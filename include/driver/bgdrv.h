@@ -3,7 +3,10 @@
 #include <dolphin/gx.h>
 #include <dolphin/os.h>
 
-typedef enum BackgroundFlags {
+#ifndef PORT_ENUM_BASE
+#define PORT_ENUM_BASE(type)
+#endif
+typedef enum BackgroundFlags PORT_ENUM_BASE(int) {
 	BG_RENDERING = (1 << 0),
 	BG_DO_MULTIPLY = (1 << 1),
 	BG_NO_AUTOSCROLL = (1 << 2),

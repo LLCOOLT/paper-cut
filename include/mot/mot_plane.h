@@ -22,4 +22,6 @@ typedef struct MotPlaneWork {
 	Vec tipPos;                   // 0x3C: nose tip; probe runs frontPos -> tipPos
 } MotPlaneWork;                   // size 0x48
 
+#ifndef TARGET_PC /* PC: static in mot_plane.c (static after extern: MSVC-only extension) */
 void flyMain(void);
+#endif

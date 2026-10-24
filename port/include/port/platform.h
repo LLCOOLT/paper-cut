@@ -48,6 +48,10 @@ struct EventEntry;
 void portTraceCmd(struct EventEntry* entry);
 /* "symbol+0xoff" for an address in the executable (or the address), into buf. */
 const char* portSymbolName(const void* addr, char* buf, size_t size);
+/* x86-64 integer division by zero (or INT_MIN / -1) at *rip: write the PowerPC
+ * result into rax/rdx and step over it; 0 if it is not a div/idiv
+ * (port/src/common/divzero_pc.c, called from the crash handlers). */
+int portEmulateIntDivide(unsigned long long* rax, unsigned long long* rdx, unsigned long long* rip, int overflow);
 void portPlatformInit(void);
 /* Pump window events; returns FALSE when the user closed the window. */
 BOOL portPlatformPoll(void);

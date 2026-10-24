@@ -20,7 +20,10 @@
 #include "driver/animdrv.h"
 #endif
 
-typedef enum EquipFlags {
+#ifndef PORT_ENUM_BASE
+#define PORT_ENUM_BASE(type)
+#endif
+typedef enum EquipFlags PORT_ENUM_BASE(int) {
     EQUIP_RESET = 1 << 0,   // 0x1, clear/reset equipped badges
     EQUIP_MARIO = 1 << 1,   // 0x2, equip Mario (non-P) badges
     EQUIP_PARTNER = 1 << 2, // 0x4, equip Partner (P) badges

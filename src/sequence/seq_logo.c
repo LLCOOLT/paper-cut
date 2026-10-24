@@ -60,7 +60,7 @@ void progDisp(CameraId camId, void* param);
 
 
 #ifndef VERSION_G8ME01
-static s32 logoAsyncFirst(void);
+static FileAsyncResult logoAsyncFirst(void);
 #endif
 
 #ifndef VERSION_G8ME01
@@ -186,7 +186,7 @@ void seq_logoMain(SequenceWork* work) {
 	u32 size;
 	u8* decode;
 	FileEntry* first;
-	s32 ret;
+	FileAsyncResult ret;
 	int ok;
 
 	switch (work->state) {
@@ -953,7 +953,7 @@ void logoDisp(CameraId camId, void* param) {
 
 #ifndef VERSION_G8ME01
 //param is unused
-static s32 logoAsyncFirst(void) {
+static FileAsyncResult logoAsyncFirst(void) {
 	return fileAsyncf(0, 0, "%s/b/first", getMarioStDvdRoot());
 }
 #endif

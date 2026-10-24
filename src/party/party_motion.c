@@ -27,6 +27,11 @@ void partyPaperOff(PartyEntry* party);
 void partyChgPoseId(PartyEntry* party, s32 pose);
 void partyChgMotSlitFloor(PartyEntry* party);
 void sincosf(f32* ret_sin, f32* ret_cos, f32 degree);
+#ifdef TARGET_PC
+/* used before its static definition: an implicit (extern) declaration then a
+ * static one is an MSVC-only extension */
+static inline BOOL partyChkMarioFollowY(MarioWork* mario);
+#endif
 
 static s32 unk_804189f4;
 static f32 touch_wall_ct;

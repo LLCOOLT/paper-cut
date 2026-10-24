@@ -19,9 +19,12 @@
 typedef struct BattleWork BattleWork;
 typedef struct BattleAlliance BattleAlliance;
 
-typedef enum BattleFlags { BATTLE_SEQ_END = 0x80000000 } BattleFlags;
+typedef enum BattleFlags { BATTLE_SEQ_END = 0x80000000 } BattleFlags; /* unsigned int: a flag mask */
 
-typedef enum BattleSequence {
+#ifndef PORT_ENUM_BASE
+#define PORT_ENUM_BASE(type)
+#endif
+typedef enum BattleSequence PORT_ENUM_BASE(int) {
     SEQ_UNKNOWN = 0,
     SEQ_INIT = 1,
     SEQ_FIRST_ACT = 2,

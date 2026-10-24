@@ -41,7 +41,10 @@ typedef struct RankEntry {
     // pad 2 bytes
 } RankEntry;
 
-typedef enum RankFlags {
+#ifndef PORT_ENUM_BASE
+#define PORT_ENUM_BASE(type)
+#endif
+typedef enum RankFlags PORT_ENUM_BASE(int) {
     RANK_BELOW = 1 << 0, // This fighter is below us in the rankings
     RANK_HIDDEN = 1 << 1, // This fighter is hidden from us
     RANK_PLAYER = 1 << 2, // This is the player
@@ -65,7 +68,7 @@ typedef struct FighterData {
 } FighterData;
 
 // This includes a bunch of "story markers" for the various important fights
-typedef enum FighterFlags {
+typedef enum FighterFlags PORT_ENUM_BASE(int) {
     FIGHT_MAJOR = 1 << 0,
     FIGHT_MINOR = 1 << 1,
     FIGHT_CHAMPION = 1 << 2,
@@ -77,7 +80,7 @@ typedef enum FighterFlags {
     FIGHT_KOOPATROL = 1 << 12,
 } FighterFlags;
 
-typedef enum FighterId {
+typedef enum FighterId PORT_ENUM_BASE(int) {
     FIGHTER_RAWK_HAWK = 0,
     FIGHTER_KOOPINATOR = 1,
     FIGHTER_CHOMPS = 2,

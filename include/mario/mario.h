@@ -57,7 +57,7 @@ typedef enum MarioMotion PORT_ENUM_BASE(u16) {
 #pragma enumsalwaysint on
 
 #pragma enumsalwaysint off
-typedef enum MarioFlags {
+typedef enum MarioFlags PORT_ENUM_BASE(int) {
     MARIO_FLAG_ACTIVE = (1 << 0),
     MARIO_FLAG_CTRL_OFF = (1 << 1),
     MARIO_FLAG_CTRL_OFF_2 = (1 << 2),
@@ -92,7 +92,7 @@ typedef enum MarioFlags {
 #pragma enumsalwaysint on
 
 #pragma enumsalwaysint off
-typedef enum MarioTrigFlags {
+typedef enum MarioTrigFlags PORT_ENUM_BASE(int) {
 	MARIO_TRIG_FLAG_IS_STARTING_NEW_MOTION = (1 << 0),
 	MARIO_TRIG_FLAG_USE_PARTNER = (1 << 1),
 	MARIO_TRIG_FLAG_SHIP_PLANE_EVT_ON = (1 << 2),

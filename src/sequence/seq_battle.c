@@ -22,6 +22,7 @@ void N_battleMapAlloc(void);
 #include "manager/evtmgr.h"
 #include "manager/evtmgr_cmd.h"
 #include "manager/filemgr.h"
+#include "addr_word.h"
 #include "mario/mario.h"
 #include "mario/mario_party.h"
 #include "mario/mario_pouch.h"
@@ -58,7 +59,7 @@ s32 seq_battle_unk_8041874c;
 
 
 static inline BOOL loadTpl(const char* path) {
-    return (u32)fileAsyncf(4, NULL, "%s/%s", getMarioStDvdRoot(), path) != 0;
+    return (AddrWord)fileAsyncf(4, NULL, "%s/%s", getMarioStDvdRoot(), path) != 0;
 }
 #define GSW0 (-170000000)
 

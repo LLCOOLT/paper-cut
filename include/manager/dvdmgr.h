@@ -7,7 +7,10 @@
 
 typedef BOOL (*DVDMgrCallback)(void);
 
-typedef enum DVDFlags {
+#ifndef PORT_ENUM_BASE
+#define PORT_ENUM_BASE(type)
+#endif
+typedef enum DVDFlags PORT_ENUM_BASE(int) {
 	DVDMGR_READING = (1 << 0),
 	DVDMGR_FINISHED = (1 << 1),
 	DVDMGR_CLOSED = (1 << 3),

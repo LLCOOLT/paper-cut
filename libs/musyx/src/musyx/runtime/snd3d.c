@@ -9,8 +9,17 @@
 #include "musyx/synth.h"
 #include "musyx/s3d_key.h"
 
+#ifdef TARGET_PC
+/* gnu89 'extern inline' (-fgnu89-inline) emits no out-of-line copy: a call
+ * the compiler does not inline (-O0, the Android debug build) is left to the
+ * linker, which finds none (Aurora's snd3dSqrtf) or the C library's sqrtf.
+ * A static copy under its own name serves every call, at any optimization. */
+#define S3D_SQRT_LINKAGE static inline
+#else
+#define S3D_SQRT_LINKAGE extern inline
+#endif
 #define S3D_DEFINE_SQRT(name)                    \
-  extern inline float name(float x) {            \
+  S3D_SQRT_LINKAGE float name(float x) {         \
     volatile float y;                            \
     if (x > 0.0f) {                              \
       double guess = __frsqrte((double)x);       \
@@ -22,9 +31,9 @@
     }                                            \
     return x;                                    \
   }
-#ifdef TTYD_BACKEND_AURORA
-/* Aurora's C++ objects import the C runtime's sqrtf (__imp_sqrtf), whose
- * import member defines sqrtf too: keep this one under its own name. */
+#ifdef TARGET_PC
+/* Not the C library's sqrtf (declared by the system headers; with Aurora its
+ * C++ objects also import it, __imp_sqrtf): this one has its own name. */
 #define sqrtf snd3dSqrtf
 #endif
 S3D_DEFINE_SQRT(sqrtf)

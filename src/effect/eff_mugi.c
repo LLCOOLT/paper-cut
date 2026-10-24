@@ -44,6 +44,9 @@ typedef struct effMugiKemuriData {
 void effMugiKemuriMain(EffectEntry* effect);
 void effMugiKemuriDisp(CameraId camId, void* param);
 
+#ifdef TARGET_PC /* file-local: other files define different inline_fn()s (one external copy wins on PC) */
+static
+#endif
 inline f32 inline_fn(effMugiKemuriData *arg0) {
 	return 6.2831855f * reviseAngle(arg0->rot.y);
 }

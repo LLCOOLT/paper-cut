@@ -14,6 +14,7 @@
 #include "manager/evtmgr.h"
 #include "manager/evtmgr_cmd.h"
 #include "manager/filemgr.h"
+#include "addr_word.h"
 #include "manager/fontmgr.h"
 #include "mario/mariost.h"
 #include "memory.h"
@@ -1326,7 +1327,7 @@ USER_FUNC(evt_end_staff_roll_init) {
         JUTFontSetup(1);
 #endif
     }
-    if ((u32)fileAsyncf(4, NULL, "%s/ending.tpl", getMarioStDvdRoot()) == 0) {
+    if ((AddrWord)fileAsyncf(4, NULL, "%s/ending.tpl", getMarioStDvdRoot()) == 0) {
         return 0;
     }
     if (end_wp->tpl == NULL) {

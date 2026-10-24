@@ -8,6 +8,10 @@ in all of that REL's objects (definitions and the REL's own references), and
 the renamed objects are archived for a whole-archive link. References to
 symbols the REL does not define (the DOL's) are left alone.
 
+Mach-O (macOS, iOS): C names carry a leading underscore, so _name becomes
+_rel_<area>__name (the C name rel_<area>__name the generated table uses), and
+the archive is written in the Darwin format ld64 expects.
+
 usage: rel_rename.py --rel NAME --out LIB [--nm llvm-nm] [--objcopy llvm-objcopy]
                      [--ar llvm-ar] OBJ...
 """
@@ -15,6 +19,10 @@ import argparse
 import os
 import subprocess
 import sys
+
+# MH_MAGIC_64 and MH_MAGIC (as stored little-endian, and big-endian), FAT_MAGIC
+MACHO_MAGICS = (b"\xcf\xfa\xed\xfe", b"\xfe\xed\xfa\xcf", b"\xce\xfa\xed\xfe", b"\xfe\xed\xfa\xce",
+                b"\xca\xfe\xba\xbe")
 
 
 def defined_globals(nm, obj):
@@ -29,6 +37,11 @@ def defined_globals(nm, obj):
     return names
 
 
+def is_macho(obj):
+    with open(obj, "rb") as f:
+        return f.read(4) in MACHO_MAGICS
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--rel", required=True)
@@ -40,15 +53,21 @@ def main():
     a = ap.parse_args()
 
     names = set()
+    macho = False
     for obj in a.objs:
         names |= defined_globals(a.nm, obj)
+        macho = macho or is_macho(obj)
     prefix = f"rel_{a.rel}__"
+    macho = is_macho(a.objs[0])
     work = a.out + ".d"
     os.makedirs(work, exist_ok=True)
     mapfile = os.path.join(work, "rename.txt")
     with open(mapfile, "w", newline="\n") as f:
         for n in sorted(names):
-            f.write(f"{n} {prefix}{n}\n")
+            if macho and n.startswith("_"):
+                f.write(f"{n} _{prefix}{n[1:]}\n")
+            else:
+                f.write(f"{n} {prefix}{n}\n")
 
     renamed = []
     for i, obj in enumerate(a.objs):
@@ -57,7 +76,8 @@ def main():
         renamed.append(dst)
     if os.path.exists(a.out):
         os.remove(a.out)
-    subprocess.run([a.ar, "rcs", a.out, *renamed], check=True)
+    fmt = ["--format=darwin"] if macho else []
+    subprocess.run([a.ar, *fmt, "rcs", a.out, *renamed], check=True)
     return 0
 
 

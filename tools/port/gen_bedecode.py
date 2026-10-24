@@ -126,6 +126,9 @@ CROSS_64 = {
                        *(["-include", WIN_SHIM_ARG] if HOST_LIBC else []), *NATIVE_COMMON,
                        *(["-isystem", "/usr/include", "-isystem", "/usr/include/x86_64-linux-gnu"]
                          if HOST_LIBC else [])],
+    # Apple arm64 (macOS, iOS) is its own ABI; always against the stand-ins.
+    "arm64-apple": ["-target", "arm64-apple-macos11", *NATIVE_COMMON,
+                    *([] if PROBE_LIBC else ["-nostdlibinc", "-isystem", "tools/port/probe_include"])],
 }
 # 32-bit headless bring-up build (TTYD_PC_32BIT): asserted in an #else branch.
 NATIVE_32 = ["-target", "i686-unknown-linux-gnu", *NATIVE_COMMON]

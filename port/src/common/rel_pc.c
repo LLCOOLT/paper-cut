@@ -63,6 +63,12 @@ void portRelUnlink(void) {
 #include <windows.h>
 #else
 #include <dlfcn.h>
+#include <unistd.h>
+#endif
+#ifdef __APPLE__
+#include <limits.h>
+#include <stdint.h>
+#include <mach-o/dyld.h>
 #endif
 
 #if defined(_WIN32)
@@ -112,7 +118,25 @@ static const char* moduleError(void) {
 }
 
 void portRelInit(const char* exePath) {
-    const char* slash = strrchr(exePath, '/');
+    const char* slash;
+#if defined(__linux__)
+    /* argv[0] may be a bare name found on PATH: the executable's real path */
+    char self[1024];
+    ssize_t n = readlink("/proc/self/exe", self, sizeof(self) - 1);
+    if (n > 0) {
+        self[n] = '\0';
+        exePath = self;
+    }
+#elif defined(__APPLE__)
+    /* argv[0] can be relative or a bare name found on PATH; the loader knows
+     * the executable's real path (in an .app: Contents/MacOS/). */
+    char exe[PATH_MAX], real[PATH_MAX];
+    uint32_t exeSize = sizeof(exe);
+    if (_NSGetExecutablePath(exe, &exeSize) == 0 && realpath(exe, real) != NULL) {
+        exePath = real;
+    }
+#endif
+    slash = strrchr(exePath, '/');
 #ifdef _WIN32
     const char* bslash = strrchr(exePath, '\\');
     if (bslash != NULL && (slash == NULL || bslash > slash)) {

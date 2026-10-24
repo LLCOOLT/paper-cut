@@ -10,7 +10,10 @@
 #define NPC_FIELD_MAX_COUNT 36
 #define NPC_BATTLE_MAX_COUNT 16
 
-typedef enum NpcTerritoryType {
+#ifndef PORT_ENUM_BASE
+#define PORT_ENUM_BASE(type)
+#endif
+typedef enum NpcTerritoryType PORT_ENUM_BASE(int) {
     NPC_TERRITORY_TYPE_NOTHING = 0,
     NPC_TERRITORY_TYPE_CIRCLE = 1,
     NPC_TERRITORY_TYPE_SQUARE = 2

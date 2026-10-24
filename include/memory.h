@@ -3,7 +3,10 @@
 #include <dolphin/gx.h>
 #include "manager/filemgr.h"
 
-typedef enum HEAP_TYPE {
+#ifndef PORT_ENUM_BASE
+#define PORT_ENUM_BASE(type)
+#endif
+typedef enum HEAP_TYPE PORT_ENUM_BASE(int) {
 	HEAP_DEFAULT = 0,
 	HEAP_MALLOC = 1, //for memInit/Clear to do its allocation
 	HEAP_EXT = 2, //TODO: proper name for EXT

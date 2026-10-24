@@ -33,7 +33,9 @@ extern EvtWord minigame03_end[];
 extern EvtWord minigame03_start[];
 extern EvtWord minigame04_end[];
 extern EvtWord minigame04_start[];
+#ifndef TARGET_PC /* PC: each file defines its own static copy (static after extern: MSVC-only extension) */
 extern EvtWord minigame_view_monte[];
+#endif
 extern EvtWord ryushi_event[];
 extern const char* s_nametbl[];
 extern s32 turn_tbl[];

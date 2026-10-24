@@ -54,6 +54,15 @@ static inline double __frsqrte(double x) { return 1.0 / sqrt(x); }
 
 /* The game's sincosf(f32* sin, f32* cos, f32 degrees) is not the C library's. */
 #define sincosf ttyd_sincosf
+/* Game names a host C library also declares: the system's declarations come
+ * first (the headers above, include-guarded), then the game's are renamed.
+ * select: tik_05.c's variable vs POSIX select(); __fpclassifyf: the n64
+ * effects' MWCC math.h copy vs glibc's and Apple's. */
+#ifndef _WIN32
+#include <sys/select.h>
+#endif
+#define select ttyd_select
+#define __fpclassifyf ttyd___fpclassifyf
 static inline unsigned int __cntlzw(unsigned int x) {
     return x == 0 ? 32 : (unsigned int)__builtin_clz(x);
 }

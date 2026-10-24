@@ -20,7 +20,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          # extern/aurora: needs the submodule commit on a pushed branch
+          # extern/aurora: upstream Aurora; CMake applies port/patches/aurora
           submodules: recursive
       - uses: actions/setup-python@v5
         with:
@@ -37,7 +37,8 @@ jobs:
             -DCMAKE_BUILD_TYPE=RelWithDebInfo \
             -DTTYD_VERSION=${{ matrix.version }} -DTTYD_BACKEND=${{ matrix.backend }}
       - name: Build
-        run: ninja -C build-pc
+        # -k 0: every failing file in one run, not just the first
+        run: ninja -C build-pc -k 0
       - name: Unit tests
         if: matrix.backend == 'headless'
         shell: bash
@@ -46,11 +47,138 @@ jobs:
             musyx_swap_test musyx_mixer_test disc_sweep musyx_seq_sweep
           ctest --test-dir build-pc -LE slow --output-on-failure
 
+  # --- Linux ---
+  linux:
+    name: Linux ${{ matrix.version }} ${{ matrix.backend }}
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        version: [G8MJ01, G8ME01]
+        backend: [headless, aurora]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # extern/aurora: upstream Aurora; CMake applies port/patches/aurora
+          submodules: recursive
+      - name: Install clang, lld, LLVM tools and Ninja
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang lld llvm ninja-build python3
+      - name: Install SDL3's build dependencies (Aurora builds SDL3 from source)
+        if: matrix.backend == 'aurora'
+        run: |
+          sudo apt-get install -y pkg-config \
+            libasound2-dev libpulse-dev libaudio-dev libfribidi-dev libjack-dev libsndio-dev \
+            libx11-dev libxext-dev libx11-xcb-dev libxrandr-dev libxcursor-dev libxfixes-dev \
+            libxi-dev libxss-dev libxtst-dev libxkbcommon-dev libdrm-dev libgbm-dev \
+            libgl1-mesa-dev libgles2-mesa-dev libegl1-mesa-dev libdbus-1-dev libibus-1.0-dev \
+            libudev-dev libthai-dev libpipewire-0.3-dev libwayland-dev libdecor-0-dev liburing-dev
+      - name: Configure
+        run: |
+          cmake -S . -B build-pc -G Ninja --toolchain cmake/toolchains/linux-clang.cmake \
+            -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+            -DTTYD_VERSION=${{ matrix.version }} -DTTYD_BACKEND=${{ matrix.backend }}
+      - name: Build
+        # -k 0: every failing file in one run, not just the first
+        run: ninja -C build-pc -k 0
+      - name: Unit tests
+        if: matrix.backend == 'headless'
+        run: |
+          ninja -C build-pc bedecode_test anim_test loaders_test map_test dtk_test \
+            musyx_swap_test musyx_mixer_test disc_sweep musyx_seq_sweep
+          ctest --test-dir build-pc -LE slow --output-on-failure
+
+  macos:
+    name: macOS ${{ matrix.version }} ${{ matrix.backend }}
+    runs-on: macos-15 # arm64; Aurora needs Xcode 16's libc++ (std::stop_token)
+    strategy:
+      fail-fast: false
+      matrix:
+        version: [G8MJ01, G8ME01]
+        backend: [headless, aurora]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # extern/aurora: upstream Aurora; CMake applies port/patches/aurora
+          submodules: recursive
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install LLVM tools and Ninja
+        # Apple clang compiles; Homebrew LLVM only provides llvm-objcopy/nm/ar
+        # for linking the RELs in (TTYD_RELS_STATIC), which Xcode lacks.
+        run: brew install llvm ninja
+      - name: Configure
+        run: |
+          cmake -S . -B build-pc -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+            -DTTYD_VERSION=${{ matrix.version }} -DTTYD_BACKEND=${{ matrix.backend }}
+      - name: Build
+        # -k 0: every failing file in one run, not just the first
+        run: ninja -C build-pc -k 0
+      - name: Unit tests
+        if: matrix.backend == 'headless'
+        run: |
+          ninja -C build-pc bedecode_test anim_test loaders_test map_test dtk_test \
+            musyx_swap_test musyx_mixer_test disc_sweep musyx_seq_sweep
+          ctest --test-dir build-pc -LE slow --output-on-failure
+      - name: App bundle
+        if: matrix.backend == 'aurora'
+        run: |
+          app=$(echo build-pc/ttyd-*.app)
+          plutil -lint "$app/Contents/Info.plist"
+          codesign --verify --verbose "$app"
+          otool -L "$app/Contents/MacOS/"ttyd-*
+          cmake --install build-pc --prefix dist
+          codesign --verify --deep --verbose dist/ttyd-*.app
+
+  ios:
+    name: iOS ${{ matrix.version }} ${{ matrix.platform }}
+    runs-on: macos-15 # Aurora needs Xcode 16's libc++ (std::stop_token)
+    strategy:
+      fail-fast: false
+      matrix:
+        version: [G8MJ01, G8ME01]
+        platform: [OS, SIMULATOR]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # extern/aurora: upstream Aurora; CMake applies port/patches/aurora
+          submodules: recursive
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install LLVM (llvm-objcopy for the RELs), Ninja and the Rust iOS targets
+        run: |
+          brew install llvm ninja protobuf
+          rustup target add aarch64-apple-ios aarch64-apple-ios-sim
+      - name: Configure
+        run: |
+          LLVM_BIN="$(brew --prefix llvm)/bin"
+          cmake -S . -B build-ios -G Ninja --toolchain cmake/toolchains/ios.cmake \
+            -DCMAKE_BUILD_TYPE=RelWithDebInfo -DTTYD_VERSION=${{ matrix.version }} \
+            -DTTYD_IOS_PLATFORM=${{ matrix.platform }} -DTTYD_IOS_CODESIGN_IDENTITY= \
+            -DTTYD_LLVM_NM="$LLVM_BIN/llvm-nm" -DTTYD_LLVM_OBJCOPY="$LLVM_BIN/llvm-objcopy" \
+            -DTTYD_LLVM_AR="$LLVM_BIN/llvm-ar" \
+            -DPROTOC_EXECUTABLE="$(command -v protoc)"
+      - name: Build
+        run: ninja -C build-ios -k 0 ttyd ttyd_ipa
+      - name: Check the bundle
+        run: |
+          app=$(ls -d build-ios/*.app)
+          plutil -lint "$app/Info.plist"
+          lipo -info "$app"/ttyd-*
+          otool -l "$app"/ttyd-* | grep -A4 LC_BUILD_VERSION | head -5
+          # one data and one bss section per linked-in REL
+          otool -l "$app"/ttyd-* | grep -E "sectname __r[db]_" | sort | uniq -c | wc -l
+
   audits:
     name: Audits
     runs-on: windows-2022
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive # gen_bedecode's layout probe reads Aurora's headers
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
@@ -62,3 +190,40 @@ jobs:
         run: python tools/port/gen_bedecode.py --check
       - name: Prototypes agree with their definitions
         run: python tools/port/proto_audit.py
+
+  # Android: the Gradle project in port/android (arm64-v8a APK per version).
+  android:
+    name: Android ${{ matrix.flavor }}
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        flavor: [Jp, Us]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Android SDK packages
+        run: |
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install \
+            "platforms;android-35" "build-tools;35.0.0" "ndk;29.0.14206865" "cmake;3.31.6"
+      - name: Rust target for nod (Aurora's disc reader)
+        run: rustup target add aarch64-linux-android
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.12"
+      - name: Build
+        working-directory: port/android
+        run: gradle --stacktrace assemble${{ matrix.flavor }}Debug
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ttyd-android-${{ matrix.flavor }}-debug
+          path: port/android/app/build/outputs/apk/**/*.apk

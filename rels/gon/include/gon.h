@@ -30,4 +30,6 @@ extern BattleUnitKind unit_patakuri;
 extern BattleUnitKind unit_patapata;
 extern BattleUnitKind unit_togekuri;
 
+#ifndef TARGET_PC /* PC: each file defines its own static copy (static after extern: MSVC-only extension) */
 extern EvtWord evt_cloud_main_evt[];
+#endif

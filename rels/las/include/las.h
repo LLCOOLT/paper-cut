@@ -56,7 +56,9 @@ extern BattleUnitKind unit_super_killer;
 extern BattleUnitKind unit_super_mahorn;
 extern BattleUnitKind unit_wanwan;
 
+#ifndef TARGET_PC /* PC: each file defines its own static copy (static after extern: MSVC-only extension) */
 extern EvtWord evt_cloud_main_evt[];
+#endif
 extern EvtWord firebar_coin[];
 extern EvtWord hikari_off_evt[];
 extern EvtWord hikari_on_evt[];

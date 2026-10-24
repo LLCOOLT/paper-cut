@@ -1,4 +1,6 @@
 #include "version.h"
+#include "pc_call.h"
+#include "addr_word.h"
 #include "eff/eff_funemizu.h"
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
@@ -2331,9 +2333,12 @@ EVT_END()
  * intplGetValue call is evaluated after the float arguments. Calling through a
  * prototype with `steps` last reproduces that evaluation order; the registers
  * (r3 mode, r4 step, r5 steps, f1 start, f2 end) are the same under the EABI,
- * so the call is behaviour-identical. */
+ * so the call is behaviour-identical. PC port: Win64 assigns registers by
+ * position (steps would be read from start's slot), so the PC calls the real
+ * prototype. */
 typedef f32 (*IntplStepsLastFn)(s32 mode, s32 step, f32 start, f32 end, s32 steps);
-#define intplGetValueStepsLast(mode, step, start, end, steps)     ((IntplStepsLastFn)intplGetValue)(mode, step, start, end, steps)
+#define intplGetValueStepsLast(mode, step, start, end, steps) \
+    PCCALL(((IntplStepsLastFn)intplGetValue)(mode, step, start, end, steps), intplGetValue(mode, step, steps, start, end))
 #endif
 
 USER_FUNC(logo) {
@@ -2345,7 +2350,7 @@ USER_FUNC(logo) {
         event->userdatap[0] = wp;
     }
     wp = event->userdatap[0];
-    if ((u32)fileAsyncf(4, NULL, "%s/mariost.tpl", getMarioStDvdRoot()) == 0) {
+    if ((AddrWord)fileAsyncf(4, NULL, "%s/mariost.tpl", getMarioStDvdRoot()) == 0) {
         return EVT_RETURN_BLOCK;
     }
     switch (wp->state) {

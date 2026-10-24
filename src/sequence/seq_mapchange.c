@@ -5,6 +5,7 @@
 #include "evt/evt_seq.h"
 #include "manager/evtmgr.h"
 #include "manager/filemgr.h"
+#include "addr_word.h"
 #include "memory.h"
 #include "mario/mario.h"
 #include "driver/camdrv.h"
@@ -145,7 +146,7 @@ void seq_mapChangeMain(SequenceWork* work) {
     BOOL newarea = strcmp(_next_area, gp->currentAreaName) != 0;
     const char* area_name;
     EvtWord* evtCode;
-    u32 fres;
+    AddrWord fres; /* a fileAsync result: the FileEntry pointer on PC */
     BOOL fok;
     switch (work->state) {
     case 0:

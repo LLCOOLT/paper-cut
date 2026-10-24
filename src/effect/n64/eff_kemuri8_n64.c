@@ -46,6 +46,9 @@ void effKemuri8N64SetCamId(EffectEntry* effect, s32 camId) {
     ((EffKemuri8N64Work*)effect->userdata)->camId = camId;
 }
 
+#ifdef TARGET_PC /* file-local: other files define different inline_fn()s (one external copy wins on PC) */
+static
+#endif
 inline float inline_fn(f32 arg0, f32 arg1) { return arg0 * (-arg1); }
 
 #pragma opt_propagation off

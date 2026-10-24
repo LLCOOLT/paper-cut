@@ -60,7 +60,11 @@ USER_FUNC(N_evt_pouch_remove_item_index);
 USER_FUNC(add_shop_point);
 USER_FUNC(chk_shop_point);
 USER_FUNC(disp_list);
+#ifdef TARGET_PC /* defined static below (static after extern: MSVC-only extension) */
+static USER_FUNC(disp_off);
+#else
 USER_FUNC(disp_off);
+#endif
 USER_FUNC(evt_mario_key_onoff);
 USER_FUNC(evt_mario_normalize);
 USER_FUNC(evt_mario_set_dir_npc);
@@ -89,9 +93,15 @@ USER_FUNC(exchange_shop_point);
 USER_FUNC(get_buy_evt);
 USER_FUNC(get_fook_evt);
 USER_FUNC(get_msg);
+#ifdef TARGET_PC /* defined static below (static after extern: MSVC-only extension) */
+static USER_FUNC(get_ptr);
+USER_FUNC(get_shop_point);
+static USER_FUNC(get_value);
+#else
 USER_FUNC(get_ptr);
 USER_FUNC(get_shop_point);
 USER_FUNC(get_value);
+#endif
 USER_FUNC(item_data_db_arrange);
 USER_FUNC(item_data_db_restore);
 USER_FUNC(keep_pouchcheck_func);

@@ -195,9 +195,23 @@ static DWORD WINAPI watchdog(void* arg) {
     return 0;
 }
 
+/* Integer division by zero: the PowerPC result, as the GameCube computes it
+ * (divzero_pc.c). First in line, before any crash report. */
+static LONG WINAPI onIntDivide(EXCEPTION_POINTERS* info) {
+    DWORD code = info->ExceptionRecord->ExceptionCode;
+    CONTEXT* ctx = info->ContextRecord;
+    if ((code == EXCEPTION_INT_DIVIDE_BY_ZERO || code == EXCEPTION_INT_OVERFLOW) &&
+        portEmulateIntDivide((unsigned long long*)&ctx->Rax, (unsigned long long*)&ctx->Rdx,
+                             (unsigned long long*)&ctx->Rip, code == EXCEPTION_INT_OVERFLOW)) {
+        return EXCEPTION_CONTINUE_EXECUTION;
+    }
+    return EXCEPTION_CONTINUE_SEARCH;
+}
+
 void portCrashInit(void) {
     const char* wd = getenv("TTYD_WATCHDOG");
     checkAddressSpace();
+    AddVectoredExceptionHandler(1, onIntDivide); /* game behaviour, not a report: always */
     if (getenv("TTYD_NO_CRASH_HANDLER") == NULL) {
         SetUnhandledExceptionFilter(onException);
         _set_invalid_parameter_handler(onInvalidParameter);
@@ -231,46 +245,525 @@ const char* portSymbolName(const void* addr, char* buf, size_t size) {
 }
 
 #else
+/* POSIX (Linux, Android, macOS, iOS): the same reports as the Windows half.
+ * Fatal signals are handled on an alternate stack (a stack overflow still
+ * reports); frames come from the unwinder (_Unwind_Backtrace, which crosses
+ * the signal frame) starting at the interrupted instruction. Names: on Linux
+ * and Android from the executable's own ELF symbol table, read at startup
+ * (the game's functions are not in the dynamic symbol table, and statics
+ * never are), else dladdr. Each frame line is
+ *   "  <16 hex digits> symbol+0xoff (module+0xoff)"
+ * (tools/port/map_sweep.py reads the symbol; `addr2line -e <exe> 0x<off>`
+ * gives the line of an executable frame). glibc needs _GNU_SOURCE for
+ * dladdr/dl_iterate_phdr/REG_RIP: CMakeLists.txt defines it for this file. */
+#if defined(__GLIBC__) && !defined(__USE_GNU)
+#error "crash_pc.c needs _GNU_SOURCE on glibc (set for this file in CMakeLists.txt)"
+#endif
 #include <signal.h>
 #include <string.h>
-#if defined(__GLIBC__) || defined(__APPLE__)
-#include <execinfo.h>
-#endif
+#include <stdarg.h>
 #include <unistd.h>
+#include <pthread.h>
+#include <time.h>
+#include <dlfcn.h>
+#include <unwind.h>
+#if defined(__linux__)
+#include <ucontext.h>
+#include <elf.h>
+#include <link.h>
+#include <fcntl.h>
+#endif
 
-void portWatchdogFrame(void) {} /* $TTYD_WATCHDOG: Windows only for now */
+#define MAX_FRAMES 48
+/* $TTYD_WATCHDOG: the watchdog thread sends this to the main thread, which
+ * prints its own stack (no portable way to read another thread's). */
+#define STALL_SIGNAL SIGUSR2
 
-static void onSignal(int sig, siginfo_t* si, void* uc) {
-    (void)uc;
-    fprintf(stderr, "\n*** crash: signal %d (%s) at address %p\n", sig, strsignal(sig), si->si_addr);
-#if defined(__GLIBC__) || defined(__APPLE__)
-    {
-        void* frames[48];
-        int n = backtrace(frames, 48);
-        backtrace_symbols_fd(frames, n, 2);
+/* stderr without stdio: the fault may be inside it (its lock held). */
+static void out(const char* fmt, ...) {
+    char buf[600];
+    va_list ap;
+    int n;
+    va_start(ap, fmt);
+    n = vsnprintf(buf, sizeof(buf), fmt, ap);
+    va_end(ap);
+    if (n > (int)sizeof(buf) - 1) {
+        n = (int)sizeof(buf) - 1;
+    }
+    if (n > 0) {
+        ssize_t written = write(2, buf, (size_t)n);
+        (void)written;
+    }
+}
+
+/* The interrupted instruction of a signal's context. */
+static uintptr_t contextPC(void* ucv) {
+#if defined(__linux__) && defined(__x86_64__)
+#ifndef REG_RIP
+#define REG_RIP 16
+#endif
+    return (uintptr_t)((ucontext_t*)ucv)->uc_mcontext.gregs[REG_RIP];
+#elif defined(__linux__) && defined(__i386__)
+#ifndef REG_EIP
+#define REG_EIP 14
+#endif
+    return (uintptr_t)((ucontext_t*)ucv)->uc_mcontext.gregs[REG_EIP];
+#elif defined(__linux__) && defined(__aarch64__)
+    return (uintptr_t)((ucontext_t*)ucv)->uc_mcontext.pc;
+#elif defined(__linux__) && defined(__arm__)
+    return (uintptr_t)((ucontext_t*)ucv)->uc_mcontext.arm_pc;
+#elif defined(__APPLE__) && defined(__x86_64__)
+    return (uintptr_t)((ucontext_t*)ucv)->uc_mcontext->__ss.__rip;
+#elif defined(__APPLE__) && defined(__aarch64__) && defined(__darwin_arm_thread_state64_get_pc)
+    return (uintptr_t)__darwin_arm_thread_state64_get_pc(((ucontext_t*)ucv)->uc_mcontext->__ss);
+#elif defined(__APPLE__) && defined(__aarch64__)
+    return (uintptr_t)((ucontext_t*)ucv)->uc_mcontext->__ss.__pc;
+#else
+    (void)ucv;
+    return 0;
+#endif
+}
+
+#if defined(__linux__)
+/* The executable's symbols (functions and data, statics included), sorted by
+ * address, from /proc/self/exe's .symtab (.dynsym if stripped). */
+typedef struct ExeSym {
+    uintptr_t addr;
+    uintptr_t size;
+    const char* name;
+} ExeSym;
+static ExeSym* sSyms;
+static size_t sSymCount;
+static uintptr_t sExeBias, sExeLo, sExeHi;
+static char sExeName[64] = "exe";
+static int sSymsLoaded;
+
+static int exeSegments(struct dl_phdr_info* info, size_t size, void* arg) {
+    int i;
+    (void)size;
+    (void)arg;
+    /* the first object reported is the executable */
+    sExeBias = (uintptr_t)info->dlpi_addr;
+    sExeLo = UINTPTR_MAX;
+    sExeHi = 0;
+    for (i = 0; i < info->dlpi_phnum; i++) {
+        const ElfW(Phdr)* ph = &info->dlpi_phdr[i];
+        if (ph->p_type == PT_LOAD) {
+            uintptr_t lo = sExeBias + (uintptr_t)ph->p_vaddr;
+            if (lo < sExeLo) {
+                sExeLo = lo;
+            }
+            if (lo + (uintptr_t)ph->p_memsz > sExeHi) {
+                sExeHi = lo + (uintptr_t)ph->p_memsz;
+            }
+        }
+    }
+    return 1;
+}
+
+static int compareSyms(const void* a, const void* b) {
+    uintptr_t x = ((const ExeSym*)a)->addr, y = ((const ExeSym*)b)->addr;
+    return x < y ? -1 : x > y;
+}
+
+static int readAt(int fd, void* buf, size_t size, off_t off) {
+    return pread(fd, buf, size, off) == (ssize_t)size;
+}
+
+static void loadSymbols(void) {
+    char path[1024];
+    ssize_t len;
+    int fd;
+    ElfW(Ehdr) eh;
+    ElfW(Shdr)* sh = NULL;
+    ElfW(Sym)* syms = NULL;
+    char* strtab = NULL;
+    size_t i, nsyms, strSize;
+    int symIdx = -1;
+    if (sSymsLoaded) {
+        return;
+    }
+    sSymsLoaded = 1;
+    dl_iterate_phdr(exeSegments, NULL);
+    len = readlink("/proc/self/exe", path, sizeof(path) - 1);
+    if (len <= 0) {
+        return;
+    }
+    path[len] = '\0';
+    snprintf(sExeName, sizeof(sExeName), "%s", strrchr(path, '/') != NULL ? strrchr(path, '/') + 1 : path);
+    fd = open(path, O_RDONLY | O_CLOEXEC);
+    if (fd < 0) {
+        return;
+    }
+    if (!readAt(fd, &eh, sizeof(eh), 0) || memcmp(eh.e_ident, ELFMAG, SELFMAG) != 0 ||
+        eh.e_shentsize != sizeof(ElfW(Shdr)) || eh.e_shnum == 0) {
+        goto done;
+    }
+    sh = (ElfW(Shdr)*)malloc(eh.e_shnum * sizeof(*sh));
+    if (sh == NULL || !readAt(fd, sh, eh.e_shnum * sizeof(*sh), (off_t)eh.e_shoff)) {
+        goto done;
+    }
+    for (i = 0; i < eh.e_shnum; i++) {
+        if (sh[i].sh_type == SHT_SYMTAB) {
+            symIdx = (int)i;
+        }
+    }
+    for (i = 0; symIdx < 0 && i < eh.e_shnum; i++) {
+        if (sh[i].sh_type == SHT_DYNSYM) {
+            symIdx = (int)i;
+        }
+    }
+    if (symIdx < 0 || sh[symIdx].sh_link >= eh.e_shnum) {
+        goto done;
+    }
+    nsyms = (size_t)(sh[symIdx].sh_size / sizeof(ElfW(Sym)));
+    strSize = (size_t)sh[sh[symIdx].sh_link].sh_size;
+    syms = (ElfW(Sym)*)malloc(nsyms * sizeof(ElfW(Sym)) + 1);
+    strtab = (char*)malloc(strSize + 1);
+    sSyms = (ExeSym*)malloc(nsyms * sizeof(ExeSym) + 1);
+    if (syms == NULL || strtab == NULL || sSyms == NULL ||
+        !readAt(fd, syms, nsyms * sizeof(ElfW(Sym)), (off_t)sh[symIdx].sh_offset) ||
+        !readAt(fd, strtab, strSize, (off_t)sh[sh[symIdx].sh_link].sh_offset)) {
+        free(strtab);
+        free(sSyms);
+        strtab = NULL;
+        sSyms = NULL;
+        goto done;
+    }
+    strtab[strSize] = '\0';
+    for (i = 0; i < nsyms; i++) {
+        const ElfW(Sym)* s = &syms[i];
+        int type = s->st_info & 0xF;
+        if ((type == STT_FUNC || type == STT_OBJECT) && s->st_shndx != SHN_UNDEF && s->st_shndx < SHN_LORESERVE &&
+            s->st_value != 0 && s->st_name < strSize) {
+            sSyms[sSymCount].addr = sExeBias + (uintptr_t)s->st_value;
+            sSyms[sSymCount].size = (uintptr_t)s->st_size;
+            sSyms[sSymCount].name = strtab + s->st_name;
+            sSymCount++;
+        }
+    }
+    qsort(sSyms, sSymCount, sizeof(ExeSym), compareSyms);
+    strtab = NULL; /* kept: the names point into it */
+done:
+    free(strtab);
+    free(syms);
+    free(sh);
+    close(fd);
+}
+
+/* the executable's symbol at addr (NULL if outside it or past its size) */
+static const ExeSym* findExeSym(uintptr_t addr) {
+    size_t lo = 0, hi = sSymCount;
+    const ExeSym* s;
+    while (lo < hi) {
+        size_t mid = lo + (hi - lo) / 2;
+        if (sSyms[mid].addr <= addr) {
+            lo = mid + 1;
+        } else {
+            hi = mid;
+        }
+    }
+    if (lo == 0) {
+        return NULL;
+    }
+    s = &sSyms[lo - 1];
+    return s->size != 0 && addr >= s->addr + s->size ? NULL : s;
+}
+#else
+static void loadSymbols(void) {}
+#endif
+
+/* "symbol+0xoff (module+0xoff)" for addr, or "module+0xoff", or "?".
+ * lookup is addr - 1 for return addresses (a call may end a function). */
+static void describe(uintptr_t addr, uintptr_t lookup, char* buf, size_t size) {
+    Dl_info info;
+#if defined(__linux__)
+    if (lookup >= sExeLo && lookup < sExeHi) {
+        const ExeSym* s = findExeSym(lookup);
+        if (s != NULL) {
+            snprintf(buf, size, "%s+0x%llx (%s+0x%llx)", s->name, (unsigned long long)(addr - s->addr), sExeName,
+                     (unsigned long long)(addr - sExeBias));
+        } else {
+            snprintf(buf, size, "%s+0x%llx", sExeName, (unsigned long long)(addr - sExeBias));
+        }
+        return;
     }
 #endif
+    memset(&info, 0, sizeof(info));
+    if (dladdr((void*)lookup, &info) && info.dli_fname != NULL) {
+        const char* base = strrchr(info.dli_fname, '/') != NULL ? strrchr(info.dli_fname, '/') + 1 : info.dli_fname;
+        if (info.dli_sname != NULL && info.dli_saddr != NULL) {
+            snprintf(buf, size, "%s+0x%llx (%s+0x%llx)", info.dli_sname,
+                     (unsigned long long)(addr - (uintptr_t)info.dli_saddr), base,
+                     (unsigned long long)(addr - (uintptr_t)info.dli_fbase));
+        } else {
+            snprintf(buf, size, "%s+0x%llx", base, (unsigned long long)(addr - (uintptr_t)info.dli_fbase));
+        }
+        return;
+    }
+    snprintf(buf, size, "?");
+}
+
+typedef struct Trace {
+    uintptr_t* ip;
+    int n;
+    int max;
+} Trace;
+
+static _Unwind_Reason_Code traceStep(struct _Unwind_Context* ctx, void* arg) {
+    Trace* t = (Trace*)arg;
+    uintptr_t ip = (uintptr_t)_Unwind_GetIP(ctx);
+    if (ip == 0 || t->n >= t->max) {
+        return _URC_END_OF_STACK;
+    }
+    t->ip[t->n++] = ip;
+    return _URC_NO_REASON;
+}
+
+/* The current thread's stack from the interrupted instruction pc (the
+ * handler's own frames and the signal trampoline left out). fromAbort: start
+ * at abort()'s caller, as the frames below it are the C library's. */
+static void printStack(uintptr_t pc, int fromAbort) {
+    uintptr_t ips[MAX_FRAMES * 2];
+    Trace t;
+    char buf[480];
+    int i, start = -1, printed;
+    t.ip = ips;
+    t.n = 0;
+    t.max = MAX_FRAMES * 2;
+    _Unwind_Backtrace(traceStep, &t);
+    for (i = 0; i < t.n; i++) {
+        if (ips[i] == pc) {
+            start = i;
+            break;
+        }
+    }
+    if (fromAbort) {
+        for (i = start < 0 ? 0 : start; i < t.n; i++) {
+            Dl_info info;
+            memset(&info, 0, sizeof(info));
+            if (dladdr((void*)(ips[i] - 1), &info) && info.dli_sname != NULL && strcmp(info.dli_sname, "abort") == 0) {
+                start = i + 1;
+                break;
+            }
+        }
+    }
+    if (start < 0) {
+        /* the unwinder did not reach the interrupted frame: that frame, then
+         * everything it saw */
+        if (pc != 0) {
+            describe(pc, pc, buf, sizeof(buf));
+            out("  %016llx %s\n", (unsigned long long)pc, buf);
+        }
+        start = 0;
+    }
+    for (i = start, printed = 0; i < t.n && printed < MAX_FRAMES; i++, printed++) {
+        describe(ips[i], ips[i] == pc ? ips[i] : ips[i] - 1, buf, sizeof(buf));
+        out("  %016llx %s\n", (unsigned long long)ips[i], buf);
+    }
+}
+
+static const char* signalName(int sig) {
+    switch (sig) {
+    case SIGSEGV:
+        return "SIGSEGV";
+    case SIGBUS:
+        return "SIGBUS";
+    case SIGILL:
+        return "SIGILL";
+    case SIGFPE:
+        return "SIGFPE";
+    case SIGABRT:
+        return "SIGABRT";
+    default:
+        return "?";
+    }
+}
+
+static volatile sig_atomic_t sInHandler;
+
+/* SIGFPE from an integer division by zero (x86-64): the PowerPC result, as the
+ * GameCube computes it (divzero_pc.c), and carry on. */
+static int emulateDivide(siginfo_t* si, void* ucv) {
+#if defined(__x86_64__) && (defined(__linux__) || defined(__APPLE__))
+    if (si->si_code == FPE_INTDIV || si->si_code == FPE_INTOVF) {
+#if defined(__linux__)
+        greg_t* g = ((ucontext_t*)ucv)->uc_mcontext.gregs;
+        return portEmulateIntDivide((unsigned long long*)&g[REG_RAX], (unsigned long long*)&g[REG_RDX],
+                                    (unsigned long long*)&g[REG_RIP], si->si_code == FPE_INTOVF);
+#else
+        __typeof__(((ucontext_t*)ucv)->uc_mcontext->__ss)* ss = &((ucontext_t*)ucv)->uc_mcontext->__ss;
+        return portEmulateIntDivide((unsigned long long*)&ss->__rax, (unsigned long long*)&ss->__rdx,
+                                    (unsigned long long*)&ss->__rip, si->si_code == FPE_INTOVF);
+#endif
+    }
+#else
+    (void)si;
+    (void)ucv;
+#endif
+    return 0;
+}
+
+static void onSignal(int sig, siginfo_t* si, void* uc) {
+    uintptr_t pc = contextPC(uc);
+    if (sig == SIGFPE && emulateDivide(si, uc)) {
+        return;
+    }
+    if (sInHandler) {
+        /* a fault while reporting one: just die */
+        signal(sig, SIG_DFL);
+        return;
+    }
+    sInHandler = 1;
+    if (sig == SIGABRT) {
+        /* abort() (also std::terminate in Aurora or Dawn): as on Windows,
+         * the game's trace first */
+        fflush(stdout);
+        out("\n*** crash: abort()\n");
+    } else {
+        out("\n*** crash: signal %d (%s) at %p", sig, signalName(sig), (void*)pc);
+        if (sig == SIGSEGV || sig == SIGBUS) {
+            out(" (address 0x%llx)", (unsigned long long)(uintptr_t)si->si_addr);
+        }
+        out("\n");
+    }
+    printStack(pc, sig == SIGABRT);
+    /* the default action when the handler returns: core dump / exit status */
     signal(sig, SIG_DFL);
     raise(sig);
 }
 
+/* $TTYD_WATCHDOG=<seconds>: if no frame completes for that long (paused time
+ * does not count), the main thread prints its stack (where the game is
+ * stuck) and the process exits with status 4. */
+static volatile int sFrames;
+static volatile int sStallSecs;
+static pthread_t sMainThread;
+
+void portWatchdogFrame(void) {
+    __atomic_fetch_add(&sFrames, 1, __ATOMIC_RELAXED);
+}
+
+static void onStall(int sig, siginfo_t* si, void* uc) {
+    (void)sig;
+    (void)si;
+    fflush(stdout);
+    out("\n*** stall: no frame for %d s; main thread:\n", (int)sStallSecs);
+    printStack(contextPC(uc), 0);
+    _Exit(4);
+}
+
+static void sleepSeconds(int secs) {
+    struct timespec ts;
+    ts.tv_sec = secs;
+    ts.tv_nsec = 0;
+    while (nanosleep(&ts, &ts) != 0) {
+    }
+}
+
+static void* watchdog(void* arg) {
+    int secs = (int)(intptr_t)arg, idle = 0, last = -1;
+    for (;;) {
+        int frames;
+        sleepSeconds(1);
+        frames = __atomic_load_n(&sFrames, __ATOMIC_RELAXED);
+        if (frames != last || portIsPaused()) {
+            last = frames;
+            idle = 0;
+        } else if (++idle >= secs) {
+            sStallSecs = secs;
+            pthread_kill(sMainThread, STALL_SIGNAL);
+            /* the main thread exits from its handler; if it cannot run it
+             * (the signal blocked, or stuck in the kernel), exit anyway */
+            sleepSeconds(10);
+            out("\n*** stall: no frame for %d s; the main thread did not report its stack\n", secs);
+            _Exit(4);
+        }
+    }
+    return NULL;
+}
+
 void portCrashInit(void) {
+    const char* wd = getenv("TTYD_WATCHDOG");
     struct sigaction sa;
     checkAddressSpace();
-    if (getenv("TTYD_NO_CRASH_HANDLER") != NULL) {
-        return;
+    if (getenv("TTYD_NO_CRASH_HANDLER") == NULL) {
+        static const int kSignals[] = {SIGSEGV, SIGBUS, SIGILL, SIGFPE, SIGABRT};
+        stack_t ss;
+        size_t i;
+        /* names, the unwinder and dladdr ready before anything can crash */
+        loadSymbols();
+        {
+            uintptr_t ip[4];
+            Trace t;
+            Dl_info info;
+            t.ip = ip;
+            t.n = 0;
+            t.max = 4;
+            _Unwind_Backtrace(traceStep, &t);
+            dladdr((void*)&portCrashInit, &info);
+        }
+        /* an alternate stack, so a stack overflow is reported too */
+        memset(&ss, 0, sizeof(ss));
+        ss.ss_size = 256 * 1024;
+        ss.ss_sp = malloc(ss.ss_size);
+        if (ss.ss_sp != NULL) {
+            sigaltstack(&ss, NULL);
+        }
+        memset(&sa, 0, sizeof(sa));
+        sa.sa_sigaction = onSignal;
+        sa.sa_flags = SA_SIGINFO | SA_ONSTACK;
+        sigemptyset(&sa.sa_mask);
+        for (i = 0; i < sizeof(kSignals) / sizeof(kSignals[0]); i++) {
+            sigaction(kSignals[i], &sa, NULL);
+        }
+    } else {
+        /* no crash reports, but division by zero is game behaviour (divzero_pc.c) */
+        memset(&sa, 0, sizeof(sa));
+        sa.sa_sigaction = onSignal;
+        sa.sa_flags = SA_SIGINFO;
+        sigemptyset(&sa.sa_mask);
+        sigaction(SIGFPE, &sa, NULL);
     }
-    memset(&sa, 0, sizeof(sa));
-    sa.sa_sigaction = onSignal;
-    sa.sa_flags = SA_SIGINFO;
-    sigaction(SIGSEGV, &sa, NULL);
-    sigaction(SIGBUS, &sa, NULL);
-    sigaction(SIGILL, &sa, NULL);
-    sigaction(SIGFPE, &sa, NULL);
-    sigaction(SIGABRT, &sa, NULL);
+    if (wd != NULL && atoi(wd) > 0) {
+        pthread_t thread;
+        pthread_attr_t attr;
+        loadSymbols();
+        sMainThread = pthread_self();
+        memset(&sa, 0, sizeof(sa));
+        sa.sa_sigaction = onStall;
+        sa.sa_flags = SA_SIGINFO | SA_ONSTACK;
+        sigemptyset(&sa.sa_mask);
+        sigaction(STALL_SIGNAL, &sa, NULL);
+        pthread_attr_init(&attr);
+        pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+        if (pthread_create(&thread, &attr, watchdog, (void*)(intptr_t)atoi(wd)) != 0) {
+            fprintf(stderr, "TTYD_WATCHDOG: cannot start the watchdog thread\n");
+        }
+        pthread_attr_destroy(&attr);
+    }
 }
 
 const char* portSymbolName(const void* addr, char* buf, size_t size) {
+    loadSymbols();
+#if defined(__linux__)
+    if ((uintptr_t)addr >= sExeLo && (uintptr_t)addr < sExeHi) {
+        const ExeSym* s = findExeSym((uintptr_t)addr);
+        if (s != NULL) {
+            snprintf(buf, size, "%s+0x%llx", s->name, (unsigned long long)((uintptr_t)addr - s->addr));
+            return buf;
+        }
+    }
+#endif
+    {
+        Dl_info info;
+        memset(&info, 0, sizeof(info));
+        if (addr != NULL && dladdr(addr, &info) && info.dli_sname != NULL && info.dli_saddr != NULL) {
+            snprintf(buf, size, "%s+0x%llx", info.dli_sname,
+                     (unsigned long long)((uintptr_t)addr - (uintptr_t)info.dli_saddr));
+            return buf;
+        }
+    }
     snprintf(buf, size, "%p", addr);
     return buf;
 }

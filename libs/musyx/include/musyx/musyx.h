@@ -80,7 +80,10 @@ typedef u16 SND_GROUPID;
 typedef u16 SND_SONGID;
 typedef u16 SND_FXID;
 
-typedef enum {
+#ifndef PORT_ENUM_BASE
+#define PORT_ENUM_BASE(type)
+#endif
+typedef enum PORT_ENUM_BASE(int) {
   SND_OUTPUTMODE_MONO = 0,
   SND_OUTPUTMODE_STEREO,
   SND_OUTPUTMODE_SURROUND
@@ -293,7 +296,7 @@ typedef struct SND_PARAMETER_INFO {
 } SND_PARAMETER_INFO;
 
 #if MUSY_VERSION >= MUSY_VERSION_CHECK(2, 0, 1)
-typedef enum {
+typedef enum PORT_ENUM_BASE(int) {
   SND_FILTER_NONE = 0,
   SND_FILTER_LOWPASS = 1,
 } SND_FILTER;
@@ -460,7 +463,7 @@ void sndSetAuxProcessingCallbacks(u8 studio,
 
 void sndUpdateAuxParameter(u8 studio, u16 para[SND_AUX_NUMPARAMETERS], u8 auxBus);
 
-typedef enum {
+typedef enum PORT_ENUM_BASE(int) {
   SND_STUDIO_TYPE_STD = 0,
   SND_STUDIO_TYPE_DPL2,
   SND_STUDIO_TYPE_RESERVED1,

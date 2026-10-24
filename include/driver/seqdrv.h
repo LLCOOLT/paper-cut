@@ -5,7 +5,10 @@
 struct SequenceWork; // file-scope tag, so the callback's parameter is the same type
 typedef void (*SequenceCallback)(struct SequenceWork* work);
 
-typedef enum SequenceType {
+#ifndef PORT_ENUM_BASE
+#define PORT_ENUM_BASE(type)
+#endif
+typedef enum SequenceType PORT_ENUM_BASE(int) {
 	SEQ_UNDEFINED = -1,
 	SEQ_LOGO = 0,
 	SEQ_TITLE = 1,

@@ -19,7 +19,10 @@ GXTexObj* wakuTexObj;
 #define fabsf(x) __fabsf(x)
 
 //msgWindow.tpl indices (enum-typed: keeps `dark ? n+1 : n` from folding to branchless math)
-typedef enum WakuTexId {
+#ifndef PORT_ENUM_BASE
+#define PORT_ENUM_BASE(type)
+#endif
+typedef enum WakuTexId PORT_ENUM_BASE(int) {
 	WAKU_ARROW = 1,
 	WAKU_ARROW_DARK = 2,
 	WAKU_SMALL = 3,

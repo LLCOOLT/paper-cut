@@ -59,7 +59,9 @@ extern BattleUnitKind unit_monochrome_pakkun;
 extern BattleUnitKind unit_piders;
 
 extern s32 JailAwayTable_New[];
+#ifndef TARGET_PC /* PC: each file defines its own static copy (static after extern: MSVC-only extension) */
 extern EvtWord evt_cloud_main_evt[];
+#endif
 extern EvtWord mri_puni_init_dvd[];
 extern EvtWord mri_puni_main[];
 extern EvtWord mri_puni_position_init[];

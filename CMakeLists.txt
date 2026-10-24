@@ -1,6 +1,12 @@
 # Native PC build of the TTYD decomp. The matching GameCube build is
 # configure.py + ninja and is unaffected by this file.
 cmake_minimum_required(VERSION 3.25)
+# macOS: 11.0 (Big Sur, the first arm64 release) unless asked otherwise; must
+# precede project(). Cross builds (iOS) set their own in the toolchain file.
+if(CMAKE_HOST_APPLE AND NOT DEFINED CMAKE_OSX_DEPLOYMENT_TARGET AND NOT DEFINED CMAKE_TOOLCHAIN_FILE
+   AND NOT DEFINED CMAKE_SYSTEM_NAME AND NOT DEFINED ENV{MACOSX_DEPLOYMENT_TARGET})
+    set(CMAKE_OSX_DEPLOYMENT_TARGET 11.0 CACHE STRING "Minimum macOS version")
+endif()
 project(ttyd_pc C CXX)
 
 set(CMAKE_C_STANDARD 11)
@@ -30,6 +36,30 @@ set_property(CACHE TTYD_BACKEND PROPERTY STRINGS aurora headless)
 option(TTYD_PC_32BIT "Build a 32-bit executable (headless only)" OFF)
 option(TTYD_PTRWIDTH_WARNINGS "Report only int<->pointer width warnings (audit build)" OFF)
 
+# --- iOS (cmake/toolchains/ios.cmake; docs/PC_PORT.md, "iOS") ---
+# Aurora only. An iOS app may only run code signed into its bundle (no
+# dlopen of RELs), so the RELs are always linked in. Bundle, Info.plist,
+# icons and the Objective-C glue: port/ios/ios.cmake.
+if(CMAKE_SYSTEM_NAME STREQUAL "iOS")
+    set(TTYD_IOS ON)
+    if(NOT TTYD_BACKEND STREQUAL "aurora")
+        message(FATAL_ERROR "iOS builds need TTYD_BACKEND=aurora")
+    endif()
+    set(TTYD_RELS_STATIC ON CACHE BOOL "Link the RELs into the executable" FORCE)
+    enable_language(OBJC)
+else()
+    set(TTYD_IOS OFF)
+endif()
+# On-screen touch controls (port/touch): touches as Aurora's virtual PAD
+# status, drawn with Aurora's Dear ImGui. On by default on iOS and Android;
+# Aurora only.
+if(TTYD_IOS OR ANDROID)
+    set(_touch_default ON)
+else()
+    set(_touch_default OFF)
+endif()
+option(TTYD_TOUCH_OVERLAY "On-screen touch controls (Aurora backend)" ${_touch_default})
+
 set(TTYD_ARCH_FLAG -m64)
 if(TTYD_PC_32BIT AND NOT MSVC)
     set(TTYD_ARCH_FLAG -m32)
@@ -42,6 +72,19 @@ if(WIN32)
     set(TTYD_LIBM)
 else()
     set(TTYD_LIBM m)
+endif()
+
+# --- Linux ---
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    # A position-independent executable: every host address the game uses must
+    # be 2 GiB or higher (portCheckHostAddress, include/sfx_name_word.h), and a
+    # non-PIE executable is loaded at 4 MiB.
+    include(CheckPIESupported)
+    check_pie_supported()
+    # glibc declares dladdr, dl_iterate_phdr and REG_RIP (crash reports) only
+    # with _GNU_SOURCE; only this file gets it (it hides nothing the game uses).
+    set_source_files_properties(${CMAKE_SOURCE_DIR}/port/src/common/crash_pc.c
+        PROPERTIES COMPILE_DEFINITIONS _GNU_SOURCE)
 endif()
 
 set(TTYD_DEFINES
@@ -73,7 +116,38 @@ if(TTYD_BACKEND STREQUAL "aurora")
             message(STATUS "Aurora: applied ${_name}")
         endif()
     endforeach()
+    if(ANDROID)
+        # Android: SDL3 built from source (Aurora requires it there; port/android
+        # compiles SDL's Java glue from the same tree, FETCHCONTENT_SOURCE_DIR_SDL),
+        # linked statically into libmain.so with Dawn (prebuilt, arm64) and nod.
+        set(AURORA_SDL3_PROVIDER vendor CACHE STRING "")
+        set(AURORA_SDL3_LINKAGE static CACHE STRING "")
+        # Not the build machine's libraries: its pkg-config and SQLite are for
+        # the host, whose headers the NDK cannot use. Aurora then fetches and
+        # builds what it needs (sqlite3) for the target.
+        set(CMAKE_DISABLE_FIND_PACKAGE_PkgConfig ON)
+        set(CMAKE_DISABLE_FIND_PACKAGE_SQLite3 ON)
+    endif()
     add_subdirectory(extern/aurora EXCLUDE_FROM_ALL)
+    # nod built by Cargo (Android) on a Windows machine whose Rust is the
+    # windows-gnu toolchain: Cargo builds the build scripts and proc macros for
+    # that host, and rustc makes their raw-dylib import libraries (getrandom)
+    # with a `dlltool` from PATH, which rustup does not provide (its own one
+    # needs GNU `as`). LLVM's llvm-dlltool (the NDK's, beside llvm-ar) does the
+    # job when it is called dlltool: a copy goes on PATH for Cargo.
+    if(CMAKE_HOST_WIN32 AND TARGET nod AND COMMAND corrosion_set_env_vars
+            AND "$CACHE{Rust_CARGO_HOST_TARGET_CACHED}" MATCHES "windows-gnu")
+        find_program(TTYD_HOST_DLLTOOL dlltool)
+        get_filename_component(_llvm_bin "${CMAKE_AR}" DIRECTORY)
+        find_program(TTYD_LLVM_DLLTOOL llvm-dlltool HINTS "${_llvm_bin}")
+        if(NOT TTYD_HOST_DLLTOOL AND TTYD_LLVM_DLLTOOL)
+            set(_dlltool_dir ${CMAKE_BINARY_DIR}/rust-host-tools)
+            file(MAKE_DIRECTORY ${_dlltool_dir})
+            file(COPY_FILE ${TTYD_LLVM_DLLTOOL} ${_dlltool_dir}/dlltool.exe ONLY_IF_DIFFERENT)
+            # Corrosion puts these first in its `cmake -E env` command.
+            corrosion_set_env_vars(nod --modify "PATH=path_list_prepend:${_dlltool_dir}")
+        endif()
+    endif()
     # aurora_overlay: wrappers (#include_next) adding the 2004-SDK declarations,
     # macros and transitive includes the game relies on that Aurora's headers lack.
     set(TTYD_SDK_INCLUDE ${CMAKE_SOURCE_DIR}/port/include/aurora_overlay
@@ -118,6 +192,9 @@ else()
         # gnu89 inline: a plain 'inline' function also gets an external
         # definition, as with MWCC (C11 inline would leave none at -O0).
         -funsigned-char -fno-strict-aliasing -fwrapv -fcommon -fgnu89-inline
+        # No fused multiply-add: arm64 (Apple, Android) would otherwise round
+        # differently from x86-64, and runs (golden audio hashes) would differ.
+        -ffp-contract=off
         # A call to an undeclared function returns C's implicit int: a pointer
         # or 64-bit result is cut to 32 bits, a narrow one is not extended and
         # f32 arguments go as doubles (e.g. seq_load.c's winZenkakuStr, a US
@@ -128,6 +205,10 @@ else()
         -Wno-error=incompatible-pointer-types)
     if(CMAKE_C_COMPILER_ID MATCHES "Clang")
         list(APPEND TTYD_CFLAGS -Wno-error=incompatible-function-pointer-types)
+    elseif(CMAKE_C_COMPILER_ID STREQUAL "GNU")
+        # GCC 14 makes the same MWCC-accepted constructs (and implicit int,
+        # return mismatches) errors; -fpermissive keeps them warnings.
+        list(APPEND TTYD_CFLAGS -fpermissive)
     endif()
     # TTYD_PTRWIDTH_WARNINGS: only the 64-bit pointer-truncation warnings
     # (an audit build); otherwise the decomp's code builds silently.
@@ -200,16 +281,18 @@ set_property(SOURCE ${CMAKE_SOURCE_DIR}/src/main.c TARGET_DIRECTORY ttyd_dol
 
 # On the GameCube only one REL is loaded at a time and it starts from fresh
 # data on every load. Two ways to get that on PC (port/src/common/rel_pc.c):
-# - TTYD_RELS_STATIC (default on Windows, where a DLL cannot read the
-#   executable's data without dllimport): every REL is linked into the
-#   executable. tools/port/rel_rename.py renames each REL's global symbols to
-#   rel_<area>__<name> so RELs (and the DOL) cannot clash, and each REL's
-#   data/bss go to their own grouped sections (.data$rel_<area>_m) between
-#   generated start/end markers; linking a REL restores its initial data,
-#   clears its bss and runs its _prolog.
+# - TTYD_RELS_STATIC (default with clang: Windows, where a DLL cannot read the
+#   executable's data without dllimport; Apple, where iOS cannot load code at
+#   run time and macOS takes the same path; Linux and Android): every REL is
+#   linked into the executable. tools/port/rel_rename.py renames each REL's
+#   global symbols to rel_<area>__<name> so RELs (and the DOL) cannot clash,
+#   and each REL's data/bss go to sections of their own (per object format,
+#   below); linking a REL restores its initial data, clears its bss and runs
+#   its _prolog. On Apple this needs LLVM's llvm-objcopy (brew install llvm).
 # - otherwise each REL is a loadable module (.so/.dylib) loaded on area entry
 #   and unloaded on exit; modules resolve game symbols against the executable.
-if(WIN32)
+if(WIN32 OR APPLE OR CMAKE_C_COMPILER_ID MATCHES "Clang")
+    # Windows, Apple (iOS cannot load code at run time) and ELF with clang.
     set(_rels_static_default ON)
 else()
     set(_rels_static_default OFF)
@@ -219,32 +302,106 @@ set(TTYD_REL_TARGETS)
 set(TTYD_REL_ARCHIVES)
 set(TTYD_REL_STATIC_SOURCES)
 if(TTYD_RELS_STATIC)
+    # Where each REL's data and bss lie (rel_pc.c restores and clears them):
+    # - COFF (Windows): grouped sections .data$rel_<area>_{a,m,z}, which the
+    #   linker sorts by suffix, with marker variables in _a and _z.
+    # - ELF (Linux, Android): one section per REL, rel_<area>_data and
+    #   rel_<area>_bss; the linker defines __start_<name>/__stop_<name> around
+    #   sections named like C identifiers. A marker variable in each keeps the
+    #   section (and so the symbols) even when the REL has no data or bss.
+    # - Mach-O (macOS, iOS): __DATA,__rd_<area> and __DATA,__rb_<area> (at
+    #   most 16 characters), bounded by the linker's section$start/section$end
+    #   symbols; one byte in each keeps it present.
+    # All need clang (#pragma clang section).
+    if(NOT CMAKE_C_COMPILER_ID MATCHES "Clang")
+        message(FATAL_ERROR "TTYD_RELS_STATIC needs clang (#pragma clang section); use -DTTYD_RELS_STATIC=OFF")
+    endif()
+    if(WIN32)
+        set(_rel_format COFF)
+    elseif(APPLE)
+        set(_rel_format MACHO)
+    else()
+        set(_rel_format ELF)
+    endif()
     get_filename_component(_llvm_bin ${CMAKE_C_COMPILER} DIRECTORY)
-    find_program(TTYD_LLVM_NM llvm-nm HINTS ${_llvm_bin} REQUIRED)
-    find_program(TTYD_LLVM_OBJCOPY llvm-objcopy HINTS ${_llvm_bin} REQUIRED)
-    find_program(TTYD_LLVM_AR llvm-ar HINTS ${_llvm_bin} REQUIRED)
+    # Linux distributions install clang as a link into /usr/lib/llvm-<N>/bin;
+    # GNU binutils' nm/objcopy/ar take the same options (rel_rename.py).
+    file(REAL_PATH ${CMAKE_C_COMPILER} _cc_real)
+    get_filename_component(_llvm_bin_real ${_cc_real} DIRECTORY)
+    set(_llvm_hints ${_llvm_bin} ${_llvm_bin_real})
+    if(APPLE)
+        # Xcode has no llvm-objcopy and Apple's nm/ar differ: Homebrew's LLVM
+        # (keg-only, not on PATH), nm and ar from the same place.
+        list(APPEND _llvm_hints /opt/homebrew/opt/llvm/bin /usr/local/opt/llvm/bin)
+        find_program(TTYD_LLVM_OBJCOPY llvm-objcopy HINTS ${_llvm_hints} NO_CMAKE_FIND_ROOT_PATH)
+        if(NOT TTYD_LLVM_OBJCOPY)
+            message(FATAL_ERROR "TTYD_RELS_STATIC needs llvm-objcopy, which Xcode does not ship: "
+                "brew install llvm (or -DTTYD_LLVM_OBJCOPY=<path>, or -DTTYD_RELS_STATIC=OFF for REL modules)")
+        endif()
+        get_filename_component(_objcopy_bin ${TTYD_LLVM_OBJCOPY} DIRECTORY)
+        set(_llvm_hints ${_objcopy_bin})
+        set(_nm_names llvm-nm)
+        set(_objcopy_names llvm-objcopy)
+        set(_ar_names llvm-ar)
+    else()
+        set(_nm_names llvm-nm nm)
+        set(_objcopy_names llvm-objcopy objcopy)
+        set(_ar_names llvm-ar ar)
+    endif()
+    find_program(TTYD_LLVM_NM NAMES ${_nm_names} HINTS ${_llvm_hints} NO_CMAKE_FIND_ROOT_PATH REQUIRED)
+    find_program(TTYD_LLVM_OBJCOPY NAMES ${_objcopy_names} HINTS ${_llvm_hints} NO_CMAKE_FIND_ROOT_PATH REQUIRED)
+    find_program(TTYD_LLVM_AR NAMES ${_ar_names} HINTS ${_llvm_hints} NO_CMAKE_FIND_ROOT_PATH REQUIRED)
     set(_relgen ${CMAKE_BINARY_DIR}/generated/rels)
     set(_table_decls "")
     set(_table_rows "")
     foreach(rel ${TTYD_RELS})
-        file(WRITE ${_relgen}/rel_${rel}_sections.h.tmp
-            "/* Generated by CMakeLists.txt: REL ${rel}'s data in its own grouped sections. */\n"
-            "#pragma clang section data=\".data$rel_${rel}_m\" bss=\".bss$rel_${rel}_m\"\n")
+        if(_rel_format STREQUAL "ELF")
+            file(WRITE ${_relgen}/rel_${rel}_sections.h.tmp
+                "/* Generated by CMakeLists.txt: REL ${rel}'s data in its own sections. */\n"
+                "#pragma clang section data=\"rel_${rel}_data\" bss=\"rel_${rel}_bss\"\n")
+            file(WRITE ${_relgen}/rel_${rel}_bounds.c.tmp
+                "/* Generated by CMakeLists.txt: keeps REL ${rel}'s sections (and their __start_/__stop_). */\n"
+                "#pragma clang section data=\"rel_${rel}_data\" bss=\"rel_${rel}_bss\"\n"
+                "char rel_${rel}_data_keep = 1;\nchar rel_${rel}_bss_keep;\n")
+            set_source_files_properties(${_relgen}/rel_${rel}_bounds.c PROPERTIES COMPILE_OPTIONS -fno-common)
+            string(APPEND _table_decls
+                "extern char __start_rel_${rel}_data[] PORT_REL_HIDDEN, __stop_rel_${rel}_data[] PORT_REL_HIDDEN,"
+                " __start_rel_${rel}_bss[] PORT_REL_HIDDEN, __stop_rel_${rel}_bss[] PORT_REL_HIDDEN;\n"
+                "#define rel_${rel}_data_start (*__start_rel_${rel}_data)\n#define rel_${rel}_data_end (*__stop_rel_${rel}_data)\n"
+                "#define rel_${rel}_bss_start (*__start_rel_${rel}_bss)\n#define rel_${rel}_bss_end (*__stop_rel_${rel}_bss)\n")
+        elseif(_rel_format STREQUAL "MACHO")
+            file(WRITE ${_relgen}/rel_${rel}_sections.h.tmp
+                "/* Generated by CMakeLists.txt: REL ${rel}'s data in its own sections. */\n"
+                "#pragma clang section data=\"__DATA,__rd_${rel}\" bss=\"__DATA,__rb_${rel}\"\n")
+            file(WRITE ${_relgen}/rel_${rel}_bounds.c.tmp
+                "/* Generated by CMakeLists.txt: REL ${rel}'s sections are never empty. */\n"
+                "__attribute__((used, section(\"__DATA,__rd_${rel}\"))) char rel_${rel}_data_pad = 1;\n"
+                "__attribute__((used, section(\"__DATA,__rb_${rel}\"))) char rel_${rel}_bss_pad = 0;\n")
+            string(APPEND _table_decls
+                "extern char rel_${rel}_data_start __asm(\"section$start$__DATA$__rd_${rel}\");\n"
+                "extern char rel_${rel}_data_end __asm(\"section$end$__DATA$__rd_${rel}\");\n"
+                "extern char rel_${rel}_bss_start __asm(\"section$start$__DATA$__rb_${rel}\");\n"
+                "extern char rel_${rel}_bss_end __asm(\"section$end$__DATA$__rb_${rel}\");\n")
+        else()
+            file(WRITE ${_relgen}/rel_${rel}_sections.h.tmp
+                "/* Generated by CMakeLists.txt: REL ${rel}'s data in its own grouped sections. */\n"
+                "#pragma clang section data=\".data$rel_${rel}_m\" bss=\".bss$rel_${rel}_m\"\n")
+            file(WRITE ${_relgen}/rel_${rel}_bounds.c.tmp
+                "/* Generated by CMakeLists.txt: markers around REL ${rel}'s data and bss. */\n"
+                "#pragma clang section data=\".data$rel_${rel}_a\" bss=\".bss$rel_${rel}_a\"\n"
+                "char rel_${rel}_data_start = 1;\nchar rel_${rel}_bss_start;\n"
+                "#pragma clang section data=\".data$rel_${rel}_z\" bss=\".bss$rel_${rel}_z\"\n"
+                "char rel_${rel}_data_end = 1;\nchar rel_${rel}_bss_end;\n")
+            string(APPEND _table_decls
+                "extern char rel_${rel}_data_start, rel_${rel}_data_end, rel_${rel}_bss_start, rel_${rel}_bss_end;\n")
+        endif()
         configure_file(${_relgen}/rel_${rel}_sections.h.tmp ${_relgen}/rel_${rel}_sections.h COPYONLY)
-        file(WRITE ${_relgen}/rel_${rel}_bounds.c.tmp
-            "/* Generated by CMakeLists.txt: markers around REL ${rel}'s data and bss. */\n"
-            "#pragma clang section data=\".data$rel_${rel}_a\" bss=\".bss$rel_${rel}_a\"\n"
-            "char rel_${rel}_data_start = 1;\nchar rel_${rel}_bss_start;\n"
-            "#pragma clang section data=\".data$rel_${rel}_z\" bss=\".bss$rel_${rel}_z\"\n"
-            "char rel_${rel}_data_end = 1;\nchar rel_${rel}_bss_end;\n")
         configure_file(${_relgen}/rel_${rel}_bounds.c.tmp ${_relgen}/rel_${rel}_bounds.c COPYONLY)
         list(APPEND TTYD_REL_STATIC_SOURCES ${_relgen}/rel_${rel}_bounds.c)
         string(APPEND _table_decls
-            "extern void rel_${rel}___prolog(void);\nextern void rel_${rel}___epilog(void);\n"
-            "extern char rel_${rel}_data_start, rel_${rel}_data_end, rel_${rel}_bss_start, rel_${rel}_bss_end;\n")
+            "extern void rel_${rel}___prolog(void);\nextern void rel_${rel}___epilog(void);\n")
         string(APPEND _table_rows
-            "    {\"${rel}\", rel_${rel}___prolog, rel_${rel}___epilog, &rel_${rel}_data_start, &rel_${rel}_data_end,"
-            " &rel_${rel}_bss_start, &rel_${rel}_bss_end},\n")
+            "    {\"${rel}\", rel_${rel}___prolog, rel_${rel}___epilog, ${_bounds_row}},\n")
 
         add_library(rel_${rel} OBJECT ${TTYD_REL_${rel}_SOURCES} ${CMAKE_SOURCE_DIR}/port/rel_ctors.c)
         ttyd_game_target(rel_${rel})
@@ -266,7 +423,8 @@ if(TTYD_RELS_STATIC)
     endforeach()
     file(WRITE ${_relgen}/rel_static_table.c.tmp
         "/* Generated by CMakeLists.txt: the RELs linked into this executable. */\n"
-        "#include \"port/rel_pc.h\"\n\n${_table_decls}\n"
+        "#include \"port/rel_pc.h\"\n\n"
+        "#define PORT_REL_HIDDEN __attribute__((visibility(\"hidden\")))\n${_table_decls}\n"
         "const PortRelStatic portRelStaticTable[] = {\n${_table_rows}};\n"
         "const int portRelStaticCount = sizeof(portRelStaticTable) / sizeof(portRelStaticTable[0]);\n")
     configure_file(${_relgen}/rel_static_table.c.tmp ${_relgen}/rel_static_table.c COPYONLY)
@@ -304,6 +462,12 @@ else()
     file(GLOB_RECURSE aurora_sources CONFIGURE_DEPENDS ${CMAKE_SOURCE_DIR}/port/src/aurora/*.c)
     list(APPEND TTYD_PORT_SOURCES ${aurora_sources})
 endif()
+if(ANDROID)
+    # Android glue: logcat, crash reports, lifecycle (port/android/native; the
+    # Gradle project is port/android).
+    file(GLOB android_sources CONFIGURE_DEPENDS ${CMAKE_SOURCE_DIR}/port/android/native/*.c)
+    list(APPEND TTYD_PORT_SOURCES ${android_sources})
+endif()
 
 # MusyX sound system, built from the decompiled source with its PC target.
 file(STRINGS ${CMAKE_SOURCE_DIR}/libs/musyx/CMakeLists.txt musyx_lines REGEX "^ +src/musyx/.*\\.c$")
@@ -324,17 +488,44 @@ if(TTYD_BACKEND STREQUAL "aurora")
     target_link_libraries(musyx_pc PRIVATE ${AURORA_SDL3_TARGET})
 endif()
 
-add_executable(ttyd $<TARGET_OBJECTS:ttyd_dol> $<TARGET_OBJECTS:musyx_pc> ${TTYD_PORT_SOURCES}
-    ${TTYD_REL_STATIC_SOURCES})
+if(ANDROID)
+    # Android: SDLActivity loads the game as libmain.so and calls its SDL_main.
+    add_library(ttyd SHARED $<TARGET_OBJECTS:ttyd_dol> $<TARGET_OBJECTS:musyx_pc> ${TTYD_PORT_SOURCES}
+        ${TTYD_REL_STATIC_SOURCES})
+else()
+    add_executable(ttyd $<TARGET_OBJECTS:ttyd_dol> $<TARGET_OBJECTS:musyx_pc> ${TTYD_PORT_SOURCES}
+        ${TTYD_REL_STATIC_SOURCES})
+endif()
 if(TTYD_RELS_STATIC)
     add_dependencies(ttyd ttyd_rels)
     target_compile_definitions(ttyd PRIVATE PORT_RELS_STATIC=1)
-    foreach(_archive ${TTYD_REL_ARCHIVES})
-        target_link_options(ttyd PRIVATE "LINKER:/WHOLEARCHIVE:${_archive}")
-    endforeach()
+    # Every REL object, though nothing references it by name.
+    if(_rel_format STREQUAL "ELF")
+        # The REL sections are reached only through __start_/__stop_ (hidden,
+        # so a shared libmain.so resolves them locally), which --gc-sections
+        # would no longer keep alive.
+        target_link_libraries(ttyd PRIVATE -Wl,--whole-archive ${TTYD_REL_ARCHIVES} -Wl,--no-whole-archive)
+        target_link_options(ttyd PRIVATE "LINKER:-z,nostart-stop-gc")
+    else()
+        foreach(_archive ${TTYD_REL_ARCHIVES})
+            if(_rel_format STREQUAL "MACHO")
+                target_link_options(ttyd PRIVATE "LINKER:-force_load,${_archive}")
+            else()
+                target_link_options(ttyd PRIVATE "LINKER:/WHOLEARCHIVE:${_archive}")
+            endif()
+        endforeach()
+    endif()
     set_property(TARGET ttyd APPEND PROPERTY LINK_DEPENDS ${TTYD_REL_ARCHIVES})
 endif()
-set_target_properties(ttyd PROPERTIES OUTPUT_NAME ${TTYD_EXE_NAME})
+if(ANDROID)
+    set_target_properties(ttyd PROPERTIES OUTPUT_NAME main)
+    # aurora::main's SDL_main (lib/main.cpp) is only referenced from Java: keep it.
+    # liblog: logcat output and crash reports (port/android/native).
+    target_link_options(ttyd PRIVATE "LINKER:--undefined=SDL_main")
+    target_link_libraries(ttyd PRIVATE log android)
+else()
+    set_target_properties(ttyd PROPERTIES OUTPUT_NAME ${TTYD_EXE_NAME})
+endif()
 if(NOT TTYD_RELS_STATIC)
     # REL modules link against the executable's symbols.
     set_target_properties(ttyd PROPERTIES ENABLE_EXPORTS ON WINDOWS_EXPORT_ALL_SYMBOLS ON)
@@ -355,6 +546,64 @@ if(TTYD_BACKEND STREQUAL "aurora")
     # Windows: SDL3, Dawn (+ the DXC DLLs it loads), nod, libpng, zlib next to the exe.
     include(${CMAKE_SOURCE_DIR}/extern/aurora/cmake/AuroraCopyRuntimeDLLs.cmake)
     aurora_copy_runtime_dlls(ttyd)
+    if(TTYD_TOUCH_OVERLAY)
+        # C++ and SDL/ImGui only: built without the game's prefix header.
+        add_library(ttyd_touch STATIC ${CMAKE_SOURCE_DIR}/port/touch/touch_overlay.cpp)
+        target_include_directories(ttyd_touch PRIVATE ${CMAKE_SOURCE_DIR}/port/include)
+        target_compile_features(ttyd_touch PRIVATE cxx_std_20)
+        target_compile_definitions(ttyd_touch PRIVATE _CRT_SECURE_NO_WARNINGS=1)
+        target_link_libraries(ttyd_touch PRIVATE aurora::core ${AURORA_SDL3_TARGET})
+        target_link_libraries(ttyd PRIVATE ttyd_touch)
+        target_compile_definitions(ttyd PRIVATE PORT_TOUCH_OVERLAY=1)
+    endif()
+    if(TTYD_IOS)
+        include(${CMAKE_SOURCE_DIR}/port/ios/ios.cmake)
+    endif()
+endif()
+
+# --- macOS: the Aurora build is an .app bundle (ttyd-jp.app / ttyd-us.app) ---
+# Info.plist from port/macos/Info.plist.in: name, bundle id, Retina, minimum
+# macOS, and the disc image types Finder may open with it (disc_aurora.c).
+# User data (cards, settings, disc.txt, pipeline cache) is Aurora's
+# SDL_GetPrefPath: ~/Library/Application Support/ttyd/.
+if(CMAKE_SYSTEM_NAME STREQUAL "Darwin" AND TTYD_BACKEND STREQUAL "aurora")
+    if(TTYD_VERSION STREQUAL "G8ME01")
+        set(TTYD_MACOS_REGION US)
+    else()
+        set(TTYD_MACOS_REGION JP)
+    endif()
+    set(TTYD_MACOS_BUNDLE_ID_PREFIX org.ttyd-port CACHE STRING "macOS bundle identifier prefix")
+    set(TTYD_MACOS_APP_NAME "Paper Mario TTYD (${TTYD_MACOS_REGION})")
+    set(TTYD_MACOS_BUNDLE_ID ${TTYD_MACOS_BUNDLE_ID_PREFIX}.${TTYD_EXE_NAME})
+    set(TTYD_MACOS_MIN_VERSION ${CMAKE_OSX_DEPLOYMENT_TARGET})
+    if(NOT TTYD_MACOS_MIN_VERSION)
+        set(TTYD_MACOS_MIN_VERSION 11.0)
+    endif()
+    configure_file(${CMAKE_SOURCE_DIR}/port/macos/Info.plist.in ${CMAKE_BINARY_DIR}/Info.plist @ONLY)
+    set_target_properties(ttyd PROPERTIES MACOSX_BUNDLE ON
+        MACOSX_BUNDLE_INFO_PLIST ${CMAKE_BINARY_DIR}/Info.plist)
+    if(TTYD_RELS_STATIC)
+        # Seal the bundle (ad hoc) now that Info.plist is in it; the linker
+        # only signs the executable.
+        add_custom_command(TARGET ttyd POST_BUILD
+            COMMAND codesign --force --sign - $<TARGET_BUNDLE_DIR:ttyd>
+            COMMENT "Signing ${TTYD_EXE_NAME}.app (ad hoc)")
+    else()
+        # REL modules go in the bundle, next to the executable (rel_pc.c).
+        foreach(rel ${TTYD_RELS})
+            set_target_properties(rel_${rel} PROPERTIES
+                LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/${TTYD_EXE_NAME}.app/Contents/MacOS/rel)
+        endforeach()
+    endif()
+    # cmake --install: copy any non-system dylib the build linked (e.g. a
+    # Homebrew SDL3) into the bundle, then sign it again.
+    install(TARGETS ttyd BUNDLE DESTINATION .)
+    install(CODE "
+        include(BundleUtilities)
+        set(_app \"\${CMAKE_INSTALL_PREFIX}/${TTYD_EXE_NAME}.app\")
+        fixup_bundle(\"\${_app}\" \"\" \"/opt/homebrew/lib;/usr/local/lib\")
+        execute_process(COMMAND codesign --force --deep --sign - \"\${_app}\" COMMAND_ERROR_IS_FATAL ANY)
+    ")
 endif()
 
 # --- Host unit tests (no disc, no window): ctest or run the binaries ---

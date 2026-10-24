@@ -34,7 +34,9 @@ void clrRollEvtFlag(void);
 void monteCountDisp(void);
 void marioChgRollMotion(void);
 void marioRollFixOn(void);
+#ifndef TARGET_PC /* PC: the static definition below (static after extern: MSVC-only extension) */
 extern MonteTable montetable[];
+#endif
 static void monte_disp(CameraId camera, void* param);
 static BOOL get_monte_check(Vec* a, Vec* b);
 void yuu_02_icon_monte_disp(CameraId camera, void* param);

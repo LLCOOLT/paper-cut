@@ -60,6 +60,9 @@ void effOpukuJetwrainMain(EffectEntry* effect);
 inline f32 sind(f32 deg) { return sin(6.2831855f * deg / 360.0f); }
 
 inline int inline_fn2(s32 a) { return a < 12; }
+#ifdef TARGET_PC /* file-local: other files define different inline_fn()s (one external copy wins on PC) */
+static
+#endif
 inline int inline_fn(s32 arg0) { return arg0 < 13; }
 
 EffectEntry* effOpukuJetwrainN64Entry(s32 type, f32 x, f32 y, f32 z, f32 scale, s32 lifetime) {

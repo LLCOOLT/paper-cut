@@ -90,7 +90,12 @@ static void warpFrame(u32 frame) {
         stg0_00_init();
         marioPartyKill();
         swInit();
-        swByteSet(0, 0);
+        {
+            /* the story so far (GSW 0, which map scripts branch on):
+             * $TTYD_STORY, default 0 (a new game) */
+            const char* v = getenv("TTYD_STORY");
+            swByteSet(0, v ? atoi(v) : 0);
+        }
         {
             /* a partner, as a save at that point of the game would have
              * ($TTYD_PARTY: party id, default 1 = Goombella; 0 = none) */
@@ -186,12 +191,21 @@ void portTraceFrame(u32 frame) {
                (long long)gp->renderTime);
         fflush(stdout);
     }
+    {
+        static s32 lastStory = -1;
+        if (swByteGet(0) != lastStory) { /* the story advanced (GSW 0) */
+            lastStory = swByteGet(0);
+            printf("[trace] frame %u: story %d (map '%.*s')\n", (unsigned)frame, (int)lastStory,
+                   (int)sizeof(gp->currentMapName), gp->currentMapName);
+            fflush(stdout);
+        }
+    }
     if (seq != lastSeq || strncmp(lastMap, gp->currentMapName, sizeof(lastMap)) != 0) {
         lastSeq = seq;
         memcpy(lastMap, gp->currentMapName, sizeof(lastMap));
-        printf("[trace] frame %u: sequence %d, map '%.*s', area '%.*s'\n", (unsigned)frame, (int)seq,
+        printf("[trace] frame %u: sequence %d, map '%.*s', area '%.*s', story %d\n", (unsigned)frame, (int)seq,
                (int)sizeof(gp->currentMapName), gp->currentMapName, (int)sizeof(gp->currentAreaName),
-               gp->currentAreaName);
+               gp->currentAreaName, (int)swByteGet(0));
         fflush(stdout);
     }
 }

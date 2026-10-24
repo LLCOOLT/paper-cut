@@ -1,0 +1,18 @@
+// Android app for the TTYD PC port (docs/PC_PORT.md, "Android").
+// Gradle 8.12 or newer: `gradle wrapper --gradle-version 8.12` makes ./gradlew.
+pluginManagement {
+    repositories {
+        google()
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+rootProject.name = "ttyd-android"
+include ":app"

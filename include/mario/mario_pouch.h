@@ -20,7 +20,10 @@ typedef s16 PouchStat;
 #define MAX_BADGES 200
 
 // 4-byte wide, using u16 casting for mario_pouch
-typedef enum ItemType {
+#ifndef PORT_ENUM_BASE
+#define PORT_ENUM_BASE(type)
+#endif
+typedef enum ItemType PORT_ENUM_BASE(int) {
     ITEM_NULL, // 0x0
     // Key Items ------------------------------------------
     ITEM_STRANGE_SACK,                 // 0x1
@@ -377,7 +380,7 @@ typedef enum ItemType {
     ITEM_TYPE_MAX
 } ItemType;
 
-typedef enum MarioPartner {
+typedef enum MarioPartner PORT_ENUM_BASE(int) {
     PARTNER_NONE,
     PARTNER_GOOMBELLA,
     PARTNER_KOOPS,

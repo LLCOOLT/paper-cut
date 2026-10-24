@@ -6,7 +6,10 @@ struct BattleUnit;
 
 //battle_status_effect
 //should be an s8, typecasting for now
-typedef enum StatusEffectType {
+#ifndef PORT_ENUM_BASE
+#define PORT_ENUM_BASE(type)
+#endif
+typedef enum StatusEffectType PORT_ENUM_BASE(int) {
 	STATUS_ALLERGIC, //0x0
 	STATUS_SLEEP, //0x1
 	STATUS_STOP, //0x2

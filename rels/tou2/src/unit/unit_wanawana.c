@@ -19,6 +19,10 @@
 
 #ifndef TARGET_PC /* PC port: the host libc declares these */
 double tan(double x);
+#else
+/* this file's own tanf, apart from the C library's (a static function after
+ * <math.h>'s extern one is an MSVC-only extension) */
+#define tanf unit_wanawana_tanf
 #endif
 typedef struct WanaWork { s32 ready; s32 poseId; Mtx mtx; GXTexObj obj; BattleUnitPart* part; smartEntry* tex; } WanaWork;
 void test_kururing_mapdisp(CameraId camera);

@@ -45,6 +45,12 @@ USER_FUNC(evt_msg_togelr);
 static void callback(MapTevCallbackInfo* info);
 static void callback(MapTevCallbackInfo* info);
 void mapObjGetPos(const char* name, Vec* pos);
+#ifdef TARGET_PC
+/* this file's own sinf/cosf, apart from the C library's (a static function
+ * after <math.h>'s extern one is an MSVC-only extension) */
+#define cosf tou_03_cosf
+#define sinf tou_03_sinf
+#endif
 static f32 cosf(f32 x);
 static f32 cosf(f32 x);
 static f32 sinf(f32 x);

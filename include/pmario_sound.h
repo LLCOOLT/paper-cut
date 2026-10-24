@@ -24,7 +24,10 @@ typedef struct SoundEnvList {
     // pad 1 byte
 } SoundEnvList;
 
-typedef enum SoundEffectFlags {
+#ifndef PORT_ENUM_BASE
+#define PORT_ENUM_BASE(type)
+#endif
+typedef enum SoundEffectFlags PORT_ENUM_BASE(int) {
     SFX_FLAG_2 = (1 << 29),
     SFX_FLAG_4 = (1 << 30),
     SFX_FLAG_8 = (1 << 31)

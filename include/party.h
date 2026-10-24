@@ -36,7 +36,7 @@ typedef enum PartyMember PORT_ENUM_BASE(u8) {
 #pragma enumsalwaysint on
 
 #pragma enumsalwaysint off
-typedef enum PartyFlags {
+typedef enum PartyFlags PORT_ENUM_BASE(int) {
     PARTY_FLAG_IS_ACTIVE = (1 << 0),
     PARTY_FLAG_IS_GROUNDED = (1 << 1),
     PARTY_FLAG_IS_FOLLOWER = (1 << 2),

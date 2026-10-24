@@ -10,7 +10,10 @@
 
 typedef struct WindowEntry WindowEntry;
 
-typedef enum WindowType {
+#ifndef PORT_ENUM_BASE
+#define PORT_ENUM_BASE(type)
+#endif
+typedef enum WindowType PORT_ENUM_BASE(int) {
 	WINDOW_TYPE_NORMAL = 0,
 	WINDOW_TYPE_SMALL = 1,
 	WINDOW_TYPE_PLATE = 2,

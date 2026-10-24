@@ -157,7 +157,7 @@ typedef struct EventEntryMsg {
     f32 y; // 0x4
 } EventEntryMsg;
 
-typedef enum EventEntry_Flags {
+typedef enum EventEntry_Flags PORT_ENUM_BASE(int) {
     EVENT_ACTIVE = (1 << 0),
     EVENT_STOPPED = (1 << 1),
 

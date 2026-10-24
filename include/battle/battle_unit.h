@@ -12,14 +12,17 @@
 #define UNIT_ALLIANCE_PARTY (unit->mAlliance == 1)
 
 // TODO: better name
-typedef enum BattleUnitToken_Flags {
+#ifndef PORT_ENUM_BASE
+#define PORT_ENUM_BASE(type)
+#endif
+typedef enum BattleUnitToken_Flags PORT_ENUM_BASE(int) {
     kChargeExpended = (1 << 3),     // 0x8
     kConfusedAction = (1 << 4),     // 0x10
     kCurrentlyActing = (1 << 12),   // 0x1000
     kHasRallyWinkStatus = (1 << 13) // 0x2000
 } BattleUnitToken_Flags;
 
-typedef enum PartsAttribute_Flags {          // 32-bit size
+typedef enum PartsAttribute_Flags PORT_ENUM_BASE(int) {          // 32-bit size
     kMainPart = (1 << 0),                    // 0x1
     kImportantPart = (1 << 1),               // 0x2
     kSemiImportantPart = (1 << 2),           // 0x4
@@ -44,7 +47,7 @@ typedef enum PartsAttribute_Flags {          // 32-bit size
     kUnk_ImmuneToStatus = (1 << 31)          // 0x80000000
 } PartsAttribute_Flags;
 
-typedef enum BattleUnitAttribute_Flags { // 32-bit size
+typedef enum BattleUnitAttribute_Flags PORT_ENUM_BASE(int) { // 32-bit size
     kUnknown_0x1 = (1 << 0),             // 0x1
     kCeiling = (1 << 1),                 // 0x2
     kFloating = (1 << 2),                // 0x4
@@ -57,7 +60,7 @@ typedef enum BattleUnitAttribute_Flags { // 32-bit size
     kUnknownUnit_0x2000000 = (1 << 25)   // 0x2000000
 } BattleUnitAttribute_Flags;
 
-typedef enum PartsCounterAttribute_Flags {   // 32-bit size
+typedef enum PartsCounterAttribute_Flags PORT_ENUM_BASE(int) {   // 32-bit size
     kCounterTopSpiky = (1 << 0),             // 0x1
     kCounterPreemptiveFrontSpiky = (1 << 1), // 0x2
     kCounterFrontSpiky = (1 << 2),           // 0x4
@@ -73,7 +76,7 @@ typedef enum PartsCounterAttribute_Flags {   // 32-bit size
     kCounterVolatileExplosive = (1 << 13)    // 0x2000
 } PartsCounterAttribute_Flags;
 
-typedef enum BattleUnitType {
+typedef enum BattleUnitType PORT_ENUM_BASE(int) {
     UNIT_NULL,                            // 0x0
     UNIT_GOOMBA,                          // 0x1
     UNIT_PARAGOOMBA,                      // 0x2

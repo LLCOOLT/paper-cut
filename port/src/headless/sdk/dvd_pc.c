@@ -14,7 +14,22 @@
 #else
 #include <dirent.h>
 #include <strings.h>
+#include <sys/stat.h>
 #endif
+
+/* a regular file at path (POSIX fopen also opens directories) */
+static BOOL isFile(const char* path) {
+#ifdef _WIN32
+    FILE* f = fopen(path, "rb");
+    if (f != NULL) {
+        fclose(f);
+    }
+    return f != NULL;
+#else
+    struct stat st;
+    return stat(path, &st) == 0 && S_ISREG(st.st_mode);
+#endif
+}
 
 #define DVD_MAX_ENTRIES 8192
 #define DVD_PATH_MAX 512
@@ -64,13 +79,11 @@ static BOOL resolveComponent(char* dir, const char* name, size_t cap) {
 #endif
 
 static BOOL hostPath(const char* discPath, char* out, size_t cap) {
-    FILE* f;
     while (*discPath == '/') {
         discPath++;
     }
     snprintf(out, cap, "%s/%s", dataRoot(), discPath);
-    if ((f = fopen(out, "rb")) != NULL) {
-        fclose(f);
+    if (isFile(out)) {
         return TRUE;
     }
 #ifndef _WIN32
@@ -93,8 +106,7 @@ static BOOL hostPath(const char* discPath, char* out, size_t cap) {
                 p++;
             }
         }
-        if ((f = fopen(out, "rb")) != NULL) {
-            fclose(f);
+        if (isFile(out)) {
             return TRUE;
         }
     }

@@ -16,6 +16,9 @@
 #include "port/os_pc.h"
 #include "port/dtk_pc.h"
 #include "port/platform.h"
+#ifdef PORT_TOUCH_OVERLAY
+#include "port/touch_overlay.h"
+#endif
 
 void salPcAuroraPump(double seconds); /* hw_pc.c: MusyX null sink without a device */
 
@@ -61,8 +64,16 @@ void portAuroraBeginFrame(void) {
                 aurora_shutdown();
                 exit(0);
             }
+#ifdef PORT_TOUCH_OVERLAY
+            if (event->type == AURORA_SDL_EVENT) {
+                portTouchEvent(&event->sdl);
+            }
+#endif
             if (event->type == AURORA_PAUSED && !sWindowPaused) {
                 sWindowPaused = TRUE;
+#ifdef PORT_TOUCH_OVERLAY
+                portTouchReleaseAll();
+#endif
                 portPause();
             } else if (event->type == AURORA_UNPAUSED && sWindowPaused) {
                 sWindowPaused = FALSE;
@@ -86,6 +97,9 @@ void VIWaitForRetrace(void) {
     if (sFast) {
         aurora_dvd_wait_idle();
     }
+#ifdef PORT_TOUCH_OVERLAY
+    portTouchDraw(); /* on-screen controls, over the game's frame */
+#endif
     aurora_end_frame();
     if (sPreCallback != NULL) {
         sPreCallback(sRetraceCount);

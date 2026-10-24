@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- The macOS .app of the Aurora build (configured by CMakeLists.txt). -->
+<plist version="1.0">
+<dict>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>en</string>
+	<key>CFBundleExecutable</key>
+	<string>@TTYD_EXE_NAME@</string>
+	<key>CFBundleIdentifier</key>
+	<string>@TTYD_MACOS_BUNDLE_ID@</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>@TTYD_MACOS_APP_NAME@</string>
+	<key>CFBundleDisplayName</key>
+	<string>@TTYD_MACOS_APP_NAME@</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>1.0</string>
+	<key>CFBundleVersion</key>
+	<string>1</string>
+	<key>LSMinimumSystemVersion</key>
+	<string>@TTYD_MACOS_MIN_VERSION@</string>
+	<key>LSApplicationCategoryType</key>
+	<string>public.app-category.games</string>
+	<key>NSHighResolutionCapable</key>
+	<true/>
+	<key>NSSupportsAutomaticGraphicsSwitching</key>
+	<true/>
+	<!-- Disc images Finder may open with the app (Open With, or dropped on its
+	     icon): they reach disc_aurora.c as an SDL drop-file event. Alternate:
+	     never the default handler for these types. -->
+	<key>CFBundleDocumentTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeName</key>
+			<string>GameCube disc image</string>
+			<key>CFBundleTypeRole</key>
+			<string>Viewer</string>
+			<key>LSHandlerRank</key>
+			<string>Alternate</string>
+			<key>LSItemContentTypes</key>
+			<array>
+				<string>public.iso-image</string>
+				<string>org.ttyd-port.gamecube-disc-image</string>
+			</array>
+		</dict>
+	</array>
+	<!-- The other formats Aurora's nod reads have no system type. -->
+	<key>UTImportedTypeDeclarations</key>
+	<array>
+		<dict>
+			<key>UTTypeIdentifier</key>
+			<string>org.ttyd-port.gamecube-disc-image</string>
+			<key>UTTypeDescription</key>
+			<string>GameCube disc image</string>
+			<key>UTTypeConformsTo</key>
+			<array>
+				<string>public.data</string>
+				<string>public.disk-image</string>
+			</array>
+			<key>UTTypeTagSpecification</key>
+			<dict>
+				<key>public.filename-extension</key>
+				<array>
+					<string>gcm</string>
+					<string>ciso</string>
+					<string>gcz</string>
+					<string>rvz</string>
+					<string>wia</string>
+					<string>wbfs</string>
+					<string>nfs</string>
+					<string>tgc</string>
+				</array>
+			</dict>
+		</dict>
+	</array>
+</dict>
+</plist>

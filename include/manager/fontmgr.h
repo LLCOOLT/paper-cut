@@ -4,13 +4,16 @@
 #include <dolphin/mtx.h>
 #include <dolphin/types.h>
 
-typedef enum BinaryFontEncoding {
+#ifndef PORT_ENUM_BASE
+#define PORT_ENUM_BASE(type)
+#endif
+typedef enum BinaryFontEncoding PORT_ENUM_BASE(int) {
 	SINGLE_BYTE_ENCODING = 0,
 	DOUBLE_BYTE_ENCODING = 1,
 	MULTI_BYTE_ENCODING = 2
 } BinaryFontEncoding;
 
-typedef enum BinaryFontMapping {
+typedef enum BinaryFontMapping PORT_ENUM_BASE(int) {
 	LINEAR_CHARACTER_MAP = 0,
 	SJIS_CHARACTER_MAP = 1,
 	TABLE_CHARACTER_MAP = 2,

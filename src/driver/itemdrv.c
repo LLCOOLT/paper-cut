@@ -38,6 +38,9 @@ void FontDrawEdge(void);
 void FontDrawEdgeOff(void);
 #endif
 
+#ifdef TARGET_PC /* file-local: camdrv.c defines the same external inline functions */
+static
+#endif
 inline Vec unknownVec0(void) {
     return (Vec){ 0.0f, 0.0f, 0.0f };
 }
@@ -50,6 +53,9 @@ inline Vec makeVecByValue2(f32 x, f32 y, f32 z) {
     return v;
 }
 
+#ifdef TARGET_PC /* file-local: camdrv.c defines the same external inline functions */
+static
+#endif
 inline Vec makeVecByValue(f32 x, f32 y, f32 z) {
     Vec v = (Vec){ 0.0f, 0.0f, 0.0f };
     v.x = x;

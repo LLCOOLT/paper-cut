@@ -2019,10 +2019,13 @@ s32 _keta_get(s32 n) {
 #define LVOBJ_ICON 0x16B
 // FAKE: same registers as (id, color, 0, x, y, z, sx, sy); listing the float arguments
 // first makes MWCC evaluate the texture-table load last, as in the US build.
+// PC port: Win64 assigns registers by position, so the PC calls the real prototype.
 #define LVOBJ_TEXPLANE(o, n, tbl)                                                   \
-    ((void (*)(f32, f32, f32, f32, f32, u32, GXColor, s32))btlDispTexPlane)(        \
+    PCCALL(((void (*)(f32, f32, f32, f32, f32, u32, GXColor, s32))btlDispTexPlane)( \
         (o)->pos.x - 16.0f, 20.0f + (o)->pos.y, 2.0f + (o)->pos.z,                  \
-        (o)->scale.x, (o)->scale.y, tbl[gp->language], (o)->color, 0)
+        (o)->scale.x, (o)->scale.y, tbl[gp->language], (o)->color, 0), btlDispTexPlane( \
+        tbl[gp->language], (o)->color, (o)->pos.x - 16.0f, 20.0f + (o)->pos.y,      \
+        2.0f + (o)->pos.z, (o)->scale.x, (o)->scale.y))
 #else
 #define LVOBJ_TEX2 0x24
 #define LVOBJ_ICON 0x163

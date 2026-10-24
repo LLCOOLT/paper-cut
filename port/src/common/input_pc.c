@@ -36,6 +36,10 @@
 #endif
 #include <dolphin/os.h>
 #include "port/platform.h"
+#include "data/mapdata.h"
+#include "driver/hitdrv.h"
+#include "driver/swdrv.h"
+#include "manager/cardmgr.h"
 #include "driver/npcdrv.h"
 #include "evt/evt_cmd.h"
 #include "evt/evt_npc.h"
@@ -106,12 +110,12 @@ static void load(const char* path) {
         exit(2);
     }
     while (fgets(line, sizeof(line), f) && sCount < MAX_LINES - 1) {
-        char cmd[16] = "", a1[64] = "", a2[16] = "", a3[16] = "";
+        char cmd[32] = "", a1[64] = "", a2[16] = "", a3[16] = "";
         char* hash = strchr(line, '#');
         Step* s = &sSteps[sCount];
         n++;
         if (hash) *hash = '\0';
-        if (sscanf(line, "%15s %63s %15s %15s", cmd, a1, a2, a3) < 1) {
+        if (sscanf(line, "%31s %63s %15s %15s", cmd, a1, a2, a3) < 1) {
             continue;
         }
         memset(s, 0, sizeof(*s));
@@ -138,6 +142,7 @@ static void load(const char* path) {
             snprintf(s->name, sizeof(s->name), "%s", a1);
         } else if (strcmp(cmd, "battle") == 0) {
             s->frames = -3;
+            snprintf(s->name, sizeof(s->name), "%s", a1); /* optional: an entry of the area's table */
         } else if (strcmp(cmd, "wait_seq") == 0 || strcmp(cmd, "wait_map") == 0) {
             s->frames = cmd[5] == 's' ? -5 : -6;
             snprintf(s->name, sizeof(s->name), "%s", a1);
@@ -148,10 +153,37 @@ static void load(const char* path) {
             snprintf(s->name, sizeof(s->name), "%s", a2);
             s->waitMax = a3[0] ? atoi(a3) : 3600;
             if (!parseKeys(s, a1)) goto bad;
+        } else if (strcmp(cmd, "save") == 0) {
+            /* save: the open file, here and now, as a Save Block does
+             * (cardWrite); waits until the card is done. A checkpoint: a later
+             * run resumes with load_file.txt */
+            s->frames = -10;
+            s->waitMax = a1[0] ? atoi(a1) : 1200;
+        } else if (strcmp(cmd, "press_until_story") == 0) {
+            /* press KEYS every 30 frames until the story (GSW 0) reaches N */
+            s->frames = -11;
+            snprintf(s->name, sizeof(s->name), "%s", a2);
+            s->waitMax = a3[0] ? atoi(a3) : 3600;
+            if (!parseKeys(s, a1)) goto bad;
+        } else if (strcmp(cmd, "press_until_control") == 0) {
+            /* press KEYS every 30 frames until Mario can be moved (cutscenes
+             * and messages over) and has been for a second */
+            s->frames = -9;
+            s->waitMax = a2[0] ? atoi(a2) : 3600;
+            if (!parseKeys(s, a1)) goto bad;
         } else if (strcmp(cmd, "hp") == 0) {
             s->frames = -4;
             s->stickX = 0;
             snprintf(s->name, sizeof(s->name), "%s", a1);
+        } else if (strcmp(cmd, "goto") == 0) {
+            /* goto HIT: Mario onto a hit object (an exit's zone, a door), as
+             * evt_mario_set_pos does; the script then walks or presses into it */
+            s->frames = -8;
+            if (a3[0]) { /* goto X Y Z: a position */
+                snprintf(s->name, sizeof(s->name), "%s %s %s", a1, a2, a3);
+            } else {
+                snprintf(s->name, sizeof(s->name), "%s", a1);
+            }
         } else if (strcmp(cmd, "pause") == 0) {
             s->frames = -7;
             snprintf(s->name, sizeof(s->name), "%s", a1);
@@ -196,8 +228,31 @@ EVT_BEGIN(input_battle_evt)
     RETURN
 EVT_END()
 
-/* The nearest live NPC with a battle group (an enemy), as a map script names it. */
-static void startBattle(void) {
+/* battle N: entry N of the current area's battle table (relSetBtlAddr),
+ * given to the nearest NPC, as a script's evt_npc_set_battle_info does for a
+ * scripted fight: every enemy formation can be fought from one map of its
+ * area. FALSE (logged) if there is no such entry. */
+static BOOL setBattleEntry(NpcEntry* npc, s32 n) {
+    char area[4] = {gp->currentMapName[0], gp->currentMapName[1], gp->currentMapName[2], '\0'};
+    AreaData* data = areaDataPtr(area);
+    NpcSetupBattleInfo* tbl = data != NULL ? (NpcSetupBattleInfo*)data->btlSetupTbl : NULL;
+    s32 count = 0;
+    while (tbl != NULL && tbl[count].name != NULL) {
+        count++;
+    }
+    if (n < 0 || n >= count) {
+        printf("[input] battle: area %s has no battle %d (%d entries)\n", area, (int)n, (int)count);
+        fflush(stdout);
+        return FALSE;
+    }
+    npcSetBattleInfo(npc, n);
+    printf("[input] battle %d of %s (%d entries)\n", (int)n, area, (int)count);
+    return TRUE;
+}
+
+/* The nearest live NPC with a battle group (an enemy), as a map script names
+ * it; with entry >= 0 the nearest live NPC, which gets that battle. */
+static void startBattle(s32 entry) {
     NpcWork* wp = npcGetWorkPtr();
     MarioWork* mario = marioGetPtr();
     NpcEntry* best = NULL;
@@ -208,7 +263,7 @@ static void startBattle(void) {
         f32 dx, dz;
         /* as the field battle check (npcdrv.c): a battle group and a defeat
          * script; story NPCs with only a group would fight out of context */
-        if (!(npc->flags & 1) || npc->battleInfo.groupSetup == NULL || npc->deadEvent == NULL) {
+        if (!(npc->flags & 1) || (entry < 0 && (npc->battleInfo.groupSetup == NULL || npc->deadEvent == NULL))) {
             continue;
         }
         dx = npc->position.x - mario->position.x;
@@ -219,9 +274,12 @@ static void startBattle(void) {
         }
     }
     if (best == NULL) {
-        printf("[input] battle: no enemy NPC on this map\n");
+        printf("[input] battle: no %s on this map\n", entry < 0 ? "enemy NPC" : "NPC");
         fflush(stdout);
         return;
+    }
+    if (entry >= 0 && !setBattleEntry(best, entry)) {
+        _Exit(6);
     }
     snprintf(sBattleNpc, sizeof(sBattleNpc), "%s", best->description);
     printf("[input] battle with '%s'\n", sBattleNpc);
@@ -264,8 +322,19 @@ void portInputApply(PADStatus* pad) {
     if (sWaitFrames >= 0) {
         /* wait_seq / wait_map: neutral input until the condition holds */
         const Step* w = &sSteps[sCur];
-        BOOL met = w->frames == -5 ? (s32)seqGetSeq() == atoi(w->name)
-                                   : gp != NULL && strcmp(gp->currentMapName, w->name) == 0;
+        static s32 sControlFrames;
+        BOOL met;
+        if (w->frames == -9) {
+            sControlFrames = seqGetSeq() == SEQ_GAME && marioChkKey() && marioChkCtrl() ? sControlFrames + 1 : 0;
+            met = sControlFrames >= 60;
+        } else if (w->frames == -11) {
+            met = swByteGet(0) >= atoi(w->name);
+        } else if (w->frames == -10) {
+            met = sWaitFrames > 0 && !cardIsExec(); /* save: the card is done */
+        } else {
+            met = w->frames == -5 ? (s32)seqGetSeq() == atoi(w->name)
+                                  : gp != NULL && strcmp(gp->currentMapName, w->name) == 0;
+        }
         if (!met) {
             if (++sWaitFrames > w->waitMax) {
                 printf("[input] FAIL: %s not reached in %d frames (sequence %d, map '%s')\n", w->text,
@@ -317,14 +386,30 @@ void portInputApply(PADStatus* pad) {
             continue;
         }
         if (s->frames == -3) {
-            startBattle();
+            /* battle [N]; N may also come from $TTYD_BATTLE_SETUP (map_sweep --battles) */
+            const char* n = s->name[0] ? s->name : getenv("TTYD_BATTLE_SETUP");
+            startBattle(n != NULL && *n ? atoi(n) : -1);
             continue;
         }
-        if (s->frames == -5 || s->frames == -6) {
+        if (s->frames == -10) {
+            printf("[input] save: slot %d, map '%s', story %d\n", (int)gp->saveSlot, gp->currentMapName,
+                   (int)swByteGet(0));
+            fflush(stdout);
+            cardWrite(gp->saveSlot);
+        }
+        if (s->frames == -5 || s->frames == -6 || s->frames == -9 || s->frames == -10 || s->frames == -11) {
             sWaitFrames = 0;
             memset(&pad[0], 0, sizeof(pad[0]));
             pad[0].err = PAD_ERR_NONE;
             return;
+        }
+        if (s->frames == -8) {
+            Vec pos;
+            if (sscanf(s->name, "%f %f %f", &pos.x, &pos.y, &pos.z) != 3) {
+                hitObjGetPos(s->name, &pos);
+            }
+            marioGetPtr()->position = pos;
+            continue;
         }
         if (s->frames == -7) {
             pauseFor(atoi(s->name));

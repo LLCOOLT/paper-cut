@@ -167,6 +167,9 @@ EffectEntry* effPokopiThunderN64Entry(s32 type, s32 duration, f32 x, f32 y, f32 
     return effect;
 }
 
+#ifdef TARGET_PC /* file-local: other files define different inline_fn()s (one external copy wins on PC) */
+static
+#endif
 inline float inline_fn(s32 arg0, float arg1) { return ((f32)arg0) * arg1; }
 
 void effPokopiThunderMain(EffectEntry* effect) {

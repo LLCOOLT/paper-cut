@@ -7,7 +7,10 @@
 
 typedef void (*OffscreenCallback)(CameraId cameraId, void* param);
 
-typedef enum FadeType {
+#ifndef PORT_ENUM_BASE
+#define PORT_ENUM_BASE(type)
+#endif
+typedef enum FadeType PORT_ENUM_BASE(int) {
 	FADE_IN_BLACK = 9,
 	FADE_OUT_BLACK = 10,
 

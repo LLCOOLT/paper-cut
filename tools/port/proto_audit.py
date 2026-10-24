@@ -187,6 +187,14 @@ def main():
         drel, dline, (dret, dk, dretT, dps) = defs[name]
         for rel, line, (ret, k, retT, pst) in ps:
             why = []
+            if ("..." in dk) != ("..." in k) and (pst or "..." in dk):
+                # Apple arm64 passes variadic arguments on the stack, not in
+                # registers: a call through a non-variadic prototype (or an
+                # unprototyped 'T f();') of a variadic definition, or the
+                # reverse, reads garbage there (other 64-bit ABIs tolerate it).
+                why.append("variadic mismatch" if pst else "unprototyped () declaration of a variadic function")
+                hits[name].append((rel, line, ", ".join(why), f"{retT} {name}({pst})"))
+                continue
             if "..." in dk or "..." in k:
                 continue
             n = min(len(k), len(dk))

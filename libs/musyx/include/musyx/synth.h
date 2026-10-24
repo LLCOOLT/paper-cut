@@ -8,7 +8,10 @@
 extern "C" {
 #endif
 
-typedef enum {
+#ifndef PORT_ENUM_BASE
+#define PORT_ENUM_BASE(type)
+#endif
+typedef enum PORT_ENUM_BASE(int) {
   MAC_STATE_RUNNABLE = 0,
   MAC_STATE_YIELDED,
   MAC_STATE_STOPPED,
@@ -67,7 +70,7 @@ typedef struct SYNTH_QUEUE {
   u8 jobTabIndex;           // offset 0x9, size 0x1
 } SYNTH_QUEUE;
 
-typedef enum {
+typedef enum PORT_ENUM_BASE(int) {
   SYNTH_JOBTYPE_LOW = 0,
   SYNTH_JOBTYPE_ZERO = 1,
   SYNTH_JOBTYPE_EVENT = 2,

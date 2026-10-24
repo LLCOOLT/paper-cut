@@ -2,7 +2,10 @@
 
 #include <dolphin/types.h>
 
-typedef enum BattleWeaponSpecialFlags { SPECIAL_UNGUARDABLE = 0x20000 } BattleWeaponSpecialFlags;
+#ifndef PORT_ENUM_BASE
+#define PORT_ENUM_BASE(type)
+#endif
+typedef enum BattleWeaponSpecialFlags PORT_ENUM_BASE(int) { SPECIAL_UNGUARDABLE = 0x20000 } BattleWeaponSpecialFlags;
 
 typedef struct BattleWeapon {
     const char* name;                 // 0x0, msg tag

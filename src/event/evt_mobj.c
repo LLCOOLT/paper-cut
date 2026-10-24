@@ -2497,7 +2497,7 @@ USER_FUNC(evt_mobj_blk) {
     const char* name;
     f32 x, y, z;
     s32 kind;
-    s32 val;
+    EvtWord val; /* the block's script (a pointer on PC) */
     s32 arg6;
     const char* anim;
     MapObjectEntry* mobj;

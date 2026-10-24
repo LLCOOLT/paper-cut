@@ -30,7 +30,10 @@ void statusWinForceUpdate(void);
 #endif
 
 // TODO: move all this into other TUs
-typedef enum winTexMode {
+#ifndef PORT_ENUM_BASE
+#define PORT_ENUM_BASE(type)
+#endif
+typedef enum winTexMode PORT_ENUM_BASE(int) {
     MODE_5 = 5,
     MODE_6 = 6,
     MODE_7 = 7,

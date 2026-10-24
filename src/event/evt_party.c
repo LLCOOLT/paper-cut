@@ -231,6 +231,9 @@ USER_FUNC(evt_party_get_pos) {
 	return EVT_RETURN_DONE;
 }
 
+#ifdef TARGET_PC /* file-local: other files define different inline_fn()s (one external copy wins on PC) */
+static
+#endif
 inline float inline_fn(f32 arg0, f32 arg1, f32 arg2, s32 arg3) {
 	return (arg0 - arg1) * (arg2 / (f32)arg3);
 }

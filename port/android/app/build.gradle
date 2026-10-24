@@ -1,0 +1,176 @@
+// The game as an Android app: the repo's CMake project (TTYD_BACKEND=aurora)
+// builds libmain.so, which SDL's Java activity loads. One flavor per game
+// version (jp: G8MJ01, us: G8ME01), each its own app id, so both can be
+// installed. Build: gradle assembleJpDebug / assembleUsDebug (docs/PC_PORT.md).
+plugins {
+    id "com.android.application"
+}
+
+def repoRoot = file("../../..").canonicalFile
+def auroraDir = new File(repoRoot, "extern/aurora")
+def cmakeVersion = "3.31.6"
+def abis = (project.findProperty("ttyd.abis") ?: "arm64-v8a").toString().split(",")*.trim()
+
+// SDL: the release Aurora builds (AURORA_SDL3_REF in extern/aurora). It is
+// downloaded once into build/third_party; its Java glue (org.libsdl.app) is
+// compiled here and its C sources are handed to CMake
+// (FETCHCONTENT_SOURCE_DIR_SDL), so both halves come from the same tree.
+def versionsFile = new File(auroraDir, "cmake/AuroraDependencyVersions.cmake")
+if (!versionsFile.exists()) {
+    throw new GradleException("extern/aurora is missing: check out the submodule (docs/PC_PORT.md)")
+}
+def sdlRefMatch = versionsFile.text =~ /_aurora_dependency_version\(AURORA_SDL3_REF "([^"]+)"/
+if (!sdlRefMatch.find()) {
+    throw new GradleException("AURORA_SDL3_REF not found in ${versionsFile}")
+}
+def sdlRef = sdlRefMatch.group(1)
+def sdlName = "SDL-" + sdlRef.replaceAll(/^refs\/tags\//, "")
+def thirdParty = new File(layout.buildDirectory.get().asFile, "third_party")
+def sdlArchive = new File(thirdParty, "${sdlName}.tar.gz")
+def sdlDir = new File(thirdParty, sdlName)
+
+def cmakeExe = {
+    def exe = System.getProperty("os.name").toLowerCase().contains("windows") ? "cmake.exe" : "cmake"
+    def sdkCmake = new File(android.sdkDirectory, "cmake/${cmakeVersion}/bin/${exe}")
+    return sdkCmake.exists() ? sdkCmake.path : "cmake"
+}
+
+def fetchSdl = tasks.register("fetchSdl") {
+    outputs.file(sdlArchive)
+    onlyIf { !sdlArchive.exists() }
+    doLast {
+        thirdParty.mkdirs()
+        def part = new File(thirdParty, "${sdlName}.tar.gz.part")
+        new URL("https://github.com/libsdl-org/SDL/archive/${sdlRef}.tar.gz").withInputStream { input ->
+            part.withOutputStream { it << input }
+        }
+        part.renameTo(sdlArchive)
+    }
+}
+
+// Gradle's file, archive and process services, for task actions (Project.exec,
+// Project.copy and Task.project at execution time are deprecated).
+interface BuildOps {
+    @javax.inject.Inject FileSystemOperations getFs()
+    @javax.inject.Inject ArchiveOperations getArchives()
+    @javax.inject.Inject ExecOperations getExec()
+}
+def ops = objects.newInstance(BuildOps)
+
+def prepareSdl = tasks.register("prepareSdl") {
+    dependsOn fetchSdl
+    inputs.file(sdlArchive)
+    outputs.dir(sdlDir)
+    doLast {
+        ops.fs.delete { delete sdlDir }
+        ops.fs.copy {
+            from ops.archives.tarTree(ops.archives.gzip(sdlArchive))
+            into sdlDir
+            // drop the archive's top folder (SDL-release-x.y.z/)
+            eachFile { f -> f.relativePath = new RelativePath(true, f.relativePath.segments.drop(1)) }
+            includeEmptyDirs = false
+        }
+        // Aurora's SDL patches, as its FetchContent step would apply them.
+        ["apply-sdl3-android-nintendo-auto-mapping.cmake", "apply-sdl3-android-security-exception.cmake"].each { p ->
+            ops.exec.exec {
+                commandLine cmakeExe(), "-DSDL_SOURCE_DIR=${sdlDir}", "-P", new File(auroraDir, "cmake/patches/${p}").path
+            }
+        }
+    }
+}
+
+android {
+    namespace = "dev.ttyd.port"
+    compileSdk = 35
+    // the installed one (docs/PC_PORT.md); AGP 8.7 would fetch 34.0.0
+    buildToolsVersion = "35.0.0"
+    // The NDK Aurora's prebuilt Dawn (dawn-android-aarch64) was built with.
+    ndkVersion = "29.0.14206865"
+
+    defaultConfig {
+        applicationId = "dev.ttyd.port"
+        // API 28: the level the prebuilt Dawn package links against; Vulkan 1.1
+        // devices (Dawn's minimum) run Android 9 or newer.
+        minSdk = 28
+        targetSdk = 35
+        versionCode = 1
+        versionName = "0.1"
+        ndk {
+            abiFilters.addAll(abis)
+        }
+        externalNativeBuild {
+            cmake {
+                arguments "-DTTYD_BACKEND=aurora",
+                        // every area REL linked into libmain.so (CMakeLists.txt)
+                        "-DTTYD_RELS_STATIC=ON",
+                        "-DANDROID_STL=c++_static",
+                        "-DFETCHCONTENT_SOURCE_DIR_SDL=${sdlDir}"
+                targets "ttyd"
+            }
+        }
+    }
+
+    flavorDimensions = ["version"]
+    productFlavors {
+        jp {
+            dimension = "version"
+            applicationIdSuffix = ".jp"
+            resValue "string", "app_name", "TTYD (JP)"
+            externalNativeBuild { cmake { arguments "-DTTYD_VERSION=G8MJ01" } }
+        }
+        us {
+            dimension = "version"
+            applicationIdSuffix = ".us"
+            resValue "string", "app_name", "TTYD (US)"
+            externalNativeBuild { cmake { arguments "-DTTYD_VERSION=G8ME01" } }
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled = false
+            // sideload builds: signed with the debug key unless you set your own
+            signingConfig = signingConfigs.debug
+        }
+    }
+
+    externalNativeBuild {
+        cmake {
+            path = file("../../../CMakeLists.txt")
+            version = cmakeVersion
+        }
+    }
+
+    sourceSets {
+        main {
+            java.srcDirs += [
+                    new File(sdlDir, "android-project/app/src/main/java"),
+                    new File(auroraDir, "platforms/android/java"), // dev.encounter.aurora.AuroraSurface
+            ]
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+
+    packaging {
+        jniLibs {
+            useLegacyPackaging = false
+        }
+    }
+
+    lint {
+        abortOnError = false
+    }
+}
+
+// SDL's sources must be in place before Java compiles and before CMake configures.
+tasks.named("preBuild").configure { dependsOn prepareSdl }
+tasks.configureEach { t ->
+    if (t.name.startsWith("configureCMake") || t.name.startsWith("buildCMake") ||
+            t.name.startsWith("generateJsonModel")) {
+        t.dependsOn prepareSdl
+    }
+}

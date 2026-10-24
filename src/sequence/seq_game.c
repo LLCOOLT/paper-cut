@@ -14,6 +14,11 @@
 #include "pmario_sound.h"
 
 //.sbss
+#ifdef TARGET_PC
+/* this file's own none_key, apart from mariost.h's (static after extern:
+ * MSVC-only extension) */
+#define none_key seq_game_none_key
+#endif
 static OSTime none_key;
 
 //.sdata

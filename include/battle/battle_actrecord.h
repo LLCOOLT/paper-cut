@@ -3,7 +3,10 @@
 #include <dolphin/types.h>
 #include "battle/battle.h"
 
-typedef enum BattleActRecordConditionType {
+#ifndef PORT_ENUM_BASE
+#define PORT_ENUM_BASE(type)
+#endif
+typedef enum BattleActRecordConditionType PORT_ENUM_BASE(int) {
 	kNoFailureCondition, //0x0
 	kConditionJumpLess, //0x1
 	kConditionJumpMore, //0x2

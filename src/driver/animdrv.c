@@ -781,7 +781,7 @@ s32 animPaperPoseEntry(const char* animName, s32 group) {
 const char* animGetTexName(const char* name);
 
 BOOL animEffectAsync(const char* animName, u32 group) {
-    s32 model, anim;
+    FileAsyncResult model, anim; /* fileAsync results: FileEntry pointers on PC */
     BOOL ret;
 
     switch (group) {
@@ -799,11 +799,11 @@ BOOL animEffectAsync(const char* animName, u32 group) {
     anim = fileAsyncf(4, NULL, "%s/%s-", "a", animGetTexName(animName));
     if (model == -1) {
         ret = TRUE;
-    } else if ((u32)model == 0) {
+    } else if ((AddrWord)model == 0) {
         ret = FALSE;
     } else if (anim == -1) {
         ret = TRUE;
-    } else if ((u32)anim == 0) {
+    } else if ((AddrWord)anim == 0) {
         ret = FALSE;
     } else {
         ret = TRUE;
@@ -3154,7 +3154,7 @@ void animSetPaperTexMtx(Mtx mtx1, Mtx mtx2, Mtx mtx3) {
 }
 
 BOOL animGroupBaseAsync(const char* name, s32 group, void* callback) {
-    s32 model, anim;
+    FileAsyncResult model, anim; /* fileAsync results: FileEntry pointers on PC */
 
     switch (group) {
         case 0:
@@ -3172,7 +3172,7 @@ BOOL animGroupBaseAsync(const char* name, s32 group, void* callback) {
     if (model == -1) {
         return TRUE;
     }
-    if ((u32)model == 0) {
+    if ((AddrWord)model == 0) {
         return FALSE;
     }
     if (anim == -1) {

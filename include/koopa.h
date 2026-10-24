@@ -25,7 +25,10 @@ struct HitEntry;
 /* Bowser (kpa) work, pointed to by MarioWork.kpaWork (0x28C JP, 0x298 US).
  * kpaPreInit allocates it once (0x154) and marioReset keeps the pointer.
  * Same layout on JP and US. */
-typedef enum KpaWorkFlags {
+#ifndef PORT_ENUM_BASE
+#define PORT_ENUM_BASE(type)
+#endif
+typedef enum KpaWorkFlags PORT_ENUM_BASE(int) {
     KPA_WORK_FLAG_NO_HIP_ATTACK = (1 << 4),  // 0x10, kpaHipAttackOk returns FALSE
     KPA_WORK_FLAG_100 = (1 << 8),            // 0x100, koopa_motion sets/clears
     KPA_WORK_FLAG_MUTEKI = (1 << 16),        // 0x10000, kpaMutekiOn/Off/Check

@@ -12,6 +12,15 @@
 #include "port/aurora_pc.h"
 #include "port/rel_pc.h"
 #include "port/platform.h"
+#ifdef __APPLE__
+#include <TargetConditionals.h>
+#endif
+#if defined(TARGET_OS_IOS) && TARGET_OS_IOS
+#include "port/ios_pc.h"
+#endif
+#ifdef __ANDROID__
+#include "port/android_pc.h"
+#endif
 
 int ttyd_main(void); /* src/main.c, compiled with -Dmain=ttyd_main */
 
@@ -39,6 +48,11 @@ int aurora_main(int argc, char* argv[]) {
         .mem2Size = 16 * 1024 * 1024,
     };
 
+#ifdef __ANDROID__
+    /* logcat, env.txt (Android has no environment to set the switches below) */
+    portAndroidEarlyInit();
+    pos = getenv("TTYD_WINDOW_POS");
+#endif
     /* $TTYD_WINDOW_POS=x,y: e.g. off-screen for unattended runs (map_sweep
      * with captures); rendering and captures go on as usual. */
     /* $TTYD_CACHE_DIR: Aurora's pipeline/shader caches elsewhere than the
@@ -54,12 +68,26 @@ int aurora_main(int argc, char* argv[]) {
     /* $TTYD_PAUSE_UNFOCUSED: also pause while another window has the focus
      * (minimized or hidden always pauses, port/src/common/pause_pc.c). */
     config.pauseOnFocusLost = getenv("TTYD_PAUSE_UNFOCUSED") != NULL;
+#if defined(TARGET_OS_IOS) && TARGET_OS_IOS
+    /* iOS: memory cards and settings in Documents/Saves (in the Files app, so
+     * .gci saves can be exchanged with Dolphin), caches in Library/Caches (not
+     * backed up). Aurora's default for both is Library/Application Support. */
+    if (config.userPath == NULL) {
+        config.userPath = portIosSavesDir();
+    }
+    if (config.cachePath == NULL) {
+        config.cachePath = portIosCacheDir();
+    }
+#endif
     if (pos != NULL && strchr(pos, ',') != NULL) {
         config.windowPosX = atoi(pos);
         config.windowPosY = atoi(strchr(pos, ',') + 1);
     }
     portCrashInit();
     info = aurora_initialize(argc, argv, &config);
+#ifdef __ANDROID__
+    portAndroidInit(); /* crash reports to logcat, background pause */
+#endif
     portRelInit(argv[0]);
     /* $TTYD_FAST (tests, map_sweep captures): draws wait for their pipeline
      * instead of being skipped while it compiles, so every frame is complete

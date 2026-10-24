@@ -6,7 +6,10 @@
 typedef struct CameraEntry CameraEntry;
 typedef void (*CameraCallback)(CameraEntry* entry);
 
-typedef enum CameraId {
+#ifndef PORT_ENUM_BASE
+#define PORT_ENUM_BASE(type)
+#endif
+typedef enum CameraId PORT_ENUM_BASE(int) {
     CAMERA_OFFSCREEN = 0,
     CAMERA_OFFSCREEN2 = 1,
     CAMERA_SHADOW = 2,

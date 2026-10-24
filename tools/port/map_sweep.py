@@ -21,8 +21,10 @@ import hashlib
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
+import tempfile
 
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -62,19 +64,87 @@ ORIGIN_ONLY = {
                # fail script stops a boat that isn't there (a NULL write, as on GameCube)
 }
 
+# Failures a warp causes because it skips state earlier maps set up: (run name
+# regex, failure signature text, why). Reported apart; they do not fail a sweep.
+WARP_ARTIFACTS = [
+    (r"^mri_0[13]%(089|09\d|100)$", "evt_puni_pera_onoff",
+     "the Punis join on earlier Great Tree maps, which set up Punidat; warped in, a Puni has no NPC (a NULL read, as on GameCube)"),
+]
 
-def first_bero(name):
-    """The first entrance (bero) the map's source declares, so the warp enters
-    as in play; without one Mario starts at the map's origin, which on some
-    maps (eki_02) is over no floor."""
+
+def warp_artifact(name, sig):
+    for pattern, text, why in WARP_ARTIFACTS:
+        if re.match(pattern, name) and text in sig:
+            return why
+    return None
+
+
+def beros(name):
+    """The entrances (beros) the map's source declares, in order."""
     import glob
     if name in ORIGIN_ONLY:
-        return None
+        return []
     for f in glob.glob(os.path.join(ROOT, "rels", "*", "src", name + ".c")):
-        m = re.search(r'"(\w+)",\s*//\s*hitName', open(f, encoding="utf-8", errors="replace").read())
-        if m:
-            return m.group(1)
-    return None
+        return re.findall(r'"(\w+)",\s*//\s*hitName', open(f, encoding="utf-8", errors="replace").read())
+    return []
+
+
+def battle_tables():
+    """(area, entries, maps) of every area's battle table (btlsetup_<area>_tbl);
+    maps: where it exists when another REL registers it (tou's: tou2, for its
+    arena tou_03), else empty (the area's maps)."""
+    import glob
+    out = []
+    for f in sorted(glob.glob(os.path.join(ROOT, "rels", "**", "*.c"), recursive=True)):
+        t = open(f, encoding="utf-8", errors="replace").read().replace("\r\n", "\n")
+        for m in re.finditer(r"NpcSetupBattleInfo btlsetup_(\w+)_tbl\[\] = \{(.*?)\n\};", t, re.S):
+            body = m.group(2)
+            n = len(re.findall(r"// name\b", body)) - len(re.findall(r"^\s*NULL, // name", body, re.M))
+            rel = os.path.relpath(f, os.path.join(ROOT, "rels")).replace(os.sep, "/").split("/")[0]
+            maps = []
+            if rel != m.group(1):
+                for g in glob.glob(os.path.join(ROOT, "rels", rel, "src", "*.c")):
+                    src = open(g, encoding="utf-8", errors="replace").read()
+                    maps += re.findall(r'relSetEvtAddr\("(\w+)", \w', src)
+            out.append((m.group(1), n, maps))
+    return out
+
+
+STORY_MAX = 420  # GSW(0) runs to about 405; larger compared values are timers
+
+
+def story_points(name):
+    """The story values (GSW(0)) the map's scripts tell apart: each value they
+    compare GSW(0) with (IF_*, CASE_* in a SWITCH on it) and the one below,
+    plus 0; [0] for a map without its own source."""
+    import glob
+    vals = set()
+    for f in glob.glob(os.path.join(ROOT, "rels", "*", "src", name + ".c")):
+        t = open(f, encoding="utf-8", errors="replace").read()
+        vals |= {int(v) for v in re.findall(r"(?:IF_[A-Z_]+|CASE_[A-Z_]+)\(\s*GSW\(0\)\s*,\s*(-?\d+)", t)}
+        for block in re.findall(r"SWITCH\(GSW\(0\)\)(.*?)END_SWITCH", t, re.S):
+            vals |= {int(v) for v in re.findall(r"CASE_[A-Z_]+\((-?\d+)", block)}
+            vals |= {int(v) for pair in re.findall(r"CASE_BETWEEN\((-?\d+),\s*(-?\d+)\)", block) for v in pair}
+    points = {0}
+    for v in vals:
+        if 0 <= v <= STORY_MAX:
+            points |= {max(0, v - 1), v}
+    return sorted(points)
+
+
+def has_npcs(name):
+    """The map's source sets up NPCs (a battle needs one to fight through)."""
+    import glob
+    for f in glob.glob(os.path.join(ROOT, "rels", "*", "src", name + ".c")):
+        return "NpcSetupInfo" in open(f, encoding="utf-8", errors="replace").read()
+    return False
+
+
+def first_bero(name):
+    """The first entrance, so the warp enters as in play; without one Mario
+    starts at the map's origin, which on some maps (eki_02) is over no floor."""
+    b = beros(name)
+    return b[0] if b else None
 
 
 def audio_hash(path):
@@ -86,8 +156,11 @@ def audio_hash(path):
         return None
 
 
-def run(exe, root, name, frames, timeout, disc=None, shots=None, script=None, audio=None, bero=None):
-    env = dict(os.environ, TTYD_DATA_DIR=root, TTYD_MAP=name + ("," + bero if bero else ""),
+def run(exe, root, item, frames, timeout, disc=None, shots=None, script=None, audio=None):
+    # name: the map, "map@bero" (--every-bero) or "area#N" (--battles); extra: more env
+    name, map_name, bero = item[:3]
+    env = dict(os.environ, TTYD_DATA_DIR=root, TTYD_MAP=map_name + ("," + bero if bero else ""),
+               **(item[3] if len(item) > 3 else {}),
                TTYD_FAST="1", TTYD_TRACE="1",
                TTYD_EXIT_FRAMES=str(frames), TTYD_WATCHDOG="30")  # a hang prints the stuck stack
     if script:  # an input script (port/src/common/input_pc.c) drives the map and ends the run
@@ -99,12 +172,18 @@ def run(exe, root, name, frames, timeout, disc=None, shots=None, script=None, au
         os.makedirs(cache, exist_ok=True)
         env.update(TTYD_SHOT_DIR=shots, TTYD_WINDOW_POS="-4000,0", TTYD_CACHE_DIR=cache,
                    TTYD_USER_DIR=cache)  # its own card image too: parallel runs on one file can block
+        user = None
+    else:  # its own (empty) memory card: a run that saves never writes the user's own
+        user = tempfile.mkdtemp(prefix="ttyd-sweep-card-")
+        env["TTYD_USER_DIR"] = user
     try:
         r = subprocess.run([exe] + ([disc] if disc else []), env=env, capture_output=True, text=True, errors="replace", timeout=timeout)
         out, code = r.stdout + r.stderr, r.returncode
     except subprocess.TimeoutExpired as e:
         out = (e.stdout or b"").decode(errors="replace") if isinstance(e.stdout, bytes) else (e.stdout or "")
         code = "timeout"
+    if user:
+        shutil.rmtree(user, ignore_errors=True)
     if audio:
         level = audio_level(env["TTYD_AUDIO_WAV"])
         if level is not None:
@@ -137,6 +216,14 @@ def main():
     ap.add_argument("--frames", type=int, default=600)
     ap.add_argument("--only", default="")
     ap.add_argument("--no-bero", action="store_true", help="warp to each map's origin instead of its first entrance")
+    ap.add_argument("--every-bero", action="store_true", help="one run per entrance of each map (map@bero)")
+    ap.add_argument("--party", type=int, default=0,
+                    help="the partner on every run ($TTYD_PARTY: 1 Goombella .. 7 Ms. Mowz; default Goombella)")
+    ap.add_argument("--story", action="store_true",
+                    help="each map at each story value its scripts compare GSW(0) with, and the one below "
+                         "(map%%NNN; --input default story_sweep.txt)")
+    ap.add_argument("--battles", action="store_true",
+                    help="one battle per entry of every area's battle table (area#N; --input default battle_sweep.txt)")
     ap.add_argument("--timeout", type=int, default=180)
     ap.add_argument("--logs", default="", help="directory for each failing map's output")
     ap.add_argument("--disc", default="", help="disc image to pass to the exe (the Aurora build)")
@@ -147,6 +234,8 @@ def main():
     ap.add_argument("--update-golden", action="store_true", help="write the --golden file from this run")
     ap.add_argument("--collect", default="", help=r"regex: report matching output lines of every run, e.g. '\[msg\] missing'")
     a = ap.parse_args()
+    if a.party:
+        os.environ["TTYD_PARTY"] = str(a.party)  # every run inherits it (trace_pc.c's warp)
     root = os.path.join(a.data, "files") if os.path.isdir(os.path.join(a.data, "files")) else a.data
     if not os.path.isdir(os.path.join(root, "m")):
         print(f"map_sweep: no extracted disc at {a.data}: skipped")
@@ -154,6 +243,30 @@ def main():
     names = maps_of(root)
     if a.only:
         names = [n for n in names if n.startswith(tuple(a.only.split(",")))]
+    if a.story:
+        # every map at every point of the story its scripts tell apart
+        items = [(f"{n}%{v:03d}", n, first_bero(n), {"TTYD_STORY": str(v)}) for n in names for v in story_points(n)]
+        if not a.input:
+            a.input = os.path.join(ROOT, "tests", "port", "input", "story_sweep.txt")
+    elif a.battles:
+        # every entry of every area's battle table, fought from the area's
+        # first map with NPCs (input_pc.c "battle N" via $TTYD_BATTLE_SETUP)
+        items = []
+        for area, count, rel_maps in battle_tables():
+            area_maps = rel_maps or [n for n in names if n.startswith(area + "_")]
+            # NPCs set up in the map's source, else (spawned by scripts, e.g. jon) the first map
+            on = next((n for n in area_maps if has_npcs(n)), area_maps[0] if area_maps else None)
+            if on is None:
+                print(f"map_sweep: no map with NPCs for area {area}: its {count} battles skipped")
+                continue
+            items += [(f"{area}#{i:02d}", on, first_bero(on), {"TTYD_BATTLE_SETUP": str(i)}) for i in range(count)]
+        if not a.input:
+            a.input = os.path.join(ROOT, "tests", "port", "input", "battle_sweep.txt")
+    elif a.every_bero:
+        items = [(f"{n}@{b}", n, b) for n in names for b in beros(n)]
+        items += [(n, n, None) for n in names if not beros(n)]
+    else:
+        items = [(n, n, None if a.no_bero else first_bero(n)) for n in names]
     exe = os.path.abspath(a.exe)
     if a.golden and not a.audio:
         import tempfile
@@ -166,13 +279,13 @@ def main():
         os.makedirs(a.shots, exist_ok=True)
     groups = collections.defaultdict(list)
     collected = collections.defaultdict(list)
+    artifacts = collections.defaultdict(list)
     passed = 0
     with concurrent.futures.ThreadPoolExecutor(a.j) as pool:
-        for name, sig, out in pool.map(lambda n: run(exe, root, n, a.frames, a.timeout, a.disc or None,
-                                                      os.path.abspath(a.shots) if a.shots else None,
-                                                      os.path.abspath(a.input) if a.input else None,
-                                                      os.path.abspath(a.audio) if a.audio else None,
-                                                      None if a.no_bero else first_bero(n)), names):
+        for name, sig, out in pool.map(lambda it: run(exe, root, it, a.frames, a.timeout, a.disc or None,
+                                                       os.path.abspath(a.shots) if a.shots else None,
+                                                       os.path.abspath(a.input) if a.input else None,
+                                                       os.path.abspath(a.audio) if a.audio else None), items):
             m = re.search(r"\[audio\] rms (\d+) peak (\d+) clipped (\d+)", out)
             if m:
                 levels[name] = tuple(int(g) for g in m.groups())
@@ -184,6 +297,10 @@ def main():
                 passed += 1
                 if a.audio:
                     hashes[name] = audio_hash(os.path.join(os.path.abspath(a.audio), name + ".wav"))
+                continue
+            why = warp_artifact(name, sig)
+            if why is not None:
+                artifacts[why].append(name)
                 continue
             groups[sig].append(name)
             if a.logs:
@@ -225,7 +342,13 @@ def main():
         for name in sorted(collected):
             for line in collected[name]:
                 print(f"  {name}: {line}")
-    print(f"\nmap_sweep: {len(names)} maps, {passed} passed, {len(names) - passed} failed, {len(groups)} distinct causes")
+    unit = ("runs (map%story)" if a.story else "battles (area#entry)" if a.battles
+            else "runs (map@entrance)" if a.every_bero else "maps")
+    known = sum(len(ns) for ns in artifacts.values())
+    print(f"\nmap_sweep: {len(items)} {unit}, {passed} passed, {len(items) - passed - known} failed, "
+          f"{known} known warp artifacts, {len(groups)} distinct causes")
+    for why, ns in artifacts.items():
+        print(f"known warp artifact ({len(ns)}): {why}\n      {' '.join(ns)}")
     for sig, ns in sorted(groups.items(), key=lambda kv: -len(kv[1])):
         print(f"{len(ns):4d}  {sig}\n      {' '.join(ns[:12])}{' ...' if len(ns) > 12 else ''}")
     if a.shots:

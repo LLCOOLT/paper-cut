@@ -52,7 +52,10 @@ u32 aramPcStreamBase(void);
 #define SUB_LEN 32
 #define NUM_SUB 5
 
-enum {
+#ifndef PORT_ENUM_BASE
+#define PORT_ENUM_BASE(type)
+#endif
+enum PORT_ENUM_BASE(int) {
   BUS_L, BUS_R, BUS_S, BUS_AL, BUS_AR, BUS_AS, BUS_BL, BUS_BR, BUS_BS, NUM_BUS
 };
 

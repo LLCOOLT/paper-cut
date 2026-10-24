@@ -1,0 +1,268 @@
+#!/usr/bin/env python3
+"""The port's CI, run on this machine: every check, both versions, one report.
+
+Stages (each logs to build-ci/<stage>.log; independent ones run at once):
+  gamecube   both matching builds (configure.py + ninja: SHA-1 OK), in turn
+  build      the PC builds: headless and Aurora, JP and US (configured if new)
+  unit       unit tests (ctest -LE slow), both versions
+  audits     proto_audit, gen_bedecode --check, diag_census (fatal classes)
+  sweep      map_sweep with golden audio, both versions
+  cards      new file, Save Block save and load, headless and Aurora, both
+             versions; the headless card then loads on Aurora
+  android    both debug APKs, when the Android SDK, JDK and Gradle are there
+  linux      headless build and unit tests in WSL, when a distribution is there;
+             else compiled and linked for Linux against stand-in headers
+Data: the extracted discs in data/<version>, the images in orig/<version>/*.iso;
+stages that need them skip without.
+
+usage: local_ci.py [--quick] [--only STAGE,...] [--skip STAGE,...]
+  --quick: no sweep, no cards (minutes instead of most of an hour)
+Exit status 1 if any stage failed.
+"""
+import argparse
+import concurrent.futures
+import glob
+import os
+import shutil
+import subprocess
+import sys
+import time
+
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+LOGS = os.path.join(ROOT, "build-ci")
+VERSIONS = [("G8MJ01", "jp"), ("G8ME01", "us")]
+BUILDS = [(v, short, backend) for v, short in VERSIONS for backend in ("headless", "aurora")]
+
+
+def build_dir(short, backend):
+    return os.path.join(ROOT, f"build-pc-{short}" + ("-aurora" if backend == "aurora" else ""))
+
+
+def tool_env():
+    """PATH with clang, CMake and Ninja (tools/port/winenv.sh, for Windows)."""
+    env = dict(os.environ)
+    if os.name == "nt":
+        vs = r"C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\Common7\IDE\CommonExtensions\Microsoft\CMake"
+        extra = [r"C:\Program Files\LLVM\bin", os.path.join(vs, "CMake", "bin"), os.path.join(vs, "Ninja")]
+        env["PATH"] = os.pathsep.join(p for p in extra if os.path.isdir(p)) + os.pathsep + env["PATH"]
+        env["Python3_ROOT_DIR"] = os.path.dirname(sys.executable)
+    return env
+
+
+ENV = tool_env()
+
+
+class Stage:
+    def __init__(self, name):
+        self.name, self.ok, self.note, self.secs = name, True, "", 0.0
+        self.log = open(os.path.join(LOGS, name + ".log"), "w", encoding="utf-8", errors="replace")
+
+    def run(self, cmd, cwd=ROOT, env=None, ok_codes=(0,)):
+        env = env or ENV
+        # Windows looks a bare command up on this process's PATH, not env's.
+        cmd = [shutil.which(cmd[0], path=env.get("PATH")) or cmd[0]] + list(cmd[1:])
+        self.log.write(f"\n$ {' '.join(cmd)}\n")
+        self.log.flush()
+        r = subprocess.run(cmd, cwd=cwd, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                           text=True, errors="replace")
+        self.log.write(r.stdout)
+        self.log.flush()
+        if r.returncode not in ok_codes:
+            self.fail(f"{os.path.basename(cmd[0])} {' '.join(cmd[1:3])}: exit {r.returncode}")
+        return r
+
+    def fail(self, why):
+        self.ok = False
+        self.note = self.note or why
+
+    def skip(self, why):
+        self.note = "skipped: " + why
+
+
+def stage_gamecube(s):
+    if not glob.glob(os.path.join(ROOT, "orig", "*", "sys", "main.dol")):
+        return s.skip("no orig/<version>/sys/main.dol")
+    for v, _ in VERSIONS:
+        s.run([sys.executable, "configure.py", "--version", v])
+        r = s.run(["ninja"])
+        if r.returncode == 0:
+            s.note += f"{v} OK "
+
+
+def configure_args(v, backend):
+    args = ["-G", "Ninja", "-DCMAKE_BUILD_TYPE=RelWithDebInfo", f"-DTTYD_VERSION={v}", f"-DTTYD_BACKEND={backend}"]
+    if os.name == "nt":
+        args.append("--toolchain=" + os.path.join(ROOT, "cmake", "toolchains", "windows-clang.cmake"))
+    return args
+
+
+def stage_build(s):
+    for v, short, backend in BUILDS:
+        d = build_dir(short, backend)
+        if not os.path.exists(os.path.join(d, "CMakeCache.txt")):
+            s.run(["cmake", "-S", ROOT, "-B", d] + configure_args(v, backend))
+        else:
+            s.run(["cmake", d])
+        s.run(["ninja", "-C", d, "-k", "0"])
+
+
+UNIT_TARGETS = ["bedecode_test", "anim_test", "loaders_test", "map_test", "dtk_test", "musyx_swap_test",
+                "musyx_mixer_test", "disc_sweep", "musyx_seq_sweep"]
+
+
+def stage_unit(s):
+    for _, short in VERSIONS:
+        d = build_dir(short, "headless")
+        s.run(["ninja", "-C", d] + UNIT_TARGETS)
+        s.run(["ctest", "--test-dir", d, "-LE", "slow", "--output-on-failure"])
+
+
+def stage_audits(s):
+    s.run([sys.executable, "tools/port/proto_audit.py"])
+    s.run([sys.executable, "tools/port/gen_bedecode.py", "--check"])
+    s.run([sys.executable, "tools/port/diag_census.py"] + [build_dir(short, "headless") for _, short in VERSIONS])
+
+
+def stage_sweep(s):
+    for v, short in VERSIONS:
+        data = os.path.join(ROOT, "data", v)
+        if not os.path.isdir(data):
+            s.note += f"{v}: no data/ "
+            continue
+        exe = os.path.join(build_dir(short, "headless"), f"ttyd-{short}")
+        r = s.run([sys.executable, "tools/port/map_sweep.py", exe, data, "--golden",
+                   os.path.join("tests", "port", "golden", f"audio_{v}.json")])
+        last = [l for l in r.stdout.splitlines() if l.startswith("map_sweep:")]
+        s.note += f"{v}: {last[-1][11:] if last else '?'}; "
+
+
+CARD_SCRIPTS = (("save_new_file", None), ("save_block", "gor_01"), ("load_file", None))
+
+
+def card_run(s, v, short, backend, user, script, warp):
+    """One card script on one backend with its own card folder; True if it reached its end."""
+    env = dict(ENV, TTYD_FAST="1", TTYD_INPUT=os.path.join(ROOT, "tests", "port", "input", script + ".txt"),
+               TTYD_USER_DIR=user, TTYD_WATCHDOG="30")
+    env.pop("TTYD_MAP", None)
+    if warp:
+        env["TTYD_MAP"] = warp
+    exe = os.path.join(build_dir(short, backend), f"ttyd-{short}")
+    if backend == "headless":
+        env["TTYD_DATA_DIR"] = os.path.join(ROOT, "data", v)
+        cmd = [exe]
+    else:
+        env.update(TTYD_WINDOW_POS="-4000,0", TTYD_CACHE_DIR=os.path.join(LOGS, "cards", "cache"),
+                   TTYD_SHOT_DIR=os.path.join(user, "shots"))
+        cmd = [exe, sorted(glob.glob(os.path.join(ROOT, "orig", v, "*.iso")))[0]]
+    r = s.run(cmd, env=env)
+    if r.returncode == 0 and "[input] end" not in r.stdout:
+        s.fail(f"{v} {backend} {script}: no [input] end")
+    return r.returncode == 0 and "[input] end" in r.stdout
+
+
+def stage_cards(s):
+    """New file, Save Block save and load, on each backend with its own card
+    folder; then the headless card loads on Aurora (same .gci files)."""
+    for v, short in VERSIONS:
+        have = {"headless": os.path.isdir(os.path.join(ROOT, "data", v)),
+                "aurora": bool(glob.glob(os.path.join(ROOT, "orig", v, "*.iso")))}
+        for backend in ("headless", "aurora"):
+            if not have[backend]:
+                s.note += f"{v} {backend}: no {'data/' if backend == 'headless' else 'disc image'} "
+                continue
+            user = os.path.join(LOGS, "cards", f"{short}-{backend}")
+            shutil.rmtree(user, ignore_errors=True)
+            os.makedirs(user)
+            ok = all([card_run(s, v, short, backend, user, script, warp) for script, warp in CARD_SCRIPTS])
+            s.note += f"{v} {backend} {'ok' if ok else 'FAIL'} "
+        if have["headless"] and have["aurora"]:
+            user = os.path.join(LOGS, "cards", f"{short}-cross")
+            shutil.rmtree(user, ignore_errors=True)
+            shutil.copytree(os.path.join(LOGS, "cards", f"{short}-headless"), user,
+                            ignore=shutil.ignore_patterns("shots"))
+            ok = card_run(s, v, short, "aurora", user, "load_file", None)
+            s.note += f"{v} headless->aurora {'ok' if ok else 'FAIL'} "
+
+
+def stage_linux(s):
+    """WSL: build the headless JP version and run its unit tests (Linux CI)."""
+    if os.name != "nt" or shutil.which("wsl") is None:
+        return s.skip("not on Windows")
+    r = subprocess.run(["wsl", "-l", "-q"], capture_output=True)
+    if r.returncode != 0 or not r.stdout.replace(b"\0", b"").strip():
+        # no Linux to build on: compile and link for it anyway, against
+        # stand-in headers (tools/port/linux_xcheck.py; it cannot run)
+        for arch, version in (("x86_64", "G8MJ01"), ("aarch64", "G8ME01")):
+            s.run([sys.executable, "tools/port/linux_xcheck.py", "--out",
+                   os.path.join(LOGS, "linux_xcheck", arch), "--arch", arch, "--version", version])
+        s.note = "no WSL: cross-compiled and linked only (x86_64 JP, aarch64 US)"
+        return
+    root = subprocess.run(["wsl", "wslpath", "-a", ROOT.replace("\\", "/")], capture_output=True, text=True).stdout.strip()
+    script = (f"set -e; cd '{root}'; b=$HOME/ttyd-ci/build-linux-jp; "
+              "cmake -S . -B $b -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DTTYD_VERSION=G8MJ01 "
+              "-DTTYD_BACKEND=headless --toolchain cmake/toolchains/linux-clang.cmake; "
+              f"ninja -C $b -k 0; ninja -C $b {' '.join(UNIT_TARGETS)}; ctest --test-dir $b -LE slow --output-on-failure")
+    s.run(["wsl", "bash", "-lc", script], env=dict(os.environ))
+
+
+def stage_android(s):
+    """Both debug APKs (port/android), when an Android SDK, a JDK 17 and Gradle
+    are there: $ANDROID_HOME, $JAVA_HOME and gradle on PATH, else under
+    ~/Android (sdk/, jdk-17/, gradle-*/)."""
+    home = os.path.expanduser("~/Android")
+    sdk = os.environ.get("ANDROID_HOME") or os.path.join(home, "sdk")
+    jdk = os.environ.get("JAVA_HOME") or os.path.join(home, "jdk-17")
+    gradle = shutil.which("gradle") or next(iter(sorted(glob.glob(os.path.join(home, "gradle-*", "bin",
+                                                                             "gradle.bat" if os.name == "nt" else "gradle")))), None)
+    if not (os.path.isdir(os.path.join(sdk, "ndk")) and os.path.isdir(jdk) and gradle):
+        return s.skip("no Android SDK/NDK, JDK 17 and Gradle")
+    env = dict(ENV, ANDROID_HOME=sdk, ANDROID_SDK_ROOT=sdk, JAVA_HOME=jdk)
+    s.run([gradle, "--no-daemon", "-p", os.path.join(ROOT, "port", "android"), "assembleJpDebug", "assembleUsDebug"],
+          env=env)
+    if s.ok:
+        s.note = "app-jp-debug.apk, app-us-debug.apk"
+
+
+STAGES = {"gamecube": stage_gamecube, "build": stage_build, "unit": stage_unit, "audits": stage_audits,
+          "sweep": stage_sweep, "cards": stage_cards, "linux": stage_linux,
+          "android": stage_android}
+# what may run at the same time; each group waits for the one before
+PLAN = [["gamecube", "build", "linux"], ["unit", "audits", "android"], ["sweep"], ["cards"]]
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--quick", action="store_true")
+    ap.add_argument("--only", default="")
+    ap.add_argument("--skip", default="")
+    a = ap.parse_args()
+    want = set(a.only.split(",")) if a.only else set(STAGES)
+    want -= set(a.skip.split(",")) if a.skip else set()
+    if a.quick:
+        want -= {"sweep", "cards"}
+    os.makedirs(LOGS, exist_ok=True)
+    results = []
+    start = time.time()
+    for group in PLAN:
+        names = [n for n in group if n in want]
+        with concurrent.futures.ThreadPoolExecutor(len(names) or 1) as pool:
+            def go(name):
+                s = Stage(name)
+                t = time.time()
+                try:
+                    STAGES[name](s)
+                except Exception as e:  # a crashed stage is a failed stage
+                    s.fail(f"{type(e).__name__}: {e}")
+                s.secs = time.time() - t
+                s.log.close()
+                print(f"{'PASS' if s.ok else 'FAIL'}  {name:9s} {s.secs:6.0f}s  {s.note.strip()}", flush=True)
+                return s
+            results += list(pool.map(go, names))
+    failed = [s.name for s in results if not s.ok]
+    print(f"\nlocal_ci: {len(results) - len(failed)}/{len(results)} stages passed in {time.time() - start:.0f}s"
+          + (f"; failed: {', '.join(failed)} (logs: build-ci/<stage>.log)" if failed else ""))
+    return 1 if failed else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

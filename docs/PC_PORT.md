@@ -15,11 +15,13 @@ builds without it and runs from the user's own disc image.
 | Field play: walking, jumping, blocks, messages (scripted input) | done |
 | Battles (a battle on every map with enemies) | done, JP and US |
 | Audio (MusyX on PC; every map plays, checked by ear) | done; SDL output not yet heard on a real device |
-| Memory card: create a file, save at a Save Block, reload | done (Aurora) |
+| Memory card: create a file, save at a Save Block, reload | done, headless and Aurora (the same `.gci` files) |
 | GameCube matching build unchanged (SHA-1 OK, both versions) | checked after every change |
-| CI (`.github/workflows/pc-port.yml`, Windows) | written, not yet run (branch not pushed) |
-| Linux, macOS | not built yet |
-| iOS, Android | planned after desktop |
+| CI | local: `tools/port/local_ci.py` (below); the GitHub workflow is disabled |
+| Linux | written; cross-compiled and linked for x86_64/aarch64, not yet built or run on Linux (WSL: `local_ci.py`'s linux stage) |
+| macOS (arm64, x86_64; headless and Aurora `.app`) | written on Windows, not yet built on a Mac (`docs/APPLE_BRIEF.md`) |
+| iOS | written on Windows, not yet built (`docs/APPLE_BRIEF.md`) |
+| Android | builds (both APKs, on Windows); not yet run on a device |
 
 ## Building
 
@@ -41,10 +43,104 @@ ninja -C build-pc-jp
   (`ttyd-jp`, `ttyd-us`).
 - `TTYD_BACKEND`: `aurora` (window, GPU, controllers, audio; `extern/aurora`)
   or `headless` (no window or dependencies; tests and sweeps).
-- `TTYD_RELS_STATIC` (default on Windows): the area RELs are linked in.
+- `TTYD_RELS_STATIC` (default with clang: Windows, Apple, Linux, Android): the
+  area RELs are linked in.
 - No disc is needed to build. The save banner/icon and DSP microcode the decomp
   extracts from the disc (`build/<version>/include/assets`) are used when
   present; otherwise stand-ins (`port/include/no_disc_assets`: blank banner).
+
+### Linux
+
+x86_64 or arm64, clang (the RELs are linked in with `#pragma clang section`;
+with gcc 13+ use `-DTTYD_RELS_STATIC=OFF`, loadable modules, untested), lld
+optional. Debian/Ubuntu packages: `clang lld llvm cmake ninja-build python3`
+(`llvm` for `llvm-nm`/`llvm-objcopy`/`llvm-ar`; binutils' `nm`/`objcopy`/`ar`
+also work). Aurora additionally builds SDL3 from source unless a system SDL3
+(3.2+) is found: `pkg-config libasound2-dev libpulse-dev libaudio-dev
+libfribidi-dev libjack-dev libsndio-dev libx11-dev libxext-dev libx11-xcb-dev
+libxrandr-dev libxcursor-dev libxfixes-dev libxi-dev libxss-dev libxtst-dev
+libxkbcommon-dev libdrm-dev libgbm-dev libgl1-mesa-dev libgles2-mesa-dev
+libegl1-mesa-dev libdbus-1-dev libibus-1.0-dev libudev-dev libthai-dev
+libpipewire-0.3-dev libwayland-dev libdecor-0-dev liburing-dev` (Aurora's own
+CI list). Dawn (Vulkan/GL) and nod come as prebuilt packages for x86_64; on
+arm64 nod builds from source (Rust, `cargo`). CMake 3.25+ (3.29+ to pick lld).
+
+```bash
+cmake -S . -B build-pc-jp -G Ninja --toolchain cmake/toolchains/linux-clang.cmake \
+  -DCMAKE_BUILD_TYPE=RelWithDebInfo -DTTYD_VERSION=G8MJ01 -DTTYD_BACKEND=headless
+ninja -C build-pc-jp
+TTYD_DATA_DIR=/path/to/extracted/G8MJ01 ./build-pc-jp/ttyd-jp
+```
+
+Linux specifics: the executable is position-independent (every host address
+must be 2 GiB or higher, see Decisions); each REL's data and bss go to their
+own ELF sections `rel_<area>_data`/`rel_<area>_bss`, bounded by the linker's
+`__start_`/`__stop_` symbols (CMakeLists.txt); game threads are `ucontext`
+coroutines on glibc and baton-passing pthreads elsewhere (Apple, Android,
+musl; `port/src/common/os_thread_pc.c`); crashes are reported from signal
+handlers on an alternate stack with names from the executable's own ELF symbol
+table (frame lines end in `(ttyd-jp+0xOFFSET)`: `addr2line -e ttyd-jp
+0xOFFSET`); `$TTYD_WATCHDOG` signals the main thread (`SIGUSR2`) to print its
+own stack. The headless DVD layer resolves disc paths case-insensitively.
+
+Status: written and checked on Windows only (no Linux host yet): the headless
+build and unit tests of both versions compile for `x86_64-linux-gnu` and
+`aarch64-linux-gnu` against stand-in glibc headers and link with ld.lld (C
+library left unresolved), the REL section layout of the linked ELF was checked
+(`tools/port/linux_xcheck.py`), and the Aurora backend's sources compile for
+x86_64 Linux (with Aurora's and SDL3's headers).
+Not yet built or run on Linux. The golden audio hashes were recorded on
+Windows x86_64: glibc's libm or arm64 floating point may change them without
+anything being wrong, so a Linux mismatch needs a listen before an update.
+### macOS
+
+Status: written and checked on Windows only (below); no Mac build has run
+yet. The CI job `macos` (macos-14, arm64) builds both versions headless and
+Aurora and runs the unit tests once the branch and the `extern/aurora`
+commit are pushed.
+
+Needs Xcode or its Command Line Tools (Apple clang), CMake 3.25+, Ninja,
+Python 3 and Homebrew LLVM (`brew install llvm ninja`): only its
+`llvm-objcopy`/`llvm-nm`/`llvm-ar`, which Xcode lacks, for linking the RELs in;
+CMake finds them in `/opt/homebrew/opt/llvm/bin` (or `/usr/local/...`) without
+`PATH` changes. Apple clang compiles everything. Aurora's first configure
+fetches its dependencies (Dawn and nod prebuilt, SDL3 built from source).
+
+```bash
+cmake -S . -B build-pc-jp -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+  -DTTYD_VERSION=G8MJ01 -DTTYD_BACKEND=aurora
+ninja -C build-pc-jp
+open build-pc-jp/ttyd-jp.app            # or: .../Contents/MacOS/ttyd-jp <disc image>
+cmake --install build-pc-jp --prefix dist  # self-contained, ad hoc signed copy
+```
+
+- Aurora builds an app bundle, `ttyd-jp.app`/`ttyd-us.app`, shown as "Paper
+  Mario TTYD (JP)"/"(US)" (`port/macos/Info.plist.in`: bundle id
+  `org.ttyd-port.ttyd-jp` (`-DTTYD_MACOS_BUNDLE_ID_PREFIX`), Retina, minimum
+  macOS, the disc image types). Opened without a disc, it shows the disc picker;
+  Finder can open a disc image with it (Open With, or dropped on its icon:
+  `disc_aurora.c` takes the open-document event at startup). Headless builds a
+  plain `ttyd-jp`.
+- User data (memory cards, `disc.txt`, Aurora's pipeline cache):
+  `~/Library/Application Support/ttyd/` (Aurora's `SDL_GetPrefPath`).
+- Minimum macOS 11.0 (`CMAKE_OSX_DEPLOYMENT_TARGET`, set before `project()`).
+- One architecture per build, the host's by default; for Intel from Apple
+  silicon, `-DCMAKE_OSX_ARCHITECTURES=x86_64` (Aurora: also
+  `-DAURORA_NOD_PROVIDER=package`, else nod is built from source with Rust).
+  Aurora has no prebuilt Dawn for a universal build: build each architecture and
+  `lipo -create` the executables if one app is wanted.
+- RELs: linked in (Mach-O sections `__DATA,__rd_<area>`/`__rb_<area>`, bounded
+  by `section$start`/`section$end`; `tools/port/rel_rename.py` keeps the
+  leading underscore). iOS cannot load code, so macOS takes the same path and
+  tests it. `-DTTYD_RELS_STATIC=OFF`: one loadable bundle per REL
+  (`-bundle_loader`), in `Contents/MacOS/rel/`.
+- Game threads (`os_thread_pc.c`): macOS's ucontext is deprecated and iOS has
+  none, so each coroutine is a host thread with a baton (one runs at a time),
+  as on Android and musl.
+- Not notarized: a downloaded copy needs right-click > Open once (or
+  `xattr -dr com.apple.quarantine ttyd-jp.app`).
+- Golden audio hashes (`map_sweep --golden`) are recorded on Windows x64;
+  arm64 (fused multiply-add) and Apple's libm may round differently.
 
 ## Running
 
@@ -72,7 +168,8 @@ Environment switches (all optional):
 | `TTYD_INPUT=<script>` | scripted controller 1 (below) |
 | `TTYD_SHOT=<f>[,<f>...]`, `TTYD_SHOT_DIR` | Aurora: write those frames as PNG |
 | `TTYD_WINDOW_POS=x,y` | Aurora window position (off-screen for unattended runs) |
-| `TTYD_CACHE_DIR`, `TTYD_USER_DIR` | Aurora's pipeline cache / memory cards and settings elsewhere |
+| `TTYD_USER_DIR` | the user folder elsewhere: memory cards (both backends), Aurora's settings |
+| `TTYD_CACHE_DIR` | Aurora's pipeline cache elsewhere |
 | `TTYD_AUDIO_WAV=<file>` | headless: write the mixed audio |
 | `TTYD_WATCHDOG=<s>` | no frame for that long: print the main thread's stack, exit 4 |
 | `TTYD_PAUSE_UNFOCUSED` | Aurora: also pause while unfocused |
@@ -80,7 +177,125 @@ Environment switches (all optional):
 
 Crashes and `abort()` print a symbolized backtrace.
 
+## iOS
+
+Written but not yet built or run: there was no Mac to build on (the `ios` CI
+job builds it once the branch and Aurora's submodule commit are pushed).
+Aurora backend, arm64, devices and the Simulator (Apple silicon Macs); one
+app per version (`ttyd-jp.app`, `ttyd-us.app`, bundle ids
+`io.github.ttyd-port.jp`/`.us`, `-DTTYD_IOS_BUNDLE_ID_PREFIX` to change).
+
+### Building
+
+On a Mac with Xcode 15 or later, CMake 3.25+, Ninja, Python 3, Homebrew
+LLVM (`llvm-nm`, `llvm-objcopy`, `llvm-ar` for the RELs; Xcode has no
+objcopy) and Rust with the iOS targets (Aurora's disc reader, nod):
+
+```bash
+brew install cmake ninja llvm
+rustup target add aarch64-apple-ios aarch64-apple-ios-sim
+cmake -S . -B build-ios-jp -G Ninja --toolchain cmake/toolchains/ios.cmake \
+  -DCMAKE_BUILD_TYPE=RelWithDebInfo -DTTYD_VERSION=G8MJ01
+ninja -C build-ios-jp ttyd ttyd_ipa   # ttyd-jp.app and an unsigned ttyd-jp.ipa
+```
+
+- `-DTTYD_IOS_PLATFORM=SIMULATOR` builds for the Simulator, signed ad hoc:
+  `xcrun simctl install booted build-ios-sim/ttyd-jp.app`, then
+  `xcrun simctl launch booted io.github.ttyd-port.jp`. Aurora's prebuilt Dawn
+  is for devices only, so the Simulator build compiles Dawn from source (a
+  long first build).
+- The toolchain file (`cmake/toolchains/ios.cmake`) builds SDL3 and nod from
+  source, statically, uses Aurora's prebuilt Dawn (Metal) for devices, and
+  finds libraries only in the iOS SDK, so the Mac's Homebrew packages are not
+  linked by mistake.
+- Use the Ninja generator: the static RELs post-process object files in
+  custom commands, which `-G Xcode` does not handle reliably. Xcode can still
+  debug the app (Debug > Attach to Process, or open the `.app`).
+
+### Installing on a device
+
+No App Store. Sideload the `.ipa` with AltStore, SideStore or Sideloadly,
+which sign it with your Apple ID (a free account signs for 7 days at a time).
+Or sign it yourself: `-DTTYD_IOS_CODESIGN_IDENTITY="Apple Development: ..."
+-DTTYD_IOS_PROVISIONING_PROFILE=<.mobileprovision>` signs the app after every
+link (`port/ios/codesign.sh`, the profile's entitlements), then
+`xcrun devicectl device install app --device <id> build-ios-jp/ttyd-jp.app`.
+
+### The disc image
+
+The app's Documents folder is shared: it shows up in the Files app (On My
+iPhone/iPad > TTYD JP) and in Finder's device window (Files tab). Put your
+own disc image there (any format Aurora's nod reads; RVZ is the smallest),
+or at the first launch tap Choose File: the system picker's copy is moved
+into that folder. At each launch the app opens the first image there that is
+this build's game. No path is remembered: an app's container path changes
+with every update. Importing rather than opening the file in place avoids a
+security-scoped bookmark held across launches and file providers (iCloud
+Drive) that evict files under the reader (`port/ios/ios_app.m`).
+
+Memory cards (`.gci`) and settings are in `Saves` inside that folder, so saves
+can be copied to and from Dolphin; Aurora's pipeline caches are in
+`Library/Caches` (not backed up).
+
+### How it differs from desktop
+
+- **RELs are linked in** (`TTYD_RELS_STATIC` is forced: an app may only run
+  code signed into its bundle). Mach-O has no grouped sections, so each REL's
+  data and bss go to `__DATA,__rd_<area>`/`__rb_<area>`, bounded by the
+  linker's `section$start$`/`section$end$` symbols; the archives are
+  `-force_load`ed and `rel_rename.py` keeps Mach-O's leading underscore
+  (`_rel_<area>__name`). Checked on Windows with LLVM's Mach-O tools
+  (`clang --target=arm64-apple-ios14`, `llvm-objcopy`, `ld64.lld`): the
+  table's bounds land on each REL's sections.
+- **Coroutines** (`os_thread_pc.c`): the ucontext routines are not
+  implemented for arm64 on Apple systems, so the game's threads switch with a
+  small routine saving the callee-saved registers (Apple arm64, also Apple
+  silicon Macs).
+- **Bundle** (`port/ios/ios.cmake`, `Info.plist.in`): full screen, landscape,
+  a launch screen entry (else iOS runs the app letterboxed), file sharing and
+  opening documents in place, game controller keys
+  (`GCSupportsControllerUserInteraction`, `GCSupportedGameControllers`,
+  `UIApplicationSupportsIndirectInputEvents`), Metal required. The icon is a
+  generated placeholder (`make_icon.py`), no game art.
+- **Lifecycle:** SDL sends `SDL_EVENT_WINDOW_MINIMIZED` when the app resigns
+  active (home, app switcher, Control Center, a call) and `RESTORED` when it is
+  active again; Aurora turns those into its Background pause, the port pauses
+  (`portPause`: game clock and audio device) and stops drawing until it is
+  back, so no Metal work is submitted in the background. The audio device is
+  paused, not closed; SDL handles audio session interruptions. The audio
+  session is SDL's default, ambient (follows the silent switch).
+- **Display:** Aurora fits the 640x480 picture to the screen (pillarboxed on
+  phones); in landscape the notch and corners fall in the side bars, and the
+  home indicator is deferred (SDL's default for full screen windows).
+- **Input:** controllers through SDL3 and Aurora's PAD as on desktop. The touch
+  overlay (`port/touch/touch_overlay.cpp`, `TTYD_TOUCH_OVERLAY`, on by default
+  on iOS): touches become port 1's virtual status (Aurora's
+  `PADSetVirtualStatus`, merged into `PADRead`), so the game reads them like a
+  controller; drawn with Aurora's Dear ImGui. Floating stick on the left,
+  A/B/X/Y on the right (GameCube arrangement), L, R, Z and START at the top,
+  laid out in the safe area (on phones in the bars beside the picture).
+  Buttons act on touch-down, before that frame's `PADRead`, for action
+  commands. Hidden (and the virtual status cleared) while a controller is
+  connected. Built and run on Windows with `-DTTYD_TOUCH_OVERLAY=ON`: drawn
+  over the picture, and a scripted touch on START
+  (`TTYD_TOUCH_TEST=1900:0.5,0.07:10`, fast mode) skips the opening exactly
+  as a scripted START press does (same frame hash). `TTYD_TOUCH_MOUSE=1` lets
+  the mouse touch on desktop builds with the option on. Not yet: D-pad,
+  C-stick, a layout editor, opacity and size settings, haptics on press.
+
+Not done yet: a run on a device or the Simulator; the security-scoped
+alternative to importing; a suspend snapshot (iOS may end the app between
+saves); a widescreen option.
+
 ## Testing
+
+`python tools/port/local_ci.py` is the CI, run on this machine: both GameCube
+matching builds, the four PC builds (headless and Aurora, JP and US), unit
+tests, audits (`proto_audit`, `gen_bedecode --check`, `diag_census`), map
+sweeps with golden audio and the card scripts (headless and Aurora, then the
+headless card loaded on Aurora), plus a Linux build in WSL when
+a distribution is installed; independent stages run at once, each logs to
+`build-ci/<stage>.log`. `--quick` leaves out the sweeps and card scripts.
 
 `ctest --test-dir build-pc-jp -LE slow` (build the test targets first, see
 the workflow): decoder and loader unit tests on synthetic data, plus, when the
@@ -106,10 +321,23 @@ Options:
   (`tests/port/golden/audio_<version>.json`, used by the ctest).
   `--update-golden` records the new hashes after an intended change.
 - `--no-bero`: warp to each map's origin instead (the game's debug map select).
+- `--every-bero`: one run per entrance of every map (`map@bero`, ~600).
+- `--battles`: one run per entry of every area's battle table (`area#N`, 407 on
+  JP), fought from a map of that area: `battle N` gives the entry to the
+  nearest NPC, as a script's `evt_npc_set_battle_info` does, then
+  `battle_sweep.txt` attacks a few turns. Every enemy formation, bosses
+  included.
+- `--party N`: every run with partner N (1 Goombella .. 7 Ms. Mowz; default 1).
+- `--story`: every map at every story value its scripts compare `GSW(0)` with,
+  and the one below (`map%NNN`, ~1700 runs; `$TTYD_STORY` sets it at the warp),
+  pressing A through the cutscenes they start (`story_sweep.txt`). Failures a
+  warp causes by skipping earlier maps' setup are listed in `WARP_ARTIFACTS`
+  and reported apart.
 - `--collect REGEX`: report matching output lines of every run (e.g.
   `'\[msg\] missing'`).
 
-Each run gets its own Aurora cache and card folder, and a 30 s watchdog.
+Each run gets its own card folder (and, on Aurora, its own cache), and a 30 s
+watchdog.
 
 ### Input scripts
 
@@ -118,10 +346,32 @@ drives controller 1, applied after the game's one `PADRead` (`DEMOPad.c`). With
 `TTYD_MAP` the script starts on the map and ends the run. Commands: `wait N`,
 `hold KEYS N`, `press KEYS` (keys `a b x y z l r start`, `left right up down`
 for the stick, `dleft`.. d-pad, `cleft`.. C-stick, joined with `+`),
-`stick X Y N`, `shot NAME`, `battle` (the nearest enemy NPC, through
-`evt_npc_battle_start`), `hp N`, `wait_seq N [MAX]`, `wait_map NAME [MAX]`,
+`stick X Y N`, `shot NAME`, `battle [N]` (the nearest enemy NPC, through
+`evt_npc_battle_start`; with N, or `$TTYD_BATTLE_SETUP`, entry N of the
+area's battle table on the nearest NPC), `hp N`, `wait_seq N [MAX]`, `wait_map NAME [MAX]`,
 `press_until_seq KEYS N [MAX]`, `press_until_map KEYS NAME [MAX]`, `pause MS`
 (`portPause` for MS of real time; `tests/port/input/pause.txt`), `end`.
+
+Real saves: `tools/port/gcmemcard.py` takes files out of raw GameCube memory
+card images (`.raw`, as Dolphin keeps them) as `.gci`, the port's card
+format (`tree RAW_DIR GCI_DIR --game G8MJ` for a whole folder);
+`tools/port/save_sweep.py EXE GCI_DIR --disc ISO` loads each save through
+the file menu on a fresh card and plays ~20 s (`save_sweep.txt`), reporting
+the map and story value it loaded into and any failure. A collection of
+speedrun practice saves (a point in every chapter, JP and US) lives,
+git-ignored, in `data/saves/` (`raw_*` the card images, `gci_*` extracted).
+
+For playing the story: `goto HIT` or `goto X Y Z` (Mario onto a hit object,
+e.g. an exit's zone or a trigger floor, or a position, as `evt_mario_set_pos`
+does), `press_until_control KEYS [MAX]` (press every 30 frames until Mario can
+be moved again for a second: cutscenes, messages and battles over),
+`press_until_story KEYS N [MAX]` (until the story counter reaches N), `save`
+(the open file, there and then, as a Save Block does: a checkpoint a later
+run resumes from with `load_file.txt`). `$TTYD_TRACE` logs each change of the
+story counter (`[trace] frame N: story S`). `tools/port/story_steps.py
+--from N --to M` lists, for each story value the scripts set, the script that
+sets it, what starts it (a map's init, an NPC, a hit object's case event, a
+battle's end) and the position checks it waits for: the scene's trigger.
 
 ## Audits
 
@@ -134,8 +384,12 @@ in the tree is fixed at once.
   `shorten-64-to-32` and `format`, instead of `-w`.
 - `tools/port/proto_audit.py`: prototypes (often local, MWCC-shaped) against
   their definitions, TARGET_PC-aware; also unprototyped `f()` declarations of
-  functions taking floats. Must report 0.
+  functions taking floats, and variadic/non-variadic mismatches. Must report 0.
 - `tools/port/gen_bedecode.py --check`: generated decoders match specs and headers.
+- `tools/port/linux_xcheck.py --out DIR [--arch x86_64|aarch64] [--version ...]`
+  (Windows, no Linux sysroot needed): compiles the headless build and the unit
+  tests for Linux against stand-in glibc headers, links with ld.lld (C library
+  unresolved) and checks the RELs' ELF sections.
 - Helpers: `implicit_fix.py` (declarations for implicit calls),
   `widen_evtword.py` (s32 locals that receive script words), `fncast_audit.py`
   / `fncast_fix.py` (calls through recast function pointers), `sjis_src.py`
@@ -154,6 +408,154 @@ Classes found so far, and what catches them:
 | Small enums (`#pragma enumsalwaysint off`) | `PORT_ENUM_BASE` on the enum headers |
 | Hardware timing the game relies on (ARQ callbacks after posting, empty wait loops) | `arq_defer_pc.c`, `PORT_SPIN` |
 | Unwritten SDK out-parameters | stub survey (`gx_state_pc.c`) |
+| Integer division by zero, which PowerPC computes (quotient 0, or -1 for a negative dividend; remainder the dividend) and x86-64 traps (`rand() % 0` in eff_stardust_n64, a pose step / 0 in the X-Naut platoon) | `map_sweep --battles` crashes; fixed for every site at once: the x86-64 exception handlers emulate the PowerPC result (`divzero_pc.c`), `$TTYD_TRACE` logs each site (`[divzero]`) |
+| Enums unsigned on the SysV ABIs (Linux, Apple, Android): without a negative enumerator an enum is `unsigned int` (MWCC, MSVC: `int`), which changes `<`, division, float conversion and widening to `EvtWord` | `PORT_ENUM_BASE(int)` on every game enum (a flag enum with `0x80000000` stays unsigned); Linux-vs-Windows warning diff (`-Wsign-compare`, `-Wsign-conversion`) |
+| MSVC-only leniencies hidden by the Windows build: a `static` definition after an `extern` declaration (a header's, or `<math.h>`'s `sinf`), one plain `inline` function name defined in several files (COMDAT on Windows: one body serves every file, even with another signature) | compiling and linking for Linux (`tools/port/linux_xcheck.py` on Windows) |
+| `extern inline` under `-fgnu89-inline`: no out-of-line copy, so a call the compiler does not inline (`-O0`, the Android debug build) is unresolved, or binds to a C library function of the same name (snd3d.c's approximate `sqrtf`) | `-O0` link (Android debug build); `grep -rn 'extern inline'` over PC-compiled code |
+| Variadic function called as non-variadic or the reverse (Apple arm64 passes variadic arguments on the stack); an undeclared call passing an f32 (sent as a double) | `proto_audit.py`; `-Werror=implicit-function-declaration`; `diag_census.py` over every version |
+
+## Android
+
+Status: **builds, not yet run**. On Windows, `libmain.so` (arm64-v8a, JP and
+US) links with no undefined symbols beyond the system libraries, and the Gradle
+build makes both debug APKs (`assembleJpDebug`, `assembleUsDebug`). No device
+or emulator was available, so the game on Android is unverified (x86_64
+emulators would need Dawn built from source, below). CI job: `android` in
+`.github/workflows/pc-port.yml` (manual, like the rest).
+
+### Building
+
+Needs: JDK 17; the Android SDK with platform 35, build-tools 35, NDK
+29.0.14206865 (the one Aurora's prebuilt Dawn was built with) and the SDK's
+CMake 3.31.6; Gradle 8.12 (the version built with; the Android Gradle plugin
+is 8.7.3); Python 3 on `PATH` (the CMake project runs
+`tools/port/*.py`); Rust (`rustup target add aarch64-linux-android`: Aurora
+builds its disc reader, nod, from source on Android); the `extern/aurora`
+submodule. The first build downloads SDL's source (Gradle task `prepareSdl`,
+the release Aurora pins), Dawn's arm64 package and nod's crates.
+
+```bash
+cd port/android
+gradle wrapper --gradle-version 8.12   # once; or run an installed gradle directly
+./gradlew assembleJpDebug              # G8MJ01; assembleUsDebug for G8ME01
+# -> app/build/outputs/apk/jp/debug/app-jp-debug.apk
+```
+
+- Gradle needs `ANDROID_HOME` (or `sdk.dir` in `port/android/local.properties`)
+  and `JAVA_HOME` set to JDK 17. A from-scratch build takes about 12 minutes
+  per flavor; debug builds compile the game at `-O0`.
+- The native library alone, for faster turnaround (`ninja -k 0` lists every
+  failing file at once):
+
+  ```bash
+  cmake -S . -B build-android-jp -G Ninja \
+    --toolchain "$ANDROID_HOME/ndk/29.0.14206865/build/cmake/android.toolchain.cmake" \
+    -DANDROID_ABI=arm64-v8a -DANDROID_PLATFORM=android-28 -DANDROID_STL=c++_static \
+    -DCMAKE_BUILD_TYPE=RelWithDebInfo -DTTYD_VERSION=G8MJ01 -DTTYD_BACKEND=aurora
+  ninja -C build-android-jp     # -> build-android-jp/libmain.so
+  ```
+
+  (Ninja: the SDK's `cmake/3.31.6/bin`.) Without `FETCHCONTENT_SOURCE_DIR_SDL`
+  Aurora downloads SDL itself.
+- Windows with rustup's `windows-gnu` toolchain: Cargo builds nod's build
+  scripts for that host, and rustc wants a `dlltool` on `PATH` for their import
+  libraries, which rustup does not ship. The CMake project then puts a copy of
+  the NDK's `llvm-dlltool` named `dlltool.exe` on `PATH` for Cargo
+  (`build*/rust-host-tools`). The `windows-msvc` toolchain needs nothing.
+
+- Flavors `jp`/`us` set `TTYD_VERSION` and the app id (`dev.ttyd.port.jp`,
+  `dev.ttyd.port.us`), so both install side by side. Release builds
+  (`assembleJpRelease`, optimized) are signed with the debug key, for
+  sideloading.
+- ABIs: `ttyd.abis` in `port/android/gradle.properties` (or `-Pttyd.abis=`),
+  default `arm64-v8a`. `x86_64` (Intel/AMD emulators) has no prebuilt Dawn:
+  Aurora builds Dawn from source for it (slow, untried). On an Apple-silicon
+  Mac the arm64 emulator images run the arm64 build.
+- `minSdk` 28: Dawn's prebuilt package links against API 28, and Dawn needs
+  Vulkan 1.1 (the manifest requires `android.hardware.vulkan.version` 1.1).
+
+### Installing and playing
+
+- `adb install -r app-jp-debug.apk` (or open the APK on the device and allow
+  installing from that source).
+- First start: the system file picker asks for the disc image (ISO, GCM, CISO,
+  GCZ, RVZ, WIA, ...). Put it in the device's local storage (e.g. Download):
+  the game reads the picked document through a file descriptor with random
+  access; documents from cloud providers can arrive as a stream that can't
+  seek and won't open. The choice is remembered (`disc.txt`, with a
+  persistable read grant). To pick another disc, clear the app's storage
+  (this deletes the saves too) or, on a debug build,
+  `adb shell run-as dev.ttyd.port.jp rm files/disc.txt`.
+- Saves (Aurora's memory card) and settings: the app's internal storage
+  (`SDL_GetPrefPath`). Moving `.gci` files in and out is not done yet.
+- Controls: any controller SDL supports (Bluetooth or USB); otherwise the
+  on-screen controls (below), which fade while a controller is in use and come
+  back when the screen is touched. Back does nothing (it is not "quit").
+- Debugging: everything the game prints goes to logcat with the tag `ttyd`
+  (`adb logcat -s ttyd SDL`). The switches of "Running" are read from
+  `env.txt` (`NAME=value` lines) in the app's external files folder:
+  `adb push env.txt /sdcard/Android/data/dev.ttyd.port.jp/files/`. A crash logs
+  the signal and a backtrace under `ttyd`, then the system writes its
+  tombstone (`ndk-stack -sym <folder of the unstripped libmain.so, under
+  app/build/intermediates/merged_native_libs/>` symbolizes it).
+
+### How it fits together
+
+- **Native library**: the same CMake project; with `ANDROID` the game is a
+  shared library `libmain.so` (SDL's activity loads it and calls `SDL_main`,
+  Aurora's `lib/main.cpp`, kept with `--undefined=SDL_main`). SDL3 is built
+  from source (Aurora requires it on Android) and linked statically
+  (`AURORA_SDL3_LINKAGE=static`); Dawn is Aurora's prebuilt
+  `dawn-android-aarch64`; nod is built with Corrosion/Cargo; libc++ static.
+- **RELs are static** (`TTYD_RELS_STATIC`, default on Android): one
+  `libmain.so`, no RELs to `dlopen` that would have to link against it, and no
+  reliance on bionic's `dlclose` really unloading a module to get fresh data.
+  On ELF each REL's data and bss go to sections `rel_<area>_data` /
+  `rel_<area>_bss` (`#pragma clang section`), bounded by the linker's
+  `__start_`/`__stop_` symbols, linked with `--whole-archive` and
+  `-z nostart-stop-gc`; a one-byte pad keeps the bounds defined for a REL
+  without data. The same scheme serves Linux with `-DTTYD_RELS_STATIC=ON`.
+- **Java** (`port/android/app/src/main/java/dev/ttyd/port/TtydActivity.java`):
+  `SDLActivity` with only `main` to load, Aurora's `AuroraSurface` (tells
+  Aurora when the surface exists), and a persistable grant for the picked
+  disc's `content://` URI (SDL's dialog doesn't take one). SDL's Java sources
+  are not in the repo: Gradle unpacks the SDL release Aurora pins, applies
+  Aurora's two SDL patches to it, compiles `org.libsdl.app` from it and hands
+  the same tree to CMake (`FETCHCONTENT_SOURCE_DIR_SDL`).
+- **Untagged heap**: arm64 Android 11+ tags the top byte of heap pointers,
+  which makes them negative as `intptr_t`. The port assumes plain user-space
+  addresses, as on the desktop (script words share one number line with the
+  negative variable ranges, sound-name words, pointer range checks), so the
+  manifest opts out (`allowNativeHeapPointerTagging="false"`).
+- **Game threads**: bionic has no `makecontext`/`swapcontext`, so on Android
+  `os_thread_pc.c` runs each game thread on a host thread with a baton (one
+  runs at a time), as on Apple and musl.
+- **Lifecycle**: when the activity pauses, SDL sends
+  `SDL_EVENT_WILL_ENTER_BACKGROUND` from its event pump on the game's thread
+  and then blocks there until resumed (`SDL_HINT_ANDROID_BLOCK_ON_PAUSE`); an
+  event watch (`port/android/native/android_pc.c`) calls `portPause` first and
+  `portResume` on `DID_ENTER_FOREGROUND`. SDL pauses its audio devices too.
+  Aurora releases the WebGPU surface while the window's surface is gone
+  (`AuroraSurface` → `set_surface_ready`, `is_presentable`) and creates a new
+  one (swapchain) on the first frame after it is back (`aurora_begin_frame` →
+  `webgpu::refresh_surface`), reporting `AURORA_PAUSED`/`UNPAUSED` meanwhile.
+- **Disc**: SDL's `SDL_IOFromFile("content://...")` opens the URI with
+  `ContentResolver.openFileDescriptor` and `fdopen`s it, so Aurora's nod
+  reader (`read_at` = seek + read on the `SDL_IOStream`) works as with a file,
+  as long as the provider gives a real, seekable file descriptor.
+- **Touch controls**: the shared overlay (`port/touch/touch_overlay.cpp`, iOS
+  section), on by default on Android.
+
+### Not done yet
+
+- A device run: everything above the CMake/LLVM checks is unverified.
+- x86_64 emulators (Dawn from source), and safe-area insets on notched screens.
+- Saving state when the system kills the app in the background between
+  saves; a suspend snapshot.
+- `.gci` import/export through the system file picker.
+- Quitting (`AURORA_EXIT`) calls `exit(0)` from the game's thread instead of
+  returning from `SDL_main`.
+- Touch layout editing, haptics on touch, per-game button hints.
 
 ## Decisions
 
@@ -331,6 +733,17 @@ layout equals the disc layout), `portSwap16/32/64Run`.
 - **Policy: the card keeps the GameCube image** (big-endian, GameCube `GlobalWork` layout, GameCube
   checksums), so `.gci` saves move between Dolphin/GameCube and the PC port. Aurora's CARD writes
   the file; the game keeps native structs.
+- **Headless CARD** (`port/src/headless/sdk/card_pc.c`): the CARD calls cardmgr makes, over the
+  same GCI folder as Aurora's (`extern/aurora/lib/dolphin/card.cpp`, `lib/card/CardGciFolder.cpp`):
+  `<user>/<JAP|USA>/Card A/01-<game>-mariost_save_file.gci`, the 0x40-byte big-endian directory
+  entry then the blocks, results and synchronous callbacks as Aurora's, so a headless save loads on
+  Aurora and the reverse. `<user>` is `$TTYD_USER_DIR`, else Aurora's default
+  (`SDL_GetPrefPath(NULL, "ttyd")`: `%APPDATA%\ttyd`, `~/Library/Application Support/ttyd`,
+  `$XDG_DATA_HOME/ttyd` or `~/.local/share/ttyd`). With no card there, slot A is an empty
+  formatted card whose folder is made on the first save (Aurora makes it at start), so runs that
+  never save write nothing; `map_sweep` gives every run a temporary folder anyway. Checked against
+  Aurora with the card scripts: the same steps and results, and `.gci` files that differ only in
+  the entry's modification time and the time stamps/counters the game saves (and their checksums).
 - `CardSaveSlot` on PC is a union of the native `data` with `u8[0x3FF0]`, so the slot stays 0x4000
   bytes with the trailer at 0x3FF0 and every card offset/size in cardmgr is the GameCube one.
 - `memcard_write`/`memcard_read` go through `portCardWriteImage` / `portCardReadBegin` +

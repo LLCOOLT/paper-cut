@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- No storage permissions: the disc image is picked through the Storage
+     Access Framework (SDL's file dialog); saves and settings live in the app's
+     internal storage. -->
+<!-- allowNativeHeapPointerTagging="false": arm64 Android 11+ puts a tag in
+     the top byte of heap pointers (negative as intptr_t); the port treats
+     pointers as plain numbers in places (script words next to the negative
+     variable ranges, sound-name words), so the heap gives untagged pointers,
+     as on the desktop. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    android:installLocation="auto">
+
+    <!-- Dawn renders with Vulkan 1.1 (0x00401000). -->
+    <uses-feature
+        android:name="android.hardware.vulkan.version"
+        android:version="0x00401000"
+        android:required="true" />
+    <uses-feature
+        android:name="android.hardware.touchscreen"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.gamepad"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.bluetooth"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.usb.host"
+        android:required="false" />
+    <!-- Android TV / Google TV -->
+    <uses-feature
+        android:name="android.software.leanback"
+        android:required="false" />
+
+    <!-- Rumble on the device itself when no controller is connected (Aurora). -->
+    <uses-permission android:name="android.permission.VIBRATE" />
+
+    <application
+        android:label="@string/app_name"
+        android:allowBackup="true"
+        android:appCategory="game"
+        android:isGame="true"
+        android:hardwareAccelerated="true"
+        android:allowNativeHeapPointerTagging="false"
+        android:theme="@android:style/Theme.Black.NoTitleBar.Fullscreen">
+
+        <activity
+            android:name=".TtydActivity"
+            android:exported="true"
+            android:label="@string/app_name"
+            android:screenOrientation="sensorLandscape"
+            android:launchMode="singleInstance"
+            android:alwaysRetainTaskState="true"
+            android:preferMinimalPostProcessing="true"
+            android:configChanges="layoutDirection|locale|grammaticalGender|fontScale|fontWeightAdjustment|orientation|uiMode|screenLayout|screenSize|smallestScreenSize|keyboard|keyboardHidden|navigation">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
+            </intent-filter>
+            <!-- Controllers plugged in over USB (SDL's HIDAPI) -->
+            <intent-filter>
+                <action android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED" />
+            </intent-filter>
+        </activity>
+
+        <!-- SDL hints (application meta-data, read by SDLActivity). Back is a
+             controller key, not "quit". -->
+        <meta-data
+            android:name="SDL_ENV.SDL_ANDROID_TRAP_BACK_BUTTON"
+            android:value="1" />
+    </application>
+</manifest>
