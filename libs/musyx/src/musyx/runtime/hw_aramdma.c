@@ -1,0 +1,648 @@
+#define MATH_NO_SQRTF 1
+#include "musyx/assert.h"
+#include "musyx/musyx.h"
+#include "musyx/hardware.h"
+#include "musyx/platform.h"
+
+typedef struct STREAM_BUFFER {
+  // total size: 0x10
+  struct STREAM_BUFFER* next; // offset 0x0, size 0x4
+  unsigned long aram;         // offset 0x4, size 0x4
+  unsigned long length;       // offset 0x8, size 0x4
+  unsigned long allocLength;  // offset 0xC, size 0x4
+} STREAM_BUFFER;
+
+#if MUSY_TARGET == MUSY_TARGET_DOLPHIN
+#include <dolphin/ar.h>
+#include <dolphin/arq.h>
+#include <dolphin/os.h>
+
+typedef struct ARAMTransferJob {
+  // total size: 0x28
+  ARQRequest arq;                  // offset 0x0, size 0x20
+  void (*callback)(u32); // offset 0x20, size 0x4
+  unsigned long user;              // offset 0x24, size 0x4
+} ARAMTransferJob;
+
+typedef struct ARAMTransferQueue {
+  // total size: 0x284
+  ARAMTransferJob queue[16]; // offset 0x0, size 0x280
+  vu8 write;                 // offset 0x280, size 0x1
+  vu8 valid;                 // offset 0x281, size 0x1
+} ARAMTransferQueue;
+
+static u32 aramTop;                                               // size: 0x4
+static u32 aramWrite;                                             // size: 0x4
+static u32 aramStream;                                            // size: 0x4
+static void* (*aramUploadCallback)(u32, u32); // size: 0x4
+static u32 aramUploadChunkSize;                                   // size: 0x4
+
+static ARAMTransferQueue aramQueueLo;
+static ARAMTransferQueue aramQueueHi;
+
+static STREAM_BUFFER aramStreamBuffers[64];
+static STREAM_BUFFER* aramUsedStreamBuffers;
+static STREAM_BUFFER* aramFreeStreamBuffers;
+static STREAM_BUFFER* aramIdleStreamBuffers;
+
+static void InitStreamBuffers();
+
+static void aramQueueInit() {
+  aramQueueLo.write = aramQueueLo.valid = 0;
+  aramQueueHi.write = aramQueueHi.valid = 0;
+}
+
+static void aramQueueCallback(unsigned long ptr) {
+  u32 i;                        // r31
+  ARQRequest* arq;              // r29
+  ARAMTransferQueue* aramQueue; // r30
+
+  arq = (ARQRequest*)ptr;
+  if (arq->priority == 1) {
+    aramQueue = &aramQueueHi;
+  } else {
+    aramQueue = &aramQueueLo;
+  }
+
+  for (i = 0; i < 16; ++i) {
+    if (arq == &aramQueue->queue[i].arq && aramQueue->queue[i].callback) {
+      aramQueue->queue[i].callback(aramQueue->queue[i].user);
+    }
+  }
+
+  --aramQueue->valid;
+}
+
+void aramUploadData(void* mram, unsigned long aram, unsigned long len, unsigned long highPrio,
+                    void (*callback)(unsigned long), unsigned long user) {
+  ARAMTransferQueue* aramQueue; // r31
+  int old;                      // r30
+
+  aramQueue = highPrio != 0 ? &aramQueueHi : &aramQueueLo;
+
+  for (;;) {
+    old = OSDisableInterrupts();
+    if (aramQueue->valid < 16) {
+      aramQueue->queue[aramQueue->write].arq.owner = 42;
+      aramQueue->queue[aramQueue->write].arq.type = 0;
+      aramQueue->queue[aramQueue->write].arq.priority = highPrio != 0 ? 1 : 0;
+      aramQueue->queue[aramQueue->write].arq.source = (u32)mram;
+      aramQueue->queue[aramQueue->write].arq.dest = aram;
+      aramQueue->queue[aramQueue->write].arq.length = len;
+      aramQueue->queue[aramQueue->write].arq.callback = aramQueueCallback;
+      aramQueue->queue[aramQueue->write].callback = callback;
+      aramQueue->queue[aramQueue->write].user = user;
+      ARQPostRequest(&aramQueue->queue[aramQueue->write].arq,
+                     aramQueue->queue[aramQueue->write].arq.owner,
+                     aramQueue->queue[aramQueue->write].arq.type,
+                     aramQueue->queue[aramQueue->write].arq.priority,
+                     aramQueue->queue[aramQueue->write].arq.source,
+                     aramQueue->queue[aramQueue->write].arq.dest,
+                     aramQueue->queue[aramQueue->write].arq.length,
+                     aramQueue->queue[aramQueue->write].arq.callback);
+      ++aramQueue->valid;
+      aramQueue->write = (aramQueue->write + 1) % 16;
+      OSRestoreInterrupts(old);
+      return;
+    }
+    OSRestoreInterrupts(old);
+  }
+}
+
+void aramSyncTransferQueue() {
+  while (aramQueueLo.valid != 0) {
+  }
+}
+
+void aramInit(unsigned long length) {
+  signed short* tmpMem;   // r30
+  unsigned long i;        // r29
+  unsigned long aramBase; // r28
+#line 173
+  MUSY_ASSERT_MSG(length > sizeof(s16) * 640, "ARAM size is too small");
+
+  aramBase = ARGetBaseAddress();
+
+#if MUSY_VERSION >= MUSY_VERSION_CHECK(2, 0, 3)
+  tmpMem = (s16*)salMallocPhysical(sizeof(s16) * 640);
+#else
+  tmpMem = (s16*)salMalloc(sizeof(s16) * 640);
+#endif
+#line 182
+  MUSY_ASSERT_MSG(tmpMem != NULL, "Could not allocate temporary storage");
+
+  for (i = 0; i < 640; ++i) {
+    tmpMem[i] = 0;
+  }
+
+  DCFlushRange(tmpMem, sizeof(s16) * 640);
+  aramQueueInit();
+  aramUploadData(tmpMem, aramBase, sizeof(s16) * 640, 0, NULL, 0);
+  aramSyncTransferQueue();
+  salFree(tmpMem);
+  aramTop = aramBase + length;
+  if (aramTop > ARGetSize()) {
+    aramTop = ARGetSize();
+  }
+
+#if MUSY_VERSION < MUSY_VERSION_CHECK(2, 0, 2)
+  aramWrite = aramBase + sizeof(s16) * 640;
+#endif
+  aramUploadCallback = NULL;
+  InitStreamBuffers();
+  MUSY_DEBUG("MusyX ARAM handler initialized\n");
+}
+
+void aramExit() {}
+
+unsigned long aramGetZeroBuffer() { return ARGetBaseAddress(); }
+
+#if MUSY_VERSION >= MUSY_VERSION_CHECK(2, 0, 1)
+unsigned long aramGetFirstUserAddress() { return ARGetBaseAddress() + sizeof(s16) * 640; }
+
+unsigned long aramGetUserBytes(unsigned long len) { return len - sizeof(s16) * 640; }
+#endif
+
+void aramSetUploadCallback(void* (*callback)(unsigned long, unsigned long),
+                           unsigned long chunckSize) {
+  unsigned long acs; // r30
+
+  if (callback != NULL) {
+    chunckSize = (chunckSize + 31) & ~31;
+    acs = ARQGetChunkSize();
+    aramUploadChunkSize = chunckSize < acs ? acs : chunckSize;
+  }
+
+  aramUploadCallback = callback;
+}
+
+#if MUSY_VERSION >= MUSY_VERSION_CHECK(2, 0, 2)
+void* aramStoreData(void* src, unsigned long len, ARAMInfo* info) {
+  unsigned long addr;
+  void* buffer;
+  unsigned long blkSize;
+  len = (len + 31) & ~31;
+  if (info->aramBase == aramGetFirstUserAddress()) {
+    if (info->aramWrite + len > aramStream) {
+      return NULL;
+    }
+  } else if (info->aramWrite + len > info->aramTop) {
+    return NULL;
+  }
+
+  addr = info->aramWrite;
+  if (aramUploadCallback == NULL) {
+    DCFlushRange(src, len);
+    aramUploadData(src, info->aramWrite, len, 0, NULL, 0);
+    info->aramWrite += len;
+    return (void*)addr;
+  }
+
+  while (len != 0) {
+    while (aramQueueLo.valid != 0) {
+    }
+    blkSize = len >= aramUploadChunkSize ? aramUploadChunkSize : len;
+    buffer = (void*)aramUploadCallback((u32)src, blkSize);
+    DCFlushRange(buffer, blkSize);
+    aramUploadData(buffer, info->aramWrite, blkSize, 0, NULL, 0);
+    len -= blkSize;
+    info->aramWrite += blkSize;
+    src = (void*)((u32)src + blkSize);
+  }
+
+  return (void*)addr;
+}
+#else
+void* aramStoreData(void* src, unsigned long len) {
+  unsigned long addr;    // r26
+  void* buffer;          // r27
+  unsigned long blkSize; // r30
+  len = (len + 31) & ~31;
+#line 266
+  MUSY_ASSERT_MSG(aramWrite + len <= aramStream, "Data will not fit in remaining ARAM space");
+  addr = aramWrite;
+  if (aramUploadCallback == NULL) {
+#line 276
+    MUSY_ASSERT_MSG(!((u32)src & 31), "MRAM address is not aligned properly");
+    DCFlushRange(src, len);
+    aramUploadData(src, aramWrite, len, 0, NULL, 0);
+    aramWrite += len;
+    return (void*)addr;
+  }
+
+  while (len != 0) {
+    blkSize = len >= aramUploadChunkSize ? aramUploadChunkSize : len;
+    buffer = (void*)aramUploadCallback((u32)src, blkSize);
+#line 297
+    MUSY_ASSERT_MSG(!((u32)buffer & 31), "MRAM address is not aligned properly");
+    DCFlushRange(buffer, blkSize);
+    aramUploadData(buffer, aramWrite, blkSize, 0, NULL, 0);
+    len -= blkSize;
+    aramWrite += blkSize;
+    src = (void*)((u32)src + blkSize);
+  }
+
+  return (void*)addr;
+}
+#endif
+
+#if MUSY_VERSION >= MUSY_VERSION_CHECK(2, 0, 2)
+void aramRemoveData(void* aram, unsigned long len, ARAMInfo* info) {
+  len = (len + 31) & ~31;
+  info->aramWrite -= len;
+#else
+void aramRemoveData(void* aram, unsigned long len) {
+  len = (len + 31) & ~31;
+  aramWrite -= len;
+#endif
+#line 328
+  MUSY_ASSERT_MSG((u32)aram == aramWrite,
+                  "Current ARAM address does not match originally allocated one");
+}
+
+static void InitStreamBuffers() {
+  unsigned long i; // r31
+  aramUsedStreamBuffers = NULL;
+  aramFreeStreamBuffers = NULL;
+  aramIdleStreamBuffers = aramStreamBuffers;
+  for (i = 1; i < 64; ++i) {
+    aramStreamBuffers[i - 1].next = &aramStreamBuffers[i];
+  }
+  aramStreamBuffers[i - 1].next = NULL;
+  aramStream = aramTop;
+}
+
+unsigned char aramAllocateStreamBuffer(unsigned long len) {
+  STREAM_BUFFER* sb;     // r30
+  STREAM_BUFFER* oSb;    // r31
+  STREAM_BUFFER* lastSb; // r28
+  u32 minLen;            // r27
+
+  len = (len + 31) & ~31;
+  lastSb = oSb = NULL;
+  minLen = -1;
+
+  for (sb = aramFreeStreamBuffers; sb != NULL; sb = sb->next) {
+    if (sb->allocLength == len) {
+      oSb = sb;
+      break;
+    }
+
+    if (sb->allocLength > len && minLen > sb->allocLength) {
+      oSb = sb;
+      minLen = sb->allocLength;
+    }
+    lastSb = sb;
+  }
+
+  if (oSb == NULL) {
+#if MUSY_VERSION >= MUSY_VERSION_CHECK(2, 0, 2)
+    if (aramIdleStreamBuffers != NULL && aramStream - len >= dataARAMDefaultGetInfo()->aramWrite) {
+#else
+    if (aramIdleStreamBuffers != NULL && aramStream - len >= aramWrite) {
+#endif
+      oSb = aramIdleStreamBuffers;
+      aramIdleStreamBuffers = oSb->next;
+      oSb->allocLength = len;
+      oSb->length = len;
+      aramStream -= len;
+      oSb->aram = aramStream;
+      oSb->next = aramUsedStreamBuffers;
+      aramUsedStreamBuffers = oSb;
+    }
+  } else {
+    if (lastSb != NULL) {
+      lastSb->next = oSb->next;
+    } else {
+      aramFreeStreamBuffers = oSb->next;
+    }
+
+    oSb->length = len;
+    oSb->next = aramUsedStreamBuffers;
+    aramUsedStreamBuffers = oSb;
+  }
+
+  if (oSb == NULL) {
+    MUSY_DEBUG("No stream buffer slots available or ARAM.\n\n");
+    return 0xFF;
+  }
+
+  return (oSb - aramStreamBuffers);
+}
+
+unsigned long aramGetStreamBufferAddress(unsigned char id, unsigned long* len) {
+#line 467
+  MUSY_ASSERT_MSG(id != 0xFF, "Stream buffer ID is invalid");
+
+  if (len != NULL) {
+    *len = aramStreamBuffers[id].length;
+  }
+
+  return aramStreamBuffers[id].aram;
+}
+
+void aramFreeStreamBuffer(unsigned char id) {
+  struct STREAM_BUFFER* fSb;    // r30
+  struct STREAM_BUFFER* sb;     // r31
+  struct STREAM_BUFFER* lastSb; // r29
+  struct STREAM_BUFFER* nextSb; // r27
+  unsigned long minAddr;        // r28
+
+  MUSY_ASSERT_MSG(id != 0xFF, "Stream buffer ID is invalid");
+  fSb = &aramStreamBuffers[id];
+  lastSb = NULL;
+  sb = aramUsedStreamBuffers;
+
+  while (sb != NULL) {
+    if (sb == fSb) {
+      if (lastSb != NULL) {
+        lastSb->next = fSb->next;
+      } else {
+        aramUsedStreamBuffers = fSb->next;
+      }
+      break;
+    } else {
+      lastSb = sb;
+      sb = sb->next;
+    }
+  }
+
+  if (fSb->aram == aramStream) {
+    fSb->next = aramIdleStreamBuffers;
+    aramIdleStreamBuffers = fSb;
+    minAddr = -1;
+    sb = aramUsedStreamBuffers;
+    while (sb != NULL) {
+      if (sb->aram <= minAddr) {
+        minAddr = sb->aram;
+      }
+      sb = sb->next;
+    }
+
+    lastSb = NULL;
+    sb = aramFreeStreamBuffers;
+    while (sb != NULL) {
+      nextSb = sb->next;
+      if (sb->aram < minAddr) {
+        if (lastSb != NULL) {
+          lastSb->next = sb->next;
+        } else {
+          aramFreeStreamBuffers = sb->next;
+        }
+
+        sb->next = aramIdleStreamBuffers;
+        aramIdleStreamBuffers = sb;
+      }
+      sb = nextSb;
+    }
+
+    aramStream = minAddr != -1 ? minAddr : aramTop;
+    return;
+  }
+  fSb->next = aramFreeStreamBuffers;
+  aramFreeStreamBuffers = fSb;
+}
+
+#elif MUSY_TARGET == MUSY_TARGET_PC
+/*
+ * PC: ARAM is a host buffer owned by the port (portAramPtr maps an ARAM address to it).
+ * Transfers are synchronous copies, so the transfer queue is always empty and callbacks
+ * run before aramUploadData returns. Address bookkeeping follows the Dolphin version.
+ */
+#include <string.h>
+
+u8* portAramPtr(u32 aramAddr);
+u32 ARGetSize(void);
+
+#define ARAM_ZERO_BYTES (sizeof(s16) * 640)
+/* Same as ARGetBaseAddress() on the GameCube: the OS reserves the first 16 KiB. */
+#define ARAM_BASE 0x4000
+
+static u32 aramTop;
+static u32 aramStream;
+static void* (*aramUploadCallback)(u32, u32);
+static u32 aramUploadChunkSize;
+
+static STREAM_BUFFER aramStreamBuffers[64];
+static STREAM_BUFFER* aramUsedStreamBuffers;
+static STREAM_BUFFER* aramFreeStreamBuffers;
+static STREAM_BUFFER* aramIdleStreamBuffers;
+
+static void InitStreamBuffers();
+
+void aramUploadData(void* mram, u32 aram, u32 len, u32 highPrio, void (*callback)(size_t),
+                    u32 user) {
+  u8* dst = portAramPtr(aram);
+  if (dst != NULL && mram != NULL) {
+    memcpy(dst, mram, len);
+  }
+  if (callback != NULL) {
+    callback(user);
+  }
+}
+
+void aramSyncTransferQueue() {}
+
+/* Start of the stream-buffer area (top of ARAM, grows down). Sample data below it
+ * comes from .samp files and is big-endian; stream buffers are filled from native
+ * host buffers (sndStream PCM16), so the mixer reads PCM16 natively above this. */
+u32 aramPcStreamBase(void) { return aramStream != 0 ? aramStream : 0xFFFFFFFF; }
+
+void aramInit(u32 length) {
+  MUSY_ASSERT_MSG(length > ARAM_ZERO_BYTES, "ARAM size is too small");
+  memset(portAramPtr(ARAM_BASE), 0, ARAM_ZERO_BYTES);
+  aramTop = ARAM_BASE + length;
+  if (aramTop > ARGetSize()) {
+    aramTop = ARGetSize();
+  }
+  aramUploadCallback = NULL;
+  InitStreamBuffers();
+  MUSY_DEBUG("MusyX ARAM handler initialized\n");
+}
+
+void aramExit() {}
+
+unsigned long aramGetZeroBuffer() { return ARAM_BASE; }
+
+u32 aramGetFirstUserAddress() { return ARAM_BASE + ARAM_ZERO_BYTES; }
+
+u32 aramGetUserBytes(u32 len) { return len - ARAM_ZERO_BYTES; }
+
+void aramSetUploadCallback(void* (*callback)(u32, u32), u32 chunckSize) {
+  if (callback != NULL) {
+    chunckSize = (chunckSize + 31) & ~31;
+    aramUploadChunkSize = chunckSize < 32 ? 32 : chunckSize;
+  }
+  aramUploadCallback = callback;
+}
+
+void* aramStoreData(void* src, u32 len, ARAMInfo* info) {
+  u32 addr;
+  void* buffer;
+  u32 blkSize;
+  u32 srcOff;
+  len = (len + 31) & ~31;
+  if (info->aramBase == aramGetFirstUserAddress()) {
+    if (info->aramWrite + len > aramStream) {
+      return NULL;
+    }
+  } else if (info->aramWrite + len > info->aramTop) {
+    return NULL;
+  }
+
+  addr = info->aramWrite;
+  if (aramUploadCallback == NULL) {
+    aramUploadData(src, info->aramWrite, len, 0, NULL, 0);
+    info->aramWrite += len;
+    return (void*)(size_t)addr;
+  }
+
+  /* With an upload callback, src is an offset into the sample data the callback reads. */
+  srcOff = (u32)(size_t)src;
+  while (len != 0) {
+    blkSize = len >= aramUploadChunkSize ? aramUploadChunkSize : len;
+    buffer = aramUploadCallback(srcOff, blkSize);
+    aramUploadData(buffer, info->aramWrite, blkSize, 0, NULL, 0);
+    len -= blkSize;
+    info->aramWrite += blkSize;
+    srcOff += blkSize;
+  }
+
+  return (void*)(size_t)addr;
+}
+
+void aramRemoveData(void* aram, u32 len, ARAMInfo* info) {
+  len = (len + 31) & ~31;
+  info->aramWrite -= len;
+  MUSY_ASSERT_MSG((u32)(size_t)aram == info->aramWrite,
+                  "Current ARAM address does not match originally allocated one");
+}
+
+static void InitStreamBuffers() {
+  u32 i;
+  aramUsedStreamBuffers = NULL;
+  aramFreeStreamBuffers = NULL;
+  aramIdleStreamBuffers = aramStreamBuffers;
+  for (i = 1; i < 64; ++i) {
+    aramStreamBuffers[i - 1].next = &aramStreamBuffers[i];
+  }
+  aramStreamBuffers[i - 1].next = NULL;
+  aramStream = aramTop;
+}
+
+u8 aramAllocateStreamBuffer(u32 len) {
+  STREAM_BUFFER* sb;
+  STREAM_BUFFER* oSb;
+  STREAM_BUFFER* lastSb;
+  u32 minLen;
+
+  len = (len + 31) & ~31;
+  lastSb = oSb = NULL;
+  minLen = (u32)-1;
+
+  for (sb = aramFreeStreamBuffers; sb != NULL; sb = sb->next) {
+    if (sb->allocLength == len) {
+      oSb = sb;
+      break;
+    }
+    if (sb->allocLength > len && minLen > sb->allocLength) {
+      oSb = sb;
+      minLen = sb->allocLength;
+    }
+    lastSb = sb;
+  }
+
+  if (oSb == NULL) {
+    if (aramIdleStreamBuffers != NULL && aramStream - len >= dataARAMDefaultGetInfo()->aramWrite) {
+      oSb = aramIdleStreamBuffers;
+      aramIdleStreamBuffers = oSb->next;
+      oSb->allocLength = len;
+      oSb->length = len;
+      aramStream -= len;
+      oSb->aram = aramStream;
+      oSb->next = aramUsedStreamBuffers;
+      aramUsedStreamBuffers = oSb;
+    }
+  } else {
+    if (lastSb != NULL) {
+      lastSb->next = oSb->next;
+    } else {
+      aramFreeStreamBuffers = oSb->next;
+    }
+    oSb->length = len;
+    oSb->next = aramUsedStreamBuffers;
+    aramUsedStreamBuffers = oSb;
+  }
+
+  if (oSb == NULL) {
+    MUSY_DEBUG("No stream buffer slots available or ARAM.\n\n");
+    return 0xFF;
+  }
+  return (u8)(oSb - aramStreamBuffers);
+}
+
+size_t aramGetStreamBufferAddress(u8 id, size_t* len) {
+  MUSY_ASSERT_MSG(id != 0xFF, "Stream buffer ID is invalid");
+  if (len != NULL) {
+    *len = aramStreamBuffers[id].length;
+  }
+  return aramStreamBuffers[id].aram;
+}
+
+void aramFreeStreamBuffer(u8 id) {
+  STREAM_BUFFER* fSb;
+  STREAM_BUFFER* sb;
+  STREAM_BUFFER* lastSb;
+  STREAM_BUFFER* nextSb;
+  u32 minAddr;
+
+  MUSY_ASSERT_MSG(id != 0xFF, "Stream buffer ID is invalid");
+  fSb = &aramStreamBuffers[id];
+  lastSb = NULL;
+  sb = aramUsedStreamBuffers;
+  while (sb != NULL) {
+    if (sb == fSb) {
+      if (lastSb != NULL) {
+        lastSb->next = fSb->next;
+      } else {
+        aramUsedStreamBuffers = fSb->next;
+      }
+      break;
+    }
+    lastSb = sb;
+    sb = sb->next;
+  }
+
+  if (fSb->aram == aramStream) {
+    fSb->next = aramIdleStreamBuffers;
+    aramIdleStreamBuffers = fSb;
+    minAddr = (u32)-1;
+    for (sb = aramUsedStreamBuffers; sb != NULL; sb = sb->next) {
+      if (sb->aram <= minAddr) {
+        minAddr = sb->aram;
+      }
+    }
+    lastSb = NULL;
+    sb = aramFreeStreamBuffers;
+    while (sb != NULL) {
+      nextSb = sb->next;
+      if (sb->aram < minAddr) {
+        if (lastSb != NULL) {
+          lastSb->next = sb->next;
+        } else {
+          aramFreeStreamBuffers = sb->next;
+        }
+        sb->next = aramIdleStreamBuffers;
+        aramIdleStreamBuffers = sb;
+      } else {
+        lastSb = sb;
+      }
+      sb = nextSb;
+    }
+    aramStream = minAddr != (u32)-1 ? minAddr : aramTop;
+    return;
+  }
+  fSb->next = aramFreeStreamBuffers;
+  aramFreeStreamBuffers = fSb;
+}
+#endif

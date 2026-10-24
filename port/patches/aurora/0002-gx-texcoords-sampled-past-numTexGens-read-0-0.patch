@@ -1,0 +1,33 @@
+From a6fc898b4190ca43e9a3b9f5caf73c7badb163d9 Mon Sep 17 00:00:00 2001
+From: LLCOOLT <114613597+LLCOOLT@users.noreply.github.com>
+Date: Sat, 24 Oct 2026 10:34:19 -0400
+Subject: [PATCH 2/3] gx: texcoords sampled past numTexGens read (0, 0)
+
+A TEV stage may sample a texcoord the game never generated; the hardware
+(and Dolphin) give zero coordinates. Aurora aborted on the unset texgen,
+and cached the pipeline first, so every later run aborted at startup.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ lib/gx/shader.cpp | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/lib/gx/shader.cpp b/lib/gx/shader.cpp
+index 2d10095..319aa99 100644
+--- a/lib/gx/shader.cpp
++++ b/lib/gx/shader.cpp
+@@ -1213,6 +1213,14 @@ std::string build_shader_source(const ShaderConfig& config, DstAlphaMode dstAlph
+       vtxXfrAttrs += fmt::format("\n    var tc{} = vec4f({}, 1.0);", i, nbt_slice_local(NbtSlice::B));
+     } else if (tcg.src == GX_TG_TANGENT) {
+       vtxXfrAttrs += fmt::format("\n    var tc{} = vec4f({}, 1.0);", i, nbt_slice_local(NbtSlice::T));
++    } else if (tcg.src == GX_MAX_TEXGENSRC) {
++      // A TEV stage samples a texcoord at or beyond numTexGens: the hardware gives (0, 0), as Dolphin does.
++      static bool warned = false;
++      if (!warned) {
++        warned = true;
++        Log.warn("texcoord {} sampled but not generated (numTexGens too low): using (0, 0)", i);
++      }
++      vtxXfrAttrs += fmt::format("\n    var tc{} = vec4f(0.0, 0.0, 1.0, 1.0);", i);
+     } else
+       UNLIKELY FATAL("unhandled tcg src {}", underlying(tcg.src));
+     if (tcg.type == GX_TG_MTX2x4 || tcg.type == GX_TG_MTX3x4) {

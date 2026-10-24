@@ -1,0 +1,29 @@
+# TTYD_MAP=gor_01: walk to the plaza's Save Block, hit it and save to file 1.
+# The first hit plays a multi-page tutorial; A advances it, picks "yes" (the
+# default) at the save prompt and closes the messages afterwards.
+wait 60
+hold right 90
+hold up 45
+press a                  # jump: hit the Save Block
+wait 300
+press a
+wait 200
+press a
+wait 200
+press a
+wait 200
+shot b1_prompt
+press a
+wait 200
+press a
+wait 300
+shot b2_saving
+press a
+wait 400
+shot b3_saved
+press a
+wait 200
+press a
+wait 200
+shot b4_done
+end

@@ -1,0 +1,688 @@
+#include "battle/battle_unit.h"
+#include "evt/evt_cmd.h"
+#include "battle/battle_event_default.h"
+#include "battle/battle_event_cmd.h"
+#include "battle/battle_camera.h"
+#include "battle/battle_event_subset.h"
+#include "battle/battle_weapon_power.h"
+#include "evt/evt_eff.h"
+#include "evt/evt_sub.h"
+#include "party/party_motion.h"
+#include "unit/party/unit_party_vivian.h"
+#include "battle/battle_database_common.h"
+
+#pragma force_active on
+
+USER_FUNC(btlevtcmd_AnimeChangePose);
+USER_FUNC(btlevtcmd_AnimeChangePoseFromTable);
+USER_FUNC(btlevtcmd_AnimeChangePoseType);
+USER_FUNC(btlevtcmd_CheckDamageCode);
+USER_FUNC(btlevtcmd_CheckPhase);
+USER_FUNC(btlevtcmd_DrawLots);
+USER_FUNC(btlevtcmd_EnemyItemUseCheck);
+USER_FUNC(btlevtcmd_GetHomePos);
+USER_FUNC(btlevtcmd_GetPos);
+USER_FUNC(btlevtcmd_GetUnitWork);
+USER_FUNC(btlevtcmd_MovePosition);
+USER_FUNC(btlevtcmd_ResetFaceDirection);
+USER_FUNC(btlevtcmd_SetEventAttack);
+USER_FUNC(btlevtcmd_SetEventConfusion);
+USER_FUNC(btlevtcmd_SetEventDamage);
+USER_FUNC(btlevtcmd_SetEventPhase);
+USER_FUNC(btlevtcmd_SetEventWait);
+USER_FUNC(btlevtcmd_SetHomePos);
+USER_FUNC(btlevtcmd_SetMoveSpeed);
+USER_FUNC(btlevtcmd_SetStayPose);
+USER_FUNC(btlevtcmd_SetTalkPose);
+USER_FUNC(btlevtcmd_SetUnitWork);
+USER_FUNC(btlevtcmd_SortPhaseMoveTable);
+USER_FUNC(btlevtcmd_StartWaitEvent);
+USER_FUNC(btlevtcmd_StatusWindowOnOff);
+USER_FUNC(btlevtcmd_WaitAttackEnd);
+USER_FUNC(evt_btl_camera_set_mode);
+USER_FUNC(evt_msg_print);
+extern EvtWord btl_marilyn_zoom[];
+extern EvtWord majo3_shadow_tail_event[];
+extern EvtWord majo_unison_phase_event[];
+
+f32 fd_boss_marilyn_las_negone_one_374[2] __attribute__((aligned(8)));
+f32 fd_boss_marilyn_las_neg_one_382;
+f32 fd_boss_marilyn_las___local_PI_383;
+f32 fd_boss_marilyn_las___local_3PIO2_385;
+f32 fd_boss_marilyn_las_one_negone_373[2] __attribute__((aligned(8)));
+f32 fd_boss_marilyn_las___local_PIO2_384;
+f32 fd_boss_marilyn_las_one_381;
+f32 fd_boss_marilyn_las_negone_one_360[2] __attribute__((aligned(8)));
+f32 fd_boss_marilyn_las_neg_one_365;
+f32 fd_boss_marilyn_las___local_PI_366;
+f32 fd_boss_marilyn_las___local_3PIO2_368;
+f32 fd_boss_marilyn_las_one_negone_359[2] __attribute__((aligned(8)));
+f32 fd_boss_marilyn_las___local_PIO2_367;
+f32 fd_boss_marilyn_las_one_364;
+BattleUnitKind unit_boss_marilyn_las;
+static BattleUnitDefense defence;
+static BattleUnitDefenseAttr defence_attr;
+static StatusVulnerability regist;
+static PoseTableEntry pose_table[18];
+static BattleDataEntry data_table[2];
+static BattleUnitKindPart parts[1];
+static BattleWeapon weapon_marilyn_kagenuke_attack1;
+static BattleWeapon weapon_marilyn_thunder_attack1;
+static BattleWeapon weapon_marilyn_charge1;
+static EvtWord marilyn_down[19];
+static EvtWord marilyn_up[27];
+static EvtWord init_event[37];
+static EvtWord damage_event[22];
+static EvtWord dead_event[152];
+static EvtWord unison_phase_event[83];
+static EvtWord phase_event[2];
+static EvtWord attack_event[93];
+#ifdef VERSION_G8ME01
+static EvtWord kagenuke_attack_event[241];
+#else
+static EvtWord kagenuke_attack_event[238];
+#endif
+static EvtWord thunder_attack_event[235];
+static EvtWord charge_attack_event[58];
+#ifdef VERSION_G8ME01
+static EvtWord wait_event[7];
+#else
+static EvtWord wait_event[6];
+#endif
+
+f32 fd_boss_marilyn_las_negone_one_374[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
+
+f32 fd_boss_marilyn_las_neg_one_382 = -1.0f;
+
+f32 fd_boss_marilyn_las___local_PI_383 = 3.1415927f;
+
+f32 fd_boss_marilyn_las___local_3PIO2_385 = 4.712389f;
+
+f32 fd_boss_marilyn_las_one_negone_373[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
+
+f32 fd_boss_marilyn_las___local_PIO2_384 = 1.5707964f;
+
+f32 fd_boss_marilyn_las_one_381 = 1.0f;
+
+f32 fd_boss_marilyn_las_negone_one_360[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
+
+f32 fd_boss_marilyn_las_neg_one_365 = -1.0f;
+
+f32 fd_boss_marilyn_las___local_PI_366 = 3.1415927f;
+
+f32 fd_boss_marilyn_las___local_3PIO2_368 = 4.712389f;
+
+f32 fd_boss_marilyn_las_one_negone_359[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
+
+f32 fd_boss_marilyn_las___local_PIO2_367 = 1.5707964f;
+
+f32 fd_boss_marilyn_las_one_364 = 1.0f;
+
+BattleUnitKind unit_boss_marilyn_las = {
+    134,
+    "btl_un_marilyn4",
+    40,
+    0,
+    1,
+    1,
+    57,
+    0,
+    0,
+    100,
+    0,
+    50,
+    7,
+    40,
+    54,
+    0,
+    54,
+    0.0f,
+    27.0f,
+    0.0f,
+    0,
+    0,
+    6.0f,
+    24.0f,
+    0.0f,
+    20.0f,
+    0.0f,
+    -10.0f,
+    0.0f,
+    0.0f,
+    0.0f,
+    0.0f,
+    0.0f,
+    20.0f,
+    0.0f,
+    0.0f,
+    16.0f,
+    35.1f,
+    0.0f,
+    0.0f,
+    27.0f,
+    0.0f,
+    40.0f,
+    54.0f,
+    0,
+    0,
+    0,
+    2,
+    100,
+    20,
+    0.0f,
+    0.0f,
+    0.0f,
+    "SFX_BOSS_MARI_DAMAGED1",
+    "SFX_BTL_DAMAGE_FIRE1",
+    "SFX_BTL_DAMAGE_ICE1",
+    "SFX_BTL_DAMAGE_BIRIBIRI1",
+    0,
+    &regist,
+    1,
+    parts,
+    init_event,
+    data_table,
+};
+
+static BattleUnitDefense defence = {{0, 0, 0, 0, 0}};
+
+static BattleUnitDefenseAttr defence_attr = {{0, 0, 0, 0, 0}};
+
+static StatusVulnerability regist = {50, 50, 50, 100, 50, 100, 100, 40, 100, 60, 100, 60, 100, 80, 40, 0, 0, 100, 40, 100, 100, 5};
+
+static PoseTableEntry pose_table[] = {
+    {1, "MRR_N_1"},
+    {2, "MRR_Z_1"},
+    {9, "MRR_Z_1"},
+    {5, "MRR_X_1"},
+    {4, "MRR_X_1"},
+    {3, "MRR_X_1"},
+    {28, "MRR_S_1"},
+    {29, "MRR_Q_2"},
+    {30, "MRR_Q_2"},
+    {31, "MRR_D_1"},
+    {39, "MRR_D_1"},
+    {50, "MRR_S_1"},
+    {42, "MRR_R_1"},
+    {40, "MRR_W_1"},
+    {56, "MRR_S_1"},
+    {57, "MRR_S_1"},
+    {65, "MRR_T_1"},
+    {69, "MRR_S_1"},
+};
+
+static BattleDataEntry data_table[] = {
+    {49, dead_event},
+    {0, NULL},
+};
+
+static BattleUnitKindPart parts[] = {
+    {1, "btl_un_marilyn4", "c_maririn", 0.0f, 0.0f, 0.0f, 15.0f, 45.0f, 0.0f, 0.0f, 50.0f, 0.0f, 38, 56, 255, &defence, &defence_attr, 0x9, 0, pose_table},
+};
+
+static BattleWeapon weapon_marilyn_kagenuke_attack1 = {
+    NULL, 0, // name..icon
+    {0}, // pad_06
+    0, NULL, // itemId..description
+    100, // baseAccuracy
+    0, 0, // baseFpCost..baseSpCost
+    1, // superguardsAllowed
+    1.0f, // reserved_14
+    1, // mStylishCommandMultiplier
+    1, // reserved_19
+    1, // mBingoSlotChance
+    1, // reserved_1B
+    weaponGetPowerDefault, // hpDamageFn
+    {7, 0, 0, 0, 0, 0, 0, 0}, // hpDamageWork
+    NULL, // fpDamageFn
+    {0}, // fpDamageWork
+    0x1101260, // targetClassFlags
+    0x20000000, // targetPropertyFlags
+    0, 0, // element..damagePattern
+    3, // acLevel
+    2, // reserved_6F
+    NULL, // acHelpMsg
+    0x87, // special
+    2, // counterResistFlags
+    0x80002000, // targetWeightFlags
+    0, 0, 0, 0, 0, 0, 0, 0, // sleepChance..poisonTime
+    0, 0, 0, 0, 0, 0, 0, 0, // poisonStrength..burnChance
+    0, 0, 0, 0, 0, 0, 0, 0, // burnTime..atkChangeTime
+    0, 0, 0, 0, 0, 0, 0, 0, // atkChangeStrength..chargeStrength
+    0, 0, 0, 0, 0, 0, 0, 0, // fastChance..holdFastTime
+    0, 0, 0, 0, 0, 0, // invisibleChance..fpRegenStrength
+    {0}, // pad_AE
+    NULL, // mAttackEvtScript
+    {0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0}, // stageEffectRates
+};
+
+static BattleWeapon weapon_marilyn_thunder_attack1 = {
+    NULL, 0, // name..icon
+    {0}, // pad_06
+    0, NULL, // itemId..description
+    100, // baseAccuracy
+    0, 0, // baseFpCost..baseSpCost
+#ifdef VERSION_G8ME01
+    2, // superguardsAllowed
+#else
+    0, // superguardsAllowed
+#endif
+    1.0f, // reserved_14
+    1, // mStylishCommandMultiplier
+    1, // reserved_19
+    1, // mBingoSlotChance
+    1, // reserved_1B
+    weaponGetPowerDefault, // hpDamageFn
+    {7, 0, 0, 0, 0, 0, 0, 0}, // hpDamageWork
+    NULL, // fpDamageFn
+    {0}, // fpDamageWork
+    0x2101260, // targetClassFlags
+    0x20000000, // targetPropertyFlags
+    0, 0, // element..damagePattern
+    3, // acLevel
+    2, // reserved_6F
+    NULL, // acHelpMsg
+    0x20044, // special
+    0x7FF, // counterResistFlags
+    0x80002000, // targetWeightFlags
+    0, 0, 0, 0, 0, 0, 0, 0, // sleepChance..poisonTime
+    0, 0, 0, 0, 0, 0, 0, 0, // poisonStrength..burnChance
+    0, 0, 0, 0, 0, 0, 0, 0, // burnTime..atkChangeTime
+    0, 0, 0, 0, 0, 0, 0, 0, // atkChangeStrength..chargeStrength
+    0, 0, 0, 0, 0, 0, 0, 0, // fastChance..holdFastTime
+    0, 0, 0, 0, 0, 0, // invisibleChance..fpRegenStrength
+    {0}, // pad_AE
+    NULL, // mAttackEvtScript
+    {0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0}, // stageEffectRates
+};
+
+static BattleWeapon weapon_marilyn_charge1 = {
+    NULL, 0, // name..icon
+    {0}, // pad_06
+    0, NULL, // itemId..description
+    100, // baseAccuracy
+    0, 0, 0, // baseFpCost..superguardsAllowed
+    1.0f, // reserved_14
+    1, // mStylishCommandMultiplier
+    1, // reserved_19
+    1, // mBingoSlotChance
+    1, // reserved_1B
+    NULL, // hpDamageFn
+    {0}, // hpDamageWork
+    NULL, // fpDamageFn
+    {0}, // fpDamageWork
+    0x1004020, // targetClassFlags
+    0x20000000, // targetPropertyFlags
+    0, 0, // element..damagePattern
+    3, // acLevel
+    2, // reserved_6F
+    NULL, // acHelpMsg
+    0x108, // special
+    0x7FF, // counterResistFlags
+    0, 0, 0, 0, 0, 0, 0, 0, // targetWeightFlags..poisonChance
+    0, 0, 0, 0, 0, 0, 0, 0, // poisonTime..dodgyTime
+    0, 0, 0, 0, 0, 0, 0, 0, // burnChance..atkChangeChance
+    0, 0, 0, 0, 0, 0, 0, 0, // atkChangeTime..ohkoChance
+    7, // chargeStrength
+    0, 0, 0, 0, 0, 0, 0, 0, // fastChance..holdFastTime
+    0, 0, 0, 0, 0, 0, // invisibleChance..fpRegenStrength
+    {0}, // pad_AE
+    NULL, // mAttackEvtScript
+    {0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0}, // stageEffectRates
+};
+
+static EVT_BEGIN(marilyn_down)
+    BEGIN_INLINE_EVENT
+        WAIT_MS(250)
+        CALL(btlevtcmd_snd_se, -2, STRING("SFX_BOSS_MARI_SHADOW1"), -250000000, 0, -250000000)
+    END_INLINE_EVENT
+    CALL(battle_evt_majo_disp_off, -2, 1, 0, 0)
+    RETURN
+EVT_END()
+
+static EVT_BEGIN(marilyn_up)
+    BEGIN_INLINE_EVENT
+        WAIT_MS(250)
+        CALL(btlevtcmd_snd_se, -2, STRING("SFX_BOSS_MARI_SHADOW2"), -250000000, 0, -250000000)
+    END_INLINE_EVENT
+    CALL(battle_evt_majo_disp_on, -2, 1, LW(0), LW(1), LW(2), 0)
+    CALL(btlevtcmd_SetPos, -2, LW(0), LW(1), LW(2))
+    RETURN
+EVT_END()
+
+static EVT_BEGIN(init_event)
+    CALL(btlevtcmd_SetEventWait, -2, PTR(wait_event))
+    CALL(btlevtcmd_SetEventPhase, -2, PTR(phase_event))
+    CALL(btlevtcmd_SetEventAttack, -2, PTR(attack_event))
+    CALL(btlevtcmd_SetEventDamage, -2, PTR(damage_event))
+    CALL(btlevtcmd_SetEventConfusion, -2, PTR(btldefaultevt_Confuse))
+    CALL(btlevtcmd_SetUnitWork, -2, 8, 0)
+    CALL(btlevtcmd_SetUnitWork, -2, 3, 0)
+    SPAWN_EVENT(PTR(majo3_shadow_tail_event))
+    CALL(btlevtcmd_StartWaitEvent, -2)
+    RETURN
+EVT_END()
+
+static EVT_BEGIN(damage_event)
+    CALL(btlevtcmd_CheckDamageCode, -2, 1024, LW(0))
+    IF_INT_NOT_EQUAL(LW(0), 0)
+        SET_VALUE(GW(12), 1)
+    END_IF
+    SET_VALUE(LW(10), -2)
+    SET_VALUE(LW(11), 1)
+    CALL_CHILD(PTR(btldefaultevt_Damage))
+    RETURN
+EVT_END()
+
+static EVT_BEGIN(dead_event)
+    CALL(btlevtcmd_GetHomePos, -2, LW(0), LW(1), LW(2))
+    CALL(btlevtcmd_GetPos, -2, LW(3), LW(4), LW(5))
+    SET_VALUE(LW(6), 1)
+    IF_INT_EQUAL(LW(0), LW(3))
+        IF_INT_EQUAL(LW(1), LW(4))
+            IF_INT_EQUAL(LW(2), LW(5))
+                SET_VALUE(LW(6), 0)
+            END_IF
+        END_IF
+    END_IF
+    IF_INT_EQUAL(LW(6), 1)
+        CALL(btlevtcmd_SetMoveSpeed, -2, FLOAT(6.0f))
+        CALL(btlevtcmd_AnimeChangePoseType, -2, 1, 40)
+        CALL(btlevtcmd_MovePosition, -2, LW(0), LW(1), LW(2), 0, -1, 0)
+        CALL(btlevtcmd_ResetFaceDirection, -2)
+    END_IF
+    WAIT_FRAMES(1)
+    CALL(btlevtcmd_WaitAttackEnd)
+    SWITCH(GW(11))
+        CASE_EQUAL(0)
+        CASE_EQUAL(1)
+        LOOP(0)
+            IF_INT_EQUAL(GW(11), 2)
+                BREAK_LOOP
+            END_IF
+            WAIT_FRAMES(1)
+        END_LOOP
+        GOTO(99)
+        CASE_EQUAL(2)
+        SWITCH(GW(13))
+            CASE_EQUAL(0)
+            CASE_DEFAULT
+            CALL(btlevtcmd_StatusWindowOnOff, 0)
+            CALL_CHILD(PTR(btl_marilyn_zoom))
+            CALL(btlevtcmd_SetTalkPose, -2, STRING("MRR_D_1"))
+            CALL(btlevtcmd_SetStayPose, -2, STRING("MRR_D_1"))
+            CALL(evt_msg_print, 2, STRING("btl_majo3_12"), 0, -2)
+            GOTO(90)
+        END_SWITCH
+    END_SWITCH
+    CALL(btlevtcmd_StatusWindowOnOff, 0)
+    CALL_CHILD(PTR(btl_marilyn_zoom))
+    CALL(btlevtcmd_SetTalkPose, -2, STRING("MRR_D_1"))
+    CALL(btlevtcmd_SetStayPose, -2, STRING("MRR_D_1"))
+    CALL(evt_msg_print, 2, STRING("btl_majo3_09"), 0, -2)
+    LABEL(90)
+    CALL(btlevtcmd_StatusWindowOnOff, 1)
+    CALL(evt_btl_camera_set_mode, 0, 0)
+    LABEL(99)
+    CALL(btlevtcmd_AnimeChangePose, -2, 1, STRING("MRR_D_3"))
+    SET_VALUE(GW(12), 2)
+    SET_VALUE(LW(10), -2)
+    CALL_CHILD(PTR(subsetevt_dead_core_nospin_norotate))
+    RETURN
+EVT_END()
+
+static EVT_BEGIN(unison_phase_event)
+    CALL(btlevtcmd_CheckPhase, LW(0), 67108867)
+    IF_INT_NOT_EQUAL(LW(0), 0)
+        CALL_CHILD(PTR(majo_unison_phase_event))
+        CALL(btlevtcmd_GetUnitWork, -2, 4, LW(3))
+        CALL(btlevtcmd_GetUnitWork, -2, 5, LW(4))
+        IF_INT_NOT_EQUAL(LW(3), LW(4))
+            CALL(btlevtcmd_SetUnitWork, -2, 4, LW(4))
+            CALL(btlevtcmd_StartWaitEvent, -2)
+            WAIT_MS(200)
+            CALL_CHILD(PTR(marilyn_down))
+            WAIT_MS(500)
+            SWITCH(LW(4))
+                CASE_EQUAL(0)
+                SET_VALUE(LW(0), 55)
+                SET_VALUE(LW(2), 0)
+                CASE_EQUAL(1)
+                SET_VALUE(LW(0), 105)
+                SET_VALUE(LW(2), 10)
+                CASE_EQUAL(2)
+                SET_VALUE(LW(0), 155)
+                SET_VALUE(LW(2), 20)
+            END_SWITCH
+            SET_VALUE(LW(1), 0)
+            CALL(btlevtcmd_SetHomePos, -2, LW(0), LW(1), LW(2))
+            CALL_CHILD(PTR(marilyn_up))
+            CALL(btlevtcmd_SortPhaseMoveTable)
+            CALL(btlevtcmd_StartWaitEvent, -2)
+        END_IF
+    END_IF
+    RETURN
+EVT_END()
+
+static EVT_BEGIN(phase_event)
+    RETURN
+EVT_END()
+
+static EVT_BEGIN(attack_event)
+    CALL(btlevtcmd_EnemyItemUseCheck, -2, LW(0))
+    IF_INT_NOT_EQUAL(LW(0), 0)
+        CALL_CHILD(LW(0))
+        CALL(btlevtcmd_StartWaitEvent, -2)
+        RETURN
+    END_IF
+    SET_VALUE(LW(2), 0)
+    CALL(btlevtcmd_GetUnitWork, -2, 9, LW(0))
+    IF_INT_LESS(LW(0), 2)
+        SET_VALUE(LW(2), 25)
+    END_IF
+    CALL(btlevtcmd_DrawLots, LW(0), 3, 40, 35, LW(2))
+    SWITCH(LW(0))
+        CASE_EQUAL(0)
+        CALL(btlevtcmd_SetUnitWork, -2, 9, 0)
+        SET_VALUE(LW(9), PTR(&weapon_marilyn_kagenuke_attack1))
+        CALL_CHILD(PTR(kagenuke_attack_event))
+        CASE_EQUAL(1)
+        CALL(btlevtcmd_SetUnitWork, -2, 9, 0)
+        SET_VALUE(LW(9), PTR(&weapon_marilyn_thunder_attack1))
+        CALL_CHILD(PTR(thunder_attack_event))
+        CASE_EQUAL(2)
+        CALL(btlevtcmd_GetUnitWork, -2, 9, LW(0))
+        ADD(LW(0), 1)
+        CALL(btlevtcmd_SetUnitWork, -2, 9, LW(0))
+        SET_VALUE(LW(9), PTR(&weapon_marilyn_charge1))
+        CALL_CHILD(PTR(charge_attack_event))
+    END_SWITCH
+    LABEL(90)
+    CALL(btlevtcmd_ResetFaceDirection, -2)
+    CALL(btlevtcmd_StartWaitEvent, -2)
+    RETURN
+EVT_END()
+
+static EVT_BEGIN(kagenuke_attack_event)
+    CALL(btlevtcmd_GetEnemyBelong, -2, LW(0))
+    CALL(btlevtcmd_SamplingEnemy, -2, LW(0), LW(9))
+    CALL(btlevtcmd_ChoiceSamplingEnemy, LW(9), LW(3), LW(4))
+    IF_INT_EQUAL(LW(3), -1)
+        CALL(btlevtcmd_CheckToken, -2, 16, LW(0))
+        IF_INT_NOT_EQUAL(LW(0), 0)
+            CALL_CHILD(subsetevt_confuse_flustered)
+        END_IF
+        RETURN
+    END_IF
+    CALL(btlevtcmd_WeaponAftereffect, LW(9))
+    CALL(btlevtcmd_AttackDeclare, -2, LW(3), LW(4))
+    CALL(btlevtcmd_WaitGuardMove)
+    CALL(btlevtcmd_PayWeaponCost, -2, LW(9))
+    CALL(btlevtcmd_CalculateFaceDirection, -2, -1, LW(3), LW(4), 16, LW(15))
+    CALL(btlevtcmd_ChangeFaceDirection, -2, LW(15))
+    CALL(evt_btl_camera_set_mode, 0, 8)
+    CALL(evt_btl_camera_set_homing_unit, 0, -2, LW(3))
+    CALL(evt_btl_camera_set_moveSpeedLv, 0, 2)
+    CALL(evt_btl_camera_set_zoom, 0, 200)
+    CALL(btlevtcmd_snd_se, -2, STRING("SFX_BOSS_MARI_ARM_FOLD1"), -250000000, 0, -250000000)
+    CALL(btlevtcmd_AnimeChangePose, -2, 1, STRING("MRR_A1_1"))
+    CALL_CHILD(marilyn_down)
+    WAIT_MS(300)
+    CALL(btlevtcmd_GetPos, LW(3), LW(0), LW(1), LW(2))
+#ifdef VERSION_G8ME01
+    ADD(LW(2), 5)
+#endif
+    CALL(btlevtcmd_FaceDirectionAdd, LW(3), LW(0), 30)
+    SET_VALUE(LW(1), 0)
+    CALL_CHILD(marilyn_up)
+    WAIT_MS(600)
+    CALL(btlevtcmd_snd_se, -2, STRING("SFX_BOSS_MARI_HAND_CLAP1"), -250000000, 0, LW(15))
+    CALL(btlevtcmd_AnimeChangePose, -2, 1, STRING("MRR_A2_1"))
+    WAIT_FRAMES(4)
+    CALL(btlevtcmd_AnimeChangePose, -2, 1, STRING("MRR_A2_2"))
+    WAIT_MS(350)
+    CALL(btlevtcmd_AnimeChangePose, -2, 1, STRING("MRR_A2_3"))
+    WAIT_MS(100)
+    CALL(evt_snd_sfxoff, LW(15))
+    CALL(btlevtcmd_PreCheckDamage, -2, LW(3), LW(4), LW(9), 256, LW(5))
+    SWITCH(LW(5))
+        CASE_OR_EQUAL(4)
+        GOTO(90)
+        CASE_END
+        CASE_EQUAL(3)
+        CALL(btlevtcmd_StartAvoid, LW(3), 38)
+        GOTO(90)
+        CASE_END
+        CASE_EQUAL(6)
+        CALL(btlevtcmd_StartAvoid, LW(3), 39)
+        GOTO(90)
+        CASE_EQUAL(2)
+        CALL(btlevtcmd_StartAvoid, LW(3), 40)
+        GOTO(90)
+        CASE_EQUAL(1)
+        GOTO(91)
+        CASE_END
+        CASE_DEFAULT
+        GOTO(98)
+        CASE_END
+    END_SWITCH
+    LABEL(90)
+    GOTO(98)
+    LABEL(91)
+    CALL(btlevtcmd_ResultACDefence, LW(3), LW(9))
+    CALL(btlevtcmd_CheckDamage, -2, LW(3), LW(4), LW(9), 256, LW(5))
+    LABEL(98)
+    CALL(btlevtcmd_AnimeChangePose, -2, 1, STRING("MRR_A2_4"))
+    WAIT_MS(400)
+    CALL(btlevtcmd_AnimeChangePose, -2, 1, STRING("MRR_A1_1"))
+    CALL_CHILD(marilyn_down)
+    CALL(evt_btl_camera_set_mode, 0, 0)
+    WAIT_MS(200)
+    CALL(btlevtcmd_GetHomePos, -2, LW(0), LW(1), LW(2))
+    CALL_CHILD(marilyn_up)
+    RETURN
+EVT_END()
+
+static EVT_BEGIN(thunder_attack_event)
+    CALL(btlevtcmd_GetEnemyBelong, -2, LW(0))
+    CALL(btlevtcmd_SamplingEnemy, -2, LW(0), LW(9))
+    CALL(btlevtcmd_ChoiceSamplingEnemy, LW(9), LW(3), LW(4))
+    IF_INT_EQUAL(LW(3), -1)
+        CALL(btlevtcmd_CheckToken, -2, 16, LW(0))
+        IF_INT_NOT_EQUAL(LW(0), 0)
+            CALL_CHILD(subsetevt_confuse_flustered)
+        END_IF
+        RETURN
+    END_IF
+    CALL(btlevtcmd_WeaponAftereffect, LW(9))
+    CALL(btlevtcmd_AttackDeclareAll, -2)
+    CALL(btlevtcmd_WaitGuardMove)
+    CALL(btlevtcmd_PayWeaponCost, -2, LW(9))
+    CALL(btlevtcmd_snd_se, -2, STRING("SFX_BOSS_MARI_POWER1"), -250000000, 0, LW(15))
+    CALL(btlevtcmd_AnimeChangePose, -2, 1, STRING("MRR_A3_1"))
+    WAIT_MS(800)
+    CALL(btlevtcmd_AnimeChangePose, -2, 1, STRING("MRR_A3_2"))
+    WAIT_MS(150)
+    CALL(evt_snd_sfxoff, LW(15))
+    CALL(btlevtcmd_GetSelectEnemy, LW(3), LW(4))
+    SET_VALUE(LW(10), 0)
+    LABEL(10)
+    CALL(evt_sub_random, 2, LW(7))
+    ADD(LW(7), 3)
+    CALL(btlevtcmd_GetHitPos, LW(3), LW(4), LW(0), LW(1), LW(2))
+    CALL(btlevtcmd_GetWidth, LW(3), LW(5))
+    CALL(btlevtcmd_GetHeight, LW(3), LW(6))
+    CALL(evt_eff64, STRING(""), STRING("thunder_n64"), LW(7), LW(0), LW(1), LW(2), LW(5), LW(6), 0, 0, 0, 0, 0, 0)
+    CALL(evt_snd_sfxon, STRING("SFX_BOSS_MARI_ATTACK_THUNDER1"), 0)
+    CALL(evt_btl_camera_shake_h, 0, 3, 0, 25, 13)
+    BEGIN_INLINE_EVENT
+        CALL(evt_sub_rumble_onoff, 0, 0)
+        WAIT_MS(300)
+        CALL(evt_sub_rumble_onoff, 1, 0)
+    END_INLINE_EVENT
+    WAIT_MS(83)
+    CALL(btlevtcmd_PreCheckDamage, -2, LW(3), LW(4), LW(9), 256, LW(5))
+    SWITCH(LW(5))
+        CASE_OR_EQUAL(4)
+        GOTO(90)
+        CASE_END
+        CASE_EQUAL(3)
+        CALL(btlevtcmd_StartAvoid, LW(3), 38)
+        GOTO(90)
+        CASE_END
+        CASE_EQUAL(6)
+        CALL(btlevtcmd_StartAvoid, LW(3), 39)
+        GOTO(90)
+        CASE_EQUAL(2)
+        CALL(btlevtcmd_StartAvoid, LW(3), 40)
+        GOTO(90)
+        CASE_EQUAL(1)
+        GOTO(91)
+        CASE_END
+        CASE_DEFAULT
+        GOTO(98)
+        CASE_END
+    END_SWITCH
+    LABEL(90)
+    GOTO(97)
+    LABEL(91)
+    IF_INT_EQUAL(LW(10), 0)
+        CALL(btlevtcmd_ResultACDefence, LW(3), LW(9))
+    END_IF
+    CALL(btlevtcmd_CheckDamage, -2, LW(3), LW(4), LW(9), 256, LW(5))
+    LABEL(97)
+    CALL(btlevtcmd_GetSelectNextEnemy, LW(3), LW(4))
+    IF_INT_NOT_EQUAL(LW(3), -1)
+        ADD(LW(10), 1)
+        GOTO(10)
+    END_IF
+    LABEL(98)
+    CALL(evt_btl_camera_set_mode, 0, 0)
+    WAIT_MS(1000)
+    RETURN
+EVT_END()
+
+static EVT_BEGIN(charge_attack_event)
+    CALL(btlevtcmd_PayWeaponCost, -2, LW(9))
+    CALL(evt_btl_camera_set_mode, 0, 7)
+    CALL(evt_btl_camera_set_homing_unit, 0, -2, -1)
+    CALL(evt_btl_camera_set_moveSpeedLv, 0, 2)
+    CALL(evt_btl_camera_set_zoom, 0, 400)
+    WAIT_MS(300)
+    CALL(btlevtcmd_AnimeChangePose, -2, 1, STRING("MRR_A3_1"))
+    CALL(btlevtcmd_snd_se, -2, STRING("SFX_BOSS_MARI_CHARGE1\0\0"), -250000000, 0, LW(15))
+    WAIT_MS(800)
+    BEGIN_INLINE_EVENT
+        WAIT_MS(1000)
+        CALL(evt_btl_camera_set_mode, 0, 0)
+    END_INLINE_EVENT
+    CALL(evt_snd_sfxoff, LW(15))
+    CALL(btlevtcmd_CheckDamage, -2, -2, 1, LW(9), 256, LW(5))
+    RETURN
+EVT_END()
+
+static EVT_BEGIN(wait_event)
+    CALL(btlevtcmd_AnimeChangePoseFromTable, -2, 1)
+    RETURN
+EVT_END()
+

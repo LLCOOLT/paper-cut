@@ -1,0 +1,396 @@
+#include "battle/battle_unit.h"
+#include "evt/evt_cmd.h"
+
+#pragma force_active on
+#include "driver/camdrv.h"
+#include "mario/mariost.h"
+#include "evt/evt_bero.h"
+#include "evt/evt_hit.h"
+#include "evt/evt_map.h"
+#include "evt/evt_mobj.h"
+#include "evt/evt_npc.h"
+#include "evt/evt_case.h"
+#include "evt/evt_sub.h"
+#include "party/party_motion.h"
+#include "data_tables.h"
+
+USER_FUNC(camera_action);
+USER_FUNC(evt_bero_mapchange);
+USER_FUNC(evt_cam3d_evt_set);
+USER_FUNC(evt_env_blur_on);
+USER_FUNC(evt_exit_case_evt);
+USER_FUNC(evt_fade_set_mapchange_type);
+USER_FUNC(evt_item_delete_check);
+USER_FUNC(evt_item_entry);
+USER_FUNC(evt_mario_bgmode_on);
+USER_FUNC(evt_mario_cam_y_off);
+USER_FUNC(evt_mario_cont_onoff);
+USER_FUNC(evt_mario_get_pos);
+USER_FUNC(evt_mario_key_onoff);
+USER_FUNC(evt_mario_kill_party);
+USER_FUNC(evt_mario_normalize);
+USER_FUNC(evt_mario_set_pos);
+USER_FUNC(evt_msg_print);
+USER_FUNC(evt_msg_toge);
+USER_FUNC(evt_npc_change_fbat_mode);
+USER_FUNC(evt_npc_check);
+USER_FUNC(evt_npc_set_position);
+USER_FUNC(evt_npc_start_for_event);
+USER_FUNC(evt_npc_stop_for_event);
+USER_FUNC(evt_party_cont_onoff);
+USER_FUNC(evt_party_set_pos);
+USER_FUNC(evt_seq_wait);
+USER_FUNC(evt_snd_bgmoff);
+USER_FUNC(evt_snd_bgmon);
+USER_FUNC(evt_snd_sfxon_3d);
+
+f32 fd_win_03_negone_one_374[2] __attribute__((aligned(8)));
+f32 fd_win_03_neg_one_382;
+f32 fd_win_03___local_PI_383;
+f32 fd_win_03___local_3PIO2_385;
+f32 fd_win_03_one_negone_373[2] __attribute__((aligned(8)));
+f32 fd_win_03___local_PIO2_384;
+f32 fd_win_03_one_381;
+f32 fd_win_03_negone_one_360[2] __attribute__((aligned(8)));
+f32 fd_win_03_neg_one_365;
+f32 fd_win_03___local_PI_366;
+f32 fd_win_03___local_3PIO2_368;
+f32 fd_win_03_one_negone_359[2] __attribute__((aligned(8)));
+f32 fd_win_03___local_PIO2_367;
+f32 fd_win_03_one_364;
+EvtWord clouda_house_in[12];
+EvtWord clouda_house_out[19];
+EvtWord cloud_out[12];
+EvtWord cloud_in[12];
+static BeroEntry bero_entry_data[5];
+EvtWord lookat_house[45];
+static EvtWord cloud_toujou[76];
+EvtWord cloud_lostitem[215];
+EvtWord tree_evt_01[20];
+static TreeAccess tree_access_data[5];
+EvtWord dummy_event[4];
+EvtWord win_03_init_evt[108];
+
+f32 fd_win_03_negone_one_374[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
+
+f32 fd_win_03_neg_one_382 = -1.0f;
+
+f32 fd_win_03___local_PI_383 = 3.1415927f;
+
+f32 fd_win_03___local_3PIO2_385 = 4.712389f;
+
+f32 fd_win_03_one_negone_373[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
+
+f32 fd_win_03___local_PIO2_384 = 1.5707964f;
+
+f32 fd_win_03_one_381 = 1.0f;
+
+f32 fd_win_03_negone_one_360[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
+
+f32 fd_win_03_neg_one_365 = -1.0f;
+
+f32 fd_win_03___local_PI_366 = 3.1415927f;
+
+f32 fd_win_03___local_3PIO2_368 = 4.712389f;
+
+f32 fd_win_03_one_negone_359[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
+
+f32 fd_win_03___local_PIO2_367 = 1.5707964f;
+
+f32 fd_win_03_one_364 = 1.0f;
+
+EVT_BEGIN(clouda_house_in)
+    CALL(evt_mario_key_onoff, 0)
+    CALL(evt_bero_mapchange, STRING("win_04"), STRING("w_bero"))
+    SET_VALUE(LW(0), 1)
+    RETURN
+EVT_END()
+
+EVT_BEGIN(clouda_house_out)
+    CALL(evt_mario_bgmode_on)
+    CALL(evt_mario_kill_party, 0)
+    CALL(evt_mario_cam_y_off)
+    CALL(evt_mario_set_pos, 277, 54, -450)
+    CALL_CHILD(PTR(bero_case_entry))
+    SET_VALUE(LW(0), 1)
+    RETURN
+EVT_END()
+
+EVT_BEGIN(cloud_out)
+    CALL(evt_snd_sfxon_3d, STRING("SFX_DOOR_SHUT_WOOD2"), 306, 23, -448, 0)
+    SET_VALUE(LW(0), 0)
+    RETURN
+EVT_END()
+
+EVT_BEGIN(cloud_in)
+    CALL(evt_snd_sfxon_3d, STRING("SFX_DOOR_OPEN_WOOD3"), 306, 23, -448, 0)
+    SET_VALUE(LW(0), 0)
+    RETURN
+EVT_END()
+
+static BeroEntry bero_entry_data[] = {
+    {
+        "w_bero", // hitName
+        0, 0, // type..sfxId
+        20000, // directionId
+        100000, // centerPosition
+        0, 0, // centerPositionY..centerPositionZ
+        -1, // length
+        NULL, // enterEvent
+        -1, // caseType
+        NULL, // exitEvent
+        "win_02", // nextMapName
+        "e_bero", // nextBeroName
+        1, // enterAnimeType
+        1, // exitAnimeType
+        0, 0, // enterAnimeArg..exitAnimeArg
+    },
+    {
+        "dokan_1", // hitName
+        2, // type
+        0, // sfxId
+        9, // directionId
+        100000, // centerPosition
+        0, 0, // centerPositionY..centerPositionZ
+        -1, // length
+        NULL, // enterEvent
+        6, // caseType
+        NULL, 0, // exitEvent..nextMapName
+        "dokan_2", // nextBeroName
+        1, // enterAnimeType
+        1, // exitAnimeType
+        0, 0, // enterAnimeArg..exitAnimeArg
+    },
+    {
+        "dokan_2", // hitName
+        4098, // type
+        0, // sfxId
+        9, // directionId
+        100000, // centerPosition
+        0, 0, // centerPositionY..centerPositionZ
+        -1, // length
+        NULL, // enterEvent
+        6, // caseType
+        NULL, 0, // exitEvent..nextMapName
+        "dokan_1", // nextBeroName
+        1, // enterAnimeType
+        1, // exitAnimeType
+        0, 0, // enterAnimeArg..exitAnimeArg
+    },
+    {
+        "n_bero", // hitName
+        4099, // type
+        0, // sfxId
+        2, // directionId
+        100000, // centerPosition
+        0, 0, // centerPositionY..centerPositionZ
+        -1, // length
+        (s32*)cloud_out, // enterEvent
+        5, // caseType
+        (s32*)cloud_in, // exitEvent
+        "win_04", // nextMapName
+        "w_bero", // nextBeroName
+        1, // enterAnimeType
+        1, // exitAnimeType
+        0, 0, // enterAnimeArg..exitAnimeArg
+    },
+    {0},
+};
+
+EVT_BEGIN(lookat_house)
+    LOOP(0)
+        CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
+        IF_INT_GREATER_OR_EQUAL(LW(0), 200)
+            BREAK_LOOP
+        END_IF
+        WAIT_FRAMES(1)
+    END_LOOP
+    CALL(evt_mario_key_onoff, 0)
+    CALL(evt_npc_change_fbat_mode, 7)
+    CALL(evt_npc_stop_for_event)
+    CALL(evt_mario_normalize)
+    CALL(evt_msg_print, 0, STRING("stg2_win_e04_02"), 0, STRING("extparty"))
+    SET_VALUE(GSW(0), 80)
+    CALL(evt_npc_change_fbat_mode, 1)
+    CALL(evt_npc_start_for_event)
+    CALL(evt_mario_key_onoff, 1)
+    RETURN
+EVT_END()
+
+USER_FUNC(camera_action) {
+    CameraEntry* cam = camGetPtr(CAMERA_3D);
+    Vec pos = {290.0f, 150.0f, 491.0f};
+    Vec at = {290.0f, 90.0f, -6.0f};
+    f32 x;
+
+    if (isFirstCall) {
+        f32 speed;
+        f32 dist;
+
+        event->lwDataF[0] = 0.0f;
+        event->lwDataF[1] = 2.5f;
+        event->lwData[2] = 0;
+        speed = 0.0f;
+        dist = 0.0f;
+        while (TRUE) {
+            if (speed >= 2.5f) {
+                break;
+            }
+            speed += 0.01f;
+            dist += speed;
+        }
+        event->lwDataF[2] = dist - 2.5f;
+    }
+    if (event->lwDataF[0] < 300.0f - event->lwDataF[2]) {
+        event->lwDataF[0] += event->lwDataF[1];
+        x = -10.0f + event->lwDataF[0];
+        event->lwData[10] = 0;
+        at.x = pos.x = x;
+    } else if (event->lwDataF[0] < 300.0f) {
+        event->lwDataF[0] += event->lwDataF[1];
+        event->lwDataF[1] -= 0.01f;
+        x = -10.0f + event->lwDataF[0];
+        event->lwData[10] = 0;
+        at.x = pos.x = x;
+    } else {
+        event->lwData[10] = 1;
+    }
+    cam->presetPos = cam->cameraPos;
+    cam->presetAt = cam->cameraAt;
+    cam->storedPos = pos;
+    cam->storedAt = at;
+    cam->startTimeA = gp->renderTime;
+    cam->durationA = 0;
+    cam->stateA = 3;
+    cam->curveA = 11;
+    return event->lwData[10] == 0 ? EVT_RETURN_BLOCK : EVT_RETURN_DONE;
+}
+
+static EVT_BEGIN(cloud_toujou)
+    CALL(evt_mario_key_onoff, 0)
+    CALL(evt_mario_cont_onoff, 0)
+    CALL(evt_party_cont_onoff, 0, 0)
+    CALL(evt_party_cont_onoff, 1, 0)
+    CALL(evt_mario_set_pos, 0, -1000, 0)
+    CALL(evt_party_set_pos, 0, 0, -1000, 0)
+    CALL(evt_party_set_pos, 1, 0, -1000, 0)
+    CALL(evt_npc_change_fbat_mode, 7)
+    CALL(evt_npc_stop_for_event)
+    CALL(evt_cam3d_evt_set, -10, 150, 491, -10, 90, -6, 0, 11)
+    CALL(evt_seq_wait, 2)
+    CALL(camera_action)
+    CALL(evt_msg_toge, 1, 0, 0, 0)
+    CALL(evt_msg_print, 0, STRING("stg2_win_e04_00_01"), 0, 0)
+    CALL(evt_fade_set_mapchange_type, 0, 2, 500, 1, 500)
+    CALL(evt_bero_mapchange, STRING("win_04"), STRING(""))
+    RETURN
+EVT_END()
+
+EVT_BEGIN(cloud_lostitem)
+    CALL(evt_mario_key_onoff, 0)
+    CALL(evt_mario_cont_onoff, 0)
+    CALL(evt_party_cont_onoff, 0, 0)
+    CALL(evt_party_cont_onoff, 1, 0)
+    CALL(evt_mario_set_pos, 0, -1000, 0)
+    CALL(evt_party_set_pos, 0, 0, -1000, 0)
+    CALL(evt_party_set_pos, 1, 0, -1000, 0)
+    CALL(evt_npc_change_fbat_mode, 7)
+    CALL(evt_npc_stop_for_event)
+    CALL(evt_npc_check, STRING("パックン1"), LW(0))
+    IF_INT_EQUAL(LW(0), 1)
+        CALL(evt_npc_set_position, STRING("パックン1"), 0, -100, 0)
+    END_IF
+    CALL(evt_npc_check, STRING("パックン2"), LW(0))
+    IF_INT_EQUAL(LW(0), 1)
+        CALL(evt_npc_set_position, STRING("パックン2"), 0, -100, 0)
+    END_IF
+    CALL(evt_cam3d_evt_set, 290, 150, 491, 290, 90, -6, 0, 11)
+    CALL(evt_seq_wait, 2)
+    WAIT_MS(1000)
+    SET_VALUE(GF(0), 1)
+    BEGIN_INLINE_EVENT
+        CALL(evt_env_blur_on, 1, 600)
+    END_INLINE_EVENT
+    BEGIN_INLINE_EVENT
+        CALL(evt_cam3d_evt_set, 290, 137, 391, 290, 90, -6, 100, 11)
+        WAIT_MS(100)
+        CALL(evt_cam3d_evt_set, 290, 150, 491, 290, 90, -6, 100, 11)
+        WAIT_MS(100)
+        CALL(evt_cam3d_evt_set, 290, 137, 391, 290, 90, -6, 100, 11)
+        WAIT_MS(100)
+        CALL(evt_cam3d_evt_set, 290, 150, 491, 290, 90, -6, 100, 11)
+        WAIT_MS(100)
+        CALL(evt_cam3d_evt_set, 290, 137, 391, 290, 90, -6, 100, 11)
+        WAIT_MS(100)
+        CALL(evt_cam3d_evt_set, 290, 150, 491, 290, 90, -6, 100, 11)
+        WAIT_MS(100)
+        SET_VALUE(GF(0), 0)
+    END_INLINE_EVENT
+    BEGIN_INLINE_EVENT
+        CALL(evt_snd_bgmoff, 1024)
+        CALL(evt_snd_bgmon, 1, STRING("BGM_FF_ENV_SURPRISED3"))
+        WAIT_MS(3000)
+        CALL(evt_snd_bgmoff, 513)
+        CALL(evt_snd_bgmon, 288, 0)
+    END_INLINE_EVENT
+    CALL(evt_msg_toge, 1, 0, 0, 0)
+    CALL(evt_msg_print, 0, STRING("stg2_win_e04_00_05"), 0, 0)
+    WAIT_WHILE(GF(0))
+    WAIT_MS(2000)
+    SET_VALUE(GSW(0), 78)
+    CALL(evt_fade_set_mapchange_type, 0, 2, 500, 1, 500)
+    CALL(evt_bero_mapchange, STRING("win_01"), STRING("n_bero"))
+    RETURN
+EVT_END()
+
+EVT_BEGIN(tree_evt_01)
+    CALL(evt_item_delete_check, STRING("item_tree01"), LW(0))
+    IF_INT_EQUAL(LW(0), 1)
+        CALL(evt_item_entry, STRING("item_tree01"), 125, -333, 72, -24, 0, GSWF(5609), 0)
+    END_IF
+    RETURN
+EVT_END()
+
+static TreeAccess tree_access_data[] = {
+    {4, "A_tree_01", "S_tree_mki_01", "S_tree_ha01", 0, NULL},
+    {4, "A_tree_02", "S_tree_mki_02", "S_tree_ha03", 0, tree_evt_01},
+    {4, "A_tree_03", "S_tree_mki_03", "S_tree_ha02", 0, NULL},
+    {4, "A_tree_04", "S_tree_mki_04", "S_tree_ha04", 0, NULL},
+    {7, NULL, NULL, NULL, 0, NULL},
+};
+
+EVT_BEGIN(dummy_event)
+    CALL(evt_exit_case_evt)
+    RETURN
+EVT_END()
+
+EVT_BEGIN(win_03_init_evt)
+    SET_VALUE(LW(0), PTR(bero_entry_data))
+    CALL(evt_bero_get_info)
+    CALL_CHILD(evt_bero_info_run)
+    CALL(evt_run_case_evt, 5, 1, STRING("n_bero"), 0, PTR(dummy_event), 0)
+    CALL(evt_snd_bgmon, 512, STRING("BGM_STG2_WIN1"))
+    CALL(evt_snd_envon, 272, STRING("ENV_STG2_WIN1"))
+    CALL(evt_snd_bgmon, 160, 0)
+    SET_VALUE(LW(0), PTR(tree_access_data))
+    CALL_CHILD(evt_sub_tree_access_entry)
+    CALL(evt_mobj_recovery_blk, STRING("mobj_recover"), 7, 425, 60, 75, 0, 0)
+    CALL(evt_item_entry, STRING("i"), 135, 475, 0, -60, 16, GSWF(2679), 0)
+    CALL(evt_item_entry, STRING("item_00"), 125, -150, 0, -30, 16, GSWF(5610), 0)
+    CALL(evt_mapobj_flag_onoff, 1, 1, STRING("S_ana"), 1)
+    CALL(evt_mapobj_flag_onoff, 1, 1, STRING("S_siro_asu"), 1)
+    CALL(evt_hitobj_onoff, STRING("A_siro_asu"), 1, 0)
+    IF_INT_EQUAL(GSW(0), 79)
+        SPAWN_EVENT(lookat_house)
+    END_IF
+    IF_INT_EQUAL(GSW(0), 76)
+        CALL(evt_npc_check_delete, STRING(/*"パックン1"*/"\x83\x70\x83\x62\x83\x4E\x83\x93\x31"))
+        SPAWN_EVENT(cloud_toujou)
+    END_IF
+    IF_INT_EQUAL(GSW(0), 77)
+        CALL(evt_npc_check_delete, STRING(/*"パックン1"*/"\x83\x70\x83\x62\x83\x4E\x83\x93\x31"))
+        SPAWN_EVENT(cloud_lostitem)
+    END_IF
+    RETURN
+EVT_END_PAD4()
+

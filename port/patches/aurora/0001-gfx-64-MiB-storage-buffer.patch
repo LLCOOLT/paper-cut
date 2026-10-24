@@ -1,0 +1,26 @@
+From 255c4c542e408b20f61988e484176099fd2902a7 Mon Sep 17 00:00:00 2001
+From: LLCOOLT <114613597+LLCOOLT@users.noreply.github.com>
+Date: Sat, 24 Oct 2026 10:26:39 -0400
+Subject: [PATCH 1/3] gfx: 64 MiB storage buffer
+
+Crowded maps in a large game re-upload big vertex arrays several times per
+frame (map polygons and models drawn interleaved); 8 MiB overflowed.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ lib/gfx/resources.hpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/lib/gfx/resources.hpp b/lib/gfx/resources.hpp
+index 3fdc0ee..b8d2a0c 100644
+--- a/lib/gfx/resources.hpp
++++ b/lib/gfx/resources.hpp
+@@ -7,7 +7,7 @@ inline constexpr bool UseTextureBuffer = true;
+ inline constexpr uint64_t UniformBufferSize = 25165824; // 24 MiB
+ inline constexpr uint64_t VertexBufferSize = 5242880;   // 5 MiB
+ inline constexpr uint64_t IndexBufferSize = 2097152;    // 2 MiB
+-inline constexpr uint64_t StorageBufferSize = 8388608;  // 8 MiB
++inline constexpr uint64_t StorageBufferSize = 67108864; // 64 MiB: crowded TTYD maps re-upload large vertex arrays (8 MiB overflowed)
+ inline constexpr uint64_t TextureUploadSize = 25165824; // 24 MiB
+ 
+ namespace detail {

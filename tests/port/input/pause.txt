@@ -1,0 +1,10 @@
+# portPause/portResume (TTYD_MAP=gor_01): a run with a 3 s pause in the middle
+# must play out exactly as without it. Fast mode: the same audio (compare with
+# pause.txt minus the pause line); real time: the game clock barely moves.
+wait 60
+hold right 90
+pause 3000
+hold up 45
+press a
+wait 60
+end

@@ -1,0 +1,30 @@
+From 279838935e839a4cbf89c5d809c40110e35a81da Mon Sep 17 00:00:00 2001
+From: LLCOOLT <114613597+LLCOOLT@users.noreply.github.com>
+Date: Sat, 24 Oct 2026 12:56:03 -0400
+Subject: [PATCH 3/3] card: CARDUnmount succeeds
+
+Card images stay open, so unmounting is a successful no-op. Returning
+NOCARD made games that check the result (TTYD's file creation) report a
+failed save after the file was written.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ lib/dolphin/card.cpp | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/lib/dolphin/card.cpp b/lib/dolphin/card.cpp
+index 24b537e..bb5b600 100644
+--- a/lib/dolphin/card.cpp
++++ b/lib/dolphin/card.cpp
+@@ -812,8 +812,9 @@ s32 CARDUnmount(const s32 chan) {
+   if (chan < 0 || chan >= 2) {
+     return CARD_RESULT_FATAL_ERROR;
+   }
+-  // TODO:
+-  return CARD_RESULT_NOCARD;
++  // Card images stay open; unmounting succeeds as on hardware (games check the
++  // result: TTYD treated NOCARD here as a failed save after writing the file).
++  return CARD_RESULT_READY;
+ }
+ 
+ s32 CARDGetCurrentMode(const s32 chan, u32* mode [[maybe_unused]]) {

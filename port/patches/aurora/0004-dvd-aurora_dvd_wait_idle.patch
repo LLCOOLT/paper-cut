@@ -1,0 +1,62 @@
+From 2b2c6489f361d0d7e4de285bca771139a1b3e862 Mon Sep 17 00:00:00 2001
+From: LLCOOLT <lucastata@protonmail.com>
+Date: Sat, 24 Oct 2026 14:44:29 -0400
+Subject: [PATCH] dvd: aurora_dvd_wait_idle
+
+Async reads complete on the worker thread whenever it gets there. A caller
+that needs repeatable timing (a game's test runs, frame by frame) waits for
+the queue to drain, callbacks included, at a point of its choosing.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ include/aurora/dvd.h    |  7 +++++++
+ lib/dolphin/dvd/dvd.cpp | 11 +++++++++++
+ 2 files changed, 18 insertions(+)
+
+diff --git a/include/aurora/dvd.h b/include/aurora/dvd.h
+index a352797..0b4b36b 100644
+--- a/include/aurora/dvd.h
++++ b/include/aurora/dvd.h
+@@ -20,6 +20,13 @@ bool aurora_dvd_open(const char* disc_path);
+  */
+ void aurora_dvd_close(void);
+ 
++/**
++ * Block until every queued DVD command has completed, its callback included.
++ * Async reads complete on a worker thread; a caller that needs them to finish
++ * at a deterministic point (e.g. once per frame in a repeatable test run) waits here.
++ */
++void aurora_dvd_wait_idle(void);
++
+ /**
+  * OVERLAY FILES!
+  *
+diff --git a/lib/dolphin/dvd/dvd.cpp b/lib/dolphin/dvd/dvd.cpp
+index be7b040..2fabaf3 100644
+--- a/lib/dolphin/dvd/dvd.cpp
++++ b/lib/dolphin/dvd/dvd.cpp
+@@ -472,6 +472,15 @@ public:
+     }
+   }
+ 
++  // Every queued command done, callbacks included (a callback may queue more).
++  void wait_idle() {
++    if (std::this_thread::get_id() == m_thread.get_id()) {
++      return;
++    }
++    std::unique_lock lk{m_mutex};
++    m_doneCv.wait(lk, [&] { return !m_running || (m_queue.empty() && m_activeBlock == nullptr); });
++  }
++
+   void wait(const DVDCommandBlock* block) {
+     if (block == nullptr) {
+       return;
+@@ -705,6 +714,8 @@ bool aurora_dvd_open(const char* disc_path) {
+   return true;
+ }
+ 
++void aurora_dvd_wait_idle(void) { s_worker.wait_idle(); }
++
+ void aurora_dvd_close(void) {
+   s_worker.stop();
+   clearState();

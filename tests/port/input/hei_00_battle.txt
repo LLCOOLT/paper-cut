@@ -1,0 +1,17 @@
+# Petal Meadows (TTYD_MAP=hei_00): walk into the Goombas, fight with jumps.
+wait 60
+shot battle_0_field
+hold right 240
+shot battle_1_contact
+wait 240
+shot battle_2_start
+press a          # action menu: first option (Jump)
+wait 30
+press a          # pick the target
+wait 50
+press a          # action command: press A as Mario lands
+wait 120
+shot battle_3_turn
+wait 240
+shot battle_4_later
+end

@@ -1,0 +1,10 @@
+# No warp, a card with a save in file 1 (save_block.txt): title, file select,
+# load file 1 and arrive on the saved map.
+press_until_seq a 1 4800       # the title: A skips the logos, the US health notice and the demo
+press_until_seq start 6 1200
+wait 600
+shot l1_files                 # file 1 should show the save (map, play time)
+press_until_map a gor_01 3000 # load file 1
+wait 300
+shot l2_loaded
+end

@@ -1,0 +1,219 @@
+#include "battle/battle_unit.h"
+#include "evt/evt_cmd.h"
+#include "evt/evt_bero.h"
+#include "jin.h"
+
+#pragma force_active on
+
+USER_FUNC(evt_bero_get_info);
+USER_FUNC(evt_bero_mapchange);
+USER_FUNC(evt_cam_letter_box_disable);
+USER_FUNC(evt_cam_road_reset);
+USER_FUNC(evt_cloud_ent);
+USER_FUNC(evt_cloud_init);
+USER_FUNC(evt_hitobj_onoff);
+USER_FUNC(evt_item_entry);
+USER_FUNC(evt_item_flag_on);
+USER_FUNC(evt_item_get_item);
+USER_FUNC(evt_kagemario_init);
+USER_FUNC(evt_mapobj_flag_onoff);
+USER_FUNC(evt_mapobj_rotate);
+USER_FUNC(evt_mario_get_party);
+USER_FUNC(evt_mario_get_pos);
+USER_FUNC(evt_mario_jump_jumpstand);
+USER_FUNC(evt_mario_key_onoff);
+USER_FUNC(evt_mario_set_pos);
+USER_FUNC(evt_mario_wait_landon);
+USER_FUNC(evt_mobj_get_position);
+USER_FUNC(evt_mobj_itembox);
+USER_FUNC(evt_mobj_jumpstand_red);
+USER_FUNC(evt_mobj_wait_animation_end);
+USER_FUNC(evt_party_get_name_hitobj_ride);
+USER_FUNC(evt_party_jump_pos);
+USER_FUNC(evt_party_set_pos);
+USER_FUNC(evt_seq_wait);
+USER_FUNC(evt_snd_bgmon);
+USER_FUNC(evt_snd_envon);
+USER_FUNC(evt_snd_set_rev_mode);
+
+f32 fd_jin_06_negone_one_374[2] __attribute__((aligned(8)));
+f32 fd_jin_06_neg_one_382;
+f32 fd_jin_06___local_PI_383;
+f32 fd_jin_06___local_3PIO2_385;
+f32 fd_jin_06_one_negone_373[2] __attribute__((aligned(8)));
+f32 fd_jin_06___local_PIO2_384;
+f32 fd_jin_06_one_381;
+f32 fd_jin_06_negone_one_360[2] __attribute__((aligned(8)));
+f32 fd_jin_06_neg_one_365;
+f32 fd_jin_06___local_PI_366;
+f32 fd_jin_06___local_3PIO2_368;
+f32 fd_jin_06_one_negone_359[2] __attribute__((aligned(8)));
+f32 fd_jin_06___local_PIO2_367;
+f32 fd_jin_06_one_364;
+static EvtWord w_close[12];
+static EvtWord w_open[12];
+static BeroEntry bero_entry_data[2];
+EvtWord jin_06_wall_open_evt[5];
+EvtWord jin_06_jumpstand[53];
+static EvtWord mobj_box00[34];
+EvtWord jin_06_init_evt[165];
+
+f32 fd_jin_06_negone_one_374[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
+
+f32 fd_jin_06_neg_one_382 = -1.0f;
+
+f32 fd_jin_06___local_PI_383 = 3.1415927f;
+
+f32 fd_jin_06___local_3PIO2_385 = 4.712389f;
+
+f32 fd_jin_06_one_negone_373[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
+
+f32 fd_jin_06___local_PIO2_384 = 1.5707964f;
+
+f32 fd_jin_06_one_381 = 1.0f;
+
+f32 fd_jin_06_negone_one_360[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
+
+f32 fd_jin_06_neg_one_365 = -1.0f;
+
+f32 fd_jin_06___local_PI_366 = 3.1415927f;
+
+f32 fd_jin_06___local_3PIO2_368 = 4.712389f;
+
+f32 fd_jin_06_one_negone_359[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
+
+f32 fd_jin_06___local_PIO2_367 = 1.5707964f;
+
+f32 fd_jin_06_one_364 = 1.0f;
+
+static EVT_BEGIN(w_close)
+    MULTIPLY_FLOAT(LW(0), FLOAT(-0.44433594f))
+    CALL(evt_mapobj_rotate, 0, STRING("door07"), 0, LW(0), 0)
+    RETURN
+EVT_END()
+
+static EVT_BEGIN(w_open)
+    MULTIPLY_FLOAT(LW(0), FLOAT(0.44433594f))
+    CALL(evt_mapobj_rotate, 0, STRING("door07"), 0, LW(0), 0)
+    RETURN
+EVT_END()
+
+static BeroEntry bero_entry_data[] = {
+    {
+        "w_bero", // hitName
+        1, // type
+        2, // sfxId
+        20000, // directionId
+        100000, // centerPosition
+        0, 0, // centerPositionY..centerPositionZ
+        -1, // length
+        NULL, // enterEvent
+        -1, // caseType
+        NULL, // exitEvent
+        "jin_07", // nextMapName
+        "e_bero", // nextBeroName
+        5, // enterAnimeType
+        5, // exitAnimeType
+        w_close, // enterAnimeArg
+        w_open, // exitAnimeArg
+    },
+    {0},
+};
+
+EVT_BEGIN(jin_06_wall_open_evt)
+    SET_VALUE(GSWF(2229), 1)
+    RETURN
+EVT_END()
+
+EVT_BEGIN(jin_06_jumpstand)
+    BEGIN_INLINE_EVENT
+        CALL(evt_mario_get_party, LW(0))
+        IF_INT_NOT_EQUAL(LW(0), 0)
+            LOOP(0)
+                CALL(evt_party_get_name_hitobj_ride, 0, LW(0))
+                IF_STR_EQUAL(LW(0), STRING("MOBJ_mobj_jump"))
+                    BREAK_LOOP
+                END_IF
+                WAIT_FRAMES(1)
+            END_LOOP
+            CALL(evt_party_jump_pos, 0, 30, 0, 50, 600, 0, -1000)
+        END_IF
+    END_INLINE_EVENT
+    CALL(evt_mario_key_onoff, 0)
+    CALL(evt_mario_jump_jumpstand, 0, 0, 0, 0, 400, 0, 0, 0, 50, 1000, 1)
+    CALL(evt_mario_key_onoff, 1)
+    RETURN
+EVT_END()
+
+static EVT_BEGIN(mobj_box00)
+    CALL(evt_mario_key_onoff, 0)
+    CALL(evt_mobj_get_position, STRING("mobj_box00"), LW(0), LW(1), LW(2))
+    CALL(evt_item_entry, STRING("item00"), 281, LW(0), LW(1), LW(2), 16, -1, 0)
+    CALL(evt_item_flag_on, STRING("item00"), 258)
+    CALL(evt_mobj_wait_animation_end, STRING("mobj_box00"))
+    CALL(evt_item_get_item, STRING("item00"))
+    CALL(evt_mario_key_onoff, 1)
+    RETURN
+EVT_END()
+
+EVT_BEGIN(jin_06_init_evt)
+    CALL(evt_snd_bgmon, 512, STRING("BGM_STG4_JIN1"))
+    CALL(evt_snd_envon, 272, STRING("ENV_STG4_JIN1"))
+    CALL(evt_snd_set_rev_mode, 2)
+    CALL(evt_kagemario_init)
+    SET_VALUE(LW(0), PTR(bero_entry_data))
+    CALL(evt_bero_get_info)
+    CALL_CHILD(PTR(evt_bero_info_run))
+    CALL_CHILD(PTR(evt_usu_kagemario_party_kill))
+    CALL(evt_mobj_itembox, STRING("mobj_box00"), 650, 0, -150, 0, 0, PTR(mobj_box00), GSWF(2238))
+    CALL(evt_mobj_jumpstand_red, 0, STRING("mobj_jump"), 0, 0, 0, PTR(jin_06_jumpstand), 0)
+    IF_INT_NOT_EQUAL(GSWF(2079), 0)
+        SET_VALUE(GSWF(2079), 0)
+        BEGIN_INLINE_EVENT
+            CALL(evt_cam_letter_box_disable, 1)
+            CALL(evt_mario_key_onoff, 0)
+            CALL(evt_mario_set_pos, 5, 365, 0)
+            CALL(evt_party_set_pos, 0, 5, 645, 0)
+            CALL(evt_cam_road_reset)
+            CALL(evt_seq_wait, 2)
+            CALL(evt_mario_wait_landon)
+            CALL(evt_mario_key_onoff, 1)
+            CALL(evt_cam_letter_box_disable, 0)
+        END_INLINE_EVENT
+        SET_VALUE(LW(0), 1)
+        ELSE
+        SET_VALUE(LW(0), 0)
+    END_IF
+    BEGIN_INLINE_EVENT
+        IF_INT_NOT_EQUAL(LW(0), 0)
+            CALL(evt_seq_wait, 2)
+            LOOP(0)
+                CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
+                IF_INT_LESS(LW(1), 365)
+                    BREAK_LOOP
+                END_IF
+                WAIT_FRAMES(1)
+            END_LOOP
+        END_IF
+        LOOP(0)
+            CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
+            IF_INT_GREATER_OR_EQUAL(LW(1), 365)
+                BREAK_LOOP
+            END_IF
+            WAIT_FRAMES(1)
+        END_LOOP
+        CALL(evt_bero_mapchange, STRING("jin_00"), STRING("ana"))
+    END_INLINE_EVENT
+    IF_INT_EQUAL(GSWF(2229), 0)
+        CALL(evt_cloud_init)
+        CALL(evt_cloud_ent, 0, STRING("mekure"), STRING("a_mekure\0\0\0"), PTR(jin_06_wall_open_evt))
+        ELSE
+        CALL(evt_mapobj_flag_onoff, 1, 1, STRING("mekure"), 1)
+        CALL(evt_hitobj_onoff, STRING("a_mekure\0\0\0"), 0, 0)
+    END_IF
+    IF_INT_LESS(GSW(0), 195)
+        SET_VALUE(GSW(0), 195)
+    END_IF
+    RETURN
+EVT_END()
+

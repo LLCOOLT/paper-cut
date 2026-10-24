@@ -1,0 +1,19 @@
+# A field battle on any map with enemies (e.g. TTYD_MAP=hei_01):
+# start it, pick Jump, pick a target, time the action command.
+wait 60
+battle
+wait 240
+shot battle_0_menu
+press a          # Jump (first option)
+wait 30
+shot battle_1_target
+press a          # first target
+wait 45
+press a          # action command on landing
+wait 30
+shot battle_2_attack
+wait 180
+shot battle_3_enemy
+wait 240
+shot battle_4_next
+end

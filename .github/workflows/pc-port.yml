@@ -1,0 +1,64 @@
+name: PC port
+
+on:
+  # Manual only, to save Actions minutes: run from the Actions tab when needed.
+  workflow_dispatch:
+
+# No game data here: the build uses stand-ins for the assets the decomp
+# extracts from the disc (CMakeLists.txt, port/include/no_disc_assets), and the
+# disc tests (disc_sweep, musyx_seq_sweep, map_sweep) skip without one.
+
+jobs:
+  windows:
+    name: Windows ${{ matrix.version }} ${{ matrix.backend }}
+    runs-on: windows-2022
+    strategy:
+      fail-fast: false
+      matrix:
+        version: [G8MJ01, G8ME01]
+        backend: [headless, aurora]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # extern/aurora: needs the submodule commit on a pushed branch
+          submodules: recursive
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install LLVM and Ninja
+        run: |
+          choco install llvm ninja -y --no-progress
+          echo "C:\Program Files\LLVM\bin" >> $env:GITHUB_PATH
+      - name: Configure
+        shell: bash
+        run: |
+          cmake -S . -B build-pc -G Ninja \
+            -DCMAKE_TOOLCHAIN_FILE=cmake/toolchains/windows-clang.cmake \
+            -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+            -DTTYD_VERSION=${{ matrix.version }} -DTTYD_BACKEND=${{ matrix.backend }}
+      - name: Build
+        run: ninja -C build-pc
+      - name: Unit tests
+        if: matrix.backend == 'headless'
+        shell: bash
+        run: |
+          ninja -C build-pc bedecode_test anim_test loaders_test map_test dtk_test \
+            musyx_swap_test musyx_mixer_test disc_sweep musyx_seq_sweep
+          ctest --test-dir build-pc -LE slow --output-on-failure
+
+  audits:
+    name: Audits
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install LLVM
+        run: |
+          choco install llvm -y --no-progress
+          echo "C:\Program Files\LLVM\bin" >> $env:GITHUB_PATH
+      - name: Generated decoders match their specs and headers
+        run: python tools/port/gen_bedecode.py --check
+      - name: Prototypes agree with their definitions
+        run: python tools/port/proto_audit.py

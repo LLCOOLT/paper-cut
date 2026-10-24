@@ -1,0 +1,197 @@
+/* Bring-up trace ($TTYD_TRACE): one line whenever the game sequence or map
+ * changes, with the frame number, so a headless run shows how far it got. */
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+#include "driver/seqdrv.h"
+#include "mario/mariost.h"
+#include "manager/evtmgr.h"
+#include "evt/evt_cmd.h"
+#include "driver/swdrv.h"
+#include "mario/mario_party.h"
+#include "event.h"
+#include "port/platform.h"
+
+/* $TTYD_TRACE=2: every running script, where it is and what it calls. */
+static void traceEvents(u32 frame) {
+    EventWork* wp = evtGetWork();
+    char a[160], b[160];
+    s32 i;
+    printf("[trace] frame %u: events\n", (unsigned)frame);
+    for (i = 0; i < wp->count; i++) {
+        EventEntry* e = &wp->entries[i];
+        if (!(e->flags & 1)) {
+            continue;
+        }
+        printf("  #%d id %d op %d at %s", (int)i, (int)e->eventId, (int)e->opcode, portSymbolName(e->nextCommand, a, sizeof(a)));
+        if (e->opcode == OPCODE_USER_FUNC && e->args != NULL) {
+            printf(" -> %s", portSymbolName((void*)e->args[0], b, sizeof(b)));
+        }
+        printf("%s\n", e->waitingOnEvent ? " (waiting on a child)" : "");
+    }
+    fflush(stdout);
+}
+
+/* $TTYD_TRACE=3: every command run by any script, with its script and the
+ * user function it calls (first 4000 commands after a map's REL is linked). */
+void portTraceCmd(EventEntry* e) {
+    static int level = -1;
+    static u32 budget = 4000;
+    char a[160], b[160];
+    if (level < 0) {
+        const char* v = getenv("TTYD_TRACE");
+        level = v ? atoi(v) : 0;
+    }
+    if (level < 3 || budget == 0 || gp == NULL || gp->currentMapName[0] == '\0') {
+        return;
+    }
+    budget--;
+    printf("[cmd] ev %d op %3d %s", (int)e->eventId, (int)e->opcode, portSymbolName(e->currCommand, a, sizeof(a)));
+    if (e->opcode == OPCODE_USER_FUNC && e->args != NULL) {
+        printf(" -> %s", portSymbolName((void*)e->args[0], b, sizeof(b)));
+    }
+    printf("\n");
+}
+
+/* $TTYD_MAP=<map>[,<bero>]: at the first field map (the opening demo) or the
+ * title, start a new game on that map (as seq_load's new game does, plus a
+ * partner: $TTYD_PARTY), run $TTYD_EXIT_FRAMES frames there (default 600) and
+ * exit 0; exit 3 if the map is not reached within $TTYD_WARP_LIMIT seconds of
+ * wall time (default 60). tools/port/map_sweep.py runs every map this way. */
+static void warpFrame(u32 frame) {
+    static int state = -1; /* -1 unread, 0 off, 1 waiting for the title, 2 warped, 3 on the map */
+    static char map[32], bero[32];
+    static u32 exitFrames = 600, limit = 60, onMap;
+    static time_t start;
+    if (state < 0) {
+        const char* v = getenv("TTYD_MAP");
+        const char* comma;
+        state = 0;
+        if (v && *v) {
+            comma = strchr(v, ',');
+            snprintf(map, sizeof(map), "%.*s", comma ? (int)(comma - v) : (int)strlen(v), v);
+            snprintf(bero, sizeof(bero), "%s", comma ? comma + 1 : "");
+            if ((v = getenv("TTYD_EXIT_FRAMES")) && atoi(v) > 0) {
+                exitFrames = (u32)atoi(v);
+            }
+            if ((v = getenv("TTYD_WARP_LIMIT")) && atoi(v) > 0) {
+                limit = (u32)atoi(v);
+            }
+            state = 1;
+            start = time(NULL);
+        }
+    }
+    if (state == 0 || gp == NULL) {
+        return;
+    }
+    /* the title, or the opening demo's map (its narration stalls in $TTYD_FAST runs) */
+    if (state == 1 && (seqGetSeq() == SEQ_TITLE || (seqGetSeq() == SEQ_GAME && strcmp(gp->currentMapName, map) != 0))) {
+        stg0_00_init();
+        marioPartyKill();
+        swInit();
+        swByteSet(0, 0);
+        {
+            /* a partner, as a save at that point of the game would have
+             * ($TTYD_PARTY: party id, default 1 = Goombella; 0 = none) */
+            const char* v = getenv("TTYD_PARTY");
+            s32 party = v ? atoi(v) : 1;
+            if (party > 0 && party < 8) {
+                partyJoin(party);
+                marioPartyEntry(party);
+            }
+        }
+        printf("[warp] frame %u: to %s%s%s\n", (unsigned)frame, map, bero[0] ? " " : "", bero);
+        fflush(stdout);
+        seqSetSeq(SEQ_MAP_CHANGE, map, bero[0] ? bero : NULL);
+        state = 2;
+    } else if (state == 2 && seqGetSeq() == SEQ_GAME && strcmp(gp->currentMapName, map) == 0) {
+        state = 3;
+        onMap = frame;
+        portInputStart(); /* a $TTYD_INPUT script runs from here and decides when to exit */
+    } else if (state == 3 && !portInputActive() && frame - onMap >= exitFrames) {
+        /* $TTYD_SHOT_DIR: save the last frame as <map>.png first (Aurora) */
+        static int shot = 0;
+        if (shot == 0 && getenv("TTYD_SHOT_DIR") != NULL) {
+            portShotRequest(map);
+            shot = 1;
+        }
+        if (shot && portShotPending() && frame - onMap < exitFrames + 60) {
+            return;
+        }
+        printf("[warp] ok: %s ran %u frames\n", map, (unsigned)exitFrames);
+        fflush(stdout);
+        _Exit(0); /* no teardown: Aurora's GPU threads are still running */
+    }
+    if (state < 3 && time(NULL) - start >= (time_t)limit) {
+        printf("[warp] FAIL: %s not reached in %us, frame %u (sequence %d, map '%s')\n", map, (unsigned)limit,
+               (unsigned)frame, (int)seqGetSeq(), gp->currentMapName);
+        fflush(stdout);
+        _Exit(3);
+    }
+}
+
+void portTraceCard(const char* step, s32 result) {
+    if (getenv("TTYD_TRACE") != NULL) {
+        printf("[card] %s: %d\n", step, (int)result);
+        fflush(stdout);
+    }
+}
+
+void portTraceMsgMissing(const char* tag) {
+    static char seen[64][48];
+    static int count;
+    int i;
+    if (getenv("TTYD_TRACE") == NULL || tag == NULL) {
+        return;
+    }
+    for (i = 0; i < count; i++) {
+        if (strncmp(seen[i], tag, sizeof(seen[i]) - 1) == 0) {
+            return;
+        }
+    }
+    if (count < 64) {
+        snprintf(seen[count++], sizeof(seen[0]), "%s", tag);
+    }
+    printf("[msg] missing '%s' (map '%s')\n", tag, gp != NULL ? gp->currentMapName : "");
+    fflush(stdout);
+}
+
+void portTraceFrame(u32 frame) {
+    static int enabled = -1;
+    portWatchdogFrame();
+    warpFrame(frame);
+    static s32 lastSeq = -2;
+    static char lastMap[sizeof(gp->currentMapName)];
+    s32 seq;
+
+    if (enabled < 0) {
+        const char* v = getenv("TTYD_TRACE");
+        enabled = v == NULL ? 0 : atoi(v) > 1 ? 2 : 1;
+    }
+    if (!enabled || gp == NULL) {
+        return;
+    }
+    seq = (s32)seqGetSeq();
+    static u32 every;
+    if (every == 0) {
+        const char* v = getenv("TTYD_TRACE_EVERY");
+        every = v != NULL && atoi(v) > 0 ? (u32)atoi(v) : 3000;
+    }
+    if (enabled > 1 && frame % every == 0) {
+        traceEvents(frame);
+    }
+    if (frame % 600 == 0) {
+        printf("[trace] frame %u: dvdError %d renderTime %lld\n", (unsigned)frame, (int)gp->dvdError,
+               (long long)gp->renderTime);
+        fflush(stdout);
+    }
+    if (seq != lastSeq || strncmp(lastMap, gp->currentMapName, sizeof(lastMap)) != 0) {
+        lastSeq = seq;
+        memcpy(lastMap, gp->currentMapName, sizeof(lastMap));
+        printf("[trace] frame %u: sequence %d, map '%.*s', area '%.*s'\n", (unsigned)frame, (int)seq,
+               (int)sizeof(gp->currentMapName), gp->currentMapName, (int)sizeof(gp->currentAreaName),
+               gp->currentAreaName);
+        fflush(stdout);
+    }
+}
