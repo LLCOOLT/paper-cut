@@ -12,7 +12,7 @@
 #include "evt/evt_sub.h"
 #include "aji.h"
 
-typedef struct YukaAnimData { u16 flags; u8 field_0x2[6]; OSTime time; f32 frame; f32 speed; struct { u8 field_0x0[8]; f32 length; }* data; } YukaAnimData;
+typedef struct YukaAnimData { u16 flags; u8 field_0x2[6]; OSTime time; f32 frame; f32 speed; MapAnimHeader* data; } YukaAnimData; /* data: a map animation (its length; 0xC on 64-bit) */
 typedef struct YukaAnim { YukaAnimData* anim; u32 flags; } YukaAnim;
 #define YUKA_NOW() OSTicksToMilliseconds(gp->inBattle ? gp->renderTime : gp->renderFieldTime)
 #define KUSURI_COL (*(GXColor*)g_Kusuri_Col)

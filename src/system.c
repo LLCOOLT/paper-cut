@@ -36,7 +36,11 @@ float fabsf(float x);
 #endif
 #endif
 
+#ifdef TARGET_PC
+extern int __float_nan[]; /* PC port: defined by port/src/common/runtime_pc.c */
+#else
 int __float_nan[];
+#endif
 #define NAN (*(f32*)__float_nan)
 
 #define FP_NAN 1

@@ -22,9 +22,32 @@
  *   press_until_seq KEYS N [MAX]  press KEYS every 30 frames until sequence N
  *   press_until_map KEYS NAME [MAX]  the same, until NAME is the current map
  *                       (screens that ignore input during their intro)
+ *   give ID             the item, key item or badge ID (pouchGetItem)
+ *   join N / party N    partner N joins / joins and comes out (1 Goombella..7)
+ *   story N / flag N    the story (GSW 0) set to N / switch GSWF N set
+ *   audience N, coins N, sp N, fp N   those set (sp: star power, in 1/100 units)
+ *   maxsp N, maxhp N    the maximums set (maxhp also fills HP)
+ *   stars MASK          the special moves obtained (bit 0: Sweet Treat ...)
+ *   mobj_event NAME     run map object NAME's event, as hitting it would (a
+ *                       switch's, a block's)
+ *   talk_all [MAX]      talk to every NPC of the map in turn (not those parked
+ *                       below the map), as A in front of one does (its talk script), A pressed every 20 frames
+ *                       and B now and then to get through; each one at most
+ *                       MAX frames (default 900); stops if the map changes
+ *   mobj_all [MAX]      the same with every map object's event (switches,
+ *                       blocks, chests)
+ *   select N|list       open selection window type N (0-18; key items, items,
+ *                       badges, partners, ...), or a window of a list of items
+ *                       as a locked door's script opens; press keys to close it
+ *   random N [SEED]     N frames of made-up play (random walking, A, B, X, ...;
+ *                       the same for the same SEED, default 1), to shake out
+ *                       crashes and stalls
+ *   state save|load N   save state slot N (1-4) saved or loaded at the end of
+ *                       this frame (Aurora, port/src/aurora/savestate_aurora.c)
  *   end                 exit (0) once any capture is written
  * Each command is logged as "[input] frame F: <line>". */
 #include <ctype.h>
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -47,6 +70,10 @@
 #include "mario/mario.h"
 #include "mario/mario_pouch.h"
 #include "mario/mariost.h"
+#include "mario/mario_party.h"
+#include "driver/mobjdrv.h"
+#include "party.h"
+EventEntry* mobjRunEvent(MapObjectEntry* entry, EvtWord* eventCode); /* mobjdrv.c */
 #include "driver/seqdrv.h"
 
 #define MAX_LINES 1024
@@ -59,9 +86,65 @@ typedef struct Step {
     s32 frames; /* -1: shot, -2: end, -3: battle, -4: hp, -5: wait_seq, -6: wait_map */
     char name[64];
     s32 waitMax; /* wait_seq / wait_map */
+    u32 seed;    /* random: its generator's seed (0: none, plain input) */
 } Step;
 
+/* random N [SEED]: N frames of made-up play, the same for the same seed */
+static u32 sRand;
+static s32 sRandHold;
+static PADStatus sRandPad;
+
+static u32 nextRand(void) {
+    sRand = sRand * 1664525u + 1013904223u;
+    return sRand >> 8;
+}
+
+/* A new input every 6-30 frames: mostly walking or running somewhere, often A
+ * (talk, check, jump), sometimes B, X, Y, Z, R, L, the C-stick or the d-pad,
+ * rarely START; never the GameCube's reset combination (START + B + X). */
+static void randomInput(PADStatus* out) {
+    if (sRandHold <= 0) {
+        static const u16 kButtons[] = {PAD_BUTTON_A, PAD_BUTTON_A, PAD_BUTTON_A, PAD_BUTTON_B, PAD_BUTTON_X,
+                                       PAD_BUTTON_Y, PAD_TRIGGER_Z, PAD_TRIGGER_R, PAD_TRIGGER_L, PAD_BUTTON_LEFT,
+                                       PAD_BUTTON_RIGHT, PAD_BUTTON_UP, PAD_BUTTON_DOWN};
+        const u32 r = nextRand() % 100;
+        memset(&sRandPad, 0, sizeof(sRandPad));
+        if (r < 70) {
+            const u32 a = nextRand() % 360;
+            const f32 tilt = nextRand() % 3 == 0 ? 60.0f : 120.0f;
+            sRandPad.stickX = (s8)(tilt * cosf(a * 0.017453292f));
+            sRandPad.stickY = (s8)(tilt * sinf(a * 0.017453292f));
+        }
+        if (nextRand() % 100 < 45) {
+            sRandPad.button |= kButtons[nextRand() % (sizeof(kButtons) / sizeof(kButtons[0]))];
+        }
+        if (nextRand() % 400 == 0) { /* about once a minute: mostly field play */
+            sRandPad.button |= PAD_BUTTON_START;
+            sRandPad.button &= ~(PAD_BUTTON_B | PAD_BUTTON_X);
+        }
+        if (nextRand() % 100 < 5) {
+            sRandPad.substickX = (s8)((s32)(nextRand() % 255) - 127);
+        }
+        sRandHold = 6 + (s32)(nextRand() % 25);
+    }
+    sRandHold--;
+    *out = sRandPad;
+    out->err = PAD_ERR_NONE;
+    out->triggerLeft = (sRandPad.button & PAD_TRIGGER_L) ? 255 : 0;
+    out->triggerRight = (sRandPad.button & PAD_TRIGGER_R) ? 255 : 0;
+    out->analogA = (sRandPad.button & PAD_BUTTON_A) ? 255 : 0;
+    out->analogB = (sRandPad.button & PAD_BUTTON_B) ? 255 : 0;
+}
+
 static s32 sWaitFrames = -1; /* frames spent in the current wait_seq / wait_map, -1: none */
+
+/* talk_all / mobj_all: the item being run, -1 when none */
+MapObjectWork* portMobjGetWork(void); /* mobjdrv.c */
+EventEntry* mobjRunEvent(MapObjectEntry* entry, EvtWord* eventCode);
+static s32 sSweepKind; /* 0 none, 1 talk, 2 mobj */
+static s32 sSweepIndex, sSweepEvt, sSweepFrames, sSweepMax, sSweepDone;
+static NpcEntry* sSweepNpc;
+static char sSweepMap[32];
 
 static Step sSteps[MAX_LINES];
 static s32 sCount, sCur = -1, sLeft;
@@ -99,6 +182,12 @@ static BOOL parseKeys(Step* s, char* keys) {
         }
     }
     return TRUE;
+}
+
+/* port/src/aurora/savestate_aurora.c defines it; the headless build has no save states */
+__attribute__((weak)) void portSaveStateRequest(int slot, int load) {
+    (void)slot;
+    (void)load;
 }
 
 static void load(const char* path) {
@@ -187,6 +276,34 @@ static void load(const char* path) {
         } else if (strcmp(cmd, "pause") == 0) {
             s->frames = -7;
             snprintf(s->name, sizeof(s->name), "%s", a1);
+        } else if (strcmp(cmd, "give") == 0 || strcmp(cmd, "join") == 0 || strcmp(cmd, "party") == 0 ||
+                   strcmp(cmd, "story") == 0 || strcmp(cmd, "flag") == 0 || strcmp(cmd, "audience") == 0 ||
+                   strcmp(cmd, "coins") == 0 || strcmp(cmd, "sp") == 0 || strcmp(cmd, "fp") == 0 ||
+                   strcmp(cmd, "maxsp") == 0 || strcmp(cmd, "maxhp") == 0 || strcmp(cmd, "stars") == 0) {
+            /* state set-up for a test, at once */
+            s->frames = -13;
+            snprintf(s->name, sizeof(s->name), "%s", cmd);
+            s->waitMax = (s32)strtol(a1, NULL, 0);
+        } else if (strcmp(cmd, "random") == 0) {
+            s->frames = atoi(a1);
+            s->seed = a2[0] ? (u32)strtoul(a2, NULL, 0) : 1u;
+            if (s->seed == 0) {
+                s->seed = 1;
+            }
+        } else if (strcmp(cmd, "talk_all") == 0 || strcmp(cmd, "mobj_all") == 0) {
+            s->frames = cmd[0] == 't' ? -16 : -17;
+            s->waitMax = a1[0] ? atoi(a1) : 900;
+        } else if (strcmp(cmd, "mobj_event") == 0) {
+            s->frames = -15;
+            snprintf(s->name, sizeof(s->name), "%s", a1);
+        } else if (strcmp(cmd, "select") == 0) {
+            s->frames = -14;
+            s->waitMax = strcmp(a1, "list") == 0 ? -1 : atoi(a1);
+        } else if (strcmp(cmd, "state") == 0) {
+            s->frames = -12;
+            s->waitMax = atoi(a2) - 1;
+            s->stickX = strcmp(a1, "load") == 0;
+            if (strcmp(a1, "load") != 0 && strcmp(a1, "save") != 0) goto bad;
         } else if (strcmp(cmd, "end") == 0) {
             s->frames = -2;
         } else {
@@ -222,6 +339,15 @@ static void pauseFor(int ms) {
 }
 
 static char sBattleNpc[32];
+
+/* select N|list: a selection window (winmgr.c's select_desc_tbl type N,
+ * or a list of items, as a door or chest asking for a key passes) */
+USER_FUNC(evt_win_item_select);
+EVT_BEGIN(input_select_evt)
+    CALL(evt_win_item_select, 1, LW(0), LW(1), LW(2))
+    RETURN
+EVT_END()
+static s32 sSelectList[] = {0x001F, 0x0021, 0x0001, -1}; /* key items' ids; any list will do */
 
 EVT_BEGIN(input_battle_evt)
     CALL(evt_npc_battle_start, PTR(sBattleNpc), 0)
@@ -318,6 +444,93 @@ void portInputApply(PADStatus* pad) {
     }
     if (sState != 2) {
         return;
+    }
+    if (sSweepKind != 0) {
+        /* talk_all / mobj_all */
+        memset(&pad[0], 0, sizeof(pad[0]));
+        pad[0].err = PAD_ERR_NONE;
+        if (gp == NULL || strncmp(gp->currentMapName, sSweepMap, sizeof(sSweepMap)) != 0) {
+            printf("[input] %s: the map changed, stopping (%d run)\n", sSweepKind == 1 ? "talk_all" : "mobj_all",
+                   (int)sSweepDone);
+            fflush(stdout);
+            sSweepKind = 0;
+            return;
+        }
+        if (sSweepEvt >= 0) {
+            const BOOL running = evtCheckID(sSweepEvt);
+            if (running && ++sSweepFrames <= sSweepMax) {
+                if (sSweepFrames % 20 < 2) {
+                    pad[0].button = PAD_BUTTON_A;
+                } else if (sSweepFrames % 90 >= 45 && sSweepFrames % 90 < 47) {
+                    pad[0].button = PAD_BUTTON_B;
+                }
+                return;
+            }
+            if (running) {
+                printf("[input] %s %d: still running after %d frames\n", sSweepKind == 1 ? "talk" : "mobj",
+                       (int)sSweepIndex, (int)sSweepMax);
+                evtDeleteID(sSweepEvt);
+            }
+            if (sSweepKind == 1 && sSweepNpc != NULL && (sSweepNpc->flags & 1)) {
+                evtStartID(sSweepNpc->regularEvtId);
+            }
+            marioKeyOn();
+            partyKeyOn();
+            sSweepEvt = -1;
+            sSweepDone++;
+            sSweepIndex++;
+            return; /* a frame between items */
+        }
+        for (;;) {
+            EventEntry* e = NULL;
+            if (sSweepKind == 1) {
+                NpcWork* wp = npcGetWorkPtr();
+                NpcEntry* npc;
+                if (sSweepIndex >= wp->count) {
+                    break;
+                }
+                npc = &wp->entries[sSweepIndex];
+                /* parked out of reach (scripts put unused NPCs at y -1000):
+                 * a player cannot talk to them, and their scripts may need
+                 * set-up that only comes with placing them */
+                if (!(npc->flags & 1) || npc->talkEvt == NULL || npc->position.y < -500.0f) {
+                    sSweepIndex++;
+                    continue;
+                }
+                printf("[input] talk %d: '%s'\n", (int)sSweepIndex, npc->description);
+                evtStopID(npc->regularEvtId);
+                marioKeyOff();
+                partyKeyOff();
+                e = evtEntry(npc->talkEvt, 0, 0);
+                e->wNpcEventType = 6;
+                e->ownerNPC = npc;
+                sSweepNpc = npc;
+            } else {
+                MapObjectWork* wp = portMobjGetWork();
+                MapObjectEntry* mobj;
+                if (sSweepIndex >= wp->count) {
+                    break;
+                }
+                mobj = &wp->entries[sSweepIndex];
+                if (!(mobj->flags & 1) || mobj->event == 0) {
+                    sSweepIndex++;
+                    continue;
+                }
+                printf("[input] mobj %d: '%s'\n", (int)sSweepIndex, mobj->name);
+                e = mobjRunEvent(mobj, (EvtWord*)mobj->event);
+            }
+            fflush(stdout);
+            if (e == NULL) {
+                sSweepIndex++;
+                continue;
+            }
+            sSweepEvt = e->eventId;
+            sSweepFrames = 0;
+            return;
+        }
+        printf("[input] %s: %d run\n", sSweepKind == 1 ? "talk_all" : "mobj_all", (int)sSweepDone);
+        fflush(stdout);
+        sSweepKind = 0;
     }
     if (sWaitFrames >= 0) {
         /* wait_seq / wait_map: neutral input until the condition holds */
@@ -419,12 +632,82 @@ void portInputApply(PADStatus* pad) {
             pouchSetHP((s16)atoi(s->name)); /* e.g. 1, so the next hit ends in a Game Over */
             continue;
         }
+        if (s->frames == -13) {
+            const s32 v = s->waitMax;
+            if (strcmp(s->name, "give") == 0) {
+                pouchGetItem((ItemType)v);
+            } else if (strcmp(s->name, "join") == 0) {
+                partyJoin((PartyId)v);
+            } else if (strcmp(s->name, "party") == 0) {
+                partyJoin((PartyId)v);
+                marioPartyKill();
+                marioPartyEntry((PartyId)v);
+            } else if (strcmp(s->name, "story") == 0) {
+                swByteSet(0, v);
+            } else if (strcmp(s->name, "flag") == 0) {
+                swSet(v);
+            } else if (strcmp(s->name, "audience") == 0) {
+                pouchSetAudienceNum((f32)v);
+            } else if (strcmp(s->name, "coins") == 0) {
+                pouchSetCoin(v);
+            } else if (strcmp(s->name, "sp") == 0) {
+                pouchSetAP((s16)v);
+            } else if (strcmp(s->name, "fp") == 0) {
+                pouchSetFP((s16)v);
+            } else if (strcmp(s->name, "maxsp") == 0) {
+                pouchGetPtr()->maximumSP = (s16)v;
+            } else if (strcmp(s->name, "maxhp") == 0) {
+                pouchSetMaxHP((s16)v);
+                pouchSetHP((s16)v);
+            } else if (strcmp(s->name, "stars") == 0) {
+                pouchGetPtr()->mStarPowersObtained = (u16)v;
+            }
+            continue;
+        }
+        if (s->frames == -16 || s->frames == -17) {
+            sSweepKind = s->frames == -16 ? 1 : 2;
+            sSweepIndex = 0;
+            sSweepEvt = -1;
+            sSweepDone = 0;
+            sSweepMax = s->waitMax;
+            sSweepNpc = NULL;
+            snprintf(sSweepMap, sizeof(sSweepMap), "%s", gp != NULL ? gp->currentMapName : "");
+            return; /* runs from the next frame */
+        }
+        if (s->frames == -15) {
+            MapObjectEntry* mobj = mobjNameToPtrNoAssert(s->name);
+            if (mobj == NULL || mobj->event == 0) {
+                printf("[input] mobj_event: no map object '%s' with an event\n", s->name);
+            } else {
+                mobjRunEvent(mobj, (EvtWord*)mobj->event);
+            }
+            fflush(stdout);
+            continue;
+        }
+        if (s->frames == -14) {
+            EventEntry* e = evtEntry(input_select_evt, 0, 0);
+            e->lwData[0] = s->waitMax < 0 ? (EvtWord)sSelectList : (EvtWord)s->waitMax;
+            continue;
+        }
+        if (s->frames == -12) {
+            portSaveStateRequest(s->waitMax, s->stickX);
+            continue;
+        }
         if (s->frames == -2) {
             return;
         }
         sLeft = s->frames;
+        if (s->seed != 0) {
+            sRand = s->seed;
+            sRandHold = 0;
+        }
     }
     s = &sSteps[sCur];
+    if (s->seed != 0) {
+        randomInput(&pad[0]);
+        sLeft--;
+        return;
+    }
     pad[0].err = PAD_ERR_NONE;
     pad[0].button = s->buttons;
     pad[0].stickX = s->stickX;

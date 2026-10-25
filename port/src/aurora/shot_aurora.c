@@ -9,7 +9,11 @@
  * (which clears it), and asks Aurora to read that copy back
  * (AuroraReadbackCaptureCopies). Aurora delivers it a frame or two later in
  * GameCube RGBA8 texture layout (4x4 tiles, AR then GB), which is untiled and
- * written as an uncompressed PNG. */
+ * written as an uncompressed PNG.
+ *
+ * $TTYD_SHOT_INBETWEEN=<k>          capture instead the k-th in-between frame
+ *                                   after each listed one (a higher
+ *                                   $TTYD_FRAMERATE), as shot_<frame>_<k> */
 #include <dolphin/gx.h>
 #include <dolphin/gx/GXAurora.h>
 #include <dolphin/vi.h>
@@ -19,6 +23,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "port/platform.h"
+#include "port/widescreen.h"
 
 #define SHOT_W 640
 #define SHOT_H 480
@@ -175,18 +180,43 @@ static BOOL listed(u32 frame) {
     return FALSE;
 }
 
+static void capture(void);
+
+/* $TTYD_SHOT_INBETWEEN=k: the listed frames' captures are of the k-th frame
+ * drawn after them by a higher $TTYD_FRAMERATE (interp_aurora.c). */
+static int inbetween(void) {
+    static int sInbetween = -1;
+    if (sInbetween < 0) {
+        const char* v = getenv("TTYD_SHOT_INBETWEEN");
+        sInbetween = v != NULL ? atoi(v) : 0;
+    }
+    return sInbetween;
+}
+
 /* Called just before the game's GXCopyDisp (aurora_overlay/dolphin/gx.h). */
 void portShotBeforeCopyDisp(u32 frame) {
-    AuroraReadbackCopySrc src;
     if (sCapturing) {
         return;
     }
-    if (sNext[0] == '\0' && listed(frame)) {
+    if (sNext[0] == '\0' && inbetween() == 0 && listed(frame)) {
         snprintf(sNext, sizeof(sNext), "shot_%u", (unsigned)frame);
     }
-    if (sNext[0] == '\0') {
-        return;
+    if (sNext[0] != '\0') {
+        capture();
     }
+}
+
+/* In-between frame k, drawn after the game's frame (vi_aurora.c). */
+void portShotInbetween(u32 frame, int k) {
+    if (!sCapturing && sNext[0] == '\0' && k == inbetween() && listed(frame)) {
+        snprintf(sNext, sizeof(sNext), "shot_%u_%d", (unsigned)frame, k);
+        capture();
+    }
+}
+
+/* Copies the frame drawn so far, for the capture named sNext. */
+static void capture(void) {
+    AuroraReadbackCopySrc src;
     if (sStream == 0) {
         sStream = AuroraReadbackCreateStream();
     }
@@ -227,7 +257,28 @@ void portShotFrame(void) {
     if (AuroraReadbackGet(sStream, &dest, 1) && dest.found) {
         u8* rgb = (u8*)malloc(SHOT_W * SHOT_H * 3);
         untile(sPixels, rgb);
-        writePng(sName, rgb, SHOT_W, SHOT_H);
+        if (portWidescreenEnabled()) {
+            /* the copy holds the whole 16:9 frame in 4:3: widen it back */
+            const int w = SHOT_W * 4 / 3;
+            u8* wide = (u8*)malloc((size_t)w * SHOT_H * 3);
+            int x, y, c;
+            for (y = 0; y < SHOT_H; y++) {
+                for (x = 0; x < w; x++) {
+                    const float fx = (x + 0.5f) * SHOT_W / w - 0.5f;
+                    const int x0 = fx < 0 ? 0 : (int)fx;
+                    const int x1 = x0 + 1 < SHOT_W ? x0 + 1 : x0;
+                    const float t = fx < 0 ? 0.f : fx - x0;
+                    for (c = 0; c < 3; c++) {
+                        const u8 a = rgb[(y * SHOT_W + x0) * 3 + c], b = rgb[(y * SHOT_W + x1) * 3 + c];
+                        wide[(y * w + x) * 3 + c] = (u8)(a + (b - a) * t + 0.5f);
+                    }
+                }
+            }
+            writePng(sName, wide, w, SHOT_H);
+            free(wide);
+        } else {
+            writePng(sName, rgb, SHOT_W, SHOT_H);
+        }
         free(rgb);
         sCapturing = 0;
     } else if (++sWaited > 30) {

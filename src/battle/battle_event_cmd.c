@@ -3544,7 +3544,11 @@ void BattleActionCommandCheckDefence(BattleUnit* unit, BattleWeapon* weapon);
 void BattleActionCommandSetup(BattleWork* wp, s32 a, BattleUnit* unit, s32 b, s32 c);
 void BattleActionCommandSetDifficulty(BattleWork* wp, BattleUnit* unit, s32 diff);
 void BattleAttackDeclareAll(BattleWork* wp);
+#ifdef TARGET_PC
+void BattleGetFirstAttackUnit(BattleWork* wp, BattleUnit** a, BattleUnit** unit); /* PC port: its real prototype */
+#else
 void BattleGetFirstAttackUnit(BattleWork* wp, s32* a, BattleUnit** unit);
+#endif
 void BattleChoiceSamplingEnemy(BattleWorkWeaponTargets* targets, s32 a, s32* b, s32* c);
 s32 BtlUnit_snd_se_pos(BattleUnit* unit, const char* sfxName, s32 volume, s32 pitch, Vec* pos);
 void BtlUnit_SetSeMode(BecSndWork* work, const char* name0, const char* name1, s16 c, s16 e, s16 unused, s16 a, s16 b);
@@ -3655,7 +3659,11 @@ USER_FUNC(btlevtcmd_GetSelectNextEnemy) {
 
 USER_FUNC(btlevtcmd_GetFirstAttackTarget) {
     EvtWord* args = event->args;
+#ifdef TARGET_PC
+    BattleUnit* part; /* PC port: a pointer is written there, 8 bytes */
+#else
     s32 part;
+#endif
     BattleUnit* unit;
     s32 a = args[0];
     s32 b = args[1];

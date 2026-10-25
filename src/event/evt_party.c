@@ -765,11 +765,20 @@ USER_FUNC(L_evt_party_vivian_tail) {
 	if (p == NULL) {
 		return EVT_RETURN_DONE;
 	}
+#ifdef TARGET_PC
+	/* both take the PartyEntry*, which r3 still held on GameCube */
+	if (args[1] == 0) {
+		L_partyVivianTailStop(p);
+	} else {
+		L_partyVivianTailStart(p);
+	}
+#else
 	if (args[1] == 0) {
 		L_partyVivianTailStop();
 	} else {
 		L_partyVivianTailStart();
 	}
+#endif
 	return EVT_RETURN_DONE;
 }
 

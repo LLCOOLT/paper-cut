@@ -1,4 +1,5 @@
 #include "version.h"
+#include "wide_x.h"
 #include "eff/eff_starstone.h"
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
@@ -72,8 +73,12 @@ typedef struct SightWork { FileEntry* tpl; s32 level[5]; f32 rot; s32 dir; s32 c
 SightWork* sight_wp;
 // make_name's sprintf buffer; file scope so .bss keeps the target order lp, name, sight_wp (a function static is emitted first)
 static char name[64];
+#ifdef TARGET_PC
+#include "sound.h" /* the real SoundWork: its pointers move sampleBank and samples on 64-bit */
+#else
 typedef struct BomSoundWork { u8 pad_0[0x330]; u16 sampleBank; u8 pad_332[0x5C0 - 0x332]; s16 samples[2][0x400]; u32 sampleIndex; } BomSoundWork;
 extern BomSoundWork sound;
+#endif
 void drawBG(s32 id, f32 x, f32 y, f32 sx, f32 sy, f32 rot);
 void drawBG(s32 id, f32 x, f32 y, f32 sx, f32 sy, f32 rot);
 void drawNum(s32 num, s32 digits, f32 x, f32 y, f32 scale);
@@ -2343,13 +2348,13 @@ static void depthDisp(CameraId camera, void* param) {
     GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XYZ, GX_S16, 0);
     GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_TEX0, GX_TEX_ST, GX_S16, 0);
     GXBegin(GX_QUADS, GX_VTXFMT0, 4);
-    GXPosition3s16(-304, 240, 0);
+    GXPosition3s16(WIDE_X(-304), 240, 0);
     GXTexCoord2s16(0, 0);
-    GXPosition3s16(304, 240, 0);
+    GXPosition3s16(WIDE_X(304), 240, 0);
     GXTexCoord2s16(1, 0);
-    GXPosition3s16(304, -240, 0);
+    GXPosition3s16(WIDE_X(304), -240, 0);
     GXTexCoord2s16(1, 1);
-    GXPosition3s16(-304, -240, 0);
+    GXPosition3s16(WIDE_X(-304), -240, 0);
     GXTexCoord2s16(0, 1);
     GXEnd();
     sysWaitDrawSync();

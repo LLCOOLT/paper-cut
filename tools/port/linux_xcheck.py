@@ -463,6 +463,26 @@ typedef struct { const char* dli_fname; void* dli_fbase; const char* dli_sname; 
 int dladdr(const void*, Dl_info*);
 #endif
 """
+H["sys/mman.h"] = r"""
+#pragma once
+#include <bits/types.h>
+#define PROT_NONE 0
+#define PROT_READ 1
+#define PROT_WRITE 2
+#define PROT_EXEC 4
+#define MAP_SHARED 0x01
+#define MAP_PRIVATE 0x02
+#define MAP_FIXED 0x10
+#define MAP_ANONYMOUS 0x20
+#define MAP_ANON MAP_ANONYMOUS
+#define MAP_FAILED ((void*)-1)
+#define MADV_DONTNEED 4
+void* mmap(void*, size_t, int, int, int, off_t);
+int munmap(void*, size_t);
+int mprotect(void*, size_t, int);
+int madvise(void*, size_t, int);
+"""
+
 H["unistd.h"] = r"""
 #pragma once
 #include <bits/types.h>
@@ -479,6 +499,7 @@ ssize_t write(int, const void*, size_t);
 ssize_t pread(int, void*, size_t, off_t);
 ssize_t pwrite(int, const void*, size_t, off_t);
 int close(int);
+int fsync(int);
 off_t lseek(int, off_t, int);
 ssize_t readlink(const char* restrict, char* restrict, size_t);
 int access(const char*, int);

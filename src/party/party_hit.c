@@ -709,7 +709,13 @@ HitEntry* partySearchFrontWall(PartyEntry* party, Vec* pos, f32 dist, f32 ang) {
 
 #endif
 
+#ifdef TARGET_PC
+/* PC port: the callers use the ceiling found (party_move.c, party_motion.c);
+ * the GameCube function is void and they read whatever r3 held */
+HitEntry* partySearchHead(PartyEntry *party, Vec *pos, f32 *dist, f32 angle)
+#else
 void partySearchHead(PartyEntry *party, Vec *pos, f32 *dist, f32 angle)
+#endif
 {
   f32 lx;
   f32 ly;
@@ -853,6 +859,9 @@ void partySearchHead(PartyEntry *party, Vec *pos, f32 *dist, f32 angle)
     pos->z = lz;
     *dist = 0.0f;
   }
+#ifdef TARGET_PC
+  return hit;
+#endif
 }
 
 void partyHitStrippedPool(f32* f, s32 i) {

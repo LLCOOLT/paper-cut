@@ -1,7 +1,13 @@
 #ifndef VERSION_G8ME01
 #define MEMORY_C_DEFS
 #endif
+#ifdef TARGET_PC
+#include "port/platform.h"
+#endif
 #include "memory.h"
+#ifdef TARGET_PC
+#include "port/mem_pc.h"
+#endif
 #include "system.h"
 #include <dolphin/os.h>
 #include <string.h>
@@ -173,6 +179,9 @@ static inline void mapallocInit(void) {
 #endif
 
 void memClear(HEAP_TYPE heap) {
+#ifdef TARGET_PC
+	portMemForget(heapStart[heap], heapEnd[heap]);
+#endif
 	OSDestroyHeap(heapHandle[heap]);
 	OSCreateHeap(heapStart[heap], heapEnd[heap]);
 	if (heap == HEAP_MALLOC) {
@@ -399,6 +408,9 @@ void smartInit(void) {
 void L_smartReInit(void) {
 	smartEntry* e;
 	int i;
+#ifdef TARGET_PC
+	portMemForget(heapStart[SMART_HEAP], heapEnd[SMART_HEAP]);
+#endif
 
 	wp->allocHead = 0;
 	wp->allocTail = 0;
@@ -447,6 +459,9 @@ void smartFree(smartEntry* entry) {
 		entry->type = 3;
 		return;
 	}
+#ifdef TARGET_PC
+	portMemForget(entry->address, (u8*)entry->address + entry->size);
+#endif
 	if (!entry->prev) {
 		wp->allocHead = entry->next;
 		if (wp->allocHead) {
@@ -494,6 +509,15 @@ smartEntry* smartAlloc(u32 size, u8 type) {
 	smartEntry* entry2;
 	int i;
 	u32 sz = size;
+
+#ifdef TARGET_PC
+	/* a frame Aurora draws between the game's: its frame-temporary blocks come
+	 * from a scratch arena, leaving the heap (and its compaction, file
+	 * eviction and auto-free) as without these frames */
+	if (type == 3 && portInterpInBetween() && (entry1 = (smartEntry*)portInterpScratchAlloc(size)) != NULL) {
+		return entry1;
+	}
+#endif
 
 	if (!g_bFirstSmartAlloc) {
 		g_bFirstSmartAlloc = TRUE;

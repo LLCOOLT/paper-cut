@@ -1,4 +1,5 @@
 #include "driver/camdrv.h"
+#include "wide_x.h"
 #include "driver/mapdrv.h"
 #include "driver/seqdrv.h"
 #include "evt/evt_bero.h"
@@ -8,6 +9,9 @@
 #include "sdk/DEMOInit.h"
 #include "memory.h"
 #include "party.h"
+#if defined(TARGET_PC) && defined(TTYD_BACKEND_AURORA)
+#include "port/widescreen.h"
+#endif
 #include "pmario_sound.h"
 #include "system.h"
 #include "libc_decls.h"
@@ -352,6 +356,9 @@ void camDraw(void) {
                 camEvalNearFar(camera);
                 MTXPerspective(camera->projection, camera->fovY, camera->aspect, camera->near, camera->far);
             }
+#if defined(TARGET_PC) && defined(TTYD_BACKEND_AURORA)
+            portWidescreenCamera(cameraId);
+#endif
             GXSetProjection(camera->projection, camera->projType);
             dispDraw(cameraId);
             sysDummyDraw(camera->view);
@@ -728,14 +735,14 @@ void camLetterBoxDraw(CameraId cameraId, void* param) {
         GXLoadPosMtxImm(camera->view, 0);
         GXSetCurrentMtx(0);
         GXBegin(GX_QUADS, GX_VTXFMT0, 8);
-        GXPosition3s16(-304, 240, 0);
-        GXPosition3s16(304, 240, 0);
-        GXPosition3s16(304, 240 - camera->letterBoxTop, 0);
-        GXPosition3s16(-304, 240 - camera->letterBoxTop, 0);
-        GXPosition3s16(-304, camera->letterBoxBottom - 240, 0);
-        GXPosition3s16(304, camera->letterBoxBottom - 240, 0);
-        GXPosition3s16(304, -240, 0);
-        GXPosition3s16(-304, -240, 0);
+        GXPosition3s16(WIDE_X(-304), 240, 0);
+        GXPosition3s16(WIDE_X(304), 240, 0);
+        GXPosition3s16(WIDE_X(304), 240 - camera->letterBoxTop, 0);
+        GXPosition3s16(WIDE_X(-304), 240 - camera->letterBoxTop, 0);
+        GXPosition3s16(WIDE_X(-304), camera->letterBoxBottom - 240, 0);
+        GXPosition3s16(WIDE_X(304), camera->letterBoxBottom - 240, 0);
+        GXPosition3s16(WIDE_X(304), -240, 0);
+        GXPosition3s16(WIDE_X(-304), -240, 0);
         GXSetViewport(viewport[0], viewport[1], viewport[2], viewport[3], viewport[4], viewport[5]);
         GXSetProjectionv(projection);
         GXSetScissor(left, top, width, height);

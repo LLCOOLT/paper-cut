@@ -1,144 +1,92 @@
-Paper Mario: The Thousand-Year Door
-![Build Status] ![Progress] ![Functions Progress] ![Data Progress] ![Linked Progress]
+Paper Mario: The Thousand-Year Door: native port
 =============
 
-[Build Status]: https://img.shields.io/badge/Build-passing%20(SHA--1%20OK)-brightgreen
-[Progress]: https://img.shields.io/badge/Code-100.00%25-blue
-[Functions Progress]: https://img.shields.io/badge/Functions-100.00%25-blue
-[Data Progress]: https://img.shields.io/badge/Data-100.00%25-blue
-[Linked Progress]: https://img.shields.io/badge/Linked-100.00%25-blue
+A native port of Paper Mario: The Thousand-Year Door, Japanese (G8MJ01) and US (G8ME01), to Windows, macOS, Linux, iOS and Android, 64-bit, with no emulator.
 
-A matching decompilation of Paper Mario: The Thousand-Year Door. The Japanese (G8MJ01) and US (G8ME01) releases are complete: every function is matched from C and each build reproduces its original game byte for byte.
+The game code is C, from the decompilation in [LLCOOLT/ttyd](https://github.com/LLCOOLT/ttyd). The GameCube platform under it (graphics, audio, input, disc, memory card) is replaced, through [Aurora](https://github.com/encounter/aurora) (WebGPU/Dawn and SDL3).
 
-## Origins and credit
+**No game data is included.** You need your own copy of the game: the port runs from your disc image.
 
-This project started as a fork of [doldecomp/ttyd](https://github.com/doldecomp/ttyd), which grew out of [NWPlayer123](https://github.com/NWPlayer123)'s original G8MJ01 decomp-toolkit setup. The project structure, build system, splits, symbols and the early decompilation work come from them and their contributors. Many thanks to everyone who worked on it. The US version also draws on [Silver136](https://github.com/Silver-136/ttyd_dtk_Silver136)'s US decompilation. The original MIT licence and copyright notice are kept in [LICENSE](LICENSE).
+## Features
 
-It is now an **independent project and is not affiliated with doldecomp**. All of the code added since the fork was written with the help of AI tools (Anthropic's Claude), so it is kept separate from the upstream project. Please don't take questions about this repository to the doldecomp community; use this repository's issues instead.
+**Playing**
+- Every map of both versions boots and runs, with every battle setup.
+- The whole story is played through scripted tests at every story value, and about 120 real saves load.
+- Field play, battles, menus, audio (MusyX in software) and memory card saves are compatible with Dolphin's `.gci` files.
 
-Some functions use small behaviour-identical tricks to reach a byte-identical build; each is marked in the code with a `FAKE` comment and listed in [docs/FAKES.md](docs/FAKES.md).
+**Display**
+- **120 Hz and up:** extra frames are drawn between the game's 60 Hz ones, with interpolated camera, characters and animation. The game's logic is untouched.
+- **Widescreen 16:9** (optional; much of the game was built for 4:3).
+- Any window size, an internal resolution of 1–8×, and an FPS counter.
 
-![Progress treemap: one cell per file, sized by code bytes, colored by match percent](docs/progress.svg)
+**Settings page:** F1, a controller's Back/Select, or a three-finger tap. It covers:
+- video, audio and controls (rumble, on-screen controls);
+- gameplay (fast-forward, text speed, run speed, skip intro);
+- **save warps:** continue from any `.gci` save, e.g. a practice save pack.
 
-Live progress maps (interactive versions of the treemap above): [JP (G8MJ01)](https://claude.ai/artifact/74tZKbcCQ7WUWFM577oqmY) and [US (G8ME01)](https://claude.ai/artifact/1Hdacn3R1wrwjtwDQRuwKJ)
+**Save states:** four slots, F5 to save and F8 to load.
 
-<!-- progress-start -->
-**Progress** (all source is C; units whose C does not match yet are built from the original code, so the build stays byte-identical):
+**Phones and tablets**
+- On-screen controls: movable, sized, with haptics.
+- Portrait or landscape, safe areas, and pause and resume with the app.
 
-| Measure | Value |
+**Faithful by construction**
+- GameCube behaviours the game relies on are reproduced on 64-bit hosts: big-endian disc data, integer division by zero, paired-single quantization, and the C library's `rand` sequence.
+
+## Status
+
+| Platform | State |
 |---|---|
-| **Code matched by C** (by code size) | **100.00%** |
-| **Functions matched by C** | **9768 / 9768** (100.0%) |
-| Files linked from C | 1234 / 1234 (100.00% of code) |
-| Fuzzy match | 100.00% |
-| Data, exact (bytes + where each relocation points; objdiff's name-paired figure is 100.00%) | 100.00% |
+| Windows (x86-64) | Plays. Every map, battle and story sweep passes. Built with clang. |
+| macOS (arm64, x86-64) | Plays (Aurora `.app`). Every map boots, JP and US. |
+| iOS | Plays on a device (iPhone, US) and in the Simulator. Disc image in the app's Documents. |
+| Linux (x86-64, aarch64) | Cross-compiled and linked; not yet run on a Linux machine. |
+| Android (arm64) | Both APKs build; not yet run on a device. |
 
-Per category, JP (G8MJ01) (generated by `tools/update_readme.py`):
+## Building and running
 
-| Category | Matched code | Linked code | Linked files | Matched functions |
-|---|---|---|---|---|
-| All | 100.00% | 100.00% | 1234 / 1234 | 9768 / 9768 |
-| DOL | 100.00% | 100.00% | 634 / 634 | 6990 / 6990 |
-| Modules | 100.00% | 100.00% | 600 / 600 | 2778 / 2778 |
-| Game Code | 100.00% | 100.00% | 1022 / 1022 | 8275 / 8275 |
-| SDK Code | 100.00% | 100.00% | 181 / 181 | 1126 / 1126 |
-| MusyX Code | 100.00% | 100.00% | 31 / 31 | 367 / 367 |
+Windows (Git Bash, LLVM clang, Visual Studio Build Tools):
 
-**US (G8ME01)**, data matched 100.00%:
-
-| Category | Matched code | Linked code | Linked files | Matched functions |
-|---|---|---|---|---|
-| All | 100.00% | 100.00% | 1226 / 1226 | 9748 / 9748 |
-| DOL | 100.00% | 100.00% | 630 / 630 | 6968 / 6968 |
-| Modules | 100.00% | 100.00% | 596 / 596 | 2780 / 2780 |
-| Game Code | 100.00% | 100.00% | 1016 / 1016 | 8283 / 8283 |
-| SDK Code | 100.00% | 100.00% | 179 / 179 | 1098 / 1098 |
-| MusyX Code | 100.00% | 100.00% | 31 / 31 | 367 / 367 |
-<!-- progress-end -->
-
-This repository does **not** contain any game assets or assembly whatsoever. An existing copy of the game is required.
-
-Supported versions:
-
-- `G8MJ01`: Rev 0 (JP), the default
-- `G8ME01`: Rev 0 (US)
-
-Dependencies
-============
-
-Windows
---------
-
-On Windows, it's **highly recommended** to use native tooling. WSL or msys2 are **not** required.  
-When running under WSL, [objdiff](#diffing) is unable to get filesystem notifications for automatic rebuilds.
-
-- Install [Python](https://www.python.org/downloads/) and add it to `%PATH%`.
-  - Also available from the [Windows Store](https://apps.microsoft.com/store/detail/python-311/9NRWMJP3717K).
-- Download [ninja](https://github.com/ninja-build/ninja/releases) and add it to `%PATH%`.
-  - Quick install via pip: `pip install ninja`
-
-macOS
-------
-
-- Install [ninja](https://github.com/ninja-build/ninja/wiki/Pre-built-Ninja-packages):
-
-  ```sh
-  brew install ninja
-  ```
-
-- Install [wine-crossover](https://github.com/Gcenx/homebrew-wine):
-
-  ```sh
-  brew install --cask --no-quarantine gcenx/wine/wine-crossover
-  ```
-
-After OS upgrades, if macOS complains about `Wine Crossover.app` being unverified, you can unquarantine it using:
-
-```sh
-sudo xattr -rd com.apple.quarantine '/Applications/Wine Crossover.app'
+```bash
+git clone --recurse-submodules https://github.com/LLCOOLT/ttyd-port.git && cd ttyd-port
+. tools/port/winenv.sh
+cmake -S . -B build-pc-us-aurora -G Ninja --toolchain cmake/toolchains/windows-clang.cmake \
+  -DCMAKE_BUILD_TYPE=RelWithDebInfo -DTTYD_VERSION=G8ME01 -DTTYD_BACKEND=aurora
+ninja -C build-pc-us-aurora
+build-pc-us-aurora/ttyd-us.exe "path/to/your/disc.iso"
 ```
 
-Linux
-------
+- `-DTTYD_VERSION=G8MJ01` builds the JP version (`ttyd-jp`).
+- Without a disc argument, a file dialog asks for one the first time.
+- The disc must match the build's version.
+- macOS, iOS, Linux and Android builds are covered in [docs/PC_PORT.md](docs/PC_PORT.md).
 
-- Install [ninja](https://github.com/ninja-build/ninja/wiki/Pre-built-Ninja-packages).
-- For non-x86(_64) platforms: Install wine from your package manager.
-  - For x86(_64), [wibo](https://github.com/decompals/wibo), a minimal 32-bit Windows binary wrapper, will be automatically downloaded and used.
+## Testing
 
-Building
-========
+`tools/port/local_ci.py` runs the checks on one machine:
+- every PC build configuration;
+- unit tests and audits;
+- the Linux cross-check and the Android build;
+- every map with golden audio.
 
-- Clone the repository:
+Scripted controller input (`TTYD_INPUT`), map warps (`TTYD_MAP`) and frame captures (`TTYD_SHOT`) drive the sweeps; [docs/PC_PORT.md](docs/PC_PORT.md#testing) lists them.
 
-  ```sh
-  git clone https://github.com/LLCOOLT/ttyd.git
-  ```
+## Documentation
 
-- Copy your game's disc image to `orig/G8MJ01` (JP) or `orig/G8ME01` (US).
-  - Supported formats: ISO (GCM), RVZ, WIA, WBFS, CISO, NFS, GCZ, TGC
-  - After the initial build, the disc image can be deleted to save space.
+| Document | Contents |
+|---|---|
+| [docs/PC_PORT.md](docs/PC_PORT.md) | Building on each platform, running, options, settings, tests, audits, design notes |
+| [docs/FRAME_INTERPOLATION.md](docs/FRAME_INTERPOLATION.md) | How 120 Hz and up works, and how its purity is checked |
+| [docs/APPLE_BRIEF.md](docs/APPLE_BRIEF.md) | Bringing up macOS and iOS |
 
-- Configure:
+## Credits
 
-  ```sh
-  python configure.py
-  ```
+- **The decompilation:** [LLCOOLT/ttyd](https://github.com/LLCOOLT/ttyd). It started as a fork of [doldecomp/ttyd](https://github.com/doldecomp/ttyd), which grew out of [NWPlayer123](https://github.com/NWPlayer123)'s original G8MJ01 decomp-toolkit setup, and its US version draws on [Silver136](https://github.com/Silver-136/ttyd_dtk_Silver136)'s work.
+- **The platform layer:** [Aurora](https://github.com/encounter/aurora) (the GameCube SDK on WebGPU/Dawn and SDL3), [Dawn](https://dawn.googlesource.com/dawn) and [SDL](https://www.libsdl.org/).
+- **The settings page** follows the one in Dusklight, the Twilight Princess port on Aurora.
 
-  To build another version, specify it with `--version`, for example `python configure.py --version G8ME01` for the US release.
+The original MIT licence and copyright notice are kept in [LICENSE](LICENSE).
 
-- Build:
+This is an **independent project, not affiliated with doldecomp**. The port, like the decompilation it is built from, was written with the help of AI tools (Anthropic's Claude). Please use this repository's issues for questions about it, not the doldecomp community.
 
-  ```sh
-  ninja
-  ```
-
-Diffing
-=======
-
-Once the initial build succeeds, an `objdiff.json` should exist in the project root.
-
-Download the latest release from [encounter/objdiff](https://github.com/encounter/objdiff). Under project settings, set `Project directory`. The configuration should be loaded automatically.
-
-Select an object from the left sidebar to begin diffing. Changes to the project will rebuild automatically: changes to source files, headers, `configure.py`, `splits.txt` or `symbols.txt`.
-
-![](assets/objdiff.png)
+Paper Mario and The Thousand-Year Door are trademarks of Nintendo. This project is not affiliated with or endorsed by Nintendo.

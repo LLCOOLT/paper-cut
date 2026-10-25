@@ -1,3 +1,4 @@
+#include "evt/evt_win.h"
 #include "eff/eff_starstone.h"
 #include "eff/eff_mahojin.h"
 #include "version.h"
@@ -49,7 +50,6 @@ s32 U_badgeShop_SpecialCheck(void);
 void statusWinForceOpen(void);
 void statusWinForceOff(void);
 extern ItemData itemDataTable[];
-typedef struct ShopSel { u8 field_0x0[8]; s32* items; u8 field_0xC[0x24 - 0xC]; s32 sel; } ShopSel;
 void mapGrpSetColor(const char* name, GXColor color);
 NpcEntry* fbatNpcTalkCheck(MarioWork* mario);
 EffectEntry* effKemuriEntry(s32 type, f32 x, f32 y, f32 z, f32 scale);
@@ -564,16 +564,16 @@ static USER_FUNC(disp_off) {
 
 static USER_FUNC(get_value) {
     EvtWord* args = event->args;
-    ShopSel* wp = (ShopSel*)evtGetValue(event, args[0]);
+    UnitWinWork* wp = (UnitWinWork*)evtGetValue(event, args[0]);
 
 #ifdef VERSION_G8ME01
-    evtSetValue(event, args[1], (EvtWord)msgSearch(itemDataTable[wp->items[wp->sel]].name));
+    evtSetValue(event, args[1], (EvtWord)msgSearch(itemDataTable[wp->goods[wp->goodsIdx]].name));
 #else
-    evtSetValue(event, args[1], (EvtWord)itemDataTable[wp->items[wp->sel]].id);
+    evtSetValue(event, args[1], (EvtWord)itemDataTable[wp->goods[wp->goodsIdx]].id);
 #endif
-    evtSetValue(event, args[2], wp->items[wp->sel]);
-    evtSetValue(event, args[3], itemDataTable[wp->items[wp->sel]].discount_price);
-    evtSetValue(event, args[4], itemDataTable[wp->items[wp->sel]].bp_cost);
+    evtSetValue(event, args[2], wp->goods[wp->goodsIdx]);
+    evtSetValue(event, args[3], itemDataTable[wp->goods[wp->goodsIdx]].discount_price);
+    evtSetValue(event, args[4], itemDataTable[wp->goods[wp->goodsIdx]].bp_cost);
     return EVT_RETURN_DONE;
 }
 

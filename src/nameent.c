@@ -1,4 +1,5 @@
 #include "nameent.h"
+#include "wide_x.h"
 #include "system.h"
 #include "driver/dispdrv.h"
 #include "driver/camdrv.h"
@@ -816,9 +817,9 @@ void nameBG(void) {
 	PSMTXScale(m1, (f32)w1 / GXGetTexObjWidth(&obj1), sy, 1.0f);
 	GXLoadTexMtxImm(m1, GX_TEXMTX0, GX_MTX2x4);
 	GXBegin(GX_QUADS, GX_VTXFMT0, 4);
-	GXPosition3f32(-304.0f, 240.0f, 0.0f);
+	GXPosition3f32(WIDE_X(-304.0f), 240.0f, 0.0f);
 	GXTexCoord2f32(0.0f, 0.0f);
-	GXPosition3f32(-304.0f, -240.0f, 0.0f);
+	GXPosition3f32(WIDE_X(-304.0f), -240.0f, 0.0f);
 	GXTexCoord2f32(0.0f, 1.0f);
 	GXPosition3f32(-272.0f, -240.0f, 0.0f);
 	GXTexCoord2f32(1.0f, 1.0f);
@@ -860,9 +861,9 @@ void nameBG(void) {
 	GXTexCoord2f32(0.0f, 0.0f);
 	GXPosition3f32(272.0f, -240.0f, 0.0f);
 	GXTexCoord2f32(0.0f, 1.0f);
-	GXPosition3f32(304.0f, -240.0f, 0.0f);
+	GXPosition3f32(WIDE_X(304.0f), -240.0f, 0.0f);
 	GXTexCoord2f32(1.0f, 1.0f);
-	GXPosition3f32(304.0f, 240.0f, 0.0f);
+	GXPosition3f32(WIDE_X(304.0f), 240.0f, 0.0f);
 	GXTexCoord2f32(1.0f, 0.0f);
 }
 
@@ -961,13 +962,13 @@ void nameMaskGX(f32 t) {
 	GXLoadPosMtxImm(camGetPtr(CAMERA_2D)->view, GX_PNMTX0);
 	GXSetCurrentMtx(GX_PNMTX0);
 	GXBegin(GX_QUADS, GX_VTXFMT0, 4);
-	GXPosition3s16(-304, 240, 0);
+	GXPosition3s16(WIDE_X(-304), 240, 0);
 	GXTexCoord2f32(0.0f, 0.0f);
-	GXPosition3s16(304, 240, 0);
+	GXPosition3s16(WIDE_X(304), 240, 0);
 	GXTexCoord2f32(1.0f, 0.0f);
-	GXPosition3s16(304, -240, 0);
+	GXPosition3s16(WIDE_X(304), -240, 0);
 	GXTexCoord2f32(1.0f, 1.0f);
-	GXPosition3s16(-304, -240, 0);
+	GXPosition3s16(WIDE_X(-304), -240, 0);
 	GXTexCoord2f32(0.0f, 1.0f);
 }
 

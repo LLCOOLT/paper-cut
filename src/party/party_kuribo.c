@@ -182,11 +182,11 @@ void kuribo_init_800C23B4(PartyEntry* party) {
 USER_FUNC(evt_msg_print);
 EVT_BEGIN(kurio_msg_evt)
     CALL(pre_kurio_use)
-    IF_INT_EQUAL(4264967296, 0)
+    IF_INT_EQUAL(-30000000, 0)
         CALL(post_kurio_use)
         RETURN
     END_IF
-    CALL(evt_msg_print, 0, 4264967296, 0, STRING("party"))
+    CALL(evt_msg_print, 0, -30000000, 0, STRING("party"))
     CALL(post_kurio_use)
     RETURN
 EVT_END()

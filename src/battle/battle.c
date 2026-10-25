@@ -432,11 +432,22 @@ BattleUnit* BattleGetPartnerPtr(BattleWork* wp, BattleUnit* unit) {
     return BattleGetMarioPtr(wp);
 }
 
+#ifdef TARGET_PC
+/* PC port: battle_event_default.c and unit_faker_mario.c wait on the result
+ * (declared BOOL there); the GameCube function is void, leaving
+ * animEffectAsync's result in r3 */
+BOOL BattlePartyAnimeLoad(s32 partyId) {
+    BattleUnitSetup* setup = &entryunit_party[partyId - 0xE0];
+
+    return animEffectAsync(setup->mUnitKindParams->mParts->modelName, 1);
+}
+#else
 void BattlePartyAnimeLoad(s32 partyId) {
     BattleUnitSetup* setup = &entryunit_party[partyId - 0xE0];
 
     animEffectAsync(setup->mUnitKindParams->mParts->modelName, 1);
 }
+#endif
 
 BOOL statusWinCheck(void);
 void statusWinOpen(void);

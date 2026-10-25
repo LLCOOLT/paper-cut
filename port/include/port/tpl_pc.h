@@ -27,6 +27,9 @@ struct TEXPalette;
 struct TEXPalette* portTplDecode(void* blob, uint32_t size, const char* name);
 /* Frees the decoded graph of a blob that is about to be freed. No-op if none. */
 void portTplRelease(void* blob);
+/* Releases every decoded TPL whose blob starts in [lo, hi) (portMemForget);
+ * detached graphs (portTplDetach) are not affected. */
+void portTplForgetRange(const void* lo, const void* hi);
 /* Copy round trip (mapdrv bmapLoad/bmapUnLoad park the map TPL in ARAM, free
  * it, and copy it back later, possibly to another address). portTplDetach
  * unregisters the decoded graph of blob (so a TPL decoded at that address in

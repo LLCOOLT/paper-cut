@@ -1991,6 +1991,13 @@ BOOL partyGetAppearPos4(PartyEntry* party, Vec* out) {
 
 
     for (i = 0; i <= n; i++) {
+#ifdef TARGET_PC
+        /* PC port: i reaches n, one past the angle table in use (the GameCube
+         * reads what follows it in its frame); that last try is left out */
+        if (i == n) {
+            continue;
+        }
+#endif
         if (i == 0) {
             query.targetDistance = dist;
             ang = party->homeDir;

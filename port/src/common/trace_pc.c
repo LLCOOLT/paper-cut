@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <dolphin/vi.h>
 #include "driver/seqdrv.h"
 #include "mario/mariost.h"
 #include "manager/evtmgr.h"
@@ -38,16 +39,38 @@ static void traceEvents(u32 frame) {
 void portTraceCmd(EventEntry* e) {
     static int level = -1;
     static u32 budget = 4000;
+    static const char* filter;
     char a[160], b[160];
     if (level < 0) {
         const char* v = getenv("TTYD_TRACE");
         level = v ? atoi(v) : 0;
+        /* $TTYD_TRACE_CMD=<text>[,<text>...]: only scripts whose name contains one;
+         * $TTYD_TRACE_BUDGET: how many commands (default 4000) */
+        filter = getenv("TTYD_TRACE_CMD");
+        if ((v = getenv("TTYD_TRACE_BUDGET")) != NULL) {
+            budget = (u32)strtoul(v, NULL, 10);
+        }
     }
     if (level < 3 || budget == 0 || gp == NULL || gp->currentMapName[0] == '\0') {
         return;
     }
+    portSymbolName(e->currCommand, a, sizeof(a));
+    if (filter != NULL) {
+        const char* f = filter;
+        for (;;) {
+            size_t n = strcspn(f, ",");
+            snprintf(b, sizeof(b), "%.*s", (int)n, f);
+            if (strstr(a, b) != NULL) {
+                break;
+            }
+            if (f[n] == '\0') {
+                return;
+            }
+            f += n + 1;
+        }
+    }
     budget--;
-    printf("[cmd] ev %d op %3d %s", (int)e->eventId, (int)e->opcode, portSymbolName(e->currCommand, a, sizeof(a)));
+    printf("[cmd] f %u ev %d op %3d %s", (unsigned)VIGetRetraceCount(), (int)e->eventId, (int)e->opcode, a);
     if (e->opcode == OPCODE_USER_FUNC && e->args != NULL) {
         printf(" -> %s", portSymbolName((void*)e->args[0], b, sizeof(b)));
     }
@@ -170,6 +193,20 @@ void portTraceFrame(u32 frame) {
     static char lastMap[sizeof(gp->currentMapName)];
     s32 seq;
 
+    if (gp != NULL) {
+        /* the crash report's "game:" line, kept current */
+        static s32 sCtxSeq = -3;
+        static char sCtxMap[sizeof(gp->currentMapName)];
+        const s32 s = (s32)seqGetSeq();
+        if (s != sCtxSeq || strncmp(sCtxMap, gp->currentMapName, sizeof(sCtxMap)) != 0) {
+            char ctx[160];
+            sCtxSeq = s;
+            memcpy(sCtxMap, gp->currentMapName, sizeof(sCtxMap));
+            snprintf(ctx, sizeof(ctx), "sequence %d, map '%.*s', frame %u", (int)s, (int)sizeof(sCtxMap),
+                     sCtxMap, (unsigned)frame);
+            portCrashSetContext(ctx);
+        }
+    }
     if (enabled < 0) {
         const char* v = getenv("TTYD_TRACE");
         enabled = v == NULL ? 0 : atoi(v) > 1 ? 2 : 1;

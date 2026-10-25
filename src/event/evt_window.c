@@ -64,7 +64,11 @@ WinMgrDesc coin_desc = {
 USER_FUNC(evt_win_item_select) {
 	EvtWord* args = event->args;
 	s32 flag = evtGetValue(event, args[0]);
+#ifdef TARGET_PC
+	EvtWord type = evtGetValue(event, args[1]); /* PC port: or a 64-bit pointer to an item list */
+#else
 	s32 type = evtGetValue(event, args[1]);
+#endif
 	WinMgrSelect* sel;
 	s32 result;
 	s32 extra;
@@ -89,7 +93,11 @@ USER_FUNC(evt_win_item_select) {
 
 USER_FUNC(evt_win_other_select) {
 	EvtWord* args = event->args;
+#ifdef TARGET_PC
+	EvtWord type = evtGetValue(event, args[0]); /* PC port: or a 64-bit pointer to an item list */
+#else
 	s32 type = evtGetValue(event, args[0]);
+#endif
 	WinMgrSelect* sel;
 	s32 result;
 	if (isFirstCall) {

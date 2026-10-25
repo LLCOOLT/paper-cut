@@ -2526,3 +2526,12 @@ void continueGame(void) {
 }
 #pragma defer_codegen reset
 #endif
+
+#ifdef TARGET_PC
+/* The settings page's save warps (port/src/common/warp_pc.c): continue from
+ * a card slot as the file select does. */
+void portContinueGame(s32 slot) {
+    wp->slot = slot;
+    continueGame();
+}
+#endif

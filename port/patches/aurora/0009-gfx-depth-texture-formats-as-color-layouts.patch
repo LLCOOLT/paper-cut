@@ -1,0 +1,47 @@
+From: Claude <noreply@anthropic.com>
+Subject: [PATCH] gfx: depth texture formats read as their colour layouts
+
+GX_TF_Z8, Z16 and Z24X8 (an EFB depth copy used as a texture, e.g. TTYD's
+paper effects when drawn as a static texture) stopped the program with
+"convert_texture: unknown texture format"; they are converted as I8,
+IA8 and RGBA8, whose tile layouts they share.
+---
+--- a/lib/gfx/texture_convert.cpp
++++ b/lib/gfx/texture_convert.cpp
+@@ -575,6 +575,15 @@
+ ConvertedTexture convert_texture(u32 format, uint32_t width, uint32_t height, uint32_t mips, ArrayRef<uint8_t> data) {
+   ZoneScoped;
+   ByteBuffer converted;
++  // Depth texture formats (an EFB depth copy read back as a texture) have the
++  // tile layouts of these colour formats
++  if (format == GX_TF_Z8) {
++    format = GX_TF_I8;
++  } else if (format == GX_TF_Z16) {
++    format = GX_TF_IA8;
++  } else if (format == GX_TF_Z24X8) {
++    format = GX_TF_RGBA8;
++  }
+   switch (format) {
+     DEFAULT_FATAL("convert_texture: unknown texture format {}", format);
+   case GX_TF_R8_PC:
+--- a/lib/gx/texture.cpp
++++ b/lib/gx/texture.cpp
+@@ -558,15 +558,18 @@
+     case GX_TF_I8:
+     case GX_TF_IA4:
+     case GX_TF_C8:
++    case GX_TF_Z8: // depth formats: the layouts of I8, IA8, RGBA8
+       total += div_ceil(static_cast<u32>(mipWidth), 8) * div_ceil(static_cast<u32>(mipHeight), 4) * 32;
+       break;
+     case GX_TF_IA8:
++    case GX_TF_Z16:
+     case GX_TF_RGB565:
+     case GX_TF_RGB5A3:
+     case GX_TF_C14X2:
+       total += div_ceil(static_cast<u32>(mipWidth), 4) * div_ceil(static_cast<u32>(mipHeight), 4) * 32;
+       break;
+     case GX_TF_RGBA8:
++    case GX_TF_Z24X8:
+       total += div_ceil(static_cast<u32>(mipWidth), 4) * div_ceil(static_cast<u32>(mipHeight), 4) * 64;
+       break;
+     default:

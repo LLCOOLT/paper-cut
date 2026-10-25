@@ -44,10 +44,10 @@ s32 tex_shadow_us[] = {0xA6, 0xA7, 0xA8, 0xA9, 0xAA, 0xAB, 0xAC, 0xAA, 0xA8, 0xA
 #endif
 #ifndef VERSION_G8ME01
 static EVT_BEGIN(evt_shake)
-    IF_INT_EQUAL(4264967297, 0)
-        CALL(evt_cam_shake, 5, 4064967306, 4064967306, 50)
+    IF_INT_EQUAL(-29999999, 0)
+        CALL(evt_cam_shake, 5, -229999990, -229999990, 50)
     ELSE
-        CALL(evt_cam_shake, 5, 4064967316, 4064967316, 100)
+        CALL(evt_cam_shake, 5, -229999980, -229999980, 100)
     END_IF
     RETURN
 EVT_END()
@@ -70,10 +70,10 @@ typedef struct TexSet { s16* tex; s16* shadow; s32 count; } TexSet;
 static TexSet texid_tbl[6] = { { tex_jp, tex_shadow_jp, 8 }, { tex_us, tex_shadow_us, 14 }, { tex_lang3, tex_shadow_lang3, 12 }, { tex_lang4, tex_shadow_lang4, 16 }, { tex_lang5, tex_shadow_lang5, 12 }, { tex_lang6, tex_shadow_lang6, 8 } };
 u32 niji_tbl[] = {144, 154, 150, 156, 158, 144};
 static EVT_BEGIN(evt_shake)
-    IF_INT_EQUAL(4264967297, 0)
-        CALL(evt_cam_shake, 5, 4064967306, 4064967306, 50)
+    IF_INT_EQUAL(-29999999, 0)
+        CALL(evt_cam_shake, 5, -229999990, -229999990, 50)
     ELSE
-        CALL(evt_cam_shake, 5, 4064967316, 4064967316, 100)
+        CALL(evt_cam_shake, 5, -229999980, -229999980, 100)
     END_IF
     RETURN
 EVT_END()

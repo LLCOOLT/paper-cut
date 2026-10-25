@@ -89,7 +89,11 @@ inline void make_jump_table(EventEntry* entry) {
 	while (1) {
 		opcode = *cmd & 0xFFFF; //load the base opcode and arg_count
 		params = *cmd++ >> 16; //increment to first argument
+#ifdef TARGET_PC
+		label = params != 0 ? *cmd : 0; /* PC port: END has no argument; the word after it is past the script */
+#else
 		label = *cmd; //load label, which will be cast to an s8 (0-0xFF valid)
+#endif
 		cmd += params; //set cmd to the opcode *after* the label
 
 		switch (opcode) {

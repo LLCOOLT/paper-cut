@@ -198,9 +198,16 @@ def signature(out, code):
     m = re.search(r"^OSPanic (.*)$", out, re.M)
     if m:
         return "panic: " + re.sub(r"0x[0-9A-Fa-f]+", "0x?", m.group(1))[:160]
-    m = re.search(r"\*\*\* (?:crash|stall): (.*)\n((?:[ \t]+[0-9a-fA-F]{16} .*\n){0,3})", out)
+    m = re.search(r"\*\*\* (?:crash|stall): (.*)\n((?:[ \t]+[0-9a-fA-F]{16} .*\n)*)", out)
     if m:
         frames = [re.sub(r"^\s*\S+\s+", "", l).split(" (")[0] for l in m.group(2).splitlines()]
+        # POSIX: the stack is printed from the signal handler; key on the frames below it
+        tramp = [i for i, f in enumerate(frames) if f.split("+")[0] in ("_sigtramp", "__restore_rt")]
+        frames = frames[tramp[0] + 1:] if tramp else frames
+        # the thread waiting for its turn (baton) is not the cause: skip the wait
+        while frames and re.match(r"(__psynch_cvwait|_pthread_cond_wait|pthread_cond_wait|__futex|syscall)", frames[0]):
+            frames = frames[1:]
+        frames = frames[:3]
         return ("stall: " if "*** stall" in m.group(0) else "crash: ") + (" < ".join(frames) or m.group(1))
     m = re.search(r"^\[warp\] FAIL: (.*)$", out, re.M)
     if m:
@@ -268,9 +275,12 @@ def main():
     else:
         items = [(n, n, None if a.no_bero else first_bero(n)) for n in names]
     exe = os.path.abspath(a.exe)
-    if a.golden and not a.audio:
+    tmp_audio = a.golden and not a.audio  # only the hashes are wanted: drop each dump once hashed
+    if tmp_audio:
         import tempfile
+        import atexit, shutil
         a.audio = tempfile.mkdtemp(prefix="map_sweep_audio_")
+        atexit.register(shutil.rmtree, a.audio, True)
     levels = {}
     hashes = {}
     if a.audio:
@@ -296,7 +306,10 @@ def main():
             if sig is None:
                 passed += 1
                 if a.audio:
-                    hashes[name] = audio_hash(os.path.join(os.path.abspath(a.audio), name + ".wav"))
+                    wav = os.path.join(os.path.abspath(a.audio), name + ".wav")
+                    hashes[name] = audio_hash(wav)
+                    if tmp_audio and os.path.exists(wav):
+                        os.remove(wav)
                 continue
             why = warp_artifact(name, sig)
             if why is not None:

@@ -158,7 +158,7 @@ __declspec(section ".data") f32 fd_evt_mobj_one_negone_359[2] __attribute__((ali
 __declspec(section ".data") f32 evt_mobj_one_negone_b[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
 
 static EVT_BEGIN(evt_shake)
-    CALL(evt_cam_shake, 4, 4064967296, 4064967306, 200)
+    CALL(evt_cam_shake, 4, -230000000, -229999990, 200)
     RETURN
 EVT_END()
 const char* _switch_anim[] = {"A_1", "A_2", "A_3", "A_4", "A_5", "S_1"};
@@ -206,11 +206,11 @@ extern void itemStatusOn(void* item, u32 flag);
 s32 kpa_powerup(EventEntry* event, BOOL isFirstCall);
 s32 fire_func(EventEntry* event, BOOL isFirstCall);
 EVT_BEGIN(kpa_powerup_evt)
-    CALL(kpa_powerup, 4264967296, 4264967297, 4264967298)
+    CALL(kpa_powerup, -30000000, -29999999, -29999998)
     RETURN
 EVT_END()
 EVT_BEGIN(evt_fire)
-    CALL(fire_func, 4264967296, 4264967297, 4264967298, 4264967299)
+    CALL(fire_func, -30000000, -29999999, -29999998, -29999997)
     RETURN
 EVT_END()
 

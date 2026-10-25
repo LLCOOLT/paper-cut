@@ -169,6 +169,13 @@ static s32 readEntry(DVDFileInfo* fileInfo, void* addr, s32 length, s32 offset) 
     if ((s32)fileInfo->startAddr >= sEntryCount) {
         return -1;
     }
+    if (length == 0) {
+        /* empty files exist on the disc (msg/hom_10.txt): the game reads them
+         * into _mapAlloc(0), which is NULL; a 0-byte read completes */
+        fileInfo->cb.transferredSize = 0;
+        fileInfo->cb.state = 0;
+        return 0;
+    }
     if (addr == NULL) {
         OSReport("DVD: read of %s (0x%X bytes at 0x%X) into a NULL buffer\n", sEntries[fileInfo->startAddr],
                  (unsigned)length, (unsigned)offset);

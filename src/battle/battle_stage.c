@@ -1,4 +1,7 @@
 #pragma optimize_for_size on
+#ifdef TARGET_PC
+#include "port/platform.h"
+#endif
 #include "battle/battle_stage.h"
 #include "pc_call.h"
 #include "battle/battle.h"
@@ -804,6 +807,9 @@ void tou_gamen_screen_tev(MapTevCallbackInfo* p) {
 	if (screen_wp->captured == 0) {
 		return;
 	}
+#ifdef TARGET_PC
+	portInterpKeep(screen_wp, sizeof(*screen_wp)); /* the screen's drift steps in this draw */
+#endif
 	if (screen_wp->field_24 != 0) {
 		tex = screen_wp->tex;
 		for (i = 0; i < 64; i++) {

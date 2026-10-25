@@ -4,6 +4,9 @@
 #include "driver/arcdrv.h"
 #include "driver/camdrv.h"
 #include "memory.h"
+#ifdef TARGET_PC
+#include "port/platform.h"
+#endif
 #include "system.h"
 #include "sdk/texPalette.h"
 #include <string.h>
@@ -430,10 +433,16 @@ void windowDispGX_System(s32 type, u8 alpha, f32 x, f32 y, f32 height, f32 width
 	static f32 scrl;
 
 	camera = camGetCurPtr();
+#ifdef TARGET_PC
+	if (!portInterpInBetween()) { /* a frame between the game's: the same scroll */
+#endif
 	scrl += 0.005f;
 	if (scrl > 10.0f) {
 		scrl -= 10.0f;
 	}
+#ifdef TARGET_PC
+	}
+#endif
 	GXSetCullMode(GX_CULL_NONE);
 	GXSetZCompLoc(GX_TRUE);
 	GXSetAlphaCompare(GX_ALWAYS, 0, GX_AOP_AND, GX_ALWAYS, 0);

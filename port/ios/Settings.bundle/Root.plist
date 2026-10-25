@@ -1,0 +1,351 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- The app's page in the Settings app (port/ios/ios.cmake). The keys are
+     settings.txt's (port/src/aurora/settings_aurora.c): read at launch and
+     when the game comes back to the foreground, and written back whenever the
+     in-game settings page (three-finger tap) saves, so both show the same. -->
+<plist version="1.0">
+<dict>
+	<key>PreferenceSpecifiers</key>
+	<array>
+		<dict>
+			<key>Type</key>
+			<string>PSGroupSpecifier</string>
+			<key>Title</key>
+			<string>Video</string>
+			<key>FooterText</key>
+			<string>The game runs at 60 frames a second; higher rates draw frames in between for a smoother camera and characters. Widescreen shows 16:9 instead of the original 4:3: some rooms and scenes end at the 4:3 edges. The in-game settings page (tap with three fingers) has the same options.</string>
+		</dict>
+		<dict>
+			<key>Type</key>
+			<string>PSMultiValueSpecifier</string>
+			<key>Title</key>
+			<string>Frame Rate</string>
+			<key>Key</key>
+			<string>framerate</string>
+			<key>DefaultValue</key>
+			<string>60</string>
+			<key>Titles</key>
+			<array>
+				<string>60 Hz</string>
+				<string>120 Hz</string>
+				<string>Display (ProMotion)</string>
+			</array>
+			<key>Values</key>
+			<array>
+				<string>60</string>
+				<string>120</string>
+				<string>display</string>
+			</array>
+		</dict>
+		<dict>
+			<key>Type</key>
+			<string>PSToggleSwitchSpecifier</string>
+			<key>Title</key>
+			<string>VSync</string>
+			<key>Key</key>
+			<string>vsync</string>
+			<key>DefaultValue</key>
+			<true/>
+		</dict>
+		<dict>
+			<key>Type</key>
+			<string>PSToggleSwitchSpecifier</string>
+			<key>Title</key>
+			<string>Widescreen (16:9)</string>
+			<key>Key</key>
+			<string>widescreen</string>
+			<key>DefaultValue</key>
+			<false/>
+		</dict>
+		<dict>
+			<key>Type</key>
+			<string>PSMultiValueSpecifier</string>
+			<key>Title</key>
+			<string>Internal Resolution</string>
+			<key>Key</key>
+			<string>resolution</string>
+			<key>DefaultValue</key>
+			<integer>0</integer>
+			<key>Titles</key>
+			<array>
+				<string>Auto (the screen's)</string>
+				<string>1x (640x480)</string>
+				<string>2x (1280x960)</string>
+				<string>3x (1920x1440)</string>
+				<string>4x (2560x1920)</string>
+			</array>
+			<key>Values</key>
+			<array>
+				<integer>0</integer>
+				<integer>1</integer>
+				<integer>2</integer>
+				<integer>3</integer>
+				<integer>4</integer>
+			</array>
+		</dict>
+		<dict>
+			<key>Type</key>
+			<string>PSMultiValueSpecifier</string>
+			<key>Title</key>
+			<string>Frame Rate Counter</string>
+			<key>Key</key>
+			<string>fps</string>
+			<key>DefaultValue</key>
+			<integer>0</integer>
+			<key>Titles</key>
+			<array>
+				<string>Off</string>
+				<string>Top Left</string>
+				<string>Top Right</string>
+				<string>Bottom Left</string>
+				<string>Bottom Right</string>
+			</array>
+			<key>Values</key>
+			<array>
+				<integer>0</integer>
+				<integer>1</integer>
+				<integer>2</integer>
+				<integer>3</integer>
+				<integer>4</integer>
+			</array>
+		</dict>
+		<dict>
+			<key>Type</key>
+			<string>PSToggleSwitchSpecifier</string>
+			<key>Title</key>
+			<string>No Pop-In (Wait for Graphics)</string>
+			<key>Key</key>
+			<string>no_pop_in</string>
+			<key>DefaultValue</key>
+			<true/>
+		</dict>
+		<dict>
+			<key>Type</key>
+			<string>PSGroupSpecifier</string>
+			<key>Title</key>
+			<string>Gameplay</string>
+			<key>FooterText</key>
+			<string>Fast-forward is the on-screen &gt;&gt; button or a controller's right stick click. Faster running can make some jumps longer than intended. Skip the Intro passes the logos quickly and goes straight to the title.</string>
+		</dict>
+		<dict>
+			<key>Type</key>
+			<string>PSMultiValueSpecifier</string>
+			<key>Title</key>
+			<string>Fast-Forward Speed</string>
+			<key>Key</key>
+			<string>ff_speed</string>
+			<key>DefaultValue</key>
+			<integer>3</integer>
+			<key>Titles</key>
+			<array>
+				<string>2x</string>
+				<string>3x</string>
+				<string>4x</string>
+				<string>5x</string>
+				<string>6x</string>
+				<string>7x</string>
+				<string>8x</string>
+			</array>
+			<key>Values</key>
+			<array>
+				<integer>2</integer>
+				<integer>3</integer>
+				<integer>4</integer>
+				<integer>5</integer>
+				<integer>6</integer>
+				<integer>7</integer>
+				<integer>8</integer>
+			</array>
+		</dict>
+		<dict>
+			<key>Type</key>
+			<string>PSToggleSwitchSpecifier</string>
+			<key>Title</key>
+			<string>Fast-Forward Toggles</string>
+			<key>Key</key>
+			<string>ff_toggle</string>
+			<key>DefaultValue</key>
+			<false/>
+		</dict>
+		<dict>
+			<key>Type</key>
+			<string>PSMultiValueSpecifier</string>
+			<key>Title</key>
+			<string>Text Speed</string>
+			<key>Key</key>
+			<string>text_speed</string>
+			<key>DefaultValue</key>
+			<integer>0</integer>
+			<key>Titles</key>
+			<array>
+				<string>Original</string>
+				<string>Fast (2x)</string>
+				<string>Faster (4x)</string>
+				<string>Instant</string>
+			</array>
+			<key>Values</key>
+			<array>
+				<integer>0</integer>
+				<integer>1</integer>
+				<integer>2</integer>
+				<integer>3</integer>
+			</array>
+		</dict>
+		<dict>
+			<key>Type</key>
+			<string>PSMultiValueSpecifier</string>
+			<key>Title</key>
+			<string>Run Speed</string>
+			<key>Key</key>
+			<string>run_speed</string>
+			<key>DefaultValue</key>
+			<integer>100</integer>
+			<key>Titles</key>
+			<array>
+				<string>Original</string>
+				<string>125%</string>
+				<string>150%</string>
+			</array>
+			<key>Values</key>
+			<array>
+				<integer>100</integer>
+				<integer>125</integer>
+				<integer>150</integer>
+			</array>
+		</dict>
+		<dict>
+			<key>Type</key>
+			<string>PSToggleSwitchSpecifier</string>
+			<key>Title</key>
+			<string>Skip the Intro</string>
+			<key>Key</key>
+			<string>skip_intro</string>
+			<key>DefaultValue</key>
+			<false/>
+		</dict>
+		<dict>
+			<key>Type</key>
+			<string>PSGroupSpecifier</string>
+			<key>Title</key>
+			<string>Rumble</string>
+			<key>FooterText</key>
+			<string>The slider is the strength (0-100%). The game's own Rumble option on the file select still applies. Without a controller, the iPhone itself vibrates when allowed.</string>
+		</dict>
+		<dict>
+			<key>Type</key>
+			<string>PSToggleSwitchSpecifier</string>
+			<key>Title</key>
+			<string>Rumble</string>
+			<key>Key</key>
+			<string>rumble</string>
+			<key>DefaultValue</key>
+			<true/>
+		</dict>
+		<dict>
+			<key>Type</key>
+			<string>PSSliderSpecifier</string>
+			<key>Key</key>
+			<string>rumble_strength</string>
+			<key>DefaultValue</key>
+			<integer>100</integer>
+			<key>MinimumValue</key>
+			<integer>0</integer>
+			<key>MaximumValue</key>
+			<integer>100</integer>
+		</dict>
+		<dict>
+			<key>Type</key>
+			<string>PSToggleSwitchSpecifier</string>
+			<key>Title</key>
+			<string>Vibrate iPhone Without Controller</string>
+			<key>Key</key>
+			<string>phone_rumble</string>
+			<key>DefaultValue</key>
+			<true/>
+		</dict>
+		<dict>
+			<key>Type</key>
+			<string>PSGroupSpecifier</string>
+			<key>Title</key>
+			<string>On-Screen Controls</string>
+			<key>FooterText</key>
+			<string>The sliders are opacity (20-100%), then size (70-150%). The controls hide while a controller is used and come back when the screen is touched.</string>
+		</dict>
+		<dict>
+			<key>Type</key>
+			<string>PSToggleSwitchSpecifier</string>
+			<key>Title</key>
+			<string>Haptic Tap on Press</string>
+			<key>Key</key>
+			<string>touch_haptics</string>
+			<key>DefaultValue</key>
+			<true/>
+		</dict>
+		<dict>
+			<key>Type</key>
+			<string>PSSliderSpecifier</string>
+			<key>Key</key>
+			<string>touch_opacity</string>
+			<key>DefaultValue</key>
+			<integer>100</integer>
+			<key>MinimumValue</key>
+			<integer>20</integer>
+			<key>MaximumValue</key>
+			<integer>100</integer>
+		</dict>
+		<dict>
+			<key>Type</key>
+			<string>PSSliderSpecifier</string>
+			<key>Key</key>
+			<string>touch_size</string>
+			<key>DefaultValue</key>
+			<integer>100</integer>
+			<key>MinimumValue</key>
+			<integer>70</integer>
+			<key>MaximumValue</key>
+			<integer>150</integer>
+		</dict>
+		<dict>
+			<key>Type</key>
+			<string>PSToggleSwitchSpecifier</string>
+			<key>Title</key>
+			<string>Auto-Run (Stick)</string>
+			<key>Key</key>
+			<string>auto_run</string>
+			<key>DefaultValue</key>
+			<false/>
+		</dict>
+		<dict>
+			<key>Type</key>
+			<string>PSGroupSpecifier</string>
+			<key>Title</key>
+			<string>Audio</string>
+		</dict>
+		<dict>
+			<key>Type</key>
+			<string>PSSliderSpecifier</string>
+			<key>Key</key>
+			<string>volume</string>
+			<key>DefaultValue</key>
+			<integer>100</integer>
+			<key>MinimumValue</key>
+			<integer>0</integer>
+			<key>MaximumValue</key>
+			<integer>100</integer>
+		</dict>
+		<dict>
+			<key>Type</key>
+			<string>PSToggleSwitchSpecifier</string>
+			<key>Title</key>
+			<string>Mute in Background</string>
+			<key>Key</key>
+			<string>mute_unfocused</string>
+			<key>DefaultValue</key>
+			<false/>
+		</dict>
+	</array>
+	<key>StringsTable</key>
+	<string>Root</string>
+</dict>
+</plist>

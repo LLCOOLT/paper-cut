@@ -1,0 +1,110 @@
+From: Claude <noreply@anthropic.com>
+Subject: [PATCH] Present area and application-chosen orientations
+
+AuroraSetPresentArea: the picture is fitted and centered in a part of the
+surface (e.g. the top of a phone held upright, controls below) instead of
+the whole of it. SDL_HINT_ORIENTATIONS is only set to landscape when the
+application has not set it.
+---
+--- a/include/dolphin/gx/GXAurora.h
++++ b/include/dolphin/gx/GXAurora.h
+@@ -169,6 +169,13 @@
+ void AuroraSetViewportPolicy(AuroraViewportPolicy policy);
+ 
+ /**
++ * Where the picture is presented: it is fitted to, and centered in, this part of the surface, given as fractions of
++ * its size (left, top, right, bottom). The default, 0, 0, 1, 1, is the whole surface. E.g. a phone held upright: the
++ * top part, with on-screen controls below.
++ */
++void AuroraSetPresentArea(float left, float top, float right, float bottom);
++
++/**
+  * Retrieves the current content framebuffer size.
+  */
+ void AuroraGetRenderSize(u32* width, u32* height);
+--- a/lib/dolphin/gx/GXAurora.cpp
++++ b/lib/dolphin/gx/GXAurora.cpp
+@@ -36,6 +36,10 @@
+ 
+ void AuroraSetViewportPolicy(AuroraViewportPolicy policy) { aurora::gx::set_viewport_policy(policy); }
+ 
++void AuroraSetPresentArea(float left, float top, float right, float bottom) {
++  aurora::webgpu::set_present_area(left, top, right, bottom);
++}
++
+ void AuroraGetRenderSize(u32* width, u32* height) {
+   const auto windowSize = aurora::window::get_window_size();
+   if (width != nullptr) {
+--- a/lib/webgpu/gpu.cpp
++++ b/lib/webgpu/gpu.cpp
+@@ -327,11 +327,31 @@
+ 
+ AuroraSampler get_resampler() noexcept { return g_Resampler; }
+ 
+-Viewport calculate_present_viewport(uint32_t surface_width, uint32_t surface_height, uint32_t content_width,
++static float g_presentArea[4] = {0.f, 0.f, 1.f, 1.f};
++
++void set_present_area(float left, float top, float right, float bottom) noexcept {
++  if (right - left < 0.05f || bottom - top < 0.05f) {
++    left = top = 0.f;
++    right = bottom = 1.f;
++  }
++  g_presentArea[0] = std::clamp(left, 0.f, 1.f);
++  g_presentArea[1] = std::clamp(top, 0.f, 1.f);
++  g_presentArea[2] = std::clamp(right, 0.f, 1.f);
++  g_presentArea[3] = std::clamp(bottom, 0.f, 1.f);
++}
++
++Viewport calculate_present_viewport(uint32_t full_width, uint32_t full_height, uint32_t content_width,
+                                     uint32_t content_height) noexcept {
+-  if (surface_width == 0 || surface_height == 0 || content_width == 0 || content_height == 0) {
++  if (full_width == 0 || full_height == 0 || content_width == 0 || content_height == 0) {
+     return {};
+   }
++  // the part of the surface the picture goes in (set_present_area)
++  const uint32_t area_left = static_cast<uint32_t>(std::lround(g_presentArea[0] * full_width));
++  const uint32_t area_top = static_cast<uint32_t>(std::lround(g_presentArea[1] * full_height));
++  const uint32_t surface_width = std::max<uint32_t>(
++      1u, static_cast<uint32_t>(std::lround(g_presentArea[2] * full_width)) - std::min(area_left, full_width - 1));
++  const uint32_t surface_height = std::max<uint32_t>(
++      1u, static_cast<uint32_t>(std::lround(g_presentArea[3] * full_height)) - std::min(area_top, full_height - 1));
+ 
+   uint32_t viewport_width = surface_width;
+   uint32_t viewport_height = std::min<uint32_t>(
+@@ -346,8 +366,8 @@
+   }
+ 
+   return {
+-      .left = static_cast<float>((surface_width - viewport_width) / 2),
+-      .top = static_cast<float>((surface_height - viewport_height) / 2),
++      .left = static_cast<float>(area_left + (surface_width - viewport_width) / 2),
++      .top = static_cast<float>(area_top + (surface_height - viewport_height) / 2),
+       .width = static_cast<float>(viewport_width),
+       .height = static_cast<float>(viewport_height),
+       .znear = 0.f,
+--- a/lib/webgpu/gpu.hpp
++++ b/lib/webgpu/gpu.hpp
+@@ -75,6 +75,7 @@
+ AuroraSampler get_resampler() noexcept;
+ Viewport calculate_present_viewport(uint32_t surface_width, uint32_t surface_height, uint32_t content_width,
+                                     uint32_t content_height) noexcept;
++void set_present_area(float left, float top, float right, float bottom) noexcept;
+ const TextureWithSampler& resample_present_source(const wgpu::CommandEncoder& encoder, const Viewport& viewport);
+ void draw_clear(const wgpu::RenderPassEncoder& pass, bool clearColor, bool clearAlpha, bool clearDepth,
+                 const Vec4<float>& clearColorValue, float clearDepthValue);
+--- a/lib/window.cpp
++++ b/lib/window.cpp
+@@ -428,8 +428,11 @@
+ 
+ bool initialize() {
+   /* We don't want to initialize anything input related here, otherwise the add events will get lost to the void */
+-  TRY(SDL_SetHint(SDL_HINT_ORIENTATIONS, "LandscapeLeft LandscapeRight"), "Error setting {}: {}", SDL_HINT_ORIENTATIONS,
+-      SDL_GetError());
++  // landscape unless the application chose the orientations
++  if (SDL_GetHint(SDL_HINT_ORIENTATIONS) == nullptr) {
++    TRY(SDL_SetHint(SDL_HINT_ORIENTATIONS, "LandscapeLeft LandscapeRight"), "Error setting {}: {}",
++        SDL_HINT_ORIENTATIONS, SDL_GetError());
++  }
+   TRY(SDL_InitSubSystem(SDL_INIT_EVENTS | SDL_INIT_VIDEO), "Error initializing SDL: {}", SDL_GetError());
+   time::internal::set_pause_reason(time::internal::PauseReason::Surface,
+                                    !g_surfaceReady.load(std::memory_order_acquire));

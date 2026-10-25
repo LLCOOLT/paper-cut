@@ -5,6 +5,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#ifdef TTYD_SAVE_STATES
+/* the game keeps pointers into these allocations: on the save-state heap */
+#define PORT_SNAPHEAP_REDIRECT
+#include "port/snapheap.h"
+#endif
 
 #ifndef PORT_BEDECODE_STANDALONE
 void OSPanic(const char* file, int line, const char* msg, ...);

@@ -197,7 +197,11 @@ extern EvtWord evt_sub_tree_access_entry[28];
 extern EvtWord evt_sub_kusa_access_entry[26];
 extern EvtWord evt_sub_starstone[VERSION_PICK(1043, 1084)];
 extern EvtWord evt_sub_mail_vibration[26];
+#ifdef TARGET_PC
+extern EvtWord evt_sub_mail_event[VERSION_PICK(118, 123)]; /* PC port: JP with its END inside */
+#else
 extern EvtWord evt_sub_mail_event[VERSION_PICK(117, 123)];
+#endif
 #ifndef VERSION_G8ME01
 __declspec(section ".data") s32 evt_sub_mail_event_end[1];
 #endif
@@ -1756,6 +1760,11 @@ EvtWord evt_sub_mail_event[] = {
         RETURN
     END_IF
     RETURN
+#ifdef TARGET_PC
+    /* PC port: the GameCube JP data keeps this script's END in the next
+     * symbol (evt_sub_mail_event_end), adjacent there but not here */
+    OPCODE_END_SCRIPT
+#endif
 };
 #endif
 
@@ -2386,8 +2395,13 @@ USER_FUNC(stone_bg_open) {
 }
 
 USER_FUNC(stageclear_wait) {
+#ifdef TARGET_PC
+	/* effStageClearEndChk(EffectEntry*): MWCC passed effNameToPtr's result in r3 */
+	return effStageClearEndChk(effNameToPtr("sub_clear")) ? EVT_RETURN_DONE : EVT_RETURN_BLOCK;
+#else
 	effNameToPtr("sub_clear");
 	return effStageClearEndChk() ? EVT_RETURN_DONE : EVT_RETURN_BLOCK;
+#endif
 }
 
 USER_FUNC(set_stop) {

@@ -11,6 +11,11 @@
 #ifndef PORT_BEDECODE_STANDALONE
 #include <dolphin/os.h>
 #endif
+#ifdef TTYD_SAVE_STATES
+/* the game keeps pointers into these allocations: on the save-state heap */
+#define PORT_SNAPHEAP_REDIRECT
+#include "port/snapheap.h"
+#endif
 
 extern const PortType portBE_map_MapFileInfo;
 extern const PortType portBE_map_MapFileJointPart;

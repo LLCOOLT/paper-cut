@@ -13,6 +13,15 @@
 #ifdef PORT_RELS_STATIC
 
 static const PortRelStatic* sCurrent;
+
+/* Save states: the linked REL is part of the state. */
+const void* portRelCurrent(void) {
+    return sCurrent;
+}
+
+void portRelSetCurrent(const void* rel) {
+    sCurrent = (const PortRelStatic*)rel;
+}
 static char** sSnapshots; /* initial data of each REL, by table index */
 
 void portRelInit(const char* exePath) {

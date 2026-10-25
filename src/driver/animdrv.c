@@ -37,13 +37,12 @@
 /* PC port: an array's extent for GXSetArray, keeping its endianness (model
  * arrays in the blob are big-endian, skinned buffers native). */
 static void portAnimArrayRange(const void* base, u32 size) {
-    unsigned int rest;
-    int le;
     if (base == NULL || size == 0) {
         return;
     }
-    portGXArrayInfo(base, &rest, &le);
-    portGXRegisterArrayRange(base, size, le);
+    /* endianness from the disc-data records only: a range left over a freed
+     * buffer must not make this one big-endian (the title's curtain) */
+    portGXRegisterArrayRange(base, size, !portGXIsDiscData(base));
 }
 #else
 #define ANIM_FILE_DATA(blob) ((AnimationPoseData*)(blob))
@@ -1101,6 +1100,83 @@ GXColor animPoseGetMaterialEvtColor(s32 poseId) {
 // FAKE: t3 = t * t2 through an inline so t3 is an inline return temp (numbered above the LICM temp of t2),
 // giving the target FPR order (t3 f7, t2 f8). Behaviour-identical.
 static inline f32 apmMul(f32 a, f32 b) { return a * b; }
+#ifdef TARGET_PC
+#include "port/platform.h"
+/* PC port: frames the port draws between the game's (higher frame rates,
+ * port/src/aurora/interp_aurora.c) pose models at in-between moments. What
+ * that changes in the poses (times, keyframe buffers, the paper turn that
+ * _animPoseDrawMtx steps per draw) is put back afterwards: the game's own
+ * frames continue from their own state, whether or not they draw the pose. */
+/* PORT_HOST_DATA (port_prefix.h): host scratch (malloc'd), not game state,
+ * kept out of the save states' sections */
+static AnimationPose* sInterpPoses PORT_HOST_DATA = NULL; /* the pose table as it was */
+static u8* sInterpKept PORT_HOST_DATA = NULL;             /* (address, size, bytes)... of buffers */
+static size_t sInterpUsed PORT_HOST_DATA = 0, sInterpCap PORT_HOST_DATA = 0;
+static u8 sInterpBuffersKept[256];
+
+static void animPoseInterpKeep(void* p, size_t n) {
+    if (p == NULL || n == 0) {
+        return;
+    }
+    if (sInterpUsed + sizeof(void*) + sizeof(size_t) + n > sInterpCap) {
+        sInterpCap = (sInterpUsed + sizeof(void*) + sizeof(size_t) + n) * 2;
+        sInterpKept = realloc(sInterpKept, sInterpCap);
+    }
+    memcpy(sInterpKept + sInterpUsed, &p, sizeof(void*));
+    memcpy(sInterpKept + sInterpUsed + sizeof(void*), &n, sizeof(size_t));
+    memcpy(sInterpKept + sInterpUsed + sizeof(void*) + sizeof(size_t), p, n);
+    sInterpUsed += sizeof(void*) + sizeof(size_t) + n;
+}
+
+/* Before an in-between frame's draw. */
+void animPoseInterpBegin(void) {
+    size_t size = wp->totalPoses * sizeof(AnimationPose);
+    if (sInterpPoses == NULL) {
+        sInterpPoses = malloc(size);
+    }
+    memcpy(sInterpPoses, wp->poses, size);
+    memset(sInterpBuffersKept, 0, sizeof(sInterpBuffersKept));
+    sInterpUsed = 0;
+}
+
+/* animPoseMain, in an in-between frame: keep the buffers it is about to change. */
+static void animPoseInterpKeepBuffers(s32 poseId, AnimationPose* pose, AnimationPoseData* file) {
+    if (poseId < 0 || poseId >= (s32)sizeof(sInterpBuffersKept) || sInterpBuffersKept[poseId]) {
+        return;
+    }
+    sInterpBuffersKept[poseId] = 1;
+    animPoseInterpKeep(pose->mpBufferVtxPos, file->mBufferPosNum * sizeof(Vec));
+    animPoseInterpKeep(pose->mpVtxArrayPos, file->mBufferPosNum * sizeof(Vec));
+    animPoseInterpKeep(pose->mpBufferVtxNrm, file->mBufferNrmNum * sizeof(Vec));
+    animPoseInterpKeep(pose->mpVtxArrayNrm, file->mBufferNrmNum * sizeof(Vec));
+    animPoseInterpKeep(pose->mpBufferGroupVisibility, file->mBufferVisibilityNum);
+    animPoseInterpKeep(pose->mpBufferNode, file->mBufferNodeNum * 4);
+    animPoseInterpKeep(pose->mpNodes, file->mBufferNodeNum * 4);
+    animPoseInterpKeep(pose->mpBufferTexAnimEntries, file->mBufferTexAnimNum * sizeof(AnimTexMtx));
+    /* the world positions and matrices it exports (dispProc), which logic reads */
+    if (pose->worldPositions != NULL) {
+        animPoseInterpKeep(*pose->worldPositions, file->groupCount * sizeof(Vec));
+    }
+    if (pose->worldMatrices != NULL) {
+        animPoseInterpKeep(*pose->worldMatrices, file->groupCount * sizeof(Mtx));
+    }
+}
+
+/* After it: the buffers, then the pose table, as they were. */
+void animPoseInterpEnd(void) {
+    size_t at = 0;
+    while (at < sInterpUsed) {
+        void* p;
+        size_t n;
+        memcpy(&p, sInterpKept + at, sizeof(void*));
+        memcpy(&n, sInterpKept + at + sizeof(void*), sizeof(size_t));
+        memcpy(p, sInterpKept + at + sizeof(void*) + sizeof(size_t), n);
+        at += sizeof(void*) + sizeof(size_t) + n;
+    }
+    memcpy(wp->poses, sInterpPoses, wp->totalPoses * sizeof(AnimationPose));
+}
+#endif
+
 void animPoseMain(s32 poseId) {
     s32 frame;
     s32 nA;
@@ -1154,6 +1230,11 @@ void animPoseMain(s32 poseId) {
         grpA = (u8*)pose->mpVtxArrayPos;
         grpB = (u8*)pose->mpVtxArrayNrm;
     }
+#ifdef TARGET_PC
+    if (portInterpInBetween()) {
+        animPoseInterpKeepBuffers(poseId, pose, file);
+    }
+#endif
     if (pose->paperId != -1 && !(((AnimationPose*)((u8*)poses + pose->paperId * sizeof(AnimationPose)))->typeFlags & 2)) { // FAKE: the paper pose found by byte offset (base + id * size) so the typeFlags offset folds into the index (mulli/addi/lwzx), as in the target
         animPoseMain(pose->paperId);
     }

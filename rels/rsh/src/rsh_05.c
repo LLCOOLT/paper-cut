@@ -37,6 +37,13 @@
 #pragma force_active on
 #pragma force_active reset
 
+/* PC port: the end marker is read a whole row at a time (the GameCube reads
+ * on into the next object) */
+#ifdef TARGET_PC
+#define PORT_SHELF_END 2
+#else
+#define PORT_SHELF_END 1
+#endif
 typedef struct MoamoaPoseDef { char model[16]; char anim[8]; s16 loop; f32 speed; s32 start; s32 count; } MoamoaPoseDef;
 typedef struct Moamoa { u16 flags; s16 state; s16 timer; u8 field_0x6[2]; Vec target; f32 vy; s16 jumpTimer; u8 field_0x1a[2]; f32 speed; f32 gravity; s16 next; u8 field_0x26[2]; f32 lastX; f32 lastZ; u8 field_0x30[0x3c - 0x30]; s16 pose; u8 field_0x3e[2]; OSTime startTime; u8 field_0x48[4]; u8 kind; u8 field_0x4d[3]; } Moamoa;
 typedef struct MoamoaWork { u16 flags; u8 field_0x2[2]; s32 count; Moamoa* moa; MapObject* mobj; f32 mobjY; Vec target[3]; s16 hitCount; s16 field_0x3a[2]; s16 field_0x3e; s16 field_0x40; s16 idleFrames; EventEntry* escapeEvt; u8 field_0x48[0x4c - 0x48]; s32 numDefs; MoamoaPoseDef defs[32]; f32 angle; f32 dist; s32 bounceCount; f32 breathDir; f32 breathDist; Vec breathPos; u8 field_0x570[0x870 - 0x570]; } MoamoaWork;
@@ -189,7 +196,7 @@ EvtWord evt_ghost_diary[5];
 EvtWord evt_ghost_diary_read[53];
 /* shelf access table: hit, msg; a NULL hit ends it */
 typedef struct ShelfMsg { const char* hit; const char* msg; } ShelfMsg;
-typedef struct ShelfMsgTbl6 { ShelfMsg rows[6]; const char* end[1]; } ShelfMsgTbl6;
+typedef struct ShelfMsgTbl6 { ShelfMsg rows[6]; const char* end[PORT_SHELF_END]; } ShelfMsgTbl6;
 static ShelfMsgTbl6 access_tbl;
 static EvtWord evt_access[14];
 static EvtWord evt_access2[47];

@@ -1,0 +1,10 @@
+# Every NPC's conversation, then every map object's event (switches, blocks,
+# chests), as the player would start them: crashes and stalls fail the run.
+give 9
+give 6
+wait 30
+talk_all 900
+wait 30
+mobj_all 600
+wait 30
+end

@@ -200,6 +200,42 @@ void salPcHeadlessPump(double seconds) {
 /* portPause (pause_pc.c): the device stops pulling, so MusyX's sequencer and
  * voices stop where they are. Headless audio is rendered per video frame and
  * stops with the frames. */
+/* The settings page's volume (port/src/aurora/settings_aurora.c): the
+ * device stream's gain, so the mix itself (and its golden hashes) is the
+ * same at any volume. */
+#ifdef TTYD_BACKEND_AURORA
+static float sGain = 1.0f;
+
+void salPcSetVolume(float gain) {
+  sGain = gain;
+  if (sStream != NULL) {
+    SDL_SetAudioStreamGain(sStream, gain);
+  }
+}
+#else
+void salPcSetVolume(float gain) {
+  (void)gain;
+}
+#endif
+
+/* Save states (port/src/aurora/savestate_aurora.c): no audio callback runs
+ * between salPcLock and salPcUnlock (SDL calls it with the stream locked). */
+void salPcLock(void) {
+#ifdef TTYD_BACKEND_AURORA
+  if (sStream != NULL) {
+    SDL_LockAudioStream(sStream);
+  }
+#endif
+}
+
+void salPcUnlock(void) {
+#ifdef TTYD_BACKEND_AURORA
+  if (sStream != NULL) {
+    SDL_UnlockAudioStream(sStream);
+  }
+#endif
+}
+
 void salPcSetPaused(int paused) {
 #ifdef TTYD_BACKEND_AURORA
   if (sStream != NULL && sStarted) {
@@ -237,6 +273,8 @@ bool salInitAi(SND_SOME_CALLBACK callback, u32 unk, u32* outFreq) {
                                           NULL);
       if (sStream == NULL) {
         fprintf(stderr, "MusyX: no audio device: %s\n", SDL_GetError());
+      } else {
+        SDL_SetAudioStreamGain(sStream, sGain);
       }
     }
   }

@@ -120,7 +120,11 @@ EvtWord regu_unten[210];
 static EvtWord init_unten[17];
 static EvtWord talk_unten[236];
 static NpcSetupInfo npc_data[2];
+#ifdef TARGET_PC
+static const char* access_tbl[6]; /* PC port: read in pairs, so a pair-sized end */
+#else
 static const char* access_tbl[5];
+#endif
 static EvtWord evt_access[14];
 static EvtWord evt_access_entry[23];
 EvtWord rsh_00_init_evt[194];
@@ -918,6 +922,9 @@ static const char* access_tbl[] = {
     "soujyuu",
     "stg6_rsh_260",
     NULL,
+#ifdef TARGET_PC
+    NULL,
+#endif
 };
 
 static EVT_BEGIN(evt_access)

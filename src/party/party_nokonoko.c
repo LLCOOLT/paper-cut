@@ -496,7 +496,7 @@ void nokonoko_use(PartyEntry* party) {
             (*(f32*)new_var) = 0.0f;
             party->useMotionId = 53;
             party->moveSpeed += EXT_LIT(float_0p1_8041b518, 0.1f) * (EXT_LIT(float_neg1_8041b520, -1.0f) - party->moveSpeed);
-            party->work.yoshi.gravityAccel = EXT_LIT(float_50_8041b56c, 50.0f);
+            party->work.nokonoko.shellSpin = EXT_LIT(float_50_8041b56c, 50.0f);
         }
         break;
     case 53:
@@ -504,9 +504,9 @@ void nokonoko_use(PartyEntry* party) {
             party->useMotionId = 70;
             return;
         }
-        party->work.yoshi.gravityAccel -= EXT_LIT(float_2p2_8041b588, 2.2f);
-        if (party->work.yoshi.gravityAccel <= EXT_LIT(float_0_8041b51c, 0.0f)) {
-            party->work.yoshi.gravityAccel = 0.0f;
+        party->work.nokonoko.shellSpin -= EXT_LIT(float_2p2_8041b588, 2.2f);
+        if (party->work.nokonoko.shellSpin <= EXT_LIT(float_0_8041b51c, 0.0f)) {
+            party->work.nokonoko.shellSpin = 0.0f;
         }
         noko_spin(party);
         party->moveSpeed += (EXT_LIT(float_neg2_8041b58c, -2.0f) - party->moveSpeed) * (party->work.nokonoko.dashed != 0 ? EXT_LIT(float_0p2_8041b590, 0.2f) : EXT_LIT(float_0p1_8041b518, 0.1f));
@@ -571,9 +571,9 @@ void nokonoko_use(PartyEntry* party) {
             return;
         }
         noko_spin(party);
-        party->work.yoshi.gravityAccel -= EXT_LIT(float_2p2_8041b588, 2.2f);
-        if (party->work.yoshi.gravityAccel <= EXT_LIT(float_0_8041b51c, 0.0f)) {
-            party->work.yoshi.gravityAccel = 0.0f;
+        party->work.nokonoko.shellSpin -= EXT_LIT(float_2p2_8041b588, 2.2f);
+        if (party->work.nokonoko.shellSpin <= EXT_LIT(float_0_8041b51c, 0.0f)) {
+            party->work.nokonoko.shellSpin = 0.0f;
         }
         party->moveSpeed += (EXT_LIT(float_neg2_8041b58c, -2.0f) - party->moveSpeed) * (party->work.nokonoko.dashed != 0 ? EXT_LIT(float_0p2_8041b590, 0.2f) : EXT_LIT(float_0p1_8041b518, 0.1f));
         if (party->moveSpeed <= EXT_LIT(float_0_8041b51c, 0.0f)) {
@@ -650,7 +650,7 @@ void nokonoko_use(PartyEntry* party) {
         if ((*(f32*)new_var) <= EXT_LIT(float_0_8041b51c, 0.0f)) {
             (*(f32*)new_var) = distABf(party->moveTarget.x, party->moveTarget.z, party->position.x, party->position.z);
             party->useMotionId = 84;
-            party->work.yoshi.gravityAccel = EXT_LIT(float_50_8041b56c, 50.0f);
+            party->work.nokonoko.shellSpin = EXT_LIT(float_50_8041b56c, 50.0f);
             party->targetDir = angleABf(party->position.x, party->position.z, party->moveTarget.x, party->moveTarget.z);
         }
         break;
@@ -745,7 +745,7 @@ void nokonoko_use(PartyEntry* party) {
         party->moveTarget = out2;
         (*(f32*)new_var) = distABf(party->position.x, party->position.z, party->moveTarget.x, party->moveTarget.z);
         party->targetDir = angleABf(party->position.x, party->position.z, party->moveTarget.x, party->moveTarget.z);
-        party->work.yoshi.gravityAccel = EXT_LIT(float_50_8041b56c, 50.0f);
+        party->work.nokonoko.shellSpin = EXT_LIT(float_50_8041b56c, 50.0f);
         break;
     case 90:
         noko_spin(party);

@@ -11,6 +11,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+GXRenderModeObj* DEMOGetRenderModeObj(void); /* sdk/DEMOInit.c: the game's render mode */
+
 #define STUB_ONCE(name)                                 \
     do {                                                \
         static int sLogged;                             \
@@ -165,18 +167,6 @@ void GXReadXfRasMetric(u32* xf_wait_in, u32* xf_wait_out, u32* ras_busy, u32* cl
 
 /* Bounding box (pixels drawn since the clear): not tracked. Reports an
  * empty box (left > right), as the hardware does when nothing was drawn. */
-void GXClearBoundingBox(void) {}
-/* No draw-extent query on Aurora: report the whole EFB as drawn. The game
- * crops captures and culls offscreen shadows/NPCs with it; an empty box made
- * the sys_01 subtitle capture underflow (left - 2) and treated everything
- * as offscreen. */
-void GXReadBoundingBox(u16* left, u16* top, u16* right, u16* bottom) {
-    STUB_ONCE(GXReadBoundingBox);
-    *left = 0;
-    *top = 0;
-    *right = 639;
-    *bottom = 479;
-}
 
 /* Depth scale/offset for the next draws (used by depth-of-field and fades).
  * Aurora has no counterpart yet. */

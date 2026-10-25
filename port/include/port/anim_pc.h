@@ -41,6 +41,8 @@ typedef struct PortAnimHeader {
 struct AnimationPoseData* portAnimDecode(void* blob, uint32_t size, const char* name);
 /* Frees the decoded graph of a blob that is about to be freed. No-op if none. */
 void portAnimRelease(void* blob);
+/* Releases every decoded model whose blob starts in [lo, hi) (portMemForget). */
+void portAnimForgetRange(const void* lo, const void* hi);
 /* Native root of a decoded blob (NULL for NULL). */
 static inline struct AnimationPoseData* portAnimRoot(void* blob) {
     return blob ? ((PortAnimHeader*)blob)->root : (struct AnimationPoseData*)0;

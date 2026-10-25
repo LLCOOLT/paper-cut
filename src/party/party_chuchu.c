@@ -147,8 +147,8 @@ USER_FUNC(post_msg);
 EVT_BEGIN(msg_evt)
     CALL(set_msg)
     CALL(search_result)
-    IF_INT_NOT_EQUAL(4264967296, 0)
-        CALL(evt_msg_print, 0, 4264967296, 0, STRING("party"))
+    IF_INT_NOT_EQUAL(-30000000, 0)
+        CALL(evt_msg_print, 0, -30000000, 0, STRING("party"))
     END_IF
     CALL(post_msg)
     RETURN

@@ -1,3 +1,6 @@
+#ifdef TARGET_PC
+#include "port/platform.h"
+#endif
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
 
@@ -43,6 +46,10 @@ void evt_yuutitle_disp_func(CameraId camera, void* param) {
     YuuTitleWork* wp = param;
     f32 scale = 2.0f;
     f32 halfWidth;
+
+#ifdef TARGET_PC
+    portInterpKeep(wp, sizeof(*wp)); /* the fade-in steps in this draw */
+#endif
 
     if (wp->alpha < 255) {
         f32 t;

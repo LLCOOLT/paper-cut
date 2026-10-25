@@ -4,6 +4,7 @@
 #pragma force_active on
 #include "manager/evtmgr_cmd.h"
 #include "memory.h"
+#include "gor.h"
 #include "driver/camdrv.h"
 #include "string.h"
 #include "driver/dispdrv.h"
@@ -94,8 +95,13 @@ USER_FUNC(evt_goryuugijo_alloc) {
             wp->init = goryuugijo_init_slot;
             wp->main = goryuugijo_main_slot;
             wp->disp = goryuugijo_disp_slot;
+#ifdef TARGET_PC /* SlotWork: its event pointer grows it to 0x80 on 64-bit */
+            wp->data = _mapAlloc(sizeof(SlotWork));
+            memset(wp->data, 0, sizeof(SlotWork));
+#else
             wp->data = _mapAlloc(0x78);
             memset(wp->data, 0, 0x78);
+#endif
             break;
     }
     wp->init(event, isFirstCall);

@@ -1,0 +1,18 @@
+# A battle of made-up play with every special move and some items (seed 1),
+# for map_sweep --battles --input: crashes and stalls fail the run.
+stars 0xFF
+maxsp 800
+sp 800
+maxhp 99
+fp 50
+give 148
+give 132
+give 240
+give 241
+give 150
+give 151
+join 2
+battle
+wait_seq 4 900
+random 3000 1
+end

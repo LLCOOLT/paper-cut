@@ -119,22 +119,6 @@ typedef struct MukiWork {
 #endif
 } MukiWork;
 
-typedef struct StarEffWork {
-    u8 pad0[8];
-    Vec pos;  // 0x8
-    f32 scl;  // 0x14
-    Vec rot;  // 0x18
-} StarEffWork;
-
-typedef struct IconEffWork {
-    u8 pad0[8];
-    Vec pos;  // 0x8
-    f32 scl;  // 0x14
-    Vec rot;  // 0x18
-    u8 pad24[0x5f - 0x24];
-    u8 alpha; // 0x5f
-} IconEffWork;
-
 static void disp_3D_alpha(CameraId cam, void* param);
 static void disp_3D(CameraId cam, void* param);
 static void disp_3D(CameraId cam, void* param);
@@ -675,15 +659,15 @@ void main_icon(s32 idx) {
         break;
     }
     if (o->eff) {
-        IconEffWork* e = (IconEffWork*)o->eff->userdata;
-        e->pos.x = o->pos.x;
-        e->pos.y = o->pos.y;
-        e->pos.z = o->pos.z;
-        e->rot.x = o->rot.x;
-        e->rot.y = o->rot.y;
-        e->rot.z = o->rot.z;
-        e->scl = 9.0f * o->scale.x;
-        e->alpha = o->alpha;
+        EffStarStoneWork* e = (EffStarStoneWork*)o->eff->userdata;
+        e->position.x = o->pos.x;
+        e->position.y = o->pos.y;
+        e->position.z = o->pos.z;
+        e->f18 = o->rot.x;
+        e->rotY = o->rot.y;
+        e->f20 = o->rot.z;
+        e->scale = 9.0f * o->scale.x;
+        e->a = o->alpha;
     }
 }
 
@@ -739,14 +723,14 @@ static void main_star(void) {
         break;
     }
     if (w->eff) {
-        StarEffWork* e = (StarEffWork*)w->eff->userdata;
-        e->pos.x = w->spos.x;
-        e->pos.y = w->spos.y;
-        e->pos.z = w->spos.z;
-        e->rot.x = w->rot.x;
-        e->rot.y = w->rot.y;
-        e->rot.z = w->rot.z;
-        e->scl = 1.5f * w->scale.x;
+        EffStarStoneWork* e = (EffStarStoneWork*)w->eff->userdata;
+        e->position.x = w->spos.x;
+        e->position.y = w->spos.y;
+        e->position.z = w->spos.z;
+        e->f18 = w->rot.x;
+        e->rotY = w->rot.y;
+        e->f20 = w->rot.z;
+        e->scale = 1.5f * w->scale.x;
     }
 }
 

@@ -5,51 +5,65 @@
 #include <aurora/dvd.h>
 #include <dolphin/os.h>
 #include <dolphin/vi.h>
+#include <SDL3/SDL_timer.h>
 #include <stdlib.h>
-#ifdef _WIN32
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#else
-#include <time.h>
-#endif
 #include "port/aurora_pc.h"
 #include "port/os_pc.h"
 #include "port/dtk_pc.h"
 #include "port/platform.h"
+#include "port/speed.h"
+#include "port/layout.h"
+#include "port/savestate.h"
 #ifdef PORT_TOUCH_OVERLAY
 #include "port/touch_overlay.h"
 #endif
 
 void salPcAuroraPump(double seconds); /* hw_pc.c: MusyX null sink without a device */
+void portShotInbetween(u32 frame, int k); /* shot_aurora.c */
 
 static u32 sRetraceCount;
 static VIRetraceCallback sPreCallback;
 static VIRetraceCallback sPostCallback;
 
 /* 60 Hz pacing, as headless (vi_pc.c): the game counts time in frames, and
- * Aurora presents without waiting for vsync (mailbox). $TTYD_FAST: none. */
+ * Aurora presents without waiting for vsync (mailbox). Each frame is
+ * presented at its field's start, and the in-between frames of a higher
+ * $TTYD_FRAMERATE (interp_aurora.c) evenly through the field. $TTYD_FAST:
+ * no waits. */
 #define FIELD_TICKS (OS_TIMER_CLOCK / 60)
 static OSTime sNextRetrace;
 
-static void paceFrame(void) {
+static void waitUntil(OSTime when) {
+    static int sFast = -1;
     OSTime now = OSGetTime();
+    if (sFast < 0) {
+        sFast = getenv("TTYD_FAST") != NULL;
+    }
+    if (!sFast && now < when) {
+        SDL_DelayPrecise((Uint64)OSTicksToMicroseconds(when - now) * 1000);
+    }
+}
+
+/* Waits for this field's start; the next one is FIELD_TICKS later. */
+static void paceFrame(void) {
     if (sNextRetrace == 0) {
-        sNextRetrace = now;
+        sNextRetrace = OSGetTime();
     }
-    if (now < sNextRetrace && getenv("TTYD_FAST") == NULL) {
-        s64 us = OSTicksToMicroseconds(sNextRetrace - now);
-#ifdef _WIN32
-        Sleep((DWORD)(us / 1000));
-#else
-        struct timespec ts = {(time_t)(us / 1000000), (long)(us % 1000000) * 1000};
-        nanosleep(&ts, NULL);
-#endif
-    }
+    waitUntil(sNextRetrace);
     /* After a stall, resynchronize instead of running frames back to back. */
     if (OSGetTime() - sNextRetrace > FIELD_TICKS * 4) {
         sNextRetrace = OSGetTime();
     }
     sNextRetrace += FIELD_TICKS;
+}
+
+static void endFrame(void) {
+    portLayoutFrame(); /* the picture's place (portrait: at the top) */
+#ifdef PORT_TOUCH_OVERLAY
+    portTouchDraw(); /* on-screen controls, over the game's frame */
+#endif
+    portSettingsDraw(); /* the settings page, when open */
+    aurora_end_frame();
 }
 
 /* Aurora reports a change of its paused state (window minimized or hidden,
@@ -64,11 +78,12 @@ void portAuroraBeginFrame(void) {
                 aurora_shutdown();
                 exit(0);
             }
-#ifdef PORT_TOUCH_OVERLAY
             if (event->type == AURORA_SDL_EVENT) {
+                portSettingsEvent(&event->sdl);
+#ifdef PORT_TOUCH_OVERLAY
                 portTouchEvent(&event->sdl);
-            }
 #endif
+            }
             if (event->type == AURORA_PAUSED && !sWindowPaused) {
                 sWindowPaused = TRUE;
 #ifdef PORT_TOUCH_OVERLAY
@@ -88,6 +103,7 @@ void portAuroraBeginFrame(void) {
 
 void VIWaitForRetrace(void) {
     static int sFast = -1;
+    int frames, k;
     if (sFast < 0) {
         sFast = getenv("TTYD_FAST") != NULL;
     }
@@ -97,10 +113,8 @@ void VIWaitForRetrace(void) {
     if (sFast) {
         aurora_dvd_wait_idle();
     }
-#ifdef PORT_TOUCH_OVERLAY
-    portTouchDraw(); /* on-screen controls, over the game's frame */
-#endif
-    aurora_end_frame();
+    paceFrame();
+    endFrame();
     if (sPreCallback != NULL) {
         sPreCallback(sRetraceCount);
     }
@@ -114,10 +128,34 @@ void VIWaitForRetrace(void) {
     portFastClockFrame();
     salPcAuroraPump(1.0 / 60.0);
     portTraceFrame(sRetraceCount); /* $TTYD_TRACE / $TTYD_WARP, as headless */
-    paceFrame();
+    portWarpFrame();               /* the settings page's save warps */
     if (sPostCallback != NULL) {
         sPostCallback(sRetraceCount);
     }
+    /* The game's next frame is now computed (and its render clocks advanced):
+     * the frames between the one just shown and that one. */
+    frames = portInterpFrames();
+    if (portSpeedActive() && frames > 1) {
+        /* no in-between frames while fast-forwarding; the snapshot stays
+         * current for when it ends */
+        portInterpFrameDone();
+        frames = 1;
+    }
+    portSpeedFrame();
+    if (frames > 1) {
+        s64 fastClock = portFastClockGet();
+        /* nothing to blend (a map or battle change): the shown frame stays */
+        for (k = 1; k < frames && portInterpReady(); k++) {
+            portAuroraBeginFrame();
+            portInterpDraw((f32)k / (f32)frames);
+            portShotInbetween(sRetraceCount - 1, k);
+            waitUntil(sNextRetrace - FIELD_TICKS + FIELD_TICKS * k / frames);
+            endFrame();
+        }
+        portInterpFrameDone();
+        portFastClockSet(fastClock);
+    }
+    portSaveStateFrame(); /* between frames: a save state asked for */
     portAuroraBeginFrame();
 }
 

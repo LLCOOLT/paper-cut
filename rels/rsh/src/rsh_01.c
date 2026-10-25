@@ -82,7 +82,11 @@ static NpcSetupInfo npc_data[7];
 NpcSetupInfo npc_data_2[3];
 static EvtWord evt_daiji_kami[41];
 EvtWord evt_pikary_arrival[141];
+#ifdef TARGET_PC
+static const char* access_tbl[9]; /* PC port: read 3 at a time; padded past its NULL */
+#else
 static const char* access_tbl[7];
+#endif
 static EvtWord evt_access[25];
 static EvtWord evt_access_entry[24];
 EvtWord rsh_01_init_evt[190];
@@ -640,6 +644,9 @@ static const char* access_tbl[] = {
     "stg6_rsh_263",
     "stg6_rsh_267",
     NULL,
+#ifdef TARGET_PC
+    NULL, NULL, /* PC port: the last read of 3 goes past the NULL (the GameCube reads the next object) */
+#endif
 };
 
 static EVT_BEGIN(evt_access)

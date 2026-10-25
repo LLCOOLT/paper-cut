@@ -1,4 +1,7 @@
 #include "dolphin/types.h"
+#ifdef TARGET_PC
+#include "port/gameplay.h"
+#endif
 #include "driver/hitdrv.h"
 #include "pmario_sound.h"
 #include "mario/mario.h"
@@ -118,6 +121,9 @@ f32 marioGetDashSpd(void) {
     }
 
     dashSpeed *= mario->playerGravity;
+#ifdef TARGET_PC
+    dashSpeed *= gPortRunSpeed; /* PC port: the run speed setting */
+#endif
     return dashSpeed;
 }
 

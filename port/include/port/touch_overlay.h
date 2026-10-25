@@ -19,6 +19,9 @@ void portTouchEvent(const union SDL_Event* event);
 void portTouchDraw(void);
 /* Release every control (pause, focus loss). */
 void portTouchReleaseAll(void);
+/* Layout editing: the controls can be dragged to new places (for the current
+ * orientation) until Done; the game gets no input meanwhile. */
+void portTouchEditLayout(void);
 
 #ifdef __cplusplus
 }

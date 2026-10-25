@@ -77,15 +77,6 @@ typedef struct SukiWork {
     u8 pad344[0x4C8 - 0x344];
 } SukiWork;
 
-typedef struct StarEffWork {
-    u8 pad0[8];
-    Vec pos;  // 0x8
-    f32 scl;  // 0x14
-    Vec rot;  // 0x18
-    u8 pad24[0x38 - 0x24];
-    s32 mode; // 0x38
-} StarEffWork;
-
 USER_FUNC(btlevtcmd_ACSuccessEffect);
 USER_FUNC(btlevtcmd_ChoiceSamplingEnemy);
 USER_FUNC(btlevtcmd_GetEnemyBelong);
@@ -501,15 +492,15 @@ static void main_star(void) {
         break;
     }
     if (w->eff) {
-        StarEffWork* e = (StarEffWork*)w->eff->userdata;
-        e->pos.x = w->spos.x;
-        e->pos.y = w->spos.y;
-        e->pos.z = w->spos.z;
-        e->rot.x = w->rot.x;
-        e->rot.y = w->rot.y;
-        e->rot.z = w->rot.z;
-        e->scl = 1.5f * w->scale.x;
-        e->mode = w->effMode;
+        EffStarStoneWork* e = (EffStarStoneWork*)w->eff->userdata;
+        e->position.x = w->spos.x;
+        e->position.y = w->spos.y;
+        e->position.z = w->spos.z;
+        e->f18 = w->rot.x;
+        e->rotY = w->rot.y;
+        e->f20 = w->rot.z;
+        e->scale = 1.5f * w->scale.x;
+        e->cam = w->effMode;
     }
 }
 

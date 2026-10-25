@@ -1,5 +1,8 @@
 #pragma optimize_for_size on
 #pragma auto_inline off
+#ifdef TARGET_PC
+#include "port/platform.h"
+#endif
 #include "battle/battle_disp.h"
 #include "pc_call.h"
 #include "battle/battle.h"
@@ -948,6 +951,9 @@ void btlUnitStolenItemDisp(CameraId camId, void* param) {
 }
 
 void btlUnitPartsBlurControl(BattleUnitPart* part, s32 unused, Mtx orientation, GXColor color, f32 rotation) {
+#ifdef TARGET_PC
+	portInterpKeep(&part->blurWork, sizeof(part->blurWork)); /* the trail steps in each draw */
+#endif
 
 	if (part->attributes & 0x4000000) {
 		_partsBlurControl(part, 1, orientation, color, rotation);

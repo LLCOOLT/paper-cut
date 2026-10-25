@@ -3,7 +3,28 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <string.h>
 #include "port/platform.h"
+
+/* The crash report file (portCrashSetReportPath): what is printed for a
+ * crash or stall also goes there, after a header with the build and where
+ * the game was (portCrashSetContext), so it can be copied from the game at
+ * the next start (Aurora: the settings page) or found in the save folder. */
+static char sReportPath[1024];
+static char sContext[200];
+static char sMessage[400];
+
+void portCrashSetMessage(const char* text) {
+    snprintf(sMessage, sizeof(sMessage), "%s", text);
+}
+
+void portCrashSetReportPath(const char* path) {
+    snprintf(sReportPath, sizeof(sReportPath), "%s", path != NULL ? path : "");
+}
+
+void portCrashSetContext(const char* text) {
+    snprintf(sContext, sizeof(sContext), "%s", text);
+}
 
 /* Sound-name words (include/sfx_name_word.h) tell ids from name pointers as
  * GameCube does: a word that is non-negative as an s32 is an id (ids carry
@@ -37,7 +58,51 @@ static void checkAddressSpace(void) {
 #include <windows.h>
 #include <dbghelp.h>
 #include <signal.h>
+#include <stdarg.h>
 #include <string.h>
+
+static FILE* sReport;
+
+/* stderr, and the report file while one is open */
+static void out(const char* fmt, ...) {
+    va_list ap;
+    va_start(ap, fmt);
+    vfprintf(stderr, fmt, ap);
+    va_end(ap);
+    if (sReport != NULL) {
+        va_start(ap, fmt);
+        vfprintf(sReport, fmt, ap);
+        va_end(ap);
+    }
+}
+
+/* Starts the report file: the build, where the game was, the message, and
+ * where the executable is loaded (offsets symbolize against that build). */
+static void reportBegin(const char* what) {
+    if (sReportPath[0] == '\0' || sReport != NULL) {
+        return;
+    }
+    sReport = fopen(sReportPath, "w");
+    if (sReport == NULL) {
+        return;
+    }
+    fprintf(sReport, "TTYD PC port %s report\nversion: %s, built %s %s\ngame: %s\n%s%s%simage: %p\n", what,
+#ifdef VERSION_G8ME01
+            "US (G8ME01)",
+#else
+            "JP (G8MJ01)",
+#endif
+            __DATE__, __TIME__, sContext[0] != '\0' ? sContext : "?", sMessage[0] != '\0' ? "message: " : "",
+            sMessage, sMessage[0] != '\0' ? "\n" : "", (void*)GetModuleHandleA(NULL));
+}
+
+static void reportEnd(void) {
+    if (sReport != NULL) {
+        fflush(sReport);
+        fclose(sReport);
+        sReport = NULL;
+    }
+}
 
 static void printFrame(HANDLE proc, DWORD64 addr) {
     char buf[sizeof(SYMBOL_INFO) + 256];
@@ -50,10 +115,10 @@ static void printFrame(HANDLE proc, DWORD64 addr) {
     line.SizeOfStruct = sizeof(line);
     if (SymFromAddr(proc, addr, &disp, sym)) {
         if (SymGetLineFromAddr64(proc, addr, &lineDisp, &line)) {
-            fprintf(stderr, "  %016llx %s+0x%llx (%s:%lu)\n", (unsigned long long)addr, sym->Name,
+            out("  %016llx %s+0x%llx (%s:%lu)\n", (unsigned long long)addr, sym->Name,
                     (unsigned long long)disp, line.FileName, (unsigned long)line.LineNumber);
         } else {
-            fprintf(stderr, "  %016llx %s+0x%llx\n", (unsigned long long)addr, sym->Name, (unsigned long long)disp);
+            out("  %016llx %s+0x%llx\n", (unsigned long long)addr, sym->Name, (unsigned long long)disp);
         }
     } else {
         /* no symbol (a system DLL): its module, e.g. where a stalled thread waits */
@@ -63,10 +128,10 @@ static void printFrame(HANDLE proc, DWORD64 addr) {
                                (LPCSTR)(uintptr_t)addr, &mod) &&
             GetModuleFileNameA(mod, name, sizeof(name)) != 0) {
             const char* base = strrchr(name, '\\');
-            fprintf(stderr, "  %016llx %s+0x%llx\n", (unsigned long long)addr, base != NULL ? base + 1 : name,
+            out("  %016llx %s+0x%llx\n", (unsigned long long)addr, base != NULL ? base + 1 : name,
                     (unsigned long long)(addr - (DWORD64)(uintptr_t)mod));
         } else {
-            fprintf(stderr, "  %016llx ?\n", (unsigned long long)addr);
+            out("  %016llx ?\n", (unsigned long long)addr);
         }
     }
 }
@@ -79,12 +144,13 @@ static LONG WINAPI onException(EXCEPTION_POINTERS* info) {
     EXCEPTION_RECORD* rec = info->ExceptionRecord;
     int i;
 
-    fprintf(stderr, "\n*** crash: exception 0x%08lx at %p", (unsigned long)rec->ExceptionCode, rec->ExceptionAddress);
+    reportBegin("crash");
+    out("\n*** crash: exception 0x%08lx at %p", (unsigned long)rec->ExceptionCode, rec->ExceptionAddress);
     if (rec->ExceptionCode == EXCEPTION_ACCESS_VIOLATION && rec->NumberParameters >= 2) {
-        fprintf(stderr, " (%s 0x%llx)", rec->ExceptionInformation[0] ? "write to" : "read from",
+        out(" (%s 0x%llx)", rec->ExceptionInformation[0] ? "write to" : "read from",
                 (unsigned long long)rec->ExceptionInformation[1]);
     }
-    fprintf(stderr, "\n");
+    out("\n");
     SymSetOptions(SYMOPT_LOAD_LINES | SYMOPT_UNDNAME | SYMOPT_DEFERRED_LOADS);
     SymInitialize(proc, NULL, TRUE);
     frame.AddrPC.Offset = ctx.Rip;
@@ -102,6 +168,7 @@ static LONG WINAPI onException(EXCEPTION_POINTERS* info) {
         printFrame(proc, frame.AddrPC.Offset);
     }
     fflush(stderr);
+    reportEnd();
     return EXCEPTION_EXECUTE_HANDLER;
 }
 
@@ -114,7 +181,8 @@ static void onAbort(int sig) {
     USHORT n, i;
     (void)sig;
     fflush(stdout);
-    fprintf(stderr, "\n*** crash: abort()\n");
+    reportBegin("crash");
+    out("\n*** crash: abort()\n");
     SymSetOptions(SYMOPT_LOAD_LINES | SYMOPT_UNDNAME | SYMOPT_DEFERRED_LOADS);
     SymInitialize(proc, NULL, TRUE);
     n = CaptureStackBackTrace(1, 48, frames, NULL);
@@ -122,6 +190,7 @@ static void onAbort(int sig) {
         printFrame(proc, (DWORD64)(uintptr_t)frames[i]);
     }
     fflush(stderr);
+    reportEnd();
 }
 
 /* The C runtime reports invalid arguments (e.g. a bad printf format pointer)
@@ -132,7 +201,8 @@ static void onInvalidParameter(const wchar_t* expr, const wchar_t* func, const w
     void* frames[48];
     USHORT n, i;
     (void)expr, (void)func, (void)file, (void)line, (void)reserved;
-    fprintf(stderr, "\n*** crash: invalid argument to a C runtime function\n");
+    reportBegin("crash");
+    out("\n*** crash: invalid argument to a C runtime function\n");
     SymSetOptions(SYMOPT_LOAD_LINES | SYMOPT_UNDNAME | SYMOPT_DEFERRED_LOADS);
     SymInitialize(proc, NULL, TRUE);
     n = CaptureStackBackTrace(1, 48, frames, NULL);
@@ -140,6 +210,7 @@ static void onInvalidParameter(const wchar_t* expr, const wchar_t* func, const w
         printFrame(proc, (DWORD64)(uintptr_t)frames[i]);
     }
     fflush(stderr);
+    reportEnd();
     abort();
 }
 
@@ -170,7 +241,8 @@ static DWORD WINAPI watchdog(void* arg) {
             ctx.ContextFlags = CONTEXT_FULL;
             GetThreadContext(sMainThread, &ctx);
             fflush(stdout);
-            fprintf(stderr, "\n*** stall: no frame for %d s; main thread:\n", secs);
+            reportBegin("stall");
+            out("\n*** stall: no frame for %d s; main thread:\n", secs);
             SymSetOptions(SYMOPT_LOAD_LINES | SYMOPT_UNDNAME | SYMOPT_DEFERRED_LOADS);
             SymInitialize(proc, NULL, TRUE);
             printFrame(proc, ctx.Rip); /* even if the walk below cannot start (a thread in a system wait) */
@@ -189,6 +261,7 @@ static DWORD WINAPI watchdog(void* arg) {
                 printFrame(proc, frame.AddrPC.Offset);
             }
             fflush(stderr);
+            reportEnd();
             _Exit(4);
         }
     }
@@ -267,17 +340,23 @@ const char* portSymbolName(const void* addr, char* buf, size_t size) {
 #include <time.h>
 #include <dlfcn.h>
 #include <unwind.h>
+#include <fcntl.h>
 #if defined(__linux__)
 #include <ucontext.h>
 #include <elf.h>
 #include <link.h>
-#include <fcntl.h>
+#endif
+#if defined(__APPLE__)
+#include <mach-o/dyld.h>
+#include <mach-o/loader.h>
 #endif
 
 #define MAX_FRAMES 48
 /* $TTYD_WATCHDOG: the watchdog thread sends this to the main thread, which
  * prints its own stack (no portable way to read another thread's). */
 #define STALL_SIGNAL SIGUSR2
+
+static int sReportFd = -1;
 
 /* stderr without stdio: the fault may be inside it (its lock held). */
 static void out(const char* fmt, ...) {
@@ -292,7 +371,64 @@ static void out(const char* fmt, ...) {
     }
     if (n > 0) {
         ssize_t written = write(2, buf, (size_t)n);
+        if (sReportFd >= 0) {
+            written = write(sReportFd, buf, (size_t)n);
+        }
         (void)written;
+    }
+}
+
+/* Starts the report file (signal-safe: open/write only). */
+static void reportBegin(const char* what) {
+    if (sReportPath[0] == '\0' || sReportFd >= 0) {
+        return;
+    }
+    sReportFd = open(sReportPath, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    if (sReportFd < 0) {
+        return;
+    }
+    {
+        /* write() to the file only: stderr gets the usual lines */
+        const int fd = sReportFd;
+        char buf[1024];
+        int n = snprintf(buf, sizeof(buf), "TTYD PC port %s report\nversion: %s, built %s %s\ngame: %s\n%s%s%s", what,
+#ifdef VERSION_G8ME01
+                         "US (G8ME01)",
+#else
+                         "JP (G8MJ01)",
+#endif
+                         __DATE__, __TIME__, sContext[0] != '\0' ? sContext : "?",
+                         sMessage[0] != '\0' ? "message: " : "", sMessage, sMessage[0] != '\0' ? "\n" : "");
+        ssize_t w = write(fd, buf, (size_t)(n > 0 && n < (int)sizeof(buf) ? n : 0));
+#if defined(__APPLE__)
+        {
+            /* the image's UUID and load address: offsets symbolize against that build */
+            const struct mach_header_64* h = (const struct mach_header_64*)_dyld_get_image_header(0);
+            const struct load_command* lc = (const struct load_command*)(h + 1);
+            uint32_t i;
+            for (i = 0; h != NULL && i < h->ncmds; i++) {
+                if (lc->cmd == LC_UUID) {
+                    const uint8_t* u = ((const struct uuid_command*)lc)->uuid;
+                    n = snprintf(buf, sizeof(buf),
+                                 "image: %02X%02X%02X%02X-%02X%02X-%02X%02X-%02X%02X-%02X%02X%02X%02X%02X%02X at %p\n",
+                                 u[0], u[1], u[2], u[3], u[4], u[5], u[6], u[7], u[8], u[9], u[10], u[11], u[12],
+                                 u[13], u[14], u[15], (const void*)h);
+                    w = write(fd, buf, (size_t)(n > 0 && n < (int)sizeof(buf) ? n : 0));
+                    break;
+                }
+                lc = (const struct load_command*)((const char*)lc + lc->cmdsize);
+            }
+        }
+#endif
+        (void)w;
+    }
+}
+
+static void reportEnd(void) {
+    if (sReportFd >= 0) {
+        fsync(sReportFd);
+        close(sReportFd);
+        sReportFd = -1;
     }
 }
 
@@ -575,6 +711,8 @@ static const char* signalName(int sig) {
         return "SIGFPE";
     case SIGABRT:
         return "SIGABRT";
+    case SIGTRAP:
+        return "SIGTRAP";
     default:
         return "?";
     }
@@ -615,6 +753,7 @@ static void onSignal(int sig, siginfo_t* si, void* uc) {
         return;
     }
     sInHandler = 1;
+    reportBegin("crash");
     if (sig == SIGABRT) {
         /* abort() (also std::terminate in Aurora or Dawn): as on Windows,
          * the game's trace first */
@@ -628,6 +767,7 @@ static void onSignal(int sig, siginfo_t* si, void* uc) {
         out("\n");
     }
     printStack(pc, sig == SIGABRT);
+    reportEnd();
     /* the default action when the handler returns: core dump / exit status */
     signal(sig, SIG_DFL);
     raise(sig);
@@ -648,8 +788,10 @@ static void onStall(int sig, siginfo_t* si, void* uc) {
     (void)sig;
     (void)si;
     fflush(stdout);
+    reportBegin("stall");
     out("\n*** stall: no frame for %d s; main thread:\n", (int)sStallSecs);
     printStack(contextPC(uc), 0);
+    reportEnd();
     _Exit(4);
 }
 
@@ -688,7 +830,8 @@ void portCrashInit(void) {
     struct sigaction sa;
     checkAddressSpace();
     if (getenv("TTYD_NO_CRASH_HANDLER") == NULL) {
-        static const int kSignals[] = {SIGSEGV, SIGBUS, SIGILL, SIGFPE, SIGABRT};
+        /* SIGTRAP: __builtin_trap and Apple's libc checks (brk on arm64) */
+        static const int kSignals[] = {SIGSEGV, SIGBUS, SIGILL, SIGFPE, SIGABRT, SIGTRAP};
         stack_t ss;
         size_t i;
         /* names, the unwinder and dladdr ready before anything can crash */

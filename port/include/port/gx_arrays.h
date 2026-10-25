@@ -38,6 +38,13 @@ void portGXRegisterArrayRange(const void* base, unsigned int size, int le);
  * pointer is registered or inside a disc blob; returns 0 (native, size
  * unknown) otherwise. */
 int portGXArrayInfo(const void* data, unsigned int* size, int* le);
+/* Drops every registration (blob, array, range) starting in [lo, hi): the
+ * memory was freed or its heap cleared (portMemForget, port/mem_pc.h). */
+void portGXForgetRange(const void* lo, const void* hi);
+/* 1 if data is disc data (big-endian): inside a registered disc blob, or a
+ * registered big-endian array. Draw-time ranges do not count, so a buffer's
+ * endianness never comes from a stale range over freed memory. */
+int portGXIsDiscData(const void* data);
 
 #ifdef __cplusplus
 }

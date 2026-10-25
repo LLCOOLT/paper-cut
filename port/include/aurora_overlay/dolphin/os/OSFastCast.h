@@ -45,7 +45,24 @@ static inline void OSf32tou16(f32* f, u16* out) { *out = __OSf32tou16(*f); }
 static inline f32 __OSs8tof32(const s8* arg) { return (f32)*arg; }
 static inline void OSs8tof32(const s8* in, f32* out) { *out = __OSs8tof32(in); }
 
-static inline f32 __OSs16tof32(const s16* arg) { return (f32)*arg; }
+/* psq_l's dequantization by GQR5's load scale (a signed 6-bit power of two),
+ * the register as the game last set it (hwaccess.h HW_SET_GQR5). */
+extern u32 portGQR5;
+static inline f32 __OSs16tof32(const s16* in) {
+    union {
+        u32 u;
+        f32 f;
+    } scale;
+    s32 n = (s32)((portGQR5 >> 24) & 0x3F);
+    if (n == 0) {
+        return (f32)*in;
+    }
+    if (n & 0x20) {
+        n -= 0x40;
+    }
+    scale.u = (u32)(127 - n) << 23; /* 2^-n, exact */
+    return (f32)*in * scale.f;
+}
 static inline void OSs16tof32(const s16* in, f32* out) { *out = __OSs16tof32(in); }
 
 static inline f32 __OSu8tof32(const u8* arg) { return (f32)*arg; }

@@ -177,7 +177,11 @@ EvtWord evt_shop_close[317];
 #endif
 EvtWord evt_shop_door_init[36];
 static EvtWord evt_yuka_simi[45];
+#ifdef TARGET_PC
+static const char* access_tbl[18]; /* PC port: read 3 at a time; padded past its NULL */
+#else
 static const char* access_tbl[16];
+#endif
 static EvtWord evt_access[25];
 static EvtWord evt_access_entry[24];
 EvtWord rsh_03_init_evt[269];
@@ -1577,6 +1581,9 @@ static const char* access_tbl[] = {
     "stg6_rsh_271",
     "stg6_rsh_271",
     NULL,
+#ifdef TARGET_PC
+    NULL, NULL, /* PC port: the last read of 3 goes past the NULL (the GameCube reads the next object) */
+#endif
 };
 
 static EVT_BEGIN(evt_access)

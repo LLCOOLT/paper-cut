@@ -1,3 +1,4 @@
+#include "eff/eff_starstone.h"
 #pragma optimize_for_size on
 #include "battle/battle.h"
 #include "pc_call.h"
@@ -123,17 +124,6 @@ typedef struct DekaWork {
     /* 0x550 */ f32 wavePos[6];
     /* 0x568 */ f32 waveAmp[6];
 } DekaWork;
-
-typedef struct StarEffWork {
-    u8 pad0[8];
-    Vec pos;  // 0x8
-    f32 scl;  // 0x14
-    Vec rot;  // 0x18
-    u8 pad24[0x34 - 0x24];
-    EffectEntry* sub; // 0x34
-    u8 pad38[0x5F - 0x38];
-    u8 alpha; // 0x5F
-} StarEffWork;
 
 static DekaWork* get_ptr(void);
 USER_FUNC(get_result);
@@ -726,15 +716,15 @@ static void main_star(void) {
         break;
     }
     if (w->eff) {
-        StarEffWork* e = w->eff->userdata;
-        e->pos.x = w->starPos.x;
-        e->pos.y = w->starPos.y;
-        e->pos.z = w->starPos.z;
-        e->rot.x = w->rot.x;
-        e->rot.y = w->rot.y;
-        e->rot.z = w->rot.z;
-        e->scl = 1.5f * w->scale.x;
-        e->alpha = alpha;
+        EffStarStoneWork* e = w->eff->userdata;
+        e->position.x = w->starPos.x;
+        e->position.y = w->starPos.y;
+        e->position.z = w->starPos.z;
+        e->f18 = w->rot.x;
+        e->rotY = w->rot.y;
+        e->f20 = w->rot.z;
+        e->scale = 1.5f * w->scale.x;
+        e->a = alpha;
     }
 }
 
@@ -847,7 +837,7 @@ void main_enemy_sub(BattleUnit* unit, s32* n) {
 USER_FUNC(end_deka) {
     DekaWork* w = get_ptr();
 
-    effDelete(((StarEffWork*)w->eff->userdata)->sub);
+    effDelete(((EffStarStoneWork*)w->eff->userdata)->dust);
     effDelete(w->eff);
     return 2;
 }

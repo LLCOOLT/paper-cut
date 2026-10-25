@@ -1,4 +1,5 @@
 #include "driver/mapdrv.h"
+#include "wide_x.h"
 #include "pc_call.h"
 #include "driver/arcdrv.h"
 #include "manager/dvdmgr.h"
@@ -2116,7 +2117,8 @@ static inline BOOL mapClipTest(Vec* v) {
 }
 
 void dispEntry(CameraId camera, f32 order, s32 renderMode, void* callback, void* param);
-#define MAP_CLIP_IN(v) ((v).z > -1.0f && (v).z < 0.0f && (v).x >= -1.0f && (v).x <= 1.0f && (v).y >= -1.0f && (v).y <= 1.0f)
+/* PC widescreen: WIDE_X widens the horizontal limit to the 16:9 view's edge */
+#define MAP_CLIP_IN(v) ((v).z > -1.0f && (v).z < 0.0f && (v).x >= -WIDE_X(1.0f) && (v).x <= WIDE_X(1.0f) && (v).y >= -1.0f && (v).y <= 1.0f)
 
 void mapDisp(void) {
 	MapWork* wp = &mapWork[activeGroup];

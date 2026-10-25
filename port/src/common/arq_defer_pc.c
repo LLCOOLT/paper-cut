@@ -59,6 +59,10 @@ void portARQPostRequest(ARQRequest* request, u32 owner, u32 type, u32 priority, 
     ARQPostRequest(request, owner, type, priority, source, dest, length, onComplete);
 }
 
+u32 portARQPendingCount(void) {
+    return sCount;
+}
+
 void portARQPoll(void) {
     /* completed transfers, in posting order; a callback may post more */
     while (sCount > 0 && sPending[sHead].done) {

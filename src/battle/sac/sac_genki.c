@@ -1,3 +1,4 @@
+#include "eff/eff_starstone.h"
 #include "version.h"
 #include "pc_call.h"
 #include "icon_ids.h"
@@ -28,17 +29,6 @@
 // US battle texture ids are 0x16 higher for these entries.
 #define BTL_TEX(id) ((id) + VERSION_PICK(0, 0x16))
 
-
-typedef struct GenkiEffWork {
-    u8 pad0[8];
-    Vec pos;           // 0x08
-    f32 scale;         // 0x14
-    Vec rot;           // 0x18
-    u8 pad24[0x34 - 0x24];
-    EffectEntry* sub;  // 0x34
-    u8 pad38[0x5F - 0x38];
-    u8 alpha;          // 0x5F
-} GenkiEffWork;
 
 typedef struct GenkiRing {
     s32 timer;
@@ -471,7 +461,7 @@ void main_weapon(s32 idx) {
     GenkiObject* o;
     s32 near;
     f32 min;
-    GenkiEffWork* ew;
+    EffStarStoneWork* ew;
 
     for (i = 2; i > 0; i--) {
         wp->trail[i] = wp->trail[i - 1];
@@ -645,19 +635,19 @@ void main_weapon(s32 idx) {
 
     if (wp->eff) {
         ew = wp->eff->userdata;
-        ew->pos.x = wp->pos.x;
-        ew->pos.y = wp->pos.y;
-        ew->pos.z = wp->pos.z;
+        ew->position.x = wp->pos.x;
+        ew->position.y = wp->pos.y;
+        ew->position.z = wp->pos.z;
         ew->scale = 1.125f;
-        ew->alpha = 255;
+        ew->a = 255;
     }
     for (i = 0; i < 3; i++) {
         ew = wp->effs[i]->userdata;
-        ew->pos.x = wp->trail[i].x;
-        ew->pos.y = wp->trail[i].y;
-        ew->pos.z = wp->trail[i].z;
+        ew->position.x = wp->trail[i].x;
+        ew->position.y = wp->trail[i].y;
+        ew->position.z = wp->trail[i].z;
         ew->scale = 1.125f;
-        ew->alpha = 255 - (i + 1) * 50;
+        ew->a = 255 - (i + 1) * 50;
     }
 }
 #pragma dont_inline reset
@@ -766,7 +756,7 @@ void main_star0(s32 idx) {
     GenkiStar* s = &w->star[idx];
     BattleUnit* mario = BattleGetMarioPtr(_battleWorkPointer);
     f32 x, y, z;
-    GenkiEffWork* ew;
+    EffStarStoneWork* ew;
 
     switch (s->state) {
     case 1:
@@ -852,12 +842,12 @@ void main_star0(s32 idx) {
     }
     if (s->eff) {
         ew = s->eff->userdata;
-        ew->pos.x = s->pos.x;
-        ew->pos.y = s->pos.y;
-        ew->pos.z = s->pos.z;
-        ew->rot.x = s->rot.x;
-        ew->rot.y = s->rot.y;
-        ew->rot.z = s->rot.z;
+        ew->position.x = s->pos.x;
+        ew->position.y = s->pos.y;
+        ew->position.z = s->pos.z;
+        ew->f18 = s->rot.x;
+        ew->rotY = s->rot.y;
+        ew->f20 = s->rot.z;
         ew->scale = 1.5f * s->scale.x;
     }
 }
@@ -867,7 +857,7 @@ void main_star0(s32 idx) {
 void main_star1(void) {
     GenkiWork* w = get_ptr();
     BattleUnit* mario = BattleGetMarioPtr(_battleWorkPointer);
-    GenkiEffWork* ew;
+    EffStarStoneWork* ew;
 
     switch (w->star[0].state) {
     case 1:
@@ -947,12 +937,12 @@ void main_star1(void) {
     }
     if (w->star[0].eff) {
         ew = w->star[0].eff->userdata;
-        ew->pos.x = w->star[0].pos.x;
-        ew->pos.y = w->star[0].pos.y;
-        ew->pos.z = w->star[0].pos.z;
-        ew->rot.x = w->star[0].rot.x;
-        ew->rot.y = w->star[0].rot.y;
-        ew->rot.z = w->star[0].rot.z;
+        ew->position.x = w->star[0].pos.x;
+        ew->position.y = w->star[0].pos.y;
+        ew->position.z = w->star[0].pos.z;
+        ew->f18 = w->star[0].rot.x;
+        ew->rotY = w->star[0].rot.y;
+        ew->f20 = w->star[0].rot.z;
         ew->scale = 1.5f * w->star[0].scale.x;
     }
 }
@@ -967,17 +957,17 @@ USER_FUNC(end_genki) {
     for (i = 0; i < 7; i++) {
         s = &w->star[i];
         if (s->eff) {
-            effDelete(((GenkiEffWork*)s->eff->userdata)->sub);
+            effDelete(((EffStarStoneWork*)s->eff->userdata)->dust);
             effDelete(s->eff);
         }
     }
     for (i = 0; i < 7; i++) {
         wp = &w->weapon[i];
         if (wp->eff) {
-            effDelete(((GenkiEffWork*)wp->eff->userdata)->sub);
+            effDelete(((EffStarStoneWork*)wp->eff->userdata)->dust);
             effDelete(wp->eff);
             for (j = 0; j < 3; j++) {
-                effDelete(((GenkiEffWork*)wp->effs[j]->userdata)->sub);
+                effDelete(((EffStarStoneWork*)wp->effs[j]->userdata)->dust);
                 effDelete(wp->effs[j]);
             }
         }
@@ -1012,7 +1002,7 @@ static void disp_3D(CameraId cam, void* param) {
     Vec p1;
     Mtx m;
     Mtx m2;
-    GenkiEffWork* ew;
+    EffStarStoneWork* ew;
     f32 s;
 
     w = get_ptr();
@@ -1024,9 +1014,9 @@ static void disp_3D(CameraId cam, void* param) {
         BtlUnit_GetHomePos(mario, &mx, &my, &mz);
         my += 60.0f;
         ew = w->rec0->userdata;
-        ew->pos.x = mx;
-        ew->pos.y = my - 10.0f;
-        ew->pos.z = 5.0f + mz;
+        ew->position.x = mx;
+        ew->position.y = my - 10.0f;
+        ew->position.z = 5.0f + mz;
         if (w->disp0 >= 10.0f) {
             p = (Vec){6.0f + mx, my, 8.0f + mz};
         } else {
@@ -1040,9 +1030,9 @@ static void disp_3D(CameraId cam, void* param) {
             BtlUnit_GetHomePos(party, &px, &py, &pz);
             py += 60.0f;
             ew = w->rec1->userdata;
-            ew->pos.x = px;
-            ew->pos.y = py - 10.0f;
-            ew->pos.z = 5.0f + pz;
+            ew->position.x = px;
+            ew->position.y = py - 10.0f;
+            ew->position.z = 5.0f + pz;
             if (w->disp1 >= 10.0f) {
                 p1 = (Vec){6.0f + px, py, 8.0f + pz};
             } else {
@@ -1057,9 +1047,9 @@ static void disp_3D(CameraId cam, void* param) {
             mx = 0.5f * (mx + px);
             my += 90.0f;
             ew = w->rec2->userdata;
-            ew->pos.x = mx;
-            ew->pos.y = my - 10.0f;
-            ew->pos.z = 5.0f + mz;
+            ew->position.x = mx;
+            ew->position.y = my - 10.0f;
+            ew->position.z = 5.0f + mz;
             if (w->disp2 >= 10.0f) {
                 p = (Vec){6.0f + mx, my, 8.0f + mz};
             } else {
@@ -1073,9 +1063,9 @@ static void disp_3D(CameraId cam, void* param) {
             BtlUnit_GetHomePos(mario, &mx, &my, &mz);
             my += 90.0f;
             ew = w->rec2->userdata;
-            ew->pos.x = mx;
-            ew->pos.y = my - 10.0f;
-            ew->pos.z = 5.0f + mz;
+            ew->position.x = mx;
+            ew->position.y = my - 10.0f;
+            ew->position.z = 5.0f + mz;
             if (w->disp2 >= 10.0f) {
                 p = (Vec){6.0f + mx, my, 8.0f + mz};
             } else {

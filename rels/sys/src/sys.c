@@ -1,3 +1,6 @@
+#ifdef TARGET_PC
+#include "port/platform.h"
+#endif
 #include "battle/battle_unit.h"
 #include "eff/eff_itemget.h"
 #include "evt/evt_cmd.h"
@@ -422,6 +425,9 @@ void sys_01_msg_tex_capture_func(CameraId cameraId, void* param) {
 
 void display_func(CameraId cameraId, void* param) {
     SysWork* wp = param;
+#ifdef TARGET_PC
+    portInterpKeep(wp, sizeof(*wp)); /* the scroll and rotation step in this draw */
+#endif
     CameraEntry* camera = camGetPtr(cameraId);
     s32 i;
     s32 scroll;

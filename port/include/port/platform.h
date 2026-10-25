@@ -9,6 +9,12 @@
  * a windowed backend replaces it. */
 /* Prints a symbolized backtrace on a crash (port/src/common/crash_pc.c). */
 void portCrashInit(void);
+/* Crash and stall reports also go to this file (crash_pc.c; "" for none). */
+void portCrashSetReportPath(const char* path);
+/* Where the game is (sequence, map), for the report's header. */
+void portCrashSetContext(const char* text);
+/* The fatal error that is about to end the program (Aurora's), for the report. */
+void portCrashSetMessage(const char* text);
 /* aborts if p is below 2 GiB (sound-name words, include/sfx_name_word.h) */
 void portCheckHostAddress(const void* p, const char* what);
 /* a frame completed ($TTYD_WATCHDOG, crash_pc.c) */
@@ -26,6 +32,28 @@ void portTraceCard(const char* step, s32 result);
 void portShotRequest(const char* name);
 BOOL portShotPending(void);
 void portShotFrame(void);
+/* The game drew its scene this frame (marioStDisp): Aurora's in-between
+ * frames of a higher $TTYD_FRAMERATE redraw it (interp_aurora.c). */
+void portInterpSceneDrawn(void);
+/* TRUE while such a frame is drawn: draw code that also advances the game's
+ * state (a blink, a scroll) leaves it for the game's own frames. */
+BOOL portInterpInBetween(void);
+/* In such a frame: keep n bytes at p as they are now; they are put back when
+ * the frame is drawn. For draw code that also steps the game's state (a menu
+ * ring, a blur trail, a fade), one call at the top of its draw function. */
+void portInterpKeep(void* p, unsigned int n);
+/* In such a frame: a frame-temporary smart heap block (smartAlloc type 3)
+ * from a scratch arena, so the game's heap is as without these frames
+ * (a smartEntry*; NULL if the arena is full). */
+void* portInterpScratchAlloc(u32 size);
+/* Save warps (port/src/common/warp_pc.c): continue from a .gci save file
+ * (the settings page), at the next retrace the game can take it. */
+void portWarpRequestSave(const char* path);
+const char* portWarpStatus(void);
+void portWarpFrame(void);
+/* The game's rand state (runtime_pc.c), kept around in-between frames. */
+u32 portRandState(void);
+void portRandSetState(u32 state);
 /* Scripted controller input ($TTYD_INPUT, port/src/common/input_pc.c). */
 BOOL portInputActive(void);
 void portInputStart(void);
@@ -34,6 +62,10 @@ void portInputApply(PADStatus* pad);
 void portARQPoll(void);
 /* $TTYD_FAST: advance the virtual game clock by one frame (headless os_pc.c) */
 void portFastClockFrame(void);
+/* $TTYD_FAST: the virtual clock, read and put back around the frames Aurora
+ * draws between the game's (interp_aurora.c), whose clock reads would move it */
+s64 portFastClockGet(void);
+void portFastClockSet(s64 t);
 /* Stop the game (the caller holds the main thread), its clock and audio, e.g.
  * while the window is minimized or the app is in the background; nests
  * (port/src/common/pause_pc.c). Game time does not advance while paused. */
@@ -43,7 +75,19 @@ BOOL portIsPaused(void);
 /* the backend's game clock (os_pc.c / os_time_aurora.c) and audio (hw_pc.c) */
 void portClockPause(void);
 void portClockResume(void);
+/* Aurora: the game clock at speed times real time (fast-forward); 1 normally. */
+void portClockSetSpeed(int speed);
+int portClockSpeed(void);
 void salPcSetPaused(BOOL paused);
+/* hw_pc.c: no audio callback runs while locked (save states). */
+void salPcLock(void);
+void salPcUnlock(void);
+/* arq_defer_pc.c: transfers whose callbacks are still to run. */
+u32 portARQPendingCount(void);
+/* os_thread_pc.c: the main thread (not a game thread's coroutine) runs. */
+BOOL portThreadIsMain(void);
+/* os_time_aurora.c: while paused, the game time to resume from (save states). */
+void portClockSetGame(s64 t);
 struct EventEntry;
 void portTraceCmd(struct EventEntry* entry);
 /* "symbol+0xoff" for an address in the executable (or the address), into buf. */

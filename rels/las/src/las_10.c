@@ -132,7 +132,11 @@ EvtWord kagi7_evt[80];
 EvtWord kagi8_evt[80];
 EvtWord daiza_up[201];
 EvtWord kagi_8_off[48];
+#ifdef TARGET_PC
+const char* daiza_name[27]; /* PC port: read 3 at a time; padded past its NULL */
+#else
 const char* daiza_name[25];
+#endif
 EvtWord kagi_8_on[365];
 EvtWord kagi_8_init[11];
 EvtWord kagi_8_syutugen[19];
@@ -1057,6 +1061,9 @@ const char* daiza_name[] = {
     "S113_daiza8",
     "eff_8",
     NULL,
+#ifdef TARGET_PC
+    NULL, NULL, /* PC port: the last read of 3 goes past the NULL (the GameCube reads the next object) */
+#endif
 };
 
 EVT_BEGIN(kagi_8_on)

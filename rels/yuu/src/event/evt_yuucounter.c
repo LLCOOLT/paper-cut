@@ -1,3 +1,6 @@
+#ifdef TARGET_PC
+#include "port/platform.h"
+#endif
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
 #include "pc_call.h"
@@ -180,6 +183,9 @@ void evt_yuucounter_disp_func(CameraId camera, void* param) {
 
     iconColor = white;
     numColor = white;
+#ifdef TARGET_PC
+    portInterpKeep(wp, sizeof(*wp)); /* the timer steps (and starts) in this draw */
+#endif
     switch (wp->type) {
         case 0:
             if (!(wp->dispFlags & 2)) {

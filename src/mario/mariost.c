@@ -1,4 +1,7 @@
 #include "mario/mariost.h"
+#ifdef TARGET_PC
+#include "port/platform.h"
+#endif
 
 #include "battle/battle.h"
 
@@ -346,6 +349,9 @@ void marioStMain(void) {
 
 void marioStDisp(void) {
 	camDraw();
+#ifdef TARGET_PC
+	portInterpSceneDrawn();
+#endif
 	g_bFirstSmartAlloc = FALSE;
 }
 

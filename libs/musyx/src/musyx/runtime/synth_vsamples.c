@@ -13,7 +13,11 @@
 
 u32 vidGetPublicId(u32 voice);
 u32 seqGetInstanceForVoice(u32 vid);
+#ifdef TARGET_PC
+void* hwGetSampleExtraData(u32 voice); /* PC port: its real prototype */
+#else
 u32 hwGetSampleExtraData(u32 voice);
+#endif
 
 VS vs;
 
@@ -92,7 +96,12 @@ u32 vsSampleStartNotify(unsigned long vid) {
     } else {
       vs.streamBuffer[sb].info.seqInstID = 0xFFFFFFFF;
     }
+#ifdef TARGET_PC
+    /* PC port: a 32-bit field in the callback's info (the game never reads it) */
+    vs.streamBuffer[sb].info.data.extraData = (u32)(uintptr_t)hwGetSampleExtraData(voice);
+#else
     vs.streamBuffer[sb].info.data.extraData = hwGetSampleExtraData(voice);
+#endif
     vs.streamBuffer[sb].smpType = hwGetSampleType(voice);
     vs.streamBuffer[sb].voice = voice;
     if (vs.callback != NULL && vs.callback(0, &vs.streamBuffer[sb].info) == 0) {

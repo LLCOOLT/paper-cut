@@ -97,7 +97,7 @@ EVT_BEGIN(nanika_luck_event)
         WAIT_FRAMES(60)
     END_SIBLING_EVENT
     CALL(_set_effect_luck)
-    CALL(btlevtcmd_WaitEventEnd, PTR(0xfe363c8f))
+    CALL(btlevtcmd_WaitEventEnd, PTR((s32)0xfe363c8f))
     RETURN
 EVT_END()
 EVT_BEGIN(_default_haikei_set_entry_event)

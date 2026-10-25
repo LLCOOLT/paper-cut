@@ -1,0 +1,180 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Sat, 24 Oct 2026 18:30:00 -0400
+Subject: [PATCH] gx, vi: widescreen: projection x scale, locked aspect
+
+GXSetProjectionScaleX (GX_AURORA_SET_PROJECTION_SCALE_X): clip-space x of
+following draws to the main framebuffer is scaled, the game's projections
+unchanged. VILockAspectRatio/VIUnlockAspectRatio (declared, not defined):
+the FIT framebuffer takes that aspect instead of the VI mode's.
+---
+diff --git a/include/dolphin/gx/GXAurora.h b/include/dolphin/gx/GXAurora.h
+index 46f6ede..789d7d1 100644
+--- a/include/dolphin/gx/GXAurora.h
++++ b/include/dolphin/gx/GXAurora.h
+@@ -30,6 +30,13 @@ extern "C" {
+  */
+ #define GX_AURORA_LOAD_PROJECTION_FULL 0x0003
+ 
++/**
++ * Scales clip-space x of every following draw to the main framebuffer (not
++ * offscreen targets): widescreen without changing the game's projections,
++ * which GXGetProjection still returns as set. Must be followed by one f32.
++ */
++#define GX_AURORA_SET_PROJECTION_SCALE_X 0x0004
++
+ /**
+  * Aurora equivalent of CP_REG_ARRAYBASE_ID: sets the base address and size of a vertex array.
+  * This command must be followed by a 64-bit memory address, 32-bit size, and 1-byte little-endian flag.
+@@ -197,6 +204,14 @@ void GX2SetPolygonOffset(f32 mFrontOffset, f32 mFrontScale, f32 mBackOffset, f32
+  */
+ void GXSetProjectionFull(const void* mtx);
+ 
++/**
++ * Multiplies clip-space x by scale for the following draws to the main
++ * framebuffer (1 = off). With the framebuffer locked to a wider aspect
++ * (VILockAspectRatio), scale = logical aspect / locked aspect keeps shapes
++ * and shows more horizontally.
++ */
++void GXSetProjectionScaleX(f32 scale);
++
+ /**
+  * Create an offscreen framebuffer and switch rendering to it.
+  * All subsequent GX rendering will target this framebuffer until GXRestoreFrameBuffer() is called.
+diff --git a/lib/dolphin/gx/GXAurora.cpp b/lib/dolphin/gx/GXAurora.cpp
+index 0d91aed..4f0ccc7 100644
+--- a/lib/dolphin/gx/GXAurora.cpp
++++ b/lib/dolphin/gx/GXAurora.cpp
+@@ -82,6 +82,11 @@ void GXSetProjectionFull(const void* mtx) {
+   }
+ }
+ 
++void GXSetProjectionScaleX(f32 scale) {
++  GX_WRITE_AURORA(GX_AURORA_SET_PROJECTION_SCALE_X);
++  GX_WRITE_F32(scale);
++}
++
+ void GX2SetPolygonOffset(f32 mFrontOffset, f32 mFrontScale, f32 mBackOffset, f32 mBackScale, f32 mClamp) {
+   GX_WRITE_AURORA(GX2_SET_POLYGON_OFFSET);
+   GX_WRITE_F32(mFrontOffset);
+diff --git a/lib/dolphin/vi/vi.cpp b/lib/dolphin/vi/vi.cpp
+index 4c8dddc..09f126a 100644
+--- a/lib/dolphin/vi/vi.cpp
++++ b/lib/dolphin/vi/vi.cpp
+@@ -43,6 +43,11 @@ void VIConfigurePan(u16 xOrg, u16 yOrg, u16 width, u16 height) {
+   (void)height;
+ }
+ u32 VIGetTvFormat() { return 0; }
++void VILockAspectRatio(int width, int height) {
++  aurora::window::set_locked_aspect(width > 0 && height > 0 ? static_cast<float>(width) / static_cast<float>(height)
++                                                             : 0.f);
++}
++void VIUnlockAspectRatio() { aurora::window::set_locked_aspect(0.f); }
+ void VIFlush() {}
+ 
+ void VISetWindowTitle(const char* title) { aurora::window::set_title(title); }
+diff --git a/lib/gx/command_processor.cpp b/lib/gx/command_processor.cpp
+index 2408c92..0e04d68 100644
+--- a/lib/gx/command_processor.cpp
++++ b/lib/gx/command_processor.cpp
+@@ -578,6 +578,12 @@ void handle_aurora(ByteReader& reader) noexcept {
+     const s32 width = reader.read<s32>();
+     const s32 height = reader.read<s32>();
+     set_render_scissor({left, top, width, height});
++  } else if (subCmd == GX_AURORA_SET_PROJECTION_SCALE_X) {
++    const f32 scale = reader.read<f32>();
++    if (g_gxState.projScaleX != scale) {
++      g_gxState.projScaleX = scale;
++      g_gxState.dirty |= DirtyUniform;
++    }
+   } else if (subCmd == GX_AURORA_LOAD_PROJECTION_FULL) {
+     auto& proj = g_gxState.proj;
+     for (int r = 0; r < 4; ++r) {
+diff --git a/lib/gx/gx.hpp b/lib/gx/gx.hpp
+index 77a821d..476443e 100644
+--- a/lib/gx/gx.hpp
++++ b/lib/gx/gx.hpp
+@@ -337,6 +337,7 @@ struct GXState {
+   std::array<PnMtx, MaxPnMtx> pnMtx;
+   u32 currentPnMtx;
+   Mat4x4<float> proj;
++  float projScaleX = 1.f; // GXSetProjectionScaleX: main framebuffer only
+   GXProjectionType projType; // for GXGetProjectionv
+   FogState fog;
+   GXCullMode cullMode = GX_CULL_BACK;
+diff --git a/lib/gx/shader_info.cpp b/lib/gx/shader_info.cpp
+index c74bd6d..b3cea57 100644
+--- a/lib/gx/shader_info.cpp
++++ b/lib/gx/shader_info.cpp
+@@ -1,6 +1,7 @@
+ #include "shader_info.hpp"
+ 
+ #include "../gfx/recording.hpp"
++#include <aurora/gfx.hpp>
+ 
+ #include <cmath>
+ 
+@@ -390,6 +391,10 @@ static void fill_uniform(ByteBuffer& buf, const ShaderInfo& info) noexcept {
+     }
+   }
+   auto proj = g_gxState.proj;
++  if (g_gxState.projScaleX != 1.f && !gfx::is_offscreen()) {
++    const float s = g_gxState.projScaleX;
++    proj.m0 = proj.m0 * Vec4{s, s, s, s};
++  }
+   if constexpr (UseReversedZ) {
+     proj.m2 = proj.m2 * Vec4{-1.f, -1.f, -1.f, -1.f};
+   } else {
+diff --git a/lib/window.cpp b/lib/window.cpp
+index cf84de3..4fa3eea 100644
+--- a/lib/window.cpp
++++ b/lib/window.cpp
+@@ -47,6 +47,7 @@ SDL_Window* g_window;
+ SDL_Renderer* g_renderer;
+ float g_frameBufferScale = 0.f;
+ bool g_frameBufferAspectFit = false;
++float g_lockedAspect = 0.f; // VILockAspectRatio: FIT to this aspect instead of the VI mode's
+ AuroraWindowSize g_windowSize;
+ std::vector<AuroraEvent> g_events;
+ std::deque<std::string> g_eventStrings;
+@@ -490,8 +491,9 @@ AuroraWindowSize get_window_size() {
+   if (g_frameBufferAspectFit) {
+     const auto [baseW, baseH] = vi::configured_fb_size();
+     if (baseW > 0 && baseH > 0) {
+-      const auto [fitW, fitH] =
+-          fit_frame_buffer_to_aspect(fb_w, fb_h, static_cast<float>(baseW) / static_cast<float>(baseH));
++      const float aspect =
++          g_lockedAspect > 0.f ? g_lockedAspect : static_cast<float>(baseW) / static_cast<float>(baseH);
++      const auto [fitW, fitH] = fit_frame_buffer_to_aspect(fb_w, fb_h, aspect);
+       fb_w = fitW;
+       fb_h = fitH;
+     }
+@@ -603,6 +605,14 @@ void set_frame_buffer_scale(float scale) {
+   request_frame_buffer_resize();
+ }
+ 
++void set_locked_aspect(float aspect) {
++  if (g_lockedAspect == aspect) {
++    return;
++  }
++  g_lockedAspect = aspect;
++  request_frame_buffer_resize();
++}
++
+ void set_frame_buffer_aspect_fit(bool fit) {
+   if (g_frameBufferAspectFit == fit) {
+     return;
+diff --git a/lib/window.hpp b/lib/window.hpp
+index 51257ea..ce558ce 100644
+--- a/lib/window.hpp
++++ b/lib/window.hpp
+@@ -50,5 +50,6 @@ void center_window();
+ void request_frame_buffer_resize();
+ void set_frame_buffer_scale(float scale);
+ void set_frame_buffer_aspect_fit(bool fit);
++void set_locked_aspect(float aspect); // 0: the VI mode's aspect
+ void set_background_input(bool value);
+ }; // namespace aurora::window
+-- 
+2.0
+

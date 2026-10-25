@@ -64,7 +64,8 @@
 		</dict>
 	</dict>
 
-	<!-- Full screen, landscape only (Aurora also sets SDL_HINT_ORIENTATIONS). A
+	<!-- Full screen, landscape or portrait (the settings' Orientation narrows it
+	     at run time, SDL_HINT_ORIENTATIONS: port/src/aurora/layout_aurora.c). A
 	     launch screen entry is what gives the app the device's full screen size
 	     instead of a letterboxed compatibility mode. -->
 	<key>UILaunchScreen</key>
@@ -79,11 +80,13 @@
 	<array>
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
+		<string>UIInterfaceOrientationPortrait</string>
 	</array>
 	<key>UISupportedInterfaceOrientations~ipad</key>
 	<array>
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
+		<string>UIInterfaceOrientationPortrait</string>
 	</array>
 
 	<!-- The app's Documents folder appears in the Files app (On My iPhone/iPad)
@@ -104,6 +107,10 @@
 			<string>ExtendedGamepad</string>
 		</dict>
 	</array>
+	<!-- ProMotion: without it iOS caps an iPhone app at 60 Hz (the in-between
+	     frames of framerate=120/display, port/src/aurora/interp_aurora.c). -->
+	<key>CADisableMinimumFrameDurationOnPhone</key>
+	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>ITSAppUsesNonExemptEncryption</key>

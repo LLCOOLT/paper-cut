@@ -2,6 +2,7 @@
 #include "pc_call.h"
 #ifdef TARGET_PC
 #include "port/platform.h"
+#include "port/gameplay.h"
 #endif
 #include "driver/animdrv.h"
 #include "driver/camdrv.h"
@@ -367,6 +368,9 @@ s32 msgMain(smartEntry* smart) {
 		break;
 	default:
 		ms = OSTicksToMilliseconds(gp->renderTime - data->lastUpdateTime);
+#ifdef TARGET_PC
+		ms = portTextMs(ms); /* PC port: the text speed setting */
+#endif
 		msgCheckSkip(smart, data);
 		if (!(data->flags & 0x10) && (data->flags & 4)) {
 			ms *= 100;
@@ -685,6 +689,9 @@ BOOL msgDisp(smartEntry* smart, u8 alpha, f32 x, f32 y) {
 					PSMTXScaleApply(m2, m2, c->scale, c->scale, c->scale);
 					PSMTXTransApply(m2, m2, hx, hy, EXT_LIT(float_0_8041a514, 0.0f));
 					FontDrawCodeMtx(m2, c->glyph);
+#ifdef TARGET_PC
+					portInterpKeep(&c->rot, sizeof(c->rot)); /* the glyph's pop settles in each draw */
+#endif
 					c->rot = EXT_LIT(float_1_8041a52c, 1.0f) + EXT_LIT(float_0p5_8041a534, 0.5f) * (c->rot - 1.0f);
 				}
 				else if (c->value & 2) {
@@ -1684,6 +1691,11 @@ void msgWindow_Add(char* msg, s32 id) {
 	WindowEntry* window = windowGetPointer(id);
 	smartEntry* smart = window->userdata;
 
+#ifdef TARGET_PC
+	if (smart == NULL) {
+		return; /* PC port: the window has closed; its data would be NULL */
+	}
+#endif
 	((MsgWinData*)smart->address)->lastUpdateTime = gp->renderTime;
 	msgAnalize(smart, msg);
 	WIN_STATE(window) = 1;
@@ -1694,6 +1706,11 @@ void msgWindow_Continue(s32 id) {
 	WindowEntry* window = windowGetPointer(id);
 	MsgWinData* data;
 
+#ifdef TARGET_PC
+	if (window->userdata == NULL) {
+		return; /* PC port: the window has closed (its message read through by then); its data would be NULL */
+	}
+#endif
 	WIN_STATE(window) = 1;
 	window->flags |= 2;
 	data = window->userdata->address;
@@ -1704,6 +1721,11 @@ void msgWindow_Repeat(s32 id) {
 	WindowEntry* window = windowGetPointer(id);
 	MsgWinData* data;
 
+#ifdef TARGET_PC
+	if (window->userdata == NULL) {
+		return; /* PC port: the window has closed (its message read through by then); its data would be NULL */
+	}
+#endif
 	WIN_STATE(window) = 1;
 	window->flags |= 2;
 	data = window->userdata->address;

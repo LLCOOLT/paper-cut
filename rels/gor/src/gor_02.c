@@ -4038,7 +4038,11 @@ void kuragarisan_msgcb(s32 type, void* param) {
 
     switch (type) {
         case 3:
+#ifdef TARGET_PC /* PC port: curPage is at 0x8 only with 32-bit pointers */
+            if (((MsgWinData*)msg)->curPage == 1) {
+#else
             if (*(u16*)(msg + 8) == 1) {
+#endif
                 npc = npcNameToPtr("\203N\203\211\203K\203\212\202\263\202\361");
                 npc->direction = 90.0f;
             }

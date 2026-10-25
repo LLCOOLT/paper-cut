@@ -166,6 +166,8 @@ EvtWord talk_tenin[2];
 static EvtWord init_white[83];
 #ifdef VERSION_G8ME01
 EvtWord mario_jump[203];
+#elif defined(TARGET_PC)
+EvtWord mario_jump[203]; /* PC port: mario_jump_tail's 6 words in it */
 #else
 EvtWord mario_jump[197];
 #endif
@@ -1028,6 +1030,13 @@ EvtWord mario_jump[] = {
     CALL(evt_snd_sfxon_3d, STRING("SFX_VOICE_MARIO_FLD_JUMP2"), LW(10), LW(11), LW(12), 0)
     CALL(evt_mario_jump_pos, 335, 30, -130, 500, 2, -1000)
     EVT_CMD(4, OPCODE_USER_FUNC), (EvtWord)evt_npc_flag_onoff, 0,
+#ifdef TARGET_PC
+    /* PC port: mario_jump_tail, adjacent on the GameCube but not here */
+    STRING(/*"ホワイト"*/"\x83\x7A\x83\x8F\x83\x43\x83\x67"), 32,
+    CALL(evt_mario_cam_keep_off)
+    RETURN
+    OPCODE_END_SCRIPT,
+#endif
 };
 #endif
 

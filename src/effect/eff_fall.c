@@ -15,28 +15,6 @@
 #include "eff/eff_magic1_n64.h"
 #include "libc_decls.h"
 
-typedef struct EffFallWork {
-    s32 type;       // 0x0
-    Vec position;   // 0x4
-    u8 pad10[0x6C - 0x10];
-    Vec pos2;       // 0x6C
-    u8 pad78[0x80 - 0x78];
-    f32 angle;      // 0x80
-    u8 pad84[0x8C - 0x84];
-    s32 timer;      // 0x8C
-    u8 pad90[0x94 - 0x90];
-    f32 scale;      // 0x94
-    u8 pad98[0xA0 - 0x98];
-    s32 state;      // 0xA0
-    u32 alpha;      // 0xA4
-    u8 padA8[0xB0 - 0xA8];
-    f32 rotation;   // 0xB0
-    u8 padB4[0xB8 - 0xB4];
-    Vec pos3;       // 0xB8
-    s32 pose0;      // 0xC4
-    s32 pose1;      // 0xC8
-} EffFallWork;
-
 typedef struct EffFallVtx {
     f32 x, y, z;
     f32 u, v;
@@ -66,6 +44,58 @@ typedef struct EffFallElem {
     s32 pose1;        // 0x60
     s32 sfx;          // 0x64
 } EffFallElem;
+
+#ifdef TARGET_PC
+#include <stddef.h>
+/* PC port: the view is elements 0 and 1 of the EffFallElem array, and the
+ * vtx pointer makes an element 0x70 bytes on 64-bit (0x68 on the GameCube):
+ * element 1's fields at their real offsets. */
+#define E1(f) (sizeof(EffFallElem) + offsetof(EffFallElem, f))
+typedef struct EffFallWork {
+    s32 type;     // e[0].type
+    Vec position; // e[0].pos
+    u8 pad10[E1(pos) - 0x10];
+    Vec pos2;     // e[1].pos
+    u8 pad78[E1(rotY) - E1(pos) - sizeof(Vec)];
+    f32 angle;    // e[1].rotY
+    u8 pad84[E1(timer) - E1(rotY) - 4];
+    s32 timer;    // e[1].timer
+    u8 pad90[E1(scale) - E1(timer) - 4];
+    f32 scale;    // e[1].scale
+    u8 pad98[E1(state) - E1(scale) - 4];
+    s32 state;    // e[1].state
+    u32 alpha;    // e[1].alpha
+    u8 padA8[E1(rot2) - E1(alpha) - 4];
+    f32 rotation; // e[1].rot2
+    u8 padB4[E1(vel) - E1(rot2) - 4];
+    Vec pos3;     // e[1].vel
+    s32 pose0;    // e[1].pose0
+    s32 pose1;    // e[1].pose1
+} EffFallWork;
+#undef E1
+#else
+typedef struct EffFallWork {
+    s32 type;       // 0x0
+    Vec position;   // 0x4
+    u8 pad10[0x6C - 0x10];
+    Vec pos2;       // 0x6C
+    u8 pad78[0x80 - 0x78];
+    f32 angle;      // 0x80
+    u8 pad84[0x8C - 0x84];
+    s32 timer;      // 0x8C
+    u8 pad90[0x94 - 0x90];
+    f32 scale;      // 0x94
+    u8 pad98[0xA0 - 0x98];
+    s32 state;      // 0xA0
+    u32 alpha;      // 0xA4
+    u8 padA8[0xB0 - 0xA8];
+    f32 rotation;   // 0xB0
+    u8 padB4[0xB8 - 0xB4];
+    Vec pos3;       // 0xB8
+    s32 pose0;      // 0xC4
+    s32 pose1;      // 0xC8
+} EffFallWork;
+#endif
 
 __declspec(section ".data") f32 eff_fall_negone_one_a[] = { -1.0f, 1.0f };
 __declspec(section ".data") static f32 negone_one_374[] = { -1.0f, 1.0f };

@@ -24,37 +24,6 @@ void* memset(void* dst, int val, u32 n);
 #endif
 void effNumberGX(Mtx mtx, s32 type, s32 number, u8 alpha, s32 extra);
 
-typedef struct MayaPoly {
-    s32 keyCount;          // 0x0
-    MayaHermitKey* keys;   // 0x4
-    s32 count;
-    s16** strips;
-} MayaPoly;
-
-typedef struct MayaKeyList {
-    s32 count;
-    MayaPoly* polys;
-} MayaKeyList;
-
-typedef struct MayaAnimData {
-    u8 pad0[4];
-    f32 endTime;
-    MayaKeyList* lists;
-} MayaAnimData;
-
-typedef struct MayaJoint {
-    Mtx mtx;
-    f32 alpha;
-} MayaJoint;
-
-typedef struct MayaAnim {
-    u16 flags;
-    f32 time;
-    OSTime startTime;
-    MayaAnimData* data;
-    MayaJoint joints[1];
-} MayaAnim;
-
 MayaAnim* effMayaAnimAlloc(MayaAnimData* data);
 void effDeleteMayaAnim(MayaAnim* anim);
 void effPlayMayaAnim(MayaAnim* anim);

@@ -19,8 +19,8 @@ builds without it and runs from the user's own disc image.
 | GameCube matching build unchanged (SHA-1 OK, both versions) | checked after every change |
 | CI | local: `tools/port/local_ci.py` (below); the GitHub workflow is disabled |
 | Linux | written; cross-compiled and linked for x86_64/aarch64, not yet built or run on Linux (WSL: `local_ci.py`'s linux stage) |
-| macOS (arm64, x86_64; headless and Aurora `.app`) | written on Windows, not yet built on a Mac (`docs/APPLE_BRIEF.md`) |
-| iOS | written on Windows, not yet built (`docs/APPLE_BRIEF.md`) |
+| macOS (arm64, x86_64; headless and Aurora `.app`) | builds (Apple clang, Xcode 26); every map boots headless, JP and US (arm64; JP also x86_64 under Rosetta); every JP map captured on Aurora, 4:3 and widescreen; unit tests and audits pass; GameCube matching build runs here (wibo); golden audio differs from Windows (libm, Testing) |
+| iOS | Simulator: boots from the disc in Documents, plays, touch controls drive Mario, background pause/resume; 4:3 by default, 16:9 widescreen opt-in (Settings app). Device: the US build runs on an iPhone 17 Pro (development-signed; iOS section) |
 | Android | builds (both APKs, on Windows); not yet run on a device |
 
 ## Building
@@ -94,10 +94,11 @@ Windows x86_64: glibc's libm or arm64 floating point may change them without
 anything being wrong, so a Linux mismatch needs a listen before an update.
 ### macOS
 
-Status: written and checked on Windows only (below); no Mac build has run
-yet. The CI job `macos` (macos-14, arm64) builds both versions headless and
-Aurora and runs the unit tests once the branch and the `extern/aurora`
-commit are pushed.
+Status: built and run on an Apple-silicon Mac (macOS 26, Xcode 26.3): both
+versions, headless and Aurora; unit tests pass; every map of the JP map
+table boots headless on arm64 and on x86_64 (Rosetta), and every US map on
+arm64. Golden audio: see
+Testing (Apple's libm rounds differently from Windows').
 
 Needs Xcode or its Command Line Tools (Apple clang), CMake 3.25+, Ninja,
 Python 3 and Homebrew LLVM (`brew install llvm ninja`): only its
@@ -123,7 +124,14 @@ cmake --install build-pc-jp --prefix dist  # self-contained, ad hoc signed copy
   plain `ttyd-jp`.
 - User data (memory cards, `disc.txt`, Aurora's pipeline cache):
   `~/Library/Application Support/ttyd/` (Aurora's `SDL_GetPrefPath`).
-- Minimum macOS 11.0 (`CMAKE_OSX_DEPLOYMENT_TARGET`, set before `project()`).
+- The app is self-contained: Aurora's dependencies (fmt, abseil, zstd,
+  libpng, ...) are fetched and linked statically, never Homebrew's or
+  MacPorts' (CMake ignores those prefixes while Aurora configures); `otool -L`
+  lists only system libraries.
+- Window restoration is off (`ApplePersistenceIgnoreState`, set before SDL
+  starts): otherwise, after a crash or a killed run, macOS asks "reopen
+  windows?" in a modal alert before the game starts.
+- Minimum macOS 12.0 (`CMAKE_OSX_DEPLOYMENT_TARGET`, set before `project()`; Aurora's prebuilt Dawn is built for 12).
 - One architecture per build, the host's by default; for Intel from Apple
   silicon, `-DCMAKE_OSX_ARCHITECTURES=x86_64` (Aurora: also
   `-DAURORA_NOD_PROVIDER=package`, else nod is built from source with Rust).
@@ -151,6 +159,56 @@ RVZ, WIA, ...); a disc of the other region or game is refused with a message.
 Headless: `$TTYD_DATA_DIR` = the extracted disc (or its `files/` directory).
 The disc ID is checked against the build's version.
 
+The settings page (Aurora; `port/settings/settings_ui.cpp`): F1, a
+controller's Back/Select or a three-finger tap opens it; Escape or B closes
+it; F11 toggles fullscreen. Video: frame rate (60, 120, 144, 240, the
+display's; docs/FRAME_INTERPOLATION.md), VSync, fullscreen, widescreen 16:9,
+internal resolution, a frame rate counter. Audio: volume, mute in the
+background. Gameplay (`port/include/port/gameplay.h`): fast-forward speed
+(2-8x) and hold or toggle, text speed, Mario's run speed, skip the intro (the
+logos at 16x, then the title without the story demo). Controls: rumble and
+its strength, and the on-screen controls' haptics, opacity, size and
+auto-run. System: pause and controllers in the background, the save folder.
+
+Save states (`port/src/aurora/savestate_aurora.c`; every Aurora build with
+static RELs: Windows, macOS, iOS, Linux, Android): F5 saves slot 1, F8 loads it, the settings page's
+States tab has four slots; an input script's `state save|load N`;
+`TTYD_STATE_TEST=<save frame>:<load frame>`. A state is MEM1, ARAM, the
+game's data and bss (their own sections from `port_prefix.h`'s pragma,
+bounded per object format in `port/src/common/snapshot_bounds_pc.c`: Mach-O
+`__ttyd_snapd`/`__ttyd_snapb` with section$start/end, COFF grouped sections
+`.data$ttyd_snap_{a,m,z}` with marker variables, ELF `ttyd_snapd`/`ttyd_snapb`
+with __start_/__stop_; the game is built `-fno-common` for it), every
+REL's sections and the linked REL, the save-state heap
+(`port/src/common/snapheap_pc.c`: what the decoders made, which the game's
+data points into; its bookkeeping is inside it), the game clock and its
+`rand()` state. It is taken between frames on the main thread, in the field
+or a battle, with the audio callback held and disc reads and ARAM transfers
+finished; a load reopens the disc files open then (Aurora patch 0008) and
+drops Aurora's texture caches. Kept compressed in memory (Apple's LZ4; elsewhere
+the port's own LZ77 codec in the same file), about 18 MiB: saving or loading
+takes about 50 ms on an M-series Mac, 120-220 ms on Windows. They hold host
+addresses, so they last for the run. Checked: the frames after a load equal
+those after the save (`TTYD_FAST`) in the field, in a battle, and after a map
+and an area (REL) change (macOS); in the field and a battle on Windows (40
+frames on, still equal). Android: built, the sections and their bounds
+linked; not yet run on a device.
+
+Fast-forward (`port/src/aurora/speed_aurora.c`): Tab, a controller's right
+stick click or the on-screen `>>`. The game clock runs at the chosen multiple
+of real time (`portClockSetSpeed`, `os_time_aurora.c`) and frame pacing,
+which waits on that clock, follows; vsync is off meanwhile and no in-between
+frames are drawn. `TTYD_FF_TEST` holds it from the start (tests).
+Changes apply at once and are written to `settings.txt` in the user folder
+(`port/src/aurora/settings_aurora.c`); the game gets no input while the page
+is open. `TTYD_SETTINGS_OPEN` opens it at start (tests).
+Warp: continue from any save file (`.gci`, this version's) in the user
+folder's `warps` folder (folders in it group them; on iOS, Files > TTYD >
+Saves > warps), e.g. a speedrun practice save pack, without going back to
+the title (`port/src/common/warp_pc.c`; on a field map or the title, not in
+a battle). The save is loaded as file 4: a save made after a warp is written
+there, never to files 1-3. `TTYD_LOAD_SAVE=<file.gci>` warps at start.
+
 The game pauses while its window is minimized or hidden (and, with
 `TTYD_PAUSE_UNFOCUSED`, while another window has the focus): its clock and the
 audio device stop, and it resumes where it left off
@@ -162,26 +220,58 @@ Environment switches (all optional):
 | Variable | Effect |
 |---|---|
 | `TTYD_TRACE=1/2/3` | sequence/map changes, missing messages, card steps; 2: running scripts; 3: every script command |
+| `TTYD_TRACE_CMD=<text>[,<text>...]`, `TTYD_TRACE_BUDGET` | with `TTYD_TRACE=3`: only the scripts whose name contains one (frame-stamped); how many commands (default 4000) |
 | `TTYD_FAST` | frames back to back on a virtual 60 Hz clock (timed waits keep their frame counts); Aurora draws wait for their pipelines |
 | `TTYD_MAP=<map>[,<bero>]` | at the first field map or the title, start a new game on that map (with a partner, `TTYD_PARTY`, default Goombella) |
 | `TTYD_EXIT_FRAMES`, `TTYD_WARP_LIMIT` | with `TTYD_MAP`: exit 0 after N frames on the map; exit 3 if not reached in N seconds |
 | `TTYD_INPUT=<script>` | scripted controller 1 (below) |
 | `TTYD_SHOT=<f>[,<f>...]`, `TTYD_SHOT_DIR` | Aurora: write those frames as PNG |
+| `TTYD_FRAMERATE=120/144/240/display` | Aurora: frames drawn between the game's (docs/FRAME_INTERPOLATION.md); else `framerate=` in the user folder's settings.txt |
+| `TTYD_SHOT_INBETWEEN=<k>` | Aurora: capture the k-th in-between frame after each `TTYD_SHOT` frame instead |
+| `TTYD_INTERP_AUDIT` | Aurora on Windows: report the game state in-between frames change (by function and line, and globals) |
 | `TTYD_WINDOW_POS=x,y` | Aurora window position (off-screen for unattended runs) |
 | `TTYD_USER_DIR` | the user folder elsewhere: memory cards (both backends), Aurora's settings |
 | `TTYD_CACHE_DIR` | Aurora's pipeline cache elsewhere |
 | `TTYD_AUDIO_WAV=<file>` | headless: write the mixed audio |
 | `TTYD_WATCHDOG=<s>` | no frame for that long: print the main thread's stack, exit 4 |
 | `TTYD_PAUSE_UNFOCUSED` | Aurora: also pause while unfocused |
+| `TTYD_WIDESCREEN=1/0` | Aurora: 16:9 picture (off by default; overrides the `widescreen` preference); see below |
 | `TTYD_GXARRAY_TRACE=1/2` | Aurora: vertex-array uploads without a size / every changed array |
 
 Crashes and `abort()` print a symbolized backtrace.
 
+The picture keeps its shape in any window or screen: Aurora's FIT viewport
+policy (`AuroraSetViewportPolicy`, set at startup) bars the 608x480 frame
+instead of stretching it (it stretched 1.6x on a 19.5:9 phone before).
+
+**Widescreen** (`port/src/aurora/widescreen_aurora.c`), opt-in: off by
+default on every platform, on with the `widescreen` preference (iOS: the
+switch in the Settings app, `port/ios/Settings.bundle`; macOS: `defaults write
+<bundle id> widescreen -bool true`) or `$TTYD_WIDESCREEN=1`. Much of the game
+was built for the 4:3 frame only: a capture sweep of the title, the opening
+story, menus, field maps and battles showed the title diorama's backdrop
+(green), the storybook's table, and black past the walls of indoor rooms at
+the sides; outdoor maps and battle stages widen well. Switching aspect per
+scene was rejected (inconsistent), so 4:3 is the default and 16:9 is the
+player's choice, with those artifacts. When on, the frame is locked to
+16:9 (`VILockAspectRatio`, an Aurora patch) and every draw to it has clip-space
+x scaled by (608/480)/(16/9) (`GXSetProjectionScaleX`, applied by Aurora when
+it builds a draw's uniforms, so `GXGetProjection` still returns the game's
+matrix and save/restore pairs stay exact). 3D shows more to the sides, 2D
+keeps its shape, centred. Per camera (`camdrv`'s loop calls
+`portWidescreenCamera`): the background and fade cameras are stretched to the
+full width instead (full-screen layers). Full-screen quads drawn at the
+608-wide frame's edges (letterbox bars, screen-copy effects, the name-entry
+backdrop) use `WIDE_X(x)` (`include/wide_x.h`) to reach the widened edges.
+Offscreen render targets are not scaled. Interior rooms show black past their
+walls at the sides (the room ends there), as in other widescreen hacks.
+
 ## iOS
 
-Written but not yet built or run: there was no Mac to build on (the `ios` CI
-job builds it once the branch and Aurora's submodule commit are pushed).
-Aurora backend, arm64, devices and the Simulator (Apple silicon Macs); one
+Built and run in the Simulator (iPhone 17 Pro, iOS 26.3, Xcode 26.3): the
+disc image in Documents is found, the game boots, plays (field, HUD,
+partner), the touch controls drive Mario, and Home / back pauses and resumes
+the same process. Aurora backend, arm64, devices and the Simulator (Apple silicon Macs); one
 app per version (`ttyd-jp.app`, `ttyd-us.app`, bundle ids
 `io.github.ttyd-port.jp`/`.us`, `-DTTYD_IOS_BUNDLE_ID_PREFIX` to change).
 
@@ -214,6 +304,14 @@ ninja -C build-ios-jp ttyd ttyd_ipa   # ttyd-jp.app and an unsigned ttyd-jp.ipa
 
 ### Installing on a device
 
+A development profile for the app's bundle id is needed once per bundle id
+(and device). With a paid team, Xcode makes it: build any app target with
+that bundle id and your team for the device (Run once, or `xcodebuild
+-allowProvisioningUpdates`); the profile lands in
+`~/Library/Developer/Xcode/UserData/Provisioning Profiles/`. Then configure
+with `-DTTYD_IOS_BUNDLE_ID_PREFIX=<prefix>` (bundle id `<prefix>.jp`/`.us`),
+`-DTTYD_IOS_CODESIGN_IDENTITY` and `-DTTYD_IOS_PROVISIONING_PROFILE`.
+
 No App Store. Sideload the `.ipa` with AltStore, SideStore or Sideloadly,
 which sign it with your Apple ID (a free account signs for 7 days at a time).
 Or sign it yourself: `-DTTYD_IOS_CODESIGN_IDENTITY="Apple Development: ..."
@@ -239,6 +337,18 @@ can be copied to and from Dolphin; Aurora's pipeline caches are in
 
 ### How it differs from desktop
 
+- **Layout** (`port/src/aurora/layout_aurora.c`, Aurora patch 0006
+  `AuroraSetPresentArea`): held upright, the picture (its actual shape) is
+  the full safe width, centered above the on-screen controls; sideways, it is
+  centered with the controls beside it. Settings > Video > Orientation turns
+  with the device, or keeps landscape or portrait (`SDL_HINT_ORIENTATIONS`,
+  set at run time). The controls can be moved per orientation (Settings >
+  Controls > Move the on-screen controls; `touch_layout.txt` in Saves).
+- **Crash reports** (`crash_pc.c`, every platform): a crash or stall also
+  writes `crash_report.txt` in the user folder: the build (version, image
+  UUID and load address, for symbolizing the offsets), the sequence and map,
+  and the stack. At the next start it becomes `last_crash.txt` and the game
+  offers to copy it (also Settings > System).
 - **RELs are linked in** (`TTYD_RELS_STATIC` is forced: an app may only run
   code signed into its bundle). Mach-O has no grouped sections, so each REL's
   data and bss go to `__DATA,__rd_<area>`/`__rb_<area>`, bounded by the
@@ -255,8 +365,11 @@ can be copied to and from Dolphin; Aurora's pipeline caches are in
   a launch screen entry (else iOS runs the app letterboxed), file sharing and
   opening documents in place, game controller keys
   (`GCSupportsControllerUserInteraction`, `GCSupportedGameControllers`,
-  `UIApplicationSupportsIndirectInputEvents`), Metal required. The icon is a
-  generated placeholder (`make_icon.py`), no game art.
+  `UIApplicationSupportsIndirectInputEvents`), Metal required. The icon is the
+  title screen's key art (Mario and his hammer), cropped from the user's own
+  extracted disc (`data/<version>/files/mariost.tpl`, decoded with
+  `tools/port/tpl2png.py`) at configure time, so it exists only in the build;
+  without an extraction, a generated placeholder (`make_icon.py`).
 - **Lifecycle:** SDL sends `SDL_EVENT_WINDOW_MINIMIZED` when the app resigns
   active (home, app switcher, Control Center, a call) and `RESTORED` when it is
   active again; Aurora turns those into its Background pause, the port pauses
@@ -275,17 +388,45 @@ can be copied to and from Dolphin; Aurora's pipeline caches are in
   A/B/X/Y on the right (GameCube arrangement), L, R, Z and START at the top,
   laid out in the safe area (on phones in the bars beside the picture).
   Buttons act on touch-down, before that frame's `PADRead`, for action
-  commands. Hidden (and the virtual status cleared) while a controller is
-  connected. Built and run on Windows with `-DTTYD_TOUCH_OVERLAY=ON`: drawn
+  commands. Hidden (and the virtual status cleared) once a controller is
+  used, shown again on a touch (a connected controller is not enough: the iOS
+  Simulator reports one that never sends input). Built and run on Windows with `-DTTYD_TOUCH_OVERLAY=ON`: drawn
   over the picture, and a scripted touch on START
   (`TTYD_TOUCH_TEST=1900:0.5,0.07:10`, fast mode) skips the opening exactly
   as a scripted START press does (same frame hash). `TTYD_TOUCH_MOUSE=1` lets
   the mouse touch on desktop builds with the option on. Not yet: D-pad,
   C-stick, a layout editor, opacity and size settings, haptics on press.
 
-Not done yet: a run on a device or the Simulator; the security-scoped
-alternative to importing; a suspend snapshot (iOS may end the app between
-saves); a widescreen option.
+- **Widescreen** (16:9, opt-in: Settings app > TTYD JP/US > Widescreen,
+  read at launch; Running has the details and the scenes it does not suit):
+  sized for the iPhone 17 Pro, whose landscape safe area
+  (about 750 x 402 points beside the Dynamic Island) holds a 715-point-wide
+  16:9 picture; the controls sit in the ~80-point bars and overlap its edges
+  translucently.
+
+- **Pipeline seed:** `data/initial_pipeline_cache.db`, when present, is
+  bundled (CMakeLists.txt; iOS bundle root, macOS `Contents/Resources`, else
+  next to the executable). Aurora builds its pipelines at launch, before the
+  game draws with them: on an iPhone a model drawn for the first time was
+  otherwise skipped until its pipeline was built (invisible cutscene
+  characters, their shadows drawn). Pipeline configurations are the same on
+  every platform (checked: every pipeline seen on both an iPhone and a Mac
+  had the same hash and config), so the seed is recorded on a desktop: run
+  `map_sweep.py` (Aurora, `--shots`) over every map and `--battles` of both
+  versions, then `tools/port/pipeline_cache.py merge
+  data/initial_pipeline_cache.db <shots dirs>`. It comes from the user's own
+  disc, so it is never committed. Aurora merges it into the user's cache at
+  every launch, so an update reaches existing installs.
+- **Debugging on a device:** `Documents/env.txt` takes the switches of
+  Running (`NAME=value` lines, `{docs}` = the Documents folder), as Android's
+  env.txt: `xcrun devicectl device copy to --domain-type appDataContainer
+  --domain-identifier <bundle id> --source env.txt --destination
+  Documents/env.txt`, then `xcrun devicectl device process launch --console
+  <bundle id>` streams the game's output (`TTYD_TRACE=2` lists every running
+  script and what it waits on).
+
+Not done yet: the security-scoped alternative to
+importing; a suspend snapshot (iOS may end the app between saves).
 
 ## Testing
 
@@ -320,6 +461,16 @@ Options:
   hash is a fingerprint of how it played; fail on any change from FILE
   (`tests/port/golden/audio_<version>.json`, used by the ctest).
   `--update-golden` records the new hashes after an intended change.
+  The hashes depend on the host's C math library: the game calls the host's
+  `sin`/`cos`/`atan2`/... (the GameCube used MSL's fdlibm, in
+  `libs/msl/src/MSL_C.PPCEABI.bare.H.a/`), whose last-bit results differ
+  between Windows (UCRT) and Apple's libm. On macOS, 158 of 279 JP maps
+  differ from the Windows hashes, identically on arm64 and x86_64 (Rosetta),
+  and arm64 and x86_64 agree with each other on all 279: the architecture
+  (with `-ffp-contract=off`) is not the cause, the OS's libm is. Making
+  every platform agree (and match the GameCube) means building MSL's fdlibm
+  for the port and routing the game's math calls to it; not done yet, and
+  the Windows golden files would then be re-recorded.
 - `--no-bero`: warp to each map's origin instead (the game's debug map select).
 - `--every-bero`: one run per entrance of every map (`map@bero`, ~600).
 - `--battles`: one run per entry of every area's battle table (`area#N`, 407 on
@@ -382,6 +533,14 @@ in the tree is fixed at once.
   `int-conversion`, implicit declarations, unsequenced access, incompatible
   pointer and function-pointer types, `cast-function-type-strict`,
   `shorten-64-to-32` and `format`, instead of `-w`.
+- `tools/port/noproto_calls.py`: calls through a no-prototype `f()`
+  declaration passing fewer arguments than the definition takes (the callee
+  reads a stale register: `L_partyVivianTailStart()` crashed moo_00 on
+  x86-64). Must report 0.
+- `-DTTYD_FORTIFY=ON`: keeps the C library's `_FORTIFY_SOURCE` in game code
+  (off by default: the game copies strings past char fields into unread
+  padding, which Apple's and bionic's default fortify abort on); a sweep
+  then lists every overflowing copy.
 - `tools/port/proto_audit.py`: prototypes (often local, MWCC-shaped) against
   their definitions, TARGET_PC-aware; also unprototyped `f()` declarations of
   functions taking floats, and variadic/non-variadic mismatches. Must report 0.
@@ -405,6 +564,7 @@ Classes found so far, and what catches them:
 | Big-endian data read natively (display lists as u32, string pools by GC offset, word layouts) | disc/song sweeps, captures |
 | Script tables walked by `EvtWord` but declared `s32` | map sweep crashes, table/type survey |
 | Float overlays on 8-byte script words; float-encoded script constants (`0xF24A7A80`) widened unsigned | union survey, grep |
+| Script words written as unsigned decimals past 2^31 (`4264967296` is `LW(0)`, `4064967296+` floats, `4224967296`, `4294966296` = -1000): they wrap to the variable/float encodings in GameCube's 32-bit words but stay positive in 64-bit `EvtWord`s, so the script got a number instead of its variable (Goombella's field tattle passed `0xFE363C80` to msgSearch and crashed; the Toad houses/inns, Punio's chapter, the Pianta Parlor). 413 literals in 11 files now written as their signed values (identical GameCube output) | `grep -rnE "[0-9]{10}"` over src/rels for values in 2^31..2^32 not preceded by `-`; hex: `(s32)` casts |
 | Small enums (`#pragma enumsalwaysint off`) | `PORT_ENUM_BASE` on the enum headers |
 | Hardware timing the game relies on (ARQ callbacks after posting, empty wait loops) | `arq_defer_pc.c`, `PORT_SPIN` |
 | Unwritten SDK out-parameters | stub survey (`gx_state_pc.c`) |
@@ -412,6 +572,10 @@ Classes found so far, and what catches them:
 | Enums unsigned on the SysV ABIs (Linux, Apple, Android): without a negative enumerator an enum is `unsigned int` (MWCC, MSVC: `int`), which changes `<`, division, float conversion and widening to `EvtWord` | `PORT_ENUM_BASE(int)` on every game enum (a flag enum with `0x80000000` stays unsigned); Linux-vs-Windows warning diff (`-Wsign-compare`, `-Wsign-conversion`) |
 | MSVC-only leniencies hidden by the Windows build: a `static` definition after an `extern` declaration (a header's, or `<math.h>`'s `sinf`), one plain `inline` function name defined in several files (COMDAT on Windows: one body serves every file, even with another signature) | compiling and linking for Linux (`tools/port/linux_xcheck.py` on Windows) |
 | `extern inline` under `-fgnu89-inline`: no out-of-line copy, so a call the compiler does not inline (`-O0`, the Android debug build) is unresolved, or binds to a C library function of the same name (snd3d.c's approximate `sqrtf`) | `-O0` link (Android debug build); `grep -rn 'extern inline'` over PC-compiled code |
+| A call through a no-prototype `f()` declaration with fewer arguments than the definition takes: the callee reads whatever the argument register holds (r3 held the right value on GameCube; x0 happened to on arm64, rdi did not on x86-64: moo_00) | `noproto_calls.py` |
+| C library hardening on by default (Apple clang, bionic, some Linux distros: `_FORTIFY_SOURCE`) aborting on the game's intended overflows into padding | off in game code; `-DTTYD_FORTIFY=ON` sweep |
+| Per-address records outliving their memory: GX array ranges/disc blobs, decoded anim models and TPL graphs kept for freed blocks or cleared heaps, so new data at the same address was taken for the old (a pose's native vertices read as big-endian through a stale range: the title's red curtain wedge after the opening demo) | `portMemForget` from `smartFree`/`L_smartReInit`/`memClear` (`port/mem_pc.h`); a new range drops overlapping older ones; a range's endianness only from disc-data records (`portGXIsDiscData`); `TTYD_GXARRAY_TRACE=2` shows upload sizes |
+| Empty files on the disc read into `_mapAlloc(0)` (NULL): a 0-byte read must complete | headless DVD; map sweep with a full extraction (`dtk vfs cp`) |
 | Variadic function called as non-variadic or the reverse (Apple arm64 passes variadic arguments on the stack); an undeclared call passing an f32 (sent as a double) | `proto_audit.py`; `-Werror=implicit-function-declaration`; `diag_census.py` over every version |
 
 ## Android

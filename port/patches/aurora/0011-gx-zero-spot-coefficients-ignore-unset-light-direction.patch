@@ -1,0 +1,26 @@
+From: Claude <noreply@anthropic.com>
+Subject: [PATCH] gx: zero spot coefficients ignore an unset light direction
+
+A point light that sets only a0 of its angle attenuation (GXInitLightAttn
+with a1 = a2 = 0, GX_AF_SPOT) may leave its direction uninitialised, as
+TTYD's map lights do (a GXLightObj on the stack). On hardware a zero
+coefficient contributes nothing; here 0 * NaN, or 0 * inf when the
+garbage's square overflowed, made the light's attenuation NaN and lit
+nothing, so walls lit only by such lights went black depending on what the
+stack held (TTYD's Excess Express corridor). A zero coefficient now adds 0.
+---
+--- a/lib/gx/shader.cpp
++++ b/lib/gx/shader.cpp
+@@ -805,7 +805,11 @@ auto lighting_func(const ShaderConfig& config, const ColorChannelConfig& cc, u8
+   } else if (cc.attnFn == GX_AF_SPOT) {
+     lightAttnFn = fmt::format(R"""(
+           var cosine = max(0.0, dot(ldir, light.dir));
+-          var cos_attn = dot(light.cos_att, vec3f(1.0, cosine, cosine * cosine));
++          // A zero coefficient contributes nothing, as on hardware: a light that only sets
++          // a0 (a point light) may leave its direction unset, and 0 * NaN or 0 * inf from
++          // that garbage would otherwise turn the light black.
++          var cos_attn = light.cos_att.x + select(0.0, light.cos_att.y * cosine, light.cos_att.y != 0.0) +
++                         select(0.0, light.cos_att.z * cosine * cosine, light.cos_att.z != 0.0);
+           var dist_attn = dot(light.dist_att, vec3f(1.0, dist, dist2));
+           attn = max(0.0, cos_attn / dist_attn);)""");
+   } else if (cc.attnFn == GX_AF_SPEC) {

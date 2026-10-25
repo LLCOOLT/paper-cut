@@ -31,6 +31,13 @@ void* _mapAlloc(u32 size);
 double sin(double x);
 double cos(double x);
 #endif
+/* PC port: the end marker is read a whole row at a time (the GameCube reads
+ * on into the next object) */
+#ifdef TARGET_PC
+#define PORT_SHIKAKE_END 5
+#else
+#define PORT_SHIKAKE_END 2
+#endif
 typedef struct { Vec pos; Vec delta; } BeltWork;
 void camFollowYOn(void);
 
@@ -120,11 +127,11 @@ EvtWord move_up_down[226];
 EvtWord move_r[84];
 /* moving-floor gimmick read by shikake_init: hit, mapobj, two motion params, time; a NULL mapobj ends the table */
 typedef struct ShikakeMove { const char* hit; const char* mapobj; EvtWord param0; EvtWord param1; EvtWord time; } ShikakeMove;
-typedef struct ShikakeMoveTbl7 { ShikakeMove rows[7]; const char* end[2]; } ShikakeMoveTbl7;
+typedef struct ShikakeMoveTbl7 { ShikakeMove rows[7]; const char* end[PORT_SHIKAKE_END]; } ShikakeMoveTbl7;
 ShikakeMoveTbl7 left_right_tbl;
-typedef struct ShikakeMoveTbl6 { ShikakeMove rows[6]; const char* end[2]; } ShikakeMoveTbl6;
+typedef struct ShikakeMoveTbl6 { ShikakeMove rows[6]; const char* end[PORT_SHIKAKE_END]; } ShikakeMoveTbl6;
 ShikakeMoveTbl6 up_down_tbl;
-typedef struct ShikakeMoveTbl15 { ShikakeMove rows[15]; const char* end[2]; } ShikakeMoveTbl15;
+typedef struct ShikakeMoveTbl15 { ShikakeMove rows[15]; const char* end[PORT_SHIKAKE_END]; } ShikakeMoveTbl15;
 ShikakeMoveTbl15 r_tbl;
 EvtWord shikake_init[66];
 static EvtWord evt_sw[134];

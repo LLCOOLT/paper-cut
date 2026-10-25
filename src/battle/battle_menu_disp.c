@@ -1,5 +1,8 @@
 #pragma optimize_for_size on
 #pragma dont_inline on
+#ifdef TARGET_PC
+#include "port/platform.h"
+#endif
 #include "battle/battle_menu_disp.h"
 #include "pc_call.h"
 #include "battle/battle_seq_command.h"
@@ -603,6 +606,9 @@ void DrawMenuPartyChangeButton(void) {
 
     wp = _battleWorkPointer;
     menu = WP_SUBMENU(wp);
+#ifdef TARGET_PC
+    portInterpKeep(&menu->partyBtnAngle, sizeof(menu->partyBtnAngle)); /* steps in this draw */
+#endif
     camGetPtr(8);
     mario = BattleGetMarioPtr(wp);
     party = BattleGetPartyPtr(wp);
@@ -1358,6 +1364,11 @@ void DrawMainMenu(BattleWork* wp_) {
     s32 diff;
     BattleCursor* mc;
 
+#ifdef TARGET_PC
+    /* the ring's scroll and icon animation step in this draw */
+    portInterpKeep(menu, sizeof(*menu));
+    portInterpKeep(cursor, sizeof(*cursor));
+#endif
     camGetPtr(CAMERA_2D);
     switch (menu->scrollState) {
     case 0:

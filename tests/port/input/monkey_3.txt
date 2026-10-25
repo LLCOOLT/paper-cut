@@ -1,0 +1,13 @@
+# One minute of made-up play from the map's entrance (seed 3): crashes and
+# stalls fail the run (tools/port/map_sweep.py --input).
+give 148
+give 132
+give 240
+give 9
+give 6
+join 2
+join 3
+join 4
+sp 300
+random 3600 3
+end

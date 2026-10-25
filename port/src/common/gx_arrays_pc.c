@@ -104,6 +104,15 @@ void portGXRegisterArrayRange(const void* base, unsigned int size, int le) {
     if (!base) {
         return;
     }
+    /* Older ranges over this memory describe freed buffers (lookups take the
+     * first match, so a stale big-endian range would win): drop them. */
+    for (i = 0; i < PORT_GX_RANGE_RING; i++) {
+        const uint8_t* r = (const uint8_t*)sRanges[i].data;
+        if (r && r != (const uint8_t*)base && r < (const uint8_t*)base + size &&
+            (const uint8_t*)base < r + sRanges[i].size) {
+            sRanges[i].data = NULL;
+        }
+    }
     for (i = 0; i < PORT_GX_RANGE_RING; i++) {
         if (sRanges[i].data == base) {
             sRanges[i].size = size;
@@ -127,6 +136,49 @@ static void portGXForgetArrayRanges(const void* base, unsigned int size) {
             sRanges[i].data = NULL;
         }
     }
+}
+
+void portGXForgetRange(const void* lo_, const void* hi_) {
+    const uint8_t* lo = (const uint8_t*)lo_;
+    const uint8_t* hi = (const uint8_t*)hi_;
+    unsigned int i;
+    for (i = 0; i < PORT_GX_BLOB_REGISTRY; i++) {
+        if (sBlobs[i].base && sBlobs[i].base >= lo && sBlobs[i].base < hi) {
+            sBlobs[i].base = NULL;
+            sBlobs[i].size = 0;
+        }
+    }
+    for (i = 0; i < PORT_GX_ARRAY_REGISTRY; i++) {
+        const uint8_t* p = (const uint8_t*)sArrays[i].data;
+        if (p && p >= lo && p < hi) {
+            sArrays[i].data = NULL;
+        }
+    }
+    for (i = 0; i < PORT_GX_RANGE_RING; i++) {
+        const uint8_t* p = (const uint8_t*)sRanges[i].data;
+        if (p && p >= lo && p < hi) {
+            sRanges[i].data = NULL;
+        }
+    }
+}
+
+int portGXIsDiscData(const void* data) {
+    const uint8_t* p = (const uint8_t*)data;
+    unsigned int i;
+    if (!data) {
+        return 0;
+    }
+    for (i = 0; i < PORT_GX_ARRAY_REGISTRY; i++) {
+        if (sArrays[i].data == data) {
+            return !sArrays[i].le;
+        }
+    }
+    for (i = 0; i < PORT_GX_BLOB_REGISTRY; i++) {
+        if (sBlobs[i].base && p >= sBlobs[i].base && p < sBlobs[i].base + sBlobs[i].size) {
+            return 1;
+        }
+    }
+    return 0;
 }
 
 int portGXArrayInfo(const void* data, unsigned int* size, int* le) {

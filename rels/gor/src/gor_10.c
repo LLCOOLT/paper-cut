@@ -1,4 +1,5 @@
 #include "battle/battle_unit.h"
+#include "wide_x.h"
 #include "evt/evt_cmd.h"
 
 #pragma force_active on
@@ -182,13 +183,13 @@ static void depthDisp(CameraId camera, void* param) {
     GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XYZ, GX_S16, 0);
     GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_TEX0, GX_TEX_ST, GX_S16, 0);
     GXBegin(GX_QUADS, GX_VTXFMT0, 4);
-    GXPosition3s16(-304, 240, 0);
+    GXPosition3s16(WIDE_X(-304), 240, 0);
     GXTexCoord2s16(0, 0);
-    GXPosition3s16(304, 240, 0);
+    GXPosition3s16(WIDE_X(304), 240, 0);
     GXTexCoord2s16(1, 0);
-    GXPosition3s16(304, -240, 0);
+    GXPosition3s16(WIDE_X(304), -240, 0);
     GXTexCoord2s16(1, 1);
-    GXPosition3s16(-304, -240, 0);
+    GXPosition3s16(WIDE_X(-304), -240, 0);
     GXTexCoord2s16(0, 1);
     GXEnd();
     sysWaitDrawSync();
@@ -295,14 +296,14 @@ void mabutaDisp(CameraId camera, void* param) {
     GXSetVtxDesc(GX_VA_POS, GX_DIRECT);
     GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XYZ, GX_S16, 0);
     GXBegin(GX_QUADS, GX_VTXFMT0, 8);
-    GXPosition3s16(-304, 240, 0);
-    GXPosition3s16(304, 240, 0);
-    GXPosition3s16(304, (s16)(240.0f - h), 0);
-    GXPosition3s16(-304, (s16)(240.0f - h), 0);
-    GXPosition3s16(-304, (s16)(-240.0f + h), 0);
-    GXPosition3s16(304, (s16)(-240.0f + h), 0);
-    GXPosition3s16(304, -240, 0);
-    GXPosition3s16(-304, -240, 0);
+    GXPosition3s16(WIDE_X(-304), 240, 0);
+    GXPosition3s16(WIDE_X(304), 240, 0);
+    GXPosition3s16(WIDE_X(304), (s16)(240.0f - h), 0);
+    GXPosition3s16(WIDE_X(-304), (s16)(240.0f - h), 0);
+    GXPosition3s16(WIDE_X(-304), (s16)(-240.0f + h), 0);
+    GXPosition3s16(WIDE_X(304), (s16)(-240.0f + h), 0);
+    GXPosition3s16(WIDE_X(304), -240, 0);
+    GXPosition3s16(WIDE_X(-304), -240, 0);
     GXEnd();
 }
 

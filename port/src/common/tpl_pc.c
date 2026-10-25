@@ -13,6 +13,11 @@ extern const PortType portBE_tpl_TEXPalette;
 #define UNLOCK(x) ((void)(x))
 #else
 #include <dolphin/os.h>
+#ifdef TTYD_SAVE_STATES
+/* the game keeps pointers into these allocations: on the save-state heap */
+#define PORT_SNAPHEAP_REDIRECT
+#include "port/snapheap.h"
+#endif
 #define LOCK() OSDisableInterrupts()
 #define UNLOCK(x) OSRestoreInterrupts(x)
 #endif
@@ -117,6 +122,19 @@ void portTplRelease(void* blob) {
     TplLive* e = findLive(blob);
     if (e) {
         dropLive(e);
+    }
+    UNLOCK(lvl);
+}
+
+void portTplForgetRange(const void* lo, const void* hi) {
+    uint32_t i;
+    int lvl = LOCK();
+    for (i = 0; i < sLiveCount;) {
+        if ((const uint8_t*)sLive[i].blob >= (const uint8_t*)lo && (const uint8_t*)sLive[i].blob < (const uint8_t*)hi) {
+            dropLive(&sLive[i]);
+        } else {
+            i++;
+        }
     }
     UNLOCK(lvl);
 }

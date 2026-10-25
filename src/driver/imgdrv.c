@@ -1,6 +1,12 @@
 /* "imgdrv" - Image Driver
  * Function: still not quite sure, TODO something about shadows that shadowdrv doesn't handle
  */
+#if defined(TARGET_PC) && defined(TTYD_BACKEND_AURORA)
+#include <dolphin/gx/GXExtra.h>
+#endif
+#ifdef TARGET_PC
+#include "port/platform.h"
+#endif
 #include "driver/imgdrv.h"
 #include "driver/animdrv.h"
 #include "driver/camdrv.h"
@@ -301,6 +307,9 @@ void imgCapture_Prim(ImageEntry* entry, s32 id) {
 	GXTexObj* obj;
 	smartEntry* buf;
 	if (!(sh->flags & 4)) return;
+#ifdef TARGET_PC
+	if (portInterpInBetween()) return; /* the capture (and its one-shot) is the game's frame's */
+#endif
 	offId = sh->offscreenId;
 	sh->flags |= 0x10;
 	if (offId != -1) {
@@ -319,6 +328,11 @@ void imgCapture_Prim(ImageEntry* entry, s32 id) {
 					}
 					memcpy(sh->data->address, buf->address, size);
 					DCFlushRange(sh->data->address, size);
+#if defined(TARGET_PC) && defined(TTYD_BACKEND_AURORA)
+					/* PC port: the offscreen copy is a GPU texture (its memory holds no
+					 * pixels); the kept capture samples the same texture */
+					GXAliasCopyTex(buf->address, sh->data->address);
+#endif
 					GXInitTexObj(&sh->texObj, sh->data->address, w, h, fmt, 0, 0, 0);
 					GXInitTexObjLOD(&sh->texObj, 0, 0, 0.0f, 0.0f, 0.0f, 0, 0, 0);
 					offscreenGetBoundingBox(offId, &sh->rect.left, &sh->rect.top, &sh->rect.width, &sh->rect.height);

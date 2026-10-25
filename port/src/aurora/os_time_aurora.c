@@ -17,10 +17,12 @@ OSTick OSGetTick(void);
 
 static int sFast = -1;
 static OSTime sBase, sVirtual;
-/* portPause: the clock stands still while paused, and the real time spent
- * paused is left out of it afterwards */
-static OSTime sPaused, sPauseStart;
-static BOOL sClockPaused;
+/* The game clock runs at sSpeed times the real one (fast-forward,
+ * speed_aurora.c): sGame was the game time at real time sReal. portPause
+ * stops it, and the real time spent paused is left out afterwards. */
+static OSTime sGame, sReal;
+static int sSpeed = 1;
+static BOOL sClockPaused, sClockStarted;
 
 static BOOL fast(void) {
     if (sFast < 0) {
@@ -36,22 +38,60 @@ void portFastClockFrame(void) {
     }
 }
 
+s64 portFastClockGet(void) {
+    return sVirtual;
+}
+
+void portFastClockSet(s64 t) {
+    sVirtual = t;
+}
+
 OSTime portOSGetTime(void) {
     if (fast()) {
         sVirtual += OSMicrosecondsToTicks(1);
         return sBase + sVirtual;
     }
-    return (sClockPaused ? sPauseStart : OSGetTime()) - sPaused;
+    if (!sClockStarted) {
+        sClockStarted = TRUE;
+        sGame = sReal = OSGetTime();
+    }
+    return sClockPaused ? sGame : sGame + (OSGetTime() - sReal) * sSpeed;
+}
+
+/* the game time now becomes the base of what follows */
+static void rebase(void) {
+    sGame = portOSGetTime();
+    sReal = OSGetTime();
 }
 
 void portClockPause(void) {
-    sPauseStart = OSGetTime();
+    rebase();
     sClockPaused = TRUE;
 }
 
 void portClockResume(void) {
-    sPaused += OSGetTime() - sPauseStart;
+    sReal = OSGetTime();
     sClockPaused = FALSE;
+}
+
+void portClockSetGame(OSTime t) {
+    sGame = t;
+    if (!sClockPaused) {
+        sReal = OSGetTime();
+    }
+}
+
+void portClockSetSpeed(int speed) {
+    if (speed != sSpeed) {
+        if (!sClockPaused) {
+            rebase();
+        }
+        sSpeed = speed;
+    }
+}
+
+int portClockSpeed(void) {
+    return sSpeed;
 }
 
 OSTick portOSGetTick(void) {

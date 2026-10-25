@@ -19,6 +19,9 @@
 #include "data/npc_data.h"
 #include "npc_event.h"
 #include "jon.h"
+#ifdef TARGET_PC
+#include "driver/msgdrv.h" /* MsgWinData */
+#endif
 
 void raster_disp(CameraId cameraId, void* param);
 #ifndef TARGET_PC /* PC port: the host libc declares these */
@@ -2990,7 +2993,11 @@ static USER_FUNC(gonbaba_wait_landon) {
 void iri_12_msgcb(s32 type, void* param) {
     u8* msg = *(u8**)param;
 
+#ifdef TARGET_PC /* PC port: curPage is at 0x8 only with 32-bit pointers */
+    if (type == 3 && ((MsgWinData*)msg)->curPage == 1) {
+#else
     if (type == 3 && *(u16*)(msg + 8) == 1) {
+#endif
         evtEntry(iri_12_makkino_okiru, 0, 0);
     }
 }

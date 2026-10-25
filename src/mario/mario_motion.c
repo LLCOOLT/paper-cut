@@ -1148,6 +1148,13 @@ void mot_bottomless(void) {
 		mario->baseSpeed = 0.0f;
 		mario->airTimer = 0;
 		mario->currSubMotionId = 0;
+#ifdef TARGET_PC
+		/* PC port: set on every path (the maps below are the only ones the
+		 * GameCube sets them for when returnPos is that low) */
+		x = mario->returnPos.x;
+		y = mario->returnPos.y;
+		z = mario->returnPos.z;
+#endif
 		if (mario->returnPos.y < -2000.0f) {
 			if (!strcmp(gp->currentMapName, "win_03")) {
 				x = 250.0f;
@@ -1169,6 +1176,21 @@ void mot_bottomless(void) {
 		}
 		pos = (Vec){x, 300.0f + y, z};
 		step = 10.0f;
+#ifdef TARGET_PC
+		{
+			/* PC port: a NaN screen position converts to 0 on ARM and x86 (in
+			 * the screen) but to 0x80000000 on the GameCube (out of it), so it
+			 * ended the search there; and the search is bounded */
+			s32 tries = 0;
+			while (TRUE) {
+				marioGetScreenPos(pos, &sx, &sy, &sz);
+				if (sx != sx || sy != sy || !marioChkInScreen(sx, sy) || ++tries > 2000) {
+					break;
+				}
+				pos.y += step;
+			}
+		}
+#else
 		while (TRUE) {
 			marioGetScreenPos(pos, &sx, &sy, &sz);
 			if (!marioChkInScreen(sx, sy)) {
@@ -1176,6 +1198,7 @@ void mot_bottomless(void) {
 			}
 			pos.y += step;
 		}
+#endif
 		mario->position.y = pos.y;
 		mario->mot.bottomless.speed = 8.0f;
 		mario->multiTimer = (s16)(distABf(x, z, mario->position.x, mario->position.z) / mario->mot.bottomless.speed);

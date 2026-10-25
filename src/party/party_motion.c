@@ -2504,7 +2504,11 @@ s32 party_motion_fall(PartyEntry* party) {
     Vec pos;
 
     if (!(party->flags & 8)) {
+#ifdef TARGET_PC
+        partyNextReadId(partyGetFootmarkId(party)); /* r3 still held party on GameCube */
+#else
         partyNextReadId(partyGetFootmarkId());
+#endif
     }
     if (party->trigFlags & 2) {
         party->trigFlags &= ~2;

@@ -4,6 +4,7 @@
 #include "dolphin/mtx.h"
 #include "driver/npcdrv.h"
 #include "evt/evt_word.h"
+#include "manager/evtmgr.h"
 
 extern EvtWord all_juyoitem_lecture_rel[];
 extern EvtWord all_party_lecture[];
@@ -38,3 +39,6 @@ extern const char* irai_msg_kakunin[];
 extern s32 special_cook_list[];
 extern Vec suifu100kaidanDOWN[];
 extern Vec suifu100kaidanUP[];
+
+/* the slot machine (gor_03), allocated by evt_goryuugijo.c */
+typedef struct SlotWork { u32 flags; s32 phase; f32 reberAngle; f32 angle[2][3]; f32 speed[3]; s8 state[3]; s8 face[2][3]; s8 stopCount[3]; s32 wait[3]; s32 extra[3]; s32 counter; s32 neonCount; s32 monteCount; s32 nowSlot; s32 caseId[2]; EventEntry* monteEvt; s32 sfxId; s16 cursor; } SlotWork;

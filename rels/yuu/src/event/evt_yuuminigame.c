@@ -154,29 +154,49 @@ USER_FUNC(evt_yuuminigame_alloc) {
             wp->init = yuuminigame_init_1hikoki;
             wp->main = yuuminigame_main_1hikoki;
             wp->disp = yuuminigame_disp_1hikoki;
+#ifdef TARGET_PC /* its event pointers grow it on 64-bit */
+            wp->data = _mapAlloc(sizeof(HikokiWork));
+            memset(wp->data, 0, sizeof(HikokiWork));
+#else
             wp->data = _mapAlloc(0x18);
             memset(wp->data, 0, 0x18);
+#endif
             break;
         case 1:
             wp->init = yuuminigame_init_2fune;
             wp->main = yuuminigame_main_2fune;
             wp->disp = yuuminigame_disp_2fune;
+#ifdef TARGET_PC /* its event pointers grow it on 64-bit */
+            wp->data = _mapAlloc(sizeof(FuneWork));
+            memset(wp->data, 0, sizeof(FuneWork));
+#else
             wp->data = _mapAlloc(0x3C);
             memset(wp->data, 0, 0x3C);
+#endif
             break;
         case 2:
             wp->init = yuuminigame_init_3roll;
             wp->main = yuuminigame_main_3roll;
             wp->disp = yuuminigame_disp_3roll;
+#ifdef TARGET_PC /* its event pointers grow it on 64-bit */
+            wp->data = _mapAlloc(sizeof(RollWork));
+            memset(wp->data, 0, sizeof(RollWork));
+#else
             wp->data = _mapAlloc(0x2C);
             memset(wp->data, 0, 0x2C);
+#endif
             break;
         case 3:
             wp->init = yuuminigame_init_4slit;
             wp->main = yuuminigame_main_4slit;
             wp->disp = yuuminigame_disp_4slit;
+#ifdef TARGET_PC /* its event pointers grow it on 64-bit */
+            wp->data = _mapAlloc(sizeof(SlitWork));
+            memset(wp->data, 0, sizeof(SlitWork));
+#else
             wp->data = _mapAlloc(0x28);
             memset(wp->data, 0, 0x28);
+#endif
             yuunpc_yuuminigame4_ptr = wp;
             break;
     }

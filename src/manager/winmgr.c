@@ -622,7 +622,14 @@ WinMgrSelect* winMgrSelectEntry(EvtWord type, s32 a2, BOOL a3) {
     jdt = &_jdt;
     sel = __memAlloc(HEAP_DEFAULT, sizeof(WinMgrSelect));
     memset(sel, 0, sizeof(WinMgrSelect));
+#ifdef TARGET_PC
+    /* PC port: type is a window type or a list of items (-1 ended). On the
+     * GameCube the list's address read as an s32 is negative (0x80...); here
+     * it is a 64-bit pointer, which as an s32 was taken for a window type. */
+    n = (type < 0 || type > 0xFFFF) ? -1 : (s32)type;
+#else
     n = type;
+#endif
     sel->type = n;
     sel->cursor = 0;
     sel->scrollTop = 0;
@@ -886,7 +893,11 @@ WinMgrSelect* winMgrSelectEntry(EvtWord type, s32 a2, BOOL a3) {
             }
             break;
         default:
+#ifdef TARGET_PC
+            if (type < 0 || type > 0xFFFF) {
+#else
             if (type < 0) {
+#endif
                 s32 m;
                 s32* it;
                 list = (s32*)type;

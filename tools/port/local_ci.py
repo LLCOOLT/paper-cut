@@ -5,7 +5,7 @@ Stages (each logs to build-ci/<stage>.log; independent ones run at once):
   gamecube   both matching builds (configure.py + ninja: SHA-1 OK), in turn
   build      the PC builds: headless and Aurora, JP and US (configured if new)
   unit       unit tests (ctest -LE slow), both versions
-  audits     proto_audit, gen_bedecode --check, diag_census (fatal classes)
+  audits     proto_audit, noproto_calls, proto_mismatch, gen_bedecode --check, diag_census (fatal classes)
   sweep      map_sweep with golden audio, both versions
   cards      new file, Save Block save and load, headless and Aurora, both
              versions; the headless card then loads on Aurora
@@ -36,6 +36,14 @@ BUILDS = [(v, short, backend) for v, short in VERSIONS for backend in ("headless
 
 def build_dir(short, backend):
     return os.path.join(ROOT, f"build-pc-{short}" + ("-aurora" if backend == "aurora" else ""))
+
+
+def aurora_exe(short):
+    """The Aurora executable: inside the .app bundle on macOS."""
+    d = build_dir(short, "aurora")
+    if sys.platform == "darwin":
+        return os.path.join(d, f"ttyd-{short}.app", "Contents", "MacOS", f"ttyd-{short}")
+    return os.path.join(d, f"ttyd-{short}")
 
 
 def tool_env():
@@ -119,6 +127,8 @@ def stage_unit(s):
 
 def stage_audits(s):
     s.run([sys.executable, "tools/port/proto_audit.py"])
+    s.run([sys.executable, "tools/port/noproto_calls.py"])
+    s.run([sys.executable, "tools/port/proto_mismatch.py"])
     s.run([sys.executable, "tools/port/gen_bedecode.py", "--check"])
     s.run([sys.executable, "tools/port/diag_census.py"] + [build_dir(short, "headless") for _, short in VERSIONS])
 
@@ -146,7 +156,7 @@ def card_run(s, v, short, backend, user, script, warp):
     env.pop("TTYD_MAP", None)
     if warp:
         env["TTYD_MAP"] = warp
-    exe = os.path.join(build_dir(short, backend), f"ttyd-{short}")
+    exe = aurora_exe(short) if backend == "aurora" else os.path.join(build_dir(short, backend), f"ttyd-{short}")
     if backend == "headless":
         env["TTYD_DATA_DIR"] = os.path.join(ROOT, "data", v)
         cmd = [exe]

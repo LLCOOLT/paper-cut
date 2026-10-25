@@ -25,7 +25,10 @@
 
 #else
 
-#define HW_SET_GQR5(var) ((void)(var))
+// GQR5 kept as state: the s16 fast-cast loads (OSFastCast.h __OSs16tof32) scale by
+// its load scale as psq_l does (effdrv.c's Maya animations set 2^-6 for their keys).
+extern u32 portGQR5;
+#define HW_SET_GQR5(var) ((void)(portGQR5 = (var)))
 #define HW_ENABLE_MSR_FP_RI() ((void)0)
 
 #endif

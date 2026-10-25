@@ -888,7 +888,11 @@ s32 iconNumberDispGx(Mtx mtx, s32 number, BOOL small, GXColor color) {
 }
 
 s32 iconNumberDispGx3D(Mtx mtx, s32 number, BOOL small, GXColor color) {
+#ifdef TARGET_PC
+    s32 digits[5]; /* PC port: five digits are written (the GameCube's fifth lands in the next stack slot) */
+#else
     s32 digits[4];
+#endif
     Mtx m;
     s32 n;
     s32* dp;

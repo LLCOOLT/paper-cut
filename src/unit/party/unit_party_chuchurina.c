@@ -1,4 +1,5 @@
 #include "version.h"
+#include "wide_x.h"
 #include "battle/battle.h"
 #include "battle/battle_database_common.h"
 #include "battle/battle_sub.h"
@@ -2966,13 +2967,13 @@ void mono_disp(CameraId camId, BattleUnit* unit) {
         GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XYZ, GX_F32, 0);
         GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_TEX0, GX_TEX_ST, GX_F32, 0);
         GXBegin(GX_QUADS, GX_VTXFMT0, 4);
-        GXPosition3f32(-304.0f, 240.0f, 0.0f);
+        GXPosition3f32(WIDE_X(-304.0f), 240.0f, 0.0f);
         GXTexCoord2f32(0.0f, 0.0f);
-        GXPosition3f32(304.0f, 240.0f, 0.0f);
+        GXPosition3f32(WIDE_X(304.0f), 240.0f, 0.0f);
         GXTexCoord2f32(1.0f, 0.0f);
-        GXPosition3f32(304.0f, -240.0f, 0.0f);
+        GXPosition3f32(WIDE_X(304.0f), -240.0f, 0.0f);
         GXTexCoord2f32(1.0f, 1.0f);
-        GXPosition3f32(-304.0f, -240.0f, 0.0f);
+        GXPosition3f32(WIDE_X(-304.0f), -240.0f, 0.0f);
         GXTexCoord2f32(0.0f, 1.0f);
         {
             BattleUnit* party = BattleGetPartyPtr(_battleWorkPointer);

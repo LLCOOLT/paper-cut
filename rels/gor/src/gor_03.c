@@ -45,7 +45,6 @@ s32 exchange_ret_tbl_no(void);
 s32 yuugijou_montemedal_keep(EventEntry* event, BOOL isFirstCall);
 void monteCountDisp(void);
 typedef struct GoryuuWork { EventEntry* event; EventEntry* subEvent; u16 flags; s32 type; s32 (*init)(EventEntry* event, BOOL isFirstCall); s32 (*main)(EventEntry* event, BOOL isFirstCall); void (*disp)(CameraId camera, void* param); void* data; } GoryuuWork;
-typedef struct SlotWork { u32 flags; s32 phase; f32 reberAngle; f32 angle[2][3]; f32 speed[3]; s8 state[3]; s8 face[2][3]; s8 stopCount[3]; s32 wait[3]; s32 extra[3]; s32 counter; s32 neonCount; s32 monteCount; s32 nowSlot; s32 caseId[2]; EventEntry* monteEvt; s32 sfxId; s16 cursor; } SlotWork;
 typedef struct GMonteSub { s32 unk0; Vec pos; f32 scale; u8 unk14[0x38 - 0x14]; } GMonteSub;
 typedef struct GMonte { u8 hidden; u8 state; s16 wait; s16 timer; u8 unk6[2]; GMonteSub sub; Vec vel; SlotWork* owner; } GMonte;
 static EvtWord dataadr[8];

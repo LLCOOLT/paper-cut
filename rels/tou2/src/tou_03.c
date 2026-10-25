@@ -1,3 +1,6 @@
+#ifdef TARGET_PC
+#include "port/platform.h"
+#endif
 #include "version.h"
 #define GXSetTexCoordGen GXSetTexCoordGen_inline_hidden
 #include "eff/n64/eff_pokopi_pcharge_n64.h"
@@ -4000,6 +4003,14 @@ void GXSetTexCoordGen(GXTexCoordID dst, GXTexGenType func, GXTexGenSrc src, u32 
 }
 #pragma dont_inline reset
 
+#ifdef TARGET_PC
+/* The screen's drift steps in screen_tev's draw, with __tou_rand (x[0]):
+ * kept for the frames drawn between the game's. */
+static void screenTevKeep(void) {
+    portInterpKeep(screen_wp, sizeof(*screen_wp));
+    portInterpKeep(&x[0], sizeof(x[0]));
+}
+#endif
 void screen_tev(MapTevCallbackInfo* info) {
     GXTexObj tex;
     Mtx mtx;
@@ -4020,6 +4031,9 @@ void screen_tev(MapTevCallbackInfo* info) {
     f32 lim;
     f32 x;
     f32 y;
+#ifdef TARGET_PC
+    screenTevKeep();
+#endif
     CameraEntry* cam;
 
     if (screen_wp->ready) {

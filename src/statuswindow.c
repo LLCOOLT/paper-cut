@@ -13,6 +13,9 @@
 #include "memory.h"
 #include "pmario_sound.h"
 #include <string.h>
+#ifdef TARGET_PC
+#include "port/platform.h"
+#endif
 
 #ifndef TARGET_PC /* PC port: the host libc declares these */
 double cos(double);
@@ -310,6 +313,9 @@ void statusWinDisp(CameraId camId, void* param) {
     y = wp->y;
     blinkOn = 1;
     if (wp->blinkTimer > 0) {
+#ifdef TARGET_PC
+        if (!portInterpInBetween()) /* a frame between the game's: the same blink */
+#endif
         wp->blinkTimer--;
         blinkOn = (wp->blinkTimer % 16) >= 6;
     }

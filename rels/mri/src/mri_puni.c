@@ -922,7 +922,13 @@ void puniMapFindbuff(Vec pos) {
         if (Punimap->x < pos.y || Punimap->z > pos.y) {
             Punimap->inRange = 0;
         } else {
+#ifdef TARGET_PC
+            /* PC port: the cells only (u16 each); size counts 4 bytes a cell, twice
+             * the table, and the GameCube copied what follows it too, unused */
+            memcpy(Punimap->data, Punimap->src, Punimap->width * Punimap->height * sizeof(u16));
+#else
             memcpy(Punimap->data, Punimap->src, Punimap->size);
+#endif
             Punimap->inRange = 1;
             pz = pos.z;
             px = pos.x;
@@ -5192,7 +5198,11 @@ USER_FUNC(evt_puni_set_hamari) {
     return EVT_RETURN_DONE;
 }
 
+#ifdef TARGET_PC
+#define puniMapDataSetI(w_, h_, src_, x_, z_)     do {         s32 w = (w_);         s32 h = (h_);                  Punimap->x = (x_);         Punimap->z = (z_);         if ((src_) == NULL) {             Punimap->enabled = 0;         } else {             Punimap->width = w;             Punimap->height = h;             Punimap->enabled = 1;             Punimap->src = (src_);             Punimap->inRange = 0;             Punimap->size = h * (w * 4);             Punimap->data = _mapAlloc(Punimap->size);             /* PC port: a copy onto itself, of more than the table holds (a no-op that reads past it) */         }     } while (0)
+#else
 #define puniMapDataSetI(w_, h_, src_, x_, z_)     do {         s32 w = (w_);         s32 h = (h_);                  Punimap->x = (x_);         Punimap->z = (z_);         if ((src_) == NULL) {             Punimap->enabled = 0;         } else {             Punimap->width = w;             Punimap->height = h;             Punimap->enabled = 1;             Punimap->src = (src_);             Punimap->inRange = 0;             Punimap->size = h * (w * 4);             Punimap->data = _mapAlloc(Punimap->size);             memcpy(Punimap->src, (src_), Punimap->size);         }     } while (0)
+#endif
 
 USER_FUNC(evt_puni_set_maze) {
     switch (Punigp->mapKind) {
@@ -6774,11 +6784,11 @@ EVT_BEGIN(puni_piders_check)
 EVT_END()
 
 EVT_BEGIN(puni_disp_info)
-    IF_INT_GREATER_OR_EQUAL(4124967296, 118)
+    IF_INT_GREATER_OR_EQUAL(-170000000, 118)
         RETURN
     END_IF
     LOOP(0)
-        CALL(puni_disp_info_sub, 4264967296, 4264967297)
+        CALL(puni_disp_info_sub, -30000000, -29999999)
         WAIT_FRAMES(1)
     END_LOOP
     RETURN
@@ -6789,9 +6799,9 @@ EVT_BEGIN(mri_puninum_fadeout)
     CALL(evt_sub_intpl_msec_init, 11, 255, 0, 500)
     LOOP(0)
         CALL(evt_sub_intpl_msec_get_value)
-        CALL(evt_puni_puninum_alpha, 4264967296)
+        CALL(evt_puni_puninum_alpha, -30000000)
         WAIT_FRAMES(1)
-        IF_INT_EQUAL(4264967297, 0)
+        IF_INT_EQUAL(-29999999, 0)
             BREAK_LOOP
         END_IF
     END_LOOP
@@ -6802,9 +6812,9 @@ EVT_BEGIN(mri_puninum_fadein)
     CALL(evt_sub_intpl_msec_init, 11, 0, 255, 500)
     LOOP(0)
         CALL(evt_sub_intpl_msec_get_value)
-        CALL(evt_puni_puninum_alpha, 4264967296)
+        CALL(evt_puni_puninum_alpha, -30000000)
         WAIT_FRAMES(1)
-        IF_INT_EQUAL(4264967297, 0)
+        IF_INT_EQUAL(-29999999, 0)
             BREAK_LOOP
         END_IF
     END_LOOP
@@ -6816,16 +6826,16 @@ EVT_BEGIN(mri_puni_position_init)
     BEGIN_INLINE_EVENT
         CALL(evt_puni_puninum_alpha, 0)
         WAIT_FRAMES(2)
-        CALL(evt_bero_get_now_number, 4264967306)
-        CALL(evt_bero_get_info_kinddir, 4264967306, 4264967296, 4264967297, 4264967298)
-        CALL(evt_bero_get_info_nextarea, 4264967306, 4264967299, 4264967300)
-        SET_VALUE(4224967296, 0)
-        IF_INT_EQUAL(4264967296, 2)
-            IF_INT_NOT_EQUAL(4264967299, 0)
-                SET_VALUE(4224967296, 1)
+        CALL(evt_bero_get_now_number, -29999990)
+        CALL(evt_bero_get_info_kinddir, -29999990, -30000000, -29999999, -29999998)
+        CALL(evt_bero_get_info_nextarea, -29999990, -29999997, -29999996)
+        SET_VALUE(-70000000, 0)
+        IF_INT_EQUAL(-30000000, 2)
+            IF_INT_NOT_EQUAL(-29999997, 0)
+                SET_VALUE(-70000000, 1)
             END_IF
         END_IF
-        IF_INT_EQUAL(4224967296, 0)
+        IF_INT_EQUAL(-70000000, 0)
             CALL(evt_puni_puninum_alpha, 255)
         END_IF
     END_INLINE_EVENT
@@ -6836,36 +6846,36 @@ EVT_BEGIN(mri_puni_position_init)
         DEBUG_PUT_MSG(STRING("\203v\203j\212\326\214W\201F\215\300\225W\203Z\203b\203g\221\322\202\277"))
         CALL(evt_bero_exec_wait, 2)
         DEBUG_PUT_MSG(STRING("\203v\203j\212\326\214W\201F\217\254\223\256\225\250\212\326\214W\217\211\212\372\211\273"))
-        DEBUG_PUT_REG(4124967961)
-        DEBUG_PUT_REG(4124967962)
-        CALL(evt_bero_get_now_number, 4264967306)
-        CALL(evt_bero_get_info_kinddir, 4264967306, 4264967296, 4264967297, 4264967298)
-        CALL(evt_bero_get_info_nextarea, 4264967306, 4264967299, 4264967300)
-        IF_INT_EQUAL(4264967296, 2)
-            IF_INT_NOT_EQUAL(4264967299, 0)
+        DEBUG_PUT_REG(-169999335)
+        DEBUG_PUT_REG(-169999334)
+        CALL(evt_bero_get_now_number, -29999990)
+        CALL(evt_bero_get_info_kinddir, -29999990, -30000000, -29999999, -29999998)
+        CALL(evt_bero_get_info_nextarea, -29999990, -29999997, -29999996)
+        IF_INT_EQUAL(-30000000, 2)
+            IF_INT_NOT_EQUAL(-29999997, 0)
                 SPAWN_EVENT(mri_puninum_fadein)
             END_IF
         END_IF
-        CALL(evt_puni_setup, 4264967296, 4264967297, 4264967298)
-        CALL(evt_toge_setup, 4264967302, 4264967303, 4264967304, 4264967305)
+        CALL(evt_puni_setup, -30000000, -29999999, -29999998)
+        CALL(evt_toge_setup, -29999994, -29999993, -29999992, -29999991)
         CALL(evt_puni_set_systemmode, 2)
         DEBUG_PUT_MSG(STRING("\203v\203j\212\326\214W\201F\217I\227\271\221\322\202\277"))
         CALL(evt_bero_exec_wait, 65536)
         CALL(evt_puni_set_systemmode, 3)
         DEBUG_PUT_MSG(STRING("\203v\203j\212\326\214W\201F\216\237\202\314\216\300\215s\222\206\221\322\202\277"))
         CALL(evt_bero_exec_wait, 1)
-        SET_VALUE(4124967962, 4124967961)
-        CALL(evt_bero_get_now_number, 4264967306)
-        CALL(evt_bero_get_info_kinddir, 4264967306, 4264967296, 4264967297, 4264967298)
-        CALL(evt_bero_get_info_nextarea, 4264967306, 4264967299, 4264967300)
-        IF_INT_EQUAL(4264967296, 1)
+        SET_VALUE(-169999334, -169999335)
+        CALL(evt_bero_get_now_number, -29999990)
+        CALL(evt_bero_get_info_kinddir, -29999990, -30000000, -29999999, -29999998)
+        CALL(evt_bero_get_info_nextarea, -29999990, -29999997, -29999996)
+        IF_INT_EQUAL(-30000000, 1)
             DEBUG_PUT_MSG(STRING("\203v\203j\212\326\214W\201F\224\340\221\322\202\277"))
             CALL(evt_bero_exec_wait, 268435456)
             DEBUG_PUT_MSG(STRING("\203v\203j\212\326\214W\201F\224\340\221\322\202\277\217I\202\355\202\350"))
             CALL(evt_bero_exec_onoff, 1, 268435456)
         END_IF
-        IF_INT_EQUAL(4264967296, 2)
-            IF_INT_NOT_EQUAL(4264967299, 0)
+        IF_INT_EQUAL(-30000000, 2)
+            IF_INT_NOT_EQUAL(-29999997, 0)
                 SPAWN_EVENT(mri_puninum_fadeout)
             END_IF
         END_IF
@@ -6875,7 +6885,7 @@ EVT_BEGIN(mri_puni_position_init)
             DEBUG_PUT_MSG(STRING("\203v\203j\212\326\214W\201F\203v\203j\221\260\203g\203Q\221\260SE\213\255\220\247\203I\203t"))
             CALL(evt_puni_force_se_off)
         END_INLINE_EVENT
-        CALL(evt_puni_exit, 4264967296, 4264967297, 4264967298, 4264967299)
+        CALL(evt_puni_exit, -30000000, -29999999, -29999998, -29999997)
     END_LOOP
     RETURN
 EVT_END()
@@ -6899,12 +6909,12 @@ EVT_BEGIN(mri_puni_init_dvd)
     CALL(evt_npc_set_tribe, STRING("\202\277\202\321\203g\203Qsp"), STRING("\202\277\202\321\203g\203Q"))
     CALL(evt_npc_entry, STRING("\203\211\203C\203o\203\213sp"), STRING("c_prival"))
     CALL(evt_npc_set_tribe, STRING("\203\211\203C\203o\203\213sp"), STRING("\203\211\203C\203o\203\213"))
-    CALL(evt_npc_set_position, STRING("\203v\203jsp"), 0, 4294966296, 0)
-    CALL(evt_npc_set_position, STRING("\203g\203Qsp"), 0, 4294966296, 0)
-    CALL(evt_npc_set_position, STRING("\203K\203C\203hsp"), 0, 4294966296, 0)
-    CALL(evt_npc_set_position, STRING("\203K\203C\203h\226\205sp"), 0, 4294966296, 0)
-    CALL(evt_npc_set_position, STRING("\202\277\202\321\203g\203Qsp"), 0, 4294966296, 0)
-    CALL(evt_npc_set_position, STRING("\203\211\203C\203o\203\213sp"), 0, 4294966296, 0)
+    CALL(evt_npc_set_position, STRING("\203v\203jsp"), 0, -1000, 0)
+    CALL(evt_npc_set_position, STRING("\203g\203Qsp"), 0, -1000, 0)
+    CALL(evt_npc_set_position, STRING("\203K\203C\203hsp"), 0, -1000, 0)
+    CALL(evt_npc_set_position, STRING("\203K\203C\203h\226\205sp"), 0, -1000, 0)
+    CALL(evt_npc_set_position, STRING("\202\277\202\321\203g\203Qsp"), 0, -1000, 0)
+    CALL(evt_npc_set_position, STRING("\203\211\203C\203o\203\213sp"), 0, -1000, 0)
     CALL(evt_npc_flag_onoff, 1, STRING("\203v\203jsp"), 1074266144)
     CALL(evt_npc_flag_onoff, 1, STRING("\203g\203Qsp"), 1074266144)
     CALL(evt_npc_flag_onoff, 1, STRING("\203K\203C\203hsp"), 1074266144)
@@ -6916,33 +6926,33 @@ EVT_END()
 
 EVT_BEGIN(mri_puni_init)
     CALL_CHILD(mri_puni_init_dvd)
-    SWITCH(4124967296)
+    SWITCH(-170000000)
         CASE_LESS(88)
         RETURN
         CASE_GREATER_OR_EQUAL(403)
         RETURN
         CASE_EQUAL(400)
-        CALL(evt_sub_get_mapname, 4264967296)
-        IF_STR_NOT_EQUAL(4264967296, STRING("mri_00"))
+        CALL(evt_sub_get_mapname, -30000000)
+        IF_STR_NOT_EQUAL(-30000000, STRING("mri_00"))
             RETURN
         END_IF
-        SET_VALUE(4224967296, 0)
-        CALL(evt_bero_get_entername, 4264967296)
-        IF_STR_EQUAL(4264967296, STRING("sekai_yami1"))
-            SET_VALUE(4224967296, 1)
+        SET_VALUE(-70000000, 0)
+        CALL(evt_bero_get_entername, -30000000)
+        IF_STR_EQUAL(-30000000, STRING("sekai_yami1"))
+            SET_VALUE(-70000000, 1)
         END_IF
-        IF_STR_EQUAL(4264967296, STRING("minnnanokoe"))
-            SET_VALUE(4224967296, 1)
+        IF_STR_EQUAL(-30000000, STRING("minnnanokoe"))
+            SET_VALUE(-70000000, 1)
         END_IF
-        IF_INT_EQUAL(4224967296, 0)
+        IF_INT_EQUAL(-70000000, 0)
             RETURN
         END_IF
         CASE_BETWEEN(118, 399)
-        CALL(evt_sub_get_mapname, 4264967296)
-        IF_STR_NOT_EQUAL(4264967296, STRING("mri_00"))
+        CALL(evt_sub_get_mapname, -30000000)
+        IF_STR_NOT_EQUAL(-30000000, STRING("mri_00"))
             RETURN
         END_IF
-        IF_INT_EQUAL(4164970180, 1)
+        IF_INT_EQUAL(-129997116, 1)
             RETURN
         END_IF
         CASE_DEFAULT

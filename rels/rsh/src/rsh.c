@@ -1,3 +1,6 @@
+#ifdef TARGET_PC
+#include "port/platform.h"
+#endif
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
 #include "manager/evtmgr_cmd.h"
@@ -1499,6 +1502,9 @@ void rsh_window_tev(MapTevCallbackInfo* info) {
             u32 f = p->flags;
             if (f & 0x10) {
                 if (!(f & 0x20000000)) {
+#ifdef TARGET_PC
+                    portInterpKeep(&p->flags, sizeof(p->flags)); /* a one-shot the next draw takes */
+#endif
                     p->flags = f | 0x20000000;
                     return;
                 }
@@ -1511,6 +1517,9 @@ void rsh_window_tev(MapTevCallbackInfo* info) {
         }
     } else {
         if (!(flags & 0x20000000)) {
+#ifdef TARGET_PC
+            portInterpKeep(&p->flags, sizeof(p->flags)); /* a one-shot the next draw takes */
+#endif
             p->flags = flags | 0x20000000;
             return;
         }

@@ -237,7 +237,11 @@ f32 fd_tou___local_PIO2_367;
 f32 fd_tou_one_364;
 f64 fd_tou__three_localstatic4_sqrtf;
 f64 fd_tou__half_localstatic3_sqrtf;
+#ifdef TARGET_PC
+const char* lockerDt[50]; /* PC port: read 5 at a time; padded past its NULL */
+#else
 const char* lockerDt[46];
+#endif
 EvtWord evt_close[188];
 static EvtWord evt_open[VERSION_PICK(165, 173)];
 EvtWord evt_tou_locker_init[109];
@@ -1125,6 +1129,9 @@ const char* lockerDt[] = {
     "a_door_10_ura",
     "a_R_10_asi",
     NULL,
+#ifdef TARGET_PC
+    NULL, NULL, NULL, NULL, /* PC port: the last read of 5 goes past the NULL (the GameCube reads the next object) */
+#endif
 };
 
 EVT_BEGIN(evt_close)

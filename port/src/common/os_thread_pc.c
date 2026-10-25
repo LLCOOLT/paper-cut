@@ -296,6 +296,10 @@ void OSCancelThread(OSThread* thread) {
     memset(t, 0, sizeof(*t));
 }
 
+BOOL portThreadIsMain(void) {
+    return sCurrent == NULL;
+}
+
 OSThread* OSGetCurrentThread(void) {
     return sCurrent != NULL ? sCurrent->thread : &sMainThread;
 }

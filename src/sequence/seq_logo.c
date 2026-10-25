@@ -25,6 +25,7 @@
 #include <string.h>
 #ifdef TARGET_PC
 #include "port/bedecode.h"
+#include "port/gameplay.h"
 #endif
 
 #ifdef VERSION_G8ME01
@@ -183,6 +184,9 @@ void seq_logoExit(SequenceWork* work) {
 #ifndef VERSION_G8ME01
 void seq_logoMain(SequenceWork* work) {
 	static OSTime time; //time instance 1
+#ifdef TARGET_PC
+	portIntroFrame(); /* PC port: "Skip the intro" fast-forwards the logos */
+#endif
 	u32 size;
 	u8* decode;
 	FileEntry* first;
@@ -251,7 +255,11 @@ void seq_logoMain(SequenceWork* work) {
 		case 8:
 			if (OSTicksToMilliseconds(gp->renderTime - time) > 1000) {
 				fadeEntry(FADE_OUT_BLACK, 500, (GXColor){0, 0, 0, 0xFF});
+#ifdef TARGET_PC
+				wp->skipStory = gPortSkipIntro != 0; /* PC port: straight to the title */
+#else
 				wp->skipStory = FALSE;
+#endif
 				work->state++;
 			}
 			break;
@@ -340,6 +348,9 @@ void seq_logoMain(SequenceWork* work) {
 #else
 void seq_logoMain(SequenceWork* work) {
 	static OSTime time;
+#ifdef TARGET_PC
+	portIntroFrame(); /* PC port: "Skip the intro" fast-forwards the logos */
+#endif
 
 	switch (work->state) {
 		case 0:
@@ -383,6 +394,11 @@ void seq_logoMain(SequenceWork* work) {
 			if (keyGetButtonTrg(0)) {
 				work->state++;
 			}
+#ifdef TARGET_PC
+			else if (gPortSkipIntro) { /* PC port: the notice page goes on by itself */
+				work->state++;
+			}
+#endif
 			else if (OSTicksToMilliseconds(gp->renderTime - time) > 59000) {
 				work->state++;
 			}
@@ -455,7 +471,11 @@ void seq_logoMain(SequenceWork* work) {
 		case 16:
 			if (OSTicksToMilliseconds(gp->renderTime - time) > 1000) {
 				fadeEntry(FADE_OUT_BLACK, 500, (GXColor){0, 0, 0, 0xFF});
+#ifdef TARGET_PC
+				wp->skipStory = gPortSkipIntro != 0; /* PC port: straight to the title */
+#else
 				wp->skipStory = FALSE;
+#endif
 				work->state++;
 			}
 			break;

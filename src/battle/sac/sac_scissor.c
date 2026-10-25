@@ -642,13 +642,6 @@ typedef struct StarTrail {
     /* 0x50 */ f32 ty[4];
 } StarTrail;
 
-typedef struct StarEffWork {
-    u8 pad0[8];
-    Vec pos;  // 0x8
-    f32 scl;  // 0x14
-    Vec rot;  // 0x18
-} StarEffWork;
-
 EffectEntry* effStarStoneEntry(s32 type, f32 x, f32 y, f32 z, f32 size);
 void star_disp2D(CameraId camera, void* param);
 #define INTPL(mode, cur, steps, a, b) PCCALL(((f32(*)(f32, f32, s32, s32, s32))intplGetValue)(a, b, mode, cur, steps), intplGetValue(mode, cur, steps, a, b))
@@ -735,20 +728,20 @@ s32 star_control(EventEntry* evt, BOOL first) {
         break;
     }
     if (w->eff) {
-        StarEffWork* e = (StarEffWork*)w->eff->userdata;
+        EffStarStoneWork* e = (EffStarStoneWork*)w->eff->userdata;
         if (w->phase >= 4) {
-            e->pos.x = 0.0f;
-            e->pos.y = -1000.0f;
-            e->pos.z = 0.0f;
+            e->position.x = 0.0f;
+            e->position.y = -1000.0f;
+            e->position.z = 0.0f;
         } else {
-            e->pos.x = w->pos.x;
-            e->pos.y = w->pos.y;
-            e->pos.z = w->pos.z;
+            e->position.x = w->pos.x;
+            e->position.y = w->pos.y;
+            e->position.z = w->pos.z;
         }
-        e->rot.x = w->rot.x;
-        e->rot.y = w->rot.y;
-        e->rot.z = w->rot.z;
-        e->scl = 1.5f * w->scale.x;
+        e->f18 = w->rot.x;
+        e->rotY = w->rot.y;
+        e->f20 = w->rot.z;
+        e->scale = 1.5f * w->scale.x;
     }
     if (w->phase >= 4 && w->phase <= 6) {
         dispEntry(CAMERA_2D, 0.0f, 2, star_disp2D, NULL);

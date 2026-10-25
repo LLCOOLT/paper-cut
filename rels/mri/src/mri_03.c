@@ -196,7 +196,11 @@ static EvtWord evt_unlock01[9];
 static EvtWord evt_unlock01[8];
 #endif
 s32 key_table01[3];
+#ifdef TARGET_PC
+EvtWord evt_check01[93]; /* PC port: ends by running bluejail_alpha (see below) */
+#else
 EvtWord evt_check01[90];
+#endif
 EvtWord bluejail_alpha[119];
 EvtWord bluejail_event[249];
 static EvtWord mario_kirimomi_event[50];
@@ -933,6 +937,12 @@ EVT_BEGIN(evt_check01)
         END_SWITCH
     END_IF
     CALL(evt_win_item_desttable, LW(10), 2)
+#ifdef TARGET_PC
+    /* PC port: no RETURN, so on the GameCube it runs on into the next script
+     * in memory, bluejail_alpha (which returns); not adjacent here */
+    CALL_CHILD(PTR(bluejail_alpha))
+    RETURN
+#endif
 EVT_END()
 
 EVT_BEGIN(bluejail_alpha)

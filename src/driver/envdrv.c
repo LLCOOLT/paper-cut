@@ -1,4 +1,7 @@
 #pragma dollar_identifiers on
+#ifdef TARGET_PC
+#include "port/platform.h"
+#endif
 #include "driver/envdrv.h"
 #include "driver/arcdrv.h"
 #include "driver/dispdrv.h"
@@ -1278,6 +1281,9 @@ void envSetWater(MapTevCallbackInfo* info) {
         while ((obj = envWaterParent(obj)) != NULL) {
             if (obj->flags & 0x10) {
                 if (!(obj->flags & 0x20000000)) {
+#ifdef TARGET_PC
+                    portInterpKeep(&obj->flags, sizeof(obj->flags)); /* a one-shot the next draw takes */
+#endif
                     obj->flags |= 0x20000000;
                     return;
                 }
@@ -1290,6 +1296,9 @@ void envSetWater(MapTevCallbackInfo* info) {
         }
     } else {
         if (!(obj->flags & 0x20000000)) {
+#ifdef TARGET_PC
+            portInterpKeep(&obj->flags, sizeof(obj->flags)); /* a one-shot the next draw takes */
+#endif
             obj->flags |= 0x20000000;
             return;
         }

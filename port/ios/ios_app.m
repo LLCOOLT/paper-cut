@@ -1,3 +1,6 @@
+#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
 /* iOS glue: the app's folders and the disc picker (port/include/port/ios_pc.h).
  *
  * Built on its own (port/ios/ios.cmake), without the game's prefix header:
@@ -45,6 +48,46 @@ static const char* folder(char* out, size_t size, NSSearchPathDirectory dir, NSS
 
 const char* portIosDocumentsDir(void) {
     return folder(sDocuments, sizeof(sDocuments), NSDocumentDirectory, nil);
+}
+
+void portIosLoadEnv(void) {
+    char path[1200], line[1024];
+    const char* docs = portIosDocumentsDir();
+    FILE* f;
+    snprintf(path, sizeof(path), "%s/env.txt", docs);
+    f = fopen(path, "r");
+    if (f == NULL) {
+        return;
+    }
+    while (fgets(line, sizeof(line), f) != NULL) {
+        char value[2048];
+        char* eq;
+        const char* v;
+        size_t n = strlen(line), o = 0;
+        while (n > 0 && (line[n - 1] == '\n' || line[n - 1] == '\r' || line[n - 1] == ' ')) {
+            line[--n] = '\0';
+        }
+        eq = strchr(line, '=');
+        if (line[0] == '\0' || line[0] == '#' || eq == NULL || eq == line) {
+            continue;
+        }
+        *eq = '\0';
+        for (v = eq + 1; *v != '\0' && o + 1 < sizeof(value); v++) {
+            if (strncmp(v, "{docs}", 6) == 0) {
+                o += (size_t)snprintf(value + o, sizeof(value) - o, "%s", docs);
+                if (o >= sizeof(value)) {
+                    o = sizeof(value) - 1;
+                }
+                v += 5;
+            } else {
+                value[o++] = *v;
+            }
+        }
+        value[o] = '\0';
+        setenv(line, value, 0);
+        printf("env.txt: %s=%s\n", line, value);
+    }
+    fclose(f);
 }
 
 const char* portIosSavesDir(void) {
@@ -130,4 +173,44 @@ int portIosPickDiscPoll(char* out, size_t size) {
     }
     sPicker = nil;
     return state;
+}
+
+/* A light tap for an on-screen button press (port/touch/touch_overlay.cpp,
+ * the touch_haptics setting). */
+void portIosHapticTap(void) {
+    static UIImpactFeedbackGenerator* sGen;
+    if (sGen == nil) {
+        sGen = [[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight];
+    }
+    [sGen impactOccurred];
+    [sGen prepare];
+}
+
+/* The orientations allowed changed (SDL_HINT_ORIENTATIONS, which SDL reads
+ * whenever UIKit asks): 0 any, 1 landscape, 2 portrait. UIKit is told to ask
+ * again, and to turn the screen now if it is held a way no longer allowed. */
+void portIosRefreshOrientation(int orientation) {
+    if (@available(iOS 16.0, *)) {
+        UIInterfaceOrientationMask mask = orientation == 1   ? UIInterfaceOrientationMaskLandscape
+                                          : orientation == 2 ? UIInterfaceOrientationMaskPortrait
+                                                             : (UIInterfaceOrientationMaskLandscape |
+                                                                UIInterfaceOrientationMaskPortrait);
+        for (UIScene* scene in UIApplication.sharedApplication.connectedScenes) {
+            if (![scene isKindOfClass:UIWindowScene.class]) {
+                continue;
+            }
+            UIWindowScene* ws = (UIWindowScene*)scene;
+            for (UIWindow* w in ws.windows) {
+                [w.rootViewController setNeedsUpdateOfSupportedInterfaceOrientations];
+            }
+            if (orientation != 0) {
+                UIWindowSceneGeometryPreferencesIOS* prefs =
+                    [[UIWindowSceneGeometryPreferencesIOS alloc] initWithInterfaceOrientations:mask];
+                [ws requestGeometryUpdateWithPreferences:prefs
+                                            errorHandler:^(NSError* error) {
+                                              (void)error;
+                                            }];
+            }
+        }
+    }
 }

@@ -383,6 +383,18 @@ void cardCopy2Main(s32 slot) {
 #endif
 }
 
+#ifdef TARGET_PC
+/* A save file's slot (GameCube image, port/include/port/cardsave_pc.h) into
+ * the loaded card's slot, as a read would: the settings page's save warps
+ * (port/src/common/warp_pc.c). FALSE: not a valid save. */
+BOOL portCardLoadSlotImage(s32 slot, const void* image) {
+    if (wp->data == NULL || slot < 0 || slot >= 4) {
+        return FALSE;
+    }
+    return portCardSlotFromImage(image, &wp->data->saves[slot]) && !(wp->data->saves[slot].data.flags & 1);
+}
+#endif
+
 void cardErase(s32 slotNo) {
     CardSaveSlot* save;
 

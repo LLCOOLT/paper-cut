@@ -91,7 +91,11 @@ EvtWord peach_evt_bero_out2[25];
 BeroEntry bero_data_peach2[2];
 EvtWord evt_kou1[115];
 EvtWord evt_kou2[155];
+#ifdef TARGET_PC
+const char* rokka_data[25]; /* PC port: read 5 at a time; padded past its NULL */
+#else
 const char* rokka_data[21];
+#endif
 EvtWord evt_rokka_open[127];
 EvtWord evt_rokka_close[165];
 EvtWord evt_rokka_init[34];
@@ -356,6 +360,9 @@ const char* rokka_data[] = {
     "a_door_4_ura",
     "a_R_4_asi",
     NULL,
+#ifdef TARGET_PC
+    NULL, NULL, NULL, NULL, /* PC port: the last read of 5 goes past the NULL (the GameCube reads the next object) */
+#endif
 };
 
 EVT_BEGIN(evt_rokka_open)

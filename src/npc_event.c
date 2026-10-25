@@ -344,7 +344,11 @@ EvtWord patapata_move_event[123];
 EvtWord patapata_find_event[131];
 EvtWord patapata_lost_event[44];
 EvtWord patapata_return_event[135];
+#ifdef TARGET_PC
+EvtWord met_init_event_common[25]; /* PC port: + the fall-through, made a call */
+#else
 EvtWord met_init_event_common[21];
+#endif
 EvtWord met_set_anim_wait_event[48];
 EvtWord met_set_anim_walk_event[48];
 EvtWord met_init_event[19];
@@ -1236,6 +1240,13 @@ EvtWord met_init_event_common[] = {
     CALL(evt_npc_flag_onoff, 1, STRING("me"), 1048592)
     CALL(evt_npc_status_onoff, 1, STRING("me"), 2)
     CALL(evt_npc_set_rotate, STRING("me"), 0, 0, 0)
+#ifdef TARGET_PC
+    /* PC port: the GameCube script has no end and runs on into the next one in
+     * its data, met_set_anim_wait_event; here that is called */
+    CALL_CHILD(PTR(met_set_anim_wait_event))
+    RETURN
+    OPCODE_END_SCRIPT
+#endif
 };
 
 EVT_BEGIN(met_set_anim_wait_event)

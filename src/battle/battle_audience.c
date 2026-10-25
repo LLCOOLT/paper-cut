@@ -1509,6 +1509,19 @@ BattleUnit* BattleAudienceDetectTargetPlayer(void) {
 //@@ BattleAudienceItemCtrlProcess
 extern s32 BtlUnit_CheckShadowGuard(BattleUnit*);
 extern double __fabs(double);
+#ifdef TARGET_PC
+/* PC port: by field. The GameCube code used byte offsets into BattleAudience
+ * and read the thrown hazards' weapons as the data after
+ * battle_audience_negone_one_a (both laid out differently with 64-bit
+ * pointers). */
+#define AUD_HIT_COUNT (((BattleAudience*)base)->presentHitCount)
+#define AUD_HIT_DAMAGE (((BattleAudience*)base)->presentWeapon.hpDamageWork[0])
+#define AUD_SET_WEAPON(off, w) (((BattleAudience*)base)->presentWeapon = (w))
+#else
+#define AUD_HIT_COUNT (*(s32*)(base + 0x137f8))
+#define AUD_HIT_DAMAGE *(s32*)(base + 0x1381c)
+#define AUD_SET_WEAPON(off, w) memcpy(base + 0x137fc, d + off, 0xc0)
+#endif
 void BattleAudienceItemCtrlProcess(void) {
 	u8* d = battle_audience_negone_one_a;
 	Vec hv;
@@ -1668,9 +1681,9 @@ void BattleAudienceItemCtrlProcess(void) {
 				it->mode = 0;
 			}
 			if (it->mode != 0) {
-				(*(s32*)(base + 0x137f8))++;
-				if ((*(s32*)(base + 0x137f8)) > 3) {
-					(*(s32*)(base + 0x137f8)) = 3;
+				AUD_HIT_COUNT++;
+				if (AUD_HIT_COUNT > 3) {
+					AUD_HIT_COUNT = 3;
 				}
 				if (it->mode == 2) {
 					it->state = 4;
@@ -1684,20 +1697,20 @@ void BattleAudienceItemCtrlProcess(void) {
 				BattleAudience_SetPresentTargetUnitId(BtlUnit_GetUnitId((BattleUnit*)aud));
 				switch (it->mItemType) {
 				case 0xec:
-					memcpy(base + 0x137fc, d + 0x40, 0xc0);
-					*(s32*)(base + 0x1381c) = (*(s32*)(base + 0x137f8)) + *(s32*)(base + 0x1381c) - 1;
+					AUD_SET_WEAPON(0x40, weapon_data_akikan);
+					AUD_HIT_DAMAGE = AUD_HIT_COUNT + AUD_HIT_DAMAGE - 1;
 					break;
 				case 0xed:
-					memcpy(base + 0x137fc, d + 0x100, 0xc0);
-					*(s32*)(base + 0x1381c) = (*(s32*)(base + 0x137f8)) + *(s32*)(base + 0x1381c) - 1;
+					AUD_SET_WEAPON(0x100, weapon_data_brick);
+					AUD_HIT_DAMAGE = AUD_HIT_COUNT + AUD_HIT_DAMAGE - 1;
 					break;
 				case 0xee:
-					memcpy(base + 0x137fc, d + 0x1c0, 0xc0);
-					*(s32*)(base + 0x1381c) = (*(s32*)(base + 0x137f8)) + *(s32*)(base + 0x1381c) - 1;
+					AUD_SET_WEAPON(0x1c0, weapon_data_bone);
+					AUD_HIT_DAMAGE = AUD_HIT_COUNT + AUD_HIT_DAMAGE - 1;
 					break;
 				case 0xef:
-					memcpy(base + 0x137fc, d + 0x280, 0xc0);
-					*(s32*)(base + 0x1381c) = (*(s32*)(base + 0x137f8)) + *(s32*)(base + 0x1381c) - 1;
+					AUD_SET_WEAPON(0x280, weapon_data_hammer);
+					AUD_HIT_DAMAGE = AUD_HIT_COUNT + AUD_HIT_DAMAGE - 1;
 					break;
 				}
 				BattleAudience_SetPresentItemNo(it->mItemType);
@@ -1718,7 +1731,7 @@ void BattleAudienceItemCtrlProcess(void) {
 					it->state = 4;
 					break;
 				}
-				(*(s32*)(base + 0x137f8)) = 0;
+				AUD_HIT_COUNT = 0;
 			} else {
 				it->state = 4;
 			}
@@ -2408,7 +2421,11 @@ void BattleAudience_Entry_Sub(s32 index, s32 type, u8 status) {
 	m->colorR = 0;
 	m->colorA = 255;
 	row = index / 20;
+#ifdef TARGET_PC
+	y = ((BattleStage*)stage)->audienceSizeY; /* PC port: 0xB34 on the GameCube */
+#else
 	y = *(f32*)(stage + 0xB34);
+#endif
 	m->position.y = y;
 	m->mHomePosition.y = y;
 	z = 0.1f * (f32)(index % 20) + (f32)(row * 30 + 0x73);

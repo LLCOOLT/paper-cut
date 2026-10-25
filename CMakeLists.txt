@@ -1,11 +1,11 @@
 # Native PC build of the TTYD decomp. The matching GameCube build is
 # configure.py + ninja and is unaffected by this file.
 cmake_minimum_required(VERSION 3.25)
-# macOS: 11.0 (Big Sur, the first arm64 release) unless asked otherwise; must
+# macOS: 12.0 (Aurora's prebuilt Dawn is built for 12) unless asked otherwise; must
 # precede project(). Cross builds (iOS) set their own in the toolchain file.
 if(CMAKE_HOST_APPLE AND NOT DEFINED CMAKE_OSX_DEPLOYMENT_TARGET AND NOT DEFINED CMAKE_TOOLCHAIN_FILE
    AND NOT DEFINED CMAKE_SYSTEM_NAME AND NOT DEFINED ENV{MACOSX_DEPLOYMENT_TARGET})
-    set(CMAKE_OSX_DEPLOYMENT_TARGET 11.0 CACHE STRING "Minimum macOS version")
+    set(CMAKE_OSX_DEPLOYMENT_TARGET 12.0 CACHE STRING "Minimum macOS version")
 endif()
 project(ttyd_pc C CXX)
 
@@ -35,6 +35,7 @@ set_property(CACHE TTYD_BACKEND PROPERTY STRINGS aurora headless)
 # 32-bit is only kept for the headless bring-up build.
 option(TTYD_PC_32BIT "Build a 32-bit executable (headless only)" OFF)
 option(TTYD_PTRWIDTH_WARNINGS "Report only int<->pointer width warnings (audit build)" OFF)
+option(TTYD_FORTIFY "Keep the C library's _FORTIFY_SOURCE checks in game code (audit build)" OFF)
 
 # --- iOS (cmake/toolchains/ios.cmake; docs/PC_PORT.md, "iOS") ---
 # Aurora only. An iOS app may only run code signed into its bundle (no
@@ -128,6 +129,16 @@ if(TTYD_BACKEND STREQUAL "aurora")
         set(CMAKE_DISABLE_FIND_PACKAGE_PkgConfig ON)
         set(CMAKE_DISABLE_FIND_PACKAGE_SQLite3 ON)
     endif()
+    if(APPLE)
+        # A self-contained app: not Homebrew's or MacPorts' libraries (fmt,
+        # abseil, zstd, libpng, ... are found there once any formula pulls them
+        # in, and the app would only run on Macs that have them). Aurora then
+        # fetches and builds its own, statically, as on Windows; zlib, sqlite3
+        # and the frameworks come from the SDK.
+        set(_ttyd_ignore_prefix ${CMAKE_IGNORE_PREFIX_PATH})
+        list(APPEND CMAKE_IGNORE_PREFIX_PATH /opt/homebrew /usr/local /opt/local)
+        set(CMAKE_DISABLE_FIND_PACKAGE_PkgConfig ON)
+    endif()
     add_subdirectory(extern/aurora EXCLUDE_FROM_ALL)
     # nod built by Cargo (Android) on a Windows machine whose Rust is the
     # windows-gnu toolchain: Cargo builds the build scripts and proc macros for
@@ -147,6 +158,20 @@ if(TTYD_BACKEND STREQUAL "aurora")
             # Corrosion puts these first in its `cmake -E env` command.
             corrosion_set_env_vars(nod --modify "PATH=path_list_prepend:${_dlltool_dir}")
         endif()
+    endif()
+    if(APPLE)
+        set(CMAKE_IGNORE_PREFIX_PATH ${_ttyd_ignore_prefix})
+        unset(CMAKE_DISABLE_FIND_PACKAGE_PkgConfig)
+    endif()
+    if(TTYD_IOS AND TARGET cargo-build_nod AND COMMAND corrosion_set_env_vars)
+        # nod's C dependencies (zlib, zstd, ... through cc-rs) otherwise target
+        # the SDK's iOS version, not the app's minimum.
+        if(CMAKE_OSX_DEPLOYMENT_TARGET)
+            set(_nod_ios_min ${CMAKE_OSX_DEPLOYMENT_TARGET})
+        else()
+            set(_nod_ios_min 14.0)
+        endif()
+        corrosion_set_env_vars(nod IPHONEOS_DEPLOYMENT_TARGET=${_nod_ios_min})
     endif()
     # aurora_overlay: wrappers (#include_next) adding the 2004-SDK declarations,
     # macros and transitive includes the game relies on that Aurora's headers lack.
@@ -203,6 +228,15 @@ else()
         # MWCC accepts these; they are fixed incrementally.
         -Wno-error=int-conversion
         -Wno-error=incompatible-pointer-types)
+    # The game copies strings past the end of char fields into padding that
+    # nothing reads (mobjEntry: "MOBJ_TreasureBox" into animName[16]), as the
+    # GameCube allows. Apple clang, Android's bionic and some Linux distros
+    # turn _FORTIFY_SOURCE on by default and abort on those copies; it is off
+    # in game code, as on Windows. TTYD_FORTIFY=ON keeps it on: a map sweep
+    # then lists every overflowing copy (each must land in unread padding).
+    if(NOT TTYD_FORTIFY)
+        list(APPEND TTYD_CFLAGS -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=0)
+    endif()
     if(CMAKE_C_COMPILER_ID MATCHES "Clang")
         list(APPEND TTYD_CFLAGS -Wno-error=incompatible-function-pointer-types)
     elseif(CMAKE_C_COMPILER_ID STREQUAL "GNU")
@@ -488,6 +522,28 @@ if(TTYD_BACKEND STREQUAL "aurora")
     target_link_libraries(musyx_pc PRIVATE ${AURORA_SDL3_TARGET})
 endif()
 
+# Save states (port/src/aurora/savestate_aurora.c; Aurora with static RELs):
+# the game's data and bss go to their own sections (port_prefix.h), copied as
+# a whole with MEM1, ARAM, the RELs' sections and the save-state heap
+# (port/src/common/snapheap_pc.c). -fno-common: tentative definitions must be
+# real symbols to be placed. The port's decoders' state goes there too (the
+# game's data points into what they decode); MusyX's output layer stays out
+# (the SDL stream, the audio thread's buffers).
+if(TTYD_BACKEND STREQUAL "aurora" AND TTYD_RELS_STATIC)
+    set(TTYD_SAVE_STATES ON)
+    foreach(_t ttyd_dol musyx_pc)
+        target_compile_definitions(${_t} PRIVATE TTYD_SAVE_STATES=1 TTYD_SNAPSHOT_SECTION=1)
+        target_compile_options(${_t} PRIVATE -fno-common)
+    endforeach()
+    set_property(SOURCE ${CMAKE_SOURCE_DIR}/libs/musyx/src/musyx/runtime/hw_pc.c TARGET_DIRECTORY musyx_pc
+        APPEND PROPERTY COMPILE_DEFINITIONS TTYD_NO_SNAPSHOT=1)
+    foreach(_f anim_pc tpl_pc map_pc camroad_pc gx_arrays_pc snapshot_bounds_pc)
+        set_property(SOURCE ${CMAKE_SOURCE_DIR}/port/src/common/${_f}.c APPEND PROPERTY
+            COMPILE_DEFINITIONS TTYD_SNAPSHOT_SECTION=1)
+        set_property(SOURCE ${CMAKE_SOURCE_DIR}/port/src/common/${_f}.c APPEND PROPERTY COMPILE_OPTIONS -fno-common)
+    endforeach()
+endif()
+
 if(ANDROID)
     # Android: SDLActivity loads the game as libmain.so and calls its SDL_main.
     add_library(ttyd SHARED $<TARGET_OBJECTS:ttyd_dol> $<TARGET_OBJECTS:musyx_pc> ${TTYD_PORT_SOURCES}
@@ -531,6 +587,12 @@ if(NOT TTYD_RELS_STATIC)
     set_target_properties(ttyd PROPERTIES ENABLE_EXPORTS ON WINDOWS_EXPORT_ALL_SYMBOLS ON)
 endif()
 target_compile_definitions(ttyd PRIVATE ${TTYD_DEFINES})
+if(TTYD_SAVE_STATES)
+    target_compile_definitions(ttyd PRIVATE TTYD_SAVE_STATES=1)
+    if(APPLE)
+        target_link_libraries(ttyd PRIVATE compression) # LZ4 for the states kept in memory (elsewhere, the port's own)
+    endif()
+endif()
 target_include_directories(ttyd PRIVATE ${TTYD_INCLUDES} ${CMAKE_BINARY_DIR}/generated)
 target_compile_options(ttyd PRIVATE ${TTYD_CFLAGS})
 target_link_libraries(ttyd PRIVATE ${TTYD_LIBM} ${CMAKE_DL_LIBS})
@@ -546,6 +608,14 @@ if(TTYD_BACKEND STREQUAL "aurora")
     # Windows: SDL3, Dawn (+ the DXC DLLs it loads), nod, libpng, zlib next to the exe.
     include(${CMAKE_SOURCE_DIR}/extern/aurora/cmake/AuroraCopyRuntimeDLLs.cmake)
     aurora_copy_runtime_dlls(ttyd)
+    # The settings page (F1 / Back / three-finger tap), ImGui: C++ like the
+    # touch overlay, built without the game's prefix header.
+    add_library(ttyd_settings STATIC ${CMAKE_SOURCE_DIR}/port/settings/settings_ui.cpp)
+    target_include_directories(ttyd_settings PRIVATE ${CMAKE_SOURCE_DIR}/port/include)
+    target_compile_features(ttyd_settings PRIVATE cxx_std_20)
+    target_compile_definitions(ttyd_settings PRIVATE _CRT_SECURE_NO_WARNINGS=1)
+    target_link_libraries(ttyd_settings PRIVATE aurora::core aurora::pad ${AURORA_SDL3_TARGET})
+    target_link_libraries(ttyd PRIVATE ttyd_settings)
     if(TTYD_TOUCH_OVERLAY)
         # C++ and SDL/ImGui only: built without the game's prefix header.
         add_library(ttyd_touch STATIC ${CMAKE_SOURCE_DIR}/port/touch/touch_overlay.cpp)
@@ -558,6 +628,35 @@ if(TTYD_BACKEND STREQUAL "aurora")
     endif()
     if(TTYD_IOS)
         include(${CMAKE_SOURCE_DIR}/port/ios/ios.cmake)
+    endif()
+    # Aurora's pipeline seed (tools/port/pipeline_cache.py): every GX pipeline
+    # the game uses, built at launch so no draw waits for one (on a slow GPU a
+    # model drawn for the first time was skipped until its pipeline was ready:
+    # invisible cutscene characters on an iPhone). Made from runs on the
+    # user's own disc, so it is bundled when present, never committed. Aurora
+    # reads it from SDL_GetBasePath(): an iOS bundle's root, a macOS app's
+    # Contents/Resources, elsewhere the executable's folder.
+    set(TTYD_PIPELINE_SEED ${CMAKE_SOURCE_DIR}/data/initial_pipeline_cache.db CACHE FILEPATH
+        "Bundled pipeline seed (initial_pipeline_cache.db), used when it exists")
+    if(EXISTS ${TTYD_PIPELINE_SEED})
+        get_filename_component(_seed_name ${TTYD_PIPELINE_SEED} NAME)
+        if(NOT _seed_name STREQUAL "initial_pipeline_cache.db")
+            message(FATAL_ERROR "TTYD_PIPELINE_SEED must be named initial_pipeline_cache.db")
+        endif()
+        if(APPLE)
+            target_sources(ttyd PRIVATE ${TTYD_PIPELINE_SEED})
+            if(TTYD_IOS)
+                set_property(TARGET ttyd APPEND PROPERTY RESOURCE ${TTYD_PIPELINE_SEED})
+            else()
+                set_source_files_properties(${TTYD_PIPELINE_SEED} PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
+            endif()
+            # a new seed must re-sign the bundle, which happens after the link
+            set_property(TARGET ttyd APPEND PROPERTY LINK_DEPENDS ${TTYD_PIPELINE_SEED})
+        elseif(NOT ANDROID)
+            add_custom_command(TARGET ttyd POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E copy_if_different ${TTYD_PIPELINE_SEED} $<TARGET_FILE_DIR:ttyd>)
+        endif()
+        message(STATUS "Bundling the pipeline seed ${TTYD_PIPELINE_SEED}")
     endif()
 endif()
 
@@ -577,7 +676,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Darwin" AND TTYD_BACKEND STREQUAL "aurora")
     set(TTYD_MACOS_BUNDLE_ID ${TTYD_MACOS_BUNDLE_ID_PREFIX}.${TTYD_EXE_NAME})
     set(TTYD_MACOS_MIN_VERSION ${CMAKE_OSX_DEPLOYMENT_TARGET})
     if(NOT TTYD_MACOS_MIN_VERSION)
-        set(TTYD_MACOS_MIN_VERSION 11.0)
+        set(TTYD_MACOS_MIN_VERSION 12.0)
     endif()
     configure_file(${CMAKE_SOURCE_DIR}/port/macos/Info.plist.in ${CMAKE_BINARY_DIR}/Info.plist @ONLY)
     set_target_properties(ttyd PROPERTIES MACOSX_BUNDLE ON

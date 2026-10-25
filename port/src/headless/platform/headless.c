@@ -25,3 +25,19 @@ BOOL portShotPending(void) {
 }
 
 void portShotFrame(void) {}
+
+void portInterpSceneDrawn(void) {}
+
+BOOL portInterpInBetween(void) {
+    return FALSE;
+}
+
+void* portInterpScratchAlloc(u32 size) {
+    (void)size;
+    return NULL;
+}
+
+void portInterpKeep(void* p, unsigned int n) {
+    (void)p;
+    (void)n;
+}

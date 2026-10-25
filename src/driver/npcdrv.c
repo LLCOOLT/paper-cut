@@ -1,4 +1,8 @@
 #define npcCheckInterrupt npcCheckInterrupt_hdr_void
+#ifdef TARGET_PC
+#include "port/platform.h"
+#endif
+#include "wide_x.h"
 #include "driver/npcdrv.h"
 #include "pc_call.h"
 #include "data/npc_data.h"
@@ -230,6 +234,11 @@ double atan2(double y, double x);
 #endif
 
 static inline void npcLuigiPoseFlip(NpcEntry* entry) {
+#ifdef TARGET_PC
+    if (portInterpInBetween()) {
+        return; /* it changes his animation: the game's own frames only */
+    }
+#endif
     if (entry->flags & 0x800000) {
         AnimationPose* animPose;
         AnimTableEntry* anim;
@@ -980,7 +989,7 @@ interrupt:
                     PSMTXMultVec(cam->view, &entry->position, &dv);
                     cam = camGetPtr((CameraId)4);
                     PSMTX44MultVec(cam->projection, &dv, &dv);
-                    if ((dv.z > -1.0f && dv.z < 0.0f && dv.x >= -2.0f && dv.x <= 2.0f && dv.y >= -2.0f && dv.y <= 2.0f) ||
+                    if ((dv.z > -1.0f && dv.z < 0.0f && dv.x >= -WIDE_X(2.0f) && dv.x <= WIDE_X(2.0f) && dv.y >= -2.0f && dv.y <= 2.0f) ||
                         (entry->flags & 0x40)) {
                         if (entry->color.r != 0xFF || entry->color.g != 0xFF || entry->color.b != 0xFF ||
                             entry->color.a != 0xFF) {
@@ -2361,9 +2370,17 @@ NpcEntry* fbatNpcTalkCheck(void) {
     return NULL;
 }
 
+#ifdef TARGET_PC
+/* PC port: rsh_02 uses the NPC hit (declared NpcEntry* there); the GameCube
+ * function is void, leaving fbatHitCheck's result in r3 */
+NpcEntry* fbatHitCheckAll(void) {
+    return (NpcEntry*)fbatHitCheck(0x13f1, NULL);
+}
+#else
 void fbatHitCheckAll(void) {
     fbatHitCheck(0x13f1, NULL);
 }
+#endif
 
 // FAKE: fbatHitCheck reads its NpcEntry/MarioWork/GlobalWork/CameraEntry/FieldBattleData fields as (*(T*)&((S*)p)->field): the plain field forms lower the function's inline cost, and the deferred inliner then pulls _npcHitCheckSphere/_npcHitCheckHammerAllMotion into it
 
@@ -3424,7 +3441,11 @@ BOOL npcCheckInterrupt(NpcEntry* npc);
 NpcEntry* _npcHitCheckHammerAllMotion(NpcEntry* npc, f32* dist, f32 r, f32 angle);
 NpcEntry* _npcHitCheckSphere(NpcEntry* npc, f32* dist, f32 x, f32 y, f32 z, f32 r);
 void* fbatHitCheck(u32 flags, void* a1);
+#ifdef TARGET_PC
+NpcEntry* fbatHitCheckAll(void);
+#else
 void fbatHitCheckAll(void);
+#endif
 NpcEntry* fbatNpcTalkCheck(void);
 void npcGroupDead(NpcEntry* entry, u16 reason);
 void _npcGroupDead(NpcEntry* entry, u16 reason);

@@ -46,7 +46,11 @@ static BattleUnitDefense defence;
 static BattleUnitDefenseAttr defence_attr;
 static StatusVulnerability regist;
 static PoseTableEntry pose_table[4];
+#ifdef TARGET_PC
+BattleDataEntry gesso_left_arm_data_table[16]; /* PC port: + data_table's entries, its end */
+#else
 BattleDataEntry gesso_left_arm_data_table[13];
+#endif
 static BattleDataEntry data_table[3];
 static BattleUnitKindPart parts[1];
 static EvtWord init_event[25];
@@ -178,6 +182,13 @@ BattleDataEntry gesso_left_arm_data_table[] = {
     {34, gesso_left_arm_damage_event},
     {35, gesso_left_arm_damage_event},
     {36, gesso_left_arm_damage_event},
+#ifdef TARGET_PC
+    /* PC port: no end here; on the GameCube the lookup (BtlUnit_GetData) runs on
+     * into data_table, defined next: its entries, then its end */
+    {10, gesso_arm_damage_pose_event},
+    {49, gesso_arm_dead_event},
+    {0},
+#endif
 };
 
 static BattleDataEntry data_table[] = {

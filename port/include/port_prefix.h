@@ -6,6 +6,29 @@
 
 #define TARGET_PC 1
 
+/* Save states (port/src/aurora/savestate_aurora.c): the game's data and bss
+ * (and the port's state the game's data depends on) in their own sections,
+ * copied as a whole. A REL's own sections header, included after this one,
+ * puts its data in its REL's sections instead. Bounds
+ * (snapshot_bounds_pc.c): Mach-O section$start/end; COFF grouped sections
+ * .data$ttyd_snap_{a,m,z} with markers in _a and _z; ELF __start_/__stop_.
+ * PORT_HOST_DATA: a variable among them that holds host scratch, not game
+ * state, kept out. */
+#if defined(TTYD_SAVE_STATES) && defined(TTYD_SNAPSHOT_SECTION) && !defined(TTYD_NO_SNAPSHOT)
+#if defined(__APPLE__)
+#pragma clang section data = "__DATA,__ttyd_snapd" bss = "__DATA,__ttyd_snapb"
+#define PORT_HOST_DATA __attribute__((section("__DATA,__data")))
+#elif defined(_WIN32)
+#pragma clang section data = ".data$ttyd_snap_m" bss = ".bss$ttyd_snap_m"
+#define PORT_HOST_DATA __attribute__((section(".data")))
+#else
+#pragma clang section data = "ttyd_snapd" bss = "ttyd_snapb"
+#define PORT_HOST_DATA __attribute__((section(".data")))
+#endif
+#else
+#define PORT_HOST_DATA
+#endif
+
 #ifdef TTYD_BACKEND_AURORA
 #include "port/aurora_compat.h"
 #endif
@@ -62,6 +85,11 @@ static inline double __frsqrte(double x) { return 1.0 / sqrt(x); }
 #include <sys/select.h>
 #endif
 #define select ttyd_select
+/* rand: the GameCube's (MSL's LCG, port/src/common/runtime_pc.c), not the host's */
+#define rand ttyd_rand
+#define srand ttyd_srand
+int ttyd_rand(void);
+void ttyd_srand(unsigned int seed);
 #define __fpclassifyf ttyd___fpclassifyf
 static inline unsigned int __cntlzw(unsigned int x) {
     return x == 0 ? 32 : (unsigned int)__builtin_clz(x);

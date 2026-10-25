@@ -1,4 +1,5 @@
 #include "driver/mobjdrv.h"
+#include "wide_x.h"
 #include "driver/mapdrv.h"
 #include "driver/npcdrv.h"
 #include "mario/mario_party.h"
@@ -304,6 +305,9 @@ void mobjKoopaOn(void) {
     }
 }
 
+#ifdef TARGET_PC
+MapObjectWork* portMobjGetWork(void); /* PC port: for the input scripts' mobj_all */
+#endif
 inline MapObjectWork* mobjGetWork(void) {
     if (koopaRunFlag) {
         return &work[2];
@@ -311,6 +315,11 @@ inline MapObjectWork* mobjGetWork(void) {
         return mobjGetWorkFlag(gp->inBattle);
     }
 }
+#ifdef TARGET_PC
+MapObjectWork* portMobjGetWork(void) {
+    return mobjGetWork();
+}
+#endif
 
 
 
@@ -894,7 +903,7 @@ void mobjMain(void) {
         if (!(entry->flags & 0x80)) {
             PSMTXMultVec(camGetPtr(CAMERA_3D)->view, &entry->position, &camPos);
             PSMTX44MultVec(camGetPtr(CAMERA_3D)->projection, &camPos, &camPos);
-            if (__fabs(camPos.x) > 1.5 || __fabs(camPos.y) > 1.5 || __fabs(camPos.z) > 1.0) {
+            if (__fabs(camPos.x) > WIDE_X(1.5) || __fabs(camPos.y) > 1.5 || __fabs(camPos.z) > 1.0) {
                 continue;
             }
         }

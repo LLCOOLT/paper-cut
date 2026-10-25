@@ -39,10 +39,10 @@ PiantaParlorWork* yuwp;
 EvtWord yuu_window_evt; /* a script address */
 
 EVT_BEGIN(minigame_end)
-    SET_VALUE(4244967296, 2)
-    SET_VALUE(4164968525, 1)
-    CALL(evt_mario_set_prev_party_pos, 0, 0, 4294966296, 0)
-    CALL(evt_mario_set_prev_party_pos, 1, 0, 4294966296, 0)
+    SET_VALUE(-50000000, 2)
+    SET_VALUE(-129998771, 1)
+    CALL(evt_mario_set_prev_party_pos, 0, 0, -1000, 0)
+    CALL(evt_mario_set_prev_party_pos, 1, 0, -1000, 0)
     CALL(evt_mario_set_enable_key, 0)
     CALL(evt_bero_mapchange, STRING("gor_03"), STRING("A_dokan_02"))
     RETURN
@@ -51,18 +51,18 @@ EVT_END()
 EVT_BEGIN(window_open)
     CALL(evt_mario_cont_onoff, 0)
     BEGIN_SIBLING_EVENT
-        CALL(evt_mario_get_pos, 0, 4264967297, 4264967298, 4264967299)
+        CALL(evt_mario_get_pos, 0, -29999999, -29999998, -29999997)
         LOOP(0)
             WAIT_FRAMES(1)
-            CALL(evt_mario_set_pos, 4264967297, 4264967298, 4264967299)
+            CALL(evt_mario_set_pos, -29999999, -29999998, -29999997)
         END_LOOP
     END_SIBLING_EVENT
-    CALL(yuuminigame_get_window_evt, 4264967296)
-    CALL_CHILD(4264967296)
+    CALL(yuuminigame_get_window_evt, -30000000)
+    CALL_CHILD(-30000000)
     CALL(evt_msg_print, 0, STRING("sysyuu_all_01"), 0, 0)
     CALL(evt_msg_select, 0, STRING("sysyuu_all_02"))
     CALL(evt_msg_continue)
-    IF_INT_EQUAL(4264967296, 0)
+    IF_INT_EQUAL(-30000000, 0)
         CALL(yuuminigame_end)
     END_IF
     CALL(yuuminigame_window_end)

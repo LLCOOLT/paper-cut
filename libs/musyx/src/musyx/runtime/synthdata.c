@@ -4,6 +4,11 @@
 #include "musyx/hardware.h"
 #include "musyx/snd.h"
 #include "musyx/version.h"
+#ifdef TTYD_SAVE_STATES
+/* the game keeps pointers into these allocations: on the save-state heap */
+#define PORT_SNAPHEAP_REDIRECT
+#include "port/snapheap.h"
+#endif
 
 static SDIR_TAB dataSmpSDirs[128];
 static u16 dataSmpSDirNum;

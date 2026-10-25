@@ -2138,14 +2138,25 @@ void _lvup_select_object_disp(CameraId camId, void* param) {
 #pragma dont_inline on
 void _check_audience_battle_end_exec(void) {
     BattleWork* wp = _battleWorkPointer;
+#ifdef TARGET_PC
+    /* PC port: the real setup types (a unit kind's level is at 0xE only with
+     * 4-byte pointers) */
+    BattleGroupSetup* group = wp->fbatInfo->setup->groupSetup;
+    s32 level = group->enemyData[0].mUnitKindParams->mLevel;
+#else
     SeqEndGroup* group = (SeqEndGroup*)wp->fbatInfo->setup->groupSetup;
     s32 level = group->units[0].kind[0xE];
+#endif
     s32 turn;
     s32 sum;
     s32 i;
     s32 lv;
     s32 limit;
+#ifdef TARGET_PC
+    BattleUnitSetup* unit;
+#else
     SeqEndUnitSetup* unit;
+#endif
 
     if (level > pouchGetPtr()->level + 1) {
         BattleAudience_Case_GreatVictory();
@@ -2153,10 +2164,17 @@ void _check_audience_battle_end_exec(void) {
     turn = wp->turnCount;
     lv = pouchGetPtr()->level + 1;
     sum = 0;
+#ifdef TARGET_PC
+    unit = group->enemyData;
+    for (i = 0; i < group->numEnemies; i++, unit++) {
+        sum += unit->mUnitKindParams->mLevel;
+    }
+#else
     unit = group->units;
     for (i = 0; i < group->count; i++, unit++) {
         sum += unit->kind[0xE];
     }
+#endif
     limit = sum * 2 / lv / 3;
     if (turn < limit) {
         BattleAudience_Case_FastVictory(limit - turn);

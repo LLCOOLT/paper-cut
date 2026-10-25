@@ -146,8 +146,15 @@ static EvtWord talk_powan[204];
 static NpcSetupInfo npc_data[7];
 EvtWord evt_tana_5[50];
 /* shelf access table read by READ_INT4: hit, msg, event, second msg; a NULL hit ends it */
+/* PC port: the end marker is read a whole row at a time (the GameCube reads
+ * on into the next object) */
+#ifdef TARGET_PC
+#define PORT_SHELF_END 4
+#else
+#define PORT_SHELF_END 1
+#endif
 typedef struct ShelfAccess { const char* hit; const char* msg; EvtWord* evt; const char* msg2; } ShelfAccess;
-typedef struct ShelfAccessTbl3 { ShelfAccess rows[3]; const char* end[1]; } ShelfAccessTbl3;
+typedef struct ShelfAccessTbl3 { ShelfAccess rows[3]; const char* end[PORT_SHELF_END]; } ShelfAccessTbl3;
 static ShelfAccessTbl3 access_tbl;
 static EvtWord evt_access[32];
 static EvtWord evt_access_entry[25];

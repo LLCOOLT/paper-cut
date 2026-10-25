@@ -20,6 +20,14 @@ const char* portIosDocumentsDir(void);
 const char* portIosSavesDir(void);
 const char* portIosCacheDir(void);
 
+/* Documents/env.txt: the debugging switches of docs/PC_PORT.md (TTYD_TRACE,
+ * TTYD_MAP, TTYD_INPUT, ...), one NAME=value per line (# comments), set
+ * unless already in the environment; "{docs}" in a value is the Documents
+ * folder. As Android's env.txt (iOS apps get no environment of their own):
+ * copy it in with the Files app, Finder or `xcrun devicectl device copy to`.
+ * Call before anything reads them. */
+void portIosLoadEnv(void);
+
 /* The system document picker. Begin presents it (0 if it can't); Poll returns
  * -1 while it is open, 0 if it was cancelled, 1 with the chosen file's path
  * in out. The file is imported: the picker's copy is moved into Documents, so
@@ -27,6 +35,10 @@ const char* portIosCacheDir(void);
  * between polls. */
 int portIosPickDiscBegin(void);
 int portIosPickDiscPoll(char* out, size_t size);
+
+/* port/src/aurora/layout_aurora.c: the allowed orientations changed
+ * (0 any, 1 landscape, 2 portrait). */
+void portIosRefreshOrientation(int orientation);
 
 #ifdef __cplusplus
 }

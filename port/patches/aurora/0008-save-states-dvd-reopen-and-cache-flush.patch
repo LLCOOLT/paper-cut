@@ -1,0 +1,147 @@
+From: Claude <noreply@anthropic.com>
+Subject: [PATCH] dvd, gx: save-state support (reopening files, flushing caches)
+
+aurora_dvd_open_files lists the open DVDFileInfos with their entry
+numbers; aurora_dvd_reopen_files closes the files open now and opens a
+saved list again into its (restored) DVDFileInfos, keeping their other
+fields. AuroraFlushTextureCaches drops the texture and EFB copy caches.
+---
+--- a/include/aurora/dvd.h
++++ b/include/aurora/dvd.h
+@@ -129,6 +129,19 @@
+  */
+ s32 aurora_dvd_base_entry_count();
+ 
++/**
++ * Save states: the files open now (each DVDFileInfo and its entry number). A state restored later (the game's
++ * memory, its DVDFileInfos included, put back) passes its list to aurora_dvd_reopen_files: the files open at that
++ * moment are closed and the state's are opened again into their DVDFileInfos. Call both with no command queued
++ * (aurora_dvd_wait_idle). Returns the number of open files; at most max are written.
++ */
++typedef struct AuroraDvdOpenFile {
++  struct DVDFileInfo* fileInfo;
++  s32 entrynum;
++} AuroraDvdOpenFile;
++u32 aurora_dvd_open_files(AuroraDvdOpenFile* out, u32 max);
++void aurora_dvd_reopen_files(const AuroraDvdOpenFile* files, u32 count);
++
+ #ifdef __cplusplus
+ }
+ #endif
+--- a/lib/dolphin/dvd/dvd.cpp
++++ b/lib/dolphin/dvd/dvd.cpp
+@@ -18,6 +18,7 @@
+ #include <mutex>
+ #include <string>
+ #include <thread>
++#include <unordered_map>
+ #include <utility>
+ #include <vector>
+ 
+@@ -45,6 +46,12 @@
+   bool s_overlayCallbacksSet = false;
+   AuroraOverlayCallbacks s_overlayCallbacks;
+   std::mutex s_fstLock;
++  // open files (save states): the handle each was given, and its entry number
++  struct OpenFile {
++    void* handle;
++    s32 entrynum;
++  };
++  std::unordered_map<DVDFileInfo*, OpenFile> s_openFiles;
+ }
+ 
+ namespace {
+@@ -1109,6 +1116,7 @@
+     fileInfo->auroraHandle = new CommandDataNod(handle);
+   }
+ 
++  s_openFiles[fileInfo] = {fileInfo->auroraHandle, entrynum};
+   return TRUE;
+ }
+ 
+@@ -1125,12 +1133,59 @@
+     return FALSE;
+   }
+   s_worker.drain_command(&fileInfo->cb);
++  {
++    std::lock_guard lock(s_fstLock);
++    s_openFiles.erase(fileInfo);
++  }
+   delete static_cast<CommandDataBase*>(fileInfo->auroraHandle);
+   fileInfo->auroraHandle = nullptr;
+   atomic_store_release(fileInfo->cb.state, DVD_STATE_END);
+   return TRUE;
+ }
+ 
++u32 aurora_dvd_open_files(AuroraDvdOpenFile* out, u32 max) {
++  std::lock_guard lock(s_fstLock);
++  u32 n = 0;
++  for (const auto& [fileInfo, file] : s_openFiles) {
++    if (n < max) {
++      out[n] = {fileInfo, file.entrynum};
++    }
++    ++n;
++  }
++  return n;
++}
++
++void aurora_dvd_reopen_files(const AuroraDvdOpenFile* files, u32 count) {
++  s_worker.wait_idle();
++  std::unordered_map<DVDFileInfo*, OpenFile> open;
++  {
++    std::lock_guard lock(s_fstLock);
++    open.swap(s_openFiles);
++  }
++  // the handles of now: no longer reachable from the restored memory
++  for (const auto& [fileInfo, file] : open) {
++    delete static_cast<CommandDataBase*>(file.handle);
++  }
++  // the state's files, open again; their DVDFileInfos keep the rest of the state's values
++  for (u32 i = 0; i < count; ++i) {
++    DVDFileInfo* fileInfo = files[i].fileInfo;
++    const u32 startAddr = fileInfo->startAddr;
++    const u32 length = fileInfo->length;
++    const auto callback = fileInfo->callback;
++    const DVDCommandBlock cb = fileInfo->cb;
++    if (!DVDFastOpen(files[i].entrynum, fileInfo)) {
++      fileInfo->auroraHandle = nullptr;
++      continue;
++    }
++    fileInfo->startAddr = startAddr;
++    fileInfo->length = length;
++    fileInfo->callback = callback;
++    const auto handle = fileInfo->auroraHandle;
++    fileInfo->cb = cb;
++    fileInfo->auroraHandle = handle;
++  }
++}
++
+ BOOL DVDGetCurrentDir(char* path, u32 maxlen) {
+   if (path == nullptr || maxlen == 0) {
+     return FALSE;
+--- a/include/dolphin/gx/GXAurora.h
++++ b/include/dolphin/gx/GXAurora.h
+@@ -179,6 +179,12 @@
+  * Retrieves the current content framebuffer size.
+  */
+ void AuroraGetRenderSize(u32* width, u32* height);
++
++/**
++ * Drops the texture and EFB copy caches (e.g. after game memory was replaced wholesale, by a save state). Call with
++ * no draw pending (after GXDrawDone).
++ */
++void AuroraFlushTextureCaches(void);
+ 
+ /**
+  * Flush pending GX state and wait for FIFO processing without signaling a draw-done callback.
+--- a/lib/dolphin/gx/GXAurora.cpp
++++ b/lib/dolphin/gx/GXAurora.cpp
+@@ -127,3 +127,8 @@
+ GXBool AuroraReadbackGet(AuroraReadbackStream stream, AuroraReadbackDest* dests, u32 count) {
+   return aurora::gx::readback::get(stream, dests, count);
+ }
++
++void AuroraFlushTextureCaches(void) {
++  aurora::gx::clear_static_texture_cache();
++  aurora::gx::clear_copy_texture_cache();
++}

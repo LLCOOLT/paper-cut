@@ -2,6 +2,7 @@
 #include "hwaccess.h"
 #include <dolphin/os/OSFastCast.h>
 #include "driver/arcdrv.h"
+#include "eff/eff_maya_data.h"
 #include "eff/eff_n64.h"
 #include "manager/dvdmgr.h"
 #include "mario/mariost.h"
@@ -318,50 +319,9 @@ EffectSet* effGetSet(const char* name) {
 	return NULL;
 }
 
-typedef struct MayaKey {
-	s16 time;
-	u8 data[0xb0];
-} MayaKey;
-
-typedef struct MayaKeyList {
-	s32 count;
-	MayaKey* keys;
-	s32 pad[2];
-} MayaKeyList;
-
-typedef struct MayaListHdr {
-	s32 count;
-	MayaKeyList* entries;
-} MayaListHdr;
-
-typedef struct MayaAnimData {
-	u8 pad0[4];
-	f32 endTime;
-	MayaListHdr* lists;
-} MayaAnimData;
-
-typedef struct MayaJoint {
-	Mtx mtx;
-	f32 alpha;
-} MayaJoint;
-
-typedef struct MayaAnim {
-	u16 flags;
-	f32 time;
-	OSTime startTime;
-	MayaAnimData* data;
-	MayaJoint joints[1];
-} MayaAnim;
-
-typedef struct MayaPoly {
-	s32 pad0[2];
-	s32 count;
-	s16** strips;
-} MayaPoly;
-
 // per-key interpolation and the GQR5 setup were inlines in the original: inline locals take the low registers,
 // last declared lowest (qv0 f9 .. qm1 f12 above dt f8 / s f7 / s3 f6 / s2 f5; gqr r9 under the key-offset temp r10)
-static inline void effMayaKeyInterp(MayaKey* prev, MayaKey* curr, f32 t, f32* buf) {
+static inline void effMayaKeyInterp(MayaHermitKey* prev, MayaHermitKey* curr, f32 t, f32* buf) {
 	s32 i;
 	f32* out;
 	register s8* pb;
@@ -401,17 +361,17 @@ static inline void effMayaSetGQR(void) {
 	HW_SET_GQR5(gqr);
 }
 
-void effCalcMayaAnimMatrix(MayaAnim* anim, MayaKeyList* list, f32* mtx, f32* alpha) {
+void effCalcMayaAnimMatrix(MayaAnim* anim, MayaPoly* list, f32* mtx, f32* alpha) {
 	f32 buf[22];
 	Mtx trans; Mtx scale; Mtx tmp2; Mtx pivot2; Mtx pivot2Inv; Mtx trans3; Mtx pivot1; Mtx pivot1Inv; Mtx trans2; Mtx rotX; Mtx rotY; Mtx rotZ; Mtx tmp;
 
-	s32 n = list->count;
+	s32 n = list->keyCount;
 	s32 k;
 	f32 t;
 
 	for (k = 1; k < n; k++) {
-		MayaKey* prev;
-		MayaKey* curr;
+		MayaHermitKey* prev;
+		MayaHermitKey* curr;
 		curr = &list->keys[k];
 		prev = &list->keys[k - 1];
 		effMayaSetGQR();
@@ -481,7 +441,7 @@ void effCalcMayaAnim(MayaAnim* anim) {
 			anim->flags |= 2;
 		}
 		for (i = 0; i < anim->data->lists->count; i++) {
-			effCalcMayaAnimMatrix(anim, &anim->data->lists->entries[i], (f32*)anim->joints[i].mtx, &anim->joints[i].alpha);
+			effCalcMayaAnimMatrix(anim, &anim->data->lists->polys[i], (f32*)anim->joints[i].mtx, &anim->joints[i].alpha);
 		}
 	}
 }
@@ -514,7 +474,7 @@ void effCalcMayaAnim(MayaAnim* anim);
 void effPlayMayaAnim(MayaAnim* anim);
 void effDeleteMayaAnim(MayaAnim* anim);
 MayaAnim* effMayaAnimAlloc(MayaAnimData* data);
-void effCalcMayaAnimMatrix(MayaAnim* anim, MayaKeyList* list, f32* mtx, f32* alpha);
+void effCalcMayaAnimMatrix(MayaAnim* anim, MayaPoly* list, f32* mtx, f32* alpha);
 EffectSet* effGetSet(const char* name);
 EffectEntry* effNameToPtr(const char* name);
 void effSoftDelete(EffectEntry* effect);

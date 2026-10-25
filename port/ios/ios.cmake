@@ -47,9 +47,18 @@ target_link_libraries(ttyd_ios PRIVATE ${AURORA_SDL3_TARGET})
 target_link_libraries(ttyd PRIVATE ttyd_ios "-framework Foundation" "-framework UIKit"
     "-framework UniformTypeIdentifiers")
 
-# Placeholder icons, generated (port/ios/make_icon.py).
+# Icons (port/ios/make_icon.py): the title screen's key art from the user's own
+# extracted disc (data/<version>/files/mariost.tpl) when it is there, else a
+# generated placeholder. The art is never in the repository, only in the build.
 set(_ios_icon_dir ${CMAKE_BINARY_DIR}/ios/icons)
-execute_process(COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_LIST_DIR}/make_icon.py ${_ios_icon_dir}
+set(_ios_icon_art ${CMAKE_SOURCE_DIR}/data/${TTYD_VERSION}/files/mariost.tpl)
+if(EXISTS ${_ios_icon_art})
+    set(_ios_icon_args --art ${_ios_icon_art})
+    set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${_ios_icon_art})
+else()
+    set(_ios_icon_args)
+endif()
+execute_process(COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_LIST_DIR}/make_icon.py ${_ios_icon_dir} ${_ios_icon_args}
     COMMAND_ERROR_IS_FATAL ANY)
 set(_ios_icons
     ${_ios_icon_dir}/AppIcon60x60@2x.png
@@ -57,6 +66,15 @@ set(_ios_icons
     ${_ios_icon_dir}/AppIcon76x76@2x~ipad.png
     ${_ios_icon_dir}/AppIcon83.5x83.5@2x~ipad.png)
 target_sources(ttyd PRIVATE ${_ios_icons})
+# The bundle is signed after the link (below): a changed icon must relink, or
+# the copied resource breaks the existing signature.
+set_property(TARGET ttyd APPEND PROPERTY LINK_DEPENDS ${_ios_icons})
+
+# The app's page in the Settings app (the widescreen switch).
+set(_ios_settings ${CMAKE_CURRENT_LIST_DIR}/Settings.bundle/Root.plist)
+target_sources(ttyd PRIVATE ${_ios_settings})
+set_source_files_properties(${_ios_settings} PROPERTIES MACOSX_PACKAGE_LOCATION Settings.bundle)
+set_property(TARGET ttyd APPEND PROPERTY LINK_DEPENDS ${_ios_settings})
 
 configure_file(${CMAKE_CURRENT_LIST_DIR}/Info.plist.in ${CMAKE_BINARY_DIR}/ios/Info.plist @ONLY)
 # iOS bundles are flat: the executable, Info.plist and RESOURCE files sit at

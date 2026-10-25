@@ -752,9 +752,17 @@ void FontDrawMessageMtx(Mtx mtx, const char* msg) {
 	}
 }
 
+#ifdef TARGET_PC
+/* PC port: msgdrv.c uses the glyph (declared u16 there); the GameCube
+ * function is void, leaving JUTFont_CodeToGlyph's result in r3 */
+u16 hankakuSearch(s8 c) {
+	return JUTFont_CodeToGlyph(FONT_CH(c));
+}
+#else
 void hankakuSearch(s8 c) {
 	JUTFont_CodeToGlyph(FONT_CH(c));
 }
+#endif
 
 u16 kanjiSearch(u32 code) {
 	return JUTFont_CodeToGlyph(code);
