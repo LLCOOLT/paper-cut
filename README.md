@@ -7,6 +7,8 @@ The game code is C, from the decompilation in [LLCOOLT/ttyd](https://github.com/
 
 **No game data is included.** You need your own copy of the game: the port runs from your disc image.
 
+**Download:** packages for Windows, macOS (Apple silicon), Linux (x86-64), iOS (unsigned, for sideloading) and Android are on the [Releases](https://github.com/LLCOOLT/ttyd-port/releases) page, for both versions. To build it yourself, see [Building and running](#building-and-running).
+
 ## Features
 
 **Playing**
@@ -20,13 +22,14 @@ The game code is C, from the decompilation in [LLCOOLT/ttyd](https://github.com/
 - Any window size, an internal resolution of 1–8×, and an FPS counter.
 
 **Settings page:** F1, a controller's Back/Select, or a three-finger tap. It covers:
-- video, audio and controls (rumble, on-screen controls);
-- gameplay (fast-forward, text speed, run speed, skip intro);
-- **save warps:** continue from any `.gci` save, e.g. a practice save pack.
+- video, audio and controls (button remapping, rumble, on-screen controls);
+- gameplay (fast-forward, text speed, run speed, skip intro, an action-command cue);
+- **save warps:** continue from any `.gci` save, e.g. a practice save pack;
+- screenshots (F12), and a clock and battery overlay.
 
 **Save states:** four slots, F5 to save and F8 to load.
 
-**Mods:** a mods folder and a Mods tab on the settings page. Mods replace or add disc files, textures and text (Dolphin texture packs work as they are), change game data, run scripts and code, and GameCube code mods can be ported from their source. US builds play [Archipelago](https://archipelago.gg) multiworld seeds. See [docs/MODDING.md](docs/MODDING.md).
+**Mods:** a mods folder and a Mods tab on the settings page. Mods replace or add disc files, textures and text (Dolphin texture packs work as they are), change game data, run scripts and code, and GameCube code mods can be ported from their source. US builds apply [Archipelago](https://archipelago.gg) multiworld seeds and connect to the server themselves (playing one also needs the randomizer's game-side mod, built from its source). See [docs/MODDING.md](docs/MODDING.md).
 
 **Phones and tablets**
 - On-screen controls: movable, sized, with haptics.
@@ -42,7 +45,7 @@ The game code is C, from the decompilation in [LLCOOLT/ttyd](https://github.com/
 | Windows (x86-64) | Plays. Every map, battle and story sweep passes. Built with clang. |
 | macOS (arm64, x86-64) | Plays (Aurora `.app`). Every map boots, JP and US. |
 | iOS | Plays on a device (iPhone, US) and in the Simulator. Disc image in the app's Documents. |
-| Linux (x86-64, aarch64) | Cross-compiled and linked; not yet run on a Linux machine. |
+| Linux (x86-64, aarch64) | x86-64 builds on Ubuntu 24.04 (CI, in a container): every map boots and saves work, headless. Not yet played on a Linux desktop. aarch64 is cross-compiled and linked only. |
 | Android (arm64) | Both APKs build; not yet run on a device. |
 
 ## Building and running
@@ -77,7 +80,7 @@ open build-pc-us-aurora/ttyd-us.app
 
 - Opened without a disc, the app asks for one. You can also drop a disc image on its icon, or run `build-pc-us-aurora/ttyd-us.app/Contents/MacOS/ttyd-us "path/to/your/disc.iso"`.
 - Saves, settings and caches are in `~/Library/Application Support/ttyd/`.
-- `cmake --install build-pc-us-aurora --prefix dist` makes a self-contained, ad hoc signed copy. It isn't notarized: on another Mac, right-click > Open it the first time.
+- `cmake --install build-pc-us-aurora --prefix dist` makes a self-contained, ad hoc signed copy. It isn't notarized, so another Mac blocks it the first time: try to open it, then System Settings > Privacy & Security > Open Anyway (before macOS 15: right-click > Open).
 - The build is for the Mac's own architecture. For Intel from Apple silicon, add `-DCMAKE_OSX_ARCHITECTURES=x86_64 -DAURORA_NOD_PROVIDER=package`.
 
 ### iOS and iPadOS
@@ -104,7 +107,7 @@ xcrun devicectl device install app --device <device id> build-ios-us/ttyd-us.app
 
 ### Linux
 
-Not yet built or run on a Linux machine: so far it is cross-compiled and linked for x86-64 and arm64 from Windows. Reports are welcome in this repository's issues.
+CI builds and tests x86-64 on Ubuntu 24.04 (headless: every map, saves), but nobody has played it on a Linux desktop yet; reports are welcome in this repository's issues. arm64 is so far cross-compiled and linked only.
 
 Needs clang (the RELs are linked in with clang-only section pragmas), CMake 3.25+, Ninja, Python 3 and LLVM's tools. On Debian/Ubuntu:
 
@@ -129,7 +132,10 @@ Android builds, and more detail for every platform, are in [docs/PC_PORT.md](doc
 - every PC build configuration;
 - unit tests and audits;
 - the Linux cross-check and the Android build;
-- every map with golden audio.
+- every map with golden audio;
+- memory card saves, the example mods and an Archipelago session.
+
+CI runs it on self-hosted runners, with Linux in an Ubuntu container on a Mac ([docs/RELEASING.md](docs/RELEASING.md)).
 
 Scripted controller input (`TTYD_INPUT`), map warps (`TTYD_MAP`) and frame captures (`TTYD_SHOT`) drive the sweeps; [docs/PC_PORT.md](docs/PC_PORT.md#testing) lists them.
 
@@ -142,10 +148,11 @@ Scripted controller input (`TTYD_INPUT`), map warps (`TTYD_MAP`) and frame captu
 | [docs/APPLE_BRIEF.md](docs/APPLE_BRIEF.md) | Bringing up macOS and iOS |
 | [docs/MODDING.md](docs/MODDING.md) | Making and installing mods |
 | [docs/MODDING_PLAN.md](docs/MODDING_PLAN.md) | The mod survey and the plan for mod support |
+| [docs/RELEASING.md](docs/RELEASING.md) | CI, the self-hosted runners, and cutting a release |
 
 ## Credits
 
-- **The decompilation:** [LLCOOLT/ttyd](https://github.com/LLCOOLT/ttyd).
+- **The decompilation:** [LLCOOLT/ttyd](https://github.com/LLCOOLT/ttyd), started by NWPlayer123, with its contributors.
 - **The platform layer:** [Aurora](https://github.com/encounter/aurora) (the GameCube SDK on WebGPU/Dawn and SDL3), [Dawn](https://dawn.googlesource.com/dawn) and [SDL](https://www.libsdl.org/).
 - **The settings page** follows the one in Dusklight, the Twilight Princess port on Aurora.
 

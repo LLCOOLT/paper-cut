@@ -1,17 +1,19 @@
 CI and releases
 ===============
 
-GitHub runs the port's checks and builds on a **self-hosted runner**: this
-machine, which has the disc images the tests need. Self-hosted jobs use no
-GitHub Actions minutes. The GitHub-hosted workflows (`pc-port.yml`,
-`build.yml`) stay manual-only.
+GitHub runs the port's checks and builds on two **self-hosted runners**: a
+Windows PC and a Mac, both with the disc images the tests need. Self-hosted
+jobs use no GitHub Actions minutes. The GitHub-hosted workflows
+(`pc-port.yml`, `build.yml`) stay manual-only.
 
 | Workflow | When | What |
 |---|---|---|
-| [`ci.yml`](../.github/workflows/ci.yml) | a push to `main` or `modding`, a pull request, or by hand | `tools/port/local_ci.py`: every stage on `main` and by hand, `--quick` otherwise; the logs as an artifact |
+| [`ci.yml`](../.github/workflows/ci.yml) | a push to `main` or `modding`, a pull request, or by hand | `tools/port/local_ci.py` on Windows (every stage on `main` and by hand, `--quick` otherwise), and its headless stages on Linux in a container on the Mac; the logs as artifacts |
 | [`release.yml`](../.github/workflows/release.yml) | a tag `v<version>`, or by hand (the Mac alone) | every local CI stage, then `tools/port/release.py` on the Windows runner and then the Mac runner: release builds and a **draft** GitHub release |
 
-## The runner
+Steps that download (configuring and building, which fetch dependencies; Gradle; the container's packages; GitHub's API) are retried after 30 seconds and 2 minutes, so a passing outage of a server doesn't fail a run.
+
+## The Windows runner
 
 - **Where it lives:** `C:\actions-runner-ttyd-port`, registered to `LLCOOLT/ttyd-port` with the label `ttyd-port`. The workflows ask for `[self-hosted, ttyd-port]`.
 - **The other runner:** the one in `C:\actions-runner` serves `LLCOOLT/ttyd`, the decomp repo.
@@ -41,6 +43,8 @@ GitHub Actions minutes. The GitHub-hosted workflows (`pc-port.yml`,
    - `SHA256SUMS-macos.txt`, and those checksums in the notes.
 4. Check the draft on GitHub (Releases), then publish it.
 
+**If the Windows job fails after local CI passed** (packaging, a download), re-running it repeats the CI. Instead, on the Windows PC at the tagged commit, `python tools/port/release.py <version> --publish v<version>` makes the Windows and Android packages and the draft; then re-run only the run's Mac job (`gh run rerun <run id> --job <the apple job's id>`), which adds its packages to that draft.
+
 To build the packages without publishing, run `python tools/port/release.py 0.1.0` (they go to `dist/`). `--targets` picks what to build (`desktop`, `android`, `ios`, `linux`; by default Windows builds `desktop,android` and a Mac `desktop,ios,linux`). Running the Release workflow by hand builds the Mac's packages alone, as an artifact, to try the Mac runner.
 
 ## The Mac runner
@@ -56,5 +60,5 @@ To build the packages without publishing, run `python tools/port/release.py 0.1.
 The usual builds compile in a few pieces extracted from the disc when a checkout has them: the memory card banner and icon, and the DSP microcode (`build/<version>/include/assets`). A release must not contain them.
 
 - **Separate builds:** `release.py` builds in its own folders (`build-release-<jp|us>`) with `-DTTYD_NO_DISC_ASSETS=ON`, which forces the stand-ins. The APKs get the same through Gradle's `-PnoDiscAssets`.
-- **A check:** it then searches every executable and library it packages for bytes of each extracted asset, and stops the release if it finds one.
+- **A check:** it then searches every executable and library it packages for bytes of each extracted asset, and stops the release if it finds one. (Where there are no extracted assets to compare with, as on the Mac, the builds had nothing to compile in.)
 - **The disc image itself:** it never goes in a package. Players supply their own.

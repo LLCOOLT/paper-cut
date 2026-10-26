@@ -17,8 +17,8 @@ builds without it and runs from the user's own disc image.
 | Audio (MusyX on PC; every map plays, checked by ear) | done; SDL output not yet heard on a real device |
 | Memory card: create a file, save at a Save Block, reload | done, headless and Aurora (the same `.gci` files) |
 | GameCube matching build unchanged (SHA-1 OK, both versions) | checked after every change |
-| CI | local: `tools/port/local_ci.py` (below); the GitHub workflow is disabled |
-| Linux | written; cross-compiled and linked for x86_64/aarch64, not yet built or run on Linux (WSL: `local_ci.py`'s linux stage) |
+| CI | `tools/port/local_ci.py` (below), on self-hosted runners (Windows; Linux in a container on a Mac: docs/RELEASING.md); the GitHub-hosted workflows are manual-only |
+| Linux | x86_64: built and tested on Ubuntu 24.04 in CI (headless: unit and disc tests, every map with golden audio, memory card scripts; the Aurora build is packaged but not yet played on a Linux desktop); aarch64: cross-compiled and linked only |
 | macOS (arm64, x86_64; headless and Aurora `.app`) | builds (Apple clang, Xcode 26); every map boots headless, JP and US (arm64; JP also x86_64 under Rosetta); every JP map captured on Aurora, 4:3 and widescreen; unit tests and audits pass; GameCube matching build runs here (wibo); golden audio differs from Windows (libm, Testing) |
 | iOS | Simulator: boots from the disc in Documents, plays, touch controls drive Mario, background pause/resume; 4:3 by default, 16:9 widescreen opt-in (Settings app). Device: the US build runs on an iPhone 17 Pro (development-signed; iOS section) |
 | Android | builds (both APKs, on Windows); not yet run on a device |
@@ -86,15 +86,15 @@ table (frame lines end in `(ttyd-jp+0xOFFSET)`: `addr2line -e ttyd-jp
 0xOFFSET`); `$TTYD_WATCHDOG` signals the main thread (`SIGUSR2`) to print its
 own stack. The headless DVD layer resolves disc paths case-insensitively.
 
-Status: written and checked on Windows only (no Linux host yet): the headless
-build and unit tests of both versions compile for `x86_64-linux-gnu` and
-`aarch64-linux-gnu` against stand-in glibc headers and link with ld.lld (C
-library left unresolved), the REL section layout of the linked ELF was checked
-(`tools/port/linux_xcheck.py`), and the Aurora backend's sources compile for
-x86_64 Linux (with Aurora's and SDL3's headers).
-Not yet built or run on Linux. The golden audio hashes were recorded on
-Windows x86_64: glibc's libm or arm64 floating point may change them without
-anything being wrong, so a Linux mismatch needs a listen before an update.
+Status: x86_64 is built and tested on Ubuntu 24.04 in CI (an x86_64 container
+on the Mac runner, `tools/port/linux_container.py`): both versions' headless
+builds pass the unit and disc tests, every map with the golden audio hashes
+(recorded on Windows, and equal on Linux), and the memory card scripts. The
+Aurora build is built and packaged there (the release's Linux zips), but no
+one has played it on a Linux desktop yet. aarch64 is only compiled and linked,
+against stand-in glibc headers (`tools/port/linux_xcheck.py`, local CI's linux
+stage without WSL); arm64 floating point may change the audio hashes without
+anything being wrong, so a mismatch there needs a listen before an update.
 ### macOS
 
 Status: built and run on an Apple-silicon Mac (macOS 26, Xcode 26.3): both
@@ -148,8 +148,9 @@ cmake --install build-pc-jp --prefix dist  # self-contained, ad hoc signed copy
 - Game threads (`os_thread_pc.c`): macOS's ucontext is deprecated and iOS has
   none, so each coroutine is a host thread with a baton (one runs at a time),
   as on Android and musl.
-- Not notarized: a downloaded copy needs right-click > Open once (or
-  `xattr -dr com.apple.quarantine ttyd-jp.app`).
+- Not notarized: a downloaded copy is blocked the first time; System Settings >
+  Privacy & Security > Open Anyway allows it (before macOS 15, right-click >
+  Open), or `xattr -dr com.apple.quarantine ttyd-jp.app`.
 - Golden audio hashes (`map_sweep --golden`) are recorded on Windows x64;
   arm64 (fused multiply-add) and Apple's libm may round differently.
 
@@ -441,7 +442,10 @@ tests, audits (`proto_audit`, `gen_bedecode --check`, `diag_census`), map
 sweeps with golden audio and the card scripts (headless and Aurora, then the
 headless card loaded on Aurora), plus a Linux build in WSL when
 a distribution is installed; independent stages run at once, each logs to
-`build-ci/<stage>.log`. `--quick` leaves out the sweeps and card scripts.
+`build-ci/<stage>.log`. `--quick` leaves out the sweeps and card scripts. On
+Linux (CI's container) `TTYD_BUILD_SUFFIX=-linux TTYD_CI_HEADLESS_ONLY=1` keeps
+its builds apart and leaves out Aurora. Steps that download (configuring,
+building, Gradle) are retried after 30 s and 2 minutes.
 
 `ctest --test-dir build-pc-jp -LE slow` (build the test targets first, see
 the workflow): decoder and loader unit tests on synthetic data, plus, when the

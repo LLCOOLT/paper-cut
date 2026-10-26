@@ -66,11 +66,19 @@ def package_platform():
     return f"{host()}-{arch()}"
 
 
-def run(cmd, **kw):
+def run(cmd, retry=True, env=None):
+    """cmd, which must succeed. Each command here may download (CMake's
+    FetchContent, Cargo, Gradle, GitHub) and is safe to repeat, so a failure
+    is retried (local_ci.RETRY_WAITS) unless retry=False."""
+    env = env or local_ci.ENV
     # (Windows looks a bare command up on this process's PATH, not env's)
-    cmd = [shutil.which(cmd[0], path=local_ci.ENV.get("PATH")) or cmd[0]] + list(cmd[1:])
-    print("$", " ".join(cmd), flush=True)
-    subprocess.run(cmd, check=True, env=local_ci.ENV, **kw)
+    cmd = [shutil.which(cmd[0], path=env.get("PATH")) or cmd[0]] + list(cmd[1:])
+
+    def attempt():
+        print("$", " ".join(cmd), flush=True)
+        return subprocess.run(cmd, env=env).returncode == 0
+    if not (local_ci.retrying(attempt, os.path.basename(cmd[0])) if retry else attempt()):
+        sys.exit(f"release: failed: {' '.join(cmd)}")
 
 
 def build(short, version_string, kind="desktop"):
@@ -135,7 +143,7 @@ def package_desktop(short, out, version_string, dist):
         check_no_disc_data([p for p, _ in files], VERSIONS[short])
     elif host() == "macos":
         # the bundle as cmake --install leaves it: its non-system libraries
-        # copied in, signed ad hoc (not notarized: right-click > Open once)
+        # copied in, signed ad hoc (not notarized: Open Anyway once)
         stage = os.path.join(out, "stage")
         shutil.rmtree(stage, ignore_errors=True)
         run(["cmake", "--install", out, "--prefix", stage])
@@ -184,7 +192,9 @@ def package_desktop(short, out, version_string, dist):
 
 def how_to_play(short):
     region = "Japanese (G8MJ01)" if short == "jp" else "US (G8ME01)"
-    start = {"windows": f"ttyd-{short}.exe", "macos": f"ttyd-{short}.app (the first time: right-click > Open)",
+    start = {"windows": f"ttyd-{short}.exe",
+             "macos": f"ttyd-{short}.app (the first time macOS blocks it: System Settings >\n"
+                      "Privacy & Security > Open Anyway; before macOS 15, right-click > Open)",
              "linux": f"ttyd-{short}"}[host()]
     return f"""Paper Mario: The Thousand-Year Door, native port ({region})
 
@@ -212,10 +222,8 @@ def package_android(dist, version_string):
         jdk = sorted(glob.glob(os.path.join(sdk_home, "jdk-17*")))
         if jdk:
             env["JAVA_HOME"] = jdk[-1]
-    cmd = [gradle, "--no-daemon", "-p", os.path.join(ROOT, "port", "android"), "-PnoDiscAssets",
-           "assembleJpDebug", "assembleUsDebug"]
-    print("$", " ".join(cmd), flush=True)
-    subprocess.run(cmd, check=True, env=env)
+    run([gradle, "--no-daemon", "-p", os.path.join(ROOT, "port", "android"), "-PnoDiscAssets",
+         "assembleJpDebug", "assembleUsDebug"], env=env)
     out = []
     for short in ("jp", "us"):
         apk = sorted(glob.glob(os.path.join(ROOT, "port", "android", "app", "build", "outputs", "apk", short, "debug",
@@ -271,23 +279,51 @@ def notes(version_string, sums):
     return body
 
 
+def gh_out(gh, args):
+    """gh's output, or None when it fails (retried: GitHub's API fails now
+    and then too)."""
+    out = []
+
+    def attempt():
+        r = subprocess.run([gh, *args], capture_output=True, text=True, env=local_ci.ENV)
+        out[:] = [r]
+        return r.returncode == 0
+    local_ci.retrying(attempt, "gh " + args[0])
+    return out[0].stdout if out[0].returncode == 0 else None
+
+
 def publish(tag, version_string, files, sums, dist):
     gh = shutil.which("gh", path=local_ci.ENV.get("PATH")) or "gh"
-    exists = subprocess.run([gh, "release", "view", tag], capture_output=True, env=local_ci.ENV).returncode == 0
-    if not exists:
+    # (whether the release is there: `gh release view` fails for "not
+    # found" as for an error, so the list of releases is asked instead)
+    tags = gh_out(gh, ["release", "list", "--limit", "100", "--json", "tagName", "-q", ".[].tagName"])
+    if tags is None:
+        sys.exit("release: can't list the repository's releases")
+    if tag not in tags.split():
+        # a new draft (created once: it isn't retried, the uploads are),
+        # then the files
         run([gh, "release", "create", tag, "--draft", "--title", f"TTYD port {version_string}",
-             "--notes-file", os.path.join(dist, "notes.md"), *files, os.path.join(dist, "SHA256SUMS.txt")])
+             "--notes-file", os.path.join(dist, "notes.md")], retry=False)
+        run([gh, "release", "upload", tag, "--clobber", *files, os.path.join(dist, "SHA256SUMS.txt")])
         return
     # another runner's release: these files beside its own, their checksums
-    # in a file of their own and added to the notes
+    # in a file of their own and in the notes (in place of this runner's from
+    # an earlier run)
     extra = os.path.join(dist, f"SHA256SUMS-{host()}.txt")
     shutil.copy(os.path.join(dist, "SHA256SUMS.txt"), extra)
     run([gh, "release", "upload", tag, "--clobber", *files, extra])
-    body = subprocess.run([gh, "release", "view", tag, "--json", "body", "-q", ".body"], capture_output=True,
-                          text=True, env=local_ci.ENV, check=True).stdout.rstrip("\n")
-    body += "\n\nSHA-256 (" + os.path.basename(extra) + "):\n```\n" + "\n".join(sums) + "\n```\n"
+    body = gh_out(gh, ["release", "view", tag, "--json", "body", "-q", ".body"])
+    if body is None:
+        sys.exit("release: can't read the release's notes")
+    head = "\n\nSHA-256 (" + os.path.basename(extra) + "):\n"
+    body = body.rstrip("\n")
+    if head in body:
+        start = body.index(head)
+        end = body.find("```\n", body.index("```\n", start) + 4)
+        body = body[:start] + (body[end + 4:] if end >= 0 else "")
+    body = body.rstrip("\n") + head + "```\n" + "\n".join(sums) + "\n```\n"
     path = os.path.join(dist, "notes-added.md")
-    open(path, "w", encoding="utf-8").write(body)
+    open(path, "w", encoding="utf-8", newline="\n").write(body)
     run([gh, "release", "edit", tag, "--notes-file", path])
 
 
@@ -316,8 +352,10 @@ def main():
     if "linux" in targets:
         files += package_linux_container(a.version, a.out)
     sums = checksums(files)
-    open(os.path.join(a.out, "SHA256SUMS.txt"), "w", encoding="utf-8").write("\n".join(sums) + "\n")
-    open(os.path.join(a.out, "notes.md"), "w", encoding="utf-8").write(notes(a.version, sums))
+    # (LF line endings, written on Windows too: `sha256sum -c` takes a CR as
+    # part of the file's name)
+    open(os.path.join(a.out, "SHA256SUMS.txt"), "w", encoding="utf-8", newline="\n").write("\n".join(sums) + "\n")
+    open(os.path.join(a.out, "notes.md"), "w", encoding="utf-8", newline="\n").write(notes(a.version, sums))
     if a.publish:
         publish(a.publish, a.version, files, sums, a.out)
     return 0

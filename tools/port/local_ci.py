@@ -84,22 +84,53 @@ def tool_env():
 
 ENV = tool_env()
 
+# A step that downloads (CMake's FetchContent, Cargo, Gradle, apt, GitHub's
+# API) is tried again when it fails: those servers fail now and then (a 504
+# from GitHub once cost a release run). A real error fails every time, after
+# these waits (seconds).
+RETRY_WAITS = (30, 120)
+
+
+def retrying(attempt, what="", log=print):
+    """attempt() until it returns something true, waiting RETRY_WAITS between
+    tries; its last result."""
+    result = attempt()
+    for wait in RETRY_WAITS:
+        if result:
+            break
+        log(f"({what or 'a step'} failed: trying again in {wait}s, in case a download did)")
+        time.sleep(wait)
+        result = attempt()
+    return result
+
 
 class Stage:
     def __init__(self, name):
         self.name, self.ok, self.note, self.secs = name, True, "", 0.0
         self.log = open(os.path.join(LOGS, name + ".log"), "w", encoding="utf-8", errors="replace")
 
-    def run(self, cmd, cwd=ROOT, env=None, ok_codes=(0,)):
+    def run(self, cmd, cwd=ROOT, env=None, ok_codes=(0,), downloads=False):
+        """downloads: the step may fetch something, so a failure is retried
+        (RETRY_WAITS)."""
         env = env or ENV
         # Windows looks a bare command up on this process's PATH, not env's.
         cmd = [shutil.which(cmd[0], path=env.get("PATH")) or cmd[0]] + list(cmd[1:])
-        self.log.write(f"\n$ {' '.join(cmd)}\n")
-        self.log.flush()
-        r = subprocess.run(cmd, cwd=cwd, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                           text=True, errors="replace")
-        self.log.write(r.stdout)
-        self.log.flush()
+        runs = []
+
+        def attempt():
+            self.log.write(f"\n$ {' '.join(cmd)}\n")
+            self.log.flush()
+            r = subprocess.run(cmd, cwd=cwd, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                               text=True, errors="replace")
+            self.log.write(r.stdout)
+            self.log.flush()
+            runs.append(r)
+            return r.returncode in ok_codes
+        if downloads:
+            retrying(attempt, os.path.basename(cmd[0]), lambda m: self.log.write(m + "\n"))
+        else:
+            attempt()
+        r = runs[-1]
         if r.returncode not in ok_codes:
             self.fail(f"{os.path.basename(cmd[0])} {' '.join(cmd[1:3])}: exit {r.returncode}")
         return r
@@ -134,11 +165,12 @@ def configure_args(v, backend):
 def stage_build(s):
     for v, short, backend in BUILDS:
         d = build_dir(short, backend)
+        # (configuring fetches the dependencies; building, Cargo's crates)
         if not os.path.exists(os.path.join(d, "CMakeCache.txt")):
-            s.run(["cmake", "-S", ROOT, "-B", d] + configure_args(v, backend))
+            s.run(["cmake", "-S", ROOT, "-B", d] + configure_args(v, backend), downloads=True)
         else:
-            s.run(["cmake", d])
-        s.run(["ninja", "-C", d, "-k", "0"])
+            s.run(["cmake", d], downloads=True)
+        s.run(["ninja", "-C", d, "-k", "0"], downloads=True)
 
 
 UNIT_TARGETS = ["bedecode_test", "anim_test", "loaders_test", "map_test", "dtk_test", "musyx_swap_test",
@@ -367,7 +399,7 @@ def stage_android(s):
         return s.skip("no Android SDK/NDK, JDK 17 and Gradle")
     env = dict(ENV, ANDROID_HOME=sdk, ANDROID_SDK_ROOT=sdk, JAVA_HOME=jdk)
     s.run([gradle, "--no-daemon", "-p", os.path.join(ROOT, "port", "android"), "assembleJpDebug", "assembleUsDebug"],
-          env=env)
+          env=env, downloads=True)
     if s.ok:
         s.note = "app-jp-debug.apk, app-us-debug.apk"
 

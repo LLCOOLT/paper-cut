@@ -28,9 +28,13 @@ def docker():
 
 
 def build_image():
-    subprocess.run([docker(), "build", "--platform", "linux/amd64", "-t", IMAGE,
-                    "-f", os.path.join(ROOT, "tools", "port", "linux-release.Dockerfile"),
-                    os.path.join(ROOT, "tools", "port")], check=True)
+    """The image (Ubuntu's packages: apt downloads, retried as local CI's
+    downloading steps are)."""
+    import local_ci
+    cmd = [docker(), "build", "--platform", "linux/amd64", "-t", IMAGE,
+           "-f", os.path.join(ROOT, "tools", "port", "linux-release.Dockerfile"), os.path.join(ROOT, "tools", "port")]
+    if not local_ci.retrying(lambda: subprocess.run(cmd).returncode == 0, "docker build"):
+        sys.exit("linux_container: the image's build failed")
 
 
 def run(command, env=()):
