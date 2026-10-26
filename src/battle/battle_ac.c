@@ -1,3 +1,4 @@
+#include "port_hook.h"
 #include "battle/battle_ac.h"
 #include "battle/battle.h"
 #include "battle/ac/ac_table.h"
@@ -7,6 +8,9 @@
 #include "battle/battle_disp.h"
 #include "battle/battle_unit.h"
 #include "icon_ids.h"
+#ifdef PORT_MODS
+#include "port/hooks/src_battle_battle_ac.h"
+#endif
 
 s32 psndSFXOn(const char* name);
 void psndSFXOff(s32 id);
@@ -117,7 +121,7 @@ void BattleActionCommandStop(BattleWork* work) {
 
 
 #pragma dont_inline on
-s32 BattleActionCommandCheckDefence(BattleUnit* unit, BattleWeapon* weapon) {
+s32 PORT_HOOKABLE(BattleActionCommandCheckDefence)(BattleUnit* unit, BattleWeapon* weapon) {
 	BattleWork* wp;
 	void* pad;
 	s32 i;
@@ -238,7 +242,7 @@ s8 BattleActionCommandGetDifficulty(BattleWork* work) {
 	return work->actionCommands.mAcDifficulty;
 }
 
-void BattleActionCommandSetDifficulty(BattleWork* work, BattleUnit* unit, s32 difficulty) {
+void PORT_HOOKABLE(BattleActionCommandSetDifficulty)(BattleWork* work, BattleUnit* unit, s32 difficulty) {
 	s32 adjusted;
 	s32 simp;
 
@@ -501,3 +505,7 @@ void BattleAcGaugeSeDelete(void) {
 	}
 }
 #pragma optimize_for_size reset
+
+#ifdef PORT_MODS
+#include "port/hooks/src_battle_battle_ac.inc"
+#endif

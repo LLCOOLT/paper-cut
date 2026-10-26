@@ -1,3 +1,4 @@
+#include "port_hook.h"
 #include "icon_ids.h"
 #include "statuswindow.h"
 #include "battle/battle.h"
@@ -13,6 +14,9 @@
 #include "memory.h"
 #include "pmario_sound.h"
 #include <string.h>
+#ifdef PORT_MODS
+#include "port/hooks/src_statuswindow.h"
+#endif
 #ifdef TARGET_PC
 #include "port/platform.h"
 #endif
@@ -300,7 +304,7 @@ numDisp(f32 x, f32 y, s32 value, BOOL small) {
     iconNumberDispGx(m, value, small, (GXColor){ 0xFF, 0xFF, 0xFF, 0xFF });
 }
 
-void statusWinDisp(CameraId camId, void* param) {
+void PORT_HOOKABLE(statusWinDisp)(CameraId camId, void* param) {
     alwaysDtEntry* e;
     s32 i;
     s32 blinkOn;
@@ -739,3 +743,7 @@ void statusWinEase(f32* f) {
 #endif
     f[3] = 0.5f;
 }
+
+#ifdef PORT_MODS
+#include "port/hooks/src_statuswindow.inc"
+#endif

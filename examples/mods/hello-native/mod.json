@@ -1,0 +1,13 @@
+{
+  "id": "dev.ttyd.hello-native",
+  "name": "Hello, code",
+  "version": "1.0",
+  "author": "ttyd-port",
+  "description": "An example code mod: a coin counter over the picture, halved shop prices, and a damage multiplier for Mario's and his partner's attacks.",
+  "games": ["G8ME01", "G8MJ01"],
+  "options": [
+    {"key": "counter", "label": "Show the coin counter", "type": "bool", "default": true},
+    {"key": "damage", "label": "Damage multiplier", "type": "int", "min": 1, "max": 4, "default": 2},
+    {"key": "shops", "label": "Shop prices", "type": "choice", "choices": ["Original", "Half"], "default": 1}
+  ]
+}

@@ -1,3 +1,4 @@
+#include "port_hook.h"
 #include "mario/mariost.h"
 #ifdef TARGET_PC
 #include "port/platform.h"
@@ -60,6 +61,9 @@
 #include <dolphin/vi.h>
 #include <string.h>
 #include <demo/DEMOPad.h>
+#ifdef PORT_MODS
+#include "port/hooks/src_mario_mariost.h"
+#endif
 
 extern void SoundSetOutputMode(s32 mode);
 extern void SoundOpenCover(void);
@@ -286,7 +290,7 @@ void marioStInit(void) {
 	}
 }
 
-void marioStMain(void) {
+void PORT_HOOKABLE(marioStMain)(void) {
 	int i;
 
 	while (gp->dvdError) {
@@ -717,3 +721,7 @@ s32 marioStGetSystemLevel(void);
 void marioStSystemLevel(s32 level);
 void marioStDisp(void);
 void marioStMain(void);
+
+#ifdef PORT_MODS
+#include "port/hooks/src_mario_mariost.inc"
+#endif

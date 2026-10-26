@@ -1,3 +1,4 @@
+#include "port_hook.h"
 #include "version.h"
 #include "pc_call.h"
 #include "win/win_main.h"
@@ -16,6 +17,9 @@
 #include "manager/filemgr.h"
 #include "data/mail_data.h"
 #include "icon_ids.h"
+#ifdef PORT_MODS
+#include "port/hooks/src_window_win_item.h"
+#endif
 
 void winFontInit(void);
 void winFontSet(Vec translate, Vec scale, GXColor color, const char* fmt, ...);
@@ -220,7 +224,7 @@ void winItemExit(WindowWork* w) {
     winMgrDelete(w->useWin[1]);
 }
 
-s32 winItemMain(WindowWork* w) {
+s32 PORT_HOOKABLE(winItemMain)(WindowWork* w) {
     s32 cnt;
     s32 col;
     f32 width;
@@ -1476,3 +1480,7 @@ __declspec(section ".data") u32 gap_05_80374D0C_data[1] = {0};
 
 
 
+
+#ifdef PORT_MODS
+#include "port/hooks/src_window_win_item.inc"
+#endif

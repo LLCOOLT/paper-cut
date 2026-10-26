@@ -4,9 +4,13 @@
  * 
  * Function: used for swapping between game states (logo, game, battle, demo/e3)
  */
+#include "port_hook.h"
 #include "driver/seqdrv.h"
 #include "system.h"
 #include <string.h> //memset prototype
+#ifdef PORT_MODS
+#include "port/hooks/src_driver_seqdrv.h"
+#endif
 
 extern SequenceCallback seq_data[8][3];
 
@@ -45,7 +49,7 @@ void seqMain(void) {
 	seq_data[now_seq][1](&seqWork); //call Main function
 }
 
-void seqSetSeq(SequenceType seq, const char* map, const char* bero) {
+void PORT_HOOKABLE(seqSetSeq)(SequenceType seq, const char* map, const char* bero) {
 	next_seq = seq;
 	next_p0 = map;
 	next_p1 = bero;
@@ -66,3 +70,7 @@ SequenceType seqGetNextSeq(void) {
 BOOL seqCheckSeq(void) {
 	return now_seq != next_seq;
 }
+
+#ifdef PORT_MODS
+#include "port/hooks/src_driver_seqdrv.inc"
+#endif

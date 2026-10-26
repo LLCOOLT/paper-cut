@@ -1,3 +1,4 @@
+#include "port_hook.h"
 #include "battle/battle.h"
 #include "pc_call.h"
 #include "battle/battle_ac_help.h"
@@ -170,7 +171,7 @@ void BattleEnd(void) {
 
 extern BattleUnitSetup entryunit_party[7];
 
-BOOL Btl_UnitSetup(BattleWork* wp) {
+BOOL PORT_HOOKABLE(Btl_UnitSetup)(BattleWork* wp) {
     int i;
     BattleUnitSetup* enemyData;
     NpcBattleInfo* setup;
@@ -790,7 +791,7 @@ void BattleStoreCoin(BattleWork* wp, s32 coin) {
     wp->fbatInfo->coins += coin;
 }
 
-void BattleStoreExp(BattleWork* wp, s32 exp) {
+void PORT_HOOKABLE(BattleStoreExp)(BattleWork* wp, s32 exp) {
     wp->stockExp += exp;
 }
 
@@ -955,6 +956,9 @@ u8 BattleMajinaiCheck(void) {
 }
 
 #include "battle/battle_stage.h"
+#ifdef PORT_MODS
+#include "port/hooks/src_battle_battle.h"
+#endif
 
 void BattleMajinaiDone(void) {
     PouchData* pouch = pouchGetPtr();
@@ -1040,3 +1044,7 @@ void BattleConsumeReserveItem(void) {
         wp->reserveItems[i] = 0;
     }
 }
+
+#ifdef PORT_MODS
+#include "port/hooks/src_battle_battle.inc"
+#endif

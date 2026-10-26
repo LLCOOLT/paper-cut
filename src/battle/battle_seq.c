@@ -1,4 +1,5 @@
 #pragma optimize_for_size on
+#include "port_hook.h"
 #include "battle/battle_seq.h"
 #include "pc_call.h"
 #include "battle/battle.h"
@@ -28,6 +29,9 @@
 #include "battle/battle_event_cmd.h"
 #include "unit/party/unit_party_nokotarou.h"
 #include "unit/party/unit_party_sanders.h"
+#ifdef PORT_MODS
+#include "port/hooks/src_battle_battle_seq.h"
+#endif
 #ifdef TARGET_PC /* declarations the GameCube code calls implicitly */
 #include "manager/evtmgr_cmd.h"
 #include "driver/fadedrv.h"
@@ -399,7 +403,7 @@ void BattleGetFirstAttackUnit(BattleWork* wp, BattleUnit** a, BattleUnit** b);
 BOOL fadeIsFinish(void);
 
 
-void btlseqFirstAct(BattleWork* wp) {
+void PORT_HOOKABLE(btlseqFirstAct)(BattleWork* wp) {
 	s32 type;
 	int i;
 	BattleUnit* unit;
@@ -2957,7 +2961,7 @@ BOOL BattleWaitAllActiveEvtEnd_NoBgSetEndWait(BattleWork* wp) {
 	return done;
 }
 
-BOOL BattleCheckConcluded(BattleWork* wp) {
+BOOL PORT_HOOKABLE(BattleCheckConcluded)(BattleWork* wp) {
 	BattleUnit* unit;
 	s32 count;
 	s32 i;
@@ -3142,3 +3146,7 @@ USER_FUNC(_set_haikei_entry_scale) {
 	return busy ? EVT_RETURN_BLOCK : EVT_RETURN_DONE;
 }
 
+
+#ifdef PORT_MODS
+#include "port/hooks/src_battle_battle_seq.inc"
+#endif

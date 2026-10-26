@@ -4,9 +4,13 @@
  * Function: Helper driver for accessing the "saved work" data for evt
  * scripts
  */
+#include "port_hook.h"
 #include "driver/swdrv.h"
 #include "mario/mariost.h"
 #include <string.h>
+#ifdef PORT_MODS
+#include "port/hooks/src_driver_swdrv.h"
+#endif
 
 void swInit(void) {
 	memset(gp->mGSWF, 0, sizeof(gp->mGSWF));
@@ -22,7 +26,7 @@ void swReInit(void) {
 }
 
 //Global Saved Work Flags --------------------------------------
-void swSet(s32 index) { //set specific bit
+void PORT_HOOKABLE(swSet)(s32 index) { //set specific bit
 	gp->mGSWF[index / 32] |= (1 << (index % 32));
 }
 
@@ -35,7 +39,7 @@ void swClear(s32 index) { //clear specific bit
 }
 
 //Global Saved Work --------------------------------------------
-void swByteSet(s32 index, s32 value) {
+void PORT_HOOKABLE(swByteSet)(s32 index, s32 value) {
 	if (index == 0) {
 		gp->mGSW0 = value;
 	}
@@ -74,3 +78,7 @@ void _swByteSet(s32 index, u8 value) {
 s32 _swByteGet(s32 index) {
 	return gp->mLSW[index];
 }
+
+#ifdef PORT_MODS
+#include "port/hooks/src_driver_swdrv.inc"
+#endif

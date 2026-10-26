@@ -1,8 +1,12 @@
+#include "port_hook.h"
 #include "driver/msgdrv.h"
 #include "pc_call.h"
 #ifdef TARGET_PC
 #include "port/platform.h"
 #include "port/gameplay.h"
+#ifdef PORT_MODS
+#include "port/mods.h"
+#endif
 #endif
 #include "driver/animdrv.h"
 #include "driver/camdrv.h"
@@ -20,6 +24,9 @@
 #include <stdlib.h>
 #include "icon_ids.h"
 #include "libc_decls.h"
+#ifdef PORT_MODS
+#include "port/hooks/src_driver_msgdrv.h"
+#endif
 #ifdef TARGET_PC
 #include "port/bedecode.h"
 /* PC port: Shift-JIS text is a byte stream; read a double-byte code big-endian. */
@@ -1486,13 +1493,21 @@ int msg_compare(const void* a, const void* b) {
 	return 0;
 }
 
-const char* msgSearch(const char* tag) {
+const char* PORT_HOOKABLE(msgSearch)(const char* tag) {
 	MessageEntry* entry;
 	MsgLookupEntry* lookup;
 	smartEntry* smart;
 	s32 i, max, j, index;
 	s32 result;
 
+#ifdef PORT_MODS /* a mod's message for this tag wins (port/mods/mods.cpp) */
+	{
+		const char* modded = portModMsgSearch(tag, language_dir[gp->language]);
+		if (modded != NULL) {
+			return modded;
+		}
+	}
+#endif
 	for (i = 0; i < 2; i++) { //check both entries
 		entry = &msgw->entries[i];
 		smart = entry->lookup;
@@ -2228,3 +2243,7 @@ void selectWindow_Disp(CameraId camId, void* param) {
 }
 
 // target pad words (G5: section sizes must match or later DOL addresses shift)
+
+#ifdef PORT_MODS
+#include "port/hooks/src_driver_msgdrv.inc"
+#endif

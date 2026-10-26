@@ -2,6 +2,7 @@
 #define pouchAddKpaCoin pouchAddKpaCoin_hdr
 #define pouchMajinaiInit pouchMajinaiInit_hdr
 #define pouchAddHP pouchAddHP_hdr
+#include "port_hook.h"
 #include "mario/mario_pouch.h"
 #undef pouchGetStarPoint
 #undef pouchAddKpaCoin
@@ -14,6 +15,9 @@
 #include "data/item_data.h"
 #include "memory.h"
 #include <string.h>
+#ifdef PORT_MODS
+#include "port/hooks/src_mario_mario_pouch.h"
+#endif
 #ifdef VERSION_G8ME01
 #include "mario/mariost.h"
 #endif
@@ -212,7 +216,7 @@ static inline BOOL pouchAdd(s16 *t1, s16 *t2, s32 size, ItemType type)
   }
   return 0;
 }
-BOOL pouchGetItem(ItemType type)
+BOOL PORT_HOOKABLE(pouchGetItem)(ItemType type)
 {
   s16 *new_var[2];
   s32 size;
@@ -406,7 +410,7 @@ static inline void pouchShift(s16 *table1, s16 *table2, int i, s32 maximum)
   }
 }
 
-BOOL pouchRemoveItem(ItemType type)
+BOOL PORT_HOOKABLE(pouchRemoveItem)(ItemType type)
 {
   s16 *table1;
   s16 *table2;
@@ -808,7 +812,7 @@ s32 pouchGetCoin(void) {
 	return mpp->coins;
 }
 
-s16 pouchAddCoin(s16 coins) {
+s16 PORT_HOOKABLE(pouchAddCoin)(s16 coins) {
 	mpp->coins += coins;
 	if (mpp->coins < 0) {
 		mpp->coins = 0;
@@ -819,7 +823,7 @@ s16 pouchAddCoin(s16 coins) {
 	return mpp->coins;
 }
 
-s32 pouchSetCoin(s32 coins) {
+s32 PORT_HOOKABLE(pouchSetCoin)(s32 coins) {
 	mpp->coins = coins;
 	if (mpp->coins < 0) {
 		mpp->coins = 0;
@@ -843,7 +847,7 @@ PouchStat pouchGetStarPiece(void) {
 	return mpp->mStarPieceCount;
 }
 
-s16 pouchAddStarPiece(s16 count) {
+s16 PORT_HOOKABLE(pouchAddStarPiece)(s16 count) {
 	mpp->mStarPieceCount += count;
 	return mpp->mStarPieceCount;
 }
@@ -1020,7 +1024,7 @@ BOOL pouchRemoveKeepItem(s32 id, s32 index) {
 	return FALSE;
 }
 
-void pouchReviseMarioParam(void) {
+void PORT_HOOKABLE(pouchReviseMarioParam)(void) {
 	int i;
 
 	mpp->maximumHP = mpp->baseMaxHP;
@@ -1090,7 +1094,7 @@ BOOL pouchUnEquipBadgeIndex(s32 index) {
 	return TRUE;
 }
 
-s32 pouchEquipCheckBadge(s32 badgeId) {
+s32 PORT_HOOKABLE(pouchEquipCheckBadge)(s32 badgeId) {
 	int i, count;
 
 	count = 0;
@@ -1322,3 +1326,7 @@ ItemType pouchHaveItem(s32 id);
 ItemType pouchKeyItem(s32 id);
 void pouchInit(void);
 PouchData* pouchGetPtr(void);
+
+#ifdef PORT_MODS
+#include "port/hooks/src_mario_mario_pouch.inc"
+#endif

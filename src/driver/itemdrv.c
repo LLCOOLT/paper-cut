@@ -1,3 +1,4 @@
+#include "port_hook.h"
 #include "driver/itemdrv.h"
 #include "pc_call.h"
 #include "eff/eff_itemget.h"
@@ -33,6 +34,9 @@
 #include <string.h>
 #include "evt/evt_lecture.h"
 #include "libc_decls.h"
+#ifdef PORT_MODS
+#include "port/hooks/src_driver_itemdrv.h"
+#endif
 #ifdef TARGET_PC /* declarations the GameCube code calls implicitly */
 void FontDrawEdge(void);
 void FontDrawEdgeOff(void);
@@ -505,7 +509,7 @@ static inline ItemEntry* itemFindDeletable(ItemWork* wp, s32 itemId) {
 }
 #endif
 
-ItemEntry* itemEntry(const char* name, s32 itemId, s32 type, s32 evtId, EvtWord a5, f32 x, f32 y, f32 z) {
+ItemEntry* PORT_HOOKABLE(itemEntry)(const char* name, s32 itemId, s32 type, s32 evtId, EvtWord a5, f32 x, f32 y, f32 z) {
 	ItemWork* wp = itemGetWork();
 	int i;
 	ItemEntry* entry;
@@ -1887,3 +1891,7 @@ void itemCoinDrop(Vec* position);
 void itemReInit(void);
 void itemInit(void);
 
+
+#ifdef PORT_MODS
+#include "port/hooks/src_driver_itemdrv.inc"
+#endif

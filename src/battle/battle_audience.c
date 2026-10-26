@@ -1,3 +1,4 @@
+#include "port_hook.h"
 #include "battle/battle_audience.h"
 #include "pc_call.h"
 #include "battle/battle.h"
@@ -26,6 +27,9 @@
 #include "battle/battle_audience_kind_data.h"
 #include "libc_decls.h"
 #include "eff/eff_magic1_n64.h"
+#ifdef PORT_MODS
+#include "port/hooks/src_battle_battle_audience.h"
+#endif
 #ifdef TARGET_PC /* declarations the GameCube code calls implicitly */
 void BattleStatusWindowAPRecoveryOff(void);
 #endif
@@ -3060,7 +3064,7 @@ BOOL BattleAudience_GetPPAudienceNum_Sub(s32 id) {
 }
 
 //@@ BattleAudience_ApRecoveryBuild
-void BattleAudience_ApRecoveryBuild(StarPowerInfo* info) {
+void PORT_HOOKABLE(BattleAudience_ApRecoveryBuild)(StarPowerInfo* info) {
 	BattleWork* bw = _battleWorkPointer;
 	BattleAudience* audience = BattleAudienceBaseGetPtr();
 	BattleUnit* mario;
@@ -4513,3 +4517,7 @@ void BattleAudience_SetPresentItemType(s32 type) {
 s32 BattleAudience_GetPresentItemType(void) {
 	return BattleAudienceBaseGetPtr()->presentItemType;
 }
+
+#ifdef PORT_MODS
+#include "port/hooks/src_battle_battle_audience.inc"
+#endif

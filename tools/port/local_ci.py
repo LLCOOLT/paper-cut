@@ -5,10 +5,13 @@ Stages (each logs to build-ci/<stage>.log; independent ones run at once):
   gamecube   both matching builds (configure.py + ninja: SHA-1 OK), in turn
   build      the PC builds: headless and Aurora, JP and US (configured if new)
   unit       unit tests (ctest -LE slow), both versions
-  audits     proto_audit, noproto_calls, proto_mismatch, gen_bedecode --check, diag_census (fatal classes)
+  audits     proto_audit, noproto_calls, proto_mismatch, gen_bedecode --check, gen_reflect --check,
+             gen_hooks --check, diag_census (fatal classes)
   sweep      map_sweep with golden audio, both versions
   cards      new file, Save Block save and load, headless and Aurora, both
              versions; the headless card then loads on Aurora
+  mods       the US Aurora build with examples/mods: the examples' messages are used,
+             their data patches apply, the code mod's services and a damage hook work
   android    both debug APKs, when the Android SDK, JDK and Gradle are there
   linux      headless build and unit tests in WSL, when a distribution is there;
              else compiled and linked for Linux against stand-in headers
@@ -130,6 +133,8 @@ def stage_audits(s):
     s.run([sys.executable, "tools/port/noproto_calls.py"])
     s.run([sys.executable, "tools/port/proto_mismatch.py"])
     s.run([sys.executable, "tools/port/gen_bedecode.py", "--check"])
+    s.run([sys.executable, "tools/port/gen_reflect.py", "--check"])
+    s.run([sys.executable, "tools/port/gen_hooks.py", "--check"])
     s.run([sys.executable, "tools/port/diag_census.py"] + [build_dir(short, "headless") for _, short in VERSIONS])
 
 
@@ -194,6 +199,57 @@ def stage_cards(s):
             s.note += f"{v} headless->aurora {'ok' if ok else 'FAIL'} "
 
 
+def mod_platform():
+    """A code mod's lib/<platform>/ folder for this machine (CMakeLists.txt, TTYD_MOD_PLATFORM)."""
+    import platform
+    arch = "arm64" if platform.machine().lower() in ("arm64", "aarch64") else "x64"
+    if sys.platform == "win32":
+        return f"windows-{arch}"
+    return "macos" if sys.platform == "darwin" else f"linux-{arch}"
+
+
+def stage_mods(s):
+    """examples/mods in a fresh user folder, the code mod's library from the
+    US Aurora build in it: the build lists the examples, uses their messages
+    in the item menu, applies their data patches, starts the code mod (its
+    area, shop and message services), then in a battle its damage hook."""
+    iso = sorted(glob.glob(os.path.join(ROOT, "orig", "G8ME01", "*.iso")))
+    if not iso:
+        return s.skip("no US disc image")
+    lib = [p for p in glob.glob(os.path.join(build_dir("us", "aurora"), "mods", "hello-native.*"))
+           if p.endswith((".dll", ".so", ".dylib"))]
+    if not lib:
+        return s.fail("no hello-native library in the US Aurora build")
+    user = os.path.join(LOGS, "mods", "user")
+    shutil.rmtree(os.path.join(LOGS, "mods"), ignore_errors=True)
+    shutil.copytree(os.path.join(ROOT, "examples", "mods"), os.path.join(user, "mods"))
+    lib_dir = os.path.join(user, "mods", "hello-native", "lib", mod_platform())
+    os.makedirs(lib_dir)
+    shutil.copy(lib[0], lib_dir)
+    os.makedirs(os.path.join(LOGS, "mods", "cache"))
+    base = dict(ENV, TTYD_FAST="1", TTYD_TRACE="1", TTYD_WATCHDOG="30", TTYD_USER_DIR=user,
+                TTYD_WINDOW_POS="-4000,0", TTYD_CACHE_DIR=os.path.join(LOGS, "mods", "cache"),
+                TTYD_SHOT_DIR=os.path.join(LOGS, "mods", "shots"))
+    runs = (
+        ("gor_01", "mods_items.txt",
+         ("mods: dev.ttyd.hello-text 1.0: 0 files, 0 textures, 2 messages, 0 patches",
+          "mods: dev.ttyd.shroom-tweaks 1.0: 0 files, 0 textures, 0 messages, 3 patches",
+          "mods: dev.ttyd.hello-native: code running", "[dev.ttyd.hello-native] entered area gor",
+          "[dev.ttyd.hello-native] shop on gor_01: 6 goods",
+          "[trace] mod message in_kinoko", "[trace] mod message msg_kinoko", "[input] end")),
+        ("hei_01", "battle_jump.txt", ("[dev.ttyd.hello-native] hit: 1 damage, 2 with the mod", "[input] end")),
+    )
+    for warp, script, wants in runs:
+        env = dict(base, TTYD_MAP=warp, TTYD_INPUT=os.path.join(ROOT, "tests", "port", "input", script))
+        r = s.run([aurora_exe("us"), iso[0]], env=env)
+        for want in wants:
+            if want not in r.stdout:
+                s.fail(f"{warp}: no \"{want}\"")
+        if "mods: dev.ttyd.shroom-tweaks: " in r.stdout:
+            s.fail("a data patch of the example was refused")
+    s.note += "example mods ok (files, data, code)" if s.ok else ""
+
+
 def stage_linux(s):
     """WSL: build the headless JP version and run its unit tests (Linux CI)."""
     if os.name != "nt" or shutil.which("wsl") is None:
@@ -234,10 +290,10 @@ def stage_android(s):
 
 
 STAGES = {"gamecube": stage_gamecube, "build": stage_build, "unit": stage_unit, "audits": stage_audits,
-          "sweep": stage_sweep, "cards": stage_cards, "linux": stage_linux,
+          "sweep": stage_sweep, "cards": stage_cards, "mods": stage_mods, "linux": stage_linux,
           "android": stage_android}
 # what may run at the same time; each group waits for the one before
-PLAN = [["gamecube", "build", "linux"], ["unit", "audits", "android"], ["sweep"], ["cards"]]
+PLAN = [["gamecube", "build", "linux"], ["unit", "audits", "android"], ["sweep"], ["cards", "mods"]]
 
 
 def main():

@@ -26,6 +26,8 @@ The game code is C, from the decompilation in [LLCOOLT/ttyd](https://github.com/
 
 **Save states:** four slots, F5 to save and F8 to load.
 
+**Mods:** a mods folder and a Mods tab on the settings page. Mods replace or add disc files, textures and text; Dolphin texture packs work as they are. See [docs/MODDING.md](docs/MODDING.md).
+
 **Phones and tablets**
 - On-screen controls: movable, sized, with haptics.
 - Portrait or landscape, safe areas, and pause and resume with the app.
@@ -78,10 +80,12 @@ Scripted controller input (`TTYD_INPUT`), map warps (`TTYD_MAP`) and frame captu
 | [docs/PC_PORT.md](docs/PC_PORT.md) | Building on each platform, running, options, settings, tests, audits, design notes |
 | [docs/FRAME_INTERPOLATION.md](docs/FRAME_INTERPOLATION.md) | How 120 Hz and up works, and how its purity is checked |
 | [docs/APPLE_BRIEF.md](docs/APPLE_BRIEF.md) | Bringing up macOS and iOS |
+| [docs/MODDING.md](docs/MODDING.md) | Making and installing mods |
+| [docs/MODDING_PLAN.md](docs/MODDING_PLAN.md) | The mod survey and the plan for mod support |
 
 ## Credits
 
-- **The decompilation:** [LLCOOLT/ttyd](https://github.com/LLCOOLT/ttyd). It started as a fork of [doldecomp/ttyd](https://github.com/doldecomp/ttyd), which grew out of [NWPlayer123](https://github.com/NWPlayer123)'s original G8MJ01 decomp-toolkit setup, and its US version draws on [Silver136](https://github.com/Silver-136/ttyd_dtk_Silver136)'s work.
+- **The decompilation:** [LLCOOLT/ttyd](https://github.com/LLCOOLT/ttyd).
 - **The platform layer:** [Aurora](https://github.com/encounter/aurora) (the GameCube SDK on WebGPU/Dawn and SDL3), [Dawn](https://dawn.googlesource.com/dawn) and [SDL](https://www.libsdl.org/).
 - **The settings page** follows the one in Dusklight, the Twilight Princess port on Aurora.
 

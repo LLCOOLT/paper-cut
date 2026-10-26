@@ -1,3 +1,4 @@
+#include "port_hook.h"
 #include "eff/eff_nice.h"
 #include "pc_call.h"
 #include "eff/n64/eff_vapor_n64.h"
@@ -85,7 +86,7 @@ void BattleAudience_Case_KillEnemy(s32 level);
 void BattleAudience_Case_FinalAttack(void);
 
 
-void BattleDamageDirect(s32 unitId, BattleUnit* target, BattleUnitPart* part, s32 damage, s32 fpDamage, u32 result, u32 pattern, s32 flag) {
+void PORT_HOOKABLE(BattleDamageDirect)(s32 unitId, BattleUnit* target, BattleUnitPart* part, s32 damage, s32 fpDamage, u32 result, u32 pattern, s32 flag) {
     BattleWork* wp = _battleWorkPointer;
     s32 pierce;
     BattleUnit* attacker;
@@ -425,7 +426,7 @@ u32 BattleCheckPikkyoro(BattleWeapon* weapon, u32* flags) {
     return result;
 }
 
-s32 BattleCalculateDamage(BattleUnit* attacker, BattleUnit* target, BattleUnitPart* part, BattleWeapon* weapon, u32* result, u32 flags) {
+s32 PORT_HOOKABLE(BattleCalculateDamage)(BattleUnit* attacker, BattleUnit* target, BattleUnitPart* part, BattleWeapon* weapon, u32* result, u32 flags) {
     u32 defaultResult;
     BattleWork* wp = _battleWorkPointer;
     s32 damage;
@@ -646,7 +647,7 @@ skip:
     return damage;
 }
 
-s32 BattleCalculateFpDamage(BattleUnit* attacker, BattleUnit* target, BattleUnitPart* part, BattleWeapon* weapon, u32* resultFlags, u32 flags) {
+s32 PORT_HOOKABLE(BattleCalculateFpDamage)(BattleUnit* attacker, BattleUnit* target, BattleUnitPart* part, BattleWeapon* weapon, u32* resultFlags, u32 flags) {
     BattleWork* wp = _battleWorkPointer;
     s32 damage = 0;
     s32 reduce = 0;
@@ -968,6 +969,9 @@ u8 _getRegistStatus(BattleUnit* unit, s32 type) {
 }
 
 #include "eff/n64/eff_stamp_n64.h"
+#ifdef PORT_MODS
+#include "port/hooks/src_battle_battle_damage.h"
+#endif
 #ifdef TARGET_PC /* the real prototype: Win64 assigns int and float arguments by position */
 EffectEntry* effUpdownEntry(s32 type, f32 x, f32 y, f32 z, s32 number, s32 timer);
 #else
@@ -1435,7 +1439,7 @@ s32 BattleSetStatusDamage(u32* result, BattleUnit* unit, BattleUnitPart* part, u
     return 1;
 }
 
-s32 BattleSetStatusDamageFromWeapon(BattleUnit* attacker, BattleUnit* target, BattleUnitPart* part, BattleWeapon* weapon, u32 flags) {
+s32 PORT_HOOKABLE(BattleSetStatusDamageFromWeapon)(BattleUnit* attacker, BattleUnit* target, BattleUnitPart* part, BattleWeapon* weapon, u32 flags) {
     s32 rate;
     u32 i;
     s32 levelDiff;
@@ -1478,7 +1482,7 @@ s32 BattleSetStatusDamageFromWeapon(BattleUnit* attacker, BattleUnit* target, Ba
     return result;
 }
 
-s32 BattlePreCheckDamage(BattleUnit* attacker, BattleUnit* target, BattleUnitPart* part, BattleWeapon* weapon, u32 flags) {
+s32 PORT_HOOKABLE(BattlePreCheckDamage)(BattleUnit* attacker, BattleUnit* target, BattleUnitPart* part, BattleWeapon* weapon, u32 flags) {
     BattleWork* wp = _battleWorkPointer;
     s32 n;
 
@@ -1569,7 +1573,7 @@ s32 _checkDamageCode_EmergencyRevival(BattleUnit* unit, u32* flags) {
     return 0;
 }
 
-s32 BattleCheckDamage(BattleUnit* attacker, BattleUnit* target, BattleUnitPart* part, BattleWeapon* weapon, s32 flags) {
+s32 PORT_HOOKABLE(BattleCheckDamage)(BattleUnit* attacker, BattleUnit* target, BattleUnitPart* part, BattleWeapon* weapon, s32 flags) {
     BattleWork* wp = _battleWorkPointer;
     u32 pattern;
     s32 ret = -1;
@@ -2085,3 +2089,7 @@ s32 BattleCheckCounter(CounterWork* work, BattleUnit* attacker, BattleUnit* targ
     }
     return 0;
 }
+
+#ifdef PORT_MODS
+#include "port/hooks/src_battle_battle_damage.inc"
+#endif

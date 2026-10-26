@@ -93,6 +93,7 @@ static const Field kFields[] = {
     {"text_speed", &sSettings.textSpeed, 0, 3},
     {"skip_intro", &sSettings.skipIntro, 0, 1},
     {"run_speed", &sSettings.runSpeed, 100, 150},
+    {"dump_textures", &sSettings.dumpTextures, 0, 1},
 };
 #define FIELD_COUNT (sizeof(kFields) / sizeof(kFields[0]))
 
@@ -170,6 +171,33 @@ int portCrashReportPending(void) {
 
 void portCrashReportDismiss(void) {
     sCrashPending = 0;
+}
+
+int portSettingsPeek(const char* userPath, const char* key) {
+    char path[1100];
+    char* pref = NULL;
+    char* text;
+    int value = 0;
+    size_t keyLen = strlen(key);
+    if (userPath == NULL) {
+        pref = SDL_GetPrefPath(NULL, "ttyd"); /* Aurora's default (appName "ttyd") */
+        userPath = pref != NULL ? pref : ".";
+    }
+    snprintf(path, sizeof(path), "%s/settings.txt", userPath);
+    SDL_free(pref);
+    text = SDL_LoadFile(path, NULL);
+    if (text != NULL) {
+        const char* line = text;
+        while (*line != '\0') {
+            if (strncmp(line, key, keyLen) == 0 && line[keyLen] == '=') {
+                value = atoi(line + keyLen + 1);
+            }
+            line += strcspn(line, "\r\n");
+            line += strspn(line, "\r\n");
+        }
+        SDL_free(text);
+    }
+    return value;
 }
 
 void portSettingsLoad(const char* userPath) {

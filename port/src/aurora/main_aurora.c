@@ -15,6 +15,7 @@
 #include "port/settings.h"
 #include "port/rel_pc.h"
 #include "port/platform.h"
+#include "port/mods.h"
 #ifdef __APPLE__
 #include <TargetConditionals.h>
 #endif
@@ -98,6 +99,10 @@ int aurora_main(int argc, char* argv[]) {
         config.windowPosX = atoi(pos);
         config.windowPosY = atoi(strchr(pos, ',') + 1);
     }
+    /* Texture dumps for pack makers ($TTYD_DUMP_TEXTURES, the settings' Mods
+     * tab): Aurora takes the option only at its start. */
+    config.allowTextureDumps = getenv("TTYD_DUMP_TEXTURES") != NULL ||
+                               portSettingsPeek(config.userPath, "dump_textures") != 0;
     portCrashInit();
 #if defined(__APPLE__) && TARGET_OS_OSX
     /* No window restoration: after a crash or a killed run, macOS would ask
@@ -134,6 +139,7 @@ int aurora_main(int argc, char* argv[]) {
     }
 
     portSettingsLoad(info.userPath); /* settings.txt (port/include/port/settings.h) */
+    portModsInit(info.userPath, info.cachePath); /* the mods folder, loose textures (port/mods/mods.cpp) */
     portAuroraBeginFrame();
     return ttyd_main();
 }

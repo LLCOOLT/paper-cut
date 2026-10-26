@@ -1,3 +1,4 @@
+#include "port_hook.h"
 #include "mario/mario.h"
 #include "driver/animdrv.h"
 #include "driver/hitdrv.h"
@@ -17,6 +18,9 @@
 #include "memory.h"
 #include <string.h>
 #include "libc_decls.h"
+#ifdef PORT_MODS
+#include "port/hooks/src_mario_mario.h"
+#endif
 #ifdef TARGET_PC /* declarations the GameCube code calls implicitly */
 void partyUsePost(PartyEntry* party);
 #endif
@@ -321,7 +325,7 @@ void marioSetSpec(void) {
 	}
 }
 
-void marioEntry(void) {
+void PORT_HOOKABLE(marioEntry)(void) {
 	MarioWork* wp = mp;
 
 	wp->flags |= 1;
@@ -2525,3 +2529,7 @@ const char* toFrontPose(const char* name) { //1:1
 		return front;
 	}
 }
+
+#ifdef PORT_MODS
+#include "port/hooks/src_mario_mario.inc"
+#endif

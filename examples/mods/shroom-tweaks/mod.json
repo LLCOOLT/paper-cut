@@ -1,0 +1,8 @@
+{
+  "id": "dev.ttyd.shroom-tweaks",
+  "name": "Shroom tweaks",
+  "version": "1.0",
+  "author": "ttyd-port",
+  "description": "An example of data patches: Mushrooms heal 10 HP and cost less.",
+  "games": ["G8ME01", "G8MJ01"]
+}

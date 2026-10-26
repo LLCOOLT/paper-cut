@@ -9,6 +9,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include "port/rel_pc.h"
+#ifdef PORT_MODS
+#include "port/mod_host.h"
+#endif
 
 #ifdef PORT_RELS_STATIC
 
@@ -51,6 +54,9 @@ BOOL portRelLink(const char* areaName) {
                 printf("[trace] REL %s linked\n", r->name);
             }
             r->prolog();
+#ifdef PORT_MODS
+            portModsAreaEvent(r->name, 1); /* mods' onArea */
+#endif
             return TRUE;
         }
     }
@@ -62,6 +68,9 @@ void portRelUnlink(void) {
     if (sCurrent == NULL) {
         return;
     }
+#ifdef PORT_MODS
+    portModsAreaEvent(sCurrent->name, 0);
+#endif
     sCurrent->epilog();
     sCurrent = NULL;
 }

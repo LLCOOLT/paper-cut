@@ -1,5 +1,6 @@
 #pragma optimize_for_size on
 #pragma auto_inline off
+#include "port_hook.h"
 #include "battle/battle_unit.h"
 #include "pc_call.h"
 #include "battle/battle.h"
@@ -13,6 +14,9 @@
 #include "driver/animdrv.h"
 #include "manager/evtmgr.h"
 #include "memory.h"
+#ifdef PORT_MODS
+#include "port/hooks/src_battle_battle_unit.h"
+#endif
 
 #ifndef TARGET_PC /* PC port: the host libc declares these */
 double pow(double, double);
@@ -68,7 +72,7 @@ BOOL BtlUnit_Init(void) {
 void BtlUnit_HpGaugeInit(BattleUnit* unit);
 void BattleStatusEffectDelete(BattleUnit* unit);
 
-BattleUnit* BtlUnit_Entry(BattleUnitSetup* setup) {
+BattleUnit* PORT_HOOKABLE(BtlUnit_Entry)(BattleUnitSetup* setup) {
     BattleWork* wp = _battleWorkPointer;
     BattleUnit* unit;
     BattleUnitPart* part;
@@ -1720,7 +1724,7 @@ s32 BtlUnit_GetExp(BattleUnit* unit) {
     }
 }
 
-s32 BtlUnit_GetCoin(BattleUnit* unit) {
+s32 PORT_HOOKABLE(BtlUnit_GetCoin)(BattleUnit* unit) {
     s32 coins, i;
 
     if (!unit) {
@@ -1803,7 +1807,7 @@ void BtlUnit_SetMaxFp(BattleUnit* unit, s32 value) {
     }
 }
 
-s32 BtlUnit_GetWeaponCost(BattleUnit* unit, BattleWeapon* weapon) {
+s32 PORT_HOOKABLE(BtlUnit_GetWeaponCost)(BattleUnit* unit, BattleWeapon* weapon) {
     s32 cost = (u8)weapon->baseFpCost;
     s32 count;
 
@@ -2216,3 +2220,7 @@ BOOL BtlUnit_CheckShadowGuard(BattleUnit* unit) {
     }
     return FALSE;
 }
+
+#ifdef PORT_MODS
+#include "port/hooks/src_battle_battle_unit.inc"
+#endif

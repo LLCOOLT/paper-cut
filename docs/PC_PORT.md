@@ -237,6 +237,8 @@ Environment switches (all optional):
 | `TTYD_PAUSE_UNFOCUSED` | Aurora: also pause while unfocused |
 | `TTYD_WIDESCREEN=1/0` | Aurora: 16:9 picture (off by default; overrides the `widescreen` preference); see below |
 | `TTYD_GXARRAY_TRACE=1/2` | Aurora: vertex-array uploads without a size / every changed array |
+| `TTYD_NO_MODS` | Aurora: no mods and no loose textures ([MODDING.md](MODDING.md)) |
+| `TTYD_DUMP_TEXTURES` | Aurora: save every texture without a replacement, under its texture-pack name |
 
 Crashes and `abort()` print a symbolized backtrace.
 

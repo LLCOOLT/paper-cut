@@ -2,6 +2,7 @@
 #ifdef TARGET_PC
 #include "port/platform.h"
 #endif
+#include "port_hook.h"
 #include "wide_x.h"
 #include "driver/npcdrv.h"
 #include "pc_call.h"
@@ -1633,6 +1634,9 @@ BOOL marioChkTalkable(void);
 void* fbatHitCheck(u32 flags, void* a1);
 
 #include "eff/eff_small_star.h"
+#ifdef PORT_MODS
+#include "port/hooks/src_driver_npcdrv.h"
+#endif
 s32 _majinai_effect(EventEntry* event, BOOL isFirstCall);
 s32 _check(EventEntry* event, BOOL isFirstCall);
 s32 marioStGetSystemLevel(void);
@@ -2819,7 +2823,7 @@ static inline void npcRandField(NpcBattleInfo* info, NpcSetupBattleInfo* setup) 
     }
 }
 
-void npcSetupBattleInfo(NpcEntry* npc, NpcSetupBattleInfo* setup) {
+void PORT_HOOKABLE(npcSetupBattleInfo)(NpcEntry* npc, NpcSetupBattleInfo* setup) {
     s32 i;
     s32 num;
     NpcBattleInfo* info;
@@ -3487,3 +3491,7 @@ void mtx_setup(NpcEntry* entry, Mtx mtx, s32 history);
 void npcRecoveryFieldNpc(void);
 void npcReleaseFieldNpc(void);
 NpcWork* npcGetWorkPtr(void);
+
+#ifdef PORT_MODS
+#include "port/hooks/src_driver_npcdrv.inc"
+#endif

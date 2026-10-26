@@ -14,6 +14,7 @@
 #include "port/speed.h"
 #include "port/layout.h"
 #include "port/savestate.h"
+#include "port/mod_host.h"
 #ifdef PORT_TOUCH_OVERLAY
 #include "port/touch_overlay.h"
 #endif
@@ -59,6 +60,7 @@ static void paceFrame(void) {
 
 static void endFrame(void) {
     portLayoutFrame(); /* the picture's place (portrait: at the top) */
+    portModsDraw();    /* code mods' drawing, over the picture */
 #ifdef PORT_TOUCH_OVERLAY
     portTouchDraw(); /* on-screen controls, over the game's frame */
 #endif

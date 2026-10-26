@@ -3,6 +3,7 @@
 #ifdef TARGET_PC
 #include "port/platform.h"
 #endif
+#include "port_hook.h"
 #include "battle/battle_menu_disp.h"
 #include "pc_call.h"
 #include "battle/battle_seq_command.h"
@@ -59,6 +60,9 @@ void btlDispGXQuads2D(f32 x0, f32 y0, f32 x1, f32 y1, u8 r, u8 g, u8 b, u8 a);
 #include "mario/mariost.h"
 #include "sdk/texPalette.h"
 #include "icon_ids.h"
+#ifdef PORT_MODS
+#include "port/hooks/src_battle_battle_menu_disp.h"
+#endif
 // US: menu animation lengths scale with the display rate (gp->framerate is 60 or 50)
 #ifdef VERSION_G8ME01
 #define FRAMES(n) (gp->framerate * (n) / 60)
@@ -1610,7 +1614,7 @@ void BattleMenuDisp_WeaponSelect_End(BattleWork* wp) {
     }
 }
 
-void DrawWeaponWin(void) {
+void PORT_HOOKABLE(DrawWeaponWin)(void) {
     Mtx rowMtx[7];
     Mtx iconMtx[5];
     Vec iconPos[5];
@@ -1899,3 +1903,7 @@ void DrawMultiItemWin(void) {
     }
 }
 
+
+#ifdef PORT_MODS
+#include "port/hooks/src_battle_battle_menu_disp.inc"
+#endif

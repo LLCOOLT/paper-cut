@@ -1,3 +1,4 @@
+#include "port_hook.h"
 #include "libc_decls.h"
 #include "pc_call.h"
 
@@ -16,6 +17,9 @@ float cosf(float);
 #include "mario/mariost.h"
 #include "evt/evt_cmd.h"
 #include "manager/evtmgr_cmd.h"
+#ifdef PORT_MODS
+#include "port/hooks/src_pmario_sound.h"
+#endif
 #ifdef TARGET_PC /* declarations the GameCube code calls implicitly */
 #include "system.h"
 #include "driver/seqdrv.h"
@@ -5593,7 +5597,7 @@ static inline void psndBGMSearchP(char* name, s32* pi) {
   // FAKE: dead int guard (COLOURING W) keeps name live to the return with 3 division pairs: name degree 22 -> 32, so it is simplified late and colours r24 as in the target; folded after RA, no code
   { s32 gz = 0; if (gz != 0) { *pi = ((((SFX_NAME_ID(name) / *pi) / (*pi / SFX_NAME_ID(name))) / ((SFX_NAME_ID(name) / (*pi + 1)) / ((*pi + 1) / SFX_NAME_ID(name)))) / ((SFX_NAME_ID(name) / (*pi + 2)) / ((*pi + 2) / SFX_NAME_ID(name)))); } }
 }
-BOOL psndBGMOn_f_d(u32 flags, char *bgm_name, u32 fadetime, u32 fadeout, s32 r7)
+BOOL PORT_HOOKABLE(psndBGMOn_f_d)(u32 flags, char *bgm_name, u32 fadetime, u32 fadeout, s32 r7)
 {
   PaperSoundBGM *bgm;
   s32 idx;
@@ -7005,3 +7009,7 @@ void psndStrippedPool(f32* f, s32 i) {
     *f = (f32)i;
 }
 
+
+#ifdef PORT_MODS
+#include "port/hooks/src_pmario_sound.inc"
+#endif

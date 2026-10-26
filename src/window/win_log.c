@@ -1,3 +1,4 @@
+#include "port_hook.h"
 #include "win/win_main.h"
 #include "driver/animdrv.h"
 #include "driver/effdrv.h"
@@ -16,6 +17,9 @@
 #include <dolphin/gx.h>
 #include "win/win_root.h"
 #include "eff/eff_starstone.h"
+#ifdef PORT_MODS
+#include "port/hooks/src_window_win_log.h"
+#endif
 #ifdef TARGET_PC
 #include "system.h" /* PC port: getMarioStDvdRoot returns a pointer; no implicit int */
 #include "port/bedecode.h"
@@ -437,7 +441,7 @@ s8 keyGetStickX(u32 chan);
 s8 keyGetStickY(u32 chan);
 u32 keyGetButton(u32 chan);
 
-s32 winLogMain(WindowWork* w) {
+s32 PORT_HOOKABLE(winLogMain)(WindowWork* w) {
     static char name[0x40];
     static char help[0x40];
     s32 i;
@@ -1745,3 +1749,7 @@ void monosiri_disp(CameraId camera, void* param) {
 
 #pragma force_active on
 #pragma force_active reset
+
+#ifdef PORT_MODS
+#include "port/hooks/src_window_win_log.inc"
+#endif

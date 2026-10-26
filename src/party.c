@@ -1,3 +1,4 @@
+#include "port_hook.h"
 #include "party.h"
 #include "driver/animdrv.h"
 #include "mario/mario_pouch.h"
@@ -692,7 +693,7 @@ s32 partyEntry2Hello(s32 memberId) {
     return slot;
 }
 
-s32 partyEntry2Pos(s32 memberId, f32 x, f32 y, f32 z) {
+s32 PORT_HOOKABLE(partyEntry2Pos)(s32 memberId, f32 x, f32 y, f32 z) {
     MarioWork* player;
     s32 slot;
     PartyEntry* party;
@@ -2660,6 +2661,9 @@ void partySetCamId(PartyEntry* party, s32 cameraId) {
 /* @@DISP@@ */
 #include "driver/camdrv.h"
 #include "driver/dispdrv.h"
+#ifdef PORT_MODS
+#include "port/hooks/src_party.h"
+#endif
 s32 shadowEntryMode(s32 mode, f32 x, f32 y, f32 z, f32 size);
 void shadowSetCamId(s32 id, s32 camId);
 void shadowFlagOn(s32 id, u32 flag);
@@ -3069,3 +3073,7 @@ void partyPaperOff(PartyEntry* party);
 BOOL partyPaperOn(PartyEntry* party, const char* animGroup);
 PartyEntry* anotherPartyGetPtr(s32 index);
 PartyEntry* partyGetPtr(s32 index);
+
+#ifdef PORT_MODS
+#include "port/hooks/src_party.inc"
+#endif

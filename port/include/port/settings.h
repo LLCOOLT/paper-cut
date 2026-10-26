@@ -49,6 +49,9 @@ typedef struct PortSettings {
     int textSpeed;      /* 0 original, 1 fast (2x), 2 faster (4x), 3 instant */
     int skipIntro;      /* boot logos fast, then the title without the story demo */
     int runSpeed;       /* Mario's run speed, 100-150 % */
+    /* Mods (port/include/port/mods.h) */
+    int dumpTextures;   /* textures without a replacement are saved, under the names packs use
+                           (from the next start: $TTYD_DUMP_TEXTURES, portSettingsPeek) */
 } PortSettings;
 
 /* PADControlMotor for the game (aurora_overlay/dolphin/pad.h): the
@@ -58,6 +61,9 @@ void portPADControlMotor(unsigned int chan, unsigned int cmd);
 PortSettings* portSettings(void);
 /* Reads settings.txt (main_aurora.c, once Aurora is up) and applies it. */
 void portSettingsLoad(const char* userPath);
+/* One setting's value in settings.txt before the settings are loaded (Aurora
+ * options taken only at its start); userPath NULL: Aurora's default folder. */
+int portSettingsPeek(const char* userPath, const char* key);
 /* Applies the settings as they are now, then writes settings.txt. */
 void portSettingsSave(void);
 void portSettingsApply(void);

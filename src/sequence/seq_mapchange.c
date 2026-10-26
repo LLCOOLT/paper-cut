@@ -1,6 +1,7 @@
 #ifdef TARGET_PC
 #include "port/rel_pc.h"
 #endif
+#include "port_hook.h"
 #include "evt/evt_cmd.h"
 #include "evt/evt_seq.h"
 #include "manager/evtmgr.h"
@@ -26,6 +27,9 @@
 #include <stdio.h>
 #include <string.h>
 #include "evt/evt_lottery.h"
+#ifdef PORT_MODS
+#include "port/hooks/src_sequence_seq_mapchange.h"
+#endif
 #ifdef TARGET_PC /* declarations the GameCube code calls implicitly */
 void animPoseAutoRelease(s32 type);
 void mobjReset(BOOL inBattle);
@@ -142,7 +146,7 @@ static const LangTbl lang_tbl = {{"jp", "us", "ge", "fr", "sp", "it", "du"}};
 typedef struct { const char* s[2]; } LangTbl;
 static const LangTbl lang_tbl = {{"jp", "us"}};
 #endif
-void seq_mapChangeMain(SequenceWork* work) {
+void PORT_HOOKABLE(seq_mapChangeMain)(SequenceWork* work) {
     BOOL newarea = strcmp(_next_area, gp->currentAreaName) != 0;
     const char* area_name;
     EvtWord* evtCode;
@@ -536,3 +540,7 @@ void _relUnLoad(void) {
         gp->relocationBase = NULL;
     }
 }
+
+#ifdef PORT_MODS
+#include "port/hooks/src_sequence_seq_mapchange.inc"
+#endif

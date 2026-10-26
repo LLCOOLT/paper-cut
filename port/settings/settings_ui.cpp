@@ -11,6 +11,7 @@
 #include "port/speed.h"
 #include "port/touch_overlay.h"
 #include "port/savestate.h"
+#include "port/mods.h"
 
 #include <SDL3/SDL.h>
 #include <aurora/aurora.h>
@@ -393,6 +394,133 @@ void systemTab(PortSettings* s) {
   crashSection();
 }
 
+#if !defined(__ANDROID__) && !(defined(__APPLE__) && TARGET_OS_IPHONE)
+void openFolder(const std::string& dir) {
+  SDL_CreateDirectory(dir.c_str());
+  const std::string url = "file:///" + dir;
+  SDL_OpenURL(url.c_str());
+}
+#endif
+
+// Mods (port/include/port/mods.h): the mods folder's mods in order, the
+// first winning; on/off and order are written to mods/mods.txt.
+void modsTab(PortSettings* s) {
+  note("A mod is a folder or a .ttydmod/.zip file with a mod.json, in the mods folder. "
+       "The first in the list wins where mods change the same thing. Changes apply to what the game "
+       "loads next (the next room or battle); textures change at once.");
+  if (ImGui::Button("Reload")) {
+    portModsReload();
+  }
+#if !defined(__ANDROID__) && !(defined(__APPLE__) && TARGET_OS_IPHONE)
+  ImGui::SameLine();
+  if (ImGui::Button("Open the mods folder")) {
+    openFolder(portModsDir());
+  }
+#endif
+  const int count = portModsCount();
+  if (count == 0) {
+    note("No mods yet.");
+  }
+  for (int i = 0; i < count; i++) {
+    const PortModInfo* mod = portModsGet(i);
+    ImGui::PushID(i);
+    ImGui::Separator();
+    bool on = mod->enabled != 0;
+    ImGui::BeginDisabled(mod->error != nullptr);
+    if (ImGui::Checkbox("##on", &on)) {
+      portModsSetEnabled(i, on ? 1 : 0);
+    }
+    ImGui::EndDisabled();
+    ImGui::SameLine();
+    if (mod->version[0] != '\0') {
+      ImGui::Text("%s  %s", mod->name, mod->version);
+    } else {
+      ImGui::TextUnformatted(mod->name);
+    }
+    ImGui::SameLine(ImGui::GetContentRegionAvail().x + ImGui::GetCursorStartPos().x - ImGui::GetFrameHeight() * 2.4f);
+    ImGui::BeginDisabled(i == 0);
+    if (ImGui::ArrowButton("##up", ImGuiDir_Up)) {
+      portModsMove(i, -1);
+    }
+    ImGui::EndDisabled();
+    ImGui::SameLine();
+    ImGui::BeginDisabled(i == count - 1);
+    if (ImGui::ArrowButton("##down", ImGuiDir_Down)) {
+      portModsMove(i, 1);
+    }
+    ImGui::EndDisabled();
+    if (mod->error != nullptr) {
+      ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.45f, 0.4f, 1.0f));
+      ImGui::TextWrapped("%s %s", mod->path, mod->error);
+      ImGui::PopStyleColor();
+    } else {
+      char line[256];
+      std::snprintf(line, sizeof(line), "%s%s%s%d files, %d textures, %d messages, %d data changes",
+                    mod->author[0] ? "by " : "", mod->author, mod->author[0] ? "  ·  " : "", mod->files, mod->textures,
+                    mod->messages, mod->patches);
+      note(line);
+      if (mod->warning != nullptr) {
+        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.75f, 0.3f, 1.0f));
+        ImGui::TextWrapped("%s", mod->warning);
+        ImGui::PopStyleColor();
+      }
+      switch (mod->code) {
+      case PORT_MOD_CODE_RUNNING: note("Code: running."); break;
+      case PORT_MOD_CODE_STARTS_NEXT_START: note("Code: starts the next time the game starts."); break;
+      case PORT_MOD_CODE_STOPS_NEXT_START: note("Code: still running; it stops the next time the game starts."); break;
+      case PORT_MOD_CODE_FAILED:
+        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.45f, 0.4f, 1.0f));
+        ImGui::TextWrapped("Code: %s", mod->codeError);
+        ImGui::PopStyleColor();
+        break;
+      default: break;
+      }
+      for (int o = 0; o < mod->optionCount; o++) {
+        const PortModOption* opt = portModsGetOption(i, o);
+        int value = opt->value;
+        ImGui::PushID(o);
+        bool edited = false;
+        if (opt->type == PORT_MOD_OPTION_BOOL) {
+          bool v = value != 0;
+          edited = ImGui::Checkbox(opt->label, &v);
+          value = v ? 1 : 0;
+        } else if (opt->type == PORT_MOD_OPTION_INT) {
+          edited = ImGui::SliderInt(opt->label, &value, opt->min, opt->max);
+        } else if (opt->choiceCount > 0) {
+          edited = combo(opt->label, &value, opt->choices, opt->choiceCount);
+        }
+        if (edited) {
+          portModsSetOption(i, o, value);
+        }
+        ImGui::PopID();
+      }
+      if (mod->description[0] != '\0') {
+        note(mod->description);
+      }
+    }
+    ImGui::PopID();
+  }
+  ImGui::Separator();
+  ImGui::TextUnformatted("Texture packs");
+  note("A Dolphin texture pack works as it comes: put its files in the textures folder, "
+       "or in a mod's textures folder.");
+#if !defined(__ANDROID__) && !(defined(__APPLE__) && TARGET_OS_IPHONE)
+  if (ImGui::Button("Open the textures folder")) {
+    openFolder(std::string(portSettingsUserPath()) + "/textures");
+  }
+#endif
+  if (check("Dump textures (from the next start)", &s->dumpTextures)) {
+    changed();
+  }
+  note("Saves each texture that has no replacement yet, under the name a pack uses, "
+       "to make or extend a pack.");
+#if !defined(__ANDROID__) && !(defined(__APPLE__) && TARGET_OS_IPHONE)
+  if (s->dumpTextures && ImGui::Button("Open the dump folder")) {
+    openFolder(portModsDumpDir());
+  }
+#endif
+}
+
 void statesTab() {
   if (!portSaveStateSupported()) {
     note("Save states are not available in this build yet.");
@@ -711,6 +839,10 @@ extern "C" void portSettingsDraw(void) {
       }
       if (ImGui::BeginTabItem("Warp")) {
         warpTab();
+        ImGui::EndTabItem();
+      }
+      if (ImGui::BeginTabItem("Mods")) {
+        modsTab(s);
         ImGui::EndTabItem();
       }
       if (ImGui::BeginTabItem("System")) {

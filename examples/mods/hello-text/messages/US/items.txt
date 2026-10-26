@@ -1,0 +1,10 @@
+An example of a messages file: each [tag] line starts a message, and its
+text runs to the next tag. Lines before the first tag, like these, are
+comments. See docs/MODDING.md.
+
+[in_kinoko]
+Mushroom (modded)
+
+[msg_kinoko]
+This text comes from a mod.
+It replaces the description.

@@ -1,3 +1,4 @@
+#include "port_hook.h"
 #include "version.h"
 #include "evt/evt_shop.h"
 #include "evt/evt_cmd.h"
@@ -24,6 +25,9 @@
 #include <dolphin/mtx.h>
 #include <string.h>
 #include <stdio.h>
+#ifdef PORT_MODS
+#include "port/hooks/src_event_evt_shop.h"
+#endif
 #ifdef TARGET_PC /* declarations the GameCube code calls implicitly */
 void FontDrawEdge(void);
 void FontDrawEdgeOff(void);
@@ -1353,7 +1357,7 @@ USER_FUNC(disp_list) {
 	return EVT_RETURN_BLOCK;
 }
 
-USER_FUNC(evt_shop_setup) {
+USER_FUNC(PORT_HOOKABLE(evt_shop_setup)) {
 	s32 i;
 	ShopWork* wp;
 	EvtWord* args = event->args;
@@ -1777,3 +1781,7 @@ BOOL evtShopIsActive(void) {
 	}
 	return FALSE;
 }
+
+#ifdef PORT_MODS
+#include "port/hooks/src_event_evt_shop.inc"
+#endif
