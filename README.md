@@ -91,6 +91,4 @@ Scripted controller input (`TTYD_INPUT`), map warps (`TTYD_MAP`) and frame captu
 
 The original MIT licence and copyright notice are kept in [LICENSE](LICENSE).
 
-This is an **independent project, not affiliated with doldecomp**. The port, like the decompilation it is built from, was written with the help of AI tools (Anthropic's Claude). Please use this repository's issues for questions about it, not the doldecomp community.
-
 Paper Mario and The Thousand-Year Door are trademarks of Nintendo. This project is not affiliated with or endorsed by Nintendo.

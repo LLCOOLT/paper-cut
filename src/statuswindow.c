@@ -36,6 +36,16 @@ typedef struct alwaysDtEntry {
     f32 scale;  // 0x8
 } alwaysDtEntry;
 
+#ifdef TARGET_PC
+#include "wide_x.h"
+/* PC port, widescreen HUD: a part's x (left-based xpos) moved to its edge */
+#define HUD_X(x, xpos) ((x) + WIDE_HUD_DX(xpos))
+#define HUD_ABS(v) ((v) + WIDE_HUD_DX(0))
+#else
+#define HUD_X(x, xpos) (x)
+#define HUD_ABS(v) (v)
+#endif
+
 //.data
 alwaysDtEntry alwaysDt[] = {
     { 108, 40, ICON_1D0, 1.0f }, // red hp banner
@@ -344,26 +354,26 @@ void PORT_HOOKABLE(statusWinDisp)(CameraId camId, void* param) {
                 continue;
             }
         }
-        MTXTrans(m, x + (f32)e->xpos, y - (f32)e->ypos, 0.0f);
+        MTXTrans(m, HUD_X(x, e->xpos) + (f32)e->xpos, y - (f32)e->ypos, 0.0f);
         MTXScale(s, e->scale, e->scale, e->scale);
         MTXConcat(m, s, m);
         iconDispGxCol(m, 0x10, e->iconId, (GXColor){ 0xFF, 0xFF, 0xFF, 0xFF });
     }
 
     if (!(wp->blink & 1) || blinkOn) {
-        numDisp(120.0f + x - 6.0f - 10.0f, 2.0f + (y - 38.0f), wp->cur.hp, 0);
+        numDisp(120.0f + HUD_X(x, 120) - 6.0f - 10.0f, 2.0f + (y - 38.0f), wp->cur.hp, 0);
     }
-    numDisp(186.0f + x - 6.0f - 10.0f, 3.0f + (y - 38.0f), wp->cur.maxHp, 1);
+    numDisp(186.0f + HUD_X(x, 186) - 6.0f - 10.0f, 3.0f + (y - 38.0f), wp->cur.maxHp, 1);
     if (!(wp->blink & 2) || blinkOn) {
-        numDisp(292.0f + x - 6.0f, 2.0f + (y - 38.0f), wp->cur.fp, 0);
+        numDisp(292.0f + HUD_X(x, 292) - 6.0f, 2.0f + (y - 38.0f), wp->cur.fp, 0);
     }
-    numDisp(358.0f + x - 6.0f, 3.0f + (y - 38.0f), wp->cur.maxFp, 1);
-    numDisp(462.0f + x, 2.0f + (y - 38.0f), wp->cur.starPoints, 0);
+    numDisp(358.0f + HUD_X(x, 358) - 6.0f, 3.0f + (y - 38.0f), wp->cur.maxFp, 1);
+    numDisp(462.0f + HUD_X(x, 462), 2.0f + (y - 38.0f), wp->cur.starPoints, 0);
     if (!(wp->blink & 0x10) || blinkOn) {
-        numDisp(572.0f + x, 2.0f + (y - 38.0f), wp->cur.coins, 0);
+        numDisp(572.0f + HUD_X(x, 572), 2.0f + (y - 38.0f), wp->cur.coins, 0);
     }
     if (!(wp->blink & 4) || blinkOn) {
-        gaugeDisp(wp->cur.ap, 260.0f + x, 4.0f + (y - 87.0f));
+        gaugeDisp(wp->cur.ap, 260.0f + HUD_X(x, 260), 4.0f + (y - 87.0f));
     }
 
     if (wp->cur.party) {
@@ -399,64 +409,64 @@ void PORT_HOOKABLE(statusWinDisp)(CameraId camId, void* param) {
             if (wp->blink & 8 && !blinkOn && i == 1) {
                 continue;
             }
-            MTXTrans(m, x + (f32)e->xpos, y - (f32)e->ypos, 0.0f);
+            MTXTrans(m, HUD_X(x, e->xpos) + (f32)e->xpos, y - (f32)e->ypos, 0.0f);
             MTXScale(s, e->scale, e->scale, e->scale);
             MTXConcat(m, s, m);
             iconDispGxCol(m, 0x10, e->iconId, (GXColor){ 0xFF, 0xFF, 0xFF, 0xFF });
         }
         if (!(wp->blink & 8) || blinkOn) {
-            numDisp(120.0f + x - 6.0f - 10.0f, 4.0f + (2.0f + (y - 78.0f)), wp->cur.partyHp, 0);
+            numDisp(120.0f + HUD_X(x, 120) - 6.0f - 10.0f, 4.0f + (2.0f + (y - 78.0f)), wp->cur.partyHp, 0);
         }
-        numDisp(186.0f + x - 6.0f - 10.0f, 4.0f + (2.0f + (y - 78.0f)), wp->cur.partyMaxHp, 1);
+        numDisp(186.0f + HUD_X(x, 186) - 6.0f - 10.0f, 4.0f + (2.0f + (y - 78.0f)), wp->cur.partyMaxHp, 1);
     }
 
     if (wp->flags & 0x100 && !gp->inBattle) {
         y2 = -180.0f + (wp->openY - wp->y);
-        MTXTrans(m2, -190.0f, y2, 0.0f);
+        MTXTrans(m2, HUD_ABS(-190.0f), y2, 0.0f);
         MTXScale(s2, 0.75f, 0.75f, 0.75f);
         MTXConcat(m2, s2, m2);
 #ifdef VERSION_G8ME01
         iconDispGxCol(m2, 0x10, ICON_212, (GXColor){ 0xFF, 0xFF, 0xFF, 0xFF });
         if (swByteGet(0) >= 7 || partyChkJoin(1)) {
-            MTXTrans(m2, -250.0f, 16.0f + y2, 0.0f);
+            MTXTrans(m2, HUD_ABS(-250.0f), 16.0f + y2, 0.0f);
             MTXScale(s2, 0.75f, 0.75f, 0.75f);
             MTXConcat(m2, s2, m2);
             iconDispGxCol(m2, 0x10, (u16)party_icon_tbl[gp->language], (GXColor){ 0xFF, 0xFF, 0xFF, 0xFF });
         }
-        MTXTrans(m2, -190.0f, 50.0f + y2, 0.0f);
+        MTXTrans(m2, HUD_ABS(-190.0f), 50.0f + y2, 0.0f);
         MTXScale(s2, 0.75f, 0.75f, 0.75f);
         MTXConcat(m2, s2, m2);
         iconDispGxCol(m2, 0x10, (u16)gear_icon_tbl[gp->language], (GXColor){ 0xFF, 0xFF, 0xFF, 0xFF });
         if (swByteGet(0) >= 20 || pouchGetHaveBadgeCnt()) {
             f32 xoff[6] = { 0.0f, 10.0f, 3.0f, 8.0f, 8.0f, 0.0f };
-            MTXTrans(m2, -130.0f + xoff[gp->language], 16.0f + y2, 0.0f);
+            MTXTrans(m2, HUD_ABS(-130.0f) + xoff[gp->language], 16.0f + y2, 0.0f);
             MTXScale(s2, 0.75f, 0.75f, 0.75f);
             MTXConcat(m2, s2, m2);
             iconDispGxCol(m2, 0x10, (u16)badge_icon_tbl[gp->language], (GXColor){ 0xFF, 0xFF, 0xFF, 0xFF });
         }
-        MTXTrans(m2, -190.0f, y2 - 25.0f, 0.0f);
+        MTXTrans(m2, HUD_ABS(-190.0f), y2 - 25.0f, 0.0f);
         MTXScale(s2, 0.75f, 0.75f, 0.75f);
         MTXConcat(m2, s2, m2);
         iconDispGxCol(m2, 0x10, (u16)journal_icon_tbl[gp->language], (GXColor){ 0xFF, 0xFF, 0xFF, 0xFF });
 #else
         iconDispGxCol(m2, 0x10, 0x212, (GXColor){ 0xFF, 0xFF, 0xFF, 0xFF });
         if (swByteGet(0) >= 7 || partyChkJoin(1)) {
-            MTXTrans(m2, -250.0f, 16.0f + y2, 0.0f);
+            MTXTrans(m2, HUD_ABS(-250.0f), 16.0f + y2, 0.0f);
             MTXScale(s2, 0.75f, 0.75f, 0.75f);
             MTXConcat(m2, s2, m2);
             iconDispGxCol(m2, 0x10, 0x213, (GXColor){ 0xFF, 0xFF, 0xFF, 0xFF });
         }
-        MTXTrans(m2, -190.0f, 50.0f + y2, 0.0f);
+        MTXTrans(m2, HUD_ABS(-190.0f), 50.0f + y2, 0.0f);
         MTXScale(s2, 0.75f, 0.75f, 0.75f);
         MTXConcat(m2, s2, m2);
         iconDispGxCol(m2, 0x10, 0x214, (GXColor){ 0xFF, 0xFF, 0xFF, 0xFF });
         if (swByteGet(0) >= 20 || pouchGetHaveBadgeCnt()) {
-            MTXTrans(m2, -130.0f, 16.0f + y2, 0.0f);
+            MTXTrans(m2, HUD_ABS(-130.0f), 16.0f + y2, 0.0f);
             MTXScale(s2, 0.75f, 0.75f, 0.75f);
             MTXConcat(m2, s2, m2);
             iconDispGxCol(m2, 0x10, 0x215, (GXColor){ 0xFF, 0xFF, 0xFF, 0xFF });
         }
-        MTXTrans(m2, -190.0f, y2 - 25.0f, 0.0f);
+        MTXTrans(m2, HUD_ABS(-190.0f), y2 - 25.0f, 0.0f);
         MTXScale(s2, 0.75f, 0.75f, 0.75f);
         MTXConcat(m2, s2, m2);
         iconDispGxCol(m2, 0x10, 0x216, (GXColor){ 0xFF, 0xFF, 0xFF, 0xFF });

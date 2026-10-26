@@ -20,9 +20,16 @@ typedef struct PortSettings {
     int widescreen;     /* 16:9 ($TTYD_WIDESCREEN; on Apple, also the
                            system preference when the file has no value) */
     int resolution;     /* 0: the window's; 1-8: that multiple of 640x480 */
-    int fps;            /* frame rate counter: 0 off, 1-4 a corner (TL TR BL BR) */
+    int fps;            /* the overlay (frame rate, clock, battery): 0 off, 1-4 a corner (TL TR BL BR) */
+    int overlayFps;     /* the overlay shows the frame rate */
+    int overlayClock;   /* ... the time */
+    int overlayBattery; /* ... the battery's charge (where there is one) */
     int noPopIn;        /* a draw whose GPU pipeline is not built yet waits for it (a short
                            pause the first time) instead of being skipped (popping in later) */
+    int texFilter;      /* textures: 0 the game's filtering, 1 sharp (their pixels shown) */
+    int msaa;           /* 4x multisample anti-aliasing (from the next start) */
+    int sideBars;       /* the bars beside a picture that doesn't fill the screen: the picture blurred, not black */
+    int wideHud;        /* widescreen: the status bar's parts at the screen's edges, not the 4:3 middle */
     /* Audio */
     int volume;         /* 0-100 */
     int muteUnfocused;  /* silent while another window has the focus */
@@ -30,6 +37,7 @@ typedef struct PortSettings {
     int pauseUnfocused; /* the game waits while another window has the focus
                            ($TTYD_PAUSE_UNFOCUSED) */
     int backgroundInput; /* controllers still work while unfocused */
+    int cloudSync;      /* Apple: saves kept the same as in iCloud Drive (port/include/port/cloud.h) */
     /* Controls */
     int rumble;         /* the game's rumble at all (its own option still applies) */
     int rumbleStrength; /* 0-100: PADSetRumbleIntensity on every port */
@@ -49,6 +57,7 @@ typedef struct PortSettings {
     int textSpeed;      /* 0 original, 1 fast (2x), 2 faster (4x), 3 instant */
     int skipIntro;      /* boot logos fast, then the title without the story demo */
     int runSpeed;       /* Mario's run speed, 100-150 % */
+    int acCue;          /* Action Command cue: 0 off, 1 on screen, 2 also a tap (phones) */
     /* Mods (port/include/port/mods.h) */
     int dumpTextures;   /* textures without a replacement are saved, under the names packs use
                            (from the next start: $TTYD_DUMP_TEXTURES, portSettingsPeek) */
@@ -61,12 +70,17 @@ void portPADControlMotor(unsigned int chan, unsigned int cmd);
 PortSettings* portSettings(void);
 /* Reads settings.txt (main_aurora.c, once Aurora is up) and applies it. */
 void portSettingsLoad(const char* userPath);
-/* One setting's value in settings.txt before the settings are loaded (Aurora
- * options taken only at its start); userPath NULL: Aurora's default folder. */
-int portSettingsPeek(const char* userPath, const char* key);
+/* One setting's value before the settings are loaded (Aurora's start-up options,
+ * e.g. msaa): settings.txt in userPath (NULL: Aurora's default folder), then on
+ * iOS the Settings app; def when neither has it. */
+int portSettingsPeek(const char* userPath, const char* key, int def);
 /* Applies the settings as they are now, then writes settings.txt. */
 void portSettingsSave(void);
 void portSettingsApply(void);
+/* iCloud Drive save sync: once a frame (pushes the card's changes), and when
+ * the app goes to the background or quits (wait: until done). */
+void portSettingsCloudTick(void);
+void portSettingsCloudPush(int wait);
 /* The window gained or lost the focus. */
 void portSettingsFocus(int focused);
 /* Aurora's user folder (the memory cards, settings.txt). */

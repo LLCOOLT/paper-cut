@@ -102,7 +102,13 @@ int aurora_main(int argc, char* argv[]) {
     /* Texture dumps for pack makers ($TTYD_DUMP_TEXTURES, the settings' Mods
      * tab): Aurora takes the option only at its start. */
     config.allowTextureDumps = getenv("TTYD_DUMP_TEXTURES") != NULL ||
-                               portSettingsPeek(config.userPath, "dump_textures") != 0;
+                               portSettingsPeek(config.userPath, "dump_textures", 0) != 0;
+    /* 4x anti-aliasing (the msaa setting; $TTYD_MSAA=0/1 overrides): fixed
+     * once Aurora is up, so read now and applied from the next start */
+    {
+        const char* msaa = getenv("TTYD_MSAA");
+        config.msaa = (msaa != NULL ? atoi(msaa) : portSettingsPeek(config.userPath, "msaa", 0)) ? 4 : 1;
+    }
     portCrashInit();
 #if defined(__APPLE__) && TARGET_OS_OSX
     /* No window restoration: after a crash or a killed run, macOS would ask

@@ -1,0 +1,168 @@
+From: Claude <noreply@anthropic.com>
+Subject: [PATCH] display: sharp textures and a blurred backdrop
+
+AuroraSetSharpTextures: every texture the game samples filtered
+nearest-neighbour (a pixel look) instead of with the game's own filters,
+from the next draw (samplers are cached by descriptor).
+
+AuroraSetPresentBackdrop: where the picture does not cover the window (a
+4:3 picture on a wider screen, a phone held upright), the present pass
+first fills the window with the picture stretched, blurred (a 7x7 grid of
+linear taps) and darkened, instead of clearing it to black.
+---
+diff --git a/include/dolphin/gx/GXAurora.h b/include/dolphin/gx/GXAurora.h
+index 2095620..f8089ae 100644
+--- a/include/dolphin/gx/GXAurora.h
++++ b/include/dolphin/gx/GXAurora.h
+@@ -141,6 +141,18 @@ extern "C" {
+  */
+ #define GX_AURORA_READBACK_CAPTURE_COPIES 0x0051
+ 
++/**
++ * Every texture the game samples filtered sharp (nearest-neighbour magnification and minification, a pixel
++ * look) instead of with the game's own filters. Applies from the next draw.
++ */
++void AuroraSetSharpTextures(GXBool sharp);
++
++/**
++ * Where the picture does not cover the window (a 4:3 picture on a wider screen, a phone held upright), fill
++ * the rest with a blurred, darkened copy of the picture stretched over the whole window instead of black.
++ */
++void AuroraSetPresentBackdrop(GXBool enabled);
++
+ #define GX2_SET_POLYGON_OFFSET 0x1000
+ 
+ /*
+diff --git a/lib/aurora.cpp b/lib/aurora.cpp
+index 3df2b4a..f70e532 100644
+--- a/lib/aurora.cpp
++++ b/lib/aurora.cpp
+@@ -329,6 +329,16 @@ void end_frame() noexcept {
+             .timestampWrites = webgpu::gpu_prof::pass_writes("Present blit"),
+         };
+         const auto pass = encoder.BeginRenderPass(&renderPassDescriptor);
++        const auto surfaceWidth = webgpu::g_graphicsConfig.surfaceConfiguration.width;
++        const auto surfaceHeight = webgpu::g_graphicsConfig.surfaceConfiguration.height;
++        if (webgpu::g_presentBackdrop && (viewport.width + 1.f < static_cast<float>(surfaceWidth) ||
++                                          viewport.height + 1.f < static_cast<float>(surfaceHeight))) {
++          // the rest of the window: the picture blurred behind it
++          pass.SetPipeline(webgpu::g_BackdropPipeline);
++          pass.SetBindGroup(0, presentBindGroup, 0, nullptr);
++          pass.SetViewport(0.f, 0.f, static_cast<float>(surfaceWidth), static_cast<float>(surfaceHeight), 0.f, 1.f);
++          pass.Draw(3);
++        }
+         // Copy EFB -> XFB (swapchain)
+         pass.SetPipeline(webgpu::g_CopyPipeline);
+         pass.SetBindGroup(0, presentBindGroup, 0, nullptr);
+diff --git a/lib/dolphin/gx/GXAurora.cpp b/lib/dolphin/gx/GXAurora.cpp
+index ddaf982..2723751 100644
+--- a/lib/dolphin/gx/GXAurora.cpp
++++ b/lib/dolphin/gx/GXAurora.cpp
+@@ -112,6 +112,17 @@ void GXRestoreFrameBuffer() {
+   aurora::gx::fifo::publish();
+ }
+ 
++namespace aurora::gfx {
++void set_sharp_textures(bool sharp) noexcept; // gfx/texture.cpp
++}
++namespace aurora::webgpu {
++extern bool g_presentBackdrop; // webgpu/gpu.cpp
++}
++
++void AuroraSetSharpTextures(GXBool sharp) { aurora::gfx::set_sharp_textures(sharp); }
++
++void AuroraSetPresentBackdrop(GXBool enabled) { aurora::webgpu::g_presentBackdrop = enabled; }
++
+ AuroraReadbackStream AuroraReadbackCreateStream() { return aurora::gfx::readback::create_stream(); }
+ 
+ void AuroraReadbackDestroyStream(AuroraReadbackStream stream) { aurora::gfx::readback::destroy_stream(stream); }
+diff --git a/lib/gfx/texture.cpp b/lib/gfx/texture.cpp
+index 029a3d0..7c43f9d 100644
+--- a/lib/gfx/texture.cpp
++++ b/lib/gfx/texture.cpp
+@@ -303,6 +303,10 @@ void write_texture(TextureRef& ref, ArrayRef<uint8_t> data) noexcept {
+   }
+ }
+ 
++static bool s_sharpTextures = false;
++
++void set_sharp_textures(bool sharp) noexcept { s_sharpTextures = sharp; }
++
+ wgpu::SamplerDescriptor TextureBind::get_descriptor() const noexcept {
+   auto [minFilter, mipFilter] = wgpu_filter_mode(texObj.min_filter());
+   auto [magFilter, _] = wgpu_filter_mode(texObj.mag_filter());
+@@ -310,6 +314,11 @@ wgpu::SamplerDescriptor TextureBind::get_descriptor() const noexcept {
+   float minLod = texObj.min_lod();
+   float maxLod = texObj.max_lod();
+   u16 maxAnisotropy = wgpu_aniso(texObj.max_aniso());
++  if (s_sharpTextures) {
++    magFilter = wgpu::FilterMode::Nearest;
++    minFilter = wgpu::FilterMode::Nearest;
++    maxAnisotropy = 1;
++  }
+   if (ref && ref->isReplacement) {
+     minLod = 0.f;
+     maxLod = 1000.f;
+diff --git a/lib/webgpu/gpu.cpp b/lib/webgpu/gpu.cpp
+index 73a5cb4..46132c4 100644
+--- a/lib/webgpu/gpu.cpp
++++ b/lib/webgpu/gpu.cpp
+@@ -47,6 +47,8 @@ TextureWithSampler g_normalBuffer;
+ static wgpu::BindGroupLayout g_CopyBindGroupLayout;
+ wgpu::RenderPipeline g_CopyPipeline;
+ wgpu::RenderPipeline g_CopyPremultipliedAlphaPipeline;
++wgpu::RenderPipeline g_BackdropPipeline;
++bool g_presentBackdrop = false;
+ wgpu::BindGroup g_CopyBindGroup;
+ static AuroraSampler g_Resampler = SAMPLER_BILINEAR;
+ static wgpu::BindGroupLayout g_ResampleBindGroupLayout;
+@@ -490,6 +492,20 @@ fn fs_opaque(in: VertexOutput) -> @location(0) vec4<f32> {
+ fn fs_premultiplied_alpha(in: VertexOutput) -> @location(0) vec4<f32> {
+     return textureSample(efb_texture, efb_sampler, in.uv);
+ }
++
++// The picture stretched over the whole window, blurred (a 7x7 grid of linear taps
++// spread over a tenth of it) and darkened: behind a picture that does not cover it
++@fragment
++fn fs_backdrop(in: VertexOutput) -> @location(0) vec4<f32> {
++    var sum = vec3<f32>(0.0);
++    for (var y = -3; y <= 3; y++) {
++        for (var x = -3; x <= 3; x++) {
++            let uv = clamp(in.uv + vec2<f32>(f32(x), f32(y)) * 0.016, vec2<f32>(0.0), vec2<f32>(1.0));
++            sum += textureSampleLevel(efb_texture, efb_sampler, uv, 0.0).rgb;
++        }
++    }
++    return vec4(sum / 49.0 * 0.45, 1.0);
++}
+ )""";
+   const wgpu::ShaderModuleDescriptor moduleDescriptor{
+       .nextInChain = &sourceDescriptor,
+@@ -561,6 +577,7 @@ fn fs_premultiplied_alpha(in: VertexOutput) -> @location(0) vec4<f32> {
+     return g_device.CreateRenderPipeline(&pipelineDescriptor);
+   };
+   g_CopyPipeline = make_copy_pipeline("XFB Copy Pipeline", "fs_opaque", nullptr);
++  g_BackdropPipeline = make_copy_pipeline("XFB Backdrop Pipeline", "fs_backdrop", nullptr);
+ 
+   const wgpu::BlendState premultipliedAlphaBlend{
+       .color =
+@@ -1112,6 +1129,7 @@ void shutdown() {
+   g_CopyBindGroupLayout = {};
+   g_CopyPipeline = {};
+   g_CopyPremultipliedAlphaPipeline = {};
++  g_BackdropPipeline = {};
+   g_CopyBindGroup = {};
+   g_ResampleBindGroupLayout = {};
+   g_ResamplePipeline = {};
+diff --git a/lib/webgpu/gpu.hpp b/lib/webgpu/gpu.hpp
+index d7fb5cf..f479191 100644
+--- a/lib/webgpu/gpu.hpp
++++ b/lib/webgpu/gpu.hpp
+@@ -53,6 +53,8 @@ extern TextureWithSampler g_depthBuffer;
+ extern TextureWithSampler g_normalBuffer;
+ extern wgpu::RenderPipeline g_CopyPipeline;
+ extern wgpu::RenderPipeline g_CopyPremultipliedAlphaPipeline;
++extern wgpu::RenderPipeline g_BackdropPipeline;
++extern bool g_presentBackdrop;
+ extern wgpu::BindGroup g_CopyBindGroup;
+ extern wgpu::Instance g_instance;
+ extern wgpu::AdapterInfo g_adapterInfo;

@@ -94,6 +94,10 @@
 	     its Saves folder. -->
 	<key>UIFileSharingEnabled</key>
 	<true/>
+
+	<!-- Screenshots (the settings page) are added to Photos. -->
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Screenshots you take in the game are saved to your photo library.</string>
 	<key>LSSupportsOpeningDocumentsInPlace</key>
 	<true/>
 

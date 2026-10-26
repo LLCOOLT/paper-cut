@@ -30,6 +30,10 @@ void portTraceCard(const char* step, s32 result);
 /* Frame captures to PNG (Aurora: port/src/aurora/shot_aurora.c; headless:
  * nothing to capture). Request one named capture; pending until written. */
 void portShotRequest(const char* name);
+/* The player's screenshot (to Photos on iOS, Pictures/TTYD on the Mac), and
+ * the last result for a few seconds (or NULL). */
+void portShotRequestUser(void);
+const char* portShotStatus(void);
 BOOL portShotPending(void);
 void portShotFrame(void);
 /* The game drew its scene this frame (marioStDisp): Aurora's in-between

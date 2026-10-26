@@ -11,6 +11,9 @@
 #include <string.h>
 #include "port/settings.h"
 #include "port/widescreen.h"
+#include "port/ac_cue.h"
+#include "port/cloud.h"
+#include "manager/cardmgr.h"
 #include "port/gameplay.h"
 #include "port/speed.h"
 #include "port/layout.h"
@@ -33,11 +36,19 @@ static PortSettings sSettings = {
     -1,   /* widescreen: not in the file yet */
     0,    /* resolution */
     0,    /* fps */
+    1,    /* overlayFps */
+    0,    /* overlayClock */
+    0,    /* overlayBattery */
     1,    /* noPopIn */
+    0,    /* texFilter */
+    0,    /* msaa */
+    0,    /* sideBars */
+    0,    /* wideHud */
     100,  /* volume */
     0,    /* muteUnfocused */
     0,    /* pauseUnfocused */
     0,    /* backgroundInput */
+    0,    /* cloudSync */
     1,    /* rumble */
     100,  /* rumbleStrength */
     1,    /* phoneRumble */
@@ -54,8 +65,12 @@ static PortSettings sSettings = {
     0,    /* textSpeed */
     0,    /* skipIntro */
     100,  /* runSpeed */
+    0,    /* acCue */
+    0,    /* dumpTextures */
 };
 static char sUserPath[1024];
+static const char* cardRegion(void);
+void portSettingsCloudPush(int wait);
 static char sPath[1100];
 static int sFocused = 1;
 
@@ -72,11 +87,19 @@ static const Field kFields[] = {
     {"widescreen", &sSettings.widescreen, 0, 1},
     {"resolution", &sSettings.resolution, 0, 8},
     {"fps", &sSettings.fps, 0, 4},
+    {"overlay_fps", &sSettings.overlayFps, 0, 1},
+    {"overlay_clock", &sSettings.overlayClock, 0, 1},
+    {"overlay_battery", &sSettings.overlayBattery, 0, 1},
     {"no_pop_in", &sSettings.noPopIn, 0, 1},
+    {"tex_filter", &sSettings.texFilter, 0, 1},
+    {"msaa", &sSettings.msaa, 0, 1},
+    {"side_bars", &sSettings.sideBars, 0, 1},
+    {"wide_hud", &sSettings.wideHud, 0, 1},
     {"volume", &sSettings.volume, 0, 100},
     {"mute_unfocused", &sSettings.muteUnfocused, 0, 1},
     {"pause_unfocused", &sSettings.pauseUnfocused, 0, 1},
     {"background_input", &sSettings.backgroundInput, 0, 1},
+    {"cloud_sync", &sSettings.cloudSync, 0, 1},
     {"rumble", &sSettings.rumble, 0, 1},
     {"rumble_strength", &sSettings.rumbleStrength, 0, 100},
     {"phone_rumble", &sSettings.phoneRumble, 0, 1},
@@ -93,6 +116,7 @@ static const Field kFields[] = {
     {"text_speed", &sSettings.textSpeed, 0, 3},
     {"skip_intro", &sSettings.skipIntro, 0, 1},
     {"run_speed", &sSettings.runSpeed, 100, 150},
+    {"ac_cue", &sSettings.acCue, 0, 2},
     {"dump_textures", &sSettings.dumpTextures, 0, 1},
 };
 #define FIELD_COUNT (sizeof(kFields) / sizeof(kFields[0]))
@@ -124,7 +148,9 @@ static int isToggle(const char* key) {
            strcmp(key, "background_input") == 0 || strcmp(key, "rumble") == 0 ||
            strcmp(key, "phone_rumble") == 0 || strcmp(key, "touch_haptics") == 0 ||
            strcmp(key, "auto_run") == 0 || strcmp(key, "stick_fixed") == 0 || strcmp(key, "tap_a") == 0 ||
-           strcmp(key, "safe_area") == 0 || strcmp(key, "no_pop_in") == 0 || strcmp(key, "ff_toggle") == 0 || strcmp(key, "skip_intro") == 0;
+           strcmp(key, "safe_area") == 0 || strcmp(key, "no_pop_in") == 0 || strcmp(key, "msaa") == 0 || strcmp(key, "cloud_sync") == 0 || strcmp(key, "overlay_fps") == 0 ||
+           strcmp(key, "overlay_clock") == 0 || strcmp(key, "overlay_battery") == 0 ||
+           strcmp(key, "side_bars") == 0 || strcmp(key, "wide_hud") == 0 || strcmp(key, "ff_toggle") == 0 || strcmp(key, "skip_intro") == 0;
 }
 
 static int syncFromPreferences(void);
@@ -173,33 +199,6 @@ void portCrashReportDismiss(void) {
     sCrashPending = 0;
 }
 
-int portSettingsPeek(const char* userPath, const char* key) {
-    char path[1100];
-    char* pref = NULL;
-    char* text;
-    int value = 0;
-    size_t keyLen = strlen(key);
-    if (userPath == NULL) {
-        pref = SDL_GetPrefPath(NULL, "ttyd"); /* Aurora's default (appName "ttyd") */
-        userPath = pref != NULL ? pref : ".";
-    }
-    snprintf(path, sizeof(path), "%s/settings.txt", userPath);
-    SDL_free(pref);
-    text = SDL_LoadFile(path, NULL);
-    if (text != NULL) {
-        const char* line = text;
-        while (*line != '\0') {
-            if (strncmp(line, key, keyLen) == 0 && line[keyLen] == '=') {
-                value = atoi(line + keyLen + 1);
-            }
-            line += strcspn(line, "\r\n");
-            line += strspn(line, "\r\n");
-        }
-        SDL_free(text);
-    }
-    return value;
-}
-
 void portSettingsLoad(const char* userPath) {
     char* text;
     snprintf(sUserPath, sizeof(sUserPath), "%s", userPath != NULL ? userPath : ".");
@@ -239,6 +238,116 @@ void portSettingsLoad(const char* userPath) {
         sSettings.widescreen = portWidescreenEnabled(); /* the variable, or Apple's preference */
     }
     portSettingsApply();
+#ifdef PORT_CLOUD_SYNC
+    if (sSettings.cloudSync) {
+        portCloudSync(sUserPath, cardRegion(), 1); /* before the game mounts the card */
+        portSettingsCloudPush(0);                  /* and what only this device has */
+    }
+#endif
+}
+
+/* The card's folder, by the game's region (Aurora's GCI folder card) */
+static const char* cardRegion(void) {
+    const char id = PORT_GAME_ID[3];
+    return id == 'J' ? "JAP" : id == 'P' ? "EUR" : "USA";
+}
+
+/* the card folder's newest modification time (0: none) */
+static Sint64 cardStamp(void) {
+    char dir[1200];
+    Sint64 newest = 0;
+    int count = 0;
+    char** names;
+    int i;
+    snprintf(dir, sizeof(dir), "%s/%s/Card A", sUserPath, cardRegion());
+    names = SDL_GlobDirectory(dir, "*.gci", 0, &count);
+    for (i = 0; names != NULL && i < count; i++) {
+        char path[1500];
+        SDL_PathInfo info;
+        snprintf(path, sizeof(path), "%s/%s", dir, names[i]);
+        if (SDL_GetPathInfo(path, &info) && info.modify_time > newest) {
+            newest = info.modify_time;
+        }
+    }
+    SDL_free(names);
+    return newest + count; /* a file gone or added changes it too */
+}
+
+static Sint64 sPushedStamp = -1;
+
+void portSettingsCloudPush(int wait) {
+#ifdef PORT_CLOUD_SYNC
+    if (sSettings.cloudSync && sUserPath[0] != '\0') {
+        sPushedStamp = cardStamp();
+        portCloudSync(sUserPath, cardRegion(), 0);
+        if (wait) {
+            portCloudFlush();
+        }
+    }
+#else
+    (void)wait;
+#endif
+}
+
+void portSettingsCloudTick(void) {
+#ifdef PORT_CLOUD_SYNC
+    static Uint64 sNext;
+    const Uint64 now = SDL_GetTicks();
+    if (!sSettings.cloudSync || now < sNext || cardIsExec()) {
+        return;
+    }
+    sNext = now + 2000; /* every 2 s: a stat of each save file */
+    if (sPushedStamp < 0) {
+        sPushedStamp = cardStamp(); /* as pulled at launch */
+    } else if (cardStamp() != sPushedStamp) {
+        portSettingsCloudPush(0);
+    }
+#endif
+}
+
+int portSettingsPeek(const char* userPath, const char* key, int def) {
+    char path[1100];
+    char* pref = NULL;
+    char* text;
+    int value = def;
+    size_t keyLen = strlen(key);
+    if (userPath == NULL) {
+        pref = SDL_GetPrefPath(NULL, "ttyd"); /* Aurora's default (its appName) */
+        userPath = pref;
+    }
+    if (userPath != NULL) {
+        snprintf(path, sizeof(path), "%s%ssettings.txt", userPath,
+                 userPath[0] != '\0' && userPath[strlen(userPath) - 1] == '/' ? "" : "/");
+        text = (char*)SDL_LoadFile(path, NULL);
+        if (text != NULL) {
+            const char* line = text;
+            while (*line != '\0') {
+                if (strncmp(line, key, keyLen) == 0 && line[keyLen] == '=') {
+                    value = atoi(line + keyLen + 1);
+                }
+                line += strcspn(line, "\n");
+                line += *line == '\n';
+            }
+            SDL_free(text);
+        }
+    }
+    SDL_free(pref);
+#ifdef SETTINGS_APP_PREFS
+    {
+        CFStringRef k = CFStringCreateWithCString(NULL, key, kCFStringEncodingUTF8);
+        CFPropertyListRef v = CFPreferencesCopyAppValue(k, kCFPreferencesCurrentApplication);
+        if (v != NULL) {
+            if (CFGetTypeID(v) == CFBooleanGetTypeID()) {
+                value = CFBooleanGetValue((CFBooleanRef)v) ? 1 : 0;
+            } else if (CFGetTypeID(v) == CFNumberGetTypeID()) {
+                CFNumberGetValue((CFNumberRef)v, kCFNumberIntType, &value);
+            }
+            CFRelease(v);
+        }
+        CFRelease(k);
+    }
+#endif
+    return value;
 }
 
 void portSettingsSave(void) {
@@ -281,6 +390,10 @@ void portSettingsApply(void) {
     portLayoutOrientation(sSettings.orientation);
     /* $TTYD_FAST (tests) always waits, so every frame is complete */
     AuroraSetDrawsBlocking(sSettings.noPopIn != 0 || getenv("TTYD_FAST") != NULL);
+    AuroraSetSharpTextures(sSettings.texFilter != 0);
+    AuroraSetPresentBackdrop(sSettings.sideBars != 0);
+    gPortWideHud = sSettings.wideHud;
+    gPortAcCue = sSettings.acCue;
     {
         static const int kTextSpeeds[] = {100, 200, 400, 10000};
         gPortTextSpeed = kTextSpeeds[sSettings.textSpeed];

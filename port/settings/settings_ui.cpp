@@ -11,6 +11,7 @@
 #include "port/speed.h"
 #include "port/touch_overlay.h"
 #include "port/savestate.h"
+#include "port/cloud.h"
 #include "port/mods.h"
 
 #include <SDL3/SDL.h>
@@ -22,13 +23,21 @@
 #include <algorithm>
 #include <cstdio>
 #include <cstring>
+#include <cfloat>
+#include <ctime>
 #include <string>
 #include <vector>
 #if defined(__APPLE__)
 #include <TargetConditionals.h>
+#include <CoreFoundation/CoreFoundation.h>
 #endif
 
 extern "C" {
+void portIosHapticTap(void);    // port/ios/ios_app.m
+extern int gPortAcCueState;     // port/src/common/ac_cue_pc.c
+extern int gPortAcCueLead;
+void portShotRequestUser(void); // port/src/aurora/shot_aurora.c
+const char* portShotStatus(void);
 // port/src/common/warp_pc.c
 void portWarpRequestSave(const char* path);
 const char* portWarpStatus(void);
@@ -135,6 +144,16 @@ void videoTab(PortSettings* s) {
     changed();
   }
   note("Much of the game was built for 4:3: some rooms and scenes end at the 4:3 edges.");
+  if (s->widescreen && check("Widescreen HUD", &s->wideHud)) {
+    changed();
+  }
+  if (s->widescreen) {
+    note("HP and FP at the left edge, Star Points and coins at the right, instead of the 4:3 middle.");
+  }
+  if (check("Blurred side bars", &s->sideBars)) {
+    changed();
+  }
+  note("Where the picture doesn't fill the screen, a blurred copy of it instead of black bars.");
   char names[9][32];
   const char* namep[9];
   std::snprintf(names[0], sizeof(names[0]), "Auto (the window's size)");
@@ -147,8 +166,32 @@ void videoTab(PortSettings* s) {
   if (combo("Internal resolution", &s->resolution, namep, 9)) {
     changed();
   }
-  if (combo("Frame rate counter", &s->fps, kCorners, 5)) {
+  static constexpr const char* kFilters[] = {"Original (smooth)", "Sharp (pixels)"};
+  if (combo("Texture filtering", &s->texFilter, kFilters, 2)) {
     changed();
+  }
+  {
+    static const int sStartMsaa = s->msaa; /* what this run started with */
+    if (check("Anti-aliasing (4x MSAA)", &s->msaa)) {
+      changed();
+    }
+    note(s->msaa != sStartMsaa ? "Takes effect the next time the game starts." : "Smooths jagged edges.");
+  }
+  if (combo("Overlay corner", &s->fps, kCorners, 5)) {
+    changed();
+  }
+  if (s->fps != 0) {
+    if (check("Frame rate", &s->overlayFps)) {
+      changed();
+    }
+    ImGui::SameLine();
+    if (check("Clock", &s->overlayClock)) {
+      changed();
+    }
+    ImGui::SameLine();
+    if (check("Battery", &s->overlayBattery)) {
+      changed();
+    }
   }
   if (check("Never skip graphics that are still loading", &s->noPopIn)) {
     changed();
@@ -294,6 +337,19 @@ constexpr const char* kTextSpeeds[] = {"Original", "Fast (2x)", "Faster (4x)", "
 constexpr const char* kRunSpeeds[] = {"Original", "125%", "150%"};
 
 void gameplayTab(PortSettings* s) {
+#if defined(__ANDROID__) || (defined(__APPLE__) && TARGET_OS_IPHONE)
+  static constexpr const char* kCues[] = {"Off", "On screen", "On screen and a tap"};
+  const int cueCount = 3;
+#else
+  static constexpr const char* kCues[] = {"Off", "On screen"};
+  const int cueCount = 2;
+  s->acCue = s->acCue > 1 ? 1 : s->acCue;
+#endif
+  if (combo("Action Command cue", &s->acCue, kCues, cueCount)) {
+    changed();
+  }
+  note("In battle, a ring closes on an A button when to press A for a Jump (and partners' stomps) and to "
+       "guard an enemy jumping at you. Other commands show their own timing.");
   int ff = s->ffSpeed - 2;
   if (combo("Fast-forward speed", &ff, kFfSpeeds, 7)) {
     s->ffSpeed = ff + 2;
@@ -374,6 +430,17 @@ void drawCrashNotice(float scale) {
 }
 
 void systemTab(PortSettings* s) {
+  if (ImGui::Button("Take a screenshot")) {
+    setOpen(false);
+    portShotRequestUser(); // the next frame, without this page
+  }
+#if defined(__APPLE__) && TARGET_OS_IPHONE
+  note("Saved to Photos.");
+#elif defined(__APPLE__)
+  note("Saved to Pictures/TTYD. Keyboard: F12.");
+#else
+  note("Saved to the Screenshots folder by the saves. Keyboard: F12.");
+#endif
 #if !defined(__ANDROID__) && !(defined(__APPLE__) && TARGET_OS_IPHONE)
   if (check("Pause while in the background", &s->pauseUnfocused)) {
     changed();
@@ -390,6 +457,33 @@ void systemTab(PortSettings* s) {
 #else
   (void)s;
   note("Saves are in the app's folder (Files app / storage).");
+#endif
+#if defined(PORT_CLOUD_SYNC)
+  ImGui::Separator();
+  if (check("Sync saves with iCloud Drive", &s->cloudSync)) {
+    changed();
+    if (s->cloudSync) {
+      portSettingsCloudPush(0);
+    }
+  }
+#if TARGET_OS_IPHONE
+  note("Your saves are kept the same as in a folder in iCloud Drive (pick the TTYD folder the Mac version "
+       "uses to share them). The newer copy of each save wins; replaced saves are kept in Backups.");
+  if (ImGui::Button(portCloudAvailable() ? "Choose another iCloud Drive folder" : "Choose an iCloud Drive folder")) {
+    portCloudPickFolder();
+  }
+  if (portCloudAvailable()) {
+    ImGui::SameLine();
+    ImGui::TextDisabled("%s", portCloudFolderName());
+  }
+#else
+  note("Your saves are kept the same as in iCloud Drive's TTYD folder (choose that folder on an iPhone or iPad "
+       "to share them). The newer copy of each save wins; replaced saves are kept in Backups.");
+#endif
+  if (s->cloudSync && portCloudStatus()[0] != '\0') {
+    note(portCloudStatus());
+  }
+  note("Saves are brought from iCloud Drive when the game starts: restart it to get another device's progress.");
 #endif
   crashSection();
 }
@@ -551,8 +645,48 @@ void statesTab() {
   note("Keyboard: F5 saves to slot 1, F8 loads it.");
 }
 
+// The Action Command cue (port/src/common/ac_cue_pc.c): an A button low in
+// the middle, a ring closing on it over the lead-in, lit when to press
+void drawAcCue() {
+  static int sPrevLead = 99;
+  if (gPortAcCueState == 0) {
+    sPrevLead = 99;
+    return;
+  }
+  const int lead = gPortAcCueLead;
+  if (lead <= 0 && sPrevLead > 0 && portSettings()->acCue == 2) {
+#if defined(__APPLE__) && TARGET_OS_IPHONE
+    portIosHapticTap();
+#endif
+  }
+  sPrevLead = lead;
+  const ImVec2 display = ImGui::GetIO().DisplaySize;
+  const float u = std::min(display.x, display.y) / 16.f; // the button's radius
+  const ImVec2 c(display.x * 0.5f, display.y * 0.78f);
+  ImDrawList* dl = ImGui::GetForegroundDrawList();
+  const bool now = lead <= 0;
+  const ImU32 green = now ? IM_COL32(80, 230, 110, 245) : IM_COL32(40, 170, 80, 200);
+  dl->AddCircleFilled(c, u, green, 40);
+  dl->AddCircle(c, u, IM_COL32(255, 255, 255, 220), 40, u * 0.08f);
+  const char* label = "A";
+  ImFont* font = ImGui::GetFont();
+  const float size = u * 1.1f;
+  const ImVec2 ts = font->CalcTextSizeA(size, FLT_MAX, 0.f, label);
+  dl->AddText(font, size, ImVec2(c.x - ts.x * 0.5f, c.y - ts.y * 0.5f), IM_COL32(255, 255, 255, 255), label);
+  if (!now) {
+    const float t = std::min(1.f, static_cast<float>(lead) / 24.f); // 1 at the lead-in's start
+    dl->AddCircle(c, u * (1.f + 2.f * t), IM_COL32(255, 255, 255, static_cast<int>(120 + 120 * (1.f - t))), 48,
+                  u * 0.14f);
+  } else {
+    dl->AddCircle(c, u * 1.25f, IM_COL32(255, 255, 150, 230), 48, u * 0.2f);
+  }
+}
+
 void drawStateStatus() {
   const char* text = portSaveStateStatus();
+  if (text == nullptr) {
+    text = portShotStatus();
+  }
   if (text == nullptr) {
     return;
   }
@@ -656,9 +790,68 @@ void warpTab() {
   ImGui::EndChild();
 }
 
+// the time as the system shows it (12/24-hour), e.g. "9:41 PM"
+void clockText(char* out, size_t size) {
+#if defined(__APPLE__)
+  static CFDateFormatterRef sFormatter;
+  if (sFormatter == nullptr) {
+    CFLocaleRef locale = CFLocaleCopyCurrent();
+    sFormatter = CFDateFormatterCreate(nullptr, locale, kCFDateFormatterNoStyle, kCFDateFormatterShortStyle);
+    CFRelease(locale);
+  }
+  CFStringRef str = CFDateFormatterCreateStringWithAbsoluteTime(nullptr, sFormatter, CFAbsoluteTimeGetCurrent());
+  if (str != nullptr && CFStringGetCString(str, out, static_cast<CFIndex>(size), kCFStringEncodingUTF8)) {
+    CFRelease(str);
+    // the formatter's narrow/no-break spaces ("9:41\u202fPM"): plain ones, which the font has
+    std::string t(out);
+    for (const char* sp : {"\xE2\x80\xAF", "\xC2\xA0"}) {
+      for (size_t at; (at = t.find(sp)) != std::string::npos;) {
+        t.replace(at, std::strlen(sp), " ");
+      }
+    }
+    std::snprintf(out, size, "%s", t.c_str());
+    return;
+  }
+  if (str != nullptr) {
+    CFRelease(str);
+  }
+#endif
+  const std::time_t now = std::time(nullptr);
+  std::tm tm{};
+#if defined(_WIN32)
+  localtime_s(&tm, &now);
+#else
+  localtime_r(&now, &tm);
+#endif
+  std::strftime(out, size, "%H:%M", &tm);
+}
+
 void drawFps(int corner) {
-  char text[32];
-  std::snprintf(text, sizeof(text), "%.0f FPS", aurora_get_fps());
+  const PortSettings* s = portSettings();
+  char text[96] = "";
+  size_t len = 0;
+  const auto add = [&](const char* part) {
+    len += static_cast<size_t>(std::snprintf(text + len, sizeof(text) - len, "%s%s", len != 0 ? "   " : "", part));
+    len = len < sizeof(text) ? len : sizeof(text) - 1;
+  };
+  char part[48];
+  if (s->overlayClock) {
+    clockText(part, sizeof(part));
+    add(part);
+  }
+  if (s->overlayBattery) {
+    int percent = -1;
+    const SDL_PowerState state = SDL_GetPowerInfo(nullptr, &percent);
+    if (percent >= 0 && state != SDL_POWERSTATE_NO_BATTERY && state != SDL_POWERSTATE_UNKNOWN) {
+      std::snprintf(part, sizeof(part), "%d%%%s", percent,
+                    state == SDL_POWERSTATE_CHARGING || state == SDL_POWERSTATE_CHARGED ? " +" : "");
+      add(part);
+    }
+  }
+  if (s->overlayFps || len == 0) {
+    std::snprintf(part, sizeof(part), "%.0f FPS", aurora_get_fps());
+    add(part);
+  }
   const ImVec2 size = ImGui::CalcTextSize(text);
   const ImVec2 display = ImGui::GetIO().DisplaySize;
   // inside the window's safe area (notch, Dynamic Island, home indicator), and
@@ -699,6 +892,11 @@ extern "C" void portSettingsEvent(const void* sdlEvent) {
   const SDL_Event* e = static_cast<const SDL_Event*>(sdlEvent);
   PortSettings* s = portSettings();
   switch (e->type) {
+  case SDL_EVENT_DID_ENTER_BACKGROUND:
+  case SDL_EVENT_TERMINATING:
+  case SDL_EVENT_QUIT:
+    portSettingsCloudPush(1); // the app may be suspended or gone next
+    break;
   case SDL_EVENT_KEY_DOWN:
     if (e->key.repeat) {
       break;
@@ -709,6 +907,8 @@ extern "C" void portSettingsEvent(const void* sdlEvent) {
       portSaveStateRequest(0, 0);
     } else if (e->key.key == SDLK_F8) {
       portSaveStateRequest(0, 1);
+    } else if (e->key.key == SDLK_F12) {
+      portShotRequestUser();
     } else if (e->key.key == SDLK_F1) {
       setOpen(!sOpen);
     } else if (e->key.key == SDLK_ESCAPE && sOpen) {
@@ -790,6 +990,8 @@ extern "C" void portSettingsDraw(void) {
     drawFps(s->fps);
   }
   drawStateStatus();
+  drawAcCue();
+  portSettingsCloudTick();
   if (portCrashReportPending() && !sOpen) {
 #if defined(__ANDROID__) || (defined(__APPLE__) && TARGET_OS_IPHONE)
     drawCrashNotice(1.6f);

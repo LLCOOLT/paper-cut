@@ -39,6 +39,8 @@ int portIosPickDiscPoll(char* out, size_t size);
 /* port/src/aurora/layout_aurora.c: the allowed orientations changed
  * (0 any, 1 landscape, 2 portrait). */
 void portIosRefreshOrientation(int orientation);
+/* A screenshot's PNG bytes into Photos (port/src/aurora/shot_aurora.c). */
+int portIosSaveToPhotos(const unsigned char* png, size_t len);
 
 #ifdef __cplusplus
 }

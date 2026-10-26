@@ -122,11 +122,83 @@
 		</dict>
 		<dict>
 			<key>Type</key>
+			<string>PSMultiValueSpecifier</string>
+			<key>Title</key>
+			<string>Texture Filtering</string>
+			<key>Key</key>
+			<string>tex_filter</string>
+			<key>DefaultValue</key>
+			<integer>0</integer>
+			<key>Titles</key>
+			<array>
+				<string>Original (Smooth)</string>
+				<string>Sharp (Pixels)</string>
+			</array>
+			<key>Values</key>
+			<array>
+				<integer>0</integer>
+				<integer>1</integer>
+			</array>
+		</dict>
+		<dict>
+			<key>Type</key>
+			<string>PSToggleSwitchSpecifier</string>
+			<key>Title</key>
+			<string>Anti-Aliasing (4x, Next Launch)</string>
+			<key>Key</key>
+			<string>msaa</string>
+			<key>DefaultValue</key>
+			<false/>
+		</dict>
+		<dict>
+			<key>Type</key>
+			<string>PSToggleSwitchSpecifier</string>
+			<key>Title</key>
+			<string>Blurred Side Bars</string>
+			<key>Key</key>
+			<string>side_bars</string>
+			<key>DefaultValue</key>
+			<false/>
+		</dict>
+		<dict>
+			<key>Type</key>
+			<string>PSToggleSwitchSpecifier</string>
+			<key>Title</key>
+			<string>Widescreen HUD</string>
+			<key>Key</key>
+			<string>wide_hud</string>
+			<key>DefaultValue</key>
+			<false/>
+		</dict>
+		<dict>
+			<key>Type</key>
 			<string>PSGroupSpecifier</string>
 			<key>Title</key>
 			<string>Gameplay</string>
 			<key>FooterText</key>
 			<string>Fast-forward is the on-screen &gt;&gt; button or a controller's right stick click. Faster running can make some jumps longer than intended. Skip the Intro passes the logos quickly and goes straight to the title.</string>
+		</dict>
+		<dict>
+			<key>Type</key>
+			<string>PSMultiValueSpecifier</string>
+			<key>Title</key>
+			<string>Action Command Cue</string>
+			<key>Key</key>
+			<string>ac_cue</string>
+			<key>DefaultValue</key>
+			<integer>0</integer>
+			<key>Titles</key>
+			<array>
+				<string>Off</string>
+				<string>On Screen</string>
+				<string>On Screen and a Tap</string>
+			</array>
+			<key>Values</key>
+			<array>
+				<integer>0</integer>
+				<integer>1</integer>
+				<integer>2</integer>
+			</array>
 		</dict>
 		<dict>
 			<key>Type</key>

@@ -8,8 +8,14 @@
 #ifdef TARGET_PC
 float portWidescreenEdgeScale(void);
 #define WIDE_X(x) ((x) * portWidescreenEdgeScale())
+/* Widescreen HUD: how far a status bar part at xpos (its left-based x,
+ * 0-608) moves toward its edge: left of the star points, left; the rest,
+ * right (0 unless the setting is on) */
+float portWideHudDx(float xpos);
+#define WIDE_HUD_DX(xpos) portWideHudDx(xpos)
 #else
 #define WIDE_X(x) x
+#define WIDE_HUD_DX(xpos) 0
 #endif
 
 #endif

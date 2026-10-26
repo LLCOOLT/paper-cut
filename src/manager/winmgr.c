@@ -1,3 +1,6 @@
+#ifdef TARGET_PC
+#include "port/menu_tap.h"
+#endif
 #include "version.h"
 #include "icon_ids.h"
 #include "manager/winmgr.h"
@@ -1197,10 +1200,23 @@ void select_main(WinMgrEntry* entry) {
                     sel->scrollTop--;
                 }
             }
+#ifdef TARGET_PC
+            /* a tap on a row (touch screens): selects it, or on the selected
+             * one confirms it (port/src/common/menu_tap_pc.c) */
+            {
+                const s32 tapped = portMenuTapRow(sel, &wp->mEntries[sel->descriptorId[0]]);
+                sel->cursor = tapped >= 0 ? tapped : sel->cursor;
+                portMenuConfirm = tapped >= 0 && tapped == prev;
+            }
+#endif
             if (prev != sel->cursor) {
                 psndSFXOn((const char*)0x20005);
             }
+#ifdef TARGET_PC
+            if ((keyGetButtonTrg(0) & 0x100) || portMenuConfirm) {
+#else
             if (keyGetButtonTrg(0) & 0x100) {
+#endif
                 if (sel->items[sel->cursor].flags & 2) {
                     psndSFXOn((const char*)0x20014);
                 }

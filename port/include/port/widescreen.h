@@ -17,5 +17,7 @@ void portWidescreenCamera(int cameraId);
 int portWidescreenEnabled(void);
 /* Switched while running (the settings page). */
 void portWidescreenSet(int on);
+/* Widescreen HUD on (the settings page; port/src/common/widescreen_pc.c) */
+extern int gPortWideHud;
 
 #endif

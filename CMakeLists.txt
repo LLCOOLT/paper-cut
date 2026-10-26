@@ -735,6 +735,16 @@ const int portBuiltinModCount = @_builtin_count@;
     if(TTYD_IOS)
         include(${CMAKE_SOURCE_DIR}/port/ios/ios.cmake)
     endif()
+    if(APPLE)
+        # Save sync through iCloud Drive (port/apple/cloud_apple.m). Its own
+        # library: the game's prefix header must not reach Objective-C.
+        enable_language(OBJC)
+        add_library(ttyd_cloud STATIC ${CMAKE_SOURCE_DIR}/port/apple/cloud_apple.m)
+        target_include_directories(ttyd_cloud PRIVATE ${CMAKE_SOURCE_DIR}/port/include)
+        target_compile_options(ttyd_cloud PRIVATE -fobjc-arc)
+        target_link_libraries(ttyd PRIVATE ttyd_cloud "-framework Foundation")
+        target_compile_definitions(ttyd PRIVATE PORT_CLOUD_SYNC=1)
+    endif()
     # Aurora's pipeline seed (tools/port/pipeline_cache.py): every GX pipeline
     # the game uses, built at launch so no draw waits for one (on a slow GPU a
     # model drawn for the first time was skipped until its pipeline was ready:

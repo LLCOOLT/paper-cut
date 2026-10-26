@@ -11,6 +11,8 @@
  * GameCube RGBA8 texture layout (4x4 tiles, AR then GB), which is untiled and
  * written as an uncompressed PNG.
  *
+ * $TTYD_USER_SHOT=<frame>           the player's screenshot (Photos/Pictures) then
+ *
  * $TTYD_SHOT_INBETWEEN=<k>          capture instead the k-th in-between frame
  *                                   after each listed one (a higher
  *                                   $TTYD_FRAMERATE), as shot_<frame>_<k> */
@@ -19,6 +21,15 @@
 #include <dolphin/vi.h>
 #undef GXCopyDisp /* the real one, from the wrapper below */
 #include <SDL3/SDL_filesystem.h>
+#include <SDL3/SDL_timer.h>
+#include <time.h>
+#include "port/settings.h"
+#if defined(__APPLE__)
+#include <TargetConditionals.h>
+#if TARGET_OS_IPHONE
+#include "port/ios_pc.h"
+#endif
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -41,6 +52,10 @@ static int sListRead;
 static char sList[512];
 static u8 sCopyId;       /* GXCopyTex dest: only an identifier for Aurora */
 static u8* sPixels;
+static int sUserNext;    /* the requested capture is the player's screenshot */
+static int sUser;        /* the in-flight capture is */
+static char sStatus[128];
+static Uint64 sStatusTime;
 
 static u32 crcTable[256];
 
@@ -69,32 +84,46 @@ static void be32(u8* p, u32 v) {
     p[3] = (u8)v;
 }
 
-static void chunk(FILE* f, const char* type, const u8* data, u32 len) {
-    u8 hdr[8];
-    u32 c;
-    be32(hdr, len);
-    memcpy(hdr + 4, type, 4);
-    fwrite(hdr, 1, 8, f);
-    fwrite(data, 1, len, f);
-    c = crc(0xFFFFFFFFu, (const u8*)type, 4);
-    c = crc(c, data, len) ^ 0xFFFFFFFFu;
-    be32(hdr, c);
-    fwrite(hdr, 1, 4, f);
-}
-
 /* RGB, filter 0 rows, zlib "stored" blocks: no compression library needed. */
 static const char* dir(void) {
     const char* d = getenv("TTYD_SHOT_DIR");
     return d != NULL && *d ? d : ".";
 }
 
-static void writePng(const char* path, const u8* rgb, u32 w, u32 h) {
+typedef struct PngBuf {
+    u8* data;
+    size_t len, cap;
+} PngBuf;
+
+static void put(PngBuf* b, const void* p, size_t n) {
+    if (b->len + n > b->cap) {
+        b->cap = (b->len + n) * 2;
+        b->data = (u8*)realloc(b->data, b->cap);
+    }
+    memcpy(b->data + b->len, p, n);
+    b->len += n;
+}
+
+static void chunkMem(PngBuf* b, const char* type, const u8* data, u32 len) {
+    u8 hdr[8];
+    u32 c;
+    be32(hdr, len);
+    memcpy(hdr + 4, type, 4);
+    put(b, hdr, 8);
+    put(b, data, len);
+    c = crc(0xFFFFFFFFu, (const u8*)type, 4);
+    c = crc(c, data, len) ^ 0xFFFFFFFFu;
+    be32(hdr, c);
+    put(b, hdr, 4);
+}
+
+/* The PNG file's bytes (malloc'd, *len set). */
+static u8* encodePng(const u8* rgb, u32 w, u32 h, size_t* len) {
     static const u8 sig[8] = {0x89, 'P', 'N', 'G', 0x0D, 0x0A, 0x1A, 0x0A};
     u8 ihdr[13];
     u32 row = w * 3 + 1, raw = row * h, blocks = (raw + 65534) / 65535;
     u32 zlen = 2 + raw + blocks * 5 + 4, i, a = 1, b = 0, pos = 0, done = 0;
     u8* z = (u8*)malloc(zlen);
-    FILE* f;
     z[pos++] = 0x78;
     z[pos++] = 0x01;
     while (done < raw) {
@@ -119,20 +148,38 @@ static void writePng(const char* path, const u8* rgb, u32 w, u32 h) {
     ihdr[8] = 8;  /* bit depth */
     ihdr[9] = 2;  /* RGB */
     ihdr[10] = ihdr[11] = ihdr[12] = 0;
-    SDL_CreateDirectory(dir()); /* with its parents */
-    f = fopen(path, "wb");
-    if (f != NULL) {
-        fwrite(sig, 1, 8, f);
-        chunk(f, "IHDR", ihdr, 13);
-        chunk(f, "IDAT", z, pos);
-        chunk(f, "IEND", NULL, 0);
-        fclose(f);
-        printf("[shot] wrote %s\n", path);
-    } else {
-        printf("[shot] cannot write %s\n", path);
+    {
+        PngBuf b = {NULL, 0, 0};
+        put(&b, sig, 8);
+        chunkMem(&b, "IHDR", ihdr, 13);
+        chunkMem(&b, "IDAT", z, pos);
+        chunkMem(&b, "IEND", NULL, 0);
+        free(z);
+        *len = b.len;
+        return b.data;
     }
+}
+
+static int writeFile(const char* path, const u8* data, size_t len) {
+    FILE* f = fopen(path, "wb");
+    if (f == NULL) {
+        printf("[shot] cannot write %s\n", path);
+        fflush(stdout);
+        return 0;
+    }
+    fwrite(data, 1, len, f);
+    fclose(f);
+    printf("[shot] wrote %s\n", path);
     fflush(stdout);
-    free(z);
+    return 1;
+}
+
+static void writePng(const char* path, const u8* rgb, u32 w, u32 h) {
+    size_t len;
+    u8* png = encodePng(rgb, w, h, &len);
+    SDL_CreateDirectory(dir()); /* with its parents */
+    writeFile(path, png, len);
+    free(png);
 }
 
 /* GameCube RGBA8: 4x4 tiles of 64 bytes, 16 AR pairs then 16 GB pairs. */
@@ -154,6 +201,67 @@ static void untile(const u8* tex, u8* rgb) {
 
 void portShotRequest(const char* name) {
     snprintf(sNext, sizeof(sNext), "%s", name);
+}
+
+/* The player's screenshot (the settings page, F12): the next frame, to Photos
+ * on iOS, else a PNG in the Pictures folder (portShotStatus says where). */
+void portShotRequestUser(void) {
+    if (sCapturing || sNext[0] != '\0') {
+        return;
+    }
+    snprintf(sNext, sizeof(sNext), "screenshot");
+    sUserNext = 1;
+}
+
+const char* portShotStatus(void) {
+    return sStatus[0] != '\0' && SDL_GetTicks() - sStatusTime < 3000 ? sStatus : NULL;
+}
+
+static void status(const char* text) {
+    snprintf(sStatus, sizeof(sStatus), "%s", text);
+    sStatusTime = SDL_GetTicks();
+}
+
+/* Where the player's screenshots go (not iOS): ~/Pictures/TTYD, or a
+ * Screenshots folder by the settings */
+static void userShotPath(char* out, size_t size) {
+    char when[32];
+    time_t now = time(NULL);
+    struct tm tm;
+    const char* home = getenv("HOME");
+    char folder[1024];
+#if defined(_WIN32)
+    localtime_s(&tm, &now);
+#else
+    localtime_r(&now, &tm);
+#endif
+    strftime(when, sizeof(when), "%Y-%m-%d at %H.%M.%S", &tm);
+#if defined(__APPLE__)
+    if (home != NULL) {
+        snprintf(folder, sizeof(folder), "%s/Pictures/TTYD", home);
+    } else
+#endif
+    {
+        snprintf(folder, sizeof(folder), "%s/Screenshots", portSettingsUserPath());
+    }
+    (void)home;
+    SDL_CreateDirectory(folder);
+    snprintf(out, size, "%s/TTYD %s.png", folder, when);
+}
+
+static void saveUserShot(const u8* rgb, u32 w, u32 h) {
+    size_t len;
+    u8* png = encodePng(rgb, w, h, &len);
+#if defined(__APPLE__) && TARGET_OS_IPHONE
+    status(portIosSaveToPhotos(png, len) ? "Screenshot saved to Photos" : "Screenshot: no access to Photos");
+#else
+    {
+        char path[1200];
+        userShotPath(path, sizeof(path));
+        status(writeFile(path, png, len) ? "Screenshot saved to Pictures/TTYD" : "Screenshot could not be saved");
+    }
+#endif
+    free(png);
 }
 
 BOOL portShotPending(void) {
@@ -198,6 +306,13 @@ void portShotBeforeCopyDisp(u32 frame) {
     if (sCapturing) {
         return;
     }
+    {
+        /* $TTYD_USER_SHOT=<frame> (tests): the player's screenshot then */
+        const char* u = getenv("TTYD_USER_SHOT");
+        if (u != NULL && (u32)strtoul(u, NULL, 10) == frame) {
+            portShotRequestUser();
+        }
+    }
     if (sNext[0] == '\0' && inbetween() == 0 && listed(frame)) {
         snprintf(sNext, sizeof(sNext), "shot_%u", (unsigned)frame);
     }
@@ -227,11 +342,17 @@ static void capture(void) {
     src.src = &sCopyId;
     if (!AuroraReadbackCaptureCopies(sStream, &src, 1)) {
         printf("[shot] readback unavailable on this GPU\n");
+        if (sUserNext) {
+            status("Screenshots are not available on this GPU");
+        }
         sNext[0] = '\0';
+        sUserNext = 0;
         return;
     }
     snprintf(sName, sizeof(sName), "%s/%s.png", dir(), sNext);
     sNext[0] = '\0';
+    sUser = sUserNext;
+    sUserNext = 0;
     sCapturing = 1;
     sWaited = 0;
 }
@@ -274,8 +395,14 @@ void portShotFrame(void) {
                     }
                 }
             }
-            writePng(sName, wide, w, SHOT_H);
+            if (sUser) {
+                saveUserShot(wide, w, SHOT_H);
+            } else {
+                writePng(sName, wide, w, SHOT_H);
+            }
             free(wide);
+        } else if (sUser) {
+            saveUserShot(rgb, SHOT_W, SHOT_H);
         } else {
             writePng(sName, rgb, SHOT_W, SHOT_H);
         }
@@ -283,6 +410,9 @@ void portShotFrame(void) {
         sCapturing = 0;
     } else if (++sWaited > 30) {
         printf("[shot] no readback for %s after 30 frames\n", sName);
+        if (sUser) {
+            status("Screenshot failed");
+        }
         fflush(stdout);
         sCapturing = 0;
     }

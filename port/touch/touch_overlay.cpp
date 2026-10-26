@@ -32,6 +32,7 @@
 #include <aurora/aurora.h>
 #include <dolphin/pad.h>
 #include "port/settings.h"
+#include "port/menu_tap.h"
 #include "port/speed.h"
 #include "port/layout.h"
 #if defined(__APPLE__)
@@ -246,12 +247,25 @@ bool computeLayout(Layout& l) {
     const float mid = 0.5f * (n.a0 + n.a1);
     l.c[b] = {n.cx + n.rm * std::cos(mid), n.cy + n.rm * std::sin(mid), n.t};
   }
-  l.c[kR] = at(kR, right - 0.12f * u, sy + 0.10f * u, 0.05f * u);
-  l.c[kZ] = at(kZ, right - 0.12f * u, sy + 0.24f * u, 0.045f * u);
-  l.c[kL] = at(kL, sx + 0.12f * u, sy + 0.10f * u, 0.05f * u);
-  l.c[kStart] = at(kStart, sx + sw * 0.5f, sy + 0.07f * u, 0.04f * u);
-  l.c[kFast] = at(kFast, sx + sw * 0.5f - 0.13f * u, sy + 0.07f * u, 0.04f * u);
   l.c[kStick] = at(kStick, sx + 0.22f * u, bottom - 0.24f * u, 0.13f * u);
+  // Landscape with little room beside the picture (a tablet's near-4:3
+  // screen): the controls are on the picture, so the shoulder buttons go
+  // above the thumbs' clusters and START at the bottom, clear of the status
+  // bar at the top and of the window's own controls in its corner.
+  if (!l.portrait && l.area.picX - sx < 0.30f * u) {
+    const Circle st = l.c[kStick];
+    l.c[kL] = at(kL, st.x, st.y - 0.32f * u, 0.05f * u);
+    l.c[kR] = at(kR, a.x + 0.03f * u, a.y - 0.36f * u, 0.05f * u);
+    l.c[kZ] = at(kZ, a.x - 0.13f * u, a.y - 0.33f * u, 0.045f * u);
+    l.c[kStart] = at(kStart, sx + sw * 0.5f + 0.07f * u, bottom - 0.07f * u, 0.04f * u);
+    l.c[kFast] = at(kFast, sx + sw * 0.5f - 0.07f * u, bottom - 0.07f * u, 0.04f * u);
+  } else {
+    l.c[kR] = at(kR, right - 0.12f * u, sy + 0.10f * u, 0.05f * u);
+    l.c[kZ] = at(kZ, right - 0.12f * u, sy + 0.24f * u, 0.045f * u);
+    l.c[kL] = at(kL, sx + 0.12f * u, sy + 0.10f * u, 0.05f * u);
+    l.c[kStart] = at(kStart, sx + sw * 0.5f, sy + 0.07f * u, 0.04f * u);
+    l.c[kFast] = at(kFast, sx + sw * 0.5f - 0.13f * u, sy + 0.07f * u, 0.04f * u);
+  }
   l.stickZoneRight = std::fmax(sx + sw * 0.45f, l.c[kStick].x + l.c[kStick].r * 1.5f);
   l.stickZoneTop = std::fmin(sy + 0.2f * u, l.c[kStick].y - l.c[kStick].r * 1.5f);
   return true;
@@ -349,9 +363,15 @@ Control hitTest(const Layout& l, float px, float py) {
   if (best == kNone && px < l.stickZoneRight && py > l.stickZoneTop) {
     return kStick;
   }
+  const bool onPicture = px >= l.area.picX && px < l.area.picX + l.area.picW && py >= l.area.picY &&
+                         py < l.area.picY + l.area.picH;
+  // with a selection list up, a tap on the picture is a tap on its rows
+  if (best == kNone && onPicture && portMenuOpen()) {
+    portMenuTap((px - l.area.picX) / l.area.picW, (py - l.area.picY) / l.area.picH);
+    return kNone;
+  }
   // a tap on the picture presses A (settings)
-  if (best == kNone && portSettings()->tapA && px >= l.area.picX && px < l.area.picX + l.area.picW &&
-      py >= l.area.picY && py < l.area.picY + l.area.picH) {
+  if (best == kNone && portSettings()->tapA && onPicture) {
     return kA;
   }
   return best;

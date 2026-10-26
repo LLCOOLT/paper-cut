@@ -36,6 +36,8 @@
  *                       MAX frames (default 900); stops if the map changes
  *   mobj_all [MAX]      the same with every map object's event (switches,
  *                       blocks, chests)
+ *   tap NX NY           a tap at NX, NY (0-1 across the picture) on a selection
+ *                       list's rows (port/src/common/menu_tap_pc.c)
  *   select N|list       open selection window type N (0-18; key items, items,
  *                       badges, partners, ...), or a window of a list of items
  *                       as a locked door's script opens; press keys to close it
@@ -46,6 +48,8 @@
  *                       this frame (Aurora, port/src/aurora/savestate_aurora.c)
  *   end                 exit (0) once any capture is written
  * Each command is logged as "[input] frame F: <line>". */
+#include "port/ac_cue.h"
+#include "port/menu_tap.h"
 #include <ctype.h>
 #include <math.h>
 #include <stdio.h>
@@ -293,6 +297,9 @@ static void load(const char* path) {
         } else if (strcmp(cmd, "talk_all") == 0 || strcmp(cmd, "mobj_all") == 0) {
             s->frames = cmd[0] == 't' ? -16 : -17;
             s->waitMax = a1[0] ? atoi(a1) : 900;
+        } else if (strcmp(cmd, "tap") == 0) {
+            s->frames = -18;
+            snprintf(s->name, sizeof(s->name), "%s %s", a1, a2);
         } else if (strcmp(cmd, "mobj_event") == 0) {
             s->frames = -15;
             snprintf(s->name, sizeof(s->name), "%s", a1);
@@ -433,7 +440,7 @@ void portInputStart(void) {
     }
 }
 
-void portInputApply(PADStatus* pad) {
+static void applyScript(PADStatus* pad) {
     const Step* s;
     if (!portInputActive()) {
         return;
@@ -674,6 +681,12 @@ void portInputApply(PADStatus* pad) {
             snprintf(sSweepMap, sizeof(sSweepMap), "%s", gp != NULL ? gp->currentMapName : "");
             return; /* runs from the next frame */
         }
+        if (s->frames == -18) {
+            float nx = 0.5f, ny = 0.5f;
+            sscanf(s->name, "%f %f", &nx, &ny);
+            portMenuTap(nx, ny); /* as the touch overlay does with a list up */
+            continue;
+        }
         if (s->frames == -15) {
             MapObjectEntry* mobj = mobjNameToPtrNoAssert(s->name);
             if (mobj == NULL || mobj->event == 0) {
@@ -719,4 +732,31 @@ void portInputApply(PADStatus* pad) {
     pad[0].analogA = (s->buttons & PAD_BUTTON_A) ? 255 : 0;
     pad[0].analogB = (s->buttons & PAD_BUTTON_B) ? 255 : 0;
     sLeft--;
+}
+
+/* $TTYD_AC_CUE_PRESS=1 (tests of the Action Command cue): A pressed for two
+ * frames each time the cue comes on (port/src/common/ac_cue_pc.c) */
+void portInputApply(PADStatus* pad) {
+    static int sPrevCue, sHold;
+    static int sCuePress = -1;
+    applyScript(pad);
+    if (sCuePress < 0) {
+        sCuePress = getenv("TTYD_AC_CUE_PRESS") != NULL;
+    }
+    if (!sCuePress) {
+        return;
+    }
+    /* as a player following the cue: at its ideal moment */
+    if (gPortAcCueState != 0 && gPortAcCueLead <= 0 && sPrevCue == 0) {
+        printf("[accue] frame %u: cue %d at its mark, pressing A\n", (unsigned)sFrame, gPortAcCueState);
+        fflush(stdout);
+        sHold = 2;
+    }
+    sPrevCue = gPortAcCueState != 0 && gPortAcCueLead <= 0;
+    if (sHold > 0) {
+        sHold--;
+        pad[0].err = PAD_ERR_NONE;
+        pad[0].button |= PAD_BUTTON_A;
+        pad[0].analogA = 255;
+    }
 }

@@ -3,6 +3,9 @@
  * below args (line 2 in each function), along with having to explicitly store
  * btlId (can't condense to one line), should fix most problems
 */
+#ifdef TARGET_PC
+#include "port/ac_cue.h"
+#endif
 #include "driver/itemdrv.h"
 #include "pc_call.h"
 #include "battle/ac/ac_timing_a.h"
@@ -2895,6 +2898,9 @@ USER_FUNC(btlevtcmd_JumpPosition) {
         if (frames) {
             unit->moveFrames = frames;
         }
+#ifdef TARGET_PC
+        portAcCueJump(unit); /* port/src/common/ac_cue_pc.c */
+#endif
         BtlUnit_SetMoveTargetPos(unit, tx, ty, tz);
         BtlUnit_GetPos(unit, &x, &y, &z);
         BtlUnit_SetMoveCurrentPos(unit, x, y, z);
@@ -4405,6 +4411,9 @@ USER_FUNC(btlevtcmd_MarioJumpPosition) {
             event->blocked = 2;
         }
         else {
+#ifdef TARGET_PC
+            portAcCueJump(unit); /* port/src/common/ac_cue_pc.c */
+#endif
             BtlUnit_SetMoveTargetPos(unit, tx, ty, tz);
             BtlUnit_GetPos(unit, &x, &y, &z);
             BtlUnit_SetMoveCurrentPos(unit, x, y, z);

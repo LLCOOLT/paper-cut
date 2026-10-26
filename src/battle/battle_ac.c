@@ -26,6 +26,11 @@ void BattleAudience_Case_ActionCommandGood(BattleWeapon* weapon);
 s32 BattleACPadCheckRecordTrigger(s32 chan, s32 mask);
 
 
+#ifdef TARGET_PC
+void portAcCueUpdate(BattleWork* wp); /* port/src/common/ac_cue_pc.c */
+void portAcCueJudged(int kind, int result);
+#endif
+
 void BattleActionCommandManagerInit(BattleWork* wp) {
 	BtlPad_WorkInit(&wp->actionCommands.pad);
 	wp->actionCommands.maincb = NULL;
@@ -40,6 +45,9 @@ void BattleActionCommandManager(BattleWork* wp) {
 	DispCallback disp;
 
 	BtlPad_WorkUpdate(&wp->actionCommands.pad, 0);
+#ifdef TARGET_PC
+	portAcCueUpdate(wp); /* the Action Command cue setting */
+#endif
 	main = wp->actionCommands.maincb;
 	if (main) {
 		if (!main(wp)) {
@@ -58,7 +66,13 @@ s32 BattleActionCommandResult(BattleWork* wp) {
 
 	result = wp->actionCommands.resultcb;
 	if (result) {
+#ifdef TARGET_PC
+		const s32 r = result(wp);
+		portAcCueJudged(1, wp->actionCommands.outputParams[0]); /* port/src/common/ac_cue_pc.c */
+		return r;
+#else
 		return result(wp);
+#endif
 	}
 	else {
 		return wp->actionCommands.result & 2;
@@ -221,6 +235,9 @@ s32 PORT_HOOKABLE(BattleActionCommandCheckDefence)(BattleUnit* unit, BattleWeapo
 		}
 	}
 	BtlPad_WorkInit(pad);
+#ifdef TARGET_PC
+	portAcCueJudged(2, wp->actionCommands.mDefenseResult); /* port/src/common/ac_cue_pc.c */
+#endif
 	return wp->actionCommands.mDefenseResult;
 }
 s32 BattleACPadCheckRecordTrigger(s32 chan, s32 mask) {

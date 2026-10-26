@@ -186,6 +186,20 @@ void portIosHapticTap(void) {
     [sGen prepare];
 }
 
+/* A screenshot (PNG bytes) into the photo library (add-only access: the
+ * system asks the first time). 0 if it could not be read as an image. */
+int portIosSaveToPhotos(const unsigned char* png, size_t len) {
+    @autoreleasepool {
+        NSData* data = [NSData dataWithBytes:png length:len];
+        UIImage* image = [UIImage imageWithData:data];
+        if (image == nil) {
+            return 0;
+        }
+        UIImageWriteToSavedPhotosAlbum(image, nil, NULL, NULL);
+        return 1;
+    }
+}
+
 /* The orientations allowed changed (SDL_HINT_ORIENTATIONS, which SDL reads
  * whenever UIKit asks): 0 any, 1 landscape, 2 portrait. UIKit is told to ask
  * again, and to turn the screen now if it is held a way no longer allowed. */
