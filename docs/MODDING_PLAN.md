@@ -1,7 +1,7 @@
 Mod support: survey and plan
 ============================
 
-Status: **M1–M3 done** (assets, data and code: [MODDING.md](MODDING.md)); M4 onward planned. Survey done October 2026 from public sources (GitHub, GameBanana, the Dolphin forums, Super Mario Wiki, the Paper Mario Technical Knowledge Base). Items marked *(unverified)* came from one weak source.
+Status: **M1–M6 done** (assets, data, code, porting GameCube mods, scripts, Archipelago: [MODDING.md](MODDING.md)); M7 (Luau) not needed for now (see 4). Survey done October 2026 from public sources (GitHub, GameBanana, the Dolphin forums, Super Mario Wiki, the Paper Mario Technical Knowledge Base). Items marked *(unverified)* came from one weak source.
 
 Contents:
 1. [What exists](#1-what-exists): GameCube mods, codes, texture packs, Switch mods, how other ports do it
@@ -184,10 +184,10 @@ itemDataTable[*].sell_price = 1
 | M1 | Assets (**done**) | `mods/` folder, `mod.json`, folders and zips, file overlay, added text, texture packs on (with a dump switch), Mods tab (enable/order), example mod, local CI stage | small |
 | M2 | Data patches (**done**) | reflection table, patches by name, originals restored when a mod is off, data reference for authors; area data moved to M3, Gecko translator dropped (3.2) | medium |
 | M3 | Hook slots and services (**done**) | 40 hook slots (generated dispatchers, no code patching), the API (frames, drawing, messages, areas, shops, battles, options, game lookup), libraries on Windows (tested) and Linux/macOS/Android (untested), mods built into the game (iOS), example code mod | medium |
-| M4 | ttyd-tools SDK | compatibility headers; port Practice Codes first (it has JP/US/EU and exercises most services), then Infinite Pit | medium |
-| M5 | evt scripts | text evt assembler, new-area registration; a sample mod that adds a room | medium |
-| M6 | Archipelago | TTYDAP's logic as a native mod plus a built-in AP client (websocket), no Dolphin memory reading | medium |
-| M7 | Luau | only if M3–M5 leave real gaps | large |
+| M4 | ttyd-tools SDK (**done**) | porting tools (fields by offset, header shims by address, assembly stubs), compatibility headers (`hookFunction` on hook slots, game variables and file statics by name, C's argument conversions), 61 hook slots, the game's statics exported; the Practice Codes ported locally (menu, displays, battles: [MODDING.md](MODDING.md#porting-a-gamecube-mod)) | medium |
+| M5 | evt scripts (**done**) | scripts in the game's own macros (`evt/*.evt`), assembled at start with the game's names, constants and statics; maps given init scripts, new maps reading another's files; `examples/mods/hello-room` (a new map) | medium |
+| M6 | Archipelago (**done**) | a built-in AP client (WebSocket), seeds applied at start (721 item places translated from the apworld's disc offsets, checked against the disc), items, checks, goal, DeathLink and room for trackers, an Archipelago settings tab, a session test against a stand-in server; TTYDAP ported locally as a code mod with the porting tools ([MODDING.md](MODDING.md#archipelago)) | medium |
+| M7 | Luau (**not needed now**) | only if M3–M6 leave real gaps. They leave one: code mods on iOS, which must be built into the app. The mods people play are GameCube C++ that Luau wouldn't run either, and scripts (M5) already run everywhere, so a scripting language waits for a mod that needs it | large |
 
 Each phase ships with an example mod in `examples/mods/` and a test in the local CI.
 

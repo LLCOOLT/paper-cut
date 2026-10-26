@@ -1,0 +1,6 @@
+# The archipelago stage of local CI: in gor_01, the Old Letter's flag set
+# (GSWF 6099: the location "Rogueport Center: Old Letter"), its check sent.
+wait 120
+flag 6099
+wait 120
+end

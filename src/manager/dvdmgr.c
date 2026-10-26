@@ -11,6 +11,9 @@
 #include "system.h"
 #include <dolphin/os.h>
 #include <string.h>
+#ifdef PORT_MODS
+#include "port/mods.h"
+#endif
 #ifdef TARGET_PC
 /* PC port: prototypes for functions this file called undeclared (implicit int) */
 void qqsort(void* base, u32 n, u32 size, int (*compare)(void*, void*));
@@ -143,6 +146,9 @@ DVDEntry* DVDMgrOpen(const char* path, u8 priority, u16 unknown) { //1:1
     DVDEntry* entry;
     int i;
 
+#ifdef PORT_MODS
+    path = portModsPathAlias(path); /* a mod's new map reads another's files */
+#endif
     if (DVDConvertPathToEntrynum(path) == -1) {
         return NULL;
     }

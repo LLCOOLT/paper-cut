@@ -1,3 +1,4 @@
+#include "port_hook.h"
 #include "evt/evt_bero.h"
 #include "cam_road.h"
 #include "driver/hitdrv.h"
@@ -387,7 +388,7 @@ USER_FUNC(evt_bero_get_now_number) {
 	return EVT_RETURN_DONE;
 }
 
-USER_FUNC(evt_bero_get_info) {
+USER_FUNC(PORT_HOOKABLE(evt_bero_get_info)) {
 	BeroEntry** table;
 	int i;
 	BeroEntry* entry;
@@ -1144,6 +1145,9 @@ USER_FUNC(evt_bero_disppos_load) {
 }
 
 #include "system.h"
+#ifdef PORT_MODS
+#include "port/hooks/src_event_evt_bero.h"
+#endif
 
 USER_FUNC(evt_bero_move_mario_speed) {
 	EvtWord* args = event->args;
@@ -1984,3 +1988,7 @@ BeroEntry* BeroINFOARR[16];
 s32 BeroSW[16];
 s32 BeroID[16];
 
+
+#ifdef PORT_MODS
+#include "port/hooks/src_event_evt_bero.inc"
+#endif

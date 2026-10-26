@@ -1,0 +1,5 @@
+# examples/mods/hello-room's new map gor_99 (local_ci's mods stage): its
+# init script runs gor_01's, then shows the mod's message.
+wait 300
+shot room
+end

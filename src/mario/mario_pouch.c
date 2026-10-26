@@ -463,7 +463,7 @@ BOOL PORT_HOOKABLE(pouchRemoveItem)(ItemType type)
   return 0;
 }
 
-BOOL pouchRemoveItemIndex(ItemType type, s32 index) {
+BOOL PORT_HOOKABLE(pouchRemoveItemIndex)(ItemType type, s32 index) {
 	s16* table1, * table2, * p;
 	BOOL valid;
 	s32 maximum;

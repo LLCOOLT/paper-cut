@@ -22,6 +22,46 @@ BOOL psndBGMOn_f_d(u32 p0, char * p1, u32 p2, u32 p3, s32 p4) {
     return r;
 }
 
+void psndSFXOff(s32 p0) {
+    PortHookSlot* s = &portHookSlots[48];
+    int i, skip = 0;
+    if (!s->active) {
+        psndSFXOff__body(p0);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*))s->pre[i])(&p0);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0)))s->replace)(p0); } else { psndSFXOff__body(p0); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0)))s->post[i])(p0);
+    }
+}
+
+BOOL psndENVOn_f_d(u32 p0, const char * p1, u32 p2, s32 p3) {
+    PortHookSlot* s = &portHookSlots[49];
+    BOOL r;
+    int i, skip = 0;
+    if (!s->active) {
+        return psndENVOn_f_d__body(p0, p1, p2, p3);
+    }
+    __builtin_memset(&r, 0, sizeof(r));
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(r)*, __typeof__(p0)*, __typeof__(p1)*, __typeof__(p2)*, __typeof__(p3)*))s->pre[i])(&r, &p0, &p1, &p2, &p3);
+    }
+    if (!skip) {
+        r = (s->replace != NULL ? ((BOOL (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->replace)(p0, p1, p2, p3) : psndENVOn_f_d__body(p0, p1, p2, p3));
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(r)*, __typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->post[i])(&r, p0, p1, p2, p3);
+    }
+    return r;
+}
+
 void portHookInit_src_pmario_sound(void) {
     portHookSlots[38].body = (void*)psndBGMOn_f_d__body;
+    portHookSlots[48].body = (void*)psndSFXOff__body;
+    portHookSlots[49].body = (void*)psndENVOn_f_d__body;
 }

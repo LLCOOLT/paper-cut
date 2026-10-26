@@ -1,0 +1,119 @@
+name: Release
+
+# A tag v<version> (e.g. v0.1.0): every local CI stage, then release builds
+# with nothing from the disc (tools/port/release.py) and a draft GitHub
+# release with the packages, on the self-hosted runners (docs/RELEASING.md):
+# Windows (Windows, Android), then the Mac (macOS, iOS, Linux in a container),
+# which adds its packages to the same draft. Publish the draft by hand once it
+# looks right. By hand (workflow_dispatch): the Mac's packages alone, as an
+# artifact, to try the Mac runner.
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version in the packages' names"
+        default: "0.0.0-test"
+      targets:
+        description: "The Mac's targets (desktop,ios,linux)"
+        default: "desktop,ios,linux"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    if: github.event_name == 'push'
+    runs-on: [self-hosted, ttyd-port]
+    timeout-minutes: 240
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          clean: false
+
+      # `bash` must be Git Bash: the runner's PATH finds Windows' WSL launcher
+      # (WindowsApps/bash.exe) first, which fails with no Linux installed
+      - name: Git Bash first on PATH
+        shell: powershell
+        run: Add-Content -Path $env:GITHUB_PATH -Value "$env:ProgramFiles/Git/bin"
+
+      - name: Disc images and extracted data (links, never committed)
+        shell: bash
+        run: python tools/port/ci_link_data.py
+
+      - name: Local CI, every stage
+        shell: bash
+        run: python tools/port/local_ci.py
+
+      - name: Release builds and a draft release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${{ github.ref_name }}"
+          python tools/port/release.py "${TAG#v}" --publish "$TAG"
+
+      - name: Logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-logs
+          path: build-ci/*.log
+          retention-days: 30
+
+  apple:
+    # after Windows (its draft exists then), or alone by hand
+    needs: release
+    if: ${{ !cancelled() && needs.release.result != 'failure' }}
+    runs-on: [self-hosted, ttyd-port-mac]
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          clean: false
+
+      # a runner started as a service may not have Homebrew's or Rust's tools
+      # on its path
+      - name: Tools on PATH
+        run: |
+          for d in /opt/homebrew/bin /usr/local/bin "$HOME/.cargo/bin" /opt/homebrew/opt/llvm/bin /usr/local/opt/llvm/bin; do
+            [ -d "$d" ] && echo "$d" >> "$GITHUB_PATH"
+          done
+          true
+
+      - name: The tools a release build needs
+        run: |
+          uname -m
+          cmake --version | head -1
+          ninja --version
+          python3 --version
+          xcodebuild -version
+          (llvm-objcopy --version || ls /opt/homebrew/opt/llvm/bin) | head -2
+          rustup target list --installed
+          # (the Linux packages' container; release.py stops there without it)
+          docker version --format '{{.Server.Version}}' || echo "no docker: no Linux packages"
+
+      - name: Release builds (macOS, iOS, Linux)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ "${{ github.event_name }}" = push ]; then
+            TAG="${{ github.ref_name }}"
+            python3 tools/port/release.py "${TAG#v}" --publish "$TAG"
+          else
+            python3 tools/port/release.py "${{ inputs.version }}" --targets "${{ inputs.targets }}"
+          fi
+
+      - name: Packages (a run by hand)
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v4
+        with:
+          name: apple-linux-packages
+          path: |
+            dist/*.zip
+            dist/*.ipa
+            dist/SHA256SUMS.txt
+          retention-days: 3

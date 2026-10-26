@@ -64,6 +64,9 @@ libegl1-mesa-dev libdbus-1-dev libibus-1.0-dev libudev-dev libthai-dev
 libpipewire-0.3-dev libwayland-dev libdecor-0-dev liburing-dev` (Aurora's own
 CI list). Dawn (Vulkan/GL) and nod come as prebuilt packages for x86_64; on
 arm64 nod builds from source (Rust, `cargo`). CMake 3.25+ (3.29+ to pick lld).
+The unit tests' layout check also compiles for 32-bit x86: `gcc-multilib` on
+x86_64. CI builds and tests Linux in an Ubuntu 24.04 container
+(`tools/port/linux-release.Dockerfile`, run by `tools/port/linux_container.py`).
 
 ```bash
 cmake -S . -B build-pc-jp -G Ninja --toolchain cmake/toolchains/linux-clang.cmake \
@@ -442,7 +445,8 @@ a distribution is installed; independent stages run at once, each logs to
 
 `ctest --test-dir build-pc-jp -LE slow` (build the test targets first, see
 the workflow): decoder and loader unit tests on synthetic data, plus, when the
-disc is extracted to `data/<version>`:
+disc is extracted to `data/<version>` (`python3 tools/port/extract_disc.py
+DISC.iso data/<version>`: `files/` and `sys/`, as Dolphin extracts it):
 
 - `disc_sweep`: every anim/map/camroad/TPL/font file through the loaders.
 - `musyx_seq_sweep`: every song swapped and played through the sequencer.

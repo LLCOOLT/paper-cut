@@ -1,4 +1,5 @@
 #define _MATH_H_ // skip math.h (its sqrtf statics are not in this TU)
+#include "port_hook.h"
 #include "sound.h"
 #include <dolphin/os.h>
 #include "manager/dvdmgr.h"
@@ -15,6 +16,9 @@ double cos(double);
 #include "mario/mariost.h"
 #endif
 #include "addr_word.h"
+#ifdef PORT_MODS
+#include "port/hooks/src_sound.h"
+#endif
 #ifdef TARGET_PC
 #include <stddef.h>
 #include "port/ai_pc.h"
@@ -946,7 +950,7 @@ inline u32 SoundEfxCheckPlay(s32 chan) {
     return TRUE;
 }
 
-s32 SoundEfxPlayEx(SND_FXID fid, u8 a2, u8 vol, u8 pan) {
+s32 PORT_HOOKABLE(SoundEfxPlayEx)(SND_FXID fid, u8 a2, u8 vol, u8 pan) {
     SoundEffect* sfx;
     s32 chan;
 
@@ -2347,3 +2351,7 @@ void SoundAIDMACallback(void) {
 }
 
 
+
+#ifdef PORT_MODS
+#include "port/hooks/src_sound.inc"
+#endif

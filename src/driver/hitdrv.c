@@ -1,3 +1,4 @@
+#include "port_hook.h"
 #include "driver/hitdrv.h"
 #include "addr_word.h"
 #include "hwaccess.h"
@@ -7,6 +8,9 @@
 #include "memory.h"
 #include "party.h"
 #include <string.h>
+#ifdef PORT_MODS
+#include "port/hooks/src_driver_hitdrv.h"
+#endif
 #ifdef TARGET_PC
 #include <math.h>
 #include "port/map_pc.h"
@@ -899,7 +903,7 @@ inline BOOL tempfunc3(HitCheckQuery* query, HitVector* vector) {
     return 1;
 }
 
-HitEntry* hitCheckVecFilter(HitCheckQuery* query, HitFilterCallback callback) { // 1:1
+HitEntry* PORT_HOOKABLE(hitCheckVecFilter)(HitCheckQuery* query, HitFilterCallback callback) { // 1:1
     f32 temp;
     HitVector* vector;
     Vec position;
@@ -1465,3 +1469,7 @@ void hitStrippedPool(f32* f) {
     f[1] = 0.1f;
 }
 
+
+#ifdef PORT_MODS
+#include "port/hooks/src_driver_hitdrv.inc"
+#endif

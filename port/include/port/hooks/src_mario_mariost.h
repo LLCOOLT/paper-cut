@@ -2,3 +2,4 @@
 /* The hookable functions of src/mario/mariost.c: their prototypes, included after its
  * #includes (PORT_MODS), for calls made before their definitions. */
 void marioStMain(void);
+void viPostCallback(u32);

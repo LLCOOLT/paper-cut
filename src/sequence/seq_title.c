@@ -1,4 +1,5 @@
 #define MATH_NO_SQRTF 1 // FAKE: sound.h reaches math.h; keep its sqrtf inline statics out of this unit's .rodata (never calls sqrt)
+#include "port_hook.h"
 #include "seq/seq_title.h"
 #include "pc_call.h"
 #include "driver/animdrv.h"
@@ -17,6 +18,9 @@
 #include <dolphin/mtx.h>
 #include <string.h>
 #include "eff/eff_magic1_n64.h"
+#ifdef PORT_MODS
+#include "port/hooks/src_sequence_seq_title.h"
+#endif
 
 
 #ifdef VERSION_G8ME01
@@ -120,7 +124,7 @@ void L_titleInit(SequenceWork* work) {
 }
 
 
-void titleMain(SequenceWork* work) {
+void PORT_HOOKABLE(titleMain)(SequenceWork* work) {
 	switch (wp2->state) {
 		case 0:
 			if (psndBGMStartCheck(0) != 0U
@@ -465,3 +469,7 @@ static void titleLoadDemo(void) {
 	animGroupBaseAsync("c_kuribo_n", 0, 0);
 	animGroupBaseAsync("c_tyusan", 0, 0);
 }
+
+#ifdef PORT_MODS
+#include "port/hooks/src_sequence_seq_title.inc"
+#endif

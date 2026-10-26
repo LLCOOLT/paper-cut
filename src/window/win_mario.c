@@ -1,3 +1,4 @@
+#include "port_hook.h"
 #include "win/win_main.h"
 #include "battle/battle_mario.h"
 #include "icon_ids.h"
@@ -12,6 +13,9 @@
 #include <dolphin/gx.h>
 #include <string.h>
 #include "libc_decls.h"
+#ifdef PORT_MODS
+#include "port/hooks/src_window_win_mario.h"
+#endif
 
 extern ItemData itemDataTable[];
 void winIconInit(void);
@@ -396,7 +400,7 @@ void winFontSetWidth(Vec pos, Vec scale, GXColor color, f32 width, const char* f
 void winFontSetEdgeWidth(Vec pos, Vec scale, GXColor color, f32 width, const char* fmt, ...);
 
 // US: every float live range has its own variable (register order); rowC is the second value of rowB
-void winMarioDisp(s32 camId, void* param, s32 idx) {
+void PORT_HOOKABLE(winMarioDisp)(s32 camId, void* param, s32 idx) {
     f32 rowC;
     // FAKE: q1/q2 hold copies of row0/row1 for the dead guards after the f198 block (register order, no code)
     f32 q1[1];
@@ -651,7 +655,7 @@ void winMarioDisp(s32 camId, void* param, s32 idx) {
     }
 }
 #else
-void winMarioDisp(s32 camId, void* param, s32 idx) {
+void PORT_HOOKABLE(winMarioDisp)(s32 camId, void* param, s32 idx) {
     static s32 pri[6] = {3, 2, 8, 10, 7, 9};
     WindowWork* w;
     GXColor white;
@@ -859,4 +863,8 @@ void winMarioDisp(s32 camId, void* param, s32 idx) {
         }
     }
 }
+#endif
+
+#ifdef PORT_MODS
+#include "port/hooks/src_window_win_mario.inc"
 #endif

@@ -8,6 +8,9 @@
  * on/off state are in mods/mods.txt; the first mod listed wins over the ones
  * after it. port/mods/mods.cpp. */
 
+#include <stddef.h>
+#include <stdint.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -77,8 +80,27 @@ const char* portModsDumpDir(void);
  * NULL. */
 const char* portModMsgSearch(const char* tag, const char* langDir);
 
+/* A map's init script from an enabled mod's evt/ (mod.json "maps"), or NULL:
+ * the game's MapData for it (port/src/aurora/mod_game_aurora.c). */
+void* portModsMapScript(const char* map);
+
+/* DVDMgrOpen (src/manager/dvdmgr.c): path, or the path a mod's new map reads
+ * its files from (mod.json "maps": "files": another map's). */
+const char* portModsPathAlias(const char* path);
+
+/* A disc file the host itself adds (an Archipelago seed's), below every mod's
+ * overlay; in use from the next portModsReload. */
+void portModsSetHostFile(const char* discPath, const void* data, size_t size);
+
 #ifdef __cplusplus
 }
+#include <string>
+#include <vector>
+/* One file of a zip (an .apttyd seed), by its path in the zip. */
+bool portModsReadZip(const std::string& zip, const std::string& member, std::vector<uint8_t>& out);
+/* A game name's address, as a mod's script names it (a function, a variable,
+ * file::name for a file's static); nullptr and why if there's none. */
+void* portModsGameAddress(const std::string& name, std::string& why);
 #endif
 
 #endif

@@ -396,7 +396,7 @@ s32 marioStGetSystemLevel(void) {
 	return gp->systemLevelFlags;
 }
 
-void viPostCallback(u32 retraceCount) {
+void PORT_HOOKABLE(viPostCallback)(u32 retraceCount) {
 	OSTime time;
 	u32 reset = PAD_BUTTON_B | PAD_BUTTON_X | PAD_BUTTON_START;
 

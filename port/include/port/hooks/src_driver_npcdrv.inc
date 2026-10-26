@@ -20,6 +20,48 @@ void npcSetupBattleInfo(NpcEntry * p0, NpcSetupBattleInfo * p1) {
     }
 }
 
+void * fbatHitCheck(u32 p0, void * p1) {
+    PortHookSlot* s = &portHookSlots[47];
+    void * r;
+    int i, skip = 0;
+    if (!s->active) {
+        return fbatHitCheck__body(p0, p1);
+    }
+    __builtin_memset(&r, 0, sizeof(r));
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(r)*, __typeof__(p0)*, __typeof__(p1)*))s->pre[i])(&r, &p0, &p1);
+    }
+    if (!skip) {
+        r = (s->replace != NULL ? ((void * (*)(__typeof__(p0), __typeof__(p1)))s->replace)(p0, p1) : fbatHitCheck__body(p0, p1));
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(r)*, __typeof__(p0), __typeof__(p1)))s->post[i])(&r, p0, p1);
+    }
+    return r;
+}
+
+NpcEntry * npcNameToPtr(const char * p0) {
+    PortHookSlot* s = &portHookSlots[54];
+    NpcEntry * r;
+    int i, skip = 0;
+    if (!s->active) {
+        return npcNameToPtr__body(p0);
+    }
+    __builtin_memset(&r, 0, sizeof(r));
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(r)*, __typeof__(p0)*))s->pre[i])(&r, &p0);
+    }
+    if (!skip) {
+        r = (s->replace != NULL ? ((NpcEntry * (*)(__typeof__(p0)))s->replace)(p0) : npcNameToPtr__body(p0));
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(r)*, __typeof__(p0)))s->post[i])(&r, p0);
+    }
+    return r;
+}
+
 void portHookInit_src_driver_npcdrv(void) {
     portHookSlots[23].body = (void*)npcSetupBattleInfo__body;
+    portHookSlots[47].body = (void*)fbatHitCheck__body;
+    portHookSlots[54].body = (void*)npcNameToPtr__body;
 }

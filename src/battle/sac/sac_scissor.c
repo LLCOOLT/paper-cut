@@ -1,3 +1,4 @@
+#include "port_hook.h"
 #include "eff/eff_starstone.h"
 #include "pc_call.h"
 #include "icon_ids.h"
@@ -816,7 +817,7 @@ s32 scissor_timer_get(EventEntry* evt) {
     return 2;
 }
 
-s32 scissor_timer_main(void) {
+s32 PORT_HOOKABLE(scissor_timer_main)(void) {
     ScissorWork* w = GetScissorPtr();
     switch (w->state) {
     case 0:
@@ -954,6 +955,9 @@ void BattleAudienceSoundSetVol(s32 kind, s32 vol, s32 frames);
 #include "battle/battle_audience.h"
 #include "evt/evt_cmd.h"
 #include "battle/battle_database_common.h"
+#ifdef PORT_MODS
+#include "port/hooks/src_battle_sac_sac_scissor.h"
+#endif
 
 s32 scissor_damage(EventEntry* evt, BOOL first) {
     BattleWork* wp;
@@ -1123,7 +1127,7 @@ void scissor_capture(CameraId camera, void* param) {
     GXPixModeSync();
 }
 
-void scissor_disp_control(CameraId camera, void* param) {
+void PORT_HOOKABLE(scissor_disp_control)(CameraId camera, void* param) {
     ScissorWork* w = GetScissorPtr();
     f32* pts = (f32*)w->buf114;
     s32 i;
@@ -1367,3 +1371,7 @@ EVT_BEGIN(marioAttackEvent_Scissor)
     CALL(btlevtcmd_StartWaitEvent, -2)
     RETURN
 EVT_END()
+
+#ifdef PORT_MODS
+#include "port/hooks/src_battle_sac_sac_scissor.inc"
+#endif

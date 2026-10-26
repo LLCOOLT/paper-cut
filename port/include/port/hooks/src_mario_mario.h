@@ -2,3 +2,4 @@
 /* The hookable functions of src/mario/mario.c: their prototypes, included after its
  * #includes (PORT_MODS), for calls made before their definitions. */
 void marioEntry(void);
+s32 marioKeyOn(void);

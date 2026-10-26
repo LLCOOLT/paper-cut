@@ -630,7 +630,7 @@ s32 marioKeyOff(void) {
 	return wp->keyOffCount;
 }
 
-s32 marioKeyOn(void) {
+s32 PORT_HOOKABLE(marioKeyOn)(void) {
 	MarioWork* wp = mp;
 
 	wp->keyOffCount--;

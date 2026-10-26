@@ -1131,7 +1131,7 @@ interrupt:
 static const Vec sZeroVec3 = {0.0f, 0.0f, 0.0f};
 #endif
 
-NpcEntry* npcNameToPtr(const char* name) {
+NpcEntry* PORT_HOOKABLE(npcNameToPtr)(const char* name) {
     NpcWork* wp;
     s32 i;
     s32 total;
@@ -2431,7 +2431,7 @@ static inline BOOL fbat_canHit(NpcEntry* npc) {
 typedef struct { s32 v[11]; } SinTbl;
 static const SinTbl sSinTbl = {{0, 0, 0, 0, 45, 60, 90, 100, 101, 101, 101}};
 
-void* fbatHitCheck(u32 flags, void* a1) {
+void* PORT_HOOKABLE(fbatHitCheck)(u32 flags, void* a1) {
     u32 f1000a;
     u32 f20;
     u32 noJump;

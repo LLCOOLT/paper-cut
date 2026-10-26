@@ -11,6 +11,7 @@
 #include "port/hook_list.h"
 #include "port/layout.h"
 #include "port/mod_host.h"
+#include "../archipelago/ttyd_ap.h"
 
 #include <SDL3/SDL.h>
 #include <imgui.h>
@@ -218,6 +219,7 @@ void fire(List& list, Args... args) {
 // The host's hooks on marioStMain (void(void): pre is int(void), post
 // void(void)): the mods' frame callbacks.
 int framePreHook() {
+  portApFrame(); // an Archipelago session's sync
   fire(sFrame);
   return 0;
 }
@@ -334,7 +336,12 @@ void portModsDraw(void) {
   fire(sDraw);
 }
 
-void portModsAreaEvent(const char* area, int entered) { fire(sArea, area, entered); }
+void portModsAreaEvent(const char* area, int entered) {
+  if (entered) {
+    portApAreaLinked(area); // an Archipelago seed's items, before the mods see the area
+  }
+  fire(sArea, area, entered);
+}
 
 void portModsShopEvent(const char* map, void* items, int count) { fire(sShop, map, items, count); }
 

@@ -1,7 +1,11 @@
+#include "port_hook.h"
 #include "evt/evt_memcard.h"
 #include "evt/evt_sub.h"
 #include "seq/seq_load.h"
 #include "sdk_decls.h"
+#ifdef PORT_MODS
+#include "port/hooks/src_sequence_seq_load.h"
+#endif
 #ifdef TARGET_PC
 /* PC port: prototypes for functions this file called undeclared (implicit int) */
 const char* winZenkakuStr(s32 num);
@@ -162,7 +166,7 @@ void seq_loadExit(SequenceWork* seq) {
 
 static inline BOOL loadStart(void);
 
-void seq_loadMain(SequenceWork* seq) {
+void PORT_HOOKABLE(seq_loadMain)(SequenceWork* seq) {
     switch (seq->state) {
         case 0:
             if (loadStart()) {
@@ -1475,7 +1479,7 @@ const char* winZenkakuStr(s32 n);
 #else
 int winZenkakuStr();
 #endif
-void seq_loadMain(SequenceWork* seq) {
+void PORT_HOOKABLE(seq_loadMain)(SequenceWork* seq) {
     switch (seq->state) {
         case 0:
             if (loadStart()) {
@@ -2534,4 +2538,8 @@ void portContinueGame(s32 slot) {
     wp->slot = slot;
     continueGame();
 }
+#endif
+
+#ifdef PORT_MODS
+#include "port/hooks/src_sequence_seq_load.inc"
 #endif

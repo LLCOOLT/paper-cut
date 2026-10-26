@@ -1,6 +1,7 @@
 /*
  * Warning, inlining hell
  */
+#include "port_hook.h"
 #include "driver/animdrv.h"
 #include <dolphin/os/OSFastCast.h>
 #include "driver/dispdrv.h"
@@ -1177,7 +1178,7 @@ void animPoseInterpEnd(void) {
 }
 #endif
 
-void animPoseMain(s32 poseId) {
+void PORT_HOOKABLE(animPoseMain)(s32 poseId) {
     s32 frame;
     s32 nA;
     s32 nB;
@@ -3101,6 +3102,9 @@ void animPaperPoseDispSub(s32 unused, AnimationPose* arg) {
 
 void _animPoseDrawMtx(AnimationPose* pose, Mtx matrix, s32 xluMode, f32 rotY, f32 scale);
 #include "sdk/DEMOInit.h"
+#ifdef PORT_MODS
+#include "port/hooks/src_driver_animdrv.h"
+#endif
 // target .bss/.sbss pad (uninitialised objects are emitted in reverse order, so this sits last)
 
 inline s32 animPoseSearchName(const char* name, s32 type) {
@@ -3574,3 +3578,7 @@ const char* animPoseGetGroupName(s32 poseId, s32 group) {
 f32 tanfTbl[0xB2];
 AnimationWork work;
 Mtx g_modeling_mtx_stack[32];
+
+#ifdef PORT_MODS
+#include "port/hooks/src_driver_animdrv.inc"
+#endif

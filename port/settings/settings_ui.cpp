@@ -13,6 +13,7 @@
 #include "port/savestate.h"
 #include "port/cloud.h"
 #include "port/mods.h"
+#include "../archipelago/ttyd_ap.h"
 
 #include <SDL3/SDL.h>
 #include <aurora/aurora.h>
@@ -430,6 +431,7 @@ void drawCrashNotice(float scale) {
 }
 
 void systemTab(PortSettings* s) {
+  note("TTYD port " PORT_VERSION " (" PORT_GAME_ID ")");
   if (ImGui::Button("Take a screenshot")) {
     setOpen(false);
     portShotRequestUser(); // the next frame, without this page
@@ -876,6 +878,57 @@ void drawFps(int corner) {
   dl->AddText(at, IM_COL32(255, 255, 255, 230), text);
 }
 
+// TTYD_SETTINGS_TAB (tests, with TTYD_SETTINGS_OPEN): the tab of that name
+// selected when the page first opens
+ImGuiTabItemFlags tabFlags(const char* name) {
+  static const char* want = SDL_getenv("TTYD_SETTINGS_TAB");
+  if (want != nullptr && strcmp(want, name) == 0) {
+    want = nullptr;
+    return ImGuiTabItemFlags_SetSelected;
+  }
+  return 0;
+}
+
+// Archipelago (port/archipelago/ttyd_ap.h): the seed, applied at start,
+// and the multiworld server's address, slot and password.
+void seedChosen(void*, const char* const* files, int) {
+  if (files != nullptr && files[0] != nullptr) {
+    portApSetSeed(files[0]);
+  }
+}
+
+void archipelagoTab() {
+  static char server[128], slot[64], password[64];
+  static bool filled;
+  if (!filled) {
+    filled = true;
+    snprintf(slot, sizeof(slot), "%s", portApSlotName());
+  }
+  note("A multiworld randomizer: the TTYD apworld's seed (an .apttyd file) and a server. The seed applies at the "
+       "game's start; its randomizer mod, the TTYD AP mod, comes as a code mod.");
+  ImGui::TextWrapped("Status: %s", portApStatus());
+  ImGui::Separator();
+  ImGui::TextWrapped("Seed: %s", portApSeedPath()[0] != '\0' ? portApSeedPath() : "(none)");
+#if !defined(__ANDROID__) && !(defined(__APPLE__) && TARGET_OS_IPHONE)
+  if (ImGui::Button("Choose a seed...")) {
+    static const SDL_DialogFileFilter kFilter[] = {{"Archipelago seed", "apttyd"}};
+    SDL_ShowOpenFileDialog(seedChosen, nullptr, SDL_GetKeyboardFocus(), kFilter, 1, nullptr, false);
+  }
+  ImGui::SameLine();
+#endif
+  note("A new seed applies at the next start.");
+  ImGui::InputText("Server", server, sizeof(server));
+  ImGui::InputText("Slot", slot, sizeof(slot));
+  ImGui::InputText("Password", password, sizeof(password), ImGuiInputTextFlags_Password);
+  if (ImGui::Button("Connect")) {
+    portApConnect(server, slot, password);
+  }
+  ImGui::SameLine();
+  if (ImGui::Button("Disconnect")) {
+    portApDisconnect();
+  }
+}
+
 } // namespace
 
 // A touch at window point (x, y) is on the settings page or the crash notice.
@@ -1019,35 +1072,39 @@ extern "C" void portSettingsDraw(void) {
     ImGui::SetWindowFontScale(scale);
     noteWindow();
     if (ImGui::BeginTabBar("tabs")) {
-      if (ImGui::BeginTabItem("Video")) {
+      if (ImGui::BeginTabItem("Video", nullptr, tabFlags("Video"))) {
         videoTab(s);
         ImGui::EndTabItem();
       }
-      if (ImGui::BeginTabItem("Audio")) {
+      if (ImGui::BeginTabItem("Audio", nullptr, tabFlags("Audio"))) {
         audioTab(s);
         ImGui::EndTabItem();
       }
-      if (ImGui::BeginTabItem("Gameplay")) {
+      if (ImGui::BeginTabItem("Gameplay", nullptr, tabFlags("Gameplay"))) {
         gameplayTab(s);
         ImGui::EndTabItem();
       }
-      if (ImGui::BeginTabItem("Controls")) {
+      if (ImGui::BeginTabItem("Controls", nullptr, tabFlags("Controls"))) {
         controlsTab(s);
         ImGui::EndTabItem();
       }
-      if (ImGui::BeginTabItem("States")) {
+      if (ImGui::BeginTabItem("States", nullptr, tabFlags("States"))) {
         statesTab();
         ImGui::EndTabItem();
       }
-      if (ImGui::BeginTabItem("Warp")) {
+      if (ImGui::BeginTabItem("Warp", nullptr, tabFlags("Warp"))) {
         warpTab();
         ImGui::EndTabItem();
       }
-      if (ImGui::BeginTabItem("Mods")) {
+      if (ImGui::BeginTabItem("Mods", nullptr, tabFlags("Mods"))) {
         modsTab(s);
         ImGui::EndTabItem();
       }
-      if (ImGui::BeginTabItem("System")) {
+      if (ImGui::BeginTabItem("Archipelago", nullptr, tabFlags("Archipelago"))) {
+        archipelagoTab();
+        ImGui::EndTabItem();
+      }
+      if (ImGui::BeginTabItem("System", nullptr, tabFlags("System"))) {
         systemTab(s);
         ImGui::EndTabItem();
       }

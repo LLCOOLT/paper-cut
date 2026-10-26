@@ -1,0 +1,89 @@
+name: CI
+
+# The port's local CI (tools/port/local_ci.py) on the self-hosted runner with
+# the "ttyd-port" label: this machine, with the disc images (docs/RELEASING.md).
+# Self-hosted jobs use no GitHub Actions minutes.
+on:
+  push:
+    branches: [main, modding]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      full:
+        description: "Every stage (also the map sweep and card tests)"
+        type: boolean
+        default: true
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  local-ci:
+    runs-on: [self-hosted, ttyd-port]
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          clean: false # keep the build folders between runs (git-ignored)
+
+      # `bash` must be Git Bash: the runner's PATH finds Windows' WSL launcher
+      # (WindowsApps/bash.exe) first, which fails with no Linux installed
+      - name: Git Bash first on PATH
+        shell: powershell
+        run: Add-Content -Path $env:GITHUB_PATH -Value "$env:ProgramFiles/Git/bin"
+
+      - name: Disc images and extracted data (links, never committed)
+        shell: bash
+        run: python tools/port/ci_link_data.py
+
+      # pushes to main and manual runs: every stage; other pushes and PRs: --quick
+      - name: Local CI
+        shell: bash
+        run: python tools/port/local_ci.py ${{ ((github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && inputs.full)) && ' ' || '--quick' }}
+
+      - name: Logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: local-ci-logs
+          path: build-ci/*.log
+          retention-days: 14
+
+  # Linux x86-64: local CI's headless stages in an Ubuntu container on the Mac
+  # runner (tools/port/linux_container.py), with the Mac's disc images
+  # ($TTYD_LOCAL_DATA in its .env). No display there, so no Aurora runs.
+  linux:
+    runs-on: [self-hosted, ttyd-port-mac]
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          clean: false
+
+      # a runner started as a service may not have Homebrew's tools on its path
+      - name: Tools on PATH
+        run: |
+          for d in /opt/homebrew/bin /usr/local/bin; do
+            [ -d "$d" ] && echo "$d" >> "$GITHUB_PATH"
+          done
+          true
+
+      - name: Disc images and extracted data (links, never committed)
+        run: python3 tools/port/ci_link_data.py
+
+      - name: Local CI on Linux (headless)
+        run: >
+          python3 tools/port/linux_container.py --env TTYD_BUILD_SUFFIX=-linux --env TTYD_CI_HEADLESS_ONLY=1 --
+          python3 tools/port/local_ci.py --only build,unit,sweep,cards
+          ${{ ((github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && inputs.full)) && ' ' || '--quick' }}
+
+      - name: Logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-ci-logs
+          path: build-ci-linux/*.log
+          retention-days: 14

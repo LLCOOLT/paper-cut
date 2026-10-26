@@ -19,6 +19,11 @@
  * api->find (Windows can't import data). The API only grows: a field added
  * later goes at the end, and version says which ones there are. */
 
+/* C++ mods: the game's headers are C (extern "C"), and two of its structs
+ * have a field named delete, which C++ sees as delete_. A C++ mod that
+ * includes more game headers puts them between ttyd_mod/game_begin.h and
+ * ttyd_mod/game_end.h the same way. */
+#include "ttyd_mod/game_begin.h"
 #include "battle/battle.h"
 #include "battle/battle_audience.h"
 #include "battle/battle_database_common.h"
@@ -32,6 +37,7 @@
 #include "mario/mario_pouch.h"
 #include "win/win_main.h"
 #include "ttyd_mod/hooks.h"
+#include "ttyd_mod/game_end.h"
 
 #ifdef __cplusplus
 extern "C" {

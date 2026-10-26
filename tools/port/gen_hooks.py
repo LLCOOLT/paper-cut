@@ -25,6 +25,7 @@ so configure those first). --apply makes the edits in the game sources
 edit is an error. --check: fail if a generated file is stale.
 """
 import argparse
+import glob
 import os
 import re
 import shlex
@@ -76,9 +77,11 @@ def find_definition(name, sources):
                 rest = "\n".join(lines[i:i + 8])
                 if re.search(r"\)\s*\{", rest) and ";" not in rest.split("{", 1)[0]:
                     found.append((src, i))
-    if len(found) != 1:
-        raise Error(f"{name}: {'no' if not found else len(found)} global definition(s) in the game's sources")
-    return found[0]
+    # several in one file: the versions' own definitions (#ifdef VERSION_...),
+    # each version compiles one; all of them are edited
+    if not found or len({src for src, _ in found}) != 1:
+        raise Error(f"{name}: {len(found) or 'no'} global definition(s) in the game's sources")
+    return found
 
 
 def stem(src):
@@ -152,8 +155,9 @@ def compile_flags(version, src):
     if not os.path.exists(ninja):
         raise Error(f"{os.path.relpath(ninja, ROOT)} missing: configure the {version} Aurora build first")
     text = open(ninja, encoding="utf-8", errors="replace").read()
-    # (files with Japanese text are compiled from a Shift-JIS copy, sjis/<src>)
-    m = re.search(r"^build CMakeFiles/ttyd_dol\.dir/(?:sjis/)?" + re.escape(src) + r"\.(?:obj|o):.*\n((?:  .*\n)+)",
+    # (files with Japanese text are compiled from a Shift-JIS copy, sjis/<src>;
+    # files with statics through a wrapper, statics/<src>)
+    m = re.search(r"^build CMakeFiles/ttyd_dol\.dir/(?:sjis/|statics/)?" + re.escape(src) + r"\.(?:obj|o):.*\n((?:  .*\n)+)",
                   text, re.M)
     if not m:
         raise Error(f"{src} is not compiled by the {version} Aurora build")
@@ -271,11 +275,14 @@ def generate(version, names, apply):
     sources = portversion.sources(version)
     entries = []  # (index, name, src, ret, params)
     for i, name in enumerate(names):
-        src, lineno = find_definition(name, sources)
+        found = find_definition(name, sources)
         if apply:
-            apply_edits(name, src, lineno)
-            src, lineno = find_definition(name, sources)  # the include moved it down
-        check_edits(name, src, lineno)
+            for k in range(len(found)):
+                apply_edits(name, *find_definition(name, sources)[k])  # each edit moves lines down
+            found = find_definition(name, sources)
+        for src, lineno in found:
+            check_edits(name, src, lineno)
+        src = found[0][0]
         ret, params = signature(version, name, src)
         entries.append((i, name, src, ret, params))
     return entries
@@ -322,9 +329,15 @@ def outputs(entries):
          " *   TtydPost_NAME  void post(Ret* result, T0 a0, ...): may change the result",
          " * Void functions have no result parameter. */",
          "#ifndef TTYD_MOD_HOOKS_H", "#define TTYD_MOD_HOOKS_H", "",
-         "enum TtydHookSlot {"]
+         "/* The headers declaring the hooked functions (their slots' types). */"]
+    m += [f'#include "{h}"' for h in declaring_headers([n for _, n, *_ in entries])]
+    m += ["", "enum TtydHookSlot {"]
     m += [f"    TTYD_HOOK_{n} = {i}," for i, n, *_ in entries]
     m += [f"    TTYD_HOOK_COUNT = {len(entries)}", "};", ""]
+    m += ["/* The slots' function names, by slot (ttyd_mod/compat.h finds a slot by name). */",
+          "#define TTYD_HOOK_NAMES { \\"]
+    m += [f'    "{n}", \\' for i, n, *_ in entries]
+    m += ["}", ""]
     for i, n, src, ret, params in entries:
         void = ret == "void"
         res = [] if void else [ret + " *"]
@@ -336,6 +349,23 @@ def outputs(entries):
     m += ["", "#endif"]
     files[MOD_H] = "\n".join(m) + "\n"
     return files
+
+
+def declaring_headers(names):
+    """The game headers (include/, as included) whose prototypes declare
+    names; one header for each, the first in path order."""
+    headers = sorted(glob.glob(os.path.join(ROOT, "include", "**", "*.h"), recursive=True))
+    texts = {h: open(h, encoding="utf-8", errors="replace").read() for h in headers}
+    out = []
+    for n in names:
+        proto = re.compile(rf"^[^#/\n]*\b{re.escape(n)}\s*\([^;{{]*\)\s*;", re.M)
+        for h in headers:
+            if proto.search(texts[h]):
+                rel = os.path.relpath(h, os.path.join(ROOT, "include")).replace(os.sep, "/")
+                if rel not in out:
+                    out.append(rel)
+                break
+    return sorted(out)
 
 
 def main():

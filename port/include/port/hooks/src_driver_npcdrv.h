@@ -2,3 +2,5 @@
 /* The hookable functions of src/driver/npcdrv.c: their prototypes, included after its
  * #includes (PORT_MODS), for calls made before their definitions. */
 void npcSetupBattleInfo(NpcEntry *, NpcSetupBattleInfo *);
+void * fbatHitCheck(u32, void *);
+NpcEntry * npcNameToPtr(const char *);

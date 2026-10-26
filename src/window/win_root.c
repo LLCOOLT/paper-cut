@@ -1,3 +1,4 @@
+#include "port_hook.h"
 #include "win/win_main.h"
 #include "pc_call.h"
 #include "battle/battle_monosiri.h"
@@ -180,7 +181,7 @@ static inline void winRootTabMain(WindowWork* w) {
         }
 }
 
-s32 winRootMain(WindowWork* w) {
+s32 PORT_HOOKABLE(winRootMain)(WindowWork* w) {
     static char* msg_help[] = {
         "msg_menu_mario", "msg_menu_nakama", "msg_menu_mochimono", "msg_menu_badge", "msg_menu_kiroku",
     };
@@ -1059,6 +1060,9 @@ void winFontInit(void);
 void winFontSetLabel(Vec pos, Vec scale, GXColor color, const char* msg);
 void* L_msgGetWork(void);
 #include "driver/animdrv.h"
+#ifdef PORT_MODS
+#include "port/hooks/src_window_win_root.h"
+#endif
 
 static inline void winBookTex(WindowWork* w, s32 id, f32 x, f32 y, f32 width, f32 height) {
     GXTexObj obj;
@@ -2630,3 +2634,7 @@ void winRootBgDrawDisp(s32 unused, WindowWork* bg) {
         GXTexCoord2f32(0.0f, 0.0f);
     }
 }
+
+#ifdef PORT_MODS
+#include "port/hooks/src_window_win_root.inc"
+#endif

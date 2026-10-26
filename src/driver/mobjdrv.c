@@ -1,3 +1,4 @@
+#include "port_hook.h"
 #include "driver/mobjdrv.h"
 #include "wide_x.h"
 #include "driver/mapdrv.h"
@@ -20,6 +21,9 @@
 #include <string.h>
 #include "koopa.h"
 #include "driver/shadowdrv.h"
+#ifdef PORT_MODS
+#include "port/hooks/src_driver_mobjdrv.h"
+#endif
 #ifdef TARGET_PC /* declarations the GameCube code calls implicitly */
 void hitDelete(const char* name);
 #include "manager/evtmgr_cmd.h"
@@ -931,7 +935,7 @@ void mobjMain(void) {
 }
 
 
-MapObjectEntry* mobjNameToPtr(const char* name) {
+MapObjectEntry* PORT_HOOKABLE(mobjNameToPtr)(const char* name) {
     int i;
     s32 entryCount;
     MapObjectEntry* entry;
@@ -1173,3 +1177,7 @@ void mobjStrippedFallPool(MapObjectEntry* entry) {
     entry->position.z = -1.0f;
     entry->velocity.x = -0.5f;
 }
+
+#ifdef PORT_MODS
+#include "port/hooks/src_driver_mobjdrv.inc"
+#endif

@@ -10,8 +10,12 @@ Stages (each logs to build-ci/<stage>.log; independent ones run at once):
   sweep      map_sweep with golden audio, both versions
   cards      new file, Save Block save and load, headless and Aurora, both
              versions; the headless card then loads on Aurora
-  mods       the US Aurora build with examples/mods: the examples' messages are used,
-             their data patches apply, the code mod's services and a damage hook work
+  mods       gen_game_all, gen_evt_table and gen_statics (both versions) --check; the
+             US Aurora build with examples/mods: the examples' messages are used, their
+             data patches apply, the code mod's services and a damage hook work, the
+             script mod's new map loads and runs its scripts
+  archipelago  the TTYD apworld's offsets as the PC's (exact, against the disc), and a
+             session with a test seed against a stand-in server
   android    both debug APKs, when the Android SDK, JDK and Gradle are there
   linux      headless build and unit tests in WSL, when a distribution is there;
              else compiled and linked for Linux against stand-in headers
@@ -32,13 +36,28 @@ import sys
 import time
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-LOGS = os.path.join(ROOT, "build-ci")
 VERSIONS = [("G8MJ01", "jp"), ("G8ME01", "us")]
-BUILDS = [(v, short, backend) for v, short in VERSIONS for backend in ("headless", "aurora")]
+# $TTYD_BUILD_SUFFIX: build folders (and logs) of their own, for a checkout
+# another system builds in too (the Linux container over the Mac's: "-linux");
+# $TTYD_CI_HEADLESS_ONLY: no Aurora builds or runs (a machine with no display)
+SUFFIX = os.environ.get("TTYD_BUILD_SUFFIX", "")
+HEADLESS_ONLY = bool(os.environ.get("TTYD_CI_HEADLESS_ONLY"))
+LOGS = os.path.join(ROOT, "build-ci" + SUFFIX)
+BUILDS = [(v, short, backend) for v, short in VERSIONS
+          for backend in (("headless",) if HEADLESS_ONLY else ("headless", "aurora"))]
 
 
 def build_dir(short, backend):
-    return os.path.join(ROOT, f"build-pc-{short}" + ("-aurora" if backend == "aurora" else ""))
+    return os.path.join(ROOT, f"build-pc-{short}" + ("-aurora" if backend == "aurora" else "") + SUFFIX)
+
+
+def data_dir(v):
+    """The extracted disc: data/<version>, or orig/<version> when the disc
+    was extracted beside its image (files/ and sys/ there)."""
+    for d in (os.path.join(ROOT, "data", v), os.path.join(ROOT, "orig", v)):
+        if os.path.isdir(os.path.join(d, "files")):
+            return d
+    return None
 
 
 def aurora_exe(short):
@@ -57,6 +76,9 @@ def tool_env():
         extra = [r"C:\Program Files\LLVM\bin", os.path.join(vs, "CMake", "bin"), os.path.join(vs, "Ninja")]
         env["PATH"] = os.pathsep.join(p for p in extra if os.path.isdir(p)) + os.pathsep + env["PATH"]
         env["Python3_ROOT_DIR"] = os.path.dirname(sys.executable)
+    # every warp gets 5 minutes: a locked Windows session presents at about
+    # 30 fps, and a warp from boot is about 4,000 frames
+    env.setdefault("TTYD_WARP_LIMIT", "300")
     return env
 
 
@@ -104,6 +126,8 @@ def configure_args(v, backend):
     args = ["-G", "Ninja", "-DCMAKE_BUILD_TYPE=RelWithDebInfo", f"-DTTYD_VERSION={v}", f"-DTTYD_BACKEND={backend}"]
     if os.name == "nt":
         args.append("--toolchain=" + os.path.join(ROOT, "cmake", "toolchains", "windows-clang.cmake"))
+    elif sys.platform.startswith("linux"):
+        args.append("--toolchain=" + os.path.join(ROOT, "cmake", "toolchains", "linux-clang.cmake"))
     return args
 
 
@@ -140,9 +164,9 @@ def stage_audits(s):
 
 def stage_sweep(s):
     for v, short in VERSIONS:
-        data = os.path.join(ROOT, "data", v)
-        if not os.path.isdir(data):
-            s.note += f"{v}: no data/ "
+        data = data_dir(v)
+        if data is None:
+            s.note += f"{v}: no extracted disc "
             continue
         exe = os.path.join(build_dir(short, "headless"), f"ttyd-{short}")
         r = s.run([sys.executable, "tools/port/map_sweep.py", exe, data, "--golden",
@@ -163,7 +187,7 @@ def card_run(s, v, short, backend, user, script, warp):
         env["TTYD_MAP"] = warp
     exe = aurora_exe(short) if backend == "aurora" else os.path.join(build_dir(short, backend), f"ttyd-{short}")
     if backend == "headless":
-        env["TTYD_DATA_DIR"] = os.path.join(ROOT, "data", v)
+        env["TTYD_DATA_DIR"] = data_dir(v)
         cmd = [exe]
     else:
         env.update(TTYD_WINDOW_POS="-4000,0", TTYD_CACHE_DIR=os.path.join(LOGS, "cards", "cache"),
@@ -179,11 +203,13 @@ def stage_cards(s):
     """New file, Save Block save and load, on each backend with its own card
     folder; then the headless card loads on Aurora (same .gci files)."""
     for v, short in VERSIONS:
-        have = {"headless": os.path.isdir(os.path.join(ROOT, "data", v)),
-                "aurora": bool(glob.glob(os.path.join(ROOT, "orig", v, "*.iso")))}
+        have = {"headless": data_dir(v) is not None,
+                "aurora": not HEADLESS_ONLY and bool(glob.glob(os.path.join(ROOT, "orig", v, "*.iso")))}
         for backend in ("headless", "aurora"):
             if not have[backend]:
-                s.note += f"{v} {backend}: no {'data/' if backend == 'headless' else 'disc image'} "
+                why = ("no extracted disc" if backend == "headless" else
+                       "not here (headless only)" if HEADLESS_ONLY else "no disc image")
+                s.note += f"{v} {backend}: {why} "
                 continue
             user = os.path.join(LOGS, "cards", f"{short}-{backend}")
             shutil.rmtree(user, ignore_errors=True)
@@ -212,7 +238,15 @@ def stage_mods(s):
     """examples/mods in a fresh user folder, the code mod's library from the
     US Aurora build in it: the build lists the examples, uses their messages
     in the item menu, applies their data patches, starts the code mod (its
-    area, shop and message services), then in a battle its damage hook."""
+    area, shop and message services), then in a battle its damage hook, and
+    warps to the script mod's new map (its scripts and message)."""
+    # the generated mod SDK pieces are current: game_all.h and game_loose.h
+    # (from the US Aurora build's flags), each version's statics list
+    s.run([sys.executable, "tools/port/gen_game_all.py", "--check"])
+    s.run([sys.executable, "tools/port/gen_evt_table.py", "--check"])
+    for _, short in VERSIONS:
+        if os.path.exists(os.path.join(build_dir(short, "aurora"), "compile_commands.json")):
+            s.run([sys.executable, "tools/port/gen_statics.py", "--build", build_dir(short, "aurora"), "--check"])
     iso = sorted(glob.glob(os.path.join(ROOT, "orig", "G8ME01", "*.iso")))
     if not iso:
         return s.skip("no US disc image")
@@ -238,6 +272,9 @@ def stage_mods(s):
           "[dev.ttyd.hello-native] shop on gor_01: 6 goods",
           "[trace] mod message in_kinoko", "[trace] mod message msg_kinoko", "[input] end")),
         ("hei_01", "battle_jump.txt", ("[dev.ttyd.hello-native] hit: 1 damage, 2 with the mod", "[input] end")),
+        ("gor_99", "mods_room.txt", ("mods: dev.ttyd.hello-room 1.0: 0 files, 0 textures, 1 messages, 0 patches, 2 scripts",
+                                     "[evt] hello-room: entered gor_99", "[trace] mod message hello_room",
+                                     "[evt] hello-room: said hello", "[input] end")),
     )
     for warp, script, wants in runs:
         env = dict(base, TTYD_MAP=warp, TTYD_INPUT=os.path.join(ROOT, "tests", "port", "input", script))
@@ -248,6 +285,52 @@ def stage_mods(s):
         if "mods: dev.ttyd.shroom-tweaks: " in r.stdout:
             s.fail("a data patch of the example was refused")
     s.note += "example mods ok (files, data, code)" if s.ok else ""
+
+
+def stage_archipelago(s):
+    """The US Aurora build's Archipelago support: every item target of the
+    TTYD apworld's locations holds what the disc's REL has at the apworld's
+    offset (TTYD_AP_VERIFY: the offsets' translation, tools/port/gc_offsets.py);
+    then a session with a test seed (tests/port/ap_test_seed.py) against a
+    stand-in server (tests/port/ap_mock_server.py): it connects, hands the
+    slot's items to the game, places the seed's items and sends a location's
+    check once its flag is set. With $TTYD_APWORLD (a checkout of the apworld),
+    port/archipelago/ttyd_ap_data.h is checked current too."""
+    iso = sorted(glob.glob(os.path.join(ROOT, "orig", "G8ME01", "*.iso")))
+    if not iso:
+        return s.skip("no US disc image")
+    if os.environ.get("TTYD_APWORLD"):
+        s.run([sys.executable, "tools/port/gen_ttyd_ap.py", "--apworld", os.environ["TTYD_APWORLD"], "--check"])
+    work = os.path.join(LOGS, "archipelago")
+    shutil.rmtree(work, ignore_errors=True)
+    os.makedirs(os.path.join(work, "user"))
+    base = dict(ENV, TTYD_FAST="1", TTYD_TRACE="1", TTYD_WATCHDOG="30", TTYD_USER_DIR=os.path.join(work, "user"),
+                TTYD_WINDOW_POS="-4000,0", TTYD_CACHE_DIR=os.path.join(work, "cache"))
+    r = s.run([aurora_exe("us"), iso[0]], env=dict(base, TTYD_AP_VERIFY="1",
+                                                   TTYD_INPUT=os.path.join(ROOT, "tests", "port", "input", "wait.txt")))
+    if "archipelago: verify: " not in r.stdout or " targets as the disc has them, 0 not" not in r.stdout:
+        s.fail("the apworld's targets aren't all as the disc has them")
+    seed = os.path.join(work, "test.apttyd")
+    s.run([sys.executable, "tests/port/ap_test_seed.py", seed])
+    log = os.path.join(work, "server.jsonl")
+    server = subprocess.Popen([sys.executable, "tests/port/ap_mock_server.py", "--port", "38281", "--slot", "Mario",
+                               "--items", "77772120,77772204", "--log", log], cwd=ROOT)
+    try:
+        r = s.run([aurora_exe("us"), iso[0]], env=dict(
+            base, TTYD_MAP="gor_01", TTYD_AP_SEED=seed, TTYD_AP_SERVER="ws://127.0.0.1:38281", TTYD_AP_NO_MOD="1",
+            TTYD_INPUT=os.path.join(ROOT, "tests", "port", "input", "ap_check.txt")))
+    finally:
+        server.terminate()
+        server.wait()
+    for want in ("archipelago: connected as Mario", "archipelago: 2 items to the game (from 0)",
+                 "archipelago: gor: 5 placements", "[input] end"):
+        if want not in r.stdout:
+            s.fail(f'no "{want}"')
+    sent = open(log, encoding="utf-8").read() if os.path.exists(log) else ""
+    for want in ('"cmd": "Connect"', '"value": "gor_01"', '"cmd": "LocationChecks", "locations": [78780004]'):
+        if want not in sent:
+            s.fail(f"the server got no {want}")
+    s.note += "translation exact; session ok" if s.ok else ""
 
 
 def stage_linux(s):
@@ -290,10 +373,11 @@ def stage_android(s):
 
 
 STAGES = {"gamecube": stage_gamecube, "build": stage_build, "unit": stage_unit, "audits": stage_audits,
-          "sweep": stage_sweep, "cards": stage_cards, "mods": stage_mods, "linux": stage_linux,
+          "sweep": stage_sweep, "cards": stage_cards, "mods": stage_mods, "archipelago": stage_archipelago,
+          "linux": stage_linux,
           "android": stage_android}
 # what may run at the same time; each group waits for the one before
-PLAN = [["gamecube", "build", "linux"], ["unit", "audits", "android"], ["sweep"], ["cards", "mods"]]
+PLAN = [["gamecube", "build", "linux"], ["unit", "audits", "android"], ["sweep"], ["cards", "mods", "archipelago"]]
 
 
 def main():

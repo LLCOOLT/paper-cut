@@ -6548,7 +6548,7 @@ void psndSFX_dist(s32 id, u16 dist) {
 	sfx->dist = dist;
 }
 
-void psndSFXOff(s32 id) {
+void PORT_HOOKABLE(psndSFXOff)(s32 id) {
 	PaperSoundEffect* sfx;
 	SoundEffectEntry* entry;
 	u32 lid;
@@ -6824,7 +6824,7 @@ static inline PaperSoundEnv* psndENVGetFree(void) {
 	}
 	return NULL;
 }
-BOOL psndENVOn_f_d(u32 flags, const char* name, u32 fadetime, s32 r6) {
+BOOL PORT_HOOKABLE(psndENVOn_f_d)(u32 flags, const char* name, u32 fadetime, s32 r6) {
 	s32 idx;
 	u16 cur;
 	u16* env;

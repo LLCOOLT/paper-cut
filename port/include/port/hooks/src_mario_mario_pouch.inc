@@ -140,6 +140,26 @@ s32 pouchEquipCheckBadge(s32 p0) {
     return r;
 }
 
+BOOL pouchRemoveItemIndex(ItemType p0, s32 p1) {
+    PortHookSlot* s = &portHookSlots[45];
+    BOOL r;
+    int i, skip = 0;
+    if (!s->active) {
+        return pouchRemoveItemIndex__body(p0, p1);
+    }
+    __builtin_memset(&r, 0, sizeof(r));
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(r)*, __typeof__(p0)*, __typeof__(p1)*))s->pre[i])(&r, &p0, &p1);
+    }
+    if (!skip) {
+        r = (s->replace != NULL ? ((BOOL (*)(__typeof__(p0), __typeof__(p1)))s->replace)(p0, p1) : pouchRemoveItemIndex__body(p0, p1));
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(r)*, __typeof__(p0), __typeof__(p1)))s->post[i])(&r, p0, p1);
+    }
+    return r;
+}
+
 void portHookInit_src_mario_mario_pouch(void) {
     portHookSlots[11].body = (void*)pouchGetItem__body;
     portHookSlots[12].body = (void*)pouchRemoveItem__body;
@@ -148,4 +168,5 @@ void portHookInit_src_mario_mario_pouch(void) {
     portHookSlots[15].body = (void*)pouchAddCoin__body;
     portHookSlots[16].body = (void*)pouchAddStarPiece__body;
     portHookSlots[17].body = (void*)pouchEquipCheckBadge__body;
+    portHookSlots[45].body = (void*)pouchRemoveItemIndex__body;
 }

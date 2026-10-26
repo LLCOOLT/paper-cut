@@ -104,7 +104,9 @@ android {
                         // every area REL linked into libmain.so (CMakeLists.txt)
                         "-DTTYD_RELS_STATIC=ON",
                         "-DANDROID_STL=c++_static",
-                        "-DFETCHCONTENT_SOURCE_DIR_SDL=${sdlDir}"
+                        "-DFETCHCONTENT_SOURCE_DIR_SDL=${sdlDir}",
+                        // -PnoDiscAssets (release builds): nothing from the disc built in
+                        "-DTTYD_NO_DISC_ASSETS=${project.hasProperty('noDiscAssets') ? 'ON' : 'OFF'}"
                 targets "ttyd"
             }
         }

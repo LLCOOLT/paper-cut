@@ -11,6 +11,27 @@
 #ifndef TTYD_MOD_HOOKS_H
 #define TTYD_MOD_HOOKS_H
 
+/* The headers declaring the hooked functions (their slots' types). */
+#include "battle/battle.h"
+#include "battle/battle_damage.h"
+#include "battle/battle_pad.h"
+#include "battle/battle_unit.h"
+#include "data/mapdata.h"
+#include "driver/animdrv.h"
+#include "driver/hitdrv.h"
+#include "driver/mobjdrv.h"
+#include "driver/msgdrv.h"
+#include "driver/npcdrv.h"
+#include "driver/seqdrv.h"
+#include "driver/swdrv.h"
+#include "mario/mario.h"
+#include "mario/mario_pouch.h"
+#include "mario/mariost.h"
+#include "pmario_sound.h"
+#include "seq/seq_load.h"
+#include "seq/seq_mapchange.h"
+#include "sound.h"
+
 enum TtydHookSlot {
     TTYD_HOOK_marioStMain = 0,
     TTYD_HOOK_seqSetSeq = 1,
@@ -51,8 +72,95 @@ enum TtydHookSlot {
     TTYD_HOOK_BattleActionCommandSetDifficulty = 36,
     TTYD_HOOK_BattleAudience_ApRecoveryBuild = 37,
     TTYD_HOOK_psndBGMOn_f_d = 38,
-    TTYD_HOOK_COUNT = 39
+    TTYD_HOOK_titleMain = 39,
+    TTYD_HOOK_seq_loadMain = 40,
+    TTYD_HOOK_winRootMain = 41,
+    TTYD_HOOK_marioKeyOn = 42,
+    TTYD_HOOK_battle_init = 43,
+    TTYD_HOOK_BattlePadManager = 44,
+    TTYD_HOOK_pouchRemoveItemIndex = 45,
+    TTYD_HOOK_viPostCallback = 46,
+    TTYD_HOOK_fbatHitCheck = 47,
+    TTYD_HOOK_psndSFXOff = 48,
+    TTYD_HOOK_psndENVOn_f_d = 49,
+    TTYD_HOOK_scissor_disp_control = 50,
+    TTYD_HOOK_scissor_timer_main = 51,
+    TTYD_HOOK_winMarioDisp = 52,
+    TTYD_HOOK_hitCheckVecFilter = 53,
+    TTYD_HOOK_npcNameToPtr = 54,
+    TTYD_HOOK_mobjNameToPtr = 55,
+    TTYD_HOOK_animPoseMain = 56,
+    TTYD_HOOK_mapDataPtr = 57,
+    TTYD_HOOK_evt_bero_get_info = 58,
+    TTYD_HOOK_relSetEvtAddr = 59,
+    TTYD_HOOK_SoundEfxPlayEx = 60,
+    TTYD_HOOK_COUNT = 61
 };
+
+/* The slots' function names, by slot (ttyd_mod/compat.h finds a slot by name). */
+#define TTYD_HOOK_NAMES { \
+    "marioStMain", \
+    "seqSetSeq", \
+    "seq_mapChangeMain", \
+    "marioEntry", \
+    "partyEntry2Pos", \
+    "msgSearch", \
+    "statusWinDisp", \
+    "winItemMain", \
+    "winLogMain", \
+    "DrawWeaponWin", \
+    "itemEntry", \
+    "pouchGetItem", \
+    "pouchRemoveItem", \
+    "pouchReviseMarioParam", \
+    "pouchSetCoin", \
+    "pouchAddCoin", \
+    "pouchAddStarPiece", \
+    "pouchEquipCheckBadge", \
+    "swSet", \
+    "swByteSet", \
+    "evt_shop_setup", \
+    "Btl_UnitSetup", \
+    "BtlUnit_Entry", \
+    "npcSetupBattleInfo", \
+    "btlseqFirstAct", \
+    "BattleCheckConcluded", \
+    "BattlePreCheckDamage", \
+    "BattleCheckDamage", \
+    "BattleCalculateDamage", \
+    "BattleCalculateFpDamage", \
+    "BattleDamageDirect", \
+    "BattleSetStatusDamageFromWeapon", \
+    "BtlUnit_GetWeaponCost", \
+    "BtlUnit_GetCoin", \
+    "BattleStoreExp", \
+    "BattleActionCommandCheckDefence", \
+    "BattleActionCommandSetDifficulty", \
+    "BattleAudience_ApRecoveryBuild", \
+    "psndBGMOn_f_d", \
+    "titleMain", \
+    "seq_loadMain", \
+    "winRootMain", \
+    "marioKeyOn", \
+    "battle_init", \
+    "BattlePadManager", \
+    "pouchRemoveItemIndex", \
+    "viPostCallback", \
+    "fbatHitCheck", \
+    "psndSFXOff", \
+    "psndENVOn_f_d", \
+    "scissor_disp_control", \
+    "scissor_timer_main", \
+    "winMarioDisp", \
+    "hitCheckVecFilter", \
+    "npcNameToPtr", \
+    "mobjNameToPtr", \
+    "animPoseMain", \
+    "mapDataPtr", \
+    "evt_bero_get_info", \
+    "relSetEvtAddr", \
+    "SoundEfxPlayEx", \
+}
 
 /* src/mario/mariost.c */
 typedef void (*TtydFn_marioStMain)(void);
@@ -210,5 +318,93 @@ typedef void (*TtydPost_BattleAudience_ApRecoveryBuild)(StarPowerInfo *);
 typedef BOOL (*TtydFn_psndBGMOn_f_d)(u32, char *, u32, u32, s32);
 typedef int (*TtydPre_psndBGMOn_f_d)(BOOL *, u32 *, char * *, u32 *, u32 *, s32 *);
 typedef void (*TtydPost_psndBGMOn_f_d)(BOOL *, u32, char *, u32, u32, s32);
+/* src/sequence/seq_title.c */
+typedef void (*TtydFn_titleMain)(SequenceWork *);
+typedef int (*TtydPre_titleMain)(SequenceWork * *);
+typedef void (*TtydPost_titleMain)(SequenceWork *);
+/* src/sequence/seq_load.c */
+typedef void (*TtydFn_seq_loadMain)(SequenceWork *);
+typedef int (*TtydPre_seq_loadMain)(SequenceWork * *);
+typedef void (*TtydPost_seq_loadMain)(SequenceWork *);
+/* src/window/win_root.c */
+typedef s32 (*TtydFn_winRootMain)(WindowWork *);
+typedef int (*TtydPre_winRootMain)(s32 *, WindowWork * *);
+typedef void (*TtydPost_winRootMain)(s32 *, WindowWork *);
+/* src/mario/mario.c */
+typedef s32 (*TtydFn_marioKeyOn)(void);
+typedef int (*TtydPre_marioKeyOn)(s32 *);
+typedef void (*TtydPost_marioKeyOn)(s32 *);
+/* src/sequence/seq_battle.c */
+typedef BOOL (*TtydFn_battle_init)(void);
+typedef int (*TtydPre_battle_init)(BOOL *);
+typedef void (*TtydPost_battle_init)(BOOL *);
+/* src/battle/battle_pad.c */
+typedef void (*TtydFn_BattlePadManager)(void);
+typedef int (*TtydPre_BattlePadManager)(void);
+typedef void (*TtydPost_BattlePadManager)(void);
+/* src/mario/mario_pouch.c */
+typedef BOOL (*TtydFn_pouchRemoveItemIndex)(ItemType, s32);
+typedef int (*TtydPre_pouchRemoveItemIndex)(BOOL *, ItemType *, s32 *);
+typedef void (*TtydPost_pouchRemoveItemIndex)(BOOL *, ItemType, s32);
+/* src/mario/mariost.c */
+typedef void (*TtydFn_viPostCallback)(u32);
+typedef int (*TtydPre_viPostCallback)(u32 *);
+typedef void (*TtydPost_viPostCallback)(u32);
+/* src/driver/npcdrv.c */
+typedef void * (*TtydFn_fbatHitCheck)(u32, void *);
+typedef int (*TtydPre_fbatHitCheck)(void * *, u32 *, void * *);
+typedef void (*TtydPost_fbatHitCheck)(void * *, u32, void *);
+/* src/pmario_sound.c */
+typedef void (*TtydFn_psndSFXOff)(s32);
+typedef int (*TtydPre_psndSFXOff)(s32 *);
+typedef void (*TtydPost_psndSFXOff)(s32);
+/* src/pmario_sound.c */
+typedef BOOL (*TtydFn_psndENVOn_f_d)(u32, const char *, u32, s32);
+typedef int (*TtydPre_psndENVOn_f_d)(BOOL *, u32 *, const char * *, u32 *, s32 *);
+typedef void (*TtydPost_psndENVOn_f_d)(BOOL *, u32, const char *, u32, s32);
+/* src/battle/sac/sac_scissor.c */
+typedef void (*TtydFn_scissor_disp_control)(CameraId, void *);
+typedef int (*TtydPre_scissor_disp_control)(CameraId *, void * *);
+typedef void (*TtydPost_scissor_disp_control)(CameraId, void *);
+/* src/battle/sac/sac_scissor.c */
+typedef s32 (*TtydFn_scissor_timer_main)(void);
+typedef int (*TtydPre_scissor_timer_main)(s32 *);
+typedef void (*TtydPost_scissor_timer_main)(s32 *);
+/* src/window/win_mario.c */
+typedef void (*TtydFn_winMarioDisp)(s32, void *, s32);
+typedef int (*TtydPre_winMarioDisp)(s32 *, void * *, s32 *);
+typedef void (*TtydPost_winMarioDisp)(s32, void *, s32);
+/* src/driver/hitdrv.c */
+typedef HitEntry * (*TtydFn_hitCheckVecFilter)(HitCheckQuery *, HitFilterCallback);
+typedef int (*TtydPre_hitCheckVecFilter)(HitEntry * *, HitCheckQuery * *, HitFilterCallback *);
+typedef void (*TtydPost_hitCheckVecFilter)(HitEntry * *, HitCheckQuery *, HitFilterCallback);
+/* src/driver/npcdrv.c */
+typedef NpcEntry * (*TtydFn_npcNameToPtr)(const char *);
+typedef int (*TtydPre_npcNameToPtr)(NpcEntry * *, const char * *);
+typedef void (*TtydPost_npcNameToPtr)(NpcEntry * *, const char *);
+/* src/driver/mobjdrv.c */
+typedef MapObjectEntry * (*TtydFn_mobjNameToPtr)(const char *);
+typedef int (*TtydPre_mobjNameToPtr)(MapObjectEntry * *, const char * *);
+typedef void (*TtydPost_mobjNameToPtr)(MapObjectEntry * *, const char *);
+/* src/driver/animdrv.c */
+typedef void (*TtydFn_animPoseMain)(s32);
+typedef int (*TtydPre_animPoseMain)(s32 *);
+typedef void (*TtydPost_animPoseMain)(s32);
+/* src/data/mapdata.c */
+typedef MapData * (*TtydFn_mapDataPtr)(const char *);
+typedef int (*TtydPre_mapDataPtr)(MapData * *, const char * *);
+typedef void (*TtydPost_mapDataPtr)(MapData * *, const char *);
+/* src/event/evt_bero.c */
+typedef s32 (*TtydFn_evt_bero_get_info)(EventEntry *, BOOL);
+typedef int (*TtydPre_evt_bero_get_info)(s32 *, EventEntry * *, BOOL *);
+typedef void (*TtydPost_evt_bero_get_info)(s32 *, EventEntry *, BOOL);
+/* src/data/mapdata.c */
+typedef void (*TtydFn_relSetEvtAddr)(const char *, EvtWord *);
+typedef int (*TtydPre_relSetEvtAddr)(const char * *, EvtWord * *);
+typedef void (*TtydPost_relSetEvtAddr)(const char *, EvtWord *);
+/* src/sound.c */
+typedef s32 (*TtydFn_SoundEfxPlayEx)(SND_FXID, u8, u8, u8);
+typedef int (*TtydPre_SoundEfxPlayEx)(s32 *, SND_FXID *, u8 *, u8 *, u8 *);
+typedef void (*TtydPost_SoundEfxPlayEx)(s32 *, SND_FXID, u8, u8, u8);
 
 #endif

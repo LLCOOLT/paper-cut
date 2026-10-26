@@ -110,3 +110,7 @@ refs/ttyd-tools/
 # PC port build directories
 build-pc*/
 /build-*/
+
+# release packages (tools/port/release.py)
+/dist/
+/dist-linux/

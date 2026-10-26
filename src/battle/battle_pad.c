@@ -3,9 +3,13 @@
  *
  * Function: helper functions for reading/writing controller inputs
  */
+#include "port_hook.h"
 #include "battle/battle_pad.h"
 #include "battle/battle.h"
 #include "mario/mariost.h"
+#ifdef PORT_MODS
+#include "port/hooks/src_battle_battle_pad.h"
+#endif
 
 #pragma dont_inline on
 #pragma optimize_for_size on
@@ -18,7 +22,7 @@ void BattlePadInit(void) {
 	}
 }
 
-void BattlePadManager(void) {
+void PORT_HOOKABLE(BattlePadManager)(void) {
 	int i;
 
 	for (i = 0; i < 4; i++) {
@@ -183,3 +187,7 @@ u32 BattlePadMultiCheckRepeat(s32 chan, s32 mask) {
 	u32* history = _battleWorkPointer->padWork[chan].mButtonsHeldHistory;
 	return history[0] & mask;
 }
+
+#ifdef PORT_MODS
+#include "port/hooks/src_battle_battle_pad.inc"
+#endif

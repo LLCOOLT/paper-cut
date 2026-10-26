@@ -46,6 +46,19 @@ void OSPanic(const char* file, int line, const char* msg, ...) {
     abort();
 }
 
+/* ---- the GameCube's low-memory clock globals, by the names mods' symbol
+ * lists give them (a mod reads them to convert ticks): the PC's clocks. */
+
+u32 OSBusClock = OS_BUS_CLOCK;
+u32 OSCoreClock = OS_CORE_CLOCK;
+
+/* The GameCube's low memory, 0x80000000 up to its code (0x80005000), for mods
+ * that use fixed addresses there (a ported GameCube mod's TTYD_GC_ADDR,
+ * ttyd_mod/vars.h): the place an ISO patcher wrote a mod's settings, a
+ * mailbox shared with a tool outside the game. Native values, with the
+ * clock words a GameCube mod reads at 0xF8 and 0xFC. */
+u32 portGcLowMem[0x5000 / 4] = {[0xF8 / 4] = OS_BUS_CLOCK, [0xFC / 4] = OS_CORE_CLOCK};
+
 /* ---- interrupts: the game loop is single-threaded; MusyX's audio thread
  * has its own lock (hw_pc.c). */
 

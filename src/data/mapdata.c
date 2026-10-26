@@ -1,4 +1,8 @@
+#include "port_hook.h"
 #include "data/mapdata.h"
+#ifdef PORT_MODS
+#include "port/hooks/src_data_mapdata.h"
+#endif
 
 MapData tst_bt00 = { "tst_bt00", NULL };
 MapData tst_00 = { "tst_00", NULL };
@@ -492,7 +496,7 @@ WorldData* worldDataPtr(void);
 int maxMapInArea(const char* areaName);
 int maxAreaInWorld(void);
 
-MapData* mapDataPtr(const char* mapName) {
+MapData* PORT_HOOKABLE(mapDataPtr)(const char* mapName) {
     WorldData* wp = worldDataPtr();
     int i;
     int j;
@@ -545,7 +549,7 @@ int maxAreaInWorld(void) {
     return n;
 }
 
-void relSetEvtAddr(const char* mapName, EvtWord* eventAddr) {
+void PORT_HOOKABLE(relSetEvtAddr)(const char* mapName, EvtWord* eventAddr) {
     MapData* map = mapDataPtr(mapName);
     if (map != NULL) {
         map->eventAddr = eventAddr;
@@ -559,3 +563,7 @@ void relSetBtlAddr(const char* areaName, void* btlSetupTbl, void* btlSetupNoTbl)
         area->btlSetupNoTbl = btlSetupNoTbl;
     }
 }
+
+#ifdef PORT_MODS
+#include "port/hooks/src_data_mapdata.inc"
+#endif

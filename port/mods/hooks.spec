@@ -54,3 +54,27 @@ BattleAudience_ApRecoveryBuild
 
 # Sound
 psndBGMOn_f_d
+
+# The Practice Codes' hooks (docs/MODDING.md, "Porting a GameCube mod")
+titleMain
+seq_loadMain
+winRootMain
+marioKeyOn
+battle_init
+BattlePadManager
+pouchRemoveItemIndex
+viPostCallback
+fbatHitCheck
+psndSFXOff
+psndENVOn_f_d
+scissor_disp_control
+scissor_timer_main
+winMarioDisp
+hitCheckVecFilter
+npcNameToPtr
+mobjNameToPtr
+animPoseMain
+mapDataPtr
+evt_bero_get_info
+relSetEvtAddr
+SoundEfxPlayEx

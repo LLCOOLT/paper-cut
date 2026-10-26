@@ -20,6 +20,27 @@ void marioEntry(void) {
     }
 }
 
+s32 marioKeyOn(void) {
+    PortHookSlot* s = &portHookSlots[42];
+    s32 r;
+    int i, skip = 0;
+    if (!s->active) {
+        return marioKeyOn__body();
+    }
+    __builtin_memset(&r, 0, sizeof(r));
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(r)*))s->pre[i])(&r);
+    }
+    if (!skip) {
+        r = (s->replace != NULL ? ((s32 (*)(void))s->replace)() : marioKeyOn__body());
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(r)*))s->post[i])(&r);
+    }
+    return r;
+}
+
 void portHookInit_src_mario_mario(void) {
     portHookSlots[3].body = (void*)marioEntry__body;
+    portHookSlots[42].body = (void*)marioKeyOn__body;
 }

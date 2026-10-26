@@ -20,6 +20,25 @@ void marioStMain(void) {
     }
 }
 
+void viPostCallback(u32 p0) {
+    PortHookSlot* s = &portHookSlots[46];
+    int i, skip = 0;
+    if (!s->active) {
+        viPostCallback__body(p0);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*))s->pre[i])(&p0);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0)))s->replace)(p0); } else { viPostCallback__body(p0); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0)))s->post[i])(p0);
+    }
+}
+
 void portHookInit_src_mario_mariost(void) {
     portHookSlots[0].body = (void*)marioStMain__body;
+    portHookSlots[46].body = (void*)viPostCallback__body;
 }

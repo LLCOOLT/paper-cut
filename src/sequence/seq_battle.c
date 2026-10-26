@@ -2,6 +2,7 @@
 void N_battleMapFree(void);
 void N_battleMapAlloc(void);
 #endif
+#include "port_hook.h"
 #include "battle/battle.h"
 #include "pc_call.h"
 #include "battle/battle_information.h"
@@ -33,6 +34,9 @@ void N_battleMapAlloc(void);
 #include "seq/seq_title.h"
 #include "system.h"
 #include <dolphin/mtx.h>
+#ifdef PORT_MODS
+#include "port/hooks/src_sequence_seq_battle.h"
+#endif
 
 typedef struct BattleSeqWork {
     s32 sequence;   // 0x0
@@ -242,7 +246,7 @@ void seq_battleMain(BattleSeqWork* work) {
     }
 }
 
-BOOL battle_init(void) {
+BOOL PORT_HOOKABLE(battle_init)(void) {
     FieldBattleData* fbat;
     NpcEntry* npc;
     PouchData* pouch;
@@ -383,3 +387,7 @@ static const char bti01[] = "bti_01";
 static const char bti02[] = "bti_02";
 static const char bti03[] = "bti_03";
 static const char bti04[] = "bti_04";
+
+#ifdef PORT_MODS
+#include "port/hooks/src_sequence_seq_battle.inc"
+#endif
