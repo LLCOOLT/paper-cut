@@ -12,6 +12,9 @@ Mach-O (macOS, iOS): C names carry a leading underscore, so _name becomes
 _rel_<area>__name (the C name rel_<area>__name the generated table uses), and
 the archive is written in the Darwin format ld64 expects.
 
+WebAssembly (web builds): wasm_redefine_syms.py renames the symbols and
+moves the REL's data and bss segments to rel_<area>_data/rel_<area>_bss.
+
 usage: rel_rename.py --rel NAME --out LIB [--nm llvm-nm] [--objcopy llvm-objcopy]
                      [--ar llvm-ar] OBJ...
 """
@@ -19,6 +22,9 @@ import argparse
 import os
 import subprocess
 import sys
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import wasm_redefine_syms  # noqa: E402
 
 # MH_MAGIC_64 and MH_MAGIC (as stored little-endian, and big-endian), FAT_MAGIC
 MACHO_MAGICS = (b"\xcf\xfa\xed\xfe", b"\xfe\xed\xfa\xcf", b"\xce\xfa\xed\xfe", b"\xfe\xed\xfa\xce",
@@ -42,6 +48,11 @@ def is_macho(obj):
         return f.read(4) in MACHO_MAGICS
 
 
+def is_wasm(obj):
+    with open(obj, "rb") as f:
+        return f.read(4) == b"\0asm"
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--rel", required=True)
@@ -55,7 +66,11 @@ def main():
     names = set()
     macho = False
     for obj in a.objs:
-        names |= defined_globals(a.nm, obj)
+        if is_wasm(obj):
+            # llvm-nm crashes on some wasm objects; read the symbol table directly.
+            names |= wasm_redefine_syms.defined_globals(obj)
+        else:
+            names |= defined_globals(a.nm, obj)
         macho = macho or is_macho(obj)
     prefix = f"rel_{a.rel}__"
     macho = is_macho(a.objs[0])
@@ -70,9 +85,16 @@ def main():
                 f.write(f"{n} {prefix}{n}\n")
 
     renamed = []
+    wasm_tool = os.path.join(os.path.dirname(os.path.abspath(__file__)), "wasm_redefine_syms.py")
     for i, obj in enumerate(a.objs):
         dst = os.path.join(work, f"{i:04d}_{os.path.basename(obj)}")
-        subprocess.run([a.objcopy, f"--redefine-syms={mapfile}", obj, dst], check=True)
+        if is_wasm(obj):
+            # llvm-objcopy cannot rename wasm symbols, and clang ignores
+            # #pragma clang section for wasm: the tool does both.
+            subprocess.run([sys.executable, wasm_tool, "--data", f"rel_{a.rel}_data",
+                            "--bss", f"rel_{a.rel}_bss", mapfile, obj, dst], check=True)
+        else:
+            subprocess.run([a.objcopy, f"--redefine-syms={mapfile}", obj, dst], check=True)
         renamed.append(dst)
     if os.path.exists(a.out):
         os.remove(a.out)

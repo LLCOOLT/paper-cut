@@ -339,7 +339,11 @@ const char* portSymbolName(const void* addr, char* buf, size_t size) {
 #include <pthread.h>
 #include <time.h>
 #include <dlfcn.h>
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#else
 #include <unwind.h>
+#endif
 #include <fcntl.h>
 #if defined(__linux__)
 #include <ucontext.h>
@@ -640,6 +644,16 @@ static void describe(uintptr_t addr, uintptr_t lookup, char* buf, size_t size) {
     snprintf(buf, size, "?");
 }
 
+#ifdef __EMSCRIPTEN__
+/* WebAssembly has no unwinder: the runtime's call stack, with function names. */
+static void printStack(uintptr_t pc, int fromAbort) {
+    static char buf[16384];
+    (void)pc;
+    (void)fromAbort;
+    emscripten_get_callstack(EM_LOG_C_STACK, buf, sizeof(buf));
+    out("%s\n", buf);
+}
+#else
 typedef struct Trace {
     uintptr_t* ip;
     int n;
@@ -698,6 +712,7 @@ static void printStack(uintptr_t pc, int fromAbort) {
         out("  %016llx %s\n", (unsigned long long)ips[i], buf);
     }
 }
+#endif /* __EMSCRIPTEN__ */
 
 static const char* signalName(int sig) {
     switch (sig) {
@@ -836,6 +851,7 @@ void portCrashInit(void) {
         size_t i;
         /* names, the unwinder and dladdr ready before anything can crash */
         loadSymbols();
+#ifndef __EMSCRIPTEN__
         {
             uintptr_t ip[4];
             Trace t;
@@ -846,6 +862,7 @@ void portCrashInit(void) {
             _Unwind_Backtrace(traceStep, &t);
             dladdr((void*)&portCrashInit, &info);
         }
+#endif
         /* an alternate stack, so a stack overflow is reported too */
         memset(&ss, 0, sizeof(ss));
         ss.ss_size = 256 * 1024;

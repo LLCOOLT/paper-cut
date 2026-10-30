@@ -731,6 +731,36 @@ gradle wrapper --gradle-version 8.12   # once; or run an installed gradle direct
   returning from `SDL_main`.
 - Touch layout editing, haptics on touch, per-game button hints.
 
+## Web
+
+A spike: the game built as WebAssembly with Emscripten, headless, run in
+Node. The browser build (Aurora on the browser's WebGPU, in a worker) comes
+later.
+
+```bash
+emcmake cmake -S . -B build-web-us -G Ninja -DTTYD_VERSION=G8ME01 -DTTYD_BACKEND=headless -DCMAKE_BUILD_TYPE=Release
+ninja -C build-web-us ttyd
+TTYD_DATA_DIR=<extracted disc, absolute path> node build-web-us/ttyd-us.js
+```
+
+How it fits:
+- **wasm32** has 32-bit pointers and script words, as on GameCube.
+- **Memory** starts at 2 GiB (`-sGLOBAL_BASE`), so sound names (pointers)
+  are told from sound ids by value as on GameCube (`include/sfx_name_word.h`);
+  the image, stack and heap land at 0x80000000 and up.
+- **Game threads** are host threads (the pthread path of
+  `port/src/common/os_thread_pc.c`), from a pool made at startup.
+- **RELs** are linked in (`TTYD_RELS_STATIC`). llvm-objcopy cannot rename
+  wasm symbols and clang ignores `#pragma clang section` for wasm, so
+  `tools/port/wasm_redefine_syms.py` does both for `rel_rename.py`.
+- **The disc and saves** go through Node's file system (`NODERAWFS`).
+
+Status: both versions build and link; US runs about 4,000 frames (boot,
+the opening sequences, the `dmo` area) and then traps at the first call
+whose declaration differs from its definition. WebAssembly is strict about
+those where native PCs are not; `tools/port/web_abi_audit.py` lists them
+(docs/WEB_DECOMP_ISSUES.md), to be fixed in the decomp.
+
 ## Decisions
 
 - **Guarding rule.** Every change to game or library code is inside
