@@ -8,6 +8,7 @@
 #include "pmario_sound.h"
 
 #ifdef TARGET_PC
+#include "port/gameplus.h"
 /* this file's own none_key, apart from mariost.h's (static after extern:
  * MSVC-only extension) */
 #define none_key seq_game_none_key
@@ -55,6 +56,9 @@ void seq_gameMain(SequenceWork* wp) {
             gp->areaFadeOutType = FADE_IN_BLACK;
             gp->areaFadeOutDuration = 300;
             wp->state++;
+#ifdef TARGET_PC
+            portRetryPoint(); // Gameplay+: a room's entry, for a retry on Game Over
+#endif
             break;
 
         case 1:

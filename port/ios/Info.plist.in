@@ -40,7 +40,7 @@
 		<string>metal</string>
 	</array>
 
-	<!-- Icons: generated placeholders (port/ios/make_icon.py), no game art. -->
+	<!-- Icons: Paper Cut's logo (port/assets/icon/ios), no game art. -->
 	<key>CFBundleIcons</key>
 	<dict>
 		<key>CFBundlePrimaryIcon</key>

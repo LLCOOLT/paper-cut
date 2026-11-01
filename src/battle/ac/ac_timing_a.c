@@ -1,6 +1,9 @@
 // Action command: press A in time with the timing gauge (ac_timing_a); the standard attack timing prompt.
 #pragma defer_codegen off
 #include "battle/ac/ac_timing_a.h"
+#ifdef TARGET_PC
+#include "port/gameplus.h"
+#endif
 #include "battle/battle.h"
 #include "battle/battle_ac.h"
 #include "battle/battle_pad.h"
@@ -191,6 +194,9 @@ s32 battleAcTimingA_GetSuccessFrame(BattleWork* work) {
     TimingAEntry* e = _ac_timing_a_timing_tbl[diff];
     s32 ret = e->value;
     s32 count = work->actionCommands.resultCount;
+#ifdef TARGET_PC
+    count = portPowerBounceCount(count); // Gameplay+ remake balance: the window narrows half as fast
+#endif
     if (TA_WORK(&work->actionCommands)->flags & 2) {
         if (count >= 100000) {
             return 0;

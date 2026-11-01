@@ -28,6 +28,9 @@
 #ifdef PORT_MODS
 #include "port/hooks/src_window_win_item.h"
 #endif
+#ifdef TARGET_PC
+#include "port/gameplus.h"
+#endif
 // FAKE: win_item.c calls pouchSetHP through this prototype (the types it was compiled with) instead of the one in mario/mario_pouch.h; same registers, behaviour-identical.
 typedef void (*PouchSetHPS32Fn)(s32);
 // FAKE: win_item.c calls pouchSetFP through this prototype (the types it was compiled with) instead of the one in mario/mario_pouch.h; same registers, behaviour-identical.
@@ -685,6 +688,9 @@ s32 PORT_HOOKABLE(winItemMain)(WindowWork* w) {
                 } else {
                     party = list[w->item.useTarget - 1]->partyId;
                     pouchSetPartyHP(party, pouchGetPartyHP(party) + itemDataTable[w->item.useItem].hp_restored);
+#ifdef TARGET_PC
+                    portHealOtherPartners(party, itemDataTable[w->item.useItem].hp_restored); // Gameplay+
+#endif
 #if VERSION >= VERSION_JP
                     PCCALL(((PouchSetFPS32Fn)pouchSetFP)(pouchGetFP() + itemDataTable[w->item.useItem].fp_restored), pouchSetFP(pouchGetFP() + itemDataTable[w->item.useItem].fp_restored));
                     PCCALL(((PouchSetAPS32Fn)pouchSetAP)(pouchGetAP() + itemDataTable[w->item.useItem].sp_restored), pouchSetAP(pouchGetAP() + itemDataTable[w->item.useItem].sp_restored));

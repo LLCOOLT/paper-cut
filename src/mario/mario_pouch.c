@@ -18,6 +18,12 @@
 #ifdef PORT_MODS
 #include "port/hooks/src_mario_mario_pouch.h"
 #endif
+#ifdef TARGET_PC
+// Gameplay+'s bigger bag (port/include/port/gameplus.h): 20 items without the Strange Sack
+int portHeldItemBase(void);
+#undef HELD_ITEM_COUNT_BASE
+#define HELD_ITEM_COUNT_BASE portHeldItemBase()
+#endif
 
 #define CHECK_ITEM(id) pouchCheckItem(id)
 
@@ -336,7 +342,11 @@ BOOL PORT_HOOKABLE(pouchGetItem)(ItemType type) {
     itemLists[1] = (void*)0;
     if ((type >= ITEM_MIN) && (type < ITEM_MAX)) {
         itemLists[0] = mpp->heldItems;
+#ifdef TARGET_PC
+        size = (pouchCheckItem(ITEM_STRANGE_SACK)) ? (20) : HELD_ITEM_COUNT_BASE;
+#else
         size = (pouchCheckItem(ITEM_STRANGE_SACK)) ? (20) : (10);
+#endif
         ok = 1;
     } else if ((type >= KEY_ITEM_MIN) && (type < KEY_ITEM_MAX)) {
         itemLists[1] = (void*)0;
@@ -421,7 +431,11 @@ BOOL PORT_HOOKABLE(pouchRemoveItem)(ItemType type) {
     if ((type >= ITEM_COIN) && (type < (ITEM_FRESH_JUICE + 1))) {
         table1 = mpp->heldItems;
         table2 = (void*)0;
+#ifdef TARGET_PC
+        maximum = (pouchCheckItem(ITEM_STRANGE_SACK)) ? (20) : HELD_ITEM_COUNT_BASE;
+#else
         maximum = (pouchCheckItem(ITEM_STRANGE_SACK)) ? (20) : (10);
+#endif
         valid = 1;
     } else if ((type >= ITEM_STRANGE_SACK) && (type < (ITEM_CRYSTAL_STAR + 1))) {
         table1 = mpp->keyItems;

@@ -118,19 +118,19 @@ android {
         jp {
             dimension = "version"
             applicationIdSuffix = ".jp"
-            resValue "string", "app_name", "TTYD (JP)"
+            resValue "string", "app_name", "Paper Cut (JP)"
             externalNativeBuild { cmake { arguments "-DTTYD_VERSION=G8MJ01" } }
         }
         us {
             dimension = "version"
             applicationIdSuffix = ".us"
-            resValue "string", "app_name", "TTYD (US)"
+            resValue "string", "app_name", "Paper Cut (US)"
             externalNativeBuild { cmake { arguments "-DTTYD_VERSION=G8ME01" } }
         }
         eu {
             dimension = "version"
             applicationIdSuffix = ".eu"
-            resValue "string", "app_name", "TTYD (EU)"
+            resValue "string", "app_name", "Paper Cut (EU)"
             externalNativeBuild { cmake { arguments "-DTTYD_VERSION=G8MP01" } }
         }
     }
@@ -156,6 +156,8 @@ android {
                     new File(sdlDir, "android-project/app/src/main/java"),
                     new File(auroraDir, "platforms/android/java"), // dev.encounter.aurora.AuroraSurface
             ]
+            // Paper Cut's launcher icon (port/assets/icon/android, tools/port/make_icons.py)
+            res.srcDirs += [new File(rootDir, "../assets/icon/android")]
         }
     }
 

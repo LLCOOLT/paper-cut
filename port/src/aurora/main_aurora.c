@@ -2,6 +2,8 @@
  * input, disc image), open the first frame, then run the game's main(). */
 #include <aurora/aurora.h>
 #include <SDL3/SDL_hints.h>
+#include <SDL3/SDL_video.h>
+#include <SDL3/SDL_surface.h>
 #include <aurora/event.h>
 #include <aurora/dvd.h>
 #include <stdio.h>
@@ -123,6 +125,19 @@ int aurora_main(int argc, char* argv[]) {
     portAndroidInit(); /* crash reports to logcat, background pause */
 #endif
     portRelInit(argv[0]);
+    /* the port's name and logo on the window (Aurora's appName "ttyd" names
+     * the user folder, which keeps the saves), and its fonts for the launcher
+     * and the settings page (port/settings/launcher_style.cpp) */
+    if (aurora_get_window() != NULL) {
+        extern const unsigned char portIcon64[];
+        SDL_Surface* icon = SDL_CreateSurfaceFrom(64, 64, SDL_PIXELFORMAT_RGBA32, (void*)portIcon64, 64 * 4);
+        SDL_SetWindowTitle(aurora_get_window(), "Paper Cut");
+        if (icon != NULL) {
+            SDL_SetWindowIcon(aurora_get_window(), icon);
+            SDL_DestroySurface(icon);
+        }
+    }
+    portUiInit();
     /* The 4:3 picture keeps its shape in any window or screen (bars beside it
      * on a phone, a resized or full-screen desktop window). Aurora starts
      * with FIT as its GX state but sizes the framebuffer to the window until
@@ -138,13 +153,13 @@ int aurora_main(int argc, char* argv[]) {
         AuroraSetDrawsBlocking(true);
     }
 
-    /* The user's own disc image (disc_aurora.c). */
+    portSettingsLoad(info.userPath); /* settings.txt (port/include/port/settings.h); the launcher shows them */
+    /* The user's own disc image (disc_aurora.c): the argument, or the launcher. */
     if (!portAuroraOpenDisc(argc, argv, info.userPath)) {
         aurora_shutdown();
         return 1;
     }
 
-    portSettingsLoad(info.userPath); /* settings.txt (port/include/port/settings.h) */
     portModsInit(info.userPath, info.cachePath); /* the mods folder, loose textures (port/mods/mods.cpp) */
     portAuroraBeginFrame();
     return ttyd_main();

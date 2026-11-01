@@ -10,6 +10,10 @@ extern "C" {
 #endif
 
 #define PORT_SAVE_STATE_SLOTS 4
+/* A slot of the port's own, past the player's: Gameplay+'s retry on Game Over
+ * (port/include/port/gameplus.h), saved quietly at each room and battle, and
+ * loadable on the Game Over screen as well. */
+#define PORT_SAVE_STATE_RETRY PORT_SAVE_STATE_SLOTS
 
 /* Asks for a save (load 0) or a load into/from slot 0-3; done at the end of
  * the frame, when the game allows it (portSaveStateStatus says the result). */
@@ -22,6 +26,10 @@ int portSaveStateSupported(void);
 const char* portSaveStateInfo(int slot);
 /* The last result, for a few seconds, or NULL. */
 const char* portSaveStateStatus(void);
+/* A slot (0-3, or PORT_SAVE_STATE_RETRY) holds a state. */
+int portSaveStateHas(int slot);
+/* Shows text where the results show, for a few seconds. */
+void portSaveStateNotice(const char* text);
 
 #ifdef __cplusplus
 }

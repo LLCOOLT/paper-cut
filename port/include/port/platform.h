@@ -33,8 +33,8 @@ void portWatchdogFrame(void);
 #endif
 /* The game's video field rate: 60, or 50 for the European release in its 50 Hz mode (ospal_pc.c). */
 int portFieldRate(void);
-/* FALSE (with a message) unless id (6 bytes, e.g. "G8ME01") is this build's game. */
-BOOL portCheckGameId(const char* id, const char* source);
+/* the game's versions and which disc is which: portCheckGameDisc, portVersionSelf */
+#include "port/versions.h"
 /* Bring-up trace of sequence/map changes when $TTYD_TRACE is set (trace_pc.c). */
 void portTraceFrame(u32 frame);
 /* msgSearch found no message for tag ($TTYD_TRACE logs it once per tag). */

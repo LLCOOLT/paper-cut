@@ -68,6 +68,7 @@ static PortSettings sSettings = {
     0,    /* acCue */
     0,    /* language */
     0,    /* pal50Hz */
+    0,    /* launcherSkip */
     0,    /* dumpTextures */
 };
 static char sUserPath[1024];
@@ -121,6 +122,7 @@ static const Field kFields[] = {
     {"ac_cue", &sSettings.acCue, 0, 2},
     {"language", &sSettings.language, 0, 5},
     {"pal_50hz", &sSettings.pal50Hz, 0, 1},
+    {"launcher_skip", &sSettings.launcherSkip, 0, 1},
     {"dump_textures", &sSettings.dumpTextures, 0, 1},
 };
 #define FIELD_COUNT (sizeof(kFields) / sizeof(kFields[0]))
@@ -154,7 +156,8 @@ static int isToggle(const char* key) {
            strcmp(key, "auto_run") == 0 || strcmp(key, "stick_fixed") == 0 || strcmp(key, "tap_a") == 0 ||
            strcmp(key, "safe_area") == 0 || strcmp(key, "no_pop_in") == 0 || strcmp(key, "msaa") == 0 || strcmp(key, "cloud_sync") == 0 || strcmp(key, "overlay_fps") == 0 ||
            strcmp(key, "overlay_clock") == 0 || strcmp(key, "overlay_battery") == 0 ||
-           strcmp(key, "side_bars") == 0 || strcmp(key, "wide_hud") == 0 || strcmp(key, "ff_toggle") == 0 || strcmp(key, "skip_intro") == 0 || strcmp(key, "pal_50hz") == 0;
+           strcmp(key, "side_bars") == 0 || strcmp(key, "wide_hud") == 0 || strcmp(key, "ff_toggle") == 0 || strcmp(key, "skip_intro") == 0 || strcmp(key, "pal_50hz") == 0 ||
+           strcmp(key, "launcher_skip") == 0;
 }
 
 static int syncFromPreferences(void);
@@ -221,6 +224,8 @@ void portSettingsLoad(const char* userPath) {
                 *eq = '\0';
                 if ((f = field(line)) != NULL) {
                     set(f, eq + 1);
+                } else {
+                    portSettingsExtraSet(line, eq + 1); /* a feature's own (settings_extra.c) */
                 }
             }
             *end = saved;
@@ -368,6 +373,11 @@ void portSettingsSave(void) {
         } else {
             SDL_IOprintf(io, "%s=%d\n", kFields[i].key, *kFields[i].value);
         }
+    }
+    for (i = 0; i < (size_t)portSettingsExtraCount(); i++) {
+        int value;
+        const char* key = portSettingsExtraAt((int)i, &value);
+        SDL_IOprintf(io, "%s=%d\n", key, value);
     }
     SDL_CloseIO(io);
 #ifdef SETTINGS_APP_PREFS

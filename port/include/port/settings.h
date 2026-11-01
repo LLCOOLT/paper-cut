@@ -61,6 +61,8 @@ typedef struct PortSettings {
     int language;       /* European release: the game's text, 0 the computer's language, 1-5 English
                            German French Spanish Italian (from the next start; $TTYD_LANGUAGE) */
     int pal50Hz;        /* European release: run at 50 Hz, as a PAL TV, not 60 (from the next start; $TTYD_50HZ) */
+    /* Launcher (port/settings/launcher_ui.cpp) */
+    int launcherSkip;   /* start with the last disc played, without the launcher */
     /* Mods (port/include/port/mods.h) */
     int dumpTextures;   /* textures without a replacement are saved, under the names packs use
                            (from the next start: $TTYD_DUMP_TEXTURES, portSettingsPeek) */
@@ -93,6 +95,42 @@ const char* portCrashReportLast(void);
 /* The last run crashed and the report was not looked at yet. */
 int portCrashReportPending(void);
 void portCrashReportDismiss(void);
+
+/* A setting of a feature's own, declared from the feature's file instead of a
+ * PortSettings field (port/src/common/settings_extra.c): the address of its
+ * value, stable for the run, in [min, max]; def until settings.txt or
+ * $TTYD_SET_<key> (this run, any build) says otherwise. key: lower_case, as
+ * in settings.txt. Declare it once, at start or first use. */
+int* portSettingsDeclare(const char* key, int def, int min, int max);
+/* A declared setting's value address by key, or NULL. */
+int* portSettingsFind(const char* key);
+/* For settings.txt (settings_aurora.c): a key=value line that isn't a fixed
+ * field, and the declared and read ones to write back. */
+int portSettingsExtraSet(const char* key, const char* value);
+int portSettingsExtraCount(void);
+const char* portSettingsExtraAt(int i, int* value);
+
+/* A feature's control on the settings page (port/settings/settings_ui.cpp),
+ * for a setting it declared: tab ("Gameplay", "Accessibility", ... or a new
+ * tab's name), label, note (or NULL), flags, and words search finds it by (or
+ * NULL). Call before the page first shows (a C++ static initializer in the
+ * feature's settings file does). */
+enum {
+    PORT_SETTING_NEXT_START = 1,    /* takes effect the next time the game starts */
+    PORT_SETTING_CHANGES_PLAY = 2,  /* changes how the game plays */
+    PORT_SETTING_CHANGES_SAVES = 4, /* changes what goes in a save */
+    PORT_SETTING_IN_GAME = 8,       /* only shown while a game runs */
+};
+void portSettingsAddToggle(const char* tab, const char* label, const char* note, unsigned flags, const char* key,
+                           const char* keywords);
+void portSettingsAddChoice(const char* tab, const char* label, const char* note, unsigned flags, const char* key,
+                           const char* const* choices, int count, const char* keywords);
+void portSettingsAddSlider(const char* tab, const char* label, const char* note, unsigned flags, const char* key,
+                           int min, int max, const char* format, const char* keywords);
+/* A section the feature draws itself (ImGui, from a C++ file): its controls,
+ * text or lists, under label; for what a toggle, choice or slider can't show. */
+void portSettingsAddSection(const char* tab, const char* label, const char* note, unsigned flags,
+                            void (*draw)(void), const char* keywords);
 
 #ifdef __cplusplus
 }

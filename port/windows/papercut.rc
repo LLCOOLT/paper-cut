@@ -1,0 +1,3 @@
+// Paper Cut's icon (port/assets/icon, made by tools/port/make_icons.py): the
+// executable's in Explorer and the taskbar. The window's own is set at start.
+1 ICON "../assets/icon/papercut.ico"

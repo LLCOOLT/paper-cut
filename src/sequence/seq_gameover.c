@@ -1,5 +1,8 @@
 // Game over sequence: the game over screen, then a return to the title.
 #include "driver/camdrv.h"
+#ifdef TARGET_PC
+#include "port/gameplus.h"
+#endif
 #include "driver/fadedrv.h"
 #include "driver/mapdrv.h"
 #include "driver/seqdrv.h"
@@ -432,6 +435,11 @@ void seq_gameOverMain(SequenceWork* work) {
             work->state++;
             break;
         case 5:
+#ifdef TARGET_PC
+            if (portRetryOffer()) { // Gameplay+: Y loads the last room's or battle's state
+                break;
+            }
+#endif
             if (evtCheckID(wp->evt->eventId)) {
                 if (!(keyGetButtonTrg(0) & (PAD_BUTTON_A | PAD_BUTTON_START))) {
                     break;

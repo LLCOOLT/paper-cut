@@ -28,6 +28,8 @@
  *   audience N, coins N, sp N, fp N   those set (sp: star power, in 1/100 units)
  *   maxsp N, maxhp N    the maximums set (maxhp also fills HP)
  *   stars MASK          the special moves obtained (bit 0: Sweet Treat ...)
+ *   swap                the Gameplay+ partner quick-swap control pressed
+ *   travel N            Gameplay+ fast travel to hub N (0 Rogueport, 1 Petalburg ...)
  *   mobj_event NAME     run map object NAME's event, as hitting it would (a
  *                       switch's, a block's)
  *   talk_all [MAX]      talk to every NPC of the map in turn (not those parked
@@ -49,6 +51,7 @@
  *   end                 exit (0) once any capture is written
  * Each command is logged as "[input] frame F: <line>". */
 #include "port/ac_cue.h"
+#include "port/gameplus.h"
 #include "port/menu_tap.h"
 #include <ctype.h>
 #include <math.h>
@@ -283,7 +286,8 @@ static void load(const char* path) {
         } else if (strcmp(cmd, "give") == 0 || strcmp(cmd, "join") == 0 || strcmp(cmd, "party") == 0 ||
                    strcmp(cmd, "story") == 0 || strcmp(cmd, "flag") == 0 || strcmp(cmd, "audience") == 0 ||
                    strcmp(cmd, "coins") == 0 || strcmp(cmd, "sp") == 0 || strcmp(cmd, "fp") == 0 ||
-                   strcmp(cmd, "maxsp") == 0 || strcmp(cmd, "maxhp") == 0 || strcmp(cmd, "stars") == 0) {
+                   strcmp(cmd, "maxsp") == 0 || strcmp(cmd, "maxhp") == 0 || strcmp(cmd, "stars") == 0 ||
+                   strcmp(cmd, "swap") == 0 || strcmp(cmd, "travel") == 0) {
             /* state set-up for a test, at once */
             s->frames = -13;
             snprintf(s->name, sizeof(s->name), "%s", cmd);
@@ -668,6 +672,10 @@ static void applyScript(PADStatus* pad) {
                 pouchSetHP((s16)v);
             } else if (strcmp(s->name, "stars") == 0) {
                 pouchGetPtr()->starPowersObtained = (u16)v;
+            } else if (strcmp(s->name, "swap") == 0) {
+                portQuickSwapPress();
+            } else if (strcmp(s->name, "travel") == 0) {
+                portFastTravelRequest(v);
             }
             continue;
         }

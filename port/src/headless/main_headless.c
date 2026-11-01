@@ -19,12 +19,18 @@ static BOOL exists(const char* dir, const char* name) {
     return f != NULL;
 }
 
+/* a file of the extracted disc (portCheckGameDisc's marker files) */
+static int hasFile(const char* name, void* root) {
+    return exists((const char*)root, name);
+}
+
 /* $TTYD_DATA_DIR: the extracted disc's files/ directory, or the directory
  * above it (with sys/). The disc's sys/boot.bin starts with the game ID. */
 static BOOL checkDataDir(void) {
     const char* env = getenv("TTYD_DATA_DIR");
     char root[1024], path[1024];
-    char id[6];
+    char id[6], why[512];
+    BOOL ok;
     FILE* f;
     snprintf(root, sizeof(root), "%s", env != NULL && env[0] != '\0' ? env : "data");
     if (!exists(root, "mariost.tpl") && exists(root, "files/mariost.tpl")) {
@@ -42,12 +48,13 @@ static BOOL checkDataDir(void) {
         fprintf(stderr, "note: %s not found; disc version not checked\n", path);
         return TRUE;
     }
-    if (fread(id, 1, sizeof(id), f) != sizeof(id)) {
-        fclose(f);
-        return portCheckGameId(NULL, path);
-    }
+    ok = fread(id, 1, sizeof(id), f) == sizeof(id);
     fclose(f);
-    return portCheckGameId(id, path);
+    if (!portCheckGameDisc(ok ? id : NULL, hasFile, root, path, why, sizeof(why))) {
+        fprintf(stderr, "%s\n", why);
+        return FALSE;
+    }
+    return TRUE;
 }
 
 int main(int argc, char* argv[]) {

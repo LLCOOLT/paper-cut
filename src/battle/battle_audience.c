@@ -1,5 +1,8 @@
 // Battle audience: the crowd in the stands, their types, movement, mood and the items they throw.
 #include "battle/battle_weapon_power.h"
+#ifdef TARGET_PC
+#include "port/gameplus.h"
+#endif
 #include "version.h"
 #include "port_hook.h"
 #include "battle/battle_audience.h"
@@ -3733,6 +3736,9 @@ void PORT_HOOKABLE(BattleAudience_ApRecoveryBuild)(StarPowerInfo* info) {
     BattleUnit* party;
     f32 sum, root, a, b, cnt, mm, pm, scale = 1.0f;
     s32 i;
+#ifdef TARGET_PC
+    scale = portStarPowerScale(); // Gameplay+ remake balance
+#endif
 
     if (audience->impendingBonuses == NULL) {
 #ifdef TARGET_PC

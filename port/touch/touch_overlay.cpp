@@ -27,6 +27,7 @@
 // fraction x,y on that drawn frame, held that many frames, sent through SDL's
 // event queue like a real one.
 #include "port/touch_overlay.h"
+#include "port/gameplus.h"
 
 #include <SDL3/SDL.h>
 #include <aurora/aurora.h>
@@ -90,6 +91,7 @@ enum Control {
   kR,
   kStart,
   kFast, // fast-forward: not a controller button
+  kSwap, // Gameplay+ partner quick-swap (port/include/port/gameplus.h), shown when it is on
   kControlCount,
 };
 
@@ -110,6 +112,7 @@ const ButtonDef kButtons[kControlCount] = {
     {"R", PAD_TRIGGER_R},
     {"START", PAD_BUTTON_START},
     {">>", 0},
+    {"P", 0},
 };
 
 constexpr u32 kPort = 0; // the game's controller 1
@@ -259,12 +262,14 @@ bool computeLayout(Layout& l) {
     l.c[kZ] = at(kZ, a.x - 0.13f * u, a.y - 0.33f * u, 0.045f * u);
     l.c[kStart] = at(kStart, sx + sw * 0.5f + 0.07f * u, bottom - 0.07f * u, 0.04f * u);
     l.c[kFast] = at(kFast, sx + sw * 0.5f - 0.07f * u, bottom - 0.07f * u, 0.04f * u);
+    l.c[kSwap] = at(kSwap, a.x - 0.26f * u, a.y - 0.33f * u, 0.04f * u);
   } else {
     l.c[kR] = at(kR, right - 0.12f * u, sy + 0.10f * u, 0.05f * u);
     l.c[kZ] = at(kZ, right - 0.12f * u, sy + 0.24f * u, 0.045f * u);
     l.c[kL] = at(kL, sx + 0.12f * u, sy + 0.10f * u, 0.05f * u);
     l.c[kStart] = at(kStart, sx + sw * 0.5f, sy + 0.07f * u, 0.04f * u);
     l.c[kFast] = at(kFast, sx + sw * 0.5f - 0.13f * u, sy + 0.07f * u, 0.04f * u);
+    l.c[kSwap] = at(kSwap, right - 0.12f * u, sy + 0.37f * u, 0.04f * u);
   }
   l.stickZoneRight = std::fmax(sx + sw * 0.45f, l.c[kStick].x + l.c[kStick].r * 1.5f);
   l.stickZoneTop = std::fmin(sy + 0.2f * u, l.c[kStick].y - l.c[kStick].r * 1.5f);
@@ -331,6 +336,11 @@ bool isBean(int c) {
   return c == kX || c == kY;
 }
 
+// the quick-swap button only while its setting is on
+bool shown(int c) {
+  return c != kSwap || portGameplus("quick_swap");
+}
+
 // Distance from (px, py) to a bean's centre line (its arc and end points),
 // in units of its half thickness: <= 1 is on the button.
 float beanDistance(const Bean& n, float px, float py) {
@@ -352,6 +362,9 @@ Control hitTest(const Layout& l, float px, float py) {
   Control best = kNone;
   float bestDist = 0.f;
   for (int c = kA; c < kControlCount; c++) {
+    if (!shown(c)) {
+      continue;
+    }
     const Circle& b = l.c[c];
     // in button radii, so a bean and a round button compare fairly
     const float d = isBean(c) ? beanDistance(l.bean[c], px, py) : std::hypot(px - b.x, py - b.y) / b.r;
@@ -394,6 +407,8 @@ void release(Finger& f) {
     sDown[f.control] = false;
     if (f.control == kFast) {
       portSpeedControl(0);
+    } else if (f.control == kSwap) {
+      gPortQuickSwapTouch = 0;
     }
   }
   f.used = false;
@@ -489,6 +504,9 @@ void editEvent(const Layout& l, Uint32 type, SDL_FingerID id, float px, float py
     int best = -1;
     float bestDist = 0.f;
     for (int c = kStick; c < kControlCount; c++) {
+      if (!shown(c)) {
+        continue;
+      }
       const float d = isBean(c) ? beanDistance(l.bean[c], px, py)
                                 : std::hypot(px - l.c[c].x, py - l.c[c].y) / l.c[c].r;
       if (d <= 1.5f && (best < 0 || d < bestDist)) {
@@ -673,6 +691,8 @@ extern "C" void portTouchEvent(const SDL_Event* event) {
       sDown[c] = true;
       if (c == kFast) {
         portSpeedControl(1);
+      } else if (c == kSwap) {
+        gPortQuickSwapTouch = 1;
       }
 #if defined(__APPLE__) && TARGET_OS_IPHONE
       if (portSettings()->touchHaptics) {
@@ -715,6 +735,9 @@ extern "C" void portTouchDraw(void) {
   }
   ImDrawList* dl = ImGui::GetForegroundDrawList();
   for (int c = kA; c < kControlCount; c++) {
+    if (!shown(c)) {
+      continue;
+    }
     // editing: the control being moved lit (X and Y with A)
     const bool lit = sEditing ? (sEditControl == c || (isBean(c) && sEditControl == kA))
                               : sDown[c] || (c == kFast && portSpeedActive());

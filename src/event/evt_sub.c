@@ -1,6 +1,9 @@
 // Miscellaneous script commands and scripts: tree and bush shaking, mail, star stones, splines,
 // countdowns, play time, area and language queries.
 #include "version.h"
+#ifdef TARGET_PC
+#include "port/gameplus.h"
+#endif
 #include "mario/mario_cam.h"
 #include "eff/eff_stageclear.h"
 #include "eff/eff_itemget.h"
@@ -531,10 +534,19 @@ EVT_BEGIN(evt_sub_starstone)
     END_IF
     // The fanfare lasts at least 9.7 seconds; the screen flashes white with a chime.
     CALL(set_stop, 0)
+#ifdef TARGET_PC
+    // Gameplay+: the fanfare cut short once a Crystal Star was seen on this file
+    CALL(portEvtSceneMs, PORT_SCENE_CRYSTAL_STAR, 9700, LW(15))
+    BEGIN_INLINE_EVENT
+        WAIT_MS(LW(15))
+        CALL(set_stop, 1)
+    END_INLINE_EVENT
+#else
     BEGIN_INLINE_EVENT
         WAIT_MS(9700)
         CALL(set_stop, 1)
     END_INLINE_EVENT
+#endif
     CALL(evt_snd_sfxon, STRING("SFX_EVT_STARSTONE_WHITEOUT1"), 0)
     CALL(evt_fade_entry, FADE_OUT_BLACK, 300, 255, 255, 255)
     CALL(evt_fade_end_wait)

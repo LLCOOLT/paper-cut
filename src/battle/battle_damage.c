@@ -1,5 +1,8 @@
 // Battle damage: computes damage, defense, status effects, counterattacks and the resulting hit events.
 #include "port_hook.h"
+#ifdef TARGET_PC
+#include "port/gameplus.h"
+#endif
 #include "eff/eff_nice.h"
 #include "pc_call.h"
 #include "eff/n64/eff_vapor_n64.h"
@@ -652,6 +655,12 @@ skip:
             *result |= 0x10000;
         }
     }
+#ifdef TARGET_PC
+    // Gameplay+ difficulty: an enemy's attack on Mario or a partner
+    if (attacker != NULL && attacker->alliance == 1 && target->alliance == 0) {
+        damage = portEnemyDamage(damage);
+    }
+#endif
     return damage;
 }
 

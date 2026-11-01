@@ -25,6 +25,24 @@ static s32 BattleACPadCheckRecordTrigger(s32 chan, s32 mask);
 #ifdef TARGET_PC
 void portAcCueUpdate(BattleWork* wp); /* port/src/common/ac_cue_pc.c */
 void portAcCueJudged(int kind, int result);
+#include "port/gameplus.h"
+/* Gameplay+ action-command assist (port/include/port/gameplus.h): an automatic
+ * attack command runs as with an Auto Command badge on Mario or the partner */
+static u8 portAutoAttackOn(BattleWork* wp) {
+    BattleUnit* unit = wp->actionCommands.acUnit;
+    u8 saved;
+    if (unit == NULL || unit->alliance != 0 || portGameplus("ac_attack_assist") != 2) {
+        return 0xFF;
+    }
+    saved = unit->badgesEquipped.AutoCommand;
+    unit->badgesEquipped.AutoCommand = 1;
+    return saved;
+}
+static void portAutoAttackOff(BattleWork* wp, u8 saved) {
+    if (saved != 0xFF) {
+        wp->actionCommands.acUnit->badgesEquipped.AutoCommand = saved;
+    }
+}
 #endif
 
 /** Clears the action-command manager at battle start: resets its pad history and drops every command callback. */
@@ -51,7 +69,14 @@ void BattleActionCommandManager(BattleWork* wp) {
 #endif
     main = wp->actionCommands.maincb;
     if (main) {
+#ifdef TARGET_PC
+        const u8 autoSaved = portAutoAttackOn(wp);
+        const s32 more = main(wp);
+        portAutoAttackOff(wp, autoSaved);
+        if (!more) {
+#else
         if (!main(wp)) {
+#endif
             wp->actionCommands.maincb = NULL;
         }
 
@@ -72,7 +97,9 @@ s32 BattleActionCommandResult(BattleWork* wp) {
     result = wp->actionCommands.resultcb;
     if (result) {
 #ifdef TARGET_PC
+		const u8 autoSaved = portAutoAttackOn(wp);
 		const s32 r = result(wp);
+		portAutoAttackOff(wp, autoSaved);
 		portAcCueJudged(1, wp->actionCommands.outputParams[0]); /* port/src/common/ac_cue_pc.c */
 		return r;
 #else
@@ -186,6 +213,12 @@ s32 PORT_HOOKABLE(BattleActionCommandCheckDefence)(BattleUnit* unit, BattleWeapo
     }
     superguard = super_frames[diff];
     normal = normal_frames[diff];
+#ifdef TARGET_PC
+    if (portGameplus("ac_guard_assist") == 1) { // Gameplay+: wider guard windows
+        normal *= 2;
+        superguard += 2;
+    }
+#endif
 
     if (weapon->superguardsAllowed && unit->currentHp > 0) {
         if (AC_GUARD_TIMER(wp) > 0) {
@@ -255,6 +288,11 @@ s32 PORT_HOOKABLE(BattleActionCommandCheckDefence)(BattleUnit* unit, BattleWeapo
             }
         }
     }
+#ifdef TARGET_PC
+    if (portGameplus("ac_guard_assist") == 2 && wp->actionCommands.defenseResult < 4) {
+        wp->actionCommands.defenseResult = 4; // Gameplay+: automatic guards (a Superguard is still the player's)
+    }
+#endif
     BtlPad_WorkInit(pad);
 #ifdef TARGET_PC
 	portAcCueJudged(2, wp->actionCommands.defenseResult); /* port/src/common/ac_cue_pc.c */
@@ -305,6 +343,11 @@ void PORT_HOOKABLE(BattleActionCommandSetDifficulty)(BattleWork* work, BattleUni
     if (adjusted > 6) {
         adjusted = 6;
     }
+#ifdef TARGET_PC
+    if (unit->alliance == 0 && portGameplus("ac_attack_assist") == 1) {
+        adjusted = adjusted > 3 ? adjusted - 3 : 0; // Gameplay+: wider attack windows
+    }
+#endif
     work->actionCommands.acDifficulty = adjusted;
 }
 

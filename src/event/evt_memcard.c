@@ -16,6 +16,15 @@
  * 0 on success, negative for errors (-3 no card, -2 a different card, -6/-13 needs formatting, -4 no save file,
  * -8/-9 no space, -10 save data it cannot use), as the save/load scripts below switch on it.
  */
+#ifdef TARGET_PC
+#include "port/gameplus.h"
+/* Gameplay+ (port/include/port/gameplus.h): args[0] = 1 when a Save Block saves without asking */
+static USER_FUNC(port_save_no_prompt) {
+    evtSetValue(event, event->args[0], portGameplus("save_no_prompt"));
+    return EVT_RETURN_DONE;
+}
+#endif
+
 static USER_FUNC(memcard_code) {
     EvtWord* args = event->args;
     s32 code = cardGetCode();
@@ -800,6 +809,17 @@ EVT_BEGIN(evt_memcard_save)
     IF_INT_EQUAL(LW(10), 23)
         GOTO(1)
     END_IF
+#ifdef TARGET_PC
+    // Gameplay+: a Save Block saves to the file played without the question
+    IF_INT_EQUAL(LW(10), 0)
+        CALL(port_save_no_prompt, LW(12))
+        IF_INT_EQUAL(LW(12), 1)
+            SET_VALUE(GSW(GSW_SAVE_RESUME_KIND), LW(10))
+            CALL(evt_msg_print, 0, STRING("msg_mcard_save_warnning"), 0, 0)
+            GOTO(3)
+        END_IF
+    END_IF
+#endif
     LABEL(0)
     IF_INT_EQUAL(LF(10), 1)
         CALL(evt_msg_print_add, 1, STRING("<scrl_auto><once_stop>"))

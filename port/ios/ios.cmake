@@ -15,7 +15,7 @@ endif()
 set(TTYD_IOS_BUNDLE_ID_PREFIX "io.github.ttyd-port" CACHE STRING
     "iOS bundle identifier prefix; .jp or .us is appended (one app per version)")
 set(TTYD_IOS_BUNDLE_ID "${TTYD_IOS_BUNDLE_ID_PREFIX}.${_ios_suffix}")
-set(TTYD_IOS_DISPLAY_NAME "TTYD ${_ios_region}")
+set(TTYD_IOS_DISPLAY_NAME "Paper Cut ${_ios_region}")
 set(TTYD_IOS_VERSION "0.1")
 set(TTYD_IOS_BUILD "1")
 if(CMAKE_OSX_DEPLOYMENT_TARGET)
@@ -47,19 +47,9 @@ target_link_libraries(ttyd_ios PRIVATE ${AURORA_SDL3_TARGET})
 target_link_libraries(ttyd PRIVATE ttyd_ios "-framework Foundation" "-framework UIKit"
     "-framework UniformTypeIdentifiers")
 
-# Icons (port/ios/make_icon.py): the title screen's key art from the user's own
-# extracted disc (data/<version>/files/mariost.tpl) when it is there, else a
-# generated placeholder. The art is never in the repository, only in the build.
-set(_ios_icon_dir ${CMAKE_BINARY_DIR}/ios/icons)
-set(_ios_icon_art ${CMAKE_SOURCE_DIR}/data/${TTYD_VERSION}/files/mariost.tpl)
-if(EXISTS ${_ios_icon_art})
-    set(_ios_icon_args --art ${_ios_icon_art})
-    set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${_ios_icon_art})
-else()
-    set(_ios_icon_args)
-endif()
-execute_process(COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_LIST_DIR}/make_icon.py ${_ios_icon_dir} ${_ios_icon_args}
-    COMMAND_ERROR_IS_FATAL ANY)
+# Icons: Paper Cut's logo (port/assets/icon/ios, made by tools/port/make_icons.py
+# from shapes, no game art).
+set(_ios_icon_dir ${CMAKE_SOURCE_DIR}/port/assets/icon/ios)
 set(_ios_icons
     ${_ios_icon_dir}/AppIcon60x60@2x.png
     ${_ios_icon_dir}/AppIcon60x60@3x.png

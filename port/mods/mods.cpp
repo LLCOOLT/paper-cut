@@ -1136,14 +1136,22 @@ void writeList() {
 
 bool usable(const Mod& mod) { return mod.enabled && mod.error.empty() && !sDisabledAll; }
 
-// Its library for this platform (lib/<platform>/*.dll|so|dylib), or "".
+// Its library for this platform and version: lib/<platform>/<game ID>/ first
+// (a mod built for each version, linked against that version's executable,
+// as the Paper Cut packages hold all three), then lib/<platform>/ itself;
+// *.dll|so|dylib, or "".
 std::string libraryOf(const Mod& mod) {
   if (mod.source == nullptr) {
     return {};
   }
-  for (const auto& [rel, size] : mod.source->list(std::string("lib/") + TTYD_MOD_PLATFORM + "/")) {
-    if (endsWith(rel, ".dll") || endsWith(rel, ".so") || endsWith(rel, ".dylib")) {
-      return rel;
+  const std::string base = std::string("lib/") + TTYD_MOD_PLATFORM + "/";
+  for (const std::string& dir : {base + PORT_GAME_ID + "/", base}) {
+    for (const auto& [rel, size] : mod.source->list(dir)) {
+      const bool library = endsWith(rel, ".dll") || endsWith(rel, ".so") || endsWith(rel, ".dylib");
+      // in lib/<platform>/ itself, not another version's folder below it
+      if (library && rel.find('/', dir.size()) == std::string::npos) {
+        return rel;
+      }
     }
   }
   return {};

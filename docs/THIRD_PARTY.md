@@ -52,6 +52,10 @@ other dealings in this Software without prior written authorization from
 Silicon Graphics, Inc.
 ```
 
+## Fredoka font in `port/assets/fonts/`
+
+The launcher's typeface is [Fredoka](https://github.com/hafontia/Fredoka-One) by The Fredoka Project Authors, under the SIL Open Font License 1.1 (`port/assets/fonts/OFL.txt`). The files are static Bold (700) and Medium (500) instances made with fontTools' `varLib.instancer` from the variable `Fredoka[wdth,wght].ttf` in [google/fonts](https://github.com/google/fonts/tree/main/ofl/fredoka) (November 2026), embedded in the PC builds.
+
 ## Build scripts in `tools/`
 
 `tools/project.py`, `tools/download_tool.py`, `tools/decompctx.py`, `tools/transform_dep.py` and `tools/changes_fmt.py` come from [dtk-template](https://github.com/encounter/dtk-template), the decomp-toolkit project template. `tools/ninja_syntax.py` is from the [ninja](https://github.com/ninja-build/ninja) project (Apache License 2.0, notice in the file). The other scripts were written for this project; see [tools/README.md](../tools/README.md).

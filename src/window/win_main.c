@@ -91,6 +91,7 @@ static WindowWork* wp;
 #include "manager/evtmgr_cmd.h"
 #ifdef TARGET_PC /* PC port: the header's prototypes are skipped on PC (these are static here) */
 static USER_FUNC(itemUseFunc);
+#include "port/gameplus.h"
 #endif
 static void winLectureKeyMask(void);
 // FAKE: the prototype this file was compiled with (u16 icon id; icondrv.h has s16/s32), so callers zero-extend the id
@@ -174,6 +175,9 @@ void winMain(void) {
 #if VERSION >= VERSION_DEMO_EU
     WindowPartyDt* list[7];
 #endif
+#ifdef TARGET_PC
+    s32 quickSwap = -1; // Gameplay+ partner quick-swap: the partner to switch to
+#endif
 
     mario = marioGetPtr();
     if (!(wp->flags & WIN_FLAG_OPEN_DISABLED) && seqGetSeq() == SEQ_GAME && !seqCheckSeq()) {
@@ -225,6 +229,12 @@ void winMain(void) {
                     if (!fadeIsFinish()) {
                         break;
                     }
+#ifdef TARGET_PC
+                    if (mario->characterId == 0 &&
+                        (quickSwap = portQuickSwapPoll(!marioBgmodeChk() ? marioGetParty() : mario->prevPartyMemberId[0])) >= 0) {
+                        wp->menuSel = 1;
+                    } else
+#endif
                     if (mario->characterId == 2) {
                         if (!(wp->buttonTrg & PAD_BUTTON_START)) {
                             break;
@@ -303,6 +313,16 @@ void winMain(void) {
                 for (i = 0; i < 4; i++) {
                     padRumbleHardOff(i);
                 }
+#ifdef TARGET_PC
+                // quick-swap: the partner menu's switch (100-102), without the menu
+                if (quickSwap >= 0) {
+                    psndClearFlag(PSND_FLAG_MUTE_SFX);
+                    wp->party.partyIds[0] = quickSwap;
+                    wp->party.cursor = 0;
+                    wp->menuState = 100;
+                    break;
+                }
+#endif
 #if VERSION >= VERSION_US
                 fileAsyncf(4, 0, WIN_DIR "%s/mail.tpl", getMarioStDvdRoot(), (u32)gp->language == 0 ? "jp" : "us");
 #else
@@ -945,6 +965,9 @@ static USER_FUNC(itemUseFunc) {
                 PCCALL(((PouchSetAPS32Fn)pouchSetAP)(pouchGetAP() + item->sp_restored), pouchSetAP(pouchGetAP() + item->sp_restored));
             } else {
                 pouchSetPartyHP(event->lwData[11], pouchGetPartyHP(event->lwData[11]) + item->hp_restored);
+#ifdef TARGET_PC
+                portHealOtherPartners(event->lwData[11], item->hp_restored); // Gameplay+
+#endif
                 PCCALL(((PouchSetFPS32Fn)pouchSetFP)(pouchGetFP() + item->fp_restored), pouchSetFP(pouchGetFP() + item->fp_restored));
                 PCCALL(((PouchSetAPS32Fn)pouchSetAP)(pouchGetAP() + item->sp_restored), pouchSetAP(pouchGetAP() + item->sp_restored));
             }

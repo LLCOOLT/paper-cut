@@ -9,6 +9,9 @@
 #endif
 #include <dolphin/os.h>
 #include "libc_decls.h"
+#ifdef TARGET_PC
+#include "port/romfont_pc.h"
+#endif
 
 //.sbss
 /**
@@ -271,6 +274,8 @@ const char* romFontGetMessage(s32 msg) {
         return msg_tbl[1][msg];
     }
     return msg_tbl[gp->language][msg];
+#elif defined(TARGET_PC)
+    return msg_tbl[1][msg]; /* PC port: the English table (romFontInit) */
 #else
     return msg_tbl[0][msg]; // has eng but always returns JP
 #endif
@@ -280,6 +285,13 @@ const char* romFontGetMessage(s32 msg) {
 void romFontInit(void) {
     wp->glyphs = 0;
     wp->uniqueChars = 0;
+#ifdef TARGET_PC
+    /* PC port: no IPL font to make glyphs from; romFontPrintGX hands its lines
+     * to the port, which draws them (port/include/port/romfont_pc.h). Its font
+     * has no Japanese, so the Japanese builds show the English table. */
+    wp->language = 1;
+    return;
+#endif
     if (OSGetFontEncode() == OS_FONT_ENCODE_SJIS) {
         wp->language = 0;
     } else {
@@ -454,6 +466,12 @@ void romFontPrintGX(f32 x, f32 y, f32 scale, GXColor* color, const char* msg, ..
     // --- format the message (this is where the va_list lives) ---
     va_start(ap, msg);
     vsprintf(buf, msg, ap); // no va_end in the original
+#ifdef TARGET_PC
+    /* PC port: the port draws the line (no IPL font: romFontInit) */
+    va_end(ap);
+    portRomFontText(x, y, scale, (const unsigned char*)color, buf);
+    return;
+#endif
 
     C_MTXLookAt(camMtx, &camPos, &up, &target);
 
@@ -548,6 +566,9 @@ void romFontPrintGX(f32 x, f32 y, f32 scale, GXColor* color, const char* msg, ..
  * SJIS double-byte codes count as one glyph unless the US/PAL ASCII font is active.
  */
 s32 romFontGetWidth(const char* message) {
+#ifdef TARGET_PC
+    return portRomFontWidth(message); /* PC port: the port's font (romFontPrintGX) */
+#endif
 #if VERSION >= VERSION_US
     s32 width = 0;
     s32 i = 0;

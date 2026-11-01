@@ -22,6 +22,9 @@
 #ifdef PORT_MODS
 #include "port/hooks/src_battle_battle_unit.h"
 #endif
+#ifdef TARGET_PC
+#include "port/gameplus.h"
+#endif
 #include "unit/party/unit_party_vivian.h"
 #include "battle/battle_actrecord.h"
 // FAKE: battle_unit.c calls BtlUnit_snd_se_pos through this prototype (the types it was compiled with) instead of the one in battle/battle_unit.h; same registers, behaviour-identical.
@@ -127,8 +130,17 @@ BattleUnit* PORT_HOOKABLE(BtlUnit_Entry)(BattleUnitSetup* setup) {
     unit->bintaHitOffset = unit->kindParams->bintaHitOffset;
     unit->kissHitOffset = unit->kindParams->kissHitOffset;
     unit->baseMaxHp = setup->unitKindParams->maxHp;
+#ifdef TARGET_PC
+    if (unit->alliance == 1) {
+        unit->baseMaxHp = portEnemyHp(unit->baseMaxHp); // Gameplay+ difficulty
+    }
+#endif
     unit->maxHp = unit->baseMaxHp;
+#ifdef TARGET_PC
+    unit->currentHp = unit->baseMaxHp;
+#else
     unit->currentHp = setup->unitKindParams->maxHp;
+#endif
     unit->baseMaxFp = setup->unitKindParams->maxFp;
     unit->maxFp = unit->baseMaxFp;
     unit->currentFp = setup->unitKindParams->maxFp;

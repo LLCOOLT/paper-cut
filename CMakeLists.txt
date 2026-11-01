@@ -698,6 +698,22 @@ if(ANDROID)
 else()
     set_target_properties(ttyd PROPERTIES OUTPUT_NAME ${TTYD_EXE_NAME})
 endif()
+# Paper Cut's icon (port/assets/icon, tools/port/make_icons.py): Windows'
+# executable icon from a resource script; macOS's in the bundle (below)
+if(WIN32)
+    enable_language(RC)
+    target_sources(ttyd PRIVATE ${CMAKE_SOURCE_DIR}/port/windows/papercut.rc)
+    # "Paper Cut.exe", what the player starts: it starts ttyd-us.exe, whose
+    # launcher starts the disc's version (tools/port/release.py packages the
+    # three builds together); a window program, no console
+    if(TTYD_BACKEND STREQUAL "aurora")
+        add_executable(papercut WIN32 ${CMAKE_SOURCE_DIR}/port/windows/papercut_start.c
+            ${CMAKE_SOURCE_DIR}/port/windows/papercut.rc)
+        set_target_properties(papercut PROPERTIES OUTPUT_NAME "Paper Cut")
+        target_compile_definitions(papercut PRIVATE UNICODE _UNICODE)
+        target_link_options(papercut PRIVATE -municode)
+    endif()
+endif()
 if(NOT TTYD_RELS_STATIC)
     # REL modules link against the executable's symbols.
     set_target_properties(ttyd PROPERTIES ENABLE_EXPORTS ON WINDOWS_EXPORT_ALL_SYMBOLS ON)
@@ -741,7 +757,34 @@ if(TTYD_BACKEND STREQUAL "aurora")
     aurora_copy_runtime_dlls(ttyd)
     # The settings page (F1 / Back / three-finger tap), ImGui: C++ like the
     # touch overlay, built without the game's prefix header.
-    add_library(ttyd_settings STATIC ${CMAKE_SOURCE_DIR}/port/settings/settings_ui.cpp)
+    # The launcher's typeface (port/assets/fonts, Fredoka: docs/THIRD_PARTY.md),
+    # embedded as C arrays so no file ships beside the executable.
+    function(ttyd_embed_file in symbol out)
+        file(READ ${in} _hex HEX)
+        string(LENGTH "${_hex}" _len)
+        math(EXPR _len "${_len} / 2")
+        string(REGEX REPLACE "([0-9a-f][0-9a-f])" "0x\\1," _hex "${_hex}")
+        file(WRITE ${out}.tmp "/* GENERATED from ${in} by CMakeLists.txt. Do not edit. */\n"
+            "const unsigned char ${symbol}[] = {${_hex}};\nconst unsigned int ${symbol}_size = ${_len};\n")
+        file(COPY_FILE ${out}.tmp ${out} ONLY_IF_DIFFERENT)
+        set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${in})
+    endfunction()
+    ttyd_embed_file(${CMAKE_SOURCE_DIR}/port/assets/fonts/Fredoka-Bold.ttf portFontBold
+        ${CMAKE_BINARY_DIR}/generated/font_bold.c)
+    ttyd_embed_file(${CMAKE_SOURCE_DIR}/port/assets/fonts/Fredoka-Medium.ttf portFontMedium
+        ${CMAKE_BINARY_DIR}/generated/font_medium.c)
+    # an object library: a feature's settings file registers its controls from a
+    # static initializer, which a static library would leave out unreferenced
+    # Features' settings files (port/settings/features/*.cpp): each declares its
+    # settings and adds its controls to the page, without editing shared files.
+    file(GLOB TTYD_SETTINGS_FEATURES CONFIGURE_DEPENDS ${CMAKE_SOURCE_DIR}/port/settings/features/*.cpp)
+    # the window's icon: Paper Cut's logo, 64x64 RGBA (tools/port/make_icons.py)
+    ttyd_embed_file(${CMAKE_SOURCE_DIR}/port/assets/icon/papercut-64.rgba portIcon64
+        ${CMAKE_BINARY_DIR}/generated/icon64.c)
+    add_library(ttyd_settings OBJECT ${CMAKE_SOURCE_DIR}/port/settings/settings_ui.cpp
+        ${CMAKE_SOURCE_DIR}/port/settings/launcher_ui.cpp ${CMAKE_SOURCE_DIR}/port/settings/launcher_style.cpp
+        ${CMAKE_BINARY_DIR}/generated/font_bold.c ${CMAKE_BINARY_DIR}/generated/font_medium.c
+        ${CMAKE_BINARY_DIR}/generated/icon64.c ${TTYD_SETTINGS_FEATURES})
     target_include_directories(ttyd_settings PRIVATE ${CMAKE_SOURCE_DIR}/port/include)
     target_compile_features(ttyd_settings PRIVATE cxx_std_20)
     # The port's version, shown on the settings page (tools/port/release.py sets it).
@@ -948,13 +991,17 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Darwin" AND TTYD_BACKEND STREQUAL "aurora")
         set(TTYD_MACOS_REGION JP)
     endif()
     set(TTYD_MACOS_BUNDLE_ID_PREFIX org.ttyd-port CACHE STRING "macOS bundle identifier prefix")
-    set(TTYD_MACOS_APP_NAME "Paper Mario TTYD (${TTYD_MACOS_REGION})")
+    set(TTYD_MACOS_APP_NAME "Paper Cut") # one app for every version (tools/port/release.py)
     set(TTYD_MACOS_BUNDLE_ID ${TTYD_MACOS_BUNDLE_ID_PREFIX}.${TTYD_EXE_NAME})
     set(TTYD_MACOS_MIN_VERSION ${CMAKE_OSX_DEPLOYMENT_TARGET})
     if(NOT TTYD_MACOS_MIN_VERSION)
         set(TTYD_MACOS_MIN_VERSION 12.0)
     endif()
     configure_file(${CMAKE_SOURCE_DIR}/port/macos/Info.plist.in ${CMAKE_BINARY_DIR}/Info.plist @ONLY)
+    # the app's icon (CFBundleIconFile), in Contents/Resources
+    set(_icns ${CMAKE_SOURCE_DIR}/port/assets/icon/papercut.icns)
+    target_sources(ttyd PRIVATE ${_icns})
+    set_source_files_properties(${_icns} PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
     set_target_properties(ttyd PROPERTIES MACOSX_BUNDLE ON
         MACOSX_BUNDLE_INFO_PLIST ${CMAKE_BINARY_DIR}/Info.plist)
     if(TTYD_RELS_STATIC)

@@ -2,6 +2,9 @@
 // star-stone scenes. Hub between the harbor and the east and west sides.
 
 #include "eff/eff_starstone.h"
+#ifdef TARGET_PC
+#include "port/gameplus.h"
+#endif
 #include "eff/eff_mahojin.h"
 #include "version.h"
 #include "battle/battle_unit.h"
@@ -7647,6 +7650,13 @@ static USER_FUNC(cook_effect) {
  * and she walks back to the counter facing Mario.
  */
 EVT_BEGIN(cooking_evt_sub)
+#ifdef TARGET_PC
+    // Gameplay+: once Zess T. has cooked on this file, the dish without the scene
+    CALL(portEvtSceneMs, PORT_SCENE_COOKING, 1, LW(0))
+    IF_INT_EQUAL(LW(0), 0)
+        RETURN
+    END_IF
+#endif
     CALL(evt_snd_bgmoff, PSND_FADE_HOLD)
     CALL(evt_snd_bgmon, PSND_CH(1), STRING("BGM_EVT_COOKING1"))
     WAIT_MS(500)

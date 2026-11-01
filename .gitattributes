@@ -14,3 +14,10 @@ config/**/*.txt  text eol=lf
 
 # Patches apply byte for byte (port/patches)
 *.patch -text
+
+# Binary assets (port/assets): never line-ending converted
+*.ttf  binary
+*.png  binary
+*.ico  binary
+*.icns binary
+*.rgba binary

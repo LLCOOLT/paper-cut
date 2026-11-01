@@ -3,6 +3,9 @@
 // FAKE: inlining off for the whole file (FAKES.md); without it 11 functions change length, e.g. DrawChangePartyWin 98 -> 259 instructions
 #pragma dont_inline on
 #ifdef TARGET_PC
+#include "port/gameplus.h"
+#endif
+#ifdef TARGET_PC
 #include "port/platform.h"
 #endif
 #include "port_hook.h"
@@ -1703,7 +1706,11 @@ void DrawMainMenu(BattleWork* wp_) {
     for (i = 0; i < cursor->count; i++) {
         switch (menu->iconState[i]) {
             case 0:
+                #ifdef TARGET_PC
+                menu->iconTimer[i] -= portBattleMenuStep(); // Gameplay+ faster battle menus
+                #else
                 menu->iconTimer[i]--;
+                #endif
                 if (menu->iconTimer[i] <= 0) {
                     menu->iconState[i] = 1;
                     menu->iconTimer[i] = 0;
@@ -1749,7 +1756,11 @@ void DrawMainMenu(BattleWork* wp_) {
                     menu->iconState[i] = 3;
                     menu->iconTimer[i] = -1;
                 }
+                #ifdef TARGET_PC
+                menu->iconTimer[i] += portBattleMenuStep(); // Gameplay+ faster battle menus
+                #else
                 menu->iconTimer[i]++;
+                #endif
                 break;
             case 3:
                 a = 3.1415927f * kakutable[cursor->count - 3][menu->iconSlot[i]] / 180.0f;
@@ -1791,7 +1802,11 @@ void DrawMainMenu(BattleWork* wp_) {
                 PSMTXTrans(mtx[i], pos[i].x, pos[i].y, pos[i].z);
                 z[i] = 0.0f;
                 menu->iconFlags[i] &= ~2;
+                #ifdef TARGET_PC
+                menu->iconTimer[i] += portBattleMenuStep(); // Gameplay+ faster battle menus
+                #else
                 menu->iconTimer[i]++;
+                #endif
                 break;
             case 5:
                 c = kakutable[cursor->count - 3][menu->iconTimer[i + 10]];
@@ -1817,7 +1832,11 @@ void DrawMainMenu(BattleWork* wp_) {
                 PSMTXTrans(mtx[i], pos[i].x, pos[i].y, pos[i].z);
                 z[i] = 0.0f;
                 menu->iconFlags[i] &= ~2;
+                #ifdef TARGET_PC
+                menu->iconTimer[i] += portBattleMenuStep(); // Gameplay+ faster battle menus
+                #else
                 menu->iconTimer[i]++;
+                #endif
                 break;
             case 10:
                 menu->iconFlags[i] |= 1;

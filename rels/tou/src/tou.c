@@ -2,6 +2,9 @@
 // Registers the init events of tou_00..tou_20 (the arena tou_03 lives in the tou2 REL).
 
 #include "version.h"
+#ifdef TARGET_PC
+#include "port/gameplus.h"
+#endif
 #include "mario/mariost.h"
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
@@ -706,6 +709,11 @@ static USER_FUNC(evt_tou_set_ranking_win_lose) {
         swSet(GSWF_TOU_LAST_MATCH_WON);
     } else {
         for (i = 0; i < rank_wp->count; i++) {
+#ifdef TARGET_PC
+            if (portGameplus("glitz_pit_kind")) {
+                break; // Gameplay+: a lost match costs no rank
+            }
+#endif
             if (id == rank_wp->entries[i].id) {
                 rank_wp->entries[i].flags &= ~1;
                 break;

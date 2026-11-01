@@ -4,6 +4,13 @@
 #include "icon_ids.h"
 #include "version.h"
 #include "battle/battle_seq_end.h"
+#ifdef TARGET_PC
+#include "port/gameplus.h"
+// Gameplay+ (port/include/port/gameplus.h): the level-up screen takes the D-pad as well as the stick
+#define LVUP_DIR(stick, dpad) (portGameplus("levelup_dpad") ? (stick) | (dpad) : (stick))
+#else
+#define LVUP_DIR(stick, dpad) (stick)
+#endif
 #include "pc_call.h"
 #include "battle/battle.h"
 #include "battle/battle_unit.h"
@@ -610,12 +617,12 @@ void btlseqEnd(BattleWork* wp) {
                     break;
                 work->evtId = 0;
             }
-            if (BattlePadCheckTrigger(BTL_PAD_STICK_RIGHT)) {
+            if (BattlePadCheckTrigger(LVUP_DIR(BTL_PAD_STICK_RIGHT, PAD_BUTTON_RIGHT))) {
                 if (work->selected < work->objCount - 1) {
                     work->selected = work->selected + 1;
                 }
             }
-            if (BattlePadCheckTrigger(BTL_PAD_STICK_LEFT)) {
+            if (BattlePadCheckTrigger(LVUP_DIR(BTL_PAD_STICK_LEFT, PAD_BUTTON_LEFT))) {
                 if (work->selected > 0) {
                     work->selected = work->selected - 1;
                 }
@@ -670,13 +677,13 @@ void btlseqEnd(BattleWork* wp) {
             break;
         }
         case 0x7000013:
-            if (BattlePadCheckTrigger(BTL_PAD_STICK_DOWN)) {
+            if (BattlePadCheckTrigger(LVUP_DIR(BTL_PAD_STICK_DOWN, PAD_BUTTON_DOWN))) {
                 work->cursor = work->cursor + 1;
                 if (work->cursor >= work->cursorCount) {
                     work->cursor = 0;
                 }
             }
-            if (BattlePadCheckTrigger(BTL_PAD_STICK_UP)) {
+            if (BattlePadCheckTrigger(LVUP_DIR(BTL_PAD_STICK_UP, PAD_BUTTON_UP))) {
                 work->cursor = work->cursor - 1;
                 if (work->cursor < 0) {
                     work->cursor = work->cursorCount - 1;
@@ -879,6 +886,9 @@ void btlseqEnd(BattleWork* wp) {
                     mario->currentHp = 1;
             }
             BattleSetMarioParamToFieldBattle(wp);
+#ifdef TARGET_PC
+            portPartyReviveAfterBattle(); // Gameplay+: no partner left at 0 HP in the field
+#endif
             BattleFree(wp->seqEndWork);
             wp->seqEndWork = NULL;
             BattleSetSeq(wp, (BattleSequence)0, 4);

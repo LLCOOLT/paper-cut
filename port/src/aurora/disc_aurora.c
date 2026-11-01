@@ -34,24 +34,52 @@
 /* Disc image formats Aurora's nod reads, as a dialog filter pattern. */
 #define DISC_EXTENSIONS "iso;gcm;ciso;gcz;rvz;wia;wbfs;nfs;tgc"
 
+/* a file of the open disc (portCheckGameDisc's marker files) */
+static int discHas(const char* name, void* ctx) {
+    char path[64];
+    (void)ctx;
+    snprintf(path, sizeof(path), "/%s", name);
+    return DVDConvertPathToEntrynum(path) >= 0;
+}
+
+/* the open disc's ID (6 characters) */
+static void discId(char gid[6]) {
+    const DVDDiskID* id = DVDGetCurrentDiskID();
+    memcpy(gid, id->gameName, 4);
+    memcpy(gid + 4, id->company, 2);
+}
+
 /* Opens path; FALSE with the reason in why if it isn't this build's disc. */
 static BOOL openDisc(const char* path, char* why, size_t size) {
-    const DVDDiskID* id;
     char gid[6];
     if (!aurora_dvd_open(path)) {
         snprintf(why, size, "%s\n\nis not a GameCube disc image that can be read.", path);
         return FALSE;
     }
-    id = DVDGetCurrentDiskID();
-    memcpy(gid, id->gameName, 4);
-    memcpy(gid + 4, id->company, 2);
-    if (memcmp(gid, PORT_GAME_ID, 6) != 0) {
-        snprintf(why, size, "%s\n\nis %.6s, but this build is for %s (Paper Mario: The Thousand-Year Door, %s).",
-                 path, gid, PORT_GAME_ID, REGION);
+    discId(gid);
+    if (!portCheckGameDisc(gid, discHas, NULL, path, why, size)) {
         aurora_dvd_close();
         return FALSE;
     }
     return TRUE;
+}
+
+int portAuroraOpenDiscPath(const char* path, char* why, size_t size) {
+    return openDisc(path, why, size);
+}
+
+/* The version of the disc image at path (opened and closed again); NULL if
+ * it can't be read or isn't a version of the game. */
+const PortVersionInfo* portAuroraProbeDisc(const char* path) {
+    const PortVersionInfo* v;
+    char gid[6];
+    if (!aurora_dvd_open(path)) {
+        return NULL;
+    }
+    discId(gid);
+    v = portVersionIdentify(gid, discHas, NULL);
+    aurora_dvd_close();
+    return v;
 }
 
 static char sPicked[4096];
@@ -195,6 +223,22 @@ static BOOL openDiscIos(const char* title) {
 }
 #endif
 
+/* The system's file dialog (iOS: the document picker) into out; FALSE if
+ * the user cancelled it. For the launcher. */
+int portAuroraPickDisc(char* out, size_t size) {
+#ifdef SDL_PLATFORM_IOS
+    if (!pickDiscIos()) {
+        return FALSE;
+    }
+#else
+    if (!pickDisc()) {
+        return FALSE;
+    }
+#endif
+    snprintf(out, size, "%s", sPicked);
+    return TRUE;
+}
+
 #if defined(__APPLE__) && TARGET_OS_OSX
 /* macOS: a disc image opened with the app in Finder (a double click, Open
  * With, dropped on its icon; Info.plist declares the types) is not an
@@ -236,6 +280,26 @@ BOOL portAuroraOpenDisc(int argc, char* argv[], const char* userPath) {
             return FALSE;
         }
         return TRUE;
+    }
+    /* The launcher (port/settings/launcher_ui.cpp): the player's disc images,
+     * the settings, Play. A disc of another version starts that version's
+     * executable from there. $TTYD_NO_LAUNCHER: the steps below instead. */
+    if (getenv("TTYD_NO_LAUNCHER") == NULL) {
+        char path[4096], finder[4096];
+        finder[0] = '\0';
+#if defined(__APPLE__) && TARGET_OS_OSX
+        if (openedInFinder()) {
+            snprintf(finder, sizeof(finder), "%s", sPicked);
+        }
+#endif
+        if (!portLauncherRun(userPath, finder, path, sizeof(path))) {
+            return FALSE;
+        }
+        if (openDisc(path, why, sizeof(why))) {
+            return TRUE;
+        }
+        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, title, why, aurora_get_window());
+        return FALSE;
     }
 #ifdef SDL_PLATFORM_IOS
     (void)last;

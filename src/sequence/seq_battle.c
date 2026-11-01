@@ -1,6 +1,9 @@
 // Battle sequence: loads the battle REL and map, runs the battle and returns to the field.
 #include "version.h"
 #include "port_hook.h"
+#ifdef TARGET_PC
+#include "port/gameplus.h"
+#endif
 #include "battle/battle.h"
 #include "battle/battle_information.h"
 #include "driver/animdrv.h"
@@ -235,6 +238,9 @@ void seq_battleMain(SequenceWork* work) {
                 break;
             }
             work->state++;
+#ifdef TARGET_PC
+            portRetryPoint(); // Gameplay+: a battle's start, for a retry on Game Over
+#endif
         case 5: {
 #endif
             Vec pos;

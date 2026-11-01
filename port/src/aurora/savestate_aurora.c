@@ -93,7 +93,8 @@ typedef struct Slot {
     char info[96];
 } Slot;
 
-static Slot sSlots[PORT_SAVE_STATE_SLOTS];
+static Slot sSlots[PORT_SAVE_STATE_SLOTS + 1]; /* the player's, then the retry slot */
+static int sQuiet; /* the retry slot's saves: no message on screen */
 static int sRequestSlot = -1;
 static int sRequestLoad;
 static char sStatus[128];
@@ -231,9 +232,12 @@ static void unpackChunk(uint8_t* dst, size_t n, const uint8_t* src, size_t packe
 #endif
 
 static void status(const char* text) {
+    fprintf(stderr, "[savestate] %s\n", text);
+    if (sQuiet) {
+        return;
+    }
     snprintf(sStatus, sizeof(sStatus), "%s", text);
     sStatusTime = SDL_GetTicks();
-    fprintf(stderr, "[savestate] %s\n", text);
 }
 
 /* the regions in a fixed order; heapSize: the save-state heap's used part
@@ -256,13 +260,13 @@ static int regions(Region* out, int max, size_t heapSize) {
     return n;
 }
 
-static int allowed(const char** why) {
+static int allowed(const char** why, int retryLoad) {
     const s32 seq = (s32)seqGetSeq();
     if (!portThreadIsMain()) {
         *why = "not on the main thread";
         return 0;
     }
-    if (seq != SEQ_GAME && seq != SEQ_BATTLE) {
+    if (seq != SEQ_GAME && seq != SEQ_BATTLE && !(retryLoad && seq == SEQ_GAME_OVER)) {
         *why = "only in the field or a battle";
         return 0;
     }
@@ -415,7 +419,7 @@ static void load(Slot* s) {
 }
 
 void portSaveStateRequest(int slot, int load) {
-    if (slot < 0 || slot >= PORT_SAVE_STATE_SLOTS) {
+    if (slot < 0 || slot > PORT_SAVE_STATE_RETRY) {
         return;
     }
     if (load && !sSlots[slot].used) {
@@ -453,9 +457,11 @@ void portSaveStateFrame(void) {
         return;
     }
     sRequestSlot = -1;
-    if (!allowed(&why)) {
+    sQuiet = slot == PORT_SAVE_STATE_RETRY && !sRequestLoad;
+    if (!allowed(&why, slot == PORT_SAVE_STATE_RETRY && sRequestLoad)) {
         snprintf(text, sizeof(text), "Save states: %s", why);
         status(text);
+        sQuiet = 0;
         return;
     }
     quiesce();
@@ -465,6 +471,16 @@ void portSaveStateFrame(void) {
         save(&sSlots[slot]);
     }
     resume();
+    sQuiet = 0;
+}
+
+int portSaveStateHas(int slot) {
+    return slot >= 0 && slot <= PORT_SAVE_STATE_RETRY && sSlots[slot].used;
+}
+
+void portSaveStateNotice(const char* text) {
+    snprintf(sStatus, sizeof(sStatus), "%s", text);
+    sStatusTime = SDL_GetTicks();
 }
 
 int portSaveStateSupported(void) {
@@ -502,6 +518,15 @@ const char* portSaveStateInfo(int slot) {
 
 const char* portSaveStateStatus(void) {
     return NULL;
+}
+
+int portSaveStateHas(int slot) {
+    (void)slot;
+    return 0;
+}
+
+void portSaveStateNotice(const char* text) {
+    (void)text;
 }
 
 #endif

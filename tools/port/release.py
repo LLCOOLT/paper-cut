@@ -11,12 +11,13 @@ Targets (--targets, comma-separated; by default this machine's):
            another machine with Docker: tools/port/linux-release.Dockerfile)
 Windows makes desktop and android; a Mac desktop, ios and linux; Linux desktop.
 
-For each game version (JP, US) and target: a build of its own
+For each game version (JP, US, EU) and target: a build of its own
 (build-release-*, -DTTYD_NO_DISC_ASSETS=ON: the stand-ins for everything
 extracted from the disc), checked to hold none of the disc's data where the
-extracted data is there to check against, packaged as
-ttyd-port-VERSION-<jp|us>-<platform>.zip (the game, its libraries, the C
-runtime on Windows, README, LICENSE and the example mods) or .apk/.ipa.
+extracted data is there to check against. Desktop: one package with all
+three builds behind the launcher, papercut-VERSION-<platform>.zip (Paper Cut
+to start, the builds, their libraries, the C runtime on Windows, README,
+LICENSE and the example mods); phones: papercut-VERSION-<jp|us|eu>-*.apk/.ipa.
 SHA256SUMS.txt and notes.md beside them.
 
 --publish TAG: the files on the GitHub release TAG (gh; in the release
@@ -97,7 +98,10 @@ def build(short, version_string, kind="desktop"):
     elif host() == "linux":
         args.append(f"--toolchain={os.path.join(TOOLCHAINS, 'linux-clang.cmake')}")
     run(args)
-    run(["ninja", "-C", out, "ttyd", "ttyd_ipa"] if kind == "ios" else ["ninja", "-C", out, "ttyd", "hello-native"])
+    targets = ["ttyd", "ttyd_ipa"] if kind == "ios" else ["ttyd", "hello-native"]
+    if kind == "desktop" and host() == "windows" and short == "us":
+        targets.append("papercut")  # Paper Cut.exe, what the player starts
+    run(["ninja", "-C", out, *targets])
     return out
 
 
@@ -130,39 +134,66 @@ def check_no_disc_data(paths, version):
     print(f"checked {len(paths)} file(s): no bytes of the disc's {', '.join(n for n, _ in probes)}")
 
 
-def package_desktop(short, out, version_string, dist):
+def package_desktop(outs, version_string, dist):
+    """One package with every version's build (outs: short -> build folder):
+    the player starts Paper Cut, which shows the launcher of the US build;
+    a disc of another version starts that version's build beside it
+    (port/settings/launcher_ui.cpp). The builds keep their names (ttyd-jp,
+    ttyd-us, ttyd-eu): code mods are linked against them."""
     plat = platform_name()
-    name = f"ttyd-port-{version_string}-{short}-{package_platform()}"
+    name = f"papercut-{version_string}-{package_platform()}"
+    us = outs["us"]
     files = []  # (source, path in the package); a source folder is copied whole
     if host() == "windows":
-        files.append((os.path.join(out, f"ttyd-{short}.exe"), f"ttyd-{short}.exe"))
-        files += [(p, os.path.basename(p)) for p in sorted(glob.glob(os.path.join(out, "*.dll")))]
+        files.append((os.path.join(us, "Paper Cut.exe"), "Paper Cut.exe"))
+        for short, out in outs.items():
+            exe = os.path.join(out, f"ttyd-{short}.exe")
+            check_no_disc_data([exe], VERSIONS[short])
+            files.append((exe, f"ttyd-{short}.exe"))
+        # the libraries: the same set in every build (the US build's)
+        files += [(p, os.path.basename(p)) for p in sorted(glob.glob(os.path.join(us, "*.dll")))]
         crt = sorted(glob.glob(os.path.join(REDIST, "14.*", "x64", "Microsoft.VC143.CRT")))
         if crt:  # app-local C runtime: no separate VC++ redistributable install needed
             files += [(p, os.path.basename(p)) for p in sorted(glob.glob(os.path.join(crt[-1], "*.dll")))]
-        check_no_disc_data([p for p, _ in files], VERSIONS[short])
     elif host() == "macos":
-        # the bundle as cmake --install leaves it: its non-system libraries
-        # copied in, signed ad hoc (not notarized: Open Anyway once)
-        stage = os.path.join(out, "stage")
-        shutil.rmtree(stage, ignore_errors=True)
-        run(["cmake", "--install", out, "--prefix", stage])
-        app = os.path.join(stage, f"ttyd-{short}.app")
-        check_no_disc_data([os.path.join(app, "Contents", "MacOS", f"ttyd-{short}")], VERSIONS[short])
-        files.append((app, f"ttyd-{short}.app"))
+        # one app: the US build's bundle as cmake --install leaves it (its
+        # non-system libraries copied in), the other builds' executables
+        # beside its own in Contents/MacOS, then signed again (ad hoc; not
+        # notarized: Open Anyway once)
+        stages = {}
+        for short, out in outs.items():
+            stage = os.path.join(out, "stage")
+            shutil.rmtree(stage, ignore_errors=True)
+            run(["cmake", "--install", out, "--prefix", stage])
+            stages[short] = os.path.join(stage, f"ttyd-{short}.app")
+            check_no_disc_data([os.path.join(stages[short], "Contents", "MacOS", f"ttyd-{short}")], VERSIONS[short])
+        app = os.path.join(dist, "_app", "Paper Cut.app")
+        shutil.rmtree(os.path.dirname(app), ignore_errors=True)
+        shutil.copytree(stages["us"], app, symlinks=True)
+        for short in outs:
+            if short != "us":
+                shutil.copy2(os.path.join(stages[short], "Contents", "MacOS", f"ttyd-{short}"),
+                             os.path.join(app, "Contents", "MacOS", f"ttyd-{short}"))
+        run(["codesign", "--force", "--deep", "--sign", "-", app])
+        files.append((app, "Paper Cut.app"))
     else:
-        files.append((os.path.join(out, f"ttyd-{short}"), f"ttyd-{short}"))
-        files += [(p, os.path.basename(p)) for p in sorted(glob.glob(os.path.join(out, "*.so*")))]
-        check_no_disc_data([p for p, _ in files], VERSIONS[short])
-    lib = next((p for p in sorted(glob.glob(os.path.join(out, "mods", "hello-native.*")))
-                if os.path.splitext(p)[1] in (".dll", ".so", ".dylib")), None)
+        for short, out in outs.items():
+            exe = os.path.join(out, f"ttyd-{short}")
+            check_no_disc_data([exe], VERSIONS[short])
+            files.append((exe, f"ttyd-{short}"))
+        files += [(p, os.path.basename(p)) for p in sorted(glob.glob(os.path.join(us, "*.so*")))]
+        files.append((os.path.join(ROOT, "port", "assets", "icon", "papercut-256.png"), "papercut.png"))
     files += [(os.path.join(ROOT, "README.md"), "README.md"), (os.path.join(ROOT, "LICENSE"), "LICENSE.txt"),
               (os.path.join(ROOT, "docs", "MODDING.md"), "docs/MODDING.md")]
     for path in glob.glob(os.path.join(ROOT, "examples", "mods", "**", "*"), recursive=True):
         if os.path.isfile(path):
             files.append((path, os.path.relpath(path, ROOT).replace(os.sep, "/")))
-    if lib:
-        files.append((lib, f"examples/mods/hello-native/lib/{plat}/{os.path.basename(lib)}"))
+    # the example code mod, built for each version (lib/<platform>/<game ID>/, port/mods/mods.cpp)
+    for short, out in outs.items():
+        lib = next((p for p in sorted(glob.glob(os.path.join(out, "mods", "hello-native.*")))
+                    if os.path.splitext(p)[1] in (".dll", ".so", ".dylib")), None)
+        if lib:
+            files.append((lib, f"examples/mods/hello-native/lib/{plat}/{VERSIONS[short]}/{os.path.basename(lib)}"))
     zpath = os.path.join(dist, name + ".zip")
     if host() == "macos":
         # ditto keeps the bundle's symlinks, permissions and signature (its
@@ -176,33 +207,42 @@ def package_desktop(short, out, version_string, dist):
                 shutil.copytree(src, dst, symlinks=True)
             else:
                 shutil.copy2(src, dst)
-        open(os.path.join(tree, "HOW TO PLAY.txt"), "w", encoding="utf-8").write(how_to_play(short))
+        open(os.path.join(tree, "HOW TO PLAY.txt"), "w", encoding="utf-8").write(how_to_play())
         run(["ditto", "-c", "-k", "--norsrc", "--noextattr", "--noqtn", "--keepParent", tree, zpath])
         shutil.rmtree(os.path.dirname(tree))
+        shutil.rmtree(os.path.dirname(app), ignore_errors=True)
     else:
         with zipfile.ZipFile(zpath, "w", zipfile.ZIP_DEFLATED) as z:
             for src, arc in files:
-                z.write(src, f"{name}/{arc}")  # (keeps the file's mode: the Linux executable stays one)
+                z.write(src, f"{name}/{arc}")  # (keeps the file's mode: the Linux executables stay ones)
             info = zipfile.ZipInfo(f"{name}/HOW TO PLAY.txt")
             info.compress_type, info.external_attr = zipfile.ZIP_DEFLATED, 0o644 << 16  # (rw-r--r--)
-            z.writestr(info, how_to_play(short))
+            z.writestr(info, how_to_play())
+            if host() == "linux":
+                # what the player starts: the US build, whose launcher starts the disc's version
+                info = zipfile.ZipInfo(f"{name}/papercut")
+                info.compress_type, info.external_attr = zipfile.ZIP_DEFLATED, 0o755 << 16  # (rwxr-xr-x)
+                z.writestr(info, '#!/bin/sh\n# Paper Cut: the launcher (the US build), which starts the disc\'s '
+                                 'version\nexec "$(dirname "$0")/ttyd-us" "$@"\n')
     print("wrote", zpath)
     return zpath
 
 
-def how_to_play(short):
-    region = {"jp": "Japanese (G8MJ01)", "us": "US (G8ME01)", "eu": "European (G8MP01)"}[short]
-    start = {"windows": f"ttyd-{short}.exe",
-             "macos": f"ttyd-{short}.app (the first time macOS blocks it: System Settings >\n"
+def how_to_play():
+    start = {"windows": "Paper Cut.exe",
+             "macos": "Paper Cut.app (the first time macOS blocks it: System Settings >\n"
                       "Privacy & Security > Open Anyway; before macOS 15, right-click > Open)",
-             "linux": f"ttyd-{short}"}[host()]
-    return f"""Paper Mario: The Thousand-Year Door, native port ({region})
+             "linux": "papercut"}[host()]
+    return f"""Paper Cut: Paper Mario: The Thousand-Year Door, native
 
 This package holds no game data. You need your own copy of the game: a disc
-image of the {region} version (.iso, .rvz, .gcm, .ciso, .gcz, .wia, ...).
+image of the Japanese, US or European release (.iso, .rvz, .gcm, .ciso, .gcz,
+.wia, ...).
 
-Start {start}: the first time, it asks for the disc image and remembers it.
-F1 (or a controller's Back/Select) opens the settings page.
+Start {start}. Add your disc image on the Play tab; Paper Cut names
+its version and plays it with that version's build (ttyd-jp, ttyd-us or
+ttyd-eu, all in this package). The list remembers your discs.
+F1 (or a controller's Back/Select) opens the settings page in the game.
 
 Mods go in the mods folder (Settings > Mods > Open the mods folder); the
 examples/ folder here has four to try (see docs/MODDING.md).
@@ -223,14 +263,14 @@ def package_android(dist, version_string):
         if jdk:
             env["JAVA_HOME"] = jdk[-1]
     run([gradle, "--no-daemon", "-p", os.path.join(ROOT, "port", "android"), "-PnoDiscAssets",
-         "assembleJpDebug", "assembleUsDebug"], env=env)
+         "assembleJpDebug", "assembleUsDebug", "assembleEuDebug"], env=env)
     out = []
-    for short in ("jp", "us"):
+    for short in ("jp", "us", "eu"):
         apk = sorted(glob.glob(os.path.join(ROOT, "port", "android", "app", "build", "outputs", "apk", short, "debug",
                                             "*.apk")))
         if not apk:
             sys.exit(f"release: no {short} APK")
-        dst = os.path.join(dist, f"ttyd-port-{version_string}-{short}-android-arm64.apk")
+        dst = os.path.join(dist, f"papercut-{version_string}-{short}-android-arm64.apk")
         shutil.copy(apk[0], dst)
         with zipfile.ZipFile(dst) as z:  # the native library, checked like the desktop builds
             libs = [n for n in z.namelist() if n.endswith("libmain.so")]
@@ -246,7 +286,7 @@ def package_android(dist, version_string):
 def package_ios(short, out, version_string, dist):
     """The unsigned .ipa (Payload/ttyd-<short>.app) the ttyd_ipa target made."""
     check_no_disc_data([os.path.join(out, f"ttyd-{short}.app", f"ttyd-{short}")], VERSIONS[short])
-    dst = os.path.join(dist, f"ttyd-port-{version_string}-{short}-ios-unsigned.ipa")
+    dst = os.path.join(dist, f"papercut-{version_string}-{short}-ios-unsigned.ipa")
     shutil.copy(os.path.join(out, f"ttyd-{short}.ipa"), dst)
     print("wrote", dst)
     return dst
@@ -302,7 +342,7 @@ def publish(tag, version_string, files, sums, dist):
     if tag not in tags.split():
         # a new draft (created once: it isn't retried, the uploads are),
         # then the files
-        run([gh, "release", "create", tag, "--draft", "--title", f"TTYD port {version_string}",
+        run([gh, "release", "create", tag, "--draft", "--title", f"Paper Cut {version_string}",
              "--notes-file", os.path.join(dist, "notes.md")], retry=False)
         run([gh, "release", "upload", tag, "--clobber", *files, os.path.join(dist, "SHA256SUMS.txt")])
         return
@@ -342,10 +382,12 @@ def main():
     shutil.rmtree(a.out, ignore_errors=True)
     os.makedirs(a.out)
     files = []
-    for short in ("jp", "us"):
-        if "desktop" in targets:
-            files.append(package_desktop(short, build(short, a.version), a.version, a.out))
-        if "ios" in targets:
+    if "desktop" in targets:
+        # one package: every version's build, behind the launcher
+        files.append(package_desktop({short: build(short, a.version) for short in VERSIONS}, a.version, a.out))
+    if "ios" in targets:
+        # an app per version (an iOS app can't start another program)
+        for short in VERSIONS:
             files.append(package_ios(short, build(short, a.version, "ios"), a.version, a.out))
     if "android" in targets:
         files += package_android(a.out, a.version)

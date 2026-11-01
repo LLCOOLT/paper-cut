@@ -289,6 +289,10 @@ static inline BOOL loadStart(void) {
     return FALSE;
 }
 
+#ifdef TARGET_PC
+#include "port/gameplus.h"
+#endif
+
 /** New game: reset the story state and the party and set the fades into the prologue map */
 static inline void loadNewGameSetup(void) {
     stg0_00_init();
@@ -303,6 +307,9 @@ static inline void loadNewGameSetup(void) {
     gp->areaFadeOutType = FADE_CURTAIN_SIDES_A2_3D;
     swInit();
     swByteSet(GSW_STORY_PROGRESS, STORY_STG0_00_PROLOGUE);
+#ifdef TARGET_PC
+    portNewGamePlus(); // Gameplay+: what the new file keeps from another (port/include/port/gameplus.h)
+#endif
 }
 
 /**
