@@ -47,6 +47,10 @@ static void marioDisp(CameraId camId, void* param);
 #ifdef PORT_MODS
 #include "port/hooks/src_mario_mario.h"
 #endif
+#ifdef TARGET_PC /* Play as Luigi: Mario's draws go through Luigi's stand-in (port/include/port/luigi.h) */
+#include "port/luigi.h"
+#define animPoseDrawMtx portLuigiDrawMtx
+#endif
 
 static void marioCtrlOff2Main(void);
 static void marioMoveMain(void);
@@ -97,7 +101,7 @@ MarioWork* marioGetPtr(void) {
  * Returns Mario's outfit colour (0 normal, 1 L Emblem, 2 W Emblem, 3 both),
  * which picks the row of marioAnimeGroupData.
  */
-s32 marioGetColor(void) {
+s32 PORT_HOOKABLE(marioGetColor)(void) {
     return mp->colorId;
 }
 
@@ -131,6 +135,9 @@ static inline s32 marioBadgeColor(void) {
     s32 a = pouchEquipCheckBadge(ITEM_L_EMBLEM);
     s32 b = pouchEquipCheckBadge(ITEM_W_EMBLEM);
 
+#ifdef TARGET_PC /* Play as Luigi: what Luigi has no version of shows Mario in Luigi's colours */
+    a |= portLuigiOn();
+#endif
     if (a && !b) {
         return 1;
     } else if (!a && b) {
@@ -157,7 +164,7 @@ static inline s32 marioBadgeColor(void) {
  * Called from peach.c, event.c and an evt_mario script call;
  * from the Japanese release on the re-force is skipped in background mode.
  */
-void marioSetCharMode(s32 mode) {
+void PORT_HOOKABLE(marioSetCharMode)(s32 mode) {
     MarioWork* wp = mp;
     u32 matFlag;
     u32 lightFlag;
@@ -276,7 +283,7 @@ void marioSetCharMode(s32 mode) {
  * when the aji module unloads (its _epilog) if GSWF_AJI09_PIXEL_MARIO_ACTIVE is set.
  * From the Japanese release on, calling it with the mode already set still resets the pose.
  */
-void marioSetFamicomMode(s32 mode) {
+void PORT_HOOKABLE(marioSetFamicomMode)(s32 mode) {
     MarioWork* wp = mp;
 
     if (mode == 1) {
@@ -331,7 +338,7 @@ void marioSetFamicomMode(s32 mode) {
  * Sets the collision box and walk/dash base speeds for the current character:
  * Peach 20x47 with dash 2.0, Bowser dash 2.25, Mario 20x37 (10x25.9 in background mode) with dash 2.25.
  */
-void marioSetSpec(void) {
+void PORT_HOOKABLE(marioSetSpec)(void) {
     MarioWork* wp = mp;
 
     if (wp->characterId == 1) {
@@ -390,7 +397,7 @@ void PORT_HOOKABLE(marioEntry)(void) {
  * Stops Mario collecting field items for 20 frames; mario_hit calls it when Bowser bumps his head on a ceiling.
  * marioItemGetChk counts the timer down.
  */
-void marioItemGetDisable(void) {
+void PORT_HOOKABLE(marioItemGetDisable)(void) {
     MarioWork* wp = mp;
     wp->flags |= MARIO_FLAG_ITEM_GET_DISABLED;
     wp->itemGetDisableTimer = 0x14;
@@ -400,7 +407,7 @@ void marioItemGetDisable(void) {
  * Counts down the item pick-up lock set by marioItemGetDisable and clears it at 0;
  * run each frame from Bowser's main loop (koopa.c).
  */
-void marioItemGetChk(void) {
+void PORT_HOOKABLE(marioItemGetChk)(void) {
     MarioWork* work;
     s32 var;
 
@@ -420,7 +427,7 @@ void marioItemGetChk(void) {
  * TRUE when Mario may collect field items, i.e. the marioItemGetDisable lock is off;
  * itemdrv checks it before a pick- up.
  */
-BOOL marioItemGetOk(void) {
+BOOL PORT_HOOKABLE(marioItemGetOk)(void) {
     return (mp->flags & MARIO_FLAG_ITEM_GET_DISABLED) == 0;
 }
 
@@ -428,7 +435,7 @@ BOOL marioItemGetOk(void) {
  * TRUE when case events (touch and check zones) may fire for Mario:
  * not while he is a paper airplane and not while hidden in Vivian's shadow. Checked by casedrv.
  */
-BOOL marioCaseEventValidChk(void) {
+BOOL PORT_HOOKABLE(marioCaseEventValidChk)(void) {
     if (mp->currMotionId == MARIO_MOTION_PLANE) {
         return FALSE;
     } else {
@@ -441,7 +448,7 @@ BOOL marioCaseEventValidChk(void) {
  * mobjdrv checks it before a field object's front-touch action. Not in the US demo.
  */
 #if VERSION >= VERSION_JP
-BOOL marioFrontActionValidChk(void) {
+BOOL PORT_HOOKABLE(marioFrontActionValidChk)(void) {
     if (mp->currMotionId == MARIO_MOTION_ROLL || mp->flags & MARIO_FLAG_PAPER_MODE) {
         return FALSE;
     }
@@ -493,7 +500,7 @@ static inline BOOL marioChkYoshiKey(void) {
  * Called by win_main and a dou_04 script call; with Vivian in use,
  * the US and PAL releases also block it while her party entry has flag 0x80000000.
  */
-BOOL marioCheckMenuDisable(void) {
+BOOL PORT_HOOKABLE(marioCheckMenuDisable)(void) {
     MarioWork* wp = mp;
 
     if (marioCtrlDisable()) {
@@ -562,7 +569,7 @@ BOOL marioCheckMenuDisable(void) {
  * and no partner action holding the keys (boat changing, tube, sideways, Flurrie, Ms. Mowz or Vivian in use,
  * Bobbery, Yoshi, Koops holding an item).
  */
-BOOL marioChkKey(void) {
+BOOL PORT_HOOKABLE(marioChkKey)(void) {
     PartyEntry* party = partyGetPtr(marioGetPartyId());
 
     if (seqGetSeq() != SEQ_GAME) {
@@ -604,7 +611,7 @@ BOOL marioChkKey(void) {
 }
 
 /** TRUE when Mario's control is on, i.e. no marioCtrlOff is outstanding. */
-BOOL marioChkCtrl(void) {
+BOOL PORT_HOOKABLE(marioChkCtrl)(void) {
     return !mp->ctrlOffCount;
 }
 
@@ -614,7 +621,7 @@ BOOL marioChkCtrl(void) {
  * and marioMain only rechecks the outfit colour and Slow Go then. Not in the US demo.
  */
 #if VERSION >= VERSION_JP
-BOOL N_marioChkUseParty(void) {
+BOOL PORT_HOOKABLE(N_marioChkUseParty)(void) {
     if ((u16)gp->buttonNew[0] & (PAD_BUTTON_LEFT | PAD_BUTTON_RIGHT | PAD_BUTTON_DOWN | PAD_BUTTON_UP | PAD_BUTTON_START)) {
         return TRUE;
     }
@@ -627,7 +634,7 @@ BOOL N_marioChkUseParty(void) {
  * freezes his field movement, ends the partner's action and takes the partner's control away.
  * From the Japanese release on it also saves his position for the accordion (jabara) motion.
  */
-void marioFBattlePrepare(void) {
+void PORT_HOOKABLE(marioFBattlePrepare)(void) {
     MarioWork* wp = mp;
 
 #if VERSION <= VERSION_DEMO_JP
@@ -651,7 +658,7 @@ void marioFBattlePrepare(void) {
  * gives the partner control back and ends a hammer swing.
  * The US and PAL releases also move the partner back to its spot beside Mario.
  */
-void marioFBattlePost(void) {
+void PORT_HOOKABLE(marioFBattlePost)(void) {
     MarioWork* wp = mp;
 
     wp->flags &= ~MARIO_FLAG_PRE_BATTLE_PHYSICS;
@@ -684,12 +691,12 @@ void marioFBattlePost(void) {
 }
 
 /** Returns how many marioCtrlOff calls are outstanding (0 means Mario has control). */
-s32 marioCtrlOffChk(void) {
+s32 PORT_HOOKABLE(marioCtrlOffChk)(void) {
     return mp->ctrlOffCount;
 }
 
 /** Returns how many marioKeyOff calls are outstanding (0 means button input is on). */
-s32 marioKeyOffChk(void) {
+s32 PORT_HOOKABLE(marioKeyOffChk)(void) {
     return mp->keyOffCount;
 }
 
@@ -697,7 +704,7 @@ s32 marioKeyOffChk(void) {
  * Takes control away from the player (counted: each call needs a marioCtrlOn) and returns the new count;
  * marioMain then skips input and motion.
  */
-s32 marioCtrlOff(void) {
+s32 PORT_HOOKABLE(marioCtrlOff)(void) {
     MarioWork* wp = mp;
 
     wp->flags |= MARIO_FLAG_CTRL_OFF;
@@ -706,7 +713,7 @@ s32 marioCtrlOff(void) {
 }
 
 /** Releases one marioCtrlOff; the player has control again when the count reaches 0. Returns the remaining count. */
-s32 marioCtrlOn(void) {
+s32 PORT_HOOKABLE(marioCtrlOn)(void) {
     MarioWork* wp = mp;
 
     wp->ctrlOffCount--;
@@ -720,7 +727,7 @@ s32 marioCtrlOn(void) {
  * Like marioCtrlOff, but marioMain keeps running Mario's motion and physics (marioCtrlOff2Main) so a jump
  * or fall can finish; used when the pause menu opens (win_main).
  */
-s32 marioCtrlOff2(void) {
+s32 PORT_HOOKABLE(marioCtrlOff2)(void) {
     MarioWork* wp = mp;
 
     wp->flags |= MARIO_FLAG_CTRL_OFF_2;
@@ -733,7 +740,7 @@ s32 marioCtrlOff2(void) {
  * Releases a marioCtrlOff2: clears the keep-moving flag and drops one control-off count.
  * Returns the remaining count.
  */
-s32 marioCtrlOn2(void) {
+s32 PORT_HOOKABLE(marioCtrlOn2)(void) {
     MarioWork* wp = mp;
 
     wp->flags &= ~MARIO_FLAG_CTRL_OFF_2;
@@ -748,7 +755,7 @@ s32 marioCtrlOn2(void) {
  * Blocks button input for Mario (counted like marioCtrlOff, but his motion and physics keep running)
  * and returns the new count.
  */
-s32 marioKeyOff(void) {
+s32 PORT_HOOKABLE(marioKeyOff)(void) {
     MarioWork* wp = mp;
 
     wp->flags |= MARIO_FLAG_KEY_OFF;
@@ -771,7 +778,7 @@ s32 PORT_HOOKABLE(marioKeyOn)(void) {
  * Makes Mario and the current partner invincible for msec milliseconds (converted to frames);
  * Mario blinks while it lasts. npcdrv sets 3 s after an enemy hit. Returns the frame count.
  */
-s16 marioSetMutekiTime(s32 msec) {
+s16 PORT_HOOKABLE(marioSetMutekiTime)(s32 msec) {
     MarioWork* wp = mp;
     PartyEntry* party;
 
@@ -784,7 +791,7 @@ s16 marioSetMutekiTime(s32 msec) {
 }
 
 /** TRUE while Mario is in background mode (MARIO_FLAG_BG_MODE). */
-BOOL marioBgmodeChk(void) {
+BOOL PORT_HOOKABLE(marioBgmodeChk)(void) {
     return (mp->flags >> 25) & 1;
 }
 
@@ -792,14 +799,14 @@ BOOL marioBgmodeChk(void) {
  * Puts Mario in background mode: smaller collision box, drawn at scale 1.2 instead of 2.0, no shadow,
  * and the camera stops following his height. Started by an evt_mario script call.
  */
-void marioBgmodeOn(void) {
+void PORT_HOOKABLE(marioBgmodeOn)(void) {
     mp->flags |= MARIO_FLAG_BG_MODE;
     marioSetSpec();
     camFollowYOff();
 }
 
 /** Ends background mode: normal collision box, and the camera follows Mario's height again. */
-void marioBgmodeOff(void) {
+void PORT_HOOKABLE(marioBgmodeOff)(void) {
     mp->flags &= ~MARIO_FLAG_BG_MODE;
     marioSetSpec();
     camFollowYOn();
@@ -809,7 +816,7 @@ void marioBgmodeOff(void) {
  * TRUE if Mario is in any of the asked states: 1 jumping, 2 falling, 4 paper mode, 8 accordion (jabara),
  * 0x10 rolling as a paper tube, 0x20 blown by wind (kaze). Used by scripts, hit checks and motions.
  */
-BOOL marioChkSts(s32 flags) {
+BOOL PORT_HOOKABLE(marioChkSts)(s32 flags) {
     MarioWork* wp = mp;
     BOOL ret = FALSE;
 
@@ -838,7 +845,7 @@ BOOL marioChkSts(s32 flags) {
  * Clears every hit-object reference in MarioWork (stand-on, front, wall, head, hammer, ...) that points to the
  * named collision object; mobjdrv calls it before deleting a field object's hit so Mario keeps no stale pointer.
  */
-void marioResetHitObj(const char* name) {
+void PORT_HOOKABLE(marioResetHitObj)(const char* name) {
     MarioWork* wp = mp;
 
     if (wp->hitobjFrontA && !strcmp(hitGetName(wp->hitobjFrontA), name)) {
@@ -874,7 +881,7 @@ void marioResetHitObj(const char* name) {
  * Puts Mario back to plain standing: normal spec, paper and tube modes off, no paper animation,
  * mirror and facing locks cleared, draw offsets zeroed, speed 0. Used by mario_motion and after a game over.
  */
-void marioReset(void) {
+void PORT_HOOKABLE(marioReset)(void) {
     MarioWork* wp = mp;
 
     marioSetSpec();
@@ -893,7 +900,7 @@ void marioReset(void) {
  * Zeroes Mario's draw rotation and draw offsets;
  * the damage, pipe, ground pound, tube and boat motions call it when they end.
  */
-void marioOfsRotReset(void) {
+void PORT_HOOKABLE(marioOfsRotReset)(void) {
     MarioWork* wp = mp;
 
     wp->rot = (Vec){0.0f, 0.0f, 0.0f};
@@ -903,7 +910,7 @@ void marioOfsRotReset(void) {
 }
 
 /** Marks Mario's sound slots (and from the US release the ground pound sound slots) as not playing. */
-void marioSoundInit(void) {
+void PORT_HOOKABLE(marioSoundInit)(void) {
     MarioWork* wp = mp;
 
     wp->soundId[0] = -1;
@@ -916,7 +923,7 @@ void marioSoundInit(void) {
 }
 
 /** Loads Mario's three pose sets for the current outfit colour; called once by seq_logo as the logo sequence ends. */
-void marioPoseInit(void) {
+void PORT_HOOKABLE(marioPoseInit)(void) {
     MarioWork* wp = mp;
 
     wp->paperAnimGroupId[0] = animPoseEntry(marioAnimeGroupData[mp->colorId][0], 2);
@@ -929,7 +936,7 @@ void marioPoseInit(void) {
  * pouch, gravity, camera, preloads the pose groups, standing pose, balloon, motion-blur trail and camera shift,
  * gives Mario the Hammer if the pouch lacks it, then sets up the partners.
  */
-void marioInit(void) {
+void PORT_HOOKABLE(marioInit)(void) {
     mp = __memAlloc(HEAP_DEFAULT, sizeof(MarioWork));
     memset(mp, 0, sizeof(MarioWork));
     marioSoundInit();
@@ -989,7 +996,7 @@ void marioInit(void) {
  * partners, camera and 8-bit mode; the rest is cleared and the partners, balloon,
  * blur trail and camera shift are reset. The US demo carries flag 0x200000 over as the party-walk lock.
  */
-void marioReInit(void) {
+void PORT_HOOKABLE(marioReInit)(void) {
     CameraId camId;
     s32 slot0;
     s32 slot1;
@@ -1205,7 +1212,7 @@ static inline BOOL marioChkRollMot2(void) {
  * display set-up, balloon, partner and camera. Bowser and Peach hand off to kpaMain/peachMain.
  * The US demo always rechecks the outfit and has no Slow Go walk forcing here.
  */
-void marioMain(void) {
+void PORT_HOOKABLE(marioMain)(void) {
     MarioWork* wp = mp;
 #if VERSION >= VERSION_JP
     MarioWork* p;
@@ -1543,7 +1550,7 @@ static inline void marioMove_screenPos(void) {
  * from the Japanese release on, aji_13 (X-Naut Fortress) raises the camera
  * when he climbs high on screen instead.
  */
-void marioMove(void) {
+void PORT_HOOKABLE(marioMove)(void) {
     MarioWork* wp = mp;
     Vec prev;
 #if VERSION >= VERSION_JP
@@ -1769,7 +1776,7 @@ static void marioMoveMain(void) {
 }
 
 /** TRUE when Mario is showing a pushing pose (M_O_1, M_O_2 or M_O_2R); used by mot_walk. */
-BOOL marioChkPushAnime(void) {
+BOOL PORT_HOOKABLE(marioChkPushAnime)(void) {
     MarioWork* wp = mp;
     BOOL valid = FALSE;
     if (!strcmp(wp->animName, "M_O_1") || !strcmp(wp->animName, "M_O_2") || !strcmp(wp->animName, "M_O_2R")) {
@@ -1779,7 +1786,7 @@ BOOL marioChkPushAnime(void) {
 }
 
 /** Returns which of Mario's three pose sets is in use: 2 the event set, 1 the back-facing set, 0 the front set. */
-s32 marioAnimeId(void) {
+s32 PORT_HOOKABLE(marioAnimeId)(void) {
     MarioWork* wp = mp;
     s32 id;
     if (wp->dispFlags & MARIO_DISP_FLAG_ANIM_SET_2) {
@@ -1797,7 +1804,7 @@ s32 marioAnimeId(void) {
  * unless he is in a paper or partner form or sidewaysNot in the US demo.
  */
 #if VERSION >= VERSION_JP
-void marioChgDamagePose(void) {
+void PORT_HOOKABLE(marioChgDamagePose)(void) {
     MarioWork* wp = mp;
     MarioMotion mot = wp->currMotionId;
 
@@ -1815,7 +1822,7 @@ void marioChgDamagePose(void) {
  * Shows a pose from Mario's event pose set (e_mario); used by scripts and some motions.
  * Ignored while the pose is locked or as 8-bit Mario.
  */
-void marioChgEvtPose(const char* name) {
+void PORT_HOOKABLE(marioChgEvtPose)(const char* name) {
     MarioWork* wp = mp;
     const char* animName;
 
@@ -1844,7 +1851,7 @@ const char* dotMarioPose[4][6] = {
  * Maps a normal Mario pose (idle, stand, walk, run, jump) to the matching 8-bit pose for his outfit colour;
  * NULL for poses 8-bit Mario lacks.
  */
-const char* toDotMarioPose(const char* name) {
+const char* PORT_HOOKABLE(toDotMarioPose)(const char* name) {
     const char* dot = NULL;
 
     if (!strcmp("M_Z_1", name)) {
@@ -1868,7 +1875,7 @@ const char* toDotMarioPose(const char* name) {
  * Changes Mario's pose by name from frame 0 unless it is already showing; ignored while the pose is locked.
  * As 8-bit Mario the name goes through toDotMarioPose and poses with no 8-bit version are skipped.
  */
-void marioChgPose(const char* name) {
+void PORT_HOOKABLE(marioChgPose)(const char* name) {
     MarioWork* wp = mp;
     const char* dot;
 
@@ -1893,7 +1900,7 @@ void marioChgPose(const char* name) {
 }
 
 /** Like marioChgPose but starts the new pose at the given frame; not for 8-bit Mario. Used by mot_stay and aji_17. */
-void marioChgPoseTime(const char* name, s16 frames) {
+void PORT_HOOKABLE(marioChgPoseTime)(const char* name, s16 frames) {
     MarioWork* wp = mp;
     const char* animName;
 
@@ -1912,7 +1919,7 @@ void marioChgPoseTime(const char* name, s16 frames) {
  * Changes the paper animation of Mario's active paper form (set up by marioPaperOn) when the name differs;
  * ignored while the pose is locked or as 8-bit Mario.
  */
-void marioChgPaper(const char* name) {
+void PORT_HOOKABLE(marioChgPaper)(const char* name) {
     MarioWork* wp = mp;
     s32 flags = wp->dispFlags;
     const char* animName;
@@ -1928,7 +1935,7 @@ void marioChgPaper(const char* name) {
 }
 
 /** Sets the current frame of Mario's paper animation and of his pose; used by mot_ship for the boat. */
-void marioSetPaperAnimeLocalTime(s32 frames) {
+void PORT_HOOKABLE(marioSetPaperAnimeLocalTime)(s32 frames) {
     MarioWork* wp = mp;
 
     wp->poseTime = frames;
@@ -1952,7 +1959,7 @@ inline void marioPaperRelease(void) {
  * for the tube, plane, boat, accordion and pipe forms (p_roll, p_plane, p_hune, p_jyabara, p_dokan_x/y) the
  * paper flag passed is FALSE, for others TRUE. Always returns TRUE.
  */
-BOOL marioPaperOn(const char* name) {
+BOOL PORT_HOOKABLE(marioPaperOn)(const char* name) {
     BOOL flag;
     MarioWork* wp = mp;
 
@@ -1968,7 +1975,7 @@ BOOL marioPaperOn(const char* name) {
 }
 
 /** Detaches and frees Mario's paper form animation, returning him to his normal model. */
-void marioPaperOff(void) {
+void PORT_HOOKABLE(marioPaperOff)(void) {
     MarioWork* wp = mp;
 
     if (wp->dispFlags & MARIO_DISP_FLAG_PAPER_ON) {
@@ -1982,17 +1989,17 @@ void marioPaperOff(void) {
 }
 
 /** Turns on the paper lighting material flag on Mario's front pose set; used by mot_hammer. */
-void marioPaperLightOn(void) {
+void PORT_HOOKABLE(marioPaperLightOn)(void) {
     animPoseSetMaterialLightFlagOn(mp->paperAnimGroupId[0], ANIM_MATERIAL_LIGHT_PAPER);
 }
 
 /** Turns off the paper lighting material flag that marioPaperLightOn set. */
-void marioPaperLightOff(void) {
+void PORT_HOOKABLE(marioPaperLightOff)(void) {
     animPoseSetMaterialLightFlagOff(mp->paperAnimGroupId[0], ANIM_MATERIAL_LIGHT_PAPER);
 }
 
 /** Projects a world position through the 3D camera to screen coordinates (x, y in pixels, z depth). */
-void marioGetScreenPos(Vec position, f32* x, f32* y, f32* z) {
+void PORT_HOOKABLE(marioGetScreenPos)(Vec position, f32* x, f32* y, f32* z) {
     CameraEntry* camera;
     f32 proj[7];
     f32 view[6];
@@ -2005,7 +2012,7 @@ void marioGetScreenPos(Vec position, f32* x, f32* y, f32* z) {
 }
 
 /** TRUE if screen point (x, y) lies in the 0-600 by 0-535 area treated as on screen. */
-BOOL marioChkInScreen(s32 x, s32 y) {
+BOOL PORT_HOOKABLE(marioChkInScreen)(s32 x, s32 y) {
     BOOL valid = FALSE;
     if (x >= 0 && x <= 600 && y >= 0 && y <= 535) {
         valid = TRUE;
@@ -2014,7 +2021,7 @@ BOOL marioChkInScreen(s32 x, s32 y) {
 }
 
 /** Mario's draw scale: 1.2 in background mode, 2.0 otherwise. */
-f32 marioGetScale(void) {
+f32 PORT_HOOKABLE(marioGetScale)(void) {
     return mp->flags & MARIO_FLAG_BG_MODE ? 1.2f : 2.0f;
 }
 
@@ -2209,7 +2216,7 @@ static void marioRearAnime(void) {
  * then queues marioDisp (blinking while invincible) or marioDispBlur and the shadow.
  * Bowser's and Peach's shadows are offset along the camera yaw (Peach's from the US release on).
  */
-void marioPreDisp(void) {
+void PORT_HOOKABLE(marioPreDisp)(void) {
     MarioWork* wp = marioGetPtr();
     Vec pos;
     f32 size;
@@ -2241,6 +2248,10 @@ void marioPreDisp(void) {
         animPoseSetLocalTime(wp->paperAnimGroupId[marioAnimeId()], wp->poseTime);
     }
     animPoseMain(wp->paperAnimGroupId[marioAnimeId()]);
+#ifdef TARGET_PC /* Play as Luigi: not for Peach, Bowser or 8-bit Mario */
+    portLuigiUpdate(PORT_LUIGI_FIELD, wp->paperAnimGroupId[marioAnimeId()],
+                    !wp->characterId && !(wp->flags & MARIO_FLAG_IS_8_BIT));
+#endif
     if (wp->dispFlags & MARIO_DISP_FLAG_HIDDEN) {
         return;
     }

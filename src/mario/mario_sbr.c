@@ -1,5 +1,6 @@
 // Mario subroutines: stick and rub input, falling out of the map (bottomless respawn), move rate, gravity,
 // touched NPC, and the paper/plane/boat checks.
+#include "port_hook.h"
 #include "mario/mario_sbr.h"
 #include "mario/mario.h"
 #include "mario/mariost.h"
@@ -17,6 +18,9 @@
 #include "mot/mot_walk.h"
 #include "libc_decls.h"
 #include "version.h"
+#ifdef PORT_MODS
+#include "port/hooks/src_mario_mario_sbr.h"
+#endif
 
 #define REVISE360(a)        \
     while ((a) < 0.0f) {    \
@@ -51,7 +55,7 @@ RubWork rubwork;
  * falling out of eki_04, gon_10 or muj_00 puts Mario at a fixed spot for that map,
  * and anywhere else at (0, 74, 0) with the partners.
  */
-void marioBottomless(void) {
+void PORT_HOOKABLE(marioBottomless)(void) {
     MarioWork* mario = marioGetPtr();
     PartyEntry* party;
 
@@ -90,7 +94,7 @@ void marioBottomless(void) {
  * either changes to the bottomless motion (background mode),
  * reloads the map (set by a boat entrance) or puts Mario and the partners back at the saved respawn point.
  */
-void marioBottomless(void) {
+void PORT_HOOKABLE(marioBottomless)(void) {
     MarioWork* mario = marioGetPtr();
     PartyEntry* party;
 
@@ -122,7 +126,7 @@ void marioBottomless(void) {
  * Saves where Mario respawns after falling out of the map:
  * an entrance (evt_bero.c) or the boat's landing spot, 37 units above the given point.
  */
-void N_marioSetBottomlessRespawnPosOnBeroEntry(f32 x, f32 y, f32 z) {
+void PORT_HOOKABLE(N_marioSetBottomlessRespawnPosOnBeroEntry)(f32 x, f32 y, f32 z) {
     MarioWork* mario = marioGetPtr();
     Vec position;
 
@@ -131,7 +135,7 @@ void N_marioSetBottomlessRespawnPosOnBeroEntry(f32 x, f32 y, f32 z) {
 }
 
 /** Saves the bottomless-pit respawn point as given; set from seq_mapchange.c to 10 above Mario on map entry. */
-void N_marioSetBottomlessRespawnPos(f32 x, f32 y, f32 z) {
+void PORT_HOOKABLE(N_marioSetBottomlessRespawnPos)(f32 x, f32 y, f32 z) {
     MarioWork* mario = marioGetPtr();
     Vec position;
 
@@ -143,13 +147,13 @@ void N_marioSetBottomlessRespawnPos(f32 x, f32 y, f32 z) {
  * Makes falling out of the map reload the current map at its entrance instead of respawning;
  * set when Mario enters a map as the boat.
  */
-void N_marioReloadMapOnBottomlessOn(void) {
+void PORT_HOOKABLE(N_marioReloadMapOnBottomlessOn)(void) {
     MarioWork* mario = marioGetPtr();
     mario->bottomlessReload = 1;
 }
 
 /** Goes back to respawning at the saved point after a fall; cleared when the boat lands. */
-void N_marioReloadMapOnBottomlessOff(void) {
+void PORT_HOOKABLE(N_marioReloadMapOnBottomlessOff)(void) {
     MarioWork* mario = marioGetPtr();
     mario->bottomlessReload = 0;
 }
@@ -196,7 +200,7 @@ BOOL marioSetDirEventMain(void) {
  * 1.0 across the screen up to 1.19 straight towards or away from the camera,
  * so depth moves look as fast as sideways ones. Used by Mario's and Yoshi's movement.
  */
-f32 marioGetMoveRate(f32 dir) {
+f32 PORT_HOOKABLE(marioGetMoveRate)(f32 dir) {
     f32 c = cos(3.1415927f * (dir - marioGetPtr()->targetYaw) / 180.0f);
     return 1.0f + (1.19f - 1.0f) * __fabsf(c);
 }
@@ -207,22 +211,22 @@ static inline void marioSetGravity(f32 g) {
 }
 
 /** Puts Mario's gravity back to normal (1.0); run from mario.c. */
-void marioResetGravity(void) {
+void PORT_HOOKABLE(marioResetGravity)(void) {
     marioSetGravity(1.0f);
 }
 
 // NPC Mario last touched (touchNpc).
-struct NpcEntry* marioGetTouchNpcPtr(void) {
+struct NpcEntry* PORT_HOOKABLE(marioGetTouchNpcPtr)(void) {
     return marioGetPtr()->touchNpc;
 }
 
 /** TRUE if the surface is a plane panel (hit attribute bits 0x38); Mario's motion checks then turn him into a plane. */
-BOOL marioChkPlanePlace(HitEntry* hit) {
+BOOL PORT_HOOKABLE(marioChkPlanePlace)(HitEntry* hit) {
     return (hitGetAttr(hit) & 0x38) != 0;
 }
 
 /** Records Mario's current height as the peak of the jump or fall (jumpPeakY). */
-void marioSetPeakYpos(void) {
+void PORT_HOOKABLE(marioSetPeakYpos)(void) {
     MarioWork* mario = marioGetPtr();
     mario->jumpPeakY = mario->position.y;
 }
@@ -231,7 +235,7 @@ void marioSetPeakYpos(void) {
  * Snaps Mario to face straight left or right on screen, whichever is nearer,
  * and points his movement direction that way. JP and the demos give both cases the 90-degree move direction.
  */
-void marioAdjustMoveDir(void) {
+void PORT_HOOKABLE(marioAdjustMoveDir)(void) {
     MarioWork* mario = marioGetPtr();
 
     if (mario->displayDirection >= 90.0f && mario->displayDirection <= 270.0f) {
@@ -265,7 +269,7 @@ f32 marioGetDispDir(void) {
 }
 
 /** Wraps an angle in degrees into 0 <= angle < 360. */
-f32 revise360(f32 angle) {
+f32 PORT_HOOKABLE(revise360)(f32 angle) {
     while (angle < 0.0f) {
         angle += 360.0f;
     }
@@ -280,7 +284,7 @@ f32 revise360(f32 angle) {
  * In paper mode the result is forced to 0 or 180 from the side Mario faces.
  * The US and PAL releases round to 0.001 degree; JP and the demos to 0.01.
  */
-f32 toMovedir(f32 angle) {
+f32 PORT_HOOKABLE(toMovedir)(f32 angle) {
     MarioWork* mario = marioGetPtr();
 
     if (mario->flags & MARIO_FLAG_PAPER_MODE) {
@@ -304,7 +308,7 @@ f32 toMovedir(f32 angle) {
 }
 
 /** toMovedir for a partner: uses the partner's paper mode and facing and the camera yaw from its playerPtr. */
-f32 partyToMovedir(PartyEntry* party, f32 angle) {
+f32 PORT_HOOKABLE(partyToMovedir)(PartyEntry* party, f32 angle) {
     void* cam = party->playerPtr;
 
     if (party->flags & PARTY_FLAG_PAPER_MODE) {
@@ -328,7 +332,7 @@ f32 partyToMovedir(PartyEntry* party, f32 angle) {
 }
 
 /** toMovedir without the paper-mode facing override: only converts the screen angle by the camera yaw. */
-f32 toMovedirSimple(f32 angle) {
+f32 PORT_HOOKABLE(toMovedirSimple)(f32 angle) {
     MarioWork* mario = marioGetPtr();
 #if VERSION >= VERSION_US
     angle = (s32)(1000.0f * (270.0f - angle + mario->targetYaw) + ((270.0f - angle + mario->targetYaw) >= 0.0f ? 0.5f : -0.5f)) / 1000.0f;
@@ -348,7 +352,7 @@ f32 toMovedirSimple(f32 angle) {
  * toMovedir, then turns the result ofs degrees further away from the camera yaw side it is on;
  * used to aim the hammer and partner moves a little off Mario's line.
  */
-f32 toMovedir2(f32 angle, f32 ofs) {
+f32 PORT_HOOKABLE(toMovedir2)(f32 angle, f32 ofs) {
     MarioWork* mario = marioGetPtr();
 
     if (mario->flags & MARIO_FLAG_PAPER_MODE) {
@@ -376,7 +380,7 @@ f32 toMovedir2(f32 angle, f32 ofs) {
  * Per-frame: counts down a forced move (marioSetForceMove) and when it ends gives Mario back the walk
  * or dash speed his stick asks for.
  */
-void marioForceMoveMain(void) {
+void PORT_HOOKABLE(marioForceMoveMain)(void) {
     MarioWork* mario = marioGetPtr();
 
     if (mario->flags & MARIO_FLAG_FORCED_MOVEMENT) {
@@ -398,7 +402,7 @@ void marioForceMoveMain(void) {
  * scripts use it (evt_mario.c) to move him to a point.
  * The boat, slit, tube and Yoshi motions keep their own motion.
  */
-void marioSetForceMove(f32 dir, s32 time, f32 speed) {
+void PORT_HOOKABLE(marioSetForceMove)(f32 dir, s32 time, f32 speed) {
     MarioWork* mario = marioGetPtr();
 
     mario->flags |= MARIO_FLAG_FORCED_MOVEMENT;
@@ -535,7 +539,7 @@ void marioGetStick(f32* dir, f32* mag) {
  * How far the main stick is pushed: 0 neutral, 1 a little, 2 past radius 55;
  * partner walking picks its walk or run pose from it.
  */
-s32 N_marioGetMovementSpeed(void) {
+s32 PORT_HOOKABLE(N_marioGetMovementSpeed)(void) {
     MarioWork* mario = marioGetPtr();
     s8 x = mario->wStickDir1;
 
@@ -550,7 +554,7 @@ s32 N_marioGetMovementSpeed(void) {
 #endif
 
 /** Resets the stick-rotation (rub) tracker; run at Mario init and when the tube motion starts. */
-void marioGetRubInit(void) {
+void PORT_HOOKABLE(marioGetRubInit)(void) {
     memset(&rubwork, 0, sizeof(rubwork));
     rubwork.revDir = -1;
 }
@@ -693,7 +697,7 @@ static inline void rubClearHist(s32 v) {
  * -1 when the button is released or the stick is not spinning.
  * Used for the Spring Jump (A), hammer spin (B) and tube (R) inputs.
  */
-s32 marioGetRub(u32 btn, s32* dirOut, s32* countOut, f32* magOut) {
+s32 PORT_HOOKABLE(marioGetRub)(u32 btn, s32* dirOut, s32* countOut, f32* magOut) {
     s32 ret = 0;
     MarioWork* mario = marioGetPtr();
     RubWork* rw = &rubwork;
@@ -790,3 +794,7 @@ s32 marioGetRub(u32 btn, s32* dirOut, s32* countOut, f32* magOut) {
     }
     return -1;
 }
+
+#ifdef PORT_MODS
+#include "port/hooks/src_mario_mario_sbr.inc"
+#endif

@@ -1,5 +1,9 @@
 // Mail table: the letters Mario can receive on the Mail Box SP.
+#include "port_hook.h"
 #include "data/mail_data.h"
+#ifdef PORT_MODS
+#include "port/hooks/src_data_mail_data.h"
+#endif
 
 /**
  * Every letter for the Mail Box SP: Peach's chapter letters, the anonymous chapter 3 hint letters, friends'
@@ -58,7 +62,7 @@ MailData mail_data[44] = {
  * An unknown id runs off the end of the 44-entry table and returns the pointer just past it,
  * so callers must pass a valid id.
  */
-MailData* mailGetPtr(s32 id) {
+MailData* PORT_HOOKABLE(mailGetPtr)(s32 id) {
     MailData* mail = mail_data;
     s32 i;
 
@@ -69,3 +73,7 @@ MailData* mailGetPtr(s32 id) {
     }
     return mail;
 }
+
+#ifdef PORT_MODS
+#include "port/hooks/src_data_mail_data.inc"
+#endif

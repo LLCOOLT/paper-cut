@@ -6,6 +6,7 @@ s32 BattleActionCommandCheckDefence(BattleUnit * p0, BattleWeapon * p1) {
     PortHookSlot* s = &portHookSlots[35];
     s32 r;
     int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
     if (!s->active) {
         return BattleActionCommandCheckDefence__body(p0, p1);
     }
@@ -25,6 +26,7 @@ s32 BattleActionCommandCheckDefence(BattleUnit * p0, BattleWeapon * p1) {
 void BattleActionCommandSetDifficulty(BattleWork * p0, BattleUnit * p1, s32 p2) {
     PortHookSlot* s = &portHookSlots[36];
     int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
     if (!s->active) {
         BattleActionCommandSetDifficulty__body(p0, p1, p2);
         return;
@@ -40,7 +42,337 @@ void BattleActionCommandSetDifficulty(BattleWork * p0, BattleUnit * p1, s32 p2) 
     }
 }
 
+void BattleActionCommandManagerInit(BattleWork * p0) {
+    PortHookSlot* s = &portHookSlots[102];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        BattleActionCommandManagerInit__body(p0);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*))s->pre[i])(&p0);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0)))s->replace)(p0); } else { BattleActionCommandManagerInit__body(p0); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0)))s->post[i])(p0);
+    }
+}
+
+void BattleActionCommandManager(BattleWork * p0) {
+    PortHookSlot* s = &portHookSlots[103];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        BattleActionCommandManager__body(p0);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*))s->pre[i])(&p0);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0)))s->replace)(p0); } else { BattleActionCommandManager__body(p0); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0)))s->post[i])(p0);
+    }
+}
+
+s32 BattleActionCommandResult(BattleWork * p0) {
+    PortHookSlot* s = &portHookSlots[104];
+    s32 r;
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        return BattleActionCommandResult__body(p0);
+    }
+    __builtin_memset(&r, 0, sizeof(r));
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(r)*, __typeof__(p0)*))s->pre[i])(&r, &p0);
+    }
+    if (!skip) {
+        r = (s->replace != NULL ? ((s32 (*)(__typeof__(p0)))s->replace)(p0) : BattleActionCommandResult__body(p0));
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(r)*, __typeof__(p0)))s->post[i])(&r, p0);
+    }
+    return r;
+}
+
+void BattleActionCommandDeclareACResult(BattleWork * p0, BattleWeapon * p1, s32 p2) {
+    PortHookSlot* s = &portHookSlots[105];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        BattleActionCommandDeclareACResult__body(p0, p1, p2);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*, __typeof__(p1)*, __typeof__(p2)*))s->pre[i])(&p0, &p1, &p2);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2)))s->replace)(p0, p1, p2); } else { BattleActionCommandDeclareACResult__body(p0, p1, p2); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2)))s->post[i])(p0, p1, p2);
+    }
+}
+
+void BattleActionCommandSetup(BattleWork * p0, s32 p1, BattleUnit * p2, s32 p3, s32 p4) {
+    PortHookSlot* s = &portHookSlots[106];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        BattleActionCommandSetup__body(p0, p1, p2, p3, p4);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*, __typeof__(p1)*, __typeof__(p2)*, __typeof__(p3)*, __typeof__(p4)*))s->pre[i])(&p0, &p1, &p2, &p3, &p4);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3), __typeof__(p4)))s->replace)(p0, p1, p2, p3, p4); } else { BattleActionCommandSetup__body(p0, p1, p2, p3, p4); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3), __typeof__(p4)))s->post[i])(p0, p1, p2, p3, p4);
+    }
+}
+
+void BattleActionCommandStart(BattleWork * p0) {
+    PortHookSlot* s = &portHookSlots[107];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        BattleActionCommandStart__body(p0);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*))s->pre[i])(&p0);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0)))s->replace)(p0); } else { BattleActionCommandStart__body(p0); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0)))s->post[i])(p0);
+    }
+}
+
+void BattleActionCommandStop(BattleWork * p0) {
+    PortHookSlot* s = &portHookSlots[108];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        BattleActionCommandStop__body(p0);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*))s->pre[i])(&p0);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0)))s->replace)(p0); } else { BattleActionCommandStop__body(p0); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0)))s->post[i])(p0);
+    }
+}
+
+s32 BattleActionCommandGetDefenceResult(void) {
+    PortHookSlot* s = &portHookSlots[109];
+    s32 r;
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        return BattleActionCommandGetDefenceResult__body();
+    }
+    __builtin_memset(&r, 0, sizeof(r));
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(r)*))s->pre[i])(&r);
+    }
+    if (!skip) {
+        r = (s->replace != NULL ? ((s32 (*)(void))s->replace)() : BattleActionCommandGetDefenceResult__body());
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(r)*))s->post[i])(&r);
+    }
+    return r;
+}
+
+void BattleActionCommandResetDefenceResult(void) {
+    PortHookSlot* s = &portHookSlots[110];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        BattleActionCommandResetDefenceResult__body();
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(void))s->pre[i])();
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(void))s->replace)(); } else { BattleActionCommandResetDefenceResult__body(); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(void))s->post[i])();
+    }
+}
+
+s32 BattleActionCommandGetDifficulty(BattleWork * p0) {
+    PortHookSlot* s = &portHookSlots[111];
+    s32 r;
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        return BattleActionCommandGetDifficulty__body(p0);
+    }
+    __builtin_memset(&r, 0, sizeof(r));
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(r)*, __typeof__(p0)*))s->pre[i])(&r, &p0);
+    }
+    if (!skip) {
+        r = (s->replace != NULL ? ((s32 (*)(__typeof__(p0)))s->replace)(p0) : BattleActionCommandGetDifficulty__body(p0));
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(r)*, __typeof__(p0)))s->post[i])(&r, p0);
+    }
+    return r;
+}
+
+s32 BattleActionCommandGetPrizeLv(BattleWork * p0, BattleUnit * p1, s32 p2) {
+    PortHookSlot* s = &portHookSlots[112];
+    s32 r;
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        return BattleActionCommandGetPrizeLv__body(p0, p1, p2);
+    }
+    __builtin_memset(&r, 0, sizeof(r));
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(r)*, __typeof__(p0)*, __typeof__(p1)*, __typeof__(p2)*))s->pre[i])(&r, &p0, &p1, &p2);
+    }
+    if (!skip) {
+        r = (s->replace != NULL ? ((s32 (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2)))s->replace)(p0, p1, p2) : BattleActionCommandGetPrizeLv__body(p0, p1, p2));
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(r)*, __typeof__(p0), __typeof__(p1), __typeof__(p2)))s->post[i])(&r, p0, p1, p2);
+    }
+    return r;
+}
+
+u16 BattleACGetButtonIcon(s32 p0, s32 p1) {
+    PortHookSlot* s = &portHookSlots[113];
+    u16 r;
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        return BattleACGetButtonIcon__body(p0, p1);
+    }
+    __builtin_memset(&r, 0, sizeof(r));
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(r)*, __typeof__(p0)*, __typeof__(p1)*))s->pre[i])(&r, &p0, &p1);
+    }
+    if (!skip) {
+        r = (s->replace != NULL ? ((u16 (*)(__typeof__(p0), __typeof__(p1)))s->replace)(p0, p1) : BattleACGetButtonIcon__body(p0, p1));
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(r)*, __typeof__(p0), __typeof__(p1)))s->post[i])(&r, p0, p1);
+    }
+    return r;
+}
+
+void BattleAcDrawGauge(s32 p0, s32 p1, s32 p2, f32 p3, s32 p4, s32 p5, s32 p6, s32 p7, s32 p8) {
+    PortHookSlot* s = &portHookSlots[114];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        BattleAcDrawGauge__body(p0, p1, p2, p3, p4, p5, p6, p7, p8);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*, __typeof__(p1)*, __typeof__(p2)*, __typeof__(p3)*, __typeof__(p4)*, __typeof__(p5)*, __typeof__(p6)*, __typeof__(p7)*, __typeof__(p8)*))s->pre[i])(&p0, &p1, &p2, &p3, &p4, &p5, &p6, &p7, &p8);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3), __typeof__(p4), __typeof__(p5), __typeof__(p6), __typeof__(p7), __typeof__(p8)))s->replace)(p0, p1, p2, p3, p4, p5, p6, p7, p8); } else { BattleAcDrawGauge__body(p0, p1, p2, p3, p4, p5, p6, p7, p8); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3), __typeof__(p4), __typeof__(p5), __typeof__(p6), __typeof__(p7), __typeof__(p8)))s->post[i])(p0, p1, p2, p3, p4, p5, p6, p7, p8);
+    }
+}
+
+void BattleAcGaugeSeInit(void) {
+    PortHookSlot* s = &portHookSlots[115];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        BattleAcGaugeSeInit__body();
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(void))s->pre[i])();
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(void))s->replace)(); } else { BattleAcGaugeSeInit__body(); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(void))s->post[i])();
+    }
+}
+
+void BattleAcGaugeSeUpdate(f32 p0) {
+    PortHookSlot* s = &portHookSlots[116];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        BattleAcGaugeSeUpdate__body(p0);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*))s->pre[i])(&p0);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0)))s->replace)(p0); } else { BattleAcGaugeSeUpdate__body(p0); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0)))s->post[i])(p0);
+    }
+}
+
+void BattleAcGaugeSeDelete(void) {
+    PortHookSlot* s = &portHookSlots[117];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        BattleAcGaugeSeDelete__body();
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(void))s->pre[i])();
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(void))s->replace)(); } else { BattleAcGaugeSeDelete__body(); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(void))s->post[i])();
+    }
+}
+
 void portHookInit_src_battle_battle_ac(void) {
     portHookSlots[35].body = (void*)BattleActionCommandCheckDefence__body;
     portHookSlots[36].body = (void*)BattleActionCommandSetDifficulty__body;
+    portHookSlots[102].body = (void*)BattleActionCommandManagerInit__body;
+    portHookSlots[103].body = (void*)BattleActionCommandManager__body;
+    portHookSlots[104].body = (void*)BattleActionCommandResult__body;
+    portHookSlots[105].body = (void*)BattleActionCommandDeclareACResult__body;
+    portHookSlots[106].body = (void*)BattleActionCommandSetup__body;
+    portHookSlots[107].body = (void*)BattleActionCommandStart__body;
+    portHookSlots[108].body = (void*)BattleActionCommandStop__body;
+    portHookSlots[109].body = (void*)BattleActionCommandGetDefenceResult__body;
+    portHookSlots[110].body = (void*)BattleActionCommandResetDefenceResult__body;
+    portHookSlots[111].body = (void*)BattleActionCommandGetDifficulty__body;
+    portHookSlots[112].body = (void*)BattleActionCommandGetPrizeLv__body;
+    portHookSlots[113].body = (void*)BattleACGetButtonIcon__body;
+    portHookSlots[114].body = (void*)BattleAcDrawGauge__body;
+    portHookSlots[115].body = (void*)BattleAcGaugeSeInit__body;
+    portHookSlots[116].body = (void*)BattleAcGaugeSeUpdate__body;
+    portHookSlots[117].body = (void*)BattleAcGaugeSeDelete__body;
 }

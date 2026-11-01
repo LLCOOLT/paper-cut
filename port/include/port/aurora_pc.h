@@ -45,6 +45,8 @@ int portInterpReady(void);
 /* Draws the scene t (0..1) of the way from the frame shown to the next one,
  * leaving the game's state as it was. FALSE if there is nothing to blend. */
 int portInterpDraw(float t);
+/* Frame advance: this frame drawn again (FALSE if there is no scene). */
+int portInterpRedraw(void);
 /* The retrace's in-between frames are done: keep this frame's state. */
 void portInterpFrameDone(void);
 

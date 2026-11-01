@@ -1,4 +1,5 @@
 // Yoshi: partner init, follow, the ride (Mario on Yoshi's back) and the flutter jump.
+#include "port_hook.h"
 #include "dolphin/types.h"
 #include "driver/animdrv.h"
 #include "driver/effdrv.h"
@@ -24,6 +25,9 @@
 #include "pmario_sound.h"
 #include "version.h"
 #include <dolphin/pad.h>
+#ifdef PORT_MODS
+#include "port/hooks/src_party_party_yoshi.h"
+#endif
 
 typedef struct YoshiWork {
     u8 pad0[0x4];        // 0x0
@@ -89,12 +93,12 @@ void L_yoshiFlyMove(PartyEntry* party);
  * Only its sign is read: 0 or more makes yoshi_use start a flutter in event mode, and landing resets it to -1.
  * The script command already converts its argument to frames, so the value is converted twice.
  */
-void evt_set_yoshi_frm(s32 msec) {
+void PORT_HOOKABLE(evt_set_yoshi_frm)(s32 msec) {
     evt_yoshi_frm = sysMsec2Frame(msec);
 }
 
 /** Sets the speed Yoshi moves at while a script drives him (evt_party_yoshi_fly argument 1). */
-void evt_set_yoshi_spd(f32 spd) {
+void PORT_HOOKABLE(evt_set_yoshi_spd)(f32 spd) {
     evt_yoshi_spd = spd;
 }
 
@@ -102,7 +106,7 @@ void evt_set_yoshi_spd(f32 spd) {
  * Returns evt_yoshi_frm; evt_party_yoshi_fly keeps waiting while it is 0
  * or more (the scripted flutter has not landed yet).
  */
-s32 evt_get_yoshi_frm(void) {
+s32 PORT_HOOKABLE(evt_get_yoshi_frm)(void) {
     return evt_yoshi_frm;
 }
 
@@ -142,7 +146,7 @@ void L_sweatMain(PartyEntry* party) {
  * 2 flutter jump, 3 jump-stand bounce, 4 falling after it,
  * 5 anything else (mounting, getting off, step-up, water). The demo has only 0, 1, 2 and 3 for everything else.
  */
-s32 yoshiGetStatus(void) {
+s32 PORT_HOOKABLE(yoshiGetStatus)(void) {
     PartyEntry* party = partyGetPtr(marioGetPartyId());
 #if VERSION <= VERSION_DEMO_JP
     s32 status = 3;
@@ -179,7 +183,7 @@ s32 yoshiGetStatus(void) {
  * Puts Mario back on Yoshi without the mount animation (motion 11) when Mario's motion is re-initialised
  * while riding (mario.c). Allocates Yoshi's work area if needed and makes the extra partner follow the ride.
  */
-void marioRideYoshi(void) {
+void PORT_HOOKABLE(marioRideYoshi)(void) {
     PartyEntry* party = partyGetPtr(marioGetPartyId());
     PartyEntry* extra;
 
@@ -205,7 +209,7 @@ void marioRideYoshi(void) {
  * Returns TRUE if it started; used by the cancel in evt_mario.c,
  * the ride script command in evt_party.c and party.c.
  */
-BOOL marioGetoffYoshi(void) {
+BOOL PORT_HOOKABLE(marioGetoffYoshi)(void) {
     PartyEntry* party = partyGetPtr(marioGetPartyId());
 
     if (!(party->flags & PARTY_FLAG_IS_BEING_USED)) {
@@ -268,7 +272,7 @@ static inline void L_fall(PartyEntry* party) {
  * In the retail versions a spike hit (MARIO_MOTION_DAMAGE_TOGE) instead puts Yoshi
  * and the extra partner in run mode 0xd.
  */
-void marioYoshiForceCancel(void) {
+void PORT_HOOKABLE(marioYoshiForceCancel)(void) {
     MarioWork* mario = marioGetPtr();
     PartyEntry* party = partyGetPtr(marioGetPartyId());
     PartyEntry* extra;
@@ -305,7 +309,7 @@ void marioYoshiForceCancel(void) {
  * Yoshi's goodbye handler (party_data): if Mario is riding, dismounts first and keeps running the ride code;
  * otherwise plays the partner goodbye and moves to run mode 0xe when it ends.
  */
-void yoshi_bye(PartyEntry* party) {
+void PORT_HOOKABLE(yoshi_bye)(PartyEntry* party) {
     if (party->trigFlags & PARTY_TRIG_FLAG_CHG_RUN_MODE) {
         party->trigFlags &= ~PARTY_TRIG_FLAG_CHG_RUN_MODE;
         partyGoodbyeInit(party);
@@ -321,7 +325,7 @@ void yoshi_bye(PartyEntry* party) {
 }
 
 /** Yoshi's exit handler (retail party_data only): cancels the ride and puts Mario back to standing. */
-void yoshi_exit(PartyEntry* party) {
+void PORT_HOOKABLE(yoshi_exit)(PartyEntry* party) {
     party->playerPtr->flags &= ~MARIO_FLAG_CHG_MOT_DISABLED;
     marioYoshiForceCancel();
     marioChgMot(MARIO_MOTION_STAY);
@@ -331,7 +335,7 @@ void yoshi_exit(PartyEntry* party) {
  * Bounce off a jump stand while riding: marioChgJumpStandMotion calls this instead of Mario's own jump-stand
  * motion; starts Yoshi's jump-stand sequence (motions 60-66) unless one is already running.
  */
-void yoshi_jumpStand(void) {
+void PORT_HOOKABLE(yoshi_jumpStand)(void) {
     PartyEntry* party = partyGetPtr(marioGetPartyId());
 
     if (party == NULL || party->currentMemberId != PARTY_MEMBER_YOSHI || !(party->flags & PARTY_FLAG_IS_BEING_USED)) {
@@ -395,7 +399,7 @@ void yoshi_animTimeMain(PartyEntry* party) {
 }
 
 /** Yoshi's init handler (party_data): sets his member kind and size (26 tall; 28 wide in the demo, 20 later). */
-void yoshi_init(PartyEntry* party) {
+void PORT_HOOKABLE(yoshi_init)(PartyEntry* party) {
     party->memberKind = PARTY_MEMBER_YOSHI;
     party->moveKind = 0;
     party->height = 26.0f;
@@ -432,7 +436,7 @@ static inline f32 L_getOfs(PartyEntry* party) {
  * The demo version of this routine is older: no head search, the fly bob adds the speed straight to the height,
  * and the move speed is cut to 3/4 while bit 0x80 is set.
  */
-void yoshi_use(PartyEntry* party) {
+void PORT_HOOKABLE(yoshi_use)(PartyEntry* party) {
     MarioWork* mario = party->playerPtr;
     PartyEntry* extra;
     f32 dir;
@@ -1776,3 +1780,7 @@ void L_getStick(PartyEntry* party, f32* angle, f32* speed) {
     }
     *speed = dist;
 }
+
+#ifdef PORT_MODS
+#include "port/hooks/src_party_party_yoshi.inc"
+#endif

@@ -5,6 +5,7 @@
 void seq_mapChangeMain(SequenceWork * p0) {
     PortHookSlot* s = &portHookSlots[2];
     int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
     if (!s->active) {
         seq_mapChangeMain__body(p0);
         return;
@@ -20,6 +21,86 @@ void seq_mapChangeMain(SequenceWork * p0) {
     }
 }
 
+void seq_mapChangeInit(SequenceWork * p0) {
+    PortHookSlot* s = &portHookSlots[1475];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        seq_mapChangeInit__body(p0);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*))s->pre[i])(&p0);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0)))s->replace)(p0); } else { seq_mapChangeInit__body(p0); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0)))s->post[i])(p0);
+    }
+}
+
+void seq_mapChangeExit(SequenceWork * p0) {
+    PortHookSlot* s = &portHookSlots[1476];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        seq_mapChangeExit__body(p0);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*))s->pre[i])(&p0);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0)))s->replace)(p0); } else { seq_mapChangeExit__body(p0); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0)))s->post[i])(p0);
+    }
+}
+
+void _unload(const char * p0, const char * p1, const char * p2) {
+    PortHookSlot* s = &portHookSlots[1477];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        _unload__body(p0, p1, p2);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*, __typeof__(p1)*, __typeof__(p2)*))s->pre[i])(&p0, &p1, &p2);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2)))s->replace)(p0, p1, p2); } else { _unload__body(p0, p1, p2); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2)))s->post[i])(p0, p1, p2);
+    }
+}
+
+void _relUnLoad(void) {
+    PortHookSlot* s = &portHookSlots[1478];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        _relUnLoad__body();
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(void))s->pre[i])();
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(void))s->replace)(); } else { _relUnLoad__body(); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(void))s->post[i])();
+    }
+}
+
 void portHookInit_src_sequence_seq_mapchange(void) {
     portHookSlots[2].body = (void*)seq_mapChangeMain__body;
+    portHookSlots[1475].body = (void*)seq_mapChangeInit__body;
+    portHookSlots[1476].body = (void*)seq_mapChangeExit__body;
+    portHookSlots[1477].body = (void*)_unload__body;
+    portHookSlots[1478].body = (void*)_relUnLoad__body;
 }

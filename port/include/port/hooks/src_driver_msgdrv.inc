@@ -6,6 +6,7 @@ const char * msgSearch(const char * p0) {
     PortHookSlot* s = &portHookSlots[5];
     const char * r;
     int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
     if (!s->active) {
         return msgSearch__body(p0);
     }
@@ -22,6 +23,234 @@ const char * msgSearch(const char * p0) {
     return r;
 }
 
+void msgInit(void) {
+    PortHookSlot* s = &portHookSlots[642];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        msgInit__body();
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(void))s->pre[i])();
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(void))s->replace)(); } else { msgInit__body(); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(void))s->post[i])();
+    }
+}
+
+void msgLoad(const char * p0, s32 p1) {
+    PortHookSlot* s = &portHookSlots[643];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        msgLoad__body(p0, p1);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*, __typeof__(p1)*))s->pre[i])(&p0, &p1);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0), __typeof__(p1)))s->replace)(p0, p1); } else { msgLoad__body(p0, p1); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0), __typeof__(p1)))s->post[i])(p0, p1);
+    }
+}
+
+void msgAnalize(smartEntry * p0, const char * p1) {
+    PortHookSlot* s = &portHookSlots[644];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        msgAnalize__body(p0, p1);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*, __typeof__(p1)*))s->pre[i])(&p0, &p1);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0), __typeof__(p1)))s->replace)(p0, p1); } else { msgAnalize__body(p0, p1); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0), __typeof__(p1)))s->post[i])(p0, p1);
+    }
+}
+
+MessageWork * L_msgGetWork(void) {
+    PortHookSlot* s = &portHookSlots[645];
+    MessageWork * r;
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        return L_msgGetWork__body();
+    }
+    __builtin_memset(&r, 0, sizeof(r));
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(r)*))s->pre[i])(&r);
+    }
+    if (!skip) {
+        r = (s->replace != NULL ? ((MessageWork * (*)(void))s->replace)() : L_msgGetWork__body());
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(r)*))s->post[i])(&r);
+    }
+    return r;
+}
+
+const char * msgGetCommand(const char * p0, char * p1, char * p2) {
+    PortHookSlot* s = &portHookSlots[646];
+    const char * r;
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        return msgGetCommand__body(p0, p1, p2);
+    }
+    __builtin_memset(&r, 0, sizeof(r));
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(r)*, __typeof__(p0)*, __typeof__(p1)*, __typeof__(p2)*))s->pre[i])(&r, &p0, &p1, &p2);
+    }
+    if (!skip) {
+        r = (s->replace != NULL ? ((const char * (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2)))s->replace)(p0, p1, p2) : msgGetCommand__body(p0, p1, p2));
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(r)*, __typeof__(p0), __typeof__(p1), __typeof__(p2)))s->post[i])(&r, p0, p1, p2);
+    }
+    return r;
+}
+
+s32 msgIconStr2ID(const char * p0) {
+    PortHookSlot* s = &portHookSlots[647];
+    s32 r;
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        return msgIconStr2ID__body(p0);
+    }
+    __builtin_memset(&r, 0, sizeof(r));
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(r)*, __typeof__(p0)*))s->pre[i])(&r, &p0);
+    }
+    if (!skip) {
+        r = (s->replace != NULL ? ((s32 (*)(__typeof__(p0)))s->replace)(p0) : msgIconStr2ID__body(p0));
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(r)*, __typeof__(p0)))s->post[i])(&r, p0);
+    }
+    return r;
+}
+
+s32 msgWindow_Entry(const char * p0, EvtWord p1, u16 p2) {
+    PortHookSlot* s = &portHookSlots[648];
+    s32 r;
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        return msgWindow_Entry__body(p0, p1, p2);
+    }
+    __builtin_memset(&r, 0, sizeof(r));
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(r)*, __typeof__(p0)*, __typeof__(p1)*, __typeof__(p2)*))s->pre[i])(&r, &p0, &p1, &p2);
+    }
+    if (!skip) {
+        r = (s->replace != NULL ? ((s32 (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2)))s->replace)(p0, p1, p2) : msgWindow_Entry__body(p0, p1, p2));
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(r)*, __typeof__(p0), __typeof__(p1), __typeof__(p2)))s->post[i])(&r, p0, p1, p2);
+    }
+    return r;
+}
+
+void msgWindow_Add(const char * p0, s32 p1) {
+    PortHookSlot* s = &portHookSlots[649];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        msgWindow_Add__body(p0, p1);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*, __typeof__(p1)*))s->pre[i])(&p0, &p1);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0), __typeof__(p1)))s->replace)(p0, p1); } else { msgWindow_Add__body(p0, p1); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0), __typeof__(p1)))s->post[i])(p0, p1);
+    }
+}
+
+void msgWindow_Continue(s32 p0) {
+    PortHookSlot* s = &portHookSlots[650];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        msgWindow_Continue__body(p0);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*))s->pre[i])(&p0);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0)))s->replace)(p0); } else { msgWindow_Continue__body(p0); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0)))s->post[i])(p0);
+    }
+}
+
+void msgWindow_Repeat(s32 p0) {
+    PortHookSlot* s = &portHookSlots[651];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        msgWindow_Repeat__body(p0);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*))s->pre[i])(&p0);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0)))s->replace)(p0); } else { msgWindow_Repeat__body(p0); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0)))s->post[i])(p0);
+    }
+}
+
+void msgWindow_ForceClose(const char * p0) {
+    PortHookSlot* s = &portHookSlots[652];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        msgWindow_ForceClose__body(p0);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*))s->pre[i])(&p0);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0)))s->replace)(p0); } else { msgWindow_ForceClose__body(p0); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0)))s->post[i])(p0);
+    }
+}
+
 void portHookInit_src_driver_msgdrv(void) {
     portHookSlots[5].body = (void*)msgSearch__body;
+    portHookSlots[642].body = (void*)msgInit__body;
+    portHookSlots[643].body = (void*)msgLoad__body;
+    portHookSlots[644].body = (void*)msgAnalize__body;
+    portHookSlots[645].body = (void*)L_msgGetWork__body;
+    portHookSlots[646].body = (void*)msgGetCommand__body;
+    portHookSlots[647].body = (void*)msgIconStr2ID__body;
+    portHookSlots[648].body = (void*)msgWindow_Entry__body;
+    portHookSlots[649].body = (void*)msgWindow_Add__body;
+    portHookSlots[650].body = (void*)msgWindow_Continue__body;
+    portHookSlots[651].body = (void*)msgWindow_Repeat__body;
+    portHookSlots[652].body = (void*)msgWindow_ForceClose__body;
 }

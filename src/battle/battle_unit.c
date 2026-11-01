@@ -54,7 +54,7 @@ s32 _enemy_can_use_item_table[] = {
 void _CheckMoveCount(BattleUnit* unit);
 
 /** Clears all 64 unit slots in the battle work at battle start. Always returns TRUE. */
-BOOL BtlUnit_Init(void) {
+BOOL PORT_HOOKABLE(BtlUnit_Init)(void) {
     int i;
     BattleWork* wp = _battleWorkPointer;
 
@@ -263,7 +263,7 @@ BattleUnit* PORT_HOOKABLE(BtlUnit_Entry)(BattleUnitSetup* setup) {
  * writes a stolen item back to the field enemy's setup so it can be recovered, releases status icons,
  * poses and memory and frees its slot. Returns FALSE when the unit is not in the table.
  */
-BOOL BtlUnit_Delete(BattleUnit* unit) {
+BOOL PORT_HOOKABLE(BtlUnit_Delete)(BattleUnit* unit) {
     BattleWork* wp = _battleWorkPointer;
     s32 i;
     BattleUnitPart* part;
@@ -335,7 +335,7 @@ BOOL BtlUnit_Delete(BattleUnit* unit) {
  * Creates a unit mid-battle (BtlUnit_Entry) and, with flag 2, puts it first in the move order or, with flag 1,
  * last.
  */
-BattleUnit* BtlUnit_Spawn(BattleUnitSetup* setup, s32 flags) {
+BattleUnit* PORT_HOOKABLE(BtlUnit_Spawn)(BattleUnitSetup* setup, s32 flags) {
     BattleWork* wp = _battleWorkPointer;
     BattleUnit* unit;
     s32 i;
@@ -378,12 +378,12 @@ BattleUnit* BtlUnit_Spawn(BattleUnitSetup* setup, s32 flags) {
 }
 
 /** Returns the unit's slot index in the battle unit table. */
-s32 BtlUnit_GetUnitId(BattleUnit* unit) {
+s32 PORT_HOOKABLE(BtlUnit_GetUnitId)(BattleUnit* unit) {
     return unit->unitId;
 }
 
 /** Finds the part with the given part number; a negative number, a one-part unit or no match gives the first part. */
-BattleUnitPart* BtlUnit_GetPartsPtr(BattleUnit* unit, s32 partNum) {
+BattleUnitPart* PORT_HOOKABLE(BtlUnit_GetPartsPtr)(BattleUnit* unit, s32 partNum) {
     BattleUnitPart* part = unit->parts;
 
     if (partNum < 0) {
@@ -401,7 +401,7 @@ BattleUnitPart* BtlUnit_GetPartsPtr(BattleUnit* unit, s32 partNum) {
 }
 
 /** Returns the part number of the unit's main (body) part, the one flagged PART_ATTR_MAIN, or -1. */
-s32 BtlUnit_GetBodyPartsId(BattleUnit* unit) {
+s32 PORT_HOOKABLE(BtlUnit_GetBodyPartsId)(BattleUnit* unit) {
     BattleUnitPart* part;
     s32 ret = -1;
 
@@ -424,14 +424,14 @@ void BtlUnit_GetPos(BattleUnit* unit, f32* x, f32* y, f32* z) {
 }
 
 /** Sets the unit's battle position (stage coordinates). */
-void BtlUnit_SetPos(BattleUnit* unit, f32 x, f32 y, f32 z) {
+void PORT_HOOKABLE(BtlUnit_SetPos)(BattleUnit* unit, f32 x, f32 y, f32 z) {
     unit->position.x = x;
     unit->position.y = y;
     unit->position.z = z;
 }
 
 /** Moves the unit's battle position by the given amounts. */
-void BtlUnit_AddPos(BattleUnit* unit, f32 x, f32 y, f32 z) {
+void PORT_HOOKABLE(BtlUnit_AddPos)(BattleUnit* unit, f32 x, f32 y, f32 z) {
     unit->position.x += x;
     unit->position.y += y;
     unit->position.z += z;
@@ -441,21 +441,21 @@ void BtlUnit_AddPos(BattleUnit* unit, f32 x, f32 y, f32 z) {
  * Reads a part's own position field (absolute only for PART_ATTR_WORLD_POSITION parts;
  * see BtlUnit_GetPartsWorldPos).
  */
-void BtlUnit_GetPartsPos(BattleUnitPart* part, f32* x, f32* y, f32* z) {
+void PORT_HOOKABLE(BtlUnit_GetPartsPos)(BattleUnitPart* part, f32* x, f32* y, f32* z) {
     *x = part->position.x;
     *y = part->position.y;
     *z = part->position.z;
 }
 
 /** Sets a part's own position field. */
-void BtlUnit_SetPartsPos(BattleUnitPart* part, f32 x, f32 y, f32 z) {
+void PORT_HOOKABLE(BtlUnit_SetPartsPos)(BattleUnitPart* part, f32 x, f32 y, f32 z) {
     part->position.x = x;
     part->position.y = y;
     part->position.z = z;
 }
 
 /** Moves a part's own position field by the given amounts. */
-void BtlUnit_AddPartsPos(BattleUnitPart* part, f32 x, f32 y, f32 z) {
+void PORT_HOOKABLE(BtlUnit_AddPartsPos)(BattleUnitPart* part, f32 x, f32 y, f32 z) {
     part->position.x += x;
     part->position.y += y;
     part->position.z += z;
@@ -486,7 +486,7 @@ void BtlUnit_GetPartsWorldPos(BattleUnitPart* part, f32* x, f32* y, f32* z) {
  * The point attacks aim at on a part: its world position plus the base and extra hit offsets,
  * scaled by the unit's size multiplier and with x mirrored for the side the unit's alliance attacks from.
  */
-void BtlUnit_GetHitPos(BattleUnit* unit, BattleUnitPart* part, f32* x, f32* y, f32* z) {
+void PORT_HOOKABLE(BtlUnit_GetHitPos)(BattleUnit* unit, BattleUnitPart* part, f32* x, f32* y, f32* z) {
     f32 y_multiply = 1.0f;
     s32 direction = _battleWorkPointer->alliances[unit->alliance].attackDirection;
     BtlUnit_GetPartsWorldPos(part, x, y, z);
@@ -501,49 +501,49 @@ void BtlUnit_GetHitPos(BattleUnit* unit, BattleUnitPart* part, f32* x, f32* y, f
 }
 
 /** Sets the extra hit offset added on top of a part's base hit offset. */
-void BtlUnit_SetHitOffset(BattleUnit* unit, BattleUnitPart* part, f32 x, f32 y, f32 z) {
+void PORT_HOOKABLE(BtlUnit_SetHitOffset)(BattleUnit* unit, BattleUnitPart* part, f32 x, f32 y, f32 z) {
     part->hitOffset.x = x;
     part->hitOffset.y = y;
     part->hitOffset.z = z;
 }
 
 /** Sets the extra offset of the target cursor shown over a part. */
-void BtlUnit_SetHitCursorOffset(BattleUnit* unit, BattleUnitPart* part, f32 x, f32 y, f32 z) {
+void PORT_HOOKABLE(BtlUnit_SetHitCursorOffset)(BattleUnit* unit, BattleUnitPart* part, f32 x, f32 y, f32 z) {
     part->hitCursorOffset.x = x;
     part->hitCursorOffset.y = y;
     part->hitCursorOffset.z = z;
 }
 
 /** Reads the unit's home position, the spot it returns to after acting. */
-void BtlUnit_GetHomePos(BattleUnit* unit, f32* x, f32* y, f32* z) {
+void PORT_HOOKABLE(BtlUnit_GetHomePos)(BattleUnit* unit, f32* x, f32* y, f32* z) {
     *x = unit->homePosition.x;
     *y = unit->homePosition.y;
     *z = unit->homePosition.z;
 }
 
 /** Sets the unit's home position, the spot it returns to after acting. */
-void BtlUnit_SetHomePos(BattleUnit* unit, f32 x, f32 y, f32 z) {
+void PORT_HOOKABLE(BtlUnit_SetHomePos)(BattleUnit* unit, f32 x, f32 y, f32 z) {
     unit->homePosition.x = x;
     unit->homePosition.y = y;
     unit->homePosition.z = z;
 }
 
 /** Moves the unit's home position by the given amounts. */
-void BtlUnit_AddHomePos(BattleUnit* unit, f32 x, f32 y, f32 z) {
+void PORT_HOOKABLE(BtlUnit_AddHomePos)(BattleUnit* unit, f32 x, f32 y, f32 z) {
     unit->homePosition.x += x;
     unit->homePosition.y += y;
     unit->homePosition.z += z;
 }
 
 /** Sets a part's home position. */
-void BtlUnit_SetPartsHomePos(BattleUnitPart* part, f32 x, f32 y, f32 z) {
+void PORT_HOOKABLE(BtlUnit_SetPartsHomePos)(BattleUnitPart* part, f32 x, f32 y, f32 z) {
     part->homePosition.x = x;
     part->homePosition.y = y;
     part->homePosition.z = z;
 }
 
 /** Sets the unit's rotation in degrees, each axis normalised to 0..360 with 360 folded to 0. */
-void BtlUnit_SetRotate(BattleUnit* unit, f32 x, f32 y, f32 z) {
+void PORT_HOOKABLE(BtlUnit_SetRotate)(BattleUnit* unit, f32 x, f32 y, f32 z) {
     f32 new_x, new_y, new_z;
 
     new_x = reviseAngle(x);
@@ -566,14 +566,14 @@ void BtlUnit_SetRotate(BattleUnit* unit, f32 x, f32 y, f32 z) {
 }
 
 /** Reads the unit's rotation in degrees. */
-void BtlUnit_GetRotate(BattleUnit* unit, f32* x, f32* y, f32* z) {
+void PORT_HOOKABLE(BtlUnit_GetRotate)(BattleUnit* unit, f32* x, f32* y, f32* z) {
     *x = unit->rotation.x;
     *y = unit->rotation.y;
     *z = unit->rotation.z;
 }
 
 /** Turns the unit by the given degrees, normalising each axis to 0..360. */
-void BtlUnit_AddRotate(BattleUnit* unit, f32 x, f32 y, f32 z) {
+void PORT_HOOKABLE(BtlUnit_AddRotate)(BattleUnit* unit, f32 x, f32 y, f32 z) {
     unit->rotation.x = reviseAngle(unit->rotation.x + x);
     if (unit->rotation.x >= 360.0f) {
         unit->rotation.x = 0.0f;
@@ -589,21 +589,21 @@ void BtlUnit_AddRotate(BattleUnit* unit, f32 x, f32 y, f32 z) {
 }
 
 /** Sets a part's rotation in degrees (not normalised). */
-void BtlUnit_SetPartsRotate(BattleUnitPart* part, f32 x, f32 y, f32 z) {
+void PORT_HOOKABLE(BtlUnit_SetPartsRotate)(BattleUnitPart* part, f32 x, f32 y, f32 z) {
     part->rotation.x = x;
     part->rotation.y = y;
     part->rotation.z = z;
 }
 
 /** Reads a part's rotation in degrees. */
-void BtlUnit_GetPartsRotate(BattleUnitPart* part, f32* x, f32* y, f32* z) {
+void PORT_HOOKABLE(BtlUnit_GetPartsRotate)(BattleUnitPart* part, f32* x, f32* y, f32* z) {
     *x = part->rotation.x;
     *y = part->rotation.y;
     *z = part->rotation.z;
 }
 
 /** Turns a part by the given degrees, wrapping each axis back into 0..360 once. */
-void BtlUnit_AddPartsRotate(BattleUnitPart* part, f32 x, f32 y, f32 z) {
+void PORT_HOOKABLE(BtlUnit_AddPartsRotate)(BattleUnitPart* part, f32 x, f32 y, f32 z) {
     part->rotation.x += x;
     if (part->rotation.x > 360.0f) {
         part->rotation.x -= 360.0f;
@@ -627,28 +627,28 @@ void BtlUnit_AddPartsRotate(BattleUnitPart* part, f32 x, f32 y, f32 z) {
 }
 
 /** Sets the unit's base rotation in degrees (normalised), applied under its animated rotation. */
-void BtlUnit_SetBaseRotate(BattleUnit* unit, f32 x, f32 y, f32 z) {
+void PORT_HOOKABLE(BtlUnit_SetBaseRotate)(BattleUnit* unit, f32 x, f32 y, f32 z) {
     unit->baseRotation.x = reviseAngle(x);
     unit->baseRotation.y = reviseAngle(y);
     unit->baseRotation.z = reviseAngle(z);
 }
 
 /** Reads the unit's base rotation in degrees. */
-void BtlUnit_GetBaseRotate(BattleUnit* unit, f32* x, f32* y, f32* z) {
+void PORT_HOOKABLE(BtlUnit_GetBaseRotate)(BattleUnit* unit, f32* x, f32* y, f32* z) {
     *x = unit->baseRotation.x;
     *y = unit->baseRotation.y;
     *z = unit->baseRotation.z;
 }
 
 /** Sets a part's base rotation in degrees. */
-void BtlUnit_SetPartsBaseRotate(BattleUnitPart* part, f32 x, f32 y, f32 z) {
+void PORT_HOOKABLE(BtlUnit_SetPartsBaseRotate)(BattleUnitPart* part, f32 x, f32 y, f32 z) {
     part->baseRotation.x = x;
     part->baseRotation.y = y;
     part->baseRotation.z = z;
 }
 
 /** Reads a part's base rotation in degrees. */
-void BtlUnit_GetPartsBaseRotate(BattleUnitPart* part, f32* x, f32* y, f32* z) {
+void PORT_HOOKABLE(BtlUnit_GetPartsBaseRotate)(BattleUnitPart* part, f32* x, f32* y, f32* z) {
     *x = part->baseRotation.x;
     *y = part->baseRotation.y;
     *z = part->baseRotation.z;
@@ -658,7 +658,7 @@ void BtlUnit_GetPartsBaseRotate(BattleUnitPart* part, f32* x, f32* y, f32* z) {
  * Sets the pivot offset the unit rotates around.
  * Like the other setters here, an axis passed as -250000000.0 (the scripts' "keep" value) is left unchanged.
  */
-void BtlUnit_SetRotateOffset(BattleUnit* unit, f32 x, f32 y, f32 z) {
+void PORT_HOOKABLE(BtlUnit_SetRotateOffset)(BattleUnit* unit, f32 x, f32 y, f32 z) {
     f32 thefuckyone = -250000000.0f;
     if (thefuckyone != x) {
         unit->rotationOffset.x = x;
@@ -672,7 +672,7 @@ void BtlUnit_SetRotateOffset(BattleUnit* unit, f32 x, f32 y, f32 z) {
 }
 
 /** Sets the pivot offset a part rotates around; an axis passed as -250000000.0 is left unchanged. */
-void BtlUnit_SetPartsRotateOffset(BattleUnitPart* part, f32 x, f32 y, f32 z) {
+void PORT_HOOKABLE(BtlUnit_SetPartsRotateOffset)(BattleUnitPart* part, f32 x, f32 y, f32 z) {
     f32 thefuckyone = -250000000.0f;
     if (thefuckyone != x) {
         part->rotationOffset.x = x;
@@ -686,14 +686,14 @@ void BtlUnit_SetPartsRotateOffset(BattleUnitPart* part, f32 x, f32 y, f32 z) {
 }
 
 /** Moves a part's rotation pivot offset by the given amounts. */
-void BtlUnit_AddPartsRotateOffset(BattleUnitPart* part, f32 x, f32 y, f32 z) {
+void PORT_HOOKABLE(BtlUnit_AddPartsRotateOffset)(BattleUnitPart* part, f32 x, f32 y, f32 z) {
     part->rotationOffset.x += x;
     part->rotationOffset.y += y;
     part->rotationOffset.z += z;
 }
 
 /** Sets the unit's base scale (its normal size, multiplied with the animated scale); -250000000.0 keeps an axis. */
-void BtlUnit_SetBaseScale(BattleUnit* unit, f32 x, f32 y, f32 z) {
+void PORT_HOOKABLE(BtlUnit_SetBaseScale)(BattleUnit* unit, f32 x, f32 y, f32 z) {
     f32 thefuckyone = -250000000.0f;
     if (thefuckyone != x) {
         unit->baseScale.x = x;
@@ -707,14 +707,14 @@ void BtlUnit_SetBaseScale(BattleUnit* unit, f32 x, f32 y, f32 z) {
 }
 
 /** Reads the unit's animated scale. */
-void BtlUnit_GetScale(BattleUnit* unit, f32* x, f32* y, f32* z) {
+void PORT_HOOKABLE(BtlUnit_GetScale)(BattleUnit* unit, f32* x, f32* y, f32* z) {
     *x = unit->scale.x;
     *y = unit->scale.y;
     *z = unit->scale.z;
 }
 
 /** Sets the unit's animated scale; an axis passed as -250000000.0 is left unchanged. */
-void BtlUnit_SetScale(BattleUnit* unit, f32 x, f32 y, f32 z) {
+void PORT_HOOKABLE(BtlUnit_SetScale)(BattleUnit* unit, f32 x, f32 y, f32 z) {
     f32 thefuckyone = -250000000.0f;
     if (thefuckyone != x) {
         unit->scale.x = x;
@@ -728,7 +728,7 @@ void BtlUnit_SetScale(BattleUnit* unit, f32 x, f32 y, f32 z) {
 }
 
 /** Adds to the unit's animated scale; an axis passed as -250000000.0 is left unchanged. */
-void BtlUnit_AddScale(BattleUnit* unit, f32 x, f32 y, f32 z) {
+void PORT_HOOKABLE(BtlUnit_AddScale)(BattleUnit* unit, f32 x, f32 y, f32 z) {
     f32 thefuckyone = -250000000.0f;
     if (thefuckyone != x) {
         unit->scale.x += x;
@@ -742,7 +742,7 @@ void BtlUnit_AddScale(BattleUnit* unit, f32 x, f32 y, f32 z) {
 }
 
 /** Sets a part's base scale; an axis passed as -250000000.0 is left unchanged. */
-void BtlUnit_SetPartsBaseScale(BattleUnitPart* part, f32 x, f32 y, f32 z) {
+void PORT_HOOKABLE(BtlUnit_SetPartsBaseScale)(BattleUnitPart* part, f32 x, f32 y, f32 z) {
     f32 thefuckyone = -250000000.0f;
     if (thefuckyone != x) {
         part->baseScale.x = x;
@@ -756,7 +756,7 @@ void BtlUnit_SetPartsBaseScale(BattleUnitPart* part, f32 x, f32 y, f32 z) {
 }
 
 /** Sets a part's animated scale; an axis passed as -250000000.0 is left unchanged. */
-void BtlUnit_SetPartsScale(BattleUnitPart* part, f32 x, f32 y, f32 z) {
+void PORT_HOOKABLE(BtlUnit_SetPartsScale)(BattleUnitPart* part, f32 x, f32 y, f32 z) {
     f32 thefuckyone = -250000000.0f;
     if (thefuckyone != x) {
         part->scale.x = x;
@@ -770,7 +770,7 @@ void BtlUnit_SetPartsScale(BattleUnitPart* part, f32 x, f32 y, f32 z) {
 }
 
 /** Adds to a part's animated scale; an axis passed as -250000000.0 is left unchanged. */
-void BtlUnit_AddPartsScale(BattleUnitPart* part, f32 x, f32 y, f32 z) {
+void PORT_HOOKABLE(BtlUnit_AddPartsScale)(BattleUnitPart* part, f32 x, f32 y, f32 z) {
     f32 thefuckyone = -250000000.0f;
     if (thefuckyone != x) {
         part->scale.x += x;
@@ -784,17 +784,17 @@ void BtlUnit_AddPartsScale(BattleUnitPart* part, f32 x, f32 y, f32 z) {
 }
 
 /** Returns the unit's width, copied from its kind data at entry. */
-s32 BtlUnit_GetWidth(BattleUnit* unit) {
+s32 PORT_HOOKABLE(BtlUnit_GetWidth)(BattleUnit* unit) {
     return unit->width;
 }
 
 /** Returns the unit's current height, copied from its kind data at entry unless a script changed it. */
-s32 BtlUnit_GetHeight(BattleUnit* unit) {
+s32 PORT_HOOKABLE(BtlUnit_GetHeight)(BattleUnit* unit) {
     return unit->height;
 }
 
 /** Overrides the unit's height. */
-void BtlUnit_SetHeight(BattleUnit* unit, s16 height) {
+void PORT_HOOKABLE(BtlUnit_SetHeight)(BattleUnit* unit, s16 height) {
     unit->height = height;
 }
 
@@ -802,7 +802,7 @@ void BtlUnit_SetHeight(BattleUnit* unit, s16 height) {
  * Sets the unit's position offset field; an axis passed as -250000000.0 is left unchanged.
  * Entry sets it to the start position.
  */
-void BtlUnit_SetOffsetPos(BattleUnit* unit, f32 x, f32 y, f32 z) {
+void PORT_HOOKABLE(BtlUnit_SetOffsetPos)(BattleUnit* unit, f32 x, f32 y, f32 z) {
     f32 thefuckyone = -250000000.0f;
     if (thefuckyone != x) {
         unit->positionOffset.x = x;
@@ -823,7 +823,7 @@ void BtlUnit_GetPartsOffsetPos(BattleUnitPart* part, f32* x, f32* y, f32* z) {
 }
 
 /** Sets a part's offset from its unit's position; an axis passed as -250000000.0 is left unchanged. */
-void BtlUnit_SetPartsOffsetPos(BattleUnitPart* part, f32 x, f32 y, f32 z) {
+void PORT_HOOKABLE(BtlUnit_SetPartsOffsetPos)(BattleUnitPart* part, f32 x, f32 y, f32 z) {
     f32 thefuckyone = -250000000.0f;
     if (thefuckyone != x) {
         part->positionOffset.x = x;
@@ -837,14 +837,14 @@ void BtlUnit_SetPartsOffsetPos(BattleUnitPart* part, f32 x, f32 y, f32 z) {
 }
 
 /** Moves a part's offset from its unit's position by the given amounts. */
-void BtlUnit_AddPartsOffsetPos(BattleUnitPart* part, f32 x, f32 y, f32 z) {
+void PORT_HOOKABLE(BtlUnit_AddPartsOffsetPos)(BattleUnitPart* part, f32 x, f32 y, f32 z) {
     part->positionOffset.x += x;
     part->positionOffset.y += y;
     part->positionOffset.z += z;
 }
 
 /** Sets the unit's draw offset (displayOffset); -250000000.0 keeps an axis. */
-void BtlUnit_SetDispOffset(BattleUnit* unit, f32 x, f32 y, f32 z) {
+void PORT_HOOKABLE(BtlUnit_SetDispOffset)(BattleUnit* unit, f32 x, f32 y, f32 z) {
     f32 thefuckyone = -250000000.0f;
     if (thefuckyone != x) {
         unit->displayOffset.x = x;
@@ -858,7 +858,7 @@ void BtlUnit_SetDispOffset(BattleUnit* unit, f32 x, f32 y, f32 z) {
 }
 
 /** Sets a part's draw offset (displayOffset); an axis passed as -250000000.0 is left unchanged. */
-void BtlUnit_SetPartsDispOffset(BattleUnitPart* part, f32 x, f32 y, f32 z) {
+void PORT_HOOKABLE(BtlUnit_SetPartsDispOffset)(BattleUnitPart* part, f32 x, f32 y, f32 z) {
     f32 thefuckyone = -250000000.0f;
     if (thefuckyone != x) {
         part->displayOffset.x = x;
@@ -872,7 +872,7 @@ void BtlUnit_SetPartsDispOffset(BattleUnitPart* part, f32 x, f32 y, f32 z) {
 }
 
 /** Adds to a part's draw offset; an axis passed as -250000000.0 is left unchanged. */
-void BtlUnit_AddPartsDispOffset(BattleUnitPart* part, f32 x, f32 y, f32 z) {
+void PORT_HOOKABLE(BtlUnit_AddPartsDispOffset)(BattleUnitPart* part, f32 x, f32 y, f32 z) {
     f32 thefuckyone = -250000000.0f;
     if (thefuckyone != x) {
         part->displayOffset.x += x;
@@ -886,7 +886,7 @@ void BtlUnit_AddPartsDispOffset(BattleUnitPart* part, f32 x, f32 y, f32 z) {
 }
 
 /** Sets where the unit's current scripted move (walk, jump) starts; -250000000.0 keeps an axis. */
-void BtlUnit_SetMoveStartPos(BattleUnit* unit, f32 x, f32 y, f32 z) {
+void PORT_HOOKABLE(BtlUnit_SetMoveStartPos)(BattleUnit* unit, f32 x, f32 y, f32 z) {
     f32 thefuckyone = -250000000.0f;
     if (thefuckyone != x) {
         unit->moveStartPos.x = x;
@@ -900,7 +900,7 @@ void BtlUnit_SetMoveStartPos(BattleUnit* unit, f32 x, f32 y, f32 z) {
 }
 
 /** Sets where a part's current scripted move starts; -250000000.0 keeps an axis. */
-void BtlUnit_SetPartsMoveStartPos(BattleUnitPart* part, f32 x, f32 y, f32 z) {
+void PORT_HOOKABLE(BtlUnit_SetPartsMoveStartPos)(BattleUnitPart* part, f32 x, f32 y, f32 z) {
     f32 thefuckyone = -250000000.0f;
     if (thefuckyone != x) {
         part->moveStartPos.x = x;
@@ -914,7 +914,7 @@ void BtlUnit_SetPartsMoveStartPos(BattleUnitPart* part, f32 x, f32 y, f32 z) {
 }
 
 /** Sets the position the unit's current scripted move has reached; -250000000.0 keeps an axis. */
-void BtlUnit_SetMoveCurrentPos(BattleUnit* unit, f32 x, f32 y, f32 z) {
+void PORT_HOOKABLE(BtlUnit_SetMoveCurrentPos)(BattleUnit* unit, f32 x, f32 y, f32 z) {
     f32 thefuckyone = -250000000.0f;
     if (thefuckyone != x) {
         unit->moveCurrentPos.x = x;
@@ -928,7 +928,7 @@ void BtlUnit_SetMoveCurrentPos(BattleUnit* unit, f32 x, f32 y, f32 z) {
 }
 
 /** Sets the position a part's current scripted move has reached; -250000000.0 keeps an axis. */
-void BtlUnit_SetPartsMoveCurrentPos(BattleUnitPart* part, f32 x, f32 y, f32 z) {
+void PORT_HOOKABLE(BtlUnit_SetPartsMoveCurrentPos)(BattleUnitPart* part, f32 x, f32 y, f32 z) {
     f32 thefuckyone = -250000000.0f;
     if (thefuckyone != x) {
         part->moveCurrentPos.x = x;
@@ -942,7 +942,7 @@ void BtlUnit_SetPartsMoveCurrentPos(BattleUnitPart* part, f32 x, f32 y, f32 z) {
 }
 
 /** Sets where the unit's current scripted move ends; -250000000.0 keeps an axis. */
-void BtlUnit_SetMoveTargetPos(BattleUnit* unit, f32 x, f32 y, f32 z) {
+void PORT_HOOKABLE(BtlUnit_SetMoveTargetPos)(BattleUnit* unit, f32 x, f32 y, f32 z) {
     f32 thefuckyone = -250000000.0f;
     if (thefuckyone != x) {
         unit->moveTargetPos.x = x;
@@ -956,7 +956,7 @@ void BtlUnit_SetMoveTargetPos(BattleUnit* unit, f32 x, f32 y, f32 z) {
 }
 
 /** Sets where a part's current scripted move ends; -250000000.0 keeps an axis. */
-void BtlUnit_SetPartsMoveTargetPos(BattleUnitPart* part, f32 x, f32 y, f32 z) {
+void PORT_HOOKABLE(BtlUnit_SetPartsMoveTargetPos)(BattleUnitPart* part, f32 x, f32 y, f32 z) {
     f32 thefuckyone = -250000000.0f;
     if (thefuckyone != x) {
         part->moveTargetPos.x = x;
@@ -970,32 +970,32 @@ void BtlUnit_SetPartsMoveTargetPos(BattleUnitPart* part, f32 x, f32 y, f32 z) {
 }
 
 /** Sets the gravity used by the unit's scripted jumps and falls. */
-void BtlUnit_SetFallAccel(BattleUnit* unit, f32 fallAccel) {
+void PORT_HOOKABLE(BtlUnit_SetFallAccel)(BattleUnit* unit, f32 fallAccel) {
     unit->fallAccel = fallAccel;
 }
 
 /** Sets the gravity used by a part's scripted jumps and falls. */
-void BtlUnit_SetPartsFallAccel(BattleUnitPart* part, f32 fallAccel) {
+void PORT_HOOKABLE(BtlUnit_SetPartsFallAccel)(BattleUnitPart* part, f32 fallAccel) {
     part->fallAccel = fallAccel;
 }
 
 /** Sets the horizontal speed of the unit's scripted moves. */
-void BtlUnit_SetMoveSpeed(BattleUnit* unit, f32 moveSpeedXZ) {
+void PORT_HOOKABLE(BtlUnit_SetMoveSpeed)(BattleUnit* unit, f32 moveSpeedXZ) {
     unit->moveSpeedXZ = moveSpeedXZ;
 }
 
 /** Sets the horizontal speed of a part's scripted moves. */
-void BtlUnit_SetPartsMoveSpeed(BattleUnitPart* part, f32 moveSpeedXZ) {
+void PORT_HOOKABLE(BtlUnit_SetPartsMoveSpeed)(BattleUnitPart* part, f32 moveSpeedXZ) {
     part->moveSpeedXZ = moveSpeedXZ;
 }
 
 /** Sets the vertical speed of the unit's scripted jumps. */
-void BtlUnit_SetJumpSpeed(BattleUnit* unit, f32 moveSpeedY) {
+void PORT_HOOKABLE(BtlUnit_SetJumpSpeed)(BattleUnit* unit, f32 moveSpeedY) {
     unit->moveSpeedY = moveSpeedY;
 }
 
 /** Returns the unit's alliance: which side it fights on. */
-s8 BtlUnit_GetBelong(BattleUnit* unit) {
+s8 PORT_HOOKABLE(BtlUnit_GetBelong)(BattleUnit* unit) {
     return unit->alliance;
 }
 
@@ -1158,7 +1158,7 @@ void BtlUnit_GetStatus(BattleUnit* unit, StatusEffectType type, s8* turns, s8* s
  * Returns FALSE when nothing was applied; retail versions also return FALSE when Charge drops below 0
  * or Allergic or Payback is set to 0 turns, which the demos treat as set.
  */
-BOOL BtlUnit_SetStatus(BattleUnit* unit, StatusEffectType type, s8 turns, s8 strength) {
+BOOL PORT_HOOKABLE(BtlUnit_SetStatus)(BattleUnit* unit, StatusEffectType type, s8 turns, s8 strength) {
     switch ((s8)type) {
         case STATUS_SLEEP:
             unit->sleepTurns = turns;
@@ -1364,7 +1364,7 @@ BOOL BtlUnit_SetStatus(BattleUnit* unit, StatusEffectType type, s8 turns, s8 str
 }
 
 /** clears the 0x1E bytes of status turns and strengths from sleepTurns on */
-void BtlUnit_ClearStatus(BattleUnit* unit) {
+void PORT_HOOKABLE(BtlUnit_ClearStatus)(BattleUnit* unit) {
     memset(&unit->sleepTurns, 0, 0x1Eu);
     BtlUnit_SetStatus(unit, STATUS_CHARGE, 1, -99);
 #if VERSION >= VERSION_JP
@@ -1377,7 +1377,7 @@ void BtlUnit_ClearStatus(BattleUnit* unit) {
  * attack and defense changes, poison and regen), clearing its strength when the turns run out.
  * Returns TRUE when the status just wore off; FALSE when it continues, was not active, or the unit is KO'd.
  */
-BOOL BtlUnit_CheckRecoveryStatus(BattleUnit* unit, StatusEffectType type) {
+BOOL PORT_HOOKABLE(BtlUnit_CheckRecoveryStatus)(BattleUnit* unit, StatusEffectType type) {
     s8 turns, strength;
 
     if (!unit) {
@@ -1513,7 +1513,7 @@ BOOL BtlUnit_CheckStatus(BattleUnit* unit, StatusEffectType type) {
 }
 
 /** Tests the unit's status flags (flipped, danger, peril, ...); a NULL unit gives 0. */
-s32 BtlUnit_CheckStatusFlag(BattleUnit* unit, s32 flags) {
+s32 PORT_HOOKABLE(BtlUnit_CheckStatusFlag)(BattleUnit* unit, s32 flags) {
     if (unit) {
         return unit->statusFlags & flags;
     }
@@ -1521,27 +1521,27 @@ s32 BtlUnit_CheckStatusFlag(BattleUnit* unit, s32 flags) {
 }
 
 /** Sets status flags (flipped, danger, peril, ...) on the unit. */
-void BtlUnit_OnStatusFlag(BattleUnit* unit, s32 flags) {
+void PORT_HOOKABLE(BtlUnit_OnStatusFlag)(BattleUnit* unit, s32 flags) {
     unit->statusFlags |= flags;
 }
 
 /** Clears status flags on the unit. */
-void BtlUnit_OffStatusFlag(BattleUnit* unit, s32 flags) {
+void PORT_HOOKABLE(BtlUnit_OffStatusFlag)(BattleUnit* unit, s32 flags) {
     unit->statusFlags &= ~flags;
 }
 
 /** Tests the unit's general flags (UNIT_FLAG_*). */
-s32 BtlUnit_CheckUnitFlag(BattleUnit* unit, s32 flags) {
+s32 PORT_HOOKABLE(BtlUnit_CheckUnitFlag)(BattleUnit* unit, s32 flags) {
     return unit->flags & flags;
 }
 
 /** Sets general unit flags (UNIT_FLAG_*). */
-void BtlUnit_OnUnitFlag(BattleUnit* unit, s32 flags) {
+void PORT_HOOKABLE(BtlUnit_OnUnitFlag)(BattleUnit* unit, s32 flags) {
     unit->flags |= flags;
 }
 
 /** Clears general unit flags (UNIT_FLAG_*). */
-void BtlUnit_OffUnitFlag(BattleUnit* unit, s32 flags) {
+void PORT_HOOKABLE(BtlUnit_OffUnitFlag)(BattleUnit* unit, s32 flags) {
     unit->flags &= ~flags;
 }
 
@@ -1550,7 +1550,7 @@ void BtlUnit_OffUnitFlag(BattleUnit* unit, s32 flags) {
  * taking the first entry that matches the type or its group's fallback (BTL_POSE_NORMAL,
  * BTL_POSE_DAMAGE or BTL_POSE_STAY_DEFAULT). NULL when nothing fits.
  */
-const char* BtlUnit_GetPoseNameFromType(BattleUnitPart* part, s32 type) {
+const char* PORT_HOOKABLE(BtlUnit_GetPoseNameFromType)(BattleUnitPart* part, s32 type) {
     PoseTableEntry* pose = part->poseTable;
     s32 alt;
 
@@ -1580,7 +1580,7 @@ const char* BtlUnit_GetPoseNameFromType(BattleUnitPart* part, s32 type) {
  * Plays the part's animation for a pose type; hurt poses 29-39 restart the animation,
  * and poses 29 and 30 also draw the part black (PART_ANIM_BLACKEN).
  */
-void BtlUnit_SetAnimType(BattleUnitPart* part, s32 type) {
+void PORT_HOOKABLE(BtlUnit_SetAnimType)(BattleUnitPart* part, s32 type) {
     const char* name = BtlUnit_GetPoseNameFromType(part, type);
 
     if (type >= 0x1D && type < 0x28) {
@@ -1597,30 +1597,30 @@ void BtlUnit_SetAnimType(BattleUnitPart* part, s32 type) {
 }
 
 /** Plays the named animation on a part. */
-void BtlUnit_SetAnim(BattleUnitPart* part, const char* name) {
+void PORT_HOOKABLE(BtlUnit_SetAnim)(BattleUnitPart* part, const char* name) {
     btlDispChangeAnime(part, name, 0);
 }
 
 /** Plays the animation for a pose type on the unit's main (body) part. */
-void BtlUnit_SetBodyAnimType(BattleUnit* unit, s32 type) {
+void PORT_HOOKABLE(BtlUnit_SetBodyAnimType)(BattleUnit* unit, s32 type) {
     s32 id = BtlUnit_GetBodyPartsId(unit);
     BtlUnit_SetAnimType(BtlUnit_GetPartsPtr(unit, id), type);
 }
 
 /** Plays the named animation on the unit's main (body) part. */
-void BtlUnit_SetBodyAnim(BattleUnit* unit, const char* name) {
+void PORT_HOOKABLE(BtlUnit_SetBodyAnim)(BattleUnit* unit, const char* name) {
     s32 id = BtlUnit_GetBodyPartsId(unit);
     btlDispChangeAnime(BtlUnit_GetPartsPtr(unit, id), name, 0);
 }
 
 /** Switches the unit's talking part to its talk pose; used while the unit speaks in battle dialogue. */
-void BtlUnit_ChangeTalkAnim(s32 unitId) {
+void PORT_HOOKABLE(BtlUnit_ChangeTalkAnim)(s32 unitId) {
     BattleUnit* unit = BattleGetUnitPtr(_battleWorkPointer, unitId);
     btlDispChangeAnime(BtlUnit_GetPartsPtr(unit, unit->talkPartId), unit->talkPose, 0);
 }
 
 /** Switches the unit's talking part back to its standing pose after it speaks. */
-void BtlUnit_ChangeStayAnim(s32 unitId) {
+void PORT_HOOKABLE(BtlUnit_ChangeStayAnim)(s32 unitId) {
     BattleUnit* unit = BattleGetUnitPtr(_battleWorkPointer, unitId);
     btlDispChangeAnime(BtlUnit_GetPartsPtr(unit, unit->talkPartId), unit->stayPose, 0);
 }
@@ -1629,7 +1629,7 @@ void BtlUnit_ChangeStayAnim(s32 unitId) {
  * Where a speech bubble's tail (toge, "thorn") points for this unit:
  * its position plus the kind's talk offset and the unit's own tail offset, x mirrored by facing.
  */
-void BtlUnit_GetTalkTogePos(s32 unitId, f32* x, f32* y, f32* z) {
+void PORT_HOOKABLE(BtlUnit_GetTalkTogePos)(s32 unitId, f32* x, f32* y, f32* z) {
     BattleUnit* unit = BattleGetUnitPtr(_battleWorkPointer, unitId);
     f32 posX, posY, posZ;
 
@@ -1643,7 +1643,7 @@ void BtlUnit_GetTalkTogePos(s32 unitId, f32* x, f32* y, f32* z) {
 }
 
 /** Returns the opposing alliance: 0 and 1 swap, any other alliance is returned unchanged. */
-BOOL BtlUnit_GetEnemyBelong(BattleUnit* unit) {
+BOOL PORT_HOOKABLE(BtlUnit_GetEnemyBelong)(BattleUnit* unit) {
     s32 belong = unit->alliance;
     switch (belong) {
         case 0:
@@ -1657,17 +1657,17 @@ BOOL BtlUnit_GetEnemyBelong(BattleUnit* unit) {
 }
 
 /** Returns the HP damage the unit took from the last hit. */
-s32 BtlUnit_GetHitDamage(BattleUnit* unit) {
+s32 PORT_HOOKABLE(BtlUnit_GetHitDamage)(BattleUnit* unit) {
     return unit->hpDamageTaken;
 }
 
 /** Returns the HP damage the unit has taken so far in the current attack. */
-s32 BtlUnit_GetTotalHitDamage(BattleUnit* unit) {
+s32 PORT_HOOKABLE(BtlUnit_GetTotalHitDamage)(BattleUnit* unit) {
     return unit->totalHpDamageTaken;
 }
 
 /** Sets (usually resets) the HP damage counted for the current attack. */
-void BtlUnit_SetTotalHitDamage(BattleUnit* unit, s16 damage) {
+void PORT_HOOKABLE(BtlUnit_SetTotalHitDamage)(BattleUnit* unit, s16 damage) {
     unit->totalHpDamageTaken = damage;
 }
 
@@ -1675,7 +1675,7 @@ void BtlUnit_SetTotalHitDamage(BattleUnit* unit, s16 damage) {
  * Whether the unit can Guard or Superguard an incoming attack:
  * it must be on the player's side, not the Shell Shield, and not asleep, stopped, frozen, KO'd or flipped.
  */
-BOOL BtlUnit_GetACPossibility(BattleUnit* unit) {
+BOOL PORT_HOOKABLE(BtlUnit_GetACPossibility)(BattleUnit* unit) {
     if (unit->alliance) {
         return FALSE;
     }
@@ -1690,7 +1690,7 @@ BOOL BtlUnit_GetACPossibility(BattleUnit* unit) {
 }
 
 /** Looks up an entry of the unit kind's tagged data table (scripts and parameters keyed by tag); NULL when absent. */
-void* BtlUnit_GetData(BattleUnit* unit, s32 tag) {
+void* PORT_HOOKABLE(BtlUnit_GetData)(BattleUnit* unit, s32 tag) {
     BattleDataEntry* entry = unit->dataTable;
     if (!entry) {
         return NULL;
@@ -1705,7 +1705,7 @@ void* BtlUnit_GetData(BattleUnit* unit, s32 tag) {
 }
 
 /** Whether the unit kind's tagged data table has an entry with this tag. */
-BOOL BtlUnit_CheckData(BattleUnit* unit, s32 tag) {
+BOOL PORT_HOOKABLE(BtlUnit_CheckData)(BattleUnit* unit, s32 tag) {
     BattleDataEntry* entry = unit->dataTable;
     if (!entry) {
         return FALSE;
@@ -1720,12 +1720,12 @@ BOOL BtlUnit_CheckData(BattleUnit* unit, s32 tag) {
 }
 
 /** Whether the unit's statuses let it guard; the same test as BtlUnit_CanActStatus. */
-BOOL BtlUnit_CanGuardStatus(BattleUnit* unit) {
+BOOL PORT_HOOKABLE(BtlUnit_CanGuardStatus)(BattleUnit* unit) {
     return BtlUnit_CanActStatus(unit);
 }
 
 /** Whether the unit's statuses let it act: not asleep, stopped, frozen, KO'd or flipped. */
-BOOL BtlUnit_CanActStatus(BattleUnit* unit) {
+BOOL PORT_HOOKABLE(BtlUnit_CanActStatus)(BattleUnit* unit) {
     if (BtlUnit_CheckStatus(unit, STATUS_SLEEP) || BtlUnit_CheckStatus(unit, STATUS_STOP) ||
         BtlUnit_CheckStatus(unit, STATUS_FREEZE) || BtlUnit_CheckStatus(unit, STATUS_INSTANT_KILL)) {
         return FALSE;
@@ -1739,7 +1739,7 @@ BOOL BtlUnit_CanActStatus(BattleUnit* unit) {
  * and status turns saved in the battle's party info (and, in US and PAL, the disabled commands) and are KO'd
  * if their HP is 0.
  */
-void BtlUnit_SetParamFromPouch(BattleUnit* unit) {
+void PORT_HOOKABLE(BtlUnit_SetParamFromPouch)(BattleUnit* unit) {
     BattleWork* wp = _battleWorkPointer;
     PouchData* pouch = pouchGetPtr();
     BattleWorkPartyInfo* info;
@@ -1771,7 +1771,7 @@ void BtlUnit_SetParamFromPouch(BattleUnit* unit) {
  * Recomputes max HP and FP from the base values plus 5 per HP Plus
  * and FP Plus badge (from the pouch for Mario and the partners) and clamps current HP and FP to them.
  */
-void BtlUnit_ReviseHpFp(BattleUnit* unit) {
+void PORT_HOOKABLE(BtlUnit_ReviseHpFp)(BattleUnit* unit) {
     PouchData* pouch = pouchGetPtr();
     PouchPartyData* party;
 
@@ -1811,7 +1811,7 @@ void BtlUnit_ReviseHpFp(BattleUnit* unit) {
  * status flags and status turns (and, in US and PAL, disabled commands) in the battle's party info for
  * when it is switched back in.
  */
-void BtlUnit_SetParamToPouch(BattleUnit* unit) {
+void PORT_HOOKABLE(BtlUnit_SetParamToPouch)(BattleUnit* unit) {
     BattleWork* wp = _battleWorkPointer;
     PouchData* pouch = pouchGetPtr();
     BattleWorkPartyInfo* info;
@@ -1839,7 +1839,7 @@ void BtlUnit_SetParamToPouch(BattleUnit* unit) {
  * and dangerHP thresholds (only below max HP).
  * When Mario first drops into peril or danger the audience reacts, unless noAudience is set.
  */
-void BtlUnit_CheckPinchStatus(BattleUnit* unit, BOOL noAudience) {
+void PORT_HOOKABLE(BtlUnit_CheckPinchStatus)(BattleUnit* unit, BOOL noAudience) {
     if (unit->currentHp <= unit->kindParams->perilHP && unit->currentHp < unit->maxHp) {
         if (!(unit->statusFlags & STATUS_FLAG_PERIL)) {
             unit->statusFlags |= STATUS_FLAG_PERIL;
@@ -1867,7 +1867,7 @@ void BtlUnit_CheckPinchStatus(BattleUnit* unit, BOOL noAudience) {
  * otherwise half the level difference scaled by the group size (x1 up to 2 enemies, x1.1 for 3, x1.3 for 4,
  * x1.5 for 5 or more) plus the kind's bonus. Read by the btlevtcmd_GetExp script helper.
  */
-s32 BtlUnit_GetExp(BattleUnit* unit) {
+s32 PORT_HOOKABLE(BtlUnit_GetExp)(BattleUnit* unit) {
     BattleWork* wp = _battleWorkPointer;
     PouchData* pouch = pouchGetPtr();
     s32 level = pouch->level;
@@ -1918,7 +1918,7 @@ s32 PORT_HOOKABLE(BtlUnit_GetCoin)(BattleUnit* unit) {
 }
 
 /** The unit's current FP; partners use Mario's, since FP is shared. */
-s32 BtlUnit_GetFp(BattleUnit* unit) {
+s32 PORT_HOOKABLE(BtlUnit_GetFp)(BattleUnit* unit) {
     BattleUnitType kind = unit->currentKind;
     BattleWork* wp = _battleWorkPointer;
     s32 result = unit->currentFp;
@@ -1929,7 +1929,7 @@ s32 BtlUnit_GetFp(BattleUnit* unit) {
 }
 
 /** Sets the unit's current FP; for a partner it sets Mario's shared FP. */
-void BtlUnit_SetFp(BattleUnit* unit, s32 value) {
+void PORT_HOOKABLE(BtlUnit_SetFp)(BattleUnit* unit, s32 value) {
     BattleUnitType kind = unit->currentKind;
     BattleWork* wp = _battleWorkPointer;
     if (kind >= TYPE_PARTNER_MIN && kind < TYPE_PARTNER_MAX) {
@@ -1940,7 +1940,7 @@ void BtlUnit_SetFp(BattleUnit* unit, s32 value) {
 }
 
 /** Adds HP to the unit, capped at its max HP (no lower bound, so a negative value can take HP below 0). */
-void BtlUnit_RecoverHp(BattleUnit* unit, s32 value) {
+void PORT_HOOKABLE(BtlUnit_RecoverHp)(BattleUnit* unit, s32 value) {
     unit->currentHp += value;
     if (unit->currentHp > unit->maxHp) {
         unit->currentHp = unit->maxHp;
@@ -1948,7 +1948,7 @@ void BtlUnit_RecoverHp(BattleUnit* unit, s32 value) {
 }
 
 /** Adds FP to the unit (Mario's shared FP for a partner), capped at the max. */
-void BtlUnit_RecoverFp(BattleUnit* unit, s32 value) {
+void PORT_HOOKABLE(BtlUnit_RecoverFp)(BattleUnit* unit, s32 value) {
     BattleUnitType kind = unit->currentKind;
     BattleWork* wp = _battleWorkPointer;
     s16 max;
@@ -1967,7 +1967,7 @@ void BtlUnit_RecoverFp(BattleUnit* unit, s32 value) {
 }
 
 /** The unit's max FP; partners use Mario's. */
-s32 BtlUnit_GetMaxFp(BattleUnit* unit) {
+s32 PORT_HOOKABLE(BtlUnit_GetMaxFp)(BattleUnit* unit) {
     BattleUnitType kind = unit->currentKind;
     BattleWork* wp = _battleWorkPointer;
     s32 result = unit->maxFp;
@@ -1978,7 +1978,7 @@ s32 BtlUnit_GetMaxFp(BattleUnit* unit) {
 }
 
 /** Sets the unit's max FP; for a partner it sets Mario's. */
-void BtlUnit_SetMaxFp(BattleUnit* unit, s32 value) {
+void PORT_HOOKABLE(BtlUnit_SetMaxFp)(BattleUnit* unit, s32 value) {
     BattleUnitType kind = unit->currentKind;
     BattleWork* wp = _battleWorkPointer;
     if (kind >= TYPE_PARTNER_MIN && kind < TYPE_PARTNER_MAX) {
@@ -2044,7 +2044,7 @@ s32 PORT_HOOKABLE(BtlUnit_GetWeaponCost)(BattleUnit* unit, BattleWeapon* weapon)
 }
 
 /** Whether the unit can afford a move: enough FP (shared for partners) and enough Star Power (baseSpCost x 100 AP). */
-BOOL BtlUnit_CheckWeaponCost(BattleUnit* unit, BattleWeapon* weapon) {
+BOOL PORT_HOOKABLE(BtlUnit_CheckWeaponCost)(BattleUnit* unit, BattleWeapon* weapon) {
     s32 fp = BtlUnit_GetFp(unit);
     if (fp < BtlUnit_GetWeaponCost(unit, weapon)) {
         return FALSE;
@@ -2053,7 +2053,7 @@ BOOL BtlUnit_CheckWeaponCost(BattleUnit* unit, BattleWeapon* weapon) {
 }
 
 /** Spends a move's FP and Star Power, adding the FP to Mario's or the partner's action record for the audience. */
-void BtlUnit_PayWeaponCost(BattleUnit* unit, BattleWeapon* weapon) {
+void PORT_HOOKABLE(BtlUnit_PayWeaponCost)(BattleUnit* unit, BattleWeapon* weapon) {
     BattleWork* wp = _battleWorkPointer;
     s32 fp = BtlUnit_GetFp(unit);
     s32 cost = BtlUnit_GetWeaponCost(unit, weapon);
@@ -2070,7 +2070,7 @@ void BtlUnit_PayWeaponCost(BattleUnit* unit, BattleWeapon* weapon) {
 }
 
 /** Finds the Shell Shield (Koops's move) guarding this unit, the one whose work[0] holds its id; NULL if none. */
-BattleUnit* BtlUnit_GetGuardKouraPtr(BattleUnit* unit) {
+BattleUnit* PORT_HOOKABLE(BtlUnit_GetGuardKouraPtr)(BattleUnit* unit) {
     BattleWork* wp = _battleWorkPointer;
     s32 i = 0;
     s32 id = unit->unitId;
@@ -2092,7 +2092,7 @@ BattleUnit* BtlUnit_GetGuardKouraPtr(BattleUnit* unit) {
  * Starts the unit's turn allowance: maxMoveCount moves, doubled by Fast and halved by Slow.
  * A one-move unit under Slow acts only on every other turn (move state 10 means it skips).
  */
-void BtlUnit_ResetMoveStatus(BattleUnit* unit) {
+void PORT_HOOKABLE(BtlUnit_ResetMoveStatus)(BattleUnit* unit) {
     s32 n;
 
     unit->moveState = 0;
@@ -2129,7 +2129,7 @@ void BtlUnit_ResetMoveStatus(BattleUnit* unit) {
  * with kind -1, mode 0, 1 or 3 picks entries 0-2 and mode 2 the jump sounds; kind -2 only restarts the timer;
  * anything else silences it. Called by the btlevtcmd move helpers.
  */
-void BtlUnit_LoadSeMode(s32 mode, s32 kind, BtlPoseSoundTable* table, BecSndWork* work) {
+void PORT_HOOKABLE(BtlUnit_LoadSeMode)(s32 mode, s32 kind, BtlPoseSoundTable* table, BecSndWork* work) {
     work->count = 0;
     work->sfxId = -1;
     switch (kind) {
@@ -2188,7 +2188,7 @@ void BtlUnit_LoadSeMode(s32 mode, s32 kind, BtlPoseSoundTable* table, BecSndWork
 }
 
 /** Sets a move sound set directly: two sound names, the start delay and the repeat period, plus two extra values. */
-void BtlUnit_SetSeMode(BecSndWork* work, const char* name0, const char* name1, s16 c, s16 e, s16 unused, s16 a, s16 b) {
+void PORT_HOOKABLE(BtlUnit_SetSeMode)(BecSndWork* work, const char* name0, const char* name1, s16 c, s16 e, s16 unused, s16 a, s16 b) {
     work->name0 = name0;
     work->name1 = name1;
     work->delay = c;
@@ -2204,7 +2204,7 @@ void BtlUnit_SetSeMode(BecSndWork* work, const char* name0, const char* name1, s
  * Puts the unit in its waiting-at-the-command-menu pose, unless it is in danger,
  * in peril or has a status pose to show, in which case the normal status pose is kept.
  */
-void BtlUnit_SetCommandAnimPose(BattleUnit* unit) {
+void PORT_HOOKABLE(BtlUnit_SetCommandAnimPose)(BattleUnit* unit) {
     BattleUnitPart* part = BtlUnit_GetPartsPtr(unit, BtlUnit_GetBodyPartsId(unit));
     BOOL special = FALSE;
 
@@ -2220,7 +2220,7 @@ void BtlUnit_SetCommandAnimPose(BattleUnit* unit) {
 }
 
 /** Resets a part's animation-synced sound state (loop count and timeline). */
-void BtlUnit_PoseSoundInit(BattleUnitPart* part) {
+void PORT_HOOKABLE(BtlUnit_PoseSoundInit)(BattleUnitPart* part) {
     PART_POSE_SOUND(part)->loopCount = 0;
     PART_POSE_SOUND(part)->time = 0.0f;
     PART_POSE_SOUND(part)->prevTime = 0.0f;
@@ -2235,7 +2235,7 @@ void BtlUnit_PoseSoundInit(BattleUnitPart* part) {
  * fire their sound or callback, restarting on each loop.
  * Sounds of units outside the current phase play at 70% volume.
  */
-void BtlUnit_ControlPoseSoundMain(BattleUnitPart* part) {
+void PORT_HOOKABLE(BtlUnit_ControlPoseSoundMain)(BattleUnitPart* part) {
     BattleWork* wp = _battleWorkPointer;
     BtlPartPoseSound* state;
     AnimTableEntry* anim;
@@ -2318,7 +2318,7 @@ void BtlUnit_ControlPoseSoundMain(BattleUnitPart* part) {
 #pragma pop
 
 /** Plays a sound effect at the unit's position (BtlUnit_snd_se_pos). */
-s32 BtlUnit_snd_se(BattleUnit* unit, const char* sfxName, s32 volume, s32 pan) {
+s32 PORT_HOOKABLE(BtlUnit_snd_se)(BattleUnit* unit, const char* sfxName, s32 volume, s32 pan) {
     Vec pos;
     BtlUnit_GetPos(unit, &pos.x, &pos.y, &pos.z);
     return PCCALL(((BtlUnit_snd_se_posS32PitchFn)BtlUnit_snd_se_pos)(unit, sfxName, volume, pan, &pos), BtlUnit_snd_se_pos(unit, sfxName, volume, pan, &pos));
@@ -2329,7 +2329,7 @@ s32 BtlUnit_snd_se(BattleUnit* unit, const char* sfxName, s32 volume, s32 pan) {
  * Tiny raises and Huge lowers the pitch by the size change's strength.
  * volume -250000000 keeps the sound's default volume. Returns the sound id.
  */
-s32 BtlUnit_snd_se_pos(BattleUnit* unit, const char* sfxName, s32 volume, s16 pitch, Vec* pos) {
+s32 PORT_HOOKABLE(BtlUnit_snd_se_pos)(BattleUnit* unit, const char* sfxName, s32 volume, s16 pitch, Vec* pos) {
     s32 id;
     s8 turns, strength;
     s16 pit = 0;
@@ -2383,7 +2383,7 @@ void BtlUnit_HpGaugeInit(BattleUnit* unit) {
  * animates the bar draining from the old HP to the new one
  * and hides the gauge again once its display time runs out.
  */
-void BtlUnit_HpGaugeMain(BattleUnit* unit) {
+void PORT_HOOKABLE(BtlUnit_HpGaugeMain)(BattleUnit* unit) {
     BattleWorkHpGauge* gauge = &unit->hpGauge;
     s16 maxHp;
 
@@ -2419,7 +2419,7 @@ void BtlUnit_HpGaugeMain(BattleUnit* unit) {
  * Whether an enemy can use (and so may be given) this item: any badge, or an item in _enemy_can_use_item_table.
  * Returns the item id when it can, else 0.
  */
-BOOL BtlUnit_EnemyItemCanUseCheck(s32 item) {
+BOOL PORT_HOOKABLE(BtlUnit_EnemyItemCanUseCheck)(s32 item) {
     s32* table = _enemy_can_use_item_table;
 
     if (item >= 0xF0 && item < 0x153) {
@@ -2438,7 +2438,7 @@ BOOL BtlUnit_EnemyItemCanUseCheck(s32 item) {
  * Whether the unit is hidden in the shadows and cannot be hit:
  * a veiled unit (Vivian's Veil) or Vivian while her UW_VIVIAN_VEIL_TURNS counter is running.
  */
-BOOL BtlUnit_CheckShadowGuard(BattleUnit* unit) {
+BOOL PORT_HOOKABLE(BtlUnit_CheckShadowGuard)(BattleUnit* unit) {
     if (unit->attributeFlags & UNIT_ATTR_VEILED) {
         return TRUE;
     }

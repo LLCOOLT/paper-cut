@@ -1,4 +1,5 @@
 // Battle camera: modes, zoom, movement and tracking of units and the audience during battle.
+#include "port_hook.h"
 #include "battle/battle_camera.h"
 #include "battle/battle.h"
 #include "battle/battle_audience.h"
@@ -9,6 +10,9 @@
 #include "system.h"
 #include <string.h>
 #include "libc_decls.h"
+#ifdef PORT_MODS
+#include "port/hooks/src_battle_battle_camera.h"
+#endif
 
 // FAKE: inlining off for the whole file (FAKES.md); without it 18 functions change length, e.g. battleCameraMain 1422 -> 1775 instructions
 #pragma dont_inline on
@@ -21,7 +25,7 @@ void btl_camera_nomove_z_onoff(s32 pri, s32 on);
 void battleCameraMoveTo(s32 mode, s32 clamp, f32 x, f32 y, f32 z, f32 atX, f32 atY, f32 atZ, f32* dX, f32* dY, f32* dZ, f32* dAtX, f32* dAtY, f32* dAtZ);
 
 /** this file uses -O4,s */
-void battleCameraInit(void) {
+void PORT_HOOKABLE(battleCameraInit)(void) {
     BattleWork* wp = _battleWorkPointer;
     BattleCameraWork* camera;
 
@@ -62,7 +66,7 @@ void battleCameraInit(void) {
  * 18 defeat, 19 running away), applies zoom, axis locks, offsets and the W/H shakes,
  * and eases the 3D camera there at the move/zoom speed level. Each mode's debug name is kept in a local buffer.
  */
-void battleCameraMain(void) {
+void PORT_HOOKABLE(battleCameraMain)(void) {
     CameraEntry* cam = camGetPtr(CAMERA_3D);
     BattleWork* wp = _battleWorkPointer;
     BattleAudience* aud = BattleAudienceBaseGetPtr();
@@ -737,7 +741,7 @@ void battleCameraMoveTo(s32 mode, s32 clamp, f32 x, f32 y, f32 z, f32 atX, f32 a
 }
 
 /** Returns how far the battle camera's eye moved this frame (length of cameraWork.moveSpeed). */
-f32 battleCameraGetPosMoveSpeed(void) {
+f32 PORT_HOOKABLE(battleCameraGetPosMoveSpeed)(void) {
     BattleWork* wp = _battleWorkPointer;
     f32 x = wp->cameraWork.moveSpeed.x;
     f32 y = wp->cameraWork.moveSpeed.y;
@@ -763,7 +767,7 @@ USER_FUNC(evt_btl_camera_set_prilimit) {
  * Switches the battle camera to mode (see battleCameraMain) if pri passes the floor, resetting zoom,
  * speed levels, axis locks and the manual offset.
  */
-void btl_camera_set_mode(s32 pri, s32 mode) {
+void PORT_HOOKABLE(btl_camera_set_mode)(s32 pri, s32 mode) {
     BattleWork* wp = _battleWorkPointer;
     if (pri >= wp->cameraWork.priLimit) {
         wp->cameraWork.mode = mode;
@@ -936,7 +940,7 @@ USER_FUNC(evt_btl_camera_add_zoom) {
 }
 
 /** Sets the camera's move and zoom easing level (0-5; out-of-range values mean 1) if pri passes the floor. */
-void btl_camera_set_moveSpeedLv(s32 pri, s32 lv) {
+void PORT_HOOKABLE(btl_camera_set_moveSpeedLv)(s32 pri, s32 lv) {
     BattleWork* wp = _battleWorkPointer;
     if (pri >= wp->cameraWork.priLimit) {
         if (lv >= 0 && lv <= 5) {
@@ -982,7 +986,7 @@ USER_FUNC(evt_btl_camera_set_zoomSpeedLv) {
  * Starts a timed camera glide (camera mode 3 in battleCameraMain) from the current eye and target to (x, y, z)
  * and (atX, atY, atZ) over frames frames with intplGetValue curve type, if pri passes the priority floor.
  */
-void btl_camera_set_moveto(s32 pri, f32 x, f32 y, f32 z, f32 atX, f32 atY, f32 atZ, s32 frames,
+void PORT_HOOKABLE(btl_camera_set_moveto)(s32 pri, f32 x, f32 y, f32 z, f32 atX, f32 atY, f32 atZ, s32 frames,
                            s32 type) {
     BattleWork* wp = _battleWorkPointer;
     CameraEntry* cam = camGetPtr(CAMERA_3D);
@@ -1027,7 +1031,7 @@ USER_FUNC(evt_btl_camera_set_moveto) {
  * Starts a horizontal camera shake whose amplitude goes from a to b over frames with interpolation type,
  * and rumbles the controller unless rumble is disabled for the camera.
  */
-void btl_camera_shake_w(s32 pri, f32 a, f32 b, s32 frames, s32 type) {
+void PORT_HOOKABLE(btl_camera_shake_w)(s32 pri, f32 a, f32 b, s32 frames, s32 type) {
     BattleWork* wp = _battleWorkPointer;
     if (pri >= wp->cameraWork.priLimit) {
         wp->cameraWork.flags |= CAMERA_FLAG_SHAKE_W;
@@ -1057,7 +1061,7 @@ USER_FUNC(evt_btl_camera_shake_w) {
 }
 
 /** Starts a vertical camera shake (see btl_camera_shake_w), with controller rumble. */
-void btl_camera_shake_h(s32 pri, f32 a, f32 b, s32 frames, s32 type) {
+void PORT_HOOKABLE(btl_camera_shake_h)(s32 pri, f32 a, f32 b, s32 frames, s32 type) {
     BattleWork* wp = _battleWorkPointer;
     if (pri >= wp->cameraWork.priLimit) {
         wp->cameraWork.flags |= CAMERA_FLAG_SHAKE_H;
@@ -1084,7 +1088,7 @@ USER_FUNC(evt_btl_camera_shake_h) {
 }
 
 /** Stops both camera shakes if pri passes the floor. */
-void btl_camera_noshake(s32 pri) {
+void PORT_HOOKABLE(btl_camera_noshake)(s32 pri) {
     BattleWork* wp = _battleWorkPointer;
     if (pri >= wp->cameraWork.priLimit) {
         wp->cameraWork.flags &= ~CAMERA_FLAG_SHAKE_W;
@@ -1162,7 +1166,7 @@ USER_FUNC(evt_btl_camera_nomove_z_onoff) {
 }
 
 /** Adds a fixed offset (x, y, z) to the camera position until btl_camera_off_posoffset_manual or a mode change. */
-void btl_camera_set_posoffset(s32 pri, f32 x, f32 y, f32 z) {
+void PORT_HOOKABLE(btl_camera_set_posoffset)(s32 pri, f32 x, f32 y, f32 z) {
     BattleWork* wp = _battleWorkPointer;
     if (pri >= wp->cameraWork.priLimit) {
         wp->cameraWork.flags |= CAMERA_FLAG_POS_OFFSET;
@@ -1207,3 +1211,7 @@ USER_FUNC(evt_btl_camera_wait_move_end) {
     }
     return 2;
 }
+
+#ifdef PORT_MODS
+#include "port/hooks/src_battle_battle_camera.inc"
+#endif

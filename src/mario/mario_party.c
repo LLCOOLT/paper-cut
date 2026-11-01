@@ -1,5 +1,6 @@
 // Mario's side of the partners: which partner is out, calling them (entry/hello/goodbye/kill), the partner
 // button, and partner join/leave, HP and level helpers.
+#include "port_hook.h"
 #include "mario/mario_party.h"
 #include "mario/mario.h"
 #include "driver/npcdrv.h"
@@ -7,6 +8,9 @@
 #include "party/party_yoshi.h"
 #include "version.h"
 #include <dolphin/pad.h>
+#ifdef PORT_MODS
+#include "port/hooks/src_mario_mario_party.h"
+#endif
 
 /** Removes the partner in Mario's first party slot (currPartySlotId[0]) and marks the slot empty (-1). */
 static inline void marioPartyKillSlot0(void) {
@@ -34,7 +38,7 @@ static inline void marioPartyKillSlot1(void) {
  * Airborne, field-battle locks, slits, an airborne Goombella or a busy Yoshi block or cancel it.
  * Always returns 0; marioUsePartyMain later fires the ability.
  */
-s32 marioUseParty(void) {
+s32 PORT_HOOKABLE(marioUseParty)(void) {
     MarioWork* mario = marioGetPtr();
     PartyEntry* party;
 
@@ -102,7 +106,7 @@ s32 marioUseParty(void) {
  * counts down partyUseDelay and then calls partyDoWork to use the partner's field ability (returns its result,
  * else 0). Losing control (marioKeyOffChk) cancels.
  */
-s32 marioUsePartyMain(void) {
+s32 PORT_HOOKABLE(marioUsePartyMain)(void) {
     MarioWork* mario = marioGetPtr();
 
     if (mario->trigFlags & MARIO_TRIG_FLAG_USE_PARTNER) {
@@ -127,7 +131,7 @@ s32 marioUsePartyMain(void) {
  * higher ids are followers (partyEntry2) in slot 1.
  * Used on save load, after battles and in the E3 sequence; returns the party slot or -1.
  */
-s32 marioPartyEntry(PartyId id) {
+s32 PORT_HOOKABLE(marioPartyEntry)(PartyId id) {
     MarioWork* mario = marioGetPtr();
     s32 ret;
 
@@ -161,7 +165,7 @@ s32 marioPartyEntry(PartyId id) {
  * or a follower into slot 1.
  * The partner menu (win_main) uses it after marioPartyGoodbye when switching partners. Returns the slot or -1.
  */
-s32 marioPartyHello(PartyId id) {
+s32 PORT_HOOKABLE(marioPartyHello)(PartyId id) {
     s32 ret = -1;
     MarioWork* mario = marioGetPtr();
 
@@ -188,7 +192,7 @@ s32 marioPartyHello(PartyId id) {
  * Sends the current partner in slot 0 away with the leaving animation (partyGoodbye)
  * when switching partners in the partner menu. TRUE if there was a partner to send away.
  */
-BOOL marioPartyGoodbye(void) {
+BOOL PORT_HOOKABLE(marioPartyGoodbye)(void) {
     BOOL ret = FALSE;
     s8 slot = marioGetPtr()->currPartySlotId[0];
     if (slot >= 0) {
@@ -199,7 +203,7 @@ BOOL marioPartyGoodbye(void) {
 }
 
 /** Removes both the partner and the follower at once with no animation (save load, end of battle, E3 sequence). */
-void marioPartyKill(void) {
+void PORT_HOOKABLE(marioPartyKill)(void) {
     marioPartyKillSlot0();
     marioPartyKillSlot1();
 }
@@ -210,7 +214,7 @@ void marioPartyKill(void) {
  * the request flag is trigFlags 0x100000, and the wait for partyDoWork runs here (retail splits it out into
  * marioUsePartyMain).
  */
-s32 marioUseParty(void) {
+s32 PORT_HOOKABLE(marioUseParty)(void) {
     MarioWork* mario = marioGetPtr();
     PartyEntry* party;
 
@@ -268,7 +272,7 @@ s32 marioUseParty(void) {
  * The PartyMember kind of the partner out with Mario (PARTY_MEMBER_GOOMBELLA, ...), or 0 when none.
  * Used by the pause menu, item menu and status window.
  */
-s32 marioGetParty(void) {
+s32 PORT_HOOKABLE(marioGetParty)(void) {
     s32 id;
 
     id = marioGetPartyId();
@@ -309,7 +313,7 @@ s32 marioGetPartyId(void) {
  * The party slot of the follower walking with Mario (a member added by partyEntry2,
  * flagged PARTY_FLAG_IS_PARTNER), or -1. The counterpart of marioGetPartyId.
  */
-s32 marioGetExtraPartyId(void) {
+s32 PORT_HOOKABLE(marioGetExtraPartyId)(void) {
     MarioWork* mario = marioGetPtr();
     PartyEntry* party;
     s32 partyId;
@@ -337,7 +341,7 @@ s32 marioGetExtraPartyId(void) {
  * event.c's story-stage setup calls it for each partner's join point (Goombella, Koops, Flurrie, Yoshi, Vivian,
  * Bobbery, Ms. Mowz).
  */
-void partyJoin(PartyId partnerId) {
+void PORT_HOOKABLE(partyJoin)(PartyId partnerId) {
     if (partnerId < 8) {
         pouchGetPtr()->partyData[partnerId].flags |= POUCH_PARTY_FLAG_JOINED; // obtained
     }
@@ -348,14 +352,14 @@ void partyJoin(PartyId partnerId) {
  * event.c's chapter 4 stage setup clears Goombella, Koops, Flurrie and Yoshi while Doopliss has them,
  * and partyJoin restores them a few stages later.
  */
-void partyLeft(PartyId partnerId) {
+void PORT_HOOKABLE(partyLeft)(PartyId partnerId) {
     if (partnerId < 8) {
         pouchGetPtr()->partyData[partnerId].flags &= ~POUCH_PARTY_FLAG_JOINED;
     }
 }
 
 /** TRUE when the partner has been recruited (pouch partyData flag 1); FALSE for ids 8 and up (followers). */
-BOOL partyChkJoin(PartyId partnerId) {
+BOOL PORT_HOOKABLE(partyChkJoin)(PartyId partnerId) {
     BOOL ret = FALSE;
     if (partnerId < 8) {
         u32 joined = pouchGetPtr()->partyData[partnerId].flags & POUCH_PARTY_FLAG_JOINED;
@@ -368,7 +372,7 @@ BOOL partyChkJoin(PartyId partnerId) {
  * The partner's current HP from the pouch (0 for invalid ids);
  * party.c compares it with PARTY_PINCH_HP for the low-HP (peril) animations.
  */
-s32 partyGetHp(PartyId partnerId) {
+s32 PORT_HOOKABLE(partyGetHp)(PartyId partnerId) {
     s32 ret = 0;
     if (partnerId < 8) {
         ret = pouchGetPtr()->partyData[partnerId].currentHP;
@@ -381,10 +385,14 @@ s32 partyGetHp(PartyId partnerId) {
  * gor_02, which unitwin_setpartylank applies to HP, attack and tech levels together).
  * The partner battle units read it to pick their moves; 0 for invalid ids.
  */
-s32 partyGetTechLv(PartyId partnerId) {
+s32 PORT_HOOKABLE(partyGetTechLv)(PartyId partnerId) {
     s32 ret = 0;
     if (partnerId < 8) {
         ret = pouchGetPtr()->partyData[partnerId].techLevel;
     }
     return ret;
 }
+
+#ifdef PORT_MODS
+#include "port/hooks/src_mario_mario_party.inc"
+#endif

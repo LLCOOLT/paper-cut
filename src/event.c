@@ -1,5 +1,6 @@
 // Story events: the per-chapter tables of story progress points (name, map, entrance and an optional
 // setup function that sets the flags and items for that point).
+#include "port_hook.h"
 #include "event.h"
 #include "driver/swdrv.h"
 #include "evt/evt_cmd.h"
@@ -16,6 +17,9 @@
 #include "statuswindow.h"
 #include "version.h"
 #include "evt/evt_story.h"
+#ifdef PORT_MODS
+#include "port/hooks/src_event.h"
+#endif
 
 static void stage4_00_init(void);
 static void stage4_04_01_init(void);
@@ -815,7 +819,7 @@ EventStage event_dt[] = {
  * resets the badge shop, Pianta Parlor and information seller, zeroes the play clock and makes the player Mario.
  * seq_load calls it when a new file starts; later story points' setups build on it.
  */
-void stg0_00_init(void) {
+void PORT_HOOKABLE(stg0_00_init)(void) {
     pouchGetPtr(); // leftover from development, return value never used for pouchInit
     pouchInit();
     pouchGetItem(ITEM_BOOTS);
@@ -2579,7 +2583,7 @@ static void stg8_15_init(void) {
  * after the ending, marks Trouble 16 solved and has Ms. Mowz join.
  * Not used in the demos, whose STG9_02 entry has no setup.
  */
-void N_stg9_02_init(void) {
+void PORT_HOOKABLE(N_stg9_02_init)(void) {
     swSet(GSWF_TROUBLE_16_SOLVED);
     partyJoin(PARTNER_MSMOWZ);
 }
@@ -2589,11 +2593,15 @@ void N_stg9_02_init(void) {
  * The E3 scenario select (seq_e3) walks these tables to find a story point
  * and runs every setup function up to it.
  */
-EventStage* eventStgDtPtr(s32 stage) {
+EventStage* PORT_HOOKABLE(eventStgDtPtr)(s32 stage) {
     return &event_dt[stage];
 }
 
 /** Number of chapter tables in event_dt (prologue, chapters 1-8 and the ending). */
-s32 eventStgNum(void) {
+s32 PORT_HOOKABLE(eventStgNum)(void) {
     return sizeof(event_dt) / sizeof(EventStage);
 }
+
+#ifdef PORT_MODS
+#include "port/hooks/src_event.inc"
+#endif

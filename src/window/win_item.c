@@ -30,6 +30,7 @@
 #endif
 #ifdef TARGET_PC
 #include "port/gameplus.h"
+#include "port/menu_tap.h"
 #endif
 // FAKE: win_item.c calls pouchSetHP through this prototype (the types it was compiled with) instead of the one in mario/mario_pouch.h; same registers, behaviour-identical.
 typedef void (*PouchSetHPS32Fn)(s32);
@@ -178,7 +179,7 @@ static WinMgrDesc window_desc[2] = {
  * boots, hammers, Magical Map and Crystal Stars, which other menu screens show;
  * the demos also hide the Strange Sack).
  */
-void winMakeSkipList(WindowWork* w) {
+void PORT_HOOKABLE(winMakeSkipList)(WindowWork* w) {
     s32 i;
     u32 j;
     u16 id;
@@ -205,7 +206,7 @@ void winMakeSkipList(WindowWork* w) {
  * copies the received mail list (newest first), builds the Important Items list,
  * creates the two item-use windows and starts loading mail.tpl.
  */
-void winItemInit(WindowWork* w) {
+void PORT_HOOKABLE(winItemInit)(WindowWork* w) {
     s32 i;
     w->item.state = 0;
     w->item.mode = 0;
@@ -245,7 +246,7 @@ void winItemInit(WindowWork* w) {
  * Run from win_root.c each time the Items window comes to the front:
  * snaps scrolls to the saved pages, hides the book and mail panels and sets the help text for the current tab.
  */
-void winItemInit2(WindowWork* w) {
+void PORT_HOOKABLE(winItemInit2)(WindowWork* w) {
     w->helpTgtX = -275.0f;
     w->helpTgtY = (f32)(125 - w->item.mode * 40);
     w->item.scroll[0] = w->item.scrollTgt[0] = 190.0f * (f32)w->item.page[0];
@@ -260,7 +261,7 @@ void winItemInit2(WindowWork* w) {
 }
 
 /** Frees the two item-use windows created by winItemInit. */
-void winItemExit(WindowWork* w) {
+void PORT_HOOKABLE(winItemExit)(WindowWork* w) {
     winMgrDelete(w->useWin[0]);
     winMgrDelete(w->useWin[1]);
 }
@@ -299,6 +300,19 @@ s32 PORT_HOOKABLE(winItemMain)(WindowWork* w) {
     f32 yoff;
     s32 k;
 
+#ifdef TARGET_PC
+    /* the mouse (portWinMouse): the two lists' buttons, then the page's items, two to a row */
+    if (w->item.state == 0) {
+        if (portWinMouse(&w->item.mode, 0, 2, -275.0f, 125.0f, 0.0f, VERSION_PICK(40, 50), 1, 160.0f, 36.0f, SFX_NAME_WORD(0x20005))) {
+            w->buttonTrg |= PAD_BUTTON_A;
+        }
+    } else if (w->item.state == 10) {
+        cnt = (w->item.mode == 0 ? pouchGetHaveItemCnt() : w->item.skipCount) - w->item.page[w->item.mode] * 10;
+        if (portWinMouse(&w->item.cursor[w->item.mode], w->item.page[w->item.mode] * 10, cnt < 10 ? cnt : 10, -155.0f, 110.0f, 204.0f, 38.0f, 2, 195.0f, 38.0f, SFX_NAME_WORD(0x20035))) {
+            w->buttonTrg |= PAD_BUTTON_A;
+        }
+    }
+#endif
     switch (w->item.state) {
         case 0:
             if (w->buttonTrg & PAD_BUTTON_B) {
@@ -763,7 +777,7 @@ s32 PORT_HOOKABLE(winItemMain)(WindowWork* w) {
 }
 
 /** Every frame: eases the list scrolls toward their pages, and the book and mail panels toward their targets. */
-void winItemMain2(WindowWork* w) {
+void PORT_HOOKABLE(winItemMain2)(WindowWork* w) {
     w->item.scrollTgt[0] = 190.0f * (f32)w->item.page[0];
     w->item.scroll[0] += (w->item.scrollTgt[0] - w->item.scroll[0]) / 4.0f;
     w->item.scrollTgt[1] = 190.0f * (f32)w->item.page[1];
@@ -777,7 +791,7 @@ void winItemMain2(WindowWork* w) {
 }
 
 /** Draws the Items window (menu slot n): background, the two tab labels, then the item list via item_disp. */
-void winItemDisp(s32 camId, void* param, s32 n) {
+void PORT_HOOKABLE(winItemDisp)(s32 camId, void* param, s32 n) {
     GXColor white = {255, 255, 255, 255};
     f32 c;
     f32 b;

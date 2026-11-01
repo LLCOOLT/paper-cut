@@ -1,4 +1,5 @@
 // Mario's paper airplane motion (plane panel): take-off, gliding, landing and the camera while flying.
+#include "port_hook.h"
 #include "mario/mario_hit.h"
 #include "dolphin/types.h"
 #include "evt/evt_cmd.h"
@@ -21,6 +22,9 @@
 #include "mot/mot_jump.h"
 #include "version.h"
 #include <dolphin/pad.h>
+#ifdef PORT_MODS
+#include "port/hooks/src_motion_mot_plane.h"
+#endif
 
 // Bits of MotPlaneWork.flags.
 enum MotPlaneFlag {
@@ -136,7 +140,7 @@ s32 marioPlaneGetFlyingDir(void) {
  * 0 when Mario is not in the plane motion, 2 while gliding (sub-motions 12-19), 1 during take-off or landing.
  * Used by evt_mario and the camera and shadow code in mario.c.
  */
-s32 marioGetPlaneStatus(void) {
+s32 PORT_HOOKABLE(marioGetPlaneStatus)(void) {
     MarioWork* mario = marioGetPtr();
     if ((u16)mario->currMotionId != MARIO_MOTION_PLANE) {
         return 0;
@@ -152,7 +156,7 @@ s32 marioGetPlaneStatus(void) {
  * Ends a glide early: switches to the landing phase (sub-motion 50) from the current height.
  * Called from evt_mario's plane command and when the field motion is changed while flying.
  */
-void mario_plane_cancel(void) {
+void PORT_HOOKABLE(mario_plane_cancel)(void) {
     MarioWork* mario = marioGetPtr();
     if ((u16)mario->currMotionId == MARIO_MOTION_PLANE && (s32)mario->currSubMotionId >= 12 && (s32)mario->currSubMotionId < 20) {
         mario->currSubMotionId = 50;
@@ -164,7 +168,7 @@ void mario_plane_cancel(void) {
  * Ends a glide early by switching to the landing phase (sub-motion 50); returns TRUE when Mario was gliding.
  * JP and later.
  */
-BOOL mario_plane_cancel(void) {
+BOOL PORT_HOOKABLE(mario_plane_cancel)(void) {
     MarioWork* mario = marioGetPtr();
     if ((u16)mario->currMotionId != MARIO_MOTION_PLANE) {
         return FALSE;
@@ -182,7 +186,7 @@ BOOL mario_plane_cancel(void) {
  * Re-applies the paper airplane animation in Mario's current colour (paper_plane[marioGetColor()])
  * when mario.c rebuilds his look while flying.
  */
-void marioForcePlaneAnime(void) {
+void PORT_HOOKABLE(marioForcePlaneAnime)(void) {
     MarioWork* mario = marioGetPtr();
     marioPaperOff();
     marioChgPaper(NULL);
@@ -238,7 +242,7 @@ static inline f32 planeCamFloor(void) {
  * Handles landing on the ground, hitting walls (falling back to the jump motion),
  * dropping into water (splash, then the water damage motion) and the camera following the flight.
  */
-void mot_plane(void) {
+void PORT_HOOKABLE(mot_plane)(void) {
     MarioWork* mp;
     BOOL done;
     EventEntry* evt;
@@ -868,7 +872,7 @@ static void flyMain(void) {
  * Cleanup when the plane motion ends: camera follow and shift reset, flight sound off, Mario reset to normal,
  * the motion's work freed and the partners dismounted.
  */
-void mot_plane_post(void) {
+void PORT_HOOKABLE(mot_plane_post)(void) {
     MarioWork* mario = marioGetPtr();
     camFollowYOn();
     planeSfxOff();
@@ -1022,3 +1026,7 @@ static BOOL chkCollision(f32* outY) {
 static f32 planeDead4(void) {
     return 4.0f;
 }
+
+#ifdef PORT_MODS
+#include "port/hooks/src_motion_mot_plane.inc"
+#endif

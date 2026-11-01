@@ -5,6 +5,7 @@
 void marioStMain(void) {
     PortHookSlot* s = &portHookSlots[0];
     int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
     if (!s->active) {
         marioStMain__body();
         return;
@@ -23,6 +24,7 @@ void marioStMain(void) {
 static void viPostCallback(u32 p0) {
     PortHookSlot* s = &portHookSlots[46];
     int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
     if (!s->active) {
         viPostCallback__body(p0);
         return;
@@ -38,7 +40,89 @@ static void viPostCallback(u32 p0) {
     }
 }
 
+void marioStInit(void) {
+    PortHookSlot* s = &portHookSlots[1096];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        marioStInit__body();
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(void))s->pre[i])();
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(void))s->replace)(); } else { marioStInit__body(); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(void))s->post[i])();
+    }
+}
+
+void marioStDisp(void) {
+    PortHookSlot* s = &portHookSlots[1097];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        marioStDisp__body();
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(void))s->pre[i])();
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(void))s->replace)(); } else { marioStDisp__body(); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(void))s->post[i])();
+    }
+}
+
+void marioStSystemLevel(s32 p0) {
+    PortHookSlot* s = &portHookSlots[1098];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        marioStSystemLevel__body(p0);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*))s->pre[i])(&p0);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0)))s->replace)(p0); } else { marioStSystemLevel__body(p0); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0)))s->post[i])(p0);
+    }
+}
+
+u32 marioStGetSystemLevel(void) {
+    PortHookSlot* s = &portHookSlots[1099];
+    u32 r;
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        return marioStGetSystemLevel__body();
+    }
+    __builtin_memset(&r, 0, sizeof(r));
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(r)*))s->pre[i])(&r);
+    }
+    if (!skip) {
+        r = (s->replace != NULL ? ((u32 (*)(void))s->replace)() : marioStGetSystemLevel__body());
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(r)*))s->post[i])(&r);
+    }
+    return r;
+}
+
 void portHookInit_src_mario_mariost(void) {
     portHookSlots[0].body = (void*)marioStMain__body;
     portHookSlots[46].body = (void*)viPostCallback__body;
+    portHookSlots[1096].body = (void*)marioStInit__body;
+    portHookSlots[1097].body = (void*)marioStDisp__body;
+    portHookSlots[1098].body = (void*)marioStSystemLevel__body;
+    portHookSlots[1099].body = (void*)marioStGetSystemLevel__body;
 }

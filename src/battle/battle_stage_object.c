@@ -1,4 +1,5 @@
 // Battle stage objects: breakable and falling set pieces, their motion, shaking and destruction.
+#include "port_hook.h"
 #include "version.h"
 #include "battle/battle_stage_object.h"
 #include "battle/battle.h"
@@ -48,6 +49,9 @@ typedef f32 (*IntplSubArgOrderFn)(s32 mode, f32 start, f32 end, s32 cur, s32 ste
 
 #include "battle/battle_detect.h"
 #include "eff/eff_fall.h"
+#ifdef PORT_MODS
+#include "port/hooks/src_battle_battle_stage_object.h"
+#endif
 
 static USER_FUNC(_set_mobj_shake_init);
 
@@ -94,7 +98,7 @@ extern BattleStageFallObjectData battle_stage_fall_object_data[];
  * Finds the stage object with the given id (1-based, assigned in BattleStageObjectInit), or NULL.
  * The tree and switch units use it to reach the set piece they stand for through unit->stageObjectId.
  */
-BattleStageObject* BattleGetObjectPtr(s32 id) {
+BattleStageObject* PORT_HOOKABLE(BattleGetObjectPtr)(s32 id) {
     BattleWork* wp = _battleWorkPointer;
     BattleStageObject* obj;
     int i;
@@ -109,7 +113,7 @@ BattleStageObject* BattleGetObjectPtr(s32 id) {
 }
 
 /** Finds a live stage object by its map object name ("nozzle_l", "if_body", ...), or NULL. */
-BattleStageObject* BattleSearchObjectPtr(const char* name) {
+BattleStageObject* PORT_HOOKABLE(BattleSearchObjectPtr)(const char* name) {
     BattleWork* wp = _battleWorkPointer;
     int i;
     BattleStageObject* obj;
@@ -131,7 +135,7 @@ BattleStageObject* BattleSearchObjectPtr(const char* name) {
  * and marks layers that are missing or not destroyable as gone.
  * A stage with no iron frame hides it and counts it as already fallen.
  */
-void BattleStageObjectInit(void) {
+void PORT_HOOKABLE(BattleStageObjectInit)(void) {
     BattleWork* wp = _battleWorkPointer;
     BattleStageData* stage = wp->fbatInfo->setup->stageData;
     s32 numObjects = stage->numObjects;
@@ -378,7 +382,7 @@ void BattleStageObjectInit(void) {
  * pushes changed positions, offsets and rotations into the map objects (layer B tilts as a whole around its own
  * height, layer C pivots on its y), and shows or hides each one by flag 1.
  */
-void BattleStageObjectMain(void) {
+void PORT_HOOKABLE(BattleStageObjectMain)(void) {
     BattleWork* wp = _battleWorkPointer;
     BattleStageObjectWork* sw = STAGE_WORK(wp);
     BattleStageObject* obj;
@@ -485,7 +489,7 @@ static void BattleObjectConfig(void) {
  * then runs the stage's own A1 destroy script or the default _object_turn_event_A1.
  * Rolled by btlevtcmd_WeaponAftereffect after attacks that shake the stage.
  */
-void BattleStage_DestroyA1(void) {
+void PORT_HOOKABLE(BattleStage_DestroyA1)(void) {
     BattleWork* wp = _battleWorkPointer;
     void* evt = wp->fbatInfo->setup->stageData->destroyBgA1Evt;
     EventEntry* entry;
@@ -508,7 +512,7 @@ void BattleStage_DestroyA1(void) {
  * Knocks down background layer A2 the same way as BattleStage_DestroyA1, but without tracking the event id,
  * so nothing waits for it.
  */
-void BattleStage_DestroyA2(void) {
+void PORT_HOOKABLE(BattleStage_DestroyA2)(void) {
     BattleWork* wp = _battleWorkPointer;
     void* evt = wp->fbatInfo->setup->stageData->destroyBgA2Evt;
 
@@ -524,7 +528,7 @@ void BattleStage_DestroyA2(void) {
  * Knocks down the rear background layer B, the same way as BattleStage_DestroyA1.
  * btlevtcmd_WeaponAftereffect only rolls this once A1 is gone.
  */
-void BattleStage_DestroyB(void) {
+void PORT_HOOKABLE(BattleStage_DestroyB)(void) {
     BattleWork* wp = _battleWorkPointer;
     void* evt = wp->fbatInfo->setup->stageData->destroyBgBEvt;
     EventEntry* entry;
@@ -3098,7 +3102,7 @@ static void _mobj_shake_main(BattleStageObject* obj) {
  * Rolls a new aim for each of the three nozzles from the rank's dirRate weights (no nozzles below rank 1).
  * Rolled by btlevtcmd_WeaponAftereffect after stage-shaking attacks.
  */
-void BattleStage_NozzleDirChangeCheck(void) {
+void PORT_HOOKABLE(BattleStage_NozzleDirChangeCheck)(void) {
     BattleWork* wp = _battleWorkPointer;
     BattleStageObjectWork* sw = STAGE_WORK(wp);
     u8 i;
@@ -3243,7 +3247,7 @@ static USER_FUNC(_nozzle_turn) {
  * Starts _close_wall_event once per battle; called from the first-act sequence of battles that cannot be fled
  * (NPC_BATTLE_NO_ESCAPE).
  */
-void BattleStage_WallCloseCheck(void) {
+void PORT_HOOKABLE(BattleStage_WallCloseCheck)(void) {
     BattleWork* wp = _battleWorkPointer;
     BattleStageObjectWork* sw = STAGE_WORK(wp);
 
@@ -3289,7 +3293,7 @@ static void _disp_escape_wall_message(CameraId camera, void* param) {
  * Drops the iron frame over the stage (_fall_frame_event) unless it already fell or the stage has none;
  * rolled by btlevtcmd_WeaponAftereffect. Once it is gone, falling objects can be rolled.
  */
-void BattleStage_IronFrameFallCheck(void) {
+void PORT_HOOKABLE(BattleStage_IronFrameFallCheck)(void) {
     BattleWork* wp = _battleWorkPointer;
     BattleStageObjectWork* sw = STAGE_WORK(wp);
 
@@ -3405,7 +3409,7 @@ static USER_FUNC(_fall_frame_delete) {
  * type 0 (first turn, battle_seq.c) only fires when the nozzle type is not 0;
  * type 1 (weapon aftereffects, the Toad audience member's trick) always runs and can start fog.
  */
-void BattleStage_NozzleWorkCheck(s32 type) {
+void PORT_HOOKABLE(BattleStage_NozzleWorkCheck)(s32 type) {
     BattleWork* wp = _battleWorkPointer;
     BattleStageObjectWork* sw = STAGE_WORK(wp);
     EventEntry* evt;
@@ -3643,7 +3647,7 @@ static USER_FUNC(_nozzle_work_effect) {
  * Counts the stage fog down at the start of each turn (btlseqTurnFirstProcess) and removes the fog effect
  * when it runs out. Returns TRUE when no fog is left.
  */
-BOOL BattleFogEndCheck(void) {
+BOOL PORT_HOOKABLE(BattleFogEndCheck)(void) {
     BattleWork* wp = _battleWorkPointer;
     BattleStageObjectWork* sw = STAGE_WORK(wp);
 
@@ -3665,7 +3669,7 @@ BOOL BattleFogEndCheck(void) {
  * Removes the fog effect at once (btlevtcmd_StageDispellFog, a Hold Fast counter blast, the battle end).
  * Returns TRUE if fog was active; fogTimer is left to run out on its own.
  */
-BOOL BattleFogForceStop(void) {
+BOOL PORT_HOOKABLE(BattleFogForceStop)(void) {
     BattleWork* wp = _battleWorkPointer;
     BattleStageObjectWork* sw = STAGE_WORK(wp);
 
@@ -3843,7 +3847,7 @@ static USER_FUNC(_nozzle_work_get_weapon_address) {
  * Rolled by btlevtcmd_WeaponAftereffect after the iron frame is gone,
  * and used by the Toad audience member's trick.
  */
-s32 BattleStage_ObjectFallCheck(void) {
+s32 PORT_HOOKABLE(BattleStage_ObjectFallCheck)(void) {
     BattleWork* wp = _battleWorkPointer;
     BattleStageObjectWork* sw = STAGE_WORK(wp);
     EventEntry* evt;
@@ -4384,3 +4388,7 @@ static s32 _object_fall_attack(EventEntry* event, BOOL isFirstCall) {
     evtSetValue(event, outArg, event->userdata[1]);
     return 2;
 }
+
+#ifdef PORT_MODS
+#include "port/hooks/src_battle_battle_stage_object.inc"
+#endif

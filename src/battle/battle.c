@@ -41,7 +41,7 @@ static void BattleCheckUnitBroken(BattleWork* wp);
  * Per-frame battle entry called by the battle game sequence;
  * flags BATTLE_SEQ_END once BattleMain reports the battle is over.
  */
-void battleMain(void) {
+void PORT_HOOKABLE(battleMain)(void) {
     BattleWork* wp = _battleWorkPointer;
 
     if (wp && BattleMain() == 0) {
@@ -53,7 +53,7 @@ void battleMain(void) {
  * Returns TRUE once the battle has finished (BATTLE_SEQ_END, the top flag bit),
  * so the sequence can return to the field.
  */
-BOOL battleSeqEndCheck() {
+BOOL PORT_HOOKABLE(battleSeqEndCheck)() {
     return _battleWorkPointer->flags >> 31;
 }
 
@@ -63,7 +63,7 @@ BOOL battleSeqEndCheck() {
  * records the info and initialises the battle subsystems (pad, action-command help, icons, action commands,
  * after-reaction queue, display, units, partner info, stage, audience, Bingo).
  */
-void BattleInit(FieldBattleInfo* info) {
+void PORT_HOOKABLE(BattleInit)(FieldBattleInfo* info) {
     BattleWork* wp;
 
 #if VERSION != VERSION_JP
@@ -155,7 +155,7 @@ static BOOL BattleMain(void) {
  * Tears a battle down: deletes every unit, ends the icon, menu, stage, audience and Bingo subsystems,
  * frees the command submenu and BattleWork, and clears _battleWorkPointer.
  */
-void BattleEnd(void) {
+void PORT_HOOKABLE(BattleEnd)(void) {
     BattleWork* wp = _battleWorkPointer;
     BattleUnit* unit;
     int i;
@@ -306,7 +306,7 @@ BOOL PORT_HOOKABLE(Btl_UnitSetup)(BattleWork* wp) {
 }
 
 /** Writes Mario's and the partner's battle stats (HP, FP, ...) back to the pouch when the battle ends. */
-void BattleSetMarioParamToFieldBattle(BattleWork* wp) {
+void PORT_HOOKABLE(BattleSetMarioParamToFieldBattle)(BattleWork* wp) {
     BattleUnit* mario;
     BattleUnit* party;
 
@@ -319,7 +319,7 @@ void BattleSetMarioParamToFieldBattle(BattleWork* wp) {
 }
 
 /** Sets the counter of one battle sequence level (init, first act, turn, phase, move, act, end, ...) to value. */
-void BattleSetSeq(BattleWork* wp, BattleSequence seq, u32 value) {
+void PORT_HOOKABLE(BattleSetSeq)(BattleWork* wp, BattleSequence seq, u32 value) {
     switch (seq) {
         case SEQ_UNKNOWN:
             wp->seqUnknownValue = value;
@@ -349,7 +349,7 @@ void BattleSetSeq(BattleWork* wp, BattleSequence seq, u32 value) {
 }
 
 /** Returns the counter of one battle sequence level. */
-s32 BattleGetSeq(BattleWork* wp, BattleSequence seq) {
+s32 PORT_HOOKABLE(BattleGetSeq)(BattleWork* wp, BattleSequence seq) {
     switch (seq) {
         case SEQ_UNKNOWN:
             return wp->seqUnknownValue;
@@ -373,7 +373,7 @@ s32 BattleGetSeq(BattleWork* wp, BattleSequence seq) {
 }
 
 /** Advances one battle sequence level's counter by one. */
-void BattleIncSeq(BattleWork* wp, BattleSequence seq) {
+void PORT_HOOKABLE(BattleIncSeq)(BattleWork* wp, BattleSequence seq) {
     s32 value = BattleGetSeq(wp, seq);
     BattleSetSeq(wp, seq, value + 1);
 }
@@ -382,7 +382,7 @@ void BattleIncSeq(BattleWork* wp, BattleSequence seq) {
  * Allocates battle memory: from the battle area of the map heap in US and PAL,
  * from HEAP_BATTLE in JP and the demos.
  */
-void* BattleAlloc(u32 size) {
+void* PORT_HOOKABLE(BattleAlloc)(u32 size) {
 #if VERSION >= VERSION_US
     return (_mapAlloc)(R_battlemapalloc_base_ptr, size);
 #else
@@ -391,7 +391,7 @@ void* BattleAlloc(u32 size) {
 }
 
 /** Frees memory from BattleAlloc; NULL is ignored. */
-void BattleFree(void* ptr) {
+void PORT_HOOKABLE(BattleFree)(void* ptr) {
     if (ptr)
 #if VERSION >= VERSION_US
         (_mapFree)(R_battlemapalloc_base_ptr, ptr);
@@ -416,20 +416,20 @@ BattleUnit* BattleGetUnitPtr(BattleWork* wp, s32 index) {
 }
 
 /** Stores unit in battle slot index (ignored past BATTLE_UNIT_MAX). */
-void BattleSetUnitPtr(BattleWork* wp, s32 index, BattleUnit* unit) {
+void PORT_HOOKABLE(BattleSetUnitPtr)(BattleWork* wp, s32 index, BattleUnit* unit) {
     if (index < BATTLE_UNIT_MAX) {
         wp->units[index] = unit;
     }
 }
 
 /** Returns part partNum of the unit in slot index. */
-BattleUnitPart* BattleGetUnitPartsPtr(s32 index, s32 partNum) {
+BattleUnitPart* PORT_HOOKABLE(BattleGetUnitPartsPtr)(s32 index, s32 partNum) {
     BattleUnit* unit = BattleGetUnitPtr(_battleWorkPointer, index);
     return BtlUnit_GetPartsPtr(unit, partNum);
 }
 
 /** Returns the invisible system unit that owns battle-wide scripts (stage hazards, audience items), or NULL. */
-BattleUnit* BattleGetSystemPtr(BattleWork* wp) {
+BattleUnit* PORT_HOOKABLE(BattleGetSystemPtr)(BattleWork* wp) {
     s32 i;
     BattleUnit* unit;
     for (i = 0; i < BATTLE_UNIT_MAX; i++) {
@@ -442,7 +442,7 @@ BattleUnit* BattleGetSystemPtr(BattleWork* wp) {
 }
 
 /** Returns Mario's unit on the player side, or NULL. */
-BattleUnit* BattleGetMarioPtr(BattleWork* wp) {
+BattleUnit* PORT_HOOKABLE(BattleGetMarioPtr)(BattleWork* wp) {
     s32 i;
     BattleUnit* unit;
     for (i = 0; i < BATTLE_UNIT_MAX; i++) {
@@ -455,7 +455,7 @@ BattleUnit* BattleGetMarioPtr(BattleWork* wp) {
 }
 
 /** Returns the active partner's unit on the player side, or NULL when Mario fights alone. */
-BattleUnit* BattleGetPartyPtr(BattleWork* wp) {
+BattleUnit* PORT_HOOKABLE(BattleGetPartyPtr)(BattleWork* wp) {
     s32 i;
     BattleUnit* unit;
     for (i = 0; i < BATTLE_UNIT_MAX; i++) {
@@ -469,7 +469,7 @@ BattleUnit* BattleGetPartyPtr(BattleWork* wp) {
 }
 
 /** Returns the other member of the player's pair: the partner for Mario, Mario for the partner. */
-BattleUnit* BattleGetPartnerPtr(BattleWork* wp, BattleUnit* unit) {
+BattleUnit* PORT_HOOKABLE(BattleGetPartnerPtr)(BattleWork* wp, BattleUnit* unit) {
     if (unit->currentKind == UNIT_MARIO) {
         return BattleGetPartyPtr(wp);
     }
@@ -484,13 +484,13 @@ BattleUnit* BattleGetPartnerPtr(BattleWork* wp, BattleUnit* unit) {
 /* PC port: battle_event_default.c and unit_faker_mario.c wait on the result
  * (declared BOOL there); the GameCube function is void, leaving
  * animEffectAsync's result in r3 */
-BOOL BattlePartyAnimeLoad(s32 partyId) {
+BOOL PORT_HOOKABLE(BattlePartyAnimeLoad)(s32 partyId) {
     BattleUnitSetup* setup = &entryunit_party[partyId - UNIT_GOOMBELLA];
 
     return animEffectAsync(setup->unitKindParams->parts->modelName, 1);
 }
 #else
-void BattlePartyAnimeLoad(s32 partyId) {
+void PORT_HOOKABLE(BattlePartyAnimeLoad)(s32 partyId) {
     BattleUnitSetup* setup = &entryunit_party[partyId - UNIT_GOOMBELLA];
 
     animEffectAsync(setup->unitKindParams->parts->modelName, 1);
@@ -502,7 +502,7 @@ void BattlePartyAnimeLoad(s32 partyId) {
  * spawns the new partner unit, gives it the old one's place in the turn order and position,
  * and returns it (NULL for an invalid choice).
  */
-BattleUnit* BattleChangeParty(BattleWork* wp) {
+BattleUnit* PORT_HOOKABLE(BattleChangeParty)(BattleWork* wp) {
     s32 kind = wp->commandMenu.partyKind;
     BattleUnit* party = BattleGetPartyPtr(wp);
     s32 oldId = *(s32*)party;
@@ -547,7 +547,7 @@ BattleUnit* BattleChangeParty(BattleWork* wp) {
  * Converts a partner unit kind (battle, field-NPC or enemy variants) to the party id used by the pouch (1
  * Goombella, 2 Koops, 3 Bobbery, 4 Yoshi, 5 Flurrie, 6 Vivian, 7 Ms. Mowz).
  */
-s32 BattleTransPartyId(BattleUnitType kind) {
+s32 PORT_HOOKABLE(BattleTransPartyId)(BattleUnitType kind) {
     switch (kind) {
         case UNIT_GOOMBELLA_CHAPTER4:
         case UNIT_DOOPLISS_CHAPTER8_GOOMBELLA:
@@ -582,7 +582,7 @@ s32 BattleTransPartyId(BattleUnitType kind) {
 }
 
 /** Converts a pouch party id back to the partner's battle unit kind (0xE0-0xE6). */
-BattleUnitType BattleTransPartyIdToUnitKind(s32 partyId) {
+BattleUnitType PORT_HOOKABLE(BattleTransPartyIdToUnitKind)(s32 partyId) {
     switch (partyId) {
         case PARTNER_GOOMBELLA:
             return UNIT_GOOMBELLA;
@@ -608,7 +608,7 @@ BattleUnitType BattleTransPartyIdToUnitKind(s32 partyId) {
  * then adds every badge in the pouch's equipped list for Mario
  * or the partner (or the single item type for an enemy) via _EquipItem, and re-derives max HP and FP.
  */
-void BtlUnit_EquipItem(BattleUnit* unit, s32 flags, ItemType type) {
+void PORT_HOOKABLE(BtlUnit_EquipItem)(BattleUnit* unit, s32 flags, ItemType type) {
     PouchData* pouch = pouchGetPtr();
     int i;
 
@@ -880,7 +880,7 @@ static void BattlePartyInfoWorkInit(BattleWork* wp) {
 }
 
 /** Adds coins won in battle to the field battle info, paid out when the battle ends. */
-void BattleStoreCoin(BattleWork* wp, s32 coin) {
+void PORT_HOOKABLE(BattleStoreCoin)(BattleWork* wp, s32 coin) {
     wp->fbatInfo->coins += coin;
 }
 
@@ -890,7 +890,7 @@ void PORT_HOOKABLE(BattleStoreExp)(BattleWork* wp, s32 exp) {
 }
 
 /** Returns the Star Points to award at the end of the battle, clamped to 1-100. */
-s32 BattleGetStockExp(BattleWork* wp) {
+s32 PORT_HOOKABLE(BattleGetStockExp)(BattleWork* wp) {
     s32 exp = wp->stockExp;
     if (exp <= 0) {
         return 1;
@@ -902,7 +902,7 @@ s32 BattleGetStockExp(BattleWork* wp) {
 }
 
 /** Returns the floor height at a point: 0 on the stage, the audience floor height beyond the stage's depth. */
-f32 BattleGetFloorHeight(BattleWork* wp, f32 x, f32 y, f32 z) {
+f32 PORT_HOOKABLE(BattleGetFloorHeight)(BattleWork* wp, f32 x, f32 y, f32 z) {
     BattleStage* stage = BattleStageGetPtr();
     if (z <= stage->stageSizeZ) {
         return 0.0f;
@@ -923,7 +923,7 @@ static void BattleCheckUnitBroken(BattleWork* wp) {
 }
 
 /** Empties the after-reaction queue (64 entries of unit id and data tag). */
-void BattleAfterReactionQueueInit(void) {
+void PORT_HOOKABLE(BattleAfterReactionQueueInit)(void) {
     BattleAfterReaction* base = _battleWorkPointer->afterReactions;
     s32 i;
     for (i = 0; i < 64; i++) {
@@ -936,7 +936,7 @@ void BattleAfterReactionQueueInit(void) {
  * Queues an after-reaction for unit a: a script from its unit data entry b to run once the current action
  * finishes. A unit already queued is not added again.
  */
-void BattleAfterReactionEntry(s32 a, s32 b) {
+void PORT_HOOKABLE(BattleAfterReactionEntry)(s32 a, s32 b) {
     BattleAfterReaction* base = _battleWorkPointer->afterReactions;
     s32 i;
     for (i = 0; i < 64; i++) {
@@ -978,7 +978,7 @@ void BattleAfterReactionRelease(s32 a, s32 b) {
  * after consuming reserved items; returns TRUE while one was started,
  * FALSE when the queue is empty or the battle is decided.
  */
-BOOL BattleAfterReactionMain(void) {
+BOOL PORT_HOOKABLE(BattleAfterReactionMain)(void) {
     s32 id;
     BattleWork* wp = _battleWorkPointer;
     BattleAfterReaction* base = wp->afterReactions;
@@ -1010,7 +1010,7 @@ BOOL BattleAfterReactionMain(void) {
 }
 
 /** Returns TRUE while a battle forbids the soft reset (battle flag bit 29); mariost checks it before resetting. */
-BOOL battleDisableHResetCheck(void) {
+BOOL PORT_HOOKABLE(battleDisableHResetCheck)(void) {
     BattleWork* wp = _battleWorkPointer;
     if (gp->inBattle == 0) {
         return FALSE;
@@ -1027,7 +1027,7 @@ BOOL battleDisableHResetCheck(void) {
  * after the battle (battle_seq_end.c), 4 the coin bonus after a won battle (npcdrv.c); only 1-3 for battles flagged
  * NPC_BATTLE_MERLEE_NO_CURSE_4) and returns it, 0 meanwhile.
  */
-u8 BattleMajinaiCheck(void) {
+u8 PORT_HOOKABLE(BattleMajinaiCheck)(void) {
     PouchData* pouch = pouchGetPtr();
     BattleWork* wp = _battleWorkPointer;
     s32 r;
@@ -1077,7 +1077,7 @@ u8 BattleMajinaiCheck(void) {
 #endif
 
 /** Uses up one of Merlee's charms and resets the countdown for the next. */
-void BattleMajinaiDone(void) {
+void PORT_HOOKABLE(BattleMajinaiDone)(void) {
     PouchData* pouch = pouchGetPtr();
     pouch->merleeCurseUsesRemaining--;
     if (pouch->merleeCurseUsesRemaining != 0) {
@@ -1090,7 +1090,7 @@ void BattleMajinaiDone(void) {
 }
 
 /** Flags the battle when Merlee's last charm has been used, so the end-of-charm notice can show. */
-void BattleMajinaiEndCheck(void) {
+void PORT_HOOKABLE(BattleMajinaiEndCheck)(void) {
     BattleWork* wp = _battleWorkPointer;
     if (pouchGetPtr()->merleeCurseUsesRemaining == 0) {
         wp->flags |= BATTLE_FLAG_MAJINAI_END;
@@ -1098,37 +1098,37 @@ void BattleMajinaiEndCheck(void) {
 }
 
 /** Keeps the HP/FP/Star Power status window open while Star Power sparkles are flying to the gauge. */
-void BattleStatusWindowAPRecoveryOn(void) {
+void PORT_HOOKABLE(BattleStatusWindowAPRecoveryOn)(void) {
     _battleWorkPointer->statusWindowAPRecoveryOn = 1;
     BattleStatusWindowCheck();
 }
 
 /** Releases the Star Power hold on the status window. */
-void BattleStatusWindowAPRecoveryOff(void) {
+void PORT_HOOKABLE(BattleStatusWindowAPRecoveryOff)(void) {
     _battleWorkPointer->statusWindowAPRecoveryOn = 0;
     BattleStatusWindowCheck();
 }
 
 /** Sets the script side's request to show the status window (it opens when the system also allows it). */
-void BattleStatusWindowEventOn(void) {
+void PORT_HOOKABLE(BattleStatusWindowEventOn)(void) {
     _battleWorkPointer->statusWindowEventOn = 1;
     BattleStatusWindowCheck();
 }
 
 /** Sets the battle system's permission to show the status window. */
-void BattleStatusWindowSystemOn(void) {
+void PORT_HOOKABLE(BattleStatusWindowSystemOn)(void) {
     _battleWorkPointer->statusWindowSystemOn = 1;
     BattleStatusWindowCheck();
 }
 
 /** Clears the script side's request to show the status window. */
-void BattleStatusWindowEventOff(void) {
+void PORT_HOOKABLE(BattleStatusWindowEventOff)(void) {
     _battleWorkPointer->statusWindowEventOn = 0;
     BattleStatusWindowCheck();
 }
 
 /** Clears the battle system's permission to show the status window. */
-void BattleStatusWindowSystemOff(void) {
+void PORT_HOOKABLE(BattleStatusWindowSystemOff)(void) {
     _battleWorkPointer->statusWindowSystemOn = 0;
     BattleStatusWindowCheck();
 }
@@ -1138,7 +1138,7 @@ void BattleStatusWindowSystemOff(void) {
  * never while forced off or during a tutorial lecture, always while Star Power sparkles fly,
  * otherwise when both script and system want it. Returns whether it is open.
  */
-BOOL BattleStatusWindowCheck(void) {
+BOOL PORT_HOOKABLE(BattleStatusWindowCheck)(void) {
     BattleWork* wp = _battleWorkPointer;
     BOOL open;
     if (wp->statusWindowOff) {
@@ -1166,7 +1166,7 @@ BOOL BattleStatusWindowCheck(void) {
  * Removes from the pouch the items reserved by actions this turn (up to four),
  * so items are only spent once their use has played out.
  */
-void BattleConsumeReserveItem(void) {
+void PORT_HOOKABLE(BattleConsumeReserveItem)(void) {
     BattleWork* wp;
     s32 i;
     wp = _battleWorkPointer;

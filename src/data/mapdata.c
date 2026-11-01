@@ -578,7 +578,7 @@ MapData* PORT_HOOKABLE(mapDataPtr)(const char* mapName) {
 }
 
 /** Finds an area's AreaData by its short name (e.g. "gor"); NULL if no area has that name. */
-AreaData* areaDataPtr(const char* areaName) {
+AreaData* PORT_HOOKABLE(areaDataPtr)(const char* areaName) {
     WorldData* wp = worldDataPtr();
     int max = maxAreaInWorld();
     int i;
@@ -635,7 +635,7 @@ void PORT_HOOKABLE(relSetEvtAddr)(const char* mapName, EvtWord* eventAddr) {
  * Called from the area REL's _prolog after its relSetEvtAddr calls (gon.c: btlsetup_gon_tbl,
  * btl_gon_setup_no_tbl).
  */
-void relSetBtlAddr(const char* areaName, void* btlSetupTbl, void* btlSetupNoTbl) {
+void PORT_HOOKABLE(relSetBtlAddr)(const char* areaName, void* btlSetupTbl, void* btlSetupNoTbl) {
     AreaData* area = areaDataPtr(areaName);
     if (area != NULL) {
         area->btlSetupTbl = btlSetupTbl;

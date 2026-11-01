@@ -23,6 +23,9 @@
 #include "version.h"
 #include <dolphin/pad.h>
 #include <demo/DEMOPad.h>
+#ifdef TARGET_PC
+#include "port/menu_tap.h"
+#endif
 
 typedef struct LinkDt {
     s16 x;             // 0x0
@@ -71,7 +74,7 @@ const char* hammer_pose[] = {NULL, ("M_H_1"), ("M_H_4"), ("M_H_7")};
  * loads Mario's model in his current outfit (emblem colors, or the 8-bit d_mario model in 8-bit form)
  * and counts the special moves (Star Powers) obtained.
  */
-void winMarioInit(WindowWork* w) {
+void PORT_HOOKABLE(winMarioInit)(WindowWork* w) {
     PouchData* pouch;
     const char* name;
     s32 i;
@@ -135,7 +138,7 @@ void winMarioInit(WindowWork* w) {
  * Run from win_root.c each time the Mario window comes to the front:
  * cursor back to the Level entry, its help text, special-move list closed.
  */
-void winMarioInit2(WindowWork* w) {
+void PORT_HOOKABLE(winMarioInit2)(WindowWork* w) {
     w->marioSel = 0;
     w->helpTgtX = w->helpTgtX = linkDt[w->marioSel].x;
     w->helpTgtY = w->helpTgtY = linkDt[w->marioSel].y;
@@ -158,7 +161,7 @@ void winMarioInit2(WindowWork* w) {
 }
 
 /** Frees the Mario model loaded by winMarioInit. */
-void winMarioExit(WindowWork* w) {
+void PORT_HOOKABLE(winMarioExit)(WindowWork* w) {
     animPoseRelease(w->mario.poseId);
 }
 
@@ -217,7 +220,7 @@ void winMarioExit(WindowWork* w) {
  * A on the special moves entry opens the list of Star Powers with their descriptions.
  * Returns -1 on B, -2 on Start, else 0.
  */
-s32 winMarioMain(WindowWork* w) {
+s32 PORT_HOOKABLE(winMarioMain)(WindowWork* w) {
     const char* anims[2];
     LinkDt* lp;
     LinkDt* p;
@@ -303,6 +306,10 @@ s32 winMarioMain(WindowWork* w) {
             }
             break;
         case 1:
+#ifdef TARGET_PC
+            /* the mouse (portWinMouse): the Special Moves' rows */
+            portWinMouse(&w->mario.wazaCursor, 0, w->mario.wazaCount, -280.0f, 118.0f, 0.0f, 26.0f, 1, 250.0f, 26.0f, (const char*)0x20005);
+#endif
             if (w->dirRep & DEMO_STICK_UP) {
                 w->mario.wazaCursor--;
                 if (w->mario.wazaCursor < 0) {
@@ -330,12 +337,12 @@ s32 winMarioMain(WindowWork* w) {
 }
 
 /** Per-frame update hook for the Mario window; empty. */
-void winMarioMain2(WindowWork* w) {
+void PORT_HOOKABLE(winMarioMain2)(WindowWork* w) {
 }
 
 #if VERSION >= VERSION_US
 /** US: plain ASCII digits */
-const char* winZenkakuStr(s32 n) {
+const char* PORT_HOOKABLE(winZenkakuStr)(s32 n) {
     static char tmp2[0x100];
     sprintf(tmp2, "%d", n);
     return tmp2;
@@ -344,7 +351,7 @@ const char* winZenkakuStr(s32 n) {
 char winZenkakuStrPad_buf[0x100];
 
 /** Formats n zero-padded to digits places (the play time's hours and minutes); returns a shared static buffer. */
-char* winZenkakuStrPad(s32 n, s32 digits) {
+char* PORT_HOOKABLE(winZenkakuStrPad)(s32 n, s32 digits) {
     char buf[0x100];
     sprintf(buf, "%%0%dd", digits);
     sprintf(winZenkakuStrPad_buf, buf, n);
@@ -356,7 +363,7 @@ char* winZenkakuStrPad(s32 n, s32 digits) {
  * Converts n to full-width (zenkaku) Shift-JIS digits for the Japanese menus,
  * with a full-width minus for negatives (not in the demos). Returns a shared static buffer.
  */
-const char* winZenkakuStr(s32 n) {
+const char* PORT_HOOKABLE(winZenkakuStr)(s32 n) {
     const char* tbl[10] = {"\x82\x4f", "\x82\x50", "\x82\x51", "\x82\x52", "\x82\x53",
                            "\x82\x54", "\x82\x55", "\x82\x56", "\x82\x57", "\x82\x58"};
     static char tmp2[0x100];
@@ -385,7 +392,7 @@ const char* winZenkakuStr(s32 n) {
 char winZenkakuStrPad_tmp[0x100];
 
 /** Full-width digits zero-padded to digits places (the play time's hours and minutes); shared static buffer. */
-char* winZenkakuStrPad(s32 n, s32 digits) {
+char* PORT_HOOKABLE(winZenkakuStrPad)(s32 n, s32 digits) {
     const char* tbl[10] = {"\x82\x4f", "\x82\x50", "\x82\x51", "\x82\x52", "\x82\x53",
                            "\x82\x54", "\x82\x55", "\x82\x56", "\x82\x57", "\x82\x58"};
     char buf[0x100];

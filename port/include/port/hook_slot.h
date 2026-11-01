@@ -17,8 +17,15 @@ typedef struct PortHookSlot {
     void* pre[PORT_HOOK_MAX];    /* int pre(Ret* result, T0* a0, ...): nonzero skips the function */
     void* post[PORT_HOOK_MAX];   /* void post(Ret* result, T0 a0, ...) */
     void* replace;               /* Ret fn(T0 a0, ...): instead of the game's */
-    void* body;                  /* the game's own function */
+    void* body;                  /* the game's own function (NULL: a slot no longer used) */
+    unsigned calls;              /* calls, in a build with PORT_HOOK_PROFILE (tools/port/gen_hooks.py) */
 } PortHookSlot;
+
+#ifdef PORT_HOOK_PROFILE
+#define PORT_HOOK_COUNT_CALL(s) ((s)->calls++)
+#else
+#define PORT_HOOK_COUNT_CALL(s) ((void)0)
+#endif
 
 extern PortHookSlot portHookSlots[];
 

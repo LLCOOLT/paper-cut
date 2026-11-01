@@ -49,7 +49,7 @@ static
 static void titleLoadDemo(void);
 
 /** Stub of the debug battle selector's message file hook: always NULL, so a debug battle loads gon_11's messages. */
-const char* DbgBtlSel_GetMsgDataPtr(void) {
+const char* PORT_HOOKABLE(DbgBtlSel_GetMsgDataPtr)(void) {
     return NULL;
 }
 
@@ -60,7 +60,7 @@ const char* DbgBtlSel_GetMsgDataPtr(void) {
  * Later versions do the setup in L_titleInit and also stop leftover field sound.
  */
 #if VERSION <= VERSION_DEMO_JP
-void seq_titleInit(SequenceWork* work) {
+void PORT_HOOKABLE(seq_titleInit)(SequenceWork* work) {
     memset(wp2, 0, sizeof(TitleWork));
     wp2->texture = fileAllocf(4, "%s/mariost.tpl", getMarioStDvdRoot());
     wp2->topPosX = 0.0f;
@@ -93,7 +93,7 @@ void seq_titleInit(SequenceWork* work) {
 }
 #else
 /** Later versions: L_titleInit does the setup, then the same flags are cleared. */
-void seq_titleInit(SequenceWork* work) {
+void PORT_HOOKABLE(seq_titleInit)(SequenceWork* work) {
     L_titleInit(work);
     gp->flags &= ~GLOBAL_FLAG_SKIP_MAP_EVENTS;
     gp->flags &= ~0x40;
@@ -103,7 +103,7 @@ void seq_titleInit(SequenceWork* work) {
 #endif
 
 /** Leaves the title sequence: frees mariost.tpl and fades out all sound unless going on to the file select. */
-void seq_titleExit(SequenceWork* work) {
+void PORT_HOOKABLE(seq_titleExit)(SequenceWork* work) {
     fileFree(wp2->texture);
     if (seqGetNextSeq() != SEQ_LOAD) {
         psndStopAllFadeOut();
@@ -111,7 +111,7 @@ void seq_titleExit(SequenceWork* work) {
 }
 
 /** Per-frame title sequence; all the work is in titleMain. */
-void seq_titleMain(SequenceWork* work) {
+void PORT_HOOKABLE(seq_titleMain)(SequenceWork* work) {
     titleMain(work);
 }
 
@@ -120,7 +120,7 @@ void seq_titleMain(SequenceWork* work) {
  * The crash handler only shows its error screen in debug mode; otherwise it stops sound and hangs.
  */
 #if VERSION >= VERSION_JP
-s32 N_getDebugMode(void) {
+s32 PORT_HOOKABLE(N_getDebugMode)(void) {
     return wp2->debug;
 }
 

@@ -68,7 +68,7 @@ PouchData* pouchGetPtr(void) {
  * Allocates and clears the pouch for a new game:
  * empty lists, 10 HP, 5 FP, 3 BP, level 1, partners at 10 HP, and Yoshi's default name.
  */
-void pouchInit(void) {
+void PORT_HOOKABLE(pouchInit)(void) {
     int i;
 
     // BUG: allocates a new PouchData without checking for or freeing the old one. pouchInit runs at boot
@@ -128,22 +128,22 @@ void pouchInit(void) {
 }
 
 /** Key item in key item list slot id (0 if empty). */
-ItemType pouchKeyItem(s32 id) {
+ItemType PORT_HOOKABLE(pouchKeyItem)(s32 id) {
     return mpp->keyItems[id];
 }
 
 /** Item in Mario's item list slot id (0 if empty). */
-ItemType pouchHaveItem(s32 id) {
+ItemType PORT_HOOKABLE(pouchHaveItem)(s32 id) {
     return mpp->heldItems[id];
 }
 
 /** Item in storage slot id (0 if empty). */
-ItemType pouchKeepItem(s32 id) {
+ItemType PORT_HOOKABLE(pouchKeepItem)(s32 id) {
     return mpp->storedItems[id];
 }
 
 /** Badge in badge list slot id (0 if empty). */
-ItemType pouchHaveBadge(s32 id) {
+ItemType PORT_HOOKABLE(pouchHaveBadge)(s32 id) {
     return mpp->badges[id];
 }
 /** Badge in worn-badge slot id (0 if that slot is not worn). US and later only. */
@@ -155,7 +155,7 @@ ItemType L_pouchEquipBadge(s32 id) {
 #endif
 
 /** Number of items Mario carries (out of 20 slots). */
-s32 pouchGetHaveItemCnt(void) {
+s32 PORT_HOOKABLE(pouchGetHaveItemCnt)(void) {
     s32 i, count;
 
     for (count = 0, i = 0; i < MAX_HELD_ITEMS; i++) {
@@ -167,7 +167,7 @@ s32 pouchGetHaveItemCnt(void) {
 }
 
 /** Number of items in storage. */
-s32 pouchGetKeepItemCnt(void) {
+s32 PORT_HOOKABLE(pouchGetKeepItemCnt)(void) {
     s32 i, count;
 
     for (count = 0, i = 0; i < MAX_STORED_ITEMS; i++) {
@@ -179,7 +179,7 @@ s32 pouchGetKeepItemCnt(void) {
 }
 
 /** Number of badges Mario owns. */
-s32 pouchGetHaveBadgeCnt(void) {
+s32 PORT_HOOKABLE(pouchGetHaveBadgeCnt)(void) {
     s32 i, count;
 
     for (count = 0, i = 0; i < MAX_BADGES; i++) {
@@ -191,7 +191,7 @@ s32 pouchGetHaveBadgeCnt(void) {
 }
 
 /** Number of badges Mario is wearing. */
-s32 pouchGetEquipBadgeCnt(void) {
+s32 PORT_HOOKABLE(pouchGetEquipBadgeCnt)(void) {
     s32 i, count;
 
     for (count = 0, i = 0; i < MAX_BADGES; i++) {
@@ -203,7 +203,7 @@ s32 pouchGetEquipBadgeCnt(void) {
 }
 
 /** Free slots in Mario's item list: 20 with the Strange Sack, else 10. */
-s32 pouchGetEmptyHaveItemCnt(void) {
+s32 PORT_HOOKABLE(pouchGetEmptyHaveItemCnt)(void) {
     s32 i, count, max;
 
     max = CHECK_ITEM(ITEM_STRANGE_SACK) ? MAX_HELD_ITEMS : HELD_ITEM_COUNT_BASE;
@@ -216,7 +216,7 @@ s32 pouchGetEmptyHaveItemCnt(void) {
 }
 
 /** Number of free item storage slots. */
-s32 pouchGetEmptyKeepItemCnt(void) {
+s32 PORT_HOOKABLE(pouchGetEmptyKeepItemCnt)(void) {
     s32 i, count;
 
     for (count = 0, i = 0; i < MAX_STORED_ITEMS; i++) {
@@ -368,7 +368,7 @@ BOOL PORT_HOOKABLE(pouchGetItem)(ItemType type) {
 }
 
 /** How many copies of an item, key item or badge Mario carries (stored items do not count); 0 for other ids. */
-s32 pouchCheckItem(u32 itemId) {
+s32 PORT_HOOKABLE(pouchCheckItem)(u32 itemId) {
     s32 id = itemId;
     s32 i;
     u32 itemCnt;
@@ -547,7 +547,7 @@ char* strupr(char* str);
  * The badge menu's name sort in win_root.c calls it too. Not in the US demo.
  */
 #if VERSION >= VERSION_JP
-void pouchHiraToKata(const char* src, char* dst) {
+void PORT_HOOKABLE(pouchHiraToKata)(const char* src, char* dst) {
     u16 c;
     s32 len = strlen(src) / 2;
 #if VERSION >= VERSION_US
@@ -784,7 +784,7 @@ static s32 comp_kind_r(const void* a, const void* b) {
  * 4/11 badges by name, 5/12 badges by kind, 6/13 badges by BP cost then kind. Badges keep their worn state.
  * JP compares internal ids for badge names.
  */
-void pouchSortItem(s32 mode) {
+void PORT_HOOKABLE(pouchSortItem)(s32 mode) {
     s32 k;
     s16 items[20];
     s16 keys[121];
@@ -1067,7 +1067,7 @@ void pouchSortItem(s32 mode) {
 }
 
 /** Mario's coins. */
-s32 pouchGetCoin(void) {
+s32 PORT_HOOKABLE(pouchGetCoin)(void) {
     return mpp->coins;
 }
 
@@ -1096,18 +1096,18 @@ s32 PORT_HOOKABLE(pouchSetCoin)(s32 coins) {
 }
 
 /** Number of Shine Sprites Mario carries (super coin: the Japanese name). */
-s32 pouchGetSuperCoin(void) {
+s32 PORT_HOOKABLE(pouchGetSuperCoin)(void) {
     return mpp->shineSpriteCount;
 }
 
 /** Sets the Shine Sprite count (super coin: the Japanese name) and returns it. */
-s16 pouchSetSuperCoin(s16 count) {
+s16 PORT_HOOKABLE(pouchSetSuperCoin)(s16 count) {
     mpp->shineSpriteCount = count;
     return mpp->shineSpriteCount;
 }
 
 /** Number of Star Pieces Mario carries. */
-s32 pouchGetStarPiece(void) {
+s32 PORT_HOOKABLE(pouchGetStarPiece)(void) {
     return mpp->starPieceCount;
 }
 
@@ -1118,7 +1118,7 @@ s16 PORT_HOOKABLE(pouchAddStarPiece)(s16 count) {
 }
 
 /** Adds HP to Mario (negative for damage), clamped to 0..maximumHP; returns the new HP. */
-s16 pouchAddHP(s32 points) {
+s16 PORT_HOOKABLE(pouchAddHP)(s32 points) {
     mpp->currentHP += (s16)points;
     if (mpp->currentHP < 0) {
         mpp->currentHP = 0;
@@ -1130,17 +1130,17 @@ s16 pouchAddHP(s32 points) {
 }
 
 /** Mario's current HP. */
-s32 pouchGetHP(void) {
+s32 PORT_HOOKABLE(pouchGetHP)(void) {
     return mpp->currentHP;
 }
 
 /** Max HP including HP Plus badges. */
-PouchStat pouchGetMaxHP(void) {
+PouchStat PORT_HOOKABLE(pouchGetMaxHP)(void) {
     return mpp->maximumHP;
 }
 
 /** Sets current HP, clamped to the maximum (not to 0). */
-void pouchSetHP(s16 points) {
+void PORT_HOOKABLE(pouchSetHP)(s16 points) {
     mpp->currentHP = points;
     if (mpp->currentHP > mpp->maximumHP) {
         mpp->currentHP = mpp->maximumHP;
@@ -1148,18 +1148,18 @@ void pouchSetHP(s16 points) {
 }
 
 /** Sets max HP and the badge-free base max HP. */
-void pouchSetMaxHP(s16 points) {
+void PORT_HOOKABLE(pouchSetMaxHP)(s16 points) {
     mpp->maximumHP = points;
     mpp->baseMaxHP = mpp->maximumHP;
 }
 
 /** A partner's current HP (partyData is indexed by PartyId). */
-s32 pouchGetPartyHP(PartyId partnerId) {
+s32 PORT_HOOKABLE(pouchGetPartyHP)(PartyId partnerId) {
     return mpp->partyData[partnerId].currentHP;
 }
 
 /** Sets a partner's current HP, clamped to its maximum (not to 0). */
-void pouchSetPartyHP(s32 partnerId, s32 points) {
+void PORT_HOOKABLE(pouchSetPartyHP)(s32 partnerId, s32 points) {
     PouchPartyData* party;
 
     mpp->partyData[partnerId].currentHP = points;
@@ -1170,17 +1170,17 @@ void pouchSetPartyHP(s32 partnerId, s32 points) {
 }
 
 /** Mario's current FP. */
-s32 pouchGetFP(void) {
+s32 PORT_HOOKABLE(pouchGetFP)(void) {
     return mpp->currentFP;
 }
 
 /** Max FP including FP Plus badges. */
-PouchStat pouchGetMaxFP(void) {
+PouchStat PORT_HOOKABLE(pouchGetMaxFP)(void) {
     return mpp->maximumFP;
 }
 
 /** Sets current FP, clamped to the maximum (not to 0). */
-void pouchSetFP(s16 points) {
+void PORT_HOOKABLE(pouchSetFP)(s16 points) {
     mpp->currentFP = points;
     if (mpp->currentFP > mpp->maximumFP) {
         mpp->currentFP = mpp->maximumFP;
@@ -1188,18 +1188,18 @@ void pouchSetFP(s16 points) {
 }
 
 /** Sets max FP and the badge-free base max FP. */
-void pouchSetMaxFP(s16 points) {
+void PORT_HOOKABLE(pouchSetMaxFP)(s16 points) {
     mpp->maximumFP = points;
     mpp->baseMaxFP = mpp->maximumFP;
 }
 
 /** Current Star Power in hundredths of a gauge unit (AP: appeal points, from the audience). */
-s32 pouchGetAP(void) {
+s32 PORT_HOOKABLE(pouchGetAP)(void) {
     return mpp->currentSP;
 }
 
 /** Adds Star Power (negative to spend: a special move costs baseSpCost * 100), clamped to 0..maximumSP. */
-void pouchAddAP(s32 points) {
+void PORT_HOOKABLE(pouchAddAP)(s32 points) {
     mpp->currentSP += points;
     if (mpp->currentSP < 0) {
         mpp->currentSP = 0;
@@ -1210,7 +1210,7 @@ void pouchAddAP(s32 points) {
 }
 
 /** Sets Star Power, clamped to 0..maximumSP. */
-void pouchSetAP(s16 points) {
+void PORT_HOOKABLE(pouchSetAP)(s16 points) {
     mpp->currentSP = points;
     if (mpp->currentSP < 0) {
         mpp->currentSP = 0;
@@ -1221,17 +1221,17 @@ void pouchSetAP(s16 points) {
 }
 
 /** Star Power maximum in hundredths of a gauge unit (100 per Crystal Star). */
-PouchStat pouchGetMaxAP(void) {
+PouchStat PORT_HOOKABLE(pouchGetMaxAP)(void) {
     return mpp->maximumSP;
 }
 
 /** Audience size carried between battles; the next battle's starting crowd is drawn around it. */
-f32 pouchGetAudienceNum(void) {
+f32 PORT_HOOKABLE(pouchGetAudienceNum)(void) {
     return mpp->audienceCount;
 }
 
 /** Saves the battle audience size (battle_audience.c) so the next battle starts with about as many. */
-void pouchSetAudienceNum(f32 num) {
+void PORT_HOOKABLE(pouchSetAudienceNum)(f32 num) {
     mpp->audienceCount = num;
 }
 
@@ -1239,7 +1239,7 @@ void pouchSetAudienceNum(f32 num) {
  * Jump level from the boots key items (0 none, 1 Boots, 2 Super Boots, 3 Ultra Boots);
  * also caches it in jumpLevel. Field objects check it (evt_mobj.c).
  */
-s32 pouchGetJumpLv(void) {
+s32 PORT_HOOKABLE(pouchGetJumpLv)(void) {
     s32 level = 0;
 
     if (CHECK_ITEM(ITEM_ULTRA_BOOTS)) {
@@ -1257,7 +1257,7 @@ s32 pouchGetJumpLv(void) {
  * Hammer level from the hammer key items (0 none, 1 Hammer, 2 Super Hammer, 3 Ultra Hammer);
  * also caches it in hammerLevel.
  */
-s32 pouchGetHammerLv(void) {
+s32 PORT_HOOKABLE(pouchGetHammerLv)(void) {
     s32 level = 0;
 
     if (CHECK_ITEM(ITEM_ULTRA_HAMMER)) {
@@ -1275,14 +1275,14 @@ s32 pouchGetHammerLv(void) {
  * Partner's attack level (number of rank-ups); the party menu shows attackLevel + 2 moves
  * and battle uses it to pick move power.
  */
-s32 pouchGetPartyAttackLv(PartyId partyId) {
+s32 PORT_HOOKABLE(pouchGetPartyAttackLv)(PartyId partyId) {
     PouchPartyData* party = &mpp->partyData[partyId];
     return party->attackLevel;
 }
 
 #if VERSION <= VERSION_DEMO_JP
 /** The demo stores into the first empty slot and removes by id alone, without shifting the list. */
-BOOL pouchAddKeepItem(s16 id) {
+BOOL PORT_HOOKABLE(pouchAddKeepItem)(s16 id) {
     s32 i;
 
     for (i = 0; i < MAX_STORED_ITEMS; i++) {
@@ -1298,7 +1298,7 @@ BOOL pouchAddKeepItem(s16 id) {
 }
 
 /** Takes the first copy of id out of storage, leaving an empty slot; FALSE if it is not stored. */
-BOOL pouchRemoveKeepItem(s32 id) {
+BOOL PORT_HOOKABLE(pouchRemoveKeepItem)(s32 id) {
     s32 i;
 
     for (i = 0; i < MAX_STORED_ITEMS; i++) {
@@ -1317,7 +1317,7 @@ BOOL pouchRemoveKeepItem(s32 id) {
  * Puts an item into storage (evt_pouch script command): it goes to the front and the rest shift back;
  * FALSE when all 32 slots are full.
  */
-BOOL pouchAddKeepItem(s16 id) {
+BOOL PORT_HOOKABLE(pouchAddKeepItem)(s16 id) {
     s32 i, j;
 
     for (i = MAX_STORED_ITEMS - 1; i >= 0; i--) {
@@ -1336,7 +1336,7 @@ BOOL pouchAddKeepItem(s16 id) {
  * Takes the stored item id out of storage slot index (evt_pouch script command) and closes the gap;
  * FALSE if that slot holds another item.
  */
-BOOL pouchRemoveKeepItem(s32 id, s32 index) {
+BOOL PORT_HOOKABLE(pouchRemoveKeepItem)(s32 id, s32 index) {
     s32 i, j;
 
     if (mpp->storedItems[index] != id) {
@@ -1397,7 +1397,7 @@ void PORT_HOOKABLE(pouchReviseMarioParam)(void) {
  * Recomputes every partner's max HP: the _party_max_hp_table entry for its HP level plus 5 per HP Plus P worn,
  * clamping current HP down to it.
  */
-void pouchRevisePartyParam(void) {
+void PORT_HOOKABLE(pouchRevisePartyParam)(void) {
     PouchPartyData* party;
     int count, i;
 
@@ -1417,12 +1417,12 @@ void pouchRevisePartyParam(void) {
 #pragma pop
 
 /** Mario's Star Points toward the next level, for the status window. */
-PouchStat pouchGetStarPoint(void) {
+PouchStat PORT_HOOKABLE(pouchGetStarPoint)(void) {
     return mpp->starPoints;
 }
 
 /** Wears the badge in list slot index by copying it into the same slot of equippedBadges; FALSE for an empty slot. */
-BOOL pouchEquipBadgeIndex(s32 index) {
+BOOL PORT_HOOKABLE(pouchEquipBadgeIndex)(s32 index) {
     if (mpp->badges[index] == 0) {
         return FALSE;
     }
@@ -1434,7 +1434,7 @@ BOOL pouchEquipBadgeIndex(s32 index) {
  * Takes off the badge in list slot index (badge menu); FALSE if that slot was not worn.
  * BP is recomputed later by pouchReviseMarioParam.
  */
-BOOL pouchUnEquipBadgeIndex(s32 index) {
+BOOL PORT_HOOKABLE(pouchUnEquipBadgeIndex)(s32 index) {
     if (mpp->equippedBadges[index] == 0) {
         return FALSE;
     }
@@ -1456,7 +1456,7 @@ s32 PORT_HOOKABLE(pouchEquipCheckBadge)(s32 badgeId) {
 }
 
 /** TRUE if the badge in list slot index is worn (equippedBadges mirrors the badges list slot for slot). */
-BOOL pouchEquipCheckBadgeIndex(s32 index) {
+BOOL PORT_HOOKABLE(pouchEquipCheckBadgeIndex)(s32 index) {
     return mpp->equippedBadges[index] != 0;
 }
 
@@ -1464,7 +1464,7 @@ BOOL pouchEquipCheckBadgeIndex(s32 index) {
  * Equips the first copy of a badge in the badge list; FALSE if Mario does not have it.
  * Used by the story-progress setup in event.c (Attack FX R) and the E3 demo sequence. Does not recompute BP.
  */
-BOOL pouchEquipBadgeID(s32 badgeId) {
+BOOL PORT_HOOKABLE(pouchEquipBadgeID)(s32 badgeId) {
     int i;
 
     for (i = 0; i < 200; i++) {
@@ -1483,7 +1483,7 @@ BOOL pouchEquipBadgeID(s32 badgeId) {
  * Unequips the first worn copy of a badge; FALSE if none is worn.
  * The Game Over sequence takes off Slow Go with it. Not in the US demo.
  */
-BOOL N_pouchUnEquipBadgeID(s32 badgeId) {
+BOOL PORT_HOOKABLE(N_pouchUnEquipBadgeID)(s32 badgeId) {
     int i;
 
     for (i = 0; i < 200; i++) {
@@ -1506,7 +1506,7 @@ BOOL N_pouchUnEquipBadgeID(s32 badgeId) {
  * In retail those are the badges field enemies drop when beaten (enemy_common_dead_event).
  * Adds it to the special table outside battle; the demo adds it to the bargain table, in or out of battle.
  */
-s32 pouchArriveBadge(s32 id) {
+s32 PORT_HOOKABLE(pouchArriveBadge)(s32 id) {
 #if VERSION <= VERSION_DEMO_JP
     // The demo stocks an arriving badge in the bargain table.
     return badgeShop_add(bdsw->bargain_table, (s16)id, 1);
@@ -1519,7 +1519,7 @@ s32 pouchArriveBadge(s32 id) {
  * Script command evt_pouch_majinai_set: gives Merlee curseCount charm uses unless more are already left,
  * and restarts her countdown (majinai: charm).
  */
-void pouchMajinaiInit(s32 curseCount) {
+void PORT_HOOKABLE(pouchMajinaiInit)(s32 curseCount) {
     if (mpp->merleeCurseUsesRemaining < curseCount) {
         mpp->merleeCurseUsesRemaining = (u8)curseCount;
         mpp->turnsUntilMerleeActivation = -1;
@@ -1528,7 +1528,7 @@ void pouchMajinaiInit(s32 curseCount) {
 }
 
 /** Coin counter of Bowser's side-scrolling stages (0-99). */
-s32 pouchGetKpaCoin(void) {
+s32 PORT_HOOKABLE(pouchGetKpaCoin)(void) {
     return mpp->superBowserCoins;
 }
 
@@ -1536,7 +1536,7 @@ s32 pouchGetKpaCoin(void) {
  * Adds coins collected in Bowser's side-scrolling stages (kpa_act.c).
  * Every 100 coins wraps the counter and returns TRUE; the caller then adds a 1000-point bonus.
  */
-BOOL pouchAddKpaCoin(s32 coins) {
+BOOL PORT_HOOKABLE(pouchAddKpaCoin)(s32 coins) {
     BOOL ret = FALSE;
     mpp->superBowserCoins += coins;
     if (mpp->superBowserCoins >= 100) {
@@ -1547,12 +1547,12 @@ BOOL pouchAddKpaCoin(s32 coins) {
 }
 
 /** Score of Bowser's side-scrolling stages, shown by the kpa rel. */
-u32 pouchGetKpaScore(void) {
+u32 PORT_HOOKABLE(pouchGetKpaScore)(void) {
     return mpp->superBowserScore;
 }
 
 /** Adds to the score of Bowser's side-scrolling stages (kpa_act.c), capped at 999999. */
-void pouchAddKpaScore(u32 score) {
+void PORT_HOOKABLE(pouchAddKpaScore)(u32 score) {
     mpp->superBowserScore += score;
     if (mpp->superBowserScore > 999999) {
         mpp->superBowserScore = 999999;
@@ -1564,7 +1564,7 @@ void pouchAddKpaScore(u32 score) {
  * sets its bit in starPowersObtained and raises the Star Power maximum to 100 per star (capped at 800).
  * The first star also sets the saved audience size to 2.
  */
-void pouchGetStarStone(u32 id) {
+void PORT_HOOKABLE(pouchGetStarStone)(u32 id) {
     u16* sp = &mpp->starPowersObtained;
     if (!*sp) {
         mpp->audienceCount = 2.0f;
@@ -1580,7 +1580,7 @@ void pouchGetStarStone(u32 id) {
 }
 
 /** Number of mails received so far (bits set among the first 99 of emailReceivedFlags). */
-s32 pouchReceiveMailCount(void) {
+s32 PORT_HOOKABLE(pouchReceiveMailCount)(void) {
     s32 i, count;
 
     for (count = 0, i = 0; i < 99; i++) {
@@ -1592,7 +1592,7 @@ s32 pouchReceiveMailCount(void) {
 }
 
 /** Delivers a mail: sets its received bit and appends its id to emailIds in arrival order (the mail menu's list). */
-void pouchReceiveMail(s32 mailId) {
+void PORT_HOOKABLE(pouchReceiveMail)(s32 mailId) {
     s32 count;
     s32 index, shift;
 
@@ -1604,12 +1604,12 @@ void pouchReceiveMail(s32 mailId) {
 }
 
 /** Marks a mail as read in emailReadFlags; the story-progress setup in event.c opens mails it pre-delivers. */
-void pouchOpenMail(s32 mailId) {
+void PORT_HOOKABLE(pouchOpenMail)(s32 mailId) {
     mpp->emailReadFlags[mailId / 32] |= (1 << (mailId % 32));
 }
 
 /** Mail state for the mail menu: 2 when read, 1 when received but unread, 0 when not received. */
-u32 pouchCheckMail(s32 mailId) {
+u32 PORT_HOOKABLE(pouchCheckMail)(s32 mailId) {
     s32 mask = (1 << (mailId % 32));
     if (mpp->emailReadFlags[mailId / 32] & mask) {
         return 2;
@@ -1622,7 +1622,7 @@ u32 pouchCheckMail(s32 mailId) {
  * Partner colour from the top three bits of its flags;
  * Yoshi's colour picks his sprite pose table and his window and battle colours.
  */
-s32 pouchGetPartyColor(PartyId partnerId) {
+s32 PORT_HOOKABLE(pouchGetPartyColor)(PartyId partnerId) {
     return mpp->partyData[partnerId].flags >> 13;
 }
 
@@ -1630,7 +1630,7 @@ s32 pouchGetPartyColor(PartyId partnerId) {
  * Stores a partner's colour in the top three bits of its flags;
  * only Yoshi uses it (set when the egg hatches, tou_10 in Glitzville, and by party.c).
  */
-void pouchSetPartyColor(PartyId partnerId, s32 color) {
+void PORT_HOOKABLE(pouchSetPartyColor)(PartyId partnerId, s32 color) {
     mpp->partyData[partnerId].flags = (mpp->partyData[partnerId].flags & 0x1FFF) | (u16)(color << 13);
 }
 
@@ -1638,12 +1638,12 @@ void pouchSetPartyColor(PartyId partnerId, s32 color) {
  * Stores the name the player gave Yoshi when the egg hatched (evt_pouch script command);
  * the story-progress setup in event.c resets it to the default name.
  */
-void pouchSetYoshiName(char* name) {
+void PORT_HOOKABLE(pouchSetYoshiName)(char* name) {
     strcpy(mpp->yoshiName, name);
 }
 
 /** Yoshi's name for messages: the stored name, or the default from message name_party3 when it is empty. */
-char* pouchGetYoshiName(void) {
+char* PORT_HOOKABLE(pouchGetYoshiName)(void) {
     if (strlen(mpp->yoshiName) < 1) {
         return (char*)msgSearch("name_party3");
     }

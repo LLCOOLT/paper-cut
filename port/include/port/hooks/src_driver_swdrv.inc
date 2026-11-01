@@ -5,6 +5,7 @@
 void swSet(s32 p0) {
     PortHookSlot* s = &portHookSlots[18];
     int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
     if (!s->active) {
         swSet__body(p0);
         return;
@@ -23,6 +24,7 @@ void swSet(s32 p0) {
 void swByteSet(s32 p0, s32 p1) {
     PortHookSlot* s = &portHookSlots[19];
     int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
     if (!s->active) {
         swByteSet__body(p0, p1);
         return;
@@ -38,7 +40,215 @@ void swByteSet(s32 p0, s32 p1) {
     }
 }
 
+void swInit(void) {
+    PortHookSlot* s = &portHookSlots[707];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        swInit__body();
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(void))s->pre[i])();
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(void))s->replace)(); } else { swInit__body(); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(void))s->post[i])();
+    }
+}
+
+void swReInit(void) {
+    PortHookSlot* s = &portHookSlots[708];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        swReInit__body();
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(void))s->pre[i])();
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(void))s->replace)(); } else { swReInit__body(); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(void))s->post[i])();
+    }
+}
+
+BOOL swGet(s32 p0) {
+    PortHookSlot* s = &portHookSlots[709];
+    BOOL r;
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        return swGet__body(p0);
+    }
+    __builtin_memset(&r, 0, sizeof(r));
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(r)*, __typeof__(p0)*))s->pre[i])(&r, &p0);
+    }
+    if (!skip) {
+        r = (s->replace != NULL ? ((BOOL (*)(__typeof__(p0)))s->replace)(p0) : swGet__body(p0));
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(r)*, __typeof__(p0)))s->post[i])(&r, p0);
+    }
+    return r;
+}
+
+void swClear(s32 p0) {
+    PortHookSlot* s = &portHookSlots[710];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        swClear__body(p0);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*))s->pre[i])(&p0);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0)))s->replace)(p0); } else { swClear__body(p0); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0)))s->post[i])(p0);
+    }
+}
+
+s32 swByteGet(s32 p0) {
+    PortHookSlot* s = &portHookSlots[711];
+    s32 r;
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        return swByteGet__body(p0);
+    }
+    __builtin_memset(&r, 0, sizeof(r));
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(r)*, __typeof__(p0)*))s->pre[i])(&r, &p0);
+    }
+    if (!skip) {
+        r = (s->replace != NULL ? ((s32 (*)(__typeof__(p0)))s->replace)(p0) : swByteGet__body(p0));
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(r)*, __typeof__(p0)))s->post[i])(&r, p0);
+    }
+    return r;
+}
+
+void _swSet(s32 p0) {
+    PortHookSlot* s = &portHookSlots[712];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        _swSet__body(p0);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*))s->pre[i])(&p0);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0)))s->replace)(p0); } else { _swSet__body(p0); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0)))s->post[i])(p0);
+    }
+}
+
+BOOL _swGet(s32 p0) {
+    PortHookSlot* s = &portHookSlots[713];
+    BOOL r;
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        return _swGet__body(p0);
+    }
+    __builtin_memset(&r, 0, sizeof(r));
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(r)*, __typeof__(p0)*))s->pre[i])(&r, &p0);
+    }
+    if (!skip) {
+        r = (s->replace != NULL ? ((BOOL (*)(__typeof__(p0)))s->replace)(p0) : _swGet__body(p0));
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(r)*, __typeof__(p0)))s->post[i])(&r, p0);
+    }
+    return r;
+}
+
+void _swClear(s32 p0) {
+    PortHookSlot* s = &portHookSlots[714];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        _swClear__body(p0);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*))s->pre[i])(&p0);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0)))s->replace)(p0); } else { _swClear__body(p0); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0)))s->post[i])(p0);
+    }
+}
+
+void _swByteSet(s32 p0, u8 p1) {
+    PortHookSlot* s = &portHookSlots[715];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        _swByteSet__body(p0, p1);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*, __typeof__(p1)*))s->pre[i])(&p0, &p1);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0), __typeof__(p1)))s->replace)(p0, p1); } else { _swByteSet__body(p0, p1); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0), __typeof__(p1)))s->post[i])(p0, p1);
+    }
+}
+
+s32 _swByteGet(s32 p0) {
+    PortHookSlot* s = &portHookSlots[716];
+    s32 r;
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        return _swByteGet__body(p0);
+    }
+    __builtin_memset(&r, 0, sizeof(r));
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(r)*, __typeof__(p0)*))s->pre[i])(&r, &p0);
+    }
+    if (!skip) {
+        r = (s->replace != NULL ? ((s32 (*)(__typeof__(p0)))s->replace)(p0) : _swByteGet__body(p0));
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(r)*, __typeof__(p0)))s->post[i])(&r, p0);
+    }
+    return r;
+}
+
 void portHookInit_src_driver_swdrv(void) {
     portHookSlots[18].body = (void*)swSet__body;
     portHookSlots[19].body = (void*)swByteSet__body;
+    portHookSlots[707].body = (void*)swInit__body;
+    portHookSlots[708].body = (void*)swReInit__body;
+    portHookSlots[709].body = (void*)swGet__body;
+    portHookSlots[710].body = (void*)swClear__body;
+    portHookSlots[711].body = (void*)swByteGet__body;
+    portHookSlots[712].body = (void*)_swSet__body;
+    portHookSlots[713].body = (void*)_swGet__body;
+    portHookSlots[714].body = (void*)_swClear__body;
+    portHookSlots[715].body = (void*)_swByteSet__body;
+    portHookSlots[716].body = (void*)_swByteGet__body;
 }

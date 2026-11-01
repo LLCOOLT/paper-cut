@@ -1,16 +1,20 @@
 // Mario's riding-Yoshi motion: clears his motion state when he gets on Yoshi (party_yoshi.c moves them both).
+#include "port_hook.h"
 #include "motion/mot_yoshi.h"
 #include "evt/evt_bero.h"
 #include "mario/mario.h"
 #include "mario/mario_party.h"
 #include "party.h"
 #include "pmario_sound.h"
+#ifdef PORT_MODS
+#include "port/hooks/src_motion_mot_yoshi.h"
+#endif
 
 /**
  * Motion while Mario rides Yoshi: on entry clears his jump flags, speed and every collision hit,
  * and sets the front pose without a shadow; party_yoshi.c then moves and animates both of them.
  */
-void mot_yoshi(void) {
+void PORT_HOOKABLE(mot_yoshi)(void) {
     MarioWork* mario = marioGetPtr();
 
     if (mario->trigFlags & MARIO_TRIG_FLAG_IS_STARTING_NEW_MOTION) {
@@ -36,7 +40,7 @@ void mot_yoshi(void) {
  * Cleanup when Mario gets off Yoshi: stops Yoshi's running sound,
  * clears the door (bero) offsets and restores Mario's pose, shadow and draw offsets.
  */
-void mot_yoshi_post(void) {
+void PORT_HOOKABLE(mot_yoshi_post)(void) {
     PartyEntry* party;
     MarioWork* mario;
 
@@ -52,3 +56,7 @@ void mot_yoshi_post(void) {
     mario->dispOfs = (Vec){0.0f, 0.0f, 0.0f};
     mario->dispOfs2 = (Vec){0.0f, 0.0f, 0.0f};
 }
+
+#ifdef PORT_MODS
+#include "port/hooks/src_motion_mot_yoshi.inc"
+#endif

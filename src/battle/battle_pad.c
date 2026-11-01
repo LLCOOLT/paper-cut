@@ -16,7 +16,7 @@
 #pragma optimize_for_size on
 
 /** Clears the battle input history of all four controllers; called from the battle's init in battle.c. */
-void BattlePadInit(void) {
+void PORT_HOOKABLE(BattlePadInit)(void) {
     int i;
 
     for (i = 0; i < 4; i++) {
@@ -37,7 +37,7 @@ void PORT_HOOKABLE(BattlePadManager)(void) {
  * Zeroes one controller's battle input record: the current and previous pad state,
  * the 30-frame button histories and the hold-repeat timer.
  */
-void BtlPad_WorkInit(BattleWorkPad* pad) {
+void PORT_HOOKABLE(BtlPad_WorkInit)(BattleWorkPad* pad) {
     int i;
 
     for (i = 0; i < 2; i++) {
@@ -69,7 +69,7 @@ void BtlPad_WorkInit(BattleWorkPad* pad) {
  * with their own press, release and repeat edges; held tilts repeat after 16 frames, then every 8.
  * Action commands read these histories to judge timing.
  */
-void BtlPad_WorkUpdate(BattleWorkPad* pad, s32 chan) {
+void PORT_HOOKABLE(BtlPad_WorkUpdate)(BattleWorkPad* pad, s32 chan) {
     int i, repeat;
 
     pad->padData[1] = pad->padData[0];
@@ -147,22 +147,22 @@ void BtlPad_WorkUpdate(BattleWorkPad* pad, s32 chan) {
 }
 
 /** Buttons newly pressed this frame on controller 1, with the stick-direction bits. */
-u32 BattlePadGetTrigger(void) {
+u32 PORT_HOOKABLE(BattlePadGetTrigger)(void) {
     return _battleWorkPointer->padWork[0].buttonsPressedHistory[0];
 }
 
 /** Buttons held this frame on controller 1, with the stick-direction bits. */
-u32 BattlePadGetNow(void) {
+u32 PORT_HOOKABLE(BattlePadGetNow)(void) {
     return _battleWorkPointer->padWork[0].buttonsHistory[0];
 }
 
 /** Nonzero if any button in mask was newly pressed this frame on controller 1. */
-BOOL BattlePadCheckTrigger(s32 mask) {
+BOOL PORT_HOOKABLE(BattlePadCheckTrigger)(s32 mask) {
     return BattlePadMultiCheckTrigger(0, mask);
 }
 
 /** Nonzero if any button in mask was newly pressed this frame on controller chan. */
-BOOL BattlePadMultiCheckTrigger(s32 chan, s32 mask) {
+BOOL PORT_HOOKABLE(BattlePadMultiCheckTrigger)(s32 chan, s32 mask) {
     u32* history = _battleWorkPointer->padWork[chan].buttonsPressedHistory;
     return history[0] & mask;
 }
@@ -171,45 +171,45 @@ BOOL BattlePadMultiCheckTrigger(s32 chan, s32 mask) {
  * Nonzero if any button in mask was newly pressed on controller 1 frame frames ago (0 = this frame, up to 29).
  * Timed action commands use it to accept a press made a few frames early.
  */
-BOOL BattlePadCheckRecordTrigger(s32 frame, s32 mask) {
+BOOL PORT_HOOKABLE(BattlePadCheckRecordTrigger)(s32 frame, s32 mask) {
     return BattlePadMultiCheckRecordTrigger(0, frame, mask);
 }
 
 /** Nonzero if any button in mask was newly pressed on controller chan frame frames ago (0 = this frame, up to 29). */
-u32 BattlePadMultiCheckRecordTrigger(s32 chan, s32 frame, s32 mask) {
+u32 PORT_HOOKABLE(BattlePadMultiCheckRecordTrigger)(s32 chan, s32 frame, s32 mask) {
     BattleWorkPad* pad = &_battleWorkPointer->padWork[chan];
     return pad->buttonsPressedHistory[frame] & mask;
 }
 
 /** Nonzero if any button in mask is held this frame on controller 1. */
-s32 BattlePadCheckNow(s32 mask) {
+s32 PORT_HOOKABLE(BattlePadCheckNow)(s32 mask) {
     return BattlePadMultiCheckNow(0, mask);
 }
 
 /** Nonzero if any button in mask is held this frame on controller chan. */
-BOOL BattlePadMultiCheckNow(s32 chan, s32 mask) {
+BOOL PORT_HOOKABLE(BattlePadMultiCheckNow)(s32 chan, s32 mask) {
     u32* history = _battleWorkPointer->padWork[chan].buttonsHistory;
     return history[0] & mask;
 }
 
 /** Nonzero if any button in mask was released this frame on controller 1. */
-s32 BattlePadCheckUp(s32 mask) {
+s32 PORT_HOOKABLE(BattlePadCheckUp)(s32 mask) {
     return BattlePadMultiCheckUp(0, mask);
 }
 
 /** Nonzero if any button in mask was released this frame on controller chan. */
-u32 BattlePadMultiCheckUp(s32 chan, s32 mask) {
+u32 PORT_HOOKABLE(BattlePadMultiCheckUp)(s32 chan, s32 mask) {
     u32* history = _battleWorkPointer->padWork[chan].buttonsReleasedHistory;
     return history[0] & mask;
 }
 
 /** Nonzero if any button in mask fired its press-or-hold repeat this frame on controller 1 (menu cursor movement). */
-s32 BattlePadCheckRepeat(s32 mask) {
+s32 PORT_HOOKABLE(BattlePadCheckRepeat)(s32 mask) {
     return BattlePadMultiCheckRepeat(0, mask);
 }
 
 /** Nonzero if any button in mask fired its press-or-hold repeat this frame on controller chan. */
-u32 BattlePadMultiCheckRepeat(s32 chan, s32 mask) {
+u32 PORT_HOOKABLE(BattlePadMultiCheckRepeat)(s32 chan, s32 mask) {
     u32* history = _battleWorkPointer->padWork[chan].buttonsRepeatHistory;
     return history[0] & mask;
 }

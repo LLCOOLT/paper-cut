@@ -213,7 +213,12 @@ static int isMeta(int32_t length, int32_t offset) {
     return offset == 0 && length == (int32_t)PORT_CARD_META_SIZE;
 }
 
+void (*gPortCardWillWrite)(void);
+
 void* portCardWriteImage(const void* native, int32_t length, int32_t offset) {
+    if (gPortCardWillWrite != NULL) {
+        gPortCardWillWrite();
+    }
     if (isSlot(length, offset)) {
         portCardSlotToImage(native, sWriteImage);
     } else if (isMeta(length, offset)) {

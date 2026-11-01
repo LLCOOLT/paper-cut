@@ -137,52 +137,52 @@ USER_FUNC(N_evt_bero_set_mario_bottomless_respawn_pos_to_current_mario_pos) {
  * Returns the BeroEXEC state bits; bit 1 is set while an entrance
  * or exit is playing (camdrv and seq_mapchange check it before showing the letterbox).
  */
-s32 bero_get_BeroEXEC(void) {
+s32 PORT_HOOKABLE(bero_get_BeroEXEC)(void) {
     return BeroEXEC;
 }
 
 /** Returns how many entrances the current map registered with evt_bero_get_info. */
-s32 bero_get_BeroNUM(void) {
+s32 PORT_HOOKABLE(bero_get_BeroNUM)(void) {
     return BeroNUM;
 }
 
 /** Start X of the walk computed by the last bero_get_position_* call. */
-f32 bero_get_BeroSX(void) {
+f32 PORT_HOOKABLE(bero_get_BeroSX)(void) {
     return BeroSX;
 }
 
 /** Start Y of the walk computed by the last bero_get_position_* call. */
-f32 bero_get_BeroSY(void) {
+f32 PORT_HOOKABLE(bero_get_BeroSY)(void) {
     return BeroSY;
 }
 
 /** Start Z of the walk computed by the last bero_get_position_* call. */
-f32 bero_get_BeroSZ(void) {
+f32 PORT_HOOKABLE(bero_get_BeroSZ)(void) {
     return BeroSZ;
 }
 
 /** End X of the walk computed by the last bero_get_position_* call. */
-f32 bero_get_BeroEX(void) {
+f32 PORT_HOOKABLE(bero_get_BeroEX)(void) {
     return BeroEX;
 }
 
 /** End Y of the walk computed by the last bero_get_position_* call. */
-f32 bero_get_BeroEY(void) {
+f32 PORT_HOOKABLE(bero_get_BeroEY)(void) {
     return BeroEY;
 }
 
 /** End Z of the walk computed by the last bero_get_position_* call. */
-f32 bero_get_BeroEZ(void) {
+f32 PORT_HOOKABLE(bero_get_BeroEZ)(void) {
     return BeroEZ;
 }
 
 /** Returns the current map's table of 16 entrance pointers (BeroINFOARR, NULL-terminated). */
-BeroEntry** bero_get_ptr(void) {
+BeroEntry** PORT_HOOKABLE(bero_get_ptr)(void) {
     return BeroINFOARR;
 }
 
 /** Zeroes the saved Mario display offset (BeroOX/OY/OZ) that pipe travel restores; called from mot_yoshi. */
-void bero_clear_Offset(void) {
+void PORT_HOOKABLE(bero_clear_Offset)(void) {
     BeroOX = 0.0f;
     BeroOY = 0.0f;
     BeroOZ = 0.0f;
@@ -192,7 +192,7 @@ void bero_clear_Offset(void) {
  * Turns an entrance reference into its table index:
  * values 0-15 are already indices, anything else is taken as a hit object name and looked up in BeroINFOARR.
  */
-s32 bero_id_filter(EvtWord id) { // 1:1, cursed function, do not touch
+s32 PORT_HOOKABLE(bero_id_filter)(EvtWord id) { // 1:1, cursed function, do not touch
     BeroEntry **temp, **table = BeroINFOARR;
     s32 newId = id;
     const char *string, *test;

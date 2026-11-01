@@ -6,6 +6,7 @@ s32 evt_bero_get_info(EventEntry * p0, BOOL p1) {
     PortHookSlot* s = &portHookSlots[58];
     s32 r;
     int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
     if (!s->active) {
         return evt_bero_get_info__body(p0, p1);
     }
@@ -22,6 +23,246 @@ s32 evt_bero_get_info(EventEntry * p0, BOOL p1) {
     return r;
 }
 
+s32 bero_get_BeroEXEC(void) {
+    PortHookSlot* s = &portHookSlots[748];
+    s32 r;
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        return bero_get_BeroEXEC__body();
+    }
+    __builtin_memset(&r, 0, sizeof(r));
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(r)*))s->pre[i])(&r);
+    }
+    if (!skip) {
+        r = (s->replace != NULL ? ((s32 (*)(void))s->replace)() : bero_get_BeroEXEC__body());
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(r)*))s->post[i])(&r);
+    }
+    return r;
+}
+
+s32 bero_get_BeroNUM(void) {
+    PortHookSlot* s = &portHookSlots[749];
+    s32 r;
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        return bero_get_BeroNUM__body();
+    }
+    __builtin_memset(&r, 0, sizeof(r));
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(r)*))s->pre[i])(&r);
+    }
+    if (!skip) {
+        r = (s->replace != NULL ? ((s32 (*)(void))s->replace)() : bero_get_BeroNUM__body());
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(r)*))s->post[i])(&r);
+    }
+    return r;
+}
+
+f32 bero_get_BeroSX(void) {
+    PortHookSlot* s = &portHookSlots[750];
+    f32 r;
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        return bero_get_BeroSX__body();
+    }
+    __builtin_memset(&r, 0, sizeof(r));
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(r)*))s->pre[i])(&r);
+    }
+    if (!skip) {
+        r = (s->replace != NULL ? ((f32 (*)(void))s->replace)() : bero_get_BeroSX__body());
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(r)*))s->post[i])(&r);
+    }
+    return r;
+}
+
+f32 bero_get_BeroSY(void) {
+    PortHookSlot* s = &portHookSlots[751];
+    f32 r;
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        return bero_get_BeroSY__body();
+    }
+    __builtin_memset(&r, 0, sizeof(r));
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(r)*))s->pre[i])(&r);
+    }
+    if (!skip) {
+        r = (s->replace != NULL ? ((f32 (*)(void))s->replace)() : bero_get_BeroSY__body());
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(r)*))s->post[i])(&r);
+    }
+    return r;
+}
+
+f32 bero_get_BeroSZ(void) {
+    PortHookSlot* s = &portHookSlots[752];
+    f32 r;
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        return bero_get_BeroSZ__body();
+    }
+    __builtin_memset(&r, 0, sizeof(r));
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(r)*))s->pre[i])(&r);
+    }
+    if (!skip) {
+        r = (s->replace != NULL ? ((f32 (*)(void))s->replace)() : bero_get_BeroSZ__body());
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(r)*))s->post[i])(&r);
+    }
+    return r;
+}
+
+f32 bero_get_BeroEX(void) {
+    PortHookSlot* s = &portHookSlots[753];
+    f32 r;
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        return bero_get_BeroEX__body();
+    }
+    __builtin_memset(&r, 0, sizeof(r));
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(r)*))s->pre[i])(&r);
+    }
+    if (!skip) {
+        r = (s->replace != NULL ? ((f32 (*)(void))s->replace)() : bero_get_BeroEX__body());
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(r)*))s->post[i])(&r);
+    }
+    return r;
+}
+
+f32 bero_get_BeroEY(void) {
+    PortHookSlot* s = &portHookSlots[754];
+    f32 r;
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        return bero_get_BeroEY__body();
+    }
+    __builtin_memset(&r, 0, sizeof(r));
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(r)*))s->pre[i])(&r);
+    }
+    if (!skip) {
+        r = (s->replace != NULL ? ((f32 (*)(void))s->replace)() : bero_get_BeroEY__body());
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(r)*))s->post[i])(&r);
+    }
+    return r;
+}
+
+f32 bero_get_BeroEZ(void) {
+    PortHookSlot* s = &portHookSlots[755];
+    f32 r;
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        return bero_get_BeroEZ__body();
+    }
+    __builtin_memset(&r, 0, sizeof(r));
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(r)*))s->pre[i])(&r);
+    }
+    if (!skip) {
+        r = (s->replace != NULL ? ((f32 (*)(void))s->replace)() : bero_get_BeroEZ__body());
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(r)*))s->post[i])(&r);
+    }
+    return r;
+}
+
+BeroEntry ** bero_get_ptr(void) {
+    PortHookSlot* s = &portHookSlots[756];
+    BeroEntry ** r;
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        return bero_get_ptr__body();
+    }
+    __builtin_memset(&r, 0, sizeof(r));
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(r)*))s->pre[i])(&r);
+    }
+    if (!skip) {
+        r = (s->replace != NULL ? ((BeroEntry ** (*)(void))s->replace)() : bero_get_ptr__body());
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(r)*))s->post[i])(&r);
+    }
+    return r;
+}
+
+void bero_clear_Offset(void) {
+    PortHookSlot* s = &portHookSlots[757];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        bero_clear_Offset__body();
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(void))s->pre[i])();
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(void))s->replace)(); } else { bero_clear_Offset__body(); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(void))s->post[i])();
+    }
+}
+
+s32 bero_id_filter(EvtWord p0) {
+    PortHookSlot* s = &portHookSlots[758];
+    s32 r;
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        return bero_id_filter__body(p0);
+    }
+    __builtin_memset(&r, 0, sizeof(r));
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(r)*, __typeof__(p0)*))s->pre[i])(&r, &p0);
+    }
+    if (!skip) {
+        r = (s->replace != NULL ? ((s32 (*)(__typeof__(p0)))s->replace)(p0) : bero_id_filter__body(p0));
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(r)*, __typeof__(p0)))s->post[i])(&r, p0);
+    }
+    return r;
+}
+
 void portHookInit_src_event_evt_bero(void) {
     portHookSlots[58].body = (void*)evt_bero_get_info__body;
+    portHookSlots[748].body = (void*)bero_get_BeroEXEC__body;
+    portHookSlots[749].body = (void*)bero_get_BeroNUM__body;
+    portHookSlots[750].body = (void*)bero_get_BeroSX__body;
+    portHookSlots[751].body = (void*)bero_get_BeroSY__body;
+    portHookSlots[752].body = (void*)bero_get_BeroSZ__body;
+    portHookSlots[753].body = (void*)bero_get_BeroEX__body;
+    portHookSlots[754].body = (void*)bero_get_BeroEY__body;
+    portHookSlots[755].body = (void*)bero_get_BeroEZ__body;
+    portHookSlots[756].body = (void*)bero_get_ptr__body;
+    portHookSlots[757].body = (void*)bero_clear_Offset__body;
+    portHookSlots[758].body = (void*)bero_id_filter__body;
 }

@@ -6,6 +6,7 @@ s32 SoundEfxPlayEx(SND_FXID p0, u8 p1, u8 p2, u8 p3) {
     PortHookSlot* s = &portHookSlots[60];
     s32 r;
     int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
     if (!s->active) {
         return SoundEfxPlayEx__body(p0, p1, p2, p3);
     }

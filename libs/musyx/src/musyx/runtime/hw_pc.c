@@ -85,6 +85,7 @@ static void ensureMutex(void) {
 /** PC build: marks the (nonexistent) DSP as booted. */
 /* One 5 ms "AI interrupt": MusyX renders sDest and advances its logic. */
 static void runQuantum(void) {
+  portAudioMixUpdate();
   if (sStarted && userCallback != NULL) {
     userCallback();
     memcpy(sQuantum, sDest, sizeof(sQuantum));
@@ -273,6 +274,7 @@ bool salInitAi(SND_SOME_CALLBACK callback, u32 unk, u32* outFreq) {
   userCallback = callback;
   synthInfo.numSamples = 0x20;
   *outFreq = OUTPUT_RATE;
+  portAudioMixUpdate(); /* its settings declared here, before the audio thread reads them */
 #ifdef TTYD_BACKEND_AURORA
   /* $TTYD_FAST (test runs, frames back to back): no device; salPcAuroraPump
    * renders per frame, so the sequencer keeps to the game's frames, not the

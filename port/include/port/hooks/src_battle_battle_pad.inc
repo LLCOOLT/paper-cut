@@ -5,6 +5,7 @@
 void BattlePadManager(void) {
     PortHookSlot* s = &portHookSlots[44];
     int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
     if (!s->active) {
         BattlePadManager__body();
         return;
@@ -20,6 +21,330 @@ void BattlePadManager(void) {
     }
 }
 
+void BattlePadInit(void) {
+    PortHookSlot* s = &portHookSlots[320];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        BattlePadInit__body();
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(void))s->pre[i])();
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(void))s->replace)(); } else { BattlePadInit__body(); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(void))s->post[i])();
+    }
+}
+
+void BtlPad_WorkInit(BattleWorkPad * p0) {
+    PortHookSlot* s = &portHookSlots[321];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        BtlPad_WorkInit__body(p0);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*))s->pre[i])(&p0);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0)))s->replace)(p0); } else { BtlPad_WorkInit__body(p0); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0)))s->post[i])(p0);
+    }
+}
+
+void BtlPad_WorkUpdate(BattleWorkPad * p0, s32 p1) {
+    PortHookSlot* s = &portHookSlots[322];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        BtlPad_WorkUpdate__body(p0, p1);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*, __typeof__(p1)*))s->pre[i])(&p0, &p1);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0), __typeof__(p1)))s->replace)(p0, p1); } else { BtlPad_WorkUpdate__body(p0, p1); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0), __typeof__(p1)))s->post[i])(p0, p1);
+    }
+}
+
+u32 BattlePadGetTrigger(void) {
+    PortHookSlot* s = &portHookSlots[323];
+    u32 r;
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        return BattlePadGetTrigger__body();
+    }
+    __builtin_memset(&r, 0, sizeof(r));
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(r)*))s->pre[i])(&r);
+    }
+    if (!skip) {
+        r = (s->replace != NULL ? ((u32 (*)(void))s->replace)() : BattlePadGetTrigger__body());
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(r)*))s->post[i])(&r);
+    }
+    return r;
+}
+
+u32 BattlePadGetNow(void) {
+    PortHookSlot* s = &portHookSlots[324];
+    u32 r;
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        return BattlePadGetNow__body();
+    }
+    __builtin_memset(&r, 0, sizeof(r));
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(r)*))s->pre[i])(&r);
+    }
+    if (!skip) {
+        r = (s->replace != NULL ? ((u32 (*)(void))s->replace)() : BattlePadGetNow__body());
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(r)*))s->post[i])(&r);
+    }
+    return r;
+}
+
+BOOL BattlePadCheckTrigger(s32 p0) {
+    PortHookSlot* s = &portHookSlots[325];
+    BOOL r;
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        return BattlePadCheckTrigger__body(p0);
+    }
+    __builtin_memset(&r, 0, sizeof(r));
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(r)*, __typeof__(p0)*))s->pre[i])(&r, &p0);
+    }
+    if (!skip) {
+        r = (s->replace != NULL ? ((BOOL (*)(__typeof__(p0)))s->replace)(p0) : BattlePadCheckTrigger__body(p0));
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(r)*, __typeof__(p0)))s->post[i])(&r, p0);
+    }
+    return r;
+}
+
+BOOL BattlePadMultiCheckTrigger(s32 p0, s32 p1) {
+    PortHookSlot* s = &portHookSlots[326];
+    BOOL r;
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        return BattlePadMultiCheckTrigger__body(p0, p1);
+    }
+    __builtin_memset(&r, 0, sizeof(r));
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(r)*, __typeof__(p0)*, __typeof__(p1)*))s->pre[i])(&r, &p0, &p1);
+    }
+    if (!skip) {
+        r = (s->replace != NULL ? ((BOOL (*)(__typeof__(p0), __typeof__(p1)))s->replace)(p0, p1) : BattlePadMultiCheckTrigger__body(p0, p1));
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(r)*, __typeof__(p0), __typeof__(p1)))s->post[i])(&r, p0, p1);
+    }
+    return r;
+}
+
+BOOL BattlePadCheckRecordTrigger(s32 p0, s32 p1) {
+    PortHookSlot* s = &portHookSlots[327];
+    BOOL r;
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        return BattlePadCheckRecordTrigger__body(p0, p1);
+    }
+    __builtin_memset(&r, 0, sizeof(r));
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(r)*, __typeof__(p0)*, __typeof__(p1)*))s->pre[i])(&r, &p0, &p1);
+    }
+    if (!skip) {
+        r = (s->replace != NULL ? ((BOOL (*)(__typeof__(p0), __typeof__(p1)))s->replace)(p0, p1) : BattlePadCheckRecordTrigger__body(p0, p1));
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(r)*, __typeof__(p0), __typeof__(p1)))s->post[i])(&r, p0, p1);
+    }
+    return r;
+}
+
+u32 BattlePadMultiCheckRecordTrigger(s32 p0, s32 p1, s32 p2) {
+    PortHookSlot* s = &portHookSlots[328];
+    u32 r;
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        return BattlePadMultiCheckRecordTrigger__body(p0, p1, p2);
+    }
+    __builtin_memset(&r, 0, sizeof(r));
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(r)*, __typeof__(p0)*, __typeof__(p1)*, __typeof__(p2)*))s->pre[i])(&r, &p0, &p1, &p2);
+    }
+    if (!skip) {
+        r = (s->replace != NULL ? ((u32 (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2)))s->replace)(p0, p1, p2) : BattlePadMultiCheckRecordTrigger__body(p0, p1, p2));
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(r)*, __typeof__(p0), __typeof__(p1), __typeof__(p2)))s->post[i])(&r, p0, p1, p2);
+    }
+    return r;
+}
+
+s32 BattlePadCheckNow(s32 p0) {
+    PortHookSlot* s = &portHookSlots[329];
+    s32 r;
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        return BattlePadCheckNow__body(p0);
+    }
+    __builtin_memset(&r, 0, sizeof(r));
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(r)*, __typeof__(p0)*))s->pre[i])(&r, &p0);
+    }
+    if (!skip) {
+        r = (s->replace != NULL ? ((s32 (*)(__typeof__(p0)))s->replace)(p0) : BattlePadCheckNow__body(p0));
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(r)*, __typeof__(p0)))s->post[i])(&r, p0);
+    }
+    return r;
+}
+
+BOOL BattlePadMultiCheckNow(s32 p0, s32 p1) {
+    PortHookSlot* s = &portHookSlots[330];
+    BOOL r;
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        return BattlePadMultiCheckNow__body(p0, p1);
+    }
+    __builtin_memset(&r, 0, sizeof(r));
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(r)*, __typeof__(p0)*, __typeof__(p1)*))s->pre[i])(&r, &p0, &p1);
+    }
+    if (!skip) {
+        r = (s->replace != NULL ? ((BOOL (*)(__typeof__(p0), __typeof__(p1)))s->replace)(p0, p1) : BattlePadMultiCheckNow__body(p0, p1));
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(r)*, __typeof__(p0), __typeof__(p1)))s->post[i])(&r, p0, p1);
+    }
+    return r;
+}
+
+s32 BattlePadCheckUp(s32 p0) {
+    PortHookSlot* s = &portHookSlots[331];
+    s32 r;
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        return BattlePadCheckUp__body(p0);
+    }
+    __builtin_memset(&r, 0, sizeof(r));
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(r)*, __typeof__(p0)*))s->pre[i])(&r, &p0);
+    }
+    if (!skip) {
+        r = (s->replace != NULL ? ((s32 (*)(__typeof__(p0)))s->replace)(p0) : BattlePadCheckUp__body(p0));
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(r)*, __typeof__(p0)))s->post[i])(&r, p0);
+    }
+    return r;
+}
+
+u32 BattlePadMultiCheckUp(s32 p0, s32 p1) {
+    PortHookSlot* s = &portHookSlots[332];
+    u32 r;
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        return BattlePadMultiCheckUp__body(p0, p1);
+    }
+    __builtin_memset(&r, 0, sizeof(r));
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(r)*, __typeof__(p0)*, __typeof__(p1)*))s->pre[i])(&r, &p0, &p1);
+    }
+    if (!skip) {
+        r = (s->replace != NULL ? ((u32 (*)(__typeof__(p0), __typeof__(p1)))s->replace)(p0, p1) : BattlePadMultiCheckUp__body(p0, p1));
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(r)*, __typeof__(p0), __typeof__(p1)))s->post[i])(&r, p0, p1);
+    }
+    return r;
+}
+
+s32 BattlePadCheckRepeat(s32 p0) {
+    PortHookSlot* s = &portHookSlots[333];
+    s32 r;
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        return BattlePadCheckRepeat__body(p0);
+    }
+    __builtin_memset(&r, 0, sizeof(r));
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(r)*, __typeof__(p0)*))s->pre[i])(&r, &p0);
+    }
+    if (!skip) {
+        r = (s->replace != NULL ? ((s32 (*)(__typeof__(p0)))s->replace)(p0) : BattlePadCheckRepeat__body(p0));
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(r)*, __typeof__(p0)))s->post[i])(&r, p0);
+    }
+    return r;
+}
+
+u32 BattlePadMultiCheckRepeat(s32 p0, s32 p1) {
+    PortHookSlot* s = &portHookSlots[334];
+    u32 r;
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        return BattlePadMultiCheckRepeat__body(p0, p1);
+    }
+    __builtin_memset(&r, 0, sizeof(r));
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(r)*, __typeof__(p0)*, __typeof__(p1)*))s->pre[i])(&r, &p0, &p1);
+    }
+    if (!skip) {
+        r = (s->replace != NULL ? ((u32 (*)(__typeof__(p0), __typeof__(p1)))s->replace)(p0, p1) : BattlePadMultiCheckRepeat__body(p0, p1));
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(r)*, __typeof__(p0), __typeof__(p1)))s->post[i])(&r, p0, p1);
+    }
+    return r;
+}
+
 void portHookInit_src_battle_battle_pad(void) {
     portHookSlots[44].body = (void*)BattlePadManager__body;
+    portHookSlots[320].body = (void*)BattlePadInit__body;
+    portHookSlots[321].body = (void*)BtlPad_WorkInit__body;
+    portHookSlots[322].body = (void*)BtlPad_WorkUpdate__body;
+    portHookSlots[323].body = (void*)BattlePadGetTrigger__body;
+    portHookSlots[324].body = (void*)BattlePadGetNow__body;
+    portHookSlots[325].body = (void*)BattlePadCheckTrigger__body;
+    portHookSlots[326].body = (void*)BattlePadMultiCheckTrigger__body;
+    portHookSlots[327].body = (void*)BattlePadCheckRecordTrigger__body;
+    portHookSlots[328].body = (void*)BattlePadMultiCheckRecordTrigger__body;
+    portHookSlots[329].body = (void*)BattlePadCheckNow__body;
+    portHookSlots[330].body = (void*)BattlePadMultiCheckNow__body;
+    portHookSlots[331].body = (void*)BattlePadCheckUp__body;
+    portHookSlots[332].body = (void*)BattlePadMultiCheckUp__body;
+    portHookSlots[333].body = (void*)BattlePadCheckRepeat__body;
+    portHookSlots[334].body = (void*)BattlePadMultiCheckRepeat__body;
 }

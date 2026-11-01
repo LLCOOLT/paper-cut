@@ -2693,6 +2693,68 @@ USER_FUNC(evt_mobj_recovery_blk) {
     return EVT_RETURN_DONE;
 }
 
+#ifdef TARGET_PC
+#include "evt/evt_pouch.h"
+#include "evt/evt_window.h"
+#include "port/gameplus.h"
+/*
+ * Gameplay+: storage at every Save Block (port/include/port/gameplus.h). Asks
+ * what to do first; storing and taking out pick items one at a time as at the
+ * Rogueport shop's counter, until the list is closed. LW(13) is 0 when Mario
+ * goes on to save, 1 when he leaves.
+ */
+static EVT_BEGIN(port_storage_evt)
+    LABEL(0)
+    CALL(evt_msg_print, MSG_PRINT_DIRECT, STRING("What would you like to do?<o>"), 0, 0)
+    CALL(evt_msg_select, MSG_PRINT_DIRECT, STRING("<select 0 3 260 140>\nSave\nStore items\nTake out items\nLeave"))
+    SET_VALUE(LW(13), LW(0))
+    CALL(evt_msg_continue)
+    IF_INT_EQUAL(LW(13), 0)
+        RETURN
+    END_IF
+    IF_INT_EQUAL(LW(13), 1)
+        LABEL(1)
+        CALL(portEvtStorageCounts)
+        IF_INT_EQUAL(LW(0), 0)
+            CALL(evt_msg_print, MSG_PRINT_DIRECT, STRING("You have no items to store.<k>"), 0, 0)
+            GOTO(0)
+        END_IF
+        IF_INT_EQUAL(LW(1), 0)
+            CALL(evt_msg_print, MSG_PRINT_DIRECT, STRING("The storage is full.<k>"), 0, 0)
+            GOTO(0)
+        END_IF
+        CALL(evt_win_item_select, 1, 4, LW(1), LW(4))
+        IF_INT_LESS_OR_EQUAL(LW(1), 0)
+            GOTO(0)
+        END_IF
+        CALL(N_evt_pouch_remove_item_index, LW(1), LW(4), LW(0))
+        CALL(evt_pouch_add_keepitem, LW(1), LW(0))
+        GOTO(1)
+    END_IF
+    IF_INT_EQUAL(LW(13), 2)
+        LABEL(2)
+        CALL(portEvtStorageCounts)
+        IF_INT_EQUAL(LW(2), 0)
+            CALL(evt_msg_print, MSG_PRINT_DIRECT, STRING("Nothing is stored.<k>"), 0, 0)
+            GOTO(0)
+        END_IF
+        IF_INT_EQUAL(LW(3), 0)
+            CALL(evt_msg_print, MSG_PRINT_DIRECT, STRING("Your bag is full.<k>"), 0, 0)
+            GOTO(0)
+        END_IF
+        CALL(evt_win_item_select, 1, 5, LW(1), LW(4))
+        IF_INT_LESS_OR_EQUAL(LW(1), 0)
+            GOTO(0)
+        END_IF
+        CALL(evt_pouch_remove_keepitem, LW(1), LW(4), LW(0))
+        CALL(evt_pouch_add_item, LW(1), LW(0))
+        GOTO(2)
+    END_IF
+    SET_VALUE(LW(13), 1)
+    RETURN
+EVT_END()
+#endif
+
 /**
  * Save block script: shows the "save_first_hit" tutorial the first time,
  * sets GSWF_SAVE_BLOCK_USED_AFTER_GOOMBELLA once Goombella has joined,
@@ -2710,6 +2772,19 @@ EVT_BEGIN(mobj_save_blk_sysevt)
     IF_INT_GREATER_OR_EQUAL(GSW(GSW_STORY_PROGRESS), STORY_STG0_07_GOOMBELLA_JOINS)
         SET_VALUE(GSWF(GSWF_SAVE_BLOCK_USED_AFTER_GOOMBELLA), 1)
     END_IF
+#ifdef TARGET_PC
+    // Gameplay+: storage at every Save Block (not after the first hit's tutorial, whose window stays open)
+    CALL(portEvtStorageOn)
+    IF_INT_EQUAL(LW(0), 1)
+        IF_INT_EQUAL(LF(10), 0)
+            CALL_CHILD(port_storage_evt)
+            IF_INT_EQUAL(LW(13), 1)
+                CALL(evt_mario_key_onoff, 1)
+                RETURN
+            END_IF
+        END_IF
+    END_IF
+#endif
     SET_VALUE(LW(0), 0)
 #if VERSION >= VERSION_US
     CALL_CHILD(evt_memcard_save_wrapper)

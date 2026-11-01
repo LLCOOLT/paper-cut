@@ -1,4 +1,5 @@
 // Battle information: the data passed in and out of a battle (mode, party, first strike, result, item drops).
+#include "port_hook.h"
 #include "battle/battle_information.h"
 #include "battle/battle.h"
 #include "evt/evt_cmd.h"
@@ -10,6 +11,9 @@
 #include "manager/evtmgr_cmd.h"
 #include "version.h"
 #include "evt/evt_story.h"
+#ifdef PORT_MODS
+#include "port/hooks/src_battle_battle_information.h"
+#endif
 
 // no automatic inlining in this unit, as in the original (the object differs without it)
 #pragma auto_inline off
@@ -17,7 +21,7 @@
 #pragma optimize_for_size on
 
 /** Stores the battle mode in the info passed from the field to the battle. */
-void BattleInformationSetMode(FieldBattleInfo* info, u32 mode) {
+void PORT_HOOKABLE(BattleInformationSetMode)(FieldBattleInfo* info, u32 mode) {
     info->mode = mode;
 }
 
@@ -25,7 +29,7 @@ void BattleInformationSetMode(FieldBattleInfo* info, u32 mode) {
  * Stores which partner (as a battle unit kind) joins Mario in the battle;
  * set by seq_battle from the active party member.
  */
-void BattleInformationSetParty(FieldBattleInfo* info, BattleUnitType party) {
+void PORT_HOOKABLE(BattleInformationSetParty)(FieldBattleInfo* info, BattleUnitType party) {
     info->party = party;
 }
 
@@ -34,7 +38,7 @@ void BattleInformationSetParty(FieldBattleInfo* info, BattleUnitType party) {
  * from the field hit kind (fbat->hitKind) that began it.
  * The field is named partyId but holds this first-strike kind.
  */
-void BattleInformationSetFirstAttack(FieldBattleInfo* info, u32 partyId) {
+void PORT_HOOKABLE(BattleInformationSetFirstAttack)(FieldBattleInfo* info, u32 partyId) {
     info->partyId = partyId;
 }
 
@@ -42,7 +46,7 @@ void BattleInformationSetFirstAttack(FieldBattleInfo* info, u32 partyId) {
  * Resets the field-to-battle info: mode, partner, first strike and result 0, no setup,
  * no coins and no special rule.
  */
-void BattleInformationInit(FieldBattleInfo* info) {
+void PORT_HOOKABLE(BattleInformationInit)(FieldBattleInfo* info) {
     BattleInformationSetMode(info, 0);
     BattleInformationSetParty(info, 0);
     BattleInformationSetFirstAttack(info, 0);
@@ -56,17 +60,17 @@ void BattleInformationInit(FieldBattleInfo* info) {
 }
 
 /** Links the field NPC's battle setup (enemy group, held items, drop results) to the battle info. */
-void BattleInfomationSetBattleSetupInfo(FieldBattleInfo* info, NpcBattleInfo* setup) {
+void PORT_HOOKABLE(BattleInfomationSetBattleSetupInfo)(FieldBattleInfo* info, NpcBattleInfo* setup) {
     info->setup = setup;
 }
 
 /** Stores the battle result; battle_seq_end sets 1 for a win, 4 for running away, and so on. */
-void BattleInformationSetResult(FieldBattleInfo* info, u32 result) {
+void PORT_HOOKABLE(BattleInformationSetResult)(FieldBattleInfo* info, u32 result) {
     info->result = result;
 }
 
 /** Returns the battle result read back by battle_seq_end, npcdrv and evt_npc after the fight (1 = won). */
-s32 BattleInformationGetResult(FieldBattleInfo* info) {
+s32 PORT_HOOKABLE(BattleInformationGetResult)(FieldBattleInfo* info) {
     return info->result;
 }
 typedef struct ItemHogTable {
@@ -95,7 +99,7 @@ const ItemHogTable N_item_hog_table = {
  * and adds a pick from N_item_hog_table: in the demos and JP only when the held-item roll finds nothing to drop,
  * from US on whenever no item dropped. From JP on, nothing drops before Frankly's house.
  */
-void BattleInformationSetDropMaterial(FieldBattleInfo* info) {
+void PORT_HOOKABLE(BattleInformationSetDropMaterial)(FieldBattleInfo* info) {
     NpcBattleInfo* setup = info->setup;
     BattleGroupSetup* group = setup->groupSetup;
     PointDropData* hp = group->hpDropTable;
@@ -237,3 +241,7 @@ void BattleInformationSetDropMaterial(FieldBattleInfo* info) {
     }
 #endif
 }
+
+#ifdef PORT_MODS
+#include "port/hooks/src_battle_battle_information.inc"
+#endif

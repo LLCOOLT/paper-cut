@@ -38,6 +38,20 @@ void salPcRender(s16* out, u32 frames);
 /* Port hook: extra stereo frames (e.g. the DVD stream) mixed after MusyX. */
 void portAudioMixExtra(s16* out, u32 frames);
 
+/* The mix categories (the settings page's music, effects and ambience
+ * volumes): each voice takes the category current when its sound started
+ * (a sequence's voices, the sequence's), and is scaled by its category's
+ * gain before it is mixed. */
+enum { SAL_PC_MUSIC, SAL_PC_SFX, SAL_PC_AMBIENCE, SAL_PC_CATEGORIES };
+/* Sets the current category (cat >= 0) and returns the one before. */
+int salPcCategory(int cat);
+void salPcSetCategoryGain(int cat, float gain);
+extern u8 salPcVoiceCat[SYNTH_MAX_VOICES];
+extern u8 salPcSeqCat[256];    /* by sequence instance */
+extern u8 salPcStreamCat[64];  /* by stream slot */
+/* Port hook, before each quantum: sets the categories' gains (salPcSetCategoryGain). */
+void portAudioMixUpdate(void);
+
 #ifdef __cplusplus
 }
 #endif

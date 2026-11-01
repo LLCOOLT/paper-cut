@@ -30,7 +30,7 @@ int quickSwapHeld() {
 }
 
 // Fast travel: a button per hub, those not reached yet greyed out
-void fastTravel() {
+void fastTravel(int) {
   if (!portGameplus("fast_travel")) {
     ImGui::TextDisabled("Turn on Fast travel above to use it.");
     return;
@@ -50,7 +50,7 @@ void fastTravel() {
 }
 
 // Journal: the file's progress, from its flags
-void journal() {
+void journal(int) {
   PortJournal j;
   if (!portJournal(&j)) {
     ImGui::TextDisabled("Shown while a game is in the field or a battle.");
@@ -92,14 +92,23 @@ struct Register {
                           "In the field, an item used on a partner heals the other partners too.", kPlay,
                           "heal_all_partners", "heal item partner mushroom hp");
     portSettingsAddToggle(kTab, "Skip repeated scenes",
-                          "Scenes already seen on this file go faster: the Crystal Star fanfare after the first "
-                          "star, and Zess T.'s cooking once she has cooked for you.",
+                          "Scenes already seen on this file go faster or straight to their end: the Crystal Star "
+                          "fanfare and the pedestal's map reveal after the first star, Zess T.'s cooking, the Glitz "
+                          "Pit's match openings and victory scenes, and the train and blimp ticket hand-overs.",
                           0, "skip_scenes", "skip cutscene scene crystal star cooking zess");
     portSettingsAddToggle(kTab, "Fast travel",
                           "Travel to a hub from this page: Rogueport, then one more per Crystal Star.", kPlay,
                           "fast_travel", "fast travel warp hub teleport");
     portSettingsAddToggle(kTab, "Faster battle menus", "The battle command wheel opens and turns twice as fast.",
                           0, "fast_battle_menus", "battle menu speed wheel fast");
+    portSettingsAddToggle(kTab, "Tattle without a turn",
+                          "Tactics has a Tattle entry when an enemy on the field was tattled before: it reads their "
+                          "tattles again, and the turn is still yours.",
+                          kPlay, "free_tattle", "tattle goombella free turn tactics log");
+    portSettingsAddToggle(kTab, "Battle pop-ups",
+                          "GUARD! and SUPERGUARD! over Mario or the partner, a resisted status's icon bouncing off, "
+                          "and status icons kept on screen while you pick a target.",
+                          0, "battle_popups", "battle popup guard superguard status resist icon feedback");
     portSettingsAddToggle(kTab, "Retry on Game Over",
                           "Keeps a save state of each room and battle as you enter it; on the Game Over screen, Y "
                           "goes back to it. A short pause at each room's start.",
@@ -115,6 +124,11 @@ struct Register {
     portSettingsAddToggle(kTab, "Glitz Pit kindness",
                           "A lost match costs no rank, and a match's bonus condition stays at the top of the screen.",
                           kPlay, "glitz_pit_kind", "glitz pit rank lose condition rule");
+    portSettingsAddToggle(kTab, "Play as Luigi",
+                          "Luigi in Mario's place, with Mario's moves. Luigi only has standing, walking, running, "
+                          "jumping and talking: anything else (the hammer, a spin jump, being hurt, paper forms, "
+                          "battle moves) shows Mario in Luigi's colours.",
+                          0, "playable_luigi", "luigi play as character mario green brother");
     static const char* const kNewGamePlus[] = {"Off", "Level and stats", "Level, stats and badges",
                                                "Level, stats, badges and Tattle Log"};
     portSettingsAddChoice(kTab, "New Game+",

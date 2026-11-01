@@ -2,7 +2,9 @@
 // level-ups, badges and the informant (winMgrSelect*).
 #ifdef TARGET_PC
 #include "port/menu_tap.h"
+#include "port/gameplus.h"
 #endif
+#include "port_hook.h"
 #include "version.h"
 #include "icon_ids.h"
 #include "manager/winmgr.h"
@@ -31,6 +33,9 @@
 #include "evt/evt_story.h"
 #include <dolphin/pad.h>
 #include <demo/DEMOPad.h>
+#ifdef PORT_MODS
+#include "port/hooks/src_manager_winmgr.h"
+#endif
 // FAKE: winmgr.c calls L_pouchEquipBadge through this prototype (the types it was compiled with) instead of the one in mario/mario_pouch.h; same registers, behaviour-identical.
 typedef u16 (*L_pouchEquipBadgeRetU16Fn)(s32);
 
@@ -288,14 +293,14 @@ USER_FUNC(evt_win_party_lankdown_chk) {
 #endif
 
 /** Allocates and clears the 32 window slots at boot (called from mariost.c). */
-void winMgrInit(void) {
+void PORT_HOOKABLE(winMgrInit)(void) {
     wp->numEntries = 32;
     wp->entries = (WinMgrEntry*)__memAlloc(HEAP_DEFAULT, wp->numEntries * sizeof(WinMgrEntry));
     memset(wp->entries, 0, wp->numEntries * sizeof(WinMgrEntry));
 }
 
 /** Clears every window slot; called on a map change so no window survives into the next map. */
-void winMgrReInit(void) {
+void PORT_HOOKABLE(winMgrReInit)(void) {
     memset(wp->entries, 0, wp->numEntries * sizeof(WinMgrEntry));
 }
 
@@ -341,7 +346,7 @@ static void winMgrDisp(CameraId camId, void* param) {
  * advances the open/close animation, runs the descriptor's main function
  * and queues winMgrDisp at priority 300 + the window's priority while it is visible.
  */
-void winMgrMain(void) {
+void PORT_HOOKABLE(winMgrMain)(void) {
     WinMgrEntry* entry;
     int i;
 
@@ -461,7 +466,7 @@ static void winMgrSeq(WinMgrEntry* entry) {
  * Claims the first free window slot for a descriptor, copying its position and size; returns the window id.
  * The window stays hidden until winMgrOpen. There is no check for a full table.
  */
-s32 winMgrEntry(WinMgrDesc* desc) {
+s32 PORT_HOOKABLE(winMgrEntry)(WinMgrDesc* desc) {
     WinMgrEntry* entry;
     int i;
 
@@ -488,7 +493,7 @@ s32 winMgrEntry(WinMgrDesc* desc) {
 }
 
 /** Stores the caller's data pointer that the descriptor's main and disp functions read (entry->param). */
-void winMgrSetParam(s32 id, void* param) {
+void PORT_HOOKABLE(winMgrSetParam)(s32 id, void* param) {
     WinMgrEntry* entry;
 
     entry = &wp->entries[id];
@@ -498,7 +503,7 @@ void winMgrSetParam(s32 id, void* param) {
 }
 
 /** Starts a window's opening animation and resets its help-text scroll and message. */
-void winMgrOpen(s32 id) {
+void PORT_HOOKABLE(winMgrOpen)(s32 id) {
     WinMgrEntry* entry;
 
     entry = &wp->entries[id];
@@ -512,7 +517,7 @@ void winMgrOpen(s32 id) {
 }
 
 /** Starts a window's closing animation; the slot stays allocated (see winMgrCloseAutoDelete). */
-void winMgrClose(s32 id) {
+void PORT_HOOKABLE(winMgrClose)(s32 id) {
     WinMgrEntry* entry;
 
     entry = &wp->entries[id];
@@ -523,7 +528,7 @@ void winMgrClose(s32 id) {
 }
 
 /** Starts a window's closing animation and frees the slot once it has finished. */
-void winMgrCloseAutoDelete(s32 id) {
+void PORT_HOOKABLE(winMgrCloseAutoDelete)(s32 id) {
     WinMgrEntry* entry;
 
     entry = &wp->entries[id];
@@ -535,17 +540,17 @@ void winMgrCloseAutoDelete(s32 id) {
 }
 
 /** Frees a window slot at once, without an animation. */
-void winMgrDelete(s32 id) {
+void PORT_HOOKABLE(winMgrDelete)(s32 id) {
     wp->entries[id].flags &= ~WINMGR_ENTRY_IN_USE;
 }
 
 /** TRUE while the window is still opening or closing (WINMGR_ENTRY_ANIMATING), so callers wait before reading input or drawing. */
-BOOL winMgrAction(s32 id) {
+BOOL PORT_HOOKABLE(winMgrAction)(s32 id) {
     return (wp->entries[id].flags >> 2) & 1;
 }
 
 /** Moves and resizes a window (x, y is the top left corner, y up) if the slot is in use. */
-void winMgrSetSize(s32 id, s32 x, s32 y, s32 width, s32 height) {
+void PORT_HOOKABLE(winMgrSetSize)(s32 id, s32 x, s32 y, s32 width, s32 height) {
     WinMgrEntry* entry;
 
     entry = &wp->entries[id];
@@ -558,7 +563,7 @@ void winMgrSetSize(s32 id, s32 x, s32 y, s32 width, s32 height) {
 }
 
 /** Sets a window's draw priority offset (added to 300 in winMgrMain) if the slot is in use. */
-void winMgrSetPriority(s32 id, s32 priority) {
+void PORT_HOOKABLE(winMgrSetPriority)(s32 id, s32 priority) {
     WinMgrEntry* entry;
 
     entry = &wp->entries[id];
@@ -568,12 +573,12 @@ void winMgrSetPriority(s32 id, s32 priority) {
 }
 
 /** The window slot for an id (no range or in-use check). */
-WinMgrEntry* winMgrGetPtr(s32 id) {
+WinMgrEntry* PORT_HOOKABLE(winMgrGetPtr)(s32 id) {
     return &wp->entries[id];
 }
 
 /** Resets a help window: scroll back to the top, no line count, no message. */
-void winMgrHelpInit(WinMgrEntry* entry) {
+void PORT_HOOKABLE(winMgrHelpInit)(WinMgrEntry* entry) {
     entry->scroll = 0;
     entry->lines = 0;
     entry->msg = NULL;
@@ -585,7 +590,7 @@ void winMgrHelpInit(WinMgrEntry* entry) {
  * Used by the select lists, the item and shop windows and evt_win.
  * PAL computes the last scroll position differently.
  */
-void winMgrHelpMain(WinMgrEntry* entry) {
+void PORT_HOOKABLE(winMgrHelpMain)(WinMgrEntry* entry) {
     u16 lines = 0;
 
     if (!(entry->flags & WINMGR_ENTRY_ANIMATING)) {
@@ -617,7 +622,7 @@ void winMgrHelpMain(WinMgrEntry* entry) {
  * filling in the lottery number for msg_lottery_number,
  * plus blinking up/down arrows and a scroll hint icon when it can scroll.
  */
-void winMgrHelpDraw(WinMgrEntry* entry) {
+void PORT_HOOKABLE(winMgrHelpDraw)(WinMgrEntry* entry) {
     Mtx mtx;
     Mtx scale;
     char buf[0x400];
@@ -682,7 +687,7 @@ void winMgrHelpDraw(WinMgrEntry* entry) {
  * newItem is shown first, above a divider (the item being picked up when the bag is full).
  * Free with winMgrSelectDelete.
  */
-WinMgrSelect* winMgrSelectEntry(EvtWord type, s32 newItem, BOOL cancelable) {
+WinMgrSelect* PORT_HOOKABLE(winMgrSelectEntry)(EvtWord type, s32 newItem, BOOL cancelable) {
     s32 n;
     WinMgrDesc* desc;
     WinMgrSelect* sel;
@@ -1069,7 +1074,7 @@ s32 select_comp_bteresa(const void* a, const void* b) {
  * The result of an item-style selection list: 0 while it is still open,
  * -1 if cancelled (or, from JP on, if the new item at the top was chosen), otherwise the chosen item id.
  */
-s32 winMgrSelect(WinMgrSelect* sel) {
+s32 PORT_HOOKABLE(winMgrSelect)(WinMgrSelect* sel) {
     if (sel->flags & WINMGR_SELECT_DONE) {
         if (sel->flags & WINMGR_SELECT_CANCELED) {
             return -1;
@@ -1090,7 +1095,7 @@ s32 winMgrSelect(WinMgrSelect* sel) {
  * after writing the choice into the script's LW slots (id, name, price and BP cost by type;
  * the informant types also build the message name). For types 9/10 it also writes the stats after the trade.
  */
-s32 winMgrSelectOther(WinMgrSelect* sel, EventEntry* evt) {
+s32 PORT_HOOKABLE(winMgrSelectOther)(WinMgrSelect* sel, EventEntry* evt) {
     InformantWork* jdt = &_jdt;
     s32 id;
     const char* name;
@@ -1198,7 +1203,7 @@ s32 winMgrSelectOther(WinMgrSelect* sel, EventEntry* evt) {
 
 // FAKE: the copy chain makes the target copy sel through r0 before the heap id; the plain
 // __memFree(HEAP_DEFAULT, sel->items); __memFree(HEAP_DEFAULT, sel); loads the heap id after. See FAKES.md
-void winMgrSelectDelete(WinMgrSelect* sel) {
+void PORT_HOOKABLE(winMgrSelectDelete)(WinMgrSelect* sel) {
     WinMgrSelectItem* items;
     int heap;
     WinMgrSelect* sel3;
@@ -1215,7 +1220,7 @@ void winMgrSelectDelete(WinMgrSelect* sel) {
 
 /** The row index chosen in a selection list (evt_win_item_select returns it as its extra value). */
 #if VERSION >= VERSION_JP
-s32 winMgrSelectGetCursor(WinMgrSelect* sel) {
+s32 PORT_HOOKABLE(winMgrSelectGetCursor)(WinMgrSelect* sel) {
     return sel->cursor;
 }
 #endif
@@ -1350,6 +1355,23 @@ static void select_main(WinMgrEntry* entry) {
  * a currency icon above the price column (one for 13, another for 16), the hand cursor and scroll arrows.
  * From US on, worn badges in the sell list get a mark.
  */
+#ifdef TARGET_PC
+/* Gameplay+'s junk-item helper (port/include/port/gameplus.h): in a sell list
+ * (3 items, 12 badges), how many of entry i's item the list holds when that
+ * is more than one and entry i is a spare (not a badge worn); 0 otherwise. */
+static s32 portSellSpares(WinMgrSelect* sel, s32 i) {
+    s32 j, n = 0;
+    if ((sel->type != 3 && sel->type != 12) || (sel->items[i].flags & WINMGR_ITEM_EQUIPPED) ||
+        !portGameplus("sell_helper")) {
+        return 0;
+    }
+    for (j = 0; j < sel->numItems; j++) {
+        n += sel->items[j].id == sel->items[i].id;
+    }
+    return n > 1 ? n : 0;
+}
+#endif
+
 static void select_disp(WinMgrEntry* entry) {
     WinMgrSelect* sel = entry->param;
     u32 left, top, wd, ht;
@@ -1380,6 +1402,9 @@ static void select_disp(WinMgrEntry* entry) {
         ofs = 0.0f;
         for (i = 0; i < sel->numItems; i++) {
             f32 py;
+#ifdef TARGET_PC
+            const s32 spare = portSellSpares(sel, i);
+#endif
             item = &itemDataTable[sel->items[i].id];
             py = sel->scrollY + (ofs + (entry->y - 44 - i * 24));
             if ((f32)entry->y < py - 32.0f || (f32)(entry->y - entry->height) > py + 32.0f) {
@@ -1411,7 +1436,12 @@ static void select_disp(WinMgrEntry* entry) {
             winFontInit();
 #if VERSION >= VERSION_US
             winFontSetWidth((Vec){entry->x + 60, sel->scrollY + (ofs + (entry->y - 32 - i * 24)), 0.0f}, (Vec){1.0f, 1.0f, 1.0f},
+#ifdef TARGET_PC
+                            *((sel->items[i].flags & WINMGR_ITEM_GRAY) ? &gray : &black), spare ? 150.0f : 185.0f,
+                            msgSearch(item->name)); /* Gameplay+: room for the spares mark */
+#else
                             *((sel->items[i].flags & WINMGR_ITEM_GRAY) ? &gray : &black), 185.0f, msgSearch(item->name));
+#endif
 #elif VERSION <= VERSION_DEMO_JP
             winFontSet((Vec){entry->x + 60, sel->scrollY + (ofs + (entry->y - 32 - i * 24)), 0.0f}, (Vec){1.0f, 1.0f, 1.0f},
                        black, msgSearch(item->name));
@@ -1469,6 +1499,15 @@ static void select_disp(WinMgrEntry* entry) {
                         winFontInit();
                         winFontSet((Vec){entry->x + entry->width - 10 - tw, sel->scrollY + (ofs + (entry->y - 32 - i * 24)), 0.0f}, (Vec){1.0f, 1.0f, 1.0f},
                                    *((sel->items[i].flags & WINMGR_ITEM_GRAY) ? &gray : &black), buf);
+#endif
+#ifdef TARGET_PC
+            if (spare) { /* Gameplay+'s junk-item helper: "x2" left of the price */
+                sprintf(buf, "x%d", spare);
+                winFontInit();
+                winFontSet((Vec){entry->x + entry->width - 50 - FontGetMessageWidth(buf) * 0.8f,
+                                 sel->scrollY + (ofs + (entry->y - 34 - i * 24)), 0.0f},
+                           (Vec){0.8f, 0.8f, 1.0f}, (GXColor){0x10, 0x90, 0x30, 0xFF}, buf);
+            }
 #endif
         }
         if (sel->newItem) {
@@ -2191,3 +2230,7 @@ static inline const char* party_name_table_rtn(u16 id) {
     }
     return name;
 }
+
+#ifdef PORT_MODS
+#include "port/hooks/src_manager_winmgr.inc"
+#endif

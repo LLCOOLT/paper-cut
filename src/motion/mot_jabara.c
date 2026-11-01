@@ -1,4 +1,5 @@
 // Mario's Spring Jump (jabara, "bellows"; Ultra Boots): charging, the jump, ceiling swings and the landing.
+#include "port_hook.h"
 #include "version.h"
 #include "dolphin/types.h"
 #include "evt/evt_cmd.h"
@@ -21,6 +22,9 @@
 #include "mot/mot_stay.h"
 #include "mario/mario_kemuri.h"
 #include <dolphin/pad.h>
+#ifdef PORT_MODS
+#include "port/hooks/src_motion_mot_jabara.h"
+#endif
 
 // Bits of MotJabaraWork.flags.
 enum MotJabaraFlag {
@@ -99,7 +103,7 @@ EVT_END()
  * 6 falling (0x1E-0x1F, counts as a jump attack on enemies in npcdrv), 7 anything else.
  * Items and the hit code also check it.
  */
-s32 marioGetJabaraState(void) {
+s32 PORT_HOOKABLE(marioGetJabaraState)(void) {
     s32 state = 7;
     MarioWork* mario = marioGetPtr();
     if ((u16)mario->currMotionId != MARIO_MOTION_JABARA) {
@@ -128,7 +132,7 @@ s32 marioGetJabaraState(void) {
  * and no blocking flag (0x80000000, or 0x100000 / 0x2100000 by version) is set;
  * otherwise also clears the hold timer.
  */
-BOOL marioPriCheckJabara(void) {
+BOOL PORT_HOOKABLE(marioPriCheckJabara)(void) {
     MarioWork* mario = marioGetPtr();
     u32 flags = mario->flags;
     if ((flags & 0x80000000) || (flags & VERSION_PICK(0x100000, 0x2100000))) {
@@ -162,7 +166,7 @@ static inline BOOL priChk(void) {
  * While A is held Mario glares (M_I_Y pose and voice);
  * the US and later releases start the glare from a trigger flag instead of a 10-frame hold.
  */
-BOOL marioChkJabara(void) {
+BOOL PORT_HOOKABLE(marioChkJabara)(void) {
     MarioWork* mario = marioGetPtr();
     s32 a, b;
     f32 c;
@@ -245,7 +249,7 @@ void jabaraSwingWalk(void);
  * at full charge a grabbable ceiling (attribute 0x40000) lets him hang under it, move along it,
  * drop with A or let go with B. Ends in the stay or fall motion.
  */
-void mot_jabara(void) {
+void PORT_HOOKABLE(mot_jabara)(void) {
     MarioWork* mario = marioGetPtr();
     Vec v74;
     Vec v68;
@@ -818,7 +822,7 @@ void mot_jabara(void) {
  * TRUE while Mario is bumping a ceiling during the Spring Jump (sub-motions 0x28-0x31);
  * mario_hit.c skips some hit checks then.
  */
-BOOL jabaraNoHitChk(void) {
+BOOL PORT_HOOKABLE(jabaraNoHitChk)(void) {
     MarioWork* mario = marioGetPtr();
     if ((u16)mario->currMotionId != MARIO_MOTION_JABARA) {
         return FALSE;
@@ -834,7 +838,7 @@ BOOL jabaraNoHitChk(void) {
  * resets the pose, puts the partners down, and clears the jump parameters unless the next motion is a jump
  * or fall motion (3-8, 10, 11).
  */
-void mot_jabara_post(void) {
+void PORT_HOOKABLE(mot_jabara_post)(void) {
     MarioWork* mario = marioGetPtr();
     MarioWork* m2;
 #if VERSION <= VERSION_DEMO_JP
@@ -1088,10 +1092,14 @@ static void swingMain(void) {
  * Unused stub: motion 0x1E (MARIO_MOTION_GRASP) only clears the jump and fall flags on entry and does nothing
  * else; nothing in the tree switches to it. Guess: a grabbing motion that was never written, from the name.
  */
-void mot_grasp(void) {
+void PORT_HOOKABLE(mot_grasp)(void) {
     MarioWork* mario = marioGetPtr();
     if (mario->trigFlags & MARIO_TRIG_FLAG_IS_STARTING_NEW_MOTION) {
         mario->trigFlags &= ~MARIO_TRIG_FLAG_IS_STARTING_NEW_MOTION;
         mario->flags &= ~(MARIO_FLAG_IS_JUMPING | MARIO_FLAG_IS_FALLING | MARIO_FLAG_IS_STEPPING | MARIO_FLAG_HAS_INPUT_JUMP);
     }
 }
+
+#ifdef PORT_MODS
+#include "port/hooks/src_motion_mot_jabara.inc"
+#endif

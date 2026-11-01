@@ -1,5 +1,9 @@
 // Battle status icons: the icons shown over units for statuses such as sleep and poison.
+#include "port_hook.h"
 #include "version.h"
+#ifdef TARGET_PC
+#include "port/gameplus.h"
+#endif
 #include "pc_call.h"
 // this unit is size-optimised, as in the original (the object differs without it)
 #pragma optimize_for_size on
@@ -175,7 +179,7 @@ IconDispTableEntry _disp_table[0x17] = {
 void BattleStatusIconDisp(CameraId camId, void* param);
 
 /** Clears the unit's status icon work; called from BtlUnit_Entry. */
-void BattleStatusIconInit(BattleUnit* unit) {
+void PORT_HOOKABLE(BattleStatusIconInit)(BattleUnit* unit) {
     memset(&unit->statusIconWork, 0, sizeof(BattleWorkStatusIcon));
 }
 
@@ -187,13 +191,18 @@ void BattleStatusIconInit(BattleUnit* unit) {
  * From the US release on it picks the table by game language;
  * the tables differ only in the HP and FP Regen icons.
  */
-void BattleStatusIconMain(BattleUnit* unit) {
+void PORT_HOOKABLE(BattleStatusIconMain)(BattleUnit* unit) {
     BattleWorkStatusIcon* icon = &unit->statusIconWork;
     BattleWork* work = _battleWorkPointer;
     u32 i;
 
     icon->numStatusIcons = 0;
+#ifdef TARGET_PC
+    // Gameplay+ battle pop-ups: the status icons stay up while targets are picked and moves play
+    if (work->flags & BATTLE_FLAG_SHOW_ALL_STATUS_ICONS || work->dispFlags & 1 || portGameplus("battle_popups")) {
+#else
     if (work->flags & BATTLE_FLAG_SHOW_ALL_STATUS_ICONS || work->dispFlags & 1) {
+#endif
         BtlUnit_GetPos(unit, &icon->position.x, &icon->position.y, &icon->position.z);
         icon->position.x += ((f32)(unit->statusIconOffset[0]) * unit->sizeMultiplier);
         icon->position.y += ((f32)(unit->statusIconOffset[1]) * unit->sizeMultiplier);
@@ -249,8 +258,21 @@ void BattleStatusIconMain(BattleUnit* unit) {
     }
 }
 
+#ifdef TARGET_PC
+/** Gameplay+ battle pop-ups: the icon texture the status bar shows for statusType, or -1. */
+s32 portStatusIconId(s32 statusType) {
+    s32 i;
+    for (i = 0; _disp_table[i].statusType != -1; i++) {
+        if (_disp_table[i].statusType == statusType) {
+            return _disp_table[i].icon;
+        }
+    }
+    return -1;
+}
+#endif
+
 /** Status-icon cleanup when a unit is deleted; empty in every version. */
-void BattleStatusIconDelete(BattleUnit* unit) {
+void PORT_HOOKABLE(BattleStatusIconDelete)(BattleUnit* unit) {
     ; // stubbed in retail
 }
 
@@ -318,6 +340,9 @@ void BattleStatusIconDisp(CameraId camId, void* param) {
 }
 
 #include "system.h"
+#ifdef PORT_MODS
+#include "port/hooks/src_battle_battle_status_icon.h"
+#endif
 
 /**
  * Icon builder for the plain turn-count statuses (Sleep, Poison, Stop, Burn, Freeze, Fast, Slow,
@@ -499,3 +524,7 @@ static BOOL _bsi_regeneration(BattleUnit* unit, IconDispTableEntry* disp, Battle
     entry->trans = (Vec){0.0f, 0.0f, 0.0f};
     return TRUE;
 }
+
+#ifdef PORT_MODS
+#include "port/hooks/src_battle_battle_status_icon.inc"
+#endif

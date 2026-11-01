@@ -1,4 +1,5 @@
 // Pause menu: the partner window (choose a partner, partner stats and moves).
+#include "port_hook.h"
 #include "version.h"
 #include "pc_call.h"
 #include "win/win_main.h"
@@ -29,6 +30,12 @@
 #include "libc_decls.h"
 #include <dolphin/pad.h>
 #include <demo/DEMOPad.h>
+#ifdef PORT_MODS
+#include "port/hooks/src_window_win_party.h"
+#endif
+#ifdef TARGET_PC
+#include "port/menu_tap.h"
+#endif
 
 /**
  * The four battle moves the party menu lists for each partner, used by party_list below:
@@ -98,7 +105,7 @@ WindowPartyDt winPartyDt[7] = {
  * 8-bit models in Mario's 8-bit form), puts the cursor on the current partner,
  * counts their moves (rank + 2) and picks Yoshi's icon for his color.
  */
-void winPartyInit(WindowWork* wp) {
+void PORT_HOOKABLE(winPartyInit)(WindowWork* wp) {
     PouchData* pouch;
     s32 i;
     s32 j;
@@ -227,7 +234,7 @@ void winPartyInit(WindowWork* wp) {
  * Run from win_root.c each time the Party window comes to the front:
  * snaps the partner carousel to the cursor and shows the partner's help text.
  */
-void winPartyInit2(WindowWork* wp) {
+void PORT_HOOKABLE(winPartyInit2)(WindowWork* wp) {
     wp->party.angle = wp->party.angleTarget = 360.0f / wp->party.count * wp->party.cursor;
     wp->party.mode = 0;
     wp->helpTgtX = -200.0f;
@@ -236,7 +243,7 @@ void winPartyInit2(WindowWork* wp) {
 }
 
 /** Frees the partner models loaded by winPartyInit. */
-void winPartyExit(WindowWork* wp) {
+void PORT_HOOKABLE(winPartyExit)(WindowWork* wp) {
     s32 i;
 
     for (i = 0; i < wp->party.count; i++) {
@@ -253,7 +260,7 @@ void winPartyExit(WindowWork* wp) {
  * X opens the move list, where Up/Down show each move's description.
  * Returns -1 on B or with no partners, -2 to close the menu, else 0.
  */
-s32 winPartyMain(WindowWork* wp) {
+s32 PORT_HOOKABLE(winPartyMain)(WindowWork* wp) {
     s32 i;
     s32 prev;
 
@@ -323,6 +330,10 @@ s32 winPartyMain(WindowWork* wp) {
             winMsgEntry(wp, 0, winPartyDt[wp->party.dtIdx].msg, 0);
             break;
         case 1:
+#ifdef TARGET_PC
+            /* the mouse (portWinMouse): the moves' rows */
+            portWinMouse(&wp->party.wazaCursor, 0, wp->party.wazaCount, -10.0f, 5.0f, 0.0f, 26.0f, 1, 260.0f, 26.0f, (const char*)0x20005);
+#endif
             if (wp->dirRep & DEMO_STICK_UP) {
                 wp->party.wazaCursor--;
                 if (wp->party.wazaCursor < 0) {
@@ -351,7 +362,7 @@ s32 winPartyMain(WindowWork* wp) {
 }
 
 /** Every frame: eases the carousel angle a quarter of the way toward the selected partner. */
-void winPartyMain2(WindowWork* wp) {
+void PORT_HOOKABLE(winPartyMain2)(WindowWork* wp) {
     wp->party.angle += (wp->party.angleTarget - wp->party.angle) / 4.0f;
 }
 
@@ -366,7 +377,7 @@ static const GXColor winPartyBlackC = {0x00, 0x00, 0x00, 0xFF};
  * and rank (one Shine Sprite icon per rank-up), the partner carousel with shadows (others shrunk and grayed),
  * the partner's name, the switch and move-list hints, and the move list with FP costs.
  */
-void winPartyDisp(s32 camId, void* param, s32 idx) {
+void PORT_HOOKABLE(winPartyDisp)(s32 camId, void* param, s32 idx) {
     WindowWork* wp = param;
     GXColor white2;
     GXColor black2;
@@ -671,3 +682,7 @@ void winPartyDisp(s32 camId, void* param, s32 idx) {
 #endif
     }
 }
+
+#ifdef PORT_MODS
+#include "port/hooks/src_window_win_party.inc"
+#endif

@@ -38,6 +38,9 @@
 #include "driver/icondrv.h"
 #include "win/win_main.h"
 #include "sdk/texPalette.h"
+#ifdef TARGET_PC
+#include "port/menu_tap.h"
+#endif
 #include "evt/evt_story.h"
 #include <dolphin/pad.h>
 #include <demo/DEMOPad.h>
@@ -177,12 +180,12 @@ s32 evt_seq_load_keep_msg_window(EventEntry* evt, BOOL isFirstCall) {
 #endif
 
 /** Enters the file select sequence; clears its work. */
-void seq_loadInit(SequenceWork* seq) {
+void PORT_HOOKABLE(seq_loadInit)(SequenceWork* seq) {
     memset(wp, 0, sizeof(LoadWork));
 }
 
 /** Leaves the file select sequence; frees the menu texture file (name.tpl). */
-void seq_loadExit(SequenceWork* seq) {
+void PORT_HOOKABLE(seq_loadExit)(SequenceWork* seq) {
     if (wp->file != NULL) {
         fileFree(wp->file);
     }
@@ -312,6 +315,99 @@ static inline void loadNewGameSetup(void) {
 #endif
 }
 
+#ifdef TARGET_PC
+/**
+ * The mouse in the menu: the panel under the pointer gets the cursor (the four files are 260 x 130 about
+ * their win_dt point, the buttons a bar 36 high from where the cursor points at them), the sound or rumble
+ * option under it is reached a step of the stick at a time; a click on the cursor's choice is A.
+ * The cursor-ready states only; the copy's destination skips the source file.
+ */
+static void loadMouse(u32* trg, u32* dir) {
+    const WinDt* dt;
+    s32 n;
+    s32 skip = -1;
+    s32 i;
+    s32 cur;
+    s32 rows;
+    f32 top;
+    f32 gx;
+    f32 gy;
+    f32 halfW;
+    static s32 sTarget = -1; /* the option row being stepped to */
+    const int kind = portMenuPoint(&gx, &gy);
+
+    if (wp->state != 0x64 && wp->state != 0xc8) {
+        sTarget = -1;
+    }
+    if (cardIsExec() || !fadeIsFinish() || (kind == 0 && sTarget < 0)) {
+        return;
+    }
+    switch (wp->state) {
+        case 1:
+            dt = win_dt;
+            n = 9;
+            break;
+        case 0x28:
+        case 0x32:
+            dt = win_dt2;
+            n = 7;
+            break;
+        case 0x33:
+            dt = win_dt3;
+            n = 4;
+            skip = wp->copySrc;
+            break;
+        case 0x64:
+        case 0xc8:
+            /* the option rows, 50 apart, the cursor at their left */
+            cur = wp->state == 0x64 ? wp->soundCursor : wp->rumbleCursor;
+            rows = wp->state == 0x64 ? 3 : 2;
+            top = wp->state == 0x64 ? 54.0f : 34.0f;
+            for (i = 0; kind != 0 && i < rows; i++) {
+                if (gx >= -90.0f && gx <= 200.0f && gy <= top - 50.0f * i + 25.0f && gy > top - 50.0f * i - 25.0f) {
+                    if (i == cur && sTarget < 0 && kind == 1) {
+                        *trg |= PAD_BUTTON_A;
+                    }
+                    sTarget = i;
+                    break;
+                }
+            }
+            if (sTarget == cur) {
+                sTarget = -1;
+            } else if (sTarget >= 0) {
+                *dir |= sTarget < cur ? DEMO_STICK_UP : DEMO_STICK_DOWN;
+            }
+            return;
+        default:
+            return;
+    }
+    for (i = 0; i < n; i++) {
+        if (i == skip) {
+            continue;
+        }
+        if (i < 4) {
+            if (gx >= dt[i].x - 130.0f && gx <= dt[i].x + 130.0f && gy <= dt[i].y + 68.0f && gy >= dt[i].y - 62.0f) {
+                break;
+            }
+        } else {
+            halfW = -dt[i].ofsX + 5.0f;
+            if (gx >= dt[i].x - halfW && gx <= dt[i].x + halfW && gy <= dt[i].y + 18.0f && gy >= dt[i].y - 18.0f) {
+                break;
+            }
+        }
+    }
+    if (i >= n) {
+        return;
+    }
+    if (i == wp->slot) {
+        *trg |= kind == 1 ? PAD_BUTTON_A : 0;
+    } else {
+        wp->slot = i;
+        SFX(i < 4 ? 9 : 5);
+    }
+}
+#endif
+
 /**
  * File menu state machine: moves the cursor between the four save slots and the copy, delete, back,
  * sound and rumble buttons, starts a new game (name entry, then the prologue on aaa_00) or continues a file,
@@ -344,6 +440,11 @@ static void loadMain(SequenceWork* seq) {
         dir = 0;
     }
     wp->cardCode = code;
+#ifdef TARGET_PC
+    if (trg == 0 && dir == 0) {
+        loadMouse(&trg, &dir); /* the mouse in the menu (port/src/common/menu_tap_pc.c) */
+    }
+#endif
     for (i = 0; i < 4; i++) {
         flags = SLOTFLAGS(i);
         if (!(flags & CARD_SAVE_FLAG_EMPTY) || (flags & CARD_SAVE_FLAG_CORRUPT)) {

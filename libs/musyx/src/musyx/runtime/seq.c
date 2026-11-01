@@ -5,6 +5,9 @@
 #include "musyx/synth.h"
 
 #include <stdint.h>
+#if MUSY_TARGET == MUSY_TARGET_PC
+#include "musyx/hw_pcmixer.h"
+#endif
 
 static NOTE seqNote[256];
 SEQ_INSTANCE seqInstance[8];
@@ -385,6 +388,9 @@ u32 seqStartPlay(PAGE* norm, PAGE* drum, MIDISETUP* midiSetup, u32* song, SND_PL
   }
 
   seqId = nseq->index;
+#if MUSY_TARGET == MUSY_TARGET_PC
+  salPcSeqCat[seqId & 0xFF] = (u8)salPcCategory(-1);
+#endif
   nseq->syncActive = FALSE;
   nseq->normtab = norm;
   nseq->drumtab = drum;

@@ -1,4 +1,5 @@
 // Battle status effects: the visual effects of statuses on units and the status-change announcement.
+#include "port_hook.h"
 #include <dolphin/pad.h>
 #include "version.h"
 #include "pc_call.h"
@@ -155,7 +156,7 @@ static s32 _get_pri(s8 type);
  * Status-effect setup for a new unit, called from BtlUnit_Entry;
  * empty in every version (the effect pointers start NULL).
  */
-void BattleStatusEffectInit(BattleUnit* unit) {
+void PORT_HOOKABLE(BattleStatusEffectInit)(BattleUnit* unit) {
     ; // stubbed in retail
 }
 
@@ -164,7 +165,7 @@ void BattleStatusEffectInit(BattleUnit* unit) {
  * creates, moves or removes the sleep Zs, Electrified sparks, Burn flames,
  * Freeze ice block and the Veil icon to match the unit's current statuses.
  */
-void BattleStatusEffectMain(BattleUnit* unit) {
+void PORT_HOOKABLE(BattleStatusEffectMain)(BattleUnit* unit) {
     BSE_Sleep(unit);
     BSE_Biribiri(unit);
     BSE_Fire(unit);
@@ -173,7 +174,7 @@ void BattleStatusEffectMain(BattleUnit* unit) {
 }
 
 /** Removes all of the unit's status effects; called when the unit is deleted from battle. */
-void BattleStatusEffectDelete(BattleUnit* unit) {
+void PORT_HOOKABLE(BattleStatusEffectDelete)(BattleUnit* unit) {
     BSE_SleepDelete(unit);
     BSE_BiribiriDelete(unit);
     BSE_FireDelete(unit);
@@ -182,6 +183,9 @@ void BattleStatusEffectDelete(BattleUnit* unit) {
 }
 
 #include "driver/effdrv.h"
+#ifdef PORT_MODS
+#include "port/hooks/src_battle_battle_status_effect.h"
+#endif
 #ifdef TARGET_PC /* the real prototype: on Win64 the extra int would shift x, y, z */
 #include "eff/eff_spark.h"
 #else
@@ -413,7 +417,7 @@ static void BSE_KagegakureDelete(BattleUnit* unit) {
  * Starts the start-of-turn Burn damage animation for a unit;
  * battle_seq.c calls it with active 1 for every living unit whose Burn strength is above 0.
  */
-void BSE_TurnFirstProcessEffectEntry(BattleUnit* unit, s16 active) {
+void PORT_HOOKABLE(BSE_TurnFirstProcessEffectEntry)(BattleUnit* unit, s16 active) {
     unit->burnDamageFlameState = 1;
     unit->burnDamageFlameActive = active;
 }
@@ -426,7 +430,7 @@ void BSE_TurnFirstProcessEffectEntry(BattleUnit* unit, s16 active) {
  * then deletes it and deals 1 damage unless the unit is hidden by BtlUnit_CheckShadowGuard.
  * Returns TRUE while still animating.
  */
-BOOL BSE_TurnFirstProcessEffectMain(BattleUnit* unit) {
+BOOL PORT_HOOKABLE(BSE_TurnFirstProcessEffectMain)(BattleUnit* unit) {
     BattleUnitPart* part;
     f32 x, y, z;
     f32* work;
@@ -488,7 +492,7 @@ BOOL BSE_TurnFirstProcessEffectMain(BattleUnit* unit) {
  * Called when the unit enters battle, from BtlUnit_ClearStatus and (not in the demos)
  * after the status messages have been shown.
  */
-void BattleStatusChangeInfoWorkInit(BattleUnit* unit) {
+void PORT_HOOKABLE(BattleStatusChangeInfoWorkInit)(BattleUnit* unit) {
     s32 i;
     StChgInfo* e = &unit->statusChangeInfo[0];
 
@@ -534,7 +538,7 @@ static s32 _get_pri(s8 type) {
  * BattleStatusChangeMsgAdjust still reads the queued types; nothing reads the stagger or offsets.
  * Guess: they laid out per-unit popups that BattleStatusChangeAnnouceMain_Unit no longer draws.
  */
-void BattleStatusChangeInfoSetAnnouce(BattleUnit* unit, s32 type, s32 strength, s32 changed) {
+void PORT_HOOKABLE(BattleStatusChangeInfoSetAnnouce)(BattleUnit* unit, s32 type, s32 strength, s32 changed) {
     StChgInfo* e = &unit->statusChangeInfo[0];
     StChgInfo tmp, swap;
     s8 pri = _get_pri(type);
@@ -596,7 +600,7 @@ Ld:;
  * since BattleStatusChangeAnnouceMain_Unit is empty it always returns FALSE.
  * Called from the battle sequence alongside BattleStatusChangeMsgMain.
  */
-BOOL BattleStatusChangeAnnouceMain(BattleWork* wp) {
+BOOL PORT_HOOKABLE(BattleStatusChangeAnnouceMain)(BattleWork* wp) {
     s32 i;
     BOOL ret;
     BattleUnit* unit;
@@ -620,7 +624,7 @@ BOOL BattleStatusChangeAnnouceMain_Unit(BattleUnit* unit) {
 // BattleStatusChangeMsgWorkInit size-optimised, as in the original (the object differs without it)
 #pragma optimize_for_size on
 /** Clears the 28 status-change message slots in BattleWork (one per status type) at battle start. */
-void BattleStatusChangeMsgWorkInit(void) {
+void PORT_HOOKABLE(BattleStatusChangeMsgWorkInit)(void) {
     StChgMsg* msg = ST_CHG_MSG(0);
     s32 i;
 
@@ -636,7 +640,7 @@ void BattleStatusChangeMsgWorkInit(void) {
  * ST_CHG_MSG_FLAG_MARIO, _PARTNER (a partner on the player's side) or _OTHER (any other unit).
  * changed selects msg1 over msg0 (only Charge differs).
  */
-void BattleStatusChangeMsgSetAnnouce(BattleUnit* unit, s32 index, s32 changed) {
+void PORT_HOOKABLE(BattleStatusChangeMsgSetAnnouce)(BattleUnit* unit, s32 index, s32 changed) {
     StChgMsg* msg = ST_CHG_MSG(index);
     s32 id;
 
@@ -661,7 +665,7 @@ void BattleStatusChangeMsgSetAnnouce(BattleUnit* unit, s32 index, s32 changed) {
  * for each status, re-marks it from every living unit whose statusChangeInfo queue holds it,
  * and drops it if no unit does or if its bit is set in the StChgWork mask.
  */
-void BattleStatusChangeMsgAdjust(BattleWork* wp) {
+void PORT_HOOKABLE(BattleStatusChangeMsgAdjust)(BattleWork* wp) {
     s32 t;
     StChgWork* base;
     s8 i;
@@ -713,7 +717,7 @@ void BattleStatusChangeMsgAdjust(BattleWork* wp) {
  * Returns TRUE while any message is pending, which holds the battle sequence.
  * The retail versions also clear every unit's queue once a message was shown.
  */
-BOOL BattleStatusChangeMsgMain(BattleWork* wp) {
+BOOL PORT_HOOKABLE(BattleStatusChangeMsgMain)(BattleWork* wp) {
     StChgWork* base = &wp->announce.stChg;
     StChgMsg* msg;
     BOOL ret = FALSE;
@@ -786,3 +790,7 @@ static void _st_chg_msg_disp(void) {
     FontDrawStart();
     FontDrawMessage(x, (s32)y + (lines - 1) * 29, (const char*)st->text);
 }
+
+#ifdef PORT_MODS
+#include "port/hooks/src_battle_battle_status_effect.inc"
+#endif

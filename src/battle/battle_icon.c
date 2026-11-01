@@ -1,4 +1,5 @@
 // Battle icons: floating item and badge icons, with their script commands.
+#include "port_hook.h"
 #include "battle/battle_icon.h"
 #include "battle/battle.h"
 #include "data/item_data.h"
@@ -10,6 +11,9 @@
 #include "driver/icondrv.h"
 
 #include "system.h"
+#ifdef PORT_MODS
+#include "port/hooks/src_battle_battle_icon.h"
+#endif
 
 // this unit is size-optimised, as in the original (the object differs without it)
 #pragma optimize_for_size on
@@ -33,7 +37,7 @@ BattleIcon* BtlIconGetPtr(s32 index) {
 }
 
 /** Clears all 16 battle icon slots; called from battle start. */
-void BattleIconInit(void) {
+void PORT_HOOKABLE(BattleIconInit)(void) {
     memset(_battleWorkPointer->icons, 0, sizeof(_battleWorkPointer->icons));
 }
 
@@ -41,7 +45,7 @@ void BattleIconInit(void) {
  * Per-frame update from the battle main loop: copies each live icon's position
  * and scale (scale * scaleMul) to its icondrv icon, and mirrors flag 2 onto the icon's flag 2.
  */
-void BattleIconMain(void) {
+void PORT_HOOKABLE(BattleIconMain)(void) {
     BattleWork* wp;
     BattleIcon* icon;
     int i;
@@ -64,7 +68,7 @@ void BattleIconMain(void) {
 }
 
 /** Deletes every battle icon when the battle ends. */
-void BattleIconEnd(void) {
+void PORT_HOOKABLE(BattleIconEnd)(void) {
     BattleWork* wp = _battleWorkPointer;
     int i;
 
@@ -77,7 +81,7 @@ void BattleIconEnd(void) {
  * Takes a free icon slot and creates an icondrv icon named "_biu_NN" showing iconId at (x, y, z), scale 1.
  * Returns the slot, or NULL when all 16 are in use.
  */
-BattleIcon* BtlIcon_Entry(u16 iconId, f32 x, f32 y, f32 z) {
+BattleIcon* PORT_HOOKABLE(BtlIcon_Entry)(u16 iconId, f32 x, f32 y, f32 z) {
     BattleIcon* icon;
     int i;
     char name[8];
@@ -108,7 +112,7 @@ BattleIcon* BtlIcon_Entry(u16 iconId, f32 x, f32 y, f32 z) {
 }
 
 /** Removes a live battle icon's icondrv icon and frees its slot; safe on an unused slot. */
-void BtlIcon_Delete(BattleIcon* icon) {
+void PORT_HOOKABLE(BtlIcon_Delete)(BattleIcon* icon) {
     if (icon->flags & 1) {
         iconDelete(icon->base->name);
         icon->flags &= ~1;
@@ -287,3 +291,7 @@ void btlIconStrippedPool(f32* f) {
     f[1] = 1.0f;
     f[2] = 0.5f;
 }
+
+#ifdef PORT_MODS
+#include "port/hooks/src_battle_battle_icon.inc"
+#endif

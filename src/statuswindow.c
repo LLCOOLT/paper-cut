@@ -20,6 +20,7 @@
 #endif
 #ifdef TARGET_PC
 #include "port/platform.h"
+#include "port/hud.h"
 #endif
 #include "version.h"
 #include "evt/evt_story.h"
@@ -102,7 +103,7 @@ static void valueUpdate(void);
  * Allocates the field HUD state at boot and sets its open
  * and closed positions (it slides down from above the screen), starting open.
  */
-void statusWinInit(void) {
+void PORT_HOOKABLE(statusWinInit)(void) {
     wp = __memAlloc(HEAP_DEFAULT, sizeof(SWork));
     memset(wp, 0, sizeof(SWork));
     if (!wp) {
@@ -119,7 +120,7 @@ void statusWinInit(void) {
 }
 
 /** Resets the HUD's idle timers on a map change and turns a pending forced open/close into a normal open/close. */
-void statusWinReInit(void) {
+void PORT_HOOKABLE(statusWinReInit)(void) {
     wp->idle = 0;
     wp->forceTimer = 0;
     if (wp->flags & STATUSWIN_FLAG_FORCE_OPEN) {
@@ -147,7 +148,7 @@ void statusWinReInit(void) {
  * toggles with Z (held for 10 seconds, with a sound) and pops open for 2 seconds when a value changes.
  * Then starts and runs the slide animation (16 frames in, 28 out).
  */
-void statusWinMain(void) {
+void PORT_HOOKABLE(statusWinMain)(void) {
     MarioWork* mario;
     f32 inv;
     f32 one;
@@ -687,38 +688,38 @@ static void valueUpdate(void) {
 }
 
 /** Requests the HUD to slide in. */
-void statusWinOpen(void) {
+void PORT_HOOKABLE(statusWinOpen)(void) {
     wp->flags &= ~(STATUSWIN_FLAG_CLOSED | STATUSWIN_FLAG_CLOSE_REQ);
     wp->flags |= STATUSWIN_FLAG_OPEN | STATUSWIN_FLAG_OPEN_REQ;
 }
 
 /** Requests the HUD to slide out. */
-void statusWinClose(void) {
+void PORT_HOOKABLE(statusWinClose)(void) {
     wp->flags |= STATUSWIN_FLAG_CLOSED | STATUSWIN_FLAG_CLOSE_REQ;
     wp->flags &= ~(STATUSWIN_FLAG_OPEN | STATUSWIN_FLAG_OPEN_REQ);
 }
 
 /** Slides the HUD in and pins it open regardless of Mario's movement, until statusWinForceOff. */
-void statusWinForceOpen(void) {
+void PORT_HOOKABLE(statusWinForceOpen)(void) {
     wp->flags &= ~(STATUSWIN_FLAG_CLOSED | STATUSWIN_FLAG_CLOSE_REQ);
     wp->flags &= ~(STATUSWIN_FLAG_FORCE_CLOSE | STATUSWIN_FLAG_FORCE_CLOSE_REQ);
     wp->flags |= STATUSWIN_FLAG_FORCE_OPEN | STATUSWIN_FLAG_FORCE_OPEN_REQ;
 }
 
 /** Slides the HUD out and keeps it closed, until statusWinForceOff or statusWinForceCloseClear. */
-void statusWinForceClose(void) {
+void PORT_HOOKABLE(statusWinForceClose)(void) {
     wp->flags &= ~(STATUSWIN_FLAG_OPEN | STATUSWIN_FLAG_OPEN_REQ);
     wp->flags &= ~(STATUSWIN_FLAG_FORCE_OPEN | STATUSWIN_FLAG_FORCE_OPEN_REQ);
     wp->flags |= STATUSWIN_FLAG_FORCE_CLOSE | STATUSWIN_FLAG_FORCE_CLOSE_REQ;
 }
 
 /** Drops a forced close without reopening the HUD. */
-void statusWinForceCloseClear(void) {
+void PORT_HOOKABLE(statusWinForceCloseClear)(void) {
     wp->flags &= ~(STATUSWIN_FLAG_FORCE_CLOSE | STATUSWIN_FLAG_FORCE_CLOSE_REQ);
 }
 
 /** Ends a forced open or close, leaving the HUD in the matching normal state; called when message windows close. */
-void statusWinForceOff(void) {
+void PORT_HOOKABLE(statusWinForceOff)(void) {
     if (wp->flags & STATUSWIN_FLAG_FORCE_OPEN) {
         wp->flags &= ~STATUSWIN_FLAG_FORCE_OPEN;
         statusWinOpen();
@@ -734,27 +735,27 @@ void statusWinForceOff(void) {
 }
 
 /** Lets the HUD draw again after statusWinDispOff. */
-void statusWinDispOn(void) {
+void PORT_HOOKABLE(statusWinDispOn)(void) {
     wp->flags &= ~STATUSWIN_FLAG_DISP_OFF;
 }
 
 /** Stops drawing the HUD without changing whether it is open. */
-void statusWinDispOff(void) {
+void PORT_HOOKABLE(statusWinDispOff)(void) {
     wp->flags |= STATUSWIN_FLAG_DISP_OFF;
 }
 
 /** Returns TRUE when the HUD is open or forced open. */
-BOOL statusWinCheck(void) {
+BOOL PORT_HOOKABLE(statusWinCheck)(void) {
     return (wp->flags & (STATUSWIN_FLAG_OPEN | STATUSWIN_FLAG_FORCE_OPEN)) ? TRUE : FALSE;
 }
 
 /** Returns TRUE when a shown value changed since the last display (see valueCheck). */
-BOOL statusWinCheckUpdate(void) {
+BOOL PORT_HOOKABLE(statusWinCheckUpdate)(void) {
     return valueCheck() != 0;
 }
 
 /** Snaps every displayed HUD value to the current one without the counting animation. */
-void statusWinForceUpdate(void) {
+void PORT_HOOKABLE(statusWinForceUpdate)(void) {
     SVal v;
 
     statusGetValue(&v);
@@ -774,7 +775,7 @@ void statusWinForceUpdate(void) {
 }
 
 /** Snaps the displayed coin count to the current one. */
-void statusWinForceUpdateCoin(void) {
+void PORT_HOOKABLE(statusWinForceUpdateCoin)(void) {
     SVal v;
 
     statusGetValue(&v);
@@ -782,7 +783,7 @@ void statusWinForceUpdateCoin(void) {
 }
 
 /** Returns the screen position of the Star Power gauge, where the audience's Star Power sparkles fly to. */
-Vec statusGetApPos(void) {
+Vec PORT_HOOKABLE(statusGetApPos)(void) {
     Vec pos;
     pos.x = wp->x + (f32)alwaysDt[12].xpos;
     pos.y = wp->y - (f32)alwaysDt[12].ypos;
@@ -791,7 +792,7 @@ Vec statusGetApPos(void) {
 }
 
 /** Makes the Star Power number blink for frames, replacing any other blink. */
-void statusAPBlink(s32 frames) {
+void PORT_HOOKABLE(statusAPBlink)(s32 frames) {
     wp->blink = 0;
     wp->blink |= 4;
     wp->blinkTimer = frames;
@@ -799,25 +800,25 @@ void statusAPBlink(s32 frames) {
 
 /** The demo has no N_statusClearBlink. */
 #if VERSION >= VERSION_JP
-void N_statusClearBlink(void) {
+void PORT_HOOKABLE(N_statusClearBlink)(void) {
     wp->blink = 0;
 }
 #endif
 
 /** Makes the FP number blink for frames. */
-void statusFPBlink(s32 frames) {
+void PORT_HOOKABLE(statusFPBlink)(s32 frames) {
     wp->blink |= 2;
     wp->blinkTimer = frames;
 }
 
 /** Makes Mario's HP number blink for frames. */
-void statusMarioHPBlink(s32 frames) {
+void PORT_HOOKABLE(statusMarioHPBlink)(s32 frames) {
     wp->blink |= 1;
     wp->blinkTimer = frames;
 }
 
 /** Makes the partner's HP number blink for frames. */
-void statusPartyHPBlink(s32 frames) {
+void PORT_HOOKABLE(statusPartyHPBlink)(s32 frames) {
     wp->blink |= 8;
     wp->blinkTimer = frames;
 }
@@ -841,6 +842,13 @@ void statusWinEase(f32* f) {
 #endif
     f[3] = 0.5f;
 }
+
+#ifdef TARGET_PC
+/* PC port: HUD scale (port/hud.h) tells the status bar's draw apart */
+int portHudIsStatusBar(DispCallback callback) {
+    return callback == statusWinDisp;
+}
+#endif
 
 #ifdef PORT_MODS
 #include "port/hooks/src_statuswindow.inc"

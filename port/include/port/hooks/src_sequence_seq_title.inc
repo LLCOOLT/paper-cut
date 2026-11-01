@@ -5,6 +5,7 @@
 static void titleMain(SequenceWork * p0) {
     PortHookSlot* s = &portHookSlots[39];
     int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
     if (!s->active) {
         titleMain__body(p0);
         return;
@@ -20,6 +21,110 @@ static void titleMain(SequenceWork * p0) {
     }
 }
 
+const char * DbgBtlSel_GetMsgDataPtr(void) {
+    PortHookSlot* s = &portHookSlots[1479];
+    const char * r;
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        return DbgBtlSel_GetMsgDataPtr__body();
+    }
+    __builtin_memset(&r, 0, sizeof(r));
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(r)*))s->pre[i])(&r);
+    }
+    if (!skip) {
+        r = (s->replace != NULL ? ((const char * (*)(void))s->replace)() : DbgBtlSel_GetMsgDataPtr__body());
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(r)*))s->post[i])(&r);
+    }
+    return r;
+}
+
+void seq_titleInit(SequenceWork * p0) {
+    PortHookSlot* s = &portHookSlots[1480];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        seq_titleInit__body(p0);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*))s->pre[i])(&p0);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0)))s->replace)(p0); } else { seq_titleInit__body(p0); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0)))s->post[i])(p0);
+    }
+}
+
+void seq_titleExit(SequenceWork * p0) {
+    PortHookSlot* s = &portHookSlots[1481];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        seq_titleExit__body(p0);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*))s->pre[i])(&p0);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0)))s->replace)(p0); } else { seq_titleExit__body(p0); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0)))s->post[i])(p0);
+    }
+}
+
+void seq_titleMain(SequenceWork * p0) {
+    PortHookSlot* s = &portHookSlots[1482];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        seq_titleMain__body(p0);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*))s->pre[i])(&p0);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0)))s->replace)(p0); } else { seq_titleMain__body(p0); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0)))s->post[i])(p0);
+    }
+}
+
+s32 N_getDebugMode(void) {
+    PortHookSlot* s = &portHookSlots[1483];
+    s32 r;
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        return N_getDebugMode__body();
+    }
+    __builtin_memset(&r, 0, sizeof(r));
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(r)*))s->pre[i])(&r);
+    }
+    if (!skip) {
+        r = (s->replace != NULL ? ((s32 (*)(void))s->replace)() : N_getDebugMode__body());
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(r)*))s->post[i])(&r);
+    }
+    return r;
+}
+
 void portHookInit_src_sequence_seq_title(void) {
     portHookSlots[39].body = (void*)titleMain__body;
+    portHookSlots[1479].body = (void*)DbgBtlSel_GetMsgDataPtr__body;
+    portHookSlots[1480].body = (void*)seq_titleInit__body;
+    portHookSlots[1481].body = (void*)seq_titleExit__body;
+    portHookSlots[1482].body = (void*)seq_titleMain__body;
+    portHookSlots[1483].body = (void*)N_getDebugMode__body;
 }

@@ -8,6 +8,9 @@
 #include <string.h>
 #include "driver/fadedrv.h"
 #include "version.h"
+#ifdef TARGET_PC
+#include "port/hud.h"
+#endif
 
 #define DISP_MAX_ENTRIES 1024
 
@@ -165,9 +168,15 @@ void dispDraw(CameraId camId) {
                     break;
             }
             currentWorkPtr = entry;
+#if defined(TARGET_PC) && defined(TTYD_BACKEND_AURORA)
+            portHudDraw(camId, entry->callback, entry->param); /* PC port: HUD scale (port/hud.h) */
+#endif
             entry->callback(camId, entry->param);
         }
     }
+#if defined(TARGET_PC) && defined(TTYD_BACKEND_AURORA)
+    portHudDraw(camId, NULL, NULL);
+#endif
 }
 
 /**

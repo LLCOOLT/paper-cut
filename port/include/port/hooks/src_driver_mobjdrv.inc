@@ -6,6 +6,7 @@ MapObjectEntry * mobjNameToPtr(const char * p0) {
     PortHookSlot* s = &portHookSlots[55];
     MapObjectEntry * r;
     int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
     if (!s->active) {
         return mobjNameToPtr__body(p0);
     }
@@ -22,6 +23,340 @@ MapObjectEntry * mobjNameToPtr(const char * p0) {
     return r;
 }
 
+void mobjKoopaOn(void) {
+    PortHookSlot* s = &portHookSlots[626];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        mobjKoopaOn__body();
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(void))s->pre[i])();
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(void))s->replace)(); } else { mobjKoopaOn__body(); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(void))s->post[i])();
+    }
+}
+
+void mobjInit(void) {
+    PortHookSlot* s = &portHookSlots[627];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        mobjInit__body();
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(void))s->pre[i])();
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(void))s->replace)(); } else { mobjInit__body(); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(void))s->post[i])();
+    }
+}
+
+void mobjReset(BOOL p0) {
+    PortHookSlot* s = &portHookSlots[628];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        mobjReset__body(p0);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*))s->pre[i])(&p0);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0)))s->replace)(p0); } else { mobjReset__body(p0); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0)))s->post[i])(p0);
+    }
+}
+
+void mobjHitEntry(MapObjectEntry * p0, s32 p1) {
+    PortHookSlot* s = &portHookSlots[629];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        mobjHitEntry__body(p0, p1);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*, __typeof__(p1)*))s->pre[i])(&p0, &p1);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0), __typeof__(p1)))s->replace)(p0, p1); } else { mobjHitEntry__body(p0, p1); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0), __typeof__(p1)))s->post[i])(p0, p1);
+    }
+}
+
+s32 mobjEntry(const char * p0, const char * p1) {
+    PortHookSlot* s = &portHookSlots[630];
+    s32 r;
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        return mobjEntry__body(p0, p1);
+    }
+    __builtin_memset(&r, 0, sizeof(r));
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(r)*, __typeof__(p0)*, __typeof__(p1)*))s->pre[i])(&r, &p0, &p1);
+    }
+    if (!skip) {
+        r = (s->replace != NULL ? ((s32 (*)(__typeof__(p0), __typeof__(p1)))s->replace)(p0, p1) : mobjEntry__body(p0, p1));
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(r)*, __typeof__(p0), __typeof__(p1)))s->post[i])(&r, p0, p1);
+    }
+    return r;
+}
+
+void mobjDelete(const char * p0) {
+    PortHookSlot* s = &portHookSlots[631];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        mobjDelete__body(p0);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*))s->pre[i])(&p0);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0)))s->replace)(p0); } else { mobjDelete__body(p0); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0)))s->post[i])(p0);
+    }
+}
+
+void mobjSetPosition(const char * p0, f32 p1, f32 p2, f32 p3) {
+    PortHookSlot* s = &portHookSlots[632];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        mobjSetPosition__body(p0, p1, p2, p3);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*, __typeof__(p1)*, __typeof__(p2)*, __typeof__(p3)*))s->pre[i])(&p0, &p1, &p2, &p3);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->replace)(p0, p1, p2, p3); } else { mobjSetPosition__body(p0, p1, p2, p3); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->post[i])(p0, p1, p2, p3);
+    }
+}
+
+void mobjMain(void) {
+    PortHookSlot* s = &portHookSlots[633];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        mobjMain__body();
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(void))s->pre[i])();
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(void))s->replace)(); } else { mobjMain__body(); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(void))s->post[i])();
+    }
+}
+
+MapObjectEntry * mobjNameToPtrNoAssert(const char * p0) {
+    PortHookSlot* s = &portHookSlots[634];
+    MapObjectEntry * r;
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        return mobjNameToPtrNoAssert__body(p0);
+    }
+    __builtin_memset(&r, 0, sizeof(r));
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(r)*, __typeof__(p0)*))s->pre[i])(&r, &p0);
+    }
+    if (!skip) {
+        r = (s->replace != NULL ? ((MapObjectEntry * (*)(__typeof__(p0)))s->replace)(p0) : mobjNameToPtrNoAssert__body(p0));
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(r)*, __typeof__(p0)))s->post[i])(&r, p0);
+    }
+    return r;
+}
+
+struct EventEntry * mobjRunEvent(MapObjectEntry * p0, EvtWord * p1) {
+    PortHookSlot* s = &portHookSlots[635];
+    struct EventEntry * r;
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        return mobjRunEvent__body(p0, p1);
+    }
+    __builtin_memset(&r, 0, sizeof(r));
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(r)*, __typeof__(p0)*, __typeof__(p1)*))s->pre[i])(&r, &p0, &p1);
+    }
+    if (!skip) {
+        r = (s->replace != NULL ? ((struct EventEntry * (*)(__typeof__(p0), __typeof__(p1)))s->replace)(p0, p1) : mobjRunEvent__body(p0, p1));
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(r)*, __typeof__(p0), __typeof__(p1)))s->post[i])(&r, p0, p1);
+    }
+    return r;
+}
+
+void mobjCalcMtx(MapObjectEntry * p0) {
+    PortHookSlot* s = &portHookSlots[636];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        mobjCalcMtx__body(p0);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*))s->pre[i])(&p0);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0)))s->replace)(p0); } else { mobjCalcMtx__body(p0); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0)))s->post[i])(p0);
+    }
+}
+
+void mobjCalcMtx2(MapObjectEntry * p0) {
+    PortHookSlot* s = &portHookSlots[637];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        mobjCalcMtx2__body(p0);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*))s->pre[i])(&p0);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0)))s->replace)(p0); } else { mobjCalcMtx2__body(p0); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0)))s->post[i])(p0);
+    }
+}
+
+BOOL mobjGetHint(MapObjectEntry * p0) {
+    PortHookSlot* s = &portHookSlots[638];
+    BOOL r;
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        return mobjGetHint__body(p0);
+    }
+    __builtin_memset(&r, 0, sizeof(r));
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(r)*, __typeof__(p0)*))s->pre[i])(&r, &p0);
+    }
+    if (!skip) {
+        r = (s->replace != NULL ? ((BOOL (*)(__typeof__(p0)))s->replace)(p0) : mobjGetHint__body(p0));
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(r)*, __typeof__(p0)))s->post[i])(&r, p0);
+    }
+    return r;
+}
+
+BOOL mobjCheckExec(void) {
+    PortHookSlot* s = &portHookSlots[639];
+    BOOL r;
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        return mobjCheckExec__body();
+    }
+    __builtin_memset(&r, 0, sizeof(r));
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(r)*))s->pre[i])(&r);
+    }
+    if (!skip) {
+        r = (s->replace != NULL ? ((BOOL (*)(void))s->replace)() : mobjCheckExec__body());
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(r)*))s->post[i])(&r);
+    }
+    return r;
+}
+
+s32 mobjCheckItemboxOpen(MapObjectEntry * p0) {
+    PortHookSlot* s = &portHookSlots[640];
+    s32 r;
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        return mobjCheckItemboxOpen__body(p0);
+    }
+    __builtin_memset(&r, 0, sizeof(r));
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(r)*, __typeof__(p0)*))s->pre[i])(&r, &p0);
+    }
+    if (!skip) {
+        r = (s->replace != NULL ? ((s32 (*)(__typeof__(p0)))s->replace)(p0) : mobjCheckItemboxOpen__body(p0));
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(r)*, __typeof__(p0)))s->post[i])(&r, p0);
+    }
+    return r;
+}
+
+MapObjectEntry * mobjNearDistCheck2(f32 p0, f32 p1, f32 p2, f32 p3, char ** p4) {
+    PortHookSlot* s = &portHookSlots[641];
+    MapObjectEntry * r;
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        return mobjNearDistCheck2__body(p0, p1, p2, p3, p4);
+    }
+    __builtin_memset(&r, 0, sizeof(r));
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(r)*, __typeof__(p0)*, __typeof__(p1)*, __typeof__(p2)*, __typeof__(p3)*, __typeof__(p4)*))s->pre[i])(&r, &p0, &p1, &p2, &p3, &p4);
+    }
+    if (!skip) {
+        r = (s->replace != NULL ? ((MapObjectEntry * (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3), __typeof__(p4)))s->replace)(p0, p1, p2, p3, p4) : mobjNearDistCheck2__body(p0, p1, p2, p3, p4));
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(r)*, __typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3), __typeof__(p4)))s->post[i])(&r, p0, p1, p2, p3, p4);
+    }
+    return r;
+}
+
 void portHookInit_src_driver_mobjdrv(void) {
     portHookSlots[55].body = (void*)mobjNameToPtr__body;
+    portHookSlots[626].body = (void*)mobjKoopaOn__body;
+    portHookSlots[627].body = (void*)mobjInit__body;
+    portHookSlots[628].body = (void*)mobjReset__body;
+    portHookSlots[629].body = (void*)mobjHitEntry__body;
+    portHookSlots[630].body = (void*)mobjEntry__body;
+    portHookSlots[631].body = (void*)mobjDelete__body;
+    portHookSlots[632].body = (void*)mobjSetPosition__body;
+    portHookSlots[633].body = (void*)mobjMain__body;
+    portHookSlots[634].body = (void*)mobjNameToPtrNoAssert__body;
+    portHookSlots[635].body = (void*)mobjRunEvent__body;
+    portHookSlots[636].body = (void*)mobjCalcMtx__body;
+    portHookSlots[637].body = (void*)mobjCalcMtx2__body;
+    portHookSlots[638].body = (void*)mobjGetHint__body;
+    portHookSlots[639].body = (void*)mobjCheckExec__body;
+    portHookSlots[640].body = (void*)mobjCheckItemboxOpen__body;
+    portHookSlots[641].body = (void*)mobjNearDistCheck2__body;
 }

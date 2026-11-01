@@ -24,7 +24,7 @@ const char* next_p0;
  * Clears the sequence work and marks the current, next and previous sequences undefined;
  * called once at boot from mariost.c before the first seqMain.
  */
-void seqInit_MARIOSTORY(void) {
+void PORT_HOOKABLE(seqInit_MARIOSTORY)(void) {
     memset(&seqWork, 0, sizeof(SequenceWork));
     now_seq = SEQ_UNDEFINED;
     next_seq = SEQ_UNDEFINED;
@@ -36,7 +36,7 @@ void seqInit_MARIOSTORY(void) {
  * calls the old sequence's exit callback, resets seqWork with the requested map and entrance (bero) names
  * and calls the new one's init; then runs the current sequence's main callback.
  */
-void seqMain(void) {
+void PORT_HOOKABLE(seqMain)(void) {
     if (next_seq != now_seq) {
         if (now_seq != SEQ_UNDEFINED) {
             sysWaitDrawSync();
@@ -73,7 +73,7 @@ SequenceType seqGetSeq(void) {
  * Returns the sequence that ran before the current one;
  * the title and map-change sequences use it to tell a fresh load from a return.
  */
-SequenceType seqGetPrevSeq(void) {
+SequenceType PORT_HOOKABLE(seqGetPrevSeq)(void) {
     return prev_seq;
 }
 
@@ -81,12 +81,12 @@ SequenceType seqGetPrevSeq(void) {
  * Returns the requested next sequence (equal to the current one when no switch is pending);
  * seq_battle checks it for a pending game over.
  */
-SequenceType seqGetNextSeq(void) {
+SequenceType PORT_HOOKABLE(seqGetNextSeq)(void) {
     return next_seq;
 }
 
 /** Returns TRUE while a sequence switch is pending (requested by seqSetSeq but not yet applied). */
-BOOL seqCheckSeq(void) {
+BOOL PORT_HOOKABLE(seqCheckSeq)(void) {
     return now_seq != next_seq;
 }
 

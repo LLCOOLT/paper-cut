@@ -21,11 +21,13 @@
 #ifdef TARGET_PC
 #include <stddef.h>
 #include "port/ai_pc.h"
+#include "port/audio_mix.h"
 #include "port/bedecode.h"
 #include "port/musyx_swap_pc.h"
 #endif
 #ifdef TARGET_PC
 typedef uintptr_t SoundARQArg; /* PC port: ARQCallback takes the request address pointer-sized */
+static int ssCategory[3]; /* each stream channel's mix category (port/audio_mix.h) */
 #else
 typedef u32 SoundARQArg; /* ARQCallback argument: the request's address */
 #endif
@@ -2126,6 +2128,9 @@ void SoundSSPlayChEx(s32 chan, const char* name, s32 aram) {
         }
     }
     sound.streamChannel = chan;
+#ifdef TARGET_PC
+    ssCategory[chan] = salPcCategory(-1); // its voices start when the header is read
+#endif
     _ssResetEntries(stream);
     stream->pan = 0x40;
     stream->span = 0;
@@ -2273,6 +2278,9 @@ static void SoundSSPlayChEx_main(s32 result, DVDFileInfo* fileInfo) {
         if (stream->count == 1) {
             pan = 0x40;
         }
+#ifdef TARGET_PC
+        salPcCategory(ssCategory[i]);
+#endif
         if (!(stream->flags & SOUND_SS_FLAG_ADPCM)) {
             stream->entries[0].streamId = sndStreamAllocEx(0xFF, stream->entries[0].buffer, 0xE00, stream->freq, 0, pan,
                                                            0, 0, 0, 0, 0x10000, _sscallback, i, NULL);
@@ -2291,6 +2299,9 @@ static void SoundSSPlayChEx_main(s32 result, DVDFileInfo* fileInfo) {
                                      _sscallback, i | 0x100, &stream->entries[1].info);
             }
         }
+#ifdef TARGET_PC
+        salPcCategory(PORT_MIX_SFX);
+#endif
 #if VERSION <= VERSION_DEMO_JP
         SoundSSSetPanCh(i, stream->pan);
         stream->fadeStep = stream->vol;

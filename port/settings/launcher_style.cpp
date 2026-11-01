@@ -168,7 +168,7 @@ void launcherStyleInit(float scale) {
   c[ImGuiCol_Separator] = rgba(IM_COL32(222, 196, 160, 255));
   c[ImGuiCol_ScrollbarBg] = rgba(kPaper, 0.f);
   c[ImGuiCol_ScrollbarGrab] = rgba(IM_COL32(214, 186, 146, 255));
-  c[ImGuiCol_NavCursor] = rgba(kGold);
+  c[ImGuiCol_NavCursor] = rgba(kInk); // the controller's focus: dark, to show on the cream cards and the red buttons
 }
 
 bool launcherRedButton(const char* label, ImVec2 size) {

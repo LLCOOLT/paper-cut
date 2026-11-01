@@ -1,5 +1,6 @@
 // Star-power special move Supernova (sac_zubastar): the star-stone game and its damage to all enemies.
 #pragma optimize_for_size on
+#include "port_hook.h"
 #include <dolphin/pad.h>
 #include "driver/fadedrv.h"
 #include "eff/eff_starstone.h"
@@ -30,6 +31,9 @@
 #include "battle/battle_ac.h"
 #include "version.h"
 #include "libc_decls.h"
+#ifdef PORT_MODS
+#include "port/hooks/src_battle_sac_sac_zubastar.h"
+#endif
 // FAKE: sac_zubastar.c calls iconDispGx through this prototype (the types it was compiled with) instead of the one in driver/icondrv.h; same registers, behaviour-identical.
 typedef void (*IconDispGxS32Fn)(Vec*, s16, s32, f32);
 
@@ -249,7 +253,7 @@ ZubaStarWork* GetZubaStarPtr(void) {
  * Supernova's damage function: the damage for the number of cuts made in the minigame (weapon->hpDamageWork: 0,
  * 3, 6, 9, 12 or 15).
  */
-s32 weaponGetPower_ZubaStar(BattleUnit* attacker, BattleWeapon* weapon, BattleUnit* target, BattleUnitPart* part) {
+s32 PORT_HOOKABLE(weaponGetPower_ZubaStar)(BattleUnit* attacker, BattleWeapon* weapon, BattleUnit* target, BattleUnitPart* part) {
     return weapon->hpDamageWork[GetZubaStarPtr()->level];
 }
 
@@ -1151,3 +1155,7 @@ EVT_BEGIN(marioAttackEvent_ZubaStar)
     CALL(btlevtcmd_StartWaitEvent, BTL_UNIT_SELF)
     RETURN
 EVT_END()
+
+#ifdef PORT_MODS
+#include "port/hooks/src_battle_sac_sac_zubastar.inc"
+#endif

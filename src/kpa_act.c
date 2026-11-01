@@ -1,4 +1,5 @@
 // Bowser interlude score display: coins and score counters.
+#include "port_hook.h"
 #include "evt/evt_cmd.h"
 #include "manager/evtmgr.h"
 #include "manager/evtmgr_cmd.h"
@@ -9,6 +10,9 @@
 #include "memory.h"
 #include <string.h>
 #include "kpa_act.h"
+#ifdef PORT_MODS
+#include "port/hooks/src_kpa_act.h"
+#endif
 
 typedef struct KpaScore {
     char str[8];
@@ -95,7 +99,7 @@ USER_FUNC(kpa_score_disp_init) {
  * capped at
  * 10000. Called when Bowser touches a coin (evt_mobj).
  */
-void kpaAddCoin(s32 coins) {
+void PORT_HOOKABLE(kpaAddCoin)(s32 coins) {
     s32 score;
     if (pouchAddKpaCoin(coins)) {
         pouchAddKpaScore(1000);
@@ -152,7 +156,7 @@ static inline void kpaSetScoreStr(s32 score, Vec* pos) {
  * Same as kpaAddCoin, and also shows the points scored as a popup above pos.
  * kpa.rel's kpa_add_coin calls it for each stage coin Bowser picks up (kpa_coin_evt).
  */
-void kpaAddCoinPos(s32 coins, Vec* pos) {
+void PORT_HOOKABLE(kpaAddCoinPos)(s32 coins, Vec* pos) {
     s32 score;
     if (pouchAddKpaCoin(coins)) {
         pouchAddKpaScore(1000);
@@ -166,7 +170,7 @@ void kpaAddCoinPos(s32 coins, Vec* pos) {
 }
 
 /** Adds score points (capped at 10000 per call) to the Super Bowser total. */
-void kpaAddScore(s32 score) {
+void PORT_HOOKABLE(kpaAddScore)(s32 score) {
     if (score > 10000) {
         score = 10000;
     }
@@ -177,7 +181,7 @@ void kpaAddScore(s32 score) {
  * Adds score points (capped at 10000 per call) to the Super Bowser total and shows them as a popup above pos.
  * Used for stomped enemies (npcdrv) and power-ups (evt_mobj).
  */
-void kpaAddScorePos(s32 score, Vec* pos) {
+void PORT_HOOKABLE(kpaAddScorePos)(s32 score, Vec* pos) {
     s32 sc = score;
     if (score > 10000) {
         sc = 10000;
@@ -191,3 +195,7 @@ USER_FUNC(kpa_chg_pose) {
     marioChgPose((const char*)evtGetValue(event, event->args[0]));
     return EVT_RETURN_DONE;
 }
+
+#ifdef PORT_MODS
+#include "port/hooks/src_kpa_act.inc"
+#endif

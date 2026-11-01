@@ -1199,6 +1199,9 @@ static s32 BattleSetStatusDamage(u32* result, BattleUnit* unit, BattleUnitPart* 
         }
     }
     if (irand(100) >= chance) {
+#ifdef TARGET_PC
+        portPopupResisted(unit, type); // Gameplay+ battle pop-ups
+#endif
         return 0;
     }
 
@@ -1754,6 +1757,9 @@ s32 PORT_HOOKABLE(BattleCheckDamage)(BattleUnit* attacker, BattleUnit* target, B
         BtlUnit_GetHitPos(target, part, &hit.x, &hit.y, &hit.z);
         eff = effNiceEntry(2, hit.x - 60.0f, 45.0f + hit.y, hit.z - 10.0f);
         ((NiceEffectWork*)eff->userdata)->overallScale = 0.75f;
+#ifdef TARGET_PC
+        portPopupGuard(target, part, 1); // Gameplay+ battle pop-ups
+#endif
         flags |= DAMAGE_FLAG_SUPERGUARDED;
         psndSFXOn("SFX_SYSTEM_GREAT1");
         BattleAudience_Case_GuardGood();
@@ -1809,6 +1815,9 @@ s32 PORT_HOOKABLE(BattleCheckDamage)(BattleUnit* attacker, BattleUnit* target, B
                 BtlUnit_GetHitPos(target, part, &hit2.x, &hit2.y, &hit2.z);
                 eff = effNiceEntry(0, hit2.x - 60.0f, 45.0f + hit2.y, hit2.z - 10.0f);
                 ((NiceEffectWork*)eff->userdata)->overallScale = 0.75f;
+#ifdef TARGET_PC
+                portPopupGuard(target, part, 0); // Gameplay+ battle pop-ups
+#endif
                 flags |= DAMAGE_FLAG_GUARDED;
                 psndSFXOn("SFX_SYSTEM_NICE1");
                 BattleAudience_Case_GuardGood();
@@ -1966,7 +1975,7 @@ s32 PORT_HOOKABLE(BattleCheckDamage)(BattleUnit* attacker, BattleUnit* target, B
  * PART_ATTR_GUARD_COVER part steps in; both run their guard hit events (0x1029 on the target, 0x1038 on the guard)
  * and *unitIdx/*partIdx become the guard's.
  */
-void BattleAttackDeclare(s32* unitIdx, s32* partIdx) {
+void PORT_HOOKABLE(BattleAttackDeclare)(s32* unitIdx, s32* partIdx) {
     s32 i;
     BattleUnit* unit;
     BattleUnitPart* part;
@@ -2086,7 +2095,7 @@ static void __declare(s32 unitIdx, s32 partIdx, s32* outUnit, s32* outPart) {
  * For multi-target attacks: swaps every target that has a bodyguard for the guard
  * and drops duplicate entries from the target list.
  */
-void BattleAttackDeclareAll(BattleWork* wp) {
+void PORT_HOOKABLE(BattleAttackDeclareAll)(BattleWork* wp) {
     s32 i;
     BattleWorkWeaponTargets* wt = &wp->weaponTargets;
     BattleWorkTarget* t;
@@ -2119,7 +2128,7 @@ void BattleAttackDeclareAll(BattleWork* wp) {
 }
 
 /** Clears a counter-check record before a hit (noHazard = 1: nothing hurts the attacker). */
-void BattleInitCounterPreCheckWork(CounterWork* work) {
+void PORT_HOOKABLE(BattleInitCounterPreCheckWork)(CounterWork* work) {
     memset(work, 0, sizeof(CounterWork));
     work->noHazard = 1;
 }
@@ -2130,7 +2139,7 @@ void BattleInitCounterPreCheckWork(CounterWork* work) {
  * each unless the weapon resists it or a badge (Spike Shield, Ice Power) protects the attacker.
  * Sets the counter's damage, message, hit event and status side effects; returns 0 without an attacker.
  */
-s32 BattleCheckCounter(CounterWork* work, BattleUnit* attacker, BattleUnit* target, BattleUnitPart* part, BattleWeapon* weapon, u32* flags) {
+s32 PORT_HOOKABLE(BattleCheckCounter)(CounterWork* work, BattleUnit* attacker, BattleUnit* target, BattleUnitPart* part, BattleWeapon* weapon, u32* flags) {
     if (!attacker) {
         return 0;
     }

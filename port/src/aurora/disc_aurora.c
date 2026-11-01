@@ -20,6 +20,7 @@
 #include <dolphin/dvd.h>
 #include "port/aurora_pc.h"
 #include "port/platform.h"
+#include "port/text_language.h"
 #ifdef SDL_PLATFORM_IOS
 #include "port/ios_pc.h"
 #endif
@@ -61,6 +62,7 @@ static BOOL openDisc(const char* path, char* why, size_t size) {
         aurora_dvd_close();
         return FALSE;
     }
+    portTextLanguageLoad(path); /* the text of another release's disc, if chosen */
     return TRUE;
 }
 

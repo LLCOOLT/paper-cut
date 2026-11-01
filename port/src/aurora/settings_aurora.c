@@ -165,6 +165,10 @@ static int syncFromPreferences(void);
 static void writePreferences(void);
 #endif
 
+/* the settings $TTYD_SET_<key> changed for this run, and their saved values */
+static char sOverridden[FIELD_COUNT];
+static int sFileValue[FIELD_COUNT];
+
 static const Field* field(const char* key) {
     size_t i;
     for (i = 0; i < FIELD_COUNT; i++) {
@@ -236,7 +240,21 @@ void portSettingsLoad(const char* userPath) {
 #ifdef SETTINGS_APP_PREFS
     syncFromPreferences();
 #endif
-    /* this run's overrides */
+    /* this run's overrides: $TTYD_SET_<key> for any setting (tests, as the
+     * features' own take it, settings_extra.c), kept out of settings.txt */
+    {
+        size_t i;
+        char env[64];
+        const char* over;
+        for (i = 0; i < FIELD_COUNT; i++) {
+            snprintf(env, sizeof(env), "TTYD_SET_%s", kFields[i].key);
+            if (kFields[i].value != NULL && (over = getenv(env)) != NULL) {
+                sFileValue[i] = *kFields[i].value;
+                sOverridden[i] = 1;
+                set(&kFields[i], over);
+            }
+        }
+    }
     if (getenv("TTYD_FRAMERATE") != NULL) {
         set(field("framerate"), getenv("TTYD_FRAMERATE"));
     }
@@ -371,7 +389,7 @@ void portSettingsSave(void) {
         if (kFields[i].value == NULL) {
             SDL_IOprintf(io, "%s=%s\n", kFields[i].key, sSettings.framerate);
         } else {
-            SDL_IOprintf(io, "%s=%d\n", kFields[i].key, *kFields[i].value);
+            SDL_IOprintf(io, "%s=%d\n", kFields[i].key, sOverridden[i] ? sFileValue[i] : *kFields[i].value);
         }
     }
     for (i = 0; i < (size_t)portSettingsExtraCount(); i++) {

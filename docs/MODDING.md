@@ -52,7 +52,7 @@ A zip may hold everything in one top-level folder (zipping the mod's folder does
 | `name`, `version`, `author`, `description` | shown on the Mods tab |
 | `games` | the versions it works on: `G8ME01` (US), `G8MJ01` (JP). Without it, every version. A mod for another version is listed with a note and not used. |
 | `maps` | maps its scripts set up (see "Scripts") |
-| `options` | settings for its code (see "Code mods") |
+| `options` | settings for its code (see "Code mods": Options) |
 
 ### overlay/: disc files
 
@@ -64,7 +64,11 @@ The files are in the disc's own formats, as the game reads them. A file the game
 
 Replacement textures named as **Dolphin** names them: `tex1_{w}x{h}[_m]_{hash}[_{tlut hash}]_{format}.png` or `.dds`, with `_mip1`, `_mip2`... files for mipmaps and `$` in place of a hash to match any. The hashes are Dolphin's (XXH64 of the GameCube texture data), so a **Dolphin texture pack for this game works as it is**: copy its files into a mod's `textures/` folder, or straight into the user folder's `textures/` folder (any folders inside are fine). Replacements can be larger than the original. DDS can be BC1–BC7 compressed.
 
-To make a pack: turn on **Dump textures** (Mods tab, from the next start) or set `TTYD_DUMP_TEXTURES=1`, and play. Every texture drawn that has no replacement yet is saved under its replacement name, in `texture_dumps` in the cache folder (the user folder on desktop; "Open the dump folder" on the Mods tab). Edit one, put it in `textures/`, and it shows the next time it is drawn.
+To make a pack: turn on **Dump textures** (Mods tab, Texture packs; it takes effect at once, while you play) or set `TTYD_DUMP_TEXTURES=1`, and play. Every texture drawn that has no replacement yet is saved under its replacement name, in `texture_dumps` in the cache folder (the user folder on desktop; "Open the dump folder" on the Mods tab). Edit one, put it in `textures/`, press **Reload the packs**, and it shows at once.
+
+The Texture packs section also shows a pack's **coverage**: how many textures the packs replace, and of the textures in the dump folder (each one the game drew while dumping was on, unreplaced then) how many a pack replaces now. Play a while with dumping on to see more of the game; the count follows as files are added.
+
+**Name collisions.** A name is the texture's size, format and a hash of its pixels (and palette), as Dolphin makes it, so two files with the same name replace the same texture and only one is used: between mods the one higher in the list, a mod's before the textures folder's, and inside one folder either of them (keep one). The section lists the names given by more than one file and the packs giving them. Textures with the same pixels share a name, so one file replaces every use of them; a name with `$` for a hash covers every texture it stands for.
 
 Not every image can be replaced this way: pictures the game draws into itself (paper effects, captures) have no fixed texture.
 
@@ -209,7 +213,7 @@ Game functions are called directly. Game **variables** go through `api->find("na
 ]
 ```
 
-They're kept in `mods/options.txt`.
+Each option may also have a `"note"` (shown under it: what it does) and `"restart": true` (the code reads it only at the game's start, and the tab says "From the next start"). The Mods tab shows a **Default** button beside an option that isn't at its default. They're kept in `mods/options.txt`.
 
 ### Building one
 
@@ -233,7 +237,21 @@ Not yet tested: libraries on Linux, macOS and Android (the code is there: `dlope
 
 - Hooks run inside the game's logic, at 60 Hz. With 120 Hz on, the frames in between draw the game without running it, so a hook or frame callback that changes the game's state doesn't run there. Only `onDraw` runs on every frame shown.
 - A save state holds the game's memory, not a mod's own variables.
-- The hook slots are part of the game's code (`include/port_hook.h`, `port/mods/hooks.spec`, `tools/port/gen_hooks.py`). Adding one is a line in `hooks.spec` and a rebuild.
+- The hook slots are part of the game's code (`include/port_hook.h`, `port/mods/hooks.spec`, `tools/port/gen_hooks.py`); see "Hook slots" below.
+
+### Hook slots
+
+[`ttyd_mod/hooks.h`](../port/include/ttyd_mod/hooks.h) has a slot, `TTYD_HOOK_<name>`, for each game function a mod can hook: about 1,600, generated from the decomp. [`port/mods/hooks.spec`](../port/mods/hooks.spec) lists them:
+
+- **Hand-picked** names (the first 61): the functions the GameCube mods hook most and the ones the port's own services stand on. Each must be hookable, or the generator fails.
+- **`@files` sets**: every function a mod can name defined in those sources: battles (`src/battle`, units, action commands, Special moves), the field (Mario, his motions, partners, NPCs, items, objects), events (the scripts' user functions, menus, sequences) and the data tables. "Can name" is: not `static` or `inline`, declared in a game header a C++ mod can include ([`ttyd_mod/game_all.h`](../port/include/ttyd_mod/game_all.h)), not variadic, and the same signature in all three versions. `python tools/port/gen_hooks.py --report` lists what a set leaves out, and why.
+- **`-name`** leaves out a hot function. The cost of a slot is a load and a branch per call while nothing hooks it (and the function no longer inlines into its callers in its file); for the functions called many times every frame (the accessors `marioGetPtr`, `BattleAudienceGetPtr`, `BtlUnit_GetStatus`...) that buys nothing, so they're out. The animation, display-list and event-interpreter files (`animdrv`, `dispdrv`, `evtmgr_cmd`...) aren't in any set.
+
+**Slot numbers never change.** [`port/mods/hook_slots.txt`](../port/mods/hook_slots.txt) gives each function its number once: new ones go at the end, and a function that leaves the list keeps its number unused (a hook on it is refused, with a line in the log). A mod built against an older list keeps hooking the same functions. Keep the file in the repository.
+
+**Extending the list:** add an `@files` line (or a name) to `hooks.spec`, configure the three Aurora builds (`build-pc-jp-aurora`, `build-pc-us-aurora`, `build-pc-eu-aurora`: the generator reads their compile flags), run `python tools/port/gen_hooks.py --apply` (it marks the definitions `PORT_HOOKABLE`, unmarks the ones that left, and writes the dispatchers), and rebuild. `GEN_HOOKS_CACHE=<folder>` keeps clang's dumps between runs while editing the list. A function the sets can't take yet: one without a prototype in a mod-includable header (about 1,370 of them: declare it in its header first), one whose definition's first line isn't `type name(`, and the RELs' (`rels/`) functions, which load and unload with their area.
+
+**Measuring:** configure a build with `-DCMAKE_C_FLAGS_RELWITHDEBINFO="-O2 -g -DNDEBUG -DPORT_HOOK_PROFILE=1"` (the same for `CMAKE_CXX_FLAGS_RELWITHDEBINFO`) and run it with `TTYD_HOOK_PROFILE=<file>`: every 600 frames the file gets each slot's calls per frame, the most first. Put what is called more than a few times a frame in the `-name` list.
 
 ## Porting a GameCube mod
 
@@ -275,6 +293,8 @@ The data comes from the apworld: [`tools/port/gen_ttyd_ap.py`](../tools/port/gen
 ## Order and conflicts
 
 The first mod in the list wins: where two mods replace the same disc file, texture, message or data field, the higher one's is used. Loose textures in the user folder's `textures/` are below every mod. Changes made on the Mods tab apply at once: textures right away, files and messages the next time the game reads them.
+
+The Mods tab (also in the launcher's settings) shows, for each mod, **what it changes** (its files, textures, messages, data changes, the hook slots its code took, its maps) and **where another enabled mod changes the same thing**: "Also changed by B: 3 files (...). Those of B are used (it is higher in the list)." Two mods' pre and post hooks on one slot both run; of two replacements only the higher mod's does. Data changes meet where they write the same place, even under different names (`itemDataTable[*]` and `itemDataTable[ITEM_MUSHROOM]`).
 
 `mods/mods.txt` (written by the Mods tab) is one id per line, in order, with `-` in front of a mod that is off. Mods it doesn't name yet are added at the end, turned on.
 

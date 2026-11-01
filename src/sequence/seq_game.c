@@ -1,11 +1,15 @@
 // Game sequence: the sequence that runs while Mario is in the field.
 
+#include "port_hook.h"
 #include "seq/seq_game.h"
 #include "driver/fadedrv.h"
 #include "evt/evt_fade.h"
 #include "mario/mario.h"
 #include "mario/mariost.h"
 #include "pmario_sound.h"
+#ifdef PORT_MODS
+#include "port/hooks/src_sequence_seq_game.h"
+#endif
 
 #ifdef TARGET_PC
 #include "port/gameplus.h"
@@ -24,7 +28,7 @@ EVT_BEGIN(maku_spread)
 EVT_END()
 
 /** Enters the field sequence: records the time (none_key, otherwise unused here) and clears system level flag 0x10. */
-void seq_gameInit(SequenceWork* wp) {
+void PORT_HOOKABLE(seq_gameInit)(SequenceWork* wp) {
     none_key = OSGetTime();
     gp->systemLevelFlags &= ~SYSTEM_LEVEL_FLAG_NO_BATTLE;
 }
@@ -36,7 +40,7 @@ void seq_gameInit(SequenceWork* wp) {
  * state 1 keeps the sound listener on the 3D camera and, on a kiosk build after the idle timeout,
  * jumps to the game-over sequence once the fade has finished.
  */
-void seq_gameMain(SequenceWork* wp) {
+void PORT_HOOKABLE(seq_gameMain)(SequenceWork* wp) {
     CameraEntry *camera, *camera2;
     Vec position;
 
@@ -76,6 +80,10 @@ void seq_gameMain(SequenceWork* wp) {
 }
 
 /** Leaves the field sequence; clears GLOBAL_FLAG_SKIP_MAP_EVENTS so the next map runs its events. */
-void seq_gameExit(SequenceWork* wp) {
+void PORT_HOOKABLE(seq_gameExit)(SequenceWork* wp) {
     gp->flags &= ~GLOBAL_FLAG_SKIP_MAP_EVENTS;
 }
+
+#ifdef PORT_MODS
+#include "port/hooks/src_sequence_seq_game.inc"
+#endif

@@ -6,6 +6,7 @@ s32 winItemMain(WindowWork * p0) {
     PortHookSlot* s = &portHookSlots[7];
     s32 r;
     int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
     if (!s->active) {
         return winItemMain__body(p0);
     }
@@ -22,6 +23,126 @@ s32 winItemMain(WindowWork * p0) {
     return r;
 }
 
+void winMakeSkipList(WindowWork * p0) {
+    PortHookSlot* s = &portHookSlots[1513];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        winMakeSkipList__body(p0);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*))s->pre[i])(&p0);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0)))s->replace)(p0); } else { winMakeSkipList__body(p0); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0)))s->post[i])(p0);
+    }
+}
+
+void winItemInit(WindowWork * p0) {
+    PortHookSlot* s = &portHookSlots[1514];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        winItemInit__body(p0);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*))s->pre[i])(&p0);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0)))s->replace)(p0); } else { winItemInit__body(p0); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0)))s->post[i])(p0);
+    }
+}
+
+void winItemInit2(WindowWork * p0) {
+    PortHookSlot* s = &portHookSlots[1515];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        winItemInit2__body(p0);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*))s->pre[i])(&p0);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0)))s->replace)(p0); } else { winItemInit2__body(p0); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0)))s->post[i])(p0);
+    }
+}
+
+void winItemExit(WindowWork * p0) {
+    PortHookSlot* s = &portHookSlots[1516];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        winItemExit__body(p0);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*))s->pre[i])(&p0);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0)))s->replace)(p0); } else { winItemExit__body(p0); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0)))s->post[i])(p0);
+    }
+}
+
+void winItemMain2(WindowWork * p0) {
+    PortHookSlot* s = &portHookSlots[1517];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        winItemMain2__body(p0);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*))s->pre[i])(&p0);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0)))s->replace)(p0); } else { winItemMain2__body(p0); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0)))s->post[i])(p0);
+    }
+}
+
+void winItemDisp(s32 p0, void * p1, s32 p2) {
+    PortHookSlot* s = &portHookSlots[1518];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        winItemDisp__body(p0, p1, p2);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*, __typeof__(p1)*, __typeof__(p2)*))s->pre[i])(&p0, &p1, &p2);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2)))s->replace)(p0, p1, p2); } else { winItemDisp__body(p0, p1, p2); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2)))s->post[i])(p0, p1, p2);
+    }
+}
+
 void portHookInit_src_window_win_item(void) {
     portHookSlots[7].body = (void*)winItemMain__body;
+    portHookSlots[1513].body = (void*)winMakeSkipList__body;
+    portHookSlots[1514].body = (void*)winItemInit__body;
+    portHookSlots[1515].body = (void*)winItemInit2__body;
+    portHookSlots[1516].body = (void*)winItemExit__body;
+    portHookSlots[1517].body = (void*)winItemMain2__body;
+    portHookSlots[1518].body = (void*)winItemDisp__body;
 }

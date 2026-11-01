@@ -6,6 +6,7 @@ MapData * mapDataPtr(const char * p0) {
     PortHookSlot* s = &portHookSlots[57];
     MapData * r;
     int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
     if (!s->active) {
         return mapDataPtr__body(p0);
     }
@@ -25,6 +26,7 @@ MapData * mapDataPtr(const char * p0) {
 void relSetEvtAddr(const char * p0, EvtWord * p1) {
     PortHookSlot* s = &portHookSlots[59];
     int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
     if (!s->active) {
         relSetEvtAddr__body(p0, p1);
         return;
@@ -40,7 +42,49 @@ void relSetEvtAddr(const char * p0, EvtWord * p1) {
     }
 }
 
+AreaData * areaDataPtr(const char * p0) {
+    PortHookSlot* s = &portHookSlots[553];
+    AreaData * r;
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        return areaDataPtr__body(p0);
+    }
+    __builtin_memset(&r, 0, sizeof(r));
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(r)*, __typeof__(p0)*))s->pre[i])(&r, &p0);
+    }
+    if (!skip) {
+        r = (s->replace != NULL ? ((AreaData * (*)(__typeof__(p0)))s->replace)(p0) : areaDataPtr__body(p0));
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(r)*, __typeof__(p0)))s->post[i])(&r, p0);
+    }
+    return r;
+}
+
+void relSetBtlAddr(const char * p0, void * p1, void * p2) {
+    PortHookSlot* s = &portHookSlots[554];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        relSetBtlAddr__body(p0, p1, p2);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*, __typeof__(p1)*, __typeof__(p2)*))s->pre[i])(&p0, &p1, &p2);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2)))s->replace)(p0, p1, p2); } else { relSetBtlAddr__body(p0, p1, p2); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2)))s->post[i])(p0, p1, p2);
+    }
+}
+
 void portHookInit_src_data_mapdata(void) {
     portHookSlots[57].body = (void*)mapDataPtr__body;
     portHookSlots[59].body = (void*)relSetEvtAddr__body;
+    portHookSlots[553].body = (void*)areaDataPtr__body;
+    portHookSlots[554].body = (void*)relSetBtlAddr__body;
 }

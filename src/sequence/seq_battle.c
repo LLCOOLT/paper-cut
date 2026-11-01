@@ -68,7 +68,7 @@ static const char bti04[7];
  * Later versions take Mario's control here for hit kinds 0x800000/0x1000000;
  * the demos start preloading the audience map for Mario's rank.
  */
-void seq_battleInit(SequenceWork* work) {
+void PORT_HOOKABLE(seq_battleInit)(SequenceWork* work) {
     FieldBattleData* fbat;
     NpcEntry* npc;
 #if VERSION <= VERSION_DEMO_JP
@@ -123,7 +123,7 @@ void seq_battleInit(SequenceWork* work) {
 }
 
 /** Leaves the battle sequence; battle_exit tears the battle down and restores the field. */
-void seq_battleExit(SequenceWork* work) {
+void PORT_HOOKABLE(seq_battleExit)(SequenceWork* work) {
     battle_exit();
 }
 
@@ -133,7 +133,7 @@ void seq_battleExit(SequenceWork* work) {
  * starts the battle via battle_init, then once the battle ends returns to the field (or game over on a kiosk
  * timeout; states 10/11 end a debug battle).
  */
-void seq_battleMain(SequenceWork* work) {
+void PORT_HOOKABLE(seq_battleMain)(SequenceWork* work) {
 #if VERSION >= VERSION_JP
     FieldBattleData* fbat;
     BattleStageData* stage;

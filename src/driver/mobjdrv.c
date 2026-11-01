@@ -328,7 +328,7 @@ static inline int mobjCheckKururingFloorItem(MapObjectEntry* entry);
  * and marks them running; nothing in the main program calls it, so it comes from the map code.
  * mobjReset turns it off again.
  */
-void mobjKoopaOn(void) {
+void PORT_HOOKABLE(mobjKoopaOn)(void) {
     if (!koopaRunFlag) {
         MapObjectWork* wp = &work[2];
 
@@ -464,7 +464,7 @@ static void cubeDNToNative(void) {
 #endif
 
 /** Allocates the field (16) and battle (8) map object tables; called once at boot. */
-void mobjInit(void) {
+void PORT_HOOKABLE(mobjInit)(void) {
     MapObjectWork* wp = &work[0];
 
 #ifdef TARGET_PC
@@ -483,7 +483,7 @@ void mobjInit(void) {
 }
 
 /** Clears the field or battle map object table and leaves Bowser's stage mode; run when a map or battle starts. */
-void mobjReset(BOOL inBattle) {
+void PORT_HOOKABLE(mobjReset)(BOOL inBattle) {
     MapObjectWork* wp = mobjGetWorkFlag(inBattle);
     memset(wp->entries, 0, sizeof(MapObjectEntry) * wp->count);
     koopaRunFlag = FALSE;
@@ -494,7 +494,7 @@ void mobjReset(BOOL inBattle) {
  * type 0 a solid cube (MOBJ_<name>), 1 a cube shaped for head hits,
  * 2 a front cube plus a second part (MOBJ~<name>) for objects with two hit parts.
  */
-void mobjHitEntry(MapObjectEntry* entry, s32 type) {
+void PORT_HOOKABLE(mobjHitEntry)(MapObjectEntry* entry, s32 type) {
     AnimationPoseData* pose;
     Mtx mtx;
     Vec min;
@@ -607,7 +607,7 @@ void mobjHitEntry(MapObjectEntry* entry, s32 type) {
  * Creates a named map object (blocks, switches, boxes, save blocks, ...) drawing animation pose animPoseName,
  * reusing the slot if the name exists; returns its index. Called by the evt_mobj entry commands.
  */
-s32 mobjEntry(const char* name, const char* animPoseName) {
+s32 PORT_HOOKABLE(mobjEntry)(const char* name, const char* animPoseName) {
     MapObjectWork* wp = mobjGetWork();
     s32 entryCount;
     s32 idx;
@@ -647,7 +647,7 @@ s32 mobjEntry(const char* name, const char* animPoseName) {
 }
 
 /** Removes the named map object and its collision and frees its pose. */
-void mobjDelete(const char* name) {
+void PORT_HOOKABLE(mobjDelete)(const char* name) {
     MapObjectWork* wp = mobjGetWork();
     s32 entryCount;
     int i;
@@ -672,7 +672,7 @@ void mobjDelete(const char* name) {
 }
 
 /** Moves the named map object to (x, y, z) and updates its collision. */
-void mobjSetPosition(const char* name, f32 x, f32 y, f32 z) {
+void PORT_HOOKABLE(mobjSetPosition)(const char* name, f32 x, f32 y, f32 z) {
     MapObjectWork* wp = mobjGetWork();
     MapObjectEntry* entry;
     s32 entryCount;
@@ -704,7 +704,7 @@ typedef struct MobjWorkHit {
  * and reports it to the object; runs each object's main function, drops falling ones,
  * keeps their shadows and colours, and queues their drawing (offscreen if they have a region).
  */
-void mobjMain(void) {
+void PORT_HOOKABLE(mobjMain)(void) {
     MobjWorkHit* wp;
     MapObjectEntry* entry;
     MarioWork* mario;
@@ -1020,7 +1020,7 @@ MapObjectEntry* PORT_HOOKABLE(mobjNameToPtr)(const char* name) {
 }
 
 /** Returns the map object with this name, or NULL if there is none. */
-MapObjectEntry* mobjNameToPtrNoAssert(const char* name) {
+MapObjectEntry* PORT_HOOKABLE(mobjNameToPtrNoAssert)(const char* name) {
     int i;
     s32 entryCount;
     MapObjectEntry* entry;
@@ -1077,7 +1077,7 @@ MapObjectEntry* mobjHitObjPtrToPtr(HitEntry* hitObj) {
  * Starts script eventCode for a map object (its this-object is set),
  * unless the object's previous script is still running; returns the event or NULL.
  */
-EventEntry* mobjRunEvent(MapObjectEntry* entry, EvtWord* eventCode) {
+EventEntry* PORT_HOOKABLE(mobjRunEvent)(MapObjectEntry* entry, EvtWord* eventCode) {
     EventEntry* event;
 
     if (eventCode == NULL) {
@@ -1117,7 +1117,7 @@ static inline void calcMtx(Mtx mtx, Vec* pos, Vec* sc, Vec* rot) {
  * Recomputes a map object's collision matrices from its position, scale and rotation,
  * sizing the hit cube from its pose's bounding box (HOBJ_ poses get a thin fixed depth).
  */
-void mobjCalcMtx(MapObjectEntry* entry) {
+void PORT_HOOKABLE(mobjCalcMtx)(MapObjectEntry* entry) {
     AnimationPoseData* pose;
     Mtx mtx;
     Vec position;
@@ -1150,7 +1150,7 @@ void mobjCalcMtx(MapObjectEntry* entry) {
  * Recomputes a map object's collision matrices from its position, rotation and the already-computed hit size;
  * evt_mobj calls it as objects move.
  */
-void mobjCalcMtx2(MapObjectEntry* entry) {
+void PORT_HOOKABLE(mobjCalcMtx2)(MapObjectEntry* entry) {
     Mtx mtx;
     Vec position;
     s32 i;
@@ -1169,7 +1169,7 @@ void mobjCalcMtx2(MapObjectEntry* entry) {
  * Returns whether a map object shows the "!" hint balloon over Mario when he is near (MOBJ_FLAG_HINT).
  * Later versions accept NULL.
  */
-BOOL mobjGetHint(MapObjectEntry* entry) {
+BOOL PORT_HOOKABLE(mobjGetHint)(MapObjectEntry* entry) {
 #if VERSION >= VERSION_JP
     if (entry == NULL) {
         return 0;
@@ -1179,7 +1179,7 @@ BOOL mobjGetHint(MapObjectEntry* entry) {
 }
 
 /** Returns TRUE while any map object is busy (MOBJ_FLAG_BUSY); the pause menu does not open then. */
-BOOL mobjCheckExec() {
+BOOL PORT_HOOKABLE(mobjCheckExec)() {
     MapObjectWork* wp = mobjGetWork();
     int i;
     MapObjectEntry* entry;
@@ -1195,7 +1195,7 @@ BOOL mobjCheckExec() {
  * For treasure chests (normal, big, gray, black) returns 2 once opened (state 99) and 1 while closed;
  * 0 for any other object.
  */
-s32 mobjCheckItemboxOpen(MapObjectEntry* entry) {
+s32 PORT_HOOKABLE(mobjCheckItemboxOpen)(MapObjectEntry* entry) {
     if (strcmp(entry->animName, "MOBJ_TreasureBox") == 0 || strcmp(entry->animName, "MOBJ_BigTreasureBox") == 0 ||
         strcmp(entry->animName, "MOBJ_GrayTreasureBox") == 0 || strcmp(entry->animName, "MOBJ_BlackTreasureBox") == 0) {
         if (entry->state == 99)
@@ -1263,7 +1263,7 @@ MapObjectEntry* mobjNearDistCheck(f32 x, f32 y, f32 z, f32 minMagnitude) {
  * Returns the nearest map object within minMagnitude of (x, y, z) whose pose is in the NULL-ended names list,
  * skipping opened chests and spent KururinFloor objects; Ms. Mowz uses it to sense hidden objects.
  */
-MapObjectEntry* mobjNearDistCheck2(f32 x, f32 y, f32 z, f32 minMagnitude, char** names) {
+MapObjectEntry* PORT_HOOKABLE(mobjNearDistCheck2)(f32 x, f32 y, f32 z, f32 minMagnitude, char** names) {
     int entryCount;
     Vec pos;
     Vec dist;

@@ -127,10 +127,16 @@ void portSettingsAddChoice(const char* tab, const char* label, const char* note,
                            const char* const* choices, int count, const char* keywords);
 void portSettingsAddSlider(const char* tab, const char* label, const char* note, unsigned flags, const char* key,
                            int min, int max, const char* format, const char* keywords);
-/* A section the feature draws itself (ImGui, from a C++ file): its controls,
- * text or lists, under label; for what a toggle, choice or slider can't show. */
+/* A section the feature draws itself with Dear ImGui (buttons, lists): draw is
+ * called where the item goes (inGame: the page is open over a running game,
+ * not the launcher's); search finds it by label, note and keywords. */
 void portSettingsAddSection(const char* tab, const char* label, const char* note, unsigned flags,
-                            void (*draw)(void), const char* keywords);
+                            void (*draw)(int inGame), const char* keywords);
+/* A feature's drawing over the game (a timer, a toast) each presented frame,
+ * with Dear ImGui's foreground draw list (pageOpen: the settings page is
+ * open), and its SDL events (a key of its own) before the page's: event
+ * returns nonzero for one it used. Either may be NULL. Call as AddSection. */
+void portSettingsAddOverlay(void (*draw)(int pageOpen), int (*event)(const void* sdlEvent));
 
 #ifdef __cplusplus
 }

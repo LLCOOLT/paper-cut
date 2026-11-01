@@ -40,6 +40,9 @@
  *                       blocks, chests)
  *   tap NX NY           a tap at NX, NY (0-1 across the picture) on a selection
  *                       list's rows (port/src/common/menu_tap_pc.c)
+ *   hover NX NY         the mouse pointer moved to NX, NY (menus)
+ *   back / wheel N      a right click / N notches of the wheel (up > 0), with a
+ *                       menu up
  *   select N|list       open selection window type N (0-18; key items, items,
  *                       badges, partners, ...), or a window of a list of items
  *                       as a locked door's script opens; press keys to close it
@@ -301,9 +304,14 @@ static void load(const char* path) {
         } else if (strcmp(cmd, "talk_all") == 0 || strcmp(cmd, "mobj_all") == 0) {
             s->frames = cmd[0] == 't' ? -16 : -17;
             s->waitMax = a1[0] ? atoi(a1) : 900;
-        } else if (strcmp(cmd, "tap") == 0) {
-            s->frames = -18;
+        } else if (strcmp(cmd, "tap") == 0 || strcmp(cmd, "hover") == 0) {
+            s->frames = cmd[0] == 't' ? -18 : -19;
             snprintf(s->name, sizeof(s->name), "%s %s", a1, a2);
+        } else if (strcmp(cmd, "back") == 0) {
+            s->frames = -20;
+        } else if (strcmp(cmd, "wheel") == 0) {
+            s->frames = -21;
+            snprintf(s->name, sizeof(s->name), "%s", a1);
         } else if (strcmp(cmd, "mobj_event") == 0) {
             s->frames = -15;
             snprintf(s->name, sizeof(s->name), "%s", a1);
@@ -695,6 +703,20 @@ static void applyScript(PADStatus* pad) {
             portMenuTap(nx, ny); /* as the touch overlay does with a list up */
             continue;
         }
+        if (s->frames == -19) {
+            float nx = 0.5f, ny = 0.5f;
+            sscanf(s->name, "%f %f", &nx, &ny);
+            portMenuHover(nx, ny); /* as the mouse moving there */
+            continue;
+        }
+        if (s->frames == -20) {
+            portMenuBack(); /* as a right click */
+            continue;
+        }
+        if (s->frames == -21) {
+            portMenuWheel(atoi(s->name)); /* as the wheel's notches, up > 0 */
+            continue;
+        }
         if (s->frames == -15) {
             MapObjectEntry* mobj = mobjNameToPtrNoAssert(s->name);
             if (mobj == NULL || mobj->event == 0) {
@@ -748,6 +770,7 @@ void portInputApply(PADStatus* pad) {
     static int sPrevCue, sHold;
     static int sCuePress = -1;
     applyScript(pad);
+    portMenuApplyPad(pad); /* the mouse's B and wheel in menus */
     if (sCuePress < 0) {
         sCuePress = getenv("TTYD_AC_CUE_PRESS") != NULL;
     }

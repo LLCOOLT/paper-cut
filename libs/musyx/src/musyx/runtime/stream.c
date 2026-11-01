@@ -7,6 +7,9 @@
 #include "musyx/synth.h"
 #include "musyx/synthdata.h"
 #include "musyx/voice.h"
+#if MUSY_TARGET == MUSY_TARGET_PC
+#include "musyx/hw_pcmixer.h"
+#endif
 
 #if !defined(_DEBUG) && MUSY_TARGET == MUSY_TARGET_DOLPHIN
 #include "dolphin/os.h"
@@ -568,6 +571,9 @@ SND_STREAMID sndStreamAllocEx(u8 prio, void* buffer, u32 samples, u32 frq, u8 vo
     streamInfo[i].bytes = bytes;
     streamInfo[i].updateFunction = updateFunction;
     streamInfo[i].voice = -1;
+#if MUSY_TARGET == MUSY_TARGET_PC
+    salPcStreamCat[i] = (u8)salPcCategory(-1);
+#endif
     if (flags & 1) {
       if (adpcmInfo != NULL) {
         for (j = 0; j < 8; j++) {
@@ -889,6 +895,9 @@ bool sndStreamActivate(SND_STREAMID stid) {
         hwEnableIrq();
         return 0;
       }
+#if MUSY_TARGET == MUSY_TARGET_PC
+      salPcVoiceCat[streamInfo[i].voice] = salPcStreamCat[i];
+#endif
 
       streamInfo[i].last = 0;
       streamInfo[i].state = 1;

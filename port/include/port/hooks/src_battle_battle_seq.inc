@@ -5,6 +5,7 @@
 static void btlseqFirstAct(BattleWork * p0) {
     PortHookSlot* s = &portHookSlots[24];
     int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
     if (!s->active) {
         btlseqFirstAct__body(p0);
         return;
@@ -24,6 +25,7 @@ BOOL BattleCheckConcluded(BattleWork * p0) {
     PortHookSlot* s = &portHookSlots[25];
     BOOL r;
     int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
     if (!s->active) {
         return BattleCheckConcluded__body(p0);
     }
@@ -40,7 +42,91 @@ BOOL BattleCheckConcluded(BattleWork * p0) {
     return r;
 }
 
+void BattleSequenceManager(void) {
+    PortHookSlot* s = &portHookSlots[335];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        BattleSequenceManager__body();
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(void))s->pre[i])();
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(void))s->replace)(); } else { BattleSequenceManager__body(); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(void))s->post[i])();
+    }
+}
+
+void battleSortPhaseMoveTable(BattleWork * p0, s32 p1) {
+    PortHookSlot* s = &portHookSlots[336];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        battleSortPhaseMoveTable__body(p0, p1);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*, __typeof__(p1)*))s->pre[i])(&p0, &p1);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0), __typeof__(p1)))s->replace)(p0, p1); } else { battleSortPhaseMoveTable__body(p0, p1); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0), __typeof__(p1)))s->post[i])(p0, p1);
+    }
+}
+
+BOOL BattleWaitAllActiveEvtEnd(BattleWork * p0) {
+    PortHookSlot* s = &portHookSlots[337];
+    BOOL r;
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        return BattleWaitAllActiveEvtEnd__body(p0);
+    }
+    __builtin_memset(&r, 0, sizeof(r));
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(r)*, __typeof__(p0)*))s->pre[i])(&r, &p0);
+    }
+    if (!skip) {
+        r = (s->replace != NULL ? ((BOOL (*)(__typeof__(p0)))s->replace)(p0) : BattleWaitAllActiveEvtEnd__body(p0));
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(r)*, __typeof__(p0)))s->post[i])(&r, p0);
+    }
+    return r;
+}
+
+BOOL BattleWaitAllActiveEvtEnd_NoBgSetEndWait(BattleWork * p0) {
+    PortHookSlot* s = &portHookSlots[338];
+    BOOL r;
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        return BattleWaitAllActiveEvtEnd_NoBgSetEndWait__body(p0);
+    }
+    __builtin_memset(&r, 0, sizeof(r));
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(r)*, __typeof__(p0)*))s->pre[i])(&r, &p0);
+    }
+    if (!skip) {
+        r = (s->replace != NULL ? ((BOOL (*)(__typeof__(p0)))s->replace)(p0) : BattleWaitAllActiveEvtEnd_NoBgSetEndWait__body(p0));
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(r)*, __typeof__(p0)))s->post[i])(&r, p0);
+    }
+    return r;
+}
+
 void portHookInit_src_battle_battle_seq(void) {
     portHookSlots[24].body = (void*)btlseqFirstAct__body;
     portHookSlots[25].body = (void*)BattleCheckConcluded__body;
+    portHookSlots[335].body = (void*)BattleSequenceManager__body;
+    portHookSlots[336].body = (void*)battleSortPhaseMoveTable__body;
+    portHookSlots[337].body = (void*)BattleWaitAllActiveEvtEnd__body;
+    portHookSlots[338].body = (void*)BattleWaitAllActiveEvtEnd_NoBgSetEndWait__body;
 }

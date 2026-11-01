@@ -46,7 +46,7 @@ static void portAutoAttackOff(BattleWork* wp, u8 saved) {
 #endif
 
 /** Clears the action-command manager at battle start: resets its pad history and drops every command callback. */
-void BattleActionCommandManagerInit(BattleWork* wp) {
+void PORT_HOOKABLE(BattleActionCommandManagerInit)(BattleWork* wp) {
     BtlPad_WorkInit(&wp->actionCommands.pad);
     wp->actionCommands.maincb = NULL;
     wp->actionCommands.resultcb = NULL;
@@ -59,7 +59,7 @@ void BattleActionCommandManagerInit(BattleWork* wp) {
  * Per-frame action-command driver: records the pad, runs the active command's main callback until it returns 0,
  * and queues its draw callback on the 2D camera.
  */
-void BattleActionCommandManager(BattleWork* wp) {
+void PORT_HOOKABLE(BattleActionCommandManager)(BattleWork* wp) {
     BattleACMainCallback main;
     DispCallback disp;
 
@@ -91,7 +91,7 @@ void BattleActionCommandManager(BattleWork* wp) {
  * Returns the active command's result through its result callback,
  * or bit 1 of the raw result (success) when it has none.
  */
-s32 BattleActionCommandResult(BattleWork* wp) {
+s32 PORT_HOOKABLE(BattleActionCommandResult)(BattleWork* wp) {
     BattleACResultCallback result;
 
     result = wp->actionCommands.resultcb;
@@ -115,7 +115,7 @@ s32 BattleActionCommandResult(BattleWork* wp) {
  * otherwise the weapon, its Bingo-slot chance and a Star Power multiplier of 0.5 + 0.25 * result are stored for
  * the bonus that follows.
  */
-void BattleActionCommandDeclareACResult(BattleWork* work, BattleWeapon* weapon, s32 result) {
+void PORT_HOOKABLE(BattleActionCommandDeclareACResult)(BattleWork* work, BattleWeapon* weapon, s32 result) {
     StarPowerInfo* info = &work->impendingBonuses;
     switch (result) {
         case -1:
@@ -136,7 +136,7 @@ void BattleActionCommandDeclareACResult(BattleWork* work, BattleWeapon* weapon, 
  * stores the setup flags and parameter, resets the state and result, and installs the command's main,
  * result and delete callbacks. A confused unit gets no on-screen prompt (no draw callback).
  */
-void BattleActionCommandSetup(BattleWork* work, s32 id, BattleUnit* unit, s32 setupFlags, s32 setupParam) {
+void PORT_HOOKABLE(BattleActionCommandSetup)(BattleWork* work, s32 id, BattleUnit* unit, s32 setupFlags, s32 setupParam) {
     ActionCommandEntry* entry; // r6
 
     entry = ActionCommandList;
@@ -165,12 +165,12 @@ void BattleActionCommandSetup(BattleWork* work, s32 id, BattleUnit* unit, s32 se
 }
 
 /** Starts the prepared action command (state 100 tells its main callback to begin). */
-void BattleActionCommandStart(BattleWork* work) {
+void PORT_HOOKABLE(BattleActionCommandStart)(BattleWork* work) {
     work->actionCommands.acState = 100;
 }
 
 /** Ends the active action command early through its delete callback. */
-void BattleActionCommandStop(BattleWork* work) {
+void PORT_HOOKABLE(BattleActionCommandStop)(BattleWork* work) {
     if (work->actionCommands.deletecb) {
         work->actionCommands.deletecb(work);
     }
@@ -306,7 +306,7 @@ static s32 BattleACPadCheckRecordTrigger(s32 chan, s32 mask) {
 #pragma dont_inline reset
 
 /** Returns the last guard result from BattleActionCommandCheckDefence (5 Superguard, 4 Guard, 2 none, 1 mashed). */
-s32 BattleActionCommandGetDefenceResult(void) {
+s32 PORT_HOOKABLE(BattleActionCommandGetDefenceResult)(void) {
     return _battleWorkPointer->actionCommands.defenseResult;
 }
 
@@ -314,14 +314,14 @@ s32 BattleActionCommandGetDefenceResult(void) {
  * Clears the guard result and the pad history, so damage that is not guardable (audience items) counts as
  * unguarded.
  */
-void BattleActionCommandResetDefenceResult(void) {
+void PORT_HOOKABLE(BattleActionCommandResetDefenceResult)(void) {
     BattleWork* wp = _battleWorkPointer;
     wp->actionCommands.defenseResult = 0;
     BtlPad_WorkInit(&wp->actionCommands.pad);
 }
 
 /** Returns the action-command difficulty level 0-6 after Simplifier/Unsimplifier adjustments. */
-s32 BattleActionCommandGetDifficulty(BattleWork* work) {
+s32 PORT_HOOKABLE(BattleActionCommandGetDifficulty)(BattleWork* work) {
     return work->actionCommands.acDifficulty;
 }
 
@@ -355,7 +355,7 @@ void PORT_HOOKABLE(BattleActionCommandSetDifficulty)(BattleWork* work, BattleUni
  * Returns the prize level (0-6) for a successful command, lv plus the difficulty minus one,
  * so harder commands earn the better rating; -1 when the unit's damage code is 0x1E.
  */
-s32 BattleActionCommandGetPrizeLv(BattleWork* work, BattleUnit* unit, s32 lv) {
+s32 PORT_HOOKABLE(BattleActionCommandGetPrizeLv)(BattleWork* work, BattleUnit* unit, s32 lv) {
     if (unit != NULL && (u8)unit->damageCode == DAMAGE_HIT_NONE) {
         return -1;
     }
@@ -374,7 +374,7 @@ s32 BattleActionCommandGetPrizeLv(BattleWork* work, BattleUnit* unit, s32 lv) {
  * Returns the icon to show for a button in an action-command prompt (A, B, X, Y, Z, L, R and the stick
  * directions), in its pressed or released form.
  */
-u16 BattleACGetButtonIcon(s32 button, s32 pressed) {
+u16 PORT_HOOKABLE(BattleACGetButtonIcon)(s32 button, s32 pressed) {
     u16 icon = 0;
 
     switch (button) {
@@ -500,7 +500,7 @@ static inline void gaugeQuad(CameraEntry* cam, f32 x0, f32 y0, f32 x1, f32 y1, u
  * flags 1 tints the fill with the command's display colour, flags 2 draws it red.
  * Used by the air gauge and timing gauge commands.
  */
-void BattleAcDrawGauge(s32 x, s32 y, s32 width, f32 ratio, s32 level, s32 a, s32 b, s32 c, s32 flags) {
+void PORT_HOOKABLE(BattleAcDrawGauge)(s32 x, s32 y, s32 width, f32 ratio, s32 level, s32 a, s32 b, s32 c, s32 flags) {
     BattleWork* wp = _battleWorkPointer;
     s32 max = 100;
     u8* mod = (u8*)&wp->actionCommands.disp.color;
@@ -638,7 +638,7 @@ void BattleAcDrawGauge(s32 x, s32 y, s32 width, f32 ratio, s32 level, s32 a, s32
 }
 
 /** Starts the rising "power gauge" sound that accompanies a filling action-command gauge. */
-void BattleAcGaugeSeInit(void) {
+void PORT_HOOKABLE(BattleAcGaugeSeInit)(void) {
     BattleWork* wp = _battleWorkPointer;
 
     AC_SE_ID(wp) = psndSFXOn("SFX_AC_POWER_GAUGE1");
@@ -646,7 +646,7 @@ void BattleAcGaugeSeInit(void) {
 }
 
 /** Sets the gauge sound's pitch from value (0-100, clamped). */
-void BattleAcGaugeSeUpdate(f32 value) {
+void PORT_HOOKABLE(BattleAcGaugeSeUpdate)(f32 value) {
     BattleWork* wp = _battleWorkPointer;
 
     if (value < 0.0f) {
@@ -662,7 +662,7 @@ void BattleAcGaugeSeUpdate(f32 value) {
 }
 
 /** Stops the gauge sound, if playing. */
-void BattleAcGaugeSeDelete(void) {
+void PORT_HOOKABLE(BattleAcGaugeSeDelete)(void) {
     BattleWork* wp = _battleWorkPointer;
 
     if (AC_SE_ID(wp) != -1) {

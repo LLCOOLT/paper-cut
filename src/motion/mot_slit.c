@@ -1,4 +1,5 @@
 // Mario's paper slit motion (side-step through bars): turning sideways, sliding along walls and turning back.
+#include "port_hook.h"
 #include "dolphin/types.h"
 #include "driver/hitdrv.h"
 #include "mario/mario.h"
@@ -15,6 +16,9 @@
 #include "mario/mario_pouch.h"
 #include "party/party_motion.h"
 #include <dolphin/pad.h>
+#ifdef PORT_MODS
+#include "port/hooks/src_motion_mot_slit.h"
+#endif
 
 // Bits of MarioWork.mot.slit.flags.
 enum MotSlitFlag {
@@ -33,7 +37,7 @@ double fabs(double);
  * Puts Mario straight back into Paper Mode's sideways standing state (slit state 10) after landing from a jump
  * or fall while still paper; called from the landing code in mario_motion.c. JP and later.
  */
-void marioSlitReenter(void) {
+void PORT_HOOKABLE(marioSlitReenter)(void) {
     MarioWork* mario = marioGetPtr();
     marioChgMot2(MARIO_MOTION_SLIT);
     mario->slitState = 10;
@@ -44,7 +48,7 @@ void marioSlitReenter(void) {
  * Returns Mario to the slit motion after landing while moving in Paper Mode, keeping its current state.
  * JP and later.
  */
-void N_marioSlitSetAfterLand(void) {
+void PORT_HOOKABLE(N_marioSlitSetAfterLand)(void) {
     MarioWork* mario = marioGetPtr();
     marioChgMot2(MARIO_MOTION_SLIT);
     mario->flags &= ~(MARIO_FLAG_IS_JUMPING | MARIO_FLAG_IS_FALLING | MARIO_FLAG_IS_STEPPING | MARIO_FLAG_HAS_INPUT_JUMP);
@@ -55,7 +59,7 @@ void N_marioSlitSetAfterLand(void) {
  * TRUE when Mario may turn into Paper Mode: he has the paper curse (ITEM_PAPER_CURSE), it is not disabled,
  * he is not in 8-bit form, and the map is not in background mode. Checked by the stay and walk motions.
  */
-BOOL marioSlitAbilityChk(void) {
+BOOL PORT_HOOKABLE(marioSlitAbilityChk)(void) {
     MarioWork* mario = marioGetPtr();
     if (mario->flags & MARIO_FLAG_SLIT_ABILITY_DISABLED) {
         return FALSE;
@@ -74,7 +78,7 @@ BOOL marioSlitAbilityChk(void) {
  * 2 while already paper and R is still held (or pressed at least halfway on the analog trigger),
  * 0 otherwise or while control is off, in background mode, or (JP and later) a partner action is starting.
  */
-s32 marioSlitButton(void) {
+s32 PORT_HOOKABLE(marioSlitButton)(void) {
     MarioWork* mario = marioGetPtr();
 #if VERSION >= VERSION_JP
     if (mario->trigFlags & MARIO_TRIG_FLAG_USE_PARTNER) {
@@ -110,7 +114,7 @@ s32 marioSlitButton(void) {
  * FALSE while Mario is slipping through a gap or turning around a crack in Paper Mode (slit states 0x50-0x52,
  * 0x5A-0x5E), TRUE otherwise; marioChkKey treats FALSE as no control.
  */
-BOOL marioSlitKeyDisable(void) {
+BOOL PORT_HOOKABLE(marioSlitKeyDisable)(void) {
     MarioWork* mario = marioGetPtr();
     s32 st;
     if (!(mario->flags & MARIO_FLAG_PAPER_MODE)) {
@@ -131,7 +135,7 @@ BOOL marioSlitKeyDisable(void) {
  * TRUE when Mario must stay in Paper Mode: R is held, walls are too close around him,
  * or he stands in a narrow crack (marioCreviceWallChk). The item menu refuses items then. JP and later.
  */
-BOOL U_marioSlitContinueChk(void) {
+BOOL PORT_HOOKABLE(U_marioSlitContinueChk)(void) {
     MarioWork* mario = marioGetPtr();
     Vec pos;
     if (marioSlitButton()) {
@@ -150,7 +154,7 @@ BOOL U_marioSlitContinueChk(void) {
  * rays 20 units to both sides (each tried from the centre and from points 10 units ahead and behind) hit walls
  * whose normals face each other within 10 degrees.
  */
-BOOL marioCreviceWallChk(const Vec* p) {
+BOOL PORT_HOOKABLE(marioCreviceWallChk)(const Vec* p) {
     f32 offX;
     f32 offZ;
     f32 angA;
@@ -258,7 +262,7 @@ BOOL marioCreviceWallChk(const Vec* p) {
  * Forgets the floor position Mario last stood on in Paper Mode (mario->slitPosSet),
  * for example when he takes damage.
  */
-void marioClearSlitFloor(void) {
+void PORT_HOOKABLE(marioClearSlitFloor)(void) {
     MarioWork* mario = marioGetPtr();
     mario->slitPosSet = 0;
 }
@@ -267,7 +271,7 @@ void marioClearSlitFloor(void) {
  * Copies the floor position saved in Paper Mode to *out and returns TRUE, or FALSE if none is saved;
  * the partners use it to follow Mario through gaps.
  */
-BOOL marioGetSlitFloorPos(Vec* out) {
+BOOL PORT_HOOKABLE(marioGetSlitFloorPos)(Vec* out) {
     MarioWork* mario = marioGetPtr();
     if (mario->slitPosSet) {
         *out = mario->slitPos;
@@ -280,7 +284,7 @@ BOOL marioGetSlitFloorPos(Vec* out) {
  * TRUE while Mario is passing through a gap in Paper Mode (slit states 0x50-0x5E);
  * the partners and evt_mario check it.
  */
-BOOL marioChkSlitThrouh(void) {
+BOOL PORT_HOOKABLE(marioChkSlitThrouh)(void) {
     MarioWork* mario = marioGetPtr();
     s32 st;
     if (mario->currMotionId != MARIO_MOTION_SLIT) {
@@ -294,7 +298,7 @@ BOOL marioChkSlitThrouh(void) {
 }
 
 /** TRUE on the last frame of a pass through a gap (slit state 0x52 or 0x5E). */
-BOOL marioChkSlitThrouhEnd(void) {
+BOOL PORT_HOOKABLE(marioChkSlitThrouhEnd)(void) {
     MarioWork* mario = marioGetPtr();
     s32 st;
     if (mario->currMotionId != MARIO_MOTION_SLIT) {
@@ -311,7 +315,7 @@ BOOL marioChkSlitThrouhEnd(void) {
  * Switches back to the slit motion in its moving state (0x14), from the stay,
  * walk and step-up motions when Mario is still paper.
  */
-void motSlitContinue(void) {
+void PORT_HOOKABLE(motSlitContinue)(void) {
     s16 v;
     v = 0x14;
     marioChgMot2(MARIO_MOTION_SLIT);
@@ -335,7 +339,7 @@ void motSlitContinue2(void) {
 #endif
 
 /** TRUE once the slit motion has reached its ending states (0x64 and later). */
-BOOL marioChkSlitEnd(void) {
+BOOL PORT_HOOKABLE(marioChkSlitEnd)(void) {
     MarioWork* mario = marioGetPtr();
     if (mario->currMotionId != MARIO_MOTION_SLIT) {
         return FALSE;
@@ -344,7 +348,7 @@ BOOL marioChkSlitEnd(void) {
 }
 
 /** Starts turning Mario back from Paper Mode (state 0x64) if he is paper. */
-void motSlitCancel(void) {
+void PORT_HOOKABLE(motSlitCancel)(void) {
     MarioWork* mario = marioGetPtr();
     if (mario->flags & MARIO_FLAG_PAPER_MODE) {
         mario->slitState = 0x64;
@@ -355,7 +359,7 @@ void motSlitCancel(void) {
  * Turns Mario back from Paper Mode for a script (state 0x6E),
  * first pulling the partners out of their paper form (JP and later); called from evt_mario.
  */
-void motSlitCancel2(void) {
+void PORT_HOOKABLE(motSlitCancel2)(void) {
     MarioWork* mario = marioGetPtr();
     if (mario->flags & MARIO_FLAG_PAPER_MODE) {
 #if VERSION >= VERSION_JP
@@ -369,7 +373,7 @@ void motSlitCancel2(void) {
  * Turns Mario back from Paper Mode with the 0x78 ending,
  * used by the paper genie lecture scripts (evt_lect_*) and yuu_03 before they take control.
  */
-void motSlitCancel3(void) {
+void PORT_HOOKABLE(motSlitCancel3)(void) {
     MarioWork* mario = marioGetPtr();
     if (mario->flags & MARIO_FLAG_PAPER_MODE) {
         mario->slitState = 0x78;
@@ -380,7 +384,7 @@ void motSlitCancel3(void) {
  * TRUE while either script-driven Paper Mode ending (0x6E-0x70 or 0x78-0x7A) is playing;
  * evt_mario and mario_sbr wait on it.
  */
-BOOL marioGetMotSlitCancel3(void) {
+BOOL PORT_HOOKABLE(marioGetMotSlitCancel3)(void) {
     s32 st;
     BOOL r = FALSE;
     MarioWork* mario = marioGetPtr();
@@ -412,7 +416,7 @@ static inline void slitSetDir(MarioWork* mario, f32 a) {
  * turns the paper look and map paper tint off, recentres the camera and returns the partners to normal.
  * Used before damage, pipes and other forced motions.
  */
-void marioSlitForceCancel(void) {
+void PORT_HOOKABLE(marioSlitForceCancel)(void) {
     MarioWork* m = marioGetPtr();
     if (m->flags & MARIO_FLAG_PAPER_MODE) {
         m->flags &= ~MARIO_FLAG_PAPER_MODE;
@@ -450,7 +454,7 @@ void marioSlitForceCancel(void) {
  * step-up); otherwise restores him and the partners like marioSlitForceCancel (in the US release only once the
  * turn into paper has finished; when switching to Tube Mode the partners turn back by request).
  */
-void mot_slit_post(void) {
+void PORT_HOOKABLE(mot_slit_post)(void) {
 #if VERSION <= VERSION_DEMO_JP
     MarioWork* mario = marioGetPtr();
     u16 id;
@@ -574,7 +578,7 @@ void mot_slit_post(void) {
 #endif
 
 /** Re-applies the Paper Mode animation (p_slit, PM_S_1A) when mario.c rebuilds Mario's look while he is paper. */
-void marioForceSlitAnime(void) {
+void PORT_HOOKABLE(marioForceSlitAnime)(void) {
     MarioWork* mario = marioGetPtr();
     marioPaperOff();
     marioChgPaper(NULL);
@@ -619,7 +623,7 @@ static inline void slitInit(void) {
  * Restores Paper Mode when Mario is re-entered on a new map while paper (marioEntry):
  * sideways standing state, 6-unit collision width, partners turned paper too.
  */
-void marioReInit_slit(void) {
+void PORT_HOOKABLE(marioReInit_slit)(void) {
     MarioWork* mario = marioGetPtr();
     slitInit();
     mario->trigFlags &= ~MARIO_TRIG_FLAG_IS_STARTING_NEW_MOTION;
@@ -707,7 +711,7 @@ static inline void slitCamReset(void) {
  * squeezes through cracks (0x5A-0x5E), and turns back when R is released and there is room.
  * Scripts end it with their own animations (0x6E, 0x78).
  */
-void mot_slit(void) {
+void PORT_HOOKABLE(mot_slit)(void) {
     MarioWork* m = marioGetPtr();
     f32 d;
     s32 st;
@@ -1411,3 +1415,7 @@ void mot_slit(void) {
             break;
     }
 }
+
+#ifdef PORT_MODS
+#include "port/hooks/src_motion_mot_slit.inc"
+#endif

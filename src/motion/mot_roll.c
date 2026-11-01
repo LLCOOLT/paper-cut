@@ -1,4 +1,5 @@
 // Mario's tube (roll) motion: rolling up, moving through small gaps and unrolling.
+#include "port_hook.h"
 #include "dolphin/types.h"
 #include "driver/hitdrv.h"
 #include "mario/mario.h"
@@ -16,6 +17,9 @@
 #include "mario/mario_hit.h"
 #include "version.h"
 #include <dolphin/pad.h>
+#ifdef PORT_MODS
+#include "port/hooks/src_motion_mot_roll.h"
+#endif
 
 // Bits of MarioWork.mot.roll.flags (all cleared when the roll starts).
 enum MotRollFlag {
@@ -234,7 +238,7 @@ void roll_upstairs(void);
 static inline void marioRollCan(void);
 
 /** Locks Tube Mode on (roll flag 0x200) so Mario cannot unroll; only while in the roll motion. */
-void marioRollFixOn(void) {
+void PORT_HOOKABLE(marioRollFixOn)(void) {
     MarioWork* mario = marioGetPtr();
     if (mario->currMotionId == MARIO_MOTION_ROLL) {
         mario->mot.roll.flags |= ROLL_FLAG_FIXED;
@@ -245,7 +249,7 @@ void marioRollFixOn(void) {
  * 1 when Mario could not unroll right now (locked, under a ceiling, not on the ground,
  * or walls too close around him); the item menu refuses items then.
  */
-s32 marioRollCancelDisable(void) {
+s32 PORT_HOOKABLE(marioRollCancelDisable)(void) {
     MarioWork* mario = marioGetPtr();
     if (mario->mot.roll.flags & ROLL_FLAG_FIXED) {
         return 1;
@@ -260,7 +264,7 @@ s32 marioRollCancelDisable(void) {
  * 0 while Mario is rolling up or unrolling (sub-motions 0-1, 0x14-0x16), 1 otherwise;
  * marioChkKey treats 0 as no control.
  */
-s32 marioRollKeyDisable(void) {
+s32 PORT_HOOKABLE(marioRollKeyDisable)(void) {
     MarioWork* mario = marioGetPtr();
     if (mario->currMotionId != MARIO_MOTION_ROLL) {
         return 1;
@@ -281,13 +285,13 @@ s32 marioRollKeyDisable(void) {
  * Marks the roll as script-driven (roll flag 0x100);
  * set by evt_mario's move commands while they move Mario in Tube Mode.
  */
-void setRollEvtFlag(void) {
+void PORT_HOOKABLE(setRollEvtFlag)(void) {
     MarioWork* mario = marioGetPtr();
     mario->mot.roll.flags |= ROLL_FLAG_EVT;
 }
 
 /** Clears the script-driven roll flag once evt_mario's move ends. */
-void clrRollEvtFlag(void) {
+void PORT_HOOKABLE(clrRollEvtFlag)(void) {
     MarioWork* mario = marioGetPtr();
     mario->mot.roll.flags &= ~ROLL_FLAG_EVT;
 }
@@ -296,7 +300,7 @@ void clrRollEvtFlag(void) {
  * 1 while a script is moving Mario in Tube Mode (roll flag 0x100);
  * mario.c and mario_motion.c then skip the player-driven movement.
  */
-s32 getRollEvtFlag(void) {
+s32 PORT_HOOKABLE(getRollEvtFlag)(void) {
     s32 r = 0;
     MarioWork* mario = marioGetPtr();
     if (mario->flags & MARIO_FLAG_TUBE_MODE) {
@@ -308,7 +312,7 @@ s32 getRollEvtFlag(void) {
 }
 
 /** Stops the roll: clears the roll velocity and Mario's speed, if he is in Tube Mode. */
-void marioResetRollSpd(void) {
+void PORT_HOOKABLE(marioResetRollSpd)(void) {
     MarioWork* mario = marioGetPtr();
     if (mario->currMotionId == MARIO_MOTION_ROLL) {
         if (marioGetPtr()->motStruct) {
@@ -323,7 +327,7 @@ void marioResetRollSpd(void) {
 }
 
 /** Re-applies the tube paper animation (p_roll, PM_R_1B) when mario.c rebuilds Mario's look while he is rolled up. */
-void marioForceRollAnime(void) {
+void PORT_HOOKABLE(marioForceRollAnime)(void) {
     MarioWork* mario = marioGetPtr();
     marioPaperOff();
     if (mario) {
@@ -340,7 +344,7 @@ void marioForceRollAnime(void) {
  * Starts unrolling (sub-motion 0x14) if Mario is in Tube Mode and could stand up here; returns 1 if it started.
  * Used by evt_mario when a script needs Mario out of Tube Mode (JP and later).
  */
-s32 marioRollTryCancel(void) {
+s32 PORT_HOOKABLE(marioRollTryCancel)(void) {
     s32 ret = 0;
     MarioWork* mario = marioGetPtr();
     if (!(mario->flags & MARIO_FLAG_TUBE_MODE)) {
@@ -377,7 +381,7 @@ s32 marioRollTryCancel(void) {
  * Starts unrolling (sub-motion 0x14) unless Tube Mode is locked or there is a ceiling overhead;
  * returns 1 if it started. Called from evt_mario.
  */
-s32 marioRollCancel(void) {
+s32 PORT_HOOKABLE(marioRollCancel)(void) {
     s32 ret = 0;
     MarioWork* mario = marioGetPtr();
     if (!(mario->flags & MARIO_FLAG_TUBE_MODE)) {
@@ -398,7 +402,7 @@ s32 marioRollCancel(void) {
  * Starts unrolling (sub-motion 0x14) unless Tube Mode is locked; returns 1 if it started. Called from evt_mario.
  * Unlike the demo it no longer checks for a ceiling here.
  */
-s32 marioRollCancel(void) {
+s32 PORT_HOOKABLE(marioRollCancel)(void) {
     MarioWork* mario = marioGetPtr();
     if (!(mario->flags & MARIO_FLAG_TUBE_MODE)) {
         return 0;
@@ -417,7 +421,7 @@ s32 marioRollCancel(void) {
  * turns Mario to face left or right on screen, restores his normal collision (marioSetSpec),
  * clears Tube Mode and the paper animation, frees the motion's work and dismounts the partners.
  */
-void mot_roll_post(void) {
+void PORT_HOOKABLE(mot_roll_post)(void) {
     MarioWork* mario = marioGetPtr();
 #if VERSION <= VERSION_DEMO_JP
     MarioWork* m;
@@ -478,7 +482,7 @@ void mot_roll_post(void) {
  * Instantly turns Mario back from Tube Mode (the same reset as mot_roll_post) and puts him in the stay motion;
  * used by evt_mario.
  */
-void marioRollForceCancel(void) {
+void PORT_HOOKABLE(marioRollForceCancel)(void) {
     MarioWork* mario = marioGetPtr();
     if (mario->currMotionId == MARIO_MOTION_ROLL) {
 #if VERSION <= VERSION_DEMO_JP
@@ -542,7 +546,7 @@ void marioRollForceCancel(void) {
  * Updates the facing shown while a script moves Mario in Tube Mode (ROLL_DISP_DIR),
  * called from mario.c's forced movement.
  */
-void marioSetRollDispDir(void) {
+void PORT_HOOKABLE(marioSetRollDispDir)(void) {
     MarioWork* mario = marioGetPtr();
     f32 b, a;
     MarioWork* m2;
@@ -553,7 +557,7 @@ void marioSetRollDispDir(void) {
 }
 
 /** Starts a scripted jump in Tube Mode: evt_mario's jump command calls this instead of switching to the jump motion. */
-void rollEvtJumpSetup(void) {
+void PORT_HOOKABLE(rollEvtJumpSetup)(void) {
     MarioWork* mario = marioGetPtr();
     camFollowYOff();
     mario->flags |= MARIO_FLAG_IS_JUMPING;
@@ -565,7 +569,7 @@ void rollEvtJumpSetup(void) {
  * allocates the roll work, sets the tube animation, the 14.8 collision box and roll speed,
  * and seats the partners.
  */
-void marioReInit_roll(void) {
+void PORT_HOOKABLE(marioReInit_roll)(void) {
     void* p;
     MarioWork* mario = marioGetPtr();
     f32 z0;
@@ -634,7 +638,7 @@ static inline s32 rollChk(void) {
  * momentum and slope push (rollData constants), jumps a little with A (not on eki_04's steep slopes),
  * and unrolls with B when there is room. Plays the rolling loop sound and squashes the tube on landing.
  */
-void mot_roll(void) {
+void PORT_HOOKABLE(mot_roll)(void) {
     MarioWork* mario = marioGetPtr();
     f32 angle;
     f32 velX;
@@ -1333,7 +1337,7 @@ void mot_roll(void) {
  * Starts climbing a small step while rolling: Mario rises to mario->stepUpY over 3 frames.
  * Called from mario_hit.c when the step ahead is 5-11 units high.
  */
-void roll_upstairs_on(void) {
+void PORT_HOOKABLE(roll_upstairs_on)(void) {
     MarioWork* mario = marioGetPtr();
     mario->flags |= MARIO_FLAG_IS_STEPPING;
     mario->flags |= MARIO_FLAG_STOP_AIR_MOVEMENT;
@@ -1362,7 +1366,7 @@ void roll_upstairs(void) {
 #pragma dont_inline reset
 
 /** Falling in Tube Mode: drops at up to 10 units a frame and lands on the first floor found. */
-void mot_fall_roll(void) {
+void PORT_HOOKABLE(mot_fall_roll)(void) {
     MarioWork* mario = marioGetPtr();
     f32 spd = marioGetFallSpd();
     f32 y;
@@ -1491,3 +1495,7 @@ void marioRollStrippedPool(void) {
     mario->scale.z = sqrtf(mario->fallStartPos.x);
     mario->fallStartPos.y = __fabsf(mario->fallStartPos.z) < 45.0;
 }
+
+#ifdef PORT_MODS
+#include "port/hooks/src_motion_mot_roll.inc"
+#endif

@@ -1,4 +1,5 @@
 // E3 sequence: the trade-show chapter-select menu, still present in the retail builds.
+#include "port_hook.h"
 #include "version.h"
 #include "seq/seq_e3.h"
 #include "demo/DEMOPad.h"
@@ -28,6 +29,9 @@
 #include "driver/windowdrv.h"
 #include "mario/mario_party.h"
 #include "evt/evt_story.h"
+#ifdef PORT_MODS
+#include "port/hooks/src_sequence_seq_e3.h"
+#endif
 #if VERSION <= VERSION_DEMO_JP
 #include "evt/evt_cmd.h"
 #include "evt/evt_sub.h"
@@ -187,7 +191,7 @@ static void alarm_handler(OSAlarm* alarm, OSContext* context) {
  * characters), starts the play-time alarm (5 min in the US release, 10 min otherwise; the June US demo arms it when
  * a scenario starts), sets the kiosk and save-blocks-off flags and plays the file menu BGM.
  */
-void seq_e3Init(SequenceWork* seq) {
+void PORT_HOOKABLE(seq_e3Init)(SequenceWork* seq) {
 #if VERSION == VERSION_DEMO_US
     s32 type = gp->inBattle != 0;
     s32 i;
@@ -233,7 +237,7 @@ void seq_e3Init(SequenceWork* seq) {
 }
 
 /** Leaves the kiosk menu: frees its textures (and the US demo's characters and their script) and fades out sound. */
-void seq_e3Exit(SequenceWork* seq) {
+void PORT_HOOKABLE(seq_e3Exit)(SequenceWork* seq) {
 #if VERSION == VERSION_DEMO_US
     s32 i;
 
@@ -252,7 +256,7 @@ void seq_e3Exit(SequenceWork* seq) {
  * A sets story progress to just before the scenario's e3_tbl entry, runs the story init events up to it,
  * sets partners, a 20 HP/FP/BP loadout and items, and starts its map.
  */
-void seq_e3Main(SequenceWork* seq) {
+void PORT_HOOKABLE(seq_e3Main)(SequenceWork* seq) {
     CameraEntry* camera;
     s32 prevId;
     BOOL matched;
@@ -894,4 +898,8 @@ static
     GXTexCoord2f32(0.0f, 0.0f);
     GXSetTevSwapModeTable(GX_TEV_SWAP1, GX_CH_RED, GX_CH_GREEN, GX_CH_BLUE, GX_CH_ALPHA);
 }
+#endif
+
+#ifdef PORT_MODS
+#include "port/hooks/src_sequence_seq_e3.inc"
 #endif

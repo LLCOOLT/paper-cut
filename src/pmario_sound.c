@@ -19,6 +19,10 @@
 #ifdef PORT_MODS
 #include "port/hooks/src_pmario_sound.h"
 #endif
+#ifdef TARGET_PC
+#include "port/audio_mix.h"
+#include "port/gameplus.h"
+#endif
 #include "evt/evt_story.h"
 
 // Frames per second and the length of a frame in milliseconds. The US code follows the display rate
@@ -10125,7 +10129,7 @@ static u32 calc3D(s32 id, Vec* pos, u8 vol, u16 dist) {
  * Returns the pssfxlist index of the sound effect called name ("SFX_..."),
  * or the id itself when name is a packed numeric id (SFX_NAME_IS_ID).
  */
-s32 searchPSSFXList(const char* name) {
+s32 PORT_HOOKABLE(searchPSSFXList)(const char* name) {
     SoundEffectEntry* entry = pssfxlist;
     int i;
 
@@ -10149,7 +10153,7 @@ s32 searchPSSFXList(const char* name) {
  * effect and environment channels and loads the sound/proj/pmario project and song library.
  * The sound groups are pushed afterwards by psndPushGroup.
  */
-void psndInit(void) {
+void PORT_HOOKABLE(psndInit)(void) {
     PaperSoundEnv* env;
     PaperSoundEffect* sfx;
     int i;
@@ -10192,7 +10196,7 @@ void psndInit(void) {
  * Per-frame sound update once loading is done: counts down the repeat guard for a few frequent sounds (not in
  * the demos), then runs BGM fades, environment sounds, effects and the driver.
  */
-void psndMain(void) {
+void PORT_HOOKABLE(psndMain)(void) {
     if (init_f) {
 #if VERSION >= VERSION_JP
         if (psnd.sfxCooldown) {
@@ -10207,14 +10211,14 @@ void psndMain(void) {
 }
 
 /** Audio-interrupt hook once loading is done: services the streams' disc reads. */
-void psndMainInt(void) {
+void PORT_HOOKABLE(psndMainInt)(void) {
     if (init_f) {
         SoundMainInt();
     }
 }
 
 /** Shuts sound down: drops all sound data and detaches the DVD manager callback. */
-void psndExit(void) {
+void PORT_HOOKABLE(psndExit)(void) {
     SoundDropData();
     DVDMgrSetupCallback(NULL);
     init_f = FALSE;
@@ -10225,7 +10229,7 @@ void psndExit(void) {
  * returns TRUE while groups remain and, after the last, frees the staging buffer,
  * marks sound as ready and returns FALSE.
  */
-BOOL psndPushGroup(void) {
+BOOL PORT_HOOKABLE(psndPushGroup)(void) {
     static u8 tbl[4];
     static s32 group;
 
@@ -10250,7 +10254,7 @@ BOOL psndPushGroup(void) {
  * Sets the listener position and facing direction (degrees) used to place 3D sound effects;
  * the field and battle sequences pass the camera's yaw each frame.
  */
-void psndSetPosDirListener(Vec* position, f32 direction) {
+void PORT_HOOKABLE(psndSetPosDirListener)(Vec* position, f32 direction) {
     psnd.position = *position;
     psnd.direction = direction;
 }
@@ -10259,7 +10263,7 @@ void psndSetPosDirListener(Vec* position, f32 direction) {
  * Fades everything out: both BGM channels and both environment channels over a second,
  * and every sound effect over 45 frames (750 ms in US and PAL).
  */
-void psndStopAllFadeOut(void) {
+void PORT_HOOKABLE(psndStopAllFadeOut)(void) {
     PaperSoundWork* wp = &psnd;
     PaperSoundEffect* sfx;
     int i;
@@ -10288,7 +10292,7 @@ void psndStopAllFadeOut(void) {
 }
 
 /** Sets the map's reverb send for sound effects: mode 0-3 is 0, 20, 40 or 60. */
-void psndSetReverb(s32 mode) {
+void PORT_HOOKABLE(psndSetReverb)(s32 mode) {
     switch (mode) {
         case 0:
             psnd.reverb = 0;
@@ -10306,7 +10310,7 @@ void psndSetReverb(s32 mode) {
 }
 
 /** Sets psnd flags; PSND_FLAG_BGM_OFF also stops both BGM channels and PSND_FLAG_ENV_OFF both environment channels. */
-void psndSetFlag(s32 flag) {
+void PORT_HOOKABLE(psndSetFlag)(s32 flag) {
     psnd.flags |= flag;
     if (psnd.flags & PSND_FLAG_BGM_OFF) {
         psndBGMOff_f_d(0, 1000, FALSE);
@@ -10319,18 +10323,18 @@ void psndSetFlag(s32 flag) {
 }
 
 /** Clears psnd flags. */
-void psndClearFlag(s32 flag) {
+void PORT_HOOKABLE(psndClearFlag)(s32 flag) {
     psnd.flags &= ~flag;
 }
 
 /** Returns the psnd flags. */
-s32 psndGetFlag(void) {
+s32 PORT_HOOKABLE(psndGetFlag)(void) {
     return psnd.flags;
 }
 
 #if VERSION <= VERSION_DEMO_JP
 /** demo: the reverb reset is in psndBGMOn_f_d, and the SFX fade-out of psndSFXAllOff is written out here */
-void psndMapChange(void) {
+void PORT_HOOKABLE(psndMapChange)(void) {
     PaperSoundWork* wp = &psnd;
     PaperSoundEffect* sfx;
     int i;
@@ -10354,7 +10358,7 @@ void psndMapChange(void) {
  * Called on a map change: resets the reverb when the map really changed, records the map name,
  * unmutes door sounds and fades out the map's effects (psndSFXAllOff).
  */
-void psndMapChange(void) {
+void PORT_HOOKABLE(psndMapChange)(void) {
     if (strcmp(psnd.mapName, gp->currentMapName)) {
         psnd.reverb = 0;
     }
@@ -10365,7 +10369,7 @@ void psndMapChange(void) {
 #endif
 
 /** Fades out every playing effect except environment sounds and those marked to survive a map change. */
-void psndSFXAllOff(void) {
+void PORT_HOOKABLE(psndSFXAllOff)(void) {
     PaperSoundWork* wp = &psnd;
     PaperSoundEffect* sfx;
     int i;
@@ -10392,7 +10396,7 @@ void psndSFXAllOff(void) {
 }
 
 /** Stops the effects tied to the BGM (PSND_SFX_WITH_BGM) when it stops, except environment and exempt ones. */
-void L_psndBGM_stop(void) {
+void PORT_HOOKABLE(L_psndBGM_stop)(void) {
     PaperSoundEffect* sfx;
     int i;
 
@@ -10409,7 +10413,7 @@ void L_psndBGM_stop(void) {
  * Changes the playback rate of BGM channel id when it is a stream (evt_snd_bgm_rate);
  * sequenced songs are left alone.
  */
-void psndBGM_rate(s32 id, u16 rate) {
+void PORT_HOOKABLE(psndBGM_rate)(s32 id, u16 rate) {
     PaperSoundBGM* bgm = &psbgm[id & 0xF];
     SoundBGMEntry* entry;
 
@@ -10568,7 +10572,7 @@ static void psndBGMMain(void) {
 }
 
 /** the demo's psndBGMOn_f_d has no fade-out time parameter (it always fades the old BGM out over 750 ms) */
-BOOL psndBGMOn(u32 flags, char* bgm_name) {
+BOOL PORT_HOOKABLE(psndBGMOn)(u32 flags, char* bgm_name) {
 #if VERSION <= VERSION_DEMO_JP
     return psndBGMOn_f_d(flags, bgm_name, 1000, 0);
 #else
@@ -10577,7 +10581,7 @@ BOOL psndBGMOn(u32 flags, char* bgm_name) {
 }
 
 /** Starts BGM bgm_name with flags and fade-in time (psndBGMOn_f_d; US and PAL fade the previous BGM out in 750 ms). */
-BOOL psndBGMOn_f(u32 flags, char* bgm_name, u32 fadetime, s32 unused) {
+BOOL PORT_HOOKABLE(psndBGMOn_f)(u32 flags, char* bgm_name, u32 fadetime, s32 unused) {
 #if VERSION <= VERSION_DEMO_JP
     return psndBGMOn_f_d(flags, bgm_name, fadetime, unused);
 #else
@@ -10831,7 +10835,13 @@ BOOL PORT_HOOKABLE(psndBGMOn_f_d)(u32 flags, char* bgm_name, u32 fadetime, s32 u
         if ((u32)bgm->streamId == 0xFFFFFFFF) {
             goto fail;
         }
+#ifdef TARGET_PC
+        salPcCategory(PORT_MIX_MUSIC);
+#endif
         SoundSSPlayCh(bgm->streamId, entry->path);
+#ifdef TARGET_PC
+        salPcCategory(PORT_MIX_SFX);
+#endif
         SoundSSMuteOn(bgm->streamId);
         SoundSSSetVolCh(bgm->streamId, vol);
         SoundSSSetPanCh(bgm->streamId, pan);
@@ -10845,7 +10855,13 @@ BOOL PORT_HOOKABLE(psndBGMOn_f_d)(u32 flags, char* bgm_name, u32 fadetime, s32 u
         if ((u32)bgm->streamId == 0xFFFFFFFF) {
             goto fail;
         }
+#ifdef TARGET_PC
+        salPcCategory(PORT_MIX_MUSIC);
+#endif
         SoundSongPlayCh(bgm->streamId, entry->flags & 0xFFFFFFF);
+#ifdef TARGET_PC
+        salPcCategory(PORT_MIX_SFX);
+#endif
         SoundSongSetVolCh(bgm->streamId, vol);
     }
     if (flags & PSND_FADE_IN) {
@@ -10893,6 +10909,12 @@ BOOL PORT_HOOKABLE(psndBGMOn_f_d)(u32 flags, char* bgm_name, u32 fadetime, u32 f
     fo = fadeout;
     ft = fadetime;
     fl = flags;
+#ifdef TARGET_PC
+    if (bgm_name != NULL) { /* Gameplay+: the jukebox's list (port/include/port/gameplus.h) */
+        psndBGMSearchP(bgm_name, &id);
+        portJukeboxHeard(id, (s32)(flags & 0xF));
+    }
+#endif
     if (psnd.flags & PSND_FLAG_BGM_OFF) {
         return FALSE;
     }
@@ -11054,7 +11076,13 @@ BOOL PORT_HOOKABLE(psndBGMOn_f_d)(u32 flags, char* bgm_name, u32 fadetime, u32 f
         if (((u32)bgm->streamId) == 0xFFFFFFFF) {
             goto fail;
         }
+#ifdef TARGET_PC
+        salPcCategory(PORT_MIX_MUSIC);
+#endif
         SoundSSPlayCh(bgm->streamId, entry->path);
+#ifdef TARGET_PC
+        salPcCategory(PORT_MIX_SFX);
+#endif
         SoundSSMuteOn(bgm->streamId);
         SoundSSSetVolCh(bgm->streamId, vol);
         SoundSSSetPanCh(bgm->streamId, pan);
@@ -11069,7 +11097,13 @@ BOOL PORT_HOOKABLE(psndBGMOn_f_d)(u32 flags, char* bgm_name, u32 fadetime, u32 f
         if (((u32)bgm->streamId) == 0xFFFFFFFF) {
             goto fail;
         }
+#ifdef TARGET_PC
+        salPcCategory(PORT_MIX_MUSIC);
+#endif
         SoundSongPlayCh(bgm->streamId, entry->flags & 0xFFFFFFF);
+#ifdef TARGET_PC
+        salPcCategory(PORT_MIX_SFX);
+#endif
         SoundSongSetVolCh(bgm->streamId, vol);
     }
     if (fl & PSND_FADE_IN) {
@@ -11100,7 +11134,7 @@ done:
 #endif
 
 /** Stops or fades BGM channel flags & 0xF with a 1 second fade (psndBGMOff_f_d). */
-BOOL psndBGMOff(u32 flags) {
+BOOL PORT_HOOKABLE(psndBGMOff)(u32 flags) {
     return psndBGMOff_f_d(flags, 1000, FALSE);
 }
 
@@ -11112,7 +11146,7 @@ BOOL psndBGMOff(u32 flags) {
  * held BGM before stopping 0x92). The demos apply them always; JP and later skip them when someswitch is set.
  * Returns FALSE when the channel is empty or guarded.
  */
-BOOL psndBGMOff_f_d(s32 flags, u32 fadetime, u32 someswitch) {
+BOOL PORT_HOOKABLE(psndBGMOff_f_d)(s32 flags, u32 fadetime, u32 someswitch) {
     PaperSoundBGM* bgm = &psbgm[flags & 0xF];
     s32 silent = silent_tbl[(flags >> 12) & 0xF];
     SoundBGMEntry* entry;
@@ -11184,12 +11218,12 @@ BOOL psndBGMOff_f_d(s32 flags, u32 fadetime, u32 someswitch) {
 }
 
 /** Returns 0 when BGM channel id is in use, -1 when it is empty. */
-s32 psndBGMChk(s32 id) {
+s32 PORT_HOOKABLE(psndBGMChk)(s32 id) {
     return psbgm[id & 0xF].listId == 0xFFFFFFFF ? -1 : 0;
 }
 
 /** Returns TRUE when BGM channel id is dipped (or dipping) to a lower volume. */
-u32 psndBGMChkSilent(s32 id) {
+u32 PORT_HOOKABLE(psndBGMChkSilent)(s32 id) {
     PaperSoundBGM* bgm = &psbgm[id & 0xF];
 
     if (bgm->listId == 0xFFFFFFFF) {
@@ -11199,7 +11233,7 @@ u32 psndBGMChkSilent(s32 id) {
 }
 
 /** Exempts BGM channel id from the master BGM volume: scope > 0 for good, < 0 not at all, 0 for 30 more frames. */
-void psndBGMScope(s32 id, s32 scope) {
+void PORT_HOOKABLE(psndBGMScope)(s32 id, s32 scope) {
     PaperSoundBGM* bgm = &psbgm[id & 0xF];
 
     if (bgm->listId == 0xFFFFFFFF) {
@@ -11217,7 +11251,7 @@ void psndBGMScope(s32 id, s32 scope) {
 }
 
 /** Returns TRUE once the stream on BGM channel id has actually started playing (or when the channel is empty). */
-BOOL psndBGMStartCheck(s32 id) {
+BOOL PORT_HOOKABLE(psndBGMStartCheck)(s32 id) {
     PaperSoundBGM* bgm = &psbgm[id & 0xF];
 
     if (bgm->listId == 0xFFFFFFFF) {
@@ -11230,7 +11264,7 @@ BOOL psndBGMStartCheck(s32 id) {
  * Returns how long BGM channel id has been playing in milliseconds (microseconds in the demos);
  * 600000 when the channel is empty (0 in the demos).
  */
-s32 psndBGMPlayTime(s32 id) {
+s32 PORT_HOOKABLE(psndBGMPlayTime)(s32 id) {
     PaperSoundBGM* bgm = &psbgm[id & 0xF];
 
     if (bgm->listId == 0xFFFFFFFF) {
@@ -11341,6 +11375,9 @@ static void psndSFXMain(void) {
                 continue;
             }
             f = e->fxId;
+#ifdef TARGET_PC
+            salPcCategory((sfx[0]->flags & PSND_SFX_ENV) ? PORT_MIX_AMBIENCE : PORT_MIX_SFX);
+#endif
             if (f & SFX_FLAG_STREAM) {
                 for (j = 0; j < 3; j++) {
                     if (!SoundSSCheck(j)) {
@@ -11400,6 +11437,9 @@ static void psndSFXMain(void) {
                     SoundEfxSetAux1(sfx[0]->channel, rv);
                 }
             }
+#ifdef TARGET_PC
+            salPcCategory(PORT_MIX_SFX);
+#endif
             if (sfx[0]->channel == 0xFFFFFFFF) {
                 sfx[0]->listId = none;
                 sfx[0]->channel = none;
@@ -11659,32 +11699,32 @@ static s32 __psndSFXOn(const char* name, u8 vol, u8 pan, u16 pitch, Vec* pos, u3
 }
 
 /** Plays effect name even while effects are switched off (PSND_FLAG_SFX_OFF). */
-s32 psndSFXOn_(const char* name) {
+s32 PORT_HOOKABLE(psndSFXOn_)(const char* name) {
     return __psndSFXOn(name, 0xFF, 0xFF, 0, NULL, 0, 0x10, 1);
 }
 
 /** Plays effect name at its list volume, centred; returns the effect id or -1. */
-s32 psndSFXOn(const char* name) {
+s32 PORT_HOOKABLE(psndSFXOn)(const char* name) {
     return __psndSFXOn(name, 0xFF, 0xFF, 0, NULL, 0, 0x10, 0);
 }
 
 /** Plays effect name at volume vol. */
-s32 psndSFXOnVol(const char* name, u8 vol) {
+s32 PORT_HOOKABLE(psndSFXOnVol)(const char* name, u8 vol) {
     return __psndSFXOn(name, vol, 0xFF, 0, NULL, 0, 0x10, 0);
 }
 
 /** Plays effect name as a 3D sound at position. */
-s32 psndSFXOn_3D(const char* name, Vec* position) {
+s32 PORT_HOOKABLE(psndSFXOn_3D)(const char* name, Vec* position) {
     return __psndSFXOn(name, 0xFF, 0xFF, 0, position, 0, 0x10, 0);
 }
 
 /** Plays effect name as a 3D sound at position with volume, pan, a start delay from pitch and audible distance dist. */
-s32 psndSFXOnEx_3D(const char* name, Vec* position, u8 vol, u8 pan, u16 pitch, u16 dist) {
+s32 PORT_HOOKABLE(psndSFXOnEx_3D)(const char* name, Vec* position, u8 vol, u8 pan, u16 pitch, u16 dist) {
     return __psndSFXOn(name, vol, pan, pitch, position, 0, dist, 0);
 }
 
 /** Sets the volume of playing effect id. */
-void psndSFX_vol(s32 id, u8 vol) {
+void PORT_HOOKABLE(psndSFX_vol)(s32 id, u8 vol) {
     PaperSoundEffect* sfx;
 
     if ((u32)id == 0xFFFFFFFF) {
@@ -11698,7 +11738,7 @@ void psndSFX_vol(s32 id, u8 vol) {
 }
 
 /** Sets the pitch bend of playing effect id (stored until it starts if still pending). */
-void psndSFX_pit(s32 id, s16 pitch) {
+void PORT_HOOKABLE(psndSFX_pit)(s32 id, s16 pitch) {
     PaperSoundEffect* sfx;
 
     if ((u32)id == 0xFFFFFFFF) {
@@ -11721,7 +11761,7 @@ void psndSFX_pit(s32 id, s16 pitch) {
 }
 
 /** Moves the 3D position of playing effect id. */
-void psndSFX_pos(s32 id, Vec* position) {
+void PORT_HOOKABLE(psndSFX_pos)(s32 id, Vec* position) {
     PaperSoundEffect* sfx;
 
     if ((u32)id == 0xFFFFFFFF) {
@@ -11735,7 +11775,7 @@ void psndSFX_pos(s32 id, Vec* position) {
 }
 
 /** Sets the audible distance of playing effect id. */
-void psndSFX_dist(s32 id, u16 dist) {
+void PORT_HOOKABLE(psndSFX_dist)(s32 id, u16 dist) {
     PaperSoundEffect* sfx;
 
     if ((u32)id == 0xFFFFFFFF) {
@@ -11801,7 +11841,7 @@ s32 psndSFXChk(s32 id) {
 }
 
 /** Returns the volume of playing effect id, 0 when it is gone. */
-u8 psndSFX_get_vol(s32 id) {
+u8 PORT_HOOKABLE(psndSFX_get_vol)(s32 id) {
     PaperSoundEffect* sfx;
 
     if ((u32)id == 0xFFFFFFFF) {
@@ -12148,7 +12188,7 @@ static void psndENVMain(void) {
 }
 
 /** Starts environment sound name on channel flags & 0xF with a 1 second fade (psndENVOn_f_d). */
-BOOL psndENVOn(u32 flags, const char* name) {
+BOOL PORT_HOOKABLE(psndENVOn)(u32 flags, const char* name) {
     return psndENVOn_f_d(flags, name, 1000, 0);
 }
 
@@ -12317,7 +12357,7 @@ end:
 #pragma dont_inline off
 #endif
 /** Stops or fades environment channel flags & 0xF with a 1 second fade (psndENVOff_f_d). */
-BOOL psndENVOff(u32 flags) {
+BOOL PORT_HOOKABLE(psndENVOff)(u32 flags) {
     return psndENVOff_f_d(flags, 1000, 0);
 }
 #pragma dont_inline reset
@@ -12325,7 +12365,7 @@ BOOL psndENVOff(u32 flags) {
  * Stops environment channel flags & 0xF: fades it out, holds it silent or dips it (PaperSoundFadeFlags),
  * or stops it at once. Returns FALSE when the channel is empty.
  */
-BOOL psndENVOff_f_d(u32 flags, u32 fadetime, s32 unused) {
+BOOL PORT_HOOKABLE(psndENVOff_f_d)(u32 flags, u32 fadetime, s32 unused) {
     s32 silent = silent_tbl[(flags >> 12) & 0xF];
     PaperSoundFade* fade;
 
@@ -12376,7 +12416,7 @@ BOOL psndENVOff_f_d(u32 flags, u32 fadetime, s32 unused) {
  * Sets a low-pass filter frequency on environment channel id (0 = none, stored as 32000 Hz);
  * returns FALSE when the channel is empty.
  */
-BOOL psndENV_LPF(s32 id, u16 freq) {
+BOOL PORT_HOOKABLE(psndENV_LPF)(s32 id, u16 freq) {
     if (psnd.envId[id & 0xF] == 0) {
         return FALSE;
     }
@@ -12395,6 +12435,17 @@ BOOL psndENV_LPF(s32 id, u16 freq) {
 void psndStrippedPool(f32* f, s32 i) {
     *f = (f32)i;
 }
+
+#ifdef TARGET_PC
+/* Gameplay+'s jukebox (port/include/port/gameplus.h): the BGM table */
+int portBgmCount(void) {
+    return 0x106;
+}
+
+const char* portBgmName(int id) {
+    return id >= 0 && id < 0x106 && psbgmlist[id].name != NULL ? psbgmlist[id].name : "";
+}
+#endif
 
 #ifdef PORT_MODS
 #include "port/hooks/src_pmario_sound.inc"

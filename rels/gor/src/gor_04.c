@@ -2,6 +2,9 @@
 // connections to hom_00 and pik_00.
 
 #include "battle/battle_unit.h"
+#ifdef TARGET_PC
+#include "port/gameplus.h"
+#endif
 #include "evt/evt_cmd.h"
 
 #include "manager/evtmgr_cmd.h"
@@ -1189,6 +1192,29 @@ EVT_BEGIN(hikosenkakari_talk)
     CALL(evt_msg_print, 0, STRING("hikou_00"), 0, STRING("me"))
     CALL(evt_msg_select, 0, STRING("hikou_01"))
     IF_INT_EQUAL(LW(0), 0)
+#ifdef TARGET_PC
+        // Gameplay+: once the blimp was taken on this file, aboard without the ticket hand-over
+        CALL(portEvtSceneMs, PORT_SCENE_BLIMP_TICKET, 1, LW(9))
+        CALL(evt_pouch_check_item, ITEM_BLIMP_TICKET, LW(8))
+        IF_INT_EQUAL(LW(9), 0)
+            IF_INT_NOT_EQUAL(LW(8), 0)
+                CALL(evt_msg_continue)
+                // where the hand-over's walks end (their x, z), at the heights they are at
+                CALL(evt_npc_get_position, STRING("me"), LW(0), LW(1), LW(2))
+                CALL(evt_npc_set_position, STRING("me"), 315, LW(1), 160)
+                CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
+                CALL(evt_mario_set_pos, 285, LW(1), 140)
+                CALL(evt_mario_set_dir, 90, 0, 0)
+                CALL(evt_party_set_pos, 0, 235, LW(1), 140)
+                CALL(evt_party_set_pos, 1, 195, LW(1), 140)
+                CALL(evt_hitobj_onoff, STRING("A_tousenbo"), 1, 0)
+                SET_VALUE(GF(10), 1)
+                CALL(evt_party_run, 0)
+                CALL(evt_party_run, 1)
+                RETURN
+            END_IF
+        END_IF
+#endif
         CALL(evt_msg_print_add, 0, STRING("hikou_04"))
         CALL(evt_pouch_check_item, ITEM_BLIMP_TICKET, LW(0))
         IF_INT_EQUAL(LW(0), 0)
@@ -1283,6 +1309,28 @@ EVT_BEGIN(ekiin_talk)
     CALL(evt_msg_print, 0, STRING("train_00"), 0, STRING("me"))
     CALL(evt_msg_select, 0, STRING("train_01"))
     IF_INT_EQUAL(LW(0), 0)
+#ifdef TARGET_PC
+        // Gameplay+: once the Excess Express was taken on this file, aboard without the ticket hand-over
+        CALL(portEvtSceneMs, PORT_SCENE_TRAIN_TICKET, 1, LW(9))
+        CALL(evt_pouch_check_item, ITEM_TRAIN_TICKET, LW(8))
+        IF_INT_EQUAL(LW(9), 0)
+            IF_INT_NOT_EQUAL(LW(8), 0)
+                CALL(evt_msg_continue)
+                CALL(evt_snd_bgmoff_f, PSND_FADE_OUT, 2000)
+                // the attendant out of the way, where his walk aside ends (x, z), at his height
+                CALL(evt_npc_get_position, STRING("me"), LW(3), LW(4), LW(5))
+                CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
+                IF_INT_GREATER_OR_EQUAL(LW(0), -350)
+                    CALL(evt_npc_set_position, STRING("me"), -390, LW(4), 80)
+                ELSE
+                    CALL(evt_npc_set_position, STRING("me"), -320, LW(4), 80)
+                END_IF
+                CALL(evt_set_dir_to_target, STRING("me"), STRING("mario"))
+                CALL_CHILD(evt_train)
+                RETURN
+            END_IF
+        END_IF
+#endif
         CALL(evt_msg_print_add, 0, STRING("train_03"))
         CALL(evt_pouch_check_item, ITEM_TRAIN_TICKET, LW(0))
         IF_INT_EQUAL(LW(0), 0)

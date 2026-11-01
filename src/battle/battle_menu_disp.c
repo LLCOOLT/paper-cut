@@ -29,6 +29,109 @@ typedef void (*FontDrawStringCenterMtxLocalFn)(Mtx, const char*);
 
 #define WP_SUBMENU(wp) ((wp)->commandMenu.subMenu)
 
+#ifdef TARGET_PC
+#include "port/menu_tap.h"
+#include "pmario_sound.h"
+#include <dolphin/vi.h>
+/* The mouse in the battle menus (port/src/common/menu_tap_pc.c): where the last frame put the ring's
+ * settled icons (drawn about 27 above that point; the front one's bubble from 76 left to 62 right of it,
+ * 20 to 65 above) and the list's rows (a bar 304 x 24 from x -52, its bottom at y), in the 2D units. */
+static Vec sPickIcon[5];
+static s32 sPickIconOn[5];
+static u32 sPickIconFrame;
+static f32 sPickRowY[7];
+static s32 sPickRowIdx[7];
+static u32 sPickRowFrame;
+
+int portBattleMenuPick(int list, int* click) {
+    f32 gx;
+    f32 gy;
+    f32 d;
+    f32 best = 28.0f * 28.0f;
+    s32 hit = -1;
+    s32 i;
+
+    *click = portMenuPoint(&gx, &gy);
+    if (*click == 0) {
+        return -1;
+    }
+    if (list == 0) {
+        if (VIGetRetraceCount() - sPickIconFrame > 2) {
+            return -1;
+        }
+        for (i = 0; i < 5; i++) {
+            if (sPickIconOn[i] == 2 && gx >= sPickIcon[i].x - 76.0f && gx <= sPickIcon[i].x + 62.0f &&
+                gy >= sPickIcon[i].y + 20.0f && gy <= sPickIcon[i].y + 65.0f) {
+                return i; /* the front one's bubble */
+            }
+            d = (gx - sPickIcon[i].x) * (gx - sPickIcon[i].x) + (gy - sPickIcon[i].y - 27.0f) * (gy - sPickIcon[i].y - 27.0f);
+            if (sPickIconOn[i] == 1 && d < best) {
+                best = d;
+                hit = i;
+            }
+        }
+        return hit;
+    }
+    if (VIGetRetraceCount() - sPickRowFrame > 2 || gx < -52.0f || gx > 252.0f) {
+        return -1;
+    }
+    for (i = 0; i < 7; i++) {
+        if (sPickRowIdx[i] >= 0 && gy >= sPickRowY[i] && gy < sPickRowY[i] + 24.0f) {
+            return sPickRowIdx[i];
+        }
+    }
+    return -1;
+}
+
+/**
+ * The mouse on the command ring (list 0) or a sub-menu's list (1), each frame the menu takes input:
+ * the row under the pointer gets the cursor; the icon under it is turned to the front a step at a time,
+ * as the stick does. Returns TRUE when a click chose the cursor's one (A).
+ */
+int portBattleMenuMouse(int list) {
+    static s32 sTarget = -1; /* the ring icon being turned to */
+    BattleWork* wp = _battleWorkPointer;
+    BattleSubMenu* menu = WP_SUBMENU(wp);
+    BattleCursor* cursor;
+    int click;
+    s32 hit;
+    s32 fwd;
+
+    if (menu == NULL || menu->cursor == NULL) {
+        return FALSE;
+    }
+    cursor = menu->cursor;
+    hit = portBattleMenuPick(list, &click);
+    if (list != 0) {
+        sTarget = -1;
+        if (hit < 0 || hit >= cursor->count) {
+            return FALSE;
+        }
+        if (hit == cursor->absPos) {
+            return click == 1;
+        }
+        cursor->absPos = hit;
+        psndSFXOn("SFX_BTL_CURSOR_MOVE2");
+        return FALSE;
+    }
+    if (hit >= 0 && hit < cursor->count) {
+        if (hit == cursor->absPos && sTarget < 0 && click == 1) {
+            return TRUE;
+        }
+        sTarget = hit;
+    }
+    if (sTarget == cursor->absPos || sTarget >= cursor->count) {
+        sTarget = -1;
+    } else if (sTarget >= 0 && menu->scrollState == 1) {
+        fwd = (sTarget - cursor->absPos + cursor->count) % cursor->count;
+        cursor->absPos = fwd * 2 <= cursor->count ? (cursor->absPos + 1) % cursor->count
+                                                  : (cursor->absPos + cursor->count - 1) % cursor->count;
+        psndSFXOn("SFX_BTL_CURSOR_MOVE1");
+    }
+    return FALSE;
+}
+#endif
+
 void DrawMultiItemWin(void);
 static void DrawSubMenuCommonProcess(f32* x, f32* y, Mtx* a, Vec* b, f32* c, Mtx* d);
 static void DrawMainIcon(BattleSubMenu* menu, BattleCommandAct* acts, Mtx* a, Vec* b, f32* c);
@@ -80,7 +183,7 @@ GXColor seleItemCoordCol = {0xFF, 0xC0, 0xC0, 0xCF};
  * yellow, green, cyan, blue and magenta (each channel between 0xC0 and 0xFF).
  * Called every frame from BattleCommandDisplay.
  */
-void SelectedItemCoordinateColorUpDate(void) {
+void PORT_HOOKABLE(SelectedItemCoordinateColorUpDate)(void) {
     static s8 seq;
     switch (seq) {
         case 0:
@@ -121,7 +224,7 @@ void SelectedItemCoordinateColorUpDate(void) {
  * or an audience attack check has fired (commandMenu.attackAudience).
  * Polled by the battle_seq_command.c menu loops.
  */
-BOOL BattleMenuKeyOKInACT(BattleWork* wp) {
+BOOL PORT_HOOKABLE(BattleMenuKeyOKInACT)(BattleWork* wp) {
     if (!wp->commandMenu.attackAudience && !WP_SUBMENU(wp)->shown) {
         return FALSE;
     }
@@ -132,7 +235,7 @@ BOOL BattleMenuKeyOKInACT(BattleWork* wp) {
  * Loads battle/common/battle_common.tpl, the textures for the command ring, list rows and DANGER/PERIL marks,
  * into wp->menuTex; called from btlDispInit.
  */
-void battleMenuDispInit(void) {
+void PORT_HOOKABLE(battleMenuDispInit)(void) {
     BattleWork* wp = _battleWorkPointer;
     char path[256];
 
@@ -141,7 +244,7 @@ void battleMenuDispInit(void) {
 }
 
 /** Frees the battle menu textures loaded by battleMenuDispInit; called at battle end. */
-void battleMenuDispEnd(void) {
+void PORT_HOOKABLE(battleMenuDispEnd)(void) {
     fileFree(_battleWorkPointer->menuTex);
 }
 
@@ -424,7 +527,14 @@ static void DrawSubIcon(BattleSubMenu* menu, Mtx* a, s32* enabled, u16* icons, c
     cursor = menu->cursor;
     ofs = menu->scrollPos - (f32)(s32)menu->scrollPos;
     ofs = 24.0f * ofs;
+#ifdef TARGET_PC
+    sPickRowFrame = VIGetRetraceCount(); /* the mouse: the rows drawn (portBattleMenuPick) */
+#endif
     for (i = 0; i < 7; i++) {
+#ifdef TARGET_PC
+        sPickRowIdx[i] = (s32)menu->scrollPos + i < cursor->count && (menu->rowFlags[i] & 1) ? (s32)menu->scrollPos + i : -1;
+        sPickRowY[i] = 35.0f - 24.0f * i + ofs;
+#endif
         if ((s32)menu->scrollPos + i < cursor->count && (menu->rowFlags[i] & 1)) {
             PSMTXTrans(m, 100.0f, 35.0f - 24.0f * i + ofs, 0.0f);
             PSMTXConcat(m, a[i], out[i]);
@@ -1534,7 +1644,7 @@ static void DrawSubMenuCommonProcess(f32* x, f32* y, Mtx* a, Vec* b, f32* c, Mtx
  * With flag bit 0, the selected command flies back from the bubble and the others grow in;
  * otherwise all icons spread out around the ring one after another (the menu opening fresh).
  */
-void BattleMenuDisp_ActSelect_Init(BattleWork* wp, BattleCursor* cursor, BattleCommandAct* acts, BOOL flag) {
+void PORT_HOOKABLE(BattleMenuDisp_ActSelect_Init)(BattleWork* wp, BattleCursor* cursor, BattleCommandAct* acts, BOOL flag) {
     s32 i;
     s32 idx;
     BattleSubMenu* menu;
@@ -1592,16 +1702,16 @@ void BattleMenuDisp_ActSelect_Init(BattleWork* wp, BattleCursor* cursor, BattleC
 }
 
 /** Per-frame update of the command ring; empty, as the animation runs in DrawMainMenu. */
-void BattleMenuDisp_ActSelect_Main(BattleWork* wp) {
+void PORT_HOOKABLE(BattleMenuDisp_ActSelect_Main)(BattleWork* wp) {
 }
 
 /** Draw callback of the command ring. */
-void BattleMenuDisp_ActSelect_Disp(BattleWork* wp) {
+void PORT_HOOKABLE(BattleMenuDisp_ActSelect_Disp)(BattleWork* wp) {
     DrawMainMenu(wp);
 }
 
 /** Closes the command ring and frees its BattleSubMenu. */
-void BattleMenuDisp_ActSelect_End(BattleWork* wp) {
+void PORT_HOOKABLE(BattleMenuDisp_ActSelect_End)(BattleWork* wp) {
     if (WP_SUBMENU(wp)) {
         BattleFree(WP_SUBMENU(wp));
         WP_SUBMENU(wp) = NULL;
@@ -1876,6 +1986,13 @@ void DrawMainMenu(BattleWork* wp_) {
                 break;
         }
     }
+#ifdef TARGET_PC
+    for (i = 0; i < 5; i++) { /* the mouse: the settled icons, 2 the front one (portBattleMenuPick) */
+        sPickIconOn[i] = i < cursor->count && menu->iconState[i] == 3 ? (i == cursor->absPos ? 2 : 1) : 0;
+        sPickIcon[i] = pos[i];
+    }
+    sPickIconFrame = VIGetRetraceCount();
+#endif
     DrawMainIcon(menu, menu->acts, mtx, pos, z);
     DrawMenuPartyChangeButton();
     DrawMenuPinchMark();
@@ -1885,7 +2002,7 @@ void DrawMainMenu(BattleWork* wp_) {
  * Sets up the move list (jumps, hammers, items, special moves or partner moves) for the given weapon table;
  * flag bit 0 plays the ring icons' leaving animation.
  */
-void BattleMenuDisp_WeaponSelect_Init(BattleWork* wp, BattleCursor* cursor, BattleCommandWeapon* weapons, BOOL flag) {
+void PORT_HOOKABLE(BattleMenuDisp_WeaponSelect_Init)(BattleWork* wp, BattleCursor* cursor, BattleCommandWeapon* weapons, BOOL flag) {
     BattleSubMenu* menu = NULL;
     BattleCursor* mainCursor = NULL;
 
@@ -1899,16 +2016,16 @@ void BattleMenuDisp_WeaponSelect_Init(BattleWork* wp, BattleCursor* cursor, Batt
 }
 
 /** Per-frame update of the move list; empty. */
-void BattleMenuDisp_WeaponSelect_Main(BattleWork* wp) {
+void PORT_HOOKABLE(BattleMenuDisp_WeaponSelect_Main)(BattleWork* wp) {
 }
 
 /** Draw callback of the move list. */
-void BattleMenuDisp_WeaponSelect_Disp(BattleWork* wp) {
+void PORT_HOOKABLE(BattleMenuDisp_WeaponSelect_Disp)(BattleWork* wp) {
     DrawWeaponWin();
 }
 
 /** Closes the move list and frees its BattleSubMenu. */
-void BattleMenuDisp_WeaponSelect_End(BattleWork* wp) {
+void PORT_HOOKABLE(BattleMenuDisp_WeaponSelect_End)(BattleWork* wp) {
     if (WP_SUBMENU(wp)) {
         BattleFree(WP_SUBMENU(wp));
         WP_SUBMENU(wp) = NULL;
@@ -1996,7 +2113,7 @@ void PORT_HOOKABLE(DrawWeaponWin)(void) {
 }
 
 /** Sets up the Tactics list on Mario's or the partner's cursor; flag bit 0 plays the ring icons' leaving animation. */
-void BattleMenuDisp_Operation_Init(BattleWork* wp, BOOL flag) {
+void PORT_HOOKABLE(BattleMenuDisp_Operation_Init)(BattleWork* wp, BOOL flag) {
     BattleSubMenu* menu;
     BattleCursor* mainCursor;
     BattleCursor* cursor;
@@ -2015,16 +2132,16 @@ void BattleMenuDisp_Operation_Init(BattleWork* wp, BOOL flag) {
 }
 
 /** Per-frame update of the Tactics list; empty. */
-void BattleMenuDisp_Operation_Main(BattleWork* wp) {
+void PORT_HOOKABLE(BattleMenuDisp_Operation_Main)(BattleWork* wp) {
 }
 
 /** Draw callback of the Tactics list. */
-void BattleMenuDisp_Operation_Disp(BattleWork* wp) {
+void PORT_HOOKABLE(BattleMenuDisp_Operation_Disp)(BattleWork* wp) {
     DrawOperationWin();
 }
 
 /** Closes the Tactics list and frees its BattleSubMenu. */
-void BattleMenuDisp_Operation_End(BattleWork* wp) {
+void PORT_HOOKABLE(BattleMenuDisp_Operation_End)(BattleWork* wp) {
     if (WP_SUBMENU(wp)) {
         BattleFree(WP_SUBMENU(wp));
         WP_SUBMENU(wp) = NULL;
@@ -2093,7 +2210,7 @@ void DrawOperationWin(void) {
  * Sets up the Change Partner list; here flag bit 0 skips the ring icons' leaving animation (the reverse of the
  * other lists).
  */
-void BattleMenuDisp_ChangePartySelect_Init(BattleWork* wp, BOOL flag) {
+void PORT_HOOKABLE(BattleMenuDisp_ChangePartySelect_Init)(BattleWork* wp, BOOL flag) {
     BattleSubMenu* menu;
     BattleCursor* mainCursor;
 
@@ -2106,16 +2223,16 @@ void BattleMenuDisp_ChangePartySelect_Init(BattleWork* wp, BOOL flag) {
 }
 
 /** Per-frame update of the Change Partner list; empty. */
-void BattleMenuDisp_ChangePartySelect_Main(BattleWork* wp) {
+void PORT_HOOKABLE(BattleMenuDisp_ChangePartySelect_Main)(BattleWork* wp) {
 }
 
 /** Draw callback of the Change Partner list. */
-void BattleMenuDisp_ChangePartySelect_Disp(BattleWork* wp) {
+void PORT_HOOKABLE(BattleMenuDisp_ChangePartySelect_Disp)(BattleWork* wp) {
     DrawChangePartyWin();
 }
 
 /** Closes the Change Partner list and frees its BattleSubMenu. */
-void BattleMenuDisp_ChangePartySelect_End(BattleWork* wp) {
+void PORT_HOOKABLE(BattleMenuDisp_ChangePartySelect_End)(BattleWork* wp) {
     if (WP_SUBMENU(wp)) {
         BattleFree(WP_SUBMENU(wp));
         WP_SUBMENU(wp) = NULL;
@@ -2178,7 +2295,7 @@ void DrawChangePartyWin(void) {
 }
 
 /** Sets up the Double/Triple Dip choice list; flag bit 0 plays the ring icons' leaving animation. */
-void BattleMenuDisp_MultiItem_Init(BattleWork* wp, BOOL flag) {
+void PORT_HOOKABLE(BattleMenuDisp_MultiItem_Init)(BattleWork* wp, BOOL flag) {
     BattleSubMenu* menu;
     BattleCursor* mainCursor;
 
@@ -2191,16 +2308,16 @@ void BattleMenuDisp_MultiItem_Init(BattleWork* wp, BOOL flag) {
 }
 
 /** Per-frame update of the Double/Triple Dip list; empty. */
-void BattleMenuDisp_MultiItem_Main(BattleWork* wp) {
+void PORT_HOOKABLE(BattleMenuDisp_MultiItem_Main)(BattleWork* wp) {
 }
 
 /** Draw callback of the Double/Triple Dip list. */
-void BattleMenuDisp_MultiItem_Disp(BattleWork* wp) {
+void PORT_HOOKABLE(BattleMenuDisp_MultiItem_Disp)(BattleWork* wp) {
     DrawMultiItemWin();
 }
 
 /** Closes the Double/Triple Dip list and frees its BattleSubMenu. */
-void BattleMenuDisp_MultiItem_End(BattleWork* wp) {
+void PORT_HOOKABLE(BattleMenuDisp_MultiItem_End)(BattleWork* wp) {
     if (WP_SUBMENU(wp)) {
         BattleFree(WP_SUBMENU(wp));
         WP_SUBMENU(wp) = NULL;

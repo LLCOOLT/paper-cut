@@ -2,12 +2,16 @@
 #pragma optimize_for_size on
 // FAKE: inlining off for the whole file (FAKES.md); without it 1 function changes length, e.g. BattleEnemyUseItemCheck 82 -> 426 instructions
 #pragma dont_inline on
+#include "port_hook.h"
 #include "battle/battle.h"
 #include "battle/battle_unit.h"
 #include "data/item_data.h"
 #include "system.h"
 
 #include "battle/battle_detect.h"
+#ifdef PORT_MODS
+#include "port/hooks/src_battle_battle_enemy_item.h"
+#endif
 
 static void* _check_status_recover_item(BattleUnit* self);
 static void* _check_status_support_item(BattleUnit* self);
@@ -42,7 +46,7 @@ static void* _check_hp_recover_item(BattleUnit* self);
  * status items to the status checks, Slow Shroom and Gradual Syrup to the HP and FP checks,
  * and any other item that restores HP or FP is used when a target is missing some.
  */
-void* BattleEnemyUseItemCheck(BattleUnit* self) {
+void* PORT_HOOKABLE(BattleEnemyUseItemCheck)(BattleUnit* self) {
     s32 itemId = self->heldItem;
     BattleWeapon* weapon;
     void* r;
@@ -282,3 +286,7 @@ static void* _check_status_recover_item(BattleUnit* self) {
     }
     return NULL;
 }
+
+#ifdef PORT_MODS
+#include "port/hooks/src_battle_battle_enemy_item.inc"
+#endif

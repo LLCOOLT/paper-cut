@@ -1,5 +1,6 @@
 // Star-power special move Earth Tremor (sac_deka): the timed-press game and its damage to every enemy.
 #pragma optimize_for_size on
+#include "port_hook.h"
 #include <dolphin/pad.h>
 #include "battle/battle.h"
 #include "battle/battle_audience.h"
@@ -31,6 +32,9 @@
 #include "battle/battle_sub.h"
 #include "eff/eff_starstone.h"
 #include "libc_decls.h"
+#ifdef PORT_MODS
+#include "port/hooks/src_battle_sac_sac_deka.h"
+#endif
 // US battle texture ids are 0x16 higher for these entries.
 #define BTL_TEX(id) ((id) + VERSION_PICK(0, 0x16))
 
@@ -1407,7 +1411,7 @@ restart:
 }
 
 /** Earth Tremor's damage function: the rounds cleared in the timing game plus 1 (1 to 6). */
-s32 weaponGetPower_Deka(BattleUnit* attacker, BattleWeapon* weapon, BattleUnit* target, BattleUnitPart* part) {
+s32 PORT_HOOKABLE(weaponGetPower_Deka)(BattleUnit* attacker, BattleWeapon* weapon, BattleUnit* target, BattleUnitPart* part) {
     return get_ptr()->result + 1;
 }
 
@@ -1472,3 +1476,7 @@ static USER_FUNC(get_result) {
     evtSetValue(event, event->args[0], w->result);
     return 2;
 }
+
+#ifdef PORT_MODS
+#include "port/hooks/src_battle_sac_sac_deka.inc"
+#endif

@@ -7,20 +7,55 @@
  *                  arguments; nonzero skips the function (then *result
  *                  is what it returns)
  *   TtydPost_NAME  void post(Ret* result, T0 a0, ...): may change the result
- * Void functions have no result parameter. */
+ * Void functions have no result parameter. The numbers never change
+ * (port/mods/hook_slots.txt); one no longer listed is a function that
+ * left the list, and a hook on it is refused. */
 #ifndef TTYD_MOD_HOOKS_H
 #define TTYD_MOD_HOOKS_H
 
 /* The headers declaring the hooked functions (their slots' types). */
+#include "battle/ac/ac_timing_a.h"
 #include "battle/battle.h"
 #include "battle/battle_ac.h"
+#include "battle/battle_ac_help.h"
+#include "battle/battle_acrobat.h"
+#include "battle/battle_actrecord.h"
+#include "battle/battle_attack_audience.h"
 #include "battle/battle_audience.h"
+#include "battle/battle_audience_kinopio.h"
+#include "battle/battle_break_slot.h"
+#include "battle/battle_camera.h"
 #include "battle/battle_damage.h"
+#include "battle/battle_detect.h"
+#include "battle/battle_disp.h"
+#include "battle/battle_enemy_item.h"
+#include "battle/battle_icon.h"
+#include "battle/battle_information.h"
+#include "battle/battle_menu_disp.h"
+#include "battle/battle_monosiri.h"
 #include "battle/battle_pad.h"
 #include "battle/battle_seq.h"
+#include "battle/battle_seq_command.h"
+#include "battle/battle_seq_end.h"
+#include "battle/battle_stage.h"
+#include "battle/battle_stage_object.h"
+#include "battle/battle_status_effect.h"
+#include "battle/battle_status_icon.h"
+#include "battle/battle_sub.h"
 #include "battle/battle_unit.h"
+#include "battle/battle_unit_event.h"
+#include "battle/battle_weapon_power.h"
+#include "battle/sac/sac_deka.h"
+#include "battle/sac/sac_scissor.h"
+#include "battle/sac/sac_zubastar.h"
+#include "countdown.h"
+#include "data/mail_data.h"
 #include "data/mapdata.h"
 #include "driver/animdrv.h"
+#include "driver/bgdrv.h"
+#include "driver/casedrv.h"
+#include "driver/envdrv.h"
+#include "driver/fadedrv.h"
 #include "driver/hitdrv.h"
 #include "driver/itemdrv.h"
 #include "driver/mobjdrv.h"
@@ -28,17 +63,79 @@
 #include "driver/npcdrv.h"
 #include "driver/seqdrv.h"
 #include "driver/swdrv.h"
+#include "driver/windowdrv.h"
+#include "event.h"
+#include "evt/evt_badgeshop.h"
+#include "evt/evt_bero.h"
+#include "evt/evt_case.h"
+#include "evt/evt_door.h"
+#include "evt/evt_johoya.h"
+#include "evt/evt_lottery.h"
+#include "evt/evt_msg.h"
+#include "evt/evt_nannpc.h"
+#include "evt/evt_npc.h"
+#include "evt/evt_shop.h"
+#include "evt/evt_uranaisi.h"
+#include "evt/evt_yuugijou.h"
+#include "koopa.h"
+#include "koopa_hit.h"
+#include "kpa_act.h"
+#include "manager/cardmgr.h"
+#include "manager/winmgr.h"
 #include "mario/mario.h"
+#include "mario/mario_balloon.h"
+#include "mario/mario_cam.h"
+#include "mario/mario_hit.h"
+#include "mario/mario_kemuri.h"
+#include "mario/mario_motion.h"
+#include "mario/mario_party.h"
 #include "mario/mario_pouch.h"
+#include "mario/mario_sbr.h"
 #include "mario/mariost.h"
+#include "mot/mot_damage.h"
+#include "mot/mot_dokan.h"
+#include "mot/mot_hammer.h"
+#include "mot/mot_hip.h"
+#include "mot/mot_jabara.h"
+#include "mot/mot_jump.h"
+#include "mot/mot_plane.h"
+#include "mot/mot_roll.h"
+#include "mot/mot_ship.h"
+#include "mot/mot_slit.h"
+#include "mot/mot_stay.h"
+#include "mot/mot_walk.h"
+#include "motion/mot_yoshi.h"
+#include "nameent.h"
 #include "party.h"
+#include "party/party_bomhei.h"
+#include "party/party_chuchu.h"
+#include "party/party_cloud.h"
+#include "party/party_hit.h"
+#include "party/party_kuribo.h"
+#include "party/party_motion.h"
+#include "party/party_move.h"
+#include "party/party_nokonoko.h"
+#include "party/party_vivian.h"
+#include "party/party_yoshi.h"
+#include "peach.h"
 #include "pmario_sound.h"
+#include "seq/seq_battle.h"
+#include "seq/seq_e3.h"
+#include "seq/seq_game.h"
+#include "seq/seq_gameover.h"
 #include "seq/seq_load.h"
+#include "seq/seq_logo.h"
 #include "seq/seq_mapchange.h"
+#include "seq/seq_title.h"
 #include "sound.h"
+#include "statuswindow.h"
+#include "unit/unit_mario.h"
+#include "win/win_badge.h"
 #include "win/win_item.h"
 #include "win/win_log.h"
+#include "win/win_main.h"
 #include "win/win_mario.h"
+#include "win/win_party.h"
 #include "win/win_root.h"
 
 enum TtydHookSlot {
@@ -103,7 +200,1526 @@ enum TtydHookSlot {
     TTYD_HOOK_evt_bero_get_info = 58,
     TTYD_HOOK_relSetEvtAddr = 59,
     TTYD_HOOK_SoundEfxPlayEx = 60,
-    TTYD_HOOK_COUNT = 61
+    TTYD_HOOK_battleAcTimingA_GetSuccessFrame = 61,
+    TTYD_HOOK_battleAcMain_TimingA = 62,
+    TTYD_HOOK_battleMain = 63,
+    TTYD_HOOK_battleSeqEndCheck = 64,
+    TTYD_HOOK_BattleInit = 65,
+    TTYD_HOOK_BattleEnd = 66,
+    TTYD_HOOK_BattleSetMarioParamToFieldBattle = 67,
+    TTYD_HOOK_BattleSetSeq = 68,
+    TTYD_HOOK_BattleGetSeq = 69,
+    TTYD_HOOK_BattleIncSeq = 70,
+    TTYD_HOOK_BattleAlloc = 71,
+    TTYD_HOOK_BattleFree = 72,
+    TTYD_HOOK_BattleSetUnitPtr = 73,
+    TTYD_HOOK_BattleGetUnitPartsPtr = 74,
+    TTYD_HOOK_BattleGetSystemPtr = 75,
+    TTYD_HOOK_BattleGetMarioPtr = 76,
+    TTYD_HOOK_BattleGetPartyPtr = 77,
+    TTYD_HOOK_BattleGetPartnerPtr = 78,
+    TTYD_HOOK_BattlePartyAnimeLoad = 79,
+    TTYD_HOOK_BattleChangeParty = 80,
+    TTYD_HOOK_BattleTransPartyId = 81,
+    TTYD_HOOK_BattleTransPartyIdToUnitKind = 82,
+    TTYD_HOOK_BtlUnit_EquipItem = 83,
+    TTYD_HOOK_BattleStoreCoin = 84,
+    TTYD_HOOK_BattleGetStockExp = 85,
+    TTYD_HOOK_BattleGetFloorHeight = 86,
+    TTYD_HOOK_BattleAfterReactionQueueInit = 87,
+    TTYD_HOOK_BattleAfterReactionEntry = 88,
+    TTYD_HOOK_BattleAfterReactionMain = 89,
+    TTYD_HOOK_battleDisableHResetCheck = 90,
+    TTYD_HOOK_BattleMajinaiCheck = 91,
+    TTYD_HOOK_BattleMajinaiDone = 92,
+    TTYD_HOOK_BattleMajinaiEndCheck = 93,
+    TTYD_HOOK_BattleStatusWindowAPRecoveryOn = 94,
+    TTYD_HOOK_BattleStatusWindowAPRecoveryOff = 95,
+    TTYD_HOOK_BattleStatusWindowEventOn = 96,
+    TTYD_HOOK_BattleStatusWindowSystemOn = 97,
+    TTYD_HOOK_BattleStatusWindowEventOff = 98,
+    TTYD_HOOK_BattleStatusWindowSystemOff = 99,
+    TTYD_HOOK_BattleStatusWindowCheck = 100,
+    TTYD_HOOK_BattleConsumeReserveItem = 101,
+    TTYD_HOOK_BattleActionCommandManagerInit = 102,
+    TTYD_HOOK_BattleActionCommandManager = 103,
+    TTYD_HOOK_BattleActionCommandResult = 104,
+    TTYD_HOOK_BattleActionCommandDeclareACResult = 105,
+    TTYD_HOOK_BattleActionCommandSetup = 106,
+    TTYD_HOOK_BattleActionCommandStart = 107,
+    TTYD_HOOK_BattleActionCommandStop = 108,
+    TTYD_HOOK_BattleActionCommandGetDefenceResult = 109,
+    TTYD_HOOK_BattleActionCommandResetDefenceResult = 110,
+    TTYD_HOOK_BattleActionCommandGetDifficulty = 111,
+    TTYD_HOOK_BattleActionCommandGetPrizeLv = 112,
+    TTYD_HOOK_BattleACGetButtonIcon = 113,
+    TTYD_HOOK_BattleAcDrawGauge = 114,
+    TTYD_HOOK_BattleAcGaugeSeInit = 115,
+    TTYD_HOOK_BattleAcGaugeSeUpdate = 116,
+    TTYD_HOOK_BattleAcGaugeSeDelete = 117,
+    TTYD_HOOK_BattleAcHelpSetHelp = 118,
+    TTYD_HOOK_BattleAcHelpSetDispType = 119,
+    TTYD_HOOK_BattleAcHelpInit = 120,
+    TTYD_HOOK_BattleAcHelpMain = 121,
+    TTYD_HOOK_BattleAcrobatStart = 122,
+    TTYD_HOOK_BattleAcrobatMain = 123,
+    TTYD_HOOK_BattleAcrobatGetResult = 124,
+    TTYD_HOOK_BtlActRec_AddCount = 125,
+    TTYD_HOOK_BtlActRec_AddPoint = 126,
+    TTYD_HOOK_BtlActRec_JudgeTurnRuleKeep = 127,
+    TTYD_HOOK_BtlActRec_JudgeRuleKeep = 128,
+    TTYD_HOOK_btlataudGetMoveEventPtr = 129,
+    TTYD_HOOK_btlataudGetAttackEventPtr = 130,
+    TTYD_HOOK_BattleAudienceItemGetPtr = 131,
+    TTYD_HOOK_BattleAudienceWinGetPtr = 132,
+    TTYD_HOOK_BattleAudienceSoundGetPtr = 133,
+    TTYD_HOOK_BattleAudience_Init = 134,
+    TTYD_HOOK_BattleAudience_Main = 135,
+    TTYD_HOOK_BattleAudience_ActInit = 136,
+    TTYD_HOOK_BattleAudience_PerAct = 137,
+    TTYD_HOOK_BattleAudience_CheckReaction = 138,
+    TTYD_HOOK_BattleAudience_PerPhase = 139,
+    TTYD_HOOK_BattleAudience_CheckReactionPerPhase = 140,
+    TTYD_HOOK_BattleAudience_Disp = 141,
+    TTYD_HOOK_BattleAudience_End = 142,
+    TTYD_HOOK_BattleAudienceItemOn = 143,
+    TTYD_HOOK_BattleAudienceDetectTargetAll = 144,
+    TTYD_HOOK_BattleAudience_Entry = 145,
+    TTYD_HOOK_BattleAudience_Delete = 146,
+    TTYD_HOOK_BattleAudience_SetAnim = 147,
+    TTYD_HOOK_BattleAudience_GetAnimEnd = 148,
+    TTYD_HOOK_BattleAudience_GetPosition = 149,
+    TTYD_HOOK_BattleAudience_GetHomePosition = 150,
+    TTYD_HOOK_BattleAudience_GetRotate = 151,
+    TTYD_HOOK_BattleAudience_SetPosition = 152,
+    TTYD_HOOK_BattleAudience_SetRotate = 153,
+    TTYD_HOOK_BattleAudience_SetRotateOffset = 154,
+    TTYD_HOOK_BattleAudience_GetItemOn = 155,
+    TTYD_HOOK_BattleAudience_GetItemOn2 = 156,
+    TTYD_HOOK_BattleAudience_SetTarget = 157,
+    TTYD_HOOK_BattleAudience_Attack = 158,
+    TTYD_HOOK_BattleAudience_GetFront = 159,
+    TTYD_HOOK_BattleAudience_ChangeStatus = 160,
+    TTYD_HOOK_BattleAudience_GetSysCtrl = 161,
+    TTYD_HOOK_BattleAudience_GetWaiting = 162,
+    TTYD_HOOK_BattleAudience_GetEscapeChangeOK = 163,
+    TTYD_HOOK_BattleAudience_GetAudienceNoFromOffset = 164,
+    TTYD_HOOK_BattleAudience_HaitiRandForFallObject = 165,
+    TTYD_HOOK_BattleAudience_GetAudienceNum = 166,
+    TTYD_HOOK_BattleAudience_WinSetActive = 167,
+    TTYD_HOOK_BattleAudienceNumToTarget = 168,
+    TTYD_HOOK_BattleAudienceAddTargetNum = 169,
+    TTYD_HOOK_BattleAudienceAddAudienceNum = 170,
+    TTYD_HOOK_BattleAudiencePuniAllEscape = 171,
+    TTYD_HOOK_BattleAudienceJoySACLecture = 172,
+    TTYD_HOOK_BattleAudienceJoyEnding = 173,
+    TTYD_HOOK_BattleAudienceDetectPakkunEatTarget = 174,
+    TTYD_HOOK_BattleAudienceSoundBooing = 175,
+    TTYD_HOOK_BattleAudienceSoundBooingKind = 176,
+    TTYD_HOOK_BattleAudienceSoundClap = 177,
+    TTYD_HOOK_BattleAudienceSoundCheer = 178,
+    TTYD_HOOK_BattleAudienceSoundCheerKind = 179,
+    TTYD_HOOK_BattleAudienceSoundWhistle = 180,
+    TTYD_HOOK_BattleAudienceSoundWhistleKind = 181,
+    TTYD_HOOK_BattleAudienceSoundCallKind = 182,
+    TTYD_HOOK_BattleAudienceSoundHandBeat = 183,
+    TTYD_HOOK_BattleAudienceSoundItemThrow = 184,
+    TTYD_HOOK_BattleAudienceSoundRun = 185,
+    TTYD_HOOK_BattleAudienceSoundSleep = 186,
+    TTYD_HOOK_BattleAudienceSoundZZZ = 187,
+    TTYD_HOOK_BattleAudienceSoundSing = 188,
+    TTYD_HOOK_BattleAudienceSoundShell = 189,
+    TTYD_HOOK_BattleAudienceSoundBombIgnite = 190,
+    TTYD_HOOK_BattleAudienceSoundBombFire = 191,
+    TTYD_HOOK_BattleAudienceSoundPakkunEat = 192,
+    TTYD_HOOK_BattleAudienceSoundSetVol = 193,
+    TTYD_HOOK_BattleAudienceSoundSetVolAll = 194,
+    TTYD_HOOK_BattleAudienceSoundCheck = 195,
+    TTYD_HOOK_BattleAudienceSoundStop = 196,
+    TTYD_HOOK_BattleAudience_Case_KillEnemy = 197,
+    TTYD_HOOK_BattleAudience_Case_ActionCommandGood = 198,
+    TTYD_HOOK_BattleAudience_Case_ActionCommandBad = 199,
+    TTYD_HOOK_BattleAudience_Case_GuardGood = 200,
+    TTYD_HOOK_BattleAudience_Case_GuardBad = 201,
+    TTYD_HOOK_BattleAudience_Case_AcrobatGood = 202,
+    TTYD_HOOK_BattleAudience_Case_AcrobatBad = 203,
+    TTYD_HOOK_BattleAudience_Case_AcrobatNoTry = 204,
+    TTYD_HOOK_BattleAudience_Case_MarioBigDamage = 205,
+    TTYD_HOOK_BattleAudience_Case_MarioPinch = 206,
+    TTYD_HOOK_BattleAudience_Case_MarioDanger = 207,
+    TTYD_HOOK_BattleAudience_Case_PartyDown = 208,
+    TTYD_HOOK_BattleAudience_Case_JumpNewRecord = 209,
+    TTYD_HOOK_BattleAudience_Case_FinalAttack = 210,
+    TTYD_HOOK_BattleAudience_Case_TurnEnd = 211,
+    TTYD_HOOK_BattleAudience_Case_Appeal = 212,
+    TTYD_HOOK_BattleAudience_Case_Escape = 213,
+    TTYD_HOOK_BattleAudience_Case_Escape_Good = 214,
+    TTYD_HOOK_BattleAudience_Case_Escape_Bad = 215,
+    TTYD_HOOK_BattleAudience_Case_EnemyDamage = 216,
+    TTYD_HOOK_BattleAudience_Case_EnemyNoDamage = 217,
+    TTYD_HOOK_BattleAudience_Case_Countered = 218,
+    TTYD_HOOK_BattleAudience_Case_HaikeiSet = 219,
+    TTYD_HOOK_BattleAudience_Case_GreatVictory = 220,
+    TTYD_HOOK_BattleAudience_Case_FastVictory = 221,
+    TTYD_HOOK_BattleAudience_Case_FallObject_Stage = 222,
+    TTYD_HOOK_BattleAudience_Case_FallObject_Aud = 223,
+    TTYD_HOOK_BattleAudience_Case_FirstAttack_Good = 224,
+    TTYD_HOOK_BattleAudience_Case_FirstAttack_Bad = 225,
+    TTYD_HOOK_BattleAudience_SetPresentItemNo = 226,
+    TTYD_HOOK_BattleAudience_GetPresentItemNo = 227,
+    TTYD_HOOK_BattleAudience_SetPresentTargetUnitId = 228,
+    TTYD_HOOK_BattleAudience_GetPresentTargetUnitId = 229,
+    TTYD_HOOK_BattleAudience_SetPresentItemType = 230,
+    TTYD_HOOK_BattleAudience_GetPresentItemType = 231,
+    TTYD_HOOK_BattleAudienceCtrlProcessKinopio = 232,
+    TTYD_HOOK_BattleBreakSlotGetPtr = 233,
+    TTYD_HOOK_BattleBreakSlot_Init = 234,
+    TTYD_HOOK_BattleBreakSlot_Main = 235,
+    TTYD_HOOK_BattleBreakSlot_Disp = 236,
+    TTYD_HOOK_BattleBreakSlot_End = 237,
+    TTYD_HOOK_BattleBreakSlot_PointInc = 238,
+    TTYD_HOOK_BattleBreakSlot_CheckReaction = 239,
+    TTYD_HOOK_BattleBreakSlot_GetBreakTurn = 240,
+    TTYD_HOOK_BattleBreakSlot_DecBreakTurn = 241,
+    TTYD_HOOK_BattleBreakSlot_HideReel = 242,
+    TTYD_HOOK_battleCameraInit = 243,
+    TTYD_HOOK_battleCameraMain = 244,
+    TTYD_HOOK_battleCameraGetPosMoveSpeed = 245,
+    TTYD_HOOK_btl_camera_set_mode = 246,
+    TTYD_HOOK_btl_camera_set_moveSpeedLv = 247,
+    TTYD_HOOK_btl_camera_set_moveto = 248,
+    TTYD_HOOK_btl_camera_shake_w = 249,
+    TTYD_HOOK_btl_camera_shake_h = 250,
+    TTYD_HOOK_btl_camera_noshake = 251,
+    TTYD_HOOK_btl_camera_set_posoffset = 252,
+    TTYD_HOOK_BattleAttackDeclare = 253,
+    TTYD_HOOK_BattleAttackDeclareAll = 254,
+    TTYD_HOOK_BattleInitCounterPreCheckWork = 255,
+    TTYD_HOOK_BattleCheckCounter = 256,
+    TTYD_HOOK_BattleSamplingEnemy = 257,
+    TTYD_HOOK_BattleSamplingEnemyUpdate = 258,
+    TTYD_HOOK_BattleChoiceSamplingEnemy = 259,
+    TTYD_HOOK_BattleGetFirstAttackUnit = 260,
+    TTYD_HOOK_btlDispGXInit2DRasta = 261,
+    TTYD_HOOK_btlDispGXInit2D = 262,
+    TTYD_HOOK_btlDispGXPoint2DRasta = 263,
+    TTYD_HOOK_btlDispGXQuads2DRasta = 264,
+    TTYD_HOOK_btlDispGXQuads2D = 265,
+    TTYD_HOOK_btlDispTexPlane = 266,
+    TTYD_HOOK_btlDispTexPlane2 = 267,
+    TTYD_HOOK_btlDispTexPlane3 = 268,
+    TTYD_HOOK_btlDispInit = 269,
+    TTYD_HOOK__GetStatusPoseType = 270,
+    TTYD_HOOK_btlDispMain = 271,
+    TTYD_HOOK_btlUnitPartsDisp = 272,
+    TTYD_HOOK_btlDispEntAnime = 273,
+    TTYD_HOOK_btlDispChangeAnime = 274,
+    TTYD_HOOK_btlDispChangePeraAnime = 275,
+    TTYD_HOOK_btlDispPoseAnime = 276,
+    TTYD_HOOK_btlGetScreenPoint = 277,
+    TTYD_HOOK_btlDispTex4 = 278,
+    TTYD_HOOK_BattleEnemyUseItemCheck = 279,
+    TTYD_HOOK_BattleIconInit = 280,
+    TTYD_HOOK_BattleIconMain = 281,
+    TTYD_HOOK_BattleIconEnd = 282,
+    TTYD_HOOK_BtlIcon_Entry = 283,
+    TTYD_HOOK_BtlIcon_Delete = 284,
+    TTYD_HOOK_BattleInformationSetMode = 285,
+    TTYD_HOOK_BattleInformationSetParty = 286,
+    TTYD_HOOK_BattleInformationSetFirstAttack = 287,
+    TTYD_HOOK_BattleInformationInit = 288,
+    TTYD_HOOK_BattleInfomationSetBattleSetupInfo = 289,
+    TTYD_HOOK_BattleInformationSetResult = 290,
+    TTYD_HOOK_BattleInformationGetResult = 291,
+    TTYD_HOOK_BattleInformationSetDropMaterial = 292,
+    TTYD_HOOK_SelectedItemCoordinateColorUpDate = 293,
+    TTYD_HOOK_BattleMenuKeyOKInACT = 294,
+    TTYD_HOOK_battleMenuDispInit = 295,
+    TTYD_HOOK_battleMenuDispEnd = 296,
+    TTYD_HOOK_BattleMenuDisp_ActSelect_Init = 297,
+    TTYD_HOOK_BattleMenuDisp_ActSelect_Main = 298,
+    TTYD_HOOK_BattleMenuDisp_ActSelect_Disp = 299,
+    TTYD_HOOK_BattleMenuDisp_ActSelect_End = 300,
+    TTYD_HOOK_BattleMenuDisp_WeaponSelect_Init = 301,
+    TTYD_HOOK_BattleMenuDisp_WeaponSelect_Main = 302,
+    TTYD_HOOK_BattleMenuDisp_WeaponSelect_Disp = 303,
+    TTYD_HOOK_BattleMenuDisp_WeaponSelect_End = 304,
+    TTYD_HOOK_BattleMenuDisp_Operation_Init = 305,
+    TTYD_HOOK_BattleMenuDisp_Operation_Main = 306,
+    TTYD_HOOK_BattleMenuDisp_Operation_Disp = 307,
+    TTYD_HOOK_BattleMenuDisp_Operation_End = 308,
+    TTYD_HOOK_BattleMenuDisp_ChangePartySelect_Init = 309,
+    TTYD_HOOK_BattleMenuDisp_ChangePartySelect_Main = 310,
+    TTYD_HOOK_BattleMenuDisp_ChangePartySelect_Disp = 311,
+    TTYD_HOOK_BattleMenuDisp_ChangePartySelect_End = 312,
+    TTYD_HOOK_BattleMenuDisp_MultiItem_Init = 313,
+    TTYD_HOOK_BattleMenuDisp_MultiItem_Main = 314,
+    TTYD_HOOK_BattleMenuDisp_MultiItem_Disp = 315,
+    TTYD_HOOK_BattleMenuDisp_MultiItem_End = 316,
+    TTYD_HOOK_battleGetUnitMonosiriPtr = 317,
+    TTYD_HOOK_battleCheckUnitMonosiriFlag = 318,
+    TTYD_HOOK_battleSetUnitMonosiriFlag = 319,
+    TTYD_HOOK_BattlePadInit = 320,
+    TTYD_HOOK_BtlPad_WorkInit = 321,
+    TTYD_HOOK_BtlPad_WorkUpdate = 322,
+    TTYD_HOOK_BattlePadGetTrigger = 323,
+    TTYD_HOOK_BattlePadGetNow = 324,
+    TTYD_HOOK_BattlePadCheckTrigger = 325,
+    TTYD_HOOK_BattlePadMultiCheckTrigger = 326,
+    TTYD_HOOK_BattlePadCheckRecordTrigger = 327,
+    TTYD_HOOK_BattlePadMultiCheckRecordTrigger = 328,
+    TTYD_HOOK_BattlePadCheckNow = 329,
+    TTYD_HOOK_BattlePadMultiCheckNow = 330,
+    TTYD_HOOK_BattlePadCheckUp = 331,
+    TTYD_HOOK_BattlePadMultiCheckUp = 332,
+    TTYD_HOOK_BattlePadCheckRepeat = 333,
+    TTYD_HOOK_BattlePadMultiCheckRepeat = 334,
+    TTYD_HOOK_BattleSequenceManager = 335,
+    TTYD_HOOK_battleSortPhaseMoveTable = 336,
+    TTYD_HOOK_BattleWaitAllActiveEvtEnd = 337,
+    TTYD_HOOK_BattleWaitAllActiveEvtEnd_NoBgSetEndWait = 338,
+    TTYD_HOOK_BattleCommandInit = 339,
+    TTYD_HOOK_BattleCommandInput = 340,
+    TTYD_HOOK_BattleCommandDisplay = 341,
+    TTYD_HOOK_BattleCommandCheckChangePositionEnable = 342,
+    TTYD_HOOK_BattleGetSelectWeapon = 343,
+    TTYD_HOOK_BattleSetConfuseAct = 344,
+    TTYD_HOOK_BattleGetRankNameLabel = 345,
+    TTYD_HOOK_btlseqEnd = 346,
+    TTYD_HOOK_BattleStageGetPtr = 347,
+    TTYD_HOOK_BattleStageInit = 348,
+    TTYD_HOOK_BattleStageMain = 349,
+    TTYD_HOOK_BattleStageEnd = 350,
+    TTYD_HOOK_BattleStageDisp = 351,
+    TTYD_HOOK_BattleStageOnLightInCommand = 352,
+    TTYD_HOOK_BattleStageOffLightInCommand = 353,
+    TTYD_HOOK_BattleStageOnLightFriendInCommand = 354,
+    TTYD_HOOK_BattleStageOffLightFriendInCommand = 355,
+    TTYD_HOOK_BattleStageOnLightEnemyInCommand = 356,
+    TTYD_HOOK_BattleStageOffLightEnemyInCommand = 357,
+    TTYD_HOOK_BattleStageGetLightNumberByName = 358,
+    TTYD_HOOK_BattleStageSysLightEntry = 359,
+    TTYD_HOOK_BattleStageLightRelease = 360,
+    TTYD_HOOK_BattleStageLightSetLightColor = 361,
+    TTYD_HOOK_BattleStageLightSetWidth = 362,
+    TTYD_HOOK_BattleStageLightSetPosition = 363,
+    TTYD_HOOK_BattleStageLightSetTarget = 364,
+    TTYD_HOOK_BattleStageLightSetTargetByUnit = 365,
+    TTYD_HOOK_BattleStageLightSetUpVec = 366,
+    TTYD_HOOK_BattleStageSetStgDark = 367,
+    TTYD_HOOK_BattleStageSetStgDarkBase = 368,
+    TTYD_HOOK_BattleStageReturnStgDarkBase = 369,
+    TTYD_HOOK_BattleStageSetAudDark = 370,
+    TTYD_HOOK_BattleStageSetAudDarkBase = 371,
+    TTYD_HOOK_BattleStageReturnAudDarkBase = 372,
+    TTYD_HOOK_BatSpotGetPtr = 373,
+    TTYD_HOOK_BattleGetObjectPtr = 374,
+    TTYD_HOOK_BattleSearchObjectPtr = 375,
+    TTYD_HOOK_BattleStageObjectInit = 376,
+    TTYD_HOOK_BattleStageObjectMain = 377,
+    TTYD_HOOK_BattleStage_DestroyA1 = 378,
+    TTYD_HOOK_BattleStage_DestroyA2 = 379,
+    TTYD_HOOK_BattleStage_DestroyB = 380,
+    TTYD_HOOK_BattleStage_NozzleDirChangeCheck = 381,
+    TTYD_HOOK_BattleStage_WallCloseCheck = 382,
+    TTYD_HOOK_BattleStage_IronFrameFallCheck = 383,
+    TTYD_HOOK_BattleStage_NozzleWorkCheck = 384,
+    TTYD_HOOK_BattleFogEndCheck = 385,
+    TTYD_HOOK_BattleFogForceStop = 386,
+    TTYD_HOOK_BattleStage_ObjectFallCheck = 387,
+    TTYD_HOOK_BattleStatusEffectInit = 388,
+    TTYD_HOOK_BattleStatusEffectMain = 389,
+    TTYD_HOOK_BattleStatusEffectDelete = 390,
+    TTYD_HOOK_BSE_TurnFirstProcessEffectEntry = 391,
+    TTYD_HOOK_BSE_TurnFirstProcessEffectMain = 392,
+    TTYD_HOOK_BattleStatusChangeInfoWorkInit = 393,
+    TTYD_HOOK_BattleStatusChangeInfoSetAnnouce = 394,
+    TTYD_HOOK_BattleStatusChangeAnnouceMain = 395,
+    TTYD_HOOK_BattleStatusChangeMsgWorkInit = 396,
+    TTYD_HOOK_BattleStatusChangeMsgSetAnnouce = 397,
+    TTYD_HOOK_BattleStatusChangeMsgAdjust = 398,
+    TTYD_HOOK_BattleStatusChangeMsgMain = 399,
+    TTYD_HOOK_BattleStatusIconInit = 400,
+    TTYD_HOOK_BattleStatusIconMain = 401,
+    TTYD_HOOK_BattleStatusIconDelete = 402,
+    TTYD_HOOK_cosfd = 403,
+    TTYD_HOOK_atan2f_safety = 404,
+    TTYD_HOOK_btlMovePos = 405,
+    TTYD_HOOK_intpl_sub = 406,
+    TTYD_HOOK_BtlCompForwardLv = 407,
+    TTYD_HOOK_BattleTransID = 408,
+    TTYD_HOOK_btlsubResetMoveColorLvAll = 409,
+    TTYD_HOOK_BtlUnit_Init = 410,
+    TTYD_HOOK_BtlUnit_Delete = 411,
+    TTYD_HOOK_BtlUnit_Spawn = 412,
+    TTYD_HOOK_BtlUnit_GetUnitId = 413,
+    TTYD_HOOK_BtlUnit_GetPartsPtr = 414,
+    TTYD_HOOK_BtlUnit_GetBodyPartsId = 415,
+    TTYD_HOOK_BtlUnit_SetPos = 416,
+    TTYD_HOOK_BtlUnit_AddPos = 417,
+    TTYD_HOOK_BtlUnit_GetPartsPos = 418,
+    TTYD_HOOK_BtlUnit_SetPartsPos = 419,
+    TTYD_HOOK_BtlUnit_AddPartsPos = 420,
+    TTYD_HOOK_BtlUnit_GetHitPos = 421,
+    TTYD_HOOK_BtlUnit_SetHitOffset = 422,
+    TTYD_HOOK_BtlUnit_SetHitCursorOffset = 423,
+    TTYD_HOOK_BtlUnit_GetHomePos = 424,
+    TTYD_HOOK_BtlUnit_SetHomePos = 425,
+    TTYD_HOOK_BtlUnit_AddHomePos = 426,
+    TTYD_HOOK_BtlUnit_SetPartsHomePos = 427,
+    TTYD_HOOK_BtlUnit_SetRotate = 428,
+    TTYD_HOOK_BtlUnit_GetRotate = 429,
+    TTYD_HOOK_BtlUnit_AddRotate = 430,
+    TTYD_HOOK_BtlUnit_SetPartsRotate = 431,
+    TTYD_HOOK_BtlUnit_GetPartsRotate = 432,
+    TTYD_HOOK_BtlUnit_AddPartsRotate = 433,
+    TTYD_HOOK_BtlUnit_SetBaseRotate = 434,
+    TTYD_HOOK_BtlUnit_GetBaseRotate = 435,
+    TTYD_HOOK_BtlUnit_SetPartsBaseRotate = 436,
+    TTYD_HOOK_BtlUnit_GetPartsBaseRotate = 437,
+    TTYD_HOOK_BtlUnit_SetRotateOffset = 438,
+    TTYD_HOOK_BtlUnit_SetPartsRotateOffset = 439,
+    TTYD_HOOK_BtlUnit_AddPartsRotateOffset = 440,
+    TTYD_HOOK_BtlUnit_SetBaseScale = 441,
+    TTYD_HOOK_BtlUnit_GetScale = 442,
+    TTYD_HOOK_BtlUnit_SetScale = 443,
+    TTYD_HOOK_BtlUnit_AddScale = 444,
+    TTYD_HOOK_BtlUnit_SetPartsBaseScale = 445,
+    TTYD_HOOK_BtlUnit_SetPartsScale = 446,
+    TTYD_HOOK_BtlUnit_AddPartsScale = 447,
+    TTYD_HOOK_BtlUnit_GetWidth = 448,
+    TTYD_HOOK_BtlUnit_GetHeight = 449,
+    TTYD_HOOK_BtlUnit_SetHeight = 450,
+    TTYD_HOOK_BtlUnit_SetOffsetPos = 451,
+    TTYD_HOOK_BtlUnit_SetPartsOffsetPos = 452,
+    TTYD_HOOK_BtlUnit_AddPartsOffsetPos = 453,
+    TTYD_HOOK_BtlUnit_SetDispOffset = 454,
+    TTYD_HOOK_BtlUnit_SetPartsDispOffset = 455,
+    TTYD_HOOK_BtlUnit_AddPartsDispOffset = 456,
+    TTYD_HOOK_BtlUnit_SetMoveStartPos = 457,
+    TTYD_HOOK_BtlUnit_SetPartsMoveStartPos = 458,
+    TTYD_HOOK_BtlUnit_SetMoveCurrentPos = 459,
+    TTYD_HOOK_BtlUnit_SetPartsMoveCurrentPos = 460,
+    TTYD_HOOK_BtlUnit_SetMoveTargetPos = 461,
+    TTYD_HOOK_BtlUnit_SetPartsMoveTargetPos = 462,
+    TTYD_HOOK_BtlUnit_SetFallAccel = 463,
+    TTYD_HOOK_BtlUnit_SetPartsFallAccel = 464,
+    TTYD_HOOK_BtlUnit_SetMoveSpeed = 465,
+    TTYD_HOOK_BtlUnit_SetPartsMoveSpeed = 466,
+    TTYD_HOOK_BtlUnit_SetJumpSpeed = 467,
+    TTYD_HOOK_BtlUnit_GetBelong = 468,
+    TTYD_HOOK_BtlUnit_SetStatus = 469,
+    TTYD_HOOK_BtlUnit_ClearStatus = 470,
+    TTYD_HOOK_BtlUnit_CheckRecoveryStatus = 471,
+    TTYD_HOOK_BtlUnit_CheckStatusFlag = 472,
+    TTYD_HOOK_BtlUnit_OnStatusFlag = 473,
+    TTYD_HOOK_BtlUnit_OffStatusFlag = 474,
+    TTYD_HOOK_BtlUnit_CheckUnitFlag = 475,
+    TTYD_HOOK_BtlUnit_OnUnitFlag = 476,
+    TTYD_HOOK_BtlUnit_OffUnitFlag = 477,
+    TTYD_HOOK_BtlUnit_GetPoseNameFromType = 478,
+    TTYD_HOOK_BtlUnit_SetAnimType = 479,
+    TTYD_HOOK_BtlUnit_SetAnim = 480,
+    TTYD_HOOK_BtlUnit_SetBodyAnimType = 481,
+    TTYD_HOOK_BtlUnit_SetBodyAnim = 482,
+    TTYD_HOOK_BtlUnit_ChangeTalkAnim = 483,
+    TTYD_HOOK_BtlUnit_ChangeStayAnim = 484,
+    TTYD_HOOK_BtlUnit_GetTalkTogePos = 485,
+    TTYD_HOOK_BtlUnit_GetEnemyBelong = 486,
+    TTYD_HOOK_BtlUnit_GetHitDamage = 487,
+    TTYD_HOOK_BtlUnit_GetTotalHitDamage = 488,
+    TTYD_HOOK_BtlUnit_SetTotalHitDamage = 489,
+    TTYD_HOOK_BtlUnit_GetACPossibility = 490,
+    TTYD_HOOK_BtlUnit_GetData = 491,
+    TTYD_HOOK_BtlUnit_CheckData = 492,
+    TTYD_HOOK_BtlUnit_CanGuardStatus = 493,
+    TTYD_HOOK_BtlUnit_CanActStatus = 494,
+    TTYD_HOOK_BtlUnit_SetParamFromPouch = 495,
+    TTYD_HOOK_BtlUnit_ReviseHpFp = 496,
+    TTYD_HOOK_BtlUnit_SetParamToPouch = 497,
+    TTYD_HOOK_BtlUnit_CheckPinchStatus = 498,
+    TTYD_HOOK_BtlUnit_GetExp = 499,
+    TTYD_HOOK_BtlUnit_GetFp = 500,
+    TTYD_HOOK_BtlUnit_SetFp = 501,
+    TTYD_HOOK_BtlUnit_RecoverHp = 502,
+    TTYD_HOOK_BtlUnit_RecoverFp = 503,
+    TTYD_HOOK_BtlUnit_GetMaxFp = 504,
+    TTYD_HOOK_BtlUnit_SetMaxFp = 505,
+    TTYD_HOOK_BtlUnit_CheckWeaponCost = 506,
+    TTYD_HOOK_BtlUnit_PayWeaponCost = 507,
+    TTYD_HOOK_BtlUnit_GetGuardKouraPtr = 508,
+    TTYD_HOOK_BtlUnit_ResetMoveStatus = 509,
+    TTYD_HOOK_BtlUnit_LoadSeMode = 510,
+    TTYD_HOOK_BtlUnit_SetSeMode = 511,
+    TTYD_HOOK_BtlUnit_SetCommandAnimPose = 512,
+    TTYD_HOOK_BtlUnit_PoseSoundInit = 513,
+    TTYD_HOOK_BtlUnit_ControlPoseSoundMain = 514,
+    TTYD_HOOK_BtlUnit_snd_se = 515,
+    TTYD_HOOK_BtlUnit_snd_se_pos = 516,
+    TTYD_HOOK_BtlUnit_HpGaugeMain = 517,
+    TTYD_HOOK_BtlUnit_EnemyItemCanUseCheck = 518,
+    TTYD_HOOK_BtlUnit_CheckShadowGuard = 519,
+    TTYD_HOOK_BattleCheckEndUnitInitEvent = 520,
+    TTYD_HOOK_BattleRunHitEventDirect = 521,
+    TTYD_HOOK_BattleRunHitEvent = 522,
+    TTYD_HOOK_BattleRunPhaseEvent = 523,
+    TTYD_HOOK_BattlePhaseEventStartDeclare = 524,
+    TTYD_HOOK_BattleRunWaitEvent = 525,
+    TTYD_HOOK_weaponGetPowerDefault = 526,
+    TTYD_HOOK_weaponGetFPPowerDefault = 527,
+    TTYD_HOOK_weaponGetPowerFromMarioJumpLv = 528,
+    TTYD_HOOK_weaponGetPowerFromMarioHammerLv = 529,
+    TTYD_HOOK_weaponGetPowerOverlapJump1 = 530,
+    TTYD_HOOK_weaponGetPowerOverlapHammer1 = 531,
+    TTYD_HOOK_weaponGetPowerFromPartyAttackLv = 532,
+    TTYD_HOOK_weaponGetPowerFromGulliblePartyAttackLv = 533,
+    TTYD_HOOK_weaponGetACOutputParam = 534,
+    TTYD_HOOK_weaponGetPowerHPHalf = 535,
+    TTYD_HOOK_weaponGetPowerHPHalf2 = 536,
+    TTYD_HOOK_weaponGetFPPowerFPHalf = 537,
+    TTYD_HOOK_weaponGetPowerTatsumaki = 538,
+    TTYD_HOOK_weaponGetPower_Deka = 539,
+    TTYD_HOOK_weaponGetPower_Scissor = 540,
+    TTYD_HOOK_weaponGetPower_ZubaStar = 541,
+    TTYD_HOOK_countDownInit = 542,
+    TTYD_HOOK_countDownSaveReStart = 543,
+    TTYD_HOOK_countDownStart = 544,
+    TTYD_HOOK_countDownSetRestartTime = 545,
+    TTYD_HOOK_countDownMain = 546,
+    TTYD_HOOK_countDownGetStatus = 547,
+    TTYD_HOOK_countDownEnd = 548,
+    TTYD_HOOK_countDownStop = 549,
+    TTYD_HOOK_countDownFlagOn = 550,
+    TTYD_HOOK_countDownFlagOff = 551,
+    TTYD_HOOK_mailGetPtr = 552,
+    TTYD_HOOK_areaDataPtr = 553,
+    TTYD_HOOK_relSetBtlAddr = 554,
+    TTYD_HOOK_bgInit = 555,
+    TTYD_HOOK_bgReInit = 556,
+    TTYD_HOOK_bgEntry = 557,
+    TTYD_HOOK_bgReEntry = 558,
+    TTYD_HOOK_bgSetColor = 559,
+    TTYD_HOOK_bgDispOn = 560,
+    TTYD_HOOK_bgDispOff = 561,
+    TTYD_HOOK_bgSetScrlOffset = 562,
+    TTYD_HOOK_bgAutoScrollOff = 563,
+    TTYD_HOOK_bgAutoScrollOn = 564,
+    TTYD_HOOK_bgTransOffsetOff = 565,
+    TTYD_HOOK_bgTransOffsetOn = 566,
+    TTYD_HOOK_bgMain = 567,
+    TTYD_HOOK_caseInit = 568,
+    TTYD_HOOK_caseReInit = 569,
+    TTYD_HOOK_caseEntry = 570,
+    TTYD_HOOK_caseDelete = 571,
+    TTYD_HOOK_caseMain = 572,
+    TTYD_HOOK_caseCheckHitObj = 573,
+    TTYD_HOOK_caseCheckHitObj2 = 574,
+    TTYD_HOOK_caseIdToPtr = 575,
+    TTYD_HOOK_envInit = 576,
+    TTYD_HOOK_envReInit = 577,
+    TTYD_HOOK_envTexSetup = 578,
+    TTYD_HOOK_envMain = 579,
+    TTYD_HOOK_envBlurOn = 580,
+    TTYD_HOOK_envBlurOff = 581,
+    TTYD_HOOK_envGlareFilter = 582,
+    TTYD_HOOK_envGlareFilterZ = 583,
+    TTYD_HOOK_envAddTev = 584,
+    TTYD_HOOK_envSetWater = 585,
+    TTYD_HOOK_envSetYamiView = 586,
+    TTYD_HOOK_envSetYami = 587,
+    TTYD_HOOK_fadeInit = 588,
+    TTYD_HOOK_fadeTexSetup = 589,
+    TTYD_HOOK_fadeEntry = 590,
+    TTYD_HOOK_fadeTecOn = 591,
+    TTYD_HOOK_fadeTecOff = 592,
+    TTYD_HOOK_fadeTecSoftOn = 593,
+    TTYD_HOOK_fadeTecSoftOff = 594,
+    TTYD_HOOK_fadeSoftFocusOn = 595,
+    TTYD_HOOK_fadeSoftFocusOff = 596,
+    TTYD_HOOK_fadeWhiteOutOn = 597,
+    TTYD_HOOK_fadeWhiteOutOff = 598,
+    TTYD_HOOK_fadeSetSpotPos = 599,
+    TTYD_HOOK_fadeSetAnimOfsPos = 600,
+    TTYD_HOOK_fadeSetAnimVirtualPos = 601,
+    TTYD_HOOK_fadeSetOffscreenCallback = 602,
+    TTYD_HOOK_fadeMain = 603,
+    TTYD_HOOK_fadeIsFinish = 604,
+    TTYD_HOOK_fadeReset = 605,
+    TTYD_HOOK_fadeGetTpl = 606,
+    TTYD_HOOK_fadeSetNarrowFast = 607,
+    TTYD_HOOK_itemInit = 608,
+    TTYD_HOOK_itemReInit = 609,
+    TTYD_HOOK_N_itemPickUpFromFieldCheck = 610,
+    TTYD_HOOK_itemMain = 611,
+    TTYD_HOOK_itemModeChange = 612,
+    TTYD_HOOK_itemDelete = 613,
+    TTYD_HOOK_itemNameToPtr = 614,
+    TTYD_HOOK_itemHitCheck = 615,
+    TTYD_HOOK_itemNearDistCheck = 616,
+    TTYD_HOOK_itemSetPosition = 617,
+    TTYD_HOOK_itemForceGet = 618,
+    TTYD_HOOK_itemNokoForceGet = 619,
+    TTYD_HOOK_itemFlagOn = 620,
+    TTYD_HOOK_itemFlagOff = 621,
+    TTYD_HOOK_itemFlag = 622,
+    TTYD_HOOK_itemStatusOn = 623,
+    TTYD_HOOK_itemStatus = 624,
+    TTYD_HOOK_itemPickUp = 625,
+    TTYD_HOOK_mobjKoopaOn = 626,
+    TTYD_HOOK_mobjInit = 627,
+    TTYD_HOOK_mobjReset = 628,
+    TTYD_HOOK_mobjHitEntry = 629,
+    TTYD_HOOK_mobjEntry = 630,
+    TTYD_HOOK_mobjDelete = 631,
+    TTYD_HOOK_mobjSetPosition = 632,
+    TTYD_HOOK_mobjMain = 633,
+    TTYD_HOOK_mobjNameToPtrNoAssert = 634,
+    TTYD_HOOK_mobjRunEvent = 635,
+    TTYD_HOOK_mobjCalcMtx = 636,
+    TTYD_HOOK_mobjCalcMtx2 = 637,
+    TTYD_HOOK_mobjGetHint = 638,
+    TTYD_HOOK_mobjCheckExec = 639,
+    TTYD_HOOK_mobjCheckItemboxOpen = 640,
+    TTYD_HOOK_mobjNearDistCheck2 = 641,
+    TTYD_HOOK_msgInit = 642,
+    TTYD_HOOK_msgLoad = 643,
+    TTYD_HOOK_msgAnalize = 644,
+    TTYD_HOOK_L_msgGetWork = 645,
+    TTYD_HOOK_msgGetCommand = 646,
+    TTYD_HOOK_msgIconStr2ID = 647,
+    TTYD_HOOK_msgWindow_Entry = 648,
+    TTYD_HOOK_msgWindow_Add = 649,
+    TTYD_HOOK_msgWindow_Continue = 650,
+    TTYD_HOOK_msgWindow_Repeat = 651,
+    TTYD_HOOK_msgWindow_ForceClose = 652,
+    TTYD_HOOK_npcGetWorkPtr = 653,
+    TTYD_HOOK_npcReleaseFiledNpc = 654,
+    TTYD_HOOK_npcRecoveryFiledNpc = 655,
+    TTYD_HOOK_npcInit = 656,
+    TTYD_HOOK_npcReset = 657,
+    TTYD_HOOK_npcGetReactionOfLivingBody = 658,
+    TTYD_HOOK_npcEntry = 659,
+    TTYD_HOOK_npcGetTribe = 660,
+    TTYD_HOOK_npcDelete = 661,
+    TTYD_HOOK_npcDeleteGroup = 662,
+    TTYD_HOOK_npcMain = 663,
+    TTYD_HOOK_npcNameToPtr_NoAssert = 664,
+    TTYD_HOOK_npcSetMarioAutoTalkPose = 665,
+    TTYD_HOOK_npcSetTalkPose = 666,
+    TTYD_HOOK_npcSetStayPose = 667,
+    TTYD_HOOK_npcTuningRy = 668,
+    TTYD_HOOK_npcTransRytoFaceDir = 669,
+    TTYD_HOOK_npcNearDistCheck = 670,
+    TTYD_HOOK_fbatGetPointer = 671,
+    TTYD_HOOK_fbatChangeMode = 672,
+    TTYD_HOOK_fbatSetAttackAnnounce = 673,
+    TTYD_HOOK_fbatSetAttackAnnounceEnable = 674,
+    TTYD_HOOK_npcGroupDead = 675,
+    TTYD_HOOK_fbatNpcTalkCheck = 676,
+    TTYD_HOOK_fbatHitCheckAll = 677,
+    TTYD_HOOK_npcCheckInterrupt = 678,
+    TTYD_HOOK_npcSetBattleInfo = 679,
+    TTYD_HOOK_npcStopForEvent = 680,
+    TTYD_HOOK_npcStopForOneEvent = 681,
+    TTYD_HOOK_npcStartForEvent = 682,
+    TTYD_HOOK_npcStartForOneEvent = 683,
+    TTYD_HOOK_npcSetColor = 684,
+    TTYD_HOOK_npcBlurOn = 685,
+    TTYD_HOOK_npcBlurOff = 686,
+    TTYD_HOOK_npcGetBtlSetupWork = 687,
+    TTYD_HOOK_npcSetBtlSetupWork = 688,
+    TTYD_HOOK_npcSetSlave = 689,
+    TTYD_HOOK_npcSetLink = 690,
+    TTYD_HOOK_dbGetDefData = 691,
+    TTYD_HOOK_npcExecAllInitEvt = 692,
+    TTYD_HOOK_npcWaitAllInitEvtEnd = 693,
+    TTYD_HOOK_npcExecAllReglEvt = 694,
+    TTYD_HOOK_npcGetBackItemEntry = 695,
+    TTYD_HOOK_npcClearDeadInfo = 696,
+    TTYD_HOOK_npcKoopaModeMobjBoundDeadCheck = 697,
+    TTYD_HOOK_fbatSandersBombTriggerOn = 698,
+    TTYD_HOOK_npcCalcScore = 699,
+    TTYD_HOOK_npcCheckBlow = 700,
+    TTYD_HOOK_N_fbatPreventMarioEventChk = 701,
+    TTYD_HOOK_seqInit_MARIOSTORY = 702,
+    TTYD_HOOK_seqMain = 703,
+    TTYD_HOOK_seqGetPrevSeq = 704,
+    TTYD_HOOK_seqGetNextSeq = 705,
+    TTYD_HOOK_seqCheckSeq = 706,
+    TTYD_HOOK_swInit = 707,
+    TTYD_HOOK_swReInit = 708,
+    TTYD_HOOK_swGet = 709,
+    TTYD_HOOK_swClear = 710,
+    TTYD_HOOK_swByteGet = 711,
+    TTYD_HOOK__swSet = 712,
+    TTYD_HOOK__swGet = 713,
+    TTYD_HOOK__swClear = 714,
+    TTYD_HOOK__swByteSet = 715,
+    TTYD_HOOK__swByteGet = 716,
+    TTYD_HOOK_windowInit = 717,
+    TTYD_HOOK_windowTexSetup = 718,
+    TTYD_HOOK_windowReInit = 719,
+    TTYD_HOOK_windowEntry = 720,
+    TTYD_HOOK_windowDelete = 721,
+    TTYD_HOOK_windowDeleteID = 722,
+    TTYD_HOOK_windowMain = 723,
+    TTYD_HOOK_windowDispGX_Kanban = 724,
+    TTYD_HOOK_windowDispGX_System = 725,
+    TTYD_HOOK_windowDispGX_Message = 726,
+    TTYD_HOOK_windowDispGX_Waku_col = 727,
+    TTYD_HOOK_windowDispGX2_Waku_col = 728,
+    TTYD_HOOK_windowCheckID = 729,
+    TTYD_HOOK_windowGetPointer = 730,
+    TTYD_HOOK_getWakuTexObj = 731,
+    TTYD_HOOK_stg0_00_init = 732,
+    TTYD_HOOK_N_stg9_02_init = 733,
+    TTYD_HOOK_eventStgDtPtr = 734,
+    TTYD_HOOK_eventStgNum = 735,
+    TTYD_HOOK_getBadgeBottakuru100TableMaxCount = 736,
+    TTYD_HOOK_getBadgeStarmaniacTableMaxCount = 737,
+    TTYD_HOOK_getBadgeBteresaTableMaxCount = 738,
+    TTYD_HOOK_badgeShop_init = 739,
+    TTYD_HOOK_badgeShop_bottakuruGeneration = 740,
+    TTYD_HOOK_badgeShop_bteresaGeneration = 741,
+    TTYD_HOOK_badgeShop_bargainGeneration = 742,
+    TTYD_HOOK_badgeShop_set = 743,
+    TTYD_HOOK_badgeShop_get = 744,
+    TTYD_HOOK_badgeShop_add = 745,
+    TTYD_HOOK_badgeShop_ThrowCheck = 746,
+    TTYD_HOOK_U_badgeShop_SpecialCheck = 747,
+    TTYD_HOOK_bero_get_BeroEXEC = 748,
+    TTYD_HOOK_bero_get_BeroNUM = 749,
+    TTYD_HOOK_bero_get_BeroSX = 750,
+    TTYD_HOOK_bero_get_BeroSY = 751,
+    TTYD_HOOK_bero_get_BeroSZ = 752,
+    TTYD_HOOK_bero_get_BeroEX = 753,
+    TTYD_HOOK_bero_get_BeroEY = 754,
+    TTYD_HOOK_bero_get_BeroEZ = 755,
+    TTYD_HOOK_bero_get_ptr = 756,
+    TTYD_HOOK_bero_clear_Offset = 757,
+    TTYD_HOOK_bero_id_filter = 758,
+    TTYD_HOOK_evtRunCaseEntry = 759,
+    TTYD_HOOK_door_position_sub = 760,
+    TTYD_HOOK_johoya_init = 761,
+    TTYD_HOOK_johoya_set = 762,
+    TTYD_HOOK_johoya_get = 763,
+    TTYD_HOOK_search_evt_no = 764,
+    TTYD_HOOK_search_evt_moji = 765,
+    TTYD_HOOK_lotteryGetPtr = 766,
+    TTYD_HOOK_evt_msg_init = 767,
+    TTYD_HOOK_nanNPCOption = 768,
+    TTYD_HOOK_nannpc_ext_main_sub = 769,
+    TTYD_HOOK_nannpc_ext_main_sub_fast = 770,
+    TTYD_HOOK_evt_nannpc_set_animtbl_sub = 771,
+    TTYD_HOOK_evtNpcNameToPtr = 772,
+    TTYD_HOOK_evtNpcNameToPtr_NoAssert = 773,
+    TTYD_HOOK_evtShopIsActive = 774,
+    TTYD_HOOK_uranaisi_ryokin_rtn = 775,
+    TTYD_HOOK_yuugijou_init = 776,
+    TTYD_HOOK_monteCountDisp = 777,
+    TTYD_HOOK_evtYuuSetWindowEvt = 778,
+    TTYD_HOOK_evtYuuWindow = 779,
+    TTYD_HOOK_evtYuuWindowEndChk = 780,
+    TTYD_HOOK_getKoopaFireEfp = 781,
+    TTYD_HOOK_kpaNoHitEnemyCheck = 782,
+    TTYD_HOOK_kpaMutekiCheck = 783,
+    TTYD_HOOK_kpaMutekiOn = 784,
+    TTYD_HOOK_kpaMutekiOff = 785,
+    TTYD_HOOK_kpaMSetMutekiTimer = 786,
+    TTYD_HOOK_kpaChgPose = 787,
+    TTYD_HOOK_kpaGetLevel = 788,
+    TTYD_HOOK_kpaSetLevel = 789,
+    TTYD_HOOK_kpaGetWidth = 790,
+    TTYD_HOOK_kpaGetBodyStatus = 791,
+    TTYD_HOOK_kpaGetStageType = 792,
+    TTYD_HOOK_kpaGetStageViewType = 793,
+    TTYD_HOOK_kpaCamFollow = 794,
+    TTYD_HOOK_kpaPreInit = 795,
+    TTYD_HOOK_kpaSetJumpPara = 796,
+    TTYD_HOOK_kpaSetFallPara = 797,
+    TTYD_HOOK_kpa_jumpNpc = 798,
+    TTYD_HOOK_kpaFireAttackCheck = 799,
+    TTYD_HOOK_kpaAttackStart = 800,
+    TTYD_HOOK_kpaAttackStart2 = 801,
+    TTYD_HOOK_kpaCancelAttackMode = 802,
+    TTYD_HOOK_kpaGetAttackMode = 803,
+    TTYD_HOOK_kpaFireDelete = 804,
+    TTYD_HOOK_kpaGetBaseScale = 805,
+    TTYD_HOOK_kpaHipAttackCheck = 806,
+    TTYD_HOOK_kpaPauseSE2 = 807,
+    TTYD_HOOK_kpaEnemyHitChk = 808,
+    TTYD_HOOK_kpaSearchGround = 809,
+    TTYD_HOOK_kpaSearchHead = 810,
+    TTYD_HOOK_kpaSearchFrontUnder = 811,
+    TTYD_HOOK_kpaGetHitobjHead = 812,
+    TTYD_HOOK_kpaGetHitobjHead2 = 813,
+    TTYD_HOOK_kpaGetHitobjRide = 814,
+    TTYD_HOOK_kpaChkHitobjRide = 815,
+    TTYD_HOOK_kpaClearHitobjRide = 816,
+    TTYD_HOOK_kpaGetHitobj = 817,
+    TTYD_HOOK_kpaGetHitFlame = 818,
+    TTYD_HOOK_kpaHitCheck = 819,
+    TTYD_HOOK_kpaFlameHitCheck = 820,
+    TTYD_HOOK_kpaAddCoin = 821,
+    TTYD_HOOK_kpaAddCoinPos = 822,
+    TTYD_HOOK_kpaAddScore = 823,
+    TTYD_HOOK_kpaAddScorePos = 824,
+    TTYD_HOOK_cardGetFilePtr = 825,
+    TTYD_HOOK_cardBufReset = 826,
+    TTYD_HOOK_cardInit = 827,
+    TTYD_HOOK_cardInsertWatchStart = 828,
+    TTYD_HOOK_cardInsertWatchEnd = 829,
+    TTYD_HOOK_cardInsertChanged = 830,
+    TTYD_HOOK_cardIsExec = 831,
+    TTYD_HOOK_cardGetCode = 832,
+    TTYD_HOOK_cardMain = 833,
+    TTYD_HOOK_cardCopy2Main = 834,
+    TTYD_HOOK_cardErase = 835,
+    TTYD_HOOK_cardCopy = 836,
+    TTYD_HOOK_cardWrite = 837,
+    TTYD_HOOK_cardWriteHeader = 838,
+    TTYD_HOOK_cardReadAll = 839,
+    TTYD_HOOK_cardCreate = 840,
+    TTYD_HOOK_cardFormat = 841,
+    TTYD_HOOK_winMgrInit = 842,
+    TTYD_HOOK_winMgrReInit = 843,
+    TTYD_HOOK_winMgrMain = 844,
+    TTYD_HOOK_winMgrEntry = 845,
+    TTYD_HOOK_winMgrSetParam = 846,
+    TTYD_HOOK_winMgrOpen = 847,
+    TTYD_HOOK_winMgrClose = 848,
+    TTYD_HOOK_winMgrCloseAutoDelete = 849,
+    TTYD_HOOK_winMgrDelete = 850,
+    TTYD_HOOK_winMgrAction = 851,
+    TTYD_HOOK_winMgrSetSize = 852,
+    TTYD_HOOK_winMgrSetPriority = 853,
+    TTYD_HOOK_winMgrGetPtr = 854,
+    TTYD_HOOK_winMgrHelpInit = 855,
+    TTYD_HOOK_winMgrHelpMain = 856,
+    TTYD_HOOK_winMgrHelpDraw = 857,
+    TTYD_HOOK_winMgrSelectEntry = 858,
+    TTYD_HOOK_winMgrSelect = 859,
+    TTYD_HOOK_winMgrSelectOther = 860,
+    TTYD_HOOK_winMgrSelectDelete = 861,
+    TTYD_HOOK_winMgrSelectGetCursor = 862,
+    TTYD_HOOK_marioGetColor = 863,
+    TTYD_HOOK_marioSetCharMode = 864,
+    TTYD_HOOK_marioSetFamicomMode = 865,
+    TTYD_HOOK_marioSetSpec = 866,
+    TTYD_HOOK_marioItemGetDisable = 867,
+    TTYD_HOOK_marioItemGetChk = 868,
+    TTYD_HOOK_marioItemGetOk = 869,
+    TTYD_HOOK_marioCaseEventValidChk = 870,
+    TTYD_HOOK_marioFrontActionValidChk = 871,
+    TTYD_HOOK_marioCheckMenuDisable = 872,
+    TTYD_HOOK_marioChkKey = 873,
+    TTYD_HOOK_marioChkCtrl = 874,
+    TTYD_HOOK_N_marioChkUseParty = 875,
+    TTYD_HOOK_marioFBattlePrepare = 876,
+    TTYD_HOOK_marioFBattlePost = 877,
+    TTYD_HOOK_marioCtrlOffChk = 878,
+    TTYD_HOOK_marioKeyOffChk = 879,
+    TTYD_HOOK_marioCtrlOff = 880,
+    TTYD_HOOK_marioCtrlOn = 881,
+    TTYD_HOOK_marioCtrlOff2 = 882,
+    TTYD_HOOK_marioCtrlOn2 = 883,
+    TTYD_HOOK_marioKeyOff = 884,
+    TTYD_HOOK_marioSetMutekiTime = 885,
+    TTYD_HOOK_marioBgmodeChk = 886,
+    TTYD_HOOK_marioBgmodeOn = 887,
+    TTYD_HOOK_marioBgmodeOff = 888,
+    TTYD_HOOK_marioChkSts = 889,
+    TTYD_HOOK_marioResetHitObj = 890,
+    TTYD_HOOK_marioReset = 891,
+    TTYD_HOOK_marioOfsRotReset = 892,
+    TTYD_HOOK_marioSoundInit = 893,
+    TTYD_HOOK_marioPoseInit = 894,
+    TTYD_HOOK_marioInit = 895,
+    TTYD_HOOK_marioReInit = 896,
+    TTYD_HOOK_marioMain = 897,
+    TTYD_HOOK_marioMove = 898,
+    TTYD_HOOK_marioChkPushAnime = 899,
+    TTYD_HOOK_marioAnimeId = 900,
+    TTYD_HOOK_marioChgDamagePose = 901,
+    TTYD_HOOK_marioChgEvtPose = 902,
+    TTYD_HOOK_toDotMarioPose = 903,
+    TTYD_HOOK_marioChgPose = 904,
+    TTYD_HOOK_marioChgPoseTime = 905,
+    TTYD_HOOK_marioChgPaper = 906,
+    TTYD_HOOK_marioSetPaperAnimeLocalTime = 907,
+    TTYD_HOOK_marioPaperOn = 908,
+    TTYD_HOOK_marioPaperOff = 909,
+    TTYD_HOOK_marioPaperLightOn = 910,
+    TTYD_HOOK_marioPaperLightOff = 911,
+    TTYD_HOOK_marioGetScreenPos = 912,
+    TTYD_HOOK_marioChkInScreen = 913,
+    TTYD_HOOK_marioGetScale = 914,
+    TTYD_HOOK_marioPreDisp = 915,
+    TTYD_HOOK_marioBaloonInit = 916,
+    TTYD_HOOK_marioBalloonOn = 917,
+    TTYD_HOOK_marioBalloonOff = 918,
+    TTYD_HOOK_marioBalloonMain = 919,
+    TTYD_HOOK_chkBalloon = 920,
+    TTYD_HOOK_marioResetCamShift = 921,
+    TTYD_HOOK_marioResetCamShiftRate = 922,
+    TTYD_HOOK_marioInitCamId = 923,
+    TTYD_HOOK_marioGetCamId = 924,
+    TTYD_HOOK_marioSetCamId = 925,
+    TTYD_HOOK_marioResetCamFollowRate = 926,
+    TTYD_HOOK_marioSetCamFollowRate = 927,
+    TTYD_HOOK_marioGetCamFollowRate = 928,
+    TTYD_HOOK_marioPreCamera = 929,
+    TTYD_HOOK_marioCamMain = 930,
+    TTYD_HOOK_marioUpdateCamCollision = 931,
+    TTYD_HOOK_marioUpdateCam = 932,
+    TTYD_HOOK_marioUpdateCamPos = 933,
+    TTYD_HOOK_marioNoUpdateCamPos = 934,
+    TTYD_HOOK_camFollowYOn = 935,
+    TTYD_HOOK_camFollowYOff = 936,
+    TTYD_HOOK_marioCamZoomOffReq = 937,
+    TTYD_HOOK_marioCamZoomOffReq2 = 938,
+    TTYD_HOOK_marioCamZoomOff = 939,
+    TTYD_HOOK_marioCamZoomUp = 940,
+    TTYD_HOOK_marioCamZoomUpLevelMain = 941,
+    TTYD_HOOK_marioHitCheckVec = 942,
+    TTYD_HOOK_marioHitCheck = 943,
+    TTYD_HOOK_clear_hitobj_ride = 944,
+    TTYD_HOOK_marioChkBero = 945,
+    TTYD_HOOK_marioSearchUnder = 946,
+    TTYD_HOOK_searchUnder2 = 947,
+    TTYD_HOOK_marioChkGnd = 948,
+    TTYD_HOOK_marioChkGnd2 = 949,
+    TTYD_HOOK_marioSearchGround = 950,
+    TTYD_HOOK_marioSearchGroundRoll = 951,
+    TTYD_HOOK_marioChkToge = 952,
+    TTYD_HOOK_marioChkLandon = 953,
+    TTYD_HOOK_marioLandonChk_old = 954,
+    TTYD_HOOK_marioChkLandon2 = 955,
+    TTYD_HOOK_marioChkOverhead = 956,
+    TTYD_HOOK_marioChkOverheadJabara = 957,
+    TTYD_HOOK_marioSearchHead = 958,
+    TTYD_HOOK_marioSearchHead_roll = 959,
+    TTYD_HOOK_marioSearchHead_jabara = 960,
+    TTYD_HOOK_marioCheckWall = 961,
+    TTYD_HOOK_marioSearchFrontWall_staying = 962,
+    TTYD_HOOK_marioCheckWall_roll = 963,
+    TTYD_HOOK_marioChkFront = 964,
+    TTYD_HOOK_dou10_yoko_yari = 965,
+    TTYD_HOOK_dou10_yoko_yari2 = 966,
+    TTYD_HOOK_N_dou10_yoko_yari3 = 967,
+    TTYD_HOOK_marioChkWallAround = 968,
+    TTYD_HOOK_marioSlitChkWallAround = 969,
+    TTYD_HOOK_marioCheckWallShip = 970,
+    TTYD_HOOK_mario_kemuri = 971,
+    TTYD_HOOK_mario_simple_kemuri = 972,
+    TTYD_HOOK_mario_land_kemuri = 973,
+    TTYD_HOOK_marioChgStayMotion = 974,
+    TTYD_HOOK_marioChgTalkMotion = 975,
+    TTYD_HOOK_marioChgGetItemMotion = 976,
+    TTYD_HOOK_marioChgShipMotion = 977,
+    TTYD_HOOK_marioChgRollMotion = 978,
+    TTYD_HOOK_marioChgJumpStandMotion = 979,
+    TTYD_HOOK_marioChgSmallJumpMotion = 980,
+    TTYD_HOOK_marioChkItemGetMotion = 981,
+    TTYD_HOOK_marioBoots = 982,
+    TTYD_HOOK_marioMotion = 983,
+    TTYD_HOOK_marioChgMot = 984,
+    TTYD_HOOK_marioChgMotSub = 985,
+    TTYD_HOOK_marioChgMot2 = 986,
+    TTYD_HOOK_marioClearJumpPara = 987,
+    TTYD_HOOK_marioSetJumpPara = 988,
+    TTYD_HOOK_marioSetFallPara = 989,
+    TTYD_HOOK_marioGetFallSpd = 990,
+    TTYD_HOOK_marioMakeJumpPara = 991,
+    TTYD_HOOK_marioJump = 992,
+    TTYD_HOOK_marioFall = 993,
+    TTYD_HOOK_marioLandOn = 994,
+    TTYD_HOOK_marioChkJump = 995,
+    TTYD_HOOK_marioChkTransform = 996,
+    TTYD_HOOK_marioChkItemMotion = 997,
+    TTYD_HOOK_marioChkRub = 998,
+    TTYD_HOOK_marioRollChgChk = 999,
+    TTYD_HOOK_marioUseParty = 1000,
+    TTYD_HOOK_marioUsePartyMain = 1001,
+    TTYD_HOOK_marioPartyEntry = 1002,
+    TTYD_HOOK_marioPartyHello = 1003,
+    TTYD_HOOK_marioPartyGoodbye = 1004,
+    TTYD_HOOK_marioPartyKill = 1005,
+    TTYD_HOOK_marioGetParty = 1006,
+    TTYD_HOOK_marioGetExtraPartyId = 1007,
+    TTYD_HOOK_partyJoin = 1008,
+    TTYD_HOOK_partyLeft = 1009,
+    TTYD_HOOK_partyChkJoin = 1010,
+    TTYD_HOOK_partyGetHp = 1011,
+    TTYD_HOOK_partyGetTechLv = 1012,
+    TTYD_HOOK_pouchInit = 1013,
+    TTYD_HOOK_pouchKeyItem = 1014,
+    TTYD_HOOK_pouchHaveItem = 1015,
+    TTYD_HOOK_pouchKeepItem = 1016,
+    TTYD_HOOK_pouchHaveBadge = 1017,
+    TTYD_HOOK_pouchGetHaveItemCnt = 1018,
+    TTYD_HOOK_pouchGetKeepItemCnt = 1019,
+    TTYD_HOOK_pouchGetHaveBadgeCnt = 1020,
+    TTYD_HOOK_pouchGetEquipBadgeCnt = 1021,
+    TTYD_HOOK_pouchGetEmptyHaveItemCnt = 1022,
+    TTYD_HOOK_pouchGetEmptyKeepItemCnt = 1023,
+    TTYD_HOOK_pouchCheckItem = 1024,
+    TTYD_HOOK_pouchHiraToKata = 1025,
+    TTYD_HOOK_pouchSortItem = 1026,
+    TTYD_HOOK_pouchGetCoin = 1027,
+    TTYD_HOOK_pouchGetSuperCoin = 1028,
+    TTYD_HOOK_pouchSetSuperCoin = 1029,
+    TTYD_HOOK_pouchGetStarPiece = 1030,
+    TTYD_HOOK_pouchAddHP = 1031,
+    TTYD_HOOK_pouchGetHP = 1032,
+    TTYD_HOOK_pouchGetMaxHP = 1033,
+    TTYD_HOOK_pouchSetHP = 1034,
+    TTYD_HOOK_pouchSetMaxHP = 1035,
+    TTYD_HOOK_pouchGetPartyHP = 1036,
+    TTYD_HOOK_pouchSetPartyHP = 1037,
+    TTYD_HOOK_pouchGetFP = 1038,
+    TTYD_HOOK_pouchGetMaxFP = 1039,
+    TTYD_HOOK_pouchSetFP = 1040,
+    TTYD_HOOK_pouchSetMaxFP = 1041,
+    TTYD_HOOK_pouchGetAP = 1042,
+    TTYD_HOOK_pouchAddAP = 1043,
+    TTYD_HOOK_pouchSetAP = 1044,
+    TTYD_HOOK_pouchGetMaxAP = 1045,
+    TTYD_HOOK_pouchGetAudienceNum = 1046,
+    TTYD_HOOK_pouchSetAudienceNum = 1047,
+    TTYD_HOOK_pouchGetJumpLv = 1048,
+    TTYD_HOOK_pouchGetHammerLv = 1049,
+    TTYD_HOOK_pouchGetPartyAttackLv = 1050,
+    TTYD_HOOK_pouchAddKeepItem = 1051,
+    TTYD_HOOK_pouchRemoveKeepItem = 1052,
+    TTYD_HOOK_pouchRevisePartyParam = 1053,
+    TTYD_HOOK_pouchGetStarPoint = 1054,
+    TTYD_HOOK_pouchEquipBadgeIndex = 1055,
+    TTYD_HOOK_pouchUnEquipBadgeIndex = 1056,
+    TTYD_HOOK_pouchEquipCheckBadgeIndex = 1057,
+    TTYD_HOOK_pouchEquipBadgeID = 1058,
+    TTYD_HOOK_N_pouchUnEquipBadgeID = 1059,
+    TTYD_HOOK_pouchArriveBadge = 1060,
+    TTYD_HOOK_pouchMajinaiInit = 1061,
+    TTYD_HOOK_pouchGetKpaCoin = 1062,
+    TTYD_HOOK_pouchAddKpaCoin = 1063,
+    TTYD_HOOK_pouchGetKpaScore = 1064,
+    TTYD_HOOK_pouchAddKpaScore = 1065,
+    TTYD_HOOK_pouchGetStarStone = 1066,
+    TTYD_HOOK_pouchReceiveMailCount = 1067,
+    TTYD_HOOK_pouchReceiveMail = 1068,
+    TTYD_HOOK_pouchOpenMail = 1069,
+    TTYD_HOOK_pouchCheckMail = 1070,
+    TTYD_HOOK_pouchGetPartyColor = 1071,
+    TTYD_HOOK_pouchSetPartyColor = 1072,
+    TTYD_HOOK_pouchSetYoshiName = 1073,
+    TTYD_HOOK_pouchGetYoshiName = 1074,
+    TTYD_HOOK_marioBottomless = 1075,
+    TTYD_HOOK_N_marioSetBottomlessRespawnPosOnBeroEntry = 1076,
+    TTYD_HOOK_N_marioSetBottomlessRespawnPos = 1077,
+    TTYD_HOOK_N_marioReloadMapOnBottomlessOn = 1078,
+    TTYD_HOOK_N_marioReloadMapOnBottomlessOff = 1079,
+    TTYD_HOOK_marioGetMoveRate = 1080,
+    TTYD_HOOK_marioResetGravity = 1081,
+    TTYD_HOOK_marioGetTouchNpcPtr = 1082,
+    TTYD_HOOK_marioChkPlanePlace = 1083,
+    TTYD_HOOK_marioSetPeakYpos = 1084,
+    TTYD_HOOK_marioAdjustMoveDir = 1085,
+    TTYD_HOOK_revise360 = 1086,
+    TTYD_HOOK_toMovedir = 1087,
+    TTYD_HOOK_partyToMovedir = 1088,
+    TTYD_HOOK_toMovedirSimple = 1089,
+    TTYD_HOOK_toMovedir2 = 1090,
+    TTYD_HOOK_marioForceMoveMain = 1091,
+    TTYD_HOOK_marioSetForceMove = 1092,
+    TTYD_HOOK_N_marioGetMovementSpeed = 1093,
+    TTYD_HOOK_marioGetRubInit = 1094,
+    TTYD_HOOK_marioGetRub = 1095,
+    TTYD_HOOK_marioStInit = 1096,
+    TTYD_HOOK_marioStDisp = 1097,
+    TTYD_HOOK_marioStSystemLevel = 1098,
+    TTYD_HOOK_marioStGetSystemLevel = 1099,
+    TTYD_HOOK_marioDmgRetQuakeOn = 1100,
+    TTYD_HOOK_marioSetSplash = 1101,
+    TTYD_HOOK_marioChkDamageSink = 1102,
+    TTYD_HOOK_set_damage_root_ypos = 1103,
+    TTYD_HOOK_mot_damage = 1104,
+    TTYD_HOOK_mot_damageToge = 1105,
+    TTYD_HOOK_mot_dokan = 1106,
+    TTYD_HOOK_marioGetHammerLevel = 1107,
+    TTYD_HOOK_mot_hammer = 1108,
+    TTYD_HOOK_marioChkHammer2 = 1109,
+    TTYD_HOOK_mot_hammer2 = 1110,
+    TTYD_HOOK_marioGetAngleKaitenHammer = 1111,
+    TTYD_HOOK_mot_ham2_post = 1112,
+    TTYD_HOOK_marioChkHipAttack = 1113,
+    TTYD_HOOK_marioChkHipBump = 1114,
+    TTYD_HOOK_mot_hip = 1115,
+    TTYD_HOOK_mot_hip_post = 1116,
+    TTYD_HOOK_marioGetJabaraState = 1117,
+    TTYD_HOOK_marioPriCheckJabara = 1118,
+    TTYD_HOOK_marioChkJabara = 1119,
+    TTYD_HOOK_mot_jabara = 1120,
+    TTYD_HOOK_jabaraNoHitChk = 1121,
+    TTYD_HOOK_mot_jabara_post = 1122,
+    TTYD_HOOK_mot_grasp = 1123,
+    TTYD_HOOK_marioPreJump = 1124,
+    TTYD_HOOK_marioGetJumpHeight = 1125,
+    TTYD_HOOK_mot_jumpStand = 1126,
+    TTYD_HOOK_mot_jumpSw = 1127,
+    TTYD_HOOK_mot_jumpNpc = 1128,
+    TTYD_HOOK_mot_jump = 1129,
+    TTYD_HOOK_mot_jumpSmall = 1130,
+    TTYD_HOOK_mot_upstairs = 1131,
+    TTYD_HOOK_mot_fall = 1132,
+    TTYD_HOOK_mot_fall_post = 1133,
+    TTYD_HOOK_mot_land = 1134,
+    TTYD_HOOK_marioGetPlaneStatus = 1135,
+    TTYD_HOOK_mario_plane_cancel = 1136,
+    TTYD_HOOK_marioForcePlaneAnime = 1137,
+    TTYD_HOOK_mot_plane = 1138,
+    TTYD_HOOK_mot_plane_post = 1139,
+    TTYD_HOOK_marioRollFixOn = 1140,
+    TTYD_HOOK_marioRollCancelDisable = 1141,
+    TTYD_HOOK_marioRollKeyDisable = 1142,
+    TTYD_HOOK_setRollEvtFlag = 1143,
+    TTYD_HOOK_clrRollEvtFlag = 1144,
+    TTYD_HOOK_getRollEvtFlag = 1145,
+    TTYD_HOOK_marioResetRollSpd = 1146,
+    TTYD_HOOK_marioForceRollAnime = 1147,
+    TTYD_HOOK_marioRollTryCancel = 1148,
+    TTYD_HOOK_marioRollCancel = 1149,
+    TTYD_HOOK_mot_roll_post = 1150,
+    TTYD_HOOK_marioRollForceCancel = 1151,
+    TTYD_HOOK_marioSetRollDispDir = 1152,
+    TTYD_HOOK_rollEvtJumpSetup = 1153,
+    TTYD_HOOK_marioReInit_roll = 1154,
+    TTYD_HOOK_mot_roll = 1155,
+    TTYD_HOOK_roll_upstairs_on = 1156,
+    TTYD_HOOK_mot_fall_roll = 1157,
+    TTYD_HOOK_marioShipChanging = 1158,
+    TTYD_HOOK_marioSetSwirlPower = 1159,
+    TTYD_HOOK_marioChkSwirlPower = 1160,
+    TTYD_HOOK_marioShipForceStop = 1161,
+    TTYD_HOOK_marioShipSetDispDir = 1162,
+    TTYD_HOOK_marioChkShipPlace = 1163,
+    TTYD_HOOK_marioForceShipAnime = 1164,
+    TTYD_HOOK_marioReInit_ship = 1165,
+    TTYD_HOOK_mot_ship_post = 1166,
+    TTYD_HOOK_mot_ship = 1167,
+    TTYD_HOOK_marioShipChgFall = 1168,
+    TTYD_HOOK_marioChkShipMoveMode = 1169,
+    TTYD_HOOK_marioSlitReenter = 1170,
+    TTYD_HOOK_N_marioSlitSetAfterLand = 1171,
+    TTYD_HOOK_marioSlitAbilityChk = 1172,
+    TTYD_HOOK_marioSlitButton = 1173,
+    TTYD_HOOK_marioSlitKeyDisable = 1174,
+    TTYD_HOOK_U_marioSlitContinueChk = 1175,
+    TTYD_HOOK_marioCreviceWallChk = 1176,
+    TTYD_HOOK_marioClearSlitFloor = 1177,
+    TTYD_HOOK_marioGetSlitFloorPos = 1178,
+    TTYD_HOOK_marioChkSlitThrouh = 1179,
+    TTYD_HOOK_marioChkSlitThrouhEnd = 1180,
+    TTYD_HOOK_motSlitContinue = 1181,
+    TTYD_HOOK_marioChkSlitEnd = 1182,
+    TTYD_HOOK_motSlitCancel = 1183,
+    TTYD_HOOK_motSlitCancel2 = 1184,
+    TTYD_HOOK_motSlitCancel3 = 1185,
+    TTYD_HOOK_marioGetMotSlitCancel3 = 1186,
+    TTYD_HOOK_marioSlitForceCancel = 1187,
+    TTYD_HOOK_mot_slit_post = 1188,
+    TTYD_HOOK_marioForceSlitAnime = 1189,
+    TTYD_HOOK_marioReInit_slit = 1190,
+    TTYD_HOOK_mot_slit = 1191,
+    TTYD_HOOK_marioVoiceGlareOn = 1192,
+    TTYD_HOOK_marioVoiceGlareOff = 1193,
+    TTYD_HOOK_marioChkDeepSleep = 1194,
+    TTYD_HOOK_mot_stay = 1195,
+    TTYD_HOOK_marioChgMotAuto = 1196,
+    TTYD_HOOK_mot_stay_post = 1197,
+    TTYD_HOOK_marioGetWalkSpd = 1198,
+    TTYD_HOOK_marioGetDashSpd = 1199,
+    TTYD_HOOK_mot_walk = 1200,
+    TTYD_HOOK_mot_dash = 1201,
+    TTYD_HOOK_mot_yoshi = 1202,
+    TTYD_HOOK_mot_yoshi_post = 1203,
+    TTYD_HOOK_nameEntInit = 1204,
+    TTYD_HOOK_nameEntReInit = 1205,
+    TTYD_HOOK_nameEntPrepare = 1206,
+    TTYD_HOOK_nameEntOn = 1207,
+    TTYD_HOOK_nameEntOff = 1208,
+    TTYD_HOOK_nameEntWait = 1209,
+    TTYD_HOOK_nameEntIsCancel = 1210,
+    TTYD_HOOK_nameEntGetName = 1211,
+    TTYD_HOOK_nameEntMain = 1212,
+    TTYD_HOOK_nameMaskGX = 1213,
+    TTYD_HOOK_anotherPartyGetPtr = 1214,
+    TTYD_HOOK_partyPaperOn = 1215,
+    TTYD_HOOK_partyPaperOff = 1216,
+    TTYD_HOOK_partyPaperLightOff = 1217,
+    TTYD_HOOK_partyChgPose = 1218,
+    TTYD_HOOK_partyChgPaper = 1219,
+    TTYD_HOOK_partyCtrlOff = 1220,
+    TTYD_HOOK_partyCtrlOn = 1221,
+    TTYD_HOOK_partyRun = 1222,
+    TTYD_HOOK_partyStop = 1223,
+    TTYD_HOOK_partySetForceMove = 1224,
+    TTYD_HOOK_partyEntryHello = 1225,
+    TTYD_HOOK_partyEntry = 1226,
+    TTYD_HOOK_partyEntryPos = 1227,
+    TTYD_HOOK_partyGoodbye = 1228,
+    TTYD_HOOK_partyKill = 1229,
+    TTYD_HOOK_partyKill2 = 1230,
+    TTYD_HOOK_yoshiSetColor = 1231,
+    TTYD_HOOK_partyGetHeight = 1232,
+    TTYD_HOOK_partyEntry2 = 1233,
+    TTYD_HOOK_partyEntry2Hello = 1234,
+    TTYD_HOOK_partyInit = 1235,
+    TTYD_HOOK_partyReInit = 1236,
+    TTYD_HOOK_partyUsePost = 1237,
+    TTYD_HOOK_partyChgRunMode = 1238,
+    TTYD_HOOK_partyPrevRunMode = 1239,
+    TTYD_HOOK_partyMain = 1240,
+    TTYD_HOOK_partyDoWork = 1241,
+    TTYD_HOOK_partyHello = 1242,
+    TTYD_HOOK_partyGoodbyeInit = 1243,
+    TTYD_HOOK_partyGoodbyeMain = 1244,
+    TTYD_HOOK_partyDokanEnd = 1245,
+    TTYD_HOOK_allPartyRidePlane = 1246,
+    TTYD_HOOK_allPartyRideShip = 1247,
+    TTYD_HOOK_allPartyForceRideOn = 1248,
+    TTYD_HOOK_allPartyRideOn = 1249,
+    TTYD_HOOK_allPartyRideOff = 1250,
+    TTYD_HOOK_allPartyRideOff2 = 1251,
+    TTYD_HOOK_partyRideChk = 1252,
+    TTYD_HOOK_party_force_ride_yoshi = 1253,
+    TTYD_HOOK_party_ride_yoshi_force_move = 1254,
+    TTYD_HOOK_partyInitCamId = 1255,
+    TTYD_HOOK_partySetCamId = 1256,
+    TTYD_HOOK_partyKeyOn = 1257,
+    TTYD_HOOK_partyKeyOff = 1258,
+    TTYD_HOOK_L_partyClearCont = 1259,
+    TTYD_HOOK_partyUpdateKeyData = 1260,
+    TTYD_HOOK_partyShadowOff = 1261,
+    TTYD_HOOK_partySetFamicomMode = 1262,
+    TTYD_HOOK_bomhei_bye = 1263,
+    TTYD_HOOK_bomhei_init = 1264,
+    TTYD_HOOK_bomheiGetStatus = 1265,
+    TTYD_HOOK_bomhei_exit = 1266,
+    TTYD_HOOK_bomhei_use_cancel = 1267,
+    TTYD_HOOK_bomhei_use_cancel2 = 1268,
+    TTYD_HOOK_bomhei_use_post = 1269,
+    TTYD_HOOK_bomhei_use = 1270,
+    TTYD_HOOK_mario_bomhei_keychk = 1271,
+    TTYD_HOOK_mario_bomhei_keychk2 = 1272,
+    TTYD_HOOK_partyGetReturnPos = 1273,
+    TTYD_HOOK_chuchu_searchObject = 1274,
+    TTYD_HOOK_chuchu_init = 1275,
+    TTYD_HOOK_chuchu_exit = 1276,
+    TTYD_HOOK_chuchu_move = 1277,
+    TTYD_HOOK_chuchu_use = 1278,
+    TTYD_HOOK_cloudGetHitBreathout = 1279,
+    TTYD_HOOK_cloudGetBreathDist = 1280,
+    TTYD_HOOK_cloud_move = 1281,
+    TTYD_HOOK_cloud_init = 1282,
+    TTYD_HOOK_cloud_use = 1283,
+    TTYD_HOOK_cloud_exit = 1284,
+    TTYD_HOOK_cloudGetBreathPower = 1285,
+    TTYD_HOOK_cloudGetBreathDir = 1286,
+    TTYD_HOOK_cloudGetStatus = 1287,
+    TTYD_HOOK_cloudResetAt = 1288,
+    TTYD_HOOK_cloudGetAt = 1289,
+    TTYD_HOOK_partyHitCheck = 1290,
+    TTYD_HOOK_partyChkGnd = 1291,
+    TTYD_HOOK__partySearchGround = 1292,
+    TTYD_HOOK_partyChkFrontStep = 1293,
+    TTYD_HOOK_partySearchWallFront = 1294,
+    TTYD_HOOK_partySearchFrontWall = 1295,
+    TTYD_HOOK_partySearchHead = 1296,
+    TTYD_HOOK_christineGetStatus = 1297,
+    TTYD_HOOK_kuribo_init = 1298,
+    TTYD_HOOK_kuribo_use_post = 1299,
+    TTYD_HOOK_kuribo_use = 1300,
+    TTYD_HOOK_kuribo_bye = 1301,
+    TTYD_HOOK_party_motion_homing_walk = 1302,
+    TTYD_HOOK_party_motion_jump = 1303,
+    TTYD_HOOK_party_motion_jump2 = 1304,
+    TTYD_HOOK_party_motion_homing_fly = 1305,
+    TTYD_HOOK_party_motion_fall = 1306,
+    TTYD_HOOK_party_motion_upstairs = 1307,
+    TTYD_HOOK_party_set_behind_dir = 1308,
+    TTYD_HOOK_party_motion_behind_mario = 1309,
+    TTYD_HOOK_party_motion_behind_mario_continue = 1310,
+    TTYD_HOOK_party_motion_behind_mario_fly = 1311,
+    TTYD_HOOK_party_motion_beside_mario = 1312,
+    TTYD_HOOK_party_motion_stay = 1313,
+    TTYD_HOOK_party_motion_damage = 1314,
+    TTYD_HOOK_allPartySlitOn = 1315,
+    TTYD_HOOK_allPartySlitOff = 1316,
+    TTYD_HOOK_allPartyForceSlitOff = 1317,
+    TTYD_HOOK_N_partyFollowCloseOn = 1318,
+    TTYD_HOOK_N_partyFollowCloseOff = 1319,
+    TTYD_HOOK_party_motion_wait = 1320,
+    TTYD_HOOK_L_partyForceSlitOff = 1321,
+    TTYD_HOOK_partyGetFootmarkPtr = 1322,
+    TTYD_HOOK_partyGetFootmarkReadId = 1323,
+    TTYD_HOOK_partyGetFootmarkWriteId = 1324,
+    TTYD_HOOK_partyGetFootmarkId = 1325,
+    TTYD_HOOK_partyGetTargetDir = 1326,
+    TTYD_HOOK_partyGetTargetDist = 1327,
+    TTYD_HOOK_partyGetTargetDist3D = 1328,
+    TTYD_HOOK_partyGetTargetDistY = 1329,
+    TTYD_HOOK_partyGetTargetMovespd2 = 1330,
+    TTYD_HOOK_partyNextReadId = 1331,
+    TTYD_HOOK_partyGetReadId = 1332,
+    TTYD_HOOK_partyGetReadId2 = 1333,
+    TTYD_HOOK_partyClearFootmark = 1334,
+    TTYD_HOOK_partyClearFootmark2 = 1335,
+    TTYD_HOOK_partyRecordFootmark = 1336,
+    TTYD_HOOK_L_getTargetPos = 1337,
+    TTYD_HOOK_partyGetTargetMovespd = 1338,
+    TTYD_HOOK_partyClearJumpPara = 1339,
+    TTYD_HOOK_partySetTargetSpd = 1340,
+    TTYD_HOOK_partyForceSetSpd = 1341,
+    TTYD_HOOK_partyUpdMoveSpd = 1342,
+    TTYD_HOOK_N_partyPlaySfxPartyLanding1 = 1343,
+    TTYD_HOOK_partyChgStayPose = 1344,
+    TTYD_HOOK_partyMoveAnime = 1345,
+    TTYD_HOOK_partySetDispDirToMario = 1346,
+    TTYD_HOOK_partyChkNoStandMobj = 1347,
+    TTYD_HOOK_partyMove = 1348,
+    TTYD_HOOK_partyMoveNoHosei = 1349,
+    TTYD_HOOK_partyChgMoveMode = 1350,
+    TTYD_HOOK_partyChgMot = 1351,
+    TTYD_HOOK_partySetDir = 1352,
+    TTYD_HOOK_partyMoveBehindMario = 1353,
+    TTYD_HOOK_partyMoveBehindMario3 = 1354,
+    TTYD_HOOK_partyMoveBesideMario = 1355,
+    TTYD_HOOK_partyMoveCheckWall = 1356,
+    TTYD_HOOK_partyGetMoveDirSpd = 1357,
+    TTYD_HOOK_partyMarioHosei = 1358,
+    TTYD_HOOK_partyChkWall = 1359,
+    TTYD_HOOK_partyWalkInit = 1360,
+    TTYD_HOOK_partyMoveWalk = 1361,
+    TTYD_HOOK_partyWalkMain = 1362,
+    TTYD_HOOK_party_move_mode_stay = 1363,
+    TTYD_HOOK_party_move_mode_walk = 1364,
+    TTYD_HOOK_party_move_mode_behind_mario = 1365,
+    TTYD_HOOK_party_move_mode_beside_mario = 1366,
+    TTYD_HOOK_partyMoveFlyInit = 1367,
+    TTYD_HOOK_partyFlyMain = 1368,
+    TTYD_HOOK_partyGetAppearPos = 1369,
+    TTYD_HOOK_partyGetAppearPos3 = 1370,
+    TTYD_HOOK_partyGetAppearPos4 = 1371,
+    TTYD_HOOK_partyGetAppearPos5 = 1372,
+    TTYD_HOOK_nokonokoGetStatus = 1373,
+    TTYD_HOOK_nokonoko_holdItem = 1374,
+    TTYD_HOOK_nokonoko_bye = 1375,
+    TTYD_HOOK_nokonoko_init = 1376,
+    TTYD_HOOK_nokonoko_move = 1377,
+    TTYD_HOOK_nokonoko_use_cancel = 1378,
+    TTYD_HOOK_nokonoko_use_post = 1379,
+    TTYD_HOOK_nokonoko_use = 1380,
+    TTYD_HOOK_nokonoko_finish = 1381,
+    TTYD_HOOK_nokotaro_hold_cancel = 1382,
+    TTYD_HOOK_N_marioForceVivianAnime = 1383,
+    TTYD_HOOK_mot_vivian = 1384,
+    TTYD_HOOK_mot_vivian_post = 1385,
+    TTYD_HOOK_vivian_init = 1386,
+    TTYD_HOOK_vivianGetStatus = 1387,
+    TTYD_HOOK_vivianUnhold = 1388,
+    TTYD_HOOK_vivianShadow = 1389,
+    TTYD_HOOK_vivian_move = 1390,
+    TTYD_HOOK_vivian_use = 1391,
+    TTYD_HOOK_evt_set_yoshi_frm = 1392,
+    TTYD_HOOK_evt_set_yoshi_spd = 1393,
+    TTYD_HOOK_evt_get_yoshi_frm = 1394,
+    TTYD_HOOK_yoshiGetStatus = 1395,
+    TTYD_HOOK_marioRideYoshi = 1396,
+    TTYD_HOOK_marioGetoffYoshi = 1397,
+    TTYD_HOOK_marioYoshiForceCancel = 1398,
+    TTYD_HOOK_yoshi_bye = 1399,
+    TTYD_HOOK_yoshi_exit = 1400,
+    TTYD_HOOK_yoshi_jumpStand = 1401,
+    TTYD_HOOK_yoshi_init = 1402,
+    TTYD_HOOK_yoshi_use = 1403,
+    TTYD_HOOK_peachSetStsNormal = 1404,
+    TTYD_HOOK_peachSetStsAftershower = 1405,
+    TTYD_HOOK_peachSetStsInvisible = 1406,
+    TTYD_HOOK_peachSetStsHappy = 1407,
+    TTYD_HOOK_peachSetStsUneasy = 1408,
+    TTYD_HOOK_peachSetStsAngry = 1409,
+    TTYD_HOOK_peachSetStsOrdinary = 1410,
+    TTYD_HOOK_peachSetStsCarry = 1411,
+    TTYD_HOOK_peachTransformOn = 1412,
+    TTYD_HOOK_peachTransformOff = 1413,
+    TTYD_HOOK_peachPreInit = 1414,
+    TTYD_HOOK_peach_stay = 1415,
+    TTYD_HOOK_peach_walk = 1416,
+    TTYD_HOOK_peach_dash = 1417,
+    TTYD_HOOK_peach_talk = 1418,
+    TTYD_HOOK_searchPSSFXList = 1419,
+    TTYD_HOOK_psndInit = 1420,
+    TTYD_HOOK_psndMain = 1421,
+    TTYD_HOOK_psndMainInt = 1422,
+    TTYD_HOOK_psndExit = 1423,
+    TTYD_HOOK_psndPushGroup = 1424,
+    TTYD_HOOK_psndSetPosDirListener = 1425,
+    TTYD_HOOK_psndStopAllFadeOut = 1426,
+    TTYD_HOOK_psndSetReverb = 1427,
+    TTYD_HOOK_psndSetFlag = 1428,
+    TTYD_HOOK_psndClearFlag = 1429,
+    TTYD_HOOK_psndGetFlag = 1430,
+    TTYD_HOOK_psndMapChange = 1431,
+    TTYD_HOOK_psndSFXAllOff = 1432,
+    TTYD_HOOK_L_psndBGM_stop = 1433,
+    TTYD_HOOK_psndBGM_rate = 1434,
+    TTYD_HOOK_psndBGMOn = 1435,
+    TTYD_HOOK_psndBGMOn_f = 1436,
+    TTYD_HOOK_psndBGMOff = 1437,
+    TTYD_HOOK_psndBGMOff_f_d = 1438,
+    TTYD_HOOK_psndBGMChk = 1439,
+    TTYD_HOOK_psndBGMChkSilent = 1440,
+    TTYD_HOOK_psndBGMScope = 1441,
+    TTYD_HOOK_psndBGMStartCheck = 1442,
+    TTYD_HOOK_psndBGMPlayTime = 1443,
+    TTYD_HOOK_psndSFXOn_ = 1444,
+    TTYD_HOOK_psndSFXOn = 1445,
+    TTYD_HOOK_psndSFXOnVol = 1446,
+    TTYD_HOOK_psndSFXOn_3D = 1447,
+    TTYD_HOOK_psndSFXOnEx_3D = 1448,
+    TTYD_HOOK_psndSFX_vol = 1449,
+    TTYD_HOOK_psndSFX_pit = 1450,
+    TTYD_HOOK_psndSFX_pos = 1451,
+    TTYD_HOOK_psndSFX_dist = 1452,
+    TTYD_HOOK_psndSFX_get_vol = 1453,
+    TTYD_HOOK_psndENVOn = 1454,
+    TTYD_HOOK_psndENVOff = 1455,
+    TTYD_HOOK_psndENVOff_f_d = 1456,
+    TTYD_HOOK_psndENV_LPF = 1457,
+    TTYD_HOOK_seq_battleInit = 1458,
+    TTYD_HOOK_seq_battleExit = 1459,
+    TTYD_HOOK_seq_battleMain = 1460,
+    TTYD_HOOK_seq_e3Init = 1461,
+    TTYD_HOOK_seq_e3Exit = 1462,
+    TTYD_HOOK_seq_e3Main = 1463,
+    TTYD_HOOK_seq_gameInit = 1464,
+    TTYD_HOOK_seq_gameMain = 1465,
+    TTYD_HOOK_seq_gameExit = 1466,
+    TTYD_HOOK_seq_gameOverInit = 1467,
+    TTYD_HOOK_seq_gameOverExit = 1468,
+    TTYD_HOOK_seq_gameOverMain = 1469,
+    TTYD_HOOK_seq_loadInit = 1470,
+    TTYD_HOOK_seq_loadExit = 1471,
+    TTYD_HOOK_seq_logoInit = 1472,
+    TTYD_HOOK_seq_logoExit = 1473,
+    TTYD_HOOK_seq_logoMain = 1474,
+    TTYD_HOOK_seq_mapChangeInit = 1475,
+    TTYD_HOOK_seq_mapChangeExit = 1476,
+    TTYD_HOOK__unload = 1477,
+    TTYD_HOOK__relUnLoad = 1478,
+    TTYD_HOOK_DbgBtlSel_GetMsgDataPtr = 1479,
+    TTYD_HOOK_seq_titleInit = 1480,
+    TTYD_HOOK_seq_titleExit = 1481,
+    TTYD_HOOK_seq_titleMain = 1482,
+    TTYD_HOOK_N_getDebugMode = 1483,
+    TTYD_HOOK_statusWinInit = 1484,
+    TTYD_HOOK_statusWinReInit = 1485,
+    TTYD_HOOK_statusWinMain = 1486,
+    TTYD_HOOK_statusWinOpen = 1487,
+    TTYD_HOOK_statusWinClose = 1488,
+    TTYD_HOOK_statusWinForceOpen = 1489,
+    TTYD_HOOK_statusWinForceClose = 1490,
+    TTYD_HOOK_statusWinForceCloseClear = 1491,
+    TTYD_HOOK_statusWinForceOff = 1492,
+    TTYD_HOOK_statusWinDispOn = 1493,
+    TTYD_HOOK_statusWinDispOff = 1494,
+    TTYD_HOOK_statusWinCheck = 1495,
+    TTYD_HOOK_statusWinCheckUpdate = 1496,
+    TTYD_HOOK_statusWinForceUpdate = 1497,
+    TTYD_HOOK_statusWinForceUpdateCoin = 1498,
+    TTYD_HOOK_statusGetApPos = 1499,
+    TTYD_HOOK_statusAPBlink = 1500,
+    TTYD_HOOK_N_statusClearBlink = 1501,
+    TTYD_HOOK_statusFPBlink = 1502,
+    TTYD_HOOK_statusMarioHPBlink = 1503,
+    TTYD_HOOK_statusPartyHPBlink = 1504,
+    TTYD_HOOK_faker_mario_makkuro_set = 1505,
+    TTYD_HOOK_winMakeEquipList = 1506,
+    TTYD_HOOK_winBadgeInit = 1507,
+    TTYD_HOOK_winBadgeInit2 = 1508,
+    TTYD_HOOK_winBadgeExit = 1509,
+    TTYD_HOOK_winBadgeMain = 1510,
+    TTYD_HOOK_winBadgeMain2 = 1511,
+    TTYD_HOOK_winBadgeDisp = 1512,
+    TTYD_HOOK_winMakeSkipList = 1513,
+    TTYD_HOOK_winItemInit = 1514,
+    TTYD_HOOK_winItemInit2 = 1515,
+    TTYD_HOOK_winItemExit = 1516,
+    TTYD_HOOK_winItemMain2 = 1517,
+    TTYD_HOOK_winItemDisp = 1518,
+    TTYD_HOOK_winLogInit = 1519,
+    TTYD_HOOK_winLogInit2 = 1520,
+    TTYD_HOOK_winLogExit = 1521,
+    TTYD_HOOK_winLogMain2 = 1522,
+    TTYD_HOOK_winLogDisp = 1523,
+    TTYD_HOOK_winGetMapTplName = 1524,
+    TTYD_HOOK_monosiriInit = 1525,
+    TTYD_HOOK_monosiriMain = 1526,
+    TTYD_HOOK_monosiriClose = 1527,
+    TTYD_HOOK_monosiriCloseWait = 1528,
+    TTYD_HOOK_monosiriExit = 1529,
+    TTYD_HOOK_winGetPtr = 1530,
+    TTYD_HOOK_winInit = 1531,
+    TTYD_HOOK_winReInit = 1532,
+    TTYD_HOOK_winCheck = 1533,
+    TTYD_HOOK_winOpenEnable = 1534,
+    TTYD_HOOK_winOpenDisable = 1535,
+    TTYD_HOOK_winMain = 1536,
+    TTYD_HOOK_winGhostDiaryChk = 1537,
+    TTYD_HOOK_winFontInit = 1538,
+    TTYD_HOOK_winFontSetLabel = 1539,
+    TTYD_HOOK_winTexInit = 1540,
+    TTYD_HOOK_winTexSet = 1541,
+    TTYD_HOOK_winTexSetNearest = 1542,
+    TTYD_HOOK_winTexSetRot = 1543,
+    TTYD_HOOK_winTexInit_x2 = 1544,
+    TTYD_HOOK_winTexSet_x2 = 1545,
+    TTYD_HOOK_winIconInit = 1546,
+    TTYD_HOOK_winIconGrayInit = 1547,
+    TTYD_HOOK_winIconSet = 1548,
+    TTYD_HOOK_winLectureOn = 1549,
+    TTYD_HOOK_winLectureCheck = 1550,
+    TTYD_HOOK_winMarioInit = 1551,
+    TTYD_HOOK_winMarioInit2 = 1552,
+    TTYD_HOOK_winMarioExit = 1553,
+    TTYD_HOOK_winMarioMain = 1554,
+    TTYD_HOOK_winMarioMain2 = 1555,
+    TTYD_HOOK_winZenkakuStr = 1556,
+    TTYD_HOOK_winZenkakuStrPad = 1557,
+    TTYD_HOOK_winPartyInit = 1558,
+    TTYD_HOOK_winPartyInit2 = 1559,
+    TTYD_HOOK_winPartyExit = 1560,
+    TTYD_HOOK_winPartyMain = 1561,
+    TTYD_HOOK_winPartyMain2 = 1562,
+    TTYD_HOOK_winPartyDisp = 1563,
+    TTYD_HOOK_winRootDisp = 1564,
+    TTYD_HOOK_winBgGX = 1565,
+    TTYD_HOOK_winMsgEntry = 1566,
+    TTYD_HOOK_winKirinukiGX = 1567,
+    TTYD_HOOK_winNameGX = 1568,
+    TTYD_HOOK_winBookGX = 1569,
+    TTYD_HOOK_winHalfBookGX = 1570,
+    TTYD_HOOK_winMailGX = 1571,
+    TTYD_HOOK_winHakoGX = 1572,
+    TTYD_HOOK_winWazaGX = 1573,
+    TTYD_HOOK_compare_func5_2 = 1574,
+    TTYD_HOOK_compare_func6_2 = 1575,
+    TTYD_HOOK_winSortEntry = 1576,
+    TTYD_HOOK_winSortWait = 1577,
+    TTYD_HOOK_winKageGX = 1578,
+    TTYD_HOOK_winZClear = 1579,
+    TTYD_HOOK_COUNT = 1580
 };
 
 /* The slots' function names, by slot (ttyd_mod/compat.h finds a slot by name). */
@@ -169,6 +1785,1525 @@ enum TtydHookSlot {
     "evt_bero_get_info", \
     "relSetEvtAddr", \
     "SoundEfxPlayEx", \
+    "battleAcTimingA_GetSuccessFrame", \
+    "battleAcMain_TimingA", \
+    "battleMain", \
+    "battleSeqEndCheck", \
+    "BattleInit", \
+    "BattleEnd", \
+    "BattleSetMarioParamToFieldBattle", \
+    "BattleSetSeq", \
+    "BattleGetSeq", \
+    "BattleIncSeq", \
+    "BattleAlloc", \
+    "BattleFree", \
+    "BattleSetUnitPtr", \
+    "BattleGetUnitPartsPtr", \
+    "BattleGetSystemPtr", \
+    "BattleGetMarioPtr", \
+    "BattleGetPartyPtr", \
+    "BattleGetPartnerPtr", \
+    "BattlePartyAnimeLoad", \
+    "BattleChangeParty", \
+    "BattleTransPartyId", \
+    "BattleTransPartyIdToUnitKind", \
+    "BtlUnit_EquipItem", \
+    "BattleStoreCoin", \
+    "BattleGetStockExp", \
+    "BattleGetFloorHeight", \
+    "BattleAfterReactionQueueInit", \
+    "BattleAfterReactionEntry", \
+    "BattleAfterReactionMain", \
+    "battleDisableHResetCheck", \
+    "BattleMajinaiCheck", \
+    "BattleMajinaiDone", \
+    "BattleMajinaiEndCheck", \
+    "BattleStatusWindowAPRecoveryOn", \
+    "BattleStatusWindowAPRecoveryOff", \
+    "BattleStatusWindowEventOn", \
+    "BattleStatusWindowSystemOn", \
+    "BattleStatusWindowEventOff", \
+    "BattleStatusWindowSystemOff", \
+    "BattleStatusWindowCheck", \
+    "BattleConsumeReserveItem", \
+    "BattleActionCommandManagerInit", \
+    "BattleActionCommandManager", \
+    "BattleActionCommandResult", \
+    "BattleActionCommandDeclareACResult", \
+    "BattleActionCommandSetup", \
+    "BattleActionCommandStart", \
+    "BattleActionCommandStop", \
+    "BattleActionCommandGetDefenceResult", \
+    "BattleActionCommandResetDefenceResult", \
+    "BattleActionCommandGetDifficulty", \
+    "BattleActionCommandGetPrizeLv", \
+    "BattleACGetButtonIcon", \
+    "BattleAcDrawGauge", \
+    "BattleAcGaugeSeInit", \
+    "BattleAcGaugeSeUpdate", \
+    "BattleAcGaugeSeDelete", \
+    "BattleAcHelpSetHelp", \
+    "BattleAcHelpSetDispType", \
+    "BattleAcHelpInit", \
+    "BattleAcHelpMain", \
+    "BattleAcrobatStart", \
+    "BattleAcrobatMain", \
+    "BattleAcrobatGetResult", \
+    "BtlActRec_AddCount", \
+    "BtlActRec_AddPoint", \
+    "BtlActRec_JudgeTurnRuleKeep", \
+    "BtlActRec_JudgeRuleKeep", \
+    "btlataudGetMoveEventPtr", \
+    "btlataudGetAttackEventPtr", \
+    "BattleAudienceItemGetPtr", \
+    "BattleAudienceWinGetPtr", \
+    "BattleAudienceSoundGetPtr", \
+    "BattleAudience_Init", \
+    "BattleAudience_Main", \
+    "BattleAudience_ActInit", \
+    "BattleAudience_PerAct", \
+    "BattleAudience_CheckReaction", \
+    "BattleAudience_PerPhase", \
+    "BattleAudience_CheckReactionPerPhase", \
+    "BattleAudience_Disp", \
+    "BattleAudience_End", \
+    "BattleAudienceItemOn", \
+    "BattleAudienceDetectTargetAll", \
+    "BattleAudience_Entry", \
+    "BattleAudience_Delete", \
+    "BattleAudience_SetAnim", \
+    "BattleAudience_GetAnimEnd", \
+    "BattleAudience_GetPosition", \
+    "BattleAudience_GetHomePosition", \
+    "BattleAudience_GetRotate", \
+    "BattleAudience_SetPosition", \
+    "BattleAudience_SetRotate", \
+    "BattleAudience_SetRotateOffset", \
+    "BattleAudience_GetItemOn", \
+    "BattleAudience_GetItemOn2", \
+    "BattleAudience_SetTarget", \
+    "BattleAudience_Attack", \
+    "BattleAudience_GetFront", \
+    "BattleAudience_ChangeStatus", \
+    "BattleAudience_GetSysCtrl", \
+    "BattleAudience_GetWaiting", \
+    "BattleAudience_GetEscapeChangeOK", \
+    "BattleAudience_GetAudienceNoFromOffset", \
+    "BattleAudience_HaitiRandForFallObject", \
+    "BattleAudience_GetAudienceNum", \
+    "BattleAudience_WinSetActive", \
+    "BattleAudienceNumToTarget", \
+    "BattleAudienceAddTargetNum", \
+    "BattleAudienceAddAudienceNum", \
+    "BattleAudiencePuniAllEscape", \
+    "BattleAudienceJoySACLecture", \
+    "BattleAudienceJoyEnding", \
+    "BattleAudienceDetectPakkunEatTarget", \
+    "BattleAudienceSoundBooing", \
+    "BattleAudienceSoundBooingKind", \
+    "BattleAudienceSoundClap", \
+    "BattleAudienceSoundCheer", \
+    "BattleAudienceSoundCheerKind", \
+    "BattleAudienceSoundWhistle", \
+    "BattleAudienceSoundWhistleKind", \
+    "BattleAudienceSoundCallKind", \
+    "BattleAudienceSoundHandBeat", \
+    "BattleAudienceSoundItemThrow", \
+    "BattleAudienceSoundRun", \
+    "BattleAudienceSoundSleep", \
+    "BattleAudienceSoundZZZ", \
+    "BattleAudienceSoundSing", \
+    "BattleAudienceSoundShell", \
+    "BattleAudienceSoundBombIgnite", \
+    "BattleAudienceSoundBombFire", \
+    "BattleAudienceSoundPakkunEat", \
+    "BattleAudienceSoundSetVol", \
+    "BattleAudienceSoundSetVolAll", \
+    "BattleAudienceSoundCheck", \
+    "BattleAudienceSoundStop", \
+    "BattleAudience_Case_KillEnemy", \
+    "BattleAudience_Case_ActionCommandGood", \
+    "BattleAudience_Case_ActionCommandBad", \
+    "BattleAudience_Case_GuardGood", \
+    "BattleAudience_Case_GuardBad", \
+    "BattleAudience_Case_AcrobatGood", \
+    "BattleAudience_Case_AcrobatBad", \
+    "BattleAudience_Case_AcrobatNoTry", \
+    "BattleAudience_Case_MarioBigDamage", \
+    "BattleAudience_Case_MarioPinch", \
+    "BattleAudience_Case_MarioDanger", \
+    "BattleAudience_Case_PartyDown", \
+    "BattleAudience_Case_JumpNewRecord", \
+    "BattleAudience_Case_FinalAttack", \
+    "BattleAudience_Case_TurnEnd", \
+    "BattleAudience_Case_Appeal", \
+    "BattleAudience_Case_Escape", \
+    "BattleAudience_Case_Escape_Good", \
+    "BattleAudience_Case_Escape_Bad", \
+    "BattleAudience_Case_EnemyDamage", \
+    "BattleAudience_Case_EnemyNoDamage", \
+    "BattleAudience_Case_Countered", \
+    "BattleAudience_Case_HaikeiSet", \
+    "BattleAudience_Case_GreatVictory", \
+    "BattleAudience_Case_FastVictory", \
+    "BattleAudience_Case_FallObject_Stage", \
+    "BattleAudience_Case_FallObject_Aud", \
+    "BattleAudience_Case_FirstAttack_Good", \
+    "BattleAudience_Case_FirstAttack_Bad", \
+    "BattleAudience_SetPresentItemNo", \
+    "BattleAudience_GetPresentItemNo", \
+    "BattleAudience_SetPresentTargetUnitId", \
+    "BattleAudience_GetPresentTargetUnitId", \
+    "BattleAudience_SetPresentItemType", \
+    "BattleAudience_GetPresentItemType", \
+    "BattleAudienceCtrlProcessKinopio", \
+    "BattleBreakSlotGetPtr", \
+    "BattleBreakSlot_Init", \
+    "BattleBreakSlot_Main", \
+    "BattleBreakSlot_Disp", \
+    "BattleBreakSlot_End", \
+    "BattleBreakSlot_PointInc", \
+    "BattleBreakSlot_CheckReaction", \
+    "BattleBreakSlot_GetBreakTurn", \
+    "BattleBreakSlot_DecBreakTurn", \
+    "BattleBreakSlot_HideReel", \
+    "battleCameraInit", \
+    "battleCameraMain", \
+    "battleCameraGetPosMoveSpeed", \
+    "btl_camera_set_mode", \
+    "btl_camera_set_moveSpeedLv", \
+    "btl_camera_set_moveto", \
+    "btl_camera_shake_w", \
+    "btl_camera_shake_h", \
+    "btl_camera_noshake", \
+    "btl_camera_set_posoffset", \
+    "BattleAttackDeclare", \
+    "BattleAttackDeclareAll", \
+    "BattleInitCounterPreCheckWork", \
+    "BattleCheckCounter", \
+    "BattleSamplingEnemy", \
+    "BattleSamplingEnemyUpdate", \
+    "BattleChoiceSamplingEnemy", \
+    "BattleGetFirstAttackUnit", \
+    "btlDispGXInit2DRasta", \
+    "btlDispGXInit2D", \
+    "btlDispGXPoint2DRasta", \
+    "btlDispGXQuads2DRasta", \
+    "btlDispGXQuads2D", \
+    "btlDispTexPlane", \
+    "btlDispTexPlane2", \
+    "btlDispTexPlane3", \
+    "btlDispInit", \
+    "_GetStatusPoseType", \
+    "btlDispMain", \
+    "btlUnitPartsDisp", \
+    "btlDispEntAnime", \
+    "btlDispChangeAnime", \
+    "btlDispChangePeraAnime", \
+    "btlDispPoseAnime", \
+    "btlGetScreenPoint", \
+    "btlDispTex4", \
+    "BattleEnemyUseItemCheck", \
+    "BattleIconInit", \
+    "BattleIconMain", \
+    "BattleIconEnd", \
+    "BtlIcon_Entry", \
+    "BtlIcon_Delete", \
+    "BattleInformationSetMode", \
+    "BattleInformationSetParty", \
+    "BattleInformationSetFirstAttack", \
+    "BattleInformationInit", \
+    "BattleInfomationSetBattleSetupInfo", \
+    "BattleInformationSetResult", \
+    "BattleInformationGetResult", \
+    "BattleInformationSetDropMaterial", \
+    "SelectedItemCoordinateColorUpDate", \
+    "BattleMenuKeyOKInACT", \
+    "battleMenuDispInit", \
+    "battleMenuDispEnd", \
+    "BattleMenuDisp_ActSelect_Init", \
+    "BattleMenuDisp_ActSelect_Main", \
+    "BattleMenuDisp_ActSelect_Disp", \
+    "BattleMenuDisp_ActSelect_End", \
+    "BattleMenuDisp_WeaponSelect_Init", \
+    "BattleMenuDisp_WeaponSelect_Main", \
+    "BattleMenuDisp_WeaponSelect_Disp", \
+    "BattleMenuDisp_WeaponSelect_End", \
+    "BattleMenuDisp_Operation_Init", \
+    "BattleMenuDisp_Operation_Main", \
+    "BattleMenuDisp_Operation_Disp", \
+    "BattleMenuDisp_Operation_End", \
+    "BattleMenuDisp_ChangePartySelect_Init", \
+    "BattleMenuDisp_ChangePartySelect_Main", \
+    "BattleMenuDisp_ChangePartySelect_Disp", \
+    "BattleMenuDisp_ChangePartySelect_End", \
+    "BattleMenuDisp_MultiItem_Init", \
+    "BattleMenuDisp_MultiItem_Main", \
+    "BattleMenuDisp_MultiItem_Disp", \
+    "BattleMenuDisp_MultiItem_End", \
+    "battleGetUnitMonosiriPtr", \
+    "battleCheckUnitMonosiriFlag", \
+    "battleSetUnitMonosiriFlag", \
+    "BattlePadInit", \
+    "BtlPad_WorkInit", \
+    "BtlPad_WorkUpdate", \
+    "BattlePadGetTrigger", \
+    "BattlePadGetNow", \
+    "BattlePadCheckTrigger", \
+    "BattlePadMultiCheckTrigger", \
+    "BattlePadCheckRecordTrigger", \
+    "BattlePadMultiCheckRecordTrigger", \
+    "BattlePadCheckNow", \
+    "BattlePadMultiCheckNow", \
+    "BattlePadCheckUp", \
+    "BattlePadMultiCheckUp", \
+    "BattlePadCheckRepeat", \
+    "BattlePadMultiCheckRepeat", \
+    "BattleSequenceManager", \
+    "battleSortPhaseMoveTable", \
+    "BattleWaitAllActiveEvtEnd", \
+    "BattleWaitAllActiveEvtEnd_NoBgSetEndWait", \
+    "BattleCommandInit", \
+    "BattleCommandInput", \
+    "BattleCommandDisplay", \
+    "BattleCommandCheckChangePositionEnable", \
+    "BattleGetSelectWeapon", \
+    "BattleSetConfuseAct", \
+    "BattleGetRankNameLabel", \
+    "btlseqEnd", \
+    "BattleStageGetPtr", \
+    "BattleStageInit", \
+    "BattleStageMain", \
+    "BattleStageEnd", \
+    "BattleStageDisp", \
+    "BattleStageOnLightInCommand", \
+    "BattleStageOffLightInCommand", \
+    "BattleStageOnLightFriendInCommand", \
+    "BattleStageOffLightFriendInCommand", \
+    "BattleStageOnLightEnemyInCommand", \
+    "BattleStageOffLightEnemyInCommand", \
+    "BattleStageGetLightNumberByName", \
+    "BattleStageSysLightEntry", \
+    "BattleStageLightRelease", \
+    "BattleStageLightSetLightColor", \
+    "BattleStageLightSetWidth", \
+    "BattleStageLightSetPosition", \
+    "BattleStageLightSetTarget", \
+    "BattleStageLightSetTargetByUnit", \
+    "BattleStageLightSetUpVec", \
+    "BattleStageSetStgDark", \
+    "BattleStageSetStgDarkBase", \
+    "BattleStageReturnStgDarkBase", \
+    "BattleStageSetAudDark", \
+    "BattleStageSetAudDarkBase", \
+    "BattleStageReturnAudDarkBase", \
+    "BatSpotGetPtr", \
+    "BattleGetObjectPtr", \
+    "BattleSearchObjectPtr", \
+    "BattleStageObjectInit", \
+    "BattleStageObjectMain", \
+    "BattleStage_DestroyA1", \
+    "BattleStage_DestroyA2", \
+    "BattleStage_DestroyB", \
+    "BattleStage_NozzleDirChangeCheck", \
+    "BattleStage_WallCloseCheck", \
+    "BattleStage_IronFrameFallCheck", \
+    "BattleStage_NozzleWorkCheck", \
+    "BattleFogEndCheck", \
+    "BattleFogForceStop", \
+    "BattleStage_ObjectFallCheck", \
+    "BattleStatusEffectInit", \
+    "BattleStatusEffectMain", \
+    "BattleStatusEffectDelete", \
+    "BSE_TurnFirstProcessEffectEntry", \
+    "BSE_TurnFirstProcessEffectMain", \
+    "BattleStatusChangeInfoWorkInit", \
+    "BattleStatusChangeInfoSetAnnouce", \
+    "BattleStatusChangeAnnouceMain", \
+    "BattleStatusChangeMsgWorkInit", \
+    "BattleStatusChangeMsgSetAnnouce", \
+    "BattleStatusChangeMsgAdjust", \
+    "BattleStatusChangeMsgMain", \
+    "BattleStatusIconInit", \
+    "BattleStatusIconMain", \
+    "BattleStatusIconDelete", \
+    "cosfd", \
+    "atan2f_safety", \
+    "btlMovePos", \
+    "intpl_sub", \
+    "BtlCompForwardLv", \
+    "BattleTransID", \
+    "btlsubResetMoveColorLvAll", \
+    "BtlUnit_Init", \
+    "BtlUnit_Delete", \
+    "BtlUnit_Spawn", \
+    "BtlUnit_GetUnitId", \
+    "BtlUnit_GetPartsPtr", \
+    "BtlUnit_GetBodyPartsId", \
+    "BtlUnit_SetPos", \
+    "BtlUnit_AddPos", \
+    "BtlUnit_GetPartsPos", \
+    "BtlUnit_SetPartsPos", \
+    "BtlUnit_AddPartsPos", \
+    "BtlUnit_GetHitPos", \
+    "BtlUnit_SetHitOffset", \
+    "BtlUnit_SetHitCursorOffset", \
+    "BtlUnit_GetHomePos", \
+    "BtlUnit_SetHomePos", \
+    "BtlUnit_AddHomePos", \
+    "BtlUnit_SetPartsHomePos", \
+    "BtlUnit_SetRotate", \
+    "BtlUnit_GetRotate", \
+    "BtlUnit_AddRotate", \
+    "BtlUnit_SetPartsRotate", \
+    "BtlUnit_GetPartsRotate", \
+    "BtlUnit_AddPartsRotate", \
+    "BtlUnit_SetBaseRotate", \
+    "BtlUnit_GetBaseRotate", \
+    "BtlUnit_SetPartsBaseRotate", \
+    "BtlUnit_GetPartsBaseRotate", \
+    "BtlUnit_SetRotateOffset", \
+    "BtlUnit_SetPartsRotateOffset", \
+    "BtlUnit_AddPartsRotateOffset", \
+    "BtlUnit_SetBaseScale", \
+    "BtlUnit_GetScale", \
+    "BtlUnit_SetScale", \
+    "BtlUnit_AddScale", \
+    "BtlUnit_SetPartsBaseScale", \
+    "BtlUnit_SetPartsScale", \
+    "BtlUnit_AddPartsScale", \
+    "BtlUnit_GetWidth", \
+    "BtlUnit_GetHeight", \
+    "BtlUnit_SetHeight", \
+    "BtlUnit_SetOffsetPos", \
+    "BtlUnit_SetPartsOffsetPos", \
+    "BtlUnit_AddPartsOffsetPos", \
+    "BtlUnit_SetDispOffset", \
+    "BtlUnit_SetPartsDispOffset", \
+    "BtlUnit_AddPartsDispOffset", \
+    "BtlUnit_SetMoveStartPos", \
+    "BtlUnit_SetPartsMoveStartPos", \
+    "BtlUnit_SetMoveCurrentPos", \
+    "BtlUnit_SetPartsMoveCurrentPos", \
+    "BtlUnit_SetMoveTargetPos", \
+    "BtlUnit_SetPartsMoveTargetPos", \
+    "BtlUnit_SetFallAccel", \
+    "BtlUnit_SetPartsFallAccel", \
+    "BtlUnit_SetMoveSpeed", \
+    "BtlUnit_SetPartsMoveSpeed", \
+    "BtlUnit_SetJumpSpeed", \
+    "BtlUnit_GetBelong", \
+    "BtlUnit_SetStatus", \
+    "BtlUnit_ClearStatus", \
+    "BtlUnit_CheckRecoveryStatus", \
+    "BtlUnit_CheckStatusFlag", \
+    "BtlUnit_OnStatusFlag", \
+    "BtlUnit_OffStatusFlag", \
+    "BtlUnit_CheckUnitFlag", \
+    "BtlUnit_OnUnitFlag", \
+    "BtlUnit_OffUnitFlag", \
+    "BtlUnit_GetPoseNameFromType", \
+    "BtlUnit_SetAnimType", \
+    "BtlUnit_SetAnim", \
+    "BtlUnit_SetBodyAnimType", \
+    "BtlUnit_SetBodyAnim", \
+    "BtlUnit_ChangeTalkAnim", \
+    "BtlUnit_ChangeStayAnim", \
+    "BtlUnit_GetTalkTogePos", \
+    "BtlUnit_GetEnemyBelong", \
+    "BtlUnit_GetHitDamage", \
+    "BtlUnit_GetTotalHitDamage", \
+    "BtlUnit_SetTotalHitDamage", \
+    "BtlUnit_GetACPossibility", \
+    "BtlUnit_GetData", \
+    "BtlUnit_CheckData", \
+    "BtlUnit_CanGuardStatus", \
+    "BtlUnit_CanActStatus", \
+    "BtlUnit_SetParamFromPouch", \
+    "BtlUnit_ReviseHpFp", \
+    "BtlUnit_SetParamToPouch", \
+    "BtlUnit_CheckPinchStatus", \
+    "BtlUnit_GetExp", \
+    "BtlUnit_GetFp", \
+    "BtlUnit_SetFp", \
+    "BtlUnit_RecoverHp", \
+    "BtlUnit_RecoverFp", \
+    "BtlUnit_GetMaxFp", \
+    "BtlUnit_SetMaxFp", \
+    "BtlUnit_CheckWeaponCost", \
+    "BtlUnit_PayWeaponCost", \
+    "BtlUnit_GetGuardKouraPtr", \
+    "BtlUnit_ResetMoveStatus", \
+    "BtlUnit_LoadSeMode", \
+    "BtlUnit_SetSeMode", \
+    "BtlUnit_SetCommandAnimPose", \
+    "BtlUnit_PoseSoundInit", \
+    "BtlUnit_ControlPoseSoundMain", \
+    "BtlUnit_snd_se", \
+    "BtlUnit_snd_se_pos", \
+    "BtlUnit_HpGaugeMain", \
+    "BtlUnit_EnemyItemCanUseCheck", \
+    "BtlUnit_CheckShadowGuard", \
+    "BattleCheckEndUnitInitEvent", \
+    "BattleRunHitEventDirect", \
+    "BattleRunHitEvent", \
+    "BattleRunPhaseEvent", \
+    "BattlePhaseEventStartDeclare", \
+    "BattleRunWaitEvent", \
+    "weaponGetPowerDefault", \
+    "weaponGetFPPowerDefault", \
+    "weaponGetPowerFromMarioJumpLv", \
+    "weaponGetPowerFromMarioHammerLv", \
+    "weaponGetPowerOverlapJump1", \
+    "weaponGetPowerOverlapHammer1", \
+    "weaponGetPowerFromPartyAttackLv", \
+    "weaponGetPowerFromGulliblePartyAttackLv", \
+    "weaponGetACOutputParam", \
+    "weaponGetPowerHPHalf", \
+    "weaponGetPowerHPHalf2", \
+    "weaponGetFPPowerFPHalf", \
+    "weaponGetPowerTatsumaki", \
+    "weaponGetPower_Deka", \
+    "weaponGetPower_Scissor", \
+    "weaponGetPower_ZubaStar", \
+    "countDownInit", \
+    "countDownSaveReStart", \
+    "countDownStart", \
+    "countDownSetRestartTime", \
+    "countDownMain", \
+    "countDownGetStatus", \
+    "countDownEnd", \
+    "countDownStop", \
+    "countDownFlagOn", \
+    "countDownFlagOff", \
+    "mailGetPtr", \
+    "areaDataPtr", \
+    "relSetBtlAddr", \
+    "bgInit", \
+    "bgReInit", \
+    "bgEntry", \
+    "bgReEntry", \
+    "bgSetColor", \
+    "bgDispOn", \
+    "bgDispOff", \
+    "bgSetScrlOffset", \
+    "bgAutoScrollOff", \
+    "bgAutoScrollOn", \
+    "bgTransOffsetOff", \
+    "bgTransOffsetOn", \
+    "bgMain", \
+    "caseInit", \
+    "caseReInit", \
+    "caseEntry", \
+    "caseDelete", \
+    "caseMain", \
+    "caseCheckHitObj", \
+    "caseCheckHitObj2", \
+    "caseIdToPtr", \
+    "envInit", \
+    "envReInit", \
+    "envTexSetup", \
+    "envMain", \
+    "envBlurOn", \
+    "envBlurOff", \
+    "envGlareFilter", \
+    "envGlareFilterZ", \
+    "envAddTev", \
+    "envSetWater", \
+    "envSetYamiView", \
+    "envSetYami", \
+    "fadeInit", \
+    "fadeTexSetup", \
+    "fadeEntry", \
+    "fadeTecOn", \
+    "fadeTecOff", \
+    "fadeTecSoftOn", \
+    "fadeTecSoftOff", \
+    "fadeSoftFocusOn", \
+    "fadeSoftFocusOff", \
+    "fadeWhiteOutOn", \
+    "fadeWhiteOutOff", \
+    "fadeSetSpotPos", \
+    "fadeSetAnimOfsPos", \
+    "fadeSetAnimVirtualPos", \
+    "fadeSetOffscreenCallback", \
+    "fadeMain", \
+    "fadeIsFinish", \
+    "fadeReset", \
+    "fadeGetTpl", \
+    "fadeSetNarrowFast", \
+    "itemInit", \
+    "itemReInit", \
+    "N_itemPickUpFromFieldCheck", \
+    "itemMain", \
+    "itemModeChange", \
+    "itemDelete", \
+    "itemNameToPtr", \
+    "itemHitCheck", \
+    "itemNearDistCheck", \
+    "itemSetPosition", \
+    "itemForceGet", \
+    "itemNokoForceGet", \
+    "itemFlagOn", \
+    "itemFlagOff", \
+    "itemFlag", \
+    "itemStatusOn", \
+    "itemStatus", \
+    "itemPickUp", \
+    "mobjKoopaOn", \
+    "mobjInit", \
+    "mobjReset", \
+    "mobjHitEntry", \
+    "mobjEntry", \
+    "mobjDelete", \
+    "mobjSetPosition", \
+    "mobjMain", \
+    "mobjNameToPtrNoAssert", \
+    "mobjRunEvent", \
+    "mobjCalcMtx", \
+    "mobjCalcMtx2", \
+    "mobjGetHint", \
+    "mobjCheckExec", \
+    "mobjCheckItemboxOpen", \
+    "mobjNearDistCheck2", \
+    "msgInit", \
+    "msgLoad", \
+    "msgAnalize", \
+    "L_msgGetWork", \
+    "msgGetCommand", \
+    "msgIconStr2ID", \
+    "msgWindow_Entry", \
+    "msgWindow_Add", \
+    "msgWindow_Continue", \
+    "msgWindow_Repeat", \
+    "msgWindow_ForceClose", \
+    "npcGetWorkPtr", \
+    "npcReleaseFiledNpc", \
+    "npcRecoveryFiledNpc", \
+    "npcInit", \
+    "npcReset", \
+    "npcGetReactionOfLivingBody", \
+    "npcEntry", \
+    "npcGetTribe", \
+    "npcDelete", \
+    "npcDeleteGroup", \
+    "npcMain", \
+    "npcNameToPtr_NoAssert", \
+    "npcSetMarioAutoTalkPose", \
+    "npcSetTalkPose", \
+    "npcSetStayPose", \
+    "npcTuningRy", \
+    "npcTransRytoFaceDir", \
+    "npcNearDistCheck", \
+    "fbatGetPointer", \
+    "fbatChangeMode", \
+    "fbatSetAttackAnnounce", \
+    "fbatSetAttackAnnounceEnable", \
+    "npcGroupDead", \
+    "fbatNpcTalkCheck", \
+    "fbatHitCheckAll", \
+    "npcCheckInterrupt", \
+    "npcSetBattleInfo", \
+    "npcStopForEvent", \
+    "npcStopForOneEvent", \
+    "npcStartForEvent", \
+    "npcStartForOneEvent", \
+    "npcSetColor", \
+    "npcBlurOn", \
+    "npcBlurOff", \
+    "npcGetBtlSetupWork", \
+    "npcSetBtlSetupWork", \
+    "npcSetSlave", \
+    "npcSetLink", \
+    "dbGetDefData", \
+    "npcExecAllInitEvt", \
+    "npcWaitAllInitEvtEnd", \
+    "npcExecAllReglEvt", \
+    "npcGetBackItemEntry", \
+    "npcClearDeadInfo", \
+    "npcKoopaModeMobjBoundDeadCheck", \
+    "fbatSandersBombTriggerOn", \
+    "npcCalcScore", \
+    "npcCheckBlow", \
+    "N_fbatPreventMarioEventChk", \
+    "seqInit_MARIOSTORY", \
+    "seqMain", \
+    "seqGetPrevSeq", \
+    "seqGetNextSeq", \
+    "seqCheckSeq", \
+    "swInit", \
+    "swReInit", \
+    "swGet", \
+    "swClear", \
+    "swByteGet", \
+    "_swSet", \
+    "_swGet", \
+    "_swClear", \
+    "_swByteSet", \
+    "_swByteGet", \
+    "windowInit", \
+    "windowTexSetup", \
+    "windowReInit", \
+    "windowEntry", \
+    "windowDelete", \
+    "windowDeleteID", \
+    "windowMain", \
+    "windowDispGX_Kanban", \
+    "windowDispGX_System", \
+    "windowDispGX_Message", \
+    "windowDispGX_Waku_col", \
+    "windowDispGX2_Waku_col", \
+    "windowCheckID", \
+    "windowGetPointer", \
+    "getWakuTexObj", \
+    "stg0_00_init", \
+    "N_stg9_02_init", \
+    "eventStgDtPtr", \
+    "eventStgNum", \
+    "getBadgeBottakuru100TableMaxCount", \
+    "getBadgeStarmaniacTableMaxCount", \
+    "getBadgeBteresaTableMaxCount", \
+    "badgeShop_init", \
+    "badgeShop_bottakuruGeneration", \
+    "badgeShop_bteresaGeneration", \
+    "badgeShop_bargainGeneration", \
+    "badgeShop_set", \
+    "badgeShop_get", \
+    "badgeShop_add", \
+    "badgeShop_ThrowCheck", \
+    "U_badgeShop_SpecialCheck", \
+    "bero_get_BeroEXEC", \
+    "bero_get_BeroNUM", \
+    "bero_get_BeroSX", \
+    "bero_get_BeroSY", \
+    "bero_get_BeroSZ", \
+    "bero_get_BeroEX", \
+    "bero_get_BeroEY", \
+    "bero_get_BeroEZ", \
+    "bero_get_ptr", \
+    "bero_clear_Offset", \
+    "bero_id_filter", \
+    "evtRunCaseEntry", \
+    "door_position_sub", \
+    "johoya_init", \
+    "johoya_set", \
+    "johoya_get", \
+    "search_evt_no", \
+    "search_evt_moji", \
+    "lotteryGetPtr", \
+    "evt_msg_init", \
+    "nanNPCOption", \
+    "nannpc_ext_main_sub", \
+    "nannpc_ext_main_sub_fast", \
+    "evt_nannpc_set_animtbl_sub", \
+    "evtNpcNameToPtr", \
+    "evtNpcNameToPtr_NoAssert", \
+    "evtShopIsActive", \
+    "uranaisi_ryokin_rtn", \
+    "yuugijou_init", \
+    "monteCountDisp", \
+    "evtYuuSetWindowEvt", \
+    "evtYuuWindow", \
+    "evtYuuWindowEndChk", \
+    "getKoopaFireEfp", \
+    "kpaNoHitEnemyCheck", \
+    "kpaMutekiCheck", \
+    "kpaMutekiOn", \
+    "kpaMutekiOff", \
+    "kpaMSetMutekiTimer", \
+    "kpaChgPose", \
+    "kpaGetLevel", \
+    "kpaSetLevel", \
+    "kpaGetWidth", \
+    "kpaGetBodyStatus", \
+    "kpaGetStageType", \
+    "kpaGetStageViewType", \
+    "kpaCamFollow", \
+    "kpaPreInit", \
+    "kpaSetJumpPara", \
+    "kpaSetFallPara", \
+    "kpa_jumpNpc", \
+    "kpaFireAttackCheck", \
+    "kpaAttackStart", \
+    "kpaAttackStart2", \
+    "kpaCancelAttackMode", \
+    "kpaGetAttackMode", \
+    "kpaFireDelete", \
+    "kpaGetBaseScale", \
+    "kpaHipAttackCheck", \
+    "kpaPauseSE2", \
+    "kpaEnemyHitChk", \
+    "kpaSearchGround", \
+    "kpaSearchHead", \
+    "kpaSearchFrontUnder", \
+    "kpaGetHitobjHead", \
+    "kpaGetHitobjHead2", \
+    "kpaGetHitobjRide", \
+    "kpaChkHitobjRide", \
+    "kpaClearHitobjRide", \
+    "kpaGetHitobj", \
+    "kpaGetHitFlame", \
+    "kpaHitCheck", \
+    "kpaFlameHitCheck", \
+    "kpaAddCoin", \
+    "kpaAddCoinPos", \
+    "kpaAddScore", \
+    "kpaAddScorePos", \
+    "cardGetFilePtr", \
+    "cardBufReset", \
+    "cardInit", \
+    "cardInsertWatchStart", \
+    "cardInsertWatchEnd", \
+    "cardInsertChanged", \
+    "cardIsExec", \
+    "cardGetCode", \
+    "cardMain", \
+    "cardCopy2Main", \
+    "cardErase", \
+    "cardCopy", \
+    "cardWrite", \
+    "cardWriteHeader", \
+    "cardReadAll", \
+    "cardCreate", \
+    "cardFormat", \
+    "winMgrInit", \
+    "winMgrReInit", \
+    "winMgrMain", \
+    "winMgrEntry", \
+    "winMgrSetParam", \
+    "winMgrOpen", \
+    "winMgrClose", \
+    "winMgrCloseAutoDelete", \
+    "winMgrDelete", \
+    "winMgrAction", \
+    "winMgrSetSize", \
+    "winMgrSetPriority", \
+    "winMgrGetPtr", \
+    "winMgrHelpInit", \
+    "winMgrHelpMain", \
+    "winMgrHelpDraw", \
+    "winMgrSelectEntry", \
+    "winMgrSelect", \
+    "winMgrSelectOther", \
+    "winMgrSelectDelete", \
+    "winMgrSelectGetCursor", \
+    "marioGetColor", \
+    "marioSetCharMode", \
+    "marioSetFamicomMode", \
+    "marioSetSpec", \
+    "marioItemGetDisable", \
+    "marioItemGetChk", \
+    "marioItemGetOk", \
+    "marioCaseEventValidChk", \
+    "marioFrontActionValidChk", \
+    "marioCheckMenuDisable", \
+    "marioChkKey", \
+    "marioChkCtrl", \
+    "N_marioChkUseParty", \
+    "marioFBattlePrepare", \
+    "marioFBattlePost", \
+    "marioCtrlOffChk", \
+    "marioKeyOffChk", \
+    "marioCtrlOff", \
+    "marioCtrlOn", \
+    "marioCtrlOff2", \
+    "marioCtrlOn2", \
+    "marioKeyOff", \
+    "marioSetMutekiTime", \
+    "marioBgmodeChk", \
+    "marioBgmodeOn", \
+    "marioBgmodeOff", \
+    "marioChkSts", \
+    "marioResetHitObj", \
+    "marioReset", \
+    "marioOfsRotReset", \
+    "marioSoundInit", \
+    "marioPoseInit", \
+    "marioInit", \
+    "marioReInit", \
+    "marioMain", \
+    "marioMove", \
+    "marioChkPushAnime", \
+    "marioAnimeId", \
+    "marioChgDamagePose", \
+    "marioChgEvtPose", \
+    "toDotMarioPose", \
+    "marioChgPose", \
+    "marioChgPoseTime", \
+    "marioChgPaper", \
+    "marioSetPaperAnimeLocalTime", \
+    "marioPaperOn", \
+    "marioPaperOff", \
+    "marioPaperLightOn", \
+    "marioPaperLightOff", \
+    "marioGetScreenPos", \
+    "marioChkInScreen", \
+    "marioGetScale", \
+    "marioPreDisp", \
+    "marioBaloonInit", \
+    "marioBalloonOn", \
+    "marioBalloonOff", \
+    "marioBalloonMain", \
+    "chkBalloon", \
+    "marioResetCamShift", \
+    "marioResetCamShiftRate", \
+    "marioInitCamId", \
+    "marioGetCamId", \
+    "marioSetCamId", \
+    "marioResetCamFollowRate", \
+    "marioSetCamFollowRate", \
+    "marioGetCamFollowRate", \
+    "marioPreCamera", \
+    "marioCamMain", \
+    "marioUpdateCamCollision", \
+    "marioUpdateCam", \
+    "marioUpdateCamPos", \
+    "marioNoUpdateCamPos", \
+    "camFollowYOn", \
+    "camFollowYOff", \
+    "marioCamZoomOffReq", \
+    "marioCamZoomOffReq2", \
+    "marioCamZoomOff", \
+    "marioCamZoomUp", \
+    "marioCamZoomUpLevelMain", \
+    "marioHitCheckVec", \
+    "marioHitCheck", \
+    "clear_hitobj_ride", \
+    "marioChkBero", \
+    "marioSearchUnder", \
+    "searchUnder2", \
+    "marioChkGnd", \
+    "marioChkGnd2", \
+    "marioSearchGround", \
+    "marioSearchGroundRoll", \
+    "marioChkToge", \
+    "marioChkLandon", \
+    "marioLandonChk_old", \
+    "marioChkLandon2", \
+    "marioChkOverhead", \
+    "marioChkOverheadJabara", \
+    "marioSearchHead", \
+    "marioSearchHead_roll", \
+    "marioSearchHead_jabara", \
+    "marioCheckWall", \
+    "marioSearchFrontWall_staying", \
+    "marioCheckWall_roll", \
+    "marioChkFront", \
+    "dou10_yoko_yari", \
+    "dou10_yoko_yari2", \
+    "N_dou10_yoko_yari3", \
+    "marioChkWallAround", \
+    "marioSlitChkWallAround", \
+    "marioCheckWallShip", \
+    "mario_kemuri", \
+    "mario_simple_kemuri", \
+    "mario_land_kemuri", \
+    "marioChgStayMotion", \
+    "marioChgTalkMotion", \
+    "marioChgGetItemMotion", \
+    "marioChgShipMotion", \
+    "marioChgRollMotion", \
+    "marioChgJumpStandMotion", \
+    "marioChgSmallJumpMotion", \
+    "marioChkItemGetMotion", \
+    "marioBoots", \
+    "marioMotion", \
+    "marioChgMot", \
+    "marioChgMotSub", \
+    "marioChgMot2", \
+    "marioClearJumpPara", \
+    "marioSetJumpPara", \
+    "marioSetFallPara", \
+    "marioGetFallSpd", \
+    "marioMakeJumpPara", \
+    "marioJump", \
+    "marioFall", \
+    "marioLandOn", \
+    "marioChkJump", \
+    "marioChkTransform", \
+    "marioChkItemMotion", \
+    "marioChkRub", \
+    "marioRollChgChk", \
+    "marioUseParty", \
+    "marioUsePartyMain", \
+    "marioPartyEntry", \
+    "marioPartyHello", \
+    "marioPartyGoodbye", \
+    "marioPartyKill", \
+    "marioGetParty", \
+    "marioGetExtraPartyId", \
+    "partyJoin", \
+    "partyLeft", \
+    "partyChkJoin", \
+    "partyGetHp", \
+    "partyGetTechLv", \
+    "pouchInit", \
+    "pouchKeyItem", \
+    "pouchHaveItem", \
+    "pouchKeepItem", \
+    "pouchHaveBadge", \
+    "pouchGetHaveItemCnt", \
+    "pouchGetKeepItemCnt", \
+    "pouchGetHaveBadgeCnt", \
+    "pouchGetEquipBadgeCnt", \
+    "pouchGetEmptyHaveItemCnt", \
+    "pouchGetEmptyKeepItemCnt", \
+    "pouchCheckItem", \
+    "pouchHiraToKata", \
+    "pouchSortItem", \
+    "pouchGetCoin", \
+    "pouchGetSuperCoin", \
+    "pouchSetSuperCoin", \
+    "pouchGetStarPiece", \
+    "pouchAddHP", \
+    "pouchGetHP", \
+    "pouchGetMaxHP", \
+    "pouchSetHP", \
+    "pouchSetMaxHP", \
+    "pouchGetPartyHP", \
+    "pouchSetPartyHP", \
+    "pouchGetFP", \
+    "pouchGetMaxFP", \
+    "pouchSetFP", \
+    "pouchSetMaxFP", \
+    "pouchGetAP", \
+    "pouchAddAP", \
+    "pouchSetAP", \
+    "pouchGetMaxAP", \
+    "pouchGetAudienceNum", \
+    "pouchSetAudienceNum", \
+    "pouchGetJumpLv", \
+    "pouchGetHammerLv", \
+    "pouchGetPartyAttackLv", \
+    "pouchAddKeepItem", \
+    "pouchRemoveKeepItem", \
+    "pouchRevisePartyParam", \
+    "pouchGetStarPoint", \
+    "pouchEquipBadgeIndex", \
+    "pouchUnEquipBadgeIndex", \
+    "pouchEquipCheckBadgeIndex", \
+    "pouchEquipBadgeID", \
+    "N_pouchUnEquipBadgeID", \
+    "pouchArriveBadge", \
+    "pouchMajinaiInit", \
+    "pouchGetKpaCoin", \
+    "pouchAddKpaCoin", \
+    "pouchGetKpaScore", \
+    "pouchAddKpaScore", \
+    "pouchGetStarStone", \
+    "pouchReceiveMailCount", \
+    "pouchReceiveMail", \
+    "pouchOpenMail", \
+    "pouchCheckMail", \
+    "pouchGetPartyColor", \
+    "pouchSetPartyColor", \
+    "pouchSetYoshiName", \
+    "pouchGetYoshiName", \
+    "marioBottomless", \
+    "N_marioSetBottomlessRespawnPosOnBeroEntry", \
+    "N_marioSetBottomlessRespawnPos", \
+    "N_marioReloadMapOnBottomlessOn", \
+    "N_marioReloadMapOnBottomlessOff", \
+    "marioGetMoveRate", \
+    "marioResetGravity", \
+    "marioGetTouchNpcPtr", \
+    "marioChkPlanePlace", \
+    "marioSetPeakYpos", \
+    "marioAdjustMoveDir", \
+    "revise360", \
+    "toMovedir", \
+    "partyToMovedir", \
+    "toMovedirSimple", \
+    "toMovedir2", \
+    "marioForceMoveMain", \
+    "marioSetForceMove", \
+    "N_marioGetMovementSpeed", \
+    "marioGetRubInit", \
+    "marioGetRub", \
+    "marioStInit", \
+    "marioStDisp", \
+    "marioStSystemLevel", \
+    "marioStGetSystemLevel", \
+    "marioDmgRetQuakeOn", \
+    "marioSetSplash", \
+    "marioChkDamageSink", \
+    "set_damage_root_ypos", \
+    "mot_damage", \
+    "mot_damageToge", \
+    "mot_dokan", \
+    "marioGetHammerLevel", \
+    "mot_hammer", \
+    "marioChkHammer2", \
+    "mot_hammer2", \
+    "marioGetAngleKaitenHammer", \
+    "mot_ham2_post", \
+    "marioChkHipAttack", \
+    "marioChkHipBump", \
+    "mot_hip", \
+    "mot_hip_post", \
+    "marioGetJabaraState", \
+    "marioPriCheckJabara", \
+    "marioChkJabara", \
+    "mot_jabara", \
+    "jabaraNoHitChk", \
+    "mot_jabara_post", \
+    "mot_grasp", \
+    "marioPreJump", \
+    "marioGetJumpHeight", \
+    "mot_jumpStand", \
+    "mot_jumpSw", \
+    "mot_jumpNpc", \
+    "mot_jump", \
+    "mot_jumpSmall", \
+    "mot_upstairs", \
+    "mot_fall", \
+    "mot_fall_post", \
+    "mot_land", \
+    "marioGetPlaneStatus", \
+    "mario_plane_cancel", \
+    "marioForcePlaneAnime", \
+    "mot_plane", \
+    "mot_plane_post", \
+    "marioRollFixOn", \
+    "marioRollCancelDisable", \
+    "marioRollKeyDisable", \
+    "setRollEvtFlag", \
+    "clrRollEvtFlag", \
+    "getRollEvtFlag", \
+    "marioResetRollSpd", \
+    "marioForceRollAnime", \
+    "marioRollTryCancel", \
+    "marioRollCancel", \
+    "mot_roll_post", \
+    "marioRollForceCancel", \
+    "marioSetRollDispDir", \
+    "rollEvtJumpSetup", \
+    "marioReInit_roll", \
+    "mot_roll", \
+    "roll_upstairs_on", \
+    "mot_fall_roll", \
+    "marioShipChanging", \
+    "marioSetSwirlPower", \
+    "marioChkSwirlPower", \
+    "marioShipForceStop", \
+    "marioShipSetDispDir", \
+    "marioChkShipPlace", \
+    "marioForceShipAnime", \
+    "marioReInit_ship", \
+    "mot_ship_post", \
+    "mot_ship", \
+    "marioShipChgFall", \
+    "marioChkShipMoveMode", \
+    "marioSlitReenter", \
+    "N_marioSlitSetAfterLand", \
+    "marioSlitAbilityChk", \
+    "marioSlitButton", \
+    "marioSlitKeyDisable", \
+    "U_marioSlitContinueChk", \
+    "marioCreviceWallChk", \
+    "marioClearSlitFloor", \
+    "marioGetSlitFloorPos", \
+    "marioChkSlitThrouh", \
+    "marioChkSlitThrouhEnd", \
+    "motSlitContinue", \
+    "marioChkSlitEnd", \
+    "motSlitCancel", \
+    "motSlitCancel2", \
+    "motSlitCancel3", \
+    "marioGetMotSlitCancel3", \
+    "marioSlitForceCancel", \
+    "mot_slit_post", \
+    "marioForceSlitAnime", \
+    "marioReInit_slit", \
+    "mot_slit", \
+    "marioVoiceGlareOn", \
+    "marioVoiceGlareOff", \
+    "marioChkDeepSleep", \
+    "mot_stay", \
+    "marioChgMotAuto", \
+    "mot_stay_post", \
+    "marioGetWalkSpd", \
+    "marioGetDashSpd", \
+    "mot_walk", \
+    "mot_dash", \
+    "mot_yoshi", \
+    "mot_yoshi_post", \
+    "nameEntInit", \
+    "nameEntReInit", \
+    "nameEntPrepare", \
+    "nameEntOn", \
+    "nameEntOff", \
+    "nameEntWait", \
+    "nameEntIsCancel", \
+    "nameEntGetName", \
+    "nameEntMain", \
+    "nameMaskGX", \
+    "anotherPartyGetPtr", \
+    "partyPaperOn", \
+    "partyPaperOff", \
+    "partyPaperLightOff", \
+    "partyChgPose", \
+    "partyChgPaper", \
+    "partyCtrlOff", \
+    "partyCtrlOn", \
+    "partyRun", \
+    "partyStop", \
+    "partySetForceMove", \
+    "partyEntryHello", \
+    "partyEntry", \
+    "partyEntryPos", \
+    "partyGoodbye", \
+    "partyKill", \
+    "partyKill2", \
+    "yoshiSetColor", \
+    "partyGetHeight", \
+    "partyEntry2", \
+    "partyEntry2Hello", \
+    "partyInit", \
+    "partyReInit", \
+    "partyUsePost", \
+    "partyChgRunMode", \
+    "partyPrevRunMode", \
+    "partyMain", \
+    "partyDoWork", \
+    "partyHello", \
+    "partyGoodbyeInit", \
+    "partyGoodbyeMain", \
+    "partyDokanEnd", \
+    "allPartyRidePlane", \
+    "allPartyRideShip", \
+    "allPartyForceRideOn", \
+    "allPartyRideOn", \
+    "allPartyRideOff", \
+    "allPartyRideOff2", \
+    "partyRideChk", \
+    "party_force_ride_yoshi", \
+    "party_ride_yoshi_force_move", \
+    "partyInitCamId", \
+    "partySetCamId", \
+    "partyKeyOn", \
+    "partyKeyOff", \
+    "L_partyClearCont", \
+    "partyUpdateKeyData", \
+    "partyShadowOff", \
+    "partySetFamicomMode", \
+    "bomhei_bye", \
+    "bomhei_init", \
+    "bomheiGetStatus", \
+    "bomhei_exit", \
+    "bomhei_use_cancel", \
+    "bomhei_use_cancel2", \
+    "bomhei_use_post", \
+    "bomhei_use", \
+    "mario_bomhei_keychk", \
+    "mario_bomhei_keychk2", \
+    "partyGetReturnPos", \
+    "chuchu_searchObject", \
+    "chuchu_init", \
+    "chuchu_exit", \
+    "chuchu_move", \
+    "chuchu_use", \
+    "cloudGetHitBreathout", \
+    "cloudGetBreathDist", \
+    "cloud_move", \
+    "cloud_init", \
+    "cloud_use", \
+    "cloud_exit", \
+    "cloudGetBreathPower", \
+    "cloudGetBreathDir", \
+    "cloudGetStatus", \
+    "cloudResetAt", \
+    "cloudGetAt", \
+    "partyHitCheck", \
+    "partyChkGnd", \
+    "_partySearchGround", \
+    "partyChkFrontStep", \
+    "partySearchWallFront", \
+    "partySearchFrontWall", \
+    "partySearchHead", \
+    "christineGetStatus", \
+    "kuribo_init", \
+    "kuribo_use_post", \
+    "kuribo_use", \
+    "kuribo_bye", \
+    "party_motion_homing_walk", \
+    "party_motion_jump", \
+    "party_motion_jump2", \
+    "party_motion_homing_fly", \
+    "party_motion_fall", \
+    "party_motion_upstairs", \
+    "party_set_behind_dir", \
+    "party_motion_behind_mario", \
+    "party_motion_behind_mario_continue", \
+    "party_motion_behind_mario_fly", \
+    "party_motion_beside_mario", \
+    "party_motion_stay", \
+    "party_motion_damage", \
+    "allPartySlitOn", \
+    "allPartySlitOff", \
+    "allPartyForceSlitOff", \
+    "N_partyFollowCloseOn", \
+    "N_partyFollowCloseOff", \
+    "party_motion_wait", \
+    "L_partyForceSlitOff", \
+    "partyGetFootmarkPtr", \
+    "partyGetFootmarkReadId", \
+    "partyGetFootmarkWriteId", \
+    "partyGetFootmarkId", \
+    "partyGetTargetDir", \
+    "partyGetTargetDist", \
+    "partyGetTargetDist3D", \
+    "partyGetTargetDistY", \
+    "partyGetTargetMovespd2", \
+    "partyNextReadId", \
+    "partyGetReadId", \
+    "partyGetReadId2", \
+    "partyClearFootmark", \
+    "partyClearFootmark2", \
+    "partyRecordFootmark", \
+    "L_getTargetPos", \
+    "partyGetTargetMovespd", \
+    "partyClearJumpPara", \
+    "partySetTargetSpd", \
+    "partyForceSetSpd", \
+    "partyUpdMoveSpd", \
+    "N_partyPlaySfxPartyLanding1", \
+    "partyChgStayPose", \
+    "partyMoveAnime", \
+    "partySetDispDirToMario", \
+    "partyChkNoStandMobj", \
+    "partyMove", \
+    "partyMoveNoHosei", \
+    "partyChgMoveMode", \
+    "partyChgMot", \
+    "partySetDir", \
+    "partyMoveBehindMario", \
+    "partyMoveBehindMario3", \
+    "partyMoveBesideMario", \
+    "partyMoveCheckWall", \
+    "partyGetMoveDirSpd", \
+    "partyMarioHosei", \
+    "partyChkWall", \
+    "partyWalkInit", \
+    "partyMoveWalk", \
+    "partyWalkMain", \
+    "party_move_mode_stay", \
+    "party_move_mode_walk", \
+    "party_move_mode_behind_mario", \
+    "party_move_mode_beside_mario", \
+    "partyMoveFlyInit", \
+    "partyFlyMain", \
+    "partyGetAppearPos", \
+    "partyGetAppearPos3", \
+    "partyGetAppearPos4", \
+    "partyGetAppearPos5", \
+    "nokonokoGetStatus", \
+    "nokonoko_holdItem", \
+    "nokonoko_bye", \
+    "nokonoko_init", \
+    "nokonoko_move", \
+    "nokonoko_use_cancel", \
+    "nokonoko_use_post", \
+    "nokonoko_use", \
+    "nokonoko_finish", \
+    "nokotaro_hold_cancel", \
+    "N_marioForceVivianAnime", \
+    "mot_vivian", \
+    "mot_vivian_post", \
+    "vivian_init", \
+    "vivianGetStatus", \
+    "vivianUnhold", \
+    "vivianShadow", \
+    "vivian_move", \
+    "vivian_use", \
+    "evt_set_yoshi_frm", \
+    "evt_set_yoshi_spd", \
+    "evt_get_yoshi_frm", \
+    "yoshiGetStatus", \
+    "marioRideYoshi", \
+    "marioGetoffYoshi", \
+    "marioYoshiForceCancel", \
+    "yoshi_bye", \
+    "yoshi_exit", \
+    "yoshi_jumpStand", \
+    "yoshi_init", \
+    "yoshi_use", \
+    "peachSetStsNormal", \
+    "peachSetStsAftershower", \
+    "peachSetStsInvisible", \
+    "peachSetStsHappy", \
+    "peachSetStsUneasy", \
+    "peachSetStsAngry", \
+    "peachSetStsOrdinary", \
+    "peachSetStsCarry", \
+    "peachTransformOn", \
+    "peachTransformOff", \
+    "peachPreInit", \
+    "peach_stay", \
+    "peach_walk", \
+    "peach_dash", \
+    "peach_talk", \
+    "searchPSSFXList", \
+    "psndInit", \
+    "psndMain", \
+    "psndMainInt", \
+    "psndExit", \
+    "psndPushGroup", \
+    "psndSetPosDirListener", \
+    "psndStopAllFadeOut", \
+    "psndSetReverb", \
+    "psndSetFlag", \
+    "psndClearFlag", \
+    "psndGetFlag", \
+    "psndMapChange", \
+    "psndSFXAllOff", \
+    "L_psndBGM_stop", \
+    "psndBGM_rate", \
+    "psndBGMOn", \
+    "psndBGMOn_f", \
+    "psndBGMOff", \
+    "psndBGMOff_f_d", \
+    "psndBGMChk", \
+    "psndBGMChkSilent", \
+    "psndBGMScope", \
+    "psndBGMStartCheck", \
+    "psndBGMPlayTime", \
+    "psndSFXOn_", \
+    "psndSFXOn", \
+    "psndSFXOnVol", \
+    "psndSFXOn_3D", \
+    "psndSFXOnEx_3D", \
+    "psndSFX_vol", \
+    "psndSFX_pit", \
+    "psndSFX_pos", \
+    "psndSFX_dist", \
+    "psndSFX_get_vol", \
+    "psndENVOn", \
+    "psndENVOff", \
+    "psndENVOff_f_d", \
+    "psndENV_LPF", \
+    "seq_battleInit", \
+    "seq_battleExit", \
+    "seq_battleMain", \
+    "seq_e3Init", \
+    "seq_e3Exit", \
+    "seq_e3Main", \
+    "seq_gameInit", \
+    "seq_gameMain", \
+    "seq_gameExit", \
+    "seq_gameOverInit", \
+    "seq_gameOverExit", \
+    "seq_gameOverMain", \
+    "seq_loadInit", \
+    "seq_loadExit", \
+    "seq_logoInit", \
+    "seq_logoExit", \
+    "seq_logoMain", \
+    "seq_mapChangeInit", \
+    "seq_mapChangeExit", \
+    "_unload", \
+    "_relUnLoad", \
+    "DbgBtlSel_GetMsgDataPtr", \
+    "seq_titleInit", \
+    "seq_titleExit", \
+    "seq_titleMain", \
+    "N_getDebugMode", \
+    "statusWinInit", \
+    "statusWinReInit", \
+    "statusWinMain", \
+    "statusWinOpen", \
+    "statusWinClose", \
+    "statusWinForceOpen", \
+    "statusWinForceClose", \
+    "statusWinForceCloseClear", \
+    "statusWinForceOff", \
+    "statusWinDispOn", \
+    "statusWinDispOff", \
+    "statusWinCheck", \
+    "statusWinCheckUpdate", \
+    "statusWinForceUpdate", \
+    "statusWinForceUpdateCoin", \
+    "statusGetApPos", \
+    "statusAPBlink", \
+    "N_statusClearBlink", \
+    "statusFPBlink", \
+    "statusMarioHPBlink", \
+    "statusPartyHPBlink", \
+    "faker_mario_makkuro_set", \
+    "winMakeEquipList", \
+    "winBadgeInit", \
+    "winBadgeInit2", \
+    "winBadgeExit", \
+    "winBadgeMain", \
+    "winBadgeMain2", \
+    "winBadgeDisp", \
+    "winMakeSkipList", \
+    "winItemInit", \
+    "winItemInit2", \
+    "winItemExit", \
+    "winItemMain2", \
+    "winItemDisp", \
+    "winLogInit", \
+    "winLogInit2", \
+    "winLogExit", \
+    "winLogMain2", \
+    "winLogDisp", \
+    "winGetMapTplName", \
+    "monosiriInit", \
+    "monosiriMain", \
+    "monosiriClose", \
+    "monosiriCloseWait", \
+    "monosiriExit", \
+    "winGetPtr", \
+    "winInit", \
+    "winReInit", \
+    "winCheck", \
+    "winOpenEnable", \
+    "winOpenDisable", \
+    "winMain", \
+    "winGhostDiaryChk", \
+    "winFontInit", \
+    "winFontSetLabel", \
+    "winTexInit", \
+    "winTexSet", \
+    "winTexSetNearest", \
+    "winTexSetRot", \
+    "winTexInit_x2", \
+    "winTexSet_x2", \
+    "winIconInit", \
+    "winIconGrayInit", \
+    "winIconSet", \
+    "winLectureOn", \
+    "winLectureCheck", \
+    "winMarioInit", \
+    "winMarioInit2", \
+    "winMarioExit", \
+    "winMarioMain", \
+    "winMarioMain2", \
+    "winZenkakuStr", \
+    "winZenkakuStrPad", \
+    "winPartyInit", \
+    "winPartyInit2", \
+    "winPartyExit", \
+    "winPartyMain", \
+    "winPartyMain2", \
+    "winPartyDisp", \
+    "winRootDisp", \
+    "winBgGX", \
+    "winMsgEntry", \
+    "winKirinukiGX", \
+    "winNameGX", \
+    "winBookGX", \
+    "winHalfBookGX", \
+    "winMailGX", \
+    "winHakoGX", \
+    "winWazaGX", \
+    "compare_func5_2", \
+    "compare_func6_2", \
+    "winSortEntry", \
+    "winSortWait", \
+    "winKageGX", \
+    "winZClear", \
 }
 
 /* src/mario/mariost.c */
@@ -415,5 +3550,6081 @@ typedef void (*TtydPost_relSetEvtAddr)(const char *, EvtWord *);
 typedef s32 (*TtydFn_SoundEfxPlayEx)(SND_FXID, u8, u8, u8);
 typedef int (*TtydPre_SoundEfxPlayEx)(s32 *, SND_FXID *, u8 *, u8 *, u8 *);
 typedef void (*TtydPost_SoundEfxPlayEx)(s32 *, SND_FXID, u8, u8, u8);
+/* src/battle/ac/ac_timing_a.c */
+typedef s32 (*TtydFn_battleAcTimingA_GetSuccessFrame)(BattleWork *);
+typedef int (*TtydPre_battleAcTimingA_GetSuccessFrame)(s32 *, BattleWork * *);
+typedef void (*TtydPost_battleAcTimingA_GetSuccessFrame)(s32 *, BattleWork *);
+/* src/battle/ac/ac_timing_a.c */
+typedef s32 (*TtydFn_battleAcMain_TimingA)(BattleWork *);
+typedef int (*TtydPre_battleAcMain_TimingA)(s32 *, BattleWork * *);
+typedef void (*TtydPost_battleAcMain_TimingA)(s32 *, BattleWork *);
+/* src/battle/battle.c */
+typedef void (*TtydFn_battleMain)(void);
+typedef int (*TtydPre_battleMain)(void);
+typedef void (*TtydPost_battleMain)(void);
+/* src/battle/battle.c */
+typedef BOOL (*TtydFn_battleSeqEndCheck)(void);
+typedef int (*TtydPre_battleSeqEndCheck)(BOOL *);
+typedef void (*TtydPost_battleSeqEndCheck)(BOOL *);
+/* src/battle/battle.c */
+typedef void (*TtydFn_BattleInit)(FieldBattleInfo *);
+typedef int (*TtydPre_BattleInit)(FieldBattleInfo * *);
+typedef void (*TtydPost_BattleInit)(FieldBattleInfo *);
+/* src/battle/battle.c */
+typedef void (*TtydFn_BattleEnd)(void);
+typedef int (*TtydPre_BattleEnd)(void);
+typedef void (*TtydPost_BattleEnd)(void);
+/* src/battle/battle.c */
+typedef void (*TtydFn_BattleSetMarioParamToFieldBattle)(BattleWork *);
+typedef int (*TtydPre_BattleSetMarioParamToFieldBattle)(BattleWork * *);
+typedef void (*TtydPost_BattleSetMarioParamToFieldBattle)(BattleWork *);
+/* src/battle/battle.c */
+typedef void (*TtydFn_BattleSetSeq)(BattleWork *, BattleSequence, u32);
+typedef int (*TtydPre_BattleSetSeq)(BattleWork * *, BattleSequence *, u32 *);
+typedef void (*TtydPost_BattleSetSeq)(BattleWork *, BattleSequence, u32);
+/* src/battle/battle.c */
+typedef s32 (*TtydFn_BattleGetSeq)(BattleWork *, BattleSequence);
+typedef int (*TtydPre_BattleGetSeq)(s32 *, BattleWork * *, BattleSequence *);
+typedef void (*TtydPost_BattleGetSeq)(s32 *, BattleWork *, BattleSequence);
+/* src/battle/battle.c */
+typedef void (*TtydFn_BattleIncSeq)(BattleWork *, BattleSequence);
+typedef int (*TtydPre_BattleIncSeq)(BattleWork * *, BattleSequence *);
+typedef void (*TtydPost_BattleIncSeq)(BattleWork *, BattleSequence);
+/* src/battle/battle.c */
+typedef void * (*TtydFn_BattleAlloc)(u32);
+typedef int (*TtydPre_BattleAlloc)(void * *, u32 *);
+typedef void (*TtydPost_BattleAlloc)(void * *, u32);
+/* src/battle/battle.c */
+typedef void (*TtydFn_BattleFree)(void *);
+typedef int (*TtydPre_BattleFree)(void * *);
+typedef void (*TtydPost_BattleFree)(void *);
+/* src/battle/battle.c */
+typedef void (*TtydFn_BattleSetUnitPtr)(BattleWork *, s32, BattleUnit *);
+typedef int (*TtydPre_BattleSetUnitPtr)(BattleWork * *, s32 *, BattleUnit * *);
+typedef void (*TtydPost_BattleSetUnitPtr)(BattleWork *, s32, BattleUnit *);
+/* src/battle/battle.c */
+typedef BattleUnitPart * (*TtydFn_BattleGetUnitPartsPtr)(s32, s32);
+typedef int (*TtydPre_BattleGetUnitPartsPtr)(BattleUnitPart * *, s32 *, s32 *);
+typedef void (*TtydPost_BattleGetUnitPartsPtr)(BattleUnitPart * *, s32, s32);
+/* src/battle/battle.c */
+typedef BattleUnit * (*TtydFn_BattleGetSystemPtr)(BattleWork *);
+typedef int (*TtydPre_BattleGetSystemPtr)(BattleUnit * *, BattleWork * *);
+typedef void (*TtydPost_BattleGetSystemPtr)(BattleUnit * *, BattleWork *);
+/* src/battle/battle.c */
+typedef BattleUnit * (*TtydFn_BattleGetMarioPtr)(BattleWork *);
+typedef int (*TtydPre_BattleGetMarioPtr)(BattleUnit * *, BattleWork * *);
+typedef void (*TtydPost_BattleGetMarioPtr)(BattleUnit * *, BattleWork *);
+/* src/battle/battle.c */
+typedef BattleUnit * (*TtydFn_BattleGetPartyPtr)(BattleWork *);
+typedef int (*TtydPre_BattleGetPartyPtr)(BattleUnit * *, BattleWork * *);
+typedef void (*TtydPost_BattleGetPartyPtr)(BattleUnit * *, BattleWork *);
+/* src/battle/battle.c */
+typedef BattleUnit * (*TtydFn_BattleGetPartnerPtr)(BattleWork *, BattleUnit *);
+typedef int (*TtydPre_BattleGetPartnerPtr)(BattleUnit * *, BattleWork * *, BattleUnit * *);
+typedef void (*TtydPost_BattleGetPartnerPtr)(BattleUnit * *, BattleWork *, BattleUnit *);
+/* src/battle/battle.c */
+typedef BOOL (*TtydFn_BattlePartyAnimeLoad)(s32);
+typedef int (*TtydPre_BattlePartyAnimeLoad)(BOOL *, s32 *);
+typedef void (*TtydPost_BattlePartyAnimeLoad)(BOOL *, s32);
+/* src/battle/battle.c */
+typedef struct BattleUnit * (*TtydFn_BattleChangeParty)(BattleWork *);
+typedef int (*TtydPre_BattleChangeParty)(struct BattleUnit * *, BattleWork * *);
+typedef void (*TtydPost_BattleChangeParty)(struct BattleUnit * *, BattleWork *);
+/* src/battle/battle.c */
+typedef s32 (*TtydFn_BattleTransPartyId)(BattleUnitType);
+typedef int (*TtydPre_BattleTransPartyId)(s32 *, BattleUnitType *);
+typedef void (*TtydPost_BattleTransPartyId)(s32 *, BattleUnitType);
+/* src/battle/battle.c */
+typedef BattleUnitType (*TtydFn_BattleTransPartyIdToUnitKind)(s32);
+typedef int (*TtydPre_BattleTransPartyIdToUnitKind)(BattleUnitType *, s32 *);
+typedef void (*TtydPost_BattleTransPartyIdToUnitKind)(BattleUnitType *, s32);
+/* src/battle/battle.c */
+typedef void (*TtydFn_BtlUnit_EquipItem)(BattleUnit *, s32, ItemType);
+typedef int (*TtydPre_BtlUnit_EquipItem)(BattleUnit * *, s32 *, ItemType *);
+typedef void (*TtydPost_BtlUnit_EquipItem)(BattleUnit *, s32, ItemType);
+/* src/battle/battle.c */
+typedef void (*TtydFn_BattleStoreCoin)(BattleWork *, s32);
+typedef int (*TtydPre_BattleStoreCoin)(BattleWork * *, s32 *);
+typedef void (*TtydPost_BattleStoreCoin)(BattleWork *, s32);
+/* src/battle/battle.c */
+typedef s32 (*TtydFn_BattleGetStockExp)(BattleWork *);
+typedef int (*TtydPre_BattleGetStockExp)(s32 *, BattleWork * *);
+typedef void (*TtydPost_BattleGetStockExp)(s32 *, BattleWork *);
+/* src/battle/battle.c */
+typedef f32 (*TtydFn_BattleGetFloorHeight)(BattleWork *, f32, f32, f32);
+typedef int (*TtydPre_BattleGetFloorHeight)(f32 *, BattleWork * *, f32 *, f32 *, f32 *);
+typedef void (*TtydPost_BattleGetFloorHeight)(f32 *, BattleWork *, f32, f32, f32);
+/* src/battle/battle.c */
+typedef void (*TtydFn_BattleAfterReactionQueueInit)(void);
+typedef int (*TtydPre_BattleAfterReactionQueueInit)(void);
+typedef void (*TtydPost_BattleAfterReactionQueueInit)(void);
+/* src/battle/battle.c */
+typedef void (*TtydFn_BattleAfterReactionEntry)(s32, s32);
+typedef int (*TtydPre_BattleAfterReactionEntry)(s32 *, s32 *);
+typedef void (*TtydPost_BattleAfterReactionEntry)(s32, s32);
+/* src/battle/battle.c */
+typedef BOOL (*TtydFn_BattleAfterReactionMain)(void);
+typedef int (*TtydPre_BattleAfterReactionMain)(BOOL *);
+typedef void (*TtydPost_BattleAfterReactionMain)(BOOL *);
+/* src/battle/battle.c */
+typedef BOOL (*TtydFn_battleDisableHResetCheck)(void);
+typedef int (*TtydPre_battleDisableHResetCheck)(BOOL *);
+typedef void (*TtydPost_battleDisableHResetCheck)(BOOL *);
+/* src/battle/battle.c */
+typedef u8 (*TtydFn_BattleMajinaiCheck)(void);
+typedef int (*TtydPre_BattleMajinaiCheck)(u8 *);
+typedef void (*TtydPost_BattleMajinaiCheck)(u8 *);
+/* src/battle/battle.c */
+typedef void (*TtydFn_BattleMajinaiDone)(void);
+typedef int (*TtydPre_BattleMajinaiDone)(void);
+typedef void (*TtydPost_BattleMajinaiDone)(void);
+/* src/battle/battle.c */
+typedef void (*TtydFn_BattleMajinaiEndCheck)(void);
+typedef int (*TtydPre_BattleMajinaiEndCheck)(void);
+typedef void (*TtydPost_BattleMajinaiEndCheck)(void);
+/* src/battle/battle.c */
+typedef void (*TtydFn_BattleStatusWindowAPRecoveryOn)(void);
+typedef int (*TtydPre_BattleStatusWindowAPRecoveryOn)(void);
+typedef void (*TtydPost_BattleStatusWindowAPRecoveryOn)(void);
+/* src/battle/battle.c */
+typedef void (*TtydFn_BattleStatusWindowAPRecoveryOff)(void);
+typedef int (*TtydPre_BattleStatusWindowAPRecoveryOff)(void);
+typedef void (*TtydPost_BattleStatusWindowAPRecoveryOff)(void);
+/* src/battle/battle.c */
+typedef void (*TtydFn_BattleStatusWindowEventOn)(void);
+typedef int (*TtydPre_BattleStatusWindowEventOn)(void);
+typedef void (*TtydPost_BattleStatusWindowEventOn)(void);
+/* src/battle/battle.c */
+typedef void (*TtydFn_BattleStatusWindowSystemOn)(void);
+typedef int (*TtydPre_BattleStatusWindowSystemOn)(void);
+typedef void (*TtydPost_BattleStatusWindowSystemOn)(void);
+/* src/battle/battle.c */
+typedef void (*TtydFn_BattleStatusWindowEventOff)(void);
+typedef int (*TtydPre_BattleStatusWindowEventOff)(void);
+typedef void (*TtydPost_BattleStatusWindowEventOff)(void);
+/* src/battle/battle.c */
+typedef void (*TtydFn_BattleStatusWindowSystemOff)(void);
+typedef int (*TtydPre_BattleStatusWindowSystemOff)(void);
+typedef void (*TtydPost_BattleStatusWindowSystemOff)(void);
+/* src/battle/battle.c */
+typedef BOOL (*TtydFn_BattleStatusWindowCheck)(void);
+typedef int (*TtydPre_BattleStatusWindowCheck)(BOOL *);
+typedef void (*TtydPost_BattleStatusWindowCheck)(BOOL *);
+/* src/battle/battle.c */
+typedef void (*TtydFn_BattleConsumeReserveItem)(void);
+typedef int (*TtydPre_BattleConsumeReserveItem)(void);
+typedef void (*TtydPost_BattleConsumeReserveItem)(void);
+/* src/battle/battle_ac.c */
+typedef void (*TtydFn_BattleActionCommandManagerInit)(BattleWork *);
+typedef int (*TtydPre_BattleActionCommandManagerInit)(BattleWork * *);
+typedef void (*TtydPost_BattleActionCommandManagerInit)(BattleWork *);
+/* src/battle/battle_ac.c */
+typedef void (*TtydFn_BattleActionCommandManager)(BattleWork *);
+typedef int (*TtydPre_BattleActionCommandManager)(BattleWork * *);
+typedef void (*TtydPost_BattleActionCommandManager)(BattleWork *);
+/* src/battle/battle_ac.c */
+typedef s32 (*TtydFn_BattleActionCommandResult)(BattleWork *);
+typedef int (*TtydPre_BattleActionCommandResult)(s32 *, BattleWork * *);
+typedef void (*TtydPost_BattleActionCommandResult)(s32 *, BattleWork *);
+/* src/battle/battle_ac.c */
+typedef void (*TtydFn_BattleActionCommandDeclareACResult)(BattleWork *, BattleWeapon *, s32);
+typedef int (*TtydPre_BattleActionCommandDeclareACResult)(BattleWork * *, BattleWeapon * *, s32 *);
+typedef void (*TtydPost_BattleActionCommandDeclareACResult)(BattleWork *, BattleWeapon *, s32);
+/* src/battle/battle_ac.c */
+typedef void (*TtydFn_BattleActionCommandSetup)(BattleWork *, s32, BattleUnit *, s32, s32);
+typedef int (*TtydPre_BattleActionCommandSetup)(BattleWork * *, s32 *, BattleUnit * *, s32 *, s32 *);
+typedef void (*TtydPost_BattleActionCommandSetup)(BattleWork *, s32, BattleUnit *, s32, s32);
+/* src/battle/battle_ac.c */
+typedef void (*TtydFn_BattleActionCommandStart)(BattleWork *);
+typedef int (*TtydPre_BattleActionCommandStart)(BattleWork * *);
+typedef void (*TtydPost_BattleActionCommandStart)(BattleWork *);
+/* src/battle/battle_ac.c */
+typedef void (*TtydFn_BattleActionCommandStop)(BattleWork *);
+typedef int (*TtydPre_BattleActionCommandStop)(BattleWork * *);
+typedef void (*TtydPost_BattleActionCommandStop)(BattleWork *);
+/* src/battle/battle_ac.c */
+typedef s32 (*TtydFn_BattleActionCommandGetDefenceResult)(void);
+typedef int (*TtydPre_BattleActionCommandGetDefenceResult)(s32 *);
+typedef void (*TtydPost_BattleActionCommandGetDefenceResult)(s32 *);
+/* src/battle/battle_ac.c */
+typedef void (*TtydFn_BattleActionCommandResetDefenceResult)(void);
+typedef int (*TtydPre_BattleActionCommandResetDefenceResult)(void);
+typedef void (*TtydPost_BattleActionCommandResetDefenceResult)(void);
+/* src/battle/battle_ac.c */
+typedef s32 (*TtydFn_BattleActionCommandGetDifficulty)(BattleWork *);
+typedef int (*TtydPre_BattleActionCommandGetDifficulty)(s32 *, BattleWork * *);
+typedef void (*TtydPost_BattleActionCommandGetDifficulty)(s32 *, BattleWork *);
+/* src/battle/battle_ac.c */
+typedef s32 (*TtydFn_BattleActionCommandGetPrizeLv)(BattleWork *, BattleUnit *, s32);
+typedef int (*TtydPre_BattleActionCommandGetPrizeLv)(s32 *, BattleWork * *, BattleUnit * *, s32 *);
+typedef void (*TtydPost_BattleActionCommandGetPrizeLv)(s32 *, BattleWork *, BattleUnit *, s32);
+/* src/battle/battle_ac.c */
+typedef u16 (*TtydFn_BattleACGetButtonIcon)(s32, s32);
+typedef int (*TtydPre_BattleACGetButtonIcon)(u16 *, s32 *, s32 *);
+typedef void (*TtydPost_BattleACGetButtonIcon)(u16 *, s32, s32);
+/* src/battle/battle_ac.c */
+typedef void (*TtydFn_BattleAcDrawGauge)(s32, s32, s32, f32, s32, s32, s32, s32, s32);
+typedef int (*TtydPre_BattleAcDrawGauge)(s32 *, s32 *, s32 *, f32 *, s32 *, s32 *, s32 *, s32 *, s32 *);
+typedef void (*TtydPost_BattleAcDrawGauge)(s32, s32, s32, f32, s32, s32, s32, s32, s32);
+/* src/battle/battle_ac.c */
+typedef void (*TtydFn_BattleAcGaugeSeInit)(void);
+typedef int (*TtydPre_BattleAcGaugeSeInit)(void);
+typedef void (*TtydPost_BattleAcGaugeSeInit)(void);
+/* src/battle/battle_ac.c */
+typedef void (*TtydFn_BattleAcGaugeSeUpdate)(f32);
+typedef int (*TtydPre_BattleAcGaugeSeUpdate)(f32 *);
+typedef void (*TtydPost_BattleAcGaugeSeUpdate)(f32);
+/* src/battle/battle_ac.c */
+typedef void (*TtydFn_BattleAcGaugeSeDelete)(void);
+typedef int (*TtydPre_BattleAcGaugeSeDelete)(void);
+typedef void (*TtydPost_BattleAcGaugeSeDelete)(void);
+/* src/battle/battle_ac_help.c */
+typedef void (*TtydFn_BattleAcHelpSetHelp)(const char *);
+typedef int (*TtydPre_BattleAcHelpSetHelp)(const char * *);
+typedef void (*TtydPost_BattleAcHelpSetHelp)(const char *);
+/* src/battle/battle_ac_help.c */
+typedef void (*TtydFn_BattleAcHelpSetDispType)(s32);
+typedef int (*TtydPre_BattleAcHelpSetDispType)(s32 *);
+typedef void (*TtydPost_BattleAcHelpSetDispType)(s32);
+/* src/battle/battle_ac_help.c */
+typedef void (*TtydFn_BattleAcHelpInit)(void);
+typedef int (*TtydPre_BattleAcHelpInit)(void);
+typedef void (*TtydPost_BattleAcHelpInit)(void);
+/* src/battle/battle_ac_help.c */
+typedef void (*TtydFn_BattleAcHelpMain)(void);
+typedef int (*TtydPre_BattleAcHelpMain)(void);
+typedef void (*TtydPost_BattleAcHelpMain)(void);
+/* src/battle/battle_acrobat.c */
+typedef s32 (*TtydFn_BattleAcrobatStart)(BattleWork *, s32, s32, s32, s32, s32);
+typedef int (*TtydPre_BattleAcrobatStart)(s32 *, BattleWork * *, s32 *, s32 *, s32 *, s32 *, s32 *);
+typedef void (*TtydPost_BattleAcrobatStart)(s32 *, BattleWork *, s32, s32, s32, s32, s32);
+/* src/battle/battle_acrobat.c */
+typedef s32 (*TtydFn_BattleAcrobatMain)(BattleWork *);
+typedef int (*TtydPre_BattleAcrobatMain)(s32 *, BattleWork * *);
+typedef void (*TtydPost_BattleAcrobatMain)(s32 *, BattleWork *);
+/* src/battle/battle_acrobat.c */
+typedef s32 (*TtydFn_BattleAcrobatGetResult)(BattleWork *, s32 *, s32 *);
+typedef int (*TtydPre_BattleAcrobatGetResult)(s32 *, BattleWork * *, s32 * *, s32 * *);
+typedef void (*TtydPost_BattleAcrobatGetResult)(s32 *, BattleWork *, s32 *, s32 *);
+/* src/battle/battle_actrecord.c */
+typedef void (*TtydFn_BtlActRec_AddCount)(u8 *);
+typedef int (*TtydPre_BtlActRec_AddCount)(u8 * *);
+typedef void (*TtydPost_BtlActRec_AddCount)(u8 *);
+/* src/battle/battle_actrecord.c */
+typedef void (*TtydFn_BtlActRec_AddPoint)(u8 *, s32);
+typedef int (*TtydPre_BtlActRec_AddPoint)(u8 * *, s32 *);
+typedef void (*TtydPost_BtlActRec_AddPoint)(u8 *, s32);
+/* src/battle/battle_actrecord.c */
+typedef void (*TtydFn_BtlActRec_JudgeTurnRuleKeep)(void);
+typedef int (*TtydPre_BtlActRec_JudgeTurnRuleKeep)(void);
+typedef void (*TtydPost_BtlActRec_JudgeTurnRuleKeep)(void);
+/* src/battle/battle_actrecord.c */
+typedef void (*TtydFn_BtlActRec_JudgeRuleKeep)(void);
+typedef int (*TtydPre_BtlActRec_JudgeRuleKeep)(void);
+typedef void (*TtydPost_BtlActRec_JudgeRuleKeep)(void);
+/* src/battle/battle_attack_audience.c */
+typedef EvtWord * (*TtydFn_btlataudGetMoveEventPtr)(void);
+typedef int (*TtydPre_btlataudGetMoveEventPtr)(EvtWord * *);
+typedef void (*TtydPost_btlataudGetMoveEventPtr)(EvtWord * *);
+/* src/battle/battle_attack_audience.c */
+typedef EvtWord * (*TtydFn_btlataudGetAttackEventPtr)(s32);
+typedef int (*TtydPre_btlataudGetAttackEventPtr)(EvtWord * *, s32 *);
+typedef void (*TtydPost_btlataudGetAttackEventPtr)(EvtWord * *, s32);
+/* src/battle/battle_audience.c */
+typedef BattleAudienceItem * (*TtydFn_BattleAudienceItemGetPtr)(s32);
+typedef int (*TtydPre_BattleAudienceItemGetPtr)(BattleAudienceItem * *, s32 *);
+typedef void (*TtydPost_BattleAudienceItemGetPtr)(BattleAudienceItem * *, s32);
+/* src/battle/battle_audience.c */
+typedef BattleAudienceWindow * (*TtydFn_BattleAudienceWinGetPtr)(void);
+typedef int (*TtydPre_BattleAudienceWinGetPtr)(BattleAudienceWindow * *);
+typedef void (*TtydPost_BattleAudienceWinGetPtr)(BattleAudienceWindow * *);
+/* src/battle/battle_audience.c */
+typedef BattleAudienceSound * (*TtydFn_BattleAudienceSoundGetPtr)(s32);
+typedef int (*TtydPre_BattleAudienceSoundGetPtr)(BattleAudienceSound * *, s32 *);
+typedef void (*TtydPost_BattleAudienceSoundGetPtr)(BattleAudienceSound * *, s32);
+/* src/battle/battle_audience.c */
+typedef void (*TtydFn_BattleAudience_Init)(void);
+typedef int (*TtydPre_BattleAudience_Init)(void);
+typedef void (*TtydPost_BattleAudience_Init)(void);
+/* src/battle/battle_audience.c */
+typedef void (*TtydFn_BattleAudience_Main)(void);
+typedef int (*TtydPre_BattleAudience_Main)(void);
+typedef void (*TtydPost_BattleAudience_Main)(void);
+/* src/battle/battle_audience.c */
+typedef void (*TtydFn_BattleAudience_ActInit)(void);
+typedef int (*TtydPre_BattleAudience_ActInit)(void);
+typedef void (*TtydPost_BattleAudience_ActInit)(void);
+/* src/battle/battle_audience.c */
+typedef void (*TtydFn_BattleAudience_PerAct)(void);
+typedef int (*TtydPre_BattleAudience_PerAct)(void);
+typedef void (*TtydPost_BattleAudience_PerAct)(void);
+/* src/battle/battle_audience.c */
+typedef BOOL (*TtydFn_BattleAudience_CheckReaction)(void);
+typedef int (*TtydPre_BattleAudience_CheckReaction)(BOOL *);
+typedef void (*TtydPost_BattleAudience_CheckReaction)(BOOL *);
+/* src/battle/battle_audience.c */
+typedef void (*TtydFn_BattleAudience_PerPhase)(u32);
+typedef int (*TtydPre_BattleAudience_PerPhase)(u32 *);
+typedef void (*TtydPost_BattleAudience_PerPhase)(u32);
+/* src/battle/battle_audience.c */
+typedef BOOL (*TtydFn_BattleAudience_CheckReactionPerPhase)(void);
+typedef int (*TtydPre_BattleAudience_CheckReactionPerPhase)(BOOL *);
+typedef void (*TtydPost_BattleAudience_CheckReactionPerPhase)(BOOL *);
+/* src/battle/battle_audience.c */
+typedef void (*TtydFn_BattleAudience_Disp)(void);
+typedef int (*TtydPre_BattleAudience_Disp)(void);
+typedef void (*TtydPost_BattleAudience_Disp)(void);
+/* src/battle/battle_audience.c */
+typedef void (*TtydFn_BattleAudience_End)(void);
+typedef int (*TtydPre_BattleAudience_End)(void);
+typedef void (*TtydPost_BattleAudience_End)(void);
+/* src/battle/battle_audience.c */
+typedef BOOL (*TtydFn_BattleAudienceItemOn)(s32, u16, s32);
+typedef int (*TtydPre_BattleAudienceItemOn)(BOOL *, s32 *, u16 *, s32 *);
+typedef void (*TtydPost_BattleAudienceItemOn)(BOOL *, s32, u16, s32);
+/* src/battle/battle_audience.c */
+typedef BattleUnit * (*TtydFn_BattleAudienceDetectTargetAll)(void);
+typedef int (*TtydPre_BattleAudienceDetectTargetAll)(BattleUnit * *);
+typedef void (*TtydPost_BattleAudienceDetectTargetAll)(BattleUnit * *);
+/* src/battle/battle_audience.c */
+typedef BOOL (*TtydFn_BattleAudience_Entry)(s32, AudienceMemberType, u8);
+typedef int (*TtydPre_BattleAudience_Entry)(BOOL *, s32 *, AudienceMemberType *, u8 *);
+typedef void (*TtydPost_BattleAudience_Entry)(BOOL *, s32, AudienceMemberType, u8);
+/* src/battle/battle_audience.c */
+typedef void (*TtydFn_BattleAudience_Delete)(s32);
+typedef int (*TtydPre_BattleAudience_Delete)(s32 *);
+typedef void (*TtydPost_BattleAudience_Delete)(s32);
+/* src/battle/battle_audience.c */
+typedef void (*TtydFn_BattleAudience_SetAnim)(s32, s32, BOOL);
+typedef int (*TtydPre_BattleAudience_SetAnim)(s32 *, s32 *, BOOL *);
+typedef void (*TtydPost_BattleAudience_SetAnim)(s32, s32, BOOL);
+/* src/battle/battle_audience.c */
+typedef BOOL (*TtydFn_BattleAudience_GetAnimEnd)(s32);
+typedef int (*TtydPre_BattleAudience_GetAnimEnd)(BOOL *, s32 *);
+typedef void (*TtydPost_BattleAudience_GetAnimEnd)(BOOL *, s32);
+/* src/battle/battle_audience.c */
+typedef void (*TtydFn_BattleAudience_GetPosition)(s32, f32 *, f32 *, f32 *);
+typedef int (*TtydPre_BattleAudience_GetPosition)(s32 *, f32 * *, f32 * *, f32 * *);
+typedef void (*TtydPost_BattleAudience_GetPosition)(s32, f32 *, f32 *, f32 *);
+/* src/battle/battle_audience.c */
+typedef void (*TtydFn_BattleAudience_GetHomePosition)(s32, f32 *, f32 *, f32 *);
+typedef int (*TtydPre_BattleAudience_GetHomePosition)(s32 *, f32 * *, f32 * *, f32 * *);
+typedef void (*TtydPost_BattleAudience_GetHomePosition)(s32, f32 *, f32 *, f32 *);
+/* src/battle/battle_audience.c */
+typedef void (*TtydFn_BattleAudience_GetRotate)(s32, f32 *, f32 *, f32 *);
+typedef int (*TtydPre_BattleAudience_GetRotate)(s32 *, f32 * *, f32 * *, f32 * *);
+typedef void (*TtydPost_BattleAudience_GetRotate)(s32, f32 *, f32 *, f32 *);
+/* src/battle/battle_audience.c */
+typedef void (*TtydFn_BattleAudience_SetPosition)(s32, f32, f32, f32);
+typedef int (*TtydPre_BattleAudience_SetPosition)(s32 *, f32 *, f32 *, f32 *);
+typedef void (*TtydPost_BattleAudience_SetPosition)(s32, f32, f32, f32);
+/* src/battle/battle_audience.c */
+typedef void (*TtydFn_BattleAudience_SetRotate)(s32, f32, f32, f32);
+typedef int (*TtydPre_BattleAudience_SetRotate)(s32 *, f32 *, f32 *, f32 *);
+typedef void (*TtydPost_BattleAudience_SetRotate)(s32, f32, f32, f32);
+/* src/battle/battle_audience.c */
+typedef void (*TtydFn_BattleAudience_SetRotateOffset)(s32, f32, f32, f32);
+typedef int (*TtydPre_BattleAudience_SetRotateOffset)(s32 *, f32 *, f32 *, f32 *);
+typedef void (*TtydPost_BattleAudience_SetRotateOffset)(s32, f32, f32, f32);
+/* src/battle/battle_audience.c */
+typedef void (*TtydFn_BattleAudience_GetItemOn)(s32 *, f32 *, f32 *, f32 *, ItemType *);
+typedef int (*TtydPre_BattleAudience_GetItemOn)(s32 * *, f32 * *, f32 * *, f32 * *, ItemType * *);
+typedef void (*TtydPost_BattleAudience_GetItemOn)(s32 *, f32 *, f32 *, f32 *, ItemType *);
+/* src/battle/battle_audience.c */
+typedef void (*TtydFn_BattleAudience_GetItemOn2)(s32 *, f32 *, f32 *, f32 *, ItemType *);
+typedef int (*TtydPre_BattleAudience_GetItemOn2)(s32 * *, f32 * *, f32 * *, f32 * *, ItemType * *);
+typedef void (*TtydPost_BattleAudience_GetItemOn2)(s32 *, f32 *, f32 *, f32 *, ItemType *);
+/* src/battle/battle_audience.c */
+typedef void (*TtydFn_BattleAudience_SetTarget)(s32);
+typedef int (*TtydPre_BattleAudience_SetTarget)(s32 *);
+typedef void (*TtydPost_BattleAudience_SetTarget)(s32);
+/* src/battle/battle_audience.c */
+typedef void (*TtydFn_BattleAudience_Attack)(s32);
+typedef int (*TtydPre_BattleAudience_Attack)(s32 *);
+typedef void (*TtydPost_BattleAudience_Attack)(s32);
+/* src/battle/battle_audience.c */
+typedef BOOL (*TtydFn_BattleAudience_GetFront)(s32);
+typedef int (*TtydPre_BattleAudience_GetFront)(BOOL *, s32 *);
+typedef void (*TtydPost_BattleAudience_GetFront)(BOOL *, s32);
+/* src/battle/battle_audience.c */
+typedef void (*TtydFn_BattleAudience_ChangeStatus)(s32, s32);
+typedef int (*TtydPre_BattleAudience_ChangeStatus)(s32 *, s32 *);
+typedef void (*TtydPost_BattleAudience_ChangeStatus)(s32, s32);
+/* src/battle/battle_audience.c */
+typedef BOOL (*TtydFn_BattleAudience_GetSysCtrl)(s32);
+typedef int (*TtydPre_BattleAudience_GetSysCtrl)(BOOL *, s32 *);
+typedef void (*TtydPost_BattleAudience_GetSysCtrl)(BOOL *, s32);
+/* src/battle/battle_audience.c */
+typedef u8 (*TtydFn_BattleAudience_GetWaiting)(s32);
+typedef int (*TtydPre_BattleAudience_GetWaiting)(u8 *, s32 *);
+typedef void (*TtydPost_BattleAudience_GetWaiting)(u8 *, s32);
+/* src/battle/battle_audience.c */
+typedef BOOL (*TtydFn_BattleAudience_GetEscapeChangeOK)(s32);
+typedef int (*TtydPre_BattleAudience_GetEscapeChangeOK)(BOOL *, s32 *);
+typedef void (*TtydPost_BattleAudience_GetEscapeChangeOK)(BOOL *, s32);
+/* src/battle/battle_audience.c */
+typedef s32 (*TtydFn_BattleAudience_GetAudienceNoFromOffset)(s32, s32, s32);
+typedef int (*TtydPre_BattleAudience_GetAudienceNoFromOffset)(s32 *, s32 *, s32 *, s32 *);
+typedef void (*TtydPost_BattleAudience_GetAudienceNoFromOffset)(s32 *, s32, s32, s32);
+/* src/battle/battle_audience.c */
+typedef s32 (*TtydFn_BattleAudience_HaitiRandForFallObject)(void);
+typedef int (*TtydPre_BattleAudience_HaitiRandForFallObject)(s32 *);
+typedef void (*TtydPost_BattleAudience_HaitiRandForFallObject)(s32 *);
+/* src/battle/battle_audience.c */
+typedef s32 (*TtydFn_BattleAudience_GetAudienceNum)(void);
+typedef int (*TtydPre_BattleAudience_GetAudienceNum)(s32 *);
+typedef void (*TtydPost_BattleAudience_GetAudienceNum)(s32 *);
+/* src/battle/battle_audience.c */
+typedef void (*TtydFn_BattleAudience_WinSetActive)(u8);
+typedef int (*TtydPre_BattleAudience_WinSetActive)(u8 *);
+typedef void (*TtydPost_BattleAudience_WinSetActive)(u8);
+/* src/battle/battle_audience.c */
+typedef void (*TtydFn_BattleAudienceNumToTarget)(void);
+typedef int (*TtydPre_BattleAudienceNumToTarget)(void);
+typedef void (*TtydPost_BattleAudienceNumToTarget)(void);
+/* src/battle/battle_audience.c */
+typedef void (*TtydFn_BattleAudienceAddTargetNum)(f32, f32);
+typedef int (*TtydPre_BattleAudienceAddTargetNum)(f32 *, f32 *);
+typedef void (*TtydPost_BattleAudienceAddTargetNum)(f32, f32);
+/* src/battle/battle_audience.c */
+typedef s32 (*TtydFn_BattleAudienceAddAudienceNum)(s32);
+typedef int (*TtydPre_BattleAudienceAddAudienceNum)(s32 *, s32 *);
+typedef void (*TtydPost_BattleAudienceAddAudienceNum)(s32 *, s32);
+/* src/battle/battle_audience.c */
+typedef void (*TtydFn_BattleAudiencePuniAllEscape)(void);
+typedef int (*TtydPre_BattleAudiencePuniAllEscape)(void);
+typedef void (*TtydPost_BattleAudiencePuniAllEscape)(void);
+/* src/battle/battle_audience.c */
+typedef void (*TtydFn_BattleAudienceJoySACLecture)(void);
+typedef int (*TtydPre_BattleAudienceJoySACLecture)(void);
+typedef void (*TtydPost_BattleAudienceJoySACLecture)(void);
+/* src/battle/battle_audience.c */
+typedef void (*TtydFn_BattleAudienceJoyEnding)(void);
+typedef int (*TtydPre_BattleAudienceJoyEnding)(void);
+typedef void (*TtydPost_BattleAudienceJoyEnding)(void);
+/* src/battle/battle_audience.c */
+typedef s32 (*TtydFn_BattleAudienceDetectPakkunEatTarget)(s32);
+typedef int (*TtydPre_BattleAudienceDetectPakkunEatTarget)(s32 *, s32 *);
+typedef void (*TtydPost_BattleAudienceDetectPakkunEatTarget)(s32 *, s32);
+/* src/battle/battle_audience.c */
+typedef void (*TtydFn_BattleAudienceSoundBooing)(void);
+typedef int (*TtydPre_BattleAudienceSoundBooing)(void);
+typedef void (*TtydPost_BattleAudienceSoundBooing)(void);
+/* src/battle/battle_audience.c */
+typedef void (*TtydFn_BattleAudienceSoundBooingKind)(s32);
+typedef int (*TtydPre_BattleAudienceSoundBooingKind)(s32 *);
+typedef void (*TtydPost_BattleAudienceSoundBooingKind)(s32);
+/* src/battle/battle_audience.c */
+typedef void (*TtydFn_BattleAudienceSoundClap)(s32, s32);
+typedef int (*TtydPre_BattleAudienceSoundClap)(s32 *, s32 *);
+typedef void (*TtydPost_BattleAudienceSoundClap)(s32, s32);
+/* src/battle/battle_audience.c */
+typedef void (*TtydFn_BattleAudienceSoundCheer)(s32, s32);
+typedef int (*TtydPre_BattleAudienceSoundCheer)(s32 *, s32 *);
+typedef void (*TtydPost_BattleAudienceSoundCheer)(s32, s32);
+/* src/battle/battle_audience.c */
+typedef void (*TtydFn_BattleAudienceSoundCheerKind)(s32, s32, s32);
+typedef int (*TtydPre_BattleAudienceSoundCheerKind)(s32 *, s32 *, s32 *);
+typedef void (*TtydPost_BattleAudienceSoundCheerKind)(s32, s32, s32);
+/* src/battle/battle_audience.c */
+typedef void (*TtydFn_BattleAudienceSoundWhistle)(void);
+typedef int (*TtydPre_BattleAudienceSoundWhistle)(void);
+typedef void (*TtydPost_BattleAudienceSoundWhistle)(void);
+/* src/battle/battle_audience.c */
+typedef void (*TtydFn_BattleAudienceSoundWhistleKind)(s32);
+typedef int (*TtydPre_BattleAudienceSoundWhistleKind)(s32 *);
+typedef void (*TtydPost_BattleAudienceSoundWhistleKind)(s32);
+/* src/battle/battle_audience.c */
+typedef void (*TtydFn_BattleAudienceSoundCallKind)(s32);
+typedef int (*TtydPre_BattleAudienceSoundCallKind)(s32 *);
+typedef void (*TtydPost_BattleAudienceSoundCallKind)(s32);
+/* src/battle/battle_audience.c */
+typedef void (*TtydFn_BattleAudienceSoundHandBeat)(void);
+typedef int (*TtydPre_BattleAudienceSoundHandBeat)(void);
+typedef void (*TtydPost_BattleAudienceSoundHandBeat)(void);
+/* src/battle/battle_audience.c */
+typedef void (*TtydFn_BattleAudienceSoundItemThrow)(s32, s32);
+typedef int (*TtydPre_BattleAudienceSoundItemThrow)(s32 *, s32 *);
+typedef void (*TtydPost_BattleAudienceSoundItemThrow)(s32, s32);
+/* src/battle/battle_audience.c */
+typedef void (*TtydFn_BattleAudienceSoundRun)(s32);
+typedef int (*TtydPre_BattleAudienceSoundRun)(s32 *);
+typedef void (*TtydPost_BattleAudienceSoundRun)(s32);
+/* src/battle/battle_audience.c */
+typedef void (*TtydFn_BattleAudienceSoundSleep)(s32);
+typedef int (*TtydPre_BattleAudienceSoundSleep)(s32 *);
+typedef void (*TtydPost_BattleAudienceSoundSleep)(s32);
+/* src/battle/battle_audience.c */
+typedef void (*TtydFn_BattleAudienceSoundZZZ)(s32);
+typedef int (*TtydPre_BattleAudienceSoundZZZ)(s32 *);
+typedef void (*TtydPost_BattleAudienceSoundZZZ)(s32);
+/* src/battle/battle_audience.c */
+typedef void (*TtydFn_BattleAudienceSoundSing)(s32);
+typedef int (*TtydPre_BattleAudienceSoundSing)(s32 *);
+typedef void (*TtydPost_BattleAudienceSoundSing)(s32);
+/* src/battle/battle_audience.c */
+typedef void (*TtydFn_BattleAudienceSoundShell)(s32);
+typedef int (*TtydPre_BattleAudienceSoundShell)(s32 *);
+typedef void (*TtydPost_BattleAudienceSoundShell)(s32);
+/* src/battle/battle_audience.c */
+typedef void (*TtydFn_BattleAudienceSoundBombIgnite)(s32, s32, s32);
+typedef int (*TtydPre_BattleAudienceSoundBombIgnite)(s32 *, s32 *, s32 *);
+typedef void (*TtydPost_BattleAudienceSoundBombIgnite)(s32, s32, s32);
+/* src/battle/battle_audience.c */
+typedef void (*TtydFn_BattleAudienceSoundBombFire)(s32);
+typedef int (*TtydPre_BattleAudienceSoundBombFire)(s32 *);
+typedef void (*TtydPost_BattleAudienceSoundBombFire)(s32);
+/* src/battle/battle_audience.c */
+typedef void (*TtydFn_BattleAudienceSoundPakkunEat)(s32);
+typedef int (*TtydPre_BattleAudienceSoundPakkunEat)(s32 *);
+typedef void (*TtydPost_BattleAudienceSoundPakkunEat)(s32);
+/* src/battle/battle_audience.c */
+typedef void (*TtydFn_BattleAudienceSoundSetVol)(s32, u8, s32);
+typedef int (*TtydPre_BattleAudienceSoundSetVol)(s32 *, u8 *, s32 *);
+typedef void (*TtydPost_BattleAudienceSoundSetVol)(s32, u8, s32);
+/* src/battle/battle_audience.c */
+typedef void (*TtydFn_BattleAudienceSoundSetVolAll)(u8, s32);
+typedef int (*TtydPre_BattleAudienceSoundSetVolAll)(u8 *, s32 *);
+typedef void (*TtydPost_BattleAudienceSoundSetVolAll)(u8, s32);
+/* src/battle/battle_audience.c */
+typedef s32 (*TtydFn_BattleAudienceSoundCheck)(s32);
+typedef int (*TtydPre_BattleAudienceSoundCheck)(s32 *, s32 *);
+typedef void (*TtydPost_BattleAudienceSoundCheck)(s32 *, s32);
+/* src/battle/battle_audience.c */
+typedef void (*TtydFn_BattleAudienceSoundStop)(s32);
+typedef int (*TtydPre_BattleAudienceSoundStop)(s32 *);
+typedef void (*TtydPost_BattleAudienceSoundStop)(s32);
+/* src/battle/battle_audience.c */
+typedef void (*TtydFn_BattleAudience_Case_KillEnemy)(s32);
+typedef int (*TtydPre_BattleAudience_Case_KillEnemy)(s32 *);
+typedef void (*TtydPost_BattleAudience_Case_KillEnemy)(s32);
+/* src/battle/battle_audience.c */
+typedef void (*TtydFn_BattleAudience_Case_ActionCommandGood)(BattleWeapon *);
+typedef int (*TtydPre_BattleAudience_Case_ActionCommandGood)(BattleWeapon * *);
+typedef void (*TtydPost_BattleAudience_Case_ActionCommandGood)(BattleWeapon *);
+/* src/battle/battle_audience.c */
+typedef void (*TtydFn_BattleAudience_Case_ActionCommandBad)(BattleWeapon *);
+typedef int (*TtydPre_BattleAudience_Case_ActionCommandBad)(BattleWeapon * *);
+typedef void (*TtydPost_BattleAudience_Case_ActionCommandBad)(BattleWeapon *);
+/* src/battle/battle_audience.c */
+typedef void (*TtydFn_BattleAudience_Case_GuardGood)(void);
+typedef int (*TtydPre_BattleAudience_Case_GuardGood)(void);
+typedef void (*TtydPost_BattleAudience_Case_GuardGood)(void);
+/* src/battle/battle_audience.c */
+typedef void (*TtydFn_BattleAudience_Case_GuardBad)(void);
+typedef int (*TtydPre_BattleAudience_Case_GuardBad)(void);
+typedef void (*TtydPost_BattleAudience_Case_GuardBad)(void);
+/* src/battle/battle_audience.c */
+typedef void (*TtydFn_BattleAudience_Case_AcrobatGood)(void);
+typedef int (*TtydPre_BattleAudience_Case_AcrobatGood)(void);
+typedef void (*TtydPost_BattleAudience_Case_AcrobatGood)(void);
+/* src/battle/battle_audience.c */
+typedef void (*TtydFn_BattleAudience_Case_AcrobatBad)(void);
+typedef int (*TtydPre_BattleAudience_Case_AcrobatBad)(void);
+typedef void (*TtydPost_BattleAudience_Case_AcrobatBad)(void);
+/* src/battle/battle_audience.c */
+typedef void (*TtydFn_BattleAudience_Case_AcrobatNoTry)(void);
+typedef int (*TtydPre_BattleAudience_Case_AcrobatNoTry)(void);
+typedef void (*TtydPost_BattleAudience_Case_AcrobatNoTry)(void);
+/* src/battle/battle_audience.c */
+typedef void (*TtydFn_BattleAudience_Case_MarioBigDamage)(s32);
+typedef int (*TtydPre_BattleAudience_Case_MarioBigDamage)(s32 *);
+typedef void (*TtydPost_BattleAudience_Case_MarioBigDamage)(s32);
+/* src/battle/battle_audience.c */
+typedef void (*TtydFn_BattleAudience_Case_MarioPinch)(void);
+typedef int (*TtydPre_BattleAudience_Case_MarioPinch)(void);
+typedef void (*TtydPost_BattleAudience_Case_MarioPinch)(void);
+/* src/battle/battle_audience.c */
+typedef void (*TtydFn_BattleAudience_Case_MarioDanger)(void);
+typedef int (*TtydPre_BattleAudience_Case_MarioDanger)(void);
+typedef void (*TtydPost_BattleAudience_Case_MarioDanger)(void);
+/* src/battle/battle_audience.c */
+typedef void (*TtydFn_BattleAudience_Case_PartyDown)(void);
+typedef int (*TtydPre_BattleAudience_Case_PartyDown)(void);
+typedef void (*TtydPost_BattleAudience_Case_PartyDown)(void);
+/* src/battle/battle_audience.c */
+typedef void (*TtydFn_BattleAudience_Case_JumpNewRecord)(void);
+typedef int (*TtydPre_BattleAudience_Case_JumpNewRecord)(void);
+typedef void (*TtydPost_BattleAudience_Case_JumpNewRecord)(void);
+/* src/battle/battle_audience.c */
+typedef void (*TtydFn_BattleAudience_Case_FinalAttack)(void);
+typedef int (*TtydPre_BattleAudience_Case_FinalAttack)(void);
+typedef void (*TtydPost_BattleAudience_Case_FinalAttack)(void);
+/* src/battle/battle_audience.c */
+typedef void (*TtydFn_BattleAudience_Case_TurnEnd)(void);
+typedef int (*TtydPre_BattleAudience_Case_TurnEnd)(void);
+typedef void (*TtydPost_BattleAudience_Case_TurnEnd)(void);
+/* src/battle/battle_audience.c */
+typedef void (*TtydFn_BattleAudience_Case_Appeal)(BattleUnit *);
+typedef int (*TtydPre_BattleAudience_Case_Appeal)(BattleUnit * *);
+typedef void (*TtydPost_BattleAudience_Case_Appeal)(BattleUnit *);
+/* src/battle/battle_audience.c */
+typedef void (*TtydFn_BattleAudience_Case_Escape)(void);
+typedef int (*TtydPre_BattleAudience_Case_Escape)(void);
+typedef void (*TtydPost_BattleAudience_Case_Escape)(void);
+/* src/battle/battle_audience.c */
+typedef void (*TtydFn_BattleAudience_Case_Escape_Good)(void);
+typedef int (*TtydPre_BattleAudience_Case_Escape_Good)(void);
+typedef void (*TtydPost_BattleAudience_Case_Escape_Good)(void);
+/* src/battle/battle_audience.c */
+typedef void (*TtydFn_BattleAudience_Case_Escape_Bad)(void);
+typedef int (*TtydPre_BattleAudience_Case_Escape_Bad)(void);
+typedef void (*TtydPost_BattleAudience_Case_Escape_Bad)(void);
+/* src/battle/battle_audience.c */
+typedef void (*TtydFn_BattleAudience_Case_EnemyDamage)(s32);
+typedef int (*TtydPre_BattleAudience_Case_EnemyDamage)(s32 *);
+typedef void (*TtydPost_BattleAudience_Case_EnemyDamage)(s32);
+/* src/battle/battle_audience.c */
+typedef void (*TtydFn_BattleAudience_Case_EnemyNoDamage)(void);
+typedef int (*TtydPre_BattleAudience_Case_EnemyNoDamage)(void);
+typedef void (*TtydPost_BattleAudience_Case_EnemyNoDamage)(void);
+/* src/battle/battle_audience.c */
+typedef void (*TtydFn_BattleAudience_Case_Countered)(void);
+typedef int (*TtydPre_BattleAudience_Case_Countered)(void);
+typedef void (*TtydPost_BattleAudience_Case_Countered)(void);
+/* src/battle/battle_audience.c */
+typedef void (*TtydFn_BattleAudience_Case_HaikeiSet)(void);
+typedef int (*TtydPre_BattleAudience_Case_HaikeiSet)(void);
+typedef void (*TtydPost_BattleAudience_Case_HaikeiSet)(void);
+/* src/battle/battle_audience.c */
+typedef void (*TtydFn_BattleAudience_Case_GreatVictory)(void);
+typedef int (*TtydPre_BattleAudience_Case_GreatVictory)(void);
+typedef void (*TtydPost_BattleAudience_Case_GreatVictory)(void);
+/* src/battle/battle_audience.c */
+typedef void (*TtydFn_BattleAudience_Case_FastVictory)(f32);
+typedef int (*TtydPre_BattleAudience_Case_FastVictory)(f32 *);
+typedef void (*TtydPost_BattleAudience_Case_FastVictory)(f32);
+/* src/battle/battle_audience.c */
+typedef void (*TtydFn_BattleAudience_Case_FallObject_Stage)(void);
+typedef int (*TtydPre_BattleAudience_Case_FallObject_Stage)(void);
+typedef void (*TtydPost_BattleAudience_Case_FallObject_Stage)(void);
+/* src/battle/battle_audience.c */
+typedef void (*TtydFn_BattleAudience_Case_FallObject_Aud)(s32, u8);
+typedef int (*TtydPre_BattleAudience_Case_FallObject_Aud)(s32 *, u8 *);
+typedef void (*TtydPost_BattleAudience_Case_FallObject_Aud)(s32, u8);
+/* src/battle/battle_audience.c */
+typedef void (*TtydFn_BattleAudience_Case_FirstAttack_Good)(void);
+typedef int (*TtydPre_BattleAudience_Case_FirstAttack_Good)(void);
+typedef void (*TtydPost_BattleAudience_Case_FirstAttack_Good)(void);
+/* src/battle/battle_audience.c */
+typedef void (*TtydFn_BattleAudience_Case_FirstAttack_Bad)(void);
+typedef int (*TtydPre_BattleAudience_Case_FirstAttack_Bad)(void);
+typedef void (*TtydPost_BattleAudience_Case_FirstAttack_Bad)(void);
+/* src/battle/battle_audience.c */
+typedef void (*TtydFn_BattleAudience_SetPresentItemNo)(s32);
+typedef int (*TtydPre_BattleAudience_SetPresentItemNo)(s32 *);
+typedef void (*TtydPost_BattleAudience_SetPresentItemNo)(s32);
+/* src/battle/battle_audience.c */
+typedef s32 (*TtydFn_BattleAudience_GetPresentItemNo)(void);
+typedef int (*TtydPre_BattleAudience_GetPresentItemNo)(s32 *);
+typedef void (*TtydPost_BattleAudience_GetPresentItemNo)(s32 *);
+/* src/battle/battle_audience.c */
+typedef void (*TtydFn_BattleAudience_SetPresentTargetUnitId)(s32);
+typedef int (*TtydPre_BattleAudience_SetPresentTargetUnitId)(s32 *);
+typedef void (*TtydPost_BattleAudience_SetPresentTargetUnitId)(s32);
+/* src/battle/battle_audience.c */
+typedef s32 (*TtydFn_BattleAudience_GetPresentTargetUnitId)(void);
+typedef int (*TtydPre_BattleAudience_GetPresentTargetUnitId)(s32 *);
+typedef void (*TtydPost_BattleAudience_GetPresentTargetUnitId)(s32 *);
+/* src/battle/battle_audience.c */
+typedef void (*TtydFn_BattleAudience_SetPresentItemType)(s32);
+typedef int (*TtydPre_BattleAudience_SetPresentItemType)(s32 *);
+typedef void (*TtydPost_BattleAudience_SetPresentItemType)(s32);
+/* src/battle/battle_audience.c */
+typedef s32 (*TtydFn_BattleAudience_GetPresentItemType)(void);
+typedef int (*TtydPre_BattleAudience_GetPresentItemType)(s32 *);
+typedef void (*TtydPost_BattleAudience_GetPresentItemType)(s32 *);
+/* src/battle/battle_audience_kinopio.c */
+typedef void (*TtydFn_BattleAudienceCtrlProcessKinopio)(s32);
+typedef int (*TtydPre_BattleAudienceCtrlProcessKinopio)(s32 *);
+typedef void (*TtydPost_BattleAudienceCtrlProcessKinopio)(s32);
+/* src/battle/battle_break_slot.c */
+typedef BreakSlotWork * (*TtydFn_BattleBreakSlotGetPtr)(void);
+typedef int (*TtydPre_BattleBreakSlotGetPtr)(BreakSlotWork * *);
+typedef void (*TtydPost_BattleBreakSlotGetPtr)(BreakSlotWork * *);
+/* src/battle/battle_break_slot.c */
+typedef void (*TtydFn_BattleBreakSlot_Init)(void);
+typedef int (*TtydPre_BattleBreakSlot_Init)(void);
+typedef void (*TtydPost_BattleBreakSlot_Init)(void);
+/* src/battle/battle_break_slot.c */
+typedef void (*TtydFn_BattleBreakSlot_Main)(void);
+typedef int (*TtydPre_BattleBreakSlot_Main)(void);
+typedef void (*TtydPost_BattleBreakSlot_Main)(void);
+/* src/battle/battle_break_slot.c */
+typedef void (*TtydFn_BattleBreakSlot_Disp)(void);
+typedef int (*TtydPre_BattleBreakSlot_Disp)(void);
+typedef void (*TtydPost_BattleBreakSlot_Disp)(void);
+/* src/battle/battle_break_slot.c */
+typedef void (*TtydFn_BattleBreakSlot_End)(void);
+typedef int (*TtydPre_BattleBreakSlot_End)(void);
+typedef void (*TtydPost_BattleBreakSlot_End)(void);
+/* src/battle/battle_break_slot.c */
+typedef void (*TtydFn_BattleBreakSlot_PointInc)(void);
+typedef int (*TtydPre_BattleBreakSlot_PointInc)(void);
+typedef void (*TtydPost_BattleBreakSlot_PointInc)(void);
+/* src/battle/battle_break_slot.c */
+typedef BOOL (*TtydFn_BattleBreakSlot_CheckReaction)(void);
+typedef int (*TtydPre_BattleBreakSlot_CheckReaction)(BOOL *);
+typedef void (*TtydPost_BattleBreakSlot_CheckReaction)(BOOL *);
+/* src/battle/battle_break_slot.c */
+typedef s32 (*TtydFn_BattleBreakSlot_GetBreakTurn)(void);
+typedef int (*TtydPre_BattleBreakSlot_GetBreakTurn)(s32 *);
+typedef void (*TtydPost_BattleBreakSlot_GetBreakTurn)(s32 *);
+/* src/battle/battle_break_slot.c */
+typedef void (*TtydFn_BattleBreakSlot_DecBreakTurn)(void);
+typedef int (*TtydPre_BattleBreakSlot_DecBreakTurn)(void);
+typedef void (*TtydPost_BattleBreakSlot_DecBreakTurn)(void);
+/* src/battle/battle_break_slot.c */
+typedef void (*TtydFn_BattleBreakSlot_HideReel)(void);
+typedef int (*TtydPre_BattleBreakSlot_HideReel)(void);
+typedef void (*TtydPost_BattleBreakSlot_HideReel)(void);
+/* src/battle/battle_camera.c */
+typedef void (*TtydFn_battleCameraInit)(void);
+typedef int (*TtydPre_battleCameraInit)(void);
+typedef void (*TtydPost_battleCameraInit)(void);
+/* src/battle/battle_camera.c */
+typedef void (*TtydFn_battleCameraMain)(void);
+typedef int (*TtydPre_battleCameraMain)(void);
+typedef void (*TtydPost_battleCameraMain)(void);
+/* src/battle/battle_camera.c */
+typedef f32 (*TtydFn_battleCameraGetPosMoveSpeed)(void);
+typedef int (*TtydPre_battleCameraGetPosMoveSpeed)(f32 *);
+typedef void (*TtydPost_battleCameraGetPosMoveSpeed)(f32 *);
+/* src/battle/battle_camera.c */
+typedef void (*TtydFn_btl_camera_set_mode)(s32, s32);
+typedef int (*TtydPre_btl_camera_set_mode)(s32 *, s32 *);
+typedef void (*TtydPost_btl_camera_set_mode)(s32, s32);
+/* src/battle/battle_camera.c */
+typedef void (*TtydFn_btl_camera_set_moveSpeedLv)(s32, s32);
+typedef int (*TtydPre_btl_camera_set_moveSpeedLv)(s32 *, s32 *);
+typedef void (*TtydPost_btl_camera_set_moveSpeedLv)(s32, s32);
+/* src/battle/battle_camera.c */
+typedef void (*TtydFn_btl_camera_set_moveto)(s32, f32, f32, f32, f32, f32, f32, s32, s32);
+typedef int (*TtydPre_btl_camera_set_moveto)(s32 *, f32 *, f32 *, f32 *, f32 *, f32 *, f32 *, s32 *, s32 *);
+typedef void (*TtydPost_btl_camera_set_moveto)(s32, f32, f32, f32, f32, f32, f32, s32, s32);
+/* src/battle/battle_camera.c */
+typedef void (*TtydFn_btl_camera_shake_w)(s32, f32, f32, s32, s32);
+typedef int (*TtydPre_btl_camera_shake_w)(s32 *, f32 *, f32 *, s32 *, s32 *);
+typedef void (*TtydPost_btl_camera_shake_w)(s32, f32, f32, s32, s32);
+/* src/battle/battle_camera.c */
+typedef void (*TtydFn_btl_camera_shake_h)(s32, f32, f32, s32, s32);
+typedef int (*TtydPre_btl_camera_shake_h)(s32 *, f32 *, f32 *, s32 *, s32 *);
+typedef void (*TtydPost_btl_camera_shake_h)(s32, f32, f32, s32, s32);
+/* src/battle/battle_camera.c */
+typedef void (*TtydFn_btl_camera_noshake)(s32);
+typedef int (*TtydPre_btl_camera_noshake)(s32 *);
+typedef void (*TtydPost_btl_camera_noshake)(s32);
+/* src/battle/battle_camera.c */
+typedef void (*TtydFn_btl_camera_set_posoffset)(s32, f32, f32, f32);
+typedef int (*TtydPre_btl_camera_set_posoffset)(s32 *, f32 *, f32 *, f32 *);
+typedef void (*TtydPost_btl_camera_set_posoffset)(s32, f32, f32, f32);
+/* src/battle/battle_damage.c */
+typedef void (*TtydFn_BattleAttackDeclare)(s32 *, s32 *);
+typedef int (*TtydPre_BattleAttackDeclare)(s32 * *, s32 * *);
+typedef void (*TtydPost_BattleAttackDeclare)(s32 *, s32 *);
+/* src/battle/battle_damage.c */
+typedef void (*TtydFn_BattleAttackDeclareAll)(BattleWork *);
+typedef int (*TtydPre_BattleAttackDeclareAll)(BattleWork * *);
+typedef void (*TtydPost_BattleAttackDeclareAll)(BattleWork *);
+/* src/battle/battle_damage.c */
+typedef void (*TtydFn_BattleInitCounterPreCheckWork)(CounterWork *);
+typedef int (*TtydPre_BattleInitCounterPreCheckWork)(CounterWork * *);
+typedef void (*TtydPost_BattleInitCounterPreCheckWork)(CounterWork *);
+/* src/battle/battle_damage.c */
+typedef s32 (*TtydFn_BattleCheckCounter)(CounterWork *, BattleUnit *, BattleUnit *, BattleUnitPart *, BattleWeapon *, u32 *);
+typedef int (*TtydPre_BattleCheckCounter)(s32 *, CounterWork * *, BattleUnit * *, BattleUnit * *, BattleUnitPart * *, BattleWeapon * *, u32 * *);
+typedef void (*TtydPost_BattleCheckCounter)(s32 *, CounterWork *, BattleUnit *, BattleUnit *, BattleUnitPart *, BattleWeapon *, u32 *);
+/* src/battle/battle_detect.c */
+typedef BOOL (*TtydFn_BattleSamplingEnemy)(BattleWorkWeaponTargets *, BattleWeapon *, s32, s8, u32, u32, s8);
+typedef int (*TtydPre_BattleSamplingEnemy)(BOOL *, BattleWorkWeaponTargets * *, BattleWeapon * *, s32 *, s8 *, u32 *, u32 *, s8 *);
+typedef void (*TtydPost_BattleSamplingEnemy)(BOOL *, BattleWorkWeaponTargets *, BattleWeapon *, s32, s8, u32, u32, s8);
+/* src/battle/battle_detect.c */
+typedef void (*TtydFn_BattleSamplingEnemyUpdate)(BattleWorkWeaponTargets *);
+typedef int (*TtydPre_BattleSamplingEnemyUpdate)(BattleWorkWeaponTargets * *);
+typedef void (*TtydPost_BattleSamplingEnemyUpdate)(BattleWorkWeaponTargets *);
+/* src/battle/battle_detect.c */
+typedef void (*TtydFn_BattleChoiceSamplingEnemy)(BattleWorkWeaponTargets *, u32, s32 *, s32 *);
+typedef int (*TtydPre_BattleChoiceSamplingEnemy)(BattleWorkWeaponTargets * *, u32 *, s32 * *, s32 * *);
+typedef void (*TtydPost_BattleChoiceSamplingEnemy)(BattleWorkWeaponTargets *, u32, s32 *, s32 *);
+/* src/battle/battle_detect.c */
+typedef void (*TtydFn_BattleGetFirstAttackUnit)(BattleWork *, BattleUnit **, BattleUnit **);
+typedef int (*TtydPre_BattleGetFirstAttackUnit)(BattleWork * *, BattleUnit ** *, BattleUnit ** *);
+typedef void (*TtydPost_BattleGetFirstAttackUnit)(BattleWork *, BattleUnit **, BattleUnit **);
+/* src/battle/battle_disp.c */
+typedef void (*TtydFn_btlDispGXInit2DRasta)(void);
+typedef int (*TtydPre_btlDispGXInit2DRasta)(void);
+typedef void (*TtydPost_btlDispGXInit2DRasta)(void);
+/* src/battle/battle_disp.c */
+typedef void (*TtydFn_btlDispGXInit2D)(void);
+typedef int (*TtydPre_btlDispGXInit2D)(void);
+typedef void (*TtydPost_btlDispGXInit2D)(void);
+/* src/battle/battle_disp.c */
+typedef void (*TtydFn_btlDispGXPoint2DRasta)(f32, f32, u8, u8, u8, u8);
+typedef int (*TtydPre_btlDispGXPoint2DRasta)(f32 *, f32 *, u8 *, u8 *, u8 *, u8 *);
+typedef void (*TtydPost_btlDispGXPoint2DRasta)(f32, f32, u8, u8, u8, u8);
+/* src/battle/battle_disp.c */
+typedef void (*TtydFn_btlDispGXQuads2DRasta)(f32, f32, f32, f32, u8, u8, u8, u8);
+typedef int (*TtydPre_btlDispGXQuads2DRasta)(f32 *, f32 *, f32 *, f32 *, u8 *, u8 *, u8 *, u8 *);
+typedef void (*TtydPost_btlDispGXQuads2DRasta)(f32, f32, f32, f32, u8, u8, u8, u8);
+/* src/battle/battle_disp.c */
+typedef void (*TtydFn_btlDispGXQuads2D)(f32, f32, f32, f32, u8, u8, u8, u8);
+typedef int (*TtydPre_btlDispGXQuads2D)(f32 *, f32 *, f32 *, f32 *, u8 *, u8 *, u8 *, u8 *);
+typedef void (*TtydPost_btlDispGXQuads2D)(f32, f32, f32, f32, u8, u8, u8, u8);
+/* src/battle/battle_disp.c */
+typedef void (*TtydFn_btlDispTexPlane)(u32, GXColor, s32, f32, f32, f32, f32, f32);
+typedef int (*TtydPre_btlDispTexPlane)(u32 *, GXColor *, s32 *, f32 *, f32 *, f32 *, f32 *, f32 *);
+typedef void (*TtydPost_btlDispTexPlane)(u32, GXColor, s32, f32, f32, f32, f32, f32);
+/* src/battle/battle_disp.c */
+typedef void (*TtydFn_btlDispTexPlane2)(f32 (*)[4], u32, GXColor, s32);
+typedef int (*TtydPre_btlDispTexPlane2)(f32 (**)[4], u32 *, GXColor *, s32 *);
+typedef void (*TtydPost_btlDispTexPlane2)(f32 (*)[4], u32, GXColor, s32);
+/* src/battle/battle_disp.c */
+typedef void (*TtydFn_btlDispTexPlane3)(f32 (*)[4], u32, GXColor, GXColor, GXColor, GXColor, s32);
+typedef int (*TtydPre_btlDispTexPlane3)(f32 (**)[4], u32 *, GXColor *, GXColor *, GXColor *, GXColor *, s32 *);
+typedef void (*TtydPost_btlDispTexPlane3)(f32 (*)[4], u32, GXColor, GXColor, GXColor, GXColor, s32);
+/* src/battle/battle_disp.c */
+typedef void (*TtydFn_btlDispInit)(void);
+typedef int (*TtydPre_btlDispInit)(void);
+typedef void (*TtydPost_btlDispInit)(void);
+/* src/battle/battle_disp.c */
+typedef BattlePoseType (*TtydFn__GetStatusPoseType)(BattleUnit *);
+typedef int (*TtydPre__GetStatusPoseType)(BattlePoseType *, BattleUnit * *);
+typedef void (*TtydPost__GetStatusPoseType)(BattlePoseType *, BattleUnit *);
+/* src/battle/battle_disp.c */
+typedef void (*TtydFn_btlDispMain)(void);
+typedef int (*TtydPre_btlDispMain)(void);
+typedef void (*TtydPost_btlDispMain)(void);
+/* src/battle/battle_disp.c */
+typedef void (*TtydFn_btlUnitPartsDisp)(CameraId, BattleUnitPart *);
+typedef int (*TtydPre_btlUnitPartsDisp)(CameraId *, BattleUnitPart * *);
+typedef void (*TtydPost_btlUnitPartsDisp)(CameraId, BattleUnitPart *);
+/* src/battle/battle_disp.c */
+typedef void (*TtydFn_btlDispEntAnime)(BattleUnit *);
+typedef int (*TtydPre_btlDispEntAnime)(BattleUnit * *);
+typedef void (*TtydPost_btlDispEntAnime)(BattleUnit *);
+/* src/battle/battle_disp.c */
+typedef void (*TtydFn_btlDispChangeAnime)(BattleUnitPart *, const char *, BOOL);
+typedef int (*TtydPre_btlDispChangeAnime)(BattleUnitPart * *, const char * *, BOOL *);
+typedef void (*TtydPost_btlDispChangeAnime)(BattleUnitPart *, const char *, BOOL);
+/* src/battle/battle_disp.c */
+typedef void (*TtydFn_btlDispChangePeraAnime)(BattleUnitPart *, const char *);
+typedef int (*TtydPre_btlDispChangePeraAnime)(BattleUnitPart * *, const char * *);
+typedef void (*TtydPost_btlDispChangePeraAnime)(BattleUnitPart *, const char *);
+/* src/battle/battle_disp.c */
+typedef void (*TtydFn_btlDispPoseAnime)(BattleUnitPart *);
+typedef int (*TtydPre_btlDispPoseAnime)(BattleUnitPart * *);
+typedef void (*TtydPost_btlDispPoseAnime)(BattleUnitPart *);
+/* src/battle/battle_disp.c */
+typedef void (*TtydFn_btlGetScreenPoint)(Vec *, Vec *);
+typedef int (*TtydPre_btlGetScreenPoint)(Vec * *, Vec * *);
+typedef void (*TtydPost_btlGetScreenPoint)(Vec *, Vec *);
+/* src/battle/battle_disp.c */
+typedef void (*TtydFn_btlDispTex4)(u32, Vec, Vec, Vec, GXColor);
+typedef int (*TtydPre_btlDispTex4)(u32 *, Vec *, Vec *, Vec *, GXColor *);
+typedef void (*TtydPost_btlDispTex4)(u32, Vec, Vec, Vec, GXColor);
+/* src/battle/battle_enemy_item.c */
+typedef void * (*TtydFn_BattleEnemyUseItemCheck)(BattleUnit *);
+typedef int (*TtydPre_BattleEnemyUseItemCheck)(void * *, BattleUnit * *);
+typedef void (*TtydPost_BattleEnemyUseItemCheck)(void * *, BattleUnit *);
+/* src/battle/battle_icon.c */
+typedef void (*TtydFn_BattleIconInit)(void);
+typedef int (*TtydPre_BattleIconInit)(void);
+typedef void (*TtydPost_BattleIconInit)(void);
+/* src/battle/battle_icon.c */
+typedef void (*TtydFn_BattleIconMain)(void);
+typedef int (*TtydPre_BattleIconMain)(void);
+typedef void (*TtydPost_BattleIconMain)(void);
+/* src/battle/battle_icon.c */
+typedef void (*TtydFn_BattleIconEnd)(void);
+typedef int (*TtydPre_BattleIconEnd)(void);
+typedef void (*TtydPost_BattleIconEnd)(void);
+/* src/battle/battle_icon.c */
+typedef BattleIcon * (*TtydFn_BtlIcon_Entry)(u16, f32, f32, f32);
+typedef int (*TtydPre_BtlIcon_Entry)(BattleIcon * *, u16 *, f32 *, f32 *, f32 *);
+typedef void (*TtydPost_BtlIcon_Entry)(BattleIcon * *, u16, f32, f32, f32);
+/* src/battle/battle_icon.c */
+typedef void (*TtydFn_BtlIcon_Delete)(BattleIcon *);
+typedef int (*TtydPre_BtlIcon_Delete)(BattleIcon * *);
+typedef void (*TtydPost_BtlIcon_Delete)(BattleIcon *);
+/* src/battle/battle_information.c */
+typedef void (*TtydFn_BattleInformationSetMode)(FieldBattleInfo *, u32);
+typedef int (*TtydPre_BattleInformationSetMode)(FieldBattleInfo * *, u32 *);
+typedef void (*TtydPost_BattleInformationSetMode)(FieldBattleInfo *, u32);
+/* src/battle/battle_information.c */
+typedef void (*TtydFn_BattleInformationSetParty)(FieldBattleInfo *, BattleUnitType);
+typedef int (*TtydPre_BattleInformationSetParty)(FieldBattleInfo * *, BattleUnitType *);
+typedef void (*TtydPost_BattleInformationSetParty)(FieldBattleInfo *, BattleUnitType);
+/* src/battle/battle_information.c */
+typedef void (*TtydFn_BattleInformationSetFirstAttack)(FieldBattleInfo *, u32);
+typedef int (*TtydPre_BattleInformationSetFirstAttack)(FieldBattleInfo * *, u32 *);
+typedef void (*TtydPost_BattleInformationSetFirstAttack)(FieldBattleInfo *, u32);
+/* src/battle/battle_information.c */
+typedef void (*TtydFn_BattleInformationInit)(FieldBattleInfo *);
+typedef int (*TtydPre_BattleInformationInit)(FieldBattleInfo * *);
+typedef void (*TtydPost_BattleInformationInit)(FieldBattleInfo *);
+/* src/battle/battle_information.c */
+typedef void (*TtydFn_BattleInfomationSetBattleSetupInfo)(FieldBattleInfo *, NpcBattleInfo *);
+typedef int (*TtydPre_BattleInfomationSetBattleSetupInfo)(FieldBattleInfo * *, NpcBattleInfo * *);
+typedef void (*TtydPost_BattleInfomationSetBattleSetupInfo)(FieldBattleInfo *, NpcBattleInfo *);
+/* src/battle/battle_information.c */
+typedef void (*TtydFn_BattleInformationSetResult)(FieldBattleInfo *, u32);
+typedef int (*TtydPre_BattleInformationSetResult)(FieldBattleInfo * *, u32 *);
+typedef void (*TtydPost_BattleInformationSetResult)(FieldBattleInfo *, u32);
+/* src/battle/battle_information.c */
+typedef s32 (*TtydFn_BattleInformationGetResult)(FieldBattleInfo *);
+typedef int (*TtydPre_BattleInformationGetResult)(s32 *, FieldBattleInfo * *);
+typedef void (*TtydPost_BattleInformationGetResult)(s32 *, FieldBattleInfo *);
+/* src/battle/battle_information.c */
+typedef void (*TtydFn_BattleInformationSetDropMaterial)(FieldBattleInfo *);
+typedef int (*TtydPre_BattleInformationSetDropMaterial)(FieldBattleInfo * *);
+typedef void (*TtydPost_BattleInformationSetDropMaterial)(FieldBattleInfo *);
+/* src/battle/battle_menu_disp.c */
+typedef void (*TtydFn_SelectedItemCoordinateColorUpDate)(void);
+typedef int (*TtydPre_SelectedItemCoordinateColorUpDate)(void);
+typedef void (*TtydPost_SelectedItemCoordinateColorUpDate)(void);
+/* src/battle/battle_menu_disp.c */
+typedef BOOL (*TtydFn_BattleMenuKeyOKInACT)(BattleWork *);
+typedef int (*TtydPre_BattleMenuKeyOKInACT)(BOOL *, BattleWork * *);
+typedef void (*TtydPost_BattleMenuKeyOKInACT)(BOOL *, BattleWork *);
+/* src/battle/battle_menu_disp.c */
+typedef void (*TtydFn_battleMenuDispInit)(void);
+typedef int (*TtydPre_battleMenuDispInit)(void);
+typedef void (*TtydPost_battleMenuDispInit)(void);
+/* src/battle/battle_menu_disp.c */
+typedef void (*TtydFn_battleMenuDispEnd)(void);
+typedef int (*TtydPre_battleMenuDispEnd)(void);
+typedef void (*TtydPost_battleMenuDispEnd)(void);
+/* src/battle/battle_menu_disp.c */
+typedef void (*TtydFn_BattleMenuDisp_ActSelect_Init)(BattleWork *, BattleCursor *, BattleCommandAct *, BOOL);
+typedef int (*TtydPre_BattleMenuDisp_ActSelect_Init)(BattleWork * *, BattleCursor * *, BattleCommandAct * *, BOOL *);
+typedef void (*TtydPost_BattleMenuDisp_ActSelect_Init)(BattleWork *, BattleCursor *, BattleCommandAct *, BOOL);
+/* src/battle/battle_menu_disp.c */
+typedef void (*TtydFn_BattleMenuDisp_ActSelect_Main)(BattleWork *);
+typedef int (*TtydPre_BattleMenuDisp_ActSelect_Main)(BattleWork * *);
+typedef void (*TtydPost_BattleMenuDisp_ActSelect_Main)(BattleWork *);
+/* src/battle/battle_menu_disp.c */
+typedef void (*TtydFn_BattleMenuDisp_ActSelect_Disp)(BattleWork *);
+typedef int (*TtydPre_BattleMenuDisp_ActSelect_Disp)(BattleWork * *);
+typedef void (*TtydPost_BattleMenuDisp_ActSelect_Disp)(BattleWork *);
+/* src/battle/battle_menu_disp.c */
+typedef void (*TtydFn_BattleMenuDisp_ActSelect_End)(BattleWork *);
+typedef int (*TtydPre_BattleMenuDisp_ActSelect_End)(BattleWork * *);
+typedef void (*TtydPost_BattleMenuDisp_ActSelect_End)(BattleWork *);
+/* src/battle/battle_menu_disp.c */
+typedef void (*TtydFn_BattleMenuDisp_WeaponSelect_Init)(BattleWork *, BattleCursor *, BattleCommandWeapon *, BOOL);
+typedef int (*TtydPre_BattleMenuDisp_WeaponSelect_Init)(BattleWork * *, BattleCursor * *, BattleCommandWeapon * *, BOOL *);
+typedef void (*TtydPost_BattleMenuDisp_WeaponSelect_Init)(BattleWork *, BattleCursor *, BattleCommandWeapon *, BOOL);
+/* src/battle/battle_menu_disp.c */
+typedef void (*TtydFn_BattleMenuDisp_WeaponSelect_Main)(BattleWork *);
+typedef int (*TtydPre_BattleMenuDisp_WeaponSelect_Main)(BattleWork * *);
+typedef void (*TtydPost_BattleMenuDisp_WeaponSelect_Main)(BattleWork *);
+/* src/battle/battle_menu_disp.c */
+typedef void (*TtydFn_BattleMenuDisp_WeaponSelect_Disp)(BattleWork *);
+typedef int (*TtydPre_BattleMenuDisp_WeaponSelect_Disp)(BattleWork * *);
+typedef void (*TtydPost_BattleMenuDisp_WeaponSelect_Disp)(BattleWork *);
+/* src/battle/battle_menu_disp.c */
+typedef void (*TtydFn_BattleMenuDisp_WeaponSelect_End)(BattleWork *);
+typedef int (*TtydPre_BattleMenuDisp_WeaponSelect_End)(BattleWork * *);
+typedef void (*TtydPost_BattleMenuDisp_WeaponSelect_End)(BattleWork *);
+/* src/battle/battle_menu_disp.c */
+typedef void (*TtydFn_BattleMenuDisp_Operation_Init)(BattleWork *, BOOL);
+typedef int (*TtydPre_BattleMenuDisp_Operation_Init)(BattleWork * *, BOOL *);
+typedef void (*TtydPost_BattleMenuDisp_Operation_Init)(BattleWork *, BOOL);
+/* src/battle/battle_menu_disp.c */
+typedef void (*TtydFn_BattleMenuDisp_Operation_Main)(BattleWork *);
+typedef int (*TtydPre_BattleMenuDisp_Operation_Main)(BattleWork * *);
+typedef void (*TtydPost_BattleMenuDisp_Operation_Main)(BattleWork *);
+/* src/battle/battle_menu_disp.c */
+typedef void (*TtydFn_BattleMenuDisp_Operation_Disp)(BattleWork *);
+typedef int (*TtydPre_BattleMenuDisp_Operation_Disp)(BattleWork * *);
+typedef void (*TtydPost_BattleMenuDisp_Operation_Disp)(BattleWork *);
+/* src/battle/battle_menu_disp.c */
+typedef void (*TtydFn_BattleMenuDisp_Operation_End)(BattleWork *);
+typedef int (*TtydPre_BattleMenuDisp_Operation_End)(BattleWork * *);
+typedef void (*TtydPost_BattleMenuDisp_Operation_End)(BattleWork *);
+/* src/battle/battle_menu_disp.c */
+typedef void (*TtydFn_BattleMenuDisp_ChangePartySelect_Init)(BattleWork *, BOOL);
+typedef int (*TtydPre_BattleMenuDisp_ChangePartySelect_Init)(BattleWork * *, BOOL *);
+typedef void (*TtydPost_BattleMenuDisp_ChangePartySelect_Init)(BattleWork *, BOOL);
+/* src/battle/battle_menu_disp.c */
+typedef void (*TtydFn_BattleMenuDisp_ChangePartySelect_Main)(BattleWork *);
+typedef int (*TtydPre_BattleMenuDisp_ChangePartySelect_Main)(BattleWork * *);
+typedef void (*TtydPost_BattleMenuDisp_ChangePartySelect_Main)(BattleWork *);
+/* src/battle/battle_menu_disp.c */
+typedef void (*TtydFn_BattleMenuDisp_ChangePartySelect_Disp)(BattleWork *);
+typedef int (*TtydPre_BattleMenuDisp_ChangePartySelect_Disp)(BattleWork * *);
+typedef void (*TtydPost_BattleMenuDisp_ChangePartySelect_Disp)(BattleWork *);
+/* src/battle/battle_menu_disp.c */
+typedef void (*TtydFn_BattleMenuDisp_ChangePartySelect_End)(BattleWork *);
+typedef int (*TtydPre_BattleMenuDisp_ChangePartySelect_End)(BattleWork * *);
+typedef void (*TtydPost_BattleMenuDisp_ChangePartySelect_End)(BattleWork *);
+/* src/battle/battle_menu_disp.c */
+typedef void (*TtydFn_BattleMenuDisp_MultiItem_Init)(BattleWork *, BOOL);
+typedef int (*TtydPre_BattleMenuDisp_MultiItem_Init)(BattleWork * *, BOOL *);
+typedef void (*TtydPost_BattleMenuDisp_MultiItem_Init)(BattleWork *, BOOL);
+/* src/battle/battle_menu_disp.c */
+typedef void (*TtydFn_BattleMenuDisp_MultiItem_Main)(BattleWork *);
+typedef int (*TtydPre_BattleMenuDisp_MultiItem_Main)(BattleWork * *);
+typedef void (*TtydPost_BattleMenuDisp_MultiItem_Main)(BattleWork *);
+/* src/battle/battle_menu_disp.c */
+typedef void (*TtydFn_BattleMenuDisp_MultiItem_Disp)(BattleWork *);
+typedef int (*TtydPre_BattleMenuDisp_MultiItem_Disp)(BattleWork * *);
+typedef void (*TtydPost_BattleMenuDisp_MultiItem_Disp)(BattleWork *);
+/* src/battle/battle_menu_disp.c */
+typedef void (*TtydFn_BattleMenuDisp_MultiItem_End)(BattleWork *);
+typedef int (*TtydPre_BattleMenuDisp_MultiItem_End)(BattleWork * *);
+typedef void (*TtydPost_BattleMenuDisp_MultiItem_End)(BattleWork *);
+/* src/battle/battle_monosiri.c */
+typedef TattleEntry * (*TtydFn_battleGetUnitMonosiriPtr)(s32);
+typedef int (*TtydPre_battleGetUnitMonosiriPtr)(TattleEntry * *, s32 *);
+typedef void (*TtydPost_battleGetUnitMonosiriPtr)(TattleEntry * *, s32);
+/* src/battle/battle_monosiri.c */
+typedef BOOL (*TtydFn_battleCheckUnitMonosiriFlag)(BattleUnit *);
+typedef int (*TtydPre_battleCheckUnitMonosiriFlag)(BOOL *, BattleUnit * *);
+typedef void (*TtydPost_battleCheckUnitMonosiriFlag)(BOOL *, BattleUnit *);
+/* src/battle/battle_monosiri.c */
+typedef void (*TtydFn_battleSetUnitMonosiriFlag)(BattleUnitType);
+typedef int (*TtydPre_battleSetUnitMonosiriFlag)(BattleUnitType *);
+typedef void (*TtydPost_battleSetUnitMonosiriFlag)(BattleUnitType);
+/* src/battle/battle_pad.c */
+typedef void (*TtydFn_BattlePadInit)(void);
+typedef int (*TtydPre_BattlePadInit)(void);
+typedef void (*TtydPost_BattlePadInit)(void);
+/* src/battle/battle_pad.c */
+typedef void (*TtydFn_BtlPad_WorkInit)(BattleWorkPad *);
+typedef int (*TtydPre_BtlPad_WorkInit)(BattleWorkPad * *);
+typedef void (*TtydPost_BtlPad_WorkInit)(BattleWorkPad *);
+/* src/battle/battle_pad.c */
+typedef void (*TtydFn_BtlPad_WorkUpdate)(BattleWorkPad *, s32);
+typedef int (*TtydPre_BtlPad_WorkUpdate)(BattleWorkPad * *, s32 *);
+typedef void (*TtydPost_BtlPad_WorkUpdate)(BattleWorkPad *, s32);
+/* src/battle/battle_pad.c */
+typedef u32 (*TtydFn_BattlePadGetTrigger)(void);
+typedef int (*TtydPre_BattlePadGetTrigger)(u32 *);
+typedef void (*TtydPost_BattlePadGetTrigger)(u32 *);
+/* src/battle/battle_pad.c */
+typedef u32 (*TtydFn_BattlePadGetNow)(void);
+typedef int (*TtydPre_BattlePadGetNow)(u32 *);
+typedef void (*TtydPost_BattlePadGetNow)(u32 *);
+/* src/battle/battle_pad.c */
+typedef BOOL (*TtydFn_BattlePadCheckTrigger)(s32);
+typedef int (*TtydPre_BattlePadCheckTrigger)(BOOL *, s32 *);
+typedef void (*TtydPost_BattlePadCheckTrigger)(BOOL *, s32);
+/* src/battle/battle_pad.c */
+typedef BOOL (*TtydFn_BattlePadMultiCheckTrigger)(s32, s32);
+typedef int (*TtydPre_BattlePadMultiCheckTrigger)(BOOL *, s32 *, s32 *);
+typedef void (*TtydPost_BattlePadMultiCheckTrigger)(BOOL *, s32, s32);
+/* src/battle/battle_pad.c */
+typedef BOOL (*TtydFn_BattlePadCheckRecordTrigger)(s32, s32);
+typedef int (*TtydPre_BattlePadCheckRecordTrigger)(BOOL *, s32 *, s32 *);
+typedef void (*TtydPost_BattlePadCheckRecordTrigger)(BOOL *, s32, s32);
+/* src/battle/battle_pad.c */
+typedef u32 (*TtydFn_BattlePadMultiCheckRecordTrigger)(s32, s32, s32);
+typedef int (*TtydPre_BattlePadMultiCheckRecordTrigger)(u32 *, s32 *, s32 *, s32 *);
+typedef void (*TtydPost_BattlePadMultiCheckRecordTrigger)(u32 *, s32, s32, s32);
+/* src/battle/battle_pad.c */
+typedef s32 (*TtydFn_BattlePadCheckNow)(s32);
+typedef int (*TtydPre_BattlePadCheckNow)(s32 *, s32 *);
+typedef void (*TtydPost_BattlePadCheckNow)(s32 *, s32);
+/* src/battle/battle_pad.c */
+typedef BOOL (*TtydFn_BattlePadMultiCheckNow)(s32, s32);
+typedef int (*TtydPre_BattlePadMultiCheckNow)(BOOL *, s32 *, s32 *);
+typedef void (*TtydPost_BattlePadMultiCheckNow)(BOOL *, s32, s32);
+/* src/battle/battle_pad.c */
+typedef s32 (*TtydFn_BattlePadCheckUp)(s32);
+typedef int (*TtydPre_BattlePadCheckUp)(s32 *, s32 *);
+typedef void (*TtydPost_BattlePadCheckUp)(s32 *, s32);
+/* src/battle/battle_pad.c */
+typedef u32 (*TtydFn_BattlePadMultiCheckUp)(s32, s32);
+typedef int (*TtydPre_BattlePadMultiCheckUp)(u32 *, s32 *, s32 *);
+typedef void (*TtydPost_BattlePadMultiCheckUp)(u32 *, s32, s32);
+/* src/battle/battle_pad.c */
+typedef s32 (*TtydFn_BattlePadCheckRepeat)(s32);
+typedef int (*TtydPre_BattlePadCheckRepeat)(s32 *, s32 *);
+typedef void (*TtydPost_BattlePadCheckRepeat)(s32 *, s32);
+/* src/battle/battle_pad.c */
+typedef u32 (*TtydFn_BattlePadMultiCheckRepeat)(s32, s32);
+typedef int (*TtydPre_BattlePadMultiCheckRepeat)(u32 *, s32 *, s32 *);
+typedef void (*TtydPost_BattlePadMultiCheckRepeat)(u32 *, s32, s32);
+/* src/battle/battle_seq.c */
+typedef void (*TtydFn_BattleSequenceManager)(void);
+typedef int (*TtydPre_BattleSequenceManager)(void);
+typedef void (*TtydPost_BattleSequenceManager)(void);
+/* src/battle/battle_seq.c */
+typedef void (*TtydFn_battleSortPhaseMoveTable)(BattleWork *, s32);
+typedef int (*TtydPre_battleSortPhaseMoveTable)(BattleWork * *, s32 *);
+typedef void (*TtydPost_battleSortPhaseMoveTable)(BattleWork *, s32);
+/* src/battle/battle_seq.c */
+typedef BOOL (*TtydFn_BattleWaitAllActiveEvtEnd)(BattleWork *);
+typedef int (*TtydPre_BattleWaitAllActiveEvtEnd)(BOOL *, BattleWork * *);
+typedef void (*TtydPost_BattleWaitAllActiveEvtEnd)(BOOL *, BattleWork *);
+/* src/battle/battle_seq.c */
+typedef BOOL (*TtydFn_BattleWaitAllActiveEvtEnd_NoBgSetEndWait)(BattleWork *);
+typedef int (*TtydPre_BattleWaitAllActiveEvtEnd_NoBgSetEndWait)(BOOL *, BattleWork * *);
+typedef void (*TtydPost_BattleWaitAllActiveEvtEnd_NoBgSetEndWait)(BOOL *, BattleWork *);
+/* src/battle/battle_seq_command.c */
+typedef void (*TtydFn_BattleCommandInit)(BattleWork *);
+typedef int (*TtydPre_BattleCommandInit)(BattleWork * *);
+typedef void (*TtydPost_BattleCommandInit)(BattleWork *);
+/* src/battle/battle_seq_command.c */
+typedef s32 (*TtydFn_BattleCommandInput)(void *);
+typedef int (*TtydPre_BattleCommandInput)(s32 *, void * *);
+typedef void (*TtydPost_BattleCommandInput)(s32 *, void *);
+/* src/battle/battle_seq_command.c */
+typedef void (*TtydFn_BattleCommandDisplay)(BattleWork *);
+typedef int (*TtydPre_BattleCommandDisplay)(BattleWork * *);
+typedef void (*TtydPost_BattleCommandDisplay)(BattleWork *);
+/* src/battle/battle_seq_command.c */
+typedef BOOL (*TtydFn_BattleCommandCheckChangePositionEnable)(BattleWork *);
+typedef int (*TtydPre_BattleCommandCheckChangePositionEnable)(BOOL *, BattleWork * *);
+typedef void (*TtydPost_BattleCommandCheckChangePositionEnable)(BOOL *, BattleWork *);
+/* src/battle/battle_seq_command.c */
+typedef struct BattleWeapon * (*TtydFn_BattleGetSelectWeapon)(BattleWork *);
+typedef int (*TtydPre_BattleGetSelectWeapon)(struct BattleWeapon * *, BattleWork * *);
+typedef void (*TtydPost_BattleGetSelectWeapon)(struct BattleWeapon * *, BattleWork *);
+/* src/battle/battle_seq_command.c */
+typedef void * (*TtydFn_BattleSetConfuseAct)(BattleWork *, BattleUnit *);
+typedef int (*TtydPre_BattleSetConfuseAct)(void * *, BattleWork * *, BattleUnit * *);
+typedef void (*TtydPost_BattleSetConfuseAct)(void * *, BattleWork *, BattleUnit *);
+/* src/battle/battle_seq_end.c */
+typedef const char * (*TtydFn_BattleGetRankNameLabel)(s32);
+typedef int (*TtydPre_BattleGetRankNameLabel)(const char * *, s32 *);
+typedef void (*TtydPost_BattleGetRankNameLabel)(const char * *, s32);
+/* src/battle/battle_seq_end.c */
+typedef void (*TtydFn_btlseqEnd)(BattleWork *);
+typedef int (*TtydPre_btlseqEnd)(BattleWork * *);
+typedef void (*TtydPost_btlseqEnd)(BattleWork *);
+/* src/battle/battle_stage.c */
+typedef BattleStage * (*TtydFn_BattleStageGetPtr)(void);
+typedef int (*TtydPre_BattleStageGetPtr)(BattleStage * *);
+typedef void (*TtydPost_BattleStageGetPtr)(BattleStage * *);
+/* src/battle/battle_stage.c */
+typedef void (*TtydFn_BattleStageInit)(void);
+typedef int (*TtydPre_BattleStageInit)(void);
+typedef void (*TtydPost_BattleStageInit)(void);
+/* src/battle/battle_stage.c */
+typedef void (*TtydFn_BattleStageMain)(void);
+typedef int (*TtydPre_BattleStageMain)(void);
+typedef void (*TtydPost_BattleStageMain)(void);
+/* src/battle/battle_stage.c */
+typedef void (*TtydFn_BattleStageEnd)(void);
+typedef int (*TtydPre_BattleStageEnd)(void);
+typedef void (*TtydPost_BattleStageEnd)(void);
+/* src/battle/battle_stage.c */
+typedef void (*TtydFn_BattleStageDisp)(void);
+typedef int (*TtydPre_BattleStageDisp)(void);
+typedef void (*TtydPost_BattleStageDisp)(void);
+/* src/battle/battle_stage.c */
+typedef void (*TtydFn_BattleStageOnLightInCommand)(void);
+typedef int (*TtydPre_BattleStageOnLightInCommand)(void);
+typedef void (*TtydPost_BattleStageOnLightInCommand)(void);
+/* src/battle/battle_stage.c */
+typedef void (*TtydFn_BattleStageOffLightInCommand)(s32, s32);
+typedef int (*TtydPre_BattleStageOffLightInCommand)(s32 *, s32 *);
+typedef void (*TtydPost_BattleStageOffLightInCommand)(s32, s32);
+/* src/battle/battle_stage.c */
+typedef void (*TtydFn_BattleStageOnLightFriendInCommand)(void);
+typedef int (*TtydPre_BattleStageOnLightFriendInCommand)(void);
+typedef void (*TtydPost_BattleStageOnLightFriendInCommand)(void);
+/* src/battle/battle_stage.c */
+typedef void (*TtydFn_BattleStageOffLightFriendInCommand)(void);
+typedef int (*TtydPre_BattleStageOffLightFriendInCommand)(void);
+typedef void (*TtydPost_BattleStageOffLightFriendInCommand)(void);
+/* src/battle/battle_stage.c */
+typedef void (*TtydFn_BattleStageOnLightEnemyInCommand)(void);
+typedef int (*TtydPre_BattleStageOnLightEnemyInCommand)(void);
+typedef void (*TtydPost_BattleStageOnLightEnemyInCommand)(void);
+/* src/battle/battle_stage.c */
+typedef void (*TtydFn_BattleStageOffLightEnemyInCommand)(void);
+typedef int (*TtydPre_BattleStageOffLightEnemyInCommand)(void);
+typedef void (*TtydPost_BattleStageOffLightEnemyInCommand)(void);
+/* src/battle/battle_stage.c */
+typedef s32 (*TtydFn_BattleStageGetLightNumberByName)(const char *);
+typedef int (*TtydPre_BattleStageGetLightNumberByName)(s32 *, const char * *);
+typedef void (*TtydPost_BattleStageGetLightNumberByName)(s32 *, const char *);
+/* src/battle/battle_stage.c */
+typedef s32 (*TtydFn_BattleStageSysLightEntry)(const char *);
+typedef int (*TtydPre_BattleStageSysLightEntry)(s32 *, const char * *);
+typedef void (*TtydPost_BattleStageSysLightEntry)(s32 *, const char *);
+/* src/battle/battle_stage.c */
+typedef void (*TtydFn_BattleStageLightRelease)(s32, s32, u8);
+typedef int (*TtydPre_BattleStageLightRelease)(s32 *, s32 *, u8 *);
+typedef void (*TtydPost_BattleStageLightRelease)(s32, s32, u8);
+/* src/battle/battle_stage.c */
+typedef void (*TtydFn_BattleStageLightSetLightColor)(s32, u8, u8, u8, s32, u8);
+typedef int (*TtydPre_BattleStageLightSetLightColor)(s32 *, u8 *, u8 *, u8 *, s32 *, u8 *);
+typedef void (*TtydPost_BattleStageLightSetLightColor)(s32, u8, u8, u8, s32, u8);
+/* src/battle/battle_stage.c */
+typedef void (*TtydFn_BattleStageLightSetWidth)(s32, s32, s32, u8);
+typedef int (*TtydPre_BattleStageLightSetWidth)(s32 *, s32 *, s32 *, u8 *);
+typedef void (*TtydPost_BattleStageLightSetWidth)(s32, s32, s32, u8);
+/* src/battle/battle_stage.c */
+typedef void (*TtydFn_BattleStageLightSetPosition)(s32, f32, f32, f32, s32, u8);
+typedef int (*TtydPre_BattleStageLightSetPosition)(s32 *, f32 *, f32 *, f32 *, s32 *, u8 *);
+typedef void (*TtydPost_BattleStageLightSetPosition)(s32, f32, f32, f32, s32, u8);
+/* src/battle/battle_stage.c */
+typedef void (*TtydFn_BattleStageLightSetTarget)(s32, f32, f32, f32, s32, u8);
+typedef int (*TtydPre_BattleStageLightSetTarget)(s32 *, f32 *, f32 *, f32 *, s32 *, u8 *);
+typedef void (*TtydPost_BattleStageLightSetTarget)(s32, f32, f32, f32, s32, u8);
+/* src/battle/battle_stage.c */
+typedef void (*TtydFn_BattleStageLightSetTargetByUnit)(s32, s32, f32, f32, f32, s32, u8);
+typedef int (*TtydPre_BattleStageLightSetTargetByUnit)(s32 *, s32 *, f32 *, f32 *, f32 *, s32 *, u8 *);
+typedef void (*TtydPost_BattleStageLightSetTargetByUnit)(s32, s32, f32, f32, f32, s32, u8);
+/* src/battle/battle_stage.c */
+typedef void (*TtydFn_BattleStageLightSetUpVec)(s32, f32, f32, f32, s32, u8);
+typedef int (*TtydPre_BattleStageLightSetUpVec)(s32 *, f32 *, f32 *, f32 *, s32 *, u8 *);
+typedef void (*TtydPost_BattleStageLightSetUpVec)(s32, f32, f32, f32, s32, u8);
+/* src/battle/battle_stage.c */
+typedef void (*TtydFn_BattleStageSetStgDark)(u8, s32, u8);
+typedef int (*TtydPre_BattleStageSetStgDark)(u8 *, s32 *, u8 *);
+typedef void (*TtydPost_BattleStageSetStgDark)(u8, s32, u8);
+/* src/battle/battle_stage.c */
+typedef void (*TtydFn_BattleStageSetStgDarkBase)(u8, s32, u8);
+typedef int (*TtydPre_BattleStageSetStgDarkBase)(u8 *, s32 *, u8 *);
+typedef void (*TtydPost_BattleStageSetStgDarkBase)(u8, s32, u8);
+/* src/battle/battle_stage.c */
+typedef void (*TtydFn_BattleStageReturnStgDarkBase)(s32, u8);
+typedef int (*TtydPre_BattleStageReturnStgDarkBase)(s32 *, u8 *);
+typedef void (*TtydPost_BattleStageReturnStgDarkBase)(s32, u8);
+/* src/battle/battle_stage.c */
+typedef void (*TtydFn_BattleStageSetAudDark)(u8, s32, u8);
+typedef int (*TtydPre_BattleStageSetAudDark)(u8 *, s32 *, u8 *);
+typedef void (*TtydPost_BattleStageSetAudDark)(u8, s32, u8);
+/* src/battle/battle_stage.c */
+typedef void (*TtydFn_BattleStageSetAudDarkBase)(u8, s32, u8);
+typedef int (*TtydPre_BattleStageSetAudDarkBase)(u8 *, s32 *, u8 *);
+typedef void (*TtydPost_BattleStageSetAudDarkBase)(u8, s32, u8);
+/* src/battle/battle_stage.c */
+typedef void (*TtydFn_BattleStageReturnAudDarkBase)(s32, u8);
+typedef int (*TtydPre_BattleStageReturnAudDarkBase)(s32 *, u8 *);
+typedef void (*TtydPost_BattleStageReturnAudDarkBase)(s32, u8);
+/* src/battle/battle_stage.c */
+typedef BattleSpotWork * (*TtydFn_BatSpotGetPtr)(void);
+typedef int (*TtydPre_BatSpotGetPtr)(BattleSpotWork * *);
+typedef void (*TtydPost_BatSpotGetPtr)(BattleSpotWork * *);
+/* src/battle/battle_stage_object.c */
+typedef BattleStageObject * (*TtydFn_BattleGetObjectPtr)(s32);
+typedef int (*TtydPre_BattleGetObjectPtr)(BattleStageObject * *, s32 *);
+typedef void (*TtydPost_BattleGetObjectPtr)(BattleStageObject * *, s32);
+/* src/battle/battle_stage_object.c */
+typedef BattleStageObject * (*TtydFn_BattleSearchObjectPtr)(const char *);
+typedef int (*TtydPre_BattleSearchObjectPtr)(BattleStageObject * *, const char * *);
+typedef void (*TtydPost_BattleSearchObjectPtr)(BattleStageObject * *, const char *);
+/* src/battle/battle_stage_object.c */
+typedef void (*TtydFn_BattleStageObjectInit)(void);
+typedef int (*TtydPre_BattleStageObjectInit)(void);
+typedef void (*TtydPost_BattleStageObjectInit)(void);
+/* src/battle/battle_stage_object.c */
+typedef void (*TtydFn_BattleStageObjectMain)(void);
+typedef int (*TtydPre_BattleStageObjectMain)(void);
+typedef void (*TtydPost_BattleStageObjectMain)(void);
+/* src/battle/battle_stage_object.c */
+typedef void (*TtydFn_BattleStage_DestroyA1)(void);
+typedef int (*TtydPre_BattleStage_DestroyA1)(void);
+typedef void (*TtydPost_BattleStage_DestroyA1)(void);
+/* src/battle/battle_stage_object.c */
+typedef void (*TtydFn_BattleStage_DestroyA2)(void);
+typedef int (*TtydPre_BattleStage_DestroyA2)(void);
+typedef void (*TtydPost_BattleStage_DestroyA2)(void);
+/* src/battle/battle_stage_object.c */
+typedef void (*TtydFn_BattleStage_DestroyB)(void);
+typedef int (*TtydPre_BattleStage_DestroyB)(void);
+typedef void (*TtydPost_BattleStage_DestroyB)(void);
+/* src/battle/battle_stage_object.c */
+typedef void (*TtydFn_BattleStage_NozzleDirChangeCheck)(void);
+typedef int (*TtydPre_BattleStage_NozzleDirChangeCheck)(void);
+typedef void (*TtydPost_BattleStage_NozzleDirChangeCheck)(void);
+/* src/battle/battle_stage_object.c */
+typedef void (*TtydFn_BattleStage_WallCloseCheck)(void);
+typedef int (*TtydPre_BattleStage_WallCloseCheck)(void);
+typedef void (*TtydPost_BattleStage_WallCloseCheck)(void);
+/* src/battle/battle_stage_object.c */
+typedef void (*TtydFn_BattleStage_IronFrameFallCheck)(void);
+typedef int (*TtydPre_BattleStage_IronFrameFallCheck)(void);
+typedef void (*TtydPost_BattleStage_IronFrameFallCheck)(void);
+/* src/battle/battle_stage_object.c */
+typedef void (*TtydFn_BattleStage_NozzleWorkCheck)(s32);
+typedef int (*TtydPre_BattleStage_NozzleWorkCheck)(s32 *);
+typedef void (*TtydPost_BattleStage_NozzleWorkCheck)(s32);
+/* src/battle/battle_stage_object.c */
+typedef BOOL (*TtydFn_BattleFogEndCheck)(void);
+typedef int (*TtydPre_BattleFogEndCheck)(BOOL *);
+typedef void (*TtydPost_BattleFogEndCheck)(BOOL *);
+/* src/battle/battle_stage_object.c */
+typedef BOOL (*TtydFn_BattleFogForceStop)(void);
+typedef int (*TtydPre_BattleFogForceStop)(BOOL *);
+typedef void (*TtydPost_BattleFogForceStop)(BOOL *);
+/* src/battle/battle_stage_object.c */
+typedef s32 (*TtydFn_BattleStage_ObjectFallCheck)(void);
+typedef int (*TtydPre_BattleStage_ObjectFallCheck)(s32 *);
+typedef void (*TtydPost_BattleStage_ObjectFallCheck)(s32 *);
+/* src/battle/battle_status_effect.c */
+typedef void (*TtydFn_BattleStatusEffectInit)(BattleUnit *);
+typedef int (*TtydPre_BattleStatusEffectInit)(BattleUnit * *);
+typedef void (*TtydPost_BattleStatusEffectInit)(BattleUnit *);
+/* src/battle/battle_status_effect.c */
+typedef void (*TtydFn_BattleStatusEffectMain)(BattleUnit *);
+typedef int (*TtydPre_BattleStatusEffectMain)(BattleUnit * *);
+typedef void (*TtydPost_BattleStatusEffectMain)(BattleUnit *);
+/* src/battle/battle_status_effect.c */
+typedef void (*TtydFn_BattleStatusEffectDelete)(BattleUnit *);
+typedef int (*TtydPre_BattleStatusEffectDelete)(BattleUnit * *);
+typedef void (*TtydPost_BattleStatusEffectDelete)(BattleUnit *);
+/* src/battle/battle_status_effect.c */
+typedef void (*TtydFn_BSE_TurnFirstProcessEffectEntry)(BattleUnit *, s16);
+typedef int (*TtydPre_BSE_TurnFirstProcessEffectEntry)(BattleUnit * *, s16 *);
+typedef void (*TtydPost_BSE_TurnFirstProcessEffectEntry)(BattleUnit *, s16);
+/* src/battle/battle_status_effect.c */
+typedef BOOL (*TtydFn_BSE_TurnFirstProcessEffectMain)(BattleUnit *);
+typedef int (*TtydPre_BSE_TurnFirstProcessEffectMain)(BOOL *, BattleUnit * *);
+typedef void (*TtydPost_BSE_TurnFirstProcessEffectMain)(BOOL *, BattleUnit *);
+/* src/battle/battle_status_effect.c */
+typedef void (*TtydFn_BattleStatusChangeInfoWorkInit)(BattleUnit *);
+typedef int (*TtydPre_BattleStatusChangeInfoWorkInit)(BattleUnit * *);
+typedef void (*TtydPost_BattleStatusChangeInfoWorkInit)(BattleUnit *);
+/* src/battle/battle_status_effect.c */
+typedef void (*TtydFn_BattleStatusChangeInfoSetAnnouce)(BattleUnit *, s32, s32, s32);
+typedef int (*TtydPre_BattleStatusChangeInfoSetAnnouce)(BattleUnit * *, s32 *, s32 *, s32 *);
+typedef void (*TtydPost_BattleStatusChangeInfoSetAnnouce)(BattleUnit *, s32, s32, s32);
+/* src/battle/battle_status_effect.c */
+typedef BOOL (*TtydFn_BattleStatusChangeAnnouceMain)(BattleWork *);
+typedef int (*TtydPre_BattleStatusChangeAnnouceMain)(BOOL *, BattleWork * *);
+typedef void (*TtydPost_BattleStatusChangeAnnouceMain)(BOOL *, BattleWork *);
+/* src/battle/battle_status_effect.c */
+typedef void (*TtydFn_BattleStatusChangeMsgWorkInit)(void);
+typedef int (*TtydPre_BattleStatusChangeMsgWorkInit)(void);
+typedef void (*TtydPost_BattleStatusChangeMsgWorkInit)(void);
+/* src/battle/battle_status_effect.c */
+typedef void (*TtydFn_BattleStatusChangeMsgSetAnnouce)(BattleUnit *, s32, s32);
+typedef int (*TtydPre_BattleStatusChangeMsgSetAnnouce)(BattleUnit * *, s32 *, s32 *);
+typedef void (*TtydPost_BattleStatusChangeMsgSetAnnouce)(BattleUnit *, s32, s32);
+/* src/battle/battle_status_effect.c */
+typedef void (*TtydFn_BattleStatusChangeMsgAdjust)(BattleWork *);
+typedef int (*TtydPre_BattleStatusChangeMsgAdjust)(BattleWork * *);
+typedef void (*TtydPost_BattleStatusChangeMsgAdjust)(BattleWork *);
+/* src/battle/battle_status_effect.c */
+typedef BOOL (*TtydFn_BattleStatusChangeMsgMain)(BattleWork *);
+typedef int (*TtydPre_BattleStatusChangeMsgMain)(BOOL *, BattleWork * *);
+typedef void (*TtydPost_BattleStatusChangeMsgMain)(BOOL *, BattleWork *);
+/* src/battle/battle_status_icon.c */
+typedef void (*TtydFn_BattleStatusIconInit)(BattleUnit *);
+typedef int (*TtydPre_BattleStatusIconInit)(BattleUnit * *);
+typedef void (*TtydPost_BattleStatusIconInit)(BattleUnit *);
+/* src/battle/battle_status_icon.c */
+typedef void (*TtydFn_BattleStatusIconMain)(BattleUnit *);
+typedef int (*TtydPre_BattleStatusIconMain)(BattleUnit * *);
+typedef void (*TtydPost_BattleStatusIconMain)(BattleUnit *);
+/* src/battle/battle_status_icon.c */
+typedef void (*TtydFn_BattleStatusIconDelete)(BattleUnit *);
+typedef int (*TtydPre_BattleStatusIconDelete)(BattleUnit * *);
+typedef void (*TtydPost_BattleStatusIconDelete)(BattleUnit *);
+/* src/battle/battle_sub.c */
+typedef f32 (*TtydFn_cosfd)(f32);
+typedef int (*TtydPre_cosfd)(f32 *, f32 *);
+typedef void (*TtydPost_cosfd)(f32 *, f32);
+/* src/battle/battle_sub.c */
+typedef f32 (*TtydFn_atan2f_safety)(f32, f32);
+typedef int (*TtydPre_atan2f_safety)(f32 *, f32 *, f32 *);
+typedef void (*TtydPost_atan2f_safety)(f32 *, f32, f32);
+/* src/battle/battle_sub.c */
+typedef void (*TtydFn_btlMovePos)(f32, f32, f32 *, f32 *);
+typedef int (*TtydPre_btlMovePos)(f32 *, f32 *, f32 * *, f32 * *);
+typedef void (*TtydPost_btlMovePos)(f32, f32, f32 *, f32 *);
+/* src/battle/battle_sub.c */
+typedef f32 (*TtydFn_intpl_sub)(s32, s32, s32, f32, f32);
+typedef int (*TtydPre_intpl_sub)(f32 *, s32 *, s32 *, s32 *, f32 *, f32 *);
+typedef void (*TtydPost_intpl_sub)(f32 *, s32, s32, s32, f32, f32);
+/* src/battle/battle_sub.c */
+typedef s32 (*TtydFn_BtlCompForwardLv)(s32, f32);
+typedef int (*TtydPre_BtlCompForwardLv)(s32 *, s32 *, f32 *);
+typedef void (*TtydPost_BtlCompForwardLv)(s32 *, s32, f32);
+/* src/battle/battle_sub.c */
+typedef s32 (*TtydFn_BattleTransID)(EventEntry *, s32);
+typedef int (*TtydPre_BattleTransID)(s32 *, EventEntry * *, s32 *);
+typedef void (*TtydPost_BattleTransID)(s32 *, EventEntry *, s32);
+/* src/battle/battle_sub.c */
+typedef void (*TtydFn_btlsubResetMoveColorLvAll)(BattleWork *);
+typedef int (*TtydPre_btlsubResetMoveColorLvAll)(BattleWork * *);
+typedef void (*TtydPost_btlsubResetMoveColorLvAll)(BattleWork *);
+/* src/battle/battle_unit.c */
+typedef BOOL (*TtydFn_BtlUnit_Init)(void);
+typedef int (*TtydPre_BtlUnit_Init)(BOOL *);
+typedef void (*TtydPost_BtlUnit_Init)(BOOL *);
+/* src/battle/battle_unit.c */
+typedef BOOL (*TtydFn_BtlUnit_Delete)(BattleUnit *);
+typedef int (*TtydPre_BtlUnit_Delete)(BOOL *, BattleUnit * *);
+typedef void (*TtydPost_BtlUnit_Delete)(BOOL *, BattleUnit *);
+/* src/battle/battle_unit.c */
+typedef BattleUnit * (*TtydFn_BtlUnit_Spawn)(BattleUnitSetup *, s32);
+typedef int (*TtydPre_BtlUnit_Spawn)(BattleUnit * *, BattleUnitSetup * *, s32 *);
+typedef void (*TtydPost_BtlUnit_Spawn)(BattleUnit * *, BattleUnitSetup *, s32);
+/* src/battle/battle_unit.c */
+typedef s32 (*TtydFn_BtlUnit_GetUnitId)(BattleUnit *);
+typedef int (*TtydPre_BtlUnit_GetUnitId)(s32 *, BattleUnit * *);
+typedef void (*TtydPost_BtlUnit_GetUnitId)(s32 *, BattleUnit *);
+/* src/battle/battle_unit.c */
+typedef BattleUnitPart * (*TtydFn_BtlUnit_GetPartsPtr)(BattleUnit *, s32);
+typedef int (*TtydPre_BtlUnit_GetPartsPtr)(BattleUnitPart * *, BattleUnit * *, s32 *);
+typedef void (*TtydPost_BtlUnit_GetPartsPtr)(BattleUnitPart * *, BattleUnit *, s32);
+/* src/battle/battle_unit.c */
+typedef s32 (*TtydFn_BtlUnit_GetBodyPartsId)(BattleUnit *);
+typedef int (*TtydPre_BtlUnit_GetBodyPartsId)(s32 *, BattleUnit * *);
+typedef void (*TtydPost_BtlUnit_GetBodyPartsId)(s32 *, BattleUnit *);
+/* src/battle/battle_unit.c */
+typedef void (*TtydFn_BtlUnit_SetPos)(BattleUnit *, f32, f32, f32);
+typedef int (*TtydPre_BtlUnit_SetPos)(BattleUnit * *, f32 *, f32 *, f32 *);
+typedef void (*TtydPost_BtlUnit_SetPos)(BattleUnit *, f32, f32, f32);
+/* src/battle/battle_unit.c */
+typedef void (*TtydFn_BtlUnit_AddPos)(BattleUnit *, f32, f32, f32);
+typedef int (*TtydPre_BtlUnit_AddPos)(BattleUnit * *, f32 *, f32 *, f32 *);
+typedef void (*TtydPost_BtlUnit_AddPos)(BattleUnit *, f32, f32, f32);
+/* src/battle/battle_unit.c */
+typedef void (*TtydFn_BtlUnit_GetPartsPos)(BattleUnitPart *, f32 *, f32 *, f32 *);
+typedef int (*TtydPre_BtlUnit_GetPartsPos)(BattleUnitPart * *, f32 * *, f32 * *, f32 * *);
+typedef void (*TtydPost_BtlUnit_GetPartsPos)(BattleUnitPart *, f32 *, f32 *, f32 *);
+/* src/battle/battle_unit.c */
+typedef void (*TtydFn_BtlUnit_SetPartsPos)(BattleUnitPart *, f32, f32, f32);
+typedef int (*TtydPre_BtlUnit_SetPartsPos)(BattleUnitPart * *, f32 *, f32 *, f32 *);
+typedef void (*TtydPost_BtlUnit_SetPartsPos)(BattleUnitPart *, f32, f32, f32);
+/* src/battle/battle_unit.c */
+typedef void (*TtydFn_BtlUnit_AddPartsPos)(BattleUnitPart *, f32, f32, f32);
+typedef int (*TtydPre_BtlUnit_AddPartsPos)(BattleUnitPart * *, f32 *, f32 *, f32 *);
+typedef void (*TtydPost_BtlUnit_AddPartsPos)(BattleUnitPart *, f32, f32, f32);
+/* src/battle/battle_unit.c */
+typedef void (*TtydFn_BtlUnit_GetHitPos)(BattleUnit *, BattleUnitPart *, f32 *, f32 *, f32 *);
+typedef int (*TtydPre_BtlUnit_GetHitPos)(BattleUnit * *, BattleUnitPart * *, f32 * *, f32 * *, f32 * *);
+typedef void (*TtydPost_BtlUnit_GetHitPos)(BattleUnit *, BattleUnitPart *, f32 *, f32 *, f32 *);
+/* src/battle/battle_unit.c */
+typedef void (*TtydFn_BtlUnit_SetHitOffset)(BattleUnit *, BattleUnitPart *, f32, f32, f32);
+typedef int (*TtydPre_BtlUnit_SetHitOffset)(BattleUnit * *, BattleUnitPart * *, f32 *, f32 *, f32 *);
+typedef void (*TtydPost_BtlUnit_SetHitOffset)(BattleUnit *, BattleUnitPart *, f32, f32, f32);
+/* src/battle/battle_unit.c */
+typedef void (*TtydFn_BtlUnit_SetHitCursorOffset)(BattleUnit *, BattleUnitPart *, f32, f32, f32);
+typedef int (*TtydPre_BtlUnit_SetHitCursorOffset)(BattleUnit * *, BattleUnitPart * *, f32 *, f32 *, f32 *);
+typedef void (*TtydPost_BtlUnit_SetHitCursorOffset)(BattleUnit *, BattleUnitPart *, f32, f32, f32);
+/* src/battle/battle_unit.c */
+typedef void (*TtydFn_BtlUnit_GetHomePos)(BattleUnit *, f32 *, f32 *, f32 *);
+typedef int (*TtydPre_BtlUnit_GetHomePos)(BattleUnit * *, f32 * *, f32 * *, f32 * *);
+typedef void (*TtydPost_BtlUnit_GetHomePos)(BattleUnit *, f32 *, f32 *, f32 *);
+/* src/battle/battle_unit.c */
+typedef void (*TtydFn_BtlUnit_SetHomePos)(BattleUnit *, f32, f32, f32);
+typedef int (*TtydPre_BtlUnit_SetHomePos)(BattleUnit * *, f32 *, f32 *, f32 *);
+typedef void (*TtydPost_BtlUnit_SetHomePos)(BattleUnit *, f32, f32, f32);
+/* src/battle/battle_unit.c */
+typedef void (*TtydFn_BtlUnit_AddHomePos)(BattleUnit *, f32, f32, f32);
+typedef int (*TtydPre_BtlUnit_AddHomePos)(BattleUnit * *, f32 *, f32 *, f32 *);
+typedef void (*TtydPost_BtlUnit_AddHomePos)(BattleUnit *, f32, f32, f32);
+/* src/battle/battle_unit.c */
+typedef void (*TtydFn_BtlUnit_SetPartsHomePos)(BattleUnitPart *, f32, f32, f32);
+typedef int (*TtydPre_BtlUnit_SetPartsHomePos)(BattleUnitPart * *, f32 *, f32 *, f32 *);
+typedef void (*TtydPost_BtlUnit_SetPartsHomePos)(BattleUnitPart *, f32, f32, f32);
+/* src/battle/battle_unit.c */
+typedef void (*TtydFn_BtlUnit_SetRotate)(BattleUnit *, f32, f32, f32);
+typedef int (*TtydPre_BtlUnit_SetRotate)(BattleUnit * *, f32 *, f32 *, f32 *);
+typedef void (*TtydPost_BtlUnit_SetRotate)(BattleUnit *, f32, f32, f32);
+/* src/battle/battle_unit.c */
+typedef void (*TtydFn_BtlUnit_GetRotate)(BattleUnit *, f32 *, f32 *, f32 *);
+typedef int (*TtydPre_BtlUnit_GetRotate)(BattleUnit * *, f32 * *, f32 * *, f32 * *);
+typedef void (*TtydPost_BtlUnit_GetRotate)(BattleUnit *, f32 *, f32 *, f32 *);
+/* src/battle/battle_unit.c */
+typedef void (*TtydFn_BtlUnit_AddRotate)(BattleUnit *, f32, f32, f32);
+typedef int (*TtydPre_BtlUnit_AddRotate)(BattleUnit * *, f32 *, f32 *, f32 *);
+typedef void (*TtydPost_BtlUnit_AddRotate)(BattleUnit *, f32, f32, f32);
+/* src/battle/battle_unit.c */
+typedef void (*TtydFn_BtlUnit_SetPartsRotate)(BattleUnitPart *, f32, f32, f32);
+typedef int (*TtydPre_BtlUnit_SetPartsRotate)(BattleUnitPart * *, f32 *, f32 *, f32 *);
+typedef void (*TtydPost_BtlUnit_SetPartsRotate)(BattleUnitPart *, f32, f32, f32);
+/* src/battle/battle_unit.c */
+typedef void (*TtydFn_BtlUnit_GetPartsRotate)(BattleUnitPart *, f32 *, f32 *, f32 *);
+typedef int (*TtydPre_BtlUnit_GetPartsRotate)(BattleUnitPart * *, f32 * *, f32 * *, f32 * *);
+typedef void (*TtydPost_BtlUnit_GetPartsRotate)(BattleUnitPart *, f32 *, f32 *, f32 *);
+/* src/battle/battle_unit.c */
+typedef void (*TtydFn_BtlUnit_AddPartsRotate)(BattleUnitPart *, f32, f32, f32);
+typedef int (*TtydPre_BtlUnit_AddPartsRotate)(BattleUnitPart * *, f32 *, f32 *, f32 *);
+typedef void (*TtydPost_BtlUnit_AddPartsRotate)(BattleUnitPart *, f32, f32, f32);
+/* src/battle/battle_unit.c */
+typedef void (*TtydFn_BtlUnit_SetBaseRotate)(BattleUnit *, f32, f32, f32);
+typedef int (*TtydPre_BtlUnit_SetBaseRotate)(BattleUnit * *, f32 *, f32 *, f32 *);
+typedef void (*TtydPost_BtlUnit_SetBaseRotate)(BattleUnit *, f32, f32, f32);
+/* src/battle/battle_unit.c */
+typedef void (*TtydFn_BtlUnit_GetBaseRotate)(BattleUnit *, f32 *, f32 *, f32 *);
+typedef int (*TtydPre_BtlUnit_GetBaseRotate)(BattleUnit * *, f32 * *, f32 * *, f32 * *);
+typedef void (*TtydPost_BtlUnit_GetBaseRotate)(BattleUnit *, f32 *, f32 *, f32 *);
+/* src/battle/battle_unit.c */
+typedef void (*TtydFn_BtlUnit_SetPartsBaseRotate)(BattleUnitPart *, f32, f32, f32);
+typedef int (*TtydPre_BtlUnit_SetPartsBaseRotate)(BattleUnitPart * *, f32 *, f32 *, f32 *);
+typedef void (*TtydPost_BtlUnit_SetPartsBaseRotate)(BattleUnitPart *, f32, f32, f32);
+/* src/battle/battle_unit.c */
+typedef void (*TtydFn_BtlUnit_GetPartsBaseRotate)(BattleUnitPart *, f32 *, f32 *, f32 *);
+typedef int (*TtydPre_BtlUnit_GetPartsBaseRotate)(BattleUnitPart * *, f32 * *, f32 * *, f32 * *);
+typedef void (*TtydPost_BtlUnit_GetPartsBaseRotate)(BattleUnitPart *, f32 *, f32 *, f32 *);
+/* src/battle/battle_unit.c */
+typedef void (*TtydFn_BtlUnit_SetRotateOffset)(BattleUnit *, f32, f32, f32);
+typedef int (*TtydPre_BtlUnit_SetRotateOffset)(BattleUnit * *, f32 *, f32 *, f32 *);
+typedef void (*TtydPost_BtlUnit_SetRotateOffset)(BattleUnit *, f32, f32, f32);
+/* src/battle/battle_unit.c */
+typedef void (*TtydFn_BtlUnit_SetPartsRotateOffset)(BattleUnitPart *, f32, f32, f32);
+typedef int (*TtydPre_BtlUnit_SetPartsRotateOffset)(BattleUnitPart * *, f32 *, f32 *, f32 *);
+typedef void (*TtydPost_BtlUnit_SetPartsRotateOffset)(BattleUnitPart *, f32, f32, f32);
+/* src/battle/battle_unit.c */
+typedef void (*TtydFn_BtlUnit_AddPartsRotateOffset)(BattleUnitPart *, f32, f32, f32);
+typedef int (*TtydPre_BtlUnit_AddPartsRotateOffset)(BattleUnitPart * *, f32 *, f32 *, f32 *);
+typedef void (*TtydPost_BtlUnit_AddPartsRotateOffset)(BattleUnitPart *, f32, f32, f32);
+/* src/battle/battle_unit.c */
+typedef void (*TtydFn_BtlUnit_SetBaseScale)(BattleUnit *, f32, f32, f32);
+typedef int (*TtydPre_BtlUnit_SetBaseScale)(BattleUnit * *, f32 *, f32 *, f32 *);
+typedef void (*TtydPost_BtlUnit_SetBaseScale)(BattleUnit *, f32, f32, f32);
+/* src/battle/battle_unit.c */
+typedef void (*TtydFn_BtlUnit_GetScale)(BattleUnit *, f32 *, f32 *, f32 *);
+typedef int (*TtydPre_BtlUnit_GetScale)(BattleUnit * *, f32 * *, f32 * *, f32 * *);
+typedef void (*TtydPost_BtlUnit_GetScale)(BattleUnit *, f32 *, f32 *, f32 *);
+/* src/battle/battle_unit.c */
+typedef void (*TtydFn_BtlUnit_SetScale)(BattleUnit *, f32, f32, f32);
+typedef int (*TtydPre_BtlUnit_SetScale)(BattleUnit * *, f32 *, f32 *, f32 *);
+typedef void (*TtydPost_BtlUnit_SetScale)(BattleUnit *, f32, f32, f32);
+/* src/battle/battle_unit.c */
+typedef void (*TtydFn_BtlUnit_AddScale)(BattleUnit *, f32, f32, f32);
+typedef int (*TtydPre_BtlUnit_AddScale)(BattleUnit * *, f32 *, f32 *, f32 *);
+typedef void (*TtydPost_BtlUnit_AddScale)(BattleUnit *, f32, f32, f32);
+/* src/battle/battle_unit.c */
+typedef void (*TtydFn_BtlUnit_SetPartsBaseScale)(BattleUnitPart *, f32, f32, f32);
+typedef int (*TtydPre_BtlUnit_SetPartsBaseScale)(BattleUnitPart * *, f32 *, f32 *, f32 *);
+typedef void (*TtydPost_BtlUnit_SetPartsBaseScale)(BattleUnitPart *, f32, f32, f32);
+/* src/battle/battle_unit.c */
+typedef void (*TtydFn_BtlUnit_SetPartsScale)(BattleUnitPart *, f32, f32, f32);
+typedef int (*TtydPre_BtlUnit_SetPartsScale)(BattleUnitPart * *, f32 *, f32 *, f32 *);
+typedef void (*TtydPost_BtlUnit_SetPartsScale)(BattleUnitPart *, f32, f32, f32);
+/* src/battle/battle_unit.c */
+typedef void (*TtydFn_BtlUnit_AddPartsScale)(BattleUnitPart *, f32, f32, f32);
+typedef int (*TtydPre_BtlUnit_AddPartsScale)(BattleUnitPart * *, f32 *, f32 *, f32 *);
+typedef void (*TtydPost_BtlUnit_AddPartsScale)(BattleUnitPart *, f32, f32, f32);
+/* src/battle/battle_unit.c */
+typedef s32 (*TtydFn_BtlUnit_GetWidth)(BattleUnit *);
+typedef int (*TtydPre_BtlUnit_GetWidth)(s32 *, BattleUnit * *);
+typedef void (*TtydPost_BtlUnit_GetWidth)(s32 *, BattleUnit *);
+/* src/battle/battle_unit.c */
+typedef s32 (*TtydFn_BtlUnit_GetHeight)(BattleUnit *);
+typedef int (*TtydPre_BtlUnit_GetHeight)(s32 *, BattleUnit * *);
+typedef void (*TtydPost_BtlUnit_GetHeight)(s32 *, BattleUnit *);
+/* src/battle/battle_unit.c */
+typedef void (*TtydFn_BtlUnit_SetHeight)(BattleUnit *, s16);
+typedef int (*TtydPre_BtlUnit_SetHeight)(BattleUnit * *, s16 *);
+typedef void (*TtydPost_BtlUnit_SetHeight)(BattleUnit *, s16);
+/* src/battle/battle_unit.c */
+typedef void (*TtydFn_BtlUnit_SetOffsetPos)(BattleUnit *, f32, f32, f32);
+typedef int (*TtydPre_BtlUnit_SetOffsetPos)(BattleUnit * *, f32 *, f32 *, f32 *);
+typedef void (*TtydPost_BtlUnit_SetOffsetPos)(BattleUnit *, f32, f32, f32);
+/* src/battle/battle_unit.c */
+typedef void (*TtydFn_BtlUnit_SetPartsOffsetPos)(BattleUnitPart *, f32, f32, f32);
+typedef int (*TtydPre_BtlUnit_SetPartsOffsetPos)(BattleUnitPart * *, f32 *, f32 *, f32 *);
+typedef void (*TtydPost_BtlUnit_SetPartsOffsetPos)(BattleUnitPart *, f32, f32, f32);
+/* src/battle/battle_unit.c */
+typedef void (*TtydFn_BtlUnit_AddPartsOffsetPos)(BattleUnitPart *, f32, f32, f32);
+typedef int (*TtydPre_BtlUnit_AddPartsOffsetPos)(BattleUnitPart * *, f32 *, f32 *, f32 *);
+typedef void (*TtydPost_BtlUnit_AddPartsOffsetPos)(BattleUnitPart *, f32, f32, f32);
+/* src/battle/battle_unit.c */
+typedef void (*TtydFn_BtlUnit_SetDispOffset)(BattleUnit *, f32, f32, f32);
+typedef int (*TtydPre_BtlUnit_SetDispOffset)(BattleUnit * *, f32 *, f32 *, f32 *);
+typedef void (*TtydPost_BtlUnit_SetDispOffset)(BattleUnit *, f32, f32, f32);
+/* src/battle/battle_unit.c */
+typedef void (*TtydFn_BtlUnit_SetPartsDispOffset)(BattleUnitPart *, f32, f32, f32);
+typedef int (*TtydPre_BtlUnit_SetPartsDispOffset)(BattleUnitPart * *, f32 *, f32 *, f32 *);
+typedef void (*TtydPost_BtlUnit_SetPartsDispOffset)(BattleUnitPart *, f32, f32, f32);
+/* src/battle/battle_unit.c */
+typedef void (*TtydFn_BtlUnit_AddPartsDispOffset)(BattleUnitPart *, f32, f32, f32);
+typedef int (*TtydPre_BtlUnit_AddPartsDispOffset)(BattleUnitPart * *, f32 *, f32 *, f32 *);
+typedef void (*TtydPost_BtlUnit_AddPartsDispOffset)(BattleUnitPart *, f32, f32, f32);
+/* src/battle/battle_unit.c */
+typedef void (*TtydFn_BtlUnit_SetMoveStartPos)(BattleUnit *, f32, f32, f32);
+typedef int (*TtydPre_BtlUnit_SetMoveStartPos)(BattleUnit * *, f32 *, f32 *, f32 *);
+typedef void (*TtydPost_BtlUnit_SetMoveStartPos)(BattleUnit *, f32, f32, f32);
+/* src/battle/battle_unit.c */
+typedef void (*TtydFn_BtlUnit_SetPartsMoveStartPos)(BattleUnitPart *, f32, f32, f32);
+typedef int (*TtydPre_BtlUnit_SetPartsMoveStartPos)(BattleUnitPart * *, f32 *, f32 *, f32 *);
+typedef void (*TtydPost_BtlUnit_SetPartsMoveStartPos)(BattleUnitPart *, f32, f32, f32);
+/* src/battle/battle_unit.c */
+typedef void (*TtydFn_BtlUnit_SetMoveCurrentPos)(BattleUnit *, f32, f32, f32);
+typedef int (*TtydPre_BtlUnit_SetMoveCurrentPos)(BattleUnit * *, f32 *, f32 *, f32 *);
+typedef void (*TtydPost_BtlUnit_SetMoveCurrentPos)(BattleUnit *, f32, f32, f32);
+/* src/battle/battle_unit.c */
+typedef void (*TtydFn_BtlUnit_SetPartsMoveCurrentPos)(BattleUnitPart *, f32, f32, f32);
+typedef int (*TtydPre_BtlUnit_SetPartsMoveCurrentPos)(BattleUnitPart * *, f32 *, f32 *, f32 *);
+typedef void (*TtydPost_BtlUnit_SetPartsMoveCurrentPos)(BattleUnitPart *, f32, f32, f32);
+/* src/battle/battle_unit.c */
+typedef void (*TtydFn_BtlUnit_SetMoveTargetPos)(BattleUnit *, f32, f32, f32);
+typedef int (*TtydPre_BtlUnit_SetMoveTargetPos)(BattleUnit * *, f32 *, f32 *, f32 *);
+typedef void (*TtydPost_BtlUnit_SetMoveTargetPos)(BattleUnit *, f32, f32, f32);
+/* src/battle/battle_unit.c */
+typedef void (*TtydFn_BtlUnit_SetPartsMoveTargetPos)(BattleUnitPart *, f32, f32, f32);
+typedef int (*TtydPre_BtlUnit_SetPartsMoveTargetPos)(BattleUnitPart * *, f32 *, f32 *, f32 *);
+typedef void (*TtydPost_BtlUnit_SetPartsMoveTargetPos)(BattleUnitPart *, f32, f32, f32);
+/* src/battle/battle_unit.c */
+typedef void (*TtydFn_BtlUnit_SetFallAccel)(BattleUnit *, f32);
+typedef int (*TtydPre_BtlUnit_SetFallAccel)(BattleUnit * *, f32 *);
+typedef void (*TtydPost_BtlUnit_SetFallAccel)(BattleUnit *, f32);
+/* src/battle/battle_unit.c */
+typedef void (*TtydFn_BtlUnit_SetPartsFallAccel)(BattleUnitPart *, f32);
+typedef int (*TtydPre_BtlUnit_SetPartsFallAccel)(BattleUnitPart * *, f32 *);
+typedef void (*TtydPost_BtlUnit_SetPartsFallAccel)(BattleUnitPart *, f32);
+/* src/battle/battle_unit.c */
+typedef void (*TtydFn_BtlUnit_SetMoveSpeed)(BattleUnit *, f32);
+typedef int (*TtydPre_BtlUnit_SetMoveSpeed)(BattleUnit * *, f32 *);
+typedef void (*TtydPost_BtlUnit_SetMoveSpeed)(BattleUnit *, f32);
+/* src/battle/battle_unit.c */
+typedef void (*TtydFn_BtlUnit_SetPartsMoveSpeed)(BattleUnitPart *, f32);
+typedef int (*TtydPre_BtlUnit_SetPartsMoveSpeed)(BattleUnitPart * *, f32 *);
+typedef void (*TtydPost_BtlUnit_SetPartsMoveSpeed)(BattleUnitPart *, f32);
+/* src/battle/battle_unit.c */
+typedef void (*TtydFn_BtlUnit_SetJumpSpeed)(BattleUnit *, f32);
+typedef int (*TtydPre_BtlUnit_SetJumpSpeed)(BattleUnit * *, f32 *);
+typedef void (*TtydPost_BtlUnit_SetJumpSpeed)(BattleUnit *, f32);
+/* src/battle/battle_unit.c */
+typedef s8 (*TtydFn_BtlUnit_GetBelong)(BattleUnit *);
+typedef int (*TtydPre_BtlUnit_GetBelong)(s8 *, BattleUnit * *);
+typedef void (*TtydPost_BtlUnit_GetBelong)(s8 *, BattleUnit *);
+/* src/battle/battle_unit.c */
+typedef BOOL (*TtydFn_BtlUnit_SetStatus)(BattleUnit *, StatusEffectType, s8, s8);
+typedef int (*TtydPre_BtlUnit_SetStatus)(BOOL *, BattleUnit * *, StatusEffectType *, s8 *, s8 *);
+typedef void (*TtydPost_BtlUnit_SetStatus)(BOOL *, BattleUnit *, StatusEffectType, s8, s8);
+/* src/battle/battle_unit.c */
+typedef void (*TtydFn_BtlUnit_ClearStatus)(BattleUnit *);
+typedef int (*TtydPre_BtlUnit_ClearStatus)(BattleUnit * *);
+typedef void (*TtydPost_BtlUnit_ClearStatus)(BattleUnit *);
+/* src/battle/battle_unit.c */
+typedef BOOL (*TtydFn_BtlUnit_CheckRecoveryStatus)(BattleUnit *, StatusEffectType);
+typedef int (*TtydPre_BtlUnit_CheckRecoveryStatus)(BOOL *, BattleUnit * *, StatusEffectType *);
+typedef void (*TtydPost_BtlUnit_CheckRecoveryStatus)(BOOL *, BattleUnit *, StatusEffectType);
+/* src/battle/battle_unit.c */
+typedef s32 (*TtydFn_BtlUnit_CheckStatusFlag)(BattleUnit *, s32);
+typedef int (*TtydPre_BtlUnit_CheckStatusFlag)(s32 *, BattleUnit * *, s32 *);
+typedef void (*TtydPost_BtlUnit_CheckStatusFlag)(s32 *, BattleUnit *, s32);
+/* src/battle/battle_unit.c */
+typedef void (*TtydFn_BtlUnit_OnStatusFlag)(BattleUnit *, s32);
+typedef int (*TtydPre_BtlUnit_OnStatusFlag)(BattleUnit * *, s32 *);
+typedef void (*TtydPost_BtlUnit_OnStatusFlag)(BattleUnit *, s32);
+/* src/battle/battle_unit.c */
+typedef void (*TtydFn_BtlUnit_OffStatusFlag)(BattleUnit *, s32);
+typedef int (*TtydPre_BtlUnit_OffStatusFlag)(BattleUnit * *, s32 *);
+typedef void (*TtydPost_BtlUnit_OffStatusFlag)(BattleUnit *, s32);
+/* src/battle/battle_unit.c */
+typedef s32 (*TtydFn_BtlUnit_CheckUnitFlag)(BattleUnit *, s32);
+typedef int (*TtydPre_BtlUnit_CheckUnitFlag)(s32 *, BattleUnit * *, s32 *);
+typedef void (*TtydPost_BtlUnit_CheckUnitFlag)(s32 *, BattleUnit *, s32);
+/* src/battle/battle_unit.c */
+typedef void (*TtydFn_BtlUnit_OnUnitFlag)(BattleUnit *, s32);
+typedef int (*TtydPre_BtlUnit_OnUnitFlag)(BattleUnit * *, s32 *);
+typedef void (*TtydPost_BtlUnit_OnUnitFlag)(BattleUnit *, s32);
+/* src/battle/battle_unit.c */
+typedef void (*TtydFn_BtlUnit_OffUnitFlag)(BattleUnit *, s32);
+typedef int (*TtydPre_BtlUnit_OffUnitFlag)(BattleUnit * *, s32 *);
+typedef void (*TtydPost_BtlUnit_OffUnitFlag)(BattleUnit *, s32);
+/* src/battle/battle_unit.c */
+typedef const char * (*TtydFn_BtlUnit_GetPoseNameFromType)(BattleUnitPart *, s32);
+typedef int (*TtydPre_BtlUnit_GetPoseNameFromType)(const char * *, BattleUnitPart * *, s32 *);
+typedef void (*TtydPost_BtlUnit_GetPoseNameFromType)(const char * *, BattleUnitPart *, s32);
+/* src/battle/battle_unit.c */
+typedef void (*TtydFn_BtlUnit_SetAnimType)(BattleUnitPart *, s32);
+typedef int (*TtydPre_BtlUnit_SetAnimType)(BattleUnitPart * *, s32 *);
+typedef void (*TtydPost_BtlUnit_SetAnimType)(BattleUnitPart *, s32);
+/* src/battle/battle_unit.c */
+typedef void (*TtydFn_BtlUnit_SetAnim)(BattleUnitPart *, const char *);
+typedef int (*TtydPre_BtlUnit_SetAnim)(BattleUnitPart * *, const char * *);
+typedef void (*TtydPost_BtlUnit_SetAnim)(BattleUnitPart *, const char *);
+/* src/battle/battle_unit.c */
+typedef void (*TtydFn_BtlUnit_SetBodyAnimType)(BattleUnit *, s32);
+typedef int (*TtydPre_BtlUnit_SetBodyAnimType)(BattleUnit * *, s32 *);
+typedef void (*TtydPost_BtlUnit_SetBodyAnimType)(BattleUnit *, s32);
+/* src/battle/battle_unit.c */
+typedef void (*TtydFn_BtlUnit_SetBodyAnim)(BattleUnit *, const char *);
+typedef int (*TtydPre_BtlUnit_SetBodyAnim)(BattleUnit * *, const char * *);
+typedef void (*TtydPost_BtlUnit_SetBodyAnim)(BattleUnit *, const char *);
+/* src/battle/battle_unit.c */
+typedef void (*TtydFn_BtlUnit_ChangeTalkAnim)(s32);
+typedef int (*TtydPre_BtlUnit_ChangeTalkAnim)(s32 *);
+typedef void (*TtydPost_BtlUnit_ChangeTalkAnim)(s32);
+/* src/battle/battle_unit.c */
+typedef void (*TtydFn_BtlUnit_ChangeStayAnim)(s32);
+typedef int (*TtydPre_BtlUnit_ChangeStayAnim)(s32 *);
+typedef void (*TtydPost_BtlUnit_ChangeStayAnim)(s32);
+/* src/battle/battle_unit.c */
+typedef void (*TtydFn_BtlUnit_GetTalkTogePos)(s32, f32 *, f32 *, f32 *);
+typedef int (*TtydPre_BtlUnit_GetTalkTogePos)(s32 *, f32 * *, f32 * *, f32 * *);
+typedef void (*TtydPost_BtlUnit_GetTalkTogePos)(s32, f32 *, f32 *, f32 *);
+/* src/battle/battle_unit.c */
+typedef BOOL (*TtydFn_BtlUnit_GetEnemyBelong)(BattleUnit *);
+typedef int (*TtydPre_BtlUnit_GetEnemyBelong)(BOOL *, BattleUnit * *);
+typedef void (*TtydPost_BtlUnit_GetEnemyBelong)(BOOL *, BattleUnit *);
+/* src/battle/battle_unit.c */
+typedef s32 (*TtydFn_BtlUnit_GetHitDamage)(BattleUnit *);
+typedef int (*TtydPre_BtlUnit_GetHitDamage)(s32 *, BattleUnit * *);
+typedef void (*TtydPost_BtlUnit_GetHitDamage)(s32 *, BattleUnit *);
+/* src/battle/battle_unit.c */
+typedef s32 (*TtydFn_BtlUnit_GetTotalHitDamage)(BattleUnit *);
+typedef int (*TtydPre_BtlUnit_GetTotalHitDamage)(s32 *, BattleUnit * *);
+typedef void (*TtydPost_BtlUnit_GetTotalHitDamage)(s32 *, BattleUnit *);
+/* src/battle/battle_unit.c */
+typedef void (*TtydFn_BtlUnit_SetTotalHitDamage)(BattleUnit *, s16);
+typedef int (*TtydPre_BtlUnit_SetTotalHitDamage)(BattleUnit * *, s16 *);
+typedef void (*TtydPost_BtlUnit_SetTotalHitDamage)(BattleUnit *, s16);
+/* src/battle/battle_unit.c */
+typedef BOOL (*TtydFn_BtlUnit_GetACPossibility)(BattleUnit *);
+typedef int (*TtydPre_BtlUnit_GetACPossibility)(BOOL *, BattleUnit * *);
+typedef void (*TtydPost_BtlUnit_GetACPossibility)(BOOL *, BattleUnit *);
+/* src/battle/battle_unit.c */
+typedef void * (*TtydFn_BtlUnit_GetData)(BattleUnit *, s32);
+typedef int (*TtydPre_BtlUnit_GetData)(void * *, BattleUnit * *, s32 *);
+typedef void (*TtydPost_BtlUnit_GetData)(void * *, BattleUnit *, s32);
+/* src/battle/battle_unit.c */
+typedef BOOL (*TtydFn_BtlUnit_CheckData)(BattleUnit *, s32);
+typedef int (*TtydPre_BtlUnit_CheckData)(BOOL *, BattleUnit * *, s32 *);
+typedef void (*TtydPost_BtlUnit_CheckData)(BOOL *, BattleUnit *, s32);
+/* src/battle/battle_unit.c */
+typedef BOOL (*TtydFn_BtlUnit_CanGuardStatus)(BattleUnit *);
+typedef int (*TtydPre_BtlUnit_CanGuardStatus)(BOOL *, BattleUnit * *);
+typedef void (*TtydPost_BtlUnit_CanGuardStatus)(BOOL *, BattleUnit *);
+/* src/battle/battle_unit.c */
+typedef BOOL (*TtydFn_BtlUnit_CanActStatus)(BattleUnit *);
+typedef int (*TtydPre_BtlUnit_CanActStatus)(BOOL *, BattleUnit * *);
+typedef void (*TtydPost_BtlUnit_CanActStatus)(BOOL *, BattleUnit *);
+/* src/battle/battle_unit.c */
+typedef void (*TtydFn_BtlUnit_SetParamFromPouch)(BattleUnit *);
+typedef int (*TtydPre_BtlUnit_SetParamFromPouch)(BattleUnit * *);
+typedef void (*TtydPost_BtlUnit_SetParamFromPouch)(BattleUnit *);
+/* src/battle/battle_unit.c */
+typedef void (*TtydFn_BtlUnit_ReviseHpFp)(BattleUnit *);
+typedef int (*TtydPre_BtlUnit_ReviseHpFp)(BattleUnit * *);
+typedef void (*TtydPost_BtlUnit_ReviseHpFp)(BattleUnit *);
+/* src/battle/battle_unit.c */
+typedef void (*TtydFn_BtlUnit_SetParamToPouch)(BattleUnit *);
+typedef int (*TtydPre_BtlUnit_SetParamToPouch)(BattleUnit * *);
+typedef void (*TtydPost_BtlUnit_SetParamToPouch)(BattleUnit *);
+/* src/battle/battle_unit.c */
+typedef void (*TtydFn_BtlUnit_CheckPinchStatus)(BattleUnit *, BOOL);
+typedef int (*TtydPre_BtlUnit_CheckPinchStatus)(BattleUnit * *, BOOL *);
+typedef void (*TtydPost_BtlUnit_CheckPinchStatus)(BattleUnit *, BOOL);
+/* src/battle/battle_unit.c */
+typedef s32 (*TtydFn_BtlUnit_GetExp)(BattleUnit *);
+typedef int (*TtydPre_BtlUnit_GetExp)(s32 *, BattleUnit * *);
+typedef void (*TtydPost_BtlUnit_GetExp)(s32 *, BattleUnit *);
+/* src/battle/battle_unit.c */
+typedef s32 (*TtydFn_BtlUnit_GetFp)(BattleUnit *);
+typedef int (*TtydPre_BtlUnit_GetFp)(s32 *, BattleUnit * *);
+typedef void (*TtydPost_BtlUnit_GetFp)(s32 *, BattleUnit *);
+/* src/battle/battle_unit.c */
+typedef void (*TtydFn_BtlUnit_SetFp)(BattleUnit *, s32);
+typedef int (*TtydPre_BtlUnit_SetFp)(BattleUnit * *, s32 *);
+typedef void (*TtydPost_BtlUnit_SetFp)(BattleUnit *, s32);
+/* src/battle/battle_unit.c */
+typedef void (*TtydFn_BtlUnit_RecoverHp)(BattleUnit *, s32);
+typedef int (*TtydPre_BtlUnit_RecoverHp)(BattleUnit * *, s32 *);
+typedef void (*TtydPost_BtlUnit_RecoverHp)(BattleUnit *, s32);
+/* src/battle/battle_unit.c */
+typedef void (*TtydFn_BtlUnit_RecoverFp)(BattleUnit *, s32);
+typedef int (*TtydPre_BtlUnit_RecoverFp)(BattleUnit * *, s32 *);
+typedef void (*TtydPost_BtlUnit_RecoverFp)(BattleUnit *, s32);
+/* src/battle/battle_unit.c */
+typedef s32 (*TtydFn_BtlUnit_GetMaxFp)(BattleUnit *);
+typedef int (*TtydPre_BtlUnit_GetMaxFp)(s32 *, BattleUnit * *);
+typedef void (*TtydPost_BtlUnit_GetMaxFp)(s32 *, BattleUnit *);
+/* src/battle/battle_unit.c */
+typedef void (*TtydFn_BtlUnit_SetMaxFp)(BattleUnit *, s32);
+typedef int (*TtydPre_BtlUnit_SetMaxFp)(BattleUnit * *, s32 *);
+typedef void (*TtydPost_BtlUnit_SetMaxFp)(BattleUnit *, s32);
+/* src/battle/battle_unit.c */
+typedef BOOL (*TtydFn_BtlUnit_CheckWeaponCost)(BattleUnit *, BattleWeapon *);
+typedef int (*TtydPre_BtlUnit_CheckWeaponCost)(BOOL *, BattleUnit * *, BattleWeapon * *);
+typedef void (*TtydPost_BtlUnit_CheckWeaponCost)(BOOL *, BattleUnit *, BattleWeapon *);
+/* src/battle/battle_unit.c */
+typedef void (*TtydFn_BtlUnit_PayWeaponCost)(BattleUnit *, BattleWeapon *);
+typedef int (*TtydPre_BtlUnit_PayWeaponCost)(BattleUnit * *, BattleWeapon * *);
+typedef void (*TtydPost_BtlUnit_PayWeaponCost)(BattleUnit *, BattleWeapon *);
+/* src/battle/battle_unit.c */
+typedef BattleUnit * (*TtydFn_BtlUnit_GetGuardKouraPtr)(BattleUnit *);
+typedef int (*TtydPre_BtlUnit_GetGuardKouraPtr)(BattleUnit * *, BattleUnit * *);
+typedef void (*TtydPost_BtlUnit_GetGuardKouraPtr)(BattleUnit * *, BattleUnit *);
+/* src/battle/battle_unit.c */
+typedef void (*TtydFn_BtlUnit_ResetMoveStatus)(BattleUnit *);
+typedef int (*TtydPre_BtlUnit_ResetMoveStatus)(BattleUnit * *);
+typedef void (*TtydPost_BtlUnit_ResetMoveStatus)(BattleUnit *);
+/* src/battle/battle_unit.c */
+typedef void (*TtydFn_BtlUnit_LoadSeMode)(s32, s32, BtlPoseSoundTable *, BecSndWork *);
+typedef int (*TtydPre_BtlUnit_LoadSeMode)(s32 *, s32 *, BtlPoseSoundTable * *, BecSndWork * *);
+typedef void (*TtydPost_BtlUnit_LoadSeMode)(s32, s32, BtlPoseSoundTable *, BecSndWork *);
+/* src/battle/battle_unit.c */
+typedef void (*TtydFn_BtlUnit_SetSeMode)(BecSndWork *, const char *, const char *, s16, s16, s16, s16, s16);
+typedef int (*TtydPre_BtlUnit_SetSeMode)(BecSndWork * *, const char * *, const char * *, s16 *, s16 *, s16 *, s16 *, s16 *);
+typedef void (*TtydPost_BtlUnit_SetSeMode)(BecSndWork *, const char *, const char *, s16, s16, s16, s16, s16);
+/* src/battle/battle_unit.c */
+typedef void (*TtydFn_BtlUnit_SetCommandAnimPose)(BattleUnit *);
+typedef int (*TtydPre_BtlUnit_SetCommandAnimPose)(BattleUnit * *);
+typedef void (*TtydPost_BtlUnit_SetCommandAnimPose)(BattleUnit *);
+/* src/battle/battle_unit.c */
+typedef void (*TtydFn_BtlUnit_PoseSoundInit)(BattleUnitPart *);
+typedef int (*TtydPre_BtlUnit_PoseSoundInit)(BattleUnitPart * *);
+typedef void (*TtydPost_BtlUnit_PoseSoundInit)(BattleUnitPart *);
+/* src/battle/battle_unit.c */
+typedef void (*TtydFn_BtlUnit_ControlPoseSoundMain)(BattleUnitPart *);
+typedef int (*TtydPre_BtlUnit_ControlPoseSoundMain)(BattleUnitPart * *);
+typedef void (*TtydPost_BtlUnit_ControlPoseSoundMain)(BattleUnitPart *);
+/* src/battle/battle_unit.c */
+typedef s32 (*TtydFn_BtlUnit_snd_se)(BattleUnit *, const char *, s32, s32);
+typedef int (*TtydPre_BtlUnit_snd_se)(s32 *, BattleUnit * *, const char * *, s32 *, s32 *);
+typedef void (*TtydPost_BtlUnit_snd_se)(s32 *, BattleUnit *, const char *, s32, s32);
+/* src/battle/battle_unit.c */
+typedef s32 (*TtydFn_BtlUnit_snd_se_pos)(BattleUnit *, const char *, s32, s16, Vec *);
+typedef int (*TtydPre_BtlUnit_snd_se_pos)(s32 *, BattleUnit * *, const char * *, s32 *, s16 *, Vec * *);
+typedef void (*TtydPost_BtlUnit_snd_se_pos)(s32 *, BattleUnit *, const char *, s32, s16, Vec *);
+/* src/battle/battle_unit.c */
+typedef void (*TtydFn_BtlUnit_HpGaugeMain)(BattleUnit *);
+typedef int (*TtydPre_BtlUnit_HpGaugeMain)(BattleUnit * *);
+typedef void (*TtydPost_BtlUnit_HpGaugeMain)(BattleUnit *);
+/* src/battle/battle_unit.c */
+typedef BOOL (*TtydFn_BtlUnit_EnemyItemCanUseCheck)(s32);
+typedef int (*TtydPre_BtlUnit_EnemyItemCanUseCheck)(BOOL *, s32 *);
+typedef void (*TtydPost_BtlUnit_EnemyItemCanUseCheck)(BOOL *, s32);
+/* src/battle/battle_unit.c */
+typedef BOOL (*TtydFn_BtlUnit_CheckShadowGuard)(BattleUnit *);
+typedef int (*TtydPre_BtlUnit_CheckShadowGuard)(BOOL *, BattleUnit * *);
+typedef void (*TtydPost_BtlUnit_CheckShadowGuard)(BOOL *, BattleUnit *);
+/* src/battle/battle_unit_event.c */
+typedef BOOL (*TtydFn_BattleCheckEndUnitInitEvent)(BattleWork *);
+typedef int (*TtydPre_BattleCheckEndUnitInitEvent)(BOOL *, BattleWork * *);
+typedef void (*TtydPost_BattleCheckEndUnitInitEvent)(BOOL *, BattleWork *);
+/* src/battle/battle_unit_event.c */
+typedef s32 (*TtydFn_BattleRunHitEventDirect)(BattleUnit *, s32, void *);
+typedef int (*TtydPre_BattleRunHitEventDirect)(s32 *, BattleUnit * *, s32 *, void * *);
+typedef void (*TtydPost_BattleRunHitEventDirect)(s32 *, BattleUnit *, s32, void *);
+/* src/battle/battle_unit_event.c */
+typedef s32 (*TtydFn_BattleRunHitEvent)(BattleUnit *, s32);
+typedef int (*TtydPre_BattleRunHitEvent)(s32 *, BattleUnit * *, s32 *);
+typedef void (*TtydPost_BattleRunHitEvent)(s32 *, BattleUnit *, s32);
+/* src/battle/battle_unit_event.c */
+typedef s32 (*TtydFn_BattleRunPhaseEvent)(BattleUnit *, BOOL);
+typedef int (*TtydPre_BattleRunPhaseEvent)(s32 *, BattleUnit * *, BOOL *);
+typedef void (*TtydPost_BattleRunPhaseEvent)(s32 *, BattleUnit *, BOOL);
+/* src/battle/battle_unit_event.c */
+typedef void (*TtydFn_BattlePhaseEventStartDeclare)(BattleUnit *);
+typedef int (*TtydPre_BattlePhaseEventStartDeclare)(BattleUnit * *);
+typedef void (*TtydPost_BattlePhaseEventStartDeclare)(BattleUnit *);
+/* src/battle/battle_unit_event.c */
+typedef s32 (*TtydFn_BattleRunWaitEvent)(BattleUnit *);
+typedef int (*TtydPre_BattleRunWaitEvent)(s32 *, BattleUnit * *);
+typedef void (*TtydPost_BattleRunWaitEvent)(s32 *, BattleUnit *);
+/* src/battle/battle_weapon_power.c */
+typedef s32 (*TtydFn_weaponGetPowerDefault)(BattleUnit *, BattleWeapon *, BattleUnit *, BattleUnitPart *);
+typedef int (*TtydPre_weaponGetPowerDefault)(s32 *, BattleUnit * *, BattleWeapon * *, BattleUnit * *, BattleUnitPart * *);
+typedef void (*TtydPost_weaponGetPowerDefault)(s32 *, BattleUnit *, BattleWeapon *, BattleUnit *, BattleUnitPart *);
+/* src/battle/battle_weapon_power.c */
+typedef s32 (*TtydFn_weaponGetFPPowerDefault)(BattleUnit *, BattleWeapon *, BattleUnit *, BattleUnitPart *);
+typedef int (*TtydPre_weaponGetFPPowerDefault)(s32 *, BattleUnit * *, BattleWeapon * *, BattleUnit * *, BattleUnitPart * *);
+typedef void (*TtydPost_weaponGetFPPowerDefault)(s32 *, BattleUnit *, BattleWeapon *, BattleUnit *, BattleUnitPart *);
+/* src/battle/battle_weapon_power.c */
+typedef s32 (*TtydFn_weaponGetPowerFromMarioJumpLv)(BattleUnit *, BattleWeapon *, BattleUnit *, BattleUnitPart *);
+typedef int (*TtydPre_weaponGetPowerFromMarioJumpLv)(s32 *, BattleUnit * *, BattleWeapon * *, BattleUnit * *, BattleUnitPart * *);
+typedef void (*TtydPost_weaponGetPowerFromMarioJumpLv)(s32 *, BattleUnit *, BattleWeapon *, BattleUnit *, BattleUnitPart *);
+/* src/battle/battle_weapon_power.c */
+typedef s32 (*TtydFn_weaponGetPowerFromMarioHammerLv)(BattleUnit *, BattleWeapon *, BattleUnit *, BattleUnitPart *);
+typedef int (*TtydPre_weaponGetPowerFromMarioHammerLv)(s32 *, BattleUnit * *, BattleWeapon * *, BattleUnit * *, BattleUnitPart * *);
+typedef void (*TtydPost_weaponGetPowerFromMarioHammerLv)(s32 *, BattleUnit *, BattleWeapon *, BattleUnit *, BattleUnitPart *);
+/* src/battle/battle_weapon_power.c */
+typedef s32 (*TtydFn_weaponGetPowerOverlapJump1)(BattleUnit *, BattleWeapon *, BattleUnit *, BattleUnitPart *);
+typedef int (*TtydPre_weaponGetPowerOverlapJump1)(s32 *, BattleUnit * *, BattleWeapon * *, BattleUnit * *, BattleUnitPart * *);
+typedef void (*TtydPost_weaponGetPowerOverlapJump1)(s32 *, BattleUnit *, BattleWeapon *, BattleUnit *, BattleUnitPart *);
+/* src/battle/battle_weapon_power.c */
+typedef s32 (*TtydFn_weaponGetPowerOverlapHammer1)(BattleUnit *, BattleWeapon *, BattleUnit *, BattleUnitPart *);
+typedef int (*TtydPre_weaponGetPowerOverlapHammer1)(s32 *, BattleUnit * *, BattleWeapon * *, BattleUnit * *, BattleUnitPart * *);
+typedef void (*TtydPost_weaponGetPowerOverlapHammer1)(s32 *, BattleUnit *, BattleWeapon *, BattleUnit *, BattleUnitPart *);
+/* src/battle/battle_weapon_power.c */
+typedef s32 (*TtydFn_weaponGetPowerFromPartyAttackLv)(BattleUnit *, BattleWeapon *, BattleUnit *, BattleUnitPart *);
+typedef int (*TtydPre_weaponGetPowerFromPartyAttackLv)(s32 *, BattleUnit * *, BattleWeapon * *, BattleUnit * *, BattleUnitPart * *);
+typedef void (*TtydPost_weaponGetPowerFromPartyAttackLv)(s32 *, BattleUnit *, BattleWeapon *, BattleUnit *, BattleUnitPart *);
+/* src/battle/battle_weapon_power.c */
+typedef s32 (*TtydFn_weaponGetPowerFromGulliblePartyAttackLv)(BattleUnit *, BattleWeapon *, BattleUnit *, BattleUnitPart *);
+typedef int (*TtydPre_weaponGetPowerFromGulliblePartyAttackLv)(s32 *, BattleUnit * *, BattleWeapon * *, BattleUnit * *, BattleUnitPart * *);
+typedef void (*TtydPost_weaponGetPowerFromGulliblePartyAttackLv)(s32 *, BattleUnit *, BattleWeapon *, BattleUnit *, BattleUnitPart *);
+/* src/battle/battle_weapon_power.c */
+typedef s32 (*TtydFn_weaponGetACOutputParam)(BattleUnit *, BattleWeapon *, BattleUnit *, BattleUnitPart *);
+typedef int (*TtydPre_weaponGetACOutputParam)(s32 *, BattleUnit * *, BattleWeapon * *, BattleUnit * *, BattleUnitPart * *);
+typedef void (*TtydPost_weaponGetACOutputParam)(s32 *, BattleUnit *, BattleWeapon *, BattleUnit *, BattleUnitPart *);
+/* src/battle/battle_weapon_power.c */
+typedef s32 (*TtydFn_weaponGetPowerHPHalf)(BattleUnit *, BattleWeapon *, BattleUnit *, BattleUnitPart *);
+typedef int (*TtydPre_weaponGetPowerHPHalf)(s32 *, BattleUnit * *, BattleWeapon * *, BattleUnit * *, BattleUnitPart * *);
+typedef void (*TtydPost_weaponGetPowerHPHalf)(s32 *, BattleUnit *, BattleWeapon *, BattleUnit *, BattleUnitPart *);
+/* src/battle/battle_weapon_power.c */
+typedef s32 (*TtydFn_weaponGetPowerHPHalf2)(BattleUnit *, BattleWeapon *, BattleUnit *, BattleUnitPart *);
+typedef int (*TtydPre_weaponGetPowerHPHalf2)(s32 *, BattleUnit * *, BattleWeapon * *, BattleUnit * *, BattleUnitPart * *);
+typedef void (*TtydPost_weaponGetPowerHPHalf2)(s32 *, BattleUnit *, BattleWeapon *, BattleUnit *, BattleUnitPart *);
+/* src/battle/battle_weapon_power.c */
+typedef s32 (*TtydFn_weaponGetFPPowerFPHalf)(BattleUnit *, BattleWeapon *, BattleUnit *, BattleUnitPart *);
+typedef int (*TtydPre_weaponGetFPPowerFPHalf)(s32 *, BattleUnit * *, BattleWeapon * *, BattleUnit * *, BattleUnitPart * *);
+typedef void (*TtydPost_weaponGetFPPowerFPHalf)(s32 *, BattleUnit *, BattleWeapon *, BattleUnit *, BattleUnitPart *);
+/* src/battle/battle_weapon_power.c */
+typedef s32 (*TtydFn_weaponGetPowerTatsumaki)(BattleUnit *, BattleWeapon *, BattleUnit *, BattleUnitPart *);
+typedef int (*TtydPre_weaponGetPowerTatsumaki)(s32 *, BattleUnit * *, BattleWeapon * *, BattleUnit * *, BattleUnitPart * *);
+typedef void (*TtydPost_weaponGetPowerTatsumaki)(s32 *, BattleUnit *, BattleWeapon *, BattleUnit *, BattleUnitPart *);
+/* src/battle/sac/sac_deka.c */
+typedef s32 (*TtydFn_weaponGetPower_Deka)(BattleUnit *, BattleWeapon *, BattleUnit *, BattleUnitPart *);
+typedef int (*TtydPre_weaponGetPower_Deka)(s32 *, BattleUnit * *, BattleWeapon * *, BattleUnit * *, BattleUnitPart * *);
+typedef void (*TtydPost_weaponGetPower_Deka)(s32 *, BattleUnit *, BattleWeapon *, BattleUnit *, BattleUnitPart *);
+/* src/battle/sac/sac_scissor.c */
+typedef s32 (*TtydFn_weaponGetPower_Scissor)(BattleUnit *, BattleWeapon *, BattleUnit *, BattleUnitPart *);
+typedef int (*TtydPre_weaponGetPower_Scissor)(s32 *, BattleUnit * *, BattleWeapon * *, BattleUnit * *, BattleUnitPart * *);
+typedef void (*TtydPost_weaponGetPower_Scissor)(s32 *, BattleUnit *, BattleWeapon *, BattleUnit *, BattleUnitPart *);
+/* src/battle/sac/sac_zubastar.c */
+typedef s32 (*TtydFn_weaponGetPower_ZubaStar)(BattleUnit *, BattleWeapon *, BattleUnit *, BattleUnitPart *);
+typedef int (*TtydPre_weaponGetPower_ZubaStar)(s32 *, BattleUnit * *, BattleWeapon * *, BattleUnit * *, BattleUnitPart * *);
+typedef void (*TtydPost_weaponGetPower_ZubaStar)(s32 *, BattleUnit *, BattleWeapon *, BattleUnit *, BattleUnitPart *);
+/* src/countdown.c */
+typedef void (*TtydFn_countDownInit)(void);
+typedef int (*TtydPre_countDownInit)(void);
+typedef void (*TtydPost_countDownInit)(void);
+/* src/countdown.c */
+typedef void (*TtydFn_countDownSaveReStart)(void);
+typedef int (*TtydPre_countDownSaveReStart)(void);
+typedef void (*TtydPost_countDownSaveReStart)(void);
+/* src/countdown.c */
+typedef void (*TtydFn_countDownStart)(u32, u32);
+typedef int (*TtydPre_countDownStart)(u32 *, u32 *);
+typedef void (*TtydPost_countDownStart)(u32, u32);
+/* src/countdown.c */
+typedef void (*TtydFn_countDownSetRestartTime)(u32);
+typedef int (*TtydPre_countDownSetRestartTime)(u32 *);
+typedef void (*TtydPost_countDownSetRestartTime)(u32);
+/* src/countdown.c */
+typedef void (*TtydFn_countDownMain)(void);
+typedef int (*TtydPre_countDownMain)(void);
+typedef void (*TtydPost_countDownMain)(void);
+/* src/countdown.c */
+typedef s32 (*TtydFn_countDownGetStatus)(void);
+typedef int (*TtydPre_countDownGetStatus)(s32 *);
+typedef void (*TtydPost_countDownGetStatus)(s32 *);
+/* src/countdown.c */
+typedef void (*TtydFn_countDownEnd)(void);
+typedef int (*TtydPre_countDownEnd)(void);
+typedef void (*TtydPost_countDownEnd)(void);
+/* src/countdown.c */
+typedef void (*TtydFn_countDownStop)(void);
+typedef int (*TtydPre_countDownStop)(void);
+typedef void (*TtydPost_countDownStop)(void);
+/* src/countdown.c */
+typedef void (*TtydFn_countDownFlagOn)(u16);
+typedef int (*TtydPre_countDownFlagOn)(u16 *);
+typedef void (*TtydPost_countDownFlagOn)(u16);
+/* src/countdown.c */
+typedef void (*TtydFn_countDownFlagOff)(u16);
+typedef int (*TtydPre_countDownFlagOff)(u16 *);
+typedef void (*TtydPost_countDownFlagOff)(u16);
+/* src/data/mail_data.c */
+typedef MailData * (*TtydFn_mailGetPtr)(s32);
+typedef int (*TtydPre_mailGetPtr)(MailData * *, s32 *);
+typedef void (*TtydPost_mailGetPtr)(MailData * *, s32);
+/* src/data/mapdata.c */
+typedef AreaData * (*TtydFn_areaDataPtr)(const char *);
+typedef int (*TtydPre_areaDataPtr)(AreaData * *, const char * *);
+typedef void (*TtydPost_areaDataPtr)(AreaData * *, const char *);
+/* src/data/mapdata.c */
+typedef void (*TtydFn_relSetBtlAddr)(const char *, void *, void *);
+typedef int (*TtydPre_relSetBtlAddr)(const char * *, void * *, void * *);
+typedef void (*TtydPost_relSetBtlAddr)(const char *, void *, void *);
+/* src/driver/bgdrv.c */
+typedef void (*TtydFn_bgInit)(void);
+typedef int (*TtydPre_bgInit)(void);
+typedef void (*TtydPost_bgInit)(void);
+/* src/driver/bgdrv.c */
+typedef void (*TtydFn_bgReInit)(void);
+typedef int (*TtydPre_bgReInit)(void);
+typedef void (*TtydPost_bgReInit)(void);
+/* src/driver/bgdrv.c */
+typedef void (*TtydFn_bgEntry)(const char *);
+typedef int (*TtydPre_bgEntry)(const char * *);
+typedef void (*TtydPost_bgEntry)(const char *);
+/* src/driver/bgdrv.c */
+typedef void (*TtydFn_bgReEntry)(const char *);
+typedef int (*TtydPre_bgReEntry)(const char * *);
+typedef void (*TtydPost_bgReEntry)(const char *);
+/* src/driver/bgdrv.c */
+typedef void (*TtydFn_bgSetColor)(GXColor);
+typedef int (*TtydPre_bgSetColor)(GXColor *);
+typedef void (*TtydPost_bgSetColor)(GXColor);
+/* src/driver/bgdrv.c */
+typedef void (*TtydFn_bgDispOn)(void);
+typedef int (*TtydPre_bgDispOn)(void);
+typedef void (*TtydPost_bgDispOn)(void);
+/* src/driver/bgdrv.c */
+typedef void (*TtydFn_bgDispOff)(void);
+typedef int (*TtydPre_bgDispOff)(void);
+typedef void (*TtydPost_bgDispOff)(void);
+/* src/driver/bgdrv.c */
+typedef void (*TtydFn_bgSetScrlOffset)(f32, f32);
+typedef int (*TtydPre_bgSetScrlOffset)(f32 *, f32 *);
+typedef void (*TtydPost_bgSetScrlOffset)(f32, f32);
+/* src/driver/bgdrv.c */
+typedef void (*TtydFn_bgAutoScrollOff)(void);
+typedef int (*TtydPre_bgAutoScrollOff)(void);
+typedef void (*TtydPost_bgAutoScrollOff)(void);
+/* src/driver/bgdrv.c */
+typedef void (*TtydFn_bgAutoScrollOn)(void);
+typedef int (*TtydPre_bgAutoScrollOn)(void);
+typedef void (*TtydPost_bgAutoScrollOn)(void);
+/* src/driver/bgdrv.c */
+typedef void (*TtydFn_bgTransOffsetOff)(void);
+typedef int (*TtydPre_bgTransOffsetOff)(void);
+typedef void (*TtydPost_bgTransOffsetOff)(void);
+/* src/driver/bgdrv.c */
+typedef void (*TtydFn_bgTransOffsetOn)(void);
+typedef int (*TtydPre_bgTransOffsetOn)(void);
+typedef void (*TtydPost_bgTransOffsetOn)(void);
+/* src/driver/bgdrv.c */
+typedef void (*TtydFn_bgMain)(void);
+typedef int (*TtydPre_bgMain)(void);
+typedef void (*TtydPost_bgMain)(void);
+/* src/driver/casedrv.c */
+typedef void (*TtydFn_caseInit)(void);
+typedef int (*TtydPre_caseInit)(void);
+typedef void (*TtydPost_caseInit)(void);
+/* src/driver/casedrv.c */
+typedef void (*TtydFn_caseReInit)(void);
+typedef int (*TtydPre_caseReInit)(void);
+typedef void (*TtydPost_caseReInit)(void);
+/* src/driver/casedrv.c */
+typedef s32 (*TtydFn_caseEntry)(CaseSetup *);
+typedef int (*TtydPre_caseEntry)(s32 *, CaseSetup * *);
+typedef void (*TtydPost_caseEntry)(s32 *, CaseSetup *);
+/* src/driver/casedrv.c */
+typedef void (*TtydFn_caseDelete)(s32);
+typedef int (*TtydPre_caseDelete)(s32 *);
+typedef void (*TtydPost_caseDelete)(s32);
+/* src/driver/casedrv.c */
+typedef void (*TtydFn_caseMain)(void);
+typedef int (*TtydPre_caseMain)(void);
+typedef void (*TtydPost_caseMain)(void);
+/* src/driver/casedrv.c */
+typedef CaseEntry * (*TtydFn_caseCheckHitObj)(HitEntry *);
+typedef int (*TtydPre_caseCheckHitObj)(CaseEntry * *, HitEntry * *);
+typedef void (*TtydPost_caseCheckHitObj)(CaseEntry * *, HitEntry *);
+/* src/driver/casedrv.c */
+typedef CaseEntry * (*TtydFn_caseCheckHitObj2)(HitEntry *);
+typedef int (*TtydPre_caseCheckHitObj2)(CaseEntry * *, HitEntry * *);
+typedef void (*TtydPost_caseCheckHitObj2)(CaseEntry * *, HitEntry *);
+/* src/driver/casedrv.c */
+typedef CaseEntry * (*TtydFn_caseIdToPtr)(s32);
+typedef int (*TtydPre_caseIdToPtr)(CaseEntry * *, s32 *);
+typedef void (*TtydPost_caseIdToPtr)(CaseEntry * *, s32);
+/* src/driver/envdrv.c */
+typedef void (*TtydFn_envInit)(void);
+typedef int (*TtydPre_envInit)(void);
+typedef void (*TtydPost_envInit)(void);
+/* src/driver/envdrv.c */
+typedef void (*TtydFn_envReInit)(void);
+typedef int (*TtydPre_envReInit)(void);
+typedef void (*TtydPost_envReInit)(void);
+/* src/driver/envdrv.c */
+typedef void (*TtydFn_envTexSetup)(void);
+typedef int (*TtydPre_envTexSetup)(void);
+typedef void (*TtydPost_envTexSetup)(void);
+/* src/driver/envdrv.c */
+typedef void (*TtydFn_envMain)(void);
+typedef int (*TtydPre_envMain)(void);
+typedef void (*TtydPost_envMain)(void);
+/* src/driver/envdrv.c */
+typedef void (*TtydFn_envBlurOn)(s32, s32);
+typedef int (*TtydPre_envBlurOn)(s32 *, s32 *);
+typedef void (*TtydPost_envBlurOn)(s32, s32);
+/* src/driver/envdrv.c */
+typedef void (*TtydFn_envBlurOff)(void);
+typedef int (*TtydPre_envBlurOff)(void);
+typedef void (*TtydPost_envBlurOff)(void);
+/* src/driver/envdrv.c */
+typedef void (*TtydFn_envGlareFilter)(s32, s32, s32, s32, s32);
+typedef int (*TtydPre_envGlareFilter)(s32 *, s32 *, s32 *, s32 *, s32 *);
+typedef void (*TtydPost_envGlareFilter)(s32, s32, s32, s32, s32);
+/* src/driver/envdrv.c */
+typedef void (*TtydFn_envGlareFilterZ)(f32);
+typedef int (*TtydPre_envGlareFilterZ)(f32 *);
+typedef void (*TtydPost_envGlareFilterZ)(f32);
+/* src/driver/envdrv.c */
+typedef void (*TtydFn_envAddTev)(s32, MapTevCallbackInfo *);
+typedef int (*TtydPre_envAddTev)(s32 *, MapTevCallbackInfo * *);
+typedef void (*TtydPost_envAddTev)(s32, MapTevCallbackInfo *);
+/* src/driver/envdrv.c */
+typedef void (*TtydFn_envSetWater)(MapTevCallbackInfo *);
+typedef int (*TtydPre_envSetWater)(MapTevCallbackInfo * *);
+typedef void (*TtydPost_envSetWater)(MapTevCallbackInfo *);
+/* src/driver/envdrv.c */
+typedef void (*TtydFn_envSetYamiView)(f32 (*)[4]);
+typedef int (*TtydPre_envSetYamiView)(f32 (**)[4]);
+typedef void (*TtydPost_envSetYamiView)(f32 (*)[4]);
+/* src/driver/envdrv.c */
+typedef void (*TtydFn_envSetYami)(MapTevCallbackInfo *);
+typedef int (*TtydPre_envSetYami)(MapTevCallbackInfo * *);
+typedef void (*TtydPost_envSetYami)(MapTevCallbackInfo *);
+/* src/driver/fadedrv.c */
+typedef void (*TtydFn_fadeInit)(void);
+typedef int (*TtydPre_fadeInit)(void);
+typedef void (*TtydPost_fadeInit)(void);
+/* src/driver/fadedrv.c */
+typedef void (*TtydFn_fadeTexSetup)(void);
+typedef int (*TtydPre_fadeTexSetup)(void);
+typedef void (*TtydPost_fadeTexSetup)(void);
+/* src/driver/fadedrv.c */
+typedef void (*TtydFn_fadeEntry)(s32, s32, GXColor);
+typedef int (*TtydPre_fadeEntry)(s32 *, s32 *, GXColor *);
+typedef void (*TtydPost_fadeEntry)(s32, s32, GXColor);
+/* src/driver/fadedrv.c */
+typedef void (*TtydFn_fadeTecOn)(void);
+typedef int (*TtydPre_fadeTecOn)(void);
+typedef void (*TtydPost_fadeTecOn)(void);
+/* src/driver/fadedrv.c */
+typedef void (*TtydFn_fadeTecOff)(void);
+typedef int (*TtydPre_fadeTecOff)(void);
+typedef void (*TtydPost_fadeTecOff)(void);
+/* src/driver/fadedrv.c */
+typedef void (*TtydFn_fadeTecSoftOn)(void);
+typedef int (*TtydPre_fadeTecSoftOn)(void);
+typedef void (*TtydPost_fadeTecSoftOn)(void);
+/* src/driver/fadedrv.c */
+typedef void (*TtydFn_fadeTecSoftOff)(void);
+typedef int (*TtydPre_fadeTecSoftOff)(void);
+typedef void (*TtydPost_fadeTecSoftOff)(void);
+/* src/driver/fadedrv.c */
+typedef void (*TtydFn_fadeSoftFocusOn)(void);
+typedef int (*TtydPre_fadeSoftFocusOn)(void);
+typedef void (*TtydPost_fadeSoftFocusOn)(void);
+/* src/driver/fadedrv.c */
+typedef void (*TtydFn_fadeSoftFocusOff)(void);
+typedef int (*TtydPre_fadeSoftFocusOff)(void);
+typedef void (*TtydPost_fadeSoftFocusOff)(void);
+/* src/driver/fadedrv.c */
+typedef void (*TtydFn_fadeWhiteOutOn)(void);
+typedef int (*TtydPre_fadeWhiteOutOn)(void);
+typedef void (*TtydPost_fadeWhiteOutOn)(void);
+/* src/driver/fadedrv.c */
+typedef void (*TtydFn_fadeWhiteOutOff)(void);
+typedef int (*TtydPre_fadeWhiteOutOff)(void);
+typedef void (*TtydPost_fadeWhiteOutOff)(void);
+/* src/driver/fadedrv.c */
+typedef void (*TtydFn_fadeSetSpotPos)(f32, f32);
+typedef int (*TtydPre_fadeSetSpotPos)(f32 *, f32 *);
+typedef void (*TtydPost_fadeSetSpotPos)(f32, f32);
+/* src/driver/fadedrv.c */
+typedef void (*TtydFn_fadeSetAnimOfsPos)(f32, f32);
+typedef int (*TtydPre_fadeSetAnimOfsPos)(f32 *, f32 *);
+typedef void (*TtydPost_fadeSetAnimOfsPos)(f32, f32);
+/* src/driver/fadedrv.c */
+typedef void (*TtydFn_fadeSetAnimVirtualPos)(f32, f32, f32);
+typedef int (*TtydPre_fadeSetAnimVirtualPos)(f32 *, f32 *, f32 *);
+typedef void (*TtydPost_fadeSetAnimVirtualPos)(f32, f32, f32);
+/* src/driver/fadedrv.c */
+typedef void (*TtydFn_fadeSetOffscreenCallback)(OffscreenCallback, void *);
+typedef int (*TtydPre_fadeSetOffscreenCallback)(OffscreenCallback *, void * *);
+typedef void (*TtydPost_fadeSetOffscreenCallback)(OffscreenCallback, void *);
+/* src/driver/fadedrv.c */
+typedef void (*TtydFn_fadeMain)(void);
+typedef int (*TtydPre_fadeMain)(void);
+typedef void (*TtydPost_fadeMain)(void);
+/* src/driver/fadedrv.c */
+typedef BOOL (*TtydFn_fadeIsFinish)(void);
+typedef int (*TtydPre_fadeIsFinish)(BOOL *);
+typedef void (*TtydPost_fadeIsFinish)(BOOL *);
+/* src/driver/fadedrv.c */
+typedef void (*TtydFn_fadeReset)(s32);
+typedef int (*TtydPre_fadeReset)(s32 *);
+typedef void (*TtydPost_fadeReset)(s32);
+/* src/driver/fadedrv.c */
+typedef TEXPalette * (*TtydFn_fadeGetTpl)(void);
+typedef int (*TtydPre_fadeGetTpl)(TEXPalette * *);
+typedef void (*TtydPost_fadeGetTpl)(TEXPalette * *);
+/* src/driver/fadedrv.c */
+typedef void (*TtydFn_fadeSetNarrowFast)(void);
+typedef int (*TtydPre_fadeSetNarrowFast)(void);
+typedef void (*TtydPost_fadeSetNarrowFast)(void);
+/* src/driver/itemdrv.c */
+typedef void (*TtydFn_itemInit)(void);
+typedef int (*TtydPre_itemInit)(void);
+typedef void (*TtydPost_itemInit)(void);
+/* src/driver/itemdrv.c */
+typedef void (*TtydFn_itemReInit)(void);
+typedef int (*TtydPre_itemReInit)(void);
+typedef void (*TtydPost_itemReInit)(void);
+/* src/driver/itemdrv.c */
+typedef BOOL (*TtydFn_N_itemPickUpFromFieldCheck)(void);
+typedef int (*TtydPre_N_itemPickUpFromFieldCheck)(BOOL *);
+typedef void (*TtydPost_N_itemPickUpFromFieldCheck)(BOOL *);
+/* src/driver/itemdrv.c */
+typedef void (*TtydFn_itemMain)(void);
+typedef int (*TtydPre_itemMain)(void);
+typedef void (*TtydPost_itemMain)(void);
+/* src/driver/itemdrv.c */
+typedef void (*TtydFn_itemModeChange)(ItemEntry *, s32);
+typedef int (*TtydPre_itemModeChange)(ItemEntry * *, s32 *);
+typedef void (*TtydPost_itemModeChange)(ItemEntry *, s32);
+/* src/driver/itemdrv.c */
+typedef void (*TtydFn_itemDelete)(const char *);
+typedef int (*TtydPre_itemDelete)(const char * *);
+typedef void (*TtydPost_itemDelete)(const char *);
+/* src/driver/itemdrv.c */
+typedef ItemEntry * (*TtydFn_itemNameToPtr)(char *);
+typedef int (*TtydPre_itemNameToPtr)(ItemEntry * *, char * *);
+typedef void (*TtydPost_itemNameToPtr)(ItemEntry * *, char *);
+/* src/driver/itemdrv.c */
+typedef ItemEntry * (*TtydFn_itemHitCheck)(f32, f32, f32, f32);
+typedef int (*TtydPre_itemHitCheck)(ItemEntry * *, f32 *, f32 *, f32 *, f32 *);
+typedef void (*TtydPost_itemHitCheck)(ItemEntry * *, f32, f32, f32, f32);
+/* src/driver/itemdrv.c */
+typedef ItemEntry * (*TtydFn_itemNearDistCheck)(f32, f32, f32, f32);
+typedef int (*TtydPre_itemNearDistCheck)(ItemEntry * *, f32 *, f32 *, f32 *, f32 *);
+typedef void (*TtydPost_itemNearDistCheck)(ItemEntry * *, f32, f32, f32, f32);
+/* src/driver/itemdrv.c */
+typedef void (*TtydFn_itemSetPosition)(ItemEntry *, f32, f32, f32);
+typedef int (*TtydPre_itemSetPosition)(ItemEntry * *, f32 *, f32 *, f32 *);
+typedef void (*TtydPost_itemSetPosition)(ItemEntry *, f32, f32, f32);
+/* src/driver/itemdrv.c */
+typedef void (*TtydFn_itemForceGet)(ItemEntry *);
+typedef int (*TtydPre_itemForceGet)(ItemEntry * *);
+typedef void (*TtydPost_itemForceGet)(ItemEntry *);
+/* src/driver/itemdrv.c */
+typedef void (*TtydFn_itemNokoForceGet)(ItemEntry *);
+typedef int (*TtydPre_itemNokoForceGet)(ItemEntry * *);
+typedef void (*TtydPost_itemNokoForceGet)(ItemEntry *);
+/* src/driver/itemdrv.c */
+typedef void (*TtydFn_itemFlagOn)(ItemEntry *, u16);
+typedef int (*TtydPre_itemFlagOn)(ItemEntry * *, u16 *);
+typedef void (*TtydPost_itemFlagOn)(ItemEntry *, u16);
+/* src/driver/itemdrv.c */
+typedef void (*TtydFn_itemFlagOff)(ItemEntry *, u16);
+typedef int (*TtydPre_itemFlagOff)(ItemEntry * *, u16 *);
+typedef void (*TtydPost_itemFlagOff)(ItemEntry *, u16);
+/* src/driver/itemdrv.c */
+typedef u16 (*TtydFn_itemFlag)(ItemEntry *, u16);
+typedef int (*TtydPre_itemFlag)(u16 *, ItemEntry * *, u16 *);
+typedef void (*TtydPost_itemFlag)(u16 *, ItemEntry *, u16);
+/* src/driver/itemdrv.c */
+typedef void (*TtydFn_itemStatusOn)(ItemEntry *, u32);
+typedef int (*TtydPre_itemStatusOn)(ItemEntry * *, u32 *);
+typedef void (*TtydPost_itemStatusOn)(ItemEntry *, u32);
+/* src/driver/itemdrv.c */
+typedef u32 (*TtydFn_itemStatus)(ItemEntry *, u32);
+typedef int (*TtydPre_itemStatus)(u32 *, ItemEntry * *, u32 *);
+typedef void (*TtydPost_itemStatus)(u32 *, ItemEntry *, u32);
+/* src/driver/itemdrv.c */
+typedef void (*TtydFn_itemPickUp)(ItemEntry *);
+typedef int (*TtydPre_itemPickUp)(ItemEntry * *);
+typedef void (*TtydPost_itemPickUp)(ItemEntry *);
+/* src/driver/mobjdrv.c */
+typedef void (*TtydFn_mobjKoopaOn)(void);
+typedef int (*TtydPre_mobjKoopaOn)(void);
+typedef void (*TtydPost_mobjKoopaOn)(void);
+/* src/driver/mobjdrv.c */
+typedef void (*TtydFn_mobjInit)(void);
+typedef int (*TtydPre_mobjInit)(void);
+typedef void (*TtydPost_mobjInit)(void);
+/* src/driver/mobjdrv.c */
+typedef void (*TtydFn_mobjReset)(BOOL);
+typedef int (*TtydPre_mobjReset)(BOOL *);
+typedef void (*TtydPost_mobjReset)(BOOL);
+/* src/driver/mobjdrv.c */
+typedef void (*TtydFn_mobjHitEntry)(MapObjectEntry *, s32);
+typedef int (*TtydPre_mobjHitEntry)(MapObjectEntry * *, s32 *);
+typedef void (*TtydPost_mobjHitEntry)(MapObjectEntry *, s32);
+/* src/driver/mobjdrv.c */
+typedef s32 (*TtydFn_mobjEntry)(const char *, const char *);
+typedef int (*TtydPre_mobjEntry)(s32 *, const char * *, const char * *);
+typedef void (*TtydPost_mobjEntry)(s32 *, const char *, const char *);
+/* src/driver/mobjdrv.c */
+typedef void (*TtydFn_mobjDelete)(const char *);
+typedef int (*TtydPre_mobjDelete)(const char * *);
+typedef void (*TtydPost_mobjDelete)(const char *);
+/* src/driver/mobjdrv.c */
+typedef void (*TtydFn_mobjSetPosition)(const char *, f32, f32, f32);
+typedef int (*TtydPre_mobjSetPosition)(const char * *, f32 *, f32 *, f32 *);
+typedef void (*TtydPost_mobjSetPosition)(const char *, f32, f32, f32);
+/* src/driver/mobjdrv.c */
+typedef void (*TtydFn_mobjMain)(void);
+typedef int (*TtydPre_mobjMain)(void);
+typedef void (*TtydPost_mobjMain)(void);
+/* src/driver/mobjdrv.c */
+typedef MapObjectEntry * (*TtydFn_mobjNameToPtrNoAssert)(const char *);
+typedef int (*TtydPre_mobjNameToPtrNoAssert)(MapObjectEntry * *, const char * *);
+typedef void (*TtydPost_mobjNameToPtrNoAssert)(MapObjectEntry * *, const char *);
+/* src/driver/mobjdrv.c */
+typedef struct EventEntry * (*TtydFn_mobjRunEvent)(MapObjectEntry *, EvtWord *);
+typedef int (*TtydPre_mobjRunEvent)(struct EventEntry * *, MapObjectEntry * *, EvtWord * *);
+typedef void (*TtydPost_mobjRunEvent)(struct EventEntry * *, MapObjectEntry *, EvtWord *);
+/* src/driver/mobjdrv.c */
+typedef void (*TtydFn_mobjCalcMtx)(MapObjectEntry *);
+typedef int (*TtydPre_mobjCalcMtx)(MapObjectEntry * *);
+typedef void (*TtydPost_mobjCalcMtx)(MapObjectEntry *);
+/* src/driver/mobjdrv.c */
+typedef void (*TtydFn_mobjCalcMtx2)(MapObjectEntry *);
+typedef int (*TtydPre_mobjCalcMtx2)(MapObjectEntry * *);
+typedef void (*TtydPost_mobjCalcMtx2)(MapObjectEntry *);
+/* src/driver/mobjdrv.c */
+typedef BOOL (*TtydFn_mobjGetHint)(MapObjectEntry *);
+typedef int (*TtydPre_mobjGetHint)(BOOL *, MapObjectEntry * *);
+typedef void (*TtydPost_mobjGetHint)(BOOL *, MapObjectEntry *);
+/* src/driver/mobjdrv.c */
+typedef BOOL (*TtydFn_mobjCheckExec)(void);
+typedef int (*TtydPre_mobjCheckExec)(BOOL *);
+typedef void (*TtydPost_mobjCheckExec)(BOOL *);
+/* src/driver/mobjdrv.c */
+typedef s32 (*TtydFn_mobjCheckItemboxOpen)(MapObjectEntry *);
+typedef int (*TtydPre_mobjCheckItemboxOpen)(s32 *, MapObjectEntry * *);
+typedef void (*TtydPost_mobjCheckItemboxOpen)(s32 *, MapObjectEntry *);
+/* src/driver/mobjdrv.c */
+typedef MapObjectEntry * (*TtydFn_mobjNearDistCheck2)(f32, f32, f32, f32, char **);
+typedef int (*TtydPre_mobjNearDistCheck2)(MapObjectEntry * *, f32 *, f32 *, f32 *, f32 *, char ** *);
+typedef void (*TtydPost_mobjNearDistCheck2)(MapObjectEntry * *, f32, f32, f32, f32, char **);
+/* src/driver/msgdrv.c */
+typedef void (*TtydFn_msgInit)(void);
+typedef int (*TtydPre_msgInit)(void);
+typedef void (*TtydPost_msgInit)(void);
+/* src/driver/msgdrv.c */
+typedef void (*TtydFn_msgLoad)(const char *, s32);
+typedef int (*TtydPre_msgLoad)(const char * *, s32 *);
+typedef void (*TtydPost_msgLoad)(const char *, s32);
+/* src/driver/msgdrv.c */
+typedef void (*TtydFn_msgAnalize)(smartEntry *, const char *);
+typedef int (*TtydPre_msgAnalize)(smartEntry * *, const char * *);
+typedef void (*TtydPost_msgAnalize)(smartEntry *, const char *);
+/* src/driver/msgdrv.c */
+typedef MessageWork * (*TtydFn_L_msgGetWork)(void);
+typedef int (*TtydPre_L_msgGetWork)(MessageWork * *);
+typedef void (*TtydPost_L_msgGetWork)(MessageWork * *);
+/* src/driver/msgdrv.c */
+typedef const char * (*TtydFn_msgGetCommand)(const char *, char *, char *);
+typedef int (*TtydPre_msgGetCommand)(const char * *, const char * *, char * *, char * *);
+typedef void (*TtydPost_msgGetCommand)(const char * *, const char *, char *, char *);
+/* src/driver/msgdrv.c */
+typedef s32 (*TtydFn_msgIconStr2ID)(const char *);
+typedef int (*TtydPre_msgIconStr2ID)(s32 *, const char * *);
+typedef void (*TtydPost_msgIconStr2ID)(s32 *, const char *);
+/* src/driver/msgdrv.c */
+typedef s32 (*TtydFn_msgWindow_Entry)(const char *, EvtWord, u16);
+typedef int (*TtydPre_msgWindow_Entry)(s32 *, const char * *, EvtWord *, u16 *);
+typedef void (*TtydPost_msgWindow_Entry)(s32 *, const char *, EvtWord, u16);
+/* src/driver/msgdrv.c */
+typedef void (*TtydFn_msgWindow_Add)(const char *, s32);
+typedef int (*TtydPre_msgWindow_Add)(const char * *, s32 *);
+typedef void (*TtydPost_msgWindow_Add)(const char *, s32);
+/* src/driver/msgdrv.c */
+typedef void (*TtydFn_msgWindow_Continue)(s32);
+typedef int (*TtydPre_msgWindow_Continue)(s32 *);
+typedef void (*TtydPost_msgWindow_Continue)(s32);
+/* src/driver/msgdrv.c */
+typedef void (*TtydFn_msgWindow_Repeat)(s32);
+typedef int (*TtydPre_msgWindow_Repeat)(s32 *);
+typedef void (*TtydPost_msgWindow_Repeat)(s32);
+/* src/driver/msgdrv.c */
+typedef void (*TtydFn_msgWindow_ForceClose)(const char *);
+typedef int (*TtydPre_msgWindow_ForceClose)(const char * *);
+typedef void (*TtydPost_msgWindow_ForceClose)(const char *);
+/* src/driver/npcdrv.c */
+typedef NpcWork * (*TtydFn_npcGetWorkPtr)(void);
+typedef int (*TtydPre_npcGetWorkPtr)(NpcWork * *);
+typedef void (*TtydPost_npcGetWorkPtr)(NpcWork * *);
+/* src/driver/npcdrv.c */
+typedef void (*TtydFn_npcReleaseFiledNpc)(void);
+typedef int (*TtydPre_npcReleaseFiledNpc)(void);
+typedef void (*TtydPost_npcReleaseFiledNpc)(void);
+/* src/driver/npcdrv.c */
+typedef void (*TtydFn_npcRecoveryFiledNpc)(void);
+typedef int (*TtydPre_npcRecoveryFiledNpc)(void);
+typedef void (*TtydPost_npcRecoveryFiledNpc)(void);
+/* src/driver/npcdrv.c */
+typedef void (*TtydFn_npcInit)(void);
+typedef int (*TtydPre_npcInit)(void);
+typedef void (*TtydPost_npcInit)(void);
+/* src/driver/npcdrv.c */
+typedef void (*TtydFn_npcReset)(BOOL);
+typedef int (*TtydPre_npcReset)(BOOL *);
+typedef void (*TtydPost_npcReset)(BOOL);
+/* src/driver/npcdrv.c */
+typedef s32 (*TtydFn_npcGetReactionOfLivingBody)(BOOL);
+typedef int (*TtydPre_npcGetReactionOfLivingBody)(s32 *, BOOL *);
+typedef void (*TtydPost_npcGetReactionOfLivingBody)(s32 *, BOOL);
+/* src/driver/npcdrv.c */
+typedef s32 (*TtydFn_npcEntry)(const char *, const char *);
+typedef int (*TtydPre_npcEntry)(s32 *, const char * *, const char * *);
+typedef void (*TtydPost_npcEntry)(s32 *, const char *, const char *);
+/* src/driver/npcdrv.c */
+typedef NpcTribeInfo * (*TtydFn_npcGetTribe)(const char *);
+typedef int (*TtydPre_npcGetTribe)(NpcTribeInfo * *, const char * *);
+typedef void (*TtydPost_npcGetTribe)(NpcTribeInfo * *, const char *);
+/* src/driver/npcdrv.c */
+typedef void (*TtydFn_npcDelete)(NpcEntry *);
+typedef int (*TtydPre_npcDelete)(NpcEntry * *);
+typedef void (*TtydPost_npcDelete)(NpcEntry *);
+/* src/driver/npcdrv.c */
+typedef void (*TtydFn_npcDeleteGroup)(NpcEntry *);
+typedef int (*TtydPre_npcDeleteGroup)(NpcEntry * *);
+typedef void (*TtydPost_npcDeleteGroup)(NpcEntry *);
+/* src/driver/npcdrv.c */
+typedef void (*TtydFn_npcMain)(void);
+typedef int (*TtydPre_npcMain)(void);
+typedef void (*TtydPost_npcMain)(void);
+/* src/driver/npcdrv.c */
+typedef NpcEntry * (*TtydFn_npcNameToPtr_NoAssert)(const char *);
+typedef int (*TtydPre_npcNameToPtr_NoAssert)(NpcEntry * *, const char * *);
+typedef void (*TtydPost_npcNameToPtr_NoAssert)(NpcEntry * *, const char *);
+/* src/driver/npcdrv.c */
+typedef void (*TtydFn_npcSetMarioAutoTalkPose)(const char *, const char *);
+typedef int (*TtydPre_npcSetMarioAutoTalkPose)(const char * *, const char * *);
+typedef void (*TtydPost_npcSetMarioAutoTalkPose)(const char *, const char *);
+/* src/driver/npcdrv.c */
+typedef void (*TtydFn_npcSetTalkPose)(char *);
+typedef int (*TtydPre_npcSetTalkPose)(char * *);
+typedef void (*TtydPost_npcSetTalkPose)(char *);
+/* src/driver/npcdrv.c */
+typedef void (*TtydFn_npcSetStayPose)(char *);
+typedef int (*TtydPre_npcSetStayPose)(char * *);
+typedef void (*TtydPost_npcSetStayPose)(char *);
+/* src/driver/npcdrv.c */
+typedef void (*TtydFn_npcTuningRy)(NpcEntry *, f32);
+typedef int (*TtydPre_npcTuningRy)(NpcEntry * *, f32 *);
+typedef void (*TtydPost_npcTuningRy)(NpcEntry *, f32);
+/* src/driver/npcdrv.c */
+typedef f32 (*TtydFn_npcTransRytoFaceDir)(NpcEntry *);
+typedef int (*TtydPre_npcTransRytoFaceDir)(f32 *, NpcEntry * *);
+typedef void (*TtydPost_npcTransRytoFaceDir)(f32 *, NpcEntry *);
+/* src/driver/npcdrv.c */
+typedef NpcEntry * (*TtydFn_npcNearDistCheck)(f32, f32, f32, f32);
+typedef int (*TtydPre_npcNearDistCheck)(NpcEntry * *, f32 *, f32 *, f32 *, f32 *);
+typedef void (*TtydPost_npcNearDistCheck)(NpcEntry * *, f32, f32, f32, f32);
+/* src/driver/npcdrv.c */
+typedef FieldBattleData * (*TtydFn_fbatGetPointer)(void);
+typedef int (*TtydPre_fbatGetPointer)(FieldBattleData * *);
+typedef void (*TtydPost_fbatGetPointer)(FieldBattleData * *);
+/* src/driver/npcdrv.c */
+typedef void (*TtydFn_fbatChangeMode)(s16);
+typedef int (*TtydPre_fbatChangeMode)(s16 *);
+typedef void (*TtydPost_fbatChangeMode)(s16);
+/* src/driver/npcdrv.c */
+typedef void (*TtydFn_fbatSetAttackAnnounce)(s32);
+typedef int (*TtydPre_fbatSetAttackAnnounce)(s32 *);
+typedef void (*TtydPost_fbatSetAttackAnnounce)(s32);
+/* src/driver/npcdrv.c */
+typedef void (*TtydFn_fbatSetAttackAnnounceEnable)(void);
+typedef int (*TtydPre_fbatSetAttackAnnounceEnable)(void);
+typedef void (*TtydPost_fbatSetAttackAnnounceEnable)(void);
+/* src/driver/npcdrv.c */
+typedef void (*TtydFn_npcGroupDead)(NpcEntry *, u16);
+typedef int (*TtydPre_npcGroupDead)(NpcEntry * *, u16 *);
+typedef void (*TtydPost_npcGroupDead)(NpcEntry *, u16);
+/* src/driver/npcdrv.c */
+typedef NpcEntry * (*TtydFn_fbatNpcTalkCheck)(void);
+typedef int (*TtydPre_fbatNpcTalkCheck)(NpcEntry * *);
+typedef void (*TtydPost_fbatNpcTalkCheck)(NpcEntry * *);
+/* src/driver/npcdrv.c */
+typedef NpcEntry * (*TtydFn_fbatHitCheckAll)(void);
+typedef int (*TtydPre_fbatHitCheckAll)(NpcEntry * *);
+typedef void (*TtydPost_fbatHitCheckAll)(NpcEntry * *);
+/* src/driver/npcdrv.c */
+typedef BOOL (*TtydFn_npcCheckInterrupt)(NpcEntry *);
+typedef int (*TtydPre_npcCheckInterrupt)(BOOL *, NpcEntry * *);
+typedef void (*TtydPost_npcCheckInterrupt)(BOOL *, NpcEntry *);
+/* src/driver/npcdrv.c */
+typedef void (*TtydFn_npcSetBattleInfo)(NpcEntry *, s32);
+typedef int (*TtydPre_npcSetBattleInfo)(NpcEntry * *, s32 *);
+typedef void (*TtydPost_npcSetBattleInfo)(NpcEntry *, s32);
+/* src/driver/npcdrv.c */
+typedef void (*TtydFn_npcStopForEvent)(void);
+typedef int (*TtydPre_npcStopForEvent)(void);
+typedef void (*TtydPost_npcStopForEvent)(void);
+/* src/driver/npcdrv.c */
+typedef void (*TtydFn_npcStopForOneEvent)(NpcEntry *);
+typedef int (*TtydPre_npcStopForOneEvent)(NpcEntry * *);
+typedef void (*TtydPost_npcStopForOneEvent)(NpcEntry *);
+/* src/driver/npcdrv.c */
+typedef void (*TtydFn_npcStartForEvent)(void);
+typedef int (*TtydPre_npcStartForEvent)(void);
+typedef void (*TtydPost_npcStartForEvent)(void);
+/* src/driver/npcdrv.c */
+typedef void (*TtydFn_npcStartForOneEvent)(NpcEntry *);
+typedef int (*TtydPre_npcStartForOneEvent)(NpcEntry * *);
+typedef void (*TtydPost_npcStartForOneEvent)(NpcEntry *);
+/* src/driver/npcdrv.c */
+typedef void (*TtydFn_npcSetColor)(const char *, GXColor);
+typedef int (*TtydPre_npcSetColor)(const char * *, GXColor *);
+typedef void (*TtydPost_npcSetColor)(const char *, GXColor);
+/* src/driver/npcdrv.c */
+typedef void (*TtydFn_npcBlurOn)(const char *);
+typedef int (*TtydPre_npcBlurOn)(const char * *);
+typedef void (*TtydPost_npcBlurOn)(const char *);
+/* src/driver/npcdrv.c */
+typedef void (*TtydFn_npcBlurOff)(const char *);
+typedef int (*TtydPre_npcBlurOff)(const char * *);
+typedef void (*TtydPost_npcBlurOff)(const char *);
+/* src/driver/npcdrv.c */
+typedef s32 (*TtydFn_npcGetBtlSetupWork)(NpcEntry *, s32);
+typedef int (*TtydPre_npcGetBtlSetupWork)(s32 *, NpcEntry * *, s32 *);
+typedef void (*TtydPost_npcGetBtlSetupWork)(s32 *, NpcEntry *, s32);
+/* src/driver/npcdrv.c */
+typedef void (*TtydFn_npcSetBtlSetupWork)(NpcEntry *, s32, s32);
+typedef int (*TtydPre_npcSetBtlSetupWork)(NpcEntry * *, s32 *, s32 *);
+typedef void (*TtydPost_npcSetBtlSetupWork)(NpcEntry *, s32, s32);
+/* src/driver/npcdrv.c */
+typedef void (*TtydFn_npcSetSlave)(NpcEntry *, NpcEntry *, s32);
+typedef int (*TtydPre_npcSetSlave)(NpcEntry * *, NpcEntry * *, s32 *);
+typedef void (*TtydPost_npcSetSlave)(NpcEntry *, NpcEntry *, s32);
+/* src/driver/npcdrv.c */
+typedef void (*TtydFn_npcSetLink)(NpcEntry *, NpcEntry *);
+typedef int (*TtydPre_npcSetLink)(NpcEntry * *, NpcEntry * *);
+typedef void (*TtydPost_npcSetLink)(NpcEntry *, NpcEntry *);
+/* src/driver/npcdrv.c */
+typedef NpcTerritoryType (*TtydFn_dbGetDefData)(NpcTerritoryInfo *, const char *);
+typedef int (*TtydPre_dbGetDefData)(NpcTerritoryType *, NpcTerritoryInfo * *, const char * *);
+typedef void (*TtydPost_dbGetDefData)(NpcTerritoryType *, NpcTerritoryInfo *, const char *);
+/* src/driver/npcdrv.c */
+typedef void (*TtydFn_npcExecAllInitEvt)(void);
+typedef int (*TtydPre_npcExecAllInitEvt)(void);
+typedef void (*TtydPost_npcExecAllInitEvt)(void);
+/* src/driver/npcdrv.c */
+typedef BOOL (*TtydFn_npcWaitAllInitEvtEnd)(void);
+typedef int (*TtydPre_npcWaitAllInitEvtEnd)(BOOL *);
+typedef void (*TtydPost_npcWaitAllInitEvtEnd)(BOOL *);
+/* src/driver/npcdrv.c */
+typedef void (*TtydFn_npcExecAllReglEvt)(void);
+typedef int (*TtydPre_npcExecAllReglEvt)(void);
+typedef void (*TtydPost_npcExecAllReglEvt)(void);
+/* src/driver/npcdrv.c */
+typedef void (*TtydFn_npcGetBackItemEntry)(NpcEntry *);
+typedef int (*TtydPre_npcGetBackItemEntry)(NpcEntry * *);
+typedef void (*TtydPost_npcGetBackItemEntry)(NpcEntry *);
+/* src/driver/npcdrv.c */
+typedef void (*TtydFn_npcClearDeadInfo)(void);
+typedef int (*TtydPre_npcClearDeadInfo)(void);
+typedef void (*TtydPost_npcClearDeadInfo)(void);
+/* src/driver/npcdrv.c */
+typedef s32 (*TtydFn_npcKoopaModeMobjBoundDeadCheck)(HitEntry *);
+typedef int (*TtydPre_npcKoopaModeMobjBoundDeadCheck)(s32 *, HitEntry * *);
+typedef void (*TtydPost_npcKoopaModeMobjBoundDeadCheck)(s32 *, HitEntry *);
+/* src/driver/npcdrv.c */
+typedef void (*TtydFn_fbatSandersBombTriggerOn)(void);
+typedef int (*TtydPre_fbatSandersBombTriggerOn)(void);
+typedef void (*TtydPost_fbatSandersBombTriggerOn)(void);
+/* src/driver/npcdrv.c */
+typedef s32 (*TtydFn_npcCalcScore)(NpcEntry *);
+typedef int (*TtydPre_npcCalcScore)(s32 *, NpcEntry * *);
+typedef void (*TtydPost_npcCalcScore)(s32 *, NpcEntry *);
+/* src/driver/npcdrv.c */
+typedef BOOL (*TtydFn_npcCheckBlow)(NpcEntry *);
+typedef int (*TtydPre_npcCheckBlow)(BOOL *, NpcEntry * *);
+typedef void (*TtydPost_npcCheckBlow)(BOOL *, NpcEntry *);
+/* src/driver/npcdrv.c */
+typedef BOOL (*TtydFn_N_fbatPreventMarioEventChk)(void);
+typedef int (*TtydPre_N_fbatPreventMarioEventChk)(BOOL *);
+typedef void (*TtydPost_N_fbatPreventMarioEventChk)(BOOL *);
+/* src/driver/seqdrv.c */
+typedef void (*TtydFn_seqInit_MARIOSTORY)(void);
+typedef int (*TtydPre_seqInit_MARIOSTORY)(void);
+typedef void (*TtydPost_seqInit_MARIOSTORY)(void);
+/* src/driver/seqdrv.c */
+typedef void (*TtydFn_seqMain)(void);
+typedef int (*TtydPre_seqMain)(void);
+typedef void (*TtydPost_seqMain)(void);
+/* src/driver/seqdrv.c */
+typedef SequenceType (*TtydFn_seqGetPrevSeq)(void);
+typedef int (*TtydPre_seqGetPrevSeq)(SequenceType *);
+typedef void (*TtydPost_seqGetPrevSeq)(SequenceType *);
+/* src/driver/seqdrv.c */
+typedef SequenceType (*TtydFn_seqGetNextSeq)(void);
+typedef int (*TtydPre_seqGetNextSeq)(SequenceType *);
+typedef void (*TtydPost_seqGetNextSeq)(SequenceType *);
+/* src/driver/seqdrv.c */
+typedef BOOL (*TtydFn_seqCheckSeq)(void);
+typedef int (*TtydPre_seqCheckSeq)(BOOL *);
+typedef void (*TtydPost_seqCheckSeq)(BOOL *);
+/* src/driver/swdrv.c */
+typedef void (*TtydFn_swInit)(void);
+typedef int (*TtydPre_swInit)(void);
+typedef void (*TtydPost_swInit)(void);
+/* src/driver/swdrv.c */
+typedef void (*TtydFn_swReInit)(void);
+typedef int (*TtydPre_swReInit)(void);
+typedef void (*TtydPost_swReInit)(void);
+/* src/driver/swdrv.c */
+typedef BOOL (*TtydFn_swGet)(s32);
+typedef int (*TtydPre_swGet)(BOOL *, s32 *);
+typedef void (*TtydPost_swGet)(BOOL *, s32);
+/* src/driver/swdrv.c */
+typedef void (*TtydFn_swClear)(s32);
+typedef int (*TtydPre_swClear)(s32 *);
+typedef void (*TtydPost_swClear)(s32);
+/* src/driver/swdrv.c */
+typedef s32 (*TtydFn_swByteGet)(s32);
+typedef int (*TtydPre_swByteGet)(s32 *, s32 *);
+typedef void (*TtydPost_swByteGet)(s32 *, s32);
+/* src/driver/swdrv.c */
+typedef void (*TtydFn__swSet)(s32);
+typedef int (*TtydPre__swSet)(s32 *);
+typedef void (*TtydPost__swSet)(s32);
+/* src/driver/swdrv.c */
+typedef BOOL (*TtydFn__swGet)(s32);
+typedef int (*TtydPre__swGet)(BOOL *, s32 *);
+typedef void (*TtydPost__swGet)(BOOL *, s32);
+/* src/driver/swdrv.c */
+typedef void (*TtydFn__swClear)(s32);
+typedef int (*TtydPre__swClear)(s32 *);
+typedef void (*TtydPost__swClear)(s32);
+/* src/driver/swdrv.c */
+typedef void (*TtydFn__swByteSet)(s32, u8);
+typedef int (*TtydPre__swByteSet)(s32 *, u8 *);
+typedef void (*TtydPost__swByteSet)(s32, u8);
+/* src/driver/swdrv.c */
+typedef s32 (*TtydFn__swByteGet)(s32);
+typedef int (*TtydPre__swByteGet)(s32 *, s32 *);
+typedef void (*TtydPost__swByteGet)(s32 *, s32);
+/* src/driver/windowdrv.c */
+typedef void (*TtydFn_windowInit)(void);
+typedef int (*TtydPre_windowInit)(void);
+typedef void (*TtydPost_windowInit)(void);
+/* src/driver/windowdrv.c */
+typedef void (*TtydFn_windowTexSetup)(void);
+typedef int (*TtydPre_windowTexSetup)(void);
+typedef void (*TtydPost_windowTexSetup)(void);
+/* src/driver/windowdrv.c */
+typedef void (*TtydFn_windowReInit)(void);
+typedef int (*TtydPre_windowReInit)(void);
+typedef void (*TtydPost_windowReInit)(void);
+/* src/driver/windowdrv.c */
+typedef s32 (*TtydFn_windowEntry)(u16);
+typedef int (*TtydPre_windowEntry)(s32 *, u16 *);
+typedef void (*TtydPost_windowEntry)(s32 *, u16);
+/* src/driver/windowdrv.c */
+typedef BOOL (*TtydFn_windowDelete)(WindowEntry *);
+typedef int (*TtydPre_windowDelete)(BOOL *, WindowEntry * *);
+typedef void (*TtydPost_windowDelete)(BOOL *, WindowEntry *);
+/* src/driver/windowdrv.c */
+typedef BOOL (*TtydFn_windowDeleteID)(s32);
+typedef int (*TtydPre_windowDeleteID)(BOOL *, s32 *);
+typedef void (*TtydPost_windowDeleteID)(BOOL *, s32);
+/* src/driver/windowdrv.c */
+typedef void (*TtydFn_windowMain)(void);
+typedef int (*TtydPre_windowMain)(void);
+typedef void (*TtydPost_windowMain)(void);
+/* src/driver/windowdrv.c */
+typedef void (*TtydFn_windowDispGX_Kanban)(s32, u8, f32, f32, f32, f32);
+typedef int (*TtydPre_windowDispGX_Kanban)(s32 *, u8 *, f32 *, f32 *, f32 *, f32 *);
+typedef void (*TtydPost_windowDispGX_Kanban)(s32, u8, f32, f32, f32, f32);
+/* src/driver/windowdrv.c */
+typedef void (*TtydFn_windowDispGX_System)(s32, u8, f32, f32, f32, f32);
+typedef int (*TtydPre_windowDispGX_System)(s32 *, u8 *, f32 *, f32 *, f32 *, f32 *);
+typedef void (*TtydPost_windowDispGX_System)(s32, u8, f32, f32, f32, f32);
+/* src/driver/windowdrv.c */
+typedef void (*TtydFn_windowDispGX_Message)(s32, s32, u8, f32, f32, f32, f32, f32, f32);
+typedef int (*TtydPre_windowDispGX_Message)(s32 *, s32 *, u8 *, f32 *, f32 *, f32 *, f32 *, f32 *, f32 *);
+typedef void (*TtydPost_windowDispGX_Message)(s32, s32, u8, f32, f32, f32, f32, f32, f32);
+/* src/driver/windowdrv.c */
+typedef void (*TtydFn_windowDispGX_Waku_col)(u16, GXColor, f32, f32, f32, f32, f32);
+typedef int (*TtydPre_windowDispGX_Waku_col)(u16 *, GXColor *, f32 *, f32 *, f32 *, f32 *, f32 *);
+typedef void (*TtydPost_windowDispGX_Waku_col)(u16, GXColor, f32, f32, f32, f32, f32);
+/* src/driver/windowdrv.c */
+typedef void (*TtydFn_windowDispGX2_Waku_col)(f32 (*)[4], u16, GXColor, f32, f32, f32, f32, f32);
+typedef int (*TtydPre_windowDispGX2_Waku_col)(f32 (**)[4], u16 *, GXColor *, f32 *, f32 *, f32 *, f32 *, f32 *);
+typedef void (*TtydPost_windowDispGX2_Waku_col)(f32 (*)[4], u16, GXColor, f32, f32, f32, f32, f32);
+/* src/driver/windowdrv.c */
+typedef s32 (*TtydFn_windowCheckID)(s32);
+typedef int (*TtydPre_windowCheckID)(s32 *, s32 *);
+typedef void (*TtydPost_windowCheckID)(s32 *, s32);
+/* src/driver/windowdrv.c */
+typedef WindowEntry * (*TtydFn_windowGetPointer)(s32);
+typedef int (*TtydPre_windowGetPointer)(WindowEntry * *, s32 *);
+typedef void (*TtydPost_windowGetPointer)(WindowEntry * *, s32);
+/* src/driver/windowdrv.c */
+typedef GXTexObj * (*TtydFn_getWakuTexObj)(s32);
+typedef int (*TtydPre_getWakuTexObj)(GXTexObj * *, s32 *);
+typedef void (*TtydPost_getWakuTexObj)(GXTexObj * *, s32);
+/* src/event.c */
+typedef void (*TtydFn_stg0_00_init)(void);
+typedef int (*TtydPre_stg0_00_init)(void);
+typedef void (*TtydPost_stg0_00_init)(void);
+/* src/event.c */
+typedef void (*TtydFn_N_stg9_02_init)(void);
+typedef int (*TtydPre_N_stg9_02_init)(void);
+typedef void (*TtydPost_N_stg9_02_init)(void);
+/* src/event.c */
+typedef EventStage * (*TtydFn_eventStgDtPtr)(s32);
+typedef int (*TtydPre_eventStgDtPtr)(EventStage * *, s32 *);
+typedef void (*TtydPost_eventStgDtPtr)(EventStage * *, s32);
+/* src/event.c */
+typedef s32 (*TtydFn_eventStgNum)(void);
+typedef int (*TtydPre_eventStgNum)(s32 *);
+typedef void (*TtydPost_eventStgNum)(s32 *);
+/* src/event/evt_badgeshop.c */
+typedef s32 (*TtydFn_getBadgeBottakuru100TableMaxCount)(void);
+typedef int (*TtydPre_getBadgeBottakuru100TableMaxCount)(s32 *);
+typedef void (*TtydPost_getBadgeBottakuru100TableMaxCount)(s32 *);
+/* src/event/evt_badgeshop.c */
+typedef s32 (*TtydFn_getBadgeStarmaniacTableMaxCount)(void);
+typedef int (*TtydPre_getBadgeStarmaniacTableMaxCount)(s32 *);
+typedef void (*TtydPost_getBadgeStarmaniacTableMaxCount)(s32 *);
+/* src/event/evt_badgeshop.c */
+typedef s32 (*TtydFn_getBadgeBteresaTableMaxCount)(void);
+typedef int (*TtydPre_getBadgeBteresaTableMaxCount)(s32 *);
+typedef void (*TtydPost_getBadgeBteresaTableMaxCount)(s32 *);
+/* src/event/evt_badgeshop.c */
+typedef void (*TtydFn_badgeShop_init)(void);
+typedef int (*TtydPre_badgeShop_init)(void);
+typedef void (*TtydPost_badgeShop_init)(void);
+/* src/event/evt_badgeshop.c */
+typedef void (*TtydFn_badgeShop_bottakuruGeneration)(void);
+typedef int (*TtydPre_badgeShop_bottakuruGeneration)(void);
+typedef void (*TtydPost_badgeShop_bottakuruGeneration)(void);
+/* src/event/evt_badgeshop.c */
+typedef void (*TtydFn_badgeShop_bteresaGeneration)(void);
+typedef int (*TtydPre_badgeShop_bteresaGeneration)(void);
+typedef void (*TtydPost_badgeShop_bteresaGeneration)(void);
+/* src/event/evt_badgeshop.c */
+typedef void (*TtydFn_badgeShop_bargainGeneration)(void);
+typedef int (*TtydPre_badgeShop_bargainGeneration)(void);
+typedef void (*TtydPost_badgeShop_bargainGeneration)(void);
+/* src/event/evt_badgeshop.c */
+typedef s16 (*TtydFn_badgeShop_set)(u8 *, s16, s16);
+typedef int (*TtydPre_badgeShop_set)(s16 *, u8 * *, s16 *, s16 *);
+typedef void (*TtydPost_badgeShop_set)(s16 *, u8 *, s16, s16);
+/* src/event/evt_badgeshop.c */
+typedef s32 (*TtydFn_badgeShop_get)(u8 *, s16);
+typedef int (*TtydPre_badgeShop_get)(s32 *, u8 * *, s16 *);
+typedef void (*TtydPost_badgeShop_get)(s32 *, u8 *, s16);
+/* src/event/evt_badgeshop.c */
+typedef s32 (*TtydFn_badgeShop_add)(u8 *, s16, s32);
+typedef int (*TtydPre_badgeShop_add)(s32 *, u8 * *, s16 *, s32 *);
+typedef void (*TtydPost_badgeShop_add)(s32 *, u8 *, s16, s32);
+/* src/event/evt_badgeshop.c */
+typedef s32 (*TtydFn_badgeShop_ThrowCheck)(s32);
+typedef int (*TtydPre_badgeShop_ThrowCheck)(s32 *, s32 *);
+typedef void (*TtydPost_badgeShop_ThrowCheck)(s32 *, s32);
+/* src/event/evt_badgeshop.c */
+typedef s32 (*TtydFn_U_badgeShop_SpecialCheck)(void);
+typedef int (*TtydPre_U_badgeShop_SpecialCheck)(s32 *);
+typedef void (*TtydPost_U_badgeShop_SpecialCheck)(s32 *);
+/* src/event/evt_bero.c */
+typedef s32 (*TtydFn_bero_get_BeroEXEC)(void);
+typedef int (*TtydPre_bero_get_BeroEXEC)(s32 *);
+typedef void (*TtydPost_bero_get_BeroEXEC)(s32 *);
+/* src/event/evt_bero.c */
+typedef s32 (*TtydFn_bero_get_BeroNUM)(void);
+typedef int (*TtydPre_bero_get_BeroNUM)(s32 *);
+typedef void (*TtydPost_bero_get_BeroNUM)(s32 *);
+/* src/event/evt_bero.c */
+typedef f32 (*TtydFn_bero_get_BeroSX)(void);
+typedef int (*TtydPre_bero_get_BeroSX)(f32 *);
+typedef void (*TtydPost_bero_get_BeroSX)(f32 *);
+/* src/event/evt_bero.c */
+typedef f32 (*TtydFn_bero_get_BeroSY)(void);
+typedef int (*TtydPre_bero_get_BeroSY)(f32 *);
+typedef void (*TtydPost_bero_get_BeroSY)(f32 *);
+/* src/event/evt_bero.c */
+typedef f32 (*TtydFn_bero_get_BeroSZ)(void);
+typedef int (*TtydPre_bero_get_BeroSZ)(f32 *);
+typedef void (*TtydPost_bero_get_BeroSZ)(f32 *);
+/* src/event/evt_bero.c */
+typedef f32 (*TtydFn_bero_get_BeroEX)(void);
+typedef int (*TtydPre_bero_get_BeroEX)(f32 *);
+typedef void (*TtydPost_bero_get_BeroEX)(f32 *);
+/* src/event/evt_bero.c */
+typedef f32 (*TtydFn_bero_get_BeroEY)(void);
+typedef int (*TtydPre_bero_get_BeroEY)(f32 *);
+typedef void (*TtydPost_bero_get_BeroEY)(f32 *);
+/* src/event/evt_bero.c */
+typedef f32 (*TtydFn_bero_get_BeroEZ)(void);
+typedef int (*TtydPre_bero_get_BeroEZ)(f32 *);
+typedef void (*TtydPost_bero_get_BeroEZ)(f32 *);
+/* src/event/evt_bero.c */
+typedef BeroEntry ** (*TtydFn_bero_get_ptr)(void);
+typedef int (*TtydPre_bero_get_ptr)(BeroEntry ** *);
+typedef void (*TtydPost_bero_get_ptr)(BeroEntry ** *);
+/* src/event/evt_bero.c */
+typedef void (*TtydFn_bero_clear_Offset)(void);
+typedef int (*TtydPre_bero_clear_Offset)(void);
+typedef void (*TtydPost_bero_clear_Offset)(void);
+/* src/event/evt_bero.c */
+typedef s32 (*TtydFn_bero_id_filter)(EvtWord);
+typedef int (*TtydPre_bero_id_filter)(s32 *, EvtWord *);
+typedef void (*TtydPost_bero_id_filter)(s32 *, EvtWord);
+/* src/event/evt_case.c */
+typedef s32 (*TtydFn_evtRunCaseEntry)(s32, BOOL, const char *, u32, void *, EvtWord *);
+typedef int (*TtydPre_evtRunCaseEntry)(s32 *, s32 *, BOOL *, const char * *, u32 *, void * *, EvtWord * *);
+typedef void (*TtydPost_evtRunCaseEntry)(s32 *, s32, BOOL, const char *, u32, void *, EvtWord *);
+/* src/event/evt_door.c */
+typedef void (*TtydFn_door_position_sub)(s32, const char *, const char *, const char *, Vec *, Vec *, BOOL);
+typedef int (*TtydPre_door_position_sub)(s32 *, const char * *, const char * *, const char * *, Vec * *, Vec * *, BOOL *);
+typedef void (*TtydPost_door_position_sub)(s32, const char *, const char *, const char *, Vec *, Vec *, BOOL);
+/* src/event/evt_johoya.c */
+typedef void (*TtydFn_johoya_init)(void);
+typedef int (*TtydPre_johoya_init)(void);
+typedef void (*TtydPost_johoya_init)(void);
+/* src/event/evt_johoya.c */
+typedef s16 (*TtydFn_johoya_set)(u8 *, s16, s16);
+typedef int (*TtydPre_johoya_set)(s16 *, u8 * *, s16 *, s16 *);
+typedef void (*TtydPost_johoya_set)(s16 *, u8 *, s16, s16);
+/* src/event/evt_johoya.c */
+typedef s16 (*TtydFn_johoya_get)(u8 *, s16);
+typedef int (*TtydPre_johoya_get)(s16 *, u8 * *, s16 *);
+typedef void (*TtydPost_johoya_get)(s16 *, u8 *, s16);
+/* src/event/evt_johoya.c */
+typedef s32 (*TtydFn_search_evt_no)(const char *);
+typedef int (*TtydPre_search_evt_no)(s32 *, const char * *);
+typedef void (*TtydPost_search_evt_no)(s32 *, const char *);
+/* src/event/evt_johoya.c */
+typedef const char * (*TtydFn_search_evt_moji)(s32);
+typedef int (*TtydPre_search_evt_moji)(const char * *, s32 *);
+typedef void (*TtydPost_search_evt_moji)(const char * *, s32);
+/* src/event/evt_lottery.c */
+typedef lottery_info * (*TtydFn_lotteryGetPtr)(void);
+typedef int (*TtydPre_lotteryGetPtr)(lottery_info * *);
+typedef void (*TtydPost_lotteryGetPtr)(lottery_info * *);
+/* src/event/evt_msg.c */
+typedef void (*TtydFn_evt_msg_init)(void);
+typedef int (*TtydPre_evt_msg_init)(void);
+typedef void (*TtydPost_evt_msg_init)(void);
+/* src/event/evt_nannpc.c */
+typedef void (*TtydFn_nanNPCOption)(void);
+typedef int (*TtydPre_nanNPCOption)(void);
+typedef void (*TtydPost_nanNPCOption)(void);
+/* src/event/evt_nannpc.c */
+typedef void (*TtydFn_nannpc_ext_main_sub)(void);
+typedef int (*TtydPre_nannpc_ext_main_sub)(void);
+typedef void (*TtydPost_nannpc_ext_main_sub)(void);
+/* src/event/evt_nannpc.c */
+typedef void (*TtydFn_nannpc_ext_main_sub_fast)(void);
+typedef int (*TtydPre_nannpc_ext_main_sub_fast)(void);
+typedef void (*TtydPost_nannpc_ext_main_sub_fast)(void);
+/* src/event/evt_nannpc.c */
+typedef void (*TtydFn_evt_nannpc_set_animtbl_sub)(NanNPC *, s16 *);
+typedef int (*TtydPre_evt_nannpc_set_animtbl_sub)(NanNPC * *, s16 * *);
+typedef void (*TtydPost_evt_nannpc_set_animtbl_sub)(NanNPC *, s16 *);
+/* src/event/evt_npc.c */
+typedef NpcEntry * (*TtydFn_evtNpcNameToPtr)(EventEntry *, const char *);
+typedef int (*TtydPre_evtNpcNameToPtr)(NpcEntry * *, EventEntry * *, const char * *);
+typedef void (*TtydPost_evtNpcNameToPtr)(NpcEntry * *, EventEntry *, const char *);
+/* src/event/evt_npc.c */
+typedef NpcEntry * (*TtydFn_evtNpcNameToPtr_NoAssert)(EventEntry *, const char *);
+typedef int (*TtydPre_evtNpcNameToPtr_NoAssert)(NpcEntry * *, EventEntry * *, const char * *);
+typedef void (*TtydPost_evtNpcNameToPtr_NoAssert)(NpcEntry * *, EventEntry *, const char *);
+/* src/event/evt_shop.c */
+typedef BOOL (*TtydFn_evtShopIsActive)(void);
+typedef int (*TtydPre_evtShopIsActive)(BOOL *);
+typedef void (*TtydPost_evtShopIsActive)(BOOL *);
+/* src/event/evt_uranaisi.c */
+typedef s32 (*TtydFn_uranaisi_ryokin_rtn)(s32);
+typedef int (*TtydPre_uranaisi_ryokin_rtn)(s32 *, s32 *);
+typedef void (*TtydPost_uranaisi_ryokin_rtn)(s32 *, s32);
+/* src/event/evt_yuugijou.c */
+typedef void (*TtydFn_yuugijou_init)(void);
+typedef int (*TtydPre_yuugijou_init)(void);
+typedef void (*TtydPost_yuugijou_init)(void);
+/* src/event/evt_yuugijou.c */
+typedef void (*TtydFn_monteCountDisp)(void);
+typedef int (*TtydPre_monteCountDisp)(void);
+typedef void (*TtydPost_monteCountDisp)(void);
+/* src/event/evt_yuugijou.c */
+typedef void (*TtydFn_evtYuuSetWindowEvt)(EvtWord *);
+typedef int (*TtydPre_evtYuuSetWindowEvt)(EvtWord * *);
+typedef void (*TtydPost_evtYuuSetWindowEvt)(EvtWord *);
+/* src/event/evt_yuugijou.c */
+typedef void (*TtydFn_evtYuuWindow)(void);
+typedef int (*TtydPre_evtYuuWindow)(void);
+typedef void (*TtydPost_evtYuuWindow)(void);
+/* src/event/evt_yuugijou.c */
+typedef s32 (*TtydFn_evtYuuWindowEndChk)(void);
+typedef int (*TtydPre_evtYuuWindowEndChk)(s32 *);
+typedef void (*TtydPost_evtYuuWindowEndChk)(s32 *);
+/* src/koopa.c */
+typedef struct EffectEntry * (*TtydFn_getKoopaFireEfp)(void);
+typedef int (*TtydPre_getKoopaFireEfp)(struct EffectEntry * *);
+typedef void (*TtydPost_getKoopaFireEfp)(struct EffectEntry * *);
+/* src/koopa.c */
+typedef s32 (*TtydFn_kpaNoHitEnemyCheck)(void);
+typedef int (*TtydPre_kpaNoHitEnemyCheck)(s32 *);
+typedef void (*TtydPost_kpaNoHitEnemyCheck)(s32 *);
+/* src/koopa.c */
+typedef s32 (*TtydFn_kpaMutekiCheck)(void);
+typedef int (*TtydPre_kpaMutekiCheck)(s32 *);
+typedef void (*TtydPost_kpaMutekiCheck)(s32 *);
+/* src/koopa.c */
+typedef void (*TtydFn_kpaMutekiOn)(void);
+typedef int (*TtydPre_kpaMutekiOn)(void);
+typedef void (*TtydPost_kpaMutekiOn)(void);
+/* src/koopa.c */
+typedef void (*TtydFn_kpaMutekiOff)(void);
+typedef int (*TtydPre_kpaMutekiOff)(void);
+typedef void (*TtydPost_kpaMutekiOff)(void);
+/* src/koopa.c */
+typedef void (*TtydFn_kpaMSetMutekiTimer)(void);
+typedef int (*TtydPre_kpaMSetMutekiTimer)(void);
+typedef void (*TtydPost_kpaMSetMutekiTimer)(void);
+/* src/koopa.c */
+typedef void (*TtydFn_kpaChgPose)(const char *, const char *);
+typedef int (*TtydPre_kpaChgPose)(const char * *, const char * *);
+typedef void (*TtydPost_kpaChgPose)(const char *, const char *);
+/* src/koopa.c */
+typedef s32 (*TtydFn_kpaGetLevel)(void);
+typedef int (*TtydPre_kpaGetLevel)(s32 *);
+typedef void (*TtydPost_kpaGetLevel)(s32 *);
+/* src/koopa.c */
+typedef void (*TtydFn_kpaSetLevel)(s32);
+typedef int (*TtydPre_kpaSetLevel)(s32 *);
+typedef void (*TtydPost_kpaSetLevel)(s32);
+/* src/koopa.c */
+typedef f32 (*TtydFn_kpaGetWidth)(s32);
+typedef int (*TtydPre_kpaGetWidth)(f32 *, s32 *);
+typedef void (*TtydPost_kpaGetWidth)(f32 *, s32);
+/* src/koopa.c */
+typedef s32 (*TtydFn_kpaGetBodyStatus)(void);
+typedef int (*TtydPre_kpaGetBodyStatus)(s32 *);
+typedef void (*TtydPost_kpaGetBodyStatus)(s32 *);
+/* src/koopa.c */
+typedef s32 (*TtydFn_kpaGetStageType)(void);
+typedef int (*TtydPre_kpaGetStageType)(s32 *);
+typedef void (*TtydPost_kpaGetStageType)(s32 *);
+/* src/koopa.c */
+typedef s32 (*TtydFn_kpaGetStageViewType)(void);
+typedef int (*TtydPre_kpaGetStageViewType)(s32 *);
+typedef void (*TtydPost_kpaGetStageViewType)(s32 *);
+/* src/koopa.c */
+typedef s32 (*TtydFn_kpaCamFollow)(void);
+typedef int (*TtydPre_kpaCamFollow)(s32 *);
+typedef void (*TtydPost_kpaCamFollow)(s32 *);
+/* src/koopa.c */
+typedef void (*TtydFn_kpaPreInit)(void);
+typedef int (*TtydPre_kpaPreInit)(void);
+typedef void (*TtydPost_kpaPreInit)(void);
+/* src/koopa.c */
+typedef f32 (*TtydFn_kpaSetJumpPara)(void);
+typedef int (*TtydPre_kpaSetJumpPara)(f32 *);
+typedef void (*TtydPost_kpaSetJumpPara)(f32 *);
+/* src/koopa.c */
+typedef f32 (*TtydFn_kpaSetFallPara)(void);
+typedef int (*TtydPre_kpaSetFallPara)(f32 *);
+typedef void (*TtydPost_kpaSetFallPara)(f32 *);
+/* src/koopa.c */
+typedef void (*TtydFn_kpa_jumpNpc)(void);
+typedef int (*TtydPre_kpa_jumpNpc)(void);
+typedef void (*TtydPost_kpa_jumpNpc)(void);
+/* src/koopa.c */
+typedef s32 (*TtydFn_kpaFireAttackCheck)(void);
+typedef int (*TtydPre_kpaFireAttackCheck)(s32 *);
+typedef void (*TtydPost_kpaFireAttackCheck)(s32 *);
+/* src/koopa.c */
+typedef void (*TtydFn_kpaAttackStart)(void);
+typedef int (*TtydPre_kpaAttackStart)(void);
+typedef void (*TtydPost_kpaAttackStart)(void);
+/* src/koopa.c */
+typedef void (*TtydFn_kpaAttackStart2)(void);
+typedef int (*TtydPre_kpaAttackStart2)(void);
+typedef void (*TtydPost_kpaAttackStart2)(void);
+/* src/koopa.c */
+typedef void (*TtydFn_kpaCancelAttackMode)(void);
+typedef int (*TtydPre_kpaCancelAttackMode)(void);
+typedef void (*TtydPost_kpaCancelAttackMode)(void);
+/* src/koopa.c */
+typedef s32 (*TtydFn_kpaGetAttackMode)(void);
+typedef int (*TtydPre_kpaGetAttackMode)(s32 *);
+typedef void (*TtydPost_kpaGetAttackMode)(s32 *);
+/* src/koopa.c */
+typedef void (*TtydFn_kpaFireDelete)(void);
+typedef int (*TtydPre_kpaFireDelete)(void);
+typedef void (*TtydPost_kpaFireDelete)(void);
+/* src/koopa.c */
+typedef f32 (*TtydFn_kpaGetBaseScale)(s32);
+typedef int (*TtydPre_kpaGetBaseScale)(f32 *, s32 *);
+typedef void (*TtydPost_kpaGetBaseScale)(f32 *, s32);
+/* src/koopa.c */
+typedef s32 (*TtydFn_kpaHipAttackCheck)(void);
+typedef int (*TtydPre_kpaHipAttackCheck)(s32 *);
+typedef void (*TtydPost_kpaHipAttackCheck)(s32 *);
+/* src/koopa.c */
+typedef void (*TtydFn_kpaPauseSE2)(void);
+typedef int (*TtydPre_kpaPauseSE2)(void);
+typedef void (*TtydPost_kpaPauseSE2)(void);
+/* src/koopa_hit.c */
+typedef s32 (*TtydFn_kpaEnemyHitChk)(f32, f32, f32, f32, f32);
+typedef int (*TtydPre_kpaEnemyHitChk)(s32 *, f32 *, f32 *, f32 *, f32 *, f32 *);
+typedef void (*TtydPost_kpaEnemyHitChk)(s32 *, f32, f32, f32, f32, f32);
+/* src/koopa_hit.c */
+typedef HitEntry * (*TtydFn_kpaSearchGround)(f32 *, f32 *, f32 *, f32);
+typedef int (*TtydPre_kpaSearchGround)(HitEntry * *, f32 * *, f32 * *, f32 * *, f32 *);
+typedef void (*TtydPost_kpaSearchGround)(HitEntry * *, f32 *, f32 *, f32 *, f32);
+/* src/koopa_hit.c */
+typedef HitEntry * (*TtydFn_kpaSearchHead)(Vec *, f32 *, f32);
+typedef int (*TtydPre_kpaSearchHead)(HitEntry * *, Vec * *, f32 * *, f32 *);
+typedef void (*TtydPost_kpaSearchHead)(HitEntry * *, Vec *, f32 *, f32);
+/* src/koopa_hit.c */
+typedef HitEntry * (*TtydFn_kpaSearchFrontUnder)(void);
+typedef int (*TtydPre_kpaSearchFrontUnder)(HitEntry * *);
+typedef void (*TtydPost_kpaSearchFrontUnder)(HitEntry * *);
+/* src/koopa_hit.c */
+typedef HitEntry * (*TtydFn_kpaGetHitobjHead)(s32);
+typedef int (*TtydPre_kpaGetHitobjHead)(HitEntry * *, s32 *);
+typedef void (*TtydPost_kpaGetHitobjHead)(HitEntry * *, s32);
+/* src/koopa_hit.c */
+typedef HitEntry * (*TtydFn_kpaGetHitobjHead2)(void);
+typedef int (*TtydPre_kpaGetHitobjHead2)(HitEntry * *);
+typedef void (*TtydPost_kpaGetHitobjHead2)(HitEntry * *);
+/* src/koopa_hit.c */
+typedef HitEntry * (*TtydFn_kpaGetHitobjRide)(s32);
+typedef int (*TtydPre_kpaGetHitobjRide)(HitEntry * *, s32 *);
+typedef void (*TtydPost_kpaGetHitobjRide)(HitEntry * *, s32);
+/* src/koopa_hit.c */
+typedef HitEntry * (*TtydFn_kpaChkHitobjRide)(void);
+typedef int (*TtydPre_kpaChkHitobjRide)(HitEntry * *);
+typedef void (*TtydPost_kpaChkHitobjRide)(HitEntry * *);
+/* src/koopa_hit.c */
+typedef long (*TtydFn_kpaClearHitobjRide)(void);
+typedef int (*TtydPre_kpaClearHitobjRide)(long *);
+typedef void (*TtydPost_kpaClearHitobjRide)(long *);
+/* src/koopa_hit.c */
+typedef HitEntry * (*TtydFn_kpaGetHitobj)(void);
+typedef int (*TtydPre_kpaGetHitobj)(HitEntry * *);
+typedef void (*TtydPost_kpaGetHitobj)(HitEntry * *);
+/* src/koopa_hit.c */
+typedef HitEntry * (*TtydFn_kpaGetHitFlame)(void);
+typedef int (*TtydPre_kpaGetHitFlame)(HitEntry * *);
+typedef void (*TtydPost_kpaGetHitFlame)(HitEntry * *);
+/* src/koopa_hit.c */
+typedef HitEntry * (*TtydFn_kpaHitCheck)(void);
+typedef int (*TtydPre_kpaHitCheck)(HitEntry * *);
+typedef void (*TtydPost_kpaHitCheck)(HitEntry * *);
+/* src/koopa_hit.c */
+typedef HitEntry * (*TtydFn_kpaFlameHitCheck)(f32, f32, f32, f32);
+typedef int (*TtydPre_kpaFlameHitCheck)(HitEntry * *, f32 *, f32 *, f32 *, f32 *);
+typedef void (*TtydPost_kpaFlameHitCheck)(HitEntry * *, f32, f32, f32, f32);
+/* src/kpa_act.c */
+typedef void (*TtydFn_kpaAddCoin)(s32);
+typedef int (*TtydPre_kpaAddCoin)(s32 *);
+typedef void (*TtydPost_kpaAddCoin)(s32);
+/* src/kpa_act.c */
+typedef void (*TtydFn_kpaAddCoinPos)(s32, Vec *);
+typedef int (*TtydPre_kpaAddCoinPos)(s32 *, Vec * *);
+typedef void (*TtydPost_kpaAddCoinPos)(s32, Vec *);
+/* src/kpa_act.c */
+typedef void (*TtydFn_kpaAddScore)(s32);
+typedef int (*TtydPre_kpaAddScore)(s32 *);
+typedef void (*TtydPost_kpaAddScore)(s32);
+/* src/kpa_act.c */
+typedef void (*TtydFn_kpaAddScorePos)(s32, Vec *);
+typedef int (*TtydPre_kpaAddScorePos)(s32 *, Vec * *);
+typedef void (*TtydPost_kpaAddScorePos)(s32, Vec *);
+/* src/manager/cardmgr.c */
+typedef CardData * (*TtydFn_cardGetFilePtr)(void);
+typedef int (*TtydPre_cardGetFilePtr)(CardData * *);
+typedef void (*TtydPost_cardGetFilePtr)(CardData * *);
+/* src/manager/cardmgr.c */
+typedef void (*TtydFn_cardBufReset)(void);
+typedef int (*TtydPre_cardBufReset)(void);
+typedef void (*TtydPost_cardBufReset)(void);
+/* src/manager/cardmgr.c */
+typedef void (*TtydFn_cardInit)(void);
+typedef int (*TtydPre_cardInit)(void);
+typedef void (*TtydPost_cardInit)(void);
+/* src/manager/cardmgr.c */
+typedef void (*TtydFn_cardInsertWatchStart)(void);
+typedef int (*TtydPre_cardInsertWatchStart)(void);
+typedef void (*TtydPost_cardInsertWatchStart)(void);
+/* src/manager/cardmgr.c */
+typedef void (*TtydFn_cardInsertWatchEnd)(void);
+typedef int (*TtydPre_cardInsertWatchEnd)(void);
+typedef void (*TtydPost_cardInsertWatchEnd)(void);
+/* src/manager/cardmgr.c */
+typedef BOOL (*TtydFn_cardInsertChanged)(void);
+typedef int (*TtydPre_cardInsertChanged)(BOOL *);
+typedef void (*TtydPost_cardInsertChanged)(BOOL *);
+/* src/manager/cardmgr.c */
+typedef BOOL (*TtydFn_cardIsExec)(void);
+typedef int (*TtydPre_cardIsExec)(BOOL *);
+typedef void (*TtydPost_cardIsExec)(BOOL *);
+/* src/manager/cardmgr.c */
+typedef s32 (*TtydFn_cardGetCode)(void);
+typedef int (*TtydPre_cardGetCode)(s32 *);
+typedef void (*TtydPost_cardGetCode)(s32 *);
+/* src/manager/cardmgr.c */
+typedef void (*TtydFn_cardMain)(void);
+typedef int (*TtydPre_cardMain)(void);
+typedef void (*TtydPost_cardMain)(void);
+/* src/manager/cardmgr.c */
+typedef void (*TtydFn_cardCopy2Main)(s32);
+typedef int (*TtydPre_cardCopy2Main)(s32 *);
+typedef void (*TtydPost_cardCopy2Main)(s32);
+/* src/manager/cardmgr.c */
+typedef void (*TtydFn_cardErase)(s32);
+typedef int (*TtydPre_cardErase)(s32 *);
+typedef void (*TtydPost_cardErase)(s32);
+/* src/manager/cardmgr.c */
+typedef void (*TtydFn_cardCopy)(s32, s32);
+typedef int (*TtydPre_cardCopy)(s32 *, s32 *);
+typedef void (*TtydPost_cardCopy)(s32, s32);
+/* src/manager/cardmgr.c */
+typedef void (*TtydFn_cardWrite)(s32);
+typedef int (*TtydPre_cardWrite)(s32 *);
+typedef void (*TtydPost_cardWrite)(s32);
+/* src/manager/cardmgr.c */
+typedef void (*TtydFn_cardWriteHeader)(void);
+typedef int (*TtydPre_cardWriteHeader)(void);
+typedef void (*TtydPost_cardWriteHeader)(void);
+/* src/manager/cardmgr.c */
+typedef void (*TtydFn_cardReadAll)(void);
+typedef int (*TtydPre_cardReadAll)(void);
+typedef void (*TtydPost_cardReadAll)(void);
+/* src/manager/cardmgr.c */
+typedef void (*TtydFn_cardCreate)(void);
+typedef int (*TtydPre_cardCreate)(void);
+typedef void (*TtydPost_cardCreate)(void);
+/* src/manager/cardmgr.c */
+typedef void (*TtydFn_cardFormat)(void);
+typedef int (*TtydPre_cardFormat)(void);
+typedef void (*TtydPost_cardFormat)(void);
+/* src/manager/winmgr.c */
+typedef void (*TtydFn_winMgrInit)(void);
+typedef int (*TtydPre_winMgrInit)(void);
+typedef void (*TtydPost_winMgrInit)(void);
+/* src/manager/winmgr.c */
+typedef void (*TtydFn_winMgrReInit)(void);
+typedef int (*TtydPre_winMgrReInit)(void);
+typedef void (*TtydPost_winMgrReInit)(void);
+/* src/manager/winmgr.c */
+typedef void (*TtydFn_winMgrMain)(void);
+typedef int (*TtydPre_winMgrMain)(void);
+typedef void (*TtydPost_winMgrMain)(void);
+/* src/manager/winmgr.c */
+typedef s32 (*TtydFn_winMgrEntry)(WinMgrDesc *);
+typedef int (*TtydPre_winMgrEntry)(s32 *, WinMgrDesc * *);
+typedef void (*TtydPost_winMgrEntry)(s32 *, WinMgrDesc *);
+/* src/manager/winmgr.c */
+typedef void (*TtydFn_winMgrSetParam)(s32, void *);
+typedef int (*TtydPre_winMgrSetParam)(s32 *, void * *);
+typedef void (*TtydPost_winMgrSetParam)(s32, void *);
+/* src/manager/winmgr.c */
+typedef void (*TtydFn_winMgrOpen)(s32);
+typedef int (*TtydPre_winMgrOpen)(s32 *);
+typedef void (*TtydPost_winMgrOpen)(s32);
+/* src/manager/winmgr.c */
+typedef void (*TtydFn_winMgrClose)(s32);
+typedef int (*TtydPre_winMgrClose)(s32 *);
+typedef void (*TtydPost_winMgrClose)(s32);
+/* src/manager/winmgr.c */
+typedef void (*TtydFn_winMgrCloseAutoDelete)(s32);
+typedef int (*TtydPre_winMgrCloseAutoDelete)(s32 *);
+typedef void (*TtydPost_winMgrCloseAutoDelete)(s32);
+/* src/manager/winmgr.c */
+typedef void (*TtydFn_winMgrDelete)(s32);
+typedef int (*TtydPre_winMgrDelete)(s32 *);
+typedef void (*TtydPost_winMgrDelete)(s32);
+/* src/manager/winmgr.c */
+typedef BOOL (*TtydFn_winMgrAction)(s32);
+typedef int (*TtydPre_winMgrAction)(BOOL *, s32 *);
+typedef void (*TtydPost_winMgrAction)(BOOL *, s32);
+/* src/manager/winmgr.c */
+typedef void (*TtydFn_winMgrSetSize)(s32, s32, s32, s32, s32);
+typedef int (*TtydPre_winMgrSetSize)(s32 *, s32 *, s32 *, s32 *, s32 *);
+typedef void (*TtydPost_winMgrSetSize)(s32, s32, s32, s32, s32);
+/* src/manager/winmgr.c */
+typedef void (*TtydFn_winMgrSetPriority)(s32, s32);
+typedef int (*TtydPre_winMgrSetPriority)(s32 *, s32 *);
+typedef void (*TtydPost_winMgrSetPriority)(s32, s32);
+/* src/manager/winmgr.c */
+typedef WinMgrEntry * (*TtydFn_winMgrGetPtr)(s32);
+typedef int (*TtydPre_winMgrGetPtr)(WinMgrEntry * *, s32 *);
+typedef void (*TtydPost_winMgrGetPtr)(WinMgrEntry * *, s32);
+/* src/manager/winmgr.c */
+typedef void (*TtydFn_winMgrHelpInit)(WinMgrEntry *);
+typedef int (*TtydPre_winMgrHelpInit)(WinMgrEntry * *);
+typedef void (*TtydPost_winMgrHelpInit)(WinMgrEntry *);
+/* src/manager/winmgr.c */
+typedef void (*TtydFn_winMgrHelpMain)(WinMgrEntry *);
+typedef int (*TtydPre_winMgrHelpMain)(WinMgrEntry * *);
+typedef void (*TtydPost_winMgrHelpMain)(WinMgrEntry *);
+/* src/manager/winmgr.c */
+typedef void (*TtydFn_winMgrHelpDraw)(WinMgrEntry *);
+typedef int (*TtydPre_winMgrHelpDraw)(WinMgrEntry * *);
+typedef void (*TtydPost_winMgrHelpDraw)(WinMgrEntry *);
+/* src/manager/winmgr.c */
+typedef WinMgrSelect * (*TtydFn_winMgrSelectEntry)(EvtWord, s32, BOOL);
+typedef int (*TtydPre_winMgrSelectEntry)(WinMgrSelect * *, EvtWord *, s32 *, BOOL *);
+typedef void (*TtydPost_winMgrSelectEntry)(WinMgrSelect * *, EvtWord, s32, BOOL);
+/* src/manager/winmgr.c */
+typedef s32 (*TtydFn_winMgrSelect)(WinMgrSelect *);
+typedef int (*TtydPre_winMgrSelect)(s32 *, WinMgrSelect * *);
+typedef void (*TtydPost_winMgrSelect)(s32 *, WinMgrSelect *);
+/* src/manager/winmgr.c */
+typedef s32 (*TtydFn_winMgrSelectOther)(WinMgrSelect *, EventEntry *);
+typedef int (*TtydPre_winMgrSelectOther)(s32 *, WinMgrSelect * *, EventEntry * *);
+typedef void (*TtydPost_winMgrSelectOther)(s32 *, WinMgrSelect *, EventEntry *);
+/* src/manager/winmgr.c */
+typedef void (*TtydFn_winMgrSelectDelete)(WinMgrSelect *);
+typedef int (*TtydPre_winMgrSelectDelete)(WinMgrSelect * *);
+typedef void (*TtydPost_winMgrSelectDelete)(WinMgrSelect *);
+/* src/manager/winmgr.c */
+typedef s32 (*TtydFn_winMgrSelectGetCursor)(WinMgrSelect *);
+typedef int (*TtydPre_winMgrSelectGetCursor)(s32 *, WinMgrSelect * *);
+typedef void (*TtydPost_winMgrSelectGetCursor)(s32 *, WinMgrSelect *);
+/* src/mario/mario.c */
+typedef s32 (*TtydFn_marioGetColor)(void);
+typedef int (*TtydPre_marioGetColor)(s32 *);
+typedef void (*TtydPost_marioGetColor)(s32 *);
+/* src/mario/mario.c */
+typedef void (*TtydFn_marioSetCharMode)(s32);
+typedef int (*TtydPre_marioSetCharMode)(s32 *);
+typedef void (*TtydPost_marioSetCharMode)(s32);
+/* src/mario/mario.c */
+typedef void (*TtydFn_marioSetFamicomMode)(s32);
+typedef int (*TtydPre_marioSetFamicomMode)(s32 *);
+typedef void (*TtydPost_marioSetFamicomMode)(s32);
+/* src/mario/mario.c */
+typedef void (*TtydFn_marioSetSpec)(void);
+typedef int (*TtydPre_marioSetSpec)(void);
+typedef void (*TtydPost_marioSetSpec)(void);
+/* src/mario/mario.c */
+typedef void (*TtydFn_marioItemGetDisable)(void);
+typedef int (*TtydPre_marioItemGetDisable)(void);
+typedef void (*TtydPost_marioItemGetDisable)(void);
+/* src/mario/mario.c */
+typedef void (*TtydFn_marioItemGetChk)(void);
+typedef int (*TtydPre_marioItemGetChk)(void);
+typedef void (*TtydPost_marioItemGetChk)(void);
+/* src/mario/mario.c */
+typedef BOOL (*TtydFn_marioItemGetOk)(void);
+typedef int (*TtydPre_marioItemGetOk)(BOOL *);
+typedef void (*TtydPost_marioItemGetOk)(BOOL *);
+/* src/mario/mario.c */
+typedef BOOL (*TtydFn_marioCaseEventValidChk)(void);
+typedef int (*TtydPre_marioCaseEventValidChk)(BOOL *);
+typedef void (*TtydPost_marioCaseEventValidChk)(BOOL *);
+/* src/mario/mario.c */
+typedef BOOL (*TtydFn_marioFrontActionValidChk)(void);
+typedef int (*TtydPre_marioFrontActionValidChk)(BOOL *);
+typedef void (*TtydPost_marioFrontActionValidChk)(BOOL *);
+/* src/mario/mario.c */
+typedef BOOL (*TtydFn_marioCheckMenuDisable)(void);
+typedef int (*TtydPre_marioCheckMenuDisable)(BOOL *);
+typedef void (*TtydPost_marioCheckMenuDisable)(BOOL *);
+/* src/mario/mario.c */
+typedef BOOL (*TtydFn_marioChkKey)(void);
+typedef int (*TtydPre_marioChkKey)(BOOL *);
+typedef void (*TtydPost_marioChkKey)(BOOL *);
+/* src/mario/mario.c */
+typedef BOOL (*TtydFn_marioChkCtrl)(void);
+typedef int (*TtydPre_marioChkCtrl)(BOOL *);
+typedef void (*TtydPost_marioChkCtrl)(BOOL *);
+/* src/mario/mario.c */
+typedef BOOL (*TtydFn_N_marioChkUseParty)(void);
+typedef int (*TtydPre_N_marioChkUseParty)(BOOL *);
+typedef void (*TtydPost_N_marioChkUseParty)(BOOL *);
+/* src/mario/mario.c */
+typedef void (*TtydFn_marioFBattlePrepare)(void);
+typedef int (*TtydPre_marioFBattlePrepare)(void);
+typedef void (*TtydPost_marioFBattlePrepare)(void);
+/* src/mario/mario.c */
+typedef void (*TtydFn_marioFBattlePost)(void);
+typedef int (*TtydPre_marioFBattlePost)(void);
+typedef void (*TtydPost_marioFBattlePost)(void);
+/* src/mario/mario.c */
+typedef s32 (*TtydFn_marioCtrlOffChk)(void);
+typedef int (*TtydPre_marioCtrlOffChk)(s32 *);
+typedef void (*TtydPost_marioCtrlOffChk)(s32 *);
+/* src/mario/mario.c */
+typedef s32 (*TtydFn_marioKeyOffChk)(void);
+typedef int (*TtydPre_marioKeyOffChk)(s32 *);
+typedef void (*TtydPost_marioKeyOffChk)(s32 *);
+/* src/mario/mario.c */
+typedef s32 (*TtydFn_marioCtrlOff)(void);
+typedef int (*TtydPre_marioCtrlOff)(s32 *);
+typedef void (*TtydPost_marioCtrlOff)(s32 *);
+/* src/mario/mario.c */
+typedef s32 (*TtydFn_marioCtrlOn)(void);
+typedef int (*TtydPre_marioCtrlOn)(s32 *);
+typedef void (*TtydPost_marioCtrlOn)(s32 *);
+/* src/mario/mario.c */
+typedef s32 (*TtydFn_marioCtrlOff2)(void);
+typedef int (*TtydPre_marioCtrlOff2)(s32 *);
+typedef void (*TtydPost_marioCtrlOff2)(s32 *);
+/* src/mario/mario.c */
+typedef s32 (*TtydFn_marioCtrlOn2)(void);
+typedef int (*TtydPre_marioCtrlOn2)(s32 *);
+typedef void (*TtydPost_marioCtrlOn2)(s32 *);
+/* src/mario/mario.c */
+typedef s32 (*TtydFn_marioKeyOff)(void);
+typedef int (*TtydPre_marioKeyOff)(s32 *);
+typedef void (*TtydPost_marioKeyOff)(s32 *);
+/* src/mario/mario.c */
+typedef s16 (*TtydFn_marioSetMutekiTime)(s32);
+typedef int (*TtydPre_marioSetMutekiTime)(s16 *, s32 *);
+typedef void (*TtydPost_marioSetMutekiTime)(s16 *, s32);
+/* src/mario/mario.c */
+typedef BOOL (*TtydFn_marioBgmodeChk)(void);
+typedef int (*TtydPre_marioBgmodeChk)(BOOL *);
+typedef void (*TtydPost_marioBgmodeChk)(BOOL *);
+/* src/mario/mario.c */
+typedef void (*TtydFn_marioBgmodeOn)(void);
+typedef int (*TtydPre_marioBgmodeOn)(void);
+typedef void (*TtydPost_marioBgmodeOn)(void);
+/* src/mario/mario.c */
+typedef void (*TtydFn_marioBgmodeOff)(void);
+typedef int (*TtydPre_marioBgmodeOff)(void);
+typedef void (*TtydPost_marioBgmodeOff)(void);
+/* src/mario/mario.c */
+typedef BOOL (*TtydFn_marioChkSts)(s32);
+typedef int (*TtydPre_marioChkSts)(BOOL *, s32 *);
+typedef void (*TtydPost_marioChkSts)(BOOL *, s32);
+/* src/mario/mario.c */
+typedef void (*TtydFn_marioResetHitObj)(const char *);
+typedef int (*TtydPre_marioResetHitObj)(const char * *);
+typedef void (*TtydPost_marioResetHitObj)(const char *);
+/* src/mario/mario.c */
+typedef void (*TtydFn_marioReset)(void);
+typedef int (*TtydPre_marioReset)(void);
+typedef void (*TtydPost_marioReset)(void);
+/* src/mario/mario.c */
+typedef void (*TtydFn_marioOfsRotReset)(void);
+typedef int (*TtydPre_marioOfsRotReset)(void);
+typedef void (*TtydPost_marioOfsRotReset)(void);
+/* src/mario/mario.c */
+typedef void (*TtydFn_marioSoundInit)(void);
+typedef int (*TtydPre_marioSoundInit)(void);
+typedef void (*TtydPost_marioSoundInit)(void);
+/* src/mario/mario.c */
+typedef void (*TtydFn_marioPoseInit)(void);
+typedef int (*TtydPre_marioPoseInit)(void);
+typedef void (*TtydPost_marioPoseInit)(void);
+/* src/mario/mario.c */
+typedef void (*TtydFn_marioInit)(void);
+typedef int (*TtydPre_marioInit)(void);
+typedef void (*TtydPost_marioInit)(void);
+/* src/mario/mario.c */
+typedef void (*TtydFn_marioReInit)(void);
+typedef int (*TtydPre_marioReInit)(void);
+typedef void (*TtydPost_marioReInit)(void);
+/* src/mario/mario.c */
+typedef void (*TtydFn_marioMain)(void);
+typedef int (*TtydPre_marioMain)(void);
+typedef void (*TtydPost_marioMain)(void);
+/* src/mario/mario.c */
+typedef void (*TtydFn_marioMove)(void);
+typedef int (*TtydPre_marioMove)(void);
+typedef void (*TtydPost_marioMove)(void);
+/* src/mario/mario.c */
+typedef BOOL (*TtydFn_marioChkPushAnime)(void);
+typedef int (*TtydPre_marioChkPushAnime)(BOOL *);
+typedef void (*TtydPost_marioChkPushAnime)(BOOL *);
+/* src/mario/mario.c */
+typedef s32 (*TtydFn_marioAnimeId)(void);
+typedef int (*TtydPre_marioAnimeId)(s32 *);
+typedef void (*TtydPost_marioAnimeId)(s32 *);
+/* src/mario/mario.c */
+typedef void (*TtydFn_marioChgDamagePose)(void);
+typedef int (*TtydPre_marioChgDamagePose)(void);
+typedef void (*TtydPost_marioChgDamagePose)(void);
+/* src/mario/mario.c */
+typedef void (*TtydFn_marioChgEvtPose)(const char *);
+typedef int (*TtydPre_marioChgEvtPose)(const char * *);
+typedef void (*TtydPost_marioChgEvtPose)(const char *);
+/* src/mario/mario.c */
+typedef const char * (*TtydFn_toDotMarioPose)(const char *);
+typedef int (*TtydPre_toDotMarioPose)(const char * *, const char * *);
+typedef void (*TtydPost_toDotMarioPose)(const char * *, const char *);
+/* src/mario/mario.c */
+typedef void (*TtydFn_marioChgPose)(const char *);
+typedef int (*TtydPre_marioChgPose)(const char * *);
+typedef void (*TtydPost_marioChgPose)(const char *);
+/* src/mario/mario.c */
+typedef void (*TtydFn_marioChgPoseTime)(const char *, s16);
+typedef int (*TtydPre_marioChgPoseTime)(const char * *, s16 *);
+typedef void (*TtydPost_marioChgPoseTime)(const char *, s16);
+/* src/mario/mario.c */
+typedef void (*TtydFn_marioChgPaper)(const char *);
+typedef int (*TtydPre_marioChgPaper)(const char * *);
+typedef void (*TtydPost_marioChgPaper)(const char *);
+/* src/mario/mario.c */
+typedef void (*TtydFn_marioSetPaperAnimeLocalTime)(s32);
+typedef int (*TtydPre_marioSetPaperAnimeLocalTime)(s32 *);
+typedef void (*TtydPost_marioSetPaperAnimeLocalTime)(s32);
+/* src/mario/mario.c */
+typedef BOOL (*TtydFn_marioPaperOn)(const char *);
+typedef int (*TtydPre_marioPaperOn)(BOOL *, const char * *);
+typedef void (*TtydPost_marioPaperOn)(BOOL *, const char *);
+/* src/mario/mario.c */
+typedef void (*TtydFn_marioPaperOff)(void);
+typedef int (*TtydPre_marioPaperOff)(void);
+typedef void (*TtydPost_marioPaperOff)(void);
+/* src/mario/mario.c */
+typedef void (*TtydFn_marioPaperLightOn)(void);
+typedef int (*TtydPre_marioPaperLightOn)(void);
+typedef void (*TtydPost_marioPaperLightOn)(void);
+/* src/mario/mario.c */
+typedef void (*TtydFn_marioPaperLightOff)(void);
+typedef int (*TtydPre_marioPaperLightOff)(void);
+typedef void (*TtydPost_marioPaperLightOff)(void);
+/* src/mario/mario.c */
+typedef void (*TtydFn_marioGetScreenPos)(Vec, f32 *, f32 *, f32 *);
+typedef int (*TtydPre_marioGetScreenPos)(Vec *, f32 * *, f32 * *, f32 * *);
+typedef void (*TtydPost_marioGetScreenPos)(Vec, f32 *, f32 *, f32 *);
+/* src/mario/mario.c */
+typedef BOOL (*TtydFn_marioChkInScreen)(s32, s32);
+typedef int (*TtydPre_marioChkInScreen)(BOOL *, s32 *, s32 *);
+typedef void (*TtydPost_marioChkInScreen)(BOOL *, s32, s32);
+/* src/mario/mario.c */
+typedef f32 (*TtydFn_marioGetScale)(void);
+typedef int (*TtydPre_marioGetScale)(f32 *);
+typedef void (*TtydPost_marioGetScale)(f32 *);
+/* src/mario/mario.c */
+typedef void (*TtydFn_marioPreDisp)(void);
+typedef int (*TtydPre_marioPreDisp)(void);
+typedef void (*TtydPost_marioPreDisp)(void);
+/* src/mario/mario_balloon.c */
+typedef void (*TtydFn_marioBaloonInit)(void);
+typedef int (*TtydPre_marioBaloonInit)(void);
+typedef void (*TtydPost_marioBaloonInit)(void);
+/* src/mario/mario_balloon.c */
+typedef void (*TtydFn_marioBalloonOn)(s32);
+typedef int (*TtydPre_marioBalloonOn)(s32 *);
+typedef void (*TtydPost_marioBalloonOn)(s32);
+/* src/mario/mario_balloon.c */
+typedef void (*TtydFn_marioBalloonOff)(void);
+typedef int (*TtydPre_marioBalloonOff)(void);
+typedef void (*TtydPost_marioBalloonOff)(void);
+/* src/mario/mario_balloon.c */
+typedef void (*TtydFn_marioBalloonMain)(void);
+typedef int (*TtydPre_marioBalloonMain)(void);
+typedef void (*TtydPost_marioBalloonMain)(void);
+/* src/mario/mario_balloon.c */
+typedef BOOL (*TtydFn_chkBalloon)(HitEntry *);
+typedef int (*TtydPre_chkBalloon)(BOOL *, HitEntry * *);
+typedef void (*TtydPost_chkBalloon)(BOOL *, HitEntry *);
+/* src/mario/mario_cam.c */
+typedef void (*TtydFn_marioResetCamShift)(void);
+typedef int (*TtydPre_marioResetCamShift)(void);
+typedef void (*TtydPost_marioResetCamShift)(void);
+/* src/mario/mario_cam.c */
+typedef void (*TtydFn_marioResetCamShiftRate)(void);
+typedef int (*TtydPre_marioResetCamShiftRate)(void);
+typedef void (*TtydPost_marioResetCamShiftRate)(void);
+/* src/mario/mario_cam.c */
+typedef void (*TtydFn_marioInitCamId)(void);
+typedef int (*TtydPre_marioInitCamId)(void);
+typedef void (*TtydPost_marioInitCamId)(void);
+/* src/mario/mario_cam.c */
+typedef s32 (*TtydFn_marioGetCamId)(void);
+typedef int (*TtydPre_marioGetCamId)(s32 *);
+typedef void (*TtydPost_marioGetCamId)(s32 *);
+/* src/mario/mario_cam.c */
+typedef void (*TtydFn_marioSetCamId)(CameraId);
+typedef int (*TtydPre_marioSetCamId)(CameraId *);
+typedef void (*TtydPost_marioSetCamId)(CameraId);
+/* src/mario/mario_cam.c */
+typedef void (*TtydFn_marioResetCamFollowRate)(void);
+typedef int (*TtydPre_marioResetCamFollowRate)(void);
+typedef void (*TtydPost_marioResetCamFollowRate)(void);
+/* src/mario/mario_cam.c */
+typedef void (*TtydFn_marioSetCamFollowRate)(f32);
+typedef int (*TtydPre_marioSetCamFollowRate)(f32 *);
+typedef void (*TtydPost_marioSetCamFollowRate)(f32);
+/* src/mario/mario_cam.c */
+typedef f32 (*TtydFn_marioGetCamFollowRate)(void);
+typedef int (*TtydPre_marioGetCamFollowRate)(f32 *);
+typedef void (*TtydPost_marioGetCamFollowRate)(f32 *);
+/* src/mario/mario_cam.c */
+typedef void (*TtydFn_marioPreCamera)(void);
+typedef int (*TtydPre_marioPreCamera)(void);
+typedef void (*TtydPost_marioPreCamera)(void);
+/* src/mario/mario_cam.c */
+typedef void (*TtydFn_marioCamMain)(void);
+typedef int (*TtydPre_marioCamMain)(void);
+typedef void (*TtydPost_marioCamMain)(void);
+/* src/mario/mario_cam.c */
+typedef void (*TtydFn_marioUpdateCamCollision)(Vec);
+typedef int (*TtydPre_marioUpdateCamCollision)(Vec *);
+typedef void (*TtydPost_marioUpdateCamCollision)(Vec);
+/* src/mario/mario_cam.c */
+typedef void (*TtydFn_marioUpdateCam)(void);
+typedef int (*TtydPre_marioUpdateCam)(void);
+typedef void (*TtydPost_marioUpdateCam)(void);
+/* src/mario/mario_cam.c */
+typedef void (*TtydFn_marioUpdateCamPos)(void);
+typedef int (*TtydPre_marioUpdateCamPos)(void);
+typedef void (*TtydPost_marioUpdateCamPos)(void);
+/* src/mario/mario_cam.c */
+typedef void (*TtydFn_marioNoUpdateCamPos)(void);
+typedef int (*TtydPre_marioNoUpdateCamPos)(void);
+typedef void (*TtydPost_marioNoUpdateCamPos)(void);
+/* src/mario/mario_cam.c */
+typedef void (*TtydFn_camFollowYOn)(void);
+typedef int (*TtydPre_camFollowYOn)(void);
+typedef void (*TtydPost_camFollowYOn)(void);
+/* src/mario/mario_cam.c */
+typedef void (*TtydFn_camFollowYOff)(void);
+typedef int (*TtydPre_camFollowYOff)(void);
+typedef void (*TtydPost_camFollowYOff)(void);
+/* src/mario/mario_cam.c */
+typedef void (*TtydFn_marioCamZoomOffReq)(void);
+typedef int (*TtydPre_marioCamZoomOffReq)(void);
+typedef void (*TtydPost_marioCamZoomOffReq)(void);
+/* src/mario/mario_cam.c */
+typedef void (*TtydFn_marioCamZoomOffReq2)(s32);
+typedef int (*TtydPre_marioCamZoomOffReq2)(s32 *);
+typedef void (*TtydPost_marioCamZoomOffReq2)(s32);
+/* src/mario/mario_cam.c */
+typedef BOOL (*TtydFn_marioCamZoomOff)(void);
+typedef int (*TtydPre_marioCamZoomOff)(BOOL *);
+typedef void (*TtydPost_marioCamZoomOff)(BOOL *);
+/* src/mario/mario_cam.c */
+typedef BOOL (*TtydFn_marioCamZoomUp)(void);
+typedef int (*TtydPre_marioCamZoomUp)(BOOL *);
+typedef void (*TtydPost_marioCamZoomUp)(BOOL *);
+/* src/mario/mario_cam.c */
+typedef BOOL (*TtydFn_marioCamZoomUpLevelMain)(void);
+typedef int (*TtydPre_marioCamZoomUpLevelMain)(BOOL *);
+typedef void (*TtydPost_marioCamZoomUpLevelMain)(BOOL *);
+/* src/mario/mario_hit.c */
+typedef HitEntry * (*TtydFn_marioHitCheckVec)(Vec *, Vec *, Vec *, Vec *, f32 *);
+typedef int (*TtydPre_marioHitCheckVec)(HitEntry * *, Vec * *, Vec * *, Vec * *, Vec * *, f32 * *);
+typedef void (*TtydPost_marioHitCheckVec)(HitEntry * *, Vec *, Vec *, Vec *, Vec *, f32 *);
+/* src/mario/mario_hit.c */
+typedef HitEntry * (*TtydFn_marioHitCheck)(f32 *, f32 *, f32 *, f32 *, f32 *, f32 *, f32 *, f32, f32, f32, f32, f32, f32);
+typedef int (*TtydPre_marioHitCheck)(HitEntry * *, f32 * *, f32 * *, f32 * *, f32 * *, f32 * *, f32 * *, f32 * *, f32 *, f32 *, f32 *, f32 *, f32 *, f32 *);
+typedef void (*TtydPost_marioHitCheck)(HitEntry * *, f32 *, f32 *, f32 *, f32 *, f32 *, f32 *, f32 *, f32, f32, f32, f32, f32, f32);
+/* src/mario/mario_hit.c */
+typedef void (*TtydFn_clear_hitobj_ride)(void);
+typedef int (*TtydPre_clear_hitobj_ride)(void);
+typedef void (*TtydPost_clear_hitobj_ride)(void);
+/* src/mario/mario_hit.c */
+typedef BOOL (*TtydFn_marioChkBero)(HitEntry *);
+typedef int (*TtydPre_marioChkBero)(BOOL *, HitEntry * *);
+typedef void (*TtydPost_marioChkBero)(BOOL *, HitEntry *);
+/* src/mario/mario_hit.c */
+typedef HitEntry * (*TtydFn_marioSearchUnder)(void);
+typedef int (*TtydPre_marioSearchUnder)(HitEntry * *);
+typedef void (*TtydPost_marioSearchUnder)(HitEntry * *);
+/* src/mario/mario_hit.c */
+typedef HitEntry * (*TtydFn_searchUnder2)(f32 *, f32, f32, f32);
+typedef int (*TtydPre_searchUnder2)(HitEntry * *, f32 * *, f32 *, f32 *, f32 *);
+typedef void (*TtydPost_searchUnder2)(HitEntry * *, f32 *, f32, f32, f32);
+/* src/mario/mario_hit.c */
+typedef void (*TtydFn_marioChkGnd)(void);
+typedef int (*TtydPre_marioChkGnd)(void);
+typedef void (*TtydPost_marioChkGnd)(void);
+/* src/mario/mario_hit.c */
+typedef void (*TtydFn_marioChkGnd2)(void);
+typedef int (*TtydPre_marioChkGnd2)(void);
+typedef void (*TtydPost_marioChkGnd2)(void);
+/* src/mario/mario_hit.c */
+typedef HitEntry * (*TtydFn_marioSearchGround)(f32 *, f32 *, f32 *, f32, f32);
+typedef int (*TtydPre_marioSearchGround)(HitEntry * *, f32 * *, f32 * *, f32 * *, f32 *, f32 *);
+typedef void (*TtydPost_marioSearchGround)(HitEntry * *, f32 *, f32 *, f32 *, f32, f32);
+/* src/mario/mario_hit.c */
+typedef HitEntry * (*TtydFn_marioSearchGroundRoll)(f32 *, f32 *, f32 *, f32, f32);
+typedef int (*TtydPre_marioSearchGroundRoll)(HitEntry * *, f32 * *, f32 * *, f32 * *, f32 *, f32 *);
+typedef void (*TtydPost_marioSearchGroundRoll)(HitEntry * *, f32 *, f32 *, f32 *, f32, f32);
+/* src/mario/mario_hit.c */
+typedef void (*TtydFn_marioChkToge)(void);
+typedef int (*TtydPre_marioChkToge)(void);
+typedef void (*TtydPost_marioChkToge)(void);
+/* src/mario/mario_hit.c */
+typedef HitEntry * (*TtydFn_marioChkLandon)(f32 *, f32);
+typedef int (*TtydPre_marioChkLandon)(HitEntry * *, f32 * *, f32 *);
+typedef void (*TtydPost_marioChkLandon)(HitEntry * *, f32 *, f32);
+/* src/mario/mario_hit.c */
+typedef HitEntry * (*TtydFn_marioLandonChk_old)(f32 *, f32);
+typedef int (*TtydPre_marioLandonChk_old)(HitEntry * *, f32 * *, f32 *);
+typedef void (*TtydPost_marioLandonChk_old)(HitEntry * *, f32 *, f32);
+/* src/mario/mario_hit.c */
+typedef HitEntry * (*TtydFn_marioChkLandon2)(f32 *, f32, f32);
+typedef int (*TtydPre_marioChkLandon2)(HitEntry * *, f32 * *, f32 *, f32 *);
+typedef void (*TtydPost_marioChkLandon2)(HitEntry * *, f32 *, f32, f32);
+/* src/mario/mario_hit.c */
+typedef f32 (*TtydFn_marioChkOverhead)(void);
+typedef int (*TtydPre_marioChkOverhead)(f32 *);
+typedef void (*TtydPost_marioChkOverhead)(f32 *);
+/* src/mario/mario_hit.c */
+typedef f32 (*TtydFn_marioChkOverheadJabara)(s32 *, f32 *);
+typedef int (*TtydPre_marioChkOverheadJabara)(f32 *, s32 * *, f32 * *);
+typedef void (*TtydPost_marioChkOverheadJabara)(f32 *, s32 *, f32 *);
+/* src/mario/mario_hit.c */
+typedef HitEntry * (*TtydFn_marioSearchHead)(Vec *, f32 *, f32);
+typedef int (*TtydPre_marioSearchHead)(HitEntry * *, Vec * *, f32 * *, f32 *);
+typedef void (*TtydPost_marioSearchHead)(HitEntry * *, Vec *, f32 *, f32);
+/* src/mario/mario_hit.c */
+typedef HitEntry * (*TtydFn_marioSearchHead_roll)(Vec *, f32 *, f32);
+typedef int (*TtydPre_marioSearchHead_roll)(HitEntry * *, Vec * *, f32 * *, f32 *);
+typedef void (*TtydPost_marioSearchHead_roll)(HitEntry * *, Vec *, f32 *, f32);
+/* src/mario/mario_hit.c */
+typedef HitEntry * (*TtydFn_marioSearchHead_jabara)(Vec *, f32 *, s32 *, f32);
+typedef int (*TtydPre_marioSearchHead_jabara)(HitEntry * *, Vec * *, f32 * *, s32 * *, f32 *);
+typedef void (*TtydPost_marioSearchHead_jabara)(HitEntry * *, Vec *, f32 *, s32 *, f32);
+/* src/mario/mario_hit.c */
+typedef void (*TtydFn_marioCheckWall)(f32, f32);
+typedef int (*TtydPre_marioCheckWall)(f32 *, f32 *);
+typedef void (*TtydPost_marioCheckWall)(f32, f32);
+/* src/mario/mario_hit.c */
+typedef void (*TtydFn_marioSearchFrontWall_staying)(f32);
+typedef int (*TtydPre_marioSearchFrontWall_staying)(f32 *);
+typedef void (*TtydPost_marioSearchFrontWall_staying)(f32);
+/* src/mario/mario_hit.c */
+typedef void (*TtydFn_marioCheckWall_roll)(f32, f32);
+typedef int (*TtydPre_marioCheckWall_roll)(f32 *, f32 *);
+typedef void (*TtydPost_marioCheckWall_roll)(f32, f32);
+/* src/mario/mario_hit.c */
+typedef HitEntry * (*TtydFn_marioChkFront)(f32 *, const Vec *, f32, f32);
+typedef int (*TtydPre_marioChkFront)(HitEntry * *, f32 * *, const Vec * *, f32 *, f32 *);
+typedef void (*TtydPost_marioChkFront)(HitEntry * *, f32 *, const Vec *, f32, f32);
+/* src/mario/mario_hit.c */
+typedef HitEntry * (*TtydFn_dou10_yoko_yari)(f32 *);
+typedef int (*TtydPre_dou10_yoko_yari)(HitEntry * *, f32 * *);
+typedef void (*TtydPost_dou10_yoko_yari)(HitEntry * *, f32 *);
+/* src/mario/mario_hit.c */
+typedef HitEntry * (*TtydFn_dou10_yoko_yari2)(f32 *);
+typedef int (*TtydPre_dou10_yoko_yari2)(HitEntry * *, f32 * *);
+typedef void (*TtydPost_dou10_yoko_yari2)(HitEntry * *, f32 *);
+/* src/mario/mario_hit.c */
+typedef HitEntry * (*TtydFn_N_dou10_yoko_yari3)(void);
+typedef int (*TtydPre_N_dou10_yoko_yari3)(HitEntry * *);
+typedef void (*TtydPost_N_dou10_yoko_yari3)(HitEntry * *);
+/* src/mario/mario_hit.c */
+typedef BOOL (*TtydFn_marioChkWallAround)(Vec *, s32, f32, f32, f32, f32);
+typedef int (*TtydPre_marioChkWallAround)(BOOL *, Vec * *, s32 *, f32 *, f32 *, f32 *, f32 *);
+typedef void (*TtydPost_marioChkWallAround)(BOOL *, Vec *, s32, f32, f32, f32, f32);
+/* src/mario/mario_hit.c */
+typedef BOOL (*TtydFn_marioSlitChkWallAround)(void);
+typedef int (*TtydPre_marioSlitChkWallAround)(BOOL *);
+typedef void (*TtydPost_marioSlitChkWallAround)(BOOL *);
+/* src/mario/mario_hit.c */
+typedef void (*TtydFn_marioCheckWallShip)(f32, f32);
+typedef int (*TtydPre_marioCheckWallShip)(f32 *, f32 *);
+typedef void (*TtydPost_marioCheckWallShip)(f32, f32);
+/* src/mario/mario_kemuri.c */
+typedef void (*TtydFn_mario_kemuri)(void);
+typedef int (*TtydPre_mario_kemuri)(void);
+typedef void (*TtydPost_mario_kemuri)(void);
+/* src/mario/mario_kemuri.c */
+typedef void (*TtydFn_mario_simple_kemuri)(void);
+typedef int (*TtydPre_mario_simple_kemuri)(void);
+typedef void (*TtydPost_mario_simple_kemuri)(void);
+/* src/mario/mario_kemuri.c */
+typedef void (*TtydFn_mario_land_kemuri)(void);
+typedef int (*TtydPre_mario_land_kemuri)(void);
+typedef void (*TtydPost_mario_land_kemuri)(void);
+/* src/mario/mario_motion.c */
+typedef void (*TtydFn_marioChgStayMotion)(void);
+typedef int (*TtydPre_marioChgStayMotion)(void);
+typedef void (*TtydPost_marioChgStayMotion)(void);
+/* src/mario/mario_motion.c */
+typedef void (*TtydFn_marioChgTalkMotion)(void);
+typedef int (*TtydPre_marioChgTalkMotion)(void);
+typedef void (*TtydPost_marioChgTalkMotion)(void);
+/* src/mario/mario_motion.c */
+typedef void (*TtydFn_marioChgGetItemMotion)(void);
+typedef int (*TtydPre_marioChgGetItemMotion)(void);
+typedef void (*TtydPost_marioChgGetItemMotion)(void);
+/* src/mario/mario_motion.c */
+typedef void (*TtydFn_marioChgShipMotion)(void);
+typedef int (*TtydPre_marioChgShipMotion)(void);
+typedef void (*TtydPost_marioChgShipMotion)(void);
+/* src/mario/mario_motion.c */
+typedef void (*TtydFn_marioChgRollMotion)(void);
+typedef int (*TtydPre_marioChgRollMotion)(void);
+typedef void (*TtydPost_marioChgRollMotion)(void);
+/* src/mario/mario_motion.c */
+typedef void (*TtydFn_marioChgJumpStandMotion)(f32);
+typedef int (*TtydPre_marioChgJumpStandMotion)(f32 *);
+typedef void (*TtydPost_marioChgJumpStandMotion)(f32);
+/* src/mario/mario_motion.c */
+typedef void (*TtydFn_marioChgSmallJumpMotion)(void);
+typedef int (*TtydPre_marioChgSmallJumpMotion)(void);
+typedef void (*TtydPost_marioChgSmallJumpMotion)(void);
+/* src/mario/mario_motion.c */
+typedef BOOL (*TtydFn_marioChkItemGetMotion)(void);
+typedef int (*TtydPre_marioChkItemGetMotion)(BOOL *);
+typedef void (*TtydPost_marioChkItemGetMotion)(BOOL *);
+/* src/mario/mario_motion.c */
+typedef void (*TtydFn_marioBoots)(void);
+typedef int (*TtydPre_marioBoots)(void);
+typedef void (*TtydPost_marioBoots)(void);
+/* src/mario/mario_motion.c */
+typedef void (*TtydFn_marioMotion)(void);
+typedef int (*TtydPre_marioMotion)(void);
+typedef void (*TtydPost_marioMotion)(void);
+/* src/mario/mario_motion.c */
+typedef void (*TtydFn_marioChgMot)(MarioMotion);
+typedef int (*TtydPre_marioChgMot)(MarioMotion *);
+typedef void (*TtydPost_marioChgMot)(MarioMotion);
+/* src/mario/mario_motion.c */
+typedef void (*TtydFn_marioChgMotSub)(MarioMotion, s32);
+typedef int (*TtydPre_marioChgMotSub)(MarioMotion *, s32 *);
+typedef void (*TtydPost_marioChgMotSub)(MarioMotion, s32);
+/* src/mario/mario_motion.c */
+typedef void (*TtydFn_marioChgMot2)(MarioMotion);
+typedef int (*TtydPre_marioChgMot2)(MarioMotion *);
+typedef void (*TtydPost_marioChgMot2)(MarioMotion);
+/* src/mario/mario_motion.c */
+typedef void (*TtydFn_marioClearJumpPara)(void);
+typedef int (*TtydPre_marioClearJumpPara)(void);
+typedef void (*TtydPost_marioClearJumpPara)(void);
+/* src/mario/mario_motion.c */
+typedef void (*TtydFn_marioSetJumpPara)(void);
+typedef int (*TtydPre_marioSetJumpPara)(void);
+typedef void (*TtydPost_marioSetJumpPara)(void);
+/* src/mario/mario_motion.c */
+typedef void (*TtydFn_marioSetFallPara)(void);
+typedef int (*TtydPre_marioSetFallPara)(void);
+typedef void (*TtydPost_marioSetFallPara)(void);
+/* src/mario/mario_motion.c */
+typedef f32 (*TtydFn_marioGetFallSpd)(void);
+typedef int (*TtydPre_marioGetFallSpd)(f32 *);
+typedef void (*TtydPost_marioGetFallSpd)(f32 *);
+/* src/mario/mario_motion.c */
+typedef f32 (*TtydFn_marioMakeJumpPara)(void);
+typedef int (*TtydPre_marioMakeJumpPara)(f32 *);
+typedef void (*TtydPost_marioMakeJumpPara)(f32 *);
+/* src/mario/mario_motion.c */
+typedef void (*TtydFn_marioJump)(void);
+typedef int (*TtydPre_marioJump)(void);
+typedef void (*TtydPost_marioJump)(void);
+/* src/mario/mario_motion.c */
+typedef void (*TtydFn_marioFall)(void);
+typedef int (*TtydPre_marioFall)(void);
+typedef void (*TtydPost_marioFall)(void);
+/* src/mario/mario_motion.c */
+typedef void (*TtydFn_marioLandOn)(void);
+typedef int (*TtydPre_marioLandOn)(void);
+typedef void (*TtydPost_marioLandOn)(void);
+/* src/mario/mario_motion.c */
+typedef BOOL (*TtydFn_marioChkJump)(void);
+typedef int (*TtydPre_marioChkJump)(BOOL *);
+typedef void (*TtydPost_marioChkJump)(BOOL *);
+/* src/mario/mario_motion.c */
+typedef BOOL (*TtydFn_marioChkTransform)(void);
+typedef int (*TtydPre_marioChkTransform)(BOOL *);
+typedef void (*TtydPost_marioChkTransform)(BOOL *);
+/* src/mario/mario_motion.c */
+typedef BOOL (*TtydFn_marioChkItemMotion)(void);
+typedef int (*TtydPre_marioChkItemMotion)(BOOL *);
+typedef void (*TtydPost_marioChkItemMotion)(BOOL *);
+/* src/mario/mario_motion.c */
+typedef s32 (*TtydFn_marioChkRub)(void);
+typedef int (*TtydPre_marioChkRub)(s32 *);
+typedef void (*TtydPost_marioChkRub)(s32 *);
+/* src/mario/mario_motion.c */
+typedef s32 (*TtydFn_marioRollChgChk)(void);
+typedef int (*TtydPre_marioRollChgChk)(s32 *);
+typedef void (*TtydPost_marioRollChgChk)(s32 *);
+/* src/mario/mario_party.c */
+typedef s32 (*TtydFn_marioUseParty)(void);
+typedef int (*TtydPre_marioUseParty)(s32 *);
+typedef void (*TtydPost_marioUseParty)(s32 *);
+/* src/mario/mario_party.c */
+typedef s32 (*TtydFn_marioUsePartyMain)(void);
+typedef int (*TtydPre_marioUsePartyMain)(s32 *);
+typedef void (*TtydPost_marioUsePartyMain)(s32 *);
+/* src/mario/mario_party.c */
+typedef s32 (*TtydFn_marioPartyEntry)(PartyId);
+typedef int (*TtydPre_marioPartyEntry)(s32 *, PartyId *);
+typedef void (*TtydPost_marioPartyEntry)(s32 *, PartyId);
+/* src/mario/mario_party.c */
+typedef s32 (*TtydFn_marioPartyHello)(PartyId);
+typedef int (*TtydPre_marioPartyHello)(s32 *, PartyId *);
+typedef void (*TtydPost_marioPartyHello)(s32 *, PartyId);
+/* src/mario/mario_party.c */
+typedef BOOL (*TtydFn_marioPartyGoodbye)(void);
+typedef int (*TtydPre_marioPartyGoodbye)(BOOL *);
+typedef void (*TtydPost_marioPartyGoodbye)(BOOL *);
+/* src/mario/mario_party.c */
+typedef void (*TtydFn_marioPartyKill)(void);
+typedef int (*TtydPre_marioPartyKill)(void);
+typedef void (*TtydPost_marioPartyKill)(void);
+/* src/mario/mario_party.c */
+typedef s32 (*TtydFn_marioGetParty)(void);
+typedef int (*TtydPre_marioGetParty)(s32 *);
+typedef void (*TtydPost_marioGetParty)(s32 *);
+/* src/mario/mario_party.c */
+typedef s32 (*TtydFn_marioGetExtraPartyId)(void);
+typedef int (*TtydPre_marioGetExtraPartyId)(s32 *);
+typedef void (*TtydPost_marioGetExtraPartyId)(s32 *);
+/* src/mario/mario_party.c */
+typedef void (*TtydFn_partyJoin)(PartyId);
+typedef int (*TtydPre_partyJoin)(PartyId *);
+typedef void (*TtydPost_partyJoin)(PartyId);
+/* src/mario/mario_party.c */
+typedef void (*TtydFn_partyLeft)(PartyId);
+typedef int (*TtydPre_partyLeft)(PartyId *);
+typedef void (*TtydPost_partyLeft)(PartyId);
+/* src/mario/mario_party.c */
+typedef BOOL (*TtydFn_partyChkJoin)(PartyId);
+typedef int (*TtydPre_partyChkJoin)(BOOL *, PartyId *);
+typedef void (*TtydPost_partyChkJoin)(BOOL *, PartyId);
+/* src/mario/mario_party.c */
+typedef s32 (*TtydFn_partyGetHp)(PartyId);
+typedef int (*TtydPre_partyGetHp)(s32 *, PartyId *);
+typedef void (*TtydPost_partyGetHp)(s32 *, PartyId);
+/* src/mario/mario_party.c */
+typedef s32 (*TtydFn_partyGetTechLv)(PartyId);
+typedef int (*TtydPre_partyGetTechLv)(s32 *, PartyId *);
+typedef void (*TtydPost_partyGetTechLv)(s32 *, PartyId);
+/* src/mario/mario_pouch.c */
+typedef void (*TtydFn_pouchInit)(void);
+typedef int (*TtydPre_pouchInit)(void);
+typedef void (*TtydPost_pouchInit)(void);
+/* src/mario/mario_pouch.c */
+typedef ItemType (*TtydFn_pouchKeyItem)(s32);
+typedef int (*TtydPre_pouchKeyItem)(ItemType *, s32 *);
+typedef void (*TtydPost_pouchKeyItem)(ItemType *, s32);
+/* src/mario/mario_pouch.c */
+typedef ItemType (*TtydFn_pouchHaveItem)(s32);
+typedef int (*TtydPre_pouchHaveItem)(ItemType *, s32 *);
+typedef void (*TtydPost_pouchHaveItem)(ItemType *, s32);
+/* src/mario/mario_pouch.c */
+typedef ItemType (*TtydFn_pouchKeepItem)(s32);
+typedef int (*TtydPre_pouchKeepItem)(ItemType *, s32 *);
+typedef void (*TtydPost_pouchKeepItem)(ItemType *, s32);
+/* src/mario/mario_pouch.c */
+typedef ItemType (*TtydFn_pouchHaveBadge)(s32);
+typedef int (*TtydPre_pouchHaveBadge)(ItemType *, s32 *);
+typedef void (*TtydPost_pouchHaveBadge)(ItemType *, s32);
+/* src/mario/mario_pouch.c */
+typedef s32 (*TtydFn_pouchGetHaveItemCnt)(void);
+typedef int (*TtydPre_pouchGetHaveItemCnt)(s32 *);
+typedef void (*TtydPost_pouchGetHaveItemCnt)(s32 *);
+/* src/mario/mario_pouch.c */
+typedef s32 (*TtydFn_pouchGetKeepItemCnt)(void);
+typedef int (*TtydPre_pouchGetKeepItemCnt)(s32 *);
+typedef void (*TtydPost_pouchGetKeepItemCnt)(s32 *);
+/* src/mario/mario_pouch.c */
+typedef s32 (*TtydFn_pouchGetHaveBadgeCnt)(void);
+typedef int (*TtydPre_pouchGetHaveBadgeCnt)(s32 *);
+typedef void (*TtydPost_pouchGetHaveBadgeCnt)(s32 *);
+/* src/mario/mario_pouch.c */
+typedef s32 (*TtydFn_pouchGetEquipBadgeCnt)(void);
+typedef int (*TtydPre_pouchGetEquipBadgeCnt)(s32 *);
+typedef void (*TtydPost_pouchGetEquipBadgeCnt)(s32 *);
+/* src/mario/mario_pouch.c */
+typedef s32 (*TtydFn_pouchGetEmptyHaveItemCnt)(void);
+typedef int (*TtydPre_pouchGetEmptyHaveItemCnt)(s32 *);
+typedef void (*TtydPost_pouchGetEmptyHaveItemCnt)(s32 *);
+/* src/mario/mario_pouch.c */
+typedef s32 (*TtydFn_pouchGetEmptyKeepItemCnt)(void);
+typedef int (*TtydPre_pouchGetEmptyKeepItemCnt)(s32 *);
+typedef void (*TtydPost_pouchGetEmptyKeepItemCnt)(s32 *);
+/* src/mario/mario_pouch.c */
+typedef s32 (*TtydFn_pouchCheckItem)(u32);
+typedef int (*TtydPre_pouchCheckItem)(s32 *, u32 *);
+typedef void (*TtydPost_pouchCheckItem)(s32 *, u32);
+/* src/mario/mario_pouch.c */
+typedef void (*TtydFn_pouchHiraToKata)(const char *, char *);
+typedef int (*TtydPre_pouchHiraToKata)(const char * *, char * *);
+typedef void (*TtydPost_pouchHiraToKata)(const char *, char *);
+/* src/mario/mario_pouch.c */
+typedef void (*TtydFn_pouchSortItem)(s32);
+typedef int (*TtydPre_pouchSortItem)(s32 *);
+typedef void (*TtydPost_pouchSortItem)(s32);
+/* src/mario/mario_pouch.c */
+typedef s32 (*TtydFn_pouchGetCoin)(void);
+typedef int (*TtydPre_pouchGetCoin)(s32 *);
+typedef void (*TtydPost_pouchGetCoin)(s32 *);
+/* src/mario/mario_pouch.c */
+typedef s32 (*TtydFn_pouchGetSuperCoin)(void);
+typedef int (*TtydPre_pouchGetSuperCoin)(s32 *);
+typedef void (*TtydPost_pouchGetSuperCoin)(s32 *);
+/* src/mario/mario_pouch.c */
+typedef s16 (*TtydFn_pouchSetSuperCoin)(s16);
+typedef int (*TtydPre_pouchSetSuperCoin)(s16 *, s16 *);
+typedef void (*TtydPost_pouchSetSuperCoin)(s16 *, s16);
+/* src/mario/mario_pouch.c */
+typedef s32 (*TtydFn_pouchGetStarPiece)(void);
+typedef int (*TtydPre_pouchGetStarPiece)(s32 *);
+typedef void (*TtydPost_pouchGetStarPiece)(s32 *);
+/* src/mario/mario_pouch.c */
+typedef s16 (*TtydFn_pouchAddHP)(s32);
+typedef int (*TtydPre_pouchAddHP)(s16 *, s32 *);
+typedef void (*TtydPost_pouchAddHP)(s16 *, s32);
+/* src/mario/mario_pouch.c */
+typedef s32 (*TtydFn_pouchGetHP)(void);
+typedef int (*TtydPre_pouchGetHP)(s32 *);
+typedef void (*TtydPost_pouchGetHP)(s32 *);
+/* src/mario/mario_pouch.c */
+typedef PouchStat (*TtydFn_pouchGetMaxHP)(void);
+typedef int (*TtydPre_pouchGetMaxHP)(PouchStat *);
+typedef void (*TtydPost_pouchGetMaxHP)(PouchStat *);
+/* src/mario/mario_pouch.c */
+typedef void (*TtydFn_pouchSetHP)(s16);
+typedef int (*TtydPre_pouchSetHP)(s16 *);
+typedef void (*TtydPost_pouchSetHP)(s16);
+/* src/mario/mario_pouch.c */
+typedef void (*TtydFn_pouchSetMaxHP)(s16);
+typedef int (*TtydPre_pouchSetMaxHP)(s16 *);
+typedef void (*TtydPost_pouchSetMaxHP)(s16);
+/* src/mario/mario_pouch.c */
+typedef s32 (*TtydFn_pouchGetPartyHP)(PartyId);
+typedef int (*TtydPre_pouchGetPartyHP)(s32 *, PartyId *);
+typedef void (*TtydPost_pouchGetPartyHP)(s32 *, PartyId);
+/* src/mario/mario_pouch.c */
+typedef void (*TtydFn_pouchSetPartyHP)(s32, s32);
+typedef int (*TtydPre_pouchSetPartyHP)(s32 *, s32 *);
+typedef void (*TtydPost_pouchSetPartyHP)(s32, s32);
+/* src/mario/mario_pouch.c */
+typedef s32 (*TtydFn_pouchGetFP)(void);
+typedef int (*TtydPre_pouchGetFP)(s32 *);
+typedef void (*TtydPost_pouchGetFP)(s32 *);
+/* src/mario/mario_pouch.c */
+typedef PouchStat (*TtydFn_pouchGetMaxFP)(void);
+typedef int (*TtydPre_pouchGetMaxFP)(PouchStat *);
+typedef void (*TtydPost_pouchGetMaxFP)(PouchStat *);
+/* src/mario/mario_pouch.c */
+typedef void (*TtydFn_pouchSetFP)(s16);
+typedef int (*TtydPre_pouchSetFP)(s16 *);
+typedef void (*TtydPost_pouchSetFP)(s16);
+/* src/mario/mario_pouch.c */
+typedef void (*TtydFn_pouchSetMaxFP)(s16);
+typedef int (*TtydPre_pouchSetMaxFP)(s16 *);
+typedef void (*TtydPost_pouchSetMaxFP)(s16);
+/* src/mario/mario_pouch.c */
+typedef s32 (*TtydFn_pouchGetAP)(void);
+typedef int (*TtydPre_pouchGetAP)(s32 *);
+typedef void (*TtydPost_pouchGetAP)(s32 *);
+/* src/mario/mario_pouch.c */
+typedef void (*TtydFn_pouchAddAP)(s32);
+typedef int (*TtydPre_pouchAddAP)(s32 *);
+typedef void (*TtydPost_pouchAddAP)(s32);
+/* src/mario/mario_pouch.c */
+typedef void (*TtydFn_pouchSetAP)(s16);
+typedef int (*TtydPre_pouchSetAP)(s16 *);
+typedef void (*TtydPost_pouchSetAP)(s16);
+/* src/mario/mario_pouch.c */
+typedef PouchStat (*TtydFn_pouchGetMaxAP)(void);
+typedef int (*TtydPre_pouchGetMaxAP)(PouchStat *);
+typedef void (*TtydPost_pouchGetMaxAP)(PouchStat *);
+/* src/mario/mario_pouch.c */
+typedef f32 (*TtydFn_pouchGetAudienceNum)(void);
+typedef int (*TtydPre_pouchGetAudienceNum)(f32 *);
+typedef void (*TtydPost_pouchGetAudienceNum)(f32 *);
+/* src/mario/mario_pouch.c */
+typedef void (*TtydFn_pouchSetAudienceNum)(f32);
+typedef int (*TtydPre_pouchSetAudienceNum)(f32 *);
+typedef void (*TtydPost_pouchSetAudienceNum)(f32);
+/* src/mario/mario_pouch.c */
+typedef s32 (*TtydFn_pouchGetJumpLv)(void);
+typedef int (*TtydPre_pouchGetJumpLv)(s32 *);
+typedef void (*TtydPost_pouchGetJumpLv)(s32 *);
+/* src/mario/mario_pouch.c */
+typedef s32 (*TtydFn_pouchGetHammerLv)(void);
+typedef int (*TtydPre_pouchGetHammerLv)(s32 *);
+typedef void (*TtydPost_pouchGetHammerLv)(s32 *);
+/* src/mario/mario_pouch.c */
+typedef s32 (*TtydFn_pouchGetPartyAttackLv)(PartyId);
+typedef int (*TtydPre_pouchGetPartyAttackLv)(s32 *, PartyId *);
+typedef void (*TtydPost_pouchGetPartyAttackLv)(s32 *, PartyId);
+/* src/mario/mario_pouch.c */
+typedef BOOL (*TtydFn_pouchAddKeepItem)(s16);
+typedef int (*TtydPre_pouchAddKeepItem)(BOOL *, s16 *);
+typedef void (*TtydPost_pouchAddKeepItem)(BOOL *, s16);
+/* src/mario/mario_pouch.c */
+typedef BOOL (*TtydFn_pouchRemoveKeepItem)(s32, s32);
+typedef int (*TtydPre_pouchRemoveKeepItem)(BOOL *, s32 *, s32 *);
+typedef void (*TtydPost_pouchRemoveKeepItem)(BOOL *, s32, s32);
+/* src/mario/mario_pouch.c */
+typedef void (*TtydFn_pouchRevisePartyParam)(void);
+typedef int (*TtydPre_pouchRevisePartyParam)(void);
+typedef void (*TtydPost_pouchRevisePartyParam)(void);
+/* src/mario/mario_pouch.c */
+typedef PouchStat (*TtydFn_pouchGetStarPoint)(void);
+typedef int (*TtydPre_pouchGetStarPoint)(PouchStat *);
+typedef void (*TtydPost_pouchGetStarPoint)(PouchStat *);
+/* src/mario/mario_pouch.c */
+typedef BOOL (*TtydFn_pouchEquipBadgeIndex)(s32);
+typedef int (*TtydPre_pouchEquipBadgeIndex)(BOOL *, s32 *);
+typedef void (*TtydPost_pouchEquipBadgeIndex)(BOOL *, s32);
+/* src/mario/mario_pouch.c */
+typedef BOOL (*TtydFn_pouchUnEquipBadgeIndex)(s32);
+typedef int (*TtydPre_pouchUnEquipBadgeIndex)(BOOL *, s32 *);
+typedef void (*TtydPost_pouchUnEquipBadgeIndex)(BOOL *, s32);
+/* src/mario/mario_pouch.c */
+typedef BOOL (*TtydFn_pouchEquipCheckBadgeIndex)(s32);
+typedef int (*TtydPre_pouchEquipCheckBadgeIndex)(BOOL *, s32 *);
+typedef void (*TtydPost_pouchEquipCheckBadgeIndex)(BOOL *, s32);
+/* src/mario/mario_pouch.c */
+typedef BOOL (*TtydFn_pouchEquipBadgeID)(s32);
+typedef int (*TtydPre_pouchEquipBadgeID)(BOOL *, s32 *);
+typedef void (*TtydPost_pouchEquipBadgeID)(BOOL *, s32);
+/* src/mario/mario_pouch.c */
+typedef BOOL (*TtydFn_N_pouchUnEquipBadgeID)(s32);
+typedef int (*TtydPre_N_pouchUnEquipBadgeID)(BOOL *, s32 *);
+typedef void (*TtydPost_N_pouchUnEquipBadgeID)(BOOL *, s32);
+/* src/mario/mario_pouch.c */
+typedef s32 (*TtydFn_pouchArriveBadge)(s32);
+typedef int (*TtydPre_pouchArriveBadge)(s32 *, s32 *);
+typedef void (*TtydPost_pouchArriveBadge)(s32 *, s32);
+/* src/mario/mario_pouch.c */
+typedef void (*TtydFn_pouchMajinaiInit)(s32);
+typedef int (*TtydPre_pouchMajinaiInit)(s32 *);
+typedef void (*TtydPost_pouchMajinaiInit)(s32);
+/* src/mario/mario_pouch.c */
+typedef s32 (*TtydFn_pouchGetKpaCoin)(void);
+typedef int (*TtydPre_pouchGetKpaCoin)(s32 *);
+typedef void (*TtydPost_pouchGetKpaCoin)(s32 *);
+/* src/mario/mario_pouch.c */
+typedef BOOL (*TtydFn_pouchAddKpaCoin)(s32);
+typedef int (*TtydPre_pouchAddKpaCoin)(BOOL *, s32 *);
+typedef void (*TtydPost_pouchAddKpaCoin)(BOOL *, s32);
+/* src/mario/mario_pouch.c */
+typedef u32 (*TtydFn_pouchGetKpaScore)(void);
+typedef int (*TtydPre_pouchGetKpaScore)(u32 *);
+typedef void (*TtydPost_pouchGetKpaScore)(u32 *);
+/* src/mario/mario_pouch.c */
+typedef void (*TtydFn_pouchAddKpaScore)(u32);
+typedef int (*TtydPre_pouchAddKpaScore)(u32 *);
+typedef void (*TtydPost_pouchAddKpaScore)(u32);
+/* src/mario/mario_pouch.c */
+typedef void (*TtydFn_pouchGetStarStone)(u32);
+typedef int (*TtydPre_pouchGetStarStone)(u32 *);
+typedef void (*TtydPost_pouchGetStarStone)(u32);
+/* src/mario/mario_pouch.c */
+typedef s32 (*TtydFn_pouchReceiveMailCount)(void);
+typedef int (*TtydPre_pouchReceiveMailCount)(s32 *);
+typedef void (*TtydPost_pouchReceiveMailCount)(s32 *);
+/* src/mario/mario_pouch.c */
+typedef void (*TtydFn_pouchReceiveMail)(s32);
+typedef int (*TtydPre_pouchReceiveMail)(s32 *);
+typedef void (*TtydPost_pouchReceiveMail)(s32);
+/* src/mario/mario_pouch.c */
+typedef void (*TtydFn_pouchOpenMail)(s32);
+typedef int (*TtydPre_pouchOpenMail)(s32 *);
+typedef void (*TtydPost_pouchOpenMail)(s32);
+/* src/mario/mario_pouch.c */
+typedef u32 (*TtydFn_pouchCheckMail)(s32);
+typedef int (*TtydPre_pouchCheckMail)(u32 *, s32 *);
+typedef void (*TtydPost_pouchCheckMail)(u32 *, s32);
+/* src/mario/mario_pouch.c */
+typedef s32 (*TtydFn_pouchGetPartyColor)(PartyId);
+typedef int (*TtydPre_pouchGetPartyColor)(s32 *, PartyId *);
+typedef void (*TtydPost_pouchGetPartyColor)(s32 *, PartyId);
+/* src/mario/mario_pouch.c */
+typedef void (*TtydFn_pouchSetPartyColor)(PartyId, s32);
+typedef int (*TtydPre_pouchSetPartyColor)(PartyId *, s32 *);
+typedef void (*TtydPost_pouchSetPartyColor)(PartyId, s32);
+/* src/mario/mario_pouch.c */
+typedef void (*TtydFn_pouchSetYoshiName)(char *);
+typedef int (*TtydPre_pouchSetYoshiName)(char * *);
+typedef void (*TtydPost_pouchSetYoshiName)(char *);
+/* src/mario/mario_pouch.c */
+typedef char * (*TtydFn_pouchGetYoshiName)(void);
+typedef int (*TtydPre_pouchGetYoshiName)(char * *);
+typedef void (*TtydPost_pouchGetYoshiName)(char * *);
+/* src/mario/mario_sbr.c */
+typedef void (*TtydFn_marioBottomless)(void);
+typedef int (*TtydPre_marioBottomless)(void);
+typedef void (*TtydPost_marioBottomless)(void);
+/* src/mario/mario_sbr.c */
+typedef void (*TtydFn_N_marioSetBottomlessRespawnPosOnBeroEntry)(f32, f32, f32);
+typedef int (*TtydPre_N_marioSetBottomlessRespawnPosOnBeroEntry)(f32 *, f32 *, f32 *);
+typedef void (*TtydPost_N_marioSetBottomlessRespawnPosOnBeroEntry)(f32, f32, f32);
+/* src/mario/mario_sbr.c */
+typedef void (*TtydFn_N_marioSetBottomlessRespawnPos)(f32, f32, f32);
+typedef int (*TtydPre_N_marioSetBottomlessRespawnPos)(f32 *, f32 *, f32 *);
+typedef void (*TtydPost_N_marioSetBottomlessRespawnPos)(f32, f32, f32);
+/* src/mario/mario_sbr.c */
+typedef void (*TtydFn_N_marioReloadMapOnBottomlessOn)(void);
+typedef int (*TtydPre_N_marioReloadMapOnBottomlessOn)(void);
+typedef void (*TtydPost_N_marioReloadMapOnBottomlessOn)(void);
+/* src/mario/mario_sbr.c */
+typedef void (*TtydFn_N_marioReloadMapOnBottomlessOff)(void);
+typedef int (*TtydPre_N_marioReloadMapOnBottomlessOff)(void);
+typedef void (*TtydPost_N_marioReloadMapOnBottomlessOff)(void);
+/* src/mario/mario_sbr.c */
+typedef f32 (*TtydFn_marioGetMoveRate)(f32);
+typedef int (*TtydPre_marioGetMoveRate)(f32 *, f32 *);
+typedef void (*TtydPost_marioGetMoveRate)(f32 *, f32);
+/* src/mario/mario_sbr.c */
+typedef void (*TtydFn_marioResetGravity)(void);
+typedef int (*TtydPre_marioResetGravity)(void);
+typedef void (*TtydPost_marioResetGravity)(void);
+/* src/mario/mario_sbr.c */
+typedef struct NpcEntry * (*TtydFn_marioGetTouchNpcPtr)(void);
+typedef int (*TtydPre_marioGetTouchNpcPtr)(struct NpcEntry * *);
+typedef void (*TtydPost_marioGetTouchNpcPtr)(struct NpcEntry * *);
+/* src/mario/mario_sbr.c */
+typedef BOOL (*TtydFn_marioChkPlanePlace)(HitEntry *);
+typedef int (*TtydPre_marioChkPlanePlace)(BOOL *, HitEntry * *);
+typedef void (*TtydPost_marioChkPlanePlace)(BOOL *, HitEntry *);
+/* src/mario/mario_sbr.c */
+typedef void (*TtydFn_marioSetPeakYpos)(void);
+typedef int (*TtydPre_marioSetPeakYpos)(void);
+typedef void (*TtydPost_marioSetPeakYpos)(void);
+/* src/mario/mario_sbr.c */
+typedef void (*TtydFn_marioAdjustMoveDir)(void);
+typedef int (*TtydPre_marioAdjustMoveDir)(void);
+typedef void (*TtydPost_marioAdjustMoveDir)(void);
+/* src/mario/mario_sbr.c */
+typedef f32 (*TtydFn_revise360)(f32);
+typedef int (*TtydPre_revise360)(f32 *, f32 *);
+typedef void (*TtydPost_revise360)(f32 *, f32);
+/* src/mario/mario_sbr.c */
+typedef f32 (*TtydFn_toMovedir)(f32);
+typedef int (*TtydPre_toMovedir)(f32 *, f32 *);
+typedef void (*TtydPost_toMovedir)(f32 *, f32);
+/* src/mario/mario_sbr.c */
+typedef f32 (*TtydFn_partyToMovedir)(PartyEntry *, f32);
+typedef int (*TtydPre_partyToMovedir)(f32 *, PartyEntry * *, f32 *);
+typedef void (*TtydPost_partyToMovedir)(f32 *, PartyEntry *, f32);
+/* src/mario/mario_sbr.c */
+typedef f32 (*TtydFn_toMovedirSimple)(f32);
+typedef int (*TtydPre_toMovedirSimple)(f32 *, f32 *);
+typedef void (*TtydPost_toMovedirSimple)(f32 *, f32);
+/* src/mario/mario_sbr.c */
+typedef f32 (*TtydFn_toMovedir2)(f32, f32);
+typedef int (*TtydPre_toMovedir2)(f32 *, f32 *, f32 *);
+typedef void (*TtydPost_toMovedir2)(f32 *, f32, f32);
+/* src/mario/mario_sbr.c */
+typedef void (*TtydFn_marioForceMoveMain)(void);
+typedef int (*TtydPre_marioForceMoveMain)(void);
+typedef void (*TtydPost_marioForceMoveMain)(void);
+/* src/mario/mario_sbr.c */
+typedef void (*TtydFn_marioSetForceMove)(f32, s32, f32);
+typedef int (*TtydPre_marioSetForceMove)(f32 *, s32 *, f32 *);
+typedef void (*TtydPost_marioSetForceMove)(f32, s32, f32);
+/* src/mario/mario_sbr.c */
+typedef s32 (*TtydFn_N_marioGetMovementSpeed)(void);
+typedef int (*TtydPre_N_marioGetMovementSpeed)(s32 *);
+typedef void (*TtydPost_N_marioGetMovementSpeed)(s32 *);
+/* src/mario/mario_sbr.c */
+typedef void (*TtydFn_marioGetRubInit)(void);
+typedef int (*TtydPre_marioGetRubInit)(void);
+typedef void (*TtydPost_marioGetRubInit)(void);
+/* src/mario/mario_sbr.c */
+typedef s32 (*TtydFn_marioGetRub)(u32, s32 *, s32 *, f32 *);
+typedef int (*TtydPre_marioGetRub)(s32 *, u32 *, s32 * *, s32 * *, f32 * *);
+typedef void (*TtydPost_marioGetRub)(s32 *, u32, s32 *, s32 *, f32 *);
+/* src/mario/mariost.c */
+typedef void (*TtydFn_marioStInit)(void);
+typedef int (*TtydPre_marioStInit)(void);
+typedef void (*TtydPost_marioStInit)(void);
+/* src/mario/mariost.c */
+typedef void (*TtydFn_marioStDisp)(void);
+typedef int (*TtydPre_marioStDisp)(void);
+typedef void (*TtydPost_marioStDisp)(void);
+/* src/mario/mariost.c */
+typedef void (*TtydFn_marioStSystemLevel)(s32);
+typedef int (*TtydPre_marioStSystemLevel)(s32 *);
+typedef void (*TtydPost_marioStSystemLevel)(s32);
+/* src/mario/mariost.c */
+typedef u32 (*TtydFn_marioStGetSystemLevel)(void);
+typedef int (*TtydPre_marioStGetSystemLevel)(u32 *);
+typedef void (*TtydPost_marioStGetSystemLevel)(u32 *);
+/* src/motion/mot_damage.c */
+typedef void (*TtydFn_marioDmgRetQuakeOn)(void);
+typedef int (*TtydPre_marioDmgRetQuakeOn)(void);
+typedef void (*TtydPost_marioDmgRetQuakeOn)(void);
+/* src/motion/mot_damage.c */
+typedef void (*TtydFn_marioSetSplash)(s32, Vec *);
+typedef int (*TtydPre_marioSetSplash)(s32 *, Vec * *);
+typedef void (*TtydPost_marioSetSplash)(s32, Vec *);
+/* src/motion/mot_damage.c */
+typedef BOOL (*TtydFn_marioChkDamageSink)(void);
+typedef int (*TtydPre_marioChkDamageSink)(BOOL *);
+typedef void (*TtydPost_marioChkDamageSink)(BOOL *);
+/* src/motion/mot_damage.c */
+typedef void (*TtydFn_set_damage_root_ypos)(f32);
+typedef int (*TtydPre_set_damage_root_ypos)(f32 *);
+typedef void (*TtydPost_set_damage_root_ypos)(f32);
+/* src/motion/mot_damage.c */
+typedef void (*TtydFn_mot_damage)(void);
+typedef int (*TtydPre_mot_damage)(void);
+typedef void (*TtydPost_mot_damage)(void);
+/* src/motion/mot_damage.c */
+typedef void (*TtydFn_mot_damageToge)(void);
+typedef int (*TtydPre_mot_damageToge)(void);
+typedef void (*TtydPost_mot_damageToge)(void);
+/* src/motion/mot_dokan.c */
+typedef void (*TtydFn_mot_dokan)(void);
+typedef int (*TtydPre_mot_dokan)(void);
+typedef void (*TtydPost_mot_dokan)(void);
+/* src/motion/mot_hammer.c */
+typedef s32 (*TtydFn_marioGetHammerLevel)(void);
+typedef int (*TtydPre_marioGetHammerLevel)(s32 *);
+typedef void (*TtydPost_marioGetHammerLevel)(s32 *);
+/* src/motion/mot_hammer.c */
+typedef void (*TtydFn_mot_hammer)(void);
+typedef int (*TtydPre_mot_hammer)(void);
+typedef void (*TtydPost_mot_hammer)(void);
+/* src/motion/mot_hammer.c */
+typedef s32 (*TtydFn_marioChkHammer2)(void);
+typedef int (*TtydPre_marioChkHammer2)(s32 *);
+typedef void (*TtydPost_marioChkHammer2)(s32 *);
+/* src/motion/mot_hammer.c */
+typedef void (*TtydFn_mot_hammer2)(void);
+typedef int (*TtydPre_mot_hammer2)(void);
+typedef void (*TtydPost_mot_hammer2)(void);
+/* src/motion/mot_hammer.c */
+typedef f32 (*TtydFn_marioGetAngleKaitenHammer)(void);
+typedef int (*TtydPre_marioGetAngleKaitenHammer)(f32 *);
+typedef void (*TtydPost_marioGetAngleKaitenHammer)(f32 *);
+/* src/motion/mot_hammer.c */
+typedef void (*TtydFn_mot_ham2_post)(void);
+typedef int (*TtydPre_mot_ham2_post)(void);
+typedef void (*TtydPost_mot_ham2_post)(void);
+/* src/motion/mot_hip.c */
+typedef BOOL (*TtydFn_marioChkHipAttack)(void);
+typedef int (*TtydPre_marioChkHipAttack)(BOOL *);
+typedef void (*TtydPost_marioChkHipAttack)(BOOL *);
+/* src/motion/mot_hip.c */
+typedef BOOL (*TtydFn_marioChkHipBump)(void);
+typedef int (*TtydPre_marioChkHipBump)(BOOL *);
+typedef void (*TtydPost_marioChkHipBump)(BOOL *);
+/* src/motion/mot_hip.c */
+typedef void (*TtydFn_mot_hip)(void);
+typedef int (*TtydPre_mot_hip)(void);
+typedef void (*TtydPost_mot_hip)(void);
+/* src/motion/mot_hip.c */
+typedef void (*TtydFn_mot_hip_post)(void);
+typedef int (*TtydPre_mot_hip_post)(void);
+typedef void (*TtydPost_mot_hip_post)(void);
+/* src/motion/mot_jabara.c */
+typedef s32 (*TtydFn_marioGetJabaraState)(void);
+typedef int (*TtydPre_marioGetJabaraState)(s32 *);
+typedef void (*TtydPost_marioGetJabaraState)(s32 *);
+/* src/motion/mot_jabara.c */
+typedef BOOL (*TtydFn_marioPriCheckJabara)(void);
+typedef int (*TtydPre_marioPriCheckJabara)(BOOL *);
+typedef void (*TtydPost_marioPriCheckJabara)(BOOL *);
+/* src/motion/mot_jabara.c */
+typedef BOOL (*TtydFn_marioChkJabara)(void);
+typedef int (*TtydPre_marioChkJabara)(BOOL *);
+typedef void (*TtydPost_marioChkJabara)(BOOL *);
+/* src/motion/mot_jabara.c */
+typedef void (*TtydFn_mot_jabara)(void);
+typedef int (*TtydPre_mot_jabara)(void);
+typedef void (*TtydPost_mot_jabara)(void);
+/* src/motion/mot_jabara.c */
+typedef BOOL (*TtydFn_jabaraNoHitChk)(void);
+typedef int (*TtydPre_jabaraNoHitChk)(BOOL *);
+typedef void (*TtydPost_jabaraNoHitChk)(BOOL *);
+/* src/motion/mot_jabara.c */
+typedef void (*TtydFn_mot_jabara_post)(void);
+typedef int (*TtydPre_mot_jabara_post)(void);
+typedef void (*TtydPost_mot_jabara_post)(void);
+/* src/motion/mot_jabara.c */
+typedef void (*TtydFn_mot_grasp)(void);
+typedef int (*TtydPre_mot_grasp)(void);
+typedef void (*TtydPost_mot_grasp)(void);
+/* src/motion/mot_jump.c */
+typedef void (*TtydFn_marioPreJump)(void);
+typedef int (*TtydPre_marioPreJump)(void);
+typedef void (*TtydPost_marioPreJump)(void);
+/* src/motion/mot_jump.c */
+typedef f32 (*TtydFn_marioGetJumpHeight)(void);
+typedef int (*TtydPre_marioGetJumpHeight)(f32 *);
+typedef void (*TtydPost_marioGetJumpHeight)(f32 *);
+/* src/motion/mot_jump.c */
+typedef void (*TtydFn_mot_jumpStand)(void);
+typedef int (*TtydPre_mot_jumpStand)(void);
+typedef void (*TtydPost_mot_jumpStand)(void);
+/* src/motion/mot_jump.c */
+typedef void (*TtydFn_mot_jumpSw)(void);
+typedef int (*TtydPre_mot_jumpSw)(void);
+typedef void (*TtydPost_mot_jumpSw)(void);
+/* src/motion/mot_jump.c */
+typedef void (*TtydFn_mot_jumpNpc)(void);
+typedef int (*TtydPre_mot_jumpNpc)(void);
+typedef void (*TtydPost_mot_jumpNpc)(void);
+/* src/motion/mot_jump.c */
+typedef void (*TtydFn_mot_jump)(void);
+typedef int (*TtydPre_mot_jump)(void);
+typedef void (*TtydPost_mot_jump)(void);
+/* src/motion/mot_jump.c */
+typedef void (*TtydFn_mot_jumpSmall)(void);
+typedef int (*TtydPre_mot_jumpSmall)(void);
+typedef void (*TtydPost_mot_jumpSmall)(void);
+/* src/motion/mot_jump.c */
+typedef void (*TtydFn_mot_upstairs)(void);
+typedef int (*TtydPre_mot_upstairs)(void);
+typedef void (*TtydPost_mot_upstairs)(void);
+/* src/motion/mot_jump.c */
+typedef void (*TtydFn_mot_fall)(void);
+typedef int (*TtydPre_mot_fall)(void);
+typedef void (*TtydPost_mot_fall)(void);
+/* src/motion/mot_jump.c */
+typedef void (*TtydFn_mot_fall_post)(void);
+typedef int (*TtydPre_mot_fall_post)(void);
+typedef void (*TtydPost_mot_fall_post)(void);
+/* src/motion/mot_jump.c */
+typedef void (*TtydFn_mot_land)(void);
+typedef int (*TtydPre_mot_land)(void);
+typedef void (*TtydPost_mot_land)(void);
+/* src/motion/mot_plane.c */
+typedef s32 (*TtydFn_marioGetPlaneStatus)(void);
+typedef int (*TtydPre_marioGetPlaneStatus)(s32 *);
+typedef void (*TtydPost_marioGetPlaneStatus)(s32 *);
+/* src/motion/mot_plane.c */
+typedef BOOL (*TtydFn_mario_plane_cancel)(void);
+typedef int (*TtydPre_mario_plane_cancel)(BOOL *);
+typedef void (*TtydPost_mario_plane_cancel)(BOOL *);
+/* src/motion/mot_plane.c */
+typedef void (*TtydFn_marioForcePlaneAnime)(void);
+typedef int (*TtydPre_marioForcePlaneAnime)(void);
+typedef void (*TtydPost_marioForcePlaneAnime)(void);
+/* src/motion/mot_plane.c */
+typedef void (*TtydFn_mot_plane)(void);
+typedef int (*TtydPre_mot_plane)(void);
+typedef void (*TtydPost_mot_plane)(void);
+/* src/motion/mot_plane.c */
+typedef void (*TtydFn_mot_plane_post)(void);
+typedef int (*TtydPre_mot_plane_post)(void);
+typedef void (*TtydPost_mot_plane_post)(void);
+/* src/motion/mot_roll.c */
+typedef void (*TtydFn_marioRollFixOn)(void);
+typedef int (*TtydPre_marioRollFixOn)(void);
+typedef void (*TtydPost_marioRollFixOn)(void);
+/* src/motion/mot_roll.c */
+typedef s32 (*TtydFn_marioRollCancelDisable)(void);
+typedef int (*TtydPre_marioRollCancelDisable)(s32 *);
+typedef void (*TtydPost_marioRollCancelDisable)(s32 *);
+/* src/motion/mot_roll.c */
+typedef s32 (*TtydFn_marioRollKeyDisable)(void);
+typedef int (*TtydPre_marioRollKeyDisable)(s32 *);
+typedef void (*TtydPost_marioRollKeyDisable)(s32 *);
+/* src/motion/mot_roll.c */
+typedef void (*TtydFn_setRollEvtFlag)(void);
+typedef int (*TtydPre_setRollEvtFlag)(void);
+typedef void (*TtydPost_setRollEvtFlag)(void);
+/* src/motion/mot_roll.c */
+typedef void (*TtydFn_clrRollEvtFlag)(void);
+typedef int (*TtydPre_clrRollEvtFlag)(void);
+typedef void (*TtydPost_clrRollEvtFlag)(void);
+/* src/motion/mot_roll.c */
+typedef s32 (*TtydFn_getRollEvtFlag)(void);
+typedef int (*TtydPre_getRollEvtFlag)(s32 *);
+typedef void (*TtydPost_getRollEvtFlag)(s32 *);
+/* src/motion/mot_roll.c */
+typedef void (*TtydFn_marioResetRollSpd)(void);
+typedef int (*TtydPre_marioResetRollSpd)(void);
+typedef void (*TtydPost_marioResetRollSpd)(void);
+/* src/motion/mot_roll.c */
+typedef void (*TtydFn_marioForceRollAnime)(void);
+typedef int (*TtydPre_marioForceRollAnime)(void);
+typedef void (*TtydPost_marioForceRollAnime)(void);
+/* src/motion/mot_roll.c */
+typedef s32 (*TtydFn_marioRollTryCancel)(void);
+typedef int (*TtydPre_marioRollTryCancel)(s32 *);
+typedef void (*TtydPost_marioRollTryCancel)(s32 *);
+/* src/motion/mot_roll.c */
+typedef s32 (*TtydFn_marioRollCancel)(void);
+typedef int (*TtydPre_marioRollCancel)(s32 *);
+typedef void (*TtydPost_marioRollCancel)(s32 *);
+/* src/motion/mot_roll.c */
+typedef void (*TtydFn_mot_roll_post)(void);
+typedef int (*TtydPre_mot_roll_post)(void);
+typedef void (*TtydPost_mot_roll_post)(void);
+/* src/motion/mot_roll.c */
+typedef void (*TtydFn_marioRollForceCancel)(void);
+typedef int (*TtydPre_marioRollForceCancel)(void);
+typedef void (*TtydPost_marioRollForceCancel)(void);
+/* src/motion/mot_roll.c */
+typedef void (*TtydFn_marioSetRollDispDir)(void);
+typedef int (*TtydPre_marioSetRollDispDir)(void);
+typedef void (*TtydPost_marioSetRollDispDir)(void);
+/* src/motion/mot_roll.c */
+typedef void (*TtydFn_rollEvtJumpSetup)(void);
+typedef int (*TtydPre_rollEvtJumpSetup)(void);
+typedef void (*TtydPost_rollEvtJumpSetup)(void);
+/* src/motion/mot_roll.c */
+typedef void (*TtydFn_marioReInit_roll)(void);
+typedef int (*TtydPre_marioReInit_roll)(void);
+typedef void (*TtydPost_marioReInit_roll)(void);
+/* src/motion/mot_roll.c */
+typedef void (*TtydFn_mot_roll)(void);
+typedef int (*TtydPre_mot_roll)(void);
+typedef void (*TtydPost_mot_roll)(void);
+/* src/motion/mot_roll.c */
+typedef void (*TtydFn_roll_upstairs_on)(void);
+typedef int (*TtydPre_roll_upstairs_on)(void);
+typedef void (*TtydPost_roll_upstairs_on)(void);
+/* src/motion/mot_roll.c */
+typedef void (*TtydFn_mot_fall_roll)(void);
+typedef int (*TtydPre_mot_fall_roll)(void);
+typedef void (*TtydPost_mot_fall_roll)(void);
+/* src/motion/mot_ship.c */
+typedef s32 (*TtydFn_marioShipChanging)(void);
+typedef int (*TtydPre_marioShipChanging)(s32 *);
+typedef void (*TtydPost_marioShipChanging)(s32 *);
+/* src/motion/mot_ship.c */
+typedef void (*TtydFn_marioSetSwirlPower)(s32, f32, f32);
+typedef int (*TtydPre_marioSetSwirlPower)(s32 *, f32 *, f32 *);
+typedef void (*TtydPost_marioSetSwirlPower)(s32, f32, f32);
+/* src/motion/mot_ship.c */
+typedef BOOL (*TtydFn_marioChkSwirlPower)(void);
+typedef int (*TtydPre_marioChkSwirlPower)(BOOL *);
+typedef void (*TtydPost_marioChkSwirlPower)(BOOL *);
+/* src/motion/mot_ship.c */
+typedef void (*TtydFn_marioShipForceStop)(void);
+typedef int (*TtydPre_marioShipForceStop)(void);
+typedef void (*TtydPost_marioShipForceStop)(void);
+/* src/motion/mot_ship.c */
+typedef void (*TtydFn_marioShipSetDispDir)(void);
+typedef int (*TtydPre_marioShipSetDispDir)(void);
+typedef void (*TtydPost_marioShipSetDispDir)(void);
+/* src/motion/mot_ship.c */
+typedef BOOL (*TtydFn_marioChkShipPlace)(HitEntry *);
+typedef int (*TtydPre_marioChkShipPlace)(BOOL *, HitEntry * *);
+typedef void (*TtydPost_marioChkShipPlace)(BOOL *, HitEntry *);
+/* src/motion/mot_ship.c */
+typedef void (*TtydFn_marioForceShipAnime)(void);
+typedef int (*TtydPre_marioForceShipAnime)(void);
+typedef void (*TtydPost_marioForceShipAnime)(void);
+/* src/motion/mot_ship.c */
+typedef void (*TtydFn_marioReInit_ship)(void);
+typedef int (*TtydPre_marioReInit_ship)(void);
+typedef void (*TtydPost_marioReInit_ship)(void);
+/* src/motion/mot_ship.c */
+typedef void (*TtydFn_mot_ship_post)(void);
+typedef int (*TtydPre_mot_ship_post)(void);
+typedef void (*TtydPost_mot_ship_post)(void);
+/* src/motion/mot_ship.c */
+typedef void (*TtydFn_mot_ship)(void);
+typedef int (*TtydPre_mot_ship)(void);
+typedef void (*TtydPost_mot_ship)(void);
+/* src/motion/mot_ship.c */
+typedef void (*TtydFn_marioShipChgFall)(void);
+typedef int (*TtydPre_marioShipChgFall)(void);
+typedef void (*TtydPost_marioShipChgFall)(void);
+/* src/motion/mot_ship.c */
+typedef BOOL (*TtydFn_marioChkShipMoveMode)(void);
+typedef int (*TtydPre_marioChkShipMoveMode)(BOOL *);
+typedef void (*TtydPost_marioChkShipMoveMode)(BOOL *);
+/* src/motion/mot_slit.c */
+typedef void (*TtydFn_marioSlitReenter)(void);
+typedef int (*TtydPre_marioSlitReenter)(void);
+typedef void (*TtydPost_marioSlitReenter)(void);
+/* src/motion/mot_slit.c */
+typedef void (*TtydFn_N_marioSlitSetAfterLand)(void);
+typedef int (*TtydPre_N_marioSlitSetAfterLand)(void);
+typedef void (*TtydPost_N_marioSlitSetAfterLand)(void);
+/* src/motion/mot_slit.c */
+typedef BOOL (*TtydFn_marioSlitAbilityChk)(void);
+typedef int (*TtydPre_marioSlitAbilityChk)(BOOL *);
+typedef void (*TtydPost_marioSlitAbilityChk)(BOOL *);
+/* src/motion/mot_slit.c */
+typedef s32 (*TtydFn_marioSlitButton)(void);
+typedef int (*TtydPre_marioSlitButton)(s32 *);
+typedef void (*TtydPost_marioSlitButton)(s32 *);
+/* src/motion/mot_slit.c */
+typedef BOOL (*TtydFn_marioSlitKeyDisable)(void);
+typedef int (*TtydPre_marioSlitKeyDisable)(BOOL *);
+typedef void (*TtydPost_marioSlitKeyDisable)(BOOL *);
+/* src/motion/mot_slit.c */
+typedef BOOL (*TtydFn_U_marioSlitContinueChk)(void);
+typedef int (*TtydPre_U_marioSlitContinueChk)(BOOL *);
+typedef void (*TtydPost_U_marioSlitContinueChk)(BOOL *);
+/* src/motion/mot_slit.c */
+typedef BOOL (*TtydFn_marioCreviceWallChk)(const Vec *);
+typedef int (*TtydPre_marioCreviceWallChk)(BOOL *, const Vec * *);
+typedef void (*TtydPost_marioCreviceWallChk)(BOOL *, const Vec *);
+/* src/motion/mot_slit.c */
+typedef void (*TtydFn_marioClearSlitFloor)(void);
+typedef int (*TtydPre_marioClearSlitFloor)(void);
+typedef void (*TtydPost_marioClearSlitFloor)(void);
+/* src/motion/mot_slit.c */
+typedef BOOL (*TtydFn_marioGetSlitFloorPos)(Vec *);
+typedef int (*TtydPre_marioGetSlitFloorPos)(BOOL *, Vec * *);
+typedef void (*TtydPost_marioGetSlitFloorPos)(BOOL *, Vec *);
+/* src/motion/mot_slit.c */
+typedef BOOL (*TtydFn_marioChkSlitThrouh)(void);
+typedef int (*TtydPre_marioChkSlitThrouh)(BOOL *);
+typedef void (*TtydPost_marioChkSlitThrouh)(BOOL *);
+/* src/motion/mot_slit.c */
+typedef BOOL (*TtydFn_marioChkSlitThrouhEnd)(void);
+typedef int (*TtydPre_marioChkSlitThrouhEnd)(BOOL *);
+typedef void (*TtydPost_marioChkSlitThrouhEnd)(BOOL *);
+/* src/motion/mot_slit.c */
+typedef void (*TtydFn_motSlitContinue)(void);
+typedef int (*TtydPre_motSlitContinue)(void);
+typedef void (*TtydPost_motSlitContinue)(void);
+/* src/motion/mot_slit.c */
+typedef BOOL (*TtydFn_marioChkSlitEnd)(void);
+typedef int (*TtydPre_marioChkSlitEnd)(BOOL *);
+typedef void (*TtydPost_marioChkSlitEnd)(BOOL *);
+/* src/motion/mot_slit.c */
+typedef void (*TtydFn_motSlitCancel)(void);
+typedef int (*TtydPre_motSlitCancel)(void);
+typedef void (*TtydPost_motSlitCancel)(void);
+/* src/motion/mot_slit.c */
+typedef void (*TtydFn_motSlitCancel2)(void);
+typedef int (*TtydPre_motSlitCancel2)(void);
+typedef void (*TtydPost_motSlitCancel2)(void);
+/* src/motion/mot_slit.c */
+typedef void (*TtydFn_motSlitCancel3)(void);
+typedef int (*TtydPre_motSlitCancel3)(void);
+typedef void (*TtydPost_motSlitCancel3)(void);
+/* src/motion/mot_slit.c */
+typedef BOOL (*TtydFn_marioGetMotSlitCancel3)(void);
+typedef int (*TtydPre_marioGetMotSlitCancel3)(BOOL *);
+typedef void (*TtydPost_marioGetMotSlitCancel3)(BOOL *);
+/* src/motion/mot_slit.c */
+typedef void (*TtydFn_marioSlitForceCancel)(void);
+typedef int (*TtydPre_marioSlitForceCancel)(void);
+typedef void (*TtydPost_marioSlitForceCancel)(void);
+/* src/motion/mot_slit.c */
+typedef void (*TtydFn_mot_slit_post)(void);
+typedef int (*TtydPre_mot_slit_post)(void);
+typedef void (*TtydPost_mot_slit_post)(void);
+/* src/motion/mot_slit.c */
+typedef void (*TtydFn_marioForceSlitAnime)(void);
+typedef int (*TtydPre_marioForceSlitAnime)(void);
+typedef void (*TtydPost_marioForceSlitAnime)(void);
+/* src/motion/mot_slit.c */
+typedef void (*TtydFn_marioReInit_slit)(void);
+typedef int (*TtydPre_marioReInit_slit)(void);
+typedef void (*TtydPost_marioReInit_slit)(void);
+/* src/motion/mot_slit.c */
+typedef void (*TtydFn_mot_slit)(void);
+typedef int (*TtydPre_mot_slit)(void);
+typedef void (*TtydPost_mot_slit)(void);
+/* src/motion/mot_stay.c */
+typedef void (*TtydFn_marioVoiceGlareOn)(void);
+typedef int (*TtydPre_marioVoiceGlareOn)(void);
+typedef void (*TtydPost_marioVoiceGlareOn)(void);
+/* src/motion/mot_stay.c */
+typedef void (*TtydFn_marioVoiceGlareOff)(void);
+typedef int (*TtydPre_marioVoiceGlareOff)(void);
+typedef void (*TtydPost_marioVoiceGlareOff)(void);
+/* src/motion/mot_stay.c */
+typedef BOOL (*TtydFn_marioChkDeepSleep)(void);
+typedef int (*TtydPre_marioChkDeepSleep)(BOOL *);
+typedef void (*TtydPost_marioChkDeepSleep)(BOOL *);
+/* src/motion/mot_stay.c */
+typedef void (*TtydFn_mot_stay)(void);
+typedef int (*TtydPre_mot_stay)(void);
+typedef void (*TtydPost_mot_stay)(void);
+/* src/motion/mot_stay.c */
+typedef void (*TtydFn_marioChgMotAuto)(void);
+typedef int (*TtydPre_marioChgMotAuto)(void);
+typedef void (*TtydPost_marioChgMotAuto)(void);
+/* src/motion/mot_stay.c */
+typedef void (*TtydFn_mot_stay_post)(void);
+typedef int (*TtydPre_mot_stay_post)(void);
+typedef void (*TtydPost_mot_stay_post)(void);
+/* src/motion/mot_walk.c */
+typedef f32 (*TtydFn_marioGetWalkSpd)(void);
+typedef int (*TtydPre_marioGetWalkSpd)(f32 *);
+typedef void (*TtydPost_marioGetWalkSpd)(f32 *);
+/* src/motion/mot_walk.c */
+typedef f32 (*TtydFn_marioGetDashSpd)(void);
+typedef int (*TtydPre_marioGetDashSpd)(f32 *);
+typedef void (*TtydPost_marioGetDashSpd)(f32 *);
+/* src/motion/mot_walk.c */
+typedef void (*TtydFn_mot_walk)(void);
+typedef int (*TtydPre_mot_walk)(void);
+typedef void (*TtydPost_mot_walk)(void);
+/* src/motion/mot_walk.c */
+typedef void (*TtydFn_mot_dash)(void);
+typedef int (*TtydPre_mot_dash)(void);
+typedef void (*TtydPost_mot_dash)(void);
+/* src/motion/mot_yoshi.c */
+typedef void (*TtydFn_mot_yoshi)(void);
+typedef int (*TtydPre_mot_yoshi)(void);
+typedef void (*TtydPost_mot_yoshi)(void);
+/* src/motion/mot_yoshi.c */
+typedef void (*TtydFn_mot_yoshi_post)(void);
+typedef int (*TtydPre_mot_yoshi_post)(void);
+typedef void (*TtydPost_mot_yoshi_post)(void);
+/* src/nameent.c */
+typedef void (*TtydFn_nameEntInit)(void);
+typedef int (*TtydPre_nameEntInit)(void);
+typedef void (*TtydPost_nameEntInit)(void);
+/* src/nameent.c */
+typedef void (*TtydFn_nameEntReInit)(void);
+typedef int (*TtydPre_nameEntReInit)(void);
+typedef void (*TtydPost_nameEntReInit)(void);
+/* src/nameent.c */
+typedef BOOL (*TtydFn_nameEntPrepare)(void);
+typedef int (*TtydPre_nameEntPrepare)(BOOL *);
+typedef void (*TtydPost_nameEntPrepare)(BOOL *);
+/* src/nameent.c */
+typedef void (*TtydFn_nameEntOn)(s32);
+typedef int (*TtydPre_nameEntOn)(s32 *);
+typedef void (*TtydPost_nameEntOn)(s32);
+/* src/nameent.c */
+typedef void (*TtydFn_nameEntOff)(void);
+typedef int (*TtydPre_nameEntOff)(void);
+typedef void (*TtydPost_nameEntOff)(void);
+/* src/nameent.c */
+typedef BOOL (*TtydFn_nameEntWait)(void);
+typedef int (*TtydPre_nameEntWait)(BOOL *);
+typedef void (*TtydPost_nameEntWait)(BOOL *);
+/* src/nameent.c */
+typedef BOOL (*TtydFn_nameEntIsCancel)(void);
+typedef int (*TtydPre_nameEntIsCancel)(BOOL *);
+typedef void (*TtydPost_nameEntIsCancel)(BOOL *);
+/* src/nameent.c */
+typedef const char * (*TtydFn_nameEntGetName)(void);
+typedef int (*TtydPre_nameEntGetName)(const char * *);
+typedef void (*TtydPost_nameEntGetName)(const char * *);
+/* src/nameent.c */
+typedef void (*TtydFn_nameEntMain)(void);
+typedef int (*TtydPre_nameEntMain)(void);
+typedef void (*TtydPost_nameEntMain)(void);
+/* src/nameent.c */
+typedef void (*TtydFn_nameMaskGX)(f32);
+typedef int (*TtydPre_nameMaskGX)(f32 *);
+typedef void (*TtydPost_nameMaskGX)(f32);
+/* src/party.c */
+typedef PartyEntry * (*TtydFn_anotherPartyGetPtr)(s32);
+typedef int (*TtydPre_anotherPartyGetPtr)(PartyEntry * *, s32 *);
+typedef void (*TtydPost_anotherPartyGetPtr)(PartyEntry * *, s32);
+/* src/party.c */
+typedef BOOL (*TtydFn_partyPaperOn)(PartyEntry *, const char *);
+typedef int (*TtydPre_partyPaperOn)(BOOL *, PartyEntry * *, const char * *);
+typedef void (*TtydPost_partyPaperOn)(BOOL *, PartyEntry *, const char *);
+/* src/party.c */
+typedef void (*TtydFn_partyPaperOff)(PartyEntry *);
+typedef int (*TtydPre_partyPaperOff)(PartyEntry * *);
+typedef void (*TtydPost_partyPaperOff)(PartyEntry *);
+/* src/party.c */
+typedef void (*TtydFn_partyPaperLightOff)(PartyEntry *);
+typedef int (*TtydPre_partyPaperLightOff)(PartyEntry * *);
+typedef void (*TtydPost_partyPaperLightOff)(PartyEntry *);
+/* src/party.c */
+typedef void (*TtydFn_partyChgPose)(PartyEntry *, const char *);
+typedef int (*TtydPre_partyChgPose)(PartyEntry * *, const char * *);
+typedef void (*TtydPost_partyChgPose)(PartyEntry *, const char *);
+/* src/party.c */
+typedef void (*TtydFn_partyChgPaper)(PartyEntry *, const char *);
+typedef int (*TtydPre_partyChgPaper)(PartyEntry * *, const char * *);
+typedef void (*TtydPost_partyChgPaper)(PartyEntry *, const char *);
+/* src/party.c */
+typedef void (*TtydFn_partyCtrlOff)(void);
+typedef int (*TtydPre_partyCtrlOff)(void);
+typedef void (*TtydPost_partyCtrlOff)(void);
+/* src/party.c */
+typedef void (*TtydFn_partyCtrlOn)(void);
+typedef int (*TtydPre_partyCtrlOn)(void);
+typedef void (*TtydPost_partyCtrlOn)(void);
+/* src/party.c */
+typedef void (*TtydFn_partyRun)(PartyEntry *);
+typedef int (*TtydPre_partyRun)(PartyEntry * *);
+typedef void (*TtydPost_partyRun)(PartyEntry *);
+/* src/party.c */
+typedef void (*TtydFn_partyStop)(PartyEntry *);
+typedef int (*TtydPre_partyStop)(PartyEntry * *);
+typedef void (*TtydPost_partyStop)(PartyEntry *);
+/* src/party.c */
+typedef void (*TtydFn_partySetForceMove)(PartyEntry *, s32, f32, f32);
+typedef int (*TtydPre_partySetForceMove)(PartyEntry * *, s32 *, f32 *, f32 *);
+typedef void (*TtydPost_partySetForceMove)(PartyEntry *, s32, f32, f32);
+/* src/party.c */
+typedef s32 (*TtydFn_partyEntryHello)(s32);
+typedef int (*TtydPre_partyEntryHello)(s32 *, s32 *);
+typedef void (*TtydPost_partyEntryHello)(s32 *, s32);
+/* src/party.c */
+typedef s32 (*TtydFn_partyEntry)(s32);
+typedef int (*TtydPre_partyEntry)(s32 *, s32 *);
+typedef void (*TtydPost_partyEntry)(s32 *, s32);
+/* src/party.c */
+typedef s32 (*TtydFn_partyEntryPos)(s32, f32, f32, f32);
+typedef int (*TtydPre_partyEntryPos)(s32 *, s32 *, f32 *, f32 *, f32 *);
+typedef void (*TtydPost_partyEntryPos)(s32 *, s32, f32, f32, f32);
+/* src/party.c */
+typedef BOOL (*TtydFn_partyGoodbye)(s32);
+typedef int (*TtydPre_partyGoodbye)(BOOL *, s32 *);
+typedef void (*TtydPost_partyGoodbye)(BOOL *, s32);
+/* src/party.c */
+typedef s32 (*TtydFn_partyKill)(s32);
+typedef int (*TtydPre_partyKill)(s32 *, s32 *);
+typedef void (*TtydPost_partyKill)(s32 *, s32);
+/* src/party.c */
+typedef s32 (*TtydFn_partyKill2)(s32);
+typedef int (*TtydPre_partyKill2)(s32 *, s32 *);
+typedef void (*TtydPost_partyKill2)(s32 *, s32);
+/* src/party.c */
+typedef s32 (*TtydFn_yoshiSetColor)(void);
+typedef int (*TtydPre_yoshiSetColor)(s32 *);
+typedef void (*TtydPost_yoshiSetColor)(s32 *);
+/* src/party.c */
+typedef f32 (*TtydFn_partyGetHeight)(PartyEntry *);
+typedef int (*TtydPre_partyGetHeight)(f32 *, PartyEntry * *);
+typedef void (*TtydPost_partyGetHeight)(f32 *, PartyEntry *);
+/* src/party.c */
+typedef s32 (*TtydFn_partyEntry2)(s32);
+typedef int (*TtydPre_partyEntry2)(s32 *, s32 *);
+typedef void (*TtydPost_partyEntry2)(s32 *, s32);
+/* src/party.c */
+typedef s32 (*TtydFn_partyEntry2Hello)(s32);
+typedef int (*TtydPre_partyEntry2Hello)(s32 *, s32 *);
+typedef void (*TtydPost_partyEntry2Hello)(s32 *, s32);
+/* src/party.c */
+typedef void (*TtydFn_partyInit)(void);
+typedef int (*TtydPre_partyInit)(void);
+typedef void (*TtydPost_partyInit)(void);
+/* src/party.c */
+typedef void (*TtydFn_partyReInit)(void);
+typedef int (*TtydPre_partyReInit)(void);
+typedef void (*TtydPost_partyReInit)(void);
+/* src/party.c */
+typedef void (*TtydFn_partyUsePost)(PartyEntry *);
+typedef int (*TtydPre_partyUsePost)(PartyEntry * *);
+typedef void (*TtydPost_partyUsePost)(PartyEntry *);
+/* src/party.c */
+typedef void (*TtydFn_partyChgRunMode)(PartyEntry *, s32);
+typedef int (*TtydPre_partyChgRunMode)(PartyEntry * *, s32 *);
+typedef void (*TtydPost_partyChgRunMode)(PartyEntry *, s32);
+/* src/party.c */
+typedef void (*TtydFn_partyPrevRunMode)(PartyEntry *);
+typedef int (*TtydPre_partyPrevRunMode)(PartyEntry * *);
+typedef void (*TtydPost_partyPrevRunMode)(PartyEntry *);
+/* src/party.c */
+typedef void (*TtydFn_partyMain)(void);
+typedef int (*TtydPre_partyMain)(void);
+typedef void (*TtydPost_partyMain)(void);
+/* src/party.c */
+typedef BOOL (*TtydFn_partyDoWork)(void);
+typedef int (*TtydPre_partyDoWork)(BOOL *);
+typedef void (*TtydPost_partyDoWork)(BOOL *);
+/* src/party.c */
+typedef void (*TtydFn_partyHello)(PartyEntry *);
+typedef int (*TtydPre_partyHello)(PartyEntry * *);
+typedef void (*TtydPost_partyHello)(PartyEntry *);
+/* src/party.c */
+typedef s32 (*TtydFn_partyGoodbyeInit)(PartyEntry *);
+typedef int (*TtydPre_partyGoodbyeInit)(s32 *, PartyEntry * *);
+typedef void (*TtydPost_partyGoodbyeInit)(s32 *, PartyEntry *);
+/* src/party.c */
+typedef s32 (*TtydFn_partyGoodbyeMain)(PartyEntry *);
+typedef int (*TtydPre_partyGoodbyeMain)(s32 *, PartyEntry * *);
+typedef void (*TtydPost_partyGoodbyeMain)(s32 *, PartyEntry *);
+/* src/party.c */
+typedef void (*TtydFn_partyDokanEnd)(s32, s32);
+typedef int (*TtydPre_partyDokanEnd)(s32 *, s32 *);
+typedef void (*TtydPost_partyDokanEnd)(s32, s32);
+/* src/party.c */
+typedef void (*TtydFn_allPartyRidePlane)(void);
+typedef int (*TtydPre_allPartyRidePlane)(void);
+typedef void (*TtydPost_allPartyRidePlane)(void);
+/* src/party.c */
+typedef void (*TtydFn_allPartyRideShip)(void);
+typedef int (*TtydPre_allPartyRideShip)(void);
+typedef void (*TtydPost_allPartyRideShip)(void);
+/* src/party.c */
+typedef void (*TtydFn_allPartyForceRideOn)(void);
+typedef int (*TtydPre_allPartyForceRideOn)(void);
+typedef void (*TtydPost_allPartyForceRideOn)(void);
+/* src/party.c */
+typedef void (*TtydFn_allPartyRideOn)(void);
+typedef int (*TtydPre_allPartyRideOn)(void);
+typedef void (*TtydPost_allPartyRideOn)(void);
+/* src/party.c */
+typedef void (*TtydFn_allPartyRideOff)(void);
+typedef int (*TtydPre_allPartyRideOff)(void);
+typedef void (*TtydPost_allPartyRideOff)(void);
+/* src/party.c */
+typedef void (*TtydFn_allPartyRideOff2)(void);
+typedef int (*TtydPre_allPartyRideOff2)(void);
+typedef void (*TtydPost_allPartyRideOff2)(void);
+/* src/party.c */
+typedef s32 (*TtydFn_partyRideChk)(PartyEntry *);
+typedef int (*TtydPre_partyRideChk)(s32 *, PartyEntry * *);
+typedef void (*TtydPost_partyRideChk)(s32 *, PartyEntry *);
+/* src/party.c */
+typedef void (*TtydFn_party_force_ride_yoshi)(PartyEntry *);
+typedef int (*TtydPre_party_force_ride_yoshi)(PartyEntry * *);
+typedef void (*TtydPost_party_force_ride_yoshi)(PartyEntry *);
+/* src/party.c */
+typedef void (*TtydFn_party_ride_yoshi_force_move)(void);
+typedef int (*TtydPre_party_ride_yoshi_force_move)(void);
+typedef void (*TtydPost_party_ride_yoshi_force_move)(void);
+/* src/party.c */
+typedef void (*TtydFn_partyInitCamId)(PartyEntry *);
+typedef int (*TtydPre_partyInitCamId)(PartyEntry * *);
+typedef void (*TtydPost_partyInitCamId)(PartyEntry *);
+/* src/party.c */
+typedef void (*TtydFn_partySetCamId)(PartyEntry *, s32);
+typedef int (*TtydPre_partySetCamId)(PartyEntry * *, s32 *);
+typedef void (*TtydPost_partySetCamId)(PartyEntry *, s32);
+/* src/party.c */
+typedef void (*TtydFn_partyKeyOn)(void);
+typedef int (*TtydPre_partyKeyOn)(void);
+typedef void (*TtydPost_partyKeyOn)(void);
+/* src/party.c */
+typedef void (*TtydFn_partyKeyOff)(void);
+typedef int (*TtydPre_partyKeyOff)(void);
+typedef void (*TtydPost_partyKeyOff)(void);
+/* src/party.c */
+typedef void (*TtydFn_L_partyClearCont)(PartyEntry *);
+typedef int (*TtydPre_L_partyClearCont)(PartyEntry * *);
+typedef void (*TtydPost_L_partyClearCont)(PartyEntry *);
+/* src/party.c */
+typedef void (*TtydFn_partyUpdateKeyData)(PartyEntry *);
+typedef int (*TtydPre_partyUpdateKeyData)(PartyEntry * *);
+typedef void (*TtydPost_partyUpdateKeyData)(PartyEntry *);
+/* src/party.c */
+typedef void (*TtydFn_partyShadowOff)(PartyEntry *);
+typedef int (*TtydPre_partyShadowOff)(PartyEntry * *);
+typedef void (*TtydPost_partyShadowOff)(PartyEntry *);
+/* src/party.c */
+typedef void (*TtydFn_partySetFamicomMode)(PartyEntry *, s32);
+typedef int (*TtydPre_partySetFamicomMode)(PartyEntry * *, s32 *);
+typedef void (*TtydPost_partySetFamicomMode)(PartyEntry *, s32);
+/* src/party/party_bomhei.c */
+typedef void (*TtydFn_bomhei_bye)(PartyEntry *);
+typedef int (*TtydPre_bomhei_bye)(PartyEntry * *);
+typedef void (*TtydPost_bomhei_bye)(PartyEntry *);
+/* src/party/party_bomhei.c */
+typedef void (*TtydFn_bomhei_init)(PartyEntry *);
+typedef int (*TtydPre_bomhei_init)(PartyEntry * *);
+typedef void (*TtydPost_bomhei_init)(PartyEntry *);
+/* src/party/party_bomhei.c */
+typedef u8 (*TtydFn_bomheiGetStatus)(void);
+typedef int (*TtydPre_bomheiGetStatus)(u8 *);
+typedef void (*TtydPost_bomheiGetStatus)(u8 *);
+/* src/party/party_bomhei.c */
+typedef void (*TtydFn_bomhei_exit)(PartyEntry *);
+typedef int (*TtydPre_bomhei_exit)(PartyEntry * *);
+typedef void (*TtydPost_bomhei_exit)(PartyEntry *);
+/* src/party/party_bomhei.c */
+typedef void (*TtydFn_bomhei_use_cancel)(void);
+typedef int (*TtydPre_bomhei_use_cancel)(void);
+typedef void (*TtydPost_bomhei_use_cancel)(void);
+/* src/party/party_bomhei.c */
+typedef void (*TtydFn_bomhei_use_cancel2)(void);
+typedef int (*TtydPre_bomhei_use_cancel2)(void);
+typedef void (*TtydPost_bomhei_use_cancel2)(void);
+/* src/party/party_bomhei.c */
+typedef void (*TtydFn_bomhei_use_post)(PartyEntry *);
+typedef int (*TtydPre_bomhei_use_post)(PartyEntry * *);
+typedef void (*TtydPost_bomhei_use_post)(PartyEntry *);
+/* src/party/party_bomhei.c */
+typedef void (*TtydFn_bomhei_use)(PartyEntry *);
+typedef int (*TtydPre_bomhei_use)(PartyEntry * *);
+typedef void (*TtydPost_bomhei_use)(PartyEntry *);
+/* src/party/party_bomhei.c */
+typedef s32 (*TtydFn_mario_bomhei_keychk)(void);
+typedef int (*TtydPre_mario_bomhei_keychk)(s32 *);
+typedef void (*TtydPost_mario_bomhei_keychk)(s32 *);
+/* src/party/party_bomhei.c */
+typedef s32 (*TtydFn_mario_bomhei_keychk2)(void);
+typedef int (*TtydPre_mario_bomhei_keychk2)(s32 *);
+typedef void (*TtydPost_mario_bomhei_keychk2)(s32 *);
+/* src/party/party_bomhei.c */
+typedef void (*TtydFn_partyGetReturnPos)(Vec *);
+typedef int (*TtydPre_partyGetReturnPos)(Vec * *);
+typedef void (*TtydPost_partyGetReturnPos)(Vec *);
+/* src/party/party_chuchu.c */
+typedef BOOL (*TtydFn_chuchu_searchObject)(void);
+typedef int (*TtydPre_chuchu_searchObject)(BOOL *);
+typedef void (*TtydPost_chuchu_searchObject)(BOOL *);
+/* src/party/party_chuchu.c */
+typedef void (*TtydFn_chuchu_init)(PartyEntry *);
+typedef int (*TtydPre_chuchu_init)(PartyEntry * *);
+typedef void (*TtydPost_chuchu_init)(PartyEntry *);
+/* src/party/party_chuchu.c */
+typedef void (*TtydFn_chuchu_exit)(PartyEntry *);
+typedef int (*TtydPre_chuchu_exit)(PartyEntry * *);
+typedef void (*TtydPost_chuchu_exit)(PartyEntry *);
+/* src/party/party_chuchu.c */
+typedef void (*TtydFn_chuchu_move)(PartyEntry *);
+typedef int (*TtydPre_chuchu_move)(PartyEntry * *);
+typedef void (*TtydPost_chuchu_move)(PartyEntry *);
+/* src/party/party_chuchu.c */
+typedef void (*TtydFn_chuchu_use)(PartyEntry *);
+typedef int (*TtydPre_chuchu_use)(PartyEntry * *);
+typedef void (*TtydPost_chuchu_use)(PartyEntry *);
+/* src/party/party_cloud.c */
+typedef struct HitEntry * (*TtydFn_cloudGetHitBreathout)(s32);
+typedef int (*TtydPre_cloudGetHitBreathout)(struct HitEntry * *, s32 *);
+typedef void (*TtydPost_cloudGetHitBreathout)(struct HitEntry * *, s32);
+/* src/party/party_cloud.c */
+typedef f32 (*TtydFn_cloudGetBreathDist)(void);
+typedef int (*TtydPre_cloudGetBreathDist)(f32 *);
+typedef void (*TtydPost_cloudGetBreathDist)(f32 *);
+/* src/party/party_cloud.c */
+typedef void (*TtydFn_cloud_move)(PartyEntry *);
+typedef int (*TtydPre_cloud_move)(PartyEntry * *);
+typedef void (*TtydPost_cloud_move)(PartyEntry *);
+/* src/party/party_cloud.c */
+typedef void (*TtydFn_cloud_init)(PartyEntry *);
+typedef int (*TtydPre_cloud_init)(PartyEntry * *);
+typedef void (*TtydPost_cloud_init)(PartyEntry *);
+/* src/party/party_cloud.c */
+typedef void (*TtydFn_cloud_use)(PartyEntry *);
+typedef int (*TtydPre_cloud_use)(PartyEntry * *);
+typedef void (*TtydPost_cloud_use)(PartyEntry *);
+/* src/party/party_cloud.c */
+typedef void (*TtydFn_cloud_exit)(PartyEntry *);
+typedef int (*TtydPre_cloud_exit)(PartyEntry * *);
+typedef void (*TtydPost_cloud_exit)(PartyEntry *);
+/* src/party/party_cloud.c */
+typedef f32 (*TtydFn_cloudGetBreathPower)(Vec, f32);
+typedef int (*TtydPre_cloudGetBreathPower)(f32 *, Vec *, f32 *);
+typedef void (*TtydPost_cloudGetBreathPower)(f32 *, Vec, f32);
+/* src/party/party_cloud.c */
+typedef f32 (*TtydFn_cloudGetBreathDir)(void);
+typedef int (*TtydPre_cloudGetBreathDir)(f32 *);
+typedef void (*TtydPost_cloudGetBreathDir)(f32 *);
+/* src/party/party_cloud.c */
+typedef u8 (*TtydFn_cloudGetStatus)(void);
+typedef int (*TtydPre_cloudGetStatus)(u8 *);
+typedef void (*TtydPost_cloudGetStatus)(u8 *);
+/* src/party/party_cloud.c */
+typedef void (*TtydFn_cloudResetAt)(void);
+typedef int (*TtydPre_cloudResetAt)(void);
+typedef void (*TtydPost_cloudResetAt)(void);
+/* src/party/party_cloud.c */
+typedef void (*TtydFn_cloudGetAt)(Vec *);
+typedef int (*TtydPre_cloudGetAt)(Vec * *);
+typedef void (*TtydPost_cloudGetAt)(Vec *);
+/* src/party/party_hit.c */
+typedef HitEntry * (*TtydFn_partyHitCheck)(PartyEntry *, Vec *, Vec *, Vec *, Vec *, f32 *);
+typedef int (*TtydPre_partyHitCheck)(HitEntry * *, PartyEntry * *, Vec * *, Vec * *, Vec * *, Vec * *, f32 * *);
+typedef void (*TtydPost_partyHitCheck)(HitEntry * *, PartyEntry *, Vec *, Vec *, Vec *, Vec *, f32 *);
+/* src/party/party_hit.c */
+typedef void (*TtydFn_partyChkGnd)(PartyEntry *);
+typedef int (*TtydPre_partyChkGnd)(PartyEntry * *);
+typedef void (*TtydPost_partyChkGnd)(PartyEntry *);
+/* src/party/party_hit.c */
+typedef HitEntry * (*TtydFn__partySearchGround)(PartyEntry *, f32, f32);
+typedef int (*TtydPre__partySearchGround)(HitEntry * *, PartyEntry * *, f32 *, f32 *);
+typedef void (*TtydPost__partySearchGround)(HitEntry * *, PartyEntry *, f32, f32);
+/* src/party/party_hit.c */
+typedef HitEntry * (*TtydFn_partyChkFrontStep)(PartyEntry *, f32, f32 *, f32 *, f32 *);
+typedef int (*TtydPre_partyChkFrontStep)(HitEntry * *, PartyEntry * *, f32 *, f32 * *, f32 * *, f32 * *);
+typedef void (*TtydPost_partyChkFrontStep)(HitEntry * *, PartyEntry *, f32, f32 *, f32 *, f32 *);
+/* src/party/party_hit.c */
+typedef HitEntry * (*TtydFn_partySearchWallFront)(PartyEntry *, Vec *, f32, f32);
+typedef int (*TtydPre_partySearchWallFront)(HitEntry * *, PartyEntry * *, Vec * *, f32 *, f32 *);
+typedef void (*TtydPost_partySearchWallFront)(HitEntry * *, PartyEntry *, Vec *, f32, f32);
+/* src/party/party_hit.c */
+typedef HitEntry * (*TtydFn_partySearchFrontWall)(PartyEntry *, Vec *, f32, f32);
+typedef int (*TtydPre_partySearchFrontWall)(HitEntry * *, PartyEntry * *, Vec * *, f32 *, f32 *);
+typedef void (*TtydPost_partySearchFrontWall)(HitEntry * *, PartyEntry *, Vec *, f32, f32);
+/* src/party/party_hit.c */
+typedef HitEntry * (*TtydFn_partySearchHead)(PartyEntry *, Vec *, f32 *, f32);
+typedef int (*TtydPre_partySearchHead)(HitEntry * *, PartyEntry * *, Vec * *, f32 * *, f32 *);
+typedef void (*TtydPost_partySearchHead)(HitEntry * *, PartyEntry *, Vec *, f32 *, f32);
+/* src/party/party_kuribo.c */
+typedef BOOL (*TtydFn_christineGetStatus)(void);
+typedef int (*TtydPre_christineGetStatus)(BOOL *);
+typedef void (*TtydPost_christineGetStatus)(BOOL *);
+/* src/party/party_kuribo.c */
+typedef void (*TtydFn_kuribo_init)(PartyEntry *);
+typedef int (*TtydPre_kuribo_init)(PartyEntry * *);
+typedef void (*TtydPost_kuribo_init)(PartyEntry *);
+/* src/party/party_kuribo.c */
+typedef void (*TtydFn_kuribo_use_post)(PartyEntry *);
+typedef int (*TtydPre_kuribo_use_post)(PartyEntry * *);
+typedef void (*TtydPost_kuribo_use_post)(PartyEntry *);
+/* src/party/party_kuribo.c */
+typedef void (*TtydFn_kuribo_use)(PartyEntry *);
+typedef int (*TtydPre_kuribo_use)(PartyEntry * *);
+typedef void (*TtydPost_kuribo_use)(PartyEntry *);
+/* src/party/party_kuribo.c */
+typedef void (*TtydFn_kuribo_bye)(PartyEntry *);
+typedef int (*TtydPre_kuribo_bye)(PartyEntry * *);
+typedef void (*TtydPost_kuribo_bye)(PartyEntry *);
+/* src/party/party_motion.c */
+typedef void (*TtydFn_party_motion_homing_walk)(PartyEntry *);
+typedef int (*TtydPre_party_motion_homing_walk)(PartyEntry * *);
+typedef void (*TtydPost_party_motion_homing_walk)(PartyEntry *);
+/* src/party/party_motion.c */
+typedef void (*TtydFn_party_motion_jump)(PartyEntry *);
+typedef int (*TtydPre_party_motion_jump)(PartyEntry * *);
+typedef void (*TtydPost_party_motion_jump)(PartyEntry *);
+/* src/party/party_motion.c */
+typedef void (*TtydFn_party_motion_jump2)(PartyEntry *);
+typedef int (*TtydPre_party_motion_jump2)(PartyEntry * *);
+typedef void (*TtydPost_party_motion_jump2)(PartyEntry *);
+/* src/party/party_motion.c */
+typedef void (*TtydFn_party_motion_homing_fly)(PartyEntry *);
+typedef int (*TtydPre_party_motion_homing_fly)(PartyEntry * *);
+typedef void (*TtydPost_party_motion_homing_fly)(PartyEntry *);
+/* src/party/party_motion.c */
+typedef s32 (*TtydFn_party_motion_fall)(PartyEntry *);
+typedef int (*TtydPre_party_motion_fall)(s32 *, PartyEntry * *);
+typedef void (*TtydPost_party_motion_fall)(s32 *, PartyEntry *);
+/* src/party/party_motion.c */
+typedef void (*TtydFn_party_motion_upstairs)(PartyEntry *);
+typedef int (*TtydPre_party_motion_upstairs)(PartyEntry * *);
+typedef void (*TtydPost_party_motion_upstairs)(PartyEntry *);
+/* src/party/party_motion.c */
+typedef void (*TtydFn_party_set_behind_dir)(PartyEntry *, f32);
+typedef int (*TtydPre_party_set_behind_dir)(PartyEntry * *, f32 *);
+typedef void (*TtydPost_party_set_behind_dir)(PartyEntry *, f32);
+/* src/party/party_motion.c */
+typedef void (*TtydFn_party_motion_behind_mario)(PartyEntry *);
+typedef int (*TtydPre_party_motion_behind_mario)(PartyEntry * *);
+typedef void (*TtydPost_party_motion_behind_mario)(PartyEntry *);
+/* src/party/party_motion.c */
+typedef void (*TtydFn_party_motion_behind_mario_continue)(PartyEntry *);
+typedef int (*TtydPre_party_motion_behind_mario_continue)(PartyEntry * *);
+typedef void (*TtydPost_party_motion_behind_mario_continue)(PartyEntry *);
+/* src/party/party_motion.c */
+typedef void (*TtydFn_party_motion_behind_mario_fly)(PartyEntry *);
+typedef int (*TtydPre_party_motion_behind_mario_fly)(PartyEntry * *);
+typedef void (*TtydPost_party_motion_behind_mario_fly)(PartyEntry *);
+/* src/party/party_motion.c */
+typedef void (*TtydFn_party_motion_beside_mario)(PartyEntry *);
+typedef int (*TtydPre_party_motion_beside_mario)(PartyEntry * *);
+typedef void (*TtydPost_party_motion_beside_mario)(PartyEntry *);
+/* src/party/party_motion.c */
+typedef void (*TtydFn_party_motion_stay)(PartyEntry *);
+typedef int (*TtydPre_party_motion_stay)(PartyEntry * *);
+typedef void (*TtydPost_party_motion_stay)(PartyEntry *);
+/* src/party/party_motion.c */
+typedef void (*TtydFn_party_motion_damage)(PartyEntry *);
+typedef int (*TtydPre_party_motion_damage)(PartyEntry * *);
+typedef void (*TtydPost_party_motion_damage)(PartyEntry *);
+/* src/party/party_motion.c */
+typedef void (*TtydFn_allPartySlitOn)(void);
+typedef int (*TtydPre_allPartySlitOn)(void);
+typedef void (*TtydPost_allPartySlitOn)(void);
+/* src/party/party_motion.c */
+typedef void (*TtydFn_allPartySlitOff)(void);
+typedef int (*TtydPre_allPartySlitOff)(void);
+typedef void (*TtydPost_allPartySlitOff)(void);
+/* src/party/party_motion.c */
+typedef void (*TtydFn_allPartyForceSlitOff)(void);
+typedef int (*TtydPre_allPartyForceSlitOff)(void);
+typedef void (*TtydPost_allPartyForceSlitOff)(void);
+/* src/party/party_motion.c */
+typedef void (*TtydFn_N_partyFollowCloseOn)(PartyEntry *);
+typedef int (*TtydPre_N_partyFollowCloseOn)(PartyEntry * *);
+typedef void (*TtydPost_N_partyFollowCloseOn)(PartyEntry *);
+/* src/party/party_motion.c */
+typedef void (*TtydFn_N_partyFollowCloseOff)(PartyEntry *);
+typedef int (*TtydPre_N_partyFollowCloseOff)(PartyEntry * *);
+typedef void (*TtydPost_N_partyFollowCloseOff)(PartyEntry *);
+/* src/party/party_motion.c */
+typedef void (*TtydFn_party_motion_wait)(PartyEntry *);
+typedef int (*TtydPre_party_motion_wait)(PartyEntry * *);
+typedef void (*TtydPost_party_motion_wait)(PartyEntry *);
+/* src/party/party_motion.c */
+typedef void (*TtydFn_L_partyForceSlitOff)(PartyEntry *);
+typedef int (*TtydPre_L_partyForceSlitOff)(PartyEntry * *);
+typedef void (*TtydPost_L_partyForceSlitOff)(PartyEntry *);
+/* src/party/party_move.c */
+typedef PartyFootmark * (*TtydFn_partyGetFootmarkPtr)(s32);
+typedef int (*TtydPre_partyGetFootmarkPtr)(PartyFootmark * *, s32 *);
+typedef void (*TtydPost_partyGetFootmarkPtr)(PartyFootmark * *, s32);
+/* src/party/party_move.c */
+typedef s32 (*TtydFn_partyGetFootmarkReadId)(s32);
+typedef int (*TtydPre_partyGetFootmarkReadId)(s32 *, s32 *);
+typedef void (*TtydPost_partyGetFootmarkReadId)(s32 *, s32);
+/* src/party/party_move.c */
+typedef s32 (*TtydFn_partyGetFootmarkWriteId)(s32);
+typedef int (*TtydPre_partyGetFootmarkWriteId)(s32 *, s32 *);
+typedef void (*TtydPost_partyGetFootmarkWriteId)(s32 *, s32);
+/* src/party/party_move.c */
+typedef s32 (*TtydFn_partyGetFootmarkId)(PartyEntry *);
+typedef int (*TtydPre_partyGetFootmarkId)(s32 *, PartyEntry * *);
+typedef void (*TtydPost_partyGetFootmarkId)(s32 *, PartyEntry *);
+/* src/party/party_move.c */
+typedef f32 (*TtydFn_partyGetTargetDir)(s32, f32, f32);
+typedef int (*TtydPre_partyGetTargetDir)(f32 *, s32 *, f32 *, f32 *);
+typedef void (*TtydPost_partyGetTargetDir)(f32 *, s32, f32, f32);
+/* src/party/party_move.c */
+typedef f32 (*TtydFn_partyGetTargetDist)(s32, f32, f32);
+typedef int (*TtydPre_partyGetTargetDist)(f32 *, s32 *, f32 *, f32 *);
+typedef void (*TtydPost_partyGetTargetDist)(f32 *, s32, f32, f32);
+/* src/party/party_move.c */
+typedef f32 (*TtydFn_partyGetTargetDist3D)(s32, Vec *);
+typedef int (*TtydPre_partyGetTargetDist3D)(f32 *, s32 *, Vec * *);
+typedef void (*TtydPost_partyGetTargetDist3D)(f32 *, s32, Vec *);
+/* src/party/party_move.c */
+typedef f32 (*TtydFn_partyGetTargetDistY)(s32, f32);
+typedef int (*TtydPre_partyGetTargetDistY)(f32 *, s32 *, f32 *);
+typedef void (*TtydPost_partyGetTargetDistY)(f32 *, s32, f32);
+/* src/party/party_move.c */
+typedef f32 (*TtydFn_partyGetTargetMovespd2)(PartyEntry *);
+typedef int (*TtydPre_partyGetTargetMovespd2)(f32 *, PartyEntry * *);
+typedef void (*TtydPost_partyGetTargetMovespd2)(f32 *, PartyEntry *);
+/* src/party/party_move.c */
+typedef void (*TtydFn_partyNextReadId)(s32);
+typedef int (*TtydPre_partyNextReadId)(s32 *);
+typedef void (*TtydPost_partyNextReadId)(s32);
+/* src/party/party_move.c */
+typedef void (*TtydFn_partyGetReadId)(s32, f32 *, f32 *, f32 *);
+typedef int (*TtydPre_partyGetReadId)(s32 *, f32 * *, f32 * *, f32 * *);
+typedef void (*TtydPost_partyGetReadId)(s32, f32 *, f32 *, f32 *);
+/* src/party/party_move.c */
+typedef void (*TtydFn_partyGetReadId2)(s32, Vec *);
+typedef int (*TtydPre_partyGetReadId2)(s32 *, Vec * *);
+typedef void (*TtydPost_partyGetReadId2)(s32, Vec *);
+/* src/party/party_move.c */
+typedef void (*TtydFn_partyClearFootmark)(void);
+typedef int (*TtydPre_partyClearFootmark)(void);
+typedef void (*TtydPost_partyClearFootmark)(void);
+/* src/party/party_move.c */
+typedef void (*TtydFn_partyClearFootmark2)(void);
+typedef int (*TtydPre_partyClearFootmark2)(void);
+typedef void (*TtydPost_partyClearFootmark2)(void);
+/* src/party/party_move.c */
+typedef void (*TtydFn_partyRecordFootmark)(PartyEntry *);
+typedef int (*TtydPre_partyRecordFootmark)(PartyEntry * *);
+typedef void (*TtydPost_partyRecordFootmark)(PartyEntry *);
+/* src/party/party_move.c */
+typedef void (*TtydFn_L_getTargetPos)(s32, Vec *);
+typedef int (*TtydPre_L_getTargetPos)(s32 *, Vec * *);
+typedef void (*TtydPost_L_getTargetPos)(s32, Vec *);
+/* src/party/party_move.c */
+typedef f32 (*TtydFn_partyGetTargetMovespd)(s32);
+typedef int (*TtydPre_partyGetTargetMovespd)(f32 *, s32 *);
+typedef void (*TtydPost_partyGetTargetMovespd)(f32 *, s32);
+/* src/party/party_move.c */
+typedef void (*TtydFn_partyClearJumpPara)(PartyEntry *);
+typedef int (*TtydPre_partyClearJumpPara)(PartyEntry * *);
+typedef void (*TtydPost_partyClearJumpPara)(PartyEntry *);
+/* src/party/party_move.c */
+typedef f32 (*TtydFn_partySetTargetSpd)(PartyEntry *, f32);
+typedef int (*TtydPre_partySetTargetSpd)(f32 *, PartyEntry * *, f32 *);
+typedef void (*TtydPost_partySetTargetSpd)(f32 *, PartyEntry *, f32);
+/* src/party/party_move.c */
+typedef f32 (*TtydFn_partyForceSetSpd)(PartyEntry *, f32);
+typedef int (*TtydPre_partyForceSetSpd)(f32 *, PartyEntry * *, f32 *);
+typedef void (*TtydPost_partyForceSetSpd)(f32 *, PartyEntry *, f32);
+/* src/party/party_move.c */
+typedef f32 (*TtydFn_partyUpdMoveSpd)(PartyEntry *);
+typedef int (*TtydPre_partyUpdMoveSpd)(f32 *, PartyEntry * *);
+typedef void (*TtydPost_partyUpdMoveSpd)(f32 *, PartyEntry *);
+/* src/party/party_move.c */
+typedef void (*TtydFn_N_partyPlaySfxPartyLanding1)(PartyEntry *);
+typedef int (*TtydPre_N_partyPlaySfxPartyLanding1)(PartyEntry * *);
+typedef void (*TtydPost_N_partyPlaySfxPartyLanding1)(PartyEntry *);
+/* src/party/party_move.c */
+typedef void (*TtydFn_partyChgStayPose)(PartyEntry *);
+typedef int (*TtydPre_partyChgStayPose)(PartyEntry * *);
+typedef void (*TtydPost_partyChgStayPose)(PartyEntry *);
+/* src/party/party_move.c */
+typedef void (*TtydFn_partyMoveAnime)(PartyEntry *, f32);
+typedef int (*TtydPre_partyMoveAnime)(PartyEntry * *, f32 *);
+typedef void (*TtydPost_partyMoveAnime)(PartyEntry *, f32);
+/* src/party/party_move.c */
+typedef void (*TtydFn_partySetDispDirToMario)(PartyEntry *);
+typedef int (*TtydPre_partySetDispDirToMario)(PartyEntry * *);
+typedef void (*TtydPost_partySetDispDirToMario)(PartyEntry *);
+/* src/party/party_move.c */
+typedef BOOL (*TtydFn_partyChkNoStandMobj)(HitEntry *);
+typedef int (*TtydPre_partyChkNoStandMobj)(BOOL *, HitEntry * *);
+typedef void (*TtydPost_partyChkNoStandMobj)(BOOL *, HitEntry *);
+/* src/party/party_move.c */
+typedef void (*TtydFn_partyMove)(PartyEntry *);
+typedef int (*TtydPre_partyMove)(PartyEntry * *);
+typedef void (*TtydPost_partyMove)(PartyEntry *);
+/* src/party/party_move.c */
+typedef void (*TtydFn_partyMoveNoHosei)(PartyEntry *);
+typedef int (*TtydPre_partyMoveNoHosei)(PartyEntry * *);
+typedef void (*TtydPost_partyMoveNoHosei)(PartyEntry *);
+/* src/party/party_move.c */
+typedef void (*TtydFn_partyChgMoveMode)(PartyEntry *, s32);
+typedef int (*TtydPre_partyChgMoveMode)(PartyEntry * *, s32 *);
+typedef void (*TtydPost_partyChgMoveMode)(PartyEntry *, s32);
+/* src/party/party_move.c */
+typedef void (*TtydFn_partyChgMot)(PartyEntry *, s32);
+typedef int (*TtydPre_partyChgMot)(PartyEntry * *, s32 *);
+typedef void (*TtydPost_partyChgMot)(PartyEntry *, s32);
+/* src/party/party_move.c */
+typedef void (*TtydFn_partySetDir)(PartyEntry *, f32, f32);
+typedef int (*TtydPre_partySetDir)(PartyEntry * *, f32 *, f32 *);
+typedef void (*TtydPost_partySetDir)(PartyEntry *, f32, f32);
+/* src/party/party_move.c */
+typedef void (*TtydFn_partyMoveBehindMario)(PartyEntry *, s32);
+typedef int (*TtydPre_partyMoveBehindMario)(PartyEntry * *, s32 *);
+typedef void (*TtydPost_partyMoveBehindMario)(PartyEntry *, s32);
+/* src/party/party_move.c */
+typedef void (*TtydFn_partyMoveBehindMario3)(PartyEntry *, s32, f32);
+typedef int (*TtydPre_partyMoveBehindMario3)(PartyEntry * *, s32 *, f32 *);
+typedef void (*TtydPost_partyMoveBehindMario3)(PartyEntry *, s32, f32);
+/* src/party/party_move.c */
+typedef void (*TtydFn_partyMoveBesideMario)(PartyEntry *, s32);
+typedef int (*TtydPre_partyMoveBesideMario)(PartyEntry * *, s32 *);
+typedef void (*TtydPost_partyMoveBesideMario)(PartyEntry *, s32);
+/* src/party/party_move.c */
+typedef void (*TtydFn_partyMoveCheckWall)(PartyEntry *);
+typedef int (*TtydPre_partyMoveCheckWall)(PartyEntry * *);
+typedef void (*TtydPost_partyMoveCheckWall)(PartyEntry *);
+/* src/party/party_move.c */
+typedef void (*TtydFn_partyGetMoveDirSpd)(PartyEntry *, f32 *, f32 *);
+typedef int (*TtydPre_partyGetMoveDirSpd)(PartyEntry * *, f32 * *, f32 * *);
+typedef void (*TtydPost_partyGetMoveDirSpd)(PartyEntry *, f32 *, f32 *);
+/* src/party/party_move.c */
+typedef s32 (*TtydFn_partyMarioHosei)(PartyEntry *);
+typedef int (*TtydPre_partyMarioHosei)(s32 *, PartyEntry * *);
+typedef void (*TtydPost_partyMarioHosei)(s32 *, PartyEntry *);
+/* src/party/party_move.c */
+typedef void (*TtydFn_partyChkWall)(PartyEntry *);
+typedef int (*TtydPre_partyChkWall)(PartyEntry * *);
+typedef void (*TtydPost_partyChkWall)(PartyEntry *);
+/* src/party/party_move.c */
+typedef void (*TtydFn_partyWalkInit)(PartyEntry *);
+typedef int (*TtydPre_partyWalkInit)(PartyEntry * *);
+typedef void (*TtydPost_partyWalkInit)(PartyEntry *);
+/* src/party/party_move.c */
+typedef void (*TtydFn_partyMoveWalk)(PartyEntry *);
+typedef int (*TtydPre_partyMoveWalk)(PartyEntry * *);
+typedef void (*TtydPost_partyMoveWalk)(PartyEntry *);
+/* src/party/party_move.c */
+typedef void (*TtydFn_partyWalkMain)(PartyEntry *);
+typedef int (*TtydPre_partyWalkMain)(PartyEntry * *);
+typedef void (*TtydPost_partyWalkMain)(PartyEntry *);
+/* src/party/party_move.c */
+typedef void (*TtydFn_party_move_mode_stay)(PartyEntry *);
+typedef int (*TtydPre_party_move_mode_stay)(PartyEntry * *);
+typedef void (*TtydPost_party_move_mode_stay)(PartyEntry *);
+/* src/party/party_move.c */
+typedef void (*TtydFn_party_move_mode_walk)(PartyEntry *);
+typedef int (*TtydPre_party_move_mode_walk)(PartyEntry * *);
+typedef void (*TtydPost_party_move_mode_walk)(PartyEntry *);
+/* src/party/party_move.c */
+typedef void (*TtydFn_party_move_mode_behind_mario)(PartyEntry *);
+typedef int (*TtydPre_party_move_mode_behind_mario)(PartyEntry * *);
+typedef void (*TtydPost_party_move_mode_behind_mario)(PartyEntry *);
+/* src/party/party_move.c */
+typedef void (*TtydFn_party_move_mode_beside_mario)(PartyEntry *);
+typedef int (*TtydPre_party_move_mode_beside_mario)(PartyEntry * *);
+typedef void (*TtydPost_party_move_mode_beside_mario)(PartyEntry *);
+/* src/party/party_move.c */
+typedef void (*TtydFn_partyMoveFlyInit)(PartyEntry *, s32);
+typedef int (*TtydPre_partyMoveFlyInit)(PartyEntry * *, s32 *);
+typedef void (*TtydPost_partyMoveFlyInit)(PartyEntry *, s32);
+/* src/party/party_move.c */
+typedef void (*TtydFn_partyFlyMain)(PartyEntry *);
+typedef int (*TtydPre_partyFlyMain)(PartyEntry * *);
+typedef void (*TtydPost_partyFlyMain)(PartyEntry *);
+/* src/party/party_move.c */
+typedef BOOL (*TtydFn_partyGetAppearPos)(PartyEntry *, Vec *);
+typedef int (*TtydPre_partyGetAppearPos)(BOOL *, PartyEntry * *, Vec * *);
+typedef void (*TtydPost_partyGetAppearPos)(BOOL *, PartyEntry *, Vec *);
+/* src/party/party_move.c */
+typedef BOOL (*TtydFn_partyGetAppearPos3)(PartyEntry *, Vec *);
+typedef int (*TtydPre_partyGetAppearPos3)(BOOL *, PartyEntry * *, Vec * *);
+typedef void (*TtydPost_partyGetAppearPos3)(BOOL *, PartyEntry *, Vec *);
+/* src/party/party_move.c */
+typedef BOOL (*TtydFn_partyGetAppearPos4)(PartyEntry *, Vec *);
+typedef int (*TtydPre_partyGetAppearPos4)(BOOL *, PartyEntry * *, Vec * *);
+typedef void (*TtydPost_partyGetAppearPos4)(BOOL *, PartyEntry *, Vec *);
+/* src/party/party_move.c */
+typedef BOOL (*TtydFn_partyGetAppearPos5)(PartyEntry *, HitEntry *, Vec *);
+typedef int (*TtydPre_partyGetAppearPos5)(BOOL *, PartyEntry * *, HitEntry * *, Vec * *);
+typedef void (*TtydPost_partyGetAppearPos5)(BOOL *, PartyEntry *, HitEntry *, Vec *);
+/* src/party/party_nokonoko.c */
+typedef s32 (*TtydFn_nokonokoGetStatus)(PartyEntry *);
+typedef int (*TtydPre_nokonokoGetStatus)(s32 *, PartyEntry * *);
+typedef void (*TtydPost_nokonokoGetStatus)(s32 *, PartyEntry *);
+/* src/party/party_nokonoko.c */
+typedef BOOL (*TtydFn_nokonoko_holdItem)(void);
+typedef int (*TtydPre_nokonoko_holdItem)(BOOL *);
+typedef void (*TtydPost_nokonoko_holdItem)(BOOL *);
+/* src/party/party_nokonoko.c */
+typedef void (*TtydFn_nokonoko_bye)(PartyEntry *);
+typedef int (*TtydPre_nokonoko_bye)(PartyEntry * *);
+typedef void (*TtydPost_nokonoko_bye)(PartyEntry *);
+/* src/party/party_nokonoko.c */
+typedef void (*TtydFn_nokonoko_init)(PartyEntry *);
+typedef int (*TtydPre_nokonoko_init)(PartyEntry * *);
+typedef void (*TtydPost_nokonoko_init)(PartyEntry *);
+/* src/party/party_nokonoko.c */
+typedef void (*TtydFn_nokonoko_move)(PartyEntry *);
+typedef int (*TtydPre_nokonoko_move)(PartyEntry * *);
+typedef void (*TtydPost_nokonoko_move)(PartyEntry *);
+/* src/party/party_nokonoko.c */
+typedef void (*TtydFn_nokonoko_use_cancel)(void);
+typedef int (*TtydPre_nokonoko_use_cancel)(void);
+typedef void (*TtydPost_nokonoko_use_cancel)(void);
+/* src/party/party_nokonoko.c */
+typedef void (*TtydFn_nokonoko_use_post)(PartyEntry *);
+typedef int (*TtydPre_nokonoko_use_post)(PartyEntry * *);
+typedef void (*TtydPost_nokonoko_use_post)(PartyEntry *);
+/* src/party/party_nokonoko.c */
+typedef void (*TtydFn_nokonoko_use)(PartyEntry *);
+typedef int (*TtydPre_nokonoko_use)(PartyEntry * *);
+typedef void (*TtydPost_nokonoko_use)(PartyEntry *);
+/* src/party/party_nokonoko.c */
+typedef void (*TtydFn_nokonoko_finish)(PartyEntry *);
+typedef int (*TtydPre_nokonoko_finish)(PartyEntry * *);
+typedef void (*TtydPost_nokonoko_finish)(PartyEntry *);
+/* src/party/party_nokonoko.c */
+typedef void (*TtydFn_nokotaro_hold_cancel)(PartyEntry *);
+typedef int (*TtydPre_nokotaro_hold_cancel)(PartyEntry * *);
+typedef void (*TtydPost_nokotaro_hold_cancel)(PartyEntry *);
+/* src/party/party_vivian.c */
+typedef void (*TtydFn_N_marioForceVivianAnime)(void);
+typedef int (*TtydPre_N_marioForceVivianAnime)(void);
+typedef void (*TtydPost_N_marioForceVivianAnime)(void);
+/* src/party/party_vivian.c */
+typedef void (*TtydFn_mot_vivian)(void);
+typedef int (*TtydPre_mot_vivian)(void);
+typedef void (*TtydPost_mot_vivian)(void);
+/* src/party/party_vivian.c */
+typedef void (*TtydFn_mot_vivian_post)(void);
+typedef int (*TtydPre_mot_vivian_post)(void);
+typedef void (*TtydPost_mot_vivian_post)(void);
+/* src/party/party_vivian.c */
+typedef void (*TtydFn_vivian_init)(PartyEntry *);
+typedef int (*TtydPre_vivian_init)(PartyEntry * *);
+typedef void (*TtydPost_vivian_init)(PartyEntry *);
+/* src/party/party_vivian.c */
+typedef s32 (*TtydFn_vivianGetStatus)(void);
+typedef int (*TtydPre_vivianGetStatus)(s32 *);
+typedef void (*TtydPost_vivianGetStatus)(s32 *);
+/* src/party/party_vivian.c */
+typedef void (*TtydFn_vivianUnhold)(PartyEntry *);
+typedef int (*TtydPre_vivianUnhold)(PartyEntry * *);
+typedef void (*TtydPost_vivianUnhold)(PartyEntry *);
+/* src/party/party_vivian.c */
+typedef void (*TtydFn_vivianShadow)(PartyEntry *);
+typedef int (*TtydPre_vivianShadow)(PartyEntry * *);
+typedef void (*TtydPost_vivianShadow)(PartyEntry *);
+/* src/party/party_vivian.c */
+typedef void (*TtydFn_vivian_move)(PartyEntry *);
+typedef int (*TtydPre_vivian_move)(PartyEntry * *);
+typedef void (*TtydPost_vivian_move)(PartyEntry *);
+/* src/party/party_vivian.c */
+typedef void (*TtydFn_vivian_use)(PartyEntry *);
+typedef int (*TtydPre_vivian_use)(PartyEntry * *);
+typedef void (*TtydPost_vivian_use)(PartyEntry *);
+/* src/party/party_yoshi.c */
+typedef void (*TtydFn_evt_set_yoshi_frm)(s32);
+typedef int (*TtydPre_evt_set_yoshi_frm)(s32 *);
+typedef void (*TtydPost_evt_set_yoshi_frm)(s32);
+/* src/party/party_yoshi.c */
+typedef void (*TtydFn_evt_set_yoshi_spd)(f32);
+typedef int (*TtydPre_evt_set_yoshi_spd)(f32 *);
+typedef void (*TtydPost_evt_set_yoshi_spd)(f32);
+/* src/party/party_yoshi.c */
+typedef s32 (*TtydFn_evt_get_yoshi_frm)(void);
+typedef int (*TtydPre_evt_get_yoshi_frm)(s32 *);
+typedef void (*TtydPost_evt_get_yoshi_frm)(s32 *);
+/* src/party/party_yoshi.c */
+typedef s32 (*TtydFn_yoshiGetStatus)(void);
+typedef int (*TtydPre_yoshiGetStatus)(s32 *);
+typedef void (*TtydPost_yoshiGetStatus)(s32 *);
+/* src/party/party_yoshi.c */
+typedef void (*TtydFn_marioRideYoshi)(void);
+typedef int (*TtydPre_marioRideYoshi)(void);
+typedef void (*TtydPost_marioRideYoshi)(void);
+/* src/party/party_yoshi.c */
+typedef BOOL (*TtydFn_marioGetoffYoshi)(void);
+typedef int (*TtydPre_marioGetoffYoshi)(BOOL *);
+typedef void (*TtydPost_marioGetoffYoshi)(BOOL *);
+/* src/party/party_yoshi.c */
+typedef void (*TtydFn_marioYoshiForceCancel)(void);
+typedef int (*TtydPre_marioYoshiForceCancel)(void);
+typedef void (*TtydPost_marioYoshiForceCancel)(void);
+/* src/party/party_yoshi.c */
+typedef void (*TtydFn_yoshi_bye)(PartyEntry *);
+typedef int (*TtydPre_yoshi_bye)(PartyEntry * *);
+typedef void (*TtydPost_yoshi_bye)(PartyEntry *);
+/* src/party/party_yoshi.c */
+typedef void (*TtydFn_yoshi_exit)(PartyEntry *);
+typedef int (*TtydPre_yoshi_exit)(PartyEntry * *);
+typedef void (*TtydPost_yoshi_exit)(PartyEntry *);
+/* src/party/party_yoshi.c */
+typedef void (*TtydFn_yoshi_jumpStand)(void);
+typedef int (*TtydPre_yoshi_jumpStand)(void);
+typedef void (*TtydPost_yoshi_jumpStand)(void);
+/* src/party/party_yoshi.c */
+typedef void (*TtydFn_yoshi_init)(PartyEntry *);
+typedef int (*TtydPre_yoshi_init)(PartyEntry * *);
+typedef void (*TtydPost_yoshi_init)(PartyEntry *);
+/* src/party/party_yoshi.c */
+typedef void (*TtydFn_yoshi_use)(PartyEntry *);
+typedef int (*TtydPre_yoshi_use)(PartyEntry * *);
+typedef void (*TtydPost_yoshi_use)(PartyEntry *);
+/* src/peach.c */
+typedef void (*TtydFn_peachSetStsNormal)(void);
+typedef int (*TtydPre_peachSetStsNormal)(void);
+typedef void (*TtydPost_peachSetStsNormal)(void);
+/* src/peach.c */
+typedef void (*TtydFn_peachSetStsAftershower)(void);
+typedef int (*TtydPre_peachSetStsAftershower)(void);
+typedef void (*TtydPost_peachSetStsAftershower)(void);
+/* src/peach.c */
+typedef void (*TtydFn_peachSetStsInvisible)(void);
+typedef int (*TtydPre_peachSetStsInvisible)(void);
+typedef void (*TtydPost_peachSetStsInvisible)(void);
+/* src/peach.c */
+typedef void (*TtydFn_peachSetStsHappy)(void);
+typedef int (*TtydPre_peachSetStsHappy)(void);
+typedef void (*TtydPost_peachSetStsHappy)(void);
+/* src/peach.c */
+typedef void (*TtydFn_peachSetStsUneasy)(void);
+typedef int (*TtydPre_peachSetStsUneasy)(void);
+typedef void (*TtydPost_peachSetStsUneasy)(void);
+/* src/peach.c */
+typedef void (*TtydFn_peachSetStsAngry)(void);
+typedef int (*TtydPre_peachSetStsAngry)(void);
+typedef void (*TtydPost_peachSetStsAngry)(void);
+/* src/peach.c */
+typedef void (*TtydFn_peachSetStsOrdinary)(void);
+typedef int (*TtydPre_peachSetStsOrdinary)(void);
+typedef void (*TtydPost_peachSetStsOrdinary)(void);
+/* src/peach.c */
+typedef void (*TtydFn_peachSetStsCarry)(void);
+typedef int (*TtydPre_peachSetStsCarry)(void);
+typedef void (*TtydPost_peachSetStsCarry)(void);
+/* src/peach.c */
+typedef void (*TtydFn_peachTransformOn)(void);
+typedef int (*TtydPre_peachTransformOn)(void);
+typedef void (*TtydPost_peachTransformOn)(void);
+/* src/peach.c */
+typedef void (*TtydFn_peachTransformOff)(void);
+typedef int (*TtydPre_peachTransformOff)(void);
+typedef void (*TtydPost_peachTransformOff)(void);
+/* src/peach.c */
+typedef void (*TtydFn_peachPreInit)(void);
+typedef int (*TtydPre_peachPreInit)(void);
+typedef void (*TtydPost_peachPreInit)(void);
+/* src/peach.c */
+typedef void (*TtydFn_peach_stay)(void);
+typedef int (*TtydPre_peach_stay)(void);
+typedef void (*TtydPost_peach_stay)(void);
+/* src/peach.c */
+typedef void (*TtydFn_peach_walk)(void);
+typedef int (*TtydPre_peach_walk)(void);
+typedef void (*TtydPost_peach_walk)(void);
+/* src/peach.c */
+typedef void (*TtydFn_peach_dash)(void);
+typedef int (*TtydPre_peach_dash)(void);
+typedef void (*TtydPost_peach_dash)(void);
+/* src/peach.c */
+typedef void (*TtydFn_peach_talk)(void);
+typedef int (*TtydPre_peach_talk)(void);
+typedef void (*TtydPost_peach_talk)(void);
+/* src/pmario_sound.c */
+typedef s32 (*TtydFn_searchPSSFXList)(const char *);
+typedef int (*TtydPre_searchPSSFXList)(s32 *, const char * *);
+typedef void (*TtydPost_searchPSSFXList)(s32 *, const char *);
+/* src/pmario_sound.c */
+typedef void (*TtydFn_psndInit)(void);
+typedef int (*TtydPre_psndInit)(void);
+typedef void (*TtydPost_psndInit)(void);
+/* src/pmario_sound.c */
+typedef void (*TtydFn_psndMain)(void);
+typedef int (*TtydPre_psndMain)(void);
+typedef void (*TtydPost_psndMain)(void);
+/* src/pmario_sound.c */
+typedef void (*TtydFn_psndMainInt)(void);
+typedef int (*TtydPre_psndMainInt)(void);
+typedef void (*TtydPost_psndMainInt)(void);
+/* src/pmario_sound.c */
+typedef void (*TtydFn_psndExit)(void);
+typedef int (*TtydPre_psndExit)(void);
+typedef void (*TtydPost_psndExit)(void);
+/* src/pmario_sound.c */
+typedef BOOL (*TtydFn_psndPushGroup)(void);
+typedef int (*TtydPre_psndPushGroup)(BOOL *);
+typedef void (*TtydPost_psndPushGroup)(BOOL *);
+/* src/pmario_sound.c */
+typedef void (*TtydFn_psndSetPosDirListener)(Vec *, f32);
+typedef int (*TtydPre_psndSetPosDirListener)(Vec * *, f32 *);
+typedef void (*TtydPost_psndSetPosDirListener)(Vec *, f32);
+/* src/pmario_sound.c */
+typedef void (*TtydFn_psndStopAllFadeOut)(void);
+typedef int (*TtydPre_psndStopAllFadeOut)(void);
+typedef void (*TtydPost_psndStopAllFadeOut)(void);
+/* src/pmario_sound.c */
+typedef void (*TtydFn_psndSetReverb)(s32);
+typedef int (*TtydPre_psndSetReverb)(s32 *);
+typedef void (*TtydPost_psndSetReverb)(s32);
+/* src/pmario_sound.c */
+typedef void (*TtydFn_psndSetFlag)(s32);
+typedef int (*TtydPre_psndSetFlag)(s32 *);
+typedef void (*TtydPost_psndSetFlag)(s32);
+/* src/pmario_sound.c */
+typedef void (*TtydFn_psndClearFlag)(s32);
+typedef int (*TtydPre_psndClearFlag)(s32 *);
+typedef void (*TtydPost_psndClearFlag)(s32);
+/* src/pmario_sound.c */
+typedef s32 (*TtydFn_psndGetFlag)(void);
+typedef int (*TtydPre_psndGetFlag)(s32 *);
+typedef void (*TtydPost_psndGetFlag)(s32 *);
+/* src/pmario_sound.c */
+typedef void (*TtydFn_psndMapChange)(void);
+typedef int (*TtydPre_psndMapChange)(void);
+typedef void (*TtydPost_psndMapChange)(void);
+/* src/pmario_sound.c */
+typedef void (*TtydFn_psndSFXAllOff)(void);
+typedef int (*TtydPre_psndSFXAllOff)(void);
+typedef void (*TtydPost_psndSFXAllOff)(void);
+/* src/pmario_sound.c */
+typedef void (*TtydFn_L_psndBGM_stop)(void);
+typedef int (*TtydPre_L_psndBGM_stop)(void);
+typedef void (*TtydPost_L_psndBGM_stop)(void);
+/* src/pmario_sound.c */
+typedef void (*TtydFn_psndBGM_rate)(s32, u16);
+typedef int (*TtydPre_psndBGM_rate)(s32 *, u16 *);
+typedef void (*TtydPost_psndBGM_rate)(s32, u16);
+/* src/pmario_sound.c */
+typedef BOOL (*TtydFn_psndBGMOn)(u32, char *);
+typedef int (*TtydPre_psndBGMOn)(BOOL *, u32 *, char * *);
+typedef void (*TtydPost_psndBGMOn)(BOOL *, u32, char *);
+/* src/pmario_sound.c */
+typedef BOOL (*TtydFn_psndBGMOn_f)(u32, char *, u32, s32);
+typedef int (*TtydPre_psndBGMOn_f)(BOOL *, u32 *, char * *, u32 *, s32 *);
+typedef void (*TtydPost_psndBGMOn_f)(BOOL *, u32, char *, u32, s32);
+/* src/pmario_sound.c */
+typedef BOOL (*TtydFn_psndBGMOff)(u32);
+typedef int (*TtydPre_psndBGMOff)(BOOL *, u32 *);
+typedef void (*TtydPost_psndBGMOff)(BOOL *, u32);
+/* src/pmario_sound.c */
+typedef BOOL (*TtydFn_psndBGMOff_f_d)(s32, u32, u32);
+typedef int (*TtydPre_psndBGMOff_f_d)(BOOL *, s32 *, u32 *, u32 *);
+typedef void (*TtydPost_psndBGMOff_f_d)(BOOL *, s32, u32, u32);
+/* src/pmario_sound.c */
+typedef s32 (*TtydFn_psndBGMChk)(s32);
+typedef int (*TtydPre_psndBGMChk)(s32 *, s32 *);
+typedef void (*TtydPost_psndBGMChk)(s32 *, s32);
+/* src/pmario_sound.c */
+typedef u32 (*TtydFn_psndBGMChkSilent)(s32);
+typedef int (*TtydPre_psndBGMChkSilent)(u32 *, s32 *);
+typedef void (*TtydPost_psndBGMChkSilent)(u32 *, s32);
+/* src/pmario_sound.c */
+typedef void (*TtydFn_psndBGMScope)(s32, s32);
+typedef int (*TtydPre_psndBGMScope)(s32 *, s32 *);
+typedef void (*TtydPost_psndBGMScope)(s32, s32);
+/* src/pmario_sound.c */
+typedef BOOL (*TtydFn_psndBGMStartCheck)(s32);
+typedef int (*TtydPre_psndBGMStartCheck)(BOOL *, s32 *);
+typedef void (*TtydPost_psndBGMStartCheck)(BOOL *, s32);
+/* src/pmario_sound.c */
+typedef s32 (*TtydFn_psndBGMPlayTime)(s32);
+typedef int (*TtydPre_psndBGMPlayTime)(s32 *, s32 *);
+typedef void (*TtydPost_psndBGMPlayTime)(s32 *, s32);
+/* src/pmario_sound.c */
+typedef s32 (*TtydFn_psndSFXOn_)(const char *);
+typedef int (*TtydPre_psndSFXOn_)(s32 *, const char * *);
+typedef void (*TtydPost_psndSFXOn_)(s32 *, const char *);
+/* src/pmario_sound.c */
+typedef s32 (*TtydFn_psndSFXOn)(const char *);
+typedef int (*TtydPre_psndSFXOn)(s32 *, const char * *);
+typedef void (*TtydPost_psndSFXOn)(s32 *, const char *);
+/* src/pmario_sound.c */
+typedef s32 (*TtydFn_psndSFXOnVol)(const char *, u8);
+typedef int (*TtydPre_psndSFXOnVol)(s32 *, const char * *, u8 *);
+typedef void (*TtydPost_psndSFXOnVol)(s32 *, const char *, u8);
+/* src/pmario_sound.c */
+typedef s32 (*TtydFn_psndSFXOn_3D)(const char *, Vec *);
+typedef int (*TtydPre_psndSFXOn_3D)(s32 *, const char * *, Vec * *);
+typedef void (*TtydPost_psndSFXOn_3D)(s32 *, const char *, Vec *);
+/* src/pmario_sound.c */
+typedef s32 (*TtydFn_psndSFXOnEx_3D)(const char *, Vec *, u8, u8, u16, u16);
+typedef int (*TtydPre_psndSFXOnEx_3D)(s32 *, const char * *, Vec * *, u8 *, u8 *, u16 *, u16 *);
+typedef void (*TtydPost_psndSFXOnEx_3D)(s32 *, const char *, Vec *, u8, u8, u16, u16);
+/* src/pmario_sound.c */
+typedef void (*TtydFn_psndSFX_vol)(s32, u8);
+typedef int (*TtydPre_psndSFX_vol)(s32 *, u8 *);
+typedef void (*TtydPost_psndSFX_vol)(s32, u8);
+/* src/pmario_sound.c */
+typedef void (*TtydFn_psndSFX_pit)(s32, s16);
+typedef int (*TtydPre_psndSFX_pit)(s32 *, s16 *);
+typedef void (*TtydPost_psndSFX_pit)(s32, s16);
+/* src/pmario_sound.c */
+typedef void (*TtydFn_psndSFX_pos)(s32, Vec *);
+typedef int (*TtydPre_psndSFX_pos)(s32 *, Vec * *);
+typedef void (*TtydPost_psndSFX_pos)(s32, Vec *);
+/* src/pmario_sound.c */
+typedef void (*TtydFn_psndSFX_dist)(s32, u16);
+typedef int (*TtydPre_psndSFX_dist)(s32 *, u16 *);
+typedef void (*TtydPost_psndSFX_dist)(s32, u16);
+/* src/pmario_sound.c */
+typedef u8 (*TtydFn_psndSFX_get_vol)(s32);
+typedef int (*TtydPre_psndSFX_get_vol)(u8 *, s32 *);
+typedef void (*TtydPost_psndSFX_get_vol)(u8 *, s32);
+/* src/pmario_sound.c */
+typedef BOOL (*TtydFn_psndENVOn)(u32, const char *);
+typedef int (*TtydPre_psndENVOn)(BOOL *, u32 *, const char * *);
+typedef void (*TtydPost_psndENVOn)(BOOL *, u32, const char *);
+/* src/pmario_sound.c */
+typedef BOOL (*TtydFn_psndENVOff)(u32);
+typedef int (*TtydPre_psndENVOff)(BOOL *, u32 *);
+typedef void (*TtydPost_psndENVOff)(BOOL *, u32);
+/* src/pmario_sound.c */
+typedef BOOL (*TtydFn_psndENVOff_f_d)(u32, u32, s32);
+typedef int (*TtydPre_psndENVOff_f_d)(BOOL *, u32 *, u32 *, s32 *);
+typedef void (*TtydPost_psndENVOff_f_d)(BOOL *, u32, u32, s32);
+/* src/pmario_sound.c */
+typedef BOOL (*TtydFn_psndENV_LPF)(s32, u16);
+typedef int (*TtydPre_psndENV_LPF)(BOOL *, s32 *, u16 *);
+typedef void (*TtydPost_psndENV_LPF)(BOOL *, s32, u16);
+/* src/sequence/seq_battle.c */
+typedef void (*TtydFn_seq_battleInit)(SequenceWork *);
+typedef int (*TtydPre_seq_battleInit)(SequenceWork * *);
+typedef void (*TtydPost_seq_battleInit)(SequenceWork *);
+/* src/sequence/seq_battle.c */
+typedef void (*TtydFn_seq_battleExit)(SequenceWork *);
+typedef int (*TtydPre_seq_battleExit)(SequenceWork * *);
+typedef void (*TtydPost_seq_battleExit)(SequenceWork *);
+/* src/sequence/seq_battle.c */
+typedef void (*TtydFn_seq_battleMain)(SequenceWork *);
+typedef int (*TtydPre_seq_battleMain)(SequenceWork * *);
+typedef void (*TtydPost_seq_battleMain)(SequenceWork *);
+/* src/sequence/seq_e3.c */
+typedef void (*TtydFn_seq_e3Init)(SequenceWork *);
+typedef int (*TtydPre_seq_e3Init)(SequenceWork * *);
+typedef void (*TtydPost_seq_e3Init)(SequenceWork *);
+/* src/sequence/seq_e3.c */
+typedef void (*TtydFn_seq_e3Exit)(SequenceWork *);
+typedef int (*TtydPre_seq_e3Exit)(SequenceWork * *);
+typedef void (*TtydPost_seq_e3Exit)(SequenceWork *);
+/* src/sequence/seq_e3.c */
+typedef void (*TtydFn_seq_e3Main)(SequenceWork *);
+typedef int (*TtydPre_seq_e3Main)(SequenceWork * *);
+typedef void (*TtydPost_seq_e3Main)(SequenceWork *);
+/* src/sequence/seq_game.c */
+typedef void (*TtydFn_seq_gameInit)(SequenceWork *);
+typedef int (*TtydPre_seq_gameInit)(SequenceWork * *);
+typedef void (*TtydPost_seq_gameInit)(SequenceWork *);
+/* src/sequence/seq_game.c */
+typedef void (*TtydFn_seq_gameMain)(SequenceWork *);
+typedef int (*TtydPre_seq_gameMain)(SequenceWork * *);
+typedef void (*TtydPost_seq_gameMain)(SequenceWork *);
+/* src/sequence/seq_game.c */
+typedef void (*TtydFn_seq_gameExit)(SequenceWork *);
+typedef int (*TtydPre_seq_gameExit)(SequenceWork * *);
+typedef void (*TtydPost_seq_gameExit)(SequenceWork *);
+/* src/sequence/seq_gameover.c */
+typedef void (*TtydFn_seq_gameOverInit)(SequenceWork *);
+typedef int (*TtydPre_seq_gameOverInit)(SequenceWork * *);
+typedef void (*TtydPost_seq_gameOverInit)(SequenceWork *);
+/* src/sequence/seq_gameover.c */
+typedef void (*TtydFn_seq_gameOverExit)(SequenceWork *);
+typedef int (*TtydPre_seq_gameOverExit)(SequenceWork * *);
+typedef void (*TtydPost_seq_gameOverExit)(SequenceWork *);
+/* src/sequence/seq_gameover.c */
+typedef void (*TtydFn_seq_gameOverMain)(SequenceWork *);
+typedef int (*TtydPre_seq_gameOverMain)(SequenceWork * *);
+typedef void (*TtydPost_seq_gameOverMain)(SequenceWork *);
+/* src/sequence/seq_load.c */
+typedef void (*TtydFn_seq_loadInit)(SequenceWork *);
+typedef int (*TtydPre_seq_loadInit)(SequenceWork * *);
+typedef void (*TtydPost_seq_loadInit)(SequenceWork *);
+/* src/sequence/seq_load.c */
+typedef void (*TtydFn_seq_loadExit)(SequenceWork *);
+typedef int (*TtydPre_seq_loadExit)(SequenceWork * *);
+typedef void (*TtydPost_seq_loadExit)(SequenceWork *);
+/* src/sequence/seq_logo.c */
+typedef void (*TtydFn_seq_logoInit)(SequenceWork *);
+typedef int (*TtydPre_seq_logoInit)(SequenceWork * *);
+typedef void (*TtydPost_seq_logoInit)(SequenceWork *);
+/* src/sequence/seq_logo.c */
+typedef void (*TtydFn_seq_logoExit)(SequenceWork *);
+typedef int (*TtydPre_seq_logoExit)(SequenceWork * *);
+typedef void (*TtydPost_seq_logoExit)(SequenceWork *);
+/* src/sequence/seq_logo.c */
+typedef void (*TtydFn_seq_logoMain)(SequenceWork *);
+typedef int (*TtydPre_seq_logoMain)(SequenceWork * *);
+typedef void (*TtydPost_seq_logoMain)(SequenceWork *);
+/* src/sequence/seq_mapchange.c */
+typedef void (*TtydFn_seq_mapChangeInit)(SequenceWork *);
+typedef int (*TtydPre_seq_mapChangeInit)(SequenceWork * *);
+typedef void (*TtydPost_seq_mapChangeInit)(SequenceWork *);
+/* src/sequence/seq_mapchange.c */
+typedef void (*TtydFn_seq_mapChangeExit)(SequenceWork *);
+typedef int (*TtydPre_seq_mapChangeExit)(SequenceWork * *);
+typedef void (*TtydPost_seq_mapChangeExit)(SequenceWork *);
+/* src/sequence/seq_mapchange.c */
+typedef void (*TtydFn__unload)(const char *, const char *, const char *);
+typedef int (*TtydPre__unload)(const char * *, const char * *, const char * *);
+typedef void (*TtydPost__unload)(const char *, const char *, const char *);
+/* src/sequence/seq_mapchange.c */
+typedef void (*TtydFn__relUnLoad)(void);
+typedef int (*TtydPre__relUnLoad)(void);
+typedef void (*TtydPost__relUnLoad)(void);
+/* src/sequence/seq_title.c */
+typedef const char * (*TtydFn_DbgBtlSel_GetMsgDataPtr)(void);
+typedef int (*TtydPre_DbgBtlSel_GetMsgDataPtr)(const char * *);
+typedef void (*TtydPost_DbgBtlSel_GetMsgDataPtr)(const char * *);
+/* src/sequence/seq_title.c */
+typedef void (*TtydFn_seq_titleInit)(SequenceWork *);
+typedef int (*TtydPre_seq_titleInit)(SequenceWork * *);
+typedef void (*TtydPost_seq_titleInit)(SequenceWork *);
+/* src/sequence/seq_title.c */
+typedef void (*TtydFn_seq_titleExit)(SequenceWork *);
+typedef int (*TtydPre_seq_titleExit)(SequenceWork * *);
+typedef void (*TtydPost_seq_titleExit)(SequenceWork *);
+/* src/sequence/seq_title.c */
+typedef void (*TtydFn_seq_titleMain)(SequenceWork *);
+typedef int (*TtydPre_seq_titleMain)(SequenceWork * *);
+typedef void (*TtydPost_seq_titleMain)(SequenceWork *);
+/* src/sequence/seq_title.c */
+typedef s32 (*TtydFn_N_getDebugMode)(void);
+typedef int (*TtydPre_N_getDebugMode)(s32 *);
+typedef void (*TtydPost_N_getDebugMode)(s32 *);
+/* src/statuswindow.c */
+typedef void (*TtydFn_statusWinInit)(void);
+typedef int (*TtydPre_statusWinInit)(void);
+typedef void (*TtydPost_statusWinInit)(void);
+/* src/statuswindow.c */
+typedef void (*TtydFn_statusWinReInit)(void);
+typedef int (*TtydPre_statusWinReInit)(void);
+typedef void (*TtydPost_statusWinReInit)(void);
+/* src/statuswindow.c */
+typedef void (*TtydFn_statusWinMain)(void);
+typedef int (*TtydPre_statusWinMain)(void);
+typedef void (*TtydPost_statusWinMain)(void);
+/* src/statuswindow.c */
+typedef void (*TtydFn_statusWinOpen)(void);
+typedef int (*TtydPre_statusWinOpen)(void);
+typedef void (*TtydPost_statusWinOpen)(void);
+/* src/statuswindow.c */
+typedef void (*TtydFn_statusWinClose)(void);
+typedef int (*TtydPre_statusWinClose)(void);
+typedef void (*TtydPost_statusWinClose)(void);
+/* src/statuswindow.c */
+typedef void (*TtydFn_statusWinForceOpen)(void);
+typedef int (*TtydPre_statusWinForceOpen)(void);
+typedef void (*TtydPost_statusWinForceOpen)(void);
+/* src/statuswindow.c */
+typedef void (*TtydFn_statusWinForceClose)(void);
+typedef int (*TtydPre_statusWinForceClose)(void);
+typedef void (*TtydPost_statusWinForceClose)(void);
+/* src/statuswindow.c */
+typedef void (*TtydFn_statusWinForceCloseClear)(void);
+typedef int (*TtydPre_statusWinForceCloseClear)(void);
+typedef void (*TtydPost_statusWinForceCloseClear)(void);
+/* src/statuswindow.c */
+typedef void (*TtydFn_statusWinForceOff)(void);
+typedef int (*TtydPre_statusWinForceOff)(void);
+typedef void (*TtydPost_statusWinForceOff)(void);
+/* src/statuswindow.c */
+typedef void (*TtydFn_statusWinDispOn)(void);
+typedef int (*TtydPre_statusWinDispOn)(void);
+typedef void (*TtydPost_statusWinDispOn)(void);
+/* src/statuswindow.c */
+typedef void (*TtydFn_statusWinDispOff)(void);
+typedef int (*TtydPre_statusWinDispOff)(void);
+typedef void (*TtydPost_statusWinDispOff)(void);
+/* src/statuswindow.c */
+typedef BOOL (*TtydFn_statusWinCheck)(void);
+typedef int (*TtydPre_statusWinCheck)(BOOL *);
+typedef void (*TtydPost_statusWinCheck)(BOOL *);
+/* src/statuswindow.c */
+typedef BOOL (*TtydFn_statusWinCheckUpdate)(void);
+typedef int (*TtydPre_statusWinCheckUpdate)(BOOL *);
+typedef void (*TtydPost_statusWinCheckUpdate)(BOOL *);
+/* src/statuswindow.c */
+typedef void (*TtydFn_statusWinForceUpdate)(void);
+typedef int (*TtydPre_statusWinForceUpdate)(void);
+typedef void (*TtydPost_statusWinForceUpdate)(void);
+/* src/statuswindow.c */
+typedef void (*TtydFn_statusWinForceUpdateCoin)(void);
+typedef int (*TtydPre_statusWinForceUpdateCoin)(void);
+typedef void (*TtydPost_statusWinForceUpdateCoin)(void);
+/* src/statuswindow.c */
+typedef Vec (*TtydFn_statusGetApPos)(void);
+typedef int (*TtydPre_statusGetApPos)(Vec *);
+typedef void (*TtydPost_statusGetApPos)(Vec *);
+/* src/statuswindow.c */
+typedef void (*TtydFn_statusAPBlink)(s32);
+typedef int (*TtydPre_statusAPBlink)(s32 *);
+typedef void (*TtydPost_statusAPBlink)(s32);
+/* src/statuswindow.c */
+typedef void (*TtydFn_N_statusClearBlink)(void);
+typedef int (*TtydPre_N_statusClearBlink)(void);
+typedef void (*TtydPost_N_statusClearBlink)(void);
+/* src/statuswindow.c */
+typedef void (*TtydFn_statusFPBlink)(s32);
+typedef int (*TtydPre_statusFPBlink)(s32 *);
+typedef void (*TtydPost_statusFPBlink)(s32);
+/* src/statuswindow.c */
+typedef void (*TtydFn_statusMarioHPBlink)(s32);
+typedef int (*TtydPre_statusMarioHPBlink)(s32 *);
+typedef void (*TtydPost_statusMarioHPBlink)(s32);
+/* src/statuswindow.c */
+typedef void (*TtydFn_statusPartyHPBlink)(s32);
+typedef int (*TtydPre_statusPartyHPBlink)(s32 *);
+typedef void (*TtydPost_statusPartyHPBlink)(s32);
+/* src/unit/unit_mario.c */
+typedef void (*TtydFn_faker_mario_makkuro_set)(BattleUnit *);
+typedef int (*TtydPre_faker_mario_makkuro_set)(BattleUnit * *);
+typedef void (*TtydPost_faker_mario_makkuro_set)(BattleUnit *);
+/* src/window/win_badge.c */
+typedef void (*TtydFn_winMakeEquipList)(WindowWork *);
+typedef int (*TtydPre_winMakeEquipList)(WindowWork * *);
+typedef void (*TtydPost_winMakeEquipList)(WindowWork *);
+/* src/window/win_badge.c */
+typedef void (*TtydFn_winBadgeInit)(WindowWork *);
+typedef int (*TtydPre_winBadgeInit)(WindowWork * *);
+typedef void (*TtydPost_winBadgeInit)(WindowWork *);
+/* src/window/win_badge.c */
+typedef void (*TtydFn_winBadgeInit2)(WindowWork *);
+typedef int (*TtydPre_winBadgeInit2)(WindowWork * *);
+typedef void (*TtydPost_winBadgeInit2)(WindowWork *);
+/* src/window/win_badge.c */
+typedef void (*TtydFn_winBadgeExit)(WindowWork *);
+typedef int (*TtydPre_winBadgeExit)(WindowWork * *);
+typedef void (*TtydPost_winBadgeExit)(WindowWork *);
+/* src/window/win_badge.c */
+typedef s32 (*TtydFn_winBadgeMain)(WindowWork *);
+typedef int (*TtydPre_winBadgeMain)(s32 *, WindowWork * *);
+typedef void (*TtydPost_winBadgeMain)(s32 *, WindowWork *);
+/* src/window/win_badge.c */
+typedef void (*TtydFn_winBadgeMain2)(WindowWork *);
+typedef int (*TtydPre_winBadgeMain2)(WindowWork * *);
+typedef void (*TtydPost_winBadgeMain2)(WindowWork *);
+/* src/window/win_badge.c */
+typedef void (*TtydFn_winBadgeDisp)(s32, void *, s32);
+typedef int (*TtydPre_winBadgeDisp)(s32 *, void * *, s32 *);
+typedef void (*TtydPost_winBadgeDisp)(s32, void *, s32);
+/* src/window/win_item.c */
+typedef void (*TtydFn_winMakeSkipList)(WindowWork *);
+typedef int (*TtydPre_winMakeSkipList)(WindowWork * *);
+typedef void (*TtydPost_winMakeSkipList)(WindowWork *);
+/* src/window/win_item.c */
+typedef void (*TtydFn_winItemInit)(WindowWork *);
+typedef int (*TtydPre_winItemInit)(WindowWork * *);
+typedef void (*TtydPost_winItemInit)(WindowWork *);
+/* src/window/win_item.c */
+typedef void (*TtydFn_winItemInit2)(WindowWork *);
+typedef int (*TtydPre_winItemInit2)(WindowWork * *);
+typedef void (*TtydPost_winItemInit2)(WindowWork *);
+/* src/window/win_item.c */
+typedef void (*TtydFn_winItemExit)(WindowWork *);
+typedef int (*TtydPre_winItemExit)(WindowWork * *);
+typedef void (*TtydPost_winItemExit)(WindowWork *);
+/* src/window/win_item.c */
+typedef void (*TtydFn_winItemMain2)(WindowWork *);
+typedef int (*TtydPre_winItemMain2)(WindowWork * *);
+typedef void (*TtydPost_winItemMain2)(WindowWork *);
+/* src/window/win_item.c */
+typedef void (*TtydFn_winItemDisp)(s32, void *, s32);
+typedef int (*TtydPre_winItemDisp)(s32 *, void * *, s32 *);
+typedef void (*TtydPost_winItemDisp)(s32, void *, s32);
+/* src/window/win_log.c */
+typedef void (*TtydFn_winLogInit)(WindowWork *);
+typedef int (*TtydPre_winLogInit)(WindowWork * *);
+typedef void (*TtydPost_winLogInit)(WindowWork *);
+/* src/window/win_log.c */
+typedef void (*TtydFn_winLogInit2)(WindowWork *);
+typedef int (*TtydPre_winLogInit2)(WindowWork * *);
+typedef void (*TtydPost_winLogInit2)(WindowWork *);
+/* src/window/win_log.c */
+typedef void (*TtydFn_winLogExit)(WindowWork *);
+typedef int (*TtydPre_winLogExit)(WindowWork * *);
+typedef void (*TtydPost_winLogExit)(WindowWork *);
+/* src/window/win_log.c */
+typedef void (*TtydFn_winLogMain2)(WindowWork *);
+typedef int (*TtydPre_winLogMain2)(WindowWork * *);
+typedef void (*TtydPost_winLogMain2)(WindowWork *);
+/* src/window/win_log.c */
+typedef void (*TtydFn_winLogDisp)(s32, void *, s32);
+typedef int (*TtydPre_winLogDisp)(s32 *, void * *, s32 *);
+typedef void (*TtydPost_winLogDisp)(s32, void *, s32);
+/* src/window/win_log.c */
+typedef const char * (*TtydFn_winGetMapTplName)(void);
+typedef int (*TtydPre_winGetMapTplName)(const char * *);
+typedef void (*TtydPost_winGetMapTplName)(const char * *);
+/* src/window/win_log.c */
+typedef MonosiriWork * (*TtydFn_monosiriInit)(s32, f32, f32);
+typedef int (*TtydPre_monosiriInit)(MonosiriWork * *, s32 *, f32 *, f32 *);
+typedef void (*TtydPost_monosiriInit)(MonosiriWork * *, s32, f32, f32);
+/* src/window/win_log.c */
+typedef void (*TtydFn_monosiriMain)(MonosiriWork *);
+typedef int (*TtydPre_monosiriMain)(MonosiriWork * *);
+typedef void (*TtydPost_monosiriMain)(MonosiriWork *);
+/* src/window/win_log.c */
+typedef void (*TtydFn_monosiriClose)(MonosiriWork *);
+typedef int (*TtydPre_monosiriClose)(MonosiriWork * *);
+typedef void (*TtydPost_monosiriClose)(MonosiriWork *);
+/* src/window/win_log.c */
+typedef BOOL (*TtydFn_monosiriCloseWait)(MonosiriWork *);
+typedef int (*TtydPre_monosiriCloseWait)(BOOL *, MonosiriWork * *);
+typedef void (*TtydPost_monosiriCloseWait)(BOOL *, MonosiriWork *);
+/* src/window/win_log.c */
+typedef void (*TtydFn_monosiriExit)(MonosiriWork *);
+typedef int (*TtydPre_monosiriExit)(MonosiriWork * *);
+typedef void (*TtydPost_monosiriExit)(MonosiriWork *);
+/* src/window/win_main.c */
+typedef WindowWork * (*TtydFn_winGetPtr)(void);
+typedef int (*TtydPre_winGetPtr)(WindowWork * *);
+typedef void (*TtydPost_winGetPtr)(WindowWork * *);
+/* src/window/win_main.c */
+typedef void (*TtydFn_winInit)(void);
+typedef int (*TtydPre_winInit)(void);
+typedef void (*TtydPost_winInit)(void);
+/* src/window/win_main.c */
+typedef void (*TtydFn_winReInit)(void);
+typedef int (*TtydPre_winReInit)(void);
+typedef void (*TtydPost_winReInit)(void);
+/* src/window/win_main.c */
+typedef BOOL (*TtydFn_winCheck)(void);
+typedef int (*TtydPre_winCheck)(BOOL *);
+typedef void (*TtydPost_winCheck)(BOOL *);
+/* src/window/win_main.c */
+typedef void (*TtydFn_winOpenEnable)(void);
+typedef int (*TtydPre_winOpenEnable)(void);
+typedef void (*TtydPost_winOpenEnable)(void);
+/* src/window/win_main.c */
+typedef void (*TtydFn_winOpenDisable)(void);
+typedef int (*TtydPre_winOpenDisable)(void);
+typedef void (*TtydPost_winOpenDisable)(void);
+/* src/window/win_main.c */
+typedef void (*TtydFn_winMain)(void);
+typedef int (*TtydPre_winMain)(void);
+typedef void (*TtydPost_winMain)(void);
+/* src/window/win_main.c */
+typedef BOOL (*TtydFn_winGhostDiaryChk)(void);
+typedef int (*TtydPre_winGhostDiaryChk)(BOOL *);
+typedef void (*TtydPost_winGhostDiaryChk)(BOOL *);
+/* src/window/win_main.c */
+typedef void (*TtydFn_winFontInit)(void);
+typedef int (*TtydPre_winFontInit)(void);
+typedef void (*TtydPost_winFontInit)(void);
+/* src/window/win_main.c */
+typedef void (*TtydFn_winFontSetLabel)(Vec, Vec, GXColor, const char *);
+typedef int (*TtydPre_winFontSetLabel)(Vec *, Vec *, GXColor *, const char * *);
+typedef void (*TtydPost_winFontSetLabel)(Vec, Vec, GXColor, const char *);
+/* src/window/win_main.c */
+typedef void (*TtydFn_winTexInit)(TEXPalette *);
+typedef int (*TtydPre_winTexInit)(TEXPalette * *);
+typedef void (*TtydPost_winTexInit)(TEXPalette *);
+/* src/window/win_main.c */
+typedef void (*TtydFn_winTexSet)(u32, Vec, Vec, GXColor);
+typedef int (*TtydPre_winTexSet)(u32 *, Vec *, Vec *, GXColor *);
+typedef void (*TtydPost_winTexSet)(u32, Vec, Vec, GXColor);
+/* src/window/win_main.c */
+typedef void (*TtydFn_winTexSetNearest)(u32, Vec, Vec, GXColor);
+typedef int (*TtydPre_winTexSetNearest)(u32 *, Vec *, Vec *, GXColor *);
+typedef void (*TtydPost_winTexSetNearest)(u32, Vec, Vec, GXColor);
+/* src/window/win_main.c */
+typedef void (*TtydFn_winTexSetRot)(u32, Vec, Vec, GXColor, f32);
+typedef int (*TtydPre_winTexSetRot)(u32 *, Vec *, Vec *, GXColor *, f32 *);
+typedef void (*TtydPost_winTexSetRot)(u32, Vec, Vec, GXColor, f32);
+/* src/window/win_main.c */
+typedef void (*TtydFn_winTexInit_x2)(TEXPalette *);
+typedef int (*TtydPre_winTexInit_x2)(TEXPalette * *);
+typedef void (*TtydPost_winTexInit_x2)(TEXPalette *);
+/* src/window/win_main.c */
+typedef void (*TtydFn_winTexSet_x2)(u32, u32, Vec, Vec, GXColor);
+typedef int (*TtydPre_winTexSet_x2)(u32 *, u32 *, Vec *, Vec *, GXColor *);
+typedef void (*TtydPost_winTexSet_x2)(u32, u32, Vec, Vec, GXColor);
+/* src/window/win_main.c */
+typedef void (*TtydFn_winIconInit)(void);
+typedef int (*TtydPre_winIconInit)(void);
+typedef void (*TtydPost_winIconInit)(void);
+/* src/window/win_main.c */
+typedef void (*TtydFn_winIconGrayInit)(void);
+typedef int (*TtydPre_winIconGrayInit)(void);
+typedef void (*TtydPost_winIconGrayInit)(void);
+/* src/window/win_main.c */
+typedef void (*TtydFn_winIconSet)(s32, Vec, Vec, GXColor);
+typedef int (*TtydPre_winIconSet)(s32 *, Vec *, Vec *, GXColor *);
+typedef void (*TtydPost_winIconSet)(s32, Vec, Vec, GXColor);
+/* src/window/win_main.c */
+typedef void (*TtydFn_winLectureOn)(void);
+typedef int (*TtydPre_winLectureOn)(void);
+typedef void (*TtydPost_winLectureOn)(void);
+/* src/window/win_main.c */
+typedef BOOL (*TtydFn_winLectureCheck)(void);
+typedef int (*TtydPre_winLectureCheck)(BOOL *);
+typedef void (*TtydPost_winLectureCheck)(BOOL *);
+/* src/window/win_mario.c */
+typedef void (*TtydFn_winMarioInit)(WindowWork *);
+typedef int (*TtydPre_winMarioInit)(WindowWork * *);
+typedef void (*TtydPost_winMarioInit)(WindowWork *);
+/* src/window/win_mario.c */
+typedef void (*TtydFn_winMarioInit2)(WindowWork *);
+typedef int (*TtydPre_winMarioInit2)(WindowWork * *);
+typedef void (*TtydPost_winMarioInit2)(WindowWork *);
+/* src/window/win_mario.c */
+typedef void (*TtydFn_winMarioExit)(WindowWork *);
+typedef int (*TtydPre_winMarioExit)(WindowWork * *);
+typedef void (*TtydPost_winMarioExit)(WindowWork *);
+/* src/window/win_mario.c */
+typedef s32 (*TtydFn_winMarioMain)(WindowWork *);
+typedef int (*TtydPre_winMarioMain)(s32 *, WindowWork * *);
+typedef void (*TtydPost_winMarioMain)(s32 *, WindowWork *);
+/* src/window/win_mario.c */
+typedef void (*TtydFn_winMarioMain2)(WindowWork *);
+typedef int (*TtydPre_winMarioMain2)(WindowWork * *);
+typedef void (*TtydPost_winMarioMain2)(WindowWork *);
+/* src/window/win_mario.c */
+typedef const char * (*TtydFn_winZenkakuStr)(s32);
+typedef int (*TtydPre_winZenkakuStr)(const char * *, s32 *);
+typedef void (*TtydPost_winZenkakuStr)(const char * *, s32);
+/* src/window/win_mario.c */
+typedef char * (*TtydFn_winZenkakuStrPad)(s32, s32);
+typedef int (*TtydPre_winZenkakuStrPad)(char * *, s32 *, s32 *);
+typedef void (*TtydPost_winZenkakuStrPad)(char * *, s32, s32);
+/* src/window/win_party.c */
+typedef void (*TtydFn_winPartyInit)(WindowWork *);
+typedef int (*TtydPre_winPartyInit)(WindowWork * *);
+typedef void (*TtydPost_winPartyInit)(WindowWork *);
+/* src/window/win_party.c */
+typedef void (*TtydFn_winPartyInit2)(WindowWork *);
+typedef int (*TtydPre_winPartyInit2)(WindowWork * *);
+typedef void (*TtydPost_winPartyInit2)(WindowWork *);
+/* src/window/win_party.c */
+typedef void (*TtydFn_winPartyExit)(WindowWork *);
+typedef int (*TtydPre_winPartyExit)(WindowWork * *);
+typedef void (*TtydPost_winPartyExit)(WindowWork *);
+/* src/window/win_party.c */
+typedef s32 (*TtydFn_winPartyMain)(WindowWork *);
+typedef int (*TtydPre_winPartyMain)(s32 *, WindowWork * *);
+typedef void (*TtydPost_winPartyMain)(s32 *, WindowWork *);
+/* src/window/win_party.c */
+typedef void (*TtydFn_winPartyMain2)(WindowWork *);
+typedef int (*TtydPre_winPartyMain2)(WindowWork * *);
+typedef void (*TtydPost_winPartyMain2)(WindowWork *);
+/* src/window/win_party.c */
+typedef void (*TtydFn_winPartyDisp)(s32, void *, s32);
+typedef int (*TtydPre_winPartyDisp)(s32 *, void * *, s32 *);
+typedef void (*TtydPost_winPartyDisp)(s32, void *, s32);
+/* src/window/win_root.c */
+typedef void (*TtydFn_winRootDisp)(s32, WindowWork *);
+typedef int (*TtydPre_winRootDisp)(s32 *, WindowWork * *);
+typedef void (*TtydPost_winRootDisp)(s32, WindowWork *);
+/* src/window/win_root.c */
+typedef void (*TtydFn_winBgGX)(WindowWork *, s32, f32, f32);
+typedef int (*TtydPre_winBgGX)(WindowWork * *, s32 *, f32 *, f32 *);
+typedef void (*TtydPost_winBgGX)(WindowWork *, s32, f32, f32);
+/* src/window/win_root.c */
+typedef void (*TtydFn_winMsgEntry)(WindowWork *, s32, const char *, const char *);
+typedef int (*TtydPre_winMsgEntry)(WindowWork * *, s32 *, const char * *, const char * *);
+typedef void (*TtydPost_winMsgEntry)(WindowWork *, s32, const char *, const char *);
+/* src/window/win_root.c */
+typedef void (*TtydFn_winKirinukiGX)(WindowWork *, s32, f32, f32, f32, f32);
+typedef int (*TtydPre_winKirinukiGX)(WindowWork * *, s32 *, f32 *, f32 *, f32 *, f32 *);
+typedef void (*TtydPost_winKirinukiGX)(WindowWork *, s32, f32, f32, f32, f32);
+/* src/window/win_root.c */
+typedef void (*TtydFn_winNameGX)(WindowWork *, s32, f32, f32, f32, f32);
+typedef int (*TtydPre_winNameGX)(WindowWork * *, s32 *, f32 *, f32 *, f32 *, f32 *);
+typedef void (*TtydPost_winNameGX)(WindowWork *, s32, f32, f32, f32, f32);
+/* src/window/win_root.c */
+typedef void (*TtydFn_winBookGX)(WindowWork *, s32, f32, f32);
+typedef int (*TtydPre_winBookGX)(WindowWork * *, s32 *, f32 *, f32 *);
+typedef void (*TtydPost_winBookGX)(WindowWork *, s32, f32, f32);
+/* src/window/win_root.c */
+typedef void (*TtydFn_winHalfBookGX)(TEXPalette *, s32, f32, f32);
+typedef int (*TtydPre_winHalfBookGX)(TEXPalette * *, s32 *, f32 *, f32 *);
+typedef void (*TtydPost_winHalfBookGX)(TEXPalette *, s32, f32, f32);
+/* src/window/win_root.c */
+typedef void (*TtydFn_winMailGX)(WindowWork *, f32, f32);
+typedef int (*TtydPre_winMailGX)(WindowWork * *, f32 *, f32 *);
+typedef void (*TtydPost_winMailGX)(WindowWork *, f32, f32);
+/* src/window/win_root.c */
+typedef void (*TtydFn_winHakoGX)(WindowWork *, s32, f32, f32);
+typedef int (*TtydPre_winHakoGX)(WindowWork * *, s32 *, f32 *, f32 *);
+typedef void (*TtydPost_winHakoGX)(WindowWork *, s32, f32, f32);
+/* src/window/win_root.c */
+typedef void (*TtydFn_winWazaGX)(WindowWork *, s32, f32, f32, f32, f32);
+typedef int (*TtydPre_winWazaGX)(WindowWork * *, s32 *, f32 *, f32 *, f32 *, f32 *);
+typedef void (*TtydPost_winWazaGX)(WindowWork *, s32, f32, f32, f32, f32);
+/* src/window/win_root.c */
+typedef s32 (*TtydFn_compare_func5_2)(const void *, const void *);
+typedef int (*TtydPre_compare_func5_2)(s32 *, const void * *, const void * *);
+typedef void (*TtydPost_compare_func5_2)(s32 *, const void *, const void *);
+/* src/window/win_root.c */
+typedef s32 (*TtydFn_compare_func6_2)(const void *, const void *);
+typedef int (*TtydPre_compare_func6_2)(s32 *, const void * *, const void * *);
+typedef void (*TtydPost_compare_func6_2)(s32 *, const void *, const void *);
+/* src/window/win_root.c */
+typedef void (*TtydFn_winSortEntry)(WindowWork *, s32, f32, f32);
+typedef int (*TtydPre_winSortEntry)(WindowWork * *, s32 *, f32 *, f32 *);
+typedef void (*TtydPost_winSortEntry)(WindowWork *, s32, f32, f32);
+/* src/window/win_root.c */
+typedef BOOL (*TtydFn_winSortWait)(WindowWork *);
+typedef int (*TtydPre_winSortWait)(BOOL *, WindowWork * *);
+typedef void (*TtydPost_winSortWait)(BOOL *, WindowWork *);
+/* src/window/win_root.c */
+typedef void (*TtydFn_winKageGX)(WindowWork *, GXColor, f32, f32, f32, f32);
+typedef int (*TtydPre_winKageGX)(WindowWork * *, GXColor *, f32 *, f32 *, f32 *, f32 *);
+typedef void (*TtydPost_winKageGX)(WindowWork *, GXColor, f32, f32, f32, f32);
+/* src/window/win_root.c */
+typedef void (*TtydFn_winZClear)(void);
+typedef int (*TtydPre_winZClear)(void);
+typedef void (*TtydPost_winZClear)(void);
 
 #endif

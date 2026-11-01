@@ -651,7 +651,7 @@ static void tess(Pt* pts, s32 n) {
  * Damage function of Art Attack: the power scissor_damage worked out for the target enemy (0 to 3),
  * 0 for anything else.
  */
-s32 weaponGetPower_Scissor(BattleUnit* attacker, BattleWeapon* weapon, BattleUnit* target, BattleUnitPart* part) {
+s32 PORT_HOOKABLE(weaponGetPower_Scissor)(BattleUnit* attacker, BattleWeapon* weapon, BattleUnit* target, BattleUnitPart* part) {
     ScissorWork* w = GetScissorPtr();
     s32 i;
     if (target == NULL) {

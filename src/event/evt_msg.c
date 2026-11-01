@@ -1,4 +1,5 @@
 // Script commands for message windows: printing, choices, inserted strings and closing.
+#include "port_hook.h"
 #include "evt/evt_msg.h"
 #include "evt/evt_cmd.h"
 #include "manager/evtmgr.h"
@@ -20,7 +21,7 @@
 typedef s32 (*MsgWindow_EntryS32Fn)(const char*, s32, s32);
 
 /** Message-script setup hook called at startup; empty in every release. */
-void evt_msg_init(void) {
+void PORT_HOOKABLE(evt_msg_init)(void) {
     // stubbed in retail
 }
 
@@ -190,6 +191,9 @@ USER_FUNC(evt_msg_print) {
 #include "mario/mario_party.h"
 #include "battle/battle.h"
 #include "battle/battle_sub.h"
+#ifdef PORT_MODS
+#include "port/hooks/src_event_evt_msg.h"
+#endif
 
 /**
  * Message label suffix of each partner, indexed by partner id (0 none, 1 Goombella, 2 Koops, 3 Bobbery, 4 Yoshi,
@@ -1002,4 +1006,8 @@ char msg_article_buf[0xA00];
 char msg_num_buf[0xA00];
 char msg_plural_buf[0xA00];
 char msg_count_buf[0xA00];
+#endif
+
+#ifdef PORT_MODS
+#include "port/hooks/src_event_evt_msg.inc"
 #endif

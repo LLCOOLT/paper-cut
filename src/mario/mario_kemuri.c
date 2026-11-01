@@ -1,4 +1,5 @@
 // Dust and splash effects under Mario's feet (walking, landing, running on water).
+#include "port_hook.h"
 #include "mario/mario.h"
 #include "mario/mariost.h"
 #include "driver/effdrv.h"
@@ -15,6 +16,9 @@
 #include "koopa.h"
 #include "libc_decls.h"
 #include "version.h"
+#ifdef PORT_MODS
+#include "port/hooks/src_mario_mario_kemuri.h"
+#endif
 
 // FAKE: keeps the following function(s) out of line as in the target; removing it changes the code
 #pragma dont_inline on
@@ -35,7 +39,7 @@ void mario_kemuri_landon(void);
  * and other floors get the normal dust from kemuri (not for Peach).
  * Nothing in tube mode, while entering a pipe or at a raised system level.
  */
-void mario_kemuri(void) {
+void PORT_HOOKABLE(mario_kemuri)(void) {
     static s32 ct = 8;
     static s32 left_or_right = 0;
     MarioWork* mario = marioGetPtr();
@@ -92,7 +96,7 @@ out:;
  * Spawns a single dust puff at Mario's feet (smaller in background mode).
  * Used by the damage motions in mot_damage.c when he hits the ground.
  */
-void mario_simple_kemuri(void) {
+void PORT_HOOKABLE(mario_simple_kemuri)(void) {
     MarioWork* mario = marioGetPtr();
     EffectEntry* eff = effKemuriEntry(0, mario->position.x, mario->position.y, mario->position.z, 0.0f);
 
@@ -106,7 +110,7 @@ void mario_simple_kemuri(void) {
  * a 0x1000-floor effect, a water splash, or a dust puff, depending on the floor.
  * Skipped once if MARIO_TRIG_FLAG_DISABLE_JUMP_KEMURI is set, which it clears.
  */
-void mario_land_kemuri(void) {
+void PORT_HOOKABLE(mario_land_kemuri)(void) {
     MarioWork* mario = marioGetPtr();
     HitEntry* hit = mario->hitobjStandOn;
     u32 attr;
@@ -383,3 +387,7 @@ void party_kemuri(PartyEntry* party) {
 }
 #endif
 #pragma dont_inline reset
+
+#ifdef PORT_MODS
+#include "port/hooks/src_mario_mario_kemuri.inc"
+#endif

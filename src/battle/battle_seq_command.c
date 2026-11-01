@@ -1,6 +1,18 @@
 // Battle command menus: building and handling the action, weapon, item and target selection menus.
 #pragma optimize_for_size on
+#include "port_hook.h"
 #include <dolphin/pad.h>
+#ifdef TARGET_PC
+#include "port/gameplus.h"
+#include "unit/party/unit_party_christine.h"
+#include "evt/evt_msg.h"
+#include "port/menu_tap.h"
+/* A, or the mouse on the ring (0) or a list (1): moves the cursor to the pointer, a click on the cursor's
+ * choice is A (battle_menu_disp.c) */
+#define BTL_MENU_A(list) (BattlePadCheckTrigger(PAD_BUTTON_A) | portBattleMenuMouse(list))
+#else
+#define BTL_MENU_A(list) BattlePadCheckTrigger(PAD_BUTTON_A)
+#endif
 #include "version.h"
 #include "battle/battle_seq_command.h"
 #include "pc_call.h"
@@ -56,6 +68,9 @@ extern BattleWeapon marioWeapon_KururinJump;
 extern BattleWeapon marioDefaultWeapon_Hammer;
 #include "battle/battle_detect.h"
 #include "libc_decls.h"
+#ifdef PORT_MODS
+#include "port/hooks/src_battle_battle_seq_command.h"
+#endif
 void BattleDrawEnemyHP(CameraId camId, void* param);
 static s32 _btlcmd_CheckWeaponTargetNum(BattleWork* wp, BattleUnit* unit, BattleWeapon* weapon);
 
@@ -85,7 +100,7 @@ s32 _hammer_badge_table[9] = {ITEM_POWER_SMASH, ITEM_PIERCING_BLOW, ITEM_HAMMER_
  * Resets the command menu to its first step and sets BATTLE_FLAG_COMMAND_INPUT;
  * btlseqAct calls it when Mario or the partner is about to choose an action.
  */
-void BattleCommandInit(BattleWork* wp) {
+void PORT_HOOKABLE(BattleCommandInit)(BattleWork* wp) {
     wp->commandMenu.state = 0;
     wp->flags |= BATTLE_FLAG_COMMAND_INPUT;
 }
@@ -716,6 +731,20 @@ BattleCheckPartyEntry _checkPartyTable[8] = {
  * gets the reason message from _get_msg and announces it for 60 frames; the menu reopens when it ends.
  */
 EVT_BEGIN(_btl_cmd_error_msg_event)
+#ifdef TARGET_PC
+    // Gameplay+ free Tattle: the tattles of the enemies already tattled, one after another, then back to the menu
+    CALL(portEvtTattleFree, LW(1))
+    IF_INT_EQUAL(LW(1), 1)
+        LOOP(0)
+            CALL(portEvtTattleNext, LW(0))
+            IF_INT_EQUAL(LW(0), 0)
+                BREAK_LOOP
+            END_IF
+            CALL(evt_msg_print, 0, LW(0), 0, 0)
+        END_LOOP
+        RETURN
+    END_IF
+#endif
     CALL(_get_msg, LW(0))
     CALL(btlevtcmd_AnnounceMessage, 0, 0, -30, LW(0), 60)
     RETURN
@@ -910,6 +939,19 @@ static void _btlcmd_MakeOperationTable(BattleWork* wp) {
         }
         num++;
     }
+#ifdef TARGET_PC
+    // Gameplay+ free Tattle: read the tattles of the enemies here that were tattled before, at no cost
+    if (portTattleFreeAvailable()) {
+        cmd->operation[num].type = PORT_OPERATION_TATTLE;
+        cmd->operation[num].enabled = 1;
+        cmd->operation[num].name = msgSearch(partyWeapon_ChristineMonosiri.name);
+        cmd->operation[num].icon = partyWeapon_ChristineMonosiri.icon;
+        cmd->operation[num].disableReason = 0;
+        cmd->operation[num].cost = 0;
+        cmd->operation[num].help = partyWeapon_ChristineMonosiri.description;
+        num++;
+    }
+#endif
     cmd->operation[num].type = 6;
     cmd->operation[num].enabled = 1;
     cmd->operation[num].name = msgSearch("btl_cmd_op_defend");
@@ -1210,7 +1252,7 @@ static void _btlcmd_SetAttackEvent(BattleUnit* unit, BattleCommand* cmd);
  * In the middle of a Double or Triple Dip it opens the item list directly.
  * Returns 1 once the action is decided, after _btlcmd_SetAttackEvent has stored its script in the unit.
  */
-s32 BattleCommandInput(void* work) {
+s32 PORT_HOOKABLE(BattleCommandInput)(void* work) {
     const char* sfxA;
     const char* sfxB;
     BattleUnit* unit;
@@ -1523,7 +1565,7 @@ s32 BattleCommandInput(void* work) {
  * the enemy HP display and every menu whose CMD_MENU_FLAG is set.
  * The demos draw the enemy HP at layer 501 instead of 902.
  */
-void BattleCommandDisplay(BattleWork* wp) {
+void PORT_HOOKABLE(BattleCommandDisplay)(BattleWork* wp) {
     BattleCommand* cmd = &wp->commandMenu;
 
     if (cmd != NULL) {
@@ -1674,7 +1716,7 @@ s32 BattleCommandDisplay_ActMenuMain(BattleWork* wp) {
                 wp->commandMenu.recCommand = 0;
             }
         }
-        if (BattlePadCheckTrigger(PAD_BUTTON_A) || wp->commandMenu.attackAudience) {
+        if (BTL_MENU_A(0) || wp->commandMenu.attackAudience) {
             if (cmd->act[cursor->absPos].enabled) {
                 psndSFXOn((const char*)0x9d8);
                 cmd->actType = cmd->act[cursor->absPos].type;
@@ -1756,7 +1798,7 @@ s32 BattleCommandDisplay_ActMenuMain(BattleWork* wp) {
  * not in zero gravity or a locked tutorial, both able to act and still on their first move of the turn,
  * Mario not veiled and the partner not flipped. battle_menu_disp.c also checks it.
  */
-BOOL BattleCommandCheckChangePositionEnable(BattleWork* wp) {
+BOOL PORT_HOOKABLE(BattleCommandCheckChangePositionEnable)(BattleWork* wp) {
     BattleUnit* unit;
 
     if (wp->flags & BATTLE_FLAG_LECTURE_LOCK_ALL) {
@@ -1831,7 +1873,7 @@ s32 BattleCommandDisplay_WeaponSelectMenuMain(BattleWork* wp, s32 type) {
             wp->commandMenu.attackAudience = 0;
             wp->commandMenu.recCommand = 0;
         }
-        if (BattlePadCheckTrigger(PAD_BUTTON_A) || wp->commandMenu.attackAudience) {
+        if (BTL_MENU_A(1) || wp->commandMenu.attackAudience) {
             if (cmd->weapon[cursor->absPos].enabled) {
                 psndSFXOn((const char*)0x9d8);
                 BattleCommandDisplay_WeaponSelectMenuEnd(wp);
@@ -2066,7 +2108,7 @@ s32 BattleCommandDisplay_OperationMenuMain(BattleWork* wp) {
     }
     if (BattleMenuKeyOKInACT(wp)) {
         _btlcmd_GetCursorPtr(cmd, 5, &cursor);
-        if (BattlePadCheckTrigger(PAD_BUTTON_A) || wp->commandMenu.attackAudience) {
+        if (BTL_MENU_A(1) || wp->commandMenu.attackAudience) {
             if (cmd->operation[cursor->absPos].enabled) {
                 psndSFXOn((const char*)0x9d8);
                 cmd->operationType = cmd->operation[cursor->absPos].type;
@@ -2087,6 +2129,13 @@ s32 BattleCommandDisplay_OperationMenuMain(BattleWork* wp) {
                     case 4:
                         cmd->state = 0x1b;
                         break;
+#ifdef TARGET_PC
+                    case PORT_OPERATION_TATTLE: // the tattles through the menu's message route (22, 23), back to it
+                        cmd->disableReason = PORT_OPERATION_TATTLE;
+                        cmd->state = 0x16;
+                        portTattleFreeBegin();
+                        break;
+#endif
                 }
                 BattleCommandDisplay_OperationMenuEnd(wp);
                 ret = 1;
@@ -2183,7 +2232,7 @@ s32 BattleCommandDisplay_MultiItemMenuMain(BattleWork* wp) {
 
     if (BattleMenuKeyOKInACT(wp)) {
         _btlcmd_GetCursorPtr(cmd, 3, &cursor);
-        if (BattlePadCheckTrigger(PAD_BUTTON_A) || wp->commandMenu.attackAudience) {
+        if (BTL_MENU_A(1) || wp->commandMenu.attackAudience) {
             if (cmd->multiItem[cursor->absPos].enabled) {
                 psndSFXOn((const char*)0x9d8);
                 cmd->dipMode = cmd->multiItem[cursor->absPos].dipCount;
@@ -2278,7 +2327,7 @@ s32 BattleCommandDisplay_ChangePartySelectMenuMain(BattleWork* wp) {
 
     if (BattleMenuKeyOKInACT(wp)) {
         _btlcmd_GetCursorPtr(cmd, 10, &cursor);
-        if (BattlePadCheckTrigger(PAD_BUTTON_A) || wp->commandMenu.attackAudience) {
+        if (BTL_MENU_A(1) || wp->commandMenu.attackAudience) {
             if (cmd->party[cursor->absPos].enabled) {
                 psndSFXOn((const char*)0x9d8);
                 BattleStageOffLightInCommand(0, 1);
@@ -2806,7 +2855,7 @@ static void _btlcmd_SetAttackEvent(BattleUnit* unit, BattleCommand* cmd) {
  * The weapon under the cursor of the current list, i.e. the move the player chose;
  * read by the btlevtcmd helpers in battle_event_cmd.c.
  */
-BattleWeapon* BattleGetSelectWeapon(BattleWork* wp) {
+BattleWeapon* PORT_HOOKABLE(BattleGetSelectWeapon)(BattleWork* wp) {
     BattleCommand* cmd = &wp->commandMenu;
     BattleCursor* cursor;
 
@@ -2980,7 +3029,7 @@ void BattleDrawEnemyHPBar(Vec pos, BattleUnit* unit, GXColor color) {
  * Enemies, and cases with no valid pick, get subsetevt_confuse_flustered.
  * The US and PAL releases first drop a Double or Triple Dip in progress.
  */
-void* BattleSetConfuseAct(BattleWork* wp, BattleUnit* unit) {
+void* PORT_HOOKABLE(BattleSetConfuseAct)(BattleWork* wp, BattleUnit* unit) {
     BattleCommand* cmd = &wp->commandMenu;
     BattleCursor* cursor;
     s16 list[24];
@@ -3293,3 +3342,7 @@ static s32 _check_weapon_type_attack(BattleWeapon* weapon) {
         return 1;
     return 0;
 }
+
+#ifdef PORT_MODS
+#include "port/hooks/src_battle_battle_seq_command.inc"
+#endif

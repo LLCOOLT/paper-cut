@@ -236,7 +236,7 @@ static inline void winLogAddMenu(WindowWork* w, s32 id) {
  * finds Mario's spot on the world map for the current area, and builds the sorted badge,
  * recipe and Tattle lists with their found counts.
  */
-void winLogInit(WindowWork* w) {
+void PORT_HOOKABLE(winLogInit)(WindowWork* w) {
 #if VERSION <= VERSION_DEMO_JP
     s32 j;
     s32 i;
@@ -470,7 +470,7 @@ void winLogInit(WindowWork* w) {
  * Run from win_root.c each time the Journal comes to the front:
  * hides the badge and recipe panels, restores their page scroll, and shows the selected entry's help text.
  */
-void winLogInit2(WindowWork* w) {
+void PORT_HOOKABLE(winLogInit2)(WindowWork* w) {
     w->helpTgtX = -128.0f;
     w->helpTgtY = 8.0f + (45.0f * w->log.count / 2.0f - 45.0f * w->log.cursor);
     w->log.badge.x = w->log.badge.tx = 320.0f;
@@ -487,7 +487,7 @@ void winLogInit2(WindowWork* w) {
 }
 
 /** Frees the Journal's map texture, the Mario map marker model and the seven Crystal Star effects. */
-void winLogExit(WindowWork* w) {
+void PORT_HOOKABLE(winLogExit)(WindowWork* w) {
     s32 i;
     if (w->mapRes) {
         fileFree(w->mapRes);
@@ -1053,7 +1053,7 @@ s32 PORT_HOOKABLE(winLogMain)(WindowWork* w) {
  * Every frame: runs the entry buttons' slide animations (chosen one to the top-left, the rest off screen,
  * and back) and eases the map, Crystal Star, badge and recipe panels toward their targets.
  */
-void winLogMain2(WindowWork* w) {
+void PORT_HOOKABLE(winLogMain2)(WindowWork* w) {
     s32 i;
 
     for (i = 0; i < w->log.count; i++) {
@@ -1134,7 +1134,7 @@ static void monoshiriGX(WindowWork* w, f32 x, f32 y);
  * the badge and recipe boxes with the selected icon (and found counts from the US release on),
  * the Tattle log list, and the entry buttons.
  */
-void winLogDisp(s32 camId, void* param, s32 idx) {
+void PORT_HOOKABLE(winLogDisp)(s32 camId, void* param, s32 idx) {
     static const GXColor kW = {0xFF, 0xFF, 0xFF, 0xFF};
     WindowWork* w = param;
     GXColor c1;
@@ -1254,7 +1254,7 @@ void winLogDisp(s32 camId, void* param, s32 idx) {
  * map0.tpl to map7.tpl, one step per chapter, each switching at that chapter's visit to Frankly's house.
  * Preloaded by winMain and loaded by the Journal map.
  */
-const char* winGetMapTplName(void) {
+const char* PORT_HOOKABLE(winGetMapTplName)(void) {
     if (swByteGet(GSW_STORY_PROGRESS) < STORY_STG0_16_FRANKLYS_HOUSE)
         return "map0.tpl";
     if (swByteGet(GSW_STORY_PROGRESS) < STORY_STG1_31_FRANKLYS_HOUSE)
@@ -1527,7 +1527,7 @@ static void monoshiriGX(WindowWork* w, f32 x, f32 y) {
  * Used by the Journal's Tattle log and by Goombella's Tattle in battle;
  * drive it with monosiriMain, monosiriClose/CloseWait and monosiriExit.
  */
-MonosiriWork* monosiriInit(s32 id, f32 x, f32 y) {
+MonosiriWork* PORT_HOOKABLE(monosiriInit)(s32 id, f32 x, f32 y) {
     MonosiriWork* m = _mapAlloc(sizeof(MonosiriWork));
     memset(m, 0, sizeof(MonosiriWork));
     m->state = 0;
@@ -1549,7 +1549,7 @@ MonosiriWork* monosiriInit(s32 id, f32 x, f32 y) {
  * loads the enemy's model (plus Smorg's extra part model) and fades it in,
  * registers capture and the card's draw, and slides the card toward its target (off screen once closing).
  */
-void monosiriMain(MonosiriWork* m) {
+void PORT_HOOKABLE(monosiriMain)(MonosiriWork* m) {
     s32 group = gp->inBattle ? 1 : 0;
 #if VERSION >= VERSION_US
     const char* lang[6] = {"jp", "us", "ge", "fr", "sp", "it"};
@@ -1626,14 +1626,14 @@ void monosiriMain(MonosiriWork* m) {
 }
 
 /** Starts the Tattle card sliding off screen. */
-void monosiriClose(MonosiriWork* m) {
+void PORT_HOOKABLE(monosiriClose)(MonosiriWork* m) {
     if (m) {
         m->state = 2;
     }
 }
 
 /** TRUE once the closing Tattle card is off screen (or there is no card). */
-BOOL monosiriCloseWait(MonosiriWork* m) {
+BOOL PORT_HOOKABLE(monosiriCloseWait)(MonosiriWork* m) {
     if (!m)
         return TRUE;
     if (m->curX > 500.0f && m->curY < -300.0f)
@@ -1642,7 +1642,7 @@ BOOL monosiriCloseWait(MonosiriWork* m) {
 }
 
 /** Frees a Tattle card: its files, models, portrait buffer and the work itself. */
-void monosiriExit(MonosiriWork* m) {
+void PORT_HOOKABLE(monosiriExit)(MonosiriWork* m) {
     // The release versions also reset each field after freeing it and check smart before freeing it
 #if VERSION <= VERSION_DEMO_JP
     if (m) {

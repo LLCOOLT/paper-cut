@@ -12,6 +12,7 @@
 #include "driver/swdrv.h"
 #include "evt/evt_story.h"
 #include "battle/battle_monosiri.h"
+#include "battle/battle.h"
 #include "battle/battle_unit.h"
 #include "driver/seqdrv.h"
 #include "mario/mariost.h"
@@ -47,6 +48,9 @@ static const struct {
     {"new_game_plus", 0, 0, 3},
     {"pit_plus", 0, 0, 1},
     {"glitz_pit_kind", 0, 0, 1},
+    {"battle_popups", 0, 0, 1},
+    {"free_tattle", 0, 0, 1},
+    {"playable_luigi", 0, 0, 1},
     {"new_game_plus_from", 1, 1, 4},
 };
 
@@ -61,6 +65,7 @@ void portGameplusDeclare(void) {
     for (i = 0; i < sizeof(kSettings) / sizeof(kSettings[0]); i++) {
         portSettingsDeclare(kSettings[i].key, kSettings[i].def, kSettings[i].min, kSettings[i].max);
     }
+    portGameplus2Declare();
 }
 
 int portGameplus(const char* key) {
@@ -265,6 +270,8 @@ int portRetryOffer(void) {
 
 /* --- Skip repeated scenes --- */
 
+static int crystalStars(void);
+
 static int sceneSeen(int scene) {
     int i, stars = 0;
     switch (scene) {
@@ -275,6 +282,15 @@ static int sceneSeen(int scene) {
             return stars >= 2; /* this one is already in the pouch */
         case PORT_SCENE_COOKING:
             return swGet(GSWF_RECIPE_LOG_UNLOCKED); /* set after her first dish */
+        case PORT_SCENE_PEDESTAL:
+            return crystalStars() >= 2; /* the first star's scene was seen */
+        case PORT_SCENE_GLITZ_OPENING:
+        case PORT_SCENE_GLITZ_WIN:
+            return swGet(GSWF_TOU_LAST_OPPONENT_VALID); /* a match was fought (set when one ends) */
+        case PORT_SCENE_TRAIN_TICKET:
+            return swByteGet(GSW_STORY_PROGRESS) >= STORY_STG6_01_THE_CONDUCTOR;
+        case PORT_SCENE_BLIMP_TICKET:
+            return swByteGet(GSW_STORY_PROGRESS) >= STORY_STG3_00_WELCOME_TO_GLITZVILLE;
     }
     return 0;
 }
@@ -285,7 +301,7 @@ int portEvtSceneMs(struct EventEntry* event, int isFirstCall) {
     int ms = evtGetValue(event, args[1]);
     (void)isFirstCall;
     if (portGameplus("skip_scenes") && sceneSeen(scene)) {
-        ms = scene == PORT_SCENE_CRYSTAL_STAR ? 2500 : 0;
+        ms = scene == PORT_SCENE_CRYSTAL_STAR ? 2500 : scene == PORT_SCENE_PEDESTAL ? 1500 : 0;
     }
     evtSetValue(event, args[2], ms);
     return EVT_RETURN_DONE;
@@ -409,6 +425,7 @@ void portNewGamePlus(void) {
     const PouchData* old;
     PouchData* pouch = pouchGetPtr();
     int i;
+    portGameplus2NewFile();
     if (mode == 0 || card == NULL || pouch == NULL) {
         return;
     }
@@ -457,5 +474,65 @@ int portEvtPitMover(struct EventEntry* event, int isFirstCall) {
     if (portGameplus("pit_plus") && evtGetValue(event, GSW(GSW_JON_DEEPEST_FLOOR)) >= 50) {
         evtSetValue(event, event->args[0], 0);
     }
+    return EVT_RETURN_DONE;
+}
+
+/* --- Tattle without a turn --- */
+
+static s32 sTattleShown[BATTLE_UNIT_MAX]; /* the kinds read so far this time */
+static s32 sTattleShownCount;
+
+/* the next living enemy already tattled whose kind wasn't read yet, or NULL */
+static BattleUnit* tattleNext(void) {
+    BattleWork* wp = _battleWorkPointer;
+    s32 i, j;
+    if (wp == NULL) {
+        return NULL;
+    }
+    for (i = 0; i < BATTLE_UNIT_MAX; i++) {
+        BattleUnit* unit = wp->units[i];
+        if (unit == NULL || unit->alliance != 1 || unit->currentHp <= 0 ||
+            !battleGetUnitMonosiriPtr(unit->currentKind)->tattleBtlTag || !battleCheckUnitMonosiriFlag(unit)) {
+            continue;
+        }
+        for (j = 0; j < sTattleShownCount; j++) {
+            if (sTattleShown[j] == unit->currentKind) {
+                break;
+            }
+        }
+        if (j == sTattleShownCount) {
+            return unit;
+        }
+    }
+    return NULL;
+}
+
+int portTattleFreeAvailable(void) {
+    if (!portGameplus("free_tattle") || !(pouchGetPtr()->partyData[1].flags & POUCH_PARTY_FLAG_JOINED)) {
+        return 0;
+    }
+    sTattleShownCount = 0;
+    return tattleNext() != NULL;
+}
+
+void portTattleFreeBegin(void) {
+    sTattleShownCount = 0;
+}
+
+int portEvtTattleFree(struct EventEntry* event, int isFirstCall) {
+    BattleWork* wp = _battleWorkPointer;
+    (void)isFirstCall;
+    evtSetValue(event, event->args[0], wp != NULL && wp->commandMenu.disableReason == PORT_OPERATION_TATTLE);
+    return EVT_RETURN_DONE;
+}
+
+int portEvtTattleNext(struct EventEntry* event, int isFirstCall) {
+    BattleUnit* unit = tattleNext();
+    (void)isFirstCall;
+    if (unit != NULL && sTattleShownCount < BATTLE_UNIT_MAX) {
+        sTattleShown[sTattleShownCount++] = unit->currentKind;
+    }
+    evtSetValue(event, event->args[0],
+                unit != NULL ? (EvtWord)battleGetUnitMonosiriPtr(unit->currentKind)->tattleBtlTag : 0);
     return EVT_RETURN_DONE;
 }

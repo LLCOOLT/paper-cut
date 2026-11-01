@@ -5,6 +5,7 @@
 void winMarioDisp(s32 p0, void * p1, s32 p2) {
     PortHookSlot* s = &portHookSlots[52];
     int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
     if (!s->active) {
         winMarioDisp__body(p0, p1, p2);
         return;
@@ -20,6 +21,152 @@ void winMarioDisp(s32 p0, void * p1, s32 p2) {
     }
 }
 
+void winMarioInit(WindowWork * p0) {
+    PortHookSlot* s = &portHookSlots[1551];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        winMarioInit__body(p0);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*))s->pre[i])(&p0);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0)))s->replace)(p0); } else { winMarioInit__body(p0); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0)))s->post[i])(p0);
+    }
+}
+
+void winMarioInit2(WindowWork * p0) {
+    PortHookSlot* s = &portHookSlots[1552];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        winMarioInit2__body(p0);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*))s->pre[i])(&p0);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0)))s->replace)(p0); } else { winMarioInit2__body(p0); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0)))s->post[i])(p0);
+    }
+}
+
+void winMarioExit(WindowWork * p0) {
+    PortHookSlot* s = &portHookSlots[1553];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        winMarioExit__body(p0);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*))s->pre[i])(&p0);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0)))s->replace)(p0); } else { winMarioExit__body(p0); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0)))s->post[i])(p0);
+    }
+}
+
+s32 winMarioMain(WindowWork * p0) {
+    PortHookSlot* s = &portHookSlots[1554];
+    s32 r;
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        return winMarioMain__body(p0);
+    }
+    __builtin_memset(&r, 0, sizeof(r));
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(r)*, __typeof__(p0)*))s->pre[i])(&r, &p0);
+    }
+    if (!skip) {
+        r = (s->replace != NULL ? ((s32 (*)(__typeof__(p0)))s->replace)(p0) : winMarioMain__body(p0));
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(r)*, __typeof__(p0)))s->post[i])(&r, p0);
+    }
+    return r;
+}
+
+void winMarioMain2(WindowWork * p0) {
+    PortHookSlot* s = &portHookSlots[1555];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        winMarioMain2__body(p0);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*))s->pre[i])(&p0);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0)))s->replace)(p0); } else { winMarioMain2__body(p0); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0)))s->post[i])(p0);
+    }
+}
+
+const char * winZenkakuStr(s32 p0) {
+    PortHookSlot* s = &portHookSlots[1556];
+    const char * r;
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        return winZenkakuStr__body(p0);
+    }
+    __builtin_memset(&r, 0, sizeof(r));
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(r)*, __typeof__(p0)*))s->pre[i])(&r, &p0);
+    }
+    if (!skip) {
+        r = (s->replace != NULL ? ((const char * (*)(__typeof__(p0)))s->replace)(p0) : winZenkakuStr__body(p0));
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(r)*, __typeof__(p0)))s->post[i])(&r, p0);
+    }
+    return r;
+}
+
+char * winZenkakuStrPad(s32 p0, s32 p1) {
+    PortHookSlot* s = &portHookSlots[1557];
+    char * r;
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        return winZenkakuStrPad__body(p0, p1);
+    }
+    __builtin_memset(&r, 0, sizeof(r));
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(r)*, __typeof__(p0)*, __typeof__(p1)*))s->pre[i])(&r, &p0, &p1);
+    }
+    if (!skip) {
+        r = (s->replace != NULL ? ((char * (*)(__typeof__(p0), __typeof__(p1)))s->replace)(p0, p1) : winZenkakuStrPad__body(p0, p1));
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(r)*, __typeof__(p0), __typeof__(p1)))s->post[i])(&r, p0, p1);
+    }
+    return r;
+}
+
 void portHookInit_src_window_win_mario(void) {
     portHookSlots[52].body = (void*)winMarioDisp__body;
+    portHookSlots[1551].body = (void*)winMarioInit__body;
+    portHookSlots[1552].body = (void*)winMarioInit2__body;
+    portHookSlots[1553].body = (void*)winMarioExit__body;
+    portHookSlots[1554].body = (void*)winMarioMain__body;
+    portHookSlots[1555].body = (void*)winMarioMain2__body;
+    portHookSlots[1556].body = (void*)winZenkakuStr__body;
+    portHookSlots[1557].body = (void*)winZenkakuStrPad__body;
 }

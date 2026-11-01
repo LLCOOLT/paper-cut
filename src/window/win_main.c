@@ -1,4 +1,5 @@
 // Pause menu: opening and closing the menu, item use from the menu, and the shared text and texture helpers.
+#include "port_hook.h"
 #include "win/win_main.h"
 #include "pc_call.h"
 #include "eff/eff_recovery.h"
@@ -89,6 +90,9 @@ static WindowWork* wp;
 #include "icon_ids.h"
 #include "data/party_data.h"
 #include "manager/evtmgr_cmd.h"
+#ifdef PORT_MODS
+#include "port/hooks/src_window_win_main.h"
+#endif
 #ifdef TARGET_PC /* PC port: the header's prototypes are skipped on PC (these are static here) */
 static USER_FUNC(itemUseFunc);
 #include "port/gameplus.h"
@@ -100,18 +104,18 @@ static void winDisp(CameraId camId, void* param);
 static void winDispKoopa(CameraId camId, void* param);
 
 /** Returns the pause menu's work area (shared by every menu tab). */
-WindowWork* winGetPtr(void) {
+WindowWork* PORT_HOOKABLE(winGetPtr)(void) {
     return wp;
 }
 
 /** Allocates and clears the pause menu work at game start (from mariost.c). */
-void winInit(void) {
+void PORT_HOOKABLE(winInit)(void) {
     wp = __memAlloc(HEAP_DEFAULT, sizeof(WindowWork));
     memset(wp, 0, sizeof(WindowWork));
 }
 
 /** Clears the pause menu work again; run on map change and on game over. */
-void winReInit(void) {
+void PORT_HOOKABLE(winReInit)(void) {
     memset(wp, 0, sizeof(WindowWork));
 }
 
@@ -119,7 +123,7 @@ void winReInit(void) {
  * TRUE while the pause menu is open (menuState 1..199) outside the badge tutorial.
  * The main loop and casedrv use it to hold off field logic while the menu is up.
  */
-BOOL winCheck(void) {
+BOOL PORT_HOOKABLE(winCheck)(void) {
     s32 state;
 
     if (wp == NULL) {
@@ -138,14 +142,14 @@ BOOL winCheck(void) {
 }
 
 /** Allows the pause menu to be opened again (clears WIN_FLAG_OPEN_DISABLED); called from the evt_window script helpers. */
-void winOpenEnable(void) {
+void PORT_HOOKABLE(winOpenEnable)(void) {
     if (wp) {
         wp->flags &= ~WIN_FLAG_OPEN_DISABLED;
     }
 }
 
 /** Blocks the pause menu from opening or running (sets WIN_FLAG_OPEN_DISABLED, which winMain checks first). */
-void winOpenDisable(void) {
+void PORT_HOOKABLE(winOpenDisable)(void) {
     if (wp) {
         wp->flags |= WIN_FLAG_OPEN_DISABLED;
     }
@@ -169,7 +173,7 @@ static const WinLangTbl winLangTbl;
  * runs winRootMain, and on close restores control.
  * It also starts the item-use and Ragged Diary scenes, swaps partners, and opens the Pianta Parlor window.
  */
-void winMain(void) {
+void PORT_HOOKABLE(winMain)(void) {
     MarioWork* mario;
     s32 i;
 #if VERSION >= VERSION_DEMO_EU
@@ -1095,7 +1099,7 @@ static USER_FUNC(cam_r) {
 }
 
 /** TRUE while the Ragged Diary scene runs or the game is in Game Over; evt_shop and evt_win use it to hold off. */
-BOOL winGhostDiaryChk(void) {
+BOOL PORT_HOOKABLE(winGhostDiaryChk)(void) {
     if (wp->menuState == 301) {
         return TRUE;
     }
@@ -1109,7 +1113,7 @@ const char* winMainStrippedTpl(void) {
 }
 
 /** Prepares the font renderer for the winFontSet* calls that follow. */
-void winFontInit(void) {
+void PORT_HOOKABLE(winFontInit)(void) {
     FontDrawStart();
 }
 
@@ -1326,7 +1330,7 @@ void winFontSetEdge(Vec pos, Vec scale, GXColor color, const char* fmt, ...) {
 #endif
 
 /** Looks up message id msg (msgSearch) and draws it; does nothing for NULL. */
-void winFontSetLabel(Vec pos, Vec scale, GXColor color, const char* msg) {
+void PORT_HOOKABLE(winFontSetLabel)(Vec pos, Vec scale, GXColor color, const char* msg) {
     Mtx trans;
     Mtx scl;
 
@@ -1357,7 +1361,7 @@ void winFontSetPitch(f32 pitch, Vec pos, Vec scale, GXColor color, const char* f
 #endif
 
 /** Selects the texture palette (TPL) that winTexSet draws from and sets up GX for one textured, color-tinted quad. */
-void winTexInit(TEXPalette* texture) {
+void PORT_HOOKABLE(winTexInit)(TEXPalette* texture) {
     winTexTpl = texture;
     GXSetCullMode(GX_CULL_NONE);
     GXSetFog(GX_FOG_NONE, 0.0f, 0.0f, 0.0f, 0.0f, (GXColor){0xFF, 0xFF, 0xFF, 0xFF});
@@ -1383,7 +1387,7 @@ void winTexInit(TEXPalette* texture) {
  * Draws texture textureId of the current TPL centred at translate, sized texture size times scale,
  * tinted by color in 2D camera space. Alpha below 255 blends; opaque draws use an alpha test instead.
  */
-void winTexSet(u32 textureId, Vec translate, Vec scale, GXColor color) {
+void PORT_HOOKABLE(winTexSet)(u32 textureId, Vec translate, Vec scale, GXColor color) {
     Mtx trans;
     Mtx scl;
     Mtx m;
@@ -1425,7 +1429,7 @@ void winTexSet(u32 textureId, Vec translate, Vec scale, GXColor color) {
 
 /** winTexSet that always alpha-blends, whatever the color's alpha. Not in the demos. */
 #if VERSION >= VERSION_JP
-void winTexSetNearest(u32 textureId, Vec translate, Vec scale, GXColor color) {
+void PORT_HOOKABLE(winTexSetNearest)(u32 textureId, Vec translate, Vec scale, GXColor color) {
     Mtx trans;
     Mtx scl;
     Mtx m;
@@ -1460,7 +1464,7 @@ void winTexSetNearest(u32 textureId, Vec translate, Vec scale, GXColor color) {
 #endif
 
 /** winTexSet with the quad rotated rot degrees about the screen's z axis. */
-void winTexSetRot(u32 textureId, Vec translate, Vec scale, GXColor color, f32 rot) {
+void PORT_HOOKABLE(winTexSetRot)(u32 textureId, Vec translate, Vec scale, GXColor color, f32 rot) {
     Mtx trans;
     Mtx scl;
     Mtx r;
@@ -1508,7 +1512,7 @@ void winTexSetRot(u32 textureId, Vec translate, Vec scale, GXColor color, f32 ro
  * stage 1 multiplies by the tint and takes the second texture's alpha,
  * so the second texture works as a mask (used for menu tab labels).
  */
-void winTexInit_x2(TEXPalette* texture) {
+void PORT_HOOKABLE(winTexInit_x2)(TEXPalette* texture) {
     winTexInit(texture);
     GXSetNumTexGens(2);
     GXSetTexCoordGen(GX_TEXCOORD0, GX_TG_MTX2x4, GX_TG_TEX0, 0x3C);
@@ -1529,7 +1533,7 @@ void winTexInit_x2(TEXPalette* texture) {
 }
 
 /** Draws textureId1 masked by textureId2 (see winTexInit_x2), blended, sized from the second texture. */
-void winTexSet_x2(u32 textureId1, u32 textureId2, Vec translate, Vec scale, GXColor color) {
+void PORT_HOOKABLE(winTexSet_x2)(u32 textureId1, u32 textureId2, Vec translate, Vec scale, GXColor color) {
     Mtx trans;
     Mtx scl;
     Mtx m;
@@ -1566,7 +1570,7 @@ void winTexSet_x2(u32 textureId1, u32 textureId2, Vec translate, Vec scale, GXCo
 }
 
 /** Sets up GX for winIconSet (no TPL; icons come from the icon driver). */
-void winIconInit(void) {
+void PORT_HOOKABLE(winIconInit)(void) {
     winTexInit(NULL);
 }
 
@@ -1574,7 +1578,7 @@ void winIconInit(void) {
  * Sets up GX so the following winIconSet draws a grayscale icon (R, G and B summed at 1/3 each);
  * used for badges that cost more BP than Mario has left.
  */
-void winIconGrayInit(void) {
+void PORT_HOOKABLE(winIconGrayInit)(void) {
     winTexInit(NULL);
     GXSetTevSwapModeTable(GX_TEV_SWAP1, GX_CH_RED, GX_CH_RED, GX_CH_RED, GX_CH_ALPHA);
     GXSetTevSwapModeTable(GX_TEV_SWAP2, GX_CH_GREEN, GX_CH_GREEN, GX_CH_GREEN, GX_CH_ALPHA);
@@ -1613,7 +1617,7 @@ void winIconGrayInit(void) {
  * Draws item/menu icon iconId centred at translate, scaled and tinted, with linear filtering.
  * One icon id is remapped to its neighbour (ICON_115 to ICON_114).
  */
-void winIconSet(s32 iconId, Vec translate, Vec scale, GXColor color) {
+void PORT_HOOKABLE(winIconSet)(s32 iconId, Vec translate, Vec scale, GXColor color) {
     Mtx trans;
     Mtx scl;
     Mtx m;
@@ -1760,7 +1764,7 @@ static void winLectureKeyMask(void) {
  * Starts the badge tutorial menu (from Rogueport, gor_02):
  * sets the tutorial flag, which opens the menu straight away, and starts evt_lecture_msg.
  */
-void winLectureOn(void) {
+void PORT_HOOKABLE(winLectureOn)(void) {
     wp->flags |= WIN_FLAG_LECTURE;
 #if VERSION >= VERSION_JP
     wp->flags |= WIN_FLAG_LECTURE_KEY_MASK;
@@ -1770,7 +1774,7 @@ void winLectureOn(void) {
 }
 
 /** TRUE while the badge tutorial's text script is still running; once it ends, clears the tutorial flag. */
-BOOL winLectureCheck(void) {
+BOOL PORT_HOOKABLE(winLectureCheck)(void) {
 
     if ((wp->flags & WIN_FLAG_LECTURE) && evtCheckID(wp->lectureEvent->eventId)) {
         return TRUE;
@@ -1787,3 +1791,7 @@ const volatile f32 winConstHalf __attribute__((aligned(8))) = 0.5f;
 void winMainStrippedPool(f32* f, s32 i) {
     *f = (f32)i;
 }
+
+#ifdef PORT_MODS
+#include "port/hooks/src_window_win_main.inc"
+#endif

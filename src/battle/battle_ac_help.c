@@ -1,4 +1,5 @@
 // Action command help text: displays the short on-screen hint that explains the current action command.
+#include "port_hook.h"
 #include "battle/battle_ac_help.h"
 #include "battle/battle.h"
 #include "battle/battle_audience.h"
@@ -6,15 +7,18 @@
 #include "driver/msgdrv.h"
 #include "driver/windowdrv.h"
 #include "manager/fontmgr.h"
+#ifdef PORT_MODS
+#include "port/hooks/src_battle_battle_ac_help.h"
+#endif
 /** Sets the message id of the action-command hint box shown above the stage (the weapon's acHelpMsg). */
-void BattleAcHelpSetHelp(const char* msg) {
+void PORT_HOOKABLE(BattleAcHelpSetHelp)(const char* msg) {
     _battleWorkPointer->acHelpMsg = msg;
 }
 /**
  * Sets how the action-command hint is drawn: 0 hides it, 1 draws it half transparent, 2 fully opaque.
  * The audience window is only allowed while the hint is hidden.
  */
-void BattleAcHelpSetDispType(s32 type) {
+void PORT_HOOKABLE(BattleAcHelpSetDispType)(s32 type) {
     _battleWorkPointer->acHelpDispType = type;
     switch (type) {
         case 0:
@@ -26,12 +30,12 @@ void BattleAcHelpSetDispType(s32 type) {
     }
 }
 /** Empty in the retail games; called once from battle setup. */
-void BattleAcHelpInit(void) {
+void PORT_HOOKABLE(BattleAcHelpInit)(void) {
     // stubbed in retail
 }
 static void _ac_help_disp(CameraId cameraId, void* param);
 /** Per-frame battle hook: queues the hint box draw when a hint is set and shown, except during a First Strike. */
-void BattleAcHelpMain(void) {
+void PORT_HOOKABLE(BattleAcHelpMain)(void) {
     BattleWork* wp = _battleWorkPointer;
     s32* type = &wp->acHelpDispType;
     if (wp->acHelpMsg && *type && !(wp->flags & BATTLE_FLAG_FIRST_ATTACK)) {
@@ -70,3 +74,7 @@ static void _ac_help_disp(CameraId cameraId, void* param) {
     FontDrawStart_alpha(alpha);
     FontDrawMessage(x, ((s32)y) + ((lines - 1) * 29), msgs[1]);
 }
+
+#ifdef PORT_MODS
+#include "port/hooks/src_battle_battle_ac_help.inc"
+#endif

@@ -1,4 +1,5 @@
 // Logo sequence: the boot logos and the progressive-scan prompt before the title.
+#include "port_hook.h"
 #include "seq/seq_logo.h"
 #include "driver/arcdrv.h"
 #include "version.h"
@@ -27,6 +28,9 @@
 #include "port/gameplay.h"
 #endif
 #include "libc_decls.h"
+#ifdef PORT_MODS
+#include "port/hooks/src_sequence_seq_logo.h"
+#endif
 
 #if VERSION >= VERSION_US
 static inline s32 logoStoryAlpha(void);
@@ -71,7 +75,7 @@ static FileEntry* logoAsyncFirst(void);
  * The demos always start interlaced; the US demo also starts the logo files loading
  * and preloads the E3 demo's models and textures.
  */
-void seq_logoInit(SequenceWork* work) {
+void PORT_HOOKABLE(seq_logoInit)(SequenceWork* work) {
     memset(wp, 0, sizeof(LogoWork));
 #if VERSION == VERSION_DEMO_JP
     // the store demo loads its logo textures from its own file
@@ -103,7 +107,7 @@ void seq_logoInit(SequenceWork* work) {
  * sets the video mode, keeping progressive after a hot reset.
  */
 #elif VERSION <= VERSION_JP
-void seq_logoInit(SequenceWork* work) {
+void PORT_HOOKABLE(seq_logoInit)(SequenceWork* work) {
     memset(wp, 0, sizeof(LogoWork));
     wp->texture = fileAllocf(4, "%s/mariost.tpl", getMarioStDvdRoot());
     if (!OSIsRestart() || OSGetResetCode() & OS_RESET_SHUTDOWN) {
@@ -157,7 +161,7 @@ void seq_logoInit(SequenceWork* work) {
  * preselecting the saved EURGB60 choice. The 2004-09 demos ask nothing and pick 60 Hz or progressive scan
  * themselves, then wait 2 s for the TV.
  */
-void seq_logoInit(SequenceWork* work) {
+void PORT_HOOKABLE(seq_logoInit)(SequenceWork* work) {
 #if VERSION == VERSION_DEMO_US2 || VERSION == VERSION_DEMO_EU
     s32 i;
 #endif
@@ -276,7 +280,7 @@ void seq_logoInit(SequenceWork* work) {
  * Leaves the logo sequence: sets up the font, window, fade, icon,
  * environment and effect textures and Mario's poses for the rest of the game, and frees mariost.tpl.
  */
-void seq_logoExit(SequenceWork* work) {
+void PORT_HOOKABLE(seq_logoExit)(SequenceWork* work) {
     fontmgrTexSetup();
     windowTexSetup();
     fadeTexSetup();
@@ -295,7 +299,7 @@ void seq_logoExit(SequenceWork* work) {
  * and only JP and the demo read b/first here.
  */
 #if VERSION <= VERSION_JP
-void seq_logoMain(SequenceWork* work) {
+void PORT_HOOKABLE(seq_logoMain)(SequenceWork* work) {
     static OSTime time; // time instance 1
 #ifdef TARGET_PC
     portIntroFrame(); /* PC port: "Skip the intro" fast-forwards the logos */
@@ -461,7 +465,7 @@ void seq_logoMain(SequenceWork* work) {
  * US and PAL logo sequence: the story screen, the three logos (1 s each, 500 ms fades) while sound groups load,
  * then the dmo_00 opening (skipped with A or Start to the title), or the kiosk menu on kiosk builds.
  */
-void seq_logoMain(SequenceWork* work) {
+void PORT_HOOKABLE(seq_logoMain)(SequenceWork* work) {
     static OSTime time;
 #ifdef TARGET_PC
     portIntroFrame(); /* PC port: "Skip the intro" fast-forwards the logos */
@@ -1365,4 +1369,8 @@ static inline s32 logoStoryAlpha(void) {
     }
     return alpha;
 }
+#endif
+
+#ifdef PORT_MODS
+#include "port/hooks/src_sequence_seq_logo.inc"
 #endif

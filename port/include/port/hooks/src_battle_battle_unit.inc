@@ -6,6 +6,7 @@ BattleUnit * BtlUnit_Entry(BattleUnitSetup * p0) {
     PortHookSlot* s = &portHookSlots[22];
     BattleUnit * r;
     int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
     if (!s->active) {
         return BtlUnit_Entry__body(p0);
     }
@@ -26,6 +27,7 @@ s32 BtlUnit_GetWeaponCost(BattleUnit * p0, BattleWeapon * p1) {
     PortHookSlot* s = &portHookSlots[32];
     s32 r;
     int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
     if (!s->active) {
         return BtlUnit_GetWeaponCost__body(p0, p1);
     }
@@ -46,6 +48,7 @@ s32 BtlUnit_GetCoin(BattleUnit * p0) {
     PortHookSlot* s = &portHookSlots[33];
     s32 r;
     int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
     if (!s->active) {
         return BtlUnit_GetCoin__body(p0);
     }
@@ -62,8 +65,2270 @@ s32 BtlUnit_GetCoin(BattleUnit * p0) {
     return r;
 }
 
+BOOL BtlUnit_Init(void) {
+    PortHookSlot* s = &portHookSlots[410];
+    BOOL r;
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        return BtlUnit_Init__body();
+    }
+    __builtin_memset(&r, 0, sizeof(r));
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(r)*))s->pre[i])(&r);
+    }
+    if (!skip) {
+        r = (s->replace != NULL ? ((BOOL (*)(void))s->replace)() : BtlUnit_Init__body());
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(r)*))s->post[i])(&r);
+    }
+    return r;
+}
+
+BOOL BtlUnit_Delete(BattleUnit * p0) {
+    PortHookSlot* s = &portHookSlots[411];
+    BOOL r;
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        return BtlUnit_Delete__body(p0);
+    }
+    __builtin_memset(&r, 0, sizeof(r));
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(r)*, __typeof__(p0)*))s->pre[i])(&r, &p0);
+    }
+    if (!skip) {
+        r = (s->replace != NULL ? ((BOOL (*)(__typeof__(p0)))s->replace)(p0) : BtlUnit_Delete__body(p0));
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(r)*, __typeof__(p0)))s->post[i])(&r, p0);
+    }
+    return r;
+}
+
+BattleUnit * BtlUnit_Spawn(BattleUnitSetup * p0, s32 p1) {
+    PortHookSlot* s = &portHookSlots[412];
+    BattleUnit * r;
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        return BtlUnit_Spawn__body(p0, p1);
+    }
+    __builtin_memset(&r, 0, sizeof(r));
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(r)*, __typeof__(p0)*, __typeof__(p1)*))s->pre[i])(&r, &p0, &p1);
+    }
+    if (!skip) {
+        r = (s->replace != NULL ? ((BattleUnit * (*)(__typeof__(p0), __typeof__(p1)))s->replace)(p0, p1) : BtlUnit_Spawn__body(p0, p1));
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(r)*, __typeof__(p0), __typeof__(p1)))s->post[i])(&r, p0, p1);
+    }
+    return r;
+}
+
+s32 BtlUnit_GetUnitId(BattleUnit * p0) {
+    PortHookSlot* s = &portHookSlots[413];
+    s32 r;
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        return BtlUnit_GetUnitId__body(p0);
+    }
+    __builtin_memset(&r, 0, sizeof(r));
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(r)*, __typeof__(p0)*))s->pre[i])(&r, &p0);
+    }
+    if (!skip) {
+        r = (s->replace != NULL ? ((s32 (*)(__typeof__(p0)))s->replace)(p0) : BtlUnit_GetUnitId__body(p0));
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(r)*, __typeof__(p0)))s->post[i])(&r, p0);
+    }
+    return r;
+}
+
+BattleUnitPart * BtlUnit_GetPartsPtr(BattleUnit * p0, s32 p1) {
+    PortHookSlot* s = &portHookSlots[414];
+    BattleUnitPart * r;
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        return BtlUnit_GetPartsPtr__body(p0, p1);
+    }
+    __builtin_memset(&r, 0, sizeof(r));
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(r)*, __typeof__(p0)*, __typeof__(p1)*))s->pre[i])(&r, &p0, &p1);
+    }
+    if (!skip) {
+        r = (s->replace != NULL ? ((BattleUnitPart * (*)(__typeof__(p0), __typeof__(p1)))s->replace)(p0, p1) : BtlUnit_GetPartsPtr__body(p0, p1));
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(r)*, __typeof__(p0), __typeof__(p1)))s->post[i])(&r, p0, p1);
+    }
+    return r;
+}
+
+s32 BtlUnit_GetBodyPartsId(BattleUnit * p0) {
+    PortHookSlot* s = &portHookSlots[415];
+    s32 r;
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        return BtlUnit_GetBodyPartsId__body(p0);
+    }
+    __builtin_memset(&r, 0, sizeof(r));
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(r)*, __typeof__(p0)*))s->pre[i])(&r, &p0);
+    }
+    if (!skip) {
+        r = (s->replace != NULL ? ((s32 (*)(__typeof__(p0)))s->replace)(p0) : BtlUnit_GetBodyPartsId__body(p0));
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(r)*, __typeof__(p0)))s->post[i])(&r, p0);
+    }
+    return r;
+}
+
+void BtlUnit_SetPos(BattleUnit * p0, f32 p1, f32 p2, f32 p3) {
+    PortHookSlot* s = &portHookSlots[416];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        BtlUnit_SetPos__body(p0, p1, p2, p3);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*, __typeof__(p1)*, __typeof__(p2)*, __typeof__(p3)*))s->pre[i])(&p0, &p1, &p2, &p3);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->replace)(p0, p1, p2, p3); } else { BtlUnit_SetPos__body(p0, p1, p2, p3); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->post[i])(p0, p1, p2, p3);
+    }
+}
+
+void BtlUnit_AddPos(BattleUnit * p0, f32 p1, f32 p2, f32 p3) {
+    PortHookSlot* s = &portHookSlots[417];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        BtlUnit_AddPos__body(p0, p1, p2, p3);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*, __typeof__(p1)*, __typeof__(p2)*, __typeof__(p3)*))s->pre[i])(&p0, &p1, &p2, &p3);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->replace)(p0, p1, p2, p3); } else { BtlUnit_AddPos__body(p0, p1, p2, p3); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->post[i])(p0, p1, p2, p3);
+    }
+}
+
+void BtlUnit_GetPartsPos(BattleUnitPart * p0, f32 * p1, f32 * p2, f32 * p3) {
+    PortHookSlot* s = &portHookSlots[418];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        BtlUnit_GetPartsPos__body(p0, p1, p2, p3);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*, __typeof__(p1)*, __typeof__(p2)*, __typeof__(p3)*))s->pre[i])(&p0, &p1, &p2, &p3);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->replace)(p0, p1, p2, p3); } else { BtlUnit_GetPartsPos__body(p0, p1, p2, p3); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->post[i])(p0, p1, p2, p3);
+    }
+}
+
+void BtlUnit_SetPartsPos(BattleUnitPart * p0, f32 p1, f32 p2, f32 p3) {
+    PortHookSlot* s = &portHookSlots[419];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        BtlUnit_SetPartsPos__body(p0, p1, p2, p3);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*, __typeof__(p1)*, __typeof__(p2)*, __typeof__(p3)*))s->pre[i])(&p0, &p1, &p2, &p3);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->replace)(p0, p1, p2, p3); } else { BtlUnit_SetPartsPos__body(p0, p1, p2, p3); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->post[i])(p0, p1, p2, p3);
+    }
+}
+
+void BtlUnit_AddPartsPos(BattleUnitPart * p0, f32 p1, f32 p2, f32 p3) {
+    PortHookSlot* s = &portHookSlots[420];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        BtlUnit_AddPartsPos__body(p0, p1, p2, p3);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*, __typeof__(p1)*, __typeof__(p2)*, __typeof__(p3)*))s->pre[i])(&p0, &p1, &p2, &p3);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->replace)(p0, p1, p2, p3); } else { BtlUnit_AddPartsPos__body(p0, p1, p2, p3); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->post[i])(p0, p1, p2, p3);
+    }
+}
+
+void BtlUnit_GetHitPos(BattleUnit * p0, BattleUnitPart * p1, f32 * p2, f32 * p3, f32 * p4) {
+    PortHookSlot* s = &portHookSlots[421];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        BtlUnit_GetHitPos__body(p0, p1, p2, p3, p4);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*, __typeof__(p1)*, __typeof__(p2)*, __typeof__(p3)*, __typeof__(p4)*))s->pre[i])(&p0, &p1, &p2, &p3, &p4);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3), __typeof__(p4)))s->replace)(p0, p1, p2, p3, p4); } else { BtlUnit_GetHitPos__body(p0, p1, p2, p3, p4); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3), __typeof__(p4)))s->post[i])(p0, p1, p2, p3, p4);
+    }
+}
+
+void BtlUnit_SetHitOffset(BattleUnit * p0, BattleUnitPart * p1, f32 p2, f32 p3, f32 p4) {
+    PortHookSlot* s = &portHookSlots[422];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        BtlUnit_SetHitOffset__body(p0, p1, p2, p3, p4);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*, __typeof__(p1)*, __typeof__(p2)*, __typeof__(p3)*, __typeof__(p4)*))s->pre[i])(&p0, &p1, &p2, &p3, &p4);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3), __typeof__(p4)))s->replace)(p0, p1, p2, p3, p4); } else { BtlUnit_SetHitOffset__body(p0, p1, p2, p3, p4); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3), __typeof__(p4)))s->post[i])(p0, p1, p2, p3, p4);
+    }
+}
+
+void BtlUnit_SetHitCursorOffset(BattleUnit * p0, BattleUnitPart * p1, f32 p2, f32 p3, f32 p4) {
+    PortHookSlot* s = &portHookSlots[423];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        BtlUnit_SetHitCursorOffset__body(p0, p1, p2, p3, p4);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*, __typeof__(p1)*, __typeof__(p2)*, __typeof__(p3)*, __typeof__(p4)*))s->pre[i])(&p0, &p1, &p2, &p3, &p4);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3), __typeof__(p4)))s->replace)(p0, p1, p2, p3, p4); } else { BtlUnit_SetHitCursorOffset__body(p0, p1, p2, p3, p4); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3), __typeof__(p4)))s->post[i])(p0, p1, p2, p3, p4);
+    }
+}
+
+void BtlUnit_GetHomePos(BattleUnit * p0, f32 * p1, f32 * p2, f32 * p3) {
+    PortHookSlot* s = &portHookSlots[424];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        BtlUnit_GetHomePos__body(p0, p1, p2, p3);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*, __typeof__(p1)*, __typeof__(p2)*, __typeof__(p3)*))s->pre[i])(&p0, &p1, &p2, &p3);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->replace)(p0, p1, p2, p3); } else { BtlUnit_GetHomePos__body(p0, p1, p2, p3); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->post[i])(p0, p1, p2, p3);
+    }
+}
+
+void BtlUnit_SetHomePos(BattleUnit * p0, f32 p1, f32 p2, f32 p3) {
+    PortHookSlot* s = &portHookSlots[425];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        BtlUnit_SetHomePos__body(p0, p1, p2, p3);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*, __typeof__(p1)*, __typeof__(p2)*, __typeof__(p3)*))s->pre[i])(&p0, &p1, &p2, &p3);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->replace)(p0, p1, p2, p3); } else { BtlUnit_SetHomePos__body(p0, p1, p2, p3); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->post[i])(p0, p1, p2, p3);
+    }
+}
+
+void BtlUnit_AddHomePos(BattleUnit * p0, f32 p1, f32 p2, f32 p3) {
+    PortHookSlot* s = &portHookSlots[426];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        BtlUnit_AddHomePos__body(p0, p1, p2, p3);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*, __typeof__(p1)*, __typeof__(p2)*, __typeof__(p3)*))s->pre[i])(&p0, &p1, &p2, &p3);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->replace)(p0, p1, p2, p3); } else { BtlUnit_AddHomePos__body(p0, p1, p2, p3); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->post[i])(p0, p1, p2, p3);
+    }
+}
+
+void BtlUnit_SetPartsHomePos(BattleUnitPart * p0, f32 p1, f32 p2, f32 p3) {
+    PortHookSlot* s = &portHookSlots[427];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        BtlUnit_SetPartsHomePos__body(p0, p1, p2, p3);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*, __typeof__(p1)*, __typeof__(p2)*, __typeof__(p3)*))s->pre[i])(&p0, &p1, &p2, &p3);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->replace)(p0, p1, p2, p3); } else { BtlUnit_SetPartsHomePos__body(p0, p1, p2, p3); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->post[i])(p0, p1, p2, p3);
+    }
+}
+
+void BtlUnit_SetRotate(BattleUnit * p0, f32 p1, f32 p2, f32 p3) {
+    PortHookSlot* s = &portHookSlots[428];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        BtlUnit_SetRotate__body(p0, p1, p2, p3);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*, __typeof__(p1)*, __typeof__(p2)*, __typeof__(p3)*))s->pre[i])(&p0, &p1, &p2, &p3);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->replace)(p0, p1, p2, p3); } else { BtlUnit_SetRotate__body(p0, p1, p2, p3); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->post[i])(p0, p1, p2, p3);
+    }
+}
+
+void BtlUnit_GetRotate(BattleUnit * p0, f32 * p1, f32 * p2, f32 * p3) {
+    PortHookSlot* s = &portHookSlots[429];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        BtlUnit_GetRotate__body(p0, p1, p2, p3);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*, __typeof__(p1)*, __typeof__(p2)*, __typeof__(p3)*))s->pre[i])(&p0, &p1, &p2, &p3);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->replace)(p0, p1, p2, p3); } else { BtlUnit_GetRotate__body(p0, p1, p2, p3); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->post[i])(p0, p1, p2, p3);
+    }
+}
+
+void BtlUnit_AddRotate(BattleUnit * p0, f32 p1, f32 p2, f32 p3) {
+    PortHookSlot* s = &portHookSlots[430];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        BtlUnit_AddRotate__body(p0, p1, p2, p3);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*, __typeof__(p1)*, __typeof__(p2)*, __typeof__(p3)*))s->pre[i])(&p0, &p1, &p2, &p3);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->replace)(p0, p1, p2, p3); } else { BtlUnit_AddRotate__body(p0, p1, p2, p3); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->post[i])(p0, p1, p2, p3);
+    }
+}
+
+void BtlUnit_SetPartsRotate(BattleUnitPart * p0, f32 p1, f32 p2, f32 p3) {
+    PortHookSlot* s = &portHookSlots[431];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        BtlUnit_SetPartsRotate__body(p0, p1, p2, p3);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*, __typeof__(p1)*, __typeof__(p2)*, __typeof__(p3)*))s->pre[i])(&p0, &p1, &p2, &p3);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->replace)(p0, p1, p2, p3); } else { BtlUnit_SetPartsRotate__body(p0, p1, p2, p3); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->post[i])(p0, p1, p2, p3);
+    }
+}
+
+void BtlUnit_GetPartsRotate(BattleUnitPart * p0, f32 * p1, f32 * p2, f32 * p3) {
+    PortHookSlot* s = &portHookSlots[432];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        BtlUnit_GetPartsRotate__body(p0, p1, p2, p3);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*, __typeof__(p1)*, __typeof__(p2)*, __typeof__(p3)*))s->pre[i])(&p0, &p1, &p2, &p3);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->replace)(p0, p1, p2, p3); } else { BtlUnit_GetPartsRotate__body(p0, p1, p2, p3); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->post[i])(p0, p1, p2, p3);
+    }
+}
+
+void BtlUnit_AddPartsRotate(BattleUnitPart * p0, f32 p1, f32 p2, f32 p3) {
+    PortHookSlot* s = &portHookSlots[433];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        BtlUnit_AddPartsRotate__body(p0, p1, p2, p3);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*, __typeof__(p1)*, __typeof__(p2)*, __typeof__(p3)*))s->pre[i])(&p0, &p1, &p2, &p3);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->replace)(p0, p1, p2, p3); } else { BtlUnit_AddPartsRotate__body(p0, p1, p2, p3); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->post[i])(p0, p1, p2, p3);
+    }
+}
+
+void BtlUnit_SetBaseRotate(BattleUnit * p0, f32 p1, f32 p2, f32 p3) {
+    PortHookSlot* s = &portHookSlots[434];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        BtlUnit_SetBaseRotate__body(p0, p1, p2, p3);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*, __typeof__(p1)*, __typeof__(p2)*, __typeof__(p3)*))s->pre[i])(&p0, &p1, &p2, &p3);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->replace)(p0, p1, p2, p3); } else { BtlUnit_SetBaseRotate__body(p0, p1, p2, p3); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->post[i])(p0, p1, p2, p3);
+    }
+}
+
+void BtlUnit_GetBaseRotate(BattleUnit * p0, f32 * p1, f32 * p2, f32 * p3) {
+    PortHookSlot* s = &portHookSlots[435];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        BtlUnit_GetBaseRotate__body(p0, p1, p2, p3);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*, __typeof__(p1)*, __typeof__(p2)*, __typeof__(p3)*))s->pre[i])(&p0, &p1, &p2, &p3);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->replace)(p0, p1, p2, p3); } else { BtlUnit_GetBaseRotate__body(p0, p1, p2, p3); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->post[i])(p0, p1, p2, p3);
+    }
+}
+
+void BtlUnit_SetPartsBaseRotate(BattleUnitPart * p0, f32 p1, f32 p2, f32 p3) {
+    PortHookSlot* s = &portHookSlots[436];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        BtlUnit_SetPartsBaseRotate__body(p0, p1, p2, p3);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*, __typeof__(p1)*, __typeof__(p2)*, __typeof__(p3)*))s->pre[i])(&p0, &p1, &p2, &p3);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->replace)(p0, p1, p2, p3); } else { BtlUnit_SetPartsBaseRotate__body(p0, p1, p2, p3); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->post[i])(p0, p1, p2, p3);
+    }
+}
+
+void BtlUnit_GetPartsBaseRotate(BattleUnitPart * p0, f32 * p1, f32 * p2, f32 * p3) {
+    PortHookSlot* s = &portHookSlots[437];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        BtlUnit_GetPartsBaseRotate__body(p0, p1, p2, p3);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*, __typeof__(p1)*, __typeof__(p2)*, __typeof__(p3)*))s->pre[i])(&p0, &p1, &p2, &p3);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->replace)(p0, p1, p2, p3); } else { BtlUnit_GetPartsBaseRotate__body(p0, p1, p2, p3); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->post[i])(p0, p1, p2, p3);
+    }
+}
+
+void BtlUnit_SetRotateOffset(BattleUnit * p0, f32 p1, f32 p2, f32 p3) {
+    PortHookSlot* s = &portHookSlots[438];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        BtlUnit_SetRotateOffset__body(p0, p1, p2, p3);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*, __typeof__(p1)*, __typeof__(p2)*, __typeof__(p3)*))s->pre[i])(&p0, &p1, &p2, &p3);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->replace)(p0, p1, p2, p3); } else { BtlUnit_SetRotateOffset__body(p0, p1, p2, p3); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->post[i])(p0, p1, p2, p3);
+    }
+}
+
+void BtlUnit_SetPartsRotateOffset(BattleUnitPart * p0, f32 p1, f32 p2, f32 p3) {
+    PortHookSlot* s = &portHookSlots[439];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        BtlUnit_SetPartsRotateOffset__body(p0, p1, p2, p3);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*, __typeof__(p1)*, __typeof__(p2)*, __typeof__(p3)*))s->pre[i])(&p0, &p1, &p2, &p3);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->replace)(p0, p1, p2, p3); } else { BtlUnit_SetPartsRotateOffset__body(p0, p1, p2, p3); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->post[i])(p0, p1, p2, p3);
+    }
+}
+
+void BtlUnit_AddPartsRotateOffset(BattleUnitPart * p0, f32 p1, f32 p2, f32 p3) {
+    PortHookSlot* s = &portHookSlots[440];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        BtlUnit_AddPartsRotateOffset__body(p0, p1, p2, p3);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*, __typeof__(p1)*, __typeof__(p2)*, __typeof__(p3)*))s->pre[i])(&p0, &p1, &p2, &p3);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->replace)(p0, p1, p2, p3); } else { BtlUnit_AddPartsRotateOffset__body(p0, p1, p2, p3); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->post[i])(p0, p1, p2, p3);
+    }
+}
+
+void BtlUnit_SetBaseScale(BattleUnit * p0, f32 p1, f32 p2, f32 p3) {
+    PortHookSlot* s = &portHookSlots[441];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        BtlUnit_SetBaseScale__body(p0, p1, p2, p3);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*, __typeof__(p1)*, __typeof__(p2)*, __typeof__(p3)*))s->pre[i])(&p0, &p1, &p2, &p3);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->replace)(p0, p1, p2, p3); } else { BtlUnit_SetBaseScale__body(p0, p1, p2, p3); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->post[i])(p0, p1, p2, p3);
+    }
+}
+
+void BtlUnit_GetScale(BattleUnit * p0, f32 * p1, f32 * p2, f32 * p3) {
+    PortHookSlot* s = &portHookSlots[442];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        BtlUnit_GetScale__body(p0, p1, p2, p3);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*, __typeof__(p1)*, __typeof__(p2)*, __typeof__(p3)*))s->pre[i])(&p0, &p1, &p2, &p3);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->replace)(p0, p1, p2, p3); } else { BtlUnit_GetScale__body(p0, p1, p2, p3); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->post[i])(p0, p1, p2, p3);
+    }
+}
+
+void BtlUnit_SetScale(BattleUnit * p0, f32 p1, f32 p2, f32 p3) {
+    PortHookSlot* s = &portHookSlots[443];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        BtlUnit_SetScale__body(p0, p1, p2, p3);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*, __typeof__(p1)*, __typeof__(p2)*, __typeof__(p3)*))s->pre[i])(&p0, &p1, &p2, &p3);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->replace)(p0, p1, p2, p3); } else { BtlUnit_SetScale__body(p0, p1, p2, p3); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->post[i])(p0, p1, p2, p3);
+    }
+}
+
+void BtlUnit_AddScale(BattleUnit * p0, f32 p1, f32 p2, f32 p3) {
+    PortHookSlot* s = &portHookSlots[444];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        BtlUnit_AddScale__body(p0, p1, p2, p3);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*, __typeof__(p1)*, __typeof__(p2)*, __typeof__(p3)*))s->pre[i])(&p0, &p1, &p2, &p3);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->replace)(p0, p1, p2, p3); } else { BtlUnit_AddScale__body(p0, p1, p2, p3); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->post[i])(p0, p1, p2, p3);
+    }
+}
+
+void BtlUnit_SetPartsBaseScale(BattleUnitPart * p0, f32 p1, f32 p2, f32 p3) {
+    PortHookSlot* s = &portHookSlots[445];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        BtlUnit_SetPartsBaseScale__body(p0, p1, p2, p3);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*, __typeof__(p1)*, __typeof__(p2)*, __typeof__(p3)*))s->pre[i])(&p0, &p1, &p2, &p3);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->replace)(p0, p1, p2, p3); } else { BtlUnit_SetPartsBaseScale__body(p0, p1, p2, p3); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->post[i])(p0, p1, p2, p3);
+    }
+}
+
+void BtlUnit_SetPartsScale(BattleUnitPart * p0, f32 p1, f32 p2, f32 p3) {
+    PortHookSlot* s = &portHookSlots[446];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        BtlUnit_SetPartsScale__body(p0, p1, p2, p3);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*, __typeof__(p1)*, __typeof__(p2)*, __typeof__(p3)*))s->pre[i])(&p0, &p1, &p2, &p3);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->replace)(p0, p1, p2, p3); } else { BtlUnit_SetPartsScale__body(p0, p1, p2, p3); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->post[i])(p0, p1, p2, p3);
+    }
+}
+
+void BtlUnit_AddPartsScale(BattleUnitPart * p0, f32 p1, f32 p2, f32 p3) {
+    PortHookSlot* s = &portHookSlots[447];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        BtlUnit_AddPartsScale__body(p0, p1, p2, p3);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*, __typeof__(p1)*, __typeof__(p2)*, __typeof__(p3)*))s->pre[i])(&p0, &p1, &p2, &p3);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->replace)(p0, p1, p2, p3); } else { BtlUnit_AddPartsScale__body(p0, p1, p2, p3); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->post[i])(p0, p1, p2, p3);
+    }
+}
+
+s32 BtlUnit_GetWidth(BattleUnit * p0) {
+    PortHookSlot* s = &portHookSlots[448];
+    s32 r;
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        return BtlUnit_GetWidth__body(p0);
+    }
+    __builtin_memset(&r, 0, sizeof(r));
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(r)*, __typeof__(p0)*))s->pre[i])(&r, &p0);
+    }
+    if (!skip) {
+        r = (s->replace != NULL ? ((s32 (*)(__typeof__(p0)))s->replace)(p0) : BtlUnit_GetWidth__body(p0));
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(r)*, __typeof__(p0)))s->post[i])(&r, p0);
+    }
+    return r;
+}
+
+s32 BtlUnit_GetHeight(BattleUnit * p0) {
+    PortHookSlot* s = &portHookSlots[449];
+    s32 r;
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        return BtlUnit_GetHeight__body(p0);
+    }
+    __builtin_memset(&r, 0, sizeof(r));
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(r)*, __typeof__(p0)*))s->pre[i])(&r, &p0);
+    }
+    if (!skip) {
+        r = (s->replace != NULL ? ((s32 (*)(__typeof__(p0)))s->replace)(p0) : BtlUnit_GetHeight__body(p0));
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(r)*, __typeof__(p0)))s->post[i])(&r, p0);
+    }
+    return r;
+}
+
+void BtlUnit_SetHeight(BattleUnit * p0, s16 p1) {
+    PortHookSlot* s = &portHookSlots[450];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        BtlUnit_SetHeight__body(p0, p1);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*, __typeof__(p1)*))s->pre[i])(&p0, &p1);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0), __typeof__(p1)))s->replace)(p0, p1); } else { BtlUnit_SetHeight__body(p0, p1); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0), __typeof__(p1)))s->post[i])(p0, p1);
+    }
+}
+
+void BtlUnit_SetOffsetPos(BattleUnit * p0, f32 p1, f32 p2, f32 p3) {
+    PortHookSlot* s = &portHookSlots[451];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        BtlUnit_SetOffsetPos__body(p0, p1, p2, p3);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*, __typeof__(p1)*, __typeof__(p2)*, __typeof__(p3)*))s->pre[i])(&p0, &p1, &p2, &p3);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->replace)(p0, p1, p2, p3); } else { BtlUnit_SetOffsetPos__body(p0, p1, p2, p3); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->post[i])(p0, p1, p2, p3);
+    }
+}
+
+void BtlUnit_SetPartsOffsetPos(BattleUnitPart * p0, f32 p1, f32 p2, f32 p3) {
+    PortHookSlot* s = &portHookSlots[452];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        BtlUnit_SetPartsOffsetPos__body(p0, p1, p2, p3);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*, __typeof__(p1)*, __typeof__(p2)*, __typeof__(p3)*))s->pre[i])(&p0, &p1, &p2, &p3);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->replace)(p0, p1, p2, p3); } else { BtlUnit_SetPartsOffsetPos__body(p0, p1, p2, p3); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->post[i])(p0, p1, p2, p3);
+    }
+}
+
+void BtlUnit_AddPartsOffsetPos(BattleUnitPart * p0, f32 p1, f32 p2, f32 p3) {
+    PortHookSlot* s = &portHookSlots[453];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        BtlUnit_AddPartsOffsetPos__body(p0, p1, p2, p3);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*, __typeof__(p1)*, __typeof__(p2)*, __typeof__(p3)*))s->pre[i])(&p0, &p1, &p2, &p3);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->replace)(p0, p1, p2, p3); } else { BtlUnit_AddPartsOffsetPos__body(p0, p1, p2, p3); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->post[i])(p0, p1, p2, p3);
+    }
+}
+
+void BtlUnit_SetDispOffset(BattleUnit * p0, f32 p1, f32 p2, f32 p3) {
+    PortHookSlot* s = &portHookSlots[454];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        BtlUnit_SetDispOffset__body(p0, p1, p2, p3);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*, __typeof__(p1)*, __typeof__(p2)*, __typeof__(p3)*))s->pre[i])(&p0, &p1, &p2, &p3);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->replace)(p0, p1, p2, p3); } else { BtlUnit_SetDispOffset__body(p0, p1, p2, p3); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->post[i])(p0, p1, p2, p3);
+    }
+}
+
+void BtlUnit_SetPartsDispOffset(BattleUnitPart * p0, f32 p1, f32 p2, f32 p3) {
+    PortHookSlot* s = &portHookSlots[455];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        BtlUnit_SetPartsDispOffset__body(p0, p1, p2, p3);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*, __typeof__(p1)*, __typeof__(p2)*, __typeof__(p3)*))s->pre[i])(&p0, &p1, &p2, &p3);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->replace)(p0, p1, p2, p3); } else { BtlUnit_SetPartsDispOffset__body(p0, p1, p2, p3); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->post[i])(p0, p1, p2, p3);
+    }
+}
+
+void BtlUnit_AddPartsDispOffset(BattleUnitPart * p0, f32 p1, f32 p2, f32 p3) {
+    PortHookSlot* s = &portHookSlots[456];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        BtlUnit_AddPartsDispOffset__body(p0, p1, p2, p3);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*, __typeof__(p1)*, __typeof__(p2)*, __typeof__(p3)*))s->pre[i])(&p0, &p1, &p2, &p3);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->replace)(p0, p1, p2, p3); } else { BtlUnit_AddPartsDispOffset__body(p0, p1, p2, p3); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->post[i])(p0, p1, p2, p3);
+    }
+}
+
+void BtlUnit_SetMoveStartPos(BattleUnit * p0, f32 p1, f32 p2, f32 p3) {
+    PortHookSlot* s = &portHookSlots[457];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        BtlUnit_SetMoveStartPos__body(p0, p1, p2, p3);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*, __typeof__(p1)*, __typeof__(p2)*, __typeof__(p3)*))s->pre[i])(&p0, &p1, &p2, &p3);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->replace)(p0, p1, p2, p3); } else { BtlUnit_SetMoveStartPos__body(p0, p1, p2, p3); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->post[i])(p0, p1, p2, p3);
+    }
+}
+
+void BtlUnit_SetPartsMoveStartPos(BattleUnitPart * p0, f32 p1, f32 p2, f32 p3) {
+    PortHookSlot* s = &portHookSlots[458];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        BtlUnit_SetPartsMoveStartPos__body(p0, p1, p2, p3);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*, __typeof__(p1)*, __typeof__(p2)*, __typeof__(p3)*))s->pre[i])(&p0, &p1, &p2, &p3);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->replace)(p0, p1, p2, p3); } else { BtlUnit_SetPartsMoveStartPos__body(p0, p1, p2, p3); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->post[i])(p0, p1, p2, p3);
+    }
+}
+
+void BtlUnit_SetMoveCurrentPos(BattleUnit * p0, f32 p1, f32 p2, f32 p3) {
+    PortHookSlot* s = &portHookSlots[459];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        BtlUnit_SetMoveCurrentPos__body(p0, p1, p2, p3);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*, __typeof__(p1)*, __typeof__(p2)*, __typeof__(p3)*))s->pre[i])(&p0, &p1, &p2, &p3);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->replace)(p0, p1, p2, p3); } else { BtlUnit_SetMoveCurrentPos__body(p0, p1, p2, p3); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->post[i])(p0, p1, p2, p3);
+    }
+}
+
+void BtlUnit_SetPartsMoveCurrentPos(BattleUnitPart * p0, f32 p1, f32 p2, f32 p3) {
+    PortHookSlot* s = &portHookSlots[460];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        BtlUnit_SetPartsMoveCurrentPos__body(p0, p1, p2, p3);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*, __typeof__(p1)*, __typeof__(p2)*, __typeof__(p3)*))s->pre[i])(&p0, &p1, &p2, &p3);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->replace)(p0, p1, p2, p3); } else { BtlUnit_SetPartsMoveCurrentPos__body(p0, p1, p2, p3); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->post[i])(p0, p1, p2, p3);
+    }
+}
+
+void BtlUnit_SetMoveTargetPos(BattleUnit * p0, f32 p1, f32 p2, f32 p3) {
+    PortHookSlot* s = &portHookSlots[461];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        BtlUnit_SetMoveTargetPos__body(p0, p1, p2, p3);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*, __typeof__(p1)*, __typeof__(p2)*, __typeof__(p3)*))s->pre[i])(&p0, &p1, &p2, &p3);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->replace)(p0, p1, p2, p3); } else { BtlUnit_SetMoveTargetPos__body(p0, p1, p2, p3); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->post[i])(p0, p1, p2, p3);
+    }
+}
+
+void BtlUnit_SetPartsMoveTargetPos(BattleUnitPart * p0, f32 p1, f32 p2, f32 p3) {
+    PortHookSlot* s = &portHookSlots[462];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        BtlUnit_SetPartsMoveTargetPos__body(p0, p1, p2, p3);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*, __typeof__(p1)*, __typeof__(p2)*, __typeof__(p3)*))s->pre[i])(&p0, &p1, &p2, &p3);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->replace)(p0, p1, p2, p3); } else { BtlUnit_SetPartsMoveTargetPos__body(p0, p1, p2, p3); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->post[i])(p0, p1, p2, p3);
+    }
+}
+
+void BtlUnit_SetFallAccel(BattleUnit * p0, f32 p1) {
+    PortHookSlot* s = &portHookSlots[463];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        BtlUnit_SetFallAccel__body(p0, p1);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*, __typeof__(p1)*))s->pre[i])(&p0, &p1);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0), __typeof__(p1)))s->replace)(p0, p1); } else { BtlUnit_SetFallAccel__body(p0, p1); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0), __typeof__(p1)))s->post[i])(p0, p1);
+    }
+}
+
+void BtlUnit_SetPartsFallAccel(BattleUnitPart * p0, f32 p1) {
+    PortHookSlot* s = &portHookSlots[464];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        BtlUnit_SetPartsFallAccel__body(p0, p1);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*, __typeof__(p1)*))s->pre[i])(&p0, &p1);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0), __typeof__(p1)))s->replace)(p0, p1); } else { BtlUnit_SetPartsFallAccel__body(p0, p1); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0), __typeof__(p1)))s->post[i])(p0, p1);
+    }
+}
+
+void BtlUnit_SetMoveSpeed(BattleUnit * p0, f32 p1) {
+    PortHookSlot* s = &portHookSlots[465];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        BtlUnit_SetMoveSpeed__body(p0, p1);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*, __typeof__(p1)*))s->pre[i])(&p0, &p1);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0), __typeof__(p1)))s->replace)(p0, p1); } else { BtlUnit_SetMoveSpeed__body(p0, p1); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0), __typeof__(p1)))s->post[i])(p0, p1);
+    }
+}
+
+void BtlUnit_SetPartsMoveSpeed(BattleUnitPart * p0, f32 p1) {
+    PortHookSlot* s = &portHookSlots[466];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        BtlUnit_SetPartsMoveSpeed__body(p0, p1);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*, __typeof__(p1)*))s->pre[i])(&p0, &p1);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0), __typeof__(p1)))s->replace)(p0, p1); } else { BtlUnit_SetPartsMoveSpeed__body(p0, p1); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0), __typeof__(p1)))s->post[i])(p0, p1);
+    }
+}
+
+void BtlUnit_SetJumpSpeed(BattleUnit * p0, f32 p1) {
+    PortHookSlot* s = &portHookSlots[467];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        BtlUnit_SetJumpSpeed__body(p0, p1);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*, __typeof__(p1)*))s->pre[i])(&p0, &p1);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0), __typeof__(p1)))s->replace)(p0, p1); } else { BtlUnit_SetJumpSpeed__body(p0, p1); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0), __typeof__(p1)))s->post[i])(p0, p1);
+    }
+}
+
+s8 BtlUnit_GetBelong(BattleUnit * p0) {
+    PortHookSlot* s = &portHookSlots[468];
+    s8 r;
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        return BtlUnit_GetBelong__body(p0);
+    }
+    __builtin_memset(&r, 0, sizeof(r));
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(r)*, __typeof__(p0)*))s->pre[i])(&r, &p0);
+    }
+    if (!skip) {
+        r = (s->replace != NULL ? ((s8 (*)(__typeof__(p0)))s->replace)(p0) : BtlUnit_GetBelong__body(p0));
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(r)*, __typeof__(p0)))s->post[i])(&r, p0);
+    }
+    return r;
+}
+
+BOOL BtlUnit_SetStatus(BattleUnit * p0, StatusEffectType p1, s8 p2, s8 p3) {
+    PortHookSlot* s = &portHookSlots[469];
+    BOOL r;
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        return BtlUnit_SetStatus__body(p0, p1, p2, p3);
+    }
+    __builtin_memset(&r, 0, sizeof(r));
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(r)*, __typeof__(p0)*, __typeof__(p1)*, __typeof__(p2)*, __typeof__(p3)*))s->pre[i])(&r, &p0, &p1, &p2, &p3);
+    }
+    if (!skip) {
+        r = (s->replace != NULL ? ((BOOL (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->replace)(p0, p1, p2, p3) : BtlUnit_SetStatus__body(p0, p1, p2, p3));
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(r)*, __typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->post[i])(&r, p0, p1, p2, p3);
+    }
+    return r;
+}
+
+void BtlUnit_ClearStatus(BattleUnit * p0) {
+    PortHookSlot* s = &portHookSlots[470];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        BtlUnit_ClearStatus__body(p0);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*))s->pre[i])(&p0);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0)))s->replace)(p0); } else { BtlUnit_ClearStatus__body(p0); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0)))s->post[i])(p0);
+    }
+}
+
+BOOL BtlUnit_CheckRecoveryStatus(BattleUnit * p0, StatusEffectType p1) {
+    PortHookSlot* s = &portHookSlots[471];
+    BOOL r;
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        return BtlUnit_CheckRecoveryStatus__body(p0, p1);
+    }
+    __builtin_memset(&r, 0, sizeof(r));
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(r)*, __typeof__(p0)*, __typeof__(p1)*))s->pre[i])(&r, &p0, &p1);
+    }
+    if (!skip) {
+        r = (s->replace != NULL ? ((BOOL (*)(__typeof__(p0), __typeof__(p1)))s->replace)(p0, p1) : BtlUnit_CheckRecoveryStatus__body(p0, p1));
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(r)*, __typeof__(p0), __typeof__(p1)))s->post[i])(&r, p0, p1);
+    }
+    return r;
+}
+
+s32 BtlUnit_CheckStatusFlag(BattleUnit * p0, s32 p1) {
+    PortHookSlot* s = &portHookSlots[472];
+    s32 r;
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        return BtlUnit_CheckStatusFlag__body(p0, p1);
+    }
+    __builtin_memset(&r, 0, sizeof(r));
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(r)*, __typeof__(p0)*, __typeof__(p1)*))s->pre[i])(&r, &p0, &p1);
+    }
+    if (!skip) {
+        r = (s->replace != NULL ? ((s32 (*)(__typeof__(p0), __typeof__(p1)))s->replace)(p0, p1) : BtlUnit_CheckStatusFlag__body(p0, p1));
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(r)*, __typeof__(p0), __typeof__(p1)))s->post[i])(&r, p0, p1);
+    }
+    return r;
+}
+
+void BtlUnit_OnStatusFlag(BattleUnit * p0, s32 p1) {
+    PortHookSlot* s = &portHookSlots[473];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        BtlUnit_OnStatusFlag__body(p0, p1);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*, __typeof__(p1)*))s->pre[i])(&p0, &p1);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0), __typeof__(p1)))s->replace)(p0, p1); } else { BtlUnit_OnStatusFlag__body(p0, p1); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0), __typeof__(p1)))s->post[i])(p0, p1);
+    }
+}
+
+void BtlUnit_OffStatusFlag(BattleUnit * p0, s32 p1) {
+    PortHookSlot* s = &portHookSlots[474];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        BtlUnit_OffStatusFlag__body(p0, p1);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*, __typeof__(p1)*))s->pre[i])(&p0, &p1);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0), __typeof__(p1)))s->replace)(p0, p1); } else { BtlUnit_OffStatusFlag__body(p0, p1); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0), __typeof__(p1)))s->post[i])(p0, p1);
+    }
+}
+
+s32 BtlUnit_CheckUnitFlag(BattleUnit * p0, s32 p1) {
+    PortHookSlot* s = &portHookSlots[475];
+    s32 r;
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        return BtlUnit_CheckUnitFlag__body(p0, p1);
+    }
+    __builtin_memset(&r, 0, sizeof(r));
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(r)*, __typeof__(p0)*, __typeof__(p1)*))s->pre[i])(&r, &p0, &p1);
+    }
+    if (!skip) {
+        r = (s->replace != NULL ? ((s32 (*)(__typeof__(p0), __typeof__(p1)))s->replace)(p0, p1) : BtlUnit_CheckUnitFlag__body(p0, p1));
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(r)*, __typeof__(p0), __typeof__(p1)))s->post[i])(&r, p0, p1);
+    }
+    return r;
+}
+
+void BtlUnit_OnUnitFlag(BattleUnit * p0, s32 p1) {
+    PortHookSlot* s = &portHookSlots[476];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        BtlUnit_OnUnitFlag__body(p0, p1);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*, __typeof__(p1)*))s->pre[i])(&p0, &p1);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0), __typeof__(p1)))s->replace)(p0, p1); } else { BtlUnit_OnUnitFlag__body(p0, p1); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0), __typeof__(p1)))s->post[i])(p0, p1);
+    }
+}
+
+void BtlUnit_OffUnitFlag(BattleUnit * p0, s32 p1) {
+    PortHookSlot* s = &portHookSlots[477];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        BtlUnit_OffUnitFlag__body(p0, p1);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*, __typeof__(p1)*))s->pre[i])(&p0, &p1);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0), __typeof__(p1)))s->replace)(p0, p1); } else { BtlUnit_OffUnitFlag__body(p0, p1); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0), __typeof__(p1)))s->post[i])(p0, p1);
+    }
+}
+
+const char * BtlUnit_GetPoseNameFromType(BattleUnitPart * p0, s32 p1) {
+    PortHookSlot* s = &portHookSlots[478];
+    const char * r;
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        return BtlUnit_GetPoseNameFromType__body(p0, p1);
+    }
+    __builtin_memset(&r, 0, sizeof(r));
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(r)*, __typeof__(p0)*, __typeof__(p1)*))s->pre[i])(&r, &p0, &p1);
+    }
+    if (!skip) {
+        r = (s->replace != NULL ? ((const char * (*)(__typeof__(p0), __typeof__(p1)))s->replace)(p0, p1) : BtlUnit_GetPoseNameFromType__body(p0, p1));
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(r)*, __typeof__(p0), __typeof__(p1)))s->post[i])(&r, p0, p1);
+    }
+    return r;
+}
+
+void BtlUnit_SetAnimType(BattleUnitPart * p0, s32 p1) {
+    PortHookSlot* s = &portHookSlots[479];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        BtlUnit_SetAnimType__body(p0, p1);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*, __typeof__(p1)*))s->pre[i])(&p0, &p1);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0), __typeof__(p1)))s->replace)(p0, p1); } else { BtlUnit_SetAnimType__body(p0, p1); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0), __typeof__(p1)))s->post[i])(p0, p1);
+    }
+}
+
+void BtlUnit_SetAnim(BattleUnitPart * p0, const char * p1) {
+    PortHookSlot* s = &portHookSlots[480];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        BtlUnit_SetAnim__body(p0, p1);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*, __typeof__(p1)*))s->pre[i])(&p0, &p1);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0), __typeof__(p1)))s->replace)(p0, p1); } else { BtlUnit_SetAnim__body(p0, p1); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0), __typeof__(p1)))s->post[i])(p0, p1);
+    }
+}
+
+void BtlUnit_SetBodyAnimType(BattleUnit * p0, s32 p1) {
+    PortHookSlot* s = &portHookSlots[481];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        BtlUnit_SetBodyAnimType__body(p0, p1);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*, __typeof__(p1)*))s->pre[i])(&p0, &p1);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0), __typeof__(p1)))s->replace)(p0, p1); } else { BtlUnit_SetBodyAnimType__body(p0, p1); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0), __typeof__(p1)))s->post[i])(p0, p1);
+    }
+}
+
+void BtlUnit_SetBodyAnim(BattleUnit * p0, const char * p1) {
+    PortHookSlot* s = &portHookSlots[482];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        BtlUnit_SetBodyAnim__body(p0, p1);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*, __typeof__(p1)*))s->pre[i])(&p0, &p1);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0), __typeof__(p1)))s->replace)(p0, p1); } else { BtlUnit_SetBodyAnim__body(p0, p1); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0), __typeof__(p1)))s->post[i])(p0, p1);
+    }
+}
+
+void BtlUnit_ChangeTalkAnim(s32 p0) {
+    PortHookSlot* s = &portHookSlots[483];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        BtlUnit_ChangeTalkAnim__body(p0);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*))s->pre[i])(&p0);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0)))s->replace)(p0); } else { BtlUnit_ChangeTalkAnim__body(p0); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0)))s->post[i])(p0);
+    }
+}
+
+void BtlUnit_ChangeStayAnim(s32 p0) {
+    PortHookSlot* s = &portHookSlots[484];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        BtlUnit_ChangeStayAnim__body(p0);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*))s->pre[i])(&p0);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0)))s->replace)(p0); } else { BtlUnit_ChangeStayAnim__body(p0); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0)))s->post[i])(p0);
+    }
+}
+
+void BtlUnit_GetTalkTogePos(s32 p0, f32 * p1, f32 * p2, f32 * p3) {
+    PortHookSlot* s = &portHookSlots[485];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        BtlUnit_GetTalkTogePos__body(p0, p1, p2, p3);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*, __typeof__(p1)*, __typeof__(p2)*, __typeof__(p3)*))s->pre[i])(&p0, &p1, &p2, &p3);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->replace)(p0, p1, p2, p3); } else { BtlUnit_GetTalkTogePos__body(p0, p1, p2, p3); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->post[i])(p0, p1, p2, p3);
+    }
+}
+
+BOOL BtlUnit_GetEnemyBelong(BattleUnit * p0) {
+    PortHookSlot* s = &portHookSlots[486];
+    BOOL r;
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        return BtlUnit_GetEnemyBelong__body(p0);
+    }
+    __builtin_memset(&r, 0, sizeof(r));
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(r)*, __typeof__(p0)*))s->pre[i])(&r, &p0);
+    }
+    if (!skip) {
+        r = (s->replace != NULL ? ((BOOL (*)(__typeof__(p0)))s->replace)(p0) : BtlUnit_GetEnemyBelong__body(p0));
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(r)*, __typeof__(p0)))s->post[i])(&r, p0);
+    }
+    return r;
+}
+
+s32 BtlUnit_GetHitDamage(BattleUnit * p0) {
+    PortHookSlot* s = &portHookSlots[487];
+    s32 r;
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        return BtlUnit_GetHitDamage__body(p0);
+    }
+    __builtin_memset(&r, 0, sizeof(r));
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(r)*, __typeof__(p0)*))s->pre[i])(&r, &p0);
+    }
+    if (!skip) {
+        r = (s->replace != NULL ? ((s32 (*)(__typeof__(p0)))s->replace)(p0) : BtlUnit_GetHitDamage__body(p0));
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(r)*, __typeof__(p0)))s->post[i])(&r, p0);
+    }
+    return r;
+}
+
+s32 BtlUnit_GetTotalHitDamage(BattleUnit * p0) {
+    PortHookSlot* s = &portHookSlots[488];
+    s32 r;
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        return BtlUnit_GetTotalHitDamage__body(p0);
+    }
+    __builtin_memset(&r, 0, sizeof(r));
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(r)*, __typeof__(p0)*))s->pre[i])(&r, &p0);
+    }
+    if (!skip) {
+        r = (s->replace != NULL ? ((s32 (*)(__typeof__(p0)))s->replace)(p0) : BtlUnit_GetTotalHitDamage__body(p0));
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(r)*, __typeof__(p0)))s->post[i])(&r, p0);
+    }
+    return r;
+}
+
+void BtlUnit_SetTotalHitDamage(BattleUnit * p0, s16 p1) {
+    PortHookSlot* s = &portHookSlots[489];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        BtlUnit_SetTotalHitDamage__body(p0, p1);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*, __typeof__(p1)*))s->pre[i])(&p0, &p1);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0), __typeof__(p1)))s->replace)(p0, p1); } else { BtlUnit_SetTotalHitDamage__body(p0, p1); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0), __typeof__(p1)))s->post[i])(p0, p1);
+    }
+}
+
+BOOL BtlUnit_GetACPossibility(BattleUnit * p0) {
+    PortHookSlot* s = &portHookSlots[490];
+    BOOL r;
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        return BtlUnit_GetACPossibility__body(p0);
+    }
+    __builtin_memset(&r, 0, sizeof(r));
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(r)*, __typeof__(p0)*))s->pre[i])(&r, &p0);
+    }
+    if (!skip) {
+        r = (s->replace != NULL ? ((BOOL (*)(__typeof__(p0)))s->replace)(p0) : BtlUnit_GetACPossibility__body(p0));
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(r)*, __typeof__(p0)))s->post[i])(&r, p0);
+    }
+    return r;
+}
+
+void * BtlUnit_GetData(BattleUnit * p0, s32 p1) {
+    PortHookSlot* s = &portHookSlots[491];
+    void * r;
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        return BtlUnit_GetData__body(p0, p1);
+    }
+    __builtin_memset(&r, 0, sizeof(r));
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(r)*, __typeof__(p0)*, __typeof__(p1)*))s->pre[i])(&r, &p0, &p1);
+    }
+    if (!skip) {
+        r = (s->replace != NULL ? ((void * (*)(__typeof__(p0), __typeof__(p1)))s->replace)(p0, p1) : BtlUnit_GetData__body(p0, p1));
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(r)*, __typeof__(p0), __typeof__(p1)))s->post[i])(&r, p0, p1);
+    }
+    return r;
+}
+
+BOOL BtlUnit_CheckData(BattleUnit * p0, s32 p1) {
+    PortHookSlot* s = &portHookSlots[492];
+    BOOL r;
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        return BtlUnit_CheckData__body(p0, p1);
+    }
+    __builtin_memset(&r, 0, sizeof(r));
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(r)*, __typeof__(p0)*, __typeof__(p1)*))s->pre[i])(&r, &p0, &p1);
+    }
+    if (!skip) {
+        r = (s->replace != NULL ? ((BOOL (*)(__typeof__(p0), __typeof__(p1)))s->replace)(p0, p1) : BtlUnit_CheckData__body(p0, p1));
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(r)*, __typeof__(p0), __typeof__(p1)))s->post[i])(&r, p0, p1);
+    }
+    return r;
+}
+
+BOOL BtlUnit_CanGuardStatus(BattleUnit * p0) {
+    PortHookSlot* s = &portHookSlots[493];
+    BOOL r;
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        return BtlUnit_CanGuardStatus__body(p0);
+    }
+    __builtin_memset(&r, 0, sizeof(r));
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(r)*, __typeof__(p0)*))s->pre[i])(&r, &p0);
+    }
+    if (!skip) {
+        r = (s->replace != NULL ? ((BOOL (*)(__typeof__(p0)))s->replace)(p0) : BtlUnit_CanGuardStatus__body(p0));
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(r)*, __typeof__(p0)))s->post[i])(&r, p0);
+    }
+    return r;
+}
+
+BOOL BtlUnit_CanActStatus(BattleUnit * p0) {
+    PortHookSlot* s = &portHookSlots[494];
+    BOOL r;
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        return BtlUnit_CanActStatus__body(p0);
+    }
+    __builtin_memset(&r, 0, sizeof(r));
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(r)*, __typeof__(p0)*))s->pre[i])(&r, &p0);
+    }
+    if (!skip) {
+        r = (s->replace != NULL ? ((BOOL (*)(__typeof__(p0)))s->replace)(p0) : BtlUnit_CanActStatus__body(p0));
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(r)*, __typeof__(p0)))s->post[i])(&r, p0);
+    }
+    return r;
+}
+
+void BtlUnit_SetParamFromPouch(BattleUnit * p0) {
+    PortHookSlot* s = &portHookSlots[495];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        BtlUnit_SetParamFromPouch__body(p0);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*))s->pre[i])(&p0);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0)))s->replace)(p0); } else { BtlUnit_SetParamFromPouch__body(p0); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0)))s->post[i])(p0);
+    }
+}
+
+void BtlUnit_ReviseHpFp(BattleUnit * p0) {
+    PortHookSlot* s = &portHookSlots[496];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        BtlUnit_ReviseHpFp__body(p0);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*))s->pre[i])(&p0);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0)))s->replace)(p0); } else { BtlUnit_ReviseHpFp__body(p0); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0)))s->post[i])(p0);
+    }
+}
+
+void BtlUnit_SetParamToPouch(BattleUnit * p0) {
+    PortHookSlot* s = &portHookSlots[497];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        BtlUnit_SetParamToPouch__body(p0);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*))s->pre[i])(&p0);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0)))s->replace)(p0); } else { BtlUnit_SetParamToPouch__body(p0); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0)))s->post[i])(p0);
+    }
+}
+
+void BtlUnit_CheckPinchStatus(BattleUnit * p0, BOOL p1) {
+    PortHookSlot* s = &portHookSlots[498];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        BtlUnit_CheckPinchStatus__body(p0, p1);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*, __typeof__(p1)*))s->pre[i])(&p0, &p1);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0), __typeof__(p1)))s->replace)(p0, p1); } else { BtlUnit_CheckPinchStatus__body(p0, p1); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0), __typeof__(p1)))s->post[i])(p0, p1);
+    }
+}
+
+s32 BtlUnit_GetExp(BattleUnit * p0) {
+    PortHookSlot* s = &portHookSlots[499];
+    s32 r;
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        return BtlUnit_GetExp__body(p0);
+    }
+    __builtin_memset(&r, 0, sizeof(r));
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(r)*, __typeof__(p0)*))s->pre[i])(&r, &p0);
+    }
+    if (!skip) {
+        r = (s->replace != NULL ? ((s32 (*)(__typeof__(p0)))s->replace)(p0) : BtlUnit_GetExp__body(p0));
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(r)*, __typeof__(p0)))s->post[i])(&r, p0);
+    }
+    return r;
+}
+
+s32 BtlUnit_GetFp(BattleUnit * p0) {
+    PortHookSlot* s = &portHookSlots[500];
+    s32 r;
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        return BtlUnit_GetFp__body(p0);
+    }
+    __builtin_memset(&r, 0, sizeof(r));
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(r)*, __typeof__(p0)*))s->pre[i])(&r, &p0);
+    }
+    if (!skip) {
+        r = (s->replace != NULL ? ((s32 (*)(__typeof__(p0)))s->replace)(p0) : BtlUnit_GetFp__body(p0));
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(r)*, __typeof__(p0)))s->post[i])(&r, p0);
+    }
+    return r;
+}
+
+void BtlUnit_SetFp(BattleUnit * p0, s32 p1) {
+    PortHookSlot* s = &portHookSlots[501];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        BtlUnit_SetFp__body(p0, p1);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*, __typeof__(p1)*))s->pre[i])(&p0, &p1);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0), __typeof__(p1)))s->replace)(p0, p1); } else { BtlUnit_SetFp__body(p0, p1); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0), __typeof__(p1)))s->post[i])(p0, p1);
+    }
+}
+
+void BtlUnit_RecoverHp(BattleUnit * p0, s32 p1) {
+    PortHookSlot* s = &portHookSlots[502];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        BtlUnit_RecoverHp__body(p0, p1);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*, __typeof__(p1)*))s->pre[i])(&p0, &p1);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0), __typeof__(p1)))s->replace)(p0, p1); } else { BtlUnit_RecoverHp__body(p0, p1); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0), __typeof__(p1)))s->post[i])(p0, p1);
+    }
+}
+
+void BtlUnit_RecoverFp(BattleUnit * p0, s32 p1) {
+    PortHookSlot* s = &portHookSlots[503];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        BtlUnit_RecoverFp__body(p0, p1);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*, __typeof__(p1)*))s->pre[i])(&p0, &p1);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0), __typeof__(p1)))s->replace)(p0, p1); } else { BtlUnit_RecoverFp__body(p0, p1); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0), __typeof__(p1)))s->post[i])(p0, p1);
+    }
+}
+
+s32 BtlUnit_GetMaxFp(BattleUnit * p0) {
+    PortHookSlot* s = &portHookSlots[504];
+    s32 r;
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        return BtlUnit_GetMaxFp__body(p0);
+    }
+    __builtin_memset(&r, 0, sizeof(r));
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(r)*, __typeof__(p0)*))s->pre[i])(&r, &p0);
+    }
+    if (!skip) {
+        r = (s->replace != NULL ? ((s32 (*)(__typeof__(p0)))s->replace)(p0) : BtlUnit_GetMaxFp__body(p0));
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(r)*, __typeof__(p0)))s->post[i])(&r, p0);
+    }
+    return r;
+}
+
+void BtlUnit_SetMaxFp(BattleUnit * p0, s32 p1) {
+    PortHookSlot* s = &portHookSlots[505];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        BtlUnit_SetMaxFp__body(p0, p1);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*, __typeof__(p1)*))s->pre[i])(&p0, &p1);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0), __typeof__(p1)))s->replace)(p0, p1); } else { BtlUnit_SetMaxFp__body(p0, p1); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0), __typeof__(p1)))s->post[i])(p0, p1);
+    }
+}
+
+BOOL BtlUnit_CheckWeaponCost(BattleUnit * p0, BattleWeapon * p1) {
+    PortHookSlot* s = &portHookSlots[506];
+    BOOL r;
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        return BtlUnit_CheckWeaponCost__body(p0, p1);
+    }
+    __builtin_memset(&r, 0, sizeof(r));
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(r)*, __typeof__(p0)*, __typeof__(p1)*))s->pre[i])(&r, &p0, &p1);
+    }
+    if (!skip) {
+        r = (s->replace != NULL ? ((BOOL (*)(__typeof__(p0), __typeof__(p1)))s->replace)(p0, p1) : BtlUnit_CheckWeaponCost__body(p0, p1));
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(r)*, __typeof__(p0), __typeof__(p1)))s->post[i])(&r, p0, p1);
+    }
+    return r;
+}
+
+void BtlUnit_PayWeaponCost(BattleUnit * p0, BattleWeapon * p1) {
+    PortHookSlot* s = &portHookSlots[507];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        BtlUnit_PayWeaponCost__body(p0, p1);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*, __typeof__(p1)*))s->pre[i])(&p0, &p1);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0), __typeof__(p1)))s->replace)(p0, p1); } else { BtlUnit_PayWeaponCost__body(p0, p1); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0), __typeof__(p1)))s->post[i])(p0, p1);
+    }
+}
+
+BattleUnit * BtlUnit_GetGuardKouraPtr(BattleUnit * p0) {
+    PortHookSlot* s = &portHookSlots[508];
+    BattleUnit * r;
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        return BtlUnit_GetGuardKouraPtr__body(p0);
+    }
+    __builtin_memset(&r, 0, sizeof(r));
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(r)*, __typeof__(p0)*))s->pre[i])(&r, &p0);
+    }
+    if (!skip) {
+        r = (s->replace != NULL ? ((BattleUnit * (*)(__typeof__(p0)))s->replace)(p0) : BtlUnit_GetGuardKouraPtr__body(p0));
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(r)*, __typeof__(p0)))s->post[i])(&r, p0);
+    }
+    return r;
+}
+
+void BtlUnit_ResetMoveStatus(BattleUnit * p0) {
+    PortHookSlot* s = &portHookSlots[509];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        BtlUnit_ResetMoveStatus__body(p0);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*))s->pre[i])(&p0);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0)))s->replace)(p0); } else { BtlUnit_ResetMoveStatus__body(p0); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0)))s->post[i])(p0);
+    }
+}
+
+void BtlUnit_LoadSeMode(s32 p0, s32 p1, BtlPoseSoundTable * p2, BecSndWork * p3) {
+    PortHookSlot* s = &portHookSlots[510];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        BtlUnit_LoadSeMode__body(p0, p1, p2, p3);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*, __typeof__(p1)*, __typeof__(p2)*, __typeof__(p3)*))s->pre[i])(&p0, &p1, &p2, &p3);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->replace)(p0, p1, p2, p3); } else { BtlUnit_LoadSeMode__body(p0, p1, p2, p3); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->post[i])(p0, p1, p2, p3);
+    }
+}
+
+void BtlUnit_SetSeMode(BecSndWork * p0, const char * p1, const char * p2, s16 p3, s16 p4, s16 p5, s16 p6, s16 p7) {
+    PortHookSlot* s = &portHookSlots[511];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        BtlUnit_SetSeMode__body(p0, p1, p2, p3, p4, p5, p6, p7);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*, __typeof__(p1)*, __typeof__(p2)*, __typeof__(p3)*, __typeof__(p4)*, __typeof__(p5)*, __typeof__(p6)*, __typeof__(p7)*))s->pre[i])(&p0, &p1, &p2, &p3, &p4, &p5, &p6, &p7);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3), __typeof__(p4), __typeof__(p5), __typeof__(p6), __typeof__(p7)))s->replace)(p0, p1, p2, p3, p4, p5, p6, p7); } else { BtlUnit_SetSeMode__body(p0, p1, p2, p3, p4, p5, p6, p7); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3), __typeof__(p4), __typeof__(p5), __typeof__(p6), __typeof__(p7)))s->post[i])(p0, p1, p2, p3, p4, p5, p6, p7);
+    }
+}
+
+void BtlUnit_SetCommandAnimPose(BattleUnit * p0) {
+    PortHookSlot* s = &portHookSlots[512];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        BtlUnit_SetCommandAnimPose__body(p0);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*))s->pre[i])(&p0);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0)))s->replace)(p0); } else { BtlUnit_SetCommandAnimPose__body(p0); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0)))s->post[i])(p0);
+    }
+}
+
+void BtlUnit_PoseSoundInit(BattleUnitPart * p0) {
+    PortHookSlot* s = &portHookSlots[513];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        BtlUnit_PoseSoundInit__body(p0);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*))s->pre[i])(&p0);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0)))s->replace)(p0); } else { BtlUnit_PoseSoundInit__body(p0); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0)))s->post[i])(p0);
+    }
+}
+
+void BtlUnit_ControlPoseSoundMain(BattleUnitPart * p0) {
+    PortHookSlot* s = &portHookSlots[514];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        BtlUnit_ControlPoseSoundMain__body(p0);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*))s->pre[i])(&p0);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0)))s->replace)(p0); } else { BtlUnit_ControlPoseSoundMain__body(p0); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0)))s->post[i])(p0);
+    }
+}
+
+s32 BtlUnit_snd_se(BattleUnit * p0, const char * p1, s32 p2, s32 p3) {
+    PortHookSlot* s = &portHookSlots[515];
+    s32 r;
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        return BtlUnit_snd_se__body(p0, p1, p2, p3);
+    }
+    __builtin_memset(&r, 0, sizeof(r));
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(r)*, __typeof__(p0)*, __typeof__(p1)*, __typeof__(p2)*, __typeof__(p3)*))s->pre[i])(&r, &p0, &p1, &p2, &p3);
+    }
+    if (!skip) {
+        r = (s->replace != NULL ? ((s32 (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->replace)(p0, p1, p2, p3) : BtlUnit_snd_se__body(p0, p1, p2, p3));
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(r)*, __typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->post[i])(&r, p0, p1, p2, p3);
+    }
+    return r;
+}
+
+s32 BtlUnit_snd_se_pos(BattleUnit * p0, const char * p1, s32 p2, s16 p3, Vec * p4) {
+    PortHookSlot* s = &portHookSlots[516];
+    s32 r;
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        return BtlUnit_snd_se_pos__body(p0, p1, p2, p3, p4);
+    }
+    __builtin_memset(&r, 0, sizeof(r));
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(r)*, __typeof__(p0)*, __typeof__(p1)*, __typeof__(p2)*, __typeof__(p3)*, __typeof__(p4)*))s->pre[i])(&r, &p0, &p1, &p2, &p3, &p4);
+    }
+    if (!skip) {
+        r = (s->replace != NULL ? ((s32 (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3), __typeof__(p4)))s->replace)(p0, p1, p2, p3, p4) : BtlUnit_snd_se_pos__body(p0, p1, p2, p3, p4));
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(r)*, __typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3), __typeof__(p4)))s->post[i])(&r, p0, p1, p2, p3, p4);
+    }
+    return r;
+}
+
+void BtlUnit_HpGaugeMain(BattleUnit * p0) {
+    PortHookSlot* s = &portHookSlots[517];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        BtlUnit_HpGaugeMain__body(p0);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*))s->pre[i])(&p0);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0)))s->replace)(p0); } else { BtlUnit_HpGaugeMain__body(p0); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0)))s->post[i])(p0);
+    }
+}
+
+BOOL BtlUnit_EnemyItemCanUseCheck(s32 p0) {
+    PortHookSlot* s = &portHookSlots[518];
+    BOOL r;
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        return BtlUnit_EnemyItemCanUseCheck__body(p0);
+    }
+    __builtin_memset(&r, 0, sizeof(r));
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(r)*, __typeof__(p0)*))s->pre[i])(&r, &p0);
+    }
+    if (!skip) {
+        r = (s->replace != NULL ? ((BOOL (*)(__typeof__(p0)))s->replace)(p0) : BtlUnit_EnemyItemCanUseCheck__body(p0));
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(r)*, __typeof__(p0)))s->post[i])(&r, p0);
+    }
+    return r;
+}
+
+BOOL BtlUnit_CheckShadowGuard(BattleUnit * p0) {
+    PortHookSlot* s = &portHookSlots[519];
+    BOOL r;
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        return BtlUnit_CheckShadowGuard__body(p0);
+    }
+    __builtin_memset(&r, 0, sizeof(r));
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(r)*, __typeof__(p0)*))s->pre[i])(&r, &p0);
+    }
+    if (!skip) {
+        r = (s->replace != NULL ? ((BOOL (*)(__typeof__(p0)))s->replace)(p0) : BtlUnit_CheckShadowGuard__body(p0));
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(r)*, __typeof__(p0)))s->post[i])(&r, p0);
+    }
+    return r;
+}
+
 void portHookInit_src_battle_battle_unit(void) {
     portHookSlots[22].body = (void*)BtlUnit_Entry__body;
     portHookSlots[32].body = (void*)BtlUnit_GetWeaponCost__body;
     portHookSlots[33].body = (void*)BtlUnit_GetCoin__body;
+    portHookSlots[410].body = (void*)BtlUnit_Init__body;
+    portHookSlots[411].body = (void*)BtlUnit_Delete__body;
+    portHookSlots[412].body = (void*)BtlUnit_Spawn__body;
+    portHookSlots[413].body = (void*)BtlUnit_GetUnitId__body;
+    portHookSlots[414].body = (void*)BtlUnit_GetPartsPtr__body;
+    portHookSlots[415].body = (void*)BtlUnit_GetBodyPartsId__body;
+    portHookSlots[416].body = (void*)BtlUnit_SetPos__body;
+    portHookSlots[417].body = (void*)BtlUnit_AddPos__body;
+    portHookSlots[418].body = (void*)BtlUnit_GetPartsPos__body;
+    portHookSlots[419].body = (void*)BtlUnit_SetPartsPos__body;
+    portHookSlots[420].body = (void*)BtlUnit_AddPartsPos__body;
+    portHookSlots[421].body = (void*)BtlUnit_GetHitPos__body;
+    portHookSlots[422].body = (void*)BtlUnit_SetHitOffset__body;
+    portHookSlots[423].body = (void*)BtlUnit_SetHitCursorOffset__body;
+    portHookSlots[424].body = (void*)BtlUnit_GetHomePos__body;
+    portHookSlots[425].body = (void*)BtlUnit_SetHomePos__body;
+    portHookSlots[426].body = (void*)BtlUnit_AddHomePos__body;
+    portHookSlots[427].body = (void*)BtlUnit_SetPartsHomePos__body;
+    portHookSlots[428].body = (void*)BtlUnit_SetRotate__body;
+    portHookSlots[429].body = (void*)BtlUnit_GetRotate__body;
+    portHookSlots[430].body = (void*)BtlUnit_AddRotate__body;
+    portHookSlots[431].body = (void*)BtlUnit_SetPartsRotate__body;
+    portHookSlots[432].body = (void*)BtlUnit_GetPartsRotate__body;
+    portHookSlots[433].body = (void*)BtlUnit_AddPartsRotate__body;
+    portHookSlots[434].body = (void*)BtlUnit_SetBaseRotate__body;
+    portHookSlots[435].body = (void*)BtlUnit_GetBaseRotate__body;
+    portHookSlots[436].body = (void*)BtlUnit_SetPartsBaseRotate__body;
+    portHookSlots[437].body = (void*)BtlUnit_GetPartsBaseRotate__body;
+    portHookSlots[438].body = (void*)BtlUnit_SetRotateOffset__body;
+    portHookSlots[439].body = (void*)BtlUnit_SetPartsRotateOffset__body;
+    portHookSlots[440].body = (void*)BtlUnit_AddPartsRotateOffset__body;
+    portHookSlots[441].body = (void*)BtlUnit_SetBaseScale__body;
+    portHookSlots[442].body = (void*)BtlUnit_GetScale__body;
+    portHookSlots[443].body = (void*)BtlUnit_SetScale__body;
+    portHookSlots[444].body = (void*)BtlUnit_AddScale__body;
+    portHookSlots[445].body = (void*)BtlUnit_SetPartsBaseScale__body;
+    portHookSlots[446].body = (void*)BtlUnit_SetPartsScale__body;
+    portHookSlots[447].body = (void*)BtlUnit_AddPartsScale__body;
+    portHookSlots[448].body = (void*)BtlUnit_GetWidth__body;
+    portHookSlots[449].body = (void*)BtlUnit_GetHeight__body;
+    portHookSlots[450].body = (void*)BtlUnit_SetHeight__body;
+    portHookSlots[451].body = (void*)BtlUnit_SetOffsetPos__body;
+    portHookSlots[452].body = (void*)BtlUnit_SetPartsOffsetPos__body;
+    portHookSlots[453].body = (void*)BtlUnit_AddPartsOffsetPos__body;
+    portHookSlots[454].body = (void*)BtlUnit_SetDispOffset__body;
+    portHookSlots[455].body = (void*)BtlUnit_SetPartsDispOffset__body;
+    portHookSlots[456].body = (void*)BtlUnit_AddPartsDispOffset__body;
+    portHookSlots[457].body = (void*)BtlUnit_SetMoveStartPos__body;
+    portHookSlots[458].body = (void*)BtlUnit_SetPartsMoveStartPos__body;
+    portHookSlots[459].body = (void*)BtlUnit_SetMoveCurrentPos__body;
+    portHookSlots[460].body = (void*)BtlUnit_SetPartsMoveCurrentPos__body;
+    portHookSlots[461].body = (void*)BtlUnit_SetMoveTargetPos__body;
+    portHookSlots[462].body = (void*)BtlUnit_SetPartsMoveTargetPos__body;
+    portHookSlots[463].body = (void*)BtlUnit_SetFallAccel__body;
+    portHookSlots[464].body = (void*)BtlUnit_SetPartsFallAccel__body;
+    portHookSlots[465].body = (void*)BtlUnit_SetMoveSpeed__body;
+    portHookSlots[466].body = (void*)BtlUnit_SetPartsMoveSpeed__body;
+    portHookSlots[467].body = (void*)BtlUnit_SetJumpSpeed__body;
+    portHookSlots[468].body = (void*)BtlUnit_GetBelong__body;
+    portHookSlots[469].body = (void*)BtlUnit_SetStatus__body;
+    portHookSlots[470].body = (void*)BtlUnit_ClearStatus__body;
+    portHookSlots[471].body = (void*)BtlUnit_CheckRecoveryStatus__body;
+    portHookSlots[472].body = (void*)BtlUnit_CheckStatusFlag__body;
+    portHookSlots[473].body = (void*)BtlUnit_OnStatusFlag__body;
+    portHookSlots[474].body = (void*)BtlUnit_OffStatusFlag__body;
+    portHookSlots[475].body = (void*)BtlUnit_CheckUnitFlag__body;
+    portHookSlots[476].body = (void*)BtlUnit_OnUnitFlag__body;
+    portHookSlots[477].body = (void*)BtlUnit_OffUnitFlag__body;
+    portHookSlots[478].body = (void*)BtlUnit_GetPoseNameFromType__body;
+    portHookSlots[479].body = (void*)BtlUnit_SetAnimType__body;
+    portHookSlots[480].body = (void*)BtlUnit_SetAnim__body;
+    portHookSlots[481].body = (void*)BtlUnit_SetBodyAnimType__body;
+    portHookSlots[482].body = (void*)BtlUnit_SetBodyAnim__body;
+    portHookSlots[483].body = (void*)BtlUnit_ChangeTalkAnim__body;
+    portHookSlots[484].body = (void*)BtlUnit_ChangeStayAnim__body;
+    portHookSlots[485].body = (void*)BtlUnit_GetTalkTogePos__body;
+    portHookSlots[486].body = (void*)BtlUnit_GetEnemyBelong__body;
+    portHookSlots[487].body = (void*)BtlUnit_GetHitDamage__body;
+    portHookSlots[488].body = (void*)BtlUnit_GetTotalHitDamage__body;
+    portHookSlots[489].body = (void*)BtlUnit_SetTotalHitDamage__body;
+    portHookSlots[490].body = (void*)BtlUnit_GetACPossibility__body;
+    portHookSlots[491].body = (void*)BtlUnit_GetData__body;
+    portHookSlots[492].body = (void*)BtlUnit_CheckData__body;
+    portHookSlots[493].body = (void*)BtlUnit_CanGuardStatus__body;
+    portHookSlots[494].body = (void*)BtlUnit_CanActStatus__body;
+    portHookSlots[495].body = (void*)BtlUnit_SetParamFromPouch__body;
+    portHookSlots[496].body = (void*)BtlUnit_ReviseHpFp__body;
+    portHookSlots[497].body = (void*)BtlUnit_SetParamToPouch__body;
+    portHookSlots[498].body = (void*)BtlUnit_CheckPinchStatus__body;
+    portHookSlots[499].body = (void*)BtlUnit_GetExp__body;
+    portHookSlots[500].body = (void*)BtlUnit_GetFp__body;
+    portHookSlots[501].body = (void*)BtlUnit_SetFp__body;
+    portHookSlots[502].body = (void*)BtlUnit_RecoverHp__body;
+    portHookSlots[503].body = (void*)BtlUnit_RecoverFp__body;
+    portHookSlots[504].body = (void*)BtlUnit_GetMaxFp__body;
+    portHookSlots[505].body = (void*)BtlUnit_SetMaxFp__body;
+    portHookSlots[506].body = (void*)BtlUnit_CheckWeaponCost__body;
+    portHookSlots[507].body = (void*)BtlUnit_PayWeaponCost__body;
+    portHookSlots[508].body = (void*)BtlUnit_GetGuardKouraPtr__body;
+    portHookSlots[509].body = (void*)BtlUnit_ResetMoveStatus__body;
+    portHookSlots[510].body = (void*)BtlUnit_LoadSeMode__body;
+    portHookSlots[511].body = (void*)BtlUnit_SetSeMode__body;
+    portHookSlots[512].body = (void*)BtlUnit_SetCommandAnimPose__body;
+    portHookSlots[513].body = (void*)BtlUnit_PoseSoundInit__body;
+    portHookSlots[514].body = (void*)BtlUnit_ControlPoseSoundMain__body;
+    portHookSlots[515].body = (void*)BtlUnit_snd_se__body;
+    portHookSlots[516].body = (void*)BtlUnit_snd_se_pos__body;
+    portHookSlots[517].body = (void*)BtlUnit_HpGaugeMain__body;
+    portHookSlots[518].body = (void*)BtlUnit_EnemyItemCanUseCheck__body;
+    portHookSlots[519].body = (void*)BtlUnit_CheckShadowGuard__body;
 }

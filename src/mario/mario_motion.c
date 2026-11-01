@@ -1,5 +1,6 @@
 // Mario's motion table and motion changes (marioChgMot), jump and fall parameters, and the checks that start
 // jumps, hammer, spin and the paper transformations from the controls.
+#include "port_hook.h"
 #include "dolphin/types.h"
 #include "mario/mario.h"
 #include "mario/mariost.h"
@@ -39,6 +40,9 @@
 #include "koopa_hit.h"
 #include "version.h"
 #include <dolphin/pad.h>
+#ifdef PORT_MODS
+#include "port/hooks/src_mario_mario_motion.h"
+#endif
 
 typedef struct MarioMotTblEntry {
     void (*main)(void);
@@ -170,7 +174,7 @@ void marioChgMoveMotion(void) {
  * Stops Mario in the standing motion unless he is riding the boat or Yoshi,
  * or is in the paper slit or tube motion. Called by events, item pickups, hit checks and the lecture maps.
  */
-void marioChgStayMotion(void) {
+void PORT_HOOKABLE(marioChgStayMotion)(void) {
     MarioWork* mario = marioGetPtr();
     if (mario->currMotionId != MARIO_MOTION_SHIP && mario->currMotionId != MARIO_MOTION_YOSHI &&
         mario->currMotionId != MARIO_MOTION_SLIT && mario->currMotionId != MARIO_MOTION_ROLL) {
@@ -179,7 +183,7 @@ void marioChgStayMotion(void) {
 }
 
 /** Starts the talk motion (mot_talk), from npcdrv when Mario speaks to an NPC and from evt_mario. */
-void marioChgTalkMotion(void) {
+void PORT_HOOKABLE(marioChgTalkMotion)(void) {
     marioChgMot(MARIO_MOTION_TALK);
 }
 
@@ -188,7 +192,7 @@ void marioChgTalkMotion(void) {
  * In tube mode it only resets the roll speed, in the slit or the boat it stops Mario,
  * and on Yoshi nothing changes.
  */
-void marioChgGetItemMotion(void) {
+void PORT_HOOKABLE(marioChgGetItemMotion)(void) {
     MarioWork* mario = marioGetPtr();
     if (mario->currMotionId == MARIO_MOTION_ROLL) {
         marioResetRollSpd();
@@ -205,7 +209,7 @@ void marioChgGetItemMotion(void) {
  * Re-initialises the boat motion (marioReInit_ship);
  * the Pianta Parlor boat game (yuu_01) and the E3 sequence use it.
  */
-void marioChgShipMotion(void) {
+void PORT_HOOKABLE(marioChgShipMotion)(void) {
     marioReInit_ship();
 }
 
@@ -214,7 +218,7 @@ void marioChgShipMotion(void) {
  * without running the old motion's post function or the first-frame setup.
  * The Pianta Parlor tube game (yuu_02) uses it; landing in tube mode too.
  */
-void marioChgRollMotion(void) {
+void PORT_HOOKABLE(marioChgRollMotion)(void) {
     MarioWork* mario = marioGetPtr();
     mario->currSubMotionId = 50;
     mario->currMotionId = MARIO_MOTION_ROLL;
@@ -225,7 +229,7 @@ void marioChgRollMotion(void) {
  * from evt_mobj and on landing on MOBJ_BlueJumpStand (100).
  * In tube mode only the height is stored (retail also puffs smoke and jumps); on Yoshi, yoshi_jumpStand jumps.
  */
-void marioChgJumpStandMotion(f32 v) {
+void PORT_HOOKABLE(marioChgJumpStandMotion)(f32 v) {
     MarioWork* mario = marioGetPtr();
 #if VERSION <= VERSION_DEMO_JP
     // The demo does not follow the camera up, and in status 0x10 only stores the height.
@@ -253,7 +257,7 @@ void marioChgJumpStandMotion(f32 v) {
  * A small fixed hop (start speed 6, no air steering), used by the Koops,
  * Vivian and Yoshi partner code and mot_jabara.
  */
-void marioChgSmallJumpMotion(void) {
+void PORT_HOOKABLE(marioChgSmallJumpMotion)(void) {
     MarioWork* mario = marioGetPtr();
     mario->trigFlags |= MARIO_TRIG_FLAG_SET_JUMP_PARAMS;
     marioChgMot(MARIO_MOTION_JUMP);
@@ -271,7 +275,7 @@ void marioChgSmallJumpMotion(void) {
  * in the tube or the slit and not starting a new motion, or on the boat once its transformation has finished.
  * itemdrv checks it before pickups.
  */
-BOOL marioChkItemGetMotion(void) {
+BOOL PORT_HOOKABLE(marioChkItemGetMotion)(void) {
     BOOL ret = FALSE;
     MarioWork* mario = marioGetPtr();
     MarioMotion cur = mario->currMotionId;
@@ -320,7 +324,7 @@ BOOL marioChkTalkable(void) {
  * Bowser instead needs kpaHipAttackOk and 6 frames to his peak.
  * Never in 8-bit or paper mode; the PAL release also skips it in plane mode.
  */
-void marioBoots(void) {
+void PORT_HOOKABLE(marioBoots)(void) {
     MarioWork* mario = marioGetPtr();
     u32 flags = mario->flags;
     if (flags & MARIO_FLAG_IS_8_BIT) {
@@ -360,7 +364,7 @@ void marioBoots(void) {
  * Runs the current motion's main function from marioMain each frame, again while a motion change is pending,
  * so a new motion's first frame runs in the same frame. Clears the hammer's hit object first.
  */
-void marioMotion(void) {
+void PORT_HOOKABLE(marioMotion)(void) {
     MarioWork* mario = marioGetPtr();
     mario->hitobjHammer = NULL;
     do {
@@ -373,7 +377,7 @@ void marioMotion(void) {
  * and flags the new one to do its first-frame setup.
  * Ignored while MARIO_FLAG_CHG_MOT_DISABLED; after a Spin Jump it clears the blur and front pose.
  */
-void marioChgMot(MarioMotion id) {
+void PORT_HOOKABLE(marioChgMot)(MarioMotion id) {
     MarioWork* mario = marioGetPtr();
     if (mario->flags & MARIO_FLAG_CHG_MOT_DISABLED) {
         return;
@@ -398,7 +402,7 @@ void marioChgMot(MarioMotion id) {
  * marioChgMot with a choice: callPost FALSE skips the old motion's post function (retail still runs it when
  * leaving the jabara motion). Used by motion code that has already cleaned up itself.
  */
-void marioChgMotSub(MarioMotion id, s32 callPost) {
+void PORT_HOOKABLE(marioChgMotSub)(MarioMotion id, s32 callPost) {
     MarioWork* mario = marioGetPtr();
     if (mario->flags & MARIO_FLAG_CHG_MOT_DISABLED) {
         return;
@@ -433,7 +437,7 @@ void marioChgMotSub(MarioMotion id, s32 callPost) {
  * then runs the old motion's post function.
  * Used by mot_jump, mot_stay, mot_slit and Bowser's motions to switch mid-move.
  */
-void marioChgMot2(MarioMotion id) {
+void PORT_HOOKABLE(marioChgMot2)(MarioMotion id) {
     MarioWork* mario = marioGetPtr();
     if (mario->flags & MARIO_FLAG_CHG_MOT_DISABLED) {
         return;
@@ -447,7 +451,7 @@ void marioChgMot2(MarioMotion id) {
 }
 
 /** Zeroes Mario's vertical motion (jump velocity, acceleration, jerk and snap), e.g. on landing. */
-void marioClearJumpPara(void) {
+void PORT_HOOKABLE(marioClearJumpPara)(void) {
     MarioWork* mario = marioGetPtr();
     mario->jumpVelocityY = 0.0f;
     mario->jumpAccelerationY = 0.0f;
@@ -461,7 +465,7 @@ void marioClearJumpPara(void) {
  * The pre-battle slow motion halves it, the Moon's low gravity swaps in a floatier set,
  * and Bowser uses kpaSetJumpPara. Called by mot_jump at the start of a jump.
  */
-void marioSetJumpPara(void) {
+void PORT_HOOKABLE(marioSetJumpPara)(void) {
     MarioWork* mario = marioGetPtr();
     f32* jd;
     switch (mario->currMotionId) {
@@ -534,7 +538,7 @@ void marioSetJumpPara(void) {
  * or a slow one under the Moon's low gravity.
  * marioJump calls it at a jump's peak; mario.c and several motions (damage, plane, boat) too.
  */
-void marioSetFallPara(void) {
+void PORT_HOOKABLE(marioSetFallPara)(void) {
     MarioWork* mario = marioGetPtr();
     f32* fall = marioJumpData.fall;
     if (mario->currMotionId == MARIO_MOTION_JUMP_SW) {
@@ -556,7 +560,7 @@ void marioSetFallPara(void) {
  * Steps the fall curve one frame and returns the new vertical speed (units per frame),
  * capped at marioJumpData.minFall (-18); the jerk is not allowed to turn positive.
  */
-f32 marioGetFallSpd(void) {
+f32 PORT_HOOKABLE(marioGetFallSpd)(void) {
     MarioWork* mario = marioGetPtr();
     MarioJumpData* jd;
     f32 min;
@@ -580,7 +584,7 @@ f32 marioGetFallSpd(void) {
  * Steps the jump curve one frame (snap into jerk into acceleration into velocity)
  * and returns the new vertical speed. Everything is divided by 1.7 during the pre-battle slow motion.
  */
-f32 marioMakeJumpPara(void) {
+f32 PORT_HOOKABLE(marioMakeJumpPara)(void) {
     MarioWork* mario = marioGetPtr();
     f32 div = (mario->flags & MARIO_FLAG_PRE_BATTLE_PHYSICS) ? 1.7f : 1.0f;
     mario->jumpJerkY = mario->jumpJerkY + mario->jumpSnapY / div;
@@ -595,7 +599,7 @@ f32 marioMakeJumpPara(void) {
  * and at the peak it records the air time and switches to falling (in tube mode it keeps the motion and sets the
  * falling flag). The spring, red switch and JUMP_2/JUMP_3 motions are skipped here.
  */
-void marioJump(void) {
+void PORT_HOOKABLE(marioJump)(void) {
     MarioWork* mario = marioGetPtr();
     f32 prev;
     if (getRollEvtFlag()) {
@@ -645,7 +649,7 @@ void marioJump(void) {
  * a passing jabara check (marioPriCheckJabara, stick rub) turns the landing into the jabara motion.
  * On kpa_03 Bowser just falls and lands; the tube uses mot_fall_roll.
  */
-void marioFall(void) {
+void PORT_HOOKABLE(marioFall)(void) {
     MarioWork* mario = marioGetPtr();
     s32 rub;
     f32 spd;
@@ -747,7 +751,7 @@ void marioFall(void) {
  * walk or stand from the stick, Bowser's quake, re-entering the slit in paper mode.
  * Bowser and the tube also call it.
  */
-void marioLandOn(void) {
+void PORT_HOOKABLE(marioLandOn)(void) {
     MarioWork* mario = marioGetPtr();
     MapObjectEntry* mobj;
     Vec pos;
@@ -1015,7 +1019,7 @@ static void mot_getItem(void) {
  * an object hint or A-button case in front or underfoot, an NPC in talk range, or Yoshi.
  * PAL also refuses on a damage floor. TRUE if Mario jumped.
  */
-BOOL marioChkJump(void) {
+BOOL PORT_HOOKABLE(marioChkJump)(void) {
     MarioWork* mario = marioGetPtr();
     CaseEntry* ce;
     if (!(mario->buttonTrg & PAD_BUTTON_A)) {
@@ -1068,7 +1072,7 @@ BOOL marioChkJump(void) {
  * or Plane Curse (retail: not while a partner use is pending).
  * Returns TRUE only when Y was pressed and no panel took it; callers (mot_stay, mot_walk) ignore it.
  */
-BOOL marioChkTransform(void) {
+BOOL PORT_HOOKABLE(marioChkTransform)(void) {
     MarioWork* mario = marioGetPtr();
     if (!(mario->buttonTrg & PAD_BUTTON_Y)) {
         return FALSE;
@@ -1097,7 +1101,7 @@ BOOL marioChkTransform(void) {
  * otherwise a swing on B (not in paper or tube mode). Needs a hammer and normal (not 8-bit) Mario.
  * TRUE if a swing started.
  */
-BOOL marioChkItemMotion(void) {
+BOOL PORT_HOOKABLE(marioChkItemMotion)(void) {
     MarioWork* mario = marioGetPtr();
     u32 trig;
     if (mario->flags & MARIO_FLAG_IS_8_BIT) {
@@ -1125,7 +1129,7 @@ BOOL marioChkItemMotion(void) {
 }
 
 /** Always 0: a left-over stick-rub check; marioMain's air movement would skip the stick while it returned nonzero. */
-s32 marioChkRub(void) {
+s32 PORT_HOOKABLE(marioChkRub)(void) {
 #if VERSION <= VERSION_DEMO_JP
     MarioWork* mario = marioGetPtr();
 #endif
@@ -1139,7 +1143,7 @@ typedef BOOL (*MarioCreviceWallChkByValueFn)(Vec pos);
  * he has the Tube Curse and no wall or crevice is around him. Not in 8-bit mode.
  * Returns MARIO_MOTION_ROLL when it switched, else 0.
  */
-s32 marioRollChgChk(void) {
+s32 PORT_HOOKABLE(marioRollChgChk)(void) {
     MarioWork* mario = marioGetPtr();
     s32 b;
     s32 a;
@@ -1468,3 +1472,7 @@ static void mot_forceReset(void) {
             break;
     }
 }
+
+#ifdef PORT_MODS
+#include "port/hooks/src_mario_mario_motion.inc"
+#endif

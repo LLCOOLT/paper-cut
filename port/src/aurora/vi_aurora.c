@@ -15,6 +15,9 @@
 #include "port/layout.h"
 #include "port/savestate.h"
 #include "port/mod_host.h"
+#include "port/menu_tap.h"
+#include "port/practice.h"
+#include "port/display.h"
 #ifdef PORT_TOUCH_OVERLAY
 #include "port/touch_overlay.h"
 #endif
@@ -59,12 +62,14 @@ static void paceFrame(void) {
 }
 
 static void endFrame(void) {
+    portDisplayFrame(); /* the display options, and the frame's timing */
     portLayoutFrame(); /* the picture's place (portrait: at the top) */
     portModsDraw();    /* code mods' drawing, over the picture */
 #ifdef PORT_TOUCH_OVERLAY
     portTouchDraw(); /* on-screen controls, over the game's frame */
 #endif
     portSettingsDraw(); /* the settings page, when open */
+    portPerfOverlayDraw(); /* the frame-time graph, when on */
     aurora_end_frame();
 }
 
@@ -82,6 +87,7 @@ void portAuroraBeginFrame(void) {
             }
             if (event->type == AURORA_SDL_EVENT) {
                 portSettingsEvent(&event->sdl);
+                portMenuMouseEvent(&event->sdl); /* the mouse in the game's lists */
 #ifdef PORT_TOUCH_OVERLAY
                 portTouchEvent(&event->sdl);
 #endif
@@ -98,6 +104,7 @@ void portAuroraBeginFrame(void) {
             }
         }
         if (!sWindowPaused && aurora_begin_frame()) {
+            portDisplayFrameStart();
             return;
         }
     }
@@ -115,6 +122,7 @@ void VIWaitForRetrace(void) {
     if (sFast) {
         aurora_dvd_wait_idle();
     }
+    portDisplayWorkDone();
     paceFrame();
     endFrame();
     if (sPreCallback != NULL) {
@@ -151,6 +159,7 @@ void VIWaitForRetrace(void) {
             portAuroraBeginFrame();
             portInterpDraw((f32)k / (f32)frames);
             portShotInbetween(sRetraceCount - 1, k);
+            portDisplayWorkDone();
             waitUntil(sNextRetrace - FIELD_TICKS + FIELD_TICKS * k / frames);
             endFrame();
         }
@@ -158,6 +167,18 @@ void VIWaitForRetrace(void) {
         portFastClockSet(fastClock);
     }
     portSaveStateFrame(); /* between frames: a save state asked for */
+    if (portFrameAdvanceWait()) {
+        /* frame advance: the game held here, its last frame drawn again (and
+         * the settings page over it) until a step or the end of the hold */
+        portPause();
+        do {
+            portAuroraBeginFrame();
+            portInterpRedraw();
+            endFrame();
+            portSaveStateFrame();
+        } while (portFrameAdvanceWait());
+        portResume();
+    }
     portAuroraBeginFrame();
 }
 

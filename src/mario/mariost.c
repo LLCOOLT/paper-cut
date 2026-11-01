@@ -182,7 +182,7 @@ void L_gcResetCheck(void);
  * Every demo sets GLOBAL_FLAG_KIOSK and starts the idle timer; the 2004-09 US demo also switches to its PAL
  * video modes on a PAL console.
  */
-void marioStInit(void) {
+void PORT_HOOKABLE(marioStInit)(void) {
     static u8 stack[0x1000];
 #if VERSION == VERSION_DEMO_US2
     // the 2004-09 US demo runs on PAL consoles too: there it switches every video mode to its PAL twin
@@ -468,7 +468,7 @@ void PORT_HOOKABLE(marioStMain)(void) {
 }
 
 /** Draws the frame through the camera list (camDraw) and clears g_bFirstSmartAlloc after the first drawn frame. */
-void marioStDisp(void) {
+void PORT_HOOKABLE(marioStDisp)(void) {
     camDraw();
 #ifdef TARGET_PC
     portInterpSceneDrawn();
@@ -482,7 +482,7 @@ void marioStDisp(void) {
  * and stops or restarts events by type mask.
  * Used by item pickups (itemdrv.c), map objects (evt_mobj.c) and the evt_lecture script command.
  */
-void marioStSystemLevel(s32 level) {
+void PORT_HOOKABLE(marioStSystemLevel)(s32 level) {
     switch (level) {
         case 0:
             _mariostSystemLevel = level;
@@ -519,7 +519,7 @@ void marioStSystemLevel(s32 level) {
  * Returns the paused-level bit mask (gp->systemLevelFlags), not the level number;
  * 0 means the game is running freely.
  */
-u32 marioStGetSystemLevel(void) {
+u32 PORT_HOOKABLE(marioStGetSystemLevel)(void) {
     return gp->systemLevelFlags;
 }
 

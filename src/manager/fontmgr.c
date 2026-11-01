@@ -13,6 +13,7 @@
 #ifdef TARGET_PC
 #include "port/bedecode.h"
 #include "port/font_pc.h"
+#include "port/display.h"
 /* PC port: Shift-JIS text is a byte stream; read a double-byte code big-endian. */
 #define SJIS_CODE(p) portBE16(p)
 #else
@@ -1055,6 +1056,10 @@ void JUTFontSetup(u16 font) {
         GXInitTexObj(&fgTexObj, &blockGlyph[1], blockGlyph->sheetwidth, blockGlyph->sheetheight,
                      GX_TF_I4, GX_CLAMP, GX_CLAMP, GX_FALSE);
         GXInitTexObjLOD(&fgTexObj, GX_LINEAR, GX_LINEAR, 0.0f, 0.0f, 0.0f, GX_FALSE, GX_FALSE, GX_ANISO_1);
+#if defined(TARGET_PC) && defined(TTYD_BACKEND_AURORA)
+        /* PC port: sharp text redraws this sheet larger (port/display.h) */
+        portFontSheet(&blockGlyph[1], blockGlyph->sheetwidth, blockGlyph->sheetheight, GX_TF_I4);
+#endif
         fontGetWidth(JUTFont_CodeToGlyph(' '))->width = 7;
         fontGetWidth(JUTFont_CodeToGlyph(0x8140))->width = 9;
     }

@@ -1,4 +1,5 @@
 // Acrobat timing window: a short timed-press prompt and its result, used during Mario and partner attacks.
+#include "port_hook.h"
 #include <dolphin/pad.h>
 #include "battle/battle_acrobat.h"
 #include "battle/battle_ac.h"
@@ -7,6 +8,9 @@
 #include "driver/icondrv.h"
 #include "icon_ids.h"
 #include "version.h"
+#ifdef PORT_MODS
+#include "port/hooks/src_battle_battle_acrobat.h"
+#endif
 
 // local prototypes
 static void _accrobat_timing_icon_disp(CameraId camId, void* param);
@@ -17,7 +21,7 @@ static void _accrobat_timing_icon_disp(CameraId camId, void* param);
  * and a press recorded in the earlyFrames frames before the start already counts as too early.
  * Clears the frame counter and result; always returns 0.
  */
-s32 BattleAcrobatStart(BattleWork* work, s32 unitId, s32 windowStartFrame,
+s32 PORT_HOOKABLE(BattleAcrobatStart)(BattleWork* work, s32 unitId, s32 windowStartFrame,
                        s32 windowEndFrame, s32 endFrame, s32 earlyFrames) {
     work->stylishCurFrame = 0;
     work->stylishWindowStart = windowStartFrame;
@@ -36,7 +40,7 @@ s32 BattleAcrobatStart(BattleWork* work, s32 unitId, s32 windowStartFrame,
  * Timing Tutor draws the "!" icon during the window and Simplifier-style AutoCommand presses for the player.
  * Returns EVT_RETURN_BLOCK while still waiting, EVT_RETURN_YIELD once decided.
  */
-s32 BattleAcrobatMain(BattleWork* work) {
+s32 PORT_HOOKABLE(BattleAcrobatMain)(BattleWork* work) {
     BattleActions* manager;
     BattleUnit* unit;
     BOOL doSimplified;
@@ -107,8 +111,12 @@ static void _accrobat_timing_icon_disp(CameraId camId, void* param) {
 }
 
 /** Copies the last Stylish check result and the frame it was decided on to the script helper's outputs. */
-s32 BattleAcrobatGetResult(BattleWork* work, s32* result, s32* curFrame) {
+s32 PORT_HOOKABLE(BattleAcrobatGetResult)(BattleWork* work, s32* result, s32* curFrame) {
     *result = work->stylishResult;
     *curFrame = work->stylishCurFrame;
     return EVT_RETURN_DONE;
 }
+
+#ifdef PORT_MODS
+#include "port/hooks/src_battle_battle_acrobat.inc"
+#endif

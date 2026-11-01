@@ -3,6 +3,7 @@
 #ifdef TARGET_PC
 #include "port/platform.h"
 #endif
+#include "port_hook.h"
 #include "driver/envdrv.h"
 #include "driver/arcdrv.h"
 #include "driver/dispdrv.h"
@@ -17,6 +18,9 @@
 #include "sdk/texPalette.h"
 #include "libc_decls.h"
 #include <math.h>
+#ifdef PORT_MODS
+#include "port/hooks/src_driver_envdrv.h"
+#endif
 
 static void envGlare(EnvironmentGlare* glare);
 
@@ -177,7 +181,7 @@ static void _callback(s32 result, DVDFileInfo* fileInfo) {
 }
 
 /** Clears both the field and battle environment state and forgets env.tpl at boot. */
-void envInit(void) {
+void PORT_HOOKABLE(envInit)(void) {
     memset(&work[0], 0, sizeof(EnvironmentWork));
     memset(&work[1], 0, sizeof(EnvironmentWork));
     env_tpl = NULL;
@@ -188,7 +192,7 @@ void envInit(void) {
  * Clears the current mode's environment state (field or battle), turning its screen effects off,
  * when a map or battle is set up again.
  */
-void envReInit(void) {
+void PORT_HOOKABLE(envReInit)(void) {
     EnvironmentWork* wp = envGetWork();
     memset(wp, 0, sizeof(EnvironmentWork));
 }
@@ -198,7 +202,7 @@ void envReInit(void) {
  * from the startup archive if it holds it, else asynchronously from the disc.
  * Called from the logo sequence at boot.
  */
-void envTexSetup(void) { // 1:1
+void PORT_HOOKABLE(envTexSetup)(void) { // 1:1
     DVDEntry* entry;
     TEXPalette* tpl;
     char path[128];
@@ -337,7 +341,7 @@ static void envDisp2(CameraId camId, void* param) { // almost 1:1, needs extra a
 }
 
 /** Once per frame: queues the environment capture and draw callbacks on the 3D camera around the scene. */
-void envMain(void) {
+void PORT_HOOKABLE(envMain)(void) {
     dispEntry(CAMERA_3D, 20.0f, 7, envCapture, NULL);
     dispEntry(CAMERA_3D, 10.0f, 7, envDisp, NULL);
     dispEntry(CAMERA_3D, 0.0f, 7, envCapture2, NULL);
@@ -691,7 +695,7 @@ static void envDisp_Blur(void) {
  * type 1 fades from fully opaque, msec gives the fade time in milliseconds (0 for a constant blur).
  * Allocates the half-size capture texture in map memory.
  */
-void envBlurOn(s32 type, s32 msec) {
+void PORT_HOOKABLE(envBlurOn)(s32 type, s32 msec) {
     EnvironmentWork* wp = envGetWork();
     EnvBlurWork* blur = (EnvBlurWork*)&wp->blurWork;
 
@@ -709,7 +713,7 @@ void envBlurOn(s32 type, s32 msec) {
 }
 
 /** Stops the motion blur and frees its capture texture. */
-void envBlurOff(void) {
+void PORT_HOOKABLE(envBlurOff)(void) {
     EnvironmentWork* wp = envGetWork();
 
     wp->flags &= ~ENV_FLAG_BLUR_CAPTURE;
@@ -863,7 +867,7 @@ static void envGlare(EnvironmentGlare* glare) {
  * and x0/y0..x1/y1 the screen rectangle it covers (rounded out to even pixels and clamped to the frame);
  * type 0 turns it off. No caller in this tree.
  */
-void envGlareFilter(s32 type, s32 y0, s32 x0, s32 y1, s32 x1) {
+void PORT_HOOKABLE(envGlareFilter)(s32 type, s32 y0, s32 x0, s32 y1, s32 x1) {
     EnvironmentWork* wp = envGetWork();
     EnvironmentGlareFilter* f = &wp->filter;
     s16 sx1, sy1, sx0, sy0;
@@ -904,7 +908,7 @@ void envGlareFilter(s32 type, s32 y0, s32 x0, s32 y1, s32 x1) {
 }
 
 /** Sets the depth scale of the glare filter and makes it depth-dependent. No caller in this tree. */
-void envGlareFilterZ(f32 zscale) {
+void PORT_HOOKABLE(envGlareFilterZ)(f32 zscale) {
     EnvironmentWork* wp = envGetWork();
     EnvironmentGlareFilter* f = &wp->filter;
 
@@ -1180,7 +1184,7 @@ envLoadTex(u32 id, s32 map) {
  * Map RELs call it from their own TEV callbacks installed with evt_map_set_tevcallback
  * (the trains in gor_04 and pik_00 with type 7, pik_01 with 4 and 7, hom_10 with 7).
  */
-void envAddTev(s32 type, MapTevCallbackInfo* info) {
+void PORT_HOOKABLE(envAddTev)(s32 type, MapTevCallbackInfo* info) {
     s32 stage;
     int map;
     int coord;
@@ -1357,7 +1361,7 @@ static inline MapObject* envWaterParent(MapObject* o) {
  * gets closer, and warps the copy through it onto the surface. Skips the first frame an object is seen.
  * Called from map TEV callbacks installed with evt_map_set_tevcallback (dou_00, hei_09).
  */
-void envSetWater(MapTevCallbackInfo* info) {
+void PORT_HOOKABLE(envSetWater)(MapTevCallbackInfo* info) {
     MapObject* obj;
     GXTevStageID stage;
     GXTexMapID map;
@@ -1515,7 +1519,7 @@ void envSetWater(MapTevCallbackInfo* info) {
 }
 
 /** Stores the view matrix the darkness (yami) pattern of envSetYami is projected with. */
-void envSetYamiView(Mtx view) {
+void PORT_HOOKABLE(envSetYamiView)(Mtx view) {
     EnvironmentWork* wp = envGetWork();
 
     PSMTXCopy(view, (MtxPtr)wp->yamiView);
@@ -1528,7 +1532,7 @@ void envSetYamiView(Mtx view) {
  * Installed with evt_map_set_tevcallback in the chapter 8 world-darkening scenes (sekai_yami) of Rogueport,
  * Petalburg, the Great Tree, Fahr Outpost and others, after the map sets the pattern view with envSetYamiView.
  */
-void envSetYami(MapTevCallbackInfo* info) {
+void PORT_HOOKABLE(envSetYami)(MapTevCallbackInfo* info) {
     static f32 u1 = 0.0f;
     static f32 u2 = 0.0f;
     static u32 v_count = 0;
@@ -1604,3 +1608,7 @@ void envSetYami(MapTevCallbackInfo* info) {
     info->indStage = indStage;
     info->texCoord = map;
 }
+
+#ifdef PORT_MODS
+#include "port/hooks/src_driver_envdrv.inc"
+#endif

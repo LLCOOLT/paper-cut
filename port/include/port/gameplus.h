@@ -75,6 +75,11 @@ int portRetryOffer(void);
 /* --- Skip repeated scenes ("skip_scenes") --- */
 #define PORT_SCENE_CRYSTAL_STAR 1 /* evt_sub.c evt_sub_starstone: the 9.7 s fanfare, cut to 2.5 s */
 #define PORT_SCENE_COOKING 2      /* gor_01.c cooking_evt_sub: Zess T.'s cooking, skipped */
+#define PORT_SCENE_PEDESTAL 3     /* tik_05.c mahojin_event1-6: the map's reveal, 6 s cut to 1.5 s */
+#define PORT_SCENE_GLITZ_OPENING 4 /* tou_03.c evt_default_opening: everyone placed, the gong */
+#define PORT_SCENE_GLITZ_WIN 5    /* tou_03.c evt_default_win: no confetti, poses or lines */
+#define PORT_SCENE_TRAIN_TICKET 6 /* gor_04.c ekiin_talk: aboard without the ticket hand-over */
+#define PORT_SCENE_BLIMP_TICKET 7 /* gor_04.c hikosenkakari_talk: the same for the blimp */
 struct EventEntry;
 /* An event command (CALL(portEvtSceneMs, scene, ms, LW(n))): LW(n) = ms, or
  * the shorter time (0: none) when the setting is on and the scene was seen
@@ -123,6 +128,30 @@ typedef struct PortJournal {
 /* The file being played's progress, from its flags; 0 when no game runs. */
 int portJournal(PortJournal* out);
 
+/* --- Tattle without a turn ("free_tattle"; battle_seq_command.c) --- */
+#define PORT_OPERATION_TATTLE 0x50 /* the Tactics entry's type, and the message route's reason */
+/* Mario's side may read a tattle now: the setting is on, Goombella has joined
+ * and an enemy on the field was tattled before (Tattle Log or this battle). */
+int portTattleFreeAvailable(void);
+/* The entry was picked: the list of tattles to read starts over. */
+void portTattleFreeBegin(void);
+/* Event commands of the menu's message event: LW = 1 when it is the free
+ * Tattle; then each enemy kind's tattle message in turn, 0 at the end. */
+int portEvtTattleFree(struct EventEntry* event, int isFirstCall);
+int portEvtTattleNext(struct EventEntry* event, int isFirstCall);
+
+/* --- Battle feedback pop-ups ("battle_popups"; port/src/common/battle_popup_pc.c) --- */
+struct BattleUnit;
+struct BattleUnitPart;
+/* battle_damage.c: Mario or the partner guarded (super: a Superguard). */
+void portPopupGuard(struct BattleUnit* unit, struct BattleUnitPart* part, int super);
+/* battle_damage.c: unit resisted statusType (its roll failed). */
+void portPopupResisted(struct BattleUnit* unit, int statusType);
+/* battle_seq.c, every battle frame: ages and draws them; portPopupClear at a battle's start. */
+void portPopupFrame(void);
+void portPopupClear(void);
+/* battle_status_icon.c: the status icons also show outside the command menu. */
+
 /* --- Save Blocks without the question ("save_no_prompt"): evt_memcard.c --- */
 
 /* --- Accessibility: difficulty ("difficulty": 0 original, 1 easy, 2 hard,
@@ -135,6 +164,78 @@ int portEnemyDamage(int damage);
 
 /* --- Accessibility: action-command assist ("ac_attack_assist",
  * "ac_guard_assist": 0 off, 1 wider windows, 2 automatic): battle_ac.c --- */
+
+/* ===== The second batch (port/src/common/gameplus2_pc.c; their controls in
+ * port/settings/features/gameplus2.cpp) ===== */
+
+/* Declares the second batch's settings (portGameplusDeclare does). */
+void portGameplus2Declare(void);
+/* seq_load.c (through portNewGamePlus), a new file just set up: what was
+ * kept for the file in that slot before (the tracks heard) starts over. */
+void portGameplus2NewFile(void);
+
+/* --- Badge loadouts ("badge_loadouts"; the settings page's list). Kept beside
+ * the save, not in it (gameplus_<version>_file<N>.txt in the user folder). --- */
+#define PORT_LOADOUT_COUNT 4
+#define PORT_LOADOUT_NAME 24
+/* Loadout i of the file being played: its name and how many badges it has
+ * (0: empty); -1 when no game runs. */
+int portLoadoutGet(int i, char* name, int nameSize);
+void portLoadoutRename(int i, const char* name);
+/* Loadout i becomes the badges worn now (returns how many). */
+int portLoadoutStore(int i);
+/* Wears loadout i in place of the badges worn now, in the field only and only
+ * when Mario's BP covers it: TRUE when it was put on; msg says what happened. */
+int portLoadoutWear(int i, char* msg, int msgSize);
+
+/* --- Item storage at every Save Block ("storage_anywhere"): evt_mobj.c
+ * mobj_save_blk_sysevt asks what to do first; storing and taking out work as
+ * at the Rogueport shop's counter. Event commands: --- */
+/* LW(0) = 1 when the setting is on. */
+int portEvtStorageOn(struct EventEntry* event, int isFirstCall);
+/* LW(0) items held, LW(1) storage slots free, LW(2) items stored, LW(3) bag
+ * slots free. */
+int portEvtStorageCounts(struct EventEntry* event, int isFirstCall);
+
+/* --- Walk-speed boost ("walk_boost", "walk_boost_speed" %, "walk_boost_key",
+ * "walk_boost_pad") --- */
+/* Aurora: the boost control is held now (port/settings/features/gameplus2.cpp). */
+extern int (*gPortWalkBoostHeld)(void);
+/* mot_walk.c marioGetWalkSpd / marioGetDashSpd: Mario's speed scale now. */
+float portWalkBoost(void);
+
+/* --- Coin and EXP multipliers ("coin_multiplier", "exp_multiplier": 0-4 for
+ * x1, x1.5, x2, x2.5, x3) --- */
+/* npcdrv.c: the coins a won battle drops (after Merlee, Money Money, First Strike). */
+int portBattleCoins(int coins);
+/* battle_seq_end.c: the battle's Star Points (before the cap of 100). */
+int portBattleExp(int exp);
+
+/* --- Star Piece and Shine Sprite tracker ("collectible_tracker": 0 off,
+ * 1-4 a corner TL TR BL BR) --- */
+/* The current map's, by their flags: TRUE when it has any (in the field). */
+int portCollectiblesHere(int* pieces, int* piecesTotal, int* sprites, int* spritesTotal);
+
+/* --- Faster text outside battle ("fast_field_text") --- */
+/* msgdrv.c: the scale of a message window's time (text, page scroll, fades):
+ * 1, or 3 for messages outside battle while the setting is on. */
+int portFieldTextScale(void);
+
+/* --- Jukebox ("jukebox"; the settings page's list) --- */
+/* pmario_sound.c psndBGMOn_f_d: BGM id (psbgmlist) was asked for on channel ch. */
+void portJukeboxHeard(int id, int ch);
+/* pmario_sound.c: the BGM table's size and a track's name ("" for none). */
+int portBgmCount(void);
+const char* portBgmName(int id);
+/* A track was heard on the file being played (while the setting was on). */
+int portJukeboxKnown(int id);
+/* Plays track id on the field channel (-1: the map's own music again). */
+void portJukeboxPlay(int id);
+/* The track the jukebox plays now, or -1. */
+int portJukeboxPlaying(void);
+
+/* --- Junk-item helper in shops ("sell_helper"): winmgr.c's sell lists mark
+ * the items and badges Mario has more than one of --- */
 
 #ifdef __cplusplus
 }

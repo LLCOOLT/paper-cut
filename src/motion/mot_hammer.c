@@ -1,5 +1,6 @@
 // Mario's hammer motions: the normal swing (mot_hammer) and the charged spin (mot_hammer2), with block and wall
 // hits.
+#include "port_hook.h"
 #include "dolphin/types.h"
 #include "pc_call.h"
 #include "driver/hitdrv.h"
@@ -22,6 +23,9 @@
 #include "libc_decls.h"
 #include "version.h"
 #include <dolphin/pad.h>
+#ifdef PORT_MODS
+#include "port/hooks/src_motion_mot_hammer.h"
+#endif
 
 // Bits of MarioWork.mot.hammer2.flags (the charged hammer; cleared when it starts).
 enum MotHammer2Flag {
@@ -158,7 +162,7 @@ static inline s32 chkBlock(HamMobj* obj) {
  * Mario's hammer level (0 none, 1 Hammer, 2 Super Hammer, 3 Ultra Hammer);
  * the motion code uses 0 to block swinging and 2+ for the spin hammer.
  */
-s32 marioGetHammerLevel(void) {
+s32 PORT_HOOKABLE(marioGetHammerLevel)(void) {
     return pouchGetPtr()->hammerLevel;
 }
 
@@ -169,7 +173,7 @@ s32 marioGetHammerLevel(void) {
  * plays the Attack FX badge sound in place of the swing sound when one is equipped,
  * then returns to standing after about 20 frames.
  */
-void mot_hammer(void) {
+void PORT_HOOKABLE(mot_hammer)(void) {
     MarioWork* mario = marioGetPtr();
     Vec* unused;
     s32 snd;
@@ -399,7 +403,7 @@ void mot_hammer(void) {
  * and once the stick has been rotated (marioGetRub) returns 1 with mario->hammerDir set.
  * Returns 0 below the Super Hammer or when B is released.
  */
-s32 marioChkHammer2(void) {
+s32 PORT_HOOKABLE(marioChkHammer2)(void) {
     MarioWork* mario = marioGetPtr();
     s32 b, a;
     f32 c;
@@ -509,7 +513,7 @@ static inline void hammer2PaperReset(MarioWork* mario) {
  * raising the charge level (hammerChargeLv, camera zooms in each level),
  * then spins around hitting everything nearby; level 3 spins longer. Ends back in the stay motion.
  */
-void mot_hammer2(void) {
+void PORT_HOOKABLE(mot_hammer2)(void) {
     MarioWork* mario = marioGetPtr();
     s32 b, a;
     f32 c;
@@ -732,7 +736,7 @@ void mot_hammer2(void) {
  * Current facing angle of the spinning hammer, for npcdrv to see whether it hits an NPC:
  * -1 if Mario is not doing the spin hammer, -2 if not in the spinning phase.
  */
-f32 marioGetAngleKaitenHammer(void) {
+f32 PORT_HOOKABLE(marioGetAngleKaitenHammer)(void) {
     MarioWork* mario = marioGetPtr();
     if (mario->currMotionId != MARIO_MOTION_HAMMER_2) {
         return -1.0f;
@@ -747,7 +751,7 @@ f32 marioGetAngleKaitenHammer(void) {
  * Cleanup when the spin hammer motion ends early:
  * paper animation off, camera shift reset and the facing and mirror locks released.
  */
-void mot_ham2_post(void) {
+void PORT_HOOKABLE(mot_ham2_post)(void) {
     MarioWork* mario = marioGetPtr();
     if (mario->dispFlags & MARIO_DISP_FLAG_PAPER_ON) {
         marioPaperOff();
@@ -965,3 +969,7 @@ static HitEntry* hammerHitWall(f32 ang, f32* s, f32* co, f32* len, f32* hx, f32*
     *len = 2.0f * mario->wPlayerCollisionBox.x;
     return hitCheckFilter(0, hx, hy, hz, len, nx, ny, nz, mario->position.x, 0.5f * mario->wPlayerCollisionBox.y + mario->position.y, mario->position.z, *s, 0.0f, *co);
 }
+
+#ifdef PORT_MODS
+#include "port/hooks/src_motion_mot_hammer.inc"
+#endif

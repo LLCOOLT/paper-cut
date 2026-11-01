@@ -3,6 +3,9 @@
 #ifdef TARGET_PC
 #include "port/rel_pc.h"
 #endif
+#ifdef PORT_MODS
+#include "port/mods.h"
+#endif
 #include "port_hook.h"
 #include "evt/evt_cmd.h"
 #include "evt/evt_seq.h"
@@ -96,6 +99,12 @@ static inline const char* getAreaName(void) {
         } else if (!strcmp(_next_map, mc_tou_03)) {
             area_name = mc_tou2;
         }
+#ifdef PORT_MODS
+        /* a new map of a mod or a mode with tou_03's files: the arena's REL too */
+        else if (portModsMapFiles(_next_map) != NULL && !strcmp(portModsMapFiles(_next_map), mc_tou_03)) {
+            area_name = mc_tou2;
+        }
+#endif
     }
     return area_name;
 }
@@ -105,7 +114,7 @@ static inline const char* getAreaName(void) {
  * and rerolls the Rogueport badge shop's bargain and Charlieton stock on entering gor_01
  * after any map except gor_01.
  */
-void seq_mapChangeInit(SequenceWork* work) {
+void PORT_HOOKABLE(seq_mapChangeInit)(SequenceWork* work) {
     strcpy(_next_area, "");
     strcpy(_next_map, "");
     strcpy(_next_bero, "");
@@ -133,7 +142,7 @@ void seq_mapChangeInit(SequenceWork* work) {
 }
 
 /** Leaves the map change sequence: resets the GX overflow counter and turns off the lottery debug display. */
-void seq_mapChangeExit(SequenceWork* work) {
+void PORT_HOOKABLE(seq_mapChangeExit)(SequenceWork* work) {
     GXResetOverflowCount();
     dbg_lotteryinfo = FALSE;
 }
@@ -445,7 +454,7 @@ void PORT_HOOKABLE(seq_mapChangeMain)(SequenceWork* work) {
  * Also resets the fade (closing the curtain) unless coming from the load or title sequence
  * or from sys_00/sys_01/dig_00.
  */
-void _unload(const char* prevMap, const char* nextMap, const char* bero) {
+void PORT_HOOKABLE(_unload)(const char* prevMap, const char* nextMap, const char* bero) {
     extern void* nanNPCWork;
     BOOL swReinit = FALSE;
     int i;
@@ -614,7 +623,7 @@ static const char mc_tst[] = "tst";
 static const char mc_jon[] = "jon";
 
 /** Unlinks the current area REL after running its epilog, freeing its buffer when it was not the shared map buffer. */
-void _relUnLoad(void) {
+void PORT_HOOKABLE(_relUnLoad)(void) {
     if (gp->relocationBase) {
 #ifdef TARGET_PC
         portRelUnlink();

@@ -53,11 +53,66 @@ typedef struct PortModOption {
     int value;
     int choiceCount;
     const char* const* choices;
+    const char* note;  /* mod.json "note": what it does, or "" */
+    int fallback;      /* mod.json "default" */
+    int nextStart;     /* mod.json "restart": true: the mod's code reads it at the game's start */
 } PortModOption;
 
 const PortModOption* portModsGetOption(int index, int option);
 /* Written to mods/options.txt; the mod's code reads it (api->optionInt). */
 void portModsSetOption(int index, int option, int value);
+
+/* What a mod changes, by kind, and where another mod changes the same thing
+ * (the mod manager on the settings page). Whether or not the mod wins there:
+ * the first in the list does. Hooks are known once its code runs. */
+enum {
+    PORT_MOD_CHANGE_FILE,    /* disc files (overlay/), by disc path */
+    PORT_MOD_CHANGE_TEXTURE, /* textures (textures/), by file name */
+    PORT_MOD_CHANGE_MESSAGE, /* messages, by tag ("DE/tag" for one language) */
+    PORT_MOD_CHANGE_PATCH,   /* data patches, by target */
+    PORT_MOD_CHANGE_HOOK,    /* hook slots its code took: "name (pre|post|replace)" */
+    PORT_MOD_CHANGE_MAP,     /* maps given an init script (mod.json "maps") */
+    PORT_MOD_CHANGE_COUNT
+};
+int portModsChangeCount(int index, int kind);
+const char* portModsChange(int index, int kind, int i);
+
+/* The things of one kind both this mod and another one change. */
+typedef struct PortModConflict {
+    int kind;          /* PORT_MOD_CHANGE_* */
+    int count;         /* how many */
+    const char* what;  /* the first few, for display ("a, b, c") */
+    const char* other; /* the other mod's name */
+    int wins;          /* this mod's are the ones in use (it is first in the list); hooks:
+                          1 both run (pre/post), 0 only the first's replacement runs */
+} PortModConflict;
+int portModsConflictCount(int index);
+const PortModConflict* portModsGetConflict(int index, int i);
+
+/* The mods folder read without a running game (the launcher's settings):
+ * listed, turned on and off and ordered; nothing is applied. Does nothing
+ * once portModsInit ran. */
+void portModsPreview(const char* userPath);
+
+/* Texture packs: the loose textures folder and the enabled mods' textures,
+ * against the textures seen while dumping (the dump folder). */
+typedef struct PortTextureStats {
+    int replacements;  /* textures replaced (distinct names over every pack) */
+    int files;         /* texture files over every pack */
+    int collisions;    /* names given by more than one file (the first pack wins) */
+    int dumped;        /* textures in the dump folder (seen in play, unreplaced when dumped) */
+    int dumpedCovered; /* of those, now replaced by a pack */
+    int dumping;       /* dumping is on now */
+} PortTextureStats;
+/* Counts again (reads the folders): call on demand, not every frame. */
+void portModsTextureStats(PortTextureStats* out);
+/* A colliding name and the packs giving it, the first winning ("a, b"), for
+ * i < collisions; NULL past the end. */
+const char* portModsTextureCollision(int i, const char** packs);
+/* Texture dumping on or off while the game runs (the dump_textures setting). */
+void portModsSetTextureDumps(int on);
+/* The texture packs read again (files added or changed while playing). */
+void portModsReloadTextures(void);
 
 /* Reads the mods folder and applies the enabled mods (main_aurora.c, once
  * the disc is open), and the loose textures folder. $TTYD_NO_MODS: neither
@@ -83,6 +138,14 @@ const char* portModMsgSearch(const char* tag, const char* langDir);
 /* A map's init script from an enabled mod's evt/ (mod.json "maps"), or NULL:
  * the game's MapData for it (port/src/aurora/mod_game_aurora.c). */
 void* portModsMapScript(const char* map);
+
+/* A map the host itself adds (the modes', port/include/port/modes.h), below
+ * every mod's: its init script and the map whose files it reads. Before
+ * portModsInit (or followed by portModsReload). */
+void portModsAddHostMap(const char* map, void* initScript, const char* files);
+/* The map whose files a mod's or the host's new map reads, or NULL
+ * (seq_mapchange.c: a new map borrowing tou_03's loads tou_03's REL). */
+const char* portModsMapFiles(const char* map);
 
 /* DVDMgrOpen (src/manager/dvdmgr.c): path, or the path a mod's new map reads
  * its files from (mod.json "maps": "files": another map's). */

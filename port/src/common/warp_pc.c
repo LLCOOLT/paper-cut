@@ -11,6 +11,7 @@
 #include "mario/mariost.h"
 #include "port/cardsave_pc.h"
 #include "port/platform.h"
+#include "port/practice.h"
 
 BOOL portCardLoadSlotImage(s32 slot, const void* image); /* cardmgr.c */
 void portContinueGame(s32 slot);                         /* seq_load.c */
@@ -74,6 +75,7 @@ static void loadSave(const char* path) {
     printf("[warp] save %s (file slot %d)\n", name, i + 1);
     fflush(stdout);
     portContinueGame(WARP_SLOT);
+    portPracticeFileLoaded();
     snprintf(sStatus, sizeof(sStatus), "Loaded %s", name);
 }
 

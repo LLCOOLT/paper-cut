@@ -1,4 +1,5 @@
 // Audience attacks: audience members throwing items, and item announcements.
+#include "port_hook.h"
 #include "driver/itemdrv.h"
 #include "evt/evt_msg.h"
 #include "version.h"
@@ -25,6 +26,9 @@
 #include "battle/battle_attack_audience.h"
 #include "libc_decls.h"
 #include "battle/battle_sub.h"
+#ifdef PORT_MODS
+#include "port/hooks/src_battle_battle_attack_audience.h"
+#endif
 
 // this unit is size-optimised, as in the original (the object differs without it)
 #pragma optimize_for_size on
@@ -256,7 +260,7 @@ static s32 _damage(EventEntry* event, BOOL isFirstCall) {
  * btlataudevtPresentItem_Damage for harmful throws (type 1), btlataudevtPresentItem_Get for gifts.
  * Called by the battle command sequence.
  */
-EvtWord* btlataudGetMoveEventPtr(void) {
+EvtWord* PORT_HOOKABLE(btlataudGetMoveEventPtr)(void) {
     switch (BattleAudience_GetPresentItemType()) {
         case 1:
             return btlataudevtPresentItem_Damage;
@@ -274,7 +278,7 @@ EVT_BEGIN(btlataudevtDummy)
     RETURN
 EVT_END()
 /** Returns the unit's own "attack the audience" script (unit data slot 6), or btlataudevtDummy when it has none. */
-EvtWord* btlataudGetAttackEventPtr(s32 unitId) {
+EvtWord* PORT_HOOKABLE(btlataudGetAttackEventPtr)(s32 unitId) {
     EvtWord* p = BtlUnit_GetData(BattleGetUnitPtr(_battleWorkPointer, unitId), 6);
     if (p == NULL) {
         p = btlataudevtDummy;
@@ -316,3 +320,7 @@ EVT_BEGIN(btlataudevtPresentItem_Get)
     CALL(btlevtcmd_StartWaitEvent, BTL_UNIT_SELF)
     RETURN
 EVT_END()
+
+#ifdef PORT_MODS
+#include "port/hooks/src_battle_battle_attack_audience.inc"
+#endif

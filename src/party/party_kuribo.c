@@ -1,4 +1,5 @@
 // Goombella (kuribo): partner init, follow and the tattle ability.
+#include "port_hook.h"
 #include "party/party_hit.h"
 #include "party/party_kuribo.h"
 #include "evt/evt_cmd.h"
@@ -14,6 +15,9 @@
 #include "party/party_move.h"
 #include "system.h"
 #include "version.h"
+#ifdef PORT_MODS
+#include "port/hooks/src_party_party_kuribo.h"
+#endif
 
 //.sbss
 u32 msg_ep; // unknown since it only gets written to once and never used
@@ -22,7 +26,7 @@ u32 msg_ep; // unknown since it only gets written to once and never used
  * TRUE while Goombella is the active partner and her Tattle ability is in use;
  * marioChkKey checks it to keep Mario's controls locked while she talks.
  */
-BOOL christineGetStatus(void) {
+BOOL PORT_HOOKABLE(christineGetStatus)(void) {
     PartyEntry* party = partyGetPtr(marioGetPartyId());
     if (!party || party->currentMemberId != PARTY_MEMBER_GOOMBELLA || !(party->flags & PARTY_FLAG_IS_BEING_USED)) {
         return FALSE;
@@ -206,7 +210,7 @@ static USER_FUNC(post_kurio_use) {
  * Party table init for Goombella, also used by the walking followers that reuse her routines (Professor Frankly,
  * Marco, the guide, the gatekeepers): sets the 26 wide by 24 tall collision size.
  */
-void kuribo_init(PartyEntry* party) {
+void PORT_HOOKABLE(kuribo_init)(PartyEntry* party) {
     party->memberKind = PARTY_MEMBER_GOOMBELLA;
     party->moveKind = 0;
     party->height = 24.0f;
@@ -234,7 +238,7 @@ f32 PSVECDistance(const Vec*, const Vec*);
  * Party table post_func, run when Goombella leaves use mode (partyUsePost or a run-mode change out of mode 3):
  * retail clears the floor-collision overrides kuribo_use may have set; empty in the demos.
  */
-void kuribo_use_post(PartyEntry* party) {
+void PORT_HOOKABLE(kuribo_use_post)(PartyEntry* party) {
 #if VERSION >= VERSION_JP
     party->flags &= ~PARTY_FLAG_DISABLE_FLOORS;
     party->flags &= ~PARTY_FLAG_FORCE_FALL;
@@ -243,7 +247,7 @@ void kuribo_use_post(PartyEntry* party) {
 
 #if VERSION <= VERSION_DEMO_JP
 /** The demo starts the message right where Goombella stands; retail first walks her next to Mario. */
-void kuribo_use(PartyEntry* party) {
+void PORT_HOOKABLE(kuribo_use)(PartyEntry* party) {
     EventEntry* evt;
 
     if (party->trigFlags & PARTY_TRIG_FLAG_CHG_RUN_MODE) {
@@ -285,7 +289,7 @@ void kuribo_use(PartyEntry* party) {
  * then starts kurio_msg_evt with the NPC Mario can talk to and waits for the script to finish
  * before returning to normal follow mode.
  */
-void kuribo_use(PartyEntry* party) {
+void PORT_HOOKABLE(kuribo_use)(PartyEntry* party) {
     MarioWork* mario = party->playerPtr;
     HitEntry* wall;
     Vec pos;
@@ -376,7 +380,7 @@ void kuribo_use(PartyEntry* party) {
  * Goodbye routine shared by Goombella, Flurrie, Vivian, Ms. Mowz and the walking NPC followers:
  * plays the standard leave-the-party motion and switches to run mode 14 once it ends.
  */
-void kuribo_bye(PartyEntry* party) {
+void PORT_HOOKABLE(kuribo_bye)(PartyEntry* party) {
     if (party->trigFlags & PARTY_TRIG_FLAG_CHG_RUN_MODE) {
         party->trigFlags &= ~PARTY_TRIG_FLAG_CHG_RUN_MODE;
         partyGoodbyeInit(party);
@@ -385,3 +389,7 @@ void kuribo_bye(PartyEntry* party) {
         partyChgRunMode(party, 14);
     }
 }
+
+#ifdef PORT_MODS
+#include "port/hooks/src_party_party_kuribo.inc"
+#endif

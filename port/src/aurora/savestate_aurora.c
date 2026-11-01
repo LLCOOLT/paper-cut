@@ -22,6 +22,18 @@
 #include <stdio.h>
 #include <string.h>
 
+static char sLabels[PORT_SAVE_STATE_SLOTS][32];
+
+const char* portSaveStateLabel(int slot) {
+    return slot >= 0 && slot < PORT_SAVE_STATE_SLOTS ? sLabels[slot] : "";
+}
+
+void portSaveStateSetLabel(int slot, const char* label) {
+    if (slot >= 0 && slot < PORT_SAVE_STATE_SLOTS) {
+        snprintf(sLabels[slot], sizeof(sLabels[slot]), "%s", label);
+    }
+}
+
 #if defined(TTYD_SAVE_STATES)
 #include <SDL3/SDL.h>
 #include <aurora/dvd.h>

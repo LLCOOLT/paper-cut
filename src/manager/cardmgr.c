@@ -1,5 +1,6 @@
 // Memory card manager: mounts, creates, formats, reads and writes the save file (banner, icon,
 // comment and checksums) as a step-by-step state machine.
+#include "port_hook.h"
 #include "version.h"
 #ifdef TARGET_PC
 #include "port/platform.h"
@@ -21,6 +22,9 @@
 #include "assets/_mariost_icon_tlut.inc"
 #include "assets/_mariost_banner_tex.inc"
 #include "libc_decls.h"
+#ifdef PORT_MODS
+#include "port/hooks/src_manager_cardmgr.h"
+#endif
 #ifdef TARGET_PC
 /* PC port: prototypes for functions this file called undeclared (implicit int) */
 s32 CARDFormatAsync(s32 chan, CARDCallback callback);
@@ -125,7 +129,7 @@ static inline BOOL dataCheck(void);
  * The in-memory copy of the save file: the header (comment, banner, icon, settings)
  * and the four save slots the file select screen lists.
  */
-CardData* cardGetFilePtr(void) {
+CardData* PORT_HOOKABLE(cardGetFilePtr)(void) {
     return wp->data;
 }
 
@@ -134,7 +138,7 @@ CardData* cardGetFilePtr(void) {
  * the memory card scripts call it before loading the file again.
  * The demo keeps its insert-watch flag across the reset.
  */
-void cardBufReset(void) {
+void PORT_HOOKABLE(cardBufReset)(void) {
     s32 flags;
     s32 timeout;
 
@@ -170,7 +174,7 @@ void cardBufReset(void) {
  * the save file image and the read and write slot buffers,
  * builds an empty file image and starts the CARD library.
  */
-void cardInit(void) {
+void PORT_HOOKABLE(cardInit)(void) {
     wp = __memAlloc(HEAP_DEFAULT, sizeof(CardWork));
     memset(wp, 0, sizeof(CardWork));
     wp->workArea = __memAlloc(HEAP_DEFAULT, CARD_WORKAREA_SIZE);
@@ -215,20 +219,20 @@ void cardInit(void) {
  * Starts watching slot A for a card being inserted or removed (memcard_watch_start);
  * also keeps cardIsExec busy for 10 frames while the probe settles. Not in the demo.
  */
-void cardInsertWatchStart(void) {
+void PORT_HOOKABLE(cardInsertWatchStart)(void) {
     wp->prevInserted = wp->chan;
     wp->busyFrames = 10;
     wp->flags |= CARD_FLAG_INSERT_WATCH;
 }
 
 /** Stops the insert watch and clears its changed flag. */
-void cardInsertWatchEnd(void) {
+void PORT_HOOKABLE(cardInsertWatchEnd)(void) {
     wp->flags &= ~CARD_FLAG_INSERT_WATCH;
     wp->flags &= ~(CARD_FLAG_INSERT_WATCH | CARD_FLAG_INSERT_CHANGED);
 }
 
 /** TRUE once a card was inserted or removed in slot A since cardInsertWatchStart; the file select scripts poll it. */
-BOOL cardInsertChanged(void) {
+BOOL PORT_HOOKABLE(cardInsertChanged)(void) {
     if (wp->flags & CARD_FLAG_INSERT_WATCH && wp->flags & CARD_FLAG_INSERT_CHANGED) {
         return TRUE;
     }
@@ -240,7 +244,7 @@ BOOL cardInsertChanged(void) {
  * TRUE while a card operation is running or a card call is in flight (or the insert watch is settling).
  * Scripts wait on it, and mariost.c waits for it before a reset so a save is never cut off.
  */
-BOOL cardIsExec(void) {
+BOOL PORT_HOOKABLE(cardIsExec)(void) {
 #if VERSION >= VERSION_JP
     if (wp == NULL) {
         return FALSE;
@@ -256,7 +260,7 @@ BOOL cardIsExec(void) {
 }
 
 /** Result of the last card operation as a CARD_RESULT_* code (READY on success, NOCARD, BROKEN, INSSPACE, ...). */
-s32 cardGetCode(void) {
+s32 PORT_HOOKABLE(cardGetCode)(void) {
     return wp->result;
 }
 
@@ -266,7 +270,7 @@ s32 cardGetCode(void) {
  * Each step starts one SDK call and the next frame continues once its callback has stored the result.
  * Delete (op 7) has no starter function.
  */
-void cardMain(void) {
+void PORT_HOOKABLE(cardMain)(void) {
 #if VERSION >= VERSION_JP
     s32 inserted;
 
@@ -391,7 +395,7 @@ void cardMain(void) {
  * keeping the console settings (sound mode, rumble, last slot, progressive scan, and the language,
  * plus the 50/60 Hz choice on PAL) and runtime pointers. Called by the file select's load.
  */
-void cardCopy2Main(s32 slot) {
+void PORT_HOOKABLE(cardCopy2Main)(s32 slot) {
 #if VERSION >= VERSION_US
     void* backup2;
     s32 backup4;
@@ -488,7 +492,7 @@ BOOL portCardLoadSlotImage(s32 slot, const void* image) {
 #endif
 
 /** Starts erasing a save slot: writes an empty slot marked erased (flag 1) over both its copies on the card. */
-void cardErase(s32 slotNo) {
+void PORT_HOOKABLE(cardErase)(s32 slotNo) {
     CardSaveSlot* save;
 
     if (!(wp->flags & CARD_FLAG_OP_BUSY)) {
@@ -507,7 +511,7 @@ void cardErase(s32 slotNo) {
 }
 
 /** Starts copying save slot from into slot to (file select's Copy), writing both copies of the target on the card. */
-void cardCopy(s32 from, s32 to) {
+void PORT_HOOKABLE(cardCopy)(s32 from, s32 to) {
     if (!(wp->flags & CARD_FLAG_OP_BUSY)) {
         wp->op = 1;
         wp->currSlot = to;
@@ -525,7 +529,7 @@ void cardCopy(s32 from, s32 to) {
  * then snapshots the global work, pouch, defeated-NPC records, badge shop, Pianta Parlor and informant state,
  * checksums it and starts the write.
  */
-void cardWrite(s32 slot) {
+void PORT_HOOKABLE(cardWrite)(s32 slot) {
     CardSaveSlot* save;
     MarioWork* mario;
     PartyEntry* party;
@@ -676,7 +680,7 @@ static void write_main(void) {
 }
 
 /** Starts rewriting just the save file header (comment, date and settings like sound mode and rumble). */
-void cardWriteHeader(void) {
+void PORT_HOOKABLE(cardWriteHeader)(void) {
     if (!(wp->flags & CARD_FLAG_OP_BUSY)) {
         wp->op = 2;
         wp->currSlot = 0;
@@ -827,7 +831,7 @@ static void read_main(void) {
 }
 
 /** Starts reading the whole save file from slot A: header and all four slots (file select start-up). */
-void cardReadAll(void) {
+void PORT_HOOKABLE(cardReadAll)(void) {
     if (!(wp->flags & CARD_FLAG_OP_BUSY)) {
         wp->op = 4;
         wp->opSlot = 0;
@@ -940,7 +944,7 @@ static void read_all_main(void) {
 }
 
 /** Starts creating the save file on the card, replacing any old one (evt_memcard's create, from the file select). */
-void cardCreate(void) {
+void PORT_HOOKABLE(cardCreate)(void) {
     if (!(wp->flags & CARD_FLAG_OP_BUSY)) {
         wp->op = 5;
         wp->opStep = 0;
@@ -1027,7 +1031,7 @@ static void create_main(void) {
 }
 
 /** Starts formatting the card in slot A (evt_memcard's format, offered by the file select for an unusable card). */
-void cardFormat(void) {
+void PORT_HOOKABLE(cardFormat)(void) {
     if (!(wp->flags & CARD_FLAG_OP_BUSY)) {
         wp->op = 6;
         wp->opStep = 0;
@@ -1700,3 +1704,7 @@ static inline void memcard_close(void) {
     wp->result = result;
     wp->flags &= ~CARD_FLAG_CALL_BUSY;
 }
+
+#ifdef PORT_MODS
+#include "port/hooks/src_manager_cardmgr.inc"
+#endif

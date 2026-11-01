@@ -378,9 +378,9 @@ void portShotFrame(void) {
     if (AuroraReadbackGet(sStream, &dest, 1) && dest.found) {
         u8* rgb = (u8*)malloc(SHOT_W * SHOT_H * 3);
         untile(sPixels, rgb);
-        if (portWidescreenEnabled()) {
-            /* the copy holds the whole 16:9 frame in 4:3: widen it back */
-            const int w = SHOT_W * 4 / 3;
+        if (portWidescreenWide()) {
+            /* the copy holds the whole widened frame in 4:3: widen it back */
+            const int w = (int)(SHOT_W * portWidescreenAspect() * 0.75f + 0.5f);
             u8* wide = (u8*)malloc((size_t)w * SHOT_H * 3);
             int x, y, c;
             for (y = 0; y < SHOT_H; y++) {

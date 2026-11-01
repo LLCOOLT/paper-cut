@@ -14,6 +14,7 @@
 #include "event.h"
 #include "port/platform.h"
 #include "port/gameplus.h"
+#include "port/practice.h"
 
 /* $TTYD_TRACE=2: every running script, where it is and what it calls. */
 static void traceEvents(u32 frame) {
@@ -191,6 +192,7 @@ void portTraceFrame(u32 frame) {
     portWatchdogFrame();
     warpFrame(frame);
     portGameplusFrame();
+    portPracticeFrame(); /* the speedrun timer, achievements */
     static s32 lastSeq = -2;
     static char lastMap[sizeof(gp->currentMapName)];
     s32 seq;

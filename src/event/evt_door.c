@@ -1,5 +1,6 @@
 // Scripts and commands for house doors: opening, walking in and out, inside/outside map groups
 // and NPC visibility.
+#include "port_hook.h"
 #include "data_tables.h"
 #include "evt/evt_door.h"
 #include "evt/evt_cmd.h"
@@ -28,6 +29,9 @@
 #include "version.h"
 #include "driver/casedrv.h"
 #include "libc_decls.h"
+#ifdef PORT_MODS
+#include "port/hooks/src_event_evt_door.h"
+#endif
 #ifdef TARGET_PC /* PC port: the header's prototypes are skipped on PC (these are static here) */
 static USER_FUNC(door_entry);
 #endif
@@ -1646,7 +1650,7 @@ static USER_FUNC(get_noclip_map) {
  * the outside spot is offset sideways by half the door map object's width according to the hinge side (type).
  * With mario set, Mario's own position replaces the hit positions. Only X and Z are written.
  */
-void door_position_sub(s32 type, const char* map, const char* hitIn, const char* hitOut, Vec* in, Vec* out, BOOL mario) {
+void PORT_HOOKABLE(door_position_sub)(s32 type, const char* map, const char* hitIn, const char* hitOut, Vec* in, Vec* out, BOOL mario) {
     Mtx inv;
     Mtx m;
     Vec pos;
@@ -1966,3 +1970,7 @@ USER_FUNC(evt_door_set_param) {
 USER_FUNC(evt_door_end_wait) {
     return DoorFLAG ? EVT_RETURN_BLOCK : EVT_RETURN_DONE;
 }
+
+#ifdef PORT_MODS
+#include "port/hooks/src_event_evt_door.inc"
+#endif

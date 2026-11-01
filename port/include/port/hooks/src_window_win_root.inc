@@ -6,6 +6,7 @@ s32 winRootMain(WindowWork * p0) {
     PortHookSlot* s = &portHookSlots[41];
     s32 r;
     int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
     if (!s->active) {
         return winRootMain__body(p0);
     }
@@ -22,6 +23,332 @@ s32 winRootMain(WindowWork * p0) {
     return r;
 }
 
+void winRootDisp(s32 p0, WindowWork * p1) {
+    PortHookSlot* s = &portHookSlots[1564];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        winRootDisp__body(p0, p1);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*, __typeof__(p1)*))s->pre[i])(&p0, &p1);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0), __typeof__(p1)))s->replace)(p0, p1); } else { winRootDisp__body(p0, p1); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0), __typeof__(p1)))s->post[i])(p0, p1);
+    }
+}
+
+void winBgGX(WindowWork * p0, s32 p1, f32 p2, f32 p3) {
+    PortHookSlot* s = &portHookSlots[1565];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        winBgGX__body(p0, p1, p2, p3);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*, __typeof__(p1)*, __typeof__(p2)*, __typeof__(p3)*))s->pre[i])(&p0, &p1, &p2, &p3);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->replace)(p0, p1, p2, p3); } else { winBgGX__body(p0, p1, p2, p3); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->post[i])(p0, p1, p2, p3);
+    }
+}
+
+void winMsgEntry(WindowWork * p0, s32 p1, const char * p2, const char * p3) {
+    PortHookSlot* s = &portHookSlots[1566];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        winMsgEntry__body(p0, p1, p2, p3);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*, __typeof__(p1)*, __typeof__(p2)*, __typeof__(p3)*))s->pre[i])(&p0, &p1, &p2, &p3);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->replace)(p0, p1, p2, p3); } else { winMsgEntry__body(p0, p1, p2, p3); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->post[i])(p0, p1, p2, p3);
+    }
+}
+
+void winKirinukiGX(WindowWork * p0, s32 p1, f32 p2, f32 p3, f32 p4, f32 p5) {
+    PortHookSlot* s = &portHookSlots[1567];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        winKirinukiGX__body(p0, p1, p2, p3, p4, p5);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*, __typeof__(p1)*, __typeof__(p2)*, __typeof__(p3)*, __typeof__(p4)*, __typeof__(p5)*))s->pre[i])(&p0, &p1, &p2, &p3, &p4, &p5);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3), __typeof__(p4), __typeof__(p5)))s->replace)(p0, p1, p2, p3, p4, p5); } else { winKirinukiGX__body(p0, p1, p2, p3, p4, p5); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3), __typeof__(p4), __typeof__(p5)))s->post[i])(p0, p1, p2, p3, p4, p5);
+    }
+}
+
+void winNameGX(WindowWork * p0, s32 p1, f32 p2, f32 p3, f32 p4, f32 p5) {
+    PortHookSlot* s = &portHookSlots[1568];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        winNameGX__body(p0, p1, p2, p3, p4, p5);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*, __typeof__(p1)*, __typeof__(p2)*, __typeof__(p3)*, __typeof__(p4)*, __typeof__(p5)*))s->pre[i])(&p0, &p1, &p2, &p3, &p4, &p5);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3), __typeof__(p4), __typeof__(p5)))s->replace)(p0, p1, p2, p3, p4, p5); } else { winNameGX__body(p0, p1, p2, p3, p4, p5); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3), __typeof__(p4), __typeof__(p5)))s->post[i])(p0, p1, p2, p3, p4, p5);
+    }
+}
+
+void winBookGX(WindowWork * p0, s32 p1, f32 p2, f32 p3) {
+    PortHookSlot* s = &portHookSlots[1569];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        winBookGX__body(p0, p1, p2, p3);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*, __typeof__(p1)*, __typeof__(p2)*, __typeof__(p3)*))s->pre[i])(&p0, &p1, &p2, &p3);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->replace)(p0, p1, p2, p3); } else { winBookGX__body(p0, p1, p2, p3); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->post[i])(p0, p1, p2, p3);
+    }
+}
+
+void winHalfBookGX(TEXPalette * p0, s32 p1, f32 p2, f32 p3) {
+    PortHookSlot* s = &portHookSlots[1570];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        winHalfBookGX__body(p0, p1, p2, p3);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*, __typeof__(p1)*, __typeof__(p2)*, __typeof__(p3)*))s->pre[i])(&p0, &p1, &p2, &p3);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->replace)(p0, p1, p2, p3); } else { winHalfBookGX__body(p0, p1, p2, p3); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->post[i])(p0, p1, p2, p3);
+    }
+}
+
+void winMailGX(WindowWork * p0, f32 p1, f32 p2) {
+    PortHookSlot* s = &portHookSlots[1571];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        winMailGX__body(p0, p1, p2);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*, __typeof__(p1)*, __typeof__(p2)*))s->pre[i])(&p0, &p1, &p2);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2)))s->replace)(p0, p1, p2); } else { winMailGX__body(p0, p1, p2); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2)))s->post[i])(p0, p1, p2);
+    }
+}
+
+void winHakoGX(WindowWork * p0, s32 p1, f32 p2, f32 p3) {
+    PortHookSlot* s = &portHookSlots[1572];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        winHakoGX__body(p0, p1, p2, p3);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*, __typeof__(p1)*, __typeof__(p2)*, __typeof__(p3)*))s->pre[i])(&p0, &p1, &p2, &p3);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->replace)(p0, p1, p2, p3); } else { winHakoGX__body(p0, p1, p2, p3); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->post[i])(p0, p1, p2, p3);
+    }
+}
+
+void winWazaGX(WindowWork * p0, s32 p1, f32 p2, f32 p3, f32 p4, f32 p5) {
+    PortHookSlot* s = &portHookSlots[1573];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        winWazaGX__body(p0, p1, p2, p3, p4, p5);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*, __typeof__(p1)*, __typeof__(p2)*, __typeof__(p3)*, __typeof__(p4)*, __typeof__(p5)*))s->pre[i])(&p0, &p1, &p2, &p3, &p4, &p5);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3), __typeof__(p4), __typeof__(p5)))s->replace)(p0, p1, p2, p3, p4, p5); } else { winWazaGX__body(p0, p1, p2, p3, p4, p5); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3), __typeof__(p4), __typeof__(p5)))s->post[i])(p0, p1, p2, p3, p4, p5);
+    }
+}
+
+s32 compare_func5_2(const void * p0, const void * p1) {
+    PortHookSlot* s = &portHookSlots[1574];
+    s32 r;
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        return compare_func5_2__body(p0, p1);
+    }
+    __builtin_memset(&r, 0, sizeof(r));
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(r)*, __typeof__(p0)*, __typeof__(p1)*))s->pre[i])(&r, &p0, &p1);
+    }
+    if (!skip) {
+        r = (s->replace != NULL ? ((s32 (*)(__typeof__(p0), __typeof__(p1)))s->replace)(p0, p1) : compare_func5_2__body(p0, p1));
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(r)*, __typeof__(p0), __typeof__(p1)))s->post[i])(&r, p0, p1);
+    }
+    return r;
+}
+
+s32 compare_func6_2(const void * p0, const void * p1) {
+    PortHookSlot* s = &portHookSlots[1575];
+    s32 r;
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        return compare_func6_2__body(p0, p1);
+    }
+    __builtin_memset(&r, 0, sizeof(r));
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(r)*, __typeof__(p0)*, __typeof__(p1)*))s->pre[i])(&r, &p0, &p1);
+    }
+    if (!skip) {
+        r = (s->replace != NULL ? ((s32 (*)(__typeof__(p0), __typeof__(p1)))s->replace)(p0, p1) : compare_func6_2__body(p0, p1));
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(r)*, __typeof__(p0), __typeof__(p1)))s->post[i])(&r, p0, p1);
+    }
+    return r;
+}
+
+void winSortEntry(WindowWork * p0, s32 p1, f32 p2, f32 p3) {
+    PortHookSlot* s = &portHookSlots[1576];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        winSortEntry__body(p0, p1, p2, p3);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*, __typeof__(p1)*, __typeof__(p2)*, __typeof__(p3)*))s->pre[i])(&p0, &p1, &p2, &p3);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->replace)(p0, p1, p2, p3); } else { winSortEntry__body(p0, p1, p2, p3); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->post[i])(p0, p1, p2, p3);
+    }
+}
+
+BOOL winSortWait(WindowWork * p0) {
+    PortHookSlot* s = &portHookSlots[1577];
+    BOOL r;
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        return winSortWait__body(p0);
+    }
+    __builtin_memset(&r, 0, sizeof(r));
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(r)*, __typeof__(p0)*))s->pre[i])(&r, &p0);
+    }
+    if (!skip) {
+        r = (s->replace != NULL ? ((BOOL (*)(__typeof__(p0)))s->replace)(p0) : winSortWait__body(p0));
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(r)*, __typeof__(p0)))s->post[i])(&r, p0);
+    }
+    return r;
+}
+
+void winKageGX(WindowWork * p0, GXColor p1, f32 p2, f32 p3, f32 p4, f32 p5) {
+    PortHookSlot* s = &portHookSlots[1578];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        winKageGX__body(p0, p1, p2, p3, p4, p5);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*, __typeof__(p1)*, __typeof__(p2)*, __typeof__(p3)*, __typeof__(p4)*, __typeof__(p5)*))s->pre[i])(&p0, &p1, &p2, &p3, &p4, &p5);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3), __typeof__(p4), __typeof__(p5)))s->replace)(p0, p1, p2, p3, p4, p5); } else { winKageGX__body(p0, p1, p2, p3, p4, p5); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3), __typeof__(p4), __typeof__(p5)))s->post[i])(p0, p1, p2, p3, p4, p5);
+    }
+}
+
+void winZClear(void) {
+    PortHookSlot* s = &portHookSlots[1579];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        winZClear__body();
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(void))s->pre[i])();
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(void))s->replace)(); } else { winZClear__body(); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(void))s->post[i])();
+    }
+}
+
 void portHookInit_src_window_win_root(void) {
     portHookSlots[41].body = (void*)winRootMain__body;
+    portHookSlots[1564].body = (void*)winRootDisp__body;
+    portHookSlots[1565].body = (void*)winBgGX__body;
+    portHookSlots[1566].body = (void*)winMsgEntry__body;
+    portHookSlots[1567].body = (void*)winKirinukiGX__body;
+    portHookSlots[1568].body = (void*)winNameGX__body;
+    portHookSlots[1569].body = (void*)winBookGX__body;
+    portHookSlots[1570].body = (void*)winHalfBookGX__body;
+    portHookSlots[1571].body = (void*)winMailGX__body;
+    portHookSlots[1572].body = (void*)winHakoGX__body;
+    portHookSlots[1573].body = (void*)winWazaGX__body;
+    portHookSlots[1574].body = (void*)compare_func5_2__body;
+    portHookSlots[1575].body = (void*)compare_func6_2__body;
+    portHookSlots[1576].body = (void*)winSortEntry__body;
+    portHookSlots[1577].body = (void*)winSortWait__body;
+    portHookSlots[1578].body = (void*)winKageGX__body;
+    portHookSlots[1579].body = (void*)winZClear__body;
 }

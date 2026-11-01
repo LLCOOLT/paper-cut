@@ -1,4 +1,5 @@
 // The speech/action balloon over Mario's head ("!" and "?"): which NPC, item box or object it points at.
+#include "port_hook.h"
 #include "mario/mario.h"
 #include "driver/casedrv.h"
 #include "driver/effdrv.h"
@@ -8,9 +9,12 @@
 #include <string.h>
 #include "mario/mario_hit.h"
 #include "eff/eff_mario_balloon.h"
+#ifdef PORT_MODS
+#include "port/hooks/src_mario_mario_balloon.h"
+#endif
 
 /** Clears the balloon effect pointer; run from marioInit and marioReInit (the "Baloon" spelling is the original's). */
-void marioBaloonInit(void) {
+void PORT_HOOKABLE(marioBaloonInit)(void) {
     marioGetPtr()->balloonEffect = NULL;
 }
 
@@ -19,7 +23,7 @@ void marioBaloonInit(void) {
  * Called each frame by marioBalloonMain and by the evt_mario balloon script commands (type 0 "!", type 1 the
  * "..." balloon).
  */
-void marioBalloonOn(s32 type) {
+void PORT_HOOKABLE(marioBalloonOn)(s32 type) {
     MarioWork* mario = marioGetPtr();
 
     if (!(mario->dispFlags & MARIO_DISP_FLAG_BALLOON_ON)) {
@@ -43,7 +47,7 @@ static inline void marioBalloonOnNpc(s32 type, NpcEntry* npc) {
 }
 
 /** Removes the balloon over Mario's head, if any, and forgets the NPC it pointed at. */
-void marioBalloonOff(void) {
+void PORT_HOOKABLE(marioBalloonOff)(void) {
     MarioWork* mario = marioGetPtr();
 
     if (mario->dispFlags & MARIO_DISP_FLAG_BALLOON_ON) {
@@ -184,7 +188,7 @@ static inline s32 chkItemBox(HitEntry* hit) {
  * and hides it while airborne, in a paper form, slit sideways, not standing, walking or dashing,
  * or without control. Skipped entirely while a script holds the balloon (MARIO_DISP_FLAG_BALLOON_EVT).
  */
-void marioBalloonMain(void) {
+void PORT_HOOKABLE(marioBalloonMain)(void) {
     MarioWork* mario;
     NpcEntry* npc;
     s32 type;
@@ -256,7 +260,7 @@ void marioBalloonMain(void) {
  * a map object with hint 1 or a balloon-flagged case event with any of the A conditions (front, jump from, push,
  * stand on). Pass-through hits never count. Used by Bowser's collision code (koopa_hit.c).
  */
-BOOL chkBalloon(HitEntry* hit) {
+BOOL PORT_HOOKABLE(chkBalloon)(HitEntry* hit) {
     BOOL ret = FALSE;
     CaseEntry* entry;
 
@@ -283,3 +287,7 @@ BOOL chkBalloon(HitEntry* hit) {
     }
     return ret;
 }
+
+#ifdef PORT_MODS
+#include "port/hooks/src_mario_mario_balloon.inc"
+#endif

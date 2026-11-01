@@ -81,6 +81,68 @@ static void winBgMain(WindowWork* wp);
 static void winMsgMain(WindowWork* wp);
 static void winSortMain(WindowWork* wp);
 
+#ifdef TARGET_PC
+#include "port/menu_tap.h"
+
+int portWinMouse(int* cur, int first, int n, float x, float y, float dx, float dy, int cols, float w, float h,
+                 const char* sfx) {
+    f32 gx;
+    f32 gy;
+    f32 hx;
+    f32 hy;
+    s32 k;
+    const int kind = portMenuPoint(&gx, &gy);
+
+    for (k = 0; kind != 0 && k < n; k++) {
+        hx = x + (f32)(k % cols) * dx;
+        hy = y - (f32)(k / cols) * dy;
+        if (gx >= hx && gx <= hx + w && gy <= hy + h / 2.0f && gy > hy - h / 2.0f) {
+            if (first + k == *cur) {
+                return kind == 1;
+            }
+            *cur = first + k;
+            if (sfx != NULL) {
+                psndSFXOn(sfx);
+            }
+            return 0;
+        }
+    }
+    return 0;
+}
+
+/**
+ * The mouse (port/src/common/menu_tap_pc.c) on the tabs, while they have the cursor: the tab under the
+ * pointer (100 x 40 about its point) is reached a step of the stick at a time, a click on the cursor's
+ * one is A.
+ */
+static void winRootMouse(WindowWork* w) {
+    static s32 sTarget = -1;
+    f32 gx;
+    f32 gy;
+    s32 i;
+    const int kind = portMenuPoint(&gx, &gy);
+
+    if (w->active != 10) {
+        sTarget = -1;
+        return;
+    }
+    for (i = 0; kind != 0 && i < w->tabNum; i++) {
+        if (gx >= w->tab[i].x - 50.0f && gx <= w->tab[i].x + 50.0f && gy <= w->tab[i].y + 20.0f && gy > w->tab[i].y - 20.0f) {
+            if (i == w->tabSel && sTarget < 0 && kind == 1) {
+                w->buttonTrg |= PAD_BUTTON_A;
+            }
+            sTarget = i;
+            break;
+        }
+    }
+    if (sTarget == w->tabSel) {
+        sTarget = -1;
+    } else if (sTarget >= 0 && !(w->buttonTrg & (PAD_BUTTON_A | PAD_BUTTON_B | PAD_BUTTON_START))) {
+        w->dirRep |= (sTarget - w->tabSel + w->tabNum) % w->tabNum * 2 <= w->tabNum ? DEMO_STICK_RIGHT : DEMO_STICK_LEFT;
+    }
+}
+#endif
+
 /**
  * Animates the five tab labels at the top of the menu each frame:
  * on open they drop in one by one (4 frames apart) from y 300 to 185 over 10 frames;
@@ -148,6 +210,9 @@ s32 PORT_HOOKABLE(winRootMain)(WindowWork* w) {
     s32 i;
     s32 ret;
 
+#ifdef TARGET_PC
+    winRootMouse(w);
+#endif
     switch (w->active) {
         case 0:
             psndSFXOn((const char*)0x2002A);
@@ -449,7 +514,7 @@ static inline void winTabDisp(WindowWork* wp);
  * then the tabs, mail window, help box, sort menu and the bobbing cursor hand with its shadow.
  * From JP on the hand is hidden while a book is open (flags 0x8000).
  */
-void winRootDisp(s32 camId, WindowWork* wp) {
+void PORT_HOOKABLE(winRootDisp)(s32 camId, WindowWork* wp) {
     GXColor white = {0xFF, 0xFF, 0xFF, 0xFF};
     s32 i;
     s32 state;
@@ -595,7 +660,7 @@ static void winBgMain(WindowWork* wp) {
  * type 0 Mario (red), 1 Party (pink), 2 Items (yellow), 3 Badges (green), 4 Journal (blue).
  * Texture 7 is the panel shape, texture 6 the pattern on it.
  */
-void winBgGX(WindowWork* wp, s32 type, f32 x, f32 y) {
+void PORT_HOOKABLE(winBgGX)(WindowWork* wp, s32 type, f32 x, f32 y) {
     Mtx m;
     GXTexObj obj;
     f32 sy;
@@ -863,7 +928,7 @@ static void winMsgDisp(WindowWork* wp, f32 x, f32 y) {
  * msg is the message tag, item the item whose icon is shown (0 none, -1/-2 a titled box), name the title tag.
  * Only a new tag takes effect: it counts the lines and scrolls back to the top. A NULL msg is ignored.
  */
-void winMsgEntry(WindowWork* wp, s32 item, const char* msg, const char* name) {
+void PORT_HOOKABLE(winMsgEntry)(WindowWork* wp, s32 item, const char* msg, const char* name) {
     static char _tmp[0x40];
     BOOL changed;
     u16 lines;
@@ -922,7 +987,7 @@ static inline void winRootTexQuad(WindowWork* wp, s32 id, f32 x, f32 y, f32 w, f
  * Type 1 adds a tab under the bottom-right edge for the Badges page's remaining-BP label;
  * the US release sizes that tab to the "msg_menu_badge_nokori" text instead of a fixed 90.
  */
-void winKirinukiGX(WindowWork* wp, s32 type, f32 x, f32 y, f32 w, f32 h) {
+void PORT_HOOKABLE(winKirinukiGX)(WindowWork* wp, s32 type, f32 x, f32 y, f32 w, f32 h) {
 #if VERSION <= VERSION_JP
     f32 w74 = 74.0f;
     f32 w66 = 66.0f;
@@ -1038,7 +1103,7 @@ static inline void nameQuad(f32 x0, f32 y0, f32 qw, f32 qh) {
  * Type 0 is the Party page's partner name (32 high), 1 the help box title (32 high),
  * 2 the 24-high plate on Mario's page. h is not used.
  */
-void winNameGX(WindowWork* wp, s32 type, f32 x, f32 y, f32 w, f32 h) {
+void PORT_HOOKABLE(winNameGX)(WindowWork* wp, s32 type, f32 x, f32 y, f32 w, f32 h) {
     Mtx m0a;
     Mtx m0b;
     Mtx m1a;
@@ -1131,7 +1196,7 @@ static inline void winBookTex(WindowWork* w, s32 id, f32 x, f32 y, f32 width, f3
  * an animated page-turn prompt (more pages or the end).
  * a == 1 is the Journal's Tattle Log book, 32 shorter, with eight entry slots in two columns.
  */
-void winBookGX(WindowWork* w, s32 a, f32 x, f32 y) {
+void PORT_HOOKABLE(winBookGX)(WindowWork* w, s32 a, f32 x, f32 y) {
     f32 off;
     s32 i;
 
@@ -1239,7 +1304,7 @@ static inline void winHalfBookQuad(TEXPalette* tpl, s32 id, f32 x, f32 y, f32 w,
  * first as a half-transparent black shadow offset by (8, -8), then in full colour.
  * Used by the Tattle card display in win_log.c (monosiri_disp). a is not used.
  */
-void winHalfBookGX(TEXPalette* tpl, s32 a, f32 x, f32 y) {
+void PORT_HOOKABLE(winHalfBookGX)(TEXPalette* tpl, s32 a, f32 x, f32 y) {
     s32 i;
     Mtx m;
 
@@ -1299,7 +1364,7 @@ void winHalfBookGX(TEXPalette* tpl, s32 a, f32 x, f32 y) {
  * Draws the mail window's frame at (x, y) for winMailDisp,
  * then leaves the scissor clipped to the letter list area (winMailDisp restores it).
  */
-void winMailGX(WindowWork* wp, f32 x, f32 y) {
+void PORT_HOOKABLE(winMailGX)(WindowWork* wp, f32 x, f32 y) {
     GXSetBlendMode(GX_BM_NONE, GX_BL_ONE, GX_BL_ZERO, GX_LO_CLEAR);
     GXSetZCompLoc(GX_FALSE);
     GXSetAlphaCompare(GX_GEQUAL, 0x80, GX_AOP_OR, GX_NEVER, 0);
@@ -1345,7 +1410,7 @@ void winMailGX(WindowWork* wp, f32 x, f32 y) {
  * Pages of 7x4 cells scroll vertically; found badges (GSWF_BADGE_FOUND_BASE) and cooked recipes show their icon,
  * the rest a blank mark. Adds page-up/down arrows and the "msg_menu_sort_narabikae" sort hint.
  */
-void winHakoGX(WindowWork* w, s32 a, f32 x, f32 y) {
+void PORT_HOOKABLE(winHakoGX)(WindowWork* w, s32 a, f32 x, f32 y) {
     u32 c0;
     u32 c1;
     f32 scroll;
@@ -1565,7 +1630,7 @@ static inline void winWazaQuad(WindowWork* wp, s32 id, f32 x, f32 y, f32 w, f32 
  * Draws the w x h panel behind a move list ("waza" = moves) at (x, y), with a 32-high header strip;
  * used on Mario's and the Party page. a is not used.
  */
-void winWazaGX(WindowWork* wp, s32 a, f32 x, f32 y, f32 w, f32 h) {
+void PORT_HOOKABLE(winWazaGX)(WindowWork* wp, s32 a, f32 x, f32 y, f32 w, f32 h) {
     f32 w1;
 
     GXSetBlendMode(GX_BM_NONE, GX_BL_ONE, GX_BL_ZERO, GX_LO_CLEAR);
@@ -2023,7 +2088,7 @@ static s32 compare_func5_1_r(const void* a, const void* b) {
 #endif
 
 /** qqsort compare for the Journal badge log by type_sort_order. */
-s32 compare_func5_2(const void* a, const void* b) {
+s32 PORT_HOOKABLE(compare_func5_2)(const void* a, const void* b) {
     const s16* ea = a;
     const s16* eb = b;
     s16 ia = itemDataTable[(s16)(*ea + BADGE_MIN)].type_sort_order;
@@ -2254,7 +2319,7 @@ static s32 compare_func6_1_r(const void* a, const void* b) {
 #endif
 
 /** qqsort compare for the Journal recipe log by type_sort_order. */
-s32 compare_func6_2(const void* a, const void* b) {
+s32 PORT_HOOKABLE(compare_func6_2)(const void* a, const void* b) {
     const s16* ea = a;
     const s16* eb = b;
     s16 ia = itemDataTable[(s16)(*ea + WIN_RECIPE_MIN)].type_sort_order;
@@ -2822,7 +2887,7 @@ static void winSortGX(WindowWork* wp) {
  * Opens the sort menu (Z on the Items, Badges and Journal pages and in the mail list) with sort_data[type]'s
  * options, sliding in from the left to (x, y), first option selected and not reversed.
  */
-void winSortEntry(WindowWork* wp, s32 type, f32 x, f32 y) {
+void PORT_HOOKABLE(winSortEntry)(WindowWork* wp, s32 type, f32 x, f32 y) {
     WinSortData* sd = sort_data[type];
     s32 n;
 
@@ -2843,7 +2908,7 @@ void winSortEntry(WindowWork* wp, s32 type, f32 x, f32 y) {
 }
 
 /** TRUE while the sort menu is open; the pages hold their own input until it closes. */
-BOOL winSortWait(WindowWork* wp) {
+BOOL PORT_HOOKABLE(winSortWait)(WindowWork* wp) {
     return wp->sortActive != 0;
 }
 
@@ -2852,7 +2917,7 @@ BOOL winSortWait(WindowWork* wp) {
  * scaled by s and tilted 80 degrees back so it lies flat,
  * under the figures shown in the menu (Mario, partners, the Journal's Crystal Stars).
  */
-void winKageGX(WindowWork* wp, GXColor color, f32 x, f32 y, f32 z, f32 s) {
+void PORT_HOOKABLE(winKageGX)(WindowWork* wp, GXColor color, f32 x, f32 y, f32 z, f32 s) {
     Mtx out;
     Mtx trans;
     Mtx scale;
@@ -2911,7 +2976,7 @@ void winKageGX(WindowWork* wp, GXColor color, f32 x, f32 y, f32 z, f32 s) {
  * writes on and colour writes off, so the 3D Mario or partner drawn next on the Mario
  * and Party pages is not hidden.
  */
-void winZClear(void) {
+void PORT_HOOKABLE(winZClear)(void) {
     Mtx mtx;
 
     PSMTXTrans(mtx, 0.0f, 0.0f, -1000.0f);

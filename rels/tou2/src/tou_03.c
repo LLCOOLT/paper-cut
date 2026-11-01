@@ -2,6 +2,9 @@
 
 #ifdef TARGET_PC
 #include "port/platform.h"
+#ifdef TARGET_PC
+#include "port/gameplus.h"
+#endif
 #endif
 #include "version.h"
 // The unit defines its own out-of-line GXSetTexCoordGen (near screen_tev); the SDK header's inline of the same name
@@ -3046,6 +3049,47 @@ EVT_BEGIN(evt_champ_lose)
     RETURN
 EVT_END()
 
+#ifdef TARGET_PC
+/**
+ * Gameplay+ (skip repeated scenes): one fighter put where evt_teki_nyuujyou_default walks it to, at once;
+ * the same LW(0) name, LW(1) index and LW(2) team size.
+ */
+static EVT_BEGIN(port_teki_place)
+    SWITCH(LW(1))
+        CASE_EQUAL(0)
+        IF_INT_EQUAL(LW(2), 1)
+            SET_VALUE(LW(3), 70)
+        ELSE
+            SET_VALUE(LW(3), 50)
+        END_IF
+        SET_VALUE(LW(4), 0)
+        CASE_EQUAL(1)
+        SET_VALUE(LW(3), 90)
+        SET_VALUE(LW(4), 25)
+        CASE_EQUAL(2)
+        SET_VALUE(LW(3), 70)
+        SET_VALUE(LW(4), -25)
+        CASE_EQUAL(3)
+        SET_VALUE(LW(3), 110)
+        SET_VALUE(LW(4), 0)
+        CASE_EQUAL(4)
+        SET_VALUE(LW(3), 130)
+        SET_VALUE(LW(4), -25)
+    END_SWITCH
+    CALL(tribe_chk, LW(0), STRING("カメック緑空"), LW(5))
+    IF_INT_EQUAL(LW(5), 1)
+        CALL(evt_npc_set_position, LW(0), LW(3), 85, LW(4))
+    ELSE
+        CALL(evt_npc_set_position, LW(0), LW(3), 60, LW(4))
+        CALL(tribe_chk, LW(0), STRING("バーストワンワン"), LW(5))
+        IF_INT_EQUAL(LW(5), 1)
+            SPAWN_EVENT(burst_wangwang)
+        END_IF
+    END_IF
+    RETURN
+EVT_END()
+#endif
+
 /**
  * Opening used for every match without a special scene:
  * the camera surveys the ring, the opponent team walks in,
@@ -3099,6 +3143,46 @@ EVT_BEGIN(evt_default_opening)
             END_INLINE_EVENT
         END_IF
     END_IF
+#ifdef TARGET_PC
+    // Gameplay+: once a match was fought on this file, everyone straight to their places in the ring
+    CALL(portEvtSceneMs, PORT_SCENE_GLITZ_OPENING, 1, LW(9))
+    IF_INT_EQUAL(LW(9), 0)
+        CALL(evt_seq_wait, 2)
+#if VERSION >= VERSION_JP
+        CALL(evt_snd_bgmon, PSND_FADE_OUT, STRING("BGM_FF_ENV_TOU1"))
+#endif
+        CALL(evt_mario_set_pos, -55, 60, 0)
+        CALL(evt_party_set_pos, 0, -95, 60, -25)
+        CALL(evt_tou_get_fighter_num, GSW(GSW_TOU_OPPONENT_ID), LW(10))
+        SET_VALUE(LW(11), 0)
+        LOOP(0)
+            IF_INT_EQUAL(LW(10), LW(11))
+                BREAK_LOOP
+            END_IF
+            SWITCH(LW(11))
+                CASE_EQUAL(0)
+                SET_VALUE(LW(0), STRING("敵１"))
+                CASE_EQUAL(1)
+                SET_VALUE(LW(0), STRING("敵２"))
+                CASE_EQUAL(2)
+                SET_VALUE(LW(0), STRING("敵３"))
+                CASE_EQUAL(3)
+                SET_VALUE(LW(0), STRING("敵４"))
+                CASE_EQUAL(4)
+                SET_VALUE(LW(0), STRING("敵５"))
+            END_SWITCH
+            SET_VALUE(LW(1), LW(11))
+            SET_VALUE(LW(2), LW(10))
+            CALL_CHILD(port_teki_place)
+            ADD(LW(11), 1)
+        END_LOOP
+        CALL(evt_cam3d_evt_set, 0, 250, 730, 0, 100, -154, 0, 11)
+        WAIT_FRAMES(1)
+        CALL(evt_snd_sfxon, STRING("SFX_STG3_GONG1"), 0)
+        CALL(evt_party_run, 0)
+        RETURN
+    END_IF
+#endif
     // The music starts; Mario and the partner hop up into the ring while the opponents walk in.
     CALL(evt_seq_wait, 2)
 #if VERSION >= VERSION_JP
@@ -3338,6 +3422,16 @@ EVT_BEGIN(evt_default_win)
         CALL(evt_npc_set_anim, LW(2), LW(3))
         ADD(LW(1), 1)
     END_LOOP
+#ifdef TARGET_PC
+    // Gameplay+: once a match was won on this file, the win without the confetti, poses and lines
+    CALL(portEvtSceneMs, PORT_SCENE_GLITZ_WIN, 1, LW(9))
+    IF_INT_EQUAL(LW(9), 0)
+        CALL(evt_mario_set_pose, STRING("M_S_1"))
+        CALL(evt_cam3d_evt_set, -65, 143, 263, -65, 95, -8, 0, 0)
+        WAIT_FRAMES(1)
+        RETURN
+    END_IF
+#endif
     // Confetti falls, Mario and the partner strike victory poses and the announcer declares Gonzales the winner.
     CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
     ADD(LW(1), 100)

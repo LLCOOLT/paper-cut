@@ -1,4 +1,5 @@
 // Target detection: picks which enemies a weapon can hit and who attacks first.
+#include "port_hook.h"
 #include "version.h"
 // this unit is size-optimised, as in the original (the object differs without it)
 #pragma optimize_for_size on
@@ -8,6 +9,9 @@
 #include "data/item_data.h"
 #include "battle/battle_sub.h"
 #include "system.h"
+#ifdef PORT_MODS
+#include "port/hooks/src_battle_battle_detect.h"
+#endif
 
 /**
  * Builds d->targets: one entry per targetable part of every living unit, with its cursor position,
@@ -502,7 +506,7 @@ static void _btlSamplingEnemy(BattleWorkWeaponTargets* d) {
  * A confused attacker gets the "own side" and "opposing side" class flags swapped so it targets its allies;
  * returns TRUE when that swap happened.
  */
-BOOL BattleSamplingEnemy(BattleWorkWeaponTargets* d, BattleWeapon* weapon, s32 unitId, s8 belong, u32 classFlags, u32 propFlags,
+BOOL PORT_HOOKABLE(BattleSamplingEnemy)(BattleWorkWeaponTargets* d, BattleWeapon* weapon, s32 unitId, s8 belong, u32 classFlags, u32 propFlags,
                          s8 direction) {
     BOOL r = FALSE;
     d->weapon = weapon;
@@ -530,7 +534,7 @@ BOOL BattleSamplingEnemy(BattleWorkWeaponTargets* d, BattleWeapon* weapon, s32 u
  * Rebuilds the target list for a weapon; the command menu calls it each time the selection cursor needs fresh
  * targets.
  */
-void BattleSamplingEnemyUpdate(BattleWorkWeaponTargets* d) {
+void PORT_HOOKABLE(BattleSamplingEnemyUpdate)(BattleWorkWeaponTargets* d) {
     _btlSamplingEnemy(d);
 }
 
@@ -540,7 +544,7 @@ void BattleSamplingEnemyUpdate(BattleWorkWeaponTargets* d) {
  * then the heaviest wins, or with TARGET_WEIGHT_RANDOM one is drawn in proportion to the weights.
  * Outputs -1/0 when there is no target. Used by enemy scripts, stage hazards and the UFO.
  */
-void BattleChoiceSamplingEnemy(BattleWorkWeaponTargets* d, u32 flags, s32* unitOut, s32* partOut) {
+void PORT_HOOKABLE(BattleChoiceSamplingEnemy)(BattleWorkWeaponTargets* d, u32 flags, s32* unitOut, s32* partOut) {
     BattleUnit* unit;
     BattleWork* wp = _battleWorkPointer;
     s32 w[74];
@@ -701,7 +705,7 @@ void BattleChoiceSamplingEnemy(BattleWorkWeaponTargets* d, u32 flags, s32* unitO
  * 1-6 Mario strikes first, 7-8 his partner, 9 (and anything else) the first enemy strikes Mario.
  * Called by battle_seq when the battle opens.
  */
-void BattleGetFirstAttackUnit(BattleWork* wp, BattleUnit** a, BattleUnit** b) {
+void PORT_HOOKABLE(BattleGetFirstAttackUnit)(BattleWork* wp, BattleUnit** a, BattleUnit** b) {
     BattleUnit* found;
     BattleUnit* other;
     BattleUnit* tmp;
@@ -737,3 +741,7 @@ void BattleGetFirstAttackUnit(BattleWork* wp, BattleUnit** a, BattleUnit** b) {
     *a = found;
     *b = other;
 }
+
+#ifdef PORT_MODS
+#include "port/hooks/src_battle_battle_detect.inc"
+#endif

@@ -25,12 +25,14 @@
 // an open file of the previous set.
 #include "port/mods.h"
 #include "port/mod_host.h"
+#include "port/modes.h"
 #include "port/reflect.h"
 #include "port/json.h"
 #include "evt_asm.h"
 #include "../archipelago/ttyd_ap.h"
 
 #include <SDL3/SDL.h>
+#include <aurora/aurora.h>
 #include <aurora/dvd.h>
 #include <dolphin/gx.h> // GXTexObj, for aurora/texture.hpp
 #include <aurora/texture.hpp>
@@ -46,9 +48,16 @@
 #include <map>
 #include <memory>
 #include <mutex>
+#include <set>
 #include <string>
 #include <unordered_map>
 #include <vector>
+
+// Aurora's start-up options (lib/internal.hpp): texture dumps can be turned
+// on and off while the game runs (portModsSetTextureDumps).
+namespace aurora {
+extern AuroraConfig g_config;
+}
 
 #ifdef _WIN32
 #define NOMINMAX
@@ -289,12 +298,25 @@ private:
 // --- the mods ---
 
 struct Option {
-  std::string key, label;
+  std::string key, label, note;
   int type = PORT_MOD_OPTION_BOOL;
   int min = 0, max = 1, fallback = 0;
+  bool nextStart = false;
   std::vector<std::string> choices;
   std::vector<const char*> choicePtrs;
   PortModOption info{};
+};
+
+// One thing a mod changes: what makes two mods' the same (a lower-case path,
+// a texture's key, a patched address), and its name for display.
+struct Change {
+  std::string key, label;
+  int kind = 0; // hooks: 0 pre, 1 post, 2 replace
+};
+
+struct Conflict {
+  std::string what, other;
+  PortModConflict info{};
 };
 
 struct Mod {
@@ -310,6 +332,10 @@ struct Mod {
   };
   std::vector<MapSpec> maps;
   int scripts = 0;
+  // What it changes (analyze()), and what another mod changes too.
+  std::vector<Change> changes[PORT_MOD_CHANGE_COUNT];
+  std::vector<Change> patchPlaces; // the addresses its patches wrote (apply)
+  std::vector<std::unique_ptr<Conflict>> conflicts;
 };
 
 // A mod's code (a library in lib/<platform>/, or built into the game): it
@@ -327,6 +353,7 @@ std::string sCachePath;
 std::vector<std::unique_ptr<Mod>> sMods; // in order, the first winning
 bool sDisabledAll;
 bool sStarted; // the mods' code has been started (once, at the game's start)
+bool sLive;    // portModsInit ran: changes are applied (else a preview: the launcher's)
 std::map<std::string, Code> sCode;        // by mod id
 std::map<std::string, int> sOptionValues; // "id.key" -> value (mods/options.txt)
 
@@ -356,6 +383,7 @@ struct ModMap {
 std::vector<std::unique_ptr<port_evt::Program>> sPrograms;
 std::map<std::string, ModMap> sMaps;
 std::vector<std::pair<std::string, std::string>> sAliases; // "/m/gor_99/" -> "/m/gor_01/"...
+std::map<std::string, ModMap> sHostMaps; // the host's own new maps (the modes'), below every mod's
 std::mutex sMapLock;
 
 void* findExport(const std::string& name) {
@@ -879,8 +907,11 @@ bool store(const Place& place, const PatchValue& v, std::string& why) {
 }
 
 // Applies one patches file; returns the lines applied. The first problem
-// goes to warning ("file:line: ...").
-int applyPatchFile(const std::vector<uint8_t>& bytes, const std::string& name, std::string& warning) {
+// goes to warning ("file:line: ..."). Each place written goes to changes (by
+// address); with write false nothing is written and changes get the targets
+// (by name: a mod turned off, the launcher's preview).
+int applyPatchFile(const std::vector<uint8_t>& bytes, const std::string& name, std::string& warning,
+                   std::vector<Change>& changes, bool write = true) {
   indexReflection();
   const std::string text(bytes.begin(), bytes.end());
   int applied = 0;
@@ -923,6 +954,12 @@ int applyPatchFile(const std::vector<uint8_t>& bytes, const std::string& name, s
     }
     std::string target = ok ? trim(line.substr(0, eq)) : std::string();
     target.erase(std::remove(target.begin(), target.end(), ' '), target.end());
+    if (!write) {
+      if (ok) {
+        changes.push_back({target, target});
+      }
+      continue;
+    }
     ok = ok && resolveTarget(target, places, why) && parseValue(trim(line.substr(eq + 1)), value, why);
     for (size_t p = 0; ok && p < places.size(); p++) {
       ok = store(places[p], value, why);
@@ -932,6 +969,11 @@ int applyPatchFile(const std::vector<uint8_t>& bytes, const std::string& name, s
     }
     if (ok) {
       applied++;
+      for (const Place& place : places) {
+        char key[32];
+        std::snprintf(key, sizeof(key), "%p", static_cast<void*>(place.address));
+        changes.push_back({key, target});
+      }
     } else if (warning.empty()) {
       warning = name + ":" + std::to_string(lineNo) + ": " + why;
     }
@@ -957,6 +999,10 @@ void describe(Mod& m, const Json& root) {
       auto opt = std::make_unique<Option>();
       opt->key = o.str("key");
       opt->label = o.str("label").empty() ? opt->key : o.str("label");
+      opt->note = o.str("note");
+      if (const Json* r = o.get("restart"); r != nullptr && r->type == Json::Bool) {
+        opt->nextStart = r->b;
+      }
       const std::string type = o.str("type");
       if (const Json* d = o.get("default"); d != nullptr) {
         opt->fallback = d->type == Json::Bool ? int(d->b) : int(d->n);
@@ -1231,7 +1277,54 @@ int optionValue(const Mod& mod, const Option& opt) {
   return std::clamp(v, opt.min, opt.max);
 }
 
+// Textures: priority by order; the loose folder below every mod.
+void applyTextures() {
+  for (auto& group : sTextureGroups) {
+    aurora::texture::unregister_replacements(group);
+  }
+  sTextureGroups.clear();
+  if (!sDisabledAll) {
+    sTextureGroups.push_back(aurora::texture::load_replacement_directory(sUserPath + "/textures", {.priority = 0}));
+  }
+  for (size_t i = 0; i < sMods.size(); i++) {
+    Mod& mod = *sMods[i];
+    if (!usable(mod) || mod.source == nullptr) {
+      continue;
+    }
+    const aurora::texture::ReplacementOptions options{.priority = int32_t(1000 - i)};
+    aurora::texture::ReplacementGroup group;
+    const std::string host = mod.source->hostPath("textures");
+    if (!host.empty()) {
+      SDL_PathInfo info;
+      if (SDL_GetPathInfo(host.c_str(), &info) && info.type == SDL_PATHTYPE_DIRECTORY) {
+        group = aurora::texture::load_replacement_directory(host, options);
+      }
+    } else {
+      for (const auto& [rel, size] : mod.source->list("textures/")) {
+        const std::string name = lower(rel);
+        if ((endsWith(name, ".png") || endsWith(name, ".dds")) && name.find("_mip") == std::string::npos) {
+          const auto reg = aurora::texture::register_virtual_replacement(
+              rel, {texturesVirtualRead, const_cast<Source*>(mod.source.get())}, options);
+          if (reg.id != 0) {
+            group.registrations.push_back(reg);
+          }
+        }
+      }
+    }
+    mod.textures = int(group.registrations.size());
+    sTextureGroups.push_back(std::move(group));
+  }
+}
+
+void analyze();
+void publish();
+
 void apply() {
+  if (!sLive) {
+    analyze(); // the launcher's preview: nothing is applied
+    publish();
+    return;
+  }
   // Disc files: the first mod with a path wins.
   auto files = std::make_unique<std::vector<OverlayFile>>();
   std::unordered_map<std::string, size_t> byPath; // lower-case disc path
@@ -1269,42 +1362,7 @@ void apply() {
   aurora_dvd_overlay_files(overlay.data(), overlay.size(), nullptr);
   sOverlayGenerations.push_back(std::move(files));
 
-  // Textures: priority by order; the loose folder below every mod.
-  for (auto& group : sTextureGroups) {
-    aurora::texture::unregister_replacements(group);
-  }
-  sTextureGroups.clear();
-  if (!sDisabledAll) {
-    sTextureGroups.push_back(aurora::texture::load_replacement_directory(sUserPath + "/textures", {.priority = 0}));
-  }
-  for (size_t i = 0; i < sMods.size(); i++) {
-    Mod& mod = *sMods[i];
-    if (!usable(mod) || mod.source == nullptr) {
-      continue;
-    }
-    const aurora::texture::ReplacementOptions options{.priority = int32_t(1000 - i)};
-    aurora::texture::ReplacementGroup group;
-    const std::string host = mod.source->hostPath("textures");
-    if (!host.empty()) {
-      SDL_PathInfo info;
-      if (SDL_GetPathInfo(host.c_str(), &info) && info.type == SDL_PATHTYPE_DIRECTORY) {
-        group = aurora::texture::load_replacement_directory(host, options);
-      }
-    } else {
-      for (const auto& [rel, size] : mod.source->list("textures/")) {
-        const std::string name = lower(rel);
-        if ((endsWith(name, ".png") || endsWith(name, ".dds")) && name.find("_mip") == std::string::npos) {
-          const auto reg = aurora::texture::register_virtual_replacement(
-              rel, {texturesVirtualRead, const_cast<Source*>(mod.source.get())}, options);
-          if (reg.id != 0) {
-            group.registrations.push_back(reg);
-          }
-        }
-      }
-    }
-    mod.textures = int(group.registrations.size());
-    sTextureGroups.push_back(std::move(group));
-  }
+  applyTextures();
 
   // Messages: the first mod with a tag wins.
   auto messages = std::make_unique<Messages>();
@@ -1339,13 +1397,14 @@ void apply() {
     Mod& mod = **it;
     mod.patches = 0;
     mod.warning.clear();
+    mod.patchPlaces.clear();
     if (!usable(mod) || mod.source == nullptr) {
       continue;
     }
     for (const auto& [rel, size] : mod.source->list("patches/")) {
       std::vector<uint8_t> bytes;
       if (endsWith(rel, ".txt") && mod.source->read(rel, bytes)) {
-        mod.patches += applyPatchFile(bytes, rel, mod.warning);
+        mod.patches += applyPatchFile(bytes, rel, mod.warning, mod.patchPlaces);
       }
     }
   }
@@ -1396,6 +1455,9 @@ void apply() {
     }
     sPrograms.push_back(std::move(program));
   }
+  for (const auto& [name, map] : sHostMaps) {
+    maps.emplace(name, map); // below every mod's
+  }
   {
     std::lock_guard lock(sMapLock);
     sMaps = std::move(maps);
@@ -1404,10 +1466,19 @@ void apply() {
       if (!m.files.empty()) {
         sAliases.push_back({"/m/" + name + "/", "/m/" + m.files + "/"});
         sAliases.push_back({"/b/" + name + ".", "/b/" + m.files + "."});
+        // its text too: the game loads a map's messages by the map's name
+        // (msg/US/tik_02.txt), and its scripts and battles print them
+        sAliases.push_back({"/" + name + ".txt", "/" + m.files + ".txt"});
       }
     }
   }
 
+  analyze();
+  publish();
+}
+
+// Each mod's info for the settings page (and the log).
+void publish() {
   for (auto& mod : sMods) {
     int code = PORT_MOD_CODE_NONE;
     const char* codeError = nullptr;
@@ -1429,7 +1500,8 @@ void apply() {
         opt->choicePtrs.push_back(c.c_str());
       }
       opt->info = {opt->key.c_str(), opt->label.c_str(), opt->type, opt->min, opt->max, optionValue(*mod, *opt),
-                   int(opt->choicePtrs.size()), opt->choicePtrs.data()};
+                   int(opt->choicePtrs.size()), opt->choicePtrs.data(), opt->note.c_str(),
+                   std::clamp(opt->fallback, opt->min, opt->max), opt->nextStart ? 1 : 0};
     }
     mod->info = {mod->id.c_str(), mod->name.c_str(), mod->version.c_str(), mod->author.c_str(),
                  mod->description.c_str(), mod->display.c_str(), mod->error.empty() ? nullptr : mod->error.c_str(),
@@ -1449,11 +1521,167 @@ void apply() {
   }
 }
 
+// --- what each mod changes, and where two change the same (the mod manager) ---
+
+// A texture file's name to its key ("" if it isn't a pack's name): two
+// files with the same key replace the same texture.
+std::string textureKey(const std::string& rel, std::string* label = nullptr) {
+  const std::string base = rel.substr(rel.rfind('/') + 1);
+  const std::string name = lower(base);
+  if ((!endsWith(name, ".png") && !endsWith(name, ".dds")) || name.find("_mip") != std::string::npos) {
+    return {};
+  }
+  const auto key = aurora::texture::parse_replacement_filename(base);
+  if (!key) {
+    return {};
+  }
+  if (label != nullptr) {
+    *label = base;
+  }
+  char text[96];
+  std::snprintf(text, sizeof(text), "%ux%u_%016llx_%016llx_%u", key->width, key->height,
+                static_cast<unsigned long long>(key->textureHash),
+                static_cast<unsigned long long>(key->hasTlut ? key->tlutHash : 0), key->format);
+  return text;
+}
+
+void analyze() {
+  for (auto& m : sMods) {
+    Mod& mod = *m;
+    for (auto& list : mod.changes) {
+      list.clear();
+    }
+    mod.conflicts.clear();
+    if (mod.source != nullptr) {
+      std::set<std::string> seen;
+      for (const auto& [rel, size] : mod.source->list("overlay/")) {
+        const std::string disc = rel.substr(strlen("overlay"));
+        mod.changes[PORT_MOD_CHANGE_FILE].push_back({lower(disc), disc});
+      }
+      for (const auto& [rel, size] : mod.source->list("textures/")) {
+        std::string label;
+        const std::string key = textureKey(rel, &label);
+        if (!key.empty() && seen.insert(key).second) {
+          mod.changes[PORT_MOD_CHANGE_TEXTURE].push_back({key, label});
+        }
+      }
+      seen.clear();
+      for (const auto& [rel, size] : mod.source->list("messages/")) {
+        std::vector<uint8_t> bytes;
+        if (!endsWith(rel, ".txt") || !mod.source->read(rel, bytes)) {
+          continue;
+        }
+        const std::string inner = rel.substr(strlen("messages/"));
+        const size_t slash = inner.find('/');
+        const std::string lang = slash == std::string::npos ? std::string() : inner.substr(0, slash) + "/";
+        std::unordered_map<std::string, std::string> tags;
+        parseMessages(bytes, tags);
+        std::vector<std::string> names;
+        for (const auto& [tag, text] : tags) {
+          names.push_back(tag);
+        }
+        std::sort(names.begin(), names.end());
+        for (const std::string& n : names) {
+          if (seen.insert(lang + n).second) {
+            mod.changes[PORT_MOD_CHANGE_MESSAGE].push_back({n, lang + n}); // by tag: see the conflicts
+          }
+        }
+      }
+      if (usable(mod) && sLive) {
+        mod.changes[PORT_MOD_CHANGE_PATCH] = mod.patchPlaces;
+      } else {
+        std::string ignored;
+        for (const auto& [rel, size] : mod.source->list("patches/")) {
+          std::vector<uint8_t> bytes;
+          if (endsWith(rel, ".txt") && mod.source->read(rel, bytes)) {
+            applyPatchFile(bytes, rel, ignored, mod.changes[PORT_MOD_CHANGE_PATCH], false);
+          }
+        }
+      }
+    }
+    for (const Mod::MapSpec& map : mod.maps) {
+      mod.changes[PORT_MOD_CHANGE_MAP].push_back({map.name, map.name});
+    }
+  }
+  static const char* const kHookKinds[] = {"pre", "post", "replace"};
+  const char* slot;
+  int kind;
+  for (int i = 0; const char* id = portModHostHookUse(i, &slot, &kind); i++) {
+    for (auto& m : sMods) {
+      if (m->id == id) {
+        m->changes[PORT_MOD_CHANGE_HOOK].push_back({slot, std::string(slot) + " (" + kHookKinds[kind] + ")", kind});
+      }
+    }
+  }
+
+  // Conflicts: the enabled mods changing the same thing, in list order.
+  for (int k = 0; k < PORT_MOD_CHANGE_COUNT; k++) {
+    std::unordered_map<std::string, std::vector<std::pair<size_t, const Change*>>> owners;
+    for (size_t i = 0; i < sMods.size(); i++) {
+      if (!usable(*sMods[i])) {
+        continue;
+      }
+      for (const Change& c : sMods[i]->changes[k]) {
+        auto& list = owners[c.key];
+        if (list.empty() || list.back().first != i) { // a patch may write one place twice
+          list.push_back({i, &c});
+        }
+      }
+    }
+    // per mod pair: how many, the first few
+    std::map<std::pair<size_t, size_t>, Conflict> pairs;
+    for (const auto& [key, list] : owners) {
+      for (size_t a = 0; a < list.size(); a++) {
+        for (size_t b = 0; b < list.size(); b++) {
+          // messages for two different languages ("DE/tag", "FR/tag") don't meet
+          const std::string& la = list[a].second->label;
+          const std::string& lb = list[b].second->label;
+          if (a == b || (k == PORT_MOD_CHANGE_MESSAGE && la.find('/') != std::string::npos &&
+                         lb.find('/') != std::string::npos && la.substr(0, la.find('/')) != lb.substr(0, lb.find('/')))) {
+            continue;
+          }
+          Conflict& c = pairs[{list[a].first, list[b].first}];
+          c.info.kind = k;
+          c.info.count++;
+          // hooks: pre and post hooks both run; of two replacements, the first's
+          c.info.wins = k == PORT_MOD_CHANGE_HOOK ? !(list[a].second->kind == 2 && list[b].second->kind == 2) || a < b
+                                                  : a < b;
+          if (c.info.count <= 3) {
+            c.what += (c.what.empty() ? "" : ", ") + list[a].second->label;
+          }
+        }
+      }
+    }
+    for (auto& [ab, c] : pairs) {
+      auto conflict = std::make_unique<Conflict>(std::move(c));
+      conflict->other = sMods[ab.second]->name;
+      if (conflict->info.count > 3) {
+        conflict->what += ", ...";
+      }
+      sMods[ab.first]->conflicts.push_back(std::move(conflict));
+    }
+  }
+  for (auto& m : sMods) {
+    for (auto& c : m->conflicts) {
+      c->info.what = c->what.c_str();
+      c->info.other = c->other.c_str();
+    }
+  }
+}
+
+// Texture packs: the loose folder's top folders (or the folder itself) and
+// the enabled mods' textures, the mods first.
+struct TextureCollision {
+  std::string name, packs;
+};
+std::vector<TextureCollision> sTextureCollisions;
+
 } // namespace
 
 extern "C" {
 
 void portModsInit(const char* userPath, const char* cachePath) {
+  sLive = true;
   sUserPath = userPath;
   sModsDir = sUserPath + "/mods";
   sDumpDir = std::string(cachePath) + "/texture_dumps";
@@ -1461,6 +1689,7 @@ void portModsInit(const char* userPath, const char* cachePath) {
   sDisabledAll = getenv("TTYD_NO_MODS") != nullptr;
   SDL_CreateDirectory((sUserPath + "/textures").c_str());
   portModHostInit();
+  portModesRegisterMaps(); // the modes' maps (port/include/port/modes.h)
   portApInit(userPath); // an Archipelago seed: its options and files, before the mods (and their code)
   scan();
   readOptions();
@@ -1545,6 +1774,151 @@ const char* portModsDir(void) { return sModsDir.c_str(); }
 
 const char* portModsDumpDir(void) { return sDumpDir.c_str(); }
 
+void portModsPreview(const char* userPath) {
+  if (sLive || !sModsDir.empty()) {
+    return;
+  }
+  sUserPath = userPath;
+  sModsDir = sUserPath + "/mods";
+  scan();
+  readOptions();
+  apply();
+}
+
+int portModsChangeCount(int index, int kind) {
+  if (index < 0 || index >= int(sMods.size()) || kind < 0 || kind >= PORT_MOD_CHANGE_COUNT) {
+    return 0;
+  }
+  return int(sMods[size_t(index)]->changes[kind].size());
+}
+
+const char* portModsChange(int index, int kind, int i) {
+  if (i < 0 || i >= portModsChangeCount(index, kind)) {
+    return nullptr;
+  }
+  return sMods[size_t(index)]->changes[kind][size_t(i)].label.c_str();
+}
+
+int portModsConflictCount(int index) {
+  return index >= 0 && index < int(sMods.size()) ? int(sMods[size_t(index)]->conflicts.size()) : 0;
+}
+
+const PortModConflict* portModsGetConflict(int index, int i) {
+  if (i < 0 || i >= portModsConflictCount(index)) {
+    return nullptr;
+  }
+  return &sMods[size_t(index)]->conflicts[size_t(i)]->info;
+}
+
+void portModsTextureStats(PortTextureStats* out) {
+  *out = {};
+  out->dumping = sLive && aurora::g_config.allowTextureDumps ? 1 : 0;
+  sTextureCollisions.clear();
+  // every pack's names, the first pack first: the enabled mods, then the
+  // loose folder's (each top folder a pack, as a Dolphin pack is unzipped)
+  std::map<std::string, std::pair<std::string, std::vector<std::string>>> packsOf; // key -> a name, packs
+  std::set<std::string> anyTlut, anyTexture; // names with "$" hashes: key without them
+  auto add = [&](const std::string& pack, const std::string& rel) {
+    const std::string base = rel.substr(rel.rfind('/') + 1);
+    const std::string name = lower(base);
+    if ((!endsWith(name, ".png") && !endsWith(name, ".dds")) || name.find("_mip") != std::string::npos) {
+      return;
+    }
+    const auto key = aurora::texture::parse_replacement_filename(base);
+    if (!key) {
+      return;
+    }
+    out->files++;
+    char loose[64];
+    std::snprintf(loose, sizeof(loose), "%ux%u_%u", key->width, key->height, key->format);
+    if (key->textureHash == aurora::texture::kWildcardTextureHash) {
+      anyTexture.insert(loose);
+    } else if (key->hasTlut && key->tlutHash == aurora::texture::kWildcardTlutHash) {
+      anyTlut.insert(std::string(loose) + "_" + std::to_string(key->textureHash));
+    }
+    auto& entry = packsOf[textureKey(rel)];
+    entry.first = base;
+    entry.second.push_back(pack);
+  };
+  for (const auto& mod : sMods) {
+    if (usable(*mod) && mod->source != nullptr) {
+      for (const auto& [rel, size] : mod->source->list("textures/")) {
+        add(mod->name, rel);
+      }
+    }
+  }
+  std::string error;
+  if (auto loose = Source::open(sUserPath + "/textures", false, error); loose != nullptr && !sDisabledAll) {
+    for (const auto& [rel, size] : loose->list("")) {
+      const size_t slash = rel.find('/');
+      add(slash == std::string::npos ? "the textures folder" : "textures/" + rel.substr(0, slash), rel);
+    }
+  }
+  out->replacements = int(packsOf.size());
+  for (const auto& [key, entry] : packsOf) {
+    if (entry.second.size() > 1) {
+      std::string list;
+      for (const std::string& p : entry.second) {
+        list += (list.empty() ? "" : ", ") + p;
+      }
+      sTextureCollisions.push_back({entry.first, list});
+    }
+  }
+  out->collisions = int(sTextureCollisions.size());
+  if (!sDumpDir.empty()) {
+    if (auto dumps = Source::open(sDumpDir, false, error); dumps != nullptr) {
+      for (const auto& [rel, size] : dumps->list("")) {
+        const std::string k = textureKey(rel);
+        if (k.empty()) {
+          continue;
+        }
+        out->dumped++;
+        const auto key = aurora::texture::parse_replacement_filename(rel.substr(rel.rfind('/') + 1));
+        char loose[64];
+        std::snprintf(loose, sizeof(loose), "%ux%u_%u", key->width, key->height, key->format);
+        if (packsOf.count(k) != 0 || anyTexture.count(loose) != 0 ||
+            anyTlut.count(std::string(loose) + "_" + std::to_string(key->textureHash)) != 0) {
+          out->dumpedCovered++;
+        }
+      }
+    }
+  }
+}
+
+const char* portModsTextureCollision(int i, const char** packs) {
+  if (i < 0 || i >= int(sTextureCollisions.size())) {
+    return nullptr;
+  }
+  *packs = sTextureCollisions[size_t(i)].packs.c_str();
+  return sTextureCollisions[size_t(i)].name.c_str();
+}
+
+void portModsReloadTextures(void) {
+  if (!sLive) {
+    return;
+  }
+  applyTextures();
+  // the textures already in use looked up again (a raw replacement's
+  // registration clears Aurora's texture cache)
+  static const uint8_t kPixel[4] = {};
+  const auto reg = aurora::texture::register_replacement(aurora::texture::TexturePointerKey{kPixel},
+                                                         {.bytes = kPixel, .width = 1, .height = 1, .gxFormat = 6});
+  aurora::texture::unregister_replacement(reg);
+  analyze();
+  publish();
+}
+
+void portModsSetTextureDumps(int on) {
+  if (!sLive || aurora::g_config.allowTextureDumps == (on != 0)) {
+    return;
+  }
+  if (on) {
+    SDL_CreateDirectory(sDumpDir.c_str());
+  }
+  aurora::g_config.allowTextureDumps = on != 0;
+  portModsReloadTextures(); // what was looked up before is looked up (and dumped) again
+}
+
 // $TTYD_TRACE: each tag a mod answered, once (local_ci's mods stage)
 static const char* traced(const char* tag, const char* text) {
   static const bool trace = getenv("TTYD_TRACE") != nullptr;
@@ -1576,6 +1950,16 @@ bool portModsReadZip(const std::string& zip, const std::string& member, std::vec
 }
 
 extern "C" {
+
+void portModsAddHostMap(const char* map, void* initScript, const char* files) {
+  sHostMaps[map] = ModMap{initScript, files != nullptr ? files : ""};
+}
+
+const char* portModsMapFiles(const char* map) {
+  std::lock_guard lock(sMapLock);
+  const auto it = sMaps.find(map);
+  return it == sMaps.end() || it->second.files.empty() ? nullptr : it->second.files.c_str();
+}
 
 void* portModsMapScript(const char* map) {
   std::lock_guard lock(sMapLock);

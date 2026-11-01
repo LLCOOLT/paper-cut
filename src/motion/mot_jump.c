@@ -1,4 +1,5 @@
 // Mario's jump, fall and landing motions: jump data tables and mot_jump, mot_fall, mot_land and mot_upstairs.
+#include "port_hook.h"
 #include "version.h"
 // Mario's jump, fall and landing motions.
 #if VERSION >= VERSION_US
@@ -22,6 +23,9 @@
 #include "koopa_motion.h"
 #include "mario/mario_hit.h"
 #include "mot/mot_jump.h"
+#ifdef PORT_MODS
+#include "port/hooks/src_motion_mot_jump.h"
+#endif
 
 /**
  * Jump curves (speed, acceleration, jerk, snap): Mario's launch off a blue jump stand (mot_jumpStand), with its
@@ -48,7 +52,7 @@ static inline void chgPoseC(MarioWork* mario) {
  * detaches from riding objects, loads the jump parameters and the take-off position.
  * The US and later releases also record the run speed at take-off for the Spring Jump check in mot_fall.
  */
-void marioPreJump(void) {
+void PORT_HOOKABLE(marioPreJump)(void) {
     MarioWork* mario = marioGetPtr();
     mario->flags &= ~MARIO_FLAG_IS_FALLING;
     mario->flags |= MARIO_FLAG_IS_JUMPING;
@@ -64,7 +68,7 @@ void marioPreJump(void) {
 }
 
 /** Height the current jump-stand launch will reach (mario->mot.jump.standHeight). */
-f32 marioGetJumpHeight(void) {
+f32 PORT_HOOKABLE(marioGetJumpHeight)(void) {
     MarioWork* mario = marioGetPtr();
     return mario->mot.jump.standHeight;
 }
@@ -75,7 +79,7 @@ f32 marioGetJumpHeight(void) {
  * a rise with marioJumpStandData's curve until 70% of the height, an ease-out to the peak, then a fall.
  * Leaves paper mode unless the paper button is held.
  */
-void mot_jumpStand(void) {
+void PORT_HOOKABLE(mot_jumpStand)(void) {
     MarioWork* mario = marioGetPtr();
     f32 prev;
     if (mario->trigFlags & MARIO_TRIG_FLAG_IS_STARTING_NEW_MOTION) {
@@ -166,7 +170,7 @@ void mot_jumpStand(void) {
  * jumps off with the marioJumpSwData curve, nudging Mario off the switch's centre
  * so he does not land back on it.
  */
-void mot_jumpSw(void) {
+void PORT_HOOKABLE(mot_jumpSw)(void) {
     MarioWork* mario = marioGetPtr();
     void* mobj;
     f32 dir;
@@ -249,7 +253,7 @@ void mot_jumpSw(void) {
  * entered from marioChgMotJump2 (npcdrv's first-strike jump hits)
  * and from koopa_hit when Bowser lands on an enemy; Bowser runs kpa_jumpNpc instead.
  */
-void mot_jumpNpc(void) {
+void PORT_HOOKABLE(mot_jumpNpc)(void) {
     MarioWork* mario = marioGetPtr();
     f32 s, c;
     void* mobj;
@@ -380,7 +384,7 @@ void N_mot_jumpNpc_post(void) {
  * and records where the fall starts. The arc itself is run by the shared jump code in mario_motion.c.
  * Bowser runs kpa_jump.
  */
-void mot_jump(void) {
+void PORT_HOOKABLE(mot_jump)(void) {
     MarioWork* mario = marioGetPtr();
     if (mario->characterId == 2) {
         kpa_jump();
@@ -426,7 +430,7 @@ void mot_jump(void) {
 }
 
 /** Small jump: the same set-up as mot_jump for the lower jump arc (MARIO_MOTION_JUMP_SMALL). */
-void mot_jumpSmall(void) {
+void PORT_HOOKABLE(mot_jumpSmall)(void) {
     MarioWork* mario = marioGetPtr();
     if (mario->characterId == 2) {
         kpa_jump();
@@ -467,7 +471,7 @@ void mot_jumpSmall(void) {
  * Steps Mario up onto a ledge to mario->stepUpY over 3 frames, then returns to the paper,
  * sideways or normal motion he was in.
  */
-void mot_upstairs(void) {
+void PORT_HOOKABLE(mot_upstairs)(void) {
     MarioWork* mario = marioGetPtr();
     if (mario->trigFlags & MARIO_TRIG_FLAG_IS_STARTING_NEW_MOTION) {
         mario->trigFlags &= ~MARIO_TRIG_FLAG_IS_STARTING_NEW_MOTION;
@@ -508,7 +512,7 @@ void mot_upstairs(void) {
  * From the US release it also arms the mid-air Spring Jump input
  * when Mario fell from standing with the Ultra Boots. Bowser runs kpa_fall.
  */
-void mot_fall(void) {
+void PORT_HOOKABLE(mot_fall)(void) {
     MarioWork* mario = marioGetPtr();
     if (mario->characterId == 2) {
         kpa_fall();
@@ -578,7 +582,7 @@ void mot_fall(void) {
 }
 
 /** Stops the looping sound in mario->soundId[2] when the fall motion ends. */
-void mot_fall_post(void) {
+void PORT_HOOKABLE(mot_fall_post)(void) {
     MarioWork* mario = marioGetPtr();
     if (mario->soundId[2] != (u32)-1) {
         psndSFXOff(mario->soundId[2]);
@@ -590,7 +594,7 @@ void mot_fall_post(void) {
  * Landing: clears the jump state and the looping sound,
  * then goes to the stay motion at once or after mario->multiTimer frames.
  */
-void mot_land(void) {
+void PORT_HOOKABLE(mot_land)(void) {
     MarioWork* mario = marioGetPtr();
     if (mario->trigFlags & MARIO_TRIG_FLAG_IS_STARTING_NEW_MOTION) {
         mario->trigFlags &= ~MARIO_TRIG_FLAG_IS_STARTING_NEW_MOTION;
@@ -621,3 +625,7 @@ void mot_land(void) {
             break;
     }
 }
+
+#ifdef PORT_MODS
+#include "port/hooks/src_motion_mot_jump.inc"
+#endif

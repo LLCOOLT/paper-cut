@@ -1,5 +1,6 @@
 // Script commands for the information seller (johoya): the rumour tables and message labels
 // by story progress.
+#include "port_hook.h"
 #include "evt/evt_johoya.h"
 #include "driver/msgdrv.h"
 #include <string.h>
@@ -8,6 +9,9 @@
 #include "manager/evtmgr_cmd.h"
 #include "version.h"
 #include "evt/evt_story.h"
+#ifdef PORT_MODS
+#include "port/hooks/src_event_evt_johoya.h"
+#endif
 
 //.data
 InformantWork _jdt = {0};
@@ -359,7 +363,7 @@ s32 johoya_data_make(const char* prefix, s32 type) {
 }
 
 /** Clears the three rumour read-flag tables. Runs on a new game (stg0_00_init in event.c). */
-void johoya_init(void) {
+void PORT_HOOKABLE(johoya_init)(void) {
     InformantUnknown* unk = &_jdt.readFlags;
 
     memset(&unk->ketiRead, 0, 0xD);
@@ -371,7 +375,7 @@ void johoya_init(void) {
  * Writes a one-bit flag (val clamped to 0 or 1) for id into a read-flag table (eight ids per byte); returns it.
  * Also used by the fortune teller (evt_uranaisi.c) for her starpiece and supercoin read flags.
  */
-s16 johoya_set(u8* table, s16 id, s16 val) {
+s16 PORT_HOOKABLE(johoya_set)(u8* table, s16 id, s16 val) {
     u8 mask;
     s32 shift;
     s32 idx;
@@ -421,7 +425,7 @@ s16 johoya_set(u8* table, s16 id, s16 val) {
 }
 
 /** Reads id's one-bit flag from a read-flag table (eight ids per byte); see johoya_set. */
-s16 johoya_get(u8* table, s16 id) {
+s16 PORT_HOOKABLE(johoya_get)(u8* table, s16 id) {
     u8 mask;
     s32 shift;
 
@@ -466,7 +470,7 @@ s16 johoya_get(u8* table, s16 id) {
  * Returns the index of a story label ("STG1_05" and so on) in evtNoLabel, or -1;
  * callers compare it with GSW_STORY_PROGRESS. Also used by the fortune teller (evt_uranaisi.c).
  */
-s32 search_evt_no(const char* label) {
+s32 PORT_HOOKABLE(search_evt_no)(const char* label) {
     s32 labelId;
 
     for (labelId = 0; labelId < (s32)(sizeof(evtNoLabel) / sizeof(char*)); labelId++) {
@@ -478,6 +482,10 @@ s32 search_evt_no(const char* label) {
 }
 
 /** Returns the story label string in evtNoLabel for an index (no bounds check). No caller in the C code. */
-const char* search_evt_moji(s32 id) {
+const char* PORT_HOOKABLE(search_evt_moji)(s32 id) {
     return evtNoLabel[id];
 }
+
+#ifdef PORT_MODS
+#include "port/hooks/src_event_evt_johoya.inc"
+#endif

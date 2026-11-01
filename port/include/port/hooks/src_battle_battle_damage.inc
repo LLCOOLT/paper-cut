@@ -6,6 +6,7 @@ s32 BattlePreCheckDamage(BattleUnit * p0, BattleUnit * p1, BattleUnitPart * p2, 
     PortHookSlot* s = &portHookSlots[26];
     s32 r;
     int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
     if (!s->active) {
         return BattlePreCheckDamage__body(p0, p1, p2, p3, p4);
     }
@@ -26,6 +27,7 @@ s32 BattleCheckDamage(BattleUnit * p0, BattleUnit * p1, BattleUnitPart * p2, Bat
     PortHookSlot* s = &portHookSlots[27];
     s32 r;
     int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
     if (!s->active) {
         return BattleCheckDamage__body(p0, p1, p2, p3, p4);
     }
@@ -46,6 +48,7 @@ static s32 BattleCalculateDamage(BattleUnit * p0, BattleUnit * p1, BattleUnitPar
     PortHookSlot* s = &portHookSlots[28];
     s32 r;
     int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
     if (!s->active) {
         return BattleCalculateDamage__body(p0, p1, p2, p3, p4, p5);
     }
@@ -66,6 +69,7 @@ static s32 BattleCalculateFpDamage(BattleUnit * p0, BattleUnit * p1, BattleUnitP
     PortHookSlot* s = &portHookSlots[29];
     s32 r;
     int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
     if (!s->active) {
         return BattleCalculateFpDamage__body(p0, p1, p2, p3, p4, p5);
     }
@@ -85,6 +89,7 @@ static s32 BattleCalculateFpDamage(BattleUnit * p0, BattleUnit * p1, BattleUnitP
 void BattleDamageDirect(s32 p0, BattleUnit * p1, BattleUnitPart * p2, s32 p3, s32 p4, u32 p5, u32 p6, s32 p7) {
     PortHookSlot* s = &portHookSlots[30];
     int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
     if (!s->active) {
         BattleDamageDirect__body(p0, p1, p2, p3, p4, p5, p6, p7);
         return;
@@ -104,6 +109,7 @@ s32 BattleSetStatusDamageFromWeapon(BattleUnit * p0, BattleUnit * p1, BattleUnit
     PortHookSlot* s = &portHookSlots[31];
     s32 r;
     int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
     if (!s->active) {
         return BattleSetStatusDamageFromWeapon__body(p0, p1, p2, p3, p4);
     }
@@ -120,6 +126,84 @@ s32 BattleSetStatusDamageFromWeapon(BattleUnit * p0, BattleUnit * p1, BattleUnit
     return r;
 }
 
+void BattleAttackDeclare(s32 * p0, s32 * p1) {
+    PortHookSlot* s = &portHookSlots[253];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        BattleAttackDeclare__body(p0, p1);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*, __typeof__(p1)*))s->pre[i])(&p0, &p1);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0), __typeof__(p1)))s->replace)(p0, p1); } else { BattleAttackDeclare__body(p0, p1); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0), __typeof__(p1)))s->post[i])(p0, p1);
+    }
+}
+
+void BattleAttackDeclareAll(BattleWork * p0) {
+    PortHookSlot* s = &portHookSlots[254];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        BattleAttackDeclareAll__body(p0);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*))s->pre[i])(&p0);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0)))s->replace)(p0); } else { BattleAttackDeclareAll__body(p0); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0)))s->post[i])(p0);
+    }
+}
+
+void BattleInitCounterPreCheckWork(CounterWork * p0) {
+    PortHookSlot* s = &portHookSlots[255];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        BattleInitCounterPreCheckWork__body(p0);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*))s->pre[i])(&p0);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0)))s->replace)(p0); } else { BattleInitCounterPreCheckWork__body(p0); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0)))s->post[i])(p0);
+    }
+}
+
+s32 BattleCheckCounter(CounterWork * p0, BattleUnit * p1, BattleUnit * p2, BattleUnitPart * p3, BattleWeapon * p4, u32 * p5) {
+    PortHookSlot* s = &portHookSlots[256];
+    s32 r;
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        return BattleCheckCounter__body(p0, p1, p2, p3, p4, p5);
+    }
+    __builtin_memset(&r, 0, sizeof(r));
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(r)*, __typeof__(p0)*, __typeof__(p1)*, __typeof__(p2)*, __typeof__(p3)*, __typeof__(p4)*, __typeof__(p5)*))s->pre[i])(&r, &p0, &p1, &p2, &p3, &p4, &p5);
+    }
+    if (!skip) {
+        r = (s->replace != NULL ? ((s32 (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3), __typeof__(p4), __typeof__(p5)))s->replace)(p0, p1, p2, p3, p4, p5) : BattleCheckCounter__body(p0, p1, p2, p3, p4, p5));
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(r)*, __typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3), __typeof__(p4), __typeof__(p5)))s->post[i])(&r, p0, p1, p2, p3, p4, p5);
+    }
+    return r;
+}
+
 void portHookInit_src_battle_battle_damage(void) {
     portHookSlots[26].body = (void*)BattlePreCheckDamage__body;
     portHookSlots[27].body = (void*)BattleCheckDamage__body;
@@ -127,4 +211,8 @@ void portHookInit_src_battle_battle_damage(void) {
     portHookSlots[29].body = (void*)BattleCalculateFpDamage__body;
     portHookSlots[30].body = (void*)BattleDamageDirect__body;
     portHookSlots[31].body = (void*)BattleSetStatusDamageFromWeapon__body;
+    portHookSlots[253].body = (void*)BattleAttackDeclare__body;
+    portHookSlots[254].body = (void*)BattleAttackDeclareAll__body;
+    portHookSlots[255].body = (void*)BattleInitCounterPreCheckWork__body;
+    portHookSlots[256].body = (void*)BattleCheckCounter__body;
 }

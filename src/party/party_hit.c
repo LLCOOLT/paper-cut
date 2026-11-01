@@ -1,4 +1,5 @@
 // Partner collision: ground, wall and ceiling checks for the partners.
+#include "port_hook.h"
 #include "version.h"
 #include "party.h"
 #include "driver/hitdrv.h"
@@ -21,6 +22,9 @@
 #include "mario/mariost.h"
 #endif
 #include <math.h>
+#ifdef PORT_MODS
+#include "port/hooks/src_party_party_hit.h"
+#endif
 
 /**
  * Default collision filter for partner rays (hitCheckVecFilter: TRUE collides, FALSE skips):
@@ -166,7 +170,7 @@ static inline HitEntry* partyHitCheckInl(PartyEntry* party, Vec* pos, Vec* dir, 
  * Exported partyHitCheckInl: a partner-filtered ray cast returning the hit object,
  * rounded distance and position, and normal. Used by party_motion.c and evt_party.c.
  */
-HitEntry* partyHitCheck(PartyEntry* party, Vec* pos, Vec* dir, Vec* outPos, Vec* outNrm, f32* dist) {
+HitEntry* PORT_HOOKABLE(partyHitCheck)(PartyEntry* party, Vec* pos, Vec* dir, Vec* outPos, Vec* outNrm, f32* dist) {
     return partyHitCheckInl(party, pos, dir, outPos, outNrm, dist);
 }
 
@@ -189,7 +193,7 @@ f32 partyNrmToAngle(Vec n) {
  * starts a fall when there is no floor (attribute 0x200 counts as none),
  * and starts the step-up motion when the floor just ahead is 5 or more units higher on a gentle slope.
  */
-void partyChkGnd(PartyEntry* party) {
+void PORT_HOOKABLE(partyChkGnd)(PartyEntry* party) {
     s32 attr;
     HitEntry* hit;
     f32 a, b, c;
@@ -369,7 +373,7 @@ HitEntry* partySearchGround(PartyEntry* party, f32 range, f32 depth) {
 
 /* the demo's ground search reports the floor height and drop depth through out-pointers and takes the first
    acceptable probe instead of the highest one */
-HitEntry* _partySearchGround(PartyEntry* party, f32* outY, f32* outDepth, f32 range, f32 depth) {
+HitEntry* PORT_HOOKABLE(_partySearchGround)(PartyEntry* party, f32* outY, f32* outDepth, f32 range, f32 depth) {
     HitEntry* hit;
     s32 i;
     f32 nsx, probeY, nsz, len, sx, sz, px, baseY, pz, ox, oz, gy, rad, d;
@@ -464,7 +468,7 @@ HitEntry* _partySearchGround(PartyEntry* party, f32* outY, f32* outDepth, f32 ra
  * Ignores floors steeper than 50 degrees and takes the highest floor within 11 units up or `depth` down:
  * sets groundY and dropDepth (-1 none, or the drop when too deep).
  */
-HitEntry* _partySearchGround(PartyEntry* party, f32 range, f32 depth) {
+HitEntry* PORT_HOOKABLE(_partySearchGround)(PartyEntry* party, f32 range, f32 depth) {
     HitEntry* hit;
     HitEntry* best;
     s32 i;
@@ -575,7 +579,7 @@ HitEntry* _partySearchGround(PartyEntry* party, f32 range, f32 depth) {
  * On a floor not more than 2 units lower, returns it with *outY = floor height and *outDist = 0;
  * on a lower floor returns NULL with *outDist = the drop. Also sets her floor tilt and slope.
  */
-HitEntry* partyChkFrontStep(PartyEntry* party, f32 range, f32* outY, f32* outDist, f32* outAng) {
+HitEntry* PORT_HOOKABLE(partyChkFrontStep)(PartyEntry* party, f32 range, f32* outY, f32* outDist, f32* outAng) {
     HitEntry* hit;
     f32 dx, sn, cs, h, ang, ox, oy, oz, gy;
     Vec pos, outPos, outNrm;
@@ -714,7 +718,7 @@ static inline HitEntry* partyHitCheckNrm(PartyEntry* party, Vec* pos, Vec* dir, 
 
 /* the demo's wall probe: chest-height ray, a mid-height ray for a ridden Yoshi, then a step-height ray that only
    counts walls of 45 degrees or more */
-HitEntry* partySearchWallFront(PartyEntry* party, Vec* pos, f32 dist, f32 ang) {
+HitEntry* PORT_HOOKABLE(partySearchWallFront)(PartyEntry* party, Vec* pos, f32 dist, f32 ang) {
     f32 sn, cs;
     f32 d, dy;
     HitEntry* hit;
@@ -772,7 +776,7 @@ HitEntry* partySearchWallFront(PartyEntry* party, Vec* pos, f32 dist, f32 ang) {
  * slides *pos along the nearest wall, or moves it by dist; it stays put when both diagonals are blocked.
  * No callers in this tree.
  */
-HitEntry* partySearchWallFront(PartyEntry* party, Vec* pos, f32 dist, f32 ang) {
+HitEntry* PORT_HOOKABLE(partySearchWallFront)(PartyEntry* party, Vec* pos, f32 dist, f32 ang) {
     Vec qpos;
     Vec qdir;
     Vec outPos;
@@ -894,7 +898,7 @@ HitEntry* partySearchWallFront(PartyEntry* party, Vec* pos, f32 dist, f32 ang) {
 
 #else
 /** Japanese release: the same wall probe without the extra gor_02 ray. */
-HitEntry* partySearchWallFront(PartyEntry* party, Vec* pos, f32 dist, f32 ang) {
+HitEntry* PORT_HOOKABLE(partySearchWallFront)(PartyEntry* party, Vec* pos, f32 dist, f32 ang) {
     Vec qpos;
     Vec qdir;
     Vec outPos;
@@ -1014,7 +1018,7 @@ HitEntry* partySearchWallFront(PartyEntry* party, Vec* pos, f32 dist, f32 ang) {
  * On a hit slides *pos along the wall and returns it; otherwise moves *pos by dist.
  * Retail versions store frontWallDist (-1 none); the US release narrows paper-mode width to 6.
  */
-HitEntry* partySearchFrontWall(PartyEntry* party, Vec* pos, f32 dist, f32 ang) {
+HitEntry* PORT_HOOKABLE(partySearchFrontWall)(PartyEntry* party, Vec* pos, f32 dist, f32 ang) {
     f32 sn, cs;
     f32 d, dy, hh;
 #if VERSION >= VERSION_US
@@ -1088,9 +1092,9 @@ HitEntry* partySearchFrontWall(PartyEntry* party, Vec* pos, f32 dist, f32 ang) {
 #ifdef TARGET_PC
 /* PC port: the callers use the ceiling found (party_move.c, party_motion.c);
  * the GameCube function is void and they read whatever r3 held */
-HitEntry* partySearchHead(PartyEntry* party, Vec* pos, f32* dist, f32 angle) {
+HitEntry* PORT_HOOKABLE(partySearchHead)(PartyEntry* party, Vec* pos, f32* dist, f32 angle) {
 #else
-void partySearchHead(PartyEntry* party, Vec* pos, f32* dist, f32 angle) {
+void PORT_HOOKABLE(partySearchHead)(PartyEntry* party, Vec* pos, f32* dist, f32 angle) {
 #endif
     f32 lx;
     f32 ly;
@@ -1361,4 +1365,8 @@ BOOL partyChkBetweenWalls(PartyEntry* party, Vec pos) {
     }
     return FALSE;
 }
+#endif
+
+#ifdef PORT_MODS
+#include "port/hooks/src_party_party_hit.inc"
 #endif

@@ -1,6 +1,10 @@
 // Battle action records: counts and points used to judge the conditions of the battle ranking.
+#include "port_hook.h"
 #include "battle/battle_actrecord.h"
 #include "battle/battle.h"
+#ifdef PORT_MODS
+#include "port/hooks/src_battle_battle_actrecord.h"
+#endif
 
 // this unit is size-optimised, as in the original (the object differs without it)
 #pragma optimize_for_size on
@@ -12,14 +16,14 @@ static s32 _check_use(s32 n);
 static s32 _check_no_use(s32 n);
 
 /** Increments one battle action-record counter (moves used, items used, ...), capped at 100. */
-void BtlActRec_AddCount(u8* count) {
+void PORT_HOOKABLE(BtlActRec_AddCount)(u8* count) {
     if (*count < 100) {
         *count = *count + 1;
     }
 }
 
 /** Adds amount to an action-record point total, capped at 100. */
-void BtlActRec_AddPoint(u8* point, s32 amount) {
+void PORT_HOOKABLE(BtlActRec_AddPoint)(u8* point, s32 amount) {
     *point += amount;
     if (*point > 100) {
         *point = 100;
@@ -31,7 +35,7 @@ void BtlActRec_AddPoint(u8* point, s32 amount) {
  * each turn from battle_seq, by counting the relevant actions so far;
  * other condition types are judged at battle end.
  */
-void BtlActRec_JudgeTurnRuleKeep(void) {
+void PORT_HOOKABLE(BtlActRec_JudgeTurnRuleKeep)(void) {
     s32 v;
     BattleWork* wp = _battleWorkPointer;
     FieldBattleInfo* rec = wp->fbatInfo;
@@ -71,7 +75,7 @@ void BtlActRec_JudgeTurnRuleKeep(void) {
  * ruleParam2, 1 = broken. The Glitz Pit reads it back (evt_tou_set_rule_result) and tests only bit 0x4,
  * so 1 and 2 both count as broken there.
  */
-void BtlActRec_JudgeRuleKeep(void) {
+void PORT_HOOKABLE(BtlActRec_JudgeRuleKeep)(void) {
     s32 v;
     BattleWork* wp = _battleWorkPointer;
     BattleActRecord* ar;
@@ -394,3 +398,7 @@ static s32 _check_turn_count_0_end(s32 n) {
     }
     return rec->ruleKeepResult;
 }
+
+#ifdef PORT_MODS
+#include "port/hooks/src_battle_battle_actrecord.inc"
+#endif

@@ -1,4 +1,5 @@
 // Pause menu: the badge window (equip and unequip badges).
+#include "port_hook.h"
 #include "version.h"
 #include "win/win_main.h"
 #include "data/item_data.h"
@@ -15,9 +16,15 @@
 #include "pmario_sound.h"
 #include <dolphin/pad.h>
 #include <demo/DEMOPad.h>
+#ifdef PORT_MODS
+#include "port/hooks/src_window_win_badge.h"
+#endif
+#ifdef TARGET_PC
+#include "port/menu_tap.h"
+#endif
 
 /** Builds the "Equipped" tab's list from the pouch: one entry (slot index, badge id, equipped) per equipped badge. */
-void winMakeEquipList(WindowWork* w) {
+void PORT_HOOKABLE(winMakeEquipList)(WindowWork* w) {
     s32 n = 0;
     s32 i;
     PouchData* pouch = pouchGetPtr();
@@ -34,7 +41,7 @@ void winMakeEquipList(WindowWork* w) {
 }
 
 /** Resets the Badges window when the pause menu opens: "All Badges" tab, cursors and pages at the top. */
-void winBadgeInit(WindowWork* w) {
+void PORT_HOOKABLE(winBadgeInit)(WindowWork* w) {
     w->badge.state = 0;
     w->badge.tab = 0;
     w->badge.sel[0] = 0;
@@ -49,7 +56,7 @@ void winBadgeInit(WindowWork* w) {
  * snaps the list scroll to the saved pages, sets the help text for the current tab
  * and rebuilds the equipped list.
  */
-void winBadgeInit2(WindowWork* w) {
+void PORT_HOOKABLE(winBadgeInit2)(WindowWork* w) {
     w->helpTgtX = -270.0f;
     w->helpTgtY = 125 - w->badge.tab * 40;
     w->badge.scroll[0] = w->badge.scrollTgt[0] = 184.0f * w->badge.page[0];
@@ -59,7 +66,7 @@ void winBadgeInit2(WindowWork* w) {
 }
 
 /** Closing hook for the Badges window; empty. */
-void winBadgeExit(WindowWork* w) {
+void PORT_HOOKABLE(winBadgeExit)(WindowWork* w) {
 }
 
 /**
@@ -135,13 +142,32 @@ enum { WIN_SORT_BADGE_ALL = 2,
  * state 10 moves through the list (L/R page) and equips or removes the badge on A if BP allows,
  * state 1000 runs the Z sort menu. Returns -1 on B (back), -2 on Start (close the menu), else 0.
  */
-s32 winBadgeMain(WindowWork* w) {
+s32 PORT_HOOKABLE(winBadgeMain)(WindowWork* w) {
     PouchData* pouch = pouchGetPtr();
     s32 tab;
     s32 cnt;
     s32 pages;
     s32 mode;
 
+#ifdef TARGET_PC
+    /* the mouse (portWinMouse): the two lists' buttons (a step of the stick, which builds the equipped
+     * list), then the page's badges */
+    if (w->badge.state == 0) {
+        tab = w->badge.tab;
+        if (portWinMouse(&tab, 0, 2, -270.0f, VERSION_PICK(125, 130), 0.0f, VERSION_PICK(40, 45), 1, 160.0f, 36.0f, NULL)) {
+            w->buttonTrg |= PAD_BUTTON_A;
+        }
+        if (tab != w->badge.tab) {
+            w->dirRep |= DEMO_STICK_DOWN;
+        }
+    } else if (w->badge.state == 10) {
+        tab = w->badge.tab;
+        cnt = (tab == 0 ? pouchGetHaveBadgeCnt() : w->badge.count) - w->badge.page[tab] * 8;
+        if (portWinMouse(&w->badge.sel[tab], w->badge.page[tab] * 8, cnt < 8 ? cnt : 8, -110.0f, 110.0f, 0.0f, 23.0f, 1, 260.0f, 23.0f, SFX_NAME_WORD(0x20035))) {
+            w->buttonTrg |= PAD_BUTTON_A;
+        }
+    }
+#endif
     switch (w->badge.state) {
         case 0:
             if (w->buttonTrg & PAD_BUTTON_B) {
@@ -280,7 +306,7 @@ s32 winBadgeMain(WindowWork* w) {
  * Every frame: eases each tab's list scroll a quarter of the way toward its current page (184 units per 8-row
  * page).
  */
-void winBadgeMain2(WindowWork* w) {
+void PORT_HOOKABLE(winBadgeMain2)(WindowWork* w) {
     s32 i;
     for (i = 0; i < 2; i++) {
         w->badge.scrollTgt[i] = 184.0f * w->badge.page[i];
@@ -296,7 +322,7 @@ static void badge_disp(WindowWork* w, f32 xo, f32 yo);
  * Draws the Badges window (menu slot n): the two tabs,
  * the BP panel with total and remaining BP and a pip per BP point, then the badge list via badge_disp.
  */
-void winBadgeDisp(s32 camId, void* param, s32 n) {
+void PORT_HOOKABLE(winBadgeDisp)(s32 camId, void* param, s32 n) {
     WindowWork* w = param;
     GXColor white = {255, 255, 255, 255};
     GXColor black = {0, 0, 0, 255};
@@ -511,3 +537,7 @@ static void badge_disp(WindowWork* w, f32 xo, f32 yo) {
         winFontSet((Vec){120.0f + xo, 135.0f + yo, 0.0f}, (Vec){0.5f, 0.5f, 0.5f}, colD, msgSearch("msg_menu_badge_hituyou"));
     }
 }
+
+#ifdef PORT_MODS
+#include "port/hooks/src_window_win_badge.inc"
+#endif

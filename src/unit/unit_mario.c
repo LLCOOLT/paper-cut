@@ -1,4 +1,5 @@
 // Battle unit data for Mario: defense, vulnerabilities, poses and data table.
+#include "port_hook.h"
 #include "battle/battle.h"
 #include "battle/battle_sub.h"
 #include "driver/animdrv.h"
@@ -21,6 +22,9 @@
 #include "data_tables.h"
 #include "version.h"
 #include "evt/evt_story.h"
+#ifdef PORT_MODS
+#include "port/hooks/src_unit_unit_mario.h"
+#endif
 
 // Unit work slots (btlevtcmd_SetUnitWork / GetUnitWork)
 enum {
@@ -405,7 +409,7 @@ static void callback(MapTevCallbackInfo* info) {
  * Installs the shadow-silhouette TEV callback 11 for Doopliss's Mario disguise;
  * the Doopliss unit (unit_boss_rampell) then flags its own model to use it. The unit argument is unused.
  */
-void faker_mario_makkuro_set(BattleUnit* unit) {
+void PORT_HOOKABLE(faker_mario_makkuro_set)(BattleUnit* unit) {
     mapSetTevCallback(11, callback);
 }
 
@@ -802,3 +806,7 @@ EVT_BEGIN(btlataudevtMarioHammer)
     CALL(btlevtcmd_StartWaitEvent, BTL_UNIT_SELF)
     RETURN
 EVT_END()
+
+#ifdef PORT_MODS
+#include "port/hooks/src_unit_unit_mario.inc"
+#endif

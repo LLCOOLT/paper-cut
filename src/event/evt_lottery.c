@@ -1,4 +1,5 @@
 // Script commands for the Pianta Parlor lottery ticket.
+#include "port_hook.h"
 #include "evt/evt_lottery.h"
 #include "evt/evt_cmd.h"
 #include "mario/mariost.h"
@@ -9,13 +10,16 @@
 #endif
 #include "manager/evtmgr_cmd.h"
 #include "version.h"
+#ifdef PORT_MODS
+#include "port/hooks/src_event_evt_lottery.h"
+#endif
 
 //.sbss
 BOOL dbg_lotteryinfo;
 static s32 lotteryUnused;
 
 /** Returns the lottery state kept in the save data (gp->lotteryInfo); the shop menus read the ticket number from it. */
-lottery_info* lotteryGetPtr(void) {
+lottery_info* PORT_HOOKABLE(lotteryGetPtr)(void) {
     return &gp->lotteryInfo;
 }
 
@@ -444,3 +448,7 @@ USER_FUNC(evt_lottery_error_check) {
     evtSetValue(event, args[0], err);
     return EVT_RETURN_DONE;
 }
+
+#ifdef PORT_MODS
+#include "port/hooks/src_event_evt_lottery.inc"
+#endif

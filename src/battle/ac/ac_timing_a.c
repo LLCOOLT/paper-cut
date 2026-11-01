@@ -1,5 +1,6 @@
 // Action command: press A in time with the timing gauge (ac_timing_a); the standard attack timing prompt.
 #pragma defer_codegen off
+#include "port_hook.h"
 #include "battle/ac/ac_timing_a.h"
 #ifdef TARGET_PC
 #include "port/gameplus.h"
@@ -14,6 +15,9 @@
 #include <string.h>
 #include "icon_ids.h"
 #include "version.h"
+#ifdef PORT_MODS
+#include "port/hooks/src_battle_ac_ac_timing_a.h"
+#endif
 
 // this unit is size-optimised, as in the original (the object differs without it)
 #pragma optimize_for_size on
@@ -189,7 +193,7 @@ s32 battleAcResult_TimingA(BattleWork* work) {
  * with timing flag bit 1 it narrows as resultCount grows, as in Power Bounce and Multibonk,
  * until 100000 bounces make it 0.
  */
-s32 battleAcTimingA_GetSuccessFrame(BattleWork* work) {
+s32 PORT_HOOKABLE(battleAcTimingA_GetSuccessFrame)(BattleWork* work) {
     s32 diff = BattleActionCommandGetDifficulty(work);
     TimingAEntry* e = _ac_timing_a_timing_tbl[diff];
     s32 ret = e->value;
@@ -217,7 +221,7 @@ s32 battleAcTimingA_GetSuccessFrame(BattleWork* work) {
  * Goombella's Headbonk and Multibonk and Frankly's lesson.
  * Does no judging itself (see battleAcResult_TimingA); it only sets up the display and runs the end wait.
  */
-s32 battleAcMain_TimingA(BattleWork* work) {
+s32 PORT_HOOKABLE(battleAcMain_TimingA)(BattleWork* work) {
     BattleActions* ac = &work->actionCommands;
     TimingAWork* tw = TA_WORK(ac);
     BattleACDispParams* disp = (BattleACDispParams*)&ac->disp;
@@ -252,3 +256,7 @@ s32 battleAcMain_TimingA(BattleWork* work) {
     }
     return 1;
 }
+
+#ifdef PORT_MODS
+#include "port/hooks/src_battle_ac_ac_timing_a.inc"
+#endif

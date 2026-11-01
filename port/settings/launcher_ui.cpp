@@ -11,11 +11,13 @@
 #include "port/settings.h"
 #include "port/versions.h"
 #include "settings_ui.h"
+#include "port/update_check.h"
 #include "launcher_style.h"
 
 #include <SDL3/SDL.h>
 #include <aurora/aurora.h>
 #include <imgui.h>
+#include <imgui_internal.h> // FocusItem
 
 #include <algorithm>
 #include <cctype>
@@ -50,7 +52,59 @@ struct Launcher {
   int selected = -1;
   std::string status;  // the last problem, shown under the list
   std::string result;  // set when a disc of this version is chosen
+  bool pad = false;        // a controller in use: its buttons shown, the focus outline kept up
+  bool focusList = true;   // put the focus on the selected disc (or the Add button) this frame
+  int tab = 0;             // the tab shown (Play, Settings, About)
+  int wantTab = -1;        // a tab asked for with the shoulder buttons
 };
+
+constexpr int kTabCount = 3;
+
+// The controller in use, for its buttons' names and the confirm button:
+// Nintendo controllers confirm with A on the right (east), the others with the
+// bottom button (south).
+SDL_GamepadType padType() {
+  // $TTYD_LAUNCHER_PAD (tests, screenshots): xbox, ps or switch, as if that controller were in use
+  static const char* test = SDL_getenv("TTYD_LAUNCHER_PAD");
+  if (test != nullptr) {
+    return std::strcmp(test, "ps") == 0       ? SDL_GAMEPAD_TYPE_PS5
+           : std::strcmp(test, "switch") == 0 ? SDL_GAMEPAD_TYPE_NINTENDO_SWITCH_PRO
+                                              : SDL_GAMEPAD_TYPE_XBOXONE;
+  }
+  int count = 0;
+  SDL_JoystickID* ids = SDL_GetGamepads(&count);
+  const SDL_GamepadType type = count > 0 ? SDL_GetGamepadTypeForID(ids[0]) : SDL_GAMEPAD_TYPE_STANDARD;
+  SDL_free(ids);
+  return type;
+}
+
+bool nintendoPad(SDL_GamepadType type) {
+  return type == SDL_GAMEPAD_TYPE_NINTENDO_SWITCH_PRO || type == SDL_GAMEPAD_TYPE_NINTENDO_SWITCH_JOYCON_LEFT ||
+         type == SDL_GAMEPAD_TYPE_NINTENDO_SWITCH_JOYCON_RIGHT || type == SDL_GAMEPAD_TYPE_NINTENDO_SWITCH_JOYCON_PAIR;
+}
+
+bool playstationPad(SDL_GamepadType type) {
+  return type == SDL_GAMEPAD_TYPE_PS3 || type == SDL_GAMEPAD_TYPE_PS4 || type == SDL_GAMEPAD_TYPE_PS5;
+}
+
+// A controller's button pressed: controller mode; the mouse moved or clicked:
+// pointer mode. Keyboard keys leave it as it is.
+void updateInputMode(Launcher& l) {
+  ImGuiIO& io = ImGui::GetIO();
+  for (int k = ImGuiKey_GamepadStart; k <= ImGuiKey_GamepadRStickDown; k++) {
+    if (ImGui::IsKeyPressed(static_cast<ImGuiKey>(k), false)) {
+      l.pad = true;
+      break;
+    }
+  }
+  if (io.MouseDelta.x != 0.f || io.MouseDelta.y != 0.f || ImGui::IsAnyMouseDown()) {
+    l.pad = false;
+  }
+  io.ConfigNavSwapGamepadButtons = nintendoPad(padType());
+  if (l.pad) {
+    ImGui::SetNavCursorVisible(true);
+  }
+}
 
 std::string fileName(const std::string& path) {
   const size_t slash = path.find_last_of("/\\");
@@ -307,13 +361,24 @@ void drawLibrary(Launcher& l, float scale) {
     const char* label = d.version != nullptr ? d.version->label : (d.exists ? "Not the game" : "Missing");
     ImGui::PushID(static_cast<int>(i));
     const bool playable = d.version == self || (d.version != nullptr && d.version->ported);
-    if (ImGui::Selectable("##disc", l.selected == static_cast<int>(i), ImGuiSelectableFlags_AllowDoubleClick,
-                          ImVec2(0, ImGui::GetTextLineHeightWithSpacing() * 2))) {
+    const bool chosen = ImGui::Selectable("##disc", l.selected == static_cast<int>(i),
+                                          ImGuiSelectableFlags_AllowDoubleClick,
+                                          ImVec2(0, ImGui::GetTextLineHeightWithSpacing() * 2));
+    if (l.focusList && l.selected == static_cast<int>(i)) {
+      ImGui::FocusItem(); // not SetKeyboardFocusHere, which would also press it
+      l.focusList = false;
+    }
+    if (chosen) {
       l.selected = static_cast<int>(i);
       l.status.clear();
-      if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)) {
+      // a double click, or the controller's confirm button, plays it
+      if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left) || l.pad) {
         play(l, l.selected);
       }
+    }
+    if (l.pad && ImGui::IsItemFocused() && l.selected != static_cast<int>(i)) {
+      l.selected = static_cast<int>(i); // with a controller the disc under the focus is the chosen one
+      l.status.clear();
     }
     ImGui::SameLine(ImGui::GetStyle().ItemSpacing.x * 2);
     ImGui::BeginGroup();
@@ -327,11 +392,17 @@ void drawLibrary(Launcher& l, float scale) {
     ImGui::PopID();
   }
   ImGui::Spacing();
-  if (launcherRedButton(l.discs.empty() ? "Add a disc image..." : "Add another...")) {
+  const bool addPressed = launcherRedButton(l.discs.empty() ? "Add a disc image..." : "Add another...");
+  if (l.focusList && l.selected < 0) {
+    ImGui::FocusItem();
+    l.focusList = false;
+  }
+  if (addPressed || (l.pad && ImGui::IsKeyPressed(ImGuiKey_GamepadFaceUp, false))) {
     char path[4096];
     if (portAuroraPickDisc(path, sizeof(path))) {
       l.selected = add(l, path);
       l.status.clear();
+      l.focusList = true;
     }
   }
   if (l.selected >= 0) {
@@ -374,7 +445,8 @@ void drawDetails(Launcher& l, float scale) {
   const std::string problem = playProblem(d);
   ImGui::BeginDisabled(!problem.empty());
   const char* label = d.version != nullptr && d.version != portVersionSelf() ? "Play (starts its build)" : "Play";
-  if (bigButton(label, std::min(ImGui::GetContentRegionAvail().x, 300.f * scale), scale)) {
+  if (bigButton(label, std::min(ImGui::GetContentRegionAvail().x, 300.f * scale), scale) ||
+      (problem.empty() && ImGui::IsKeyPressed(ImGuiKey_GamepadStart, false))) {
     play(l, l.selected);
   }
   ImGui::EndDisabled();
@@ -410,9 +482,135 @@ void drawAbout(Launcher& l, float scale) {
   ImGui::Spacing();
   ImGui::Text("Paper Cut %s", PORT_VERSION);
   ImGui::Text("This build: %s (%s)", self->name, self->version);
+  portUpdateDrawNotice(); // a newer release, when the update check found one
   ImGui::Spacing();
   ImGui::TextDisabled("Typeface: Fredoka (SIL Open Font License).");
   ImGui::EndChild();
+}
+
+enum PadButton { kConfirm, kBack, kTop, kStart, kShoulders, kTriggers };
+
+// One button's glyph with its top left at `at`, in the controller's own
+// markings; returns its width (dl nullptr: only measured).
+float padGlyph(ImDrawList* dl, PadButton b, SDL_GamepadType type, ImVec2 at, float h) {
+  const float r = h * 0.5f;
+  const ImVec2 c(at.x + r, at.y + r);
+  ImFont* font = gLauncherFonts.heading;
+  const float size = h * 0.72f;
+  auto letter = [&](const char* text, ImU32 bg) {
+    if (dl == nullptr) {
+      return h;
+    }
+    dl->AddCircleFilled(c, r, bg);
+    const ImVec2 sz = font->CalcTextSizeA(size, FLT_MAX, 0.f, text);
+    dl->AddText(font, size, ImVec2(c.x - sz.x * 0.5f, c.y - sz.y * 0.5f), IM_COL32(255, 255, 255, 255), text);
+    return h;
+  };
+  auto pill = [&](const char* text) {
+    const ImVec2 sz = font->CalcTextSizeA(size * 0.8f, FLT_MAX, 0.f, text);
+    const float w = std::max(h * 1.3f, sz.x + h * 0.6f);
+    if (dl == nullptr) {
+      return w;
+    }
+    dl->AddRectFilled(at, ImVec2(at.x + w, at.y + h), IM_COL32(255, 247, 228, 255), r);
+    dl->AddText(font, size * 0.8f, ImVec2(at.x + (w - sz.x) * 0.5f, c.y - sz.y * 0.5f), kInk, text);
+    return w;
+  };
+  if (b == kShoulders || b == kTriggers) {
+    const bool n = nintendoPad(type), p = playstationPad(type);
+    const char* left = b == kShoulders ? (n ? "L" : p ? "L1" : "LB") : (n ? "ZL" : p ? "L2" : "LT");
+    const char* right = b == kShoulders ? (n ? "R" : p ? "R1" : "RB") : (n ? "ZR" : p ? "R2" : "RT");
+    const float w = pill(left) + h * 0.2f;
+    at.x += w;
+    return w + pill(right);
+  }
+  if (b == kStart) {
+    return pill(nintendoPad(type) ? "+" : playstationPad(type) ? "Options" : "Menu");
+  }
+  // the face buttons by position: confirm and back swap places on Nintendo controllers
+  SDL_GamepadButton button = SDL_GAMEPAD_BUTTON_NORTH;
+  if (b == kConfirm) {
+    button = nintendoPad(type) ? SDL_GAMEPAD_BUTTON_EAST : SDL_GAMEPAD_BUTTON_SOUTH;
+  } else if (b == kBack) {
+    button = nintendoPad(type) ? SDL_GAMEPAD_BUTTON_SOUTH : SDL_GAMEPAD_BUTTON_EAST;
+  }
+  if (dl == nullptr) {
+    return h; // measuring
+  }
+  const ImU32 dark = IM_COL32(52, 40, 34, 255);
+  const float k = r * 0.45f;
+  switch (SDL_GetGamepadButtonLabelForType(type, button)) {
+  case SDL_GAMEPAD_BUTTON_LABEL_A:
+    return letter("A", IM_COL32(84, 170, 72, 255));
+  case SDL_GAMEPAD_BUTTON_LABEL_B:
+    return letter("B", IM_COL32(214, 64, 56, 255));
+  case SDL_GAMEPAD_BUTTON_LABEL_X:
+    return letter("X", IM_COL32(60, 118, 214, 255));
+  case SDL_GAMEPAD_BUTTON_LABEL_Y:
+    return letter("Y", IM_COL32(226, 176, 34, 255));
+  case SDL_GAMEPAD_BUTTON_LABEL_CROSS:
+    dl->AddCircleFilled(c, r, dark);
+    dl->AddLine(ImVec2(c.x - k, c.y - k), ImVec2(c.x + k, c.y + k), IM_COL32(124, 166, 232, 255), h * 0.1f);
+    dl->AddLine(ImVec2(c.x + k, c.y - k), ImVec2(c.x - k, c.y + k), IM_COL32(124, 166, 232, 255), h * 0.1f);
+    return h;
+  case SDL_GAMEPAD_BUTTON_LABEL_CIRCLE:
+    dl->AddCircleFilled(c, r, dark);
+    dl->AddCircle(c, k, IM_COL32(232, 96, 100, 255), 0, h * 0.1f);
+    return h;
+  case SDL_GAMEPAD_BUTTON_LABEL_SQUARE:
+    dl->AddCircleFilled(c, r, dark);
+    dl->AddRect(ImVec2(c.x - k * 0.85f, c.y - k * 0.85f), ImVec2(c.x + k * 0.85f, c.y + k * 0.85f),
+                IM_COL32(222, 130, 196, 255), 0.f, 0, h * 0.1f);
+    return h;
+  case SDL_GAMEPAD_BUTTON_LABEL_TRIANGLE:
+    dl->AddCircleFilled(c, r, dark);
+    dl->AddTriangle(ImVec2(c.x, c.y - k), ImVec2(c.x + k, c.y + k * 0.75f), ImVec2(c.x - k, c.y + k * 0.75f),
+                    IM_COL32(96, 200, 160, 255), h * 0.1f);
+    return h;
+  default:
+    return letter(b == kConfirm ? "A" : b == kBack ? "B" : "Y", dark);
+  }
+}
+
+// The controller's buttons for this screen, along the bottom of the stage.
+void drawPrompts(const Launcher& l, ImVec2 stageMin, ImVec2 stageMax, float scale) {
+  struct Prompt {
+    PadButton button;
+    const char* text;
+  };
+  std::vector<Prompt> prompts;
+  if (l.tab == 0) {
+    if (!l.discs.empty()) {
+      prompts.push_back({kConfirm, "Play"});
+    }
+    prompts.push_back({kTop, "Add a disc"});
+  } else {
+    prompts.push_back({kConfirm, "Choose"});
+    prompts.push_back({kBack, "Back"});
+  }
+  if (l.tab == 1) {
+    prompts.push_back({kTriggers, "Sections"});
+  }
+  prompts.push_back({kShoulders, "Tabs"});
+  const SDL_GamepadType type = padType();
+  ImDrawList* dl = ImGui::GetForegroundDrawList();
+  ImFont* font = gLauncherFonts.body;
+  const float h = 26.f * scale;
+  const float textSize = font->FontSize * ImGui::GetIO().FontGlobalScale;
+  const float gap = 8.f * scale, between = 26.f * scale;
+  float width = 0.f;
+  for (const Prompt& p : prompts) {
+    width += padGlyph(nullptr, p.button, type, ImVec2(0.f, 0.f), h) + gap +
+             font->CalcTextSizeA(textSize, FLT_MAX, 0.f, p.text).x + between;
+  }
+  width -= between;
+  ImVec2 at((stageMin.x + stageMax.x - width) * 0.5f, stageMax.y - h);
+  for (const Prompt& p : prompts) {
+    at.x += padGlyph(dl, p.button, type, at, h) + gap;
+    const ImVec2 sz = font->CalcTextSizeA(textSize, FLT_MAX, 0.f, p.text);
+    dl->AddText(font, textSize, ImVec2(at.x, at.y + (h - sz.y) * 0.5f), IM_COL32(255, 247, 228, 255), p.text);
+    at.x += sz.x + between;
+  }
 }
 
 // $TTYD_LAUNCHER_TAB (tests, screenshots): the tab of that name selected at start
@@ -462,9 +660,32 @@ void draw(Launcher& l, float time) {
                        IM_COL32(60, 20, 30, 255), 3.f * scale);
   y += gsz.y + 14.f * scale;
 
+  // a controller: the shoulder buttons step through the tabs, and its
+  // buttons are named along the bottom
+  updateInputMode(l);
+  if (ImGui::IsKeyPressed(ImGuiKey_GamepadL1, false)) {
+    l.wantTab = (l.tab + kTabCount - 1) % kTabCount;
+  } else if (ImGui::IsKeyPressed(ImGuiKey_GamepadR1, false)) {
+    l.wantTab = (l.tab + 1) % kTabCount;
+  }
+  const float promptsHeight = l.pad ? 40.f * scale : 0.f;
+  if (l.pad) {
+    drawPrompts(l, stageMin, stageMax, scale);
+  }
+  auto tabFlags = [&](int index, const char* name) {
+    if (l.wantTab == index) {
+      l.wantTab = -1;
+      if (index == 0) {
+        l.focusList = true;
+      }
+      return static_cast<ImGuiTabItemFlags>(ImGuiTabItemFlags_SetSelected);
+    }
+    return startTab(name);
+  };
+
   // the panels below the title
   ImGui::SetNextWindowPos(ImVec2(stageMin.x, y), ImGuiCond_Always);
-  ImGui::SetNextWindowSize(ImVec2(stageMax.x - stageMin.x, stageMax.y - y), ImGuiCond_Always);
+  ImGui::SetNextWindowSize(ImVec2(stageMax.x - stageMin.x, stageMax.y - y - promptsHeight), ImGuiCond_Always);
   ImGui::Begin("launcher", nullptr,
                ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings |
                    ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoBackground);
@@ -473,19 +694,22 @@ void draw(Launcher& l, float time) {
   const bool tabs = ImGui::BeginTabBar("launcher");
   ImGui::PopStyleColor();
   if (tabs) {
-    if (ImGui::BeginTabItem("Play", nullptr, startTab("Play"))) {
+    if (ImGui::BeginTabItem("Play", nullptr, tabFlags(0, "Play"))) {
+      l.tab = 0;
       drawLibrary(l, scale);
       ImGui::SameLine(0, 18.f * scale);
       drawDetails(l, scale);
       ImGui::EndTabItem();
     }
-    if (ImGui::BeginTabItem("Settings", nullptr, startTab("Settings"))) {
+    if (ImGui::BeginTabItem("Settings", nullptr, tabFlags(1, "Settings"))) {
+      l.tab = 1;
       beginCard("settings", ImVec2(0, 0), scale);
       portSettingsTabs(false);
       ImGui::EndChild();
       ImGui::EndTabItem();
     }
-    if (ImGui::BeginTabItem("About", nullptr, startTab("About"))) {
+    if (ImGui::BeginTabItem("About", nullptr, tabFlags(2, "About"))) {
+      l.tab = 2;
       drawAbout(l, scale);
       ImGui::EndTabItem();
     }
@@ -507,6 +731,8 @@ extern "C" int portLauncherRun(const char* userPath, const char* finder, char* p
   } else if (portSettings()->launcherSkip && l.selected >= 0 && l.discs[l.selected].path == readFile(l.lastFile)) {
     play(l, l.selected);
   }
+  // a controller plugged in: its buttons shown from the start
+  l.pad = SDL_HasGamepad() || SDL_getenv("TTYD_LAUNCHER_PAD") != nullptr;
   const Uint64 start = SDL_GetTicks();
   while (l.result.empty()) {
     portAuroraBeginFrame(); // exits the program if the window is closed

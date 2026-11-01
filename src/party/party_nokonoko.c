@@ -1,4 +1,5 @@
 // Koops (nokonoko): partner init, follow and the shell toss ability.
+#include "port_hook.h"
 #include "mario/mario_hit.h"
 #include "mario/mario.h"
 #include "mario/mario_party.h"
@@ -28,6 +29,9 @@ static inline f32 nokonokoSin(f32 x) {
 #include "eff/n64/eff_small_star_n64.h"
 #include "mario/mariost.h"
 #include "version.h"
+#ifdef PORT_MODS
+#include "port/hooks/src_party_party_nokonoko.h"
+#endif
 #define val (val)
 static HitEntry* ccwall(PartyEntry* party, s32 mode);
 static void lookupSafetyPosSub(Vec pos, f32 height, f32 angle, Vec* out);
@@ -42,7 +46,7 @@ static u32 lookupSafetyPos(Vec pos, f32 height, Vec* out);
  * 5 coming back after a held shot, 6 dropping back in from above after falling out of bounds, 7 anything else.
  * Read by evt_party, npcdrv and party_motion.
  */
-s32 nokonokoGetStatus(PartyEntry* party) {
+s32 PORT_HOOKABLE(nokonokoGetStatus)(PartyEntry* party) {
     u32 m;
     s32 status;
     if (party == NULL) {
@@ -78,7 +82,7 @@ s32 nokonokoGetStatus(PartyEntry* party) {
  * TRUE while Koops is mid Shell Toss carrying an item his shell picked up;
  * marioChkKey and itemdrv check it so Mario cannot act or collect items until the shell is back.
  */
-BOOL nokonoko_holdItem(void) {
+BOOL PORT_HOOKABLE(nokonoko_holdItem)(void) {
     PartyEntry* party = partyGetPtr(marioGetPartyId());
     if (party == NULL) {
         return FALSE;
@@ -93,7 +97,7 @@ BOOL nokonoko_holdItem(void) {
  * Koops's goodbye routine, the same as kuribo_bye:
  * plays the leave-the-party motion and switches to run mode 14 once it ends.
  */
-void nokonoko_bye(PartyEntry* party) {
+void PORT_HOOKABLE(nokonoko_bye)(PartyEntry* party) {
     if (party->trigFlags & PARTY_TRIG_FLAG_CHG_RUN_MODE) {
         party->trigFlags &= ~PARTY_TRIG_FLAG_CHG_RUN_MODE;
         partyGoodbyeInit(party);
@@ -107,7 +111,7 @@ void nokonoko_bye(PartyEntry* party) {
  * Party table init for Koops: sets his 24 wide by 37 tall collision size
  * and clears the stored shell-spin sound handle.
  */
-void nokonoko_init(PartyEntry* party) {
+void PORT_HOOKABLE(nokonoko_init)(PartyEntry* party) {
     party->memberKind = PARTY_MEMBER_KOOPS;
     party->moveKind = 0;
     party->height = 37.0f;
@@ -119,7 +123,7 @@ void nokonoko_init(PartyEntry* party) {
  * Koops's follow routine: records Mario's footsteps and runs the shared stay, walk,
  * behind-Mario or beside-Mario movement for his current move mode.
  */
-void nokonoko_move(PartyEntry* party) {
+void PORT_HOOKABLE(nokonoko_move)(PartyEntry* party) {
     marioGetPtr();
     if (party->trigFlags & PARTY_TRIG_FLAG_CHG_RUN_MODE) {
         party->trigFlags &= ~PARTY_TRIG_FLAG_CHG_RUN_MODE;
@@ -153,7 +157,7 @@ void nokonoko_move(PartyEntry* party) {
  * stops the shell-spin sound, restores his flags and standing height and puts him back into follow mode
  * unless he is in run mode 8 or 13.
  */
-void nokonoko_use_cancel(void) {
+void PORT_HOOKABLE(nokonoko_use_cancel)(void) {
     PartyEntry* party;
     marioGetPtr();
     party = partyGetPtr(marioGetPartyId());
@@ -187,7 +191,7 @@ void nokonoko_use_cancel(void) {
  * hands any carried item to Mario (itemNokoForceGet), stops the shell-spin sound and restores his flags,
  * 37 unit height and shell work fields.
  */
-void nokonoko_use_post(PartyEntry* party) {
+void PORT_HOOKABLE(nokonoko_use_post)(PartyEntry* party) {
     if (party->work.nokonoko.heldItem != NULL) {
         itemNokoForceGet(party->work.nokonoko.heldItem);
         party->work.nokonoko.heldItem = NULL;
@@ -259,7 +263,7 @@ static inline void noko_star(PartyEntry* party, s32 n) {
  * Off screen, he is placed near Mario and the toss ends at once.
  * nokonokoGetStatus reports the state; the US release reworked the wall push-out.
  */
-void nokonoko_use(PartyEntry* party) {
+void PORT_HOOKABLE(nokonoko_use)(PartyEntry* party) {
     Vec out;
     Vec out2;
     Vec rp;
@@ -885,7 +889,7 @@ void nokonoko_use(PartyEntry* party) {
  * Ends Shell Toss if Koops is in use: runs nokonoko_use_post, then returns him to follow mode,
  * or to run mode 0 when the toss was started by an event.
  */
-void nokonoko_finish(PartyEntry* party) {
+void PORT_HOOKABLE(nokonoko_finish)(PartyEntry* party) {
     if (party != NULL && party->currentMemberId == PARTY_MEMBER_KOOPS && (party->flags & PARTY_FLAG_IS_BEING_USED)) {
         nokonoko_use_post(party);
         if (party->runMode != 9) {
@@ -904,7 +908,7 @@ void nokonoko_finish(PartyEntry* party) {
  * Releases an event-held shell (evt_party_nokotaro_hold_cancel) by moving it from the held state into the
  * spinning state that sends it back.
  */
-void nokotaro_hold_cancel(PartyEntry* party) {
+void PORT_HOOKABLE(nokotaro_hold_cancel)(PartyEntry* party) {
     party->useMotionId = 20;
 }
 
@@ -1383,3 +1387,7 @@ static void lookupSafetyPosSub(Vec pos, f32 height, f32 angle, Vec* out) {
 }
 
 // target pad words (G5: section sizes must match or later DOL addresses shift)
+
+#ifdef PORT_MODS
+#include "port/hooks/src_party_party_nokonoko.inc"
+#endif

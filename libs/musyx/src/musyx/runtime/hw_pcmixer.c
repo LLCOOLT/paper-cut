@@ -36,7 +36,9 @@
 #include "musyx/platform.h"
 
 #if MUSY_TARGET == MUSY_TARGET_PC
+#include "musyx/dspvoice.h"
 #include "musyx/hw_pcmixer.h"
+#include "musyx/synth.h"
 #include "musyx/voice.h"
 
 #include <math.h>
@@ -364,15 +366,51 @@ static void mixSub(_PB* pb, const s16* smp, s32 (*bus)[FRAME_LEN], u32 at) {
   }
 }
 
+/* --- Mix categories (hw_pcmixer.h) --- */
+u8 salPcVoiceCat[SYNTH_MAX_VOICES];
+u8 salPcSeqCat[256];
+u8 salPcStreamCat[64];
+static int sCategory = SAL_PC_SFX;
+static s32 sCatGain[SAL_PC_CATEGORIES] = {32768, 32768, 32768}; /* 1.15 */
+
+int salPcCategory(int cat) {
+  int prev = sCategory;
+  if (cat >= 0 && cat < SAL_PC_CATEGORIES) {
+    sCategory = cat;
+  }
+  return prev;
+}
+
+void salPcSetCategoryGain(int cat, float gain) {
+  if (cat >= 0 && cat < SAL_PC_CATEGORIES) {
+    gain = gain < 0.f ? 0.f : (gain > 1.f ? 1.f : gain);
+    sCatGain[cat] = (s32)(gain * 32768.f + 0.5f);
+  }
+}
+
+/* the gain for a parameter block's voice (1.15) */
+static s32 pbGain(const _PB* pb) {
+  u32 v;
+  for (v = 0; v < synthInfo.voiceNum && v < SYNTH_MAX_VOICES; v++) {
+    if (dspVoice[v].pb == pb) {
+      u8 cat = salPcVoiceCat[v];
+      return cat < SAL_PC_CATEGORIES ? sCatGain[cat] : 32768;
+    }
+  }
+  return 32768;
+}
+
 void salPcProcessPb(_PB* pb, s32 (*bus)[FRAME_LEN]) {
   const u16* upd;
   u32 pos = 0;
   u32 sf, i;
   s16 smp[SUB_LEN];
+  s32 gain;
 
   if (!sSrcReady) {
     initSrcTables();
   }
+  gain = pbGain(pb);
   upd = resolve2(pb->update.dataHi, pb->update.dataLo);
   for (sf = 0; sf < NUM_SUB; sf++) {
     applyUpdates(pb, upd, &pos, pb->update.updNum[sf]);
@@ -399,6 +437,11 @@ void salPcProcessPb(_PB* pb, s32 (*bus)[FRAME_LEN]) {
         vol = vol < 0 ? 0 : (vol > 0x7FFF ? 0x7FFF : vol);
       }
       pb->ve.currentVolume = (u16)vol;
+    }
+    if (gain != 32768) { /* full volume leaves the mix as it was */
+      for (i = 0; i < SUB_LEN; i++) {
+        smp[i] = (s16)((smp[i] * gain) >> 15);
+      }
     }
 
     mixSub(pb, smp, bus, sf * SUB_LEN);

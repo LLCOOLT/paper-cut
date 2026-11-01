@@ -1,5 +1,6 @@
 // Mario's paper boat motion (boat panel): turning into the boat, steering, swirls (whirlpools), the dash and
 // turning back.
+#include "port_hook.h"
 #include "version.h"
 #if VERSION <= VERSION_DEMO_JP
 // the demo unit is built without the main precompiled header: only the dtrigf constants lead its data
@@ -27,6 +28,9 @@
 #include "mario/mario_hit.h"
 #include "mot/mot_jump.h"
 #include <dolphin/pad.h>
+#ifdef PORT_MODS
+#include "port/hooks/src_motion_mot_ship.h"
+#endif
 
 typedef struct MotShipWork {
     u32 flags;                   // 0x00: bit0 = facing (SHIP_DIR), bit1 = N_marioShipGetDir; set to 0/1/2 by shipDecideDir
@@ -136,7 +140,7 @@ s32 N_marioShipGetDir(void) {
  * 1 while folding into or out of the boat (0-12, 30-48), 3 while sailing (50, 52),
  * 0 otherwise or when not in Boat Mode. mario.c blocks control during 1 and 2.
  */
-s32 marioShipChanging(void) {
+s32 PORT_HOOKABLE(marioShipChanging)(void) {
     MarioWork* mario = marioGetPtr();
     if (mario->currMotionId != MARIO_MOTION_SHIP) {
         return 0;
@@ -157,7 +161,7 @@ s32 marioShipChanging(void) {
  * Pushes the boat for msec milliseconds with strength a toward angle b (degrees), added to its drift each frame;
  * the Pianta Parlor boat minigame (yuu_01) uses it for its random currents.
  */
-void marioSetSwirlPower(s32 msec, f32 a, f32 b) {
+void PORT_HOOKABLE(marioSetSwirlPower)(s32 msec, f32 a, f32 b) {
     s32 t;
     marioGetPtr();
     t = sysMsec2Frame(msec);
@@ -167,13 +171,13 @@ void marioSetSwirlPower(s32 msec, f32 a, f32 b) {
 }
 
 /** TRUE while a push set by marioSetSwirlPower is still running. */
-BOOL marioChkSwirlPower(void) {
+BOOL PORT_HOOKABLE(marioChkSwirlPower)(void) {
     marioGetPtr();
     return marioGetPtr()->motShip->swirlTime != 0;
 }
 
 /** Stops the boat's drift (both drift velocity components to 0); used by dou_10's script. */
-void marioShipForceStop(void) {
+void PORT_HOOKABLE(marioShipForceStop)(void) {
     f32 a = 0.0f;
     f32 b;
     marioGetPtr();
@@ -186,7 +190,7 @@ void marioShipForceStop(void) {
  * Called from mario.c's forced movement while a script moves the boat:
  * clears the drift so only the scripted move applies. Same body as marioShipForceStop.
  */
-void marioShipSetDispDir(void) {
+void PORT_HOOKABLE(marioShipSetDispDir)(void) {
     f32 a = 0.0f;
     f32 b;
     marioGetPtr();
@@ -196,7 +200,7 @@ void marioShipSetDispDir(void) {
 }
 
 /** TRUE when hit is a boat panel (any of the dock attributes 0x3C000); mario_motion.c uses it to offer Boat Mode. */
-BOOL marioChkShipPlace(HitEntry* hit) {
+BOOL PORT_HOOKABLE(marioChkShipPlace)(HitEntry* hit) {
     return (hitGetAttr(hit) & (HIT_ATTR_DOCK_NEG_Z | HIT_ATTR_DOCK_POS_Z | HIT_ATTR_DOCK_NEG_X | HIT_ATTR_DOCK_POS_X)) != 0;
 }
 
@@ -204,7 +208,7 @@ BOOL marioChkShipPlace(HitEntry* hit) {
  * Re-applies the paper boat animation in Mario's current colour (paper_ship[marioGetColor()])
  * when mario.c rebuilds his look while sailing.
  */
-void marioForceShipAnime(void) {
+void PORT_HOOKABLE(marioForceShipAnime)(void) {
     MarioWork* mario = marioGetPtr();
     marioPaperOff();
     marioChgPaper(NULL);
@@ -219,7 +223,7 @@ void marioForceShipAnime(void) {
  * allocates the boat work, sets the boat animation at its final frame and the 40x40 collision box,
  * starts the wake effect and seats the partners.
  */
-void marioReInit_ship(void) {
+void PORT_HOOKABLE(marioReInit_ship)(void) {
     MarioWork* mario = marioGetPtr();
     void* p;
     s32 t, u;
@@ -268,7 +272,7 @@ void marioReInit_ship(void) {
  * restores the normal collision box (not in the demos), stops the engine sound,
  * resets the offsets and frees the boat work.
  */
-void mot_ship_post(void) {
+void PORT_HOOKABLE(mot_ship_post)(void) {
     MarioWork* mario = marioGetPtr();
     s32 t;
     allPartyRideOff();
@@ -379,7 +383,7 @@ static inline void shipDecideDir(MarioWork* m, Vec* pp1, Vec* pp2) {
  * then sails with the stick (shipMove), bobs on the water, falls off ledges,
  * and with B or Y at a dock spins and unfolds back onto land. dou_03 has its own slope push.
  */
-void mot_ship(void) {
+void PORT_HOOKABLE(mot_ship)(void) {
     MarioWork* m = marioGetPtr();
     MotShipWork* newWork;
     MotShipWork* ms;
@@ -970,7 +974,7 @@ void mot_ship(void) {
 }
 
 /** Starts the boat falling (gentle fall curve) when it sails off a ledge; called from mario_hit.c. */
-void marioShipChgFall(void) {
+void PORT_HOOKABLE(marioShipChgFall)(void) {
     MarioWork* mario = marioGetPtr();
     if (!(mario->flags & MARIO_FLAG_IS_FALLING)) {
         mario->flags |= MARIO_FLAG_IS_FALLING;
@@ -985,7 +989,7 @@ void marioShipChgFall(void) {
  * TRUE while Mario is sailing in Boat Mode (sub-motions 50-52);
  * mario_hit.c uses it to pick the boat's floor checks.
  */
-BOOL marioChkShipMoveMode(void) {
+BOOL PORT_HOOKABLE(marioChkShipMoveMode)(void) {
     MarioWork* mario = marioGetPtr();
     if (mario->currMotionId != MARIO_MOTION_SHIP) {
         return FALSE;
@@ -1254,3 +1258,7 @@ static BOOL checkHarbor(Vec* out) {
     }
     return FALSE;
 }
+
+#ifdef PORT_MODS
+#include "port/hooks/src_motion_mot_ship.inc"
+#endif

@@ -20,6 +20,9 @@ static inline u16 adsrLE16(const void* p) {
 #include <float.h>
 #endif
 #include <string.h>
+#if MUSY_TARGET == MUSY_TARGET_PC
+#include "musyx/hw_pcmixer.h"
+#endif
 
 static u8 DebugMacroSteps;
 
@@ -2048,6 +2051,10 @@ u32 macStart(u16 macid, u8 priority, u8 maxVoices,
         svoice->setup.midiSet = midiSet;
         svoice->setup.section = section;
       }
+#if MUSY_TARGET == MUSY_TARGET_PC
+      /* the mix category: a sequence's, or the one its effect started in */
+      salPcVoiceCat[voice] = svoice->fxFlag ? salPcCategory(-1) : salPcSeqCat[midiSet];
+#endif
 
       svoice->macroId = macid;
       svoice->allocId = allocId;

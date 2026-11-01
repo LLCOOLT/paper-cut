@@ -1818,7 +1818,7 @@ static USER_FUNC(evt_shop_main_func) {
 }
 
 /** TRUE while the shop set up on the current map has its item display up or a purchase running (any ShopWork flag). */
-BOOL evtShopIsActive(void) {
+BOOL PORT_HOOKABLE(evtShopIsActive)(void) {
     if (!strcmp(gp->currentMapName, mapname) && _wp->flags) {
         return TRUE;
     }

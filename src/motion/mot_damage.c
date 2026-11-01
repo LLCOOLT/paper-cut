@@ -1,4 +1,5 @@
 // Mario's damage motions: knock-back, falling in water, spikes (toge) and the return to the last safe spot.
+#include "port_hook.h"
 #include "dolphin/types.h"
 #include "driver/hitdrv.h"
 #include "driver/npcdrv.h"
@@ -23,6 +24,9 @@
 #include "party/party_yoshi.h"
 #include "mario/mario_hit.h"
 #include "version.h"
+#ifdef PORT_MODS
+#include "port/hooks/src_motion_mot_damage.h"
+#endif
 
 /**
  * Small horizontal camera shake (about 0.01 for 50 ms) when Mario lands back
@@ -55,7 +59,7 @@ EVT_END()
  * Shakes the camera as Mario lands back on solid ground after a damage return;
  * uses a shorter shake in background (2D) mode.
  */
-void marioDmgRetQuakeOn(void) {
+void PORT_HOOKABLE(marioDmgRetQuakeOn)(void) {
     EvtWord* evt;
     if (marioBgmodeChk() == 0) {
         evt = quake_evt;
@@ -69,7 +73,7 @@ void marioDmgRetQuakeOn(void) {
  * Splash for Mario or a partner entering (kind 0) or leaving (kind 1) water at pos, with the matching sound;
  * the splash effect is skipped in background mode. Also called by the partner, plane and Yoshi code.
  */
-void marioSetSplash(s32 kind, Vec* pos) {
+void PORT_HOOKABLE(marioSetSplash)(s32 kind, Vec* pos) {
     if (kind == 0) {
         psndSFXOn_3D((char*)0x194, pos);
     }
@@ -94,7 +98,7 @@ static s32 gazigazi(EventEntry* evt, BOOL isFirstCall) {
  * TRUE while Mario is still sinking or waiting under the water in the damage motion (sub-motions 0-9);
  * Yoshi's code uses it.
  */
-BOOL marioChkDamageSink(void) {
+BOOL PORT_HOOKABLE(marioChkDamageSink)(void) {
     MarioWork* mario = marioGetPtr();
     if (mario->currMotionId == MARIO_MOTION_DAMAGE && (s32)mario->currSubMotionId >= 0 && (s32)mario->currSubMotionId < 10) {
         return TRUE;
@@ -106,7 +110,7 @@ BOOL marioChkDamageSink(void) {
  * Records the water surface height (or the height Mario was hit at) that the damage motions measure from;
  * set by the hit code before switching motion.
  */
-void set_damage_root_ypos(f32 y) {
+void PORT_HOOKABLE(set_damage_root_ypos)(f32 y) {
     MarioWork* mario = marioGetPtr();
     mario->mot.damage.rootY = y;
 }
@@ -117,7 +121,7 @@ void set_damage_root_ypos(f32 y) {
  * flies back hidden to the hit's return position (fixed spots on muj_00, gor_00 and gor_04 when there is none),
  * drops down, loses 1 HP and returns to standing. Pre-JP builds lack the zero-distance return fix.
  */
-void mot_damage(void) {
+void PORT_HOOKABLE(mot_damage)(void) {
     MarioWork* mario = marioGetPtr();
     Vec dest;
     f32 d;
@@ -399,7 +403,7 @@ BOOL marioWaitDamageReturnFall(void) {
  * Mario is knocked high into the air, carried back to the hit's return position, dropped,
  * loses 1 HP and stands up. Cancels paper, Yoshi, bomb and Koops actions first.
  */
-void mot_damageToge(void) {
+void PORT_HOOKABLE(mot_damageToge)(void) {
     MarioWork* mario = marioGetPtr();
     Vec dest;
     f32 d;
@@ -560,3 +564,7 @@ BOOL marioWaitDamageTogeReturnFall(void) {
     }
     return FALSE;
 }
+
+#ifdef PORT_MODS
+#include "port/hooks/src_motion_mot_damage.inc"
+#endif

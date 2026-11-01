@@ -1,4 +1,5 @@
 // Mario's standing and idle motions: idle poses, low-HP and sleep poses, and the automatic motion changes.
+#include "port_hook.h"
 #include "dolphin/types.h"
 #include "mario/mario.h"
 #include "mario/mario_cam.h"
@@ -17,6 +18,9 @@
 #include "mario/mario_pouch.h"
 #include "version.h"
 #include <dolphin/pad.h>
+#ifdef PORT_MODS
+#include "port/hooks/src_motion_mot_stay.h"
+#endif
 
 /** TRUE when Mario is at 5 HP or less, which switches his idle to the tired pose (M_S_3) and breathing sounds. */
 static inline BOOL lowHP(void) {
@@ -28,7 +32,7 @@ static inline BOOL lowHP(void) {
  * Starts Mario's charge-up voice (sound 0xDC) in mario->soundId[1] if it is not already playing;
  * used while he glares holding B for the spin hammer or A for the Spring Jump.
  */
-void marioVoiceGlareOn(void) {
+void PORT_HOOKABLE(marioVoiceGlareOn)(void) {
     MarioWork* mario = marioGetPtr();
     if (mario->soundId[1] == (u32)-1) {
         mario->soundId[1] = psndSFXOn_3D((char*)0xDC, &mario->position);
@@ -36,7 +40,7 @@ void marioVoiceGlareOn(void) {
 }
 
 /** Stops the charge-up voice started by marioVoiceGlareOn. */
-void marioVoiceGlareOff(void) {
+void PORT_HOOKABLE(marioVoiceGlareOff)(void) {
     MarioWork* mario = marioGetPtr();
     if (mario->soundId[1] != (u32)-1) {
         psndSFXOff(mario->soundId[1]);
@@ -48,7 +52,7 @@ void marioVoiceGlareOff(void) {
  * TRUE once Mario has been asleep in the idle animation for 10 seconds;
  * the partners then fall asleep too (party_motion.c).
  */
-BOOL marioChkDeepSleep(void) {
+BOOL PORT_HOOKABLE(marioChkDeepSleep)(void) {
     BOOL result = FALSE;
     MarioWork* mario = marioGetPtr();
     if (mario->currMotionId == MARIO_MOTION_STAY && mario->stay.deepSleepTimer >= sysMsec2Frame(10000)) {
@@ -64,7 +68,7 @@ BOOL marioChkDeepSleep(void) {
  * After 50 seconds without input Mario yawns and then naps (M_N_5A, snoring).
  * Bowser and Peach run their own versions.
  */
-void mot_stay(void) {
+void PORT_HOOKABLE(mot_stay)(void) {
     MarioWork* mario;
     MarioWork* m;
     BOOL newMot;
@@ -345,7 +349,7 @@ void mot_stay(void) {
  * Picks the ground motion from the stick: stay when centred,
  * dash when pushed far (walk instead with the Slow Go badge), walk otherwise.
  */
-void marioChgMotAuto(void) {
+void PORT_HOOKABLE(marioChgMotAuto)(void) {
     MarioWork* mario = marioGetPtr();
     s32 a = (u8)mario->wStickDir1;
     if ((s8)a == 0 && (s8)mario->wStickDir2 == 0) {
@@ -363,7 +367,7 @@ void marioChgMotAuto(void) {
 
 #if VERSION <= VERSION_DEMO_JP
 /** Cleanup when the stay motion ends: stops the idle sound and the charge-up voice. */
-void mot_stay_post(void) {
+void PORT_HOOKABLE(mot_stay_post)(void) {
     MarioWork* mario;
     mario = marioGetPtr();
     if (mario->soundId[0] != (u32)-1) {
@@ -382,7 +386,7 @@ void mot_stay_post(void) {
  * and also the charge-up voice unless Mario is going into the spin hammer
  * or the Spring Jump (which keep it playing).
  */
-void mot_stay_post(void) {
+void PORT_HOOKABLE(mot_stay_post)(void) {
     MarioWork* mario;
     MarioMotion id = marioGetPtr()->currMotionId;
     if (id != MARIO_MOTION_HAMMER_2 && id != MARIO_MOTION_JABARA) {
@@ -404,4 +408,8 @@ void mot_stay_post(void) {
         }
     }
 }
+#endif
+
+#ifdef PORT_MODS
+#include "port/hooks/src_motion_mot_stay.inc"
 #endif

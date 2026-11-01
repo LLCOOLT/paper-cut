@@ -197,7 +197,7 @@ EVT_END()
  * dispatches on the top-level SEQ_UNKNOWN step to setup (0), the opening act (1),
  * the turn loop (2) and the end of battle (3); 4 means finished. Also keeps the low-HP warning beep running.
  */
-void BattleSequenceManager(void) { // 1:1
+void PORT_HOOKABLE(BattleSequenceManager)(void) { // 1:1
     BattleWork* wp = _battleWorkPointer;
     switch (BattleGetSeq(wp, SEQ_UNKNOWN)) {
         case 0:
@@ -219,6 +219,10 @@ void BattleSequenceManager(void) { // 1:1
             break;
     }
 #ifdef TARGET_PC
+    if (BattleGetSeq(wp, SEQ_UNKNOWN) == 0) {
+        portPopupClear();
+    }
+    portPopupFrame(); // Gameplay+ battle pop-ups
     // Gameplay+: a Glitz Pit match's condition stays at the top of the screen once its banner is gone
     if (BattleGetSeq(wp, SEQ_UNKNOWN) == 2 && wp->fbatInfo != NULL && wp->fbatInfo->ruleType != 0 &&
         wp->ruleDispTimer <= 0 && portGameplus("glitz_pit_kind")) {
@@ -2681,7 +2685,7 @@ static void btlseqPhaseFirstProcess(BattleWork* wp) {
  * highest first (both bubble sorts, so ties keep the first order).
  * count <= 0 counts the queue itself; btlevtcmd_SortPhaseMoveTable re-sorts this way mid-phase.
  */
-void battleSortPhaseMoveTable(BattleWork* wp, s32 count) {
+void PORT_HOOKABLE(battleSortPhaseMoveTable)(BattleWork* wp, s32 count) {
     int i, j;
     BattleUnit* unit1;
     BattleUnit* unit2;
@@ -2774,7 +2778,7 @@ static void battleMakePhaseEvtTable(BattleWork* wp) {
  * and the stage's nozzle, falling-frame, background-collapse, falling-object and wall-closing events have ended;
  * clears the ids of finished ones. The sequence steps poll it before moving on.
  */
-BOOL BattleWaitAllActiveEvtEnd(BattleWork* wp) {
+BOOL PORT_HOOKABLE(BattleWaitAllActiveEvtEnd)(BattleWork* wp) {
     BattleStageObjectWork* stage = STAGE_WORK(wp);
     BOOL ret = BattleWaitAllActiveEvtEnd_NoBgSetEndWait(wp);
 
@@ -2821,7 +2825,7 @@ BOOL BattleWaitAllActiveEvtEnd(BattleWork* wp) {
  * Unlike BattleWaitAllActiveEvtEnd it ignores the stage-object events,
  * so battle_stage_object.c can use it while those run.
  */
-BOOL BattleWaitAllActiveEvtEnd_NoBgSetEndWait(BattleWork* wp) {
+BOOL PORT_HOOKABLE(BattleWaitAllActiveEvtEnd_NoBgSetEndWait)(BattleWork* wp) {
     void* w;
     BattleUnit* unit;
     BOOL done;

@@ -1,7 +1,9 @@
 // Mario's walk and run motion.
+#include "port_hook.h"
 #include "dolphin/types.h"
 #ifdef TARGET_PC
 #include "port/gameplay.h"
+#include "port/gameplus.h"
 #endif
 #include "driver/hitdrv.h"
 #include "pmario_sound.h"
@@ -15,6 +17,9 @@
 #include "peach.h"
 #include "mario/mario_pouch.h"
 #include "version.h"
+#ifdef PORT_MODS
+#include "port/hooks/src_motion_mot_walk.h"
+#endif
 
 /**
  * Footstep sounds for walking and running: every interval frames a full step and at half that a lighter one,
@@ -88,7 +93,7 @@ void marioWalkDashSe(HitEntry* hitObj, u32 interval) {
  * Mario's walking speed: baseWalkSpeed, halved in Paper Mode when the stick is only tilted a little
  * and always in background mode, times playerGravity. Also used by Peach's walk and mario_sbr.c.
  */
-f32 marioGetWalkSpd(void) {
+f32 PORT_HOOKABLE(marioGetWalkSpd)(void) {
     f32 walkSpeed;
     s8 stickDir2;
     s8 stickDir1;
@@ -107,6 +112,9 @@ f32 marioGetWalkSpd(void) {
     }
 
     walkSpeed *= mario->playerGravity;
+#ifdef TARGET_PC
+    walkSpeed *= portWalkBoost(); /* Gameplay+: the walk-speed boost, while held */
+#endif
     return walkSpeed;
 }
 
@@ -114,7 +122,7 @@ f32 marioGetWalkSpd(void) {
  * Mario's running speed: baseDashSpeed (just the walk speed in Paper Mode, halved for a small tilt;
  * halved in background mode), times playerGravity.
  */
-f32 marioGetDashSpd(void) {
+f32 PORT_HOOKABLE(marioGetDashSpd)(void) {
     MarioWork* mario;
     f32 dashSpeed;
     s8 stickDir2;
@@ -137,6 +145,7 @@ f32 marioGetDashSpd(void) {
     dashSpeed *= mario->playerGravity;
 #ifdef TARGET_PC
     dashSpeed *= gPortRunSpeed; /* PC port: the run speed setting */
+    dashSpeed *= portWalkBoost(); /* Gameplay+: the walk-speed boost, while held */
 #endif
     return dashSpeed;
 }
@@ -147,7 +156,7 @@ f32 marioGetDashSpd(void) {
  * to running when the stick is pushed far (unless the Slow Go badge is on), to Paper Mode when R is pressed,
  * and back to standing when the stick is released. Bowser and Peach run their own versions.
  */
-void mot_walk(void) {
+void PORT_HOOKABLE(mot_walk)(void) {
     f32 walkSpeed;
     s32 trigFlags;
     s32 flags;
@@ -274,7 +283,7 @@ void mot_walk(void) {
  * dropping back to walking for a small stick tilt or with the Slow Go badge,
  * with the pushing pose against pushable objects.
  */
-void mot_dash(void) {
+void PORT_HOOKABLE(mot_dash)(void) {
     f32 dashSpeed;
     u32 trigFlags;
     BOOL pushCaseActive;
@@ -389,3 +398,7 @@ void mot_dash(void) {
         }
     }
 }
+
+#ifdef PORT_MODS
+#include "port/hooks/src_motion_mot_walk.inc"
+#endif

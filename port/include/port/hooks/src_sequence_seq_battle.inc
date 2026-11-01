@@ -6,6 +6,7 @@ static BOOL battle_init(void) {
     PortHookSlot* s = &portHookSlots[43];
     BOOL r;
     int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
     if (!s->active) {
         return battle_init__body();
     }
@@ -22,6 +23,66 @@ static BOOL battle_init(void) {
     return r;
 }
 
+void seq_battleInit(SequenceWork * p0) {
+    PortHookSlot* s = &portHookSlots[1458];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        seq_battleInit__body(p0);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*))s->pre[i])(&p0);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0)))s->replace)(p0); } else { seq_battleInit__body(p0); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0)))s->post[i])(p0);
+    }
+}
+
+void seq_battleExit(SequenceWork * p0) {
+    PortHookSlot* s = &portHookSlots[1459];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        seq_battleExit__body(p0);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*))s->pre[i])(&p0);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0)))s->replace)(p0); } else { seq_battleExit__body(p0); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0)))s->post[i])(p0);
+    }
+}
+
+void seq_battleMain(SequenceWork * p0) {
+    PortHookSlot* s = &portHookSlots[1460];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        seq_battleMain__body(p0);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*))s->pre[i])(&p0);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0)))s->replace)(p0); } else { seq_battleMain__body(p0); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0)))s->post[i])(p0);
+    }
+}
+
 void portHookInit_src_sequence_seq_battle(void) {
     portHookSlots[43].body = (void*)battle_init__body;
+    portHookSlots[1458].body = (void*)seq_battleInit__body;
+    portHookSlots[1459].body = (void*)seq_battleExit__body;
+    portHookSlots[1460].body = (void*)seq_battleMain__body;
 }

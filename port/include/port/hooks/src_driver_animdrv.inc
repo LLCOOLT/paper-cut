@@ -5,6 +5,7 @@
 void animPoseMain(s32 p0) {
     PortHookSlot* s = &portHookSlots[56];
     int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
     if (!s->active) {
         animPoseMain__body(p0);
         return;

@@ -1,5 +1,6 @@
 // Battle end sequence: victory results, level-up (rank-up) selection and returning to the field.
 #pragma optimize_for_size on
+#include "port_hook.h"
 #include <dolphin/pad.h>
 #include "icon_ids.h"
 #include "version.h"
@@ -71,6 +72,9 @@
 
 #include "eff/eff_pointget.h"
 #include "unit/party/unit_party_nokotarou.h"
+#ifdef PORT_MODS
+#include "port/hooks/src_battle_battle_seq_end.h"
+#endif
 // FAKE: battle_seq_end.c calls windowDispGX_Waku_col through this prototype (the types it was compiled with) instead of the one in driver/windowdrv.h; same registers, behaviour-identical.
 typedef void (*WindowDispWakuColFloatsFirstFn)(f32, f32, f32, f32, f32, u16, GXColor);
 
@@ -221,7 +225,7 @@ static RankUpData* _get_rank_data(s32 level) {
  * Returns the message label of Mario's rank title for a level (the last _rank_up_data entry it has reached),
  * for the Mario page of the pause menu (win_mario.c); NULL below level 1.
  */
-const char* BattleGetRankNameLabel(s32 level) {
+const char* PORT_HOOKABLE(BattleGetRankNameLabel)(s32 level) {
     RankUpData* found = NULL;
     RankUpData* rank = _rank_up_data;
 
@@ -255,7 +259,7 @@ static void _GetExpIcon_End(SeqEndWork* work);
  * then plays the level-up show with the HP/FP/BP choice and the rank-up message,
  * fades out and hands Mario's and the partner's state back to the field. A loss goes to the game over sequence.
  */
-void btlseqEnd(BattleWork* wp) {
+void PORT_HOOKABLE(btlseqEnd)(BattleWork* wp) {
     SeqEndWork* work = (SeqEndWork*)wp->seqEndWork;
     FieldBattleInfo* info = wp->fbatInfo;
     PouchData* pouch = pouchGetPtr();
@@ -433,6 +437,9 @@ void btlseqEnd(BattleWork* wp) {
             if (wp->majinaiState == 3) {
                 work->exp = work->exp * 2;
             }
+#ifdef TARGET_PC
+            work->exp = portBattleExp(work->exp); /* Gameplay+: the EXP multiplier */
+#endif
             if (pouch->level >= LEVEL_MAX) {
                 work->exp = 0;
             }
@@ -3169,3 +3176,7 @@ static USER_FUNC(_get_rank_up_msg) {
 //
 //
 //
+
+#ifdef PORT_MODS
+#include "port/hooks/src_battle_battle_seq_end.inc"
+#endif

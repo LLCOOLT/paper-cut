@@ -1,4 +1,5 @@
 // Name entry screen: the kana/latin character grid used to name a save file or Yoshi.
+#include "port_hook.h"
 #include "nameent.h"
 #include "wide_x.h"
 #include "system.h"
@@ -22,6 +23,9 @@ static void nameBG(void);
 static void nameKirinukiGX(f32 x, f32 y, f32 w, f32 h);
 void nameWinGX(f32 x, f32 y, f32 w, f32 h, TEXPalette* tpl, s32 type);
 #include <string.h>
+#ifdef PORT_MODS
+#include "port/hooks/src_nameent.h"
+#endif
 
 static s32 nameMain(void);
 static void nameEntDisp(CameraId cameraId, void* param);
@@ -98,12 +102,12 @@ static const char* msg_tbl[] = {
 };
 
 /** Clears the name entry state. Called once at boot (marioStInit). */
-void nameEntInit(void) {
+void PORT_HOOKABLE(nameEntInit)(void) {
     memset(wp, 0, sizeof(NameEntryWork));
 }
 
 /** Makes the next nameEntMain free the name entry textures and stop drawing. Used when the game over screen resets. */
-void nameEntReInit(void) {
+void PORT_HOOKABLE(nameEntReInit)(void) {
     wp->loadState = 3;
 }
 
@@ -149,7 +153,7 @@ const char* latin_tbl[] = {
  * Starts loading the name entry textures (w/<language>/name.tpl; the JP builds always use jp,
  * the demo reads window/jp) and returns TRUE once they are loaded. Callers poll it before nameEntOn.
  */
-BOOL nameEntPrepare(void) {
+BOOL PORT_HOOKABLE(nameEntPrepare)(void) {
 #if VERSION >= VERSION_US
     const char* lang[6] = {"jp", "us", "ge", "fr", "sp", "it"};
     return fileAsyncf(4, NULL, "%s/w/%s/name.tpl", getMarioStDvdRoot(), lang[gp->language]) != NULL;
@@ -168,7 +172,7 @@ BOOL nameEntPrepare(void) {
  * an empty 8-character name and the cursor at the top left.
  * Type 2 blanks the grid cell the name needs (hiragana and katakana n, latin p), so it cannot be typed yet.
  */
-void nameEntOn(s32 type) {
+void PORT_HOOKABLE(nameEntOn)(s32 type) {
     s32 i;
 
     wp->flags = 0;
@@ -237,18 +241,18 @@ void nameEntOn(s32 type) {
 }
 
 /** Closes the name entry screen: the next nameEntMain frees its textures. */
-void nameEntOff(void) {
+void PORT_HOOKABLE(nameEntOff)(void) {
     wp->loadState = 3;
 }
 
 /** Lets the screen take input (NAMEENT_FLAG_INPUT_ON) and returns TRUE while the player has not yet confirmed or cancelled. */
-BOOL nameEntWait(void) {
+BOOL PORT_HOOKABLE(nameEntWait)(void) {
     wp->flags |= NAMEENT_FLAG_INPUT_ON;
     return wp->state != 0x65;
 }
 
 /** TRUE when the player backed out with B on an empty file name (type 0 only). */
-BOOL nameEntIsCancel(void) {
+BOOL PORT_HOOKABLE(nameEntIsCancel)(void) {
     return (wp->flags >> 1) & 1;
 }
 
@@ -257,7 +261,7 @@ BOOL nameEntIsCancel(void) {
  * or plain spaces in the latin table) cut off, keeping at least one character;
  * NULL until the player has confirmed.
  */
-const char* nameEntGetName(void) {
+const char* PORT_HOOKABLE(nameEntGetName)(void) {
     s32 j;
 
     if (wp->state != 0x65) {
@@ -316,7 +320,7 @@ static inline BOOL nameEntLoad(void) {
  * Per frame: loads the textures, runs nameMain while the screen is open, or frees them after nameEntOff,
  * and queues nameEntDisp in the 3D camera layer while anything is shown.
  */
-void nameEntMain(void) {
+void PORT_HOOKABLE(nameEntMain)(void) {
     switch (wp->loadState) {
         case 0:
             break;
@@ -1172,7 +1176,7 @@ static void nameKirinukiGX(f32 x, f32 y, f32 w, f32 h) {
  * FADE_*_SPOT fades) in black at half opacity, scaled about its centre by 1000 t^5
  * (t is maskAlpha, 0 to 1, raised while confirming), so the spot closes in and the screen behind darkens.
  */
-void nameMaskGX(f32 t) {
+void PORT_HOOKABLE(nameMaskGX)(f32 t) {
     Mtx a, b, c;
     GXTexObj obj;
     f32 s;
@@ -1308,3 +1312,7 @@ void nameWinGX(f32 x, f32 y, f32 w, f32 h, TEXPalette* tpl, s32 type) {
     nameWinQuad(tpl, type + 4, type + 6, type + 1, x, y - h + 16, w - 16, 16);
     nameWinQuad(tpl, type + 4, type + 8, type + 3, x + w - 16, y - h + 16, 16, 16);
 }
+
+#ifdef PORT_MODS
+#include "port/hooks/src_nameent.inc"
+#endif

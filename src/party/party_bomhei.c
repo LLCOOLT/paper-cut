@@ -1,4 +1,5 @@
 // Bobbery (bomhei): partner init, follow and the bomb ability.
+#include "port_hook.h"
 #include "version.h"
 #include "mot/mot_damage.h"
 #include "driver/casedrv.h"
@@ -27,6 +28,9 @@
 #include "party/party_bomhei.h"
 #include "evt/evt_cam.h"
 #include <dolphin/pad.h>
+#ifdef PORT_MODS
+#include "port/hooks/src_party_party_bomhei.h"
+#endif
 
 #if VERSION >= VERSION_JP
 /** Height bob of Bobbery over Mario's head per frame of Mario's carry walk (M_W_7), in quarter units. */
@@ -112,7 +116,7 @@ static inline void bomheiStopUseSfx(PartyEntry* party) {
  * dropping Mario's carry flag and stopping the bomb sounds on the first frame,
  * then switches to run mode 14 when the sequence ends.
  */
-void bomhei_bye(PartyEntry* party) {
+void PORT_HOOKABLE(bomhei_bye)(PartyEntry* party) {
     if (party->trigFlags & PARTY_TRIG_FLAG_CHG_RUN_MODE) {
         party->trigFlags &= ~PARTY_TRIG_FLAG_CHG_RUN_MODE;
         partyGoodbyeInit(party);
@@ -128,7 +132,7 @@ void bomhei_bye(PartyEntry* party) {
  * Party table init handler: Bobbery is member kind 3, 28 units tall and wide,
  * starts in idle state 100 with no bomb sounds playing.
  */
-void bomhei_init(PartyEntry* party) {
+void PORT_HOOKABLE(bomhei_init)(PartyEntry* party) {
     party->memberKind = PARTY_MEMBER_BOBBERY;
     party->moveKind = 0;
     party->height = 28.0f;
@@ -144,7 +148,7 @@ void bomhei_init(PartyEntry* party) {
  * but not using his ability, 1 on the frame his bomb explodes (use motion 60),
  * 2 otherwise (bomb in progress, or another partner is out).
  */
-u8 bomheiGetStatus() {
+u8 PORT_HOOKABLE(bomheiGetStatus)() {
     u32 partyId = marioGetPartyId();
     PartyEntry* party = partyGetPtr(partyId);
     u8 status = 2;
@@ -160,7 +164,7 @@ u8 bomheiGetStatus() {
 
 #if VERSION <= VERSION_DEMO_JP
 /** Party table exit handler (demo): drops Mario's carry flag, stops the bomb sounds and frees the use work. */
-void bomhei_exit(PartyEntry* party) {
+void PORT_HOOKABLE(bomhei_exit)(PartyEntry* party) {
     party->playerPtr->flags &= ~(MARIO_FLAG_ACTIVE << 13);
     bomheiStopUseSfx(party);
     BOMHEI_FREE(party);
@@ -172,7 +176,7 @@ void bomhei_exit(PartyEntry* party) {
  * Called before plane, ship and bellows rides and on run-mode changes (party_move.c).
  * Unlike the release versions it leaves Mario's carry flag and the sounds alone.
  */
-void bomhei_use_cancel() {
+void PORT_HOOKABLE(bomhei_use_cancel)() {
     PartyEntry* p = partyGetPtr(marioGetPartyId());
     if (p != NULL && p->currentMemberId == PARTY_MEMBER_BOBBERY && (p->flags & PARTY_FLAG_IS_BEING_USED)) {
         if (p->runMode != 9) {
@@ -189,7 +193,7 @@ void bomhei_use_cancel() {
  * putting Mario back in his standing pose and stopping the sounds.
  * Called when Mario takes damage (mot_damage.c).
  */
-void bomhei_use_cancel2() {
+void PORT_HOOKABLE(bomhei_use_cancel2)() {
     PartyEntry* p = partyGetPtr(marioGetPartyId());
     if (p != NULL && p->currentMemberId == PARTY_MEMBER_BOBBERY && (p->flags & PARTY_FLAG_IS_BEING_USED) && (p->playerPtr->flags & (MARIO_FLAG_ACTIVE << 13))) {
         p->playerPtr->flags &= ~(MARIO_FLAG_ACTIVE << 13);
@@ -208,7 +212,7 @@ void bomhei_use_cancel2() {
  * Party table post-use handler (demo): drops Mario's carry flag with a standing pose,
  * stops the sounds and frees the use work.
  */
-void bomhei_use_post(PartyEntry* party) {
+void PORT_HOOKABLE(bomhei_use_post)(PartyEntry* party) {
     MarioWork* mario = party->playerPtr;
     if (mario->flags & (MARIO_FLAG_ACTIVE << 13)) {
         mario->flags &= ~(MARIO_FLAG_ACTIVE << 13);
@@ -228,7 +232,7 @@ static HitEntry* check_front(PartyEntry* party);
  * faces him at the skull's tongue on Keelhaul Key's muj_05 (A_dokuro_bero),
  * and drives Mario's carry poses unless Mario is in a damage motion (state 0x66).
  */
-void bomhei_use(PartyEntry* party) {
+void PORT_HOOKABLE(bomhei_use)(PartyEntry* party) {
     MarioWork* mario;
 
     bomhei_use_main(party);
@@ -261,7 +265,7 @@ void bomhei_use(PartyEntry* party) {
  * Party table exit handler: drops Mario's carry flag and, if Bobbery's bomb is in progress,
  * cancels it like bomhei_use_cancel.
  */
-void bomhei_exit(PartyEntry* party) {
+void PORT_HOOKABLE(bomhei_exit)(PartyEntry* party) {
     PartyEntry* p;
     party->playerPtr->flags &= ~(MARIO_FLAG_ACTIVE << 13);
     p = partyGetPtr(marioGetPartyId());
@@ -282,7 +286,7 @@ void bomhei_exit(PartyEntry* party) {
  * clears the use flags, stops the fuse sounds and frees the use work.
  * Called before plane, ship and bellows rides, on run-mode changes (party_move.c) and from bomhei_use.
  */
-void bomhei_use_cancel() {
+void PORT_HOOKABLE(bomhei_use_cancel)() {
     PartyEntry* p = partyGetPtr(marioGetPartyId());
     if (p != NULL && p->currentMemberId == PARTY_MEMBER_BOBBERY && (p->flags & PARTY_FLAG_IS_BEING_USED)) {
         p->playerPtr->flags &= ~(MARIO_FLAG_ACTIVE << 13);
@@ -300,7 +304,7 @@ void bomhei_use_cancel() {
  * Cancels a bomb only while Mario is carrying Bobbery, putting Mario back in his standing pose.
  * Called when Mario takes damage (mot_damage.c).
  */
-void bomhei_use_cancel2() {
+void PORT_HOOKABLE(bomhei_use_cancel2)() {
     PartyEntry* p = partyGetPtr(marioGetPartyId());
     if (p != NULL && p->currentMemberId == PARTY_MEMBER_BOBBERY && (p->flags & PARTY_FLAG_IS_BEING_USED) && (p->playerPtr->flags & (MARIO_FLAG_ACTIVE << 13))) {
         p->playerPtr->flags &= ~(MARIO_FLAG_ACTIVE << 13);
@@ -321,7 +325,7 @@ void bomhei_use_cancel2() {
  * gives Mario a pose matching his motion (walk, run, jump or stand) if he was carrying, clears the use flags,
  * flags a run-mode change and frees the use work.
  */
-void bomhei_use_post(PartyEntry* party) {
+void PORT_HOOKABLE(bomhei_use_post)(PartyEntry* party) {
     MarioWork* mario = party->playerPtr;
     const char* name;
     if (party->useMotionId >= 70 && party->useMotionId < 100) {
@@ -361,7 +365,7 @@ static HitEntry* check_front(PartyEntry* party);
  * Cancels the bomb when Mario stands on a red or blue spring while carrying, loses control, is force- moved,
  * or turns sideways through a slit while carrying.
  */
-void bomhei_use(PartyEntry* party) {
+void PORT_HOOKABLE(bomhei_use)(PartyEntry* party) {
     MarioWork* mario = party->playerPtr;
     MapObjectEntry* mobj;
 
@@ -917,7 +921,7 @@ static void bomhei_use_main(PartyEntry* party) {
  * Returns 0 while Bobbery's bomb is at a stage where marioCheckMenuDisable must keep the menu shut (being
  * lifted, carried, thrown, the blast, flying off); 1 otherwise or when Bobbery is not in use.
  */
-s32 mario_bomhei_keychk() {
+s32 PORT_HOOKABLE(mario_bomhei_keychk)() {
     MarioWork* mario = marioGetPtr();
     PartyEntry* p = partyGetPtr(marioGetPartyId());
     u8 m;
@@ -940,7 +944,7 @@ s32 mario_bomhei_keychk() {
  * Returns 0 while Bobbery is being lifted or thrown, so marioChkKey ignores Mario's buttons;
  * 1 otherwise or when Bobbery is not in use.
  */
-s32 mario_bomhei_keychk2() {
+s32 PORT_HOOKABLE(mario_bomhei_keychk2)() {
     MarioWork* mario = marioGetPtr();
     PartyEntry* p = partyGetPtr(marioGetPartyId());
     u8 m;
@@ -1109,7 +1113,7 @@ static inline BOOL bomheiChkReturnGround(Vec* pos, f32 dist, f32 angle) {
  * else behind or in front of him at his collision radius,
  * whichever has no wall and floor that passes bomheiChkReturnGround; else behind him at that radius.
  */
-void partyGetReturnPos(Vec* out) {
+void PORT_HOOKABLE(partyGetReturnPos)(Vec* out) {
     MarioWork* mario = marioGetPtr();
     f32 x, z, s, c;
     f32 hx, hy, hz, dist, nx, ny, nz;
@@ -1233,3 +1237,7 @@ static HitEntry* check_front(PartyEntry* party) {
     }
     return hit;
 }
+
+#ifdef PORT_MODS
+#include "port/hooks/src_party_party_bomhei.inc"
+#endif

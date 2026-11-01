@@ -5,6 +5,7 @@
 #ifdef TARGET_PC
 #include "port/platform.h"
 #endif
+#include "port_hook.h"
 #include "version.h"
 #include "battle/battle_disp.h"
 #include "pc_call.h"
@@ -27,6 +28,13 @@
 #include "unit/party/unit_party_vivian.h"
 #include <dolphin/gx.h>
 #include <dolphin/mtx.h>
+#ifdef PORT_MODS
+#include "port/hooks/src_battle_battle_disp.h"
+#endif
+#ifdef TARGET_PC /* Play as Luigi: the parts' draws go through Luigi's stand-in (port/include/port/luigi.h) */
+#include "port/luigi.h"
+#define animPoseDrawMtx portLuigiDrawMtx
+#endif
 
 // FAKE: battle_disp.c calls iconDispGx through this prototype (the types it was compiled with) instead of the one in driver/icondrv.h; same registers, behaviour-identical.
 typedef void (*IconDispGxArgOrderFn)(f32, Vec*, s16, u16);
@@ -110,7 +118,7 @@ static void btlDispGXInit2DSub(void) {
  * Sets up GX for flat-coloured 2D quads (position and colour, no texture);
  * action command gauges use it before btlDispGXQuads2DRasta.
  */
-void btlDispGXInit2DRasta(void) {
+void PORT_HOOKABLE(btlDispGXInit2DRasta)(void) {
     btlDispGXInit2DSub();
     GXSetVtxDesc(GX_VA_POS, GX_DIRECT);
     GXSetVtxDesc(GX_VA_CLR0, GX_DIRECT);
@@ -126,7 +134,7 @@ void btlDispGXInit2DRasta(void) {
 }
 
 /** Sets up GX for textured 2D quads (texture times vertex colour); the battle menu uses it before btlDispGXQuads2D. */
-void btlDispGXInit2D(void) {
+void PORT_HOOKABLE(btlDispGXInit2D)(void) {
     btlDispGXInit2DSub();
     GXSetVtxDesc(GX_VA_POS, GX_DIRECT);
     GXSetVtxDesc(GX_VA_CLR0, GX_DIRECT);
@@ -153,13 +161,13 @@ f32 getGravityDispOffset(BattleUnitPart* part);
 static void gravityOffsetControl(BattleUnitPart* part);
 static void statusPoseControl(BattleUnitPart* part);
 /** Emits one vertex of a flat-coloured quad at (x, y) on the 2D plane. */
-void btlDispGXPoint2DRasta(f32 x, f32 y, u8 r, u8 g, u8 b, u8 a) {
+void PORT_HOOKABLE(btlDispGXPoint2DRasta)(f32 x, f32 y, u8 r, u8 g, u8 b, u8 a) {
     GXPosition3f32(x, y, 0.0f);
     GXColor4u8(r, g, b, a);
 }
 
 /** Draws a flat-coloured rectangle from (x0, y0) to (x1, y1); used for action command gauges and bars. */
-void btlDispGXQuads2DRasta(f32 x0, f32 y0, f32 x1, f32 y1, u8 r, u8 g, u8 b, u8 a) {
+void PORT_HOOKABLE(btlDispGXQuads2DRasta)(f32 x0, f32 y0, f32 x1, f32 y1, u8 r, u8 g, u8 b, u8 a) {
     GXBegin(GX_QUADS, GX_VTXFMT0, 4);
     btlDispGXPoint2DRasta(x0, y0, r, g, b, a);
     btlDispGXPoint2DRasta(x1, y0, r, g, b, a);
@@ -175,7 +183,7 @@ void btlDispGXPoint2D(f32 x, f32 y, u8 r, u8 g, u8 b, u8 a, f32 s, f32 t) {
 }
 
 /** Draws a textured rectangle from (x0, y0) to (x1, y1) with the full texture mapped on it. */
-void btlDispGXQuads2D(f32 x0, f32 y0, f32 x1, f32 y1, u8 r, u8 g, u8 b, u8 a) {
+void PORT_HOOKABLE(btlDispGXQuads2D)(f32 x0, f32 y0, f32 x1, f32 y1, u8 r, u8 g, u8 b, u8 a) {
     GXBegin(GX_QUADS, GX_VTXFMT0, 4);
     btlDispGXPoint2D(x0, y0, r, g, b, a, 0.0f, 0.0f);
     btlDispGXPoint2D(x1, y0, r, g, b, a, 1.0f, 0.0f);
@@ -255,7 +263,7 @@ static void btlDispTexPlainGX(u32 id, GXColor color0, GXColor color1, GXColor co
  * Draws a battle menu texture as a flat plane in the 3D scene at (tX, tY, tZ), scaled by (sX, sY);
  * used for action command signs, status icons, the Yoshi gauge and similar in-world markers.
  */
-void btlDispTexPlane(u32 id, GXColor color, s32 unused, f32 tX, f32 tY, f32 tZ, f32 sX, f32 sY) {
+void PORT_HOOKABLE(btlDispTexPlane)(u32 id, GXColor color, s32 unused, f32 tX, f32 tY, f32 tZ, f32 sX, f32 sY) {
     CameraEntry* camera;
     Mtx scale, trans, mtx;
 
@@ -270,7 +278,7 @@ void btlDispTexPlane(u32 id, GXColor color, s32 unused, f32 tX, f32 tY, f32 tZ, 
 }
 
 /** Draws a battle menu texture with a caller-built model matrix, in camera space. */
-void btlDispTexPlane2(Mtx mtx, u32 id, GXColor color, s32 unused) {
+void PORT_HOOKABLE(btlDispTexPlane2)(Mtx mtx, u32 id, GXColor color, s32 unused) {
     CameraEntry* camera;
     Mtx mtx2;
 
@@ -283,7 +291,7 @@ void btlDispTexPlane2(Mtx mtx, u32 id, GXColor color, s32 unused) {
 }
 
 /** Like btlDispTexPlane2 with a separate colour for each corner (used by a Star Power special move's display). */
-void btlDispTexPlane3(Mtx mtx, u32 id, GXColor color0, GXColor color1, GXColor color2, GXColor color3, s32 unused) {
+void PORT_HOOKABLE(btlDispTexPlane3)(Mtx mtx, u32 id, GXColor color0, GXColor color1, GXColor color2, GXColor color3, s32 unused) {
     CameraEntry* camera;
     Mtx mtx2;
 
@@ -308,7 +316,7 @@ void btlDispGetTexSize(u32 id, u16* width, u16* height) {
  * Battle display setup at battle start: the battle cameras, the menu display, and BATTLE_DISP_FLAG_STAR_POINTS,
  * which turns on the Star Point counter.
  */
-void btlDispInit(void) {
+void PORT_HOOKABLE(btlDispInit)(void) {
     BattleWork* wp = _battleWorkPointer;
 
     battleCameraInit();
@@ -321,7 +329,7 @@ void btlDispInit(void) {
  * else the first status it has from _status_pose_table (the demos check sleep before stop and freeze,
  * retail checks it after), else BTL_POSE_NORMAL.
  */
-BattlePoseType _GetStatusPoseType(BattleUnit* unit) {
+BattlePoseType PORT_HOOKABLE(_GetStatusPoseType)(BattleUnit* unit) {
     s32* table = _status_pose_table;
     StatusEffectType type;
 
@@ -362,7 +370,7 @@ static void btlUnitPartsBlurControl(BattleUnitPart* part, s32 unused, Mtx orient
  * blur and shadow draws and held-item icons, then the Star Point counter, stage, command menu,
  * audience and break slot. Retail drops the shell to the floor height.
  */
-void btlDispMain(void) {
+void PORT_HOOKABLE(btlDispMain)(void) {
     BattleUnit* unit;
     BattleUnitPart* part;
     BattleWork* wp = _battleWorkPointer;
@@ -577,6 +585,11 @@ void btlDispMain(void) {
             statusPoseControl(part);
             BtlUnit_GetPartsWorldPos(part, &wx, &wy, &wz);
             animPoseMain(part->poseId);
+#ifdef TARGET_PC /* Play as Luigi: Mario's unit's body */
+            if (unit->currentKind == UNIT_MARIO && unit->alliance == 0 && part->kindPartParams->partNum == 1) {
+                portLuigiUpdate(PORT_LUIGI_BATTLE, part->poseId, TRUE);
+            }
+#endif
             zpos = (Vec){wx, wy, wz + part->dispZOffset};
             part->dispColor.a = part->kindPartParams->baseAlpha;
             if (BtlUnit_CheckStatus(unit, STATUS_INVISIBLE) || (unit->attributeFlags & UNIT_ATTR_INTANGIBLE)) {
@@ -677,7 +690,7 @@ void btlDispMain(void) {
  * then draws the pose tinted by its colour (black when blackened, green-tinted for poison,
  * dimmed by moveColorLv) with the Charge shine. Also records the matrix for the blur trail.
  */
-void btlUnitPartsDisp(CameraId camId, BattleUnitPart* param) {
+void PORT_HOOKABLE(btlUnitPartsDisp)(CameraId camId, BattleUnitPart* param) {
     Mtx uMtx;
     Mtx drawMtx;
     Mtx pS2;
@@ -1090,7 +1103,7 @@ static void btlUnitPartsBlurDisp(CameraId camId, BattleUnitPart* part) {
  * Creates the animation pose for every part of a unit from its model name, starting in its normal pose;
  * parts without a pose table or model get poseId -1.
  */
-void btlDispEntAnime(BattleUnit* unit) {
+void PORT_HOOKABLE(btlDispEntAnime)(BattleUnit* unit) {
     BattleUnitPart* part;
     const char* name;
 
@@ -1113,7 +1126,7 @@ void btlDispEntAnime(BattleUnit* unit) {
  * Plays a named animation on a part, taking manual control of its pose (status poses no longer override it).
  * flag marks it as a hurt pose, which keeps the status draw types.
  */
-void btlDispChangeAnime(BattleUnitPart* part, const char* name, BOOL flag) {
+void PORT_HOOKABLE(btlDispChangeAnime)(BattleUnitPart* part, const char* name, BOOL flag) {
     strcpy(PART_POSENAME(part), name);
     part->animFlags |= PART_ANIM_MANUAL_POSE;
     part->animFlags |= PART_ANIM_CHANGE;
@@ -1128,7 +1141,7 @@ void btlDispChangeAnime(BattleUnitPart* part, const char* name, BOOL flag) {
 }
 
 /** Plays a paper effect animation (pera) on a part, for flattened and similar effects, with the plain draw type. */
-void btlDispChangePeraAnime(BattleUnitPart* part, const char* name) {
+void PORT_HOOKABLE(btlDispChangePeraAnime)(BattleUnitPart* part, const char* name) {
     part->animFlags |= PART_ANIM_PERA;
     PART_POSETYPE(part) = 0;
     animPoseSetEffectAnim(part->poseId, name, 1);
@@ -1138,7 +1151,7 @@ void btlDispChangePeraAnime(BattleUnitPart* part, const char* name) {
  * Hands a part's pose back to automatic status-based selection, clearing manual, blackened,
  * command-wait and pera states.
  */
-void btlDispPoseAnime(BattleUnitPart* part) {
+void PORT_HOOKABLE(btlDispPoseAnime)(BattleUnitPart* part) {
     part->animFlags &= ~(PART_ANIM_MANUAL_POSE | PART_ANIM_BLACKEN);
     part->animFlags |= PART_ANIM_CHANGE;
     part->animFlags &= ~PART_ANIM_COMMAND_WAIT;
@@ -1380,7 +1393,7 @@ void btlDispAnimeSpeed(BattleUnitPart* part, f32 speed) {
 #pragma pop
 
 /** Projects a 3D battle position to 2D screen coordinates (the 608x480 2D camera space centred on the screen). */
-void btlGetScreenPoint(Vec* in, Vec* out) {
+void PORT_HOOKABLE(btlGetScreenPoint)(Vec* in, Vec* out) {
     CameraEntry* camera = camGetPtr(CAMERA_3D);
     Vec v;
 
@@ -1400,7 +1413,7 @@ void btlGetScreenPoint(Vec* in, Vec* out) {
  * so one corner texture makes a full symmetrical sight;
  * used by aiming action commands (Tattle and shot targets).
  */
-void btlDispTex4(u32 id, Vec pos, Vec scale, Vec rot, GXColor color) {
+void PORT_HOOKABLE(btlDispTex4)(u32 id, Vec pos, Vec scale, Vec rot, GXColor color) {
     u16 width, height;
     f32 hw, hh;
     Vec off;
@@ -1507,3 +1520,7 @@ static void _btlStockExpDisp(CameraId camId, void* param) {
         }
     }
 }
+
+#ifdef PORT_MODS
+#include "port/hooks/src_battle_battle_disp.inc"
+#endif

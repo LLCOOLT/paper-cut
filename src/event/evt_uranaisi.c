@@ -1,5 +1,6 @@
 // Script commands for the fortune teller (uranaisi, Merluvlee in the Rogueport Underground):
 // fortune tables and message labels by story progress.
+#include "port_hook.h"
 #include "evt/evt_uranaisi.h"
 #include "evt/evt_johoya.h"
 #include "driver/msgdrv.h"
@@ -9,6 +10,9 @@
 #include <string.h>
 #include "libc_decls.h"
 #include "evt/evt_story.h"
+#ifdef PORT_MODS
+#include "port/hooks/src_event_evt_uranaisi.h"
+#endif
 
 typedef struct {
     u16 flags; // never used
@@ -686,7 +690,7 @@ s32 uranaisi_data_make_supercoin(const char* prefix, s32 type) {
  * twice Mario's level for "where to go next", otherwise uranaisi_ryokin_tbl (5 for a Star Piece, 10 for a Shine
  * Sprite).
  */
-s32 uranaisi_ryokin_rtn(s32 mode) {
+s32 PORT_HOOKABLE(uranaisi_ryokin_rtn)(s32 mode) {
     if (mode != 0) {
         return uranaisi_ryokin_tbl[mode];
     }
@@ -707,3 +711,7 @@ USER_FUNC(uranaisi_ryokin) {
     evtSetValue(event, args[1], price);
     return 2;
 }
+
+#ifdef PORT_MODS
+#include "port/hooks/src_event_evt_uranaisi.inc"
+#endif

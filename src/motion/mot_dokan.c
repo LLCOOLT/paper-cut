@@ -1,4 +1,5 @@
 // Mario's pipe (dokan) motion: going down or up a pipe with the partners.
+#include "port_hook.h"
 #include "dolphin/types.h"
 #include "mario/mario.h"
 #include "mario/mario_cam.h"
@@ -9,6 +10,9 @@
 #include "party.h"
 #include "system.h"
 #include "version.h"
+#ifdef PORT_MODS
+#include "port/hooks/src_motion_mot_dokan.h"
+#endif
 
 /**
  * Brings the partners back out with Mario when he comes out of a pipe:
@@ -113,7 +117,7 @@ static void _partyEntry(s32 flag) {
  * Ends in the stay motion once Mario is out.
  * The US and later releases flip the sideways exit tumble to match the facing.
  */
-void mot_dokan(void) {
+void PORT_HOOKABLE(mot_dokan)(void) {
     MarioWork* mario = marioGetPtr();
     PartyEntry* party;
 
@@ -444,3 +448,7 @@ void mot_dokan(void) {
         }
     }
 }
+
+#ifdef PORT_MODS
+#include "port/hooks/src_motion_mot_dokan.inc"
+#endif

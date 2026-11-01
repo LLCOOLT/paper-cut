@@ -1,4 +1,5 @@
 // Ms. Mowz (chuchu): partner init, follow and the treasure search ability.
+#include "port_hook.h"
 #include "driver/itemdrv.h"
 #include "driver/mobjdrv.h"
 #include "evt/evt_cmd.h"
@@ -19,6 +20,9 @@
 #include "eff/eff_fukidashi.h"
 #include "version.h"
 #include "evt/evt_msg.h"
+#ifdef PORT_MODS
+#include "port/hooks/src_party_party_chuchu.h"
+#endif
 // FAKE: party_chuchu.c calls effFukidashiEntry through this prototype (the types it was compiled with) instead of the one in eff/eff_fukidashi.h; same registers, behaviour-identical.
 typedef void* (*EffFukidashiEntryRetVoidptrS32Fn)(s32, s32, s32, f32, f32, f32, f32, f32, s32);
 
@@ -444,7 +448,7 @@ static USER_FUNC(post_msg) {
  * a Kururin floor item or a block from mobj_list);
  * party_motion.c and party_move.c play her sniffing pose while it is TRUE.
  */
-BOOL chuchu_searchObject(void) {
+BOOL PORT_HOOKABLE(chuchu_searchObject)(void) {
     char** name;
     ChuchuParty* cp = (ChuchuParty*)partyGetPtr(marioGetPartyId());
     MapObjectEntry* mobj;
@@ -506,7 +510,7 @@ static inline int chuchu_findTreasure(ChuchuParty* cpp, f32 range) {
  * a block or box from mobj_list or a chuchu_treasure_tbl spot);
  * party_motion.c and party_move.c play her sniffing pose while it is TRUE.
  */
-BOOL chuchu_searchObject(void) {
+BOOL PORT_HOOKABLE(chuchu_searchObject)(void) {
     ChuchuParty* cp = (ChuchuParty*)partyGetPtr(marioGetPartyId());
     MarioWork* player = cp->player;
     ChuchuTreasure* tbl;
@@ -526,7 +530,7 @@ BOOL chuchu_searchObject(void) {
 #endif
 
 /** Party table init handler: Ms. Mowz is member kind 7, 20 units tall and 24 wide. */
-void chuchu_init(PartyEntry* party) {
+void PORT_HOOKABLE(chuchu_init)(PartyEntry* party) {
     ChuchuParty* cp = (ChuchuParty*)party;
 
     cp->memberKind = PARTY_MEMBER_MS_MOWZ;
@@ -540,14 +544,14 @@ void chuchu_reinit(PartyEntry* party) {
 }
 
 /** Party table exit handler; does nothing. */
-void chuchu_exit(PartyEntry* party) {
+void PORT_HOOKABLE(chuchu_exit)(PartyEntry* party) {
 }
 
 /**
  * Party table move handler: on a run-mode change clears the in-use flag and starts walking;
  * then follows Mario (the retail versions also update her walk speed first).
  */
-void chuchu_move(PartyEntry* party) {
+void PORT_HOOKABLE(chuchu_move)(PartyEntry* party) {
     if (party->trigFlags & PARTY_TRIG_FLAG_CHG_RUN_MODE) {
         party->trigFlags &= ~PARTY_TRIG_FLAG_CHG_RUN_MODE;
         party->flags &= ~PARTY_FLAG_IS_BEING_USED;
@@ -566,7 +570,7 @@ void chuchu_move(PartyEntry* party) {
  * sniffs (sound 0x944, pose PCH_A2_1) for 30, runs msg_evt,
  * and once post_msg advances the step ends the use and unfreezes.
  */
-void chuchu_use(PartyEntry* party) {
+void PORT_HOOKABLE(chuchu_use)(PartyEntry* party) {
     ChuchuParty* cp = (ChuchuParty*)party;
     MarioWork* mario = cp->player;
     Vec pos;
@@ -644,3 +648,7 @@ void chuchu_use(PartyEntry* party) {
     }
     partyChkGnd(party);
 }
+
+#ifdef PORT_MODS
+#include "port/hooks/src_party_party_chuchu.inc"
+#endif

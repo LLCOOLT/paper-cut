@@ -2,6 +2,7 @@
 #include "battle/battle_weapon_power.h"
 #ifdef TARGET_PC
 #include "port/gameplus.h"
+#include "port/crowd.h"
 #endif
 #include "version.h"
 #include "port_hook.h"
@@ -340,12 +341,12 @@ BattleAudienceMember* BattleAudienceGetPtr(s32 id) {
 }
 
 /** Returns thrown-item slot id (0-99). */
-BattleAudienceItem* BattleAudienceItemGetPtr(s32 id) {
+BattleAudienceItem* PORT_HOOKABLE(BattleAudienceItemGetPtr)(s32 id) {
     return &BattleAudienceBaseGetPtr()->items[id];
 }
 
 /** Returns the audience-count window shown during command input. */
-BattleAudienceWindow* BattleAudienceWinGetPtr(void) {
+BattleAudienceWindow* PORT_HOOKABLE(BattleAudienceWinGetPtr)(void) {
     return &BattleAudienceBaseGetPtr()->window;
 }
 
@@ -353,7 +354,7 @@ BattleAudienceWindow* BattleAudienceWinGetPtr(void) {
  * Returns crowd sound channel id (0-23); each kind of crowd sound
  * (noise, cheers, boos, whistles ...) has its own.
  */
-BattleAudienceSound* BattleAudienceSoundGetPtr(s32 id) {
+BattleAudienceSound* PORT_HOOKABLE(BattleAudienceSoundGetPtr)(s32 id) {
     return &BattleAudienceBaseGetPtr()->sounds[id];
 }
 
@@ -364,7 +365,7 @@ BattleAudienceSound* BattleAudienceSoundGetPtr(s32 id) {
  * Then counts the members present on each half for the audience window (not those arriving or leaving),
  * starts the crowd-noise loop fading to 60% over 180 frames and has the crowd move toward its target size.
  */
-void BattleAudience_Init(void) {
+void PORT_HOOKABLE(BattleAudience_Init)(void) {
     BattleAudience* audience;
     BattleAudienceWindow* window;
     int j;
@@ -425,7 +426,7 @@ void BattleAudience_Init(void) {
  * then updates the members, thrown items, Star Power sparkles, the window and the crowd sounds,
  * and remembers whether command input was open for the next frame.
  */
-void BattleAudience_Main(void) {
+void PORT_HOOKABLE(BattleAudience_Main)(void) {
     BattleWork* wp = _battleWorkPointer;
     BattleAudience* audience = BattleAudienceBaseGetPtr();
 
@@ -437,6 +438,9 @@ void BattleAudience_Main(void) {
     BattleAudienceApSrcCtrlProcess();
     BattleAudienceWinCtrlProcess();
     BattleAudienceSoundMain();
+#ifdef TARGET_PC
+    portCrowdBattleFrame(); /* Crowd Control: a viewer's command (port/include/port/crowd.h) */
+#endif
     if (wp->flags & BATTLE_FLAG_COMMAND_INPUT) {
         audience->flags |= AUDIENCE_FLAG_COMMAND_MENU;
     } else {
@@ -449,7 +453,7 @@ void BattleAudience_Main(void) {
  * (action command, guard and Stylish results, enemy damaged, undamaged or defeated, the Stylish count)
  * before a unit acts; battle_seq.c calls it, as does BattleAudience_PerAct.
  */
-void BattleAudience_ActInit(void) {
+void PORT_HOOKABLE(BattleAudience_ActInit)(void) {
     BattleAudience* audience = BattleAudienceBaseGetPtr();
     audience->numStylishCommandsThisAttack = 0;
     audience->flags &= ~AUDIENCE_FLAG_AC_GOOD;
@@ -481,7 +485,7 @@ void BattleAudience_ActInit(void) {
  * A Stylish move also brings in 10 Punies, and a pending Puni escape is announced.
  * Finally the change goes to BattleAudienceAddTargetNum and the record is cleared.
  */
-void BattleAudience_PerAct(void) {
+void PORT_HOOKABLE(BattleAudience_PerAct)(void) {
     BattleAudience* audience = BattleAudienceBaseGetPtr();
     f32 total;
     f32 delta;
@@ -621,7 +625,7 @@ void BattleAudience_PerAct(void) {
  * TRUE while the audience's announcement script (the Puni escape from BattleAudience_PerAct) is still
  * running, so battle_seq.c waits after an action; otherwise forgets the script and returns FALSE.
  */
-BOOL BattleAudience_CheckReaction(void) {
+BOOL PORT_HOOKABLE(BattleAudience_CheckReaction)(void) {
     BattleAudience* audience;
     EventEntry* evt;
 
@@ -698,7 +702,7 @@ static u8 check_exe_phase_evt_status(s32 index, s32 type) {
  * at the enemy phase the item-throw limit is rolled again
  * and the phase reactions are armed (BattleAudience_CheckReactionPerPhase).
  */
-void BattleAudience_PerPhase(u32 value) {
+void PORT_HOOKABLE(BattleAudience_PerPhase)(u32 value) {
     BattleAudience* audience;
     BattleAudienceMember* member;
     s32 i;
@@ -759,7 +763,7 @@ void BattleAudience_PerPhase(u32 value) {
  * Last, sleeping members count down to waking, Koopas in their shells come out when their timer ends
  * and the post-BINGO! boost loses a turn. Skipped, apart from that last step, while the audience is frozen.
  */
-BOOL BattleAudience_CheckReactionPerPhase(void) {
+BOOL PORT_HOOKABLE(BattleAudience_CheckReactionPerPhase)(void) {
     BattleAudience* audience;
     BattleAudience* pe;
     BattleAudienceMember* member;
@@ -1236,7 +1240,7 @@ BOOL BattleAudience_CheckReactionPerPhase(void) {
  * steps the members' animation scripts and, unless the audience is hidden, draws the members (two passes),
  * thrown items and Star Power sparkles; the audience-count window is drawn once Mario has Star Power.
  */
-void BattleAudience_Disp(void) {
+void PORT_HOOKABLE(BattleAudience_Disp)(void) {
     BattleAudienceBaseGetPtr();
     BattleAudienceAnimProcess();
     if (!(BattleAudienceBaseGetPtr()->flags & AUDIENCE_FLAG_HIDDEN)) {
@@ -1255,7 +1259,7 @@ void BattleAudience_Disp(void) {
  * saves the target audience size (clamped to 0 and the rank's maximum) to the pouch for the next battle.
  * The US and PAL releases also free the copy of the Star Power bonuses.
  */
-void BattleAudience_End(void) {
+void PORT_HOOKABLE(BattleAudience_End)(void) {
     BattleAudience* audience;
     FileEntry* obj;
     int i;
@@ -1764,7 +1768,7 @@ static void BattleAudienceCtrlProcess(void) {
  * for a consumable item, before the first-item tutorial has been seen. TRUE when the member took the item.
  * Called by the phase reactions, the random throws in BattleAudienceCtrlProcess and Frankly's lecture.
  */
-BOOL BattleAudienceItemOn(s32 index, u16 itemId, s32 numItems) {
+BOOL PORT_HOOKABLE(BattleAudienceItemOn)(s32 index, u16 itemId, s32 numItems) {
     BattleAudience* audience = BattleAudienceBaseGetPtr();
     BattleAudienceMember* member = BattleAudienceGetPtr(index);
     BattleAudienceItem* item;
@@ -1847,7 +1851,7 @@ static void BattleAudienceSetThrowItemMax(void) {
  * skipping the unused kinds from UNIT_UNUSED_TREE up to UNIT_UNUSED_TESTNPC; NULL if there is none.
  * The Boo's phase event uses it to choose whom to turn invisible.
  */
-BattleUnit* BattleAudienceDetectTargetAll(void) {
+BattleUnit* PORT_HOOKABLE(BattleAudienceDetectTargetAll)(void) {
     s32 i;
     BattleWork* wp = _battleWorkPointer;
     BattleUnit* unit;
@@ -2888,7 +2892,7 @@ static void BattleAudienceDispWin(CameraId camId, void* param) {
  * Called by the crowd setup, BattleAudienceAddAudienceNum, the Puni arrivals,
  * audience scripts (evt_audience.c) and Frankly's lecture.
  */
-BOOL BattleAudience_Entry(s32 index, AudienceMemberType type, u8 status) {
+BOOL PORT_HOOKABLE(BattleAudience_Entry)(s32 index, AudienceMemberType type, u8 status) {
     BattleAudienceMember* m;
     f32 x;
     s32 t;
@@ -2999,7 +3003,7 @@ static void BattleAudience_Entry_Sub(s32 index, s32 type, u8 status) {
  * also freeing the right seat of a two-seat member. Called by the audience status code, audience scripts,
  * Frankly's lecture and the Cortez and Shadow Queen battles.
  */
-void BattleAudience_Delete(s32 index) {
+void PORT_HOOKABLE(BattleAudience_Delete)(s32 index) {
     BattleAudienceMember* member;
 
     BattleAudienceBaseGetPtr();
@@ -3015,7 +3019,7 @@ void BattleAudience_Delete(s32 index) {
  * does nothing for a free seat, the right half of a two-seat member,
  * or an animation already running unless force is set.
  */
-void BattleAudience_SetAnim(s32 id, s32 animId, BOOL force) {
+void PORT_HOOKABLE(BattleAudience_SetAnim)(s32 id, s32 animId, BOOL force) {
     BattleAudienceMember* member;
     s32* anim;
     s32 i;
@@ -3042,7 +3046,7 @@ void BattleAudience_SetAnim(s32 id, s32 animId, BOOL force) {
 }
 
 /** TRUE once member index's animation script has reached its end op (-1) and its last wait has run out. */
-BOOL BattleAudience_GetAnimEnd(s32 index) {
+BOOL PORT_HOOKABLE(BattleAudience_GetAnimEnd)(s32 index) {
     BattleAudienceMember* member = BattleAudienceGetPtr(index);
 
     if (*member->animPc != -1) {
@@ -3052,7 +3056,7 @@ BOOL BattleAudience_GetAnimEnd(s32 index) {
 }
 
 /** Reads member index's current position. */
-void BattleAudience_GetPosition(s32 index, f32* x, f32* y, f32* z) {
+void PORT_HOOKABLE(BattleAudience_GetPosition)(s32 index, f32* x, f32* y, f32* z) {
     BattleAudienceMember* member;
 
     member = BattleAudienceGetPtr(index);
@@ -3062,7 +3066,7 @@ void BattleAudience_GetPosition(s32 index, f32* x, f32* y, f32* z) {
 }
 
 /** Reads member index's seat position; the falling stage objects play their landing sound there. */
-void BattleAudience_GetHomePosition(s32 index, f32* x, f32* y, f32* z) {
+void PORT_HOOKABLE(BattleAudience_GetHomePosition)(s32 index, f32* x, f32* y, f32* z) {
     BattleAudienceMember* member;
 
     member = BattleAudienceGetPtr(index);
@@ -3072,7 +3076,7 @@ void BattleAudience_GetHomePosition(s32 index, f32* x, f32* y, f32* z) {
 }
 
 /** Reads member index's rotation in degrees (used by Cortez's battle script). */
-void BattleAudience_GetRotate(s32 index, f32* x, f32* y, f32* z) {
+void PORT_HOOKABLE(BattleAudience_GetRotate)(s32 index, f32* x, f32* y, f32* z) {
     BattleAudienceMember* member;
 
     member = BattleAudienceGetPtr(index);
@@ -3082,7 +3086,7 @@ void BattleAudience_GetRotate(s32 index, f32* x, f32* y, f32* z) {
 }
 
 /** Moves member index to (x, y, z); used by audience scripts, Clock Out and the Shadow Queen battle. */
-void BattleAudience_SetPosition(s32 index, f32 x, f32 y, f32 z) {
+void PORT_HOOKABLE(BattleAudience_SetPosition)(s32 index, f32 x, f32 y, f32 z) {
     BattleAudienceMember* member;
 
     member = BattleAudienceGetPtr(index);
@@ -3092,7 +3096,7 @@ void BattleAudience_SetPosition(s32 index, f32 x, f32 y, f32 z) {
 }
 
 /** Sets member index's rotation in degrees; used by audience scripts and Cortez's battle script. */
-void BattleAudience_SetRotate(s32 index, f32 x, f32 y, f32 z) {
+void PORT_HOOKABLE(BattleAudience_SetRotate)(s32 index, f32 x, f32 y, f32 z) {
     BattleAudienceMember* member;
 
     member = BattleAudienceGetPtr(index);
@@ -3104,7 +3108,7 @@ void BattleAudience_SetRotate(s32 index, f32 x, f32 y, f32 z) {
 /**
  * Sets the point member index rotates about, relative to its position and scaled with it (audience scripts).
  */
-void BattleAudience_SetRotateOffset(s32 index, f32 x, f32 y, f32 z) {
+void PORT_HOOKABLE(BattleAudience_SetRotateOffset)(s32 index, f32 x, f32 y, f32 z) {
     BattleAudienceMember* member;
 
     member = BattleAudienceGetPtr(index);
@@ -3120,7 +3124,7 @@ void BattleAudience_SetRotateOffset(s32 index, f32 x, f32 y, f32 z) {
  * The command menu uses it for the X-button attack on the item holder
  * (battle_menu_disp.c, battle_seq_command.c).
  */
-void BattleAudience_GetItemOn(s32* memberId, f32* x, f32* y, f32* z, ItemType* itemType) {
+void PORT_HOOKABLE(BattleAudience_GetItemOn)(s32* memberId, f32* x, f32* y, f32* z, ItemType* itemType) {
     BattleAudience* audience;
     BattleAudienceMember* member;
     BattleAudienceItem* item;
@@ -3168,7 +3172,7 @@ void BattleAudience_GetItemOn(s32* memberId, f32* x, f32* y, f32* z, ItemType* i
  * index, position and item (any pointer may be NULL);
  * used by the audience-attack scripts in battle_attack_audience.c.
  */
-void BattleAudience_GetItemOn2(s32* memberId, f32* x, f32* y, f32* z, ItemType* itemType) {
+void PORT_HOOKABLE(BattleAudience_GetItemOn2)(s32* memberId, f32* x, f32* y, f32* z, ItemType* itemType) {
     BattleAudience* audience;
     BattleAudienceMember* member;
 
@@ -3202,7 +3206,7 @@ void BattleAudience_GetItemOn2(s32* memberId, f32* x, f32* y, f32* z, ItemType* 
  * and makes every other member holding an item put it away; from the X-button check in battle_seq_command.c.
  * The demos do this only while the member still holds its item.
  */
-void BattleAudience_SetTarget(s32 index) {
+void PORT_HOOKABLE(BattleAudience_SetTarget)(s32 index) {
     BattleAudienceMember* member;
     s32 i;
 
@@ -3241,7 +3245,7 @@ void BattleAudience_SetTarget(s32 index) {
  * Marks member index as hit by Mario's audience attack (MEMBER_FLAG_ATTACKED);
  * its status code then drops the item and knocks it back. Called from battle_attack_audience.c.
  */
-void BattleAudience_Attack(s32 index) {
+void PORT_HOOKABLE(BattleAudience_Attack)(s32 index) {
     BattleAudienceGetPtr(index)->flags |= MEMBER_FLAG_ATTACKED;
 }
 
@@ -3249,7 +3253,7 @@ void BattleAudience_Attack(s32 index) {
  * TRUE when member index faces the camera: its facing direction points against
  * the 3D camera's view direction.
  */
-BOOL BattleAudience_GetFront(s32 index) {
+BOOL PORT_HOOKABLE(BattleAudience_GetFront)(s32 index) {
     BattleAudienceMember* member;
     CameraEntry* camera;
     Vec dir;
@@ -3268,7 +3272,7 @@ BOOL BattleAudience_GetFront(s32 index) {
  * resetting its colour, rotation, offsets, scale, velocity, timers and status work.
  * A call for the right half of a two-seat member goes to its left half; free seats are ignored.
  */
-void BattleAudience_ChangeStatus(s32 index, s32 status) {
+void PORT_HOOKABLE(BattleAudience_ChangeStatus)(s32 index, s32 status) {
     BattleAudienceMember* member;
 
     BattleAudienceBaseGetPtr();
@@ -3317,7 +3321,7 @@ BOOL BattleAudience_GetExist(s32 index) {
 }
 
 /** TRUE when member index exists and the audience code, not a script (MEMBER_FLAG_EVT_CTRL), controls it. */
-BOOL BattleAudience_GetSysCtrl(s32 index) {
+BOOL PORT_HOOKABLE(BattleAudience_GetSysCtrl)(s32 index) {
     BattleAudienceMember* member;
 
     BattleAudienceBaseGetPtr();
@@ -3332,7 +3336,7 @@ BOOL BattleAudience_GetSysCtrl(s32 index) {
  * TRUE when member index is under audience control, holds no item and is idle or fidgeting (status 0-3),
  * so it is free to react; cheers, boos and whistles pick from these members.
  */
-u8 BattleAudience_GetWaiting(s32 index) {
+u8 PORT_HOOKABLE(BattleAudience_GetWaiting)(s32 index) {
     BattleAudienceMember* member;
 
     BattleAudienceBaseGetPtr();
@@ -3352,7 +3356,7 @@ u8 BattleAudience_GetWaiting(s32 index) {
  * in its shell, fuse lit, in a Boo or Shy Guy event, in a demo-only status or already leaving.
  * Used when the crowd shrinks, the Punies flee and falling objects or blasts scatter the crowd.
  */
-BOOL BattleAudience_GetEscapeChangeOK(s32 index) {
+BOOL PORT_HOOKABLE(BattleAudience_GetEscapeChangeOK)(s32 index) {
     BattleAudience* audience;
     BattleAudienceMember* member;
 
@@ -3396,7 +3400,7 @@ BOOL BattleAudience_GetEscapeChangeOK(s32 index) {
  * (row is subtracted from the seat's row), or -1 when that falls outside the 20 columns or the 200 seats.
  * Used for neighbourhoods: Bulky Bob-omb blasts, Piranha Plant bites, falling objects and an idle-hop check.
  */
-s32 BattleAudience_GetAudienceNoFromOffset(s32 index, s32 column, s32 row) {
+s32 PORT_HOOKABLE(BattleAudience_GetAudienceNoFromOffset)(s32 index, s32 column, s32 row) {
     s32 audienceNo;
 
     BattleAudience* audience = BattleAudienceBaseGetPtr();
@@ -3416,7 +3420,7 @@ s32 BattleAudience_GetAudienceNoFromOffset(s32 index, s32 column, s32 row) {
  * Picks a random seat in the first three rows for a stage object to fall on (battle_stage_object.c):
  * row 0 columns 4-15, row 1 5-14, row 2 6-13 (the demos: 1-18, 2-17, 3-16). Haiti is Japanese for seating.
  */
-s32 BattleAudience_HaitiRandForFallObject(void) {
+s32 PORT_HOOKABLE(BattleAudience_HaitiRandForFallObject)(void) {
     s32 row = irand(3);
     s32 col = 10;
 
@@ -3641,7 +3645,7 @@ s32 BattleAudience_NoUsedFCHaitiRand(void) {
  * the seat picker, the Star Power special moves and the Magnus von Grapple 2.0
  * and Shadow Queen battles use it.
  */
-s32 BattleAudience_GetAudienceNum(void) {
+s32 PORT_HOOKABLE(BattleAudience_GetAudienceNum)(void) {
     return BattleAudienceBaseGetPtr()->currentAudienceIntCount;
 }
 
@@ -3798,7 +3802,7 @@ void PORT_HOOKABLE(BattleAudience_ApRecoveryBuild)(StarPowerInfo* info) {
  * Shows (nonzero) or hides the audience-count window, which slides in or out over 15 frames;
  * used by the action-command help and battle end.
  */
-void BattleAudience_WinSetActive(u8 active) {
+void PORT_HOOKABLE(BattleAudience_WinSetActive)(u8 active) {
     BattleAudienceWinGetPtr()->active = active;
 }
 
@@ -3808,7 +3812,7 @@ void BattleAudience_WinSetActive(u8 active) {
  * and not leaving (BattleAudienceAddAudienceNum). Does nothing while the audience is frozen.
  * Called at battle start, at each turn end and by the bingo slots.
  */
-void BattleAudienceNumToTarget(void) {
+void PORT_HOOKABLE(BattleAudienceNumToTarget)(void) {
     s32 num;
     BattleAudience* audience = BattleAudienceBaseGetPtr();
 
@@ -3878,7 +3882,7 @@ static s32 BattleAudienceNumToTargetSub(void) {
  * The crowd reactions (BattleAudience_Case_*) use it, as do the bingo slots,
  * audience scripts and some bosses.
  */
-void BattleAudienceAddTargetNum(f32 value, f32 value2) {
+void PORT_HOOKABLE(BattleAudienceAddTargetNum)(f32 value, f32 value2) {
     BattleAudience* audience = BattleAudienceBaseGetPtr();
 
     audience->addedAudienceCount += value2;
@@ -3970,7 +3974,7 @@ static void BattleAudienceAddTargetNumSub(f32 value) {
  * does nothing before Mario has Star Power or on a wide stage.
  * Used by BattleAudienceNumToTarget, the bingo slots and Frankly's lecture.
  */
-s32 BattleAudienceAddAudienceNum(s32 num) {
+s32 PORT_HOOKABLE(BattleAudienceAddAudienceNum)(s32 num) {
     s32 total;
     s32 list[200];
     BattleWork* wp;
@@ -4039,7 +4043,7 @@ s32 BattleAudienceAddAudienceNum(s32 num) {
  * (the target size in the demos), and flags the escape for its announcement (msg_puni_all_escape).
  * Called after falling objects hit the stands and after a Bulky Bob-omb blast.
  */
-void BattleAudiencePuniAllEscape(void) {
+void PORT_HOOKABLE(BattleAudiencePuniAllEscape)(void) {
     BattleAudienceMember* member;
     BattleAudience* audience;
     s32 i;
@@ -4183,13 +4187,13 @@ static void BattleAudienceJoy(s32 type) {
 }
 
 /** Crowd reaction for Frankly's Star Power lecture: a 120-frame cheer and BattleAudienceJoy type 2. */
-void BattleAudienceJoySACLecture(void) {
+void PORT_HOOKABLE(BattleAudienceJoySACLecture)(void) {
     BattleAudienceSoundCheer(120, 60);
     BattleAudienceJoy(2);
 }
 
 /** Whole-crowd reaction of BattleAudienceJoy type 3, for the audience script command in evt_audience.c. */
-void BattleAudienceJoyEnding(void) {
+void PORT_HOOKABLE(BattleAudienceJoyEnding)(void) {
     BattleAudienceJoy(3);
 }
 
@@ -4281,7 +4285,7 @@ static s32 BattleAudienceDetectPakkunEatTargetSub(s32 index, s32 dir1, s32 dir2)
  * the member right beside it, the side tried first chosen at random;
  * -1 when neither seat holds one, and then the event is not offered.
  */
-s32 BattleAudienceDetectPakkunEatTarget(s32 index) {
+s32 PORT_HOOKABLE(BattleAudienceDetectPakkunEatTarget)(s32 index) {
     if (irand(2) == 0) {
         return BattleAudienceDetectPakkunEatTargetSub(index, -1, 1);
     }
@@ -4293,7 +4297,7 @@ s32 BattleAudienceDetectPakkunEatTarget(s32 index) {
  * (under 50, 50-99, 100-149, 150 and more). Used by the failed-move and run-away reactions,
  * the bingo slots and Earth Tremor.
  */
-void BattleAudienceSoundBooing(void) {
+void PORT_HOOKABLE(BattleAudienceSoundBooing)(void) {
     s32 kind;
     s32 num;
 
@@ -4320,7 +4324,7 @@ void BattleAudienceSoundBooing(void) {
  * 1-4 SFX_AUDIENCE_BOO_ALLY1-4, 5-8 SFX_AUDIENCE_BOO_ENEMY1-4, panned and scaled to the crowd;
  * it plays to its end. The Star Power special moves call it directly.
  */
-void BattleAudienceSoundBooingKind(s32 kind) {
+void PORT_HOOKABLE(BattleAudienceSoundBooingKind)(s32 kind) {
     char name[64];
     AudSound* sound;
     s32 right, left;
@@ -4372,7 +4376,7 @@ void BattleAudienceSoundBooingKind(s32 kind) {
  * SFX_AUDIENCE_CLAPPING1-4, a louder tier at 50, 100 and 150 members taking part.
  * Used by the Stylish and Appeal reactions, battle end and the Star Power special moves.
  */
-void BattleAudienceSoundClap(s32 duration, s32 fade) {
+void PORT_HOOKABLE(BattleAudienceSoundClap)(s32 duration, s32 fade) {
     char name[64];
     AudSound* sound;
     s32 right, left, sum;
@@ -4457,7 +4461,7 @@ void BattleAudienceSoundNoiseAlways(void) {
  * Plays the crowd's cheer (BattleAudienceSoundCheerKind) at the tier for the members taking part
  * (1-49, 50-99, 100-149, 150 and more) for duration frames, fading over the last fade.
  */
-void BattleAudienceSoundCheer(s32 duration, s32 fade) {
+void PORT_HOOKABLE(BattleAudienceSoundCheer)(s32 duration, s32 fade) {
     s32 kind;
     s32 num;
 
@@ -4485,7 +4489,7 @@ void BattleAudienceSoundCheer(s32 duration, s32 fade) {
  * a free one is used, the second cheer pitch-shifted, and when both are busy the one nearer its end is cut.
  * Called by BattleAudienceSoundCheer and sac_common.c.
  */
-void BattleAudienceSoundCheerKind(s32 kind, s32 duration, s32 fade) {
+void PORT_HOOKABLE(BattleAudienceSoundCheerKind)(s32 kind, s32 duration, s32 fade) {
     char name[64];
     AudSound* sound;
     AudSound* sound5;
@@ -4543,7 +4547,7 @@ void BattleAudienceSoundCheerKind(s32 kind, s32 duration, s32 fade) {
 /**
  * A whistle from a random idle member (BattleAudienceSoundWhistleKind with a random kind 1-3); at battle end.
  */
-void BattleAudienceSoundWhistle(void) {
+void PORT_HOOKABLE(BattleAudienceSoundWhistle)(void) {
     BattleAudienceSoundWhistleKind(irand(3) + 1);
 }
 
@@ -4552,7 +4556,7 @@ void BattleAudienceSoundWhistle(void) {
  * on channel 6 for the left half of the stands or 7 for the right; nothing when nobody is idle.
  * Used by the Star Power special moves.
  */
-void BattleAudienceSoundWhistleKind(s32 kind) {
+void PORT_HOOKABLE(BattleAudienceSoundWhistleKind)(s32 kind) {
     Vec pos;
     s32 id, idx;
     s32 list[200];
@@ -4596,7 +4600,7 @@ void BattleAudienceSoundWhistleKind(s32 kind) {
  * Plays crowd call kind 1 or 2 (SFX_AUDIENCE_CALL_ALLY1 or 2) on channel 8, panned and scaled to the crowd;
  * used by the Star Power special moves.
  */
-void BattleAudienceSoundCallKind(s32 kind) {
+void PORT_HOOKABLE(BattleAudienceSoundCallKind)(s32 kind) {
     AudSound* sound;
     s32 right, left;
 
@@ -4620,7 +4624,7 @@ void BattleAudienceSoundCallKind(s32 kind) {
  * Starts the crowd's rhythmic clapping loop (SFX_AUDIENCE_HANDBEAT1) on channel 9 for the Star Power special
  * moves, louder the more members take part: 75 plus a random share, silent for an empty crowd.
  */
-void BattleAudienceSoundHandBeat(void) {
+void PORT_HOOKABLE(BattleAudienceSoundHandBeat)(void) {
     s32 right;
     AudSound* sound;
     s32 left;
@@ -4656,7 +4660,7 @@ void BattleAudienceSoundHandBeat(void) {
  * Plays a member's throw sound at its seat (kind 0 SFX_AUDIENCE_THROW_OBJECT1, else OBJECT2),
  * on channel 10 for the left half or 11 for the right; from the throwing status in battle_audience_kinopio.c.
  */
-void BattleAudienceSoundItemThrow(s32 kind, s32 index) {
+void PORT_HOOKABLE(BattleAudienceSoundItemThrow)(s32 kind, s32 index) {
     Vec pos;
     s32 id;
     AudSound* sound;
@@ -4684,7 +4688,7 @@ void BattleAudienceSoundItemThrow(s32 kind, s32 index) {
  * Plays the crowd's running sound (kind 0 SFX_AUDIENCE_RUN1, 1 RUN2) on channel 13, not positioned;
  * the bingo slots play it when their result brings fans in or sends them away.
  */
-void BattleAudienceSoundRun(s32 kind) {
+void PORT_HOOKABLE(BattleAudienceSoundRun)(s32 kind) {
     AudSound* sound = AudSoundGetPtr(13);
 
     BattleAudienceSoundStop(13);
@@ -4703,7 +4707,7 @@ void BattleAudienceSoundRun(s32 kind) {
  * Plays a random sleep sound (SFX_AUDIENCE_SLEEP1-3) at member index as it dozes off
  * after a Crazee Dayzee's song, on channel 14 for the left half or 15 for the right.
  */
-void BattleAudienceSoundSleep(s32 index) {
+void PORT_HOOKABLE(BattleAudienceSoundSleep)(s32 index) {
     Vec pos;
     s32 id;
     AudSound* sound;
@@ -4735,7 +4739,7 @@ void BattleAudienceSoundSleep(s32 index) {
  * The new sound's handle is not kept, so the channel still holds the previous one
  * and cannot stop or fade this sound.
  */
-void BattleAudienceSoundZZZ(s32 index) {
+void PORT_HOOKABLE(BattleAudienceSoundZZZ)(s32 index) {
     AudSound* sound = AudSoundGetPtr(16);
 
     BattleAudienceSoundStop(16);
@@ -4744,7 +4748,7 @@ void BattleAudienceSoundZZZ(s32 index) {
 }
 
 /** Plays the Crazee Dayzee's song (SFX_AUDIENCE_PANSY_SINGING1) at member index on channel 17. */
-void BattleAudienceSoundSing(s32 index) {
+void PORT_HOOKABLE(BattleAudienceSoundSing)(s32 index) {
     AudSound* sound = AudSoundGetPtr(17);
 
     BattleAudienceSoundStop(17);
@@ -4756,7 +4760,7 @@ void BattleAudienceSoundSing(s32 index) {
  * Plays the Koopa's shell sound (SFX_AUDIENCE_SHELL_TRANSFORM1) at member index as it goes into
  * or comes out of its shell, on channel 18 for the left half or 19 for the right.
  */
-void BattleAudienceSoundShell(s32 index) {
+void PORT_HOOKABLE(BattleAudienceSoundShell)(s32 index) {
     Vec pos;
     s32 id;
     AudSound* sound;
@@ -4777,7 +4781,7 @@ void BattleAudienceSoundShell(s32 index) {
  * Plays a Bulky Bob-omb's burning fuse (SFX_AUDIENCE_BOMB_READY1) at member index on channel 20 for duration
  * frames, fading over the last fade (180 and 120 when it lights).
  */
-void BattleAudienceSoundBombIgnite(s32 index, s32 duration, s32 fade) {
+void PORT_HOOKABLE(BattleAudienceSoundBombIgnite)(s32 index, s32 duration, s32 fade) {
     AudSound* sound = AudSoundGetPtr(20);
 
     BattleAudienceSoundStop(20);
@@ -4789,7 +4793,7 @@ void BattleAudienceSoundBombIgnite(s32 index, s32 duration, s32 fade) {
  * Plays a Bulky Bob-omb's blast (SFX_AUDIENCE_BOMB_BURST1) at member index,
  * on channel 21 for the left half or 22 for the right.
  */
-void BattleAudienceSoundBombFire(s32 index) {
+void PORT_HOOKABLE(BattleAudienceSoundBombFire)(s32 index) {
     Vec pos;
     s32 id;
     AudSound* sound;
@@ -4807,7 +4811,7 @@ void BattleAudienceSoundBombFire(s32 index) {
 }
 
 /** Plays a Piranha Plant's bite (SFX_AUDIENCE_PAKU_EAT1) at member index on channel 23. */
-void BattleAudienceSoundPakkunEat(s32 index) {
+void PORT_HOOKABLE(BattleAudienceSoundPakkunEat)(s32 index) {
     AudSound* sound = AudSoundGetPtr(23);
 
     BattleAudienceSoundStop(23);
@@ -4819,7 +4823,7 @@ void BattleAudienceSoundPakkunEat(s32 index) {
  * Fades crowd sound channel index from its current volume to vol percent over length frames
  * and cancels its timed fade-out; BattleAudienceSoundMain applies it.
  */
-void BattleAudienceSoundSetVol(s32 index, u8 vol, s32 length) {
+void PORT_HOOKABLE(BattleAudienceSoundSetVol)(s32 index, u8 vol, s32 length) {
     BattleAudienceSound* sound;
 
     sound = BattleAudienceSoundGetPtr(index);
@@ -4833,7 +4837,7 @@ void BattleAudienceSoundSetVol(s32 index, u8 vol, s32 length) {
 /**
  * Fades all 24 crowd sound channels to vol percent over length frames; battle end silences the crowd with it.
  */
-void BattleAudienceSoundSetVolAll(u8 vol, s32 length) {
+void PORT_HOOKABLE(BattleAudienceSoundSetVolAll)(u8 vol, s32 length) {
     s32 i;
 
     for (i = 0; i < 24; i++) {
@@ -4844,12 +4848,12 @@ void BattleAudienceSoundSetVolAll(u8 vol, s32 length) {
 /**
  * Nonzero while crowd sound channel index is playing; the Star Power special moves wait on it (sac_common.c).
  */
-s32 BattleAudienceSoundCheck(s32 index) {
+s32 PORT_HOOKABLE(BattleAudienceSoundCheck)(s32 index) {
     return AudSoundGetPtr(index)->flags & AUDIENCE_SOUND_FLAG_PLAYING;
 }
 
 /** Stops the sound on crowd channel index if it is playing. */
-void BattleAudienceSoundStop(s32 index) {
+void PORT_HOOKABLE(BattleAudienceSoundStop)(s32 index) {
     AudSound* sound = AudSoundGetPtr(index);
 
     if (sound->flags & AUDIENCE_SOUND_FLAG_PLAYING) {
@@ -5017,7 +5021,7 @@ static void BattleAudienceNoiseMain(void) {
  * Notes that the action defeated an enemy (level is unused);
  * a failed action command then costs no fans (BattleAudience_PerAct). From the damage code.
  */
-void BattleAudience_Case_KillEnemy(s32 level) {
+void PORT_HOOKABLE(BattleAudience_Case_KillEnemy)(s32 level) {
     BattleAudienceBaseGetPtr()->flags |= AUDIENCE_FLAG_ENEMY_KILLED;
 }
 
@@ -5027,7 +5031,7 @@ void BattleAudience_Case_KillEnemy(s32 level) {
  * records the success for BattleAudience_PerAct. The demo also counts it as one Stylish command
  * and clears the missed-Stylish flag.
  */
-void BattleAudience_Case_ActionCommandGood(BattleWeapon* weapon) {
+void PORT_HOOKABLE(BattleAudience_Case_ActionCommandGood)(BattleWeapon* weapon) {
     BattleAudience* audience = BattleAudienceBaseGetPtr();
     s32 i;
     s32 count = 0;
@@ -5056,7 +5060,7 @@ void BattleAudience_Case_ActionCommandGood(BattleWeapon* weapon) {
  * and after a failed hammer attack a Hammer Bro in the crowd may throw a hammer next phase;
  * records the failure for BattleAudience_PerAct.
  */
-void BattleAudience_Case_ActionCommandBad(BattleWeapon* weapon) {
+void PORT_HOOKABLE(BattleAudience_Case_ActionCommandBad)(BattleWeapon* weapon) {
     BattleAudience* audience = BattleAudienceBaseGetPtr();
     s32 count = 0;
     s32 i;
@@ -5077,12 +5081,12 @@ void BattleAudience_Case_ActionCommandBad(BattleWeapon* weapon) {
 }
 
 /** Notes a successful guard or Superguard for BattleAudience_PerAct (from the damage code). */
-void BattleAudience_Case_GuardGood(void) {
+void PORT_HOOKABLE(BattleAudience_Case_GuardGood)(void) {
     BattleAudienceBaseGetPtr()->flags |= AUDIENCE_FLAG_GUARD_GOOD;
 }
 
 /** Notes a failed guard for BattleAudience_PerAct, which ends the pleased streak (from the damage code). */
-void BattleAudience_Case_GuardBad(void) {
+void PORT_HOOKABLE(BattleAudience_Case_GuardBad)(void) {
     BattleAudienceBaseGetPtr()->flags |= AUDIENCE_FLAG_GUARD_BAD;
 }
 
@@ -5092,7 +5096,7 @@ void BattleAudience_Case_GuardBad(void) {
  * counts the Stylish command (up to 5 per action) for BattleAudience_PerAct.
  * The demo only flags the success and clears the missed-Stylish flag.
  */
-void BattleAudience_Case_AcrobatGood(void) {
+void PORT_HOOKABLE(BattleAudience_Case_AcrobatGood)(void) {
     BattleAudience* audience = BattleAudienceBaseGetPtr();
     s32 count = 0;
     s32 i;
@@ -5124,7 +5128,7 @@ void BattleAudience_Case_AcrobatGood(void) {
  * if anyone is idle, booing and the arms-up reaction;
  * flags it for BattleAudience_PerAct (the demo also notes the miss).
  */
-void BattleAudience_Case_AcrobatBad(void) {
+void PORT_HOOKABLE(BattleAudience_Case_AcrobatBad)(void) {
     BattleAudience* audience = BattleAudienceBaseGetPtr();
     s32 count = 0;
     s32 i;
@@ -5148,7 +5152,7 @@ void BattleAudience_Case_AcrobatBad(void) {
  * Called by a script command when a Stylish chance passed untried;
  * only the demo acts on it, clearing the missed-Stylish flag.
  */
-void BattleAudience_Case_AcrobatNoTry(void) {
+void PORT_HOOKABLE(BattleAudience_Case_AcrobatNoTry)(void) {
 #if VERSION <= VERSION_DEMO_JP
     BattleAudienceBaseGetPtr()->flags &= ~AUDIENCE_FLAG_STYLISH_MISSED;
 #else
@@ -5157,7 +5161,7 @@ void BattleAudience_Case_AcrobatNoTry(void) {
 }
 
 /** Hook for Mario taking damage (from the damage code); the crowd does nothing with it. */
-void BattleAudience_Case_MarioBigDamage(s32 damage) {
+void PORT_HOOKABLE(BattleAudience_Case_MarioBigDamage)(s32 damage) {
     BattleAudienceBaseGetPtr();
 }
 
@@ -5165,7 +5169,7 @@ void BattleAudience_Case_MarioBigDamage(s32 damage) {
  * Mario has just fallen into Danger (BtlUnit_CheckPinchStatus):
  * the target size grows by 5% of the level's audience factor.
  */
-void BattleAudience_Case_MarioPinch(void) {
+void PORT_HOOKABLE(BattleAudience_Case_MarioPinch)(void) {
     BattleAudienceAddTargetNum(0.049999997f * BattleAudienceBaseGetPtr()->audienceDeltaMultiplier, 0.0f);
 }
 
@@ -5173,21 +5177,21 @@ void BattleAudience_Case_MarioPinch(void) {
  * Mario has just fallen into Peril, despite the name (BtlUnit_CheckPinchStatus):
  * the target size grows by 15% of the level's audience factor.
  */
-void BattleAudience_Case_MarioDanger(void) {
+void PORT_HOOKABLE(BattleAudience_Case_MarioDanger)(void) {
     BattleAudienceAddTargetNum(0.14999999f * BattleAudienceBaseGetPtr()->audienceDeltaMultiplier, 0.0f);
 }
 
 /** A partner was knocked out (damage code): the target size drops by 25% of the level's audience factor. */
-void BattleAudience_Case_PartyDown(void) {
+void PORT_HOOKABLE(BattleAudience_Case_PartyDown)(void) {
     BattleAudienceAddTargetNum(-0.25f * BattleAudienceBaseGetPtr()->audienceDeltaMultiplier, 0.0f);
 }
 
 /** Empty hook for a new Power Bounce record (battle_mario.c). */
-void BattleAudience_Case_JumpNewRecord(void) {
+void PORT_HOOKABLE(BattleAudience_Case_JumpNewRecord)(void) {
 }
 
 /** Empty hook for an enemy being defeated (from the damage code). */
-void BattleAudience_Case_FinalAttack(void) {
+void PORT_HOOKABLE(BattleAudience_Case_FinalAttack)(void) {
 }
 
 /**
@@ -5200,7 +5204,7 @@ void BattleAudience_Case_FinalAttack(void) {
  * Piranha Plant and Luigi reactions are queued, the Koopas too late in battle, and the chance resets.
  * Finally the crowd moves toward its target size.
  */
-void BattleAudience_Case_TurnEnd(void) {
+void PORT_HOOKABLE(BattleAudience_Case_TurnEnd)(void) {
     BattleWork* wp = _battleWorkPointer;
     BattleUnit* mario = BattleGetMarioPtr(wp);
     BattleAudience* audience = BattleAudienceBaseGetPtr();
@@ -5258,7 +5262,7 @@ void BattleAudience_Case_TurnEnd(void) {
  * the target size grows by 5% of the level's audience factor either way.
  * The demo also counts the Appeal as a Stylish command.
  */
-void BattleAudience_Case_Appeal(BattleUnit* unit) {
+void PORT_HOOKABLE(BattleAudience_Case_Appeal)(BattleUnit* unit) {
     BattleAudience* audience = BattleAudienceBaseGetPtr();
 
 #if VERSION <= VERSION_DEMO_JP
@@ -5284,14 +5288,14 @@ void BattleAudience_Case_Appeal(BattleUnit* unit) {
 }
 
 /** Empty hook for the start of a run-away attempt (battle_event_default.c). */
-void BattleAudience_Case_Escape(void) {
+void PORT_HOOKABLE(BattleAudience_Case_Escape)(void) {
 }
 
 /**
  * Mario's side ran away: the target size drops by 10% of the level's audience factor,
  * the crowd noise swells to full and the crowd boos.
  */
-void BattleAudience_Case_Escape_Good(void) {
+void PORT_HOOKABLE(BattleAudience_Case_Escape_Good)(void) {
     BattleAudienceAddTargetNum(-0.099999994f * BattleAudienceBaseGetPtr()->audienceDeltaMultiplier, 0.0f);
     BattleAudienceSoundSetVol(2, 100, 30);
     BattleAudienceSoundBooing();
@@ -5300,13 +5304,13 @@ void BattleAudience_Case_Escape_Good(void) {
 /**
  * A run-away attempt failed: the target size drops by 20% of the level's audience factor and the crowd boos.
  */
-void BattleAudience_Case_Escape_Bad(void) {
+void PORT_HOOKABLE(BattleAudience_Case_Escape_Bad)(void) {
     BattleAudienceAddTargetNum(-0.19999999f * BattleAudienceBaseGetPtr()->audienceDeltaMultiplier, 0.0f);
     BattleAudienceSoundBooing();
 }
 
 /** Notes that the action damaged an enemy or gave it a status (damage is unused); from the damage code. */
-void BattleAudience_Case_EnemyDamage(s32 damage) {
+void PORT_HOOKABLE(BattleAudience_Case_EnemyDamage)(s32 damage) {
     BattleAudienceBaseGetPtr()->flags |= AUDIENCE_FLAG_ENEMY_DAMAGED;
 }
 
@@ -5314,7 +5318,7 @@ void BattleAudience_Case_EnemyDamage(s32 damage) {
  * Notes that an attack hit an enemy for no damage and no status;
  * unless another hit did damage, BattleAudience_PerAct takes 5% off and the X-Nauts may throw rocks.
  */
-void BattleAudience_Case_EnemyNoDamage(void) {
+void PORT_HOOKABLE(BattleAudience_Case_EnemyNoDamage)(void) {
     BattleAudienceBaseGetPtr()->flags |= AUDIENCE_FLAG_ENEMY_NO_DAMAGE;
 }
 
@@ -5322,7 +5326,7 @@ void BattleAudience_Case_EnemyNoDamage(void) {
  * An attack by Mario's side was countered: the target size drops by 10% of the level's audience factor
  * and the X-Nauts may throw rocks next phase (from the damage code).
  */
-void BattleAudience_Case_Countered(void) {
+void PORT_HOOKABLE(BattleAudience_Case_Countered)(void) {
     BattleAudienceAddTargetNum(-0.099999994f * BattleAudienceBaseGetPtr()->audienceDeltaMultiplier, 0.0f);
     BattleAudienceAddPhaseEvtList(5);
 }
@@ -5331,7 +5335,7 @@ void BattleAudience_Case_Countered(void) {
  * A background set fell onto the stage (haikei = background; battle_stage_object.c):
  * the target size grows by 5% of the level's audience factor.
  */
-void BattleAudience_Case_HaikeiSet(void) {
+void PORT_HOOKABLE(BattleAudience_Case_HaikeiSet)(void) {
     BattleAudienceAddTargetNum(0.049999997f * BattleAudienceBaseGetPtr()->audienceDeltaMultiplier, 0.0f);
 }
 
@@ -5339,7 +5343,7 @@ void BattleAudience_Case_HaikeiSet(void) {
  * Won a battle whose level is more than one above Mario's:
  * the target size grows by 15% of the level's audience factor (battle_seq_end.c).
  */
-void BattleAudience_Case_GreatVictory(void) {
+void PORT_HOOKABLE(BattleAudience_Case_GreatVictory)(void) {
     BattleAudienceAddTargetNum(0.14999999f * BattleAudienceBaseGetPtr()->audienceDeltaMultiplier, 0.0f);
 }
 
@@ -5347,12 +5351,12 @@ void BattleAudience_Case_GreatVictory(void) {
  * Won quickly: the target size grows by 5% of the level's audience factor per turn under par,
  * rate being the turns saved (battle_seq_end.c).
  */
-void BattleAudience_Case_FastVictory(f32 rate) {
+void PORT_HOOKABLE(BattleAudience_Case_FastVictory)(f32 rate) {
     BattleAudienceAddTargetNum(0.01f * (5.0f * rate) * BattleAudienceBaseGetPtr()->audienceDeltaMultiplier, 0.0f);
 }
 
 /** A stage object fell onto the stage: the target size grows by 5% of the level's audience factor. */
-void BattleAudience_Case_FallObject_Stage(void) {
+void PORT_HOOKABLE(BattleAudience_Case_FallObject_Stage)(void) {
     BattleAudienceAddTargetNum(0.049999997f * BattleAudienceBaseGetPtr()->audienceDeltaMultiplier, 0.0f);
 }
 
@@ -5364,7 +5368,7 @@ void BattleAudience_Case_FallObject_Stage(void) {
  * the whole crowd for type 6 (which also takes one more off); other types hit the one seat only.
  * The stage code never drops types 6 and 7 into the stands. Then the Punies run away.
  */
-void BattleAudience_Case_FallObject_Aud(s32 index, u8 type) {
+void PORT_HOOKABLE(BattleAudience_Case_FallObject_Aud)(s32 index, u8 type) {
     BattleAudience* audience = BattleAudienceBaseGetPtr();
     s32 near[8][2] = {
         {-1, 1},
@@ -5455,19 +5459,19 @@ void BattleAudience_Case_FallObject_Aud(s32 index, u8 type) {
 }
 
 /** Mario's side struck first: the target size grows by 2% of the level's audience factor (battle_seq.c). */
-void BattleAudience_Case_FirstAttack_Good(void) {
+void PORT_HOOKABLE(BattleAudience_Case_FirstAttack_Good)(void) {
     BattleAudienceAddTargetNum(0.02f * BattleAudienceBaseGetPtr()->audienceDeltaMultiplier, 0.0f);
 }
 
 /** The enemy struck first: the target size drops by 5% of the level's audience factor (battle_seq.c). */
-void BattleAudience_Case_FirstAttack_Bad(void) {
+void PORT_HOOKABLE(BattleAudience_Case_FirstAttack_Bad)(void) {
     BattleAudienceAddTargetNum(-0.049999997f * BattleAudienceBaseGetPtr()->audienceDeltaMultiplier, 0.0f);
 }
 
 /**
  * Stores the item a landed audience throw delivers (0 once used up); set by BattleAudienceItemCtrlProcess.
  */
-void BattleAudience_SetPresentItemNo(s32 no) {
+void PORT_HOOKABLE(BattleAudience_SetPresentItemNo)(s32 no) {
     BattleAudienceBaseGetPtr()->presentItemNo = no;
 }
 
@@ -5475,12 +5479,12 @@ void BattleAudience_SetPresentItemNo(s32 no) {
  * Returns the item a landed audience throw delivers;
  * read by the audience item scripts and the command sequence.
  */
-s32 BattleAudience_GetPresentItemNo(void) {
+s32 PORT_HOOKABLE(BattleAudience_GetPresentItemNo)(void) {
     return BattleAudienceBaseGetPtr()->presentItemNo;
 }
 
 /** Stores the unit a landed audience throw goes to (BattleAudienceItemCtrlProcess). */
-void BattleAudience_SetPresentTargetUnitId(s32 unitId) {
+void PORT_HOOKABLE(BattleAudience_SetPresentTargetUnitId)(s32 unitId) {
     BattleAudienceBaseGetPtr()->presentTargetUnitId = unitId;
 }
 
@@ -5488,7 +5492,7 @@ void BattleAudience_SetPresentTargetUnitId(s32 unitId) {
  * Returns the unit a landed audience throw goes to; read by the audience item
  * scripts and the command sequence.
  */
-s32 BattleAudience_GetPresentTargetUnitId(void) {
+s32 PORT_HOOKABLE(BattleAudience_GetPresentTargetUnitId)(void) {
     return BattleAudienceBaseGetPtr()->presentTargetUnitId;
 }
 
@@ -5496,14 +5500,14 @@ s32 BattleAudience_GetPresentTargetUnitId(void) {
  * Stores whether a landed audience throw is a gift (0, a consumable item)
  * or junk that does damage (1: can, rock, bone, hammer).
  */
-void BattleAudience_SetPresentItemType(s32 type) {
+void PORT_HOOKABLE(BattleAudience_SetPresentItemType)(s32 type) {
     BattleAudienceBaseGetPtr()->presentItemType = type;
 }
 
 /**
  * Returns 0 for a gift or 1 for a damaging throw; btlataudGetMoveEventPtr picks the target's script by it.
  */
-s32 BattleAudience_GetPresentItemType(void) {
+s32 PORT_HOOKABLE(BattleAudience_GetPresentItemType)(void) {
     return BattleAudienceBaseGetPtr()->presentItemType;
 }
 

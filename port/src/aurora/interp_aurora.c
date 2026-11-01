@@ -27,6 +27,7 @@
 #include "driver/camdrv.h"
 #include "driver/dispdrv.h"
 #include "driver/npcdrv.h"
+#include "driver/seqdrv.h"
 #include "mario/mario.h"
 #include "mario/mario_party.h"
 #include "mario/mariost.h"
@@ -411,6 +412,21 @@ int portInterpDraw(float t) {
         npcs->entries[i].position = sNpcPos[i];
     }
     return TRUE;
+}
+
+/* Frame advance (vi_aurora.c): the frame just computed drawn again, as it is,
+ * while the game is held. FALSE when there is no scene to draw (a map change). */
+int portInterpRedraw(void) {
+    const BOOL drawn = sSceneDrawn;
+    int ok;
+    if (gp == NULL || (!drawn && !sPrev.valid) || seqGetSeq() == SEQ_MAP_CHANGE) {
+        return FALSE;
+    }
+    snapshot(); /* from this frame to itself */
+    sSceneDrawn = TRUE;
+    ok = portInterpDraw(1.f);
+    sSceneDrawn = drawn;
+    return ok;
 }
 
 /* Save states: the scene changed under it, nothing to blend from. */

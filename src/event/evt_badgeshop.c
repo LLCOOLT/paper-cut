@@ -1,4 +1,5 @@
 // Script commands and stock tables for the badge shops: bargain and restock generation.
+#include "port_hook.h"
 #include "version.h"
 // Script commands and stock tables for the badge shops (Lovely Howz of Badges, Dazzle,
 // Charlieton, the Pianta Parlor prize counter): bargain and restock generation.
@@ -14,6 +15,9 @@
 #include "system.h"
 #include <string.h>
 #include "evt/evt_story.h"
+#ifdef PORT_MODS
+#include "port/hooks/src_event_evt_badgeshop.h"
+#endif
 
 // tables (retail: .sdata, except badge_starmaniac_table and badge_bottakuru_table in .data; demo: all .data)
 s32 badge_special_table[] = { //Lovely Howz of Badges
@@ -137,12 +141,12 @@ BadgeShopWork* bdsw;
 static s32 bottakuruComp(const void* sortA, const void* sortB);
 
 /** Number of items in Charlieton's Pit of 100 Trials list (without the ITEM_NULL end); winmgr sizes that menu by it. */
-s32 getBadgeBottakuru100TableMaxCount(void) {
+s32 PORT_HOOKABLE(getBadgeBottakuru100TableMaxCount)(void) {
     return (sizeof(badge_bottakuru100_table) / sizeof(s32)) - 1;
 }
 
 /** Number of badges in Dazzle's list (without the ITEM_NULL end); winmgr sizes the Star Piece exchange menu by it. */
-s32 getBadgeStarmaniacTableMaxCount(void) {
+s32 PORT_HOOKABLE(getBadgeStarmaniacTableMaxCount)(void) {
     return (sizeof(badge_starmaniac_table) / sizeof(s32)) - 1;
 }
 
@@ -150,7 +154,7 @@ s32 getBadgeStarmaniacTableMaxCount(void) {
  * Number of Pianta Parlor prizes across the base list and all four card lists (Special, Silver, Gold, Platinum);
  * winmgr sizes the prize menu by it.
  */
-s32 getBadgeBteresaTableMaxCount(void) {
+s32 PORT_HOOKABLE(getBadgeBteresaTableMaxCount)(void) {
     return ((sizeof(badge_bteresa_table) / sizeof(s32)) - 1) +
            ((sizeof(badge_bteresa_table_card_special) / sizeof(s32)) - 1) +
            ((sizeof(badge_bteresa_table_card_silver) / sizeof(s32)) - 1) +
@@ -163,7 +167,7 @@ s32 getBadgeBteresaTableMaxCount(void) {
  * the base Pianta Parlor prizes, and Charlieton's first offer. Sets restockFlags bit 0.
  * On boot (mariost.c) and new game (stg0_00).
  */
-void badgeShop_init(void) {
+void PORT_HOOKABLE(badgeShop_init)(void) {
     s32* ptr;
     s32* p2;
 
@@ -209,7 +213,7 @@ static s32 bottakuruComp(const void* sortA, const void* sortB) {
  * and stores the first four items' indexes into badge_bottakuru_table in GSW_BADGESHOP_BARGAIN_SLOTS..+3 (16 =
  * empty slot). Runs from badgeShop_init and on entering Rogueport's gor_01 after a restock (seq_mapchange.c).
  */
-void badgeShop_bottakuruGeneration(void) {
+void PORT_HOOKABLE(badgeShop_bottakuruGeneration)(void) {
     s32 table[0x11][2];
     s32 i;
     s32 k;
@@ -256,7 +260,7 @@ void badgeShop_bottakuruGeneration(void) {
  * Adds each Pianta Parlor card's prize list to the Parlor stock the first time Mario holds that card (Special,
  * Silver, Gold, Platinum), guarded by the GSWF_PARLOR_*_CARD_PRIZES_ADDED flags. No caller in the C code.
  */
-void badgeShop_bteresaGeneration(void) {
+void PORT_HOOKABLE(badgeShop_bteresaGeneration)(void) {
     s32* ptr;
     s32* p2;
     s32 has;
@@ -306,7 +310,7 @@ void badgeShop_bteresaGeneration(void) {
  * Picks up to five discounted badges from the special stock.
  * markedCount counts table entries marked 2; nothing marks them, so it stays 0.
  */
-void badgeShop_bargainGeneration(void) {
+void PORT_HOOKABLE(badgeShop_bargainGeneration)(void) {
     s16 stopcount;
     u8 table[0x19];
     s16 has;
@@ -445,7 +449,7 @@ void badgeShop_bargainGeneration(void) {
  * Tables hold four items per byte from BADGE_MIN, or from KEY_ITEM_MIN for Charlieton's and the Parlor's;
  * other ids give 0.
  */
-s16 badgeShop_set(u8* table, s16 id, s16 val) {
+s16 PORT_HOOKABLE(badgeShop_set)(u8* table, s16 id, s16 val) {
     s32 bound;
     s16 index;
     u8 mask;
@@ -493,7 +497,7 @@ s16 badgeShop_set(u8* table, s16 id, s16 val) {
  * Reads the 2-bit stock count (0-3) of item id from a shop table;
  * same layout as badgeShop_set, 0 when out of range.
  */
-s32 badgeShop_get(u8* table, s16 id) { // 1:1
+s32 PORT_HOOKABLE(badgeShop_get)(u8* table, s16 id) { // 1:1
     s32 bound;
     s16 index;
     u8 mask;
@@ -532,7 +536,7 @@ s32 badgeShop_get(u8* table, s16 id) { // 1:1
  * Adds value (may be negative) to the 2-bit stock count of item id, clamped to 0-3, and returns the new count;
  * same table layout as badgeShop_set.
  */
-s32 badgeShop_add(u8* table, s16 id, s32 value) { // 1:1, can blow up in your face
+s32 PORT_HOOKABLE(badgeShop_add)(u8* table, s16 id, s32 value) { // 1:1, can blow up in your face
     s32 temp;
     s32 mask;
     s32 shift;
@@ -776,7 +780,7 @@ USER_FUNC(evt_badgeShop_getBargainKind) {
  * which never hold a badge id, so it always returns 0.
  * Guess: it was meant to count copies already set aside.
  */
-s32 badgeShop_ThrowCheck(s32 itemId) {
+s32 PORT_HOOKABLE(badgeShop_ThrowCheck)(s32 itemId) {
     int i;
     s32 count;
 
@@ -792,7 +796,7 @@ s32 badgeShop_ThrowCheck(s32 itemId) {
 
 /** Counts the filled slots among the five bargain badges (bargainBadges). Retail only; no caller in the C code. */
 #if VERSION >= VERSION_JP
-s32 U_badgeShop_SpecialCheck(void) {
+s32 PORT_HOOKABLE(U_badgeShop_SpecialCheck)(void) {
     s32 count;
     int i;
 
@@ -803,4 +807,8 @@ s32 U_badgeShop_SpecialCheck(void) {
     }
     return count;
 }
+#endif
+
+#ifdef PORT_MODS
+#include "port/hooks/src_event_evt_badgeshop.inc"
 #endif

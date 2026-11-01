@@ -47,6 +47,9 @@ void portCardMetaFromImage(const uint8_t* image, void* nativeMeta);
 
 /* cardmgr glue: returns the buffer to pass to CARDWriteAsync. */
 void* portCardWriteImage(const void* native, int32_t length, int32_t offset);
+/* Called before each of the game's card writes, when set (the save backups:
+ * port/settings/features/saves.cpp). */
+extern void (*gPortCardWillWrite)(void);
 /* cardmgr glue: returns the buffer to pass to CARDReadAsync; the conversion
  * into 'native' happens in portCardReadEnd (call it from the read callback
  * with the CARD result). */

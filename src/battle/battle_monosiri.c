@@ -1,10 +1,14 @@
 // Goombella Tattle Details
+#include "port_hook.h"
 #include "battle/battle_monosiri.h"
 #include "battle/battle_unit.h"
 #include "driver/swdrv.h"
 #include "battle/battle.h"
 #include "version.h"
 #include "evt/evt_story.h"
+#ifdef PORT_MODS
+#include "port/hooks/src_battle_battle_monosiri.h"
+#endif
 
 // Definition order as the demo keeps it in .data (retail splits the small tables into .sdata)
 TattleEntry monosiriMessageTable[] = {
@@ -866,7 +870,7 @@ BattleUnitType* battle_monosiri_same_tbl[] = {
 };
 
 /** Returns the Tattle entry (log text, model and so on) for a battle unit type, indexed by BattleUnitType. */
-TattleEntry* battleGetUnitMonosiriPtr(s32 id) {
+TattleEntry* PORT_HOOKABLE(battleGetUnitMonosiriPtr)(s32 id) {
     return &monosiriMessageTable[id];
 }
 
@@ -875,7 +879,7 @@ TattleEntry* battleGetUnitMonosiriPtr(s32 id) {
  * or its kind (or the kind it started as, if it changed kind in battle) has been Tattled,
  * either in the saved GSWF_TATTLE_BASE flags or earlier in this battle.
  */
-BOOL battleCheckUnitMonosiriFlag(BattleUnit* unit) {
+BOOL PORT_HOOKABLE(battleCheckUnitMonosiriFlag)(BattleUnit* unit) {
     BattleWork* wp = _battleWorkPointer;
     BattleUnitType kind = unit->currentKind;
     s32 flag;
@@ -899,7 +903,7 @@ BOOL battleCheckUnitMonosiriFlag(BattleUnit* unit) {
  * When the type is in one of the battle_monosiri_same_tbl groups (an enemy and its clones or variants),
  * every type in it is marked.
  */
-void battleSetUnitMonosiriFlag(BattleUnitType kind) {
+void PORT_HOOKABLE(battleSetUnitMonosiriFlag)(BattleUnitType kind) {
     BattleWork* wp = _battleWorkPointer;
     BattleUnitType* group;
     s32 i, j, k;
@@ -923,3 +927,7 @@ void battleSetUnitMonosiriFlag(BattleUnitType kind) {
     swSet(kind + GSWF_TATTLE_BASE);
     wp->tattledUnitTypeFlags[kind / 32] |= 1 << (kind % 32);
 }
+
+#ifdef PORT_MODS
+#include "port/hooks/src_battle_battle_monosiri.inc"
+#endif

@@ -1,5 +1,6 @@
 // Slot-machine event (break slot): spinning reels, card symbols and combination effects.
 #pragma optimize_for_size on
+#include "port_hook.h"
 #include <dolphin/pad.h>
 #include "icon_ids.h"
 #include "version.h"
@@ -29,6 +30,9 @@
 #include "battle/battle_message.h"
 #include "evt/evt_eff.h"
 #include "libc_decls.h"
+#ifdef PORT_MODS
+#include "port/hooks/src_battle_battle_break_slot.h"
+#endif
 // FAKE: battle_break_slot.c calls pouchSetAP through this prototype (the types it was compiled with) instead of the one in mario/mario_pouch.h; same registers, behaviour-identical.
 typedef void (*PouchSetAPS32Fn)(s32);
 
@@ -258,7 +262,7 @@ EVT_END()
 // FAKE: inlining off (FAKES.md); without it 8 functions change length, e.g. BattleBreakSlotReelGetPtr 15 -> 6 instructions
 #pragma dont_inline on
 /** Returns the battle's Bingo slot state. */
-BreakSlotWork* BattleBreakSlotGetPtr(void) {
+BreakSlotWork* PORT_HOOKABLE(BattleBreakSlotGetPtr)(void) {
     return &_battleWorkPointer->breakSlot;
 }
 
@@ -280,7 +284,7 @@ const SlotCards5 R_slot_3_cards = {{0, 1, 2, 3, 4}};
  * Resets the Bingo slots at battle start and gives each of the three reels its cards (0 Mushroom, 1 Fire Flower,
  * 2 Star, 3 Shine Sprite, 4 Poison Mushroom): two eight-card reels and a five-card one.
  */
-void BattleBreakSlot_Init(void) {
+void PORT_HOOKABLE(BattleBreakSlot_Init)(void) {
     BreakSlotWork* wp = BattleBreakSlotGetPtr();
     SlotCards8 c1 = R_slot_1_cards;
     SlotCards8 c2 = R_slot_2_cards;
@@ -318,7 +322,7 @@ void BattleBreakSlot_Init(void) {
  * the boosted turns are set in breakTurn. A mismatch plays the failure sound.
  * PAL plays a language-dependent number of break hits (one more in Italian).
  */
-void BattleBreakSlot_Main(void) {
+void PORT_HOOKABLE(BattleBreakSlot_Main)(void) {
     static f32 updown;
     BattleWork* wp = _battleWorkPointer;
     BattleDebugCtrl* dbg2 = &wp->debug;
@@ -862,7 +866,7 @@ void BattleBreakSlot_Main(void) {
 }
 
 /** Queues the Bingo reel drawing on the 2D camera. */
-void BattleBreakSlot_Disp(void) {
+void PORT_HOOKABLE(BattleBreakSlot_Disp)(void) {
     dispEntry(CAMERA_2D, 490.0f, 0, BattleBreakSlotDispReel, NULL);
 }
 
@@ -950,7 +954,7 @@ static void BattleBreakSlotDispReel(CameraId camId, void* param) {
 }
 
 /** Frees the reels' card lists at battle end; empty in JP and the demos, which leak them with the battle heap. */
-void BattleBreakSlot_End(void) {
+void PORT_HOOKABLE(BattleBreakSlot_End)(void) {
 #if VERSION >= VERSION_US
     BattleFree(BattleBreakSlotReelGetPtr(0)->cards);
     BattleFree(BattleBreakSlotReelGetPtr(1)->cards);
@@ -967,7 +971,7 @@ void BattleBreakSlot_End(void) {
  * The third card is always drawn different from the second (the real result comes from the spin).
  * Debug flags and slot->flags force a card (Shine Sprite; the demos' bit 1 forces a Star).
  */
-void BattleBreakSlot_PointInc(void) {
+void PORT_HOOKABLE(BattleBreakSlot_PointInc)(void) {
     BattleDebugCtrl* dbg = &_battleWorkPointer->debug;
     BreakSlotReel* reel;
     BreakSlotReel* reel2;
@@ -1063,7 +1067,7 @@ void BattleBreakSlot_Start(void) {
  * Called between battle phases: starts a pending Bingo and returns TRUE while its sequence
  * or announcement is still playing; afterwards resets the camera, settles the crowd size and returns FALSE.
  */
-BOOL BattleBreakSlot_CheckReaction(void) {
+BOOL PORT_HOOKABLE(BattleBreakSlot_CheckReaction)(void) {
     BreakSlotWork* slot = BattleBreakSlotGetPtr();
 
     BattleBreakSlot_Start();
@@ -1084,12 +1088,12 @@ BOOL BattleBreakSlot_CheckReaction(void) {
  * Returns how many turns of the post-BINGO!
  * boost remain (Star Power gains are multiplied and the crowd stays excited).
  */
-s32 BattleBreakSlot_GetBreakTurn(void) {
+s32 PORT_HOOKABLE(BattleBreakSlot_GetBreakTurn)(void) {
     return BattleBreakSlotGetPtr()->breakTurn;
 }
 
 /** Counts one turn off the post-BINGO! boost, once per turn from the audience phase. */
-void BattleBreakSlot_DecBreakTurn(void) {
+void PORT_HOOKABLE(BattleBreakSlot_DecBreakTurn)(void) {
     BreakSlotWork* slot = BattleBreakSlotGetPtr();
 
     slot->breakTurn--;
@@ -1099,7 +1103,7 @@ void BattleBreakSlot_DecBreakTurn(void) {
 }
 
 /** Hides the Bingo cards and clears the fill count when the battle ends. */
-void BattleBreakSlot_HideReel(void) {
+void PORT_HOOKABLE(BattleBreakSlot_HideReel)(void) {
     BreakSlotWork* slot = BattleBreakSlotGetPtr();
     BreakSlotReel* reel = BattleBreakSlotReelGetPtr(0);
     s32 i;
@@ -1126,3 +1130,7 @@ static void item_appear_force(BreakSlotReel* reel, s32 item) {
     }
 }
 #pragma dont_inline reset
+
+#ifdef PORT_MODS
+#include "port/hooks/src_battle_battle_break_slot.inc"
+#endif

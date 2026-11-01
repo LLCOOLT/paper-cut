@@ -3,6 +3,7 @@
 #ifdef TARGET_PC
 #include "port/platform.h"
 #endif
+#include "port_hook.h"
 #include "battle/battle_stage.h"
 #include "pc_call.h"
 #include "battle/battle.h"
@@ -20,6 +21,9 @@
 #include "libc_decls.h"
 #include "version.h"
 #include "evt/evt_story.h"
+#ifdef PORT_MODS
+#include "port/hooks/src_battle_battle_stage.h"
+#endif
 
 #define STG BattleStageGetPtr()
 
@@ -81,7 +85,7 @@ static void drawCone(CameraId camId, BattleSpotEntry* e);
  * Returns the stage lighting state inside the battle work (_battleWorkPointer->stage):
  * the 12 light beams, the stage and audience darkness and the stage and audience area sizes.
  */
-BattleStage* BattleStageGetPtr(void) {
+BattleStage* PORT_HOOKABLE(BattleStageGetPtr)(void) {
     return &_battleWorkPointer->stage;
 }
 
@@ -91,7 +95,7 @@ BattleStage* BattleStageGetPtr(void) {
  * stage size 290 x 200 x 90 and audience area 290 x -50 x 200,
  * then sets up the stage objects and the spotlight cones.
  */
-void BattleStageInit(void) {
+void PORT_HOOKABLE(BattleStageInit)(void) {
     BattleStage* s = STG;
     s32 i;
 
@@ -138,7 +142,7 @@ typedef struct LightSpline {
  * clears a light once its release fade (BattleStageLightRelease) reaches black,
  * follows spline targets (flag 4, looping with flag 8) and steps the stage and audience darkness fades.
  */
-void BattleStageMain(void) {
+void PORT_HOOKABLE(BattleStageMain)(void) {
     StageLight* l;
     s32 i;
     LightSpline* sp;
@@ -229,7 +233,7 @@ void BattleStageMain(void) {
  * The US and later releases also free the spotlight cone array (batSpotEnd);
  * the demos and the Japanese release leave it allocated.
  */
-void BattleStageEnd(void) {
+void PORT_HOOKABLE(BattleStageEnd)(void) {
     s32 i;
     BattleStage* s = &_battleWorkPointer->stage;
 
@@ -249,7 +253,7 @@ void BattleStageEnd(void) {
  * Queues the stage darkness (z 5000) and the light beams (z 6000) on the 3D camera each frame;
  * called from battle_disp.c. The BattleGetUnitPtr result is unused.
  */
-void BattleStageDisp(void) {
+void PORT_HOOKABLE(BattleStageDisp)(void) {
     BattleGetUnitPtr(_battleWorkPointer, _battleWorkPointer->activeUnitId);
     dispEntry(CAMERA_3D, 5000.0f, 2, BattleStageDispDark, NULL);
     dispEntry(CAMERA_3D, 6000.0f, 2, BattleStageDispLight, NULL);
@@ -401,34 +405,34 @@ static void BattleStageDispLight(CameraId camId, void* param) {
  * Empty in every version. battle_seq_command.c calls it when Mario or the partner starts choosing a command.
  * Guess: it once lit the acting unit while the menu is open.
  */
-void BattleStageOnLightInCommand(void) {
+void PORT_HOOKABLE(BattleStageOnLightInCommand)(void) {
 }
 
 /** Empty in every version; battle_seq_command.c calls it when command selection ends (both arguments unused). */
-void BattleStageOffLightInCommand(s32 a, s32 b) {
+void PORT_HOOKABLE(BattleStageOffLightInCommand)(s32 a, s32 b) {
 }
 
 /** Empty in every version; called from battle_seq_command.c while choosing a target. Guess: it once lit the allies. */
-void BattleStageOnLightFriendInCommand(void) {
+void PORT_HOOKABLE(BattleStageOnLightFriendInCommand)(void) {
 }
 
 /** Empty in every version; called from battle_seq_command.c when the command menu opens or targeting ends. */
-void BattleStageOffLightFriendInCommand(void) {
+void PORT_HOOKABLE(BattleStageOffLightFriendInCommand)(void) {
 }
 
 /** Empty in every version; called from battle_seq_command.c while choosing a target. Guess: it once lit the enemies. */
-void BattleStageOnLightEnemyInCommand(void) {
+void PORT_HOOKABLE(BattleStageOnLightEnemyInCommand)(void) {
 }
 
 /** Empty in every version; called from battle_seq_command.c when the command menu opens or targeting ends. */
-void BattleStageOffLightEnemyInCommand(void) {
+void PORT_HOOKABLE(BattleStageOffLightEnemyInCommand)(void) {
 }
 
 /**
  * Returns the slot of the active light with this name, or -1.
  * evt_batstage.c finds its sys_activeUnit_1..3 beams this way.
  */
-s32 BattleStageGetLightNumberByName(const char* name) {
+s32 PORT_HOOKABLE(BattleStageGetLightNumberByName)(const char* name) {
     BattleStage* s = STG;
     s32 i;
 
@@ -446,7 +450,7 @@ s32 BattleStageGetLightNumberByName(const char* name) {
  * and returns its slot (7 when all are taken, which callers do not check).
  * The first loop searches for the name but does nothing with a match.
  */
-s32 BattleStageSysLightEntry(const char* name) {
+s32 PORT_HOOKABLE(BattleStageSysLightEntry)(const char* name) {
     BattleStage* s = STG;
     s32 i;
 
@@ -471,7 +475,7 @@ s32 BattleStageSysLightEntry(const char* name) {
  * otherwise fades its colour to black over time frames (curve mode) and BattleStageMain clears it
  * when it reaches black.
  */
-void BattleStageLightRelease(s32 idx, s32 time, u8 mode) {
+void PORT_HOOKABLE(BattleStageLightRelease)(s32 idx, s32 time, u8 mode) {
     // FAKE: l first holds the stage pointer (two defs), so with propagation on the stage base and idx * 232 + 4 stay separate adds as in the target; this replaces the old opt_propagation off pragma, under which the {0,0,0} template also left a dead stack store
     StageLight* l = (StageLight*)STG;
 
@@ -500,7 +504,7 @@ void BattleStageLightRelease(s32 idx, s32 time, u8 mode) {
  * Starts a fade of light idx's colour to (r, g, b) over time frames with interpolation curve mode;
  * time 0 sets it at once.
  */
-void BattleStageLightSetLightColor(s32 idx, u8 r, u8 g, u8 b, s32 time, u8 mode) {
+void PORT_HOOKABLE(BattleStageLightSetLightColor)(s32 idx, u8 r, u8 g, u8 b, s32 time, u8 mode) {
     StageLight* l = &STG->lights[idx];
 
     l->colorStart = (GXColor){l->color.r, l->color.g, l->color.b};
@@ -520,7 +524,7 @@ void BattleStageLightSetLightColor(s32 idx, u8 r, u8 g, u8 b, s32 time, u8 mode)
  * Starts a fade of light idx's beam radius to width over time frames with interpolation curve mode;
  * time 0 sets it at once.
  */
-void BattleStageLightSetWidth(s32 idx, s32 width, s32 time, u8 mode) {
+void PORT_HOOKABLE(BattleStageLightSetWidth)(s32 idx, s32 width, s32 time, u8 mode) {
     StageLight* l = &STG->lights[idx];
 
     l->widthStart = l->width;
@@ -540,7 +544,7 @@ void BattleStageLightSetWidth(s32 idx, s32 width, s32 time, u8 mode) {
  * Starts a move of light idx's source position to (x, y, z) over time frames with interpolation curve mode;
  * time 0 moves it at once.
  */
-void BattleStageLightSetPosition(s32 idx, f32 x, f32 y, f32 z, s32 time, u8 mode) {
+void PORT_HOOKABLE(BattleStageLightSetPosition)(s32 idx, f32 x, f32 y, f32 z, s32 time, u8 mode) {
     StageLight* l = &STG->lights[idx];
 
     l->posStart.x = l->pos.x;
@@ -566,7 +570,7 @@ void BattleStageLightSetPosition(s32 idx, f32 x, f32 y, f32 z, s32 time, u8 mode
  * Starts a move of the point light idx shines at to (x, y, z) over time frames with interpolation curve mode,
  * dropping any spline target (flag 4); time 0 moves it at once.
  */
-void BattleStageLightSetTarget(s32 idx, f32 x, f32 y, f32 z, s32 time, u8 mode) {
+void PORT_HOOKABLE(BattleStageLightSetTarget)(s32 idx, f32 x, f32 y, f32 z, s32 time, u8 mode) {
     StageLight* l = &STG->lights[idx];
 
     l->targetStart.x = l->target.x;
@@ -590,7 +594,7 @@ void BattleStageLightSetTarget(s32 idx, f32 x, f32 y, f32 z, s32 time, u8 mode) 
  * Aims light idx at battle unit unitId's position plus the offset (x, y, z), moving there over time frames.
  * evt_batstage.c uses it to point the beams at the acting unit.
  */
-void BattleStageLightSetTargetByUnit(s32 idx, s32 unitId, f32 x, f32 y, f32 z, s32 time, u8 mode) {
+void PORT_HOOKABLE(BattleStageLightSetTargetByUnit)(s32 idx, s32 unitId, f32 x, f32 y, f32 z, s32 time, u8 mode) {
     f32 px, py, pz;
     BattleUnit* unit = BattleGetUnitPtr(_battleWorkPointer, unitId);
 
@@ -607,7 +611,7 @@ void BattleStageLightSetTargetByUnit(s32 idx, s32 unitId, f32 x, f32 y, f32 z, s
  * Starts a turn of light idx's up vector (where its beam fan starts) to (x, y, z) over time frames with
  * interpolation curve mode; time 0 sets it at once.
  */
-void BattleStageLightSetUpVec(s32 idx, f32 x, f32 y, f32 z, s32 time, u8 mode) {
+void PORT_HOOKABLE(BattleStageLightSetUpVec)(s32 idx, f32 x, f32 y, f32 z, s32 time, u8 mode) {
     StageLight* l = &STG->lights[idx];
 
     l->upStart.x = l->up.x;
@@ -665,17 +669,17 @@ static void BattleStageSetDarkBase(StageDark* d, u8 v, s32 time, u8 mode) {
  * Fades the darkness over the stage to alpha v over time frames (evt_batstage_set_stg_dark and the stage light
  * helpers).
  */
-void BattleStageSetStgDark(u8 v, s32 time, u8 mode) {
+void PORT_HOOKABLE(BattleStageSetStgDark)(u8 v, s32 time, u8 mode) {
     BattleStageSetDark(&STG->stgDark, v, time, mode);
 }
 
 /** Fades the stage darkness's base alpha to v over time frames (evt_batstage_set_stg_dark_base). */
-void BattleStageSetStgDarkBase(u8 v, s32 time, u8 mode) {
+void PORT_HOOKABLE(BattleStageSetStgDarkBase)(u8 v, s32 time, u8 mode) {
     BattleStageSetDarkBase(&STG->stgDark, v, time, mode);
 }
 
 /** Fades the stage darkness back to its base alpha over time frames. */
-void BattleStageReturnStgDarkBase(s32 time, u8 mode) {
+void PORT_HOOKABLE(BattleStageReturnStgDarkBase)(s32 time, u8 mode) {
     StageDark* d = &STG->stgDark;
     BattleStageSetDark(d, d->base, time, mode);
 }
@@ -684,17 +688,17 @@ void BattleStageReturnStgDarkBase(s32 time, u8 mode) {
  * Fades the darkness over the audience to alpha v over time frames (evt_batstage_set_aud_dark and the stage
  * light helpers).
  */
-void BattleStageSetAudDark(u8 v, s32 time, u8 mode) {
+void PORT_HOOKABLE(BattleStageSetAudDark)(u8 v, s32 time, u8 mode) {
     BattleStageSetDark(&STG->audDark, v, time, mode);
 }
 
 /** Fades the audience darkness's base alpha to v over time frames. */
-void BattleStageSetAudDarkBase(u8 v, s32 time, u8 mode) {
+void PORT_HOOKABLE(BattleStageSetAudDarkBase)(u8 v, s32 time, u8 mode) {
     BattleStageSetDarkBase(&STG->audDark, v, time, mode);
 }
 
 /** Fades the audience darkness back to its base alpha over time frames. */
-void BattleStageReturnAudDarkBase(s32 time, u8 mode) {
+void PORT_HOOKABLE(BattleStageReturnAudDarkBase)(s32 time, u8 mode) {
     StageDark* d = &STG->audDark;
     BattleStageSetDark(d, d->base, time, mode);
 }
@@ -719,7 +723,7 @@ f32 getSpline(f32* a, f32* b, f32* c, f32* d, s32* t, s32 n, s32 x) {
 }
 #pragma dont_inline reset
 /** Returns the spotlight cone work; the level-up script helpers in battle_seq_end.c move and fade its cones. */
-BattleSpotWork* BatSpotGetPtr(void) {
+BattleSpotWork* PORT_HOOKABLE(BatSpotGetPtr)(void) {
     return wp;
 }
 
@@ -1060,3 +1064,7 @@ void tou_gamen_screen_tev(MapTevCallbackInfo* p) {
     p->texMap = 2;
     p->texCoord = 2;
 }
+
+#ifdef PORT_MODS
+#include "port/hooks/src_battle_battle_stage.inc"
+#endif

@@ -40,6 +40,7 @@
 #endif
 
 extern "C" {
+#include "port/widescreen.h"
 void portIosHapticTap(void);    // port/ios/ios_app.m
 extern int gPortAcCueState;     // port/src/common/ac_cue_pc.c
 extern int gPortAcCueLead;
@@ -289,125 +290,6 @@ void openFolder(const std::string& dir) {
 }
 #endif
 
-// Mods (port/include/port/mods.h): the mods folder's mods in order, the
-// first winning; on/off and order are written to mods/mods.txt.
-void modsTab(PortSettings* s) {
-  note("A mod is a folder or a .ttydmod/.zip file with a mod.json, in the mods folder. "
-       "The first in the list wins where mods change the same thing. Changes apply to what the game "
-       "loads next (the next room or battle); textures change at once.");
-  if (ImGui::Button("Reload")) {
-    portModsReload();
-  }
-#if !defined(__ANDROID__) && !(defined(__APPLE__) && TARGET_OS_IPHONE)
-  ImGui::SameLine();
-  if (ImGui::Button("Open the mods folder")) {
-    openFolder(portModsDir());
-  }
-#endif
-  const int count = portModsCount();
-  if (count == 0) {
-    note("No mods yet.");
-  }
-  for (int i = 0; i < count; i++) {
-    const PortModInfo* mod = portModsGet(i);
-    ImGui::PushID(i);
-    ImGui::Separator();
-    bool on = mod->enabled != 0;
-    ImGui::BeginDisabled(mod->error != nullptr);
-    if (ImGui::Checkbox("##on", &on)) {
-      portModsSetEnabled(i, on ? 1 : 0);
-    }
-    ImGui::EndDisabled();
-    ImGui::SameLine();
-    if (mod->version[0] != '\0') {
-      ImGui::Text("%s  %s", mod->name, mod->version);
-    } else {
-      ImGui::TextUnformatted(mod->name);
-    }
-    ImGui::SameLine(ImGui::GetContentRegionAvail().x + ImGui::GetCursorStartPos().x - ImGui::GetFrameHeight() * 2.4f);
-    ImGui::BeginDisabled(i == 0);
-    if (ImGui::ArrowButton("##up", ImGuiDir_Up)) {
-      portModsMove(i, -1);
-    }
-    ImGui::EndDisabled();
-    ImGui::SameLine();
-    ImGui::BeginDisabled(i == count - 1);
-    if (ImGui::ArrowButton("##down", ImGuiDir_Down)) {
-      portModsMove(i, 1);
-    }
-    ImGui::EndDisabled();
-    if (mod->error != nullptr) {
-      ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.45f, 0.4f, 1.0f));
-      ImGui::TextWrapped("%s %s", mod->path, mod->error);
-      ImGui::PopStyleColor();
-    } else {
-      char line[256];
-      std::snprintf(line, sizeof(line), "%s%s%s%d files, %d textures, %d messages, %d data changes",
-                    mod->author[0] ? "by " : "", mod->author, mod->author[0] ? "  ·  " : "", mod->files, mod->textures,
-                    mod->messages, mod->patches);
-      note(line);
-      if (mod->warning != nullptr) {
-        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.75f, 0.3f, 1.0f));
-        ImGui::TextWrapped("%s", mod->warning);
-        ImGui::PopStyleColor();
-      }
-      switch (mod->code) {
-      case PORT_MOD_CODE_RUNNING: note("Code: running."); break;
-      case PORT_MOD_CODE_STARTS_NEXT_START: note("Code: starts the next time the game starts."); break;
-      case PORT_MOD_CODE_STOPS_NEXT_START: note("Code: still running; it stops the next time the game starts."); break;
-      case PORT_MOD_CODE_FAILED:
-        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.45f, 0.4f, 1.0f));
-        ImGui::TextWrapped("Code: %s", mod->codeError);
-        ImGui::PopStyleColor();
-        break;
-      default: break;
-      }
-      for (int o = 0; o < mod->optionCount; o++) {
-        const PortModOption* opt = portModsGetOption(i, o);
-        int value = opt->value;
-        ImGui::PushID(o);
-        bool edited = false;
-        if (opt->type == PORT_MOD_OPTION_BOOL) {
-          bool v = value != 0;
-          edited = ImGui::Checkbox(opt->label, &v);
-          value = v ? 1 : 0;
-        } else if (opt->type == PORT_MOD_OPTION_INT) {
-          edited = ImGui::SliderInt(opt->label, &value, opt->min, opt->max);
-        } else if (opt->choiceCount > 0) {
-          edited = combo(opt->label, &value, opt->choices, opt->choiceCount);
-        }
-        if (edited) {
-          portModsSetOption(i, o, value);
-        }
-        ImGui::PopID();
-      }
-      if (mod->description[0] != '\0') {
-        note(mod->description);
-      }
-    }
-    ImGui::PopID();
-  }
-  ImGui::Separator();
-  ImGui::TextUnformatted("Texture packs");
-  note("A Dolphin texture pack works as it comes: put its files in the textures folder, "
-       "or in a mod's textures folder.");
-#if !defined(__ANDROID__) && !(defined(__APPLE__) && TARGET_OS_IPHONE)
-  if (ImGui::Button("Open the textures folder")) {
-    openFolder(std::string(portSettingsUserPath()) + "/textures");
-  }
-#endif
-  if (check("Dump textures (from the next start)", &s->dumpTextures)) {
-    changed();
-  }
-  note("Saves each texture that has no replacement yet, under the name a pack uses, "
-       "to make or extend a pack.");
-#if !defined(__ANDROID__) && !(defined(__APPLE__) && TARGET_OS_IPHONE)
-  if (s->dumpTextures && ImGui::Button("Open the dump folder")) {
-    openFolder(portModsDumpDir());
-  }
-#endif
-}
-
 void statesTab() {
   if (!portSaveStateSupported()) {
     note("Save states are not available in this build yet.");
@@ -418,8 +300,16 @@ void statesTab() {
   for (int i = 0; i < PORT_SAVE_STATE_SLOTS; i++) {
     ImGui::PushID(i);
     const char* info = portSaveStateInfo(i);
+    ImGui::AlignTextToFramePadding();
     ImGui::Text("Slot %d", i + 1);
     ImGui::SameLine(ImGui::GetFontSize() * 4.f);
+    char label[32];
+    std::snprintf(label, sizeof(label), "%s", portSaveStateLabel(i));
+    ImGui::SetNextItemWidth(ImGui::GetFontSize() * 8.f);
+    if (ImGui::InputTextWithHint("##label", "label", label, sizeof(label))) {
+      portSaveStateSetLabel(i, label);
+    }
+    ImGui::SameLine();
     if (ImGui::Button("Save")) {
       portSaveStateRequest(i, 0);
       setOpen(false);
@@ -855,7 +745,7 @@ constexpr const char* kCues[] = {"Off", "On screen"};
 constexpr int kCueCount = 2;
 #endif
 
-bool widescreenOn(const PortSettings* s) { return s->widescreen != 0; }
+bool widescreenOn(const PortSettings* s) { return s->widescreen != 0 || portWidescreenWide(); }
 bool isEurope(const PortSettings*) { return std::strcmp(PORT_GAME_ID, "G8MP01") == 0; }
 
 const Item kItems[] = {
@@ -980,9 +870,7 @@ const Item kItems[] = {
     {"Practice", "Save warps", nullptr, kInGame, [](PortSettings*, const Item&) { warpTab(); },
      "warp gci practice saves", nullptr},
 
-    // Mods
-    {"Mods", "Mods and texture packs", nullptr, 0, [](PortSettings* s, const Item&) { modsTab(s); },
-     "mods textures packs dump reload folder", nullptr},
+    // Mods: port/settings/features/mods_manager.cpp
 
     // Archipelago
     {"Archipelago", "Archipelago", nullptr, 0, [](PortSettings*, const Item&) { archipelagoTab(); },
@@ -1035,11 +923,10 @@ const Item kItems[] = {
 // (portSettingsDeclare): kept here and drawn after the fixed ones of their tab.
 struct Extra {
   const char* key;
-  int kind; // 0 toggle, 1 choice, 2 slider, 3 a section the feature draws
+  int kind; // 0 toggle, 1 choice, 2 slider (sections: portSettingsAddSection)
   const char* const* choices;
   int count, min, max;
   const char* format;
-  void (*draw)(void) = nullptr; // a section's
 };
 
 std::deque<Extra>& extras() {
@@ -1054,11 +941,6 @@ std::vector<Item>& extraItems() {
 
 void drawExtra(PortSettings*, const Item& it) {
   const Extra& e = *static_cast<const Extra*>(it.data);
-  if (e.kind == 3) {
-    ImGui::TextUnformatted(it.label);
-    e.draw();
-    return;
-  }
   int* v = portSettingsFind(e.key);
   if (v == nullptr) {
     ImGui::TextDisabled("%s (not declared: %s)", it.label, e.key);
@@ -1172,11 +1054,20 @@ bool matches(const Item& it, const char* query) {
 }
 
 char sSearch[64];
+bool sTabsInGame; // for the features' sections (portSettingsAddSection)
 
 } // namespace
 
 void portSettingsTabs(bool inGame) {
   PortSettings* s = portSettings();
+  sTabsInGame = inGame;
+  static bool sSearchSet;
+  if (!sSearchSet) {
+    sSearchSet = true;
+    if (const char* want = SDL_getenv("TTYD_SETTINGS_SEARCH")) { // tests: a search typed from the start
+      std::snprintf(sSearch, sizeof(sSearch), "%s", want);
+    }
+  }
   ImGui::SetNextItemWidth(std::min(ImGui::GetContentRegionAvail().x, ImGui::GetFontSize() * 18.f));
   ImGui::InputTextWithHint("##search", "Search settings", sSearch, sizeof(sSearch));
   if (sSearch[0] != '\0') {
@@ -1235,6 +1126,16 @@ void portSettingsTabs(bool inGame) {
   if (std::find(tabs.begin(), tabs.end(), sTab) == tabs.end()) {
     sTab = tabs.front();
   }
+  // a controller's triggers step through the tabs (in the game its shoulder
+  // buttons too; in the launcher those switch the launcher's own tabs)
+  const int count = static_cast<int>(tabs.size());
+  const int at = static_cast<int>(std::find(tabs.begin(), tabs.end(), sTab) - tabs.begin());
+  if (ImGui::IsKeyPressed(ImGuiKey_GamepadL2, false) || (inGame && ImGui::IsKeyPressed(ImGuiKey_GamepadL1, false))) {
+    sTab = tabs[(at + count - 1) % count];
+  } else if (ImGui::IsKeyPressed(ImGuiKey_GamepadR2, false) ||
+             (inGame && ImGui::IsKeyPressed(ImGuiKey_GamepadR1, false))) {
+    sTab = tabs[(at + 1) % count];
+  }
   ImGui::BeginChild("tabs", ImVec2(ImGui::GetFontSize() * 8.f, 0));
   for (const std::string& tab : tabs) {
     if (ImGui::Selectable(tab.c_str(), tab == sTab)) {
@@ -1270,10 +1171,31 @@ extern "C" void portSettingsAddSlider(const char* tab, const char* label, const 
 }
 
 extern "C" void portSettingsAddSection(const char* tab, const char* label, const char* note, unsigned flags,
-                                       void (*draw)(void), const char* keywords) {
-  addExtra(tab, label, note, flags, keywords, Extra{nullptr, 3, nullptr, 0, 0, 0, nullptr, draw});
+                                       void (*draw)(int inGame), const char* keywords) {
+  Item it{tab, label, note, flags,
+          [](PortSettings*, const Item& self) {
+            ImGui::SeparatorText(self.label); // the section's name over what it draws
+            reinterpret_cast<void (*)(int)>(const_cast<void*>(self.data))(sTabsInGame ? 1 : 0);
+          },
+          keywords, nullptr};
+  it.data = reinterpret_cast<const void*>(draw);
+  extraItems().push_back(it);
 }
 
+namespace {
+struct Overlay {
+  void (*draw)(int pageOpen);
+  int (*event)(const void* sdlEvent);
+};
+std::vector<Overlay>& overlays() {
+  static std::vector<Overlay> list;
+  return list;
+}
+} // namespace
+
+extern "C" void portSettingsAddOverlay(void (*draw)(int pageOpen), int (*event)(const void* sdlEvent)) {
+  overlays().push_back(Overlay{draw, event});
+}
 
 // A touch at window point (x, y) is on the settings page or the crash notice.
 extern "C" int portSettingsOwnsPoint(float x, float y) {
@@ -1288,6 +1210,11 @@ extern "C" int portSettingsOwnsPoint(float x, float y) {
 extern "C" void portSettingsEvent(const void* sdlEvent) {
   const SDL_Event* e = static_cast<const SDL_Event*>(sdlEvent);
   PortSettings* s = portSettings();
+  for (const Overlay& o : overlays()) {
+    if (o.event != nullptr && o.event(sdlEvent)) {
+      return; // a feature's key
+    }
+  }
   switch (e->type) {
   case SDL_EVENT_DID_ENTER_BACKGROUND:
   case SDL_EVENT_TERMINATING:
@@ -1389,6 +1316,11 @@ extern "C" void portSettingsDraw(void) {
   drawRomFont();
   drawStateStatus();
   drawAcCue();
+  for (const Overlay& o : overlays()) {
+    if (o.draw != nullptr) {
+      o.draw(sOpen ? 1 : 0);
+    }
+  }
   portSettingsCloudTick();
   if (portCrashReportPending() && !sOpen) {
 #if defined(__ANDROID__) || (defined(__APPLE__) && TARGET_OS_IPHONE)

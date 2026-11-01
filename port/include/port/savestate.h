@@ -9,13 +9,13 @@
 extern "C" {
 #endif
 
-#define PORT_SAVE_STATE_SLOTS 4
+#define PORT_SAVE_STATE_SLOTS 10
 /* A slot of the port's own, past the player's: Gameplay+'s retry on Game Over
  * (port/include/port/gameplus.h), saved quietly at each room and battle, and
  * loadable on the Game Over screen as well. */
 #define PORT_SAVE_STATE_RETRY PORT_SAVE_STATE_SLOTS
 
-/* Asks for a save (load 0) or a load into/from slot 0-3; done at the end of
+/* Asks for a save (load 0) or a load into/from slot 0-9; done at the end of
  * the frame, when the game allows it (portSaveStateStatus says the result). */
 void portSaveStateRequest(int slot, int load);
 /* End of each frame (vi_aurora.c). */
@@ -30,6 +30,9 @@ const char* portSaveStateStatus(void);
 int portSaveStateHas(int slot);
 /* Shows text where the results show, for a few seconds. */
 void portSaveStateNotice(const char* text);
+/* A player's slot's label (the Practice tab), "" when it has none. */
+const char* portSaveStateLabel(int slot);
+void portSaveStateSetLabel(int slot, const char* label);
 
 #ifdef __cplusplus
 }

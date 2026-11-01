@@ -1,4 +1,5 @@
 // Mario's spin jump / hip drop (mot_hip): the spin, the drop and the ground pound.
+#include "port_hook.h"
 #include "dolphin/types.h"
 #include "driver/hitdrv.h"
 #include "pmario_sound.h"
@@ -17,6 +18,9 @@
 #include "mot/mot_hip.h"
 #include "version.h"
 #include <dolphin/pad.h>
+#ifdef PORT_MODS
+#include "port/hooks/src_motion_mot_hip.h"
+#endif
 
 /** Vertical camera shake (0.0195 for 110 ms) when Mario's spin jump lands on the ground. */
 static EVT_BEGIN(quake_evt)
@@ -36,7 +40,7 @@ s32 U_chkground(void);
  * TRUE when the spin jump should start: Mario has been airborne at least 10 frames past the jump peak,
  * A was just pressed and he has the Super Boots or better. Checked from the jump motions in mario_motion.c.
  */
-BOOL marioChkHipAttack(void) {
+BOOL PORT_HOOKABLE(marioChkHipAttack)(void) {
     BOOL ret;
     MarioWork* mario;
 
@@ -52,7 +56,7 @@ BOOL marioChkHipAttack(void) {
  * TRUE while Mario is in the landing phase of the spin jump (MARIO_MOTION_HIP_2);
  * mobjdrv uses it to trigger spin-jump switches and blocks he lands on.
  */
-BOOL marioChkHipBump(void) {
+BOOL PORT_HOOKABLE(marioChkHipBump)(void) {
     BOOL ret = FALSE;
 
     if (marioGetPtr()->currMotionId == MARIO_MOTION_HIP_2) {
@@ -103,7 +107,7 @@ static inline void hipSfxStop(MarioWork* mario) {
  * on landing it switches to MARIO_MOTION_HIP_2, shakes the camera and stands,
  * or goes to the water or spike damage motion when the floor has those attributes. Bowser runs kpa_hip instead.
  */
-void mot_hip(void) {
+void PORT_HOOKABLE(mot_hip)(void) {
     MarioWork* mario;
     HitEntry* hit;
     f32 fall;
@@ -389,7 +393,7 @@ s32 U_chkground(void) {
 #endif
 
 /** Cleanup when the spin jump motion ends: resets the spin offsets and air timers and stops the looping sounds. */
-void mot_hip_post(void) {
+void PORT_HOOKABLE(mot_hip_post)(void) {
     MarioWork* mario;
 
     mario = marioGetPtr();
@@ -402,3 +406,7 @@ void mot_hip_post(void) {
     hipSfxStop(mario);
 #endif
 }
+
+#ifdef PORT_MODS
+#include "port/hooks/src_motion_mot_hip.inc"
+#endif

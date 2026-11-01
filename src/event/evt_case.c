@@ -1,9 +1,13 @@
 // Script commands that register, run and remove case events (hit-triggered scripts, casedrv).
+#include "port_hook.h"
 #include "evt/evt_case.h"
 #include "driver/casedrv.h"
 #include "manager/evtmgr.h"
 #include "manager/evtmgr_cmd.h"
 #include <string.h>
+#ifdef PORT_MODS
+#include "port/hooks/src_event_evt_case.h"
+#endif
 
 /**
  * Registers a case event with casedrv: conditionId is what triggers it (with CASE_COND_FLAG_BALLOON when flag is
@@ -101,7 +105,7 @@ USER_FUNC(evt_run_case_evt_bero) {
  * C entry point for registering a case event at priority 0 (_caseEntry);
  * evt_map.c uses it for the airport ride cases. Returns the case id.
  */
-s32 evtRunCaseEntry(s32 conditionId, BOOL flag, const char* hitObjName, u32 swFlag, void* evtCode,
+s32 PORT_HOOKABLE(evtRunCaseEntry)(s32 conditionId, BOOL flag, const char* hitObjName, u32 swFlag, void* evtCode,
                     EvtWord* lwData) {
     return _caseEntry(conditionId, flag, hitObjName, swFlag, evtCode, lwData, 0);
 }
@@ -145,3 +149,7 @@ USER_FUNC(evt_set_case_wrk) {
     entry->lwData[index] = value;
     return EVT_RETURN_DONE;
 }
+
+#ifdef PORT_MODS
+#include "port/hooks/src_event_evt_case.inc"
+#endif

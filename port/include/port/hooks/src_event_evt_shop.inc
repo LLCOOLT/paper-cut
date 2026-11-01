@@ -6,6 +6,7 @@ s32 evt_shop_setup(EventEntry * p0, BOOL p1) {
     PortHookSlot* s = &portHookSlots[20];
     s32 r;
     int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
     if (!s->active) {
         return evt_shop_setup__body(p0, p1);
     }
@@ -22,6 +23,28 @@ s32 evt_shop_setup(EventEntry * p0, BOOL p1) {
     return r;
 }
 
+BOOL evtShopIsActive(void) {
+    PortHookSlot* s = &portHookSlots[774];
+    BOOL r;
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        return evtShopIsActive__body();
+    }
+    __builtin_memset(&r, 0, sizeof(r));
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(r)*))s->pre[i])(&r);
+    }
+    if (!skip) {
+        r = (s->replace != NULL ? ((BOOL (*)(void))s->replace)() : evtShopIsActive__body());
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(r)*))s->post[i])(&r);
+    }
+    return r;
+}
+
 void portHookInit_src_event_evt_shop(void) {
     portHookSlots[20].body = (void*)evt_shop_setup__body;
+    portHookSlots[774].body = (void*)evtShopIsActive__body;
 }

@@ -5,6 +5,7 @@
 void seqSetSeq(SequenceType p0, const char * p1, const char * p2) {
     PortHookSlot* s = &portHookSlots[1];
     int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
     if (!s->active) {
         seqSetSeq__body(p0, p1, p2);
         return;
@@ -20,6 +21,112 @@ void seqSetSeq(SequenceType p0, const char * p1, const char * p2) {
     }
 }
 
+void seqInit_MARIOSTORY(void) {
+    PortHookSlot* s = &portHookSlots[702];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        seqInit_MARIOSTORY__body();
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(void))s->pre[i])();
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(void))s->replace)(); } else { seqInit_MARIOSTORY__body(); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(void))s->post[i])();
+    }
+}
+
+void seqMain(void) {
+    PortHookSlot* s = &portHookSlots[703];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        seqMain__body();
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(void))s->pre[i])();
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(void))s->replace)(); } else { seqMain__body(); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(void))s->post[i])();
+    }
+}
+
+SequenceType seqGetPrevSeq(void) {
+    PortHookSlot* s = &portHookSlots[704];
+    SequenceType r;
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        return seqGetPrevSeq__body();
+    }
+    __builtin_memset(&r, 0, sizeof(r));
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(r)*))s->pre[i])(&r);
+    }
+    if (!skip) {
+        r = (s->replace != NULL ? ((SequenceType (*)(void))s->replace)() : seqGetPrevSeq__body());
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(r)*))s->post[i])(&r);
+    }
+    return r;
+}
+
+SequenceType seqGetNextSeq(void) {
+    PortHookSlot* s = &portHookSlots[705];
+    SequenceType r;
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        return seqGetNextSeq__body();
+    }
+    __builtin_memset(&r, 0, sizeof(r));
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(r)*))s->pre[i])(&r);
+    }
+    if (!skip) {
+        r = (s->replace != NULL ? ((SequenceType (*)(void))s->replace)() : seqGetNextSeq__body());
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(r)*))s->post[i])(&r);
+    }
+    return r;
+}
+
+BOOL seqCheckSeq(void) {
+    PortHookSlot* s = &portHookSlots[706];
+    BOOL r;
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        return seqCheckSeq__body();
+    }
+    __builtin_memset(&r, 0, sizeof(r));
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(r)*))s->pre[i])(&r);
+    }
+    if (!skip) {
+        r = (s->replace != NULL ? ((BOOL (*)(void))s->replace)() : seqCheckSeq__body());
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(r)*))s->post[i])(&r);
+    }
+    return r;
+}
+
 void portHookInit_src_driver_seqdrv(void) {
     portHookSlots[1].body = (void*)seqSetSeq__body;
+    portHookSlots[702].body = (void*)seqInit_MARIOSTORY__body;
+    portHookSlots[703].body = (void*)seqMain__body;
+    portHookSlots[704].body = (void*)seqGetPrevSeq__body;
+    portHookSlots[705].body = (void*)seqGetNextSeq__body;
+    portHookSlots[706].body = (void*)seqCheckSeq__body;
 }

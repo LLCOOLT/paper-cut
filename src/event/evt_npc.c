@@ -1,5 +1,6 @@
 // Script commands that control NPCs: entry, position, movement, jumps, animations, flags and
 // battle setup (npcdrv).
+#include "port_hook.h"
 #include "evt/evt_npc.h"
 #include "party.h"
 #include "mario/mario_party.h"
@@ -21,6 +22,9 @@
 #include "libc_decls.h"
 #include <math.h>
 #include "version.h"
+#ifdef PORT_MODS
+#include "port/hooks/src_event_evt_npc.h"
+#endif
 
 static f32 _intplGetFloat(s32 mode, f32 t);
 
@@ -1703,7 +1707,7 @@ USER_FUNC(evt_npc_facedirection_add) {
  * Returns the markers -1 for "party", -2 for "extparty" and -3 for "mario" instead of pointers.
  * An unknown name asserts in npcNameToPtr.
  */
-NpcEntry* evtNpcNameToPtr(EventEntry* event, const char* name) {
+NpcEntry* PORT_HOOKABLE(evtNpcNameToPtr)(EventEntry* event, const char* name) {
     if (!strcmp(name, "me")) {
         return event->ownerNPC;
     }
@@ -1738,7 +1742,7 @@ NpcEntry* evtNpcNameToPtr(EventEntry* event, const char* name) {
 }
 
 /** Same as evtNpcNameToPtr, but an unknown map NPC name returns NULL instead of asserting. */
-NpcEntry* evtNpcNameToPtr_NoAssert(EventEntry* event, const char* name) {
+NpcEntry* PORT_HOOKABLE(evtNpcNameToPtr_NoAssert)(EventEntry* event, const char* name) {
     if (!strcmp(name, "me")) {
         return event->ownerNPC;
     }
@@ -2898,3 +2902,7 @@ USER_FUNC(evt_npc_release_filednpc) {
     }
     return EVT_RETURN_DONE;
 }
+
+#ifdef PORT_MODS
+#include "port/hooks/src_event_evt_npc.inc"
+#endif

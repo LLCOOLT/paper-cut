@@ -1,4 +1,5 @@
 // Script commands for the Pianta Parlor (yuugijou): minigame windows, Piantas and records.
+#include "port_hook.h"
 #include "icon_ids.h"
 #include "evt/evt_yuugijou.h"
 #include "evt/evt_cmd.h"
@@ -14,6 +15,9 @@
 #include "evt/evt_bero.h"
 #include "evt/evt_mario.h"
 #include "evt/evt_msg.h"
+#ifdef PORT_MODS
+#include "port/hooks/src_event_evt_yuugijou.h"
+#endif
 
 // Retail only: the per-minigame window script lookup, defined at the end of the file.
 #if VERSION >= VERSION_JP
@@ -104,7 +108,7 @@ static inline s32 MAX0(s32 x) {
  * Called on a new game (mariost.c) and from event.c.
  * The demo has its own records; US/PAL keep eight record rows, JP four.
  */
-void yuugijou_init(void) {
+void PORT_HOOKABLE(yuugijou_init)(void) {
 #if VERSION >= VERSION_JP
     s32 t;
 #endif
@@ -437,7 +441,7 @@ void yuugijou_init(void) {
  * Called from the draw callbacks of gor_03 (the Pianta Changer)
  * and of the Pianta Parlor games (yuu_00 to yuu_03).
  */
-void monteCountDisp(void) {
+void PORT_HOOKABLE(monteCountDisp)(void) {
     static s32 monte_snd_flag;
     s32 y = -0xB4;
     u32 flags = yuwp->flags;
@@ -634,18 +638,22 @@ USER_FUNC(yuuminigame_get_window_evt) {
 }
 
 /** Retail: sets the script window_open runs as a child before the quit prompt; each minigame sets its own. */
-void evtYuuSetWindowEvt(EvtWord* evt) {
+void PORT_HOOKABLE(evtYuuSetWindowEvt)(EvtWord* evt) {
     yuu_window_evt = evt;
 }
 #endif
 
 /** Opens the minigame pause window (window_open); called by the menu code (win_main.c, state 400). */
-void evtYuuWindow(void) {
+void PORT_HOOKABLE(evtYuuWindow)(void) {
     yuwp->flags &= ~PARLOR_FLAG_WINDOW_DONE;
     evtEntryType(window_open, 0, 0, 0);
 }
 
 /** Returns 1 once the minigame pause window has closed; win_main.c polls it to leave state 401. */
-s32 evtYuuWindowEndChk(void) {
+s32 PORT_HOOKABLE(evtYuuWindowEndChk)(void) {
     return (yuwp->flags >> 3) & 1;
 }
+
+#ifdef PORT_MODS
+#include "port/hooks/src_event_evt_yuugijou.inc"
+#endif

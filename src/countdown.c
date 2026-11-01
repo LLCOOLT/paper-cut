@@ -1,4 +1,5 @@
 // Countdown timer: the on-screen time limit that timed events start, save, restart and end.
+#include "port_hook.h"
 #include "countdown.h"
 
 #include "driver/camdrv.h"
@@ -14,6 +15,9 @@
 #include "pmario_sound.h"
 #include "version.h"
 #include "evt/evt_story.h"
+#ifdef PORT_MODS
+#include "port/hooks/src_countdown.h"
+#endif
 
 //.sdata2
 static const GXColor sWhite = {255, 255, 255, 255};
@@ -30,7 +34,7 @@ static CountdownWork* wp;
 static void countDownDisp(CameraId cameraId, void* param);
 
 /** Points the countdown at gp->countdown and clears it. Called during game initialisation. */
-void countDownInit(void) {
+void PORT_HOOKABLE(countDownInit)(void) {
     wp = &gp->countdown;
     memset(&gp->countdown, 0, sizeof(gp->countdown));
 }
@@ -41,7 +45,7 @@ void countDownInit(void) {
  * then restarts the ticking sound (the bomb timer before chapter 7, the alarm from chapter 7 on).
  * The US and PAL releases clamp the remaining time at zero first and clear the time-up flag.
  */
-void countDownSaveReStart(void) {
+void PORT_HOOKABLE(countDownSaveReStart)(void) {
     CountdownWork* work = wp;
     if ((work->flags & COUNTDOWN_FLAG_RUNNING) != 0) {
         u32 ticks = OS_TIMER_CLOCK / 1000;
@@ -74,7 +78,7 @@ void countDownSaveReStart(void) {
  * slides the display in from the right at (180, -180)
  * and starts the ticking sound (bomb timer before chapter 7, alarm after).
  */
-void countDownStart(u32 limit, u32 restart) {
+void PORT_HOOKABLE(countDownStart)(u32 limit, u32 restart) {
     wp->limit = limit;
     wp->restart = restart;
     wp->prevTime = gp->renderTime;
@@ -95,7 +99,7 @@ void countDownStart(u32 limit, u32 restart) {
 }
 
 /** Changes the minimum time (ms) a countdown gets back when a save is loaded mid-countdown. */
-void countDownSetRestartTime(u32 restart) {
+void PORT_HOOKABLE(countDownSetRestartTime)(u32 restart) {
     wp->restart = restart;
 }
 
@@ -105,7 +109,7 @@ void countDownSetRestartTime(u32 restart) {
  * sets the time-up flag (2) once the limit is reached and queues the draw.
  * JP and later releases also stop the ticking sound at time-up.
  */
-void countDownMain(void) {
+void PORT_HOOKABLE(countDownMain)(void) {
     if ((wp->flags & COUNTDOWN_FLAG_RUNNING) != 0) {
         switch (wp->state) {
             case 0:
@@ -211,30 +215,34 @@ static void countDownDisp(CameraId cameraId, void* param) {
 }
 
 /** Returns -1 when no countdown is running, 1 when its time is up and 0 while it is still counting. */
-s32 countDownGetStatus(void) {
+s32 PORT_HOOKABLE(countDownGetStatus)(void) {
     CountdownWork* work = wp;
     return !(work->flags & COUNTDOWN_FLAG_RUNNING) ? -1 : (work->flags >> 1) & 1;
 }
 
 /** Slides a running countdown off screen and stops its sound (state 2 of countDownMain). */
-void countDownEnd(void) {
+void PORT_HOOKABLE(countDownEnd)(void) {
     if ((wp->flags & COUNTDOWN_FLAG_RUNNING) != 0) {
         wp->state = 2;
     }
 }
 
 /** Freezes the countdown (flag 8) and stops its sound; the display stays up. */
-void countDownStop(void) {
+void PORT_HOOKABLE(countDownStop)(void) {
     wp->flags |= COUNTDOWN_FLAG_FROZEN;
     psndSFXOff(wp->sfxId);
 }
 
 /** Sets countdown flags (1 running, 2 time up, 4 hidden, 8 frozen). */
-void countDownFlagOn(u16 flag) {
+void PORT_HOOKABLE(countDownFlagOn)(u16 flag) {
     wp->flags |= flag;
 }
 
 /** Clears countdown flags (1 running, 2 time up, 4 hidden, 8 frozen). */
-void countDownFlagOff(u16 flag) {
+void PORT_HOOKABLE(countDownFlagOff)(u16 flag) {
     wp->flags &= ~flag;
 }
+
+#ifdef PORT_MODS
+#include "port/hooks/src_countdown.inc"
+#endif

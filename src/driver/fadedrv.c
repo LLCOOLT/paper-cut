@@ -1,5 +1,6 @@
 // Fade driver: screen transitions (iris, spot and colour fades, curtains, pipe and page-flip animations,
 // story-book frames) and the tec/soft-focus/white-out overlays.
+#include "port_hook.h"
 #include "driver/fadedrv.h"
 #include "driver/animdrv.h"
 #include "driver/arcdrv.h"
@@ -18,6 +19,9 @@
 #include <string.h>
 #include "version.h"
 #include "libc_decls.h"
+#ifdef PORT_MODS
+#include "port/hooks/src_driver_fadedrv.h"
+#endif
 
 #if VERSION >= VERSION_US
 // US-only named constant (dispdrv reads it by name), followed by a zero word
@@ -51,7 +55,7 @@ static void _callback(s32 error, DVDFileInfo* info) {
 }
 
 /** Boot setup: allocates the fade work and resets its five fade slots (no animation poses, centred spot, scale 1). */
-void fadeInit(void) {
+void PORT_HOOKABLE(fadeInit)(void) {
     FadeEntry* entry;
     int i;
 
@@ -82,7 +86,7 @@ void fadeInit(void) {
  * from the startup archive if it holds it, else asynchronously from the disc.
  * Called from the logo sequence at boot.
  */
-void fadeTexSetup(void) {
+void PORT_HOOKABLE(fadeTexSetup)(void) {
     DVDEntry* dvd;
     u32 size;
     char path[128];
@@ -109,7 +113,7 @@ void fadeTexSetup(void) {
  * slot 2 the pipe transitions, and the later slots the page flips
  * and the story-book frames (Mario, Peach, Bowser), each with the animation file it plays.
  */
-void fadeEntry(s32 type, s32 duration, GXColor color) {
+void PORT_HOOKABLE(fadeEntry)(s32 type, s32 duration, GXColor color) {
     FadeEntry* entry;
     s32 id;
 
@@ -439,44 +443,44 @@ void fadeEntry(s32 type, s32 duration, GXColor color) {
  * Scripts set it with evt_fade_tec_onoff in Peach's X-Naut Fortress scenes (aji_10 Grodus's room,
  * aji_16 her room, aji_17 TEC's room). Guess: named after TEC.
  */
-void fadeTecOn(void) {
+void PORT_HOOKABLE(fadeTecOn)(void) {
     wp->flags |= FADE_WORK_TEC;
 }
 
 /** Turns the tec overlay off at once. */
-void fadeTecOff(void) {
+void PORT_HOOKABLE(fadeTecOff)(void) {
     wp->flags &= ~FADE_WORK_TEC;
 }
 
 /** Turns the tec overlay on, fading it in over about 25 frames. */
-void fadeTecSoftOn(void) {
+void PORT_HOOKABLE(fadeTecSoftOn)(void) {
     wp->flags |= FADE_WORK_TEC | FADE_WORK_TEC_SOFT_IN;
     wp->softness = 0.0f;
 }
 
 /** Fades the tec overlay out over about 25 frames. */
-void fadeTecSoftOff(void) {
+void PORT_HOOKABLE(fadeTecSoftOff)(void) {
     wp->flags |= FADE_WORK_TEC | FADE_WORK_TEC_SOFT_OUT;
     wp->softness = 1.0f;
 }
 
 /** Turns on the soft-focus overlay (fade.tpl image 3 over the 2D layer), used by the evt_fade helpers. */
-void fadeSoftFocusOn(void) {
+void PORT_HOOKABLE(fadeSoftFocusOn)(void) {
     wp->flags |= FADE_WORK_SOFT_FOCUS;
 }
 
 /** Turns the soft-focus overlay off. */
-void fadeSoftFocusOff(void) {
+void PORT_HOOKABLE(fadeSoftFocusOff)(void) {
     wp->flags &= ~FADE_WORK_SOFT_FOCUS;
 }
 
 /** Covers the 3D scene with white (no fade in this driver); no caller in this tree. */
-void fadeWhiteOutOn(void) {
+void PORT_HOOKABLE(fadeWhiteOutOn)(void) {
     wp->flags |= FADE_WORK_WHITE_OUT;
 }
 
 /** Removes the white cover from fadeWhiteOutOn. */
-void fadeWhiteOutOff(void) {
+void PORT_HOOKABLE(fadeWhiteOutOff)(void) {
     wp->flags &= ~FADE_WORK_WHITE_OUT;
 }
 
@@ -484,21 +488,21 @@ void fadeWhiteOutOff(void) {
  * Sets the screen position the spot fades close on or open from (e.g. where Mario stands);
  * used by the evt_fade helpers.
  */
-void fadeSetSpotPos(f32 x, f32 y) {
+void PORT_HOOKABLE(fadeSetSpotPos)(f32 x, f32 y) {
     FadeEntry* entry = &wp->entries[0];
     entry->fadeSpotX = x;
     entry->fadeSpotY = y;
 }
 
 /** Sets the screen offset of the curtain and stage animations in slot 1. */
-void fadeSetAnimOfsPos(f32 x, f32 y) {
+void PORT_HOOKABLE(fadeSetAnimOfsPos)(f32 x, f32 y) {
     FadeEntry* entry = &wp->entries[1];
     entry->animOffsetX = x;
     entry->animOffsetY = y;
 }
 
 /** Places the curtain and stage animation of slot 1 at a world position, so it sorts in depth with the 3D scene. */
-void fadeSetAnimVirtualPos(f32 x, f32 y, f32 z) {
+void PORT_HOOKABLE(fadeSetAnimVirtualPos)(f32 x, f32 y, f32 z) {
     FadeEntry* entry = &wp->entries[1];
     entry->VirtualPos = (Vec){x, y, z};
     entry->flags |= FADE_ENTRY_VIRTUAL_POS;
@@ -508,7 +512,7 @@ void fadeSetAnimVirtualPos(f32 x, f32 y, f32 z) {
  * Sets the callback slot 3's page-flip transitions call to draw into the offscreen image;
  * used by the E3 demo sequence.
  */
-void fadeSetOffscreenCallback(OffscreenCallback callback, void* param) {
+void PORT_HOOKABLE(fadeSetOffscreenCallback)(OffscreenCallback callback, void* param) {
     FadeEntry* entry = &wp->entries[3];
     entry->callback = callback;
     entry->offparam = param;
@@ -540,7 +544,7 @@ static inline void fadeCapture(const char* name, const char* off, s32 mode) {
  * marks fades finished, and queues their draw callbacks plus the tec,
  * soft-focus and black or white cover overlays.
  */
-void fadeMain(void) {
+void PORT_HOOKABLE(fadeMain)(void) {
     FadeEntry* entry;
     s32 i;
 
@@ -1605,7 +1609,7 @@ static void disp_dummy_black(CameraId camId, void* param) {
  * Tells whether the most recently started fade has finished (TRUE when none was started);
  * scripts and sequences wait on it.
  */
-BOOL fadeIsFinish(void) {
+BOOL PORT_HOOKABLE(fadeIsFinish)(void) {
     FadeEntry* entry;
 
     if (wp->lastEntryId == -1) {
@@ -1616,7 +1620,7 @@ BOOL fadeIsFinish(void) {
 }
 
 /** Stops fade slot id at once: releases its animation poses and captured image and resets it to the defaults. */
-void fadeReset(s32 id) {
+void PORT_HOOKABLE(fadeReset)(s32 id) {
     FadeEntry* entry;
 
     entry = &wp->entries[id];
@@ -1640,11 +1644,15 @@ void fadeReset(s32 id) {
 }
 
 /** Returns fade.tpl; the name entry screen draws its frame textures from it. */
-TEXPalette* fadeGetTpl(void) {
+TEXPalette* PORT_HOOKABLE(fadeGetTpl)(void) {
     return wp->texture;
 }
 
 /** Makes the next curtain or stage animation in slot 1 play fast; used by the title screen. */
-void fadeSetNarrowFast(void) {
+void PORT_HOOKABLE(fadeSetNarrowFast)(void) {
     wp->entries[1].flags |= FADE_ENTRY_FAST;
 }
+
+#ifdef PORT_MODS
+#include "port/hooks/src_driver_fadedrv.inc"
+#endif

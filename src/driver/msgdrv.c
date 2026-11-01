@@ -5,9 +5,16 @@
 #ifdef TARGET_PC
 #include "port/platform.h"
 #include "port/gameplay.h"
+#include "port/gameplus.h"
 #ifdef PORT_MODS
 #include "port/mods.h"
 #endif
+#endif
+#ifdef TARGET_PC
+/* Gameplay+: faster text outside battle, the message windows' 200 ms fades too */
+#define MSG_FADE_MS(ticks) (OSTicksToMilliseconds(ticks) * portFieldTextScale())
+#else
+#define MSG_FADE_MS(ticks) OSTicksToMilliseconds(ticks)
 #endif
 #include "version.h"
 #include "driver/animdrv.h"
@@ -33,6 +40,7 @@
 #endif
 #ifdef TARGET_PC
 #include "port/bedecode.h"
+#include "port/hud.h"
 /* PC port: Shift-JIS text is a byte stream; read a double-byte code big-endian. */
 #define SJIS_CODE(p) portBE16(p)
 #else
@@ -170,7 +178,7 @@ static void msgDispKeyWait_render(s32 wXluStage);
  * Sets up the message system at boot: the blinking star (hoshi_2) pose drawn at key waits
  * and the always-loaded global message file (slot 1).
  */
-void msgInit(void) {
+void PORT_HOOKABLE(msgInit)(void) {
     msgw->poseId = animPoseEntry("hoshi_2", 2);
     animPoseSetAnim(msgw->poseId, "HOS_C_1", TRUE);
     animPoseSetMaterialFlagOn(msgw->poseId, ANIM_MATERIAL_FLAG_NO_BLEND | ANIM_MATERIAL_FLAG_NO_BLEND2);
@@ -185,7 +193,7 @@ void msgInit(void) {
 
 #if VERSION <= VERSION_DEMO_JP
 /** the demo loads the text into a smart heap block and points a missing file at an empty text */
-void msgLoad(const char* filename, s32 index) {
+void PORT_HOOKABLE(msgLoad)(const char* filename, s32 index) {
     MessageEntry* entry;
     const char* str;
     MsgLookupEntry* lookup;
@@ -257,7 +265,7 @@ void msgLoad(const char* filename, s32 index) {
  * 1 = global), counts its tag/text pairs and builds a lookup table sorted by tag for msgSearch.
  * The US and later builds allocate slot 1 once, sized for the largest language's file.
  */
-void msgLoad(const char* filename, s32 index) {
+void PORT_HOOKABLE(msgLoad)(const char* filename, s32 index) {
     MessageEntry* entry;
     const char* str;
     MsgLookupEntry* lookup;
@@ -435,6 +443,10 @@ static s32 msgMain(smartEntry* smart) {
     }
     if (data->scrollTarget > data->scrollPos) {
         data->scrollPos += 0.36f * OSTicksToMilliseconds(gp->renderTime - data->lastUpdateTime);
+#ifdef TARGET_PC
+        /* Gameplay+: faster text outside battle, the page turn too */
+        data->scrollPos += 0.36f * OSTicksToMilliseconds(gp->renderTime - data->lastUpdateTime) * (portFieldTextScale() - 1);
+#endif
         msgCheckSkip(smart, data);
         if (!(data->flags & MSG_WIN_FLAG_SMALL) && (data->flags & MSG_WIN_FLAG_FAST)) {
             data->scrollPos += 0.36f * OSTicksToMilliseconds(gp->renderTime - data->lastUpdateTime);
@@ -462,6 +474,7 @@ static s32 msgMain(smartEntry* smart) {
             ms = OSTicksToMilliseconds(gp->renderTime - data->lastUpdateTime);
 #ifdef TARGET_PC
             ms = portTextMs(ms); /* PC port: the text speed setting */
+            ms *= portFieldTextScale(); /* Gameplay+: faster text outside battle */
 #endif
             msgCheckSkip(smart, data);
             if (!(data->flags & MSG_WIN_FLAG_SMALL) && (data->flags & MSG_WIN_FLAG_FAST)) {
@@ -863,7 +876,7 @@ static void msgDispKeyWait_render(s32 wXluStage) {
  * text and Japanese ruby, <col>, <shake>, <wave>, <icon>, <k> key waits, <p> pages, <select>, speeds and waits,
  * word wrap and scrolling. Called when a window opens and for each added message.
  */
-void msgAnalize(smartEntry* smart, const char* msg) {
+void PORT_HOOKABLE(msgAnalize)(smartEntry* smart, const char* msg) {
     u16 glyphD;
     s32 wwD;
     s32 wwR;
@@ -1593,7 +1606,7 @@ void msgAnalize(smartEntry* smart, const char* msg) {
 #pragma opt_lifetimes reset
 
 /** Returns the message driver's work (loaded files and the key-wait star pose). */
-MessageWork* L_msgGetWork(void) {
+MessageWork* PORT_HOOKABLE(L_msgGetWork)(void) {
     return &msgWork;
 }
 
@@ -1679,7 +1692,7 @@ BOOL _ismbblead(u32 c) {
  * Splits a markup tag at msg (after the '<') into its command name and argument string (up to '>'),
  * and returns the text after the tag.
  */
-const char* msgGetCommand(const char* msg, char* cmd, char* arg) {
+const char* PORT_HOOKABLE(msgGetCommand)(const char* msg, char* cmd, char* arg) {
     s32 i;
     BOOL inArg = FALSE;
     const char* m = msg;
@@ -1716,7 +1729,7 @@ const char* msgGetCommand(const char* msg, char* cmd, char* arg) {
 }
 
 /** Maps an <icon> name in message text to its icon id, or -1. */
-s32 msgIconStr2ID(const char* str) {
+s32 PORT_HOOKABLE(msgIconStr2ID)(const char* str) {
     u32 i;
 
     for (i = 0; i < 18; i++) {
@@ -1732,7 +1745,7 @@ s32 msgIconStr2ID(const char* str) {
  * parses the text and sizes the window for its type; returns the window id.
  * callback is a function (s32 event, smartEntry*) the window notifies, 0 for none.
  */
-s32 msgWindow_Entry(const char* msg, EvtWord callback, u16 priority) {
+s32 PORT_HOOKABLE(msgWindow_Entry)(const char* msg, EvtWord callback, u16 priority) {
     WindowEntry* window;
     char* copy;
     MsgWinData* data;
@@ -1839,7 +1852,7 @@ static void msgWindow_Delete(WindowEntry* window) {
  * Appends message msg to an open message window and resumes printing;
  * the script commands use it to continue a conversation in the same window.
  */
-void msgWindow_Add(const char* msg, s32 id) {
+void PORT_HOOKABLE(msgWindow_Add)(const char* msg, s32 id) {
     WindowEntry* window = windowGetPointer(id);
     smartEntry* smart = window->userdata;
 
@@ -1855,7 +1868,7 @@ void msgWindow_Add(const char* msg, s32 id) {
 }
 
 /** Resumes printing in a message window that is waiting. */
-void msgWindow_Continue(s32 id) {
+void PORT_HOOKABLE(msgWindow_Continue)(s32 id) {
     WindowEntry* window = windowGetPointer(id);
     MsgWinData* data;
 
@@ -1871,7 +1884,7 @@ void msgWindow_Continue(s32 id) {
 }
 
 /** Restarts a message window's text from the beginning. */
-void msgWindow_Repeat(s32 id) {
+void PORT_HOOKABLE(msgWindow_Repeat)(s32 id) {
     WindowEntry* window = windowGetPointer(id);
     MsgWinData* data;
 
@@ -1892,7 +1905,7 @@ void msgWindow_Repeat(s32 id) {
 }
 
 /** Closes every open message window whose speaker tag is name, putting its speaker back in the standing pose. */
-void msgWindow_ForceClose(const char* name) {
+void PORT_HOOKABLE(msgWindow_ForceClose)(const char* name) {
     WindowEntry* window;
     MsgWinData* data;
     s32 i;
@@ -1982,7 +1995,7 @@ static void msgWindow_Main(WindowEntry* window) {
             WIN_STATE(window) = 6;
         case 6:
             window->flags |= WINDOW_FLAG_PRINTING;
-            window->alpha = OSTicksToMilliseconds(gp->renderTime - window->timestamp) * 255 / 200;
+            window->alpha = MSG_FADE_MS(gp->renderTime - window->timestamp) * 255 / 200;
             if (window->alpha > 255) {
                 window->alpha = 255;
                 WIN_STATE(window) = 1;
@@ -2004,7 +2017,7 @@ static void msgWindow_Main(WindowEntry* window) {
                 windowDelete(window);
                 return;
             }
-            window->alpha = 255 - OSTicksToMilliseconds(gp->renderTime - window->timestamp) * 255 / 200;
+            window->alpha = 255 - MSG_FADE_MS(gp->renderTime - window->timestamp) * 255 / 200;
             if (window->alpha <= 0) {
                 window->alpha = 0;
             }
@@ -2144,7 +2157,7 @@ static void msgWindow_Clear_Main(WindowEntry* window) {
         case 6:
             window->flags |= WINDOW_FLAG_PRINTING;
             if (window->alpha < 255) {
-                window->alpha = OSTicksToMilliseconds(gp->renderTime - window->timestamp) * 255 / 200;
+                window->alpha = MSG_FADE_MS(gp->renderTime - window->timestamp) * 255 / 200;
                 if (window->alpha > 255) {
                     window->alpha = 255;
                 }
@@ -2182,7 +2195,7 @@ static void msgWindow_Clear_Main(WindowEntry* window) {
                 windowDelete(window);
                 return;
             }
-            window->alpha = 255 - OSTicksToMilliseconds(gp->renderTime - window->timestamp) * 255 / 200;
+            window->alpha = 255 - MSG_FADE_MS(gp->renderTime - window->timestamp) * 255 / 200;
             if (window->alpha <= 0) {
                 window->alpha = 0;
             }
@@ -2408,6 +2421,13 @@ static void selectWindow_Disp(CameraId camId, void* param) {
 }
 
 // target pad words (G5: section sizes must match or later DOL addresses shift)
+
+#ifdef TARGET_PC
+/* PC port: HUD scale (port/hud.h) tells the message and choice windows' draws apart */
+int portHudIsMessage(DispCallback callback) {
+    return callback == msgWindow_Disp || callback == selectWindow_Disp;
+}
+#endif
 
 #ifdef PORT_MODS
 #include "port/hooks/src_driver_msgdrv.inc"

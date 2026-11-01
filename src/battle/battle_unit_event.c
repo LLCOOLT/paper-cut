@@ -1,11 +1,15 @@
 // Battle unit events: running the hit, phase, wait and init event scripts attached to a unit.
+#include "port_hook.h"
 #include "battle/battle_unit_event.h"
+#ifdef PORT_MODS
+#include "port/hooks/src_battle_battle_unit_event.h"
+#endif
 
 /**
  * Checks whether every unit's init event script has finished, clearing the ids of those that have;
  * returns TRUE once none are still running. Polled by the battle start sequence after Btl_UnitSetup.
  */
-BOOL BattleCheckEndUnitInitEvent(BattleWork* wp) {
+BOOL PORT_HOOKABLE(BattleCheckEndUnitInitEvent)(BattleWork* wp) {
     BattleUnit* unit;
     BOOL valid;
     s32 i, eventId;
@@ -33,7 +37,7 @@ BOOL BattleCheckEndUnitInitEvent(BattleWork* wp) {
  * stores damageCode in unit->damageCode for the script to read
  * and returns the new event id (0 when code is NULL).
  */
-s32 BattleRunHitEventDirect(BattleUnit* unit, s32 damageCode, void* code) {
+s32 PORT_HOOKABLE(BattleRunHitEventDirect)(BattleUnit* unit, s32 damageCode, void* code) {
     EventEntry* evt;
     s32 id, newId;
 
@@ -77,7 +81,7 @@ s32 BattleRunHitEventDirect(BattleUnit* unit, s32 damageCode, void* code) {
  * A hit code with low byte 0x28 is skipped unless the unit has data tag 0x2E.
  * Called from the damage code and btlevtcmd scripts.
  */
-s32 BattleRunHitEvent(BattleUnit* unit, s32 damageCode) {
+s32 PORT_HOOKABLE(BattleRunHitEvent)(BattleUnit* unit, s32 damageCode) {
     void* code;
     s32 id;
     BOOL valid;
@@ -103,7 +107,7 @@ s32 BattleRunHitEvent(BattleUnit* unit, s32 damageCode) {
  * The phase-change sequence in battle_seq.c runs every unit's unison script together,
  * then the plain ones one at a time.
  */
-s32 BattleRunPhaseEvent(BattleUnit* unit, BOOL isUnison) {
+s32 PORT_HOOKABLE(BattleRunPhaseEvent)(BattleUnit* unit, BOOL isUnison) {
     EventEntry* evt = NULL;
     s32 id = 0;
     void* code;
@@ -131,7 +135,7 @@ s32 BattleRunPhaseEvent(BattleUnit* unit, BOOL isUnison) {
  * Kills a unit's running damage, wait and attack scripts but not its phase script;
  * a phase script calls this through btlevtcmd_PhaseEventStartDeclare before it takes over the unit.
  */
-void BattlePhaseEventStartDeclare(BattleUnit* unit) {
+void PORT_HOOKABLE(BattlePhaseEventStartDeclare)(BattleUnit* unit) {
     s32 id;
 
     id = unit->damageEventId;
@@ -154,7 +158,7 @@ void BattlePhaseEventStartDeclare(BattleUnit* unit) {
 }
 
 /** Restarts the unit's idle (wait) script, replacing any running one. Always returns 0. */
-s32 BattleRunWaitEvent(BattleUnit* unit) {
+s32 PORT_HOOKABLE(BattleRunWaitEvent)(BattleUnit* unit) {
     EventEntry* evt;
     void* code;
     s32 id;
@@ -173,3 +177,7 @@ s32 BattleRunWaitEvent(BattleUnit* unit) {
     }
     return 0; // unused
 }
+
+#ifdef PORT_MODS
+#include "port/hooks/src_battle_battle_unit_event.inc"
+#endif

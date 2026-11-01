@@ -1,4 +1,5 @@
 // Script commands for crowd NPCs (nannpc): many simple sprite NPCs drawn through extdrv.
+#include "port_hook.h"
 #include "evt/evt_cmd.h"
 #include "evt/evt_nannpc.h"
 #include "driver/extdrv.h"
@@ -14,6 +15,9 @@
 #include <string.h>
 #include "libc_decls.h"
 #include "version.h"
+#ifdef PORT_MODS
+#include "port/hooks/src_event_evt_nannpc.h"
+#endif
 
 static s32 nannpc_zcompare(const void* a, const void* b);
 
@@ -164,7 +168,7 @@ static inline void nanNPCHitMove(NanNPC* r, f32 mag) {
  * NPCs with flag 0x4 push each other apart when closer than their size,
  * are pulled back towards their target position, and then move with collision (speed capped).
  */
-void nanNPCOption(void) {
+void PORT_HOOKABLE(nanNPCOption)(void) {
     NanNPC* q;
     void* w;
     NanNPC* p;
@@ -313,7 +317,7 @@ static void nannpc_ext_init(void) {
 }
 
 /** Default per-frame update (sub function 1): calls each active crowd NPC's own func. */
-void nannpc_ext_main_sub(void) {
+void PORT_HOOKABLE(nannpc_ext_main_sub)(void) {
     s32 i;
     NanNPCWork* w = nanNPCWork;
     for (i = extGetPoseNum() - 1; i >= 0; i--) {
@@ -330,7 +334,7 @@ void nannpc_ext_main_sub(void) {
  * and copies texture, direction and position to its extdrv pose;
  * flag 0x2 hides the NPC by moving it 1000 units down.
  */
-void nannpc_ext_main_sub_fast(void) {
+void PORT_HOOKABLE(nannpc_ext_main_sub_fast)(void) {
     s32 i;
     NanNPC* p;
     NanNPCWork* w = nanNPCWork;
@@ -596,7 +600,7 @@ USER_FUNC(evt_nannpc_set_size) {
 }
 
 /** Gives a crowd NPC an animation table of texture ids ended by -1 (the C version of evt_nannpc_set_animtbl). */
-void evt_nannpc_set_animtbl_sub(NanNPC* npc, s16* tbl) {
+void PORT_HOOKABLE(evt_nannpc_set_animtbl_sub)(NanNPC* npc, s16* tbl) {
     s32 n;
     npc->animtbl = tbl;
     n = 0;
@@ -835,3 +839,7 @@ USER_FUNC(evt_nannpcwork_flag_onoff) {
 }
 
 #pragma force_active reset
+
+#ifdef PORT_MODS
+#include "port/hooks/src_event_evt_nannpc.inc"
+#endif

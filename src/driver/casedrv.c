@@ -1,5 +1,6 @@
 // Case driver: "cases" run an event script when Mario touches, jumps on, stands on or hammers a
 // named hit object (or when a custom condition function says so).
+#include "port_hook.h"
 #include "driver/casedrv.h"
 #include "driver/hitdrv.h"
 #include "driver/npcdrv.h"
@@ -17,6 +18,9 @@
 #include "version.h"
 #include <dolphin/pad.h>
 #include <demo/DEMOPad.h>
+#ifdef PORT_MODS
+#include "port/hooks/src_driver_casedrv.h"
+#endif
 
 // FAKE: casedrv.c calls evtEntry through the prototype it was compiled with (an s32 priority, passed without
 // the u8 truncation) instead of the one in manager/evtmgr.h; same registers
@@ -33,14 +37,14 @@ static CaseWork work;
 static CaseWork* wp = &work;
 
 /** Allocates and clears the table of 64 case entries at boot. */
-void caseInit(void) {
+void PORT_HOOKABLE(caseInit)(void) {
     wp->count = 64;
     wp->entries = __memAlloc(HEAP_DEFAULT, wp->count * sizeof(CaseEntry));
     memset(wp->entries, 0, wp->count * sizeof(CaseEntry));
 }
 
 /** Releases every case entry, e.g. on a map change; the table stays allocated. */
-void caseReInit(void) {
+void PORT_HOOKABLE(caseReInit)(void) {
     CaseEntry* entry = wp->entries;
     int i;
 
@@ -54,7 +58,7 @@ void caseReInit(void) {
  * the hit object name and condition (or a save flag or a check function) that fires it.
  * Returns the case id the scripts use to delete it. Called by the evt_case helpers.
  */
-s32 caseEntry(CaseSetup* setup) {
+s32 PORT_HOOKABLE(caseEntry)(CaseSetup* setup) {
     CaseEntry* entry;
     int i = 0;
     for (entry = wp->entries; i < wp->count; i++, entry++) {
@@ -85,7 +89,7 @@ s32 caseEntry(CaseSetup* setup) {
 }
 
 /** Releases case entry caseId so it no longer fires. */
-void caseDelete(s32 caseId) {
+void PORT_HOOKABLE(caseDelete)(s32 caseId) {
     wp->entries[caseId].flags &= ~CASE_ENTRY_FLAG_IN_USE;
 }
 
@@ -98,7 +102,7 @@ void caseDelete(s32 caseId) {
  * Skipped in battle, with a window open, or while Mario can't take case events;
  * the demo checks the field battle mode directly instead of N_fbatPreventMarioEventChk.
  */
-void caseMain(void) {
+void PORT_HOOKABLE(caseMain)(void) {
     MarioWork* mario;
     PartyEntry* party;
     s32 pressedA;
@@ -277,7 +281,7 @@ void caseMain(void) {
  * Returns the active case watching hit object obj (any hit-object condition, not flag or function cases),
  * or NULL; also NULL in battle. Mario's motions use it to tell whether a surface or wall has an event attached.
  */
-CaseEntry* caseCheckHitObj(HitEntry* obj) {
+CaseEntry* PORT_HOOKABLE(caseCheckHitObj)(HitEntry* obj) {
     CaseEntry* entry;
     int i;
     if (gp->inBattle != 0)
@@ -297,7 +301,7 @@ CaseEntry* caseCheckHitObj(HitEntry* obj) {
  * Like caseCheckHitObj, but only for cases fired by Bobbery's blast on obj;
  * Bobbery's field code uses it to see whether a wall reacts to a bomb.
  */
-CaseEntry* caseCheckHitObj2(HitEntry* obj) {
+CaseEntry* PORT_HOOKABLE(caseCheckHitObj2)(HitEntry* obj) {
     CaseEntry* entry;
     int i;
     if (gp->inBattle != 0)
@@ -314,9 +318,13 @@ CaseEntry* caseCheckHitObj2(HitEntry* obj) {
 }
 
 /** Returns case caseId's entry, or NULL if that slot is no longer in use. */
-CaseEntry* caseIdToPtr(s32 caseId) {
+CaseEntry* PORT_HOOKABLE(caseIdToPtr)(s32 caseId) {
     CaseEntry* entry = &wp->entries[caseId];
     if (!(entry->flags & CASE_ENTRY_FLAG_IN_USE))
         return NULL;
     return entry;
 }
+
+#ifdef PORT_MODS
+#include "port/hooks/src_driver_casedrv.inc"
+#endif

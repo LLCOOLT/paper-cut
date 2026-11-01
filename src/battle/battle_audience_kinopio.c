@@ -1,4 +1,5 @@
 // Battle audience control for the Toad (kinopio) members: jumping, entering, singing and status behaviors.
+#include "port_hook.h"
 #include "battle/battle_audience.h"
 #include "pc_call.h"
 #include "battle/battle.h"
@@ -20,6 +21,9 @@
 #include "version.h"
 #include "libc_decls.h"
 #include "battle/battle_break_slot.h"
+#ifdef PORT_MODS
+#include "port/hooks/src_battle_battle_audience_kinopio.h"
+#endif
 // FAKE: battle_audience_kinopio.c calls BattleAudience_GetEscapeChangeOK through this prototype (the types it was compiled with) instead of the one in battle/battle_audience.h; same registers, behaviour-identical.
 typedef u8 (*BattleAudience_GetEscapeChangeOKNoProtoFn)();
 
@@ -67,7 +71,7 @@ static void BattleAudienceCtrlProcessKinopioFireSub(s32 index);
  * then integrates velocity and hop height and works out the draw position.
  * Boos bob up and down; Piranha Plants never hop.
  */
-void BattleAudienceCtrlProcessKinopio(s32 index) {
+void PORT_HOOKABLE(BattleAudienceCtrlProcessKinopio)(s32 index) {
     BattleAudienceMember* m = BattleAudienceGetPtr(index);
     BOOL front = BattleAudience_GetFront(index);
     switch (m->status) {
@@ -1553,4 +1557,8 @@ static void BattleAudienceCtrlProcessKinopioNoGravity(s32 index, s32 front) {
 /** Status 22, demos only: empty; whatever the "audience ball" event was, it was cut. */
 static void BattleAudienceCtrlProcessKinopioAudBall(s32 index, s32 front) {
 }
+#endif
+
+#ifdef PORT_MODS
+#include "port/hooks/src_battle_battle_audience_kinopio.inc"
 #endif

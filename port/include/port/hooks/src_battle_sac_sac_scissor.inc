@@ -5,6 +5,7 @@
 static void scissor_disp_control(CameraId p0, void * p1) {
     PortHookSlot* s = &portHookSlots[50];
     int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
     if (!s->active) {
         scissor_disp_control__body(p0, p1);
         return;
@@ -24,6 +25,7 @@ static s32 scissor_timer_main(void) {
     PortHookSlot* s = &portHookSlots[51];
     s32 r;
     int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
     if (!s->active) {
         return scissor_timer_main__body();
     }
@@ -40,7 +42,29 @@ static s32 scissor_timer_main(void) {
     return r;
 }
 
+s32 weaponGetPower_Scissor(BattleUnit * p0, BattleWeapon * p1, BattleUnit * p2, BattleUnitPart * p3) {
+    PortHookSlot* s = &portHookSlots[540];
+    s32 r;
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        return weaponGetPower_Scissor__body(p0, p1, p2, p3);
+    }
+    __builtin_memset(&r, 0, sizeof(r));
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(r)*, __typeof__(p0)*, __typeof__(p1)*, __typeof__(p2)*, __typeof__(p3)*))s->pre[i])(&r, &p0, &p1, &p2, &p3);
+    }
+    if (!skip) {
+        r = (s->replace != NULL ? ((s32 (*)(__typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->replace)(p0, p1, p2, p3) : weaponGetPower_Scissor__body(p0, p1, p2, p3));
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(r)*, __typeof__(p0), __typeof__(p1), __typeof__(p2), __typeof__(p3)))s->post[i])(&r, p0, p1, p2, p3);
+    }
+    return r;
+}
+
 void portHookInit_src_battle_sac_sac_scissor(void) {
     portHookSlots[50].body = (void*)scissor_disp_control__body;
     portHookSlots[51].body = (void*)scissor_timer_main__body;
+    portHookSlots[540].body = (void*)weaponGetPower_Scissor__body;
 }

@@ -5,6 +5,7 @@
 void seq_loadMain(SequenceWork * p0) {
     PortHookSlot* s = &portHookSlots[40];
     int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
     if (!s->active) {
         seq_loadMain__body(p0);
         return;
@@ -20,6 +21,46 @@ void seq_loadMain(SequenceWork * p0) {
     }
 }
 
+void seq_loadInit(SequenceWork * p0) {
+    PortHookSlot* s = &portHookSlots[1470];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        seq_loadInit__body(p0);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*))s->pre[i])(&p0);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0)))s->replace)(p0); } else { seq_loadInit__body(p0); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0)))s->post[i])(p0);
+    }
+}
+
+void seq_loadExit(SequenceWork * p0) {
+    PortHookSlot* s = &portHookSlots[1471];
+    int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
+    if (!s->active) {
+        seq_loadExit__body(p0);
+        return;
+    }
+    for (i = 0; i < s->preCount; i++) {
+        skip |= ((int (*)(__typeof__(p0)*))s->pre[i])(&p0);
+    }
+    if (!skip) {
+        if (s->replace != NULL) { ((void (*)(__typeof__(p0)))s->replace)(p0); } else { seq_loadExit__body(p0); }
+    }
+    for (i = 0; i < s->postCount; i++) {
+        ((void (*)(__typeof__(p0)))s->post[i])(p0);
+    }
+}
+
 void portHookInit_src_sequence_seq_load(void) {
     portHookSlots[40].body = (void*)seq_loadMain__body;
+    portHookSlots[1470].body = (void*)seq_loadInit__body;
+    portHookSlots[1471].body = (void*)seq_loadExit__body;
 }

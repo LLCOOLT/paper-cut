@@ -1,4 +1,5 @@
 // Vivian: partner init, follow and the shadow (hide in the floor) ability.
+#include "port_hook.h"
 #include "version.h"
 #include "party/party_vivian.h"
 #include "driver/animdrv.h"
@@ -18,6 +19,9 @@
 #include "pmario_sound.h"
 #include "eff/eff_ripple.h"
 #include <dolphin/pad.h>
+#ifdef PORT_MODS
+#include "port/hooks/src_party_party_vivian.h"
+#endif
 
 #if VERSION >= VERSION_US
 #define VIVIAN_FOLLOW_DIST 30.0f
@@ -33,7 +37,7 @@ s32 vivian_cancel_req;
  * Re-applies Mario's sunk-into-the-shadow look (the "p_bibi" paper pose M_B_3 / PM_B_1, held at frame 24)
  * when mario.c refreshes his animation during the Vivian motion. Not in the demos.
  */
-void N_marioForceVivianAnime(void) {
+void PORT_HOOKABLE(N_marioForceVivianAnime)(void) {
     MarioWork* mario = marioGetPtr();
 
     marioPaperOff();
@@ -51,7 +55,7 @@ void N_marioForceVivianAnime(void) {
  * on entry it stops any jump or fall, zeroes his speed and timers and, in retail,
  * clears his wall and push collision; nothing runs on later frames.
  */
-void mot_vivian(void) {
+void PORT_HOOKABLE(mot_vivian)(void) {
     MarioWork* mario = marioGetPtr();
 
     if (mario->trigFlags & MARIO_TRIG_FLAG_IS_STARTING_NEW_MOTION) {
@@ -93,7 +97,7 @@ void L_partyVivianTailStart(PartyEntry* party);
  * pops both of them back out at once (paper off, offsets and walls restored, Vivian back to follow mode);
  * otherwise, while Veil is in use, it sets vivian_cancel_req so vivian_use starts rising out.
  */
-void mot_vivian_post(void) {
+void PORT_HOOKABLE(mot_vivian_post)(void) {
     PartyEntry* party = (PartyEntry*)partyGetPtr(marioGetPartyId());
     MarioWork* mario = marioGetPtr();
 
@@ -136,7 +140,7 @@ cancel:
 }
 
 /** Party table init for Vivian: 24 wide by 35 tall, flying follower, base shadow size 10, tail shown and no ripple. */
-void vivian_init(PartyEntry* party) {
+void PORT_HOOKABLE(vivian_init)(PartyEntry* party) {
     party->memberKind = PARTY_MEMBER_VIVIAN;
     party->moveKind = 1;
     party->height = 35.0f;
@@ -158,7 +162,7 @@ void vivian_init(PartyEntry* party) {
  * Mario's collision, item pickup, NPC contact and the event commands read it (1 to 3 skip several of Mario's hit
  * checks).
  */
-s32 vivianGetStatus(void) {
+s32 PORT_HOOKABLE(vivianGetStatus)(void) {
     PartyEntry* party = (PartyEntry*)partyGetPtr(marioGetPartyId());
     u8 st;
 
@@ -185,7 +189,7 @@ s32 vivianGetStatus(void) {
  * Ends a hidden Veil from code or a script (evt_party, evt_mario):
  * if Vivian is in the hidden state it starts the rise-out sequence.
  */
-void vivianUnhold(PartyEntry* party) {
+void PORT_HOOKABLE(vivianUnhold)(PartyEntry* party) {
     if (party == NULL || party->currentMemberId != PARTY_MEMBER_VIVIAN || !(party->flags & PARTY_FLAG_IS_BEING_USED)) {
         return;
     }
@@ -242,7 +246,7 @@ BOOL N_vivianDisplayTailCheck(PartyEntry* party) {
  * keeping it within VIVIAN_FOLLOW_DIST (30 units in the US and PAL releases, 22 before);
  * party.c draws her shadow tail to it.
  */
-void vivianShadow(PartyEntry* party) {
+void PORT_HOOKABLE(vivianShadow)(PartyEntry* party) {
     f32 dx, dy, dz;
 
 #if VERSION >= VERSION_JP
@@ -264,7 +268,7 @@ void vivianShadow(PartyEntry* party) {
 }
 
 /** Vivian's follow routine: the shared flying-partner movement plus her shadow-tail update. */
-void vivian_move(PartyEntry* party) {
+void PORT_HOOKABLE(vivian_move)(PartyEntry* party) {
     if (party->trigFlags & PARTY_TRIG_FLAG_CHG_RUN_MODE) {
         party->trigFlags &= ~PARTY_TRIG_FLAG_CHG_RUN_MODE;
         partyMoveFlyInit(party, 1);
@@ -295,7 +299,7 @@ static inline void vivianFollow(PartyEntry* party) {
  * then stay hidden riding the ground under Mario until B
  * or X (or vivian_cancel_req) brings them back up with a small hop.
  */
-void vivian_use(PartyEntry* party) {
+void PORT_HOOKABLE(vivian_use)(PartyEntry* party) {
     f32 gx, gy, gz;
     void* hit;
     void* rip;
@@ -612,7 +616,7 @@ static inline void vivianFollow(PartyEntry* party) {
  * then stay hidden, following the ground under Mario while he moves,
  * until B or X (or vivian_cancel_req) raises them back up with a small hop. vivianGetStatus reports the state.
  */
-void vivian_use(PartyEntry* party) {
+void PORT_HOOKABLE(vivian_use)(PartyEntry* party) {
     Vec s;
     void* rip;
     f32 d;
@@ -851,4 +855,8 @@ void vivian_use(PartyEntry* party) {
             break;
     }
 }
+#endif
+
+#ifdef PORT_MODS
+#include "port/hooks/src_party_party_vivian.inc"
 #endif

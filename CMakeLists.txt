@@ -651,7 +651,7 @@ if(TTYD_BACKEND STREQUAL "aurora" AND TTYD_RELS_STATIC)
     endforeach()
     set_property(SOURCE ${CMAKE_SOURCE_DIR}/libs/musyx/src/musyx/runtime/hw_pc.c TARGET_DIRECTORY musyx_pc
         APPEND PROPERTY COMPILE_DEFINITIONS TTYD_NO_SNAPSHOT=1)
-    foreach(_f anim_pc tpl_pc map_pc camroad_pc gx_arrays_pc snapshot_bounds_pc)
+    foreach(_f anim_pc tpl_pc map_pc camroad_pc gx_arrays_pc snapshot_bounds_pc luigi_pc)
         set_property(SOURCE ${CMAKE_SOURCE_DIR}/port/src/common/${_f}.c APPEND PROPERTY
             COMPILE_DEFINITIONS TTYD_SNAPSHOT_SECTION=1)
         set_property(SOURCE ${CMAKE_SOURCE_DIR}/port/src/common/${_f}.c APPEND PROPERTY COMPILE_OPTIONS -fno-common)
@@ -744,7 +744,7 @@ if(TTYD_WEB)
         --profiling-funcs)
 endif()
 if(WIN32)
-    target_link_libraries(ttyd PRIVATE dbghelp)
+    target_link_libraries(ttyd PRIVATE dbghelp ws2_32) # ws2_32: LiveSplit (port/src/common/livesplit_pc.c)
 endif()
 if(TTYD_BACKEND STREQUAL "aurora")
     target_link_libraries(ttyd PRIVATE aurora::core aurora::gx aurora::gd aurora::vi

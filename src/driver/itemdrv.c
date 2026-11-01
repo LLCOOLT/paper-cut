@@ -175,7 +175,7 @@ static inline void itemGetEnd(ItemEntry* entry) {
 void itemGetSound(ItemEntry* entry);
 
 /** Allocates the 32-entry field and battle item tables; called once at boot. */
-void itemInit(void) { // 1:1
+void PORT_HOOKABLE(itemInit)(void) { // 1:1
     ItemWork* wp;
 
     wp = &work[0];
@@ -195,7 +195,7 @@ void itemInit(void) { // 1:1
  * Clears the current item table on map change; on the field it first puts dropped badges
  * (ITEM_FLAG_BADGE_RETURN) on sale at the badge shop (itemCheckBadge).
  */
-void itemReInit(void) {
+void PORT_HOOKABLE(itemReInit)(void) {
     ItemWork* wp = itemGetWork();
     ItemEntry* entry;
     int i;
@@ -375,7 +375,7 @@ static BOOL itemGetNokoCheck(ItemEntry* entry) {
 }
 
 /** Returns TRUE while any item is in its get sequence (mode 2); NPC updates, shops and menus wait on it. */
-BOOL N_itemPickUpFromFieldCheck(void) {
+BOOL PORT_HOOKABLE(N_itemPickUpFromFieldCheck)(void) {
     ItemWork* wp = itemGetWork();
     ItemEntry* entry;
     int i;
@@ -398,7 +398,7 @@ typedef struct ItemEffPos {
  * resting on the floor (1), falling (3, 4), bouncing (5, 6, 10),
  * being collected (2) or carried by a partner (8); checks Mario touching items, queues drawing and shadows.
  */
-void itemMain(void) {
+void PORT_HOOKABLE(itemMain)(void) {
     ItemWork* wp = itemGetWork();
     MarioWork* mario;
     ItemEntry* entry;
@@ -575,7 +575,7 @@ void itemMain(void) {
 }
 
 /** Puts an item into mode (resting, collecting, falling, bouncing, carried, ...) and restarts that mode's sub-state. */
-void itemModeChange(ItemEntry* entry, s32 mode) {
+void PORT_HOOKABLE(itemModeChange)(ItemEntry* entry, s32 mode) {
     entry->mode = mode;
     entry->subState = 0;
 }
@@ -848,7 +848,7 @@ ItemEntry* PORT_HOOKABLE(itemEntry)(f32 x, f32 y, f32 z, const char* name, s32 i
  * Removes the named field item (and its name windows);
  * JP, US and PAL first put a dropped badge on sale at the badge shop (itemCheckBadge).
  */
-void itemDelete(const char* name) {
+void PORT_HOOKABLE(itemDelete)(const char* name) {
     ItemWork* wp = itemGetWork();
     ItemEntry* entry;
     int i;
@@ -878,7 +878,7 @@ void itemDelete(const char* name) {
 }
 
 /** Returns the field item with this name, or NULL. */
-ItemEntry* itemNameToPtr(char* name) {
+ItemEntry* PORT_HOOKABLE(itemNameToPtr)(char* name) {
     ItemWork* wp = itemGetWork();
     ItemEntry* entry;
     int i;
@@ -896,7 +896,7 @@ ItemEntry* itemNameToPtr(char* name) {
  * and not cut off from it by a wall (checked with a collision ray), or NULL;
  * evt_mobj uses it to see whether an item sits on a block.
  */
-ItemEntry* itemHitCheck(f32 x, f32 y, f32 z, f32 range) {
+ItemEntry* PORT_HOOKABLE(itemHitCheck)(f32 x, f32 y, f32 z, f32 range) {
     ItemWork* wp = itemGetWork();
     ItemEntry* entry;
     int i;
@@ -949,7 +949,7 @@ ItemEntry* itemHitCheck(f32 x, f32 y, f32 z, f32 range) {
  * Returns the nearest collectable item within range of (x, y, z), skipping items Koops's shell must ignore;
  * Ms. Mowz and evt_mobj use it.
  */
-ItemEntry* itemNearDistCheck(f32 x, f32 y, f32 z, f32 range) {
+ItemEntry* PORT_HOOKABLE(itemNearDistCheck)(f32 x, f32 y, f32 z, f32 range) {
     MarioWork* mario = marioGetPtr();
     ItemWork* wp = itemGetWork();
     ItemEntry* entry;
@@ -2149,7 +2149,7 @@ static void itemseq_Bound(ItemEntry* entry) {
 }
 
 /** Moves an item to (x, y, z). */
-void itemSetPosition(ItemEntry* entry, f32 x, f32 y, f32 z) {
+void PORT_HOOKABLE(itemSetPosition)(ItemEntry* entry, f32 x, f32 y, f32 z) {
     entry->position.x = x;
     entry->position.y = y;
     entry->position.z = z;
@@ -2281,7 +2281,7 @@ itemHitCheckUp(ItemEntry* entry, f32 vy) {
  * Starts the get sequence for an item at once (collected by a script or partner),
  * without waiting for Mario's get motion.
  */
-void itemForceGet(ItemEntry* entry) {
+void PORT_HOOKABLE(itemForceGet)(ItemEntry* entry) {
     entry->timer = 0;
     itemModeChange(entry, 2);
     entry->flags |= ITEM_FLAG_FORCE_GET;
@@ -2292,7 +2292,7 @@ void itemForceGet(ItemEntry* entry) {
  * Koops's shell has fetched the item: starts the get sequence if Mario may collect now,
  * else drops the item back to rest where it is.
  */
-void itemNokoForceGet(ItemEntry* entry) {
+void PORT_HOOKABLE(itemNokoForceGet)(ItemEntry* entry) {
     if (itemGetNokoCheck(entry)) {
         entry->timer = 0;
         itemModeChange(entry, 2);
@@ -2309,32 +2309,32 @@ void itemNokoForceGet(ItemEntry* entry) {
 }
 
 /** Sets ITEM_FLAG_* bits on an item. */
-void itemFlagOn(ItemEntry* entry, u16 flags) {
+void PORT_HOOKABLE(itemFlagOn)(ItemEntry* entry, u16 flags) {
     entry->flags |= flags;
 }
 
 /** Clears ITEM_FLAG_* bits on an item. */
-void itemFlagOff(ItemEntry* entry, u16 flags) {
+void PORT_HOOKABLE(itemFlagOff)(ItemEntry* entry, u16 flags) {
     entry->flags &= ~flags;
 }
 
 /** Returns which of the given ITEM_FLAG_* bits are set on an item. */
-u16 itemFlag(ItemEntry* entry, u16 flags) {
+u16 PORT_HOOKABLE(itemFlag)(ItemEntry* entry, u16 flags) {
     return entry->flags & flags;
 }
 
 /** Sets ITEM_STATUS_* bits on an item. */
-void itemStatusOn(ItemEntry* entry, u32 flags) {
+void PORT_HOOKABLE(itemStatusOn)(ItemEntry* entry, u32 flags) {
     entry->status |= flags;
 }
 
 /** Returns which of the given ITEM_STATUS_* bits are set on an item. */
-u32 itemStatus(ItemEntry* entry, u32 flags) {
+u32 PORT_HOOKABLE(itemStatus)(ItemEntry* entry, u32 flags) {
     return entry->status & flags;
 }
 
 /** A partner picks up the item and carries it (mode 8, following above the partner); it stops blinking. */
-void itemPickUp(ItemEntry* entry) {
+void PORT_HOOKABLE(itemPickUp)(ItemEntry* entry) {
     entry->status |= ITEM_STATUS_PARTY_HOLD;
     itemModeChange(entry, 8);
     entry->timer = 0;

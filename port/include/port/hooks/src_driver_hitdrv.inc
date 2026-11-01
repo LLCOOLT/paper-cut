@@ -6,6 +6,7 @@ HitEntry * hitCheckVecFilter(HitCheckQuery * p0, HitFilterCallback p1) {
     PortHookSlot* s = &portHookSlots[53];
     HitEntry * r;
     int i, skip = 0;
+    PORT_HOOK_COUNT_CALL(s);
     if (!s->active) {
         return hitCheckVecFilter__body(p0, p1);
     }

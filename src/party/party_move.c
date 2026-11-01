@@ -1,4 +1,5 @@
 // Partner movement: the footmark trail behind Mario, target speed and direction, walking and the move modes.
+#include "port_hook.h"
 #include "party.h"
 #include "pc_call.h"
 #include "driver/camdrv.h"
@@ -29,6 +30,9 @@
 #include "mario/mariost.h"
 #include "mario/mario_hit.h"
 #include "version.h"
+#ifdef PORT_MODS
+#include "port/hooks/src_party_party_move.h"
+#endif
 
 static void walkMain(PartyEntry* party);
 // FAKE: party_move.c calls partySearchHead through this prototype (the types it was compiled with) instead of the one in party/party_hit.h; same registers, behaviour-identical.
@@ -110,22 +114,22 @@ static const char* objNames[] = {
  * The footmark at the read position of trail id (0 = the trail the partner follows, 1 = the follower's trail);
  * party_motion.c steers toward it.
  */
-PartyFootmark* partyGetFootmarkPtr(s32 id) {
+PartyFootmark* PORT_HOOKABLE(partyGetFootmarkPtr)(s32 id) {
     return &footmarkBuf[id][readId[id]];
 }
 
 /** Read position (0-79) of footmark trail id. */
-s32 partyGetFootmarkReadId(s32 id) {
+s32 PORT_HOOKABLE(partyGetFootmarkReadId)(s32 id) {
     return readId[id];
 }
 
 /** Write position (0-79) of footmark trail id, the newest mark; read == write means the trail is used up. */
-s32 partyGetFootmarkWriteId(s32 id) {
+s32 PORT_HOOKABLE(partyGetFootmarkWriteId)(s32 id) {
     return writeId[id];
 }
 
 /** Which footmark trail this party entry follows: 1 for a PARTY_FLAG_IS_FOLLOWER entry, else 0. */
-s32 partyGetFootmarkId(PartyEntry* party) {
+s32 PORT_HOOKABLE(partyGetFootmarkId)(PartyEntry* party) {
     return (party->flags >> 2) & 1;
 }
 
@@ -148,7 +152,7 @@ static inline void partyTargetPos(PartyEntry* other, BOOL far, Vec* pos) {
  * Demo: direction in degrees from (x, z) to what trail id chases: Mario for trail 0;
  * for trail 1 the partner in slot 0, or Mario while Koops's nokonokoGetStatus is 3.
  */
-f32 partyGetTargetDir(s32 id, f32 x, f32 z) {
+f32 PORT_HOOKABLE(partyGetTargetDir)(s32 id, f32 x, f32 z) {
     MarioWork* mario;
     PartyEntry* other;
     BOOL far;
@@ -173,7 +177,7 @@ f32 partyGetTargetDir(s32 id, f32 x, f32 z) {
  * Demo: horizontal distance from (x, z) to what trail id chases (Mario, or the slot 0 partner for trail 1;
  * Mario while Koops's nokonokoGetStatus is 3).
  */
-f32 partyGetTargetDist(s32 id, f32 x, f32 z) {
+f32 PORT_HOOKABLE(partyGetTargetDist)(s32 id, f32 x, f32 z) {
     MarioWork* mario;
     PartyEntry* other;
     BOOL far;
@@ -195,7 +199,7 @@ f32 partyGetTargetDist(s32 id, f32 x, f32 z) {
 }
 
 /** Demo: 3D distance from p to what trail id chases, picked as in partyGetTargetDir. */
-f32 partyGetTargetDist3D(s32 id, Vec* p) {
+f32 PORT_HOOKABLE(partyGetTargetDist3D)(s32 id, Vec* p) {
     PartyEntry* other;
     BOOL far;
     Vec pos;
@@ -215,7 +219,7 @@ f32 partyGetTargetDist3D(s32 id, Vec* p) {
 }
 
 /** Demo: vertical distance from height y to what trail id chases, picked as in partyGetTargetDir. */
-f32 partyGetTargetDistY(s32 id, f32 y) {
+f32 PORT_HOOKABLE(partyGetTargetDistY)(s32 id, f32 y) {
     PartyEntry* other;
     BOOL far;
     Vec pos;
@@ -240,7 +244,7 @@ f32 partyGetTargetDistY(s32 id, f32 y) {
  * it is Mario's walk speed (baseSpeed, else baseDashSpeed);
  * otherwise the active partner's moveSpeed unless Koops's nokonokoGetStatus is 3.
  */
-f32 partyGetTargetMovespd2(PartyEntry* party) {
+f32 PORT_HOOKABLE(partyGetTargetMovespd2)(PartyEntry* party) {
     MarioWork* mario = party->playerPtr;
     BOOL far;
     PartyEntry* other;
@@ -277,7 +281,7 @@ f32 partyGetTargetMovespd2(PartyEntry* party) {
  * Demo: moves trail id's read position on by one,
  * wrapping at 80 (unlike the later versions it can pass the write position).
  */
-void partyNextReadId(s32 id) {
+void PORT_HOOKABLE(partyNextReadId)(s32 id) {
     readId[id]++;
     if (readId[id] >= 80) {
         readId[id] = 0;
@@ -285,7 +289,7 @@ void partyNextReadId(s32 id) {
 }
 
 /** Copies the position of the footmark at trail id's read position into x, y, z. */
-void partyGetReadId(s32 id, f32* x, f32* y, f32* z) {
+void PORT_HOOKABLE(partyGetReadId)(s32 id, f32* x, f32* y, f32* z) {
     PartyFootmark* fm = &footmarkBuf[id][readId[id]];
     *x = fm->pos.x;
     *y = fm->pos.y;
@@ -293,7 +297,7 @@ void partyGetReadId(s32 id, f32* x, f32* y, f32* z) {
 }
 
 /** Copies the position of the footmark at trail id's read position into pos. */
-void partyGetReadId2(s32 id, Vec* pos) {
+void PORT_HOOKABLE(partyGetReadId2)(s32 id, Vec* pos) {
     PartyFootmark* fm = &footmarkBuf[id][readId[id]];
     pos->x = fm->pos.x;
     pos->y = fm->pos.y;
@@ -301,7 +305,7 @@ void partyGetReadId2(s32 id, Vec* pos) {
 }
 
 /* both footmark lists restart: list 0 at Mario, list 1 at the active partner (or Mario) */
-void partyClearFootmark(void) {
+void PORT_HOOKABLE(partyClearFootmark)(void) {
     Vec mpos = marioGetPtr()->position;
     PartyEntry* other = partyGetPtr(marioGetPartyId());
     Vec ppos = *(other ? &other->position : &mpos);
@@ -324,7 +328,7 @@ void partyClearFootmark(void) {
 }
 
 /** Demo: restarts both footmark trails at Mario's position (the active partner is looked up but not used). */
-void partyClearFootmark2(void) {
+void PORT_HOOKABLE(partyClearFootmark2)(void) {
     Vec pos = marioGetPtr()->position;
     PartyEntry* other = partyGetPtr(marioGetPartyId());
     PartyFootmark* a = footmarkBuf[0];
@@ -406,7 +410,7 @@ static inline BOOL partyChkOtherFlag(PartyEntry* other) {
  * The slot 0 entry tracks Mario; the other tracks the active partner,
  * or Mario while Koops's nokonokoGetStatus is 3; switching between the two restarts the trail (footmarkMode).
  */
-void partyRecordFootmark(PartyEntry* party) {
+void PORT_HOOKABLE(partyRecordFootmark)(PartyEntry* party) {
     u32 flags = 0;
     PartyEntry* other;
     BOOL far;
@@ -484,7 +488,7 @@ static inline void getTargetPos(s32 id, Vec* pos) {
 }
 
 /** Out-of-line copy of getTargetPos; party_motion.c calls it to get the point trail id is chasing. */
-void L_getTargetPos(s32 id, Vec* pos) {
+void PORT_HOOKABLE(L_getTargetPos)(s32 id, Vec* pos) {
     MarioWork* mario2;
     MarioWork* mario;
     PartyEntry* other;
@@ -519,7 +523,7 @@ void L_getTargetPos(s32 id, Vec* pos) {
  * Direction in degrees from (x, z) to what trail id chases (getTargetPos).
  * It has no id 0 shortcut like its siblings, so it also checks the other entry for trail 0.
  */
-f32 partyGetTargetDir(s32 id, f32 x, f32 z) {
+f32 PORT_HOOKABLE(partyGetTargetDir)(s32 id, f32 x, f32 z) {
     MarioWork* mario = marioGetPtr();
     BOOL far = FALSE;
     PartyEntry* other = anotherPartyGetPtr(id != 0);
@@ -543,7 +547,7 @@ f32 partyGetTargetDir(s32 id, f32 x, f32 z) {
  * Mario for trail 0, else the other party member
  * when it is within 150 units of Mario (and Koops's nokonokoGetStatus is not 3).
  */
-f32 partyGetTargetDist(s32 id, f32 x, f32 z) {
+f32 PORT_HOOKABLE(partyGetTargetDist)(s32 id, f32 x, f32 z) {
     MarioWork* mario = marioGetPtr();
     BOOL far = FALSE;
     PartyEntry* other = anotherPartyGetPtr(id != 0);
@@ -566,7 +570,7 @@ f32 partyGetTargetDist(s32 id, f32 x, f32 z) {
 }
 
 /** 3D distance from p to what trail id chases, picked as in partyGetTargetDist. */
-f32 partyGetTargetDist3D(s32 id, Vec* p) {
+f32 PORT_HOOKABLE(partyGetTargetDist3D)(s32 id, Vec* p) {
     MarioWork* mario = marioGetPtr();
     BOOL far = FALSE;
     PartyEntry* other = anotherPartyGetPtr(id != 0);
@@ -589,7 +593,7 @@ f32 partyGetTargetDist3D(s32 id, Vec* p) {
 }
 
 /** Vertical distance from height y to what trail id chases, picked as in partyGetTargetDist. */
-f32 partyGetTargetDistY(s32 id, f32 y) {
+f32 PORT_HOOKABLE(partyGetTargetDistY)(s32 id, f32 y) {
     MarioWork* mario = marioGetPtr();
     BOOL far = FALSE;
     PartyEntry* other = anotherPartyGetPtr(id != 0);
@@ -615,7 +619,7 @@ f32 partyGetTargetDistY(s32 id, f32 y) {
  * The speed trail id should move at: Mario's walk speed (baseSpeed, else baseDashSpeed) for trail 0 or
  * when the other party member is away, else that member's moveSpeed.
  */
-f32 partyGetTargetMovespd(s32 id) {
+f32 PORT_HOOKABLE(partyGetTargetMovespd)(s32 id) {
     MarioWork* mario = marioGetPtr();
     BOOL far;
     PartyEntry* other;
@@ -650,7 +654,7 @@ f32 partyGetTargetMovespd(s32 id) {
  * it is Mario's walk speed (baseSpeed, else baseDashSpeed);
  * otherwise the active partner's moveSpeed while it is within 150 units of Mario.
  */
-f32 partyGetTargetMovespd2(PartyEntry* party) {
+f32 PORT_HOOKABLE(partyGetTargetMovespd2)(PartyEntry* party) {
     MarioWork* mario = party->playerPtr;
     BOOL far;
     PartyEntry* other;
@@ -687,7 +691,7 @@ f32 partyGetTargetMovespd2(PartyEntry* party) {
 }
 
 /** Moves trail id's read position on by one, wrapping at 80; it stops at the write position, the newest mark. */
-void partyNextReadId(s32 id) {
+void PORT_HOOKABLE(partyNextReadId)(s32 id) {
     if (readId[id] != writeId[id]) {
         readId[id]++;
         if (readId[id] >= 80) {
@@ -697,7 +701,7 @@ void partyNextReadId(s32 id) {
 }
 
 /** Copies the position of the footmark at trail id's read position into x, y, z. */
-void partyGetReadId(s32 id, f32* x, f32* y, f32* z) {
+void PORT_HOOKABLE(partyGetReadId)(s32 id, f32* x, f32* y, f32* z) {
     PartyFootmark* fm = &footmarkBuf[id][readId[id]];
     *x = fm->pos.x;
     *y = fm->pos.y;
@@ -705,7 +709,7 @@ void partyGetReadId(s32 id, f32* x, f32* y, f32* z) {
 }
 
 /** Copies the position of the footmark at trail id's read position into pos. */
-void partyGetReadId2(s32 id, Vec* pos) {
+void PORT_HOOKABLE(partyGetReadId2)(s32 id, Vec* pos) {
     PartyFootmark* fm = &footmarkBuf[id][readId[id]];
     pos->x = fm->pos.x;
     pos->y = fm->pos.y;
@@ -713,7 +717,7 @@ void partyGetReadId2(s32 id, Vec* pos) {
 }
 
 /** Restarts footmark trail 0 (the one the partner follows) at Mario's position. */
-void partyClearFootmark(void) {
+void PORT_HOOKABLE(partyClearFootmark)(void) {
     Vec pos = marioGetPtr()->position;
     u32 i;
 
@@ -729,7 +733,7 @@ void partyClearFootmark(void) {
  * Restarts footmark trail 1 (the follower's) at the active partner's position,
  * or Mario's when there is no partner, it is over 150 units from Mario or Koops's nokonokoGetStatus is 3.
  */
-void partyClearFootmark2(void) {
+void PORT_HOOKABLE(partyClearFootmark2)(void) {
     MarioWork* mario = marioGetPtr();
     PartyEntry* other = partyGetPtr(marioGetPartyId());
     Vec pos;
@@ -818,7 +822,7 @@ static inline BOOL partyChkOtherFlag(PartyEntry* other) {
  * while it is within 150 units of Mario (else Mario);
  * switching between the two restarts the trail (footmarkMode).
  */
-void partyRecordFootmark(PartyEntry* party) {
+void PORT_HOOKABLE(partyRecordFootmark)(PartyEntry* party) {
     MarioWork* mario = party->playerPtr;
     u32 flags = 0;
     PartyEntry* other;
@@ -870,7 +874,7 @@ void partyRecordFootmark(PartyEntry* party) {
  * Ends any jump, fall or step: clears those flags and zeroes vertical speed, acceleration and gravity.
  * Used by party.c and Koops.
  */
-void partyClearJumpPara(PartyEntry* party) {
+void PORT_HOOKABLE(partyClearJumpPara)(PartyEntry* party) {
     party->flags &= ~(PARTY_FLAG_IS_JUMPING | PARTY_FLAG_IS_FALLING | PARTY_FLAG_IS_STEPPING);
     party->velY = 0.0f;
     party->accelY = 0.0f;
@@ -956,7 +960,7 @@ static inline f32 partyChkUpdSpd(PartyEntry* party) {
 }
 
 /** Sets the speed the partner eases toward (0 = stop) and, when nonzero, takes one easing step at once. Returns spd. */
-f32 partySetTargetSpd(PartyEntry* party, f32 spd) {
+f32 PORT_HOOKABLE(partySetTargetSpd)(PartyEntry* party, f32 spd) {
     if (spd) {
         party->targetSpeed = spd;
         partyChkUpdSpd(party);
@@ -972,7 +976,7 @@ f32 partySetTargetSpd(PartyEntry* party, f32 spd) {
  * Sets both targetSpeed and moveSpeed at once to spd scaled by Mario's playerGravity (0.75 in shallow water),
  * with no easing. Returns spd.
  */
-f32 partyForceSetSpd(PartyEntry* party, f32 spd) {
+f32 PORT_HOOKABLE(partyForceSetSpd)(PartyEntry* party, f32 spd) {
     f32 t = spd * party->playerPtr->playerGravity;
     party->targetSpeed = t * partySpdRate(party);
     party->moveSpeed = party->targetSpeed;
@@ -983,7 +987,7 @@ f32 partyForceSetSpd(PartyEntry* party, f32 spd) {
  * One speed-easing step for this frame (partyUpdSpd) unless the partner is forced to move or is jumping,
  * falling or climbing a step; returns moveSpeed. Koops and Ms. Mowz call it from their walks.
  */
-f32 partyUpdMoveSpd(PartyEntry* party) {
+f32 PORT_HOOKABLE(partyUpdMoveSpd)(PartyEntry* party) {
     if (party->forceMoveFrames != 0 || party->motionId == 2 || party->motionId == 3 || party->motionId == 6) {
         return party->moveSpeed;
     }
@@ -991,7 +995,7 @@ f32 partyUpdMoveSpd(PartyEntry* party) {
 }
 
 /** Plays the partner landing sound (0x928) at the partner, when a jump or fall ends (party_motion.c). */
-void N_partyPlaySfxPartyLanding1(PartyEntry* party) {
+void PORT_HOOKABLE(N_partyPlaySfxPartyLanding1)(PartyEntry* party) {
     psndSFXOn_3D((const char*)0x928, &party->position);
 }
 
@@ -1065,7 +1069,7 @@ void partyWalkSe(PartyEntry* party, s32 arg) {
  * or PARTY_FLAG_SLEEP_ON is set. Ms. Mowz keeps her pose while chuchu_searchObject finds something to sniff out.
  * Does nothing in run mode 0.
  */
-void partyChgStayPose(PartyEntry* party) {
+void PORT_HOOKABLE(partyChgStayPose)(PartyEntry* party) {
     if (party->runMode != 0) {
         if (marioChkDeepSleep() == TRUE || (party->flags & PARTY_FLAG_SLEEP_ON)) {
             partyChgPoseId(party, 6);
@@ -1081,7 +1085,7 @@ void partyChgStayPose(PartyEntry* party) {
  * Picks the walk (pose 2) or run (pose 3) animation from speed spd and plays the matching footsteps;
  * the cutoffs are higher when Mario's playerGravity is not 1. In a paper slit the partner always runs.
  */
-void partyMoveAnime(PartyEntry* party, f32 spd) {
+void PORT_HOOKABLE(partyMoveAnime)(PartyEntry* party, f32 spd) {
     f32 g;
     f32 a;
     f32 b;
@@ -1115,7 +1119,7 @@ void partyMoveAnime(PartyEntry* party, f32 spd) {
  * displayDirectionTarget 180 when Mario is on its left in the camera's view, else 0.
  * Used by evt_mario.c and party_motion.c.
  */
-void partySetDispDirToMario(PartyEntry* party) {
+void PORT_HOOKABLE(partySetDispDirToMario)(PartyEntry* party) {
     f32 dir = angleABf(party->position.x, party->position.z,
                        party->playerPtr->position.x, party->playerPtr->position.z);
     f32 a = revise360(camGetPtr(CAMERA_3D)->viewYaw + 270.0f - dir);
@@ -1130,7 +1134,7 @@ void partySetDispDirToMario(PartyEntry* party) {
  * TRUE when hit belongs to a map object a partner must not stand on (the objNames list: chests, jump stands,
  * Save and Heart Blocks, switches). party_motion.c then hops the partner off it (partyGetAppearPos5).
  */
-BOOL partyChkNoStandMobj(HitEntry* hit) {
+BOOL PORT_HOOKABLE(partyChkNoStandMobj)(HitEntry* hit) {
     MapObjectEntry* mobj;
     BOOL ret;
     const char** names;
@@ -1159,7 +1163,7 @@ BOOL partyChkNoStandMobj(HitEntry* hit) {
  * One frame of movement with corrections: the speed
  * and direction come from partyGetMoveDirSpd (push away from Mario, moving floors).
  */
-void partyMove(PartyEntry* party) {
+void PORT_HOOKABLE(partyMove)(PartyEntry* party) {
     partyMoveMain(party, 1);
 }
 
@@ -1167,7 +1171,7 @@ void partyMove(PartyEntry* party) {
  * One frame of movement straight along targetDir at moveSpeed, without the push and floor corrections.
  * Used by party.c, Koops and Bobbery.
  */
-void partyMoveNoHosei(PartyEntry* party) {
+void PORT_HOOKABLE(partyMoveNoHosei)(PartyEntry* party) {
     partyMoveMain(party, 0);
 }
 
@@ -1309,7 +1313,7 @@ static s32 partyMoveMain(PartyEntry* party, s32 hosei) {
  * Switches the move mode (0 stay, 1 walk, 2 behind Mario, 3 beside Mario, 6 behind Mario continued)
  * and raises PARTY_TRIG_FLAG_CHG_MOVE_MODE so the new mode initialises; leaving mode 6 clears flag 0x8000.
  */
-void partyChgMoveMode(PartyEntry* party, s32 mode) {
+void PORT_HOOKABLE(partyChgMoveMode)(PartyEntry* party, s32 mode) {
     // The self-copy in case 4/5 keeps the arm alive through switch lowering
     // (the target's cmpwi 4; bge range check) and then coalesces to nothing.
     PartyEntry* p = party;
@@ -1331,7 +1335,7 @@ void partyChgMoveMode(PartyEntry* party, s32 mode) {
  * Switches the motion (0 stand, 1 move, 2 jump, 3 fall, 6 step, 7 damage) and raises PARTY_TRIG_FLAG_CHG_MOT.
  * JP, US and PAL also end the jump and wall/floor overrides when leaving a fall.
  */
-void partyChgMot(PartyEntry* party, s32 mot) {
+void PORT_HOOKABLE(partyChgMot)(PartyEntry* party, s32 mot) {
 #if VERSION >= VERSION_JP
     if (party->motionId == 3) {
         party->flags &= ~(PARTY_FLAG_IS_JUMPING | PARTY_FLAG_IS_FALLING | PARTY_FLAG_IS_STEPPING);
@@ -1344,7 +1348,7 @@ void partyChgMot(PartyEntry* party, s32 mot) {
 }
 
 /** Turns targetDir toward the point (x, z). */
-void partySetDir(PartyEntry* party, f32 x, f32 z) {
+void PORT_HOOKABLE(partySetDir)(PartyEntry* party, f32 x, f32 z) {
     party->targetDir = angleABf(party->position.x, party->position.z, x, z);
 }
 
@@ -1352,7 +1356,7 @@ void partySetDir(PartyEntry* party, f32 x, f32 z) {
  * Sends the partner to its spot behind Mario (move mode 2). arg goes to moveArg.
  * Ignored while Yoshi is in run mode 3 (being used).
  */
-void partyMoveBehindMario(PartyEntry* party, s32 arg) {
+void PORT_HOOKABLE(partyMoveBehindMario)(PartyEntry* party, s32 arg) {
     if (party->currentMemberId == PARTY_MEMBER_YOSHI && party->runMode == 3) {
         return;
     }
@@ -1368,9 +1372,9 @@ void partyMoveBehindMario(PartyEntry* party, s32 arg) {
 /* GameCube: the caller's dir (f1) passes through untouched to
  * party_set_behind_dir; the PC port spells the float parameter out. */
 #ifdef TARGET_PC
-void partyMoveBehindMario3(PartyEntry* party, s32 arg, f32 dir) {
+void PORT_HOOKABLE(partyMoveBehindMario3)(PartyEntry* party, s32 arg, f32 dir) {
 #else
-void partyMoveBehindMario3(PartyEntry* party, s32 arg) {
+void PORT_HOOKABLE(partyMoveBehindMario3)(PartyEntry* party, s32 arg) {
 #endif
     if (party->currentMemberId == PARTY_MEMBER_YOSHI && party->runMode == 3) {
         return;
@@ -1389,7 +1393,7 @@ void partyMoveBehindMario3(PartyEntry* party, s32 arg) {
  * Sends the partner to its spot beside Mario (move mode 3), from evt_party.c. arg goes to moveArg.
  * Ignored while Yoshi is in run mode 3.
  */
-void partyMoveBesideMario(PartyEntry* party, s32 arg) {
+void PORT_HOOKABLE(partyMoveBesideMario)(PartyEntry* party, s32 arg) {
     if (party->currentMemberId == PARTY_MEMBER_YOSHI && party->runMode == 3) {
         return;
     }
@@ -1402,7 +1406,7 @@ void partyMoveBesideMario(PartyEntry* party, s32 arg) {
  * Wall and floor check for a frame where the partner is moved some other way (party_motion.c's behind-Mario
  * motions): stops it at walls and lets it fall when there is no floor within 10 units.
  */
-void partyMoveCheckWall(PartyEntry* party) {
+void PORT_HOOKABLE(partyMoveCheckWall)(PartyEntry* party) {
     f32 spd;
     f32 dir;
     Vec pos;
@@ -1448,7 +1452,7 @@ void partyMoveCheckWall(PartyEntry* party) {
  * and after 30 frames of pushing it sends the partner behind Mario.
  * JP, US and PAL ignore the push during door walks.
  */
-void partyGetMoveDirSpd(PartyEntry* party, f32* dir, f32* spd) {
+void PORT_HOOKABLE(partyGetMoveDirSpd)(PartyEntry* party, f32* dir, f32* spd) {
     MarioWork* mario = party->playerPtr;
     s32 hosei;
     BOOL far;
@@ -1510,7 +1514,7 @@ void partyGetMoveDirSpd(PartyEntry* party, f32* dir, f32* spd) {
  * or while Mario pushes) it sets pushVelX/Z to move it away, sideways if Mario walks straight at it.
  * Returns pushCount, frames pushed while Mario moves (max 100).
  */
-s32 partyMarioHosei(PartyEntry* party) {
+s32 PORT_HOOKABLE(partyMarioHosei)(PartyEntry* party) {
     MarioWork* mario = party->playerPtr;
     f32 kx;
     f32 kz;
@@ -1591,7 +1595,7 @@ s32 partyMarioHosei(PartyEntry* party) {
  * so only the push from Mario and moving floors count.
  * Used for a standing partner (party.c in the demo, party_motion.c).
  */
-void partyChkWall(PartyEntry* party) {
+void PORT_HOOKABLE(partyChkWall)(PartyEntry* party) {
     f32 spd;
     f32 dir;
     Vec pos;
@@ -1651,7 +1655,7 @@ void party_move_mode_wait(PartyEntry* party) {
  * then stand pose, move mode 1 and motion 0 unless Mario has partner walking disabled.
  * The PAL release also ends any jump.
  */
-void partyWalkInit(PartyEntry* party) {
+void PORT_HOOKABLE(partyWalkInit)(PartyEntry* party) {
     u8* p114;
     MarioWork* mario = party->playerPtr;
 
@@ -1692,7 +1696,7 @@ void partyWalkInit(PartyEntry* party) {
  * move_func of the walking partners (partyDataTbl):
  * reinitialises on a run-mode change, eases the speed (JP, US and PAL), then runs partyWalkMain.
  */
-void partyMoveWalk(PartyEntry* party) {
+void PORT_HOOKABLE(partyMoveWalk)(PartyEntry* party) {
     if (party->trigFlags & PARTY_TRIG_FLAG_CHG_RUN_MODE) {
         party->trigFlags &= ~PARTY_TRIG_FLAG_CHG_RUN_MODE;
         party->flags &= ~PARTY_FLAG_IS_BEING_USED;
@@ -1731,7 +1735,7 @@ void partyMoveWalk(PartyEntry* party) {
  * One walking frame: lays this frame's footmark (Mario for the slot 0 entry; the other entry for slot 1,
  * or Mario when it is Bobbery in use, Koops's status 3 or far away) and runs the move mode.
  */
-void partyWalkMain(PartyEntry* party) {
+void PORT_HOOKABLE(partyWalkMain)(PartyEntry* party) {
     PartyEntry* other;
     u32 flags = 0;
 #if VERSION >= VERSION_JP
@@ -1783,7 +1787,7 @@ void partyWalkMain(PartyEntry* party) {
  * Move mode 0: the partner stays where it is (stand motion, falls; JP,
  * US and PAL also run Flurrie's hover and end other motions).
  */
-void party_move_mode_stay(PartyEntry* party) {
+void PORT_HOOKABLE(party_move_mode_stay)(PartyEntry* party) {
     if (party->trigFlags & PARTY_TRIG_FLAG_CHG_MOVE_MODE) {
         party->trigFlags &= ~PARTY_TRIG_FLAG_CHG_MOVE_MODE;
         partyChgPoseId(party, 1);
@@ -1820,7 +1824,7 @@ void party_move_mode_stay(PartyEntry* party) {
  * Move mode 1: the partner follows its footmark trail (walking or flying homing motion), with jump, fall,
  * step and damage motions.
  */
-void party_move_mode_walk(PartyEntry* party) {
+void PORT_HOOKABLE(party_move_mode_walk)(PartyEntry* party) {
     if (party->trigFlags & PARTY_TRIG_FLAG_CHG_MOVE_MODE) {
         party->trigFlags &= ~PARTY_TRIG_FLAG_CHG_MOVE_MODE;
     }
@@ -1855,7 +1859,7 @@ void party_move_mode_walk(PartyEntry* party) {
  * Move mode 2: the partner heads for its spot behind Mario (walking or flying), with jump, fall,
  * step and damage motions.
  */
-void party_move_mode_behind_mario(PartyEntry* party) {
+void PORT_HOOKABLE(party_move_mode_behind_mario)(PartyEntry* party) {
     if (party->trigFlags & PARTY_TRIG_FLAG_CHG_MOVE_MODE) {
         party->trigFlags &= ~PARTY_TRIG_FLAG_CHG_MOVE_MODE;
     }
@@ -1885,7 +1889,7 @@ void party_move_mode_behind_mario(PartyEntry* party) {
 }
 
 /** Move mode 3: the partner heads for its spot beside Mario, with jump, fall, step and damage motions. */
-void party_move_mode_beside_mario(PartyEntry* party) {
+void PORT_HOOKABLE(party_move_mode_beside_mario)(PartyEntry* party) {
     if (party->trigFlags & PARTY_TRIG_FLAG_CHG_MOVE_MODE) {
         party->trigFlags &= ~PARTY_TRIG_FLAG_CHG_MOVE_MODE;
     }
@@ -2014,7 +2018,7 @@ void partyForceWalk(PartyEntry* party) {
  * Readies a flying partner (Flurrie, Vivian): grounded, footmark trail restarted; arg picks moveArg 0 or 2.
  * In move mode 2 it only resets the homing distance. Ends in the stand pose, move mode 1, motion 0.
  */
-void partyMoveFlyInit(PartyEntry* party, s32 arg) {
+void PORT_HOOKABLE(partyMoveFlyInit)(PartyEntry* party, s32 arg) {
     MarioWork* mario = marioGetPtr();
 
     party->flags |= PARTY_FLAG_IS_GROUNDED;
@@ -2053,7 +2057,7 @@ void partyMoveFlyInit(PartyEntry* party, s32 arg) {
  * One flying frame for Flurrie and Vivian: lays this frame's footmark and runs the move mode.
  * For slot 1 it follows the slot 0 entry, falling back to Mario on trail 0.
  */
-void partyFlyMain(PartyEntry* party) {
+void PORT_HOOKABLE(partyFlyMain)(PartyEntry* party) {
     u32 flags;
     PartyEntry* p;
 
@@ -2192,7 +2196,7 @@ static inline void partyAppearMoveBack(Vec* out, f32 d, f32 ang) {
  * members), else to his sides or front, the first spot with no wall in the way and floor within 100 units below.
  * Returns FALSE if none; out starts at Mario's position. On the plane it keeps Mario's position.
  */
-BOOL partyGetAppearPos(PartyEntry* party, Vec* out) {
+BOOL PORT_HOOKABLE(partyGetAppearPos)(PartyEntry* party, Vec* out) {
     HitCheckQuery query;
     f32 s;
     f32 c;
@@ -2467,7 +2471,7 @@ BOOL partyGetAppearPos2(PartyEntry* party, Vec* out) {
  * If every spot has an NPC it takes the one farthest from it.
  * Used by Goombella, Ms. Mowz and party_motion.c to put the partner back by Mario.
  */
-BOOL partyGetAppearPos3(PartyEntry* party, Vec* out) {
+BOOL PORT_HOOKABLE(partyGetAppearPos3)(PartyEntry* party, Vec* out) {
     HitCheckQuery query;
     s32 angles[9] = {45, 135, -135, 315, -315, 180, -180, 90, -90};
     f32 s;
@@ -2559,7 +2563,7 @@ static inline void partyAppearAdjustY(PartyEntry* party, MarioWork* mario, Vec* 
  * or from the other party member, in direction homeDir, else fanned around it;
  * door walks in Twilight Town's usu_00 use their own fan. Falls back to partyGetAppearPos and returns FALSE.
  */
-BOOL partyGetAppearPos4(PartyEntry* party, Vec* out) {
+BOOL PORT_HOOKABLE(partyGetAppearPos4)(PartyEntry* party, Vec* out) {
     PartyEntry* other = NULL;
     MarioWork* mario = party->playerPtr;
     HitCheckQuery query;
@@ -2683,7 +2687,7 @@ static void partyMoveStrippedPool(f32* f) {
  * Tries 12 directions from targetDir around the object and takes the first with no wall within 50 units
  * and no hazard-water floor (0x200) 50 units out. Returns FALSE when there is none.
  */
-BOOL partyGetAppearPos5(PartyEntry* party, HitEntry* hit, Vec* out) {
+BOOL PORT_HOOKABLE(partyGetAppearPos5)(PartyEntry* party, HitEntry* hit, Vec* out) {
     s32 angles[12] = {0, 30, -30, 60, -60, 90, -90, 120, -120, 150, -150, 180};
     Vec pos;
     Vec dir;
@@ -2740,4 +2744,8 @@ BOOL partyGetAppearPos5(PartyEntry* party, HitEntry* hit, Vec* out) {
 static void partyMoveStrippedPool(f32* f) {
     f[0] = 0.0f;
 }
+#endif
+
+#ifdef PORT_MODS
+#include "port/hooks/src_party_party_move.inc"
 #endif

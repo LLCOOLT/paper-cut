@@ -1,6 +1,9 @@
 // tik_05 (埋没した都市, Rogueport Sewers): the Thousand-Year Door room: the pedestal for the Crystal Stars (starstone, the
 // mahojin circle), the door opening scenes, and the shattering (tiz_broken) and crystal effects.
 #include "eff/eff_starstone.h"
+#ifdef TARGET_PC
+#include "port/gameplus.h"
+#endif
 #include "eff/n64/eff_crystal_n64.h"
 #include "eff/n64/eff_pokopi_pcharge_n64.h"
 #include "eff/eff_mist2.h"
@@ -2275,7 +2278,13 @@ EVT_BEGIN(mahojin_event1)
     CALL(evt_cam3d_evt_set, 0, 634, 421, 0, 58, -270, 0, 11)
     CALL_CHILD(evt_mahojin_move2)
     SPAWN_EVENT(evt_fogset)
+#ifdef TARGET_PC
+    // Gameplay+: the map's reveal cut short once a pedestal scene was seen on this file
+    CALL(portEvtSceneMs, PORT_SCENE_PEDESTAL, 6000, LW(15))
+    WAIT_MS(LW(15))
+#else
     WAIT_MS(6000)
+#endif
     CALL_CHILD(evt_mapwrite)
     CALL(evt_msg_print_party, STRING("mac_1_002"))
     WAIT_MS(500)
@@ -2314,7 +2323,13 @@ EVT_BEGIN(mahojin_event2)
     CALL(evt_cam3d_evt_set, 0, 634, 421, 0, 58, -270, 0, 11)
     CALL_CHILD(evt_mahojin_move2)
     SPAWN_EVENT(evt_fogset)
+#ifdef TARGET_PC
+    // Gameplay+: the map's reveal cut short once a pedestal scene was seen on this file
+    CALL(portEvtSceneMs, PORT_SCENE_PEDESTAL, 6000, LW(15))
+    WAIT_MS(LW(15))
+#else
     WAIT_MS(6000)
+#endif
     CALL_CHILD(evt_mapwrite)
     CALL(evt_msg_print_party, STRING("mac_2_002"))
     WAIT_MS(500)
@@ -2349,7 +2364,13 @@ EVT_BEGIN(mahojin_event3)
     CALL(evt_cam3d_evt_set, 0, 634, 421, 0, 58, -270, 0, 11)
     CALL_CHILD(evt_mahojin_move2)
     SPAWN_EVENT(evt_fogset)
+#ifdef TARGET_PC
+    // Gameplay+: the map's reveal cut short once a pedestal scene was seen on this file
+    CALL(portEvtSceneMs, PORT_SCENE_PEDESTAL, 6000, LW(15))
+    WAIT_MS(LW(15))
+#else
     WAIT_MS(6000)
+#endif
     CALL_CHILD(evt_mapwrite)
     CALL(evt_msg_print_party, STRING("mac_3_001"))
     WAIT_MS(500)
@@ -2384,7 +2405,13 @@ EVT_BEGIN(mahojin_event4)
     CALL(evt_cam3d_evt_set, 0, 634, 421, 0, 58, -270, 0, 11)
     CALL_CHILD(evt_mahojin_move2)
     SPAWN_EVENT(evt_fogset)
+#ifdef TARGET_PC
+    // Gameplay+: the map's reveal cut short once a pedestal scene was seen on this file
+    CALL(portEvtSceneMs, PORT_SCENE_PEDESTAL, 6000, LW(15))
+    WAIT_MS(LW(15))
+#else
     WAIT_MS(6000)
+#endif
     CALL_CHILD(evt_mapwrite)
     CALL(evt_msg_print_party, STRING("mac_4_001"))
     WAIT_MS(500)
@@ -2419,7 +2446,13 @@ EVT_BEGIN(mahojin_event5)
     CALL(evt_cam3d_evt_set, 0, 634, 421, 0, 58, -270, 0, 11)
     CALL_CHILD(evt_mahojin_move2)
     SPAWN_EVENT(evt_fogset)
+#ifdef TARGET_PC
+    // Gameplay+: the map's reveal cut short once a pedestal scene was seen on this file
+    CALL(portEvtSceneMs, PORT_SCENE_PEDESTAL, 6000, LW(15))
+    WAIT_MS(LW(15))
+#else
     WAIT_MS(6000)
+#endif
     CALL_CHILD(evt_mapwrite)
     CALL(evt_msg_print_party, STRING("mac_5_001"))
     WAIT_MS(500)
@@ -2455,7 +2488,13 @@ EVT_BEGIN(mahojin_event6)
     CALL(evt_cam3d_evt_set, 0, 634, 421, 0, 58, -270, 0, 11)
     CALL_CHILD(evt_mahojin_move2)
     SPAWN_EVENT(evt_fogset)
+#ifdef TARGET_PC
+    // Gameplay+: the map's reveal cut short once a pedestal scene was seen on this file
+    CALL(portEvtSceneMs, PORT_SCENE_PEDESTAL, 6000, LW(15))
+    WAIT_MS(LW(15))
+#else
     WAIT_MS(6000)
+#endif
     CALL_CHILD(evt_mapwrite)
     CALL(evt_msg_print_party, STRING("mac_6_001"))
     WAIT_MS(500)

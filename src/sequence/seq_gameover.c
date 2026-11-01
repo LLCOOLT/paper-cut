@@ -1,4 +1,5 @@
 // Game over sequence: the game over screen, then a return to the title.
+#include "port_hook.h"
 #include "driver/camdrv.h"
 #ifdef TARGET_PC
 #include "port/gameplus.h"
@@ -29,6 +30,9 @@
 #include "statuswindow.h"
 #include "version.h"
 #include <dolphin/pad.h>
+#ifdef PORT_MODS
+#include "port/hooks/src_sequence_seq_gameover.h"
+#endif
 
 typedef struct GameOverWork {
     EventEntry* evt; // 0x0
@@ -296,7 +300,7 @@ EVT_END()
  * Enters the game over sequence: resets windows, fades out all sound, clears sound flags and stops field events.
  * Later versions also show the 3D camera and unequip Slow Go.
  */
-void seq_gameOverInit(SequenceWork* work) {
+void PORT_HOOKABLE(seq_gameOverInit)(SequenceWork* work) {
     winReInit();
 #if VERSION <= VERSION_DEMO_JP
     psndStopAllFadeOut();
@@ -319,7 +323,7 @@ void seq_gameOverInit(SequenceWork* work) {
 }
 
 /** Leaves the game over sequence: fades out all sound and restarts events. */
-void seq_gameOverExit(SequenceWork* work) {
+void PORT_HOOKABLE(seq_gameOverExit)(SequenceWork* work) {
     psndStopAllFadeOut();
     marioStSystemLevel(0); // flags cleared, events restarted
 }
@@ -341,7 +345,7 @@ USER_FUNC(N_evt_snd_bgm_unpause) {
  * seq_gameOverMain is defined last: functions are emitted in reverse order (-inline deferred),
  * so it comes first in the object.
  */
-void seq_gameOverMain(SequenceWork* work) {
+void PORT_HOOKABLE(seq_gameOverMain)(SequenceWork* work) {
     CameraEntry* camera;
     MarioWork* mario;
 
@@ -478,3 +482,7 @@ void seq_gameOverMain(SequenceWork* work) {
             break;
     }
 }
+
+#ifdef PORT_MODS
+#include "port/hooks/src_sequence_seq_gameover.inc"
+#endif
