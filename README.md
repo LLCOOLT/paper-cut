@@ -12,7 +12,7 @@ The game code is C, from the decompilation in [LLCOOLT/ttyd](https://github.com/
 ## Features
 
 **Playing**
-- Every map of both versions boots and runs, with every battle setup.
+- Every map of the Japanese, US and European versions boots and runs, with every battle setup. The European version plays in English, German, French, Spanish or Italian.
 - The whole story is played through scripted tests at every story value, and about 120 real saves load.
 - Field play, battles, menus, audio (MusyX in software) and memory card saves are compatible with Dolphin's `.gci` files.
 

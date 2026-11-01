@@ -40,7 +40,7 @@ SPEC = os.path.join(ROOT, "port", "mods", "hooks.spec")
 INC_DIR = os.path.join(ROOT, "port", "include", "port", "hooks")
 LIST_H = os.path.join(ROOT, "port", "include", "port", "hook_list.h")
 MOD_H = os.path.join(ROOT, "port", "include", "ttyd_mod", "hooks.h")
-SHORT = {"G8MJ01": "jp", "G8ME01": "us"}
+SHORT = portversion.SHORT
 
 
 class Error(Exception):
@@ -392,10 +392,11 @@ def main():
         print(f"gen_hooks: {e}", file=sys.stderr)
         return 2
     sigs = {v: [(n, s, r, p) for _, n, s, r, p in es] for v, es in per.items()}
-    if sigs["G8MJ01"] != sigs["G8ME01"]:
-        diff = [x[0] for x, y in zip(sigs["G8MJ01"], sigs["G8ME01"]) if x != y]
-        print(f"gen_hooks: signatures differ between versions: {', '.join(diff)}", file=sys.stderr)
-        return 2
+    for v in portversion.VERSIONS[1:]:
+        if sigs[v] != sigs["G8MJ01"]:
+            diff = [x[0] for x, y in zip(sigs["G8MJ01"], sigs[v]) if x != y]
+            print(f"gen_hooks: signatures differ between G8MJ01 and {v}: {', '.join(diff)}", file=sys.stderr)
+            return 2
     files = outputs(per["G8ME01"])
     stale = 0
     os.makedirs(INC_DIR, exist_ok=True)

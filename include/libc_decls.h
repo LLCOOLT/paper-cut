@@ -18,6 +18,10 @@ extern void _savefpr_28(void);
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#ifndef _WIN32
+/* MSL's, which only Windows' C library also has (PAL's pouchHiraToKata): port/src/common/libc_pc.c */
+char* strupr(char* s);
+#endif
 #else
 extern double asin(double);
 extern double atan(double);

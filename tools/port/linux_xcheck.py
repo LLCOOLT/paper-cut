@@ -11,7 +11,7 @@ build is configured for x86_64- or aarch64-linux-gnu with clang and linked
 with ld.lld leaving the C library unresolved (the result cannot run), then the
 ELF layout of the RELs linked into the executable is checked.
 
-usage: linux_xcheck.py --out DIR [--version G8MJ01|G8ME01] [--arch x86_64|aarch64] [-- -DOPTION=...]
+usage: linux_xcheck.py --out DIR [--version G8MJ01|G8ME01|G8MP01] [--arch x86_64|aarch64] [-- -DOPTION=...]
 Needs clang, ld.lld, llvm-ar, llvm-nm, cmake and ninja on PATH.
 """
 import argparse
@@ -708,7 +708,7 @@ def main():
     ok = subprocess.run([tool("ninja"), "-C", build, "-k", "0", "bedecode_test", "anim_test", "loaders_test",
                          "map_test", "dtk_test", "musyx_swap_test", "musyx_mixer_test", "disc_sweep",
                          "musyx_seq_sweep"]).returncode == 0 and ok
-    exe = os.path.join(build, "ttyd-us" if a.version == "G8ME01" else "ttyd-jp")
+    exe = os.path.join(build, "ttyd-" + {"G8MJ01": "jp", "G8ME01": "us", "G8MP01": "eu"}[a.version])
     if ok and os.path.exists(exe):
         ok = check_rels(exe) and ok
     print("linux_xcheck: " + ("ok" if ok else "FAILED"))

@@ -6,7 +6,8 @@ the game read this ($TTYD_DATA_DIR, data/<version>; docs/PC_PORT.md).
 
   extract_disc.py DISC.iso OUT_DIR
 
-Only plain images: a compressed one (.rvz, .ciso, .gcz, .wia) is converted
+A demo disc's game (.tgc, as the demos' folders hold them) works too. Only
+plain images: a compressed one (.rvz, .ciso, .gcz, .wia) is converted
 to .iso first (Dolphin: right-click > Convert File). Files already there with
 the right size are left as they are, so a second run finishes quickly.
 """
@@ -46,13 +47,29 @@ def dol_size(head):
     return end
 
 
+TGC_MAGIC = 0xAE0F38A2
+
+
 def extract(image, out):
     with open(image, "rb") as disc:
+        # A .tgc (a game on a multi-game demo disc): a header, then the
+        # game's disc. Its main.dol and FST are where the header says, and the
+        # FST's file offsets are virtual: shifted by the file area's real
+        # offset less its virtual one (Dolphin's TGCBlob).
+        head = disc.read(0x40)
+        base, shift = 0, 0
+        if u32(head, 0) == TGC_MAGIC:
+            base = u32(head, 0x08)
+            shift = u32(head, 0x24) - u32(head, 0x34)
+        disc.seek(base)
         boot = disc.read(0x440)
         if u32(boot, 0x1C) != 0xC2339F3D:
             sys.exit(f"extract_disc: {image} isn't a plain GameCube image (convert an .rvz/.ciso to .iso first)")
-        dol_off, fst_off, fst_size = u32(boot, 0x420), u32(boot, 0x424), u32(boot, 0x428)
-        disc.seek(0x2440)
+        if base:
+            dol_off, fst_off, fst_size = u32(head, 0x1C), u32(head, 0x10), u32(head, 0x14)
+        else:
+            dol_off, fst_off, fst_size = u32(boot, 0x420), u32(boot, 0x424), u32(boot, 0x428)
+        disc.seek(base + 0x2440)
         apploader = disc.read(0x20)
         disc.seek(dol_off)
         dol = disc.read(0x100)
@@ -60,9 +77,10 @@ def extract(image, out):
         fst = disc.read(fst_size)
 
         sysdir = os.path.join(out, "sys")
-        copy(disc, 0, 0x440, os.path.join(sysdir, "boot.bin"))
-        copy(disc, 0x440, 0x2000, os.path.join(sysdir, "bi2.bin"))
-        copy(disc, 0x2440, 0x20 + u32(apploader, 0x14) + u32(apploader, 0x18), os.path.join(sysdir, "apploader.img"))
+        copy(disc, base, 0x440, os.path.join(sysdir, "boot.bin"))
+        copy(disc, base + 0x440, 0x2000, os.path.join(sysdir, "bi2.bin"))
+        copy(disc, base + 0x2440, 0x20 + u32(apploader, 0x14) + u32(apploader, 0x18),
+             os.path.join(sysdir, "apploader.img"))
         copy(disc, dol_off, dol_size(dol), os.path.join(sysdir, "main.dol"))
         copy(disc, fst_off, fst_size, os.path.join(sysdir, "fst.bin"))
 
@@ -85,7 +103,7 @@ def extract(image, out):
                 os.makedirs(path, exist_ok=True)
                 stack.append((u32(fst, i * 12 + 8), path))
             else:
-                copy(disc, u32(fst, i * 12 + 4), u32(fst, i * 12 + 8), path)
+                copy(disc, u32(fst, i * 12 + 4) + shift, u32(fst, i * 12 + 8), path)
                 files += 1
     print(f"extract_disc: {boot[:6].decode('ascii', errors='replace')}: {files} files to {out}")
 

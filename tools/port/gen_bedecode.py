@@ -583,18 +583,16 @@ def generate_all_versions(spec_path):
     """One file for every version: shared when the layouts agree, else per version."""
     texts = {}
     for v in portversion.VERSIONS:
-        VERSION_ARGS[:] = portversion.defines(v)[:2]
+        VERSION_ARGS[:] = portversion.version_args(v)
         try:
             fmt, texts[v] = generate(spec_path)
         except SpecError as e:
             raise SpecError(f"{v}: {e}")
-    jp, us = texts["G8MJ01"], texts["G8ME01"]
-    if jp == us:
-        return fmt, jp
-    head, jp_body = jp.split("\n", 1)
-    us_body = us.split("\n", 1)[1]
-    return fmt, (f"{head}\n/* Layouts differ between versions: US (G8ME01) first, then JP (G8MJ01). */\n"
-                 f"#ifdef VERSION_G8ME01\n{us_body}#else\n{jp_body}#endif\n")
+    if len(set(texts.values())) == 1:
+        return fmt, texts["G8MJ01"]
+    head = texts["G8MJ01"].split("\n", 1)[0]
+    bodies = {v: t.split("\n", 1)[1] for v, t in texts.items()}
+    return fmt, f"{head}\n/* Layouts differ between versions. */\n" + portversion.version_switch(bodies)
 
 
 def main():

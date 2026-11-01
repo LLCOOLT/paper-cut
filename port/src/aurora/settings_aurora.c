@@ -66,6 +66,8 @@ static PortSettings sSettings = {
     0,    /* skipIntro */
     100,  /* runSpeed */
     0,    /* acCue */
+    0,    /* language */
+    0,    /* pal50Hz */
     0,    /* dumpTextures */
 };
 static char sUserPath[1024];
@@ -117,6 +119,8 @@ static const Field kFields[] = {
     {"skip_intro", &sSettings.skipIntro, 0, 1},
     {"run_speed", &sSettings.runSpeed, 100, 150},
     {"ac_cue", &sSettings.acCue, 0, 2},
+    {"language", &sSettings.language, 0, 5},
+    {"pal_50hz", &sSettings.pal50Hz, 0, 1},
     {"dump_textures", &sSettings.dumpTextures, 0, 1},
 };
 #define FIELD_COUNT (sizeof(kFields) / sizeof(kFields[0]))
@@ -150,7 +154,7 @@ static int isToggle(const char* key) {
            strcmp(key, "auto_run") == 0 || strcmp(key, "stick_fixed") == 0 || strcmp(key, "tap_a") == 0 ||
            strcmp(key, "safe_area") == 0 || strcmp(key, "no_pop_in") == 0 || strcmp(key, "msaa") == 0 || strcmp(key, "cloud_sync") == 0 || strcmp(key, "overlay_fps") == 0 ||
            strcmp(key, "overlay_clock") == 0 || strcmp(key, "overlay_battery") == 0 ||
-           strcmp(key, "side_bars") == 0 || strcmp(key, "wide_hud") == 0 || strcmp(key, "ff_toggle") == 0 || strcmp(key, "skip_intro") == 0;
+           strcmp(key, "side_bars") == 0 || strcmp(key, "wide_hud") == 0 || strcmp(key, "ff_toggle") == 0 || strcmp(key, "skip_intro") == 0 || strcmp(key, "pal_50hz") == 0;
 }
 
 static int syncFromPreferences(void);

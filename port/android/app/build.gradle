@@ -1,7 +1,8 @@
 // The game as an Android app: the repo's CMake project (TTYD_BACKEND=aurora)
 // builds libmain.so, which SDL's Java activity loads. One flavor per game
-// version (jp: G8MJ01, us: G8ME01), each its own app id, so both can be
-// installed. Build: gradle assembleJpDebug / assembleUsDebug (docs/PC_PORT.md).
+// version (jp: G8MJ01, us: G8ME01, eu: G8MP01), each its own app id, so all can
+// be installed. Build: gradle assembleJpDebug / assembleUsDebug / assembleEuDebug
+// (docs/PC_PORT.md).
 plugins {
     id "com.android.application"
 }
@@ -125,6 +126,12 @@ android {
             applicationIdSuffix = ".us"
             resValue "string", "app_name", "TTYD (US)"
             externalNativeBuild { cmake { arguments "-DTTYD_VERSION=G8ME01" } }
+        }
+        eu {
+            dimension = "version"
+            applicationIdSuffix = ".eu"
+            resValue "string", "app_name", "TTYD (EU)"
+            externalNativeBuild { cmake { arguments "-DTTYD_VERSION=G8MP01" } }
         }
     }
 

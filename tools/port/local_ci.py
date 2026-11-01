@@ -36,7 +36,7 @@ import sys
 import time
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-VERSIONS = [("G8MJ01", "jp"), ("G8ME01", "us")]
+VERSIONS = [("G8MJ01", "jp"), ("G8ME01", "us"), ("G8MP01", "eu")]
 # $TTYD_BUILD_SUFFIX: build folders (and logs) of their own, for a checkout
 # another system builds in too (the Linux container over the Mac's: "-linux");
 # $TTYD_CI_HEADLESS_ONLY: no Aurora builds or runs (a machine with no display)
@@ -398,10 +398,11 @@ def stage_android(s):
     if not (os.path.isdir(os.path.join(sdk, "ndk")) and os.path.isdir(jdk) and gradle):
         return s.skip("no Android SDK/NDK, JDK 17 and Gradle")
     env = dict(ENV, ANDROID_HOME=sdk, ANDROID_SDK_ROOT=sdk, JAVA_HOME=jdk)
-    s.run([gradle, "--no-daemon", "-p", os.path.join(ROOT, "port", "android"), "assembleJpDebug", "assembleUsDebug"],
+    s.run([gradle, "--no-daemon", "-p", os.path.join(ROOT, "port", "android"), "assembleJpDebug", "assembleUsDebug",
+           "assembleEuDebug"],
           env=env, downloads=True)
     if s.ok:
-        s.note = "app-jp-debug.apk, app-us-debug.apk"
+        s.note = "app-jp-debug.apk, app-us-debug.apk, app-eu-debug.apk"
 
 
 STAGES = {"gamecube": stage_gamecube, "build": stage_build, "unit": stage_unit, "audits": stage_audits,

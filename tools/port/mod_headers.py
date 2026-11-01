@@ -194,7 +194,7 @@ def scan_ast(text):
 
 
 def decomp_ast(version, tmp):
-    mod_fields.gb.VERSION_ARGS[:] = mod_fields.portversion.defines(version)[:2]
+    mod_fields.gb.VERSION_ARGS[:] = mod_fields.portversion.version_args(version)
     probe = os.path.join(tmp, "decomp_ast.c")
     with open(probe, "w") as f:
         for p in sorted(glob.glob(os.path.join(ROOT, "include", "**", "*.h"), recursive=True)):

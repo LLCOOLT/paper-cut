@@ -41,7 +41,8 @@ with open(os.path.join(ROOT, "include", "version.h"), encoding="utf-8") as _f:
     VERSION_VALUES = {m.group(1): int(m.group(2))
                       for m in re.finditer(r"^#define (VERSION_[A-Z0-9_]+) (\d+)\b", _f.read(), re.M)}
 # the versions the PC port builds (name, VERSION value)
-PORT_VERSIONS = (("JP", VERSION_VALUES["VERSION_JP"]), ("US", VERSION_VALUES["VERSION_US"]))
+PORT_VERSIONS = (("JP", VERSION_VALUES["VERSION_JP"]), ("US", VERSION_VALUES["VERSION_US"]),
+                 ("EU", VERSION_VALUES["VERSION_EU"]))
 
 
 def version_cond(cond, version):

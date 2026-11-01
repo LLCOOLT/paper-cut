@@ -153,7 +153,7 @@ def gc_sizes(version):
 
 
 def generate(version):
-    gb.VERSION_ARGS[:] = portversion.defines(version)[:2]
+    gb.VERSION_ARGS[:] = portversion.version_args(version)
     externs, symbols = parse_spec()
     headers = list(dict.fromkeys(externs + [h for _, h in symbols]))
     with tempfile.TemporaryDirectory() as td:
@@ -320,13 +320,13 @@ def main():
     except (Error, gb.SpecError) as e:
         print(f"gen_reflect: {e}", file=sys.stderr)
         return 2
-    jp, us = gens["G8MJ01"][0], gens["G8ME01"][0]
-    if jp == us:
-        text = jp
+    texts = {v: g[0] for v, g in gens.items()}
+    if len(set(texts.values())) == 1:
+        text = texts["G8MJ01"]
     else:
-        head, jp_body = jp.split("\n", 1)
-        text = (f"{head}\n/* The versions differ: US (G8ME01) first, then JP (G8MJ01). */\n"
-                f"#ifdef VERSION_G8ME01\n{us.split(chr(10), 1)[1]}#else\n{jp_body}#endif\n")
+        head = texts["G8MJ01"].split("\n", 1)[0]
+        text = (f"{head}\n/* The versions differ. */\n"
+                + portversion.version_switch({v: t.split("\n", 1)[1] for v, t in texts.items()}))
     doc = gens["G8ME01"][1]
     if gens["G8MJ01"][1] != doc.replace("G8ME01", "G8MJ01"):
         doc = doc.replace("the JP build has the same unless noted", "the JP build's differs in places")

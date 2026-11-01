@@ -34,7 +34,7 @@ static BOOL fast(void) {
 
 void portFastClockFrame(void) {
     if (fast()) {
-        sVirtual += OS_TIMER_CLOCK / 60;
+        sVirtual += OS_TIMER_CLOCK / portFieldRate();
     }
 }
 

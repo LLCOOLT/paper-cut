@@ -13,10 +13,11 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON) # tools/port/gen_statics.py reads it
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_EXTENSIONS ON)
 
-# One executable per game version: struct layouts differ between JP and US,
-# so the version is fixed at compile time like the matching build's -DVERSION_*.
-set(TTYD_VERSIONS G8MJ01 G8ME01)
-set(TTYD_VERSION G8MJ01 CACHE STRING "Game version (disc ID): G8MJ01 (JP) or G8ME01 (US)")
+# One executable per game version: struct layouts differ between JP, US and
+# PAL, so the version is fixed at compile time like the matching build's
+# -DVERSION_*. The list's order is configure.py's (index = BUILD_VERSION).
+set(TTYD_VERSIONS G8MJ01 G8ME01 G8MP01)
+set(TTYD_VERSION G8MJ01 CACHE STRING "Game version (disc ID): G8MJ01 (JP), G8ME01 (US) or G8MP01 (PAL)")
 set_property(CACHE TTYD_VERSION PROPERTY STRINGS ${TTYD_VERSIONS})
 list(FIND TTYD_VERSIONS ${TTYD_VERSION} TTYD_BUILD_VERSION)
 if(TTYD_BUILD_VERSION LESS 0)
@@ -24,6 +25,8 @@ if(TTYD_BUILD_VERSION LESS 0)
 endif()
 if(TTYD_VERSION STREQUAL "G8ME01")
     set(TTYD_EXE_NAME ttyd-us)
+elseif(TTYD_VERSION STREQUAL "G8MP01")
+    set(TTYD_EXE_NAME ttyd-eu)
 else()
     set(TTYD_EXE_NAME ttyd-jp)
 endif()
@@ -109,6 +112,11 @@ set(TTYD_DEFINES
     TARGET_PC=1 NONMATCHING=1 NDEBUG=1 _USE_MATH_DEFINES=1 _CRT_SECURE_NO_WARNINGS=1
     BUILD_VERSION=${TTYD_BUILD_VERSION} VERSION_${TTYD_VERSION} SDK_REVISION=1
     PORT_GAME_ID="${TTYD_VERSION}")
+# As configure.py: PAL is built from the US code, so it defines VERSION_G8ME01
+# too (the library code under libs/ tests it; VERSION_G8MP01 marks PAL)
+if(TTYD_VERSION STREQUAL "G8MP01")
+    list(APPEND TTYD_DEFINES VERSION_G8ME01)
+endif()
 
 if(TTYD_BACKEND STREQUAL "aurora")
     # extern/aurora is upstream Aurora; the port's fixes to it are patches
@@ -934,6 +942,8 @@ endif()
 if(CMAKE_SYSTEM_NAME STREQUAL "Darwin" AND TTYD_BACKEND STREQUAL "aurora")
     if(TTYD_VERSION STREQUAL "G8ME01")
         set(TTYD_MACOS_REGION US)
+    elseif(TTYD_VERSION STREQUAL "G8MP01")
+        set(TTYD_MACOS_REGION EU)
     else()
         set(TTYD_MACOS_REGION JP)
     endif()

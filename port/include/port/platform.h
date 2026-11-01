@@ -19,6 +19,20 @@ void portCrashSetMessage(const char* text);
 void portCheckHostAddress(const void* p, const char* what);
 /* a frame completed ($TTYD_WATCHDOG, crash_pc.c) */
 void portWatchdogFrame(void);
+/* This build's region, for messages: "Japan", "US" or "Europe" (PORT_GAME_ID
+ * G8MJ01, G8ME01, G8MP01); PORT_REGION_SHORT as in the version names. */
+#if defined(VERSION_G8MP01)
+#define PORT_REGION_NAME "Europe"
+#define PORT_REGION_SHORT "EU"
+#elif defined(VERSION_G8ME01)
+#define PORT_REGION_NAME "US"
+#define PORT_REGION_SHORT "US"
+#else
+#define PORT_REGION_NAME "Japan"
+#define PORT_REGION_SHORT "JP"
+#endif
+/* The game's video field rate: 60, or 50 for the European release in its 50 Hz mode (ospal_pc.c). */
+int portFieldRate(void);
 /* FALSE (with a message) unless id (6 bytes, e.g. "G8ME01") is this build's game. */
 BOOL portCheckGameId(const char* id, const char* source);
 /* Bring-up trace of sequence/map changes when $TTYD_TRACE is set (trace_pc.c). */

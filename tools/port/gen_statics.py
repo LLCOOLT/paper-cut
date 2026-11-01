@@ -105,7 +105,10 @@ def main():
     a = ap.parse_args()
     build = os.path.join(ROOT, a.build)
     db = json.load(open(os.path.join(build, "compile_commands.json"), encoding="utf-8"))
-    version = next(m.group(1) for e in db for m in [re.search(r"-DVERSION_(G8M[EJ]01)", e.get("command", ""))] if m)
+    # the build's version (PAL defines VERSION_G8ME01 too: its own macro decides)
+    flags = next(set(re.findall(r"-DVERSION_(G8M[EJP]01)\b", e.get("command", ""))) for e in db
+                 if "-DVERSION_" in e.get("command", ""))
+    version = "G8MP01" if "G8MP01" in flags else flags.pop()
     todo = {}
     for e in db:
         src = game_source(os.path.join(e["directory"], e["file"]), build)

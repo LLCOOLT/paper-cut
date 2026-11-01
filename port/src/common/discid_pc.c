@@ -8,7 +8,7 @@ BOOL portCheckGameId(const char* id, const char* source) {
     if (id == NULL || memcmp(id, PORT_GAME_ID, 6) != 0) {
         fprintf(stderr, "%s is %.6s, but this build is for %s (Paper Mario: The Thousand-Year Door, %s).\n", source,
                 id ? id : "not a GameCube disc", PORT_GAME_ID,
-                strcmp(PORT_GAME_ID, "G8ME01") == 0 ? "US" : "Japan");
+                PORT_REGION_NAME);
         return FALSE;
     }
     return TRUE;

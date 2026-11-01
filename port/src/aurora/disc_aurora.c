@@ -30,7 +30,7 @@
 /* SDL's <stdbool.h> must not leave a bool macro behind for the game's headers. */
 #undef bool
 
-#define REGION (strcmp(PORT_GAME_ID, "G8ME01") == 0 ? "US" : "Japan")
+#define REGION PORT_REGION_NAME
 /* Disc image formats Aurora's nod reads, as a dialog filter pattern. */
 #define DISC_EXTENSIONS "iso;gcm;ciso;gcz;rvz;wia;wbfs;nfs;tgc"
 

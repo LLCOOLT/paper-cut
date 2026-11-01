@@ -134,7 +134,7 @@ def find_symbol(version, rel, section, address):
 @functools.lru_cache(None)
 def variable_type(src, name, version, rel):
     """The C type the decomp gives a variable in its source file."""
-    gb.VERSION_ARGS[:] = portversion.defines(version)[:2]
+    gb.VERSION_ARGS[:] = portversion.version_args(version)
     extra = [f"-Irels/{rel}/include"] if rel and os.path.isdir(os.path.join(ROOT, "rels", rel, "include")) else []
     r = mod_fields.run([mod_fields.CLANG, "-fsyntax-only", "-w", *gb.DISC_ARGS, *gb.VERSION_ARGS, *extra,
                         "-ferror-limit=0", "-Xclang", "-ast-dump", "-fno-color-diagnostics", src], ROOT)
@@ -148,7 +148,7 @@ def variable_type(src, name, version, rel):
 @functools.lru_cache(None)
 def layouts(src, version, rel, pc):
     """Record layouts of a source file's types, the GameCube's or the PC's."""
-    gb.VERSION_ARGS[:] = portversion.defines(version)[:2]
+    gb.VERSION_ARGS[:] = portversion.version_args(version)
     extra = [f"-Irels/{rel}/include"] if rel and os.path.isdir(os.path.join(ROOT, "rels", rel, "include")) else []
     args = gb.NATIVE_ARGS if pc else gb.DISC_ARGS
     r = mod_fields.run([mod_fields.CLANG, "-fsyntax-only", "-w", *args, *gb.VERSION_ARGS, *extra,

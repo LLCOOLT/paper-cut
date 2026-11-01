@@ -39,7 +39,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import local_ci
 
 ROOT = local_ci.ROOT
-VERSIONS = {"jp": "G8MJ01", "us": "G8ME01"}
+VERSIONS = {"jp": "G8MJ01", "us": "G8ME01", "eu": "G8MP01"}
 REDIST = r"C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Redist\MSVC"
 TOOLCHAINS = os.path.join(ROOT, "cmake", "toolchains")
 
@@ -191,7 +191,7 @@ def package_desktop(short, out, version_string, dist):
 
 
 def how_to_play(short):
-    region = "Japanese (G8MJ01)" if short == "jp" else "US (G8ME01)"
+    region = {"jp": "Japanese (G8MJ01)", "us": "US (G8ME01)", "eu": "European (G8MP01)"}[short]
     start = {"windows": f"ttyd-{short}.exe",
              "macos": f"ttyd-{short}.app (the first time macOS blocks it: System Settings >\n"
                       "Privacy & Security > Open Anyway; before macOS 15, right-click > Open)",

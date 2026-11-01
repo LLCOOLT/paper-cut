@@ -99,7 +99,7 @@ static BOOL fastClock(void) {
 
 void portFastClockFrame(void) {
     if (fastClock()) {
-        sVirtualNs += 1000000000LL / 60;
+        sVirtualNs += 1000000000LL / portFieldRate();
     }
 }
 

@@ -36,7 +36,7 @@ WORK = os.environ.get("R2S_WORK", "/tmp/raw2struct")
 RESDIR = subprocess.run(["clang", "-print-resource-dir"], capture_output=True, text=True).stdout.strip()
 
 PPC = ["-target", "powerpc-unknown-eabi", "-w", "-std=gnu99", "-funsigned-char", "-fdeclspec",
-       *portversion.defines(portversion.default())[:2], "-DSDK_REVISION=1", "-DNDEBUG=1",
+       *portversion.version_args(portversion.default()), "-DSDK_REVISION=1", "-DNDEBUG=1",
        "-Wno-error=implicit-function-declaration", "-Wno-error=int-conversion",
        "-Wno-error=incompatible-pointer-types", "-Wno-error=incompatible-function-pointer-types"]
 # TARGET_PC on the 32-bit PowerPC target: PC header variants, 32-bit big-endian layout.

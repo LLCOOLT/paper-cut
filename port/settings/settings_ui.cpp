@@ -335,6 +335,7 @@ void controlsTab(PortSettings* s) {
 
 constexpr const char* kFfSpeeds[] = {"2x", "3x", "4x", "5x", "6x", "7x", "8x"};
 constexpr const char* kTextSpeeds[] = {"Original", "Fast (2x)", "Faster (4x)", "Instant"};
+constexpr const char* kLanguages[] = {"The computer's", "English", "Deutsch", "Français", "Español", "Italiano"};
 constexpr const char* kRunSpeeds[] = {"Original", "125%", "150%"};
 
 void gameplayTab(PortSettings* s) {
@@ -374,6 +375,16 @@ void gameplayTab(PortSettings* s) {
   }
   note("The logos go by quickly and the story opening is skipped (it still plays from the title "
        "screen if left alone).");
+  if (strcmp(PORT_GAME_ID, "G8MP01") == 0) {
+    if (combo("Language", &s->language, kLanguages, 6)) {
+      changed();
+    }
+    note("The game's text, from the next start.");
+    if (check("Run at 50 Hz (PAL)", &s->pal50Hz)) {
+      changed();
+    }
+    note("As on a PAL TV: the game's 50 Hz mode, a little slower. From the next start; 60 Hz otherwise.");
+  }
 }
 
 // Puts the last crash report on the clipboard; true if there was one.

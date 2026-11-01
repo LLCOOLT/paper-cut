@@ -212,7 +212,7 @@ def pc_records(version, tmp):
     """The struct names the PC build's headers define (a record's tag, or a
     typedef naming a record): a mod builds against these, so only these
     replace its own copies (the GameCube SDK has some the PC build doesn't)."""
-    gb.VERSION_ARGS[:] = portversion.defines(version)[:2]
+    gb.VERSION_ARGS[:] = portversion.version_args(version)
     probe = os.path.join(tmp, "pc_records.c")
     with open(probe, "w") as f:
         for p in sorted(glob.glob(os.path.join(ROOT, "include", "**", "*.h"), recursive=True)):
@@ -232,7 +232,7 @@ def pc_records(version, tmp):
 
 
 def decomp_layouts(version, tmp):
-    gb.VERSION_ARGS[:] = portversion.defines(version)[:2]
+    gb.VERSION_ARGS[:] = portversion.version_args(version)
     # the game's headers and the SDK's (both on the include path)
     roots = [os.path.join(ROOT, "include"), os.path.join(ROOT, "libs", "dolsdk2004", "include")]
     headers = []

@@ -12,7 +12,7 @@
 
 void salPcHeadlessPump(double seconds);
 
-#define FIELD_TICKS (OS_TIMER_CLOCK / 60)
+#define FIELD_TICKS (OS_TIMER_CLOCK / portFieldRate()) /* 60, or 50: PAL in 50 Hz */
 
 static u32 sRetraceCount;
 static OSTime sNextRetrace;
@@ -43,7 +43,7 @@ void VIWaitForRetrace(void) {
     portDTKPump();
     portARQPoll();
     /* MusyX: render the audio of one video frame (null sink). */
-    salPcHeadlessPump(1.0 / 60.0);
+    salPcHeadlessPump(1.0 / portFieldRate());
     if (!portPlatformPoll()) {
         exit(0);
     }

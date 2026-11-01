@@ -17,6 +17,9 @@ extern float gPortRunSpeed; /* Mario's run speed scale, 1 = original */
 /* seq_logo.c, every frame of the boot logos: with gPortSkipIntro the Aurora
  * backend fast-forwards them (port/src/aurora/speed_aurora.c). */
 void portIntroFrame(void);
+/* European release: TRUE to answer its 50/60 Hz question 50 Hz (the settings
+ * page's choice, or $TTYD_50HZ=1; default 60 Hz). ospal_pc.c. */
+int portPal50Hz(void);
 /* msgdrv.c: milliseconds of message time for ms of game time. */
 int portTextMs(int ms);
 

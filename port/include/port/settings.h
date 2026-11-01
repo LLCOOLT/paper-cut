@@ -58,6 +58,9 @@ typedef struct PortSettings {
     int skipIntro;      /* boot logos fast, then the title without the story demo */
     int runSpeed;       /* Mario's run speed, 100-150 % */
     int acCue;          /* Action Command cue: 0 off, 1 on screen, 2 also a tap (phones) */
+    int language;       /* European release: the game's text, 0 the computer's language, 1-5 English
+                           German French Spanish Italian (from the next start; $TTYD_LANGUAGE) */
+    int pal50Hz;        /* European release: run at 50 Hz, as a PAL TV, not 60 (from the next start; $TTYD_50HZ) */
     /* Mods (port/include/port/mods.h) */
     int dumpTextures;   /* textures without a replacement are saved, under the names packs use
                            (from the next start: $TTYD_DUMP_TEXTURES, portSettingsPeek) */

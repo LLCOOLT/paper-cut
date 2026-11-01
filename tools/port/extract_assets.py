@@ -7,7 +7,7 @@ real bytes are emitted. Without it, zero-filled placeholders are written so
 the code still builds; only the memory-card icon/banner are affected.
 Nothing from the disc is ever committed.
 
-usage: extract_assets.py OUT_DIR [--version G8MJ01|G8ME01]
+usage: extract_assets.py OUT_DIR [--version G8MJ01|G8ME01|G8MP01]
 """
 import os, re, struct, sys
 

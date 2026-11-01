@@ -31,7 +31,7 @@ static VIRetraceCallback sPostCallback;
  * presented at its field's start, and the in-between frames of a higher
  * $TTYD_FRAMERATE (interp_aurora.c) evenly through the field. $TTYD_FAST:
  * no waits. */
-#define FIELD_TICKS (OS_TIMER_CLOCK / 60)
+#define FIELD_TICKS (OS_TIMER_CLOCK / portFieldRate()) /* 60, or 50: PAL in 50 Hz */
 static OSTime sNextRetrace;
 
 static void waitUntil(OSTime when) {
@@ -128,7 +128,7 @@ void VIWaitForRetrace(void) {
     portARQPoll();
     portShotFrame();
     portFastClockFrame();
-    salPcAuroraPump(1.0 / 60.0);
+    salPcAuroraPump(1.0 / portFieldRate());
     portTraceFrame(sRetraceCount); /* $TTYD_TRACE / $TTYD_WARP, as headless */
     portWarpFrame();               /* the settings page's save warps */
     if (sPostCallback != NULL) {

@@ -80,10 +80,12 @@ static BOOL sInBetween;
 static DispEntry* sSorted[1024]; /* dispdrv.c's DISP_MAX_ENTRIES */
 
 static int sFrames = 1;
+static int sRate = 60;
 
 /* The setting (settings_aurora.c: framerate= in settings.txt, or
  * $TTYD_FRAMERATE): 60 (off), 120, 144, 240, ... or "display", the monitor's
- * rate. Shown as the nearest multiple of 60, at most 8 frames per game frame. */
+ * rate. Shown as the nearest multiple of 60, at most 8 frames per game frame
+ * (of 50, in the European release's 50 Hz mode: portInterpFrames). */
 void portInterpSetRate(const char* v) {
     int rate = 60, frames;
     if (v != NULL && strcmp(v, "display") == 0) {
@@ -98,10 +100,17 @@ void portInterpSetRate(const char* v) {
         printf("[interp] %d frames per game frame (%d Hz)\n", frames, frames * 60);
     }
     sFrames = frames;
+    sRate = rate;
 }
 
 int portInterpFrames(void) {
-    return sFrames;
+    int field = portFieldRate(), frames;
+    if (field == 60) {
+        return sFrames;
+    }
+    /* 50 Hz: as many frames per game frame as fit the setting's rate */
+    frames = (sRate + field / 2) / field;
+    return frames < 1 ? 1 : frames > 8 ? 8 : frames;
 }
 
 void portInterpSceneDrawn(void) {

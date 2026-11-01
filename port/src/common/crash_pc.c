@@ -87,11 +87,7 @@ static void reportBegin(const char* what) {
         return;
     }
     fprintf(sReport, "TTYD PC port %s report\nversion: %s, built %s %s\ngame: %s\n%s%s%simage: %p\n", what,
-#ifdef VERSION_G8ME01
-            "US (G8ME01)",
-#else
-            "JP (G8MJ01)",
-#endif
+            PORT_REGION_SHORT " (" PORT_GAME_ID ")",
             __DATE__, __TIME__, sContext[0] != '\0' ? sContext : "?", sMessage[0] != '\0' ? "message: " : "",
             sMessage, sMessage[0] != '\0' ? "\n" : "", (void*)GetModuleHandleA(NULL));
 }
@@ -396,11 +392,7 @@ static void reportBegin(const char* what) {
         const int fd = sReportFd;
         char buf[1024];
         int n = snprintf(buf, sizeof(buf), "TTYD PC port %s report\nversion: %s, built %s %s\ngame: %s\n%s%s%s", what,
-#ifdef VERSION_G8ME01
-                         "US (G8ME01)",
-#else
-                         "JP (G8MJ01)",
-#endif
+                         PORT_REGION_SHORT " (" PORT_GAME_ID ")",
                          __DATE__, __TIME__, sContext[0] != '\0' ? sContext : "?",
                          sMessage[0] != '\0' ? "message: " : "", sMessage, sMessage[0] != '\0' ? "\n" : "");
         ssize_t w = write(fd, buf, (size_t)(n > 0 && n < (int)sizeof(buf) ? n : 0));

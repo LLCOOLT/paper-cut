@@ -9,8 +9,8 @@ builds without it and runs from the user's own disc image.
 
 | Milestone | State |
 |---|---|
-| Builds on Windows (clang + lld), JP and US, headless and Aurora | done |
-| Boots to the title (JP, US) | done |
+| Builds on Windows (clang + lld), JP, US and PAL, headless and Aurora | done |
+| Boots to the title (JP, US, PAL) | done |
 | Every map of the game's map table boots and runs (279 per version) | done, headless and Aurora |
 | Field play: walking, jumping, blocks, messages (scripted input) | done |
 | Battles (a battle on every map with enemies) | done, JP and US |
@@ -39,8 +39,8 @@ cmake -S . -B build-pc-jp -G Ninja --toolchain cmake/toolchains/windows-clang.cm
 ninja -C build-pc-jp
 ```
 
-- `TTYD_VERSION`: `G8MJ01` (JP) or `G8ME01` (US); one executable per version
-  (`ttyd-jp`, `ttyd-us`).
+- `TTYD_VERSION`: `G8MJ01` (JP), `G8ME01` (US) or `G8MP01` (PAL, the European
+  release); one executable per version (`ttyd-jp`, `ttyd-us`, `ttyd-eu`).
 - `TTYD_BACKEND`: `aurora` (window, GPU, controllers, audio; `extern/aurora`)
   or `headless` (no window or dependencies; tests and sweeps).
 - `TTYD_RELS_STATIC` (default with clang: Windows, Apple, Linux, Android): the
@@ -755,9 +755,19 @@ plus the port's changes, nearly all inside `#ifdef TARGET_PC`.
   `proto_audit` (prototypes against definitions, per version), the pointer-width
   audit build and `fncast_audit`, `tools/check_versions.py` (no per-version
   macros in game code), and the map sweep with golden audio.
-- **Versions:** the decomp builds JP, US, PAL (G8MP01) and the US and JP demos.
-  The port builds JP and US; `port/sources_<version>.cmake` exist for all five
-  (from each version's splits), the rest of the port follows.
+- **Versions:** the decomp builds JP, US, PAL (G8MP01) and four demos. The port
+  builds JP, US and PAL; `port/sources_<version>.cmake` exist for the demos
+  too (from each version's splits), which come next.
+- **PAL:** the game's text is the language of the settings page's choice, else
+  `$TTYD_LANGUAGE` (`en de fr es it`), else the computer's (it picks
+  `msg/<language>` from the console language, `OSGetLanguage`). Its boot
+  question, 50 or 60 Hz, is in the console's ROM font, which the PC hasn't, so
+  the port answers it: 60 Hz (EURGB60, the same pacing as JP and US) unless
+  the settings page's "Run at 50 Hz" or `$TTYD_50HZ=1` asks for 50. At 50 Hz
+  the frame pacing, the audio per frame and the fast-run clock follow
+  (`portFieldRate`); in-between frames are whole multiples of 50. Saves are
+  the US layout (the European save structs are the US ones), under PAL's own
+  game ID.
 
 ## Web
 

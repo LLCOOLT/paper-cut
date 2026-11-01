@@ -202,9 +202,27 @@ void seq_logoInit(SequenceWork* work) {
         wp->progressive = FALSE;
         gp->flags |= GLOBAL_FLAG_VIDEO_MODE_SET;
 #elif VERSION >= VERSION_DEMO_EU
+#ifdef TARGET_PC
+        /* PC port: the question's text is in the console's ROM font, which the PC hasn't: answered
+         * by the settings page's choice (60 Hz unless 50 Hz is set), as progDisp would */
+        if (!portPal50Hz()) {
+            OSSetEuRgb60Mode(1);
+            gp->framerate = 60;
+            VIConfigure(&sRMObjHReso_prog);
+            VIFlush();
+            gp->flags |= GLOBAL_FLAG_PROGRESSIVE;
+        } else {
+            OSSetEuRgb60Mode(0);
+            gp->framerate = 50;
+            gp->flags &= ~GLOBAL_FLAG_PROGRESSIVE;
+        }
+        wp->progressive = FALSE;
+        gp->flags |= GLOBAL_FLAG_VIDEO_MODE_SET;
+#else
         // PAL: always ask for 50Hz / 60Hz; preselect 60Hz when EURGB60 is saved
         wp->progressive = TRUE;
         wp->toggle = OSGetEuRgb60Mode() != 1;
+#endif
 #else
         if (VIGetDTVStatus()) {
             if (OSGetProgressiveMode() == 1) {

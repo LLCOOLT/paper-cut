@@ -36,7 +36,7 @@ def main():
         print("ci_link_data: $TTYD_LOCAL_DATA is not set: no disc images (stages that need them skip)")
         return 0
     pairs = [(os.path.join(src, "data"), os.path.join(ROOT, "data"))]
-    for version in ("G8MJ01", "G8ME01"):
+    for version in ("G8MJ01", "G8ME01", "G8MP01"):
         have = os.path.join(src, "orig", version)
         if os.path.isdir(have):
             os.makedirs(os.path.join(ROOT, "orig", version), exist_ok=True)

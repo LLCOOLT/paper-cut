@@ -13,4 +13,13 @@ OSTick portOSGetTick(void);
 #define OSGetTime portOSGetTime
 #define OSGetTick portOSGetTick
 #endif
+/* OSGetLanguage's values under the SDK's names (Aurora: OS_LANGUAGE_*) */
+#ifndef OS_LANG_ENGLISH
+#define OS_LANG_ENGLISH OS_LANGUAGE_ENGLISH
+#define OS_LANG_GERMAN OS_LANGUAGE_GERMAN
+#define OS_LANG_FRENCH OS_LANGUAGE_FRENCH
+#define OS_LANG_SPANISH OS_LANGUAGE_SPANISH
+#define OS_LANG_ITALIAN OS_LANGUAGE_ITALIAN
+#define OS_LANG_DUTCH OS_LANGUAGE_DUTCH
+#endif
 #endif
