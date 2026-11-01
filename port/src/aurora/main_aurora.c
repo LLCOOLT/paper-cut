@@ -18,6 +18,7 @@
 #include "port/rel_pc.h"
 #include "port/platform.h"
 #include "port/mods.h"
+#include "port/luigi.h"
 #ifdef __APPLE__
 #include <TargetConditionals.h>
 #endif
@@ -160,6 +161,7 @@ int aurora_main(int argc, char* argv[]) {
         return 1;
     }
 
+    portLuigiModelInit(); /* Luigi's model with our animations, from the disc (docs/LUIGI_ANIMS.md) */
     portModsInit(info.userPath, info.cachePath); /* the mods folder, loose textures (port/mods/mods.cpp) */
     portAuroraBeginFrame();
     return ttyd_main();

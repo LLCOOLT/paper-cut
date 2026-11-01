@@ -23,6 +23,10 @@
 #endif
 #ifdef TARGET_PC
 #include "port/bedecode.h"
+/* Play as Luigi: the journal map's walking figure is drawn through Luigi's stand-in (port/include/port/luigi.h) */
+#include "port/luigi.h"
+#define animPoseDrawMtx portLuigiDrawMtx
+#define animPoseRelease portLuigiRelease
 #endif
 #include "mario/mario.h"
 #include "win/win_log.h"
@@ -1395,6 +1399,9 @@ static void mapGX(WindowWork* w, f32 x, f32 y) {
             PSMTXTrans(m, mx + tubuDt[w->log.mapIdx].x, my + tubuDt[w->log.mapIdx].y, 0.0f);
             animPoseSetLocalTime(w->log.pose, gp->retraceCount % (s32)(data->loopInfo)[2]);
             animPoseMain(w->log.pose);
+#ifdef TARGET_PC
+            portLuigiUpdate(PORT_LUIGI_LOG, w->log.pose, TRUE);
+#endif
             animPoseDrawMtx(w->log.pose, m, 1, 0.0f, scale);
             animPoseDrawMtx(w->log.pose, m, 2, 0.0f, scale);
             animPoseDrawMtx(w->log.pose, m, 3, 0.0f, scale);

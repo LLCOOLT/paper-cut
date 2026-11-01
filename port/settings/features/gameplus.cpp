@@ -125,9 +125,9 @@ struct Register {
                           "A lost match costs no rank, and a match's bonus condition stays at the top of the screen.",
                           kPlay, "glitz_pit_kind", "glitz pit rank lose condition rule");
     portSettingsAddToggle(kTab, "Play as Luigi",
-                          "Luigi in Mario's place, with Mario's moves. Luigi only has standing, walking, running, "
-                          "jumping and talking: anything else (the hammer, a spin jump, being hurt, paper forms, "
-                          "battle moves) shows Mario in Luigi's colours.",
+                          "Luigi in Mario's place, with Mario's moves: in the field, in battle, in the menus and "
+                          "the credits, with his own footsteps, and the text calls him Luigi. The other Luigi, in "
+                          "Rogueport's inn and his scenes, stays out of sight. Saves are not changed.",
                           0, "playable_luigi", "luigi play as character mario green brother");
     static const char* const kNewGamePlus[] = {"Off", "Level and stats", "Level, stats and badges",
                                                "Level, stats, badges and Tattle Log"};

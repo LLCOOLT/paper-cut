@@ -22,6 +22,7 @@
 #ifdef TARGET_PC
 #include "port/audio_mix.h"
 #include "port/gameplus.h"
+#include "port/luigi.h"
 #endif
 #include "evt/evt_story.h"
 
@@ -11581,6 +11582,9 @@ static s32 __psndSFXOn(const char* name, u8 vol, u8 pan, u16 pitch, Vec* pos, u3
     s32 i;
     s32 id;
     id = searchPSSFXList(name);
+#ifdef TARGET_PC /* Play as Luigi: his steps, jump and landing for Mario's (port/include/port/luigi.h) */
+    id = portLuigiSfx(id);
+#endif
     sid = id & 0x1FFF;
     entry = &pssfxlist[sid];
     if (entry->fxId == 0) {

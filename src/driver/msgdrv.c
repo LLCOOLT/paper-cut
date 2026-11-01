@@ -6,6 +6,7 @@
 #include "port/platform.h"
 #include "port/gameplay.h"
 #include "port/gameplus.h"
+#include "port/luigi.h"
 #ifdef PORT_MODS
 #include "port/mods.h"
 #endif
@@ -1637,7 +1638,7 @@ const char* PORT_HOOKABLE(msgSearch)(const char* tag) {
     {
         const char* modded = portModMsgSearch(tag, language_dir[gp->language]);
         if (modded != NULL) {
-            return modded;
+            return portLuigiText(modded); /* Play as Luigi: his name for Mario's */
         }
     }
 #endif
@@ -1655,7 +1656,11 @@ const char* PORT_HOOKABLE(msgSearch)(const char* tag) {
                 }
                 result = strcmp(tag, msgEntryText(entry) + lookup[index].startaddr);
                 if (!result) {
+#ifdef TARGET_PC /* Play as Luigi: his name for Mario's (port/include/port/luigi.h) */
+                    return portLuigiText(msgEntryText(entry) + lookup[index].endaddr);
+#else
                     return msgEntryText(entry) + lookup[index].endaddr;
+#endif
                 }
                 if (result < 0) {
                     max = index - 1;

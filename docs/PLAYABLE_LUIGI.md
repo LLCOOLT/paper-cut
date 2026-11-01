@@ -1,9 +1,9 @@
 # Playable Luigi (Paper Cut 0.2, M6)
 
 A Gameplay+ option, "Play as Luigi" (setting key `playable_luigi`, off by
-default), that shows Luigi in Mario's place. It changes how Mario looks, not
-what he can do: Luigi uses Mario's moves, stats, collision and sounds. Saves are
-not changed.
+default), that shows Luigi in Mario's place. It changes how Mario looks, sounds
+and is called, not what he can do: Luigi uses Mario's moves, stats and
+collision. Saves are not changed.
 
 ## What the disc has
 
@@ -105,41 +105,91 @@ state in CMakeLists.txt), and it checks each frame that its pose is still the
 `c_luigi` it loaded (a battle's end frees battle poses; a map change, a save
 state or a reset can free or replace the field one), loading it again if not.
 
+## Text, menus, the other Luigi, sounds
+
+All of it only while the option is on; `port/src/common/luigi_pc.c` again.
+
+- Text (`portLuigiText`, from `msgSearch` in `src/driver/msgdrv.c`, a mod's
+  message too): every message the game looks up, with the player's name as
+  Luigi's: `Mario` and `MARIO` in the Latin languages (English, French,
+  German, Spanish, Italian), `マリオ` (Shift-JIS) in Japanese. Not changed:
+  the name inside another word (French "Mariole", Spanish "Marioink"), "Paper
+  Mario" (the game's title, also the Glitzville play and the Weekly site),
+  "Mario Bros." / "Super Mario Bros." and the series ("MARIO SERIES THEME
+  MUSIC" in the credits), and in Japanese ペーパーマリオ, マリオブラザーズ,
+  マリオストーリー and マリオシリーズ. German's genitive "Marios" becomes
+  "Luigis", a shout's drawn-out letters follow ("MARIOOO!" "LUIGIII!"), and
+  "Mario and Luigi" (et, e, y, und, &, と, や) becomes "Luigi and Mario", not
+  "Luigi and Luigi" (and the other way round). Only lowercase tags (`<...>`,
+  message names) are never touched. The texts are made once per message and
+  kept on the save-state heap (the game keeps pointers to them). Checked over
+  every message file of the three discs with a host-side harness: of about
+  1,100 messages per language with the name, the only ones left as they were
+  are the ones above.
+- Menus: the pause menu's Mario page and the badge page's figure
+  (`src/window/win_mario.c`) and the journal map's walking figure
+  (`src/window/win_log.c`) go through the same stand-in as the field, in two
+  more slots (`PORT_LUIGI_MENU`, `PORT_LUIGI_LOG`): the figure's pose steps as
+  before, Luigi's follows it and is drawn instead, with the same name map. Only
+  for Mario's own models (`a_mario*`), so 8-bit Mario's `d_mario` stays.
+  `portLuigiRelease` (the menus' `animPoseRelease`, also in
+  `src/window/win_badge.c`) frees a stand-in with its figure.
+- Credits (`rels/end/src/end_00.c`): the parade's silhouettes swap the two
+  brothers: Luigi's model and walk where Mario walks with Peach, Mario's where
+  Luigi walks with his party.
+- The other Luigi: an NPC drawn with `c_luigi` (`NPC_FLAG_LUIGI`, set by
+  `npcEntry`: Rogueport's inn and plaza, the harbour, Mario's house in the
+  prologue and epilogue) is not drawn (nor his shadow) and is skipped by the
+  talk check, the side push, the field attacks' and the blow's hit checks
+  (`src/driver/npcdrv.c`). He is not deleted and his flags are not changed,
+  so the scenes' scripts that move him, turn him or make him speak run as
+  before (his speech balloons point at where he stands).
+- Sounds (`portLuigiSfx`, from `__psndSFXOn` in `src/pmario_sound.c`): Mario's
+  plain-floor steps (`SFX_MARIO_MOVE1L`/`R`), jump (`SFX_MARIO_JUMP1`) and
+  landing (`SFX_MARIO_LANDING1`) play as Luigi's NPC's
+  (`SFX_FLD_NPC_LUIGI_*`): the same samples, a little lower and quieter, as the
+  game plays them for him. The other floors' steps and landings (grass, metal,
+  water, ...) and Mario's voice have no Luigi version and stay.
+- Collision: kept as Mario's. Luigi's NPC box is 22x47, but Mario's size is
+  what every map's crawlspaces, pipes, low ceilings and the paper and tube
+  forms are built around, so changing it could leave a map unbeatable; the
+  model only looks taller (his bounding box is 24 units to Mario's 22).
+
 ## Limitations
 
-- Luigi only has stand, idle, walk, run, jump and talk. Everything else Mario
-  does shows Mario's model (in green in the field); in battle that is every attack, Appeal,
-  guarding, being hurt and the victory pose, so in battle Luigi is mostly seen
-  standing, walking and running between moves.
-- Known issue: in battle Luigi draws grey (darker than in the field). His
-  model's vertex colours are white like Mario's, so it is in how battle draws
-  him: the light or material state copied from Mario's battle part, or the
-  battle pool (type 1) he is loaded into. Not fixed yet.
+- Every Mario animation has a Luigi version (docs/LUIGI_ANIMS.md) but
+  `M_H_12`, the thrown hammer, which looks the same on Mario's model.
+- Known issue (not re-checked with this work): in battle Luigi draws grey
+  (darker than in the field). His model's vertex colours are white like
+  Mario's, so it is in how battle draws him: the light or material state
+  copied from Mario's battle part, or the battle pool (type 1) he is loaded
+  into.
 - In battle the fallback is red Mario: the battle model's colour comes from
   `_mario_super_emblem_anim_set` (unit_mario.c), which only looks at the
   badges.
-- No paper forms on Luigi's model (plane, boat, tube, sideways, Vivian's
-  shadow): they are Mario's.
-- Luigi's run and walk have his own timing; he moves at Mario's speed, with
-  Mario's collision and footstep sounds, and jumps Mario's jump.
-- Text still says Mario, and the menus (the Mario page, badges, the journal,
-  the credits) still draw Mario.
-- Luigi in Rogueport's inn and in the Super Luigi scenes is still there: two
-  Luigis.
+- Luigi moves at Mario's speed, with Mario's collision (above), and jumps
+  Mario's jump.
+- Text: a substitution, not a rewrite. Lines where Mario's name stands for the
+  person still read naturally, but some don't fit Luigi: other characters
+  still speak of Luigi as someone else ("your brother Luigi"), Luigi's own
+  lines (his inn talks, the Super Luigi books) call his brother Luigi, and a
+  few scenes describe Mario's look (the small one, the red cap). The save
+  file's name (the player's own, "Mario" by default) is not changed.
+- The other Luigi is hidden everywhere his NPC is, so his inn talks (his
+  stories and the Super Luigi books' sales pitch) can't be started while the
+  option is on; his scenes still play around the empty spot he stands in.
+- The file select draws no Mario model (only textures from `name.tpl`), so
+  there is nothing there to change.
 - The fallback colours follow the option when Mario's outfit is checked (each
   field frame the partner can be used, as for a badge change); the Luigi model
-  itself switches at once.
+  itself switches at once. The hidden Luigi NPC, the text and the sounds
+  switch at once too; a message already open keeps its text.
 - Peach, Bowser and 8-bit Mario are unchanged.
-
-## What a full Luigi would need
-
-- New animations for Luigi's model: hammer, spin jump, damage, item, Yoshi
-  ride and the battle moves (`b_mario`'s 85). The disc has none, so this is new
-  art (a model tool that writes the game's animation format), or a retarget of
-  Mario's animations onto Luigi's skeleton, which the two models' different
-  node layouts make far from automatic.
-- Paper forms drawn from Luigi's model (the paper capture is of the pose, so
-  this may only need the stand-in pose attached to Mario's paper pose).
-- Luigi's sounds (`SFX_FLD_NPC_LUIGI_*` exist for his NPC: steps, jump,
-  landing) and his taller collision box (22x47 as an NPC).
-- Text: a "Luigi" for Mario's name in messages, and the menus' models.
+- The menu tabs' titles ("Mario" on the pause menu's first tab) are textures,
+  not text, and still say Mario.
+- Seen in game (US): the Mario page draws Luigi with "Luigi" by the level and
+  "Luigi's Abilities" in its help, and the Gear page's help says "Luigi's
+  items". Not yet seen in game: the hidden Luigi NPC (the scripted runs never
+  reached a spot where he stands), the badge page's and the journal map's
+  figures, the credits, the sounds, and the Japanese and European text in
+  game (the text was checked with the harness only).

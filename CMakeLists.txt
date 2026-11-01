@@ -703,6 +703,10 @@ endif()
 if(WIN32)
     enable_language(RC)
     target_sources(ttyd PRIVATE ${CMAKE_SOURCE_DIR}/port/windows/papercut.rc)
+    # the resource compiler doesn't report the .ico as a dependency: a new icon
+    # alone rebuilds the resources only with this
+    set_source_files_properties(${CMAKE_SOURCE_DIR}/port/windows/papercut.rc PROPERTIES
+        OBJECT_DEPENDS ${CMAKE_SOURCE_DIR}/port/assets/icon/papercut.ico)
     # "Paper Cut.exe", what the player starts: it starts ttyd-us.exe, whose
     # launcher starts the disc's version (tools/port/release.py packages the
     # three builds together); a window program, no console
@@ -781,10 +785,13 @@ if(TTYD_BACKEND STREQUAL "aurora")
     # the window's icon: Paper Cut's logo, 64x64 RGBA (tools/port/make_icons.py)
     ttyd_embed_file(${CMAKE_SOURCE_DIR}/port/assets/icon/papercut-64.rgba portIcon64
         ${CMAKE_BINARY_DIR}/generated/icon64.c)
+    # Luigi's animation pack, our own work (port/src/aurora/luigi_model_aurora.c, docs/LUIGI_ANIMS.md)
+    ttyd_embed_file(${CMAKE_SOURCE_DIR}/port/assets/luigi/luigi_anims.bin portLuigiPack
+        ${CMAKE_BINARY_DIR}/generated/luigi_pack.c)
     add_library(ttyd_settings OBJECT ${CMAKE_SOURCE_DIR}/port/settings/settings_ui.cpp
         ${CMAKE_SOURCE_DIR}/port/settings/launcher_ui.cpp ${CMAKE_SOURCE_DIR}/port/settings/launcher_style.cpp
         ${CMAKE_BINARY_DIR}/generated/font_bold.c ${CMAKE_BINARY_DIR}/generated/font_medium.c
-        ${CMAKE_BINARY_DIR}/generated/icon64.c ${TTYD_SETTINGS_FEATURES})
+        ${CMAKE_BINARY_DIR}/generated/icon64.c ${CMAKE_BINARY_DIR}/generated/luigi_pack.c ${TTYD_SETTINGS_FEATURES})
     target_include_directories(ttyd_settings PRIVATE ${CMAKE_SOURCE_DIR}/port/include)
     target_compile_features(ttyd_settings PRIVATE cxx_std_20)
     # The port's version, shown on the settings page (tools/port/release.py sets it).

@@ -34,6 +34,9 @@
 #include "dolphin/exi.h"
 #include "dolphin/pad.h"
 #include "evt/evt_memcard.h"
+#ifdef TARGET_PC
+#include "port/luigi.h"
+#endif
 #include "end.h"
 #include "driver/extdrv.h"
 #include "evt/evt_bg.h"
@@ -754,7 +757,15 @@ USER_FUNC(evt_end_credit_npc_main) {
     }
     switch (actor->state) {
         case 0:
-#if VERSION >= VERSION_US
+#ifdef TARGET_PC /* Play as Luigi: Luigi walks in Mario's place and Mario in Luigi's (port/include/port/luigi.h) */
+            {
+                const char* model = R_credits_npc_info[id].agb;
+                const char* anim = R_credits_npc_info[id].anim;
+                portLuigiCreditActor(&model, &anim);
+                actor->poseId = animPoseEntry(model, inBattle);
+                animPoseSetAnim(actor->poseId, anim, 1);
+            }
+#elif VERSION >= VERSION_US
             actor->poseId = animPoseEntry(R_credits_npc_info[id].agb, inBattle);
             animPoseSetAnim(actor->poseId, R_credits_npc_info[id].anim, 1);
 #else

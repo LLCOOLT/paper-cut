@@ -46,6 +46,18 @@
 #include <stddef.h>
 #include "version.h"
 
+#ifdef TARGET_PC /* Play as Luigi: the Luigi NPC (c_luigi) is hidden, intangible and can't be talked to
+                  * (port/include/port/luigi.h); he stays an NPC, so his scenes' scripts run as before */
+#include "port/luigi.h"
+#define NPC_LUIGI_GONE(e) portLuigiHidesNpc((e)->flags)
+#define NPC_SKIP_LUIGI(e)    \
+    if (NPC_LUIGI_GONE(e)) \
+        continue;
+#else
+#define NPC_LUIGI_GONE(e) 0
+#define NPC_SKIP_LUIGI(e)
+#endif
+
 // first-strike announce: frames to slide in/out, and the frame the slide out starts
 #if VERSION <= VERSION_DEMO_JP
 #define ANNOUNCE_SLIDE 30
@@ -960,7 +972,12 @@ void PORT_HOOKABLE(npcMain)(void) {
                             entry->moveOffset.z = 0.0f;
                             npcMoveG(entry);
                         }
+#ifdef TARGET_PC
+                        if (!(entry->flags & NPC_FLAG_ENEMY) && !(entry->flags & NPC_FLAG_INTANGIBLE) && !(entry->flags & NPC_FLAG_NO_MARIO_SIDE_HIT) &&
+                            !NPC_LUIGI_GONE(entry)) {
+#else
                         if (!(entry->flags & NPC_FLAG_ENEMY) && !(entry->flags & NPC_FLAG_INTANGIBLE) && !(entry->flags & NPC_FLAG_NO_MARIO_SIDE_HIT)) {
+#endif
                             npcCheckHitMarioSide(entry);
                         }
                         {
@@ -1165,7 +1182,11 @@ void PORT_HOOKABLE(npcMain)(void) {
                 interrupt:
                     npcCheckInterrupt(entry);
                 }
+#ifdef TARGET_PC
+                if (!(entry->flags & NPC_FLAG_NO_DISPLAY) && !NPC_LUIGI_GONE(entry)) {
+#else
                 if (!(entry->flags & NPC_FLAG_NO_DISPLAY)) {
+#endif
                     CameraEntry* cam;
 
                     cam = camGetPtr((CameraId)4);
@@ -2075,6 +2096,7 @@ void fbatEncountCheck(void) {
             if (((!(npc->flags & NPC_FLAG_ACTIVE)) || (npc->flags & NPC_FLAG_ENEMY)) || (!npc->talkEvt)) {
                 continue;
             }
+            NPC_SKIP_LUIGI(npc)
             hit = 0;
             if ((!(npc->position.y > (mario->position.y + mario->wPlayerCollisionBox.y))) && (!(mario->position.y > (npc->position.y + npc->height)))) {
                 Vec pos;
@@ -2709,6 +2731,7 @@ static inline BOOL fbat_canHit(NpcEntry* npc) {
         continue;                                                     \
     if (npc->flags & NPC_FLAG_INTANGIBLE)                             \
         continue;                                                     \
+    NPC_SKIP_LUIGI(npc)                                               \
     if ((*(u32*)&((NpcEntry*)npc)->jumpFlags) & NPC_STATUS_DEAD)      \
         continue;                                                     \
     if (npc->flags & NPC_FLAG_KOOPA_MODE)                             \
@@ -2733,6 +2756,7 @@ static inline BOOL fbat_canHit(NpcEntry* npc) {
         continue;                                                \
     if (npc->flags & NPC_FLAG_INTANGIBLE)                        \
         continue;                                                \
+    NPC_SKIP_LUIGI(npc)                                          \
     if (npc->flags & NPC_FLAG_KOOPA_MODE)                        \
         continue;                                                \
     if ((*(u32*)&((NpcEntry*)npc)->jumpFlags) & NPC_STATUS_DEAD) \
@@ -3922,6 +3946,11 @@ BOOL PORT_HOOKABLE(npcCheckBlow)(NpcEntry* npc) {
         return FALSE;
     }
     if (npc->flags & NPC_FLAG_INTANGIBLE) {
+        return FALSE;
+    }
+#endif
+#ifdef TARGET_PC
+    if (NPC_LUIGI_GONE(npc)) {
         return FALSE;
     }
 #endif

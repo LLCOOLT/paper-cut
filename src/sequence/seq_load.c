@@ -1648,9 +1648,18 @@ static void continueGame(void) {
 
 #ifdef TARGET_PC
 /* The settings page's save warps (port/src/common/warp_pc.c): continue from
- * a card slot as the file select does. */
+ * a card slot as the file select does, curtain included: the file select
+ * closes it (state 0x16) and the map change opens it. The fades held where
+ * the warp came from go first (the intro's white fade-out, which the title
+ * clears only once it has loaded; a map's own): a continue's FADE_NONE never
+ * clears them, and the field stayed white under them. */
 void portContinueGame(s32 slot) {
+    s32 i;
     wp->slot = slot;
+    for (i = 0; i < 5; i++) { /* FadeWork.entries (fadedrv.h) */
+        fadeReset(i);
+    }
+    fadeEntry(FADE_CURTAIN_SIDES_A1, 0, (GXColor){0, 0, 0, 255});
     continueGame();
 }
 #endif

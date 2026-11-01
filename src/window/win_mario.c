@@ -25,6 +25,13 @@
 #include <demo/DEMOPad.h>
 #ifdef TARGET_PC
 #include "port/menu_tap.h"
+/* Play as Luigi: the Mario page's and badge page's figure is drawn through Luigi's stand-in (port/include/port/luigi.h) */
+#include "port/luigi.h"
+#define animPoseDrawMtx portLuigiDrawMtx
+#define animPoseRelease portLuigiRelease
+#define LUIGI_MENU_UPDATE(pose) portLuigiUpdate(PORT_LUIGI_MENU, (pose), TRUE)
+#else
+#define LUIGI_MENU_UPDATE(pose)
 #endif
 
 typedef struct LinkDt {
@@ -714,6 +721,7 @@ void PORT_HOOKABLE(winMarioDisp)(s32 camId, void* param, s32 idx) {
         animPoseSetLocalTime(w->mario.poseId, (f32)(gp->retraceCount % (s32)anim->loopInfo[2]));
     }
     animPoseMain(w->mario.poseId);
+    LUIGI_MENU_UPDATE(w->mario.poseId);
     winKageGX(w, (GXColor){0x00, 0x00, 0x00, 0x80}, x - 150.0f, y, 0.0f, 1.0f);
     PSMTXTrans(mtx, x - 150.0f, y, 0.0f);
     winZClear();
@@ -974,6 +982,7 @@ void PORT_HOOKABLE(winMarioDisp)(s32 camId, void* param, s32 idx) {
     }
 #endif
     animPoseMain(w->mario.poseId);
+    LUIGI_MENU_UPDATE(w->mario.poseId);
     winKageGX(w, (GXColor){0x00, 0x00, 0x00, 0x80}, x - 150.0f, y, 0.0f, 1.0f);
     PSMTXTrans(mtx, x - 150.0f, y, 0.0f);
     winZClear();

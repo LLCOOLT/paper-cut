@@ -21,6 +21,9 @@
 #endif
 #ifdef TARGET_PC
 #include "port/menu_tap.h"
+/* Play as Luigi: the badge page's figures have Luigi's stand-in, which goes with them (port/include/port/luigi.h) */
+#include "port/luigi.h"
+#define animPoseRelease portLuigiRelease
 #endif
 
 /** Builds the "Equipped" tab's list from the pouch: one entry (slot index, badge id, equipped) per equipped badge. */

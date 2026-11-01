@@ -27,6 +27,7 @@
 #ifdef TARGET_PC
 #include "port/anim_pc.h"
 #include "port/bedecode.h"
+#include "port/luigi.h"
 /* PC port: a loaded model blob starts with a marker and the native root
  * (port/anim_pc.h), where the GameCube code casts the blob itself. Index
  * tables stay big-endian in the blob: ANIM_IDX16 reads the low half of an
@@ -6648,6 +6649,12 @@ static void animPaperPoseDispSub(s32 unused, AnimationPose* arg) {
         pose = arg;
     }
     d = animPoseGetBaseData(pose)->anims[pose->animId].data;
+#ifdef TARGET_PC
+    /* Play as Luigi: a paper form (spin, plane, boat, ...) captures Luigi's
+     * stand-in pose with its bounds; Mario's pose keeps the capture's state */
+    pose = portLuigiPaperPose(arg);
+    d = animPoseGetBaseData(pose)->anims[pose->animId].data;
+#endif
     scale *= 25.74f / (d->bboxMax.y - d->bboxMin.y);
     hh = 0.75f * DEMOGetRenderModeObj()->efbHeight;
     sysWaitDrawSync();
@@ -6675,6 +6682,9 @@ static void animPaperPoseDispSub(s32 unused, AnimationPose* arg) {
     if (pose->vivianType) {
         PSMTXCopy(save, pose->matrix);
     }
+#ifdef TARGET_PC
+    pose = arg;
+#endif
     sysWaitDrawSync();
     GXReadBoundingBox(&left, &top, &right, &bottom);
     if (left > right) {
