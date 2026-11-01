@@ -1,3 +1,5 @@
+// Paper Mario 64 smoke effect 4 (kemuri: smoke) at a point with an angle and a flip option.
+#include "eff/n64/eff_kemuri4_n64.h"
 #include "driver/camdrv.h"
 #include "driver/dispdrv.h"
 #include "driver/effdrv.h"
@@ -8,6 +10,7 @@
 #include <dolphin/gx.h>
 #include <dolphin/mtx.h>
 #include <stdlib.h>
+#include "libc_decls.h"
 
 typedef struct EffKemuri4N64Work {
     s32 active;      // 0x0
@@ -22,8 +25,8 @@ typedef struct EffKemuri4N64Work {
     Mtx mtx;         // 0x30
     f32 rotSpeed;    // 0x60
     f32 moveScale;   // 0x64
-    f32 field_68;    // 0x68
-    f32 field_6C;    // 0x6C
+    f32 rising;      // 0x68, nonzero until velocity turns negative
+    f32 reserved_6C; // 0x6C, only cleared at entry
     f32 velocity;    // 0x70
     f32 accel;       // 0x74
     f32 accel2;      // 0x78
@@ -32,12 +35,8 @@ typedef struct EffKemuri4N64Work {
     f32 dirZ;        // 0x84
 } EffKemuri4N64Work;
 
-#ifndef TARGET_PC /* PC port: the host libc declares these */
-double sin(double);
-double cos(double);
-#endif
-
-struct { effN64Vtx v[41]; u8 pad[2]; } flowers_v = { { // FAKE: padded to the original symbol size (trailing zero bytes, never read)
+/** Dash puff mesh: the textured quad at 25 and the vertex-coloured flower shape at 35. */
+effN64Vtx flowers_v[41] = {
     {-9, 8, -7, 0, 512, 255, 255, 255, 255},
     {-9, 4, 2, 512, 512, 255, 255, 255, 255},
     {0, 0, 0, 512, 0, 255, 255, 255, 255},
@@ -79,11 +78,17 @@ struct { effN64Vtx v[41]; u8 pad[2]; } flowers_v = { { // FAKE: padded to the or
     {-3, -16, 0, 0, 0, 100, 160, 60, 255},
     {-4, -7, 0, 0, 0, 100, 160, 60, 255},
     {-11, -5, 0, 0, 0, 100, 160, 60, 255},
-}, {0} };
+};
 
-void effKemuri4Main(EffectEntry* effect);
-void effKemuri4Disp(CameraId cameraId, EffectEntry* effect);
+static void effKemuri4Main(EffectEntry* effect);
+static void effKemuri4Disp(CameraId cameraId, EffectEntry* effect);
 
+/**
+ * Spawns one puff at (x, y, z) that drifts sideways from the angle (mirrored if flip is nonzero).
+ * Called via evt_eff "kemuri4"; type 0 holds in place while Mario is idle.
+ * Spawns one flower-smoke puff ("dash" in the effect table) at (x, y, z) drifting sideways from the angle,
+ * mirrored if flip is nonzero. Called via evt_eff64 "kemuri4_n64"; type 0 holds in place while Mario is idle.
+ */
 EffectEntry* effKemuri4N64Entry(s32 type, f32 x, f32 y, f32 z, f32 angle, f32 flip) {
     EffectEntry* effect;
     EffKemuri4N64Work* work;
@@ -97,38 +102,39 @@ EffectEntry* effKemuri4N64Entry(s32 type, f32 x, f32 y, f32 z, f32 angle, f32 fl
     work = __memAlloc(HEAP_EFFECT, sizeof(EffKemuri4N64Work));
     effect->userdata = work;
     effect->callback = effKemuri4Main;
-    
+
     for (i = 0; i < 1; i++, work++) {
-    work->active = 1;
-    work->type = type;
-    work->field_6C = 0.0f;
-    work->position.x = x;
-    work->position.y = y;
-    work->position.z = z;
-    work->scale.x = 1.0f;
-    work->scale.y = 1.0f;
-    work->scale.z = 1.0f;
-    work->alpha = 255;
-    work->field_68 = 1.0f;
-    work->moveScale = 5.4f;
-    work->rotSpeed = (f32)(flip != zero ? -10 : 10);
-    work->velocity = 0.5f;
-    work->accel = -0.07f;
-    work->accel2 = 0.003f;
-    work->accel3 = 0.0f;
-    work->timer = 15;
-    work->rotation.y = angle;
-    work->rotation.x = 0.0f;
-    work->rotation.z = 0.0f;
-    work->texFlag = (rand() % 100 >> 4) & 1;
-    rad = 6.2831855f * reviseAngle(angle + (f32)(flip != zero ? -90 : 90)) / 360.0f;
-    work->dirX = (f32)sin(rad);
-    work->dirZ = (f32)cos(rad);
+        work->active = 1;
+        work->type = type;
+        work->reserved_6C = 0.0f;
+        work->position.x = x;
+        work->position.y = y;
+        work->position.z = z;
+        work->scale.x = 1.0f;
+        work->scale.y = 1.0f;
+        work->scale.z = 1.0f;
+        work->alpha = 255;
+        work->rising = 1.0f;
+        work->moveScale = 5.4f;
+        work->rotSpeed = (f32)(flip != zero ? -10 : 10);
+        work->velocity = 0.5f;
+        work->accel = -0.07f;
+        work->accel2 = 0.003f;
+        work->accel3 = 0.0f;
+        work->timer = 15;
+        work->rotation.y = angle;
+        work->rotation.x = 0.0f;
+        work->rotation.z = 0.0f;
+        work->texFlag = (rand() % 100 >> 4) & 1;
+        rad = 6.2831855f * reviseAngle(angle + (f32)(flip != zero ? -90 : 90)) / 360.0f;
+        work->dirX = (f32)sin(rad);
+        work->dirZ = (f32)cos(rad);
     }
     return effect;
 }
 
-void effKemuri4Main(EffectEntry* effect) {
+/** Moves and spins the puff, fading alpha by 12 per frame; type 0 stalls its timer while Mario motion is 0. */
+static void effKemuri4Main(EffectEntry* effect) {
     EffKemuri4N64Work* work = effect->userdata;
     Vec position;
     Vec tmp = {0.0f, 0.0f, 0.0f};
@@ -153,7 +159,7 @@ void effKemuri4Main(EffectEntry* effect) {
             continue;
         }
         anyActive = 1;
-        if (work->type == 0 && work->field_68 && marioGetPtr()->currMotionId == 0U) {
+        if (work->type == 0 && work->rising && marioGetPtr()->currMotionId == 0U) {
             work->timer++;
         } else {
             work->accel2 = work->accel2 + work->accel3;
@@ -164,7 +170,7 @@ void effKemuri4Main(EffectEntry* effect) {
             work->position.z = work->position.z - work->dirZ * (work->velocity * work->moveScale);
             work->alpha -= 12;
             if (work->velocity < 0.0f) {
-                work->field_68 = 0.0f;
+                work->rising = 0.0f;
             }
         }
         PSMTXRotRad(rotX, 'x', 0.017453292f * work->rotation.x);
@@ -184,7 +190,8 @@ void effKemuri4Main(EffectEntry* effect) {
     }
 }
 
-void effKemuri4Disp(CameraId cameraId, EffectEntry* effect) {
+/** Draws a textured quad (texture 0x4C or 0x4D, picked randomly at spawn), then an untextured vertex-colored shape. */
+static void effKemuri4Disp(CameraId cameraId, EffectEntry* effect) {
     CameraEntry* camera = camGetPtr(cameraId);
     effN64Vtx* vtx1;
     effN64Vtx* vtx2;
@@ -197,8 +204,8 @@ void effKemuri4Disp(CameraId cameraId, EffectEntry* effect) {
 
     work = effect->userdata;
     GXSetCullMode(GX_CULL_NONE);
-    vtx1 = &flowers_v.v[25];
-    vtx2 = &flowers_v.v[35];
+    vtx1 = &flowers_v[25];
+    vtx2 = &flowers_v[35];
     for (i = 0; i < effect->count; i++, work++) {
         if (work->active == 0) {
             continue;

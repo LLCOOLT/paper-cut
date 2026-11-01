@@ -1,3 +1,4 @@
+// Paper Mario 64 effect: bush, four leaves at random offsets that spin and fall; types 0-1.
 #include "eff/n64/eff_bush_n64.h"
 #include "eff/eff_n64.h"
 #include "driver/camdrv.h"
@@ -7,26 +8,22 @@
 #include <dolphin/gx.h>
 #include <dolphin/mtx.h>
 #include <stdlib.h>
-
-#ifndef TARGET_PC /* PC port: the host libc declares these */
-double sin(double);
-double cos(double);
-#endif
-
+#include "libc_decls.h"
 typedef struct EffBushN64Work {
-    s32 type;      // 0x0
-    Vec position;  // 0x4
-    f32 vx;        // 0x10
-    f32 vy;        // 0x14
-    f32 angleZ;    // 0x18
-    f32 spin;      // 0x1C
-    f32 angleY;    // 0x20
-    s32 alpha;     // 0x24
-    s32 lifetime;  // 0x28
-    s32 frame;     // 0x2C
+    s32 type;     // 0x0
+    Vec position; // 0x4
+    f32 vx;       // 0x10
+    f32 vy;       // 0x14
+    f32 angleZ;   // 0x18
+    f32 spin;     // 0x1C
+    f32 angleY;   // 0x20
+    s32 alpha;    // 0x24
+    s32 lifetime; // 0x28
+    s32 frame;    // 0x2C
     u8 pad[4];
 } EffBushN64Work;
 
+/** Two-sided 12x12 green leaf quad for the bush leaves. */
 static effN64Vtx size12x12_tex64x64_vtx[] = {
     {-6, -6, 0, 0, 0, 0x19, 0x55, 0x11, 0xFF},
     {6, -6, 0, 2048, 0, 0x19, 0x55, 0x11, 0xFF},
@@ -38,9 +35,14 @@ static effN64Vtx size12x12_tex64x64_vtx[] = {
     {-6, 6, 0, 0, 4096, 0x30, 0x6C, 0x25, 0xFF},
 };
 
-void effBushMain(EffectEntry* effect);
-void effBushDisp(CameraId cameraId, EffectEntry* effect);
+static void effBushMain(EffectEntry* effect);
+static void effBushDisp(CameraId cameraId, EffectEntry* effect);
 
+/**
+ * Spawns four leaves at random offsets around (x, y, z).
+ * Type 0 pauses itself while Mario is idle early in its life; type 1 falls faster.
+ * Reached through evt_eff64 ("bush_n64").
+ */
 EffectEntry* effBushN64Entry(s32 type, f32 x, f32 y, f32 z) {
     EffectEntry* effect;
     EffBushN64Work* work;
@@ -73,7 +75,12 @@ EffectEntry* effBushN64Entry(s32 type, f32 x, f32 y, f32 z) {
     return effect;
 }
 
-void effBushMain(EffectEntry* effect) {
+/**
+ * For type 0, returns early (no update, no draw) between frames 5 and 15 while Mario's motion id is 0.
+ * Each leaf drifts with gravity, a sine-driven sideways push and a random spin;
+ * fades in over 10 frames and out at the end of its 100.
+ */
+static void effBushMain(EffectEntry* effect) {
     EffBushN64Work* work = effect->userdata;
     Vec position;
     Vec tmp = {0.0f, 0.0f, 0.0f};
@@ -139,7 +146,8 @@ void effBushMain(EffectEntry* effect) {
     dispEntry(CAMERA_3D, dispCalcZ(&position), 2, (DispCallback)effBushDisp, effect);
 }
 
-void effBushDisp(CameraId cameraId, EffectEntry* effect) {
+/** Draws each leaf as a two-sided quad tilted around Z and Y, with the leaf texture. */
+static void effBushDisp(CameraId cameraId, EffectEntry* effect) {
     CameraEntry* camera;
     EffBushN64Work* work;
     s32 i;

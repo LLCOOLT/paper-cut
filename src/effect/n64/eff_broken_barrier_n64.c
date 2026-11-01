@@ -1,3 +1,5 @@
+// Paper Mario 64 effect: broken barrier, 60 pieces of a shattering barrier that scatter and fade.
+#include "eff/n64/eff_broken_barrier_n64.h"
 #include "eff/eff_n64.h"
 #include "driver/camdrv.h"
 #include "driver/dispdrv.h"
@@ -7,94 +9,42 @@
 #include <dolphin/gx.h>
 #include <dolphin/mtx.h>
 #include <stdlib.h>
-#include "eff/eff_magic1_n64.h"
 #include "libc_decls.h"
-
-
-#define NAN (*(f32*)__float_nan)
-
-#define FP_NAN 1
-#define FP_INFINITE 2
-#define FP_ZERO 3
-#define FP_NORMAL 4
-#define FP_SUBNORMAL 5
-
-static inline s32 __fpclassifyf(f32 x) {
-    switch (*(s32*)&x & 0x7F800000) {
-        case 0x7F800000:
-            if (*(s32*)&x & 0x007FFFFF) {
-                return FP_NAN;
-            } else {
-                return FP_INFINITE;
-            }
-            break;
-        case 0:
-            if (*(s32*)&x & 0x007FFFFF) {
-                return FP_SUBNORMAL;
-            } else {
-                return FP_ZERO;
-            }
-            break;
-        default:
-            return FP_NORMAL;
-    }
-}
-
-#define fpclassify(x) __fpclassifyf(x)
-#define isnan(x) (fpclassify(x) == FP_NAN)
-
-#ifndef TARGET_PC /* PC port: the host libc declares these */
-static inline f32 sqrtf(f32 x) {
-    const f64 _half = .5;
-    const f64 _three = 3.0;
-
-    if (x > 0.0f) {
-        f64 guess = __frsqrte(x);
-        guess = _half * guess * (_three - guess * guess * x);
-        guess = _half * guess * (_three - guess * guess * x);
-        guess = _half * guess * (_three - guess * guess * x);
-        return x * guess;
-    } else if (x < 0.0) {
-        return NAN;
-    } else if (isnan(x)) {
-        return NAN;
-    } else {
-        return x;
-    }
-}
-#endif
+#include <math.h>
 
 typedef struct EffBrokenBarrierN64Work {
-    s32 type;       // 0x0
-    Vec position;   // 0x4
-    f32 width;      // 0x10
-    f32 height;     // 0x14
-    Vec velocity;   // 0x18
-    Vec targetVel;  // 0x24
-    s32 timer;      // 0x30
-    f32 rot;        // 0x34
-    s32 lifetime;   // 0x38
-    s32 frame;      // 0x3C
-    s32 r;          // 0x40
-    s32 g;          // 0x44
-    s32 b;          // 0x48
-    s32 alpha;      // 0x4C
-    s32 r2;         // 0x50
-    s32 g2;         // 0x54
-    s32 b2;         // 0x58
-    s32 alpha2;     // 0x5C
-    f32 scale;      // 0x60
-    f32 rotVelA;    // 0x64
-    f32 rotVelB;    // 0x68
+    s32 type;      // 0x0
+    Vec position;  // 0x4
+    f32 width;     // 0x10
+    f32 height;    // 0x14
+    Vec velocity;  // 0x18
+    Vec targetVel; // 0x24
+    s32 timer;     // 0x30
+    f32 rot;       // 0x34
+    s32 lifetime;  // 0x38
+    s32 frame;     // 0x3C
+    s32 r;         // 0x40
+    s32 g;         // 0x44
+    s32 b;         // 0x48
+    s32 alpha;     // 0x4C
+    s32 r2;        // 0x50
+    s32 g2;        // 0x54
+    s32 b2;        // 0x58
+    s32 alpha2;    // 0x5C
+    f32 scale;     // 0x60
+    f32 rotVelA;   // 0x64
+    f32 rotVelB;   // 0x68
 } EffBrokenBarrierN64Work;
 
-void effBrokenBarrierMain(EffectEntry* effect);
-void effBrokenBarrierDisp(CameraId cameraId, EffectEntry* effect);
+static void effBrokenBarrierMain(EffectEntry* effect);
+static void effBrokenBarrierDisp(CameraId cameraId, EffectEntry* effect);
 static void main_dl(EffectEntry* effect, Mtx viewMtx);
 
+/** Shard size over its 20-frame cycle: swells to 1.5 then shrinks (the ten steps are listed twice). */
 static f32 scale_data[] = {0.2f, 0.4f, 0.8f, 1.3f, 1.5f, 1.3f, 0.9f, 0.6f, 0.4f, 0.3f,
                            0.2f, 0.4f, 0.8f, 1.3f, 1.5f, 1.3f, 0.9f, 0.6f, 0.4f, 0.3f};
 
+/** Barrier shard quads: eight cells of the shard texture strip, one picked per shard. */
 static effN64Vtx size8x8_tex22x22_vtx[] = {
     {-8, -8, 0, 0, 0, 0, 0, 0, 255},
     {8, -8, 0, 704, 0, 0, 0, 0, 255},
@@ -130,7 +80,11 @@ static effN64Vtx size8x8_tex22x22_vtx[] = {
     {-8, 8, 0, 4928, 704, 0, 0, 0, 255},
 };
 
-
+/**
+ * Spawns 60 barrier shards around (x, y, z) for `life` frames (0 or less: until soft deleted).
+ * Type 0 is the staff barrier breaking, 2 plays in reverse (shards flow inward); 1 is Peach's (Guess).
+ * Used in the Palace of Shadow (las_29).
+ */
 EffectEntry* effBrokenBarrierN64Entry(s32 type, s32 life, f32 x, f32 y, f32 z, f32 scale) {
     EffectEntry* effect;
     EffBrokenBarrierN64Work* work;
@@ -139,12 +93,12 @@ EffectEntry* effBrokenBarrierN64Entry(s32 type, s32 life, f32 x, f32 y, f32 z, f
     s32 i;
 
     effect = effEntry();
-    effect->type = "BrokenBarrierN64\0\0\0";
+    effect->type = "BrokenBarrierN64";
     effect->count = 61;
     work = __memAlloc(HEAP_EFFECT, sizeof(EffBrokenBarrierN64Work) * 61);
     effect->userdata = work;
     effect->callback = effBrokenBarrierMain;
-    effect->flags |= 2;
+    effect->flags |= EFFECT_FLAG_SOFT_DELETE;
     work->type = type;
     work->frame = 0;
     if (life <= 0) {
@@ -178,8 +132,12 @@ EffectEntry* effBrokenBarrierN64Entry(s32 type, s32 life, f32 x, f32 y, f32 z, f
     return effect;
 }
 
-#pragma opt_propagation off
-void effBrokenBarrierMain(EffectEntry* effect) {
+/**
+ * Each shard, with a staggered start, spawns on the barrier shell in a 20-frame cycle,
+ * flies out (or in, for types 2-3) spinning, and shrinks along a scale table.
+ * The whole effect fades in its last 8 frames.
+ */
+static void effBrokenBarrierMain(EffectEntry* effect) {
     s32 w;
     s32 h;
     EffBrokenBarrierN64Work* work = effect->userdata;
@@ -201,8 +159,8 @@ void effBrokenBarrierMain(EffectEntry* effect) {
     tmp.z = work->position.z;
     position = tmp;
     type = work->type;
-    if (effect->flags & 4) {
-        effect->flags &= ~4;
+    if (effect->flags & EFFECT_FLAG_DELETE_REQUESTED) {
+        effect->flags &= ~EFFECT_FLAG_DELETE_REQUESTED;
         work->lifetime = 16;
     }
     if (work->lifetime < 1000) {
@@ -219,11 +177,11 @@ void effBrokenBarrierMain(EffectEntry* effect) {
     width = work->width;
     height = work->height;
     switch (type) {
-    case 2:
-    case 3:
-        width *= 4.0f;
-        height *= 4.0f;
-        break;
+        case 2:
+        case 3:
+            width *= 4.0f;
+            height *= 4.0f;
+            break;
     }
     w = (s32)width;
     halfW = 0.5f * width;
@@ -242,9 +200,8 @@ void effBrokenBarrierMain(EffectEntry* effect) {
             a = (f32)(rand() % 360);
             t = (f32)(rand() % 360);
             switch (type) {
-            case 0:
-            case 2:
-                {
+                case 0:
+                case 2: {
                     f32 lat = 6.2831855f * t / 360.0f;
                     f32 lon;
                     f32 c;
@@ -252,24 +209,24 @@ void effBrokenBarrierMain(EffectEntry* effect) {
                     work->position.y = height * (f32)cos(lon) * (c = (f32)cos(lat));
                     work->position.z = width * (f32)sin(lat);
                 }
-                work->velocity.x = 0.4f * work->position.x;
-                work->velocity.y = 0.4f * work->position.y;
-                work->velocity.z = 0.4f * work->position.z;
-                work->targetVel.x = 0.1f * work->velocity.x;
-                work->targetVel.y = 0.1f * work->velocity.y;
-                work->targetVel.z = 0.1f * work->velocity.z;
-                break;
-            case 1:
-            default:
-                work->position.x = (f32)(rand() % w) - halfW;
-                work->position.y = (f32)(rand() % h) - halfH;
-                work->position.z = (f32)(rand() % w) - halfW;
-                work->velocity.x = 0.3f * work->position.x;
-                work->velocity.y = 0.3f * work->position.y;
-                work->velocity.z = 0.3f * work->position.z;
-                work->targetVel.x = 0.02f * work->velocity.x;
-                work->targetVel.y = 0.02f * work->velocity.y;
-                work->targetVel.z = 0.02f * work->velocity.z;
+                    work->velocity.x = 0.4f * work->position.x;
+                    work->velocity.y = 0.4f * work->position.y;
+                    work->velocity.z = 0.4f * work->position.z;
+                    work->targetVel.x = 0.1f * work->velocity.x;
+                    work->targetVel.y = 0.1f * work->velocity.y;
+                    work->targetVel.z = 0.1f * work->velocity.z;
+                    break;
+                case 1:
+                default:
+                    work->position.x = (f32)(rand() % w) - halfW;
+                    work->position.y = (f32)(rand() % h) - halfH;
+                    work->position.z = (f32)(rand() % w) - halfW;
+                    work->velocity.x = 0.3f * work->position.x;
+                    work->velocity.y = 0.3f * work->position.y;
+                    work->velocity.z = 0.3f * work->position.z;
+                    work->targetVel.x = 0.02f * work->velocity.x;
+                    work->targetVel.y = 0.02f * work->velocity.y;
+                    work->targetVel.z = 0.02f * work->velocity.z;
             }
             work->rotVelA = (f32)(rand() % 15);
             work->rotVelB = (f32)(rand() % 15);
@@ -279,21 +236,21 @@ void effBrokenBarrierMain(EffectEntry* effect) {
         work->scale = scale_data[work->timer];
         work->rot += 4.0f;
         switch (type) {
-        case 2:
-        case 3:
-            work->velocity.x = 0.05f * -work->position.x;
-            work->velocity.y = 0.05f * -work->position.y;
-            work->velocity.z = 0.05f * -work->position.z;
-            if (sqrtf(work->velocity.x * work->velocity.x + work->velocity.y * work->velocity.y +
-                      work->velocity.z * work->velocity.z) < 1.0f) {
-                a = (f32)(rand() % 360);
-                t = (f32)(rand() % 360);
-                b = 6.2831855f * t / 360.0f;
-                work->position.x = width * (f32)sin(a = 6.2831855f * a / 360.0f) * (ca = (f32)cos(b));
-                work->position.y = height * (f32)cos(a) * (ca = (f32)cos(b));
-                work->position.z = width * (f32)sin(b);
-            }
-            break;
+            case 2:
+            case 3:
+                work->velocity.x = 0.05f * -work->position.x;
+                work->velocity.y = 0.05f * -work->position.y;
+                work->velocity.z = 0.05f * -work->position.z;
+                if (sqrtf(work->velocity.x * work->velocity.x + work->velocity.y * work->velocity.y +
+                          work->velocity.z * work->velocity.z) < 1.0f) {
+                    a = (f32)(rand() % 360);
+                    t = (f32)(rand() % 360);
+                    b = 6.2831855f * t / 360.0f;
+                    work->position.x = width * (f32)sin(a = 6.2831855f * a / 360.0f) * (ca = (f32)cos(b));
+                    work->position.y = height * (f32)cos(a) * (ca = (f32)cos(b));
+                    work->position.z = width * (f32)sin(b);
+                }
+                break;
         }
         work->position.x += work->velocity.x;
         work->position.y += work->velocity.y;
@@ -307,9 +264,8 @@ void effBrokenBarrierMain(EffectEntry* effect) {
     dispEntry(CAMERA_3D, dispCalcZ(&position), 2, (DispCallback)effBrokenBarrierDisp, effect);
 }
 
-#pragma opt_propagation reset
-
-void effBrokenBarrierDisp(CameraId cameraId, EffectEntry* effect) {
+/** Draws the shard cloud three times: as is, and rotated by +/-120 degrees about a tilted axis. */
+static void effBrokenBarrierDisp(CameraId cameraId, EffectEntry* effect) {
     Mtx trans;
     Mtx scaleMtx;
     Mtx rotMtx;
@@ -342,18 +298,19 @@ void effBrokenBarrierDisp(CameraId cameraId, EffectEntry* effect) {
     PSMTXConcat(camera->view, mtx, mtx2);
     main_dl(effect, mtx2);
     {
-    Vec axis = {0.4f, 0.0f, 0.8f};
-    PSMTXRotAxisRad(rotMtx, &axis, 2.0943952f);
-    PSMTXConcat(mtx, rotMtx, mtx2);
-    PSMTXConcat(camera->view, mtx2, mtx2);
-    main_dl(effect, mtx2);
-    PSMTXRotAxisRad(rotMtx, &axis, -2.0943952f);
-    PSMTXConcat(mtx, rotMtx, mtx2);
-    PSMTXConcat(camera->view, mtx2, mtx2);
-    main_dl(effect, mtx2);
+        Vec axis = {0.4f, 0.0f, 0.8f};
+        PSMTXRotAxisRad(rotMtx, &axis, 2.0943952f);
+        PSMTXConcat(mtx, rotMtx, mtx2);
+        PSMTXConcat(camera->view, mtx2, mtx2);
+        main_dl(effect, mtx2);
+        PSMTXRotAxisRad(rotMtx, &axis, -2.0943952f);
+        PSMTXConcat(mtx, rotMtx, mtx2);
+        PSMTXConcat(camera->view, mtx2, mtx2);
+        main_dl(effect, mtx2);
     }
 }
 
+/** Draws each live shard as a rotated, scaled quad using one of eight textured cells of the shard strip. */
 static void main_dl(EffectEntry* effect, Mtx viewMtx) {
     EffBrokenBarrierN64Work* work = effect->userdata;
     Mtx trans;
@@ -382,14 +339,30 @@ static void main_dl(EffectEntry* effect, Mtx viewMtx) {
         GXSetCurrentMtx(GX_PNMTX0);
         GXSetTevColor(GX_TEVREG0, (GXColor){r, g, b, (s32)((f32)work->alpha * alpha)});
         switch (i & 7) {
-            case 0: vtx = &size8x8_tex22x22_vtx[12]; break;
-            case 1: vtx = &size8x8_tex22x22_vtx[16]; break;
-            case 2: vtx = &size8x8_tex22x22_vtx[20]; break;
-            case 3: vtx = &size8x8_tex22x22_vtx[24]; break;
-            case 4: vtx = &size8x8_tex22x22_vtx[28]; break;
-            case 5: vtx = &size8x8_tex22x22_vtx[0]; break;
-            case 6: vtx = &size8x8_tex22x22_vtx[4]; break;
-            case 7: vtx = &size8x8_tex22x22_vtx[8]; break;
+            case 0:
+                vtx = &size8x8_tex22x22_vtx[12];
+                break;
+            case 1:
+                vtx = &size8x8_tex22x22_vtx[16];
+                break;
+            case 2:
+                vtx = &size8x8_tex22x22_vtx[20];
+                break;
+            case 3:
+                vtx = &size8x8_tex22x22_vtx[24];
+                break;
+            case 4:
+                vtx = &size8x8_tex22x22_vtx[28];
+                break;
+            case 5:
+                vtx = &size8x8_tex22x22_vtx[0];
+                break;
+            case 6:
+                vtx = &size8x8_tex22x22_vtx[4];
+                break;
+            case 7:
+                vtx = &size8x8_tex22x22_vtx[8];
+                break;
         }
         effSetVtxDescN64(vtx);
         GXBegin(GX_TRIANGLES, GX_VTXFMT0, 6);

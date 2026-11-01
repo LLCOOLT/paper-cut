@@ -1,4 +1,6 @@
-#ifdef VERSION_G8ME01
+// Screen distortion (Indirect): copies the frame buffer and redraws it over a point through a texture; types 0-1.
+#include "version.h"
+#if VERSION >= VERSION_US
 #include "mario/mariost.h"
 #endif
 #include "eff/eff_indirect.h"
@@ -6,33 +8,41 @@
 #include "memory.h"
 #include <dolphin/gx.h>
 #include <dolphin/mtx.h>
+#ifdef TARGET_PC /* PC port: the header's prototypes are skipped on PC (these are static here) */
+static void effIndirectMain(EffectEntry* effect);
+static void effIndirectDisp(CameraId cameraId, EffectEntry* effect);
+#endif
 
 typedef struct EffIndirectWork {
-    s32 type;          // 0x0
-    Vec position;      // 0x4
-    f32 field_0x10;    // 0x10
-    f32 field_0x14;    // 0x14
-    f32 rotZ;          // 0x18
-    f32 scale;         // 0x1C
-    u8 alpha;          // 0x20
-    u8 field_0x21[7];  // 0x21
-    s32 timer;         // 0x28, counts down while fading out
-    s32 field_0x2C;    // 0x2C
-    f32 field_0x30;    // 0x30
-    smartEntry* work;  // 0x34
+    s32 type;         // 0x0
+    Vec position;     // 0x4
+    f32 rotX;         // 0x10, only cleared at entry
+    f32 rotY;         // 0x14, only cleared at entry
+    f32 rotZ;         // 0x18
+    f32 scale;        // 0x1C
+    u8 alpha;         // 0x20
+    u8 pad_21[7];     // 0x21
+    s32 timer;        // 0x28, counts down while fading out
+    s32 counter;      // 0x2C, only cleared at entry
+    f32 speed;        // 0x30, set to -0.05 at entry; never read
+    smartEntry* work; // 0x34
 } EffIndirectWork;
 
+/**
+ * Spawns a screen distortion centred at (x, y, z), allocating a 64x64 IA8 capture buffer; type 0-1.
+ * duration is the lifetime in frames (1000 or more is endless). Spawned by scripts (tik, battle items).
+ */
 EffectEntry* effIndirectEntry(s32 type, s32 duration, f32 x, f32 y, f32 z) {
     EffectEntry* effect;
     EffIndirectWork* work;
 
     effect = effEntry();
-    effect->type = "Indirect\0\0\0";
+    effect->type = "Indirect";
     effect->count = 1;
     work = __memAlloc(HEAP_EFFECT, sizeof(EffIndirectWork));
     effect->userdata = work;
     effect->callback = effIndirectMain;
-    effect->flags |= 2;
+    effect->flags |= EFFECT_FLAG_SOFT_DELETE;
     work->type = type;
     work->position.x = x;
     work->position.y = y;
@@ -40,26 +50,27 @@ EffectEntry* effIndirectEntry(s32 type, s32 duration, f32 x, f32 y, f32 z) {
     work->scale = 0.0f;
     work->alpha = 255;
     work->work = smartAlloc(GXGetTexBufferSize(64, 64, GX_TF_IA8, GX_FALSE, 0), 0);
-    work->field_0x10 = 0.0f;
-    work->field_0x14 = 0.0f;
+    work->rotX = 0.0f;
+    work->rotY = 0.0f;
     work->rotZ = 0.0f;
     work->timer = duration;
-    work->field_0x2C = 0;
-    work->field_0x30 = -0.05f;
+    work->counter = 0;
+    work->speed = -0.05f;
     return effect;
 }
 
-void effIndirectMain(EffectEntry* effect) {
+/** Fades the distortion near the end of its life (or on soft delete) and frees the capture buffer when finished. */
+static void effIndirectMain(EffectEntry* effect) {
     EffIndirectWork* work = effect->userdata;
     Vec position;
 
-    position = (Vec){ work->position.x, work->position.y, work->position.z };
+    position = (Vec){work->position.x, work->position.y, work->position.z};
     switch (work->type) {
         case 0:
         case 1:
             // soft delete: start fading out
-            if (effect->flags & 4) {
-                effect->flags &= ~4;
+            if (effect->flags & EFFECT_FLAG_DELETE_REQUESTED) {
+                effect->flags &= ~EFFECT_FLAG_DELETE_REQUESTED;
                 work->timer = 16;
             }
             if (work->timer < 1000) {
@@ -73,7 +84,7 @@ void effIndirectMain(EffectEntry* effect) {
             if (work->timer < 32) {
                 work->alpha = work->timer * 8;
             }
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
             work->rotZ += -300.0f / (f32)gp->framerate;
             work->scale += 60.0f / (f32)gp->framerate;
 #else
@@ -85,7 +96,8 @@ void effIndirectMain(EffectEntry* effect) {
     dispEntry(CAMERA_3D_EFFECTB, dispCalcZ(&position), 2, (DispCallback)effIndirectDisp, effect);
 }
 
-void effIndirectDisp(CameraId cameraId, EffectEntry* effect) {
+/** Copies the frame buffer into a texture and redraws it over the point, offset through an indirect texture. */
+static void effIndirectDisp(CameraId cameraId, EffectEntry* effect) {
     EffIndirectWork* work = effect->userdata;
     CameraEntry* camera;
     s32 type;
@@ -97,17 +109,24 @@ void effIndirectDisp(CameraId cameraId, EffectEntry* effect) {
     Mtx scale;
     Mtx final;
     GXTexObj texObj;
+#if VERSION <= VERSION_DEMO_JP
+    void* indTex;
+    f32 indMtx[2][3];
+#endif
 
     camera = camGetPtr(CAMERA_2D);
     type = work->type;
     alpha = work->alpha;
+#if VERSION <= VERSION_DEMO_JP
+    indTex = work->work->address;
+#endif
     GXSetBlendMode(GX_BM_BLEND, GX_BL_SRCALPHA, GX_BL_INVSRCALPHA, GX_LO_CLEAR);
     GXSetZCompLoc(GX_TRUE);
     GXSetAlphaCompare(GX_ALWAYS, 0, GX_AOP_AND, GX_ALWAYS, 0);
     GXSetZMode(GX_FALSE, GX_LEQUAL, GX_FALSE);
     switch (type) {
         case 0:
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
             effGetTexObj(0x6A, &texObj);
 #else
             effGetTexObj(0x86, &texObj);
@@ -128,6 +147,11 @@ void effIndirectDisp(CameraId cameraId, EffectEntry* effect) {
     GXPixModeSync();
     GXInitTexObj(&texObj, buffer, 304, 240, GX_TF_RGB565, GX_CLAMP, GX_CLAMP, GX_FALSE);
     GXLoadTexObj(&texObj, GX_TEXMAP1);
+#if VERSION <= VERSION_DEMO_JP
+    // The demo still bends the screen copy through an indirect texture; retail draws it straight.
+    GXInitTexObj(&texObj, indTex, 64, 64, GX_TF_IA8, GX_CLAMP, GX_CLAMP, GX_FALSE);
+    GXLoadTexObj(&texObj, GX_TEXMAP2);
+#endif
 
     PSMTXTrans(mtx, work->position.x, work->position.y, work->position.z);
     PSMTXScale(scale, work->scale, work->scale, work->scale);
@@ -139,7 +163,7 @@ void effIndirectDisp(CameraId cameraId, EffectEntry* effect) {
 
     GXSetNumChans(1);
     GXSetChanCtrl(GX_COLOR0A0, GX_FALSE, GX_SRC_REG, GX_SRC_REG, GX_LIGHT_NULL, GX_DF_NONE, GX_AF_NONE);
-    GXSetChanMatColor(GX_COLOR0A0, (GXColor){ 0xFF, 0xFF, 0xFF, alpha });
+    GXSetChanMatColor(GX_COLOR0A0, (GXColor){0xFF, 0xFF, 0xFF, alpha});
     GXSetNumTexGens(2);
     GXSetTexCoordGen2(GX_TEXCOORD0, GX_TG_MTX2x4, GX_TG_TEX0, GX_IDENTITY, GX_FALSE, GX_PTIDENTITY);
     GXSetTexCoordGen2(GX_TEXCOORD1, GX_TG_MTX3x4, GX_TG_POS, GX_TEXMTX0, GX_FALSE, GX_PTIDENTITY);
@@ -147,6 +171,15 @@ void effIndirectDisp(CameraId cameraId, EffectEntry* effect) {
     PSMTXConcat(mtx, camera->view, mtx);
     PSMTXConcat(mtx, final, mtx);
     GXLoadTexMtxImm(mtx, GX_TEXMTX0, GX_MTX3x4);
+#if VERSION <= VERSION_DEMO_JP
+    indMtx[0][0] = 0.5f;
+    indMtx[0][1] = 0.0f;
+    indMtx[0][2] = 0.0f;
+    indMtx[1][0] = 0.0f;
+    indMtx[1][1] = 0.5f;
+    indMtx[1][2] = 0.0f;
+    GXSetIndTexMtx(GX_ITM_0, indMtx, 1);
+#endif
     GXSetNumTevStages(2);
     GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP0, GX_COLOR0A0);
     GXSetTevOp(GX_TEVSTAGE0, GX_MODULATE);
@@ -186,4 +219,8 @@ void effIndirectDisp(CameraId cameraId, EffectEntry* effect) {
     GXPosition3f32(-size / 2, -size / 2, 0.0f);
     GXTexCoord2f32(0.0f, v);
     GXEnd();
+#if VERSION <= VERSION_DEMO_JP
+    GXSetNumIndStages(0);
+    GXSetTevDirect(GX_TEVSTAGE1);
+#endif
 }

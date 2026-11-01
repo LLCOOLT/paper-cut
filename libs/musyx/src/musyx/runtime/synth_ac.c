@@ -1,7 +1,7 @@
-#define MATH_NO_SQRTF 1
 #include "musyx/synth.h"
 
 
+/** Pitch ratios for 0 to 127 semitones up. */
 static float toneup_tab[128] = {
     1.0f,       1.0594635f, 1.1224623f, 1.1892071f,  1.2599211f,  1.3348398f,  1.4142141f,
     1.4983072f, 1.5874014f, 1.6817932f, 1.7817984f,  1.8877487f,  2.000001f,   2.118927f,
@@ -24,6 +24,7 @@ static float toneup_tab[128] = {
     1448.1554f, 1534.2672f,
 
 };
+/** Pitch ratios for 0 to 127 semitones down. */
 static float tonedown_tab[128] = {
     1.0f,          0.94387436f,   0.8908987f,    0.8408966f,    0.7937002f,    0.74915314f,
     0.7071066f,    0.66741943f,   0.62996006f,   0.59460354f,   0.56123066f,   0.52973175f,
@@ -50,8 +51,18 @@ static float tonedown_tab[128] = {
 
 };
 
+/**
+ * Returns note multiplied by the semitone ratio 1.0594631 (2^(1/12)), i.e. a pitch ratio one key higher;
+ * used to interpolate between keys.
+ */
 s32 sndPitchUpOne(u16 note) { return note * 1.0594631f; }
 
+/**
+ * Returns the DSP pitch ratio (4.12 fixed point) for playing a sample at the given key.
+ * sInfo packs the sample's root key in the top byte
+ * and its sample rate in Hz in the low 24 bits (0xFFFFFFFF means a default of key 0x40 at 22050 Hz);
+ * the rate is scaled by the semitone table and divided by the mix rate.
+ */
 u32 sndGetPitch(u8 key, u32 sInfo) {
   u8 okey;   // r31
   float frq; // r63

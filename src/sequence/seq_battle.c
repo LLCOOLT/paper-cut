@@ -1,10 +1,7 @@
-#ifdef VERSION_G8ME01
-void N_battleMapFree(void);
-void N_battleMapAlloc(void);
-#endif
+// Battle sequence: loads the battle REL and map, runs the battle and returns to the field.
+#include "version.h"
 #include "port_hook.h"
 #include "battle/battle.h"
-#include "pc_call.h"
 #include "battle/battle_information.h"
 #include "driver/animdrv.h"
 #include "driver/camdrv.h"
@@ -23,7 +20,6 @@ void N_battleMapAlloc(void);
 #include "manager/evtmgr.h"
 #include "manager/evtmgr_cmd.h"
 #include "manager/filemgr.h"
-#include "addr_word.h"
 #include "mario/mario.h"
 #include "mario/mario_party.h"
 #include "mario/mario_pouch.h"
@@ -32,61 +28,87 @@ void N_battleMapAlloc(void);
 #include "party.h"
 #include "pmario_sound.h"
 #include "seq/seq_title.h"
+#include "seq/seq_battle.h"
+#include "driver/mapdrv.h"
+#include "data/mapdata.h"
 #include "system.h"
 #include <dolphin/mtx.h>
-#ifdef PORT_MODS
+#include "evt/evt_story.h"
+
+static void battle_exit(void);
+#if VERSION <= VERSION_DEMO_JP
+static void battle_init(void);
+#else
+static BOOL battle_init(void);
+#endif
+#ifdef PORT_MODS /* after the static prototype: the generated one then keeps its internal linkage */
 #include "port/hooks/src_sequence_seq_battle.h"
 #endif
 
-typedef struct BattleSeqWork {
-    s32 sequence;   // 0x0
-    s32 state;      // 0x4
-    u8 unk8[8];     // 0x8
-    s32 counter;    // 0x10
-} BattleSeqWork;
-
-BOOL bmapLoad(const char* a, const char* b);
-void bmapUnLoad(void);
-BattleUnitType BattleTransPartyIdToUnitKind(s32 id);
-#ifdef TARGET_PC
-BOOL psndBGMOn_f(u32 r3, char* bgm_name, u32 fadetime, s32 r6);
-#else
-void psndBGMOn_f(u32 a, u32 b, u32 c, u32 d);
-#endif
-BOOL psndBGMOff(u32 flags);
-BOOL psndENVOn(u32 a, char* b);
-void mobjReset(BOOL inBattle);
-void animPoseAutoRelease(BOOL inBattle);
-
 s32 debug_battle_flag;
-s32 seq_battle_unk_8041874c;
 
-
+/** Requests an async load of a TPL under the disc root; true once the file is resident (seq_battleMain polls it). */
 static inline BOOL loadTpl(const char* path) {
-    return (AddrWord)fileAsyncf(4, NULL, "%s/%s", getMarioStDvdRoot(), path) != 0;
+    return fileAsyncf(4, NULL, "%s/%s", getMarioStDvdRoot(), path) != NULL;
 }
-#define GSW0 (-170000000)
 
-void seq_battleInit(BattleSeqWork* work) {
+// battle map names (defined at the end of the file)
+static const char gon11[7];
+static const char bti01[7];
+static const char bti02[7];
+static const char bti03[7];
+static const char bti04[7];
+
+/**
+ * Enters the battle sequence: switches to the enemy's battle BGM (kept during the Great Tree time-bomb countdown
+ * and after the final battle), stops field events and rumble and mutes field sound effects.
+ * Later versions take Mario's control here for hit kinds 0x800000/0x1000000;
+ * the demos start preloading the audience map for Mario's rank.
+ */
+void seq_battleInit(SequenceWork* work) {
     FieldBattleData* fbat;
     NpcEntry* npc;
+#if VERSION <= VERSION_DEMO_JP
+    MapData* map;
+#endif
 
     debug_battle_flag = gp->debugBattle;
+#if VERSION <= VERSION_DEMO_JP
+    // the demo starts reading the battle map now
+    fbatGetPointer();
+    switch (pouchGetPtr()->rank) {
+        case 0:
+            map = mapDataPtr(bti01);
+            break;
+        case 1:
+            map = mapDataPtr(bti02);
+            break;
+        case 2:
+            map = mapDataPtr(bti03);
+            break;
+        case 3:
+        default:
+            map = mapDataPtr(bti04);
+            break;
+    }
+    bmapPreLoad(map->mapName, NULL);
+#endif
     fbat = fbatGetPointer();
     npc = fbat->target;
-    if (evtGetValue(NULL, GSW0) < 109 || evtGetValue(NULL, GSW0) >= 111) {
-        if (evtGetValue(NULL, GSW0) != 402) {
-            psndBGMOff(0x400);
-            psndBGMOn(1, (char*)npc->battleInfo.bgmName);
+    if (evtGetValue(NULL, GSW(GSW_STORY_PROGRESS)) < STORY_STG2_23_TIME_BOMB_ACTIVATED || evtGetValue(NULL, GSW(GSW_STORY_PROGRESS)) >= STORY_STG2_24_BOSS_BATTLE) {
+        if (evtGetValue(NULL, GSW(GSW_STORY_PROGRESS)) != STORY_STG8_END_AFTER_THE_BATTLE) {
+            psndBGMOff(PSND_FADE_HOLD);
+            psndBGMOn(PSND_CH(1), (char*)npc->battleInfo.bgmName);
         }
     }
-    psndENVOff(0x400);
+    psndENVOff(PSND_FADE_HOLD);
     padRumbleOff(0);
     evtStopAll(4);
-    psndSetFlag(0x80);
+    psndSetFlag(PSND_FLAG_MUTE_SFX);
+#if VERSION >= VERSION_JP
     switch (fbatGetPointer()->hitKind) {
-        case 0x1000000:
-        case 0x800000:
+        case FBAT_HIT_BOMB:
+        case FBAT_HIT_SHELL:
             if (debug_battle_flag == 0) {
                 marioCtrlOff();
                 partyCtrlOff();
@@ -94,27 +116,31 @@ void seq_battleInit(BattleSeqWork* work) {
             }
             break;
     }
+#endif
 }
 
-void seq_battleExit(BattleSeqWork* work) {
+/** Leaves the battle sequence; battle_exit tears the battle down and restores the field. */
+void seq_battleExit(SequenceWork* work) {
     battle_exit();
 }
 
-static const char gon11[7];
-static const char bti01[7];
-static const char bti02[7];
-static const char bti03[7];
-static const char bti04[7];
-
-void seq_battleMain(BattleSeqWork* work) {
+/**
+ * Per-frame battle sequence: curtain fade, audience texture loads,
+ * waits out a pending first strike (up to 200 frames), loads the bti_01..04 audience stage for Mario's rank,
+ * starts the battle via battle_init, then once the battle ends returns to the field (or game over on a kiosk
+ * timeout; states 10/11 end a debug battle).
+ */
+void seq_battleMain(SequenceWork* work) {
+#if VERSION >= VERSION_JP
     FieldBattleData* fbat;
     BattleStageData* stage;
     PouchData* pouch;
+#endif
 
     switch (work->state) {
         case 0: {
             GXColor color = {0, 0, 0, 255};
-            fadeEntry(0x16, 1000, color);
+            fadeEntry(FADE_CURTAIN_VERTICAL_A1, 1000, color);
             work->state++;
             work->counter = 0;
             break;
@@ -123,7 +149,7 @@ void seq_battleMain(BattleSeqWork* work) {
             if (!loadTpl("battle/audience/audience_normal.tpl")) {
                 break;
             }
-            if (!loadTpl("battle/audience/audience_luigi.tpl\0")) {
+            if (!loadTpl("battle/audience/audience_luigi.tpl")) {
                 break;
             }
             work->counter++;
@@ -131,20 +157,27 @@ void seq_battleMain(BattleSeqWork* work) {
                 work->state++;
             }
             break;
+#if VERSION <= VERSION_DEMO_JP
+        // the demo loads the battle map in battle_init
+        case 2:
+            battle_init();
+            work->state++;
+        case 3: {
+#else
         case 2:
             pouchGetPtr();
             switch (fbatGetPointer()->hitKind) {
-                case 0x1000000:
-                case 0x800000:
+                case FBAT_HIT_BOMB:
+                case FBAT_HIT_SHELL:
                     if (debug_battle_flag == 0) {
-                        marioGetPtr()->flags &= ~1;
+                        marioGetPtr()->flags &= ~MARIO_FLAG_ACTIVE;
                     }
                     break;
                 default:
                     if (debug_battle_flag == 0) {
                         marioCtrlOff();
                         partyCtrlOff();
-                        marioGetPtr()->flags &= ~1;
+                        marioGetPtr()->flags &= ~MARIO_FLAG_ACTIVE;
                         padRumbleOff(0);
                     }
                     break;
@@ -177,17 +210,17 @@ void seq_battleMain(BattleSeqWork* work) {
             }
             switch (pouch->rank) {
                 case 0:
-                    bmapLoad(bti01, stage->mSpecificStageDataDir);
+                    bmapLoad(bti01, stage->specificStageDataDir);
                     break;
                 case 1:
-                    bmapLoad(bti02, stage->mSpecificStageDataDir);
+                    bmapLoad(bti02, stage->specificStageDataDir);
                     break;
                 case 2:
-                    bmapLoad(bti03, stage->mSpecificStageDataDir);
+                    bmapLoad(bti03, stage->specificStageDataDir);
                     break;
                 case 3:
                 default:
-                    bmapLoad(bti04, stage->mSpecificStageDataDir);
+                    bmapLoad(bti04, stage->specificStageDataDir);
                     break;
             }
             wait = FALSE;
@@ -203,6 +236,7 @@ void seq_battleMain(BattleSeqWork* work) {
             }
             work->state++;
         case 5: {
+#endif
             Vec pos;
             if (battleSeqEndCheck()) {
                 work->counter = 0;
@@ -212,51 +246,105 @@ void seq_battleMain(BattleSeqWork* work) {
                 }
             }
             marioGetPtr();
-            camGetPtr(4);
+            camGetPtr(CAMERA_3D);
             pos.x = 0.0f;
             pos.y = 0.0f;
             pos.z = 400.0f;
-            if (_battleWorkPointer->flags & 0x100) {
+            if (_battleWorkPointer->flags & BATTLE_FLAG_WIDE_STAGE) {
                 pos.z += 200.0f;
             }
-            psndSetPosDirListener(&pos, camGetPtr(4)->viewYaw);
+            psndSetPosDirListener(&pos, camGetPtr(CAMERA_3D)->viewYaw);
             break;
         }
+#if VERSION <= VERSION_DEMO_JP
+        case 4:
+#else
         case 6:
+#endif
             if (++work->counter > 30) {
-                if ((gp->flags & 0x1000) && (gp->flags & 0x2000)) {
-                    seqSetSeq(5, (const char*)1, NULL);
+                // A non-NULL map name tells seq_gameOver to skip its iris fade (the battle has already
+                // faded out); seq_game does not read it.
+                if ((gp->flags & GLOBAL_FLAG_KIOSK) && (gp->flags & GLOBAL_FLAG_KIOSK_TIMEOUT)) {
+                    seqSetSeq(SEQ_GAME_OVER, (const char*)1, NULL);
                 } else {
-                    seqSetSeq(2, (const char*)1, NULL);
+                    seqSetSeq(SEQ_GAME, (const char*)1, NULL);
                 }
             }
             break;
         case 10: {
             GXColor color = {0, 0, 0, 255};
-            fadeEntry(0x16, 200, color);
+            fadeEntry(FADE_CURTAIN_VERTICAL_A1, 200, color);
             work->state++;
             break;
         }
         case 11:
             if (fadeIsFinish()) {
                 gp->debugBattle = 0;
-                seqSetSeq(5, (const char*)1, NULL);
+                seqSetSeq(SEQ_GAME_OVER, (const char*)1, NULL);
             }
             break;
     }
 }
 
-BOOL PORT_HOOKABLE(battle_init)(void) {
+/**
+ * Sets up the battle: frees field memory, parks the field NPCs, resets the event manager,
+ * then fills the FieldBattleInfo (partner, first-attack kind from the field hit, setup and rules from the enemy)
+ * and calls BattleInit.
+ * The demos also take control and load the stage map here; later versions return FALSE (done in one call).
+ */
+#if VERSION <= VERSION_DEMO_JP
+static void PORT_HOOKABLE(battle_init)(void) {
+#else
+/** Later versions: same setup, returning FALSE once done (seq_battleMain state 4 retries while TRUE). */
+static BOOL PORT_HOOKABLE(battle_init)(void) {
+#endif
     FieldBattleData* fbat;
     NpcEntry* npc;
     PouchData* pouch;
+#if VERSION <= VERSION_DEMO_JP
+    MapData* map;
+    MapData* map2;
+    BattleStageData* stage;
+#endif
     FieldBattleInfo* info;
     PartyEntry* party;
 
     fbat = fbatGetPointer();
     npc = fbat->target;
+#if VERSION <= VERSION_DEMO_JP
+    stage = npc->battleInfo.stageData;
+#endif
     pouch = pouchGetPtr();
-    camSetMode(4, 2);
+#if VERSION <= VERSION_DEMO_JP
+    // the demo takes Mario's control and loads the battle map here (later versions: seq_battleMain states 2 and 3)
+    if (debug_battle_flag == 0) {
+        marioCtrlOff();
+        partyCtrlOff();
+        marioGetPtr()->flags &= ~MARIO_FLAG_ACTIVE;
+        padRumbleOff(0);
+    }
+    switch (pouch->rank) {
+        case 0:
+            map = mapDataPtr(bti01);
+            break;
+        case 1:
+            map = mapDataPtr(bti02);
+            break;
+        case 2:
+            map = mapDataPtr(bti03);
+            break;
+        case 3:
+        default:
+            map = mapDataPtr(bti04);
+            break;
+    }
+    map2 = NULL;
+    if (stage->specificStageDataDir) {
+        map2 = mapDataPtr(stage->specificStageDataDir);
+    }
+    bmapLoad(map->mapName, stage->specificStageDataDir);
+#endif
+    camSetMode(CAMERA_3D, 2);
     if (gp->debugBattle) {
         const char* msg = DbgBtlSel_GetMsgDataPtr();
         if (msg) {
@@ -265,7 +353,7 @@ BOOL PORT_HOOKABLE(battle_init)(void) {
             msgLoad(gon11, 0);
         }
     }
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
     N_battleMapAlloc();
 #else
     memClear(4);
@@ -273,10 +361,18 @@ BOOL PORT_HOOKABLE(battle_init)(void) {
 #endif
     _battleWorkPointer = NULL;
     animPoseBattleInit();
-    npcReleaseFieldNpc();
+    npcReleaseFiledNpc();
     gp->inBattle = 1;
     evtmgrReInit();
-    psndSetFlag(0x10);
+#if VERSION <= VERSION_DEMO_JP
+    if (map && map->eventAddr) {
+        evtEntry(map->eventAddr, 0, 0);
+    }
+    if (map2 && map2->eventAddr) {
+        evtEntry(map2->eventAddr, 0, 0);
+    }
+#endif
+    psndSetFlag(PSND_FLAG_SFX_WITH_BGM);
     info = &fbat->info;
     BattleInformationInit(info);
     BattleInformationSetMode(info, 0);
@@ -284,7 +380,7 @@ BOOL PORT_HOOKABLE(battle_init)(void) {
     if (party) {
         s32 id = party->currentMemberId;
         BattleUnitType kind = BattleTransPartyIdToUnitKind(id);
-        if (!(pouch->partyData[id].flags & 2)) {
+        if (!(pouch->partyData[id].flags & POUCH_PARTY_FLAG_AWAY)) {
             BattleInformationSetParty(info, kind);
         }
     }
@@ -310,10 +406,10 @@ BOOL PORT_HOOKABLE(battle_init)(void) {
             case 0x400000:
                 BattleInformationSetFirstAttack(info, 6);
                 break;
-            case 0x800000:
+            case FBAT_HIT_SHELL:
                 BattleInformationSetFirstAttack(info, 7);
                 break;
-            case 0x1000000:
+            case FBAT_HIT_BOMB:
                 BattleInformationSetFirstAttack(info, 8);
                 break;
             case 0x10000000:
@@ -329,15 +425,24 @@ BOOL PORT_HOOKABLE(battle_init)(void) {
     info->ruleParam = npc->battleInfo.battleRule[1];
     info->ruleParam2 = npc->battleInfo.battleRule[2];
     BattleInit(info);
+#if VERSION >= VERSION_JP
     return FALSE;
+#endif
 }
 
-void battle_exit(void) {
+/**
+ * Tears the battle down and restores the field:
+ * frees battle data and drivers, restores the camera mode and field NPCs,
+ * resumes field events and Mario's control, resets the paper-craft light,
+ * and resumes the field BGM and ambience unless heading to game over (or, in later versions,
+ * resumes the time-bomb music in the Great Tree).
+ */
+static void battle_exit(void) {
     LightEntry* light;
     Mtx mtx;
 
     BattleEnd();
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
     N_battleMapFree();
     smartAutoFree(2);
 #endif
@@ -345,10 +450,10 @@ void battle_exit(void) {
     iconReInit();
     extReset();
     bmapUnLoad();
-    if (camGetPtr(4)->flags & 4) {
-        camSetMode(4, 1);
+    if (camGetPtr(CAMERA_3D)->flags & CAM_FLAG_ROAD_LOADED) {
+        camSetMode(CAMERA_3D, 1);
     } else {
-        camSetMode(4, 3);
+        camSetMode(CAMERA_3D, 3);
     }
     npcReset(TRUE);
     mobjReset(TRUE);
@@ -357,36 +462,64 @@ void battle_exit(void) {
     effAutoRelease(TRUE);
     animPoseAutoRelease(TRUE);
     evtmgrReInit();
-    npcRecoveryFieldNpc();
+    npcRecoveryFiledNpc();
     gp->inBattle = 0;
-#ifndef VERSION_G8ME01
+#if VERSION <= VERSION_JP
     memClear(4);
 #endif
     evtStartAll(4);
     if (debug_battle_flag == 0) {
         marioCtrlOn();
         partyCtrlOn();
-        marioGetPtr()->flags |= 1;
+        marioGetPtr()->flags |= MARIO_FLAG_ACTIVE;
     }
+#if VERSION <= VERSION_DEMO_JP
+    psndClearFlag(PSND_FLAG_SFX_WITH_BGM);
+#else
     L_psndBGM_stop();
-    psndClearFlag(0x80);
+#endif
+    psndClearFlag(PSND_FLAG_MUTE_SFX);
     light = lightGetPaperCraft();
-    { Vec v = {-200.0f, 100.0f, 100.0f}; light->position = v; }
+    {
+        Vec v = {-200.0f, 100.0f, 100.0f};
+        light->position = v;
+    }
     PSMTXScale(mtx, 3.0f, 3.0f, 3.0f);
     PSMTXMultVec(mtx, &light->position, &light->position);
-    if (evtGetValue(NULL, GSW0) >= 109 && evtGetValue(NULL, GSW0) < 111) {
-        PCCALL(psndBGMOn_f(0x120, 0, 0x2EE, 1), psndBGMOn_f(0x120, NULL, 0x2EE, 1));
-    } else if (evtGetValue(NULL, GSW0) != 402 && seqGetNextSeq() != 5) {
-        psndBGMOn(0x120, NULL);
-        psndENVOn(0x120, NULL);
+#if VERSION <= VERSION_DEMO_JP
+    if ((evtGetValue(NULL, GSW(GSW_STORY_PROGRESS)) < STORY_STG2_23_TIME_BOMB_ACTIVATED || evtGetValue(NULL, GSW(GSW_STORY_PROGRESS)) >= STORY_STG2_24_BOSS_BATTLE) && evtGetValue(NULL, GSW(GSW_STORY_PROGRESS)) != STORY_STG8_END_AFTER_THE_BATTLE && seqGetNextSeq() != SEQ_GAME_OVER) {
+#else
+    if (evtGetValue(NULL, GSW(GSW_STORY_PROGRESS)) >= STORY_STG2_23_TIME_BOMB_ACTIVATED && evtGetValue(NULL, GSW(GSW_STORY_PROGRESS)) < STORY_STG2_24_BOSS_BATTLE) {
+        psndBGMOn_f(PSND_FADE_RESUME | PSND_FADE_IN, 0, 0x2EE, 1);
+    } else if (evtGetValue(NULL, GSW(GSW_STORY_PROGRESS)) != STORY_STG8_END_AFTER_THE_BATTLE && seqGetNextSeq() != SEQ_GAME_OVER) {
+#endif
+        psndBGMOn(PSND_FADE_RESUME | PSND_FADE_IN, NULL);
+        psndENVOn(PSND_FADE_RESUME | PSND_FADE_IN, NULL);
     }
 }
 
+// the demo defines the names in another order (their order in .rodata)
+#if VERSION <= VERSION_DEMO_JP
+/**
+ * Names of the battle stage maps for Mario's rank (bti_01 to bti_04, the stage gets bigger as he rises),
+ * and gon_11, whose message file a debug battle loads when its menu has none.
+ */
+static const char bti01[] = "bti_01";
+static const char bti02[] = "bti_02";
+static const char bti03[] = "bti_03";
+static const char bti04[] = "bti_04";
+static const char gon11[] = "gon_11";
+#else
+/**
+ * gon_11, whose message file a debug battle loads when its menu has none, and the battle stage maps for
+ * Mario's rank (bti_01 to bti_04, the stage gets bigger as he rises).
+ */
 static const char gon11[] = "gon_11";
 static const char bti01[] = "bti_01";
 static const char bti02[] = "bti_02";
 static const char bti03[] = "bti_03";
 static const char bti04[] = "bti_04";
+#endif
 
 #ifdef PORT_MODS
 #include "port/hooks/src_sequence_seq_battle.inc"

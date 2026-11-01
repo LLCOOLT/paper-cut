@@ -1,45 +1,46 @@
+// evt_keijiban: Notice board (掲示板) text helper; builds board entries from "<prefix>_NNNN" messages.
+
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
 #include "manager/evtmgr_cmd.h"
 
-#pragma force_active on
 #include "driver/msgdrv.h"
 #include "evt/evt_johoya.h"
 #include "stdio.h"
 #include "string.h"
 #include "memory.h"
+#include "evt/evt_story.h"
 
-typedef struct KeijibanEntry { s16 unk0; s16 evtNo; s16 index; } KeijibanEntry;
-typedef struct KeijibanData { KeijibanEntry* entries; s32 count; const char* prefix; char* label; s32 current; s32 maxEvtNo; } KeijibanData;
+typedef struct KeijibanEntry {
+    s16 flags;
+    s16 evtNo;
+    s16 index;
+} KeijibanEntry; /* flags: never accessed */
+typedef struct KeijibanData {
+    KeijibanEntry* entries;
+    s32 count;
+    const char* prefix;
+    char* label;
+    s32 current;
+    s32 maxEvtNo;
+} KeijibanData;
 #define KJDT (_kjdt)
 
-s32 keijiban_data_make(const char* prefix, BOOL fill);
-USER_FUNC(keijiban_joho_makelabel);
-USER_FUNC(keijiban_joho_check);
-USER_FUNC(keijiban_data_free);
-USER_FUNC(keijiban_data_alloc);
-
-f32 fd_evt_keijiban_negone_one_374[2] __attribute__((aligned(8)));
-f32 fd_evt_keijiban_neg_one_382;
-f32 fd_evt_keijiban___local_PI_383;
-f32 fd_evt_keijiban___local_3PIO2_385;
-f32 fd_evt_keijiban_one_negone_373[2] __attribute__((aligned(8)));
-f32 fd_evt_keijiban___local_PIO2_384;
-f32 fd_evt_keijiban_one_381;
-f32 fd_evt_keijiban_negone_one_360[2] __attribute__((aligned(8)));
-f32 fd_evt_keijiban_neg_one_365;
-f32 fd_evt_keijiban___local_PI_366;
-f32 fd_evt_keijiban___local_3PIO2_368;
-f32 fd_evt_keijiban_one_negone_359[2] __attribute__((aligned(8)));
-f32 fd_evt_keijiban___local_PIO2_367;
-f32 fd_evt_keijiban_one_364;
 KeijibanData _kjdt[1];
 
+/**
+ * Builds the list of notice board entries for a message prefix: reads the messages prefix_0000, prefix_0001, ...
+ * until one lacks the "<!" header or its name is "enddata";
+ * each header's first field names an event number (search_evt_no).
+ * Without fill it finds the highest event number not past the current story progress
+ * and counts the entries for it; with fill (bit 0) it stores those entries (event number and message index) in
+ * the table. Returns the number of entries.
+ */
 s32 keijiban_data_make(const char* prefix, BOOL fill) {
     char name[64];
     char buf[64];
     KeijibanData* kj = KJDT;
-    s32 gsw = evtGetValue(NULL, GSW(0));
+    s32 gsw = evtGetValue(NULL, GSW(GSW_STORY_PROGRESS));
     s32 i;
     s32 len;
     s32 field;
@@ -56,7 +57,7 @@ s32 keijiban_data_make(const char* prefix, BOOL fill) {
         kj->maxEvtNo = -1;
     }
     count = 0;
-    for (i = 0; ; i++) {
+    for (i = 0;; i++) {
         sprintf(name, "%s_%04d", prefix, i);
         p = (const s8*)msgSearch(name);
         if (*p++ != '<' || *p++ != '!') {
@@ -127,6 +128,10 @@ s32 keijiban_data_make(const char* prefix, BOOL fill) {
     return count;
 }
 
+/**
+ * Script helper that builds the message label of notice board entry args[0] ("prefix_NNNN") into args[1]
+ * and remembers it as the current entry; gives an empty string when the index is out of range.
+ */
 USER_FUNC(keijiban_joho_makelabel) {
     EvtWord* args = event->args;
     s32 idx = evtGetValue(event, args[0]);
@@ -143,11 +148,13 @@ USER_FUNC(keijiban_joho_makelabel) {
     return EVT_RETURN_DONE;
 }
 
+/** Script helper that returns the number of notice board entries in args[0]. */
 USER_FUNC(keijiban_joho_check) {
     evtSetValue(event, event->args[0], KJDT->count);
     return EVT_RETURN_DONE;
 }
 
+/** Script helper that frees the notice board entry table and resets the board data. */
 USER_FUNC(keijiban_data_free) {
     KeijibanData* kj = KJDT;
 
@@ -163,6 +170,10 @@ USER_FUNC(keijiban_data_free) {
     return EVT_RETURN_DONE;
 }
 
+/**
+ * Script helper that loads a notice board: args[0] is the message prefix;
+ * counts the entries at the current story progress, allocates the table and fills it.
+ */
 USER_FUNC(keijiban_data_alloc) {
     KJDT->prefix = (const char*)evtGetValue(event, event->args[0]);
     KJDT->count = keijiban_data_make(KJDT->prefix, FALSE);
@@ -173,35 +184,7 @@ USER_FUNC(keijiban_data_alloc) {
     return EVT_RETURN_DONE;
 }
 
-f32 fd_evt_keijiban_negone_one_374[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_evt_keijiban_neg_one_382 = -1.0f;
-
-f32 fd_evt_keijiban___local_PI_383 = 3.1415927f;
-
-f32 fd_evt_keijiban___local_3PIO2_385 = 4.712389f;
-
-f32 fd_evt_keijiban_one_negone_373[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_evt_keijiban___local_PIO2_384 = 1.5707964f;
-
-f32 fd_evt_keijiban_one_381 = 1.0f;
-
-f32 fd_evt_keijiban_negone_one_360[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_evt_keijiban_neg_one_365 = -1.0f;
-
-f32 fd_evt_keijiban___local_PI_366 = 3.1415927f;
-
-f32 fd_evt_keijiban___local_3PIO2_368 = 4.712389f;
-
-f32 fd_evt_keijiban_one_negone_359[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_evt_keijiban___local_PIO2_367 = 1.5707964f;
-
-f32 fd_evt_keijiban_one_364 = 1.0f;
-
+/** Notice board entries; empty here, so the board shows nothing. */
 KeijibanData _kjdt[] = {
     {0},
 };
-

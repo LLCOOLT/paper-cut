@@ -1,129 +1,65 @@
+// tik_07 (埋没した都市, Rogueport Sewers): the room with the door and the pipes to Rogueport (gor_03) and Fahr Outpost
+// (bom_00), and the e-mail scene.
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
 #include "evt/evt_bero.h"
 #include "evt/evt_sub.h"
 #include "evt/evt_movefloor.h"
+#include "evt/evt_cam.h"
+#include "evt/evt_eff.h"
+#include "evt/evt_item.h"
+#include "driver/itemdrv.h"
+#include "evt/evt_map.h"
+#include "evt/evt_mario.h"
+#include "evt/evt_mobj.h"
+#include "evt/evt_msg.h"
+#include "evt/evt_npc.h"
+#include "evt/evt_party.h"
+#include "evt/evt_seq.h"
+#include "evt/evt_snd.h"
+#include "tik.h"
+#include "version.h"
+#include "evt/evt_story.h"
+#include "driver/mapdrv.h"
+#include "evt/evt_pouch.h"
 
-#pragma force_active on
-
-USER_FUNC(evt_bero_exec_wait);
-USER_FUNC(evt_bero_get_info);
-USER_FUNC(evt_bero_overwrite);
-USER_FUNC(evt_cam3d_evt_off);
-USER_FUNC(evt_cam3d_evt_set);
-USER_FUNC(evt_cam_road_reset);
-USER_FUNC(evt_cam_shift_reset);
-USER_FUNC(evt_eff_fukidashi);
-USER_FUNC(evt_item_entry);
-USER_FUNC(evt_item_flag_on);
-USER_FUNC(evt_item_get_item);
-USER_FUNC(evt_item_set_scale);
-USER_FUNC(evt_key_get_buttontrg);
-USER_FUNC(evt_mapobj_flag_onoff);
-USER_FUNC(evt_mapobj_rotate);
-USER_FUNC(evt_mario_balloon_bikkuri);
-USER_FUNC(evt_mario_balloon_off);
-USER_FUNC(evt_mario_cont_onoff);
-USER_FUNC(evt_mario_get_pos);
-USER_FUNC(evt_mario_key_onoff);
-USER_FUNC(evt_mario_set_dir);
-USER_FUNC(evt_mario_set_pos);
-USER_FUNC(evt_mario_set_pose);
-USER_FUNC(evt_mario_wait_landon);
-USER_FUNC(evt_mobj_get_position);
-USER_FUNC(evt_mobj_itembox);
-USER_FUNC(evt_mobj_lv_blk);
-USER_FUNC(evt_mobj_powerupblk);
-USER_FUNC(evt_mobj_save_blk);
-USER_FUNC(evt_mobj_wait_animation_end);
-USER_FUNC(evt_msg_print);
-USER_FUNC(evt_msg_print_party);
-USER_FUNC(evt_npc_check_delete);
-USER_FUNC(evt_party_cont_onoff);
-USER_FUNC(evt_party_move_pos2);
-USER_FUNC(evt_party_set_dir);
-USER_FUNC(evt_party_set_pos);
-USER_FUNC(evt_pouch_open_mail);
-USER_FUNC(evt_pouch_receive_mail);
-USER_FUNC(evt_seq_wait);
-USER_FUNC(evt_snd_bgmoff);
-USER_FUNC(evt_snd_bgmon);
-USER_FUNC(evt_snd_envon);
-USER_FUNC(evt_snd_set_rev_mode);
-USER_FUNC(evt_snd_sfxon_3d);
-USER_FUNC(evt_sub_rumble_onoff);
-
-f32 fd_tik_07_negone_one_374[2] __attribute__((aligned(8)));
-f32 fd_tik_07_neg_one_382;
-f32 fd_tik_07___local_PI_383;
-f32 fd_tik_07___local_3PIO2_385;
-f32 fd_tik_07_one_negone_373[2] __attribute__((aligned(8)));
-f32 fd_tik_07___local_PIO2_384;
-f32 fd_tik_07_one_381;
-f32 fd_tik_07_negone_one_360[2] __attribute__((aligned(8)));
-f32 fd_tik_07_neg_one_365;
-f32 fd_tik_07___local_PI_366;
-f32 fd_tik_07___local_3PIO2_368;
-f32 fd_tik_07_one_negone_359[2] __attribute__((aligned(8)));
-f32 fd_tik_07___local_PIO2_367;
-f32 fd_tik_07_one_364;
-EvtWord bero_00_open_door[12];
-EvtWord bero_00_close_door[12];
+extern EvtWord bero_00_open_door[];
+extern EvtWord bero_00_close_door[];
 static BeroEntry bero_entry_data[8];
 static BeroEntry bero_entry_data2[2];
-EvtWord tik_07_down_evt[82];
-static EvtWord peach_mail[188];
-static EvtWord evt_block[8];
-static EvtWord mobj_box00[34];
-EvtWord tik_07_init_evt[323];
+extern EvtWord tik_07_down_evt[];
 
-f32 fd_tik_07_negone_one_374[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_tik_07_neg_one_382 = -1.0f;
-
-f32 fd_tik_07___local_PI_383 = 3.1415927f;
-
-f32 fd_tik_07___local_3PIO2_385 = 4.712389f;
-
-f32 fd_tik_07_one_negone_373[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_tik_07___local_PIO2_384 = 1.5707964f;
-
-f32 fd_tik_07_one_381 = 1.0f;
-
-f32 fd_tik_07_negone_one_360[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_tik_07_neg_one_365 = -1.0f;
-
-f32 fd_tik_07___local_PI_366 = 3.1415927f;
-
-f32 fd_tik_07___local_3PIO2_368 = 4.712389f;
-
-f32 fd_tik_07_one_negone_359[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_tik_07___local_PIO2_367 = 1.5707964f;
-
-f32 fd_tik_07_one_364 = 1.0f;
-
+/**
+ * Opening callback for the door at exit bero_00:
+ * rotates the door_1 map object by the door's progress (LW(0)) times -0.444 degrees per unit.
+ */
 EVT_BEGIN(bero_00_open_door)
     MULTIPLY_FLOAT(LW(0), FLOAT(-0.44433594f))
     CALL(evt_mapobj_rotate, 1, STRING("door_1"), 0, LW(0), 0)
     RETURN
 EVT_END()
 
+/**
+ * Closing callback for the door at exit bero_00:
+ * rotates door_1 by progress times 0.444, the reverse of bero_00_open_door.
+ */
 EVT_BEGIN(bero_00_close_door)
     MULTIPLY_FLOAT(LW(0), FLOAT(0.44433594f))
     CALL(evt_mapobj_rotate, 1, STRING("door_1"), 0, LW(0), 0)
     RETURN
 EVT_END()
 
+/**
+ * Doors of this room: the north exit to tik_08, the east exit to tik_00, the pipe to Fahr Outpost (bom_00), the
+ * pipe to tik_18, the pipe up to Rogueport (gor_03) and a pair of pipes that link spots inside the room.
+ */
 static BeroEntry bero_entry_data[] = {
     {
         "n_bero", // hitName
         1, // type
         1, // sfxId
-        20000, // directionId
-        100000, // centerPosition
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         NULL, // enterEvent
@@ -139,8 +75,8 @@ static BeroEntry bero_entry_data[] = {
     {
         "e_bero", // hitName
         0, 0, // type..sfxId
-        20000, // directionId
-        100000, // centerPosition
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         NULL, // enterEvent
@@ -156,8 +92,8 @@ static BeroEntry bero_entry_data[] = {
         "dokan__1", // hitName
         2, // type
         0, // sfxId
-        9, // directionId
-        100000, // centerPosition
+        BERO_DIR_DOWN, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         NULL, // enterEvent
@@ -173,8 +109,8 @@ static BeroEntry bero_entry_data[] = {
         "dokan_2", // hitName
         2, // type
         0, // sfxId
-        9, // directionId
-        100000, // centerPosition
+        BERO_DIR_DOWN, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         NULL, // enterEvent
@@ -190,8 +126,8 @@ static BeroEntry bero_entry_data[] = {
         "dokan_3", // hitName
         2, // type
         0, // sfxId
-        9, // directionId
-        100000, // centerPosition
+        BERO_DIR_DOWN, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         NULL, // enterEvent
@@ -206,8 +142,8 @@ static BeroEntry bero_entry_data[] = {
         "dokan_4", // hitName
         2, // type
         0, // sfxId
-        2, // directionId
-        100000, // centerPosition
+        BERO_DIR_E, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         NULL, // enterEvent
@@ -223,8 +159,8 @@ static BeroEntry bero_entry_data[] = {
         "dokan_5", // hitName
         4098, // type
         0, // sfxId
-        9, // directionId
-        100000, // centerPosition
+        BERO_DIR_DOWN, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         NULL, // enterEvent
@@ -238,13 +174,17 @@ static BeroEntry bero_entry_data[] = {
     {0},
 };
 
+/**
+ * Stand-in for the Fahr Outpost pipe from the end of chapter 6 until chapter 7 has begun: it leads to the
+ * chapter 7 title screen (sys_01, stg_7) instead. Swapped in by the map init script.
+ */
 static BeroEntry bero_entry_data2[] = {
     {
         "dokan__1", // hitName
         2, // type
         0, // sfxId
-        9, // directionId
-        100000, // centerPosition
+        BERO_DIR_DOWN, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         NULL, // enterEvent
@@ -259,11 +199,16 @@ static BeroEntry bero_entry_data2[] = {
     {0},
 };
 
+/**
+ * Entry cutscene when Mario drops into the sewers through the Rogueport hole (GSWF_GOR03_DROP_TO_UNDERGROUND).
+ * He and his partners are placed in the air at height 300,
+ * controls are given back and the camera is released once they land. Clears the flag.
+ */
 EVT_BEGIN(tik_07_down_evt)
-    IF_INT_EQUAL(GSWF(1223), 0)
+    IF_INT_EQUAL(GSWF(GSWF_GOR03_DROP_TO_UNDERGROUND), 0)
         RETURN
     END_IF
-    SET_VALUE(GSWF(1223), 0)
+    SET_VALUE(GSWF(GSWF_GOR03_DROP_TO_UNDERGROUND), 0)
     CALL(evt_mario_key_onoff, 0)
     CALL(evt_mario_cont_onoff, 0)
     CALL(evt_party_cont_onoff, 0, 0)
@@ -279,22 +224,45 @@ EVT_BEGIN(tik_07_down_evt)
         CALL(evt_party_cont_onoff, 1, 1)
         CALL(evt_mario_wait_landon)
         WAIT_MS(100)
+#if VERSION >= VERSION_DEMO_EU
+        LOOP(30)
+            CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
+            CALL(evt_party_get_pos, 0, LW(3), LW(4), LW(5))
+            ADD(LW(1), 20)
+            IF_INT_LESS(LW(1), LW(4))
+                SUBTRACT(LW(4), 10)
+                CALL(evt_party_set_pos, 0, LW(3), LW(4), LW(5))
+            ELSE
+                BREAK_LOOP
+            END_IF
+            WAIT_FRAMES(1)
+        END_LOOP
+#endif
         CALL(evt_cam_road_reset)
         CALL(evt_cam3d_evt_off, 0, 11)
         WAIT_MS(400)
         CALL(evt_mario_key_onoff, 1)
+#if VERSION >= VERSION_DEMO_EU
+        CALL(evt_cam_letter_box_disable, 0)
+#endif
     END_INLINE_EVENT
     RETURN
 EVT_END()
 
+/**
+ * Scene at STORY_STG4_16_LEAVING_TWILIGHT_TOWN:
+ * Mario's mail alert (a vibrating exclamation), the partner comments (tik_07_mail4_00);
+ * after he presses A the mail jingle plays, Peach's mail is read (tik_07_mail4_01, 02),
+ * story progress becomes STORY_STG4_17_A_MAIL_FROM_PEACH and the mail is opened (mail slot 3).
+ */
 static EVT_BEGIN(peach_mail)
     CALL(evt_mario_key_onoff, 0)
     CALL(evt_seq_wait, 2)
     CALL(evt_bero_exec_wait, 65536)
     CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
     CALL(evt_snd_sfxon_3d, STRING("SFX_VOICE_MARIO_FIND1_2"), LW(0), LW(1), LW(2), 0)
-    CALL(evt_snd_bgmoff, 1024)
-    CALL(evt_snd_bgmon, 1, STRING("BGM_FF_MAIL_RECEPTION1"))
+    CALL(evt_snd_bgmoff, PSND_FADE_HOLD)
+    CALL(evt_snd_bgmon, PSND_CH(1), STRING("BGM_FF_MAIL_RECEPTION1"))
     CALL(evt_eff_fukidashi, 0, STRING(""), 0, 0, 0, 0, 0, 0, 0, 0, 0)
     SPAWN_EVENT_GET_ID(PTR(evt_sub_mail_vibration), LW(10))
     WAIT_MS(500)
@@ -312,8 +280,8 @@ static EVT_BEGIN(peach_mail)
         WAIT_FRAMES(1)
     END_LOOP
     CALL(evt_mario_balloon_off)
-    CALL(evt_snd_bgmoff, 513)
-    CALL(evt_snd_bgmon, 288, 0)
+    CALL(evt_snd_bgmoff, PSND_FADE_OUT | PSND_CH(1))
+    CALL(evt_snd_bgmon, PSND_FADE_RESUME | PSND_FADE_IN, 0)
     CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
     CALL(evt_snd_sfxon_3d, STRING("SFX_MAIL_RECEPTION1"), LW(0), LW(1), LW(2), 0)
     DELETE_EVENT(LW(10))
@@ -334,46 +302,68 @@ static EVT_BEGIN(peach_mail)
     CALL(evt_mario_key_onoff, 1)
     CALL(evt_cam_shift_reset)
     CALL(evt_cam3d_evt_off, 500, 11)
-    SET_VALUE(GSW(0), 220)
+    SET_VALUE(GSW(GSW_STORY_PROGRESS), STORY_STG4_17_A_MAIL_FROM_PEACH)
     CALL(evt_pouch_receive_mail, 3)
     CALL(evt_pouch_open_mail, 3)
     RETURN
 EVT_END()
 
+/**
+ * Break callback of the big Lv 2 block (mobj_blk01, GSWF_TIK07_BIG_BLOCK_BROKEN): shows the s_hikari map-object
+ * group, which the map init hides while the block is unbroken.
+ */
 static EVT_BEGIN(evt_block)
-    CALL(evt_mapobj_flag_onoff, 1, 0, STRING("s_hikari"), 1)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("s_hikari"), MAPOBJ_FLAG_HIDE)
     RETURN
 EVT_END()
 
+/**
+ * Item-box callback for the Flower Saver P chest:
+ * takes control, puts the badge at the chest, waits for the chest animation and hands it to Mario.
+ */
 static EVT_BEGIN(mobj_box00)
     CALL(evt_mario_key_onoff, 0)
     CALL(evt_mobj_get_position, STRING("mobj_box00"), LW(0), LW(1), LW(2))
-    CALL(evt_item_entry, STRING("item00"), 282, LW(0), LW(1), LW(2), 16, -1, 0)
-    CALL(evt_item_flag_on, STRING("item00"), 258)
+    CALL(evt_item_entry, STRING("item00"), ITEM_FLOWER_SAVER_P, LW(0), LW(1), LW(2), ITEM_ENTRY_FIXED, -1, 0)
+#if VERSION <= VERSION_DEMO_JP
+    CALL(evt_item_flag_on, STRING("item00"), ITEM_FLAG_NO_TOUCH)
+#else
+    CALL(evt_item_flag_on, STRING("item00"), ITEM_FLAG_BADGE_RETURN | ITEM_FLAG_NO_TOUCH)
+#endif
     CALL(evt_mobj_wait_animation_end, STRING("mobj_box00"))
     CALL(evt_item_get_item, STRING("item00"))
     CALL(evt_mario_key_onoff, 1)
     RETURN
 EVT_END()
 
+/**
+ * Map init script of tik_07.
+ * Runs the drop-in scene, sets up the exits, the save block, the big block, the Flower Saver P chest,
+ * the Shine Sprite block, two Star Pieces and the moving and descending floors.
+ * Removes the enemy NPCs that do not belong to the story step,
+ * swaps the pipe to Fahr Outpost (dokan__1) for one to the chapter 7 title screen between chapters 6 and 7,
+ * and runs peach_mail at STORY_STG4_16_LEAVING_TWILIGHT_TOWN.
+ */
 EVT_BEGIN(tik_07_init_evt)
-    CALL_CHILD(PTR(tik_07_down_evt))
+    // The drop-in scene, the exits, the music, and the room's blocks, chest, Shine Sprite and Star Pieces.
+    CALL_CHILD(tik_07_down_evt)
     SET_VALUE(LW(0), PTR(bero_entry_data))
     CALL(evt_bero_get_info)
-    CALL_CHILD(PTR(evt_bero_info_run))
-    CALL(evt_snd_bgmon, 512, STRING("BGM_STG0_TIK1"))
-    CALL(evt_snd_envon, 272, STRING("ENV_STG0_TIK1"))
+    CALL_CHILD(evt_bero_info_run)
+    CALL(evt_snd_bgmon, PSND_FADE_OUT, STRING("BGM_STG0_TIK1"))
+    CALL(evt_snd_envon, PSND_FADE_RESTART | PSND_FADE_IN, STRING("ENV_STG0_TIK1"))
     CALL(evt_snd_set_rev_mode, 2)
     CALL(evt_mobj_save_blk, STRING("mobj_save"), 475, 60, 125, 0, 0)
-    CALL(evt_mobj_lv_blk, STRING("mobj_blk01"), -300, 100, -50, PTR(evt_block), GSWF(1340), STRING("MOBJ_Lv2BigBlock"))
-    IF_INT_EQUAL(GSWF(1340), 0)
-        CALL(evt_mapobj_flag_onoff, 1, 1, STRING("s_hikari"), 1)
+    CALL(evt_mobj_lv_blk, STRING("mobj_blk01"), -300, 100, -50, PTR(evt_block), GSWF(GSWF_TIK07_BIG_BLOCK_BROKEN), STRING("MOBJ_Lv2BigBlock"))
+    IF_INT_EQUAL(GSWF(GSWF_TIK07_BIG_BLOCK_BROKEN), 0)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("s_hikari"), MAPOBJ_FLAG_HIDE)
     END_IF
-    CALL(evt_mobj_itembox, STRING("mobj_box00"), -550, 0, 100, 0, 0, PTR(mobj_box00), GSWF(1359))
-    CALL(evt_mobj_powerupblk, STRING("pblk2"), -180, 160, 0, 0, GSWF(5533), 0)
-    CALL(evt_item_entry, STRING("item_00"), 125, 460, 160, -450, 16, GSWF(5594), 0)
+    CALL(evt_mobj_itembox, STRING("mobj_box00"), -550, 0, 100, 0, 0, PTR(mobj_box00), GSWF(GSWF_TIK07_FLOWER_SAVER_P_CHEST_OPENED))
+    CALL(evt_mobj_powerupblk, STRING("pblk2"), -180, 160, 0, 0, GSWF(GSWF_TIK07_SHINE_SPRITE), 0)
+    CALL(evt_item_entry, STRING("item_00"), ITEM_STAR_PIECE, 460, 160, -450, ITEM_ENTRY_FIXED, GSWF(GSWF_TIK07_STAR_PIECE_1), 0)
     CALL(evt_item_set_scale, STRING("item_00"), FLOAT(0.5996094f))
-    CALL(evt_item_entry, STRING("item_01"), 125, 125, 0, -60, 16, GSWF(5595), 0)
+    CALL(evt_item_entry, STRING("item_01"), ITEM_STAR_PIECE, 125, 0, -60, ITEM_ENTRY_FIXED, GSWF(GSWF_TIK07_STAR_PIECE_2), 0)
+    // Four platforms that slide back and forth.
     SET_VALUE(LW(0), STRING("ugo_1"))
     SET_VALUE(LW(1), STRING("a_ugo_1"))
     SET_VALUE(LW(2), -20)
@@ -384,7 +374,7 @@ EVT_BEGIN(tik_07_init_evt)
     SET_VALUE(LW(7), 0)
     SET_VALUE(LW(11), 0)
     SET_VALUE(LW(12), 0)
-    SPAWN_EVENT(PTR(moving_floor))
+    SPAWN_EVENT(moving_floor)
     SET_VALUE(LW(0), STRING("ugo_2"))
     SET_VALUE(LW(1), STRING("a_ugo_2"))
     SET_VALUE(LW(2), 20)
@@ -395,7 +385,7 @@ EVT_BEGIN(tik_07_init_evt)
     SET_VALUE(LW(7), 0)
     SET_VALUE(LW(11), 0)
     SET_VALUE(LW(12), 0)
-    SPAWN_EVENT(PTR(moving_floor))
+    SPAWN_EVENT(moving_floor)
     SET_VALUE(LW(0), STRING("ugo_3"))
     SET_VALUE(LW(1), STRING("a_ugi_3"))
     SET_VALUE(LW(2), -70)
@@ -406,7 +396,7 @@ EVT_BEGIN(tik_07_init_evt)
     SET_VALUE(LW(7), 0)
     SET_VALUE(LW(11), 0)
     SET_VALUE(LW(12), 0)
-    SPAWN_EVENT(PTR(moving_floor))
+    SPAWN_EVENT(moving_floor)
     SET_VALUE(LW(0), STRING("ugo_4"))
     SET_VALUE(LW(1), STRING("a_ugo_4"))
     SET_VALUE(LW(2), 0)
@@ -417,7 +407,8 @@ EVT_BEGIN(tik_07_init_evt)
     SET_VALUE(LW(7), 0)
     SET_VALUE(LW(11), 0)
     SET_VALUE(LW(12), 0)
-    SPAWN_EVENT(PTR(moving_floor))
+    SPAWN_EVENT(moving_floor)
+    // The pair of balance-scale platforms: the one Mario stands on sinks as the other rises.
     SET_VALUE(GW(0), 5000)
     SET_VALUE(GW(1), 0)
     SET_VALUE(LW(0), STRING("kur_1"))
@@ -428,7 +419,7 @@ EVT_BEGIN(tik_07_init_evt)
     SET_VALUE(LW(5), 1)
     SET_RAW_VALUE(LW(6), GW(0))
     SET_RAW_VALUE(LW(7), GW(1))
-    SPAWN_EVENT(PTR(ridedown_floor))
+    SPAWN_EVENT(ridedown_floor)
     SET_VALUE(LW(0), STRING("kur_2"))
     SET_VALUE(LW(1), STRING("a_kur_2"))
     SET_VALUE(LW(2), 60)
@@ -437,26 +428,28 @@ EVT_BEGIN(tik_07_init_evt)
     SET_VALUE(LW(5), 0)
     SET_RAW_VALUE(LW(6), GW(0))
     SET_RAW_VALUE(LW(7), GW(1))
-    SPAWN_EVENT(PTR(ridedown_floor))
-    IF_INT_LESS(GSW(0), 261)
+    SPAWN_EVENT(ridedown_floor)
+    // Spanias roam the room until the X-Nauts retreat in chapter 5; a Koopatrol and a Hammer Bro after that.
+    IF_INT_LESS(GSW(GSW_STORY_PROGRESS), STORY_STG5_43_X_NAUTS_RETREAT)
         CALL(evt_npc_check_delete, STRING("トゲノコ"))
         CALL(evt_npc_check_delete, STRING("ハンマーブロス"))
-        ELSE
+    ELSE
         CALL(evt_npc_check_delete, STRING("ハンニャー１"))
-        CALL(evt_npc_check_delete, STRING("ハンニャー２\0\0\0"))
+        CALL(evt_npc_check_delete, STRING("ハンニャー２"))
     END_IF
-    IF_INT_GREATER_OR_EQUAL(GSW(0), 349)
-        IF_INT_LESS(GSW(0), 352)
+    // Between chapters 6 and 7 the Fahr Outpost pipe leads to the chapter 7 title screen instead.
+    IF_INT_GREATER_OR_EQUAL(GSW(GSW_STORY_PROGRESS), STORY_STG6_71_01)
+        IF_INT_LESS(GSW(GSW_STORY_PROGRESS), STORY_STG7_00_START)
             SET_VALUE(LW(0), STRING("dokan__1"))
-            CALL_CHILD(PTR(bero_case_switch_off))
+            CALL_CHILD(bero_case_switch_off)
             CALL(evt_bero_overwrite, STRING("dokan__1"), PTR(bero_entry_data2))
             SET_VALUE(LW(0), STRING("dokan__1"))
-            CALL_CHILD(PTR(bero_case_switch_on))
+            CALL_CHILD(bero_case_switch_on)
         END_IF
     END_IF
-    IF_INT_EQUAL(GSW(0), 219)
-        SPAWN_EVENT(PTR(peach_mail))
+    // Peach's e-mail arrives here on the way back from Twilight Town.
+    IF_INT_EQUAL(GSW(GSW_STORY_PROGRESS), STORY_STG4_16_LEAVING_TWILIGHT_TOWN)
+        SPAWN_EVENT(peach_mail)
     END_IF
     RETURN
 EVT_END()
-

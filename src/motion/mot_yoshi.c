@@ -1,3 +1,4 @@
+// Mario's riding-Yoshi motion: clears his motion state when he gets on Yoshi (party_yoshi.c moves them both).
 #include "motion/mot_yoshi.h"
 #include "evt/evt_bero.h"
 #include "mario/mario.h"
@@ -5,14 +6,18 @@
 #include "party.h"
 #include "pmario_sound.h"
 
+/**
+ * Motion while Mario rides Yoshi: on entry clears his jump flags, speed and every collision hit,
+ * and sets the front pose without a shadow; party_yoshi.c then moves and animates both of them.
+ */
 void mot_yoshi(void) {
     MarioWork* mario = marioGetPtr();
 
-    if (mario->trigFlags & 1) {
-        mario->trigFlags &= ~1;
-        mario->flags &= ~0xF0000;
-        mario->dispFlags |= 4;
-        mario->dispFlags |= 0x1000;
+    if (mario->trigFlags & MARIO_TRIG_FLAG_IS_STARTING_NEW_MOTION) {
+        mario->trigFlags &= ~MARIO_TRIG_FLAG_IS_STARTING_NEW_MOTION;
+        mario->flags &= ~(MARIO_FLAG_IS_JUMPING | MARIO_FLAG_IS_FALLING | MARIO_FLAG_IS_STEPPING | MARIO_FLAG_HAS_INPUT_JUMP);
+        mario->dispFlags |= MARIO_DISP_FLAG_FRONT_POSE;
+        mario->dispFlags |= MARIO_DISP_FLAG_NO_SHADOW;
         mario->multiTimer = 0;
         mario->airTimer = 0;
         mario->currSubMotionId = 0;
@@ -27,6 +32,10 @@ void mot_yoshi(void) {
     }
 }
 
+/**
+ * Cleanup when Mario gets off Yoshi: stops Yoshi's running sound,
+ * clears the door (bero) offsets and restores Mario's pose, shadow and draw offsets.
+ */
 void mot_yoshi_post(void) {
     PartyEntry* party;
     MarioWork* mario;
@@ -38,8 +47,8 @@ void mot_yoshi_post(void) {
         party->yoshiPsndSFXId = -1;
     }
     bero_clear_Offset();
-    mario->dispFlags &= ~4;
-    mario->dispFlags &= ~0x1000;
-    mario->dispOfs = (Vec){ 0.0f, 0.0f, 0.0f };
-    mario->dispOfs2 = (Vec){ 0.0f, 0.0f, 0.0f };
+    mario->dispFlags &= ~MARIO_DISP_FLAG_FRONT_POSE;
+    mario->dispFlags &= ~MARIO_DISP_FLAG_NO_SHADOW;
+    mario->dispOfs = (Vec){0.0f, 0.0f, 0.0f};
+    mario->dispOfs2 = (Vec){0.0f, 0.0f, 0.0f};
 }

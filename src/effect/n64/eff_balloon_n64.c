@@ -1,3 +1,5 @@
+// Paper Mario 64 effect: balloon that inflates to a target scale while rotating; type picks the shape.
+#include "eff/n64/eff_balloon_n64.h"
 #include "driver/camdrv.h"
 #include "driver/dispdrv.h"
 #include "driver/effdrv.h"
@@ -6,12 +8,8 @@
 #include <dolphin/mtx.h>
 #include <dolphin/os/OSFastCast.h>
 #include <string.h>
-
-#ifndef TARGET_PC /* PC port: the host libc declares these */
-double sin(double);
-double cos(double);
-#endif
-
+#include "eff/eff_n64_vtx.h"
+#include "libc_decls.h"
 typedef struct EffBalloonN64Point {
     f32 x, y;
 } EffBalloonN64Point;
@@ -29,16 +27,14 @@ typedef struct EffBalloonN64Work {
     f32 offsetY;                   // 0xC8
 } EffBalloonN64Work;
 
-typedef struct effN64Vtx {
-    s16 x, y, z;   // 0x0
-    s16 s, t;      // 0x6
-    u8 r, g, b, a; // 0xA
-} effN64Vtx;
-
 void effGetTexObjN64(u32 id, GXTexObj* obj);
 void effSetVtxDescN64(effN64Vtx* vtx);
+// Unprototyped on purpose: this file passes tri1 its vertex indices as plain ints, without the
+// u16 conversion that eff_n64.h's prototype would add, so it includes only the vertex type.
+// FAKE: local prototype: tri1 is declared without parameters (eff_n64.h: (u16, u16, u16, u16)); this file was compiled with it and the header prototype changes the code.
 void tri1();
 
+/** Template vertices of the balloon, copied each frame before the 20 outline points are wobbled around it. */
 static effN64Vtx balloon_vtx[] = {
     {0, 0, 0, 0, 0, 0, 0, 0, 255},
     {0, 0, 0, 0, 480, 0, 0, 0, 255},
@@ -64,23 +60,25 @@ static effN64Vtx balloon_vtx[] = {
     {0, 0, 0, 0, 512, 0, 0, 0, 255},
 };
 
-void effBalloonMain(EffectEntry* effect);
-void effBalloonDisp(CameraId cameraId, EffectEntry* effect);
+static void effBalloonMain(EffectEntry* effect);
+static void effBalloonDisp(CameraId cameraId, EffectEntry* effect);
 
-#pragma explicit_zero_data on
-static const u32 gap_09_8041E97C_sdata2 = 0;
-
+/**
+ * Spawns the balloon at (x, y, z) that grows to `targetScale`,
+ * tilted by `rotation` degrees about Z. A 20-point outline wobbles around it.
+ * Reached through evt_eff64 ("balloon_n64").
+ */
 EffectEntry* effBalloonN64Entry(s32 type, f32 x, f32 y, f32 z, f32 targetScale, f32 rotation) {
     EffectEntry* effect;
     EffBalloonN64Work* work;
 
     effect = effEntry();
-    effect->type = "BalloonN64\0";
+    effect->type = "BalloonN64";
     effect->count = 1;
     work = __memAlloc(HEAP_EFFECT, sizeof(EffBalloonN64Work));
     effect->userdata = work;
     effect->callback = effBalloonMain;
-    effect->flags |= 2;
+    effect->flags |= EFFECT_FLAG_SOFT_DELETE;
     work->type = type;
     work->position.x = x;
     work->position.y = y;
@@ -90,12 +88,14 @@ EffectEntry* effBalloonN64Entry(s32 type, f32 x, f32 y, f32 z, f32 targetScale, 
     work->targetScale = targetScale;
     work->scale = 0.0f;
     work->frame = 0;
-    (void)&gap_09_8041E97C_sdata2;
     return effect;
 }
-#pragma explicit_zero_data reset
 
-void effBalloonMain(EffectEntry* effect) {
+/**
+ * Eases the scale toward the target with a sine pulse and rebuilds the 20 wobbling outline points each frame.
+ * Once soft deleted it counts down 99 frames while its offset rises.
+ */
+static void effBalloonMain(EffectEntry* effect) {
     s32 lifetime;
     EffBalloonN64Work* work = effect->userdata;
     EffBalloonN64Point* pt = work->points;
@@ -110,8 +110,8 @@ void effBalloonMain(EffectEntry* effect) {
     tmp.y = work->position.y;
     tmp.z = work->position.z;
     position = tmp;
-    if (effect->flags & 4) {
-        effect->flags &= ~4;
+    if (effect->flags & EFFECT_FLAG_DELETE_REQUESTED) {
+        effect->flags &= ~EFFECT_FLAG_DELETE_REQUESTED;
         work->lifetime = 99;
     }
     if (work->lifetime < 100) {
@@ -149,8 +149,12 @@ void effBalloonMain(EffectEntry* effect) {
     dispEntry(CAMERA_3D, dispCalcZ(&position), 2, (DispCallback)effBalloonDisp, effect);
 }
 
-#pragma opt_dead_assignments off
-void effBalloonDisp(CameraId cameraId, EffectEntry* effect) {
+/**
+ * Builds the vertices in a temporary buffer (from the template, via fast-cast conversions),
+ * then draws the outline as a fan of triangles around one vertex;
+ * the texture is chosen from the lifetime counter (Guess).
+ */
+static void effBalloonDisp(CameraId cameraId, EffectEntry* effect) {
     CameraEntry* camera = camGetPtr(cameraId);
     EffBalloonN64Work* work = effect->userdata;
     s32 type;
@@ -252,5 +256,3 @@ void effBalloonDisp(CameraId cameraId, EffectEntry* effect) {
         }
     }
 }
-
-#pragma opt_dead_assignments reset

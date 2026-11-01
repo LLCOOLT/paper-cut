@@ -54,8 +54,8 @@ void portAcCueJump(void* unit) {
     if (testing()) {
         BattleUnit* u = (BattleUnit*)unit;
         printf("[accue] retrace %u: jump of unit %d (alliance %d, kind %d) to %.0f %.0f %.0f in %d frames\n",
-               (unsigned)VIGetRetraceCount(), (int)u->unitId, (int)u->mAlliance, (int)u->currentKind,
-               u->mMoveTargetPos.x, u->mMoveTargetPos.y, u->mMoveTargetPos.z, (int)u->moveFrames);
+               (unsigned)VIGetRetraceCount(), (int)u->unitId, (int)u->alliance, (int)u->currentKind,
+               u->moveTargetPos.x, u->moveTargetPos.y, u->moveTargetPos.z, (int)u->moveFrames);
         fflush(stdout);
     }
     if (sKind == 1 && sJumpUnit != NULL && sJumpUnit != (BattleUnit*)unit) {
@@ -78,8 +78,8 @@ static int landsOnPlayer(BattleWork* wp, BattleUnit* jumper) {
             continue;
         }
         BtlUnit_GetPos(units[i], &x, &y, &z);
-        dx = jumper->mMoveTargetPos.x - x;
-        dz = jumper->mMoveTargetPos.z - z;
+        dx = jumper->moveTargetPos.x - x;
+        dz = jumper->moveTargetPos.z - z;
         if (dx * dx + dz * dz < 25.0f * 25.0f) {
             return 1;
         }
@@ -136,7 +136,7 @@ void portAcCueUpdate(BattleWork* wp) {
         return;
     }
     if (sKind == 0 && sLanded == 0 && j->moveFrames > 0) {
-        if (ac->resultcb == battleAcResult_TimingA && ac->mAcState == 100 && ac->mAcUnit == j) {
+        if (ac->resultcb == battleAcResult_TimingA && ac->acState == 100 && ac->acUnit == j) {
             sKind = 1;
             sWindow = battleAcTimingA_GetSuccessFrame(wp);
         } else if (ac->maincb == NULL && j != BattleGetMarioPtr(wp) && j != BattleGetPartyPtr(wp) &&

@@ -42,7 +42,7 @@ s32 BattleCheckDamage(BattleUnit * p0, BattleUnit * p1, BattleUnitPart * p2, Bat
     return r;
 }
 
-s32 BattleCalculateDamage(BattleUnit * p0, BattleUnit * p1, BattleUnitPart * p2, BattleWeapon * p3, u32 * p4, u32 p5) {
+static s32 BattleCalculateDamage(BattleUnit * p0, BattleUnit * p1, BattleUnitPart * p2, BattleWeapon * p3, u32 * p4, u32 p5) {
     PortHookSlot* s = &portHookSlots[28];
     s32 r;
     int i, skip = 0;
@@ -62,7 +62,7 @@ s32 BattleCalculateDamage(BattleUnit * p0, BattleUnit * p1, BattleUnitPart * p2,
     return r;
 }
 
-s32 BattleCalculateFpDamage(BattleUnit * p0, BattleUnit * p1, BattleUnitPart * p2, BattleWeapon * p3, u32 * p4, u32 p5) {
+static s32 BattleCalculateFpDamage(BattleUnit * p0, BattleUnit * p1, BattleUnitPart * p2, BattleWeapon * p3, u32 * p4, u32 p5) {
     PortHookSlot* s = &portHookSlots[29];
     s32 r;
     int i, skip = 0;

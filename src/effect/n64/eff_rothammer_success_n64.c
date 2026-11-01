@@ -1,3 +1,5 @@
+// Paper Mario 64 effect: a ring of `count` yellow star sprites flying outward from a point and spinning;
+// the success counterpart of eff_rothammer_fail_n64.c.
 #include "eff/eff_n64.h"
 #include "driver/camdrv.h"
 #include "driver/dispdrv.h"
@@ -5,12 +7,8 @@
 #include "memory.h"
 #include <dolphin/gx.h>
 #include <dolphin/mtx.h>
-
-#ifndef TARGET_PC /* PC port: the host libc declares these */
-double sin(double);
-double cos(double);
-#endif
-
+#include "eff/n64/eff_rothammer_success_n64.h"
+#include "libc_decls.h"
 typedef struct EffRotHammerSuccessWork {
     s16 type;     // 0x0
     Vec position; // 0x4
@@ -23,6 +21,7 @@ typedef struct EffRotHammerSuccessWork {
     f32 scale;    // 0x30
 } EffRotHammerSuccessWork;
 
+/** 16x16 camera-facing quad drawn for each spinning yellow star. */
 static effN64Vtx size16x16_tex32x32_vtx[] = {
     {-8, -8, 0, 0, 0, 0, 0, 0, 255},
     {8, -8, 0, 64, 0, 0, 0, 0, 255},
@@ -30,9 +29,13 @@ static effN64Vtx size16x16_tex32x32_vtx[] = {
     {-8, 8, 0, 0, 32, 0, 0, 0, 255},
 };
 
-void effRotHammerSuccessMain(EffectEntry* effect);
-void effRotHammerSuccessDisp(CameraId cameraId, EffectEntry* effect);
+static void effRotHammerSuccessMain(EffectEntry* effect);
+static void effRotHammerSuccessDisp(CameraId cameraId, EffectEntry* effect);
 
+/**
+ * Spawns `count` star sprites flying out from (x, y, z) for `lifetime` frames.
+ * Spawned by event scripts through evt_eff.
+ */
 EffectEntry* effRotHammerSuccessN64Entry(s32 type, f32 x, f32 y, f32 z, s32 count, s32 lifetime) {
     EffectEntry* effect;
     EffRotHammerSuccessWork* work;
@@ -68,7 +71,12 @@ EffectEntry* effRotHammerSuccessN64Entry(s32 type, f32 x, f32 y, f32 z, s32 coun
     return effect;
 }
 
-void effRotHammerSuccessMain(EffectEntry* effect) {
+/**
+ * Moves each star by its velocity, which damps 20% per frame (30% plus slowing spin over the last 5 frames),
+ * turns it by its spin speed and shrinks it 20% per frame once half the lifetime has passed.
+ * Deletes when the lifetime runs out.
+ */
+static void effRotHammerSuccessMain(EffectEntry* effect) {
     EffRotHammerSuccessWork* work = effect->userdata;
     Vec position;
     Vec tmp = {0.0f, 0.0f, 0.0f};
@@ -112,7 +120,11 @@ void effRotHammerSuccessMain(EffectEntry* effect) {
     dispEntry(CAMERA_3D, dispCalcZ(&position), 2, (DispCallback)effRotHammerSuccessDisp, effect);
 }
 
-void effRotHammerSuccessDisp(CameraId cameraId, EffectEntry* effect) {
+/**
+ * Draws each star as a camera-facing 16x16 quad of texture 0x1D, turned by its spin and scaled,
+ * in flat yellow (DC,DC,28).
+ */
+static void effRotHammerSuccessDisp(CameraId cameraId, EffectEntry* effect) {
     CameraEntry* camera;
     EffRotHammerSuccessWork* work;
     s32 i;

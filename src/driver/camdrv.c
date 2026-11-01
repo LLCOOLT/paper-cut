@@ -1,3 +1,5 @@
+// Camera driver: the fixed set of cameras (offscreen, shadow, background, 3D, 2D, fade...), their
+// projection and view matrices, and the per-frame camera update.
 #include "driver/camdrv.h"
 #include "wide_x.h"
 #include "driver/mapdrv.h"
@@ -22,6 +24,13 @@ void camShiftPostMain(void);
 #include "cam_road.h"
 #include "cam_shift.h"
 #endif
+#include "cam_road.h"
+#include "cam_shift.h"
+#include "battle/battle_camera.h"
+#include "version.h"
+#ifdef TARGET_PC /* PC port: the header's prototypes are skipped on PC (these are static here) */
+static void camLetterBox(void);
+#endif
 
 // NOTE: this is ~roughly 12.5 degrees in radians, ideally it should be MTXDegToRad(12.5) or 5PI/72
 #define DEG_TO_RAD_12_5__1 0.21816612780094147
@@ -31,33 +40,30 @@ void camShiftPostMain(void);
 CameraEntry* camPtrTbl[CAMERA_MAX];
 
 //.sdata
-Vec camPtDefault = { 0.0f, 0.0f, 1000.0f };
-Vec camAtDefault = { 0.0f, 0.0f, 0.0f };
-Vec camUpDefault = { 0.0f, 1.0f, 0.0f };
+Vec camPtDefault = {0.0f, 0.0f, 1000.0f};
+Vec camAtDefault = {0.0f, 0.0f, 0.0f};
+Vec camUpDefault = {0.0f, 1.0f, 0.0f};
 
 //.sbss
 CameraId currentCamNo;
-
-typedef struct CameraParams {
-    f32 fovY;   // 0x00
-    f32 aspect; // 0x04
-    f32 far;    // 0x08
-    Vec pos;    // 0x0C
-    Vec at;     // 0x18
-} CameraParams;
 
 // forward declarations
 CameraEntry* camEntryPersp(CameraCallback callback, f32 fovY, f32 aspect, f32 near, f32 far, f32 nearZ, f32 farZ,
                            const char* name);
 CameraEntry* camEntryOrtho(CameraCallback callback, f32 fovY, f32 aspect, f32 top, f32 bottom, f32 left, f32 right,
                            f32 near, f32 far, f32 nearZ, f32 farZ, const char* name);
-void camEvalNearFar(CameraEntry* camera);
-void cam3dMain(CameraEntry* camera);
-void cam3dImgMain(CameraEntry* camera);
-void camEffMain(CameraEntry* camera);
-void camLetterBox(void);
+static void camEvalNearFar(CameraEntry* camera);
+static void cam3dMain(CameraEntry* camera);
+static void cam3dImgMain(CameraEntry* camera);
+static void camEffMain(CameraEntry* camera);
 inline Vec makeVecByValue(f32 x, f32 y, f32 z);
 
+/**
+ * Creates the 13 cameras at boot, in draw order:
+ * two offscreen render targets, shadow, background, the main 3D camera, two 3D effect cameras,
+ * the 3D image camera, 2D (menus and text), the two fade cameras and two debug cameras.
+ * All use a 25 degree field of view on a 608x480 screen.
+ */
 void camInit(void) {
     f32 deg2rad;
 
@@ -100,7 +106,7 @@ void camInit(void) {
     camPtrTbl[12] = camEntryPersp(NULL, 25.0f, 1.2666666f, 1.0f, 32768.0f, 0.0f, 1.0f, "dbg3d");
 }
 
-// near/far is perspective, nearZ/farZ is projection
+/** near/far is perspective, nearZ/farZ is projection */
 CameraEntry* camEntryPersp(CameraCallback callback, f32 fovY, f32 aspect, f32 near, f32 far, f32 nearZ, f32 farZ,
                            const char* name) {
     CameraEntry* camera = __memAlloc(HEAP_DEFAULT, sizeof(CameraEntry));
@@ -149,13 +155,18 @@ CameraEntry* camEntryPersp(CameraCallback callback, f32 fovY, f32 aspect, f32 ne
     camera->reserved_21A = 0;
     camera->reserved_21C = 0;
     camera->reserved_21E = 0;
-    camera->reserved_224 = (Vec){ 0.0f, 0.0f, 0.0f };
-    camera->reserved_230 = (Vec){ 10.0f, 10.0f, 10.0f };
-    camera->reserved_23C = (Vec){ 0.0f, 0.0f, 0.0f };
-    camera->reserved_248 = (Vec){ 0.0f, 0.0f, 0.0f };
+    camera->reserved_224 = (Vec){0.0f, 0.0f, 0.0f};
+    camera->reserved_230 = (Vec){10.0f, 10.0f, 10.0f};
+    camera->reserved_23C = (Vec){0.0f, 0.0f, 0.0f};
+    camera->reserved_248 = (Vec){0.0f, 0.0f, 0.0f};
     return camera;
 }
 
+/**
+ * Allocates and initialises an orthographic camera (top/bottom/left/right box, near/far,
+ * viewport depth nearZ..farZ) with the default eye, full-screen scissor and viewport and the given name.
+ * camInit uses it for the 2D cameras ("off", "off2", "shadow", "bg").
+ */
 inline CameraEntry* camEntryOrtho(CameraCallback callback, f32 fovY, f32 aspect, f32 top, f32 bottom, f32 left,
                                   f32 right, f32 near, f32 far, f32 nearZ, f32 farZ, const char* name) {
     CameraEntry* camera = __memAlloc(HEAP_DEFAULT, sizeof(CameraEntry));
@@ -172,7 +183,6 @@ inline CameraEntry* camEntryOrtho(CameraCallback callback, f32 fovY, f32 aspect,
     camera->callback = callback;
     camera->mode = 0;
     camera->rollAngle = 0.0f;
-    // ???
     camera->viewOffset.z = 0.0f;
     camera->viewOffset.y = 0.0f;
     camera->viewOffset.x = 0.0f;
@@ -193,6 +203,7 @@ inline CameraEntry* camEntryOrtho(CameraCallback callback, f32 fovY, f32 aspect,
     return camera;
 }
 
+/** Clamps *val to [min * range, max * range]; used to limit how far the field zoom may pan. */
 inline void clampScaled(f32* val, f32 min, f32 max, f32 range) {
     if (*val < min * range) {
         *val = min * range;
@@ -201,6 +212,12 @@ inline void clampScaled(f32* val, f32 min, f32 max, f32 range) {
     }
 }
 
+/**
+ * Once per frame: runs every camera's update callback,
+ * builds its view matrix (look-at, roll, offset) and applies any pending projection adjustment.
+ * On the field the 3D view is also scaled and panned towards Mario by his camera zoom (camZoom, weighted by
+ * camZoomWeight).
+ */
 void camMain(void) {
     Mtx rot, trans;
     Mtx transMtx, scaleMtx, fxMtx;
@@ -227,7 +244,7 @@ void camMain(void) {
             weight = marioGetPtr()->camZoomWeight;
 
             // Focus, M.
-            focus = (Vec){ 0.0f, 0.0f, 0.0f };
+            focus = (Vec){0.0f, 0.0f, 0.0f};
             focus.x = marioGetPtr()->position.x + marioGetPtr()->camZoomOfs.x;
             focus.y = marioGetPtr()->position.y + marioGetPtr()->camZoomOfs.y;
             focus.z = marioGetPtr()->position.z + marioGetPtr()->camZoomOfs.z;
@@ -267,14 +284,18 @@ void camMain(void) {
             PSMTXConcat(fxMtx, camera->view, camera->view);
         }
 
-        if (camera->flags & 8) {
+        if (camera->flags & CAM_FLAG_PROJ_ADJUST) {
             PSMTX44Concat(camera->projAdjust, camera->projection, camera->projection);
-            camera->flags &= ~8;
+            camera->flags &= ~CAM_FLAG_PROJ_ADJUST;
         }
     }
 }
 
-void camEvalNearFar(CameraEntry* camera) {
+/**
+ * Fits a perspective camera's near and far planes to the corners of the map's bounding box as seen from the
+ * camera, for cameras flagged CAM_FLAG_EVAL_NEAR_FAR; a corner behind the camera leaves the near plane at 1.
+ */
+static void camEvalNearFar(CameraEntry* camera) {
     MapWork* map;
     f32 m22;
     f32 m23;
@@ -340,6 +361,18 @@ void camEvalNearFar(CameraEntry* camera) {
     }
 }
 
+#ifdef TARGET_PC
+/* PC port: the in-between frames recompute a camera's near/far
+ * (port/src/aurora/interp_aurora.c) */
+void portCamEvalNearFar(CameraEntry* camera) {
+    camEvalNearFar(camera);
+}
+#endif
+
+/**
+ * Draws the frame: updates the letterbox, sorts the display list and, for every camera not hidden,
+ * sets its viewport, scissor and projection and calls its queued draw callbacks; then empties the display list.
+ */
 void camDraw(void) {
     int cameraId;
 
@@ -347,12 +380,12 @@ void camDraw(void) {
     dispSort();
     for (cameraId = 0; cameraId < CAMERA_MAX; cameraId++) {
         CameraEntry* camera = camPtrTbl[cameraId];
-        if (!(camera->flags & 1)) {
+        if (!(camera->flags & CAM_FLAG_HIDDEN)) {
             currentCamNo = cameraId;
             GXSetViewport(camera->viewport[0], camera->viewport[1], camera->viewport[2], camera->viewport[3],
                           camera->viewport[4], camera->viewport[5]);
             GXSetScissor(camera->scissor[0], camera->scissor[1], camera->scissor[2], camera->scissor[3]);
-            if (camera->flags & 0x40 && camera->projType == GX_PERSPECTIVE) {
+            if ((camera->flags & CAM_FLAG_EVAL_NEAR_FAR) && camera->projType == GX_PERSPECTIVE) {
                 camEvalNearFar(camera);
                 MTXPerspective(camera->projection, camera->fovY, camera->aspect, camera->near, camera->far);
             }
@@ -367,17 +400,22 @@ void camDraw(void) {
     dispReInit();
 }
 
+/**
+ * Starts the field camera on a map's camera road file (the hit data that steers the camera along the map),
+ * mode 1; without a road file the camera falls back to mode 3.
+ * Resets the field of view, roll, offset and transitions. Called by the map driver when a map loads.
+ */
 void camLoadRoad(CameraId cameraId, const char* filename) {
     CameraEntry* camera = camGetPtr(cameraId);
-    camera->flags &= ~0x10;
+    camera->flags &= ~CAM_FLAG_FOLLOW_Y_OFF;
     camera->blendPos.z = 0.0f;
     camera->blendPos.y = 0.0f;
     camera->blendPos.x = 0.0f;
     if (camRoadSetup(filename)) {
-        camera->flags |= 4;
+        camera->flags |= CAM_FLAG_ROAD_LOADED;
         camGetPtr(cameraId)->mode = 1;
     } else {
-        camera->flags &= ~4;
+        camera->flags &= ~CAM_FLAG_ROAD_LOADED;
         camGetPtr(cameraId)->mode = 3;
     }
     camera->fovY = 25.0f;
@@ -395,9 +433,10 @@ void camLoadRoad(CameraId cameraId, const char* filename) {
     camera->marioPos.x = 0.0f;
 }
 
+/** Drops the camera road (mode 0) and resets the field of view, roll, offset and pending projection adjustment. */
 void camUnLoadRoad(CameraId cameraId) {
     CameraEntry* camera = camGetPtr(cameraId);
-    camera->flags &= ~4;
+    camera->flags &= ~CAM_FLAG_ROAD_LOADED;
     camGetPtr(cameraId)->mode = 0;
     camera->stateA = 0;
     camera->progressA = 0.0f;
@@ -406,27 +445,38 @@ void camUnLoadRoad(CameraId cameraId) {
     camera->viewOffset.z = 0.0f;
     camera->viewOffset.y = 0.0f;
     camera->viewOffset.x = 0.0f;
-    camera->flags &= ~8;
+    camera->flags &= ~CAM_FLAG_PROJ_ADJUST;
 }
 
+/** Returns camera cameraId's entry. */
 CameraEntry* camGetPtr(CameraId cameraId) {
     return camPtrTbl[cameraId];
 }
 
+/** Returns the camera being drawn right now (set by camDraw), for draw callbacks that work on any camera. */
 CameraEntry* camGetCurPtr(void) {
     return camPtrTbl[currentCamNo];
 }
 
+/** Returns the id of the camera being drawn right now. */
 CameraId camGetCurNo(void) {
     return currentCamNo;
 }
 
+/** Sets which camera counts as being drawn. */
 void camSetCurNo(CameraId cameraId) {
     currentCamNo = cameraId;
 }
 
-void cam3dMain(CameraEntry* camera) {
-    if (camera->flags & 2) {
+/**
+ * Update callback of the main 3D camera, skipped while CAM_FLAG_CTRL_OFF is set.
+ * Mode 1 (field): advances its two timed transitions,
+ * follows Mario's camera target and blends towards anchor points,
+ * then runs the camera shift and camera road code to place the camera. Mode 2 (battle): runs the battle camera.
+ * Afterwards offscreen camera 2 copies its view and projection.
+ */
+static void cam3dMain(CameraEntry* camera) {
+    if (camera->flags & CAM_FLAG_CTRL_OFF) {
         return;
     }
 
@@ -495,7 +545,7 @@ void cam3dMain(CameraEntry* camera) {
                     break;
             }
 
-            if (!(camera->flags & 0x10)) {
+            if (!(camera->flags & CAM_FLAG_FOLLOW_Y_OFF)) {
                 camera->marioPos.y +=
                     (((1.0f + marioGetPtr()->camTarget.y) - camera->marioPos.y) * marioGetCamFollowRate());
             }
@@ -508,7 +558,7 @@ void cam3dMain(CameraEntry* camera) {
 
             {
                 f32 t, it;
-                t = intplGetValue(camera->curveB, (s32)(100000.0f * camera->progressB), 100000, 0.0f, 1.0f);
+                t = intplGetValue(camera->curveB, 0.0f, 1.0f, (s32)(100000.0f * camera->progressB), 100000);
                 it = 1.0f - t;
                 switch (camera->stateB) {
                     case 0:
@@ -552,16 +602,15 @@ void cam3dMain(CameraEntry* camera) {
                     case 0:
                     case 1:
                     case 2:
-                        if (camera->flags & 0x4) {
+                        if (camera->flags & CAM_FLAG_ROAD_LOADED) {
                             MarioWork* mario = marioGetPtr();
                             f32 bank = 0.0f;
                             f32 dolly;
                             f32 oldx, oldy, oldz;
 
                             camShiftMain(camera, mario, &bank);
-                            camRoadMain(&work2.fovY, camera->blendPos.x, camera->blendPos.y, camera->blendPos.z,
+                            camRoadMain(&work2, camera->blendPos.x, camera->blendPos.y, camera->blendPos.z,
                                         camera->blendAt.x, camera->blendAt.y, camera->blendAt.z, bank);
-                            /// ???
                             dolly = camera->dollyPercent;
                             oldx = work2.pos.x;
                             oldy = work2.pos.y;
@@ -592,8 +641,7 @@ void cam3dMain(CameraEntry* camera) {
 
                 {
                     f32 t, it;
-                    t = intplGetValue(camera->curveA, (s32)(100000.0f * (1.0f - camera->progressA)), 100000, 0.0f,
-                                      1.0f);
+                    t = intplGetValue(camera->curveA, 0.0f, 1.0f, (s32)(100000.0f * (1.0f - camera->progressA)), 100000);
                     it = 1.0f - t;
                     camera->cameraAt.x = (work.at.x * it) + (work2.at.x * t);
                     camera->cameraAt.y = (work.at.y * it) + (work2.at.y * t);
@@ -645,11 +693,20 @@ void cam3dMain(CameraEntry* camera) {
     camGetPtr(CAMERA_OFFSCREEN2)->projType = camGetPtr(CAMERA_3D)->projType;
 }
 
-void cam3dImgMain(CameraEntry* camera) {
+/**
+ * Update callback of the 3D image camera: rebuilds its projection from its current field of view,
+ * aspect and planes.
+ */
+static void cam3dImgMain(CameraEntry* camera) {
     MTXPerspective(camera->projection, camera->fovY, camera->aspect, camera->near, camera->far);
 }
 
-void camEffMain(CameraEntry* camera) {
+/**
+ * Update callback of the two 3D effect cameras:
+ * copies the main 3D camera's position, target and up vector so effects draw from the same viewpoint.
+ * The JP and later releases also rebuild the projection each frame.
+ */
+static void camEffMain(CameraEntry* camera) {
     CameraEntry* camera3D = camGetPtr(CAMERA_3D);
 
     camera->cameraPos = camera3D->cameraPos;
@@ -657,37 +714,53 @@ void camEffMain(CameraEntry* camera) {
     camera->cameraAt = camera3D->cameraAt;
     camera->viewDistance = VECDistance(&camera->cameraPos, &camera->cameraAt);
     camera->viewYaw = angleABf(camera->cameraPos.x, camera->cameraPos.z, camera->cameraAt.x, camera->cameraAt.z);
+#if VERSION >= VERSION_JP
     MTXPerspective(camera->projection, camera->fovY, camera->aspect, camera->near, camera->far);
+#endif
 }
 
+/**
+ * Sets a camera's update mode (for the 3D camera: 1 field with a camera road, 2 battle, 3 field without one);
+ * the battle sequence switches the 3D camera to battle mode.
+ */
 void camSetMode(CameraId cameraId, u16 mode) {
     camPtrTbl[cameraId]->mode = mode;
 }
 
+/** Shows a camera: its draw callbacks run again. */
 void camDispOn(CameraId cameraId) {
-    camPtrTbl[cameraId]->flags &= ~1;
+    camPtrTbl[cameraId]->flags &= ~CAM_FLAG_HIDDEN;
 }
 
+/** Hides a camera: camDraw skips it and its draw callbacks. */
 void camDispOff(CameraId cameraId) {
-    camPtrTbl[cameraId]->flags |= 1;
+    camPtrTbl[cameraId]->flags |= CAM_FLAG_HIDDEN;
 }
 
+/** Gives the camera back to its update callback (e.g. after a scripted camera move). */
 void camCtrlOn(CameraId cameraId) {
-    camPtrTbl[cameraId]->flags &= ~2;
+    camPtrTbl[cameraId]->flags &= ~CAM_FLAG_CTRL_OFF;
 }
 
+/** Freezes a camera's automatic update so scripts (evt_cam) or the map change sequence can place it directly. */
 void camCtrlOff(CameraId cameraId) {
-    camPtrTbl[cameraId]->flags |= 2;
+    camPtrTbl[cameraId]->flags |= CAM_FLAG_CTRL_OFF;
 }
 
+/** Switches a camera to a perspective projection. */
 void camSetTypePersp(CameraId cameraId) {
     camPtrTbl[cameraId]->projType = GX_PERSPECTIVE;
 }
 
+/** Switches a camera to an orthographic projection; used by the evt_cam helpers. */
 void camSetTypeOrtho(CameraId cameraId) {
     camPtrTbl[cameraId]->projType = GX_ORTHOGRAPHIC;
 }
 
+/**
+ * Projects world position model through the 3D camera to screen coordinates centred on the screen (x right, y
+ * up, in 608x480 pixels), keeping depth in z. Used to place message balloons and effects over 3D objects.
+ */
 void getScreenPoint(Vec* model, Vec* screen) {
     CameraEntry* camera;
     f32 projection[GX_PROJECTION_SZ];
@@ -705,13 +778,17 @@ void getScreenPoint(Vec* model, Vec* screen) {
     screen->y = 240.0f - screen->y;
 }
 
-void camLetterBoxDraw(CameraId cameraId, void* param) {
+/**
+ * Draws the black letterbox bars across the top and bottom of the screen at the 2D camera's current bar heights
+ * and alpha, unless globally disabled.
+ */
+static void camLetterBoxDraw(CameraId cameraId, void* param) {
     CameraEntry* camera = camGetPtr(CAMERA_2D);
     f32 viewport[GX_VIEWPORT_SZ];
     f32 projection[GX_PROJECTION_SZ];
     u32 left, top, width, height;
 
-    if (!(gp->flags & 0x8000) && camera->letterBoxAlpha != 0) {
+    if (!(gp->flags & GLOBAL_FLAG_NO_LETTER_BOX) && camera->letterBoxAlpha != 0) {
         GXGetViewportv(viewport);
         GXGetProjectionv(projection);
         GXGetScissor(&left, &top, &width, &height);
@@ -721,9 +798,9 @@ void camLetterBoxDraw(CameraId cameraId, void* param) {
         GXSetAlphaCompare(GX_ALWAYS, 0, GX_AOP_AND, GX_ALWAYS, 0);
         GXSetZMode(GX_DISABLE, GX_LEQUAL, GX_DISABLE);
         GXSetNumChans(1);
-        GXSetChanMatColor(GX_COLOR0A0, (GXColor){ 0, 0, 0, camera->letterBoxAlpha });
+        GXSetChanMatColor(GX_COLOR0A0, (GXColor){0, 0, 0, camera->letterBoxAlpha});
         GXSetChanCtrl(GX_COLOR0A0, GX_FALSE, GX_SRC_REG, GX_SRC_REG, 0, GX_DF_NONE, GX_AF_NONE);
-        GXSetFog(GX_FOG_NONE, 0.0f, 0.0f, 0.0f, 0.0f, (GXColor){ 255, 255, 255, 255 });
+        GXSetFog(GX_FOG_NONE, 0.0f, 0.0f, 0.0f, 0.0f, (GXColor){255, 255, 255, 255});
         GXSetNumTexGens(0);
         GXSetNumTevStages(1);
         GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD_NULL, GX_TEXMAP_NULL, GX_COLOR0A0);
@@ -749,26 +826,32 @@ void camLetterBoxDraw(CameraId cameraId, void* param) {
     }
 }
 
-void camLetterBox(void) {
+/**
+ * Once per frame: shows the letterbox while the game is in a cutscene (Mario has no control and no partner is
+ * being used, outside door transitions) and hides it otherwise.
+ * The bars slide in 3 pixels per frame to 49 (top) and 44 (bottom) and fade out when done;
+ * also sets the idle sound mix while they are up.
+ */
+static void camLetterBox(void) {
     CameraEntry* camera = camPtrTbl[CAMERA_2D];
     PartyEntry* party = partyGetPtr(0);
-    if (!(camera->flags & 0x200) && !(bero_get_BeroEXEC() & 1)) {
+    if (!(camera->flags & CAM_FLAG_LETTER_BOX_DISABLE) && !(bero_get_BeroEXEC() & 1)) {
         if ((seqGetSeq() == SEQ_GAME) && (!marioChkKey() || !marioChkCtrl()) &&
-            (!party || (party && !(party->flags & 0x100)))) {
-            if (!(camera->flags & 0x100)) {
-                camera->flags |= 0x100;
-                psndSetFlag(0x20);
+            (!party || (party && !(party->flags & PARTY_FLAG_IS_BEING_USED)))) {
+            if (!(camera->flags & CAM_FLAG_LETTER_BOX)) {
+                camera->flags |= CAM_FLAG_LETTER_BOX;
+                psndSetFlag(PSND_FLAG_IDLE_MIX);
                 camera->letterBoxAlpha = 0xFF;
                 camera->letterBoxTop = 0;
                 camera->letterBoxBottom = 0;
                 camera->letterBoxCamId = CAMERA_2D;
             }
         } else if (seqGetSeq() != SEQ_MAP_CHANGE) {
-            camera->flags &= ~0x100;
-            psndClearFlag(0x20);
+            camera->flags &= ~CAM_FLAG_LETTER_BOX;
+            psndClearFlag(PSND_FLAG_IDLE_MIX);
         }
     }
-    if (camera->flags & 0x100) {
+    if (camera->flags & CAM_FLAG_LETTER_BOX) {
         camera->letterBoxAlpha = 0xFF;
         camera->letterBoxTop += +3;
         if (camera->letterBoxTop > 0x31) {
@@ -778,8 +861,8 @@ void camLetterBox(void) {
         if (camera->letterBoxBottom > 0x2C) {
             camera->letterBoxBottom = 0x2C;
         }
-        if (camera->flags & 0x400) {
-            camera->flags &= ~0x400;
+        if (camera->flags & CAM_FLAG_LETTER_BOX_SNAP) {
+            camera->flags &= ~CAM_FLAG_LETTER_BOX_SNAP;
             camera->letterBoxTop = 0x31;
             camera->letterBoxBottom = 0x2C;
         }
@@ -788,26 +871,29 @@ void camLetterBox(void) {
         if (camera->letterBoxAlpha < 0) {
             camera->letterBoxAlpha = 0;
         }
-        if (camera->flags & 0x400) {
-            camera->flags &= ~0x400;
+        if (camera->flags & CAM_FLAG_LETTER_BOX_SNAP) {
+            camera->flags &= ~CAM_FLAG_LETTER_BOX_SNAP;
             camera->letterBoxAlpha = 0;
         }
     }
     dispEntry(camera->letterBoxCamId, 0.0f, 3, &camLetterBoxDraw, NULL);
 }
 
+/** A zero vector; unused leftover helper. */
 inline Vec unknownVec0(void) {
-    return (Vec){ 0.0f, 0.0f, 0.0f };
+    return (Vec){0.0f, 0.0f, 0.0f};
 }
 
+/** Builds a Vec from three components; camInit uses it to place the fixed cameras. */
 inline Vec makeVecByValue(f32 x, f32 y, f32 z) {
-    Vec v = (Vec){ 0.0f, 0.0f, 0.0f };
+    Vec v = (Vec){0.0f, 0.0f, 0.0f};
     v.x = x;
     v.y = y;
     v.z = z;
     return v;
 }
 
+/** A zero vector; unused leftover helper. */
 inline Vec unknownVec2(void) {
-    return (Vec){ 0.0f, 0.0f, 0.0f };
+    return (Vec){0.0f, 0.0f, 0.0f};
 }

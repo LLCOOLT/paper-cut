@@ -1,88 +1,28 @@
+// kpa_00 (クッパ編, Bowser's interludes): a Bowser's Castle scene with Kammy Koopa; continues in kpa_01 and ends in
+// Petalburg (nok_01).
+
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
 #include "evt/evt_memcard.h"
 #include "evt/evt_npc.h"
-#include "party/party_motion.h"
+#include "evt/evt_bero.h"
+#include "evt/evt_cam.h"
+#include "evt/evt_fade.h"
+#include "evt/evt_mario.h"
+#include "evt/evt_seq.h"
+#include "evt/evt_snd.h"
+#include "evt/evt_sub.h"
+#include "kpa.h"
+#include "version.h"
+#include "evt/evt_story.h"
 
-#pragma force_active on
-
-USER_FUNC(evt_bero_mapchange);
-USER_FUNC(evt_cam3d_evt_set);
-USER_FUNC(evt_fade_end_wait);
-USER_FUNC(evt_fade_entry);
-USER_FUNC(evt_fade_set_mapchange_type);
-USER_FUNC(evt_mario_cont_onoff);
-USER_FUNC(evt_mario_key_onoff);
-USER_FUNC(evt_mario_kill_party);
-USER_FUNC(evt_mario_set_mode);
-USER_FUNC(evt_mario_set_pos);
-USER_FUNC(evt_npc_flag_onoff);
-USER_FUNC(evt_npc_get_position);
-USER_FUNC(evt_npc_kamek_kemuri2);
-USER_FUNC(evt_npc_set_position);
-USER_FUNC(evt_npc_set_ry);
-USER_FUNC(evt_npc_set_scale);
-USER_FUNC(evt_seq_wait);
-USER_FUNC(evt_snd_bgm_scope);
-USER_FUNC(evt_snd_bgmoff_f);
-USER_FUNC(evt_snd_bgmon);
-USER_FUNC(evt_snd_envoff_f);
-USER_FUNC(evt_snd_sfx_pos);
-USER_FUNC(evt_snd_sfxoff);
-USER_FUNC(evt_snd_sfxon_3d);
-USER_FUNC(evt_sub_get_sincos);
-USER_FUNC(evt_sub_intpl_msec_get_value);
-USER_FUNC(evt_sub_intpl_msec_init);
-#ifdef VERSION_G8ME01
-#endif
-
-f32 fd_kpa_00_negone_one_374[2] __attribute__((aligned(8)));
-f32 fd_kpa_00_neg_one_382;
-f32 fd_kpa_00___local_PI_383;
-f32 fd_kpa_00___local_3PIO2_385;
-f32 fd_kpa_00_one_negone_373[2] __attribute__((aligned(8)));
-f32 fd_kpa_00___local_PIO2_384;
-f32 fd_kpa_00_one_381;
-f32 fd_kpa_00_negone_one_360[2] __attribute__((aligned(8)));
-f32 fd_kpa_00_neg_one_365;
-f32 fd_kpa_00___local_PI_366;
-f32 fd_kpa_00___local_3PIO2_368;
-f32 fd_kpa_00_one_negone_359[2] __attribute__((aligned(8)));
-f32 fd_kpa_00___local_PIO2_367;
-f32 fd_kpa_00_one_364;
-EvtWord kpa_00_first_evt[61];
-EvtWord kpa_00_fly_evt[380];
 static NpcSetupInfo npcEnt[3];
-EvtWord kpa_00_init_evt[24];
 
-f32 fd_kpa_00_negone_one_374[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_kpa_00_neg_one_382 = -1.0f;
-
-f32 fd_kpa_00___local_PI_383 = 3.1415927f;
-
-f32 fd_kpa_00___local_3PIO2_385 = 4.712389f;
-
-f32 fd_kpa_00_one_negone_373[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_kpa_00___local_PIO2_384 = 1.5707964f;
-
-f32 fd_kpa_00_one_381 = 1.0f;
-
-f32 fd_kpa_00_negone_one_360[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_kpa_00_neg_one_365 = -1.0f;
-
-f32 fd_kpa_00___local_PI_366 = 3.1415927f;
-
-f32 fd_kpa_00___local_3PIO2_368 = 4.712389f;
-
-f32 fd_kpa_00_one_negone_359[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_kpa_00___local_PIO2_367 = 1.5707964f;
-
-f32 fd_kpa_00_one_364 = 1.0f;
-
+/**
+ * Opening cutscene of the Bowser interludes: the camera pans across Bowser's Castle to a BGM_STGK_CASTLE1 start,
+ * then the game moves on to kpa_01.
+ * Runs at the start of the first interlude (story progress below STORY_STG1_19_01_BOWSER_CASTLE).
+ */
 EVT_BEGIN(kpa_00_first_evt)
     CALL(evt_mario_cont_onoff, 0)
     CALL(evt_mario_key_onoff, 0)
@@ -92,7 +32,7 @@ EVT_BEGIN(kpa_00_first_evt)
     CALL(evt_seq_wait, 2)
     BEGIN_INLINE_EVENT
         WAIT_MS(2000)
-        CALL(evt_snd_bgmon, 512, STRING("BGM_STGK_CASTLE1"))
+        CALL(evt_snd_bgmon, PSND_FADE_OUT, STRING("BGM_STGK_CASTLE1"))
         CALL(evt_snd_bgm_scope, 0, 1)
     END_INLINE_EVENT
     CALL(evt_cam3d_evt_set, 0, 134, 534, 0, 45, -8, 5000, 11)
@@ -103,10 +43,19 @@ EVT_BEGIN(kpa_00_first_evt)
     RETURN
 EVT_END()
 
+/**
+ * Closing cutscene of the first interlude: the flying Bowser NPC (飛クッパ) bobs up and away and grows from 0.1 to
+ * 0.6 scale, with the airship engine sound (SFX_KUPPA_AIRSHIP_MOVE1) following its position,
+ * while Kammy Koopa flies alongside with her broom sound and a smoke trail.
+ * The story advances to STORY_STG1_19_02_BOWSER_CASTLE_INTERIOR, the game is saved,
+ * and play returns to Petalburg (nok_01).
+ */
 EVT_BEGIN(kpa_00_fly_evt)
+    // Cutscene start: controls are off and Mario is moved out of sight; Bowser's airship and Kammy are placed
+    // small and far away.
     CALL(evt_mario_key_onoff, 0)
     CALL(evt_mario_cont_onoff, 0)
-    CALL(evt_npc_flag_onoff, 1, STRING("ババ"), 262144)
+    CALL(evt_npc_flag_onoff, 1, STRING("ババ"), NPC_FLAG_NO_SHADOW)
     CALL(evt_mario_set_pos, 0, -1000, 0)
     CALL(evt_npc_set_position, STRING("飛クッパ"), 0, 30, -15)
     CALL(evt_npc_set_scale, STRING("飛クッパ"), FLOAT(0.099609375f), FLOAT(0.099609375f), FLOAT(0.099609375f))
@@ -115,6 +64,8 @@ EVT_BEGIN(kpa_00_fly_evt)
     CALL(evt_npc_set_scale, STRING("ババ"), FLOAT(0.099609375f), FLOAT(0.099609375f), FLOAT(0.099609375f))
     CALL(evt_npc_set_ry, STRING("ババ"), 90)
     CALL(evt_cam3d_evt_set, 0, 134, 534, 0, 45, -8, 0, 11)
+    // The camera holds on the sky while the airship and Kammy's broom swing in sine-wave arcs and grow as they
+    // approach.
     CALL(evt_seq_wait, 2)
     WAIT_MS(500)
     SET_FLOAT_VALUE(GW(0), FLOAT(-1.0f))
@@ -169,6 +120,7 @@ EVT_BEGIN(kpa_00_fly_evt)
     END_INLINE_EVENT
     BEGIN_INLINE_EVENT
         WAIT_MS(1500)
+        // Kammy puffs her magic smoke and her flying sound loops until she reaches her mark.
         CALL(evt_npc_kamek_kemuri2, STRING("ババ"), 2000, 1)
     END_INLINE_EVENT
     SET_VALUE(GF(0), 0)
@@ -200,6 +152,7 @@ EVT_BEGIN(kpa_00_fly_evt)
         END_IF
         SET_VALUE(GF(0), 1)
     END_INLINE_EVENT
+    // The airship flies across the screen with its engine sound following it.
     CALL(evt_snd_sfxon_3d, STRING("SFX_KUPPA_AIRSHIP_MOVE1"), 0, 0, 0, LW(3))
     SET_VALUE(LW(4), -1000)
     CALL(evt_sub_intpl_msec_init, 11, 0, 210, 3000)
@@ -217,29 +170,36 @@ EVT_BEGIN(kpa_00_fly_evt)
     END_IF
     CALL(evt_snd_sfxoff, LW(3))
     WAIT_MS(800)
-    SET_VALUE(GSW(0), 61)
-    CALL(evt_snd_bgmoff_f, 512, 1000)
-    CALL(evt_snd_envoff_f, 512, 1000)
-    CALL(evt_fade_entry, 6, 300, 0, 0, 0)
+    // The story advances to Bowser's castle interior; the music fades, the screen closes to a spot, and the
+    // game is saved.
+    SET_VALUE(GSW(GSW_STORY_PROGRESS), STORY_STG1_19_02_BOWSER_CASTLE_INTERIOR)
+    CALL(evt_snd_bgmoff_f, PSND_FADE_OUT, 1000)
+    CALL(evt_snd_envoff_f, PSND_FADE_OUT, 1000)
+    CALL(evt_fade_entry, FADE_OUT_SPOT_3D, 300, 0, 0, 0)
     CALL(evt_fade_end_wait)
     WAIT_MS(2000)
     SET_VALUE(LF(10), 0)
     SET_VALUE(LW(0), 3)
-#ifdef VERSION_G8ME01
-    CALL_CHILD(PTR(evt_memcard_save_wrapper))
+#if VERSION >= VERSION_US
+    CALL_CHILD(evt_memcard_save_wrapper)
 #else
-    CALL_CHILD(PTR(evt_memcard_save))
+    CALL_CHILD(evt_memcard_save)
 #endif
     CALL(evt_mario_set_mode, 0)
-    CALL(evt_fade_set_mapchange_type, 1, 59, 0, 58, 0)
+    CALL(evt_fade_set_mapchange_type, 1, FADE_STORY_BOWSER_A1, 0, FADE_STORY_BOWSER_A3, 0)
+    // The scene ends in Petalburg (nok_01).
     CALL(evt_bero_mapchange, STRING("nok_01"), STRING("nokotarou"))
     RETURN
 EVT_END()
 
+/**
+ * NPCs of the airship scene: Kammy Koopa (ババ) and Bowser's flying airship (飛クッパ), both created by
+ * npc_init_evt without battle or talk.
+ */
 static NpcSetupInfo npcEnt[] = {
     {
-        /*"ババ"*/"\x83\x6F\x83\x6F", // name
-        0x20, // flags
+        "ババ", // name
+        NPC_FLAG_INTANGIBLE, // flags
         0, // reactionFlags
         npc_init_evt, // initEvent
         NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, // regularEvent..territoryType
@@ -248,8 +208,8 @@ static NpcSetupInfo npcEnt[] = {
         0.0f, 0.0f, 0.0f, 0.0f, 0, // searchRange..battleInfoId
     },
     {
-        /*"飛クッパ"*/"\x94\xF2\x83\x4E\x83\x62\x83\x70", // name
-        0x20, // flags
+        "飛クッパ", // name
+        NPC_FLAG_INTANGIBLE, // flags
         0, // reactionFlags
         npc_init_evt, // initEvent
         NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, // regularEvent..territoryType
@@ -260,16 +220,20 @@ static NpcSetupInfo npcEnt[] = {
     {0},
 };
 
+/**
+ * Map init for kpa_00 (Bowser's Castle exterior).
+ * Sets up the two NPCs, Kammy and the flying Bowser,
+ * and starts the opening cutscene or the flying cutscene depending on the story progress.
+ */
 EVT_BEGIN(kpa_00_init_evt)
     CALL(evt_mario_set_mode, 2)
-    CALL(evt_snd_envon, 272, STRING("ENV_KOOPA_KPA1\0"))
+    CALL(evt_snd_envon, PSND_FADE_RESTART | PSND_FADE_IN, STRING("ENV_KOOPA_KPA1"))
     CALL(evt_npc_setup, PTR(npcEnt))
-    SWITCH(GSW(0))
-        CASE_EQUAL(59)
+    SWITCH(GSW(GSW_STORY_PROGRESS))
+        CASE_EQUAL(STORY_STG1_19_PEACH_TEC)
         SPAWN_EVENT(kpa_00_first_evt)
-        CASE_EQUAL(60)
+        CASE_EQUAL(STORY_STG1_19_01_BOWSER_CASTLE)
         SPAWN_EVENT(kpa_00_fly_evt)
     END_SWITCH
     RETURN
 EVT_END_PAD()
-

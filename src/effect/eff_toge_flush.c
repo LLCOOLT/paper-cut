@@ -1,3 +1,5 @@
+// Spike flash (toge: spike): a flash that expands and fades with a pulsing glow behind it;
+// types 0-4 pick the color (0 cycles colors, 1 and 3 red, 2 blue, 4 white).
 #include "eff/eff_toge_flush.h"
 #include "driver/dispdrv.h"
 #include "mario/mariost.h"
@@ -5,7 +7,10 @@
 #include "system.h"
 #include <dolphin/gx.h>
 #include <dolphin/mtx.h>
-#include "eff/eff_magic1_n64.h"
+#include "libc_decls.h"
+
+static void effTogeFlushDisp(CameraId cameraId, EffectEntry* effect);
+static void effTogeFlushMain(EffectEntry* effect);
 
 typedef struct EffTogeFlushWork {
     s32 type;       // 0x0
@@ -21,17 +26,25 @@ typedef struct EffTogeFlushWork {
     s32 age;        // 0x30
 } EffTogeFlushWork;
 
+/**
+ * Colours the type 0 flash cycles through, one per frame: pale yellow, gold, cream, gold,
+ * two frames each.
+ */
 static u8 color_rotation_data[24] = {
     0xFF, 0xFF, 0x52, 0xFF, 0xFF, 0x52, 0xB5, 0x94, 0x00, 0xB5, 0x94, 0x00,
     0xFF, 0xFF, 0xD6, 0xFF, 0xFF, 0xD6, 0xB5, 0x94, 0x00, 0xB5, 0x94, 0x00,
 };
 
+/**
+ * Spawns the flash at (x, y, z), living `life` frames.
+ * Types: 0 cycles colours, 1 and 3 red, 2 blue, 4 white; types 0 and 3 also spin.
+ */
 EffectEntry* effTogeFlushEntry(s32 type, f32 x, f32 y, f32 z, s32 life) {
     EffectEntry* effect;
     EffTogeFlushWork* work;
 
     effect = effEntry();
-    effect->type = "TogeFlush\0\0";
+    effect->type = "TogeFlush";
     effect->count = 1;
     work = __memAlloc(HEAP_EFFECT, sizeof(EffTogeFlushWork));
     effect->userdata = work;
@@ -56,7 +69,8 @@ EffectEntry* effTogeFlushEntry(s32 type, f32 x, f32 y, f32 z, s32 life) {
     return effect;
 }
 
-void effTogeFlushMain(EffectEntry* effect) {
+/** Grows the flash and fades it out after 6 frames, spins it with decay, and pulses the glow behind it by sine. */
+static void effTogeFlushMain(EffectEntry* effect) {
     s32 life;
     EffTogeFlushWork* work = effect->userdata;
     s32 age;
@@ -84,15 +98,19 @@ void effTogeFlushMain(EffectEntry* effect) {
     work->scale2 = 0.5f * s + 0.9f;
     work->alpha2 = 64.0f * (f32)sin((6.2831855f * (life * 40)) / 360.0f) + 144.0f;
     {
-    Vec position = { 0.0f, 0.0f, 0.0f };
-    position.x = work->position.x;
-    position.y = work->position.y;
-    position.z = work->position.z;
-    dispEntry(CAMERA_3D, dispCalcZ(&position), 2, (DispCallback)effTogeFlushDisp, effect);
+        Vec position = {0.0f, 0.0f, 0.0f};
+        position.x = work->position.x;
+        position.y = work->position.y;
+        position.z = work->position.z;
+        dispEntry(CAMERA_3D, dispCalcZ(&position), 2, (DispCallback)effTogeFlushDisp, effect);
     }
 }
 
-void effTogeFlushDisp(CameraId cameraId, EffectEntry* effect) {
+/**
+ * Draws a pulsing coloured glow quad, then the (non-pulsing) flash quad on top,
+ * using one of three flash textures depending on the remaining life.
+ */
+static void effTogeFlushDisp(CameraId cameraId, EffectEntry* effect) {
     EffTogeFlushWork* work = effect->userdata;
     s32 type = work->type;
     GXTexObj texObj;
@@ -138,28 +156,28 @@ void effTogeFlushDisp(CameraId cameraId, EffectEntry* effect) {
     GXLoadPosMtxImm(out, GX_PNMTX0);
     GXSetCurrentMtx(GX_PNMTX0);
     switch (type) {
-    case 0: {
-        idx %= 24;
-        GXSetTevColor(GX_TEVREG0, (GXColor){ color_rotation_data[idx], color_rotation_data[idx + 1],
-                                             color_rotation_data[idx + 2], alpha });
-        break;
-    }
-    case 1: {
-        GXSetTevColor(GX_TEVREG0, (GXColor){ 0xFF, 0x00, 0x00, alpha });
-        break;
-    }
-    case 2: {
-        GXSetTevColor(GX_TEVREG0, (GXColor){ 0x00, 0x00, 0xFF, alpha });
-        break;
-    }
-    case 3: {
-        GXSetTevColor(GX_TEVREG0, (GXColor){ 0xFF, 0x00, 0x00, alpha });
-        break;
-    }
-    case 4: {
-        GXSetTevColor(GX_TEVREG0, (GXColor){ 0xFF, 0xFF, 0xFF, alpha });
-        break;
-    }
+        case 0: {
+            idx %= 24;
+            GXSetTevColor(GX_TEVREG0, (GXColor){color_rotation_data[idx], color_rotation_data[idx + 1],
+                                                color_rotation_data[idx + 2], alpha});
+            break;
+        }
+        case 1: {
+            GXSetTevColor(GX_TEVREG0, (GXColor){0xFF, 0x00, 0x00, alpha});
+            break;
+        }
+        case 2: {
+            GXSetTevColor(GX_TEVREG0, (GXColor){0x00, 0x00, 0xFF, alpha});
+            break;
+        }
+        case 3: {
+            GXSetTevColor(GX_TEVREG0, (GXColor){0xFF, 0x00, 0x00, alpha});
+            break;
+        }
+        case 4: {
+            GXSetTevColor(GX_TEVREG0, (GXColor){0xFF, 0xFF, 0xFF, alpha});
+            break;
+        }
     }
     GXBegin(GX_QUADS, GX_VTXFMT0, 4);
     GXPosition3f32(-8.0f, 8.0f, 0.0f);
@@ -183,18 +201,18 @@ void effTogeFlushDisp(CameraId cameraId, EffectEntry* effect) {
         GXLoadPosMtxImm(out, GX_PNMTX0);
         GXSetCurrentMtx(GX_PNMTX0);
         switch (type) {
-        case 3: {
-            GXSetTevColor(GX_TEVREG0, (GXColor){ 0xF1, 0x4B, 0x41, alpha });
-            break;
-        }
-        case 4: {
-            GXSetTevColor(GX_TEVREG0, (GXColor){ 0xC9, 0xC0, 0xCF, alpha });
-            break;
-        }
-        default: {
-            GXSetTevColor(GX_TEVREG0, (GXColor){ 0xFF, 0xFF, 0xFF, alpha });
-            break;
-        }
+            case 3: {
+                GXSetTevColor(GX_TEVREG0, (GXColor){0xF1, 0x4B, 0x41, alpha});
+                break;
+            }
+            case 4: {
+                GXSetTevColor(GX_TEVREG0, (GXColor){0xC9, 0xC0, 0xCF, alpha});
+                break;
+            }
+            default: {
+                GXSetTevColor(GX_TEVREG0, (GXColor){0xFF, 0xFF, 0xFF, alpha});
+                break;
+            }
         }
         GXBegin(GX_QUADS, GX_VTXFMT0, 4);
         GXPosition3f32(-4.0f, 4.0f, 0.0f);

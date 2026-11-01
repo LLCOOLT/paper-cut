@@ -1,4 +1,7 @@
+// Ext driver: draws many copies of one paper animation as flat textured quads with shadows; the
+// animation frame is rendered to a texture first.
 #include "driver/extdrv.h"
+#include "system.h"
 #include "driver/dispdrv.h"
 #include "driver/camdrv.h"
 #include "mario/mariost.h"
@@ -9,25 +12,31 @@
 #include <dolphin/os.h>
 #include "gxsub.h"
 #include "driver/animdrv.h"
-
-void animPoseDisp_MakeExtTexture(const char* group, const char* anim, f32 frame, f32 scale, GXTexObj* obj, void*** image, s32* x0, s32* y0, s32* x1, s32* y1);
-void effGetTexObjN64(u32 id, GXTexObj* obj);
-void qqsort(void* array, u32 num, u32 size, s32 (*compare)(const void*, const void*));
-#ifndef TARGET_PC /* PC port: the host libc declares these */
-double atan2(double y, double x);
-#endif
-
+#include "eff/eff_n64.h"
+#include "version.h"
+#include "libc_decls.h"
+// FAKE: extdrv.c calls animPoseDisp_MakeExtTexture through this prototype (the types it was compiled with) instead of the one in driver/animdrv.h; same registers, behaviour-identical.
+typedef void (*AnimPoseDisp_MakeExtTextureLocalFn)(const char*, const char*, f32, f32, GXTexObj*, void***, s32*, s32*, s32*, s32*);
 
 static ExtdrvWork work[2];
 static u8 shadow_dl[32];
-__declspec(section ".sdata") static f32 shadow_vtx[16];
+static f32 shadow_vtx[16];
 static f32 shadow_coord[8];
 
-#define extGetWork() (gp->inBattle ? &work[1] : &work[0])
+/** The field or the battle ext work, by the current mode. */
+static inline ExtdrvWork* extGetWork(void) {
+    return gp->inBattle ? &work[1] : &work[0];
+}
 
-void extMakeTexture(CameraId camId, void* param);
+static void extMakeTexture(CameraId camId, void* param);
 static s32 compare(const void* a, const void* b);
+#ifdef TARGET_PC
+/* PC port: the in-between frames look for this draw in the list
+ * (port/src/aurora/interp_aurora.c) */
+DispCallback portExtMakeTexture = extMakeTexture;
+#endif
 
+/** Sine of each whole degree, 450 entries so cosine is 90 further on: extMain turns each copy to its heading. */
 static f32 sintbl[450] = {
     0.0f, 0.0174519997f, 0.0348990001f, 0.0523359999f, 0.0697560012f, 0.0871559978f, 0.104528002f, 0.121868998f,
     0.139173001f, 0.156434f, 0.173648f, 0.190808997f, 0.207911998f, 0.224950999f, 0.241922006f, 0.258819014f,
@@ -88,12 +97,19 @@ static f32 sintbl[450] = {
     0.999391019f, 0.999848008f,
 };
 
+/** Clears the current mode's crowd (no poses) at boot; called from mariost. */
 void extInit(void) {
-	ExtdrvWork* wp = extGetWork();
-	wp->poseNum = 0;
-	wp->poses = NULL;
+    ExtdrvWork* wp = extGetWork();
+    wp->poseNum = 0;
+    wp->poses = NULL;
 }
 
+/**
+ * Sets up a crowd of poseNum flat sprites (used by evt_nannpc's crowd scenes):
+ * allocates the poses, matrices, sort table and one quad display list per texture listed in texInfo (NULL-group
+ * terminated), stores the per-frame callbacks and queues extMakeTexture on the offscreen camera to render the
+ * animation frames to textures. initFunc runs once at the end.
+ */
 void extEntry(s32 poseNum, ExtdrvTexInfo* texInfo, void (*initFunc)(void), void (*mainFunc)(void), void (*mainFunc2)(void)) {
     static f32 Normals[] = {0.0f, 0.0f, 1.0f, 0.0f, 0.0f, -1.0f};
     static GXColor Colors[] = {{0xFF, 0xFF, 0xFF, 0xFF}};
@@ -133,7 +149,11 @@ void extEntry(s32 poseNum, ExtdrvTexInfo* texInfo, void (*initFunc)(void), void 
     }
 }
 
-void extMakeTexture(CameraId camId, void* param) {
+/**
+ * Offscreen draw callback queued by extEntry: renders each listed animation frame (group, animation, frame) to a
+ * texture and builds that texture's quad, sized from the rendered bounds at half scale, as a display list.
+ */
+static void extMakeTexture(CameraId camId, void* param) {
     ExtdrvWork* wp = extGetWork();
     ExtdrvTexInfo* info;
     ExtdrvTex* tex;
@@ -153,7 +173,7 @@ void extMakeTexture(CameraId camId, void* param) {
     queen_uv[3] = -1.0f / wp->texNum;
     for (i = 0; i < wp->texNum; i++, info++, tex++) {
         n = i * 12;
-        animPoseDisp_MakeExtTexture(info->group, info->anim, info->frame, 4.0f, &tex->obj, &tex->image, &x0, &y0, &x1, &y1);
+        ((AnimPoseDisp_MakeExtTextureLocalFn)animPoseDisp_MakeExtTexture)(info->group, info->anim, info->frame, 4.0f, &tex->obj, &tex->image, &x0, &y0, &x1, &y1);
         wp->vtx[n++] = x0 / 2.0f;
         wp->vtx[n++] = -y0 / 2.0f;
         wp->vtx[n++] = 0.0f;
@@ -183,6 +203,10 @@ void extMakeTexture(CameraId camId, void* param) {
     memcpy(queen_uv, save, sizeof(save));
 }
 
+/**
+ * Frees everything extEntry allocated for the current mode and clears its work;
+ * called by the evt_ext helpers and when leaving a map or battle.
+ */
 void extReset(void) {
     ExtdrvWork* wp = extGetWork();
 
@@ -210,6 +234,7 @@ void extReset(void) {
     memset(wp, 0, sizeof(ExtdrvWork));
 }
 
+/** The 3D camera's yaw in degrees (0..360), from the direction it looks along. */
 static inline f32 camGetRy(void) {
     CameraEntry* cam = camGetPtr(CAMERA_3D);
     f32 ry = 57.29579f * (f32)atan2(-(cam->cameraAt.x - cam->cameraPos.x), -(cam->cameraAt.z - cam->cameraPos.z));
@@ -223,16 +248,21 @@ static inline f32 camGetRy(void) {
     return ry;
 }
 
+/**
+ * Once per frame: runs the crowd's callbacks (the first only when the game is not paused),
+ * turns every billboarding pose (flag 2) smoothly towards the camera,
+ * flipping it to face from behind when seen from the back,
+ * and sorts the visible poses by texture id so extDraw changes textures as little as possible.
+ */
 void extMain(void) {
     ExtdrvWork* wp = extGetWork();
     s32 i;
     ExtdrvPose* pose;
     ExtdrvSort* sort;
-    CameraEntry* cam;
     f32 ry, angle, diff, c, s;
     u32 flags;
 
-    if (((u32 (*)(void))marioStGetSystemLevel)() == 0 && wp->mainFunc != NULL) {
+    if (marioStGetSystemLevel() == 0 && wp->mainFunc != NULL) {
         wp->mainFunc();
     }
     if (wp->mainFunc2 != NULL) {
@@ -241,15 +271,15 @@ void extMain(void) {
     pose = wp->poses;
     sort = wp->sort;
     ry = camGetRy();
-    cam = camGetPtr(CAMERA_3D);
-    cam = camGetPtr(CAMERA_3D);
+    camGetPtr(CAMERA_3D); // fetched twice and never used
+    camGetPtr(CAMERA_3D);
     for (i = wp->poseNum - 1; i >= 0; i--, pose++, sort++) {
         flags = pose->flags;
         sort->index = i;
-        if (flags & 1) {
+        if (flags & EXT_POSE_FLAG_ACTIVE) {
             sort->z = pose->texId;
         }
-        if (flags & 2) {
+        if (flags & EXT_POSE_FLAG_FACE_CAMERA) {
             angle = 90.0f + (ry - pose->dir);
             while (angle < -360.0f) {
                 angle += 360.0f;
@@ -297,24 +327,31 @@ void extMain(void) {
     wp->usedTmem = 0;
 }
 
+/** qsort comparator for the pose sort table: ascending by the sort key (the texture id). */
 static s32 compare(const void* a, const void* b) {
-    if (((ExtdrvSort*)a)->z > ((ExtdrvSort*)b)->z) {
+    if (((const ExtdrvSort*)a)->z > ((const ExtdrvSort*)b)->z) {
         return 1;
     }
-    if (((ExtdrvSort*)a)->z < ((ExtdrvSort*)b)->z) {
+    if (((const ExtdrvSort*)a)->z < ((const ExtdrvSort*)b)->z) {
         return -1;
     }
     return 0;
 }
 
+/** Returns the current mode's pose array, for the crowd code to place and animate each sprite. */
 ExtdrvPose* extGetPosePtr(void) {
     return extGetWork()->poses;
 }
 
+/** Returns how many poses the current mode's crowd has. */
 s32 extGetPoseNum(void) {
     return extGetWork()->poseNum;
 }
 
+/**
+ * Draws pose index on its own (if visible): loads its texture if it differs from the last one,
+ * its position and normal matrices, and calls its quad.
+ */
 void extPoseDraw(s32 index) {
     ExtdrvWork* wp = extGetWork();
     ExtdrvPose* pose = &wp->poses[index];
@@ -323,7 +360,7 @@ void extPoseDraw(s32 index) {
     Mtx mtx;
     Mtx nrm;
 
-    if (pose->flags & 1) {
+    if (pose->flags & EXT_POSE_FLAG_ACTIVE) {
         texId = pose->texId;
         if (wp->curTex != texId) {
             tex = &wp->texs[texId];
@@ -339,6 +376,10 @@ void extPoseDraw(s32 index) {
     }
 }
 
+/**
+ * Draws every visible pose in sorted order, reloading the texture only when it changes;
+ * the caller loads the render, vertex, texture and TEV setup first.
+ */
 void extDraw(void) {
     ExtdrvWork* wp = extGetWork();
     s32 i;
@@ -350,7 +391,7 @@ void extDraw(void) {
 
     for (i = wp->poseNum - 1, sort = wp->sort; i >= 0; i--, sort++) {
         pose = &wp->poses[sort->index];
-        if (pose->flags & 1) {
+        if (pose->flags & EXT_POSE_FLAG_ACTIVE) {
             texId = pose->texId;
             if (texId != wp->curTex) {
                 tex = &wp->texs[texId];
@@ -365,6 +406,7 @@ void extDraw(void) {
     }
 }
 
+/** Sets the alpha-tested, depth-writing render mode the crowd sprites draw with. */
 void extLoadRenderMode(void) {
     GXSetBlendMode(GX_BM_NONE, GX_BL_ONE, GX_BL_ZERO, GX_LO_CLEAR);
     GXSetZCompLoc(GX_FALSE);
@@ -372,6 +414,10 @@ void extLoadRenderMode(void) {
     GXSetZMode(GX_TRUE, GX_LEQUAL, GX_TRUE);
 }
 
+/**
+ * Points the GX vertex arrays at the crowd's quad corners and texture coordinates (16-bit indexed)
+ * and turns culling off.
+ */
 void extLoadVertex(void) {
     ExtdrvWork* wp = extGetWork();
 
@@ -385,6 +431,10 @@ void extLoadVertex(void) {
     GXSetCullMode(GX_CULL_NONE);
 }
 
+/**
+ * Preloads every crowd texture into texture memory one after another (skipping the 512 KB bank boundary)
+ * so extDraw can switch between them cheaply, and sets up texture coordinate 0.
+ */
 void extLoadTexture(void) {
     ExtdrvWork* wp = extGetWork();
     ExtdrvTex* tex = wp->texs;
@@ -407,10 +457,12 @@ void extLoadTexture(void) {
     GXSetTexCoordGen2(GX_TEXCOORD0, GX_TG_MTX2x4, GX_TG_TEX0, GX_IDENTITY, GX_FALSE, GX_PTIDENTITY);
 }
 
+/** Waits for the texture preloads from extLoadTexture to finish. */
 void extLoadTextureExit(void) {
     GXTexModeSync();
 }
 
+/** Sets a single TEV stage that outputs the texture's colour and alpha unlit and unfogged, for the crowd sprites. */
 void extLoadTev(void) {
     GXColor fogColor = {0xFF, 0xFF, 0xFF, 0xFF};
 
@@ -430,17 +482,26 @@ static u8 shadow_dl[32] ATTRIBUTE_ALIGN(32) = {
     0x80, 0x00, 0x04, 0x00, 0x00, 0x01, 0x01, 0x02, 0x02, 0x03, 0x03,
 };
 
+// The retail builds place shadow_vtx in small data; the demo keeps it in .data
+#if VERSION <= VERSION_DEMO_JP
+/** Corners of the shared shadow quad, 2.4 units square and flat on the ground, drawn under every copy. */
+static f32 shadow_vtx[16] = {
+#else
+/** Corners of the shared shadow quad, 2.4 units square and flat on the ground, drawn under every copy. */
 __declspec(section ".sdata") static f32 shadow_vtx[16] = {
+#endif
     -1.2f, 0.0f, -1.2f,
     -1.2f, 0.0f, 1.2f,
     1.2f, 0.0f, 1.2f,
     1.2f, 0.0f, -1.2f,
 };
 
+/** Texture coordinates of the shadow quad's four corners. */
 static f32 shadow_coord[8] = {
     0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f,
 };
 
+/** Points the GX vertex arrays at the shared shadow quad (2.4 units square, flat on the ground). */
 void extLoadShadowVertex(void) {
     GXClearVtxDesc();
     GXSetVtxDesc(GX_VA_POS, GX_INDEX8);
@@ -452,6 +513,7 @@ void extLoadShadowVertex(void) {
     GXSetCullMode(GX_CULL_NONE);
 }
 
+/** Sets up the shadow TEV: a translucent black (alpha 0xA0) masked by N64 effect texture 0x2C, the round shadow. */
 void extLoadShadowTev(void) {
     GXTexObj obj;
 
@@ -473,6 +535,7 @@ void extLoadShadowTev(void) {
     GXLoadTexObj(&obj, GX_TEXMAP0);
 }
 
+/** Sets the blended, depth-tested but not depth-writing render mode for the crowd shadows. */
 void extLoadShadowRenderMode(void) {
     GXSetBlendMode(GX_BM_BLEND, GX_BL_SRCALPHA, GX_BL_INVSRCALPHA, GX_LO_CLEAR);
     GXSetZCompLoc(GX_TRUE);
@@ -480,10 +543,15 @@ void extLoadShadowRenderMode(void) {
     GXSetZMode(GX_TRUE, GX_LEQUAL, GX_FALSE);
 }
 
+/** Sets the extra matrix each pose's shadow is drawn with (e.g. its scale). */
 void extLoadShadowMtx(Mtx mtx) {
     PSMTXCopy(mtx, extGetWork()->shadowMtx);
 }
 
+/**
+ * Draws a round shadow under every pose that has one (flag 4 clear), in reverse sort order;
+ * poses with flag 0x10 have theirs dropped to their own shadow height.
+ */
 void extDrawShadow(void) {
     ExtdrvWork* wp = extGetWork();
     s32 i;
@@ -494,10 +562,10 @@ void extDrawShadow(void) {
     sort = &wp->sort[wp->poseNum - 1];
     for (i = wp->poseNum - 1; i >= 0; i--, sort--) {
         pose = &wp->poses[sort->index];
-        if (!(pose->flags & 4)) {
+        if (!(pose->flags & EXT_POSE_FLAG_NO_SHADOW)) {
             PSMTXConcat(camGetCurPtr()->view, *pose->mtx, mtx);
             PSMTXConcat(mtx, wp->shadowMtx, mtx);
-            if (pose->flags & 0x10) {
+            if (pose->flags & EXT_POSE_FLAG_SHADOW_Y) {
                 PSMTXTransApply(mtx, mtx, 0.0f, -(*pose->mtx)[1][3] + pose->shadowY, 0.0f);
             }
             GXLoadPosMtxImm(mtx, 0);

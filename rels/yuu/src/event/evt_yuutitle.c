@@ -1,10 +1,11 @@
+// evt_yuutitle: Pianta Parlor minigame title card display (alloc, main, free, draw).
+
 #ifdef TARGET_PC
 #include "port/platform.h"
 #endif
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
 
-#pragma force_active on
 #include "memory.h"
 #include "string.h"
 #include "driver/msgdrv.h"
@@ -13,44 +14,35 @@
 #include "driver/camdrv.h"
 #include "manager/fontmgr.h"
 
-typedef struct YuuTitleWork { EventEntry* event; u16 flags; f32 x; f32 y; f32 startX; f32 startY; f32 targetX; f32 targetY; s32 alpha; const char* msg; } YuuTitleWork;
+typedef struct YuuTitleWork {
+    EventEntry* event;
+    u16 flags;
+    f32 x;
+    f32 y;
+    f32 startX;
+    f32 startY;
+    f32 targetX;
+    f32 targetY;
+    s32 alpha;
+    const char* msg;
+} YuuTitleWork;
 static YuuTitleWork* _wp;
-void evt_yuutitle_disp_func(CameraId camera, void* param);
-void FontDrawScale(f32 scale);
-void FontDrawEdge(void);
-void FontDrawEdgeOff(void);
-void FontDrawString(f32 x, f32 y, const char* str);
 
-USER_FUNC(evt_yuutitle_main_func);
-USER_FUNC(evt_yuutitle_free);
-USER_FUNC(evt_yuutitle_alloc);
-void evt_yuutitle_disp_func(CameraId camera, void* param);
-
-f32 fd_evt_yuutitle_negone_one_374[2] __attribute__((aligned(8)));
-f32 fd_evt_yuutitle_neg_one_382;
-f32 fd_evt_yuutitle___local_PI_383;
-f32 fd_evt_yuutitle___local_3PIO2_385;
-f32 fd_evt_yuutitle_one_negone_373[2] __attribute__((aligned(8)));
-f32 fd_evt_yuutitle___local_PIO2_384;
-f32 fd_evt_yuutitle_one_381;
-f32 fd_evt_yuutitle_negone_one_360[2] __attribute__((aligned(8)));
-f32 fd_evt_yuutitle_neg_one_365;
-f32 fd_evt_yuutitle___local_PI_366;
-f32 fd_evt_yuutitle___local_3PIO2_368;
-f32 fd_evt_yuutitle_one_negone_359[2] __attribute__((aligned(8)));
-f32 fd_evt_yuutitle___local_PIO2_367;
-f32 fd_evt_yuutitle_one_364;
 static EvtWord main_evt[4];
 
-void evt_yuutitle_disp_func(CameraId camera, void* param) {
+/**
+ * Draws the minigame title text: it slides in from 200 units off its target and scales up
+ * while fading in over about 43 frames, then draws centred with a white outline.
+ */
+static void evt_yuutitle_disp_func(CameraId camera, void* param) {
     YuuTitleWork* wp = param;
     f32 scale = 2.0f;
     f32 halfWidth;
 
+
 #ifdef TARGET_PC
     portInterpKeep(wp, sizeof(*wp)); /* the fade-in steps in this draw */
 #endif
-
     if (wp->alpha < 255) {
         f32 t;
 
@@ -73,7 +65,11 @@ void evt_yuutitle_disp_func(CameraId camera, void* param) {
     FontDrawEdgeOff();
 }
 
-USER_FUNC(evt_yuutitle_main_func) {
+/**
+ * Body of the title event: queues the draw callback each frame until the free request flag is set,
+ * then marks itself stopped.
+ */
+static USER_FUNC(evt_yuutitle_main_func) {
     YuuTitleWork* wp = (YuuTitleWork*)event->lwData[0];
 
     if (wp->flags & 1) {
@@ -84,6 +80,10 @@ USER_FUNC(evt_yuutitle_main_func) {
     return EVT_RETURN_BLOCK;
 }
 
+/**
+ * args[0], args[1] = target x, y, args[2] = message id string looked up with msgSearch.
+ * Creates the title card and starts its event.
+ */
 USER_FUNC(evt_yuutitle_alloc) {
     EvtWord* args = event->args;
     YuuTitleWork* wp = _mapAlloc(sizeof(YuuTitleWork));
@@ -101,6 +101,7 @@ USER_FUNC(evt_yuutitle_alloc) {
     return EVT_RETURN_DONE;
 }
 
+/** Script call that asks the title event to stop, blocks until it has, then frees the title card. */
 USER_FUNC(evt_yuutitle_free) {
     YuuTitleWork* wp = _wp;
 
@@ -118,36 +119,8 @@ USER_FUNC(evt_yuutitle_free) {
     return EVT_RETURN_DONE;
 }
 
-f32 fd_evt_yuutitle_negone_one_374[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_evt_yuutitle_neg_one_382 = -1.0f;
-
-f32 fd_evt_yuutitle___local_PI_383 = 3.1415927f;
-
-f32 fd_evt_yuutitle___local_3PIO2_385 = 4.712389f;
-
-f32 fd_evt_yuutitle_one_negone_373[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_evt_yuutitle___local_PIO2_384 = 1.5707964f;
-
-f32 fd_evt_yuutitle_one_381 = 1.0f;
-
-f32 fd_evt_yuutitle_negone_one_360[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_evt_yuutitle_neg_one_365 = -1.0f;
-
-f32 fd_evt_yuutitle___local_PI_366 = 3.1415927f;
-
-f32 fd_evt_yuutitle___local_3PIO2_368 = 4.712389f;
-
-f32 fd_evt_yuutitle_one_negone_359[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_evt_yuutitle___local_PIO2_367 = 1.5707964f;
-
-f32 fd_evt_yuutitle_one_364 = 1.0f;
-
+/** The title card's per-frame event, started by evt_yuutitle_alloc; runs evt_yuutitle_main_func. */
 static EVT_BEGIN(main_evt)
     CALL(evt_yuutitle_main_func)
     RETURN
 EVT_END()
-

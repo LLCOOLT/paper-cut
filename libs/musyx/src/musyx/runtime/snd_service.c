@@ -1,4 +1,3 @@
-#define MATH_NO_SQRTF 1
 #include "musyx/musyx.h"
 #include "musyx/platform.h"
 #include "musyx/snd.h"
@@ -9,12 +8,14 @@ extern "C" {
 #endif // __cplusplus
 
 #if MUSY_VERSION >= MUSY_VERSION_CHECK(2, 0, 1) && MUSY_TARGET == MUSY_TARGET_DOLPHIN
+/** Constants for fast integer-to-float conversion and square root. */
 static const double i2fMagic = 4.503601774854144E15;
 static const float sqrtConsts[] = {
     3.f,
     0.5f,
     0.f,
 };
+/** Polynomial coefficients for the sine approximation. */
 static const float _sinConsts[] = {
     -0.16666667,   // -(1/6)
     0.008333332f,  // 1/120
@@ -27,6 +28,7 @@ static const float _sinConsts[] = {
 };
 #endif
 
+/** Sine wave table of 1024 16-bit values. */
 s16 sndSintab[1024] = {
     0,    6,    12,   18,   25,   31,   37,   43,   50,   56,   62,   69,   75,   81,   87,   94,
     100,  106,  113,  119,  125,  131,  138,  144,  150,  157,  163,  169,  175,  182,  188,  194,
@@ -96,13 +98,22 @@ s16 sndSintab[1024] = {
 
 #define SINTAB_ELEMENT_COUNT (sizeof(sndSintab) / sizeof(u16) - 1)
 
+/** Seed of the sound engine's random number generator. */
 u32 last_rnd = 1;
 
+/**
+ * Pseudo-random number: advances a multiplicative congruential generator (multiplier 2822053219)
+ * and returns bits 6 to 21.
+ */
 u16 sndRand(void) {
   last_rnd *= 2822053219;
   return last_rnd >> 6;
 }
 
+/**
+ * Sine lookup: angle uses 4096 steps per circle, the result is the sine scaled to +-4095,
+ * from a 1024-entry quarter-wave table with the sign and mirroring applied per quadrant.
+ */
 s16 sndSin(u16 angle) {
   angle &= 0xFFF;
   if (angle < 1024) {
@@ -117,6 +128,10 @@ s16 sndSin(u16 angle) {
   return -sndSintab[SINTAB_ELEMENT_COUNT - (angle & SINTAB_ELEMENT_COUNT)];
 }
 
+/**
+ * Binary search for key in a sorted array of num elements of len bytes, using the comparison function cmp.
+ * Returns the matching element or NULL.
+ */
 void* sndBSearch(void* key, void* base, s32 num, s32 len, SND_COMPARE cmp) {
   long l;    // r31
   long r;    // r30
@@ -146,6 +161,10 @@ void* sndBSearch(void* key, void* base, s32 num, s32 len, SND_COMPARE cmp) {
 #if MUSY_VERSION >= MUSY_VERSION_CHECK(2, 0, 1)
 #if MUSY_TARGET == MUSY_TARGET_DOLPHIN
 #if __MWERKS__
+/**
+ * Square root in assembly (the original is hand written asm):
+ * three Newton-Raphson refinements of the hardware reciprocal square root estimate; returns 0 for 0.
+ */
 asm float sndSqrt(register float x) {
   nofralloc;
   lis r3, sqrtConsts @ha;
@@ -174,6 +193,11 @@ asm float sndSqrt(register float x) {
   blr
 }
 
+/**
+ * Cosine in assembly (the original is hand written asm):
+ * reduces the angle (in units of a quarter turn)
+ * and evaluates a short polynomial with paired-single instructions.
+ */
 asm float sndCos(register float x) {
   nofralloc;
 
@@ -252,30 +276,32 @@ skip_neg2:
   blr
 }
 #else  // __MWERKS__
-// TODO: GCC Compatible asm
+// Other compilers: plain C stand-in for the Gekko asm above (same result).
 float sndSqrt(register float x) { return sqrt(x); }
 
-// TODO: GCC Compatible asm
+// Other compilers: plain C stand-in for the Gekko asm above (same result).
 float sndCos(register float x) { return cos(x); }
 #endif // __MWERKS__
 #elif MUSY_TARGET == MUSY_TARGET_PC
+/** PC build square root (plain sqrt). */
 float sndSqrt(float x) { return sqrt(x); }
 
+/** PC build cosine (plain cos). */
 float sndCos(float x) { return cos(x); }
 #endif // MUSY_TARGET // MUSY_TARGET_PC
 #endif // MUSY_VERSION >= MUSY_VERSION_CHECK(2, 0, 1)
 
+/** Converts a time in milliseconds in place to the 8.8 fixed point milliseconds the synth uses (times 256). */
 void sndConvertMs(u32* time) { *time = *time * 256; }
 
+/** Converts a duration in song ticks in place to the synth's millisecond unit, using the voice's ticks per second. */
 void sndConvertTicks(u32* out, SYNTH_VOICE* svoice) {
   *out = (((*out << 16) / synthGetTicksPerSecond(svoice)) * 1000) / 32;
 }
 
+/** Converts a synth time (8.8 fixed point milliseconds) back to whole milliseconds. */
 u32 sndConvert2Ms(u32 time) { return time / 256; }
 
 #ifdef __cplusplus
 }
 #endif // __cplusplus
-#pragma force_active on
-__declspec(section ".data") u32 gap_05_803BB350_data[4] = {0, 0, 0, 0};
-#pragma force_active reset

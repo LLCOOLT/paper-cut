@@ -4,6 +4,10 @@
 
 #include "__axfx.h"
 
+/**
+ * Four-tap interpolation coefficients (128 phases of 4) the chorus uses to read its delay line at fractional
+ * positions.
+ */
 static f32 rsmpTab12khz[512] = {
     0.097503662109f,  0.802215576172f,  0.101593017578f,  -0.000976562500f, 0.093505859375f,
     0.802032470703f,  0.105804443359f,  -0.001037597656f, 0.089599609375f,  0.801696777344f,
@@ -116,6 +120,11 @@ const static double i2fMagic = 4503601774854144.0;
 static void do_src1(AXFX_CHORUS_SRCINFO* src);
 static void do_src2(AXFX_CHORUS_SRCINFO* src);
 
+/**
+ * Assembly sample-rate-conversion pass of the chorus (selected when the integer part of the per-frame pitch step
+ * is 0): reads the history buffer at the current position with a fractional step, interpolates,
+ * and writes the destination frame. Original assembly.
+ */
 asm static void do_src1(register AXFX_CHORUS_SRCINFO* src) {
     nofralloc
 	stwu r1, -64(r1)
@@ -227,6 +236,10 @@ L_00000160:
     blr
 }
 
+/**
+ * Assembly sample-rate-conversion pass of the chorus (selected when the integer part of the pitch step is 1):
+ * the counterpart of do_src1 for the faster step. Original assembly.
+ */
 asm static void do_src2(register AXFX_CHORUS_SRCINFO* src) {
     nofralloc
 	stwu r1, -64(r1)
@@ -360,6 +373,11 @@ L_00000344:
 	blr
 }
 
+/**
+ * Validates the chorus parameters (base delay 5-15 ms, variation 0-5 ms, period 500-10000 ms),
+ * allocates one block holding three frames of left/right/surround history, clears it and applies the settings.
+ * Returns nonzero on success.
+ */
 int AXFXChorusInit(AXFX_CHORUS* c) {
     s32* left;
     s32* right;
@@ -411,6 +429,7 @@ int AXFXChorusInit(AXFX_CHORUS* c) {
     return 0;
 }
 
+/** Frees the chorus buffers. */
 int AXFXChorusShutdown(AXFX_CHORUS* c) {
     BOOL old;
 
@@ -420,6 +439,10 @@ int AXFXChorusShutdown(AXFX_CHORUS* c) {
     return 1;
 }
 
+/**
+ * Recomputes the chorus read position from the base delay and the pitch-modulation depth
+ * and half-period from the variation and period parameters. Returns 0 if a parameter is out of range.
+ */
 int AXFXChorusSettings(AXFX_CHORUS* c) {
     BOOL old;
 
@@ -439,6 +462,12 @@ int AXFXChorusSettings(AXFX_CHORUS* c) {
     return 1;
 }
 
+/**
+ * AX aux-bus callback, run once per audio frame (160 samples):
+ * stores the incoming frame in the history ring,
+ * then reads it back with a slowly oscillating sample-rate offset (do_src1/do_src2) to produce the chorus pitch
+ * wobble.
+ */
 void AXFXChorusCallback(AXFX_BUFFERUPDATE* bufferUpdate, AXFX_CHORUS* chorus) {
     s32* leftD;
     s32* rightD;

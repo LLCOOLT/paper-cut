@@ -94,7 +94,6 @@ set(TTYD_DOL_SOURCES
     ${CMAKE_SOURCE_DIR}/src/driver/msgdrv.c
     ${CMAKE_SOURCE_DIR}/src/driver/swdrv.c
     ${CMAKE_SOURCE_DIR}/src/driver/itemdrv.c
-    ${CMAKE_SOURCE_DIR}/src/driver/itemdrv_pad.c
     ${CMAKE_SOURCE_DIR}/src/driver/extdrv.c
     ${CMAKE_SOURCE_DIR}/src/driver/envdrv.c
     ${CMAKE_SOURCE_DIR}/src/effect/eff_fukidashi.c

@@ -1,3 +1,5 @@
+// Paper Mario 64 effect: cool leaf, four leaves tumbling and spinning; types 0-2 pick the spin.
+#include "eff/n64/eff_cool_leaf_n64.h"
 #include "eff/eff_n64.h"
 #include "driver/camdrv.h"
 #include "driver/dispdrv.h"
@@ -7,28 +9,24 @@
 #include <dolphin/gx.h>
 #include <dolphin/mtx.h>
 #include <stdlib.h>
-
-#ifndef TARGET_PC /* PC port: the host libc declares these */
-double sin(double);
-double cos(double);
-#endif
-
+#include "libc_decls.h"
 typedef struct EffCoolLeafN64Work {
-    s32 type;      // 0x0
-    Vec position;  // 0x4
-    f32 vx;        // 0x10
-    f32 vy;        // 0x14
-    f32 angleZ;    // 0x18
-    f32 spin;      // 0x1C
-    f32 angleY;    // 0x20
-    s32 alpha;     // 0x24
-    s32 lifetime;  // 0x28
-    s32 frame;     // 0x2C
-    f32 ax;        // 0x30
-    f32 ay;        // 0x34
-    f32 az;        // 0x38
+    s32 type;     // 0x0
+    Vec position; // 0x4
+    f32 vx;       // 0x10
+    f32 vy;       // 0x14
+    f32 angleZ;   // 0x18
+    f32 spin;     // 0x1C
+    f32 angleY;   // 0x20
+    s32 alpha;    // 0x24
+    s32 lifetime; // 0x28
+    s32 frame;    // 0x2C
+    f32 ax;       // 0x30
+    f32 ay;       // 0x34
+    f32 az;       // 0x38
 } EffCoolLeafN64Work;
 
+/** Two-sided 12x12 brown leaf quad, used by type 0. */
 static effN64Vtx size12x12_tex64x64_brown_vtx[] = {
     {-6, -6, 0, 0, 0, 0x19, 0x2A, 0x11, 0xFF},
     {6, -6, 0, 2048, 0, 0x19, 0x2A, 0x11, 0xFF},
@@ -40,6 +38,7 @@ static effN64Vtx size12x12_tex64x64_brown_vtx[] = {
     {-6, 6, 0, 0, 4096, 0x30, 0x36, 0x25, 0xFF},
 };
 
+/** Two-sided 12x12 red leaf quad, used by type 1. */
 static effN64Vtx size12x12_tex64x64_red_vtx[] = {
     {-6, -6, 0, 0, 0, 0x32, 0x15, 0x11, 0xFF},
     {6, -6, 0, 2048, 0, 0x32, 0x15, 0x11, 0xFF},
@@ -51,9 +50,14 @@ static effN64Vtx size12x12_tex64x64_red_vtx[] = {
     {-6, 6, 0, 0, 4096, 0x60, 0x1B, 0x25, 0xFF},
 };
 
-void effCoolLeafMain(EffectEntry* effect);
-void effCoolLeafDisp(CameraId cameraId, EffectEntry* effect);
+static void effCoolLeafMain(EffectEntry* effect);
+static void effCoolLeafDisp(CameraId cameraId, EffectEntry* effect);
 
+/**
+ * Spawns four leaves that swirl for 100 frames, each starting at a random offset near (75-125, 70-90).
+ * Types 0 and 1 are a gentle and a fast swirl; type 2 flings them toward the centre.
+ * Spawned from event scripts through evt_eff.
+ */
 EffectEntry* effCoolLeafN64Entry(s32 type, f32 x, f32 y, f32 z) {
     EffectEntry* effect;
     EffCoolLeafN64Work* work;
@@ -114,7 +118,12 @@ EffectEntry* effCoolLeafN64Entry(s32 type, f32 x, f32 y, f32 z) {
     return effect;
 }
 
-void effCoolLeafMain(EffectEntry* effect) {
+/**
+ * Fades the leaves in over the first 10 frames and out over the last 10;
+ * each leaf spins and, for types 0 and 1, is pushed back toward the centre by an acceleration that flips sign
+ * with its position.
+ */
+static void effCoolLeafMain(EffectEntry* effect) {
     EffCoolLeafN64Work* work = effect->userdata;
     Vec position;
     Vec tmp = {0.0f, 0.0f, 0.0f};
@@ -249,8 +258,10 @@ void effCoolLeafMain(EffectEntry* effect) {
         case 2:
             for (i = 1; i < effect->count; i++, work++) {
                 work->spin += (f32)((s32)effTblRandN64(50, frame + i * 20) - 25);
-                s = (f32)sin(6.2831855f * work->spin / 360.0f); work->angleZ += 10.0f * s;
-                c = (f32)cos(6.2831855f * (0.5f * work->spin) / 360.0f); work->angleY += 10.0f * c;
+                s = (f32)sin(6.2831855f * work->spin / 360.0f);
+                work->angleZ += 10.0f * s;
+                c = (f32)cos(6.2831855f * (0.5f * work->spin) / 360.0f);
+                work->angleY += 10.0f * c;
                 work->position.x += work->vx;
                 work->position.y += work->vy;
             }
@@ -259,7 +270,11 @@ void effCoolLeafMain(EffectEntry* effect) {
     dispEntry(CAMERA_3D, dispCalcZ(&position), 2, (DispCallback)effCoolLeafDisp, effect);
 }
 
-void effCoolLeafDisp(CameraId cameraId, EffectEntry* effect) {
+/**
+ * Draws each leaf as a two-sided sprite with texture 0x14, rotated about Z and Y;
+ * type 0 uses the brown leaf vertices and type 1 the red ones.
+ */
+static void effCoolLeafDisp(CameraId cameraId, EffectEntry* effect) {
     CameraEntry* camera;
     EffCoolLeafN64Work* work;
     s32 type;

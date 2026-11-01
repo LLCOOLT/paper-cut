@@ -2,7 +2,7 @@
 /* The hookable functions of src/driver/itemdrv.c: included at its end (PORT_MODS). */
 #include "port/hook_slot.h"
 
-ItemEntry * itemEntry(const char * p0, s32 p1, s32 p2, s32 p3, EvtWord p4, f32 p5, f32 p6, f32 p7) {
+ItemEntry * itemEntry(f32 p0, f32 p1, f32 p2, const char * p3, s32 p4, u16 p5, s32 p6, EvtWord * p7) {
     PortHookSlot* s = &portHookSlots[10];
     ItemEntry * r;
     int i, skip = 0;

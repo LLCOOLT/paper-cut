@@ -1,7 +1,8 @@
+// win_03 (ウィンディん家周辺, Boggly Woods): the path between win_02 and Flurrie's house (win_04), with two Piranha Plants.
+
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
 
-#pragma force_active on
 #include "driver/camdrv.h"
 #include "mario/mariost.h"
 #include "evt/evt_bero.h"
@@ -11,94 +12,28 @@
 #include "evt/evt_npc.h"
 #include "evt/evt_case.h"
 #include "evt/evt_sub.h"
-#include "party/party_motion.h"
+#include "evt/evt_cam.h"
+#include "evt/evt_env.h"
+#include "evt/evt_fade.h"
+#include "evt/evt_item.h"
+#include "evt/evt_mario.h"
+#include "evt/evt_msg.h"
+#include "evt/evt_party.h"
+#include "evt/evt_seq.h"
+#include "evt/evt_snd.h"
+#include "win.h"
 #include "data_tables.h"
+#include "evt/evt_story.h"
+#include "driver/casedrv.h"
+#include "driver/mapdrv.h"
 
-USER_FUNC(camera_action);
-USER_FUNC(evt_bero_mapchange);
-USER_FUNC(evt_cam3d_evt_set);
-USER_FUNC(evt_env_blur_on);
-USER_FUNC(evt_exit_case_evt);
-USER_FUNC(evt_fade_set_mapchange_type);
-USER_FUNC(evt_item_delete_check);
-USER_FUNC(evt_item_entry);
-USER_FUNC(evt_mario_bgmode_on);
-USER_FUNC(evt_mario_cam_y_off);
-USER_FUNC(evt_mario_cont_onoff);
-USER_FUNC(evt_mario_get_pos);
-USER_FUNC(evt_mario_key_onoff);
-USER_FUNC(evt_mario_kill_party);
-USER_FUNC(evt_mario_normalize);
-USER_FUNC(evt_mario_set_pos);
-USER_FUNC(evt_msg_print);
-USER_FUNC(evt_msg_toge);
-USER_FUNC(evt_npc_change_fbat_mode);
-USER_FUNC(evt_npc_check);
-USER_FUNC(evt_npc_set_position);
-USER_FUNC(evt_npc_start_for_event);
-USER_FUNC(evt_npc_stop_for_event);
-USER_FUNC(evt_party_cont_onoff);
-USER_FUNC(evt_party_set_pos);
-USER_FUNC(evt_seq_wait);
-USER_FUNC(evt_snd_bgmoff);
-USER_FUNC(evt_snd_bgmon);
-USER_FUNC(evt_snd_sfxon_3d);
-
-f32 fd_win_03_negone_one_374[2] __attribute__((aligned(8)));
-f32 fd_win_03_neg_one_382;
-f32 fd_win_03___local_PI_383;
-f32 fd_win_03___local_3PIO2_385;
-f32 fd_win_03_one_negone_373[2] __attribute__((aligned(8)));
-f32 fd_win_03___local_PIO2_384;
-f32 fd_win_03_one_381;
-f32 fd_win_03_negone_one_360[2] __attribute__((aligned(8)));
-f32 fd_win_03_neg_one_365;
-f32 fd_win_03___local_PI_366;
-f32 fd_win_03___local_3PIO2_368;
-f32 fd_win_03_one_negone_359[2] __attribute__((aligned(8)));
-f32 fd_win_03___local_PIO2_367;
-f32 fd_win_03_one_364;
-EvtWord clouda_house_in[12];
-EvtWord clouda_house_out[19];
-EvtWord cloud_out[12];
-EvtWord cloud_in[12];
 static BeroEntry bero_entry_data[5];
-EvtWord lookat_house[45];
-static EvtWord cloud_toujou[76];
-EvtWord cloud_lostitem[215];
-EvtWord tree_evt_01[20];
 static TreeAccess tree_access_data[5];
-EvtWord dummy_event[4];
-EvtWord win_03_init_evt[108];
 
-f32 fd_win_03_negone_one_374[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_win_03_neg_one_382 = -1.0f;
-
-f32 fd_win_03___local_PI_383 = 3.1415927f;
-
-f32 fd_win_03___local_3PIO2_385 = 4.712389f;
-
-f32 fd_win_03_one_negone_373[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_win_03___local_PIO2_384 = 1.5707964f;
-
-f32 fd_win_03_one_381 = 1.0f;
-
-f32 fd_win_03_negone_one_360[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_win_03_neg_one_365 = -1.0f;
-
-f32 fd_win_03___local_PI_366 = 3.1415927f;
-
-f32 fd_win_03___local_3PIO2_368 = 4.712389f;
-
-f32 fd_win_03_one_negone_359[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_win_03___local_PIO2_367 = 1.5707964f;
-
-f32 fd_win_03_one_364 = 1.0f;
-
+/**
+ * Bero enter script of Flurrie's front door: locks Mario's keys
+ * and changes the map to win_04 at its "w_bero" entry (Flurrie's house interior); returns LW(0) = 1.
+ */
 EVT_BEGIN(clouda_house_in)
     CALL(evt_mario_key_onoff, 0)
     CALL(evt_bero_mapchange, STRING("win_04"), STRING("w_bero"))
@@ -106,34 +41,47 @@ EVT_BEGIN(clouda_house_in)
     RETURN
 EVT_END()
 
+/**
+ * Bero script that nothing in the tree references:
+ * turns on Mario's background mode, removes the partner, turns off the camera's y follow,
+ * places Mario at (277, 54, -450), next to Flurrie's door at (306, 23, -448), and runs bero_case_entry;
+ * returns LW(0) = 1.
+ * Guess: an unused variant for coming out of Flurrie's house.
+ */
 EVT_BEGIN(clouda_house_out)
     CALL(evt_mario_bgmode_on)
     CALL(evt_mario_kill_party, 0)
     CALL(evt_mario_cam_y_off)
     CALL(evt_mario_set_pos, 277, 54, -450)
-    CALL_CHILD(PTR(bero_case_entry))
+    CALL_CHILD(bero_case_entry)
     SET_VALUE(LW(0), 1)
     RETURN
 EVT_END()
 
+/** Bero exit script: plays the wooden door-shut sound at Flurrie's door (306, 23, -448); returns LW(0) = 0. */
 EVT_BEGIN(cloud_out)
     CALL(evt_snd_sfxon_3d, STRING("SFX_DOOR_SHUT_WOOD2"), 306, 23, -448, 0)
     SET_VALUE(LW(0), 0)
     RETURN
 EVT_END()
 
+/** Bero enter script: plays the wooden door-open sound at Flurrie's door (306, 23, -448); returns LW(0) = 0. */
 EVT_BEGIN(cloud_in)
     CALL(evt_snd_sfxon_3d, STRING("SFX_DOOR_OPEN_WOOD3"), 306, 23, -448, 0)
     SET_VALUE(LW(0), 0)
     RETURN
 EVT_END()
 
+/**
+ * Exits of this map: west to win_02, the pipe pair dokan_1/dokan_2 within this map,
+ * and Flurrie's door (n_bero) to win_04, which plays the wooden door sounds.
+ */
 static BeroEntry bero_entry_data[] = {
     {
         "w_bero", // hitName
         0, 0, // type..sfxId
-        20000, // directionId
-        100000, // centerPosition
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         NULL, // enterEvent
@@ -149,8 +97,8 @@ static BeroEntry bero_entry_data[] = {
         "dokan_1", // hitName
         2, // type
         0, // sfxId
-        9, // directionId
-        100000, // centerPosition
+        BERO_DIR_DOWN, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         NULL, // enterEvent
@@ -165,8 +113,8 @@ static BeroEntry bero_entry_data[] = {
         "dokan_2", // hitName
         4098, // type
         0, // sfxId
-        9, // directionId
-        100000, // centerPosition
+        BERO_DIR_DOWN, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         NULL, // enterEvent
@@ -181,8 +129,8 @@ static BeroEntry bero_entry_data[] = {
         "n_bero", // hitName
         4099, // type
         0, // sfxId
-        2, // directionId
-        100000, // centerPosition
+        BERO_DIR_E, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         (s32*)cloud_out, // enterEvent
@@ -197,6 +145,10 @@ static BeroEntry bero_entry_data[] = {
     {0},
 };
 
+/**
+ * Trigger: when Mario walks past x = 200 the extra partner comments on Flurrie's house ("stg2_win_e04_02")
+ * and the story becomes STORY_STG2_04_PLANE_PANEL.
+ */
 EVT_BEGIN(lookat_house)
     LOOP(0)
         CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
@@ -208,16 +160,23 @@ EVT_BEGIN(lookat_house)
     CALL(evt_mario_key_onoff, 0)
     CALL(evt_npc_change_fbat_mode, 7)
     CALL(evt_npc_stop_for_event)
+#if VERSION >= VERSION_JP
     CALL(evt_mario_normalize)
+#endif
     CALL(evt_msg_print, 0, STRING("stg2_win_e04_02"), 0, STRING("extparty"))
-    SET_VALUE(GSW(0), 80)
+    SET_VALUE(GSW(GSW_STORY_PROGRESS), STORY_STG2_04_PLANE_PANEL)
     CALL(evt_npc_change_fbat_mode, 1)
     CALL(evt_npc_start_for_event)
     CALL(evt_mario_key_onoff, 1)
     RETURN
 EVT_END()
 
-USER_FUNC(camera_action) {
+/**
+ * Script helper for cloud_toujou: pans the 3D camera sideways from x -10 to x 290 (position y 150, z 491,
+ * looking at y 90, z -6),
+ * 2.5 units a frame and easing to a stop at the end; blocks until the pan is done.
+ */
+static USER_FUNC(camera_action) {
     CameraEntry* cam = camGetPtr(CAMERA_3D);
     Vec pos = {290.0f, 150.0f, 491.0f};
     Vec at = {290.0f, 90.0f, -6.0f};
@@ -266,6 +225,12 @@ USER_FUNC(camera_action) {
     return event->lwData[10] == 0 ? EVT_RETURN_BLOCK : EVT_RETURN_DONE;
 }
 
+/**
+ * First part of Flurrie's intro, spawned by the init script at STORY_STG2_03_02:
+ * Mario and the partners are moved off the map, the camera pans to her house (camera_action)
+ * and a voice without a speaker tail praises the woods and the house she built there (stg2_win_e04_00_01);
+ * then the map changes to win_04 with an iris wipe.
+ */
 static EVT_BEGIN(cloud_toujou)
     CALL(evt_mario_key_onoff, 0)
     CALL(evt_mario_cont_onoff, 0)
@@ -281,11 +246,17 @@ static EVT_BEGIN(cloud_toujou)
     CALL(camera_action)
     CALL(evt_msg_toge, 1, 0, 0, 0)
     CALL(evt_msg_print, 0, STRING("stg2_win_e04_00_01"), 0, 0)
-    CALL(evt_fade_set_mapchange_type, 0, 2, 500, 1, 500)
+    CALL(evt_fade_set_mapchange_type, 0, FADE_OUT_IRIS, 500, FADE_IN_IRIS, 500)
     CALL(evt_bero_mapchange, STRING("win_04"), STRING(""))
     RETURN
 EVT_END()
 
+/**
+ * Last part of Flurrie's intro, spawned by the init script at STORY_STG2_03_03 (after win_05):
+ * with Mario off the map, the camera shakes toward the house with a blur and the surprised jingle,
+ * a voice wails that something is gone (stg2_win_e04_00_05),
+ * the story becomes STORY_STG2_03_04_SHES_LOST_HER_PRECIOUS and the map changes to win_01 ("n_bero").
+ */
 EVT_BEGIN(cloud_lostitem)
     CALL(evt_mario_key_onoff, 0)
     CALL(evt_mario_cont_onoff, 0)
@@ -327,30 +298,32 @@ EVT_BEGIN(cloud_lostitem)
         SET_VALUE(GF(0), 0)
     END_INLINE_EVENT
     BEGIN_INLINE_EVENT
-        CALL(evt_snd_bgmoff, 1024)
-        CALL(evt_snd_bgmon, 1, STRING("BGM_FF_ENV_SURPRISED3"))
+        CALL(evt_snd_bgmoff, PSND_FADE_HOLD)
+        CALL(evt_snd_bgmon, PSND_CH(1), STRING("BGM_FF_ENV_SURPRISED3"))
         WAIT_MS(3000)
-        CALL(evt_snd_bgmoff, 513)
-        CALL(evt_snd_bgmon, 288, 0)
+        CALL(evt_snd_bgmoff, PSND_FADE_OUT | PSND_CH(1))
+        CALL(evt_snd_bgmon, PSND_FADE_RESUME | PSND_FADE_IN, 0)
     END_INLINE_EVENT
     CALL(evt_msg_toge, 1, 0, 0, 0)
     CALL(evt_msg_print, 0, STRING("stg2_win_e04_00_05"), 0, 0)
     WAIT_WHILE(GF(0))
     WAIT_MS(2000)
-    SET_VALUE(GSW(0), 78)
-    CALL(evt_fade_set_mapchange_type, 0, 2, 500, 1, 500)
+    SET_VALUE(GSW(GSW_STORY_PROGRESS), STORY_STG2_03_04_SHES_LOST_HER_PRECIOUS)
+    CALL(evt_fade_set_mapchange_type, 0, FADE_OUT_IRIS, 500, FADE_IN_IRIS, 500)
     CALL(evt_bero_mapchange, STRING("win_01"), STRING("n_bero"))
     RETURN
 EVT_END()
 
+/** Tree hit script for the second tree: spawns a Star Piece (GSWF_WIN03_STAR_PIECE_TREE) the first time it is hit. */
 EVT_BEGIN(tree_evt_01)
     CALL(evt_item_delete_check, STRING("item_tree01"), LW(0))
     IF_INT_EQUAL(LW(0), 1)
-        CALL(evt_item_entry, STRING("item_tree01"), 125, -333, 72, -24, 0, GSWF(5609), 0)
+        CALL(evt_item_entry, STRING("item_tree01"), ITEM_STAR_PIECE, -333, 72, -24, ITEM_ENTRY_STAY, GSWF(GSWF_WIN03_STAR_PIECE_TREE), 0)
     END_IF
     RETURN
 EVT_END()
 
+/** Trees of this map that shake when Mario hammers them; the second drops a Star Piece once. */
 static TreeAccess tree_access_data[] = {
     {4, "A_tree_01", "S_tree_mki_01", "S_tree_ha01", 0, NULL},
     {4, "A_tree_02", "S_tree_mki_02", "S_tree_ha03", 0, tree_evt_01},
@@ -359,38 +332,53 @@ static TreeAccess tree_access_data[] = {
     {7, NULL, NULL, NULL, 0, NULL},
 };
 
+/**
+ * Case script the init script registers for pressing A while standing on "n_bero":
+ * it only ends the case event, so pressing A there does nothing.
+ */
 EVT_BEGIN(dummy_event)
     CALL(evt_exit_case_evt)
     RETURN
 EVT_END()
 
+/**
+ * Map init script of win_03, outside Flurrie's house:
+ * registers exits, the "n_bero" A case, BGM and ambience, trees, a recovery block,
+ * the Volt Shroom and a Star Piece,
+ * hides the "S_ana" and "S_siro_asu" objects (and the "A_siro_asu" hit),
+ * and spawns lookat_house at STORY_STG2_03_05,
+ * cloud_toujou at STORY_STG2_03_02 and cloud_lostitem at STORY_STG2_03_03.
+ */
 EVT_BEGIN(win_03_init_evt)
     SET_VALUE(LW(0), PTR(bero_entry_data))
     CALL(evt_bero_get_info)
     CALL_CHILD(evt_bero_info_run)
-    CALL(evt_run_case_evt, 5, 1, STRING("n_bero"), 0, PTR(dummy_event), 0)
-    CALL(evt_snd_bgmon, 512, STRING("BGM_STG2_WIN1"))
-    CALL(evt_snd_envon, 272, STRING("ENV_STG2_WIN1"))
-    CALL(evt_snd_bgmon, 160, 0)
+    CALL(evt_run_case_evt, CASE_COND_STAND_ON_A, 1, STRING("n_bero"), 0, PTR(dummy_event), 0)
+    CALL(evt_snd_bgmon, PSND_FADE_OUT, STRING("BGM_STG2_WIN1"))
+    CALL(evt_snd_envon, PSND_FADE_RESTART | PSND_FADE_IN, STRING("ENV_STG2_WIN1"))
+    CALL(evt_snd_bgmon, PSND_FADE_RESUME | PSND_FADE_UNDIP, 0)
     SET_VALUE(LW(0), PTR(tree_access_data))
     CALL_CHILD(evt_sub_tree_access_entry)
     CALL(evt_mobj_recovery_blk, STRING("mobj_recover"), 7, 425, 60, 75, 0, 0)
-    CALL(evt_item_entry, STRING("i"), 135, 475, 0, -60, 16, GSWF(2679), 0)
-    CALL(evt_item_entry, STRING("item_00"), 125, -150, 0, -30, 16, GSWF(5610), 0)
-    CALL(evt_mapobj_flag_onoff, 1, 1, STRING("S_ana"), 1)
-    CALL(evt_mapobj_flag_onoff, 1, 1, STRING("S_siro_asu"), 1)
+    CALL(evt_item_entry, STRING("i"), ITEM_VOLT_SHROOM, 475, 0, -60, ITEM_ENTRY_FIXED, GSWF(GSWF_WIN03_VOLT_SHROOM_TAKEN), 0)
+    CALL(evt_item_entry, STRING("item_00"), ITEM_STAR_PIECE, -150, 0, -30, ITEM_ENTRY_FIXED, GSWF(GSWF_WIN03_STAR_PIECE), 0)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("S_ana"), MAPOBJ_FLAG_HIDE)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("S_siro_asu"), MAPOBJ_FLAG_HIDE)
     CALL(evt_hitobj_onoff, STRING("A_siro_asu"), 1, 0)
-    IF_INT_EQUAL(GSW(0), 79)
+    IF_INT_EQUAL(GSW(GSW_STORY_PROGRESS), STORY_STG2_03_05_TO_FLURRIES_PLACE)
         SPAWN_EVENT(lookat_house)
     END_IF
-    IF_INT_EQUAL(GSW(0), 76)
-        CALL(evt_npc_check_delete, STRING(/*"パックン1"*/"\x83\x70\x83\x62\x83\x4E\x83\x93\x31"))
+    IF_INT_EQUAL(GSW(GSW_STORY_PROGRESS), STORY_STG2_03_02_SEALED_ENTRANCE_2)
+        CALL(evt_npc_check_delete, STRING("パックン1"))
         SPAWN_EVENT(cloud_toujou)
     END_IF
-    IF_INT_EQUAL(GSW(0), 77)
-        CALL(evt_npc_check_delete, STRING(/*"パックン1"*/"\x83\x70\x83\x62\x83\x4E\x83\x93\x31"))
+    IF_INT_EQUAL(GSW(GSW_STORY_PROGRESS), STORY_STG2_03_03_FLURRIE_INTRO)
+        CALL(evt_npc_check_delete, STRING("パックン1"))
         SPAWN_EVENT(cloud_lostitem)
     END_IF
     RETURN
+#if VERSION <= VERSION_DEMO_JP
+EVT_END()
+#else
 EVT_END_PAD4()
-
+#endif

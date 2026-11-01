@@ -1,3 +1,5 @@
+// Script commands for map objects and map-wide settings: animations, blend, fog, colour and
+// offscreen drawing (mapdrv).
 #include "eff/eff_fire.h"
 #include "driver/animdrv.h"
 #include "driver/hitdrv.h"
@@ -15,90 +17,17 @@
 #include <dolphin/gx.h>
 #include <string.h>
 #include "evt/evt_map.h"
+#include "eff/eff_torch.h"
+#include "version.h"
+// FAKE: evt_map.c calls mapObjSetColor through this prototype (the types it was compiled with) instead of the one in driver/mapdrv.h; same registers, behaviour-identical.
+typedef void (*MapObjSetColorGxcolorFn)(const char*, GXColor);
 
-EffectEntry* effTorchEntry(s32 type, f32 x, f32 y, f32 z, f32 scale);
-EffectEntry* effFireEntry(s32 type, s32 time, f32 x, f32 y, f32 z, f32 scale);
-
-void mapObjGetPos(const char* name, Vec* pos);
-void mapObjFlagOn(const char* name, u32 flags);
-void mapObjFlagOff(const char* name, u32 flags);
-void mapGrpFlagOn(const char* name, u32 flags);
-void mapGrpFlagOff(const char* name, u32 flags);
-void mapObjGetFlushColor(const char* name, u8* r, u8* g, u8* b, u8* a);
-void mapObjSetFlushColor(const char* name, u8 r, u8 g, u8 b, u8 a);
-void mapGrpSetFlushColor(const char* name, u8 r, u8 g, u8 b, u8 a);
-void mapObjFlushOn(const char* name);
-void mapObjFlushOff(const char* name);
-void mapGrpFlushOn(const char* name);
-void mapGrpFlushOff(const char* name);
-void mapObjClearOffScreen(const char* name);
-void mapGrpClearOffScreen(const char* name);
-#ifdef TARGET_PC
-void mapObjSetOffScreen(const char* name, const char* offscreen);
-void mapGrpSetOffScreen(const char* name, const char* offscreen);
-#else
-void mapObjSetOffScreen(const char* name, s32 val);
-void mapGrpSetOffScreen(const char* name, s32 val);
-#endif
-void mapSetPlayRate(const char* name, f32 rate);
-void mapReStartAnimation(const char* name);
-void mapReStartAnimationAll(const char* name);
-void mapPauseAnimation(const char* name);
-void mapPauseAnimationAll(const char* name);
-void mapPlayAnimationLv(const char* name, s32 a, s32 b);
-#ifdef TARGET_PC
-void mapObjSetColor(const char* name, GXColor* color);
-#else
-void mapObjSetColor(const char* name, GXColor color);
-#endif
-void mapGrpSetColor(const char* name, GXColor color);
-void mapBlendOff(void);
-void mapBlendOff2(void);
-#ifdef TARGET_PC
-void mapSetBlend(GXColor* color);
-void mapSetBlend2(GXColor* color);
-#else
-void mapSetBlend(GXColor color);
-void mapSetBlend2(GXColor color);
-#endif
-void mapFogOn(void);
-void mapFogOff(void);
-void mapGetFog(s32* type, f32* start, f32* end, GXColor* color);
-void mapSetFog(s32 type, f32 start, f32 end, GXColor color);
-void mapObjScale(const char* name, f32 x, f32 y, f32 z);
-void mapObjRotate(const char* name, f32 x, f32 y, f32 z);
-void mapObjTranslate(const char* name, f32 x, f32 y, f32 z);
-
-USER_FUNC(N_evt_mapdisp_onoff);
-USER_FUNC(evt_map_replace_mapobj);
-USER_FUNC(evt_map_entry_airport_harbor);
-USER_FUNC(check2);
 static USER_FUNC(check);
-USER_FUNC(evt_map_get_flush_color);
-USER_FUNC(evt_map_set_flush_color);
-USER_FUNC(evt_map_set_flush_onoff);
-USER_FUNC(evt_map_set_tevcallback);
-USER_FUNC(evt_mapobj_get_position);
-USER_FUNC(evt_mapobj_clear_offscreen);
-USER_FUNC(evt_mapobj_set_offscreen);
-USER_FUNC(evt_mapobj_flag_onoff);
-USER_FUNC(evt_map_set_playrate);
-USER_FUNC(evt_map_replayanim);
-USER_FUNC(evt_map_pauseanim);
-USER_FUNC(evt_map_checkanim);
-USER_FUNC(evt_map_playanim);
-USER_FUNC(evt_mapobj_color);
-USER_FUNC(evt_map_blend_set_mobj_flag);
-USER_FUNC(evt_map_blend_set_flag);
-USER_FUNC(evt_map_blend_off);
-USER_FUNC(evt_map_set_blend);
-USER_FUNC(evt_map_fog_onoff);
-USER_FUNC(evt_map_get_fog);
-USER_FUNC(evt_map_set_fog);
-USER_FUNC(evt_mapobj_scale);
-USER_FUNC(evt_mapobj_rotate);
-USER_FUNC(evt_mapobj_trans);
 
+/**
+ * Sets the translation of the map object named in args[1] to args[2..4];
+ * args[0] (single or group) is ignored, both choices call mapObjTranslate.
+ */
 USER_FUNC(evt_mapobj_trans) {
     EvtWord* args = event->args;
     s32 type = evtGetValue(event, args[0]);
@@ -114,6 +43,10 @@ USER_FUNC(evt_mapobj_trans) {
     return EVT_RETURN_DONE;
 }
 
+/**
+ * Sets the rotation in degrees of the map object named in args[1] to args[2..4];
+ * args[0] is ignored as in evt_mapobj_trans. The door scripts swing doors with it.
+ */
 USER_FUNC(evt_mapobj_rotate) {
     EvtWord* args = event->args;
     s32 type = evtGetValue(event, args[0]);
@@ -129,6 +62,7 @@ USER_FUNC(evt_mapobj_rotate) {
     return EVT_RETURN_DONE;
 }
 
+/** Sets the scale of the map object named in args[1] to args[2..4]; args[0] is ignored. */
 USER_FUNC(evt_mapobj_scale) {
     EvtWord* args = event->args;
     s32 type = evtGetValue(event, args[0]);
@@ -144,6 +78,7 @@ USER_FUNC(evt_mapobj_scale) {
     return EVT_RETURN_DONE;
 }
 
+/** Sets the map fog: args[0] fog type, args[1..2] start and end distance, args[3..5] RGB colour. */
 USER_FUNC(evt_map_set_fog) {
     EvtWord* args = event->args;
     s32 type = evtGetValue(event, args[0]);
@@ -156,6 +91,7 @@ USER_FUNC(evt_map_set_fog) {
     return EVT_RETURN_DONE;
 }
 
+/** Returns the current map fog into args[0..5]: type, start, end (floats) and R, G, B. */
 USER_FUNC(evt_map_get_fog) {
     EvtWord* args = event->args;
     s32 type;
@@ -172,6 +108,7 @@ USER_FUNC(evt_map_get_fog) {
     return EVT_RETURN_DONE;
 }
 
+/** Turns the map fog on (args[0] nonzero) or off. */
 USER_FUNC(evt_map_fog_onoff) {
     if (evtGetValue(event, event->args[0])) {
         mapFogOn();
@@ -181,6 +118,10 @@ USER_FUNC(evt_map_fog_onoff) {
     return EVT_RETURN_DONE;
 }
 
+/**
+ * Sets one of the map's two blend colours (args[0] 0 or 1) to RGBA args[1..4];
+ * it tints every map object not flagged NO_BLEND / NO_BLEND2 and is how the door scripts darken a room.
+ */
 USER_FUNC(evt_map_set_blend) {
     EvtWord* args = event->args;
     s32 type = evtGetValue(event, args[0]);
@@ -189,13 +130,14 @@ USER_FUNC(evt_map_set_blend) {
     s32 b = evtGetValue(event, args[3]);
     s32 a = evtGetValue(event, args[4]);
     if (type == 0) {
-        PCCALL(mapSetBlend((GXColor){r, g, b, a}), mapSetBlend(&(GXColor){r, g, b, a}));
+        mapSetBlend((GXColor){r, g, b, a});
     } else {
-        PCCALL(mapSetBlend2((GXColor){r, g, b, a}), mapSetBlend2(&(GXColor){r, g, b, a}));
+        mapSetBlend2((GXColor){r, g, b, a});
     }
     return EVT_RETURN_DONE;
 }
 
+/** Turns off the map blend colour chosen by args[0] (0 first, else second). */
 USER_FUNC(evt_map_blend_off) {
     if (evtGetValue(event, event->args[0]) == 0) {
         mapBlendOff();
@@ -205,6 +147,10 @@ USER_FUNC(evt_map_blend_off) {
     return EVT_RETURN_DONE;
 }
 
+/**
+ * Sets (args[0] == 1) or clears animation material flags args[2] on "mario" (all three paper poses), "party",
+ * "extparty" or a named NPC (args[1]), e.g. to exempt them from the map blend.
+ */
 USER_FUNC(evt_map_blend_set_flag) {
     EvtWord* args = event->args;
     s32 on = evtGetValue(event, args[0]);
@@ -214,22 +160,30 @@ USER_FUNC(evt_map_blend_set_flag) {
         MarioWork* mp = marioGetPtr();
         s32* poses = &mp->paperAnimGroupId[0];
         if (on == 1) {
-            if (poses[0] != -1) animPoseSetMaterialFlagOn(poses[0], flags);
-            if (poses[1] != -1) animPoseSetMaterialFlagOn(poses[1], flags);
-            if (poses[2] != -1) animPoseSetMaterialFlagOn(poses[2], flags);
+            if (poses[0] != -1)
+                animPoseSetMaterialFlagOn(poses[0], flags);
+            if (poses[1] != -1)
+                animPoseSetMaterialFlagOn(poses[1], flags);
+            if (poses[2] != -1)
+                animPoseSetMaterialFlagOn(poses[2], flags);
         } else {
-            if (poses[0] != -1) animPoseSetMaterialFlagOff(poses[0], flags);
-            if (poses[1] != -1) animPoseSetMaterialFlagOff(poses[1], flags);
-            if (poses[2] != -1) animPoseSetMaterialFlagOff(poses[2], flags);
+            if (poses[0] != -1)
+                animPoseSetMaterialFlagOff(poses[0], flags);
+            if (poses[1] != -1)
+                animPoseSetMaterialFlagOff(poses[1], flags);
+            if (poses[2] != -1)
+                animPoseSetMaterialFlagOff(poses[2], flags);
         }
     } else if (strcmp(name, "party") == 0) {
+        // BUG: no check that a partner (or, below, a follower) is out: partyGetPtr returns NULL for id -1
+        // and party->paperAnimGroup is then read through a null pointer.
         PartyEntry* party = partyGetPtr(marioGetPartyId());
         if (on == 1) {
             animPoseSetMaterialFlagOn(party->paperAnimGroup, flags);
         } else {
             animPoseSetMaterialFlagOff(party->paperAnimGroup, flags);
         }
-    } else if (strcmp(name, "extparty\0\0\0") == 0) {
+    } else if (strcmp(name, "extparty") == 0) {
         PartyEntry* party = partyGetPtr(marioGetExtraPartyId());
         if (on == 1) {
             animPoseSetMaterialFlagOn(party->paperAnimGroup, flags);
@@ -247,6 +201,10 @@ USER_FUNC(evt_map_blend_set_flag) {
     return EVT_RETURN_DONE;
 }
 
+/**
+ * Sets (args[0] == 1) or clears animation material flags args[2] on the pose of the field object (mobj) named in
+ * args[1]; used by mri_03 (Great Tree).
+ */
 USER_FUNC(evt_map_blend_set_mobj_flag) {
     EvtWord* args = event->args;
     s32 on = evtGetValue(event, args[0]);
@@ -261,6 +219,7 @@ USER_FUNC(evt_map_blend_set_mobj_flag) {
     return EVT_RETURN_DONE;
 }
 
+/** Sets the RGBA colour args[2..5] of the map object (args[0] 0) or group (1) named in args[1]. */
 USER_FUNC(evt_mapobj_color) {
     EvtWord* args = event->args;
     s32 type = evtGetValue(event, args[0]);
@@ -270,13 +229,17 @@ USER_FUNC(evt_mapobj_color) {
     u8 b = evtGetValue(event, args[4]);
     u8 a = evtGetValue(event, args[5]);
     if (type == 0) {
-        PCCALL(mapObjSetColor(name, (GXColor){r, g, b, a}), mapObjSetColor(name, &(GXColor){r, g, b, a}));
+        PCCALL(((MapObjSetColorGxcolorFn)mapObjSetColor)(name, (GXColor){r, g, b, a}), mapObjSetColor(name, &(GXColor){r, g, b, a}));
     } else {
         mapGrpSetColor(name, (GXColor){r, g, b, a});
     }
     return EVT_RETURN_DONE;
 }
 
+/**
+ * Starts the map animation named in args[0]; args[1] is the play mode
+ * and args[2] the level passed to mapPlayAnimationLv.
+ */
 USER_FUNC(evt_map_playanim) {
     EvtWord* args = event->args;
     const char* name = (const char*)evtGetValue(event, args[0]);
@@ -286,6 +249,10 @@ USER_FUNC(evt_map_playanim) {
     return EVT_RETURN_DONE;
 }
 
+/**
+ * Returns whether the map animation in args[0] is valid (args[1]) and the milliseconds it has left (args[2]),
+ * which scripts pass straight to WAIT_MS.
+ */
 USER_FUNC(evt_map_checkanim) {
     EvtWord* args = event->args;
     BOOL valid;
@@ -296,6 +263,7 @@ USER_FUNC(evt_map_checkanim) {
     return EVT_RETURN_DONE;
 }
 
+/** Pauses the map animation named in args[1]; args[0] nonzero uses mapPauseAnimationAll instead. */
 USER_FUNC(evt_map_pauseanim) {
     EvtWord* args = event->args;
     s32 all = evtGetValue(event, args[0]);
@@ -308,6 +276,7 @@ USER_FUNC(evt_map_pauseanim) {
     return EVT_RETURN_DONE;
 }
 
+/** Resumes a paused map animation named in args[1]; args[0] nonzero uses mapReStartAnimationAll. */
 USER_FUNC(evt_map_replayanim) {
     EvtWord* args = event->args;
     s32 all = evtGetValue(event, args[0]);
@@ -320,6 +289,7 @@ USER_FUNC(evt_map_replayanim) {
     return EVT_RETURN_DONE;
 }
 
+/** Sets the playback rate (float args[1], 1.0 normal) of the map animation named in args[0]. */
 USER_FUNC(evt_map_set_playrate) {
     EvtWord* args = event->args;
     const char* name = (const char*)evtGetValue(event, args[0]);
@@ -327,6 +297,10 @@ USER_FUNC(evt_map_set_playrate) {
     return EVT_RETURN_DONE;
 }
 
+/**
+ * Sets (args[1] nonzero) or clears MAPOBJ_FLAG_* bits on a map object (args[0] MAPOBJ_SINGLE)
+ * or group (MAPOBJ_GROUP) named in args[2]. The flags in args[3] are read as a literal, not through evtGetValue.
+ */
 USER_FUNC(evt_mapobj_flag_onoff) {
     EvtWord* args = event->args;
     s32 type = evtGetValue(event, args[0]);
@@ -349,19 +323,24 @@ USER_FUNC(evt_mapobj_flag_onoff) {
     return EVT_RETURN_DONE;
 }
 
+/**
+ * Makes the map object (args[0] 0) or group (1) named in args[1] also draw into the offscreen buffer named in
+ * args[2].
+ */
 USER_FUNC(evt_mapobj_set_offscreen) {
     EvtWord* args = event->args;
     s32 type = evtGetValue(event, args[0]);
     const char* name = (const char*)evtGetValue(event, args[1]);
     EvtWord val = evtGetValue(event, args[2]); /* the offscreen name */
     if (type == 0) {
-        PCCALL(mapObjSetOffScreen(name, val), mapObjSetOffScreen(name, (const char*)val));
+        mapObjSetOffScreen(name, (const char*)val);
     } else {
-        PCCALL(mapGrpSetOffScreen(name, val), mapGrpSetOffScreen(name, (const char*)val));
+        mapGrpSetOffScreen(name, (const char*)val);
     }
     return EVT_RETURN_DONE;
 }
 
+/** Stops the map object (args[0] 0) or group (1) named in args[1] drawing into its offscreen buffer. */
 USER_FUNC(evt_mapobj_clear_offscreen) {
     EvtWord* args = event->args;
     s32 type = evtGetValue(event, args[0]);
@@ -374,6 +353,7 @@ USER_FUNC(evt_mapobj_clear_offscreen) {
     return EVT_RETURN_DONE;
 }
 
+/** Returns the position of the map object named in args[0] as floats in args[1..3]. */
 USER_FUNC(evt_mapobj_get_position) {
     EvtWord* args = event->args;
     Vec pos;
@@ -384,6 +364,10 @@ USER_FUNC(evt_mapobj_get_position) {
     return EVT_RETURN_DONE;
 }
 
+/**
+ * Installs a TEV callback (args[1]) in slot args[0] of the map's tevCallbacks;
+ * map objects pick a slot with MAPOBJ_TEV_CALLBACK flags. Used by many maps for water and light effects.
+ */
 USER_FUNC(evt_map_set_tevcallback) {
     EvtWord* args = event->args;
     s32 index = evtGetValue(event, args[0]);
@@ -392,6 +376,10 @@ USER_FUNC(evt_map_set_tevcallback) {
     return EVT_RETURN_DONE;
 }
 
+/**
+ * Turns the flush (solid-colour glow overlay) on (args[1] nonzero) or off for the map object (args[0] 0)
+ * or group (1) named in args[2].
+ */
 USER_FUNC(evt_map_set_flush_onoff) {
     EvtWord* args = event->args;
     s32 type = evtGetValue(event, args[0]);
@@ -413,6 +401,7 @@ USER_FUNC(evt_map_set_flush_onoff) {
     return EVT_RETURN_DONE;
 }
 
+/** Sets the flush colour RGBA args[2..5] of the map object (args[0] 0) or group (1) named in args[1]. */
 USER_FUNC(evt_map_set_flush_color) {
     EvtWord* args = event->args;
     s32 type = evtGetValue(event, args[0]);
@@ -429,6 +418,7 @@ USER_FUNC(evt_map_set_flush_color) {
     return EVT_RETURN_DONE;
 }
 
+/** Returns the flush colour of the map object named in args[0] as R, G, B, A in args[1..4]. */
 USER_FUNC(evt_map_get_flush_color) {
     EvtWord* args = event->args;
     u8 r;
@@ -443,6 +433,10 @@ USER_FUNC(evt_map_get_flush_color) {
     return EVT_RETURN_DONE;
 }
 
+/**
+ * Returns 1 in args[0] while Mario stands on the hit object named in LW(1), else 0;
+ * loop test for evt_ride_airport.
+ */
 static USER_FUNC(check) {
     EvtWord* args = event->args;
     MarioWork* mp = marioGetPtr();
@@ -455,7 +449,11 @@ static USER_FUNC(check) {
     return EVT_RETURN_DONE;
 }
 
-USER_FUNC(check2) {
+/**
+ * Returns 1 in args[0] while Mario stands on some hit object other than the one in LW(1);
+ * 0 when he is on it or airborne. Loop test for evt_nonride_airport.
+ */
+static USER_FUNC(check2) {
     EvtWord* args = event->args;
     MarioWork* mp = marioGetPtr();
     evtSetValue(event, args[0], 0);
@@ -467,6 +465,12 @@ USER_FUNC(check2) {
     return EVT_RETURN_DONE;
 }
 
+/**
+ * Sets up a Plane Mode (args[0] 0) or Boat Mode (1) panel:
+ * loads the plane or boat model, then, once the matching curse is learned,
+ * registers glow-in/glow-out case events on the panel's hit (args[2]) for map group args[1].
+ * Blocks until the model has loaded.
+ */
 USER_FUNC(evt_map_entry_airport_harbor) {
     EvtWord* args = event->args;
     s32 type = evtGetValue(event, args[0]);
@@ -475,52 +479,69 @@ USER_FUNC(evt_map_entry_airport_harbor) {
     EvtWord lw[16];
     mapGetMapObj(name);
     switch (type) {
-    case 0:
-        if (!animGroupBaseAsync("p_hikohki", 0, NULL)) return EVT_RETURN_BLOCK;
-        if ((s32)pouchCheckItem(4) == 1) {
-            lw[0] = (EvtWord)name;
-            lw[1] = (EvtWord)hit;
-            evtRunCaseEntry(0, 0, hit, 0, evt_ride_airport, lw);
-            lw[0] = (EvtWord)name;
-            lw[1] = (EvtWord)hit;
-            evtRunCaseEntry(1, 0, hit, 0, evt_nonride_airport, lw);
-        }
-        break;
-    case 1:
-        if (!animGroupBaseAsync("p_hune", 0, NULL)) return EVT_RETURN_BLOCK;
-        if ((s32)pouchCheckItem(5) == 1) {
-            lw[0] = (EvtWord)name;
-            lw[1] = (EvtWord)hit;
-            evtRunCaseEntry(0, 0, hit, 0, evt_ride_airport, lw);
-            lw[0] = (EvtWord)name;
-            lw[1] = (EvtWord)hit;
-            evtRunCaseEntry(1, 0, hit, 0, evt_nonride_airport, lw);
-        }
-        break;
+        case 0:
+            if (!animGroupBaseAsync("p_hikohki", 0, NULL))
+                return EVT_RETURN_BLOCK;
+            if ((s32)pouchCheckItem(ITEM_PLANE_CURSE) == 1) {
+                lw[0] = (EvtWord)name;
+                lw[1] = (EvtWord)hit;
+                evtRunCaseEntry(0, 0, hit, 0, evt_ride_airport, lw);
+                lw[0] = (EvtWord)name;
+                lw[1] = (EvtWord)hit;
+                evtRunCaseEntry(1, 0, hit, 0, evt_nonride_airport, lw);
+            }
+            break;
+        case 1:
+            if (!animGroupBaseAsync("p_hune", 0, NULL))
+                return EVT_RETURN_BLOCK;
+            if ((s32)pouchCheckItem(ITEM_BOAT_CURSE) == 1) {
+                lw[0] = (EvtWord)name;
+                lw[1] = (EvtWord)hit;
+                evtRunCaseEntry(0, 0, hit, 0, evt_ride_airport, lw);
+                lw[0] = (EvtWord)name;
+                lw[1] = (EvtWord)hit;
+                evtRunCaseEntry(1, 0, hit, 0, evt_nonride_airport, lw);
+            }
+            break;
     }
     return EVT_RETURN_DONE;
 }
 
+/**
+ * Hides the map object named in args[0] for good and puts a real flame at its position:
+ * args[1] 0 a torch effect, 1 a fire effect (tinted by the map blend in the retail releases).
+ * Used by bom_02 and jin_07.
+ */
 USER_FUNC(evt_map_replace_mapobj) {
     EvtWord* args = event->args;
     const char* name = (const char*)evtGetValue(event, args[0]);
     s32 type = evtGetValue(event, args[1]);
     Vec pos;
     mapObjGetPos(name, &pos);
-    mapObjFlagOn(name, 0x4000);
+    mapObjFlagOn(name, MAPOBJ_FLAG_DISABLE);
     switch (type) {
-    case 0:
-        effTorchEntry(0, pos.x, pos.y - 3.0f, pos.z, 0.6f);
-        break;
-    case 1: {
-        EffectEntry* eff = effFireEntry(5, 0, pos.x, pos.y, pos.z, 0.4f);
-        ((EffFireWork*)eff->userdata)->useMapBlend = 1;
-        break;
-    }
+        case 0:
+            effTorchEntry(0, pos.x, pos.y - 3.0f, pos.z, 0.6f);
+            break;
+#if VERSION <= VERSION_DEMO_JP
+        case 1:
+            effFireEntry(5, 0, pos.x, pos.y, pos.z, 0.4f);
+            break;
+#else
+        case 1: {
+            EffectEntry* eff = effFireEntry(5, 0, pos.x, pos.y, pos.z, 0.4f);
+            ((EffFireWork*)eff->userdata)->useMapBlend = 1;
+            break;
+        }
+#endif
     }
     return EVT_RETURN_DONE;
 }
 
+/**
+ * Turns all map drawing on (args[0] nonzero) or off;
+ * the battle tutorial (evt_lect_gor) hides the map with it in the JP and later releases.
+ */
 USER_FUNC(N_evt_mapdisp_onoff) {
     if (evtGetValue(event, event->args[0])) {
         N_mapDispOn();
@@ -530,8 +551,13 @@ USER_FUNC(N_evt_mapdisp_onoff) {
     return EVT_RETURN_DONE;
 }
 
+/**
+ * Runs while Mario stands on a Plane or Boat Mode panel (LW(1)):
+ * fades a yellow glow on the panel group (LW(0)) up to alpha 100, 2 per frame, until he steps off.
+ * Registered by evt_map_entry_airport_harbor.
+ */
 EVT_BEGIN(evt_ride_airport)
-    CALL(evt_mapobj_flag_onoff, 1, 0, LW(0), 256)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, LW(0), MAPOBJ_FLAG_DISPLAY_LIST)
     LABEL(0)
     CALL(evt_map_get_flush_color, LW(0), LW(10), LW(11), LW(12), LW(13))
     ADD(LW(13), 2)
@@ -548,6 +574,7 @@ EVT_BEGIN(evt_ride_airport)
     RETURN
 EVT_END()
 
+/** Counterpart of evt_ride_airport while Mario is off the panel: fades the panel's glow back down to 0. */
 EVT_BEGIN(evt_nonride_airport)
     LABEL(0)
     CALL(evt_map_get_flush_color, LW(0), LW(10), LW(11), LW(12), LW(13))

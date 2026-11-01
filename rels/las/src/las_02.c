@@ -1,78 +1,36 @@
+// las_02 (ラストダンジョン, Palace of Shadow): the second hall.
+
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
 
-#pragma force_active on
 #include "stdio.h"
 #include "evt/evt_bero.h"
 #ifdef TARGET_PC /* declarations the GameCube code calls implicitly */
 #include "manager/evtmgr_cmd.h"
 #endif
+#include "manager/evtmgr_cmd.h"
+#include "evt/evt_eff.h"
+#include "evt/evt_map.h"
+#include "evt/evt_mobj.h"
+#include "evt/evt_npc.h"
+#include "evt/evt_snd.h"
+#include "las.h"
+#include "evt/evt_story.h"
+#include "driver/mapdrv.h"
 
+#if VERSION >= VERSION_JP
 static char name[8];
+#endif
 
-USER_FUNC(evt_bero_get_info);
-USER_FUNC(evt_eff);
-USER_FUNC(evt_mapobj_flag_onoff);
-USER_FUNC(evt_mapobj_get_position);
-USER_FUNC(evt_mapobj_rotate);
-USER_FUNC(evt_mobj_badgeblk);
-USER_FUNC(evt_npc_check);
-USER_FUNC(evt_npc_set_link);
-USER_FUNC(evt_snd_bgmon);
-USER_FUNC(evt_snd_envon);
-USER_FUNC(evt_snd_set_rev_mode);
 static USER_FUNC(make_name);
 
-f32 fd_las_02_negone_one_374[2] __attribute__((aligned(8)));
-f32 fd_las_02_neg_one_382;
-f32 fd_las_02___local_PI_383;
-f32 fd_las_02___local_3PIO2_385;
-f32 fd_las_02_one_negone_373[2] __attribute__((aligned(8)));
-f32 fd_las_02___local_PIO2_384;
-f32 fd_las_02_one_381;
-f32 fd_las_02_negone_one_360[2] __attribute__((aligned(8)));
-f32 fd_las_02_neg_one_365;
-f32 fd_las_02___local_PI_366;
-f32 fd_las_02___local_3PIO2_368;
-f32 fd_las_02_one_negone_359[2] __attribute__((aligned(8)));
-f32 fd_las_02___local_PIO2_367;
-f32 fd_las_02_one_364;
-static EvtWord w_door_close[22];
-static EvtWord w_door_open[22];
-static EvtWord e_door_close[22];
-static EvtWord e_door_open[22];
 static BeroEntry bero_entry_data[3];
-static EvtWord rousoku_init[46];
-EvtWord las_02_init_evt[44];
 
-f32 fd_las_02_negone_one_374[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_las_02_neg_one_382 = -1.0f;
-
-f32 fd_las_02___local_PI_383 = 3.1415927f;
-
-f32 fd_las_02___local_3PIO2_385 = 4.712389f;
-
-f32 fd_las_02_one_negone_373[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_las_02___local_PIO2_384 = 1.5707964f;
-
-f32 fd_las_02_one_381 = 1.0f;
-
-f32 fd_las_02_negone_one_360[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_las_02_neg_one_365 = -1.0f;
-
-f32 fd_las_02___local_PI_366 = 3.1415927f;
-
-f32 fd_las_02___local_3PIO2_368 = 4.712389f;
-
-f32 fd_las_02_one_negone_359[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_las_02___local_PIO2_367 = 1.5707964f;
-
-f32 fd_las_02_one_364 = 1.0f;
-
+/**
+ * Door animation script (closing) for the west door, used as the enter/exit animation of this room's bero entry.
+ * LW(0) holds the angle step of the swing, and the script turns the door panels S_door1_1 and S_door1_2 by it,
+ * the second one the opposite way.
+ */
 static EVT_BEGIN(w_door_close)
     MULTIPLY_FLOAT(LW(0), FLOAT(-0.38867188f))
     CALL(evt_mapobj_rotate, 0, STRING("S_door1_1"), 0, LW(0), 0)
@@ -81,6 +39,11 @@ static EVT_BEGIN(w_door_close)
     RETURN
 EVT_END()
 
+/**
+ * Door animation script (opening) for the west door, used as the enter/exit animation of this room's bero entry.
+ * LW(0) holds the angle step of the swing, and the script turns the door panels S_door1_1 and S_door1_2 by it,
+ * the second one the opposite way.
+ */
 static EVT_BEGIN(w_door_open)
     MULTIPLY_FLOAT(LW(0), FLOAT(0.38867188f))
     CALL(evt_mapobj_rotate, 0, STRING("S_door1_1"), 0, LW(0), 0)
@@ -89,6 +52,11 @@ static EVT_BEGIN(w_door_open)
     RETURN
 EVT_END()
 
+/**
+ * Door animation script (closing) for the east door, used as the enter/exit animation of this room's bero entry.
+ * LW(0) holds the angle step of the swing, and the script turns the door panels S_door2_1 and S_door2_2 by it,
+ * the second one the opposite way.
+ */
 static EVT_BEGIN(e_door_close)
     MULTIPLY_FLOAT(LW(0), FLOAT(0.38867188f))
     CALL(evt_mapobj_rotate, 0, STRING("S_door2_1"), 0, LW(0), 0)
@@ -97,6 +65,11 @@ static EVT_BEGIN(e_door_close)
     RETURN
 EVT_END()
 
+/**
+ * Door animation script (opening) for the east door, used as the enter/exit animation of this room's bero entry.
+ * LW(0) holds the angle step of the swing, and the script turns the door panels S_door2_1 and S_door2_2 by it,
+ * the second one the opposite way.
+ */
 static EVT_BEGIN(e_door_open)
     MULTIPLY_FLOAT(LW(0), FLOAT(-0.38867188f))
     CALL(evt_mapobj_rotate, 0, STRING("S_door2_1"), 0, LW(0), 0)
@@ -105,13 +78,14 @@ static EVT_BEGIN(e_door_open)
     RETURN
 EVT_END()
 
+/** Exits of las_02: west door w_bero to las_01 (e_bero); east door e_bero to las_03 (w_bero). */
 static BeroEntry bero_entry_data[] = {
     {
         "w_bero", // hitName
         1, // type
         6, // sfxId
-        20000, // directionId
-        100000, // centerPosition
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         NULL, // enterEvent
@@ -128,8 +102,8 @@ static BeroEntry bero_entry_data[] = {
         "e_bero", // hitName
         1, // type
         6, // sfxId
-        20000, // directionId
-        100000, // centerPosition
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         NULL, // enterEvent
@@ -145,40 +119,63 @@ static BeroEntry bero_entry_data[] = {
     {0},
 };
 
+/**
+ * Map-init helper: hides the 18 numbered candle ("rousoku") map objects (names from make_name)
+ * and puts a flame effect 7 units below the origin of each one.
+ */
 static EVT_BEGIN(rousoku_init)
     SET_VALUE(LW(0), 1)
     LOOP(18)
         CALL(make_name, LW(0), LW(1))
-        CALL(evt_mapobj_flag_onoff, 1, 1, LW(1), 1)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, LW(1), MAPOBJ_FLAG_HIDE)
         CALL(evt_mapobj_get_position, LW(1), LW(2), LW(3), LW(4))
         SUBTRACT_FLOAT(LW(3), FLOAT(7.0f))
+#if VERSION <= VERSION_DEMO_JP
+        CALL(evt_eff, STRING(""), STRING("fire"), 3, LW(2), LW(3), LW(4), FLOAT(1.0f), 1000, 0, 0, 0, 0, 0, 0)
+#else
         CALL(evt_eff, 0, STRING("fire"), 3, LW(2), LW(3), LW(4), FLOAT(1.0f), 1000, 0, 0, 0, 0, 0, 0)
+#endif
         ADD(LW(0), 1)
     END_LOOP
     RETURN
 EVT_END()
 
+/**
+ * Map init script for las_02: music and ambience, the doors to las_01 and las_03, the Shooting Star badge block,
+ * links the two Bombshell Bill Blasters if they exist, and lights the 18 torches.
+ */
 EVT_BEGIN(las_02_init_evt)
-    CALL(evt_snd_bgmon, 512, STRING("BGM_STG8_LST1"))
-    CALL(evt_snd_envon, 272, STRING("ENV_STG8_LAS1"))
+    CALL(evt_snd_bgmon, PSND_FADE_OUT, STRING("BGM_STG8_LST1"))
+    CALL(evt_snd_envon, PSND_FADE_RESTART | PSND_FADE_IN, STRING("ENV_STG8_LAS1"))
+#if VERSION >= VERSION_JP
     CALL(evt_snd_set_rev_mode, 2)
+#endif
     SET_VALUE(LW(0), PTR(bero_entry_data))
     CALL(evt_bero_get_info)
-    CALL_CHILD(PTR(evt_bero_info_run))
-    CALL(evt_mobj_badgeblk, STRING("mobj00"), -550, 480, 60, 130, 0, GSWF(4371), 0)
+    CALL_CHILD(evt_bero_info_run)
+    CALL(evt_mobj_badgeblk, STRING("mobj00"), -550, 480, 60, ITEM_SHOOTING_STAR, 0, GSWF(GSWF_LAS02_SHOOTING_STAR_BLOCK_HIT), 0)
     CALL(evt_npc_check, STRING("スーパーキラー大砲１"), LW(0))
     IF_INT_EQUAL(LW(0), 1)
         CALL(evt_npc_set_link, STRING("スーパーキラー大砲１"), STRING("スーパーキラー大砲２"))
     END_IF
-    CALL_CHILD(PTR(rousoku_init))
+    CALL_CHILD(rousoku_init)
     RETURN
 EVT_END()
 
+/**
+ * Script helper: builds the torch map-object name "hi<args[0]>" and returns it in args[1].
+ * The name buffer is static (global in later versions) so that it outlives the call.
+ */
 static USER_FUNC(make_name) {
     EvtWord* args = event->args;
+#if VERSION <= VERSION_DEMO_JP
+    // The demo builds the name in a stack buffer, which is gone by the time the script uses the name.
+    char name[8];
+#endif
+    s32 number;
 
-    sprintf(name, "hi%d\0\0\0", evtGetValue(event, args[0]));
+    number = evtGetValue(event, args[0]);
+    sprintf(name, "hi%d", number);
     evtSetValue(event, args[1], (EvtWord)name);
     return EVT_RETURN_DONE;
 }
-

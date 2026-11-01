@@ -1,98 +1,59 @@
+// tik_08 (埋没した都市, Rogueport Sewers): the room with the pipe to Twilight Town (usu_00) and the door back to tik_07.
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
 #include "evt/evt_bero.h"
+#include "evt/evt_cam.h"
+#include "evt/evt_mario.h"
+#include "evt/evt_mobj.h"
+#include "evt/evt_msg.h"
+#include "evt/evt_snd.h"
+#include "tik.h"
+#include "evt/evt_story.h"
+#include "driver/camdrv.h"
 
-#pragma force_active on
-
-USER_FUNC(evt_bero_exec_wait);
-USER_FUNC(evt_bero_get_info);
-USER_FUNC(evt_bero_overwrite);
-USER_FUNC(evt_cam_ctrl_onoff);
-USER_FUNC(evt_mario_key_onoff);
-USER_FUNC(evt_mario_normalize);
-USER_FUNC(evt_mobj_signboard);
-USER_FUNC(evt_msg_print);
-USER_FUNC(evt_msg_toge);
-USER_FUNC(evt_snd_bgmon);
-USER_FUNC(evt_snd_envon);
-USER_FUNC(evt_snd_set_rev_mode);
-
-f32 fd_tik_08_negone_one_374[2] __attribute__((aligned(8)));
-f32 fd_tik_08_neg_one_382;
-f32 fd_tik_08___local_PI_383;
-f32 fd_tik_08___local_3PIO2_385;
-f32 fd_tik_08_one_negone_373[2] __attribute__((aligned(8)));
-f32 fd_tik_08___local_PIO2_384;
-f32 fd_tik_08_one_381;
-f32 fd_tik_08_negone_one_360[2] __attribute__((aligned(8)));
-f32 fd_tik_08_neg_one_365;
-f32 fd_tik_08___local_PI_366;
-f32 fd_tik_08___local_3PIO2_368;
-f32 fd_tik_08_one_negone_359[2] __attribute__((aligned(8)));
-f32 fd_tik_08___local_PIO2_367;
-f32 fd_tik_08_one_364;
-EvtWord oshimodo_event_sub[33];
-static EvtWord oshimodo_event[10];
+extern EvtWord oshimodo_event_sub[];
 static BeroEntry bero_oshimodo[1];
 static BeroEntry bero_entry_data[3];
 static BeroEntry bero_entry_data2[2];
-static EvtWord evt_kanban[16];
-EvtWord tik_08_init_evt[68];
 
-f32 fd_tik_08_negone_one_374[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_tik_08_neg_one_382 = -1.0f;
-
-f32 fd_tik_08___local_PI_383 = 3.1415927f;
-
-f32 fd_tik_08___local_3PIO2_385 = 4.712389f;
-
-f32 fd_tik_08_one_negone_373[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_tik_08___local_PIO2_384 = 1.5707964f;
-
-f32 fd_tik_08_one_381 = 1.0f;
-
-f32 fd_tik_08_negone_one_360[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_tik_08_neg_one_365 = -1.0f;
-
-f32 fd_tik_08___local_PI_366 = 3.1415927f;
-
-f32 fd_tik_08___local_3PIO2_368 = 4.712389f;
-
-f32 fd_tik_08_one_negone_359[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_tik_08___local_PIO2_367 = 1.5707964f;
-
-f32 fd_tik_08_one_364 = 1.0f;
-
+/**
+ * Pushes Mario back from the Twilight Town pipe (oshimodo = push back) before it is open:
+ * he walks out of the pipe (bero exec), the "no entry" message tik_08_01 is shown and controls return.
+ */
 EVT_BEGIN(oshimodo_event_sub)
-    CALL(evt_cam_ctrl_onoff, 4, 0)
+    CALL(evt_cam_ctrl_onoff, CAMERA_3D, 0)
     CALL(evt_mario_key_onoff, 0)
     CALL(evt_bero_exec_wait, 65536)
     WAIT_MS(750)
     CALL(evt_msg_toge, 1, 0, 0, 0)
     CALL(evt_msg_print, 0, STRING("tik_08_01"), 0, 0)
     CALL(evt_mario_key_onoff, 1)
-    CALL(evt_cam_ctrl_onoff, 4, 1)
+    CALL(evt_cam_ctrl_onoff, CAMERA_3D, 1)
     RETURN
 EVT_END()
 
+/**
+ * Pushes Mario back from the blocked Twilight Town pipe:
+ * spawns oshimodo_event_sub, sets GSWF_TIK08_TWILIGHT_PIPE_REACHED and returns 0 in LW(0).
+ */
 static EVT_BEGIN(oshimodo_event)
-    SPAWN_EVENT(PTR(oshimodo_event_sub))
-    SET_VALUE(GSWF(1341), 1)
+    SPAWN_EVENT(oshimodo_event_sub)
+    SET_VALUE(GSWF(GSWF_TIK08_TWILIGHT_PIPE_REACHED), 1)
     SET_VALUE(LW(0), 0)
     RETURN
 EVT_END()
 
+/**
+ * Stand-in for the Twilight Town pipe until Frankly's talk at the end of chapter 3: entering it only pushes
+ * Mario back with "The pipe rejected you!". Swapped in by the map init script.
+ */
 static BeroEntry bero_oshimodo[] = {
     {
         "dokan", // hitName
         2, // type
         0, // sfxId
-        9, // directionId
-        100000, // centerPosition
+        BERO_DIR_DOWN, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         NULL, // enterEvent
@@ -106,13 +67,14 @@ static BeroEntry bero_oshimodo[] = {
     },
 };
 
+/** Doors of this room: the pipe to Twilight Town (usu_00) and the south exit back to tik_07. */
 static BeroEntry bero_entry_data[] = {
     {
         "dokan", // hitName
         2, // type
         0, // sfxId
-        9, // directionId
-        100000, // centerPosition
+        BERO_DIR_DOWN, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         NULL, // enterEvent
@@ -128,8 +90,8 @@ static BeroEntry bero_entry_data[] = {
         "s_bero", // hitName
         1, // type
         1, // sfxId
-        20000, // directionId
-        100000, // centerPosition
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         NULL, // enterEvent
@@ -145,13 +107,17 @@ static BeroEntry bero_entry_data[] = {
     {0},
 };
 
+/**
+ * Stand-in for the Twilight Town pipe from the end of chapter 3 until chapter 4 has begun: it leads to the
+ * chapter 4 title screen (sys_01, stg_4) instead. Swapped in by the map init script.
+ */
 static BeroEntry bero_entry_data2[] = {
     {
         "dokan", // hitName
         2, // type
         0, // sfxId
-        9, // directionId
-        100000, // centerPosition
+        BERO_DIR_DOWN, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         NULL, // enterEvent
@@ -166,6 +132,7 @@ static BeroEntry bero_entry_data2[] = {
     {0},
 };
 
+/** Signboard script: says tik_08_02 with Mario's controls disabled. */
 static EVT_BEGIN(evt_kanban)
     CALL(evt_mario_key_onoff, 0)
     CALL(evt_mario_normalize)
@@ -174,30 +141,36 @@ static EVT_BEGIN(evt_kanban)
     RETURN
 EVT_END()
 
+/**
+ * Map init script of tik_08, the room with the pipe to Twilight Town (usu_00).
+ * Starts the sewer music and sets up the exits.
+ * Until STORY_STG3_51_FRANKLYS_HOUSE the pipe (dokan) is replaced with the push-back version,
+ * and during chapter 3's end (STORY_STG3_52_DARKLY to chapter 4) with a second replacement;
+ * adds a signboard (tik_08_02).
+ */
 EVT_BEGIN(tik_08_init_evt)
-    CALL(evt_snd_bgmon, 512, STRING("BGM_STG0_TIK1"))
-    CALL(evt_snd_envon, 272, STRING("ENV_STG0_TIK1"))
+    CALL(evt_snd_bgmon, PSND_FADE_OUT, STRING("BGM_STG0_TIK1"))
+    CALL(evt_snd_envon, PSND_FADE_RESTART | PSND_FADE_IN, STRING("ENV_STG0_TIK1"))
     CALL(evt_snd_set_rev_mode, 2)
     SET_VALUE(LW(0), PTR(bero_entry_data))
     CALL(evt_bero_get_info)
-    CALL_CHILD(PTR(evt_bero_info_run))
-    IF_INT_LESS_OR_EQUAL(GSW(0), 175)
+    CALL_CHILD(evt_bero_info_run)
+    IF_INT_LESS_OR_EQUAL(GSW(GSW_STORY_PROGRESS), STORY_STG3_51_FRANKLYS_HOUSE)
         SET_VALUE(LW(0), STRING("dokan"))
-        CALL_CHILD(PTR(bero_case_switch_off))
+        CALL_CHILD(bero_case_switch_off)
         CALL(evt_bero_overwrite, STRING("dokan"), PTR(bero_oshimodo))
         SET_VALUE(LW(0), STRING("dokan"))
-        CALL_CHILD(PTR(bero_case_switch_on))
+        CALL_CHILD(bero_case_switch_on)
     END_IF
-    IF_INT_GREATER_OR_EQUAL(GSW(0), 176)
-        IF_INT_LESS(GSW(0), 178)
+    IF_INT_GREATER_OR_EQUAL(GSW(GSW_STORY_PROGRESS), STORY_STG3_52_DARKLY)
+        IF_INT_LESS(GSW(GSW_STORY_PROGRESS), STORY_STG4_00_WELCOME_TO_STAGE_4)
             SET_VALUE(LW(0), STRING("dokan"))
-            CALL_CHILD(PTR(bero_case_switch_off))
+            CALL_CHILD(bero_case_switch_off)
             CALL(evt_bero_overwrite, STRING("dokan"), PTR(bero_entry_data2))
             SET_VALUE(LW(0), STRING("dokan"))
-            CALL_CHILD(PTR(bero_case_switch_on))
+            CALL_CHILD(bero_case_switch_on)
         END_IF
     END_IF
-    CALL(evt_mobj_signboard, STRING("board\0\0"), 85, 0, 0, PTR(evt_kanban), 0)
+    CALL(evt_mobj_signboard, STRING("board"), 85, 0, 0, PTR(evt_kanban), 0)
     RETURN
 EVT_END()
-

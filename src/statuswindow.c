@@ -1,3 +1,4 @@
+// Status window: the field HUD (HP, FP, star power gauge, coins, star points) and its show/hide logic.
 #include "port_hook.h"
 #include "icon_ids.h"
 #include "statuswindow.h"
@@ -20,10 +21,10 @@
 #ifdef TARGET_PC
 #include "port/platform.h"
 #endif
-
-#ifndef TARGET_PC /* PC port: the host libc declares these */
-double cos(double);
-#endif
+#include "version.h"
+#include "evt/evt_story.h"
+#include <dolphin/pad.h>
+#include "libc_decls.h"
 
 typedef StatusValue SVal;
 
@@ -69,35 +70,38 @@ alwaysDtEntry partysDt[] = {
     { 38, 80, ICON_1A4, 1.0f },
     { 124, 70, ICON_1D8, 1.0f },
 };
-u16 party_icon[8] = { ICON_1A4, ICON_1A4, ICON_1A5, ICON_1A6, ICON_1A7, ICON_1AE, ICON_1AF, ICON_1B0 };
-u16 gauge_back[8] = { ICON_1B7, ICON_1B8, ICON_1B9, ICON_1BA, ICON_1BB, ICON_1BC, ICON_1BD, ICON_1BE };
+u16 party_icon[8] = {ICON_1A4, ICON_1A4, ICON_1A5, ICON_1A6, ICON_1A7, ICON_1AE, ICON_1AF, ICON_1B0};
+u16 gauge_back[8] = {ICON_1B7, ICON_1B8, ICON_1B9, ICON_1BA, ICON_1BB, ICON_1BC, ICON_1BD, ICON_1BE};
 u16 gauge_wakka[16] = { ICON_1C0, ICON_1C1, ICON_1C2, ICON_1C3, ICON_1C4, ICON_1C5, ICON_1C6, ICON_1C7,
                         ICON_1C8, ICON_1C9, ICON_1CA, ICON_1CB, ICON_1CC, ICON_1CD, ICON_1CE, ICON_1CF };
-#ifdef VERSION_G8ME01
-// US: pause-menu icons per language
-s16 party_icon_tbl[6] = { 0x215, 0x22B, 0x22C, 0x22D, 0x22E, 0x22F };
-s16 gear_icon_tbl[6] = { 0x216, 0x230, 0x231, 0x232, 0x233, 0x234 };
-s16 badge_icon_tbl[6] = { 0x217, 0x235, 0x236, 0x235, 0x237, 0x238 };
-s16 journal_icon_tbl[6] = { 0x218, 0x239, 0x239, 0x239, 0x23A, 0x23B };
+#if VERSION == VERSION_US || VERSION == VERSION_EU
+// US and PAL: pause-menu icons per language (the 2004-09 demos draw no menu hints, so they lack these)
+s16 party_icon_tbl[6] = {0x215, 0x22B, 0x22C, 0x22D, 0x22E, 0x22F};
+s16 gear_icon_tbl[6] = {0x216, 0x230, 0x231, 0x232, 0x233, 0x234};
+s16 badge_icon_tbl[6] = {0x217, 0x235, 0x236, 0x235, 0x237, 0x238};
+s16 journal_icon_tbl[6] = {0x218, 0x239, 0x239, 0x239, 0x23A, 0x23B};
 #endif
-
-
-#pragma force_active on
-u16 gap_07_804118FC_sdata[2] = { 0, 0 };
-#pragma force_active reset
 
 //.sbss
 static SWork* wp;
 
-void statusWinDisp(CameraId camId, void* param);
-void gaugeDisp(s32 sp, f32 x, f32 y);
-void statusGetValue(SVal* values);
-BOOL valueCheck(void);
-void valueUpdate(void);
-void statusWinOpen(void);
-void statusWinClose(void);
-BOOL statusWinCheck(void);
+// The demo draws the status window icons with icon flag 0x4, retail with 0x10.
+#if VERSION <= VERSION_DEMO_JP
+#define SW_ICON_FLAGS 0x4
+#else
+#define SW_ICON_FLAGS 0x10
+#endif
 
+static void statusWinDisp(CameraId camId, void* param);
+static void gaugeDisp(s32 sp, f32 x, f32 y);
+static void statusGetValue(SVal* values);
+static BOOL valueCheck(void);
+static void valueUpdate(void);
+
+/**
+ * Allocates the field HUD state at boot and sets its open
+ * and closed positions (it slides down from above the screen), starting open.
+ */
 void statusWinInit(void) {
     wp = __memAlloc(HEAP_DEFAULT, sizeof(SWork));
     memset(wp, 0, sizeof(SWork));
@@ -110,42 +114,49 @@ void statusWinInit(void) {
     wp->closeY = 334.0f;
     wp->idle = 0;
     wp->forceTimer = 0;
-    wp->flags &= ~0xA;
-    wp->flags |= 5;
+    wp->flags &= ~(STATUSWIN_FLAG_CLOSED | STATUSWIN_FLAG_CLOSE_REQ);
+    wp->flags |= STATUSWIN_FLAG_OPEN | STATUSWIN_FLAG_OPEN_REQ;
 }
 
+/** Resets the HUD's idle timers on a map change and turns a pending forced open/close into a normal open/close. */
 void statusWinReInit(void) {
     wp->idle = 0;
     wp->forceTimer = 0;
-    if (wp->flags & 0x10) {
-        wp->flags &= ~0x10;
-        wp->flags &= ~0xA;
-        wp->flags |= 5;
-    } else if (wp->flags & 1) {
-        wp->flags &= ~0xA;
-        wp->flags |= 5;
+    if (wp->flags & STATUSWIN_FLAG_FORCE_OPEN) {
+        wp->flags &= ~STATUSWIN_FLAG_FORCE_OPEN;
+        wp->flags &= ~(STATUSWIN_FLAG_CLOSED | STATUSWIN_FLAG_CLOSE_REQ);
+        wp->flags |= STATUSWIN_FLAG_OPEN | STATUSWIN_FLAG_OPEN_REQ;
+    } else if (wp->flags & STATUSWIN_FLAG_OPEN) {
+        wp->flags &= ~(STATUSWIN_FLAG_CLOSED | STATUSWIN_FLAG_CLOSE_REQ);
+        wp->flags |= STATUSWIN_FLAG_OPEN | STATUSWIN_FLAG_OPEN_REQ;
     }
-    if (wp->flags & 0x20) {
-        wp->flags &= ~0x20;
-        wp->flags |= 0xA;
-        wp->flags &= ~5;
-    } else if (wp->flags & 2) {
-        wp->flags |= 0xA;
-        wp->flags &= ~5;
+    if (wp->flags & STATUSWIN_FLAG_FORCE_CLOSE) {
+        wp->flags &= ~STATUSWIN_FLAG_FORCE_CLOSE;
+        wp->flags |= STATUSWIN_FLAG_CLOSED | STATUSWIN_FLAG_CLOSE_REQ;
+        wp->flags &= ~(STATUSWIN_FLAG_OPEN | STATUSWIN_FLAG_OPEN_REQ);
+    } else if (wp->flags & STATUSWIN_FLAG_CLOSED) {
+        wp->flags |= STATUSWIN_FLAG_CLOSED | STATUSWIN_FLAG_CLOSE_REQ;
+        wp->flags &= ~(STATUSWIN_FLAG_OPEN | STATUSWIN_FLAG_OPEN_REQ);
     }
 }
 
+/**
+ * Per-frame HUD logic in the field: hidden when Mario is not himself (a transformation or another character)
+ * and left alone in the Pit of 100 Trials ("yuu").
+ * While Mario can move it opens after he stands still for 10 seconds, closes when he walks,
+ * toggles with Z (held for 10 seconds, with a sound) and pops open for 2 seconds when a value changes.
+ * Then starts and runs the slide animation (16 frames in, 28 out).
+ */
 void statusWinMain(void) {
     MarioWork* mario;
     f32 inv;
     f32 one;
     f32 t;
 
-
     one = 1.0f;
     mario = marioGetPtr();
     if (mario->characterId) {
-        wp->flags = 2;
+        wp->flags = STATUSWIN_FLAG_CLOSED;
         wp->duration = one;
         wp->timer = one;
         wp->tEnd = 0.0f;
@@ -156,9 +167,9 @@ void statusWinMain(void) {
         return;
     }
     switch (seqGetSeq()) {
-        case 2:
-        case 3:
-            if ((marioChkCtrl() ? FALSE : TRUE) || (marioChkKey() ? FALSE : TRUE) || !(mario->flags & 1)) {
+        case SEQ_GAME:
+        case SEQ_MAP_CHANGE:
+            if ((marioChkCtrl() ? FALSE : TRUE) || (marioChkKey() ? FALSE : TRUE) || !(mario->flags & MARIO_FLAG_ACTIVE)) {
                 if (statusWinCheck()) {
                     statusWinClose();
                 }
@@ -172,7 +183,9 @@ void statusWinMain(void) {
                         wp->idle = gp->framerate * 10;
                         if (!wp->forcedClose && !wp->forceTimer && !statusWinCheck()) {
                             statusWinOpen();
-                            wp->flags |= 0x100;
+#if VERSION >= VERSION_JP
+                            wp->flags |= STATUSWIN_FLAG_MENU_HINTS;
+#endif
                         }
                     }
                 } else {
@@ -182,12 +195,12 @@ void statusWinMain(void) {
                         statusWinClose();
                     }
                 }
-                if (mario->buttonTrg & 0x10) {
+                if (mario->buttonTrg & PAD_TRIGGER_Z) {
                     if (!statusWinCheck()) {
                         statusWinOpen();
                         wp->forceTimer = gp->framerate * 10;
                         psndSFXOn((const char*)0x2A);
-                        wp->flags |= 0x100;
+                        wp->flags |= STATUSWIN_FLAG_MENU_HINTS;
                     } else {
                         statusWinClose();
                         wp->forceTimer = gp->framerate * 10;
@@ -206,14 +219,14 @@ void statusWinMain(void) {
                 wp->forceTimer--;
             }
             wp->prevPos = mario->position;
-            if (wp->flags & 0x10) {
-                wp->flags &= ~0xA;
+            if (wp->flags & STATUSWIN_FLAG_FORCE_OPEN) {
+                wp->flags &= ~(STATUSWIN_FLAG_CLOSED | STATUSWIN_FLAG_CLOSE_REQ);
             }
-            if (wp->flags & 0x20) {
-                wp->flags &= ~5;
+            if (wp->flags & STATUSWIN_FLAG_FORCE_CLOSE) {
+                wp->flags &= ~(STATUSWIN_FLAG_OPEN | STATUSWIN_FLAG_OPEN_REQ);
             }
             break;
-        case 4:
+        case SEQ_BATTLE:
             break;
         default:
             if (statusWinCheck()) {
@@ -221,17 +234,17 @@ void statusWinMain(void) {
             }
             break;
     }
-    if (wp->flags & 4 || wp->flags & 8 || wp->flags & 0x40 || wp->flags & 0x80) {
+    if (wp->flags & STATUSWIN_FLAG_OPEN_REQ || wp->flags & STATUSWIN_FLAG_CLOSE_REQ || wp->flags & STATUSWIN_FLAG_FORCE_OPEN_REQ || wp->flags & STATUSWIN_FLAG_FORCE_CLOSE_REQ) {
         wp->tStart = wp->t;
-        wp->tEnd = (wp->flags & 0x44) ? 1.0f : 0.0f;
+        wp->tEnd = (wp->flags & (STATUSWIN_FLAG_OPEN_REQ | STATUSWIN_FLAG_FORCE_OPEN_REQ)) ? 1.0f : 0.0f;
         wp->timer = 0.0f;
-        wp->duration = (wp->flags & 0x44) ? 16.0f / wp->speed : 28.0f / wp->speed;
-        wp->flags &= ~4;
-        wp->flags &= ~8;
-        wp->flags &= ~0x40;
-        wp->flags &= ~0x80;
+        wp->duration = (wp->flags & (STATUSWIN_FLAG_OPEN_REQ | STATUSWIN_FLAG_FORCE_OPEN_REQ)) ? 16.0f / wp->speed : 28.0f / wp->speed;
+        wp->flags &= ~STATUSWIN_FLAG_OPEN_REQ;
+        wp->flags &= ~STATUSWIN_FLAG_CLOSE_REQ;
+        wp->flags &= ~STATUSWIN_FLAG_FORCE_OPEN_REQ;
+        wp->flags &= ~STATUSWIN_FLAG_FORCE_CLOSE_REQ;
     }
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
     wp->timer += 60.0f / gp->framerate;
 #else
     wp->timer += one;
@@ -240,7 +253,7 @@ void statusWinMain(void) {
         wp->timer = wp->duration;
         wp->t = wp->tEnd;
         if (wp->t == 0.0f) {
-            wp->flags &= ~0x100;
+            wp->flags &= ~STATUSWIN_FLAG_MENU_HINTS;
         }
     } else {
         inv = (f32)cos(3.1415927f * wp->timer / wp->duration);
@@ -251,7 +264,7 @@ void statusWinMain(void) {
     wp->x = wp->openX * t + wp->closeX * inv;
     wp->y = wp->openY * t + wp->closeY * inv;
     valueUpdate();
-    if (!(wp->flags & 0x1000)) {
+    if (!(wp->flags & STATUSWIN_FLAG_DISP_OFF)) {
         dispEntry(CAMERA_2D, 500.0f, 0, statusWinDisp, NULL);
     }
 }
@@ -259,12 +272,18 @@ void statusWinMain(void) {
 // iconDispGx's original prototype takes the scale first (f1 either way); calling it in that
 // order gives the target's argument evaluation order.
 #ifdef TARGET_PC /* Win64 assigns int/float registers by position: call with the real argument order */
-static inline void iconDispGxScaleFirst(f32 scale, Vec* pos, s16 flags, u16 icon) { iconDispGx(pos, flags, icon, scale); }
+static inline void iconDispGxScaleFirst(f32 scale, Vec* pos, s16 flags, u16 icon) {
+    iconDispGx(pos, flags, icon, scale);
+}
 #else
 #define iconDispGxScaleFirst ((void (*)(f32, Vec*, s16, u16))iconDispGx)
 #endif
 
-void gaugeDisp(s32 sp, f32 x, f32 y) {
+/**
+ * Draws the Star Power gauge at (x, y): one 32-pixel slot per crystal star obtained,
+ * full slots for each 100 of sp and the partly filled slot in 15 steps.
+ */
+static void gaugeDisp(s32 sp, f32 x, f32 y) {
     s32 i;
     s32 max;
     s32 full;
@@ -272,7 +291,7 @@ void gaugeDisp(s32 sp, f32 x, f32 y) {
 
     max = 0;
     for (i = 0; i < sizeof(gauge_back) / sizeof(gauge_back[0]); i++) {
-        if (*(u16*)&pouchGetPtr()->mStarPowersObtained & (1 << i)) {
+        if (pouchGetPtr()->starPowersObtained & (1 << i)) {
             max += 100;
         }
     }
@@ -293,17 +312,17 @@ void gaugeDisp(s32 sp, f32 x, f32 y) {
         pos.x = x + (f32)(full * 32);
         pos.y = y;
         pos.z = 0.0f;
-        iconDispGxScaleFirst(1.0f, &pos, 0x10, gauge_wakka[part]);
+        iconDispGxScaleFirst(1.0f, &pos, SW_ICON_FLAGS, gauge_wakka[part]);
     }
     for (i = 0; i < sizeof(gauge_back) / sizeof(gauge_back[0]); i++) {
         Vec pos2;
-        if (!(*(u16*)&pouchGetPtr()->mStarPowersObtained & (1 << i))) {
+        if (!(pouchGetPtr()->starPowersObtained & (1 << i))) {
             break;
         }
         pos2.x = x + (f32)(i * 32);
         pos2.y = 12.0f + y;
         pos2.z = 0.0f;
-        iconDispGxScaleFirst(1.0f, &pos2, 0x10, i < full ? gauge_back[i] : ICON_1BF);
+        iconDispGxScaleFirst(1.0f, &pos2, SW_ICON_FLAGS, i < full ? gauge_back[i] : ICON_1BF);
     }
 }
 
@@ -311,10 +330,14 @@ static inline void
 numDisp(f32 x, f32 y, s32 value, BOOL small) {
     Mtx m;
     MTXTrans(m, x, y, 0.0f);
-    iconNumberDispGx(m, value, small, (GXColor){ 0xFF, 0xFF, 0xFF, 0xFF });
+    iconNumberDispGx(m, value, small, (GXColor){0xFF, 0xFF, 0xFF, 0xFF});
 }
 
-void PORT_HOOKABLE(statusWinDisp)(CameraId camId, void* param) {
+/**
+ * Draws the HUD: the HP, FP, Star Power and coin/Star Point banners with their icons and numbers,
+ * Mario's and the partner's HP, and the gauge, blinking any value flagged by the stat blink functions.
+ */
+static void PORT_HOOKABLE(statusWinDisp)(CameraId camId, void* param) {
     alwaysDtEntry* e;
     s32 i;
     s32 blinkOn;
@@ -336,7 +359,7 @@ void PORT_HOOKABLE(statusWinDisp)(CameraId camId, void* param) {
 
     e = alwaysDt;
     for (i = 0; i < sizeof(alwaysDt) / sizeof(alwaysDt[0]); i++, e++) {
-        if (e->iconId == ICON_1D2 && !*(u16*)&pouchGetPtr()->mStarPowersObtained) {
+        if (e->iconId == ICON_1D2 && !pouchGetPtr()->starPowersObtained) {
             break;
         }
         if (!blinkOn) {
@@ -357,7 +380,7 @@ void PORT_HOOKABLE(statusWinDisp)(CameraId camId, void* param) {
         MTXTrans(m, HUD_X(x, e->xpos) + (f32)e->xpos, y - (f32)e->ypos, 0.0f);
         MTXScale(s, e->scale, e->scale, e->scale);
         MTXConcat(m, s, m);
-        iconDispGxCol(m, 0x10, e->iconId, (GXColor){ 0xFF, 0xFF, 0xFF, 0xFF });
+        iconDispGxCol(m, SW_ICON_FLAGS, e->iconId, (GXColor){0xFF, 0xFF, 0xFF, 0xFF});
     }
 
     if (!(wp->blink & 1) || blinkOn) {
@@ -378,8 +401,8 @@ void PORT_HOOKABLE(statusWinDisp)(CameraId camId, void* param) {
 
     if (wp->cur.party) {
         partysDt[1].iconId = party_icon[wp->cur.party];
-        if (wp->cur.party == 4) {
-            switch (pouchGetPartyColor(4)) {
+        if (wp->cur.party == PARTNER_YOSHI) {
+            switch (pouchGetPartyColor(PARTNER_YOSHI)) {
                 case 0:
                     partysDt[1].iconId = ICON_1A7;
                     break;
@@ -412,7 +435,7 @@ void PORT_HOOKABLE(statusWinDisp)(CameraId camId, void* param) {
             MTXTrans(m, HUD_X(x, e->xpos) + (f32)e->xpos, y - (f32)e->ypos, 0.0f);
             MTXScale(s, e->scale, e->scale, e->scale);
             MTXConcat(m, s, m);
-            iconDispGxCol(m, 0x10, e->iconId, (GXColor){ 0xFF, 0xFF, 0xFF, 0xFF });
+            iconDispGxCol(m, SW_ICON_FLAGS, e->iconId, (GXColor){0xFF, 0xFF, 0xFF, 0xFF});
         }
         if (!(wp->blink & 8) || blinkOn) {
             numDisp(120.0f + HUD_X(x, 120) - 6.0f - 10.0f, 4.0f + (2.0f + (y - 78.0f)), wp->cur.partyHp, 0);
@@ -420,65 +443,72 @@ void PORT_HOOKABLE(statusWinDisp)(CameraId camId, void* param) {
         numDisp(186.0f + HUD_X(x, 186) - 6.0f - 10.0f, 4.0f + (2.0f + (y - 78.0f)), wp->cur.partyMaxHp, 1);
     }
 
-    if (wp->flags & 0x100 && !gp->inBattle) {
+#if VERSION == VERSION_JP || VERSION == VERSION_US || VERSION == VERSION_EU
+    // Only the releases draw the menu hints; no demo has them (the 2004-09 demos still set the flag).
+    if (wp->flags & STATUSWIN_FLAG_MENU_HINTS && !gp->inBattle) {
         y2 = -180.0f + (wp->openY - wp->y);
         MTXTrans(m2, HUD_ABS(-190.0f), y2, 0.0f);
         MTXScale(s2, 0.75f, 0.75f, 0.75f);
         MTXConcat(m2, s2, m2);
-#ifdef VERSION_G8ME01
-        iconDispGxCol(m2, 0x10, ICON_212, (GXColor){ 0xFF, 0xFF, 0xFF, 0xFF });
-        if (swByteGet(0) >= 7 || partyChkJoin(1)) {
+        // US and PAL pick the menu icons (and the badge icon's offset) per language; JP uses fixed icons
+#if VERSION >= VERSION_US
+        iconDispGxCol(m2, 0x10, ICON_212, (GXColor){0xFF, 0xFF, 0xFF, 0xFF});
+        if (swByteGet(GSW_STORY_PROGRESS) >= STORY_STG0_07_GOOMBELLA_JOINS || partyChkJoin(PARTNER_GOOMBELLA)) {
             MTXTrans(m2, HUD_ABS(-250.0f), 16.0f + y2, 0.0f);
             MTXScale(s2, 0.75f, 0.75f, 0.75f);
             MTXConcat(m2, s2, m2);
-            iconDispGxCol(m2, 0x10, (u16)party_icon_tbl[gp->language], (GXColor){ 0xFF, 0xFF, 0xFF, 0xFF });
+            iconDispGxCol(m2, 0x10, (u16)party_icon_tbl[gp->language], (GXColor){0xFF, 0xFF, 0xFF, 0xFF});
         }
         MTXTrans(m2, HUD_ABS(-190.0f), 50.0f + y2, 0.0f);
         MTXScale(s2, 0.75f, 0.75f, 0.75f);
         MTXConcat(m2, s2, m2);
-        iconDispGxCol(m2, 0x10, (u16)gear_icon_tbl[gp->language], (GXColor){ 0xFF, 0xFF, 0xFF, 0xFF });
-        if (swByteGet(0) >= 20 || pouchGetHaveBadgeCnt()) {
-            f32 xoff[6] = { 0.0f, 10.0f, 3.0f, 8.0f, 8.0f, 0.0f };
+        iconDispGxCol(m2, 0x10, (u16)gear_icon_tbl[gp->language], (GXColor){0xFF, 0xFF, 0xFF, 0xFF});
+        if (swByteGet(GSW_STORY_PROGRESS) >= STORY_STG0_17_BADGE_TUTORIAL || pouchGetHaveBadgeCnt()) {
+            f32 xoff[6] = {0.0f, 10.0f, 3.0f, 8.0f, 8.0f, 0.0f};
             MTXTrans(m2, HUD_ABS(-130.0f) + xoff[gp->language], 16.0f + y2, 0.0f);
             MTXScale(s2, 0.75f, 0.75f, 0.75f);
             MTXConcat(m2, s2, m2);
-            iconDispGxCol(m2, 0x10, (u16)badge_icon_tbl[gp->language], (GXColor){ 0xFF, 0xFF, 0xFF, 0xFF });
+            iconDispGxCol(m2, 0x10, (u16)badge_icon_tbl[gp->language], (GXColor){0xFF, 0xFF, 0xFF, 0xFF});
         }
         MTXTrans(m2, HUD_ABS(-190.0f), y2 - 25.0f, 0.0f);
         MTXScale(s2, 0.75f, 0.75f, 0.75f);
         MTXConcat(m2, s2, m2);
-        iconDispGxCol(m2, 0x10, (u16)journal_icon_tbl[gp->language], (GXColor){ 0xFF, 0xFF, 0xFF, 0xFF });
+        iconDispGxCol(m2, 0x10, (u16)journal_icon_tbl[gp->language], (GXColor){0xFF, 0xFF, 0xFF, 0xFF});
 #else
-        iconDispGxCol(m2, 0x10, 0x212, (GXColor){ 0xFF, 0xFF, 0xFF, 0xFF });
-        if (swByteGet(0) >= 7 || partyChkJoin(1)) {
+        iconDispGxCol(m2, 0x10, 0x212, (GXColor){0xFF, 0xFF, 0xFF, 0xFF});
+        if (swByteGet(GSW_STORY_PROGRESS) >= STORY_STG0_07_GOOMBELLA_JOINS || partyChkJoin(PARTNER_GOOMBELLA)) {
             MTXTrans(m2, HUD_ABS(-250.0f), 16.0f + y2, 0.0f);
             MTXScale(s2, 0.75f, 0.75f, 0.75f);
             MTXConcat(m2, s2, m2);
-            iconDispGxCol(m2, 0x10, 0x213, (GXColor){ 0xFF, 0xFF, 0xFF, 0xFF });
+            iconDispGxCol(m2, 0x10, 0x213, (GXColor){0xFF, 0xFF, 0xFF, 0xFF});
         }
         MTXTrans(m2, HUD_ABS(-190.0f), 50.0f + y2, 0.0f);
         MTXScale(s2, 0.75f, 0.75f, 0.75f);
         MTXConcat(m2, s2, m2);
-        iconDispGxCol(m2, 0x10, 0x214, (GXColor){ 0xFF, 0xFF, 0xFF, 0xFF });
-        if (swByteGet(0) >= 20 || pouchGetHaveBadgeCnt()) {
+        iconDispGxCol(m2, 0x10, 0x214, (GXColor){0xFF, 0xFF, 0xFF, 0xFF});
+        if (swByteGet(GSW_STORY_PROGRESS) >= STORY_STG0_17_BADGE_TUTORIAL || pouchGetHaveBadgeCnt()) {
             MTXTrans(m2, HUD_ABS(-130.0f), 16.0f + y2, 0.0f);
             MTXScale(s2, 0.75f, 0.75f, 0.75f);
             MTXConcat(m2, s2, m2);
-            iconDispGxCol(m2, 0x10, 0x215, (GXColor){ 0xFF, 0xFF, 0xFF, 0xFF });
+            iconDispGxCol(m2, 0x10, 0x215, (GXColor){0xFF, 0xFF, 0xFF, 0xFF});
         }
         MTXTrans(m2, HUD_ABS(-190.0f), y2 - 25.0f, 0.0f);
         MTXScale(s2, 0.75f, 0.75f, 0.75f);
         MTXConcat(m2, s2, m2);
-        iconDispGxCol(m2, 0x10, 0x216, (GXColor){ 0xFF, 0xFF, 0xFF, 0xFF });
+        iconDispGxCol(m2, 0x10, 0x216, (GXColor){0xFF, 0xFF, 0xFF, 0xFF});
 #endif
     }
+#endif
 }
 
-void statusGetValue(SVal* values) {
+/**
+ * Reads the values the HUD shows: from the pouch in the field (the partner from the party),
+ * from Mario's and the partner's battle units in battle.
+ */
+static void statusGetValue(SVal* values) {
     BattleWork* bw;
     BattleUnit* mario;
     BattleUnit* party;
-
 
     if (!gp->inBattle) {
         values->hp = pouchGetHP();
@@ -489,9 +519,25 @@ void statusGetValue(SVal* values) {
         values->maxAp = pouchGetMaxAP();
         values->starPoints = pouchGetStarPoint();
         values->coins = pouchGetCoin();
+#if VERSION <= VERSION_DEMO_JP
+        // the demo remembers the last partner in cur.lastParty and shows it while in bg mode
+        if (!marioBgmodeChk()) {
+            values->party = marioGetParty();
+            values->partyHp = pouchGetPtr()->partyData[values->party].currentHP;
+            values->partyMaxHp = pouchGetPtr()->partyData[values->party].maximumHP;
+            if (values->party) {
+                wp->cur.lastParty = values->party;
+            }
+        } else {
+            values->party = wp->cur.lastParty;
+            values->partyHp = pouchGetPtr()->partyData[values->party].currentHP;
+            values->partyMaxHp = pouchGetPtr()->partyData[values->party].maximumHP;
+        }
+#else
         values->party = !marioBgmodeChk() ? (s16)marioGetParty() : marioGetPtr()->prevPartyMemberId[0];
         values->partyHp = pouchGetPtr()->partyData[values->party].currentHP;
         values->partyMaxHp = pouchGetPtr()->partyData[values->party].maximumHP;
+#endif
     } else {
         bw = _battleWorkPointer;
         mario = BattleGetMarioPtr(bw);
@@ -516,7 +562,11 @@ void statusGetValue(SVal* values) {
     }
 }
 
-BOOL valueCheck(void) {
+/**
+ * Returns TRUE when any shown value differs from what the HUD last displayed, and marks HP,
+ * FP or Star Power changes for a blink.
+ */
+static BOOL valueCheck(void) {
     SVal v;
     BOOL changed = FALSE;
 
@@ -571,6 +621,10 @@ BOOL valueCheck(void) {
     return changed;
 }
 
+/**
+ * Step for the counting-number animation: a tenth of the remaining difference, at least 1 toward the target,
+ * 0 when equal.
+ */
 static inline s32 calcStep(s32 target, s32 cur) {
     s32 d = target - cur;
     if (d) {
@@ -585,7 +639,11 @@ static inline s32 calcStep(s32 target, s32 cur) {
     return d;
 }
 
-void valueUpdate(void) {
+/**
+ * Counts the displayed HUD numbers toward the real values every other frame while the window is open,
+ * with the coin counting sound every 8th frame (6th in the demos).
+ */
+static void valueUpdate(void) {
     static s32 count;
     SVal v;
     s32 d;
@@ -600,7 +658,11 @@ void valueUpdate(void) {
         return;
     }
     d = calcStep(v.coins, wp->cur.coins);
+#if VERSION <= VERSION_DEMO_JP
+    if (d && !(count % 6)) {
+#else
     if (d && !(count % 8)) {
+#endif
         psndSFXOn("SFX_COUNT_COIN1");
     }
     wp->cur.hp += calcStep(v.hp, wp->cur.hp);
@@ -624,63 +686,74 @@ void valueUpdate(void) {
     }
 }
 
+/** Requests the HUD to slide in. */
 void statusWinOpen(void) {
-    wp->flags &= ~0xA;
-    wp->flags |= 5;
+    wp->flags &= ~(STATUSWIN_FLAG_CLOSED | STATUSWIN_FLAG_CLOSE_REQ);
+    wp->flags |= STATUSWIN_FLAG_OPEN | STATUSWIN_FLAG_OPEN_REQ;
 }
 
+/** Requests the HUD to slide out. */
 void statusWinClose(void) {
-    wp->flags |= 0xA;
-    wp->flags &= ~5;
+    wp->flags |= STATUSWIN_FLAG_CLOSED | STATUSWIN_FLAG_CLOSE_REQ;
+    wp->flags &= ~(STATUSWIN_FLAG_OPEN | STATUSWIN_FLAG_OPEN_REQ);
 }
 
+/** Slides the HUD in and pins it open regardless of Mario's movement, until statusWinForceOff. */
 void statusWinForceOpen(void) {
-    wp->flags &= ~0xA;
-    wp->flags &= ~0xA0;
-    wp->flags |= 0x50;
+    wp->flags &= ~(STATUSWIN_FLAG_CLOSED | STATUSWIN_FLAG_CLOSE_REQ);
+    wp->flags &= ~(STATUSWIN_FLAG_FORCE_CLOSE | STATUSWIN_FLAG_FORCE_CLOSE_REQ);
+    wp->flags |= STATUSWIN_FLAG_FORCE_OPEN | STATUSWIN_FLAG_FORCE_OPEN_REQ;
 }
 
+/** Slides the HUD out and keeps it closed, until statusWinForceOff or statusWinForceCloseClear. */
 void statusWinForceClose(void) {
-    wp->flags &= ~5;
-    wp->flags &= ~0x50;
-    wp->flags |= 0xA0;
+    wp->flags &= ~(STATUSWIN_FLAG_OPEN | STATUSWIN_FLAG_OPEN_REQ);
+    wp->flags &= ~(STATUSWIN_FLAG_FORCE_OPEN | STATUSWIN_FLAG_FORCE_OPEN_REQ);
+    wp->flags |= STATUSWIN_FLAG_FORCE_CLOSE | STATUSWIN_FLAG_FORCE_CLOSE_REQ;
 }
 
+/** Drops a forced close without reopening the HUD. */
 void statusWinForceCloseClear(void) {
-    wp->flags &= ~0xA0;
+    wp->flags &= ~(STATUSWIN_FLAG_FORCE_CLOSE | STATUSWIN_FLAG_FORCE_CLOSE_REQ);
 }
 
+/** Ends a forced open or close, leaving the HUD in the matching normal state; called when message windows close. */
 void statusWinForceOff(void) {
-    if (wp->flags & 0x10) {
-        wp->flags &= ~0x10;
+    if (wp->flags & STATUSWIN_FLAG_FORCE_OPEN) {
+        wp->flags &= ~STATUSWIN_FLAG_FORCE_OPEN;
         statusWinOpen();
-    } else if (wp->flags & 1) {
+    } else if (wp->flags & STATUSWIN_FLAG_OPEN) {
         statusWinOpen();
     }
-    if (wp->flags & 0x20) {
-        wp->flags &= ~0x20;
+    if (wp->flags & STATUSWIN_FLAG_FORCE_CLOSE) {
+        wp->flags &= ~STATUSWIN_FLAG_FORCE_CLOSE;
         statusWinClose();
-    } else if (wp->flags & 2) {
+    } else if (wp->flags & STATUSWIN_FLAG_CLOSED) {
         statusWinClose();
     }
 }
 
+/** Lets the HUD draw again after statusWinDispOff. */
 void statusWinDispOn(void) {
-    wp->flags &= ~0x1000;
+    wp->flags &= ~STATUSWIN_FLAG_DISP_OFF;
 }
 
+/** Stops drawing the HUD without changing whether it is open. */
 void statusWinDispOff(void) {
-    wp->flags |= 0x1000;
+    wp->flags |= STATUSWIN_FLAG_DISP_OFF;
 }
 
+/** Returns TRUE when the HUD is open or forced open. */
 BOOL statusWinCheck(void) {
-    return (wp->flags & 0x11) ? TRUE : FALSE;
+    return (wp->flags & (STATUSWIN_FLAG_OPEN | STATUSWIN_FLAG_FORCE_OPEN)) ? TRUE : FALSE;
 }
 
+/** Returns TRUE when a shown value changed since the last display (see valueCheck). */
 BOOL statusWinCheckUpdate(void) {
     return valueCheck() != 0;
 }
 
+/** Snaps every displayed HUD value to the current one without the counting animation. */
 void statusWinForceUpdate(void) {
     SVal v;
 
@@ -700,6 +773,7 @@ void statusWinForceUpdate(void) {
     }
 }
 
+/** Snaps the displayed coin count to the current one. */
 void statusWinForceUpdateCoin(void) {
     SVal v;
 
@@ -707,6 +781,7 @@ void statusWinForceUpdateCoin(void) {
     wp->cur.coins = v.coins;
 }
 
+/** Returns the screen position of the Star Power gauge, where the audience's Star Power sparkles fly to. */
 Vec statusGetApPos(void) {
     Vec pos;
     pos.x = wp->x + (f32)alwaysDt[12].xpos;
@@ -715,34 +790,47 @@ Vec statusGetApPos(void) {
     return pos;
 }
 
+/** Makes the Star Power number blink for frames, replacing any other blink. */
 void statusAPBlink(s32 frames) {
     wp->blink = 0;
     wp->blink |= 4;
     wp->blinkTimer = frames;
 }
 
+/** The demo has no N_statusClearBlink. */
+#if VERSION >= VERSION_JP
 void N_statusClearBlink(void) {
     wp->blink = 0;
 }
+#endif
 
+/** Makes the FP number blink for frames. */
 void statusFPBlink(s32 frames) {
     wp->blink |= 2;
     wp->blinkTimer = frames;
 }
 
+/** Makes Mario's HP number blink for frames. */
 void statusMarioHPBlink(s32 frames) {
     wp->blink |= 1;
     wp->blinkTimer = frames;
 }
 
+/** Makes the partner's HP number blink for frames. */
 void statusPartyHPBlink(s32 frames) {
     wp->blink |= 8;
     wp->blinkTimer = frames;
 }
 
+/**
+ * Stand-in for a stripped function: it is in no version's symbols and nothing calls it, so the link drops it.
+ * It fills f with 0, 1, pi and 0.5 (and 60 in US and PAL), the float constants the file uses,
+ * in the order the original keeps them.
+ */
+// FAKE: uncalled stand-in for a stripped function; orders 0, 1, pi, 0.5 (and US/PAL 60) in .sdata2
 void statusWinEase(f32* f) {
     f[0] = 0.0f;
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
     // US pool order: 0, 60 (framerate step), pi, 1, 0.5
     f[4] = 60.0f;
     f[2] = 3.1415927f;

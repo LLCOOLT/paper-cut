@@ -1,3 +1,4 @@
+// eff_rankup.c: rank-up banner (ランクアップ), used by ItemEvent_Teki_Kyouka; effRankupEntry with its main and draw callbacks.
 #pragma once
 
 #include "driver/camdrv.h"
@@ -5,5 +6,3 @@
 #include <dolphin/types.h>
 
 EffectEntry* effRankupEntry(s32 type, f32 x, f32 y, f32 z);
-void effRankupMain(EffectEntry* effect);
-void effRankupDisp(CameraId cameraId, EffectEntry* effect);

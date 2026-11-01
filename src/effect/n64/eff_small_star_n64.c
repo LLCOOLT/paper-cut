@@ -1,3 +1,5 @@
+// Paper Mario 64 effect: `count` small star sprites scatter from a point with the given velocity.
+#include "eff/n64/eff_small_star_n64.h"
 #include "eff/eff_n64.h"
 #include "driver/camdrv.h"
 #include "driver/dispdrv.h"
@@ -6,61 +8,8 @@
 #include "system.h"
 #include <dolphin/gx.h>
 #include <dolphin/mtx.h>
-#include "eff/eff_magic1_n64.h"
 #include "libc_decls.h"
-
-#define NAN (*(f32*)__float_nan)
-
-#define FP_NAN 1
-#define FP_INFINITE 2
-#define FP_ZERO 3
-#define FP_NORMAL 4
-#define FP_SUBNORMAL 5
-
-static inline s32 __fpclassifyf(f32 x) {
-    switch (*(s32*)&x & 0x7F800000) {
-        case 0x7F800000:
-            if (*(s32*)&x & 0x007FFFFF) {
-                return FP_NAN;
-            } else {
-                return FP_INFINITE;
-            }
-            break;
-        case 0:
-            if (*(s32*)&x & 0x007FFFFF) {
-                return FP_SUBNORMAL;
-            } else {
-                return FP_ZERO;
-            }
-            break;
-        default:
-            return FP_NORMAL;
-    }
-}
-
-#define fpclassify(x) __fpclassifyf(x)
-#define isnan(x) (fpclassify(x) == FP_NAN)
-
-#ifndef TARGET_PC /* PC port: the host libc declares these */
-static inline f32 sqrtf(f32 x) {
-    const f64 _half = .5;
-    const f64 _three = 3.0;
-
-    if (x > 0.0f) {
-        f64 guess = __frsqrte(x);
-        guess = _half * guess * (_three - guess * guess * x);
-        guess = _half * guess * (_three - guess * guess * x);
-        guess = _half * guess * (_three - guess * guess * x);
-        return x * guess;
-    } else if (x < 0.0) {
-        return NAN;
-    } else if (isnan(x)) {
-        return NAN;
-    } else {
-        return x;
-    }
-}
-#endif
+#include <math.h>
 
 #define PI 3.1415927f
 #define HALF_PI 1.5707964f
@@ -77,12 +26,15 @@ typedef struct EffSmallStarN64Work {
     u8 camera;    // 0x30
 } EffSmallStarN64Work;
 
-static f32 kaiten;
+static void effSmallStarMain(EffectEntry* effect);
+static void effSmallStarDisp(CameraId cameraId, EffectEntry* effect);
 
-void effSmallStarMain(EffectEntry* effect);
-void effSmallStarDisp(CameraId cameraId, EffectEntry* effect);
-
+/**
+ * Spawns `count` small stars at (x, y, z); type picks the spread pattern and (dx, dy, dz) the base velocity.
+ * Used by the Koopa partner (party_nokonoko), eff_small_star.c and event scripts.
+ */
 EffectEntry* effSmallStarN64Entry(s32 type, s32 count, f32 x, f32 y, f32 z, f32 dx, f32 dy, f32 dz) {
+    static f32 kaiten;
     EffectEntry* effect;
     EffSmallStarN64Work* w;
     f32 px, py, pz;
@@ -125,7 +77,7 @@ EffectEntry* effSmallStarN64Entry(s32 type, s32 count, f32 x, f32 y, f32 z, f32 
         return NULL;
     }
     inv = 1.0f / sqrtf(len);
-    effect->type = "SmallStarN64\0\0\0";
+    effect->type = "SmallStarN64";
     effect->count = count;
     px *= inv;
     py *= inv;
@@ -147,70 +99,70 @@ EffectEntry* effSmallStarN64Entry(s32 type, s32 count, f32 x, f32 y, f32 z, f32 
         w->position.z = z;
         w->camera = 4;
         switch (type) {
-        case 0:
-        case 1:
-        case 2: {
-            Vec dir = {0.0f, 0.0f, 0.0f};
-            dir.x = dx;
-            dir.y = dy;
-            dir.z = dz;
-            axis = dir;
-            PSMTXRotAxisRad(mtx, &axis, 0.017453292f * (360.0f * (f32)i / (f32)(count - 1)));
-            w->velocity.x = dx + mtx[0][0] * px + mtx[0][1] * py + mtx[0][2] * pz;
-            w->velocity.y = dy + mtx[1][0] * px + mtx[1][1] * py + mtx[1][2] * pz;
-            w->velocity.z = dz + mtx[2][0] * px + mtx[2][1] * py + mtx[2][2] * pz;
-            break;
-        }
-        case 3: {
-            Vec v = {0.0f, 0.0f, 0.0f};
-            f32 t;
-            v.x = (f32)sin(ang);
-            v.z = -(f32)cos(ang);
-            axis = v;
-            if (count == 1) {
-                t = 0.0f;
-            } else {
-                t = 100.0f * (f32)i / (f32)(count - 1) - 50.0f;
+            case 0:
+            case 1:
+            case 2: {
+                Vec dir = {0.0f, 0.0f, 0.0f};
+                dir.x = dx;
+                dir.y = dy;
+                dir.z = dz;
+                axis = dir;
+                PSMTXRotAxisRad(mtx, &axis, 0.017453292f * (360.0f * (f32)i / (f32)(count - 1)));
+                w->velocity.x = dx + mtx[0][0] * px + mtx[0][1] * py + mtx[0][2] * pz;
+                w->velocity.y = dy + mtx[1][0] * px + mtx[1][1] * py + mtx[1][2] * pz;
+                w->velocity.z = dz + mtx[2][0] * px + mtx[2][1] * py + mtx[2][2] * pz;
+                break;
             }
-            PSMTXRotAxisRad(mtx, &axis, 0.017453292f * t);
-            w->velocity.x = mtx[0][0] * dx + mtx[0][1] * dy + mtx[0][2] * dz;
-            w->velocity.y = mtx[1][0] * dx + mtx[1][1] * dy + mtx[1][2] * dz;
-            w->velocity.z = mtx[2][0] * dx + mtx[2][1] * dy + mtx[2][2] * dz;
-            break;
-        }
-        case 4: {
-            Vec v = {0.0f, 0.0f, 0.0f};
-            v.x = (f32)sin(ang);
-            v.z = -(f32)cos(ang);
-            axis = v;
-            PSMTXRotAxisRad(mtx, &axis, 0.017453292f * (360.0f * (f32)i / (f32)(count - 1)));
-            w->velocity.x = mtx[0][0] * dx + mtx[0][1] * dy + mtx[0][2] * dz;
-            w->velocity.y = mtx[1][0] * dx + mtx[1][1] * dy + mtx[1][2] * dz;
-            w->velocity.z = mtx[2][0] * dx + mtx[2][1] * dy + mtx[2][2] * dz;
-            break;
-        }
+            case 3: {
+                Vec v = {0.0f, 0.0f, 0.0f};
+                f32 t;
+                v.x = (f32)sin(ang);
+                v.z = -(f32)cos(ang);
+                axis = v;
+                if (count == 1) {
+                    t = 0.0f;
+                } else {
+                    t = 100.0f * (f32)i / (f32)(count - 1) - 50.0f;
+                }
+                PSMTXRotAxisRad(mtx, &axis, 0.017453292f * t);
+                w->velocity.x = mtx[0][0] * dx + mtx[0][1] * dy + mtx[0][2] * dz;
+                w->velocity.y = mtx[1][0] * dx + mtx[1][1] * dy + mtx[1][2] * dz;
+                w->velocity.z = mtx[2][0] * dx + mtx[2][1] * dy + mtx[2][2] * dz;
+                break;
+            }
+            case 4: {
+                Vec v = {0.0f, 0.0f, 0.0f};
+                v.x = (f32)sin(ang);
+                v.z = -(f32)cos(ang);
+                axis = v;
+                PSMTXRotAxisRad(mtx, &axis, 0.017453292f * (360.0f * (f32)i / (f32)(count - 1)));
+                w->velocity.x = mtx[0][0] * dx + mtx[0][1] * dy + mtx[0][2] * dz;
+                w->velocity.y = mtx[1][0] * dx + mtx[1][1] * dy + mtx[1][2] * dz;
+                w->velocity.z = mtx[2][0] * dx + mtx[2][1] * dy + mtx[2][2] * dz;
+                break;
+            }
         }
         switch (type) {
-        case 0:
-            w->rotVel = 0.0f;
-            w->life = 24;
-            break;
-        case 1:
-            w->rotVel = 20.0f;
-            w->life = 24;
-            break;
-        case 2:
-            w->rotVel = 20.0f;
-            w->velocity.x *= 0.5f;
-            w->velocity.y *= 0.5f;
-            w->velocity.z *= 0.5f;
-            w->life = 40;
-            break;
-        case 3:
-        case 4:
-            w->rotVel = 20.0f;
-            w->life = 24;
-            break;
+            case 0:
+                w->rotVel = 0.0f;
+                w->life = 24;
+                break;
+            case 1:
+                w->rotVel = 20.0f;
+                w->life = 24;
+                break;
+            case 2:
+                w->rotVel = 20.0f;
+                w->velocity.x *= 0.5f;
+                w->velocity.y *= 0.5f;
+                w->velocity.z *= 0.5f;
+                w->life = 40;
+                break;
+            case 3:
+            case 4:
+                w->rotVel = 20.0f;
+                w->life = 24;
+                break;
         }
         w->rotation = 0.0f;
         w->frame = 0;
@@ -223,8 +175,11 @@ EffectEntry* effSmallStarN64Entry(s32 type, s32 count, f32 x, f32 y, f32 z, f32 
     return effect;
 }
 
+// FAKE: match-forcing setting: the same code without it compiles differently (removal tried).
 #pragma opt_propagation off
+// FAKE: lifetimes optimisation off for _cosf, alphaf, effSmallStarMain: the original register allocation and scheduling need it
 #pragma opt_lifetimes off
+/** Polynomial cosine approximation on [0, 2*pi), written out to match the original's inlined code. */
 static inline f32 _cosf(f32 x) {
     f32 a = 0.03705f;
     f32 b = 0.4967f;
@@ -258,8 +213,18 @@ static inline f32 _cosf(f32 x) {
     return a;
 }
 
-inline f32 alphaf(f32 m, s32 x) { return x * m; }
-void effSmallStarMain(EffectEntry* effect) {
+/** Multiplies an integer alpha value by a float factor. */
+inline f32 alphaf(f32 m, s32 x) {
+    return x * m;
+}
+/**
+ * Type 2 stars bob (vy = 4*cos of 6 degrees per frame) while drifting outward,
+ * and fade 40% per frame and slow their spin once falling.
+ * Other types damp their velocity 20% per frame;
+ * type 0 also spins faster between 20 and 5 frames left, and all fade 40% per frame and slow over the last 5.
+ * Deletes at end of life; drawn on the work's camera.
+ */
+static void effSmallStarMain(EffectEntry* effect) {
     EffSmallStarN64Work* w = effect->userdata;
     Vec position;
     Vec tmp = {0.0f, 0.0f, 0.0f};
@@ -319,6 +284,13 @@ void effSmallStarMain(EffectEntry* effect) {
 #pragma opt_propagation reset
 #pragma opt_lifetimes reset
 
+/** RGB colours the small stars cycle through (pinks, purples and blues), three bytes per step. */
+static u8 color_rotation_data[] = {
+    0xFE, 0xAC, 0xAC, 0xFE, 0xAC, 0xD5, 0xFE, 0xB4, 0x9A, 0xD5, 0xB4, 0xFE,
+    0xB4, 0xB4, 0xFE, 0xB4, 0xDD, 0xFE, 0xB4, 0xFE, 0xFE, 0xB4, 0xFE, 0xD5,
+    0xB4, 0xFE, 0xB4, 0xD5, 0xFE, 0xB4, 0xFE, 0xFE, 0xB4, 0xFE, 0xD5, 0xAC,
+};
+/** 16x16 camera-facing quad drawn for each small star. */
 static effN64Vtx size16x16_tex32x32_vtx[] = {
     {-8, -8, 0, 0, 0, 0, 0, 0, 0xFF},
     {8, -8, 0, 64, 0, 0, 0, 0, 0xFF},
@@ -326,17 +298,17 @@ static effN64Vtx size16x16_tex32x32_vtx[] = {
     {-8, 8, 0, 0, 32, 0, 0, 0, 0xFF},
 };
 
-static u8 color_rotation_data[] = {
-    0xFE, 0xAC, 0xAC, 0xFE, 0xAC, 0xD5, 0xFE, 0xB4, 0x9A, 0xD5, 0xB4, 0xFE,
-    0xB4, 0xB4, 0xFE, 0xB4, 0xDD, 0xFE, 0xB4, 0xFE, 0xFE, 0xB4, 0xFE, 0xD5,
-    0xB4, 0xFE, 0xB4, 0xD5, 0xFE, 0xB4, 0xFE, 0xFE, 0xB4, 0xFE, 0xD5, 0xAC,
-};
-
+/** Reads one byte of the shared color rotation table, wrapping at 36 entries. */
 static inline u8 color_rot_get(s32 idx) {
     return color_rotation_data[idx % 36];
 }
 
-void effSmallStarDisp(CameraId cameraId, EffectEntry* effect) {
+/**
+ * Draws each star as a 16x16 quad of texture 0x1D facing the camera and turned by its spin,
+ * with no depth test so it shows on top; the colour cycles through color_rotation_data,
+ * each star one step further along.
+ */
+static void effSmallStarDisp(CameraId cameraId, EffectEntry* effect) {
     CameraEntry* camera;
     s32 a, b, c;
     EffSmallStarN64Work* w;
@@ -389,11 +361,12 @@ void effSmallStarDisp(CameraId cameraId, EffectEntry* effect) {
     }
 }
 
-void effSmallStarN64CamChg(EffectEntry* effect, u8 camera) {
+/** Sets the camera every star of the effect is drawn on. */
+void effSmallStarN64CamChg(EffectEntry* effect, s32 cameraId) {
     EffSmallStarN64Work* w = effect->userdata;
     s32 i;
 
     for (i = 0; i < effect->count; i++, w++) {
-        w->camera = camera;
+        w->camera = cameraId;
     }
 }

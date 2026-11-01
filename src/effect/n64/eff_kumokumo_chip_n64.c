@@ -1,3 +1,5 @@
+// Paper Mario 64 effect: cloud fragments (kumokumo: cloud) flying from a point toward a target.
+#include "eff/n64/eff_kumokumo_chip_n64.h"
 #include "eff/eff_n64.h"
 #include "driver/camdrv.h"
 #include "driver/dispdrv.h"
@@ -6,28 +8,26 @@
 #include <dolphin/gx.h>
 #include <dolphin/mtx.h>
 #include "libc_decls.h"
+#include <math.h>
 
 typedef struct EffKumokumoChipN64Work {
-    s32 type;      // 0x0
-    Vec position;  // 0x4
-    Vec velocity;  // 0x10
-    s32 lifetime;  // 0x1C
-    s32 frame;     // 0x20
-    s32 r1;        // 0x24
-    s32 g1;        // 0x28
-    s32 b1;        // 0x2C
-    s32 a1;        // 0x30
-    s32 r2;        // 0x34
-    s32 g2;        // 0x38
-    s32 b2;        // 0x3C
-    s32 a2;        // 0x40
-    f32 scale;     // 0x44
+    s32 type;     // 0x0
+    Vec position; // 0x4
+    Vec velocity; // 0x10
+    s32 lifetime; // 0x1C
+    s32 frame;    // 0x20
+    s32 r1;       // 0x24
+    s32 g1;       // 0x28
+    s32 b1;       // 0x2C
+    s32 a1;       // 0x30
+    s32 r2;       // 0x34
+    s32 g2;       // 0x38
+    s32 b2;       // 0x3C
+    s32 a2;       // 0x40
+    f32 scale;    // 0x44
 } EffKumokumoChipN64Work;
 
-static inline s32 kk_fpclassifyf(f32 x) { switch (*(s32*)&x & 0x7F800000) { case 0x7F800000: if (*(s32*)&x & 0x007FFFFF) { return 1; } else { return 2; } break; case 0: if (*(s32*)&x & 0x007FFFFF) { return 5; } else { return 3; } break; default: return 4; } }
-static inline f32 kk_sqrtf(f32 x) { if (x == 0.0f) { return x; } else if (x > 0.0f) { f64 guess = __frsqrte(x); guess = 0.5 * guess * (3.0 - guess * guess * x); guess = 0.5 * guess * (3.0 - guess * guess * x); guess = 0.5 * guess * (3.0 - guess * guess * x); return x * guess; } else if (x < 0.0) { return *(f32*)__float_nan; } else if (kk_fpclassifyf(x) == 1) { return *(f32*)__float_nan; } return x; }
-
-
+/** 32x32 cloud chip quad. */
 static effN64Vtx size32x32_tex32x32_vtx[] = {
     {-16, 0, 0, 0, 0, 0, 0, 0, 255},
     {16, 0, 0, 1024, 0, 0, 0, 0, 255},
@@ -35,9 +35,13 @@ static effN64Vtx size32x32_tex32x32_vtx[] = {
     {-16, 32, 0, 0, 1024, 0, 0, 0, 255},
 };
 
-void effKumokumoChipMain(EffectEntry* effect);
-void effKumokumoChipDisp(CameraId cameraId, EffectEntry* effect);
+static void effKumokumoChipMain(EffectEntry* effect);
+static void effKumokumoChipDisp(CameraId cameraId, EffectEntry* effect);
 
+/**
+ * Spawns one cloud chip at (x, y, z) that flies in a straight line to (tx, ty, tz) at speed units per frame (so
+ * it lives distance / speed frames); type 0 and 2 are yellowish, other types white-blue. Soft-deletable.
+ */
 EffectEntry* effKumokumoChipN64Entry(s32 type, f32 x, f32 y, f32 z, f32 tx, f32 ty, f32 tz, f32 speed, f32 scale) {
     EffectEntry* effect;
     EffKumokumoChipN64Work* work;
@@ -51,14 +55,33 @@ EffectEntry* effKumokumoChipN64Entry(s32 type, f32 x, f32 y, f32 z, f32 tx, f32 
     work = __memAlloc(HEAP_EFFECT, sizeof(EffKumokumoChipN64Work));
     effect->userdata = work;
     effect->callback = effKumokumoChipMain;
-    effect->flags |= 2;
+    effect->flags |= EFFECT_FLAG_SOFT_DELETE;
     work->type = type;
     work->frame = 0;
     dx = tx - x;
     dy = ty - y;
     dz = tz - z;
     dist = dx * dx + dy * dy + dz * dz;
-    { f32 zero = 0.0f; if (dist != zero) { f32 r; if (dist > zero) { f64 guess = __frsqrte(dist); guess = 0.5 * guess * (3.0 - guess * guess * dist); guess = 0.5 * guess * (3.0 - guess * guess * dist); guess = 0.5 * guess * (3.0 - guess * guess * dist); r = dist * guess; } else if (dist < 0.0) { r = *(f32*)__float_nan; } else if (kk_fpclassifyf(dist) == 1) { r = *(f32*)__float_nan; } else { r = dist; } dist = r; } }
+    {
+        f32 zero = 0.0f;
+        if (dist != zero) {
+            f32 r;
+            if (dist > zero) {
+                f64 guess = __frsqrte(dist);
+                guess = 0.5 * guess * (3.0 - guess * guess * dist);
+                guess = 0.5 * guess * (3.0 - guess * guess * dist);
+                guess = 0.5 * guess * (3.0 - guess * guess * dist);
+                r = dist * guess;
+            } else if (dist < 0.0) {
+                r = NAN;
+            } else if (isnan(dist)) {
+                r = NAN;
+            } else {
+                r = dist;
+            }
+            dist = r;
+        }
+    }
     if (speed > 0.0f) {
         lifetime = dist / speed;
     } else {
@@ -108,7 +131,11 @@ EffectEntry* effKumokumoChipN64Entry(s32 type, f32 x, f32 y, f32 z, f32 tx, f32 
     return effect;
 }
 
-void effKumokumoChipMain(EffectEntry* effect) {
+/**
+ * Fades the chip in over 16 frames (4 for types other than 0 and 2) and out before its end;
+ * moves it by its velocity. A delete request starts a 16-frame fade instead of deleting at once.
+ */
+static void effKumokumoChipMain(EffectEntry* effect) {
     EffKumokumoChipN64Work* work = effect->userdata;
     Vec position;
     Vec tmp = {0.0f, 0.0f, 0.0f};
@@ -121,8 +148,8 @@ void effKumokumoChipMain(EffectEntry* effect) {
     tmp.z = work->position.z;
     position = tmp;
     type = work->type;
-    if (effect->flags & 4) {
-        effect->flags &= ~4;
+    if (effect->flags & EFFECT_FLAG_DELETE_REQUESTED) {
+        effect->flags &= ~EFFECT_FLAG_DELETE_REQUESTED;
         work->lifetime = 16;
     }
     if (work->lifetime < 1000) {
@@ -160,7 +187,8 @@ void effKumokumoChipMain(EffectEntry* effect) {
     dispEntry(CAMERA_3D, dispCalcZ(&position), 2, (DispCallback)effKumokumoChipDisp, effect);
 }
 
-void effKumokumoChipDisp(CameraId cameraId, EffectEntry* effect) {
+/** Draws the chip as one scaled 32x32 textured quad (effect texture 0x6B) with the current fade alpha. */
+static void effKumokumoChipDisp(CameraId cameraId, EffectEntry* effect) {
     CameraEntry* camera;
     EffKumokumoChipN64Work* work;
     s32 alpha;
@@ -197,7 +225,3 @@ void effKumokumoChipDisp(CameraId cameraId, EffectEntry* effect) {
     GXBegin(GX_TRIANGLES, GX_VTXFMT0, 6);
     tri2(0, 1, 2, 0, 0, 2, 3, 0);
 }
-
-#pragma force_active on
-__declspec(section ".data") u32 gap_05_803A2270_data[4] = {0};
-#pragma force_active reset

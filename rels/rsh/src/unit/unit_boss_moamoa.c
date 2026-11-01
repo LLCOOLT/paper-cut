@@ -1,8 +1,8 @@
+// Smorg (moamoa): boss battle unit, the main body, used on the Excess Express.
 #include "version.h"
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
 
-#pragma force_active on
 #include "battle/battle.h"
 #include "battle/battle_sub.h"
 #include "battle/battle_unit.h"
@@ -22,83 +22,88 @@
 #include "battle/battle_database_common.h"
 #include "data_tables.h"
 #include "driver/extdrv.h"
+#include "evt/evt_ext.h"
+#include "evt/evt_npc.h"
+#include "rsh.h"
 
-typedef struct MoamoaGroup { char anim[16]; char pose[8]; f32 speed; s32 start; s32 num; } MoamoaGroup;
-typedef struct Moamoa { u16 flags; u8 field_0x2[2]; Vec pos; s16 group; u8 field_0x12[6]; OSTime time; s16 chain; s16 order; f32 t; s32 poseId; s32 type; EvtWord* owner; Vec vel; Vec pos2; u8 field_0x4c[4]; } Moamoa;
-typedef struct MoamoaWork { s32 field_0x0; s32 count; Moamoa* elems; s32 numGroups; MoamoaGroup groups[32]; s16 chainNum[128]; s16 chainIdx[128][2]; s32 poseId[5]; EvtWord unitId; Vec center; f32 angle; f32 radius; f32 targetScale; f32 scale; } MoamoaWork;
-typedef struct MoamoaExtData { const char* anim; const char* pose; f32 speed; } MoamoaExtData;
-static MoamoaWork* wp;
+// Unit work slots of the Smorg main body (btlevtcmd_SetUnitWork / GetUnitWork, unit->work)
+enum {
+    UW_BOSS_MOAMOA_REGROW_TURNS = 1, // turns left with no tentacle or mouth before they regrow (reset to 2)
+    UW_BOSS_MOAMOA_MOUTH_FORM = 2,   // 1 once it has dropped to half HP: it regrows the mouth instead of tentacles
+    UW_BOSS_MOAMOA_TENTACLE_C = 3,   // unit id of tentacle c, or -1 once it is gone
+    UW_BOSS_MOAMOA_TENTACLE_B = 4,   // unit id of tentacle b, or -1
+    UW_BOSS_MOAMOA_TENTACLE_A = 5,   // unit id of tentacle a, or -1
+    UW_BOSS_MOAMOA_MOUTH = 6,        // unit id of the mouth (second form), or -1
+};
+
+typedef struct MoamoaGroup {
+    char anim[16];
+    char pose[8];
+    f32 speed;
+    s32 start;
+    s32 num;
+} MoamoaGroup;
+typedef struct BtlMoamoa {
+    u16 flags;
+    u8 pad_2[2];
+    Vec pos;
+    s16 group;
+    u8 pad_12[6];
+    OSTime time;
+    s16 chain;
+    s16 order;
+    f32 t;
+    s32 poseId;
+    s32 type;
+    EvtWord* owner;
+    Vec vel;
+    Vec pos2;
+    u8 pad_4c[4];
+} BtlMoamoa;
+typedef struct BtlMoamoaWork {
+    s32 flags;
+    s32 count;
+    BtlMoamoa* elems;
+    s32 numGroups;
+    MoamoaGroup groups[32];
+    s16 chainNum[128];
+    s16 chainIdx[128][2];
+    s32 poseId[5];
+    EvtWord unitId;
+    Vec center;
+    f32 angle;
+    f32 radius;
+    f32 targetScale;
+    f32 scale;
+} BtlMoamoaWork;
+typedef struct MoamoaExtData {
+    const char* anim;
+    const char* pose;
+    f32 speed;
+} MoamoaExtData;
+static BtlMoamoaWork* wp;
+#if VERSION >= VERSION_DEMO_EU
+// PAL: a seeded generator for the swarm's start positions (moamoa_srand / moamoa_randf)
+static u32 moamoa_rand_prev;
+static u32 moamoa_rand_cur;
+#endif
 #ifndef TARGET_PC /* PC port: the host libc declares these */
 int rand(void);
 #endif
-void moamoa_mainUnitIdClear(void);
+static void moamoa_mainUnitIdClear(void);
 static f32 randf(f32 min, f32 max);
-extern const char* g_moamoa_chain_tbl[][2];
-USER_FUNC(moamoa1_on);
-void moamoa_pose(Moamoa* elem);
-void moamoa_draw(CameraId cameraId, void* param);
+static USER_FUNC(moamoa1_on);
+static void moamoa_pose(BtlMoamoa* elem);
+static void moamoa_draw(CameraId cameraId, void* param);
 
-USER_FUNC(btlevtcmd_AnimeChangePose);
-USER_FUNC(btlevtcmd_AnimeChangePoseFromTable);
-USER_FUNC(btlevtcmd_CheckActStatus);
-USER_FUNC(btlevtcmd_CheckPhase);
-USER_FUNC(btlevtcmd_EnemyItemUseCheck);
-USER_FUNC(btlevtcmd_GetHp);
-USER_FUNC(btlevtcmd_GetMaxHp);
-USER_FUNC(btlevtcmd_GetPos);
-USER_FUNC(btlevtcmd_GetUnitId);
-USER_FUNC(btlevtcmd_GetUnitWork);
-USER_FUNC(btlevtcmd_SetEventAttack);
-USER_FUNC(btlevtcmd_SetEventConfusion);
-USER_FUNC(btlevtcmd_SetEventDamage);
-USER_FUNC(btlevtcmd_SetEventPhase);
-USER_FUNC(btlevtcmd_SetEventWait);
-USER_FUNC(btlevtcmd_SetHitCursorOffset);
-USER_FUNC(btlevtcmd_SetHitOffset);
-USER_FUNC(btlevtcmd_SetHomePos);
-USER_FUNC(btlevtcmd_SetPos);
-USER_FUNC(btlevtcmd_SetUnitWork);
-USER_FUNC(btlevtcmd_SpawnUnit);
-USER_FUNC(btlevtcmd_StartWaitEvent);
-USER_FUNC(evt_btl_camera_set_mode);
-USER_FUNC(evt_btl_camera_set_moveto);
-USER_FUNC(evt_ext_entry);
-USER_FUNC(evt_npc_entry);
-USER_FUNC(evt_npc_flag_onoff);
-USER_FUNC(evt_npc_set_position);
-USER_FUNC(moamoa_on);
-USER_FUNC(moamoa_set_bodyScale);
-void moamoa_draw(CameraId cameraId, void* param);
+static USER_FUNC(moamoa_set_bodyScale);
 static void ext_moamoa_main(void);
 static void ext_moamoa_init(void);
-void moamoa_pose(Moamoa* elem);
-USER_FUNC(moamoa2_on);
-USER_FUNC(moamoa1_on);
-USER_FUNC(moamoa_bomb);
-USER_FUNC(moamoa_guruguru);
-void moamoa_mainUnitIdClear(void);
-static f32 randf(f32 min, f32 max);
-USER_FUNC(evt_moamoa_mainUnitIdClear);
-USER_FUNC(boss_moamoa_check_zenei_kouei);
-extern BattleUnitKind unit_boss_moamoa_mouth;
-extern BattleUnitKind unit_boss_moamoa_tentacle_a;
-extern BattleUnitKind unit_boss_moamoa_tentacle_b;
-extern BattleUnitKind unit_boss_moamoa_tentacle_c;
+static USER_FUNC(moamoa2_on);
+static USER_FUNC(moamoa1_on);
+static USER_FUNC(moamoa_bomb);
+static USER_FUNC(moamoa_guruguru);
 
-f32 fd_boss_moamoa_negone_one_374[2] __attribute__((aligned(8)));
-f32 fd_boss_moamoa_neg_one_382;
-f32 fd_boss_moamoa___local_PI_383;
-f32 fd_boss_moamoa___local_3PIO2_385;
-f32 fd_boss_moamoa_one_negone_373[2] __attribute__((aligned(8)));
-f32 fd_boss_moamoa___local_PIO2_384;
-f32 fd_boss_moamoa_one_381;
-f32 fd_boss_moamoa_negone_one_360[2] __attribute__((aligned(8)));
-f32 fd_boss_moamoa_neg_one_365;
-f32 fd_boss_moamoa___local_PI_366;
-f32 fd_boss_moamoa___local_3PIO2_368;
-f32 fd_boss_moamoa_one_negone_359[2] __attribute__((aligned(8)));
-f32 fd_boss_moamoa___local_PIO2_367;
-f32 fd_boss_moamoa_one_364;
 BattleUnitKind unit_boss_moamoa;
 BattleUnitDefense moamoa_defence;
 s32 moamoa_defence_no_parts[2];
@@ -114,22 +119,26 @@ BattleUnitSetup entry_boss_moamoa_tentacle_b;
 BattleUnitSetup entry_boss_moamoa_tentacle_c;
 BattleUnitSetup entry_boss_moamoa_mouth;
 BattleWeapon weapon_moamoa_tsunami_attack;
-EvtWord moamoa_zoom[34];
-static EvtWord mario_party_zoom[34];
+extern EvtWord moamoa_zoom[];
 static EvtWord init_event[159];
 static EvtWord damage_event[10];
 const char* MOAMOA_TAIJOU[4];
 static EvtWord dead_event[349];
 const char* moamoa2_change_tbl[7];
-EvtWord moamoa_tentacl_on[208];
-EvtWord moamoa_mouth_on[132];
+extern EvtWord moamoa_tentacl_on[];
+extern EvtWord moamoa_mouth_on[];
 static EvtWord phase_event[159];
 static EvtWord attack_event[19];
 static EvtWord wait_event[6];
 static ExtTexInfo ext_moamoa_data[89];
 static EvtWord evt_moamoa[151];
-EvtWord MOAMOA_SET_BODYSCALE[4];
+extern EvtWord MOAMOA_SET_BODYSCALE[];
 
+/**
+ * Script helper for the Smorg boss's tentacle and mouth units:
+ * args[0] is a battle unit id, and args[1] receives 0 if the unit's x position is -120 or more and 1
+ * if it is further left, i.e. whether it stands in the front (zenei) or rear (kouei) part of the stage.
+ */
 USER_FUNC(boss_moamoa_check_zenei_kouei) {
     BattleWork* btlwp = _battleWorkPointer;
     EvtWord* args = event->args;
@@ -147,49 +156,57 @@ USER_FUNC(boss_moamoa_check_zenei_kouei) {
     return 2;
 }
 
-USER_FUNC(evt_moamoa_mainUnitIdClear) {
+/**
+ * Script helper: forgets the Smorg main body's unit id in the swarm work area (wp->unitId = -1),
+ * so the swarm draws itself falling away once the boss is dead.
+ */
+static USER_FUNC(evt_moamoa_mainUnitIdClear) {
     moamoa_mainUnitIdClear();
     return 2;
 }
 
+/** Returns a random float between min and max using rand(). */
 static f32 randf(f32 min, f32 max) {
     f32 r = rand() / 32767.0f;
 
     return r * (max - min) + min;
 }
 
-void moamoa_mainUnitIdClear(void) {
+/**
+ * PAL only: seeds the boss swarm's own random generator (two-word state),
+ * so the PAL version gets the same swarm placement on every run.
+ */
+#if VERSION >= VERSION_DEMO_EU
+void moamoa_srand(u32 seed) {
+    moamoa_rand_prev = seed;
+    moamoa_rand_cur = seed + 0x37E35F7D;
+}
+
+/** PAL only: returns a float between min and max from the boss swarm's own generator seeded by moamoa_srand. */
+f32 moamoa_randf(f32 min, f32 max) {
+    s32 cur = moamoa_rand_cur;
+    s32 next = moamoa_rand_prev + cur + 0x195B31B7;
+    f32 r;
+
+    moamoa_rand_prev = cur;
+    moamoa_rand_cur = next;
+    r = (next & 0x7FFF) / 32767.0f;
+    return r * (max - min) + min;
+}
+#endif
+
+/**
+ * Clears the Smorg main body's unit id in the swarm work area (wp->unitId = -1).
+ * Called from evt_moamoa_mainUnitIdClear.
+ */
+static void moamoa_mainUnitIdClear(void) {
     wp->unitId = -1;
 }
 
-f32 fd_boss_moamoa_negone_one_374[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_boss_moamoa_neg_one_382 = -1.0f;
-
-f32 fd_boss_moamoa___local_PI_383 = 3.1415927f;
-
-f32 fd_boss_moamoa___local_3PIO2_385 = 4.712389f;
-
-f32 fd_boss_moamoa_one_negone_373[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_boss_moamoa___local_PIO2_384 = 1.5707964f;
-
-f32 fd_boss_moamoa_one_381 = 1.0f;
-
-f32 fd_boss_moamoa_negone_one_360[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_boss_moamoa_neg_one_365 = -1.0f;
-
-f32 fd_boss_moamoa___local_PI_366 = 3.1415927f;
-
-f32 fd_boss_moamoa___local_3PIO2_368 = 4.712389f;
-
-f32 fd_boss_moamoa_one_negone_359[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_boss_moamoa___local_PIO2_367 = 1.5707964f;
-
-f32 fd_boss_moamoa_one_364 = 1.0f;
-
+/**
+ * Unit kind of the Smorg (HP 50, level 78): its size, offsets, damage sounds, status vulnerability,
+ * parts and init event.
+ */
 BattleUnitKind unit_boss_moamoa = {
     107,
     "btl_un_moamoa",
@@ -222,8 +239,13 @@ BattleUnitKind unit_boss_moamoa = {
     0.0f,
     0.0f,
     0.0f,
+#if VERSION <= VERSION_DEMO_JP
+    250.0f,
+    0.0f,
+#else
     15.0f,
     10.0f,
+#endif
     80.0f,
     0.0f,
     0.0f,
@@ -248,7 +270,7 @@ BattleUnitKind unit_boss_moamoa = {
     "SFX_BTL_DAMAGE_FIRE1",
     "SFX_BTL_DAMAGE_ICE1",
     "SFX_BTL_DAMAGE_BIRIBIRI1",
-    0x200000,
+    UNIT_ATTR_NO_KNOCKBACK_POSE,
     &regist,
     1,
     parts,
@@ -256,113 +278,144 @@ BattleUnitKind unit_boss_moamoa = {
     data_table,
 };
 
+/** Defence of the Smorg: 2 damage points off every hit. */
 BattleUnitDefense moamoa_defence = {{2, 2, 2, 2, 2}};
 
+/**
+ * Empty defence table (all zeros) given to a tentacle's or mouth's part so it takes damage as normal
+ * while the arms are out.
+ */
 s32 moamoa_defence_no_parts[] = {
     0, 0,
 };
 
+/** Defence of the Smorg: 1 damage points off every hit. */
 BattleUnitDefense moamoa2_defence = {{1, 1, 1, 1, 1}};
 
+/** Element reactions of the Smorg: no special reaction to any element. */
 static BattleUnitDefenseAttr defence_attr = {{0, 0, 0, 0, 0}};
 
+/**
+ * Status vulnerability of the Smorg (percent chance to take each status):
+ * immune to sleep, stop, dizzy, poison, confusion, electric shock, burn, freeze, growing huge, shrinking,
+ * attack up, attack down, defence up, defence down, allergy, fright, gale force, speed up, slow, dodgy,
+ * invisibility and instant kill.
+ */
 static StatusVulnerability regist = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
+/** Pose table of the Smorg: maps each battle pose to the animation it plays (S_* animations). */
 PoseTableEntry moamoa1_pose_table[] = {
-    {28, "S_1_1"},
+    {BTL_POSE_NORMAL, "S_1_1"},
     {31, "D_1_1"},
-    {39, "D_1_1"},
-    {69, "S_1_1"},
+    {BTL_POSE_DAMAGE, "D_1_1"},
+    {BTL_POSE_STAY_DEFAULT, "S_1_1"},
 };
 
+/** Pose table of the Smorg: maps each battle pose to the animation it plays (S_* animations). */
 PoseTableEntry moamoa1_weakness_pose_table[] = {
-    {28, "S_1_3"},
+    {BTL_POSE_NORMAL, "S_1_3"},
     {31, "D_1_3"},
-    {39, "D_1_3"},
-    {69, "S_1_3"},
+    {BTL_POSE_DAMAGE, "D_1_3"},
+    {BTL_POSE_STAY_DEFAULT, "S_1_3"},
 };
 
+/** Data table of the Smorg: event handlers for being defeated. */
 static BattleDataEntry data_table[] = {
     {49, dead_event},
     {0, NULL},
 };
 
+/** Body part of the Smorg (model c_g_moamoa_b): hit position, defences, attributes and pose table. */
 static BattleUnitKindPart parts[] = {
-    {1, "btl_un_moamoa", "c_g_moamoa_b", 0.0f, 0.0f, 0.0f, -2.0f, 53.0f, 20.0f, -4.0f, 63.0f, 20.0f, 20, 30, 255, &moamoa_defence, &defence_attr, 0x20000001, 0, moamoa1_pose_table},
+    {1, "btl_un_moamoa", "c_g_moamoa_b", 0.0f, 0.0f, 0.0f, -2.0f, 53.0f, 20.0f, -4.0f, 63.0f, 20.0f, 20, 30, 255, &moamoa_defence, &defence_attr, PART_ATTR_MAIN | PART_ATTR_IMMUNE_TO_DAMAGE_OR_STATUS, 0, moamoa1_pose_table},
 };
 
+/**
+ * Spawn setup for Smorg's tentacle A: starts off-screen on the enemy side; the main body moves it into place.
+ */
 BattleUnitSetup entry_boss_moamoa_tentacle_a = {
-    &unit_boss_moamoa_tentacle_a, // mUnitKindParams
+    &unit_boss_moamoa_tentacle_a, // unitKindParams
     1, // alliance
     {0}, // pad_05
-    0x4000004, // attackPhase
+    BATTLE_PHASE_ENEMY, // attackPhase
     {0.0f, -1000.0f, 0.0f}, // position
     0, // hitOffsetX
     {0}, // unitWork
     NULL, // itemDropTable
 };
 
+/**
+ * Spawn setup for Smorg's tentacle B: starts off-screen on the enemy side; the main body moves it into place.
+ */
 BattleUnitSetup entry_boss_moamoa_tentacle_b = {
-    &unit_boss_moamoa_tentacle_b, // mUnitKindParams
+    &unit_boss_moamoa_tentacle_b, // unitKindParams
     1, // alliance
     {0}, // pad_05
-    0x4000004, // attackPhase
+    BATTLE_PHASE_ENEMY, // attackPhase
     {0.0f, -1000.0f, 0.0f}, // position
     0, // hitOffsetX
     {0}, // unitWork
     NULL, // itemDropTable
 };
 
+/**
+ * Spawn setup for Smorg's tentacle C: starts off-screen on the enemy side; the main body moves it into place.
+ */
 BattleUnitSetup entry_boss_moamoa_tentacle_c = {
-    &unit_boss_moamoa_tentacle_c, // mUnitKindParams
+    &unit_boss_moamoa_tentacle_c, // unitKindParams
     1, // alliance
     {0}, // pad_05
-    0x4000004, // attackPhase
+    BATTLE_PHASE_ENEMY, // attackPhase
     {0.0f, -1000.0f, 0.0f}, // position
     0, // hitOffsetX
     {0}, // unitWork
     NULL, // itemDropTable
 };
 
+/**
+ * Spawn setup for Smorg's mouth: starts off-screen on the enemy side;
+ * the main body moves it onto its own position.
+ */
 BattleUnitSetup entry_boss_moamoa_mouth = {
-    &unit_boss_moamoa_mouth, // mUnitKindParams
+    &unit_boss_moamoa_mouth, // unitKindParams
     1, // alliance
     {0}, // pad_05
-    0x4000004, // attackPhase
+    BATTLE_PHASE_ENEMY, // attackPhase
     {0.0f, -1000.0f, 0.0f}, // position
     0, // hitOffsetX
     {0}, // unitWork
     NULL, // itemDropTable
 };
 
+/** Weapon of the Smorg's tsunami: 0 damage. */
 BattleWeapon weapon_moamoa_tsunami_attack = {
     NULL, 0, // name..icon
     {0}, // pad_06
     0, NULL, // itemId..description
     100, // baseAccuracy
     0, 0, // baseFpCost..baseSpCost
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
     2, // superguardsAllowed
 #else
     0, // superguardsAllowed
 #endif
     1.0f, // reserved_14
-    1, // mStylishCommandMultiplier
+    1, // stylishCommandMultiplier
     1, // reserved_19
-    1, // mBingoSlotChance
+    1, // bingoSlotChance
     1, // reserved_1B
     weaponGetPowerDefault, // hpDamageFn
     {0}, // hpDamageWork
     NULL, // fpDamageFn
     {0}, // fpDamageWork
-    0x2101260, // targetClassFlags
-    0x20000000, // targetPropertyFlags
-    0, 0, // element..damagePattern
+    TARGET_CLASS_NO_TREE_OR_SWITCH | TARGET_CLASS_NO_SYSTEM_UNIT | TARGET_CLASS_NO_OWN_ALLIANCE | TARGET_CLASS_NO_SELF | TARGET_CLASS_MAIN_PARTS | TARGET_CLASS_MULTIPLE, // targetClassFlags
+    TARGET_PROP_START_OPPOSING_SIDE, // targetPropertyFlags
+    ELEMENT_NORMAL, 0, // element..damagePattern
     3, // acLevel
     2, // reserved_6F
     NULL, // acHelpMsg
-    0x87, // special
-    0x7FF, // counterResistFlags
+    SPECIAL_BADGE_BUFFABLE | SPECIAL_STATUS_BUFFABLE | SPECIAL_CHARGE_BUFFABLE | SPECIAL_SHATTERS_FREEZE, // special
+    COUNTER_RESIST_ALL, // counterResistFlags
     0, 0, 0, 0, 0, 0, 0, 0, // targetWeightFlags..poisonChance
     0, 0, 0, 0, 0, 0, 0, 0, // poisonTime..dodgyTime
     0, 0, 0, 0, 0, 0, 0, 0, // burnChance..atkChangeChance
@@ -370,15 +423,21 @@ BattleWeapon weapon_moamoa_tsunami_attack = {
     0, 0, 0, 0, 0, 0, 0, 0, // chargeStrength..paybackTime
     0, 0, 0, 0, 0, 0, 0, // holdFastTime..fpRegenStrength
     {0}, // pad_AE
-    NULL, // mAttackEvtScript
+    NULL, // attackEvtScript
     {0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0}, // stageEffectRates
 };
 
+/**
+ * Battle camera script: switches to camera mode 3
+ * and moves the camera to a fixed close view of the Smorg (about (83, 144, 512) looking at (83, 109, 0)).
+ * LW(0) selects the speed: 1 waits 600 ms after starting the move, 2 jumps there in a single frame,
+ * anything else takes 30 frames.
+ */
 EVT_BEGIN(moamoa_zoom)
     CALL(evt_btl_camera_set_mode, 0, 3)
     IF_INT_NOT_EQUAL(LW(0), 2)
         SET_VALUE(LW(1), 30)
-        ELSE
+    ELSE
         SET_VALUE(LW(1), 1)
     END_IF
     CALL(evt_btl_camera_set_moveto, 0, 83, 144, 512, 83, 109, 0, LW(1), 11)
@@ -388,11 +447,16 @@ EVT_BEGIN(moamoa_zoom)
     RETURN
 EVT_END()
 
+/**
+ * Battle camera script: zooms in on Mario and the partner (camera mode 3,
+ * to (-120, 58, 257) looking at (-120, 40, 0)).
+ * LW(0) works as in moamoa_zoom: 1 waits 600 ms, 2 jumps in one frame, otherwise 30 frames.
+ */
 static EVT_BEGIN(mario_party_zoom)
     CALL(evt_btl_camera_set_mode, 0, 3)
     IF_INT_NOT_EQUAL(LW(0), 2)
         SET_VALUE(LW(1), 30)
-        ELSE
+    ELSE
         SET_VALUE(LW(1), 1)
     END_IF
     CALL(evt_btl_camera_set_moveto, 0, -120, 58, 257, -120, 40, 0, LW(1), 11)
@@ -402,51 +466,64 @@ static EVT_BEGIN(mario_party_zoom)
     RETURN
 EVT_END()
 
+/**
+ * Init event of the Smorg main body: registers its wait, phase, attack, damage and confusion events,
+ * spawns the three tentacle units (c, b and a, stored in unit work 3 to 5) with the mouth slot (6) empty,
+ * starts the swarm (evt_moamoa) and the body-scale event, and starts the wait event.
+ */
 static EVT_BEGIN(init_event)
-    CALL(btlevtcmd_SetEventWait, -2, PTR(wait_event))
-    CALL(btlevtcmd_SetEventPhase, -2, PTR(phase_event))
-    CALL(btlevtcmd_SetEventAttack, -2, PTR(attack_event))
-    CALL(btlevtcmd_SetEventDamage, -2, PTR(damage_event))
-    CALL(btlevtcmd_SetEventConfusion, -2, PTR(btldefaultevt_Confuse))
-    CALL(btlevtcmd_SetUnitWork, -2, 1, 2)
-    CALL(btlevtcmd_SetUnitWork, -2, 2, 0)
-    CALL(btlevtcmd_GetUnitId, -2, LW(4))
+    CALL(btlevtcmd_SetEventWait, BTL_UNIT_SELF, PTR(wait_event))
+    CALL(btlevtcmd_SetEventPhase, BTL_UNIT_SELF, PTR(phase_event))
+    CALL(btlevtcmd_SetEventAttack, BTL_UNIT_SELF, PTR(attack_event))
+    CALL(btlevtcmd_SetEventDamage, BTL_UNIT_SELF, PTR(damage_event))
+    CALL(btlevtcmd_SetEventConfusion, BTL_UNIT_SELF, PTR(btldefaultevt_Confuse))
+    CALL(btlevtcmd_SetUnitWork, BTL_UNIT_SELF, UW_BOSS_MOAMOA_REGROW_TURNS, 2)
+    CALL(btlevtcmd_SetUnitWork, BTL_UNIT_SELF, UW_BOSS_MOAMOA_MOUTH_FORM, 0)
+    CALL(btlevtcmd_GetUnitId, BTL_UNIT_SELF, LW(4))
     CALL(btlevtcmd_SpawnUnit, LW(3), PTR(&entry_boss_moamoa_tentacle_c), 0)
-    CALL(btlevtcmd_GetPos, -2, LW(0), LW(1), LW(2))
+    CALL(btlevtcmd_GetPos, BTL_UNIT_SELF, LW(0), LW(1), LW(2))
     CALL(btlevtcmd_SetPos, LW(3), LW(0), LW(1), LW(2))
     CALL(btlevtcmd_SetHomePos, LW(3), LW(0), LW(1), LW(2))
-    SET_VALUE(LW(5), 3)
-    CALL(btlevtcmd_SetUnitWork, -2, LW(5), LW(3))
+    SET_VALUE(LW(5), UW_BOSS_MOAMOA_TENTACLE_C)
+    CALL(btlevtcmd_SetUnitWork, BTL_UNIT_SELF, LW(5), LW(3))
     CALL(btlevtcmd_SetUnitWork, LW(3), 0, LW(4))
     CALL(btlevtcmd_SpawnUnit, LW(3), PTR(&entry_boss_moamoa_tentacle_b), 0)
-    CALL(btlevtcmd_GetPos, -2, LW(0), LW(1), LW(2))
+    CALL(btlevtcmd_GetPos, BTL_UNIT_SELF, LW(0), LW(1), LW(2))
     CALL(btlevtcmd_SetPos, LW(3), LW(0), LW(1), LW(2))
     CALL(btlevtcmd_SetHomePos, LW(3), LW(0), LW(1), LW(2))
-    SET_VALUE(LW(5), 4)
-    CALL(btlevtcmd_SetUnitWork, -2, LW(5), LW(3))
+    SET_VALUE(LW(5), UW_BOSS_MOAMOA_TENTACLE_B)
+    CALL(btlevtcmd_SetUnitWork, BTL_UNIT_SELF, LW(5), LW(3))
     CALL(btlevtcmd_SetUnitWork, LW(3), 0, LW(4))
     CALL(btlevtcmd_SpawnUnit, LW(3), PTR(&entry_boss_moamoa_tentacle_a), 0)
-    CALL(btlevtcmd_GetPos, -2, LW(0), LW(1), LW(2))
+    CALL(btlevtcmd_GetPos, BTL_UNIT_SELF, LW(0), LW(1), LW(2))
     CALL(btlevtcmd_SetPos, LW(3), LW(0), LW(1), LW(2))
     CALL(btlevtcmd_SetHomePos, LW(3), LW(0), LW(1), LW(2))
-    SET_VALUE(LW(5), 5)
-    CALL(btlevtcmd_SetUnitWork, -2, LW(5), LW(3))
+    SET_VALUE(LW(5), UW_BOSS_MOAMOA_TENTACLE_A)
+    CALL(btlevtcmd_SetUnitWork, BTL_UNIT_SELF, LW(5), LW(3))
     CALL(btlevtcmd_SetUnitWork, LW(3), 0, LW(4))
-    SET_VALUE(LW(5), 6)
-    CALL(btlevtcmd_SetUnitWork, -2, LW(5), -1)
-    CALL_CHILD(PTR(evt_moamoa))
-    SPAWN_EVENT(PTR(MOAMOA_SET_BODYSCALE))
-    CALL(btlevtcmd_StartWaitEvent, -2)
+    SET_VALUE(LW(5), UW_BOSS_MOAMOA_MOUTH)
+    CALL(btlevtcmd_SetUnitWork, BTL_UNIT_SELF, LW(5), -1)
+    CALL_CHILD(evt_moamoa)
+    SPAWN_EVENT(MOAMOA_SET_BODYSCALE)
+    CALL(btlevtcmd_StartWaitEvent, BTL_UNIT_SELF)
     RETURN
 EVT_END()
 
+/**
+ * Damage event of the Smorg main body: runs the default damage handling (btldefaultevt_Damage) with the body as
+ * target.
+ */
 static EVT_BEGIN(damage_event)
     SET_VALUE(LW(10), -2)
     SET_VALUE(LW(11), 1)
-    CALL_CHILD(PTR(btldefaultevt_Damage))
+    CALL_CHILD(btldefaultevt_Damage)
     RETURN
 EVT_END()
 
+/**
+ * Animation names (S_1_2, then L_1_4; NULL separates steps) Smorg's body plays, in order,
+ * when it leaves its first form.
+ */
 const char* MOAMOA_TAIJOU[] = {
     "S_1_2",
     NULL,
@@ -454,77 +531,88 @@ const char* MOAMOA_TAIJOU[] = {
     NULL,
 };
 
+/**
+ * Death event of the Smorg main body: after attacks end,
+ * removes any tentacles still alive one by one (arm-down sound and R_1x pose), then the swirl (moamoa_guruguru),
+ * smoke, coins, experience and star points, the explosion sound and the swarm scatter (moamoa_bomb);
+ * clears the swarm's unit id and kills the unit.
+ */
 static EVT_BEGIN(dead_event)
+    // Once the last attack has finished, Smorg's remaining tentacles (or its second-form arm) collapse
+    // and vanish one by one.
     CALL(btlevtcmd_WaitAttackEnd)
-    CALL(btlevtcmd_GetUnitWork, -2, 2, LW(0))
+    CALL(btlevtcmd_GetUnitWork, BTL_UNIT_SELF, UW_BOSS_MOAMOA_MOUTH_FORM, LW(0))
     IF_INT_NOT_EQUAL(LW(0), 1)
-        SET_VALUE(LW(0), 5)
-        CALL(btlevtcmd_GetUnitWork, -2, LW(0), LW(1))
+        SET_VALUE(LW(0), UW_BOSS_MOAMOA_TENTACLE_A)
+        CALL(btlevtcmd_GetUnitWork, BTL_UNIT_SELF, LW(0), LW(1))
         IF_INT_NOT_EQUAL(LW(1), -1)
-            CALL(btlevtcmd_snd_se, -2, STRING("SFX_BOSS_MOA_G_ARM_DOWN1"), -250000000, 0, -250000000)
+            CALL(btlevtcmd_snd_se, BTL_UNIT_SELF, STRING("SFX_BOSS_MOA_G_ARM_DOWN1"), EVT_NULLPTR, 0, EVT_NULLPTR)
             CALL(btlevtcmd_AnimeChangePose, LW(1), 1, STRING("R_1A"))
             WAIT_FRAMES(1)
             CALL(btlevtcmd_AnimeWaitPlayComplete, LW(1), 1)
             CALL(btlevtcmd_KillUnit, LW(1), 1)
-            CALL(btlevtcmd_SetUnitWork, -2, LW(0), -1)
+            CALL(btlevtcmd_SetUnitWork, BTL_UNIT_SELF, LW(0), -1)
         END_IF
-        SET_VALUE(LW(0), 4)
-        CALL(btlevtcmd_GetUnitWork, -2, LW(0), LW(1))
+        SET_VALUE(LW(0), UW_BOSS_MOAMOA_TENTACLE_B)
+        CALL(btlevtcmd_GetUnitWork, BTL_UNIT_SELF, LW(0), LW(1))
         IF_INT_NOT_EQUAL(LW(1), -1)
-            CALL(btlevtcmd_snd_se, -2, STRING("SFX_BOSS_MOA_G_ARM_DOWN1"), -250000000, 0, -250000000)
+            CALL(btlevtcmd_snd_se, BTL_UNIT_SELF, STRING("SFX_BOSS_MOA_G_ARM_DOWN1"), EVT_NULLPTR, 0, EVT_NULLPTR)
             CALL(btlevtcmd_AnimeChangePose, LW(1), 1, STRING("R_1B"))
             WAIT_FRAMES(1)
             CALL(btlevtcmd_AnimeWaitPlayComplete, LW(1), 1)
             CALL(btlevtcmd_KillUnit, LW(1), 1)
-            CALL(btlevtcmd_SetUnitWork, -2, LW(0), -1)
+            CALL(btlevtcmd_SetUnitWork, BTL_UNIT_SELF, LW(0), -1)
         END_IF
-        SET_VALUE(LW(0), 3)
-        CALL(btlevtcmd_GetUnitWork, -2, LW(0), LW(1))
+        SET_VALUE(LW(0), UW_BOSS_MOAMOA_TENTACLE_C)
+        CALL(btlevtcmd_GetUnitWork, BTL_UNIT_SELF, LW(0), LW(1))
         IF_INT_NOT_EQUAL(LW(1), -1)
-            CALL(btlevtcmd_snd_se, -2, STRING("SFX_BOSS_MOA_G_ARM_DOWN1"), -250000000, 0, -250000000)
+            CALL(btlevtcmd_snd_se, BTL_UNIT_SELF, STRING("SFX_BOSS_MOA_G_ARM_DOWN1"), EVT_NULLPTR, 0, EVT_NULLPTR)
             CALL(btlevtcmd_AnimeChangePose, LW(1), 1, STRING("R_1C"))
             WAIT_FRAMES(1)
             CALL(btlevtcmd_AnimeWaitPlayComplete, LW(1), 1)
             CALL(btlevtcmd_KillUnit, LW(1), 1)
-            CALL(btlevtcmd_SetUnitWork, -2, LW(0), -1)
+            CALL(btlevtcmd_SetUnitWork, BTL_UNIT_SELF, LW(0), -1)
         END_IF
     ELSE
-        SET_VALUE(LW(0), 6)
-        CALL(btlevtcmd_GetUnitWork, -2, LW(0), LW(1))
+        SET_VALUE(LW(0), UW_BOSS_MOAMOA_MOUTH)
+        CALL(btlevtcmd_GetUnitWork, BTL_UNIT_SELF, LW(0), LW(1))
         IF_INT_NOT_EQUAL(LW(1), -1)
-            CALL(btlevtcmd_snd_se, -2, STRING("SFX_BOSS_MOA_G_ARM_DOWN2"), -250000000, 0, -250000000)
+            CALL(btlevtcmd_snd_se, BTL_UNIT_SELF, STRING("SFX_BOSS_MOA_G_ARM_DOWN2"), EVT_NULLPTR, 0, EVT_NULLPTR)
             CALL(btlevtcmd_AnimeChangePose, LW(1), 1, STRING("L_2_6"))
             WAIT_FRAMES(1)
             CALL(btlevtcmd_AnimeWaitPlayComplete, LW(1), 1)
             CALL(btlevtcmd_KillUnit, LW(1), 1)
-            CALL(btlevtcmd_SetUnitWork, -2, LW(0), -1)
+            CALL(btlevtcmd_SetUnitWork, BTL_UNIT_SELF, LW(0), -1)
         END_IF
     END_IF
+    // Smorg's body sags and crumples through its defeat animations.
     SET_INT_READ_ADDR(PTR(&MOAMOA_TAIJOU))
     LOOP(0)
         READ_INT(LW(2))
         IF_INT_EQUAL(LW(2), 0)
             BREAK_LOOP
         END_IF
-        CALL(btlevtcmd_AnimeChangePose, -2, 1, LW(2))
+        CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, LW(2))
         WAIT_FRAMES(1)
-        CALL(btlevtcmd_AnimeWaitPlayComplete, -2, 1)
+        CALL(btlevtcmd_AnimeWaitPlayComplete, BTL_UNIT_SELF, 1)
     END_LOOP
+    // A pause, a lump sound, then the body keeps collapsing.
     WAIT_MS(1000)
-    CALL(btlevtcmd_snd_se, -2, STRING("SFX_BOSS_MOA_G_LUMP1"), -250000000, 0, -250000000)
+    CALL(btlevtcmd_snd_se, BTL_UNIT_SELF, STRING("SFX_BOSS_MOA_G_LUMP1"), EVT_NULLPTR, 0, EVT_NULLPTR)
     LOOP(0)
         READ_INT(LW(2))
         IF_INT_EQUAL(LW(2), 0)
             BREAK_LOOP
         END_IF
-        CALL(btlevtcmd_AnimeChangePose, -2, 1, LW(2))
+        CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, LW(2))
         WAIT_FRAMES(1)
-        CALL(btlevtcmd_AnimeWaitPlayComplete, -2, 1)
+        CALL(btlevtcmd_AnimeWaitPlayComplete, BTL_UNIT_SELF, 1)
     END_LOOP
+    // The swarm swirls up, smoke puffs out and the party is paid its coins, experience and star points.
     CALL(moamoa_guruguru)
     WAIT_MS(500)
     SET_VALUE(LW(10), -2)
-    CALL(btlevtcmd_snd_se, LW(10), STRING("SFX_BTL_ENEMY_DIE1_2"), -250000000, 0, -250000000)
+    CALL(btlevtcmd_snd_se, LW(10), STRING("SFX_BTL_ENEMY_DIE1_2"), EVT_NULLPTR, 0, EVT_NULLPTR)
     CALL(btlevtcmd_GetPos, LW(10), LW(0), LW(1), LW(2))
     ADD(LW(2), 10)
     CALL(evt_eff, 0, STRING("kemuri_test"), 4, LW(0), LW(1), LW(2), FLOAT(0.7998047f), 0, 0, 0, 0, 0, 0, 0)
@@ -541,11 +629,12 @@ static EVT_BEGIN(dead_event)
         LOOP(LW(0))
         END_LOOP
     END_IF
-    CALL(btlevtcmd_snd_se, -2, STRING("SFX_BOSS_MOA_G_EXPLOSION1"), -250000000, 0, -250000000)
+    // The final explosion scatters the swarm, and the boss unit is removed.
+    CALL(btlevtcmd_snd_se, BTL_UNIT_SELF, STRING("SFX_BOSS_MOA_G_EXPLOSION1"), EVT_NULLPTR, 0, EVT_NULLPTR)
     CALL(moamoa_bomb)
     CALL(evt_moamoa_mainUnitIdClear)
     CALL(btlevtcmd_GetBackItem, LW(10))
-    CALL(btlevtcmd_CheckDamageCode, LW(10), 1024, LW(0))
+    CALL(btlevtcmd_CheckDamageCode, LW(10), DAMAGE_FLAG_DEFEATED, LW(0))
     IF_INT_NOT_EQUAL(LW(0), 0)
         CALL(btlevtcmd_KillUnit, LW(10), 0)
     ELSE
@@ -554,6 +643,9 @@ static EVT_BEGIN(dead_event)
     RETURN
 EVT_END()
 
+/**
+ * Animation names (L_2_1 to L_2_5, then S_2) Smorg's body plays in order while it changes into its second form.
+ */
 const char* moamoa2_change_tbl[] = {
     "L_2_1",
     "L_2_3",
@@ -564,46 +656,53 @@ const char* moamoa2_change_tbl[] = {
     NULL,
 };
 
+/**
+ * Phase event of the Smorg boss (called from its phase_event): grows the three tentacles.
+ * Plays the arm restore sound and the V_2 pose,
+ * spawns the tentacle units (entry_boss_moamoa_tentacle_a, b and c),
+ * links them to the main body through unit work 3 to 5, attaches the swarm Moamoa chains to them (moamoa1_on),
+ * switches the defence table to moamoa_defence and plays each tentacle's B_1 idle pose.
+ */
 EVT_BEGIN(moamoa_tentacl_on)
-    CALL(btlevtcmd_snd_se, -2, STRING("SFX_BOSS_MOA_G_ARM_RESTORE1"), -250000000, 0, -250000000)
-    CALL(btlevtcmd_AnimeChangePose, -2, 1, STRING("V_2"))
+    CALL(btlevtcmd_snd_se, BTL_UNIT_SELF, STRING("SFX_BOSS_MOA_G_ARM_RESTORE1"), EVT_NULLPTR, 0, EVT_NULLPTR)
+    CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("V_2"))
     WAIT_FRAMES(1)
-    CALL(btlevtcmd_AnimeWaitPlayComplete, -2, 1)
-    CALL(btlevtcmd_GetUnitId, -2, LW(4))
+    CALL(btlevtcmd_AnimeWaitPlayComplete, BTL_UNIT_SELF, 1)
+    CALL(btlevtcmd_GetUnitId, BTL_UNIT_SELF, LW(4))
     CALL(btlevtcmd_SpawnUnit, LW(3), PTR(&entry_boss_moamoa_tentacle_c), 0)
-    CALL(btlevtcmd_GetPos, -2, LW(0), LW(1), LW(2))
+    CALL(btlevtcmd_GetPos, BTL_UNIT_SELF, LW(0), LW(1), LW(2))
     CALL(btlevtcmd_SetPos, LW(3), LW(0), LW(1), LW(2))
     CALL(btlevtcmd_SetHomePos, LW(3), LW(0), LW(1), LW(2))
-    SET_VALUE(LW(5), 3)
-    CALL(btlevtcmd_SetUnitWork, -2, LW(5), LW(3))
+    SET_VALUE(LW(5), UW_BOSS_MOAMOA_TENTACLE_C)
+    CALL(btlevtcmd_SetUnitWork, BTL_UNIT_SELF, LW(5), LW(3))
     CALL(btlevtcmd_SetUnitWork, LW(3), 0, LW(4))
     SET_VALUE(LW(6), LW(3))
     CALL(btlevtcmd_SpawnUnit, LW(3), PTR(&entry_boss_moamoa_tentacle_b), 0)
-    CALL(btlevtcmd_GetPos, -2, LW(0), LW(1), LW(2))
+    CALL(btlevtcmd_GetPos, BTL_UNIT_SELF, LW(0), LW(1), LW(2))
     CALL(btlevtcmd_SetPos, LW(3), LW(0), LW(1), LW(2))
     CALL(btlevtcmd_SetHomePos, LW(3), LW(0), LW(1), LW(2))
-    SET_VALUE(LW(5), 4)
-    CALL(btlevtcmd_SetUnitWork, -2, LW(5), LW(3))
+    SET_VALUE(LW(5), UW_BOSS_MOAMOA_TENTACLE_B)
+    CALL(btlevtcmd_SetUnitWork, BTL_UNIT_SELF, LW(5), LW(3))
     CALL(btlevtcmd_SetUnitWork, LW(3), 0, LW(4))
     SET_VALUE(LW(7), LW(3))
     CALL(btlevtcmd_SpawnUnit, LW(3), PTR(&entry_boss_moamoa_tentacle_a), 0)
-    CALL(btlevtcmd_GetPos, -2, LW(0), LW(1), LW(2))
+    CALL(btlevtcmd_GetPos, BTL_UNIT_SELF, LW(0), LW(1), LW(2))
     CALL(btlevtcmd_SetPos, LW(3), LW(0), LW(1), LW(2))
     CALL(btlevtcmd_SetHomePos, LW(3), LW(0), LW(1), LW(2))
-    SET_VALUE(LW(5), 5)
-    CALL(btlevtcmd_SetUnitWork, -2, LW(5), LW(3))
+    SET_VALUE(LW(5), UW_BOSS_MOAMOA_TENTACLE_A)
+    CALL(btlevtcmd_SetUnitWork, BTL_UNIT_SELF, LW(5), LW(3))
     CALL(btlevtcmd_SetUnitWork, LW(3), 0, LW(4))
     CALL(moamoa1_on)
-    CALL(btlevtcmd_SetPartsDefenceTable, -2, 1, PTR(&moamoa_defence))
-    CALL(btlevtcmd_OnPartsAttribute, -2, 1, 536870912)
-    CALL(btlevtcmd_AnimeSetPoseTable, -2, 1, PTR(moamoa1_pose_table))
-    CALL(btlevtcmd_OnPartsAttribute, LW(3), 1, 16777216)
-    CALL(btlevtcmd_OnPartsAttribute, LW(7), 1, 16777216)
-    CALL(btlevtcmd_OnPartsAttribute, LW(6), 1, 16777216)
+    CALL(btlevtcmd_SetPartsDefenceTable, BTL_UNIT_SELF, 1, PTR(&moamoa_defence))
+    CALL(btlevtcmd_OnPartsAttribute, BTL_UNIT_SELF, 1, PART_ATTR_IMMUNE_TO_DAMAGE_OR_STATUS)
+    CALL(btlevtcmd_AnimeSetPoseTable, BTL_UNIT_SELF, 1, PTR(moamoa1_pose_table))
+    CALL(btlevtcmd_OnPartsAttribute, LW(3), 1, PART_ATTR_HIDDEN)
+    CALL(btlevtcmd_OnPartsAttribute, LW(7), 1, PART_ATTR_HIDDEN)
+    CALL(btlevtcmd_OnPartsAttribute, LW(6), 1, PART_ATTR_HIDDEN)
     WAIT_FRAMES(3)
-    CALL(btlevtcmd_OffPartsAttribute, LW(3), 1, 16777216)
-    CALL(btlevtcmd_OffPartsAttribute, LW(7), 1, 16777216)
-    CALL(btlevtcmd_OffPartsAttribute, LW(6), 1, 16777216)
+    CALL(btlevtcmd_OffPartsAttribute, LW(3), 1, PART_ATTR_HIDDEN)
+    CALL(btlevtcmd_OffPartsAttribute, LW(7), 1, PART_ATTR_HIDDEN)
+    CALL(btlevtcmd_OffPartsAttribute, LW(6), 1, PART_ATTR_HIDDEN)
     CALL(btlevtcmd_AnimeChangePose, LW(3), 1, STRING("B_1A"))
     CALL(btlevtcmd_AnimeChangePose, LW(7), 1, STRING("B_1B"))
     CALL(btlevtcmd_AnimeChangePose, LW(6), 1, STRING("B_1C"))
@@ -612,27 +711,33 @@ EVT_BEGIN(moamoa_tentacl_on)
     RETURN
 EVT_END()
 
+/**
+ * Phase event of the Smorg boss (called from its phase_event): grows the mouth.
+ * Plays the restore sound, the V_2 pose, spawns the mouth unit (entry_boss_moamoa_mouth) linked through unit
+ * work 6, attaches the swarm Moamoa chains to it (moamoa2_on),
+ * and switches to moamoa2_defence and the mouth's pose-change table.
+ */
 EVT_BEGIN(moamoa_mouth_on)
-    CALL(btlevtcmd_snd_se, -2, STRING("SFX_BOSS_MOA_G_ARM_RESTORE2"), -250000000, 0, -250000000)
+    CALL(btlevtcmd_snd_se, BTL_UNIT_SELF, STRING("SFX_BOSS_MOA_G_ARM_RESTORE2"), EVT_NULLPTR, 0, EVT_NULLPTR)
     WAIT_FRAMES(40)
-    CALL(btlevtcmd_AnimeChangePose, -2, 1, STRING("V_2"))
+    CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("V_2"))
     WAIT_FRAMES(1)
-    CALL(btlevtcmd_AnimeWaitPlayComplete, -2, 1)
-    CALL(btlevtcmd_GetUnitId, -2, LW(4))
+    CALL(btlevtcmd_AnimeWaitPlayComplete, BTL_UNIT_SELF, 1)
+    CALL(btlevtcmd_GetUnitId, BTL_UNIT_SELF, LW(4))
     CALL(btlevtcmd_SpawnUnit, LW(3), PTR(&entry_boss_moamoa_mouth), 0)
-    CALL(btlevtcmd_GetPos, -2, LW(0), LW(1), LW(2))
+    CALL(btlevtcmd_GetPos, BTL_UNIT_SELF, LW(0), LW(1), LW(2))
     CALL(btlevtcmd_SetPos, LW(3), LW(0), LW(1), LW(2))
     CALL(btlevtcmd_SetHomePos, LW(3), LW(0), LW(1), LW(2))
-    SET_VALUE(LW(5), 6)
-    CALL(btlevtcmd_SetUnitWork, -2, LW(5), LW(3))
+    SET_VALUE(LW(5), UW_BOSS_MOAMOA_MOUTH)
+    CALL(btlevtcmd_SetUnitWork, BTL_UNIT_SELF, LW(5), LW(3))
     CALL(btlevtcmd_SetUnitWork, LW(3), 0, LW(4))
     CALL(moamoa2_on)
-    CALL(btlevtcmd_SetPartsDefenceTable, -2, 1, PTR(&moamoa2_defence))
-    CALL(btlevtcmd_AnimeSetPoseTable, -2, 1, PTR(moamoa1_pose_table))
+    CALL(btlevtcmd_SetPartsDefenceTable, BTL_UNIT_SELF, 1, PTR(&moamoa2_defence))
+    CALL(btlevtcmd_AnimeSetPoseTable, BTL_UNIT_SELF, 1, PTR(moamoa1_pose_table))
     SET_INT_READ_ADDR(PTR(&moamoa2_change_tbl))
-    CALL(btlevtcmd_OnPartsAttribute, LW(3), 1, 16777216)
+    CALL(btlevtcmd_OnPartsAttribute, LW(3), 1, PART_ATTR_HIDDEN)
     WAIT_FRAMES(3)
-    CALL(btlevtcmd_OffPartsAttribute, LW(3), 1, 16777216)
+    CALL(btlevtcmd_OffPartsAttribute, LW(3), 1, PART_ATTR_HIDDEN)
     LOOP(0)
         READ_INT(LW(2))
         IF_INT_EQUAL(LW(2), 0)
@@ -655,51 +760,56 @@ EVT_BEGIN(moamoa_mouth_on)
     RETURN
 EVT_END()
 
+/**
+ * Phase event of the Smorg main body: once the mouth
+ * and all tentacles are gone it checks the HP threshold in unit work 2 and, when it fires,
+ * regrows the tentacles (moamoa_tentacl_on) and the mouth (moamoa_mouth_on).
+ */
 static EVT_BEGIN(phase_event)
-    CALL(btlevtcmd_CheckPhase, LW(0), 67108867)
+    CALL(btlevtcmd_CheckPhase, LW(0), BATTLE_PHASE_AFTER_PLAYER)
     IF_INT_EQUAL(LW(0), 0)
         GOTO(0)
     END_IF
-    CALL(btlevtcmd_CheckActStatus, -2, LW(0))
+    CALL(btlevtcmd_CheckActStatus, BTL_UNIT_SELF, LW(0))
     IF_INT_EQUAL(LW(0), 0)
         GOTO(0)
     END_IF
-    CALL(btlevtcmd_GetUnitWork, -2, 6, LW(0))
+    CALL(btlevtcmd_GetUnitWork, BTL_UNIT_SELF, UW_BOSS_MOAMOA_MOUTH, LW(0))
     IF_INT_EQUAL(LW(0), -1)
-        CALL(btlevtcmd_GetUnitWork, -2, 5, LW(0))
+        CALL(btlevtcmd_GetUnitWork, BTL_UNIT_SELF, UW_BOSS_MOAMOA_TENTACLE_A, LW(0))
         IF_INT_EQUAL(LW(0), -1)
-            CALL(btlevtcmd_GetUnitWork, -2, 4, LW(0))
+            CALL(btlevtcmd_GetUnitWork, BTL_UNIT_SELF, UW_BOSS_MOAMOA_TENTACLE_B, LW(0))
             IF_INT_EQUAL(LW(0), -1)
-                CALL(btlevtcmd_GetUnitWork, -2, 3, LW(0))
+                CALL(btlevtcmd_GetUnitWork, BTL_UNIT_SELF, UW_BOSS_MOAMOA_TENTACLE_C, LW(0))
                 IF_INT_EQUAL(LW(0), -1)
-                    CALL(btlevtcmd_GetUnitWork, -2, 1, LW(1))
+                    CALL(btlevtcmd_GetUnitWork, BTL_UNIT_SELF, UW_BOSS_MOAMOA_REGROW_TURNS, LW(1))
                     IF_INT_NOT_EQUAL(LW(1), 0)
                         SUBTRACT(LW(1), 1)
-                        CALL(btlevtcmd_SetUnitWork, -2, 1, LW(1))
+                        CALL(btlevtcmd_SetUnitWork, BTL_UNIT_SELF, UW_BOSS_MOAMOA_REGROW_TURNS, LW(1))
                         IF_INT_EQUAL(LW(1), 0)
-                            CALL(btlevtcmd_SetUnitWork, -2, 1, 2)
-                            CALL(btlevtcmd_GetUnitWork, -2, 2, LW(0))
+                            CALL(btlevtcmd_SetUnitWork, BTL_UNIT_SELF, UW_BOSS_MOAMOA_REGROW_TURNS, 2)
+                            CALL(btlevtcmd_GetUnitWork, BTL_UNIT_SELF, UW_BOSS_MOAMOA_MOUTH_FORM, LW(0))
                             SWITCH(LW(0))
                                 CASE_EQUAL(0)
-                                CALL(btlevtcmd_GetMaxHp, -2, LW(0))
+                                CALL(btlevtcmd_GetMaxHp, BTL_UNIT_SELF, LW(0))
                                 MULTIPLY(LW(0), 50)
                                 DIVIDE(LW(0), 100)
-                                CALL(btlevtcmd_GetHp, -2, LW(1))
+                                CALL(btlevtcmd_GetHp, BTL_UNIT_SELF, LW(1))
                                 IF_INT_LESS_OR_EQUAL(LW(1), LW(0))
-                                    CALL(btlevtcmd_SetUnitWork, -2, 2, 1)
-                                    CALL(btlevtcmd_AnimeChangePose, -2, 1, STRING("S_1_2"))
+                                    CALL(btlevtcmd_SetUnitWork, BTL_UNIT_SELF, UW_BOSS_MOAMOA_MOUTH_FORM, 1)
+                                    CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("S_1_2"))
                                     WAIT_MS(1000)
-                                    CALL(btlevtcmd_AnimeChangePose, -2, 1, STRING("S_1_1"))
+                                    CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("S_1_1"))
                                 END_IF
                             END_SWITCH
-                            CALL(btlevtcmd_GetUnitWork, -2, 2, LW(1))
+                            CALL(btlevtcmd_GetUnitWork, BTL_UNIT_SELF, UW_BOSS_MOAMOA_MOUTH_FORM, LW(1))
                             IF_INT_NOT_EQUAL(LW(1), 1)
-                                CALL_CHILD(PTR(moamoa_tentacl_on))
-                                ELSE
-                                CALL_CHILD(PTR(moamoa_mouth_on))
+                                CALL_CHILD(moamoa_tentacl_on)
+                            ELSE
+                                CALL_CHILD(moamoa_mouth_on)
                             END_IF
-                            CALL(btlevtcmd_SetHitOffset, -2, 1, 0, 0, 0)
-                            CALL(btlevtcmd_SetHitCursorOffset, -2, 1, 0, 0, 0)
+                            CALL(btlevtcmd_SetHitOffset, BTL_UNIT_SELF, 1, 0, 0, 0)
+                            CALL(btlevtcmd_SetHitCursorOffset, BTL_UNIT_SELF, 1, 0, 0, 0)
                         END_IF
                     END_IF
                 END_IF
@@ -710,22 +820,25 @@ static EVT_BEGIN(phase_event)
     RETURN
 EVT_END()
 
+/** Attack event of the Smorg main body: runs the attack script chosen in LW(0). */
 static EVT_BEGIN(attack_event)
-    CALL(btlevtcmd_EnemyItemUseCheck, -2, LW(0))
+    CALL(btlevtcmd_EnemyItemUseCheck, BTL_UNIT_SELF, LW(0))
     IF_INT_NOT_EQUAL(LW(0), 0)
         CALL_CHILD(LW(0))
-        CALL(btlevtcmd_StartWaitEvent, -2)
+        CALL(btlevtcmd_StartWaitEvent, BTL_UNIT_SELF)
         RETURN
     END_IF
-    CALL(btlevtcmd_StartWaitEvent, -2)
+    CALL(btlevtcmd_StartWaitEvent, BTL_UNIT_SELF)
     RETURN
 EVT_END()
 
+/** Idle event of the Smorg main body: shows the unit's table pose for state 1. */
 static EVT_BEGIN(wait_event)
-    CALL(btlevtcmd_AnimeChangePoseFromTable, -2, 1)
+    CALL(btlevtcmd_AnimeChangePoseFromTable, BTL_UNIT_SELF, 1)
     RETURN
 EVT_END()
 
+/** Animation and bone data for each of the 89 swarm segments that make up Smorg's body. */
 static ExtTexInfo ext_moamoa_data[] = {
     {"c_n_moa_a", "S_1", 0.0f},
     {"c_n_moa_a", "S_1", 2.0f},
@@ -818,9 +931,13 @@ static ExtTexInfo ext_moamoa_data[] = {
     {0},
 };
 
-USER_FUNC(moamoa_guruguru) {
+/**
+ * Script helper used at the Smorg's death: collects the Moamoa that are above ground, finds their center,
+ * and gives each a starting angle (22.4 degrees apart) so they can swirl (guruguru) around it.
+ */
+static USER_FUNC(moamoa_guruguru) {
     s32 i;
-    Moamoa* elem;
+    BtlMoamoa* elem;
     ExtdrvPose* pose;
     f32 cnt;
     f32 ang;
@@ -867,13 +984,19 @@ USER_FUNC(moamoa_guruguru) {
     return 2;
 }
 
-USER_FUNC(moamoa_bomb) {
+/**
+ * Script helper used at the Smorg's death: every other frame it launches up to ten more Moamoa outward
+ * and upward from their body positions, makes them fall under gravity,
+ * and finishes (returns done) once at most nine Moamoa remain above -200,
+ * so the swarm scatters like an explosion.
+ */
+static USER_FUNC(moamoa_bomb) {
     ExtdrvPose* p2;
-    Moamoa* e2;
+    BtlMoamoa* e2;
     s32 k;
     s32 i;
     ExtdrvPose* pose;
-    Moamoa* elem;
+    BtlMoamoa* elem;
     s32 n;
 
     BattleGetUnitPtr(_battleWorkPointer, wp->unitId);
@@ -938,11 +1061,17 @@ USER_FUNC(moamoa_bomb) {
     return 0;
 }
 
-USER_FUNC(moamoa1_on) {
+/**
+ * Script helper: attaches the swarm Moamoa to the Smorg's three tentacle parts.
+ * Looks up the tentacle poses (unit work 3 to 5), hides their joints,
+ * and assigns each Moamoa's chain to the tentacle it belongs to (chains 0 to 4, 5 to 9 and 10 to 14)
+ * or to the main body, recording which unit's work slot owns it.
+ */
+static USER_FUNC(moamoa1_on) {
     BattleUnit* unit = BattleGetUnitPtr(_battleWorkPointer, wp->unitId);
     s32 i;
     BattleUnitPart* part;
-    Moamoa* elem;
+    BtlMoamoa* elem;
     AnimationPose* ap;
     s32 j;
     Vec* p;
@@ -950,13 +1079,13 @@ USER_FUNC(moamoa1_on) {
     for (i = 1; i < 4; i++) {
         switch (i) {
             case 1:
-                part = BattleGetUnitPartsPtr(unit->work[3], 1);
+                part = BattleGetUnitPartsPtr(unit->work[UW_BOSS_MOAMOA_TENTACLE_C], 1);
                 break;
             case 2:
-                part = BattleGetUnitPartsPtr(unit->work[4], 1);
+                part = BattleGetUnitPartsPtr(unit->work[UW_BOSS_MOAMOA_TENTACLE_B], 1);
                 break;
             case 3:
-                part = BattleGetUnitPartsPtr(unit->work[5], 1);
+                part = BattleGetUnitPartsPtr(unit->work[UW_BOSS_MOAMOA_TENTACLE_A], 1);
                 break;
         }
         wp->poseId[i] = part->poseId;
@@ -971,13 +1100,13 @@ USER_FUNC(moamoa1_on) {
     for (i = 0; i < wp->count; i++, elem++) {
         if (elem->chain < 5) {
             elem->poseId = wp->poseId[3];
-            elem->owner = &unit->work[5];
+            elem->owner = &unit->work[UW_BOSS_MOAMOA_TENTACLE_A];
         } else if (elem->chain < 10) {
             elem->poseId = wp->poseId[2];
-            elem->owner = &unit->work[4];
+            elem->owner = &unit->work[UW_BOSS_MOAMOA_TENTACLE_B];
         } else if (elem->chain < 15) {
             elem->poseId = wp->poseId[1];
-            elem->owner = &unit->work[3];
+            elem->owner = &unit->work[UW_BOSS_MOAMOA_TENTACLE_C];
         } else if (elem->chain < 30) {
             elem->poseId = wp->poseId[0];
             elem->owner = &wp->unitId;
@@ -989,14 +1118,19 @@ USER_FUNC(moamoa1_on) {
     return 2;
 }
 
-USER_FUNC(moamoa2_on) {
+/**
+ * Script helper: attaches the swarm Moamoa to the Smorg's mouth.
+ * Looks up the mouth pose (unit work 6), hides its joints,
+ * and assigns the Moamoa of chains 15 to 29 to the mouth and all others to the main body.
+ */
+static USER_FUNC(moamoa2_on) {
     BattleUnit* unit = BattleGetUnitPtr(_battleWorkPointer, wp->unitId);
-    Moamoa* elem;
+    BtlMoamoa* elem;
     AnimationPose* ap;
     Vec* p;
     s32 i;
 
-    wp->poseId[4] = BattleGetUnitPartsPtr(unit->work[6], 1)->poseId;
+    wp->poseId[4] = BattleGetUnitPartsPtr(unit->work[UW_BOSS_MOAMOA_MOUTH], 1)->poseId;
     animPoseWorldPositionEvalOn(wp->poseId[4]);
     ap = animPoseGetAnimPosePtr(wp->poseId[4]);
     p = *ap->worldPositions;
@@ -1016,7 +1150,7 @@ USER_FUNC(moamoa2_on) {
             elem->owner = &wp->unitId;
         } else if (elem->chain < 30) {
             elem->poseId = wp->poseId[4];
-            elem->owner = &unit->work[6];
+            elem->owner = &unit->work[UW_BOSS_MOAMOA_MOUTH];
         } else {
             elem->poseId = wp->poseId[0];
             elem->owner = &wp->unitId;
@@ -1025,30 +1159,48 @@ USER_FUNC(moamoa2_on) {
     return 2;
 }
 
-USER_FUNC(moamoa_on) {
+/**
+ * Script helper: creates the boss's swarm.
+ * Allocates 750 Moamoa with small random offsets (EU: from its own seeded generator), reads the main body pose,
+ * sets up the bone chains and the animation groups from ext_moamoa_data,
+ * and attaches the chains to the tentacles (moamoa1_on) and the passengers' models (types 1 to 10).
+ */
+static USER_FUNC(moamoa_on) {
     s32 i;
-    s32 j;
-    Moamoa* elem;
+    BtlMoamoa* elem;
     MoamoaExtData* d;
+    s32 j;
     AnimationPose* ap;
     Vec* p;
     s32 start;
+#if VERSION >= VERSION_DEMO_EU
+    u32 seeds[4] = {0x3056, 0xF36, 0xF2A93, 0x17F57};
+#endif
     Vec v;
     char anim[32];
     char pose[32];
 
-    wp = BTL_ALLOC(sizeof(MoamoaWork));
-    memset(wp, 0, sizeof(MoamoaWork));
+    wp = BTL_ALLOC(sizeof(BtlMoamoaWork));
+    memset(wp, 0, sizeof(BtlMoamoaWork));
     wp->count = 750;
-    wp->elems = BTL_ALLOC(wp->count * sizeof(Moamoa));
-    memset(wp->elems, 0, wp->count * sizeof(Moamoa));
+    wp->elems = BTL_ALLOC(wp->count * sizeof(BtlMoamoa));
+    memset(wp->elems, 0, wp->count * sizeof(BtlMoamoa));
     elem = wp->elems;
+#if VERSION >= VERSION_DEMO_EU
+    moamoa_srand(seeds[rand() & 3]);
+#endif
     for (i = 0; i < wp->count; i++, elem++) {
         elem->flags = 0;
         v = (Vec){0.0f, 0.0f, 0.0f};
+#if VERSION >= VERSION_DEMO_EU
+        v.x = moamoa_randf(-10.0f, 10.0f);
+        v.y = moamoa_randf(-10.0f, 10.0f);
+        v.z = moamoa_randf(-10.0f, 10.0f);
+#else
         v.x = randf(-10.0f, 10.0f);
         v.y = randf(-10.0f, 10.0f);
         v.z = randf(-10.0f, 10.0f);
+#endif
         elem->pos = v;
     }
     wp->unitId = BattleTransID(event, -2);
@@ -1060,13 +1212,13 @@ USER_FUNC(moamoa_on) {
     for (i = 0; i < ap->numWorldPositions; i++, p++) {
         *p = (Vec){0.0f, -1000.0f, 0.0f};
     }
-    for (i = 0; i < g_moamoa_chain_num; i++) {
-        wp->chainIdx[i][0] = animPoseGetGroupIdx(wp->poseId[0], g_moamoa_chain_tbl[i][0]);
-        wp->chainIdx[i][1] = animPoseGetGroupIdx(wp->poseId[0], g_moamoa_chain_tbl[i][1]);
+    for (i = 0; i < g_moamoa_chain_max; i++) {
+        wp->chainIdx[i][0] = animPoseGetGroupIdx(wp->poseId[0], g_moamoa_chain_tbl[i].from);
+        wp->chainIdx[i][1] = animPoseGetGroupIdx(wp->poseId[0], g_moamoa_chain_tbl[i].to);
     }
     elem = wp->elems;
     for (i = 0; i < wp->count; i++, elem++) {
-        elem->chain = i % g_moamoa_chain_num;
+        elem->chain = i % g_moamoa_chain_max;
         elem->order = wp->chainNum[elem->chain]++;
     }
     moamoa1_on(event, isFirstCall);
@@ -1138,6 +1290,10 @@ USER_FUNC(moamoa_on) {
     return 2;
 }
 
+/**
+ * Sets up the boss's swarm: hides the passenger model NPCs, runs moamoa_on,
+ * and adds the 750-sprite swarm effect with ext_moamoa_data, ext_moamoa_init and ext_moamoa_main.
+ */
 static EVT_BEGIN(evt_moamoa)
     CALL(evt_npc_entry, STRING("moa_a"), STRING("c_n_moa_a"))
     CALL(evt_npc_entry, STRING("moa_b"), STRING("c_n_moa_b"))
@@ -1159,20 +1315,24 @@ static EVT_BEGIN(evt_moamoa)
     CALL(evt_npc_set_position, STRING("papa"), 0, -1000, 0)
     CALL(evt_npc_set_position, STRING("mama"), 0, -1000, 0)
     CALL(evt_npc_set_position, STRING("konari"), 0, -1000, 0)
-    CALL(evt_npc_flag_onoff, 1, STRING("kinopio"), 2048)
-    CALL(evt_npc_flag_onoff, 1, STRING("cook"), 2048)
-    CALL(evt_npc_flag_onoff, 1, STRING("powan"), 2048)
-    CALL(evt_npc_flag_onoff, 1, STRING("sarary"), 2048)
-    CALL(evt_npc_flag_onoff, 1, STRING("rose"), 2048)
-    CALL(evt_npc_flag_onoff, 1, STRING("papa"), 2048)
-    CALL(evt_npc_flag_onoff, 1, STRING("mama"), 2048)
-    CALL(evt_npc_flag_onoff, 1, STRING("konari"), 2048)
+    CALL(evt_npc_flag_onoff, 1, STRING("kinopio"), NPC_FLAG_NO_DISPLAY)
+    CALL(evt_npc_flag_onoff, 1, STRING("cook"), NPC_FLAG_NO_DISPLAY)
+    CALL(evt_npc_flag_onoff, 1, STRING("powan"), NPC_FLAG_NO_DISPLAY)
+    CALL(evt_npc_flag_onoff, 1, STRING("sarary"), NPC_FLAG_NO_DISPLAY)
+    CALL(evt_npc_flag_onoff, 1, STRING("rose"), NPC_FLAG_NO_DISPLAY)
+    CALL(evt_npc_flag_onoff, 1, STRING("papa"), NPC_FLAG_NO_DISPLAY)
+    CALL(evt_npc_flag_onoff, 1, STRING("mama"), NPC_FLAG_NO_DISPLAY)
+    CALL(evt_npc_flag_onoff, 1, STRING("konari"), NPC_FLAG_NO_DISPLAY)
     CALL(moamoa_on)
     CALL(evt_ext_entry, 750, PTR(ext_moamoa_data), PTR(ext_moamoa_init), PTR(ext_moamoa_main), 0)
     RETURN
 EVT_END()
 
-void moamoa_pose(Moamoa* elem) {
+/**
+ * Selects the animation group (model and animation) for one swarm Moamoa from its type (group_tbl row: plain
+ * Smorg models and the swallowed passengers' models) and restarts its clock if the group changed.
+ */
+static void moamoa_pose(BtlMoamoa* elem) {
     static const char* group_tbl[][2] = {
         {"c_n_moa_a", "S_1"},
         {"c_n_moa_b", "S_1"},
@@ -1205,10 +1365,14 @@ void moamoa_pose(Moamoa* elem) {
     }
 }
 
+/**
+ * Init callback of the boss swarm effect: sets scale to 1 and gives every sprite an identity matrix
+ * and its starting pose.
+ */
 static void ext_moamoa_init(void) {
     s32 i;
     ExtdrvPose* pose;
-    Moamoa* elem;
+    BtlMoamoa* elem;
 
     pose = extGetPosePtr();
     elem = wp->elems;
@@ -1221,15 +1385,26 @@ static void ext_moamoa_init(void) {
     }
 }
 
+/**
+ * Event run beside the main body's script: calls moamoa_set_bodyScale to resize the body Moamoa as tentacles
+ * and mouth are lost.
+ */
 EVT_BEGIN(MOAMOA_SET_BODYSCALE)
     CALL(moamoa_set_bodyScale)
     RETURN
 EVT_END()
 
+/**
+ * Per-frame callback of the boss swarm.
+ * Eases the body scale, advances every sprite's animation and, while the main body lives,
+ * places each Moamoa on its bone chain (between two joints of the tentacle, mouth or body pose,
+ * offset by the part it belongs to). After the body is gone it makes the Moamoa swirl and then fall.
+ * Queues the draw callback each frame.
+ */
 static void ext_moamoa_main(void) {
-    Moamoa* elem;
-    Moamoa* e4;
-    Moamoa* e2;
+    BtlMoamoa* elem;
+    BtlMoamoa* e4;
+    BtlMoamoa* e2;
     s32 k4;
     s32 k3;
     s32 k;
@@ -1347,7 +1522,8 @@ static void ext_moamoa_main(void) {
     dispEntry(CAMERA_3D, 0.0f, 1, moamoa_draw, NULL);
 }
 
-void moamoa_draw(CameraId cameraId, void* param) {
+/** Draw callback of the boss swarm: loads the ext driver state and draws all sprites. */
+static void moamoa_draw(CameraId cameraId, void* param) {
     extLoadRenderMode();
     extLoadVertex();
     extLoadTexture();
@@ -1356,7 +1532,13 @@ void moamoa_draw(CameraId cameraId, void* param) {
     extLoadTextureExit();
 }
 
-USER_FUNC(moamoa_set_bodyScale) {
+/**
+ * Script helper: sets the target scale of the body's own Moamoa sprites (chains 46 and up),
+ * which ext_moamoa_main eases toward.
+ * The scale is 0.333 * (n - 3) + 1, where n counts missing parts (each missing tentacle counts 1,
+ * a missing mouth counts 3). Removes the effect if the main body no longer exists.
+ */
+static USER_FUNC(moamoa_set_bodyScale) {
     BattleUnit* unit;
     s32 n;
 
@@ -1366,19 +1548,18 @@ USER_FUNC(moamoa_set_bodyScale) {
         extReset();
         return 2;
     }
-    if (unit->work[6] == -1) {
+    if (unit->work[UW_BOSS_MOAMOA_MOUTH] == -1) {
         n += 3;
     }
-    if (unit->work[5] == -1) {
+    if (unit->work[UW_BOSS_MOAMOA_TENTACLE_A] == -1) {
         n++;
     }
-    if (unit->work[4] == -1) {
+    if (unit->work[UW_BOSS_MOAMOA_TENTACLE_B] == -1) {
         n++;
     }
-    if (unit->work[3] == -1) {
+    if (unit->work[UW_BOSS_MOAMOA_TENTACLE_C] == -1) {
         n++;
     }
     wp->targetScale = 0.333f * (n - 3) + 1.0f;
     return 0;
 }
-

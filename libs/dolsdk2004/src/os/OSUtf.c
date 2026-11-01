@@ -1,6 +1,10 @@
 #include <dolphin.h>
 #include <dolphin/os.h>
 
+/**
+ * Decodes one UTF-8 character at utf8 into a UTF-32 code point;
+ * returns the pointer past it, or NULL for an invalid, overlong or surrogate sequence.
+ */
 char* OSUTF8to32(const char* utf8, u32* utf32) {
     u32 u;
     u8 c;
@@ -60,6 +64,10 @@ char* OSUTF8to32(const char* utf8, u32* utf32) {
     return (char*)utf8;
 }
 
+/**
+ * Encodes a UTF-32 code point as one to four UTF-8 bytes;
+ * returns the pointer past the bytes written, or NULL for a surrogate or a value above 0x10FFFF.
+ */
 char* OSUTF32to8(u32 utf32, char* utf8) {
     int len;
 
@@ -94,6 +102,10 @@ char* OSUTF32to8(u32 utf32, char* utf8) {
     return utf8;
 }
 
+/**
+ * Decodes one UTF-16 unit or a surrogate pair into a UTF-32 code point;
+ * returns the pointer past it, or NULL for an unpaired surrogate.
+ */
 u16* OSUTF16to32(const u16* utf16, u32* utf32) {
     u16 w1;
     u16 w2;
@@ -124,6 +136,10 @@ u16* OSUTF16to32(const u16* utf16, u32* utf32) {
     return (u16*)utf16;
 }
 
+/**
+ * Encodes a UTF-32 code point as one UTF-16 unit or a surrogate pair;
+ * returns the pointer past it, or NULL for a surrogate or a value above 0x10FFFF.
+ */
 u16* OSUTF32to16(u32 utf32, u16* utf16) {
     u16 w1;
     u16 w2;
@@ -153,6 +169,7 @@ u16* OSUTF32to16(u32 utf32, u16* utf16) {
     return utf16;
 }
 
+/** Unicode code points of the Windows-1252 characters 0x80-0x9F (0 where the code page has none). */
 static u16 UcsAnsiTable[32] = {
     0x20AC, 0x0000, 0x201A, 0x0192, 0x201E, 0x2026, 
     0x2020, 0x2021, 0x02C6, 0x2030, 0x0160, 0x2039,
@@ -162,6 +179,11 @@ static u16 UcsAnsiTable[32] = {
     0x017E, 0x0178,
 };
 
+/**
+ * Converts a code point to a single-byte Windows-1252 value.
+ * Returns 0 above 0xFF; values outside 0x80 to 0x9F are returned as they are.
+ * Surprising: the lookup in the 0x80 to 0x9F table is unreachable because of the earlier checks.
+ */
 u8 OSUTF32toANSI(u32 utf32) {
     int i;
 
@@ -184,6 +206,10 @@ u8 OSUTF32toANSI(u32 utf32) {
     return 0;
 }
 
+/**
+ * Converts a Windows-1252 byte to its UTF-32 code point (the 0x80 to 0x9F range through UcsAnsiTable,
+ * everything else unchanged).
+ */
 u32 OSANSItoUTF32(u8 ansi) {
     if (ansi >= 0x80 && ansi <= 0x9F) {
         return UcsAnsiTable[ansi - 0x80];
@@ -192,6 +218,7 @@ u32 OSANSItoUTF32(u8 ansi) {
     return ansi;
 }
 
+/** Shift-JIS code for each Unicode code point U+0000 to U+00FF, by its low byte (0: none). */
 static u16 Ucs00[256] = {
 	0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 	0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
@@ -238,6 +265,7 @@ static u16 Ucs00[256] = {
 	0x0000, 0x0000, 0x0000, 0x0000
 };
 
+/** Shift-JIS code for each Unicode code point U+0300 to U+03FF, by its low byte (0: none). */
 static u16 Ucs03[256] = {
     0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 	0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
@@ -284,6 +312,7 @@ static u16 Ucs03[256] = {
 	0x0000, 0x0000, 0x0000, 0x0000
 };
 
+/** Shift-JIS code for each Unicode code point U+0400 to U+04FF, by its low byte (0: none). */
 static u16 Ucs04[256] = {
     0x0000, 0x8446, 0x0000, 0x0000, 0x0000, 0x0000,
 	0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
@@ -330,6 +359,7 @@ static u16 Ucs04[256] = {
 	0x0000, 0x0000, 0x0000, 0x0000
 };
 
+/** Shift-JIS code for each Unicode code point U+2000 to U+20FF, by its low byte (0: none). */
 static u16 Ucs20[256] = {
     0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 	0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
@@ -376,6 +406,7 @@ static u16 Ucs20[256] = {
 	0x0000, 0x0000, 0x0000, 0x0000
 };
 
+/** Shift-JIS code for each Unicode code point U+2100 to U+21FF, by its low byte (0: none). */
 static u16 Ucs21[256] = {
     0x0000, 0x0000, 0x0000, 0x818E, 0x0000, 0x0000,
 	0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
@@ -422,6 +453,7 @@ static u16 Ucs21[256] = {
 	0x0000, 0x0000, 0x0000, 0x0000
 };
 
+/** Shift-JIS code for each Unicode code point U+2200 to U+22FF, by its low byte (0: none). */
 static u16 Ucs22[256] = {
     0x81CD, 0x0000, 0x81DD, 0x81CE, 0x0000, 0x0000,
 	0x0000, 0x81DE, 0x81B8, 0x0000, 0x0000, 0x81B9,
@@ -468,6 +500,7 @@ static u16 Ucs22[256] = {
 	0x0000, 0x0000, 0x0000, 0x0000
 };
 
+/** Shift-JIS code for each Unicode code point U+2300 to U+23FF, by its low byte (0: none). */
 static u16 Ucs23[256] = {
     0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 	0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
@@ -514,6 +547,7 @@ static u16 Ucs23[256] = {
 	0x0000, 0x0000, 0x0000, 0x0000
 };
 
+/** Shift-JIS code for each Unicode code point U+2500 to U+25FF, by its low byte (0: none). */
 static u16 Ucs25[256] = {
     0x849F, 0x84AA, 0x84A0, 0x84AB, 0x0000, 0x0000,
 	0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
@@ -560,6 +594,7 @@ static u16 Ucs25[256] = {
 	0x0000, 0x0000, 0x0000, 0x0000
 };
 
+/** Shift-JIS code for each Unicode code point U+2600 to U+26FF, by its low byte (0: none). */
 static u16 Ucs26[256] = {
     0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x819A,
 	0x8199, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
@@ -606,6 +641,7 @@ static u16 Ucs26[256] = {
 	0x0000, 0x0000, 0x0000, 0x0000
 };
 
+/** Shift-JIS code for each Unicode code point U+3000 to U+30FF, by its low byte (0: none). */
 static u16 Ucs30[256] = {
     0x8140, 0x8141, 0x8142, 0x8156, 0x0000, 0x8158,
 	0x8159, 0x815A, 0x8171, 0x8172, 0x8173, 0x8174,
@@ -652,6 +688,7 @@ static u16 Ucs30[256] = {
 	0x815B, 0x8152, 0x8153, 0x0000
 };
 
+/** Shift-JIS code for each Unicode code point U+4E00 to U+4EFF, by its low byte (0: none). */
 static u16 Ucs4E[256] = {
     0x88EA, 0x929A, 0x0000, 0x8EB5, 0x0000, 0x0000,
 	0x0000, 0x969C, 0x8FE4, 0x8E4F, 0x8FE3, 0x89BA,
@@ -698,6 +735,7 @@ static u16 Ucs4E[256] = {
 	0x0000, 0x0000, 0x0000, 0x0000
 };
 
+/** Shift-JIS code for each Unicode code point U+4F00 to U+4FFF, by its low byte (0: none). */
 static u16 Ucs4F[256] = {
     0x0000, 0x8AE9, 0x0000, 0x0000, 0x0000, 0x0000,
 	0x0000, 0x0000, 0x0000, 0x98C2, 0x88C9, 0x0000,
@@ -744,6 +782,7 @@ static u16 Ucs4F[256] = {
 	0x0000, 0x0000, 0x98EA, 0x0000
 };
 
+/** Shift-JIS code for each Unicode code point U+5000 to U+50FF, by its low byte (0: none). */
 static u16 Ucs50[256] = {
     0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x98E4,
 	0x98ED, 0x0000, 0x0000, 0x9171, 0x0000, 0x8CC2,
@@ -790,6 +829,7 @@ static u16 Ucs50[256] = {
 	0x0000, 0x0000, 0x0000, 0x0000
 };
 
+/** Shift-JIS code for each Unicode code point U+5100 to U+51FF, by its low byte (0: none). */
 static u16 Ucs51[256] = {
     0x8B56, 0x994D, 0x994E, 0x0000, 0x89AD, 0x0000,
 	0x0000, 0x0000, 0x0000, 0x994C, 0x0000, 0x0000,
@@ -836,6 +876,7 @@ static u16 Ucs51[256] = {
 	0x0000, 0x949F, 0x9982, 0x0000
 };
 
+/** Shift-JIS code for each Unicode code point U+5200 to U+52FF, by its low byte (0: none). */
 static u16 Ucs52[256] = {
     0x9381, 0x0000, 0x0000, 0x906E, 0x9983, 0x0000,
 	0x95AA, 0x90D8, 0x8AA0, 0x0000, 0x8AA7, 0x9984,
@@ -882,6 +923,7 @@ static u16 Ucs52[256] = {
 	0x0000, 0x0000, 0x8CF9, 0x96DC
 };
 
+/** Shift-JIS code for each Unicode code point U+5300 to U+53FF, by its low byte (0: none). */
 static u16 Ucs53[256] = {
     0x0000, 0x96E6, 0x93F5, 0x0000, 0x0000, 0x95EF,
 	0x99B0, 0x0000, 0x99B1, 0x0000, 0x0000, 0x0000,
@@ -928,6 +970,7 @@ static u16 Ucs53[256] = {
 	0x0000, 0x0000, 0x0000, 0x0000
 };
 
+/** Shift-JIS code for each Unicode code point U+5400 to U+54FF, by its low byte (0: none). */
 static u16 Ucs54[256] = {
     0x0000, 0x99DC, 0x0000, 0x8B68, 0x8A65, 0x0000,
 	0x0000, 0x0000, 0x8D87, 0x8B67, 0x92DD, 0x8944,
@@ -974,6 +1017,7 @@ static u16 Ucs54[256] = {
 	0x0000, 0x9A4A, 0x0000, 0x0000
 };
 
+/** Shift-JIS code for each Unicode code point U+5500 to U+55FF, by its low byte (0: none). */
 static u16 Ucs55[256] = {
     0x0000, 0x0000, 0x0000, 0x0000, 0x8953, 0x0000,
 	0x8DB4, 0x904F, 0x0000, 0x0000, 0x0000, 0x0000,
@@ -1020,6 +1064,7 @@ static u16 Ucs55[256] = {
 	0x0000, 0x9A75, 0x9A74, 0x0000
 };
 
+/** Shift-JIS code for each Unicode code point U+5600 to U+56FF, by its low byte (0: none). */
 static u16 Ucs56[256] = {
     0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 	0x9251, 0x0000, 0x0000, 0x89C3, 0x0000, 0x0000,
@@ -1066,6 +1111,7 @@ static u16 Ucs56[256] = {
 	0x0000, 0x8D91, 0x0000, 0x9A9C
 };
 
+/** Shift-JIS code for each Unicode code point U+5700 to U+57FF, by its low byte (0: none). */
 static u16 Ucs57[256] = {
     0x9A9B, 0x0000, 0x0000, 0x95DE, 0x9A9D, 0x0000,
 	0x0000, 0x0000, 0x9A9F, 0x9A9E, 0x0000, 0x9AA0,
@@ -1112,6 +1158,7 @@ static u16 Ucs57[256] = {
 	0x8DE9, 0x0000, 0x0000, 0x0000
 };
 
+/** Shift-JIS code for each Unicode code point U+5800 to U+58FF, by its low byte (0: none). */
 static u16 Ucs58[256] = {
     0x9678, 0x0000, 0x93B0, 0x0000, 0x0000, 0x8C98,
 	0x91CD, 0x0000, 0x0000, 0x0000, 0x9ABF, 0x9AC2,
@@ -1158,6 +1205,7 @@ static u16 Ucs58[256] = {
 	0x9AE5, 0x9AE6, 0x0000, 0x0000
 };
 
+/** Shift-JIS code for each Unicode code point U+5900 to U+59FF, by its low byte (0: none). */
 static u16 Ucs59[256] = {
     0x0000, 0x0000, 0x9AE7, 0x0000, 0x0000, 0x0000,
 	0x0000, 0x0000, 0x0000, 0x95CF, 0x9AE8, 0x0000,
@@ -1204,6 +1252,7 @@ static u16 Ucs59[256] = {
 	0x0000, 0x0000, 0x0000, 0x8E70
 };
 
+/** Shift-JIS code for each Unicode code point U+5A00 to U+5AFF, by its low byte (0: none). */
 static u16 Ucs5A[256] = {
     0x0000, 0x88D0, 0x0000, 0x88A1, 0x0000, 0x0000,
 	0x0000, 0x0000, 0x0000, 0x9B51, 0x0000, 0x0000,
@@ -1250,6 +1299,7 @@ static u16 Ucs5A[256] = {
 	0x0000, 0x0000, 0x0000, 0x0000
 };
 
+/** Shift-JIS code for each Unicode code point U+5B00 to U+5BFF, by its low byte (0: none). */
 static u16 Ucs5B[256] = {
     0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 	0x0000, 0x0000, 0x0000, 0x8AF0, 0x0000, 0x9B68,
@@ -1296,6 +1346,7 @@ static u16 Ucs5B[256] = {
 	0x0000, 0x0000, 0x91CE, 0x8EF5
 };
 
+/** Shift-JIS code for each Unicode code point U+5C00 to U+5CFF, by its low byte (0: none). */
 static u16 Ucs5C[256] = {
     0x0000, 0x9595, 0x90EA, 0x0000, 0x8ECB, 0x9B91,
 	0x8FAB, 0x9B92, 0x9B93, 0x88D1, 0x91B8, 0x9071,
@@ -1342,6 +1393,7 @@ static u16 Ucs5C[256] = {
 	0x0000, 0x9BB5, 0x0000, 0x0000
 };
 
+/** Shift-JIS code for each Unicode code point U+5D00 to U+5DFF, by its low byte (0: none). */
 static u16 Ucs5D[256] = {
     0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 	0x0000, 0x9092, 0x0000, 0x0000, 0x0000, 0x9BBA,
@@ -1388,6 +1440,7 @@ static u16 Ucs5D[256] = {
 	0x0000, 0x9246, 0x8BD0, 0x0000
 };
 
+/** Shift-JIS code for each Unicode code point U+5E00 to U+5EFF, by its low byte (0: none). */
 static u16 Ucs5E[256] = {
     0x0000, 0x0000, 0x8E73, 0x957A, 0x0000, 0x0000,
 	0x94BF, 0x0000, 0x0000, 0x0000, 0x0000, 0x9BE1,
@@ -1434,6 +1487,7 @@ static u16 Ucs5E[256] = {
 	0x9455, 0x0000, 0x9C4F, 0x93F9
 };
 
+/** Shift-JIS code for each Unicode code point U+5F00 to U+5FFF, by its low byte (0: none). */
 static u16 Ucs5F[256] = {
     0x0000, 0x95D9, 0x0000, 0x9C50, 0x984D, 0x0000,
 	0x0000, 0x0000, 0x0000, 0x9C51, 0x95BE, 0x9C54,
@@ -1480,6 +1534,7 @@ static u16 Ucs5F[256] = {
 	0x0000, 0x8D9A, 0x0000, 0x9C7C
 };
 
+/** Shift-JIS code for each Unicode code point U+6000 to U+60FF, by its low byte (0: none). */
 static u16 Ucs60[256] = {
     0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 	0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
@@ -1526,6 +1581,7 @@ static u16 Ucs60[256] = {
 	0x0000, 0x0000, 0x0000, 0x0000
 };
 
+/** Shift-JIS code for each Unicode code point U+6100 to U+61FF, by its low byte (0: none). */
 static u16 Ucs61[256] = {
     0x9CB5, 0x8F44, 0x0000, 0x9CB8, 0x0000, 0x0000,
 	0x9CB2, 0x0000, 0x96FA, 0x96F9, 0x0000, 0x0000,
@@ -1572,6 +1628,7 @@ static u16 Ucs61[256] = {
 	0x9CF4, 0x9CF3, 0x9CF5, 0x9CF2
 };
 
+/** Shift-JIS code for each Unicode code point U+6200 to U+62FF, by its low byte (0: none). */
 static u16 Ucs62[256] = {
     0x9CF6, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 	0x0000, 0x0000, 0x9CF7, 0x9CF8, 0x95E8, 0x0000,
@@ -1618,6 +1675,7 @@ static u16 Ucs62[256] = {
 	0x0000, 0x0000, 0x8F45, 0x9D5C
 };
 
+/** Shift-JIS code for each Unicode code point U+6300 to U+63FF, by its low byte (0: none). */
 static u16 Ucs63[256] = {
     0x0000, 0x8E9D, 0x9D6B, 0x0000, 0x0000, 0x0000,
 	0x0000, 0x8E77, 0x9D6C, 0x88C2, 0x0000, 0x0000,
@@ -1664,6 +1722,7 @@ static u16 Ucs63[256] = {
 	0x0000, 0x0000, 0x0000, 0x0000
 };
 
+/** Shift-JIS code for each Unicode code point U+6400 to U+64FF, by its low byte (0: none). */
 static u16 Ucs64[256] = {
     0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 	0x9D8C, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
@@ -1710,6 +1769,7 @@ static u16 Ucs64[256] = {
 	0x0000, 0x9DB4, 0x8FEF, 0x0000
 };
 
+/** Shift-JIS code for each Unicode code point U+6500 to U+65FF, by its low byte (0: none). */
 static u16 Ucs65[256] = {
     0x9DB3, 0x0000, 0x0000, 0x0000, 0x0000, 0x9DB7,
 	0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
@@ -1756,6 +1816,7 @@ static u16 Ucs65[256] = {
 	0x0000, 0x0000, 0x0000, 0x0000
 };
 
+/** Shift-JIS code for each Unicode code point U+6600 to U+66FF, by its low byte (0: none). */
 static u16 Ucs66[256] = {
     0x0000, 0x0000, 0x8D56, 0x9DDE, 0x0000, 0x0000,
 	0x8DA9, 0x8FB8, 0x0000, 0x0000, 0x9DDD, 0x0000,
@@ -1802,6 +1863,7 @@ static u16 Ucs66[256] = {
 	0x99D6, 0x915D, 0x915C, 0x91D6
 };
 
+/** Shift-JIS code for each Unicode code point U+6700 to U+67FF, by its low byte (0: none). */
 static u16 Ucs67[256] = {
     0x8DC5, 0x0000, 0x0000, 0x98F0, 0x0000, 0x0000,
 	0x0000, 0x0000, 0x8C8E, 0x974C, 0x0000, 0x95FC,
@@ -1848,6 +1910,7 @@ static u16 Ucs67[256] = {
 	0x0000, 0x0000, 0x968F, 0x8A60
 };
 
+/** Shift-JIS code for each Unicode code point U+6800 to U+68FF, by its low byte (0: none). */
 static u16 Ucs68[256] = {
     0x0000, 0x0000, 0x92CC, 0x93C8, 0x8968, 0x0000,
 	0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
@@ -1894,6 +1957,7 @@ static u16 Ucs68[256] = {
 	0x0000, 0x0000, 0x0000, 0x0000
 };
 
+/** Shift-JIS code for each Unicode code point U+6900 to U+69FF, by its low byte (0: none). */
 static u16 Ucs69[256] = {
     0x986F, 0x9E96, 0x0000, 0x0000, 0x9EA4, 0x88D6,
 	0x0000, 0x0000, 0x9E98, 0x0000, 0x0000, 0x96B8,
@@ -1940,6 +2004,7 @@ static u16 Ucs69[256] = {
 	0x0000, 0x9185, 0x0000, 0x9EDB
 };
 
+/** Shift-JIS code for each Unicode code point U+6A00 to U+6AFF, by its low byte (0: none). */
 static u16 Ucs6A[256] = {
     0x0000, 0x0000, 0x9ED9, 0x0000, 0x0000, 0x9EE0,
 	0x0000, 0x0000, 0x0000, 0x0000, 0x9EE6, 0x94F3,
@@ -1986,6 +2051,7 @@ static u16 Ucs6A[256] = {
 	0x0000, 0x0000, 0x0000, 0x0000
 };
 
+/** Shift-JIS code for each Unicode code point U+6B00 to U+6BFF, by its low byte (0: none). */
 static u16 Ucs6B[256] = {
     0x0000, 0x0000, 0x0000, 0x0000, 0x9793, 0x9F4F,
 	0x0000, 0x0000, 0x0000, 0x0000, 0x9EDC, 0x0000,
@@ -2032,6 +2098,7 @@ static u16 Ucs6B[256] = {
 	0x0000, 0x0000, 0x0000, 0x0000
 };
 
+/** Shift-JIS code for each Unicode code point U+6C00 to U+6CFF, by its low byte (0: none). */
 static u16 Ucs6C[256] = {
     0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 	0x0000, 0x0000, 0x9F81, 0x0000, 0x0000, 0x0000,
@@ -2078,6 +2145,7 @@ static u16 Ucs6C[256] = {
 	0x0000, 0x0000, 0x0000, 0x0000
 };
 
+/** Shift-JIS code for each Unicode code point U+6D00 to U+6DFF, by its low byte (0: none). */
 static u16 Ucs6D[256] = {
     0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 	0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x976D,
@@ -2124,6 +2192,7 @@ static u16 Ucs6D[256] = {
 	0x0000, 0x0000, 0x0000, 0x0000
 };
 
+/** Shift-JIS code for each Unicode code point U+6E00 to U+6EFF, by its low byte (0: none). */
 static u16 Ucs6E[256] = {
     0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x90B4,
 	0x0000, 0x8A89, 0x8DCF, 0x8FC2, 0x9FBB, 0x8F61,
@@ -2170,6 +2239,7 @@ static u16 Ucs6E[256] = {
 	0x0000, 0x0000, 0x9FF6, 0x9FDE
 };
 
+/** Shift-JIS code for each Unicode code point U+6F00 to U+6FFF, by its low byte (0: none). */
 static u16 Ucs6F[256] = {
     0x0000, 0x8B99, 0x9559, 0x0000, 0x0000, 0x0000,
 	0x8EBD, 0x0000, 0x0000, 0x8D97, 0x0000, 0x0000,
@@ -2216,6 +2286,7 @@ static u16 Ucs6F[256] = {
 	0x0000, 0x0000, 0xE068, 0x0000
 };
 
+/** Shift-JIS code for each Unicode code point U+7000 to U+70FF, by its low byte (0: none). */
 static u16 Ucs70[256] = {
     0x0000, 0xE066, 0x0000, 0x0000, 0x0000, 0x0000,
 	0x0000, 0x0000, 0x0000, 0xE062, 0x0000, 0xE063,
@@ -2262,6 +2333,7 @@ static u16 Ucs70[256] = {
 	0x0000, 0xE082, 0x0000, 0x0000
 };
 
+/** Shift-JIS code for each Unicode code point U+7100 to U+71FF, by its low byte (0: none). */
 static u16 Ucs71[256] = {
     0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 	0x0000, 0x0000, 0x0000, 0xE081, 0x0000, 0x0000,
@@ -2308,6 +2380,7 @@ static u16 Ucs71[256] = {
 	0xE09E, 0x0000, 0x0000, 0xE0A0
 };
 
+/** Shift-JIS code for each Unicode code point U+7200 to U+72FF, by its low byte (0: none). */
 static u16 Ucs72[256] = {
     0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 	0x949A, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
@@ -2354,6 +2427,7 @@ static u16 Ucs72[256] = {
 	0x9854, 0x9482, 0x0000, 0x0000
 };
 
+/** Shift-JIS code for each Unicode code point U+7300 to U+73FF, by its low byte (0: none). */
 static u16 Ucs73[256] = {
     0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 	0x0000, 0x0000, 0x0000, 0x0000, 0xE0C7, 0x0000,
@@ -2400,6 +2474,7 @@ static u16 Ucs73[256] = {
 	0x0000, 0x0000, 0x8CBB, 0x0000
 };
 
+/** Shift-JIS code for each Unicode code point U+7400 to U+74FF, by its low byte (0: none). */
 static u16 Ucs74[256] = {
     0x0000, 0x0000, 0x0000, 0x8B85, 0x0000, 0xE0E4,
 	0x979D, 0x0000, 0x0000, 0x97AE, 0x0000, 0x0000,
@@ -2446,6 +2521,7 @@ static u16 Ucs74[256] = {
 	0x0000, 0x0000, 0x0000, 0x0000
 };
 
+/** Shift-JIS code for each Unicode code point U+7500 to U+75FF, by its low byte (0: none). */
 static u16 Ucs75[256] = {
     0x0000, 0x0000, 0x0000, 0xE14B, 0xE14A, 0xE14C,
 	0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
@@ -2492,6 +2568,7 @@ static u16 Ucs75[256] = {
 	0xE180, 0x0000, 0xE17D, 0xE17E
 };
 
+/** Shift-JIS code for each Unicode code point U+7600 to U+76FF, by its low byte (0: none). */
 static u16 Ucs76[256] = {
     0x0000, 0xE181, 0x0000, 0x0000, 0x0000, 0x0000,
 	0x0000, 0x0000, 0x0000, 0xE188, 0x0000, 0xE186,
@@ -2538,6 +2615,7 @@ static u16 Ucs76[256] = {
 	0x0000, 0x0000, 0x8F82, 0x0000
 };
 
+/** Shift-JIS code for each Unicode code point U+7700 to U+77FF, by its low byte (0: none). */
 static u16 Ucs77[256] = {
     0x0000, 0x8FC8, 0x0000, 0x0000, 0xE1BE, 0x0000,
 	0x0000, 0xE1BD, 0xE1BC, 0x94FB, 0x0000, 0x8AC5,
@@ -2584,6 +2662,7 @@ static u16 Ucs77[256] = {
 	0xE1E3, 0x0000, 0x0000, 0x0000
 };
 
+/** Shift-JIS code for each Unicode code point U+7800 to U+78FF, by its low byte (0: none). */
 static u16 Ucs78[256] = {
     0x0000, 0x0000, 0x8DBB, 0x0000, 0x0000, 0x0000,
 	0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
@@ -2630,6 +2709,7 @@ static u16 Ucs78[256] = {
 	0x0000, 0xE242, 0x0000, 0x0000
 };
 
+/** Shift-JIS code for each Unicode code point U+7900 to U+79FF, by its low byte (0: none). */
 static u16 Ucs79[256] = {
     0x0000, 0x8FCA, 0x0000, 0x0000, 0x0000, 0x0000,
 	0x0000, 0xE244, 0x0000, 0x0000, 0x0000, 0x0000,
@@ -2676,6 +2756,7 @@ static u16 Ucs79[256] = {
 	0x0000, 0x0000, 0x0000, 0x0000
 };
 
+/** Shift-JIS code for each Unicode code point U+7A00 to U+7AFF, by its low byte (0: none). */
 static u16 Ucs7A[256] = {
     0x8B48, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 	0x0000, 0x0000, 0xE262, 0x0000, 0x0000, 0x92F6,
@@ -2722,6 +2803,7 @@ static u16 Ucs7A[256] = {
 	0x0000, 0x0000, 0x0000, 0x8AC6
 };
 
+/** Shift-JIS code for each Unicode code point U+7B00 to U+7BFF, by its low byte (0: none). */
 static u16 Ucs7B[256] = {
     0x0000, 0x0000, 0xE293, 0x0000, 0xE2A0, 0x0000,
 	0xE296, 0x0000, 0x8B88, 0x0000, 0xE295, 0xE2A2,
@@ -2768,6 +2850,7 @@ static u16 Ucs7B[256] = {
 	0x0000, 0x0000, 0x0000, 0x0000
 };
 
+/** Shift-JIS code for each Unicode code point U+7C00 to U+7CFF, by its low byte (0: none). */
 static u16 Ucs7C[256] = {
     0xE2C5, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 	0x0000, 0xE2C6, 0x0000, 0x0000, 0x0000, 0x0000,
@@ -2814,6 +2897,7 @@ static u16 Ucs7C[256] = {
 	0x0000, 0x0000, 0x8B8A, 0x0000
 };
 
+/** Shift-JIS code for each Unicode code point U+7D00 to U+7DFF, by its low byte (0: none). */
 static u16 Ucs7D[256] = {
     0x8B49, 0x0000, 0xE340, 0x0000, 0x96F1, 0x8D67,
 	0xE2FC, 0x0000, 0x0000, 0x0000, 0xE343, 0x96E4,
@@ -2860,6 +2944,7 @@ static u16 Ucs7D[256] = {
 	0x0000, 0x0000, 0x0000, 0x0000
 };
 
+/** Shift-JIS code for each Unicode code point U+7E00 to U+7EFF, by its low byte (0: none). */
 static u16 Ucs7E[256] = {
     0x0000, 0x898F, 0x0000, 0x0000, 0x93EA, 0xE36E,
 	0x0000, 0x0000, 0x0000, 0xE375, 0xE36F, 0xE376,
@@ -2906,6 +2991,7 @@ static u16 Ucs7E[256] = {
 	0x0000, 0x0000, 0x0000, 0x0000
 };
 
+/** Shift-JIS code for each Unicode code point U+7F00 to U+7FFF, by its low byte (0: none). */
 static u16 Ucs7F[256] = {
     0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 	0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
@@ -2952,6 +3038,7 @@ static u16 Ucs7F[256] = {
 	0x9783, 0x0000, 0x0000, 0x0000
 };
 
+/** Shift-JIS code for each Unicode code point U+8000 to U+80FF, by its low byte (0: none). */
 static u16 Ucs80[256] = {
     0x9773, 0x9856, 0x0000, 0x8D6C, 0xE3CC, 0x8ED2,
 	0xE3CB, 0x0000, 0x0000, 0x0000, 0x0000, 0xE3CD,
@@ -2998,6 +3085,7 @@ static u16 Ucs80[256] = {
 	0xE445, 0x945C, 0x0000, 0x0000
 };
 
+/** Shift-JIS code for each Unicode code point U+8100 to U+81FF, by its low byte (0: none). */
 static u16 Ucs81[256] = {
     0x0000, 0x0000, 0x8E89, 0x0000, 0x0000, 0x8BBA,
 	0x90C6, 0x9865, 0x96AC, 0xE3F5, 0x90D2, 0x0000,
@@ -3044,6 +3132,7 @@ static u16 Ucs81[256] = {
 	0x8950, 0x0000, 0xE46B, 0x0000
 };
 
+/** Shift-JIS code for each Unicode code point U+8200 to U+82FF, by its low byte (0: none). */
 static u16 Ucs82[256] = {
     0x0000, 0xE46C, 0xE46D, 0x0000, 0x0000, 0xE46E,
 	0x0000, 0xE46F, 0x8BBB, 0x9DA8, 0xE470, 0x0000,
@@ -3090,6 +3179,7 @@ static u16 Ucs82[256] = {
 	0x0000, 0x0000, 0x0000, 0x0000
 };
 
+/** Shift-JIS code for each Unicode code point U+8300 to U+83FF, by its low byte (0: none). */
 static u16 Ucs83[256] = {
     0x0000, 0x0000, 0x96CE, 0xE497, 0x89D6, 0x8A9D,
 	0xE49B, 0x0000, 0x0000, 0xE49D, 0x0000, 0x0000,
@@ -3136,6 +3226,7 @@ static u16 Ucs83[256] = {
 	0x0000, 0xE4C1, 0x0000, 0x0000
 };
 
+/** Shift-JIS code for each Unicode code point U+8400 to U+84FF, by its low byte (0: none). */
 static u16 Ucs84[256] = {
     0x0000, 0x0000, 0x0000, 0xE4C2, 0x93B8, 0x0000,
 	0x0000, 0xE4C7, 0x0000, 0x0000, 0x0000, 0xE4C4,
@@ -3182,6 +3273,7 @@ static u16 Ucs84[256] = {
 	0xE4F8, 0x0000, 0x0000, 0xE4F0
 };
 
+/** Shift-JIS code for each Unicode code point U+8500 to U+85FF, by its low byte (0: none). */
 static u16 Ucs85[256] = {
     0x8EC1, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 	0xE4CF, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
@@ -3228,6 +3320,7 @@ static u16 Ucs85[256] = {
 	0x0000, 0x0000, 0xE560, 0x0000
 };
 
+/** Shift-JIS code for each Unicode code point U+8600 to U+86FF, by its low byte (0: none). */
 static u16 Ucs86[256] = {
     0x0000, 0x0000, 0xE541, 0x0000, 0x0000, 0x0000,
 	0xE562, 0x9168, 0x0000, 0x0000, 0xE55D, 0xE55F,
@@ -3274,6 +3367,7 @@ static u16 Ucs86[256] = {
 	0x0000, 0x0000, 0x89E9, 0x0000
 };
 
+/** Shift-JIS code for each Unicode code point U+8700 to U+87FF, by its low byte (0: none). */
 static u16 Ucs87[256] = {
     0xE586, 0x0000, 0x9649, 0xE587, 0x0000, 0x0000,
 	0xE584, 0x0000, 0xE585, 0xE58A, 0xE58D, 0x0000,
@@ -3320,6 +3414,7 @@ static u16 Ucs87[256] = {
 	0x0000, 0x0000, 0xE5B7, 0x0000
 };
 
+/** Shift-JIS code for each Unicode code point U+8800 to U+88FF, by its low byte (0: none). */
 static u16 Ucs88[256] = {
     0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0xE5A2,
 	0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
@@ -3366,6 +3461,7 @@ static u16 Ucs88[256] = {
 	0xE5E7, 0x90BB, 0x909E, 0x0000
 };
 
+/** Shift-JIS code for each Unicode code point U+8900 to U+89FF, by its low byte (0: none). */
 static u16 Ucs89[256] = {
     0x0000, 0x0000, 0xE5E6, 0x0000, 0xE5EB, 0x0000,
 	0x0000, 0x95A1, 0x0000, 0x0000, 0xE5ED, 0x0000,
@@ -3412,6 +3508,7 @@ static u16 Ucs89[256] = {
 	0x0000, 0x0000, 0x0000, 0x0000
 };
 
+/** Shift-JIS code for each Unicode code point U+8A00 to U+8AFF, by its low byte (0: none). */
 static u16 Ucs8A[256] = {
     0x8CBE, 0x0000, 0x92F9, 0xE65D, 0x0000, 0x0000,
 	0x0000, 0x0000, 0x8C76, 0x0000, 0x9075, 0x0000,
@@ -3458,6 +3555,7 @@ static u16 Ucs8A[256] = {
 	0x0000, 0x0000, 0x91F8, 0x0000
 };
 
+/** Shift-JIS code for each Unicode code point U+8B00 to U+8BFF, by its low byte (0: none). */
 static u16 Ucs8B[256] = {
     0x9664, 0x8979, 0x88E0, 0x0000, 0x93A3, 0x0000,
 	0x0000, 0xE689, 0x0000, 0x0000, 0x0000, 0x0000,
@@ -3504,6 +3602,7 @@ static u16 Ucs8B[256] = {
 	0x0000, 0x0000, 0x0000, 0x0000
 };
 
+/** Shift-JIS code for each Unicode code point U+8C00 to U+8CFF, by its low byte (0: none). */
 static u16 Ucs8C[256] = {
     0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 	0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
@@ -3550,6 +3649,7 @@ static u16 Ucs8C[256] = {
 	0x8D77, 0xE6CE, 0x0000, 0x0000
 };
 
+/** Shift-JIS code for each Unicode code point U+8D00 to U+8DFF, by its low byte (0: none). */
 static u16 Ucs8D[256] = {
     0x0000, 0x0000, 0x0000, 0x0000, 0xE6D1, 0xE6D2,
 	0x0000, 0xE6D4, 0x91A1, 0x0000, 0xE6D3, 0x8AE4,
@@ -3596,6 +3696,7 @@ static u16 Ucs8D[256] = {
 	0xE6F0, 0x0000, 0x0000, 0xE6F3
 };
 
+/** Shift-JIS code for each Unicode code point U+8E00 to U+8EFF, by its low byte (0: none). */
 static u16 Ucs8E[256] = {
     0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 	0x0000, 0x0000, 0xE6F1, 0xE6F2, 0x9778, 0x0000,
@@ -3642,6 +3743,7 @@ static u16 Ucs8E[256] = {
 	0xE764, 0x8C79, 0xE767, 0x0000
 };
 
+/** Shift-JIS code for each Unicode code point U+8F00 to U+8FFF, by its low byte (0: none). */
 static u16 Ucs8F[256] = {
     0x0000, 0x0000, 0x0000, 0x8A72, 0x0000, 0xE769,
 	0x0000, 0x0000, 0x0000, 0x8DDA, 0xE768, 0x0000,
@@ -3688,6 +3790,7 @@ static u16 Ucs8F[256] = {
 	0x0000, 0x92C7, 0x0000, 0x0000
 };
 
+/** Shift-JIS code for each Unicode code point U+9000 to U+90FF, by its low byte (0: none). */
 static u16 Ucs90[256] = {
     0x91DE, 0x9197, 0x0000, 0x93A6, 0x0000, 0xE790,
 	0x8B74, 0x0000, 0x0000, 0x0000, 0x0000, 0xE799,
@@ -3734,6 +3837,7 @@ static u16 Ucs90[256] = {
 	0x0000, 0x9373, 0x0000, 0x0000
 };
 
+/** Shift-JIS code for each Unicode code point U+9100 to U+91FF, by its low byte (0: none). */
 static u16 Ucs91[256] = {
     0x0000, 0x0000, 0xE7BD, 0x0000, 0x0000, 0x0000,
 	0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
@@ -3780,6 +3884,7 @@ static u16 Ucs91[256] = {
 	0xE7DD, 0x0000, 0x0000, 0xE7E1
 };
 
+/** Shift-JIS code for each Unicode code point U+9200 to U+92FF, by its low byte (0: none). */
 static u16 Ucs92[256] = {
     0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 	0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
@@ -3826,6 +3931,7 @@ static u16 Ucs92[256] = {
 	0x8D7C, 0x0000, 0x0000, 0x0000
 };
 
+/** Shift-JIS code for each Unicode code point U+9300 to U+93FF, by its low byte (0: none). */
 static u16 Ucs93[256] = {
     0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 	0x8E4B, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
@@ -3872,6 +3978,7 @@ static u16 Ucs93[256] = {
 	0x0000, 0x0000, 0x0000, 0x0000
 };
 
+/** Shift-JIS code for each Unicode code point U+9400 to U+94FF, by its low byte (0: none). */
 static u16 Ucs94[256] = {
     0x0000, 0x0000, 0x0000, 0xE85E, 0x0000, 0x0000,
 	0x0000, 0xE85F, 0x0000, 0x0000, 0x0000, 0x0000,
@@ -3918,6 +4025,7 @@ static u16 Ucs94[256] = {
 	0x0000, 0x0000, 0x0000, 0x0000
 };
 
+/** Shift-JIS code for each Unicode code point U+9500 to U+95FF, by its low byte (0: none). */
 static u16 Ucs95[256] = {
     0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 	0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
@@ -3964,6 +4072,7 @@ static u16 Ucs95[256] = {
 	0x0000, 0x0000, 0x0000, 0x0000
 };
 
+/** Shift-JIS code for each Unicode code point U+9600 to U+96FF, by its low byte (0: none). */
 static u16 Ucs96[256] = {
     0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 	0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
@@ -4010,6 +4119,7 @@ static u16 Ucs96[256] = {
 	0x0000, 0x0000, 0x0000, 0x0000
 };
 
+/** Shift-JIS code for each Unicode code point U+9700 to U+97FF, by its low byte (0: none). */
 static u16 Ucs97[256] = {
     0x8EF9, 0x0000, 0x0000, 0x0000, 0xE8BA, 0x0000,
 	0xE8BB, 0x906B, 0xE8BC, 0x0000, 0x97EC, 0x0000,
@@ -4056,6 +4166,7 @@ static u16 Ucs97[256] = {
 	0x0000, 0x0000, 0x0000, 0x8BBF
 };
 
+/** Shift-JIS code for each Unicode code point U+9800 to U+98FF, by its low byte (0: none). */
 static u16 Ucs98[256] = {
     0x0000, 0x95C5, 0x92B8, 0x8DA0, 0x0000, 0x8D80,
 	0x8F87, 0x0000, 0x907B, 0x0000, 0x0000, 0x0000,
@@ -4102,6 +4213,7 @@ static u16 Ucs98[256] = {
 	0x8E94, 0x964F, 0x8FFC, 0x0000
 };
 
+/** Shift-JIS code for each Unicode code point U+9900 to U+99FF, by its low byte (0: none). */
 static u16 Ucs99[256] = {
     0x0000, 0x0000, 0x0000, 0xE94C, 0x0000, 0x96DD,
 	0x0000, 0x0000, 0x0000, 0xE94D, 0x977B, 0x0000,
@@ -4148,6 +4260,7 @@ static u16 Ucs99[256] = {
 	0x0000, 0x0000, 0x0000, 0x8F78
 };
 
+/** Shift-JIS code for each Unicode code point U+9A00 to U+9AFF, by its low byte (0: none). */
 static u16 Ucs9A[256] = {
     0x0000, 0xE974, 0x0000, 0x0000, 0x0000, 0xE976,
 	0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
@@ -4194,6 +4307,7 @@ static u16 Ucs9A[256] = {
 	0x0000, 0x0000, 0x0000, 0x0000
 };
 
+/** Shift-JIS code for each Unicode code point U+9B00 to U+9BFF, by its low byte (0: none). */
 static u16 Ucs9B[256] = {
     0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 	0xE9A0, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
@@ -4240,6 +4354,7 @@ static u16 Ucs9B[256] = {
 	0x0000, 0x0000, 0x0000, 0x0000
 };
 
+/** Shift-JIS code for each Unicode code point U+9C00 to U+9CFF, by its low byte (0: none). */
 static u16 Ucs9C[256] = {
     0x0000, 0x0000, 0x0000, 0x0000, 0xE9D8, 0x0000,
 	0xE9D4, 0x0000, 0xE9D5, 0xE9D1, 0xE9D7, 0x0000,
@@ -4286,6 +4401,7 @@ static u16 Ucs9C[256] = {
 	0x0000, 0x0000, 0x0000, 0x0000
 };
 
+/** Shift-JIS code for each Unicode code point U+9D00 to U+9DFF, by its low byte (0: none). */
 static u16 Ucs9D[256] = {
     0x0000, 0x0000, 0x0000, 0xE9EE, 0x0000, 0x0000,
 	0xE9EF, 0x93BC, 0xE9EC, 0xE9EB, 0x0000, 0x0000,
@@ -4332,6 +4448,7 @@ static u16 Ucs9D[256] = {
 	0x0000, 0xEA5E, 0x0000, 0x0000
 };
 
+/** Shift-JIS code for each Unicode code point U+9E00 to U+9EFF, by its low byte (0: none). */
 static u16 Ucs9E[256] = {
     0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 	0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
@@ -4378,6 +4495,7 @@ static u16 Ucs9E[256] = {
 	0xEA85, 0xEA86, 0x0000, 0x0000
 };
 
+/** Shift-JIS code for each Unicode code point U+9F00 to U+9FFF, by its low byte (0: none). */
 static u16 Ucs9F[256] = {
     0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 	0x0000, 0xEA87, 0xEA88, 0x0000, 0x0000, 0x0000,
@@ -4424,6 +4542,7 @@ static u16 Ucs9F[256] = {
 	0x0000, 0x0000, 0x0000, 0x0000
 };
 
+/** Shift-JIS code for each Unicode code point U+FF00 to U+FFFF, by its low byte (0: none). */
 static u16 UcsFF[256] = {
     0x0000, 0x8149, 0x0000, 0x8194, 0x8190, 0x8193,
 	0x8195, 0x0000, 0x8169, 0x816A, 0x8196, 0x817B,
@@ -4470,8 +4589,16 @@ static u16 UcsFF[256] = {
 	0x0000, 0x0000, 0x0000, 0x0000
 };
 
+/**
+ * Pages of the Unicode to Shift-JIS table, by the code point's high byte;
+ * all empty in this build, so OSUTF32toSJIS returns 0 and the UcsXX pages above are not reached.
+ */
 static u16* UcsSjisTable[256] = {0};
 
+/**
+ * Converts a code point to Shift-JIS through a two-level table keyed by its high byte.
+ * In this build the table of pages is empty, so it always returns 0.
+ */
 u16 OSUTF32toSJIS(u32 utf32) {
     u16* table;
 
@@ -4487,6 +4614,9 @@ u16 OSUTF32toSJIS(u32 utf32) {
     return 0;
 }
 
+/**
+ * Unicode code point for each single-byte Shift-JIS code 0x00-0xFF (ASCII and half-width katakana; 0: none).
+ */
 static u16 Sjis00[256] = {
     0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 	0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
@@ -4533,6 +4663,7 @@ static u16 Sjis00[256] = {
 	0x0000, 0x0000, 0x0000, 0x0000
 };
 
+/** Unicode code point for each Shift-JIS character 0x8100 to 0x81FF, by its trail byte (0: none). */
 static u16 Sjis81[256] = {
     0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 	0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
@@ -4579,6 +4710,7 @@ static u16 Sjis81[256] = {
 	0x25EF, 0x0000, 0x0000, 0x0000
 };
 
+/** Unicode code point for each Shift-JIS character 0x8200 to 0x82FF, by its trail byte (0: none). */
 static u16 Sjis82[256] = {
     0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 	0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
@@ -4625,6 +4757,7 @@ static u16 Sjis82[256] = {
 	0x0000, 0x0000, 0x0000, 0x0000
 };
 
+/** Unicode code point for each Shift-JIS character 0x8300 to 0x83FF, by its trail byte (0: none). */
 static u16 Sjis83[256] = {
     0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 	0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
@@ -4671,6 +4804,7 @@ static u16 Sjis83[256] = {
 	0x0000, 0x0000, 0x0000, 0x0000
 };
 
+/** Unicode code point for each Shift-JIS character 0x8400 to 0x84FF, by its trail byte (0: none). */
 static u16 Sjis84[256] = {
     0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 	0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
@@ -4717,6 +4851,7 @@ static u16 Sjis84[256] = {
 	0x0000, 0x0000, 0x0000, 0x0000
 };
 
+/** Unicode code point for each Shift-JIS character 0x8800 to 0x88FF, by its trail byte (0: none). */
 static u16 Sjis88[256] = {
     0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 	0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
@@ -4763,6 +4898,7 @@ static u16 Sjis88[256] = {
 	0x852D, 0x0000, 0x0000, 0x0000
 };
 
+/** Unicode code point for each Shift-JIS character 0x8900 to 0x89FF, by its trail byte (0: none). */
 static u16 Sjis89[256] = {
     0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 	0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
@@ -4809,6 +4945,7 @@ static u16 Sjis89[256] = {
 	0x6539, 0x0000, 0x0000, 0x0000
 };
 
+/** Unicode code point for each Shift-JIS character 0x8A00 to 0x8AFF, by its trail byte (0: none). */
 static u16 Sjis8A[256] = {
     0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 	0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
@@ -4855,6 +4992,7 @@ static u16 Sjis8A[256] = {
 	0x68C4, 0x0000, 0x0000, 0x0000
 };
 
+/** Unicode code point for each Shift-JIS character 0x8B00 to 0x8BFF, by its trail byte (0: none). */
 static u16 Sjis8B[256] = {
     0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 	0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
@@ -4901,6 +5039,7 @@ static u16 Sjis8B[256] = {
 	0x5C48, 0x0000, 0x0000, 0x0000
 };
 
+/** Unicode code point for each Shift-JIS character 0x8C00 to 0x8CFF, by its trail byte (0: none). */
 static u16 Sjis8C[256] = {
     0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 	0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
@@ -4947,6 +5086,7 @@ static u16 Sjis8C[256] = {
 	0x5411, 0x0000, 0x0000, 0x0000
 };
 
+/** Unicode code point for each Shift-JIS character 0x8D00 to 0x8DFF, by its trail byte (0: none). */
 static u16 Sjis8D[256] = {
     0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 	0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
@@ -4993,6 +5133,7 @@ static u16 Sjis8D[256] = {
 	0x5237, 0x0000, 0x0000, 0x0000
 };
 
+/** Unicode code point for each Shift-JIS character 0x8E00 to 0x8EFF, by its trail byte (0: none). */
 static u16 Sjis8E[256] = {
     0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 	0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
@@ -5039,6 +5180,7 @@ static u16 Sjis8E[256] = {
 	0x5468, 0x0000, 0x0000, 0x0000
 };
 
+/** Unicode code point for each Shift-JIS character 0x8F00 to 0x8FFF, by its trail byte (0: none). */
 static u16 Sjis8F[256] = {
     0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 	0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
@@ -5085,6 +5227,7 @@ static u16 Sjis8F[256] = {
 	0x98FE, 0x0000, 0x0000, 0x0000
 };
 
+/** Unicode code point for each Shift-JIS character 0x9000 to 0x90FF, by its trail byte (0: none). */
 static u16 Sjis90[256] = {
     0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 	0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
@@ -5131,6 +5274,7 @@ static u16 Sjis90[256] = {
 	0x7DDA, 0x0000, 0x0000, 0x0000
 };
 
+/** Unicode code point for each Shift-JIS character 0x9100 to 0x91FF, by its trail byte (0: none). */
 static u16 Sjis91[256] = {
     0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 	0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
@@ -5177,6 +5321,7 @@ static u16 Sjis91[256] = {
 	0x53EA, 0x0000, 0x0000, 0x0000
 };
 
+/** Unicode code point for each Shift-JIS character 0x9200 to 0x92FF, by its trail byte (0: none). */
 static u16 Sjis92[256] = {
     0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 	0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
@@ -5223,6 +5368,7 @@ static u16 Sjis92[256] = {
 	0x9013, 0x0000, 0x0000, 0x0000
 };
 
+/** Unicode code point for each Shift-JIS character 0x9300 to 0x93FF, by its trail byte (0: none). */
 static u16 Sjis93[256] = {
     0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 	0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
@@ -5269,6 +5415,7 @@ static u16 Sjis93[256] = {
 	0x5165, 0x0000, 0x0000, 0x0000
 };
 
+/** Unicode code point for each Shift-JIS character 0x9400 to 0x94FF, by its trail byte (0: none). */
 static u16 Sjis94[256] = {
     0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 	0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
@@ -5315,6 +5462,7 @@ static u16 Sjis94[256] = {
 	0x7F8E, 0x0000, 0x0000, 0x0000
 };
 
+/** Unicode code point for each Shift-JIS character 0x9500 to 0x95FF, by its trail byte (0: none). */
 static u16 Sjis95[256] = {
     0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 	0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
@@ -5361,6 +5509,7 @@ static u16 Sjis95[256] = {
 	0x670B, 0x0000, 0x0000, 0x0000
 };
 
+/** Unicode code point for each Shift-JIS character 0x9600 to 0x96FF, by its trail byte (0: none). */
 static u16 Sjis96[256] = {
     0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 	0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
@@ -5407,6 +5556,7 @@ static u16 Sjis96[256] = {
 	0x7652, 0x0000, 0x0000, 0x0000
 };
 
+/** Unicode code point for each Shift-JIS character 0x9700 to 0x97FF, by its trail byte (0: none). */
 static u16 Sjis97[256] = {
     0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 	0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
@@ -5453,6 +5603,7 @@ static u16 Sjis97[256] = {
 	0x806F, 0x0000, 0x0000, 0x0000
 };
 
+/** Unicode code point for each Shift-JIS character 0x9800 to 0x98FF, by its trail byte (0: none). */
 static u16 Sjis98[256] = {
     0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 	0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
@@ -5499,6 +5650,7 @@ static u16 Sjis98[256] = {
 	0x50B2, 0x0000, 0x0000, 0x0000
 };
 
+/** Unicode code point for each Shift-JIS character 0x9900 to 0x99FF, by its trail byte (0: none). */
 static u16 Sjis99[256] = {
     0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 	0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
@@ -5545,6 +5697,7 @@ static u16 Sjis99[256] = {
 	0x54A8, 0x0000, 0x0000, 0x0000
 };
 
+/** Unicode code point for each Shift-JIS character 0x9A00 to 0x9AFF, by its trail byte (0: none). */
 static u16 Sjis9A[256] = {
     0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 	0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
@@ -5591,6 +5744,7 @@ static u16 Sjis9A[256] = {
 	0x5969, 0x0000, 0x0000, 0x0000
 };
 
+/** Unicode code point for each Shift-JIS character 0x9B00 to 0x9BFF, by its trail byte (0: none). */
 static u16 Sjis9B[256] = {
     0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 	0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
@@ -5637,6 +5791,7 @@ static u16 Sjis9B[256] = {
 	0x5ECF, 0x0000, 0x0000, 0x0000
 };
 
+/** Unicode code point for each Shift-JIS character 0x9C00 to 0x9CFF, by its trail byte (0: none). */
 static u16 Sjis9C[256] = {
     0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 	0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
@@ -5683,6 +5838,7 @@ static u16 Sjis9C[256] = {
 	0x621B, 0x0000, 0x0000, 0x0000
 };
 
+/** Unicode code point for each Shift-JIS character 0x9D00 to 0x9DFF, by its trail byte (0: none). */
 static u16 Sjis9D[256] = {
     0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 	0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
@@ -5729,6 +5885,7 @@ static u16 Sjis9D[256] = {
 	0x66BC, 0x0000, 0x0000, 0x0000
 };
 
+/** Unicode code point for each Shift-JIS character 0x9E00 to 0x9EFF, by its trail byte (0: none). */
 static u16 Sjis9E[256] = {
     0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 	0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
@@ -5775,6 +5932,7 @@ static u16 Sjis9E[256] = {
 	0x6AA3, 0x0000, 0x0000, 0x0000
 };
 
+/** Unicode code point for each Shift-JIS character 0x9F00 to 0x9FFF, by its trail byte (0: none). */
 static u16 Sjis9F[256] = {
     0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 	0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
@@ -5821,6 +5979,7 @@ static u16 Sjis9F[256] = {
 	0x6ECC, 0x0000, 0x0000, 0x0000
 };
 
+/** Unicode code point for each Shift-JIS character 0xE000 to 0xE0FF, by its trail byte (0: none). */
 static u16 SjisE0[256] = {
     0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 	0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
@@ -5867,6 +6026,7 @@ static u16 SjisE0[256] = {
 	0x73F1, 0x0000, 0x0000, 0x0000
 };
 
+/** Unicode code point for each Shift-JIS character 0xE100 to 0xE1FF, by its trail byte (0: none). */
 static u16 SjisE1[256] = {
     0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 	0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
@@ -5913,6 +6073,7 @@ static u16 SjisE1[256] = {
 	0x78EC, 0x0000, 0x0000, 0x0000
 };
 
+/** Unicode code point for each Shift-JIS character 0xE200 to 0xE2FF, by its trail byte (0: none). */
 static u16 SjisE2[256] = {
     0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 	0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
@@ -5959,6 +6120,7 @@ static u16 SjisE2[256] = {
 	0x7D06, 0x0000, 0x0000, 0x0000
 };
 
+/** Unicode code point for each Shift-JIS character 0xE300 to 0xE3FF, by its trail byte (0: none). */
 static u16 SjisE3[256] = {
     0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 	0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
@@ -6005,6 +6167,7 @@ static u16 SjisE3[256] = {
 	0x814B, 0x0000, 0x0000, 0x0000
 };
 
+/** Unicode code point for each Shift-JIS character 0xE400 to 0xE4FF, by its trail byte (0: none). */
 static u16 SjisE4[256] = {
     0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 	0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
@@ -6051,6 +6214,7 @@ static u16 SjisE4[256] = {
 	0x8548, 0x0000, 0x0000, 0x0000
 };
 
+/** Unicode code point for each Shift-JIS character 0xE500 to 0xE5FF, by its trail byte (0: none). */
 static u16 SjisE5[256] = {
     0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 	0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
@@ -6097,6 +6261,7 @@ static u16 SjisE5[256] = {
 	0x895E, 0x0000, 0x0000, 0x0000
 };
 
+/** Unicode code point for each Shift-JIS character 0xE600 to 0xE6FF, by its trail byte (0: none). */
 static u16 SjisE6[256] = {
     0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 	0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
@@ -6143,6 +6308,7 @@ static u16 SjisE6[256] = {
 	0x8E4A, 0x0000, 0x0000, 0x0000
 };
 
+/** Unicode code point for each Shift-JIS character 0xE700 to 0xE7FF, by its trail byte (0: none). */
 static u16 SjisE7[256] = {
     0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 	0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
@@ -6189,6 +6355,7 @@ static u16 SjisE7[256] = {
 	0x932E, 0x0000, 0x0000, 0x0000
 };
 
+/** Unicode code point for each Shift-JIS character 0xE800 to 0xE8FF, by its trail byte (0: none). */
 static u16 SjisE8[256] = {
     0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 	0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
@@ -6235,6 +6402,7 @@ static u16 SjisE8[256] = {
 	0x9870, 0x0000, 0x0000, 0x0000
 };
 
+/** Unicode code point for each Shift-JIS character 0xE900 to 0xE9FF, by its trail byte (0: none). */
 static u16 SjisE9[256] = {
     0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 	0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
@@ -6281,6 +6449,7 @@ static u16 SjisE9[256] = {
 	0x9D48, 0x0000, 0x0000, 0x0000
 };
 
+/** Unicode code point for each Shift-JIS character 0xEA00 to 0xEAFF, by its trail byte (0: none). */
 static u16 SjisEA[256] = {
     0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 	0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
@@ -6327,8 +6496,16 @@ static u16 SjisEA[256] = {
 	0x0000, 0x0000, 0x0000, 0x0000
 };
 
+/**
+ * Pages of the Shift-JIS to Unicode table, by the lead byte;
+ * all empty in this build, so OSSJIStoUTF32 returns 0 and the SjisXX pages above are not reached.
+ */
 static u16* SjisUcsTable[256] = {0};
 
+/**
+ * Converts a Shift-JIS character to UTF-32 through a two-level table keyed by its high byte.
+ * In this build the table of pages is empty, so it always returns 0.
+ */
 u32 OSSJIStoUTF32(u16 sjis) {
     u16* table;
 

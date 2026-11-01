@@ -6,11 +6,14 @@
 #define ROUND(n, a) (((u32)(n) + (a)-1) & ~((a)-1))
 
 #ifdef DEBUG
+/** Library version string kept in the binary (debug build). */
 const char* __SIVersion = "<< Dolphin SDK - SI\tdebug build: Apr  5 2004 03:55:31 (0x2301) >>";
 #else
+/** Library version string kept in the binary (release build). */
 const char* __SIVersion = "<< Dolphin SDK - SI\trelease build: Apr  5 2004 04:14:16 (0x2301) >>";
 #endif
 
+/** The transfer in progress: channel (-1: none), poll setting, input buffer and callback. */
 static SIControl Si = {
     /* chan */       -1,
     /* poll */        0,
@@ -21,6 +24,7 @@ static SIControl Si = {
 
 static SIPacket Packet[4];
 static OSAlarm Alarm[4];
+/** Last device type read from each port (no response until probed). */
 static u32 Type[4] = { SI_ERROR_NO_RESPONSE, SI_ERROR_NO_RESPONSE, SI_ERROR_NO_RESPONSE, SI_ERROR_NO_RESPONSE };
 static OSTime TypeTime[4];
 static OSTime XferTime[4];
@@ -41,14 +45,20 @@ static void AlarmHandler(OSAlarm* alarm, OSContext* context);
 static void GetTypeCallback(s32 chan, u32 error, OSContext* context);
 static int SIGetResponseRaw(s32 chan);
 
+/** Returns TRUE while a serial interface (controller port) transfer is in progress. */
 BOOL SIBusy(void) {
     return (Si.chan != -1) ? TRUE : FALSE;
 }
 
+/** Returns TRUE when channel chan has a transfer waiting in its queued packet or is the transfer running now. */
 BOOL SIIsChanBusy(s32 chan) {
     return Packet[chan].chan != -1 || Si.chan == chan;
 }
 
+/**
+ * Acknowledges the SI transfer-complete interrupt in the communication control/status register
+ * and clears the transfer-start bit.
+ */
 static void SIClearTCInterrupt(void) {
     u32 reg;
 
@@ -58,6 +68,12 @@ static void SIClearTCInterrupt(void) {
     __SIRegs[SI_COMCSR_IDX] = reg;
 }
 
+/**
+ * Finishes the transfer in flight: acknowledges the interrupt,
+ * copies the received bytes from the SI buffer to the caller's input buffer,
+ * and returns the 4-bit status of the channel (4 if an error was flagged without a status code).
+ * On success it refreshes the channel's type timestamp. Clears the current channel.
+ */
 static u32 CompleteTransfer(void) {
     u32 sr;
     u32 i;
@@ -105,6 +121,10 @@ static u32 CompleteTransfer(void) {
     return sr;
 }
 
+/**
+ * Starts the next queued transfer by scanning the channels after chan in turn;
+ * only a packet whose scheduled time has arrived is sent.
+ */
 static void SITransferNext(s32 chan) {
     int i;
     SIPacket* packet;
@@ -128,6 +148,13 @@ static void SITransferNext(s32 chan) {
 
 #define CHAN_NONE -1
 
+/**
+ * Handler for the SI interrupt (exception 0x14).
+ * On transfer-complete it finishes the transfer, starts the next queued one, calls the callback,
+ * and re-queries a channel's type if it is marked busy.
+ * On the read-status (polling) interrupt it saves the polled responses of all four channels and,
+ * once every polled channel has answered, runs the registered polling handlers.
+ */
 static void SIInterruptHandler(__OSInterrupt interrupt, OSContext* context) {
     u32 reg;
     s32 chan;
@@ -192,6 +219,10 @@ static void SIInterruptHandler(__OSInterrupt interrupt, OSContext* context) {
     }
 }
 
+/**
+ * Turns the SI read-status (polling) interrupt on or off, clearing the saved poll timestamps when turning it on;
+ * returns whether it was on.
+ */
 static BOOL SIEnablePollingInterrupt(BOOL enable) {
     BOOL enabled;
     BOOL rc;
@@ -219,6 +250,10 @@ static BOOL SIEnablePollingInterrupt(BOOL enable) {
     return rc;
 }
 
+/**
+ * Adds a handler (up to four) called after each complete poll of the controllers,
+ * enabling the polling interrupt; returns FALSE when all slots are used.
+ */
 BOOL SIRegisterPollingHandler(__OSInterruptHandler handler) {
     BOOL enabled;
     int i;
@@ -244,6 +279,10 @@ BOOL SIRegisterPollingHandler(__OSInterruptHandler handler) {
     return FALSE;
 }
 
+/**
+ * Removes a polling handler and turns the polling interrupt off when none remain;
+ * returns FALSE if it was not registered.
+ */
 BOOL SIUnregisterPollingHandler(__OSInterruptHandler handler) {
     BOOL enabled;
     int i;
@@ -272,6 +311,11 @@ BOOL SIUnregisterPollingHandler(__OSInterruptHandler handler) {
     return FALSE;
 }
 
+/**
+ * Initialises the SI: registers the version, clears the packet queue and polling,
+ * sets the default sampling rate, registers the SI interrupt handler and unmasks it,
+ * then queries the device type on all four ports.
+ */
 void SIInit(void) {
     OSRegisterVersion(__SIVersion);
 
@@ -291,6 +335,11 @@ void SIInit(void) {
     SIGetType(3);
 }
 
+/**
+ * Starts a transfer on channel chan right away, if none is running:
+ * copies the output bytes into the SI buffer and writes the communication control register (lengths, channel,
+ * start). Returns 0 when the SI is busy.
+ */
 static int __SITransfer(s32 chan, void* output, u32 outputBytes, void* input, u32 inputBytes, SICallback callback) {
     BOOL enabled;
     u32 rLen;
@@ -352,6 +401,10 @@ static int __SITransfer(s32 chan, void* output, u32 outputBytes, void* input, u3
     return 1;
 }
 
+/**
+ * Waits for the running transfer to complete, finishes it, and starts the next queued one;
+ * returns the transfer's status.
+ */
 u32 SISync(void) {
     BOOL enabled;
     u32 sr;
@@ -365,6 +418,10 @@ u32 SISync(void) {
     return sr;
 }
 
+/**
+ * Returns the 4-bit status of channel chan from the SI status register;
+ * an error flag marks the channel's cached type as invalid (8).
+ */
 u32 SIGetStatus(s32 chan) {
     BOOL enabled;
     u32 sr;
@@ -385,20 +442,27 @@ u32 SIGetStatus(s32 chan) {
     return sr;
 }
 
+/** Sets the command word that the SI sends to channel chan on every poll. */
 void SISetCommand(s32 chan, u32 command) {
     ASSERTMSGLINE(752, (chan >= 0) && (chan < 4), "SISetCommand(): invalid channel.");
     __SIRegs[chan* 3] = command;
 }
 
+/** Returns the poll command word of channel chan. */
 u32 SIGetCommand(s32 chan) {
     ASSERTMSGLINE(770, (chan >= 0) && (chan < 4), "SIGetCommand(): invalid channel.");
     return __SIRegs[chan* 3];
 }
 
+/** Triggers an immediate transfer of the poll commands (writes the transfer-complete bit into the status register). */
 void SITransferCommands(void) {
     __SIRegs[SI_STATUS_IDX] = SI_COMCSR_TCINT_MASK;
 }
 
+/**
+ * Sets the poll timing: x is the line interval between polls and y the number of polls per frame;
+ * returns the new poll register value.
+ */
 u32 SISetXY(u32 x, u32 y) {
     u32 poll;
     BOOL enabled;
@@ -418,6 +482,10 @@ u32 SISetXY(u32 x, u32 y) {
     return poll;
 }
 
+/**
+ * Enables automatic polling for the channels in the upper bits of poll and sends the poll commands at once;
+ * returns the new poll register value.
+ */
 u32 SIEnablePolling(u32 poll) {
     BOOL enabled;
     u32 en;
@@ -443,6 +511,7 @@ u32 SIEnablePolling(u32 poll) {
     return poll;
 }
 
+/** Disables automatic polling for the channels in poll and returns the new poll register value. */
 u32 SIDisablePolling(u32 poll) {
     BOOL enabled;
 
@@ -462,6 +531,10 @@ u32 SIDisablePolling(u32 poll) {
     return poll;
 }
 
+/**
+ * If the channel has a new poll response (status bit 0x20),
+ * copies its two words from the SI registers into the cache and returns TRUE.
+ */
 static BOOL SIGetResponseRaw(s32 chan) {
     u32 sr;
 
@@ -476,6 +549,10 @@ static BOOL SIGetResponseRaw(s32 chan) {
     return FALSE;
 }
 
+/**
+ * Returns TRUE and copies the latest cached two-word poll response of chan into data,
+ * once per response (the cache is cleared); with interrupts disabled.
+ */
 BOOL SIGetResponse(s32 chan, void* data) {
     BOOL rc;
     BOOL enabled;
@@ -495,6 +572,7 @@ BOOL SIGetResponse(s32 chan, void* data) {
     return rc;
 }
 
+/** OS alarm callback for a delayed transfer: starts the channel's queued packet. */
 static void AlarmHandler(OSAlarm* alarm, OSContext* context) {
     s32 chan;
     SIPacket* packet;
@@ -512,6 +590,12 @@ static void AlarmHandler(OSAlarm* alarm, OSContext* context) {
     }
 }
 
+/**
+ * Queues a transfer of outputBytes to channel chan and reading of inputBytes,
+ * starting it at once when the SI is free and the delay since the channel's last transfer has passed,
+ * otherwise scheduling it with an OS alarm (delay is in ticks after the last transfer, 0 for none).
+ * callback runs when it completes. Returns FALSE if the channel already has a transfer pending.
+ */
 BOOL SITransfer(s32 chan, void* output, u32 outputBytes, void* input, u32 inputBytes, 
                 SICallback callback, OSTime delay) {
     BOOL enabled;
@@ -553,6 +637,7 @@ BOOL SITransfer(s32 chan, void* output, u32 outputBytes, void* input, u32 inputB
     return TRUE;
 }
 
+/** Calls and clears the callbacks queued for channel chan by SIGetTypeAsync, passing the finished type word. */
 static void CallTypeAndStatusCallback(s32 chan, u32 type) {
     SITypeCallback callback;
     int i;
@@ -567,6 +652,11 @@ static void CallTypeAndStatusCallback(s32 chan, u32 type) {
     }
 }
 
+/**
+ * SI callback for the device-ID command: stores the reply as the port's type.
+ * For a wireless controller it also performs the ID fix handshake (command 0x4E) using the wireless ID kept in
+ * SRAM, then calls the queued type callbacks.
+ */
 static void GetTypeCallback(s32 chan, u32 error, OSContext* context) {
     u32 type;
     u32 chanBit;
@@ -632,6 +722,11 @@ static void GetTypeCallback(s32 chan, u32 error, OSContext* context) {
     }
 }
 
+/**
+ * Returns the cached device type word of chan (controller, steering wheel, keyboard, ...).
+ * If the cache is older than 50 ms or marked invalid it starts a new device-ID query (65 microseconds after the
+ * last transfer) and returns the stale value or the busy marker meanwhile.
+ */
 u32 SIGetType(s32 chan) {
     static u32 cmdTypeAndStatus;
     BOOL enabled;
@@ -669,6 +764,10 @@ u32 SIGetType(s32 chan) {
     return type;
 }
 
+/**
+ * Like SIGetType, but when a query is in progress it queues callback to be called with the result (up to four
+ * callbacks); otherwise it calls callback at once.
+ */
 u32 SIGetTypeAsync(s32 chan, SITypeCallback callback) {
     BOOL enabled;
     u32 type;
@@ -698,6 +797,11 @@ u32 SIGetTypeAsync(s32 chan, SITypeCallback callback) {
     return type;
 }
 
+/**
+ * Reduces a raw type word to one of the known SI device constants (N64 controller, keyboard, mouse, microphone,
+ * GBA, GameCube controller, steering, keyboard, WaveBird, receiver), or to SI_ERROR_NO_RESPONSE,
+ * BUSY or UNKNOWN.
+ */
 u32 SIDecodeType(u32 type) {
     u32 error;
 
@@ -761,10 +865,12 @@ u32 SIDecodeType(u32 type) {
     return SI_ERROR_UNKNOWN;
 }
 
+/** Returns the decoded device type of port chan: SIDecodeType(SIGetType(chan)). */
 u32 SIProbe(s32 chan) {
     return SIDecodeType(SIGetType(chan));
 }
 
+/** Returns a printable name for a device type word (such as "No response" or "N64 controller") after decoding it. */
 char* SIGetTypeString(u32 type) {
     switch (SIDecodeType(type)) {
     case SI_ERROR_NO_RESPONSE:
@@ -790,7 +896,7 @@ char* SIGetTypeString(u32 type) {
     case SI_GC_KEYBOARD:
         return "Keyboard";
     case SI_GC_STEERING:
-        return "Steering\0\0\0";
+        return "Steering";
     case SI_ERROR_UNKNOWN:
     default:
         return "Unknown";

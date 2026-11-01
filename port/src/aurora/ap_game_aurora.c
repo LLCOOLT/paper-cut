@@ -19,7 +19,7 @@ int portApGswGet(int index) { return swByteGet(index); }
 
 void portApGswSet(int index, int value) { swByteSet(index, value); }
 
-uint8_t* portApGswBytes(void) { return gp->mGSW; }
+uint8_t* portApGswBytes(void) { return gp->gsw; }
 
 const char* portApMapName(void) { return gp->currentMapName; }
 

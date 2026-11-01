@@ -1,3 +1,6 @@
+// Paper Mario 64 effect: camera-facing explosion sprite; type 0 grows by 0.1 per frame, other types keep their scale
+// and step a 40-degree-per-frame spin angle that the draw code never uses.
+#include "eff/n64/eff_explosion_n64.h"
 #include "eff/eff_n64.h"
 #include "driver/camdrv.h"
 #include "driver/dispdrv.h"
@@ -19,6 +22,7 @@ typedef struct EffExplosionN64Work {
     f32 rotVel;   // 0x28
 } EffExplosionN64Work;
 
+/** Camera-facing 32x32 explosion sprite. */
 static effN64Vtx size32x32_tex32x32_vtx[] = {
     {-16, -16, 0, 0, 0, 0, 0, 0, 255},
     {16, -16, 0, -1024, 0, 0, 0, 0, 255},
@@ -26,15 +30,19 @@ static effN64Vtx size32x32_tex32x32_vtx[] = {
     {-16, 16, 0, 0, 1024, 0, 0, 0, 255},
 };
 
-void effExplosionMain(EffectEntry* effect);
-void effExplosionDisp(CameraId cameraId, EffectEntry* effect);
+static void effExplosionMain(EffectEntry* effect);
+static void effExplosionDisp(CameraId cameraId, EffectEntry* effect);
 
+/**
+ * Spawns a single explosion sprite at (x, y, z) that lasts duration frames.
+ * Type 0 grows; other types spin at 40 degrees per frame. Spawned only from event scripts through evt_eff.
+ */
 EffectEntry* effExplosionN64Entry(s32 type, s32 duration, f32 x, f32 y, f32 z, f32 scale) {
     EffectEntry* effect;
     EffExplosionN64Work* work;
 
     effect = effEntry();
-    effect->type = "ExplosionN64\0\0\0";
+    effect->type = "ExplosionN64";
     effect->count = 1;
     work = __memAlloc(HEAP_EFFECT, sizeof(EffExplosionN64Work));
     effect->userdata = work;
@@ -57,7 +65,12 @@ EffectEntry* effExplosionN64Entry(s32 type, s32 duration, f32 x, f32 y, f32 z, f
     return effect;
 }
 
-void effExplosionMain(EffectEntry* effect) {
+/**
+ * Advances progress from 0 to 8 across the duration (it picks the animation frame),
+ * steps the spin angle (40 degrees per frame for types other than 0; unused when drawing),
+ * grows type 0 by 0.1 per frame, and deletes at end of life.
+ */
+static void effExplosionMain(EffectEntry* effect) {
     EffExplosionN64Work* work = effect->userdata;
     Vec position;
     Vec tmp = {0.0f, 0.0f, 0.0f};
@@ -80,7 +93,8 @@ void effExplosionMain(EffectEntry* effect) {
     dispEntry(CAMERA_3D, dispCalcZ(&position), 2, (DispCallback)effExplosionDisp, effect);
 }
 
-void effExplosionDisp(CameraId cameraId, EffectEntry* effect) {
+/** Draws a camera-facing explosion sprite using texture 14, picking the frame from progress. */
+static void effExplosionDisp(CameraId cameraId, EffectEntry* effect) {
     s32 last;
     s32 s;
     CameraEntry* camera;

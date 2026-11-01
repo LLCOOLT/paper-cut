@@ -1,3 +1,6 @@
+// battle_database_nok (ノコ村, Petalburg): the battle database; the epilogue's stage-play battle (btlgrp_nok_hei_ep) on
+// the Petal Meadows stage.
+
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
 #include "battle/battle_weapon_power.h"
@@ -5,25 +8,8 @@
 #include "battle/battle_stage.h"
 #include "battle/battle_stage_object.h"
 #include "driver/npcdrv.h"
+#include "nok.h"
 
-#pragma force_active on
-
-extern BattleUnitKind unit_act_mario;
-
-f32 fd_battle_database_nok_negone_one_374[2] __attribute__((aligned(8)));
-f32 fd_battle_database_nok_neg_one_382;
-f32 fd_battle_database_nok___local_PI_383;
-f32 fd_battle_database_nok___local_3PIO2_385;
-f32 fd_battle_database_nok_one_negone_373[2] __attribute__((aligned(8)));
-f32 fd_battle_database_nok___local_PIO2_384;
-f32 fd_battle_database_nok_one_381;
-f32 fd_battle_database_nok_negone_one_360[2] __attribute__((aligned(8)));
-f32 fd_battle_database_nok_neg_one_365;
-f32 fd_battle_database_nok___local_PI_366;
-f32 fd_battle_database_nok___local_3PIO2_368;
-f32 fd_battle_database_nok_one_negone_359[2] __attribute__((aligned(8)));
-f32 fd_battle_database_nok___local_PIO2_367;
-f32 fd_battle_database_nok_one_364;
 BattleStageObjectData nok_btlobject_data[10];
 BattleStageData nok_btlstage_data[1];
 BattleUnitSetup btlparty_nok_hei_ep[1];
@@ -32,34 +18,7 @@ NpcBattleSelect btlgrpsel_nok_btlno_hei_test1_off[2];
 NpcSetupBattleInfo btlsetup_nok_tbl[2];
 NpcTerritoryInfo btl_nok_setup_no_tbl[2];
 
-f32 fd_battle_database_nok_negone_one_374[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_battle_database_nok_neg_one_382 = -1.0f;
-
-f32 fd_battle_database_nok___local_PI_383 = 3.1415927f;
-
-f32 fd_battle_database_nok___local_3PIO2_385 = 4.712389f;
-
-f32 fd_battle_database_nok_one_negone_373[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_battle_database_nok___local_PIO2_384 = 1.5707964f;
-
-f32 fd_battle_database_nok_one_381 = 1.0f;
-
-f32 fd_battle_database_nok_negone_one_360[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_battle_database_nok_neg_one_365 = -1.0f;
-
-f32 fd_battle_database_nok___local_PI_366 = 3.1415927f;
-
-f32 fd_battle_database_nok___local_3PIO2_368 = 4.712389f;
-
-f32 fd_battle_database_nok_one_negone_359[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_battle_database_nok___local_PIO2_367 = 1.5707964f;
-
-f32 fd_battle_database_nok_one_364 = 1.0f;
-
+/** Scenery props of the Petalburg battle stage (stg_04_0): rocks and grass tufts with their positions. */
 BattleStageObjectData nok_btlobject_data[] = {
     {"ki_1", 2, 0, {-100.0f, 0.0f, -30.0f}, 0, 60, {0}},
     {"isi_A", 2, 0, {150.0f, 0.0f, -30.0f}, 10, 50, {0}},
@@ -73,12 +32,13 @@ BattleStageObjectData nok_btlobject_data[] = {
     {"C", 2, 3, {0}, 0, 60, {0}},
 };
 
+/** The Petalburg battle stage (bti_01 backdrop, stg_04_0 scenery) used by the epilogue stage-play fight. */
 BattleStageData nok_btlstage_data[] = {
     {
-        "bti_01", // mGlobalStageDataDir
-        "stg_04_0", // mSpecificStageDataDir
-        10, // mNumObjects
-        nok_btlobject_data, // mObjects
+        "bti_01", // globalStageDataDir
+        "stg_04_0", // specificStageDataDir
+        10, // numObjects
+        nok_btlobject_data, // objects
         {NULL, 0, {0}, 0, NULL, 100, 0, 0, 2, 0.0f, 0, 0, 0, 0, weaponGetPowerDefault, {1, 0, 0, 0, 0, 0, 0, 0}, NULL, {0}, 0x2100060, 0x20000000, 0, 26, 3, 2, NULL, 0, 0x7FF, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, {0}, NULL, {0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0}}, // bgAWeapon
         {NULL, 0, {0}, 0, NULL, 100, 0, 0, 2, 0.0f, 0, 0, 0, 0, weaponGetPowerDefault, {1, 0, 0, 0, 0, 0, 0, 0}, NULL, {0}, 0x2100060, 0x20000000, 0, 26, 3, 2, NULL, 0, 0x7FF, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, {0}, NULL, {0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0}}, // bgBWeapon
         NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, // initEvt..bgCEvt
@@ -86,12 +46,13 @@ BattleStageData nok_btlstage_data[] = {
     },
 };
 
+/** Enemy of the epilogue stage play: the play's Mario (unit_act_mario). */
 BattleUnitSetup btlparty_nok_hei_ep[] = {
     {
-        &unit_act_mario, // mUnitKindParams
+        &unit_act_mario, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {90.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -99,6 +60,11 @@ BattleUnitSetup btlparty_nok_hei_ep[] = {
     },
 };
 
+/**
+ * Battle group of the hei_ep fight (btlparty_nok_hei_ep):
+ * item drop odds 25 from the drop table, 25 the held item, 50 nothing;
+ * heart drop table default, flower drop table battle_heart_drop_param_default (the heart table).
+ */
 BattleGroupSetup btlgrp_nok_hei_ep = {
     1, // numEnemies
     btlparty_nok_hei_ep, // enemyData
@@ -107,32 +73,36 @@ BattleGroupSetup btlgrp_nok_hei_ep = {
     50, // noItemWeight
     battle_heart_drop_param_default, // hpDropTable
     battle_heart_drop_param_default, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/** Enemy group of the hei_test1_off encounter: btlgrp_nok_hei_ep. */
 NpcBattleSelect btlgrpsel_nok_btlno_hei_test1_off[] = {
     {50, &btlgrp_nok_hei_ep, nok_btlstage_data},
     {0},
 };
 
+/**
+ * Encounter table of Petalburg: the single epilogue stage-play battle with its enemy pool and battle music.
+ */
 NpcSetupBattleInfo btlsetup_nok_tbl[] = {
     {
-        /*"マップstg_01_0"*/"\x83\x7D\x83\x62\x83\x76\x73\x74\x67\x5F\x30\x31\x5F\x30", // name
+        "マップstg_01_0", // name
         "nok_01", // mapName
         0, // fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_nok_btlno_hei_test1_off, // select
-        0x100000, // battleFlags
-        6, // field_1C
-        {{1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        NPC_BATTLE_NO_PLAYER_ENTRY, // battleFlags
+        6, // randomMode
+        {{1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_ZAKO_BATTLE1", // bgmName
     },
     {0},
 };
 
+/** Maps the BTLNO_NOK battle name to its position in btlsetup_nok_tbl. */
 NpcTerritoryInfo btl_nok_setup_no_tbl[] = {
     {"BTLNO_HEI_TEST1", 0},
     {0},
 };
-

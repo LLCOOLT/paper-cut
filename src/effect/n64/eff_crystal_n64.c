@@ -1,3 +1,4 @@
+// Paper Mario 64 effect: crystal shine that scales in over its lifetime; types 0-9 pick the variant.
 #include "eff/n64/eff_crystal_n64.h"
 #include "eff/eff_n64.h"
 #include "driver/camdrv.h"
@@ -6,25 +7,28 @@
 #include "memory.h"
 #include <dolphin/gx.h>
 #include <dolphin/mtx.h>
+#include "libc_decls.h"
 
-#ifndef TARGET_PC /* PC port: the host libc declares these */
-double sin(double);
-#endif
+static void effCrystalMain(EffectEntry* effect);
+static void effCrystalDisp(CameraId cameraId, EffectEntry* effect);
 
-void effCrystalMain(EffectEntry* effect);
-void effCrystalDisp(CameraId cameraId, EffectEntry* effect);
-
+/**
+ * Spawns a crystal glint at (x, y, z).
+ * Types 0-6 pick one of seven colour/animation variants;
+ * any other type shrinks from scale toward 0.1 over lifetime.
+ * sac_suki.c spawns type 6 with life 60; event scripts via evt_eff.
+ */
 EffectEntry* effCrystalN64Entry(s32 type, s32 lifetime, f32 x, f32 y, f32 z, f32 scale) {
     EffectEntry* effect;
     EffCrystalN64Work* work;
 
     effect = effEntry();
-    effect->type = "CrystalN64\0";
+    effect->type = "CrystalN64";
     effect->count = 1;
     work = __memAlloc(HEAP_EFFECT, sizeof(EffCrystalN64Work));
     effect->userdata = work;
     effect->callback = effCrystalMain;
-    effect->flags |= 2;
+    effect->flags |= EFFECT_FLAG_SOFT_DELETE;
     work->type = type;
     work->frame = 0;
     work->camera = 4;
@@ -40,36 +44,40 @@ EffectEntry* effCrystalN64Entry(s32 type, s32 lifetime, f32 x, f32 y, f32 z, f32
     work->scale = scale;
     work->reserved_18 = 0;
     switch (type) {
-    case 0:
-        work->variant = 0;
-        break;
-    case 1:
-        work->variant = 2;
-        break;
-    case 2:
-        work->variant = 4;
-        break;
-    case 3:
-        work->variant = 6;
-        break;
-    case 4:
-        work->variant = 7;
-        break;
-    case 5:
-        work->variant = 8;
-        break;
-    case 6:
-        work->variant = 9;
-        break;
-    default:
-        work->variant = 10;
-        work->scaleVel = -(scale - 0.1f) / (f32)lifetime;
-        break;
+        case 0:
+            work->variant = 0;
+            break;
+        case 1:
+            work->variant = 2;
+            break;
+        case 2:
+            work->variant = 4;
+            break;
+        case 3:
+            work->variant = 6;
+            break;
+        case 4:
+            work->variant = 7;
+            break;
+        case 5:
+            work->variant = 8;
+            break;
+        case 6:
+            work->variant = 9;
+            break;
+        default:
+            work->variant = 10;
+            work->scaleVel = -(scale - 0.1f) / (f32)lifetime;
+            break;
     }
     return effect;
 }
 
-void effCrystalMain(EffectEntry* effect) {
+/**
+ * Fades in over 16 frames and out over the last 16 (a delete request cuts the life to 30).
+ * Sets the tint and alpha for the variant: some pulse with a sine, the later ones keep growing by 10% per frame.
+ */
+static void effCrystalMain(EffectEntry* effect) {
     EffCrystalN64Work* work = effect->userdata;
     Vec position;
     Vec tmp = {0.0f, 0.0f, 0.0f};
@@ -84,8 +92,8 @@ void effCrystalMain(EffectEntry* effect) {
     tmp.y = work->position.y;
     tmp.z = work->position.z;
     position = tmp;
-    if (effect->flags & 4) {
-        effect->flags &= ~4;
+    if (effect->flags & EFFECT_FLAG_DELETE_REQUESTED) {
+        effect->flags &= ~EFFECT_FLAG_DELETE_REQUESTED;
         work->lifetime = 30;
     }
     if (work->lifetime < 100) {
@@ -111,95 +119,96 @@ void effCrystalMain(EffectEntry* effect) {
         fade = life * 16;
     }
     switch (variant) {
-    case 0:
-        work->r = 70;
-        work->g = 180;
-        work->b = 120;
-        sn = (f32)sin(6.2831855f * (f32)(frame * 2) / 360.0f);
-        work->a = 190 + (s32)(10.0f * sn);
-        work->a = work->a * alpha / 255;
-        break;
-    case 1:
-        work->r = 70;
-        work->g = 255;
-        work->b = 230;
-        work->a = 255;
-        work->a = work->a * alpha / 255;
-        break;
-    case 2:
-        work->r = 170;
-        work->g = 40;
-        work->b = 110;
-        sn = (f32)sin(6.2831855f * (f32)(frame * 2) / 360.0f);
-        work->a = 190 + (s32)(10.0f * sn);
-        work->a = work->a * alpha / 255;
-        break;
-    case 3:
-        work->r = 220;
-        work->g = 40;
-        work->b = 170;
-        work->a = 255;
-        work->a = work->a * alpha / 255;
-        break;
-    case 4:
-        work->r = 235;
-        work->g = 235;
-        work->b = 200;
-        sn = (f32)sin(6.2831855f * (f32)(frame * 2) / 360.0f);
-        work->a = 215 + (s32)(15.0f * sn);
-        work->a = work->a * alpha / 255;
-        break;
-    case 5:
-        work->r = 235;
-        work->g = 235;
-        work->b = 200;
-        work->a = 255;
-        work->a = work->a * alpha / 255;
-        break;
-    case 6:
-        work->r = 70;
-        work->g = 180;
-        work->b = 120;
-        work->a = 127;
-        work->a = work->a * fade / 255;
-        work->scale *= 1.1f;
-        break;
-    case 7:
-        work->r = 162;
-        work->g = 189;
-        work->b = 174;
-        work->a = 160;
-        work->a = work->a * fade / 255;
-        work->scale *= 1.1f;
-        break;
-    case 8:
-        work->r = 170;
-        work->g = 40;
-        work->b = 110;
-        work->a = 127;
-        work->a = work->a * fade / 255;
-        work->scale *= 1.1f;
-        break;
-    case 9:
-        work->r = 180;
-        work->g = 178;
-        work->b = 174;
-        work->a = 160;
-        work->a = work->a * fade / 255;
-        work->scale *= 1.1f;
-        break;
-    default:
-        work->r = 50;
-        work->g = 50;
-        work->b = 255;
-        work->a = 160;
-        work->a = work->a * fade / 255;
-        work->scale += work->scaleVel;
-        break;
+        case 0:
+            work->r = 70;
+            work->g = 180;
+            work->b = 120;
+            sn = (f32)sin(6.2831855f * (f32)(frame * 2) / 360.0f);
+            work->a = 190 + (s32)(10.0f * sn);
+            work->a = work->a * alpha / 255;
+            break;
+        case 1:
+            work->r = 70;
+            work->g = 255;
+            work->b = 230;
+            work->a = 255;
+            work->a = work->a * alpha / 255;
+            break;
+        case 2:
+            work->r = 170;
+            work->g = 40;
+            work->b = 110;
+            sn = (f32)sin(6.2831855f * (f32)(frame * 2) / 360.0f);
+            work->a = 190 + (s32)(10.0f * sn);
+            work->a = work->a * alpha / 255;
+            break;
+        case 3:
+            work->r = 220;
+            work->g = 40;
+            work->b = 170;
+            work->a = 255;
+            work->a = work->a * alpha / 255;
+            break;
+        case 4:
+            work->r = 235;
+            work->g = 235;
+            work->b = 200;
+            sn = (f32)sin(6.2831855f * (f32)(frame * 2) / 360.0f);
+            work->a = 215 + (s32)(15.0f * sn);
+            work->a = work->a * alpha / 255;
+            break;
+        case 5:
+            work->r = 235;
+            work->g = 235;
+            work->b = 200;
+            work->a = 255;
+            work->a = work->a * alpha / 255;
+            break;
+        case 6:
+            work->r = 70;
+            work->g = 180;
+            work->b = 120;
+            work->a = 127;
+            work->a = work->a * fade / 255;
+            work->scale *= 1.1f;
+            break;
+        case 7:
+            work->r = 162;
+            work->g = 189;
+            work->b = 174;
+            work->a = 160;
+            work->a = work->a * fade / 255;
+            work->scale *= 1.1f;
+            break;
+        case 8:
+            work->r = 170;
+            work->g = 40;
+            work->b = 110;
+            work->a = 127;
+            work->a = work->a * fade / 255;
+            work->scale *= 1.1f;
+            break;
+        case 9:
+            work->r = 180;
+            work->g = 178;
+            work->b = 174;
+            work->a = 160;
+            work->a = work->a * fade / 255;
+            work->scale *= 1.1f;
+            break;
+        default:
+            work->r = 50;
+            work->g = 50;
+            work->b = 255;
+            work->a = 160;
+            work->a = work->a * fade / 255;
+            work->scale += work->scaleVel;
+            break;
     }
     dispEntry(work->camera, dispCalcZ(&position), 2, (DispCallback)effCrystalDisp, effect);
 }
 
+/** Outer 108x108 glint quad of the crystal shine, spun slowly with texture 0x6D (types below 3). */
 effN64Vtx size108x108_tex32x32_vtx[] = {
     {-54, -54, 1, 0, 0, 0, 0, 0, 255},
     {54, -54, 1, 1024, 0, 0, 0, 0, 255},
@@ -207,6 +216,7 @@ effN64Vtx size108x108_tex32x32_vtx[] = {
     {-54, 54, 1, 0, 1024, 0, 0, 0, 255},
 };
 
+/** Inner 100x100 glint quad: spun fast against the outer one for types below 3, drawn alone for the rest. */
 effN64Vtx size100x100_tex32x32_vtx[] = {
     {-50, -50, -1, 0, 0, 0, 0, 0, 255},
     {50, -50, -1, 1024, 0, 0, 0, 0, 255},
@@ -214,7 +224,8 @@ effN64Vtx size100x100_tex32x32_vtx[] = {
     {-50, 50, -1, 0, 1024, 0, 0, 0, 255},
 };
 
-void effCrystalDisp(CameraId cameraId, EffectEntry* effect) {
+/** Draws a camera-facing glint of 108x108 or 100x100 units; types below 3 use textures 0x6D and 0x6E. */
+static void effCrystalDisp(CameraId cameraId, EffectEntry* effect) {
     CameraEntry* camera;
     EffCrystalN64Work* work;
     GXTexObj texObj;

@@ -1,90 +1,32 @@
+// bom_00 (ボム村, Fahr Outpost): the snowfield with the pipe from Rogueport Sewers (tik_07); path to bom_03.
+
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
 #include "evt/evt_bero.h"
 #include "evt/evt_sub.h"
+#include "evt/evt_cam.h"
+#include "evt/evt_eff.h"
+#include "evt/evt_mario.h"
+#include "evt/evt_mobj.h"
+#include "evt/evt_msg.h"
+#include "evt/evt_party.h"
+#include "evt/evt_seq.h"
+#include "evt/evt_snd.h"
+#include "party.h"
+#include "bom.h"
 #include "data_tables.h"
+#include "evt/evt_story.h"
 
-#pragma force_active on
-
-USER_FUNC(evt_bero_exec_wait);
-USER_FUNC(evt_bero_get_info);
-USER_FUNC(evt_cam3d_evt_off);
-USER_FUNC(evt_cam3d_evt_set);
-USER_FUNC(evt_cam_letter_box_onoff);
-USER_FUNC(evt_eff64);
-USER_FUNC(evt_mario_dispflag_onoff);
-USER_FUNC(evt_mario_key_onoff);
-USER_FUNC(evt_mario_mov_pos2);
-USER_FUNC(evt_mario_set_dir);
-USER_FUNC(evt_mobj_brick);
-USER_FUNC(evt_mobj_kururing_floor);
-USER_FUNC(evt_msg_print_party);
-USER_FUNC(evt_party_dispflg_onoff);
-USER_FUNC(evt_party_move_pos2);
-USER_FUNC(evt_party_run);
-USER_FUNC(evt_party_set_dir);
-USER_FUNC(evt_party_stop);
-USER_FUNC(evt_seq_wait);
-USER_FUNC(evt_snd_bgm_scope);
-USER_FUNC(evt_snd_bgmon);
-USER_FUNC(evt_snd_envon);
-
-f32 fd_bom_00_negone_one_374[2] __attribute__((aligned(8)));
-f32 fd_bom_00_neg_one_382;
-f32 fd_bom_00___local_PI_383;
-f32 fd_bom_00___local_3PIO2_385;
-f32 fd_bom_00_one_negone_373[2] __attribute__((aligned(8)));
-f32 fd_bom_00___local_PIO2_384;
-f32 fd_bom_00_one_381;
-f32 fd_bom_00_negone_one_360[2] __attribute__((aligned(8)));
-f32 fd_bom_00_neg_one_365;
-f32 fd_bom_00___local_PI_366;
-f32 fd_bom_00___local_3PIO2_368;
-f32 fd_bom_00_one_negone_359[2] __attribute__((aligned(8)));
-f32 fd_bom_00___local_PIO2_367;
-f32 fd_bom_00_one_364;
-EvtWord evt_bom_snowfall[18];
 static TreeAccess tree_tbl[4];
-static EvtWord evt_tree[7];
-static EvtWord first_evt_dokan[36];
 static BeroEntry bero_entry_data[3];
-static EvtWord first_evt[108];
-EvtWord first_evt2[101];
-EvtWord bom_00_init_evt[66];
 
-f32 fd_bom_00_negone_one_374[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_bom_00_neg_one_382 = -1.0f;
-
-f32 fd_bom_00___local_PI_383 = 3.1415927f;
-
-f32 fd_bom_00___local_3PIO2_385 = 4.712389f;
-
-f32 fd_bom_00_one_negone_373[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_bom_00___local_PIO2_384 = 1.5707964f;
-
-f32 fd_bom_00_one_381 = 1.0f;
-
-f32 fd_bom_00_negone_one_360[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_bom_00_neg_one_365 = -1.0f;
-
-f32 fd_bom_00___local_PI_366 = 3.1415927f;
-
-f32 fd_bom_00___local_3PIO2_368 = 4.712389f;
-
-f32 fd_bom_00_one_negone_359[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_bom_00___local_PIO2_367 = 1.5707964f;
-
-f32 fd_bom_00_one_364 = 1.0f;
-
+/** Starts the snowfall effect (snowfall_n64) shared by the Fahr Outpost field maps. */
 EVT_BEGIN(evt_bom_snowfall)
     CALL(evt_eff64, 0, STRING("snowfall_n64"), 0, 64, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
     RETURN
 EVT_END()
 
+/** The three trees of the snowfield that can be shaken, ending with a terminator entry. */
 static TreeAccess tree_tbl[] = {
     {3, "A_ki1", "S_ki_1", "S_ha_1", 0, NULL},
     {3, "A_ki2", "S_ki_2", "S_ha_2", 0, NULL},
@@ -92,34 +34,41 @@ static TreeAccess tree_tbl[] = {
     {7, NULL, NULL, NULL, 0, NULL},
 };
 
+/** Registers the map's tree access table (tree_tbl) with evt_sub_tree_access_entry so the trees can be shaken. */
 static EVT_BEGIN(evt_tree)
     SET_VALUE(LW(0), PTR(tree_tbl))
-    CALL_CHILD(PTR(evt_sub_tree_access_entry))
+    CALL_CHILD(evt_sub_tree_access_entry)
     RETURN
 EVT_END()
 
+/**
+ * Pipe-exit event used when entering from the Rogueport Sewers pipe:
+ * on the very first arrival (GSWF_BOM_FAHR_REACHED not set) it hides Mario and the partner
+ * until first_evt clears GF(0), then shows them again; leaves LW(0) = 0.
+ */
 static EVT_BEGIN(first_evt_dokan)
-    IF_INT_EQUAL(GSWF(3884), 1)
+    IF_INT_EQUAL(GSWF(GSWF_BOM_FAHR_REACHED), 1)
         SET_VALUE(LW(0), 0)
         RETURN
     END_IF
     CALL(evt_mario_dispflag_onoff, 1, 1)
-    CALL(evt_party_dispflg_onoff, 0, 1, 1)
+    CALL(evt_party_dispflg_onoff, 0, PARTY_DISP_FLAG_HIDDEN, 1)
     SET_VALUE(GF(0), 1)
     WAIT_WHILE(GF(0))
     CALL(evt_mario_dispflag_onoff, 0, 1)
-    CALL(evt_party_dispflg_onoff, 0, 1, 0)
+    CALL(evt_party_dispflg_onoff, 0, PARTY_DISP_FLAG_HIDDEN, 0)
     SET_VALUE(LW(0), 0)
     RETURN
 EVT_END()
 
+/** Exits of this room: the pipe to tik_07 and the east door to bom_03. */
 static BeroEntry bero_entry_data[] = {
     {
         "dokan", // hitName
         2, // type
         0, // sfxId
-        9, // directionId
-        100000, // centerPosition
+        BERO_DIR_DOWN, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         (s32*)first_evt_dokan, // enterEvent
@@ -134,8 +83,8 @@ static BeroEntry bero_entry_data[] = {
     {
         "e_bero", // hitName
         0, 0, // type..sfxId
-        20000, // directionId
-        100000, // centerPosition
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         NULL, // enterEvent
@@ -150,6 +99,12 @@ static BeroEntry bero_entry_data[] = {
     {0},
 };
 
+/**
+ * First arrival at Fahr Outpost: letterboxed camera pan down over the snowfield,
+ * Mario and the partner walk into the scene, the partner speaks stg7_bom_01,
+ * and the story progress is set to STORY_STG7_00_START with GSWF_BOM_FAHR_REACHED raised.
+ * It clears GF(0) once the pan is done.
+ */
 static EVT_BEGIN(first_evt)
     CALL(evt_mario_key_onoff, 0)
     CALL(evt_party_stop, 0)
@@ -171,14 +126,20 @@ static EVT_BEGIN(first_evt)
     WAIT_MS(200)
     CALL(evt_msg_print_party, STRING("stg7_bom_01"))
     CALL(evt_cam3d_evt_off, 500, 11)
-    SET_VALUE(GSW(0), 352)
-    SET_VALUE(GSWF(3884), 1)
+    SET_VALUE(GSW(GSW_STORY_PROGRESS), STORY_STG7_00_START)
+    SET_VALUE(GSWF(GSWF_BOM_FAHR_REACHED), 1)
     CALL(evt_mario_key_onoff, 1)
     CALL(evt_party_run, 0)
     CALL(evt_snd_bgm_scope, 0, 0)
     RETURN
 EVT_END()
 
+/**
+ * Arrival cutscene for the first visit when Fahr Outpost is reached
+ * before Chapter 7 proper (story step before STORY_STG6_71_01):
+ * the camera pulls down from above, Mario and the partner walk in from the pipe
+ * and the partner comments (stg7_bom_01_00). It does not advance the story.
+ */
 EVT_BEGIN(first_evt2)
     CALL(evt_snd_bgm_scope, 0, 1)
     CALL(evt_mario_key_onoff, 0)
@@ -199,37 +160,42 @@ EVT_BEGIN(first_evt2)
     WAIT_MS(200)
     CALL(evt_msg_print_party, STRING("stg7_bom_01_00"))
     CALL(evt_cam3d_evt_off, 500, 11)
-    SET_VALUE(GSWF(3884), 1)
+    SET_VALUE(GSWF(GSWF_BOM_FAHR_REACHED), 1)
     CALL(evt_snd_bgm_scope, 0, 0)
     CALL(evt_mario_key_onoff, 1)
     CALL(evt_party_run, 0)
     RETURN
 EVT_END()
 
+/**
+ * Init script of bom_00, the snowy entrance field of Fahr Outpost:
+ * sets the exits (the pipe back to Rogueport Sewers tik_07 and the path east to bom_03), the music and ambience,
+ * snowfall and trees, a Double Dip P brick and a Star Piece panel,
+ * and starts the arrival cutscene on the first visit.
+ */
 EVT_BEGIN(bom_00_init_evt)
     SET_VALUE(LW(0), PTR(bero_entry_data))
     CALL(evt_bero_get_info)
-    CALL_CHILD(PTR(evt_bero_info_run))
-    CALL(evt_snd_bgmon, 512, STRING("BGM_STG7_BOM1"))
-    CALL(evt_snd_envon, 272, STRING("ENV_STG7_BOM1"))
-    CALL_CHILD(PTR(evt_bom_snowfall))
-    CALL_CHILD(PTR(evt_tree))
-    CALL(evt_mobj_brick, STRING("mobj_badge_gat2"), 215, 65, -75, 255, 12, 0, GSWF(3891))
-    CALL(evt_mobj_kururing_floor, STRING("kururin1"), -300, 5, 0, STRING("S_gra02_dai"), 125, GSWF(5658))
-    IF_INT_EQUAL(GSWF(3884), 0)
-        SWITCH(GSW(0))
-            CASE_LESS(349)
-            SPAWN_EVENT(PTR(first_evt2))
+    CALL_CHILD(evt_bero_info_run)
+    CALL(evt_snd_bgmon, PSND_FADE_OUT, STRING("BGM_STG7_BOM1"))
+    CALL(evt_snd_envon, PSND_FADE_RESTART | PSND_FADE_IN, STRING("ENV_STG7_BOM1"))
+    CALL_CHILD(evt_bom_snowfall)
+    CALL_CHILD(evt_tree)
+    CALL(evt_mobj_brick, STRING("mobj_badge_gat2"), 215, 65, -75, ITEM_DOUBLE_DIP_P, 12, 0, GSWF(GSWF_BOM00_DOUBLE_DIP_P_BLOCK_HIT))
+    CALL(evt_mobj_kururing_floor, STRING("kururin1"), -300, 5, 0, STRING("S_gra02_dai"), 125, GSWF(GSWF_BOM00_STAR_PIECE_PANEL))
+    IF_INT_EQUAL(GSWF(GSWF_BOM_FAHR_REACHED), 0)
+        SWITCH(GSW(GSW_STORY_PROGRESS))
+            CASE_LESS(STORY_STG6_71_01)
+            SPAWN_EVENT(first_evt2)
             CASE_DEFAULT
-            SPAWN_EVENT(PTR(first_evt))
+            SPAWN_EVENT(first_evt)
         END_SWITCH
-        ELSE
-        IF_INT_GREATER_OR_EQUAL(GSW(0), 349)
-            IF_INT_LESS(GSW(0), 352)
-                SET_VALUE(GSW(0), 352)
+    ELSE
+        IF_INT_GREATER_OR_EQUAL(GSW(GSW_STORY_PROGRESS), STORY_STG6_71_01)
+            IF_INT_LESS(GSW(GSW_STORY_PROGRESS), STORY_STG7_00_START)
+                SET_VALUE(GSW(GSW_STORY_PROGRESS), STORY_STG7_00_START)
             END_IF
         END_IF
     END_IF
     RETURN
 EVT_END()
-

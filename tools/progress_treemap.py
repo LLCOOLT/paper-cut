@@ -16,8 +16,20 @@ import datetime
 import html
 import json
 import os
+import re
 import subprocess
 import sys
+
+
+def read_versions():
+    """The version names of configure.py's VERSIONS list ("G8MJ01", ..., "G8MP01_DEMO")."""
+    path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "configure.py")
+    with open(path, encoding="utf-8") as f:
+        block = re.search(r"^VERSIONS = \[(.*?)^\]", f.read(), re.M | re.S)
+    return set(re.findall(r'^\s*"(\w+)",', block.group(1), re.M)) if block else set()
+
+
+VERSIONS = read_versions()
 
 
 def num(m, key):
@@ -302,8 +314,11 @@ def main():
     report = load(args.report)
     baseline = load(args.baseline) if args.baseline else None
     commit = args.commit or git_head(root)
+    # the version is the name of a folder on the report's path (build/<version>/report.json)
+    parts = os.path.normpath(os.path.abspath(args.report)).split(os.sep)
+    version = next((p for p in reversed(parts) if p in VERSIONS), "G8MJ01")
     # true C uses the JP source scan and the JP 10-16 baseline, so it only applies to the G8MJ01 report
-    jp = "G8MJ01" in os.path.abspath(args.report)
+    jp = version == "G8MJ01"
     payload = build_payload(report, commit, baseline, args.baseline_label, None if args.raw or not jp else root)
 
     template_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "progress_treemap.html")
@@ -312,6 +327,7 @@ def main():
     data = json.dumps(payload, separators=(",", ":")).replace("</", "<\\/")
     out = template.replace("/*__DATA__*/null", data)
     out = out.replace("__COMMIT__", html.escape(commit or "working tree"))
+    out = out.replace("__VERSION__", version)
     if (t := payload.get("true")) and "true_fuzzy" in t:
         note = (f'<p class="cmp">All code is C. The map colours each file by how closely its C matches the original: '
                 f'<b>green</b> = byte-exact and linked. Hover a cell for its counts. '

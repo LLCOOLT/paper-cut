@@ -1,12 +1,15 @@
+// Wizzerd effect (mahorn: Wizzerd) of rings growing and fading around a point; count and duration come from the caller.
 #include "eff/eff_mahorn.h"
 #include "driver/dispdrv.h"
 #include "memory.h"
 #include <dolphin/gx.h>
 #include <dolphin/mtx.h>
 #include "version.h"
+
+static void effMahornDisp(CameraId cameraId, EffectEntry* effect);
+static void effMahornMain(EffectEntry* effect);
 // US effect texture ids are 0x1C lower for these entries.
 #define EFF_TEX(id) ((id) - VERSION_PICK(0, 0x1C))
-
 
 typedef struct EffMahornWork {
     s32 type;     // 0x0
@@ -26,9 +29,13 @@ static u8 scale_dt[] = {
 };
 static u8 scale_dt2[] = {
     0x00, 0x13, 0x29, 0x3F, 0x52, 0x5F, 0x64, 0x63, 0x5F, 0x59, 0x51,
-    0x47, 0x3D, 0x33, 0x28, 0x1E, 0x14, 0x0C, 0x06, 0x02, 0x00, 0, 0, 0 // FAKE: trailing zero padding to the original symbol size (never read)
+    0x47, 0x3D, 0x33, 0x28, 0x1E, 0x14, 0x0C, 0x06, 0x02, 0x00
 };
 
+/**
+ * Spawns `count` expanding rings at (x, y, z) for `duration` frames;
+ * used by the Wizzerd effect through evt_eff ("mahorn").
+ */
 EffectEntry* effMahornEntry(s32 type, s32 count, s32 duration, f32 x, f32 y, f32 z, f32 scale) {
     EffectEntry* effect;
     EffMahornWork* work;
@@ -36,7 +43,7 @@ EffectEntry* effMahornEntry(s32 type, s32 count, s32 duration, f32 x, f32 y, f32
     s32 i, num;
 
     effect = effEntry();
-    effect->type = "Mahorn\0";
+    effect->type = "Mahorn";
     num = count + 1;
     effect->count = num;
     work = __memAlloc(HEAP_EFFECT, sizeof(EffMahornWork) * num);
@@ -46,8 +53,7 @@ EffectEntry* effMahornEntry(s32 type, s32 count, s32 duration, f32 x, f32 y, f32
     work->frame = 0;
     if (duration <= 0) {
         work->timer = 1000;
-    }
-    else {
+    } else {
         work->timer = duration;
     }
     work->position.x = x;
@@ -69,13 +75,17 @@ EffectEntry* effMahornEntry(s32 type, s32 count, s32 duration, f32 x, f32 y, f32
     return effect;
 }
 
-void effMahornMain(EffectEntry* effect) {
+/**
+ * Per frame: counts down each ring's delay, grows its scale along the scale curve,
+ * fades it out near the end of the duration and deletes the effect when the last ring is gone.
+ */
+static void effMahornMain(EffectEntry* effect) {
     EffMahornWork* work = effect->userdata;
     Vec position;
     s32 i;
     f32 scale;
 
-    position = (Vec){ work->position.x, work->position.y, work->position.z };
+    position = (Vec){work->position.x, work->position.y, work->position.z};
     if (work->timer < 1000) {
         work->timer--;
     }
@@ -96,8 +106,7 @@ void effMahornMain(EffectEntry* effect) {
         work->frame++;
         if (i & 1) {
             scale = scale_dt[work->frame % 21] / 100.0f;
-        }
-        else {
+        } else {
             scale = scale_dt2[work->frame % 21] / 100.0f;
         }
         work->scale = scale;
@@ -107,7 +116,8 @@ void effMahornMain(EffectEntry* effect) {
     dispEntry(CAMERA_3D, dispCalcZ(&position), 2, (DispCallback)effMahornDisp, effect);
 }
 
-void effMahornDisp(CameraId cameraId, EffectEntry* effect) {
+/** Draws each ring as a camera-facing textured quad (effect texture 0x82) with its own scale and alpha. */
+static void effMahornDisp(CameraId cameraId, EffectEntry* effect) {
     BOOL odd;
     EffMahornWork* work = effect->userdata;
     s32 alpha, i;
@@ -153,17 +163,15 @@ void effMahornDisp(CameraId cameraId, EffectEntry* effect) {
         }
         odd = i & 1;
         if (odd) {
-            GXSetChanMatColor(GX_COLOR0A0, (GXColor){ 0xFD, 0xE8, 0x3C, work->alpha * alpha / 255 });
-        }
-        else {
-            GXSetChanMatColor(GX_COLOR0A0, (GXColor){ 0xFF, 0xFC, 0xE7, work->alpha * alpha / 255 });
+            GXSetChanMatColor(GX_COLOR0A0, (GXColor){0xFD, 0xE8, 0x3C, work->alpha * alpha / 255});
+        } else {
+            GXSetChanMatColor(GX_COLOR0A0, (GXColor){0xFF, 0xFC, 0xE7, work->alpha * alpha / 255});
         }
         PSMTXTrans(mtx, work->position.x, work->position.y, work->position.z);
         if (odd) {
             PSMTXScale(scale, work->scale * work->scale2, work->scale * work->scale2,
                        work->scale * work->scale2);
-        }
-        else {
+        } else {
             PSMTXScale(scale, work->scale * work->scale2, -work->scale * work->scale2,
                        work->scale * work->scale2);
         }

@@ -1,8 +1,10 @@
+// Declarations for the Pirate's Grotto (dou) module: map init scripts, battle setup tables, the Boat Curse lecture scripts, the bobbing-platform events and the area's battle units.
 #pragma once
 
 #include "dolphin/types.h"
 #include "driver/npcdrv.h"
 #include "evt/evt_word.h"
+#include "evt/evt_cmd.h"
 
 extern NpcTerritoryInfo btl_dou_setup_no_tbl[];
 extern NpcSetupBattleInfo btlsetup_dou_tbl[];
@@ -30,3 +32,5 @@ extern BattleUnitKind unit_hermos;
 extern BattleUnitKind unit_killer;
 extern BattleUnitKind unit_kuriboo;
 extern BattleUnitKind unit_patamet;
+
+USER_FUNC(evt_dou_normal_puka);

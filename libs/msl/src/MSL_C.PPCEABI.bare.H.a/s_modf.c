@@ -1,7 +1,12 @@
 #include "fdlibm.h"
 
+/** The constant 1.0 for modf. */
 static const double one = 1.0;
 
+/**
+ * Splits x into integer and fractional parts by masking the mantissa bits:
+ * stores the integer part (same sign) in *iptr and returns the fraction.
+ */
 double modf(double x, double* iptr) {
     int i0, i1, j0;
     unsigned i;

@@ -1,153 +1,68 @@
+// dou_04 (洞窟, Pirate's Grotto): room off dou_03 with a lift raised by a red switch.
+// Grotto Key and Star Piece items, and a Goomba NPC (Kurichero) who gives a Couples Cake request.
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
 
-#pragma force_active on
 #include "mario/mario.h"
 #include "manager/evtmgr_cmd.h"
 #include "driver/hitdrv.h"
+#include "driver/itemdrv.h"
 #include "string.h"
 #include "evt/evt_bero.h"
 #include "evt/evt_damage.h"
 #include "evt/evt_npc.h"
+#include "battle/battle_sub.h"
+#include "evt/evt_cam.h"
+#include "evt/evt_eff.h"
+#include "evt/evt_hit.h"
+#include "evt/evt_item.h"
+#include "evt/evt_map.h"
+#include "evt/evt_mario.h"
+#include "evt/evt_mobj.h"
+#include "evt/evt_msg.h"
+#include "evt/evt_party.h"
+#include "evt/evt_pouch.h"
+#include "evt/evt_snd.h"
+#include "party.h"
+#include "evt/evt_sub.h"
+#include "system.h"
+#include "dou.h"
+#include "evt/evt_story.h"
 
-f32 sinfd(f32 degrees);
-f32 reviseAngle(f32 angle);
-void mapObjTranslate(const char* name, f32 x, f32 y, f32 z);
+static USER_FUNC(evt_box_pukapuka);
 
-USER_FUNC(evt_bero_get_info);
-USER_FUNC(evt_box_pukapuka);
-USER_FUNC(evt_cam_shake);
-USER_FUNC(evt_eff_fukidashi);
-USER_FUNC(evt_hit_bind_mapobj);
-USER_FUNC(evt_hit_bind_update);
-USER_FUNC(evt_hit_damage_return_set);
-USER_FUNC(evt_item_entry);
-USER_FUNC(evt_item_flag_off);
-USER_FUNC(evt_item_get_item);
-USER_FUNC(evt_item_get_item_end_wait);
-USER_FUNC(evt_item_get_position);
-USER_FUNC(evt_item_set_position);
-USER_FUNC(evt_map_playanim);
-USER_FUNC(evt_mapobj_get_position);
-USER_FUNC(evt_mapobj_trans);
-USER_FUNC(evt_mario_check_menu);
-USER_FUNC(evt_mario_dispflag_onoff);
-USER_FUNC(evt_mario_get_name_hitobj_head);
-USER_FUNC(evt_mario_get_name_hitobj_ride);
-USER_FUNC(evt_mario_get_party);
-USER_FUNC(evt_mario_get_pos);
-USER_FUNC(evt_mario_jump_pos);
-USER_FUNC(evt_mario_mov_pos2);
-USER_FUNC(evt_mario_party_use_check);
-USER_FUNC(evt_mario_set_dir);
-USER_FUNC(evt_mario_set_dir_npc);
-USER_FUNC(evt_mario_set_hosei_xyz);
-USER_FUNC(evt_mario_set_pose);
-USER_FUNC(evt_mobj_powerupblk);
-USER_FUNC(evt_mobj_switch_red);
-USER_FUNC(evt_msg_continue);
-USER_FUNC(evt_msg_print);
-USER_FUNC(evt_msg_print_add);
-USER_FUNC(evt_npc_flag_onoff);
-USER_FUNC(evt_npc_get_position);
-USER_FUNC(evt_npc_move_position);
-USER_FUNC(evt_npc_set_position);
-USER_FUNC(evt_npc_set_ry);
-USER_FUNC(evt_npc_setup);
-USER_FUNC(evt_npc_wait_pera);
-USER_FUNC(evt_party_dispflg_onoff);
-USER_FUNC(evt_party_get_name_hitobj_ride);
-USER_FUNC(evt_party_get_pos);
-USER_FUNC(evt_party_jump_pos);
-USER_FUNC(evt_party_move_pos2);
-USER_FUNC(evt_party_run);
-USER_FUNC(evt_party_set_dir);
-USER_FUNC(evt_party_set_dir_npc);
-USER_FUNC(evt_party_set_hosei_xyz);
-USER_FUNC(evt_party_stop);
-USER_FUNC(evt_pouch_check_item);
-USER_FUNC(evt_pouch_get_haveitemcnt);
-USER_FUNC(evt_snd_bgmon);
-USER_FUNC(evt_snd_envon);
-USER_FUNC(evt_snd_set_rev_mode);
-USER_FUNC(evt_snd_sfxoff);
-USER_FUNC(evt_snd_sfxon_3d);
-USER_FUNC(evt_sub_intpl_msec_get_value);
-USER_FUNC(evt_sub_intpl_msec_get_value_para);
-USER_FUNC(evt_sub_intpl_msec_init);
-USER_FUNC(evt_mapgrp_translate2);
-
-f32 fd_dou_04_negone_one_374[2] __attribute__((aligned(8)));
-f32 fd_dou_04_neg_one_382;
-f32 fd_dou_04___local_PI_383;
-f32 fd_dou_04___local_3PIO2_385;
-f32 fd_dou_04_one_negone_373[2] __attribute__((aligned(8)));
-f32 fd_dou_04___local_PIO2_384;
-f32 fd_dou_04_one_381;
-f32 fd_dou_04_negone_one_360[2] __attribute__((aligned(8)));
-f32 fd_dou_04_neg_one_365;
-f32 fd_dou_04___local_PI_366;
-f32 fd_dou_04___local_3PIO2_368;
-f32 fd_dou_04_one_negone_359[2] __attribute__((aligned(8)));
-f32 fd_dou_04___local_PIO2_367;
-f32 fd_dou_04_one_364;
 static BeroEntry bero_entry_data[2];
-EvtWord box_trans[76];
-EvtWord box_pukapuka[5];
-EvtWord box_event[222];
-EvtWord lift_event_00[223];
-EvtWord lift_event_01[236];
-EvtWord lift_main_00[53];
-EvtWord lift_main_01[53];
-EvtWord lift_event_init[17];
-EvtWord lift_event[5];
+extern EvtWord box_trans[];
+extern EvtWord box_pukapuka[];
+extern EvtWord box_event[];
+extern EvtWord lift_event_00[];
+extern EvtWord lift_event_01[];
+extern EvtWord lift_main_00[];
+extern EvtWord lift_main_01[];
+extern EvtWord lift_event_init[];
+extern EvtWord lift_event[];
 static HitDamageReturn hitDmgRetPoints[4];
-static EvtWord kuribo_init[16];
-EvtWord kuribo_talk[740];
+extern EvtWord kuribo_talk[];
 static NpcSetupInfo npcEnt[2];
-EvtWord dou_04_init_evt[96];
 
-USER_FUNC(evt_mario_check_menu) {
+/**
+ * Script helper: stores in args[0] whether Mario's menu is currently disabled (marioCheckMenuDisable),
+ * so the lift scripts can stop moving while a menu or message is open.
+ */
+static USER_FUNC(evt_mario_check_menu) {
     EvtWord* args = event->args;
 
     evtSetValue(event, args[0], marioCheckMenuDisable());
     return EVT_RETURN_DONE;
 }
 
-f32 fd_dou_04_negone_one_374[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_dou_04_neg_one_382 = -1.0f;
-
-f32 fd_dou_04___local_PI_383 = 3.1415927f;
-
-f32 fd_dou_04___local_3PIO2_385 = 4.712389f;
-
-f32 fd_dou_04_one_negone_373[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_dou_04___local_PIO2_384 = 1.5707964f;
-
-f32 fd_dou_04_one_381 = 1.0f;
-
-f32 fd_dou_04_negone_one_360[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_dou_04_neg_one_365 = -1.0f;
-
-f32 fd_dou_04___local_PI_366 = 3.1415927f;
-
-f32 fd_dou_04___local_3PIO2_368 = 4.712389f;
-
-f32 fd_dou_04_one_negone_359[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_dou_04___local_PIO2_367 = 1.5707964f;
-
-f32 fd_dou_04_one_364 = 1.0f;
-
+/** Exits (beros) of this room: e_bero to dou_03. */
 static BeroEntry bero_entry_data[] = {
     {
         "e_bero", // hitName
         0, 0, // type..sfxId
-        20000, // directionId
-        100000, // centerPosition
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         NULL, // enterEvent
@@ -162,6 +77,10 @@ static BeroEntry bero_entry_data[] = {
     {0},
 };
 
+/**
+ * Moves the large box platform (s04_m_hako_a) and the water bridge (mizuhashi) by the offsets in GW(0) to GW(2)
+ * every frame, rebinds its hit area, and shifts Mario and the partners by the box's movement while they ride it.
+ */
 EVT_BEGIN(box_trans)
     SET_FLOAT_VALUE(LW(3), 0)
     LOOP(0)
@@ -188,17 +107,22 @@ EVT_BEGIN(box_trans)
     RETURN
 EVT_END()
 
+/** Runs evt_box_pukapuka, which writes the idle bobbing offset of the box into GW(1). */
 EVT_BEGIN(box_pukapuka)
     CALL(evt_box_pukapuka, GW(1))
     RETURN
 EVT_END()
 
+/**
+ * Movement of the box platform in dou_04: forever slides the offset GW(0) from 0 out to 50 and back (slowly,
+ * with float sounds and small bobs at each end) while box_pukapuka bobs it up and down.
+ */
 EVT_BEGIN(box_event)
     SET_FLOAT_VALUE(GW(0), FLOAT(0.0f))
     SET_FLOAT_VALUE(GW(1), FLOAT(0.0f))
     SET_FLOAT_VALUE(GW(2), FLOAT(0.0f))
-    SPAWN_EVENT(PTR(box_trans))
-    SPAWN_EVENT(PTR(box_pukapuka))
+    SPAWN_EVENT(box_trans)
+    SPAWN_EVENT(box_pukapuka)
     CALL(evt_hit_bind_mapobj, STRING("a04_m_hako_03"), STRING("s04_m_hako_a"))
     LOOP(0)
         CALL(evt_sub_intpl_msec_init, 1, 0, 3, 500)
@@ -275,6 +199,12 @@ EVT_BEGIN(box_event)
     RETURN
 EVT_END()
 
+/**
+ * One step of the first lift platform (s04_m_hako_b, hit area a04_m_hako_02):
+ * LW(0) = 0 lowers it from the offset in LW(3) down to -180 at 0.75 per frame,
+ * anything else raises it back to 0.
+ * It carries Mario and the partners, stops while a menu is open, and leaves the final offset in LW(4).
+ */
 EVT_BEGIN(lift_event_00)
     IF_INT_EQUAL(LW(0), 0)
         SET_FLOAT_VALUE(LW(0), LW(3))
@@ -313,7 +243,7 @@ EVT_BEGIN(lift_event_00)
         CALL(evt_mapobj_get_position, STRING("s04_m_hako_b"), LW(10), LW(11), LW(12))
         CALL(evt_snd_sfxon_3d, STRING("SFX_STG5_STEP_DOWN1"), LW(10), LW(11), LW(12), 0)
         CALL(evt_cam_shake, 4, FLOAT(0.0f), FLOAT(0.0009765625f), 150)
-        ELSE
+    ELSE
         SET_FLOAT_VALUE(LW(0), LW(3))
         LOOP(0)
             CALL(evt_mapobj_trans, 1, STRING("s04_m_hako_b"), 0, LW(0), 0)
@@ -352,6 +282,11 @@ EVT_BEGIN(lift_event_00)
     RETURN
 EVT_END()
 
+/**
+ * One step of the second lift platform (s04_m_ita_b, hit area a04_m_hako_01):
+ * LW(0) = 0 raises it from the offset in LW(3) up to 128 with a rising sound,
+ * otherwise it falls back to 0 with a falling sound; same carrying behaviour as lift_event_00.
+ */
 EVT_BEGIN(lift_event_01)
     IF_INT_EQUAL(LW(0), 0)
         CALL(evt_mapobj_get_position, STRING("s04_m_ita_b"), LW(0), LW(1), LW(2))
@@ -390,7 +325,7 @@ EVT_BEGIN(lift_event_01)
             END_IF
         END_LOOP
         CALL(evt_snd_sfxoff, LW(9))
-        ELSE
+    ELSE
         CALL(evt_mapobj_get_position, STRING("s04_m_ita_b"), LW(0), LW(1), LW(2))
         CALL(evt_snd_sfxon_3d, STRING("SFX_STG5_STEP_FALL1"), LW(0), LW(1), LW(2), LW(9))
         SET_FLOAT_VALUE(LW(0), LW(3))
@@ -432,6 +367,11 @@ EVT_BEGIN(lift_event_01)
     RETURN
 EVT_END()
 
+/**
+ * Control loop of the first lift: waits until the red switch has set GF(10) to 0,
+ * lowers the platform (resuming from where it stopped if interrupted), waits 4 seconds,
+ * raises it again and sets GF(10) back to 1.
+ */
 EVT_BEGIN(lift_main_00)
     SET_VALUE(LF(10), 0)
     LOOP(0)
@@ -439,25 +379,29 @@ EVT_BEGIN(lift_main_00)
         IF_INT_EQUAL(LF(10), 0)
             SET_VALUE(LW(0), 0)
             SET_FLOAT_VALUE(LW(3), FLOAT(0.0f))
-            ELSE
+        ELSE
             SET_VALUE(LW(0), 0)
             SET_FLOAT_VALUE(LW(3), LW(4))
         END_IF
-        CALL_CHILD(PTR(lift_event_00))
+        CALL_CHILD(lift_event_00)
         WAIT_MS(4000)
         IF_INT_EQUAL(LF(10), 0)
             SET_VALUE(LW(0), 1)
             SET_FLOAT_VALUE(LW(3), FLOAT(-180.0f))
-            ELSE
+        ELSE
             SET_VALUE(LW(0), 1)
             SET_FLOAT_VALUE(LW(3), LW(4))
         END_IF
-        CALL_CHILD(PTR(lift_event_00))
+        CALL_CHILD(lift_event_00)
         SET_VALUE(GF(10), 1)
     END_LOOP
     RETURN
 EVT_END()
 
+/**
+ * Control loop of the second lift: the same sequence as lift_main_00 for the platform that rises to 128
+ * and returns.
+ */
 EVT_BEGIN(lift_main_01)
     SET_VALUE(LF(10), 0)
     LOOP(0)
@@ -465,39 +409,47 @@ EVT_BEGIN(lift_main_01)
         IF_INT_EQUAL(LF(10), 0)
             SET_VALUE(LW(0), 0)
             SET_FLOAT_VALUE(LW(3), FLOAT(0.0f))
-            ELSE
+        ELSE
             SET_VALUE(LW(0), 0)
             SET_FLOAT_VALUE(LW(3), LW(4))
         END_IF
-        CALL_CHILD(PTR(lift_event_01))
+        CALL_CHILD(lift_event_01)
         WAIT_MS(4000)
         IF_INT_EQUAL(LF(10), 0)
             SET_VALUE(LW(0), 1)
             SET_FLOAT_VALUE(LW(3), FLOAT(128.0f))
-            ELSE
+        ELSE
             SET_VALUE(LW(0), 1)
             SET_FLOAT_VALUE(LW(3), LW(4))
         END_IF
-        CALL_CHILD(PTR(lift_event_01))
+        CALL_CHILD(lift_event_01)
         SET_VALUE(GF(10), 1)
     END_LOOP
     RETURN
 EVT_END()
 
+/**
+ * Binds the two lift hit areas to their platforms,
+ * sets GF(10) to 1 (lifts idle) and starts both lift control loops.
+ */
 EVT_BEGIN(lift_event_init)
     CALL(evt_hit_bind_mapobj, STRING("a04_m_hako_01"), STRING("s04_m_ita_b"))
     CALL(evt_hit_bind_mapobj, STRING("a04_m_hako_02"), STRING("s04_m_hako_b"))
     SET_VALUE(GF(10), 1)
-    SPAWN_EVENT(PTR(lift_main_00))
-    SPAWN_EVENT(PTR(lift_main_01))
+    SPAWN_EVENT(lift_main_00)
+    SPAWN_EVENT(lift_main_01)
     RETURN
 EVT_END()
 
+/** Event of the red switch (mobj00): sets GF(10) to 0 to start the lifts. */
 EVT_BEGIN(lift_event)
     SET_VALUE(GF(10), 0)
     RETURN
 EVT_END()
 
+/**
+ * Hazard-water floors of this room (map hit names) and the point each puts Mario back at after he is bitten.
+ */
 static HitDamageReturn hitDmgRetPoints[] = {
     {"mod_01", {120.0f, 10.0f, 0.0f}},
     {"mod_02", {-90.0f, 10.0f, -110.0f}},
@@ -505,23 +457,40 @@ static HitDamageReturn hitDmgRetPoints[] = {
     {0},
 };
 
+/**
+ * Init of the Goomba Kurichero: during Trouble Center job 21 (the Couples Cake request) he is placed at (-183,
+ * 10, 135) facing east.
+ */
 static EVT_BEGIN(kuribo_init)
-    IF_INT_EQUAL(GSW(1420), 21)
+    IF_INT_EQUAL(GSW(GSW_TROUBLE_ACTIVE), 21)
         CALL(evt_npc_set_position, STRING("me"), -183, 10, 135)
         CALL(evt_npc_set_ry, STRING("me"), 90)
     END_IF
     RETURN
 EVT_END()
 
+/**
+ * Talk script of the Goomba Kurichero.
+ * During Trouble Center job 21 (the Couples Cake request) he first asks for help (irai_21_001),
+ * then converses with Goombella (partner 1) when she is the partner,
+ * a Couples Cake appears (GSWF_DOU04_TROUBLE21_COUPLES_CAKE_TAKEN),
+ * and the job is completed (GSWF_TROUBLE_21_SOLVED, sys_request_finish).
+ * Other partners and other times give a generic line.
+ */
 EVT_BEGIN(kuribo_talk)
-    IF_INT_EQUAL(GSW(1420), 21)
-        IF_INT_EQUAL(GSWF(5405), 0)
+    // Only while the Couples Cake request is active does he have anything to say.
+    IF_INT_EQUAL(GSW(GSW_TROUBLE_ACTIVE), 21)
+        IF_INT_EQUAL(GSWF(GSWF_TROUBLE_WORK_BASE), 0)
+            // First talk: he thanks Mario for taking the request and says he feels lonely on the island.
             CALL(evt_msg_print, 0, STRING("irai_21_001"), 0, 0)
-            SET_VALUE(GSWF(5405), 1)
-            ELSE
+            SET_VALUE(GSWF(GSWF_TROUBLE_WORK_BASE), 1)
+        ELSE
+            // Later talks: if Goombella is the partner, she is the cute girl he has been waiting for.
             CALL(evt_mario_get_party, LW(0))
             IF_INT_EQUAL(LW(0), 1)
                 CALL(evt_party_stop, 0)
+                // Mario and Goombella walk up to him, and he asks whether they found a cute girl, then notices
+                // Goombella.
                 CALL(evt_npc_set_ry, STRING("me"), 90)
                 CALL(evt_party_set_dir_npc, 0, STRING("クリチェロ"))
                 WAIT_MS(300)
@@ -533,13 +502,14 @@ EVT_BEGIN(kuribo_talk)
                     CALL(evt_mario_set_dir, 270, 300, 0)
                 END_INLINE_EVENT
                 BEGIN_INLINE_EVENT
-                    CALL(evt_party_dispflg_onoff, 0, 16, 1)
+                    CALL(evt_party_dispflg_onoff, 0, PARTY_DISP_FLAG_DIR_LOCK, 1)
                     CALL(evt_party_move_pos2, 0, -144, 86, 40)
                     WAIT_FRAMES(1)
-                    CALL(evt_party_dispflg_onoff, 0, 16, 0)
+                    CALL(evt_party_dispflg_onoff, 0, PARTY_DISP_FLAG_DIR_LOCK, 0)
                     SET_VALUE(GF(0), 0)
                 END_INLINE_EVENT
-                CALL(evt_npc_flag_onoff, 1, STRING("me"), 32)
+                // The Goomba walks over to Goombella, nervously confesses his love and asks her out.
+                CALL(evt_npc_flag_onoff, 1, STRING("me"), NPC_FLAG_INTANGIBLE)
                 CALL(evt_npc_move_position, STRING("me"), -175, 86, 0, 40, 0)
                 WAIT_WHILE(GF(0))
                 WAIT_MS(500)
@@ -550,6 +520,7 @@ EVT_BEGIN(kuribo_talk)
                 CALL(evt_npc_get_position, STRING("me"), LW(0), LW(1), LW(2))
                 ADD(LW(0), 5)
                 CALL(evt_npc_move_position, STRING("me"), LW(0), LW(2), 0, 30, 0)
+                // Goombella is startled and Mario and she jump back in surprise.
                 BEGIN_INLINE_EVENT
                     WAIT_MS(250)
                     CALL(evt_mario_dispflag_onoff, 1, 2)
@@ -559,18 +530,21 @@ EVT_BEGIN(kuribo_talk)
                 END_INLINE_EVENT
                 BEGIN_INLINE_EVENT
                     WAIT_MS(250)
-                    CALL(evt_party_dispflg_onoff, 0, 16, 1)
+                    CALL(evt_party_dispflg_onoff, 0, PARTY_DISP_FLAG_DIR_LOCK, 1)
                     CALL(evt_party_get_pos, 0, LW(0), LW(1), LW(2))
                     CALL(evt_party_jump_pos, 0, LW(0), LW(1), LW(2), 200, 1, 5)
-                    CALL(evt_party_dispflg_onoff, 0, 16, 0)
+                    CALL(evt_party_dispflg_onoff, 0, PARTY_DISP_FLAG_DIR_LOCK, 0)
                 END_INLINE_EVENT
+                // He says he loves her and asks her to go out with him.
                 CALL(evt_msg_print, 0, STRING("irai_21_005"), 0, STRING("me"))
                 CALL(evt_npc_get_position, STRING("me"), LW(0), LW(1), LW(2))
                 ADD(LW(0), 10)
                 ADD(LW(1), 15)
                 ADD(LW(2), 5)
-                CALL(evt_item_entry, STRING("ff"), 219, LW(0), LW(1), LW(2), 17, GSWF(2991), 0)
+                // A Couples Cake appears next to him for Goombella.
+                CALL(evt_item_entry, STRING("ff"), ITEM_COUPLES_CAKE, LW(0), LW(1), LW(2), ITEM_ENTRY_FIXED_NO_TOUCH, GSWF(GSWF_DOU04_TROUBLE21_COUPLES_CAKE_TAKEN), 0)
                 WAIT_MS(800)
+                // Goombella is flustered and says she is already going out with Mario; Mario and she react.
                 CALL(evt_msg_print, 0, STRING("irai_21_006"), 0, STRING("party"))
                 WAIT_MS(500)
                 CALL(evt_eff_fukidashi, 3, STRING(""), 0, 0, 0, 0, 0, 0, 0, 0, 30)
@@ -607,6 +581,7 @@ EVT_BEGIN(kuribo_talk)
                     END_LOOP
                 END_INLINE_EVENT
                 WAIT_MS(800)
+                // Heartbroken, the Goomba says he has had enough, shouts "Peace!" and runs off the screen.
                 CALL(evt_msg_print, 0, STRING("irai_21_008"), 0, STRING("me"))
                 CALL(evt_npc_move_position, STRING("me"), -140, -76, 0, 60, 0)
                 WAIT_MS(1000)
@@ -626,6 +601,7 @@ EVT_BEGIN(kuribo_talk)
                 END_INLINE_EVENT
                 CALL(evt_npc_move_position, STRING("me"), 140, -76, 0, 150, 0)
                 CALL(evt_npc_set_position, STRING("me"), 0, -1000, 0)
+                // Goombella feels bad about it, picks up the Couples Cake and gives it to Mario as a reward.
                 CALL(evt_msg_print, 0, STRING("irai_21_010"), 0, STRING("party"))
                 CALL(evt_item_get_position, STRING("ff"), LW(0), LW(1), LW(2))
                 SUBTRACT(LW(2), 10)
@@ -641,32 +617,37 @@ EVT_BEGIN(kuribo_talk)
                 CALL(evt_msg_print, 0, STRING("irai_21_011"), 0, STRING("party"))
                 CALL(evt_mario_set_dir, 270, 300, 0)
                 WAIT_MS(300)
+                // If the inventory has room (10 slots, or 20 with the Strange Sack) Mario receives the cake;
+                // otherwise it is left on the ground.
                 CALL(evt_pouch_get_haveitemcnt, LW(0))
-                CALL(evt_pouch_check_item, 1, LW(1))
+                CALL(evt_pouch_check_item, ITEM_STRANGE_SACK, LW(1))
                 IF_INT_EQUAL(LW(1), 0)
                     SET_VALUE(LW(1), 10)
-                    ELSE
+                ELSE
                     SET_VALUE(LW(1), 20)
                 END_IF
                 IF_INT_LESS(LW(0), LW(1))
                     CALL(evt_msg_continue)
                     CALL(evt_item_get_item, STRING("ff"))
                     CALL(evt_item_get_item_end_wait, STRING("ff"))
-                    ELSE
+                ELSE
                     CALL(evt_msg_print_add, 0, STRING("irai_21_011_1"))
                     CALL(evt_party_set_dir, 0, 270, 300)
                     WAIT_MS(300)
                     CALL(evt_item_set_position, STRING("ff"), -165, 10, 106)
-                    CALL(evt_item_flag_off, STRING("ff"), 2)
+                    CALL(evt_item_flag_off, STRING("ff"), ITEM_FLAG_NO_TOUCH)
                     WAIT_MS(300)
                     CALL(evt_party_set_dir, 0, 90, 300)
                 END_IF
+                // The request is finished: Trouble Center job 21 is solved.
                 CALL(evt_msg_print, 0, STRING("irai_21_013"), 0, STRING("party"))
                 CALL(evt_party_run, 0)
-                SET_VALUE(GSW(1420), 0)
-                SET_VALUE(GSWF(5395), 1)
+                SET_VALUE(GSW(GSW_TROUBLE_ACTIVE), 0)
+                SET_VALUE(GSWF(GSWF_TROUBLE_21_SOLVED), 1)
                 CALL(evt_msg_print, 0, STRING("sys_request_finish"), 0, 0)
-                ELSE
+                // Any other partner: the Goomba turns them down with a line specific to that partner (Koops,
+                // Flurrie, Yoshi, Vivian, Bobbery, Ms. Mowz) and the partner replies.
+            ELSE
                 LOOP(0)
                     CALL(evt_mario_party_use_check, LW(1))
                     IF_INT_EQUAL(LW(1), 0)
@@ -714,7 +695,7 @@ EVT_BEGIN(kuribo_talk)
                     CALL(evt_party_get_pos, 0, LW(5), LW(6), LW(7))
                     IF_INT_GREATER_OR_EQUAL(LW(2), LW(5))
                         CALL(evt_mario_set_dir, 270, 200, 0)
-                        ELSE
+                    ELSE
                         CALL(evt_mario_set_dir, 90, 200, 0)
                     END_IF
                 END_INLINE_EVENT
@@ -727,10 +708,11 @@ EVT_BEGIN(kuribo_talk)
     RETURN
 EVT_END()
 
+/** NPC setup of dou_04: the Goomba Kurichero, who talks to Mario about the Couples Cake request. */
 static NpcSetupInfo npcEnt[] = {
     {
-        /*"クリチェロ"*/"\x83\x4E\x83\x8A\x83\x60\x83\x46\x83\x8D", // name
-        0x600, // flags
+        "クリチェロ", // name
+        NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM, // flags
         0, // reactionFlags
         kuribo_init, // initEvent
         NULL, // regularEvent
@@ -743,32 +725,41 @@ static NpcSetupInfo npcEnt[] = {
     {0},
 };
 
+/**
+ * Init script of dou_04, the lift room off dou_03:
+ * music and ambience, exit, Kurichero, the moving box platform, the red switch and two lifts, waves,
+ * the Grotto Key and Star Piece, a Shine Sprite block, and the Couples Cake once job 21 is solved.
+ */
 EVT_BEGIN(dou_04_init_evt)
-    CALL(evt_snd_bgmon, 512, STRING("BGM_STG5_DOU1"))
-    CALL(evt_snd_envon, 272, STRING("ENV_STG5_DOU6"))
+    CALL(evt_snd_bgmon, PSND_FADE_OUT, STRING("BGM_STG5_DOU1"))
+    CALL(evt_snd_envon, PSND_FADE_RESTART | PSND_FADE_IN, STRING("ENV_STG5_DOU6"))
     CALL(evt_snd_set_rev_mode, 2)
     SET_VALUE(LW(0), PTR(bero_entry_data))
     CALL(evt_bero_get_info)
-    CALL_CHILD(PTR(evt_bero_info_run))
+    CALL_CHILD(evt_bero_info_run)
     WAIT_FRAMES(1)
     CALL(evt_npc_setup, PTR(npcEnt))
-    SPAWN_EVENT(PTR(box_event))
+    SPAWN_EVENT(box_event)
     CALL(evt_mobj_switch_red, 0, STRING("mobj00"), 25, 32, 125, PTR(lift_event), 0)
-    SPAWN_EVENT(PTR(lift_event_init))
+    SPAWN_EVENT(lift_event_init)
     CALL(evt_map_playanim, STRING("nami"), 1, 0)
     CALL(evt_map_playanim, STRING("moku"), 1, 0)
-    CALL(evt_item_entry, STRING("kagitsume"), 20, 122, 110, -118, 0, GSWF(2977), 0)
-    CALL(evt_item_entry, STRING("starpice"), 125, -230, 200, 110, 0, GSWF(5646), 0)
+    CALL(evt_item_entry, STRING("kagitsume"), ITEM_GROTTO_KEY, 122, 110, -118, ITEM_ENTRY_STAY, GSWF(GSWF_DOU04_GROTTO_KEY_TAKEN), 0)
+    CALL(evt_item_entry, STRING("starpice"), ITEM_STAR_PIECE, -230, 200, 110, ITEM_ENTRY_STAY, GSWF(GSWF_DOU04_STAR_PIECE), 0)
     CALL(evt_hit_damage_return_set, PTR(hitDmgRetPoints))
-    CALL_CHILD(PTR(evt_gazigazi_entry))
-    CALL(evt_mobj_powerupblk, STRING("pblk00"), -230, 290, -105, 0, GSWF(5555), 0)
-    IF_INT_EQUAL(GSWF(5395), 1)
-        CALL(evt_item_entry, STRING("iri_21"), 219, -165, 10, 106, 16, GSWF(2991), 0)
+    CALL_CHILD(evt_gazigazi_entry)
+    CALL(evt_mobj_powerupblk, STRING("pblk00"), -230, 290, -105, 0, GSWF(GSWF_DOU04_SHINE_SPRITE), 0)
+    IF_INT_EQUAL(GSWF(GSWF_TROUBLE_21_SOLVED), 1)
+        CALL(evt_item_entry, STRING("iri_21"), ITEM_COUPLES_CAKE, -165, 10, 106, ITEM_ENTRY_FIXED, GSWF(GSWF_DOU04_TROUBLE21_COUPLES_CAKE_TAKEN), 0)
     END_IF
     RETURN
 EVT_END()
 
-USER_FUNC(evt_box_pukapuka) {
+/**
+ * Script helper: every frame writes the idle bobbing height of the box platform (two sine waves of 1.5 and 0.7
+ * units, minus 25) into args[0] as a float; never finishes.
+ */
+static USER_FUNC(evt_box_pukapuka) {
     EvtWord* args = event->args;
     f32 y;
 
@@ -784,7 +775,12 @@ USER_FUNC(evt_box_pukapuka) {
     return EVT_RETURN_BLOCK;
 }
 
-USER_FUNC(evt_mapgrp_translate2) {
+/**
+ * Script helper: moves the map group args[0] to (args[1], args[2], args[3]) and,
+ * if Mario stands on the hit area named by args[4],
+ * pushes him along by the movement since the last call (stored in the script's lwDataF[6..8]).
+ */
+static USER_FUNC(evt_mapgrp_translate2) {
     EvtWord* args = event->args;
     MarioWork* mario = marioGetPtr();
     const char* name = (const char*)evtGetValue(event, args[0]);
@@ -810,4 +806,3 @@ USER_FUNC(evt_mapgrp_translate2) {
     prev[2] = 10.0f * (z / 10.0f);
     return EVT_RETURN_DONE;
 }
-

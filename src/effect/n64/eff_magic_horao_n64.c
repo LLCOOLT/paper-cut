@@ -1,3 +1,5 @@
+// Paper Mario 64 magic effect (horao); types 0-5, some types spawn dust (hokori) puffs.
+#include "eff/n64/eff_magic_horao_n64.h"
 #include "driver/camdrv.h"
 #include "driver/dispdrv.h"
 #include "driver/effdrv.h"
@@ -5,40 +7,30 @@
 #include <dolphin/gx.h>
 #include <dolphin/mtx.h>
 #include <stdlib.h>
-
-#ifndef TARGET_PC /* PC port: the host libc declares these */
-double sin(double);
-#endif
-
-typedef struct effN64Vtx {
-    s16 x, y, z;
-    s16 s, t;
-    u8 r, g, b, a;
-} effN64Vtx;
-
-void effGetTexObjN64(u32 id, GXTexObj* obj);
-void effSetVtxDescN64(effN64Vtx* vtx);
-void tri2();
+#include "eff/eff_n64.h"
+#include "eff/n64/eff_hokori_n64.h"
+#include "libc_decls.h"
 
 typedef struct EffMagicHoraoN64Work {
-    s32 type;      // 0x0
-    Vec position;  // 0x4
-    f32 vy;        // 0x10
-    f32 unk14;     // 0x14
-    f32 unk18;     // 0x18
-    s32 unk1C;     // 0x1C
-    s32 unk20;     // 0x20
-    f32 unk24;     // 0x24
-    f32 unk28;     // 0x28
-    s32 state;     // 0x2C
-    s32 timer;     // 0x30
-    f32 scale;     // 0x34
-    s32 angle;     // 0x38
-    s32 alpha;     // 0x3C
-    s32 lifetime;  // 0x40
-    s32 frame;     // 0x44
+    s32 type;        // 0x0
+    Vec position;    // 0x4
+    f32 vy;          // 0x10
+    f32 startScale;  // 0x14
+    f32 targetScale; // 0x18
+    s32 startAlpha;  // 0x1C
+    s32 targetAlpha; // 0x20
+    f32 curScale;    // 0x24
+    f32 lerpRate;    // 0x28, eases curScale and alpha toward their targets
+    s32 state;       // 0x2C
+    s32 timer;       // 0x30
+    f32 scale;       // 0x34
+    s32 angle;       // 0x38
+    s32 alpha;       // 0x3C
+    s32 lifetime;    // 0x40
+    s32 frame;       // 0x44
 } EffMagicHoraoN64Work;
 
+/** Large flat quad (6400 units wide) the horao magic draws its textures on. */
 static effN64Vtx size64x64_tex64x64_vtx[] = {
     {-3200, 0, 0, 0, 0, 0, 0, 0, 0xFF},
     {3200, 0, 0, 2048, 0, 0, 0, 0, 0xFF},
@@ -46,17 +38,20 @@ static effN64Vtx size64x64_tex64x64_vtx[] = {
     {-3200, 6400, 0, 0, 2048, 0, 0, 0, 0xFF},
 };
 
-EffectEntry* effHokoriN64Entry(s32 type, s32 lifetime, f32 x, f32 y, f32 z);
+static void effMagicHoraoMain(EffectEntry* effect);
+static void effMagicHoraoDisp(CameraId cameraId, EffectEntry* effect);
 
-void effMagicHoraoMain(EffectEntry* effect);
-void effMagicHoraoDisp(CameraId cameraId, EffectEntry* effect);
-
+/**
+ * Spawns a "Horao" battle magic sprite at (x, y, z):
+ * scale and alpha ease from (a, b) toward (c, d) at rate e, and it is deleted after f frames.
+ * Via evt_eff64 "magic_horao_n64"; no script callers found.
+ */
 EffectEntry* effMagicHoraoN64Entry(s32 type, f32 x, f32 y, f32 z, f32 a, s32 b, f32 c, s32 d, f32 e, s32 f) {
     EffectEntry* effect;
     EffMagicHoraoN64Work* work;
 
     effect = effEntry();
-    effect->type = "MagicHoraoN64\0\0";
+    effect->type = "MagicHoraoN64";
     effect->count = 1;
     work = __memAlloc(HEAP_EFFECT, sizeof(EffMagicHoraoN64Work));
     effect->userdata = work;
@@ -65,23 +60,24 @@ EffectEntry* effMagicHoraoN64Entry(s32 type, f32 x, f32 y, f32 z, f32 a, s32 b, 
     work->position.x = x;
     work->position.y = y;
     work->position.z = z;
-    work->unk28 = e;
-    work->unk14 = a;
-    work->unk1C = b;
-    work->unk18 = c;
-    work->unk20 = d;
+    work->lerpRate = e;
+    work->startScale = a;
+    work->startAlpha = b;
+    work->targetScale = c;
+    work->targetAlpha = d;
     work->scale = 1.0f;
     work->angle = rand() % 360;
     work->lifetime = f;
     work->frame = 0;
     work->alpha = b;
-    work->unk24 = a;
+    work->curScale = a;
     work->vy = 0.0f;
     work->state = 0;
     return effect;
 }
 
-void effMagicHoraoMain(EffectEntry* effect) {
+/** Runs a six-state sequence: ease in, hold, wait, fall to the ground (kicking up two dust puffs), wait, fade out. */
+static void effMagicHoraoMain(EffectEntry* effect) {
     EffMagicHoraoN64Work* work = effect->userdata;
     Vec position;
     Vec tmp = {0.0f, 0.0f, 0.0f};
@@ -98,8 +94,8 @@ void effMagicHoraoMain(EffectEntry* effect) {
     }
     switch (work->state) {
         case 0:
-            work->unk24 += work->unk28 * (work->unk18 - work->unk24);
-            work->alpha = work->alpha + work->unk28 * (work->unk20 - work->alpha);
+            work->curScale += work->lerpRate * (work->targetScale - work->curScale);
+            work->alpha = work->alpha + work->lerpRate * (work->targetAlpha - work->alpha);
             work->scale -= 0.02f;
             if (work->scale < 0.0f) {
                 work->scale = 0.0f;
@@ -148,7 +144,8 @@ void effMagicHoraoMain(EffectEntry* effect) {
     dispEntry(CAMERA_3D, dispCalcZ(&position), 2, (DispCallback)effMagicHoraoDisp, effect);
 }
 
-void effMagicHoraoDisp(CameraId cameraId, EffectEntry* effect) {
+/** Draws a wobbling 16-strip ribbon (textures 0x56/0x57) while easing in; in the hold state draws two flat textures. */
+static void effMagicHoraoDisp(CameraId cameraId, EffectEntry* effect) {
     effN64Vtx* vtx;
     effN64Vtx* v;
     s32 i;
@@ -175,7 +172,7 @@ void effMagicHoraoDisp(CameraId cameraId, EffectEntry* effect) {
     PSMTXScale(scale, 0.01f, 0.01f, 0.01f);
     PSMTXTrans(mtx, 100.0f * work->position.x, 100.0f * work->position.y, 100.0f * work->position.z);
     PSMTXConcat(scale, mtx, mtx);
-    PSMTXScale(scale, work->unk24, work->unk24, work->unk24);
+    PSMTXScale(scale, work->curScale, work->curScale, work->curScale);
     PSMTXConcat(mtx, scale, mtx);
     PSMTXConcat(camera->view, mtx, mtx);
     GXLoadPosMtxImm(mtx, GX_PNMTX0);
@@ -184,6 +181,8 @@ void effMagicHoraoDisp(CameraId cameraId, EffectEntry* effect) {
     ang = 6.2831855f * (f32)(frame * 30) / 360.0f;
     GXSetTevColor(GX_TEVREG0, (GXColor){225.0f + 25.0f * (f32)sin(ang), 225.0f + 25.0f * (f32)sin(ang), 0xFF, alpha});
 #else
+    // The first element sets ang and the second reads it: MWCC evaluates initialiser elements left to right (C leaves
+    // their order unspecified). Setting ang in a statement before the call changes the register allocation.
     GXSetTevColor(GX_TEVREG0, (GXColor){(ang = 6.2831855f * (f32)(frame * 30) / 360.0f, 225.0f + 25.0f * (f32)sin(ang)), 225.0f + 25.0f * (f32)sin(ang), 0xFF, alpha});
 #endif
     GXSetNumChans(0);

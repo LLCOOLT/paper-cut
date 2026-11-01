@@ -1,3 +1,5 @@
+// Paper Mario 64 magic effect 2 at a point with a scale and life.
+#include "eff/n64/eff_magic2_n64.h"
 #include "eff/eff_n64.h"
 #include "driver/camdrv.h"
 #include "driver/dispdrv.h"
@@ -6,18 +8,17 @@
 #include "system.h"
 #include <dolphin/gx.h>
 #include <dolphin/mtx.h>
-#include "eff/eff_magic1_n64.h"
 #include "libc_decls.h"
 
 typedef struct EffMagic2N64Work {
-    s32 type;     // 0x0
-    Vec position; // 0x4
-    Vec offset;   // 0x10
-    f32 scale;    // 0x1C
+    s32 type;        // 0x0
+    Vec position;    // 0x4
+    Vec offset;      // 0x10
+    f32 scale;       // 0x1C
     f32 scaleTarget; // 0x20
-    s32 alpha;    // 0x24
-    s32 life;     // 0x28
-    s32 age;      // 0x2C
+    s32 alpha;       // 0x24
+    s32 life;        // 0x28
+    s32 age;         // 0x2C
     s32 a30;
     s32 a34;
     s32 a38;
@@ -32,15 +33,16 @@ typedef struct EffMagic2N64Work {
     f32 f5c;
 } EffMagic2N64Work;
 
-
+/** Colours the magic burst cycles through, eight RGB entries. */
 static u8 color_rotation_data[24] = {0xFF, 0xC5, 0x9C, 0xFF, 0x9C, 0xFF, 0xFF, 0x73, 0xD6, 0xFF, 0x9C, 0xFF,
                                      0xFF, 0xC5, 0x7B, 0xFF, 0xB4, 0xFF, 0xDE, 0x73, 0xFF, 0xFF, 0x94, 0x9C};
 
-void effMagic2Main(EffectEntry* effect);
-void effMagic2Disp(CameraId cameraId, EffectEntry* effect);
-void magic2_2_line_dl(void);
-void magic2_4_dl(void);
+static void effMagic2Main(EffectEntry* effect);
+static void effMagic2Disp(CameraId cameraId, EffectEntry* effect);
+static void magic2_2_line_dl(void);
+static void magic2_4_dl(void);
 
+/** Type 0 mesh: a 12-sided tube of long streaks reaching 2000 units deep. */
 effN64Vtx stg_magic2_2_line_v[] = {
     {-87, 50, 0, 5461, 2048, 255, 255, 255, 0},
     {-87, 50, -2000, 5461, 0, 255, 255, 255, 255},
@@ -70,6 +72,7 @@ effN64Vtx stg_magic2_2_line_v[] = {
     {87, 50, -2000, 2731, 0, 255, 255, 255, 255},
 };
 
+/** Type 1 mesh: a 12-sided short ring, 50 units deep. */
 effN64Vtx stg_magic2_1_v[] = {
     {-87, 50, 0, 5461, 512, 255, 255, 255, 255},
     {-87, 50, -50, 5461, 0, 255, 255, 255, 255},
@@ -99,12 +102,17 @@ effN64Vtx stg_magic2_1_v[] = {
     {87, 50, -50, 2731, 0, 255, 255, 255, 255},
 };
 
+/**
+ * Spawns a screen-space magic burst for life frames, centered on the projection of world point (x, y, z).
+ * Type 0 is the streaked variant (target size 0.2 * scale), type 1 the wide ring variant.
+ * Via evt_eff64 effect set 13; no script callers found.
+ */
 EffectEntry* effMagic2N64Entry(s32 type, s32 life, f32 x, f32 y, f32 z, f32 scale) {
     EffectEntry* effect;
     EffMagic2N64Work* w;
 
     effect = effEntry();
-    effect->type = "Magic2N64\0\0";
+    effect->type = "Magic2N64";
     effect->count = 1;
     w = __memAlloc(HEAP_EFFECT, sizeof(EffMagic2N64Work));
     effect->userdata = w;
@@ -138,8 +146,13 @@ EffectEntry* effMagic2N64Entry(s32 type, s32 life, f32 x, f32 y, f32 z, f32 scal
     return effect;
 }
 
+// FAKE: match-forcing setting: the same code without it compiles differently (removal tried).
 #pragma opt_common_subs off
-void effMagic2Main(EffectEntry* effect) {
+/**
+ * Fades the burst in over 10 frames and out over the last 6, eases its scale with a sine pulse,
+ * projects the world position to screen coordinates for the draw, and scrolls the two texture offsets.
+ */
+static void effMagic2Main(EffectEntry* effect) {
     EffMagic2N64Work* w = effect->userdata;
     Vec position;
     Vec pos2;
@@ -181,11 +194,11 @@ void effMagic2Main(EffectEntry* effect) {
         }
     }
     {
-    Vec tmp2 = {0.0f, 0.0f, 0.0f};
-    tmp2.x = w->position.x;
-    tmp2.y = w->position.y;
-    tmp2.z = w->position.z;
-    pos2 = tmp2;
+        Vec tmp2 = {0.0f, 0.0f, 0.0f};
+        tmp2.x = w->position.x;
+        tmp2.y = w->position.y;
+        tmp2.z = w->position.z;
+        pos2 = tmp2;
     }
     PSMTXMultVec(camGetPtr(CAMERA_3D)->view, &pos2, &pos2);
     PSMTX44MultVec(camGetPtr(CAMERA_3D)->projection, &pos2, &pos2);
@@ -210,7 +223,11 @@ void effMagic2Main(EffectEntry* effect) {
 }
 
 #pragma opt_common_subs reset
-void effMagic2Disp(CameraId cameraId, EffectEntry* effect) {
+/**
+ * Draws the burst with an N64-style perspective projection (narrow for type 0, wide for type 1) once per record,
+ * scrolling two textures and cycling a color table.
+ */
+static void effMagic2Disp(CameraId cameraId, EffectEntry* effect) {
     s32 fov;
     s32 half;
     EffMagic2N64Work* w;
@@ -298,7 +315,8 @@ void effMagic2Disp(CameraId cameraId, EffectEntry* effect) {
     GXSetScissorBoxOffset(0, 0);
 }
 
-void magic2_2_line_dl(void) {
+/** Draws type 0: a 12-sided tube of long streaks (2000 units deep, texture 17). */
+static void magic2_2_line_dl(void) {
     GXTexObj texObj;
     GXSetNumChans(1);
     GXSetChanCtrl(4, 0, 0, 1, 0, 0, 2);
@@ -341,7 +359,8 @@ void magic2_2_line_dl(void) {
     tri2(15, 14, 25, 0, 15, 25, 24, 0);
 }
 
-void magic2_4_dl(void) {
+/** Draws type 1: a 12-sided short ring (50 units deep) using textures 18 and 19. */
+static void magic2_4_dl(void) {
     GXTexObj texObj;
     GXSetNumChans(1);
     GXSetChanCtrl(4, 0, 0, 1, 0, 0, 2);

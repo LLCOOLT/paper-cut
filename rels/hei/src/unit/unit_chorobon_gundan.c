@@ -1,8 +1,7 @@
-#pragma dollar_identifiers on
+// Fuzzy Horde (chorobon_gundan): battle unit used in Petal Meadows.
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
 
-#pragma force_active on
 #include "battle/battle.h"
 #include "battle/battle_unit.h"
 #include "dolphin/mtx.h"
@@ -18,98 +17,63 @@
 #include "battle/battle_database_common.h"
 #include "data_tables.h"
 #include "driver/extdrv.h"
-#ifdef TARGET_PC /* declarations the GameCube code calls implicitly */
 #include "manager/evtmgr_cmd.h"
-#endif
+#include "unit/unit_chorobon_gundan.h"
+#include "battle/battle_sub.h"
+#include "evt/evt_ext.h"
+#include "evt/evt_npc.h"
+#include "version.h"
+#include "libc_decls.h"
 
-typedef struct Chorogun { u8 flags; u8 state; u8 pad_2[2]; Vec vel; f32 speed; Vec pos; s32 timer; Vec target; } Chorogun;
+// Unit work slots (btlevtcmd_SetUnitWork / GetUnitWork)
+enum {
+    UW_CHOROBON_GUNDAN_FEW_LEFT = 0, // 1 once a hit finds 50 or fewer Fuzzies left in the horde
+};
+
 Chorogun* chorogun;
 s32 chorogun_targetId;
-s32 BtlUnit_snd_se_pos(BattleUnit* unit, const char* name, s32 vol, s32 pan, Vec* pos);
-#ifndef TARGET_PC /* PC port: the host libc declares these */
-int rand(void);
-double sqrt(double x);
-#endif
 
-USER_FUNC(btlevtcmd_AnimeChangePoseFromTable);
-USER_FUNC(btlevtcmd_AttackDeclare);
-USER_FUNC(btlevtcmd_CheckDamage);
-USER_FUNC(btlevtcmd_CheckDamageCode);
-USER_FUNC(btlevtcmd_ChoiceSamplingEnemy);
-USER_FUNC(btlevtcmd_EnemyItemUseCheck);
-USER_FUNC(btlevtcmd_GetDamage);
-USER_FUNC(btlevtcmd_GetEnemyBelong);
-USER_FUNC(btlevtcmd_PayWeaponCost);
-USER_FUNC(btlevtcmd_PreCheckDamage);
-USER_FUNC(btlevtcmd_ResultACDefence);
-USER_FUNC(btlevtcmd_SamplingEnemy);
-USER_FUNC(btlevtcmd_SetEventAttack);
-USER_FUNC(btlevtcmd_SetEventConfusion);
-USER_FUNC(btlevtcmd_SetEventDamage);
-USER_FUNC(btlevtcmd_SetEventWait);
-USER_FUNC(btlevtcmd_SetUnitWork);
-USER_FUNC(btlevtcmd_StartAvoid);
-USER_FUNC(btlevtcmd_StartWaitEvent);
-USER_FUNC(btlevtcmd_WaitGuardMove);
-USER_FUNC(btlevtcmd_WeaponAftereffect);
+// Battle script helper, defined below: puts every surviving Fuzzy of the horde into its post-attack state.
 USER_FUNC(chorogun_after_attack);
+// Battle script helper, defined below: makes the surviving Fuzzies of the horde fly toward the attack target and waits
+// until they have arrived.
 USER_FUNC(chorogun_approach_target);
+// Battle script helper, defined below: sets one Fuzzy of the horde to its bouncing-off-the-target state.
 USER_FUNC(chorogun_bound_target);
+// Battle script helper, defined below: sets one Fuzzy of the horde to its countered state.
 USER_FUNC(chorogun_counterd);
+// Battle script helper, defined below: sends one random Fuzzy of the horde diving at the attack target.
 USER_FUNC(chorogun_dive_target);
+// Battle script helper, defined below: makes up to 50 Fuzzies run off the stage.
 USER_FUNC(chorogun_escape);
+// Battle script helper, defined below: counts the Fuzzies of the horde that are still alive.
 USER_FUNC(chorogun_get_alive_num);
-USER_FUNC(chorogun_set_target_id);
-USER_FUNC(evt_btl_camera_set_homing_unit);
-USER_FUNC(evt_btl_camera_set_mode);
-USER_FUNC(evt_btl_camera_set_zoom);
-USER_FUNC(evt_ext_entry);
-USER_FUNC(evt_npc_entry);
-USER_FUNC(evt_npc_set_position);
-USER_FUNC(chorogun_escape_all);
-USER_FUNC(chorogun_appear);
-void chorogun_ext_disp(CameraId camera, void* param);
-void chorogun_ext_main(void);
-void chorogun_ext_init(void);
-BattleUnit* chorogun_get_ptr(void);
-extern EvtWord escape_chorogun_event[];
+static USER_FUNC(chorogun_set_target_id);
+static void chorogun_ext_disp(CameraId camera, void* param);
+static void chorogun_ext_main(void);
+static void chorogun_ext_init(void);
+static BattleUnit* chorogun_get_ptr(void);
 
-f32 negone_one$374[2] __attribute__((aligned(8)));
-f32 neg_one$382;
-f32 __local_PI$383;
-f32 __local_3PIO2$385;
-u32 gap_04_0000FF9C_data[1];
-f32 one_negone$373[2] __attribute__((aligned(8)));
-f32 __local_PIO2$384;
-f32 one$381;
-f32 negone_one$360[2] __attribute__((aligned(8)));
-f32 neg_one$365;
-f32 __local_PI$366;
-f32 __local_3PIO2$368;
-u32 gap_04_0000FFC4_data[1];
-f32 one_negone$359[2] __attribute__((aligned(8)));
-f32 __local_PIO2$367;
-f32 one$364;
 BattleUnitKind unit_chorobon_gundan;
-typedef struct { BattleUnitDefense v; u8 pad[3]; } DefencePad;
-typedef struct { BattleUnitDefenseAttr v; u8 pad[3]; } DefenceAttrPad;
-typedef struct { StatusVulnerability v; u8 pad[2]; } RegistPad;
-static DefencePad defence;
-static DefenceAttrPad defence_attr;
-static RegistPad regist;
+static BattleUnitDefense defence;
+static BattleUnitDefenseAttr defence_attr;
+static StatusVulnerability regist;
 static PoseTableEntry pose_table[15];
 static BattleDataEntry data_table[2];
 static BattleUnitKindPart parts[1];
 BattleWeapon weapon_chorobon_gundan_attack;
-EvtWord chorogun_dead_reward[73];
 static EvtWord init_event[26];
+#if VERSION <= VERSION_DEMO_JP
+static EvtWord damage_event[80];
+#else
 static EvtWord damage_event[59];
+#endif
 static EvtWord attack_event[217];
 static EvtWord wait_event[6];
 ExtTexInfo chorogun_ext_entry_data[21];
-EvtWord chorogun_entry[19];
 
-BattleUnit* chorogun_get_ptr(void) {
+/** Finds the Fuzzy Horde unit (initial kind 0x15) among the battle's units and returns it, or NULL. */
+static BattleUnit* chorogun_get_ptr(void) {
     s32 i;
     BattleWork* wp = _battleWorkPointer;
     BattleUnit* unit;
@@ -123,38 +87,10 @@ BattleUnit* chorogun_get_ptr(void) {
     return NULL;
 }
 
-f32 negone_one$374[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 neg_one$382 = -1.0f;
-
-f32 __local_PI$383 = 3.1415927f;
-
-f32 __local_3PIO2$385 = 4.712389f;
-
-u32 gap_04_0000FF9C_data[1] = {0};
-
-f32 one_negone$373[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 __local_PIO2$384 = 1.5707964f;
-
-f32 one$381 = 1.0f;
-
-f32 negone_one$360[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 neg_one$365 = -1.0f;
-
-f32 __local_PI$366 = 3.1415927f;
-
-f32 __local_3PIO2$368 = 4.712389f;
-
-u32 gap_04_0000FFC4_data[1] = {0};
-
-f32 one_negone$359[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 __local_PIO2$367 = 1.5707964f;
-
-f32 one$364 = 1.0f;
-
+/**
+ * Unit kind of the Fuzzy Horde:
+ * 20 HP, level 19, with its size, sounds and the links to its parts, status vulnerability and scripts.
+ */
 BattleUnitKind unit_chorobon_gundan = {
     21,
     "btl_un_chorobon_gundan",
@@ -213,20 +149,31 @@ BattleUnitKind unit_chorobon_gundan = {
     "SFX_BTL_DAMAGE_FIRE1",
     "SFX_BTL_DAMAGE_ICE1",
     "SFX_BTL_DAMAGE_BIRIBIRI1",
-    0x240000,
-    &regist.v,
+#if VERSION <= VERSION_DEMO_JP
+    UNIT_ATTR_REQUIRED_FOR_CLEAR | UNIT_ATTR_NO_KNOCKBACK_POSE | UNIT_ATTR_NO_HP_GAUGE,
+#else
+    UNIT_ATTR_REQUIRED_FOR_CLEAR | UNIT_ATTR_NO_KNOCKBACK_POSE,
+#endif
+    &regist,
     1,
     parts,
     init_event,
     data_table,
 };
 
-static DefencePad defence = {{{0, 0, 0, 0, 0}}, {0}};
+/** Defence of the Fuzzy Horde's body per damage type: 0 against every damage type. */
+static BattleUnitDefense defence = {{0, 0, 0, 0, 0}};
 
-static DefenceAttrPad defence_attr = {{{0, 0, 0, 0, 0}}, {0}};
+/** Defence attributes of the Fuzzy Horde's body: none, so every damage type is dealt normally. */
+static BattleUnitDefenseAttr defence_attr = {{0, 0, 0, 0, 0}};
 
-static RegistPad regist = {{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, {0}};
+/** Status vulnerability of the Fuzzy Horde: immune to every status. */
+static StatusVulnerability regist = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
+/**
+ * Pose table of the Fuzzy Horde:
+ * the animation played for each pose type (idle, hurt, walk, run, attack and so on).
+ */
 static PoseTableEntry pose_table[] = {
     {1, "CBN_N_1"},
     {2, "CBN_Y_1"},
@@ -234,26 +181,29 @@ static PoseTableEntry pose_table[] = {
     {5, "CBN_K_1"},
     {4, "CBN_X_1"},
     {3, "CBN_X_1"},
-    {28, "CBN_S_1"},
+    {BTL_POSE_NORMAL, "CBN_S_1"},
     {29, "CBN_Q_1"},
     {30, "CBN_Q_1"},
     {31, "CBN_S_1"},
-    {39, "CBN_D_1"},
+    {BTL_POSE_DAMAGE, "CBN_D_1"},
     {50, "CBN_A_1"},
-    {42, "CBN_R_1"},
-    {40, "CBN_W_1"},
-    {69, "CBN_S_1"},
+    {BTL_POSE_RUN, "CBN_R_1"},
+    {BTL_POSE_WALK, "CBN_W_1"},
+    {BTL_POSE_STAY_DEFAULT, "CBN_S_1"},
 };
 
+/** Event table of the Fuzzy Horde: nothing special on a First Strike. */
 static BattleDataEntry data_table[] = {
     {48, btldefaultevt_Dummy},
     {0, NULL},
 };
 
+/** Body part of the Fuzzy Horde: a single part using the model "c_chorobon". */
 static BattleUnitKindPart parts[] = {
-    {1, "btl_un_chorobon_gundan", "c_chorobon", 0.0f, 0.0f, 0.0f, 0.0f, 25.0f, 0.0f, 0.0f, 30.0f, 0.0f, 20, 30, 255, &defence.v, &defence_attr.v, 0x3000009, 0, pose_table},
+    {1, "btl_un_chorobon_gundan", "c_chorobon", 0.0f, 0.0f, 0.0f, 0.0f, 25.0f, 0.0f, 0.0f, 30.0f, 0.0f, 20, 30, 255, &defence, &defence_attr, PART_ATTR_MAIN | PART_ATTR_GUARD_COVER | PART_ATTR_HIDDEN | PART_ATTR_NO_SHADOW, 0, pose_table},
 };
 
+/** Fuzzy Horde's attack: 1 damage to a single target, a plain attack. */
 BattleWeapon weapon_chorobon_gundan_attack = {
     NULL, 0, // name..icon
     {0}, // pad_06
@@ -262,23 +212,23 @@ BattleWeapon weapon_chorobon_gundan_attack = {
     0, 0, // baseFpCost..baseSpCost
     2, // superguardsAllowed
     1.0f, // reserved_14
-    1, // mStylishCommandMultiplier
+    1, // stylishCommandMultiplier
     1, // reserved_19
-    1, // mBingoSlotChance
+    1, // bingoSlotChance
     1, // reserved_1B
     weaponGetPowerDefault, // hpDamageFn
     {1, 0, 0, 0, 0, 0, 0, 0}, // hpDamageWork
     NULL, // fpDamageFn
     {0}, // fpDamageWork
-    0x1101260, // targetClassFlags
-    0x20000002, // targetPropertyFlags
-    0, 0, // element..damagePattern
+    TARGET_CLASS_NO_TREE_OR_SWITCH | TARGET_CLASS_NO_SYSTEM_UNIT | TARGET_CLASS_NO_OWN_ALLIANCE | TARGET_CLASS_NO_SELF | TARGET_CLASS_MAIN_PARTS | TARGET_CLASS_SINGLE, // targetClassFlags
+    TARGET_PROP_NO_FLOATING | TARGET_PROP_START_OPPOSING_SIDE, // targetPropertyFlags
+    ELEMENT_NORMAL, 0, // element..damagePattern
     3, // acLevel
     2, // reserved_6F
     NULL, // acHelpMsg
-    7, // special
-    0x7FF, // counterResistFlags
-    0x80000004, // targetWeightFlags
+    SPECIAL_BADGE_BUFFABLE | SPECIAL_STATUS_BUFFABLE | SPECIAL_CHARGE_BUFFABLE, // special
+    COUNTER_RESIST_ALL, // counterResistFlags
+    TARGET_WEIGHT_PREFER_FRONT | TARGET_WEIGHT_RANDOM, // targetWeightFlags
     0, 0, 0, 0, 0, 0, 0, 0, // sleepChance..poisonTime
     0, 0, 0, 0, 0, 0, 0, 0, // poisonStrength..burnChance
     0, 0, 0, 0, 0, 0, 0, 0, // burnTime..atkChangeTime
@@ -286,12 +236,18 @@ BattleWeapon weapon_chorobon_gundan_attack = {
     0, 0, 0, 0, 0, 0, 0, 0, // fastChance..holdFastTime
     0, 0, 0, 0, 0, 0, // invisibleChance..fpRegenStrength
     {0}, // pad_AE
-    NULL, // mAttackEvtScript
+    NULL, // attackEvtScript
     {0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0}, // stageEffectRates
 };
 
+/**
+ * Death script of the Fuzzy Horde: plays the defeat sound,
+ * pays out the unit's coins and experience points and spawns the star-point effect above it.
+ * Not present in the US demo.
+ */
+#if VERSION >= VERSION_JP
 EVT_BEGIN(chorogun_dead_reward)
-    CALL(btlevtcmd_snd_se, LW(10), STRING("SFX_BTL_ENEMY_DIE1_2"), -250000000, 0, -250000000)
+    CALL(btlevtcmd_snd_se, LW(10), STRING("SFX_BTL_ENEMY_DIE1_2"), EVT_NULLPTR, 0, EVT_NULLPTR)
     CALL(btlevtcmd_GetPos, LW(10), LW(0), LW(1), LW(2))
     ADD(LW(2), 10)
     CALL(btlevtcmd_GetCoin, LW(10), LW(0))
@@ -309,19 +265,28 @@ EVT_BEGIN(chorogun_dead_reward)
     END_IF
     RETURN
 EVT_END()
+#endif
 
+/** Init event of the Fuzzy Horde: installs wait, attack, damage and default confusion events and clears unit work 0. */
 static EVT_BEGIN(init_event)
-    CALL(btlevtcmd_SetEventWait, -2, PTR(wait_event))
-    CALL(btlevtcmd_SetEventAttack, -2, PTR(attack_event))
-    CALL(btlevtcmd_SetEventDamage, -2, PTR(damage_event))
-    CALL(btlevtcmd_SetEventConfusion, -2, PTR(btldefaultevt_Confuse))
-    CALL(btlevtcmd_SetUnitWork, -2, 0, 0)
-    CALL(btlevtcmd_StartWaitEvent, -2)
+    CALL(btlevtcmd_SetEventWait, BTL_UNIT_SELF, PTR(wait_event))
+    CALL(btlevtcmd_SetEventAttack, BTL_UNIT_SELF, PTR(attack_event))
+    CALL(btlevtcmd_SetEventDamage, BTL_UNIT_SELF, PTR(damage_event))
+    CALL(btlevtcmd_SetEventConfusion, BTL_UNIT_SELF, PTR(btldefaultevt_Confuse))
+    CALL(btlevtcmd_SetUnitWork, BTL_UNIT_SELF, UW_CHOROBON_GUNDAN_FEW_LEFT, 0)
+    CALL(btlevtcmd_StartWaitEvent, BTL_UNIT_SELF)
     RETURN
 EVT_END()
 
+/**
+ * Damage event of the Fuzzy Horde: for each point of damage taken it either flags the horde as shrinking (unit
+ * work 0 = 1, once at most 50 Fuzzies are alive) or makes a Fuzzy escape (chorogun_escape);
+ * if the damage killed (damage code
+ * 256) and at most 500 Fuzzies remain, the whole swarm flees (escape_chorogun_event). The demos instead remove the
+ * unit as soon as work 0 is set.
+ */
 static EVT_BEGIN(damage_event)
-    CALL(btlevtcmd_GetDamage, -2, LW(15))
+    CALL(btlevtcmd_GetDamage, BTL_UNIT_SELF, LW(15))
     SET_VALUE(LW(0), 0)
     LOOP(0)
         IF_INT_GREATER_OR_EQUAL(LW(0), LW(15))
@@ -329,48 +294,68 @@ static EVT_BEGIN(damage_event)
         END_IF
         CALL(chorogun_get_alive_num, LW(1))
         IF_INT_LESS_OR_EQUAL(LW(1), 50)
-            CALL(btlevtcmd_SetUnitWork, -2, 0, 1)
-            ELSE
+            CALL(btlevtcmd_SetUnitWork, BTL_UNIT_SELF, UW_CHOROBON_GUNDAN_FEW_LEFT, 1)
+        ELSE
             CALL(chorogun_escape)
         END_IF
         ADD(LW(0), 1)
     END_LOOP
-    CALL(btlevtcmd_CheckDamageCode, -2, 256, LW(0))
+    CALL(btlevtcmd_CheckDamageCode, BTL_UNIT_SELF, DAMAGE_FLAG_LAST_HIT, LW(0))
     IF_INT_EQUAL(LW(0), 0)
         GOTO(99)
     END_IF
+#if VERSION <= VERSION_DEMO_JP
+    CALL(btlevtcmd_GetUnitWork, BTL_UNIT_SELF, UW_CHOROBON_GUNDAN_FEW_LEFT, LW(0))
+    IF_INT_EQUAL(LW(0), 1)
+        CALL(evt_btl_camera_set_mode, 0, 0)
+        CALL(chorogun_escape)
+        CALL(btlevtcmd_KillUnit, BTL_UNIT_SELF, 0)
+        GOTO(99)
+    END_IF
+#endif
     CALL(chorogun_get_alive_num, LW(0))
     IF_INT_LESS_OR_EQUAL(LW(0), 500)
-        CALL_CHILD(PTR(escape_chorogun_event))
+        CALL_CHILD(escape_chorogun_event)
         GOTO(99)
     END_IF
     LABEL(99)
     RETURN
 EVT_END()
 
+/**
+ * Attack event of the Fuzzy Horde: uses an enemy item if it has one;
+ * otherwise the swarm flies at one target (weapon_chorobon_gundan_attack).
+ * The pre-damage check decides between a dodge and a hit,
+ * and a hit swoops (alive count + 100) / 200 groups of Fuzzies onto the target in turn,
+ * the last one dealing the damage.
+ */
 static EVT_BEGIN(attack_event)
-    CALL(btlevtcmd_EnemyItemUseCheck, -2, LW(0))
+    // It may use an enemy item instead of attacking.
+    CALL(btlevtcmd_EnemyItemUseCheck, BTL_UNIT_SELF, LW(0))
     IF_INT_NOT_EQUAL(LW(0), 0)
         CALL_CHILD(LW(0))
-        CALL(btlevtcmd_StartWaitEvent, -2)
+        CALL(btlevtcmd_StartWaitEvent, BTL_UNIT_SELF)
         RETURN
     END_IF
-    CALL(btlevtcmd_GetEnemyBelong, -2, LW(0))
-    CALL(btlevtcmd_SamplingEnemy, -2, LW(0), PTR(&weapon_chorobon_gundan_attack))
+    CALL(btlevtcmd_GetEnemyBelong, BTL_UNIT_SELF, LW(0))
+    // Target: it picks one for its attack; with none, a confused one flusters, otherwise the attack ends.
+    CALL(btlevtcmd_SamplingEnemy, BTL_UNIT_SELF, LW(0), PTR(&weapon_chorobon_gundan_attack))
     CALL(btlevtcmd_ChoiceSamplingEnemy, PTR(&weapon_chorobon_gundan_attack), LW(3), LW(4))
     IF_INT_EQUAL(LW(3), -1)
         GOTO(99)
     END_IF
     CALL(btlevtcmd_WeaponAftereffect, PTR(&weapon_chorobon_gundan_attack))
-    CALL(btlevtcmd_AttackDeclare, -2, LW(3), LW(4))
+    // The attack is declared.
+    CALL(btlevtcmd_AttackDeclare, BTL_UNIT_SELF, LW(3), LW(4))
     CALL(btlevtcmd_WaitGuardMove)
-    CALL(btlevtcmd_PayWeaponCost, -2, PTR(&weapon_chorobon_gundan_attack))
+    CALL(btlevtcmd_PayWeaponCost, BTL_UNIT_SELF, PTR(&weapon_chorobon_gundan_attack))
     CALL(evt_btl_camera_set_mode, 0, 7)
-    CALL(evt_btl_camera_set_homing_unit, 0, LW(3), -1)
+    CALL(evt_btl_camera_set_homing_unit, 0, LW(3), BTL_UNIT_NONE)
     CALL(evt_btl_camera_set_zoom, 0, 200)
+    // The swarm flies up to the target; the pre-damage check decides between a dodge and a hit.
     CALL(chorogun_set_target_id, LW(3))
     CALL(chorogun_approach_target)
-    CALL(btlevtcmd_PreCheckDamage, -2, LW(3), LW(4), PTR(&weapon_chorobon_gundan_attack), 256, LW(5))
+    CALL(btlevtcmd_PreCheckDamage, BTL_UNIT_SELF, LW(3), LW(4), PTR(&weapon_chorobon_gundan_attack), DAMAGE_FLAG_LAST_HIT, LW(5))
     SWITCH(LW(5))
         CASE_OR_EQUAL(4)
         GOTO(90)
@@ -392,9 +377,11 @@ static EVT_BEGIN(attack_event)
         GOTO(98)
         CASE_END
     END_SWITCH
+    // Miss: the swarm waits, then breaks off (the target dodges for some kinds of miss).
     LABEL(90)
     WAIT_MS(1000)
     GOTO(98)
+    // Hit: the Fuzzies dive onto the target in groups, each group bouncing off.
     LABEL(91)
     CALL(chorogun_get_alive_num, LW(15))
     ADD(LW(15), 100)
@@ -409,35 +396,42 @@ static EVT_BEGIN(attack_event)
         END_IF
         CALL(chorogun_dive_target, 30, LW(6))
         WAIT_FRAMES(30)
+        // The last group deals the damage.
         CALL(btlevtcmd_ResultACDefence, LW(3), PTR(&weapon_chorobon_gundan_attack))
         IF_INT_EQUAL(LW(14), LW(15))
-            CALL(btlevtcmd_CheckDamage, -2, LW(3), LW(4), PTR(&weapon_chorobon_gundan_attack), 256, LW(5))
-            ELSE
-            CALL(btlevtcmd_CheckDamage, -2, LW(3), LW(4), PTR(&weapon_chorobon_gundan_attack), 0, LW(5))
+            CALL(btlevtcmd_CheckDamage, BTL_UNIT_SELF, LW(3), LW(4), PTR(&weapon_chorobon_gundan_attack), DAMAGE_FLAG_LAST_HIT, LW(5))
+        ELSE
+            CALL(btlevtcmd_CheckDamage, BTL_UNIT_SELF, LW(3), LW(4), PTR(&weapon_chorobon_gundan_attack), 0, LW(5))
         END_IF
         IF_INT_EQUAL(LW(5), 21)
             CALL(chorogun_counterd, LW(6))
-            ELSE
+        ELSE
             CALL(chorogun_bound_target, LW(6))
         END_IF
         ADD(LW(14), 1)
         WAIT_FRAMES(30)
     END_LOOP
     GOTO(98)
+    // The swarm flies back to its place.
     LABEL(98)
     CALL(evt_btl_camera_set_mode, 0, 0)
     CALL(chorogun_after_attack)
     WAIT_MS(1000)
     LABEL(99)
-    CALL(btlevtcmd_StartWaitEvent, -2)
+    CALL(btlevtcmd_StartWaitEvent, BTL_UNIT_SELF)
     RETURN
 EVT_END()
 
+/** Wait (idle) event of the Fuzzy Horde: shows the idle pose from the pose table. */
 static EVT_BEGIN(wait_event)
-    CALL(btlevtcmd_AnimeChangePoseFromTable, -2, 1)
+    CALL(btlevtcmd_AnimeChangePoseFromTable, BTL_UNIT_SELF, 1)
     RETURN
 EVT_END()
 
+/**
+ * Sprite entries of the Fuzzy horde's extra Fuzzies:
+ * copies of the Fuzzy model playing the walk animation from staggered starting frames.
+ */
 ExtTexInfo chorogun_ext_entry_data[] = {
     {"c_chorobon", "CBN_W_1", 0.0f},
     {"c_chorobon", "CBN_W_1", 2.0f},
@@ -462,6 +456,10 @@ ExtTexInfo chorogun_ext_entry_data[] = {
     {0},
 };
 
+/**
+ * Battle-start script: creates the hidden "ext_chorobon" NPC
+ * and registers the 1000-sprite Fuzzy swarm (init, per- frame update and draw callbacks).
+ */
 EVT_BEGIN(chorogun_entry)
     CALL(evt_npc_entry, STRING("ext_chorobon"), STRING("c_chorobon"))
     CALL(evt_npc_set_position, STRING("ext_chorobon"), 0, -1000, 0)
@@ -469,7 +467,12 @@ EVT_BEGIN(chorogun_entry)
     RETURN
 EVT_END()
 
-void chorogun_ext_init(void) {
+/**
+ * Init callback of the Fuzzy swarm: allocates the per-Fuzzy state for 1000 Fuzzies,
+ * hides them below the floor and assigns each a formation spot in a 50-wide block in front of the unit (shuffled
+ * at random).
+ */
+static void chorogun_ext_init(void) {
     s32 i;
     s32 a, b;
     f32 tx, ty, tz;
@@ -510,7 +513,13 @@ void chorogun_ext_init(void) {
     }
 }
 
-void chorogun_ext_main(void) {
+/**
+ * Per-frame update of the 1000 Fuzzies: each follows its state,
+ * from falling out of the sky into formation (1, 2, 10, 20, 21),
+ * through marching toward the target (30..50) and the dive attack,
+ * to running off the stage (60, 61) and being hidden (99). Also plays the landing and movement sounds.
+ */
+static void chorogun_ext_main(void) {
     BattleWork* wp;
     BattleUnit* unit;
     s32 i;
@@ -521,7 +530,6 @@ void chorogun_ext_main(void) {
     f32 dz;
     f32 dx;
     f32 tz;
-    f32 tx;
     f32 dx2;
     f32 dz2;
     f32 x, y, z;
@@ -531,7 +539,7 @@ void chorogun_ext_main(void) {
     pose = extGetPosePtr();
     n = 0;
     for (i = 0; i < extGetPoseNum(); i++) {
-        if (chorogun[i].flags & 1) {
+        if (chorogun[i].flags & CHOROGUN_FLAG_ALIVE) {
             n++;
         }
     }
@@ -543,203 +551,204 @@ void chorogun_ext_main(void) {
         (*pose->mtx)[1][3] += c->vel.y;
         (*pose->mtx)[2][3] += c->vel.z;
         switch (c->state) {
-        case 0:
-            break;
-        case 1:
-            c->timer--;
-            if (c->timer > 0) {
+            case 0:
                 break;
-            }
-            (*pose->mtx)[0][3] = 500.0f * rand() / 32767.0f - 250.0f;
-            (*pose->mtx)[1][3] = 250.0f + 100.0f * rand() / 32767.0f;
-            (*pose->mtx)[2][3] = 800.0f * rand() / 32767.0f - 100.0f;
-            c->vel.x = 0.0f;
-            c->vel.y = 0.0f;
-            c->vel.z = 0.0f;
-            c->speed = 3.0f;
-            c->state = 2;
-            c->timer = 0;
-            if (i == 0) {
-                BtlUnit_snd_se_pos(unit, "SFX_BOSS_TEAM_CHORO_FALL2", 0x7F, 0, &(Vec){0.0f, 200.0f, 200.0f});
-            }
-            break;
-        case 2:
-            if ((*pose->mtx)[1][3] <= 0.0f) {
-                if (i % 100 == 0) {
-                    BtlUnit_snd_se_pos(unit, "SFX_BOSS_TEAM_CHORO_FALL1", 0x7F, 0, &(Vec){(*pose->mtx)[0][3], (*pose->mtx)[1][3], (*pose->mtx)[2][3]});
+            case 1:
+                c->timer--;
+                if (c->timer > 0) {
+                    break;
                 }
-                c->state = 10;
-            } else {
-                c->vel.y += -0.25f;
-            }
-            break;
-        case 10:
-            if ((*pose->mtx)[1][3] <= 0.0f) {
-                dx = c->pos.x - (*pose->mtx)[0][3];
-                dz = c->pos.z - (*pose->mtx)[2][3];
-                d = sqrt(dx * dx + dz * dz);
-                if (i % 100 == 0) {
-                    BtlUnit_snd_se_pos(unit, "SFX_BOSS_TEAM_CHORO_TOGETHER1", 0x7F, 0, &(Vec){(*pose->mtx)[0][3], (*pose->mtx)[1][3], (*pose->mtx)[2][3]});
-                }
-                if (d <= 5.0f) {
-                    c->state = 20;
-                } else {
-                    if (d <= 20.0f) {
-                        c->speed *= 0.9f;
-                    }
-                    c->vel.x = c->speed * (dx / d);
-                    c->vel.y = c->speed;
-                    c->vel.z = c->speed * (dz / d);
-                    (*pose->mtx)[1][3] = 0.0f;
-                }
-            } else {
-                c->vel.y += -0.5f;
-            }
-            break;
-        case 20:
-            (*pose->mtx)[1][3] = 0.0f;
-            c->vel.x = 0.0f;
-            c->vel.y = c->speed;
-            c->vel.z = 0.0f;
-            c->state = 21;
-            break;
-        case 21:
-            d = unit->mPosition.x - unit->mHomePosition.x + intplGetValue(0, n, 1000, c->pos.x, unit->mHomePosition.x);
-            tz = unit->mPosition.z - unit->mHomePosition.z + intplGetValue(0, n, 1000, c->pos.z, unit->mHomePosition.z);
-            if ((*pose->mtx)[1][3] <= unit->mPosition.y) {
-                dx2 = d - (*pose->mtx)[0][3];
-                dz2 = tz - (*pose->mtx)[2][3];
-                d = sqrt(dx2 * dx2 + dz2 * dz2);
-                if (i % 100 == 0) {
-                    BtlUnit_snd_se_pos(unit, "SFX_BOSS_TEAM_CHORO_WAIT1", 0x60, 0, &(Vec){(*pose->mtx)[0][3], (*pose->mtx)[1][3], (*pose->mtx)[2][3]});
-                }
-                c->speed = 3.0f + 0.5f * rand() / 32767.0f;
-                c->vel.x = c->speed * (dx2 / d);
-                c->vel.y = c->speed;
-                c->vel.z = c->speed * (dz2 / d);
-                (*pose->mtx)[1][3] = unit->mPosition.y;
-            } else {
-                c->vel.y += -0.5f;
-            }
-            break;
-        case 30:
-            c->state = 31;
-            c->timer = 0;
-            BtlUnit_GetPos(BattleGetUnitPtr(wp, chorogun_targetId), &x, &y, &z);
-            x += 50.0f * rand() / 32767.0f - 25.0f;
-            c->target.x = x;
-            z += 50.0f * rand() / 32767.0f - 25.0f;
-            c->target.z = z;
-        case 31:
-            if ((*pose->mtx)[1][3] <= 0.0f) {
-                dz2 = c->target.x - (*pose->mtx)[0][3];
-                dx2 = c->target.z - (*pose->mtx)[2][3];
-                d = sqrt(dz2 * dz2 + dx2 * dx2);
-                if (i % 100 == 0) {
-                    BtlUnit_snd_se_pos(unit, "SFX_BOSS_TEAM_CHORO_MOVE1", 0x60, 0, &(Vec){(*pose->mtx)[0][3], (*pose->mtx)[1][3], (*pose->mtx)[2][3]});
-                }
-                if (d <= 30.0f || c->timer >= 240) {
-                    c->state = 40;
-                } else {
-                    c->vel.x = c->speed * (dz2 / d);
-                    c->vel.y = c->speed;
-                    c->vel.z = c->speed * (dx2 / d);
-                    (*pose->mtx)[1][3] = 0.0f;
-                    c->timer++;
-                }
-            } else {
-                c->vel.y += -0.5f;
-            }
-            break;
-        case 40:
-            if ((*pose->mtx)[1][3] <= 0.0f) {
-                (*pose->mtx)[1][3] = 0.0f;
+                (*pose->mtx)[0][3] = 500.0f * rand() / 32767.0f - 250.0f;
+                (*pose->mtx)[1][3] = 250.0f + 100.0f * rand() / 32767.0f;
+                (*pose->mtx)[2][3] = 800.0f * rand() / 32767.0f - 100.0f;
                 c->vel.x = 0.0f;
-                c->vel.y = c->speed;
-                c->vel.z = 0.0f;
-            } else {
-                c->vel.y += -0.5f;
-            }
-            break;
-        case 45:
-            c->timer--;
-            if (c->timer <= 0) {
-                c->timer = 0;
                 c->vel.y = 0.0f;
-            } else {
-                c->vel.y += -0.5f;
-            }
-            break;
-        case 46:
-            c->state = 47;
-            c->timer = 0;
-            c->vel.y = 6.0f;
-            if ((*pose->mtx)[1][3] <= 0.0f) {
-                (*pose->mtx)[1][3] = 0.1f;
-            }
-        case 47:
-            if ((*pose->mtx)[1][3] <= 0.0f) {
-                c->state = 40;
-                (*pose->mtx)[1][3] = 0.0f;
-                c->vel.x = 0.0f;
-                c->vel.y = c->speed;
                 c->vel.z = 0.0f;
-            } else {
-                c->vel.y += -0.5f;
-            }
-            break;
-        case 48:
-            c->state = 49;
-            c->timer = 0;
-            c->vel.x = -4.0f;
-            c->vel.y = 10.0f;
-            if ((*pose->mtx)[1][3] <= 0.0f) {
-                (*pose->mtx)[1][3] = 0.1f;
-            }
-        case 49:
-            if ((*pose->mtx)[1][3] <= 0.0f) {
-                c->state = 40;
-                (*pose->mtx)[1][3] = 0.0f;
-                c->vel.x = 0.0f;
-                c->vel.y = c->speed;
-                c->vel.z = 0.0f;
-            } else {
-                c->vel.y += -0.5f;
-            }
-            break;
-        case 50:
-            c->state = 20;
-            break;
-        case 60:
-            c->state = 61;
-            break;
-        case 61:
-            if ((*pose->mtx)[1][3] <= 0.0f) {
-                if (i % 100 == 0) {
-                    BtlUnit_snd_se_pos(unit, "SFX_BOSS_TEAM_CHORO_MOVE1", 0x60, 0, &(Vec){(*pose->mtx)[0][3], (*pose->mtx)[1][3], (*pose->mtx)[2][3]});
+                c->speed = 3.0f;
+                c->state = 2;
+                c->timer = 0;
+                if (i == 0) {
+                    BtlUnit_snd_se_pos(unit, "SFX_BOSS_TEAM_CHORO_FALL2", 0x7F, 0, &(Vec){0.0f, 200.0f, 200.0f});
                 }
+                break;
+            case 2:
+                if ((*pose->mtx)[1][3] <= 0.0f) {
+                    if (i % 100 == 0) {
+                        BtlUnit_snd_se_pos(unit, "SFX_BOSS_TEAM_CHORO_FALL1", 0x7F, 0, &(Vec){(*pose->mtx)[0][3], (*pose->mtx)[1][3], (*pose->mtx)[2][3]});
+                    }
+                    c->state = 10;
+                } else {
+                    c->vel.y += -0.25f;
+                }
+                break;
+            case 10:
+                if ((*pose->mtx)[1][3] <= 0.0f) {
+                    dx = c->pos.x - (*pose->mtx)[0][3];
+                    dz = c->pos.z - (*pose->mtx)[2][3];
+                    d = sqrt(dx * dx + dz * dz);
+                    if (i % 100 == 0) {
+                        BtlUnit_snd_se_pos(unit, "SFX_BOSS_TEAM_CHORO_TOGETHER1", 0x7F, 0, &(Vec){(*pose->mtx)[0][3], (*pose->mtx)[1][3], (*pose->mtx)[2][3]});
+                    }
+                    if (d <= 5.0f) {
+                        c->state = 20;
+                    } else {
+                        if (d <= 20.0f) {
+                            c->speed *= 0.9f;
+                        }
+                        c->vel.x = c->speed * (dx / d);
+                        c->vel.y = c->speed;
+                        c->vel.z = c->speed * (dz / d);
+                        (*pose->mtx)[1][3] = 0.0f;
+                    }
+                } else {
+                    c->vel.y += -0.5f;
+                }
+                break;
+            case 20:
                 (*pose->mtx)[1][3] = 0.0f;
-                c->vel.x = 5.0f;
-                c->vel.y = c->speed + irand(5);
+                c->vel.x = 0.0f;
+                c->vel.y = c->speed;
                 c->vel.z = 0.0f;
-            } else {
-                c->vel.y += -0.5f;
-            }
-            if ((*pose->mtx)[0][3] >= 250.0f) {
-                c->state = 99;
-            }
-            break;
-        case 99:
-            (*pose->mtx)[0][3] = 0.0f;
-            (*pose->mtx)[1][3] = -1000.0f;
-            (*pose->mtx)[2][3] = 0.0f;
-            break;
+                c->state = 21;
+                break;
+            case 21:
+                d = unit->position.x - unit->homePosition.x + intplGetValue(0, c->pos.x, unit->homePosition.x, n, 1000);
+                tz = unit->position.z - unit->homePosition.z + intplGetValue(0, c->pos.z, unit->homePosition.z, n, 1000);
+                if ((*pose->mtx)[1][3] <= unit->position.y) {
+                    dx2 = d - (*pose->mtx)[0][3];
+                    dz2 = tz - (*pose->mtx)[2][3];
+                    d = sqrt(dx2 * dx2 + dz2 * dz2);
+                    if (i % 100 == 0) {
+                        BtlUnit_snd_se_pos(unit, "SFX_BOSS_TEAM_CHORO_WAIT1", 0x60, 0, &(Vec){(*pose->mtx)[0][3], (*pose->mtx)[1][3], (*pose->mtx)[2][3]});
+                    }
+                    c->speed = 3.0f + 0.5f * rand() / 32767.0f;
+                    c->vel.x = c->speed * (dx2 / d);
+                    c->vel.y = c->speed;
+                    c->vel.z = c->speed * (dz2 / d);
+                    (*pose->mtx)[1][3] = unit->position.y;
+                } else {
+                    c->vel.y += -0.5f;
+                }
+                break;
+            case 30:
+                c->state = 31;
+                c->timer = 0;
+                BtlUnit_GetPos(BattleGetUnitPtr(wp, chorogun_targetId), &x, &y, &z);
+                x += 50.0f * rand() / 32767.0f - 25.0f;
+                c->target.x = x;
+                z += 50.0f * rand() / 32767.0f - 25.0f;
+                c->target.z = z;
+            case 31:
+                if ((*pose->mtx)[1][3] <= 0.0f) {
+                    dz2 = c->target.x - (*pose->mtx)[0][3];
+                    dx2 = c->target.z - (*pose->mtx)[2][3];
+                    d = sqrt(dz2 * dz2 + dx2 * dx2);
+                    if (i % 100 == 0) {
+                        BtlUnit_snd_se_pos(unit, "SFX_BOSS_TEAM_CHORO_MOVE1", 0x60, 0, &(Vec){(*pose->mtx)[0][3], (*pose->mtx)[1][3], (*pose->mtx)[2][3]});
+                    }
+                    if (d <= 30.0f || c->timer >= 240) {
+                        c->state = 40;
+                    } else {
+                        c->vel.x = c->speed * (dz2 / d);
+                        c->vel.y = c->speed;
+                        c->vel.z = c->speed * (dx2 / d);
+                        (*pose->mtx)[1][3] = 0.0f;
+                        c->timer++;
+                    }
+                } else {
+                    c->vel.y += -0.5f;
+                }
+                break;
+            case 40:
+                if ((*pose->mtx)[1][3] <= 0.0f) {
+                    (*pose->mtx)[1][3] = 0.0f;
+                    c->vel.x = 0.0f;
+                    c->vel.y = c->speed;
+                    c->vel.z = 0.0f;
+                } else {
+                    c->vel.y += -0.5f;
+                }
+                break;
+            case 45:
+                c->timer--;
+                if (c->timer <= 0) {
+                    c->timer = 0;
+                    c->vel.y = 0.0f;
+                } else {
+                    c->vel.y += -0.5f;
+                }
+                break;
+            case 46:
+                c->state = 47;
+                c->timer = 0;
+                c->vel.y = 6.0f;
+                if ((*pose->mtx)[1][3] <= 0.0f) {
+                    (*pose->mtx)[1][3] = 0.1f;
+                }
+            case 47:
+                if ((*pose->mtx)[1][3] <= 0.0f) {
+                    c->state = 40;
+                    (*pose->mtx)[1][3] = 0.0f;
+                    c->vel.x = 0.0f;
+                    c->vel.y = c->speed;
+                    c->vel.z = 0.0f;
+                } else {
+                    c->vel.y += -0.5f;
+                }
+                break;
+            case 48:
+                c->state = 49;
+                c->timer = 0;
+                c->vel.x = -4.0f;
+                c->vel.y = 10.0f;
+                if ((*pose->mtx)[1][3] <= 0.0f) {
+                    (*pose->mtx)[1][3] = 0.1f;
+                }
+            case 49:
+                if ((*pose->mtx)[1][3] <= 0.0f) {
+                    c->state = 40;
+                    (*pose->mtx)[1][3] = 0.0f;
+                    c->vel.x = 0.0f;
+                    c->vel.y = c->speed;
+                    c->vel.z = 0.0f;
+                } else {
+                    c->vel.y += -0.5f;
+                }
+                break;
+            case 50:
+                c->state = 20;
+                break;
+            case 60:
+                c->state = 61;
+                break;
+            case 61:
+                if ((*pose->mtx)[1][3] <= 0.0f) {
+                    if (i % 100 == 0) {
+                        BtlUnit_snd_se_pos(unit, "SFX_BOSS_TEAM_CHORO_MOVE1", 0x60, 0, &(Vec){(*pose->mtx)[0][3], (*pose->mtx)[1][3], (*pose->mtx)[2][3]});
+                    }
+                    (*pose->mtx)[1][3] = 0.0f;
+                    c->vel.x = 5.0f;
+                    c->vel.y = c->speed + irand(5);
+                    c->vel.z = 0.0f;
+                } else {
+                    c->vel.y += -0.5f;
+                }
+                if ((*pose->mtx)[0][3] >= 250.0f) {
+                    c->state = 99;
+                }
+                break;
+            case 99:
+                (*pose->mtx)[0][3] = 0.0f;
+                (*pose->mtx)[1][3] = -1000.0f;
+                (*pose->mtx)[2][3] = 0.0f;
+                break;
         }
     }
     dispEntry(CAMERA_3D, 0.0f, 1, chorogun_ext_disp, NULL);
 }
 
-void chorogun_ext_disp(CameraId camera, void* param) {
+/** Draw callback of the Fuzzy swarm: loads the render setup, vertices, textures and TEV setup and draws the sprites. */
+static void chorogun_ext_disp(CameraId camera, void* param) {
     extLoadRenderMode();
     extLoadVertex();
     extLoadTexture();
@@ -748,13 +757,14 @@ void chorogun_ext_disp(CameraId camera, void* param) {
     extLoadTextureExit();
 }
 
+/** Battle script helper: stores the number of Fuzzies still alive in args[0]. */
 USER_FUNC(chorogun_get_alive_num) {
     EvtWord* args = event->args;
     s32 i;
     s32 n = 0;
 
     for (i = 0; i < extGetPoseNum(); i++) {
-        if (chorogun[i].flags & 1) {
+        if (chorogun[i].flags & CHOROGUN_FLAG_ALIVE) {
             n++;
         }
     }
@@ -762,11 +772,16 @@ USER_FUNC(chorogun_get_alive_num) {
     return 2;
 }
 
-USER_FUNC(chorogun_set_target_id) {
+/** Battle script helper: remembers the unit id args[0] as the target of the Fuzzies' dive attack. */
+static USER_FUNC(chorogun_set_target_id) {
     chorogun_targetId = evtGetValue(event, event->args[0]);
     return 2;
 }
 
+/**
+ * Battle script helper: marks all Fuzzies alive and makes them drop into formation;
+ * finishes once every one has settled (state 21).
+ */
 USER_FUNC(chorogun_appear) {
     s32 i;
     s32 n;
@@ -775,7 +790,7 @@ USER_FUNC(chorogun_appear) {
     if (isFirstCall) {
         for (i = 0; i < extGetPoseNum(); i++) {
             c = &chorogun[i];
-            c->flags |= 1;
+            c->flags |= CHOROGUN_FLAG_ALIVE;
             c->state = 1;
         }
     }
@@ -791,24 +806,33 @@ USER_FUNC(chorogun_appear) {
     return 0;
 }
 
+/**
+ * Battle script helper: sends every living Fuzzy toward the attack target and waits
+ * until all of them have arrived (state 40).
+ */
 USER_FUNC(chorogun_approach_target) {
     s32 i;
 
     if (isFirstCall) {
         for (i = 0; i < extGetPoseNum(); i++) {
-            if (chorogun[i].flags & 1) {
+            if (chorogun[i].flags & CHOROGUN_FLAG_ALIVE) {
                 chorogun[i].state = 30;
             }
         }
     }
     for (i = 0; i < extGetPoseNum(); i++) {
-        if ((chorogun[i].flags & 1) && chorogun[i].state != 40) {
+        if ((chorogun[i].flags & CHOROGUN_FLAG_ALIVE) && chorogun[i].state != 40) {
             return 0;
         }
     }
     return 2;
 }
 
+/**
+ * Battle script helper: picks a random living Fuzzy,
+ * aims it at the target unit's position so that it lands after args[0] frames,
+ * plays the attack sound and returns the chosen Fuzzy's index in args[1].
+ */
 USER_FUNC(chorogun_dive_target) {
     ExtdrvPose* pose;
     s32 frames;
@@ -831,7 +855,7 @@ USER_FUNC(chorogun_dive_target) {
     t = frames;
     pose = extGetPosePtr();
     for (i = 0; i < extGetPoseNum(); i++) {
-        if (chorogun[i & 0xFFFFFFFFFFFFFFFFu].flags & 1) {
+        if (chorogun[i & 0xFFFFFFFFFFFFFFFFu].flags & CHOROGUN_FLAG_ALIVE) {
             list[n++] = i;
         }
     }
@@ -854,6 +878,7 @@ USER_FUNC(chorogun_dive_target) {
     return 2;
 }
 
+/** Battle script helper: sets Fuzzy number args[0] to the bounce-off state (46) after it has hit. */
 USER_FUNC(chorogun_bound_target) {
     s32 id = evtGetValue(event, event->args[0]);
 
@@ -861,6 +886,7 @@ USER_FUNC(chorogun_bound_target) {
     return 2;
 }
 
+/** Battle script helper: sets Fuzzy number args[0] to the countered state (48). */
 USER_FUNC(chorogun_counterd) {
     s32 id = evtGetValue(event, event->args[0]);
 
@@ -868,12 +894,13 @@ USER_FUNC(chorogun_counterd) {
     return 2;
 }
 
+/** Battle script helper: on its first call sends all living Fuzzies back toward the formation (state 50). */
 USER_FUNC(chorogun_after_attack) {
     s32 i;
 
     if (isFirstCall) {
         for (i = 0; i < extGetPoseNum(); i++) {
-            if (chorogun[i].flags & 1) {
+            if (chorogun[i].flags & CHOROGUN_FLAG_ALIVE) {
                 chorogun[i].state = 50;
             }
         }
@@ -881,6 +908,10 @@ USER_FUNC(chorogun_after_attack) {
     return 2;
 }
 
+/**
+ * Battle script helper: removes the 50 living Fuzzies nearest the unit's home position (or fewer if less than 50
+ * are close) from the horde; they run off the stage as the horde loses members.
+ */
 USER_FUNC(chorogun_escape) {
     f32 dist[1000];
     s32 idx[1000];
@@ -893,9 +924,9 @@ USER_FUNC(chorogun_escape) {
     s32 ti;
 
     for (i = 0; i < extGetPoseNum(); i++, pose++) {
-        if (chorogun[i].flags & 1) {
-            dx = unit->mHomePosition.x - (*pose->mtx)[0][3];
-            dz = unit->mHomePosition.z - (*pose->mtx)[2][3];
+        if (chorogun[i].flags & CHOROGUN_FLAG_ALIVE) {
+            dx = unit->homePosition.x - (*pose->mtx)[0][3];
+            dz = unit->homePosition.z - (*pose->mtx)[2][3];
             d = dx * dx + dz * dz;
             if (n >= 50) {
                 if (d <= 2500.0f) {
@@ -925,27 +956,23 @@ USER_FUNC(chorogun_escape) {
     m = n >= 50 ? 50 : n;
     for (i = 0; i < m; i++) {
         c = &chorogun[idx[i]];
-        c->flags &= ~1;
+        c->flags &= ~CHOROGUN_FLAG_ALIVE;
         c->state = 60;
     }
     return 2;
 }
 
+/** Battle script helper: removes all living Fuzzies from the horde and sends them running off the stage. */
 USER_FUNC(chorogun_escape_all) {
     s32 i;
     Chorogun* c;
 
     for (i = 0; i < extGetPoseNum(); i++) {
         c = &chorogun[i];
-        if (c->flags & 1) {
-            c->flags &= ~1;
+        if (c->flags & CHOROGUN_FLAG_ALIVE) {
+            c->flags &= ~CHOROGUN_FLAG_ALIVE;
             c->state = 60;
         }
     }
     return 2;
 }
-
-
-#pragma force_active on
-u32 gap_04_00010994_data[1] = {0};
-#pragma force_active reset

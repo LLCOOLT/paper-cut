@@ -1,33 +1,15 @@
+// qiz.rel (はてなむしクイズ, the question-bug quiz; JP and PAL): registers qiz_00.
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
 
-#pragma force_active on
 #include "data/mapdata.h"
 #include "qiz.h"
+#include "rel_module.h"
 
-typedef void (*voidfunctionptr)(void);
-extern voidfunctionptr _ctors[];
-extern voidfunctionptr _dtors[];
-
-void _unresolved(void);
-void _epilog(void);
-void _prolog(void);
-
-f32 fd_qiz_negone_one_374[2] __attribute__((aligned(8)));
-f32 fd_qiz_neg_one_382;
-f32 fd_qiz___local_PI_383;
-f32 fd_qiz___local_3PIO2_385;
-f32 fd_qiz_one_negone_373[2] __attribute__((aligned(8)));
-f32 fd_qiz___local_PIO2_384;
-f32 fd_qiz_one_381;
-f32 fd_qiz_negone_one_360[2] __attribute__((aligned(8)));
-f32 fd_qiz_neg_one_365;
-f32 fd_qiz___local_PI_366;
-f32 fd_qiz___local_3PIO2_368;
-f32 fd_qiz_one_negone_359[2] __attribute__((aligned(8)));
-f32 fd_qiz___local_PIO2_367;
-f32 fd_qiz_one_364;
-
+/**
+ * Module entry point: runs the static constructors,
+ * then registers the init script of qiz_00 with the REL loader (there are no battle tables).
+ */
 void _prolog(void) {
     voidfunctionptr* ctor;
 
@@ -37,34 +19,7 @@ void _prolog(void) {
     relSetEvtAddr("qiz_00", qiz_00_init_evt);
 }
 
-f32 fd_qiz_negone_one_374[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_qiz_neg_one_382 = -1.0f;
-
-f32 fd_qiz___local_PI_383 = 3.1415927f;
-
-f32 fd_qiz___local_3PIO2_385 = 4.712389f;
-
-f32 fd_qiz_one_negone_373[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_qiz___local_PIO2_384 = 1.5707964f;
-
-f32 fd_qiz_one_381 = 1.0f;
-
-f32 fd_qiz_negone_one_360[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_qiz_neg_one_365 = -1.0f;
-
-f32 fd_qiz___local_PI_366 = 3.1415927f;
-
-f32 fd_qiz___local_3PIO2_368 = 4.712389f;
-
-f32 fd_qiz_one_negone_359[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_qiz___local_PIO2_367 = 1.5707964f;
-
-f32 fd_qiz_one_364 = 1.0f;
-
+/** Module exit point: runs the static destructors. */
 void _epilog(void) {
     voidfunctionptr* dtor;
 
@@ -72,5 +27,6 @@ void _epilog(void) {
         (*dtor)();
     }
 }
+/** Placeholder the linker points unresolved relocations at; it does nothing. */
 void _unresolved(void) {
 }

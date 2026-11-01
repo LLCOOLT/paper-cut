@@ -1,10 +1,16 @@
+// Fire pillar (hibashira: pillar of fire) animation; types 0-2 place one pillar, types 3-5 spread count pillars
+// between a start and an end point.
 #include "eff/eff_hibashira.h"
 #include "driver/animdrv.h"
 #include "driver/dispdrv.h"
 #include "mario/mariost.h"
 #include "memory.h"
 #include <dolphin/mtx.h>
-#include "eff/eff_magic1_n64.h"
+#include "libc_decls.h"
+#ifdef TARGET_PC /* PC port: the header's prototypes are skipped on PC (these are static here) */
+static void effHibashiraMain(EffectEntry* effect);
+static void effHibashiraDisp(CameraId cameraId, EffectEntry* effect);
+#endif
 
 typedef struct EffHibashiraWork {
     s32 type;     // 0x0
@@ -17,6 +23,11 @@ typedef struct EffHibashiraWork {
     s32 delay;    // 0x24
 } EffHibashiraWork;
 
+/**
+ * Spawns the fire pillar(s) for `duration` frames:
+ * types 0-2 one pillar at (x, y, z), types 3-5 `count` pillars spread from (x, y, z) to (endX, endY, endZ).
+ * Used by Mario's _fire_wave helper in battle_mario.c and evt_eff.
+ */
 EffectEntry* effHibashiraEntry(s32 type, s32 count, s32 duration, f32 x, f32 y, f32 z, f32 endX,
                                f32 endY, f32 endZ, f32 scale) {
     EffectEntry* effect;
@@ -44,7 +55,7 @@ EffectEntry* effHibashiraEntry(s32 type, s32 count, s32 duration, f32 x, f32 y, 
     work = __memAlloc(HEAP_EFFECT, sizeof(EffHibashiraWork) * effect->count);
     effect->userdata = work;
     effect->callback = effHibashiraMain;
-    effect->flags |= 2;
+    effect->flags |= EFFECT_FLAG_SOFT_DELETE;
     work->type = type;
     work->position.x = x;
     work->position.y = y;
@@ -54,8 +65,7 @@ EffectEntry* effHibashiraEntry(s32 type, s32 count, s32 duration, f32 x, f32 y, 
     work->alpha = 255;
     if (duration <= 0) {
         work->timer = 1000;
-    }
-    else {
+    } else {
         work->timer = duration;
     }
     work->frame = 0;
@@ -82,7 +92,8 @@ EffectEntry* effHibashiraEntry(s32 type, s32 count, s32 duration, f32 x, f32 y, 
     return effect;
 }
 
-void effHibashiraMain(EffectEntry* effect) {
+/** Fades the pillars in and out, spreading pillars for types 3-5 and loading their flame animations. */
+static void effHibashiraMain(EffectEntry* effect) {
     s32 k;
     EffHibashiraWork* work = effect->userdata;
     EffHibashiraWork* pillar;
@@ -91,13 +102,13 @@ void effHibashiraMain(EffectEntry* effect) {
     s32 i;
     s32 inBattle;
 
-    position = (Vec){ work->position.x, work->position.y, work->position.z };
+    position = (Vec){work->position.x, work->position.y, work->position.z};
     inBattle = gp->inBattle ? TRUE : FALSE;
     type = work->type;
 
     // soft delete: start fading out
-    if (effect->flags & 4) {
-        effect->flags &= ~4;
+    if (effect->flags & EFFECT_FLAG_DELETE_REQUESTED) {
+        effect->flags &= ~EFFECT_FLAG_DELETE_REQUESTED;
         work->timer = 16;
     }
     switch (type) {
@@ -170,7 +181,8 @@ void effHibashiraMain(EffectEntry* effect) {
     dispEntry(CAMERA_3D, dispCalcZ(&position), 2, (DispCallback)effHibashiraDisp, effect);
 }
 
-void effHibashiraDisp(CameraId cameraId, EffectEntry* effect) {
+/** Draws each pillar's animation pose at its offset, faded by the effect's alpha. */
+static void effHibashiraDisp(CameraId cameraId, EffectEntry* effect) {
     EffHibashiraWork* work = effect->userdata;
     s32 i, alpha;
     Mtx mtx;
@@ -190,9 +202,9 @@ void effHibashiraDisp(CameraId cameraId, EffectEntry* effect) {
             PSMTXScale(scale, work->scale, work->scale, work->scale);
             PSMTXConcat(mtx, scale, mtx);
             PSMTXConcat(base, mtx, mtx);
-            animPoseSetMaterialFlagOn(work->poseId, 0x40);
+            animPoseSetMaterialFlagOn(work->poseId, ANIM_MATERIAL_FLAG_EVT_COLOR);
             animPoseSetMaterialEvtColor(work->poseId,
-                                        (GXColor){ 0xFF, 0xFF, 0xFF, work->alpha * alpha / 255 });
+                                        (GXColor){0xFF, 0xFF, 0xFF, work->alpha * alpha / 255});
             animPoseMain(work->poseId);
             animPoseDrawMtx(work->poseId, mtx, 1, 0.0f, 10.0f);
             animPoseDrawMtx(work->poseId, mtx, 2, 0.0f, 10.0f);

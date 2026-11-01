@@ -1,3 +1,4 @@
+// Battle unit data for the tree stage object (unit_object_tree).
 #include "battle/battle.h"
 #include "battle/battle_stage_object.h"
 #include "battle/battle_sub.h"
@@ -5,20 +6,20 @@
 #include "manager/evtmgr_cmd.h"
 #include "evt/evt_cmd.h"
 #include "battle/battle_event_default.h"
+#include "battle/battle_event_cmd.h"
+#include "version.h"
 
-USER_FUNC(_rumble_tree);
-USER_FUNC(_turn_tree);
-USER_FUNC(btlevtcmd_SetEventAttack);
-USER_FUNC(btlevtcmd_SetEventConfusion);
-USER_FUNC(btlevtcmd_SetEventDamage);
-USER_FUNC(btlevtcmd_SetEventWait);
-USER_FUNC(btlevtcmd_SetMaxMoveCount);
-USER_FUNC(btlevtcmd_StartWaitEvent);
+static USER_FUNC(_rumble_tree);
+static USER_FUNC(_turn_tree);
 
 static BattleUnitKindPart parts[1];
 static EvtWord init_event[25];
 static EvtWord damage_event[14];
+#if VERSION <= VERSION_DEMO_JP
+static s32 _data[34];
+#else
 static s32 _data[35];
+#endif
 static BattleUnitDefense defence;
 static BattleUnitDefenseAttr defence_attr;
 static StatusVulnerability regist;
@@ -27,6 +28,10 @@ static BattleDataEntry data_table[1];
 static EvtWord attack_event[5];
 static EvtWord wait_event[2];
 
+/**
+ * Unit data of the stage tree: an invisible prop (hidden part, no HP gauge, 999 HP) that stands in for a
+ * tree on the battle stage which the player can hit. It never takes a turn.
+ */
 BattleUnitKind unit_object_tree = {
     216,
     "btl_un_tree",
@@ -85,7 +90,7 @@ BattleUnitKind unit_object_tree = {
     "SFX_BTL_DAMAGE_FIRE1",
     "SFX_BTL_DAMAGE_ICE1",
     "SFX_BTL_DAMAGE_BIRIBIRI1",
-    0x12003001,
+    UNIT_ATTR_TARGET_SORT_OFFSET | UNIT_ATTR_NO_GRAVITY_BOB | UNIT_ATTR_ACTS_IN_ZERO_GRAVITY | UNIT_ATTR_NO_HP_GAUGE | UNIT_ATTR_IGNORE_FOR_CLEAR,
     &regist,
     1,
     parts,
@@ -93,63 +98,97 @@ BattleUnitKind unit_object_tree = {
     data_table,
 };
 
-static BattleUnitKindPart parts[] = {
-    {1, "btl_un_tree", "b_mario", 0.0f, 0.0f, 0.0f, 0.0f, 25.0f, 0.0f, 0.0f, 30.0f, 0.0f, 20, 30, 255, &defence, &defence_attr, 0x3000009, 0, pose_table},
+/** The tree takes no damage reduction; every hit just triggers its shake and tip-over. */
+static BattleUnitDefense defence = {{0, 0, 0, 0, 0}};
+
+/** The tree has no elemental defence. */
+static BattleUnitDefenseAttr defence_attr = {{0, 0, 0, 0, 0}};
+
+/** The tree has no status vulnerabilities (all zero). */
+static StatusVulnerability regist = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+
+/**
+ * Poses of the tree: every pose uses the same still frame of the Mario model (M_S_1),
+ * apart from one slot that uses M_O_1.
+ */
+static PoseTableEntry pose_table[] = {
+    {BTL_POSE_NORMAL, "M_S_1"},
+    {31, "M_S_1"},
+    {BTL_POSE_DAMAGE, "M_O_1"},
+    {BTL_POSE_STAY_DEFAULT, "M_S_1"},
 };
 
+/** The tree has no data table events. */
+static BattleDataEntry data_table[] = {
+    {0, NULL},
+};
+
+/**
+ * The tree's single part: a hidden, shadowless Mario-model body (guard cover,
+ * no HP gauge) used only as a hit target.
+ */
+static BattleUnitKindPart parts[] = {
+    {1, "btl_un_tree", "b_mario", 0.0f, 0.0f, 0.0f, 0.0f, 25.0f, 0.0f, 0.0f, 30.0f, 0.0f, 20, 30, 255, &defence, &defence_attr, PART_ATTR_MAIN | PART_ATTR_GUARD_COVER | PART_ATTR_HIDDEN | PART_ATTR_NO_SHADOW, 0, pose_table},
+};
+
+/**
+ * Init for a stage tree the player can hit (spawned by battle_stage_object.c as _entry_tree_data):
+ * registers the wait, attack and damage scripts, never moves, and idles. Its part is hidden and has no shadow.
+ */
 static EVT_BEGIN(init_event)
-    CALL(btlevtcmd_SetEventWait, -2, PTR(wait_event))
-    CALL(btlevtcmd_SetEventAttack, -2, PTR(attack_event))
-    CALL(btlevtcmd_SetEventDamage, -2, PTR(damage_event))
-    CALL(btlevtcmd_SetEventConfusion, -2, PTR(btldefaultevt_Confuse))
-    CALL(btlevtcmd_SetMaxMoveCount, -2, 0)
-    CALL(btlevtcmd_StartWaitEvent, -2)
+    CALL(btlevtcmd_SetEventWait, BTL_UNIT_SELF, PTR(wait_event))
+    CALL(btlevtcmd_SetEventAttack, BTL_UNIT_SELF, PTR(attack_event))
+    CALL(btlevtcmd_SetEventDamage, BTL_UNIT_SELF, PTR(damage_event))
+    CALL(btlevtcmd_SetEventConfusion, BTL_UNIT_SELF, PTR(btldefaultevt_Confuse))
+    CALL(btlevtcmd_SetMaxMoveCount, BTL_UNIT_SELF, 0)
+    CALL(btlevtcmd_StartWaitEvent, BTL_UNIT_SELF)
     RETURN
 EVT_END()
 
+/**
+ * Hit reaction: wobbles the tree object up and down (_rumble_tree),
+ * then tips it over to 90 degrees and snaps it back upright (_turn_tree).
+ */
 static EVT_BEGIN(damage_event)
     SET_VALUE(LW(10), -2)
     SET_VALUE(LW(11), 1)
-    CALL(_rumble_tree, -2)
+    CALL(_rumble_tree, BTL_UNIT_SELF)
     CALL(_turn_tree, -2)
     RETURN
 EVT_END()
 
+/** The tree never acts on its own turn; it just returns to its (empty) idle script. */
+static EVT_BEGIN(attack_event)
+    CALL(btlevtcmd_StartWaitEvent, BTL_UNIT_SELF)
+    RETURN
+EVT_END()
+
+/**
+ * Vertical offsets applied on successive frames by _rumble_tree: a decaying wobble that settles at zero.
+ */
 static s32 _data[] = {
     -5, 0, 15, 0, -15, 0, 14, 0,
     -13, 0, 12, 0, -11, 0, 10, 0,
     -9, 0, 8, 0, -7, 0, 6, 0,
     -6, 0, 5, 0, -4, 0, 2, 0,
+#if VERSION <= VERSION_DEMO_JP
+    -2, 0,
+#else
     -2, 0, 0,
+#endif
 };
 
-static BattleUnitDefense defence = {{0, 0, 0, 0, 0}};
-
-static BattleUnitDefenseAttr defence_attr = {{0, 0, 0, 0, 0}};
-
-static StatusVulnerability regist = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-
-static PoseTableEntry pose_table[] = {
-    {28, "M_S_1"},
-    {31, "M_S_1"},
-    {39, "M_O_1"},
-    {69, "M_S_1"},
-};
-
-static BattleDataEntry data_table[] = {
-    {0, NULL},
-};
-
-static EVT_BEGIN(attack_event)
-    CALL(btlevtcmd_StartWaitEvent, -2)
-    RETURN
-EVT_END()
-
+/** Idle: nothing; the tree has no idle animation. */
 static EVT_BEGIN(wait_event)
     RETURN
 EVT_END()
 
-USER_FUNC(_rumble_tree) {
+/**
+ * Shakes the tree's stage object (args[0] unit) when it is hit:
+ * adds one entry of the _data offset table to its height each frame for 34 frames,
+ * a decaying up-and-down wobble. Run from damage_event before _turn_tree.
+ */
+static USER_FUNC(_rumble_tree) {
     BattleUnit* unit;
     BattleStageObject* object;
     s32 id;
@@ -164,7 +203,7 @@ USER_FUNC(_rumble_tree) {
     if (isFirstCall) {
         event->userdata[0] = 0;
     }
-    object->mPosition.y += _data[event->userdata[0]];
+    object->position.y += _data[event->userdata[0]];
     event->userdata[0]++;
     if ((u32)event->userdata[0] >= 34) {
         return EVT_RETURN_DONE;
@@ -172,7 +211,11 @@ USER_FUNC(_rumble_tree) {
     return EVT_RETURN_BLOCK;
 }
 
-USER_FUNC(_turn_tree) {
+/**
+ * Tilts the tree's stage object (the running unit) about X by 3 degrees a frame up to 90 over 30 frames,
+ * then snaps it back upright. Run from damage_event after _rumble_tree.
+ */
+static USER_FUNC(_turn_tree) {
     BattleUnit* unit;
     BattleStageObject* object;
     s32 id;
@@ -185,9 +228,9 @@ USER_FUNC(_turn_tree) {
     }
     event->userdata[0] += 3;
     if (event->userdata[0] > 90) {
-        object->mRotation.x = 0.0f;
+        object->rotation.x = 0.0f;
         return EVT_RETURN_DONE;
     }
-    object->mRotation.x = event->userdata[0];
+    object->rotation.x = event->userdata[0];
     return EVT_RETURN_BLOCK;
 }

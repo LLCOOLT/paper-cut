@@ -1,4 +1,6 @@
+// Action command: rotate the control stick in circles (ac_stick_rotate); more rotations, stronger result.
 #include "icon_ids.h"
+// this unit is size-optimised, as in the original (the object differs without it)
 #pragma optimize_for_size on
 #include "battle/battle.h"
 #include "battle/battle_ac.h"
@@ -13,22 +15,22 @@ typedef struct StickRotateParams {
 #ifdef TARGET_PC
     u8 field_0x0[offsetof(BattleActions, acFlags)]; // BattleActions header; its pointers are 8 bytes on PC
 #else
-    u8 field_0x0[0x34 - 0x0];
+    u8 header[0x34 - 0x0]; // 0x0, BattleActions header up to acFlags
 #endif
-    u32 flags;       // 0x34
-    s32 maxCount;    // 0x38
-    s32 startTime;   // 0x3C
-    u32 button;      // 0x40
-    s32 needCount;   // 0x44
-    s32 stepsA;      // 0x48
-    s32 stepsB;      // 0x4C
-    s32 timeout;     // 0x50
+    u32 flags;             // 0x34
+    s32 maxCount;          // 0x38
+    s32 startTime;         // 0x3C
+    u32 button;            // 0x40
+    s32 needCount;         // 0x44
+    s32 stepsA;            // 0x48
+    s32 stepsB;            // 0x4C
+    s32 timeout;           // 0x50
 } StickRotateParams;
+
 #ifdef TARGET_PC
 _Static_assert(offsetof(StickRotateParams, maxCount) == offsetof(BattleActions, params[0]) &&
                offsetof(StickRotateParams, timeout) == offsetof(BattleActions, params[6]), "StickRotateParams view of BattleActions.params");
 #endif
-
 typedef struct StickRotateWork {
     s8 dir;       // 0x0
     s8 prevDir;   // 0x1
@@ -39,26 +41,27 @@ typedef struct StickRotateWork {
     s8 iconDir;   // 0x6
     u8 iconTimer; // 0x7
     u16 count;    // 0x8
-    u8 pad_A[2];
     s32 timer;    // 0xC
     u16 slow;     // 0x10
-    u8 pad_12[2];
     s32 endTimer; // 0x14
 } StickRotateWork;
 
 #define AC_PARAMS(work) ((StickRotateParams*)&(work)->actionCommands)
-// FAKE: the no-op (BattleActions*) casts here and on disp below keep the address add early (the plain field reschedules the disp functions)
-#define AC_WORK(bw) ((StickRotateWork*)((BattleActions*)&(bw)->actionCommands)->work)
 #define AC_DISP(w) ((BattleACDispParams*)&(w)->actionCommands.disp)
 
-#define PAD(m) (((s32(*)(s32))BattlePadCheckNow)(m))
+#define PAD(m) (BattlePadCheckNow(m))
 
 static void actionCommandDisp(f32 x, f32 y);
-void actionCommandDisp2(f32 x, f32 y);
-u16 _get_icon_id(s8 dir);
+static void actionCommandDisp2(f32 x, f32 y);
+static u16 _get_icon_id(s8 dir);
 
+// FAKE: inlining off (FAKES.md); without it 1 function changes length, e.g. battleAcMain_StickRotate 422 -> 567 instructions
 #pragma dont_inline on
-s32 _GetInputDir(void) {
+/**
+ * Reads the Control Stick as one of eight directions, 1 up then clockwise to 8 up-left, or 0 when centred.
+ * Returns -1 when the command needs a button held (params[2]) and it is not.
+ */
+static s32 _GetInputDir(void) {
     if (AC_PARAMS(_battleWorkPointer)->button != 0 && !PAD(AC_PARAMS(_battleWorkPointer)->button)) {
         return -1;
     }
@@ -75,15 +78,19 @@ s32 _GetInputDir(void) {
         if (PAD(0x80000)) {
             return 4;
         }
-        return (BattlePadCheckNow(0x40000) != 0U) + 5;
+        return (BattlePadCheckNow(BTL_PAD_STICK_LEFT) != 0U) + 5;
     }
     if (PAD(0x80000)) {
         return 3;
     }
-    return BattlePadCheckNow(0x40000) != 0U ? 7 : 0;
+    return BattlePadCheckNow(BTL_PAD_STICK_LEFT) != 0U ? 7 : 0;
 }
 
-s32 _CalcRollDir(void) {
+/**
+ * Which way the stick turned since last frame: +1 clockwise, -1 anticlockwise, 0 when centred, jumping or new;
+ * an unchanged direction keeps the current roll.
+ */
+static s32 _CalcRollDir(void) {
     StickRotateWork* w = (StickRotateWork*)_battleWorkPointer->actionCommands.work;
     s8 cur = w->dir;
     s8 prev = w->prevDir;
@@ -110,14 +117,22 @@ s32 _CalcRollDir(void) {
     return d;
 }
 
-#define FINISH(w)                            \
-    do {                                     \
-        (w)->actionCommands.result &= ~1;    \
-        (w)->actionCommands.mAcState = 1002; \
-        restart = TRUE;                      \
+#define FINISH(w)                           \
+    do {                                    \
+        (w)->actionCommands.result &= ~1;   \
+        (w)->actionCommands.acState = 1002; \
+        restart = TRUE;                     \
     } while (0)
 
 #pragma dont_inline reset
+/**
+ * Per-frame driver of action command 9, which no battle script in the tree sets up.
+ * Start rotating the stick (holding button params[2], if set) within 120 frames;
+ * every 8 steps is one rotation, counted in outputParams[0] up to params[0].
+ * After params[1] frames, or on letting go of the button, it succeeds with params[3] rotations or more.
+ * acFlags bit 0 demands a steady one-way turn, each step within params[4]..params[5] frames;
+ * bit 1 a fixed direction.
+ */
 s32 battleAcMain_StickRotate(BattleWork* work) {
     StickRotateWork* sw;
     BattleACDispParams* disp;
@@ -128,7 +143,7 @@ s32 battleAcMain_StickRotate(BattleWork* work) {
 
     do {
         restart = FALSE;
-        switch (ac->mAcState) {
+        switch (ac->acState) {
             case 0:
                 ac->result = 1;
                 memset(disp, 0, sizeof(BattleACDispParams));
@@ -141,13 +156,13 @@ s32 battleAcMain_StickRotate(BattleWork* work) {
                 sw->iconTimer = 0;
                 sw->slow = 0;
                 sw->stall = 0;
-                ac->mAcState = 99;
+                ac->acState = 99;
                 break;
             case 99:
                 break;
             case 100:
                 sw->timer = 120;
-                ac->mAcState = 1000;
+                ac->acState = 1000;
                 sw->roll = 0;
                 sw->count = 0;
                 ac->outputParams[0] = 0;
@@ -156,8 +171,8 @@ s32 battleAcMain_StickRotate(BattleWork* work) {
                     sw->iconB = 2;
                 }
             case 1000:
-                if ((ac->setupFlags & 1) && (ac->mAcUnit->mTokenFlags & 0x10)) {
-                    if (ac->setupFlags & 2) {
+                if ((ac->setupFlags & AC_SETUP_FLAG_CONFUSED_AUTO) && (ac->acUnit->tokenFlags & TOKEN_FLAG_CONFUSED_ACTION)) {
+                    if (ac->setupFlags & AC_SETUP_FLAG_RETRIES) {
                         ac->setupParam--;
                         if (ac->setupParam >= 0) {
                             break;
@@ -167,7 +182,7 @@ s32 battleAcMain_StickRotate(BattleWork* work) {
                         ac->result = 0;
                     } else {
                         ac->result = 2;
-                        ac->mResultCount++;
+                        ac->resultCount++;
                     }
                     return 0;
                 }
@@ -179,11 +194,11 @@ s32 battleAcMain_StickRotate(BattleWork* work) {
                         }
                         ac->result = 0;
                         restart = TRUE;
-                        ac->mAcState = 1002;
+                        ac->acState = 1002;
                         break;
                     }
                 }
-                ac->mAcState = 1001;
+                ac->acState = 1001;
                 sw->prevDir = 0;
                 ac->outputParams[0]++;
                 sw->timer = AC_PARAMS(work)->startTime;
@@ -198,7 +213,7 @@ s32 battleAcMain_StickRotate(BattleWork* work) {
                     (ac->countdown)--;
                     ac->result = 2;
                     restart = TRUE;
-                    ac->mAcState = 1002;
+                    ac->acState = 1002;
                     ac->outputParams[0] = AC_PARAMS(work)->maxCount;
                 }
                 sw->timer--;
@@ -212,7 +227,7 @@ s32 battleAcMain_StickRotate(BattleWork* work) {
                     }
                     ac->result &= ~1;
                     restart = TRUE;
-                    ac->mAcState = 1002;
+                    ac->acState = 1002;
                     break;
                 }
                 sw->dir = _GetInputDir();
@@ -222,7 +237,7 @@ s32 battleAcMain_StickRotate(BattleWork* work) {
                     }
                     ac->result &= ~1;
                     restart = TRUE;
-                    ac->mAcState = 1002;
+                    ac->acState = 1002;
                     break;
                 }
                 if (sw->dir == 0) {
@@ -311,18 +326,18 @@ s32 battleAcMain_StickRotate(BattleWork* work) {
                 break;
             }
             case 1002:
-                ac->mAcState = 1003;
+                ac->acState = 1003;
                 break;
             case 1003:
                 break;
             case 1004:
                 sw->endTimer = 60;
                 disp->slideTimer = 60;
-                ac->mAcState = 1005;
+                ac->acState = 1005;
             case 1005:
                 sw->endTimer--;
                 if (sw->endTimer <= 0) {
-                    ac->mAcState = 1006;
+                    ac->acState = 1006;
                 }
                 break;
             case 1006:
@@ -336,23 +351,29 @@ s32 battleAcMain_StickRotate(BattleWork* work) {
     return 1;
 }
 
+/** Returns the result word: 1 while running, 2 on success, 0 on failure. */
 s32 battleAcResult_StickRotate(BattleWork* work) {
     return work->actionCommands.result;
 }
 
+/**
+ * Display callback: slides the stick icon in over 20 frames and out over 40 after the command is stopped,
+ * drawn by actionCommandDisp with acFlags bit 1 and actionCommandDisp2 otherwise.
+ */
 void battleAcDisp_StickRotate(CameraId cameraId, void* param) {
-    BattleACDispParams* disp = &((BattleActions*)&((BattleWork*)param)->actionCommands)->disp;
+    BattleWork* work = (BattleWork*)param;
+    BattleActions* ac = &work->actionCommands;
+    BattleACDispParams* disp = &ac->disp;
     void (*fn)(f32, f32);
-#define work ((BattleWork*)param)
 
     if (AC_PARAMS(work)->flags & 2) {
         fn = actionCommandDisp;
     } else {
         fn = actionCommandDisp2;
     }
-    switch (work->actionCommands.mAcState) {
+    switch (ac->acState) {
         case 99:
-            disp->iconX = intplGetValue(4, 20 - disp->slideTimer, 20, -300.0f, 30.0f);
+            disp->iconX = intplGetValue(4, -300.0f, 30.0f, 20 - disp->slideTimer, 20);
             fn(disp->iconX, disp->iconY);
             if (disp->slideTimer > 0) {
                 disp->slideTimer--;
@@ -373,18 +394,19 @@ void battleAcDisp_StickRotate(CameraId cameraId, void* param) {
                 disp->slideTimer--;
             }
             if (disp->slideTimer <= 40) {
-                disp->iconX = intplGetValue(4, disp->slideTimer, 40, -300.0f, 30.0f);
+                disp->iconX = intplGetValue(4, -300.0f, 30.0f, disp->slideTimer, 40);
             } else {
                 disp->iconX = 30.0f;
             }
             fn(disp->iconX, disp->iconY);
             break;
     }
-#undef work
 }
 
+// no automatic inlining for _get_icon_id, actionCommandDisp, actionCommandDisp2, as in the original (the object differs without it)
 #pragma auto_inline off
-u16 _get_icon_id(s8 dir) {
+/** Icon of the stick tilted in direction 1-8 (see _GetInputDir), or centred for anything else. */
+static u16 _get_icon_id(s8 dir) {
     switch (dir) {
         case 1:
             return ICON_07C;
@@ -407,19 +429,21 @@ u16 _get_icon_id(s8 dir) {
     }
 }
 
-#define ICON(v, id)                  \
-    (v) = (Vec){0.0f, 0.0f, 0.0f};   \
-    (v).x = -200.0f + x;             \
-    (v).y = 70.0f + y;               \
-    iconDispGx(&(v), 0x10, (id), 1.0f)
+#define ICON(v, id)                \
+    (v) = (Vec){0.0f, 0.0f, 0.0f}; \
+    (v).x = -200.0f + x;           \
+    (v).y = 70.0f + y;             \
+    iconDispGx(&(v), ICON_DISP_2D, (id), 1.0f)
 
+/** Stick icon for the fixed-direction mode (acFlags bit 1): shows the direction to turn to next. */
 static void actionCommandDisp(f32 x, f32 y) {
     BattleWork* work = _battleWorkPointer;
+    BattleActions* ac = &work->actionCommands;
     StickRotateParams* p = AC_PARAMS(work);
-    StickRotateWork* sw = AC_WORK(work);
+    StickRotateWork* sw = (StickRotateWork*)ac->work;
     Vec v0, v1, v2, v3, v4, v5;
 
-    switch (work->actionCommands.mAcState) {
+    switch (work->actionCommands.acState) {
         case 99:
         case 100:
             ICON(v0, ICON_079);
@@ -448,13 +472,18 @@ static void actionCommandDisp(f32 x, f32 y) {
     }
 }
 
-void actionCommandDisp2(f32 x, f32 y) {
+/**
+ * Stick icon for the free mode: spins through the eight directions as a hint,
+ * following the player's turn direction.
+ */
+static void actionCommandDisp2(f32 x, f32 y) {
     BattleWork* work = _battleWorkPointer;
+    BattleActions* ac = &work->actionCommands;
     StickRotateParams* p = AC_PARAMS(work);
-    StickRotateWork* sw = AC_WORK(work);
+    StickRotateWork* sw = (StickRotateWork*)ac->work;
     Vec v0, v1, v2;
 
-    switch (work->actionCommands.mAcState) {
+    switch (work->actionCommands.acState) {
         case 99:
         case 100:
             ICON(v0, ICON_079);
@@ -493,6 +522,7 @@ void actionCommandDisp2(f32 x, f32 y) {
 }
 
 #pragma auto_inline reset
+/** Called by btlevtcmd_StopAC: starts the slide-out and the 60-frame end wait. */
 void battleAcDelete_StickRotate(BattleWork* work) {
-    work->actionCommands.mAcState = 1004;
+    work->actionCommands.acState = 1004;
 }

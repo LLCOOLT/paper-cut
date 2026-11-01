@@ -1,3 +1,4 @@
+// Paper Mario 64 effect: Piranha Plant (packn) fire breath (bfire) from a point toward a target; types 0-2.
 #include "eff/eff_n64.h"
 #include "driver/camdrv.h"
 #include "driver/dispdrv.h"
@@ -6,39 +7,35 @@
 #include "system.h"
 #include <dolphin/gx.h>
 #include <dolphin/mtx.h>
+#include "eff/n64/eff_packn_bfire_n64.h"
 #include <stdlib.h>
-
-#ifndef TARGET_PC /* PC port: the host libc declares these */
-double cos(double);
-double sin(double);
-#endif
+#include "libc_decls.h"
 
 typedef struct EffPacknBfireWork {
-    s32 type;     // 0x0
-    Vec pos;      // 0x4
-    Vec tgt;      // 0x10
-    s32 arg1;     // 0x1c
-    s32 life;     // 0x20
-    s32 frame;    // 0x24
-    s32 color[8]; // 0x28
-    f32 scaleArg; // 0x48
-    f32 uvx;      // 0x4c
-    f32 uvy;      // 0x50
-    f32 duvx;     // 0x54
-    f32 duvy;     // 0x58
-    f32 unk5c;    // 0x5c
-    Vec vel;      // 0x60
-    f32 sy;       // 0x6c
-    f32 sx;       // 0x70
-    f32 rot;      // 0x74
-    f32 drot;     // 0x78
+    s32 type;        // 0x0
+    Vec pos;         // 0x4
+    Vec tgt;         // 0x10
+    s32 frames;      // 0x1c
+    s32 life;        // 0x20
+    s32 frame;       // 0x24
+    s32 color[8];    // 0x28
+    f32 scaleArg;    // 0x48
+    f32 uvx;         // 0x4c
+    f32 uvy;         // 0x50
+    f32 duvx;        // 0x54
+    f32 duvy;        // 0x58
+    f32 reserved_5c; // 0x5c, never read or written
+    Vec vel;         // 0x60
+    f32 sy;          // 0x6c
+    f32 sx;          // 0x70
+    f32 rot;         // 0x74
+    f32 drot;        // 0x78
 } EffPacknBfireWork;
 
-EffectEntry* effPacknBfireN64Entry(s32 type, s32 arg1, s32 life, f32 x, f32 y, f32 z, f32 tx, f32 ty, f32 tz,
-                                   f32 arg7);
-void effPacknBfireMain(EffectEntry* effect);
-void effPacknBfireDisp(CameraId cameraId, EffectEntry* effect);
+static void effPacknBfireMain(EffectEntry* effect);
+static void effPacknBfireDisp(CameraId cameraId, EffectEntry* effect);
 
+/** 64x64 camera-facing quad drawn for each fire puff and spark of the Piranha Plant's fire breath. */
 static effN64Vtx size64x64_tex32x32_vtx[] = {
     {-32, -32, 0, 0, 0, 0, 0, 0, 255},
     {32, -32, 0, 1024, 0, 0, 0, 0, 255},
@@ -46,8 +43,13 @@ static effN64Vtx size64x64_tex32x32_vtx[] = {
     {-32, 32, 0, 0, 1024, 0, 0, 0, 255},
 };
 
-EffectEntry* effPacknBfireN64Entry(s32 type, s32 arg1, s32 life, f32 x, f32 y, f32 z, f32 tx, f32 ty, f32 tz,
-                                   f32 arg7) {
+/**
+ * Spawns piranha-plant fire breath from (x, y, z) toward (tx, ty, tz).
+ * Type 0 is the emitter: it lasts life frames and launches a type 1 fire puff every 4 frames that flies to the
+ * target in frames; type 2 is a burst of 8 sparks. Via evt_eff64 "packn_bfire_n64"; no script callers found.
+ */
+EffectEntry* effPacknBfireN64Entry(s32 type, s32 frames, s32 life, f32 x, f32 y, f32 z, f32 tx, f32 ty, f32 tz,
+                                   f32 scale) {
     s32 count;
     EffectEntry* effect;
     EffPacknBfireWork* work;
@@ -57,12 +59,12 @@ EffectEntry* effPacknBfireN64Entry(s32 type, s32 arg1, s32 life, f32 x, f32 y, f
 
     effect = effEntry();
     count = (type == 2) ? 8 : 1;
-    effect->type = "PacknBfireN64\0\0";
+    effect->type = "PacknBfireN64";
     effect->count = count;
     work = __memAlloc(HEAP_EFFECT, count * sizeof(EffPacknBfireWork));
     effect->userdata = work;
     effect->callback = effPacknBfireMain;
-    effect->flags |= 2;
+    effect->flags |= EFFECT_FLAG_SOFT_DELETE;
     if (life <= 0) {
         work->life = 1000;
     } else {
@@ -70,7 +72,7 @@ EffectEntry* effPacknBfireN64Entry(s32 type, s32 arg1, s32 life, f32 x, f32 y, f
     }
     work->type = type;
     work->frame = 0;
-    work->arg1 = arg1;
+    work->frames = frames;
     work->color[3] = 0;
     work->pos.x = x;
     work->pos.y = y;
@@ -78,64 +80,69 @@ EffectEntry* effPacknBfireN64Entry(s32 type, s32 arg1, s32 life, f32 x, f32 y, f
     work->tgt.x = tx;
     work->tgt.y = ty;
     work->tgt.z = tz;
-    work->vel.x = (work->tgt.x - work->pos.x) / (f32)arg1;
-    work->vel.y = (work->tgt.y - work->pos.y) / (f32)arg1;
-    work->vel.z = (work->tgt.z - work->pos.z) / (f32)arg1;
-    work->scaleArg = arg7;
+    work->vel.x = (work->tgt.x - work->pos.x) / (f32)frames;
+    work->vel.y = (work->tgt.y - work->pos.y) / (f32)frames;
+    work->vel.z = (work->tgt.z - work->pos.z) / (f32)frames;
+    work->scaleArg = scale;
     switch (type) {
-    case 0:
-        break;
-    case 1:
-        work->color[0] = 255;
-        work->color[1] = 88;
-        work->color[2] = 70;
-        work->color[3] = 55;
-        work->color[4] = 11;
-        work->color[5] = 51;
-        work->color[6] = 123;
-        work->color[7] = 255;
-        work->uvx = (f32)(rand() % 65);
-        work->uvy = (f32)(rand() % 65);
-        work->sx = 0.2f;
-        work->sy = 0.3f;
-        work->duvx = 0.0f;
-        work->duvy = 0.0f;
-        work->rot = 0.0f;
-        work->drot = -10.0f;
-        break;
-    default:
-        work->color[0] = 255;
-        work->color[1] = 88;
-        work->color[2] = 70;
-        work->color[3] = 55;
-        work->color[4] = 11;
-        work->color[5] = 51;
-        work->color[6] = 123;
-        work->color[7] = 255;
-        base = (f32)(rand() % 361);
-        for (i = 0; i < count; i++) {
-            work->pos.x = x;
-            work->pos.y = y;
-            work->pos.z = z;
-            angle = 6.2831855f * (base + (f32)((i * 360) / 8)) / 360.0f;
-            work->vel.x = 5.0f * (f32)sin(angle);
-            work->vel.y = 2.0f * (f32)cos(angle) + 3.0f;
+        case 0:
+            break;
+        case 1:
+            work->color[0] = 255;
+            work->color[1] = 88;
+            work->color[2] = 70;
+            work->color[3] = 55;
+            work->color[4] = 11;
+            work->color[5] = 51;
+            work->color[6] = 123;
+            work->color[7] = 255;
             work->uvx = (f32)(rand() % 65);
             work->uvy = (f32)(rand() % 65);
-            work->sx = 1.0f;
-            work->sy = 1.0f;
+            work->sx = 0.2f;
+            work->sy = 0.3f;
             work->duvx = 0.0f;
             work->duvy = 0.0f;
-            work->rot = -45.0f;
+            work->rot = 0.0f;
             work->drot = -10.0f;
-            work++;
-        }
-        break;
+            break;
+        default:
+            work->color[0] = 255;
+            work->color[1] = 88;
+            work->color[2] = 70;
+            work->color[3] = 55;
+            work->color[4] = 11;
+            work->color[5] = 51;
+            work->color[6] = 123;
+            work->color[7] = 255;
+            base = (f32)(rand() % 361);
+            for (i = 0; i < count; i++) {
+                work->pos.x = x;
+                work->pos.y = y;
+                work->pos.z = z;
+                angle = 6.2831855f * (base + (f32)((i * 360) / 8)) / 360.0f;
+                work->vel.x = 5.0f * (f32)sin(angle);
+                work->vel.y = 2.0f * (f32)cos(angle) + 3.0f;
+                work->uvx = (f32)(rand() % 65);
+                work->uvy = (f32)(rand() % 65);
+                work->sx = 1.0f;
+                work->sy = 1.0f;
+                work->duvx = 0.0f;
+                work->duvy = 0.0f;
+                work->rot = -45.0f;
+                work->drot = -10.0f;
+                work++;
+            }
+            break;
     }
     return effect;
 }
 
-void effPacknBfireMain(EffectEntry* effect) {
+/**
+ * Type 0 emits puffs; type 1 drifts and settles its size and spins,
+ * and spawns the type 2 burst just before it ends;
+ * type 2 sparks fall with gravity, bounce on the ground (y = 0) and shrink.
+ */
+static void effPacknBfireMain(EffectEntry* effect) {
     EffPacknBfireWork* work;
     Vec position;
     Vec tmp = {0.0f, 0.0f, 0.0f};
@@ -148,8 +155,8 @@ void effPacknBfireMain(EffectEntry* effect) {
     tmp.z = work->pos.z;
     position = tmp;
     type = work->type;
-    if (effect->flags & 4) {
-        effect->flags &= ~4;
+    if (effect->flags & EFFECT_FLAG_DELETE_REQUESTED) {
+        effect->flags &= ~EFFECT_FLAG_DELETE_REQUESTED;
         work->life = 16;
     }
     if (work->life < 1000) {
@@ -165,47 +172,51 @@ void effPacknBfireMain(EffectEntry* effect) {
     } else {
         s32 frame = work->frame;
         switch (type) {
-        case 0:
-            if ((frame & 3) == 0) {
-                effPacknBfireN64Entry(1, work->arg1, work->arg1, work->pos.x, work->pos.y, work->pos.z,
-                                      work->tgt.x, work->tgt.y, work->tgt.z, 1.0f);
-            }
-            break;
-        case 1:
-            work->vel.x *= 0.97f;
-            work->vel.z *= 0.97f;
-            work->vel.y += 0.02f * (1.0f - work->vel.y);
-            work->pos.x += work->vel.x;
-            work->pos.y += work->vel.y;
-            work->pos.z += work->vel.z;
-            work->sx += 0.05f * (1.0f - work->sx);
-            work->sy += 0.1f * (1.0f - work->sy);
-            work->rot += work->drot;
-            break;
-        case 2:
-            for (i = 0; i < effect->count; i++) {
-                work->vel.x *= 0.9f;
-                work->vel.y -= 0.2f;
+            case 0:
+                if ((frame & 3) == 0) {
+                    effPacknBfireN64Entry(1, work->frames, work->frames, work->pos.x, work->pos.y, work->pos.z,
+                                          work->tgt.x, work->tgt.y, work->tgt.z, 1.0f);
+                }
+                break;
+            case 1:
+                work->vel.x *= 0.97f;
+                work->vel.z *= 0.97f;
+                work->vel.y += 0.02f * (1.0f - work->vel.y);
                 work->pos.x += work->vel.x;
                 work->pos.y += work->vel.y;
-                if (work->pos.y < 0.0f) {
-                    work->pos.y = 0.0f;
-                    if (work->vel.y < 0.0f) {
-                        work->vel.y *= -0.6f;
-                    }
-                }
-                work->sx += 0.07f * -work->sx;
-                work->sy += 0.05f * -work->sy;
+                work->pos.z += work->vel.z;
+                work->sx += 0.05f * (1.0f - work->sx);
+                work->sy += 0.1f * (1.0f - work->sy);
                 work->rot += work->drot;
-                work++;
-            }
-            break;
+                break;
+            case 2:
+                for (i = 0; i < effect->count; i++) {
+                    work->vel.x *= 0.9f;
+                    work->vel.y -= 0.2f;
+                    work->pos.x += work->vel.x;
+                    work->pos.y += work->vel.y;
+                    if (work->pos.y < 0.0f) {
+                        work->pos.y = 0.0f;
+                        if (work->vel.y < 0.0f) {
+                            work->vel.y *= -0.6f;
+                        }
+                    }
+                    work->sx += 0.07f * -work->sx;
+                    work->sy += 0.05f * -work->sy;
+                    work->rot += work->drot;
+                    work++;
+                }
+                break;
         }
         dispEntry(CAMERA_3D, dispCalcZ(&position), 2, (DispCallback)effPacknBfireDisp, effect);
     }
 }
 
-void effPacknBfireDisp(CameraId cameraId, EffectEntry* effect) {
+/**
+ * Draws each type 1/2 fire puff as a camera-facing 64x64 quad with two scrolling flame textures (0x71, 0x72);
+ * type 0 draws nothing.
+ */
+static void effPacknBfireDisp(CameraId cameraId, EffectEntry* effect) {
     CameraEntry* camera;
     EffPacknBfireWork* work;
     GXTexObj texObj;

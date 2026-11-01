@@ -1,8 +1,9 @@
+// gon_11 (ゴンババ, Hooktail Castle): Hooktail's (Gonbaba's) lair: cutscenes, the Hooktail boss fight (story 55, 56) and the Diamond Star.
+// Also a chest that gives an Attack FX item.
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
 #include "manager/evtmgr_cmd.h"
 
-#pragma force_active on
 #include "driver/npcdrv.h"
 #include "driver/hitdrv.h"
 #include "driver/camdrv.h"
@@ -21,165 +22,58 @@
 #include "evt/evt_bero.h"
 #include "evt/evt_sub.h"
 #include "gon.h"
+#include "evt/evt_cloud_map.h"
+#include "evt/evt_cam.h"
+#include "evt/evt_case.h"
+#include "evt/evt_eff.h"
+#include "evt/evt_hit.h"
+#include "evt/evt_img.h"
+#include "evt/evt_item.h"
+#include "evt/evt_light.h"
+#include "evt/evt_map.h"
+#include "evt/evt_mario.h"
+#include "evt/evt_mobj.h"
+#include "evt/evt_msg.h"
+#include "evt/evt_npc.h"
+#include "evt/evt_party.h"
+#include "evt/evt_seq.h"
+#include "evt/evt_snd.h"
+#include "driver/mapdrv.h"
+#include "version.h"
+#include "evt/evt_story.h"
+#include "driver/casedrv.h"
 
-USER_FUNC(evt_img_alloc_capture);
-typedef struct CloudWork { s32 used; s32 state; char animName[0x20]; char imgName[0x20]; char offscreenName[0x20]; char groupNames[8][0x20]; char hitName[0x20]; s32 limit; s32 counter; EventEntry* evt; void* endEvt; s32 timer; s32 x; s32 y; s32 w; s32 h; f32 lastFrame; } CloudWork;
-void mapGrpSetOffScreen(const char* name, const char* offscreen);
-void mapGrpClearOffScreen(const char* name);
-static CloudWork* cloud;
-static u8 cloud_once_flag;
-static void _mapsetofs_all(CloudWork* wp);
-static void _mapclsofs_all(CloudWork* wp);
+static CloudMapWork* cloud;
+static s8 cloud_once_flag;
+static void _mapsetofs_all(CloudMapWork* wp);
+static void _mapclsofs_all(CloudMapWork* wp);
 static BOOL _get_boundingbox(const char* name, s32* x, s32* y, s32* w, s32* h);
-static void _img_alloc_capture(const char* a0, s32 a1, const char* a2, s32 a3, s32 a4, s32 a5, s32 a6, s32 a7);
+static void _img_alloc_capture(const char* name, s32 shadowId, const char* offscreenName, s32 allocMode, s32 x, s32 y, s32 w, s32 h);
 
-USER_FUNC(evt_bero_get_info);
-USER_FUNC(evt_cam3d_evt_set);
-USER_FUNC(evt_cam_shake);
 static USER_FUNC(evt_cloud_main);
-USER_FUNC(evt_eff);
-USER_FUNC(evt_eff_fukidashi);
-USER_FUNC(evt_hitobj_onoff);
-USER_FUNC(evt_iri_16_cloud_ent);
-USER_FUNC(evt_iri_16_cloud_init);
-USER_FUNC(evt_item_entry);
-USER_FUNC(evt_item_get_item);
-USER_FUNC(evt_item_get_item_end_wait);
-USER_FUNC(evt_item_get_position);
-USER_FUNC(evt_item_set_position);
-USER_FUNC(evt_light_charalight_all_onoff);
-USER_FUNC(evt_light_mario_lighting_onoff);
-USER_FUNC(evt_light_npc_lighting_onoff);
-USER_FUNC(evt_light_party_lighting_onoff);
-USER_FUNC(evt_map_fog_onoff);
-USER_FUNC(evt_map_get_fog);
-USER_FUNC(evt_map_set_fog);
-USER_FUNC(evt_mapobj_flag_onoff);
-USER_FUNC(evt_mapobj_rotate);
-USER_FUNC(evt_mario_get_party);
-USER_FUNC(evt_mario_get_pos);
-USER_FUNC(evt_mario_goodbye_party);
-USER_FUNC(evt_mario_hello_party);
-USER_FUNC(evt_mario_key_onoff);
-USER_FUNC(evt_mario_mov_pos2);
-USER_FUNC(evt_mario_normalize);
-USER_FUNC(evt_mario_set_dir);
-USER_FUNC(evt_mario_set_pos);
-USER_FUNC(evt_mario_set_pose);
-USER_FUNC(evt_mobj_get_position);
-USER_FUNC(evt_mobj_itembox);
-USER_FUNC(evt_mobj_wait_animation_end);
-USER_FUNC(evt_msg_print);
-USER_FUNC(evt_msg_print_party);
-USER_FUNC(evt_msg_toge);
-USER_FUNC(evt_npc_battle_start);
-USER_FUNC(evt_npc_change_fbat_mode);
-USER_FUNC(evt_npc_delete);
-USER_FUNC(evt_npc_flag_onoff);
-USER_FUNC(evt_npc_get_position);
-USER_FUNC(evt_npc_jump_position_nohit);
-USER_FUNC(evt_npc_move_position);
-USER_FUNC(evt_npc_pera_onoff);
-USER_FUNC(evt_npc_set_anim);
-USER_FUNC(evt_npc_set_battle_info);
-USER_FUNC(evt_npc_set_position);
-USER_FUNC(evt_npc_set_ry);
-USER_FUNC(evt_npc_set_scale);
-USER_FUNC(evt_npc_status_onoff);
-USER_FUNC(evt_npc_wait_anim);
-USER_FUNC(evt_npc_wait_battle_end);
-USER_FUNC(evt_party_move_pos2);
-USER_FUNC(evt_party_set_dir);
-USER_FUNC(evt_party_set_pos);
-USER_FUNC(evt_party_stop);
-USER_FUNC(evt_run_case_evt);
-USER_FUNC(evt_seq_wait);
-USER_FUNC(evt_snd_bgmoff);
-USER_FUNC(evt_snd_bgmoff_f);
-USER_FUNC(evt_snd_bgmon);
-USER_FUNC(evt_snd_envoff_f);
-USER_FUNC(evt_snd_envon);
-USER_FUNC(evt_snd_set_rev_mode);
-USER_FUNC(evt_snd_sfx_vol);
-USER_FUNC(evt_snd_sfxoff);
-USER_FUNC(evt_snd_sfxon);
-USER_FUNC(evt_snd_sfxon_3d);
-USER_FUNC(evt_snd_sfxon_3d_ex);
-USER_FUNC(evt_sub_intpl_get_value);
-USER_FUNC(evt_sub_intpl_init);
-USER_FUNC(evt_sub_intpl_msec_get_value);
-USER_FUNC(evt_sub_intpl_msec_init);
 static USER_FUNC(gonbaba_wait_landon);
-static void _img_alloc_capture(const char* a0, s32 a1, const char* a2, s32 a3, s32 a4, s32 a5, s32 a6, s32 a7);
-static BOOL _get_boundingbox(const char* name, s32* x, s32* y, s32* w, s32* h);
-static void _mapsetofs_all(CloudWork* wp);
-static void _mapclsofs_all(CloudWork* wp);
 
-f32 fd_gon_11_negone_one_374[2] __attribute__((aligned(8)));
-f32 fd_gon_11_neg_one_382;
-f32 fd_gon_11___local_PI_383;
-f32 fd_gon_11___local_3PIO2_385;
-f32 fd_gon_11_one_negone_373[2] __attribute__((aligned(8)));
-f32 fd_gon_11___local_PIO2_384;
-f32 fd_gon_11_one_381;
-f32 fd_gon_11_negone_one_360[2] __attribute__((aligned(8)));
-f32 fd_gon_11_neg_one_365;
-f32 fd_gon_11___local_PI_366;
-f32 fd_gon_11___local_3PIO2_368;
-f32 fd_gon_11_one_negone_359[2] __attribute__((aligned(8)));
-f32 fd_gon_11___local_PIO2_367;
-f32 fd_gon_11_one_364;
-EvtWord evt_sound[8];
-static EvtWord door01_close[22];
-static EvtWord door01_open[22];
+extern EvtWord evt_sound[];
 static BeroEntry bero_entry_data[2];
-static EvtWord gonbaba_standup_shake[23];
-static EvtWord gonbaba_fog_change[87];
-static EvtWord gonbaba_down_shake[83];
-EvtWord gonbaba_event[1410];
+extern EvtWord gonbaba_event[];
 static const char* capturemap[2];
 static Vec v_list[8];
-static EvtWord evt_cloud_main_evt[4];
-EvtWord iri_16_box_evt[33];
-EvtWord iri_16_cloud_evt[36];
-EvtWord iri_16_touch_evt[2];
-static EvtWord iri_16_init[57];
-EvtWord gon_11_init_evt[101];
+extern EvtWord iri_16_box_evt[];
+extern EvtWord iri_16_cloud_evt[];
+extern EvtWord iri_16_touch_evt[];
 
-f32 fd_gon_11_negone_one_374[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_gon_11_neg_one_382 = -1.0f;
-
-f32 fd_gon_11___local_PI_383 = 3.1415927f;
-
-f32 fd_gon_11___local_3PIO2_385 = 4.712389f;
-
-f32 fd_gon_11_one_negone_373[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_gon_11___local_PIO2_384 = 1.5707964f;
-
-f32 fd_gon_11_one_381 = 1.0f;
-
-f32 fd_gon_11_negone_one_360[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_gon_11_neg_one_365 = -1.0f;
-
-f32 fd_gon_11___local_PI_366 = 3.1415927f;
-
-f32 fd_gon_11___local_3PIO2_368 = 4.712389f;
-
-f32 fd_gon_11_one_negone_359[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_gon_11___local_PIO2_367 = 1.5707964f;
-
-f32 fd_gon_11_one_364 = 1.0f;
-
+/** Exit event of the lair door: fades out the cutscene music on channel 1 and returns 0 to the door code. */
 EVT_BEGIN(evt_sound)
-    CALL(evt_snd_bgmoff, 513)
+    CALL(evt_snd_bgmoff, PSND_FADE_OUT | PSND_CH(1))
     SET_VALUE(LW(0), 0)
     RETURN
 EVT_END()
 
+/**
+ * Door animation callback, closing for the w_bero exit to gon_10:
+ * rotates map objects "door03" and "door04" about Y by 0.389 and -0.389 times the value in LW(0),
+ * so the two leaves swing opposite ways.
+ */
 static EVT_BEGIN(door01_close)
     MULTIPLY_FLOAT(LW(0), FLOAT(0.38867188f))
     CALL(evt_mapobj_rotate, 1, STRING("door03"), 0, LW(0), 0)
@@ -188,6 +82,11 @@ static EVT_BEGIN(door01_close)
     RETURN
 EVT_END()
 
+/**
+ * Door animation callback, opening for the w_bero exit to gon_10:
+ * rotates map objects "door03" and "door04" about Y by -0.389 and 0.389 times the value in LW(0),
+ * so the two leaves swing opposite ways.
+ */
 static EVT_BEGIN(door01_open)
     MULTIPLY_FLOAT(LW(0), FLOAT(-0.38867188f))
     CALL(evt_mapobj_rotate, 1, STRING("door03"), 0, LW(0), 0)
@@ -196,13 +95,14 @@ static EVT_BEGIN(door01_open)
     RETURN
 EVT_END()
 
+/** Exits (beros) of this room: w_bero to gon_10. */
 static BeroEntry bero_entry_data[] = {
     {
         "w_bero", // hitName
         1, // type
         13, // sfxId
-        20000, // directionId
-        100000, // centerPosition
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         NULL, // enterEvent
@@ -218,11 +118,16 @@ static BeroEntry bero_entry_data[] = {
     {0},
 };
 
+/** Script helper: blocks until Hooktail (ゴンババ) has touched the ground. */
 static USER_FUNC(gonbaba_wait_landon) {
     // ゴンババ
-    return npcNameToPtr("\203S\203\223\203o\203o")->groundHit ? EVT_RETURN_DONE : EVT_RETURN_BLOCK;
+    return npcNameToPtr("ゴンババ")->groundHit ? EVT_RETURN_DONE : EVT_RETURN_BLOCK;
 }
 
+/**
+ * Waits 3.7 seconds into the Hooktail entrance cutscene,
+ * then plays SFX_STG1_GNB_STEP1 at her position and shakes the camera when she stands up.
+ */
 static EVT_BEGIN(gonbaba_standup_shake)
     WAIT_MS(3700)
     CALL(evt_npc_get_position, STRING("ゴンババ"), LW(0), LW(1), LW(2))
@@ -231,6 +136,10 @@ static EVT_BEGIN(gonbaba_standup_shake)
     RETURN
 EVT_END()
 
+/**
+ * Fog fade during Hooktail's entrance: over 8 seconds it moves the map fog's two distance parameters outward by
+ * 400 and 1600 units from their current values.
+ */
 static EVT_BEGIN(gonbaba_fog_change)
     CALL(evt_map_get_fog, LW(4), LW(5), LW(6), LW(7), LW(8), LW(9))
     SET_VALUE(GW(0), LW(5))
@@ -268,6 +177,11 @@ static EVT_BEGIN(gonbaba_fog_change)
     RETURN
 EVT_END()
 
+/**
+ * Shake for Hooktail collapsing: plays SFX_STG1_GNB_DOWN1
+ * and DOWN2 at her position (the second fading out over 10 seconds) while the camera shakes strongly and
+ * then settles to a small rumble.
+ */
 static EVT_BEGIN(gonbaba_down_shake)
     CALL(evt_npc_get_position, STRING("ゴンババ"), LW(0), LW(1), LW(2))
     CALL(evt_snd_sfxon, STRING("SFX_STG1_GNB_DOWN1"), 0)
@@ -297,28 +211,40 @@ static EVT_BEGIN(gonbaba_down_shake)
     RETURN
 EVT_END()
 
+/**
+ * The Hooktail boss scene, run when Mario enters the lair:
+ * Mario walks in, Hooktail wakes and speaks (stg1_gon_19 to 20_2) while the fog thickens and the floor shakes,
+ * then the boss battle starts.
+ * After the battle (or at once when the intro is skipped) Hooktail collapses,
+ * Koops' father (ノコタロウ父) appears and talks with the partner and Mario (stg1_gon_33_01 to 33_17),
+ * and the story moves to STORY_STG1_16_HOOKTAIL and then STORY_STG1_17_FATHER_AND_SON_REUNITED.
+ */
 EVT_BEGIN(gonbaba_event)
+    // Hooktail Castle's last room: fog fills it and Mario loses control.
     CALL(evt_hitobj_onoff, STRING("baba"), 1, 0)
     CALL(evt_npc_pera_onoff, STRING("ゴンババ"), 0)
-    CALL(evt_npc_flag_onoff, 1, STRING("ゴンババ"), 512)
+    CALL(evt_npc_flag_onoff, 1, STRING("ゴンババ"), NPC_FLAG_TALK_ANIM)
     CALL(evt_map_set_fog, 2, 400, 1000, 0, 10, 40)
     CALL(evt_map_fog_onoff, 1)
     CALL(evt_mario_key_onoff, 0)
     CALL(evt_mario_normalize)
-    IF_INT_EQUAL(GSWF(1498), 1)
+    // If the intro was already seen, skip straight to the aftermath.
+    IF_INT_EQUAL(GSWF(GSWF_GON11_HOOKTAIL_INTRO_SKIP), 1)
         GOTO(100)
     END_IF
+    // Mario and his partner enter the room.
     CALL(evt_cam3d_evt_set, -480, 150, 459, -480, 67, -13, 0, 11)
     CALL(evt_mario_set_pos, -560, 10, 0)
     CALL(evt_party_set_pos, 0, -600, 10, 0)
     CALL(evt_seq_wait, 2)
+    // The door slams shut behind them and the camera shakes.
     BEGIN_INLINE_EVENT
         SET_VALUE(LW(1), 0)
-        SPAWN_EVENT(PTR(bero_close_door_play_se))
+        SPAWN_EVENT(bero_close_door_play_se)
         CALL(evt_sub_intpl_msec_init, 11, 180, 0, 500)
         LOOP(0)
             CALL(evt_sub_intpl_msec_get_value)
-            CALL_CHILD(PTR(door01_close))
+            CALL_CHILD(door01_close)
             IF_INT_EQUAL(LW(1), 0)
                 BREAK_LOOP
             END_IF
@@ -330,8 +256,9 @@ EVT_BEGIN(gonbaba_event)
         CALL(evt_party_move_pos2, 0, -490, 0, FLOAT(120.0f))
     END_INLINE_EVENT
     CALL(evt_mario_mov_pos2, -450, 0, FLOAT(120.0f))
-    SPAWN_EVENT(PTR(bero_case_entry))
+    SPAWN_EVENT(bero_case_entry)
     WAIT_MS(1300)
+    // A voice from the dark asks who dares approach; Mario jumps in surprise.
     CALL(evt_msg_print, 0, STRING("stg1_gon_19"), 0, 0)
     CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
     CALL(evt_snd_sfxon_3d, STRING("SFX_VOICE_MARIO_SURPRISED2_3"), LW(0), LW(1), LW(2), 0)
@@ -340,22 +267,24 @@ EVT_BEGIN(gonbaba_event)
     CALL(evt_mario_set_pose, STRING("M_N_5B"))
     WAIT_MS(2000)
     CALL(evt_mario_set_pose, STRING("M_S_1"))
-    CALL(evt_snd_bgmon, 512, STRING("BGM_EVT_GONBABA_FLY2"))
+    // Hooktail roars and stands up, the fog changes and the battle music begins.
+    CALL(evt_snd_bgmon, PSND_FADE_OUT, STRING("BGM_EVT_GONBABA_FLY2"))
     BEGIN_INLINE_EVENT
         CALL(evt_snd_sfxon_3d_ex, STRING("SFX_STG1_GNB_ROAR2"), -900, 30, 490, 255, 255, 4300, 16, 0)
         CALL(evt_npc_set_anim, STRING("ゴンババ"), STRING("GNB_U_1"))
         CALL(evt_npc_wait_anim, STRING("ゴンババ"), FLOAT(1.0f))
         CALL(evt_npc_set_anim, STRING("ゴンババ"), STRING("GNB_S_1"))
     END_INLINE_EVENT
-    SPAWN_EVENT(PTR(gonbaba_standup_shake))
-    SPAWN_EVENT(PTR(gonbaba_fog_change))
+    SPAWN_EVENT(gonbaba_standup_shake)
+    SPAWN_EVENT(gonbaba_fog_change)
     CALL(evt_cam3d_evt_set, -900, 31, 490, -205, 175, 20, 4500, 11)
     BEGIN_INLINE_EVENT
         WAIT_MS(1800)
-        CALL(evt_mapobj_flag_onoff, 1, 1, STRING("door10"), 1)
-        CALL(evt_mapobj_flag_onoff, 1, 1, STRING("kesu"), 1)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("door10"), MAPOBJ_FLAG_HIDE)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("kesu"), MAPOBJ_FLAG_HIDE)
     END_INLINE_EVENT
     WAIT_MS(4000)
+    // The camera trembles as Hooktail towers over them.
     LOOP(30)
         CALL(evt_cam3d_evt_set, -890, 33, 483, -205, 175, 20, 15, 11)
         WAIT_MS(15)
@@ -366,12 +295,13 @@ EVT_BEGIN(gonbaba_event)
     SET_VALUE(LW(0), -246)
     SET_VALUE(LW(1), 146)
     SET_VALUE(LW(2), 43)
+    // Hooktail taunts them about the strange-garbed one who came before, then threatens to eat them.
     CALL(evt_msg_toge, 2, LW(0), LW(1), LW(2))
     CALL(evt_msg_print, 0, STRING("stg1_gon_19_2"), 0, STRING("ゴンババ"))
     CALL(evt_cam3d_evt_set, -545, -14, 417, -225, 227, 12, 0, 11)
     WAIT_FRAMES(1)
-    CALL(evt_mapobj_flag_onoff, 1, 0, STRING("door10"), 1)
-    CALL(evt_mapobj_flag_onoff, 1, 0, STRING("kesu"), 1)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("door10"), MAPOBJ_FLAG_HIDE)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("kesu"), MAPOBJ_FLAG_HIDE)
     WAIT_MS(1000)
     SET_VALUE(LW(0), -246)
     SET_VALUE(LW(1), 146)
@@ -388,11 +318,13 @@ EVT_BEGIN(gonbaba_event)
     WAIT_MS(500)
     CALL(evt_cam3d_evt_set, -325, 30, 650, -350, 125, -33, 3000, 11)
     WAIT_MS(2500)
+    // The battle with Hooktail starts.
     CALL(evt_npc_set_battle_info, STRING("ゴンババ"), 20)
     CALL(evt_npc_battle_start, STRING("ゴンババ"))
     CALL(evt_npc_wait_battle_end)
+    // After the battle: lights and fog are reset and Hooktail is lying on the floor, groaning.
     LABEL(100)
-    CALL(evt_snd_bgmoff, 512)
+    CALL(evt_snd_bgmoff, PSND_FADE_OUT)
     CALL(evt_map_fog_onoff, 0)
     CALL(evt_hitobj_onoff, STRING("baba"), 1, 1)
     CALL(evt_cam3d_evt_set, 0, 30, 842, 0, 135, 150, 0, 11)
@@ -407,10 +339,10 @@ EVT_BEGIN(gonbaba_event)
     CALL(evt_party_set_pos, 0, -25, 10, 150)
     CALL(evt_mario_set_dir, 270, 0, 0)
     CALL(evt_party_set_dir, 0, 90, -1)
-    SPAWN_EVENT(PTR(gonbaba_down_shake))
+    SPAWN_EVENT(gonbaba_down_shake)
     BEGIN_INLINE_EVENT
         WAIT_MS(300)
-        CALL(evt_npc_flag_onoff, 1, STRING("ゴンババ"), 131088)
+        CALL(evt_npc_flag_onoff, 1, STRING("ゴンババ"), NPC_FLAG_JUMPING | NPC_FLAG_LAND_ON_FLOOR)
         CALL(gonbaba_wait_landon)
         CALL(evt_npc_set_anim, STRING("ゴンババ"), STRING("GNB_H_2"))
     END_INLINE_EVENT
@@ -431,6 +363,7 @@ EVT_BEGIN(gonbaba_event)
             WAIT_MS(2333)
         END_LOOP
     END_INLINE_EVENT
+    // The partner is worried about Hooktail, and Mario nods.
     CALL(evt_msg_print_party, STRING("stg1_gon_33_01"))
     CALL(evt_party_set_dir, 0, 270, -1)
     WAIT_MS(800)
@@ -441,6 +374,7 @@ EVT_BEGIN(gonbaba_event)
     CALL(evt_snd_sfxon_3d, STRING("SFX_VOICE_MARIO_NOD1_2"), LW(0), LW(1), LW(2), 0)
     CALL(evt_mario_set_pose, STRING("M_N_2"))
     WAIT_MS(500)
+    // Mario hears a voice and notices something moving in Hooktail.
     CALL(evt_msg_toge, 2, 220, 160, -160)
     CALL(evt_msg_print, 0, STRING("stg1_gon_33_03"), 0, 0)
     CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
@@ -452,6 +386,7 @@ EVT_BEGIN(gonbaba_event)
     CALL(evt_cam3d_evt_set, 255, 220, 648, 255, 170, 150, 1000, 11)
     WAIT_MS(1000)
     DELETE_EVENT(LW(10))
+    // Muffled sounds come from inside Hooktail as someone fights his way out.
     BEGIN_INLINE_EVENT
         CALL(evt_npc_get_position, STRING("ゴンババ"), LW(0), LW(1), LW(2))
         CALL(evt_snd_sfxon_3d, STRING("SFX_STG1_NOKOPAPA_OUT1_1"), LW(0), LW(1), LW(2), 0)
@@ -467,9 +402,10 @@ EVT_BEGIN(gonbaba_event)
     CALL(evt_npc_set_anim, STRING("ゴンババ"), STRING("GNB_H_4"))
     WAIT_MS(2750)
     SET_VALUE(GW(10), 30)
+    // Mr. Koopa spins out of Hooktail's mouth and lands in the room.
     BEGIN_INLINE_EVENT_GET_ID(LW(10))
         CALL(evt_npc_set_anim, STRING("ノコタロウ父"), STRING("NKP_Z_2"))
-        CALL(evt_npc_flag_onoff, 0, STRING("ノコタロウ父"), 1024)
+        CALL(evt_npc_flag_onoff, 0, STRING("ノコタロウ父"), NPC_FLAG_MOVE_ANIM)
         CALL(evt_npc_pera_onoff, STRING("ノコタロウ父"), 0)
         SET_VALUE(LW(0), 0)
         LOOP(0)
@@ -517,25 +453,28 @@ EVT_BEGIN(gonbaba_event)
     CALL(evt_npc_get_position, STRING("ノコタロウ父"), LW(0), LW(1), LW(2))
     CALL(evt_npc_jump_position_nohit, STRING("ノコタロウ父"), LW(0), LW(1), LW(2), 300, 50)
     CALL(evt_npc_pera_onoff, STRING("ノコタロウ父"), 1)
-    CALL(evt_npc_flag_onoff, 1, STRING("ノコタロウ父"), 1024)
+    CALL(evt_npc_flag_onoff, 1, STRING("ノコタロウ父"), NPC_FLAG_MOVE_ANIM)
     WAIT_MS(300)
+    // He shouts that he is finally free.
     CALL(evt_msg_print, 0, STRING("stg1_gon_33_04"), 0, STRING("ノコタロウ父"))
+    // Koops is swapped in as the partner if someone else was along.
     CALL(evt_mario_get_party, LW(0))
     IF_INT_NOT_EQUAL(LW(0), 2)
         CALL(evt_mario_goodbye_party, 0)
         CALL(evt_mario_hello_party, 0, 2)
         CALL(evt_party_stop, 0)
-        SET_VALUE(GSWF(1500), 1)
+        SET_VALUE(GSWF(GSWF_GON11_KOOPS_SWAPPED_IN), 1)
     END_IF
     CALL(evt_mario_set_pos, 25, 10, 200)
     CALL(evt_party_set_pos, 0, -25, 10, 200)
-    IF_INT_EQUAL(GSWF(1500), 1)
+    IF_INT_EQUAL(GSWF(GSWF_GON11_KOOPS_SWAPPED_IN), 1)
         CALL(evt_npc_set_position, STRING("クリスチーヌ"), -10, 10, 160)
-        CALL(evt_npc_flag_onoff, 1, STRING("クリスチーヌ"), 32768)
+        CALL(evt_npc_flag_onoff, 1, STRING("クリスチーヌ"), NPC_FLAG_INSTANT_TURN)
         CALL(evt_npc_set_ry, STRING("クリスチーヌ"), 90)
         CALL(evt_npc_status_onoff, 1, STRING("クリスチーヌ"), 2)
     END_IF
     WAIT_MS(500)
+    // Koops recognizes his father and the two have a tearful reunion.
     CALL(evt_msg_print, 0, STRING("stg1_gon_33_05"), 0, STRING("party"))
     WAIT_MS(500)
     BEGIN_INLINE_EVENT
@@ -547,9 +486,10 @@ EVT_BEGIN(gonbaba_event)
     CALL(evt_cam3d_evt_set, 0, 75, 450, 0, 50, 200, 0, 11)
     WAIT_FRAMES(1)
     WAIT_MS(500)
-    CALL(evt_snd_bgmoff, 1024)
-    CALL(evt_snd_bgmon, 1, STRING("BGM_EVT_NOKO_SAIKAI1"))
+    CALL(evt_snd_bgmoff, PSND_FADE_HOLD)
+    CALL(evt_snd_bgmon, PSND_CH(1), STRING("BGM_EVT_NOKO_SAIKAI1"))
     CALL(evt_msg_print, 0, STRING("stg1_gon_33_07"), 0, STRING("party"))
+    // Koops runs to his father while they chat about the ten years apart.
     CALL(evt_cam3d_evt_set, 240, 75, 450, 240, 50, 200, 1000, 11)
     SET_VALUE(GF(0), 0)
     BEGIN_INLINE_EVENT
@@ -565,7 +505,7 @@ EVT_BEGIN(gonbaba_event)
         WAIT_FRAMES(1)
     END_LOOP
     WAIT_MS(500)
-    IF_INT_EQUAL(GSWF(1500), 1)
+    IF_INT_EQUAL(GSWF(GSWF_GON11_KOOPS_SWAPPED_IN), 1)
         BEGIN_INLINE_EVENT
             CALL(evt_npc_move_position, STRING("クリスチーヌ"), 150, 200, 0, FLOAT(80.0f), 1)
         END_INLINE_EVENT
@@ -590,8 +530,9 @@ EVT_BEGIN(gonbaba_event)
     CALL(evt_msg_print, 0, STRING("stg1_gon_33_14"), 0, STRING("ノコタロウ父"))
     CALL(evt_cam3d_evt_set, 245, 75, 450, 245, 50, 200, 500, 11)
     WAIT_MS(500)
+    // The father fishes the Crystal Star out of his pocket: he kept it from Hooktail's belly.
     CALL(evt_npc_set_anim, STRING("ノコタロウ父"), STRING("NKP_A_1"))
-    CALL(evt_item_entry, STRING("stone"), 114, 245, 45, 220, 17, -1, 0)
+    CALL(evt_item_entry, STRING("stone"), ITEM_DIAMOND_STAR, 245, 45, 220, ITEM_ENTRY_FIXED_NO_TOUCH, -1, 0)
     WAIT_MS(500)
     CALL(evt_item_get_position, STRING("stone"), LW(0), LW(1), LW(2))
     SET_FLOAT_VALUE(LW(3), FLOAT(-1.0f))
@@ -602,6 +543,7 @@ EVT_BEGIN(gonbaba_event)
         WAIT_MS(1000)
         CALL(evt_npc_set_anim, STRING("ノコタロウ父"), STRING("NKP_S_1"))
     END_INLINE_EVENT
+    // The star bounces on the floor.
     LOOP(0)
         ADD_FLOAT(LW(1), LW(3))
         ADD_FLOAT(LW(3), LW(4))
@@ -612,7 +554,7 @@ EVT_BEGIN(gonbaba_event)
                 MULTIPLY_FLOAT(LW(3), FLOAT(-0.69921875f))
                 SET_FLOAT_VALUE(LW(1), FLOAT(10.0f))
                 SET_VALUE(LF(0), 1)
-                ELSE
+            ELSE
                 CALL(evt_snd_sfxon_3d, STRING("SFX_EVT_STARSTONE_JUMP1"), LW(0), LW(1), LW(2), 0)
                 BREAK_LOOP
             END_IF
@@ -621,6 +563,7 @@ EVT_BEGIN(gonbaba_event)
     END_LOOP
     CALL(evt_item_set_position, STRING("stone"), LW(0), FLOAT(10.0f), LW(2))
     CALL(evt_npc_set_anim, STRING("ノコタロウ父"), STRING("NKP_S_1"))
+    // He insists Mario takes it as a friend of Koops.
     CALL(evt_msg_print, 0, STRING("stg1_gon_33_15"), 0, STRING("party"))
     CALL(evt_msg_print, 0, STRING("stg1_gon_33_16"), 0, STRING("ノコタロウ父"))
     CALL(evt_cam3d_evt_set, 190, 75, 450, 190, 50, 200, 500, 11)
@@ -638,28 +581,41 @@ EVT_BEGIN(gonbaba_event)
     BEGIN_INLINE_EVENT
         CALL(evt_party_set_dir, 0, 90, -1)
     END_INLINE_EVENT
+    // Mario and the partner walk over; the music fades.
     CALL(evt_cam3d_evt_set, 245, 75, 450, 245, 50, 245, 2000, 11)
-    CALL(evt_snd_bgmoff_f, 512, 2000)
+    CALL(evt_snd_bgmoff_f, PSND_FADE_OUT, 2000)
     BEGIN_INLINE_EVENT
         CALL(evt_mario_mov_pos2, 245, 215, FLOAT(30.0f))
     END_INLINE_EVENT
     WAIT_MS(2000)
-    SET_VALUE(GSW(0), 55)
-    SET_VALUE(GSW(0), 56)
-    CALL(evt_snd_bgmoff_f, 512, 2000)
-    CALL(evt_snd_bgmoff, 513)
-    CALL(evt_snd_envoff_f, 512, 2000)
+    // Hooktail is defeated, father and son are reunited: the story advances and the Diamond Star is awarded.
+    SET_VALUE(GSW(GSW_STORY_PROGRESS), STORY_STG1_16_HOOKTAIL)
+    SET_VALUE(GSW(GSW_STORY_PROGRESS), STORY_STG1_17_FATHER_AND_SON_REUNITED)
+#if VERSION <= VERSION_DEMO_JP
+    CALL(evt_snd_bgmoff, PSND_FADE_OUT)
+#else
+    CALL(evt_snd_bgmoff_f, PSND_FADE_OUT, 2000)
+#endif
+    CALL(evt_snd_bgmoff, PSND_FADE_OUT | PSND_CH(1))
+#if VERSION >= VERSION_JP
+    CALL(evt_snd_envoff_f, PSND_FADE_OUT, 2000)
+#endif
     SET_VALUE(LW(0), 1)
     SET_VALUE(LW(1), STRING("stone"))
-    CALL_CHILD(PTR(evt_sub_starstone))
+    CALL_CHILD(evt_sub_starstone)
     RETURN
 EVT_END()
 
+/**
+ * Map group that the dark cloud of Trouble Center request 16 (evt_iri_16_cloud_ent) draws into its offscreen
+ * buffer; the cloud's paper animation is a capture of it. An empty string ends the list.
+ */
 static const char* capturemap[] = {
     "gon_11_S",
     "\0",
 };
 
+/** Corners of a box, as offsets from its centre, that a script helper projects to the screen. */
 static Vec v_list[] = {
     {-50.0f, 100.0f, 50.0f},
     {50.0f, 100.0f, 50.0f},
@@ -671,27 +627,40 @@ static Vec v_list[] = {
     {-50.0f, 0.0f, -50.0f},
 };
 
+/**
+ * Event script: runs the cloud-blowing mechanism (evt_cloud_main) of las_14,
+ * the room where Flurrie's gust uncovers the way.
+ */
 static EVT_BEGIN(evt_cloud_main_evt)
     CALL(evt_cloud_main)
     RETURN
 EVT_END()
 
-static void _img_alloc_capture(const char* a0, s32 a1, const char* a2, s32 a3, s32 a4, s32 a5, s32 a6, s32 a7) {
+/**
+ * Calls evt_img_alloc_capture directly from C by building a throwaway event with the eight arguments;
+ * used so the cloud effect can capture the screen area it needs.
+ */
+static void _img_alloc_capture(const char* name, s32 shadowId, const char* offscreenName, s32 allocMode, s32 x, s32 y, s32 w, s32 h) {
     EventEntry event;
     EvtWord args[10];
 
     event.args = args;
-    args[0] = (EvtWord)a0;
-    args[1] = a1;
-    args[2] = (EvtWord)a2;
-    args[3] = a3;
-    args[4] = a4;
-    args[5] = a5;
-    args[6] = a6;
-    args[7] = a7;
+    args[0] = (EvtWord)name;
+    args[1] = shadowId;
+    args[2] = (EvtWord)offscreenName;
+    args[3] = allocMode;
+    args[4] = x;
+    args[5] = y;
+    args[6] = w;
+    args[7] = h;
     evt_img_alloc_capture(&event, TRUE);
 }
 
+/**
+ * Projects the eight corners of a box (v_list) around the named hit object to screen coordinates
+ * and returns their bounding rectangle (x, y, width, height) in image space, clipped to the 608 x 480 screen.
+ * Used to size the capture image for the dark cloud.
+ */
 static BOOL _get_boundingbox(const char* name, s32* x, s32* y, s32* w, s32* h) {
     Vec pos;
     Vec screen;
@@ -751,7 +720,11 @@ static BOOL _get_boundingbox(const char* name, s32* x, s32* y, s32* w, s32* h) {
     return TRUE;
 }
 
-static void _mapsetofs_all(CloudWork* wp) {
+/**
+ * Sends every map group of the cloud effect (up to 8) to its offscreen buffer,
+ * so the scenery under the cloud can be drawn into it.
+ */
+static void _mapsetofs_all(CloudMapWork* wp) {
     s32 i;
 
     for (i = 0; i < 8; i++) {
@@ -762,7 +735,8 @@ static void _mapsetofs_all(CloudWork* wp) {
     }
 }
 
-static void _mapclsofs_all(CloudWork* wp) {
+/** Undoes _mapsetofs_all: returns the cloud effect's map groups to normal drawing. */
+static void _mapclsofs_all(CloudMapWork* wp) {
     s32 i;
 
     for (i = 0; i < 8; i++) {
@@ -773,203 +747,181 @@ static void _mapclsofs_all(CloudWork* wp) {
     }
 }
 
+// FAKE: kept out of line (removal tested: the code differs).
 #pragma dont_inline on
-static s32 evt_cloud_main(EventEntry *event, BOOL isFirstCall)
-{
-  HitEntry *hit0;
-  HitEntry *hit1;
-  HitEntry *hit2;
-  HitEntry *hit3;
-  MarioWork *mario;
-  CloudWork *wp;
-  PartyEntry *party;
-  PartyEntry *ptmp;
-  HitEntry *hit;
-  OffscreenEntry *off;
-  ImageEntry *img;
-  BOOL inBattle;
-  wp = (CloudWork *) event->lwData[0];
-  inBattle = gp->inBattle != 0;
-  mario = marioGetPtr();
-  ptmp = partyGetPtr(0);
-  if (isFirstCall)
-  {
-    return 0;
-  }
-  if (ptmp == ((void *) 0))
-  {
-    return 0;
-  }
-  hit0 = (HitEntry *) cloudGetHitBreathout(0);
-  hit1 = (HitEntry *) cloudGetHitBreathout(1);
-  hit2 = (HitEntry *) cloudGetHitBreathout(2);
-  hit3 = (HitEntry *) cloudGetHitBreathout(3);
-  switch (wp->state)
-  {
-    case 0:
-      if (((s32) (cloud_once_flag & 0xFFFFFFFFFFFFFFFFu)) == 1) // FAKE: no-op 64-bit mask; needed for 100% (plain cloud_once_flag == 1 gives 97.9-98.1)
-    {
-      break;
+/**
+ * Running script of one dark cloud entry: waits for Flurrie's breath to touch the cloud's hit area,
+ * then builds a paper-cloud image of the scenery under it and counts how long the breath keeps hitting it;
+ * when the count reaches the limit the cloud plays its blow-away animation,
+ * runs the end event (iri_16_cloud_evt) and the entry is released. If the breath stops first the cloud resets.
+ */
+static USER_FUNC(evt_cloud_main) {
+    CloudMapWork* wp = (CloudMapWork*)event->lwData[0];
+    s32 group = gp->inBattle != 0;
+    MarioWork* mario = marioGetPtr();
+    PartyEntry* party = partyGetPtr(0);
+    HitEntry* hit0;
+    HitEntry* hit1;
+    HitEntry* hit2;
+    HitEntry* hit3;
+    HitEntry* hit;
+    OffscreenEntry* off;
+    ImageEntry* img;
+
+    if (isFirstCall) {
+        return EVT_RETURN_BLOCK;
     }
-      hit = hitNameToPtr(wp->hitName);
-      if ((((hit0 == hit) || (hit1 == hit)) || (hit2 == hit)) || (hit3 == hit))
-    {
-      wp->state++;
+    if (party == NULL) {
+        return EVT_RETURN_BLOCK;
     }
-      wp->counter = 0;
-      break;
-
-    case 1:
-      if ((mario->displayDirectionTarget > 90.0f) && ((mario->displayDirectionTarget <= 270.0f) ^ 0))
-    {
-      strcpy(wp->animName, "P_oof_cloud_2");
+#if VERSION <= VERSION_DEMO_JP
+    if (party->currentMemberId != PARTY_MEMBER_FLURRIE) {
+        return EVT_RETURN_BLOCK;
     }
-    else
-    {
-      strcpy(wp->animName, "P_oof_cloud_1");
+#endif
+    hit0 = (HitEntry*)cloudGetHitBreathout(0);
+    hit1 = (HitEntry*)cloudGetHitBreathout(1);
+    hit2 = (HitEntry*)cloudGetHitBreathout(2);
+    hit3 = (HitEntry*)cloudGetHitBreathout(3);
+    switch (wp->state) {
+        case 0:
+            if (cloud_once_flag == 1) {
+                break;
+            }
+            hit = hitNameToPtr(wp->hitName);
+            if (hit0 == hit || hit1 == hit || hit2 == hit || hit3 == hit) {
+                wp->state++;
+            }
+            wp->counter = 0;
+            break;
+        case 1:
+            if (mario->displayDirectionTarget > 90.0f && mario->displayDirectionTarget <= 270.0f) {
+                strcpy(wp->animName, "P_oof_cloud_2");
+            } else {
+                strcpy(wp->animName, "P_oof_cloud_1");
+            }
+            if (!animGroupBaseAsync(wp->animName, group, NULL)) {
+                break;
+            }
+            cloud_once_flag = 1;
+            animPaperPoseEntry(wp->animName, group);
+            offscreenEntry(wp->offscreenName);
+            off = offscreenNameToPtr(wp->offscreenName);
+#if VERSION <= VERSION_DEMO_JP
+            off->texFmt = off->copyFmt = 6;
+#else
+            off->texFmt = off->copyFmt = 4;
+#endif
+            _mapsetofs_all(wp);
+            wp->state++;
+            break;
+        case 2:
+            imgEntry(wp->imgName, group);
+            img = imgNameToPtr(wp->imgName, group);
+            img->poseId = animPaperPoseGetId(wp->animName, group);
+            img->animTime = animTimeGetTime(group);
+            imgClearVirtualPoint(img);
+            imgSetShadow(img, 2);
+            img->flags |= 2;
+            wp->state = 222;
+            break;
+        case 222:
+            if (!_get_boundingbox(wp->hitName, &wp->x, &wp->y, &wp->w, &wp->h)) {
+                break;
+            }
+            _img_alloc_capture(wp->imgName, 0, wp->offscreenName, 1, wp->x, wp->y, wp->w, wp->h);
+            wp->state = 223;
+            break;
+        case 223:
+            img = imgNameToPtr(wp->imgName, group);
+            img->flags &= ~2;
+            wp->state = 3;
+        case 3:
+            img = imgNameToPtr(wp->imgName, group);
+            img->animName = "A_1";
+            img->animTime = animTimeGetTime(group);
+            img->flags &= ~2;
+            wp->timer = 30;
+            wp->lastFrame = 0.0f;
+            wp->state++;
+            break;
+        case 4:
+            img = imgNameToPtr(wp->imgName, group);
+            if (wp->lastFrame == 0.0f || wp->lastFrame + 1.0f < img->loopTimes) {
+                psndSFXOn_3D("SFX_OFF_CLAUD_WIND2", &mario->position);
+                wp->lastFrame = img->loopTimes;
+            }
+            if (mario->currMotionId != MARIO_MOTION_CLOUD) {
+                wp->state = 10;
+                break;
+            }
+            hit = hitNameToPtr(wp->hitName);
+            if (hit0 != hit && hit1 != hit && hit2 != hit && hit3 != hit) {
+                if (wp->timer == 0) {
+                    wp->state = 10;
+                } else {
+                    wp->timer--;
+                    wp->counter += 2;
+                }
+            } else {
+                wp->timer = 30;
+                wp->counter += 2;
+                if (wp->counter > wp->limit) {
+                    wp->state = 20;
+                }
+            }
+            break;
+        case 10:
+            wp->state = 99;
+            break;
+        case 20:
+            psndSFXOn_3D("SFX_OFF_CLAUD_WIND3", &mario->position);
+            if (wp->endEvt != NULL) {
+                evtEntry(wp->endEvt, 0, 0);
+            }
+            img = imgNameToPtr(wp->imgName, group);
+            img->animName = "A_2";
+            img->animTime = animTimeGetTime(group);
+            wp->timer = 60;
+            wp->state++;
+            break;
+        case 21:
+            if (wp->timer != 0) {
+                wp->timer--;
+                break;
+            }
+            wp->timer = 30;
+            wp->counter += 2;
+            wp->state = 100;
+            break;
+        case 99:
+        case 100:
+            img = imgNameToPtr(wp->imgName, group);
+            _mapclsofs_all(wp);
+            animPaperPoseRelease(img->poseId);
+            imgFreeCapture(img, 0);
+            imgSetShadow(img, 0);
+            imgRelease(img, group);
+            offscreenDelete(wp->offscreenName);
+            cloud_once_flag = 0;
+            if (wp->state == 99) {
+                wp->state = 0;
+                break;
+            }
+            return EVT_RETURN_DONE;
     }
-      if (!animGroupBaseAsync(wp->animName, inBattle, (void *) 0))
-    {
-      break;
-    }
-      cloud_once_flag = 1;
-      animPaperPoseEntry(wp->animName, inBattle);
-      offscreenEntry(wp->offscreenName);
-      off = offscreenNameToPtr(wp->offscreenName);
-      off->texFmt = (off->copyFmt = 4);
-      _mapsetofs_all(wp);
-      wp->state++;
-      break;
-
-    case 2:
-      imgEntry(wp->imgName, inBattle);
-      img = imgNameToPtr(wp->imgName, inBattle);
-      img->poseId = animPaperPoseGetId(wp->animName, inBattle);
-      *(&img->animTime) = animTimeGetTime(inBattle);
-      imgClearVirtualPoint(img);
-      imgSetShadow(img, 2);
-      img->flags |= 2;
-      wp->state = 222;
-      break;
-
-    case 222:
-      if (!_get_boundingbox(wp->hitName, &wp->x, &wp->y, &wp->w, &wp->h))
-    {
-      break;
-    }
-      _img_alloc_capture(wp->imgName, 0, wp->offscreenName, 1, wp->x, wp->y, wp->w, wp->h);
-      wp->state = 223;
-      break;
-
-    case 223:
-      img = imgNameToPtr(wp->imgName, inBattle);
-      img->flags &= ~2;
-      wp->state = 3;
-
-    case 3:
-      img = imgNameToPtr(wp->imgName, inBattle);
-      img->animName = "A_1";
-      *(&img->animTime) = animTimeGetTime(inBattle);
-      img->flags &= ~2;
-      wp->timer = 30;
-      wp->lastFrame = 0.0f;
-      wp->state++;
-      break;
-
-    case 4:
-    {
-      img = imgNameToPtr(wp->imgName, inBattle);
-      if ((wp->lastFrame == 0.0f) || ((wp->lastFrame + 1.0f) < img->loopTimes))
-      {
-        psndSFXOn_3D("SFX_OFF_CLAUD_WIND2", &mario->position);
-        wp->lastFrame = img->loopTimes;
-      }
-      if (mario->currMotionId != 27)
-      {
-        wp->state = 10;
-        break;
-      }
-      hit = hitNameToPtr(wp->hitName);
-      if ((((hit0 != hit) && (hit1 != hit)) && (hit2 != hit)) && (hit3 != hit))
-      {
-        if (wp->timer == 0)
-        {
-          wp->state = 10;
-        }
-        else
-        {
-          wp->timer--;
-          wp->counter += 2;
-        }
-      }
-      else
-      {
-        wp->timer = 30;
-        wp->counter += 2;
-        if (wp->counter > wp->limit)
-        {
-          wp->state = 20;
-        }
-      }
-      break;
-    }
-
-    case 10:
-      wp->state = 99;
-      break;
-
-    case 20:
-      psndSFXOn_3D("SFX_OFF_CLAUD_WIND3", &mario->position);
-      if (wp->endEvt != ((void *) 0))
-    {
-      evtEntry(wp->endEvt, 0, 0);
-    }
-      img = imgNameToPtr(wp->imgName, inBattle);
-      img->animName = "A_2";
-      *(&img->animTime) = animTimeGetTime(inBattle);
-      wp->timer = 60;
-      wp->state++;
-      break;
-
-    case 21:
-      if (wp->timer != 0)
-    {
-      wp->timer--;
-      break;
-    }
-      wp->timer = 30;
-      wp->counter += 2;
-      wp->state = 100;
-      break;
-
-    case 99:
-
-    case 100:
-      img = imgNameToPtr(wp->imgName, inBattle);
-      _mapclsofs_all(wp);
-      animPaperPoseRelease(img->poseId);
-      imgFreeCapture(img, 0);
-      imgSetShadow(img, 0);
-      imgRelease(img, inBattle);
-      offscreenDelete(wp->offscreenName);
-      cloud_once_flag = 0;
-      if (wp->state == 99)
-    {
-      wp->state = 0;
-      break;
-    }
-      return 2;
-
-  }
-
-  return 0;
+    return EVT_RETURN_BLOCK;
 }
 #pragma dont_inline reset
 
-USER_FUNC(evt_iri_16_cloud_init) {
+/**
+ * Script helper: allocates the 16 cloud entries and names their images
+ * and offscreen buffers (i_name_N, o_name_N). Used by Trouble Center request 16.
+ */
+static USER_FUNC(evt_iri_16_cloud_init) {
     s32 i;
 
-    cloud = _mapAlloc(sizeof(CloudWork) * 16);
+    cloud = _mapAlloc(sizeof(CloudMapWork) * 16);
     for (i = 0; i < 16; i++) {
         cloud[i].used = 0;
         sprintf(cloud[i].imgName, "i_name_%1d", i);
@@ -979,12 +931,17 @@ USER_FUNC(evt_iri_16_cloud_init) {
     return EVT_RETURN_DONE;
 }
 
-USER_FUNC(evt_iri_16_cloud_ent) {
+/**
+ * Script helper: registers one blowable cloud: args[0] is the list of map groups it hides,
+ * args[1] the hit object name, args[2] the script to run when it has been blown away.
+ * Starts evt_cloud_main for it.
+ */
+static USER_FUNC(evt_iri_16_cloud_ent) {
     EvtWord* args = event->args;
     char** groups;
     char* hitName;
     void* endEvt;
-    CloudWork* wp;
+    CloudMapWork* wp;
     s32 i;
     s32 j;
 
@@ -1020,10 +977,14 @@ USER_FUNC(evt_iri_16_cloud_ent) {
     return EVT_RETURN_DONE;
 }
 
+/**
+ * Opens the chest that appears after the cloud is gone
+ * and gives Mario the Attack FX B key item (the Trouble Center request 16 reward item).
+ */
 EVT_BEGIN(iri_16_box_evt)
     CALL(evt_mario_key_onoff, 0)
     CALL(evt_mobj_get_position, STRING("box"), LW(0), LW(1), LW(2))
-    CALL(evt_item_entry, STRING("mb"), 110, LW(0), LW(1), LW(2), 17, -1, 0)
+    CALL(evt_item_entry, STRING("mb"), ITEM_ATTACK_FX_B_KEY_ITEM, LW(0), LW(1), LW(2), ITEM_ENTRY_FIXED_NO_TOUCH, -1, 0)
     CALL(evt_mobj_wait_animation_end, STRING("box"))
     CALL(evt_item_get_item, STRING("mb"))
     CALL(evt_item_get_item_end_wait, STRING("mb"))
@@ -1031,74 +992,93 @@ EVT_BEGIN(iri_16_box_evt)
     RETURN
 EVT_END()
 
+/**
+ * End event of the request-16 cloud: places the chest (box), switches off the cloud's hit area,
+ * plays the success jingle and sets GSWF_TROUBLE_WORK_1.
+ */
 EVT_BEGIN(iri_16_cloud_evt)
-    CALL(evt_mobj_itembox, STRING("box"), 0, 0, 0, 0, 0, PTR(iri_16_box_evt), GSWF(5407))
+    CALL(evt_mobj_itembox, STRING("box"), 0, 0, 0, 0, 0, PTR(iri_16_box_evt), GSWF(GSWF_TROUBLE_WORK_2))
     CALL(evt_hitobj_onoff, STRING("A_kura"), 1, 0)
-    CALL(evt_snd_bgmoff, 1024)
-    CALL(evt_snd_bgmon, 1, STRING("BGM_FF_ENV_SUCCESS1"))
+    CALL(evt_snd_bgmoff, PSND_FADE_HOLD)
+    CALL(evt_snd_bgmon, PSND_CH(1), STRING("BGM_FF_ENV_SUCCESS1"))
     WAIT_MS(2000)
-    CALL(evt_snd_bgmoff, 513)
-    CALL(evt_snd_bgmon, 288, 0)
-    SET_VALUE(GSWF(5406), 1)
+    CALL(evt_snd_bgmoff, PSND_FADE_OUT | PSND_CH(1))
+    CALL(evt_snd_bgmon, PSND_FADE_RESUME | PSND_FADE_IN, 0)
+    SET_VALUE(GSWF(GSWF_TROUBLE_WORK_1), 1)
     RETURN
 EVT_END()
 
+/** Case event on the request-16 cloud (front-A); does nothing. */
 EVT_BEGIN(iri_16_touch_evt)
     RETURN
 EVT_END()
 
+/**
+ * Map-init part of Trouble Center request 16: while the request is active it sets up the cloud (A_kura) with its
+ * case event and the capture map, or, once the cloud is cleared (GSWF_TROUBLE_WORK_1), the reward chest (box);
+ * when the request is not active it disables the hit objects A_taka and A_kura.
+ */
 static EVT_BEGIN(iri_16_init)
-    IF_INT_EQUAL(GSW(1420), 16)
+    IF_INT_EQUAL(GSW(GSW_TROUBLE_ACTIVE), 16)
         CALL(evt_hitobj_onoff, STRING("A_taka"), 1, 0)
-        IF_INT_EQUAL(GSWF(5406), 0)
+        IF_INT_EQUAL(GSWF(GSWF_TROUBLE_WORK_1), 0)
             CALL(evt_iri_16_cloud_init)
             CALL(evt_iri_16_cloud_ent, PTR(&capturemap), STRING("A_kura"), PTR(iri_16_cloud_evt))
-            CALL(evt_run_case_evt, 9, 1, STRING("A_kura"), 0, PTR(iri_16_touch_evt), 0)
-            ELSE
-            CALL(evt_hitobj_onoff, STRING("A_kura"), 1, 0)
-            CALL(evt_mobj_itembox, STRING("box"), 0, 0, 0, 0, 0, PTR(iri_16_box_evt), GSWF(5407))
-        END_IF
+            CALL(evt_run_case_evt, CASE_COND_FRONT_A, 1, STRING("A_kura"), 0, PTR(iri_16_touch_evt), 0)
         ELSE
+            CALL(evt_hitobj_onoff, STRING("A_kura"), 1, 0)
+            CALL(evt_mobj_itembox, STRING("box"), 0, 0, 0, 0, 0, PTR(iri_16_box_evt), GSWF(GSWF_TROUBLE_WORK_2))
+        END_IF
+    ELSE
         CALL(evt_hitobj_onoff, STRING("A_taka"), 1, 0)
         CALL(evt_hitobj_onoff, STRING("A_kura"), 1, 0)
     END_IF
     RETURN
 EVT_END()
 
+/**
+ * Map init for gon_11 (Hooktail's lair): sets up the door back to gon_10, the music and ambience,
+ * and the Hooktail and Koops' father NPCs.
+ * Before Hooktail is beaten (STORY_STG1_16_HOOKTAIL) it enlarges Hooktail and starts gonbaba_event;
+ * afterwards both NPCs are moved off the map.
+ * Also sets up the Trouble Center request 16 cloud and chest (iri_16_init).
+ */
 EVT_BEGIN(gon_11_init_evt)
     SET_VALUE(LW(0), PTR(bero_entry_data))
     CALL(evt_bero_get_info)
-    SWITCH(GSW(0))
-        CASE_LESS(55)
+    SWITCH(GSW(GSW_STORY_PROGRESS))
+        CASE_LESS(STORY_STG1_16_HOOKTAIL)
         CASE_DEFAULT
-        CALL_CHILD(PTR(evt_bero_info_run))
+        CALL_CHILD(evt_bero_info_run)
     END_SWITCH
-    SWITCH(GSW(0))
-        CASE_LESS(55)
-        CALL(evt_snd_bgmoff, 512)
+    SWITCH(GSW(GSW_STORY_PROGRESS))
+        CASE_LESS(STORY_STG1_16_HOOKTAIL)
+        CALL(evt_snd_bgmoff, PSND_FADE_OUT)
         CASE_DEFAULT
-        CALL(evt_snd_bgmon, 512, STRING("BGM_STG1_GON1"))
+        CALL(evt_snd_bgmon, PSND_FADE_OUT, STRING("BGM_STG1_GON1"))
     END_SWITCH
-    CALL(evt_snd_envon, 272, STRING("ENV_STG1_GON4\0\0"))
+    CALL(evt_snd_envon, PSND_FADE_RESTART | PSND_FADE_IN, STRING("ENV_STG1_GON4"))
     CALL(evt_snd_set_rev_mode, 2)
-    CALL(evt_npc_flag_onoff, 1, STRING("ノコタロウ父"), 1536)
+    CALL(evt_npc_flag_onoff, 1, STRING("ノコタロウ父"), NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM)
     CALL(evt_npc_change_fbat_mode, 1)
-    CALL(evt_npc_flag_onoff, 1, STRING("ゴンババ"), 32)
-    IF_INT_GREATER_OR_EQUAL(GSW(0), 55)
+    CALL(evt_npc_flag_onoff, 1, STRING("ゴンババ"), NPC_FLAG_INTANGIBLE)
+    IF_INT_GREATER_OR_EQUAL(GSW(GSW_STORY_PROGRESS), STORY_STG1_16_HOOKTAIL)
         CALL(evt_npc_set_position, STRING("ゴンババ"), 0, -1000, 0)
         CALL(evt_hitobj_onoff, STRING("baba"), 1, 0)
-        ELSE
-        CALL(evt_npc_flag_onoff, 1, STRING("ゴンババ"), 33554432)
+    ELSE
+        CALL(evt_npc_flag_onoff, 1, STRING("ゴンババ"), NPC_FLAG_NO_BILLBOARD)
         CALL(evt_npc_set_scale, STRING("ゴンババ"), FLOAT(1.2998047f), FLOAT(1.2998047f), FLOAT(1.2998047f))
-        SPAWN_EVENT(PTR(gonbaba_event))
+        SPAWN_EVENT(gonbaba_event)
     END_IF
-    CALL(evt_npc_flag_onoff, 1, STRING("ゴンババ"), 64)
+    CALL(evt_npc_flag_onoff, 1, STRING("ゴンババ"), NPC_FLAG_ALWAYS_VISIBLE)
     CALL(evt_light_charalight_all_onoff, 1)
     CALL(evt_light_npc_lighting_onoff, 1, STRING("ゴンババ"))
-    CALL_CHILD(PTR(iri_16_init))
-    IF_INT_GREATER_OR_EQUAL(GSW(0), 55)
+    CALL_CHILD(iri_16_init)
+#if VERSION >= VERSION_JP
+    IF_INT_GREATER_OR_EQUAL(GSW(GSW_STORY_PROGRESS), STORY_STG1_16_HOOKTAIL)
         CALL(evt_npc_delete, STRING("ノコタロウ父"))
         CALL(evt_npc_delete, STRING("ゴンババ"))
     END_IF
+#endif
     RETURN
 EVT_END()

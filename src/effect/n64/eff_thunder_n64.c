@@ -1,5 +1,6 @@
+// Paper Mario 64 effect: lightning strike with a charge light or flare and a shock flash; type picks variant.
+#include "eff/n64/eff_thunder_n64.h"
 #include "eff/eff_n64.h"
-#include "pc_call.h"
 #include "eff/n64/eff_akari_charge_n64.h"
 #include "driver/camdrv.h"
 #include "driver/dispdrv.h"
@@ -8,6 +9,8 @@
 #include "mario/mariost.h"
 #include <dolphin/gx.h>
 #include <dolphin/mtx.h>
+#include "eff/n64/eff_shock_n64.h"
+#include "eff/n64/eff_thunderflare_n64.h"
 
 typedef struct EffThunderN64Work {
     s32 type;            // 0x0
@@ -29,13 +32,13 @@ typedef struct EffThunderN64Work {
     EffectEntry* charge; // 0x48
 } EffThunderN64Work;
 
-EffectEntry* effThunderflareN64Entry(s32 type, s32 lifetime, f32 x, f32 y, f32 z, f32 w);
-EffectEntry* effAkariChargeN64Entry(s32 type, s32 lifetime, f32 x, f32 y, f32 z, f32 size);
-EffectEntry* effShockN64Entry(s32 type, f32 x, f32 y, f32 z, f32 a, f32 b);
+static void effThunderMain(EffectEntry* effect);
+static void effThunderDisp(CameraId cameraId, EffectEntry* effect);
 
-void effThunderMain(EffectEntry* effect);
-void effThunderDisp(CameraId cameraId, EffectEntry* effect);
-
+/**
+ * The lightning bolt mesh (inazuma, "lightning"): several jagged bolt shapes,
+ * of which each type draws its own set of triangles.
+ */
 effN64Vtx Ncube_inazuma_v[] = {
     {-85, -102, 0, 3887, 2048, 255, 255, 255, 255},
     {-135, -138, 0, 4053, 1024, 255, 255, 255, 255},
@@ -591,17 +594,18 @@ effN64Vtx Ncube_inazuma_v[] = {
     {-13, -115, 0, 9463, 2048, 255, 255, 255, 255},
 };
 
+/** Spawns a lightning strike at (x, y, z); type picks the variant. Spawned by event scripts through evt_eff. */
 EffectEntry* effThunderN64Entry(s32 type, f32 x, f32 y, f32 z, f32 a, f32 b) {
     EffectEntry* effect;
     EffThunderN64Work* work;
 
     effect = effEntry();
-    effect->type = "ThunderN64\0";
+    effect->type = "ThunderN64";
     effect->count = 1;
     work = __memAlloc(HEAP_EFFECT, sizeof(EffThunderN64Work));
     effect->userdata = work;
     effect->callback = effThunderMain;
-    effect->flags |= 2;
+    effect->flags |= EFFECT_FLAG_SOFT_DELETE;
     work->type = type;
     work->frame = 0;
     if (type >= 3) {
@@ -631,12 +635,12 @@ EffectEntry* effThunderN64Entry(s32 type, f32 x, f32 y, f32 z, f32 a, f32 b) {
         }
         if (type != 1) {
             work->charge = effAkariChargeN64Entry(0, 0, -120.0f, 189.0f, 72.0f, 1.0f);
-            ((EffAkariChargeN64Elem*)work->charge->userdata)->r2 = 255;
-            ((EffAkariChargeN64Elem*)work->charge->userdata)->g2 = 255;
-            ((EffAkariChargeN64Elem*)work->charge->userdata)->b2 = 255;
-            ((EffAkariChargeN64Elem*)work->charge->userdata)->r = 255;
-            ((EffAkariChargeN64Elem*)work->charge->userdata)->g = 0;
-            ((EffAkariChargeN64Elem*)work->charge->userdata)->b = 255;
+            ((EffAkariChargeN64Work*)work->charge->userdata)->elem[0].r2 = 255;
+            ((EffAkariChargeN64Work*)work->charge->userdata)->elem[0].g2 = 255;
+            ((EffAkariChargeN64Work*)work->charge->userdata)->elem[0].b2 = 255;
+            ((EffAkariChargeN64Work*)work->charge->userdata)->elem[0].r = 255;
+            ((EffAkariChargeN64Work*)work->charge->userdata)->elem[0].g = 0;
+            ((EffAkariChargeN64Work*)work->charge->userdata)->elem[0].b = 255;
         }
     }
     if (type >= 3) {
@@ -645,7 +649,14 @@ EffectEntry* effThunderN64Entry(s32 type, f32 x, f32 y, f32 z, f32 a, f32 b) {
     return effect;
 }
 
-void effThunderMain(EffectEntry* effect) {
+/**
+ * A delete request ends it next frame; the lifetime only counts down from below 100.
+ * At the end it also deletes its charge and flare child effects (the flare goes after 18 frames anyway).
+ * Types 0-2 (other types for their first 6 frames) scroll the two bolt texture layers,
+ * some steps only every interval0/interval1 frames;
+ * types 3+ fade 13 per frame after frame 6, types 0-2 fade 25 per frame over their last 10. CAMERA_3D, layer 2.
+ */
+static void effThunderMain(EffectEntry* effect) {
     EffThunderN64Work* work;
     Vec position;
     Vec tmp = {0.0f, 0.0f, 0.0f};
@@ -659,8 +670,8 @@ void effThunderMain(EffectEntry* effect) {
     tmp.y = work->position.y;
     tmp.z = work->position.z;
     position = tmp;
-    if (effect->flags & 4) {
-        effect->flags &= ~4;
+    if (effect->flags & EFFECT_FLAG_DELETE_REQUESTED) {
+        effect->flags &= ~EFFECT_FLAG_DELETE_REQUESTED;
         work->lifetime = 0;
     }
     type = work->type;
@@ -730,10 +741,15 @@ void effThunderMain(EffectEntry* effect) {
         }
     }
 
-    PCCALL(((void (*)(s32, s32, f32, DispCallback, void*))dispEntry)(CAMERA_3D, 2, dispCalcZ(&position), (DispCallback)effThunderDisp, effect), dispEntry(CAMERA_3D, dispCalcZ(&position), 2, (DispCallback)effThunderDisp, effect));
+    dispEntry(CAMERA_3D, dispCalcZ(&position), 2, (DispCallback)effThunderDisp, effect);
 }
 
-void effThunderDisp(CameraId cameraId, EffectEntry* effect) {
+/**
+ * Draws the lightning bolt mesh (Ncube_inazuma_v, a different part per type) camera-facing with texture 84 in
+ * two scrolled layers: magenta-pink (FF,2F,C6) for types 0-2, yellow with the fading alpha for types 3+.
+ * Type 1 stays hidden for its first 18 frames.
+ */
+static void effThunderDisp(CameraId cameraId, EffectEntry* effect) {
     CameraEntry* camera;
     EffThunderN64Work* work;
     s32 type;
@@ -810,26 +826,26 @@ void effThunderDisp(CameraId cameraId, EffectEntry* effect) {
         case 0:
         case 1:
         case 2:
-        PSMTXTrans(mtx, work->position.x, work->position.y, work->position.z);
-        PSMTXRotRad(rot, 'y', 0.017453292f * -camGetPtr(4)->viewYaw);
-        PSMTXConcat(mtx, rot, view);
-        PSMTXTrans(mtx, 0.0f, 0.0f, 1.0f);
-        PSMTXConcat(view, mtx, view);
-        PSMTXConcat(camera->view, view, view);
-        GXLoadPosMtxImm(view, 0);
-        GXSetCurrentMtx(0);
-        GXSetTevColor(1, (GXColor){255, 47, 198, 255});
+            PSMTXTrans(mtx, work->position.x, work->position.y, work->position.z);
+            PSMTXRotRad(rot, 'y', 0.017453292f * -camGetPtr(CAMERA_3D)->viewYaw);
+            PSMTXConcat(mtx, rot, view);
+            PSMTXTrans(mtx, 0.0f, 0.0f, 1.0f);
+            PSMTXConcat(view, mtx, view);
+            PSMTXConcat(camera->view, view, view);
+            GXLoadPosMtxImm(view, 0);
+            GXSetCurrentMtx(0);
+            GXSetTevColor(1, (GXColor){255, 47, 198, 255});
             break;
         default:
-        PSMTXTrans(mtx, work->position.x, work->position.y, work->position.z);
-        PSMTXRotRad(rot, 'y', 0.017453292f * -camGetPtr(4)->viewYaw);
-        PSMTXConcat(mtx, rot, view);
-        PSMTXTrans(mtx, 0.0f, 0.0f, 1.0f);
-        PSMTXConcat(view, mtx, view);
-        PSMTXConcat(camera->view, view, view);
-        GXLoadPosMtxImm(view, 0);
-        GXSetCurrentMtx(0);
-        GXSetTevColor(1, (GXColor){255, 255, 0, work->alpha});
+            PSMTXTrans(mtx, work->position.x, work->position.y, work->position.z);
+            PSMTXRotRad(rot, 'y', 0.017453292f * -camGetPtr(CAMERA_3D)->viewYaw);
+            PSMTXConcat(mtx, rot, view);
+            PSMTXTrans(mtx, 0.0f, 0.0f, 1.0f);
+            PSMTXConcat(view, mtx, view);
+            PSMTXConcat(camera->view, view, view);
+            GXLoadPosMtxImm(view, 0);
+            GXSetCurrentMtx(0);
+            GXSetTevColor(1, (GXColor){255, 255, 0, work->alpha});
             break;
     }
     effGetTexObjN64(84, &tex);
@@ -851,7 +867,7 @@ void effThunderDisp(CameraId cameraId, EffectEntry* effect) {
     switch (type) {
         case 0:
             GXBegin(144, 0, 156);
-            ((void (*)())tri2)(0, 1, 2, 0, 0, 2, 3, 0);
+            tri2(0, 1, 2, 0, 0, 2, 3, 0);
             tri2(4, 5, 5, 0, 4, 5, 4, 0);
             tri2(6, 7, 8, 0, 6, 8, 9, 0);
             tri2(10, 11, 12, 0, 10, 12, 13, 0);

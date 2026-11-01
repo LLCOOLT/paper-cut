@@ -38,8 +38,8 @@ typedef volatile signed   long          vs32;
 typedef volatile unsigned long          vu32;
 typedef volatile signed   long long int vs64;
 typedef volatile unsigned long long int vu64;
-#endif
 
+#endif
 typedef float  f32;
 typedef double f64;
 
@@ -65,8 +65,8 @@ typedef int BOOL;
 
 #ifndef INT_MAX
 #define INT_MAX 2147483647
-#endif
 
+#endif
 #ifndef NULL
 #define NULL ((void*)0)
 #endif
@@ -81,8 +81,8 @@ typedef int BOOL;
 #include "libc/stdarg.h"
 #include "libc/string.h"
 #include "libc/ctype.h"
-#endif
 
+#endif
 #include "cmath.h"
 
 #endif

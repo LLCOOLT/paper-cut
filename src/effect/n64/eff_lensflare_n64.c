@@ -1,3 +1,5 @@
+// Paper Mario 64 effect: lens flare made of a bright head and five rings along a flare axis.
+#include "eff/n64/eff_lensflare_n64.h"
 #include "eff/eff_n64.h"
 #include "driver/camdrv.h"
 #include "driver/dispdrv.h"
@@ -5,12 +7,7 @@
 #include "memory.h"
 #include <dolphin/gx.h>
 #include <dolphin/mtx.h>
-
-#ifndef TARGET_PC /* PC port: the host libc declares these */
-double cos(double);
-s32 rand(void);
-#endif
-
+#include "libc_decls.h"
 // One element per flare: element 0 is the head (type, position, fade and timers),
 // elements 1-5 are the rings (angle, scale, distance along the flare axis, speed).
 typedef struct EffLensflareN64Elem {
@@ -27,6 +24,7 @@ typedef struct EffLensflareN64Elem {
     f32 speed;    // 0x30
 } EffLensflareN64Elem;
 
+/** Spinning 48x48 glow at the head of the lens flare. */
 static effN64Vtx size48x48_tex32x32_vtx[] = {
     {-24, -24, 0, 0, 0, 0, 0, 0, 255},
     {24, -24, 0, 1024, 0, 0, 0, 0, 255},
@@ -34,6 +32,7 @@ static effN64Vtx size48x48_tex32x32_vtx[] = {
     {-24, 24, 0, 0, 1024, 0, 0, 0, 255},
 };
 
+/** 10x10 shape of the lens flare's streak elements, drawn four times per element. */
 static effN64Vtx size10x10_tex32x32_vtx[] = {
     {0, -5, 0, 0, 0, 0, 0, 0, 255},
     {10, -5, 0, 1024, 0, 0, 0, 0, 255},
@@ -53,22 +52,27 @@ static effN64Vtx size10x10_tex32x32_vtx[] = {
     {-5, 5, 0, 0, 4096, 0, 0, 0, 255},
 };
 
-void effLensflareMain(EffectEntry* effect);
-void effLensflareDisp(CameraId cameraId, EffectEntry* effect);
+static void effLensflareMain(EffectEntry* effect);
+static void effLensflareDisp(CameraId cameraId, EffectEntry* effect);
 
-EffectEntry* effLensflareN64Entry(s32 type, s32 lifetime, f32 x, f32 y, f32 z) {
+/**
+ * Spawns a lens flare at (x, y, z): one main record plus five orbiting streak elements with random angle
+ * and size. lifetime <= 0 keeps it until deleted.
+ * Played from map scripts in gor, tik and las via evt_eff64 "lensflare_n64".
+ */
+EffectEntry* effLensflareN64Entry(s32 type, s32 lifetime, f32 x, f32 y, f32 z, f32 scale) {
     EffectEntry* effect;
     EffLensflareN64Elem* work;
     EffLensflareN64Elem* e;
     s32 i;
 
     effect = effEntry();
-    effect->type = "LensflareN64\0\0\0";
+    effect->type = "LensflareN64";
     effect->count = 6;
     work = __memAlloc(HEAP_EFFECT, sizeof(EffLensflareN64Elem) * 6);
     effect->userdata = work;
     effect->callback = effLensflareMain;
-    effect->flags |= 2;
+    effect->flags |= EFFECT_FLAG_SOFT_DELETE;
     work->type = type;
     work->frame = 0;
     if (lifetime <= 0) {
@@ -90,7 +94,12 @@ EffectEntry* effLensflareN64Entry(s32 type, s32 lifetime, f32 x, f32 y, f32 z) {
     return effect;
 }
 
-void effLensflareMain(EffectEntry* effect) {
+/**
+ * Fades the flare in over 20 frames and out before the end;
+ * cycles each streak element outward and respawns it with new random values;
+ * a delete request starts a 30-frame fade.
+ */
+static void effLensflareMain(EffectEntry* effect) {
     EffLensflareN64Elem* e = effect->userdata;
     Vec position;
     Vec tmp = {0.0f, 0.0f, 0.0f};
@@ -101,8 +110,8 @@ void effLensflareMain(EffectEntry* effect) {
     tmp.y = e->position.y;
     tmp.z = e->position.z;
     position = tmp;
-    if (effect->flags & 4) {
-        effect->flags &= ~4;
+    if (effect->flags & EFFECT_FLAG_DELETE_REQUESTED) {
+        effect->flags &= ~EFFECT_FLAG_DELETE_REQUESTED;
         e->lifetime = 30;
     }
     if (e->lifetime < 100) {
@@ -132,7 +141,11 @@ void effLensflareMain(EffectEntry* effect) {
     dispEntry(CAMERA_3D, dispCalcZ(&position), 2, (DispCallback)effLensflareDisp, effect);
 }
 
-void effLensflareDisp(CameraId cameraId, EffectEntry* effect) {
+/**
+ * Draws a spinning 48x48 glow billboard (texture 0x6F),
+ * then for each streak element four small shapes (texture 0x86).
+ */
+static void effLensflareDisp(CameraId cameraId, EffectEntry* effect) {
     s32 ang1;
     s32 odd;
     s32 ang2;

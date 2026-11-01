@@ -1,9 +1,11 @@
+// usu_01 (ウスグラタウン, Twilight Town): the east side of town with the shop, the villagers' houses and the crows; the gate
+// leads to Twilight Trail (gra_00).
+
 #include "version.h"
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
 #include "manager/evtmgr_cmd.h"
 
-#pragma force_active on
 #include "mario/mario.h"
 #include "driver/animdrv.h"
 #include "pmario_sound.h"
@@ -13,347 +15,93 @@
 #include "data/item_data.h"
 #include "driver/npcdrv.h"
 #include "driver/mobjdrv.h"
+#include "driver/itemdrv.h"
 #include "evt/evt_bero.h"
 #include "evt/evt_door.h"
 #include "evt/evt_sub.h"
 #include "usu.h"
 #include "evt/evt_npc.h"
 #include "evt/evt_shop.h"
+#include "evt/evt_cam.h"
+#include "evt/evt_case.h"
+#include "evt/evt_eff.h"
+#include "evt/evt_hit.h"
+#include "evt/evt_img.h"
+#include "evt/evt_item.h"
+#include "evt/evt_lecture.h"
+#include "evt/evt_map.h"
+#include "evt/evt_mario.h"
+#include "evt/evt_mobj.h"
+#include "evt/evt_msg.h"
+#include "evt/evt_paper.h"
+#include "evt/evt_party.h"
+#include "evt/evt_pouch.h"
+#include "evt/evt_seq.h"
+#include "evt/evt_snd.h"
+#include "evt/evt_urouro.h"
+#include "evt/evt_window.h"
 #include "data_tables.h"
-#ifdef VERSION_G8ME01
-USER_FUNC(evt_mario_get_motion);
-#endif
-
-extern ItemData itemDataTable[];
-void mapObjFlagOn(const char* name, u32 flags);
-void mapObjFlagOff(const char* name, u32 flags);
+#include "evt/evt_story.h"
+#include "driver/casedrv.h"
+#include "driver/mapdrv.h"
+#include "driver/camdrv.h"
 
 static USER_FUNC(bgm_start_wait);
-static USER_FUNC(booboo_main);
-USER_FUNC(box_r);
-USER_FUNC(check_tabemono);
-USER_FUNC(chk_fuki);
-USER_FUNC(delete_item_list);
-USER_FUNC(door_dark_flag);
-USER_FUNC(evt_bero_exec_wait);
-USER_FUNC(evt_bero_get_info);
-USER_FUNC(evt_cam3d_evt_off);
-USER_FUNC(evt_cam3d_evt_set);
-USER_FUNC(evt_cam3d_evt_set_xyz);
-USER_FUNC(evt_cam3d_evt_xyz_off);
-USER_FUNC(evt_cam_get_at);
-USER_FUNC(evt_cam_get_pos);
-USER_FUNC(evt_cam_letter_box_disable);
-USER_FUNC(evt_door_load_mapflag);
-USER_FUNC(evt_door_param);
-USER_FUNC(evt_eff);
-USER_FUNC(evt_eff_fukidashi);
-USER_FUNC(evt_exit_case_evt);
-USER_FUNC(evt_hitobj_onoff);
-USER_FUNC(evt_img_alloc_capture);
-USER_FUNC(evt_img_clear_virtual_point);
-USER_FUNC(evt_img_entry);
-USER_FUNC(evt_img_onoff);
-USER_FUNC(evt_img_release);
-USER_FUNC(evt_img_set_paper);
-USER_FUNC(evt_img_set_paper_anim);
-USER_FUNC(evt_img_set_virtual_point);
-USER_FUNC(evt_img_wait_animend);
-USER_FUNC(evt_item_delete_check);
-USER_FUNC(evt_item_entry);
-USER_FUNC(evt_item_flag_on);
-USER_FUNC(evt_item_get_item);
-USER_FUNC(evt_item_get_item_end_wait);
-USER_FUNC(evt_item_get_position);
-USER_FUNC(evt_item_set_position);
-USER_FUNC(evt_kagemario_init);
-USER_FUNC(evt_key_get_buttontrg);
-USER_FUNC(evt_mapobj_flag_onoff);
-USER_FUNC(evt_mapobj_get_position);
-USER_FUNC(evt_mapobj_rotate);
-USER_FUNC(evt_mapobj_trans);
-USER_FUNC(evt_mario_adjust_dir);
-USER_FUNC(evt_mario_balloon_off);
-USER_FUNC(evt_mario_balloon_tenten);
-USER_FUNC(evt_mario_dispflag_onoff);
-USER_FUNC(evt_mario_get_party);
-USER_FUNC(evt_mario_get_pos);
-USER_FUNC(evt_mario_hello_party);
-USER_FUNC(evt_mario_init_camid);
-USER_FUNC(evt_mario_key_onoff);
-USER_FUNC(evt_mario_mov_pos2);
-USER_FUNC(evt_mario_normalize);
-USER_FUNC(evt_mario_party_door_move);
-USER_FUNC(evt_mario_party_use_check);
-USER_FUNC(evt_mario_set_camid);
-USER_FUNC(evt_mario_set_dir);
-USER_FUNC(evt_mario_set_dir_npc);
-USER_FUNC(evt_mario_set_pos);
-USER_FUNC(evt_mario_set_pose);
-USER_FUNC(evt_mario_wait_movable);
-USER_FUNC(evt_mario_wait_rideon);
-USER_FUNC(evt_mobj_exec_cancel);
-USER_FUNC(evt_mobj_flag_onoff);
-USER_FUNC(evt_mobj_get_position);
-USER_FUNC(evt_mobj_itembox);
-USER_FUNC(evt_mobj_lock);
-USER_FUNC(evt_mobj_set_anim);
-USER_FUNC(evt_mobj_wait_animation_end);
-USER_FUNC(evt_msg_close);
-USER_FUNC(evt_msg_continue);
-USER_FUNC(evt_msg_print);
-USER_FUNC(evt_msg_print_add);
-USER_FUNC(evt_msg_print_party);
-USER_FUNC(evt_msg_select);
-USER_FUNC(evt_msg_toge);
-USER_FUNC(evt_npc_change_interrupt);
-USER_FUNC(evt_npc_entry);
-USER_FUNC(evt_npc_flag_onoff);
-USER_FUNC(evt_npc_get_position);
-USER_FUNC(evt_npc_get_reglid);
-USER_FUNC(evt_npc_move_position);
-USER_FUNC(evt_npc_restart_regular_event);
-USER_FUNC(evt_npc_set_anim);
-USER_FUNC(evt_npc_set_position);
-USER_FUNC(evt_npc_set_ry);
-USER_FUNC(evt_npc_set_tribe);
-USER_FUNC(evt_npc_setup);
-USER_FUNC(evt_npc_status_onoff);
-USER_FUNC(evt_npc_wait_pera);
-USER_FUNC(evt_paper_delete);
-USER_FUNC(evt_paper_entry);
-USER_FUNC(evt_party_cont_onoff);
-USER_FUNC(evt_party_get_pos);
-USER_FUNC(evt_party_get_status);
-USER_FUNC(evt_party_move_behind_mario);
-USER_FUNC(evt_party_move_pos2);
-USER_FUNC(evt_party_run);
-USER_FUNC(evt_party_set_dir);
-USER_FUNC(evt_party_set_dir_npc);
-USER_FUNC(evt_party_set_homing_dist);
-USER_FUNC(evt_party_stop);
-USER_FUNC(evt_party_yoshi_ride);
-USER_FUNC(evt_pouch_add_item);
-USER_FUNC(evt_pouch_check_item);
-USER_FUNC(evt_pouch_get_haveitemcnt);
-USER_FUNC(evt_pouch_remove_item);
-USER_FUNC(evt_run_case_evt);
-USER_FUNC(evt_seq_wait);
-USER_FUNC(evt_set_dir_to_target);
-USER_FUNC(evt_shop_setup);
-USER_FUNC(evt_snd_bgmoff);
-USER_FUNC(evt_snd_bgmoff_f);
-USER_FUNC(evt_snd_bgmon);
-USER_FUNC(evt_snd_bgmon_f);
-USER_FUNC(evt_snd_env_lpf);
-USER_FUNC(evt_snd_envoff);
-USER_FUNC(evt_snd_envon);
-USER_FUNC(evt_snd_sfxoff);
-USER_FUNC(evt_snd_sfxon);
-USER_FUNC(evt_snd_sfxon_3d);
-USER_FUNC(evt_sub_area_check);
-USER_FUNC(evt_sub_get_dist);
-USER_FUNC(evt_sub_intpl_msec_get_value);
-USER_FUNC(evt_sub_intpl_msec_init);
-USER_FUNC(evt_sub_save_playtime);
-USER_FUNC(evt_win_item_select);
-USER_FUNC(get_item_list);
-USER_FUNC(ie2_npc_disp_off);
-USER_FUNC(ie2_npc_disp_on);
-USER_FUNC(lect_cam_load);
-USER_FUNC(lect_cam_save);
-USER_FUNC(mainwindow_opendisable);
-USER_FUNC(mainwindow_openenable);
-USER_FUNC(mobj_ry);
-static USER_FUNC(npc_process);
-static USER_FUNC(set_fook_evt);
-USER_FUNC(shop_item_disp_off);
-USER_FUNC(shop_item_disp_on);
-USER_FUNC(sleep_voice);
-USER_FUNC(urouro_init_func);
-USER_FUNC(urouro_main_func);
+static USER_FUNC(check_tabemono);
+static USER_FUNC(chk_fuki);
+static USER_FUNC(delete_item_list);
+static USER_FUNC(get_item_list);
+static USER_FUNC(sleep_voice);
 static void majin_callback(s32 type);
 
-f32 fd_usu_01_negone_one_374[2] __attribute__((aligned(8)));
-f32 fd_usu_01_neg_one_382;
-f32 fd_usu_01___local_PI_383;
-f32 fd_usu_01___local_3PIO2_385;
-f32 fd_usu_01_one_negone_373[2] __attribute__((aligned(8)));
-f32 fd_usu_01___local_PIO2_384;
-f32 fd_usu_01_one_381;
-f32 fd_usu_01_negone_one_360[2] __attribute__((aligned(8)));
-f32 fd_usu_01_neg_one_365;
-f32 fd_usu_01___local_PI_366;
-f32 fd_usu_01___local_3PIO2_368;
-f32 fd_usu_01_one_negone_359[2] __attribute__((aligned(8)));
-f32 fd_usu_01___local_PIO2_367;
-f32 fd_usu_01_one_364;
-EvtWord villagerF_init[7];
-EvtWord villagerF_talk[52];
-EvtWord villagerG_init[7];
-EvtWord villagerG_talk[52];
-EvtWord villagerH_init[7];
-EvtWord villagerH_talk[44];
-EvtWord villagerI_init[19];
-EvtWord villagerI_pig_init[19];
-EvtWord villagerI_talk[57];
-EvtWord villagerJ_init[19];
-EvtWord villagerJ_pig_init[19];
-EvtWord villagerJ_talk[57];
-EvtWord shop_man_init[36];
-EvtWord shop_man_talk[28];
-EvtWord shop_woman_init[7];
-EvtWord shop_woman_talk[163];
-static EvtWord kizayarou_init[38];
-EvtWord kizayarou_pig_init[14];
-static EvtWord kizayarou_talk[33];
-EvtWord childABC_talk_01[28];
-EvtWord childABC_talk_02[28];
-EvtWord childABC_talk_03[28];
-EvtWord childABC_talk_04[28];
-EvtWord aunt_init[22];
-EvtWord aunt_pig_init[29];
-EvtWord iri_20_out_house[407];
-EvtWord iri_20_aunt_to_house[149];
-EvtWord aunt_talk[687];
-EvtWord childA_init[7];
-EvtWord childA_talk[31];
-EvtWord childB_init[7];
-EvtWord childB_talk[31];
-EvtWord childC_init[7];
-EvtWord childC_talk[31];
-EvtWord gatekeeper_init[38];
-EvtWord gatekeeper_pig_init[33];
-EvtWord gatekeeper_talk[145];
-EvtWord crow_f_init[8];
-EvtWord crow_g_init[8];
-EvtWord crow_h_init[8];
-EvtWord crow_i_init[8];
-EvtWord crow_j_init[8];
-static EvtWord musume_talk[84];
-EvtWord musume_a_init[40];
-static EvtWord musume_a_entry[15];
-EvtWord musume_a_pig_entry[15];
-EvtWord musume_b_init[40];
-static EvtWord musume_b_entry[15];
-EvtWord musume_b_pig_entry[15];
-EvtWord musume_c_init[40];
-static EvtWord musume_c_entry[15];
-EvtWord musume_c_pig_entry[15];
-static EvtWord urouro_move[24];
-EvtWord urouro_move_semai[24];
 static NpcSetupInfo npcEnt[24];
-EvtWord village_chief_change_pig_event[166];
-EvtWord evt_mon_open[112];
-static EvtWord cam_up[34];
-static EvtWord cam_down[8];
-EvtWord usu01_check_vivian[36];
-EvtWord usu01_crowFG_talk_event[VERSION_PICK(355, 394)];
-EvtWord usu01_crowHI_talk_event[VERSION_PICK(250, 289)];
-EvtWord usu01_crowJ_talk_event[VERSION_PICK(226, 265)];
+extern EvtWord village_chief_change_pig_event[];
 const char* minka_npc[6];
 const char* minka_item[2];
 const char* shop_npc[6];
 const char* shop_mobj[4];
 const char* shop_item[5];
-static EvtWord evt_door_1_1[12];
-static EvtWord evt_door_1_2[12];
-static EvtWord evt_wall_1[28];
-static EvtWord door_1_open[12];
-static EvtWord door_1_close[14];
 static DoorParam door_1;
-EvtWord evt_door_2_1_1[15];
-EvtWord evt_door_2_1_2[2];
-EvtWord evt_wall_2_1[28];
-EvtWord loop_msg[84];
-EvtWord mise_kiza_msg[32];
-EvtWord mawari_house_delay[46];
-EvtWord door_2_1_open[23];
 DoorParam door_2_1;
-EvtWord evt_ie2_door2_1[244];
-EvtWord evt_ie2_door2_2[226];
-static EvtWord evt_door_3_1[12];
-static EvtWord evt_door_3_2[12];
-static EvtWord evt_wall_3[30];
 const char* door_3_item[2];
-static EvtWord door_3_open[12];
-static EvtWord door_3_close[14];
 static DoorParam door_3;
 static BeroEntry bero_entry_data[3];
-EvtWord usu01_gusun[80];
-EvtWord evt_monban_buta_main[34];
-EvtWord evt_monban_buta[18];
-EvtWord evt_monban_buta2[17];
-EvtWord evt_monban_look[119];
+extern EvtWord evt_monban_buta2[];
 static s32 lock_tbl[2];
-static EvtWord lock_item_check[41];
-EvtWord unlock[13];
 static ShopObj obj_list[6];
 static ShopItem goods_list[6];
 static ShopDb trade_list[12];
 static ShopperData35 shopper_data;
-EvtWord shopper_talk1[11];
-EvtWord shopper_talk2[11];
-typedef struct BoobooName { const char* name; u8 field_0x4; u8 field_0x5; u8 pad_0x6[2]; } BoobooName; /* field_0x4/0x5 never read */
+
 static BoobooName booboo_name[8];
-EvtWord evt_roll_get[2];
 static s32 key_tbl[2];
-static EvtWord evt_majin[330];
-static EvtWord evt_majin2[237];
-EvtWord tree_onoff[57];
-static EvtWord evt_ki_1[12];
-static EvtWord evt_ki_2[20];
-static EvtWord evt_ki_3[20];
 static TreeAccess tree_tbl[5];
-EvtWord usu_01_tree_init[7];
 static EvtWord mobj_box00[34];
-EvtWord usu_01_init_evt[350];
 
-
-f32 fd_usu_01_negone_one_374[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_usu_01_neg_one_382 = -1.0f;
-
-f32 fd_usu_01___local_PI_383 = 3.1415927f;
-
-f32 fd_usu_01___local_3PIO2_385 = 4.712389f;
-
-f32 fd_usu_01_one_negone_373[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_usu_01___local_PIO2_384 = 1.5707964f;
-
-f32 fd_usu_01_one_381 = 1.0f;
-
-f32 fd_usu_01_negone_one_360[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_usu_01_neg_one_365 = -1.0f;
-
-f32 fd_usu_01___local_PI_366 = 3.1415927f;
-
-f32 fd_usu_01___local_3PIO2_368 = 4.712389f;
-
-f32 fd_usu_01_one_negone_359[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_usu_01___local_PIO2_367 = 1.5707964f;
-
-f32 fd_usu_01_one_364 = 1.0f;
-
+/** Init script of villager F: enables move/talk animation. */
 EVT_BEGIN(villagerF_init)
-    CALL(evt_npc_flag_onoff, 1, STRING("村人Ｆ"), 1536)
+    CALL(evt_npc_flag_onoff, 1, STRING("村人Ｆ"), NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM)
     RETURN
 EVT_END()
 
+/**
+ * Talk script of villager F, the novelist: text by story progress.
+ * Before the Doopliss fight he wonders whether pigs can read;
+ * until Mario leaves Twilight Town he asks what books Mario likes (a four-way choice, one shared reply);
+ * later lines are about his writing, his finished love story (until the end of the game)
+ * and its film adaptation (after).
+ */
 EVT_BEGIN(villagerF_talk)
-    SWITCH(GSW(0))
-        CASE_LESS(200)
+    SWITCH(GSW(GSW_STORY_PROGRESS))
+        CASE_LESS(STORY_STG4_10_DOOPLISS_BATTLE)
         CALL(evt_msg_print, 0, STRING("stg4_usu_82"), 0, STRING("me"))
-        CASE_LESS(219)
+        CASE_LESS(STORY_STG4_16_LEAVING_TWILIGHT_TOWN)
         CALL(evt_msg_print, 0, STRING("stg4_usu_30"), 0, STRING("me"))
         CALL(evt_msg_select, 0, STRING("stg4_usu_30_yn"))
         CALL(evt_msg_print_add, 0, STRING("stg4_usu_30_00"))
-        CASE_LESS(222)
+        CASE_LESS(STORY_STG4_31_FRANKLYS_HOUSE)
         CALL(evt_msg_print, 0, STRING("stg4_usu_84"), 0, STRING("me"))
-        CASE_LESS_OR_EQUAL(402)
+        CASE_LESS_OR_EQUAL(STORY_STG8_END_AFTER_THE_BATTLE)
         CALL(evt_msg_print, 0, STRING("stg4_usu_84_1"), 0, STRING("me"))
         CASE_DEFAULT
         CALL(evt_msg_print, 0, STRING("stg4_usu_84_1_1"), 0, STRING("me"))
@@ -361,22 +109,27 @@ EVT_BEGIN(villagerF_talk)
     RETURN
 EVT_END()
 
+/** Init script of villager G: enables move/talk animation. */
 EVT_BEGIN(villagerG_init)
-    CALL(evt_npc_flag_onoff, 1, STRING("村人Ｇ"), 1536)
+    CALL(evt_npc_flag_onoff, 1, STRING("村人Ｇ"), NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM)
     RETURN
 EVT_END()
 
+/**
+ * Talk script of villager G: text by Chapter 4 progress (before the Doopliss fight, until leaving Twilight Town,
+ * later).
+ */
 EVT_BEGIN(villagerG_talk)
-    SWITCH(GSW(0))
-        CASE_LESS(200)
+    SWITCH(GSW(GSW_STORY_PROGRESS))
+        CASE_LESS(STORY_STG4_10_DOOPLISS_BATTLE)
         CALL(evt_msg_print, 0, STRING("stg4_usu_85"), 0, STRING("me"))
-        CASE_LESS(219)
+        CASE_LESS(STORY_STG4_16_LEAVING_TWILIGHT_TOWN)
         CALL(evt_msg_print, 0, STRING("stg4_usu_86"), 0, STRING("me"))
         CALL(evt_msg_select, 0, STRING("stg4_usu_86_yn"))
         CALL(evt_msg_print_add, 0, STRING("stg4_usu_86_00"))
-        CASE_LESS(222)
+        CASE_LESS(STORY_STG4_31_FRANKLYS_HOUSE)
         CALL(evt_msg_print, 0, STRING("stg4_usu_87"), 0, STRING("me"))
-        CASE_LESS_OR_EQUAL(402)
+        CASE_LESS_OR_EQUAL(STORY_STG8_END_AFTER_THE_BATTLE)
         CALL(evt_msg_print, 0, STRING("stg4_usu_87_1"), 0, STRING("me"))
         CASE_DEFAULT
         CALL(evt_msg_print, 0, STRING("stg4_usu_87_1_1"), 0, STRING("me"))
@@ -384,20 +137,25 @@ EVT_BEGIN(villagerG_talk)
     RETURN
 EVT_END()
 
+/** Init script of villager H: enables move/talk animation. */
 EVT_BEGIN(villagerH_init)
-    CALL(evt_npc_flag_onoff, 1, STRING("村人Ｈ"), 1536)
+    CALL(evt_npc_flag_onoff, 1, STRING("村人Ｈ"), NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM)
     RETURN
 EVT_END()
 
+/**
+ * Talk script of villager H: text by Chapter 4 progress (before the Doopliss fight, until leaving Twilight Town,
+ * later).
+ */
 EVT_BEGIN(villagerH_talk)
-    SWITCH(GSW(0))
-        CASE_LESS(200)
+    SWITCH(GSW(GSW_STORY_PROGRESS))
+        CASE_LESS(STORY_STG4_10_DOOPLISS_BATTLE)
         CALL(evt_msg_print, 0, STRING("stg4_usu_88"), 0, STRING("me"))
-        CASE_LESS(219)
+        CASE_LESS(STORY_STG4_16_LEAVING_TWILIGHT_TOWN)
         CALL(evt_msg_print, 0, STRING("stg4_usu_89"), 0, STRING("me"))
-        CASE_LESS(222)
+        CASE_LESS(STORY_STG4_31_FRANKLYS_HOUSE)
         CALL(evt_msg_print, 0, STRING("stg4_usu_90"), 0, STRING("me"))
-        CASE_LESS_OR_EQUAL(402)
+        CASE_LESS_OR_EQUAL(STORY_STG8_END_AFTER_THE_BATTLE)
         CALL(evt_msg_print, 0, STRING("stg4_usu_90_1"), 0, STRING("me"))
         CASE_DEFAULT
         CALL(evt_msg_print, 0, STRING("stg4_usu_90_1_1"), 0, STRING("me"))
@@ -405,37 +163,43 @@ EVT_BEGIN(villagerH_talk)
     RETURN
 EVT_END()
 
+/**
+ * Init script of villager I (human form): enables move/talk animation and keeps him below the map
+ * until the Doopliss fight (STORY_STG4_10).
+ */
 EVT_BEGIN(villagerI_init)
-    CALL(evt_npc_flag_onoff, 1, STRING("村人Ｉ"), 1536)
-    SWITCH(GSW(0))
-        CASE_LESS(200)
+    CALL(evt_npc_flag_onoff, 1, STRING("村人Ｉ"), NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM)
+    SWITCH(GSW(GSW_STORY_PROGRESS))
+        CASE_LESS(STORY_STG4_10_DOOPLISS_BATTLE)
         CALL(evt_npc_set_position, STRING("村人Ｉ"), 0, -2000, 0)
         CASE_DEFAULT
     END_SWITCH
     RETURN
 EVT_END()
 
+/** Init script of the pig form of villager I: shown until STORY_STG4_10, then moved below the map. */
 EVT_BEGIN(villagerI_pig_init)
-    CALL(evt_npc_flag_onoff, 1, STRING("ブタ村人Ｉ"), 1536)
-    SWITCH(GSW(0))
-        CASE_LESS(200)
+    CALL(evt_npc_flag_onoff, 1, STRING("ブタ村人Ｉ"), NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM)
+    SWITCH(GSW(GSW_STORY_PROGRESS))
+        CASE_LESS(STORY_STG4_10_DOOPLISS_BATTLE)
         CASE_DEFAULT
         CALL(evt_npc_set_position, STRING("ブタ村人Ｉ"), 0, -2000, 0)
     END_SWITCH
     RETURN
 EVT_END()
 
+/** Talk script of villager I: an oink plus pig text before the Doopliss fight, then human text by story progress. */
 EVT_BEGIN(villagerI_talk)
-    SWITCH(GSW(0))
-        CASE_LESS(200)
+    SWITCH(GSW(GSW_STORY_PROGRESS))
+        CASE_LESS(STORY_STG4_10_DOOPLISS_BATTLE)
         CALL(evt_npc_get_position, STRING("me"), LW(0), LW(1), LW(2))
         CALL(evt_snd_sfxon_3d, STRING("SFX_STG4_VOICE_PIG1"), LW(0), LW(1), LW(2), 0)
         CALL(evt_msg_print, 0, STRING("stg4_usu_91"), 0, STRING("me"))
-        CASE_LESS(219)
+        CASE_LESS(STORY_STG4_16_LEAVING_TWILIGHT_TOWN)
         CALL(evt_msg_print, 0, STRING("stg4_usu_92"), 0, STRING("me"))
-        CASE_LESS(222)
+        CASE_LESS(STORY_STG4_31_FRANKLYS_HOUSE)
         CALL(evt_msg_print, 0, STRING("stg4_usu_93"), 0, STRING("me"))
-        CASE_LESS_OR_EQUAL(402)
+        CASE_LESS_OR_EQUAL(STORY_STG8_END_AFTER_THE_BATTLE)
         CALL(evt_msg_print, 0, STRING("stg4_usu_93_1"), 0, STRING("me"))
         CASE_DEFAULT
         CALL(evt_msg_print, 0, STRING("stg4_usu_93_1_1"), 0, STRING("me"))
@@ -443,37 +207,43 @@ EVT_BEGIN(villagerI_talk)
     RETURN
 EVT_END()
 
+/**
+ * Init script of villager J (human form): enables move/talk animation and keeps him below the map
+ * until the Doopliss fight (STORY_STG4_10).
+ */
 EVT_BEGIN(villagerJ_init)
-    CALL(evt_npc_flag_onoff, 1, STRING("村人Ｊ"), 1536)
-    SWITCH(GSW(0))
-        CASE_LESS(200)
+    CALL(evt_npc_flag_onoff, 1, STRING("村人Ｊ"), NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM)
+    SWITCH(GSW(GSW_STORY_PROGRESS))
+        CASE_LESS(STORY_STG4_10_DOOPLISS_BATTLE)
         CALL(evt_npc_set_position, STRING("村人Ｊ"), 0, -2000, 0)
         CASE_DEFAULT
     END_SWITCH
     RETURN
 EVT_END()
 
+/** Init script of the pig form of villager J: shown until STORY_STG4_10, then moved below the map. */
 EVT_BEGIN(villagerJ_pig_init)
-    CALL(evt_npc_flag_onoff, 1, STRING("ブタ村人Ｊ"), 1536)
-    SWITCH(GSW(0))
-        CASE_LESS(200)
+    CALL(evt_npc_flag_onoff, 1, STRING("ブタ村人Ｊ"), NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM)
+    SWITCH(GSW(GSW_STORY_PROGRESS))
+        CASE_LESS(STORY_STG4_10_DOOPLISS_BATTLE)
         CASE_DEFAULT
         CALL(evt_npc_set_position, STRING("ブタ村人Ｊ"), 0, -2000, 0)
     END_SWITCH
     RETURN
 EVT_END()
 
+/** Talk script of villager J: an oink plus pig text before the Doopliss fight, then human text by story progress. */
 EVT_BEGIN(villagerJ_talk)
-    SWITCH(GSW(0))
-        CASE_LESS(200)
+    SWITCH(GSW(GSW_STORY_PROGRESS))
+        CASE_LESS(STORY_STG4_10_DOOPLISS_BATTLE)
         CALL(evt_npc_get_position, STRING("me"), LW(0), LW(1), LW(2))
         CALL(evt_snd_sfxon_3d, STRING("SFX_STG4_VOICE_PIG1"), LW(0), LW(1), LW(2), 0)
         CALL(evt_msg_print, 0, STRING("stg4_usu_94"), 0, STRING("me"))
-        CASE_LESS(219)
+        CASE_LESS(STORY_STG4_16_LEAVING_TWILIGHT_TOWN)
         CALL(evt_msg_print, 0, STRING("stg4_usu_95"), 0, STRING("me"))
-        CASE_LESS(222)
+        CASE_LESS(STORY_STG4_31_FRANKLYS_HOUSE)
         CALL(evt_msg_print, 0, STRING("stg4_usu_96"), 0, STRING("me"))
-        CASE_LESS_OR_EQUAL(402)
+        CASE_LESS_OR_EQUAL(STORY_STG8_END_AFTER_THE_BATTLE)
         CALL(evt_msg_print, 0, STRING("stg4_usu_96_1"), 0, STRING("me"))
         CASE_DEFAULT
         CALL(evt_msg_print, 0, STRING("stg4_usu_96_1_1"), 0, STRING("me"))
@@ -481,25 +251,35 @@ EVT_BEGIN(villagerJ_talk)
     RETURN
 EVT_END()
 
+/**
+ * Init script of the shopkeeper (the shop woman's husband): enables move/talk animation.
+ * From the Doopliss fight until Mario leaves Twilight Town he stands in the shop at (-125, 0, -475),
+ * turned to 90 degrees towards the dandy he quarrels with (see mise_kiza_msg);
+ * later he stands at (-130, 0, -480). Before the fight his placement is left as set up.
+ */
 EVT_BEGIN(shop_man_init)
-    CALL(evt_npc_flag_onoff, 1, STRING("店の主人"), 1536)
-    SWITCH(GSW(0))
-        CASE_LESS(200)
-        CASE_LESS(219)
+    CALL(evt_npc_flag_onoff, 1, STRING("店の主人"), NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM)
+    SWITCH(GSW(GSW_STORY_PROGRESS))
+        CASE_LESS(STORY_STG4_10_DOOPLISS_BATTLE)
+        CASE_LESS(STORY_STG4_16_LEAVING_TWILIGHT_TOWN)
         CALL(evt_npc_set_position, STRING("店の主人"), -125, 0, -475)
         CALL(evt_npc_set_ry, STRING("店の主人"), 90)
-        CALL(evt_npc_flag_onoff, 1, STRING("店の主人"), 4194304)
+        CALL(evt_npc_flag_onoff, 1, STRING("店の主人"), NPC_FLAG_RESUME_ON_LEAVE)
         CASE_DEFAULT
         CALL(evt_npc_set_position, STRING("店の主人"), -130, 0, -480)
     END_SWITCH
     RETURN
 EVT_END()
 
+/**
+ * Talk script of the shopkeeper: one line until Mario leaves Twilight Town (stg4_usu_61_5),
+ * another after the story's end (stg4_usu_61_6).
+ */
 EVT_BEGIN(shop_man_talk)
-    SWITCH(GSW(0))
-        CASE_LESS(219)
+    SWITCH(GSW(GSW_STORY_PROGRESS))
+        CASE_LESS(STORY_STG4_16_LEAVING_TWILIGHT_TOWN)
         CALL(evt_msg_print, 0, STRING("stg4_usu_61_5"), 0, STRING("店の主人"))
-        CASE_LESS_OR_EQUAL(402)
+        CASE_LESS_OR_EQUAL(STORY_STG8_END_AFTER_THE_BATTLE)
         CALL(evt_msg_print, 0, STRING("stg4_usu_61_6"), 0, STRING("店の主人"))
         CASE_DEFAULT
         CALL(evt_msg_print, 0, STRING("stg4_usu_61_7"), 0, STRING("店の主人"))
@@ -507,15 +287,25 @@ EVT_BEGIN(shop_man_talk)
     RETURN
 EVT_END()
 
+/** Init script of the shopkeeper's wife: enables move/talk animation. */
 EVT_BEGIN(shop_woman_init)
-    CALL(evt_npc_flag_onoff, 1, STRING("お店の奥さん"), 1536)
+    CALL(evt_npc_flag_onoff, 1, STRING("お店の奥さん"), NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM)
     RETURN
 EVT_END()
 
+/**
+ * Talk script of the shopkeeper's wife.
+ * Before the Shop Key is found, the first talk has her sob that her husband came back from the woods as a pig;
+ * Mario dozes off during her long story (snoring loop, yawn, wake-up voice and poses),
+ * then she asks him to restore her husband and offers anything in the storeroom (sets
+ * GSWF_USU01_SHOPKEEPER_ASKED_HELP); later talks repeat the plea.
+ * After that she lets Mario open the storeroom (until it is unlocked),
+ * then talks about readying the store (until the Doopliss fight), then gives her final line.
+ */
 EVT_BEGIN(shop_woman_talk)
-    SWITCH(GSW(0))
-        CASE_LESS(184)
-        IF_INT_EQUAL(GSWF(1925), 0)
+    SWITCH(GSW(GSW_STORY_PROGRESS))
+        CASE_LESS(STORY_STG4_03_SHOP_KEY)
+        IF_INT_EQUAL(GSWF(GSWF_USU01_SHOPKEEPER_ASKED_HELP), 0)
             CALL(evt_msg_print, 0, STRING("stg4_usu_52"), 0, STRING("me"))
             WAIT_MS(200)
             CALL(evt_mario_set_pose, STRING("M_I_2"))
@@ -555,13 +345,13 @@ EVT_BEGIN(shop_woman_talk)
             CALL(evt_mario_set_pose, STRING("M_N_2"))
             WAIT_MS(600)
             CALL(evt_msg_print, 0, STRING("stg4_usu_55"), 0, STRING("me"))
-            SET_VALUE(GSWF(1925), 1)
-            ELSE
+            SET_VALUE(GSWF(GSWF_USU01_SHOPKEEPER_ASKED_HELP), 1)
+        ELSE
             CALL(evt_msg_print, 0, STRING("stg4_usu_56"), 0, STRING("me"))
         END_IF
-        CASE_LESS(185)
+        CASE_LESS(STORY_STG4_04_STORAGE_ROOM_UNLOCKED)
         CALL(evt_msg_print, 0, STRING("stg4_usu_58"), 0, STRING("me"))
-        CASE_LESS(200)
+        CASE_LESS(STORY_STG4_10_DOOPLISS_BATTLE)
         CALL(evt_msg_print, 0, STRING("stg4_usu_58_01"), 0, STRING("me"))
         CASE_DEFAULT
         CALL(evt_msg_print, 0, STRING("stg4_usu_59"), 0, STRING("me"))
@@ -570,32 +360,47 @@ EVT_BEGIN(shop_woman_talk)
     RETURN
 EVT_END()
 
+/**
+ * Init script of the dandy ("kizayarou", human form): enables move/talk animation.
+ * He is kept below the map before the Doopliss fight (his pig form stands in instead)
+ * and once Mario leaves Twilight Town; in between he stands in the shop at (-100, 0, -450).
+ */
 static EVT_BEGIN(kizayarou_init)
-    CALL(evt_npc_flag_onoff, 1, STRING("キザ野郎"), 1536)
-    SWITCH(GSW(0))
-        CASE_LESS(200)
+    CALL(evt_npc_flag_onoff, 1, STRING("キザ野郎"), NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM)
+    SWITCH(GSW(GSW_STORY_PROGRESS))
+        CASE_LESS(STORY_STG4_10_DOOPLISS_BATTLE)
         CALL(evt_npc_set_position, STRING("キザ野郎"), 0, -2000, 0)
-        CASE_LESS(219)
+        CASE_LESS(STORY_STG4_16_LEAVING_TWILIGHT_TOWN)
         CALL(evt_npc_set_position, STRING("キザ野郎"), -100, 0, -450)
-        CALL(evt_npc_flag_onoff, 1, STRING("キザ野郎"), 4194304)
+        CALL(evt_npc_flag_onoff, 1, STRING("キザ野郎"), NPC_FLAG_RESUME_ON_LEAVE)
         CASE_DEFAULT
         CALL(evt_npc_set_position, STRING("キザ野郎"), 0, -2000, 0)
     END_SWITCH
     RETURN
 EVT_END()
 
+/**
+ * Init script of the pig form of the dandy ("kizayarou") in the shop:
+ * shown until STORY_STG4_10, then moved below the map.
+ */
 EVT_BEGIN(kizayarou_pig_init)
-    SWITCH(GSW(0))
-        CASE_LESS(200)
+    SWITCH(GSW(GSW_STORY_PROGRESS))
+        CASE_LESS(STORY_STG4_10_DOOPLISS_BATTLE)
         CASE_DEFAULT
         CALL(evt_npc_set_position, STRING("ブタキザ野郎"), 0, -2000, 0)
     END_SWITCH
     RETURN
 EVT_END()
 
+/**
+ * Talk script of the dandy, shared by his pig form:
+ * before the Doopliss fight an oink sound and a small "L'oink" line (stg4_usu_61_00);
+ * afterwards he says, in his French accent, that he came by the pipe
+ * and does not know why he is in the shop (stg4_usu_61).
+ */
 static EVT_BEGIN(kizayarou_talk)
-    SWITCH(GSW(0))
-        CASE_LESS(200)
+    SWITCH(GSW(GSW_STORY_PROGRESS))
+        CASE_LESS(STORY_STG4_10_DOOPLISS_BATTLE)
         CALL(evt_npc_get_position, STRING("me"), LW(0), LW(1), LW(2))
         CALL(evt_snd_sfxon_3d, STRING("SFX_STG4_VOICE_PIG1"), LW(0), LW(1), LW(2), 0)
         CALL(evt_msg_print, 0, STRING("stg4_usu_61_00"), 0, STRING("me"))
@@ -605,6 +410,10 @@ static EVT_BEGIN(kizayarou_talk)
     RETURN
 EVT_END()
 
+/**
+ * Group chat of the three children (A, B and C) with staggered messages stg4_usu_63 and up;
+ * used while the children still have their mother.
+ */
 EVT_BEGIN(childABC_talk_01)
     BEGIN_INLINE_EVENT
         CALL(evt_msg_print, 0, STRING("stg4_usu_63"), 0, STRING("子供Ａ"))
@@ -618,6 +427,11 @@ EVT_BEGIN(childABC_talk_01)
     RETURN
 EVT_END()
 
+/**
+ * Group chat of the three children, staggered by 400 ms and 600 ms:
+ * small lines saying they miss their mommy, are hungry and want pork chops
+ * (stg4_usu_79 to stg4_usu_81); used from the Doopliss fight until STORY_STG4_31_FRANKLYS_HOUSE.
+ */
 EVT_BEGIN(childABC_talk_02)
     BEGIN_INLINE_EVENT
         CALL(evt_msg_print, 0, STRING("stg4_usu_79"), 0, STRING("子供Ａ"))
@@ -631,6 +445,10 @@ EVT_BEGIN(childABC_talk_02)
     RETURN
 EVT_END()
 
+/**
+ * Group chat of the three children, staggered the same way: they greet Mario, say he is back and ask for a gift
+ * (stg4_usu_81_2 to stg4_usu_81_4); used from STORY_STG4_31_FRANKLYS_HOUSE until the end of the game.
+ */
 EVT_BEGIN(childABC_talk_03)
     BEGIN_INLINE_EVENT
         CALL(evt_msg_print, 0, STRING("stg4_usu_81_2"), 0, STRING("子供Ａ"))
@@ -644,6 +462,10 @@ EVT_BEGIN(childABC_talk_03)
     RETURN
 EVT_END()
 
+/**
+ * Group chat of the three children with the same greeting, welcome-back and gift lines as childABC_talk_03
+ * (stg4_usu_81_4_2 to stg4_usu_81_4_4); used after the end of the game.
+ */
 EVT_BEGIN(childABC_talk_04)
     BEGIN_INLINE_EVENT
         CALL(evt_msg_print, 0, STRING("stg4_usu_81_4_2"), 0, STRING("子供Ａ"))
@@ -657,22 +479,30 @@ EVT_BEGIN(childABC_talk_04)
     RETURN
 EVT_END()
 
+/**
+ * Init script of the aunt (human form): enables move/talk animation and hides her below the map
+ * if she has been turned into a pig (GSWF_USU01_MOTHER_TURNED_PIG) before the Doopliss fight.
+ */
 EVT_BEGIN(aunt_init)
-    CALL(evt_npc_flag_onoff, 1, STRING("おばさん"), 1536)
-    SWITCH(GSW(0))
-        CASE_LESS(200)
-        IF_INT_EQUAL(GSWF(1927), 1)
+    CALL(evt_npc_flag_onoff, 1, STRING("おばさん"), NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM)
+    SWITCH(GSW(GSW_STORY_PROGRESS))
+        CASE_LESS(STORY_STG4_10_DOOPLISS_BATTLE)
+        IF_INT_EQUAL(GSWF(GSWF_USU01_MOTHER_TURNED_PIG), 1)
             CALL(evt_npc_set_position, STRING("おばさん"), 0, -2000, 0)
         END_IF
     END_SWITCH
     RETURN
 EVT_END()
 
+/**
+ * Init script of the pig aunt: enables move/talk animation and hides her
+ * unless she has been turned into a pig (GSWF_USU01_MOTHER_TURNED_PIG) before the Doopliss fight.
+ */
 EVT_BEGIN(aunt_pig_init)
-    CALL(evt_npc_flag_onoff, 1, STRING("ブタおばさん"), 1536)
-    SWITCH(GSW(0))
-        CASE_LESS(200)
-        IF_INT_EQUAL(GSWF(1927), 0)
+    CALL(evt_npc_flag_onoff, 1, STRING("ブタおばさん"), NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM)
+    SWITCH(GSW(GSW_STORY_PROGRESS))
+        CASE_LESS(STORY_STG4_10_DOOPLISS_BATTLE)
+        IF_INT_EQUAL(GSWF(GSWF_USU01_MOTHER_TURNED_PIG), 0)
             CALL(evt_npc_set_position, STRING("ブタおばさん"), 0, -2000, 0)
         END_IF
         CASE_DEFAULT
@@ -681,15 +511,24 @@ EVT_BEGIN(aunt_pig_init)
     RETURN
 EVT_END()
 
+/**
+ * Trouble 20 helper (door in LW(0)): with Mario's controls off, pans the camera,
+ * opens the house door and walks the aunt out to (-368, 0) facing Mario,
+ * while Mario and the partner follow her out to -420 and -450;
+ * then closes the door, returns the camera and restores the house's map objects.
+ */
 EVT_BEGIN(iri_20_out_house)
+    // Mario's controls are off and the camera swings to a spot in front of the house.
     CALL(evt_mario_key_onoff, 0)
     BEGIN_INLINE_EVENT
         CALL(evt_cam3d_evt_set_xyz, -420, 1, 0, 0, 150, 11)
     END_INLINE_EVENT
+    // Set the door up for the exit: its glow and sound start and the door parts swing to their starting
+    // position.
     IF_INT_EQUAL(LW(14), 0)
-        SPAWN_EVENT(PTR(door_light2))
+        SPAWN_EVENT(door_light2)
     END_IF
-    SPAWN_EVENT(PTR(door_up_se))
+    SPAWN_EVENT(door_up_se)
     CALL(evt_door_param, LW(0), 6, LW(7), LW(8), LW(9))
     IF_INT_NOT_EQUAL(LW(8), 0)
         BEGIN_INLINE_EVENT
@@ -709,7 +548,7 @@ EVT_BEGIN(iri_20_out_house)
     IF_INT_NOT_EQUAL(LW(9), 0)
         BEGIN_INLINE_EVENT
             WAIT_MS(400)
-            SPAWN_EVENT(PTR(house_close_se))
+            SPAWN_EVENT(house_close_se)
         END_INLINE_EVENT
         BEGIN_INLINE_EVENT
             CALL(evt_door_param, LW(0), 6, LW(7), LW(8), LW(9))
@@ -729,10 +568,11 @@ EVT_BEGIN(iri_20_out_house)
         END_INLINE_EVENT
     END_IF
     WAIT_MS(500)
+    // A moment later the door opens: the glow, the opening sound and the door parts swinging open.
     IF_INT_EQUAL(LW(14), 0)
-        SPAWN_EVENT(PTR(door_light))
+        SPAWN_EVENT(door_light)
     END_IF
-    SPAWN_EVENT(PTR(door_open_se))
+    SPAWN_EVENT(door_open_se)
     CALL(evt_door_param, LW(0), 6, LW(7), LW(8), LW(9))
     IF_INT_NOT_EQUAL(LW(7), 0)
         BEGIN_INLINE_EVENT
@@ -751,6 +591,8 @@ EVT_BEGIN(iri_20_out_house)
         END_INLINE_EVENT
     END_IF
     WAIT_MS(500)
+    // The aunt walks out of the door, along the path to (-368, 0), and turns toward Mario;
+    // Mario and his partner follow her out to x -420 and -450 and face her.
     CALL(evt_door_param, LW(0), 5, LW(1), LW(2), LW(3))
     BEGIN_INLINE_EVENT
         CALL(evt_npc_move_position, STRING("おばさん"), LW(1), LW(3), 0, 60, 0)
@@ -767,11 +609,12 @@ EVT_BEGIN(iri_20_out_house)
         CALL(evt_party_move_pos2, 0, -450, -1, 60)
         CALL(evt_party_set_dir_npc, 0, STRING("おばさん"))
     END_INLINE_EVENT
+    // After a long pause the door closes again with its sound.
     WAIT_MS(2000)
     CALL(evt_door_param, LW(0), 6, LW(7), LW(8), LW(9))
     IF_INT_NOT_EQUAL(LW(7), 0)
         BEGIN_INLINE_EVENT
-            SPAWN_EVENT(PTR(door_close_se))
+            SPAWN_EVENT(door_close_se)
         END_INLINE_EVENT
         BEGIN_INLINE_EVENT
             CALL(evt_door_param, LW(0), 6, LW(7), LW(8), LW(9))
@@ -789,27 +632,28 @@ EVT_BEGIN(iri_20_out_house)
         END_INLINE_EVENT
     END_IF
     WAIT_MS(500)
+    // The camera returns, the door's map objects are restored and Mario's controls come back.
     CALL(evt_cam3d_evt_xyz_off, 100, 11)
     CALL(door_dark_flag, LW(0), 0)
     CALL(evt_door_param, LW(0), 3, LW(1), LW(2))
     IF_INT_NOT_EQUAL(LW(1), 0)
         IF_INT_NOT_EQUAL(LW(15), 1)
-            CALL(evt_mapobj_flag_onoff, 1, 1, LW(1), 1)
+            CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, LW(1), MAPOBJ_FLAG_HIDE)
         END_IF
-        CALL(evt_mapobj_flag_onoff, 1, 0, LW(1), 2048)
-        CALL(evt_mapobj_flag_onoff, 1, 0, LW(1), 4096)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, LW(1), MAPOBJ_FLAG_NO_BLEND)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, LW(1), MAPOBJ_FLAG_NO_BLEND2)
     END_IF
     IF_INT_NOT_EQUAL(LW(2), 0)
         CALL(evt_hitobj_onoff, LW(2), 1, 0)
     END_IF
     CALL(evt_door_param, LW(0), 2, LW(1), LW(2))
     IF_INT_NOT_EQUAL(LW(1), 0)
-        CALL(evt_mapobj_flag_onoff, 1, 0, LW(1), 2048)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, LW(1), MAPOBJ_FLAG_NO_BLEND)
     END_IF
     CALL(evt_door_param, LW(0), 1, LW(1), LW(2), LW(3))
     IF_INT_NOT_EQUAL(LW(1), 0)
-        CALL(evt_mapobj_flag_onoff, 1, 0, LW(1), 2048)
-        CALL(evt_mapobj_flag_onoff, 1, 0, LW(1), 4096)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, LW(1), MAPOBJ_FLAG_NO_BLEND)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, LW(1), MAPOBJ_FLAG_NO_BLEND2)
     END_IF
     CALL(evt_door_param, LW(0), 2, LW(1), LW(2))
     IF_INT_NOT_EQUAL(LW(1), 0)
@@ -819,13 +663,17 @@ EVT_BEGIN(iri_20_out_house)
     RETURN
 EVT_END()
 
+/**
+ * Trouble 20 helper: the aunt walks back to house 1's door, which opens; she walks inside to (-390, -185)
+ * and the door closes behind her.
+ */
 EVT_BEGIN(iri_20_aunt_to_house)
     CALL(evt_npc_move_position, STRING("おばさん"), -390, -40, 0, 60, 0)
     SET_VALUE(LW(0), PTR(&door_1))
-    CALL(evt_npc_flag_onoff, 0, STRING("me"), 1024)
+    CALL(evt_npc_flag_onoff, 0, STRING("me"), NPC_FLAG_MOVE_ANIM)
     CALL(evt_npc_move_position, STRING("me"), -390, -20, 0, 60, 0)
-    CALL(evt_npc_flag_onoff, 1, STRING("me"), 1024)
-    SPAWN_EVENT(PTR(door_open_se))
+    CALL(evt_npc_flag_onoff, 1, STRING("me"), NPC_FLAG_MOVE_ANIM)
+    SPAWN_EVENT(door_open_se)
     CALL(evt_door_param, LW(0), 6, LW(7), LW(8), LW(9))
     IF_INT_NOT_EQUAL(LW(7), 0)
         BEGIN_INLINE_EVENT
@@ -851,7 +699,7 @@ EVT_BEGIN(iri_20_aunt_to_house)
     CALL(evt_door_param, LW(0), 6, LW(7), LW(8), LW(9))
     IF_INT_NOT_EQUAL(LW(7), 0)
         BEGIN_INLINE_EVENT
-            SPAWN_EVENT(PTR(door_close_se))
+            SPAWN_EVENT(door_close_se)
         END_INLINE_EVENT
         BEGIN_INLINE_EVENT
             CALL(evt_door_param, LW(0), 6, LW(7), LW(8), LW(9))
@@ -871,47 +719,78 @@ EVT_BEGIN(iri_20_aunt_to_house)
     RETURN
 EVT_END()
 
+/**
+ * Talk script of the aunt, shared by her pig form.
+ * While trouble 20 is active she runs that request:
+ * the first talk takes Mario outside, where to music-box music she asks him to find out how her former love
+ * Podley feels about her; once he has met Podley (GSWF_TROUBLE_WORK_1) Mario tells the truth
+ * or makes something up, she gives him a Meteor Meal (left on the ground if his items are full)
+ * and the trouble is solved.
+ * Otherwise, before the Doopliss fight, the first talk has her ask for food for her hungry children (a food item
+ * from the pouch earns a Shooting Star), then the bell rings
+ * and she turns into a pig (sets GSWF_USU01_MOTHER_TURNED_PIG); as a pig she oinks. Later talks give story text.
+ */
 EVT_BEGIN(aunt_talk)
-    IF_INT_EQUAL(GSW(1420), 20)
-        IF_INT_EQUAL(GSWF(5405), 0)
+    IF_INT_EQUAL(GSW(GSW_TROUBLE_ACTIVE), 20)
+        IF_INT_EQUAL(GSWF(GSWF_TROUBLE_WORK_BASE), 0)
+            // Trouble 20 (Podley's old flame): the aunt asks Mario to step outside because she can't talk in
+            // front of the children (irai_20_001).
             CALL(evt_msg_print, 0, STRING("irai_20_001"), 0, STRING("me"))
-            CALL(evt_npc_flag_onoff, 1, STRING("me"), 32)
+            // She and Mario move into position by her door and she is walked out
+            // through it (iri_20_out_house).
+            CALL(evt_npc_flag_onoff, 1, STRING("me"), NPC_FLAG_INTANGIBLE)
             BEGIN_INLINE_EVENT
                 CALL(evt_npc_move_position, STRING("me"), -390, -130, 0, 60, 0)
             END_INLINE_EVENT
             CALL(evt_mario_mov_pos2, -390, -100, 60)
             WAIT_MS(500)
-            CALL(evt_npc_flag_onoff, 0, STRING("me"), 32)
+            CALL(evt_npc_flag_onoff, 0, STRING("me"), NPC_FLAG_INTANGIBLE)
             SET_VALUE(LW(0), PTR(&door_1))
             SET_VALUE(LW(14), 0)
             SET_VALUE(LW(15), 0)
-            CALL_CHILD(PTR(iri_20_out_house))
-            CALL(evt_snd_bgmoff_f, 1024, 2000)
+            CALL_CHILD(iri_20_out_house)
+            // The town music fades out and music-box music takes over.
+            CALL(evt_snd_bgmoff_f, PSND_FADE_HOLD, 2000)
             WAIT_MS(1000)
+#if VERSION <= VERSION_DEMO_JP
+            CALL(evt_snd_bgmoff, PSND_FADE_HOLD)
+            CALL(evt_snd_bgmon, PSND_CH(1), STRING("BGM_EVT_ORGEL1"))
+#else
             BEGIN_INLINE_EVENT
                 WAIT_MS(2000)
-                CALL(evt_snd_bgmoff, 1024)
-                CALL(evt_snd_bgmon, 1, STRING("BGM_EVT_ORGEL1"))
+                CALL(evt_snd_bgmoff, PSND_FADE_HOLD)
+                CALL(evt_snd_bgmon, PSND_CH(1), STRING("BGM_EVT_ORGEL1"))
             END_INLINE_EVENT
+#endif
+            // She explains she wants to meet her former love Podley (irai_20_002);
+            // "Purehearted Eve" was her stage name (irai_20_003).
             CALL(evt_msg_print, 0, STRING("irai_20_002"), 0, STRING("me"))
             CALL(evt_mario_set_pose, STRING("M_N_1"))
             WAIT_MS(500)
             CALL(evt_msg_print, 0, STRING("irai_20_003"), 0, STRING("me"))
             CALL(evt_mario_set_pose, STRING("M_S_1"))
-            CALL(evt_snd_bgmoff_f, 513, 3000)
-            CALL_CHILD(PTR(iri_20_aunt_to_house))
-            CALL(evt_snd_bgmoff_f, 513, 2000)
-            CALL(evt_snd_bgmon_f, 288, 0, 2000)
-            CALL(evt_snd_bgmon, 160, 0)
-            CALL(evt_snd_envon, 160, 0)
+#if VERSION >= VERSION_JP
+            CALL(evt_snd_bgmoff_f, PSND_FADE_OUT | PSND_CH(1), 3000)
+#endif
+            // She walks back into the house, the town music returns and the request is marked as started.
+            CALL_CHILD(iri_20_aunt_to_house)
+            CALL(evt_snd_bgmoff_f, PSND_FADE_OUT | PSND_CH(1), 2000)
+            CALL(evt_snd_bgmon_f, PSND_FADE_RESUME | PSND_FADE_IN, 0, 2000)
+#if VERSION >= VERSION_JP
+            CALL(evt_snd_bgmon, PSND_FADE_RESUME | PSND_FADE_UNDIP, 0)
+            CALL(evt_snd_envon, PSND_FADE_RESUME | PSND_FADE_UNDIP, 0)
             CALL(evt_snd_env_lpf, 0, 0)
-            SET_VALUE(GSWF(5405), 1)
-            ELSE
-            IF_INT_EQUAL(GSWF(5406), 0)
+#endif
+            SET_VALUE(GSWF(GSWF_TROUBLE_WORK_BASE), 1)
+        ELSE
+            IF_INT_EQUAL(GSWF(GSWF_TROUBLE_WORK_1), 0)
+                // Mario hasn't met Podley yet: she repeats the request (irai_20_004).
                 CALL(evt_msg_print, 0, STRING("irai_20_004"), 0, STRING("me"))
-                ELSE
-                CALL(evt_npc_flag_onoff, 1, STRING("おばさん"), 32)
-                CALL(evt_npc_flag_onoff, 1, STRING("子供Ｂ"), 32)
+            ELSE
+                // Mario has met Podley: he and his partner walk up to the aunt and the
+                // three children gather round.
+                CALL(evt_npc_flag_onoff, 1, STRING("おばさん"), NPC_FLAG_INTANGIBLE)
+                CALL(evt_npc_flag_onoff, 1, STRING("子供Ｂ"), NPC_FLAG_INTANGIBLE)
                 SET_VALUE(GF(0), 1)
                 BEGIN_INLINE_EVENT
                     CALL(evt_party_move_pos2, 0, -443, -140, 60)
@@ -926,19 +805,22 @@ EVT_BEGIN(aunt_talk)
                 WAIT_FRAMES(1)
                 CALL(evt_npc_wait_pera, STRING("me"))
                 WAIT_WHILE(GF(0))
-                CALL(evt_npc_flag_onoff, 0, STRING("おばさん"), 32)
-                CALL(evt_npc_flag_onoff, 0, STRING("子供Ｂ"), 32)
+                CALL(evt_npc_flag_onoff, 0, STRING("おばさん"), NPC_FLAG_INTANGIBLE)
+                CALL(evt_npc_flag_onoff, 0, STRING("子供Ｂ"), NPC_FLAG_INTANGIBLE)
+                // She asks how Podley feels about her (irai_20_005);
+                // Mario can tell her the truth (irai_20_007) or make something up (irai_20_008).
                 CALL(evt_msg_print, 0, STRING("irai_20_005"), 0, STRING("me"))
                 CALL(evt_msg_select, 0, STRING("irai_20_006"))
                 IF_INT_EQUAL(LW(0), 0)
                     CALL(evt_msg_print_add, 0, STRING("irai_20_007"))
-                    ELSE
+                ELSE
                     CALL(evt_msg_continue)
                     CALL(evt_mario_set_pose, STRING("M_I_2"))
                     WAIT_MS(1200)
                     CALL(evt_mario_set_pose, STRING("M_S_1"))
                     CALL(evt_msg_print, 0, STRING("irai_20_008"), 0, STRING("me"))
                 END_IF
+                // The children clamor for food (irai_20_009 to 011).
                 BEGIN_INLINE_EVENT
                     CALL(evt_msg_print, 0, STRING("irai_20_009"), 0, STRING("子供Ａ"))
                 END_INLINE_EVENT
@@ -948,35 +830,40 @@ EVT_BEGIN(aunt_talk)
                 END_INLINE_EVENT
                 WAIT_MS(1000)
                 CALL(evt_msg_print, 0, STRING("irai_20_011"), 0, STRING("子供Ｃ"))
+                // She announces a feast and gives Mario a Meteor Meal (irai_20_012) if his items have room
+                // (10 slots, 20 with the Strange Sack).
                 CALL(evt_msg_print, 0, STRING("irai_20_012"), 0, STRING("me"))
                 CALL(evt_pouch_get_haveitemcnt, LW(0))
-                CALL(evt_pouch_check_item, 1, LW(1))
+                CALL(evt_pouch_check_item, ITEM_STRANGE_SACK, LW(1))
                 IF_INT_EQUAL(LW(1), 0)
                     SET_VALUE(LW(1), 10)
-                    ELSE
+                ELSE
                     SET_VALUE(LW(1), 20)
                 END_IF
                 IF_INT_LESS(LW(0), LW(1))
                     CALL(evt_msg_continue)
-                    CALL(evt_item_entry, STRING("sd"), 217, 0, -1000, 0, 17, -1, 0)
+                    CALL(evt_item_entry, STRING("sd"), ITEM_METEOR_MEAL, 0, -1000, 0, ITEM_ENTRY_FIXED_NO_TOUCH, -1, 0)
                     CALL(evt_item_get_item, STRING("sd"))
                     CALL(evt_item_get_item_end_wait, STRING("sd"))
-                    SET_VALUE(GSWF(1938), 1)
-                    ELSE
+                    SET_VALUE(GSWF(GSWF_USU01_TROUBLE20_METEOR_MEAL_TAKEN), 1)
+                ELSE
+                    // Items full: she leaves the Meteor Meal on the ground for him (irai_20_012_1).
                     CALL(evt_msg_print_add, 0, STRING("irai_20_012_1"))
                     CALL(evt_npc_get_position, STRING("me"), LW(0), LW(1), LW(2))
                     CALL(evt_npc_status_onoff, 1, STRING("me"), 2)
                     CALL(evt_npc_move_position, STRING("me"), -363, -152, 0, 40, 0)
                     WAIT_MS(300)
-                    CALL(evt_item_entry, STRING("iri_20"), 217, -345, 20, -132, 16, GSWF(1938), 0)
+                    CALL(evt_item_entry, STRING("iri_20"), ITEM_METEOR_MEAL, -345, 20, -132, ITEM_ENTRY_FIXED, GSWF(GSWF_USU01_TROUBLE20_METEOR_MEAL_TAKEN), 0)
                     WAIT_MS(300)
                     CALL(evt_npc_move_position, STRING("me"), LW(0), LW(2), 0, 40, 0)
                     CALL(evt_set_dir_to_target, STRING("me"), STRING("mario"))
                 END_IF
+                // She thanks Mario (irai_20_014), the playtime is saved,
+                // the trouble is solved and the children cheer (irai_20_015 to 017).
                 CALL(evt_msg_print, 0, STRING("irai_20_014"), 0, STRING("me"))
-                CALL(evt_sub_save_playtime, GSW(1453))
-                SET_VALUE(GSW(1420), 0)
-                SET_VALUE(GSWF(5394), 1)
+                CALL(evt_sub_save_playtime, GSW(GSW_USU01_TROUBLE20_TIME))
+                SET_VALUE(GSW(GSW_TROUBLE_ACTIVE), 0)
+                SET_VALUE(GSWF(GSWF_TROUBLE_20_SOLVED), 1)
                 CALL(evt_msg_print, 0, STRING("sys_request_finish"), 0, 0)
                 BEGIN_INLINE_EVENT
                     CALL(evt_msg_print, 0, STRING("irai_20_015"), 0, STRING("子供Ａ"))
@@ -993,12 +880,17 @@ EVT_BEGIN(aunt_talk)
         END_IF
         RETURN
     END_IF
-    SWITCH(GSW(0))
-        CASE_LESS(200)
-        IF_INT_EQUAL(GSWF(1927), 0)
+    // No trouble active: her words depend on how far the story has gone.
+    SWITCH(GSW(GSW_STORY_PROGRESS))
+        CASE_LESS(STORY_STG4_10_DOOPLISS_BATTLE)
+        IF_INT_EQUAL(GSWF(GSWF_USU01_MOTHER_TURNED_PIG), 0)
+            // Before the Doopliss fight, first talk: she says she can't buy food for the children since her
+            // husband turned into a pig (stg4_usu_62), and they pipe up.
             CALL(evt_msg_print, 0, STRING("stg4_usu_62"), 0, STRING("me"))
-            CALL_CHILD(PTR(childABC_talk_01))
+            CALL_CHILD(childABC_talk_01)
             WAIT_MS(1400)
+            // She begs for spare food (stg4_usu_66) with a yes/no menu;
+            // a food item from Mario's pouch earns a Shooting Star (stg4_usu_68).
             CALL(evt_msg_print, 0, STRING("stg4_usu_66"), 0, STRING("me"))
             CALL(evt_msg_select, 0, STRING("stg4_usu_66_yn"))
             CALL(evt_msg_continue)
@@ -1010,16 +902,20 @@ EVT_BEGIN(aunt_talk)
             IF_INT_EQUAL(LW(0), 0)
                 CALL(get_item_list, LW(0))
                 LOOP(0)
+#if VERSION <= VERSION_DEMO_JP
+                    CALL(evt_win_item_select, LW(0), LW(1))
+#else
                     CALL(evt_win_item_select, 0, LW(0), LW(1), 0)
+#endif
                     IF_INT_NOT_EQUAL(LW(1), -1)
                         CALL(check_tabemono, LW(1), LW(2))
                         IF_INT_EQUAL(LW(2), 1)
                             CALL(evt_pouch_remove_item, LW(1), LW(2))
                             BREAK_LOOP
-                            ELSE
+                        ELSE
                             CALL(evt_msg_print, 0, STRING("stg4_usu_67"), 0, 0)
                         END_IF
-                        ELSE
+                    ELSE
                         BREAK_LOOP
                     END_IF
                     WAIT_FRAMES(1)
@@ -1027,16 +923,18 @@ EVT_BEGIN(aunt_talk)
                 CALL(delete_item_list, LW(0))
                 IF_INT_NOT_EQUAL(LW(1), -1)
                     CALL(evt_msg_print, 0, STRING("stg4_usu_68"), 0, STRING("me"))
-                    CALL(evt_item_entry, STRING("orei"), 130, 0, 0, 0, 17, -1, 0)
+                    CALL(evt_item_entry, STRING("orei"), ITEM_SHOOTING_STAR, 0, 0, 0, ITEM_ENTRY_FIXED_NO_TOUCH, -1, 0)
                     CALL(evt_item_get_item, STRING("orei"))
                     CALL(evt_item_get_item_end_wait, STRING("orei"))
                     CALL(evt_msg_print, 0, STRING("stg4_usu_69"), 0, STRING("me"))
-                    ELSE
+                ELSE
                     CALL(evt_msg_print, 0, STRING("stg4_usu_70"), 0, STRING("me"))
                 END_IF
-                ELSE
+            ELSE
                 CALL(evt_msg_print, 0, STRING("stg4_usu_70"), 0, STRING("me"))
             END_IF
+            // The temple bell tolls and she turns into a pig in a puff of smoke;
+            // the children scream (stg4_usu_71 to 73).
             WAIT_MS(500)
             CALL(evt_snd_sfxon, STRING("SFX_STG4_TEMPLE_BELL1"), 0)
             WAIT_MS(2000)
@@ -1063,17 +961,20 @@ EVT_BEGIN(aunt_talk)
                 WAIT_MS(600)
                 CALL(evt_msg_print, 0, STRING("stg4_usu_73"), 0, STRING("子供Ｃ"))
             END_INLINE_EVENT
-            SET_VALUE(GSWF(1927), 1)
-            ELSE
+            SET_VALUE(GSWF(GSWF_USU01_MOTHER_TURNED_PIG), 1)
+        ELSE
+            // As a pig she only oinks (stg4_usu_73_01).
             CALL(evt_npc_get_position, STRING("me"), LW(0), LW(1), LW(2))
             CALL(evt_snd_sfxon_3d, STRING("SFX_STG4_VOICE_PIG1"), LW(0), LW(1), LW(2), 0)
             CALL(evt_msg_print, 0, STRING("stg4_usu_73_01"), 0, STRING("me"))
         END_IF
-        CASE_LESS(219)
+        CASE_LESS(STORY_STG4_16_LEAVING_TWILIGHT_TOWN)
+        // After the Doopliss fight she gives story text: thanks for restoring the village
+        // (stg4_usu_77), then comments by progress.
         CALL(evt_msg_print, 0, STRING("stg4_usu_77"), 0, STRING("me"))
-        CASE_LESS(222)
+        CASE_LESS(STORY_STG4_31_FRANKLYS_HOUSE)
         CALL(evt_msg_print, 0, STRING("stg4_usu_78"), 0, STRING("me"))
-        CASE_LESS_OR_EQUAL(402)
+        CASE_LESS_OR_EQUAL(STORY_STG8_END_AFTER_THE_BATTLE)
         CALL(evt_msg_print, 0, STRING("stg4_usu_81_1"), 0, STRING("me"))
         CASE_DEFAULT
         CALL(evt_msg_print, 0, STRING("stg4_usu_81_4_1"), 0, STRING("me"))
@@ -1081,83 +982,93 @@ EVT_BEGIN(aunt_talk)
     RETURN
 EVT_END()
 
+/** Init script of child A: enables move/talk animation. */
 EVT_BEGIN(childA_init)
-    CALL(evt_npc_flag_onoff, 1, STRING("子供Ａ"), 1536)
+    CALL(evt_npc_flag_onoff, 1, STRING("子供Ａ"), NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM)
     RETURN
 EVT_END()
 
+/** Talk script of child A: a line about the mother turning into a pig, the three-children chat, or later story text. */
 EVT_BEGIN(childA_talk)
-    SWITCH(GSW(0))
-        CASE_LESS(200)
-        IF_INT_EQUAL(GSWF(1927), 1)
+    SWITCH(GSW(GSW_STORY_PROGRESS))
+        CASE_LESS(STORY_STG4_10_DOOPLISS_BATTLE)
+        IF_INT_EQUAL(GSWF(GSWF_USU01_MOTHER_TURNED_PIG), 1)
             CALL(evt_msg_print, 0, STRING("stg4_usu_74"), 0, STRING("me"))
-            ELSE
-            CALL_CHILD(PTR(childABC_talk_01))
+        ELSE
+            CALL_CHILD(childABC_talk_01)
         END_IF
-        CASE_LESS(222)
-        CALL_CHILD(PTR(childABC_talk_02))
-        CASE_LESS_OR_EQUAL(402)
-        CALL_CHILD(PTR(childABC_talk_03))
+        CASE_LESS(STORY_STG4_31_FRANKLYS_HOUSE)
+        CALL_CHILD(childABC_talk_02)
+        CASE_LESS_OR_EQUAL(STORY_STG8_END_AFTER_THE_BATTLE)
+        CALL_CHILD(childABC_talk_03)
         CASE_DEFAULT
-        CALL_CHILD(PTR(childABC_talk_04))
+        CALL_CHILD(childABC_talk_04)
     END_SWITCH
     RETURN
 EVT_END()
 
+/** Init script of child B: enables move/talk animation. */
 EVT_BEGIN(childB_init)
-    CALL(evt_npc_flag_onoff, 1, STRING("子供Ｂ"), 1536)
+    CALL(evt_npc_flag_onoff, 1, STRING("子供Ｂ"), NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM)
     RETURN
 EVT_END()
 
+/** Talk script of child B: a line about the mother turning into a pig, the three-children chat, or later story text. */
 EVT_BEGIN(childB_talk)
-    SWITCH(GSW(0))
-        CASE_LESS(200)
-        IF_INT_EQUAL(GSWF(1927), 1)
+    SWITCH(GSW(GSW_STORY_PROGRESS))
+        CASE_LESS(STORY_STG4_10_DOOPLISS_BATTLE)
+        IF_INT_EQUAL(GSWF(GSWF_USU01_MOTHER_TURNED_PIG), 1)
             CALL(evt_msg_print, 0, STRING("stg4_usu_75"), 0, STRING("me"))
-            ELSE
-            CALL_CHILD(PTR(childABC_talk_01))
+        ELSE
+            CALL_CHILD(childABC_talk_01)
         END_IF
-        CASE_LESS(222)
-        CALL_CHILD(PTR(childABC_talk_02))
-        CASE_LESS_OR_EQUAL(402)
-        CALL_CHILD(PTR(childABC_talk_03))
+        CASE_LESS(STORY_STG4_31_FRANKLYS_HOUSE)
+        CALL_CHILD(childABC_talk_02)
+        CASE_LESS_OR_EQUAL(STORY_STG8_END_AFTER_THE_BATTLE)
+        CALL_CHILD(childABC_talk_03)
         CASE_DEFAULT
-        CALL_CHILD(PTR(childABC_talk_04))
+        CALL_CHILD(childABC_talk_04)
     END_SWITCH
     RETURN
 EVT_END()
 
+/** Init script of child C: enables move/talk animation. */
 EVT_BEGIN(childC_init)
-    CALL(evt_npc_flag_onoff, 1, STRING("子供Ｃ"), 1536)
+    CALL(evt_npc_flag_onoff, 1, STRING("子供Ｃ"), NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM)
     RETURN
 EVT_END()
 
+/** Talk script of child C: a line about the mother turning into a pig, the three-children chat, or later story text. */
 EVT_BEGIN(childC_talk)
-    SWITCH(GSW(0))
-        CASE_LESS(200)
-        IF_INT_EQUAL(GSWF(1927), 1)
+    SWITCH(GSW(GSW_STORY_PROGRESS))
+        CASE_LESS(STORY_STG4_10_DOOPLISS_BATTLE)
+        IF_INT_EQUAL(GSWF(GSWF_USU01_MOTHER_TURNED_PIG), 1)
             CALL(evt_msg_print, 0, STRING("stg4_usu_76"), 0, STRING("me"))
-            ELSE
-            CALL_CHILD(PTR(childABC_talk_01))
+        ELSE
+            CALL_CHILD(childABC_talk_01)
         END_IF
-        CASE_LESS(222)
-        CALL_CHILD(PTR(childABC_talk_02))
-        CASE_LESS_OR_EQUAL(402)
-        CALL_CHILD(PTR(childABC_talk_03))
+        CASE_LESS(STORY_STG4_31_FRANKLYS_HOUSE)
+        CALL_CHILD(childABC_talk_02)
+        CASE_LESS_OR_EQUAL(STORY_STG8_END_AFTER_THE_BATTLE)
+        CALL_CHILD(childABC_talk_03)
         CASE_DEFAULT
-        CALL_CHILD(PTR(childABC_talk_04))
+        CALL_CHILD(childABC_talk_04)
     END_SWITCH
     RETURN
 EVT_END()
 
+/**
+ * Init script of the gatekeeper: enables move/talk animation;
+ * before STORY_STG4_02_DINGE it blocks the e_bero exit and moves him to his post.
+ */
 EVT_BEGIN(gatekeeper_init)
-    CALL(evt_npc_flag_onoff, 1, STRING("門番"), 1536)
-    SWITCH(GSW(0))
-        CASE_LESS(181)
+    CALL(evt_npc_flag_onoff, 1, STRING("門番"), NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM)
+    SWITCH(GSW(GSW_STORY_PROGRESS))
+        CASE_LESS(STORY_STG4_02_DINGE)
         SET_VALUE(LW(0), STRING("e_bero"))
-        CALL_CHILD(PTR(bero_case_switch_off))
+        CALL_CHILD(bero_case_switch_off)
         CALL(evt_npc_set_position, STRING("門番"), 400, 0, -55)
-        CASE_LESS(200)
+        CASE_LESS(STORY_STG4_10_DOOPLISS_BATTLE)
         CALL(evt_npc_set_position, STRING("門番"), 0, -2000, 0)
         CASE_DEFAULT
         CALL(evt_npc_set_position, STRING("門番"), 400, 0, -55)
@@ -1165,12 +1076,16 @@ EVT_BEGIN(gatekeeper_init)
     RETURN
 EVT_END()
 
+/**
+ * Init script of the pig gatekeeper: parked below the map before STORY_STG4_02_DINGE,
+ * shown at the gate until the Doopliss fight.
+ */
 EVT_BEGIN(gatekeeper_pig_init)
-    CALL(evt_npc_flag_onoff, 1, STRING("ブタ門番"), 1536)
-    SWITCH(GSW(0))
-        CASE_LESS(181)
+    CALL(evt_npc_flag_onoff, 1, STRING("ブタ門番"), NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM)
+    SWITCH(GSW(GSW_STORY_PROGRESS))
+        CASE_LESS(STORY_STG4_02_DINGE)
         CALL(evt_npc_set_position, STRING("ブタ門番"), 0, -2000, 0)
-        CASE_LESS(200)
+        CASE_LESS(STORY_STG4_10_DOOPLISS_BATTLE)
         CALL(evt_npc_set_position, STRING("ブタ門番"), 400, 0, -55)
         CASE_DEFAULT
         CALL(evt_npc_set_position, STRING("ブタ門番"), 0, -2000, 0)
@@ -1178,9 +1093,18 @@ EVT_BEGIN(gatekeeper_pig_init)
     RETURN
 EVT_END()
 
+/**
+ * Talk script of the gatekeeper, shared by his pig form.
+ * The first talk walks Mario up to him: he warns of a monster in the woods
+ * and says passing needs the mayor's permission, the partner answers (stg4_usu_45),
+ * the pig-mayor scene (village_chief_change_pig_event) starts
+ * and the story advances to STORY_STG4_01_00_GATEKEEPER_CONVERSATION.
+ * Later he repeats the warning, refuses passage once the mayor is a pig,
+ * oinks as a pig (until the Doopliss fight) and then gives story text.
+ */
 EVT_BEGIN(gatekeeper_talk)
-    SWITCH(GSW(0))
-        CASE_LESS(179)
+    SWITCH(GSW(GSW_STORY_PROGRESS))
+        CASE_LESS(STORY_STG4_01_00_GATEKEEPER_CONVERSATION)
         CALL(evt_mario_mov_pos2, 350, -50, 120)
         WAIT_FRAMES(1)
         CALL(evt_mario_set_dir, 90, 300, 0)
@@ -1196,22 +1120,22 @@ EVT_BEGIN(gatekeeper_talk)
         CALL(evt_msg_print_party, STRING("stg4_usu_45"))
         CALL(evt_party_run, 0)
         CALL(evt_cam3d_evt_off, 1000, 11)
-        SPAWN_EVENT(PTR(village_chief_change_pig_event))
-        SET_VALUE(GSW(0), 179)
+        SPAWN_EVENT(village_chief_change_pig_event)
+        SET_VALUE(GSW(GSW_STORY_PROGRESS), STORY_STG4_01_00_GATEKEEPER_CONVERSATION)
         RETURN
-        CASE_LESS(180)
+        CASE_LESS(STORY_STG4_01_THE_MAYORS_A_PIG)
         CALL(evt_msg_print, 0, STRING("stg4_usu_45_01"), 0, STRING("me"))
-        CASE_LESS(181)
+        CASE_LESS(STORY_STG4_02_DINGE)
         CALL(evt_msg_print, 0, STRING("stg4_usu_46"), 0, STRING("me"))
-        CASE_LESS(200)
+        CASE_LESS(STORY_STG4_10_DOOPLISS_BATTLE)
         CALL(evt_npc_get_position, STRING("me"), LW(0), LW(1), LW(2))
         CALL(evt_snd_sfxon_3d, STRING("SFX_STG4_VOICE_PIG1"), LW(0), LW(1), LW(2), 0)
         CALL(evt_msg_print, 0, STRING("stg4_usu_48"), 0, STRING("me"))
-        CASE_LESS(219)
+        CASE_LESS(STORY_STG4_16_LEAVING_TWILIGHT_TOWN)
         CALL(evt_msg_print, 0, STRING("stg4_usu_49"), 0, STRING("me"))
-        CASE_LESS(222)
+        CASE_LESS(STORY_STG4_31_FRANKLYS_HOUSE)
         CALL(evt_msg_print, 0, STRING("stg4_usu_49_1"), 0, STRING("me"))
-        CASE_LESS_OR_EQUAL(402)
+        CASE_LESS_OR_EQUAL(STORY_STG8_END_AFTER_THE_BATTLE)
         CALL(evt_msg_print, 0, STRING("stg4_usu_49_2"), 0, STRING("me"))
         CASE_DEFAULT
         CALL(evt_msg_print, 0, STRING("stg4_usu_49_2_1"), 0, STRING("me"))
@@ -1219,34 +1143,44 @@ EVT_BEGIN(gatekeeper_talk)
     RETURN
 EVT_END()
 
+/** Init script of crow F: puts it on its perch at (275, 83, 355). */
 EVT_BEGIN(crow_f_init)
     CALL(evt_npc_set_position, STRING("me"), 275, 83, 355)
     RETURN
 EVT_END()
 
+/** Init script of crow G: puts it on its perch at (250, 112, 355). */
 EVT_BEGIN(crow_g_init)
     CALL(evt_npc_set_position, STRING("me"), 250, 112, 355)
     RETURN
 EVT_END()
 
+/** Init script of crow H: puts it on its perch at (-147, 110, 346). */
 EVT_BEGIN(crow_h_init)
     CALL(evt_npc_set_position, STRING("me"), -147, 110, 346)
     RETURN
 EVT_END()
 
+/** Init script of crow I: puts it on its perch at (-175, 110, 348). */
 EVT_BEGIN(crow_i_init)
     CALL(evt_npc_set_position, STRING("me"), -175, 110, 348)
     RETURN
 EVT_END()
 
+/** Init script of crow J: puts it on its perch at (-195, 100, -157). */
 EVT_BEGIN(crow_j_init)
     CALL(evt_npc_set_position, STRING("me"), -195, 100, -157)
     RETURN
 EVT_END()
 
+/**
+ * Talk interrupt of the three young women: the pig versions speak "stg4_usu_148_1_01" to "03"
+ * before the Doopliss fight; as dancers afterwards they speak "stg4_usu_148_1_04" to "06"
+ * until the Peach report (STORY_STG4_15_05).
+ */
 static EVT_BEGIN(musume_talk)
-    SWITCH(GSW(0))
-        CASE_LESS(200)
+    SWITCH(GSW(GSW_STORY_PROGRESS))
+        CASE_LESS(STORY_STG4_10_DOOPLISS_BATTLE)
         CALL(evt_npc_get_position, STRING("ブタ３人娘Ａ"), LW(0), LW(1), LW(2))
         CALL(evt_snd_sfxon_3d, STRING("SFX_STG4_VOICE_PIG1"), LW(0), LW(1), LW(2), 0)
         CALL(evt_msg_print, 0, STRING("stg4_usu_148_1_01"), 0, STRING("ブタ３人娘Ａ"))
@@ -1256,7 +1190,7 @@ static EVT_BEGIN(musume_talk)
         CALL(evt_npc_get_position, STRING("ブタ３人娘Ｃ"), LW(0), LW(1), LW(2))
         CALL(evt_snd_sfxon_3d, STRING("SFX_STG4_VOICE_PIG1"), LW(0), LW(1), LW(2), 0)
         CALL(evt_msg_print, 0, STRING("stg4_usu_148_1_03"), 0, STRING("ブタ３人娘Ｃ"))
-        CASE_LESS(215)
+        CASE_LESS(STORY_STG4_15_05_PEACH_X_NAUT_PHD_REPORT)
         CALL(evt_msg_print, 0, STRING("stg4_usu_148_1_04"), 0, STRING("３人娘Ａ"))
         CALL(evt_msg_print, 0, STRING("stg4_usu_148_1_05"), 0, STRING("３人娘Ｂ"))
         CALL(evt_msg_print, 0, STRING("stg4_usu_148_1_06"), 0, STRING("３人娘Ｃ"))
@@ -1264,116 +1198,147 @@ static EVT_BEGIN(musume_talk)
     RETURN
 EVT_END()
 
+/**
+ * Sets up the first of the three young women (the "musume" trio; NPC name in LW(0), dancer or pig form):
+ * places her at (-440, 0, 180) facing 90 degrees, enables move/talk animation,
+ * makes musume_talk her talk event and briefly turns on instant turning while the map starts.
+ */
 EVT_BEGIN(musume_a_init)
     CALL(evt_npc_set_position, LW(0), -440, 0, 180)
     CALL(evt_npc_set_ry, LW(0), 90)
-    CALL(evt_npc_flag_onoff, 1, LW(0), 1536)
+    CALL(evt_npc_flag_onoff, 1, LW(0), NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM)
     CALL(evt_npc_change_interrupt, LW(0), 6, PTR(musume_talk))
     BEGIN_INLINE_EVENT
-        CALL(evt_npc_flag_onoff, 1, LW(0), 32768)
+        CALL(evt_npc_flag_onoff, 1, LW(0), NPC_FLAG_INSTANT_TURN)
         CALL(evt_seq_wait, 2)
         CALL(evt_npc_wait_pera, LW(0))
-        CALL(evt_npc_flag_onoff, 0, LW(0), 32768)
+        CALL(evt_npc_flag_onoff, 0, LW(0), NPC_FLAG_INSTANT_TURN)
     END_INLINE_EVENT
     RETURN
 EVT_END()
 
+/** Spawns the first young woman in her dancer form (model "c_dance_r") and runs musume_a_init on her. */
 static EVT_BEGIN(musume_a_entry)
     CALL(evt_npc_entry, STRING("３人娘Ａ"), STRING("c_dance_r"))
     CALL(evt_npc_set_tribe, STRING("３人娘Ａ"), STRING("踊り子"))
     SET_VALUE(LW(0), STRING("３人娘Ａ"))
-    CALL_CHILD(PTR(musume_a_init))
+    CALL_CHILD(musume_a_init)
     RETURN
 EVT_END()
 
+/** Spawns the pig form of the first young woman ("c_bubusan" model) and runs musume_a_init on her. */
 EVT_BEGIN(musume_a_pig_entry)
     CALL(evt_npc_entry, STRING("ブタ３人娘Ａ"), STRING("c_bubusan"))
     CALL(evt_npc_set_tribe, STRING("ブタ３人娘Ａ"), STRING("ブタ"))
     SET_VALUE(LW(0), STRING("ブタ３人娘Ａ"))
-    CALL_CHILD(PTR(musume_a_init))
+    CALL_CHILD(musume_a_init)
     RETURN
 EVT_END()
 
+/**
+ * Sets up the second of the three young women (NPC name in LW(0)): as musume_a_init, at (-410, 0, 150).
+ */
 EVT_BEGIN(musume_b_init)
     CALL(evt_npc_set_position, LW(0), -410, 0, 150)
     CALL(evt_npc_set_ry, LW(0), 90)
-    CALL(evt_npc_flag_onoff, 1, LW(0), 1536)
+    CALL(evt_npc_flag_onoff, 1, LW(0), NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM)
     CALL(evt_npc_change_interrupt, LW(0), 6, PTR(musume_talk))
     BEGIN_INLINE_EVENT
-        CALL(evt_npc_flag_onoff, 1, LW(0), 32768)
+        CALL(evt_npc_flag_onoff, 1, LW(0), NPC_FLAG_INSTANT_TURN)
         CALL(evt_seq_wait, 2)
         CALL(evt_npc_wait_pera, LW(0))
-        CALL(evt_npc_flag_onoff, 0, LW(0), 32768)
+        CALL(evt_npc_flag_onoff, 0, LW(0), NPC_FLAG_INSTANT_TURN)
     END_INLINE_EVENT
     RETURN
 EVT_END()
 
+/** Spawns the second young woman in her pink dancer form (model "c_dance_p") and runs musume_b_init on her. */
 static EVT_BEGIN(musume_b_entry)
     CALL(evt_npc_entry, STRING("３人娘Ｂ"), STRING("c_dance_p"))
     CALL(evt_npc_set_tribe, STRING("３人娘Ｂ"), STRING("踊り子ピンク"))
     SET_VALUE(LW(0), STRING("３人娘Ｂ"))
-    CALL_CHILD(PTR(musume_b_init))
+    CALL_CHILD(musume_b_init)
     RETURN
 EVT_END()
 
+/** Spawns the pig form of the second young woman and runs musume_b_init on her. */
 EVT_BEGIN(musume_b_pig_entry)
     CALL(evt_npc_entry, STRING("ブタ３人娘Ｂ"), STRING("c_bubusan"))
     CALL(evt_npc_set_tribe, STRING("ブタ３人娘Ｂ"), STRING("ブタ"))
     SET_VALUE(LW(0), STRING("ブタ３人娘Ｂ"))
-    CALL_CHILD(PTR(musume_b_init))
+    CALL_CHILD(musume_b_init)
     RETURN
 EVT_END()
 
+/**
+ * Sets up the third of the three young women (NPC name in LW(0)): as musume_a_init, at (-380, 0, 180).
+ */
 EVT_BEGIN(musume_c_init)
     CALL(evt_npc_set_position, LW(0), -380, 0, 180)
     CALL(evt_npc_set_ry, LW(0), 90)
-    CALL(evt_npc_flag_onoff, 1, LW(0), 1536)
+    CALL(evt_npc_flag_onoff, 1, LW(0), NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM)
     CALL(evt_npc_change_interrupt, LW(0), 6, PTR(musume_talk))
     BEGIN_INLINE_EVENT
-        CALL(evt_npc_flag_onoff, 1, LW(0), 32768)
+        CALL(evt_npc_flag_onoff, 1, LW(0), NPC_FLAG_INSTANT_TURN)
         CALL(evt_seq_wait, 2)
         CALL(evt_npc_wait_pera, LW(0))
-        CALL(evt_npc_flag_onoff, 0, LW(0), 32768)
+        CALL(evt_npc_flag_onoff, 0, LW(0), NPC_FLAG_INSTANT_TURN)
     END_INLINE_EVENT
     RETURN
 EVT_END()
 
+/** Spawns the third young woman in her green dancer form (model "c_dance_k") and runs musume_c_init on her. */
 static EVT_BEGIN(musume_c_entry)
     CALL(evt_npc_entry, STRING("３人娘Ｃ"), STRING("c_dance_k"))
     CALL(evt_npc_set_tribe, STRING("３人娘Ｃ"), STRING("踊り子黄緑"))
     SET_VALUE(LW(0), STRING("３人娘Ｃ"))
-    CALL_CHILD(PTR(musume_c_init))
+    CALL_CHILD(musume_c_init)
     RETURN
 EVT_END()
 
+/** Spawns the pig form of the third young woman and runs musume_c_init on her. */
 EVT_BEGIN(musume_c_pig_entry)
     CALL(evt_npc_entry, STRING("ブタ３人娘Ｃ"), STRING("c_bubusan"))
     CALL(evt_npc_set_tribe, STRING("ブタ３人娘Ｃ"), STRING("ブタ"))
     SET_VALUE(LW(0), STRING("ブタ３人娘Ｃ"))
-    CALL_CHILD(PTR(musume_c_init))
+    CALL_CHILD(musume_c_init)
     RETURN
 EVT_END()
 
+/**
+ * Regular script of the wandering NPCs (villagers G and J and the pig forms): wanders around its start position
+ * within a 50-unit radius at speed 30 using the urouro helpers.
+ */
 static EVT_BEGIN(urouro_move)
-    CALL(evt_npc_flag_onoff, 0, STRING("me"), 1073741824)
+    CALL(evt_npc_flag_onoff, 0, STRING("me"), NPC_FLAG_NO_WALL_HIT)
     CALL(evt_npc_get_position, STRING("me"), LW(0), LW(1), LW(2))
     CALL(urouro_init_func, STRING("me"), LW(0), LW(2), FLOAT(50.0f), FLOAT(30.0f), 0)
     CALL(urouro_main_func, STRING("me"))
     RETURN
 EVT_END()
 
+/**
+ * Narrow-range ("semai") variant of urouro_move:
+ * wanders around the start position within a 15-unit radius at speed 30.
+ * Nothing in the tree uses it.
+ */
 EVT_BEGIN(urouro_move_semai)
-    CALL(evt_npc_flag_onoff, 0, STRING("me"), 1073741824)
+    CALL(evt_npc_flag_onoff, 0, STRING("me"), NPC_FLAG_NO_WALL_HIT)
     CALL(evt_npc_get_position, STRING("me"), LW(0), LW(1), LW(2))
     CALL(urouro_init_func, STRING("me"), LW(0), LW(2), FLOAT(15.0f), FLOAT(30.0f), 0)
     CALL(urouro_main_func, STRING("me"))
     RETURN
 EVT_END()
 
+/**
+ * NPC setup table of the east side of Twilight Town: villagers F to J, the shopkeeper and his wife,
+ * the dandy, the aunt and the three children, the gatekeeper, the pig forms of the dandy, the aunt,
+ * the gatekeeper and villagers I and J (shown only before the Doopliss fight) and the five crows F to J.
+ */
 static NpcSetupInfo npcEnt[] = {
     {
-        /*"村人Ｆ"*/"\x91\xBA\x90\x6C\x82\x65", // name
-        0x40080600, // flags
+        "村人Ｆ", // name
+        NPC_FLAG_NO_WALL_HIT | NPC_FLAG_SHADOW_NO_COLLISION | NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM, // flags
         0, // reactionFlags
         villagerF_init, // initEvent
         NULL, // regularEvent
@@ -1384,8 +1349,8 @@ static NpcSetupInfo npcEnt[] = {
         0.0f, 0.0f, 0.0f, 0.0f, 0, // searchRange..battleInfoId
     },
     {
-        /*"村人Ｇ"*/"\x91\xBA\x90\x6C\x82\x66", // name
-        0x80600, // flags
+        "村人Ｇ", // name
+        NPC_FLAG_SHADOW_NO_COLLISION | NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM, // flags
         0, // reactionFlags
         villagerG_init, // initEvent
         urouro_move, // regularEvent
@@ -1396,8 +1361,8 @@ static NpcSetupInfo npcEnt[] = {
         0.0f, 0.0f, 0.0f, 0.0f, 0, // searchRange..battleInfoId
     },
     {
-        /*"村人Ｈ"*/"\x91\xBA\x90\x6C\x82\x67", // name
-        0x40080600, // flags
+        "村人Ｈ", // name
+        NPC_FLAG_NO_WALL_HIT | NPC_FLAG_SHADOW_NO_COLLISION | NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM, // flags
         0, // reactionFlags
         villagerH_init, // initEvent
         NULL, // regularEvent
@@ -1408,8 +1373,8 @@ static NpcSetupInfo npcEnt[] = {
         0.0f, 0.0f, 0.0f, 0.0f, 0, // searchRange..battleInfoId
     },
     {
-        /*"村人Ｉ"*/"\x91\xBA\x90\x6C\x82\x68", // name
-        0x40080600, // flags
+        "村人Ｉ", // name
+        NPC_FLAG_NO_WALL_HIT | NPC_FLAG_SHADOW_NO_COLLISION | NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM, // flags
         0, // reactionFlags
         villagerI_init, // initEvent
         NULL, // regularEvent
@@ -1420,8 +1385,8 @@ static NpcSetupInfo npcEnt[] = {
         0.0f, 0.0f, 0.0f, 0.0f, 0, // searchRange..battleInfoId
     },
     {
-        /*"村人Ｊ"*/"\x91\xBA\x90\x6C\x82\x69", // name
-        0x80600, // flags
+        "村人Ｊ", // name
+        NPC_FLAG_SHADOW_NO_COLLISION | NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM, // flags
         0, // reactionFlags
         villagerJ_init, // initEvent
         urouro_move, // regularEvent
@@ -1432,8 +1397,8 @@ static NpcSetupInfo npcEnt[] = {
         0.0f, 0.0f, 0.0f, 0.0f, 0, // searchRange..battleInfoId
     },
     {
-        /*"店の主人"*/"\x93\x58\x82\xCC\x8E\xE5\x90\x6C", // name
-        0x40080600, // flags
+        "店の主人", // name
+        NPC_FLAG_NO_WALL_HIT | NPC_FLAG_SHADOW_NO_COLLISION | NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM, // flags
         0, // reactionFlags
         shop_man_init, // initEvent
         NULL, // regularEvent
@@ -1444,8 +1409,8 @@ static NpcSetupInfo npcEnt[] = {
         0.0f, 0.0f, 0.0f, 0.0f, 0, // searchRange..battleInfoId
     },
     {
-        /*"お店の奥さん"*/"\x82\xA8\x93\x58\x82\xCC\x89\x9C\x82\xB3\x82\xF1", // name
-        0x40080600, // flags
+        "お店の奥さん", // name
+        NPC_FLAG_NO_WALL_HIT | NPC_FLAG_SHADOW_NO_COLLISION | NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM, // flags
         0, // reactionFlags
         shop_woman_init, // initEvent
         NULL, // regularEvent
@@ -1456,8 +1421,8 @@ static NpcSetupInfo npcEnt[] = {
         0.0f, 0.0f, 0.0f, 0.0f, 0, // searchRange..battleInfoId
     },
     {
-        /*"キザ野郎"*/"\x83\x4C\x83\x55\x96\xEC\x98\x59", // name
-        0x40080600, // flags
+        "キザ野郎", // name
+        NPC_FLAG_NO_WALL_HIT | NPC_FLAG_SHADOW_NO_COLLISION | NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM, // flags
         0, // reactionFlags
         kizayarou_init, // initEvent
         NULL, // regularEvent
@@ -1468,8 +1433,8 @@ static NpcSetupInfo npcEnt[] = {
         0.0f, 0.0f, 0.0f, 0.0f, 0, // searchRange..battleInfoId
     },
     {
-        /*"おばさん"*/"\x82\xA8\x82\xCE\x82\xB3\x82\xF1", // name
-        0x40080600, // flags
+        "おばさん", // name
+        NPC_FLAG_NO_WALL_HIT | NPC_FLAG_SHADOW_NO_COLLISION | NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM, // flags
         0, // reactionFlags
         aunt_init, // initEvent
         NULL, // regularEvent
@@ -1480,8 +1445,8 @@ static NpcSetupInfo npcEnt[] = {
         0.0f, 0.0f, 0.0f, 0.0f, 0, // searchRange..battleInfoId
     },
     {
-        /*"子供Ａ"*/"\x8E\x71\x8B\x9F\x82\x60", // name
-        0x40080600, // flags
+        "子供Ａ", // name
+        NPC_FLAG_NO_WALL_HIT | NPC_FLAG_SHADOW_NO_COLLISION | NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM, // flags
         0, // reactionFlags
         childA_init, // initEvent
         NULL, // regularEvent
@@ -1492,8 +1457,8 @@ static NpcSetupInfo npcEnt[] = {
         0.0f, 0.0f, 0.0f, 0.0f, 0, // searchRange..battleInfoId
     },
     {
-        /*"子供Ｂ"*/"\x8E\x71\x8B\x9F\x82\x61", // name
-        0x40080600, // flags
+        "子供Ｂ", // name
+        NPC_FLAG_NO_WALL_HIT | NPC_FLAG_SHADOW_NO_COLLISION | NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM, // flags
         0, // reactionFlags
         childB_init, // initEvent
         NULL, // regularEvent
@@ -1504,8 +1469,8 @@ static NpcSetupInfo npcEnt[] = {
         0.0f, 0.0f, 0.0f, 0.0f, 0, // searchRange..battleInfoId
     },
     {
-        /*"子供Ｃ"*/"\x8E\x71\x8B\x9F\x82\x62", // name
-        0x40080600, // flags
+        "子供Ｃ", // name
+        NPC_FLAG_NO_WALL_HIT | NPC_FLAG_SHADOW_NO_COLLISION | NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM, // flags
         0, // reactionFlags
         childC_init, // initEvent
         NULL, // regularEvent
@@ -1516,8 +1481,8 @@ static NpcSetupInfo npcEnt[] = {
         0.0f, 0.0f, 0.0f, 0.0f, 0, // searchRange..battleInfoId
     },
     {
-        /*"門番"*/"\x96\xE5\x94\xD4", // name
-        0x40080600, // flags
+        "門番", // name
+        NPC_FLAG_NO_WALL_HIT | NPC_FLAG_SHADOW_NO_COLLISION | NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM, // flags
         0, // reactionFlags
         gatekeeper_init, // initEvent
         NULL, // regularEvent
@@ -1528,8 +1493,8 @@ static NpcSetupInfo npcEnt[] = {
         0.0f, 0.0f, 0.0f, 0.0f, 0, // searchRange..battleInfoId
     },
     {
-        /*"ブタキザ野郎"*/"\x83\x75\x83\x5E\x83\x4C\x83\x55\x96\xEC\x98\x59", // name
-        0x80600, // flags
+        "ブタキザ野郎", // name
+        NPC_FLAG_SHADOW_NO_COLLISION | NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM, // flags
         0, // reactionFlags
         kizayarou_pig_init, // initEvent
         urouro_move, // regularEvent
@@ -1540,8 +1505,8 @@ static NpcSetupInfo npcEnt[] = {
         0.0f, 0.0f, 0.0f, 0.0f, 0, // searchRange..battleInfoId
     },
     {
-        /*"ブタおばさん"*/"\x83\x75\x83\x5E\x82\xA8\x82\xCE\x82\xB3\x82\xF1", // name
-        0x80600, // flags
+        "ブタおばさん", // name
+        NPC_FLAG_SHADOW_NO_COLLISION | NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM, // flags
         0, // reactionFlags
         aunt_pig_init, // initEvent
         urouro_move, // regularEvent
@@ -1552,11 +1517,15 @@ static NpcSetupInfo npcEnt[] = {
         0.0f, 0.0f, 0.0f, 0.0f, 0, // searchRange..battleInfoId
     },
     {
-        /*"ブタ門番"*/"\x83\x75\x83\x5E\x96\xE5\x94\xD4", // name
-        0x80600, // flags
+        "ブタ門番", // name
+        NPC_FLAG_SHADOW_NO_COLLISION | NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM, // flags
         0, // reactionFlags
         gatekeeper_pig_init, // initEvent
+#if VERSION <= VERSION_DEMO_JP
+        urouro_move, // regularEvent
+#else
         NULL, // regularEvent
+#endif
         gatekeeper_talk, // talkEvent
         NULL, NULL, NULL, NULL, NULL, 0, // deadEvent..territoryType
         {0}, // territoryBase
@@ -1564,8 +1533,8 @@ static NpcSetupInfo npcEnt[] = {
         0.0f, 0.0f, 0.0f, 0.0f, 0, // searchRange..battleInfoId
     },
     {
-        /*"ブタ村人Ｉ"*/"\x83\x75\x83\x5E\x91\xBA\x90\x6C\x82\x68", // name
-        0x80600, // flags
+        "ブタ村人Ｉ", // name
+        NPC_FLAG_SHADOW_NO_COLLISION | NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM, // flags
         0, // reactionFlags
         villagerI_pig_init, // initEvent
         urouro_move, // regularEvent
@@ -1576,8 +1545,8 @@ static NpcSetupInfo npcEnt[] = {
         0.0f, 0.0f, 0.0f, 0.0f, 0, // searchRange..battleInfoId
     },
     {
-        /*"ブタ村人Ｊ"*/"\x83\x75\x83\x5E\x91\xBA\x90\x6C\x82\x69", // name
-        0x80600, // flags
+        "ブタ村人Ｊ", // name
+        NPC_FLAG_SHADOW_NO_COLLISION | NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM, // flags
         0, // reactionFlags
         villagerJ_pig_init, // initEvent
         urouro_move, // regularEvent
@@ -1588,8 +1557,8 @@ static NpcSetupInfo npcEnt[] = {
         0.0f, 0.0f, 0.0f, 0.0f, 0, // searchRange..battleInfoId
     },
     {
-        /*"カラスＦ"*/"\x83\x4A\x83\x89\x83\x58\x82\x65", // name
-        0x40000600, // flags
+        "カラスＦ", // name
+        NPC_FLAG_NO_WALL_HIT | NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM, // flags
         0, // reactionFlags
         crow_f_init, // initEvent
         NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, // regularEvent..territoryType
@@ -1598,8 +1567,8 @@ static NpcSetupInfo npcEnt[] = {
         0.0f, 0.0f, 0.0f, 0.0f, 0, // searchRange..battleInfoId
     },
     {
-        /*"カラスＧ"*/"\x83\x4A\x83\x89\x83\x58\x82\x66", // name
-        0x40000600, // flags
+        "カラスＧ", // name
+        NPC_FLAG_NO_WALL_HIT | NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM, // flags
         0, // reactionFlags
         crow_g_init, // initEvent
         NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, // regularEvent..territoryType
@@ -1608,8 +1577,8 @@ static NpcSetupInfo npcEnt[] = {
         0.0f, 0.0f, 0.0f, 0.0f, 0, // searchRange..battleInfoId
     },
     {
-        /*"カラスＨ"*/"\x83\x4A\x83\x89\x83\x58\x82\x67", // name
-        0x40000600, // flags
+        "カラスＨ", // name
+        NPC_FLAG_NO_WALL_HIT | NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM, // flags
         0, // reactionFlags
         crow_h_init, // initEvent
         NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, // regularEvent..territoryType
@@ -1618,8 +1587,8 @@ static NpcSetupInfo npcEnt[] = {
         0.0f, 0.0f, 0.0f, 0.0f, 0, // searchRange..battleInfoId
     },
     {
-        /*"カラスＩ"*/"\x83\x4A\x83\x89\x83\x58\x82\x68", // name
-        0x40000600, // flags
+        "カラスＩ", // name
+        NPC_FLAG_NO_WALL_HIT | NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM, // flags
         0, // reactionFlags
         crow_i_init, // initEvent
         NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, // regularEvent..territoryType
@@ -1628,8 +1597,8 @@ static NpcSetupInfo npcEnt[] = {
         0.0f, 0.0f, 0.0f, 0.0f, 0, // searchRange..battleInfoId
     },
     {
-        /*"カラスＪ"*/"\x83\x4A\x83\x89\x83\x58\x82\x69", // name
-        0x40000600, // flags
+        "カラスＪ", // name
+        NPC_FLAG_NO_WALL_HIT | NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM, // flags
         0, // reactionFlags
         crow_j_init, // initEvent
         NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, // regularEvent..territoryType
@@ -1640,6 +1609,12 @@ static NpcSetupInfo npcEnt[] = {
     {0},
 };
 
+/**
+ * Spawned by the first gatekeeper talk: waits until Mario walks to x <= -300, then the temple bell rings;
+ * Mario is startled (the partner is called out if absent), turns to the partner,
+ * and the partner says the bell means someone is being turned into a pig
+ * and is glad it was not them (stg4_usu_50).
+ */
 EVT_BEGIN(village_chief_change_pig_event)
     LABEL(0)
     WAIT_FRAMES(1)
@@ -1650,7 +1625,9 @@ EVT_BEGIN(village_chief_change_pig_event)
     GOTO(0)
     LABEL(10)
     CALL(evt_mario_key_onoff, 0)
+#if VERSION >= VERSION_JP
     CALL(evt_mario_normalize)
+#endif
     CALL(evt_snd_sfxon, STRING("SFX_STG4_TEMPLE_BELL1"), 0)
     WAIT_MS(500)
     CALL(evt_mario_get_party, LW(0))
@@ -1666,7 +1643,7 @@ EVT_BEGIN(village_chief_change_pig_event)
     CALL(evt_party_get_pos, 0, LW(3), LW(4), LW(5))
     IF_INT_LESS(LW(0), LW(3))
         CALL(evt_mario_set_dir, 90, 100, 0)
-        ELSE
+    ELSE
         CALL(evt_mario_set_dir, 270, 100, 0)
     END_IF
     ADD(LW(0), LW(3))
@@ -1688,15 +1665,19 @@ EVT_BEGIN(village_chief_change_pig_event)
     RETURN
 EVT_END()
 
+/**
+ * Gate script: before the gatekeeper has become a pig the gatekeeper refuses ("stg4_usu_45_02");
+ * afterwards the gate halves rotate open and the story moves to STORY_STG4_02_03_OPENING_THE_GATE.
+ */
 EVT_BEGIN(evt_mon_open)
-    IF_INT_LESS(GSW(0), 182)
+    IF_INT_LESS(GSW(GSW_STORY_PROGRESS), STORY_STG4_02_02_THE_GATEKEEPERS_A_PIG)
         CALL(evt_mario_key_onoff, 0)
         CALL(evt_msg_print, 0, STRING("stg4_usu_45_02"), 0, STRING("門番"))
         CALL(evt_mario_key_onoff, 1)
-        ELSE
+    ELSE
         CALL(evt_cam_letter_box_disable, 1)
         CALL(evt_mario_key_onoff, 0)
-        CALL(evt_mapobj_flag_onoff, 1, 0, STRING("S_monato"), 1)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("S_monato"), MAPOBJ_FLAG_HIDE)
         CALL(evt_mapobj_get_position, STRING("S_mon01"), LW(10), LW(11), LW(12))
         CALL(evt_snd_sfxon_3d, STRING("SFX_STG4_FENCE_OPEN1"), LW(10), LW(11), LW(12), LW(9))
         CALL(evt_sub_intpl_msec_init, 11, 0, 900, 1000)
@@ -1717,16 +1698,20 @@ EVT_BEGIN(evt_mon_open)
         CALL(evt_snd_sfxoff, LW(9))
         CALL(evt_mario_key_onoff, 1)
         CALL(evt_cam_letter_box_disable, 0)
-        SET_VALUE(GSW(0), 183)
+        SET_VALUE(GSW(GSW_STORY_PROGRESS), STORY_STG4_02_03_OPENING_THE_GATE)
         CALL(evt_exit_case_evt)
     END_IF
     RETURN
 EVT_END()
 
+/**
+ * Raises the 3D camera and its target by 85 units over 500 ms, then waits 600 ms;
+ * the crow watchers use it before a crow speaks from its perch.
+ */
 static EVT_BEGIN(cam_up)
     BEGIN_INLINE_EVENT
-        CALL(evt_cam_get_pos, 4, LW(0), LW(1), LW(2))
-        CALL(evt_cam_get_at, 4, LW(3), LW(4), LW(5))
+        CALL(evt_cam_get_pos, CAMERA_3D, LW(0), LW(1), LW(2))
+        CALL(evt_cam_get_at, CAMERA_3D, LW(3), LW(4), LW(5))
         ADD(LW(1), 85)
         ADD(LW(4), 85)
         CALL(evt_cam3d_evt_set, LW(0), LW(1), LW(2), LW(3), LW(4), LW(5), 500, 11)
@@ -1735,12 +1720,17 @@ static EVT_BEGIN(cam_up)
     RETURN
 EVT_END()
 
+/** Returns the 3D camera to its normal position over 500 ms (after cam_up) and waits for it. */
 static EVT_BEGIN(cam_down)
     CALL(evt_cam3d_evt_off, 500, 11)
     WAIT_MS(500)
     RETURN
 EVT_END()
 
+/**
+ * Background loop: while Vivian is the active partner and Mario is not hidden in her shadow,
+ * it clears the crow-talk gates GW(0), GW(1) and GW(2) so the crows talk again next time.
+ */
 EVT_BEGIN(usu01_check_vivian)
     LABEL(0)
     CALL(evt_mario_get_party, LW(0))
@@ -1759,17 +1749,30 @@ EVT_BEGIN(usu01_check_vivian)
     RETURN
 EVT_END()
 
-#ifdef VERSION_G8ME01
+/**
+ * Background watcher for crows F and G: when Mario stands within 20 units of crow F,
+ * a "..." balloon shows over him
+ * (US and later: only while he stands, walks, dashes or rides in Vivian's shadow,
+ * and no other partner's action is in use); pressing A makes the crow caw (stg4_jin_153).
+ * When Mario is hidden in Vivian's shadow (after STORY_STG4_13_VIVIAN_JOINS) the crows talk instead,
+ * by story progress (stg4_usu_137 to 142_2_2: before the name guessing they say the "Mario" with the mayor is
+ * the villain and that only a soul under Creepy Steeple knows his name);
+ * the first time, Vivian then proposes searching under Creepy Steeple (sets GSWF_USU01_CROWS_PARTNER_REACTION);
+ * that sets GW(0), which keeps the watcher quiet until usu01_check_vivian clears it.
+ */
 EVT_BEGIN(usu01_crowFG_talk_event)
+    // No balloon is showing yet; GW(0) keeps the watcher quiet once the crows have talked.
     SET_VALUE(LW(15), 0)
     LABEL(0)
     IF_INT_NOT_EQUAL(GW(0), 0)
         WAIT_FRAMES(1)
         GOTO(0)
     END_IF
+    // Check whether Mario is within 20 units of crow F.
     CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
     CALL(evt_npc_get_position, STRING("カラスＦ"), LW(3), LW(4), LW(5))
     CALL(evt_sub_area_check, 1, LW(3), LW(5), 20, LW(0), LW(2), LW(6))
+#if VERSION >= VERSION_US
     CALL(evt_mario_get_party, LW(1))
     IF_INT_NOT_EQUAL(LW(1), 6)
         CALL(evt_mario_party_use_check, LW(1))
@@ -1787,17 +1790,21 @@ EVT_BEGIN(usu01_crowFG_talk_event)
             END_IF
         END_IF
     END_IF
+#endif
+    // Show the "..." balloon over Mario while he is in range and hide it when he leaves.
     IF_INT_EQUAL(LW(6), 1)
         IF_INT_EQUAL(LW(15), 0)
             CALL(evt_mario_balloon_tenten)
             SET_VALUE(LW(15), 1)
         END_IF
-        ELSE
+    ELSE
         IF_INT_EQUAL(LW(15), 1)
             CALL(evt_mario_balloon_off)
             SET_VALUE(LW(15), 0)
         END_IF
     END_IF
+    // A pressed with the balloon up: Mario's controls lock,
+    // the camera rises to the crows and crow F caws (stg4_jin_153).
     IF_INT_EQUAL(LW(15), 1)
         CALL(evt_key_get_buttontrg, 0, LW(0))
         CALL(evt_mario_party_use_check, LW(1))
@@ -1807,18 +1814,23 @@ EVT_BEGIN(usu01_crowFG_talk_event)
                 SET_VALUE(LW(15), 0)
                 CALL(evt_mario_key_onoff, 0)
                 CALL(evt_party_cont_onoff, 0, 0)
+#if VERSION >= VERSION_JP
                 CALL(mainwindow_opendisable)
-                CALL_CHILD(PTR(cam_up))
+#endif
+                CALL_CHILD(cam_up)
                 CALL(evt_npc_get_position, STRING("カラスＦ"), LW(0), LW(1), LW(2))
                 CALL(evt_snd_sfxon_3d, STRING("SFX_STG4_CROW_HOWL1"), LW(0), LW(1), LW(2), 0)
                 CALL(evt_msg_print, 0, STRING("stg4_jin_153"), 0, STRING("カラスＦ"))
-                CALL_CHILD(PTR(cam_down))
+                CALL_CHILD(cam_down)
                 CALL(evt_mario_key_onoff, 1)
                 CALL(evt_party_cont_onoff, 0, 1)
+#if VERSION >= VERSION_JP
                 CALL(mainwindow_openenable)
+#endif
             END_IF
         END_IF
     END_IF
+    // The crows only speak when Vivian is the partner and Mario hides in her shadow.
     CALL(evt_mario_get_party, LW(0))
     IF_INT_NOT_EQUAL(LW(0), 6)
         WAIT_FRAMES(1)
@@ -1829,25 +1841,33 @@ EVT_BEGIN(usu01_crowFG_talk_event)
         WAIT_FRAMES(1)
         GOTO(0)
     END_IF
+    // Once Vivian has joined, the camera rises and the crows hold a conversation chosen by story progress.
     IF_INT_EQUAL(LW(15), 1)
         CALL(evt_mario_balloon_off)
         SET_VALUE(LW(15), 0)
-        IF_INT_GREATER_OR_EQUAL(GSW(0), 206)
+        IF_INT_GREATER_OR_EQUAL(GSW(GSW_STORY_PROGRESS), STORY_STG4_13_VIVIAN_JOINS)
             CALL(evt_mario_key_onoff, 0)
             CALL(evt_party_cont_onoff, 0, 0)
+#if VERSION >= VERSION_JP
             CALL(mainwindow_opendisable)
-            CALL_CHILD(PTR(cam_up))
+#endif
+            CALL_CHILD(cam_up)
             WAIT_MS(1000)
             CALL(evt_npc_get_position, STRING("カラスＦ"), LW(0), LW(1), LW(2))
             CALL(evt_snd_sfxon_3d, STRING("SFX_STG4_CROW_HOWL1"), LW(0), LW(1), LW(2), 0)
-            SWITCH(GSW(0))
-                CASE_LESS(210)
+            SWITCH(GSW(GSW_STORY_PROGRESS))
+                CASE_LESS(STORY_STG4_14_NAME_GUESSING)
+                // Before the name guessing, crow F says the Mario with the mayor is really the
+                // villain and crow G adds that only a soul locked under Creepy Steeple knows
+                // his name (stg4_usu_137 to 140).
                 CALL(evt_msg_print, 0, STRING("stg4_usu_137"), 0, STRING("カラスＦ"))
                 CALL(evt_msg_print, 0, STRING("stg4_usu_138"), 0, STRING("カラスＧ"))
                 CALL(evt_msg_print, 0, STRING("stg4_usu_139"), 0, STRING("カラスＦ"))
                 CALL(evt_msg_print, 0, STRING("stg4_usu_140"), 0, STRING("カラスＧ"))
-                CALL_CHILD(PTR(cam_down))
-                IF_INT_EQUAL(GSWF(1928), 0)
+                CALL_CHILD(cam_down)
+                // The first time, Vivian and Mario step aside and she proposes searching under Creepy Steeple
+                // for the villain's real name (stg4_usu_149_viv, 150_viv).
+                IF_INT_EQUAL(GSWF(GSWF_USU01_CROWS_PARTNER_REACTION), 0)
                     CALL(evt_party_cont_onoff, 0, 1)
                     LOOP(0)
                         CALL(evt_party_get_status, 6, LW(0))
@@ -1870,167 +1890,62 @@ EVT_BEGIN(usu01_crowFG_talk_event)
                     CALL(evt_mario_set_pose, STRING("M_S_1"))
                     CALL(evt_msg_print_party, STRING("stg4_usu_150"))
                     WAIT_MS(300)
-                    SET_VALUE(GSWF(1928), 1)
+                    SET_VALUE(GSWF(GSWF_USU01_CROWS_PARTNER_REACTION), 1)
                     CALL(evt_party_cont_onoff, 0, 0)
                     CALL(evt_party_run, 0)
                 END_IF
-                CASE_LESS(222)
+                CASE_LESS(STORY_STG4_31_FRANKLYS_HOUSE)
+                // Later the crows gossip about Peach being kidnapped again (stg4_usu_141 and 142),
+                // repeated in new versions after Franklys's house (142_1, 142_2) and after the ending (142_2_1, 142_2_2).
+                // .
                 CALL(evt_msg_print, 0, STRING("stg4_usu_141"), 0, STRING("カラスＦ"))
                 CALL(evt_msg_print, 0, STRING("stg4_usu_142"), 0, STRING("カラスＧ"))
-                CALL_CHILD(PTR(cam_down))
-                CASE_LESS_OR_EQUAL(402)
+                CALL_CHILD(cam_down)
+                CASE_LESS_OR_EQUAL(STORY_STG8_END_AFTER_THE_BATTLE)
                 CALL(evt_msg_print, 0, STRING("stg4_usu_142_1"), 0, STRING("カラスＦ"))
                 CALL(evt_msg_print, 0, STRING("stg4_usu_142_2"), 0, STRING("カラスＧ"))
-                CALL_CHILD(PTR(cam_down))
+                CALL_CHILD(cam_down)
                 CASE_DEFAULT
                 CALL(evt_msg_print, 0, STRING("stg4_usu_142_2_1"), 0, STRING("カラスＦ"))
                 CALL(evt_msg_print, 0, STRING("stg4_usu_142_2_2"), 0, STRING("カラスＧ"))
-                CALL_CHILD(PTR(cam_down))
+                CALL_CHILD(cam_down)
             END_SWITCH
+            // Controls come back; GW(0) keeps the crows quiet until usu01_check_vivian resets it.
             CALL(evt_party_cont_onoff, 0, 1)
             CALL(evt_mario_key_onoff, 1)
+#if VERSION >= VERSION_JP
             CALL(mainwindow_openenable)
-            SET_VALUE(GW(0), 1)
-        END_IF
-    END_IF
-    WAIT_FRAMES(1)
-    GOTO(0)
-    RETURN
-EVT_END()
-#else
-EVT_BEGIN(usu01_crowFG_talk_event)
-    SET_VALUE(LW(15), 0)
-    LABEL(0)
-    IF_INT_NOT_EQUAL(GW(0), 0)
-        WAIT_FRAMES(1)
-        GOTO(0)
-    END_IF
-    CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
-    CALL(evt_npc_get_position, STRING("カラスＦ"), LW(3), LW(4), LW(5))
-    CALL(evt_sub_area_check, 1, LW(3), LW(5), 20, LW(0), LW(2), LW(6))
-    IF_INT_EQUAL(LW(6), 1)
-        IF_INT_EQUAL(LW(15), 0)
-            CALL(evt_mario_balloon_tenten)
-            SET_VALUE(LW(15), 1)
-        END_IF
-        ELSE
-        IF_INT_EQUAL(LW(15), 1)
-            CALL(evt_mario_balloon_off)
-            SET_VALUE(LW(15), 0)
-        END_IF
-    END_IF
-    IF_INT_EQUAL(LW(15), 1)
-        CALL(evt_key_get_buttontrg, 0, LW(0))
-        CALL(evt_mario_party_use_check, LW(1))
-        IF_INT_EQUAL(LW(1), 0)
-            IF_BITS_SET(LW(0), 256)
-                CALL(evt_mario_balloon_off)
-                SET_VALUE(LW(15), 0)
-                CALL(evt_mario_key_onoff, 0)
-                CALL(evt_party_cont_onoff, 0, 0)
-                CALL(mainwindow_opendisable)
-                CALL_CHILD(PTR(cam_up))
-                CALL(evt_npc_get_position, STRING("カラスＦ"), LW(0), LW(1), LW(2))
-                CALL(evt_snd_sfxon_3d, STRING("SFX_STG4_CROW_HOWL1"), LW(0), LW(1), LW(2), 0)
-                CALL(evt_msg_print, 0, STRING("stg4_jin_153"), 0, STRING("カラスＦ"))
-                CALL_CHILD(PTR(cam_down))
-                CALL(evt_mario_key_onoff, 1)
-                CALL(evt_party_cont_onoff, 0, 1)
-                CALL(mainwindow_openenable)
-            END_IF
-        END_IF
-    END_IF
-    CALL(evt_mario_get_party, LW(0))
-    IF_INT_NOT_EQUAL(LW(0), 6)
-        WAIT_FRAMES(1)
-        GOTO(0)
-    END_IF
-    CALL(evt_party_get_status, 6, LW(0))
-    IF_INT_NOT_EQUAL(LW(0), 2)
-        WAIT_FRAMES(1)
-        GOTO(0)
-    END_IF
-    IF_INT_EQUAL(LW(15), 1)
-        CALL(evt_mario_balloon_off)
-        SET_VALUE(LW(15), 0)
-        IF_INT_GREATER_OR_EQUAL(GSW(0), 206)
-            CALL(evt_mario_key_onoff, 0)
-            CALL(evt_party_cont_onoff, 0, 0)
-            CALL(mainwindow_opendisable)
-            CALL_CHILD(PTR(cam_up))
-            WAIT_MS(1000)
-            CALL(evt_npc_get_position, STRING("カラスＦ"), LW(0), LW(1), LW(2))
-            CALL(evt_snd_sfxon_3d, STRING("SFX_STG4_CROW_HOWL1"), LW(0), LW(1), LW(2), 0)
-            SWITCH(GSW(0))
-                CASE_LESS(210)
-                CALL(evt_msg_print, 0, STRING("stg4_usu_137"), 0, STRING("カラスＦ"))
-                CALL(evt_msg_print, 0, STRING("stg4_usu_138"), 0, STRING("カラスＧ"))
-                CALL(evt_msg_print, 0, STRING("stg4_usu_139"), 0, STRING("カラスＦ"))
-                CALL(evt_msg_print, 0, STRING("stg4_usu_140"), 0, STRING("カラスＧ"))
-                CALL_CHILD(PTR(cam_down))
-                IF_INT_EQUAL(GSWF(1928), 0)
-                    CALL(evt_party_cont_onoff, 0, 1)
-                    LOOP(0)
-                        CALL(evt_party_get_status, 6, LW(0))
-                        IF_INT_EQUAL(LW(0), 0)
-                            BREAK_LOOP
-                        END_IF
-                        WAIT_FRAMES(1)
-                    END_LOOP
-                    WAIT_MS(400)
-                    CALL(evt_party_stop, 0)
-                    CALL(evt_party_move_pos2, 0, 280, 350, FLOAT(80.0f))
-                    WAIT_FRAMES(1)
-                    CALL(evt_party_set_dir, 0, 270, 200)
-                    CALL(evt_mario_set_dir, 90, 200, 0)
-                    WAIT_MS(300)
-                    CALL(evt_msg_print_party, STRING("stg4_usu_149"))
-                    WAIT_MS(300)
-                    CALL(evt_mario_set_pose, STRING("M_N_2"))
-                    WAIT_MS(500)
-                    CALL(evt_mario_set_pose, STRING("M_S_1"))
-                    CALL(evt_msg_print_party, STRING("stg4_usu_150"))
-                    WAIT_MS(300)
-                    SET_VALUE(GSWF(1928), 1)
-                    CALL(evt_party_cont_onoff, 0, 0)
-                    CALL(evt_party_run, 0)
-                END_IF
-                CASE_LESS(222)
-                CALL(evt_msg_print, 0, STRING("stg4_usu_141"), 0, STRING("カラスＦ"))
-                CALL(evt_msg_print, 0, STRING("stg4_usu_142"), 0, STRING("カラスＧ"))
-                CALL_CHILD(PTR(cam_down))
-                CASE_LESS_OR_EQUAL(402)
-                CALL(evt_msg_print, 0, STRING("stg4_usu_142_1"), 0, STRING("カラスＦ"))
-                CALL(evt_msg_print, 0, STRING("stg4_usu_142_2"), 0, STRING("カラスＧ"))
-                CALL_CHILD(PTR(cam_down))
-                CASE_DEFAULT
-                CALL(evt_msg_print, 0, STRING("stg4_usu_142_2_1"), 0, STRING("カラスＦ"))
-                CALL(evt_msg_print, 0, STRING("stg4_usu_142_2_2"), 0, STRING("カラスＧ"))
-                CALL_CHILD(PTR(cam_down))
-            END_SWITCH
-            CALL(evt_party_cont_onoff, 0, 1)
-            CALL(evt_mario_key_onoff, 1)
-            CALL(mainwindow_openenable)
-            SET_VALUE(GW(0), 1)
-        END_IF
-    END_IF
-    WAIT_FRAMES(1)
-    GOTO(0)
-    RETURN
-EVT_END()
 #endif
+            SET_VALUE(GW(0), 1)
+        END_IF
+    END_IF
+    WAIT_FRAMES(1)
+    GOTO(0)
+    RETURN
+EVT_END()
 
-#ifdef VERSION_G8ME01
+/**
+ * Background watcher for crows H and I: when Mario stands within 80 units of crow H,
+ * a "..." balloon shows over him
+ * (US and later: only while he stands, walks, dashes or rides in Vivian's shadow,
+ * and no other partner's action is in use); pressing A makes the crow caw (stg4_jin_153).
+ * When Mario is hidden in Vivian's shadow (after STORY_STG4_13_VIVIAN_JOINS) the crows talk instead,
+ * by story progress (stg4_usu_143 to 146_2_2); that sets GW(1),
+ * which keeps the watcher quiet until usu01_check_vivian clears it.
+ */
 EVT_BEGIN(usu01_crowHI_talk_event)
+    // No balloon is showing yet; GW(1) keeps the watcher quiet once the crows have talked.
     SET_VALUE(LW(15), 0)
     LABEL(0)
     IF_INT_NOT_EQUAL(GW(1), 0)
         WAIT_FRAMES(1)
         GOTO(0)
     END_IF
+    // Check whether Mario is within 80 units of crow H.
     CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
     CALL(evt_npc_get_position, STRING("カラスＨ"), LW(3), LW(4), LW(5))
     CALL(evt_sub_area_check, 1, LW(3), LW(5), 80, LW(0), LW(2), LW(6))
+#if VERSION >= VERSION_US
     CALL(evt_mario_get_party, LW(1))
     IF_INT_NOT_EQUAL(LW(1), 6)
         CALL(evt_mario_party_use_check, LW(1))
@@ -2048,178 +1963,119 @@ EVT_BEGIN(usu01_crowHI_talk_event)
             END_IF
         END_IF
     END_IF
-    IF_INT_EQUAL(LW(6), 1)
-        IF_INT_EQUAL(LW(15), 0)
-            CALL(evt_mario_balloon_tenten)
-            SET_VALUE(LW(15), 1)
-        END_IF
-        ELSE
-        IF_INT_EQUAL(LW(15), 1)
-            CALL(evt_mario_balloon_off)
-            SET_VALUE(LW(15), 0)
-        END_IF
-    END_IF
-    IF_INT_EQUAL(LW(15), 1)
-        CALL(evt_key_get_buttontrg, 0, LW(0))
-        CALL(evt_mario_party_use_check, LW(1))
-        IF_INT_EQUAL(LW(1), 0)
-            IF_BITS_SET(LW(0), 256)
-                CALL(evt_mario_balloon_off)
-                SET_VALUE(LW(15), 0)
-                CALL(evt_mario_key_onoff, 0)
-                CALL_CHILD(PTR(cam_up))
-                CALL(evt_npc_get_position, STRING("カラスＨ"), LW(0), LW(1), LW(2))
-                CALL(evt_snd_sfxon_3d, STRING("SFX_STG4_CROW_HOWL1"), LW(0), LW(1), LW(2), 0)
-                CALL(evt_msg_print, 0, STRING("stg4_jin_153"), 0, STRING("カラスＨ"))
-                CALL_CHILD(PTR(cam_down))
-                CALL(evt_mario_key_onoff, 1)
-            END_IF
-        END_IF
-    END_IF
-    CALL(evt_mario_get_party, LW(0))
-    IF_INT_NOT_EQUAL(LW(0), 6)
-        WAIT_FRAMES(1)
-        GOTO(0)
-    END_IF
-    CALL(evt_party_get_status, 6, LW(0))
-    IF_INT_NOT_EQUAL(LW(0), 2)
-        WAIT_FRAMES(1)
-        GOTO(0)
-    END_IF
-    IF_INT_EQUAL(LW(15), 1)
-        CALL(evt_mario_balloon_off)
-        SET_VALUE(LW(15), 0)
-        IF_INT_GREATER_OR_EQUAL(GSW(0), 206)
-            CALL(evt_mario_key_onoff, 0)
-            CALL(evt_party_cont_onoff, 0, 0)
-            CALL(mainwindow_opendisable)
-            CALL_CHILD(PTR(cam_up))
-            WAIT_MS(1000)
-            CALL(evt_npc_get_position, STRING("カラスＨ"), LW(0), LW(1), LW(2))
-            CALL(evt_snd_sfxon_3d, STRING("SFX_STG4_CROW_HOWL1"), LW(0), LW(1), LW(2), 0)
-            SWITCH(GSW(0))
-                CASE_LESS(210)
-                CALL(evt_msg_print, 0, STRING("stg4_usu_143"), 0, STRING("カラスＨ"))
-                CALL(evt_msg_print, 0, STRING("stg4_usu_144"), 0, STRING("カラスＩ"))
-                CASE_LESS(222)
-                CALL(evt_msg_print, 0, STRING("stg4_usu_145"), 0, STRING("カラスＨ"))
-                CALL(evt_msg_print, 0, STRING("stg4_usu_146"), 0, STRING("カラスＩ"))
-                CASE_LESS_OR_EQUAL(402)
-                CALL(evt_msg_print, 0, STRING("stg4_usu_146_1"), 0, STRING("カラスＨ"))
-                CALL(evt_msg_print, 0, STRING("stg4_usu_146_2"), 0, STRING("カラスＩ"))
-                CASE_DEFAULT
-                CALL(evt_msg_print, 0, STRING("stg4_usu_146_2_1"), 0, STRING("カラスＨ"))
-                CALL(evt_msg_print, 0, STRING("stg4_usu_146_2_2"), 0, STRING("カラスＩ"))
-            END_SWITCH
-            CALL_CHILD(PTR(cam_down))
-            CALL(evt_party_cont_onoff, 0, 1)
-            CALL(evt_mario_key_onoff, 1)
-            CALL(mainwindow_openenable)
-            SET_VALUE(GW(1), 1)
-        END_IF
-    END_IF
-    WAIT_FRAMES(1)
-    GOTO(0)
-    RETURN
-EVT_END()
-#else
-EVT_BEGIN(usu01_crowHI_talk_event)
-    SET_VALUE(LW(15), 0)
-    LABEL(0)
-    IF_INT_NOT_EQUAL(GW(1), 0)
-        WAIT_FRAMES(1)
-        GOTO(0)
-    END_IF
-    CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
-    CALL(evt_npc_get_position, STRING("カラスＨ"), LW(3), LW(4), LW(5))
-    CALL(evt_sub_area_check, 1, LW(3), LW(5), 80, LW(0), LW(2), LW(6))
-    IF_INT_EQUAL(LW(6), 1)
-        IF_INT_EQUAL(LW(15), 0)
-            CALL(evt_mario_balloon_tenten)
-            SET_VALUE(LW(15), 1)
-        END_IF
-        ELSE
-        IF_INT_EQUAL(LW(15), 1)
-            CALL(evt_mario_balloon_off)
-            SET_VALUE(LW(15), 0)
-        END_IF
-    END_IF
-    IF_INT_EQUAL(LW(15), 1)
-        CALL(evt_key_get_buttontrg, 0, LW(0))
-        CALL(evt_mario_party_use_check, LW(1))
-        IF_INT_EQUAL(LW(1), 0)
-            IF_BITS_SET(LW(0), 256)
-                CALL(evt_mario_balloon_off)
-                SET_VALUE(LW(15), 0)
-                CALL(evt_mario_key_onoff, 0)
-                CALL_CHILD(PTR(cam_up))
-                CALL(evt_npc_get_position, STRING("カラスＨ"), LW(0), LW(1), LW(2))
-                CALL(evt_snd_sfxon_3d, STRING("SFX_STG4_CROW_HOWL1"), LW(0), LW(1), LW(2), 0)
-                CALL(evt_msg_print, 0, STRING("stg4_jin_153"), 0, STRING("カラスＨ"))
-                CALL_CHILD(PTR(cam_down))
-                CALL(evt_mario_key_onoff, 1)
-            END_IF
-        END_IF
-    END_IF
-    CALL(evt_mario_get_party, LW(0))
-    IF_INT_NOT_EQUAL(LW(0), 6)
-        WAIT_FRAMES(1)
-        GOTO(0)
-    END_IF
-    CALL(evt_party_get_status, 6, LW(0))
-    IF_INT_NOT_EQUAL(LW(0), 2)
-        WAIT_FRAMES(1)
-        GOTO(0)
-    END_IF
-    IF_INT_EQUAL(LW(15), 1)
-        CALL(evt_mario_balloon_off)
-        SET_VALUE(LW(15), 0)
-        IF_INT_GREATER_OR_EQUAL(GSW(0), 206)
-            CALL(evt_mario_key_onoff, 0)
-            CALL(evt_party_cont_onoff, 0, 0)
-            CALL(mainwindow_opendisable)
-            CALL_CHILD(PTR(cam_up))
-            WAIT_MS(1000)
-            CALL(evt_npc_get_position, STRING("カラスＨ"), LW(0), LW(1), LW(2))
-            CALL(evt_snd_sfxon_3d, STRING("SFX_STG4_CROW_HOWL1"), LW(0), LW(1), LW(2), 0)
-            SWITCH(GSW(0))
-                CASE_LESS(210)
-                CALL(evt_msg_print, 0, STRING("stg4_usu_143"), 0, STRING("カラスＨ"))
-                CALL(evt_msg_print, 0, STRING("stg4_usu_144"), 0, STRING("カラスＩ"))
-                CASE_LESS(222)
-                CALL(evt_msg_print, 0, STRING("stg4_usu_145"), 0, STRING("カラスＨ"))
-                CALL(evt_msg_print, 0, STRING("stg4_usu_146"), 0, STRING("カラスＩ"))
-                CASE_LESS_OR_EQUAL(402)
-                CALL(evt_msg_print, 0, STRING("stg4_usu_146_1"), 0, STRING("カラスＨ"))
-                CALL(evt_msg_print, 0, STRING("stg4_usu_146_2"), 0, STRING("カラスＩ"))
-                CASE_DEFAULT
-                CALL(evt_msg_print, 0, STRING("stg4_usu_146_2_1"), 0, STRING("カラスＨ"))
-                CALL(evt_msg_print, 0, STRING("stg4_usu_146_2_2"), 0, STRING("カラスＩ"))
-            END_SWITCH
-            CALL_CHILD(PTR(cam_down))
-            CALL(evt_party_cont_onoff, 0, 1)
-            CALL(evt_mario_key_onoff, 1)
-            CALL(mainwindow_openenable)
-            SET_VALUE(GW(1), 1)
-        END_IF
-    END_IF
-    WAIT_FRAMES(1)
-    GOTO(0)
-    RETURN
-EVT_END()
 #endif
+    // Show the "..." balloon over Mario while he is in range and hide it when he leaves.
+    IF_INT_EQUAL(LW(6), 1)
+        IF_INT_EQUAL(LW(15), 0)
+            CALL(evt_mario_balloon_tenten)
+            SET_VALUE(LW(15), 1)
+        END_IF
+    ELSE
+        IF_INT_EQUAL(LW(15), 1)
+            CALL(evt_mario_balloon_off)
+            SET_VALUE(LW(15), 0)
+        END_IF
+    END_IF
+    // A pressed with the balloon up: Mario's controls lock,
+    // the camera rises to the crows and crow H caws (stg4_jin_153).
+    IF_INT_EQUAL(LW(15), 1)
+        CALL(evt_key_get_buttontrg, 0, LW(0))
+        CALL(evt_mario_party_use_check, LW(1))
+        IF_INT_EQUAL(LW(1), 0)
+            IF_BITS_SET(LW(0), 256)
+                CALL(evt_mario_balloon_off)
+                SET_VALUE(LW(15), 0)
+                CALL(evt_mario_key_onoff, 0)
+                CALL_CHILD(cam_up)
+                CALL(evt_npc_get_position, STRING("カラスＨ"), LW(0), LW(1), LW(2))
+                CALL(evt_snd_sfxon_3d, STRING("SFX_STG4_CROW_HOWL1"), LW(0), LW(1), LW(2), 0)
+                CALL(evt_msg_print, 0, STRING("stg4_jin_153"), 0, STRING("カラスＨ"))
+                CALL_CHILD(cam_down)
+                CALL(evt_mario_key_onoff, 1)
+            END_IF
+        END_IF
+    END_IF
+    // The crows only speak when Vivian is the partner and Mario hides in her shadow.
+    CALL(evt_mario_get_party, LW(0))
+    IF_INT_NOT_EQUAL(LW(0), 6)
+        WAIT_FRAMES(1)
+        GOTO(0)
+    END_IF
+    CALL(evt_party_get_status, 6, LW(0))
+    IF_INT_NOT_EQUAL(LW(0), 2)
+        WAIT_FRAMES(1)
+        GOTO(0)
+    END_IF
+    // Once Vivian has joined, the camera rises and the crows chat about their children.
+    IF_INT_EQUAL(LW(15), 1)
+        CALL(evt_mario_balloon_off)
+        SET_VALUE(LW(15), 0)
+        IF_INT_GREATER_OR_EQUAL(GSW(GSW_STORY_PROGRESS), STORY_STG4_13_VIVIAN_JOINS)
+            CALL(evt_mario_key_onoff, 0)
+            CALL(evt_party_cont_onoff, 0, 0)
+#if VERSION >= VERSION_JP
+            CALL(mainwindow_opendisable)
+#endif
+            CALL_CHILD(cam_up)
+            WAIT_MS(1000)
+            CALL(evt_npc_get_position, STRING("カラスＨ"), LW(0), LW(1), LW(2))
+            CALL(evt_snd_sfxon_3d, STRING("SFX_STG4_CROW_HOWL1"), LW(0), LW(1), LW(2), 0)
+            SWITCH(GSW(GSW_STORY_PROGRESS))
+                CASE_LESS(STORY_STG4_14_NAME_GUESSING)
+                // Before the name guessing, crow H tells crow I that her oldest, Ronnie,
+                // is taking his SATs (stg4_usu_143) and crow I is impressed (144).
+                CALL(evt_msg_print, 0, STRING("stg4_usu_143"), 0, STRING("カラスＨ"))
+                CALL(evt_msg_print, 0, STRING("stg4_usu_144"), 0, STRING("カラスＩ"))
+                CASE_LESS(STORY_STG4_31_FRANKLYS_HOUSE)
+                // Later, crow H says he is even going to a test prep center (145) and crow I thinks about a
+                // college fund for little Billy (146).
+                CALL(evt_msg_print, 0, STRING("stg4_usu_145"), 0, STRING("カラスＨ"))
+                CALL(evt_msg_print, 0, STRING("stg4_usu_146"), 0, STRING("カラスＩ"))
+                CASE_LESS_OR_EQUAL(STORY_STG8_END_AFTER_THE_BATTLE)
+                // After Franklys's house, crow H laments that Ronnie did poorly on his SATs (146_1) and crow
+                // I consoles her (146_2); the last lines follow the ending.
+                CALL(evt_msg_print, 0, STRING("stg4_usu_146_1"), 0, STRING("カラスＨ"))
+                CALL(evt_msg_print, 0, STRING("stg4_usu_146_2"), 0, STRING("カラスＩ"))
+                CASE_DEFAULT
+                CALL(evt_msg_print, 0, STRING("stg4_usu_146_2_1"), 0, STRING("カラスＨ"))
+                CALL(evt_msg_print, 0, STRING("stg4_usu_146_2_2"), 0, STRING("カラスＩ"))
+            END_SWITCH
+            CALL_CHILD(cam_down)
+            // Controls come back; GW(1) keeps the crows quiet until usu01_check_vivian resets it.
+            CALL(evt_party_cont_onoff, 0, 1)
+            CALL(evt_mario_key_onoff, 1)
+#if VERSION >= VERSION_JP
+            CALL(mainwindow_openenable)
+#endif
+            SET_VALUE(GW(1), 1)
+        END_IF
+    END_IF
+    WAIT_FRAMES(1)
+    GOTO(0)
+    RETURN
+EVT_END()
 
-#ifdef VERSION_G8ME01
+/**
+ * Background watcher for crow J: when Mario stands within 20 units of crow J, a "..." balloon shows over him
+ * (US and later: only while he stands, walks, dashes or rides in Vivian's shadow,
+ * and no other partner's action is in use); pressing A makes the crow caw (stg4_jin_153).
+ * When Mario is hidden in Vivian's shadow (after STORY_STG4_13_VIVIAN_JOINS) the crow talks instead,
+ * by story progress (stg4_usu_147 to 148_1_1); that sets GW(2),
+ * which keeps the watcher quiet until usu01_check_vivian clears it.
+ */
 EVT_BEGIN(usu01_crowJ_talk_event)
+    // No balloon is showing yet; GW(2) keeps the watcher quiet once the crow has talked.
     SET_VALUE(LW(15), 0)
     LABEL(0)
     IF_INT_NOT_EQUAL(GW(2), 0)
         WAIT_FRAMES(1)
         GOTO(0)
     END_IF
+    // Check whether Mario is within 20 units of crow J.
     CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
     CALL(evt_npc_get_position, STRING("カラスＪ"), LW(3), LW(4), LW(5))
     CALL(evt_sub_area_check, 1, LW(3), LW(5), 20, LW(0), LW(2), LW(6))
+#if VERSION >= VERSION_US
     CALL(evt_mario_get_party, LW(1))
     IF_INT_NOT_EQUAL(LW(1), 6)
         CALL(evt_mario_party_use_check, LW(1))
@@ -2237,182 +2093,131 @@ EVT_BEGIN(usu01_crowJ_talk_event)
             END_IF
         END_IF
     END_IF
-    IF_INT_EQUAL(LW(6), 1)
-        IF_INT_EQUAL(LW(15), 0)
-            CALL(evt_mario_balloon_tenten)
-            SET_VALUE(LW(15), 1)
-        END_IF
-        ELSE
-        IF_INT_EQUAL(LW(15), 1)
-            CALL(evt_mario_balloon_off)
-            SET_VALUE(LW(15), 0)
-        END_IF
-    END_IF
-    IF_INT_EQUAL(LW(15), 1)
-        CALL(evt_key_get_buttontrg, 0, LW(0))
-        CALL(evt_mario_party_use_check, LW(1))
-        IF_INT_EQUAL(LW(1), 0)
-            IF_BITS_SET(LW(0), 256)
-                CALL(evt_mario_balloon_off)
-                SET_VALUE(LW(15), 0)
-                CALL(evt_mario_key_onoff, 0)
-                CALL_CHILD(PTR(cam_up))
-                CALL(evt_npc_get_position, STRING("カラスＪ"), LW(0), LW(1), LW(2))
-                CALL(evt_snd_sfxon_3d, STRING("SFX_STG4_CROW_HOWL1"), LW(0), LW(1), LW(2), 0)
-                CALL(evt_msg_print, 0, STRING("stg4_jin_153"), 0, STRING("カラスＪ"))
-                CALL_CHILD(PTR(cam_down))
-                CALL(evt_mario_key_onoff, 1)
-            END_IF
-        END_IF
-    END_IF
-    CALL(evt_mario_get_party, LW(0))
-    IF_INT_NOT_EQUAL(LW(0), 6)
-        WAIT_FRAMES(1)
-        GOTO(0)
-    END_IF
-    CALL(evt_party_get_status, 6, LW(0))
-    IF_INT_NOT_EQUAL(LW(0), 2)
-        WAIT_FRAMES(1)
-        GOTO(0)
-    END_IF
-    IF_INT_EQUAL(LW(15), 1)
-        CALL(evt_mario_balloon_off)
-        SET_VALUE(LW(15), 0)
-        IF_INT_GREATER_OR_EQUAL(GSW(0), 206)
-            CALL(evt_mario_key_onoff, 0)
-            CALL(evt_party_cont_onoff, 0, 0)
-            CALL(mainwindow_opendisable)
-            CALL_CHILD(PTR(cam_up))
-            WAIT_MS(1000)
-            CALL(evt_npc_get_position, STRING("カラスＪ"), LW(0), LW(1), LW(2))
-            CALL(evt_snd_sfxon_3d, STRING("SFX_STG4_CROW_HOWL1"), LW(0), LW(1), LW(2), 0)
-            SWITCH(GSW(0))
-                CASE_LESS(210)
-                CALL(evt_msg_print, 0, STRING("stg4_usu_147"), 0, STRING("カラスＪ"))
-                CASE_LESS(222)
-                CALL(evt_msg_print, 0, STRING("stg4_usu_148"), 0, STRING("カラスＪ"))
-                CASE_LESS_OR_EQUAL(402)
-                CALL(evt_msg_print, 0, STRING("stg4_usu_148_1"), 0, STRING("カラスＪ"))
-                CASE_DEFAULT
-                CALL(evt_msg_print, 0, STRING("stg4_usu_148_1_1"), 0, STRING("カラスＪ"))
-            END_SWITCH
-            CALL_CHILD(PTR(cam_down))
-            CALL(evt_mario_key_onoff, 1)
-            CALL(evt_party_cont_onoff, 0, 1)
-            CALL(mainwindow_openenable)
-            SET_VALUE(GW(2), 1)
-        END_IF
-    END_IF
-    WAIT_FRAMES(1)
-    GOTO(0)
-    RETURN
-EVT_END()
-#else
-EVT_BEGIN(usu01_crowJ_talk_event)
-    SET_VALUE(LW(15), 0)
-    LABEL(0)
-    IF_INT_NOT_EQUAL(GW(2), 0)
-        WAIT_FRAMES(1)
-        GOTO(0)
-    END_IF
-    CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
-    CALL(evt_npc_get_position, STRING("カラスＪ"), LW(3), LW(4), LW(5))
-    CALL(evt_sub_area_check, 1, LW(3), LW(5), 20, LW(0), LW(2), LW(6))
-    IF_INT_EQUAL(LW(6), 1)
-        IF_INT_EQUAL(LW(15), 0)
-            CALL(evt_mario_balloon_tenten)
-            SET_VALUE(LW(15), 1)
-        END_IF
-        ELSE
-        IF_INT_EQUAL(LW(15), 1)
-            CALL(evt_mario_balloon_off)
-            SET_VALUE(LW(15), 0)
-        END_IF
-    END_IF
-    IF_INT_EQUAL(LW(15), 1)
-        CALL(evt_key_get_buttontrg, 0, LW(0))
-        CALL(evt_mario_party_use_check, LW(1))
-        IF_INT_EQUAL(LW(1), 0)
-            IF_BITS_SET(LW(0), 256)
-                CALL(evt_mario_balloon_off)
-                SET_VALUE(LW(15), 0)
-                CALL(evt_mario_key_onoff, 0)
-                CALL_CHILD(PTR(cam_up))
-                CALL(evt_npc_get_position, STRING("カラスＪ"), LW(0), LW(1), LW(2))
-                CALL(evt_snd_sfxon_3d, STRING("SFX_STG4_CROW_HOWL1"), LW(0), LW(1), LW(2), 0)
-                CALL(evt_msg_print, 0, STRING("stg4_jin_153"), 0, STRING("カラスＪ"))
-                CALL_CHILD(PTR(cam_down))
-                CALL(evt_mario_key_onoff, 1)
-            END_IF
-        END_IF
-    END_IF
-    CALL(evt_mario_get_party, LW(0))
-    IF_INT_NOT_EQUAL(LW(0), 6)
-        WAIT_FRAMES(1)
-        GOTO(0)
-    END_IF
-    CALL(evt_party_get_status, 6, LW(0))
-    IF_INT_NOT_EQUAL(LW(0), 2)
-        WAIT_FRAMES(1)
-        GOTO(0)
-    END_IF
-    IF_INT_EQUAL(LW(15), 1)
-        CALL(evt_mario_balloon_off)
-        SET_VALUE(LW(15), 0)
-        IF_INT_GREATER_OR_EQUAL(GSW(0), 206)
-            CALL(evt_mario_key_onoff, 0)
-            CALL(evt_party_cont_onoff, 0, 0)
-            CALL(mainwindow_opendisable)
-            CALL_CHILD(PTR(cam_up))
-            WAIT_MS(1000)
-            CALL(evt_npc_get_position, STRING("カラスＪ"), LW(0), LW(1), LW(2))
-            CALL(evt_snd_sfxon_3d, STRING("SFX_STG4_CROW_HOWL1"), LW(0), LW(1), LW(2), 0)
-            SWITCH(GSW(0))
-                CASE_LESS(210)
-                CALL(evt_msg_print, 0, STRING("stg4_usu_147"), 0, STRING("カラスＪ"))
-                CASE_LESS(222)
-                CALL(evt_msg_print, 0, STRING("stg4_usu_148"), 0, STRING("カラスＪ"))
-                CASE_LESS_OR_EQUAL(402)
-                CALL(evt_msg_print, 0, STRING("stg4_usu_148_1"), 0, STRING("カラスＪ"))
-                CASE_DEFAULT
-                CALL(evt_msg_print, 0, STRING("stg4_usu_148_1_1"), 0, STRING("カラスＪ"))
-            END_SWITCH
-            CALL_CHILD(PTR(cam_down))
-            CALL(evt_mario_key_onoff, 1)
-            CALL(evt_party_cont_onoff, 0, 1)
-            CALL(mainwindow_openenable)
-            SET_VALUE(GW(2), 1)
-        END_IF
-    END_IF
-    WAIT_FRAMES(1)
-    GOTO(0)
-    RETURN
-EVT_END()
 #endif
+    // Show the "..." balloon over Mario while he is in range and hide it when he leaves.
+    IF_INT_EQUAL(LW(6), 1)
+        IF_INT_EQUAL(LW(15), 0)
+            CALL(evt_mario_balloon_tenten)
+            SET_VALUE(LW(15), 1)
+        END_IF
+    ELSE
+        IF_INT_EQUAL(LW(15), 1)
+            CALL(evt_mario_balloon_off)
+            SET_VALUE(LW(15), 0)
+        END_IF
+    END_IF
+    // A pressed with the balloon up: Mario's controls lock,
+    // the camera rises to the crow and it caws (stg4_jin_153).
+    IF_INT_EQUAL(LW(15), 1)
+        CALL(evt_key_get_buttontrg, 0, LW(0))
+        CALL(evt_mario_party_use_check, LW(1))
+        IF_INT_EQUAL(LW(1), 0)
+            IF_BITS_SET(LW(0), 256)
+                CALL(evt_mario_balloon_off)
+                SET_VALUE(LW(15), 0)
+                CALL(evt_mario_key_onoff, 0)
+                CALL_CHILD(cam_up)
+                CALL(evt_npc_get_position, STRING("カラスＪ"), LW(0), LW(1), LW(2))
+                CALL(evt_snd_sfxon_3d, STRING("SFX_STG4_CROW_HOWL1"), LW(0), LW(1), LW(2), 0)
+                CALL(evt_msg_print, 0, STRING("stg4_jin_153"), 0, STRING("カラスＪ"))
+                CALL_CHILD(cam_down)
+                CALL(evt_mario_key_onoff, 1)
+            END_IF
+        END_IF
+    END_IF
+    // The crow only speaks when Vivian is the partner and Mario hides in her shadow.
+    CALL(evt_mario_get_party, LW(0))
+    IF_INT_NOT_EQUAL(LW(0), 6)
+        WAIT_FRAMES(1)
+        GOTO(0)
+    END_IF
+    CALL(evt_party_get_status, 6, LW(0))
+    IF_INT_NOT_EQUAL(LW(0), 2)
+        WAIT_FRAMES(1)
+        GOTO(0)
+    END_IF
+    // Once Vivian has joined, the camera rises and crow J muses aloud by story progress.
+    IF_INT_EQUAL(LW(15), 1)
+        CALL(evt_mario_balloon_off)
+        SET_VALUE(LW(15), 0)
+        IF_INT_GREATER_OR_EQUAL(GSW(GSW_STORY_PROGRESS), STORY_STG4_13_VIVIAN_JOINS)
+            CALL(evt_mario_key_onoff, 0)
+            CALL(evt_party_cont_onoff, 0, 0)
+#if VERSION >= VERSION_JP
+            CALL(mainwindow_opendisable)
+#endif
+            CALL_CHILD(cam_up)
+            WAIT_MS(1000)
+            CALL(evt_npc_get_position, STRING("カラスＪ"), LW(0), LW(1), LW(2))
+            CALL(evt_snd_sfxon_3d, STRING("SFX_STG4_CROW_HOWL1"), LW(0), LW(1), LW(2), 0)
+            SWITCH(GSW(GSW_STORY_PROGRESS))
+                CASE_LESS(STORY_STG4_14_NAME_GUESSING)
+                // Before the name guessing, crow J laments that the twilit world is
+                // full of pain (stg4_usu_147).
+                CALL(evt_msg_print, 0, STRING("stg4_usu_147"), 0, STRING("カラスＪ"))
+                CASE_LESS(STORY_STG4_31_FRANKLYS_HOUSE)
+                // Later it finds small sparks of hope in the gloom (stg4_usu_148),
+                // then (after Franklys's house) decides to go on an epic journey (148_1 and 148_1_1).
+                CALL(evt_msg_print, 0, STRING("stg4_usu_148"), 0, STRING("カラスＪ"))
+                CASE_LESS_OR_EQUAL(STORY_STG8_END_AFTER_THE_BATTLE)
+                CALL(evt_msg_print, 0, STRING("stg4_usu_148_1"), 0, STRING("カラスＪ"))
+                CASE_DEFAULT
+                CALL(evt_msg_print, 0, STRING("stg4_usu_148_1_1"), 0, STRING("カラスＪ"))
+            END_SWITCH
+            // Camera returns, Mario's controls come back and the partner is released.
+            CALL_CHILD(cam_down)
+            CALL(evt_mario_key_onoff, 1)
+            CALL(evt_party_cont_onoff, 0, 1)
+#if VERSION >= VERSION_JP
+            CALL(mainwindow_openenable)
+#endif
+            SET_VALUE(GW(2), 1)
+        END_IF
+    END_IF
+    WAIT_FRAMES(1)
+    GOTO(0)
+    RETURN
+EVT_END()
 
+/**
+ * NPCs inside house 1, the aunt's home: the aunt in her human and pig forms and the three children;
+ * door_1 lists them as the house's interior NPCs.
+ */
 const char* minka_npc[] = {
-    /*"おばさん"*/"\x82\xA8\x82\xCE\x82\xB3\x82\xF1",
-    /*"ブタおばさん"*/"\x83\x75\x83\x5E\x82\xA8\x82\xCE\x82\xB3\x82\xF1",
-    /*"子供Ａ"*/"\x8E\x71\x8B\x9F\x82\x60",
-    /*"子供Ｂ"*/"\x8E\x71\x8B\x9F\x82\x61",
-    /*"子供Ｃ"*/"\x8E\x71\x8B\x9F\x82\x62",
+    "おばさん",
+    "ブタおばさん",
+    "子供Ａ",
+    "子供Ｂ",
+    "子供Ｃ",
     NULL,
 };
 
+/**
+ * Item objects inside house 1: the Meteor Meal "iri_20" the aunt leaves for Mario when his items are full;
+ * door_1 lists them as the house's contents.
+ */
 const char* minka_item[] = {
     "iri_20",
     NULL,
 };
 
+/**
+ * NPCs inside the shop (house 2): the shopkeeper's wife, the dandy and his pig form,
+ * the shopkeeper and the black chest's demon (Peramajin); door_2_1 lists them as the interior NPCs.
+ */
 const char* shop_npc[] = {
-    /*"お店の奥さん"*/"\x82\xA8\x93\x58\x82\xCC\x89\x9C\x82\xB3\x82\xF1",
-    /*"キザ野郎"*/"\x83\x4C\x83\x55\x96\xEC\x98\x59",
-    /*"ブタキザ野郎"*/"\x83\x75\x83\x5E\x83\x4C\x83\x55\x96\xEC\x98\x59",
-    /*"店の主人"*/"\x93\x58\x82\xCC\x8E\xE5\x90\x6C",
-    /*"ペラ魔人"*/"\x83\x79\x83\x89\x96\x82\x90\x6C",
+    "お店の奥さん",
+    "キザ野郎",
+    "ブタキザ野郎",
+    "店の主人",
+    "ペラ魔人",
     NULL,
 };
 
+/**
+ * Map objects inside the shop (house 2): the storeroom lock, the black chest "pera_box" and the item chest
+ * "mobj_box00"; door_2_1 lists them as the shop's contents.
+ */
 const char* shop_mobj[] = {
     "usu_00_lock",
     "pera_box",
@@ -2420,6 +2225,10 @@ const char* shop_mobj[] = {
     NULL,
 };
 
+/**
+ * Pickup items lying in the shop (house 2): item_02 (Life Shroom), item_03 (Boo's Sheet),
+ * item_04 (Jammin' Jelly) and item_05 (Inn Coupon); door_2_1 lists them as the shop's contents.
+ */
 const char* shop_item[] = {
     "item_02",
     "item_03",
@@ -2428,18 +2237,32 @@ const char* shop_item[] = {
     NULL,
 };
 
+/**
+ * Door script for house 1's door "S_usu01_ie1_door" (evtIn of door_1):
+ * turns it about y by LW(0) scaled to door units.
+ */
 static EVT_BEGIN(evt_door_1_1)
     MULTIPLY_FLOAT(LW(0), FLOAT(0.5546875f))
     CALL(evt_mapobj_rotate, 1, STRING("S_usu01_ie1_door"), 0, LW(0), 0)
     RETURN
 EVT_END()
 
+/**
+ * Door script for house 1's door (evtOut of door_1,
+ * which the door code runs with the door-fall sound while the house front opens or closes):
+ * tilts "S_usu01_ie1_door" about x by half of LW(0) (0 to 180, so up to 90 degrees).
+ */
 static EVT_BEGIN(evt_door_1_2)
     MULTIPLY_FLOAT(LW(0), FLOAT(0.5f))
     CALL(evt_mapobj_rotate, 1, STRING("S_usu01_ie1_door"), LW(0), 0, 0)
     RETURN
 EVT_END()
 
+/**
+ * Wall script of house 1 (evtWall of door_1, run by the door code as the house front swings open or shut,
+ * LW(0) 0 to 180):
+ * tilts the front panels "S_usu01_ie1_kai1" and "S_usu01_ie1_kai2" about x by -LW(0)/2 and +LW(0)/2.
+ */
 static EVT_BEGIN(evt_wall_1)
     SET_FLOAT_VALUE(LW(1), LW(0))
     MULTIPLY_FLOAT(LW(1), FLOAT(-0.5f))
@@ -2450,20 +2273,27 @@ static EVT_BEGIN(evt_wall_1)
     RETURN
 EVT_END()
 
+/** House 1 open callback: dips BGM and ambience to 50 and low-pass filters the environment sound. */
 static EVT_BEGIN(door_1_open)
-    CALL(evt_snd_bgmoff, 18432)
-    CALL(evt_snd_envoff, 18432)
+    CALL(evt_snd_bgmoff, PSND_FADE_DIP_TO(50))
+    CALL(evt_snd_envoff, PSND_FADE_DIP_TO(50))
     CALL(evt_snd_env_lpf, 0, 800)
     RETURN
 EVT_END()
 
+/** House 1 close callback: restores BGM and ambience and removes the low-pass filter. */
 static EVT_BEGIN(door_1_close)
-    CALL(evt_snd_bgmon, 160, 0)
-    CALL(evt_snd_envon, 160, 0)
+    CALL(evt_snd_bgmon, PSND_FADE_RESUME | PSND_FADE_UNDIP, 0)
+    CALL(evt_snd_envon, PSND_FADE_RESUME | PSND_FADE_UNDIP, 0)
     CALL(evt_snd_env_lpf, 0, 0)
     RETURN
 EVT_END()
 
+/**
+ * Door of house 1 (the aunt's home, "S_usu01_ie1_door"): its collision,
+ * the inside and outside models and the open and close scripts,
+ * with the interior NPCs and items listed in minka_npc and minka_item.
+ */
 static DoorParam door_1 = {
     0, // flags
     3, // type
@@ -2485,6 +2315,7 @@ static DoorParam door_1 = {
     door_1_close, // evtClose
 };
 
+/** Door script for house 2's front door: rotates "S_usu01_ie2_door1" by LW(0) scaled to door units. */
 EVT_BEGIN(evt_door_2_1_1)
     SET_VALUE(LW(2), LW(0))
     MULTIPLY_FLOAT(LW(0), FLOAT(0.5546875f))
@@ -2492,10 +2323,15 @@ EVT_BEGIN(evt_door_2_1_1)
     RETURN
 EVT_END()
 
+/** Empty door script for house 2 (just returns). */
 EVT_BEGIN(evt_door_2_1_2)
     RETURN
 EVT_END()
 
+/**
+ * Wall script of house 2, the shop (evtWall of door_2_1, LW(0) 0 to 180 as the front swings open or shut):
+ * turns the front panels "S_usu01_ie2_kai1" and "S_usu01_ie2_kai2" about z by +LW(0)/2 and -LW(0)/2.
+ */
 EVT_BEGIN(evt_wall_2_1)
     SET_FLOAT_VALUE(LW(1), LW(0))
     MULTIPLY_FLOAT(LW(1), FLOAT(0.5f))
@@ -2506,11 +2342,19 @@ EVT_BEGIN(evt_wall_2_1)
     RETURN
 EVT_END()
 
+/**
+ * Background chatter for the shop quarrel (LW(0) speaker, LW(1) message id,
+ * LW(2) a flag used as the "may speak" switch, LW(3) start delay in ms);
+ * runs only from the Doopliss fight to STORY_STG4_15_05.
+ * Once Mario can move it prints the message over and over;
+ * a sibling loop closes the speaker's bubble and pauses it
+ * while that speaker is the NPC Mario would talk to (chk_fuki), so he can be spoken to.
+ */
 EVT_BEGIN(loop_msg)
-    IF_INT_LESS(GSW(0), 200)
+    IF_INT_LESS(GSW(GSW_STORY_PROGRESS), STORY_STG4_10_DOOPLISS_BATTLE)
         RETURN
     END_IF
-    IF_INT_GREATER(GSW(0), 215)
+    IF_INT_GREATER(GSW(GSW_STORY_PROGRESS), STORY_STG4_15_05_PEACH_X_NAUT_PHD_REPORT)
         RETURN
     END_IF
     CALL(evt_mario_wait_movable)
@@ -2525,7 +2369,7 @@ EVT_BEGIN(loop_msg)
                     CALL(evt_msg_close, LW(1))
                 END_IF
                 SET_INT_INDEXED(LW(2), 0)
-                ELSE
+            ELSE
                 SET_INT_INDEXED(LW(2), 1)
             END_IF
             WAIT_FRAMES(1)
@@ -2549,43 +2393,58 @@ EVT_BEGIN(loop_msg)
     RETURN
 EVT_END()
 
+/**
+ * Shop quarrel chatter, started when Mario enters the shop or comes back from the storeroom:
+ * through loop_msg the dandy (stg4_usu_61_3, swearing he just woke up in the shop)
+ * and the shopkeeper (stg4_usu_61_4, demanding why he was there with his wife) repeat their lines.
+ */
 EVT_BEGIN(mise_kiza_msg)
     BEGIN_SIBLING_EVENT
         SET_VALUE(LW(0), STRING("キザ野郎"))
         SET_VALUE(LW(1), STRING("stg4_usu_61_3"))
         SET_RAW_VALUE(LW(2), LSWF(2))
         SET_VALUE(LW(3), 700)
-        CALL_CHILD(PTR(loop_msg))
+        CALL_CHILD(loop_msg)
     END_SIBLING_EVENT
     SET_VALUE(LW(0), STRING("店の主人"))
     SET_VALUE(LW(1), STRING("stg4_usu_61_4"))
     SET_RAW_VALUE(LW(2), LSWF(3))
     SET_VALUE(LW(3), 300)
-    CALL_CHILD(PTR(loop_msg))
+    CALL_CHILD(loop_msg)
     RETURN
 EVT_END()
 
+/**
+ * Shop close callback (evtClose of door_2_1): at STORY_STG4_01 with the shop woman's plea heard
+ * (GSWF_USU01_SHOPKEEPER_ASKED_HELP) it starts the gatekeeper-turns-pig scene (evt_monban_buta2);
+ * it stops the quarrel chatter and closes its bubbles, hides house 3 ("S_usu01_ie3") for one second,
+ * and restores the BGM and ambience.
+ */
 EVT_BEGIN(mawari_house_delay)
-    IF_INT_EQUAL(GSW(0), 180)
-        IF_INT_EQUAL(GSWF(1925), 1)
-            SPAWN_EVENT(PTR(evt_monban_buta2))
+    IF_INT_EQUAL(GSW(GSW_STORY_PROGRESS), STORY_STG4_01_THE_MAYORS_A_PIG)
+        IF_INT_EQUAL(GSWF(GSWF_USU01_SHOPKEEPER_ASKED_HELP), 1)
+            SPAWN_EVENT(evt_monban_buta2)
         END_IF
     END_IF
     DELETE_EVENT(GW(3))
     CALL(evt_msg_close, STRING("stg4_usu_61_3"))
     CALL(evt_msg_close, STRING("stg4_usu_61_4"))
-    CALL(evt_mapobj_flag_onoff, 1, 1, STRING("S_usu01_ie3"), 1)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("S_usu01_ie3"), MAPOBJ_FLAG_HIDE)
     WAIT_MS(1000)
-    CALL(evt_mapobj_flag_onoff, 1, 0, STRING("S_usu01_ie3"), 1)
-    CALL(evt_snd_bgmon, 160, 0)
-    CALL(evt_snd_envon, 160, 0)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("S_usu01_ie3"), MAPOBJ_FLAG_HIDE)
+    CALL(evt_snd_bgmon, PSND_FADE_RESUME | PSND_FADE_UNDIP, 0)
+    CALL(evt_snd_envon, PSND_FADE_RESUME | PSND_FADE_UNDIP, 0)
     CALL(evt_snd_env_lpf, 0, 0)
     RETURN
 EVT_END()
 
+/**
+ * Shop open callback (evtOpen of door_2_1): dips the BGM and ambience and low-pass filters the ambience,
+ * stops the sounds heard from outside (usu01_gusun) and starts the quarrel chatter (mise_kiza_msg).
+ */
 EVT_BEGIN(door_2_1_open)
-    CALL(evt_snd_bgmoff, 18432)
-    CALL(evt_snd_envoff, 18432)
+    CALL(evt_snd_bgmoff, PSND_FADE_DIP_TO(50))
+    CALL(evt_snd_envoff, PSND_FADE_DIP_TO(50))
     CALL(evt_snd_env_lpf, 0, 800)
     DELETE_EVENT(GW(4))
     CALL(evt_msg_close, STRING("stg4_usu_61_1"))
@@ -2594,6 +2453,11 @@ EVT_BEGIN(door_2_1_open)
     RETURN
 EVT_END()
 
+/**
+ * Front door of house 2, the shop ("S_usu01_ie2_door1"): its collision,
+ * the inside and outside models and its scripts, with the interior NPCs,
+ * map objects and items listed in shop_npc, shop_mobj and shop_item.
+ */
 DoorParam door_2_1 = {
     0, // flags
     3, // type
@@ -2615,7 +2479,11 @@ DoorParam door_2_1 = {
     mawari_house_delay, // evtClose
 };
 
-USER_FUNC(sleep_voice) {
+/**
+ * Script helper that blocks forever: each time Mario's sleep animation (M_N_5A) loops it plays
+ * "SFX_VOICE_MARIO_SLEEP1" at his position and stores the sound id in GW(10).
+ */
+static USER_FUNC(sleep_voice) {
     MarioWork* mario = marioGetPtr();
     s32 loops;
 
@@ -2626,14 +2494,18 @@ USER_FUNC(sleep_voice) {
         loops = animPoseGetLoopTimes(mario->paperAnimGroupId[marioAnimeId()]);
         if (loops != event->userdata[0]) {
             event->userdata[0] = loops;
-            evtSetValue(event, GW(10), psndSFXOn_3D("SFX_VOICE_MARIO_SLEEP1\0", &mario->position));
+            evtSetValue(event, GW(10), psndSFXOn_3D("SFX_VOICE_MARIO_SLEEP1", &mario->position));
         }
     }
     return EVT_RETURN_BLOCK;
 }
 
-USER_FUNC(get_item_list) {
-#ifdef VERSION_G8ME01
+/**
+ * Script helper: builds a -1 terminated list of the items in Mario's pouch (first 20 slots) in newly allocated
+ * memory, returns the pointer in args[0].
+ */
+static USER_FUNC(get_item_list) {
+#if VERSION >= VERSION_US
     EvtWord* args = event->args;
     s32 cnt = pouchGetHaveItemCnt();
     s32* list = _mapAlloc((cnt + 1) * sizeof(s32));
@@ -2657,8 +2529,9 @@ USER_FUNC(get_item_list) {
     return EVT_RETURN_DONE;
 }
 
-USER_FUNC(delete_item_list) {
-#ifdef VERSION_G8ME01
+/** Script helper: frees the list that get_item_list allocated (pointer in args[0]). */
+static USER_FUNC(delete_item_list) {
+#if VERSION >= VERSION_US
     void* p = (void*)evtGetValue(event, event->args[0]);
     _mapFree(p);
 #else
@@ -2667,20 +2540,28 @@ USER_FUNC(delete_item_list) {
     return EVT_RETURN_DONE;
 }
 
-USER_FUNC(check_tabemono) {
+/**
+ * Script helper: returns in args[1] whether item args[0] counts as food for the aunt's request:
+ * its usable_locations has the menu-use bit (4); aunt_talk turns anything else down as not edible.
+ */
+static USER_FUNC(check_tabemono) {
     EvtWord* args = event->args;
     s32 id = evtGetValue(event, args[0]);
     BOOL food = FALSE;
 
-    // FAKE: the u16 view of the u16 field is a no-op; the plain field read schedules the table load differently
-    if (*(u16*)&itemDataTable[id].usable_locations & 4) {
+    ItemData* item = &itemDataTable[id];
+    if (item->usable_locations & 4) {
         food = TRUE;
     }
     evtSetValue(event, args[1], food);
     return EVT_RETURN_DONE;
 }
 
-USER_FUNC(chk_fuki) {
+/**
+ * Script helper: returns in args[1] TRUE if the NPC that the A button would talk to this frame (talkTarget)
+ * is the one named args[0].
+ */
+static USER_FUNC(chk_fuki) {
     EvtWord* args = event->args;
     const char* name = (const char*)evtGetValue(event, args[0]);
     NpcEntry* npc = npcGetWorkPtr()->talkTarget;
@@ -2693,7 +2574,8 @@ USER_FUNC(chk_fuki) {
     return EVT_RETURN_DONE;
 }
 
-USER_FUNC(shop_item_disp_off) {
+/** Script helper: hides the six shop display objects in obj_list. */
+static USER_FUNC(shop_item_disp_off) {
     s32 i;
 
     for (i = 0; i < 6; i++) {
@@ -2702,7 +2584,8 @@ USER_FUNC(shop_item_disp_off) {
     return EVT_RETURN_DONE;
 }
 
-USER_FUNC(shop_item_disp_on) {
+/** Script helper: shows the six shop display objects in obj_list. */
+static USER_FUNC(shop_item_disp_on) {
     s32 i;
 
     for (i = 0; i < 6; i++) {
@@ -2711,36 +2594,50 @@ USER_FUNC(shop_item_disp_on) {
     return EVT_RETURN_DONE;
 }
 
-USER_FUNC(ie2_npc_disp_off) {
-    const char* show[] = {"\202\250\223X\202\314\211\234\202\263\202\361", "\203L\203U\226\354\230Y",
-                          "\203u\203^\203L\203U\226\354\230Y", "\223X\202\314\216\345\220l", NULL};
-    const char* hide[] = {"\203y\203\211\226\202\220l", NULL};
+/**
+ * Script helper run when Mario goes into the storeroom:
+ * lets the shop's people (the wife, the dandy in both forms and the shopkeeper) take the map's blend colour
+ * again,
+ * so they darken with the shop, and makes the black chest's demon ("ペラ魔人") ignore it.
+ */
+static USER_FUNC(ie2_npc_disp_off) {
+    const char* show[] = {"お店の奥さん", "キザ野郎",
+                          "ブタキザ野郎", "店の主人", NULL};
+    const char* hide[] = {"ペラ魔人", NULL};
     s32 i;
 
     for (i = 0; show[i] != NULL; i++) {
-        animPoseSetMaterialFlagOff(npcNameToPtr(show[i])->poseId, 0x1800);
+        animPoseSetMaterialFlagOff(npcNameToPtr(show[i])->poseId, ANIM_MATERIAL_FLAG_NO_BLEND | ANIM_MATERIAL_FLAG_NO_BLEND2);
     }
     for (i = 0; hide[i] != NULL; i++) {
-        animPoseSetMaterialFlagOn(npcNameToPtr(hide[i])->poseId, 0x1800);
+        animPoseSetMaterialFlagOn(npcNameToPtr(hide[i])->poseId, ANIM_MATERIAL_FLAG_NO_BLEND | ANIM_MATERIAL_FLAG_NO_BLEND2);
     }
     return EVT_RETURN_DONE;
 }
 
-USER_FUNC(ie2_npc_disp_on) {
-    const char* hide[] = {"\202\250\223X\202\314\211\234\202\263\202\361", "\203L\203U\226\354\230Y",
-                          "\203u\203^\203L\203U\226\354\230Y", "\223X\202\314\216\345\220l", NULL};
-    const char* show[] = {"\203y\203\211\226\202\220l", NULL};
+/**
+ * Script helper run when Mario comes back from the storeroom: the reverse of ie2_npc_disp_off
+ * (the shop's people ignore the map's blend colour again and the chest demon takes it).
+ */
+static USER_FUNC(ie2_npc_disp_on) {
+    const char* hide[] = {"お店の奥さん", "キザ野郎",
+                          "ブタキザ野郎", "店の主人", NULL};
+    const char* show[] = {"ペラ魔人", NULL};
     s32 i;
 
     for (i = 0; hide[i] != NULL; i++) {
-        animPoseSetMaterialFlagOn(npcNameToPtr(hide[i])->poseId, 0x1800);
+        animPoseSetMaterialFlagOn(npcNameToPtr(hide[i])->poseId, ANIM_MATERIAL_FLAG_NO_BLEND | ANIM_MATERIAL_FLAG_NO_BLEND2);
     }
     for (i = 0; show[i] != NULL; i++) {
-        animPoseSetMaterialFlagOff(npcNameToPtr(show[i])->poseId, 0x1800);
+        animPoseSetMaterialFlagOff(npcNameToPtr(show[i])->poseId, ANIM_MATERIAL_FLAG_NO_BLEND | ANIM_MATERIAL_FLAG_NO_BLEND2);
     }
     return EVT_RETURN_DONE;
 }
 
+/**
+ * Script helper: sets the talk hook script (fook_evt) of the ShopperData at args[0] to args[1];
+ * the init script picks shopper_talk1 or shopper_talk2 by story progress.
+ */
 static USER_FUNC(set_fook_evt) {
     EvtWord* args = event->args;
     EvtWord* work = (EvtWord*)evtGetValue(event, args[0]); /* ShopperData35: [1] = fook_evt */
@@ -2749,39 +2646,51 @@ static USER_FUNC(set_fook_evt) {
     return EVT_RETURN_DONE;
 }
 
+/**
+ * Script helper: gives each pig NPC in booboo_name[] that is present in the room (up to eight) the "paper,
+ * no ambient light" material flag.
+ */
 static USER_FUNC(booboo_main) {
     u32 i;
 
     for (i = 0; i < 8; i++) {
         if (npcNameToPtr_NoAssert(booboo_name[i].name) != NULL) {
-            animPoseSetMaterialLightFlagOn(npcNameToPtr(booboo_name[i].name)->poseId, 0x10);
+            animPoseSetMaterialLightFlagOn(npcNameToPtr(booboo_name[i].name)->poseId, ANIM_MATERIAL_LIGHT_PAPER_NO_AMB);
         }
     }
     return EVT_RETURN_DONE;
 }
 
+/** Script helper that runs until blocked: each frame it hides any NPC parked at y <= -1000 and shows the rest. */
 static USER_FUNC(npc_process) {
     NpcWork* wp = npcGetWorkPtr();
     NpcEntry* npc = wp->entries;
     s32 i;
 
     for (i = 0; i < wp->total; i++, npc++) {
-        if (npc->flags & 1) {
+        if (npc->flags & NPC_FLAG_USED) {
             if (npc->position.y <= -1000.0f) {
-                npc->flags |= 0x800;
+                npc->flags |= NPC_FLAG_NO_DISPLAY;
             } else {
-                npc->flags &= ~0x800;
+                npc->flags &= ~NPC_FLAG_NO_DISPLAY;
             }
         }
     }
     return EVT_RETURN_BLOCK;
 }
 
+/**
+ * Going from the shop into the storeroom (A at "A_usu01_ie2_door3", once it is unlocked):
+ * the storeroom stays lit, the Inn Coupon ("item_05") is moved out of sight,
+ * Mario and the partner walk through the door "S_usu01_ie2_door3", which swings open and shut;
+ * the quarrel chatter stops, the shop's goods (once STORY_STG4_04) and people are dimmed,
+ * the wall "S_usu01_ie2_mkabe" slides away and the door folds down.
+ */
 EVT_BEGIN(evt_ie2_door2_1)
     CALL(evt_cam_letter_box_disable, 1)
     CALL(evt_mario_key_onoff, 0)
-    CALL(evt_mapobj_flag_onoff, 1, 1, STRING("S_usu01_ie2_naka2"), 2048)
-    CALL(evt_mapobj_flag_onoff, 1, 1, STRING("S_usu01_ie2_naka2"), 4096)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("S_usu01_ie2_naka2"), MAPOBJ_FLAG_NO_BLEND)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("S_usu01_ie2_naka2"), MAPOBJ_FLAG_NO_BLEND2)
     CALL(evt_item_delete_check, STRING("item_05"), LW(0))
     IF_INT_EQUAL(LW(0), 0)
         CALL(evt_item_get_position, STRING("item_05"), LW(0), LW(1), LW(2))
@@ -2819,7 +2728,7 @@ EVT_BEGIN(evt_ie2_door2_1)
     DELETE_EVENT(GW(3))
     CALL(evt_msg_close, STRING("stg4_usu_61_3"))
     CALL(evt_msg_close, STRING("stg4_usu_61_4"))
-    IF_INT_GREATER_OR_EQUAL(GSW(0), 185)
+    IF_INT_GREATER_OR_EQUAL(GSW(GSW_STORY_PROGRESS), STORY_STG4_04_STORAGE_ROOM_UNLOCKED)
         CALL(shop_item_disp_off)
     END_IF
     CALL(ie2_npc_disp_off)
@@ -2851,6 +2760,12 @@ EVT_BEGIN(evt_ie2_door2_1)
     RETURN
 EVT_END()
 
+/**
+ * Going back from the storeroom into the shop (A at "A_usu01_ie2_door3_u"): the reverse of evt_ie2_door2_1.
+ * The door stands up, the wall "S_usu01_ie2_mkabe" slides back,
+ * the shop's goods (once STORY_STG4_04) and people are lit again and the quarrel chatter restarts;
+ * Mario and the partner walk back through the door, and the Inn Coupon ("item_05") is put back.
+ */
 EVT_BEGIN(evt_ie2_door2_2)
     CALL(evt_cam_letter_box_disable, 1)
     CALL(evt_mario_key_onoff, 0)
@@ -2878,7 +2793,7 @@ EVT_BEGIN(evt_ie2_door2_2)
         WAIT_FRAMES(1)
     END_LOOP
     WAIT_MS(500)
-    IF_INT_GREATER_OR_EQUAL(GSW(0), 185)
+    IF_INT_GREATER_OR_EQUAL(GSW(GSW_STORY_PROGRESS), STORY_STG4_04_STORAGE_ROOM_UNLOCKED)
         CALL(shop_item_disp_on)
     END_IF
     CALL(ie2_npc_disp_on)
@@ -2910,8 +2825,8 @@ EVT_BEGIN(evt_ie2_door2_2)
         END_IF
         WAIT_FRAMES(1)
     END_LOOP
-    CALL(evt_mapobj_flag_onoff, 1, 0, STRING("S_usu01_ie2_naka2"), 2048)
-    CALL(evt_mapobj_flag_onoff, 1, 0, STRING("S_usu01_ie2_naka2"), 4096)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("S_usu01_ie2_naka2"), MAPOBJ_FLAG_NO_BLEND)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("S_usu01_ie2_naka2"), MAPOBJ_FLAG_NO_BLEND2)
     CALL(evt_item_delete_check, STRING("item_05"), LW(0))
     IF_INT_EQUAL(LW(0), 0)
         CALL(evt_item_get_position, STRING("item_05"), LW(0), LW(1), LW(2))
@@ -2922,18 +2837,32 @@ EVT_BEGIN(evt_ie2_door2_2)
     RETURN
 EVT_END()
 
+/**
+ * Door script for house 3's door "S_usu01_ie3_door" (evtIn of door_3):
+ * turns it about y by LW(0) scaled to door units.
+ */
 static EVT_BEGIN(evt_door_3_1)
     MULTIPLY_FLOAT(LW(0), FLOAT(0.5546875f))
     CALL(evt_mapobj_rotate, 1, STRING("S_usu01_ie3_door"), 0, LW(0), 0)
     RETURN
 EVT_END()
 
+/**
+ * Door script for house 3's door (evtOut of door_3,
+ * run with the door-fall sound as the house front opens or closes):
+ * tilts "S_usu01_ie3_door" about x by half of LW(0) (0 to 180).
+ */
 static EVT_BEGIN(evt_door_3_2)
     MULTIPLY_FLOAT(LW(0), FLOAT(0.5f))
     CALL(evt_mapobj_rotate, 1, STRING("S_usu01_ie3_door"), LW(0), 0, 0)
     RETURN
 EVT_END()
 
+/**
+ * Wall script of house 3 (evtWall of door_3, LW(0) 0 to 180):
+ * tilts the front panel "S_usu01_ie3_kai1" about x by -LW(0)/2,
+ * then 10 frames later "S_usu01_ie3_kai2" by +LW(0)/2, so the second panel trails the first.
+ */
 static EVT_BEGIN(evt_wall_3)
     SET_FLOAT_VALUE(LW(1), LW(0))
     MULTIPLY_FLOAT(LW(1), FLOAT(-0.5f))
@@ -2945,25 +2874,32 @@ static EVT_BEGIN(evt_wall_3)
     RETURN
 EVT_END()
 
+/** Item objects inside house 3: "item01"; door_3 lists them as the house's contents. */
 const char* door_3_item[] = {
     "item01",
     NULL,
 };
 
+/** House 3 open callback: dips BGM and ambience to 50 and low-pass filters the environment sound. */
 static EVT_BEGIN(door_3_open)
-    CALL(evt_snd_bgmoff, 18432)
-    CALL(evt_snd_envoff, 18432)
+    CALL(evt_snd_bgmoff, PSND_FADE_DIP_TO(50))
+    CALL(evt_snd_envoff, PSND_FADE_DIP_TO(50))
     CALL(evt_snd_env_lpf, 0, 800)
     RETURN
 EVT_END()
 
+/** House 3 close callback: restores BGM and ambience and removes the low-pass filter. */
 static EVT_BEGIN(door_3_close)
-    CALL(evt_snd_bgmon, 160, 0)
-    CALL(evt_snd_envon, 160, 0)
+    CALL(evt_snd_bgmon, PSND_FADE_RESUME | PSND_FADE_UNDIP, 0)
+    CALL(evt_snd_envon, PSND_FADE_RESUME | PSND_FADE_UNDIP, 0)
     CALL(evt_snd_env_lpf, 0, 0)
     RETURN
 EVT_END()
 
+/**
+ * Door of house 3 ("S_usu01_ie3_door"): its collision, the inside and outside models and the open and close
+ * scripts that dip the music and ambience while Mario is indoors, with the item list door_3_item.
+ */
 static DoorParam door_3 = {
     0, // flags
     3, // type
@@ -2984,12 +2920,16 @@ static DoorParam door_3 = {
     door_3_close, // evtClose
 };
 
+/**
+ * Map exits of this part of Twilight Town: the east exit "e_bero" leads to gra_00 (Twilight Trail) and the
+ * west exit "w_bero" leads back to usu_00.
+ */
 static BeroEntry bero_entry_data[] = {
     {
         "e_bero", // hitName
         0, 0, // type..sfxId
-        20000, // directionId
-        100000, // centerPosition
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         NULL, // enterEvent
@@ -3004,8 +2944,8 @@ static BeroEntry bero_entry_data[] = {
     {
         "w_bero", // hitName
         0, 0, // type..sfxId
-        20000, // directionId
-        100000, // centerPosition
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         NULL, // enterEvent
@@ -3020,11 +2960,18 @@ static BeroEntry bero_entry_data[] = {
     {0},
 };
 
+/**
+ * Sounds from inside the shop, heard once per visit:
+ * until Mario leaves Twilight Town and as long as GSWF_JIN08_PARROT_REVEALED_DOOPLISS_NAME is clear
+ * (set once the Creepy Steeple parrot in jin_08 lets slip Doopliss's name),
+ * when he walks to 0 <= x <= 100 a bubble pointing at the shop shows
+ * sniffling (stg4_usu_51) before the Doopliss fight, or two shouting bubbles (stg4_usu_61_1, 61_2) after it.
+ */
 EVT_BEGIN(usu01_gusun)
-    IF_INT_GREATER_OR_EQUAL(GSW(0), 219)
+    IF_INT_GREATER_OR_EQUAL(GSW(GSW_STORY_PROGRESS), STORY_STG4_16_LEAVING_TWILIGHT_TOWN)
         RETURN
     END_IF
-    IF_INT_EQUAL(GSWF(2232), 1)
+    IF_INT_EQUAL(GSWF(GSWF_JIN08_PARROT_REVEALED_DOOPLISS_NAME), 1)
         RETURN
     END_IF
     CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
@@ -3032,10 +2979,10 @@ EVT_BEGIN(usu01_gusun)
     CALL(evt_mario_get_pos, 0, LW(3), LW(4), LW(5))
     IF_INT_GREATER_OR_EQUAL(LW(3), 0)
         IF_INT_LESS_OR_EQUAL(LW(3), 100)
-            IF_INT_LESS(GSW(0), 200)
+            IF_INT_LESS(GSW(GSW_STORY_PROGRESS), STORY_STG4_10_DOOPLISS_BATTLE)
                 CALL(evt_msg_toge, 2, 37, 30, -244)
                 CALL(evt_msg_print, 0, STRING("stg4_usu_51"), 0, 0)
-                ELSE
+            ELSE
                 CALL(evt_msg_toge, 2, 37, 30, -244)
                 CALL(evt_msg_print, 0, STRING("stg4_usu_61_1"), 0, 0)
                 CALL(evt_msg_toge, 2, 37, 30, -244)
@@ -3049,6 +2996,10 @@ EVT_BEGIN(usu01_gusun)
     RETURN
 EVT_END()
 
+/**
+ * Cutscene body: replaces the gatekeeper with the gatekeeper pig at (400, 0, -55),
+ * rings the temple bell and returns control.
+ */
 EVT_BEGIN(evt_monban_buta_main)
     CALL(evt_mario_key_onoff, 0)
     CALL(evt_npc_set_position, STRING("ブタ門番"), 400, 0, -55)
@@ -3057,39 +3008,52 @@ EVT_BEGIN(evt_monban_buta_main)
     WAIT_MS(500)
     CALL(evt_mario_key_onoff, 1)
     SET_VALUE(LW(0), STRING("e_bero"))
-    CALL_CHILD(PTR(bero_case_switch_on))
-    SET_VALUE(GSW(0), 181)
+    CALL_CHILD(bero_case_switch_on)
+    SET_VALUE(GSW(GSW_STORY_PROGRESS), STORY_STG4_02_DINGE)
     RETURN
 EVT_END()
 
+/**
+ * Map-entry trigger, spawned by the init script at STORY_STG4_01 once the shop woman has made her plea:
+ * waits for Mario's entry move to finish (evt_bero_exec_wait),
+ * then runs the gatekeeper-turns-pig scene (evt_monban_buta_main) unless STORY_STG4_02_DINGE is reached.
+ */
 EVT_BEGIN(evt_monban_buta)
-    IF_INT_GREATER_OR_EQUAL(GSW(0), 181)
+    IF_INT_GREATER_OR_EQUAL(GSW(GSW_STORY_PROGRESS), STORY_STG4_02_DINGE)
         RETURN
     END_IF
     CALL(evt_mario_key_onoff, 0)
     CALL(evt_bero_exec_wait, 65536)
-    CALL_CHILD(PTR(evt_monban_buta_main))
+    CALL_CHILD(evt_monban_buta_main)
     CALL(evt_mario_key_onoff, 1)
     RETURN
 EVT_END()
 
+/**
+ * Variant of evt_monban_buta spawned by the shop's close callback (mawari_house_delay):
+ * waits one second instead of for the entry move.
+ */
 EVT_BEGIN(evt_monban_buta2)
-    IF_INT_GREATER_OR_EQUAL(GSW(0), 181)
+    IF_INT_GREATER_OR_EQUAL(GSW(GSW_STORY_PROGRESS), STORY_STG4_02_DINGE)
         RETURN
     END_IF
     CALL(evt_mario_key_onoff, 0)
     WAIT_MS(1000)
-    CALL_CHILD(PTR(evt_monban_buta_main))
+    CALL_CHILD(evt_monban_buta_main)
     CALL(evt_mario_key_onoff, 1)
     RETURN
 EVT_END()
 
+/**
+ * Watcher loop: when Mario nears the gatekeeper pig after STORY_STG4_02_DINGE,
+ * the party comments ("stg4_usu_47") and the story moves to STORY_STG4_02_02_THE_GATEKEEPERS_A_PIG.
+ */
 EVT_BEGIN(evt_monban_look)
     LOOP(0)
-        IF_INT_GREATER_OR_EQUAL(GSW(0), 182)
+        IF_INT_GREATER_OR_EQUAL(GSW(GSW_STORY_PROGRESS), STORY_STG4_02_02_THE_GATEKEEPERS_A_PIG)
             RETURN
         END_IF
-        IF_INT_GREATER_OR_EQUAL(GSW(0), 181)
+        IF_INT_GREATER_OR_EQUAL(GSW(GSW_STORY_PROGRESS), STORY_STG4_02_DINGE)
             SET_VALUE(LW(0), 420)
             SET_VALUE(LW(1), 0)
             SET_VALUE(LW(2), 0)
@@ -3112,7 +3076,7 @@ EVT_BEGIN(evt_monban_look)
                 CALL(evt_msg_print_party, STRING("stg4_usu_47"))
                 CALL(evt_party_run, 0)
                 CALL(evt_mario_key_onoff, 1)
-                SET_VALUE(GSW(0), 182)
+                SET_VALUE(GSW(GSW_STORY_PROGRESS), STORY_STG4_02_02_THE_GATEKEEPERS_A_PIG)
                 RETURN
             END_IF
         END_IF
@@ -3121,19 +3085,30 @@ EVT_BEGIN(evt_monban_look)
     RETURN
 EVT_END()
 
+/** Item menu offered at the storeroom lock: only the Shop Key (-1 ends the list). */
 static s32 lock_tbl[] = {
     ITEM_SHOP_KEY, -1,
 };
 
+/**
+ * Check script of the storeroom lock ("usu_00_lock"):
+ * with the Shop Key in the pouch Mario picks it from the item menu (backing out cancels the unlock);
+ * without it, once the shopkeeper's wife has made her plea she turns to Mario,
+ * says her husband must have lost the key in the woods (stg4_usu_57) and the unlock is cancelled.
+ */
 static EVT_BEGIN(lock_item_check)
-    CALL(evt_pouch_check_item, 21, LW(0))
+    CALL(evt_pouch_check_item, ITEM_SHOP_KEY, LW(0))
     IF_INT_GREATER(LW(0), 0)
+#if VERSION <= VERSION_DEMO_JP
+        CALL(evt_win_item_select, PTR(lock_tbl), LW(0))
+#else
         CALL(evt_win_item_select, 0, PTR(lock_tbl), LW(0), 0)
+#endif
         IF_INT_EQUAL(LW(0), -1)
             CALL(evt_mobj_exec_cancel, STRING("me"))
         END_IF
-        ELSE
-        IF_INT_EQUAL(GSWF(1925), 1)
+    ELSE
+        IF_INT_EQUAL(GSWF(GSWF_USU01_SHOPKEEPER_ASKED_HELP), 1)
             CALL(evt_set_dir_to_target, STRING("お店の奥さん"), STRING("mario"))
             CALL(evt_msg_print, 0, STRING("stg4_usu_57"), 0, STRING("お店の奥さん"))
             CALL(evt_mobj_exec_cancel, STRING("me"))
@@ -3142,12 +3117,17 @@ static EVT_BEGIN(lock_item_check)
     RETURN
 EVT_END()
 
+/**
+ * Unlocks the shop storage door: runs the door script when Mario faces door A_usu01_ie2_door3
+ * and sets STORY_STG4_04_STORAGE_ROOM_UNLOCKED.
+ */
 EVT_BEGIN(unlock)
-    CALL(evt_run_case_evt, 9, 1, STRING("A_usu01_ie2_door3"), 0, PTR(evt_ie2_door2_1), 0)
-    SET_VALUE(GSW(0), 185)
+    CALL(evt_run_case_evt, CASE_COND_FRONT_A, 1, STRING("A_usu01_ie2_door3"), 0, PTR(evt_ie2_door2_1), 0)
+    SET_VALUE(GSW(GSW_STORY_PROGRESS), STORY_STG4_04_STORAGE_ROOM_UNLOCKED)
     RETURN
 EVT_END()
 
+/** Shop display objects: the six item stands (map object and hit area) of the Twilight Town shop. */
 static ShopObj obj_list[] = {
     {"mi02_S_item_01", "A_item_01"},
     {"mi02_mi02_S_item_02", "A_item_02"},
@@ -3157,18 +3137,36 @@ static ShopObj obj_list[] = {
     {"mi02_S_item_06", "A_item_06"},
 };
 
+/**
+ * Stock of the Twilight Town shop with its coin prices: Thunder Rage 20,
+ * Boo's Sheet 10 in the demos (Spite Pouch 10 in retail), Stopwatch 30, Maple Syrup 20,
+ * Super Shroom 15 and Life Shroom 40.
+ */
 static ShopItem goods_list[] = {
     {ITEM_THUNDER_RAGE, 20},
+#if VERSION <= VERSION_DEMO_JP
+    {ITEM_BOOS_SHEET, 10},
+#else
     {ITEM_SPITE_POUCH, 10},
+#endif
     {ITEM_STOPWATCH, 30},
     {ITEM_MAPLE_SYRUP, 20},
     {ITEM_SUPER_SHROOM, 15},
     {ITEM_LIFE_SHROOM, 40},
 };
 
+/**
+ * Sell prices the Twilight Town shop pays, overriding the item table's defaults: Thunder Rage 10,
+ * Boo's Sheet 5 in the demos (Spite Pouch 5 in retail), Stopwatch 15, Maple Syrup 10, Super Shroom 7,
+ * Life Shroom 20, Mistake 3, Dried Bouquet 14, Dried Shroom 4, Jelly Ultra 200 and Hot Sauce 12.
+ */
 static ShopDb trade_list[] = {
     {ITEM_THUNDER_RAGE, 10, 0},
+#if VERSION <= VERSION_DEMO_JP
+    {ITEM_BOOS_SHEET, 5, 0},
+#else
     {ITEM_SPITE_POUCH, 5, 0},
+#endif
     {ITEM_STOPWATCH, 15, 0},
     {ITEM_MAPLE_SYRUP, 10, 0},
     {ITEM_SUPER_SHROOM, 7, 0},
@@ -3181,44 +3179,73 @@ static ShopDb trade_list[] = {
     {0},
 };
 
+/**
+ * Shopper data of the shop woman (the shopkeeper's wife): her NPC name,
+ * no talk or buy hooks of its own (the init script adds them by story progress) and the shop's message
+ * keys "usugurashop_00" onward.
+ */
 static ShopperData35 shopper_data = {
-    /*"お店の奥さん"*/"\x82\xA8\x93\x58\x82\xCC\x89\x9C\x82\xB3\x82\xF1", // name
+    "お店の奥さん", // name
     NULL, NULL, // fook_evt..buy_evt
     {"usugurashop_00", "usugurashop_01", "usugurashop_02", "usugurashop_03", "usugurashop_04", "usugurashop_05", "usugurashop_06", "usugurashop_07", "usugurashop_08", "usugurashop_09", "usugurashop_10", "usugurashop_11", "usugurashop_12", "usugurashop_13", "usugurashop_14", "usugurashop_15", "usugurashop_16", "usugurashop_17", "usugurashop_18", "usugurashop_19", "usugurashop_20", "usugurashop_21", "usugurashop_22", "usugurashop_23", "usugurashop_24", "usugurashop_25", "usugurashop_26", "usugurashop_27", "usugurashop_28", "usugurashop_29", "usugurashop_30", "usugurashop_31", "usugurashop_32", "usugurashop_33", "usugurashop_34"}, // msgs
 };
 
+/**
+ * Talk hook (fook_evt) of the shop woman from the storeroom unlock to the Doopliss fight:
+ * she begs Mario to restore her husband (stg4_usu_59);
+ * LW(0) = -100 makes the shop talk continue in the same message box.
+ */
 EVT_BEGIN(shopper_talk1)
     CALL(evt_msg_print, 0, STRING("stg4_usu_59"), 0, STRING("me"))
     SET_VALUE(LW(0), -100)
     RETURN
 EVT_END()
 
+/**
+ * Talk hook of the shop woman from the Doopliss fight to STORY_STG4_15_03:
+ * the pig was not her husband, and she fancies the younger man (stg4_usu_60);
+ * LW(0) = -100 as in shopper_talk1.
+ */
 EVT_BEGIN(shopper_talk2)
     CALL(evt_msg_print, 0, STRING("stg4_usu_60"), 0, STRING("me"))
     SET_VALUE(LW(0), -100)
     RETURN
 EVT_END()
 
+/**
+ * NPC names of the pig forms (the dandy, the aunt, the gatekeeper, villagers I and J and the three young women)
+ * that booboo_main lights without scene ambient light.
+ */
 static BoobooName booboo_name[] = {
-    {/*"ブタキザ野郎"*/"\x83\x75\x83\x5E\x83\x4C\x83\x55\x96\xEC\x98\x59", 7, 0},
-    {/*"ブタおばさん"*/"\x83\x75\x83\x5E\x82\xA8\x82\xCE\x82\xB3\x82\xF1", 1, 0},
-    {/*"ブタ門番"*/"\x83\x75\x83\x5E\x96\xE5\x94\xD4", 3, 1},
-    {/*"ブタ村人Ｉ"*/"\x83\x75\x83\x5E\x91\xBA\x90\x6C\x82\x68", 5, 1},
-    {/*"ブタ村人Ｊ"*/"\x83\x75\x83\x5E\x91\xBA\x90\x6C\x82\x69", 4, 1},
-    {/*"ブタ３人娘Ａ"*/"\x83\x75\x83\x5E\x82\x52\x90\x6C\x96\xBA\x82\x60", 4, 1},
-    {/*"ブタ３人娘Ｂ"*/"\x83\x75\x83\x5E\x82\x52\x90\x6C\x96\xBA\x82\x61", 4, 1},
-    {/*"ブタ３人娘Ｃ"*/"\x83\x75\x83\x5E\x82\x52\x90\x6C\x96\xBA\x82\x62", 4, 1},
+    {"ブタキザ野郎", 7, 0},
+    {"ブタおばさん", 1, 0},
+    {"ブタ門番", 3, 1},
+    {"ブタ村人Ｉ", 5, 1},
+    {"ブタ村人Ｊ", 4, 1},
+    {"ブタ３人娘Ａ", 4, 1},
+    {"ブタ３人娘Ｂ", 4, 1},
+    {"ブタ３人娘Ｃ", 4, 1},
 };
 
+/** Empty script (just returns) that nothing in the tree uses. Guess: by its name, meant for getting the tube ("roll") curse. */
 EVT_BEGIN(evt_roll_get)
     RETURN
 EVT_END()
 
+/** Item menu offered at the black chest: only the Black Key (-1 ends the list). */
 static s32 key_tbl[] = {
     ITEM_BLACK_KEY_0x23, -1,
 };
 
+/**
+ * Open script of the black chest ("pera_box"): Mario and the partner step up to it.
+ * The first time, the voice in the chest shakes it and begs Mario to find the key and let it out,
+ * swearing it will not curse him (stg4_usu_majin3_01 to 07; sets GSWF_USU01_BLACK_CHEST_FIRST_TALK);
+ * later, without the Black Key it begs again, and with it Mario may pick the key from the item menu (declining
+ * cancels), which uses it up and the demon cackles; evt_majin2 then gives the curse.
+ */
 static EVT_BEGIN(evt_majin)
+    // Mario's controls are off; he and his partner walk up to the black chest.
     CALL(evt_mario_key_onoff, 0)
     CALL(evt_mario_normalize)
     CALL(evt_mario_adjust_dir)
@@ -3229,11 +3256,14 @@ static EVT_BEGIN(evt_majin)
     END_INLINE_EVENT
     CALL(evt_mario_mov_pos2, -235, -370, FLOAT(80.0f))
     CALL(evt_mario_set_dir, 90, 200, 0)
-    IF_INT_EQUAL(GSWF(1932), 0)
+    IF_INT_EQUAL(GSWF(GSWF_USU01_BLACK_CHEST_FIRST_TALK), 0)
+        // First visit: a voice inside the chest startles Mario (stg4_usu_majin3_01).
         CALL(evt_mobj_get_position, STRING("pera_box"), LW(0), LW(1), LW(2))
         ADD(LW(1), 30)
         CALL(evt_msg_toge, 2, LW(0), LW(1), LW(2))
         CALL(evt_msg_print, 0, STRING("stg4_usu_majin3_01"), 0, 0)
+        // The chest rattles. The voice insists it is not like other black chests (majin3_02 to 04),
+        // then begs to be let out (05 to 07) while Mario shrugs it off.
         CALL(evt_mobj_get_position, STRING("pera_box"), LW(3), LW(4), LW(5))
         ADD(LW(4), 30)
         CALL(evt_snd_sfxon_3d, STRING("SFX_MOBJ_BLACKBOX_SWING1"), LW(3), LW(4), LW(5), LW(15))
@@ -3268,51 +3298,71 @@ static EVT_BEGIN(evt_majin)
         CALL(evt_mario_set_pose, STRING("M_S_1"))
         CALL(evt_msg_toge, 2, LW(0), LW(1), LW(2))
         CALL(evt_msg_print, 0, STRING("stg4_usu_majin3_07"), PTR(majin_callback), 0)
+        // The chest is left alone and the first talk is recorded.
         CALL(evt_mobj_exec_cancel, STRING("pera_box"))
-        SET_VALUE(GSWF(1932), 1)
-        ELSE
-        CALL(evt_pouch_check_item, 35, LW(0))
+        SET_VALUE(GSWF(GSWF_USU01_BLACK_CHEST_FIRST_TALK), 1)
+    ELSE
+        // Later visits: without the Black Key the voice just begs Mario to find it (majin3_08).
+        CALL(evt_pouch_check_item, ITEM_BLACK_KEY_0x23, LW(0))
         IF_INT_LESS_OR_EQUAL(LW(0), 0)
             CALL(evt_mobj_get_position, STRING("pera_box"), LW(0), LW(1), LW(2))
             ADD(LW(1), 30)
             CALL(evt_msg_toge, 2, LW(0), LW(1), LW(2))
             CALL(evt_msg_print, 0, STRING("stg4_usu_majin3_08"), PTR(majin_callback), 0)
             CALL(evt_mobj_exec_cancel, STRING("pera_box"))
-            ELSE
+            // With the Black Key the voice is overjoyed (majin3_09) and Mario may pick the key from the item
+            // menu; declining draws a shocked "No way!" (majin3_10).
+        ELSE
             CALL(evt_mobj_get_position, STRING("pera_box"), LW(0), LW(1), LW(2))
             ADD(LW(1), 30)
             CALL(evt_msg_toge, 2, LW(0), LW(1), LW(2))
             CALL(evt_msg_print, 0, STRING("stg4_usu_majin3_09"), PTR(majin_callback), 0)
+#if VERSION <= VERSION_DEMO_JP
+            CALL(evt_win_item_select, PTR(key_tbl), LW(0))
+#else
             CALL(evt_win_item_select, 0, PTR(key_tbl), LW(0), 0)
+#endif
             IF_INT_EQUAL(LW(0), -1)
                 CALL(evt_mobj_get_position, STRING("pera_box"), LW(0), LW(1), LW(2))
                 ADD(LW(1), 30)
                 CALL(evt_msg_toge, 2, LW(0), LW(1), LW(2))
                 CALL(evt_msg_print, 0, STRING("stg4_usu_majin3_10"), PTR(majin_callback), 0)
                 CALL(evt_mobj_exec_cancel, STRING("pera_box"))
-                ELSE
-                CALL(evt_pouch_remove_item, 35, LW(0))
+            ELSE
+                // Giving the key uses it up, and the demon cackles that Mario is a fool (majin3_11).
+                CALL(evt_pouch_remove_item, ITEM_BLACK_KEY_0x23, LW(0))
                 CALL(evt_mobj_get_position, STRING("pera_box"), LW(0), LW(1), LW(2))
                 ADD(LW(1), 30)
                 CALL(evt_msg_toge, 2, LW(0), LW(1), LW(2))
                 CALL(evt_msg_print, 0, STRING("stg4_usu_majin3_11"), PTR(majin_callback), 0)
+#if VERSION >= VERSION_JP
                 CALL(evt_mario_set_pose, STRING("M_I_N"))
+#endif
             END_IF
         END_IF
     END_IF
+    // The partner is released and Mario's controls come back.
     CALL(evt_party_run, 0)
     CALL(evt_mario_key_onoff, 1)
     RETURN
 EVT_END()
 
+/**
+ * Second half of the black chest scene: Mario receives the Tube Curse, the spirit's theme plays,
+ * roll_majin_lecture teaches the move, and the story becomes STORY_STG4_04_01_PAPER_MAGE_TUBE_MOD
+ * (GSWF_USU01_BLACK_CHEST_OPENED set).
+ */
 static EVT_BEGIN(evt_majin2)
     CALL(evt_mario_key_onoff, 0)
+#if VERSION <= VERSION_DEMO_JP
+    CALL(evt_mario_normalize)
+#endif
     CALL(evt_party_stop, 0)
     CALL(evt_mobj_wait_animation_end, STRING("pera_box"))
-    CALL(evt_pouch_add_item, 3, LW(0))
-    CALL(evt_snd_bgmoff, 1024)
-    CALL(evt_snd_bgmon, 1, STRING("BGM_EVT_PERAMAJIN1"))
-    CALL(evt_snd_envoff, 1024)
+    CALL(evt_pouch_add_item, ITEM_TUBE_CURSE, LW(0))
+    CALL(evt_snd_bgmoff, PSND_FADE_HOLD)
+    CALL(evt_snd_bgmon, PSND_CH(1), STRING("BGM_EVT_PERAMAJIN1"))
+    CALL(evt_snd_envoff, PSND_FADE_HOLD)
     CALL(bgm_start_wait)
     WAIT_MS(1000)
     CALL(evt_paper_entry, STRING("OFF_d_kusya"))
@@ -3337,8 +3387,8 @@ static EVT_BEGIN(evt_majin2)
     CALL(lect_cam_save)
     CALL(evt_mario_get_pos, 0, LW(10), LW(11), LW(12))
     WAIT_FRAMES(1)
-    CALL_CHILD(PTR(roll_majin_lecture_init))
-    CALL_CHILD(PTR(roll_majin_lecture))
+    CALL_CHILD(roll_majin_lecture_init)
+    CALL_CHILD(roll_majin_lecture)
     LOOP(6)
         CALL(evt_mario_dispflag_onoff, 1, 1)
         WAIT_MS(100)
@@ -3357,7 +3407,7 @@ static EVT_BEGIN(evt_majin2)
         CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
         CALL(evt_snd_sfxon_3d, STRING("SFX_OFF_PERAMAJIN_GOOUT1"), LW(0), LW(1), LW(2), 0)
     END_INLINE_EVENT
-    CALL(evt_snd_bgmoff_f, 513, 2000)
+    CALL(evt_snd_bgmoff_f, PSND_FADE_OUT | PSND_CH(1), 2000)
     CALL(evt_img_set_paper_anim, STRING("img"), STRING("A_2"))
     CALL(evt_img_wait_animend, STRING("img"))
     BEGIN_INLINE_EVENT
@@ -3366,17 +3416,23 @@ static EVT_BEGIN(evt_majin2)
     END_INLINE_EVENT
     CALL(evt_img_release, STRING("img"))
     CALL(evt_paper_delete, STRING("OFF_d_kusya"))
-    SET_VALUE(GSW(0), 187)
-    SET_VALUE(GSWF(1931), 1)
-    CALL(evt_snd_bgmoff, 513)
-    CALL(evt_snd_bgmon, 288, 0)
-    CALL(evt_snd_envoff, 513)
-    CALL(evt_snd_envon, 288, 0)
+    SET_VALUE(GSW(GSW_STORY_PROGRESS), STORY_STG4_04_01_PAPER_MAGE_TUBE_MOD)
+    SET_VALUE(GSWF(GSWF_USU01_BLACK_CHEST_OPENED), 1)
+    CALL(evt_snd_bgmoff, PSND_FADE_OUT | PSND_CH(1))
+    CALL(evt_snd_bgmon, PSND_FADE_RESUME | PSND_FADE_IN, 0)
+    CALL(evt_snd_envoff, PSND_FADE_OUT | PSND_CH(1))
+    CALL(evt_snd_envon, PSND_FADE_RESUME | PSND_FADE_IN, 0)
     CALL(evt_party_run, 0)
     CALL(evt_mario_key_onoff, 1)
     RETURN
 EVT_END()
 
+/**
+ * Message callback for the black chest's ("pera_box") lines:
+ * starts its A_2 animation when the message opens (type 0),
+ * restarts it each time it has looped while the text runs (type 5) and returns it to S_1
+ * when the message ends (type 2).
+ */
 static void majin_callback(s32 type) {
     MapObjectEntry* mobj = mobjNameToPtr("pera_box");
 
@@ -3391,28 +3447,33 @@ static void majin_callback(s32 type) {
     }
 }
 
-USER_FUNC(box_r) {
+/** Script helper: turns the "pera_box" chest to face 135 degrees. */
+static USER_FUNC(box_r) {
     MapObjectEntry* mobj = mobjNameToPtr("pera_box");
 
     mobj->rotation.y = 135.0f;
-    mobj->flags |= 4;
+    mobj->flags |= MOBJ_FLAG_CALC_MTX;
     return EVT_RETURN_DONE;
 }
 
-BOOL psndBGMStartCheck(s32 id);
-
+/** Script helper: blocks until the channel 1 BGM has started. */
 static USER_FUNC(bgm_start_wait) {
     return psndBGMStartCheck(1) ? EVT_RETURN_DONE : EVT_RETURN_BLOCK;
 }
 
-USER_FUNC(mobj_ry) {
+/** Script helper: turns the "mobj_box00" chest to face 135 degrees. */
+static USER_FUNC(mobj_ry) {
     MapObjectEntry* mobj = mobjNameToPtr("mobj_box00");
 
     mobj->rotation.y = 135.0f;
-    mobj->flags |= 4;
+    mobj->flags |= MOBJ_FLAG_CALC_MTX;
     return EVT_RETURN_DONE;
 }
 
+/**
+ * Script: shows or hides a tree map object depending on Mario's distance (LW(10) object, LW(11) radius),
+ * toggling LF(0).
+ */
 EVT_BEGIN(tree_onoff)
     LOOP(0)
         CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
@@ -3420,12 +3481,12 @@ EVT_BEGIN(tree_onoff)
         CALL(evt_sub_get_dist, LW(0), LW(2), LW(3), LW(5), LW(9))
         IF_INT_GREATER(LW(9), LW(11))
             IF_INT_EQUAL(LF(0), 1)
-                CALL(evt_mapobj_flag_onoff, 1, 1, LW(10), 1)
+                CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, LW(10), MAPOBJ_FLAG_HIDE)
                 SET_VALUE(LF(0), 0)
             END_IF
-            ELSE
+        ELSE
             IF_INT_EQUAL(LF(0), 0)
-                CALL(evt_mapobj_flag_onoff, 1, 0, LW(10), 1)
+                CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, LW(10), MAPOBJ_FLAG_HIDE)
                 SET_VALUE(LF(0), 1)
             END_IF
         END_IF
@@ -3434,6 +3495,7 @@ EVT_BEGIN(tree_onoff)
     RETURN
 EVT_END()
 
+/** Hammer hook of tree "S_usu01_ki01" (tree_tbl): crow J plays A_1 for 1.5 seconds, then S_1. Guess: A_1 is the crow flapping. */
 static EVT_BEGIN(evt_ki_1)
     CALL(evt_npc_set_anim, STRING("カラスＪ"), STRING("A_1"))
     WAIT_MS(1500)
@@ -3441,6 +3503,10 @@ static EVT_BEGIN(evt_ki_1)
     RETURN
 EVT_END()
 
+/**
+ * Hammer hook of tree "S_usu01_ki02" (tree_tbl): crows H and I play A_1 for 1.5 seconds, then S_1.
+ * Guess: A_1 is the crows flapping.
+ */
 static EVT_BEGIN(evt_ki_2)
     CALL(evt_npc_set_anim, STRING("カラスＨ"), STRING("A_1"))
     CALL(evt_npc_set_anim, STRING("カラスＩ"), STRING("A_1"))
@@ -3450,6 +3516,10 @@ static EVT_BEGIN(evt_ki_2)
     RETURN
 EVT_END()
 
+/**
+ * Hammer hook of tree "S_usu01_ki03" (tree_tbl): crows F and G play A_1 for 1.5 seconds, then S_1.
+ * Guess: A_1 is the crows flapping.
+ */
 static EVT_BEGIN(evt_ki_3)
     CALL(evt_npc_set_anim, STRING("カラスＦ"), STRING("A_1"))
     CALL(evt_npc_set_anim, STRING("カラスＧ"), STRING("A_1"))
@@ -3459,6 +3529,10 @@ static EVT_BEGIN(evt_ki_3)
     RETURN
 EVT_END()
 
+/**
+ * Shakeable trees of this part of Twilight Town: three whose hammer hook startles crows F to J and a fourth
+ * with no hook; the type 7 row ends the list.
+ */
 static TreeAccess tree_tbl[] = {
     {2, "A_ki_1", "S_usu01_ki01", NULL, 0, evt_ki_1},
     {2, "A_ki_2", "S_usu01_ki02", NULL, 0, evt_ki_2},
@@ -3467,120 +3541,151 @@ static TreeAccess tree_tbl[] = {
     {7, NULL, NULL, NULL, 0, NULL},
 };
 
+/** Registers tree_tbl with the shared tree-shaking script. */
 EVT_BEGIN(usu_01_tree_init)
     SET_VALUE(LW(0), PTR(tree_tbl))
-    CALL_CHILD(PTR(evt_sub_tree_access_entry))
+    CALL_CHILD(evt_sub_tree_access_entry)
     RETURN
 EVT_END()
 
+/**
+ * Opening script of the item chest "mobj_box00":
+ * gives the Defend Plus badge as a fixed item with the pickup fanfare (badge-return flag outside the early
+ * demos).
+ */
 static EVT_BEGIN(mobj_box00)
     CALL(evt_mario_key_onoff, 0)
     CALL(evt_mobj_get_position, STRING("mobj_box00"), LW(0), LW(1), LW(2))
-    CALL(evt_item_entry, STRING("item00"), 274, LW(0), LW(1), LW(2), 16, -1, 0)
-    CALL(evt_item_flag_on, STRING("item00"), 258)
+    CALL(evt_item_entry, STRING("item00"), ITEM_DEFEND_PLUS, LW(0), LW(1), LW(2), ITEM_ENTRY_FIXED, -1, 0)
+#if VERSION <= VERSION_DEMO_JP
+    CALL(evt_item_flag_on, STRING("item00"), ITEM_FLAG_NO_TOUCH)
+#else
+    CALL(evt_item_flag_on, STRING("item00"), ITEM_FLAG_BADGE_RETURN | ITEM_FLAG_NO_TOUCH)
+#endif
     CALL(evt_mobj_wait_animation_end, STRING("mobj_box00"))
     CALL(evt_item_get_item, STRING("item00"))
     CALL(evt_mario_key_onoff, 1)
     RETURN
 EVT_END()
 
+/**
+ * Map init script of usu_01, the part of Twilight Town whose east exit leads to gra_00:
+ * starts BGM and ambience, registers the exits and NPCs,
+ * spawns the three young women (pigs before the Doopliss fight, dancers until STORY_STG4_15_05),
+ * locks the storeroom with the Shop Key until it is unlocked, registers the three house doors,
+ * and starts the gatekeeper-pig trigger, the shop sounds, the shop (from STORY_STG4_04) and the crow watchers.
+ * It also sets up the town gate, trees, items, the Defend Plus chest and the black chest by story progress.
+ */
 EVT_BEGIN(usu_01_init_evt)
-    CALL(evt_snd_bgmon, 512, STRING("BGM_STG4_USU1"))
-    CALL(evt_snd_envon, 272, STRING("ENV_STG4_USU1"))
+    // Start the town music and ambience, set up the map exits and spawn the NPCs.
+    CALL(evt_snd_bgmon, PSND_FADE_OUT, STRING("BGM_STG4_USU1"))
+    CALL(evt_snd_envon, PSND_FADE_RESTART | PSND_FADE_IN, STRING("ENV_STG4_USU1"))
     CALL(evt_kagemario_init)
     SET_VALUE(LW(0), PTR(bero_entry_data))
     CALL(evt_bero_get_info)
-    CALL_CHILD(PTR(evt_bero_info_run))
-    CALL_CHILD(PTR(evt_usu_kagemario_party_kill))
+    CALL_CHILD(evt_bero_info_run)
+    CALL_CHILD(evt_usu_kagemario_party_kill)
     CALL(evt_npc_setup, PTR(npcEnt))
-    SWITCH(GSW(0))
-        CASE_BETWEEN(178, 200)
-        CALL_CHILD(PTR(musume_a_pig_entry))
-        CALL_CHILD(PTR(musume_b_pig_entry))
-        CALL_CHILD(PTR(musume_c_pig_entry))
-        CASE_BETWEEN(200, 215)
-        CALL_CHILD(PTR(musume_a_entry))
-        CALL_CHILD(PTR(musume_b_entry))
-        CALL_CHILD(PTR(musume_c_entry))
+    // The three young women appear as pigs before the Doopliss fight and as dancers until the Peach report.
+    SWITCH(GSW(GSW_STORY_PROGRESS))
+        CASE_BETWEEN(STORY_STG4_00_WELCOME_TO_STAGE_4, STORY_STG4_10_DOOPLISS_BATTLE)
+        CALL_CHILD(musume_a_pig_entry)
+        CALL_CHILD(musume_b_pig_entry)
+        CALL_CHILD(musume_c_pig_entry)
+        CASE_BETWEEN(STORY_STG4_10_DOOPLISS_BATTLE, STORY_STG4_15_05_PEACH_X_NAUT_PHD_REPORT)
+        CALL_CHILD(musume_a_entry)
+        CALL_CHILD(musume_b_entry)
+        CALL_CHILD(musume_c_entry)
     END_SWITCH
-    IF_INT_LESS(GSW(0), 185)
-        CALL(evt_mobj_lock, STRING("usu_00_lock"), 21, FLOAT(-263.5f), FLOAT(10.099609f), FLOAT(-432.0498f), 135, PTR(lock_item_check), PTR(unlock), GSWF(1926))
-        ELSE
-        CALL(evt_run_case_evt, 9, 1, STRING("A_usu01_ie2_door3"), 0, PTR(evt_ie2_door2_1), 0)
+    // The storeroom stays locked with the Shop Key until it is unlocked.
+    IF_INT_LESS(GSW(GSW_STORY_PROGRESS), STORY_STG4_04_STORAGE_ROOM_UNLOCKED)
+        CALL(evt_mobj_lock, STRING("usu_00_lock"), ITEM_SHOP_KEY, FLOAT(-263.5f), FLOAT(10.099609f), FLOAT(-432.0498f), 135, PTR(lock_item_check), PTR(unlock), GSWF(GSWF_USU01_STOREROOM_UNLOCKED))
+    ELSE
+        CALL(evt_run_case_evt, CASE_COND_FRONT_A, 1, STRING("A_usu01_ie2_door3"), 0, PTR(evt_ie2_door2_1), 0)
     END_IF
+    // Register the doors of the three houses.
     SET_VALUE(LW(0), PTR(&door_1))
-    CALL_CHILD(PTR(evt_door_entry))
+    CALL_CHILD(evt_door_entry)
     SET_VALUE(LW(0), PTR(&door_2_1))
-    CALL_CHILD(PTR(evt_door_entry))
+    CALL_CHILD(evt_door_entry)
     SET_VALUE(LW(0), PTR(&door_3))
-    CALL_CHILD(PTR(evt_door_entry))
-    CALL(evt_run_case_evt, 9, 1, STRING("A_usu01_ie2_door3_u"), 0, PTR(evt_ie2_door2_2), 0)
-    SPAWN_EVENT(PTR(evt_monban_look))
-    IF_INT_EQUAL(GSW(0), 180)
-        IF_INT_EQUAL(GSWF(1925), 1)
-            SPAWN_EVENT(PTR(evt_monban_buta))
+    CALL_CHILD(evt_door_entry)
+    CALL(evt_run_case_evt, CASE_COND_FRONT_A, 1, STRING("A_usu01_ie2_door3_u"), 0, PTR(evt_ie2_door2_2), 0)
+    // Gatekeeper-pig scenes, the shop sounds and the shop itself (from the storeroom unlock on).
+    SPAWN_EVENT(evt_monban_look)
+    IF_INT_EQUAL(GSW(GSW_STORY_PROGRESS), STORY_STG4_01_THE_MAYORS_A_PIG)
+        IF_INT_EQUAL(GSWF(GSWF_USU01_SHOPKEEPER_ASKED_HELP), 1)
+            SPAWN_EVENT(evt_monban_buta)
         END_IF
     END_IF
     SPAWN_EVENT_GET_ID(PTR(usu01_gusun), GW(4))
-    IF_INT_GREATER_OR_EQUAL(GSW(0), 185)
-        IF_INT_LESS(GSW(0), 200)
+    IF_INT_GREATER_OR_EQUAL(GSW(GSW_STORY_PROGRESS), STORY_STG4_04_STORAGE_ROOM_UNLOCKED)
+        IF_INT_LESS(GSW(GSW_STORY_PROGRESS), STORY_STG4_10_DOOPLISS_BATTLE)
             CALL(set_fook_evt, PTR(&shopper_data), PTR(shopper_talk1))
-            ELSE
-            IF_INT_LESS(GSW(0), 213)
+        ELSE
+            IF_INT_LESS(GSW(GSW_STORY_PROGRESS), STORY_STG4_15_03_THE_RUBY_STAR)
                 CALL(set_fook_evt, PTR(&shopper_data), PTR(shopper_talk2))
             END_IF
         END_IF
         CALL(evt_shop_setup, PTR(obj_list), PTR(goods_list), PTR(&shopper_data), PTR(trade_list))
     END_IF
-    CALL(evt_mapobj_flag_onoff, 1, 1, STRING("mi02_S_items"), 16384)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("mi02_S_items"), MAPOBJ_FLAG_DISABLE)
+    // Reset the crow gates and start the watchers that let the crows talk when Mario hides in Vivian's
+    // shadow.
     SET_VALUE(GW(0), 0)
     SET_VALUE(GW(1), 0)
     SET_VALUE(GW(2), 0)
-    SPAWN_EVENT(PTR(usu01_check_vivian))
-    SPAWN_EVENT(PTR(usu01_crowFG_talk_event))
-    SPAWN_EVENT(PTR(usu01_crowHI_talk_event))
-    SPAWN_EVENT(PTR(usu01_crowJ_talk_event))
-    IF_INT_LESS(GSW(0), 183)
-        CALL(evt_run_case_evt, 9, 1, STRING("A_mon"), 0, PTR(evt_mon_open), 0)
-        CALL(evt_mapobj_flag_onoff, 1, 1, STRING("S_monato"), 1)
+    SPAWN_EVENT(usu01_check_vivian)
+    SPAWN_EVENT(usu01_crowFG_talk_event)
+    SPAWN_EVENT(usu01_crowHI_talk_event)
+    SPAWN_EVENT(usu01_crowJ_talk_event)
+    // Until the story opens the town gate, Mario can press A at it to open it;
+    // afterwards it already stands open.
+    IF_INT_LESS(GSW(GSW_STORY_PROGRESS), STORY_STG4_02_03_OPENING_THE_GATE)
+        CALL(evt_run_case_evt, CASE_COND_FRONT_A, 1, STRING("A_mon"), 0, PTR(evt_mon_open), 0)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("S_monato"), MAPOBJ_FLAG_HIDE)
         CALL(evt_hitobj_onoff, STRING("A_mon02"), 1, 0)
-        ELSE
+    ELSE
         CALL(evt_mapobj_rotate, 1, STRING("S_mon01"), 0, 50, 0)
         CALL(evt_mapobj_rotate, 1, STRING("S_mon02"), 0, -85, 0)
         CALL(evt_hitobj_onoff, STRING("A_mon"), 1, 0)
     END_IF
+    // Light the pig NPCs, set up the trees and start the tree-distance check.
     BEGIN_INLINE_EVENT
         CALL(booboo_main)
     END_INLINE_EVENT
-    CALL(evt_mapobj_flag_onoff, 1, 0, STRING("ki1"), 2)
-    CALL(evt_mapobj_flag_onoff, 1, 0, STRING("ki2"), 2)
-    CALL(evt_mapobj_flag_onoff, 1, 0, STRING("ki3"), 2)
-    CALL(evt_mapobj_flag_onoff, 1, 0, STRING("ki4"), 2)
-    CALL(evt_mapobj_flag_onoff, 1, 0, STRING("ki5"), 2)
-    CALL_CHILD(PTR(usu_01_tree_init))
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("ki1"), MAPOBJ_FLAG_BBOX_CULL)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("ki2"), MAPOBJ_FLAG_BBOX_CULL)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("ki3"), MAPOBJ_FLAG_BBOX_CULL)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("ki4"), MAPOBJ_FLAG_BBOX_CULL)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("ki5"), MAPOBJ_FLAG_BBOX_CULL)
+    CALL_CHILD(usu_01_tree_init)
     SET_VALUE(LW(10), STRING("ki3"))
     SET_VALUE(LW(11), 450)
-    SPAWN_EVENT(PTR(tree_onoff))
-    CALL(evt_item_entry, STRING("item_01"), 125, 210, 0, 265, 16, GSWF(5630), 0)
-    CALL(evt_item_entry, STRING("item_02"), 151, -275, 0, -310, 16, GSWF(1935), 0)
-    CALL(evt_item_entry, STRING("item_03"), 134, -305, 0, -380, 16, GSWF(1936), 0)
-    CALL(evt_item_entry, STRING("item_04"), 156, -335, 0, -410, 16, GSWF(1937), 0)
-    CALL(evt_item_entry, STRING("item_05"), 164, -250, 0, -500, 16, GSWF(1939), 0)
-    CALL(evt_mobj_itembox, STRING("mobj_box00"), -255, 0, -288, 0, 0, PTR(mobj_box00), GSWF(1934))
+    SPAWN_EVENT(tree_onoff)
+    // Place the items: a Star Piece, a Life Shroom, a Boo's Sheet,
+    // a Jammin' Jelly and an Inn Coupon, plus the Defend Plus chest.
+    CALL(evt_item_entry, STRING("item_01"), ITEM_STAR_PIECE, 210, 0, 265, ITEM_ENTRY_FIXED, GSWF(GSWF_USU01_STAR_PIECE), 0)
+    CALL(evt_item_entry, STRING("item_02"), ITEM_LIFE_SHROOM, -275, 0, -310, ITEM_ENTRY_FIXED, GSWF(GSWF_USU01_LIFE_SHROOM_TAKEN), 0)
+    CALL(evt_item_entry, STRING("item_03"), ITEM_BOOS_SHEET, -305, 0, -380, ITEM_ENTRY_FIXED, GSWF(GSWF_USU01_BOOS_SHEET_TAKEN), 0)
+    CALL(evt_item_entry, STRING("item_04"), ITEM_JAMMIN_JELLY, -335, 0, -410, ITEM_ENTRY_FIXED, GSWF(GSWF_USU01_JAMMIN_JELLY_TAKEN), 0)
+    CALL(evt_item_entry, STRING("item_05"), ITEM_INN_COUPON, -250, 0, -500, ITEM_ENTRY_FIXED, GSWF(GSWF_USU01_INN_COUPON_TAKEN), 0)
+    CALL(evt_mobj_itembox, STRING("mobj_box00"), -255, 0, -288, 0, 0, PTR(mobj_box00), GSWF(GSWF_USU01_DEFEND_PLUS_CHEST_OPENED))
     CALL(mobj_ry)
     BEGIN_INLINE_EVENT
         CALL(npc_process)
     END_INLINE_EVENT
-    IF_INT_GREATER_OR_EQUAL(GSW(0), 187)
-        SET_VALUE(GSWF(1931), 1)
+    // The black chest holds the Tube Curse and opens with the Black Key;
+    // the aunt's Meteor Meal is placed if trouble 20 is solved.
+    IF_INT_GREATER_OR_EQUAL(GSW(GSW_STORY_PROGRESS), STORY_STG4_04_01_PAPER_MAGE_TUBE_MOD)
+        SET_VALUE(GSWF(GSWF_USU01_BLACK_CHEST_OPENED), 1)
     END_IF
-    CALL(evt_mobj_itembox, STRING("pera_box"), -289, 0, -341, 3, PTR(evt_majin), PTR(evt_majin2), GSWF(1931))
-    CALL(evt_mobj_flag_onoff, 0, STRING("pera_box"), 64)
+    CALL(evt_mobj_itembox, STRING("pera_box"), -289, 0, -341, 3, PTR(evt_majin), PTR(evt_majin2), GSWF(GSWF_USU01_BLACK_CHEST_OPENED))
+    CALL(evt_mobj_flag_onoff, 0, STRING("pera_box"), MOBJ_FLAG_FALL)
     CALL(box_r)
-    IF_INT_EQUAL(GSWF(5394), 1)
-        CALL(evt_item_entry, STRING("iri_20"), 217, -345, 20, -132, 16, GSWF(1938), 0)
+    IF_INT_EQUAL(GSWF(GSWF_TROUBLE_20_SOLVED), 1)
+        CALL(evt_item_entry, STRING("iri_20"), ITEM_METEOR_MEAL, -345, 20, -132, ITEM_ENTRY_FIXED, GSWF(GSWF_USU01_TROUBLE20_METEOR_MEAL_TAKEN), 0)
     END_IF
-    SPAWN_EVENT(PTR(evt_sub_mail_event))
+    SPAWN_EVENT(evt_sub_mail_event)
     RETURN
 EVT_END()
-

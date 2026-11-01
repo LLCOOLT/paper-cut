@@ -1,0 +1,179 @@
+id	file	resolution	note
+328	libs/musyx/include/musyx/musyx.h	reapplied	PORT_ENUM_BASE fallback define + typedef enum PORT_ENUM_BASE(int) on SND_OUTPUTMODE (decomp code unchanged here)
+329	libs/musyx/include/musyx/musyx.h	reapplied	typedef enum PORT_ENUM_BASE(int) on SND_FILTER
+330	libs/musyx/include/musyx/musyx.h	reapplied	typedef enum PORT_ENUM_BASE(int) on SND_STUDIO_TYPE
+337	libs/musyx/include/musyx/synth.h	reapplied	PORT_ENUM_BASE fallback define + PORT_ENUM_BASE(int) on the MAC_STATE enum
+338	libs/musyx/include/musyx/synth.h	reapplied	PORT_ENUM_BASE(int) on the SYNTH_JOBTYPE enum
+343	libs/musyx/include/musyx/synth.h	fixed-placement	removed the #if MUSY_TARGET_PC synthKillVoicesBySampleReferences prototype: the decomp now declares it unconditionally (it landed as a duplicate)
+641	rels/hei/src/hei_10.c	reapplied	#ifndef TARGET_PC around the decomp's local memset prototype (after mapdrv.h)
+642	rels/hei/src/hei_10.c	reapplied	its #endif
+643	rels/hei/src/hei_10.c	obsolete	decomp dropped the local rand() prototype (stdlib.h/libc_decls.h)
+644	rels/hei/src/hei_10.c	fixed-placement	removed the stray #endif it left after the extern evt_golden[] (its #ifndef partner, 643, is obsolete)
+647	rels/hei/src/unit/unit_chorobon_gundan.c	fixed-placement	removed the TARGET_PC evtmgr_cmd.h include: the decomp includes manager/evtmgr_cmd.h unconditionally (landed as a duplicate)
+648	rels/hei/src/unit/unit_chorobon_gundan.c	obsolete	decomp dropped the local rand/sqrt prototypes (libc_decls.h)
+649	rels/hei/src/unit/unit_chorobon_gundan.c	obsolete	its #endif (see 648)
+715	rels/las/include/las.h	obsolete	decomp removed extern evt_cloud_main_evt[] from las.h (las_14.c keeps its static EVT_BEGIN)
+883	rels/muj/src/muj_00.c	fixed-placement	removed #include "pc_call.h": its only user (892) is obsolete
+884	rels/muj/src/muj_00.c	obsolete	decomp dropped the local sin/cos prototypes (libc_decls.h)
+885	rels/muj/src/muj_00.c	obsolete	its #endif (see 884)
+886	rels/muj/src/muj_00.c	obsolete	decomp dropped the local atan2 prototype (libc_decls.h)
+887	rels/muj/src/muj_00.c	obsolete	its #endif (see 886)
+892	rels/muj/src/muj_00.c	obsolete	the cast intplGetValue call is gone: decomp calls intplGetValue(0, start, target, elapsed, duration) direct through system.h, which matches system.c
+899	rels/muj/src/muj_02.c	obsolete	decomp includes manager/evtmgr_cmd.h unconditionally
+904	rels/muj/src/muj_20.c	fixed-placement	removed #include "pc_call.h" and "addr_word.h": their users (909-911) are obsolete
+905	rels/muj/src/muj_20.c	fixed-placement	removed the stray #ifndef TARGET_PC it left before TitleWork; the sin/cos prototypes it guarded are gone (libc_decls.h)
+906	rels/muj/src/muj_20.c	obsolete	its #endif (see 905)
+909	rels/muj/src/muj_20.c	obsolete	the intplGetValueStepsLast cast macro is gone; decomp calls intplGetValue direct in system.h order
+910	rels/muj/src/muj_20.c	obsolete	same (the PCCALL macro body)
+911	rels/muj/src/muj_20.c	obsolete	decomp compares fileAsyncf's FileEntry* result to NULL (no u32 cast)
+1074	rels/tou2/src/unit/unit_borodo.c	obsolete	decomp includes manager/evtmgr_cmd.h unconditionally
+1075	rels/tou2/src/unit/unit_borodo_king.c	obsolete	decomp includes manager/evtmgr_cmd.h unconditionally
+1076	rels/tou2/src/unit/unit_boss_koopa_tou.c	obsolete	decomp includes battle/battle_sub.h, which declares BattleTransID(EventEntry*, s32)
+1077	rels/tou2/src/unit/unit_boss_macho_gance.c	obsolete	decomp dropped the local wrong-order intplGetValue prototype: system.h declares (mode, start, end, currStep, steps) as system.c defines it, and the calls use that order
+1078	rels/tou2/src/unit/unit_boss_macho_gance.c	obsolete	its #endif (see 1077)
+1079	rels/tou2/src/unit/unit_burst_wanwan.c	fixed-placement	removed the TARGET_PC evtmgr_cmd.h include: the decomp includes it unconditionally
+1080	rels/tou2/src/unit/unit_burst_wanwan.c	fixed-placement	removed the dangling #ifndef TARGET_PC: the sqrt prototype is gone (libc_decls.h)
+1081	rels/tou2/src/unit/unit_burst_wanwan.c	obsolete	its #endif (see 1080)
+1085	rels/tou2/src/unit/unit_honenoko.c	obsolete	decomp includes manager/evtmgr_cmd.h unconditionally
+1090	rels/tou2/src/unit/unit_kamec_green.c	reapplied	#include "pc_call.h" after evt/evt_cmd.h
+1091	rels/tou2/src/unit/unit_kamec_green.c	fixed-placement	PC side of the effect prototypes now includes eff/n64/eff_pokopi_pcharge_n64.h and eff_thunderflare_n64.h (real prototypes); #endif moved before the blank line
+1092	rels/tou2/src/unit/unit_kamec_green.c	fixed-placement	its #endif (see 1091)
+1093	rels/tou2/src/unit/unit_kamec_green.c	reapplied	PCCALL around effPokopiPchargeN64Entry on the decomp's UW_KAMEC_GREEN_WAND_EFFECT line
+1094	rels/tou2/src/unit/unit_kamec_green.c	rewritten	PCCALL around effThunderflareN64Entry; the PC call passes all 6 real arguments (type, lifetime, x, y, z, scale 1.0f): the port's 5-argument prototype dropped scale
+1095	rels/tou2/src/unit/unit_kamec_red.c	reapplied	#include "pc_call.h" after evt/evt_cmd.h
+1096	rels/tou2/src/unit/unit_kamec_red.c	fixed-placement	as 1091
+1097	rels/tou2/src/unit/unit_kamec_red.c	fixed-placement	as 1092
+1098	rels/tou2/src/unit/unit_kamec_red.c	reapplied	PCCALL around effPokopiPchargeN64Entry (UW_KAMEC_RED_STAFF_EFFECT)
+1099	rels/tou2/src/unit/unit_kamec_red.c	rewritten	as 1094 (6-argument PC call with scale 1.0f)
+1100	rels/tou2/src/unit/unit_kamec_white.c	reapplied	#include "pc_call.h" after evt/evt_cmd.h
+1101	rels/tou2/src/unit/unit_kamec_white.c	fixed-placement	as 1091
+1102	rels/tou2/src/unit/unit_kamec_white.c	fixed-placement	as 1092
+1103	rels/tou2/src/unit/unit_kamec_white.c	reapplied	PCCALL around effPokopiPchargeN64Entry (UW_KAMEC_WHITE_CHARGE_EFFECT)
+1104	rels/tou2/src/unit/unit_kamec_white.c	rewritten	as 1094 (6-argument PC call with scale 1.0f)
+1105	rels/tou2/src/unit/unit_monochrome_pakkun.c	fixed-placement	removed the TARGET_PC evtmgr_cmd.h include: the decomp includes it unconditionally
+1106	rels/tou2/src/unit/unit_monochrome_pakkun.c	fixed-placement	removed the intplGetValue remap block (left half-open): the decomp includes system.h and calls in its (mode, start, end, currStep, steps) order, which system.c defines
+1107	rels/tou2/src/unit/unit_monochrome_pakkun.c	obsolete	its #endif (see 1106)
+1108	rels/tou2/src/unit/unit_piders.c	obsolete	decomp includes manager/evtmgr_cmd.h unconditionally (the Aurora GX hunks 1109-1111 placed fine)
+1113	rels/tou2/src/unit/unit_ura_noko.c	obsolete	decomp includes manager/evtmgr_cmd.h unconditionally
+1115	rels/tou2/src/unit/unit_wanawana.c	fixed-placement	removed the TARGET_PC battle_sub.h include: the decomp includes it unconditionally
+1116	rels/tou2/src/unit/unit_wanawana.c	fixed-placement	removed the dangling #ifndef TARGET_PC: the tan prototype is gone (libc_decls.h)
+1117	rels/tou2/src/unit/unit_wanawana.c	obsolete	the decomp renamed the local tanf to tanFloat (no clash with <math.h>), and tan comes from libc_decls.h
+3007	src/sequence/seq_battle.c	fixed-placement	removed #include "pc_call.h": its only user (3014) is obsolete
+3008	src/sequence/seq_battle.c	fixed-placement	removed #include "addr_word.h": its only user (3012) is obsolete
+3009	src/sequence/seq_battle.c	fixed-placement	PORT_MODS hooks header moved after the decomp's static battle_init prototype (battle_init is static now; see the summary)
+3010	src/sequence/seq_battle.c	obsolete	decomp dropped the local psndBGMOn_f prototype: pmario_sound.h declares BOOL psndBGMOn_f(u32, char*, u32, s32)
+3011	src/sequence/seq_battle.c	obsolete	its #endif (see 3010)
+3012	src/sequence/seq_battle.c	obsolete	loadTpl compares fileAsyncf's FileEntry* to NULL (no u32 cast)
+3013	src/sequence/seq_battle.c	reapplied	PORT_HOOKABLE(battle_init) on the decomp's static BOOL version (JP and later; the demos' void version is not hooked)
+3014	src/sequence/seq_battle.c	obsolete	psndBGMOn_f is called through pmario_sound.h's real prototype (the 0 is a null char*)
+3015	src/sequence/seq_battle.c	reapplied	PORT_MODS .inc include at the end of the file
+3017	src/sequence/seq_demo.c	reapplied	AIInitDMA((AddrWord)SoundBuffer[...]) in THPSimpleInit
+3025	src/sequence/seq_demo.c	reapplied	ptr += THP_BE32(compSizePtr) (audio-track loop)
+3026	src/sequence/seq_demo.c	reapplied	ptr += THP_BE32(compSizePtr) (video-only path)
+3027	src/sequence/seq_demo.c	reapplied	AIInitDMA((AddrWord)...) in THPAudioMixCallback
+3032	src/sequence/seq_demo.c	reapplied	AIInitDMA((AddrWord)...) in THPAudioMixCallback (second call)
+3033	src/sequence/seq_e3.c	obsolete	decomp includes mario_motion.h, statuswindow.h, fontmgr.h, mario_party.h, msgdrv.h and win_main.h, which declare what the PC block declared
+3034	src/sequence/seq_e3.c	obsolete	the local winTexMode enum is gone (the decomp uses win_main.h's winTexSet)
+3035	src/sequence/seq_e3.c	obsolete	the local winTexSet prototype is gone (win_main.h)
+3036	src/sequence/seq_e3.c	obsolete	the local windowDispGX_Waku_col prototype is gone (windowdrv.h)
+3037	src/sequence/seq_e3.c	fixed-placement	removed the stray #endif it left after the demo include block
+3038	src/sequence/seq_e3.c	fixed-placement	removed the TARGET_PC block in e3Disp: the decomp passes GXColor by value and calls FontGetMessageWidth(msgSearch(keys[i])), exactly the PC side
+3039	src/sequence/seq_e3.c	fixed-placement	its #endif (see 3038)
+3044	src/sequence/seq_load.c	fixed-placement	kept the PORT_MODS hooks header; dropped the PC winZenkakuStr prototype (win/win_mario.h declares const char* winZenkakuStr(s32))
+3045	src/sequence/seq_load.c	obsolete	decomp dropped the local sin/fmod prototypes (libc_decls.h)
+3046	src/sequence/seq_load.c	obsolete	decomp dropped the local fabsf inline (uses __fabsf)
+3047	src/sequence/seq_load.c	obsolete	its #endif (see 3046)
+3048	src/sequence/seq_load.c	reapplied	PORT_HOOKABLE(seq_loadMain): the decomp has one seq_loadMain for all versions (already in place)
+3049	src/sequence/seq_load.c	fixed-placement	removed the TARGET_PC vertex block in loadDrawBg (two copies had landed nested): the decomp's loadDrawBg already calls GXPosition3f32/GXTexCoord2f32
+3050	src/sequence/seq_load.c	obsolete	its #endif (see 3049)
+3051	src/sequence/seq_load.c	obsolete	second (US) copy of the libc prototypes: the decomp merged the two version copies and dropped them
+3052	src/sequence/seq_load.c	obsolete	as 3051
+3053	src/sequence/seq_load.c	obsolete	as 3051
+3054	src/sequence/seq_load.c	fixed-placement	removed the stray #ifndef TARGET_PC before loadNewGameSetup: the local SDK prototype block it guarded is gone
+3055	src/sequence/seq_load.c	obsolete	its #endif (see 3054)
+3056	src/sequence/seq_load.c	obsolete	the local sprintf/strcat/strcpy/strlen prototypes are gone (libc_decls.h)
+3057	src/sequence/seq_load.c	obsolete	the local winZenkakuStr prototype is gone (win_mario.h)
+3058	src/sequence/seq_load.c	fixed-placement	removed the stray #endif it left before seq_loadMain; PORT_HOOKABLE as 3048
+3059	src/sequence/seq_load.c	fixed-placement	as 3049 (the EXT_LIT copy)
+3060	src/sequence/seq_load.c	obsolete	its #endif (see 3059)
+3061	src/sequence/seq_load.c	reapplied	portContinueGame (wp->slot, static continueGame) and the PORT_MODS .inc at the end of the file
+3063	src/sequence/seq_logo.c	obsolete	decomp dropped the local cos prototype (libc_decls.h)
+3064	src/sequence/seq_logo.c	fixed-placement	removed the stray #endif it left after logoStoryAlpha
+3065	src/sequence/seq_logo.c	obsolete	decomp declares logoAsyncFirst as returning FileEntry*
+3066	src/sequence/seq_logo.c	fixed-placement	portIntroFrame (JP/demo seq_logoMain) reindented to the decomp's 4 spaces
+3067	src/sequence/seq_logo.c	obsolete	the local is now FileEntry* firstRead
+3068	src/sequence/seq_logo.c	reapplied	skipStory = gPortSkipIntro != 0 on PC in the JP/demo seq_logoMain state 8
+3069	src/sequence/seq_logo.c	reapplied	its #endif
+3070	src/sequence/seq_logo.c	fixed-placement	portBE32 size line reindented to 4 spaces
+3071	src/sequence/seq_logo.c	fixed-placement	as 3070
+3072	src/sequence/seq_logo.c	fixed-placement	portIntroFrame (US/PAL seq_logoMain) moved right after the static and reindented
+3073	src/sequence/seq_logo.c	reapplied	PC else-if gPortSkipIntro on the notice page (state 6); the decomp's "} else if" is split around the block
+3074	src/sequence/seq_logo.c	reapplied	skipStory = gPortSkipIntro != 0 in the US/PAL state 16
+3075	src/sequence/seq_logo.c	reapplied	its #endif
+3076	src/sequence/seq_logo.c	obsolete	logoAsyncFirst's definition returns FileEntry* in the decomp
+3078	src/sequence/seq_mapchange.c	fixed-placement	removed #include "addr_word.h": its only user (3084) is obsolete
+3079	src/sequence/seq_mapchange.c	fixed-placement	removed the PC declaration block: the decomp includes database.h, animdrv.h, mobjdrv.h, cam_road.h, cam_shift.h etc.; its sound.h would also clash with the decomp's local SoundSetOutputMode(s32)
+3080	src/sequence/seq_mapchange.c	obsolete	the local camRoadMain prototype is gone (cam_road.h)
+3081	src/sequence/seq_mapchange.c	reapplied	#ifndef TARGET_PC around the decomp's local cos prototype (sin is gone)
+3082	src/sequence/seq_mapchange.c	fixed-placement	its #endif had landed after SoundSetOutputMode; now right after cos
+3084	src/sequence/seq_mapchange.c	obsolete	fres is FileEntry* in the decomp
+3085	src/sequence/seq_mapchange.c	fixed-placement	PC REL-link side reindented to the decomp's deeper nesting
+3088	src/sequence/seq_mapchange.c	reapplied	#endif after OSUnlink in _relUnLoad; also gave the demos' inline REL unload in step 1 the same portRelUnlink block
+3089	src/sequence/seq_mapchange.c	reapplied	PORT_MODS .inc at the end of the file
+3091	src/sequence/seq_title.c	fixed-placement	removed #include "pc_call.h": its only user (3094) is obsolete
+3092	src/sequence/seq_title.c	reapplied	PORT_MODS hooks header, after the decomp's static titleMain prototype (titleMain is static now; see the summary)
+3093	src/sequence/seq_title.c	reapplied	PORT_HOOKABLE(titleMain) on the decomp's static definition
+3094	src/sequence/seq_title.c	obsolete	the cast intplGetValue call is gone; the decomp calls it direct in system.h order
+3191	src/window/win_badge.c	obsolete	the decomp's call sites pass SFX_NAME_WORD(id) and pmario_sound.h declares psndSFXOn(const char*)
+3192	src/window/win_badge.c	obsolete	its #endif (see 3191)
+3193	src/window/win_item.c	fixed-placement	#include "port_hook.h" moved below the file's header comment
+3195	src/window/win_item.c	reapplied	PORT_MODS hooks header after the includes
+3196	src/window/win_item.c	obsolete	call sites pass SFX_NAME_WORD(id); pmario_sound.h declares psndSFXOn(const char*)
+3197	src/window/win_item.c	obsolete	its #endif (see 3196)
+3199	src/window/win_item.c	obsolete	mailRes = fileAsyncf(...) assigns the FileEntry* direct
+3200	src/window/win_item.c	obsolete	as 3199
+3201	src/window/win_item.c	reapplied	PCCALL with the real pouchSetHP/FP/AP(s16) prototypes around the decomp's Pouch*S32Fn casts (pouchGet* casts are gone)
+3202	src/window/win_item.c	reapplied	as 3201 for FP/AP; the pouchSetPartyHP call is direct in the decomp
+3203	src/window/win_item.c	reapplied	PORT_MODS .inc at the end of the file
+3204	src/window/win_log.c	fixed-placement	#include "port_hook.h" moved below the file's header comment
+3205	src/window/win_log.c	fixed-placement	kept only #include "port/bedecode.h" on PC: WIN_FILE_ASYNCF has no users (the decomp calls fileAsyncf direct) and system.h, mario.h and pmario_sound.h are included by the decomp
+3207	src/window/win_log.c	obsolete	the decomp calls fileAsyncf direct (no void* cast)
+3208	src/window/win_log.c	obsolete	as 3207
+3209	src/window/win_log.c	fixed-placement	the #ifndef TARGET_PC now guards only the static fabs inline (sin's prototype is gone; __fabs stays, a macro on PC)
+3210	src/window/win_log.c	obsolete	the sin prototype is gone (libc_decls.h)
+3211	src/window/win_log.c	reapplied	#ifndef TARGET_PC around the static fabs inline and its doc comment
+3212	src/window/win_log.c	reapplied	its #endif
+3213	src/window/win_log.c	obsolete	the local sprintf prototype is gone
+3214	src/window/win_log.c	obsolete	its #endif
+3215	src/window/win_log.c	obsolete	monosiriMain calls fileAsyncf direct
+3216	src/window/win_log.c	obsolete	as 3215
+3217	src/window/win_log.c	obsolete	as 3215
+3218	src/window/win_log.c	obsolete	the local tan prototype is gone
+3219	src/window/win_log.c	obsolete	its #endif
+3222	src/window/win_log.c	obsolete	the second local sprintf prototype is gone
+3223	src/window/win_log.c	obsolete	its #endif
+3224	src/window/win_log.c	reapplied	PORT_MODS .inc at the end of the file
+3228	src/window/win_main.c	obsolete	evt_yuugijou.h, mobjdrv.h, mario_pouch.h, statuswindow.h and evtmgr_cmd.h are included by the decomp
+3229	src/window/win_main.c	obsolete	the local sin/vsprintf prototypes are gone (libc_decls.h)
+3230	src/window/win_main.c	obsolete	its #endif
+3231	src/window/win_main.c	reapplied	TARGET_PC real FontDrawStringVecPitch(Vec, f32, const s8*) around the decomp's local prototype (after the evtmgr_cmd.h include)
+3232	src/window/win_main.c	reapplied	its #endif
+3233	src/window/win_main.c	reapplied	PCCALL with the real pouchSetHP/FP/AP prototypes around the decomp's Pouch*S32Fn casts
+3234	src/window/win_main.c	reapplied	as 3233; pouchSetPartyHP is direct in the decomp
+3236	src/window/win_mario.c	fixed-placement	#include "port_hook.h" moved below the file's header comment
+3238	src/window/win_mario.c	reapplied	PORT_HOOKABLE(winMarioDisp), US/PAL definition
+3239	src/window/win_mario.c	reapplied	PORT_HOOKABLE(winMarioDisp), pre-US definition
+3240	src/window/win_mario.c	reapplied	PORT_MODS .inc at the end of the file
+3244	src/window/win_root.c	fixed-placement	removed #include "pc_call.h": the psndSFXOn calls are direct now (3249-3255 obsolete)
+3245	src/window/win_root.c	reapplied	#include "addr_word.h" (for 3256); the pouchSortItem prototype is obsolete (mario_pouch.h)
+3246	src/window/win_root.c	obsolete	the local sin/fabs prototypes are gone
+3247	src/window/win_root.c	fixed-placement	removed the stray #endif it left before WIN_ROOT_ADD_TAB
+3249	src/window/win_root.c	obsolete	decomp calls psndSFXOn(SFX_NAME_WORD(0x20006)) through pmario_sound.h
+3250	src/window/win_root.c	obsolete	as 3249
+3251	src/window/win_root.c	fixed-placement	PORT_MODS hooks header kept right after the animdrv.h include (was splitting off the winBookTex doc comment)
+3252	src/window/win_root.c	obsolete	winSortMain calls psndSFXOn(SFX_NAME_WORD(..)) direct
+3253	src/window/win_root.c	obsolete	as 3252
+3254	src/window/win_root.c	obsolete	as 3252
+3255	src/window/win_root.c	obsolete	as 3252
+3256	src/window/win_root.c	fixed-placement	the (u32)(AddrWord) mail icon line now in the decomp's indentation and brace style (had landed as the old line)
+3257	src/window/win_root.c	reapplied	PORT_MODS .inc at the end of the file

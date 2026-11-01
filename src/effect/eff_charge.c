@@ -1,3 +1,6 @@
+// Charge glow (Charge): about 30 additive sparkle sprites around a point; types 0-2 pick the colour pair.
+#include "eff/eff_charge.h"
+// functions are emitted in source order, as in the original
 #pragma defer_codegen off
 #include "driver/camdrv.h"
 #include "driver/dispdrv.h"
@@ -7,12 +10,7 @@
 #include "system.h"
 #include <dolphin/gx.h>
 #include <dolphin/mtx.h>
-
-#ifndef TARGET_PC /* PC port: the host libc declares these */
-double sin(double);
-double cos(double);
-#endif
-
+#include "libc_decls.h"
 typedef struct EffChargeWork {
     s32 state;    // 0x0
     s32 type;     // 0x4
@@ -32,10 +30,11 @@ typedef struct EffChargeWork {
     s32 b1;       // 0x44
 } EffChargeWork;
 
-void effChargeDisp(CameraId cameraId, EffectEntry* effect);
-void effChargeMain(EffectEntry* effect);
+static void effChargeDisp(CameraId cameraId, EffectEntry* effect);
+static void effChargeMain(EffectEntry* effect);
 
-void effChargeDisp(CameraId cameraId, EffectEntry* effect) {
+/** Draws the sparkles as additive billboards from texture 30, tinted between the two colours chosen by type. */
+static void effChargeDisp(CameraId cameraId, EffectEntry* effect) {
     EffChargeWork* work = effect->userdata;
     s32 i;
     s32 s0 = work->r0, s1 = work->g0, s2 = work->b0;
@@ -53,7 +52,7 @@ void effChargeDisp(CameraId cameraId, EffectEntry* effect) {
     effGetTexObj(30, &texObj);
     GXLoadTexObj(&texObj, GX_TEXMAP0);
     {
-        GXSetTevColor(GX_TEVREG1, (GXColor){ work->r1, work->g1, work->b1, 0 });
+        GXSetTevColor(GX_TEVREG1, (GXColor){work->r1, work->g1, work->b1, 0});
     }
     GXSetNumChans(0);
     GXSetChanCtrl(GX_COLOR0A0, GX_FALSE, GX_SRC_REG, GX_SRC_REG, GX_LIGHT_NULL, GX_DF_NONE, GX_AF_NONE);
@@ -81,7 +80,7 @@ void effChargeDisp(CameraId cameraId, EffectEntry* effect) {
         f32 ps = work->scale;
         if (ps) {
             {
-                GXSetTevColor(GX_TEVREG0, (GXColor){ s0, s1, s2, work->alpha });
+                GXSetTevColor(GX_TEVREG0, (GXColor){s0, s1, s2, work->alpha});
             }
             PSMTXTrans(pmtx, work->position.x, work->position.y, work->position.z);
             PSMTXScale(smtx, ps, ps, ps);
@@ -100,8 +99,7 @@ void effChargeDisp(CameraId cameraId, EffectEntry* effect) {
                 GXTexCoord2f32(1.0f, 1.0f);
                 GXPosition3f32(-8.0f, -24.0f, 0.0f);
                 GXTexCoord2f32(0.0f, 1.0f);
-            }
-            else {
+            } else {
                 GXBegin(GX_QUADS, GX_VTXFMT0, 4);
                 GXPosition3f32(-12.0f, -12.0f, 0.0f);
                 GXTexCoord2f32(0.0f, 0.0f);
@@ -116,13 +114,17 @@ void effChargeDisp(CameraId cameraId, EffectEntry* effect) {
     }
 }
 
-void effChargeMain(EffectEntry* effect) {
+/**
+ * Ramps alpha up over the first 20 frames, moves the sparkles every other frame,
+ * and deletes the effect once the duration (1000 or more means endless) expires.
+ */
+static void effChargeMain(EffectEntry* effect) {
     s32 frame;
     s32 odd;
     EffChargeWork* work = effect->userdata;
     s32 i;
     Vec position;
-    Vec tmp = { 0.0f, 0.0f, 0.0f };
+    Vec tmp = {0.0f, 0.0f, 0.0f};
 
     tmp.x = work->position.x;
     tmp.y = work->position.y;
@@ -140,8 +142,7 @@ void effChargeMain(EffectEntry* effect) {
     frame = work->frame;
     if (frame <= 20) {
         work->alpha = frame * 12;
-    }
-    else {
+    } else {
         work->alpha = 255;
     }
     if (frame & 1) {
@@ -180,7 +181,10 @@ void effChargeMain(EffectEntry* effect) {
     dispEntry(CAMERA_3D, dispCalcZ(&position), 2, (DispCallback)effChargeDisp, effect);
 }
 
-#pragma opt_strength_reduction off
+/**
+ * Spawns a charge glow with 30 sparkles at (x, y, z); type 0-2 select the colour pair.
+ * Spawned by Palace of Shadow boss units (las).
+ */
 EffectEntry* effChargeEntry(s32 type, s32 duration, f32 x, f32 y, f32 z, f32 scale) {
     EffectEntry* effect;
     EffChargeWork* work;
@@ -188,7 +192,7 @@ EffectEntry* effChargeEntry(s32 type, s32 duration, f32 x, f32 y, f32 z, f32 sca
     s32 i;
 
     effect = effEntry();
-    effect->type = "Charge\0";
+    effect->type = "Charge";
     effect->count = 31;
     work = __memAlloc(HEAP_EFFECT, 0x8b8);
     effect->userdata = work;
@@ -236,4 +240,3 @@ EffectEntry* effChargeEntry(s32 type, s32 duration, f32 x, f32 y, f32 z, f32 sca
     }
     return effect;
 }
-#pragma opt_strength_reduction reset

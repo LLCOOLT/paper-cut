@@ -1,0 +1,180 @@
+id	file	resolution	note
+2228	src/event/evt_kinopio.c	fixed-placement	data_tables.h include moved below the decomp's file comment (was placed above it)
+2229	src/event/evt_kinopio.c	obsolete	decomp dropped the local itemEntry extern; driver/itemdrv.h declares the real itemEntry(f32 x, y, z, name, itemId, u16 type, collectFlag, EvtWord* pickupEvt) that itemdrv.c defines
+2231	src/event/evt_kinopio.c	fixed-placement	msg_no's (EvtWord) cast kept; tab indent fixed to the decomp's 4 spaces
+2232	src/event/evt_kinopio.c	fixed-placement	get_to_bed_evt's (EvtWord) cast kept; tab indent fixed
+2233	src/event/evt_kinopio.c	fixed-placement	get_from_bed_evt's (EvtWord) cast kept; tab indent fixed
+2234	src/event/evt_kinopio.c	obsolete	script literal (4264967296-style unsigned var id/float) now written LW()/LF()/GSW()/FLOAT()/negative ints by the decomp
+2235	src/event/evt_kinopio.c	obsolete	script literal (4264967296-style unsigned var id/float) now written LW()/LF()/GSW()/FLOAT()/negative ints by the decomp
+2236	src/event/evt_kinopio.c	obsolete	script literal (4264967296-style unsigned var id/float) now written LW()/LF()/GSW()/FLOAT()/negative ints by the decomp
+2237	src/event/evt_kinopio.c	obsolete	script literal (4264967296-style unsigned var id/float) now written LW()/LF()/GSW()/FLOAT()/negative ints by the decomp
+2238	src/event/evt_kinopio.c	obsolete	script literal (4264967296-style unsigned var id/float) now written LW()/LF()/GSW()/FLOAT()/negative ints by the decomp
+2239	src/event/evt_kinopio.c	obsolete	script literal (4264967296-style unsigned var id/float) now written LW()/LF()/GSW()/FLOAT()/negative ints by the decomp
+2240	src/event/evt_kinopio.c	obsolete	script literal (4264967296-style unsigned var id/float) now written LW()/LF()/GSW()/FLOAT()/negative ints by the decomp
+2241	src/event/evt_kinopio.c	obsolete	script literal (4264967296-style unsigned var id/float) now written LW()/LF()/GSW()/FLOAT()/negative ints by the decomp
+2242	src/event/evt_kinopio.c	obsolete	script literal (4264967296-style unsigned var id/float) now written LW()/LF()/GSW()/FLOAT()/negative ints by the decomp
+2243	src/event/evt_kinopio.c	obsolete	script literal (4264967296-style unsigned var id/float) now written LW()/LF()/GSW()/FLOAT()/negative ints by the decomp
+2244	src/event/evt_kinopio.c	obsolete	script literal (4264967296-style unsigned var id/float) now written LW()/LF()/GSW()/FLOAT()/negative ints by the decomp
+2245	src/event/evt_kinopio.c	obsolete	script literal (4264967296-style unsigned var id/float) now written LW()/LF()/GSW()/FLOAT()/negative ints by the decomp
+2246	src/event/evt_kinopio.c	obsolete	script literal (4264967296-style unsigned var id/float) now written LW()/LF()/GSW()/FLOAT()/negative ints by the decomp
+2247	src/event/evt_kinopio.c	obsolete	script literal (4264967296-style unsigned var id/float) now written LW()/LF()/GSW()/FLOAT()/negative ints by the decomp
+2248	src/event/evt_kinopio.c	obsolete	script literal (4264967296-style unsigned var id/float) now written LW()/LF()/GSW()/FLOAT()/negative ints by the decomp
+2249	src/event/evt_kinopio.c	obsolete	script literal (4264967296-style unsigned var id/float) now written LW()/LF()/GSW()/FLOAT()/negative ints by the decomp
+2250	src/event/evt_kinopio.c	obsolete	script literal (4264967296-style unsigned var id/float) now written LW()/LF()/GSW()/FLOAT()/negative ints by the decomp
+2251	src/event/evt_kinopio.c	obsolete	script literal (4264967296-style unsigned var id/float) now written LW()/LF()/GSW()/FLOAT()/negative ints by the decomp
+2252	src/event/evt_kinopio.c	obsolete	script literal (4264967296-style unsigned var id/float) now written LW()/LF()/GSW()/FLOAT()/negative ints by the decomp
+2253	src/event/evt_kinopio.c	obsolete	script literal (4264967296-style unsigned var id/float) now written LW()/LF()/GSW()/FLOAT()/negative ints by the decomp
+2254	src/event/evt_kinopio.c	obsolete	script literal (4264967296-style unsigned var id/float) now written LW()/LF()/GSW()/FLOAT()/negative ints by the decomp
+2255	src/event/evt_kinopio.c	obsolete	script literal (4264967296-style unsigned var id/float) now written LW()/LF()/GSW()/FLOAT()/negative ints by the decomp
+2256	src/event/evt_kinopio.c	obsolete	script literal (4264967296-style unsigned var id/float) now written LW()/LF()/GSW()/FLOAT()/negative ints by the decomp
+2257	src/event/evt_kinopio.c	obsolete	script literal (4264967296-style unsigned var id/float) now written LW()/LF()/GSW()/FLOAT()/negative ints by the decomp
+2258	src/event/evt_kinopio.c	obsolete	script literal (4264967296-style unsigned var id/float) now written LW()/LF()/GSW()/FLOAT()/negative ints by the decomp
+2259	src/event/evt_kinopio.c	obsolete	script literal (4264967296-style unsigned var id/float) now written LW()/LF()/GSW()/FLOAT()/negative ints by the decomp
+2260	src/event/evt_kinopio.c	obsolete	script literal (4264967296-style unsigned var id/float) now written LW()/LF()/GSW()/FLOAT()/negative ints by the decomp
+2261	src/event/evt_kinopio.c	obsolete	script literal (4264967296-style unsigned var id/float) now written LW()/LF()/GSW()/FLOAT()/negative ints by the decomp
+2262	src/event/evt_kinopio.c	obsolete	script literal (4264967296-style unsigned var id/float) now written LW()/LF()/GSW()/FLOAT()/negative ints by the decomp
+2263	src/event/evt_kinopio.c	obsolete	script literal (4264967296-style unsigned var id/float) now written LW()/LF()/GSW()/FLOAT()/negative ints by the decomp
+2264	src/event/evt_kinopio.c	obsolete	script literal (4264967296-style unsigned var id/float) now written LW()/LF()/GSW()/FLOAT()/negative ints by the decomp
+2265	src/event/evt_kinopio.c	obsolete	script literal (4264967296-style unsigned var id/float) now written LW()/LF()/GSW()/FLOAT()/negative ints by the decomp
+2266	src/event/evt_kinopio.c	obsolete	script literal (4264967296-style unsigned var id/float) now written LW()/LF()/GSW()/FLOAT()/negative ints by the decomp
+2267	src/event/evt_kinopio.c	obsolete	script literal (4264967296-style unsigned var id/float) now written LW()/LF()/GSW()/FLOAT()/negative ints by the decomp
+2268	src/event/evt_kinopio.c	obsolete	script literal (4264967296-style unsigned var id/float) now written LW()/LF()/GSW()/FLOAT()/negative ints by the decomp
+2269	src/event/evt_kinopio.c	obsolete	script literal (4264967296-style unsigned var id/float) now written LW()/LF()/GSW()/FLOAT()/negative ints by the decomp
+2270	src/event/evt_kinopio.c	obsolete	script literal (4264967296-style unsigned var id/float) now written LW()/LF()/GSW()/FLOAT()/negative ints by the decomp
+2271	src/event/evt_kinopio.c	obsolete	script literal (4264967296-style unsigned var id/float) now written LW()/LF()/GSW()/FLOAT()/negative ints by the decomp
+2272	src/event/evt_kinopio.c	obsolete	script literal (4264967296-style unsigned var id/float) now written LW()/LF()/GSW()/FLOAT()/negative ints by the decomp
+2273	src/event/evt_kinopio.c	obsolete	script literal (4264967296-style unsigned var id/float) now written LW()/LF()/GSW()/FLOAT()/negative ints by the decomp
+2274	src/event/evt_kinopio.c	obsolete	script literal (4264967296-style unsigned var id/float) now written LW()/LF()/GSW()/FLOAT()/negative ints by the decomp
+2275	src/event/evt_kinopio.c	obsolete	script literal (4264967296-style unsigned var id/float) now written LW()/LF()/GSW()/FLOAT()/negative ints by the decomp
+2276	src/event/evt_kinopio.c	obsolete	script literal (4264967296-style unsigned var id/float) now written LW()/LF()/GSW()/FLOAT()/negative ints by the decomp
+2277	src/event/evt_kinopio.c	obsolete	script literal (4264967296-style unsigned var id/float) now written LW()/LF()/GSW()/FLOAT()/negative ints by the decomp
+2278	src/event/evt_kinopio.c	obsolete	script literal (4264967296-style unsigned var id/float) now written LW()/LF()/GSW()/FLOAT()/negative ints by the decomp
+2279	src/event/evt_kinopio.c	obsolete	script literal (4264967296-style unsigned var id/float) now written LW()/LF()/GSW()/FLOAT()/negative ints by the decomp
+2280	src/event/evt_kinopio.c	obsolete	script literal (4264967296-style unsigned var id/float) now written LW()/LF()/GSW()/FLOAT()/negative ints by the decomp
+2281	src/event/evt_kinopio.c	obsolete	script literal (4264967296-style unsigned var id/float) now written LW()/LF()/GSW()/FLOAT()/negative ints by the decomp
+2282	src/event/evt_kinopio.c	obsolete	script literal (4264967296-style unsigned var id/float) now written LW()/LF()/GSW()/FLOAT()/negative ints by the decomp
+2393	src/event/evt_msg.c	reapplied	_evt_msg_print prototype: callback (was a3) retyped s32 -> EvtWord
+2394	src/event/evt_msg.c	rewritten	decomp deleted the local msgWindow_Entry prototype and calls through the FAKE MsgWindow_EntryS32Fn cast; both call sites now PCCALL(cast call, msgWindow_Entry(...)) so PC calls the real prototype with the EvtWord callback (needs msgdrv.h/.c change, see summary)
+2395	src/event/evt_msg.c	reapplied	_evt_msg_print definition: callback retyped s32 -> EvtWord
+2396	src/event/evt_msg.c	fixed-placement	evt_msg_print 'EvtWord c' kept; tab indent fixed
+2397	src/event/evt_msg.c	obsolete	second local msgWindow_Entry prototype deleted by the decomp (msgdrv.h declares it); PC call handled by 2394
+2398	src/event/evt_msg.c	obsolete	msgPoolStr/MSG_POOL not needed: decomp's evtMsgFmtStr/evtMsgFmtInt use string literals instead of words + offset into the .rodata pool
+2400	src/event/evt_msg.c	fixed-placement	#ifndef TARGET_PC around strcat/strstr kept; #endif moved above the blank line before clang-format on
+2401	src/event/evt_msg.c	reapplied	evt_msg_print_insert: vals[4]/p retyped EvtWord (printf args can be strings)
+2402	src/event/evt_msg.c	fixed-placement	evt_msg_print_insert 'EvtWord c, d' kept; tab indent fixed
+2403	src/event/evt_msg.c	reapplied	evt_msg_print_add_insert: vals[4]/p retyped EvtWord
+2404	src/event/evt_msg.c	obsolete	local msgWindow_ForceClose declaration removed by the decomp; msgdrv.h declares msgWindow_ForceClose(const char* name)
+2405	src/event/evt_msg.c	obsolete	#endif of 2404's block; see 2404
+2406	src/event/evt_msg.c	obsolete	decomp's evt_msg_close already calls msgWindow_ForceClose((const char*)evtGetValue(...))
+2407	src/event/evt_msg.c	obsolete	words + 0xNN pool offset replaced by the string literal in the decomp (no MSG_POOL needed)
+2408	src/event/evt_msg.c	obsolete	words + 0xNN pool offset replaced by the string literal in the decomp (no MSG_POOL needed)
+2409	src/event/evt_msg.c	obsolete	words + 0xNN pool offset replaced by the string literal in the decomp (no MSG_POOL needed)
+2410	src/event/evt_msg.c	obsolete	words + 0xNN pool offset replaced by the string literal in the decomp (no MSG_POOL needed)
+2411	src/event/evt_msg.c	obsolete	words + 0xNN pool offset replaced by the string literal in the decomp (no MSG_POOL needed)
+2412	src/event/evt_msg.c	obsolete	words + 0xNN pool offset replaced by the string literal in the decomp (no MSG_POOL needed)
+2413	src/event/evt_msg.c	obsolete	words + 0xNN pool offset replaced by the string literal in the decomp (no MSG_POOL needed)
+2414	src/event/evt_msg.c	obsolete	words + 0xNN pool offset replaced by the string literal in the decomp (no MSG_POOL needed)
+2415	src/event/evt_msg.c	obsolete	words + 0xNN pool offset replaced by the string literal in the decomp (no MSG_POOL needed)
+2416	src/event/evt_msg.c	obsolete	words + 0xNN pool offset replaced by the string literal in the decomp (no MSG_POOL needed)
+2417	src/event/evt_msg.c	obsolete	words + 0xNN pool offset replaced by the string literal in the decomp (no MSG_POOL needed)
+2418	src/event/evt_msg.c	obsolete	words + 0xNN pool offset replaced by the string literal in the decomp (no MSG_POOL needed)
+2419	src/event/evt_msg.c	obsolete	words + 0xNN pool offset replaced by the string literal in the decomp (no MSG_POOL needed)
+2420	src/event/evt_msg.c	obsolete	words + 0xNN pool offset replaced by the string literal in the decomp (no MSG_POOL needed)
+2421	src/event/evt_msg.c	obsolete	words + 0xNN pool offset replaced by the string literal in the decomp (no MSG_POOL needed)
+2422	src/event/evt_msg.c	obsolete	words + 0xNN pool offset replaced by the string literal in the decomp (no MSG_POOL needed)
+2423	src/event/evt_msg.c	obsolete	words + 0xNN pool offset replaced by the string literal in the decomp (no MSG_POOL needed)
+2424	src/event/evt_msg.c	obsolete	words + 0xNN pool offset replaced by the string literal in the decomp (no MSG_POOL needed)
+2425	src/event/evt_msg.c	obsolete	words + 0xNN pool offset replaced by the string literal in the decomp (no MSG_POOL needed)
+2426	src/event/evt_msg.c	obsolete	words + 0xNN pool offset replaced by the string literal in the decomp (no MSG_POOL needed)
+2427	src/event/evt_msg.c	obsolete	words + 0xNN pool offset replaced by the string literal in the decomp (no MSG_POOL needed)
+2428	src/event/evt_msg.c	obsolete	words + 0xNN pool offset replaced by the string literal in the decomp (no MSG_POOL needed)
+2429	src/event/evt_msg.c	obsolete	words + 0xNN pool offset replaced by the string literal in the decomp (no MSG_POOL needed)
+2430	src/event/evt_msg.c	obsolete	words + 0xNN pool offset replaced by the string literal in the decomp (no MSG_POOL needed)
+2431	src/event/evt_msg.c	obsolete	words + 0xNN pool offset replaced by the string literal in the decomp (no MSG_POOL needed)
+2432	src/event/evt_msg.c	obsolete	words + 0xNN pool offset replaced by the string literal in the decomp (no MSG_POOL needed)
+2433	src/event/evt_msg.c	obsolete	words + 0xNN pool offset replaced by the string literal in the decomp (no MSG_POOL needed)
+2434	src/event/evt_msg.c	obsolete	words + 0xNN pool offset replaced by the string literal in the decomp (no MSG_POOL needed)
+2435	src/event/evt_msg.c	obsolete	words + 0xNN pool offset replaced by the string literal in the decomp (no MSG_POOL needed)
+2436	src/event/evt_msg.c	obsolete	words + 0xNN pool offset replaced by the string literal in the decomp (no MSG_POOL needed)
+2437	src/event/evt_msg.c	obsolete	words + 0xNN pool offset replaced by the string literal in the decomp (no MSG_POOL needed)
+2438	src/event/evt_msg.c	obsolete	words + 0xNN pool offset replaced by the string literal in the decomp (no MSG_POOL needed)
+2439	src/event/evt_msg.c	obsolete	words + 0xNN pool offset replaced by the string literal in the decomp (no MSG_POOL needed)
+2440	src/event/evt_msg.c	obsolete	words + 0xNN pool offset replaced by the string literal in the decomp (no MSG_POOL needed)
+2441	src/event/evt_msg.c	obsolete	words + 0xNN pool offset replaced by the string literal in the decomp (no MSG_POOL needed)
+2442	src/event/evt_msg.c	obsolete	words + 0xNN pool offset replaced by the string literal in the decomp (no MSG_POOL needed)
+2443	src/event/evt_msg.c	obsolete	words + 0xNN pool offset replaced by the string literal in the decomp (no MSG_POOL needed)
+2304	src/event/evt_mobj.c	fixed-placement	pc_call.h include removed again: its only user (PCCALL around pouchAddCoin, 2352) is obsolete
+2305	src/event/evt_mobj.c	obsolete	evt_cam_shake literals now FLOAT(0.0f)/FLOAT(0.01f)
+2306	src/event/evt_mobj.c	obsolete	itemEntry remap macro not needed: decomp calls itemEntry(x, y, z, ...) through driver/itemdrv.h's real prototype (itemdrv.c defines the same order)
+2307	src/event/evt_mobj.c	obsolete	#endif of 2306's block
+2308	src/event/evt_mobj.c	obsolete	kpa_powerup_evt literals now LW(0..2)
+2309	src/event/evt_mobj.c	obsolete	evt_fire literals now LW(0..3)
+2310	src/event/evt_mobj.c	obsolete	K&R 'extern void mobjSetPosition();' deleted by the decomp; mobjdrv.h has the full prototype
+2311	src/event/evt_mobj.c	obsolete	K&R 'extern void strcat();' deleted by the decomp (string.h)
+2312	src/event/evt_mobj.c	obsolete	#endif of 2311's block
+2313	src/event/evt_mobj.c	reapplied	mobjRunEvent cast (s32*) -> (EvtWord*) on mobj->event/extraEvent (EvtWord in the decomp's MapObjectEntry)
+2317	src/event/evt_mobj.c	reapplied	mobjRunEvent cast (s32*) -> (EvtWord*) on mobj->event/extraEvent (EvtWord in the decomp's MapObjectEntry)
+2320	src/event/evt_mobj.c	reapplied	mobjRunEvent cast (s32*) -> (EvtWord*) on mobj->event/extraEvent (EvtWord in the decomp's MapObjectEntry)
+2322	src/event/evt_mobj.c	reapplied	mobjRunEvent cast (s32*) -> (EvtWord*) on mobj->event/extraEvent (EvtWord in the decomp's MapObjectEntry)
+2323	src/event/evt_mobj.c	reapplied	mobjRunEvent cast (s32*) -> (EvtWord*) on mobj->event/extraEvent (EvtWord in the decomp's MapObjectEntry)
+2327	src/event/evt_mobj.c	reapplied	mobjRunEvent cast (s32*) -> (EvtWord*) on mobj->event/extraEvent (EvtWord in the decomp's MapObjectEntry)
+2329	src/event/evt_mobj.c	reapplied	mobjRunEvent cast (s32*) -> (EvtWord*) on mobj->event/extraEvent (EvtWord in the decomp's MapObjectEntry)
+2331	src/event/evt_mobj.c	reapplied	mobjRunEvent cast (s32*) -> (EvtWord*) on mobj->event/extraEvent (EvtWord in the decomp's MapObjectEntry)
+2334	src/event/evt_mobj.c	reapplied	mobjRunEvent cast (s32*) -> (EvtWord*) on mobj->event/extraEvent (EvtWord in the decomp's MapObjectEntry)
+2338	src/event/evt_mobj.c	reapplied	mobjRunEvent cast (s32*) -> (EvtWord*) on mobj->event/extraEvent (EvtWord in the decomp's MapObjectEntry)
+2342	src/event/evt_mobj.c	reapplied	mobjRunEvent cast (s32*) -> (EvtWord*) on mobj->event/extraEvent (EvtWord in the decomp's MapObjectEntry)
+2346	src/event/evt_mobj.c	reapplied	mobjRunEvent cast (s32*) -> (EvtWord*) on mobj->event/extraEvent (EvtWord in the decomp's MapObjectEntry)
+2348	src/event/evt_mobj.c	reapplied	mobjRunEvent cast (s32*) -> (EvtWord*) on mobj->event/extraEvent (EvtWord in the decomp's MapObjectEntry)
+2353	src/event/evt_mobj.c	reapplied	mobjRunEvent cast (s32*) -> (EvtWord*) on mobj->event/extraEvent (EvtWord in the decomp's MapObjectEntry)
+2354	src/event/evt_mobj.c	reapplied	mobjRunEvent cast (s32*) -> (EvtWord*) on mobj->event/extraEvent (EvtWord in the decomp's MapObjectEntry)
+2356	src/event/evt_mobj.c	reapplied	mobjRunEvent cast (s32*) -> (EvtWord*) on mobj->event/extraEvent (EvtWord in the decomp's MapObjectEntry)
+2358	src/event/evt_mobj.c	reapplied	mobjRunEvent cast (s32*) -> (EvtWord*) on mobj->event/extraEvent (EvtWord in the decomp's MapObjectEntry)
+2361	src/event/evt_mobj.c	reapplied	mobjRunEvent cast (s32*) -> (EvtWord*) on mobj->event/extraEvent (EvtWord in the decomp's MapObjectEntry)
+2362	src/event/evt_mobj.c	reapplied	mobjRunEvent cast (s32*) -> (EvtWord*) on mobj->event/extraEvent (EvtWord in the decomp's MapObjectEntry)
+2364	src/event/evt_mobj.c	reapplied	mobjRunEvent cast (s32*) -> (EvtWord*) on mobj->event/extraEvent (EvtWord in the decomp's MapObjectEntry)
+2370	src/event/evt_mobj.c	reapplied	mobjRunEvent cast (s32*) -> (EvtWord*) on mobj->event/extraEvent (EvtWord in the decomp's MapObjectEntry)
+2373	src/event/evt_mobj.c	reapplied	mobjRunEvent cast (s32*) -> (EvtWord*) on mobj->event/extraEvent (EvtWord in the decomp's MapObjectEntry)
+2378	src/event/evt_mobj.c	reapplied	mobjRunEvent cast (s32*) -> (EvtWord*) on mobj->event/extraEvent (EvtWord in the decomp's MapObjectEntry)
+2380	src/event/evt_mobj.c	reapplied	mobjRunEvent cast (s32*) -> (EvtWord*) on mobj->event/extraEvent (EvtWord in the decomp's MapObjectEntry)
+2382	src/event/evt_mobj.c	reapplied	mobjRunEvent cast (s32*) -> (EvtWord*) on mobj->event/extraEvent (EvtWord in the decomp's MapObjectEntry)
+2387	src/event/evt_mobj.c	reapplied	mobjRunEvent cast (s32*) -> (EvtWord*) on mobj->event/extraEvent (EvtWord in the decomp's MapObjectEntry)
+2389	src/event/evt_mobj.c	reapplied	mobjRunEvent cast (s32*) -> (EvtWord*) on mobj->event/extraEvent (EvtWord in the decomp's MapObjectEntry)
+2390	src/event/evt_mobj.c	reapplied	mobjRunEvent cast (s32*) -> (EvtWord*) on mobj->event/extraEvent (EvtWord in the decomp's MapObjectEntry)
+2314	src/event/evt_mobj.c	reapplied	script word for mobj->event/extraEvent retyped s32 -> EvtWord (val/val2)
+2315	src/event/evt_mobj.c	reapplied	script word for mobj->event/extraEvent retyped s32 -> EvtWord (val/val2)
+2316	src/event/evt_mobj.c	reapplied	script word for mobj->event/extraEvent retyped s32 -> EvtWord (val/val2)
+2318	src/event/evt_mobj.c	reapplied	script word for mobj->event/extraEvent retyped s32 -> EvtWord (val/val2)
+2319	src/event/evt_mobj.c	reapplied	script word for mobj->event/extraEvent retyped s32 -> EvtWord (val/val2)
+2321	src/event/evt_mobj.c	reapplied	script word for mobj->event/extraEvent retyped s32 -> EvtWord (val/val2)
+2324	src/event/evt_mobj.c	reapplied	script word for mobj->event/extraEvent retyped s32 -> EvtWord (val/val2)
+2330	src/event/evt_mobj.c	reapplied	script word for mobj->event/extraEvent retyped s32 -> EvtWord (val/val2)
+2332	src/event/evt_mobj.c	reapplied	script word for mobj->event/extraEvent retyped s32 -> EvtWord (val/val2)
+2339	src/event/evt_mobj.c	reapplied	script word for mobj->event/extraEvent retyped s32 -> EvtWord (val/val2)
+2349	src/event/evt_mobj.c	reapplied	script word for mobj->event/extraEvent retyped s32 -> EvtWord (val/val2)
+2355	src/event/evt_mobj.c	reapplied	script word for mobj->event/extraEvent retyped s32 -> EvtWord (val/val2)
+2357	src/event/evt_mobj.c	reapplied	script word for mobj->event/extraEvent retyped s32 -> EvtWord (val/val2)
+2359	src/event/evt_mobj.c	reapplied	script word for mobj->event/extraEvent retyped s32 -> EvtWord (val/val2)
+2360	src/event/evt_mobj.c	reapplied	script word for mobj->event/extraEvent retyped s32 -> EvtWord (val/val2)
+2363	src/event/evt_mobj.c	reapplied	script word for mobj->event/extraEvent retyped s32 -> EvtWord (val/val2)
+2365	src/event/evt_mobj.c	reapplied	script word for mobj->event/extraEvent retyped s32 -> EvtWord (val/val2)
+2371	src/event/evt_mobj.c	reapplied	script word for mobj->event/extraEvent retyped s32 -> EvtWord (val/val2)
+2372	src/event/evt_mobj.c	reapplied	script word for mobj->event/extraEvent retyped s32 -> EvtWord (val/val2)
+2374	src/event/evt_mobj.c	reapplied	script word for mobj->event/extraEvent retyped s32 -> EvtWord (val/val2)
+2376	src/event/evt_mobj.c	reapplied	script word for mobj->event/extraEvent retyped s32 -> EvtWord (val/val2)
+2377	src/event/evt_mobj.c	reapplied	script word for mobj->event/extraEvent retyped s32 -> EvtWord (val/val2)
+2379	src/event/evt_mobj.c	reapplied	script word for mobj->event/extraEvent retyped s32 -> EvtWord (val/val2)
+2381	src/event/evt_mobj.c	reapplied	script word for mobj->event/extraEvent retyped s32 -> EvtWord (val/val2)
+2386	src/event/evt_mobj.c	reapplied	script word for mobj->event/extraEvent retyped s32 -> EvtWord (val/val2)
+2391	src/event/evt_mobj.c	reapplied	script word for mobj->event/extraEvent retyped s32 -> EvtWord (val/val2)
+2375	src/event/evt_mobj.c	reapplied	(EvtWord*)mobj->event in the NULL test and the mobjRunEvent call
+2337	src/event/evt_mobj.c	reapplied	lwData = ... + (s32)0xF24A7A80 (float-variable encoding stays negative in a 64-bit EvtWord)
+2343	src/event/evt_mobj.c	reapplied	lwData = ... + (s32)0xF24A7A80 (float-variable encoding stays negative in a 64-bit EvtWord)
+2344	src/event/evt_mobj.c	reapplied	lwData = ... + (s32)0xF24A7A80 (float-variable encoding stays negative in a 64-bit EvtWord)
+2345	src/event/evt_mobj.c	reapplied	lwData = ... + (s32)0xF24A7A80 (float-variable encoding stays negative in a 64-bit EvtWord)
+2325	src/event/evt_mobj.c	fixed-placement	ev = mobjRunEvent(... (EvtWord*)...) re-indented to the decomp's level
+2335	src/event/evt_mobj.c	fixed-placement	TARGET_PC typeDataP[0] pointer test kept; re-indented to the case body
+2350	src/event/evt_mobj.c	fixed-placement	PC block landed inside MOBJ_EXTRA_OBJS's #else and took over its #endif (file unbalanced); restored the #endif after mobj_sign and rebuilt #ifdef TARGET_PC (eff_batfukidashi.h + reorder macro) #else around the decomp's FAKE effCoinFukidashiEntry extern
+2351	src/event/evt_mobj.c	rewritten	#endif part folded into 2350's block; the msgWindow_Entry extern retype is obsolete (decomp deleted the extern, calls pass callback 0 via msgdrv.h)
+2333	src/event/evt_mobj.c	obsolete	local msgWindow_Entry extern deleted by the decomp (msgdrv.h; calls pass 0)
+2352	src/event/evt_mobj.c	obsolete	decomp calls pouchAddCoin(-kind) directly with mario_pouch.h's prototype; no function-pointer cast left
+2388	src/event/evt_mobj.c	reapplied	evt_mobj_koopa_fireber_dodai: the script word (decomp's 'script', was arg7) split out as EvtWord, order kept

@@ -1,75 +1,32 @@
+// hei_04 (平原, Petal Meadows): grassy field between hei_03 and hei_05.
+// Field enemies, coins and a POW Block.
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
 #include "evt/evt_bero.h"
 #include "evt/evt_sub.h"
+#include "evt/evt_item.h"
+#include "evt/evt_map.h"
+#include "evt/evt_npc.h"
+#include "evt/evt_snd.h"
+#include "hei.h"
 #include "data_tables.h"
+#include "version.h"
+#include "evt/evt_story.h"
+#include "driver/mapdrv.h"
 
-#pragma force_active on
-
-USER_FUNC(evt_bero_get_info);
-USER_FUNC(evt_item_delete_check);
-USER_FUNC(evt_item_entry);
-USER_FUNC(evt_mapobj_flag_onoff);
-USER_FUNC(evt_npc_change_fbat_mode);
-USER_FUNC(evt_snd_bgmon);
-USER_FUNC(evt_snd_envon);
-
-f32 fd_hei_04_negone_one_374[2] __attribute__((aligned(8)));
-f32 fd_hei_04_neg_one_382;
-f32 fd_hei_04___local_PI_383;
-f32 fd_hei_04___local_3PIO2_385;
-f32 fd_hei_04_one_negone_373[2] __attribute__((aligned(8)));
-f32 fd_hei_04___local_PIO2_384;
-f32 fd_hei_04_one_381;
-f32 fd_hei_04_negone_one_360[2] __attribute__((aligned(8)));
-f32 fd_hei_04_neg_one_365;
-f32 fd_hei_04___local_PI_366;
-f32 fd_hei_04___local_3PIO2_368;
-f32 fd_hei_04_one_negone_359[2] __attribute__((aligned(8)));
-f32 fd_hei_04___local_PIO2_367;
-f32 fd_hei_04_one_364;
 static BeroEntry bero_entry_data[3];
-static EvtWord evt_ki_3[20];
 static TreeAccess ki_data[4];
-EvtWord evt_kusa_11[20];
-EvtWord evt_kusa_12[20];
+extern EvtWord evt_kusa_11[];
+extern EvtWord evt_kusa_12[];
 static KusaAccess kusa_data[12];
-EvtWord hei_04_init_evt[40];
 
-f32 fd_hei_04_negone_one_374[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_hei_04_neg_one_382 = -1.0f;
-
-f32 fd_hei_04___local_PI_383 = 3.1415927f;
-
-f32 fd_hei_04___local_3PIO2_385 = 4.712389f;
-
-f32 fd_hei_04_one_negone_373[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_hei_04___local_PIO2_384 = 1.5707964f;
-
-f32 fd_hei_04_one_381 = 1.0f;
-
-f32 fd_hei_04_negone_one_360[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_hei_04_neg_one_365 = -1.0f;
-
-f32 fd_hei_04___local_PI_366 = 3.1415927f;
-
-f32 fd_hei_04___local_3PIO2_368 = 4.712389f;
-
-f32 fd_hei_04_one_negone_359[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_hei_04___local_PIO2_367 = 1.5707964f;
-
-f32 fd_hei_04_one_364 = 1.0f;
-
+/** Doors of this room: the west exit (w_bero) to hei_03 and the east exit (e_bero) to hei_05. */
 static BeroEntry bero_entry_data[] = {
     {
         "w_bero", // hitName
         0, 0, // type..sfxId
-        20000, // directionId
-        100000, // centerPosition
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         NULL, // enterEvent
@@ -84,8 +41,8 @@ static BeroEntry bero_entry_data[] = {
     {
         "e_bero", // hitName
         0, 0, // type..sfxId
-        20000, // directionId
-        100000, // centerPosition
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         NULL, // enterEvent
@@ -100,14 +57,19 @@ static BeroEntry bero_entry_data[] = {
     {0},
 };
 
+/**
+ * Reward script for tree a_ki_3: if not yet taken,
+ * a Coin falls from the tree when Mario hits it (GSWF_HEI04_TREE_COIN_TAKEN).
+ */
 static EVT_BEGIN(evt_ki_3)
     CALL(evt_item_delete_check, STRING("item_ki_3"), LW(0))
     IF_INT_EQUAL(LW(0), 1)
-        CALL(evt_item_entry, STRING("item_ki_3"), 121, 17, 90, -122, 14, GSWF(1791), 0)
+        CALL(evt_item_entry, STRING("item_ki_3"), ITEM_COIN, 17, 90, -122, ITEM_ENTRY_FALL_THROWN, GSWF(GSWF_HEI04_TREE_COIN_TAKEN), 0)
     END_IF
     RETURN
 EVT_END()
 
+/** Trees of this field that Mario can hit (a_ki_1 to a_ki_3); the third runs evt_ki_3 when hit. */
 static TreeAccess ki_data[] = {
     {0, "a_ki_1", "miki_1", "ha_temae", "ha_usiro", NULL},
     {0, "a_ki_2", "miki_2", "ha_temae_2", "ha_usiro_2", NULL},
@@ -115,22 +77,25 @@ static TreeAccess ki_data[] = {
     {7, NULL, NULL, NULL, 0, NULL},
 };
 
+/** Reward script for bush 11: if not yet taken, a Coin pops out of the bush when Mario hits it. */
 EVT_BEGIN(evt_kusa_11)
     CALL(evt_item_delete_check, STRING("item_kusa_11"), LW(0))
     IF_INT_EQUAL(LW(0), 1)
-        CALL(evt_item_entry, STRING("item_kusa_11"), 121, 364, 75, -95, 4, GSWF(1790), 0)
+        CALL(evt_item_entry, STRING("item_kusa_11"), ITEM_COIN, 364, 75, -95, ITEM_ENTRY_LAUNCH, GSWF(GSWF_HEI04_BUSH_COIN_TAKEN), 0)
     END_IF
     RETURN
 EVT_END()
 
+/** Reward script for bush 12: if not yet taken, a POW Block pops out of the bush when Mario hits it. */
 EVT_BEGIN(evt_kusa_12)
     CALL(evt_item_delete_check, STRING("item_kusa_12"), LW(0))
     IF_INT_EQUAL(LW(0), 1)
-        CALL(evt_item_entry, STRING("item_kusa_12"), 139, 320, 75, -55, 4, GSWF(1801), 0)
+        CALL(evt_item_entry, STRING("item_kusa_12"), ITEM_POW_BLOCK, 320, 75, -55, ITEM_ENTRY_LAUNCH, GSWF(GSWF_HEI04_BUSH_POW_BLOCK_TAKEN), 0)
     END_IF
     RETURN
 EVT_END()
 
+/** Grass patches Mario can hit on this field (a_kusa_1 to a_kusa_12); the last two run events when cut. */
 static KusaAccess kusa_data[] = {
     {0, "a_kusa_1", "kusa_1", NULL},
     {0, "a_kusa_2", "kusa_2", NULL},
@@ -146,19 +111,22 @@ static KusaAccess kusa_data[] = {
     {4, NULL, NULL, NULL},
 };
 
+/**
+ * Petal Meadows hei_04 map init: registers the exits, field music,
+ * the tree and bush rewards and disables bounding-box culling for the field group.
+ */
 EVT_BEGIN(hei_04_init_evt)
     SET_VALUE(LW(0), PTR(bero_entry_data))
     CALL(evt_bero_get_info)
-    CALL_CHILD(PTR(evt_bero_info_run))
-    CALL(evt_snd_bgmon, 512, STRING("BGM_STG1_HEI1"))
-    CALL(evt_snd_bgmon, 160, 0)
-    CALL(evt_snd_envon, 272, STRING("ENV_STG1_HEI1"))
+    CALL_CHILD(evt_bero_info_run)
+    CALL(evt_snd_bgmon, PSND_FADE_OUT, STRING("BGM_STG1_HEI1"))
+    CALL(evt_snd_bgmon, PSND_FADE_RESUME | PSND_FADE_UNDIP, 0)
+    CALL(evt_snd_envon, PSND_FADE_RESTART | PSND_FADE_IN, STRING("ENV_STG1_HEI1"))
     CALL(evt_npc_change_fbat_mode, 1)
     SET_VALUE(LW(0), PTR(ki_data))
-    CALL_CHILD(PTR(evt_sub_tree_access_entry))
+    CALL_CHILD(evt_sub_tree_access_entry)
     SET_VALUE(LW(0), PTR(kusa_data))
-    CALL_CHILD(PTR(evt_sub_kusa_access_entry))
-    CALL(evt_mapobj_flag_onoff, 1, 0, STRING("group1\0"), 2)
+    CALL_CHILD(evt_sub_kusa_access_entry)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("group1"), MAPOBJ_FLAG_BBOX_CULL)
     RETURN
 EVT_END()
-

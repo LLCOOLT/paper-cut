@@ -1,75 +1,23 @@
+// gon_02 (ゴンババ, Hooktail Castle): first hall between gon_01 and gon_03.
+// Dry Bones-type enemies (karon) are set up here, plus a Power Bounce block.
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
 #include "evt/evt_bero.h"
+#include "evt/evt_map.h"
+#include "evt/evt_mobj.h"
+#include "evt/evt_npc.h"
+#include "evt/evt_snd.h"
+#include "gon.h"
+#include "version.h"
+#include "evt/evt_story.h"
 
-#pragma force_active on
-
-USER_FUNC(evt_bero_get_info);
-USER_FUNC(evt_map_playanim);
-USER_FUNC(evt_mapobj_rotate);
-USER_FUNC(evt_mobj_badgeblk);
-USER_FUNC(evt_npc_change_fbat_mode);
-USER_FUNC(evt_npc_entry);
-USER_FUNC(evt_npc_flag_onoff);
-USER_FUNC(evt_npc_pera_onoff);
-USER_FUNC(evt_npc_set_anim);
-USER_FUNC(evt_npc_set_height);
-USER_FUNC(evt_npc_set_position);
-USER_FUNC(evt_npc_set_rotate);
-USER_FUNC(evt_npc_set_width);
-USER_FUNC(evt_snd_bgmon);
-USER_FUNC(evt_snd_envon);
-USER_FUNC(evt_snd_set_rev_mode);
-
-f32 fd_gon_02_negone_one_374[2] __attribute__((aligned(8)));
-f32 fd_gon_02_neg_one_382;
-f32 fd_gon_02___local_PI_383;
-f32 fd_gon_02___local_3PIO2_385;
-f32 fd_gon_02_one_negone_373[2] __attribute__((aligned(8)));
-f32 fd_gon_02___local_PIO2_384;
-f32 fd_gon_02_one_381;
-f32 fd_gon_02_negone_one_360[2] __attribute__((aligned(8)));
-f32 fd_gon_02_neg_one_365;
-f32 fd_gon_02___local_PI_366;
-f32 fd_gon_02___local_3PIO2_368;
-f32 fd_gon_02_one_negone_359[2] __attribute__((aligned(8)));
-f32 fd_gon_02___local_PIO2_367;
-f32 fd_gon_02_one_364;
-static EvtWord door01_close[22];
-static EvtWord door01_open[22];
-static EvtWord door02_close[12];
-static EvtWord door02_open[12];
 static BeroEntry bero_entry_data[4];
-EvtWord gon_02_init_evt[248];
 
-f32 fd_gon_02_negone_one_374[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_gon_02_neg_one_382 = -1.0f;
-
-f32 fd_gon_02___local_PI_383 = 3.1415927f;
-
-f32 fd_gon_02___local_3PIO2_385 = 4.712389f;
-
-f32 fd_gon_02_one_negone_373[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_gon_02___local_PIO2_384 = 1.5707964f;
-
-f32 fd_gon_02_one_381 = 1.0f;
-
-f32 fd_gon_02_negone_one_360[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_gon_02_neg_one_365 = -1.0f;
-
-f32 fd_gon_02___local_PI_366 = 3.1415927f;
-
-f32 fd_gon_02___local_3PIO2_368 = 4.712389f;
-
-f32 fd_gon_02_one_negone_359[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_gon_02___local_PIO2_367 = 1.5707964f;
-
-f32 fd_gon_02_one_364 = 1.0f;
-
+/**
+ * Door animation callback, closing for the w_bero exit to gon_01:
+ * rotates map objects "door01" and "door02" about Y by 0.389 and -0.389 times the value in LW(0),
+ * so the two leaves swing opposite ways.
+ */
 static EVT_BEGIN(door01_close)
     MULTIPLY_FLOAT(LW(0), FLOAT(0.38867188f))
     CALL(evt_mapobj_rotate, 1, STRING("door01"), 0, LW(0), 0)
@@ -78,6 +26,11 @@ static EVT_BEGIN(door01_close)
     RETURN
 EVT_END()
 
+/**
+ * Door animation callback, opening for the w_bero exit to gon_01:
+ * rotates map objects "door01" and "door02" about Y by -0.389 and 0.389 times the value in LW(0),
+ * so the two leaves swing opposite ways.
+ */
 static EVT_BEGIN(door01_open)
     MULTIPLY_FLOAT(LW(0), FLOAT(-0.38867188f))
     CALL(evt_mapobj_rotate, 1, STRING("door01"), 0, LW(0), 0)
@@ -86,25 +39,34 @@ static EVT_BEGIN(door01_open)
     RETURN
 EVT_END()
 
+/**
+ * Door animation callback, closing for the e_bero exit to gon_03:
+ * rotates map object "door03" about Y by -0.444 times the value in LW(0).
+ */
 static EVT_BEGIN(door02_close)
     MULTIPLY_FLOAT(LW(0), FLOAT(-0.44433594f))
     CALL(evt_mapobj_rotate, 1, STRING("door03"), 0, LW(0), 0)
     RETURN
 EVT_END()
 
+/**
+ * Door animation callback, opening for the e_bero exit to gon_03:
+ * rotates map object "door03" about Y by 0.444 times the value in LW(0).
+ */
 static EVT_BEGIN(door02_open)
     MULTIPLY_FLOAT(LW(0), FLOAT(0.44433594f))
     CALL(evt_mapobj_rotate, 1, STRING("door03"), 0, LW(0), 0)
     RETURN
 EVT_END()
 
+/** Exits (beros) of this room: w_bero to gon_01, e_bero to gon_03 and w_bero2 to gon_01. */
 static BeroEntry bero_entry_data[] = {
     {
         "w_bero", // hitName
         1, // type
         12, // sfxId
-        20000, // directionId
-        100000, // centerPosition
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         NULL, // enterEvent
@@ -121,8 +83,8 @@ static BeroEntry bero_entry_data[] = {
         "e_bero", // hitName
         1, // type
         12, // sfxId
-        20000, // directionId
-        100000, // centerPosition
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         NULL, // enterEvent
@@ -138,8 +100,8 @@ static BeroEntry bero_entry_data[] = {
     {
         "w_bero2", // hitName
         0, 0, // type..sfxId
-        20000, // directionId
-        100000, // centerPosition
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         NULL, // enterEvent
@@ -154,12 +116,17 @@ static BeroEntry bero_entry_data[] = {
     {0},
 };
 
+/**
+ * Map init for gon_02 (first hall): sets up the doors, castle music and reverb,
+ * five dormant Dry Bones (karon) NPCs lying on the floor that are not yet active,
+ * and the Power Bounce badge block.
+ */
 EVT_BEGIN(gon_02_init_evt)
     SET_VALUE(LW(0), PTR(bero_entry_data))
     CALL(evt_bero_get_info)
-    CALL_CHILD(PTR(evt_bero_info_run))
-    CALL(evt_snd_bgmon, 512, STRING("BGM_STG1_GON1"))
-    CALL(evt_snd_envon, 272, STRING("ENV_STG1_GON1"))
+    CALL_CHILD(evt_bero_info_run)
+    CALL(evt_snd_bgmon, PSND_FADE_OUT, STRING("BGM_STG1_GON1"))
+    CALL(evt_snd_envon, PSND_FADE_RESTART | PSND_FADE_IN, STRING("ENV_STG1_GON1"))
     CALL(evt_snd_set_rev_mode, 2)
     CALL(evt_npc_change_fbat_mode, 1)
     CALL(evt_npc_entry, STRING("\"カロン00\""), STRING("c_karon_g"))
@@ -167,8 +134,8 @@ EVT_BEGIN(gon_02_init_evt)
     CALL(evt_npc_set_rotate, STRING("\"カロン00\""), 0, 0, 0)
     CALL(evt_npc_set_anim, STRING("\"カロン00\""), STRING("KRN_Z_2"))
     CALL(evt_npc_pera_onoff, STRING("\"カロン00\""), 0)
-    CALL(evt_npc_flag_onoff, 0, STRING("\"カロン00\""), 1048576)
-    CALL(evt_npc_flag_onoff, 1, STRING("\"カロン00\""), 33554432)
+    CALL(evt_npc_flag_onoff, 0, STRING("\"カロン00\""), NPC_FLAG_NO_AUTO_UPDATE)
+    CALL(evt_npc_flag_onoff, 1, STRING("\"カロン00\""), NPC_FLAG_NO_BILLBOARD)
     CALL(evt_npc_set_width, STRING("\"カロン00\""), 30)
     CALL(evt_npc_set_height, STRING("\"カロン00\""), 7)
     CALL(evt_npc_entry, STRING("\"カロン01\""), STRING("c_karon_g"))
@@ -176,8 +143,8 @@ EVT_BEGIN(gon_02_init_evt)
     CALL(evt_npc_set_rotate, STRING("\"カロン01\""), 0, 180, 0)
     CALL(evt_npc_set_anim, STRING("\"カロン01\""), STRING("KRN_Z_2"))
     CALL(evt_npc_pera_onoff, STRING("\"カロン01\""), 0)
-    CALL(evt_npc_flag_onoff, 0, STRING("\"カロン01\""), 1048576)
-    CALL(evt_npc_flag_onoff, 1, STRING("\"カロン01\""), 33554432)
+    CALL(evt_npc_flag_onoff, 0, STRING("\"カロン01\""), NPC_FLAG_NO_AUTO_UPDATE)
+    CALL(evt_npc_flag_onoff, 1, STRING("\"カロン01\""), NPC_FLAG_NO_BILLBOARD)
     CALL(evt_npc_set_width, STRING("\"カロン01\""), 30)
     CALL(evt_npc_set_height, STRING("\"カロン01\""), 7)
     CALL(evt_npc_entry, STRING("\"カロン02\""), STRING("c_karon_g"))
@@ -185,12 +152,12 @@ EVT_BEGIN(gon_02_init_evt)
     CALL(evt_npc_set_rotate, STRING("\"カロン02\""), 0, 0, 0)
     CALL(evt_npc_set_anim, STRING("\"カロン02\""), STRING("KRN_Z_2"))
     CALL(evt_npc_pera_onoff, STRING("\"カロン02\""), 0)
-    CALL(evt_npc_flag_onoff, 0, STRING("\"カロン02\""), 1048576)
-    CALL(evt_npc_flag_onoff, 1, STRING("\"カロン02\""), 33554432)
+    CALL(evt_npc_flag_onoff, 0, STRING("\"カロン02\""), NPC_FLAG_NO_AUTO_UPDATE)
+    CALL(evt_npc_flag_onoff, 1, STRING("\"カロン02\""), NPC_FLAG_NO_BILLBOARD)
     CALL(evt_npc_set_width, STRING("\"カロン02\""), 30)
     CALL(evt_npc_set_height, STRING("\"カロン02\""), 7)
     CALL(evt_npc_entry, STRING("\"カロン03\""), STRING("c_karon_g"))
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
     CALL(evt_npc_set_position, STRING("\"カロン03\""), 360, 0, -33)
 #else
     CALL(evt_npc_set_position, STRING("\"カロン03\""), 310, 0, -33)
@@ -198,8 +165,8 @@ EVT_BEGIN(gon_02_init_evt)
     CALL(evt_npc_set_rotate, STRING("\"カロン03\""), 0, 180, 0)
     CALL(evt_npc_set_anim, STRING("\"カロン03\""), STRING("KRN_Z_2"))
     CALL(evt_npc_pera_onoff, STRING("\"カロン03\""), 0)
-    CALL(evt_npc_flag_onoff, 0, STRING("\"カロン03\""), 1048576)
-    CALL(evt_npc_flag_onoff, 1, STRING("\"カロン03\""), 33554432)
+    CALL(evt_npc_flag_onoff, 0, STRING("\"カロン03\""), NPC_FLAG_NO_AUTO_UPDATE)
+    CALL(evt_npc_flag_onoff, 1, STRING("\"カロン03\""), NPC_FLAG_NO_BILLBOARD)
     CALL(evt_npc_set_width, STRING("\"カロン03\""), 30)
     CALL(evt_npc_set_height, STRING("\"カロン03\""), 7)
     CALL(evt_npc_entry, STRING("\"カロン04\""), STRING("c_karon_g"))
@@ -207,12 +174,11 @@ EVT_BEGIN(gon_02_init_evt)
     CALL(evt_npc_set_rotate, STRING("\"カロン04\""), 0, 0, 0)
     CALL(evt_npc_set_anim, STRING("\"カロン04\""), STRING("KRN_Z_2"))
     CALL(evt_npc_pera_onoff, STRING("\"カロン04\""), 0)
-    CALL(evt_npc_flag_onoff, 0, STRING("\"カロン04\""), 1048576)
-    CALL(evt_npc_flag_onoff, 1, STRING("\"カロン04\""), 33554432)
+    CALL(evt_npc_flag_onoff, 0, STRING("\"カロン04\""), NPC_FLAG_NO_AUTO_UPDATE)
+    CALL(evt_npc_flag_onoff, 1, STRING("\"カロン04\""), NPC_FLAG_NO_BILLBOARD)
     CALL(evt_npc_set_width, STRING("\"カロン04\""), 30)
     CALL(evt_npc_set_height, STRING("\"カロン04\""), 7)
     CALL(evt_map_playanim, STRING("hokori"), 1, 0)
-    CALL(evt_mobj_badgeblk, STRING("m\0\0"), 200, 60, -50, 242, 0, GSWF(1502), 1)
+    CALL(evt_mobj_badgeblk, STRING("m"), 200, 60, -50, ITEM_POWER_BOUNCE, 0, GSWF(GSWF_GON02_POWER_BOUNCE_BLOCK_HIT), 1)
     RETURN
 EVT_END()
-

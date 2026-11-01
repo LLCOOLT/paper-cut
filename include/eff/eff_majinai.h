@@ -1,3 +1,4 @@
+// eff_majinai.c: majinai (spell) effect entry (effMajinaiEntry), its work struct and main/draw callbacks.
 #pragma once
 
 #include "driver/camdrv.h"
@@ -15,5 +16,3 @@ typedef struct EffMajinaiWork {
 } EffMajinaiWork;
 
 EffectEntry* effMajinaiEntry(s32 type, f32 x, f32 y, f32 z);
-void effMajinaiMain(EffectEntry* effect);
-void effMajinaiDisp(CameraId cameraId, EffectEntry* effect);

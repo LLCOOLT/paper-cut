@@ -1,26 +1,12 @@
+// Battle unit for a Toad (キノピオ) acting in Flurrie's stage play in the epilogue (nok.rel); it only plays its
+// scripted part.
+
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
+#include "battle/battle_sub.h"
+#include "battle/battle_event_cmd.h"
+#include "version.h"
 
-#pragma force_active on
-
-USER_FUNC(btlevtcmd_AnimeChangePoseFromTable);
-USER_FUNC(btlevtcmd_SetEventWait);
-USER_FUNC(btlevtcmd_StartWaitEvent);
-
-f32 fd_act_kinopio_negone_one_374[2] __attribute__((aligned(8)));
-f32 fd_act_kinopio_neg_one_382;
-f32 fd_act_kinopio___local_PI_383;
-f32 fd_act_kinopio___local_3PIO2_385;
-f32 fd_act_kinopio_one_negone_373[2] __attribute__((aligned(8)));
-f32 fd_act_kinopio___local_PIO2_384;
-f32 fd_act_kinopio_one_381;
-f32 fd_act_kinopio_negone_one_360[2] __attribute__((aligned(8)));
-f32 fd_act_kinopio_neg_one_365;
-f32 fd_act_kinopio___local_PI_366;
-f32 fd_act_kinopio___local_3PIO2_368;
-f32 fd_act_kinopio_one_negone_359[2] __attribute__((aligned(8)));
-f32 fd_act_kinopio___local_PIO2_367;
-f32 fd_act_kinopio_one_364;
 BattleUnitKind unit_act_kinopio;
 static BattleUnitDefense defence;
 static BattleUnitDefenseAttr defence_attr;
@@ -29,39 +15,12 @@ static PoseTableEntry pose_table[7];
 static BattleDataEntry data_table[1];
 static BattleUnitKindPart parts[1];
 static EvtWord init_event[9];
-static EvtWord damage_event[2];
-static EvtWord phase_event[2];
-static EvtWord attack_event[2];
 static EvtWord wait_event[6];
 
-f32 fd_act_kinopio_negone_one_374[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_act_kinopio_neg_one_382 = -1.0f;
-
-f32 fd_act_kinopio___local_PI_383 = 3.1415927f;
-
-f32 fd_act_kinopio___local_3PIO2_385 = 4.712389f;
-
-f32 fd_act_kinopio_one_negone_373[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_act_kinopio___local_PIO2_384 = 1.5707964f;
-
-f32 fd_act_kinopio_one_381 = 1.0f;
-
-f32 fd_act_kinopio_negone_one_360[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_act_kinopio_neg_one_365 = -1.0f;
-
-f32 fd_act_kinopio___local_PI_366 = 3.1415927f;
-
-f32 fd_act_kinopio___local_3PIO2_368 = 4.712389f;
-
-f32 fd_act_kinopio_one_negone_359[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_act_kinopio___local_PIO2_367 = 1.5707964f;
-
-f32 fd_act_kinopio_one_364 = 1.0f;
-
+/**
+ * Unit kind of the Toad actor (HP 10, level 1):
+ * its size, offsets, damage sounds, status vulnerability, parts and init event.
+ */
 BattleUnitKind unit_act_kinopio = {
     185,
     "btl_un_act_kinopio",
@@ -128,50 +87,68 @@ BattleUnitKind unit_act_kinopio = {
     data_table,
 };
 
+/** Defence of the Toad actor: no damage reduction. */
 static BattleUnitDefense defence = {{0, 0, 0, 0, 0}};
 
+/** Element reactions of the Toad actor: no special reaction to any element. */
 static BattleUnitDefenseAttr defence_attr = {{0, 0, 0, 0, 0}};
 
+/**
+ * Status vulnerability of the Toad actor (percent chance to take each status):
+ * immune to sleep, stop, dizzy, poison, confusion, electric shock, burn, freeze, growing huge, shrinking,
+ * attack up, attack down, defence up, defence down, allergy, fright, gale force, speed up, slow, dodgy,
+ * invisibility and instant kill.
+ */
 static StatusVulnerability regist = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
+/** Pose table of the Toad actor: maps each battle pose to the animation it plays (KNP_* animations). */
 static PoseTableEntry pose_table[] = {
     {28, "KNP_S_1"},
     {31, "KNP_S_1"},
     {39, "KNP_D_1"},
     {42, "KNP_R_1"},
     {40, "KNP_W_1"},
-    {65, "KNP_T_1"},
-    {69, "KNP_S_1"},
+    {BTL_POSE_TALK, "KNP_T_1"},
+    {BTL_POSE_STAY_DEFAULT, "KNP_S_1"},
 };
 
+/** Data table of the Toad actor: empty; it has no event hooks. */
 static BattleDataEntry data_table[] = {
     {0, NULL},
 };
 
+/** Body part of the Toad actor (model c_kinopio): hit position, defences, attributes and pose table. */
 static BattleUnitKindPart parts[] = {
-    {1, "btl_un_teresa", "c_kinopio\0\0", 0.0f, 0.0f, 0.0f, 15.0f, 25.0f, 0.0f, 0.0f, 30.0f, 0.0f, 20, 30, 255, &defence, &defence_attr, 0x9, 0, pose_table},
+    {1, "btl_un_teresa", "c_kinopio", 0.0f, 0.0f, 0.0f, 15.0f, 25.0f, 0.0f, 0.0f, 30.0f, 0.0f, 20, 30, 255, &defence, &defence_attr, PART_ATTR_MAIN | PART_ATTR_GUARD_COVER, 0, pose_table},
 };
 
+/**
+ * Init event of the Toad stage actor: installs only its wait event and starts it;
+ * this unit never attacks or takes damage.
+ */
 static EVT_BEGIN(init_event)
-    CALL(btlevtcmd_SetEventWait, -2, PTR(wait_event))
-    CALL(btlevtcmd_StartWaitEvent, -2)
+    CALL(btlevtcmd_SetEventWait, BTL_UNIT_SELF, PTR(wait_event))
+    CALL(btlevtcmd_StartWaitEvent, BTL_UNIT_SELF)
     RETURN
 EVT_END()
 
+/** Damage event of the Toad stage actor: does nothing. */
 static EVT_BEGIN(damage_event)
     RETURN
 EVT_END()
 
+/** Phase event of the Toad stage actor: does nothing. */
 static EVT_BEGIN(phase_event)
     RETURN
 EVT_END()
 
+/** Attack event of the Toad stage actor: does nothing. */
 static EVT_BEGIN(attack_event)
     RETURN
 EVT_END()
 
+/** Idle event of the Toad stage actor: shows the unit's table pose for state 1. */
 static EVT_BEGIN(wait_event)
-    CALL(btlevtcmd_AnimeChangePoseFromTable, -2, 1)
+    CALL(btlevtcmd_AnimeChangePoseFromTable, BTL_UNIT_SELF, 1)
     RETURN
 EVT_END()
-

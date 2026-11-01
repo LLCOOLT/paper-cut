@@ -1,122 +1,58 @@
+// dou_03 (洞窟, Pirate's Grotto): hub room with the water gate that the Gate Handle operates (story 248).
+// Drifting barrels and bottles; doors to dou_04, dou_05, dou_09 and dou_12.
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
 #include "evt/evt_bero.h"
 #include "evt/evt_damage.h"
 #include "driver/hitdrv.h"
 #include "mario/mario_pouch.h"
+#include "evt/evt_cam.h"
+#include "evt/evt_case.h"
+#include "evt/evt_hit.h"
+#include "evt/evt_map.h"
+#include "evt/evt_mario.h"
+#include "evt/evt_mobj.h"
+#include "evt/evt_msg.h"
+#include "evt/evt_party.h"
+#include "evt/evt_pouch.h"
+#include "evt/evt_snd.h"
+#include "evt/evt_sub.h"
+#include "evt/evt_window.h"
+#include "dou.h"
+#include "evt/evt_story.h"
+#include "driver/mapdrv.h"
+#include "driver/casedrv.h"
 
-#pragma force_active on
-
-USER_FUNC(evt_bero_get_info);
-USER_FUNC(evt_cam3d_evt_off);
-USER_FUNC(evt_cam3d_evt_set);
-USER_FUNC(evt_cam_shake);
-USER_FUNC(evt_dou_normal_puka);
-USER_FUNC(evt_hit_bind_mapobj);
-USER_FUNC(evt_hit_bind_update);
-USER_FUNC(evt_hit_damage_return_set);
-USER_FUNC(evt_hitobj_attr_onoff);
-USER_FUNC(evt_hitobj_onoff);
-USER_FUNC(evt_map_checkanim);
-USER_FUNC(evt_map_entry_airport_harbor);
-USER_FUNC(evt_map_pauseanim);
-USER_FUNC(evt_map_playanim);
-USER_FUNC(evt_mapobj_flag_onoff);
-USER_FUNC(evt_mapobj_get_position);
-USER_FUNC(evt_mapobj_rotate);
-USER_FUNC(evt_mapobj_trans);
-USER_FUNC(evt_mario_key_onoff);
-USER_FUNC(evt_mobj_kururing_floor);
-USER_FUNC(evt_msg_print);
-USER_FUNC(evt_msg_print_party);
-USER_FUNC(evt_msg_toge);
-USER_FUNC(evt_party_run);
-USER_FUNC(evt_party_stop);
-USER_FUNC(evt_pouch_check_item);
-USER_FUNC(evt_pouch_remove_item);
-USER_FUNC(evt_run_case_evt);
-USER_FUNC(evt_snd_bgmon);
-USER_FUNC(evt_snd_envon);
-USER_FUNC(evt_snd_set_rev_mode);
-USER_FUNC(evt_snd_sfxoff);
-USER_FUNC(evt_snd_sfxon);
-USER_FUNC(evt_snd_sfxon_3d);
-USER_FUNC(evt_sub_intpl_msec_get_value);
-USER_FUNC(evt_sub_intpl_msec_init);
-USER_FUNC(evt_sub_random);
-USER_FUNC(evt_win_item_select);
-
-f32 fd_dou_03_negone_one_374[2] __attribute__((aligned(8)));
-f32 fd_dou_03_neg_one_382;
-f32 fd_dou_03___local_PI_383;
-f32 fd_dou_03___local_3PIO2_385;
-f32 fd_dou_03_one_negone_373[2] __attribute__((aligned(8)));
-f32 fd_dou_03___local_PIO2_384;
-f32 fd_dou_03_one_381;
-f32 fd_dou_03_negone_one_360[2] __attribute__((aligned(8)));
-f32 fd_dou_03_neg_one_365;
-f32 fd_dou_03___local_PI_366;
-f32 fd_dou_03___local_3PIO2_368;
-f32 fd_dou_03_one_negone_359[2] __attribute__((aligned(8)));
-f32 fd_dou_03___local_PIO2_367;
-f32 fd_dou_03_one_364;
-EvtWord dou_03_custom[10];
+extern EvtWord dou_03_custom[];
 static BeroEntry bero_entry_data[8];
-EvtWord watergate_handle_init[34];
+extern EvtWord watergate_handle_init[];
 static s32 itemsel_table[2];
-EvtWord watergate_lever[20];
-EvtWord watergate_geer_small[20];
-EvtWord watergate_geer_large[20];
-EvtWord nagare_taru[38];
-EvtWord nagare_taru_se[45];
-EvtWord nagare_bin[33];
-EvtWord watergate_handle[251];
-static EvtWord dou_puka_event_main0[60];
-static EvtWord dou_puka_event_main1[60];
-static EvtWord dou_puka_event_main2[60];
+extern EvtWord watergate_lever[];
+extern EvtWord watergate_geer_small[];
+extern EvtWord watergate_geer_large[];
+extern EvtWord nagare_taru[];
+extern EvtWord nagare_taru_se[];
+extern EvtWord nagare_bin[];
+extern EvtWord watergate_handle[];
 static HitDamageReturn hitDmgRetPoints[18];
-EvtWord dou_03_init_evt[130];
 
-f32 fd_dou_03_negone_one_374[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_dou_03_neg_one_382 = -1.0f;
-
-f32 fd_dou_03___local_PI_383 = 3.1415927f;
-
-f32 fd_dou_03___local_3PIO2_385 = 4.712389f;
-
-f32 fd_dou_03_one_negone_373[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_dou_03___local_PIO2_384 = 1.5707964f;
-
-f32 fd_dou_03_one_381 = 1.0f;
-
-f32 fd_dou_03_negone_one_360[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_dou_03_neg_one_365 = -1.0f;
-
-f32 fd_dou_03___local_PI_366 = 3.1415927f;
-
-f32 fd_dou_03___local_3PIO2_368 = 4.712389f;
-
-f32 fd_dou_03_one_negone_359[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_dou_03___local_PIO2_367 = 1.5707964f;
-
-f32 fd_dou_03_one_364 = 1.0f;
-
+/** Enter event of the dou_03 doors: switches the "on_off" hit object on and lets Mario through. */
 EVT_BEGIN(dou_03_custom)
     CALL(evt_hitobj_onoff, STRING("on_off"), 1, 0)
     SET_VALUE(LW(0), 0)
     RETURN
 EVT_END()
 
+/**
+ * Exits (beros) of this room: w_bero_1 to dou_12, w_bero_2 to dou_12, w_bero_3 to dou_04, e_bero_1 to dou_05,
+ * e_bero_2 to dou_05, e_bero_3 to dou_05 and s_bero to dou_09.
+ */
 static BeroEntry bero_entry_data[] = {
     {
         "w_bero_1", // hitName
         0, 0, // type..sfxId
-        20000, // directionId
-        100000, // centerPosition
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         NULL, // enterEvent
@@ -131,8 +67,8 @@ static BeroEntry bero_entry_data[] = {
     {
         "w_bero_2", // hitName
         0, 0, // type..sfxId
-        20000, // directionId
-        100000, // centerPosition
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         (s32*)dou_03_custom, // enterEvent
@@ -147,8 +83,8 @@ static BeroEntry bero_entry_data[] = {
     {
         "w_bero_3", // hitName
         0, 0, // type..sfxId
-        20000, // directionId
-        100000, // centerPosition
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         NULL, // enterEvent
@@ -163,8 +99,8 @@ static BeroEntry bero_entry_data[] = {
     {
         "e_bero_1", // hitName
         0, 0, // type..sfxId
-        20000, // directionId
-        100000, // centerPosition
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         (s32*)dou_03_custom, // enterEvent
@@ -179,8 +115,8 @@ static BeroEntry bero_entry_data[] = {
     {
         "e_bero_2", // hitName
         0, 0, // type..sfxId
-        20000, // directionId
-        100000, // centerPosition
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         NULL, // enterEvent
@@ -195,8 +131,8 @@ static BeroEntry bero_entry_data[] = {
     {
         "e_bero_3", // hitName
         0, 0, // type..sfxId
-        20000, // directionId
-        100000, // centerPosition
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         NULL, // enterEvent
@@ -211,8 +147,8 @@ static BeroEntry bero_entry_data[] = {
     {
         "s_bero", // hitName
         0, 0, // type..sfxId
-        20000, // directionId
-        100000, // centerPosition
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         NULL, // enterEvent
@@ -227,23 +163,29 @@ static BeroEntry bero_entry_data[] = {
     {0},
 };
 
+/**
+ * Sets up the floodgate at map load: before STORY_STG5_22_FLOODGATE the winch lever is hidden
+ * and the exit behind the gate (s_bero) is switched off; afterwards the gate is already up.
+ */
 EVT_BEGIN(watergate_handle_init)
-    IF_INT_LESS(GSW(0), 248)
-        CALL(evt_mapobj_flag_onoff, 0, 1, STRING("S_reba"), 1)
+    IF_INT_LESS(GSW(GSW_STORY_PROGRESS), STORY_STG5_22_FLOODGATE)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_SINGLE, 1, STRING("S_reba"), MAPOBJ_FLAG_HIDE)
         SET_VALUE(LW(0), STRING("s_bero"))
-        CALL_CHILD(PTR(bero_case_switch_off))
+        CALL_CHILD(bero_case_switch_off)
         CALL(evt_hitobj_attr_onoff, 1, 0, STRING("s_bero"), 128)
         CALL(evt_hitobj_onoff, STRING("A_reba"), 1, 0)
-        ELSE
+    ELSE
         CALL(evt_map_playanim, STRING("mon_up"), 0, 0)
     END_IF
     RETURN
 EVT_END()
 
+/** Items offered in the item menu at the floodgate winch: only the Gate Handle. */
 static s32 itemsel_table[] = {
     ITEM_GATE_HANDLE, -1,
 };
 
+/** Turns the floodgate winch lever (S_reba) forever, 2 degrees per frame. */
 EVT_BEGIN(watergate_lever)
     SET_VALUE(LW(0), 0)
     LOOP(0)
@@ -254,6 +196,7 @@ EVT_BEGIN(watergate_lever)
     RETURN
 EVT_END()
 
+/** Turns the small winch gear (S_zenmai1) forever, 2 degrees per frame. */
 EVT_BEGIN(watergate_geer_small)
     SET_VALUE(LW(0), 0)
     LOOP(0)
@@ -264,6 +207,7 @@ EVT_BEGIN(watergate_geer_small)
     RETURN
 EVT_END()
 
+/** Turns the large winch gear (S_zenmai2) forever, 4 degrees per frame the other way. */
 EVT_BEGIN(watergate_geer_large)
     SET_VALUE(LW(0), 0)
     LOOP(0)
@@ -274,6 +218,10 @@ EVT_BEGIN(watergate_geer_large)
     RETURN
 EVT_END()
 
+/**
+ * After the floodgate opens, the barrel (S_taru) is swept away along Z for 2 seconds and
+ * then hidden along with its hit area.
+ */
 EVT_BEGIN(nagare_taru)
     CALL(evt_sub_intpl_msec_init, 1, 0, 100, 2000)
     LOOP(0)
@@ -284,11 +232,12 @@ EVT_BEGIN(nagare_taru)
         END_IF
         WAIT_FRAMES(1)
     END_LOOP
-    CALL(evt_mapobj_flag_onoff, 1, 1, STRING("S_taru"), 1)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("S_taru"), MAPOBJ_FLAG_HIDE)
     CALL(evt_hitobj_onoff, STRING("A_taru"), 1, 0)
     RETURN
 EVT_END()
 
+/** Plays the barrel-moving sound at the barrel's position three times, a second apart. */
 EVT_BEGIN(nagare_taru_se)
     CALL(evt_mapobj_get_position, STRING("S_taru"), LW(0), LW(1), LW(2))
     CALL(evt_snd_sfxon_3d, STRING("SFX_STG5_BARREL_MOVE1"), LW(0), LW(1), LW(2), LW(9))
@@ -301,6 +250,7 @@ EVT_BEGIN(nagare_taru_se)
     RETURN
 EVT_END()
 
+/** After the floodgate opens, the bottle (S_bin) is swept away along Z for 1.2 seconds and then hidden. */
 EVT_BEGIN(nagare_bin)
     CALL(evt_sub_intpl_msec_init, 1, 0, 100, 1200)
     LOOP(0)
@@ -311,13 +261,20 @@ EVT_BEGIN(nagare_bin)
         END_IF
         WAIT_FRAMES(1)
     END_LOOP
-    CALL(evt_mapobj_flag_onoff, 1, 1, STRING("S_bin"), 1)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("S_bin"), MAPOBJ_FLAG_HIDE)
     RETURN
 EVT_END()
 
+/**
+ * Talk-to-winch event (A_makimaki): before the floodgate is raised,
+ * asks for the Gate Handle (a message if Mario does not have one, otherwise the item menu), then fits it,
+ * cranks the winch with shaking and gear sounds, raises the gate, sweeps away the barrel and bottle,
+ * and the partner comments (stg5_dou_02 and 03).
+ * Sets STORY_STG5_22_FLOODGATE and re-enables the exit; afterwards it only gives a short message.
+ */
 EVT_BEGIN(watergate_handle)
-    IF_INT_LESS(GSW(0), 248)
-        CALL(evt_pouch_check_item, 72, LW(0))
+    IF_INT_LESS(GSW(GSW_STORY_PROGRESS), STORY_STG5_22_FLOODGATE)
+        CALL(evt_pouch_check_item, ITEM_GATE_HANDLE, LW(0))
         IF_INT_EQUAL(LW(0), 0)
             CALL(evt_mario_key_onoff, 0)
             CALL(evt_msg_toge, 1, 0, 0, 0)
@@ -325,14 +282,18 @@ EVT_BEGIN(watergate_handle)
             CALL(evt_mario_key_onoff, 1)
             RETURN
         END_IF
+#if VERSION <= VERSION_DEMO_JP
+        CALL(evt_win_item_select, PTR(itemsel_table), LW(0))
+#else
         CALL(evt_win_item_select, 0, PTR(itemsel_table), LW(0), 0)
+#endif
         IF_INT_EQUAL(LW(0), -1)
             RETURN
         END_IF
         CALL(evt_mario_key_onoff, 0)
-        CALL(evt_mapobj_flag_onoff, 0, 0, STRING("S_reba"), 1)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_SINGLE, 0, STRING("S_reba"), MAPOBJ_FLAG_HIDE)
         CALL(evt_hitobj_onoff, STRING("A_reba"), 1, 1)
-        CALL(evt_pouch_remove_item, 72, LW(0))
+        CALL(evt_pouch_remove_item, ITEM_GATE_HANDLE, LW(0))
         CALL(evt_snd_sfxon, STRING("SFX_STG5_FLOODGATE_SHAKE1"), LW(10))
         CALL(evt_cam_shake, 4, FLOAT(0.009765625f), FLOAT(0.0f), 500)
         WAIT_MS(500)
@@ -362,10 +323,10 @@ EVT_BEGIN(watergate_handle)
         CALL(evt_mapobj_get_position, STRING("s03_mon"), LW(0), LW(1), LW(2))
         CALL(evt_snd_sfxon_3d, STRING("SFX_STG5_FLOODGATE_UP2"), LW(0), LW(1), LW(2), LW(9))
         DELETE_EVENT(GW(10))
-        SPAWN_EVENT(PTR(nagare_taru))
-        SPAWN_EVENT(PTR(nagare_taru_se))
+        SPAWN_EVENT(nagare_taru)
+        SPAWN_EVENT(nagare_taru_se)
         DELETE_EVENT(GW(11))
-        SPAWN_EVENT(PTR(nagare_bin))
+        SPAWN_EVENT(nagare_bin)
         WAIT_MS(2000)
         CALL(evt_cam3d_evt_off, 300, 11)
         WAIT_MS(500)
@@ -373,15 +334,19 @@ EVT_BEGIN(watergate_handle)
         CALL(evt_snd_sfxon, STRING("SFX_STG5_ELMOS_VOICE1"), 0)
         CALL(evt_msg_print, 0, STRING("stg5_dou_02"), 0, 0)
         WAIT_MS(500)
+#if VERSION >= VERSION_JP
         CALL(evt_party_stop, 0)
+#endif
         CALL(evt_msg_print_party, STRING("stg5_dou_03"))
+#if VERSION >= VERSION_JP
         CALL(evt_party_run, 0)
+#endif
         SET_VALUE(LW(0), STRING("s_bero"))
-        CALL_CHILD(PTR(bero_case_switch_on))
+        CALL_CHILD(bero_case_switch_on)
         CALL(evt_hitobj_attr_onoff, 1, 1, STRING("s_bero"), 128)
-        SET_VALUE(GSW(0), 248)
+        SET_VALUE(GSW(GSW_STORY_PROGRESS), STORY_STG5_22_FLOODGATE)
         CALL(evt_mario_key_onoff, 1)
-        ELSE
+    ELSE
         CALL(evt_mario_key_onoff, 0)
         CALL(evt_msg_toge, 1, 0, 0, 0)
         CALL(evt_msg_print, 0, STRING("stg5_dou_03_after"), 0, 0)
@@ -390,6 +355,11 @@ EVT_BEGIN(watergate_handle)
     RETURN
 EVT_END()
 
+/**
+ * Bobbing loop for floating object 0: binds the hit area in LW(1) (if any) to the map object in LW(0),
+ * waits a random 0.2 to 0.6 seconds, then every 130 ms steps through the 16 heights of the bobbing table
+ * (evt_dou_normal_puka), moves the object to that height and updates the hit area.
+ */
 static EVT_BEGIN(dou_puka_event_main0)
     IF_INT_NOT_EQUAL(LW(1), 0)
         CALL(evt_hit_bind_mapobj, LW(1), LW(0))
@@ -415,6 +385,11 @@ static EVT_BEGIN(dou_puka_event_main0)
     RETURN
 EVT_END()
 
+/**
+ * Bobbing loop for floating object 1: binds the hit area in LW(1) (if any) to the map object in LW(0),
+ * waits a random 0.2 to 0.6 seconds, then every 130 ms steps through the 16 heights of the bobbing table
+ * (evt_dou_normal_puka), moves the object to that height and updates the hit area.
+ */
 static EVT_BEGIN(dou_puka_event_main1)
     IF_INT_NOT_EQUAL(LW(1), 0)
         CALL(evt_hit_bind_mapobj, LW(1), LW(0))
@@ -440,6 +415,11 @@ static EVT_BEGIN(dou_puka_event_main1)
     RETURN
 EVT_END()
 
+/**
+ * Bobbing loop for floating object 2: binds the hit area in LW(1) (if any) to the map object in LW(0),
+ * waits a random 0.2 to 0.6 seconds, then every 130 ms steps through the 16 heights of the bobbing table
+ * (evt_dou_normal_puka), moves the object to that height and updates the hit area.
+ */
 static EVT_BEGIN(dou_puka_event_main2)
     IF_INT_NOT_EQUAL(LW(1), 0)
         CALL(evt_hit_bind_mapobj, LW(1), LW(0))
@@ -465,6 +445,9 @@ static EVT_BEGIN(dou_puka_event_main2)
     RETURN
 EVT_END()
 
+/**
+ * Hazard-water floors of this room (map hit names) and the point each puts Mario back at after he is bitten.
+ */
 static HitDamageReturn hitDmgRetPoints[] = {
     {"mod_01", {0.0f, -1000.0f, 0.0f}},
     {"mod_02", {0.0f, -1000.0f, 0.0f}},
@@ -486,25 +469,31 @@ static HitDamageReturn hitDmgRetPoints[] = {
     {0},
 };
 
+/**
+ * Init script of dou_03, the hub room with the floodgate:
+ * music and ambience, exits, waves, a Star Piece panel, the winch event, the gate state by story progress,
+ * drifting barrel and bottle (bobbing platforms until the gate opens),
+ * the ship-change platform and the boat's bobbing.
+ */
 EVT_BEGIN(dou_03_init_evt)
-    CALL(evt_snd_bgmon, 512, STRING("BGM_STG5_DOU1"))
-    CALL(evt_snd_envon, 272, STRING("ENV_STG5_DOU4"))
+    CALL(evt_snd_bgmon, PSND_FADE_OUT, STRING("BGM_STG5_DOU1"))
+    CALL(evt_snd_envon, PSND_FADE_RESTART | PSND_FADE_IN, STRING("ENV_STG5_DOU4"))
     CALL(evt_snd_set_rev_mode, 2)
     SET_VALUE(LW(0), PTR(bero_entry_data))
     CALL(evt_bero_get_info)
-    CALL_CHILD(PTR(evt_bero_info_run))
+    CALL_CHILD(evt_bero_info_run)
     CALL(evt_map_playanim, STRING("nami"), 1, 0)
     CALL(evt_map_playanim, STRING("moku"), 1, 0)
     CALL(evt_map_playanim, STRING("tubo"), 1, 0)
-    CALL(evt_mobj_kururing_floor, STRING("kururin1"), 450, 275, -550, STRING("s03_iwadan2"), 125, GSWF(5645))
-    CALL(evt_run_case_evt, 9, 1, STRING("A_makimaki"), 0, PTR(watergate_handle), 0)
-    SPAWN_EVENT(PTR(watergate_handle_init))
-    IF_INT_GREATER_OR_EQUAL(GSW(0), 245)
+    CALL(evt_mobj_kururing_floor, STRING("kururin1"), 450, 275, -550, STRING("s03_iwadan2"), 125, GSWF(GSWF_DOU03_STAR_PIECE_PANEL))
+    CALL(evt_run_case_evt, CASE_COND_FRONT_A, 1, STRING("A_makimaki"), 0, PTR(watergate_handle), 0)
+    SPAWN_EVENT(watergate_handle_init)
+    IF_INT_GREATER_OR_EQUAL(GSW(GSW_STORY_PROGRESS), STORY_STG5_20_THE_BLUE_BLOCK)
         CALL(evt_mapobj_trans, 0, STRING("tetu"), 1, 100, 0)
     END_IF
     CALL(evt_hit_damage_return_set, PTR(hitDmgRetPoints))
-    CALL_CHILD(PTR(evt_gazigazi_entry))
-    IF_INT_LESS(GSW(0), 248)
+    CALL_CHILD(evt_gazigazi_entry)
+    IF_INT_LESS(GSW(GSW_STORY_PROGRESS), STORY_STG5_22_FLOODGATE)
         SET_VALUE(LW(0), STRING("S_taru"))
         SET_VALUE(LW(1), STRING("A_taru"))
         SPAWN_EVENT_GET_ID(PTR(dou_puka_event_main0), LW(10))
@@ -513,15 +502,14 @@ EVT_BEGIN(dou_03_init_evt)
         SET_VALUE(LW(1), 0)
         SPAWN_EVENT_GET_ID(PTR(dou_puka_event_main1), LW(10))
         SET_VALUE(GW(11), LW(10))
-        ELSE
-        CALL(evt_mapobj_flag_onoff, 1, 1, STRING("S_taru"), 1)
+    ELSE
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("S_taru"), MAPOBJ_FLAG_HIDE)
         CALL(evt_hitobj_onoff, STRING("A_taru"), 1, 0)
-        CALL(evt_mapobj_flag_onoff, 1, 1, STRING("S_bin"), 1)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("S_bin"), MAPOBJ_FLAG_HIDE)
     END_IF
     SET_VALUE(LW(0), STRING("s03_fune"))
     SET_VALUE(LW(1), 0)
     SPAWN_EVENT_GET_ID(PTR(dou_puka_event_main2), LW(10))
-    CALL(evt_map_entry_airport_harbor, 1, STRING("S_Ship_Change\0\0"), STRING("Ship_Change"))
+    CALL(evt_map_entry_airport_harbor, 1, STRING("S_Ship_Change"), STRING("Ship_Change"))
     RETURN
 EVT_END()
-

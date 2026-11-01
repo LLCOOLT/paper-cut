@@ -1,85 +1,28 @@
+// jin_09 (ダイム寺院, Creepy Steeple): dripping room with a jump stand and a power-up block; door to jin_10.
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
 #include "evt/evt_bero.h"
+#include "evt/evt_cam.h"
+#include "evt/evt_map.h"
+#include "evt/evt_mario.h"
+#include "evt/evt_mobj.h"
+#include "evt/evt_party.h"
+#include "evt/evt_seq.h"
+#include "evt/evt_snd.h"
+#include "evt/evt_sub.h"
 #include "jin.h"
+#include "evt/evt_story.h"
 
-#pragma force_active on
-
-USER_FUNC(evt_bero_get_info);
-USER_FUNC(evt_bero_mapchange);
-USER_FUNC(evt_cam_road_reset);
-USER_FUNC(evt_kagemario_init);
-USER_FUNC(evt_map_checkanim);
-USER_FUNC(evt_map_playanim);
-USER_FUNC(evt_mario_cont_onoff);
-USER_FUNC(evt_mario_get_party);
-USER_FUNC(evt_mario_get_pos);
-USER_FUNC(evt_mario_jump_jumpstand);
-USER_FUNC(evt_mario_key_onoff);
-USER_FUNC(evt_mario_set_pos);
-USER_FUNC(evt_mobj_jumpstand_red);
-USER_FUNC(evt_mobj_powerupblk);
-USER_FUNC(evt_party_cont_onoff);
-USER_FUNC(evt_party_set_pos);
-USER_FUNC(evt_seq_wait);
-USER_FUNC(evt_snd_bgmon);
-USER_FUNC(evt_snd_envon);
-USER_FUNC(evt_snd_set_rev_mode);
-USER_FUNC(evt_snd_sfxon_3d);
-USER_FUNC(evt_sub_random);
-
-f32 fd_jin_09_negone_one_374[2] __attribute__((aligned(8)));
-f32 fd_jin_09_neg_one_382;
-f32 fd_jin_09___local_PI_383;
-f32 fd_jin_09___local_3PIO2_385;
-f32 fd_jin_09_one_negone_373[2] __attribute__((aligned(8)));
-f32 fd_jin_09___local_PIO2_384;
-f32 fd_jin_09_one_381;
-f32 fd_jin_09_negone_one_360[2] __attribute__((aligned(8)));
-f32 fd_jin_09_neg_one_365;
-f32 fd_jin_09___local_PI_366;
-f32 fd_jin_09___local_3PIO2_368;
-f32 fd_jin_09_one_negone_359[2] __attribute__((aligned(8)));
-f32 fd_jin_09___local_PIO2_367;
-f32 fd_jin_09_one_364;
 static BeroEntry bero_entry_data[2];
-EvtWord jin_09_jumpstand[21];
-EvtWord jin_09_init_evt[214];
+extern EvtWord jin_09_jumpstand[];
 
-f32 fd_jin_09_negone_one_374[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_jin_09_neg_one_382 = -1.0f;
-
-f32 fd_jin_09___local_PI_383 = 3.1415927f;
-
-f32 fd_jin_09___local_3PIO2_385 = 4.712389f;
-
-f32 fd_jin_09_one_negone_373[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_jin_09___local_PIO2_384 = 1.5707964f;
-
-f32 fd_jin_09_one_381 = 1.0f;
-
-f32 fd_jin_09_negone_one_360[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_jin_09_neg_one_365 = -1.0f;
-
-f32 fd_jin_09___local_PI_366 = 3.1415927f;
-
-f32 fd_jin_09___local_3PIO2_368 = 4.712389f;
-
-f32 fd_jin_09_one_negone_359[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_jin_09___local_PIO2_367 = 1.5707964f;
-
-f32 fd_jin_09_one_364 = 1.0f;
-
+/** Doors of this room: the east exit (e_bero) to jin_10. */
 static BeroEntry bero_entry_data[] = {
     {
         "e_bero", // hitName
         0, 0, // type..sfxId
-        20000, // directionId
-        100000, // centerPosition
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         NULL, // enterEvent
@@ -94,6 +37,7 @@ static BeroEntry bero_entry_data[] = {
     {0},
 };
 
+/** Script for the red jump stand: Mario is launched up in an arc by the stand. */
 EVT_BEGIN(jin_09_jumpstand)
     CALL(evt_mario_key_onoff, 0)
     CALL(evt_mario_jump_jumpstand, 0, 0, 0, -10, 700, 0, 50, 0, 0, 1800, 1)
@@ -101,16 +45,21 @@ EVT_BEGIN(jin_09_jumpstand)
     RETURN
 EVT_END()
 
+/**
+ * Creepy Steeple jin_09 map init: sets music, the shadow-Mario tint and the exit,
+ * adds the Shine Sprite power-up block, the random water-drip animations and sounds,
+ * the red jump stand and the drop-in entrance from above.
+ */
 EVT_BEGIN(jin_09_init_evt)
-    CALL(evt_snd_bgmon, 512, STRING("BGM_STG4_JIN1"))
-    CALL(evt_snd_envon, 272, STRING("ENV_STG4_JIN1"))
+    CALL(evt_snd_bgmon, PSND_FADE_OUT, STRING("BGM_STG4_JIN1"))
+    CALL(evt_snd_envon, PSND_FADE_RESTART | PSND_FADE_IN, STRING("ENV_STG4_JIN1"))
     CALL(evt_snd_set_rev_mode, 2)
     CALL(evt_kagemario_init)
     SET_VALUE(LW(0), PTR(bero_entry_data))
     CALL(evt_bero_get_info)
-    CALL_CHILD(PTR(evt_bero_info_run))
-    CALL_CHILD(PTR(evt_usu_kagemario_party_kill))
-    CALL(evt_mobj_powerupblk, STRING("blk00"), -120, 60, 90, 0, GSWF(5550), 0)
+    CALL_CHILD(evt_bero_info_run)
+    CALL_CHILD(evt_usu_kagemario_party_kill)
+    CALL(evt_mobj_powerupblk, STRING("blk00"), -120, 60, 90, 0, GSWF(GSWF_JIN09_SHINE_SPRITE), 0)
     BEGIN_INLINE_EVENT
         LOOP(0)
             CALL(evt_sub_random, 3000, LW(0))
@@ -134,8 +83,8 @@ EVT_BEGIN(jin_09_init_evt)
         END_LOOP
     END_INLINE_EVENT
     CALL(evt_mobj_jumpstand_red, 0, STRING("jumpstand"), 0, 0, 0, PTR(jin_09_jumpstand), 0)
-    IF_INT_NOT_EQUAL(GSWF(2079), 0)
-        SET_VALUE(GSWF(2079), 0)
+    IF_INT_NOT_EQUAL(GSWF(GSWF_STG4_DROP_IN_ENTRANCE), 0)
+        SET_VALUE(GSWF(GSWF_STG4_DROP_IN_ENTRANCE), 0)
         BEGIN_INLINE_EVENT
             CALL(evt_mario_key_onoff, 0)
             CALL(evt_mario_cont_onoff, 0)
@@ -153,7 +102,7 @@ EVT_BEGIN(jin_09_init_evt)
             CALL(evt_mario_key_onoff, 1)
         END_INLINE_EVENT
         SET_VALUE(LW(0), 1)
-        ELSE
+    ELSE
         SET_VALUE(LW(0), 0)
     END_IF
     BEGIN_INLINE_EVENT
@@ -178,4 +127,3 @@ EVT_BEGIN(jin_09_init_evt)
     END_INLINE_EVENT
     RETURN
 EVT_END()
-

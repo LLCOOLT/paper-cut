@@ -1,3 +1,5 @@
+// Shadow Queen tornado (queen: the Shadow Queen): plays the MOBJ_EFF_queen_tornade model animation and fades out.
+// The duration argument sets how long it lasts (0 or less: until removed).
 #include "eff/eff_queen.h"
 #include "driver/animdrv.h"
 #include "driver/dispdrv.h"
@@ -5,18 +7,25 @@
 #include "memory.h"
 #include <dolphin/mtx.h>
 
+static void effQueenDisp(CameraId cameraId, EffectEntry* effect);
+static void effQueenMain(EffectEntry* effect);
+
 typedef struct EffQueenWork {
-    s32 type;       // 0x0
-    Vec position;   // 0x4
-    f32 scale;      // 0x10
-    f32 size;       // 0x14
-    s32 poseId;     // 0x18
-    s32 field_0x1C; // 0x1C
-    s32 timer;      // 0x20, counts down while fading out
-    s32 alpha;      // 0x24
-    s32 maxAlpha;   // 0x28
+    s32 type;     // 0x0
+    Vec position; // 0x4
+    f32 scale;    // 0x10
+    f32 size;     // 0x14
+    s32 poseId;   // 0x18
+    s32 state;    // 0x1C, only cleared at entry
+    s32 timer;    // 0x20, counts down while fading out
+    s32 alpha;    // 0x24
+    s32 maxAlpha; // 0x28
 } EffQueenWork;
 
+/**
+ * Spawns the Shadow Queen tornado at (x, y, z) scaled by `size` for `duration` frames;
+ * reached through evt_eff ("queen").
+ */
 EffectEntry* effQueenEntry(s32 type, s32 duration, f32 x, f32 y, f32 z, f32 size) {
     EffectEntry* effect;
     EffQueenWork* work;
@@ -27,7 +36,7 @@ EffectEntry* effQueenEntry(s32 type, s32 duration, f32 x, f32 y, f32 z, f32 size
     work = __memAlloc(HEAP_EFFECT, sizeof(EffQueenWork) * effect->count);
     effect->userdata = work;
     effect->callback = effQueenMain;
-    effect->flags |= 2;
+    effect->flags |= EFFECT_FLAG_SOFT_DELETE;
     work->type = type;
     work->position.x = x;
     work->position.y = y;
@@ -36,11 +45,10 @@ EffectEntry* effQueenEntry(s32 type, s32 duration, f32 x, f32 y, f32 z, f32 size
     work->scale = 0.0f;
     if (duration <= 0) {
         work->timer = 1000;
-    }
-    else {
+    } else {
         work->timer = duration;
     }
-    work->field_0x1C = 0;
+    work->state = 0;
     work->poseId = -1;
     work->alpha = 0;
     work->maxAlpha = 255;
@@ -48,17 +56,18 @@ EffectEntry* effQueenEntry(s32 type, s32 duration, f32 x, f32 y, f32 z, f32 size
     return effect;
 }
 
-void effQueenMain(EffectEntry* effect) {
+/** Per frame: loads the MOBJ_EFF_queen_tornade animation, fades it in and out and deletes the effect at the end. */
+static void effQueenMain(EffectEntry* effect) {
     EffQueenWork* work = effect->userdata;
     Vec position;
     BOOL inBattle;
 
-    position = (Vec){ work->position.x, work->position.y, work->position.z };
+    position = (Vec){work->position.x, work->position.y, work->position.z};
     inBattle = gp->inBattle != 0;
 
     // soft delete: start fading out
-    if (effect->flags & 4) {
-        effect->flags &= ~4;
+    if (effect->flags & EFFECT_FLAG_DELETE_REQUESTED) {
+        effect->flags &= ~EFFECT_FLAG_DELETE_REQUESTED;
         work->timer = 100;
     }
     if (!animGroupBaseAsync("MOBJ_EFF_queen_tornade", inBattle, NULL)) {
@@ -80,8 +89,7 @@ void effQueenMain(EffectEntry* effect) {
     }
     if (work->timer < 100) {
         work->alpha -= 3;
-    }
-    else {
+    } else {
         work->alpha += 3;
     }
     if (work->alpha > (s32)(0.8f * work->maxAlpha)) {
@@ -93,7 +101,8 @@ void effQueenMain(EffectEntry* effect) {
     dispEntry(CAMERA_3D, dispCalcZ(&position), 2, (DispCallback)effQueenDisp, effect);
 }
 
-void effQueenDisp(CameraId cameraId, EffectEntry* effect) {
+/** Draws the tornado pose in three segments scaled by 10. */
+static void effQueenDisp(CameraId cameraId, EffectEntry* effect) {
     EffQueenWork* work = effect->userdata;
     Mtx mtx;
     Mtx scale;
@@ -107,8 +116,8 @@ void effQueenDisp(CameraId cameraId, EffectEntry* effect) {
         PSMTXRotRad(rot, 'y', MTXDegToRad(-camGetPtr(cameraId)->viewYaw));
         PSMTXConcat(mtx, rot, mtx);
         PSMTXConcat(mtx, scale, mtx);
-        animPoseSetMaterialFlagOn(work->poseId, 0x40);
-        animPoseSetMaterialEvtColor(work->poseId, (GXColor){ 0xFF, 0xFF, 0xFF, work->alpha });
+        animPoseSetMaterialFlagOn(work->poseId, ANIM_MATERIAL_FLAG_EVT_COLOR);
+        animPoseSetMaterialEvtColor(work->poseId, (GXColor){0xFF, 0xFF, 0xFF, work->alpha});
         animPoseMain(work->poseId);
         animPoseDrawMtx(work->poseId, mtx, 1, 0.0f, 10.0f);
         animPoseDrawMtx(work->poseId, mtx, 2, 0.0f, 10.0f);

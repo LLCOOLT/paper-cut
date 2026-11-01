@@ -1,120 +1,34 @@
+// gra_06 (ウスグラの道, Twilight Trail): the end of the trail before Creepy Steeple (jin_00), with the save and heart
+// blocks.
+
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
 #include "evt/evt_bero.h"
+#include "evt/evt_cam.h"
+#include "evt/evt_case.h"
+#include "evt/evt_hit.h"
+#include "evt/evt_item.h"
+#include "evt/evt_map.h"
+#include "evt/evt_mario.h"
+#include "evt/evt_mobj.h"
+#include "evt/evt_msg.h"
+#include "evt/evt_party.h"
+#include "evt/evt_seq.h"
+#include "evt/evt_snd.h"
+#include "evt/evt_sub.h"
+#include "evt/evt_telop.h"
 #include "gra.h"
+#include "version.h"
+#include "evt/evt_story.h"
+#include "driver/mapdrv.h"
+#include "driver/casedrv.h"
 
-#pragma force_active on
-
-USER_FUNC(N_evt_bero_set_mario_bottomless_respawn_pos_to_current_mario_pos);
-USER_FUNC(evt_bero_get_info);
-USER_FUNC(evt_bero_mapchange);
-USER_FUNC(evt_cam3d_event_from_road);
-USER_FUNC(evt_cam3d_evt_off);
-USER_FUNC(evt_cam3d_evt_set);
-USER_FUNC(evt_cam_shake);
-USER_FUNC(evt_hit_bind_mapobj);
-USER_FUNC(evt_hit_bind_update);
-USER_FUNC(evt_hitobj_onoff);
-USER_FUNC(evt_item_entry);
-USER_FUNC(evt_kagemario_init);
-USER_FUNC(evt_mapobj_flag_onoff);
-USER_FUNC(evt_mapobj_get_position);
-USER_FUNC(evt_mapobj_rotate);
-USER_FUNC(evt_mapobj_trans);
-USER_FUNC(evt_mario_adjust_dir);
-USER_FUNC(evt_mario_cont_onoff);
-USER_FUNC(evt_mario_get_party);
-USER_FUNC(evt_mario_get_pos);
-USER_FUNC(evt_mario_jump_pos);
-USER_FUNC(evt_mario_key_onoff);
-USER_FUNC(evt_mario_mov_pos2);
-USER_FUNC(evt_mario_normalize);
-USER_FUNC(evt_mario_set_dir);
-USER_FUNC(evt_mario_set_pos);
-USER_FUNC(evt_mario_set_pose);
-USER_FUNC(evt_mobj_brick);
-USER_FUNC(evt_mobj_recovery_blk);
-USER_FUNC(evt_mobj_save_blk);
-USER_FUNC(evt_msg_print_party);
-USER_FUNC(evt_party_cont_onoff);
-USER_FUNC(evt_party_get_pos);
-USER_FUNC(evt_party_jump_pos);
-USER_FUNC(evt_party_move_pos2);
-USER_FUNC(evt_party_run);
-USER_FUNC(evt_party_set_dir);
-USER_FUNC(evt_party_set_pos);
-USER_FUNC(evt_party_set_pose);
-USER_FUNC(evt_party_stop);
-USER_FUNC(evt_run_case_evt);
-USER_FUNC(evt_seq_wait);
-USER_FUNC(evt_snd_bgmoff_f);
-USER_FUNC(evt_snd_bgmon);
-USER_FUNC(evt_snd_envon);
-USER_FUNC(evt_snd_sfxon_3d);
-USER_FUNC(evt_sub_intpl_msec_get_value);
-USER_FUNC(evt_sub_intpl_msec_init);
-USER_FUNC(evt_telop_entry);
-#ifdef VERSION_G8ME01
-USER_FUNC(evt_mario_dispflag_onoff);
-#endif
-
-f32 fd_gra_06_negone_one_374[2] __attribute__((aligned(8)));
-f32 fd_gra_06_neg_one_382;
-f32 fd_gra_06___local_PI_383;
-f32 fd_gra_06___local_3PIO2_385;
-f32 fd_gra_06_one_negone_373[2] __attribute__((aligned(8)));
-f32 fd_gra_06___local_PIO2_384;
-f32 fd_gra_06_one_381;
-f32 fd_gra_06_negone_one_360[2] __attribute__((aligned(8)));
-f32 fd_gra_06_neg_one_365;
-f32 fd_gra_06___local_PI_366;
-f32 fd_gra_06___local_3PIO2_368;
-f32 fd_gra_06_one_negone_359[2] __attribute__((aligned(8)));
-f32 fd_gra_06___local_PIO2_367;
-f32 fd_gra_06_one_364;
-EvtWord ne_close[22];
-EvtWord ne_open[22];
-EvtWord gra_06_ido[12];
-EvtWord gra_06_ido_in_sub[77];
-EvtWord gra_06_ido_in[7];
 static BeroEntry bero_entry_data[4];
-EvtWord gra_06_saku_open[288];
-EvtWord first_gra06jin[138];
-#ifdef VERSION_G8ME01
-EvtWord teresa_oidasare_evt[282];
-#else
-EvtWord teresa_oidasare_evt[274];
-#endif
-EvtWord gra_06_init_evt[148];
 
-f32 fd_gra_06_negone_one_374[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_gra_06_neg_one_382 = -1.0f;
-
-f32 fd_gra_06___local_PI_383 = 3.1415927f;
-
-f32 fd_gra_06___local_3PIO2_385 = 4.712389f;
-
-f32 fd_gra_06_one_negone_373[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_gra_06___local_PIO2_384 = 1.5707964f;
-
-f32 fd_gra_06_one_381 = 1.0f;
-
-f32 fd_gra_06_negone_one_360[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_gra_06_neg_one_365 = -1.0f;
-
-f32 fd_gra_06___local_PI_366 = 3.1415927f;
-
-f32 fd_gra_06___local_3PIO2_368 = 4.712389f;
-
-f32 fd_gra_06_one_negone_359[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_gra_06___local_PIO2_367 = 1.5707964f;
-
-f32 fd_gra_06_one_364 = 1.0f;
-
+/**
+ * Closes the double door (door_L and door_R) of the Creepy Steeple entrance:
+ * LW(0) is the door angle, and the two leaves rotate opposite ways.
+ */
 EVT_BEGIN(ne_close)
     MULTIPLY_FLOAT(LW(0), FLOAT(-0.38867188f))
     CALL(evt_mapobj_rotate, 0, STRING("door_L"), 0, LW(0), 0)
@@ -123,6 +37,7 @@ EVT_BEGIN(ne_close)
     RETURN
 EVT_END()
 
+/** Opens the double door of the Creepy Steeple entrance, the reverse of ne_close. */
 EVT_BEGIN(ne_open)
     MULTIPLY_FLOAT(LW(0), FLOAT(0.38867188f))
     CALL(evt_mapobj_rotate, 0, STRING("door_L"), 0, LW(0), 0)
@@ -131,13 +46,18 @@ EVT_BEGIN(ne_open)
     RETURN
 EVT_END()
 
+/** Exit event of the hole ("ana"): sets GSWF_STG4_DROP_IN_ENTRANCE and changes the map to jin_09, the room below. */
 EVT_BEGIN(gra_06_ido)
-    SET_VALUE(GSWF(2079), 1)
+    SET_VALUE(GSWF(GSWF_STG4_DROP_IN_ENTRANCE), 1)
     CALL(evt_bero_mapchange, STRING("jin_09"), 0)
     SET_VALUE(LW(0), 1)
     RETURN
 EVT_END()
 
+/**
+ * Moves Mario and his partners above the hole's landing spot and makes them jump down to it,
+ * then waits 1.5 seconds.
+ */
 EVT_BEGIN(gra_06_ido_in_sub)
     CALL(evt_seq_wait, 2)
     CALL(evt_mario_set_pos, 210, -100, 318)
@@ -148,7 +68,9 @@ EVT_BEGIN(gra_06_ido_in_sub)
     CALL(evt_party_set_dir, 1, 270, -1)
     BEGIN_INLINE_EVENT
         CALL(evt_mario_jump_pos, 165, 0, 374, 800, 0, -1000)
+#if VERSION >= VERSION_JP
         CALL(N_evt_bero_set_mario_bottomless_respawn_pos_to_current_mario_pos)
+#endif
     END_INLINE_EVENT
     BEGIN_INLINE_EVENT
         WAIT_MS(400)
@@ -162,19 +84,24 @@ EVT_BEGIN(gra_06_ido_in_sub)
     RETURN
 EVT_END()
 
+/** Enter event of the hole: spawns gra_06_ido_in_sub and returns 0. */
 EVT_BEGIN(gra_06_ido_in)
-    SPAWN_EVENT(PTR(gra_06_ido_in_sub))
+    SPAWN_EVENT(gra_06_ido_in_sub)
     SET_VALUE(LW(0), 0)
     RETURN
 EVT_END()
 
+/**
+ * Doors of this room: the north exit (n_bero) to jin_00 (Creepy Steeple), the south-west exit (sw_bero) to
+ * gra_05 and the hole (ana) to jin_09 (Creepy Steeple).
+ */
 static BeroEntry bero_entry_data[] = {
     {
         "n_bero", // hitName
         1, // type
         6, // sfxId
-        20000, // directionId
-        100000, // centerPosition
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         NULL, // enterEvent
@@ -190,8 +117,8 @@ static BeroEntry bero_entry_data[] = {
     {
         "sw_bero", // hitName
         0, 0, // type..sfxId
-        20000, // directionId
-        100000, // centerPosition
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         NULL, // enterEvent
@@ -207,8 +134,8 @@ static BeroEntry bero_entry_data[] = {
         "ana", // hitName
         3840, // type
         0, // sfxId
-        20000, // directionId
-        100000, // centerPosition
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         (s32*)gra_06_ido_in, // enterEvent
@@ -223,7 +150,13 @@ static BeroEntry bero_entry_data[] = {
     {0},
 };
 
+/**
+ * Opens the Creepy Steeple's iron gate when Mario presses A in front of it:
+ * the gate leaves swing open while the chain rattles and lifts away,
+ * sets GSWF_GRA06_STEEPLE_GATE_OPENED and removes the gate collision.
+ */
 EVT_BEGIN(gra_06_saku_open)
+    // The gate and its chain rattle, as if the gate were locked.
     CALL(evt_mapobj_get_position, STRING("kusari"), LW(10), LW(11), LW(12))
     CALL(evt_snd_sfxon_3d, STRING("SFX_STG4_GATE_CLOSED1"), LW(10), LW(11), LW(12), 0)
     SET_VALUE(LW(0), 0)
@@ -258,16 +191,25 @@ EVT_BEGIN(gra_06_saku_open)
             WAIT_FRAMES(1)
         END_LOOP
     END_LOOP
+    // If Mario is up at the gate with a partner, the partner comments.
     CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
     IF_INT_GREATER(LW(2), 160)
         CALL(evt_mario_get_party, LW(0))
         IF_INT_NOT_EQUAL(LW(0), 0)
             CALL(evt_mario_key_onoff, 0)
+#if VERSION >= VERSION_DEMO_EU
+            CALL(evt_party_stop, 0)
+            WAIT_MS(200)
+#endif
             CALL(evt_msg_print_party, STRING("stg4_gra_20"))
+#if VERSION >= VERSION_DEMO_EU
+            CALL(evt_party_run, 0)
+#endif
             CALL(evt_mario_key_onoff, 1)
         END_IF
         RETURN
     END_IF
+    // The two gate leaves swing open.
     CALL(evt_mapobj_get_position, STRING("kusari"), LW(0), LW(1), LW(2))
     CALL(evt_snd_sfxon_3d, STRING("SFX_STG4_GATE_OPEN1"), LW(0), LW(1), LW(2), 0)
     BEGIN_INLINE_EVENT
@@ -289,6 +231,7 @@ EVT_BEGIN(gra_06_saku_open)
             WAIT_FRAMES(1)
         END_LOOP
     END_INLINE_EVENT
+    // The chain drops away with a clank and is hidden.
     BEGIN_INLINE_EVENT
         WAIT_FRAMES(15)
         CALL(evt_mapobj_get_position, STRING("kusari"), LW(10), LW(11), LW(12))
@@ -303,20 +246,29 @@ EVT_BEGIN(gra_06_saku_open)
         WAIT_FRAMES(1)
     END_LOOP
     WAIT_MS(100)
-    CALL(evt_mapobj_flag_onoff, 1, 1, STRING("kusari"), 1)
-    SET_VALUE(GSWF(2078), 1)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("kusari"), MAPOBJ_FLAG_HIDE)
+    // The gate is marked as open and its collision is removed.
+    SET_VALUE(GSWF(GSWF_GRA06_STEEPLE_GATE_OPENED), 1)
     CALL(evt_hitobj_onoff, STRING("a_saku01"), 1, 0)
     RETURN
 EVT_END()
 
+/**
+ * Cutscene on the first arrival at the Steeple gate:
+ * the camera pans over the Creepy Steeple, a place-name telop is shown,
+ * Mario and the partner walk to the gate and the partner comments (stg4_gra_19).
+ * Sets the story to STORY_STG4_08_STEEPLE_DEMO_EXT.
+ */
 EVT_BEGIN(first_gra06jin)
-    CALL(evt_snd_envon, 272, STRING("ENV_STG4_GRA1"))
+    CALL(evt_snd_envon, PSND_FADE_RESTART | PSND_FADE_IN, STRING("ENV_STG4_GRA1"))
     CALL(evt_mario_key_onoff, 0)
     CALL(evt_cam3d_evt_set, -84, 562, 619, -431, 402, 73, 0, 11)
     CALL(evt_mario_set_pos, -320, 0, 365)
     CALL(evt_party_set_pos, 0, -350, 0, 365)
     CALL(evt_seq_wait, 2)
+#if VERSION >= VERSION_JP
     CALL(evt_mario_normalize)
+#endif
     BEGIN_INLINE_EVENT
         WAIT_MS(1500)
         CALL(evt_telop_entry, 8)
@@ -324,7 +276,7 @@ EVT_BEGIN(first_gra06jin)
     CALL(evt_cam3d_evt_set, 305, 562, 372, -42, 402, -174, 5000, 0)
     WAIT_MS(6000)
     CALL(evt_cam3d_evt_set, 1050, 219, 1169, 88, 250, 153, 2000, 0)
-    CALL(evt_snd_bgmoff_f, 512, 3000)
+    CALL(evt_snd_bgmoff_f, PSND_FADE_OUT, 3000)
     BEGIN_INLINE_EVENT
         CALL(evt_party_move_pos2, 0, -110, 350, FLOAT(100.0f))
     END_INLINE_EVENT
@@ -333,8 +285,11 @@ EVT_BEGIN(first_gra06jin)
     CALL(evt_cam3d_evt_set, 120, 92, 530, -83, 40, 315, 0, 0)
     CALL(evt_mario_mov_pos2, -67, 312, FLOAT(100.0f))
     WAIT_FRAMES(1)
-    CALL(evt_snd_bgmon, 512, STRING("BGM_STG4_JIN1"))
-    CALL(evt_snd_envon, 272, STRING("ENV_STG4_GRA1"))
+    CALL(evt_snd_bgmon, PSND_FADE_OUT, STRING("BGM_STG4_JIN1"))
+    CALL(evt_snd_envon, PSND_FADE_RESTART | PSND_FADE_IN, STRING("ENV_STG4_GRA1"))
+#if VERSION <= VERSION_DEMO_JP
+    CALL(evt_mario_normalize)
+#endif
     CALL(evt_party_stop, 0)
     CALL(evt_party_set_dir, 0, 90, 200)
     WAIT_MS(300)
@@ -342,13 +297,21 @@ EVT_BEGIN(first_gra06jin)
     CALL(evt_party_run, 0)
     CALL(evt_cam3d_evt_off, 500, 11)
     WAIT_MS(500)
-    SET_VALUE(GSW(0), 193)
+    SET_VALUE(GSW(GSW_STORY_PROGRESS), STORY_STG4_08_STEEPLE_DEMO_EXT)
+#if VERSION >= VERSION_JP
     CALL(N_evt_bero_set_mario_bottomless_respawn_pos_to_current_mario_pos)
+#endif
     CALL(evt_mario_key_onoff, 1)
     RETURN
 EVT_END()
 
+/**
+ * Scene when Mario comes out of the Steeple carried by the Boos:
+ * Mario and the partner drop from above onto the trail and land,
+ * control returns and the Steeple door's n_bero case is switched on again.
+ */
 EVT_BEGIN(teresa_oidasare_evt)
+    // Mario and his partner are placed high above the trail, as if dropped out of the Steeple.
     CALL(evt_mario_key_onoff, 0)
     CALL(evt_party_stop, 0)
     CALL(evt_mario_set_dir, 270, 0, 0)
@@ -361,10 +324,11 @@ EVT_BEGIN(teresa_oidasare_evt)
     CALL(evt_cam3d_event_from_road, 65, 60, -115, 0, LW(0), LW(1), LW(2), LW(3), LW(4), LW(5))
     CALL(evt_cam3d_evt_set, LW(0), LW(1), LW(2), LW(3), LW(4), LW(5), 0, 11)
     CALL(evt_seq_wait, 2)
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
     CALL(evt_mario_cont_onoff, 1)
     CALL(evt_mario_dispflag_onoff, 1, 2)
 #endif
+    // They fall and land hard, with the camera shaking.
     CALL(evt_mario_set_pose, STRING("M_D_1"))
     CALL(evt_mario_get_party, LW(0))
     SWITCH(LW(0))
@@ -406,7 +370,9 @@ EVT_BEGIN(teresa_oidasare_evt)
     END_LOOP
     CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
     CALL(evt_snd_sfxon_3d, STRING("SFX_VOICE_MARIO_LAND_DAMAGE2"), LW(0), LW(1), LW(2), 0)
+#if VERSION >= VERSION_JP
     CALL(N_evt_bero_set_mario_bottomless_respawn_pos_to_current_mario_pos)
+#endif
     CALL(evt_mario_set_pose, STRING("M_D_2"))
     CALL(evt_cam_shake, 4, FLOAT(0.009765625f), FLOAT(0.0f), 50)
     WAIT_MS(700)
@@ -433,64 +399,70 @@ EVT_BEGIN(teresa_oidasare_evt)
         CASE_EQUAL(5)
         CALL(evt_party_set_pose, 0, STRING("PWD_S_1"))
     END_SWITCH
+    // Control returns and the Steeple door is switched on again.
     CALL(evt_cam3d_evt_off, 0, 11)
-#ifndef VERSION_G8ME01
+#if VERSION <= VERSION_JP
     CALL(evt_mario_cont_onoff, 1)
 #endif
     CALL(evt_party_cont_onoff, 0, 1)
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
     CALL(evt_mario_dispflag_onoff, 0, 2)
 #endif
     CALL(evt_mario_key_onoff, 1)
     CALL(evt_party_run, 0)
-    SET_VALUE(GSWF(2227), 0)
+    SET_VALUE(GSWF(GSWF_JIN00_BOOS_CARRIED_MARIO_OUT), 0)
     SET_VALUE(LW(0), STRING("n_bero"))
-    CALL_CHILD(PTR(bero_case_switch_on))
+    CALL_CHILD(bero_case_switch_on)
     RETURN
 EVT_END()
 
+/**
+ * Init script of gra_06, the end of the trail: a Star Piece,
+ * the entry cases (the Boo drop-out scene or the normal exits), save and recovery blocks, a hidden coin brick,
+ * the Steeple gate in its open or closed state,
+ * and the first- arrival cutscene before STORY_STG4_08_STEEPLE_DEMO_EXT.
+ */
 EVT_BEGIN(gra_06_init_evt)
-    CALL(evt_item_entry, STRING("item00"), 125, -130, 0, 150, 16, GSWF(5633), 0)
+    CALL(evt_item_entry, STRING("item00"), ITEM_STAR_PIECE, -130, 0, 150, ITEM_ENTRY_FIXED, GSWF(GSWF_GRA06_STAR_PIECE), 0)
     CALL(evt_kagemario_init)
-    IF_INT_EQUAL(GSWF(2227), 1)
+    IF_INT_EQUAL(GSWF(GSWF_JIN00_BOOS_CARRIED_MARIO_OUT), 1)
         SET_VALUE(LW(0), PTR(bero_entry_data))
         CALL(evt_bero_get_info)
-        SPAWN_EVENT(PTR(bero_case_entry))
+        SPAWN_EVENT(bero_case_entry)
         SET_VALUE(LW(0), STRING("n_bero"))
-        CALL_CHILD(PTR(bero_case_switch_off))
-        SPAWN_EVENT(PTR(teresa_oidasare_evt))
-        ELSE
+        CALL_CHILD(bero_case_switch_off)
+        SPAWN_EVENT(teresa_oidasare_evt)
+    ELSE
         SET_VALUE(LW(0), PTR(bero_entry_data))
         CALL(evt_bero_get_info)
-        IF_INT_LESS(GSW(0), 193)
-            CALL_CHILD(PTR(bero_case_entry))
-            ELSE
-            CALL_CHILD(PTR(evt_bero_info_run))
+        IF_INT_LESS(GSW(GSW_STORY_PROGRESS), STORY_STG4_08_STEEPLE_DEMO_EXT)
+            CALL_CHILD(bero_case_entry)
+        ELSE
+            CALL_CHILD(evt_bero_info_run)
         END_IF
     END_IF
     CALL(evt_mobj_save_blk, STRING("mobj_save"), -125, 60, 235, 0, 0)
     CALL(evt_mobj_recovery_blk, STRING("mobj_recover"), 10, -270, 60, 270, 0, 0)
-    CALL(evt_mobj_brick, STRING("mobj_hidden1\0\0\0"), 67, 90, -13, 121, 11, 0, GSWF(2090))
-    CALL_CHILD(PTR(evt_usu_kagemario_party_kill))
-    IF_INT_EQUAL(GSWF(2078), 0)
+    CALL(evt_mobj_brick, STRING("mobj_hidden1"), 67, 90, -13, ITEM_COIN, 11, 0, GSWF(GSWF_GRA06_HIDDEN_COIN_BLOCK_HIT))
+    CALL_CHILD(evt_usu_kagemario_party_kill)
+    IF_INT_EQUAL(GSWF(GSWF_GRA06_STEEPLE_GATE_OPENED), 0)
         CALL(evt_hitobj_onoff, STRING("A_Mon"), 1, 0)
-        CALL(evt_run_case_evt, 9, 1, STRING("a_saku01"), 0, PTR(gra_06_saku_open), 0)
-        ELSE
+        CALL(evt_run_case_evt, CASE_COND_FRONT_A, 1, STRING("a_saku01"), 0, PTR(gra_06_saku_open), 0)
+    ELSE
         CALL(evt_hit_bind_mapobj, STRING("A_mon_L"), STRING("mon_L"))
         CALL(evt_hit_bind_mapobj, STRING("A_mon_R"), STRING("mon_R"))
         CALL(evt_mapobj_rotate, 0, STRING("mon_L"), 0, 90, 0)
         CALL(evt_mapobj_rotate, 0, STRING("mon_R"), 0, -90, 0)
         CALL(evt_hit_bind_update, STRING("A_mon_L"))
         CALL(evt_hit_bind_update, STRING("A_mon_R"))
-        CALL(evt_mapobj_flag_onoff, 1, 1, STRING("kusari"), 1)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("kusari"), MAPOBJ_FLAG_HIDE)
         CALL(evt_hitobj_onoff, STRING("a_saku01"), 1, 0)
     END_IF
-    IF_INT_LESS(GSW(0), 193)
-        SPAWN_EVENT(PTR(first_gra06jin))
-        ELSE
-        CALL(evt_snd_bgmon, 512, STRING("BGM_STG4_JIN1"))
-        CALL(evt_snd_envon, 272, STRING("ENV_STG4_GRA1"))
+    IF_INT_LESS(GSW(GSW_STORY_PROGRESS), STORY_STG4_08_STEEPLE_DEMO_EXT)
+        SPAWN_EVENT(first_gra06jin)
+    ELSE
+        CALL(evt_snd_bgmon, PSND_FADE_OUT, STRING("BGM_STG4_JIN1"))
+        CALL(evt_snd_envon, PSND_FADE_RESTART | PSND_FADE_IN, STRING("ENV_STG4_GRA1"))
     END_IF
     RETURN
 EVT_END()
-

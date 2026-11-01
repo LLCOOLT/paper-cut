@@ -1,3 +1,4 @@
+// Paper Mario 64 effect: green-white scrolling rings at a given angle, staggered in time (4 for type 0, else 1).
 #include "eff/n64/eff_thruhammer_n64.h"
 #include "eff/eff_n64.h"
 #include "driver/camdrv.h"
@@ -6,33 +7,31 @@
 #include "system.h"
 #include <dolphin/gx.h>
 #include <dolphin/mtx.h>
-
-#ifndef TARGET_PC /* PC port: the host libc declares these */
-double sin(double x);
-double cos(double x);
-#endif
-
+#include "libc_decls.h"
 typedef struct EffThruHammerN64Work {
-    s16 type;         // 0x0
-    Vec position;     // 0x4
-    Vec velocity;     // 0x10
-    Vec scale;        // 0x1C
-    s32 timer;        // 0x28
-    s32 counter;      // 0x2C
-    f32 rotY;         // 0x30
-    f32 rotZ;         // 0x34
-    s32 alpha;        // 0x38
-    f32 texS;         // 0x3C
-    f32 texSVel;      // 0x40
-    f32 texT;         // 0x44
-    f32 texTVel;      // 0x48
-    s32 delay;        // 0x4C
-    u8 r1, g1, b1;    // 0x50
-    u8 r2, g2, b2;    // 0x53
-    u8 pad[2];        // 0x56
+    s16 type;      // 0x0
+    Vec position;  // 0x4
+    Vec velocity;  // 0x10
+    Vec scale;     // 0x1C
+    s32 timer;     // 0x28
+    s32 counter;   // 0x2C
+    f32 rotY;      // 0x30
+    f32 rotZ;      // 0x34
+    s32 alpha;     // 0x38
+    f32 texS;      // 0x3C
+    f32 texSVel;   // 0x40
+    f32 texT;      // 0x44
+    f32 texTVel;   // 0x48
+    s32 delay;     // 0x4C
+    u8 r1, g1, b1; // 0x50
+    u8 r2, g2, b2; // 0x53
+    u8 pad[2];     // 0x56
 } EffThruHammerN64Work;
 
-
+/**
+ * The ring mesh: a flared band, solid at its inner edge and clear at its outer rim,
+ * scaled out into each ring.
+ */
 static effN64Vtx stg_thruhammer_v[] = {
     {-34, -2, 20, 4267, 1024, 255, 255, 255, 255},
     {-52, 50, 0, 3840, 2048, 255, 255, 255, 0},
@@ -56,10 +55,14 @@ static effN64Vtx stg_thruhammer_v[] = {
     {0, -2, 40, 0, 1024, 255, 255, 255, 255},
 };
 
-void effThruHammerMain(EffectEntry* effect);
-void effThruHammerDisp(CameraId cameraId, EffectEntry* effect);
+static void effThruHammerMain(EffectEntry* effect);
+static void effThruHammerDisp(CameraId cameraId, EffectEntry* effect);
 static void main_dl(EffectEntry* effect, Mtx mtx);
 
+/**
+ * Spawns scrolling rings at (x, y, z) rotated by `angle`; type 0 uses four rings, others one.
+ * Spawned by event scripts through evt_eff.
+ */
 EffectEntry* effThruHammerN64Entry(s32 type, f32 x, f32 y, f32 z, f32 angle) {
     EffectEntry* effect;
     EffThruHammerN64Work* work;
@@ -68,15 +71,15 @@ EffectEntry* effThruHammerN64Entry(s32 type, f32 x, f32 y, f32 z, f32 angle) {
 
     effect = effEntry();
     switch (type) {
-    case 0:
-        n = 4;
-        break;
-    case 1:
-    default:
-        n = 1;
-        break;
+        case 0:
+            n = 4;
+            break;
+        case 1:
+        default:
+            n = 1;
+            break;
     }
-    effect->type = "ThruHammerN64\0\0";
+    effect->type = "ThruHammerN64";
     effect->count = n + 1;
     work = __memAlloc(HEAP_EFFECT, sizeof(EffThruHammerN64Work) * (n + 1));
     effect->userdata = work;
@@ -103,7 +106,13 @@ EffectEntry* effThruHammerN64Entry(s32 type, f32 x, f32 y, f32 z, f32 angle) {
     return effect;
 }
 
-void effThruHammerMain(EffectEntry* effect) {
+/**
+ * Starts each ring in turn (negative delay counts up to 0):
+ * it resets to the centre with a direction from its Z angle,
+ * then widens 0.2 per frame on X and Z while its height eases from 10 down to 0.1 and its texture scroll slows.
+ * After 8 frames the shared alpha drops 20% per frame; deletes when the timer runs out. CAMERA_3D, layer 2.
+ */
+static void effThruHammerMain(EffectEntry* effect) {
     EffThruHammerN64Work* work = effect->userdata;
     s32 i;
     Vec position;
@@ -158,7 +167,11 @@ void effThruHammerMain(EffectEntry* effect) {
     dispEntry(CAMERA_3D, dispCalcZ(&position), 2, (DispCallback)effThruHammerDisp, effect);
 }
 
-void effThruHammerDisp(CameraId cameraId, EffectEntry* effect) {
+/**
+ * Draws the ring mesh (stg_thruhammer_v, via main_dl) camera-facing with texture 0x23 as the alpha mask
+ * and 0x24 shaded between the work's two colours: back faces culled first, then front faces, so both sides show.
+ */
+static void effThruHammerDisp(CameraId cameraId, EffectEntry* effect) {
     CameraEntry* camera;
     EffThruHammerN64Work* work;
     u8 r1, g1, b1, r2, g2, b2;
@@ -210,8 +223,7 @@ void effThruHammerDisp(CameraId cameraId, EffectEntry* effect) {
     main_dl(effect, mtx);
 }
 
-#pragma opt_propagation off
-#pragma opt_lifetimes off
+/** Draws each active ring as a scaled, rotated textured quad. */
 static void main_dl(EffectEntry* effect, Mtx camMtx) {
     EffThruHammerN64Work* work = effect->userdata;
     s32 i;

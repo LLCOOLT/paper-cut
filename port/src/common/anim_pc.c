@@ -235,8 +235,8 @@ static int indicesOk(PortDecodeCtx* ctx, const AnimationPoseData* r) {
         const AnimPoseGroup* g = &r->groups[i];
         if (g->shapeId < -1 || g->shapeId >= r->shapeCount || g->childGroupId < -1 || g->childGroupId >= r->groupCount ||
             g->brotherGroupId < -1 || g->brotherGroupId >= r->groupCount || g->visibilityId < 0 ||
-            (u32)g->visibilityId >= r->mBufferVisibilityNum || g->nodeId < 0 ||
-            (u64)g->nodeId + sizeof(AnimPoseNode) / sizeof(f32) > r->mBufferNodeNum) {
+            (u32)g->visibilityId >= r->bufferVisibilityNum || g->nodeId < 0 ||
+            (u64)g->nodeId + sizeof(AnimPoseNode) / sizeof(f32) > r->bufferNodeNum) {
             portDecodeFail(ctx, "group %d (%s): an index is out of range", (int)i, g->name);
             return 0;
         }
@@ -269,25 +269,25 @@ AnimationPoseData* portAnimDecode(void* blob, uint32_t size, const char* name) {
 
     root = (AnimationPoseData*)portDecode(&ctx, &portBE_anim_AnimationPoseData, 0);
     if (root) {
-        root->bufferVtxPos = (Vec*)decodeWords(&ctx, (uint32_t)(uintptr_t)root->bufferVtxPos, root->mBufferPosNum * 3,
+        root->bufferVtxPos = (Vec*)decodeWords(&ctx, (uint32_t)(uintptr_t)root->bufferVtxPos, root->bufferPosNum * 3,
                                                "bufferVtxPos");
-        root->nrmVtxBuffer = (Vec*)decodeWords(&ctx, (uint32_t)(uintptr_t)root->nrmVtxBuffer, root->mBufferNrmNum * 3,
+        root->nrmVtxBuffer = (Vec*)decodeWords(&ctx, (uint32_t)(uintptr_t)root->nrmVtxBuffer, root->bufferNrmNum * 3,
                                                "nrmVtxBuffer");
-        /* nodeData: mBufferNodeNum floats (groups index it by float). */
-        root->nodeData = (AnimPoseNode*)decodeWords(&ctx, (uint32_t)(uintptr_t)root->nodeData, root->mBufferNodeNum,
+        /* nodeData: bufferNodeNum floats (groups index it by float). */
+        root->nodeData = (AnimPoseNode*)decodeWords(&ctx, (uint32_t)(uintptr_t)root->nodeData, root->bufferNodeNum,
                                                     "nodeData");
     }
-    for (i = 0; root && !ctx.failed && i < root->mAnimCount; i++) {
-        uint32_t off = (uint32_t)(uintptr_t)root->mpAnims[i].data;
+    for (i = 0; root && !ctx.failed && i < root->animCount; i++) {
+        uint32_t off = (uint32_t)(uintptr_t)root->anims[i].data;
         AnimData* a = NULL;
         if (off) {
             /* entries may share an AnimData: reuse one decoded earlier (the
-             * disc table is still intact; 0x1AC = mpAnims, 0x3C = .data) */
+             * disc table is still intact; 0x1AC = anims, 0x3C = .data) */
             uint32_t table = portBE32(ctx.blob + 0x1AC);
             for (j = 0; j < i; j++) {
                 uint32_t prev = portBE32(ctx.blob + table + j * 0x40 + 0x3C);
                 if (prev == off) {
-                    a = root->mpAnims[j].data;
+                    a = root->anims[j].data;
                     break;
                 }
             }
@@ -295,14 +295,14 @@ AnimationPoseData* portAnimDecode(void* blob, uint32_t size, const char* name) {
                 a = decodeAnim(&ctx, off);
             }
         }
-        root->mpAnims[i].data = a;
+        root->anims[i].data = a;
     }
     if (root && !ctx.failed && layoutOk(&ctx, root) && indicesOk(&ctx, root)) {
         /* Payloads stay in the blob: none may sit in the bytes we overwrite. */
         if (rangeOk(&ctx, root->posIndex, 4, "posIndex") && rangeOk(&ctx, root->nrmIndex, 4, "nrmIndex") &&
             rangeOk(&ctx, root->clr0VtxBuffer, 4, "clr0VtxBuffer") && rangeOk(&ctx, root->clr0Index, 4, "clr0Index") &&
             rangeOk(&ctx, root->texVtxBuffer, 8, "texVtxBuffer") &&
-            rangeOk(&ctx, root->groupVisibility, root->mBufferVisibilityNum, "groupVisibility")) {
+            rangeOk(&ctx, root->groupVisibility, root->bufferVisibilityNum, "groupVisibility")) {
             for (i = 0; i < 8; i++) {
                 if (!rangeOk(&ctx, root->texIndex[i], 4, "texIndex")) {
                     break;
@@ -338,7 +338,7 @@ AnimationPoseData* portAnimDecode(void* blob, uint32_t size, const char* name) {
     sLive[sLiveCount].arena = ctx.arena;
     sLiveCount++;
     hdr.magic = PORT_ANIM_MAGIC;
-    hdr.discSize = root->mSize;
+    hdr.discSize = root->size;
     hdr.root = root;
     memcpy(blob, &hdr, sizeof(hdr));
     UNLOCK(lvl);

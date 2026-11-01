@@ -1,8 +1,10 @@
+// muj (無人島, Keelhaul Key; muj is mujinto, "desert island"): the REL prolog/epilog, the map list, and area-wide
+// events: Cortez appearing and vanishing in his tornado (korutesu_apper, korutesu_vanish) and the ship bobbing
+// (muj_ship_puka).
 #include "eff/n64/eff_kameki_tornade_n64.h"
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
 
-#pragma force_active on
 #include "mario/mario.h"
 #include "system.h"
 #include "driver/effdrv.h"
@@ -13,91 +15,34 @@
 #include "dolphin/os.h"
 #include "pmario_sound.h"
 #include "data/mapdata.h"
+#include "evt/evt_eff.h"
+#include "evt/evt_snd.h"
+#include "evt/evt_sub.h"
 #include "muj.h"
+#include "rel_module.h"
 
-s32 psndSFXOnEx_3D(const char* name, Vec* position, s32 vol, s32 pan, s32 pitch, s32 flags);
-typedef void (*voidfunctionptr)(void);
-extern voidfunctionptr _ctors[];
-extern voidfunctionptr _dtors[];
-
-USER_FUNC(evt_eff64);
-USER_FUNC(evt_eff_softdelete);
-USER_FUNC(evt_npc_flag_onoff);
-USER_FUNC(evt_npc_get_position);
-USER_FUNC(evt_snd_sfxoff);
-USER_FUNC(evt_snd_sfxon);
-USER_FUNC(evt_snd_sfxon_3d);
-USER_FUNC(evt_sub_intpl_msec_get_value_para);
-USER_FUNC(evt_sub_intpl_msec_init);
-USER_FUNC(muj_mario_pos_osreport_func);
-USER_FUNC(muj_ship_puka_func);
+static USER_FUNC(muj_ship_puka_func);
 static USER_FUNC(tornade_alpha_func);
-USER_FUNC(muj_npc_buruburu);
-USER_FUNC(muj_npc_fuwafuwa);
-USER_FUNC(muj_npc_guruguru);
-void _unresolved(void);
-void _epilog(void);
-void _prolog(void);
 
-f32 fd_muj_negone_one_374[2] __attribute__((aligned(8)));
-f32 fd_muj_neg_one_382;
-f32 fd_muj___local_PI_383;
-f32 fd_muj___local_3PIO2_385;
-f32 fd_muj_one_negone_373[2] __attribute__((aligned(8)));
-f32 fd_muj___local_PIO2_384;
-f32 fd_muj_one_381;
-f32 fd_muj_negone_one_360[2] __attribute__((aligned(8)));
-f32 fd_muj_neg_one_365;
-f32 fd_muj___local_PI_366;
-f32 fd_muj___local_3PIO2_368;
-f32 fd_muj_one_negone_359[2] __attribute__((aligned(8)));
-f32 fd_muj___local_PIO2_367;
-f32 fd_muj_one_364;
-f64 fd_muj__three_localstatic4_sqrtf;
-f64 fd_muj__half_localstatic3_sqrtf;
 f32 muj_ship_puka_data[16];
-EvtWord muj_ship_puka[21];
-EvtWord korutesu_apper[234];
-EvtWord korutesu_vanish[227];
-EvtWord muj_mario_pos_osreport[4];
+extern EvtWord muj_mario_pos_osreport[];
 
-f32 fd_muj_negone_one_374[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_muj_neg_one_382 = -1.0f;
-
-f32 fd_muj___local_PI_383 = 3.1415927f;
-
-f32 fd_muj___local_3PIO2_385 = 4.712389f;
-
-f32 fd_muj_one_negone_373[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_muj___local_PIO2_384 = 1.5707964f;
-
-f32 fd_muj_one_381 = 1.0f;
-
-f32 fd_muj_negone_one_360[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_muj_neg_one_365 = -1.0f;
-
-f32 fd_muj___local_PI_366 = 3.1415927f;
-
-f32 fd_muj___local_3PIO2_368 = 4.712389f;
-
-f32 fd_muj_one_negone_359[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_muj___local_PIO2_367 = 1.5707964f;
-
-f32 fd_muj_one_364 = 1.0f;
-
-f64 fd_muj__three_localstatic4_sqrtf = 3.0;
-
-f64 fd_muj__half_localstatic3_sqrtf = 0.5;
-
+/**
+ * Height offsets of one 16-step cycle of the pirate ship bobbing on the waves, stepped through every 130 ms
+ * by muj_ship_puka.
+ */
 f32 muj_ship_puka_data[] = {
     -0.0f, -0.5f, -1.0f, -1.5f, -2.0f, -2.2f, -2.5f, -2.7f,
     -2.7f, -2.7f, -2.5f, -2.2f, -2.0f, -1.5f, -1.0f, -0.5f,
 };
 
+/**
+ * Ship bobbing loop for the pirate ship's NPC/objects:
+ * every 130 ms steps through muj_ship_puka_data (via muj_ship_puka_func)
+ * and writes the scaled offset into the indexed float LW(0).
+ * The caller sets LW(0) to the target and LW(1) to the amplitude;
+ * runs forever, spawned from the Keelhaul Key ship maps.
+ */
 EVT_BEGIN(muj_ship_puka)
     SET_VALUE(LW(10), 0)
     LOOP(0)
@@ -109,6 +54,10 @@ EVT_BEGIN(muj_ship_puka)
     RETURN
 EVT_END()
 
+/**
+ * REL prolog: runs the static constructors, registers each Keelhaul Key map's init event (muj_00..muj_21)
+ * and the area's battle setup tables with the map loader.
+ */
 void _prolog(void) {
     voidfunctionptr* ctor;
 
@@ -129,6 +78,7 @@ void _prolog(void) {
     relSetBtlAddr("muj", btlsetup_muj_tbl, btl_muj_setup_no_tbl);
 }
 
+/** REL epilog: runs the static destructors when the muj module is unloaded. */
 void _epilog(void) {
     voidfunctionptr* dtor;
 
@@ -137,10 +87,15 @@ void _epilog(void) {
     }
 }
 
+/** Unresolved-symbol stub for the REL linker; does nothing. */
 void _unresolved(void) {
 }
 
-USER_FUNC(muj_ship_puka_func) {
+/**
+ * Script helper for muj_ship_puka: args[0] = step index (used modulo 16), args[1] = amplitude;
+ * returns the amplitude times the matching entry of muj_ship_puka_data into args[2].
+ */
+static USER_FUNC(muj_ship_puka_func) {
     EvtWord* args = event->args;
     s32 index = evtGetValue(event, args[0]);
     f32 value = evtGetFloat(event, args[1]);
@@ -149,6 +104,13 @@ USER_FUNC(muj_ship_puka_func) {
     return EVT_RETURN_DONE;
 }
 
+/**
+ * Script helper that makes an NPC circle around a point (cx, cz) for a set time.
+ * Args: [0] NPC name, [1] centre x, [2] centre z, [3] 0 = turn the NPC to face left or right of its travel,
+ * [4] angular speed per frame, [5] duration in ms.
+ * Keeps the NPC's starting radius and angle, updates its position and plays its footstep sounds;
+ * blocks until the duration has elapsed.
+ */
 USER_FUNC(muj_npc_guruguru) {
     EvtWord* args = event->args;
     const char* name = (const char*)evtGetValue(event, args[0]);
@@ -204,6 +166,11 @@ USER_FUNC(muj_npc_guruguru) {
     return EVT_RETURN_YIELD;
 }
 
+/**
+ * Script helper that bobs an NPC up and down for a set time.
+ * Args: [0] NPC name, [1] axis (only 0 = vertical is implemented), [2] duration in ms.
+ * Follows a 32-entry sine-like table and snaps the NPC back to its start position at the end.
+ */
 USER_FUNC(muj_npc_fuwafuwa) {
     EvtWord* args = event->args;
     const char* name = (const char*)evtGetValue(event, args[0]);
@@ -245,6 +212,13 @@ USER_FUNC(muj_npc_fuwafuwa) {
     return EVT_RETURN_YIELD;
 }
 
+/**
+ * Script helper that shakes an NPC (or the active partner when the NPC pointer is -2) back
+ * and forth along one axis.
+ * Args: [0] NPC name, [1] axis (0 x, 1 y, 2 z), [2] amplitude, [3] half period in ms,
+ * [4] duration in ms (0 = shake until the script is killed). Restores the start position when the duration ends.
+ * Used for the shivering sailors.
+ */
 USER_FUNC(muj_npc_buruburu) {
     EvtWord* args = event->args;
     const char* name = (const char*)evtGetValue(event, args[0]);
@@ -321,6 +295,11 @@ USER_FUNC(muj_npc_buruburu) {
     return EVT_RETURN_YIELD;
 }
 
+/**
+ * Script helper for korutesu_apper/korutesu_vanish:
+ * sets the transparency scale (args[1], 0.0 to 1.0) of the named kameki_tornade_n64 effect (args[0]),
+ * which fades Cortez's tornado in and out.
+ */
 static USER_FUNC(tornade_alpha_func) {
     EvtWord* args = event->args;
     const char* name = (const char*)evtGetValue(event, args[0]);
@@ -330,12 +309,21 @@ static USER_FUNC(tornade_alpha_func) {
     return EVT_RETURN_DONE;
 }
 
-USER_FUNC(muj_mario_pos_osreport_func) {
+/**
+ * Debug stub for muj_mario_pos_osreport: reads Mario's state and the A-button trigger
+ * but prints nothing in this build; always blocks.
+ */
+static USER_FUNC(muj_mario_pos_osreport_func) {
     marioGetPtr();
     keyGetButtonTrg(0);
     return EVT_RETURN_BLOCK;
 }
 
+/**
+ * Cortez's entrance: a tornado effect spawns at his position and fades in over one second with wind sounds,
+ * while Cortez (NPC "コルテス") flickers hidden and visible at shrinking intervals until he stands there.
+ * Called with CALL_CHILD from the Keelhaul Key shore maps (muj_10, muj_12) before he speaks.
+ */
 EVT_BEGIN(korutesu_apper)
     CALL(evt_npc_get_position, STRING("コルテス"), LW(0), LW(1), LW(2))
     BEGIN_INLINE_EVENT
@@ -365,51 +353,56 @@ EVT_BEGIN(korutesu_apper)
         CALL(evt_eff_softdelete, STRING("tornade"))
     END_INLINE_EVENT
     BEGIN_INLINE_EVENT
-        CALL(evt_npc_flag_onoff, 1, STRING("コルテス"), 128)
+        CALL(evt_npc_flag_onoff, 1, STRING("コルテス"), NPC_FLAG_HIDDEN)
         WAIT_MS(700)
-        CALL(evt_npc_flag_onoff, 0, STRING("コルテス"), 128)
+        CALL(evt_npc_flag_onoff, 0, STRING("コルテス"), NPC_FLAG_HIDDEN)
         WAIT_FRAMES(1)
-        CALL(evt_npc_flag_onoff, 1, STRING("コルテス"), 128)
+        CALL(evt_npc_flag_onoff, 1, STRING("コルテス"), NPC_FLAG_HIDDEN)
         WAIT_MS(600)
-        CALL(evt_npc_flag_onoff, 0, STRING("コルテス"), 128)
+        CALL(evt_npc_flag_onoff, 0, STRING("コルテス"), NPC_FLAG_HIDDEN)
         WAIT_FRAMES(1)
-        CALL(evt_npc_flag_onoff, 1, STRING("コルテス"), 128)
+        CALL(evt_npc_flag_onoff, 1, STRING("コルテス"), NPC_FLAG_HIDDEN)
         WAIT_MS(500)
-        CALL(evt_npc_flag_onoff, 0, STRING("コルテス"), 128)
+        CALL(evt_npc_flag_onoff, 0, STRING("コルテス"), NPC_FLAG_HIDDEN)
         WAIT_FRAMES(1)
-        CALL(evt_npc_flag_onoff, 1, STRING("コルテス"), 128)
+        CALL(evt_npc_flag_onoff, 1, STRING("コルテス"), NPC_FLAG_HIDDEN)
         WAIT_MS(400)
-        CALL(evt_npc_flag_onoff, 0, STRING("コルテス"), 128)
+        CALL(evt_npc_flag_onoff, 0, STRING("コルテス"), NPC_FLAG_HIDDEN)
         WAIT_FRAMES(1)
-        CALL(evt_npc_flag_onoff, 1, STRING("コルテス"), 128)
+        CALL(evt_npc_flag_onoff, 1, STRING("コルテス"), NPC_FLAG_HIDDEN)
         WAIT_MS(300)
-        CALL(evt_npc_flag_onoff, 0, STRING("コルテス"), 128)
+        CALL(evt_npc_flag_onoff, 0, STRING("コルテス"), NPC_FLAG_HIDDEN)
         WAIT_FRAMES(1)
-        CALL(evt_npc_flag_onoff, 1, STRING("コルテス"), 128)
+        CALL(evt_npc_flag_onoff, 1, STRING("コルテス"), NPC_FLAG_HIDDEN)
         WAIT_MS(200)
-        CALL(evt_npc_flag_onoff, 0, STRING("コルテス"), 128)
+        CALL(evt_npc_flag_onoff, 0, STRING("コルテス"), NPC_FLAG_HIDDEN)
         WAIT_FRAMES(1)
-        CALL(evt_npc_flag_onoff, 1, STRING("コルテス"), 128)
+        CALL(evt_npc_flag_onoff, 1, STRING("コルテス"), NPC_FLAG_HIDDEN)
         WAIT_MS(100)
-        CALL(evt_npc_flag_onoff, 0, STRING("コルテス"), 128)
+        CALL(evt_npc_flag_onoff, 0, STRING("コルテス"), NPC_FLAG_HIDDEN)
         WAIT_FRAMES(1)
-        CALL(evt_npc_flag_onoff, 1, STRING("コルテス"), 128)
+        CALL(evt_npc_flag_onoff, 1, STRING("コルテス"), NPC_FLAG_HIDDEN)
         WAIT_MS(50)
-        CALL(evt_npc_flag_onoff, 0, STRING("コルテス"), 128)
+        CALL(evt_npc_flag_onoff, 0, STRING("コルテス"), NPC_FLAG_HIDDEN)
         WAIT_FRAMES(1)
-        CALL(evt_npc_flag_onoff, 1, STRING("コルテス"), 128)
+        CALL(evt_npc_flag_onoff, 1, STRING("コルテス"), NPC_FLAG_HIDDEN)
         WAIT_MS(30)
-        CALL(evt_npc_flag_onoff, 0, STRING("コルテス"), 128)
+        CALL(evt_npc_flag_onoff, 0, STRING("コルテス"), NPC_FLAG_HIDDEN)
         WAIT_FRAMES(1)
-        CALL(evt_npc_flag_onoff, 1, STRING("コルテス"), 128)
+        CALL(evt_npc_flag_onoff, 1, STRING("コルテス"), NPC_FLAG_HIDDEN)
         WAIT_MS(30)
-        CALL(evt_npc_flag_onoff, 0, STRING("コルテス"), 128)
+        CALL(evt_npc_flag_onoff, 0, STRING("コルテス"), NPC_FLAG_HIDDEN)
         WAIT_FRAMES(1)
     END_INLINE_EVENT
     WAIT_MS(3000)
     RETURN
 EVT_END()
 
+/**
+ * Cortez's exit: the same tornado effect fades in around him while he flickers hidden
+ * and visible at growing intervals, then the tornado is deleted and he stays hidden.
+ * Called at the end of his scenes in muj_12.
+ */
 EVT_BEGIN(korutesu_vanish)
     CALL(evt_npc_get_position, STRING("コルテス"), LW(0), LW(1), LW(2))
     CALL(evt_eff64, STRING("tornade"), STRING("kameki_tornade_n64"), 0, LW(0), LW(1), LW(2), FLOAT(2.5f), 0, 0, 0, 0, 0, 0, 0)
@@ -433,54 +426,55 @@ EVT_BEGIN(korutesu_vanish)
         CALL(evt_eff_softdelete, STRING("tornade"))
     END_INLINE_EVENT
     BEGIN_INLINE_EVENT
-        CALL(evt_npc_flag_onoff, 1, STRING("コルテス"), 128)
+        CALL(evt_npc_flag_onoff, 1, STRING("コルテス"), NPC_FLAG_HIDDEN)
         WAIT_MS(30)
-        CALL(evt_npc_flag_onoff, 0, STRING("コルテス"), 128)
+        CALL(evt_npc_flag_onoff, 0, STRING("コルテス"), NPC_FLAG_HIDDEN)
         WAIT_FRAMES(1)
-        CALL(evt_npc_flag_onoff, 1, STRING("コルテス"), 128)
+        CALL(evt_npc_flag_onoff, 1, STRING("コルテス"), NPC_FLAG_HIDDEN)
         WAIT_MS(30)
-        CALL(evt_npc_flag_onoff, 0, STRING("コルテス"), 128)
+        CALL(evt_npc_flag_onoff, 0, STRING("コルテス"), NPC_FLAG_HIDDEN)
         WAIT_FRAMES(1)
-        CALL(evt_npc_flag_onoff, 1, STRING("コルテス"), 128)
+        CALL(evt_npc_flag_onoff, 1, STRING("コルテス"), NPC_FLAG_HIDDEN)
         WAIT_MS(50)
-        CALL(evt_npc_flag_onoff, 0, STRING("コルテス"), 128)
+        CALL(evt_npc_flag_onoff, 0, STRING("コルテス"), NPC_FLAG_HIDDEN)
         WAIT_FRAMES(1)
-        CALL(evt_npc_flag_onoff, 1, STRING("コルテス"), 128)
+        CALL(evt_npc_flag_onoff, 1, STRING("コルテス"), NPC_FLAG_HIDDEN)
         WAIT_MS(100)
-        CALL(evt_npc_flag_onoff, 0, STRING("コルテス"), 128)
+        CALL(evt_npc_flag_onoff, 0, STRING("コルテス"), NPC_FLAG_HIDDEN)
         WAIT_FRAMES(1)
-        CALL(evt_npc_flag_onoff, 1, STRING("コルテス"), 128)
+        CALL(evt_npc_flag_onoff, 1, STRING("コルテス"), NPC_FLAG_HIDDEN)
         WAIT_MS(200)
-        CALL(evt_npc_flag_onoff, 0, STRING("コルテス"), 128)
+        CALL(evt_npc_flag_onoff, 0, STRING("コルテス"), NPC_FLAG_HIDDEN)
         WAIT_FRAMES(1)
-        CALL(evt_npc_flag_onoff, 1, STRING("コルテス"), 128)
+        CALL(evt_npc_flag_onoff, 1, STRING("コルテス"), NPC_FLAG_HIDDEN)
         WAIT_MS(300)
-        CALL(evt_npc_flag_onoff, 0, STRING("コルテス"), 128)
+        CALL(evt_npc_flag_onoff, 0, STRING("コルテス"), NPC_FLAG_HIDDEN)
         WAIT_FRAMES(1)
-        CALL(evt_npc_flag_onoff, 1, STRING("コルテス"), 128)
+        CALL(evt_npc_flag_onoff, 1, STRING("コルテス"), NPC_FLAG_HIDDEN)
         WAIT_MS(400)
-        CALL(evt_npc_flag_onoff, 0, STRING("コルテス"), 128)
+        CALL(evt_npc_flag_onoff, 0, STRING("コルテス"), NPC_FLAG_HIDDEN)
         WAIT_FRAMES(1)
-        CALL(evt_npc_flag_onoff, 1, STRING("コルテス"), 128)
+        CALL(evt_npc_flag_onoff, 1, STRING("コルテス"), NPC_FLAG_HIDDEN)
         WAIT_MS(500)
-        CALL(evt_npc_flag_onoff, 0, STRING("コルテス"), 128)
+        CALL(evt_npc_flag_onoff, 0, STRING("コルテス"), NPC_FLAG_HIDDEN)
         WAIT_FRAMES(1)
-        CALL(evt_npc_flag_onoff, 1, STRING("コルテス"), 128)
+        CALL(evt_npc_flag_onoff, 1, STRING("コルテス"), NPC_FLAG_HIDDEN)
         WAIT_MS(600)
-        CALL(evt_npc_flag_onoff, 0, STRING("コルテス"), 128)
+        CALL(evt_npc_flag_onoff, 0, STRING("コルテス"), NPC_FLAG_HIDDEN)
         WAIT_FRAMES(1)
-        CALL(evt_npc_flag_onoff, 1, STRING("コルテス"), 128)
+        CALL(evt_npc_flag_onoff, 1, STRING("コルテス"), NPC_FLAG_HIDDEN)
         WAIT_MS(700)
-        CALL(evt_npc_flag_onoff, 0, STRING("コルテス"), 128)
+        CALL(evt_npc_flag_onoff, 0, STRING("コルテス"), NPC_FLAG_HIDDEN)
         WAIT_FRAMES(1)
-        CALL(evt_npc_flag_onoff, 1, STRING("コルテス"), 128)
+        CALL(evt_npc_flag_onoff, 1, STRING("コルテス"), NPC_FLAG_HIDDEN)
         WAIT_MS(800)
-        CALL(evt_npc_flag_onoff, 0, STRING("コルテス"), 128)
+        CALL(evt_npc_flag_onoff, 0, STRING("コルテス"), NPC_FLAG_HIDDEN)
         WAIT_FRAMES(1)
     END_INLINE_EVENT
     RETURN
 EVT_END()
 
+/** Debug event that calls muj_mario_pos_osreport_func; has no visible effect. */
 EVT_BEGIN(muj_mario_pos_osreport)
     CALL(muj_mario_pos_osreport_func)
     RETURN

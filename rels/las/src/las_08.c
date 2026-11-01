@@ -1,7 +1,8 @@
+// las_08 (ラストダンジョン, Palace of Shadow): the looping corridor (mugen kairou) with the torches.
+
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
 
-#pragma force_active on
 #include "driver/mapdrv.h"
 #include "driver/hitdrv.h"
 #include "driver/effdrv.h"
@@ -9,84 +10,30 @@
 #ifdef TARGET_PC /* declarations the GameCube code calls implicitly */
 #include "manager/evtmgr_cmd.h"
 #endif
+#include "manager/evtmgr_cmd.h"
+#include "evt/evt_map.h"
+#include "evt/evt_seq.h"
+#include "evt/evt_snd.h"
+#include "evt/evt_sub.h"
+#include "las.h"
+#include "evt/evt_story.h"
 
-USER_FUNC(evt_bero_exec_wait);
-USER_FUNC(evt_bero_get_info);
-USER_FUNC(evt_bero_overwrite);
-USER_FUNC(evt_mapobj_flag_onoff);
-USER_FUNC(evt_mapobj_rotate);
-USER_FUNC(evt_mapobj_scale);
-USER_FUNC(evt_seq_wait);
-USER_FUNC(evt_snd_bgmon);
-USER_FUNC(evt_snd_envon);
-USER_FUNC(evt_snd_set_rev_mode);
-USER_FUNC(evt_sub_get_sincos);
-USER_FUNC(hi_onoff);
-USER_FUNC(mugen_kairou_get_list);
+static USER_FUNC(hi_onoff);
+static USER_FUNC(mugen_kairou_get_list);
 
-f32 fd_las_08_negone_one_374[2] __attribute__((aligned(8)));
-f32 fd_las_08_neg_one_382;
-f32 fd_las_08___local_PI_383;
-f32 fd_las_08___local_3PIO2_385;
-f32 fd_las_08_one_negone_373[2] __attribute__((aligned(8)));
-f32 fd_las_08___local_PIO2_384;
-f32 fd_las_08_one_381;
-f32 fd_las_08_negone_one_360[2] __attribute__((aligned(8)));
-f32 fd_las_08_neg_one_365;
-f32 fd_las_08___local_PI_366;
-f32 fd_las_08___local_3PIO2_368;
-f32 fd_las_08_one_negone_359[2] __attribute__((aligned(8)));
-f32 fd_las_08___local_PIO2_367;
-f32 fd_las_08_one_364;
-static EvtWord w1_door_close[22];
-static EvtWord w1_door_open[22];
-static EvtWord w2_door_close[22];
-static EvtWord w2_door_open[22];
-static EvtWord e1_door_close[22];
-static EvtWord e1_door_open[22];
-static EvtWord e2_door_close[22];
-static EvtWord e2_door_open[22];
-static EvtWord door_matigai_evt[15];
-EvtWord door_seikai_evt[19];
 static BeroEntry bero_entry_data[5];
 BeroEntry e_bero_1_matigai[1];
 BeroEntry e_bero_1_seikai[1];
 BeroEntry e_bero_2_seikai[1];
 const char* taimatu_data[16];
-EvtWord hikari_anim[52];
-EvtWord taimatu_evt[18];
 s32 mugen_kairou_list[7];
-EvtWord mugen_kairou_init[96];
-EvtWord las_08_init_evt[22];
 
-f32 fd_las_08_negone_one_374[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_las_08_neg_one_382 = -1.0f;
-
-f32 fd_las_08___local_PI_383 = 3.1415927f;
-
-f32 fd_las_08___local_3PIO2_385 = 4.712389f;
-
-f32 fd_las_08_one_negone_373[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_las_08___local_PIO2_384 = 1.5707964f;
-
-f32 fd_las_08_one_381 = 1.0f;
-
-f32 fd_las_08_negone_one_360[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_las_08_neg_one_365 = -1.0f;
-
-f32 fd_las_08___local_PI_366 = 3.1415927f;
-
-f32 fd_las_08___local_3PIO2_368 = 4.712389f;
-
-f32 fd_las_08_one_negone_359[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_las_08___local_PIO2_367 = 1.5707964f;
-
-f32 fd_las_08_one_364 = 1.0f;
-
+/**
+ * Door animation script (closing) for the west (door 1) door,
+ * used as the enter/exit animation of this room's bero entry.
+ * LW(0) holds the angle step of the swing, and the script turns the door panels S_doa_l1_01
+ * and S_doa_l1_02 by it, the second one the opposite way.
+ */
 static EVT_BEGIN(w1_door_close)
     MULTIPLY_FLOAT(LW(0), FLOAT(-0.38867188f))
     CALL(evt_mapobj_rotate, 0, STRING("S_doa_l1_01"), 0, LW(0), 0)
@@ -95,6 +42,12 @@ static EVT_BEGIN(w1_door_close)
     RETURN
 EVT_END()
 
+/**
+ * Door animation script (opening) for the west (door 1) door,
+ * used as the enter/exit animation of this room's bero entry.
+ * LW(0) holds the angle step of the swing, and the script turns the door panels S_doa_l1_01
+ * and S_doa_l1_02 by it, the second one the opposite way.
+ */
 static EVT_BEGIN(w1_door_open)
     MULTIPLY_FLOAT(LW(0), FLOAT(0.38867188f))
     CALL(evt_mapobj_rotate, 0, STRING("S_doa_l1_01"), 0, LW(0), 0)
@@ -103,6 +56,12 @@ static EVT_BEGIN(w1_door_open)
     RETURN
 EVT_END()
 
+/**
+ * Door animation script (closing) for the west (door 2) door,
+ * used as the enter/exit animation of this room's bero entry.
+ * LW(0) holds the angle step of the swing, and the script turns the door panels S_doa_l2_01
+ * and S_doa_l2_02 by it, the second one the opposite way.
+ */
 static EVT_BEGIN(w2_door_close)
     MULTIPLY_FLOAT(LW(0), FLOAT(-0.38867188f))
     CALL(evt_mapobj_rotate, 0, STRING("S_doa_l2_01"), 0, LW(0), 0)
@@ -111,6 +70,12 @@ static EVT_BEGIN(w2_door_close)
     RETURN
 EVT_END()
 
+/**
+ * Door animation script (opening) for the west (door 2) door,
+ * used as the enter/exit animation of this room's bero entry.
+ * LW(0) holds the angle step of the swing, and the script turns the door panels S_doa_l2_01
+ * and S_doa_l2_02 by it, the second one the opposite way.
+ */
 static EVT_BEGIN(w2_door_open)
     MULTIPLY_FLOAT(LW(0), FLOAT(0.38867188f))
     CALL(evt_mapobj_rotate, 0, STRING("S_doa_l2_01"), 0, LW(0), 0)
@@ -119,6 +84,12 @@ static EVT_BEGIN(w2_door_open)
     RETURN
 EVT_END()
 
+/**
+ * Door animation script (closing) for the east (door 1) door,
+ * used as the enter/exit animation of this room's bero entry.
+ * LW(0) holds the angle step of the swing, and the script turns the door panels S_doa_r1_01
+ * and S_doa_r1_02 by it, the second one the opposite way.
+ */
 static EVT_BEGIN(e1_door_close)
     MULTIPLY_FLOAT(LW(0), FLOAT(0.38867188f))
     CALL(evt_mapobj_rotate, 0, STRING("S_doa_r1_01"), 0, LW(0), 0)
@@ -127,6 +98,12 @@ static EVT_BEGIN(e1_door_close)
     RETURN
 EVT_END()
 
+/**
+ * Door animation script (opening) for the east (door 1) door,
+ * used as the enter/exit animation of this room's bero entry.
+ * LW(0) holds the angle step of the swing, and the script turns the door panels S_doa_r1_01
+ * and S_doa_r1_02 by it, the second one the opposite way.
+ */
 static EVT_BEGIN(e1_door_open)
     MULTIPLY_FLOAT(LW(0), FLOAT(-0.38867188f))
     CALL(evt_mapobj_rotate, 0, STRING("S_doa_r1_01"), 0, LW(0), 0)
@@ -135,6 +112,12 @@ static EVT_BEGIN(e1_door_open)
     RETURN
 EVT_END()
 
+/**
+ * Door animation script (closing) for the east (door 2) door,
+ * used as the enter/exit animation of this room's bero entry.
+ * LW(0) holds the angle step of the swing, and the script turns the door panels S_doa_r2_01
+ * and S_doa_r2_02 by it, the second one the opposite way.
+ */
 static EVT_BEGIN(e2_door_close)
     MULTIPLY_FLOAT(LW(0), FLOAT(0.38867188f))
     CALL(evt_mapobj_rotate, 0, STRING("S_doa_r2_01"), 0, LW(0), 0)
@@ -143,6 +126,12 @@ static EVT_BEGIN(e2_door_close)
     RETURN
 EVT_END()
 
+/**
+ * Door animation script (opening) for the east (door 2) door,
+ * used as the enter/exit animation of this room's bero entry.
+ * LW(0) holds the angle step of the swing, and the script turns the door panels S_doa_r2_01
+ * and S_doa_r2_02 by it, the second one the opposite way.
+ */
 static EVT_BEGIN(e2_door_open)
     MULTIPLY_FLOAT(LW(0), FLOAT(-0.38867188f))
     CALL(evt_mapobj_rotate, 0, STRING("S_doa_r2_01"), 0, LW(0), 0)
@@ -151,33 +140,47 @@ static EVT_BEGIN(e2_door_open)
     RETURN
 EVT_END()
 
+/**
+ * Event script (bero callback): when a door in the corridor puzzle is taken
+ * while the story is at STORY_STG8_01_02_LOCK, resets the corridor streak GSW_LAS08_CORRIDOR_STREAK to 0
+ * and sets GSWF_LAS_WRONG_DOOR_TAKEN (the buzzer plays in las_07). Returns 0 in LW(0).
+ */
 static EVT_BEGIN(door_matigai_evt)
-    IF_INT_EQUAL(GSW(0), 385)
-        SET_VALUE(GSW(1121), 0)
-        SET_VALUE(GSWF(4325), 1)
+    IF_INT_EQUAL(GSW(GSW_STORY_PROGRESS), STORY_STG8_01_02_LOCK)
+        SET_VALUE(GSW(GSW_LAS08_CORRIDOR_STREAK), 0)
+        SET_VALUE(GSWF(GSWF_LAS_WRONG_DOOR_TAKEN), 1)
     END_IF
     SET_VALUE(LW(0), 0)
     RETURN
 EVT_END()
 
+/**
+ * Door-enter hook for the correct door of the endless corridor:
+ * while the story is at STORY_STG8_01_02_LOCK it counts one more correct door in GSW_LAS08_CORRIDOR_STREAK,
+ * and after seven in a row advances the story to STORY_STG8_02_FOLLOW_THE_LIT_TORCHES. Returns 0 in LW(0).
+ */
 EVT_BEGIN(door_seikai_evt)
-    IF_INT_EQUAL(GSW(0), 385)
-        ADD(GSW(1121), 1)
-        IF_INT_GREATER_OR_EQUAL(GSW(1121), 7)
-            SET_VALUE(GSW(0), 386)
+    IF_INT_EQUAL(GSW(GSW_STORY_PROGRESS), STORY_STG8_01_02_LOCK)
+        ADD(GSW(GSW_LAS08_CORRIDOR_STREAK), 1)
+        IF_INT_GREATER_OR_EQUAL(GSW(GSW_LAS08_CORRIDOR_STREAK), 7)
+            SET_VALUE(GSW(GSW_STORY_PROGRESS), STORY_STG8_02_FOLLOW_THE_LIT_TORCHES)
         END_IF
     END_IF
     SET_VALUE(LW(0), 0)
     RETURN
 EVT_END()
 
+/**
+ * Exits of las_08: west door w_bero_1 to las_07 (e_bero_1); east door e_bero_1 to las_09 (w_bero); west door
+ * w_bero_2 to las_07 (e_bero_2); east door e_bero_2 to las_07 (w_bero_2).
+ */
 static BeroEntry bero_entry_data[] = {
     {
         "w_bero_1", // hitName
         1, // type
         6, // sfxId
-        20000, // directionId
-        100000, // centerPosition
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         NULL, // enterEvent
@@ -194,8 +197,8 @@ static BeroEntry bero_entry_data[] = {
         "e_bero_1", // hitName
         1, // type
         6, // sfxId
-        20000, // directionId
-        100000, // centerPosition
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         NULL, // enterEvent
@@ -212,8 +215,8 @@ static BeroEntry bero_entry_data[] = {
         "w_bero_2", // hitName
         1, // type
         6, // sfxId
-        20000, // directionId
-        100000, // centerPosition
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         NULL, // enterEvent
@@ -230,8 +233,8 @@ static BeroEntry bero_entry_data[] = {
         "e_bero_2", // hitName
         1, // type
         6, // sfxId
-        20000, // directionId
-        100000, // centerPosition
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         NULL, // enterEvent
@@ -247,13 +250,14 @@ static BeroEntry bero_entry_data[] = {
     {0},
 };
 
+/** Exit of las_08: east door e_bero_1 to las_07 (w_bero_1). */
 BeroEntry e_bero_1_matigai[] = {
     {
         "e_bero_1", // hitName
         1, // type
         6, // sfxId
-        20000, // directionId
-        100000, // centerPosition
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         NULL, // enterEvent
@@ -268,13 +272,14 @@ BeroEntry e_bero_1_matigai[] = {
     },
 };
 
+/** Exit of las_08: east door e_bero_1 to las_08 (w_bero_1). */
 BeroEntry e_bero_1_seikai[] = {
     {
         "e_bero_1", // hitName
         1, // type
         6, // sfxId
-        20000, // directionId
-        100000, // centerPosition
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         NULL, // enterEvent
@@ -289,13 +294,14 @@ BeroEntry e_bero_1_seikai[] = {
     },
 };
 
+/** Exit of las_08: east door e_bero_2 to las_08 (w_bero_2). */
 BeroEntry e_bero_2_seikai[] = {
     {
         "e_bero_2", // hitName
         1, // type
         6, // sfxId
-        20000, // directionId
-        100000, // centerPosition
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         NULL, // enterEvent
@@ -310,6 +316,10 @@ BeroEntry e_bero_2_seikai[] = {
     },
 };
 
+/**
+ * Torch objects of the corridor as pairs: the glow model S_hikari_NN and the hit object A_hi_NN that gives
+ * the position of the flame.
+ */
 const char* taimatu_data[] = {
     "S_hikari_01",
     "A_hi_01",
@@ -329,6 +339,10 @@ const char* taimatu_data[] = {
     "A_hi_08",
 };
 
+/**
+ * Event script: pulses the eight torch flames of the corridor,
+ * scaling their light map objects with a sine wave (0.6 to 1.0) forever.
+ */
 EVT_BEGIN(hikari_anim)
     CALL(evt_seq_wait, 2)
     CALL(evt_bero_exec_wait, 65536)
@@ -351,50 +365,66 @@ EVT_BEGIN(hikari_anim)
     RETURN
 EVT_END()
 
+/**
+ * Event script: hides the eight torch map objects of the corridor,
+ * then starts hikari_anim to make the lit torches flicker.
+ */
 EVT_BEGIN(taimatu_evt)
     SET_INT_READ_ADDR(PTR(&taimatu_data))
     LOOP(8)
         READ_INT2(LW(0), LW(1))
-        CALL(evt_mapobj_flag_onoff, 0, 1, LW(0), 1)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_SINGLE, 1, LW(0), MAPOBJ_FLAG_HIDE)
     END_LOOP
-    SPAWN_EVENT(PTR(hikari_anim))
+    SPAWN_EVENT(hikari_anim)
     RETURN
 EVT_END()
 
+/**
+ * Which door is right in each of the seven rounds of the endless corridor: 7 means door e_bero_1 and 3 means
+ * e_bero_2.
+ */
 s32 mugen_kairou_list[] = {
     7, 7, 3, 3, 7, 3, 7,
 };
 
+/**
+ * Event script: sets up the endless corridor (mugen kairou),
+ * a room that repeats until Mario takes the right door seven times.
+ * Before the Palace lock is opened it just lights the four torches 4..7;
+ * afterwards it lights the torch given by mugen_kairou_list for the current streak
+ * and rewires the east doors e_bero_1 and e_bero_2
+ * so that the right one leads on (the list entry, 7 or 3, decides which).
+ */
 EVT_BEGIN(mugen_kairou_init)
-    CALL_CHILD(PTR(taimatu_evt))
-    IF_INT_EQUAL(GSW(0), 385)
-        CALL(mugen_kairou_get_list, GSW(1121), LW(0))
+    CALL_CHILD(taimatu_evt)
+    IF_INT_EQUAL(GSW(GSW_STORY_PROGRESS), STORY_STG8_01_02_LOCK)
+        CALL(mugen_kairou_get_list, GSW(GSW_LAS08_CORRIDOR_STREAK), LW(0))
         CALL(hi_onoff, LW(0), 1)
         CALL(evt_seq_wait, 2)
         CALL(evt_bero_exec_wait, 65536)
-        CALL(mugen_kairou_get_list, GSW(1121), LW(0))
+        CALL(mugen_kairou_get_list, GSW(GSW_LAS08_CORRIDOR_STREAK), LW(0))
         SWITCH(LW(0))
             CASE_EQUAL(7)
-            IF_INT_LESS(GSW(1121), 6)
+            IF_INT_LESS(GSW(GSW_LAS08_CORRIDOR_STREAK), 6)
                 SET_VALUE(LW(0), STRING("e_bero_1"))
-                CALL_CHILD(PTR(bero_case_switch_off))
+                CALL_CHILD(bero_case_switch_off)
                 CALL(evt_bero_overwrite, STRING("e_bero_1"), PTR(e_bero_1_seikai))
                 SET_VALUE(LW(0), STRING("e_bero_1"))
-                CALL_CHILD(PTR(bero_case_switch_on))
+                CALL_CHILD(bero_case_switch_on)
             END_IF
             CASE_EQUAL(3)
             SET_VALUE(LW(0), STRING("e_bero_2"))
-            CALL_CHILD(PTR(bero_case_switch_off))
+            CALL_CHILD(bero_case_switch_off)
             CALL(evt_bero_overwrite, STRING("e_bero_2"), PTR(e_bero_2_seikai))
             SET_VALUE(LW(0), STRING("e_bero_2"))
-            CALL_CHILD(PTR(bero_case_switch_on))
+            CALL_CHILD(bero_case_switch_on)
             SET_VALUE(LW(0), STRING("e_bero_1"))
-            CALL_CHILD(PTR(bero_case_switch_off))
+            CALL_CHILD(bero_case_switch_off)
             CALL(evt_bero_overwrite, STRING("e_bero_1"), PTR(e_bero_1_matigai))
             SET_VALUE(LW(0), STRING("e_bero_1"))
-            CALL_CHILD(PTR(bero_case_switch_on))
+            CALL_CHILD(bero_case_switch_on)
         END_SWITCH
-        ELSE
+    ELSE
         CALL(hi_onoff, 4, 1)
         CALL(hi_onoff, 5, 1)
         CALL(hi_onoff, 6, 1)
@@ -403,20 +433,28 @@ EVT_BEGIN(mugen_kairou_init)
     RETURN
 EVT_END()
 
+/** Map init script for las_08: music and ambience, the door set, and the endless corridor setup. */
 EVT_BEGIN(las_08_init_evt)
-    CALL(evt_snd_bgmon, 512, STRING("BGM_STG8_LST1"))
-    CALL(evt_snd_envon, 272, STRING("ENV_STG8_LAS1"))
+    CALL(evt_snd_bgmon, PSND_FADE_OUT, STRING("BGM_STG8_LST1"))
+    CALL(evt_snd_envon, PSND_FADE_RESTART | PSND_FADE_IN, STRING("ENV_STG8_LAS1"))
+#if VERSION >= VERSION_JP
     CALL(evt_snd_set_rev_mode, 2)
+#endif
     SET_VALUE(LW(0), PTR(bero_entry_data))
     CALL(evt_bero_get_info)
-    CALL_CHILD(PTR(evt_bero_info_run))
-    SPAWN_EVENT(PTR(mugen_kairou_init))
+    CALL_CHILD(evt_bero_info_run)
+    SPAWN_EVENT(mugen_kairou_init)
     RETURN
 EVT_END()
 
 EffectEntry* effTorchEntry(s32 type, f32 x, f32 y, f32 z, f32 scale);
 
-USER_FUNC(hi_onoff) {
+/**
+ * Script helper: turns torch args[0] on (args[1] nonzero) or off.
+ * On shows its light object and starts a torch fire effect at its hit object;
+ * off hides the light and softly deletes the effect.
+ */
+static USER_FUNC(hi_onoff) {
     EvtWord* args = event->args;
     s32 index = evtGetValue(event, args[0]);
     s32 on = evtGetValue(event, args[1]);
@@ -434,7 +472,11 @@ USER_FUNC(hi_onoff) {
     return EVT_RETURN_DONE;
 }
 
-USER_FUNC(mugen_kairou_get_list) {
+/**
+ * Script helper: reads entry args[0] of mugen_kairou_list into args[1] (7 or 3: which door the current round
+ * expects).
+ */
+static USER_FUNC(mugen_kairou_get_list) {
     EvtWord* args = event->args;
     s32 index = evtGetValue(event, args[0]);
 

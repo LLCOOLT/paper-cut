@@ -1,5 +1,5 @@
+// Action command: power gauge (ac_power_gauge); mash the button to charge the gauge before time runs out.
 #include "icon_ids.h"
-#include "pc_call.h"
 #include "battle/battle.h"
 #include "battle/battle_ac.h"
 #include "battle/battle_pad.h"
@@ -8,14 +8,12 @@
 #include "driver/icondrv.h"
 #include "system.h"
 #include <string.h>
+#include "version.h"
+// FAKE: ac_power_gauge.c calls BattleACGetButtonIcon through this prototype (the types it was compiled with) instead of the one in battle/battle_ac.h; same registers, behaviour-identical.
+typedef s32 (*BattleACGetButtonIconRetS32Fn)(s32, s32);
 
+// this unit is size-optimised, as in the original (the object differs without it)
 #pragma optimize_for_size on
-
-void BattleAcDrawGauge(s32 x, s32 y, s32 icon, f32 ratio, s32 a, s32 b, s32 c, s32 d, s32 e);
-void BattleAcGaugeSeInit(void);
-void BattleAcGaugeSeUpdate(f32 value);
-void BattleAcGaugeSeDelete(void);
-s32 BattleACGetButtonIcon(s32 button, s32 pressed);
 
 typedef struct PowerGaugeWork {
     s32 frame;     // 0x0
@@ -25,7 +23,6 @@ typedef struct PowerGaugeWork {
     s8 autoFail;   // 0x10
     s8 phase;      // 0x11
     s8 mode;       // 0x12
-    u8 pad13;      // 0x13
     u32 button;    // 0x14
     s32 endTimer;  // 0x18
 } PowerGaugeWork;
@@ -35,17 +32,24 @@ typedef struct PowerGaugeWork {
 #define ICONGX ((void (*)(Vec*, s32, s32, f32))iconDispGx)
 static void actionCommandDisp(f32 x, f32 y);
 
+/**
+ * Per-frame driver of action command 15, used by Bobbery's Bomb, Yoshi's Gulp and Ms. Mowz's Kiss Thief.
+ * A gauge fills over params[1] frames (curve params[3]) and stays full for params[2] more.
+ * params[0] 0/1: press L+R or A while it is at params[4] or above;
+ * 2/3: hold A or R (within 120 frames) to fill it and release at params[4] or above.
+ * acFlags bit 0 fills only while held. Running out of time fails.
+ */
 s32 battleAcMain_PowerGauge(BattleWork* work) {
     BattleActions* ac = &work->actionCommands;
     PowerGaugeWork* pw = PG_WORK(ac);
     BOOL isAuto = FALSE;
     BattleACDispParams* disp = (BattleACDispParams*)&ac->disp;
 
-    if (ac->mAcUnit->badgesEquipped.AutoCommand) {
+    if (ac->acUnit->badgesEquipped.AutoCommand) {
         isAuto = TRUE;
     }
 
-    switch (ac->mAcState) {
+    switch (ac->acState) {
         case 0:
             memset(disp, 0, 0x2C);
             disp->iconX = -300.0f;
@@ -56,7 +60,7 @@ s32 battleAcMain_PowerGauge(BattleWork* work) {
             pw->frame = 0;
             pw->frame2 = 0;
             ac->outputParams[0] = 0;
-            ac->mAcState = 99;
+            ac->acState = 99;
             ac->result = 1;
             pw->maxFrames = ac->params[1] + ac->params[2];
             pw->gauge = 0.0f;
@@ -94,7 +98,7 @@ s32 battleAcMain_PowerGauge(BattleWork* work) {
         case 99:
             break;
         case 100:
-            if ((ac->setupFlags & 1) && (ac->mAcUnit->mTokenFlags & kConfusedAction)) {
+            if ((ac->setupFlags & AC_SETUP_FLAG_CONFUSED_AUTO) && (ac->acUnit->tokenFlags & TOKEN_FLAG_CONFUSED_ACTION)) {
                 if (irand(100) >= 0) {
                     ac->setupParam = 30;
                     pw->autoFail = 0;
@@ -103,13 +107,13 @@ s32 battleAcMain_PowerGauge(BattleWork* work) {
                     ac->setupParam = 30;
                 }
                 ac->outputParams[0] = 1;
-                ac->mAcState = 1002;
+                ac->acState = 1002;
                 break;
             }
             if (pw->mode) {
-                ac->mAcState = 1001;
+                ac->acState = 1001;
             } else {
-                ac->mAcState = 1000;
+                ac->acState = 1000;
             }
             if (pw->mode) {
                 BattleAcGaugeSeInit();
@@ -122,7 +126,7 @@ s32 battleAcMain_PowerGauge(BattleWork* work) {
                     if (!pw->mode) {
                         if (pw->button == BattlePadGetNow() || isAuto) {
                             pw->phase = 1;
-                            ac->mAcState = 1001;
+                            ac->acState = 1001;
                             pw->frame = 0;
                             ac->outputParams[0] = 1;
                             BattleAcGaugeSeInit();
@@ -137,8 +141,8 @@ s32 battleAcMain_PowerGauge(BattleWork* work) {
                             }
                         }
                     } else {
-                        if (!((s32(*)(s32))BattlePadCheckNow)(pw->button)) {
-                            if (((s32(*)(s32))BattlePadCheckUp)(pw->button)) {
+                        if (!BattlePadCheckNow(pw->button)) {
+                            if (BattlePadCheckUp(pw->button)) {
                                 pw->phase = 2;
                             }
                         }
@@ -150,12 +154,12 @@ s32 battleAcMain_PowerGauge(BattleWork* work) {
             } else if (pw->phase == 1) {
                 pw->frame2++;
             }
-            if (ac->mAcState == 1000) {
+            if (ac->acState == 1000) {
                 if (pw->frame > 120) {
                     pw->frame = 0;
                     ac->result = 0;
                     pw->gauge = 0.0f;
-                    ac->mAcState = 1003;
+                    ac->acState = 1003;
                     ac->outputParams[0] = 2;
                     break;
                 }
@@ -163,12 +167,12 @@ s32 battleAcMain_PowerGauge(BattleWork* work) {
                 pw->frame = 0;
                 ac->result = 0;
                 pw->gauge = 101.0f;
-                ac->mAcState = 1003;
+                ac->acState = 1003;
                 break;
             }
             if (pw->frame <= ac->params[1]) {
-                pw->gauge = PCCALL(((f32(*)(s32, f32, f32, s32, s32))intplGetValue)(ac->params[3], 0.0f, 100.0f, pw->frame2, ac->params[1]), intplGetValue(ac->params[3], pw->frame2, ac->params[1], 0.0f, 100.0f));
-#ifdef VERSION_G8ME01
+                pw->gauge = intplGetValue(ac->params[3], 0.0f, 100.0f, pw->frame2, ac->params[1]);
+#if VERSION >= VERSION_US
                 if (pw->gauge > 100.0f) {
                     pw->gauge = 100.0f;
                 }
@@ -190,9 +194,9 @@ s32 battleAcMain_PowerGauge(BattleWork* work) {
                     ac->result &= ~2;
                 } else {
                     ac->result = 2;
-                    ac->mResultCount++;
+                    ac->resultCount++;
                 }
-                ac->mAcState = 1003;
+                ac->acState = 1003;
             }
             break;
         case 1002:
@@ -200,27 +204,27 @@ s32 battleAcMain_PowerGauge(BattleWork* work) {
             if (ac->setupParam < 0) {
                 if (pw->autoFail) {
                     ac->result = 2;
-                    ac->mResultCount++;
+                    ac->resultCount++;
                 } else {
                     ac->result = 0;
                 }
-                ac->doneFlags |= 1;
+                ac->doneFlags |= AC_DONE_FLAG_FINISHED;
                 pw->endTimer = 60;
-                ac->mAcState = 1005;
+                ac->acState = 1005;
                 return 0;
             }
             break;
         case 1003:
-            ac->mAcState = 1004;
+            ac->acState = 1004;
         case 1004:
-            ac->doneFlags |= 1;
+            ac->doneFlags |= AC_DONE_FLAG_FINISHED;
             BattleAcGaugeSeDelete();
             pw->endTimer = 60;
-            ac->mAcState = 1005;
+            ac->acState = 1005;
         case 1005:
             pw->endTimer--;
             if (pw->endTimer <= 0) {
-                ac->mAcState = 1006;
+                ac->acState = 1006;
             }
             break;
         case 1006:
@@ -233,17 +237,21 @@ s32 battleAcMain_PowerGauge(BattleWork* work) {
     return 1;
 }
 
+/** Returns the result word: 1 while running, 2 on success, 0 on failure. */
 s32 battleAcResult_PowerGauge(BattleWork* work) {
     return work->actionCommands.result;
 }
 
-
+/**
+ * Display callback: slides the gauge in from the left over 20 frames,
+ * and once the command ends keeps it up for 40 frames before sliding it back out.
+ */
 void battleAcDisp_PowerGauge(CameraId cameraId, BattleWork* work) {
     BattleActions* ac = &work->actionCommands;
     BattleACDispParams* disp = (BattleACDispParams*)&ac->disp;
-    switch (ac->mAcState) {
+    switch (ac->acState) {
         case 99:
-            disp->iconX = intplGetValue(4, 20 - disp->slideTimer, 20, -300.0f, 30.0f);
+            disp->iconX = intplGetValue(4, -300.0f, 30.0f, 20 - disp->slideTimer, 20);
         case 100:
         case 1000:
         case 1001:
@@ -256,7 +264,7 @@ void battleAcDisp_PowerGauge(CameraId cameraId, BattleWork* work) {
         case 1004:
         case 1005:
             if (disp->slideTimer >= 40) {
-                disp->iconX = intplGetValue(4, disp->slideTimer - 40, 20, 30.0f, -300.0f);
+                disp->iconX = intplGetValue(4, 30.0f, -300.0f, disp->slideTimer - 40, 20);
             } else {
                 disp->iconX = 30.0f;
             }
@@ -268,12 +276,18 @@ void battleAcDisp_PowerGauge(CameraId cameraId, BattleWork* work) {
     }
 }
 
+/** Called by btlevtcmd_StopAC: unless the command already finished, stops the gauge sound and starts the end wait. */
 void battleAcDelete_PowerGauge(BattleWork* work) {
-    if (!(work->actionCommands.doneFlags & 1)) {
-        work->actionCommands.mAcState = 1004;
+    if (!(work->actionCommands.doneFlags & AC_DONE_FLAG_FINISHED)) {
+        work->actionCommands.acState = 1004;
     }
 }
 
+/**
+ * Draws the gauge with its params[4] threshold (acFlags bit 1 hides it), the threshold marker or,
+ * with acFlags bit 2, a star that lights in the zone (bit 3 shifts it left), and the button icons,
+ * flashed as a cue to press or release.
+ */
 static void actionCommandDisp(f32 x, f32 y) {
     BattleWork* work = _battleWorkPointer;
     BattleActions* ac = &work->actionCommands;
@@ -283,7 +297,7 @@ static void actionCommandDisp(f32 x, f32 y) {
     f32 ratio;
     u32 flags;
 
-    camGetPtr(8);
+    camGetPtr(CAMERA_2D);
     pw = PG_WORK(ac);
     ratio = pw->gauge / 100.0f;
     if (ratio > 1.0f) {
@@ -302,7 +316,7 @@ static void actionCommandDisp(f32 x, f32 y) {
         Vec pos = {0.0f, 0.0f, 0.0f};
         pos.x = -288.0f + x + (f32)(ac->params[4] * 0xB0) / 100.0f;
         pos.y = 45.0f + y;
-        ICONGX(&pos, 0x10, ICON_096, 1.0f);
+        ICONGX(&pos, ICON_DISP_2D, ICON_096, 1.0f);
     } else {
         s32 icon;
         if (pw->gauge >= (f32)ac->params[4] && pw->gauge <= 100.0f) {
@@ -314,12 +328,12 @@ static void actionCommandDisp(f32 x, f32 y) {
             Vec pos = {0.0f, 0.0f, 0.0f};
             pos.x = 120.0f + (-200.0f + x) - 12.0f;
             pos.y = 18.0f + y;
-            ICONGX(&pos, 0x10, icon, 1.0f);
+            ICONGX(&pos, ICON_DISP_2D, icon, 1.0f);
         } else {
             Vec pos = {0.0f, 0.0f, 0.0f};
             pos.x = 120.0f + (-200.0f + x);
             pos.y = 18.0f + y;
-            ICONGX(&pos, 0x10, icon, 1.0f);
+            ICONGX(&pos, ICON_DISP_2D, icon, 1.0f);
         }
     }
 
@@ -331,26 +345,26 @@ static void actionCommandDisp(f32 x, f32 y) {
             d = ICON_080;
             break;
         case 1:
-            a = BattleACGetButtonIcon(0x100, 1);
-            b = BattleACGetButtonIcon(0x100, 0);
+            a = ((BattleACGetButtonIconRetS32Fn)BattleACGetButtonIcon)(PAD_BUTTON_A, 1);
+            b = ((BattleACGetButtonIconRetS32Fn)BattleACGetButtonIcon)(PAD_BUTTON_A, 0);
             c = 0;
             d = 0;
             break;
         case 2:
-            a = BattleACGetButtonIcon(0x100, 1);
-            b = BattleACGetButtonIcon(0x100, 0);
+            a = ((BattleACGetButtonIconRetS32Fn)BattleACGetButtonIcon)(PAD_BUTTON_A, 1);
+            b = ((BattleACGetButtonIconRetS32Fn)BattleACGetButtonIcon)(PAD_BUTTON_A, 0);
             c = 0;
             d = 0;
             break;
         case 3:
-            a = BattleACGetButtonIcon(0x20, 1);
-            b = BattleACGetButtonIcon(0x20, 0);
+            a = ((BattleACGetButtonIconRetS32Fn)BattleACGetButtonIcon)(PAD_TRIGGER_R, 1);
+            b = ((BattleACGetButtonIconRetS32Fn)BattleACGetButtonIcon)(PAD_TRIGGER_R, 0);
             c = 0;
             d = 0;
             break;
     }
 
-    switch (ac->mAcState) {
+    switch (ac->acState) {
         case 99:
         case 100:
         case 1003:
@@ -362,18 +376,18 @@ static void actionCommandDisp(f32 x, f32 y) {
                 f32 py = 80.0f + y;
                 pos.x = px;
                 pos.y = py;
-                ICONGX(&pos, 0x10, b, 1.0f);
+                ICONGX(&pos, ICON_DISP_2D, b, 1.0f);
                 {
                     Vec pos2 = {0.0f, 0.0f, 0.0f};
                     pos2.x = 56.0f + px;
                     pos2.y = py;
-                    ICONGX(&pos2, 0x10, d, 1.0f);
+                    ICONGX(&pos2, ICON_DISP_2D, d, 1.0f);
                 }
             } else {
                 Vec pos = {0.0f, 0.0f, 0.0f};
                 pos.x = 28.0f + (-225.0f + x);
                 pos.y = 80.0f + y;
-                ICONGX(&pos, 0x10, b, 1.0f);
+                ICONGX(&pos, ICON_DISP_2D, b, 1.0f);
             }
             break;
         case 1000:
@@ -386,18 +400,18 @@ static void actionCommandDisp(f32 x, f32 y) {
                         f32 py = 80.0f + y;
                         pos.x = px;
                         pos.y = py;
-                        ICONGX(&pos, 0x10, a, 1.0f);
+                        ICONGX(&pos, ICON_DISP_2D, a, 1.0f);
                         {
                             Vec pos2 = {0.0f, 0.0f, 0.0f};
                             pos2.x = 56.0f + px;
                             pos2.y = py;
-                            ICONGX(&pos2, 0x10, c, 1.0f);
+                            ICONGX(&pos2, ICON_DISP_2D, c, 1.0f);
                         }
                     } else {
                         Vec pos = {0.0f, 0.0f, 0.0f};
                         pos.x = 28.0f + (-225.0f + x);
                         pos.y = 80.0f + y;
-                        ICONGX(&pos, 0x10, a, 1.0f);
+                        ICONGX(&pos, ICON_DISP_2D, a, 1.0f);
                     }
                 } else {
                     if ((u16)c) {
@@ -406,18 +420,18 @@ static void actionCommandDisp(f32 x, f32 y) {
                         f32 py = 80.0f + y;
                         pos.x = px;
                         pos.y = py;
-                        ICONGX(&pos, 0x10, b, 1.0f);
+                        ICONGX(&pos, ICON_DISP_2D, b, 1.0f);
                         {
                             Vec pos2 = {0.0f, 0.0f, 0.0f};
                             pos2.x = 56.0f + px;
                             pos2.y = py;
-                            ICONGX(&pos2, 0x10, d, 1.0f);
+                            ICONGX(&pos2, ICON_DISP_2D, d, 1.0f);
                         }
                     } else {
                         Vec pos = {0.0f, 0.0f, 0.0f};
                         pos.x = 28.0f + (-225.0f + x);
                         pos.y = 80.0f + y;
-                        ICONGX(&pos, 0x10, b, 1.0f);
+                        ICONGX(&pos, ICON_DISP_2D, b, 1.0f);
                     }
                 }
             } else {
@@ -428,18 +442,18 @@ static void actionCommandDisp(f32 x, f32 y) {
                         f32 py = 80.0f + y;
                         pos.x = px;
                         pos.y = py;
-                        ICONGX(&pos, 0x10, b, 1.0f);
+                        ICONGX(&pos, ICON_DISP_2D, b, 1.0f);
                         {
                             Vec pos2 = {0.0f, 0.0f, 0.0f};
                             pos2.x = 56.0f + px;
                             pos2.y = py;
-                            ICONGX(&pos2, 0x10, d, 1.0f);
+                            ICONGX(&pos2, ICON_DISP_2D, d, 1.0f);
                         }
                     } else {
                         Vec pos = {0.0f, 0.0f, 0.0f};
                         pos.x = 28.0f + (-225.0f + x);
                         pos.y = 80.0f + y;
-                        ICONGX(&pos, 0x10, b, 1.0f);
+                        ICONGX(&pos, ICON_DISP_2D, b, 1.0f);
                     }
                 } else {
                     if ((u16)c) {
@@ -448,18 +462,18 @@ static void actionCommandDisp(f32 x, f32 y) {
                         f32 py = 80.0f + y;
                         pos.x = px;
                         pos.y = py;
-                        ICONGX(&pos, 0x10, a, 1.0f);
+                        ICONGX(&pos, ICON_DISP_2D, a, 1.0f);
                         {
                             Vec pos2 = {0.0f, 0.0f, 0.0f};
                             pos2.x = 56.0f + px;
                             pos2.y = py;
-                            ICONGX(&pos2, 0x10, c, 1.0f);
+                            ICONGX(&pos2, ICON_DISP_2D, c, 1.0f);
                         }
                     } else {
                         Vec pos = {0.0f, 0.0f, 0.0f};
                         pos.x = 28.0f + (-225.0f + x);
                         pos.y = 80.0f + y;
-                        ICONGX(&pos, 0x10, a, 1.0f);
+                        ICONGX(&pos, ICON_DISP_2D, a, 1.0f);
                     }
                 }
             }

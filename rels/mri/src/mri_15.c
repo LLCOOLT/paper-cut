@@ -1,125 +1,63 @@
+// mri_15 (巨木の中, The Great Tree): the room with the light-locked door where Lord Crump and two X-Nauts flee
+// or fight Mario (dai3_escape, dai3_battle).
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
 #include "evt/evt_bero.h"
 #include "evt/evt_sub.h"
+#include "evt/evt_case.h"
+#include "evt/evt_item.h"
+#include "evt/evt_map.h"
+#include "evt/evt_mario.h"
+#include "evt/evt_npc.h"
+#include "evt/evt_seq.h"
+#include "evt/evt_snd.h"
+#include "mri_puni.h"
 #include "mri.h"
 #include "data_tables.h"
+#include "evt/evt_story.h"
+#include "driver/casedrv.h"
 
-#pragma force_active on
-
-USER_FUNC(evt_bero_exec_get);
-USER_FUNC(evt_bero_exec_wait);
-USER_FUNC(evt_bero_get_info);
-USER_FUNC(evt_item_delete_check);
-USER_FUNC(evt_item_entry);
-USER_FUNC(evt_map_pauseanim);
-USER_FUNC(evt_map_playanim);
-USER_FUNC(evt_mapobj_get_position);
-USER_FUNC(evt_mario_get_name_hitobj_ride);
-USER_FUNC(evt_mario_get_pos);
-USER_FUNC(evt_mario_key_onoff);
-USER_FUNC(evt_mario_normalize);
-USER_FUNC(evt_mario_set_pose);
-USER_FUNC(evt_npc_battle_start);
-USER_FUNC(evt_npc_flag_onoff);
-USER_FUNC(evt_npc_move_position);
-USER_FUNC(evt_npc_set_battle_info);
-USER_FUNC(evt_npc_set_position);
-USER_FUNC(evt_npc_set_ry);
-USER_FUNC(evt_npc_wait_battle_end);
-USER_FUNC(evt_puni_mem_init);
-USER_FUNC(evt_puni_set_hamari);
-USER_FUNC(evt_puni_set_yuka);
-USER_FUNC(evt_run_case_evt);
-USER_FUNC(evt_seq_wait);
-USER_FUNC(evt_snd_bgmon);
-USER_FUNC(evt_snd_envon);
-USER_FUNC(evt_snd_sfxon_3d);
-
-f32 fd_mri_15_negone_one_374[2] __attribute__((aligned(8)));
-f32 fd_mri_15_neg_one_382;
-f32 fd_mri_15___local_PI_383;
-f32 fd_mri_15___local_3PIO2_385;
-f32 fd_mri_15_one_negone_373[2] __attribute__((aligned(8)));
-f32 fd_mri_15___local_PIO2_384;
-f32 fd_mri_15_one_381;
-f32 fd_mri_15_negone_one_360[2] __attribute__((aligned(8)));
-f32 fd_mri_15_neg_one_365;
-f32 fd_mri_15___local_PI_366;
-f32 fd_mri_15___local_3PIO2_368;
-f32 fd_mri_15_one_negone_359[2] __attribute__((aligned(8)));
-f32 fd_mri_15___local_PIO2_367;
-f32 fd_mri_15_one_364;
-static EvtWord bero_s_doa_close[10];
-static EvtWord bero_s_doa_open[10];
-EvtWord evt_dokan[12];
+extern EvtWord evt_dokan[];
 static BeroEntry bero_entry_data[3];
-static EvtWord door_switch_init[17];
-static EvtWord door_switch[59];
-EvtWord dai3_escape[32];
-EvtWord dai3_battle_init[66];
-EvtWord dai3_battle[140];
-EvtWord ueki_evt_01[20];
+extern EvtWord dai3_escape[];
+extern EvtWord dai3_battle_init[];
+extern EvtWord dai3_battle[];
+extern EvtWord ueki_evt_01[];
 static KusaAccess ueki_access_data[7];
-EvtWord mri_15_init_evt[156];
 
-f32 fd_mri_15_negone_one_374[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_mri_15_neg_one_382 = -1.0f;
-
-f32 fd_mri_15___local_PI_383 = 3.1415927f;
-
-f32 fd_mri_15___local_3PIO2_385 = 4.712389f;
-
-f32 fd_mri_15_one_negone_373[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_mri_15___local_PIO2_384 = 1.5707964f;
-
-f32 fd_mri_15_one_381 = 1.0f;
-
-f32 fd_mri_15_negone_one_360[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_mri_15_neg_one_365 = -1.0f;
-
-f32 fd_mri_15___local_PI_366 = 3.1415927f;
-
-f32 fd_mri_15___local_3PIO2_368 = 4.712389f;
-
-f32 fd_mri_15_one_negone_359[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_mri_15___local_PIO2_367 = 1.5707964f;
-
-f32 fd_mri_15_one_364 = 1.0f;
-
+/** Closes the south door (S_doa); used as the door-close script of the south loading zone. */
 static EVT_BEGIN(bero_s_doa_close)
     SET_VALUE(LW(9), 0)
     SET_VALUE(LW(10), STRING("S_doa"))
-    SPAWN_EVENT(PTR(evt_mri_door_close))
+    SPAWN_EVENT(evt_mri_door_close)
     RETURN
 EVT_END()
 
+/** Opens the south door (S_doa); used as the door-open script of the south loading zone. */
 static EVT_BEGIN(bero_s_doa_open)
     SET_VALUE(LW(9), 0)
     SET_VALUE(LW(10), STRING("S_doa"))
-    SPAWN_EVENT(PTR(evt_mri_door_open))
+    SPAWN_EVENT(evt_mri_door_open)
     RETURN
 EVT_END()
 
+/** Exit script of the pipe back to mri_14: marks Lord Crump as gone (GSWF_MRI15_CRUMP_GONE) and returns 0. */
 EVT_BEGIN(evt_dokan)
-    IF_INT_EQUAL(GSWF(2866), 0)
-        SET_VALUE(GSWF(2866), 1)
+    IF_INT_EQUAL(GSWF(GSWF_MRI15_CRUMP_GONE), 0)
+        SET_VALUE(GSWF(GSWF_MRI15_CRUMP_GONE), 1)
     END_IF
     SET_VALUE(LW(0), 0)
     RETURN
 EVT_END()
 
+/** Exits of mri_15: west door w_bero to mri_06 (e_bero); pipe dokan to mri_14 (dokan). */
 static BeroEntry bero_entry_data[] = {
     {
         "w_bero", // hitName
         1, // type
         0, // sfxId
-        20000, // directionId
-        100000, // centerPosition
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         NULL, // enterEvent
@@ -136,8 +74,8 @@ static BeroEntry bero_entry_data[] = {
         "dokan", // hitName
         2, // type
         0, // sfxId
-        9, // directionId
-        100000, // centerPosition
+        BERO_DIR_DOWN, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         NULL, // enterEvent
@@ -152,43 +90,56 @@ static BeroEntry bero_entry_data[] = {
     {0},
 };
 
+/**
+ * Init script of the west door lamp: while the west door is locked (GSWF_MRI15_WEST_DOOR_UNLOCKED is 0) its
+ * loading zone is switched off, otherwise the lamp animation is shown lit.
+ */
 static EVT_BEGIN(door_switch_init)
-    IF_INT_EQUAL(GSWF(2865), 0)
+    IF_INT_EQUAL(GSWF(GSWF_MRI15_WEST_DOOR_UNLOCKED), 0)
         SET_VALUE(LW(0), STRING("w_bero"))
-        CALL_CHILD(PTR(bero_case_switch_off))
-        ELSE
+        CALL_CHILD(bero_case_switch_off)
+    ELSE
         CALL(evt_map_playanim, STRING("light"), 2, 0)
     END_IF
     RETURN
 EVT_END()
 
+/**
+ * Hit script of the door switch: plays the unlock sound and, half a second later, the lamp sound,
+ * then toggles GSWF_MRI15_WEST_DOOR_UNLOCKED: unlocks the west loading zone and lights the lamp,
+ * or locks it again and pauses the lamp animation.
+ */
 static EVT_BEGIN(door_switch)
     CALL(evt_mapobj_get_position, STRING("S_lights"), LW(0), LW(1), LW(2))
     CALL(evt_snd_sfxon_3d, STRING("SFX_STG2_DOOR_UNLOCK"), LW(0), LW(1), LW(2), 0)
     WAIT_MS(500)
     CALL(evt_snd_sfxon_3d, STRING("SFX_STG2_DOOR_LAMP"), LW(0), LW(1), LW(2), 0)
-    IF_INT_EQUAL(GSWF(2865), 0)
-        SET_VALUE(GSWF(2865), 1)
+    IF_INT_EQUAL(GSWF(GSWF_MRI15_WEST_DOOR_UNLOCKED), 0)
+        SET_VALUE(GSWF(GSWF_MRI15_WEST_DOOR_UNLOCKED), 1)
         SET_VALUE(LW(0), STRING("w_bero"))
-        CALL_CHILD(PTR(bero_case_switch_on))
+        CALL_CHILD(bero_case_switch_on)
         CALL(evt_map_playanim, STRING("light"), 0, 0)
-        ELSE
-        SET_VALUE(GSWF(2865), 0)
+    ELSE
+        SET_VALUE(GSWF(GSWF_MRI15_WEST_DOOR_UNLOCKED), 0)
         SET_VALUE(LW(0), STRING("w_bero"))
-        CALL_CHILD(PTR(bero_case_switch_off))
+        CALL_CHILD(bero_case_switch_off)
         CALL(evt_map_playanim, STRING("light"), 0, 0)
         CALL(evt_map_pauseanim, 0, STRING("light"))
     END_IF
     RETURN
 EVT_END()
 
+/**
+ * Lord Crump flees the room: the west door closes behind him and he runs out of the left side,
+ * then is parked out of sight.
+ */
 EVT_BEGIN(dai3_escape)
     WAIT_MS(800)
     BEGIN_INLINE_EVENT
         WAIT_MS(300)
         SET_VALUE(LW(9), 0)
         SET_VALUE(LW(10), STRING("S_doa"))
-        SPAWN_EVENT(PTR(evt_mri_door_close))
+        SPAWN_EVENT(evt_mri_door_close)
     END_INLINE_EVENT
     CALL(evt_npc_move_position, STRING("第三勢力幹部"), -193, 29, 0, FLOAT(180.0f), 0)
     CALL(evt_npc_set_position, STRING("第三勢力幹部"), 0, -1000, 0)
@@ -196,27 +147,33 @@ EVT_BEGIN(dai3_escape)
     RETURN
 EVT_END()
 
+/** Positions the two X-Naut grunts and, if he has not left yet, Lord Crump for the fight in the Puni room. */
 EVT_BEGIN(dai3_battle_init)
     CALL(evt_npc_set_position, STRING("第三勢力部下Ａ"), -119, 0, 29)
     CALL(evt_npc_set_ry, STRING("第三勢力部下Ａ"), 90)
-    CALL(evt_npc_flag_onoff, 1, STRING("第三勢力部下Ａ"), 1536)
-    CALL(evt_npc_flag_onoff, 1, STRING("第三勢力部下Ａ"), 1073741856)
+    CALL(evt_npc_flag_onoff, 1, STRING("第三勢力部下Ａ"), NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM)
+    CALL(evt_npc_flag_onoff, 1, STRING("第三勢力部下Ａ"), NPC_FLAG_NO_WALL_HIT | NPC_FLAG_INTANGIBLE)
     CALL(evt_npc_set_position, STRING("第三勢力部下Ｂ"), -129, 0, 66)
     CALL(evt_npc_set_ry, STRING("第三勢力部下Ｂ"), 90)
-    CALL(evt_npc_flag_onoff, 1, STRING("第三勢力部下Ｂ"), 1536)
-    CALL(evt_npc_flag_onoff, 1, STRING("第三勢力部下Ｂ"), 1073741856)
-    IF_INT_EQUAL(GSWF(2866), 0)
+    CALL(evt_npc_flag_onoff, 1, STRING("第三勢力部下Ｂ"), NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM)
+    CALL(evt_npc_flag_onoff, 1, STRING("第三勢力部下Ｂ"), NPC_FLAG_NO_WALL_HIT | NPC_FLAG_INTANGIBLE)
+    IF_INT_EQUAL(GSWF(GSWF_MRI15_CRUMP_GONE), 0)
         CALL(evt_npc_set_position, STRING("第三勢力幹部"), -5, 0, 29)
         CALL(evt_npc_set_ry, STRING("第三勢力幹部"), 270)
-        CALL(evt_npc_flag_onoff, 1, STRING("第三勢力幹部"), 1536)
-        CALL(evt_npc_flag_onoff, 1, STRING("第三勢力幹部"), 1073741856)
+        CALL(evt_npc_flag_onoff, 1, STRING("第三勢力幹部"), NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM)
+        CALL(evt_npc_flag_onoff, 1, STRING("第三勢力幹部"), NPC_FLAG_NO_WALL_HIT | NPC_FLAG_INTANGIBLE)
     END_IF
     RETURN
 EVT_END()
 
+/**
+ * The chase and fight in mri_15 (story 23): Lord Crump runs off,
+ * then when Mario steps onto the platform the two X-Naut grunts (battle info 11) attack;
+ * afterwards they are removed. Sets the story to STORY_STG2_23_01_X_NAUT_BATTLE.
+ */
 EVT_BEGIN(dai3_battle)
     CALL(evt_seq_wait, 2)
-    IF_INT_EQUAL(GSWF(2866), 0)
+    IF_INT_EQUAL(GSWF(GSWF_MRI15_CRUMP_GONE), 0)
         SPAWN_EVENT_GET_ID(PTR(dai3_escape), LW(10))
     END_IF
     CALL(evt_bero_exec_wait, 65536)
@@ -253,26 +210,31 @@ EVT_BEGIN(dai3_battle)
     CALL(evt_npc_battle_start, STRING("第三勢力部下Ａ"))
     CALL(evt_npc_wait_battle_end)
     CALL(evt_mario_set_pose, STRING("M_S_1"))
-    IF_INT_EQUAL(GSWF(2866), 0)
+    IF_INT_EQUAL(GSWF(GSWF_MRI15_CRUMP_GONE), 0)
         DELETE_EVENT(LW(10))
         CALL(evt_npc_set_position, STRING("第三勢力幹部"), 0, -1000, 0)
-        SET_VALUE(GSWF(2866), 1)
+        SET_VALUE(GSWF(GSWF_MRI15_CRUMP_GONE), 1)
     END_IF
-    SET_VALUE(GSW(0), 110)
+    SET_VALUE(GSW(GSW_STORY_PROGRESS), STORY_STG2_23_01_X_NAUT_BATTLE)
     CALL(evt_npc_set_position, STRING("第三勢力部下Ａ"), 0, -1000, 0)
     CALL(evt_npc_set_position, STRING("第三勢力部下Ｂ"), 0, -1000, 0)
     CALL(evt_mario_key_onoff, 1)
     RETURN
 EVT_END()
 
+/** Planter hit script: drops a Star Piece once (GSWF_MRI15_STAR_PIECE_PLANTER). */
 EVT_BEGIN(ueki_evt_01)
     CALL(evt_item_delete_check, STRING("item_ueki01"), LW(0))
     IF_INT_EQUAL(LW(0), 1)
-        CALL(evt_item_entry, STRING("item_ueki01"), 125, -37, 0, 96, 0, GSWF(5616), 0)
+        CALL(evt_item_entry, STRING("item_ueki01"), ITEM_STAR_PIECE, -37, 0, 96, ITEM_ENTRY_STAY, GSWF(GSWF_MRI15_STAR_PIECE_PLANTER), 0)
     END_IF
     RETURN
 EVT_END()
 
+/**
+ * Plants Mario can search in mri_15: A_ueki01 (runs ueki_evt_01 when searched), A_ueki02, A_ueki03,
+ * A_ueki04, A_ueki05, A_ueki06.
+ */
 static KusaAccess ueki_access_data[] = {
     {1, "A_ueki01", "S_ueki01", ueki_evt_01},
     {1, "A_ueki02", "S_ueki02", NULL},
@@ -283,6 +245,11 @@ static KusaAccess ueki_access_data[] = {
     {4, NULL, NULL, NULL},
 };
 
+/**
+ * Map init script of mri_15, the room behind the Crystal Star room:
+ * sets up the Puni, planters, waterfalls, the light-locked door and, right after the time bomb is set,
+ * the X-Naut fight.
+ */
 EVT_BEGIN(mri_15_init_evt)
     CALL(evt_puni_mem_init)
     CALL(evt_puni_set_yuka, 15, 0, -310, -1000, -1000, 0, 0)
@@ -291,21 +258,21 @@ EVT_BEGIN(mri_15_init_evt)
     SET_VALUE(LW(7), 0)
     SET_VALUE(LW(8), 0)
     SET_VALUE(LW(9), 0)
-    CALL_CHILD(PTR(mri_puni_init))
+    CALL_CHILD(mri_puni_init)
     SET_VALUE(LW(0), PTR(bero_entry_data))
     CALL(evt_bero_get_info)
-    CALL_CHILD(PTR(evt_bero_info_run))
-    SPAWN_EVENT(PTR(puni_disp_info))
-    SPAWN_EVENT(PTR(mri_countdown))
+    CALL_CHILD(evt_bero_info_run)
+    SPAWN_EVENT(puni_disp_info)
+    SPAWN_EVENT(mri_countdown)
     SET_VALUE(LW(0), PTR(ueki_access_data))
-    CALL_CHILD(PTR(evt_sub_kusa_access_entry))
-    SWITCH(GSW(0))
-        CASE_BETWEEN(109, 110)
-        CALL(evt_snd_bgmon, 512, STRING("BGM_EVT_DANGER4"))
-        CALL(evt_snd_envon, 272, STRING("ENV_STG2_MRI9"))
+    CALL_CHILD(evt_sub_kusa_access_entry)
+    SWITCH(GSW(GSW_STORY_PROGRESS))
+        CASE_BETWEEN(STORY_STG2_23_TIME_BOMB_ACTIVATED, STORY_STG2_23_01_X_NAUT_BATTLE)
+        CALL(evt_snd_bgmon, PSND_FADE_OUT, STRING("BGM_EVT_DANGER4"))
+        CALL(evt_snd_envon, PSND_FADE_RESTART | PSND_FADE_IN, STRING("ENV_STG2_MRI9"))
         CASE_DEFAULT
-        CALL(evt_snd_bgmon, 512, STRING("BGM_STG2_MRI1"))
-        CALL(evt_snd_envon, 272, STRING("ENV_STG2_MRI1"))
+        CALL(evt_snd_bgmon, PSND_FADE_OUT, STRING("BGM_STG2_MRI1"))
+        CALL(evt_snd_envon, PSND_FADE_RESTART | PSND_FADE_IN, STRING("ENV_STG2_MRI1"))
     END_SWITCH
     CALL(evt_map_playanim, STRING("mizu_01"), 1, 0)
     CALL(evt_map_playanim, STRING("mizu_02"), 1, 0)
@@ -318,18 +285,17 @@ EVT_BEGIN(mri_15_init_evt)
     SET_VALUE(LW(1), 0)
     SET_VALUE(LW(2), -75)
     SET_FLOAT_VALUE(LW(3), FLOAT(1.0f))
-    SPAWN_EVENT(PTR(mri_waterfall_effect))
+    SPAWN_EVENT(mri_waterfall_effect)
     SET_VALUE(LW(0), 60)
     SET_VALUE(LW(1), 0)
     SET_VALUE(LW(2), -40)
     SET_FLOAT_VALUE(LW(3), FLOAT(1.0f))
-    SPAWN_EVENT(PTR(mri_waterfall_effect))
-    IF_INT_EQUAL(GSW(0), 109)
-        CALL_CHILD(PTR(dai3_battle_init))
-        SPAWN_EVENT(PTR(dai3_battle))
+    SPAWN_EVENT(mri_waterfall_effect)
+    IF_INT_EQUAL(GSW(GSW_STORY_PROGRESS), STORY_STG2_23_TIME_BOMB_ACTIVATED)
+        CALL_CHILD(dai3_battle_init)
+        SPAWN_EVENT(dai3_battle)
     END_IF
-    SPAWN_EVENT(PTR(door_switch_init))
-    CALL(evt_run_case_evt, 9, 1, STRING("A_sui\0\0"), 0, PTR(door_switch), 0)
+    SPAWN_EVENT(door_switch_init)
+    CALL(evt_run_case_evt, CASE_COND_FRONT_A, 1, STRING("A_sui"), 0, PTR(door_switch), 0)
     RETURN
 EVT_END()
-

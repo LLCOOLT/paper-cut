@@ -1,3 +1,5 @@
+// Paper Mario 64 smoke effect 8 (kemuri: smoke) at a point; types 0 and 1.
+#include "eff/n64/eff_kemuri8_n64.h"
 #include "driver/camdrv.h"
 #include "driver/dispdrv.h"
 #include "driver/effdrv.h"
@@ -5,54 +7,61 @@
 #include "system.h"
 #include <dolphin/gx.h>
 #include <dolphin/mtx.h>
-
-#ifndef TARGET_PC /* PC port: the host libc declares these */
-double sin(double x);
-double cos(double x);
-#endif
+#include "libc_decls.h"
 
 typedef struct EffKemuri8N64Work {
-    u16 type;       // 0x0
-    s16 pad_2;      // 0x2
-    Vec position;   // 0x4
-    f32 speed; // 0x10, along (sinAngle, cosAngle)
-    f32 accel; // 0x14, added to speed each frame
-    f32 accelStep; // 0x18, added to accel
-    f32 accelStep2; // 0x1C, added to accelStep
-    f32 field_0x20; // 0x20
-    f32 field_0x24; // 0x24
-    f32 field_0x28; // 0x28
-    f32 field_0x2C; // 0x2C
-    f32 sinAngle;   // 0x30
-    f32 cosAngle;   // 0x34
-    s32 field_0x38; // 0x38
-    s32 timer;      // 0x3C
-    s32 texFrame; // 0x40, current of 16 texture frames; >15 = done
-    u8 r;           // 0x44
-    u8 g;           // 0x45
-    u8 b;           // 0x46
-    u8 a;           // 0x47
+    u16 type;         // 0x0
+    s16 pad_2;        // 0x2
+    Vec position;     // 0x4
+    f32 speed;        // 0x10, along (sinAngle, cosAngle)
+    f32 accel;        // 0x14, added to speed each frame
+    f32 accelStep;    // 0x18, added to accel
+    f32 accelStep2;   // 0x1C, added to accelStep
+    f32 velY;         // 0x20, vertical motion is set at entry but never applied
+    f32 accelY;       // 0x24
+    f32 accelStepY;   // 0x28
+    f32 accelStep2Y;  // 0x2C
+    f32 sinAngle;     // 0x30
+    f32 cosAngle;     // 0x34
+    s32 variant;      // 0x38, only cleared at entry
+    s32 timer;        // 0x3C
+    s32 texFrame;     // 0x40, current of 16 texture frames; >15 = done
+    u8 r;             // 0x44
+    u8 g;             // 0x45
+    u8 b;             // 0x46
+    u8 a;             // 0x47
     s32 texFrameNext; // 0x48
-    s32 limit;      // 0x4C
-    BOOL flag;      // 0x50
-    s32 counter;    // 0x54
-    s32 camId;      // 0x58
+    s32 limit;        // 0x4C
+    BOOL flag;        // 0x50
+    s32 counter;      // 0x54
+    s32 camId;        // 0x58
 } EffKemuri8N64Work;
 
-void effKemuri8Main(EffectEntry* effect);
-void effKemuri8Disp(CameraId cameraId, EffectEntry* effect);
+static void effKemuri8Main(EffectEntry* effect);
+static void effKemuri8Disp(CameraId cameraId, EffectEntry* effect);
 
+/** Sets the camera the smoke is drawn with (the entry defaults to camera 4). */
 void effKemuri8N64SetCamId(EffectEntry* effect, s32 camId) {
-    ((EffKemuri8N64Work*)effect->userdata)->camId = camId;
+    EffKemuri8N64Work* work = effect->userdata;
+
+    work->camId = camId;
 }
 
+/** Returns a * -b (used for the x position of each puff in the ring). */
 #ifdef TARGET_PC /* file-local: other files define different inline_fn()s (one external copy wins on PC) */
 static
 #endif
-inline float inline_fn(f32 arg0, f32 arg1) { return arg0 * (-arg1); }
+inline float inline_fn(f32 a, f32 b) {
+    return a * (-b);
+}
 
+// FAKE: match-forcing setting: the same code without it compiles differently (removal tried).
 #pragma opt_propagation off
-#pragma opt_lifetimes off
+/**
+ * Spawns a ring of smoke puffs (7/9/11 for type 0/1/other, radius 14/28/42) around (x, y, z) that fly outward in
+ * the screen plane. Types 3 and up use the same sizes with a hot variant.
+ * Used by the bomb effect and evt_eff64 "kemuri8_n64".
+ */
 EffectEntry* effKemuri8N64Entry(s32 type, f32 x, f32 y, f32 z) {
     EffectEntry* effect;
     EffKemuri8N64Work* work;
@@ -69,25 +78,25 @@ EffectEntry* effKemuri8N64Entry(s32 type, f32 x, f32 y, f32 z) {
         type -= 3;
     }
     switch (type) {
-    case 0:
-        radius = 14.0f;
-        count = 7;
-        break;
-    case 1:
-        radius = 28.0f;
-        count = 9;
-        break;
-    default:
-        count = 11;
-        radius = 42.0f;
-        break;
+        case 0:
+            radius = 14.0f;
+            count = 7;
+            break;
+        case 1:
+            radius = 28.0f;
+            count = 9;
+            break;
+        default:
+            count = 11;
+            radius = 42.0f;
+            break;
     }
-    effect->type = "Kemuri8N64\0";
+    effect->type = "Kemuri8N64";
     effect->count = count;
     work = __memAlloc(HEAP_EFFECT, sizeof(EffKemuri8N64Work) * count);
     effect->userdata = work;
     effect->callback = effKemuri8Main;
-    work->field_0x38 = 0;
+    work->variant = 0;
     work->timer = 0;
     work->type = type;
     work->position.x = x;
@@ -103,10 +112,10 @@ EffectEntry* effKemuri8N64Entry(s32 type, f32 x, f32 y, f32 z) {
         work->accel = 0.19999999f;
         work->accelStep = 0.0f;
         work->accelStep2 = 0.0f;
-        work->field_0x20 = 1.75f;
-        work->field_0x24 = -0.16f;
-        work->field_0x28 = 0.0f;
-        work->field_0x2C = 0.0f;
+        work->velY = 1.75f;
+        work->accelY = -0.16f;
+        work->accelStepY = 0.0f;
+        work->accelStep2Y = 0.0f;
         rad = 6.2831855f * (f32)(((i - 1) * 360) / (count - 1)) / 360.0f;
         work->position.x = inline_fn(radius, (f32)sin(rad));
         work->position.y = radius * -(f32)cos(rad);
@@ -131,8 +140,8 @@ EffectEntry* effKemuri8N64Entry(s32 type, f32 x, f32 y, f32 z) {
 }
 
 #pragma opt_propagation reset
-#pragma opt_lifetimes reset
-void effKemuri8Main(EffectEntry* effect) {
+/** Steps the shared 16-frame texture animation over 17 frames and flies each puff outward; deletes at the end. */
+static void effKemuri8Main(EffectEntry* effect) {
     EffKemuri8N64Work* work = effect->userdata;
     s32 i;
     s32 cur;
@@ -172,7 +181,11 @@ void effKemuri8Main(EffectEntry* effect) {
     dispEntry(camId, dispCalcZ(&position), 2, (DispCallback)effKemuri8Disp, effect);
 }
 
-void effKemuri8Disp(CameraId cameraId, EffectEntry* effect) {
+/**
+ * Draws each puff twice as a billboarded quad (texture 0x28): a dark offset shadow, then the puff.
+ * Hot puffs shift from white through yellow to red as their counter grows.
+ */
+static void effKemuri8Disp(CameraId cameraId, EffectEntry* effect) {
     CameraEntry* camera;
     EffKemuri8N64Work* work;
     s32 type;

@@ -35,7 +35,7 @@ static void onDraw(void* user) {
 static void damagePost(s32* result, BattleUnit* attacker, BattleUnit* target, BattleUnitPart* part,
                        BattleWeapon* weapon, u32* flags, u32 unused) {
     (void)target, (void)part, (void)weapon, (void)flags, (void)unused;
-    if (attacker != NULL && attacker->mAlliance == 0) { /* Mario and his partner (battle.c: entryunit_mario) */
+    if (attacker != NULL && attacker->alliance == 0) { /* Mario and his partner (battle.c: entryunit_mario) */
         const s32 before = *result;
         *result *= api->optionInt("damage", 2);
         api->log("hit: %d damage, %d with the mod", before, *result);

@@ -1,9 +1,10 @@
+// tik_02 (埋没した都市, Rogueport Sewers): the Blooper (gesso) boss room with the moving floating island (ukishima_move); the
+// way to Petal Meadows (hei_00).
 #include "eff/n64/eff_ripple_n64.h"
 #include "eff/n64/eff_hokori_n64.h"
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
 
-#pragma force_active on
 #include "evt/evt_npc.h"
 #include "party.h"
 #include "mario/mariost.h"
@@ -15,122 +16,55 @@
 #include "driver/effdrv.h"
 #include "evt/evt_bero.h"
 #include "evt/evt_damage.h"
+#include "evt/evt_cam.h"
+#include "evt/evt_case.h"
+#include "evt/evt_eff.h"
+#include "evt/evt_hit.h"
+#include "evt/evt_img.h"
+#include "evt/evt_map.h"
+#include "evt/evt_mario.h"
+#include "evt/evt_mobj.h"
+#include "evt/evt_msg.h"
+#include "evt/evt_offscreen.h"
+#include "evt/evt_paper.h"
+#include "evt/evt_party.h"
+#include "evt/evt_snd.h"
+#include "evt/evt_sub.h"
+#include "tik.h"
+#include "version.h"
+#include "evt/evt_story.h"
+#include "driver/casedrv.h"
+#include "driver/mapdrv.h"
+#include "driver/camdrv.h"
 
 static BOOL _hitIsGroupSub(HitEntry* target, HitEntry* node, BOOL checkSibling);
-#ifdef TARGET_PC /* defined static below; keep it file-local on every host */
-static BOOL hitIsGroup(HitEntry* target, HitEntry* group);
-#else
-BOOL hitIsGroup(HitEntry* target, HitEntry* group);
-#endif
 
-USER_FUNC(evt_bero_get_info);
-USER_FUNC(evt_bero_overwrite);
-USER_FUNC(evt_cam3d_evt_off);
-USER_FUNC(evt_cam3d_evt_set);
-USER_FUNC(evt_cam_shake);
-USER_FUNC(evt_eff);
-USER_FUNC(evt_eff64);
-USER_FUNC(evt_eff_fukidashi);
-USER_FUNC(evt_exit_case_evt);
-USER_FUNC(evt_hit_bind_mapobj);
-USER_FUNC(evt_hit_bind_update);
-USER_FUNC(evt_hit_damage_return_set);
-USER_FUNC(evt_hitobj_attr_onoff);
-USER_FUNC(evt_img_alloc_capture);
-USER_FUNC(evt_img_clear_virtual_point);
-USER_FUNC(evt_img_entry);
-USER_FUNC(evt_img_free_capture);
-USER_FUNC(evt_img_onoff);
-USER_FUNC(evt_img_release);
-USER_FUNC(evt_img_set_paper);
-USER_FUNC(evt_img_set_paper_anim);
-USER_FUNC(evt_img_wait_animend);
-USER_FUNC(evt_map_entry_airport_harbor);
-USER_FUNC(evt_map_playanim);
-USER_FUNC(evt_mapobj_clear_offscreen);
-USER_FUNC(evt_mapobj_flag_onoff);
-USER_FUNC(evt_mapobj_get_position);
-USER_FUNC(evt_mapobj_set_offscreen);
-USER_FUNC(evt_mapobj_trans);
-USER_FUNC(evt_mario_get_pos);
-USER_FUNC(evt_mario_key_onoff);
-USER_FUNC(evt_mario_mov_pos2);
-USER_FUNC(evt_mario_set_dir);
-USER_FUNC(evt_mario_set_hosei_xyz);
-USER_FUNC(evt_mario_set_pose);
-USER_FUNC(evt_mobj_powerupblk);
-USER_FUNC(evt_msg_print);
-USER_FUNC(evt_npc_battle_start);
-USER_FUNC(evt_npc_flag_onoff);
-USER_FUNC(evt_npc_get_position);
-USER_FUNC(evt_npc_glide_position);
-USER_FUNC(evt_npc_jump_position_nohit);
-USER_FUNC(evt_npc_set_anim);
-USER_FUNC(evt_npc_set_balloontype);
-USER_FUNC(evt_npc_set_battle_info);
-USER_FUNC(evt_npc_set_height);
-USER_FUNC(evt_npc_set_position);
-USER_FUNC(evt_npc_set_width);
-USER_FUNC(evt_npc_setup);
-USER_FUNC(evt_npc_wait_battle_end);
-USER_FUNC(evt_offscreen_delete);
-USER_FUNC(evt_offscreen_entry);
-USER_FUNC(evt_offscreen_get_boundingbox2);
-USER_FUNC(evt_paper_entry);
-USER_FUNC(evt_party_move_pos2);
-USER_FUNC(evt_party_run);
-USER_FUNC(evt_party_set_dir);
-USER_FUNC(evt_party_stop);
-USER_FUNC(evt_run_case_evt);
-USER_FUNC(evt_snd_bgmoff_f);
-USER_FUNC(evt_snd_bgmon);
-USER_FUNC(evt_snd_bgmon_f);
-USER_FUNC(evt_snd_envon);
-USER_FUNC(evt_snd_set_rev_mode);
-USER_FUNC(evt_snd_sfx_pit);
-USER_FUNC(evt_snd_sfxoff);
-USER_FUNC(evt_snd_sfxon);
-USER_FUNC(evt_snd_sfxon_3d);
-USER_FUNC(evt_sub_intpl_msec_get_value);
-USER_FUNC(evt_sub_intpl_msec_get_value_para);
-USER_FUNC(evt_sub_intpl_msec_init);
-USER_FUNC(geso_set_checkpose);
-USER_FUNC(hokori_color_func);
-USER_FUNC(mario_hosei_all);
-USER_FUNC(ripple_scale_func);
-USER_FUNC(tik_npc_buruburu);
 static BOOL hitIsGroup(HitEntry* target, HitEntry* group);
 static BOOL _hitIsGroupSub(HitEntry* target, HitEntry* node, BOOL checkSibling);
 
-f32 fd_tik_02_negone_one_374[2] __attribute__((aligned(8)));
-f32 fd_tik_02_neg_one_382;
-f32 fd_tik_02___local_PI_383;
-f32 fd_tik_02___local_3PIO2_385;
-f32 fd_tik_02_one_negone_373[2] __attribute__((aligned(8)));
-f32 fd_tik_02___local_PIO2_384;
-f32 fd_tik_02_one_381;
-f32 fd_tik_02_negone_one_360[2] __attribute__((aligned(8)));
-f32 fd_tik_02_neg_one_365;
-f32 fd_tik_02___local_PI_366;
-f32 fd_tik_02___local_3PIO2_368;
-f32 fd_tik_02_one_negone_359[2] __attribute__((aligned(8)));
-f32 fd_tik_02___local_PIO2_367;
-f32 fd_tik_02_one_364;
 static BeroEntry bero_entry_data[7];
 static BeroEntry bero_entry_data2[2];
-EvtWord geso_init[2];
-EvtWord geso_talk[8];
-EvtWord geso_dead[7];
+extern EvtWord geso_init[];
+extern EvtWord geso_talk[];
+extern EvtWord geso_dead[];
 static NpcSetupInfo npcEnt[2];
-EvtWord ukishima_move[134];
+extern EvtWord ukishima_move[];
 char geso_checkpose[];
-static EvtWord ukishima_apper[294];
-EvtWord geso_battle[676];
-static EvtWord wall_bomb[142];
+extern EvtWord geso_battle[];
+#if VERSION <= VERSION_DEMO_JP
+static HitDamageReturn hitDmgRetPoints[6];
+#else
 static HitDamageReturn hitDmgRetPoints[7];
-EvtWord tik_02_init_evt[207];
+#endif
 
-USER_FUNC(tik_npc_buruburu) {
+/**
+ * Script helper that makes an NPC (or the second partner, when the name resolves to -2) tremble.
+ * args: [0] NPC name, [1] axis (0 X, 1 Y, 2 Z), [2] amplitude, [3] half-period in ms,
+ * [4] total duration in ms (0 = until the script is stopped).
+ * The NPC is nudged between +amplitude and -amplitude every half period and returns to where it started
+ * when the time is up.
+ */
+static USER_FUNC(tik_npc_buruburu) {
     EvtWord* args = event->args;
     const char* name = (const char*)evtGetValue(event, args[0]);
     NpcEntry* npc = evtNpcNameToPtr(event, name);
@@ -206,6 +140,11 @@ USER_FUNC(tik_npc_buruburu) {
     return EVT_RETURN_YIELD;
 }
 
+/**
+ * Recursive helper for hitIsGroup.
+ * Walks the hit-tree below node (child first, then siblings when checkSibling is set) and returns TRUE
+ * if any joint has the same name as target's.
+ */
 static BOOL _hitIsGroupSub(HitEntry* target, HitEntry* node, BOOL checkSibling) {
     if (strcmp(target->joint->name, node->joint->name) == 0) {
         return TRUE;
@@ -219,6 +158,10 @@ static BOOL _hitIsGroupSub(HitEntry* target, HitEntry* node, BOOL checkSibling) 
     return FALSE;
 }
 
+/**
+ * Returns TRUE if the collision target is the group's top hit or one of the hits below it,
+ * comparing joint names; FALSE when target is NULL.
+ */
 static BOOL hitIsGroup(HitEntry* target, HitEntry* group) {
     if (target != NULL) {
         return _hitIsGroupSub(target, group, FALSE);
@@ -226,7 +169,12 @@ static BOOL hitIsGroup(HitEntry* target, HitEntry* group) {
     return FALSE;
 }
 
-USER_FUNC(mario_hosei_all) {
+/**
+ * Script helper that carries Mario and his two partners along with a moving platform.
+ * args[0] is the platform's hit name and args[1] the platform's X movement this frame;
+ * each of the three that is standing on that hit group gets the movement added as floor movement.
+ */
+static USER_FUNC(mario_hosei_all) {
     EvtWord* args = event->args;
     HitEntry* hit = hitNameToPtr((const char*)evtGetValue(event, args[0]));
     f32 value = evtGetFloat(event, args[1]);
@@ -246,7 +194,8 @@ USER_FUNC(mario_hosei_all) {
     return EVT_RETURN_DONE;
 }
 
-USER_FUNC(ripple_scale_func) {
+/** Script helper. Sets the vertical scale (scaleY) of the named N64-style ripple effect to the float args[1]. */
+static USER_FUNC(ripple_scale_func) {
     EvtWord* args = event->args;
     const char* name = (const char*)evtGetValue(event, args[0]);
     f32 scale = evtGetFloat(event, args[1]);
@@ -255,7 +204,8 @@ USER_FUNC(ripple_scale_func) {
     return EVT_RETURN_DONE;
 }
 
-USER_FUNC(hokori_color_func) {
+/** Script helper. Tints the named dust (hokori) effect a dull grey-brown (RGB 0x70, 0x58, 0x58). */
+static USER_FUNC(hokori_color_func) {
     EffectEntry* effect = effNameToPtr((const char*)evtGetValue(event, event->args[0]));
 
     ((EffHokoriN64Work*)effect->userdata)->r = 0x70;
@@ -264,7 +214,11 @@ USER_FUNC(hokori_color_func) {
     return EVT_RETURN_DONE;
 }
 
-USER_FUNC(geso_set_checkpose) {
+/**
+ * Script helper.
+ * Gives the named NPC (the Blooper) the geso_checkpose table, which defines how the game checks its poses.
+ */
+static USER_FUNC(geso_set_checkpose) {
     const char* name = (const char*)evtGetValue(event, event->args[0]);
     NpcEntry* npc = evtNpcNameToPtr(event, name);
 
@@ -272,40 +226,16 @@ USER_FUNC(geso_set_checkpose) {
     return EVT_RETURN_DONE;
 }
 
-f32 fd_tik_02_negone_one_374[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_tik_02_neg_one_382 = -1.0f;
-
-f32 fd_tik_02___local_PI_383 = 3.1415927f;
-
-f32 fd_tik_02___local_3PIO2_385 = 4.712389f;
-
-f32 fd_tik_02_one_negone_373[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_tik_02___local_PIO2_384 = 1.5707964f;
-
-f32 fd_tik_02_one_381 = 1.0f;
-
-f32 fd_tik_02_negone_one_360[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_tik_02_neg_one_365 = -1.0f;
-
-f32 fd_tik_02___local_PI_366 = 3.1415927f;
-
-f32 fd_tik_02___local_3PIO2_368 = 4.712389f;
-
-f32 fd_tik_02_one_negone_359[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_tik_02___local_PIO2_367 = 1.5707964f;
-
-f32 fd_tik_02_one_364 = 1.0f;
-
+/**
+ * Doors of this room: two west exits back to tik_01 (the lower one behind a bombable wall), a pair of pipes
+ * that link spots inside the room, the door to tik_13 and the pipe to Petal Meadows (hei_00).
+ */
 static BeroEntry bero_entry_data[] = {
     {
         "w_bero_1", // hitName
         0, 0, // type..sfxId
-        20000, // directionId
-        100000, // centerPosition
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         NULL, // enterEvent
@@ -320,8 +250,8 @@ static BeroEntry bero_entry_data[] = {
     {
         "w_bwro_2", // hitName
         0, 0, // type..sfxId
-        20000, // directionId
-        100000, // centerPosition
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         NULL, // enterEvent
@@ -337,8 +267,8 @@ static BeroEntry bero_entry_data[] = {
         "dokan_1", // hitName
         2, // type
         0, // sfxId
-        9, // directionId
-        100000, // centerPosition
+        BERO_DIR_DOWN, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         NULL, // enterEvent
@@ -353,8 +283,8 @@ static BeroEntry bero_entry_data[] = {
         "dokan_2", // hitName
         4098, // type
         0, // sfxId
-        9, // directionId
-        100000, // centerPosition
+        BERO_DIR_DOWN, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         NULL, // enterEvent
@@ -369,8 +299,8 @@ static BeroEntry bero_entry_data[] = {
         "w_bero", // hitName
         4096, // type
         0, // sfxId
-        20000, // directionId
-        100000, // centerPosition
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         NULL, 0, NULL, // enterEvent..exitEvent
@@ -384,8 +314,8 @@ static BeroEntry bero_entry_data[] = {
         "dokan", // hitName
         2, // type
         0, // sfxId
-        9, // directionId
-        100000, // centerPosition
+        BERO_DIR_DOWN, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         NULL, // enterEvent
@@ -400,13 +330,17 @@ static BeroEntry bero_entry_data[] = {
     {0},
 };
 
+/**
+ * Stand-in for the Petal Meadows pipe until chapter 1 has begun: it leads to the chapter 1 title screen
+ * (sys_01, stg_1) instead. Swapped in by the map init script.
+ */
 static BeroEntry bero_entry_data2[] = {
     {
         "dokan", // hitName
         2, // type
         0, // sfxId
-        9, // directionId
-        100000, // centerPosition
+        BERO_DIR_DOWN, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         NULL, // enterEvent
@@ -421,24 +355,28 @@ static BeroEntry bero_entry_data2[] = {
     {0},
 };
 
+/** Init script for the Blooper (geso, ゲッソー) NPC; does nothing. */
 EVT_BEGIN(geso_init)
     RETURN
 EVT_END()
 
+/** Talk script for the Blooper; says mac_0_124. */
 EVT_BEGIN(geso_talk)
     CALL(evt_msg_print, 0, STRING("mac_0_124"), 0, STRING("me"))
     RETURN
 EVT_END()
 
+/** Ends the Blooper cutscene when his battle unit dies; clears GF(0) which the cutscene waits on, after a second. */
 EVT_BEGIN(geso_dead)
     SET_VALUE(GF(0), 0)
     WAIT_MS(1000)
     RETURN
 EVT_END()
 
+/** NPCs of this room: the Blooper's tentacle, which starts the boss scene when Mario hits it. */
 static NpcSetupInfo npcEnt[] = {
     {
-        /*"ゲッソーのゲソ"*/"\x83\x51\x83\x62\x83\x5C\x81\x5B\x82\xCC\x83\x51\x83\x5C", // name
+        "ゲッソーのゲソ", // name
         0, // flags
         3, // reactionFlags
         geso_init, // initEvent
@@ -453,6 +391,12 @@ static NpcSetupInfo npcEnt[] = {
     {0},
 };
 
+/**
+ * Slides one floating island (ukishima) of the Blooper room back and forth along X and keeps its hit area
+ * and anything standing on it in step (mario_hosei_all).
+ * Arguments in LW: [4] map object, [5] hit name, [6] and [7] the two end X positions,
+ * [8] and [9] the move and rest times in ms. Plays the island-move sound on each pass.
+ */
 EVT_BEGIN(ukishima_move)
     CALL(evt_hit_bind_mapobj, LW(5), LW(4))
     SET_FLOAT_VALUE(LW(2), LW(6))
@@ -497,15 +441,21 @@ EVT_BEGIN(ukishima_move)
     RETURN
 EVT_END()
 
+/** Pose Mario takes when he checks the Blooper's tentacle: plain standing (M_S_1) instead of his look pose. */
 char geso_checkpose[] = "M_S_1";
 
+/**
+ * Raises the two floating islands (ugo_yuka_1 and ugo_yuka_2) of the Blooper room out of the water,
+ * from 30 units below their rest height in 100 ms, moving their hit areas with them.
+ */
 static EVT_BEGIN(ukishima_apper)
-    CALL(evt_mapobj_flag_onoff, 1, 0, STRING("ugo_yuka_1"), 2)
-    CALL(evt_mapobj_flag_onoff, 1, 0, STRING("ugo_yuka_2"), 2)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("ugo_yuka_1"), MAPOBJ_FLAG_BBOX_CULL)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("ugo_yuka_2"), MAPOBJ_FLAG_BBOX_CULL)
+    // The islands rise from 30 units under the water up to the surface.
     CALL(evt_sub_intpl_msec_init, 1, -30, 0, 100)
     LOOP(0)
         CALL(evt_sub_intpl_msec_get_value_para, LW(0), LW(1))
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
         CALL(evt_mapobj_trans, 0, STRING("ugo_yuka_1"), 65, LW(0), 0)
         CALL(evt_mapobj_trans, 0, STRING("ugo_yuka_2"), -71, LW(0), 0)
 #else
@@ -519,10 +469,11 @@ static EVT_BEGIN(ukishima_apper)
             BREAK_LOOP
         END_IF
     END_LOOP
+    // First bob: they dip 10 units and come back up.
     CALL(evt_sub_intpl_msec_init, 11, 0, -10, 400)
     LOOP(0)
         CALL(evt_sub_intpl_msec_get_value_para, LW(0), LW(1))
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
         CALL(evt_mapobj_trans, 0, STRING("ugo_yuka_1"), 65, LW(0), 0)
         CALL(evt_mapobj_trans, 0, STRING("ugo_yuka_2"), -71, LW(0), 0)
 #else
@@ -539,7 +490,7 @@ static EVT_BEGIN(ukishima_apper)
     CALL(evt_sub_intpl_msec_init, 11, -10, 0, 400)
     LOOP(0)
         CALL(evt_sub_intpl_msec_get_value_para, LW(0), LW(1))
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
         CALL(evt_mapobj_trans, 0, STRING("ugo_yuka_1"), 65, LW(0), 0)
         CALL(evt_mapobj_trans, 0, STRING("ugo_yuka_2"), -71, LW(0), 0)
 #else
@@ -553,10 +504,11 @@ static EVT_BEGIN(ukishima_apper)
             BREAK_LOOP
         END_IF
     END_LOOP
+    // Second, smaller bob of 5 units.
     CALL(evt_sub_intpl_msec_init, 11, 0, -5, 300)
     LOOP(0)
         CALL(evt_sub_intpl_msec_get_value_para, LW(0), LW(1))
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
         CALL(evt_mapobj_trans, 0, STRING("ugo_yuka_1"), 65, LW(0), 0)
         CALL(evt_mapobj_trans, 0, STRING("ugo_yuka_2"), -71, LW(0), 0)
 #else
@@ -573,7 +525,7 @@ static EVT_BEGIN(ukishima_apper)
     CALL(evt_sub_intpl_msec_init, 11, -5, 0, 300)
     LOOP(0)
         CALL(evt_sub_intpl_msec_get_value_para, LW(0), LW(1))
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
         CALL(evt_mapobj_trans, 0, STRING("ugo_yuka_1"), 65, LW(0), 0)
         CALL(evt_mapobj_trans, 0, STRING("ugo_yuka_2"), -71, LW(0), 0)
 #else
@@ -587,10 +539,11 @@ static EVT_BEGIN(ukishima_apper)
             BREAK_LOOP
         END_IF
     END_LOOP
+    // Last bob of 1 unit, after which the islands rest at the surface.
     CALL(evt_sub_intpl_msec_init, 11, 0, -1, 200)
     LOOP(0)
         CALL(evt_sub_intpl_msec_get_value_para, LW(0), LW(1))
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
         CALL(evt_mapobj_trans, 0, STRING("ugo_yuka_1"), 65, LW(0), 0)
         CALL(evt_mapobj_trans, 0, STRING("ugo_yuka_2"), -71, LW(0), 0)
 #else
@@ -607,7 +560,7 @@ static EVT_BEGIN(ukishima_apper)
     CALL(evt_sub_intpl_msec_init, 11, -1, 0, 200)
     LOOP(0)
         CALL(evt_sub_intpl_msec_get_value_para, LW(0), LW(1))
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
         CALL(evt_mapobj_trans, 0, STRING("ugo_yuka_1"), 65, LW(0), 0)
         CALL(evt_mapobj_trans, 0, STRING("ugo_yuka_2"), -71, LW(0), 0)
 #else
@@ -624,18 +577,29 @@ static EVT_BEGIN(ukishima_apper)
     RETURN
 EVT_END()
 
+/**
+ * Cutscene and battle with the Blooper (geso, the prologue boss),
+ * started from the map init at STORY_STG0_17_BADGE_TUTORIAL.
+ * Mario is held back at X = -410 until the scene triggers;
+ * the Blooper's tentacle (ゲッソーのゲソ) and then the Blooper rise out of the water (mac_0_125, mac_0_126),
+ * the battle starts (battle info 3), and afterwards he leaves in a crash.
+ * The road of islands then appears (ukishima_apper),
+ * story progress is set to STORY_STG0_19_BLOOPER_BATTLE and the sewer music returns.
+ */
 EVT_BEGIN(geso_battle)
+    // The Blooper waits under the walkway and its tentacle lies across it; the scene waits until Mario hits it.
     CALL(evt_npc_set_position, STRING("ゲッソー"), -385, -60, 0)
     CALL(evt_npc_set_anim, STRING("ゲッソー"), STRING("GSO_S_1"))
-    CALL(evt_npc_flag_onoff, 1, STRING("ゲッソー"), 1073741856)
+    CALL(evt_npc_flag_onoff, 1, STRING("ゲッソー"), NPC_FLAG_NO_WALL_HIT | NPC_FLAG_INTANGIBLE)
     CALL(evt_npc_set_position, STRING("ゲッソーのゲソ"), -444, 0, 0)
-    CALL(evt_npc_flag_onoff, 1, STRING("ゲッソーのゲソ"), 128)
+    CALL(evt_npc_flag_onoff, 1, STRING("ゲッソーのゲソ"), NPC_FLAG_HIDDEN)
     CALL(evt_npc_set_width, STRING("ゲッソーのゲソ"), 60)
     CALL(evt_npc_set_height, STRING("ゲッソーのゲソ"), 5)
     CALL(evt_npc_set_balloontype, STRING("ゲッソーのゲソ"), 0)
     CALL(geso_set_checkpose, STRING("ゲッソーのゲソ"))
     SET_VALUE(GF(0), 1)
     WAIT_WHILE(GF(0))
+    // Mario is held back from the edge while the Blooper yelps in pain and pulls the tentacle away.
     BEGIN_INLINE_EVENT_GET_ID(LW(12))
         LOOP(0)
             CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
@@ -648,7 +612,7 @@ EVT_BEGIN(geso_battle)
         END_LOOP
     END_INLINE_EVENT
     CALL(evt_mario_key_onoff, 0)
-    CALL(evt_snd_bgmoff_f, 512, 500)
+    CALL(evt_snd_bgmoff_f, PSND_FADE_OUT, 500)
     CALL(evt_party_stop, 0)
     CALL(evt_npc_set_position, STRING("ゲッソーのゲソ"), 0, -1000, 0)
     WAIT_MS(300)
@@ -676,6 +640,7 @@ EVT_BEGIN(geso_battle)
     CALL(evt_eff_fukidashi, 0, STRING(""), 0, 1, 0, 0, 0, 0, 0, 0, 60)
     CALL(evt_eff_fukidashi, 3, STRING(""), 0, 1, 0, 0, 0, 0, 0, 0, 60)
     WAIT_MS(1000)
+    // The camera turns to the water; Mario and Goombella step to the edge as ripples spread.
     CALL(evt_cam3d_evt_set, -580, 110, 241, -385, 40, 24, 500, 11)
     WAIT_MS(500)
     DELETE_EVENT(LW(12))
@@ -695,6 +660,7 @@ EVT_BEGIN(geso_battle)
         WAIT_MS(400)
     END_INLINE_EVENT
     WAIT_MS(1500)
+    // The Blooper bursts out of the water onto the walkway, startling Mario, and the camera shakes.
     CALL(evt_npc_set_anim, STRING("ゲッソー"), STRING("GSO_O_1"))
     CALL(evt_npc_set_position, STRING("ゲッソー"), -250, -200, -60)
     BEGIN_INLINE_EVENT
@@ -719,10 +685,12 @@ EVT_BEGIN(geso_battle)
     END_LOOP
     CALL(evt_cam3d_evt_set, -635, 52, 302, -385, 75, 24, 50, 11)
     WAIT_MS(50)
-    CALL(evt_npc_flag_onoff, 1, STRING("ゲッソー"), 32768)
+    // The Blooper battle.
+    CALL(evt_npc_flag_onoff, 1, STRING("ゲッソー"), NPC_FLAG_INSTANT_TURN)
     CALL(evt_npc_set_battle_info, STRING("ゲッソー"), 3)
     CALL(evt_npc_battle_start, STRING("ゲッソー"))
     CALL(evt_npc_wait_battle_end)
+    // The beaten Blooper trembles, wails and leaps up, crashing into the ceiling.
     BEGIN_INLINE_EVENT_GET_ID(LW(10))
         CALL(tik_npc_buruburu, STRING("ゲッソー"), 1, FLOAT(1.0f), 10, 0)
     END_INLINE_EVENT
@@ -732,11 +700,11 @@ EVT_BEGIN(geso_battle)
     CALL(evt_cam3d_evt_set, -300, 213, 647, -300, 100, 7, 0, 11)
     CALL(evt_npc_set_position, STRING("ゲッソー"), -250, -86, -60)
     WAIT_MS(1000)
-    CALL(evt_npc_flag_onoff, 0, STRING("ゲッソー"), 32768)
+    CALL(evt_npc_flag_onoff, 0, STRING("ゲッソー"), NPC_FLAG_INSTANT_TURN)
     CALL(evt_msg_print, 0, STRING("mac_0_126"), 0, STRING("ゲッソー"))
     BEGIN_INLINE_EVENT
         WAIT_MS(500)
-        CALL(evt_cam_shake, 4, FLOAT(0.0f), FLOAT(0.029296875f), 500)
+        CALL(evt_cam_shake, CAMERA_3D, FLOAT(0.0f), FLOAT(0.029296875f), 500)
     END_INLINE_EVENT
     BEGIN_INLINE_EVENT
         WAIT_MS(200)
@@ -754,6 +722,7 @@ EVT_BEGIN(geso_battle)
     CALL(hokori_color_func, STRING("hokori00"))
     CALL(hokori_color_func, STRING("hokori01"))
     WAIT_MS(2000)
+    // A pipe rises from the water and the floating islands come up and start sliding back and forth.
     BEGIN_INLINE_EVENT
         CALL(evt_sub_intpl_msec_init, 13, -30, 0, 1600)
         LOOP(100)
@@ -766,11 +735,11 @@ EVT_BEGIN(geso_battle)
         CALL(evt_hit_bind_update, STRING("a_dokan_1"))
     END_INLINE_EVENT
     CALL(evt_snd_sfxon, STRING("SFX_STG0_ROAD_APPEAR1"), 0)
-    CALL_CHILD(PTR(ukishima_apper))
+    CALL_CHILD(ukishima_apper)
     WAIT_MS(500)
     SET_VALUE(LW(4), STRING("ugo_yuka_1"))
     SET_VALUE(LW(5), STRING("a_ugo_yuka_1"))
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
     SET_FLOAT_VALUE(LW(6), 65)
     SET_FLOAT_VALUE(LW(7), 32)
 #else
@@ -779,10 +748,10 @@ EVT_BEGIN(geso_battle)
 #endif
     SET_VALUE(LW(8), 1000)
     SET_VALUE(LW(9), 2000)
-    SPAWN_EVENT(PTR(ukishima_move))
+    SPAWN_EVENT(ukishima_move)
     SET_VALUE(LW(4), STRING("ugo_yuka_2"))
     SET_VALUE(LW(5), STRING("a_ugo_yuka_2"))
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
     SET_FLOAT_VALUE(LW(6), -71)
     SET_FLOAT_VALUE(LW(7), -34)
 #else
@@ -791,15 +760,22 @@ EVT_BEGIN(geso_battle)
 #endif
     SET_VALUE(LW(8), 1000)
     SET_VALUE(LW(9), 2000)
-    SPAWN_EVENT(PTR(ukishima_move))
-    SET_VALUE(GSW(0), 21)
+    SPAWN_EVENT(ukishima_move)
+    // Story progress is set past the Blooper battle and control and the sewer music return.
+    SET_VALUE(GSW(GSW_STORY_PROGRESS), STORY_STG0_19_BLOOPER_BATTLE)
     CALL(evt_cam3d_evt_off, 500, 11)
     CALL(evt_party_run, 0)
     CALL(evt_mario_key_onoff, 1)
-    CALL(evt_snd_bgmon_f, 768, STRING("BGM_STG0_TIK1"), 2000)
+    CALL(evt_snd_bgmon_f, PSND_FADE_IN | PSND_FADE_OUT, STRING("BGM_STG0_TIK1"), 2000)
     RETURN
 EVT_END()
 
+/**
+ * Bobbery bomb trigger for the cracked wall w_bwro_2:
+ * plays the break sound, enables the exit behind it and its hit area,
+ * sets GSWF_TIK01_WALL2_BOMBED and plays the paper-style collapse animation over the wall (the same flag as the
+ * other side in tik_01).
+ */
 static EVT_BEGIN(wall_bomb)
     BEGIN_INLINE_EVENT
         WAIT_MS(200)
@@ -807,9 +783,9 @@ static EVT_BEGIN(wall_bomb)
         CALL(evt_snd_sfxon_3d, STRING("SFX_OFF_WALL_BREAK1"), LW(0), LW(1), LW(2), 0)
     END_INLINE_EVENT
     SET_VALUE(LW(0), STRING("w_bwro_2"))
-    CALL_CHILD(PTR(bero_case_switch_on))
+    CALL_CHILD(bero_case_switch_on)
     CALL(evt_hitobj_attr_onoff, 1, 1, STRING("w_bwro_2"), 4)
-    SET_VALUE(GSWF(1332), 1)
+    SET_VALUE(GSWF(GSWF_TIK01_WALL2_BOMBED), 1)
     CALL(evt_img_entry, STRING("capture_img"))
     CALL(evt_img_set_paper, STRING("capture_img"), STRING("OFF_d_bom_ver2"))
     CALL(evt_offscreen_entry, STRING("offscreen"))
@@ -825,12 +801,12 @@ static EVT_BEGIN(wall_bomb)
         CALL(evt_img_alloc_capture, STRING("capture_img"), 0, STRING("offscreen"), 1, LW(10), LW(11), LW(12), LW(13))
         CALL(evt_img_clear_virtual_point, STRING("capture_img"))
         CALL(evt_img_set_paper_anim, STRING("capture_img"), STRING("A_1"))
-        CALL(evt_mapobj_flag_onoff, 1, 1, STRING("bom_kabe_3"), 1)
-        CALL(evt_mapobj_flag_onoff, 1, 0, STRING("bom_kabe_4"), 1)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("bom_kabe_3"), MAPOBJ_FLAG_HIDE)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("bom_kabe_4"), MAPOBJ_FLAG_HIDE)
         CALL(evt_img_wait_animend, STRING("capture_img"))
-        ELSE
-        CALL(evt_mapobj_flag_onoff, 1, 1, STRING("bom_kabe_3"), 1)
-        CALL(evt_mapobj_flag_onoff, 1, 0, STRING("bom_kabe_4"), 1)
+    ELSE
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("bom_kabe_3"), MAPOBJ_FLAG_HIDE)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("bom_kabe_4"), MAPOBJ_FLAG_HIDE)
     END_IF
     CALL(evt_mapobj_clear_offscreen, 1, STRING("bom_kabe_3"))
     CALL(evt_img_free_capture, STRING("capture_img"), 0)
@@ -842,40 +818,50 @@ static EVT_BEGIN(wall_bomb)
     RETURN
 EVT_END()
 
+/** Spots Mario is put back on after falling into the water of this room (the object's own position). */
 static HitDamageReturn hitDmgRetPoints[] = {
     {"mod_1", {0.0f, -1000.0f, 0.0f}},
     {"mod_2", {0.0f, -1000.0f, 0.0f}},
     {"mod_3", {0.0f, -1000.0f, 0.0f}},
     {"mod_4", {0.0f, -1000.0f, 0.0f}},
     {"mod_5", {0.0f, -1000.0f, 0.0f}},
+#if VERSION >= VERSION_JP
     {"dokan_1", {0.0f, -1000.0f, 0.0f}},
+#endif
     {0},
 };
 
+/**
+ * Map init script of tik_02, the Blooper room.
+ * Starts the music and the water animations, sets up the exits, the cracked wall to bomb with Bobbery,
+ * the Shine Sprite power block and the floating islands (sunk out of sight before the battle,
+ * sliding on their own after STORY_STG0_19_BLOOPER_BATTLE). Starts geso_battle at STORY_STG0_17_BADGE_TUTORIAL.
+ * Until Petal Meadows opens the pipe exit (dokan) is switched off and its destination replaced.
+ */
 EVT_BEGIN(tik_02_init_evt)
     SET_VALUE(LW(0), PTR(bero_entry_data))
     CALL(evt_bero_get_info)
-    CALL_CHILD(PTR(evt_bero_info_run))
+    CALL_CHILD(evt_bero_info_run)
     CALL(evt_npc_setup, PTR(npcEnt))
-    CALL(evt_snd_bgmon, 512, STRING("BGM_STG0_TIK1"))
-    CALL(evt_snd_envon, 272, STRING("ENV_STG0_TIK4"))
+    CALL(evt_snd_bgmon, PSND_FADE_OUT, STRING("BGM_STG0_TIK1"))
+    CALL(evt_snd_envon, PSND_FADE_RESTART | PSND_FADE_IN, STRING("ENV_STG0_TIK4"))
     CALL(evt_snd_set_rev_mode, 2)
     CALL(evt_map_playanim, STRING("anm_nami_1"), 1, 0)
     CALL(evt_map_playanim, STRING("anm_nami_2"), 1, 0)
     CALL(evt_hit_damage_return_set, PTR(hitDmgRetPoints))
-    CALL_CHILD(PTR(evt_gazigazi_entry))
+    CALL_CHILD(evt_gazigazi_entry)
     CALL(evt_paper_entry, STRING("OFF_d_bom_ver2"))
-    IF_INT_EQUAL(GSWF(1332), 0)
-        CALL(evt_mapobj_flag_onoff, 1, 1, STRING("bom_kabe_4"), 1)
+    IF_INT_EQUAL(GSWF(GSWF_TIK01_WALL2_BOMBED), 0)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("bom_kabe_4"), MAPOBJ_FLAG_HIDE)
         CALL(evt_hitobj_attr_onoff, 1, 0, STRING("w_bwro_2"), 4)
         SET_VALUE(LW(0), STRING("w_bwro_2"))
-        CALL_CHILD(PTR(bero_case_switch_off))
-        CALL(evt_run_case_evt, 15, 1, STRING("w_bwro_2"), 0, PTR(wall_bomb), 0)
-        ELSE
-        CALL(evt_mapobj_flag_onoff, 1, 1, STRING("bom_kabe_3"), 1)
+        CALL_CHILD(bero_case_switch_off)
+        CALL(evt_run_case_evt, CASE_COND_BOBBERY, 1, STRING("w_bwro_2"), 0, PTR(wall_bomb), 0)
+    ELSE
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("bom_kabe_3"), MAPOBJ_FLAG_HIDE)
     END_IF
-    CALL(evt_mobj_powerupblk, STRING("pblk1"), 350, 60, 100, 0, GSWF(5531), 0)
-    IF_INT_LESS(GSW(0), 21)
+    CALL(evt_mobj_powerupblk, STRING("pblk1"), 350, 60, 100, 0, GSWF(GSWF_TIK02_SHINE_SPRITE), 0)
+    IF_INT_LESS(GSW(GSW_STORY_PROGRESS), STORY_STG0_19_BLOOPER_BATTLE)
         CALL(evt_hit_bind_mapobj, STRING("a_ugo_yuka_1"), STRING("ugo_yuka_1"))
         CALL(evt_hit_bind_mapobj, STRING("a_ugo_yuka_2"), STRING("ugo_yuka_2"))
         CALL(evt_mapobj_trans, 0, STRING("ugo_yuka_1"), 0, -100, 0)
@@ -885,10 +871,10 @@ EVT_BEGIN(tik_02_init_evt)
         CALL(evt_hit_bind_mapobj, STRING("a_dokan_1"), STRING("s_dokan_1"))
         CALL(evt_mapobj_trans, 0, STRING("s_dokan_1"), 0, -30, 0)
         CALL(evt_hit_bind_update, STRING("a_dokan_1"))
-        ELSE
+    ELSE
         SET_VALUE(LW(4), STRING("ugo_yuka_1"))
         SET_VALUE(LW(5), STRING("a_ugo_yuka_1"))
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
         SET_FLOAT_VALUE(LW(6), 65)
         SET_FLOAT_VALUE(LW(7), 32)
 #else
@@ -897,10 +883,10 @@ EVT_BEGIN(tik_02_init_evt)
 #endif
         SET_VALUE(LW(8), 1000)
         SET_VALUE(LW(9), 2000)
-        SPAWN_EVENT(PTR(ukishima_move))
+        SPAWN_EVENT(ukishima_move)
         SET_VALUE(LW(4), STRING("ugo_yuka_2"))
         SET_VALUE(LW(5), STRING("a_ugo_yuka_2"))
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
         SET_FLOAT_VALUE(LW(6), -71)
         SET_FLOAT_VALUE(LW(7), -34)
 #else
@@ -909,20 +895,19 @@ EVT_BEGIN(tik_02_init_evt)
 #endif
         SET_VALUE(LW(8), 1000)
         SET_VALUE(LW(9), 2000)
-        SPAWN_EVENT(PTR(ukishima_move))
+        SPAWN_EVENT(ukishima_move)
     END_IF
-    IF_INT_EQUAL(GSW(0), 20)
-        SPAWN_EVENT(PTR(geso_battle))
+    IF_INT_EQUAL(GSW(GSW_STORY_PROGRESS), STORY_STG0_17_BADGE_TUTORIAL)
+        SPAWN_EVENT(geso_battle)
     END_IF
-    IF_INT_LESS(GSW(0), 23)
+    IF_INT_LESS(GSW(GSW_STORY_PROGRESS), STORY_STG1_00_PETAL_MEADOWS)
         SET_VALUE(LW(0), STRING("dokan"))
-        CALL_CHILD(PTR(bero_case_switch_off))
+        CALL_CHILD(bero_case_switch_off)
         CALL(evt_bero_overwrite, STRING("dokan"), PTR(bero_entry_data2))
         SET_VALUE(LW(0), STRING("dokan"))
-        CALL_CHILD(PTR(bero_case_switch_on))
+        CALL_CHILD(bero_case_switch_on)
     END_IF
     CALL(evt_map_entry_airport_harbor, 1, STRING("S_Ship_Change_01"), STRING("ue_1"))
     CALL(evt_map_entry_airport_harbor, 1, STRING("S_Ship_Change_02"), STRING("ue_2"))
     RETURN
 EVT_END()
-

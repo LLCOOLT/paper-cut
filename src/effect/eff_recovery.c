@@ -1,5 +1,6 @@
+// HP/FP recovery (type 0: HP heart, 1: FP flower, 4/5: large HP/FP): `amount` icons rise one after another with
+// shine sounds and sparkles; type 6 is the sparkle-only form.
 #include "driver/camdrv.h"
-#include "pc_call.h"
 #include "eff/eff_recovery.h"
 #include "driver/dispdrv.h"
 #include "driver/effdrv.h"
@@ -10,41 +11,34 @@
 #include <dolphin/gx.h>
 #include <dolphin/mtx.h>
 #include <dolphin/os.h>
-
-#ifndef TARGET_PC /* PC port: the host libc declares these */
-double sin(double);
-double cos(double);
-s32 rand(void);
-#endif
-s32 psndSFXOn_3D(const char* name, Vec* position);
-#ifdef TARGET_PC /* the real prototype: Win64 assigns int and float arguments by position */
+#include "eff/eff_number.h"
+#include "pmario_sound.h"
+#include "version.h"
+#include "libc_decls.h"
 #include "eff/eff_stardust.h"
-#else
-EffectEntry* effStardustEntry(s32, f32, f32, f32, f32, f32, s32, s32);
-#endif
-#ifndef TARGET_PC /* PC port: the host libc declares these */
-int sprintf(char* str, const char* format, ...);
-#endif
-#ifndef TARGET_PC /* PC port: the host libc declares it */
-u32 strlen(const char* s);
-#endif
-#ifndef TARGET_PC /* PC port: the host libc declares these */
-void* memset(void* dst, int val, u32 n);
-#endif
-void effNumberGX(Mtx mtx, s32 type, s32 number, u8 alpha, s32 extra);
+#include <string.h>
 
-MayaAnim* effMayaAnimAlloc(MayaAnimData* data);
-void effDeleteMayaAnim(MayaAnim* anim);
-void effPlayMayaAnim(MayaAnim* anim);
-void effCalcMayaAnim(MayaAnim* anim);
-
-#define QUAD(l, r, t, b, u) \
+#define QUAD(l, r, t, b, u)           \
     GXBegin(GX_QUADS, GX_VTXFMT0, 4); \
-    GXPosition3f32((l), (t), 0.0f); GXTexCoord2f32(0.0f, 0.0f); \
-    GXPosition3f32((r), (t), 0.0f); GXTexCoord2f32((u), 0.0f); \
-    GXPosition3f32((r), (b), 0.0f); GXTexCoord2f32((u), 1.0f); \
-    GXPosition3f32((l), (b), 0.0f); GXTexCoord2f32(0.0f, 1.0f);
+    GXPosition3f32((l), (t), 0.0f);   \
+    GXTexCoord2f32(0.0f, 0.0f);       \
+    GXPosition3f32((r), (t), 0.0f);   \
+    GXTexCoord2f32((u), 0.0f);        \
+    GXPosition3f32((r), (b), 0.0f);   \
+    GXTexCoord2f32((u), 1.0f);        \
+    GXPosition3f32((l), (b), 0.0f);   \
+    GXTexCoord2f32(0.0f, 1.0f);
 
+/** Twelve pastel colours the recovery sparkles cycle through, one step per frame. */
+static u8 color_rotation_data[] = {
+    0xFE, 0xAC, 0xAC, 0xFE, 0xAC, 0xD5, 0xFE, 0xB4, 0x9A, 0xD5, 0xB4, 0xFE,
+    0xB4, 0xB4, 0xFE, 0xB4, 0xDD, 0xFE, 0xB4, 0xFE, 0xFE, 0xB4, 0xFE, 0xD5,
+    0xB4, 0xFE, 0xB4, 0xD5, 0xFE, 0xB4, 0xFE, 0xFE, 0xB4, 0xFE, 0xD5, 0xAC,
+};
+/**
+ * Keyframes of the recovery icon over 79 frames: it grows from nothing while dropping into place,
+ * bounces, holds, then dips and shoots upward at the end.
+ */
 MayaHermitKey recovery_effHermit_0[] = {
     {
         0, // time
@@ -157,37 +151,37 @@ MayaHermitKey recovery_effHermit_0[] = {
         },
     },
 };
-static u8 color_rotation_data[] = {
-    0xFE, 0xAC, 0xAC, 0xFE, 0xAC, 0xD5, 0xFE, 0xB4, 0x9A, 0xD5, 0xB4, 0xFE,
-    0xB4, 0xB4, 0xFE, 0xB4, 0xDD, 0xFE, 0xB4, 0xFE, 0xFE, 0xB4, 0xFE, 0xD5,
-    0xB4, 0xFE, 0xB4, 0xD5, 0xFE, 0xB4, 0xFE, 0xFE, 0xB4, 0xFE, 0xD5, 0xAC,
-};
+/** The recovery icon's square plane that carries the heart or flower texture. */
 s16 recovery_effFace_pPlane2_q007_0[] = {
     4, // vertex count
     -768, -768, 0, 0, 512,
     768, -768, 0, 512, 512,
     768, 768, 0, 512, 0,
     -768, 768, 0, 0, 0,
-    0, // pad
 };
 s16* recovery_effFaceDt_pPlane2_q007 = recovery_effFace_pPlane2_q007_0;
+/** The recovery icon's single animated part: its keyframes and plane. */
 MayaPoly recovery_effAnimRST[] = {
     {10, recovery_effHermit_0, 1, &recovery_effFaceDt_pPlane2_q007},
 };
-MayaKeyList recovery_effAnimRSTDt = {1, recovery_effAnimRST};
-MayaAnimData recovery_effAnimDt = { { 0 }, 79.0f, &recovery_effAnimRSTDt };
+/** Part list of the recovery icon animation. */
+MayaPolyList recovery_effAnimRSTDt = {1, recovery_effAnimRST};
+/** Recovery icon animation (79 frames), started by effRecoveryEntry and drawn under each icon. */
+MayaAnimData recovery_effAnimDt = {{0}, 79.0f, &recovery_effAnimRSTDt};
 
+static void effRecoveryMain(EffectEntry* effect);
+static void effRecoveryMain2(EffectEntry* effect);
 
-void effRecoveryMain(EffectEntry* effect);
-void effRecoveryMain2(EffectEntry* effect);
+static void effRecoveryDisp(CameraId cameraId, EffectEntry* effect);
+static void effRecoveryDisp2(CameraId cameraId, EffectEntry* effect);
+static void effRecoveryDisp3(CameraId cameraId, EffectEntry* effect);
+static void effRecoveryDisp4(CameraId cameraId, EffectEntry* effect);
 
-void effRecoveryDisp(CameraId cameraId, EffectEntry* effect);
-void effRecoveryDisp2(CameraId cameraId, EffectEntry* effect);
-void effRecoveryDisp3(CameraId cameraId, EffectEntry* effect);
-void effRecoveryDisp4(CameraId cameraId, EffectEntry* effect);
-
-#pragma opt_propagation off
-#pragma opt_lifetimes off
+/**
+ * Spawns the HP/FP recovery icons at (x, y, z);
+ * type selects HP, FP, large forms or sparkle-only and `amount` the icon count.
+ * Called from battle_damage.c and battle_seq.c.
+ */
 EffectEntry* effRecoveryEntry(s32 type, s32 amount, f32 x, f32 y, f32 z) {
     EffectEntry* effect;
     RecoveryWork* work;
@@ -200,30 +194,30 @@ EffectEntry* effRecoveryEntry(s32 type, s32 amount, f32 x, f32 y, f32 z) {
 
     effect = effEntry();
     switch (type) {
-    case 2:
-    case 3:
-        amount = 0;
-        break;
-    case 4:
-    case 5:
-        amount = 20;
-        break;
-    case 6:
-        amount = 11;
-        break;
+        case 2:
+        case 3:
+            amount = 0;
+            break;
+        case 4:
+        case 5:
+            amount = 20;
+            break;
+        case 6:
+            amount = 11;
+            break;
     }
-    effect->type = "Recovery\0\0\0";
+    effect->type = "Recovery";
     effect->count = amount + 1;
     size = effect->count * sizeof(RecoveryWork);
     work = __memAlloc(HEAP_EFFECT, size);
     effect->userdata = work;
     switch (type) {
-    case 6:
-        effect->callback = effRecoveryMain2;
-        break;
-    default:
-        effect->callback = effRecoveryMain;
-        break;
+        case 6:
+            effect->callback = effRecoveryMain2;
+            break;
+        default:
+            effect->callback = effRecoveryMain;
+            break;
     }
     work->anim = effMayaAnimAlloc(&recovery_effAnimDt);
     effPlayMayaAnim(work->anim);
@@ -235,48 +229,50 @@ EffectEntry* effRecoveryEntry(s32 type, s32 amount, f32 x, f32 y, f32 z) {
     work->timer = 0;
     work->tick = gp->retraceCount;
     work->alpha = 255;
+#if VERSION >= VERSION_JP
     work->baseY = -30.0f;
+#endif
     {
-    Vec sfxPos;
-    Vec pos = { 0.0f, 0.0f, 0.0f };
-    pos.x = work->position.x;
-    pos.y = work->position.y;
-    pos.z = work->position.z;
-    sfxPos = pos;
-    switch (work->type) {
-    case 0:
-    case 7:
-        if (work->amount <= 5) {
-            psndSFXOn_3D("SFX_HP_RECOVER_SMALL1", &sfxPos);
-        } else if (work->amount <= 10) {
-            psndSFXOn_3D("SFX_HP_RECOVER_MID1", &sfxPos);
-        } else {
-            psndSFXOn_3D("SFX_HP_RECOVER_BIG1", &sfxPos);
+        Vec sfxPos;
+        Vec pos = {0.0f, 0.0f, 0.0f};
+        pos.x = work->position.x;
+        pos.y = work->position.y;
+        pos.z = work->position.z;
+        sfxPos = pos;
+        switch (work->type) {
+            case 0:
+            case 7:
+                if (work->amount <= 5) {
+                    psndSFXOn_3D("SFX_HP_RECOVER_SMALL1", &sfxPos);
+                } else if (work->amount <= 10) {
+                    psndSFXOn_3D("SFX_HP_RECOVER_MID1", &sfxPos);
+                } else {
+                    psndSFXOn_3D("SFX_HP_RECOVER_BIG1", &sfxPos);
+                }
+                break;
+            case 1:
+            case 8:
+                if (work->amount <= 5) {
+                    psndSFXOn_3D("SFX_FP_RECOVER_SMALL1", &sfxPos);
+                } else if (work->amount <= 10) {
+                    psndSFXOn_3D("SFX_FP_RECOVER_MID1", &sfxPos);
+                } else {
+                    psndSFXOn_3D("SFX_FP_RECOVER_BIG1", &sfxPos);
+                }
+                break;
+            case 4:
+                psndSFXOn_3D("SFX_HP_RECOVER_BIG1", &sfxPos);
+                break;
+            case 5:
+                psndSFXOn_3D("SFX_FP_RECOVER_BIG1", &sfxPos);
+                break;
         }
-        break;
-    case 1:
-    case 8:
-        if (work->amount <= 5) {
-            psndSFXOn_3D("SFX_FP_RECOVER_SMALL1", &sfxPos);
-        } else if (work->amount <= 10) {
-            psndSFXOn_3D("SFX_FP_RECOVER_MID1", &sfxPos);
-        } else {
-            psndSFXOn_3D("SFX_FP_RECOVER_BIG1", &sfxPos);
-        }
-        break;
-    case 4:
-        psndSFXOn_3D("SFX_HP_RECOVER_BIG1", &sfxPos);
-        break;
-    case 5:
-        psndSFXOn_3D("SFX_FP_RECOVER_BIG1", &sfxPos);
-        break;
-    }
     }
     switch (type) {
-    case 6:
-        effDeleteMayaAnim(work->anim);
-        work->timer = 180;
-        break;
+        case 6:
+            effDeleteMayaAnim(work->anim);
+            work->timer = 180;
+            break;
     }
     zero = 0.0f;
     pp = work + 1;
@@ -284,13 +280,13 @@ EffectEntry* effRecoveryEntry(s32 type, s32 amount, f32 x, f32 y, f32 z) {
         work = pp;
         work->position.x = zero;
         switch (type) {
-        case 4:
-        case 5:
-            work->position.y = (i < 10) ? zero : -15.0f;
-            break;
-        default:
-            work->position.y = 0.0f;
-            break;
+            case 4:
+            case 5:
+                work->position.y = (i < 10) ? zero : -15.0f;
+                break;
+            default:
+                work->position.y = 0.0f;
+                break;
         }
         work->position.z = zero;
         work->scale.x = zero;
@@ -304,28 +300,27 @@ EffectEntry* effRecoveryEntry(s32 type, s32 amount, f32 x, f32 y, f32 z) {
         work->alpha = 255;
         work->angle = zero;
         switch (type) {
-        case 6:
-            if (i == 1) {
-                work->scale.x = work->scale.y = work->scale.z = 1.5f;
-                work->alpha = 0;
-                work->delay = 0;
-            } else {
-                work->scale.x = work->scale.y = work->scale.z = 0.3f;
-                work->angle = (f32)(((i & 1) ? irand(80) : -irand(80)) + 90);
-                work->velocity.x = 1.8f * (f32)cos(6.2831855f * work->angle / 360.0f);
-                work->velocity.y = 1.8f * (f32)sin(6.2831855f * work->angle / 360.0f);
-                work->alpha = 255;
-                work->delay = delay;
-            }
-            break;
+            case 6:
+                if (i == 1) {
+                    work->scale.x = work->scale.y = work->scale.z = 1.5f;
+                    work->alpha = 0;
+                    work->delay = 0;
+                } else {
+                    work->scale.x = work->scale.y = work->scale.z = 0.3f;
+                    work->angle = (f32)(((i & 1) ? irand(80) : -irand(80)) + 90);
+                    work->velocity.x = 1.8f * (f32)cos(6.2831855f * work->angle / 360.0f);
+                    work->velocity.y = 1.8f * (f32)sin(6.2831855f * work->angle / 360.0f);
+                    work->alpha = 255;
+                    work->delay = delay;
+                }
+                break;
         }
     }
     return effect;
 }
-#pragma opt_propagation reset
-#pragma opt_lifetimes reset
 
-void effRecoveryMain(EffectEntry* effect) {
+/** Per frame: releases the icons one at a time with their shine sounds and sparkles, then deletes the effect. */
+static void effRecoveryMain(EffectEntry* effect) {
     RecoveryWork* work = effect->userdata;
     RecoveryWork* p;
     s32 i;
@@ -335,7 +330,9 @@ void effRecoveryMain(EffectEntry* effect) {
     s32 type = work->type;
     u32 n = 0;
     f32 x, y, z;
+#if VERSION >= VERSION_JP
     f32 baseY = work->baseY;
+#endif
     f32 a, d;
 
     work = effect->userdata;
@@ -363,71 +360,75 @@ void effRecoveryMain(EffectEntry* effect) {
         p++;
         for (i = 1; i < effect->count; i++, p++) {
             switch (p->state) {
-            case 0:
-                if (go) {
-                    a = 6.2831855f * (90.0f + 360.0f * (f32)(i - 1) / (f32)amount) / 360.0f;
-                    p->velocity.x = 12.0f * (f32)sin(a);
-                    p->velocity.y = 0.0f;
-                    a = cos(a);
-                    p->velocity.z = 12.0f * -a;
-                    p->timer = 0;
-                    p->state++;
-                }
-                break;
-            case 1:
-                if (p->timer < 10) {
-                    p->velocity.x *= 0.7f;
-                    p->velocity.y *= 0.7f;
-                    p->velocity.z *= 0.7f;
-                    p->position.x += p->velocity.x;
-                    p->position.y += p->velocity.y;
-                    p->position.z += p->velocity.z;
-                    p->scale.x = p->scale.y = p->scale.z = 1.0f;
-                    p->timer++;
-                } else {
-                    p->timer = 10;
-                    p->state++;
-                }
-                break;
-            case 2:
-                if (--p->timer <= 0) {
-                    p->timer = 0;
-                    p->state++;
-                }
-                break;
-            case 3:
-                if (p->timer < 40) {
-                    a = PCCALL(((f32 (*)(f32, f32, s32, s32, s32))intplGetValue)(0.0f, 360.0f, 11, ++p->timer, 40), intplGetValue(11, ++p->timer, 40, 0.0f, 360.0f));
-                    d = distABf(0.0f, 0.0f, p->position.x, p->position.z);
-                    d *= 0.99f;
-                    a = 6.2831855f * (90.0f + (a + 360.0f * (f32)(i - 2) / (f32)amount)) / 360.0f;
-                    p->position.x = d * (f32)sin(a);
-                    p->position.z = d * -(f32)cos(a);
-                } else {
-                    p->timer = rand() % 20;
-                    p->state++;
-                }
-                break;
-            case 4:
-                if (--p->timer <= 0) {
-                    p->timer = 0;
-                    p->state++;
-                }
-                break;
-            case 5:
-                if (p->timer < 16) {
-                    p->timer++;
-                    p->position.x = PCCALL(((f32 (*)(f32, f32, s32, s32, s32))intplGetValue)(p->position.x, 0.0f, 1, p->timer, 16), intplGetValue(1, p->timer, 16, p->position.x, 0.0f));
-                    p->position.y = PCCALL(((f32 (*)(f32, f32, s32, s32, s32))intplGetValue)(p->position.y, baseY, 1, p->timer, 16), intplGetValue(1, p->timer, 16, p->position.y, baseY));
-                    p->position.z = PCCALL(((f32 (*)(f32, f32, s32, s32, s32))intplGetValue)(p->position.z, 0.0f, 1, p->timer, 20), intplGetValue(1, p->timer, 20, p->position.z, 0.0f));
-                    p->scale.x = p->scale.y = p->scale.z = PCCALL(((f32 (*)(f32, f32, s32, s32, s32))intplGetValue)(1.0f, 0.0f, 1, p->timer, 16), intplGetValue(1, p->timer, 16, 1.0f, 0.0f));
-                } else {
-                    p->state++;
-                }
-                break;
-            case 6:
-                done++;
-                break;
+                case 0:
+                    if (go) {
+                        a = 6.2831855f * (90.0f + 360.0f * (f32)(i - 1) / (f32)amount) / 360.0f;
+                        p->velocity.x = 12.0f * (f32)sin(a);
+                        p->velocity.y = 0.0f;
+                        a = cos(a);
+                        p->velocity.z = 12.0f * -a;
+                        p->timer = 0;
+                        p->state++;
+                    }
+                    break;
+                case 1:
+                    if (p->timer < 10) {
+                        p->velocity.x *= 0.7f;
+                        p->velocity.y *= 0.7f;
+                        p->velocity.z *= 0.7f;
+                        p->position.x += p->velocity.x;
+                        p->position.y += p->velocity.y;
+                        p->position.z += p->velocity.z;
+                        p->scale.x = p->scale.y = p->scale.z = 1.0f;
+                        p->timer++;
+                    } else {
+                        p->timer = 10;
+                        p->state++;
+                    }
+                    break;
+                case 2:
+                    if (--p->timer <= 0) {
+                        p->timer = 0;
+                        p->state++;
+                    }
+                    break;
+                case 3:
+                    if (p->timer < 40) {
+                        a = intplGetValue(11, 0.0f, 360.0f, ++p->timer, 40);
+                        d = distABf(0.0f, 0.0f, p->position.x, p->position.z);
+                        d *= 0.99f;
+                        a = 6.2831855f * (90.0f + (a + 360.0f * (f32)(i - 2) / (f32)amount)) / 360.0f;
+                        p->position.x = d * (f32)sin(a);
+                        p->position.z = d * -(f32)cos(a);
+                    } else {
+                        p->timer = rand() % 20;
+                        p->state++;
+                    }
+                    break;
+                case 4:
+                    if (--p->timer <= 0) {
+                        p->timer = 0;
+                        p->state++;
+                    }
+                    break;
+                case 5:
+                    if (p->timer < 16) {
+                        p->timer++;
+                        p->position.x = intplGetValue(1, p->position.x, 0.0f, p->timer, 16);
+#if VERSION <= VERSION_DEMO_JP
+                        p->position.y = intplGetValue(1, p->position.y, -30.0f, p->timer, 16);
+#else
+                        p->position.y = intplGetValue(1, p->position.y, baseY, p->timer, 16);
+#endif
+                        p->position.z = intplGetValue(1, p->position.z, 0.0f, p->timer, 20);
+                        p->scale.x = p->scale.y = p->scale.z = intplGetValue(1, 1.0f, 0.0f, p->timer, 16);
+                    } else {
+                        p->state++;
+                    }
+                    break;
+                case 6:
+                    done++;
+                    break;
             }
         }
         if (type <= 1u || type == 7 || type == 8 || type == 4 || type == 5) {
@@ -435,40 +436,47 @@ void effRecoveryMain(EffectEntry* effect) {
                 work = effect->userdata;
                 if (type != 7 && type != 8) {
                     Vec sfxPos;
-                    PCCALL(effStardustEntry(2, x, y - 20.0f, z, 30.0f, 30.0f, 2, 30),
-                           effStardustEntry(2, 2, 30, x, y - 20.0f, z, 30.0f, 30.0f));
-                    {
-                    Vec pos = { 0.0f, 0.0f, 0.0f };
-                    pos.x = work->position.x;
-                    pos.y = work->position.y;
-                    pos.z = work->position.z;
-                    sfxPos = pos;
-                    switch (work->type) {
-                    case 0:
-                        if (work->amount <= 5) {
-                            psndSFXOn_3D("SFX_HP_RECOVER_SHINE1", &sfxPos);
-                        } else if (work->amount <= 10) {
-                            psndSFXOn_3D("SFX_HP_RECOVER_SHINE2", &sfxPos);
-                        } else {
-                            psndSFXOn_3D("SFX_HP_RECOVER_SHINE3", &sfxPos);
-                        }
-                        break;
-                    case 1:
-                        if (work->amount <= 5) {
-                            psndSFXOn_3D("SFX_FP_RECOVER_SHINE1", &sfxPos);
-                        } else if (work->amount <= 10) {
-                            psndSFXOn_3D("SFX_FP_RECOVER_SHINE2", &sfxPos);
-                        } else {
-                            psndSFXOn_3D("SFX_FP_RECOVER_SHINE3", &sfxPos);
-                        }
-                        break;
-                    case 4:
-                        psndSFXOn_3D("SFX_HP_RECOVER_SHINE3", &sfxPos);
-                        break;
-                    case 5:
-                        psndSFXOn_3D("SFX_FP_RECOVER_SHINE3", &sfxPos);
-                        break;
+#if VERSION <= VERSION_DEMO_JP
+                    s32 count = amount * 10;
+                    if (count > 100) {
+                        count = 100;
                     }
+                    effStardustEntry(2, count, 30, x, y - 20.0f, z, 30.0f, 30.0f);
+#else
+                    effStardustEntry(2, 2, 30, x, y - 20.0f, z, 30.0f, 30.0f);
+#endif
+                    {
+                        Vec pos = {0.0f, 0.0f, 0.0f};
+                        pos.x = work->position.x;
+                        pos.y = work->position.y;
+                        pos.z = work->position.z;
+                        sfxPos = pos;
+                        switch (work->type) {
+                            case 0:
+                                if (work->amount <= 5) {
+                                    psndSFXOn_3D("SFX_HP_RECOVER_SHINE1", &sfxPos);
+                                } else if (work->amount <= 10) {
+                                    psndSFXOn_3D("SFX_HP_RECOVER_SHINE2", &sfxPos);
+                                } else {
+                                    psndSFXOn_3D("SFX_HP_RECOVER_SHINE3", &sfxPos);
+                                }
+                                break;
+                            case 1:
+                                if (work->amount <= 5) {
+                                    psndSFXOn_3D("SFX_FP_RECOVER_SHINE1", &sfxPos);
+                                } else if (work->amount <= 10) {
+                                    psndSFXOn_3D("SFX_FP_RECOVER_SHINE2", &sfxPos);
+                                } else {
+                                    psndSFXOn_3D("SFX_FP_RECOVER_SHINE3", &sfxPos);
+                                }
+                                break;
+                            case 4:
+                                psndSFXOn_3D("SFX_HP_RECOVER_SHINE3", &sfxPos);
+                                break;
+                            case 5:
+                                psndSFXOn_3D("SFX_FP_RECOVER_SHINE3", &sfxPos);
+                                break;
+                        }
                     }
                 }
                 effDeleteMayaAnim(work->anim);
@@ -480,21 +488,21 @@ void effRecoveryMain(EffectEntry* effect) {
     work = effect->userdata;
     work->tick = gp->retraceCount;
     {
-    Vec calc = { 0.0f, 0.0f, 0.0f };
-    calc.x = work->position.x;
-    calc.y = work->position.y;
-    calc.z = work->position.z;
-    dispEntry(CAMERA_3D, dispCalcZ(&calc), 1, (DispCallback)effRecoveryDisp, effect);
+        Vec calc = {0.0f, 0.0f, 0.0f};
+        calc.x = work->position.x;
+        calc.y = work->position.y;
+        calc.z = work->position.z;
+        dispEntry(CAMERA_3D, dispCalcZ(&calc), 1, (DispCallback)effRecoveryDisp, effect);
     }
     if (type <= 1u || type == 7 || type == 8) {
-        Vec calc = { 0.0f, 0.0f, 0.0f };
+        Vec calc = {0.0f, 0.0f, 0.0f};
         calc.x = work->position.x;
         calc.y = work->position.y;
         calc.z = work->position.z;
         dispEntry(CAMERA_3D, dispCalcZ(&calc), 2, (DispCallback)effRecoveryDisp2, effect);
     }
     if (type == 4 || type == 5) {
-        Vec calc = { 0.0f, 0.0f, 0.0f };
+        Vec calc = {0.0f, 0.0f, 0.0f};
         calc.x = work->position.x;
         calc.y = work->position.y;
         calc.z = work->position.z;
@@ -502,10 +510,11 @@ void effRecoveryMain(EffectEntry* effect) {
     }
 }
 
-void effRecoveryMain2(EffectEntry* effect) {
+/** Per frame: Main for the sparkle-only form (type 6). */
+static void effRecoveryMain2(EffectEntry* effect) {
     RecoveryWork* work = effect->userdata;
     Vec calc;
-    Vec pos = { 0.0f, 0.0f, 0.0f };
+    Vec pos = {0.0f, 0.0f, 0.0f};
     s32 i;
 
     pos.x = work->position.x;
@@ -519,8 +528,7 @@ void effRecoveryMain2(EffectEntry* effect) {
         work->alpha = work->timer << 3;
     }
     if (work->timer < 0) {
-        PCCALL(effStardustEntry(2, work->position.x, work->position.y, work->position.z, 40.0f, 45.0f, 6, 30),
-               effStardustEntry(2, 6, 30, work->position.x, work->position.y, work->position.z, 40.0f, 45.0f));
+        effStardustEntry(2, 6, 30, work->position.x, work->position.y, work->position.z, 40.0f, 45.0f);
         effDelete(effect);
         return;
     }
@@ -556,13 +564,13 @@ void effRecoveryMain2(EffectEntry* effect) {
     dispEntry(CAMERA_3D, dispCalcZ(&calc), 2, (DispCallback)effRecoveryDisp4, effect);
 }
 
-void effRecoveryDisp(CameraId cameraId, EffectEntry* effect) {
+/** Draws the rising icons as textured quads. */
+static void effRecoveryDisp(CameraId cameraId, EffectEntry* effect) {
     RecoveryWork* work = effect->userdata;
     RecoveryWork* p;
     CameraEntry* cam;
     s32 type;
     s32 i;
-    u8* c;
     GXColor color;
     GXTexObj texObj;
     Mtx transMtx;
@@ -586,24 +594,24 @@ void effRecoveryDisp(CameraId cameraId, EffectEntry* effect) {
     GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XYZ, GX_F32, 0);
     GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_TEX0, GX_TEX_ST, GX_F32, 0);
     switch (type) {
-    case 0:
-    case 2:
-    case 4:
-    case 7:
-        effGetTexObj(18, &texObj);
-        GXLoadTexObj(&texObj, GX_TEXMAP0);
-        effGetTexObj(20, &texObj);
-        GXLoadTexObj(&texObj, GX_TEXMAP1);
-        break;
-    case 1:
-    case 3:
-    case 5:
-    case 8:
-        effGetTexObj(19, &texObj);
-        GXLoadTexObj(&texObj, GX_TEXMAP0);
-        effGetTexObj(21, &texObj);
-        GXLoadTexObj(&texObj, GX_TEXMAP1);
-        break;
+        case 0:
+        case 2:
+        case 4:
+        case 7:
+            effGetTexObj(18, &texObj);
+            GXLoadTexObj(&texObj, GX_TEXMAP0);
+            effGetTexObj(20, &texObj);
+            GXLoadTexObj(&texObj, GX_TEXMAP1);
+            break;
+        case 1:
+        case 3:
+        case 5:
+        case 8:
+            effGetTexObj(19, &texObj);
+            GXLoadTexObj(&texObj, GX_TEXMAP0);
+            effGetTexObj(21, &texObj);
+            GXLoadTexObj(&texObj, GX_TEXMAP1);
+            break;
     }
     p = effect->userdata;
     PSMTXTrans(transMtx, p->position.x, p->position.y, p->position.z);
@@ -644,8 +652,10 @@ void effRecoveryDisp(CameraId cameraId, EffectEntry* effect) {
         GXSetTevColorIn(GX_TEVSTAGE0, GX_CC_ZERO, GX_CC_C0, GX_CC_TEXC, GX_CC_ZERO);
         GXSetTevAlphaIn(GX_TEVSTAGE0, GX_CA_ZERO, GX_CA_A0, GX_CA_TEXA, GX_CA_ZERO);
         for (i = 1; i < effect->count; i++, p++) {
-            c = &color_rotation_data[((i + gp->retraceCount) % 12) * 3];
-            color = (GXColor){ c[0], c[1], c[2], p->alpha };
+            {
+                u32 k = (i + gp->retraceCount) % 12;
+                color = (GXColor){color_rotation_data[k * 3], color_rotation_data[k * 3 + 1], color_rotation_data[k * 3 + 2], p->alpha};
+            }
             GXSetTevColor(GX_TEVREG0, color);
             PSMTXTrans(transMtx, p->position.x, p->position.y, p->position.z);
             PSMTXScale(scaleMtx, p->scale.x, p->scale.y, p->scale.z);
@@ -659,7 +669,11 @@ void effRecoveryDisp(CameraId cameraId, EffectEntry* effect) {
     }
 }
 
-void effRecoveryDisp2(CameraId cameraId, EffectEntry* effect) {
+/**
+ * Draws the recovered amount above the icons for the HP/FP forms (types 0-3, 7, 8) with effNumberGX,
+ * centred and facing the camera: number style 0 for HP (types 0, 2, 7), 1 for FP (types 1, 3, 8).
+ */
+static void effRecoveryDisp2(CameraId cameraId, EffectEntry* effect) {
     RecoveryWork* work = effect->userdata;
     CameraEntry* cam;
     s32 type;
@@ -693,20 +707,25 @@ void effRecoveryDisp2(CameraId cameraId, EffectEntry* effect) {
     PSMTXTrans(tmp, off, 0.0f, 0.0f);
     PSMTXConcat(mtx, tmp, mtx);
     switch (type) {
-    case 0:
-    case 2:
-    case 7:
-        effNumberGX(mtx, 0, amount, 0xFF, 1);
-        break;
-    case 1:
-    case 3:
-    case 8:
-        effNumberGX(mtx, 1, amount, 0xFF, 1);
-        break;
+        case 0:
+        case 2:
+        case 7:
+            effNumberGX(mtx, 0, amount, 0xFF, 1);
+            break;
+        case 1:
+        case 3:
+        case 8:
+            effNumberGX(mtx, 1, amount, 0xFF, 1);
+            break;
     }
 }
 
-void effRecoveryDisp3(CameraId cameraId, EffectEntry* effect) {
+/**
+ * Draws the label for the large forms (types 4/5) as a camera-facing 108x40 quad, twice:
+ * a dark shadow offset by 2 units, then the label in pink for HP (type 4) or green for FP (type 5).
+ * Texture 111/110 in US and PAL (173/172 when gp->language is 4), 0x8B/0x8A in JP and the demos.
+ */
+static void effRecoveryDisp3(CameraId cameraId, EffectEntry* effect) {
     RecoveryWork* work = effect->userdata;
     CameraEntry* cam;
     s32 type;
@@ -760,7 +779,7 @@ void effRecoveryDisp3(CameraId cameraId, EffectEntry* effect) {
     w = 108.0f;
     for (i = 0; i < 2; i++) {
         if (i == 0) {
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
             if ((u32)gp->language == 4) {
                 effGetTexObj(173, &texObj);
             } else {
@@ -770,9 +789,9 @@ void effRecoveryDisp3(CameraId cameraId, EffectEntry* effect) {
             effGetTexObj(0x8B, &texObj);
 #endif
             GXLoadTexObj(&texObj, GX_TEXMAP0);
-            GXSetChanMatColor(GX_COLOR0A0, (GXColor){ 0x00, 0x00, 0x00, 0xA0 });
+            GXSetChanMatColor(GX_COLOR0A0, (GXColor){0x00, 0x00, 0x00, 0xA0});
         } else {
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
             if ((u32)gp->language == 4) {
                 effGetTexObj(172, &texObj);
             } else {
@@ -783,9 +802,9 @@ void effRecoveryDisp3(CameraId cameraId, EffectEntry* effect) {
 #endif
             GXLoadTexObj(&texObj, GX_TEXMAP0);
             if (type == 4) {
-                GXSetChanMatColor(GX_COLOR0A0, (GXColor){ 0xF5, 0x98, 0x9D, 0xFF });
+                GXSetChanMatColor(GX_COLOR0A0, (GXColor){0xF5, 0x98, 0x9D, 0xFF});
             } else {
-                GXSetChanMatColor(GX_COLOR0A0, (GXColor){ 0x5D, 0xC1, 0x00, 0xFF });
+                GXSetChanMatColor(GX_COLOR0A0, (GXColor){0x5D, 0xC1, 0x00, 0xFF});
             }
         }
         PSMTXTrans(mtx, (f32)((1 - i) * 2), (f32)(-(1 - i) * 2), 0.0f);
@@ -799,7 +818,13 @@ void effRecoveryDisp3(CameraId cameraId, EffectEntry* effect) {
     }
 }
 
-void effRecoveryDisp4(CameraId cameraId, EffectEntry* effect) {
+/**
+ * Draws the sparkle-only form (type 6) camera-facing:
+ * the first piece is a white glow (texture 18) that fades in to half alpha;
+ * the others are sparkles (texture 20) pointed along their flight angle,
+ * their colour cycling through color_rotation_data.
+ */
+static void effRecoveryDisp4(CameraId cameraId, EffectEntry* effect) {
     RecoveryWork* work = effect->userdata;
     CameraEntry* cam;
     s32 i;
@@ -810,7 +835,6 @@ void effRecoveryDisp4(CameraId cameraId, EffectEntry* effect) {
     Mtx scaleMtx;
     Mtx base;
     GXTexObj texObj;
-    u8* c;
     f32 w;
     f32 nw;
     f32 l;
@@ -845,10 +869,12 @@ void effRecoveryDisp4(CameraId cameraId, EffectEntry* effect) {
             if (i == 1) {
                 effGetTexObj(18, &texObj);
                 GXLoadTexObj(&texObj, GX_TEXMAP0);
-                GXSetChanMatColor(GX_COLOR0A0, (GXColor){ 0xFF, 0xFF, 0xFF, alpha * work->alpha / 255 });
+                GXSetChanMatColor(GX_COLOR0A0, (GXColor){0xFF, 0xFF, 0xFF, alpha * work->alpha / 255});
             } else {
-                c = &color_rotation_data[((i + gp->retraceCount) % 12) * 3];
-                color = (GXColor){ c[0], c[1], c[2], alpha * work->alpha / 255 };
+                {
+                    u32 k = (i + gp->retraceCount) % 12;
+                    color = (GXColor){color_rotation_data[k * 3], color_rotation_data[k * 3 + 1], color_rotation_data[k * 3 + 2], alpha * work->alpha / 255};
+                }
                 effGetTexObj(20, &texObj);
                 GXLoadTexObj(&texObj, GX_TEXMAP0);
                 GXSetChanMatColor(GX_COLOR0A0, color);
@@ -875,13 +901,18 @@ void effRecoveryDisp4(CameraId cameraId, EffectEntry* effect) {
             if (i != 1) {
                 u = 2.0f;
             }
-            l = nw / 2.0f; v = l + off;
+            l = nw / 2.0f;
+            v = l + off;
             r = 16.0f;
             w = 1.0f;
-            GXPosition3f32(l, r + off, 0.0f); GXTexCoord2f32(0.0f, 0.0f);
-            GXPosition3f32(r, r + off, 0.0f); GXTexCoord2f32(u, 0.0f);
-            GXPosition3f32(r, v, 0.0f); GXTexCoord2f32(u, w);
-            GXPosition3f32(l, v, 0.0f); GXTexCoord2f32(0.0f, w);
+            GXPosition3f32(l, r + off, 0.0f);
+            GXTexCoord2f32(0.0f, 0.0f);
+            GXPosition3f32(r, r + off, 0.0f);
+            GXTexCoord2f32(u, 0.0f);
+            GXPosition3f32(r, v, 0.0f);
+            GXTexCoord2f32(u, w);
+            GXPosition3f32(l, v, 0.0f);
+            GXTexCoord2f32(0.0f, w);
         }
     }
 }

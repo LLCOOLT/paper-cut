@@ -1,3 +1,4 @@
+// Paper Mario 64 effect: expanding water ripple rings on a surface; base of eff_ripple.c.
 #pragma defer_codegen off
 #include "eff/n64/eff_ripple_n64.h"
 #include "eff/eff_n64.h"
@@ -8,8 +9,7 @@
 #include <dolphin/mtx.h>
 #include <stdlib.h>
 
-
-
+/** 16x16 quad lying flat on the water surface, scaled up into each ripple ring. */
 effN64Vtx size16x16_tex32x32_0_vtx[] = {
     {-8, 0, -8, 0, 0, 0, 0, 0, 255},
     {8, 0, -8, 1024, 0, 0, 0, 0, 255},
@@ -17,17 +17,23 @@ effN64Vtx size16x16_tex32x32_0_vtx[] = {
     {-8, 0, 8, 0, 1024, 0, 0, 0, 255},
 };
 
-void effRippleMain(EffectEntry* effect);
-void effRippleDisp(CameraId cameraId, EffectEntry* effect);
+static void effRippleMain(EffectEntry* effect);
+static void effRippleDisp(CameraId cameraId, EffectEntry* effect);
 
-__declspec(section ".rodata") static Vec vec3_802fb520 = {0.0f, 0.0f, 0.0f};
+__declspec(section ".rodata") static Vec rippleZeroVec = {0.0f, 0.0f, 0.0f};
+/** Sets the x/z rotation of the ripple plane (degrees), so it can lie on a slanted surface. Used by bom_01. */
 void effRippleN64SetRxRz(EffectEntry* effect, f32 rx, f32 rz) {
     EffRippleN64Work* work = effect->userdata;
     work->rx = rx;
     work->rz = rz;
 }
 
-void effRippleDisp(CameraId cameraId, EffectEntry* effect) {
+/**
+ * Draws the ripple as one flat quad (tilted by rx/rz) scaled by scale*scaleY:
+ * shape texture 0x5B from the TTYD set for types 1-3/10/20/30, else N64 texture 0x21,
+ * masked by N64 texture 0x22 scrolling with `offset`. Types 1, 3, 10 and 30 are black, the rest white.
+ */
+static void effRippleDisp(CameraId cameraId, EffectEntry* effect) {
     CameraEntry* camera;
     s32 type;
     EffRippleN64Work* work;
@@ -87,7 +93,13 @@ void effRippleDisp(CameraId cameraId, EffectEntry* effect) {
     tri2(0, 1, 2, 0, 0, 2, 3, 0);
 }
 
-void effRippleMain(EffectEntry* effect) {
+/**
+ * Grows the ring by 0.1 per frame (types 2/3 and 20/30 also by 5%),
+ * eases alpha toward 120 and fades it over the last 32 frames, and scrolls the texture.
+ * Types 1-3 spawn a second ring (type x10) at the same spot and tilt 15 frames before they end.
+ * Deletes when the lifetime runs out; drawn on the work's camera, layer 2.
+ */
+static void effRippleMain(EffectEntry* effect) {
     EffRippleN64Work* work;
     EffectEntry* e;
     EffRippleN64Work* w;
@@ -98,7 +110,7 @@ void effRippleMain(EffectEntry* effect) {
     Vec tmp;
 
     work = effect->userdata;
-    tmp = vec3_802fb520;
+    tmp = rippleZeroVec;
     tmp.x = work->position.x;
     tmp.y = work->position.y;
     tmp.z = work->position.z;
@@ -138,13 +150,16 @@ void effRippleMain(EffectEntry* effect) {
     dispEntry(work->cameraId, dispCalcZ(&position), 2, (DispCallback)effRippleDisp, effect);
 }
 
-#pragma dont_inline on
-EffectEntry* effRippleN64Entry(s32 type, f32 x, f32 y, f32 z, f32 arg4) {
+/**
+ * Spawns a ripple at (x, y, z); type 1/2/3 (or 10/20/30) select the start scale.
+ * Used by eff_ripple.c and event scripts.
+ */
+EffectEntry* effRippleN64Entry(s32 type, f32 x, f32 y, f32 z, f32 yOffset) {
     EffectEntry* effect;
     EffRippleN64Work* work;
 
     effect = effEntry();
-    effect->type = "RippleN64\0\0";
+    effect->type = "RippleN64";
     effect->count = 1;
     work = __memAlloc(HEAP_EFFECT, sizeof(EffRippleN64Work));
     effect->userdata = work;
@@ -178,7 +193,6 @@ EffectEntry* effRippleN64Entry(s32 type, f32 x, f32 y, f32 z, f32 arg4) {
     }
     work->lifetime = 32;
     work->offset = rand() % 32;
-    work->unk28 = y + arg4;
+    work->surfaceY = y + yOffset;
     return effect;
 }
-#pragma dont_inline reset

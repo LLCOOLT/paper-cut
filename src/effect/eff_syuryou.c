@@ -1,3 +1,5 @@
+// Grodus effects (syuryou, 首領: the leader): type 0 plays his staff animation EFF_batug_tue once, type 1 his barrier
+// MOBJ_EFF_baria; both fade out when removed.
 #include "eff/eff_syuryou.h"
 #include "driver/animdrv.h"
 #include "driver/dispdrv.h"
@@ -5,6 +7,14 @@
 #include "memory.h"
 #include <dolphin/mtx.h>
 
+static void effSyuryouDisp(CameraId cameraId, EffectEntry* effect);
+static void effSyuryouMain(EffectEntry* effect);
+
+/**
+ * Spawns Grodus's effect at (x, y, z): type 0 his staff animation, type 1 his barrier.
+ * `duration` is in frames (0 or less: until soft deleted);
+ * the aji (X-Naut Fortress) fights spawn the barrier with a 1000-frame duration.
+ */
 EffectEntry* effSyuryouEntry(s32 type, s32 duration, f32 x, f32 y, f32 z) {
     EffectEntry* effect;
     EffSyuryouWork* work;
@@ -15,7 +25,7 @@ EffectEntry* effSyuryouEntry(s32 type, s32 duration, f32 x, f32 y, f32 z) {
     work = __memAlloc(HEAP_EFFECT, sizeof(EffSyuryouWork) * effect->count);
     effect->userdata = work;
     effect->callback = effSyuryouMain;
-    effect->flags |= 2;
+    effect->flags |= EFFECT_FLAG_SOFT_DELETE;
     work->type = type;
     work->position.x = x;
     work->position.y = y;
@@ -24,8 +34,7 @@ EffectEntry* effSyuryouEntry(s32 type, s32 duration, f32 x, f32 y, f32 z) {
     work->alpha = 255;
     if (duration <= 0) {
         work->timer = 1000;
-    }
-    else {
+    } else {
         work->timer = duration;
     }
     work->alpha = 255;
@@ -33,15 +42,22 @@ EffectEntry* effSyuryouEntry(s32 type, s32 duration, f32 x, f32 y, f32 z) {
     return effect;
 }
 
+// FAKE: match-forcing setting: the same code without it compiles differently (removal tried).
 #pragma push
+// FAKE: dead assignments optimisation off for effSyuryouMain, effSyuryouDisp: the original register allocation and scheduling need it
 #pragma opt_dead_assignments off
-void effSyuryouMain(EffectEntry* effect) {
+/**
+ * Waits for the animation group to load, starts the pose, then runs the timer:
+ * soft delete or timeout fades the alpha over 32 frames;
+ * the staff deletes itself after one loop and the barrier switches to its S_1 animation.
+ */
+static void effSyuryouMain(EffectEntry* effect) {
     EffSyuryouWork* work = effect->userdata;
     Vec position;
     BOOL inBattle;
     s32 type;
 
-    position = (Vec){ work->position.x, work->position.y, work->position.z };
+    position = (Vec){work->position.x, work->position.y, work->position.z};
     type = work->type;
     inBattle = gp->inBattle != 0;
 
@@ -75,8 +91,8 @@ void effSyuryouMain(EffectEntry* effect) {
     }
 
     // soft delete: start fading out
-    if (effect->flags & 4) {
-        effect->flags &= ~4;
+    if (effect->flags & EFFECT_FLAG_DELETE_REQUESTED) {
+        effect->flags &= ~EFFECT_FLAG_DELETE_REQUESTED;
         work->timer = 32;
     }
     if (work->timer < 1000) {
@@ -96,7 +112,8 @@ void effSyuryouMain(EffectEntry* effect) {
 }
 #pragma pop
 
-void effSyuryouDisp(CameraId cameraId, EffectEntry* effect) {
+/** Draws the animation pose camera-facing, with the fade alpha applied as an event colour. */
+static void effSyuryouDisp(CameraId cameraId, EffectEntry* effect) {
     EffSyuryouWork* work = effect->userdata;
     Mtx mtx;
     Mtx scale;
@@ -108,8 +125,8 @@ void effSyuryouDisp(CameraId cameraId, EffectEntry* effect) {
         PSMTXRotRad(rot, 'y', MTXDegToRad(-camGetPtr(cameraId)->viewYaw));
         PSMTXConcat(mtx, rot, mtx);
         PSMTXConcat(mtx, scale, mtx);
-        animPoseSetMaterialFlagOn(work->poseId, 0x40);
-        animPoseSetMaterialEvtColor(work->poseId, (GXColor){ 0xFF, 0xFF, 0xFF, work->alpha });
+        animPoseSetMaterialFlagOn(work->poseId, ANIM_MATERIAL_FLAG_EVT_COLOR);
+        animPoseSetMaterialEvtColor(work->poseId, (GXColor){0xFF, 0xFF, 0xFF, work->alpha});
         animPoseMain(work->poseId);
         animPoseDrawMtx(work->poseId, mtx, 1, 0.0f, 10.0f);
         animPoseDrawMtx(work->poseId, mtx, 2, 0.0f, 10.0f);

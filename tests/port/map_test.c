@@ -396,7 +396,7 @@ static void checkGraph(PortMapData* d, const uint8_t* f, const Layout* L) {
     CHECK(mat->lightMode == 1 && mat->blendMode == 2 && mat->samplerCount == 1);
     CHECK(mat->samplers[0] && mat->samplers[1] == NULL && mat->samplers[7] == NULL);
     CHECK(mat->samplers[0]->wrapS == 1 && mat->samplers[0]->wrapT == 2 && mat->samplers[0]->blendMode == 1);
-    CHECK(mat->samplers[0]->pad4[0] == 0xCA && mat->samplers[0]->pad4[3] == 0x0D); /* bytes, kept in file order */
+    CHECK(mat->samplers[0]->pad_04[0] == 0xCA && mat->samplers[0]->pad_04[3] == 0x0D); /* bytes, kept in file order */
     CHECK(mat->samplers[0]->tex && !strcmp(mat->samplers[0]->tex->name, "tex0") && mat->samplers[0]->tex->data == NULL);
     CHECK(mat->xforms[0].sx == 1.0f && mat->xforms[0].cx == 0.75f && mat->xforms[1].sx == 0.0f);
     CHECK(mat->blendColor.r == 0xFE && mat->blendColor.a == 0x80);
@@ -439,7 +439,7 @@ static void checkGraph(PortMapData* d, const uint8_t* f, const Layout* L) {
     if (at->count == 1 && at->anims[0]) {
         MapAnimHeader* h = at->anims[0];
         CHECK(h->alphaAnims == NULL);
-        CHECK(JOINTS(h) && JOINTS(h)->count == 1 && !strcmp(JOINTS(h)->items[0]->name, "c1"));
+        CHECK(JOINTS(h) && JOINTS(h)->count == 1 && !strcmp(JOINTS(h)->items[0]->nameRef, "c1"));
         CHECK(JOINTS(h)->items[0]->base[6] == 1.0f && JOINTS(h)->items[0]->keyCount == 2);
         CHECK(JOINTS(h)->items[0]->keys[1].time == 30.0f && JOINTS(h)->items[0]->keys[1].ch[8].value == 3.5f);
         CHECK(JOINTS(h)->items[0]->keys[0].ch[0].step == 1);

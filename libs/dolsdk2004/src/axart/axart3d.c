@@ -2,6 +2,9 @@
 #include <dolphin/os.h>
 #include <dolphin/mix.h>
 
+/**
+ * Stereo pan value (0x40 at angle 0) for each horizontal angle in degrees, used outside Pro Logic II mode.
+ */
 static u8 __AXART3DPan[360] = {
     0x40, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47, 0x48, 0x49, 0x4A, 0x4B,
 	0x4C, 0x4D, 0x4E, 0x4F, 0x50, 0x51, 0x52, 0x53, 0x54, 0x55, 0x56, 0x57,
@@ -35,6 +38,7 @@ static u8 __AXART3DPan[360] = {
 	0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x3A, 0x3B, 0x3C, 0x3D, 0x3E, 0x3F
 };
 
+/** Surround pan (front to rear) for each horizontal angle in degrees. */
 static u8 __AXART3DSpan[360] = {
     0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F,
     0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F,
@@ -83,6 +87,7 @@ static u8 __AXART3DSpan[360] = {
     0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F, 0x7F,
 };
 
+/** Stereo pan for each horizontal angle in degrees in Dolby Pro Logic II mode. */
 static u8 __AXART3DPanDPL2[360] = {
     0x40, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47, 0x48, 0x49, 0x4A, 0x4B,
 	0x4C, 0x4D, 0x4E, 0x4F, 0x50, 0x51, 0x52, 0x53, 0x54, 0x55, 0x56, 0x57,
@@ -116,6 +121,7 @@ static u8 __AXART3DPanDPL2[360] = {
 	0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x3A, 0x3B, 0x3C, 0x3D, 0x3E, 0x3F
 };
 
+/** Left-ear delay (interaural time difference) for each horizontal angle in degrees. */
 static u8 __AXART3DItdL[360] = {
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -164,6 +170,7 @@ static u8 __AXART3DItdL[360] = {
     0x04, 0x03, 0x02, 0x01, 0x00, 0x00, 0x00, 0x00,
 };
 
+/** Right-ear delay (interaural time difference) for each horizontal angle in degrees. */
 static u8 __AXART3DItdR[360] = {
     0x00, 0x00, 0x00, 0x00, 0x01, 0x02, 0x03, 0x04,
     0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C,
@@ -212,6 +219,7 @@ static u8 __AXART3DItdR[360] = {
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 };
 
+/** Source filter setting for each vertical angle in degrees (0 to 360). */
 static u8 __AXART3DSrc[360+1] = {
     0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01,
     0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01,
@@ -261,19 +269,38 @@ static u8 __AXART3DSrc[360+1] = {
     0x01,
 };
 
+/**
+ * Doppler and distance scales set by AXARTSet3DDopplerScale and AXARTSet3DDistanceScale:
+ * the closing speed and the distance are divided by them to get the pitch change and the attenuation.
+ */
 static f32 __AXART3DDopplerScale = 0;
 static f32 __AXART3DDistanceScale = 0;
 
+/**
+ * Sets the scale that divides a 3D articulator's closing speed to get its pitch (Doppler) offset.
+ * Default 20.0 from AXARTInit.
+ */
 void AXARTSet3DDopplerScale(f32 scale) {
     ASSERTLINE(323, scale > 0);
     __AXART3DDopplerScale = scale;
 }
 
+/**
+ * Sets the distance scale for 3D sounds: attenuation is dist / scale times -60 (in the 16.16 fixed format MIX
+ * takes). Default 40.0 from AXARTInit.
+ */
 void AXARTSet3DDistanceScale(f32 scale) {
     ASSERTLINE(340, scale > 0);
     __AXART3DDistanceScale = scale;
 }
 
+/**
+ * When a 3D articulator's 'update' flag is set,
+ * converts its horizontal and vertical angles (radians) to degrees and looks up pan, surround pan,
+ * ITD left/right and SRC type in 360-entry tables (the DPL2 pan table when MIX is in Dolby Pro Logic II mode).
+ * Also sets the pitch offset from closingSpeed / Doppler scale and the attenuation from dist / distance scale,
+ * then clears 'update'.
+ */
 void AXART3DSound(AXART_3D* articulator) {
     u32 hAngle;
     u32 vAngle;

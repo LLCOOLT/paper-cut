@@ -1,4 +1,3 @@
-#define MATH_NO_SQRTF 1
 #include "musyx/seq.h"
 
 #include "musyx/assert.h"
@@ -11,6 +10,10 @@ static NOTE seqNote[256];
 SEQ_INSTANCE seqInstance[8];
 u16 seqMIDIPriority[8][16];
 
+/**
+ * State of the sequence player: the next sequence id to hand out, the fade-out in progress and the sequence
+ * now playing.
+ */
 static u32 seq_next_id = 0;
 static bool8 curFadeOutState = 0;
 static u32 curSeqId = 0;
@@ -20,6 +23,7 @@ SEQ_INSTANCE* seqFreeRoot = NULL;
 SEQ_INSTANCE* seqPausedRoot = NULL;
 SEQ_INSTANCE* seqActiveRoot = NULL;
 
+/** Rebuilds the free list of the 256 NOTE slots as one doubly linked chain. */
 static void ClearNotes() {
   NOTE* ln = NULL; // r30
   s32 i;           // r29
@@ -36,6 +40,8 @@ static void ClearNotes() {
   ln->next = NULL;
 }
 
+/** Moves every note of the instance (both timed lists and the key-off list) back onto the free list without touching
+ * the voices. */
 static void ResetNotes(SEQ_INSTANCE* seq) {
   NOTE* n; // r31
   u32 i;   // r30
@@ -71,6 +77,7 @@ static void ResetNotes(SEQ_INSTANCE* seq) {
   }
 }
 
+/** Kills the sound (voiceKillSound) of every note the instance still has, timed or waiting for key-off. */
 static void KillNotes(SEQ_INSTANCE* seq) {
   NOTE* n; // r31
   u32 i;   // r30
@@ -86,6 +93,8 @@ static void KillNotes(SEQ_INSTANCE* seq) {
   }
 }
 
+/** Takes a note slot from the free list and inserts it, ordered by end time, into the current sequence's timed note
+ * list for the section's current time index. Returns NULL if no slot is free. */
 static NOTE* AllocateNote(u32 endTime, u8 section) {
   NOTE* n;       // r31
   NOTE* nl;      // r30
@@ -129,6 +138,7 @@ static NOTE* AllocateNote(u32 endTime, u8 section) {
   return n;
 }
 
+/** Unlinks a note from the current sequence's timed list and puts it back on the free list. */
 static void FreeNote(struct NOTE* n) {
   if (n->next != NULL) {
     n->next->prev = n->prev;
@@ -148,6 +158,8 @@ static void FreeNote(struct NOTE* n) {
   noteFree = n;
 }
 
+/** For both time lists of the current sequence, sends key-off to every note whose end time has passed and moves it to
+ * the key-off list. Returns nonzero while timed notes remain. */
 static u32 HandleNotes() {
   NOTE* note; // r31
   u32 i;      // r30
@@ -178,6 +190,8 @@ static u32 HandleNotes() {
   return cseq->noteUsed[0] != NULL || cseq->noteUsed[1] != NULL;
 }
 
+/** Sends key-off to every timed note of the current sequence and moves them to the key-off list (used by the "all notes
+ * off" controller event). */
 static void KeyOffNotes() {
   NOTE* note;     // r31
   NOTE* nextNote; // r29
@@ -202,6 +216,7 @@ static void KeyOffNotes() {
   }
 }
 
+/** Unlinks a note from the current sequence's key-off list and returns it to the free list. */
 static void seqFreeKeyOffNote(NOTE* n) {
   if (n->next != NULL) {
     n->next->prev = n->prev;
@@ -221,6 +236,7 @@ static void seqFreeKeyOffNote(NOTE* n) {
   noteFree = n;
 }
 
+/** Once every five calls, frees key-off notes whose voice no longer exists (sndFXCheck reports an error for its ID). */
 static void HandleKeyOffNotes() {
   NOTE* n;  // r31
   NOTE* nn; // r30
@@ -239,8 +255,11 @@ static void HandleKeyOffNotes() {
   cseq->keyOffCheck = (cseq->keyOffCheck + 1) % 5;
 }
 
+/** Resets the counter that hands out public sequence IDs. */
 static void InitPublicIds() { seq_next_id = 0; }
 
+/** Creates the public ID for instance seqId: the next counter value (below the crossfade bit) that no active or paused
+ * sequence already uses. */
 static u32 GetPublicId(u32 seqId) {
   u32 pub_id;       // r30
   SEQ_INSTANCE* si; // r31
@@ -268,6 +287,8 @@ static u32 GetPublicId(u32 seqId) {
   return pub_id;
 }
 
+/** Maps a public sequence ID to its instance index by searching the active and paused lists; the crossfade flag bit is
+ * preserved. Returns SND_ID_ERROR if no such sequence is running. */
 u32 seqGetPrivateId(u32 seqId) {
   SEQ_INSTANCE* si; // r31
   for (si = seqActiveRoot; si != NULL; si = si->next) {
@@ -283,6 +304,9 @@ u32 seqGetPrivateId(u32 seqId) {
   return SND_ID_ERROR;
 }
 
+/** Selects the instrument for a MIDI channel: translates the program through the normal or (channel 9) drum page table
+ * and copies that entry's macro, priority and voice limit into the channel state. Also clears the channel's MIDI
+ * priority override. */
 static void DoPrgChange(SEQ_INSTANCE* seq, u8 prg, u8 midi) {
   seqMIDIPriority[curSeqId][midi] = 0xFFFF;
   if (midi != 9) {
@@ -313,6 +337,7 @@ static void DoPrgChange(SEQ_INSTANCE* seq, u8 prg, u8 midi) {
 #endif
 }
 
+// Builds a 128-entry table from MIDI program number to position in the page list (0xFF where the program is unused).
 static void BuildTransTab(u8* tab, PAGE* page) {
   u8 i; // r31
 
@@ -328,6 +353,10 @@ static void BuildTransTab(u8* tab, PAGE* page) {
 static void StartPause(SEQ_INSTANCE* si);
 static void InitTrackEvents();
 
+/** Starts a song: takes an instance from the free list and makes it active, sets up its note and drum program tables,
+ * volume groups, track mutes, speed, tempo and the master and track pointers from the song array, resets the MIDI
+ * controllers of its 16 channels and applies the MIDI setup (program, volume, pan, reverb, chorus) of the song.
+ * Optionally starts paused. Returns the public sequence ID, or SND_ID_ERROR if no instance is free. */
 u32 seqStartPlay(PAGE* norm, PAGE* drum, MIDISETUP* midiSetup, u32* song, SND_PLAYPARA* para,
                  u8 studio, u16 sgid) {
   ARR* arr;              // r27
@@ -499,6 +528,8 @@ u32 seqStartPlay(PAGE* norm, PAGE* drum, MIDISETUP* midiSetup, u32* song, SND_PL
   return seqId;
 }
 
+/** Computes how far the section clock advances for deltaTime: bpm * deltaTime scaled by the section speed (256 =
+ * normal), stored as 16.16 in tickDelta for the current time index. */
 static void SetTickDelta(SEQ_SECTION* section, u32 deltaTime) {
   float tickDelta = (float)section->bpm * (float)deltaTime * (1.f / (40960000.f));
   tickDelta *= section->speed * (1.f / 256.f);
@@ -507,6 +538,8 @@ static void SetTickDelta(SEQ_SECTION* section, u32 deltaTime) {
   section->tickDelta[section->timeIndex].high = floorf(tickDelta);
 }
 
+/** Applies the master (tempo) track entries of a section that are due by its current time: sets the new BPM in the
+ * section and the synth. */
 static void HandleMasterTrack(u8 secIndex) {
   SEQ_SECTION* section; // r31
 
@@ -529,6 +562,8 @@ static void HandleMasterTrack(u8 secIndex) {
   }
 }
 
+/** Restarts the master track of a section from its beginning after a loop, re-applies the tempo that is due and
+ * recomputes the tick delta. */
 static void RewindMTrack(u8 secIndex, u32 deltaTime) {
   if (cseq->section[secIndex].mTrack.base == NULL) {
     return;
@@ -538,6 +573,7 @@ static void RewindMTrack(u8 secIndex, u32 deltaTime) {
   SetTickDelta(cseq->section + secIndex, deltaTime);
 }
 
+/** Moves an instance from the active list to the paused list (state 2). */
 static void StartPause(SEQ_INSTANCE* si) {
   if (si->prev != NULL) {
     si->prev->next = si->next;
@@ -558,6 +594,8 @@ static void StartPause(SEQ_INSTANCE* si) {
   si->state = 2;
 }
 
+/** Pauses a sequence: moves it to the paused list and kills and releases its notes. For a pending crossfade ID it only
+ * sets a flag on the queued crossfade. */
 void seqPause(u32 seqId) {
   SEQ_INSTANCE* si; // r31
   seqId = seqGetPrivateId(seqId);
@@ -581,6 +619,8 @@ void seqPause(u32 seqId) {
   }
 }
 
+/** Stops a sequence: removes it from the active or paused list, kills and releases its notes and returns the instance
+ * to the free list. For a pending crossfade ID it cancels the crossfade's result pointer. */
 void seqStop(u32 seqId) {
   SEQ_INSTANCE* si; // r31
 
@@ -628,6 +668,7 @@ void seqStop(u32 seqId) {
   }
 }
 
+/** Stops every active and paused sequence. */
 void seqKillAllInstances() {
   SEQ_INSTANCE* si; // r31
   for (si = seqActiveRoot; si != NULL; si = si->next) {
@@ -639,6 +680,7 @@ void seqKillAllInstances() {
   }
 }
 
+/** Stops every active or paused sequence that was started from song group sgid. */
 void seqKillInstancesByGroupID(u16 sgid) {
   SEQ_INSTANCE* si; // r31
 
@@ -654,6 +696,8 @@ void seqKillInstancesByGroupID(u16 sgid) {
   }
 }
 
+/** Sets the tempo scale (256 = normal) of all sections of a sequence; for a pending crossfade ID the speed is stored to
+ * be applied when it starts. */
 void seqSpeed(u32 seqId, u16 speed) {
   u32 i; // r30
 
@@ -671,6 +715,7 @@ void seqSpeed(u32 seqId, u16 speed) {
   }
 }
 
+/** Moves a paused sequence back to the active list. For a pending crossfade ID it clears the "start paused" flag. */
 void seqContinue(u32 seqId) {
   struct SEQ_INSTANCE* si; // r31
 
@@ -704,6 +749,8 @@ void seqContinue(u32 seqId) {
   }
 }
 
+/** Sets the 64-bit track mute mask of a sequence (mask1 = tracks 0-31, mask2 = tracks 32-63; a set bit means the track
+ * plays). For a pending crossfade ID it stores the mask to apply later. */
 void seqMute(u32 seqId, u32 mask1, u32 mask2) {
   seqId = seqGetPrivateId(seqId);
   if (seqId == SND_SEQ_ERROR_ID) {
@@ -721,6 +768,8 @@ void seqMute(u32 seqId, u32 mask1, u32 mask2) {
   }
 }
 
+/** Fades a sequence's volume groups to volume over time; mode is one of the SND_SEQVOL modes (continue, stop, pause,
+ * mute) for what happens after the fade. For a pending crossfade ID it adjusts the queued crossfade instead. */
 void seqVolume(u8 volume, u16 time, u32 seqId, u8 mode) {
   u32 i;      // r29
   u32 pub_id; // r27
@@ -763,6 +812,10 @@ void seqVolume(u8 volume, u16 time, u32 seqId, u8 mode) {
   }
 }
 
+/** Fades out sequence ci->seqId1 (stop, pause or mute) and brings in a second sequence: either an already running one
+ * (SND_CROSSFADE_CONTINUE) or a new song started with the volume, speed and mute settings of ci. With
+ * SND_CROSSFADE_SYNC the crossfade is queued until the first sequence reaches its sync event. The new ID is stored in
+ * *new_seqId. */
 void seqCrossFade(SND_CROSSFADE* ci, u32* new_seqId, bool8 irq_call) {
   SND_PLAYPARA pp; // r1+0x14
   u32 seqId;       // r29
@@ -861,6 +914,8 @@ void seqCrossFade(SND_CROSSFADE* ci, u32* new_seqId, bool8 irq_call) {
   }
 }
 
+/** Decodes one entry of a controller stream: a delta time (1 or 2 bytes, bit 7 flags two bytes) followed by a signed
+ * delta value in the same encoding. Returns the advanced pointer, or NULL at the 0x80 0x00 terminator. */
 static u8* GetStreamValue(u8* stream, u16* deltaTime, s16* deltaData) {
   u8 b1; // r31
   u8 b2; // r29
@@ -913,6 +968,8 @@ static u8* GetStreamValue(u8* stream, u16* deltaTime, s16* deltaData) {
   return stream;
 }
 
+/** Prepares a controller stream (pitch bend or modulation) of the current song for reading: loads its first entry, or
+ * marks it as never due if there is none. */
 static void InitStream(SEQ_STREAM* stream, u32 streamDataOffset) {
   u16 delta; // r1+0x10
   if (streamDataOffset != 0) {
@@ -927,6 +984,7 @@ static void InitStream(SEQ_STREAM* stream, u32 streamDataOffset) {
   }
 }
 
+/** Applies the pending delta of a controller stream to its value, loads the next entry and returns the new value. */
 static u16 HandleStream(SEQ_STREAM* stream) {
   u16 delta; // r1+0xC
   stream->value += stream->nextDelta;
@@ -942,6 +1000,8 @@ static u16 HandleStream(SEQ_STREAM* stream) {
   return stream->value;
 }
 
+/** Finds the next event of track trackId: a note or controller in the current pattern, a pitch bend or modulation
+ * stream step, a new pattern from the track list, or the loop marker. Returns NULL when the track is finished. */
 static SEQ_EVENT* GenerateNextTrackEvent(u8 trackId) {
   TRACK* track;    // r29
   CPAT* pattern;   // r31
@@ -978,7 +1038,7 @@ static SEQ_EVENT* GenerateNextTrackEvent(u8 trackId) {
 
         ev->type = 3;
         ev->time = track->addr->time;
-        // TODO what is this?
+        // loop marker: its transpose/velocityAdd bytes hold the u16 index of the entry to loop to
         track->addr = &track->base[*((u16*)&track->addr->transpose)];
         return ev;
       }
@@ -1042,6 +1102,7 @@ static SEQ_EVENT* GenerateNextTrackEvent(u8 trackId) {
   return NULL;
 }
 
+/** Inserts an event into a section's event list, which is ordered by time. */
 static void InsertGlobalEvent(SEQ_SECTION* section, SEQ_EVENT* event) {
   SEQ_EVENT* el;      // r31
   SEQ_EVENT* last_el; // r30
@@ -1071,10 +1132,12 @@ static void InsertGlobalEvent(SEQ_SECTION* section, SEQ_EVENT* event) {
   event->next = NULL;
 }
 
+/** Returns the time of the earliest event in a section (0 when none). */
 static u32 GetNextEventTime(SEQ_SECTION* section) {
   return section->globalEventRoot == NULL ? 0 : section->globalEventRoot->time;
 }
 
+/** Removes and returns the earliest event of a section. */
 static SEQ_EVENT* GetGlobalEvent(SEQ_SECTION* section) {
   SEQ_EVENT* ev; // r31
   ev = section->globalEventRoot;
@@ -1084,6 +1147,10 @@ static SEQ_EVENT* GetGlobalEvent(SEQ_SECTION* section) {
   return ev;
 }
 
+/** Runs one sequence event. A new pattern is started (setting its program change and volume), a note on becomes a synth
+ * sound (synthStartSound, honoring track mute, transpose and velocity offsets), controller entries set MIDI
+ * controllers, priorities, resets, all-notes-off or the sync crossfade trigger, and pitch bend and modulation stream
+ * events set those controllers. Returns the track's next event, or NULL at a loop marker. */
 static SEQ_EVENT* HandleEvent(SEQ_EVENT* event, u8 secIndex, bool* loopFlag) {
   CPAT* pa;          // r26
   NOTE_DATA* pe;     // r24
@@ -1133,7 +1200,7 @@ static SEQ_EVENT* HandleEvent(SEQ_EVENT* event, u8 secIndex, bool* loopFlag) {
         DoPrgChange(cseq, key & 0x7f, midi);
         break;
       case 1:
-        inpSetMidiCtrl(0x82 /* TODO SND_MIDICTRL_? */, midi, curSeqId, key & 0x7f);
+        inpSetMidiCtrl(0x82 /* aftertouch (macro ctrl 0x81, see inpTranslateExCtrl) */, midi, curSeqId, key & 0x7f);
         break;
       default:
         if ((velocity & 0x80) != 0x80) {
@@ -1209,6 +1276,7 @@ static SEQ_EVENT* HandleEvent(SEQ_EVENT* event, u8 secIndex, bool* loopFlag) {
   return GenerateNextTrackEvent(event->trackId);
 }
 
+/** Queues the first event of each of the 64 tracks into the current sequence's section event lists. */
 static void InitTrackEvents() {
   u32 i;         // r31
   SEQ_EVENT* ev; // r30
@@ -1228,6 +1296,7 @@ static void InitTrackEvents() {
   }
 }
 
+/** Queues the first event of each track belonging to section secIndex, used when a section loops. */
 static void InitTrackEventsSection(u8 secIndex) {
   u32 i;         // r31
   SEQ_EVENT* ev; // r30
@@ -1247,6 +1316,9 @@ static void InitTrackEventsSection(u8 secIndex) {
   }
 }
 
+/** Executes all events of a section that are due by its current time. When the end of all tracks is reached and a loop
+ * was requested it switches to the other time index, jumps back to the loop point, rewinds the master track and
+ * restarts the tracks. Returns FALSE when the section has run out of events without looping. */
 static bool HandleTrackEvents(u8 secIndex, u32 deltaTime) {
   SEQ_EVENT* ev;        // r29
   bool loopFlag;        // r1+0x10
@@ -1279,6 +1351,8 @@ static bool HandleTrackEvents(u8 secIndex, u32 deltaTime) {
   return TRUE;
 }
 
+/** Per-frame sequencer step: for each active sequence it applies master track tempo, runs due events and notes,
+ * advances the section clocks and, once no events or notes remain, releases the instance. */
 void seqHandle(u32 deltaTime) {
     u32 x;                // r29
     u32 i;                // r31
@@ -1356,6 +1430,8 @@ void seqHandle(u32 deltaTime) {
     }
 }
 
+/** Initializes the sequencer: puts the 8 instances on the free list, resets MIDI priorities, the note pool and the
+ * public ID counter. */
 void seqInit() {
   u32 i; // r31
   u32 j; // r29

@@ -1,23 +1,31 @@
+// ARC archive reader (SDK): opens files by path inside a packed .arc archive in memory.
 #include "sdk/arc.h"
 #include <dolphin/os.h>
 #include "libc_decls.h"
+
 #include "addr_word.h"
 #ifdef TARGET_PC
 #include "port/bedecode.h"
 #endif
-
 #pragma unsigned_char off
 
 typedef struct FSTEntry {
-	u32 entryInfo; //top byte is 0 file 1 dir, u24 string offset
-	u32 entryOffsetOrParent; //file = offset, dir = parent index
-	u32 entrySizeOrNext; //file = size, dir = next entry
+    u32 entryInfo;           // top byte is 0 file 1 dir, u24 string offset
+    u32 entryOffsetOrParent; // file = offset, dir = parent index
+    u32 entrySizeOrNext;     // file = size, dir = next entry
 } FSTEntry;
 
-#ifndef TARGET_PC /* PC port: the host libc declares these */
-static inline int tolower(int c) { return (c == -1) ? -1 : (int)__lower_map[c & 0xFF]; }
-#endif
+#ifdef TARGET_PC /* PC port: the host libc's tolower (no MSL table) */
+static inline int arcToLower(int c) {
+    return tolower(c);
+}
+#else
+/** Lower-cases a character with the MSL table, for case-insensitive name matching. */
+static inline int arcToLower(int c) {
+    return (c == -1) ? -1 : (int)__lower_map[c & 0xFF];
+}
 
+#endif
 #ifdef TARGET_PC
 /* PC port: the archive stays big-endian in memory (its member files are
  * decoded by their own loaders): read the header and FST words swapped. */
@@ -37,186 +45,202 @@ BOOL ARCGetCurrentDir(ARCHandle* handle, char* path, u32 maxlen);
 
 // NOTE: functions are emitted in reverse source order (target starts with ARCClose)
 
+/**
+ * Opens an archive in memory: checks the 0x55AA382D magic
+ * and fills the handle with absolute pointers to the file table, names and file data.
+ * Called by arcdrv when an archive is loaded.
+ */
 BOOL ARCInitHandle(void* arcStart, ARCHandle* handle) {
-	FSTEntry* entry;
-	ARCHeader* header;
+    FSTEntry* entry;
+    ARCHeader* header;
 
-	header = (ARCHeader*)arcStart;
+    header = (ARCHeader*)arcStart;
 	if (ARC_WORD(header->magic) != 0x55AA382D) {
-		OSPanic(__FILE__, 70, "ARCInitHandle: bad archive format\0\0");
-	}
-	handle->archiveStartAddr = arcStart;
+        OSPanic(__FILE__, 70, "ARCInitHandle: bad archive format\0\0");
+    }
+    handle->archiveStartAddr = arcStart;
 	entry = (FSTEntry*)((AddrWord)arcStart + ARC_WORD(header->fstStart));
-	handle->FSTStart = (void*)entry; //relative->absolute
+    handle->FSTStart = (void*)entry;                                // relative->absolute
 	handle->fileStart = (void*)((AddrWord)arcStart + ARC_WORD(header->fileStart)); //relative->absolute
 	handle->entryNum = ARC_WORD(entry->entrySizeOrNext); //entry 0 size is entry count
-	handle->FSTStringStart = (char*)&entry[handle->entryNum];
+    handle->FSTStringStart = (char*)&entry[handle->entryNum];
 	handle->FSTLength = ARC_WORD(header->fstSize);
-	handle->currDir = 0;
-	return TRUE;
+    handle->currDir = 0;
+    return TRUE;
 }
 
+/**
+ * Looks up a file by path in the archive and fills info with its offset and length.
+ * Returns FALSE if the path is missing or names a directory.
+ */
 BOOL ARCOpen(ARCHandle* handle, const char* filename, ARCFileInfo* info) {
-	s32 entry;
-	char currentDir[128];
-	FSTEntry* FstStart = (FSTEntry*)handle->FSTStart;
+    s32 entry;
+    char currentDir[128];
+    FSTEntry* FstStart = (FSTEntry*)handle->FSTStart;
 
-	entry = ARCConvertPathToEntrynum(handle, filename);
-	if (0 > entry) {
-		ARCGetCurrentDir(handle, currentDir, 128);
-		return FALSE;
-	}
-	if ((0 > entry) || entryIsDir(entry)) {
-		return FALSE;
-	}
-	info->handle = handle;
-	info->startOffset = filePosition(entry);
-	info->length = fileLength(entry);
-	return TRUE;
+    entry = ARCConvertPathToEntrynum(handle, filename);
+    if (0 > entry) {
+        ARCGetCurrentDir(handle, currentDir, 128);
+        return FALSE;
+    }
+    if ((0 > entry) || entryIsDir(entry)) {
+        return FALSE;
+    }
+    info->handle = handle;
+    info->startOffset = filePosition(entry);
+    info->length = fileLength(entry);
+    return TRUE;
 }
 
+/** Case-insensitive compare of one path component against an entry name. */
 static inline BOOL isSame(const char* path, const char* string) {
-	while (*string != '\0') {
-		if (tolower(*path++) != tolower(*string++)) {
-			return FALSE;
-		}
-	}
-	if ((*path == '/') || (*path == '\0')) {
-		return TRUE;
-	}
-	return FALSE;
+    while (*string != '\0') {
+        if (arcToLower(*path++) != arcToLower(*string++)) {
+            return FALSE;
+        }
+    }
+    if ((*path == '/') || (*path == '\0')) {
+        return TRUE;
+    }
+    return FALSE;
 }
 
+/**
+ * Resolves a path (absolute or relative to the current directory, with . and ..) to a file-table entry index;
+ * -1 if not found.
+ */
 s32 ARCConvertPathToEntrynum(ARCHandle* handle, const char* pathPtr) {
-	const char* ptr;
-	char* stringPtr;
-	BOOL isDir;
-	s32 length;
-	u32 dirLookAt;
-	u32 i;
-	FSTEntry* FstStart;
+    const char* ptr;
+    char* stringPtr;
+    BOOL isDir;
+    s32 length;
+    u32 dirLookAt;
+    u32 i;
+    FSTEntry* FstStart;
 
-	dirLookAt = handle->currDir;
-	FstStart = (FSTEntry*)handle->FSTStart;
+    dirLookAt = handle->currDir;
+    FstStart = (FSTEntry*)handle->FSTStart;
 
-	while (1) {
-		if (*pathPtr == '\0') {
-			return (s32)dirLookAt;
-		}
-		else if (*pathPtr == '/') {
-			dirLookAt = 0;
-			pathPtr++;
-			continue;
-		}
-		else if (*pathPtr == '.') {
-			if (*(pathPtr + 1) == '.') {
-				if (*(pathPtr + 2) == '/') {
-					dirLookAt = parentDir(dirLookAt);
-					pathPtr += 3;
-					continue;
-				}
-				else if (*(pathPtr + 2) == '\0') {
-					return (s32)parentDir(dirLookAt);
-				}
-			}
-			else if (*(pathPtr + 1) == '/') {
-				pathPtr += 2;
-				continue;
-			}
-			else if (*(pathPtr + 1) == '\0') {
-				return (s32)dirLookAt;
-			}
-		}
+    while (1) {
+        if (*pathPtr == '\0') {
+            return (s32)dirLookAt;
+        } else if (*pathPtr == '/') {
+            dirLookAt = 0;
+            pathPtr++;
+            continue;
+        } else if (*pathPtr == '.') {
+            if (*(pathPtr + 1) == '.') {
+                if (*(pathPtr + 2) == '/') {
+                    dirLookAt = parentDir(dirLookAt);
+                    pathPtr += 3;
+                    continue;
+                } else if (*(pathPtr + 2) == '\0') {
+                    return (s32)parentDir(dirLookAt);
+                }
+            } else if (*(pathPtr + 1) == '/') {
+                pathPtr += 2;
+                continue;
+            } else if (*(pathPtr + 1) == '\0') {
+                return (s32)dirLookAt;
+            }
+        }
 
-		for (ptr = pathPtr; (*ptr != '\0') && (*ptr != '/'); ptr++) {
-			;
-		}
+        for (ptr = pathPtr; (*ptr != '\0') && (*ptr != '/'); ptr++) {
+            ;
+        }
 
-		isDir = (*ptr == '\0') ? FALSE : TRUE;
-		length = (s32)(ptr - pathPtr);
-		ptr = pathPtr;
+        isDir = (*ptr == '\0') ? FALSE : TRUE;
+        length = (s32)(ptr - pathPtr);
+        ptr = pathPtr;
 
-		for (i = dirLookAt + 1; i < nextDir(dirLookAt); i = entryIsDir(i) ? nextDir(i) : (i + 1)) {
-			if ((entryIsDir(i) == FALSE) && (isDir == TRUE)) {
-				continue;
-			}
-			stringPtr = handle->FSTStringStart + stringOff(i);
-			if (isSame(ptr, stringPtr) == TRUE) {
-				goto next_hier;
-			}
-		}
-		return -1;
+        for (i = dirLookAt + 1; i < nextDir(dirLookAt); i = entryIsDir(i) ? nextDir(i) : (i + 1)) {
+            if ((entryIsDir(i) == FALSE) && (isDir == TRUE)) {
+                continue;
+            }
+            stringPtr = handle->FSTStringStart + stringOff(i);
+            if (isSame(ptr, stringPtr) == TRUE) {
+                goto next_hier;
+            }
+        }
+        return -1;
 
-	next_hier:
-		if (isDir == FALSE) {
-			return (s32)i;
-		}
-		dirLookAt = i;
-		pathPtr += length + 1;
-	}
+    next_hier:
+        if (isDir == FALSE) {
+            return (s32)i;
+        }
+        dirLookAt = i;
+        pathPtr += length + 1;
+    }
 }
 
-u32 myStrncpy(char* dest, char* src, u32 maxlen) {
-	u32 i = maxlen;
-	while ((i > 0) && (*src != 0)) {
-		*dest++ = *src++;
-		i--;
-	}
-	return maxlen - i;
+/** Copies up to maxlen characters without a terminator; returns the count copied. */
+static u32 myStrncpy(char* dest, char* src, u32 maxlen) {
+    u32 i = maxlen;
+    while ((i > 0) && (*src != 0)) {
+        *dest++ = *src++;
+        i--;
+    }
+    return maxlen - i;
 }
-
+// FAKE: inline_depth(3) to the end of the file: without it entryToPath inlines deeper (169 instead of 136 instructions)
 #pragma inline_depth(3)
+/** Builds the path of an entry into path by walking up its parent directories; returns its length. */
 static u32 entryToPath(ARCHandle* handle, u32 entry, char* path, u32 maxlen) {
-	char* name;
-	u32 loc;
-	FSTEntry* FstStart = (FSTEntry*)handle->FSTStart;
+    char* name;
+    u32 loc;
+    FSTEntry* FstStart = (FSTEntry*)handle->FSTStart;
 
-	if (entry == 0) {
-		return 0;
-	}
-	name = handle->FSTStringStart + stringOff(entry);
-	loc = entryToPath(handle, parentDir(entry), path, maxlen);
-	if (loc == maxlen) {
-		return loc;
-	}
-	*(path + loc++) = '/';
-	loc += myStrncpy(path + loc, name, maxlen - loc);
-	return loc;
+    if (entry == 0) {
+        return 0;
+    }
+    name = handle->FSTStringStart + stringOff(entry);
+    loc = entryToPath(handle, parentDir(entry), path, maxlen);
+    if (loc == maxlen) {
+        return loc;
+    }
+    *(path + loc++) = '/';
+    loc += myStrncpy(path + loc, name, maxlen - loc);
+    return loc;
 }
 
-BOOL ARCConvertEntrynumToPath(ARCHandle* handle, s32 entrynum, char* path, u32 maxlen) {
-	u32 loc;
-	FSTEntry* FstStart = (FSTEntry*)handle->FSTStart;
+/** Writes the full path of an entry (with a trailing / for directories); FALSE if it did not fit. */
+static BOOL ARCConvertEntrynumToPath(ARCHandle* handle, s32 entrynum, char* path, u32 maxlen) {
+    u32 loc;
+    FSTEntry* FstStart = (FSTEntry*)handle->FSTStart;
 
-	loc = entryToPath(handle, (u32)entrynum, path, maxlen);
-	if (loc == maxlen) {
-		path[maxlen - 1] = '\0';
-		return FALSE;
-	}
-	if (entryIsDir(entrynum)) {
-		if (loc == maxlen - 1) {
-			path[loc] = '\0';
-			return FALSE;
-		}
-		path[loc++] = '/';
-	}
-	path[loc] = '\0';
-	return TRUE;
+    loc = entryToPath(handle, (u32)entrynum, path, maxlen);
+    if (loc == maxlen) {
+        path[maxlen - 1] = '\0';
+        return FALSE;
+    }
+    if (entryIsDir(entrynum)) {
+        if (loc == maxlen - 1) {
+            path[loc] = '\0';
+            return FALSE;
+        }
+        path[loc++] = '/';
+    }
+    path[loc] = '\0';
+    return TRUE;
 }
 
+/** Writes the path of the archive's current directory into path. */
 BOOL ARCGetCurrentDir(ARCHandle* handle, char* path, u32 maxlen) {
-	return ARCConvertEntrynumToPath(handle, (s32)handle->currDir, path, maxlen);
+    return ARCConvertEntrynumToPath(handle, (s32)handle->currDir, path, maxlen);
 }
 
+/** Returns the address in memory of an opened file's data. */
 void* ARCGetStartAddrInMem(ARCFileInfo* info) {
-	ARCHandle* handle = info->handle;
+    ARCHandle* handle = info->handle;
 	return (void*)((AddrWord)handle->archiveStartAddr + info->startOffset);
 }
 
+/** Returns an opened file's length in bytes. */
 u32 ARCGetLength(ARCFileInfo* info) {
-	return info->length;
+    return info->length;
 }
 
+/** Closes an opened file; nothing to release, always TRUE. */
 BOOL ARCClose(ARCFileInfo* info) {
-	return TRUE;
+    return TRUE;
 }

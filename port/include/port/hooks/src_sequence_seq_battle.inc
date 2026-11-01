@@ -2,7 +2,7 @@
 /* The hookable functions of src/sequence/seq_battle.c: included at its end (PORT_MODS). */
 #include "port/hook_slot.h"
 
-BOOL battle_init(void) {
+static BOOL battle_init(void) {
     PortHookSlot* s = &portHookSlots[43];
     BOOL r;
     int i, skip = 0;

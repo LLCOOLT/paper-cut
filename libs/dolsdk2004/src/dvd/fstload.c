@@ -4,7 +4,7 @@
 
 #include "__dvd.h"
 
-static u8 bb2Buf[64]; // FAKE: one extra byte to match the original symbol size (OSRoundUp32B pointer, never indexed past 63)
+static u8 bb2Buf[OSRoundUp32B(sizeof(DVDBB2)) + 31];
 
 static u32 status;
 static DVDBB2* bb2;
@@ -13,6 +13,12 @@ static DVDDiskID* idTmp;
 // prototypes
 static void cb(s32 result, DVDCommandBlock* block);
 
+/**
+ * DVD callback that chains the boot reads.
+ * After the disc ID read it reads the 32-byte DVDBB2 block at disc offset 0x420;
+ * after that it reads the FST to the address and offset that block gives.
+ * On result -4 it resets the drive and restarts from the disc ID read.
+ */
 static void cb(s32 result, DVDCommandBlock* block) {
     if (result > 0) {
         switch(status) {
@@ -37,6 +43,12 @@ static void cb(s32 result, DVDCommandBlock* block) {
     }
 }
 
+/**
+ * Boot-time loader: reads the disc ID, the DVDBB2 block and then the FST into memory through cb,
+ * polling until the drive is idle.
+ * It then records the FST address and maximum size and the disc ID in the OS boot info, prints the game name,
+ * company, disc number, version and streaming flag, and lowers the top of the arena to the FST address.
+ */
 void __fstLoad(void) {
     OSBootInfo* bootInfo;
     DVDDiskID* id;

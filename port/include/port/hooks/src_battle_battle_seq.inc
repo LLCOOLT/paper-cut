@@ -2,7 +2,7 @@
 /* The hookable functions of src/battle/battle_seq.c: included at its end (PORT_MODS). */
 #include "port/hook_slot.h"
 
-void btlseqFirstAct(BattleWork * p0) {
+static void btlseqFirstAct(BattleWork * p0) {
     PortHookSlot* s = &portHookSlots[24];
     int i, skip = 0;
     if (!s->active) {

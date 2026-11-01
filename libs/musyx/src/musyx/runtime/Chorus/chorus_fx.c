@@ -1,9 +1,9 @@
-#define MATH_NO_SQRTF 1
 #include "musyx/musyx.h"
 
 #include "musyx/sal.h"
 #include "musyx/assert.h"
 
+/** Resampling filter taps for the 12 kHz chorus delay line. */
 static float rsmpTab12khz[512] = {
     0.097503662109f,  0.802215576172f,  0.101593017578f,  -0.000976562500f, 0.093505859375f,
     0.802032470703f,  0.105804443359f,  -0.001037597656f, 0.089599609375f,  0.801696777344f,
@@ -110,6 +110,7 @@ static float rsmpTab12khz[512] = {
     0.802215576172f,  0.097503662109f,
 };
 
+/** Constant for fast integer-to-float conversion. */
 const double i2fMagic = 4.503601774854144E15;
 
 #ifdef __MWERKS__
@@ -293,7 +294,7 @@ lbl_803B6E10:
 /* clang-format on */
 #else
 static void do_src1(_SND_CHORUS_SRCINFO* src) {
-  // TODO: Reimplement in C
+  // No C version: the original MusyX asm above stays asm (project rule).
 }
 #endif
 
@@ -531,11 +532,16 @@ lbl_803B6FF4:
 #undef smpBasePtr
 }
 #else
+/** Empty non-Metrowerks placeholder for the assembly do_src2 above, which writes 160 samples, each a 4-tap filter of the
+ * history with rsmpTab12khz weights, stepping one sample plus a fraction (sndAuxCallbackChorus's pitchHi == 1 case). */
 static void do_src2(register _SND_CHORUS_SRCINFO* src) {
-  // TODO: Reimplement in C
+  // No C version: the original MusyX asm above stays asm (project rule).
 }
 #endif
 
+/** Aux effect callback for the chorus: copies the incoming frame into a 3-frame history, then for each channel
+ * resamples the delayed history with a slowly varying pitch offset (that flips sign every half period) and writes the
+ * result to the output buffers; parameter updates are ignored. */
 void sndAuxCallbackChorus(u8 reason, SND_AUX_INFO* info, void* user) {
   SND_AUX_CHORUS* c;
   s32 *leftD, *rightD, *surD, *leftS, *rightS, *surS;
@@ -612,6 +618,8 @@ void sndAuxCallbackChorus(u8 reason, SND_AUX_INFO* info, void* user) {
   }
 }
 
+/** Recomputes the chorus parameters from the user's settings: read position from the base delay (ms), the pitch
+ * variation period (in 5 ms frames) and its step. Returns TRUE. */
 bool sndAuxCallbackUpdateSettingsChorus(SND_AUX_CHORUS* ch) {
   ch->work.currentPosHi = 0x140 - ((ch->baseDelay - 5) << 5);
   ch->work.currentPosLo = 0;
@@ -622,6 +630,8 @@ bool sndAuxCallbackUpdateSettingsChorus(SND_AUX_CHORUS* ch) {
   return TRUE;
 }
 
+/** Allocates and clears the chorus history buffers (3 frames per channel) and its resampler state, then applies the
+ * settings. Returns FALSE if the allocation fails. */
 bool sndAuxCallbackPrepareChorus(SND_AUX_CHORUS* chorus) {
   u32 i;
   s32* lastLeft;
@@ -660,6 +670,7 @@ bool sndAuxCallbackPrepareChorus(SND_AUX_CHORUS* chorus) {
   return FALSE;
 }
 
+/** Frees the chorus buffers. Returns TRUE. */
 bool sndAuxCallbackShutdownChorus(SND_AUX_CHORUS* ch) {
   salFree(ch->work.lastLeft[0]);
   return TRUE;

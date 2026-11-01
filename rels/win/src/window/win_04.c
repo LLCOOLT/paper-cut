@@ -1,7 +1,10 @@
+// win_04 (ウィンディん家周辺, Flurrie's house in Boggly Woods): the red-walled main room of Flurrie's house, with its
+// chandelier and mirror ball; exits west to win_03 and east through Flurrie's door to her bedroom win_05.
+
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
+#include "driver/animdrv.h"
 
-#pragma force_active on
 #include "driver/dispdrv.h"
 #include "stdlib.h"
 #include "memory.h"
@@ -13,214 +16,129 @@
 #include "evt/evt_bero.h"
 #include "win.h"
 #include "mario/mario_pouch.h"
+#include "evt/evt_cam.h"
+#include "evt/evt_case.h"
+#include "evt/evt_eff.h"
+#include "evt/evt_fade.h"
+#include "evt/evt_item.h"
+#include "evt/evt_map.h"
+#include "evt/evt_mario.h"
+#include "evt/evt_mobj.h"
+#include "evt/evt_msg.h"
+#include "evt/evt_npc.h"
+#include "evt/evt_party.h"
+#include "evt/evt_seq.h"
+#include "evt/evt_snd.h"
+#include "party.h"
+#include "evt/evt_sub.h"
+#include "evt/evt_window.h"
+#include "driver/envdrv.h"
+#include "driver/itemdrv.h"
+#include "mario/mario.h"
+#include "evt/evt_story.h"
+#include "driver/casedrv.h"
+#include "driver/mapdrv.h"
 
-typedef struct Flower { s16 state; s16 timer; f32 x; f32 y; f32 scale; f32 targetScale; s32 alpha; } Flower;
-typedef struct FlowerWork { s32 count; Flower* flowers; } FlowerWork;
-void flower_disp(CameraId camera, void* param);
-void envAddTev(s32 type, void* param);
+typedef struct Flower {
+    s16 state;
+    s16 timer;
+    f32 x;
+    f32 y;
+    f32 scale;
+    f32 targetScale;
+    s32 alpha;
+} Flower;
+typedef struct FlowerWork {
+    s32 count;
+    Flower* flowers;
+} FlowerWork;
+static void flower_disp(CameraId camera, void* param);
 static s32 ssf[3];
 
-USER_FUNC(evt_bero_exec_wait);
-USER_FUNC(evt_bero_get_info);
-USER_FUNC(evt_bero_mapchange);
-USER_FUNC(evt_bero_overwrite);
-USER_FUNC(evt_cam3d_evt_off);
-USER_FUNC(evt_cam3d_evt_set);
-USER_FUNC(evt_eff);
-USER_FUNC(evt_eff_fukidashi);
-USER_FUNC(evt_exit_case_evt);
-USER_FUNC(evt_fade_set_mapchange_type);
-USER_FUNC(evt_flower);
-USER_FUNC(evt_flower_end);
-USER_FUNC(evt_flower_end_main);
-USER_FUNC(evt_flower_init);
-USER_FUNC(evt_item_entry);
-USER_FUNC(evt_item_flag_on);
-USER_FUNC(evt_item_get_position);
-USER_FUNC(evt_item_move_3d_position);
-USER_FUNC(evt_item_set_position);
-USER_FUNC(evt_key_get_button);
-USER_FUNC(evt_map_blend_set_flag);
-USER_FUNC(evt_map_pauseanim);
-USER_FUNC(evt_map_playanim);
-USER_FUNC(evt_map_set_blend);
-USER_FUNC(evt_map_set_tevcallback);
-USER_FUNC(evt_mapobj_flag_onoff);
-USER_FUNC(evt_mapobj_rotate);
-USER_FUNC(evt_mapobj_trans);
-USER_FUNC(evt_mario_check_key_item);
-USER_FUNC(evt_mario_cont_onoff);
-USER_FUNC(evt_mario_dispflag_onoff);
-USER_FUNC(evt_mario_dump_item);
-USER_FUNC(evt_mario_get_party);
-USER_FUNC(evt_mario_get_pos);
-USER_FUNC(evt_mario_key_onoff);
-USER_FUNC(evt_mario_mov_pos2);
-USER_FUNC(evt_mario_normalize);
-USER_FUNC(evt_mario_set_dir);
-USER_FUNC(evt_mario_set_pos);
-USER_FUNC(evt_mario_set_pose);
-USER_FUNC(evt_mobj_save_blk);
-USER_FUNC(evt_msg_continue);
-USER_FUNC(evt_msg_print);
-USER_FUNC(evt_msg_print_party);
-USER_FUNC(evt_msg_select);
-USER_FUNC(evt_msg_toge);
-USER_FUNC(evt_npc_delete);
-USER_FUNC(evt_npc_entry);
-USER_FUNC(evt_npc_flag_onoff);
-USER_FUNC(evt_npc_get_position);
-USER_FUNC(evt_npc_jump_position_nohit);
-USER_FUNC(evt_npc_move_position);
-USER_FUNC(evt_npc_set_anim);
-USER_FUNC(evt_npc_set_position);
-USER_FUNC(evt_npc_set_ry);
-USER_FUNC(evt_party_cont_onoff);
-USER_FUNC(evt_party_dispflg_onoff);
-USER_FUNC(evt_party_force_reset_outofscreen);
-USER_FUNC(evt_party_get_pos);
-USER_FUNC(evt_party_move_pos2);
-USER_FUNC(evt_party_run);
-USER_FUNC(evt_party_set_dir);
-USER_FUNC(evt_party_set_pos);
-USER_FUNC(evt_party_set_pose);
-USER_FUNC(evt_party_stop);
-USER_FUNC(evt_run_case_evt);
-USER_FUNC(evt_seq_wait);
-USER_FUNC(evt_snd_bgmoff);
-USER_FUNC(evt_snd_bgmon);
-USER_FUNC(evt_snd_env_lpf);
-USER_FUNC(evt_snd_envon);
-USER_FUNC(evt_snd_sfxoff);
-USER_FUNC(evt_snd_sfxon_3d);
-USER_FUNC(evt_sub_intpl_msec_get_value);
-USER_FUNC(evt_sub_intpl_msec_get_value_para);
-USER_FUNC(evt_sub_intpl_msec_init);
-USER_FUNC(evt_win_item_select);
-USER_FUNC(fade_alpha);
-USER_FUNC(flower_pos_report);
-USER_FUNC(ss_ch_check);
-USER_FUNC(ss_ch_set);
-static f32 randf(f32 min, f32 max);
-void flower_disp(CameraId camera, void* param);
-void mirror_ball(void* param);
+static USER_FUNC(evt_flower);
+static USER_FUNC(evt_flower_end);
+static USER_FUNC(evt_flower_end_main);
+static USER_FUNC(evt_flower_init);
+static USER_FUNC(flower_pos_report);
+static USER_FUNC(ss_ch_set);
+static void mirror_ball(MapTevCallbackInfo* info);
 
-f32 fd_win_04_negone_one_374[2] __attribute__((aligned(8)));
-f32 fd_win_04_neg_one_382;
-f32 fd_win_04___local_PI_383;
-f32 fd_win_04___local_3PIO2_385;
-f32 fd_win_04_one_negone_373[2] __attribute__((aligned(8)));
-f32 fd_win_04___local_PIO2_384;
-f32 fd_win_04_one_381;
-f32 fd_win_04_negone_one_360[2] __attribute__((aligned(8)));
-f32 fd_win_04_neg_one_365;
-f32 fd_win_04___local_PI_366;
-f32 fd_win_04___local_3PIO2_368;
-f32 fd_win_04_one_negone_359[2] __attribute__((aligned(8)));
-f32 fd_win_04___local_PIO2_367;
-f32 fd_win_04_one_364;
-EvtWord win_04w_door_open[10];
-EvtWord win_04w_door_close[10];
-EvtWord win_04e_door_open[10];
-EvtWord win_04e_door_close[10];
-static EvtWord out_w_bero[12];
 BeroEntry bero_witchtrio[1];
 static BeroEntry bero_entry_data[3];
-EvtWord meet_clouda[76];
-EvtWord meet_clouda2[139];
-EvtWord clouda_inai[17];
-EvtWord clouda_irai[444];
-EvtWord clouda_irai_ato[20];
-EvtWord mirror_trans[35];
-EvtWord mirror_rotate[41];
-EvtWord mario_move_wait[63];
-EvtWord dummy1_jump[26];
-EvtWord dummy2_jump[32];
+extern EvtWord meet_clouda2[];
 static s32 item_list[2];
-EvtWord clouda_nakama[1556];
-EvtWord touch_door[39];
-EvtWord mirror_ball_event[18];
+extern EvtWord mirror_ball_event[];
 static u32 texture_0[1248];
 Vec rose_table_direct[55];
 f32 rose_table[120];
-EvtWord flower_event[28];
-EvtWord flower_disp_pos[21];
-static EvtWord cloud_toujou[95];
-EvtWord win_04_init_evt[94];
+extern EvtWord flower_event[];
 
-#ifndef TARGET_PC /* PC port: the host libc declares these */
-int rand(void);
-#endif
-
-f32 fd_win_04_negone_one_374[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_win_04_neg_one_382 = -1.0f;
-
-f32 fd_win_04___local_PI_383 = 3.1415927f;
-
-f32 fd_win_04___local_3PIO2_385 = 4.712389f;
-
-f32 fd_win_04_one_negone_373[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_win_04___local_PIO2_384 = 1.5707964f;
-
-f32 fd_win_04_one_381 = 1.0f;
-
-f32 fd_win_04_negone_one_360[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_win_04_neg_one_365 = -1.0f;
-
-f32 fd_win_04___local_PI_366 = 3.1415927f;
-
-f32 fd_win_04___local_3PIO2_368 = 4.712389f;
-
-f32 fd_win_04_one_negone_359[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_win_04___local_PIO2_367 = 1.5707964f;
-
-f32 fd_win_04_one_364 = 1.0f;
-
+/**
+ * Door-open callback for the west bero exit: names the door map objects "S_doa_w_l" and "S_doa_w_r"
+ * and runs the shared evt_win_door_open.
+ */
 EVT_BEGIN(win_04w_door_open)
     SET_VALUE(LW(8), STRING("S_doa_w_l"))
     SET_VALUE(LW(9), STRING("S_doa_w_r"))
-    SPAWN_EVENT(PTR(evt_win_door_open))
+    SPAWN_EVENT(evt_win_door_open)
     RETURN
 EVT_END()
 
+/**
+ * Door-close callback for the west bero exit: names the door map objects "S_doa_w_l" and "S_doa_w_r"
+ * and runs the shared evt_win_door_close.
+ */
 EVT_BEGIN(win_04w_door_close)
     SET_VALUE(LW(8), STRING("S_doa_w_l"))
     SET_VALUE(LW(9), STRING("S_doa_w_r"))
-    SPAWN_EVENT(PTR(evt_win_door_close))
+    SPAWN_EVENT(evt_win_door_close)
     RETURN
 EVT_END()
 
+/**
+ * Door-open callback for the east bero exit: names the door map objects "S_doa_e_l" and "S_doa_e_r"
+ * and runs the shared evt_win_door_open.
+ */
 EVT_BEGIN(win_04e_door_open)
     SET_VALUE(LW(8), STRING("S_doa_e_l"))
     SET_VALUE(LW(9), STRING("S_doa_e_r"))
-    SPAWN_EVENT(PTR(evt_win_door_open))
+    SPAWN_EVENT(evt_win_door_open)
     RETURN
 EVT_END()
 
+/**
+ * Door-close callback for the east bero exit: names the door map objects "S_doa_e_l" and "S_doa_e_r"
+ * and runs the shared evt_win_door_close.
+ */
 EVT_BEGIN(win_04e_door_close)
     SET_VALUE(LW(8), STRING("S_doa_e_l"))
     SET_VALUE(LW(9), STRING("S_doa_e_r"))
-    SPAWN_EVENT(PTR(evt_win_door_close))
+    SPAWN_EVENT(evt_win_door_close)
     RETURN
 EVT_END()
 
+/**
+ * Exit script of the west door in bero_witchtrio,
+ * the exit the init script swaps in at STORY_STG2_05_02 (it leads to win_00, where witchtrio_picture plays):
+ * sets the next map change to an iris wipe (500 ms out, 500 ms in); returns LW(0) = 0.
+ */
 static EVT_BEGIN(out_w_bero)
-    CALL(evt_fade_set_mapchange_type, 0, 2, 500, 1, 500)
+    CALL(evt_fade_set_mapchange_type, 0, FADE_OUT_IRIS, 500, FADE_IN_IRIS, 500)
     SET_VALUE(LW(0), 0)
     RETURN
 EVT_END()
 
+/**
+ * Replacement for the west door, swapped in once Flurrie has asked for her necklace: it leads to win_00
+ * with an iris wipe, where the Sirens' sketch scene (witchtrio_picture) plays.
+ */
 BeroEntry bero_witchtrio[] = {
     {
         "w_bero", // hitName
         1, // type
         0, // sfxId
-        20000, // directionId
-        100000, // centerPosition
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         NULL, // enterEvent
@@ -235,13 +153,14 @@ BeroEntry bero_witchtrio[] = {
     },
 };
 
+/** Doors of this room: west back to win_03 and east into win_05, both with their opening animations. */
 static BeroEntry bero_entry_data[] = {
     {
         "w_bero", // hitName
         1, // type
         0, // sfxId
-        20000, // directionId
-        100000, // centerPosition
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         NULL, // enterEvent
@@ -258,8 +177,8 @@ static BeroEntry bero_entry_data[] = {
         "e_bero", // hitName
         1, // type
         0, // sfxId
-        20000, // directionId
-        100000, // centerPosition
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         NULL, // enterEvent
@@ -275,6 +194,12 @@ static BeroEntry bero_entry_data[] = {
     {0},
 };
 
+/**
+ * Spawned by the init script at STORY_STG2_04 when Mario first enters Flurrie's house:
+ * once he is in, Punio (the second partner, "extparty") calls out "Excuse me!",
+ * the camera looks over the room and Punio guesses she went for a walk (stg2_win_e05_00_00, 01).
+ * The story becomes STORY_STG2_05_A_SHY_FLURRIE and meet_clouda2 starts.
+ */
 EVT_BEGIN(meet_clouda)
     CALL(evt_mario_key_onoff, 0)
     CALL(evt_mario_normalize)
@@ -292,18 +217,38 @@ EVT_BEGIN(meet_clouda)
     CALL(evt_party_run, 0)
     CALL(evt_party_run, 1)
     CALL(evt_mario_key_onoff, 1)
-    SET_VALUE(GSW(0), 81)
-    SPAWN_EVENT(PTR(meet_clouda2))
+    SET_VALUE(GSW(GSW_STORY_PROGRESS), STORY_STG2_05_A_SHY_FLURRIE)
+    SPAWN_EVENT(meet_clouda2)
     RETURN
 EVT_END()
 
+/**
+ * Trigger: once Mario stands at x >= 150 on the raised floor (y 50;
+ * the demos also wait for both partners to be up there),
+ * the partners step up beside him, Punio calls for Madame Flurrie (stg2_win_e05_00_02)
+ * and the story becomes STORY_STG2_05_01_FLURRIE_LIVING_ROOM.
+ */
 EVT_BEGIN(meet_clouda2)
     LOOP(0)
         CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
         IF_INT_GREATER_OR_EQUAL(LW(0), 150)
             IF_INT_GREATER_OR_EQUAL(LW(1), 50)
                 IF_INT_LESS(LW(1), 51)
+#if VERSION <= VERSION_DEMO_JP
+                    CALL(evt_party_get_pos, 0, LW(0), LW(1), LW(2))
+                    IF_INT_GREATER_OR_EQUAL(LW(1), 50)
+                        IF_INT_LESS(LW(1), 51)
+                            CALL(evt_party_get_pos, 1, LW(0), LW(1), LW(2))
+                            IF_INT_GREATER_OR_EQUAL(LW(1), 50)
+                                IF_INT_LESS(LW(1), 51)
+                                    BREAK_LOOP
+                                END_IF
+                            END_IF
+                        END_IF
+                    END_IF
+#else
                     BREAK_LOOP
+#endif
                 END_IF
             END_IF
         END_IF
@@ -311,6 +256,7 @@ EVT_BEGIN(meet_clouda2)
     END_LOOP
     CALL(evt_mario_key_onoff, 0)
     CALL(evt_mario_normalize)
+#if VERSION >= VERSION_JP
     BEGIN_INLINE_EVENT_GET_ID(LW(10))
         CALL(evt_party_force_reset_outofscreen, 0)
         CALL(evt_party_stop, 0)
@@ -318,21 +264,25 @@ EVT_BEGIN(meet_clouda2)
         ADD(LW(0), 50)
         IF_INT_LESS(LW(2), 0)
             ADD(LW(2), 50)
-            ELSE
+        ELSE
             SUBTRACT(LW(2), 50)
         END_IF
         CALL(evt_party_move_pos2, 0, 130, LW(2), FLOAT(120.0f))
         CALL(evt_party_set_dir, 0, 90, 200)
     END_INLINE_EVENT
     CALL(evt_party_force_reset_outofscreen, 1)
+#endif
     CALL(evt_party_stop, 1)
     CALL(evt_party_get_pos, 1, LW(0), LW(1), LW(2))
     ADD(LW(0), 50)
     IF_INT_LESS(LW(2), 0)
         ADD(LW(2), 50)
-        ELSE
+    ELSE
         SUBTRACT(LW(2), 50)
     END_IF
+#if VERSION <= VERSION_DEMO_JP
+    CALL(evt_party_move_pos2, 1, LW(0), LW(2), FLOAT(120.0f))
+#else
     CALL(evt_party_move_pos2, 1, 160, LW(2), FLOAT(120.0f))
     CALL(evt_party_set_dir, 1, 90, 200)
     LOOP(0)
@@ -342,14 +292,22 @@ EVT_BEGIN(meet_clouda2)
         END_IF
         WAIT_FRAMES(1)
     END_LOOP
+#endif
     CALL(evt_msg_print, 0, STRING("stg2_win_e05_00_02"), 0, STRING("extparty"))
+#if VERSION >= VERSION_JP
     CALL(evt_party_run, 0)
+#endif
     CALL(evt_party_run, 1)
     CALL(evt_mario_key_onoff, 1)
-    SET_VALUE(GSW(0), 82)
+    SET_VALUE(GSW(GSW_STORY_PROGRESS), STORY_STG2_05_01_FLURRIE_LIVING_ROOM)
     RETURN
 EVT_END()
 
+/**
+ * Inner-door script (touch_door) before STORY_STG2_05_01:
+ * a system message says the door won't budge (stg2_win_e04_03)
+ * and the partner thinks the place is deserted (stg2_win_e04_04).
+ */
 EVT_BEGIN(clouda_inai)
     CALL(evt_mario_key_onoff, 0)
     CALL(evt_msg_print, 0, STRING("stg2_win_e04_03"), 0, 0)
@@ -358,18 +316,32 @@ EVT_BEGIN(clouda_inai)
     RETURN
 EVT_END()
 
+/**
+ * Flurrie's request through her door (touch_door at STORY_STG2_05_01):
+ * she shrieks that no one may come in, recognizes Punio,
+ * says she lost her necklace and won't go out without it, and begs whoever spoke to find it;
+ * Punio asks Mario (Sure or Nah; "Nah" gets a retort)
+ * (stg2_win_e05_00_03 to 15).
+ * The story becomes STORY_STG2_05_02_FLURRIE_REQUEST and GSWF_WIN04_FLURRIE_REQUEST_HEARD is set.
+ */
 EVT_BEGIN(clouda_irai)
+    // Mario's controls are locked; outside the demos both partners first gather by Mario.
     CALL(evt_mario_key_onoff, 0)
+#if VERSION >= VERSION_JP
     BEGIN_INLINE_EVENT_GET_ID(LW(10))
         CALL(evt_party_force_reset_outofscreen, 0)
+#endif
         CALL(evt_party_stop, 0)
+#if VERSION >= VERSION_JP
         CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
         CALL(evt_party_move_pos2, 0, 255, LW(2), FLOAT(120.0f))
         CALL(evt_party_set_dir, 0, 90, 200)
     END_INLINE_EVENT
     BEGIN_INLINE_EVENT_GET_ID(LW(11))
         CALL(evt_party_force_reset_outofscreen, 1)
+#endif
         CALL(evt_party_stop, 1)
+#if VERSION >= VERSION_JP
         CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
         CALL(evt_party_move_pos2, 1, 225, LW(2), FLOAT(120.0f))
         CALL(evt_party_set_dir, 1, 90, 200)
@@ -384,6 +356,8 @@ EVT_BEGIN(clouda_irai)
         END_IF
         WAIT_FRAMES(1)
     END_LOOP
+#endif
+    // Flurrie shrieks from behind the door that no one may come in, startling everyone.
     CALL(evt_msg_toge, 2, 350, 100, 0)
     CALL(evt_msg_print, 0, STRING("stg2_win_e05_00_03"), 0, 0)
     CALL(evt_mario_set_dir, 90, 200, 0)
@@ -395,7 +369,8 @@ EVT_BEGIN(clouda_irai)
     CALL(evt_eff_fukidashi, 3, STRING(""), 0, 0, 0, 0, 0, 0, 0, 0, 60)
     CALL(evt_eff_fukidashi, 4, STRING(""), 0, 0, 0, 0, 0, 0, 0, 0, 60)
     WAIT_MS(1000)
-    CALL(evt_mario_dispflag_onoff, 1, 256)
+    // Mario and the partners step up to the door and Punio asks if Flurrie is there.
+    CALL(evt_mario_dispflag_onoff, 1, MARIO_DISP_FLAG_DIR_LOCK)
     BEGIN_INLINE_EVENT
         WAIT_MS(300)
         CALL(evt_cam3d_evt_set, 50, 90, 308, 248, 105, 20, 0, 11)
@@ -417,9 +392,10 @@ EVT_BEGIN(clouda_irai)
     CALL(evt_mario_mov_pos2, 240, 0, FLOAT(120.0f))
     WAIT_WHILE(GF(0))
     WAIT_WHILE(GF(1))
-    CALL(evt_mario_dispflag_onoff, 0, 256)
+    CALL(evt_mario_dispflag_onoff, 0, MARIO_DISP_FLAG_DIR_LOCK)
     CALL(evt_msg_print, 0, STRING("stg2_win_e05_00_04"), 0, STRING("extparty"))
     WAIT_MS(1000)
+    // Flurrie recognizes Punio, who explains that the Great Tree's door is blocked; Flurrie offers to help.
     CALL(evt_msg_toge, 2, 350, 100, 0)
     CALL(evt_msg_print, 0, STRING("stg2_win_e05_00_05"), 0, 0)
     WAIT_MS(500)
@@ -428,12 +404,14 @@ EVT_BEGIN(clouda_irai)
     CALL(evt_msg_toge, 2, 350, 100, 0)
     CALL(evt_msg_print, 0, STRING("stg2_win_e05_00_07"), 0, 0)
     WAIT_MS(500)
+    // The partner asks what is wrong: Flurrie has lost her favorite necklace and won't go out without it.
     CALL(evt_msg_print_party, STRING("stg2_win_e05_00_08"))
     WAIT_MS(500)
     CALL(evt_msg_toge, 2, 350, 100, 0)
     CALL(evt_msg_print, 0, STRING("stg2_win_e05_00_09"), 0, 0)
     CALL(evt_cam3d_evt_set, 200, 120, 194, 200, 85, -3, 0, 11)
     WAIT_MS(500)
+    // The partner remembers hearing about a necklace, and Flurrie begs whoever spoke to find it.
     CALL(evt_msg_print_party, STRING("stg2_win_e05_00_10"))
     CALL(evt_cam3d_evt_set, 110, 199, 257, 393, 72, -135, 0, 11)
     WAIT_FRAMES(1)
@@ -441,13 +419,14 @@ EVT_BEGIN(clouda_irai)
     CALL(evt_msg_print, 0, STRING("stg2_win_e05_00_11"), 0, 0)
     CALL(evt_cam3d_evt_set, 220, 130, 243, 220, 87, -3, 0, 11)
     WAIT_MS(500)
+    // Punio volunteers Mario: answering Nah earns a retort, Sure a nod.
     CALL(evt_msg_print, 0, STRING("stg2_win_e05_00_12"), 0, STRING("extparty"))
     CALL(evt_mario_set_dir, 270, 200, 0)
     CALL(evt_msg_select, 0, STRING("stg2_win_e05_00_12_yn"))
     CALL(evt_msg_continue)
     IF_INT_EQUAL(LW(0), 1)
         CALL(evt_msg_print, 0, STRING("stg2_win_e05_00_14"), 0, STRING("extparty"))
-        ELSE
+    ELSE
         BEGIN_INLINE_EVENT
             CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
             CALL(evt_snd_sfxon_3d, STRING("SFX_VOICE_MARIO_NOD1"), LW(0), LW(1), LW(2), 0)
@@ -456,23 +435,28 @@ EVT_BEGIN(clouda_irai)
         WAIT_MS(500)
         CALL(evt_msg_print, 0, STRING("stg2_win_e05_00_13"), 0, STRING("extparty"))
     END_IF
+    // Flurrie apologizes for the trouble, the story advances and the west door now leads to win_00.
     CALL(evt_cam3d_evt_off, 300, 11)
     WAIT_MS(300)
     CALL(evt_msg_toge, 2, 350, 100, 0)
     CALL(evt_msg_print, 0, STRING("stg2_win_e05_00_15"), 0, 0)
-    SET_VALUE(GSW(0), 83)
-    SET_VALUE(GSWF(2681), 1)
+    SET_VALUE(GSW(GSW_STORY_PROGRESS), STORY_STG2_05_02_FLURRIE_REQUEST)
+    SET_VALUE(GSWF(GSWF_WIN04_FLURRIE_REQUEST_HEARD), 1)
     CALL(evt_party_run, 0)
     CALL(evt_party_run, 1)
     CALL(evt_mario_key_onoff, 1)
     SET_VALUE(LW(0), STRING("w_bero"))
-    CALL_CHILD(PTR(bero_case_switch_off))
+    CALL_CHILD(bero_case_switch_off)
     CALL(evt_bero_overwrite, STRING("w_bero"), PTR(bero_witchtrio))
     SET_VALUE(LW(0), STRING("w_bero"))
-    CALL_CHILD(PTR(bero_case_switch_on))
+    CALL_CHILD(bero_case_switch_on)
     RETURN
 EVT_END()
 
+/**
+ * Door script after Flurrie's request: speaks "stg2_win_e05_19" from the door
+ * while Mario still has not found her necklace.
+ */
 EVT_BEGIN(clouda_irai_ato)
     CALL(evt_mario_key_onoff, 0)
     CALL(evt_msg_toge, 2, 350, 100, 0)
@@ -481,6 +465,11 @@ EVT_BEGIN(clouda_irai_ato)
     RETURN
 EVT_END()
 
+/**
+ * Lowers the mirror ball: interpolates GW(1), the y offset that mirror_rotate applies to "S_mirre",
+ * from 0 to -100 over 1.5 seconds,
+ * with the SFX_STG2_CRAUD_LIGHT2 sound playing at (170, 50, 10).
+ */
 EVT_BEGIN(mirror_trans)
     CALL(evt_snd_sfxon_3d, STRING("SFX_STG2_CRAUD_LIGHT2"), 170, 50, 10, LW(9))
     CALL(evt_sub_intpl_msec_init, 0, 0, -100, 1500)
@@ -496,6 +485,10 @@ EVT_BEGIN(mirror_trans)
     RETURN
 EVT_END()
 
+/**
+ * Endless loop that spins the mirror ball ("S_mirre") 360 degrees every 6 seconds
+ * while keeping its height from GW(1).
+ */
 EVT_BEGIN(mirror_rotate)
     LOOP(0)
         CALL(evt_sub_intpl_msec_init, 0, 0, 360, 6000)
@@ -513,6 +506,10 @@ EVT_BEGIN(mirror_rotate)
     RETURN
 EVT_END()
 
+/**
+ * Waits until Mario's position has stayed the same for two frames in a row;
+ * clouda_nakama uses it so the scene continues once his walk has ended.
+ */
 EVT_BEGIN(mario_move_wait)
     CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
     SET_VALUE(LW(6), 0)
@@ -529,19 +526,24 @@ EVT_BEGIN(mario_move_wait)
                     IF_INT_GREATER_OR_EQUAL(LW(6), 2)
                         BREAK_LOOP
                     END_IF
-                    ELSE
+                ELSE
                     SET_VALUE(LW(6), 0)
                 END_IF
-                ELSE
+            ELSE
                 SET_VALUE(LW(6), 0)
             END_IF
-            ELSE
+        ELSE
             SET_VALUE(LW(6), 0)
         END_IF
     END_LOOP
     RETURN
 EVT_END()
 
+/**
+ * In clouda_nakama, when Flurrie rushes at Mario and knocks his partner aside:
+ * hops the hidden helper NPC "dummy1" (whose position the partner follows) from LW(0..2)
+ * to 90 units left and 30 back, then sets ssf[0] to 1 so the scene knows the hop is over.
+ */
 EVT_BEGIN(dummy1_jump)
     CALL(evt_npc_set_position, STRING("dummy1"), LW(0), LW(1), LW(2))
     ADD(LW(0), -90)
@@ -551,6 +553,10 @@ EVT_BEGIN(dummy1_jump)
     RETURN
 EVT_END()
 
+/**
+ * The same for Punio: hops the hidden helper NPC "dummy2" from Punio's position to 90 units left and 30 forward,
+ * then sets ssf[1] to 1.
+ */
 EVT_BEGIN(dummy2_jump)
     CALL(evt_party_get_pos, 1, LW(0), LW(1), LW(2))
     CALL(evt_npc_set_position, STRING("dummy2"), LW(0), LW(1), LW(2))
@@ -561,8 +567,12 @@ EVT_BEGIN(dummy2_jump)
     RETURN
 EVT_END()
 
-USER_FUNC(ss_ch_check) {
-    u64 out; // FAKEMATCH (decomp-permuter): reorders the args[1] load
+/**
+ * Script helper: writes ssf[args[0]] to the variable args[1] (as a float);
+ * clouda_nakama polls it for 1 to see that a helper hop (slots 0 and 1) or Mario's fall (slot 2) is over.
+ */
+static USER_FUNC(ss_ch_check) {
+    u64 out; // FAKE: a 64-bit local for the variable id reorders the args[1] load (docs/FAKES.md lists the forms tried)
     EvtWord* args = event->args;
     s32 index = evtGetValue(event, args[0]);
 
@@ -571,7 +581,8 @@ USER_FUNC(ss_ch_check) {
     return EVT_RETURN_DONE;
 }
 
-USER_FUNC(ss_ch_set) {
+/** Script helper: sets ssf[args[0]] to args[1]; used by clouda_nakama and the helper hop scripts. */
+static USER_FUNC(ss_ch_set) {
     EvtWord* args = event->args;
     s32 index = evtGetValue(event, args[0]);
 
@@ -579,27 +590,46 @@ USER_FUNC(ss_ch_set) {
     return EVT_RETURN_DONE;
 }
 
-USER_FUNC(fade_alpha) {
+/**
+ * Script helper: covers the screen with a 2D black fade of color (args[0], args[1], args[2]) and alpha args[3],
+ * without animating.
+ */
+static USER_FUNC(fade_alpha) {
     EvtWord* args = event->args;
     s32 r = evtGetValue(event, args[0]);
     s32 g = evtGetValue(event, args[1]);
     s32 b = evtGetValue(event, args[2]);
     s32 a = evtGetValue(event, args[3]);
 
-    fadeEntry(13, 0, (GXColor){r, g, b, a});
+    fadeEntry(FADE_COVER_BLACK_2D, 0, (GXColor){r, g, b, a});
     return EVT_RETURN_DONE;
 }
 
+/** Items Mario may hand Flurrie through her door in clouda_nakama: only the Necklace (-1 ends the list). */
 static s32 item_list[] = {
     ITEM_NECKLACE, -1,
 };
 
+/**
+ * Flurrie joins the party (touch_door at STORY_STG2_08 with the necklace):
+ * Mario picks the necklace from the item menu and leaves it by the door, Flurrie takes it and is overjoyed,
+ * then the room darkens, the mirror ball lowers and spins, rose petals bloom and she comes out;
+ * she sweeps the partners aside and kisses Mario, who keels over (stg2_win_e09_00 to 07_01).
+ * all_party_lecture runs, Punio comments, GSWF_WIN04_FLURRIE_JOINED is set
+ * and the story becomes STORY_STG2_09_FLURRIE_JOINS.
+ * If Mario cancels the menu she laments her lost necklace (stg2_win_e09_00_01) and it returns LW(0) = 0.
+ */
 EVT_BEGIN(clouda_nakama)
-    CALL(evt_npc_flag_onoff, 1, STRING("クラウダ"), 1536)
+    // Mario picks an item to give; cancelling ends the scene with Flurrie lamenting her lost necklace.
+    CALL(evt_npc_flag_onoff, 1, STRING("クラウダ"), NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM)
     CALL(evt_mario_key_onoff, 0)
     CALL(evt_party_stop, 0)
     CALL(evt_party_stop, 1)
+#if VERSION <= VERSION_DEMO_JP
+    CALL(evt_win_item_select, PTR(item_list), LW(0))
+#else
     CALL(evt_win_item_select, 0, PTR(item_list), LW(0), 0)
+#endif
     IF_INT_EQUAL(LW(0), -1)
         CALL(evt_msg_toge, 2, 350, 100, 0)
         CALL(evt_msg_print, 0, STRING("stg2_win_e09_00_01"), 0, 0)
@@ -609,6 +639,7 @@ EVT_BEGIN(clouda_nakama)
         SET_VALUE(LW(0), 0)
         RETURN
     END_IF
+    // Flurrie is overjoyed but still won't be seen; Mario nods and sets the necklace down by the door.
     CALL(evt_cam3d_evt_set, 186, 201, 538, 186, 106, -3, 0, 11)
     WAIT_FRAMES(1)
     CALL(evt_msg_toge, 2, 350, 100, 0)
@@ -619,14 +650,14 @@ EVT_BEGIN(clouda_nakama)
     END_INLINE_EVENT
     CALL(evt_mario_set_pose, STRING("M_N_2"))
     WAIT_MS(500)
-    CALL(evt_mario_dispflag_onoff, 1, 256)
+    CALL(evt_mario_dispflag_onoff, 1, MARIO_DISP_FLAG_DIR_LOCK)
     CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
     CALL(evt_mario_mov_pos2, 255, LW(2), FLOAT(120.0f))
-    CALL(evt_item_entry, STRING("necklace"), 63, 0, -1000, 0, 16, -1, 0)
-    CALL(evt_item_flag_on, STRING("necklace"), 2)
+    CALL(evt_item_entry, STRING("necklace"), ITEM_NECKLACE, 0, -1000, 0, ITEM_ENTRY_FIXED, -1, 0)
+    CALL(evt_item_flag_on, STRING("necklace"), ITEM_FLAG_NO_TOUCH)
     CALL(evt_item_set_position, STRING("necklace"), 280, 50, 0)
-    CALL(evt_mario_dump_item, 63)
-    CALL(evt_snd_bgmoff, 512)
+    CALL(evt_mario_dump_item, ITEM_NECKLACE)
+    CALL(evt_snd_bgmoff, PSND_FADE_OUT)
     WAIT_MS(500)
     BEGIN_INLINE_EVENT
         CALL(evt_party_move_pos2, 0, 185, -20, FLOAT(120.0f))
@@ -636,15 +667,16 @@ EVT_BEGIN(clouda_nakama)
         CALL(evt_party_move_pos2, 1, 210, -25, FLOAT(120.0f))
         CALL(evt_party_set_dir, 1, 90, -1)
     END_INLINE_EVENT
-    CALL(evt_mario_dispflag_onoff, 0, 256)
+    // Mario steps back, the door opens a crack and the necklace slides inside.
+    CALL(evt_mario_dispflag_onoff, 0, MARIO_DISP_FLAG_DIR_LOCK)
     CALL(evt_mario_mov_pos2, 150, 0, FLOAT(120.0f))
-    CALL_CHILD(PTR(mario_move_wait))
+    CALL_CHILD(mario_move_wait)
     CALL(evt_mario_set_dir, 90, 200, 0)
     SET_VALUE(LW(8), STRING("S_doa_e_l"))
     SET_VALUE(LW(9), STRING("S_doa_e_r"))
     SET_VALUE(LW(0), 0)
     SET_VALUE(LW(1), 500)
-    SPAWN_EVENT(PTR(evt_win_door_open_pure))
+    SPAWN_EVENT(evt_win_door_open_pure)
     WAIT_MS(500)
     BEGIN_INLINE_EVENT
         CALL(evt_item_get_position, STRING("necklace"), LW(0), LW(1), LW(2))
@@ -657,8 +689,9 @@ EVT_BEGIN(clouda_nakama)
     SET_VALUE(LW(9), STRING("S_doa_e_r"))
     SET_VALUE(LW(0), 1)
     SET_VALUE(LW(1), 500)
-    SPAWN_EVENT(PTR(evt_win_door_open_pure))
+    SPAWN_EVENT(evt_win_door_open_pure)
     WAIT_MS(1500)
+    // Flurrie rejoices; the chandelier lifts and the room goes dark, puzzling Mario.
     CALL(evt_msg_toge, 2, 350, 100, 0)
     CALL(evt_msg_print, 0, STRING("stg2_win_e09_01"), 0, 0)
     BEGIN_INLINE_EVENT
@@ -698,17 +731,18 @@ EVT_BEGIN(clouda_nakama)
     WAIT_MS(1000)
     CALL(evt_cam3d_evt_set, 175, 150, 297, 175, 155, -3, 1000, 11)
     WAIT_MS(1000)
+    // Flurrie's theme starts: the room glitters, the mirror ball lowers and spins, and the light turns pink.
     SET_VALUE(GW(1), 0)
     BEGIN_INLINE_EVENT
         WAIT_MS(500)
-        CALL(evt_mapobj_flag_onoff, 1, 1, STRING("S"), 2048)
-        CALL(evt_mapobj_flag_onoff, 1, 0, STRING("hika_"), 2048)
-        CALL(evt_map_blend_set_flag, 1, STRING("mario"), 2048)
-        CALL(evt_map_blend_set_flag, 1, STRING("party"), 2048)
-        CALL(evt_map_blend_set_flag, 1, STRING("extparty"), 2048)
-        CALL(evt_map_blend_set_flag, 1, STRING("クラウダ"), 2048)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("S"), MAPOBJ_FLAG_NO_BLEND)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("hika_"), MAPOBJ_FLAG_NO_BLEND)
+        CALL(evt_map_blend_set_flag, 1, STRING("mario"), ANIM_MATERIAL_FLAG_NO_BLEND)
+        CALL(evt_map_blend_set_flag, 1, STRING("party"), ANIM_MATERIAL_FLAG_NO_BLEND)
+        CALL(evt_map_blend_set_flag, 1, STRING("extparty"), ANIM_MATERIAL_FLAG_NO_BLEND)
+        CALL(evt_map_blend_set_flag, 1, STRING("クラウダ"), ANIM_MATERIAL_FLAG_NO_BLEND)
         CALL(evt_map_set_blend, 0, 255, 255, 255, 0)
-        CALL(evt_mapobj_flag_onoff, 1, 0, STRING("hika_"), 1)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("hika_"), MAPOBJ_FLAG_HIDE)
         CALL(evt_map_playanim, STRING("kirakira"), 1, 0)
         CALL(evt_sub_intpl_msec_init, 0, 0, 255, 1000)
         LOOP(0)
@@ -722,15 +756,15 @@ EVT_BEGIN(clouda_nakama)
     END_INLINE_EVENT
     SET_VALUE(GF(0), 1)
     BEGIN_INLINE_EVENT
-        SPAWN_EVENT(PTR(mirror_ball_event))
+        SPAWN_EVENT(mirror_ball_event)
         SPAWN_EVENT_GET_ID(PTR(mirror_rotate), GW(10))
-        CALL_CHILD(PTR(mirror_trans))
+        CALL_CHILD(mirror_trans)
         WAIT_MS(500)
         SET_VALUE(GF(0), 0)
     END_INLINE_EVENT
     BEGIN_INLINE_EVENT
         WAIT_MS(1500)
-        CALL(evt_snd_bgmon, 512, STRING("BGM_EVT_CLOUDA1"))
+        CALL(evt_snd_bgmon, PSND_FADE_OUT, STRING("BGM_EVT_CLOUDA1"))
     END_INLINE_EVENT
     BEGIN_INLINE_EVENT
         CALL(evt_sub_intpl_msec_init, 0, 0, 1000, 1500)
@@ -753,6 +787,7 @@ EVT_BEGIN(clouda_nakama)
     WAIT_MS(1000)
     WAIT_WHILE(GF(0))
     WAIT_MS(1000)
+    // The door opens and Flurrie floats out with a wink as rose petals bloom.
     CALL(evt_cam3d_evt_set, 110, 128, 307, 250, 110, 5, 1000, 11)
     WAIT_MS(1000)
     CALL(evt_party_set_dir, 1, 90, -1)
@@ -763,22 +798,22 @@ EVT_BEGIN(clouda_nakama)
     SET_VALUE(LW(9), STRING("S_doa_e_r"))
     SET_VALUE(LW(0), 0)
     SET_VALUE(LW(1), 500)
-    SPAWN_EVENT(PTR(evt_win_door_open_pure))
+    SPAWN_EVENT(evt_win_door_open_pure)
     WAIT_MS(1500)
     CALL(evt_cam3d_evt_set, 272, 75, 175, 272, 75, -1, 0, 11)
     BEGIN_INLINE_EVENT
-        CALL(evt_npc_flag_onoff, 1, STRING("クラウダ"), 1073741824)
-        CALL(evt_npc_flag_onoff, 0, STRING("クラウダ"), 1536)
+        CALL(evt_npc_flag_onoff, 1, STRING("クラウダ"), NPC_FLAG_NO_WALL_HIT)
+        CALL(evt_npc_flag_onoff, 0, STRING("クラウダ"), NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM)
         CALL(evt_npc_move_position, STRING("クラウダ"), 270, 0, 0, FLOAT(30.0f), 0)
         SET_VALUE(LW(8), STRING("S_doa_e_l"))
         SET_VALUE(LW(9), STRING("S_doa_e_r"))
         SET_VALUE(LW(0), 1)
         SET_VALUE(LW(1), 500)
-        SPAWN_EVENT(PTR(evt_win_door_open_pure))
+        SPAWN_EVENT(evt_win_door_open_pure)
         WAIT_MS(500)
     END_INLINE_EVENT
     WAIT_MS(2000)
-    SPAWN_EVENT(PTR(flower_event))
+    SPAWN_EVENT(flower_event)
     WAIT_MS(2500)
     CALL(evt_npc_set_anim, STRING("クラウダ"), STRING("PWD_A_7"))
     CALL(evt_npc_get_position, STRING("クラウダ"), LW(0), LW(1), LW(2))
@@ -799,8 +834,9 @@ EVT_BEGIN(clouda_nakama)
         END_LOOP
     END_INLINE_EVENT
     WAIT_MS(1000)
+    // The petals fade, the lights return and the mirror ball goes back up.
     SET_VALUE(GW(0), 1)
-    CALL(evt_mapobj_flag_onoff, 1, 1, STRING("hika_"), 1)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("hika_"), MAPOBJ_FLAG_HIDE)
     CALL(evt_map_pauseanim, 0, STRING("kirakira"))
     CALL(evt_mapobj_trans, 1, STRING("S_mirre"), 0, 100, 0)
     DELETE_EVENT(GW(10))
@@ -808,23 +844,24 @@ EVT_BEGIN(clouda_nakama)
     CALL(evt_cam3d_evt_set, 225, 170, 391, 225, 100, -3, 0, 11)
     WAIT_MS(300)
     BEGIN_INLINE_EVENT
-        CALL(evt_party_dispflg_onoff, 0, 16, 1)
+        CALL(evt_party_dispflg_onoff, 0, PARTY_DISP_FLAG_DIR_LOCK, 1)
         CALL(evt_party_get_pos, 0, LW(0), LW(1), LW(2))
         ADD(LW(0), -15)
         CALL(evt_party_move_pos2, 0, LW(0), LW(2), FLOAT(80.0f))
         CALL(evt_party_set_dir, 0, 90, -1)
-        CALL(evt_party_dispflg_onoff, 0, 16, 0)
+        CALL(evt_party_dispflg_onoff, 0, PARTY_DISP_FLAG_DIR_LOCK, 0)
     END_INLINE_EVENT
-    CALL(evt_party_dispflg_onoff, 1, 16, 1)
+    CALL(evt_party_dispflg_onoff, 1, PARTY_DISP_FLAG_DIR_LOCK, 1)
     CALL(evt_party_get_pos, 1, LW(0), LW(1), LW(2))
     ADD(LW(0), -25)
     CALL(evt_party_move_pos2, 1, LW(0), LW(2), FLOAT(80.0f))
     CALL(evt_party_set_dir, 1, 90, -1)
-    CALL(evt_party_dispflg_onoff, 1, 16, 0)
+    CALL(evt_party_dispflg_onoff, 1, PARTY_DISP_FLAG_DIR_LOCK, 0)
     WAIT_MS(700)
+    // Flurrie notices Mario and is smitten with her necklace hunter.
     CALL(evt_eff_fukidashi, 1, STRING(""), STRING("クラウダ"), 0, 0, 0, 0, 0, 0, 0, 60)
     WAIT_MS(1000)
-    CALL(evt_npc_flag_onoff, 1, STRING("クラウダ"), 1536)
+    CALL(evt_npc_flag_onoff, 1, STRING("クラウダ"), NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM)
     CALL(evt_msg_print, 0, STRING("stg2_win_e09_02"), 0, STRING("クラウダ"))
     BEGIN_INLINE_EVENT
         CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
@@ -832,6 +869,7 @@ EVT_BEGIN(clouda_nakama)
     END_INLINE_EVENT
     CALL(evt_mario_set_pose, STRING("M_I_G"))
     WAIT_MS(1000)
+    // She wants to thank him with a kiss; Mario shakes his head.
     CALL(evt_cam3d_evt_set, 270, 134, 245, 270, 90, -1, 1000, 11)
     WAIT_MS(1000)
     CALL(evt_msg_print, 0, STRING("stg2_win_e09_03"), 0, STRING("クラウダ"))
@@ -844,6 +882,7 @@ EVT_BEGIN(clouda_nakama)
     END_INLINE_EVENT
     CALL(evt_mario_set_pose, STRING("M_N_C"))
     WAIT_MS(1000)
+    // Flurrie charges, knocking the partner and Punio aside, and kisses Mario, who keels over.
     CALL(evt_cam3d_evt_set, 270, 134, 245, 270, 90, -1, 0, 11)
     CALL(evt_npc_get_position, STRING("クラウダ"), LW(0), LW(1), LW(2))
     ADD(LW(1), 20)
@@ -856,8 +895,8 @@ EVT_BEGIN(clouda_nakama)
     CALL(evt_mario_set_pose, STRING("M_N_7"))
     BEGIN_INLINE_EVENT
         CALL(evt_npc_entry, STRING("dummy1"), STRING("c_pguide"))
-        CALL(evt_npc_flag_onoff, 1, STRING("dummy1"), 32)
-        CALL(evt_npc_flag_onoff, 1, STRING("dummy1"), 128)
+        CALL(evt_npc_flag_onoff, 1, STRING("dummy1"), NPC_FLAG_INTANGIBLE)
+        CALL(evt_npc_flag_onoff, 1, STRING("dummy1"), NPC_FLAG_HIDDEN)
         CALL(evt_party_get_pos, 0, LW(0), LW(1), LW(2))
         CALL(evt_npc_set_position, STRING("dummy1"), LW(0), LW(1), LW(2))
         CALL(evt_party_cont_onoff, 0, 0)
@@ -881,7 +920,7 @@ EVT_BEGIN(clouda_nakama)
             CALL(evt_party_set_pose, 0, STRING("PNK_D_1"))
         END_SWITCH
         CALL(ss_ch_set, 0, 0)
-        SPAWN_EVENT(PTR(dummy1_jump))
+        SPAWN_EVENT(dummy1_jump)
         LOOP(0)
             CALL(evt_npc_get_position, STRING("dummy1"), LW(0), LW(1), LW(2))
             CALL(evt_party_set_pos, 0, LW(0), LW(1), LW(2))
@@ -901,8 +940,8 @@ EVT_BEGIN(clouda_nakama)
     END_INLINE_EVENT
     BEGIN_INLINE_EVENT
         CALL(evt_npc_entry, STRING("dummy2"), STRING("c_pguide"))
-        CALL(evt_npc_flag_onoff, 1, STRING("dummy2"), 32)
-        CALL(evt_npc_flag_onoff, 1, STRING("dummy2"), 128)
+        CALL(evt_npc_flag_onoff, 1, STRING("dummy2"), NPC_FLAG_INTANGIBLE)
+        CALL(evt_npc_flag_onoff, 1, STRING("dummy2"), NPC_FLAG_HIDDEN)
         CALL(evt_party_get_pos, 1, LW(0), LW(1), LW(2))
         CALL(evt_npc_set_position, STRING("dummy2"), LW(0), LW(1), LW(2))
         CALL(evt_party_cont_onoff, 1, 0)
@@ -918,7 +957,7 @@ EVT_BEGIN(clouda_nakama)
         CALL(evt_party_set_dir, 1, 270, -1)
         CALL(evt_party_set_pose, 1, STRING("R_1"))
         CALL(ss_ch_set, 1, 0)
-        SPAWN_EVENT(PTR(dummy2_jump))
+        SPAWN_EVENT(dummy2_jump)
         LOOP(0)
             CALL(evt_npc_get_position, STRING("dummy2"), LW(0), LW(1), LW(2))
             CALL(evt_party_set_pos, 1, LW(0), LW(1), LW(2))
@@ -964,7 +1003,7 @@ EVT_BEGIN(clouda_nakama)
         CALL(ss_ch_set, 2, 1)
     END_INLINE_EVENT
     CALL(evt_cam3d_evt_set, FLOAT(165.19922f), FLOAT(143.0f), FLOAT(292.0f), FLOAT(165.19922f), FLOAT(90.0f), FLOAT(-3.0f), 500, 11)
-    CALL(evt_npc_flag_onoff, 0, STRING("クラウダ"), 1536)
+    CALL(evt_npc_flag_onoff, 0, STRING("クラウダ"), NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM)
     CALL(evt_npc_jump_position_nohit, STRING("クラウダ"), 205, 50, 0, 500, 1)
     CALL(evt_npc_set_anim, STRING("クラウダ"), STRING("PWD_S_1"))
     LOOP(0)
@@ -974,7 +1013,8 @@ EVT_BEGIN(clouda_nakama)
         END_IF
         WAIT_FRAMES(1)
     END_LOOP
-    CALL(evt_npc_flag_onoff, 1, STRING("クラウダ"), 1536)
+    // Flurrie gushes over Mario, asks about the Crystal Stars and decides to join to keep him safe.
+    CALL(evt_npc_flag_onoff, 1, STRING("クラウダ"), NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM)
     CALL(evt_msg_print, 0, STRING("stg2_win_e09_06"), 0, STRING("クラウダ"))
     CALL(evt_mario_set_pose, STRING("M_U_3"))
     WAIT_MS(650)
@@ -1005,39 +1045,44 @@ EVT_BEGIN(clouda_nakama)
     CALL(evt_mario_set_pose, STRING("M_N_5B"))
     WAIT_MS(1000)
     WAIT_MS(500)
+    // Flurrie joins with the partner lecture, Punio cheers, the story advances and the woods music returns.
     SET_VALUE(LW(8), STRING("クラウダ"))
     SET_VALUE(LW(9), 5)
-    CALL_CHILD(PTR(all_party_lecture))
+    CALL_CHILD(all_party_lecture)
     CALL(evt_party_move_pos2, 1, 148, 30, FLOAT(120.0f))
     CALL(evt_msg_print, 0, STRING("stg2_win_e09_09"), 0, STRING("extparty"))
     CALL(evt_cam3d_evt_off, 300, 11)
-    SET_VALUE(GSWF(2682), 1)
-    SET_VALUE(GSW(0), 87)
+    SET_VALUE(GSWF(GSWF_WIN04_FLURRIE_JOINED), 1)
+    SET_VALUE(GSW(GSW_STORY_PROGRESS), STORY_STG2_09_FLURRIE_JOINS)
     CALL(evt_party_run, 0)
     CALL(evt_party_run, 1)
     CALL(evt_mario_key_onoff, 1)
-    CALL(evt_snd_bgmon, 512, STRING("BGM_STG2_WIN1"))
-    CALL(evt_snd_bgmoff, 22528)
-    CALL(evt_snd_envon, 272, STRING("ENV_STG2_WIN2"))
+    CALL(evt_snd_bgmon, PSND_FADE_OUT, STRING("BGM_STG2_WIN1"))
+    CALL(evt_snd_bgmoff, PSND_FADE_DIP_TO(60))
+    CALL(evt_snd_envon, PSND_FADE_RESTART | PSND_FADE_IN, STRING("ENV_STG2_WIN2"))
     CALL(evt_snd_env_lpf, 0, 800)
     SET_VALUE(LW(0), 1)
     RETURN
 EVT_END()
 
+/**
+ * Front-door case script: depending on story progress it runs clouda_inai, clouda_irai, clouda_irai_ato,
+ * or (after the Sirens' defeat) either asks for the necklace or starts the joining scene clouda_nakama.
+ */
 EVT_BEGIN(touch_door)
-    SWITCH(GSW(0))
-        CASE_LESS(82)
-        CALL_CHILD(PTR(clouda_inai))
-        CASE_EQUAL(82)
-        CALL_CHILD(PTR(clouda_irai))
-        CASE_BETWEEN(83, 85)
-        CALL_CHILD(PTR(clouda_irai_ato))
-        CASE_EQUAL(86)
-        CALL(evt_mario_check_key_item, 63, LW(0))
+    SWITCH(GSW(GSW_STORY_PROGRESS))
+        CASE_LESS(STORY_STG2_05_01_FLURRIE_LIVING_ROOM)
+        CALL_CHILD(clouda_inai)
+        CASE_EQUAL(STORY_STG2_05_01_FLURRIE_LIVING_ROOM)
+        CALL_CHILD(clouda_irai)
+        CASE_BETWEEN(STORY_STG2_05_02_FLURRIE_REQUEST, STORY_STG2_07_MARIO_VS_SHADOW_SIRENS)
+        CALL_CHILD(clouda_irai_ato)
+        CASE_EQUAL(STORY_STG2_08_SHADOW_SIRENS_LOSE)
+        CALL(evt_mario_check_key_item, ITEM_NECKLACE, LW(0))
         IF_INT_EQUAL(LW(0), 0)
-            CALL_CHILD(PTR(clouda_irai_ato))
-            ELSE
-            CALL_CHILD(PTR(clouda_nakama))
+            CALL_CHILD(clouda_irai_ato)
+        ELSE
+            CALL_CHILD(clouda_nakama)
             IF_INT_EQUAL(LW(0), 1)
                 CALL(evt_exit_case_evt)
             END_IF
@@ -1046,10 +1091,14 @@ EVT_BEGIN(touch_door)
     RETURN
 EVT_END()
 
+/**
+ * Sets map TEV callback 1 to mirror_ball, assigns it to the map object "S_mirre"
+ * and turns off its prebuilt display lists so the callback's extra shine stage is used.
+ */
 EVT_BEGIN(mirror_ball_event)
     CALL(evt_map_set_tevcallback, 1, PTR(mirror_ball))
-    CALL(evt_mapobj_flag_onoff, 1, 1, STRING("S_mirre"), 16777216)
-    CALL(evt_mapobj_flag_onoff, 1, 0, STRING("S_mirre"), 256)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("S_mirre"), MAPOBJ_TEV_CALLBACK(1))
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("S_mirre"), MAPOBJ_FLAG_DISPLAY_LIST)
     RETURN
 EVT_END()
 
@@ -1213,6 +1262,10 @@ static u32 texture_0[] = {
     0x00000001, 0xFFFFFFFF, 0x00000001, 0xFFFFFFFF, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
 };
 
+/**
+ * Rose petals of Flurrie's entrance: the screen position (x, y) and final size (z) of each of the 55 flowers
+ * that evt_flower grows in flower_event.
+ */
 Vec rose_table_direct[] = {
     {-196.61f, 223.94f, 0.78f},
     {-141.56f, 219.43f, 0.76f},
@@ -1271,6 +1324,10 @@ Vec rose_table_direct[] = {
     {173.63f, -125.26f, 0.72f},
 };
 
+/**
+ * Another layout of rose petals: 60 (x, y) screen positions in rows along the edges of the screen.
+ * Nothing reads it; the petals use rose_table_direct.
+ */
 f32 rose_table[] = {
     -186.66667f, 230.0f, -133.33334f, 230.0f, -80.0f, 230.0f, -26.666672f, 230.0f,
     26.666656f, 230.0f, 80.0f, 230.0f, 133.33334f, 230.0f, 186.66666f, 230.0f,
@@ -1289,6 +1346,10 @@ f32 rose_table[] = {
     -190.0f, 270.0f, -190.0f, -260.0f, 190.0f, 270.0f, 190.0f, -260.0f,
 };
 
+/**
+ * Rose-petal effect: allocates 55 flowers, ticks them until GW(0) is set to 1, then fades them out;
+ * spawned during Flurrie's joining scene.
+ */
 EVT_BEGIN(flower_event)
     SET_VALUE(GW(0), 0)
     CALL(evt_flower_init)
@@ -1307,6 +1368,10 @@ EVT_BEGIN(flower_event)
     RETURN
 EVT_END()
 
+/**
+ * Waits until the A button (256) is held on controller 0, then calls flower_pos_report (which does nothing).
+ * Nothing in the tree runs it. Guess: a debug leftover.
+ */
 EVT_BEGIN(flower_disp_pos)
     LOOP(0)
         WAIT_FRAMES(1)
@@ -1320,11 +1385,16 @@ EVT_BEGIN(flower_disp_pos)
     RETURN
 EVT_END()
 
-void mirror_ball(void* param) {
-    envAddTev(10, param);
+/** Map TEV callback for the mirror ball: adds environment effect type 10 (envAddTev), a normal-based shine from env.tpl. */
+static void mirror_ball(MapTevCallbackInfo* info) {
+    envAddTev(10, info);
 }
 
-void flower_disp(CameraId camera, void* param) {
+/**
+ * 2D draw callback for the falling rose petals:
+ * blends each of the 55 flowers' texture at its position, scale and alpha.
+ */
+static void flower_disp(CameraId camera, void* param) {
     FlowerWork* wp = param;
     CameraEntry* cam = camGetPtr(camera);
     GXTexObj tex;
@@ -1382,6 +1452,12 @@ void flower_disp(CameraId camera, void* param) {
     }
 }
 
+/**
+ * Second part of Flurrie's intro (after win_03's cloud_toujou), at STORY_STG2_03_02:
+ * with Mario off the map, the camera looks over the room while a voice without a speaker tail
+ * enjoys the peace of the woods (stg2_win_e04_00_02), then, pointed at (300, 80, 40),
+ * admits she will soon crave drama (stg2_win_e04_00_03); the map changes to win_05 with an iris wipe.
+ */
 static EVT_BEGIN(cloud_toujou)
     CALL(evt_mario_key_onoff, 0)
     CALL(evt_mario_cont_onoff, 0)
@@ -1399,53 +1475,65 @@ static EVT_BEGIN(cloud_toujou)
     WAIT_MS(1000)
     CALL(evt_msg_toge, 2, 300, 80, 40)
     CALL(evt_msg_print, 0, STRING("stg2_win_e04_00_03"), 0, 0)
-    CALL(evt_fade_set_mapchange_type, 0, 2, 500, 1, 500)
+    CALL(evt_fade_set_mapchange_type, 0, FADE_OUT_IRIS, 500, FADE_IN_IRIS, 500)
     CALL(evt_bero_mapchange, STRING("win_05"), STRING(""))
     RETURN
 EVT_END()
 
+/**
+ * Map init script of win_04, Flurrie's house: (retail) marks the route on the log map, registers exits,
+ * plays the Boggly Woods BGM dipped and filtered as indoors, places the save block,
+ * spawns meet_clouda at STORY_STG2_04 and meet_clouda2 at STORY_STG2_05,
+ * swaps the west exit for bero_witchtrio (to win_00) at STORY_STG2_05_02,
+ * replaces the inner door's exit with touch_door until STORY_STG2_08,
+ * spawns cloud_toujou at STORY_STG2_03_02 and hides "hika_".
+ */
 EVT_BEGIN(win_04_init_evt)
-    SET_VALUE(GSWF(253), 1)
+#if VERSION >= VERSION_JP
+    SET_VALUE(GSWF(GSWF_LOG_MAP_WIN_ROUTE_SHOWN), 1)
+#endif
     SET_VALUE(LW(0), PTR(bero_entry_data))
     CALL(evt_bero_get_info)
-    CALL_CHILD(PTR(evt_bero_info_run))
-    CALL(evt_snd_bgmon, 512, STRING("BGM_STG2_WIN1"))
-    CALL(evt_snd_envon, 272, STRING("ENV_STG2_WIN2"))
-    CALL(evt_snd_bgmoff, 22528)
+    CALL_CHILD(evt_bero_info_run)
+    CALL(evt_snd_bgmon, PSND_FADE_OUT, STRING("BGM_STG2_WIN1"))
+    CALL(evt_snd_envon, PSND_FADE_RESTART | PSND_FADE_IN, STRING("ENV_STG2_WIN2"))
+    CALL(evt_snd_bgmoff, PSND_FADE_DIP_TO(60))
     CALL(evt_snd_env_lpf, 0, 800)
     CALL(evt_mobj_save_blk, STRING("mobj_save"), -125, 60, -95, 0, 0)
-    IF_INT_EQUAL(GSW(0), 80)
-        SPAWN_EVENT(PTR(meet_clouda))
+    IF_INT_EQUAL(GSW(GSW_STORY_PROGRESS), STORY_STG2_04_PLANE_PANEL)
+        SPAWN_EVENT(meet_clouda)
     END_IF
-    IF_INT_EQUAL(GSW(0), 81)
-        SPAWN_EVENT(PTR(meet_clouda2))
+    IF_INT_EQUAL(GSW(GSW_STORY_PROGRESS), STORY_STG2_05_A_SHY_FLURRIE)
+        SPAWN_EVENT(meet_clouda2)
     END_IF
-    IF_INT_EQUAL(GSW(0), 83)
+    IF_INT_EQUAL(GSW(GSW_STORY_PROGRESS), STORY_STG2_05_02_FLURRIE_REQUEST)
         SET_VALUE(LW(0), STRING("w_bero"))
-        CALL_CHILD(PTR(bero_case_switch_off))
+        CALL_CHILD(bero_case_switch_off)
         CALL(evt_bero_overwrite, STRING("w_bero"), PTR(bero_witchtrio))
         SET_VALUE(LW(0), STRING("w_bero"))
-        CALL_CHILD(PTR(bero_case_switch_on))
+        CALL_CHILD(bero_case_switch_on)
     END_IF
-    IF_INT_LESS_OR_EQUAL(GSW(0), 86)
+    IF_INT_LESS_OR_EQUAL(GSW(GSW_STORY_PROGRESS), STORY_STG2_08_SHADOW_SIRENS_LOSE)
         SET_VALUE(LW(0), STRING("e_bero"))
-        CALL_CHILD(PTR(bero_case_switch_off))
-        CALL(evt_run_case_evt, 9, 1, STRING("e_bero"), 0, PTR(touch_door), 0)
+        CALL_CHILD(bero_case_switch_off)
+        CALL(evt_run_case_evt, CASE_COND_FRONT_A, 1, STRING("e_bero"), 0, PTR(touch_door), 0)
     END_IF
-    IF_INT_EQUAL(GSW(0), 76)
-        SPAWN_EVENT(PTR(cloud_toujou))
+    IF_INT_EQUAL(GSW(GSW_STORY_PROGRESS), STORY_STG2_03_02_SEALED_ENTRANCE_2)
+        SPAWN_EVENT(cloud_toujou)
     END_IF
-    CALL(evt_mapobj_flag_onoff, 1, 1, STRING("hika_"), 1)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("hika_"), MAPOBJ_FLAG_HIDE)
     RETURN
 EVT_END()
 
+/** Returns a random float in [min, max] from rand(). */
 static f32 randf(f32 min, f32 max) {
     f32 r = rand() / 32767.0f;
 
     return (max - min) * r + min;
 }
 
-USER_FUNC(evt_flower_init) {
+/** Script helper: allocates the rose-petal work area (55 flowers) and stores it in LW(10). */
+static USER_FUNC(evt_flower_init) {
     FlowerWork* wp = _mapAlloc(sizeof(FlowerWork));
 
     wp->count = 55;
@@ -1454,7 +1542,12 @@ USER_FUNC(evt_flower_init) {
     return EVT_RETURN_DONE;
 }
 
-USER_FUNC(evt_flower) {
+/**
+ * Script helper: ticks every flower: each starts
+ * after a random delay (0 to 99 frames) at its rose_table_direct position,
+ * grows by 0.08 a frame to its target scale while fading in by 20 alpha a frame, and all are drawn in 2D.
+ */
+static USER_FUNC(evt_flower) {
     FlowerWork* wp = (FlowerWork*)event->lwData[10];
     Flower* fl = wp->flowers;
     s32 i;
@@ -1492,7 +1585,8 @@ USER_FUNC(evt_flower) {
     return EVT_RETURN_DONE;
 }
 
-USER_FUNC(evt_flower_end) {
+/** Script helper: resets all flowers' states so they start fading. */
+static USER_FUNC(evt_flower_end) {
     FlowerWork* wp = (FlowerWork*)event->lwData[10];
     Flower* fl = wp->flowers;
     s32 i;
@@ -1503,7 +1597,8 @@ USER_FUNC(evt_flower_end) {
     return EVT_RETURN_DONE;
 }
 
-USER_FUNC(evt_flower_end_main) {
+/** Script helper: fades the flowers' alpha by 10 per frame until they are gone, drawing them each frame. */
+static USER_FUNC(evt_flower_end_main) {
     FlowerWork* wp = (FlowerWork*)event->lwData[10];
     Flower* fl = wp->flowers;
     s32 i;
@@ -1525,7 +1620,8 @@ USER_FUNC(evt_flower_end_main) {
     return EVT_RETURN_DONE;
 }
 
-USER_FUNC(flower_pos_report) {
+/** Loops over the flowers doing nothing; only flower_disp_pos calls it. Guess: its debug output was compiled out. */
+static USER_FUNC(flower_pos_report) {
     FlowerWork* wp = (FlowerWork*)event->lwData[10];
     s32 i;
 

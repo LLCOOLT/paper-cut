@@ -1,110 +1,54 @@
+// jin_06 (ダイム寺院, Creepy Steeple): room with a Flower Saver chest, a jump stand and a peel-away wall; doors to jin_07.
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
 #include "evt/evt_bero.h"
+#include "evt/evt_cam.h"
+#include "evt/evt_cloud.h"
+#include "evt/evt_hit.h"
+#include "evt/evt_item.h"
+#include "driver/itemdrv.h"
+#include "evt/evt_map.h"
+#include "evt/evt_mario.h"
+#include "evt/evt_mobj.h"
+#include "evt/evt_party.h"
+#include "evt/evt_seq.h"
+#include "evt/evt_snd.h"
 #include "jin.h"
+#include "evt/evt_story.h"
+#include "driver/mapdrv.h"
 
-#pragma force_active on
-
-USER_FUNC(evt_bero_get_info);
-USER_FUNC(evt_bero_mapchange);
-USER_FUNC(evt_cam_letter_box_disable);
-USER_FUNC(evt_cam_road_reset);
-USER_FUNC(evt_cloud_ent);
-USER_FUNC(evt_cloud_init);
-USER_FUNC(evt_hitobj_onoff);
-USER_FUNC(evt_item_entry);
-USER_FUNC(evt_item_flag_on);
-USER_FUNC(evt_item_get_item);
-USER_FUNC(evt_kagemario_init);
-USER_FUNC(evt_mapobj_flag_onoff);
-USER_FUNC(evt_mapobj_rotate);
-USER_FUNC(evt_mario_get_party);
-USER_FUNC(evt_mario_get_pos);
-USER_FUNC(evt_mario_jump_jumpstand);
-USER_FUNC(evt_mario_key_onoff);
-USER_FUNC(evt_mario_set_pos);
-USER_FUNC(evt_mario_wait_landon);
-USER_FUNC(evt_mobj_get_position);
-USER_FUNC(evt_mobj_itembox);
-USER_FUNC(evt_mobj_jumpstand_red);
-USER_FUNC(evt_mobj_wait_animation_end);
-USER_FUNC(evt_party_get_name_hitobj_ride);
-USER_FUNC(evt_party_jump_pos);
-USER_FUNC(evt_party_set_pos);
-USER_FUNC(evt_seq_wait);
-USER_FUNC(evt_snd_bgmon);
-USER_FUNC(evt_snd_envon);
-USER_FUNC(evt_snd_set_rev_mode);
-
-f32 fd_jin_06_negone_one_374[2] __attribute__((aligned(8)));
-f32 fd_jin_06_neg_one_382;
-f32 fd_jin_06___local_PI_383;
-f32 fd_jin_06___local_3PIO2_385;
-f32 fd_jin_06_one_negone_373[2] __attribute__((aligned(8)));
-f32 fd_jin_06___local_PIO2_384;
-f32 fd_jin_06_one_381;
-f32 fd_jin_06_negone_one_360[2] __attribute__((aligned(8)));
-f32 fd_jin_06_neg_one_365;
-f32 fd_jin_06___local_PI_366;
-f32 fd_jin_06___local_3PIO2_368;
-f32 fd_jin_06_one_negone_359[2] __attribute__((aligned(8)));
-f32 fd_jin_06___local_PIO2_367;
-f32 fd_jin_06_one_364;
-static EvtWord w_close[12];
-static EvtWord w_open[12];
 static BeroEntry bero_entry_data[2];
-EvtWord jin_06_wall_open_evt[5];
-EvtWord jin_06_jumpstand[53];
-static EvtWord mobj_box00[34];
-EvtWord jin_06_init_evt[165];
+extern EvtWord jin_06_wall_open_evt[];
+extern EvtWord jin_06_jumpstand[];
 
-f32 fd_jin_06_negone_one_374[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_jin_06_neg_one_382 = -1.0f;
-
-f32 fd_jin_06___local_PI_383 = 3.1415927f;
-
-f32 fd_jin_06___local_3PIO2_385 = 4.712389f;
-
-f32 fd_jin_06_one_negone_373[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_jin_06___local_PIO2_384 = 1.5707964f;
-
-f32 fd_jin_06_one_381 = 1.0f;
-
-f32 fd_jin_06_negone_one_360[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_jin_06_neg_one_365 = -1.0f;
-
-f32 fd_jin_06___local_PI_366 = 3.1415927f;
-
-f32 fd_jin_06___local_3PIO2_368 = 4.712389f;
-
-f32 fd_jin_06_one_negone_359[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_jin_06___local_PIO2_367 = 1.5707964f;
-
-f32 fd_jin_06_one_364 = 1.0f;
-
+/**
+ * Door animation callback: closes door07 as Mario arrives through w_bero (from jin_07);
+ * LW(0) is the door angle and the door turns around Y by 0.44 times it, negated.
+ */
 static EVT_BEGIN(w_close)
     MULTIPLY_FLOAT(LW(0), FLOAT(-0.44433594f))
     CALL(evt_mapobj_rotate, 0, STRING("door07"), 0, LW(0), 0)
     RETURN
 EVT_END()
 
+/**
+ * Door animation callback: opens door07 as Mario leaves through w_bero (to jin_07);
+ * LW(0) is the door angle and the door turns around Y by 0.44 times it.
+ */
 static EVT_BEGIN(w_open)
     MULTIPLY_FLOAT(LW(0), FLOAT(0.44433594f))
     CALL(evt_mapobj_rotate, 0, STRING("door07"), 0, LW(0), 0)
     RETURN
 EVT_END()
 
+/** Doors of this room: the west exit (w_bero) to jin_07. */
 static BeroEntry bero_entry_data[] = {
     {
         "w_bero", // hitName
         1, // type
         2, // sfxId
-        20000, // directionId
-        100000, // centerPosition
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         NULL, // enterEvent
@@ -120,11 +64,17 @@ static BeroEntry bero_entry_data[] = {
     {0},
 };
 
+/** Script run when the peeling wall (a_mekure) is flipped away: sets GSWF_JIN06_PEELING_WALL_BLOWN so it stays open. */
 EVT_BEGIN(jin_06_wall_open_evt)
-    SET_VALUE(GSWF(2229), 1)
+    SET_VALUE(GSWF(GSWF_JIN06_PEELING_WALL_BLOWN), 1)
     RETURN
 EVT_END()
 
+/**
+ * Script for the red jump stand (mobj_jump) at the bottom of the room:
+ * Mario is launched up (the partner jumps up after him once it is standing on the stand) through the hole to the
+ * floor above.
+ */
 EVT_BEGIN(jin_06_jumpstand)
     BEGIN_INLINE_EVENT
         CALL(evt_mario_get_party, LW(0))
@@ -145,30 +95,44 @@ EVT_BEGIN(jin_06_jumpstand)
     RETURN
 EVT_END()
 
+/**
+ * Chest script for the Flower Saver chest (mobj_box00):
+ * the item appears at the chest while it opens and Mario receives the badge; control is locked meanwhile.
+ */
 static EVT_BEGIN(mobj_box00)
     CALL(evt_mario_key_onoff, 0)
     CALL(evt_mobj_get_position, STRING("mobj_box00"), LW(0), LW(1), LW(2))
-    CALL(evt_item_entry, STRING("item00"), 281, LW(0), LW(1), LW(2), 16, -1, 0)
-    CALL(evt_item_flag_on, STRING("item00"), 258)
+    CALL(evt_item_entry, STRING("item00"), ITEM_FLOWER_SAVER, LW(0), LW(1), LW(2), ITEM_ENTRY_FIXED, -1, 0)
+#if VERSION <= VERSION_DEMO_JP
+    CALL(evt_item_flag_on, STRING("item00"), ITEM_FLAG_NO_TOUCH)
+#else
+    CALL(evt_item_flag_on, STRING("item00"), ITEM_FLAG_BADGE_RETURN | ITEM_FLAG_NO_TOUCH)
+#endif
     CALL(evt_mobj_wait_animation_end, STRING("mobj_box00"))
     CALL(evt_item_get_item, STRING("item00"))
     CALL(evt_mario_key_onoff, 1)
     RETURN
 EVT_END()
 
+/**
+ * Creepy Steeple jin_06 map init: sets music, the shadow-Mario tint and the exit,
+ * adds the Flower Saver chest and the red jump stand,
+ * handles Mario falling in from the hole in the jin_00 floor (returning him to jin_00 when he goes back above
+ * height 365), the peeling wall, and moves the story to "Push the statue" at least.
+ */
 EVT_BEGIN(jin_06_init_evt)
-    CALL(evt_snd_bgmon, 512, STRING("BGM_STG4_JIN1"))
-    CALL(evt_snd_envon, 272, STRING("ENV_STG4_JIN1"))
+    CALL(evt_snd_bgmon, PSND_FADE_OUT, STRING("BGM_STG4_JIN1"))
+    CALL(evt_snd_envon, PSND_FADE_RESTART | PSND_FADE_IN, STRING("ENV_STG4_JIN1"))
     CALL(evt_snd_set_rev_mode, 2)
     CALL(evt_kagemario_init)
     SET_VALUE(LW(0), PTR(bero_entry_data))
     CALL(evt_bero_get_info)
-    CALL_CHILD(PTR(evt_bero_info_run))
-    CALL_CHILD(PTR(evt_usu_kagemario_party_kill))
-    CALL(evt_mobj_itembox, STRING("mobj_box00"), 650, 0, -150, 0, 0, PTR(mobj_box00), GSWF(2238))
+    CALL_CHILD(evt_bero_info_run)
+    CALL_CHILD(evt_usu_kagemario_party_kill)
+    CALL(evt_mobj_itembox, STRING("mobj_box00"), 650, 0, -150, 0, 0, PTR(mobj_box00), GSWF(GSWF_JIN06_FLOWER_SAVER_CHEST_OPENED))
     CALL(evt_mobj_jumpstand_red, 0, STRING("mobj_jump"), 0, 0, 0, PTR(jin_06_jumpstand), 0)
-    IF_INT_NOT_EQUAL(GSWF(2079), 0)
-        SET_VALUE(GSWF(2079), 0)
+    IF_INT_NOT_EQUAL(GSWF(GSWF_STG4_DROP_IN_ENTRANCE), 0)
+        SET_VALUE(GSWF(GSWF_STG4_DROP_IN_ENTRANCE), 0)
         BEGIN_INLINE_EVENT
             CALL(evt_cam_letter_box_disable, 1)
             CALL(evt_mario_key_onoff, 0)
@@ -181,7 +145,7 @@ EVT_BEGIN(jin_06_init_evt)
             CALL(evt_cam_letter_box_disable, 0)
         END_INLINE_EVENT
         SET_VALUE(LW(0), 1)
-        ELSE
+    ELSE
         SET_VALUE(LW(0), 0)
     END_IF
     BEGIN_INLINE_EVENT
@@ -204,16 +168,15 @@ EVT_BEGIN(jin_06_init_evt)
         END_LOOP
         CALL(evt_bero_mapchange, STRING("jin_00"), STRING("ana"))
     END_INLINE_EVENT
-    IF_INT_EQUAL(GSWF(2229), 0)
+    IF_INT_EQUAL(GSWF(GSWF_JIN06_PEELING_WALL_BLOWN), 0)
         CALL(evt_cloud_init)
-        CALL(evt_cloud_ent, 0, STRING("mekure"), STRING("a_mekure\0\0\0"), PTR(jin_06_wall_open_evt))
-        ELSE
-        CALL(evt_mapobj_flag_onoff, 1, 1, STRING("mekure"), 1)
-        CALL(evt_hitobj_onoff, STRING("a_mekure\0\0\0"), 0, 0)
+        CALL(evt_cloud_ent, 0, STRING("mekure"), STRING("a_mekure"), PTR(jin_06_wall_open_evt))
+    ELSE
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("mekure"), MAPOBJ_FLAG_HIDE)
+        CALL(evt_hitobj_onoff, STRING("a_mekure"), 0, 0)
     END_IF
-    IF_INT_LESS(GSW(0), 195)
-        SET_VALUE(GSW(0), 195)
+    IF_INT_LESS(GSW(GSW_STORY_PROGRESS), STORY_STG4_09_01_PUSH_THE_STATUE)
+        SET_VALUE(GSW(GSW_STORY_PROGRESS), STORY_STG4_09_01_PUSH_THE_STATUE)
     END_IF
     RETURN
 EVT_END()
-

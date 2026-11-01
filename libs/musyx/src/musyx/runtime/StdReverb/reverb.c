@@ -6,11 +6,9 @@
 
 #include "musyx/sal.h"
 
-// TTYD symbols.txt names this static U_HandleReverb (avoids clashing with creverb.c's HandleReverb)
-#define HandleReverb U_HandleReverb
-
 extern double pow(double x, double y);
 
+/** Sets the read point of a delay line so its output lags the input by len samples. */
 static inline void DLsetdelay(_SND_REVHI_DELAYLINE* delayline, s32 len) {
   delayline->outPoint = delayline->inPoint - (len * sizeof(f32));
   while (delayline->outPoint < 0) {
@@ -18,6 +16,7 @@ static inline void DLsetdelay(_SND_REVHI_DELAYLINE* delayline, s32 len) {
   }
 }
 
+/** Allocates a delay line of length samples, clears it and sets a default lag of half its length. */
 static inline void DLcreate(_SND_REVHI_DELAYLINE* delayline, s32 length) {
   delayline->length = (s32)length * sizeof(f32);
   delayline->inputs = (f32*)salMalloc(length * sizeof(f32));
@@ -28,7 +27,13 @@ static inline void DLcreate(_SND_REVHI_DELAYLINE* delayline, s32 length) {
   delayline->outPoint = 0;
 }
 
+/** Frees a delay line's sample buffer. */
 static inline void DLdelete(_SND_REVHI_DELAYLINE* delayline) { salFree(delayline->inputs); }
+/**
+ * Builds the high-quality reverb for 32 kHz: per channel three comb filters (lengths 1789, 1999, 2333)
+ * and three all-pass filters (433, 149 and a per-channel length), mix, damping,
+ * crosstalk and an optional pre-delay. Returns FALSE if a setting is out of range.
+ */
 bool ReverbHICreate(_SND_REVHI_WORK* rev, f32 coloration, f32 time, f32 mix, f32 damping,
                     f32 preDelay, f32 crosstalk) {
   static int lens[] = {1789, 1999, 2333, 433, 149, 47, 73, 67};
@@ -86,6 +91,10 @@ bool ReverbHICreate(_SND_REVHI_WORK* rev, f32 coloration, f32 time, f32 mix, f32
 }
 
 #if MUSY_TARGET == MUSY_TARGET_PC // stripped in TTYD (needed by reverb_fx.c on PC)
+/**
+ * Changes the settings of a high-quality reverb by freeing its delay lines
+ * and creating it again (removed from this game build).
+ */
 bool ReverbHIModify(struct _SND_REVHI_WORK* rv, float coloration, float time, float mix,
                     float damping, float preDelay, float crosstalk) {
   u8 i; // r30
@@ -126,12 +135,15 @@ bool ReverbHIModify(struct _SND_REVHI_WORK* rv, float coloration, float time, fl
 #endif
 
 #ifdef __MWERKS__
+/**
+ * Constants for the standard reverb: filter gains 0.3 and 0.6, and the integer-to-float conversion constant.
+ */
 static const float value0_3 = 0.3f;
 static const float value0_6 = 0.6f;
 static const double i2fMagic = 4.503601774854144E15;
 
 /* clang-format off */
-/* TODO: Properly rework these to use input arguments and cleanup ASM */
+/* Original MusyX asm: stays asm (project rule); empty stubs for other compilers. */
 static asm void DoCrossTalk(s32* a, s32* b, f32 start, f32 end) {
   nofralloc
   stwu r1, -0x30(r1)
@@ -243,7 +255,7 @@ L_00000710:
 #else
 /* clang-format on */
 static void DoCrossTalk(s32* a, s32* b, f32 start, f32 end) {
-  // TODO: Reimplement in C
+  // No C version: the original MusyX asm above stays asm (project rule).
 }
 #endif
 
@@ -607,10 +619,14 @@ L_00000C6C:
 /* clang-format on */
 #else
 static void HandleReverb(s32*, SND_AUX_REVERBHI* rev, s32) {
-  // TODO: Reimplement in C
+  // No C version: the original MusyX asm above stays asm (project rule).
 }
 #endif
 
+/**
+ * Runs the high-quality reverb on one frame: for the left channel it first applies the crosstalk blend with the
+ * right channel (if any), then reverberates the left, right and surround buffers.
+ */
 void ReverbHICallback(s32* left, s32* right, s32* surround, SND_AUX_REVERBHI* rev) {
   u8 i;
   for (i = 0; i < 3; ++i) {
@@ -632,6 +648,10 @@ void ReverbHICallback(s32* left, s32* right, s32* surround, SND_AUX_REVERBHI* re
 }
 
 #if MUSY_TARGET == MUSY_TARGET_PC // stripped in TTYD (needed by reverb_fx.c on PC)
+/**
+ * Frees the nine all-pass and nine comb delay lines
+ * and the pre-delay buffers of the high-quality reverb (removed from this game build).
+ */
 void ReverbHIFree(_SND_REVHI_WORK* rv) {
   u8 i;
   for (i = 0; i < 9; ++i) {

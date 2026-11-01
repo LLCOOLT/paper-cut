@@ -1,3 +1,4 @@
+// Paper Mario 64 effect: a rotating, expanding sprite with a color-cycling flash behind it; lasts `timer` frames.
 #include "eff/n64/eff_wangflush_n64.h"
 #include "eff/eff_n64.h"
 #include "driver/camdrv.h"
@@ -5,24 +6,32 @@
 #include "memory.h"
 #include <dolphin/gx.h>
 #include <dolphin/mtx.h>
-#ifndef TARGET_PC /* PC port: the host libc declares these */
-double sin(double x);
-#endif
-
+#include "version.h"
+#include "libc_decls.h"
 typedef struct EffWangFlushN64Work {
-    s32 type;      // 0x0
-    Vec position;  // 0x4
-    f32 rotation;  // 0x10
-    f32 rotSpeed;  // 0x14
-    f32 scale;     // 0x18
-    f32 scaleAdd;  // 0x1C
+    s32 type;       // 0x0
+    Vec position;   // 0x4
+    f32 rotation;   // 0x10
+    f32 rotSpeed;   // 0x14
+    f32 scale;      // 0x18
+    f32 scaleAdd;   // 0x1C
     f32 flashScale; // 0x20
-    s32 alpha;     // 0x24
+    s32 alpha;      // 0x24
     s32 flashAlpha; // 0x28
-    s32 timer;     // 0x2C
-    s32 frame;     // 0x30
+    s32 timer;      // 0x2C
+    s32 frame;      // 0x30
 } EffWangFlushN64Work;
 
+#if VERSION <= VERSION_DEMO_JP
+// The demo defines the colours first
+static u8 color_rotation_data[] = {
+    0xFF, 0xFF, 0x52, 0xFF, 0xFF, 0x52, 0xB5, 0x94,
+    0x00, 0xB5, 0x94, 0x00, 0xFF, 0xFF, 0xD6, 0xFF,
+    0xFF, 0xD6, 0xB5, 0x94, 0x00, 0xB5, 0x94, 0x00,
+};
+#endif
+
+/** 16x16 quad drawn for both the colour-cycling flash and the spinning white sprite. */
 static effN64Vtx size16x16_tex64x64_vtx[] = {
     {-8, -8, 0, 0, 1024, 0, 0, 0, 255},
     {8, -8, 0, 2048, 1024, 0, 0, 0, 255},
@@ -30,21 +39,25 @@ static effN64Vtx size16x16_tex64x64_vtx[] = {
     {-8, 8, 0, 0, 3072, 0, 0, 0, 255},
 };
 
+#if VERSION >= VERSION_JP
+/** Yellow, brown and cream colours the flash behind the sprite cycles through, three bytes per step. */
 static u8 color_rotation_data[] = {
     0xFF, 0xFF, 0x52, 0xFF, 0xFF, 0x52, 0xB5, 0x94,
     0x00, 0xB5, 0x94, 0x00, 0xFF, 0xFF, 0xD6, 0xFF,
     0xFF, 0xD6, 0xB5, 0x94, 0x00, 0xB5, 0x94, 0x00,
 };
+#endif
 
-void effWangFlushMain(EffectEntry* effect);
-void effWangFlushDisp(CameraId cameraId, EffectEntry* effect);
+static void effWangFlushMain(EffectEntry* effect);
+static void effWangFlushDisp(CameraId cameraId, EffectEntry* effect);
 
+/** Spawns a flash at (x, y, z) lasting `timer` frames. Spawned by event scripts through evt_eff. */
 EffectEntry* effWangFlushN64Entry(s32 type, f32 x, f32 y, f32 z, s32 timer) {
     EffectEntry* effect;
     EffWangFlushN64Work* work;
 
     effect = effEntry();
-    effect->type = "WangflushN64\0\0\0";
+    effect->type = "WangflushN64";
     effect->count = 1;
     work = __memAlloc(HEAP_EFFECT, sizeof(EffWangFlushN64Work));
     effect->userdata = work;
@@ -69,7 +82,13 @@ EffectEntry* effWangFlushN64Entry(s32 type, f32 x, f32 y, f32 z, s32 timer) {
     return effect;
 }
 
-void effWangFlushMain(EffectEntry* effect) {
+/**
+ * The sprite's alpha jumps toward 218 over the first 6 frames, then drops 22% per frame;
+ * its size grows faster every frame (+0.29 per frame per frame) and its spin slows 7% per frame.
+ * The flash behind it pulses in size (0.4-1.4) and alpha on sine waves. Deletes when the timer runs out.
+ * CAMERA_3D, layer 2.
+ */
+static void effWangFlushMain(EffectEntry* effect) {
     s32 timer;
     s32 frame;
     f32 sv;
@@ -105,7 +124,11 @@ void effWangFlushMain(EffectEntry* effect) {
     dispEntry(CAMERA_3D, dispCalcZ(&position), 2, (DispCallback)effWangFlushDisp, effect);
 }
 
-void effWangFlushDisp(CameraId cameraId, EffectEntry* effect) {
+/**
+ * Draws texture 0x1C camera-facing: for type 0 first a pulsing flash whose colour cycles through
+ * color_rotation_data, then the white sprite turned by its spin, at its size and alpha.
+ */
+static void effWangFlushDisp(CameraId cameraId, EffectEntry* effect) {
     CameraEntry* camera;
     EffWangFlushN64Work* work;
     s32 idx;

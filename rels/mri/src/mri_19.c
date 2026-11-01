@@ -1,82 +1,34 @@
+// mri_19 (巨木の中, The Great Tree): a pipe room with planters, a wind event (cloud_wind_event) and a plane
+// panel (hikou).
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
 #include "evt/evt_bero.h"
 #include "evt/evt_sub.h"
+#include "evt/evt_cloud.h"
+#include "evt/evt_hit.h"
+#include "evt/evt_map.h"
+#include "evt/evt_mobj.h"
+#include "evt/evt_snd.h"
+#include "mri_puni.h"
 #include "mri.h"
 #include "data_tables.h"
+#include "evt/evt_story.h"
+#include "driver/mapdrv.h"
 
-#pragma force_active on
-
-USER_FUNC(evt_bero_get_info);
-USER_FUNC(evt_cloud_ent);
-USER_FUNC(evt_cloud_init);
-USER_FUNC(evt_hitobj_attr_onoff);
-USER_FUNC(evt_hitobj_onoff);
-USER_FUNC(evt_map_entry_airport_harbor);
-USER_FUNC(evt_map_playanim);
-USER_FUNC(evt_mapobj_flag_onoff);
-USER_FUNC(evt_mobj_powerupblk);
-USER_FUNC(evt_puni_mem_init);
-USER_FUNC(evt_puni_set_hamari);
-USER_FUNC(evt_puni_set_yuka);
-USER_FUNC(evt_snd_bgmoff);
-USER_FUNC(evt_snd_bgmon);
-USER_FUNC(evt_snd_envon);
-
-f32 fd_mri_19_negone_one_374[2] __attribute__((aligned(8)));
-f32 fd_mri_19_neg_one_382;
-f32 fd_mri_19___local_PI_383;
-f32 fd_mri_19___local_3PIO2_385;
-f32 fd_mri_19_one_negone_373[2] __attribute__((aligned(8)));
-f32 fd_mri_19___local_PIO2_384;
-f32 fd_mri_19_one_381;
-f32 fd_mri_19_negone_one_360[2] __attribute__((aligned(8)));
-f32 fd_mri_19_neg_one_365;
-f32 fd_mri_19___local_PI_366;
-f32 fd_mri_19___local_3PIO2_368;
-f32 fd_mri_19_one_negone_359[2] __attribute__((aligned(8)));
-f32 fd_mri_19___local_PIO2_367;
-f32 fd_mri_19_one_364;
 static BeroEntry bero_entry_data[5];
 static KusaAccess ueki_access_data[7];
-static EvtWord cloud_wind_event[39];
-EvtWord mri_19_init_evt[146];
 
-f32 fd_mri_19_negone_one_374[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_mri_19_neg_one_382 = -1.0f;
-
-f32 fd_mri_19___local_PI_383 = 3.1415927f;
-
-f32 fd_mri_19___local_3PIO2_385 = 4.712389f;
-
-f32 fd_mri_19_one_negone_373[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_mri_19___local_PIO2_384 = 1.5707964f;
-
-f32 fd_mri_19_one_381 = 1.0f;
-
-f32 fd_mri_19_negone_one_360[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_mri_19_neg_one_365 = -1.0f;
-
-f32 fd_mri_19___local_PI_366 = 3.1415927f;
-
-f32 fd_mri_19___local_3PIO2_368 = 4.712389f;
-
-f32 fd_mri_19_one_negone_359[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_mri_19___local_PIO2_367 = 1.5707964f;
-
-f32 fd_mri_19_one_364 = 1.0f;
-
+/**
+ * Exits of mri_19: pipe dokan1 to mri_05 (dokan4); pipe dokan2 to mri_06 (dokan1); dokan3 (scripted pipe);
+ * dokan4 (scripted pipe).
+ */
 static BeroEntry bero_entry_data[] = {
     {
         "dokan1", // hitName
         2, // type
         0, // sfxId
-        2, // directionId
-        100000, // centerPosition
+        BERO_DIR_E, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         NULL, // enterEvent
@@ -92,8 +44,8 @@ static BeroEntry bero_entry_data[] = {
         "dokan2", // hitName
         2, // type
         0, // sfxId
-        9, // directionId
-        100000, // centerPosition
+        BERO_DIR_DOWN, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         NULL, // enterEvent
@@ -109,8 +61,8 @@ static BeroEntry bero_entry_data[] = {
         "dokan3", // hitName
         2, // type
         0, // sfxId
-        9, // directionId
-        100000, // centerPosition
+        BERO_DIR_DOWN, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         NULL, // enterEvent
@@ -125,8 +77,8 @@ static BeroEntry bero_entry_data[] = {
         "dokan4", // hitName
         2, // type
         0, // sfxId
-        6, // directionId
-        100000, // centerPosition
+        BERO_DIR_W, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         NULL, // enterEvent
@@ -140,6 +92,7 @@ static BeroEntry bero_entry_data[] = {
     {0},
 };
 
+/** Plants Mario can search in mri_19: A_ueki01, A_ueki02, A_ueki03, A_ueki04, A_ueki05, A_ueki08. */
 static KusaAccess ueki_access_data[] = {
     {1, "A_ueki01", "S_ueki01", NULL},
     {1, "A_ueki02", "S_ueki02", NULL},
@@ -150,21 +103,32 @@ static KusaAccess ueki_access_data[] = {
     {4, NULL, NULL, NULL},
 };
 
+/**
+ * Wind event when Flurrie blows the cloud away:
+ * plays the success jingle for 2 seconds, then registers the hidden airport panel (hikou and hikou1) as
+ * plane-mode harbors, switches the panel's collision attribute on and sets GSWF_MRI19_GUST_REVEALED_PANEL.
+ */
 static EVT_BEGIN(cloud_wind_event)
     BEGIN_INLINE_EVENT
-        CALL(evt_snd_bgmoff, 1024)
-        CALL(evt_snd_bgmon, 1, STRING("BGM_FF_ENV_SUCCESS1"))
+        CALL(evt_snd_bgmoff, PSND_FADE_HOLD)
+        CALL(evt_snd_bgmon, PSND_CH(1), STRING("BGM_FF_ENV_SUCCESS1"))
         WAIT_MS(2000)
-        CALL(evt_snd_bgmoff, 513)
-        CALL(evt_snd_bgmon, 288, 0)
+        CALL(evt_snd_bgmoff, PSND_FADE_OUT | PSND_CH(1))
+        CALL(evt_snd_bgmon, PSND_FADE_RESUME | PSND_FADE_IN, 0)
     END_INLINE_EVENT
     CALL(evt_map_entry_airport_harbor, 0, STRING("hikou"), STRING("a_hi"))
     CALL(evt_map_entry_airport_harbor, 0, STRING("hikou1"), STRING("a_hi1"))
     CALL(evt_hitobj_attr_onoff, 1, 1, STRING("a_hi"), 16)
-    SET_VALUE(GSWF(2874), 1)
+    SET_VALUE(GSWF(GSWF_MRI19_GUST_REVEALED_PANEL), 1)
     RETURN
 EVT_END()
 
+/**
+ * Map init script of mri_19, a pipe room with planters and a Shine Sprite block:
+ * sets up the Puni, the planters and the water animations;
+ * until Flurrie's wind has blown away the cloud (GSWF_MRI19_GUST_REVEALED_PANEL) it hides the plane panel
+ * (hikou) behind a cloud, afterwards the panel is open for the paper-plane ride.
+ */
 EVT_BEGIN(mri_19_init_evt)
     CALL(evt_puni_mem_init)
     CALL(evt_puni_set_yuka, 19, 110, -319, -1000, -1000, 0, 0)
@@ -173,38 +137,37 @@ EVT_BEGIN(mri_19_init_evt)
     SET_VALUE(LW(7), 0)
     SET_VALUE(LW(8), 0)
     SET_VALUE(LW(9), 0)
-    CALL_CHILD(PTR(mri_puni_init))
-    SPAWN_EVENT(PTR(puni_disp_info))
-    SPAWN_EVENT(PTR(mri_countdown))
-    SWITCH(GSW(0))
-        CASE_BETWEEN(109, 110)
-        CALL(evt_snd_bgmon, 512, STRING("BGM_EVT_DANGER4"))
-        CALL(evt_snd_envon, 272, STRING("ENV_STG2_MRI9"))
+    CALL_CHILD(mri_puni_init)
+    SPAWN_EVENT(puni_disp_info)
+    SPAWN_EVENT(mri_countdown)
+    SWITCH(GSW(GSW_STORY_PROGRESS))
+        CASE_BETWEEN(STORY_STG2_23_TIME_BOMB_ACTIVATED, STORY_STG2_23_01_X_NAUT_BATTLE)
+        CALL(evt_snd_bgmon, PSND_FADE_OUT, STRING("BGM_EVT_DANGER4"))
+        CALL(evt_snd_envon, PSND_FADE_RESTART | PSND_FADE_IN, STRING("ENV_STG2_MRI9"))
         CASE_DEFAULT
-        CALL(evt_snd_bgmon, 512, STRING("BGM_STG2_MRI1"))
-        CALL(evt_snd_envon, 272, STRING("ENV_STG2_MRI1"))
+        CALL(evt_snd_bgmon, PSND_FADE_OUT, STRING("BGM_STG2_MRI1"))
+        CALL(evt_snd_envon, PSND_FADE_RESTART | PSND_FADE_IN, STRING("ENV_STG2_MRI1"))
     END_SWITCH
     SET_VALUE(LW(0), PTR(bero_entry_data))
     CALL(evt_bero_get_info)
-    CALL_CHILD(PTR(evt_bero_info_run))
-    CALL(evt_mobj_powerupblk, STRING("pblk00"), -360, -175, 25, 0, GSWF(5545), 0)
+    CALL_CHILD(evt_bero_info_run)
+    CALL(evt_mobj_powerupblk, STRING("pblk00"), -360, -175, 25, 0, GSWF(GSWF_MRI19_SHINE_SPRITE), 0)
     SET_VALUE(LW(0), PTR(ueki_access_data))
-    CALL_CHILD(PTR(evt_sub_kusa_access_entry))
+    CALL_CHILD(evt_sub_kusa_access_entry)
     CALL(evt_map_playanim, STRING("mizu_01"), 1, 0)
     CALL(evt_map_playanim, STRING("mizu_02"), 1, 0)
     CALL(evt_map_playanim, STRING("awa_01"), 1, 0)
     CALL(evt_map_playanim, STRING("awa_02"), 1, 0)
-    IF_INT_EQUAL(GSWF(2874), 0)
+    IF_INT_EQUAL(GSWF(GSWF_MRI19_GUST_REVEALED_PANEL), 0)
         CALL(evt_cloud_init)
-        CALL(evt_cloud_ent, 0, STRING("S_f2_isk"), STRING("A_f2_isk\0\0\0"), PTR(cloud_wind_event))
+        CALL(evt_cloud_ent, 0, STRING("S_f2_isk"), STRING("A_f2_isk"), PTR(cloud_wind_event))
         CALL(evt_hitobj_attr_onoff, 1, 0, STRING("a_hi"), 16)
-        ELSE
-        CALL(evt_mapobj_flag_onoff, 1, 1, STRING("S_f2_isk"), 1)
-        CALL(evt_hitobj_onoff, STRING("A_f2_isk\0\0\0"), 1, 0)
+    ELSE
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("S_f2_isk"), MAPOBJ_FLAG_HIDE)
+        CALL(evt_hitobj_onoff, STRING("A_f2_isk"), 1, 0)
         CALL(evt_map_entry_airport_harbor, 0, STRING("hikou"), STRING("a_hi"))
         CALL(evt_map_entry_airport_harbor, 0, STRING("hikou1"), STRING("a_hi1"))
     END_IF
-    SPAWN_EVENT(PTR(puni_piders_check))
+    SPAWN_EVENT(puni_piders_check)
     RETURN
 EVT_END()
-

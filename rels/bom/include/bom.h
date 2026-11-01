@@ -1,3 +1,4 @@
+// Declarations shared by the bom.rel units (サイハテ村, Fahr Outpost).
 #pragma once
 
 #include "dolphin/types.h"

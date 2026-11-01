@@ -12,7 +12,7 @@
 #include "manager/fontmgr.h"
 #include "sdk/arc.h"
 
-BOOL ARCConvertEntrynumToPath(ARCHandle* handle, s32 entrynum, char* path, u32 maxlen);
+BOOL ARCGetCurrentDir(ARCHandle* handle, char* path, u32 maxlen); /* through the now-static ARCConvertEntrynumToPath */
 
 #include <stdarg.h>
 #include <stddef.h>
@@ -166,7 +166,7 @@ static uint8_t* buildCamRoad(void) {
     memcpy(b + 0x44, "1.01", 5);
     portPutBE32(b + 0xC8, 2);
     {
-        /* f_f0Num .. f_108Num: the decoder skips tables whose count is 0 */
+        /* groupNum .. extraNum: the decoder skips tables whose count is 0 */
         static const uint32_t nums[7] = {1, 1, 2, 1, 2, 1, 1};
         for (i = 0; i < 7; i++) {
             portPutBE32(b + 0xCC + 4 * i, nums[i]);
@@ -224,13 +224,13 @@ static void testCamRoad(void) {
     }
     CHECK((void*)m != (void*)b);
     CHECK(strcmp(m->version, "1.01") == 0);
-    CHECK(memcmp(m->pad0, "camroad header pad", 18) == 0);
+    CHECK(memcmp(m->pad_00, "camroad header pad", 18) == 0);
     CHECK(m->curveNum == 2);
-    CHECK((uint8_t*)m->f_e8 == b + CR_E8 && (uint8_t*)m->curves == b + CR_CURVES);
-    CHECK((uint8_t*)m->f_f0 == b + CR_F0 && (uint8_t*)m->f_f4 == b + CR_F4 && (uint8_t*)m->f_f8 == b + CR_F8);
-    CHECK((uint8_t*)m->f_fc == b + CR_FC && (uint8_t*)m->f_100 == b + CR_100);
-    CHECK((uint8_t*)m->f_104 == b + CR_104 && (uint8_t*)m->f_108 == b + CR_108);
-    CHECK(m->f_e8->x == 25.0f && m->f_e8->y == -1.5f && m->f_e8->z == 300.0f);
+    CHECK((uint8_t*)m->projection == b + CR_E8 && (uint8_t*)m->curves == b + CR_CURVES);
+    CHECK((uint8_t*)m->groups == b + CR_F0 && (uint8_t*)m->strips == b + CR_F4 && (uint8_t*)m->curveVtx == b + CR_F8);
+    CHECK((uint8_t*)m->groupVtx == b + CR_FC && (uint8_t*)m->stripIdx == b + CR_100);
+    CHECK((uint8_t*)m->collGroups == b + CR_104 && (uint8_t*)m->extra == b + CR_108);
+    CHECK(m->projection->x == 25.0f && m->projection->y == -1.5f && m->projection->z == 300.0f);
     CHECK(strcmp(m->curves[0].name, "curve_a") == 0 && strcmp(m->curves[1].name, "curve_b") == 0);
     CHECK(m->curves[0].off == 0 && m->curves[1].off == 1);
     {
@@ -250,24 +250,24 @@ static void testCamRoad(void) {
         memcpy(&s, c1 + 0xB4, 4);
         CHECK(s == -1);
     }
-    CHECK(strcmp((char*)m->f_f0, "group0") == 0); /* group pad kept as bytes */
-    memcpy(&s, (uint8_t*)m->f_f0 + 0x58, 4);
+    CHECK(strcmp((char*)m->groups, "group0") == 0); /* group pad kept as bytes */
+    memcpy(&s, (uint8_t*)m->groups + 0x58, 4);
     CHECK(s == 1);
-    memcpy(&s, (uint8_t*)m->f_f0 + 0x64, 4);
+    memcpy(&s, (uint8_t*)m->groups + 0x64, 4);
     CHECK(s == 2);
-    CHECK(((int32_t*)m->f_f4)[1] == 2);
-    CHECK(((Vec*)m->f_f8)[1].x == 3.25f && ((Vec*)m->f_f8)[1].z == 5.25f);
-    CHECK(((Vec*)m->f_fc)[0].y == 8.0f);
-    CHECK(((int32_t*)m->f_100)[1] == 1);
-    memcpy(&s, (uint8_t*)m->f_104 + 0x64, 4);
+    CHECK(((int32_t*)m->strips)[1] == 2);
+    CHECK(((Vec*)m->curveVtx)[1].x == 3.25f && ((Vec*)m->curveVtx)[1].z == 5.25f);
+    CHECK(((Vec*)m->groupVtx)[0].y == 8.0f);
+    CHECK(((int32_t*)m->stripIdx)[1] == 1);
+    memcpy(&s, (uint8_t*)m->collGroups + 0x64, 4);
     CHECK(s == 4);
-    CHECK(memcmp(m->f_108, "\x12\x34\x56\x78", 4) == 0); /* unused table: untouched */
+    CHECK(memcmp(m->extra, "\x12\x34\x56\x78", 4) == 0); /* unused table: untouched */
 
     /* set up again from the same (archive-resident) blob: no second swap */
     memcpy(snapshot, b, CR_END);
     again = portCamRoadDecode(b, CR_END, "camroad");
     CHECK(again == m && memcmp(snapshot, b, CR_END) == 0);
-    CHECK(m->f_e8->x == 25.0f);
+    CHECK(m->projection->x == 25.0f);
 
     /* fresh file at the same address: decoded again into the same slot */
     free(b);
@@ -335,8 +335,8 @@ static void fillSlot(CardSaveSlot* s) {
     s->data.global.mapFadeOutType = 3;
     strcpy(s->data.global.currentMapName, "gor_01");
     s->data.global.mapAlloc = (void*)s; /* runtime pointer: not saved */
-    s->data.global.mGSWF[3] = 0x80000001u;
-    s->data.global.mGSW[0x7FF] = 0xAB;
+    s->data.global.gswf[3] = 0x80000001u;
+    s->data.global.gsw[0x7FF] = 0xAB;
     s->data.global.lastSlot = 2;
     s->data.global.savePlayerPos.x = -12.5f;
     s->data.global.savePlayerPos.y = 10.0f;
@@ -345,16 +345,16 @@ static void fillSlot(CardSaveSlot* s) {
     s->data.global.saveCount = 77;
     s->data.global.stickX[1] = -100;
     s->data.global.prevRumbleStatus[3] = 9;
-    s->data.global.mLotteryInfo.flags = 0x0008;
-    s->data.global.mLotteryInfo.buyTime = 0x1122334455667788LL;
-    s->data.global.mLotteryInfo.number = 1234;
-    s->data.global.mLotteryInfo.days[3] = 7;
+    s->data.global.lotteryInfo.flags = 0x0008;
+    s->data.global.lotteryInfo.buyTime = 0x1122334455667788LL;
+    s->data.global.lotteryInfo.number = 1234;
+    s->data.global.lotteryInfo.days[3] = 7;
     s->data.pouch.partyData[2].maximumHP = 25;
     s->data.pouch.coins = 999;
     s->data.pouch.audienceCount = 123.5f;
     s->data.pouch.jumpLevel = -2;
     s->data.pouch.badges[199] = 0x0123;
-    s->data.pouch.mEmailReadFlags[3] = 0xDEADBEEF;
+    s->data.pouch.emailReadFlags[3] = 0xDEADBEEF;
     strcpy(s->data.pouch.yoshiName, "Yoshi");
     strcpy(s->data.deadInfo[63].mapName, "tik_01");
     s->data.deadInfo[63].mask = 0x00F0F0F0;
@@ -415,8 +415,8 @@ static void testCardSave(void) {
     a->data.global.mapAlloc = NULL;
     nativeCheckSum(a);
     CHECK(memcmp(&a->data, &b->data, sizeof(a->data)) == 0);
-    CHECK(b->data.global.mLotteryInfo.buyTime == 0x1122334455667788LL && b->data.global.mLotteryInfo.number == 1234 &&
-          b->data.global.mLotteryInfo.days[3] == 7);
+    CHECK(b->data.global.lotteryInfo.buyTime == 0x1122334455667788LL && b->data.global.lotteryInfo.number == 1234 &&
+          b->data.global.lotteryInfo.days[3] == 7);
 
     /* a corrupted card image stays rejected by the game's dataCheck */
     img[0x100] ^= 0x40;
@@ -520,7 +520,9 @@ static void testArc(void) {
     CHECK(!ARCOpen(&h, "sub", &fi));     /* a directory */
     CHECK(!ARCOpen(&h, "nope", &fi));
     CHECK(ARCConvertPathToEntrynum(&h, "sub/../foo") == 1);
-    CHECK(ARCConvertEntrynumToPath(&h, 2, path, sizeof(path)) && strcmp(path, "/sub/") == 0); /* dirs: files keep no parent */
+    h.currDir = 2; /* the directory "sub" */
+    CHECK(ARCGetCurrentDir(&h, path, sizeof(path)) && strcmp(path, "/sub/") == 0); /* dirs: files keep no parent */
+    h.currDir = 0;
     CHECK(portBE32(a + FST + 8) == NENT); /* the table itself stays big-endian */
     portPutBE32(a, 0x12345678);
     ARCInitHandle(a, &h);

@@ -1,3 +1,5 @@
+// Paper Mario 64 effect: rubble (gareki), eight debris pieces that fall to a ground height and fade.
+#include "eff/n64/eff_gareki_n64.h"
 #include "eff/eff_n64.h"
 #include "driver/camdrv.h"
 #include "driver/dispdrv.h"
@@ -8,28 +10,33 @@
 #include <stdlib.h>
 
 typedef struct EffGarekiN64Work {
-    Vec position;  // 0x0
-    f32 groundY;   // 0xC
-    f32 velX;      // 0x10
-    f32 velY;      // 0x14
-    f32 offsetX;   // 0x18
-    f32 offsetY;   // 0x1C
-    s32 lifetime;  // 0x20
-    s32 state;     // 0x24
-    s32 alpha;     // 0x28
-    f32 rotX;      // 0x2C
-    f32 rotY;      // 0x30
-    f32 rotZ;      // 0x34
-    f32 rotVelX;   // 0x38
-    f32 rotVelY;   // 0x3C
+    Vec position; // 0x0
+    f32 groundY;  // 0xC
+    f32 velX;     // 0x10
+    f32 velY;     // 0x14
+    f32 offsetX;  // 0x18
+    f32 offsetY;  // 0x1C
+    s32 lifetime; // 0x20
+    s32 state;    // 0x24
+    s32 alpha;    // 0x28
+    f32 rotX;     // 0x2C
+    f32 rotY;     // 0x30
+    f32 rotZ;     // 0x34
+    f32 rotVelX;  // 0x38
+    f32 rotVelY;  // 0x3C
 } EffGarekiN64Work;
 
-void gareki_dl(s32 type);
-void effGarekiMain(EffectEntry* effect);
-void effGarekiDisp(CameraId cameraId, EffectEntry* effect);
+static void gareki_dl(s32 type);
+static void effGarekiMain(EffectEntry* effect);
+static void effGarekiDisp(CameraId cameraId, EffectEntry* effect);
 
+/** Sideways speed of each of the eight rubble pieces when the chunk breaks. */
+static f32 vx_data[] = {-1.0f, -0.5f, 0.5f, 1.0f, -1.0f, -0.5f, 0.5f, 1.0f};
+
+/** Starting (x, y) offset of each of the eight rubble pieces from the chunk's centre. */
 static f32 trans_data[] = {-5.0f, -4.0f, -3.0f, -2.0f, 2.0f, -3.0f, 5.0f, -4.0f, -4.0f, 2.0f, -1.0f, 4.0f, 3.0f, 2.0f, 5.0f, 4.0f};
 
+/** Rubble mesh: the whole chunk first, then the eight pieces it breaks into. */
 static effN64Vtx stg__s_v[] = {
     {-6, -6, 0, 0, 0, 255, 255, 255, 255},
     {6, -6, 0, 1024, 0, 255, 255, 255, 255},
@@ -93,18 +100,20 @@ static effN64Vtx stg__s_v[] = {
     {1, -4, 0, 1024, 2304, 255, 255, 255, 255},
 };
 
-static f32 vx_data[] = {-1.0f, -0.5f, 0.5f, 1.0f, -1.0f, -0.5f, 0.5f, 1.0f};
-
-EffectEntry* effGarekiN64Entry(f32 x, f32 y, f32 z, f32 groundY) {
+/**
+ * Spawns a falling rubble chunk (gareki = rubble) at (x, y, z) that drops until it reaches groundY,
+ * then breaks into eight pieces. type is not read. Spawned only from event scripts through evt_eff.
+ */
+EffectEntry* effGarekiN64Entry(s32 type, f32 x, f32 y, f32 z, f32 groundY) {
     f32* tp;
-    s32 i;
     EffGarekiN64Work* work;
     f32* vp;
     EffectEntry* effect;
     EffGarekiN64Work* piece;
+    s32 i;
 
     effect = effEntry();
-    effect->type = "GarekiN64\0\0";
+    effect->type = "GarekiN64";
     effect->count = 9;
     work = __memAlloc(HEAP_EFFECT, sizeof(EffGarekiN64Work) * 9);
     effect->userdata = work;
@@ -139,7 +148,11 @@ EffectEntry* effGarekiN64Entry(f32 x, f32 y, f32 z, f32 groundY) {
     return effect;
 }
 
-void effGarekiMain(EffectEntry* effect) {
+/**
+ * State 0: the whole chunk accelerates downward and tumbles until it reaches groundY.
+ * State 1: the eight pieces fly apart with gravity for 20 frames, fading out over the last 10.
+ */
+static void effGarekiMain(EffectEntry* effect) {
     EffGarekiN64Work* work = effect->userdata;
     Vec position;
     Vec tmp = {0.0f, 0.0f, 0.0f};
@@ -181,7 +194,11 @@ void effGarekiMain(EffectEntry* effect) {
     dispEntry(CAMERA_3D, dispCalcZ(&position), 2, (DispCallback)effGarekiDisp, effect);
 }
 
-void effGarekiDisp(CameraId cameraId, EffectEntry* effect) {
+/**
+ * Draws the whole chunk with texture 23 while it falls,
+ * then each of the eight pieces at its own offset and rotation.
+ */
+static void effGarekiDisp(CameraId cameraId, EffectEntry* effect) {
     CameraEntry* camera;
     EffGarekiN64Work* work;
     s32 i;
@@ -257,7 +274,8 @@ void effGarekiDisp(CameraId cameraId, EffectEntry* effect) {
     }
 }
 
-void gareki_dl(s32 type) {
+/** Draws piece number type of the rubble from the stg__s_v vertices (0 is the whole chunk, 1-8 are the pieces). */
+static void gareki_dl(s32 type) {
     GXSetCullMode(GX_CULL_NONE);
     effSetVtxDescN64(stg__s_v);
     switch (type) {

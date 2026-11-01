@@ -35,7 +35,7 @@ def maps_of(root):
     mapDataPtr returns NULL for the rest, e.g. stg_* test stages, and the game crashes too)."""
     table = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
                          "src", "data", "mapdata.c")
-    known = set(re.findall(r'^MapData \w+ = \{ "(\w+)"', open(table, encoding="utf-8").read(), re.M))
+    known = set(re.findall(r'^MapData \w+ = \{\s*"(\w+)"', open(table, encoding="utf-8").read(), re.M))
     m = os.path.join(root, "m")
     return sorted(n for n in os.listdir(m) if os.path.exists(os.path.join(m, n, "d")) and n in known)
 

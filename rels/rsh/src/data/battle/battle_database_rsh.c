@@ -1,33 +1,19 @@
+// Excess Express (rsh) battle database: the Smorg (moamoa) boss setup, its stage and background scripting, and the area battle tables.
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
 #include "manager/evtmgr_cmd.h"
 
-#pragma force_active on
 #include "battle/battle_stage_object.h"
 #include "battle/battle.h"
 #include "battle/battle_weapon_power.h"
 #include "battle/battle_database_common.h"
 #include "battle/battle_stage.h"
 #include "driver/npcdrv.h"
+#include "rsh.h"
 
-USER_FUNC(_set_destroy_flag);
-USER_FUNC(_set_offset);
-extern BattleUnitKind unit_boss_moamoa;
+static USER_FUNC(_set_destroy_flag);
+static USER_FUNC(_set_offset);
 
-f32 fd_battle_database_rsh_negone_one_374[2] __attribute__((aligned(8)));
-f32 fd_battle_database_rsh_neg_one_382;
-f32 fd_battle_database_rsh___local_PI_383;
-f32 fd_battle_database_rsh___local_3PIO2_385;
-f32 fd_battle_database_rsh_one_negone_373[2] __attribute__((aligned(8)));
-f32 fd_battle_database_rsh___local_PIO2_384;
-f32 fd_battle_database_rsh_one_381;
-f32 fd_battle_database_rsh_negone_one_360[2] __attribute__((aligned(8)));
-f32 fd_battle_database_rsh_neg_one_365;
-f32 fd_battle_database_rsh___local_PI_366;
-f32 fd_battle_database_rsh___local_3PIO2_368;
-f32 fd_battle_database_rsh_one_negone_359[2] __attribute__((aligned(8)));
-f32 fd_battle_database_rsh___local_PIO2_367;
-f32 fd_battle_database_rsh_one_364;
 BattleStageObjectData rsh_btlobject_data[7];
 BattleStageData rsh_btlstage_data[1];
 BattleUnitSetup btlparty_rsh_rsh_06_01_off_1[1];
@@ -36,36 +22,11 @@ NpcBattleSelect btlgrpsel_rsh_btlno_rsh_test1_off[2];
 NpcBattleSelect btlgrpsel_rsh_btlno_rsh_06_01_off[2];
 NpcSetupBattleInfo btlsetup_rsh_tbl[3];
 NpcTerritoryInfo btl_rsh_setup_no_tbl[3];
-EvtWord bgset_rsh_bg_event[30];
+extern EvtWord bgset_rsh_bg_event[];
 
-f32 fd_battle_database_rsh_negone_one_374[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_battle_database_rsh_neg_one_382 = -1.0f;
-
-f32 fd_battle_database_rsh___local_PI_383 = 3.1415927f;
-
-f32 fd_battle_database_rsh___local_3PIO2_385 = 4.712389f;
-
-f32 fd_battle_database_rsh_one_negone_373[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_battle_database_rsh___local_PIO2_384 = 1.5707964f;
-
-f32 fd_battle_database_rsh_one_381 = 1.0f;
-
-f32 fd_battle_database_rsh_negone_one_360[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_battle_database_rsh_neg_one_365 = -1.0f;
-
-f32 fd_battle_database_rsh___local_PI_366 = 3.1415927f;
-
-f32 fd_battle_database_rsh___local_3PIO2_368 = 4.712389f;
-
-f32 fd_battle_database_rsh_one_negone_359[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_battle_database_rsh___local_PIO2_367 = 1.5707964f;
-
-f32 fd_battle_database_rsh_one_364 = 1.0f;
-
+/**
+ * Scenery props of the Excess Express battle stage (stg_06_0): rocks and scenery hills with their positions.
+ */
 BattleStageObjectData rsh_btlobject_data[] = {
     {"r_mae", 2, 1, {170.0f, 0.0f, -50.0f}, 0, 60, {0}},
     {"r_oku", 2, 1, {170.0f, -1000.0f, -50.0f}, 10, 50, {0}},
@@ -76,12 +37,15 @@ BattleStageObjectData rsh_btlobject_data[] = {
     {"C", 2, 3, {0}, 0, 60, {0}},
 };
 
+/**
+ * The Excess Express battle stage (bti_01 backdrop, stg_06_0 scenery) with its scrolling background script.
+ */
 BattleStageData rsh_btlstage_data[] = {
     {
-        "bti_01", // mGlobalStageDataDir
-        "stg_06_0", // mSpecificStageDataDir
-        7, // mNumObjects
-        rsh_btlobject_data, // mObjects
+        "bti_01", // globalStageDataDir
+        "stg_06_0", // specificStageDataDir
+        7, // numObjects
+        rsh_btlobject_data, // objects
         {NULL, 0, {0}, 0, NULL, 100, 0, 0, 2, 0.0f, 0, 0, 0, 0, NULL, {0}, NULL, {0}, 0x2100060, 0x20000000, 0, 26, 3, 2, NULL, 0, 0x7FF, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, {0}, NULL, {0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0}}, // bgAWeapon
         {NULL, 0, {0}, 0, NULL, 100, 0, 0, 2, 0.0f, 0, 0, 0, 0, weaponGetPowerDefault, {1, 0, 0, 0, 0, 0, 0, 0}, NULL, {0}, 0x2100060, 0x20000000, 0, 26, 3, 2, NULL, 0, 0x7FF, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, {0}, NULL, {0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0}}, // bgBWeapon
         NULL, NULL, NULL, NULL, NULL, NULL, // initEvt..bgA2Evt
@@ -90,12 +54,13 @@ BattleStageData rsh_btlstage_data[] = {
     },
 };
 
+/** Enemies of the rsh_06_01_off_1 fight: Smorg. */
 BattleUnitSetup btlparty_rsh_rsh_06_01_off_1[] = {
     {
-        &unit_boss_moamoa, // mUnitKindParams
+        &unit_boss_moamoa, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {70.0f, -20.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -103,6 +68,10 @@ BattleUnitSetup btlparty_rsh_rsh_06_01_off_1[] = {
     },
 };
 
+/**
+ * Battle group of the rsh_06_01_off_1 fight (btlparty_rsh_rsh_06_01_off_1): never drops an item;
+ * heart drop table default, flower drop table battle_heart_drop_param_default (the heart table).
+ */
 BattleGroupSetup btlgrp_rsh_rsh_06_01_off_1 = {
     1, // numEnemies
     btlparty_rsh_rsh_06_01_off_1, // enemyData
@@ -110,50 +79,63 @@ BattleGroupSetup btlgrp_rsh_rsh_06_01_off_1 = {
     100, // noItemWeight
     battle_heart_drop_param_default, // hpDropTable
     battle_heart_drop_param_default, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/** Enemy group of the rsh_test1_off encounter: btlgrp_rsh_rsh_06_01_off_1. */
 NpcBattleSelect btlgrpsel_rsh_btlno_rsh_test1_off[] = {
     {50, &btlgrp_rsh_rsh_06_01_off_1, rsh_btlstage_data},
     {0},
 };
 
+/** Enemy group of the rsh_06_01_off encounter: btlgrp_rsh_rsh_06_01_off_1. */
 NpcBattleSelect btlgrpsel_rsh_btlno_rsh_06_01_off[] = {
     {50, &btlgrp_rsh_rsh_06_01_off_1, rsh_btlstage_data},
     {0},
 };
 
+/**
+ * Encounter table of the Excess Express: the ordinary train fight and the Smorg boss fight, with their enemy
+ * pools and battle music.
+ */
 NpcSetupBattleInfo btlsetup_rsh_tbl[] = {
     {
-        /*"マップstg_06_0"*/"\x83\x7D\x83\x62\x83\x76\x73\x74\x67\x5F\x30\x36\x5F\x30", // name
+        "マップstg_06_0", // name
         NULL, 0, // mapName..fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_rsh_btlno_rsh_test1_off, // select
-        0, 0, // battleFlags..field_1C
-        {{3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        0, 0, // battleFlags, randomMode
+        {{3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_ZAKO_BATTLE1", // bgmName
     },
     {
-        /*"rsh_06 もあもあ"*/"\x72\x73\x68\x5F\x30\x36\x20\x82\xE0\x82\xA0\x82\xE0\x82\xA0", // name
+        "rsh_06 もあもあ", // name
         NULL, 0, // mapName..fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_rsh_btlno_rsh_06_01_off, // select
-        0x20000010, // battleFlags
-        6, // field_1C
-        {{3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        NPC_BATTLE_MAX_COUNT | NPC_BATTLE_MARIO_PAUSE3_VOICE, // battleFlags
+        6, // randomMode
+        {{3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_BOSS_STG6_GREAT_MOAMOA1", // bgmName
     },
     {0},
 };
 
+/** Maps the BTLNO_RSH battle names to their positions in btlsetup_rsh_tbl. */
 NpcTerritoryInfo btl_rsh_setup_no_tbl[] = {
     {"BTLNO_RSH_TEST1", 0},
     {"BTLNO_RSH_06_01", 1},
     {0},
 };
 
+/**
+ * Background script of the Smorg boss battle stage:
+ * sets the stage objects to be destroyed when the battle ends
+ * and scrolls the two rock mountains (iwayama_1, iwayama_2) sideways forever, with a different phase for each,
+ * to fake the train moving past them.
+ */
 EVT_BEGIN(bgset_rsh_bg_event)
     CALL(_set_destroy_flag)
     SET_VALUE(LW(0), 0)
@@ -166,7 +148,14 @@ EVT_BEGIN(bgset_rsh_bg_event)
     RETURN
 EVT_END()
 
-USER_FUNC(_set_offset) {
+/**
+ * Script helper for bgset_rsh_bg_event.
+ * Args: [0] stage object name, [1] the script variable holding the step counter (read and updated),
+ * [2] total steps, [3] base x offset, [4] x amplitude.
+ * Sets the object's x position offset to base + amplitude * step / total and counts the step down,
+ * wrapping around at zero, so the scenery loops.
+ */
+static USER_FUNC(_set_offset) {
     EvtWord* args = event->args;
     const char* name = (const char*)evtGetValue(event, args[0]);
     s32 outVar = args[1];
@@ -184,7 +173,11 @@ USER_FUNC(_set_offset) {
     evtSetValue(event, outVar, step);
     return EVT_RETURN_DONE;
 }
-USER_FUNC(_set_destroy_flag) {
+/**
+ * Script helper: sets flag 8 in the battle stage object work so the stage objects are destroyed
+ * when the battle ends.
+ */
+static USER_FUNC(_set_destroy_flag) {
     _battleWorkPointer->stageObjectWork.flags |= 8;
     return EVT_RETURN_DONE;
 }

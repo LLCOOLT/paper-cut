@@ -1,7 +1,8 @@
+// dmo_00 (オープニングデモ, opening demo): the storybook prologue that seq_logo.c starts after the boot logos. A book
+// on a desk opens and its pages zoom into pictures while text windows narrate; A or Start skips to the title.
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
 
-#pragma force_active on
 #include "manager/evtmgr.h"
 #include "manager/evtmgr_cmd.h"
 #include "mario/mariost.h"
@@ -18,6 +19,7 @@
 #include "dolphin/gx.h"
 #include "dolphin/mtx.h"
 #include "dolphin/os.h"
+#include "dolphin/pad.h"
 #include "string.h"
 #include "stdio.h"
 #include "evt/evt_cam.h"
@@ -27,115 +29,63 @@
 #include "evt/evt_paper.h"
 #include "evt/evt_party.h"
 #include "evt/evt_sub.h"
-#ifdef TARGET_PC /* declarations the GameCube code calls implicitly */
-void statusWinDispOff(void);
-void statusWinDispOn(void);
-#endif
+#include "evt/evt_bg.h"
+#include "evt/evt_eff.h"
+#include "evt/evt_fade.h"
+#include "evt/evt_img.h"
+#include "evt/evt_map.h"
+#include "evt/evt_msg.h"
+#include "evt/evt_seq.h"
+#include "evt/evt_snd.h"
+#include "evt/evt_urouro.h"
+#include "dmo.h"
+#include "statuswindow.h"
+#include "eff/n64/eff_crystal_n64.h"
+#include "eff/n64/eff_radiation_n64.h"
+#include "version.h"
+#include "driver/mapdrv.h"
+#include "driver/seqdrv.h"
 
-typedef struct DemoWork { s32 field_0x0; f32 bookRot; s32 page; s32 captured; f32 fade; f32 scale; f32 x; f32 y; void** capBuf; FileEntry* tpl; s32 winOn; s32 winAlpha; } DemoWork;
+// State of the opening demo, cleared by demo_init.
+typedef struct DemoWork {
+    s32 reserved_00; // 0x00, never accessed
+    f32 bookRot;     // 0x04, book cover angle (book_r)
+    s32 page;        // 0x08, current picture (next), -1 before the first
+    s32 captured;    // 0x0C, demo_cap has copied the screen
+    f32 fade;        // 0x10, 0..1 zoom from the book into the picture (adjust)
+    f32 scale;       // 0x14
+    f32 x;           // 0x18
+    f32 y;           // 0x1C
+    void** capBuf;   // 0x20, screen copy buffer of demo_cap
+    FileEntry* tpl;  // 0x24, demo.tpl
+    s32 winOn;       // 0x28, text window fading in (demo_winonoff)
+    s32 winAlpha;    // 0x2C
+} DemoWork;
+
 static DemoWork work;
-char buf[0x200];
+char buf[0x200]; // the text window's message tags (make_msg)
 static DemoWork* wp;
-#ifndef TARGET_PC /* PC port: the host libc declares these */
-double sin(double x);
-#endif
-void demo_img(CameraId cameraId, void* param);
-void demo_book(CameraId cameraId, void* param);
-void demo_desk(CameraId cameraId, void* param);
-void demo_window(CameraId cameraId, void* param);
 
-USER_FUNC(N_evt_img_set_z);
-USER_FUNC(adjust);
-USER_FUNC(book_r);
-USER_FUNC(demo_scale);
-USER_FUNC(demo_winonoff);
-USER_FUNC(eff_cam);
-USER_FUNC(eff_cam1);
-USER_FUNC(evt_bg_disp_onoff);
-USER_FUNC(evt_cam3d_evt_set);
-USER_FUNC(evt_eff64);
-USER_FUNC(evt_eff_fukidashi);
-USER_FUNC(evt_fade_end_wait);
-USER_FUNC(evt_fade_set_mapchange_type);
-USER_FUNC(evt_img_alloc_capture);
-USER_FUNC(evt_img_clear_virtual_point);
-USER_FUNC(evt_img_entry);
-USER_FUNC(evt_img_free_capture);
-USER_FUNC(evt_img_onoff);
-USER_FUNC(evt_img_release);
-USER_FUNC(evt_img_set_paper);
-USER_FUNC(evt_img_set_paper_anim);
-USER_FUNC(evt_img_wait_animend);
-USER_FUNC(evt_key_get_buttontrg);
-USER_FUNC(evt_mapobj_flag_onoff);
-USER_FUNC(evt_mapobj_rotate);
-USER_FUNC(evt_mobj_flag_onoff);
-USER_FUNC(evt_msg_print);
-USER_FUNC(evt_msg_print_add);
-USER_FUNC(evt_msg_toge);
-USER_FUNC(evt_npc_flag_onoff);
-USER_FUNC(evt_npc_get_position);
-USER_FUNC(evt_npc_move_position);
-USER_FUNC(evt_npc_reverse_ry);
-USER_FUNC(evt_npc_set_anim);
-USER_FUNC(evt_npc_set_autotalkpose);
-USER_FUNC(evt_npc_set_camid);
-USER_FUNC(evt_npc_set_position);
-USER_FUNC(evt_npc_set_ry);
-USER_FUNC(evt_npc_set_tribe);
-USER_FUNC(evt_npc_status_onoff);
-USER_FUNC(evt_paper_delete);
-USER_FUNC(evt_seq_set_seq);
-USER_FUNC(evt_seq_wait);
-USER_FUNC(evt_snd_bgm_scope);
-USER_FUNC(evt_snd_bgmoff_f);
-USER_FUNC(evt_snd_bgmon);
-USER_FUNC(evt_snd_sfxon_);
-USER_FUNC(evt_sub_intpl_msec_get_value);
-USER_FUNC(evt_sub_intpl_msec_get_value_para);
-USER_FUNC(evt_sub_intpl_msec_init);
-USER_FUNC(make_msg);
+static void demo_cap(void);
+static void demo_desk(CameraId cameraId, void* param);
+static void demo_img(CameraId cameraId, void* param);
+static void demo_book(CameraId cameraId, void* param);
+static void demo_window(CameraId cameraId, void* param);
 static USER_FUNC(next);
-USER_FUNC(urouro_init_func);
-USER_FUNC(urouro_main_func);
-USER_FUNC(demo_draw);
-void demo_window(CameraId cameraId, void* param);
-void demo_book(CameraId cameraId, void* param);
-void demo_img(CameraId cameraId, void* param);
-void demo_desk(CameraId cameraId, void* param);
-void demo_cap(void);
-void demo_exit(void);
-USER_FUNC(demo_init);
 
-f32 fd_dmo_00_negone_one_374[2] __attribute__((aligned(8)));
-f32 fd_dmo_00_neg_one_382;
-f32 fd_dmo_00___local_PI_383;
-f32 fd_dmo_00___local_3PIO2_385[2];
-f32 fd_dmo_00_one_negone_373[2] __attribute__((aligned(8)));
-f32 fd_dmo_00___local_PIO2_384;
-f32 fd_dmo_00_one_381;
-f32 fd_dmo_00_negone_one_360[2] __attribute__((aligned(8)));
-f32 fd_dmo_00_neg_one_365;
-f32 fd_dmo_00___local_PI_366;
-f32 fd_dmo_00___local_3PIO2_368[2];
-f32 fd_dmo_00_one_negone_359[2] __attribute__((aligned(8)));
-f32 fd_dmo_00___local_PIO2_367;
-f32 fd_dmo_00_one_364;
-f64 fd_dmo_00__three_localstatic4_sqrtf;
-f64 fd_dmo_00__half_localstatic3_sqrtf;
-EvtWord buttonCheck[32];
-EvtWord demo_evt[1489];
-static EvtWord koushukei_dai[63];
-EvtWord roten_move[25];
-EvtWord kuribo_move[25];
-EvtWord chusan_move[25];
-#ifdef VERSION_G8ME01
-EvtWord dmo_00_init_evt[268];
-#else
-EvtWord dmo_00_init_evt[262];
-#endif
+extern EvtWord buttonCheck[];
+extern EvtWord demo_evt[];
+extern EvtWord roten_move[];
+extern EvtWord kuribo_move[];
+extern EvtWord chusan_move[];
 
-USER_FUNC(demo_init) {
+/**
+ * Script helper that starts the opening demo: clears the DemoWork state,
+ * hides the status window and mutes sound effects, loads demo.tpl (blocks until the file is in),
+ * and sets the fade-in for the map (black after the logo sequence,
+ * white after the title screen in the demo versions; black otherwise).
+ */
+static USER_FUNC(demo_init) {
     if (isFirstCall) {
         memset(wp, 0, sizeof(DemoWork));
         wp->bookRot = 0.0f;
@@ -146,25 +96,40 @@ USER_FUNC(demo_init) {
         wp->x = 0.0f;
         wp->y = 0.0f;
         statusWinDispOff();
-        psndSetFlag(4);
+        psndSetFlag(PSND_FLAG_SFX_OFF);
     }
-    if (fileAsyncf(4, NULL, "%s/demo.tpl\0\0\0\0", getMarioStDvdRoot()) != 0U) {
-        wp->tpl = fileAllocf(4, "%s/demo.tpl\0\0\0\0", getMarioStDvdRoot());
-        gp->areaFadeOutType = 9;
+    if (fileAsyncf(4, NULL, "%s/demo.tpl", getMarioStDvdRoot()) != NULL) {
+        wp->tpl = fileAllocf(4, "%s/demo.tpl", getMarioStDvdRoot());
+#if VERSION <= VERSION_DEMO_JP
+        // the map fades in from black after the logo sequence and from white after the title screen
+        if (seqGetPrevSeq() == SEQ_LOGO) {
+            gp->areaFadeOutType = FADE_IN_BLACK;
+            gp->areaFadeOutDuration = 500;
+        } else {
+            gp->areaFadeOutType = FADE_IN_WHITE;
+            gp->areaFadeOutDuration = 500;
+        }
+#else
+        gp->areaFadeOutType = FADE_IN_BLACK;
         gp->areaFadeOutDuration = 500;
+#endif
         return EVT_RETURN_DONE;
     }
     return EVT_RETURN_BLOCK;
 }
 
+/**
+ * Called when the module unloads: frees demo.tpl, switches sound effects back on,
+ * resets the 3D camera viewport to the full 608 by 480 screen and shows the status window again.
+ */
 void demo_exit(void) {
-    CameraEntry* cam = camGetPtr(8);
+    CameraEntry* cam = camGetPtr(CAMERA_2D);
 
     if (wp->tpl != NULL) {
         fileFree(wp->tpl);
     }
-    psndClearFlag(4);
-    cam = camGetPtr(4);
+    psndClearFlag(PSND_FLAG_SFX_OFF);
+    cam = camGetPtr(CAMERA_3D);
     cam->viewport[0] = 0.0f;
     cam->viewport[1] = 0.0f;
     cam->viewport[2] = 608.0f;
@@ -172,7 +137,12 @@ void demo_exit(void) {
     statusWinDispOn();
 }
 
-void demo_cap(void) {
+/**
+ * Unused: nothing calls it and capBuf is never allocated. On the fifth picture (page 4) it copies the rendered
+ * screen into capBuf once, then again every call while the zoom (fade) is running.
+ * Guess: meant to let the last picture be drawn over the zoom.
+ */
+static void demo_cap(void) {
     if (wp->page == 4) {
         if (wp->captured == 0) {
             GXSetTexCopySrc(0, 0, 608, 480);
@@ -189,8 +159,12 @@ void demo_cap(void) {
     }
 }
 
-void demo_desk(CameraId cameraId, void* param) {
-    CameraEntry* cam = camGetPtr(8);
+/**
+ * Draw callback for the desk: draws the full-screen desk texture (demo.tpl image 0) at the current scale
+ * and offset, fading out as the zoom into a picture advances.
+ */
+static void demo_desk(CameraId cameraId, void* param) {
+    CameraEntry* cam = camGetPtr(CAMERA_2D);
     GXTexObj obj;
     Mtx mtx;
     Mtx scale;
@@ -240,8 +214,12 @@ void demo_desk(CameraId cameraId, void* param) {
     GXEnd();
 }
 
-void demo_img(CameraId cameraId, void* param) {
-    CameraEntry* cam = camGetPtr(8);
+/**
+ * Draw callback for the storybook picture: once the first page is turned (page is not -1) draws demo.tpl image
+ * page+8 as a textured quad, fading it out as the zoom amount (fade) rises.
+ */
+static void demo_img(CameraId cameraId, void* param) {
+    CameraEntry* cam = camGetPtr(CAMERA_2D);
     CameraEntry* cam2;
     Mtx mtx;
     Mtx scale;
@@ -294,12 +272,12 @@ void demo_img(CameraId cameraId, void* param) {
         GXProject(w / 2, h / 2 + 35.0f, 0.0f, mtx, proj, vp, &p1.x, &p1.y, &p1.z);
         GXProject(w / 2, -h / 2 + 35.0f, 0.0f, mtx, proj, vp, &p2.x, &p2.y, &p2.z);
         GXProject(-w / 2, -h / 2 + 35.0f, 0.0f, mtx, proj, vp, &p3.x, &p3.y, &p3.z);
-        cam2 = camGetPtr(4);
+        cam2 = camGetPtr(CAMERA_3D);
         cam2->viewport[0] = p0.x;
         cam2->viewport[1] = p0.y;
         cam2->viewport[2] = p2.x - p0.x;
         cam2->viewport[3] = p2.y - p0.y;
-        cam2 = camGetPtr(6);
+        cam2 = camGetPtr(CAMERA_3D_IMAGE);
         cam2->viewport[0] = 0.0f;
         cam2->viewport[1] = 0.0f;
         cam2->viewport[2] = 608.0f;
@@ -317,8 +295,12 @@ void demo_img(CameraId cameraId, void* param) {
     }
 }
 
-void demo_book(CameraId cameraId, void* param) {
-    CameraEntry* cam = camGetPtr(8);
+/**
+ * Draw callback for the storybook: draws the book's textures (demo.tpl images 1 and 2) at the current scale
+ * and offset with the cover turned by bookRot, so the book opens as the demo begins.
+ */
+static void demo_book(CameraId cameraId, void* param) {
+    CameraEntry* cam = camGetPtr(CAMERA_2D);
     GXTexObj obj;
     Mtx mtx;
     Mtx scale;
@@ -439,7 +421,11 @@ void demo_book(CameraId cameraId, void* param) {
     GXEnd();
 }
 
-void demo_window(CameraId cameraId, void* param) {
+/**
+ * Draw callback for the narration window: fades the text window's background in
+ * or out (10 alpha per frame, depending on winOn) and draws it on the 2D camera.
+ */
+static void demo_window(CameraId cameraId, void* param) {
     CameraEntry* cam = camGetPtr(cameraId);
     GXTexObj obj;
     Mtx mtx;
@@ -500,24 +486,33 @@ void demo_window(CameraId cameraId, void* param) {
     GXEnd();
 }
 
-USER_FUNC(demo_draw) {
-    dispEntry(4, 9.0f, 7, demo_desk, NULL);
-    dispEntry(4, 8.0f, 7, demo_book, NULL);
+/**
+ * Script helper that keeps the demo drawing: queues the desk, book, zoom picture and text window every frame.
+ * Never finishes.
+ */
+static USER_FUNC(demo_draw) {
+    dispEntry(CAMERA_3D, 9.0f, 7, demo_desk, NULL);
+    dispEntry(CAMERA_3D, 8.0f, 7, demo_book, NULL);
     if (wp->fade != 0.0f) {
-        dispEntry(7, 0.0f, 7, demo_img, NULL);
+        dispEntry(CAMERA_3D_EFFECTB, 0.0f, 7, demo_img, NULL);
     }
-    dispEntry(8, 0.0f, 3, demo_window, NULL);
+    dispEntry(CAMERA_2D, 0.0f, 3, demo_window, NULL);
     return EVT_RETURN_BLOCK;
 }
 
-USER_FUNC(demo_winonoff) {
+/** Script helper: args[0] switches the narration window on (1) or off (0) so that it fades in or out. */
+static USER_FUNC(demo_winonoff) {
     EvtWord* args = event->args;
 
     wp->winOn = evtGetValue(event, args[0]);
     return EVT_RETURN_DONE;
 }
 
-USER_FUNC(demo_scale) {
+/**
+ * Script helper: slowly zooms the desk (scale 0.6 to 1.5 over 12 seconds) while the first pages are narrated;
+ * finishes at 1.5.
+ */
+static USER_FUNC(demo_scale) {
     OSTime now = event->lifetime;
     f32 t;
 
@@ -534,19 +529,25 @@ USER_FUNC(demo_scale) {
     return EVT_RETURN_BLOCK;
 }
 
-USER_FUNC(book_r) {
+/** Script helper: args[0] is a float; sets the angle of the book cover. */
+static USER_FUNC(book_r) {
     EvtWord* args = event->args;
 
     wp->bookRot = evtGetFloat(event, args[0]);
     return EVT_RETURN_DONE;
 }
 
+/** Script helper: advances to the next picture of the storybook (increments the page counter). */
 static USER_FUNC(next) {
     wp->page++;
     return EVT_RETURN_DONE;
 }
 
-USER_FUNC(adjust) {
+/**
+ * Script helper: args[0] is a float from 0 to 1;
+ * sets the zoom amount into the last picture (img4) and moves its scale and position accordingly.
+ */
+static USER_FUNC(adjust) {
     EvtWord* args = event->args;
     Mtx trans;
     Mtx scale;
@@ -566,85 +567,78 @@ USER_FUNC(adjust) {
     return EVT_RETURN_DONE;
 }
 
-USER_FUNC(eff_cam) {
-    ((s32*)effNameToPtr("eff0")->userdata)[0x38 / 4] = 5;
-    ((s32*)effNameToPtr("eff1")->userdata)[0x38 / 4] = 5;
+/** Moves the two crystal effects to the CAMERA_3D_EFFECTA camera. */
+static USER_FUNC(eff_cam) {
+    ((EffCrystalN64Work*)effNameToPtr("eff0")->userdata)->camera = CAMERA_3D_EFFECTA;
+    ((EffCrystalN64Work*)effNameToPtr("eff1")->userdata)->camera = CAMERA_3D_EFFECTA;
     return EVT_RETURN_DONE;
 }
 
-USER_FUNC(eff_cam1) {
-    ((s32*)effNameToPtr("eff2")->userdata)[0x98 / 4] = 5;
+/** The same for the radiation effect. */
+static USER_FUNC(eff_cam1) {
+    ((EffRadiationN64Work*)effNameToPtr("eff2")->userdata)->camera = CAMERA_3D_EFFECTA;
     return EVT_RETURN_DONE;
 }
 
-USER_FUNC(make_msg) {
+/**
+ * Script helper: args[0] is a message name; measures its width and line count
+ * and builds the text window tags (clear, window position/size, once_stop) into buf so the narration is centred.
+ * The vertical offset differs slightly in the demo versions.
+ */
+static USER_FUNC(make_msg) {
     EvtWord* args = event->args;
     u16 lines;
     u16 width;
 
     width = FontGetMessageWidthLine(msgSearch((const char*)evtGetValue(event, args[0])), &lines);
+#if VERSION <= VERSION_DEMO_JP
+    sprintf(buf, "<clear><wpos %d %d %d %d><once_stop>", -width / 2 - 62, lines * 28 / 2 - 90, 400, 200);
+#else
     sprintf(buf, "<clear><wpos %d %d %d %d><once_stop>", -width / 2 - 62, lines * 28 / 2 - 84, 400, 200);
+#endif
     return EVT_RETURN_DONE;
 }
 
-f32 fd_dmo_00_negone_one_374[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_dmo_00_neg_one_382 = -1.0f;
-
-f32 fd_dmo_00___local_PI_383 = 3.1415927f;
-
-f32 fd_dmo_00___local_3PIO2_385[] = {
-    4.712389f, 0.0f,
-};
-
-f32 fd_dmo_00_one_negone_373[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_dmo_00___local_PIO2_384 = 1.5707964f;
-
-f32 fd_dmo_00_one_381 = 1.0f;
-
-f32 fd_dmo_00_negone_one_360[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_dmo_00_neg_one_365 = -1.0f;
-
-f32 fd_dmo_00___local_PI_366 = 3.1415927f;
-
-f32 fd_dmo_00___local_3PIO2_368[] = {
-    4.712389f, 0.0f,
-};
-
-f32 fd_dmo_00_one_negone_359[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_dmo_00___local_PIO2_367 = 1.5707964f;
-
-f32 fd_dmo_00_one_364 = 1.0f;
-
-f64 fd_dmo_00__three_localstatic4_sqrtf = 3.0;
-
-f64 fd_dmo_00__half_localstatic3_sqrtf = 0.5;
-
+/** Pointer to the demo's work data (work), used by the demo scripts and callbacks. */
 static DemoWork* wp = &work;
 
+/**
+ * Runs alongside the demo: after the fade finishes, waits for A or Start, then sets GF(10),
+ * fades to white and changes to the title screen.
+ */
 EVT_BEGIN(buttonCheck)
     CALL(evt_fade_end_wait)
     LOOP(0)
         CALL(evt_key_get_buttontrg, 0, LW(0))
-        IF_BITS_SET(LW(0), 4352)
+        IF_BITS_SET(LW(0), PAD_BUTTON_A | PAD_BUTTON_START)
             SET_VALUE(GF(10), 1)
-            CALL(evt_fade_set_mapchange_type, 1, 17, 500, -1, -1)
-            CALL(evt_seq_set_seq, 3, STRING("title"), 0)
+            CALL(evt_fade_set_mapchange_type, 1, FADE_OUT_WHITE, 500, -1, -1)
+            CALL(evt_seq_set_seq, SEQ_MAP_CHANGE, STRING("title"), 0)
         END_IF
         WAIT_FRAMES(1)
     END_LOOP
     RETURN
 EVT_END()
 
+/**
+ * The opening demo itself: starts the title-skip watcher and the music,
+ * narrates the storybook prologue (op_book_01 to op_book_24) while the book opens
+ * and each of the four pictures is turned, then cuts to the Rogueport scene
+ * where Peach meets the mysterious person who gives her the golden treasure box (op_00 to op_12 onwards).
+ */
 EVT_BEGIN(demo_evt)
+    // The demo starts: a watcher is spawned so A or Start skips to the title screen, and the storybook music
+    // begins.
     CALL(evt_seq_wait, 2)
     SET_VALUE(GF(10), 0)
     SPAWN_EVENT_GET_ID(PTR(buttonCheck), GW(10))
-    CALL(evt_snd_bgmon, 513, STRING("BGM_DEMO1"))
+#if VERSION <= VERSION_DEMO_JP
+    CALL(evt_snd_bgmon, PSND_FADE_OUT, STRING("BGM_DEMO1"))
+#else
+    CALL(evt_snd_bgmon, PSND_FADE_OUT | PSND_CH(1), STRING("BGM_DEMO1"))
+#endif
     CALL(evt_snd_bgm_scope, 0, 1)
+    // The narrator opens the story ("the story of the Thousand-Year Door") while the book grows on screen.
     BEGIN_INLINE_EVENT_GET_ID(LW(9))
         WAIT_MS(4000)
         CALL(demo_winonoff, 1)
@@ -666,6 +660,7 @@ EVT_BEGIN(demo_evt)
     CALL(evt_msg_print, 1, PTR(buf), 0, 0)
     CALL(evt_msg_print_add, 0, STRING("op_book_04"))
     CALL(demo_winonoff, 0)
+    // Wait for the first two narration lines to finish.
     LOOP(0)
         IS_EVENT_RUNNING(LW(9), LW(0))
         WAIT_FRAMES(1)
@@ -673,6 +668,7 @@ EVT_BEGIN(demo_evt)
             BREAK_LOOP
         END_IF
     END_LOOP
+    // The book cover opens, then the narrator describes the big, happy town that once stood here.
     CALL(next)
     CALL(evt_snd_sfxon_, STRING("SFX_EVT_OPN_BOOK_OPEN1"), 0)
     CALL(evt_sub_intpl_msec_init, 11, 0, 1800, 2000)
@@ -685,6 +681,7 @@ EVT_BEGIN(demo_evt)
         END_IF
         WAIT_FRAMES(1)
     END_LOOP
+    // Narration of the town and the cataclysm that struck it.
     WAIT_MS(1000)
     CALL(demo_winonoff, 1)
     CALL(make_msg, STRING("op_book_05"))
@@ -700,6 +697,14 @@ EVT_BEGIN(demo_evt)
     CALL(evt_msg_print, 1, PTR(buf), 0, 0)
     CALL(evt_msg_print_add, 0, STRING("op_book_08"))
     CALL(demo_winonoff, 0)
+    // The four page pictures are set up; the first page turns and the narrator tells of the town sinking
+    // underground.
+#if VERSION <= VERSION_DEMO_JP
+    CALL(evt_img_entry, STRING("img4"))
+    CALL(evt_img_entry, STRING("img3"))
+    CALL(evt_img_entry, STRING("img2"))
+    CALL(evt_img_entry, STRING("img1"))
+#else
     CALL(evt_img_entry, STRING("img1"))
     CALL(evt_img_entry, STRING("img2"))
     CALL(evt_img_entry, STRING("img3"))
@@ -708,6 +713,7 @@ EVT_BEGIN(demo_evt)
     CALL(N_evt_img_set_z, STRING("img2"), FLOAT(3.0f))
     CALL(N_evt_img_set_z, STRING("img3"), FLOAT(2.0f))
     CALL(N_evt_img_set_z, STRING("img4"), FLOAT(1.0f))
+#endif
     CALL(evt_img_set_paper, STRING("img1"), STRING("OFF_d_meku_right"))
     CALL(evt_img_clear_virtual_point, STRING("img1"))
     CALL(evt_img_alloc_capture, STRING("img1"), 0, 0, 1, 124, 0, 386, 480)
@@ -732,6 +738,7 @@ EVT_BEGIN(demo_evt)
     CALL(evt_msg_print, 1, PTR(buf), 0, 0)
     CALL(evt_msg_print_add, 0, STRING("op_book_12"))
     CALL(demo_winonoff, 0)
+    // The second page turns: many moons pass and a new town is built on the site.
     CALL(evt_img_set_paper, STRING("img2"), STRING("OFF_d_meku_right"))
     CALL(evt_img_clear_virtual_point, STRING("img2"))
     CALL(evt_img_alloc_capture, STRING("img2"), 0, 0, 1, 124, 0, 386, 480)
@@ -758,6 +765,7 @@ EVT_BEGIN(demo_evt)
     CALL(evt_msg_print, 1, PTR(buf), 0, 0)
     CALL(evt_msg_print_add, 0, STRING("op_book_16"))
     CALL(demo_winonoff, 0)
+    // The third page turns: rumors of an ancient city and treasure under the town, the tale of Rogueport.
     CALL(evt_img_set_paper, STRING("img3"), STRING("OFF_d_meku_right"))
     CALL(evt_img_clear_virtual_point, STRING("img3"))
     CALL(evt_img_alloc_capture, STRING("img3"), 0, 0, 1, 124, 0, 386, 480)
@@ -787,6 +795,7 @@ EVT_BEGIN(demo_evt)
     CALL(evt_msg_print, 1, PTR(buf), 0, 0)
     CALL(evt_msg_print_add, 0, STRING("op_book_21"))
     CALL(demo_winonoff, 0)
+    // The fourth page turns: the narrator says the Thousand-Year Door starts here.
     CALL(evt_img_set_paper, STRING("img4"), STRING("OFF_d_meku_right"))
     CALL(evt_img_clear_virtual_point, STRING("img4"))
     CALL(evt_img_alloc_capture, STRING("img4"), 0, 0, 1, 124, 0, 386, 480)
@@ -810,23 +819,32 @@ EVT_BEGIN(demo_evt)
     CALL(evt_msg_print, 1, PTR(buf), 0, 0)
     CALL(evt_msg_print_add, 0, STRING("op_book_24"))
     CALL(demo_winonoff, 0)
+    // The storybook scene ends; the Rogueport square is shown, with Peach, the mysterious person and the box
+    // still hidden.
     CALL(evt_bg_disp_onoff, 1)
-    CALL(evt_mapobj_flag_onoff, 1, 0, STRING("S"), 1)
-    CALL(evt_mapobj_flag_onoff, 1, 1, STRING("S_ie_01_naka"), 1)
-    CALL(evt_mapobj_flag_onoff, 1, 1, STRING("S_ie_02_f1_naka"), 1)
-    CALL(evt_mapobj_flag_onoff, 1, 1, STRING("S_ie_02_f2_naka"), 1)
-    CALL(evt_mapobj_flag_onoff, 1, 1, STRING("S_ie_03_naka"), 1)
-    CALL(evt_mapobj_flag_onoff, 1, 1, STRING("S_ie_04_naka"), 1)
-    CALL(evt_mapobj_flag_onoff, 1, 1, STRING("S_gai_kabe_k"), 1)
-    CALL(evt_mapobj_flag_onoff, 1, 1, STRING("S_gai_kabe_k_01"), 1)
-    CALL(evt_npc_flag_onoff, 0, STRING("peach"), 128)
-    CALL(evt_npc_flag_onoff, 0, STRING("nazo"), 128)
-    CALL(evt_npc_flag_onoff, 0, STRING("hako"), 128)
-    CALL(evt_npc_flag_onoff, 0, STRING("ロテン１"), 128)
-    CALL(evt_npc_flag_onoff, 0, STRING("クリボー１"), 128)
-    CALL(evt_npc_flag_onoff, 0, STRING("チューさん１"), 128)
-    CALL(evt_mobj_flag_onoff, 0, STRING("hako"), 16384)
-    CALL(evt_snd_bgmoff_f, 513, 6000)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("S"), MAPOBJ_FLAG_HIDE)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("S_ie_01_naka"), MAPOBJ_FLAG_HIDE)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("S_ie_02_f1_naka"), MAPOBJ_FLAG_HIDE)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("S_ie_02_f2_naka"), MAPOBJ_FLAG_HIDE)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("S_ie_03_naka"), MAPOBJ_FLAG_HIDE)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("S_ie_04_naka"), MAPOBJ_FLAG_HIDE)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("S_gai_kabe_k"), MAPOBJ_FLAG_HIDE)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("S_gai_kabe_k_01"), MAPOBJ_FLAG_HIDE)
+    CALL(evt_npc_flag_onoff, 0, STRING("peach"), NPC_FLAG_HIDDEN)
+    CALL(evt_npc_flag_onoff, 0, STRING("nazo"), NPC_FLAG_HIDDEN)
+    CALL(evt_npc_flag_onoff, 0, STRING("hako"), NPC_FLAG_HIDDEN)
+    CALL(evt_npc_flag_onoff, 0, STRING("ロテン１"), NPC_FLAG_HIDDEN)
+    CALL(evt_npc_flag_onoff, 0, STRING("クリボー１"), NPC_FLAG_HIDDEN)
+    CALL(evt_npc_flag_onoff, 0, STRING("チューさん１"), NPC_FLAG_HIDDEN)
+#if VERSION >= VERSION_JP
+    CALL(evt_mobj_flag_onoff, 0, STRING("hako"), MOBJ_FLAG_INVISIBLE)
+#endif
+#if VERSION <= VERSION_DEMO_JP
+    // The storybook music fades out and the town fades in.
+    CALL(evt_snd_bgmoff_f, PSND_FADE_OUT, 6000)
+#else
+    CALL(evt_snd_bgmoff_f, PSND_FADE_OUT | PSND_CH(1), 6000)
+#endif
     CALL(evt_sub_intpl_msec_init, 0, 0, 1000, 3000)
     LOOP(0)
         CALL(evt_sub_intpl_msec_get_value)
@@ -837,13 +855,19 @@ EVT_BEGIN(demo_evt)
             BREAK_LOOP
         END_IF
     END_LOOP
+    // The page pictures are freed.
     CALL(evt_img_free_capture, STRING("img4"), 0)
     CALL(evt_img_release, STRING("img4"))
     DELETE_EVENT(GW(0))
     CALL(evt_paper_delete, STRING("OFF_d_meku_right"))
     LABEL(100)
+    // New music; Peach strolls in and complains that Toadsworth is always watching over her.
     WAIT_MS(1000)
-    CALL(evt_snd_bgmon, 513, STRING("BGM_DEMO2"))
+#if VERSION <= VERSION_DEMO_JP
+    CALL(evt_snd_bgmon, PSND_FADE_OUT, STRING("BGM_DEMO2"))
+#else
+    CALL(evt_snd_bgmon, PSND_FADE_OUT | PSND_CH(1), STRING("BGM_DEMO2"))
+#endif
     CALL(evt_npc_move_position, STRING("peach"), 0, 450, 0, FLOAT(60.0f), 1)
     WAIT_MS(1000)
     CALL(evt_msg_print, 0, STRING("op_00"), 0, 0)
@@ -855,6 +879,7 @@ EVT_BEGIN(demo_evt)
     WAIT_MS(300)
     CALL(evt_cam3d_evt_set, 0, 200, 837, 0, 200, 437, 4000, 11)
     WAIT_MS(300)
+    // Peach looks around the odd town.
     LOOP(4)
         CALL(evt_npc_reverse_ry, STRING("peach"))
         WAIT_MS(500)
@@ -862,6 +887,7 @@ EVT_BEGIN(demo_evt)
     CALL(evt_msg_print, 0, STRING("op_02"), 0, 0)
     WAIT_MS(300)
     WAIT_MS(1000)
+    // A mysterious figure calls to Peach; she turns to him in surprise and he offers his wares.
     CALL(evt_msg_toge, 1, 0, 0, 0)
     CALL(evt_msg_print, 0, STRING("op_03"), 0, STRING("nazo"))
     WAIT_MS(300)
@@ -886,6 +912,7 @@ EVT_BEGIN(demo_evt)
     WAIT_MS(300)
     CALL(evt_msg_print, 0, STRING("op_06"), 0, STRING("peach"))
     WAIT_MS(300)
+    // Peach hesitates, gets nervous, then notices the pretty box.
     CALL(evt_npc_set_tribe, STRING("peach"), STRING("デモピーチ不安"))
     WAIT_MS(1000)
     CALL(evt_npc_set_anim, STRING("peach"), STRING("P_H_1"))
@@ -900,6 +927,8 @@ EVT_BEGIN(demo_evt)
     CALL(evt_msg_print, 0, STRING("op_07"), 0, STRING("peach"))
     WAIT_MS(300)
     WAIT_MS(500)
+    // The box floats up as the merchant says it holds a map to a legendary treasure and only opens for the
+    // right person.
     CALL(evt_npc_get_position, STRING("hako"), LW(7), LW(8), LW(9))
     CALL(evt_sub_intpl_msec_init, 11, 0, 100, 1000)
     LOOP(0)
@@ -920,12 +949,13 @@ EVT_BEGIN(demo_evt)
     CALL(evt_npc_set_tribe, STRING("peach"), STRING("デモピーチ不安"))
     CALL(evt_msg_print, 0, STRING("op_09"), 0, STRING("peach"))
     WAIT_MS(1000)
+    // The camera pulls in; the merchant says the box will open for Peach, and she agrees to try.
     CALL(evt_cam3d_evt_set, -450, 250, 1030, -135, 100, 482, 0, 11)
-    CALL(evt_npc_flag_onoff, 1, STRING("peach"), 32768)
-    CALL(evt_npc_flag_onoff, 1, STRING("nazo"), 32768)
+    CALL(evt_npc_flag_onoff, 1, STRING("peach"), NPC_FLAG_INSTANT_TURN)
+    CALL(evt_npc_flag_onoff, 1, STRING("nazo"), NPC_FLAG_INSTANT_TURN)
     CALL(evt_npc_set_tribe, STRING("peach"), STRING("デモピーチ標準2"))
-    CALL(evt_mapobj_flag_onoff, 1, 0, STRING("S_gai_kabe_k"), 1)
-    CALL(evt_mapobj_flag_onoff, 1, 0, STRING("S_gai_kabe_k_01"), 1)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("S_gai_kabe_k"), MAPOBJ_FLAG_HIDE)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("S_gai_kabe_k_01"), MAPOBJ_FLAG_HIDE)
     WAIT_MS(300)
     CALL(evt_msg_print, 0, STRING("op_10"), 0, STRING("nazo"))
     WAIT_MS(300)
@@ -934,6 +964,7 @@ EVT_BEGIN(demo_evt)
     WAIT_MS(300)
     CALL(evt_npc_status_onoff, 0, STRING("peach"), 2)
     CALL(evt_npc_status_onoff, 0, STRING("nazo"), 2)
+    // Peach steps up and takes the box, which follows the carrying characters while she walks.
     SET_VALUE(GF(0), 0)
     SET_VALUE(GF(1), 0)
     BEGIN_INLINE_EVENT
@@ -985,6 +1016,7 @@ EVT_BEGIN(demo_evt)
             WAIT_FRAMES(1)
         END_LOOP
     END_INLINE_EVENT
+    // The merchant steps away and back while Peach prepares to open the box.
     CALL(evt_npc_get_position, STRING("nazo"), LW(0), LW(1), LW(2))
     ADD(LW(0), 20)
     CALL(evt_npc_move_position, STRING("nazo"), LW(0), LW(2), 0, FLOAT(40.0f), 1)
@@ -994,11 +1026,13 @@ EVT_BEGIN(demo_evt)
     SUBTRACT(LW(0), 20)
     CALL(evt_npc_move_position, STRING("nazo"), LW(0), LW(2), 0, FLOAT(40.0f), 1)
     WAIT_MS(300)
+    // Peach says she will try to open it.
     CALL(evt_npc_set_ry, STRING("hako"), 225)
     CALL(evt_cam3d_evt_set, -90, 89, 739, -90, 44, 442, 0, 11)
     WAIT_FRAMES(1)
     CALL(evt_msg_print, 0, STRING("op_12"), 0, STRING("peach"))
     WAIT_MS(300)
+    // The camera moves in; the box opens and light bursts out.
     CALL(evt_cam3d_evt_set, -85, 50, 590, -85, 28, 442, 15000, 11)
     WAIT_MS(1000)
     CALL(evt_npc_set_camid, STRING("hako"), 5)
@@ -1014,12 +1048,14 @@ EVT_BEGIN(demo_evt)
         CALL(evt_eff64, STRING("eff2"), STRING("radiation_n64"), 3, LW(0), LW(1), LW(2), FLOAT(0.5f), 0, 0, 0, 0, 0, 0, 0)
         CALL(eff_cam1)
     END_INLINE_EVENT
+    // Peach reacts to the glow.
     BEGIN_INLINE_EVENT
         WAIT_MS(300)
         CALL(evt_npc_set_anim, STRING("peach"), STRING("P_B_3"))
         WAIT_MS(300)
         CALL(evt_npc_set_anim, STRING("peach"), STRING("P_B_4"))
     END_INLINE_EVENT
+    // After a pause the demo ends with a white fade to the title screen.
     WAIT_MS(2000)
     LOOP(0)
         IF_INT_EQUAL(GF(10), 0)
@@ -1028,11 +1064,15 @@ EVT_BEGIN(demo_evt)
         WAIT_FRAMES(1)
     END_LOOP
     DELETE_EVENT(GW(10))
-    CALL(evt_fade_set_mapchange_type, 1, 17, 2000, -1, -1)
-    CALL(evt_seq_set_seq, 3, STRING("title"), 0)
+    CALL(evt_fade_set_mapchange_type, 1, FADE_OUT_WHITE, 2000, -1, -1)
+    CALL(evt_seq_set_seq, SEQ_MAP_CHANGE, STRING("title"), 0)
     RETURN
 EVT_END()
 
+/**
+ * Swings the gallows rope (koushukei-dai, 絞首刑台 = gallows; map object S_rop) back and forth about its X axis
+ * between +10 and -10 degrees, one second each way, forever. The map's init spawns it.
+ */
 static EVT_BEGIN(koushukei_dai)
     LOOP(0)
         CALL(evt_sub_intpl_msec_init, 11, 10, -10, 1000)
@@ -1059,6 +1099,10 @@ static EVT_BEGIN(koushukei_dai)
     RETURN
 EVT_END()
 
+/**
+ * Walking loop for the vendor Roten in the demo scene:
+ * walks back and forth between X = 450 and X = -350 at speed 32, waiting a second at each end.
+ */
 EVT_BEGIN(roten_move)
     LOOP(0)
         CALL(evt_npc_move_position, STRING("ロテン１"), 450, 150, 0, FLOAT(32.0f), 0)
@@ -1069,6 +1113,7 @@ EVT_BEGIN(roten_move)
     RETURN
 EVT_END()
 
+/** Wander script for the demo Goomba: starts at the origin and wanders in a 100 by 30 area. */
 EVT_BEGIN(kuribo_move)
     CALL(evt_npc_set_position, STRING("クリボー１"), 0, 0, 0)
     CALL(evt_npc_get_position, STRING("クリボー１"), LW(0), LW(1), LW(2))
@@ -1077,6 +1122,7 @@ EVT_BEGIN(kuribo_move)
     RETURN
 EVT_END()
 
+/** Wander script for the demo Chu-san (mouse): starts at (-175, 100) and wanders in a 100 by 30 area. */
 EVT_BEGIN(chusan_move)
     CALL(evt_npc_set_position, STRING("チューさん１"), -175, 0, 100)
     CALL(evt_npc_get_position, STRING("チューさん１"), LW(0), LW(1), LW(2))
@@ -1085,7 +1131,11 @@ EVT_BEGIN(chusan_move)
     RETURN
 EVT_END()
 
-#ifdef VERSION_G8ME01
+/**
+ * Init script of dmo_00, the opening demo map: starts demo_init, places Peach, the mysterious person,
+ * the golden treasure box and a few townsfolk (Roten, a Goomba and Chu-san, hidden until needed),
+ * sets up the camera, and spawns the drawing and the narration script (demo_evt).
+ */
 EVT_BEGIN(dmo_00_init_evt)
     CALL(demo_init)
     CALL(evt_npc_entry, STRING("peach"), STRING("c_peach"))
@@ -1093,34 +1143,36 @@ EVT_BEGIN(dmo_00_init_evt)
     CALL(evt_npc_set_ry, STRING("peach"), 90)
     CALL(evt_npc_set_position, STRING("peach"), -2, 0, 550)
     CALL(evt_npc_status_onoff, 1, STRING("peach"), 2)
-    CALL(evt_npc_flag_onoff, 1, STRING("peach"), 1074267648)
+    CALL(evt_npc_flag_onoff, 1, STRING("peach"), NPC_FLAG_NO_WALL_HIT | NPC_FLAG_SHADOW_NO_COLLISION | NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM)
     CALL(evt_npc_entry, STRING("nazo"), STRING("c_nazo"))
     CALL(evt_npc_set_tribe, STRING("nazo"), STRING("謎の人"))
     CALL(evt_npc_set_ry, STRING("nazo"), 90)
     CALL(evt_npc_set_position, STRING("nazo"), -145, 0, 450)
     CALL(evt_npc_status_onoff, 1, STRING("nazo"), 2)
-    CALL(evt_npc_flag_onoff, 1, STRING("nazo"), 1074266112)
+    CALL(evt_npc_flag_onoff, 1, STRING("nazo"), NPC_FLAG_NO_WALL_HIT | NPC_FLAG_SHADOW_NO_COLLISION)
     CALL(evt_npc_set_height, STRING("nazo"), 40)
     CALL(evt_npc_entry, STRING("hako"), STRING("MOBJ_GoldenTreasureBox"))
     CALL(evt_npc_set_anim, STRING("hako"), STRING("S_1"))
     CALL(evt_npc_set_position, STRING("hako"), -125, 0, 450)
-    CALL(evt_npc_flag_onoff, 1, STRING("hako"), 1073741824)
+    CALL(evt_npc_flag_onoff, 1, STRING("hako"), NPC_FLAG_NO_WALL_HIT)
     CALL(evt_npc_pera_onoff, STRING("hako"), 0)
+#if VERSION >= VERSION_JP
     CALL(evt_mobj_itembox, STRING("hako"), 340, 110, -20, 1, 0, 0, 0)
-    CALL(evt_mobj_flag_onoff, 1, STRING("hako"), 16384)
+    CALL(evt_mobj_flag_onoff, 1, STRING("hako"), MOBJ_FLAG_INVISIBLE)
+#endif
     CALL(evt_npc_entry, STRING("ロテン１"), STRING("c_roten"))
     CALL(evt_npc_set_tribe, STRING("ロテン１"), STRING("ロテン"))
-    CALL(evt_npc_flag_onoff, 1, STRING("ロテン１"), 1074267648)
+    CALL(evt_npc_flag_onoff, 1, STRING("ロテン１"), NPC_FLAG_NO_WALL_HIT | NPC_FLAG_SHADOW_NO_COLLISION | NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM)
     CALL(evt_npc_status_onoff, 1, STRING("ロテン１"), 2)
     CALL(evt_npc_change_interrupt, STRING("ロテン１"), 1, PTR(roten_move))
     CALL(evt_npc_entry, STRING("クリボー１"), STRING("c_kuribo_n"))
     CALL(evt_npc_set_tribe, STRING("クリボー１"), STRING("NPCクリボー"))
-    CALL(evt_npc_flag_onoff, 1, STRING("クリボー１"), 1074267648)
+    CALL(evt_npc_flag_onoff, 1, STRING("クリボー１"), NPC_FLAG_NO_WALL_HIT | NPC_FLAG_SHADOW_NO_COLLISION | NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM)
     CALL(evt_npc_status_onoff, 1, STRING("クリボー１"), 2)
     CALL(evt_npc_change_interrupt, STRING("クリボー１"), 1, PTR(kuribo_move))
     CALL(evt_npc_entry, STRING("チューさん１"), STRING("c_tyusan"))
     CALL(evt_npc_set_tribe, STRING("チューさん１"), STRING("チューさん"))
-    CALL(evt_npc_flag_onoff, 1, STRING("チューさん１"), 1074267648)
+    CALL(evt_npc_flag_onoff, 1, STRING("チューさん１"), NPC_FLAG_NO_WALL_HIT | NPC_FLAG_SHADOW_NO_COLLISION | NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM)
     CALL(evt_npc_status_onoff, 1, STRING("チューさん１"), 2)
     CALL(evt_npc_change_interrupt, STRING("チューさん１"), 1, PTR(chusan_move))
     CALL(evt_mario_cont_onoff, 0)
@@ -1130,79 +1182,14 @@ EVT_BEGIN(dmo_00_init_evt)
     CALL(evt_paper_entry, STRING("OFF_d_meku_right"))
     CALL(evt_cam3d_evt_set, 0, 385, 1473, 0, 100, 0, 0, 11)
     CALL(evt_cam_letter_box_onoff, 1, 1)
-    CALL(evt_mapobj_flag_onoff, 1, 1, STRING("S"), 1)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("S"), MAPOBJ_FLAG_HIDE)
     CALL(evt_bg_disp_onoff, 0)
-    CALL(evt_npc_flag_onoff, 1, STRING("peach"), 128)
-    CALL(evt_npc_flag_onoff, 1, STRING("nazo"), 128)
-    CALL(evt_npc_flag_onoff, 1, STRING("hako"), 128)
-    CALL(evt_npc_flag_onoff, 1, STRING("ロテン１"), 128)
-    CALL(evt_npc_flag_onoff, 1, STRING("クリボー１"), 128)
-    CALL(evt_npc_flag_onoff, 1, STRING("チューさん１"), 128)
-    BEGIN_INLINE_EVENT_GET_ID(GW(0))
-        SET_TYPE(0)
-        CALL(demo_draw)
-    END_INLINE_EVENT
-    SPAWN_EVENT(PTR(demo_evt))
-    SPAWN_EVENT(PTR(koushukei_dai))
-    BEGIN_INLINE_EVENT
-        CALL(evt_sub_animgroup_async, STRING("OFF_d_maku_center"))
-    END_INLINE_EVENT
-    CALL(evt_fade_set_mapchange_type, 1, -1, -1, -1, 900)
-    RETURN
-EVT_END()
-#else
-EVT_BEGIN(dmo_00_init_evt)
-    CALL(demo_init)
-    CALL(evt_npc_entry, STRING("peach"), STRING("c_peach"))
-    CALL(evt_npc_set_tribe, STRING("peach"), STRING(/*"デモピーチ標準2"*/"\x83\x66\x83\x82\x83\x73\x81\x5B\x83\x60\x95\x57\x8F\x80\x32"))
-    CALL(evt_npc_set_ry, STRING("peach"), 90)
-    CALL(evt_npc_set_position, STRING("peach"), -2, 0, 550)
-    CALL(evt_npc_status_onoff, 1, STRING("peach"), 2)
-    CALL(evt_npc_flag_onoff, 1, STRING("peach"), 1074267648)
-    CALL(evt_npc_entry, STRING("nazo"), STRING("c_nazo"))
-    CALL(evt_npc_set_tribe, STRING("nazo"), STRING(/*"謎の人"*/"\x93\xE4\x82\xCC\x90\x6C"))
-    CALL(evt_npc_set_ry, STRING("nazo"), 90)
-    CALL(evt_npc_set_position, STRING("nazo"), -145, 0, 450)
-    CALL(evt_npc_status_onoff, 1, STRING("nazo"), 2)
-    CALL(evt_npc_flag_onoff, 1, STRING("nazo"), 1074266112)
-    CALL(evt_npc_set_height, STRING("nazo"), 40)
-    CALL(evt_npc_entry, STRING("hako"), STRING("MOBJ_GoldenTreasureBox"))
-    CALL(evt_npc_set_anim, STRING("hako"), STRING("S_1"))
-    CALL(evt_npc_set_position, STRING("hako"), -125, 0, 450)
-    CALL(evt_npc_flag_onoff, 1, STRING("hako"), 1073741824)
-    CALL(evt_npc_pera_onoff, STRING("hako"), 0)
-    CALL(evt_mobj_itembox, STRING("hako"), 340, 110, -20, 1, 0, 0, 0)
-    CALL(evt_mobj_flag_onoff, 1, STRING("hako"), 16384)
-    CALL(evt_npc_entry, STRING(/*"ロテン１"*/"\x83\x8D\x83\x65\x83\x93\x82\x50"), STRING("c_roten"))
-    CALL(evt_npc_set_tribe, STRING(/*"ロテン１"*/"\x83\x8D\x83\x65\x83\x93\x82\x50"), STRING(/*"ロテン"*/"\x83\x8D\x83\x65\x83\x93"))
-    CALL(evt_npc_flag_onoff, 1, STRING(/*"ロテン１"*/"\x83\x8D\x83\x65\x83\x93\x82\x50"), 1074267648)
-    CALL(evt_npc_status_onoff, 1, STRING(/*"ロテン１"*/"\x83\x8D\x83\x65\x83\x93\x82\x50"), 2)
-    CALL(evt_npc_change_interrupt, STRING(/*"ロテン１"*/"\x83\x8D\x83\x65\x83\x93\x82\x50"), 1, PTR(roten_move))
-    CALL(evt_npc_entry, STRING(/*"クリボー１"*/"\x83\x4E\x83\x8A\x83\x7B\x81\x5B\x82\x50"), STRING("c_kuribo_n"))
-    CALL(evt_npc_set_tribe, STRING(/*"クリボー１"*/"\x83\x4E\x83\x8A\x83\x7B\x81\x5B\x82\x50"), STRING(/*"NPCクリボー"*/"\x4E\x50\x43\x83\x4E\x83\x8A\x83\x7B\x81\x5B"))
-    CALL(evt_npc_flag_onoff, 1, STRING(/*"クリボー１"*/"\x83\x4E\x83\x8A\x83\x7B\x81\x5B\x82\x50"), 1074267648)
-    CALL(evt_npc_status_onoff, 1, STRING(/*"クリボー１"*/"\x83\x4E\x83\x8A\x83\x7B\x81\x5B\x82\x50"), 2)
-    CALL(evt_npc_change_interrupt, STRING(/*"クリボー１"*/"\x83\x4E\x83\x8A\x83\x7B\x81\x5B\x82\x50"), 1, PTR(kuribo_move))
-    CALL(evt_npc_entry, STRING(/*"チューさん１"*/"\x83\x60\x83\x85\x81\x5B\x82\xB3\x82\xF1\x82\x50"), STRING("c_tyusan"))
-    CALL(evt_npc_set_tribe, STRING(/*"チューさん１"*/"\x83\x60\x83\x85\x81\x5B\x82\xB3\x82\xF1\x82\x50"), STRING(/*"チューさん"*/"\x83\x60\x83\x85\x81\x5B\x82\xB3\x82\xF1"))
-    CALL(evt_npc_flag_onoff, 1, STRING(/*"チューさん１"*/"\x83\x60\x83\x85\x81\x5B\x82\xB3\x82\xF1\x82\x50"), 1074267648)
-    CALL(evt_npc_status_onoff, 1, STRING(/*"チューさん１"*/"\x83\x60\x83\x85\x81\x5B\x82\xB3\x82\xF1\x82\x50"), 2)
-    CALL(evt_npc_change_interrupt, STRING(/*"チューさん１"*/"\x83\x60\x83\x85\x81\x5B\x82\xB3\x82\xF1\x82\x50"), 1, PTR(chusan_move))
-    CALL(evt_mario_cont_onoff, 0)
-    CALL(evt_party_cont_onoff, 0, 0)
-    CALL(evt_mario_set_pos, 0, -1000, 0)
-    CALL(evt_party_set_pos, 0, 0, -1000, 0)
-    CALL(evt_paper_entry, STRING("OFF_d_meku_right"))
-    CALL(evt_cam3d_evt_set, 0, 385, 1473, 0, 100, 0, 0, 11)
-    CALL(evt_cam_letter_box_onoff, 1, 1)
-    CALL(evt_mapobj_flag_onoff, 1, 1, STRING("S"), 1)
-    CALL(evt_bg_disp_onoff, 0)
-    CALL(evt_npc_flag_onoff, 1, STRING("peach"), 128)
-    CALL(evt_npc_flag_onoff, 1, STRING("nazo"), 128)
-    CALL(evt_npc_flag_onoff, 1, STRING("hako"), 128)
-    CALL(evt_npc_flag_onoff, 1, STRING(/*"ロテン１"*/"\x83\x8D\x83\x65\x83\x93\x82\x50"), 128)
-    CALL(evt_npc_flag_onoff, 1, STRING(/*"クリボー１"*/"\x83\x4E\x83\x8A\x83\x7B\x81\x5B\x82\x50"), 128)
-    CALL(evt_npc_flag_onoff, 1, STRING(/*"チューさん１"*/"\x83\x60\x83\x85\x81\x5B\x82\xB3\x82\xF1\x82\x50"), 128)
+    CALL(evt_npc_flag_onoff, 1, STRING("peach"), NPC_FLAG_HIDDEN)
+    CALL(evt_npc_flag_onoff, 1, STRING("nazo"), NPC_FLAG_HIDDEN)
+    CALL(evt_npc_flag_onoff, 1, STRING("hako"), NPC_FLAG_HIDDEN)
+    CALL(evt_npc_flag_onoff, 1, STRING("ロテン１"), NPC_FLAG_HIDDEN)
+    CALL(evt_npc_flag_onoff, 1, STRING("クリボー１"), NPC_FLAG_HIDDEN)
+    CALL(evt_npc_flag_onoff, 1, STRING("チューさん１"), NPC_FLAG_HIDDEN)
     BEGIN_INLINE_EVENT_GET_ID(GW(0))
         SET_TYPE(0)
         CALL(demo_draw)
@@ -1212,7 +1199,12 @@ EVT_BEGIN(dmo_00_init_evt)
     BEGIN_INLINE_EVENT
         CALL(evt_sub_animgroup_async, STRING("OFF_d_maku_center"))
     END_INLINE_EVENT
-    RETURN
-EVT_END_PAD()
+#if VERSION >= VERSION_US
+    CALL(evt_fade_set_mapchange_type, 1, -1, -1, -1, 900)
 #endif
-
+    RETURN
+#if VERSION >= VERSION_US
+EVT_END()
+#else
+EVT_END_PAD() // JP and the demo: one zero word after the script
+#endif

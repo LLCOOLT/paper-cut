@@ -61,6 +61,7 @@ static Cell* DLInsert(Cell* list, Cell* cell);
 static int DLOverlap(Cell* list, void* start, void* end);
 static s32 DLSize(Cell* list);
 
+/** Adds a cell to the front of a doubly linked cell list and returns the new head. */
 static Cell* DLAddFront(Cell* list, Cell* cell) {
     cell->next = list;
     cell->prev = 0;
@@ -70,6 +71,7 @@ static Cell* DLAddFront(Cell* list, Cell* cell) {
     return cell;
 }
 
+/** Returns the cell if it is in the list (compared by pointer), otherwise NULL. */
 static Cell* DLLookup(Cell* list, Cell* cell) {
     for(; list; list = list->next) {
         if (list == cell) {
@@ -79,6 +81,7 @@ static Cell* DLLookup(Cell* list, Cell* cell) {
     return NULL;
 }
 
+/** Unlinks a cell from a doubly linked list and returns the list's new head. */
 static Cell* DLExtract(Cell* list, Cell* cell) {
     if (cell->next) {
         cell->next->prev = cell->prev;
@@ -90,6 +93,10 @@ static Cell* DLExtract(Cell* list, Cell* cell) {
     return list;
 }
 
+/**
+ * Inserts a cell into a list sorted by address,
+ * merging it with the adjoining previous and next cells when they touch; returns the head.
+ */
 static Cell* DLInsert(Cell* list, Cell* cell) {
     Cell* prev;
     Cell* next;
@@ -127,6 +134,7 @@ static Cell* DLInsert(Cell* list, Cell* cell) {
     return cell;
 }
 
+/** Returns 1 if any cell in the list overlaps the address range [start, end). */
 static int DLOverlap(Cell* list, void* start, void* end) {
     Cell* cell = list;
 
@@ -142,6 +150,7 @@ static int DLOverlap(Cell* list, void* start, void* end) {
     return 0;
 }
 
+/** Returns the sum of the sizes of all cells in a list. */
 static s32 DLSize(Cell* list) {
     Cell* cell;
     s32 size;
@@ -157,6 +166,11 @@ static s32 DLSize(Cell* list) {
     return size;
 }
 
+/**
+ * Allocates from a heap, first fit: adds a 32-byte header, rounds the size to 32 bytes,
+ * and swallows the leftover when it is under 64 bytes.
+ * Returns the block just past the header, or NULL if nothing fits.
+ */
 void* OSAllocFromHeap(int heap, u32 size) {
     HeapDesc* hd;
     Cell* cell;
@@ -223,6 +237,11 @@ void* OSAllocFromHeap(int heap, u32 size) {
     return (u8*)cell + 0x20;
 }
 
+/**
+ * Reserves the memory range at *rstart..*rend (rounded outward to 32 bytes) out of the free lists of all heaps,
+ * so the caller can use a fixed address.
+ * Updates the range to what was reserved and returns the start; NULL if the range overlaps an allocated block.
+ */
 void* OSAllocFixed(void* rstart, void* rend) {
     int i;
     Cell* cell;
@@ -331,6 +350,10 @@ void* OSAllocFixed(void* rstart, void* rend) {
     return (void*)*(OSA_U*)rstart;
 }
 
+/**
+ * Frees a block from a heap: moves its cell from the allocated list to the address-ordered free list,
+ * merging with neighbours.
+ */
 void OSFreeToHeap(int heap, void* ptr) {
     HeapDesc* hd;
     Cell* cell;
@@ -353,6 +376,7 @@ void OSFreeToHeap(int heap, void* ptr) {
     hd->free = DLInsert(hd->free, cell);
 }
 
+/** Sets the heap that plain OSAlloc calls use and returns the previously current one. */
 int OSSetCurrentHeap(int heap) {
     int prev;
 
@@ -364,6 +388,10 @@ int OSSetCurrentHeap(int heap) {
     return prev;
 }
 
+/**
+ * Sets up the heap system: places the descriptor array for maxHeaps heaps at arenaStart,
+ * marks all unused and returns the 32-byte aligned address after it, where the first heap can start.
+ */
 void* OSInitAlloc(void* arenaStart, void* arenaEnd, int maxHeaps) {
     u32 arraySize;
     int i;
@@ -393,6 +421,10 @@ void* OSInitAlloc(void* arenaStart, void* arenaEnd, int maxHeaps) {
     return arenaStart;
 }
 
+/**
+ * Creates a heap over [start, end) (aligned inward to 32 bytes) as one big free cell,
+ * in the first unused descriptor; returns its id, or -1 if none is free.
+ */
 int OSCreateHeap(void* start, void* end) {
     int heap;
     HeapDesc* hd;
@@ -442,6 +474,7 @@ int OSCreateHeap(void* start, void* end) {
     return -1;
 }
 
+/** Releases a heap descriptor so its slot can be reused; the memory is not touched. */
 void OSDestroyHeap(int heap) {
     HeapDesc* hd;
     s32 size;
@@ -469,6 +502,7 @@ void OSDestroyHeap(int heap) {
 #endif
 }
 
+/** Adds the range [start, end) to a heap as a new free cell and grows the heap's size. */
 void OSAddToHeap(int heap, void* start, void* end) {
     HeapDesc* hd;
     Cell* cell;
@@ -509,6 +543,10 @@ void OSAddToHeap(int heap, void* start, void* end) {
 #define ASSERTREPORT(line, cond) \
     if (!(cond)) { OSReport("OSCheckHeap: Failed " #cond " in %d", line); return -1; }
 
+/**
+ * Walks a heap's allocated and free lists and returns the total free bytes,
+ * net of per-block headers (debug builds also check list consistency and return -1 if it fails).
+ */
 s32 OSCheckHeap(int heap) {
     HeapDesc* hd;
     Cell* cell;
@@ -558,6 +596,7 @@ s32 OSCheckHeap(int heap) {
     return free;
 }
 
+/** Returns the usable size of an allocated block: its cell size less the 32-byte header. */
 u32 OSReferentSize(void* ptr) {
     Cell* cell;
 
@@ -573,6 +612,7 @@ u32 OSReferentSize(void* ptr) {
     return (s32)((OSA_U)cell->size-HEADERSIZE);
 }
 
+/** Prints a heap's usage and every allocated and free cell (address, size, end, prev, next) to the debug console. */
 void OSDumpHeap(int heap) {
     HeapDesc* hd;
     Cell* cell;
@@ -605,6 +645,7 @@ void OSDumpHeap(int heap) {
     }
 }
 
+/** Calls the visitor on every allocated block in every active heap, passing its address and cell size. */
 void OSVisitAllocated(void (*visitor)(void*, u32)) {
     u32 heap;
     Cell* cell;

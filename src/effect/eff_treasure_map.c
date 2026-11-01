@@ -1,3 +1,4 @@
+// Treasure map: plays the EFF_treasure_map model animation at a point and fades out when removed.
 #include "eff/eff_treasure_map.h"
 #include "driver/animdrv.h"
 #include "driver/dispdrv.h"
@@ -5,17 +6,24 @@
 #include "memory.h"
 #include <dolphin/mtx.h>
 
+static void effTreasureMapDisp(CameraId cameraId, EffectEntry* effect);
+static void effTreasureMapMain(EffectEntry* effect);
+
+/**
+ * Spawns the treasure map at (x, y, z); the map model is shown until the effect is removed.
+ * Caller: evt_eff "treasure_map".
+ */
 EffectEntry* effTreasureMapEntry(s32 type, f32 x, f32 y, f32 z) {
     EffectEntry* effect;
     EffTreasureMapWork* work;
 
     effect = effEntry();
-    effect->type = "Treasure_Map\0\0\0";
+    effect->type = "Treasure_Map";
     effect->count = 1;
     work = __memAlloc(HEAP_EFFECT, sizeof(EffTreasureMapWork));
     effect->userdata = work;
     effect->callback = effTreasureMapMain;
-    effect->flags |= 2;
+    effect->flags |= EFFECT_FLAG_SOFT_DELETE;
     work->type = type;
     work->position.x = x;
     work->position.y = y;
@@ -29,12 +37,13 @@ EffectEntry* effTreasureMapEntry(s32 type, f32 x, f32 y, f32 z) {
     return effect;
 }
 
-void effTreasureMapMain(EffectEntry* effect) {
+/** Waits for the EFF_treasure_map group, starts its animation, and on soft delete fades alpha out over 16 frames. */
+static void effTreasureMapMain(EffectEntry* effect) {
     EffTreasureMapWork* work = effect->userdata;
     Vec position;
     BOOL inBattle;
 
-    position = (Vec){ work->position.x, work->position.y, work->position.z };
+    position = (Vec){work->position.x, work->position.y, work->position.z};
     inBattle = gp->inBattle != 0;
 
     if (work->poseId == -1) {
@@ -46,8 +55,8 @@ void effTreasureMapMain(EffectEntry* effect) {
     }
 
     // soft delete: start fading out
-    if (effect->flags & 4) {
-        effect->flags &= ~4;
+    if (effect->flags & EFFECT_FLAG_DELETE_REQUESTED) {
+        effect->flags &= ~EFFECT_FLAG_DELETE_REQUESTED;
         work->timer = 16;
     }
     if (work->timer < 1000) {
@@ -67,7 +76,8 @@ void effTreasureMapMain(EffectEntry* effect) {
     dispEntry(work->cameraId, dispCalcZ(&position), 2, (DispCallback)effTreasureMapDisp, effect);
 }
 
-void effTreasureMapDisp(CameraId cameraId, EffectEntry* effect) {
+/** Draws the map twice: first a larger brown copy as an outline, then the normal one on top. */
+static void effTreasureMapDisp(CameraId cameraId, EffectEntry* effect) {
     EffTreasureMapWork* work = effect->userdata;
     Mtx trans;
     Mtx scale;
@@ -87,17 +97,16 @@ void effTreasureMapDisp(CameraId cameraId, EffectEntry* effect) {
                 PSMTXRotRad(rot, 'y', MTXDegToRad(work->rotY));
                 PSMTXConcat(trans, scale, mtx);
                 PSMTXConcat(mtx, rot, mtx);
-                animPoseSetMaterialFlagOn(work->poseId, 0x40);
-                animPoseSetMaterialEvtColor(work->poseId, (GXColor){ 0x2E, 0x1B, 0x08, work->alpha });
-            }
-            else {
+                animPoseSetMaterialFlagOn(work->poseId, ANIM_MATERIAL_FLAG_EVT_COLOR);
+                animPoseSetMaterialEvtColor(work->poseId, (GXColor){0x2E, 0x1B, 0x08, work->alpha});
+            } else {
                 PSMTXTrans(trans, work->position.x, work->position.y, work->position.z);
                 PSMTXScale(scale, s, s, s);
                 PSMTXRotRad(rot, 'y', MTXDegToRad(work->rotY));
                 PSMTXConcat(trans, scale, mtx);
                 PSMTXConcat(mtx, rot, mtx);
-                animPoseSetMaterialFlagOn(work->poseId, 0x40);
-                animPoseSetMaterialEvtColor(work->poseId, (GXColor){ 0xFF, 0xFF, 0xFF, work->alpha });
+                animPoseSetMaterialFlagOn(work->poseId, ANIM_MATERIAL_FLAG_EVT_COLOR);
+                animPoseSetMaterialEvtColor(work->poseId, (GXColor){0xFF, 0xFF, 0xFF, work->alpha});
             }
             animPoseMain(work->poseId);
             animPoseDrawMtx(work->poseId, mtx, 1, 0.0f, 10.0f);

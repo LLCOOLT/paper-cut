@@ -1,9 +1,13 @@
+// "LasMon" effect: plays the MOBJ_EFF_las_mon animation at a point; types 0 and 1 pick the animation.
 #include "eff/eff_las_mon.h"
 #include "driver/animdrv.h"
 #include "driver/dispdrv.h"
 #include "mario/mariost.h"
 #include "memory.h"
 #include <dolphin/mtx.h>
+
+static void effLasMonDisp(CameraId cameraId, EffectEntry* effect);
+static void effLasMonMain(EffectEntry* effect);
 
 typedef struct EffLasMonWork {
     s32 type;     // 0x0
@@ -15,17 +19,18 @@ typedef struct EffLasMonWork {
     s32 timer;    // 0x20, counts down while fading out
 } EffLasMonWork;
 
+/** Spawns a MOBJ_EFF_las_mon animation at (x, y, z); spawned by an event script in tik. */
 EffectEntry* effLasMonEntry(s32 type, f32 x, f32 y, f32 z) {
     EffectEntry* effect;
     EffLasMonWork* work;
 
     effect = effEntry();
-    effect->type = "LasMon\0";
+    effect->type = "LasMon";
     effect->count = 1;
     work = __memAlloc(HEAP_EFFECT, sizeof(EffLasMonWork) * effect->count);
     effect->userdata = work;
     effect->callback = effLasMonMain;
-    effect->flags |= 2;
+    effect->flags |= EFFECT_FLAG_SOFT_DELETE;
     work->type = type;
     work->position.x = x;
     work->position.y = y;
@@ -38,17 +43,18 @@ EffectEntry* effLasMonEntry(s32 type, f32 x, f32 y, f32 z) {
     return effect;
 }
 
-void effLasMonMain(EffectEntry* effect) {
+/** Loads the animation, plays A_1 once then holds S_1, and fades out over 16 frames on soft delete. */
+static void effLasMonMain(EffectEntry* effect) {
     EffLasMonWork* work = effect->userdata;
     Vec position;
     BOOL inBattle;
 
-    position = (Vec){ work->position.x, work->position.y, work->position.z };
+    position = (Vec){work->position.x, work->position.y, work->position.z};
     inBattle = gp->inBattle != 0;
 
     // soft delete: start fading out
-    if (effect->flags & 4) {
-        effect->flags &= ~4;
+    if (effect->flags & EFFECT_FLAG_DELETE_REQUESTED) {
+        effect->flags &= ~EFFECT_FLAG_DELETE_REQUESTED;
         work->timer = 16;
     }
     if (work->timer < 1000) {
@@ -86,7 +92,8 @@ void effLasMonMain(EffectEntry* effect) {
     dispEntry(CAMERA_3D, dispCalcZ(&position), 2, (DispCallback)effLasMonDisp, effect);
 }
 
-void effLasMonDisp(CameraId cameraId, EffectEntry* effect) {
+/** Draws the pose at the effect position with the current alpha. */
+static void effLasMonDisp(CameraId cameraId, EffectEntry* effect) {
     EffLasMonWork* work = effect->userdata;
     Mtx mtx;
     Mtx scale;
@@ -95,8 +102,8 @@ void effLasMonDisp(CameraId cameraId, EffectEntry* effect) {
         PSMTXTrans(mtx, work->position.x, work->position.y, work->position.z);
         PSMTXScale(scale, work->scale, work->scale, work->scale);
         PSMTXConcat(mtx, scale, mtx);
-        animPoseSetMaterialFlagOn(work->poseId, 0x40);
-        animPoseSetMaterialEvtColor(work->poseId, (GXColor){ 0xFF, 0xFF, 0xFF, work->alpha });
+        animPoseSetMaterialFlagOn(work->poseId, ANIM_MATERIAL_FLAG_EVT_COLOR);
+        animPoseSetMaterialEvtColor(work->poseId, (GXColor){0xFF, 0xFF, 0xFF, work->alpha});
         animPoseMain(work->poseId);
         animPoseDrawMtx(work->poseId, mtx, 1, 0.0f, 10.0f);
         animPoseDrawMtx(work->poseId, mtx, 2, 0.0f, 10.0f);

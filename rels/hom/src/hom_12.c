@@ -1,89 +1,47 @@
+// hom_12 (途中駅ホーム, Excess Express platform): the coupled cars seen from outside, leading into rsh_02_a.
+
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
+#include "evt/evt_bero.h"
+#include "evt/evt_cam.h"
+#include "evt/evt_map.h"
+#include "evt/evt_mario.h"
+#include "evt/evt_party.h"
+#include "evt/evt_seq.h"
+#include "evt/evt_snd.h"
 #include "hom.h"
+#include "evt/evt_story.h"
+#include "driver/mapdrv.h"
 
-#pragma force_active on
-
-USER_FUNC(evt_bero_mapchange);
-USER_FUNC(evt_cam3d_evt_set);
-USER_FUNC(evt_cam_letter_box_onoff);
-USER_FUNC(evt_mapobj_flag_onoff);
-USER_FUNC(evt_mapobj_trans);
-USER_FUNC(evt_mario_cont_onoff);
-USER_FUNC(evt_mario_set_pos);
-USER_FUNC(evt_party_cont_onoff);
-USER_FUNC(evt_party_set_pos);
-USER_FUNC(evt_seq_wait);
-USER_FUNC(evt_snd_bgmoff);
-USER_FUNC(evt_snd_envon);
-
-f32 fd_hom_12_negone_one_374[2] __attribute__((aligned(8)));
-f32 fd_hom_12_neg_one_382;
-f32 fd_hom_12___local_PI_383;
-f32 fd_hom_12___local_3PIO2_385;
-f32 fd_hom_12_one_negone_373[2] __attribute__((aligned(8)));
-f32 fd_hom_12___local_PIO2_384;
-f32 fd_hom_12_one_381;
-f32 fd_hom_12_negone_one_360[2] __attribute__((aligned(8)));
-f32 fd_hom_12_neg_one_365;
-f32 fd_hom_12___local_PI_366;
-f32 fd_hom_12___local_3PIO2_368;
-f32 fd_hom_12_one_negone_359[2] __attribute__((aligned(8)));
-f32 fd_hom_12___local_PIO2_367;
-f32 fd_hom_12_one_364;
-EvtWord hom_12_init_evt[140];
-
-f32 fd_hom_12_negone_one_374[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_hom_12_neg_one_382 = -1.0f;
-
-f32 fd_hom_12___local_PI_383 = 3.1415927f;
-
-f32 fd_hom_12___local_3PIO2_385 = 4.712389f;
-
-f32 fd_hom_12_one_negone_373[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_hom_12___local_PIO2_384 = 1.5707964f;
-
-f32 fd_hom_12_one_381 = 1.0f;
-
-f32 fd_hom_12_negone_one_360[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_hom_12_neg_one_365 = -1.0f;
-
-f32 fd_hom_12___local_PI_366 = 3.1415927f;
-
-f32 fd_hom_12___local_3PIO2_368 = 4.712389f;
-
-f32 fd_hom_12_one_negone_359[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_hom_12___local_PIO2_367 = 1.5707964f;
-
-f32 fd_hom_12_one_364 = 1.0f;
-
+/**
+ * Excess Express exterior scene (hom_12): hides Mario and his partners, sets the train to cruising speed,
+ * pans a letterboxed camera along the coupled cars and then changes to rsh_02_a (nidome).
+ */
 EVT_BEGIN(hom_12_init_evt)
-    CALL(evt_snd_bgmoff, 512)
-    CALL(evt_snd_envon, 272, STRING("ENV_STG6_RSH2"))
+    CALL(evt_snd_bgmoff, PSND_FADE_OUT)
+    CALL(evt_snd_envon, PSND_FADE_RESTART | PSND_FADE_IN, STRING("ENV_STG6_RSH2"))
     CALL(evt_mario_cont_onoff, 0)
     CALL(evt_party_cont_onoff, 0, 0)
     CALL(evt_party_cont_onoff, 1, 0)
     CALL(evt_mario_set_pos, 0, -1000, 0)
     CALL(evt_party_set_pos, 0, 0, -1000, 0)
     CALL(evt_party_set_pos, 1, 0, -1000, 0)
-    IF_INT_EQUAL(GSWF(3578), 0)
-        CALL_CHILD(PTR(hom_10_evt_resha_right))
-        CALL_CHILD(PTR(hom_10_evt_resha_start3))
+    IF_INT_EQUAL(GSWF(GSWF_TRAIN_RETURN_TRIP), 0)
+        CALL_CHILD(hom_10_evt_resha_right)
+        CALL_CHILD(hom_10_evt_resha_start3)
         SET_VALUE(LW(0), 500)
         SET_VALUE(LW(1), -500)
-        CALL(evt_mapobj_flag_onoff, 1, 1, STRING("renketu"), 1)
-        CALL(evt_mapobj_flag_onoff, 1, 0, STRING("renketu_1"), 1)
-        CALL(evt_mapobj_flag_onoff, 1, 0, STRING("renketu_2"), 1)
-        CALL(evt_mapobj_flag_onoff, 1, 0, STRING("renketu_3"), 1)
-        CALL(evt_mapobj_flag_onoff, 1, 0, STRING("renketu_4"), 1)
-        CALL(evt_mapobj_flag_onoff, 1, 0, STRING("renketu_5"), 1)
-        ELSE
-        CALL_CHILD(PTR(hom_10_evt_resha_left))
-        CALL_CHILD(PTR(hom_10_evt_resha_start4))
+#if VERSION >= VERSION_JP
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("renketu"), MAPOBJ_FLAG_HIDE)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("renketu_1"), MAPOBJ_FLAG_HIDE)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("renketu_2"), MAPOBJ_FLAG_HIDE)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("renketu_3"), MAPOBJ_FLAG_HIDE)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("renketu_4"), MAPOBJ_FLAG_HIDE)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("renketu_5"), MAPOBJ_FLAG_HIDE)
+#endif
+    ELSE
+        CALL_CHILD(hom_10_evt_resha_left)
+        CALL_CHILD(hom_10_evt_resha_start4)
         SET_VALUE(LW(0), 0)
         SET_VALUE(LW(1), 1000)
         CALL(evt_mapobj_trans, 1, STRING("train"), -1500, 0, 0)
@@ -98,4 +56,3 @@ EVT_BEGIN(hom_12_init_evt)
     END_INLINE_EVENT
     RETURN
 EVT_END()
-

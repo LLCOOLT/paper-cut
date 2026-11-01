@@ -1,3 +1,4 @@
+// Script commands for 2D icon and text overlays.
 #include "evt/evt_cmd.h"
 #include "driver/dispdrv.h"
 #include "driver/icondrv.h"
@@ -9,27 +10,31 @@
 #include <string.h>
 #include "evt/evt_twoddisp.h"
 #include "libc_decls.h"
-
-void FontDrawScale(f32 scale);
-void FontDrawString(f32 x, f32 y, const char* str);
+#include "version.h"
+#ifdef TARGET_PC /* PC port: the header's prototypes are skipped on PC (these are static here) */
+static USER_FUNC(twoddisp_main);
+#endif
 
 typedef struct TwodEntry {
-    char name[0x10];  // 0x0
-    u16 flags;        // 0x10
-    u16 unk12;        // 0x12
-    f32 x;            // 0x14
-    f32 y;            // 0x18
-    f32 baseX;        // 0x1C
-    f32 baseY;        // 0x20
-    EvtWord id;       // 0x24, icon id, or a text pointer (top bit set)
-    f32 scale;        // 0x28
+    char name[0x10]; // 0x0
+    u16 flags;       // 0x10
+    u16 flags2;      // 0x12, cleared with flags, never read
+    f32 x;           // 0x14
+    f32 y;           // 0x18
+    f32 baseX;       // 0x1C
+    f32 baseY;       // 0x20
+    EvtWord id;      // 0x24, icon id, or a text pointer (top bit set)
+    f32 scale;       // 0x28
     u8 pad[0x34 - 0x2C];
 } TwodEntry;
 
 TwodEntry* twodPtr;
 s32 twodID;
-USER_FUNC(twoddisp_main);
 
+/**
+ * Draws every visible 2D overlay entry: an icon, or (id top bit set) a text string with a black shadow,
+ * at its base position plus offset.
+ */
 static void twoddisp_disp(CameraId camera, void* param) {
     char buf[0x100];
     Vec pos;
@@ -55,7 +60,7 @@ static void twoddisp_disp(CameraId camera, void* param) {
                 pos.y = p->baseY + p->y;
                 pos.z = 0.0f;
                 GXSetFog(GX_FOG_NONE, 0.0f, 0.0f, 0.0f, 0.0f, fogi);
-                iconDispGx(&pos, 0x10, (u16)p->id, p->scale);
+                iconDispGx(&pos, ICON_DISP_2D, (u16)p->id, p->scale);
             } else {
                 FontDrawStart();
                 FontDrawScale(p->scale);
@@ -73,37 +78,42 @@ static void twoddisp_disp(CameraId camera, void* param) {
     }
 }
 
-USER_FUNC(twoddisp_main) {
+/** Registers twoddisp_disp on the 2D camera for this frame; run every frame by twoddisp_main_event. */
+static USER_FUNC(twoddisp_main) {
     u32 i;
     for (i = 0; (s32)i < 100; i++) {
     }
-    dispEntry((CameraId)8, 1000.0f, 0, twoddisp_disp, NULL);
+    dispEntry(CAMERA_2D, 1000.0f, 0, twoddisp_disp, NULL);
     return 2;
 }
 
-s32 evt_twoddisp_init(EventEntry* evt, BOOL isFirstCall) {
+/**
+ * Sets up the 2D overlay system: allocates 100 empty entries from map memory and starts twoddisp_main_event,
+ * copying the caller's local variables to it. No script in the game calls these overlay commands.
+ */
+USER_FUNC(evt_twoddisp_init) {
     EventEntry* e;
     TwodEntry* p;
     u32 i;
 
-    e = evtEntryType(twoddisp_main_event, evt->priority, 0, evt->type);
-    e->unitId = evt->unitId;
-    e->ownerNPC = evt->ownerNPC;
+    e = evtEntryType(twoddisp_main_event, event->priority, 0, event->type);
+    e->unitId = event->unitId;
+    e->ownerNPC = event->ownerNPC;
     for (i = 0; i < 16; i++) {
-        e->lwData[i] = evt->lwData[i];
+        e->lwData[i] = event->lwData[i];
     }
     for (i = 0; i < 3; i++) {
-        e->lfData[i] = evt->lfData[i];
+        e->lfData[i] = event->lfData[i];
     }
-    e->uwBase = evt->uwBase;
-    e->ufBase = evt->ufBase;
+    e->uwBase = event->uwBase;
+    e->ufBase = event->ufBase;
     twodID = e->eventId;
     twodPtr = (TwodEntry*)_mapAlloc(100 * sizeof(TwodEntry));
     for (i = 0; (s32)i < 100; i++) {
         p = &twodPtr[i];
         p->name[0] = 0;
         p->flags = 0;
-        p->unk12 = 0;
+        p->flags2 = 0;
         p->x = 0.0f;
         p->baseX = 0.0f;
         p->y = 0.0f;
@@ -114,16 +124,20 @@ s32 evt_twoddisp_init(EventEntry* evt, BOOL isFirstCall) {
     return 2;
 }
 
-s32 evt_twoddisp_entry(EventEntry* evt, BOOL isFirstCall) {
+/**
+ * Adds a visible overlay named args[0] showing args[1] (an icon id,
+ * or a text pointer with the top bit set) in the first free slot.
+ */
+USER_FUNC(evt_twoddisp_entry) {
     EvtWord id; /* an icon id or a text pointer */
     s32 i;
     EvtWord* args;
     char* name;
     TwodEntry* p;
 
-    args = evt->args;
-    name = (char*)evtGetValue(evt, args[0]);
-    id = evtGetValue(evt, args[1]);
+    args = event->args;
+    name = (char*)evtGetValue(event, args[0]);
+    id = evtGetValue(event, args[1]);
 
     for (i = 0; i < 100; i++) {
         p = &twodPtr[i];
@@ -131,7 +145,7 @@ s32 evt_twoddisp_entry(EventEntry* evt, BOOL isFirstCall) {
         if ((s8)p->name[0] == 0) {
             strcpy(p->name, name);
             p->flags = 1;
-            p->unk12 = 0;
+            p->flags2 = 0;
             p->x = 0.0f;
             p->baseX = 0.0f;
             p->y = 0.0f;
@@ -144,6 +158,7 @@ s32 evt_twoddisp_entry(EventEntry* evt, BOOL isFirstCall) {
     return 2;
 }
 
+/** Finds the overlay entry with the given name, or NULL. */
 static inline TwodEntry* twod_find(const char* name) {
     s32 i;
     TwodEntry* p;
@@ -157,50 +172,51 @@ static inline TwodEntry* twod_find(const char* name) {
     return NULL;
 }
 
-s32 evt_twoddisp_set_position(EventEntry* evt, BOOL isFirstCall) {
-    EvtWord* args = evt->args;
-    char* name = (char*)evtGetValue(evt, args[0]);
+/** Sets the offset of overlay args[0] to (args[1], args[2]), added to its base position. */
+USER_FUNC(evt_twoddisp_set_position) {
+    EvtWord* args = event->args;
+    char* name = (char*)evtGetValue(event, args[0]);
     TwodEntry* p;
-    s32 i;
 
     p = twod_find(name);
-    p->x = evtGetFloat(evt, args[1]);
-    p->y = evtGetFloat(evt, args[2]);
+    p->x = evtGetFloat(event, args[1]);
+    p->y = evtGetFloat(event, args[2]);
     return 2;
 }
 
-s32 evt_twoddisp_set_base_position(EventEntry* evt, BOOL isFirstCall) {
-    EvtWord* args = evt->args;
-    char* name = (char*)evtGetValue(evt, args[0]);
+/** Sets the base screen position of overlay args[0] to (args[1], args[2]). */
+USER_FUNC(evt_twoddisp_set_base_position) {
+    EvtWord* args = event->args;
+    char* name = (char*)evtGetValue(event, args[0]);
     TwodEntry* p;
-    s32 i;
 
     p = twod_find(name);
-    p->baseX = evtGetFloat(evt, args[1]);
-    p->baseY = evtGetFloat(evt, args[2]);
+    p->baseX = evtGetFloat(event, args[1]);
+    p->baseY = evtGetFloat(event, args[2]);
     return 2;
 }
 
-s32 evt_twoddisp_flag_onoff(EventEntry* evt, BOOL isFirstCall) {
+/** Sets (args[0] nonzero) or clears flag bits args[2] on overlay args[1]; bit 1 makes it visible. */
+USER_FUNC(evt_twoddisp_flag_onoff) {
     s32 onoff;
     TwodEntry* p;
-    s32 i;
     EvtWord* args;
     char* name;
 
-    args = evt->args;
-    onoff = evtGetValue(evt, args[0]);
-    name = (char*)evtGetValue(evt, args[1]);
+    args = event->args;
+    onoff = evtGetValue(event, args[0]);
+    name = (char*)evtGetValue(event, args[1]);
 
     p = twod_find(name);
     if (onoff) {
-        p->flags |= evtGetValue(evt, args[2]);
+        p->flags |= evtGetValue(event, args[2]);
     } else {
-        p->flags &= ~evtGetValue(evt, args[2]);
+        p->flags &= ~evtGetValue(event, args[2]);
     }
     return 2;
 }
 
+/** Background script started by evt_twoddisp_init: draws the overlays every frame, forever. */
 EVT_BEGIN(twoddisp_main_event)
     LOOP(0)
         CALL(twoddisp_main)
@@ -211,7 +227,3 @@ EVT_END()
 
 __declspec(section ".sdata2") const GXColor twod_text_fog_color;
 __declspec(section ".sdata2") const GXColor twod_icon_fog_color;
-
-#pragma force_active on
-u32 gap_07_80411DDC_sdata[1] = {0};
-#pragma force_active reset

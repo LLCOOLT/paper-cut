@@ -667,7 +667,7 @@ static void applyScript(PADStatus* pad) {
                 pouchSetMaxHP((s16)v);
                 pouchSetHP((s16)v);
             } else if (strcmp(s->name, "stars") == 0) {
-                pouchGetPtr()->mStarPowersObtained = (u16)v;
+                pouchGetPtr()->starPowersObtained = (u16)v;
             }
             continue;
         }

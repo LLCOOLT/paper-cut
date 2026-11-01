@@ -20,7 +20,7 @@ void marioStMain(void) {
     }
 }
 
-void viPostCallback(u32 p0) {
+static void viPostCallback(u32 p0) {
     PortHookSlot* s = &portHookSlots[46];
     int i, skip = 0;
     if (!s->active) {

@@ -1,3 +1,5 @@
+// Paper Mario 64 effect: Peach dust whose particle layout comes from three 16x16 masks, one per type.
+#include "eff/n64/eff_peach_dust_n64.h"
 #include "eff/eff_n64.h"
 #include "driver/camdrv.h"
 #include "driver/dispdrv.h"
@@ -6,12 +8,8 @@
 #include <dolphin/gx.h>
 #include <dolphin/mtx.h>
 #include <stdlib.h>
-
-#ifndef TARGET_PC /* PC port: the host libc declares these */
-double cos(double);
-double sin(double);
-#endif
-
+#include "version.h"
+#include "libc_decls.h"
 typedef struct EffPeachDustParticle {
     s32 pad0;     // 0x0
     Vec position; // 0x4
@@ -25,18 +23,87 @@ typedef struct EffPeachDustParticle {
 typedef struct EffPeachDustWork {
     s32 type;     // 0x0
     Vec position; // 0x4
-    f32 unk10;    // 0x10
-    f32 unk14;    // 0x14
-    f32 unk18;    // 0x18
+    f32 velX;     // 0x10, unused; header mirrors EffPeachDustParticle
+    f32 velY;     // 0x14
+    f32 velZ;     // 0x18
     s32 lifetime; // 0x1C
     s32 frame;    // 0x20
-    f32 unk24;    // 0x24
-    s32 unk28;    // 0x28
+    f32 scale;    // 0x24, unused
+    s32 tex;      // 0x28, unused
     EffPeachDustParticle particles[100];
 } EffPeachDustWork;
 
-char data[768] = ".......+..............@.#...........$%&.*=..........-...;>.........,'....)!.......~~......{.......~~......]@@^....~/........(_......#:<.....+.......[}|.....+.......1.......23......45.....677......8......7.......90......7.......a22b...c...........deee............f++++..........ff....+........ff......+........+......+.......+.......ff......+........+...f++.........+..ff...........+f..+............+.ff............+..+............+..f+.f+++f.....+....+f..+......+.......+.......+.......+.......+........+++++++f.....gh............+g.ggg..........g...hh..........g....g..........hh..hh.hh.......g..hg+ghgg......hghg.g...g.......hggg.....+.....g+.h......g....g..........g....g..........g.....g.........g.....g.........hgg...g...........g...g.........hg.....gggggggggh...";
+/** Size in percent of each Peach dust particle over its first frames: it swells, then wobbles slightly. */
+static u8 scale_data[] = {
+    0x1E, 0x3C, 0x5A, 0x64, 0x68, 0x6A, 0x6C, 0x6E, 0x70, 0x71, 0x71, 0x6E, 0x6B,
+    0x67, 0x64, 0x68, 0x6A, 0x6C, 0x6E, 0x70, 0x71, 0x71, 0x6E, 0x6B, 0x67,
+};
 
+// Three 16x16 masks, one per type, that place the dust particles: any byte other than '.' gets a particle.
+// The first row of each mask is the top of the shape. Which other character is used has no meaning to the code.
+u8 data[768] =
+    // type 0
+    ".......+........"
+    "......@.#......."
+    "....$%&.*=......"
+    "....-...;>......"
+    "...,'....)!....."
+    "..~~......{....."
+    "..~~......]@@^.."
+    "..~/........(_.."
+    "....#:<.....+..."
+    "....[}|.....+..."
+    "....1.......23.."
+    "....45.....677.."
+    "....8......7...."
+    "...90......7...."
+    "...a22b...c....."
+    "......deee......"
+    // type 1
+    "......f++++....."
+    ".....ff....+...."
+    "....ff......+..."
+    ".....+......+..."
+    "....+.......ff.."
+    "....+........+.."
+    ".f++.........+.."
+    "ff...........+f."
+    ".+............+."
+    "ff............+."
+    ".+............+."
+    ".f+.f+++f.....+."
+    "...+f..+......+."
+    "......+.......+."
+    "......+.......+."
+    ".......+++++++f."
+    // type 2
+    "....gh.........."
+    "..+g.ggg........"
+    "..g...hh........"
+    "..g....g........"
+    "..hh..hh.hh....."
+    "..g..hg+ghgg...."
+    "..hghg.g...g...."
+    "...hggg.....+..."
+    "..g+.h......g..."
+    ".g..........g..."
+    ".g..........g..."
+    "..g.........g..."
+    "..g.........hgg."
+    "..g...........g."
+    "..g.........hg.."
+    "...gggggggggh...";
+
+/** RGB colours the Peach dust particles cycle through (pinks, purples and blues), three bytes per step. */
+static u8 color_rotation_data[] = {
+    0xFE, 0xAC, 0xAC, 0xFE, 0xAC, 0xD5, 0xFE, 0xB4, 0x9A, 0xD5, 0xB4, 0xFE,
+    0xB4, 0xB4, 0xFE, 0xB4, 0xDD, 0xFE, 0xB4, 0xFE, 0xFE, 0xB4, 0xFE, 0xD5,
+    0xB4, 0xFE, 0xB4, 0xD5, 0xFE, 0xB4, 0xFE, 0xFE, 0xB4, 0xFE, 0xD5, 0xAC,
+};
+
+/**
+ * Eight 16x16 quads, one per 22x22 cell of the dust texture, that the particles step through as they animate.
+ */
 static effN64Vtx size8x8_tex22x22_vtx[] = {
     {-8, -8, 0, 0, 0, 0, 0, 0, 255},
     {8, -8, 0, 704, 0, 0, 0, 0, 255},
@@ -72,25 +139,19 @@ static effN64Vtx size8x8_tex22x22_vtx[] = {
     {-8, 8, 0, 4928, 704, 0, 0, 0, 255},
 };
 
-static u8 scale_data[] = {
-    0x1E, 0x3C, 0x5A, 0x64, 0x68, 0x6A, 0x6C, 0x6E, 0x70, 0x71, 0x71, 0x6E, 0x6B,
-    0x67, 0x64, 0x68, 0x6A, 0x6C, 0x6E, 0x70, 0x71, 0x71, 0x6E, 0x6B, 0x67,
-};
+static void effPeachDustMain(EffectEntry* effect);
+static void effPeachDustDisp(CameraId cameraId, EffectEntry* effect);
 
-static u8 color_rotation_data[] = {
-    0xFE, 0xAC, 0xAC, 0xFE, 0xAC, 0xD5, 0xFE, 0xB4, 0x9A, 0xD5, 0xB4, 0xFE,
-    0xB4, 0xB4, 0xFE, 0xB4, 0xDD, 0xFE, 0xB4, 0xFE, 0xFE, 0xB4, 0xFE, 0xD5,
-    0xB4, 0xFE, 0xB4, 0xD5, 0xFE, 0xB4, 0xFE, 0xFE, 0xB4, 0xFE, 0xD5, 0xAC,
-};
+static void effPeachDustMain(EffectEntry* effect);
+static void effPeachDustDisp(CameraId cameraId, EffectEntry* effect);
 
-void effPeachDustMain(EffectEntry* effect);
-void effPeachDustDisp(CameraId cameraId, EffectEntry* effect);
-
-void effPeachDustMain(EffectEntry* effect);
-void effPeachDustDisp(CameraId cameraId, EffectEntry* effect);
-
+/**
+ * Spawns up to 100 dust particles at (x, y, z) arranged by one of three 16x16 masks selected by type (every
+ * non-'.' cell gets a particle, with jitter), turned by scale degrees.
+ * Record 0 holds the shared header; 80 frames. Via evt_eff64 "peach_dust_n64"; no script callers found.
+ */
 EffectEntry* effPeachDustN64Entry(s32 type, f32 x, f32 y, f32 z, f32 unused, f32 scale) {
-    char* base;
+    u8* base;
     EffectEntry* effect;
     EffPeachDustParticle* p;
     s32 count;
@@ -156,7 +217,11 @@ EffectEntry* effPeachDustN64Entry(s32 type, f32 x, f32 y, f32 z, f32 unused, f32
     return effect;
 }
 
-void effPeachDustMain(EffectEntry* effect) {
+/**
+ * Advances every particle (spreading outward, scale from a table then easing to 0.1)
+ * and cycles its texture frame; deletes the effect once all particles have expired.
+ */
+static void effPeachDustMain(EffectEntry* effect) {
     EffPeachDustParticle* p = effect->userdata;
     Vec position;
     Vec tmp = {0.0f, 0.0f, 0.0f};
@@ -184,9 +249,14 @@ void effPeachDustMain(EffectEntry* effect) {
         } else {
             p->frame++;
             f = p->frame;
+#if VERSION <= VERSION_DEMO_JP
+            if (f - 1 < 25) {
+                p->scale = 0.4f * (0.01f * scale_data[f - 1]);
+#else
             g = f - 1;
             if (g < 25) {
                 p->scale = 0.4f * (0.01f * scale_data[g]);
+#endif
             } else {
                 p->scale += 0.1f * (0.1f - p->scale);
             }
@@ -203,7 +273,8 @@ void effPeachDustMain(EffectEntry* effect) {
     }
 }
 
-void effPeachDustDisp(CameraId cameraId, EffectEntry* effect) {
+/** Draws each live particle as a camera-facing quad (texture 0x20, one of eight 22x22 cells) with a rotating color. */
+static void effPeachDustDisp(CameraId cameraId, EffectEntry* effect) {
     EffPeachDustParticle* p;
     s32 i;
     s32 tex;
@@ -256,9 +327,13 @@ void effPeachDustDisp(CameraId cameraId, EffectEntry* effect) {
         if (off >= 36) {
             off = 0;
         }
-        { f32 k = 1.4f; f32 h = 0.7f; r = color_rotation_data[off++] * k;
-        g = color_rotation_data[off++] * h;
-        b = color_rotation_data[off++] * h; }
+        {
+            f32 k = 1.4f;
+            f32 h = 0.7f;
+            r = color_rotation_data[off++] * k;
+            g = color_rotation_data[off++] * h;
+            b = color_rotation_data[off++] * h;
+        }
         if (r > 255) {
             r = 255;
         }

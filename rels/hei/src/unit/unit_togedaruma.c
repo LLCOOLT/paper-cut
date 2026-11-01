@@ -1,3 +1,4 @@
+// Bristle (togedaruma): battle unit used in Petal Meadows.
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
 #include "battle/battle_event_default.h"
@@ -5,37 +6,12 @@
 #include "battle/battle_camera.h"
 #include "battle/battle_event_subset.h"
 #include "battle/battle_weapon_power.h"
-#include "party/party_motion.h"
+#include "evt/evt_snd.h"
 #include "battle/battle_database_common.h"
+#include "battle/battle_sub.h"
+#include "evt/evt_eff.h"
+#include "version.h"
 
-#pragma force_active on
-
-USER_FUNC(btlevtcmd_AnimeChangePoseFromTable);
-USER_FUNC(btlevtcmd_CheckStatus);
-USER_FUNC(btlevtcmd_GetPos);
-USER_FUNC(btlevtcmd_OffPartsCounterAttribute);
-USER_FUNC(btlevtcmd_OnPartsCounterAttribute);
-USER_FUNC(btlevtcmd_SetEventAttack);
-USER_FUNC(btlevtcmd_SetEventConfusion);
-USER_FUNC(btlevtcmd_SetEventDamage);
-USER_FUNC(btlevtcmd_SetEventWait);
-USER_FUNC(btlevtcmd_StartWaitEvent);
-USER_FUNC(evt_eff);
-
-f32 fd_togedaruma_negone_one_374[2] __attribute__((aligned(8)));
-f32 fd_togedaruma_neg_one_382;
-f32 fd_togedaruma___local_PI_383;
-f32 fd_togedaruma___local_3PIO2_385;
-f32 fd_togedaruma_one_negone_373[2] __attribute__((aligned(8)));
-f32 fd_togedaruma___local_PIO2_384;
-f32 fd_togedaruma_one_381;
-f32 fd_togedaruma_negone_one_360[2] __attribute__((aligned(8)));
-f32 fd_togedaruma_neg_one_365;
-f32 fd_togedaruma___local_PI_366;
-f32 fd_togedaruma___local_3PIO2_368;
-f32 fd_togedaruma_one_negone_359[2] __attribute__((aligned(8)));
-f32 fd_togedaruma___local_PIO2_367;
-f32 fd_togedaruma_one_364;
 BattleUnitKind unit_togedaruma;
 static BattleUnitDefense defence;
 static BattleUnitDefenseAttr defence_attr;
@@ -51,40 +27,15 @@ static EvtWord dmg_avoid_counter_thorn_head_event[63];
 static EvtWord dmg_avoid_counter_thorn_front_event[121];
 static EvtWord damage_event[10];
 static EvtWord dmg_turn_event[131];
-static EvtWord wakeup_event[134];
 static EvtWord attack_event[358];
 static EvtWord wait_event[102];
 
-f32 fd_togedaruma_negone_one_374[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_togedaruma_neg_one_382 = -1.0f;
-
-f32 fd_togedaruma___local_PI_383 = 3.1415927f;
-
-f32 fd_togedaruma___local_3PIO2_385 = 4.712389f;
-
-f32 fd_togedaruma_one_negone_373[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_togedaruma___local_PIO2_384 = 1.5707964f;
-
-f32 fd_togedaruma_one_381 = 1.0f;
-
-f32 fd_togedaruma_negone_one_360[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_togedaruma_neg_one_365 = -1.0f;
-
-f32 fd_togedaruma___local_PI_366 = 3.1415927f;
-
-f32 fd_togedaruma___local_3PIO2_368 = 4.712389f;
-
-f32 fd_togedaruma_one_negone_359[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_togedaruma___local_PIO2_367 = 1.5707964f;
-
-f32 fd_togedaruma_one_364 = 1.0f;
-
+/**
+ * Unit kind of the Bristle:
+ * 2 HP, level 16, with its size, sounds and the links to its parts, status vulnerability and scripts.
+ */
 BattleUnitKind unit_togedaruma = {
-    19,
+    UNIT_BRISTLE,
     "btl_un_togedaruma",
     2,
     0,
@@ -149,53 +100,84 @@ BattleUnitKind unit_togedaruma = {
     data_table,
 };
 
+/**
+ * Defence of the Bristle's body: 4 against normal, ice, explosion and electric hits;
+ * immune to fire (defence 99 cancels the hit).
+ */
 static BattleUnitDefense defence = {{4, 99, 4, 4, 4}};
 
+/** Defence attributes of the Bristle's body: fire (takes no damage); every other type is dealt normally. */
 static BattleUnitDefenseAttr defence_attr = {{0, 2, 0, 0, 0}};
 
+/** Defence of the Bristle's body per damage type while flipped over: 0 against every damage type. */
 static BattleUnitDefense defence_turn = {0};
 
+#if VERSION <= VERSION_DEMO_JP
+/**
+ * Status vulnerability of the Bristle in the demo, as a percent of the normal chance: immune to burn;
+ * sleep 50%, stop 90%, freeze 70%, instant kill 95% (and 9 other statuses lowered).
+ */
+static StatusVulnerability regist = {50, 90, 50, 100, 50, 100, 0, 70, 100, 70, 100, 70, 100, 70, 70, 50, 75, 100, 70, 100, 100, 95};
+#else
+/**
+ * Status vulnerability of the Bristle in the retail versions, as a percent of the normal chance:
+ * immune to burn; sleep 40%, freeze 60%, instant kill 95% (and 8 other statuses lowered).
+ */
 static StatusVulnerability regist = {40, 100, 40, 100, 40, 100, 0, 60, 100, 60, 100, 60, 100, 100, 60, 50, 40, 100, 60, 100, 100, 95};
+#endif
 
+/**
+ * Pose table of the Bristle:
+ * the animation played for each pose type (idle, hurt, walk, run, attack and so on).
+ */
 static PoseTableEntry pose_table[] = {
-    {1, "TGD_N_1"},
-    {2, "TGD_I_1"},
-    {9, "TGD_I_1"},
-    {5, "TGD_K_1"},
-    {4, "TGD_X_1"},
-    {3, "TGD_X_1"},
-    {28, "TGD_S_4"},
+    {STATUS_SLEEP, "TGD_N_1"},
+    {STATUS_STOP, "TGD_I_1"},
+    {STATUS_FREEZE, "TGD_I_1"},
+    {STATUS_CONFUSE, "TGD_K_1"},
+    {STATUS_POISON, "TGD_X_1"},
+    {STATUS_DIZZY, "TGD_X_1"},
+    {BTL_POSE_NORMAL, "TGD_S_4"},
     {29, "TGD_Q_1"},
     {30, "TGD_Q_1"},
     {31, "TGD_S_2"},
-    {39, "TGD_D_1"},
+    {BTL_POSE_DAMAGE, "TGD_D_1"},
     {50, "TGD_A_1"},
-    {40, "TGD_S_4"},
-    {42, "TGD_S_4"},
-    {56, "TGD_X_1"},
-    {57, "TGD_X_1"},
-    {65, "TGD_T_1"},
-    {69, "TGD_S_4"},
+    {BTL_POSE_WALK, "TGD_S_4"},
+    {BTL_POSE_RUN, "TGD_S_4"},
+    {BTL_POSE_DANGER, "TGD_X_1"},
+    {BTL_POSE_PERIL, "TGD_X_1"},
+    {BTL_POSE_TALK, "TGD_T_1"},
+    {BTL_POSE_STAY_DEFAULT, "TGD_S_4"},
 };
 
+/**
+ * Pose table of the Bristle while flipped over:
+ * the animation played for each pose type (idle, hurt, walk, run, attack and so on).
+ */
 static PoseTableEntry pose_table_turn[] = {
-    {1, "TGD_N_2"},
-    {2, "TGD_I_2"},
-    {9, "TGD_Z_4"},
-    {5, "TGD_K_2"},
-    {4, "TGD_X_2"},
-    {3, "TGD_X_2"},
-    {28, "TGD_S_5"},
+    {STATUS_SLEEP, "TGD_N_2"},
+    {STATUS_STOP, "TGD_I_2"},
+    {STATUS_FREEZE, "TGD_Z_4"},
+    {STATUS_CONFUSE, "TGD_K_2"},
+    {STATUS_POISON, "TGD_X_2"},
+    {STATUS_DIZZY, "TGD_X_2"},
+    {BTL_POSE_NORMAL, "TGD_S_5"},
     {29, "TGD_Q_2"},
     {30, "TGD_Q_2"},
     {31, "TGD_S_3"},
-    {39, "TGD_D_2"},
-    {56, "TGD_X_2"},
-    {57, "TGD_X_2"},
-    {65, "TGD_S_5"},
-    {69, "TGD_S_5"},
+    {BTL_POSE_DAMAGE, "TGD_D_2"},
+    {BTL_POSE_DANGER, "TGD_X_2"},
+    {BTL_POSE_PERIL, "TGD_X_2"},
+    {BTL_POSE_TALK, "TGD_S_5"},
+    {BTL_POSE_STAY_DEFAULT, "TGD_S_5"},
 };
 
+/**
+ * Event table of the Bristle:
+ * its reaction to being flipped over, the counter for an attacker hurt by its spikes,
+ * the counter for an attacker hurt by its spikes, nothing special on a First Strike.
+ */
 static BattleDataEntry data_table[] = {
     {13, dmg_turn_event},
     {37, dmg_avoid_counter_thorn_head_event},
@@ -205,10 +187,12 @@ static BattleDataEntry data_table[] = {
     {0, NULL},
 };
 
+/** Body part of the Bristle: a single part using the model "c_togedaruma". */
 static BattleUnitKindPart parts[] = {
-    {1, "btl_un_togedaruma", "c_togedaruma", 0.0f, 0.0f, 0.0f, 0.0f, 35.0f, 0.0f, 0.0f, 45.0f, 0.0f, 20, 30, 255, &defence, &defence_attr, 0x2009, 0x7, pose_table},
+    {1, "btl_un_togedaruma", "c_togedaruma", 0.0f, 0.0f, 0.0f, 0.0f, 35.0f, 0.0f, 0.0f, 45.0f, 0.0f, 20, 30, 255, &defence, &defence_attr, PART_ATTR_MAIN | PART_ATTR_GUARD_COVER | PART_ATTR_BOMB_FLIPPABLE, COUNTER_ATTR_TOP_SPIKY | COUNTER_ATTR_PREEMPTIVE_FRONT_SPIKY | COUNTER_ATTR_FRONT_SPIKY, pose_table},
 };
 
+/** Bristle's attack: 1 damage to a single target, a hammer-style hit. */
 static BattleWeapon weapon_togedaruma_attack = {
     NULL, 0, // name..icon
     {0}, // pad_06
@@ -217,23 +201,23 @@ static BattleWeapon weapon_togedaruma_attack = {
     0, 0, // baseFpCost..baseSpCost
     1, // superguardsAllowed
     1.0f, // reserved_14
-    1, // mStylishCommandMultiplier
+    1, // stylishCommandMultiplier
     1, // reserved_19
-    1, // mBingoSlotChance
+    1, // bingoSlotChance
     1, // reserved_1B
     weaponGetPowerDefault, // hpDamageFn
     {1, 0, 0, 0, 0, 0, 0, 0}, // hpDamageWork
     NULL, // fpDamageFn
     {0}, // fpDamageWork
-    0x1101260, // targetClassFlags
-    0x21002000, // targetPropertyFlags
-    0, 0, // element..damagePattern
+    TARGET_CLASS_NO_TREE_OR_SWITCH | TARGET_CLASS_NO_SYSTEM_UNIT | TARGET_CLASS_NO_OWN_ALLIANCE | TARGET_CLASS_NO_SELF | TARGET_CLASS_MAIN_PARTS | TARGET_CLASS_SINGLE, // targetClassFlags
+    TARGET_PROP_HAMMERLIKE | TARGET_PROP_FRONTMOST | TARGET_PROP_START_OPPOSING_SIDE, // targetPropertyFlags
+    ELEMENT_NORMAL, 0, // element..damagePattern
     3, // acLevel
     2, // reserved_6F
     NULL, // acHelpMsg
-    0x87, // special
-    0x1E, // counterResistFlags
-    0x2004, // targetWeightFlags
+    SPECIAL_BADGE_BUFFABLE | SPECIAL_STATUS_BUFFABLE | SPECIAL_CHARGE_BUFFABLE | SPECIAL_SHATTERS_FREEZE, // special
+    COUNTER_RESIST_TOP_SPIKY | COUNTER_RESIST_PREEMPTIVE_SPIKY | COUNTER_RESIST_FRONT_SPIKY | COUNTER_RESIST_FIERY, // counterResistFlags
+    TARGET_WEIGHT_PREFER_FRONT | TARGET_WEIGHT_UNUSED_2000, // targetWeightFlags
     0, 0, 0, 0, 0, 0, 0, 0, // sleepChance..poisonTime
     0, 0, 0, 0, 0, 0, 0, 0, // poisonStrength..burnChance
     0, 0, 0, 0, 0, 0, 0, 0, // burnTime..atkChangeTime
@@ -241,28 +225,34 @@ static BattleWeapon weapon_togedaruma_attack = {
     0, 0, 0, 0, 0, 0, 0, 0, // fastChance..holdFastTime
     0, 0, 0, 0, 0, 0, // invisibleChance..fpRegenStrength
     {0}, // pad_AE
-    NULL, // mAttackEvtScript
+    NULL, // attackEvtScript
     {0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0}, // stageEffectRates
 };
 
+/** Init event of the Bristle: installs attack, damage and confusion events and starts waiting. */
 static EVT_BEGIN(init_event)
-    CALL(btlevtcmd_SetEventWait, -2, PTR(wait_event))
-    CALL(btlevtcmd_SetEventAttack, -2, PTR(attack_event))
-    CALL(btlevtcmd_SetEventDamage, -2, PTR(damage_event))
-    CALL(btlevtcmd_SetEventConfusion, -2, PTR(attack_event))
-    CALL(btlevtcmd_StartWaitEvent, -2)
+    CALL(btlevtcmd_SetEventWait, BTL_UNIT_SELF, PTR(wait_event))
+    CALL(btlevtcmd_SetEventAttack, BTL_UNIT_SELF, PTR(attack_event))
+    CALL(btlevtcmd_SetEventDamage, BTL_UNIT_SELF, PTR(damage_event))
+    CALL(btlevtcmd_SetEventConfusion, BTL_UNIT_SELF, PTR(attack_event))
+    CALL(btlevtcmd_StartWaitEvent, BTL_UNIT_SELF)
     RETURN
 EVT_END()
 
+/**
+ * Spark effect (toge_flush) shown above the Bristle when an attack on its spiked top is turned away:
+ * it waits 30 frames and places the flash at a height that depends on whether the unit has status 10 or 11,
+ * then waits another 60 frames.
+ */
 static EVT_BEGIN(dmg_avoid_counter_thorn_head_event)
     WAIT_FRAMES(30)
-    CALL(btlevtcmd_GetPos, -2, LW(0), LW(1), LW(2))
-    CALL(btlevtcmd_CheckStatus, -2, 10, LW(3))
+    CALL(btlevtcmd_GetPos, BTL_UNIT_SELF, LW(0), LW(1), LW(2))
+    CALL(btlevtcmd_CheckStatus, BTL_UNIT_SELF, STATUS_HUGE, LW(3))
     IF_INT_NOT_EQUAL(LW(3), 0)
         ADD(LW(1), 58)
         GOTO(90)
     END_IF
-    CALL(btlevtcmd_CheckStatus, -2, 11, LW(3))
+    CALL(btlevtcmd_CheckStatus, BTL_UNIT_SELF, STATUS_TINY, LW(3))
     IF_INT_NOT_EQUAL(LW(3), 0)
         ADD(LW(1), 32)
         GOTO(90)
@@ -275,35 +265,40 @@ static EVT_BEGIN(dmg_avoid_counter_thorn_head_event)
     RETURN
 EVT_END()
 
+/**
+ * Same as the head version but for an attack on the Bristle's front:
+ * it plays SFX_ENM_TOGEDA_MOVE1 and a jump pose sequence (TGD_J_1 and J_2,
+ * or J_3 and J_4 when status 17 is set), then places the toge_flush spark by status 10 or 11.
+ */
 static EVT_BEGIN(dmg_avoid_counter_thorn_front_event)
-    CALL(btlevtcmd_snd_se, -2, STRING("SFX_ENM_TOGEDA_MOVE1"), -250000000, 0, -250000000)
+    CALL(btlevtcmd_snd_se, BTL_UNIT_SELF, STRING("SFX_ENM_TOGEDA_MOVE1"), EVT_NULLPTR, 0, EVT_NULLPTR)
     BEGIN_SIBLING_EVENT
-        CALL(btlevtcmd_CheckStatus, -2, 17, LW(0))
+        CALL(btlevtcmd_CheckStatus, BTL_UNIT_SELF, STATUS_FLIPPED, LW(0))
         IF_INT_NOT_EQUAL(LW(0), 0)
-            CALL(btlevtcmd_AnimeChangePose, -2, 1, STRING("TGD_J_3"))
+            CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("TGD_J_3"))
             WAIT_FRAMES(60)
-            CALL(btlevtcmd_AnimeChangePose, -2, 1, STRING("TGD_J_4"))
+            CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("TGD_J_4"))
         ELSE
-            CALL(btlevtcmd_AnimeChangePose, -2, 1, STRING("TGD_J_1"))
+            CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("TGD_J_1"))
             WAIT_FRAMES(60)
-            CALL(btlevtcmd_AnimeChangePose, -2, 1, STRING("TGD_J_2"))
+            CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("TGD_J_2"))
         END_IF
     END_SIBLING_EVENT
     WAIT_FRAMES(30)
-    CALL(btlevtcmd_GetPos, -2, LW(0), LW(1), LW(2))
-    CALL(btlevtcmd_CheckStatus, -2, 10, LW(3))
+    CALL(btlevtcmd_GetPos, BTL_UNIT_SELF, LW(0), LW(1), LW(2))
+    CALL(btlevtcmd_CheckStatus, BTL_UNIT_SELF, STATUS_HUGE, LW(3))
     IF_INT_NOT_EQUAL(LW(3), 0)
-        CALL(btlevtcmd_FaceDirectionAdd, -2, LW(0), 53)
+        CALL(btlevtcmd_FaceDirectionAdd, BTL_UNIT_SELF, LW(0), 53)
         ADD(LW(1), 26)
         GOTO(90)
     END_IF
-    CALL(btlevtcmd_CheckStatus, -2, 11, LW(3))
+    CALL(btlevtcmd_CheckStatus, BTL_UNIT_SELF, STATUS_TINY, LW(3))
     IF_INT_NOT_EQUAL(LW(3), 0)
-        CALL(btlevtcmd_FaceDirectionAdd, -2, LW(0), 33)
+        CALL(btlevtcmd_FaceDirectionAdd, BTL_UNIT_SELF, LW(0), 33)
         ADD(LW(1), 16)
         GOTO(90)
     END_IF
-    CALL(btlevtcmd_FaceDirectionAdd, -2, LW(0), 43)
+    CALL(btlevtcmd_FaceDirectionAdd, BTL_UNIT_SELF, LW(0), 43)
     ADD(LW(1), 21)
     GOTO(90)
     LABEL(90)
@@ -312,27 +307,34 @@ static EVT_BEGIN(dmg_avoid_counter_thorn_front_event)
     RETURN
 EVT_END()
 
+/** Damage event of the Bristle: runs the default damage handling. */
 static EVT_BEGIN(damage_event)
     SET_VALUE(LW(10), -2)
     SET_VALUE(LW(11), 1)
-    CALL_CHILD(PTR(btldefaultevt_Damage))
+    CALL_CHILD(btldefaultevt_Damage)
     RETURN
 EVT_END()
 
+/**
+ * Reaction when the Bristle is flipped over: switches to the flipped defence and pose tables,
+ * sets the over-turn count to 2 (SFX_ENM_INSIDE1),
+ * rolls it backwards over 10 frames if it was not already flipped,
+ * hops and rests on its back at y = 10 (pose TGD_S_5).
+ */
 static EVT_BEGIN(dmg_turn_event)
     SET_VALUE(LW(10), -2)
     SET_VALUE(LW(11), 1)
     CALL(btlevtcmd_SetPartsDefenceTable, LW(10), LW(11), PTR(&defence_turn))
     CALL(btlevtcmd_AnimeSetPoseTable, LW(10), LW(11), PTR(pose_table_turn))
-    CALL(btlevtcmd_OnStatusFlag, LW(10), 1)
+    CALL(btlevtcmd_OnStatusFlag, LW(10), STATUS_FLAG_FLIPPED)
     CALL(btlevtcmd_GetOverTurnCount, LW(10), LW(12))
     CALL(btlevtcmd_SetOverTurnCount, LW(10), 2)
     WAIT_FRAMES(2)
-    CALL(btlevtcmd_snd_se, LW(10), STRING("SFX_ENM_INSIDE1"), -250000000, 0, -250000000)
+    CALL(btlevtcmd_snd_se, LW(10), STRING("SFX_ENM_INSIDE1"), EVT_NULLPTR, 0, EVT_NULLPTR)
     CALL(btlevtcmd_AnimeChangePose, LW(10), LW(11), STRING("TGD_S_1"))
     IF_INT_LESS_OR_EQUAL(LW(12), 0)
         SET_VALUE(LW(12), 0)
-        CALL(btlevtcmd_SetRotateOffset, -2, 0, 10, 0)
+        CALL(btlevtcmd_SetRotateOffset, BTL_UNIT_SELF, 0, 10, 0)
         BEGIN_SIBLING_EVENT
             LOOP(0)
                 IF_INT_GREATER_OR_EQUAL(LW(12), 10)
@@ -340,22 +342,28 @@ static EVT_BEGIN(dmg_turn_event)
                 END_IF
                 ADD(LW(12), 1)
                 WAIT_FRAMES(1)
-                CALL(btlevtcmd_AddRotate, -2, 0, 0, -18)
+                CALL(btlevtcmd_AddRotate, BTL_UNIT_SELF, 0, 0, -18)
             END_LOOP
         END_SIBLING_EVENT
     END_IF
-    CALL(btlevtcmd_SetFallAccel, -2, FLOAT(0.69921875f))
-    CALL(btlevtcmd_GetPos, -2, LW(0), LW(1), LW(2))
-    CALL(btlevtcmd_JumpPosition, -2, LW(0), LW(1), LW(2), 25, -1)
-    CALL(btlevtcmd_SetRotate, -2, 0, 0, 0)
-    CALL(btlevtcmd_SetRotateOffset, -2, 0, 0, 0)
+    CALL(btlevtcmd_SetFallAccel, BTL_UNIT_SELF, FLOAT(0.69921875f))
+    CALL(btlevtcmd_GetPos, BTL_UNIT_SELF, LW(0), LW(1), LW(2))
+    CALL(btlevtcmd_JumpPosition, BTL_UNIT_SELF, LW(0), LW(1), LW(2), 25, -1)
+    CALL(btlevtcmd_SetRotate, BTL_UNIT_SELF, 0, 0, 0)
+    CALL(btlevtcmd_SetRotateOffset, BTL_UNIT_SELF, 0, 0, 0)
     CALL(btlevtcmd_AnimeChangePose, LW(10), LW(11), STRING("TGD_S_5"))
-    CALL(btlevtcmd_GetPos, -2, LW(0), LW(1), LW(2))
-    CALL(btlevtcmd_SetPos, -2, LW(0), 10, LW(2))
-    CALL(btlevtcmd_SetHomePos, -2, LW(0), 10, LW(2))
+    CALL(btlevtcmd_GetPos, BTL_UNIT_SELF, LW(0), LW(1), LW(2))
+    CALL(btlevtcmd_SetPos, BTL_UNIT_SELF, LW(0), 10, LW(2))
+    CALL(btlevtcmd_SetHomePos, BTL_UNIT_SELF, LW(0), 10, LW(2))
     RETURN
 EVT_END()
 
+/**
+ * Recovery of the Bristle at the start of its turn:
+ * counts the over-turn count down and, when it reaches 0, restores the normal defence and pose tables,
+ * rolls it forward upright with SFX_ENM_TOGEDA_MOVE6 and a hop and sets it back on the ground;
+ * while still flipped it just goes back to waiting.
+ */
 static EVT_BEGIN(wakeup_event)
     SET_VALUE(LW(10), -2)
     SET_VALUE(LW(11), 1)
@@ -363,14 +371,14 @@ static EVT_BEGIN(wakeup_event)
     SUBTRACT(LW(0), 1)
     CALL(btlevtcmd_SetOverTurnCount, LW(10), LW(0))
     IF_INT_NOT_EQUAL(LW(0), 0)
-        CALL(btlevtcmd_StartWaitEvent, -2)
+        CALL(btlevtcmd_StartWaitEvent, BTL_UNIT_SELF)
         RETURN
     END_IF
     CALL(btlevtcmd_SetPartsDefenceTable, LW(10), LW(11), PTR(&defence))
-    CALL(btlevtcmd_OffStatusFlag, LW(10), 1)
+    CALL(btlevtcmd_OffStatusFlag, LW(10), STATUS_FLAG_FLIPPED)
     CALL(btlevtcmd_AnimeSetPoseTable, LW(10), LW(11), PTR(pose_table))
     SET_VALUE(LW(12), 0)
-    CALL(btlevtcmd_SetRotateOffset, -2, 0, 10, 0)
+    CALL(btlevtcmd_SetRotateOffset, BTL_UNIT_SELF, 0, 10, 0)
     BEGIN_SIBLING_EVENT
         LOOP(0)
             IF_INT_GREATER_OR_EQUAL(LW(12), 10)
@@ -378,46 +386,56 @@ static EVT_BEGIN(wakeup_event)
             END_IF
             ADD(LW(12), 1)
             WAIT_FRAMES(1)
-            CALL(btlevtcmd_AddRotate, -2, 0, 0, -18)
+            CALL(btlevtcmd_AddRotate, BTL_UNIT_SELF, 0, 0, -18)
         END_LOOP
     END_SIBLING_EVENT
-    CALL(btlevtcmd_snd_se, LW(10), STRING("SFX_ENM_TOGEDA_MOVE6"), -250000000, 0, -250000000)
-    CALL(btlevtcmd_SetFallAccel, -2, FLOAT(1.0f))
-    CALL(btlevtcmd_GetPos, -2, LW(0), LW(1), LW(2))
-    CALL(btlevtcmd_JumpPosition, -2, LW(0), LW(1), LW(2), 18, -1)
-    CALL(btlevtcmd_SetRotate, -2, 0, 0, 0)
-    CALL(btlevtcmd_SetRotateOffset, -2, 0, 0, 0)
+    CALL(btlevtcmd_snd_se, LW(10), STRING("SFX_ENM_TOGEDA_MOVE6"), EVT_NULLPTR, 0, EVT_NULLPTR)
+    CALL(btlevtcmd_SetFallAccel, BTL_UNIT_SELF, FLOAT(1.0f))
+    CALL(btlevtcmd_GetPos, BTL_UNIT_SELF, LW(0), LW(1), LW(2))
+    CALL(btlevtcmd_JumpPosition, BTL_UNIT_SELF, LW(0), LW(1), LW(2), 18, -1)
+    CALL(btlevtcmd_SetRotate, BTL_UNIT_SELF, 0, 0, 0)
+    CALL(btlevtcmd_SetRotateOffset, BTL_UNIT_SELF, 0, 0, 0)
     CALL(btlevtcmd_AnimeChangePose, LW(10), LW(11), STRING("TGD_S_4"))
-    CALL(btlevtcmd_GetPos, -2, LW(0), LW(1), LW(2))
-    CALL(btlevtcmd_SetPos, -2, LW(0), 0, LW(2))
-    CALL(btlevtcmd_SetHomePos, -2, LW(0), 0, LW(2))
-    CALL(btlevtcmd_StartWaitEvent, -2)
+    CALL(btlevtcmd_GetPos, BTL_UNIT_SELF, LW(0), LW(1), LW(2))
+    CALL(btlevtcmd_SetPos, BTL_UNIT_SELF, LW(0), 0, LW(2))
+    CALL(btlevtcmd_SetHomePos, BTL_UNIT_SELF, LW(0), 0, LW(2))
+    CALL(btlevtcmd_StartWaitEvent, BTL_UNIT_SELF)
     RETURN
 EVT_END()
 
+/**
+ * Attack event of the Bristle: gets up first if it is flipped over;
+ * otherwise it uses an enemy item if it has one,
+ * or curls up (TGD_J_1, A_1) and rolls at one target (weapon_togedaruma_attack).
+ * The pre-damage check decides between a dodge and a hit with the action-command result, then it returns home.
+ */
 static EVT_BEGIN(attack_event)
-    CALL(btlevtcmd_GetOverTurnCount, -2, LW(0))
+    // Flipped over: it gets up instead of attacking.
+    CALL(btlevtcmd_GetOverTurnCount, BTL_UNIT_SELF, LW(0))
     IF_INT_GREATER_OR_EQUAL(LW(0), 1)
         CALL_CHILD(wakeup_event)
         RETURN
     END_IF
+    // First Strike: the first-attack target is already fixed and the camera pulls in on it.
     CALL(btlevtcmd_check_battleflag, LW(0), 2)
     IF_INT_NOT_EQUAL(LW(0), 0)
         WAIT_MS(750)
         CALL(btlevtcmd_GetFirstAttackTarget, LW(3), LW(4))
     ELSE
-        CALL(btlevtcmd_EnemyItemUseCheck, -2, LW(0))
+        // It may use an enemy item instead of attacking.
+        CALL(btlevtcmd_EnemyItemUseCheck, BTL_UNIT_SELF, LW(0))
         IF_INT_NOT_EQUAL(LW(0), 0)
             CALL_CHILD(LW(0))
-            CALL(btlevtcmd_StartWaitEvent, -2)
+            CALL(btlevtcmd_StartWaitEvent, BTL_UNIT_SELF)
             RETURN
         END_IF
-        CALL(btlevtcmd_GetEnemyBelong, -2, LW(0))
-        CALL(btlevtcmd_SamplingEnemy, -2, LW(0), PTR(&weapon_togedaruma_attack))
+        CALL(btlevtcmd_GetEnemyBelong, BTL_UNIT_SELF, LW(0))
+        // Target: it picks one for its attack; with none, a confused one flusters, otherwise the attack ends.
+        CALL(btlevtcmd_SamplingEnemy, BTL_UNIT_SELF, LW(0), PTR(&weapon_togedaruma_attack))
         CALL(btlevtcmd_ChoiceSamplingEnemy, PTR(&weapon_togedaruma_attack), LW(3), LW(4))
     END_IF
     IF_INT_EQUAL(LW(3), -1)
-        CALL(btlevtcmd_CheckToken, -2, 16, LW(0))
+        CALL(btlevtcmd_CheckToken, BTL_UNIT_SELF, TOKEN_FLAG_CONFUSED_ACTION, LW(0))
         IF_INT_NOT_EQUAL(LW(0), 0)
             CALL_CHILD(subsetevt_confuse_flustered)
             RETURN
@@ -425,23 +443,26 @@ static EVT_BEGIN(attack_event)
         GOTO(99)
     END_IF
     CALL(btlevtcmd_WeaponAftereffect, PTR(&weapon_togedaruma_attack))
-    CALL(btlevtcmd_AttackDeclare, -2, LW(3), LW(4))
+    // The attack is declared.
+    CALL(btlevtcmd_AttackDeclare, BTL_UNIT_SELF, LW(3), LW(4))
     CALL(btlevtcmd_WaitGuardMove)
-    CALL(btlevtcmd_PayWeaponCost, -2, PTR(&weapon_togedaruma_attack))
-    CALL(btlevtcmd_snd_se, -2, STRING("SFX_ENM_TOGEDA_MOVE1"), -250000000, 0, -250000000)
-    CALL(btlevtcmd_AnimeChangePose, -2, 1, STRING("TGD_J_1"))
+    CALL(btlevtcmd_PayWeaponCost, BTL_UNIT_SELF, PTR(&weapon_togedaruma_attack))
+    // Wind-up: it curls into a spiky ball and starts spinning in place.
+    CALL(btlevtcmd_snd_se, BTL_UNIT_SELF, STRING("SFX_ENM_TOGEDA_MOVE1"), EVT_NULLPTR, 0, EVT_NULLPTR)
+    CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("TGD_J_1"))
     WAIT_FRAMES(10)
-    CALL(btlevtcmd_snd_se, -2, STRING("SFX_ENM_TOGEDA_MOVE2"), -250000000, 0, LW(15))
-    CALL(btlevtcmd_AnimeChangePose, -2, 1, STRING("TGD_A_1"))
+    CALL(btlevtcmd_snd_se, BTL_UNIT_SELF, STRING("SFX_ENM_TOGEDA_MOVE2"), EVT_NULLPTR, 0, LW(15))
+    CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("TGD_A_1"))
+    // It rolls at the target; the pre-damage check decides between a dodge and a hit.
     WAIT_MS(400)
     CALL(evt_btl_camera_set_mode, 0, 8)
-    CALL(evt_btl_camera_set_homing_unit, 0, -2, LW(3))
+    CALL(evt_btl_camera_set_homing_unit, 0, BTL_UNIT_SELF, LW(3))
     CALL(evt_btl_camera_set_moveSpeedLv, 0, 1)
     CALL(evt_btl_camera_set_zoom, 0, 250)
     CALL(btlevtcmd_GetHitPos, LW(3), LW(4), LW(0), LW(1), LW(2))
-    CALL(btlevtcmd_SetMoveSpeed, -2, FLOAT(7.0f))
-    CALL(btlevtcmd_MovePosition, -2, LW(0), LW(1), LW(2), 0, -1, 0)
-    CALL(btlevtcmd_PreCheckDamage, -2, LW(3), LW(4), PTR(&weapon_togedaruma_attack), 256, LW(5))
+    CALL(btlevtcmd_SetMoveSpeed, BTL_UNIT_SELF, FLOAT(7.0f))
+    CALL(btlevtcmd_MovePosition, BTL_UNIT_SELF, LW(0), LW(1), LW(2), 0, -1, 0)
+    CALL(btlevtcmd_PreCheckDamage, BTL_UNIT_SELF, LW(3), LW(4), PTR(&weapon_togedaruma_attack), DAMAGE_FLAG_LAST_HIT, LW(5))
     SWITCH(LW(5))
         CASE_OR_EQUAL(4)
         GOTO(90)
@@ -463,78 +484,87 @@ static EVT_BEGIN(attack_event)
         GOTO(98)
         CASE_END
     END_SWITCH
+    // Miss: it rolls past the target (which dodges for some kinds of miss), hops, uncurls
+    // and shakes off the dizziness.
     LABEL(90)
-    CALL(btlevtcmd_AnimeChangePose, -2, 1, STRING("TGD_A_1"))
+    CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("TGD_A_1"))
     CALL(btlevtcmd_GetHitPos, LW(3), LW(4), LW(0), LW(1), LW(2))
     ADD(LW(2), 5)
     CALL(evt_snd_sfxoff, LW(15))
-    CALL(btlevtcmd_snd_se, -2, STRING("SFX_ENM_TOGEDA_MOVE3"), -250000000, 0, -250000000)
-    CALL(btlevtcmd_JumpSetting, -2, 0, 0, FLOAT(0.099609375f))
-    CALL(btlevtcmd_JumpPosition, -2, LW(0), 0, LW(2), FLOAT(60.0f), -1)
-    CALL(btlevtcmd_snd_se, -2, STRING("SFX_ENM_TOGEDA_MOVE4"), -250000000, 0, -250000000)
-    CALL(btlevtcmd_AnimeChangePose, -2, 1, STRING("TGD_N_1"))
+    CALL(btlevtcmd_snd_se, BTL_UNIT_SELF, STRING("SFX_ENM_TOGEDA_MOVE3"), EVT_NULLPTR, 0, EVT_NULLPTR)
+    CALL(btlevtcmd_JumpSetting, BTL_UNIT_SELF, 0, 0, FLOAT(0.099609375f))
+    CALL(btlevtcmd_JumpPosition, BTL_UNIT_SELF, LW(0), 0, LW(2), FLOAT(60.0f), -1)
+    CALL(btlevtcmd_snd_se, BTL_UNIT_SELF, STRING("SFX_ENM_TOGEDA_MOVE4"), EVT_NULLPTR, 0, EVT_NULLPTR)
+    CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("TGD_N_1"))
     WAIT_MS(1500)
-    CALL(btlevtcmd_AnimeChangePose, -2, 1, STRING("TGD_J_1"))
-    CALL(btlevtcmd_snd_se, -2, STRING("SFX_ENM_TOGEDA_MOVE5\0\0\0"), -250000000, 0, -250000000)
+    CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("TGD_J_1"))
+    CALL(btlevtcmd_snd_se, BTL_UNIT_SELF, STRING("SFX_ENM_TOGEDA_MOVE5"), EVT_NULLPTR, 0, EVT_NULLPTR)
     GOTO(98)
+    // Hit: the roll lands for its damage and it rolls to a stop.
     LABEL(91)
     CALL(evt_btl_camera_shake_h, 0, 1, 1, 8, 0)
     CALL(evt_btl_camera_set_moveSpeedLv, 0, 2)
     CALL(evt_btl_camera_add_zoom, 0, -50)
     CALL(btlevtcmd_ResultACDefence, LW(3), PTR(&weapon_togedaruma_attack))
-    CALL(btlevtcmd_CheckDamage, -2, LW(3), LW(4), PTR(&weapon_togedaruma_attack), 256, LW(5))
+    CALL(btlevtcmd_CheckDamage, BTL_UNIT_SELF, LW(3), LW(4), PTR(&weapon_togedaruma_attack), DAMAGE_FLAG_LAST_HIT, LW(5))
     CALL(evt_snd_sfxoff, LW(15))
-    CALL(btlevtcmd_snd_se, -2, STRING("SFX_ENM_TOGEDA_MOVE3"), -250000000, 0, -250000000)
+    CALL(btlevtcmd_snd_se, BTL_UNIT_SELF, STRING("SFX_ENM_TOGEDA_MOVE3"), EVT_NULLPTR, 0, EVT_NULLPTR)
     GOTO(98)
+    // It rolls back to its home position and uncurls.
     LABEL(98)
     CALL(evt_btl_camera_set_mode, 0, 0)
-    CALL(btlevtcmd_GetHomePos, -2, LW(0), LW(1), LW(2))
-    CALL(btlevtcmd_JumpSetting, -2, 0, FLOAT(5.0f), FLOAT(0.19921875f))
-    CALL(btlevtcmd_JumpPosition, -2, LW(0), LW(1), LW(2), 0, -1)
-    CALL(btlevtcmd_AnimeChangePose, -2, 1, STRING("TGD_J_2"))
+    CALL(btlevtcmd_GetHomePos, BTL_UNIT_SELF, LW(0), LW(1), LW(2))
+    CALL(btlevtcmd_JumpSetting, BTL_UNIT_SELF, 0, FLOAT(5.0f), FLOAT(0.19921875f))
+    CALL(btlevtcmd_JumpPosition, BTL_UNIT_SELF, LW(0), LW(1), LW(2), 0, -1)
+    CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("TGD_J_2"))
     WAIT_FRAMES(15)
-    CALL(btlevtcmd_AnimeChangePose, -2, 1, STRING("TGD_S_4"))
+    CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("TGD_S_4"))
     WAIT_MS(400)
     LABEL(99)
-    CALL(btlevtcmd_StartWaitEvent, -2)
+    CALL(btlevtcmd_StartWaitEvent, BTL_UNIT_SELF)
     RETURN
 EVT_END()
 
+/**
+ * Wait (idle) event of the Bristle: shows the idle pose from the pose table,
+ * then every frame turns counter attribute 2 (pre-emptive front spikes) of part 1 off
+ * while any of statuses 1 to 5
+ * or 9 (Sleep, Stop, Dizzy, Poison, Confuse, Freeze) is active and on otherwise.
+ */
 static EVT_BEGIN(wait_event)
-    CALL(btlevtcmd_AnimeChangePoseFromTable, -2, 1)
+    CALL(btlevtcmd_AnimeChangePoseFromTable, BTL_UNIT_SELF, 1)
     LABEL(0)
     SET_VALUE(LW(15), 0)
-    CALL(btlevtcmd_CheckStatus, -2, 1, LW(0))
+    CALL(btlevtcmd_CheckStatus, BTL_UNIT_SELF, STATUS_SLEEP, LW(0))
     IF_INT_NOT_EQUAL(LW(0), 0)
         ADD(LW(15), 1)
     END_IF
-    CALL(btlevtcmd_CheckStatus, -2, 2, LW(0))
+    CALL(btlevtcmd_CheckStatus, BTL_UNIT_SELF, STATUS_STOP, LW(0))
     IF_INT_NOT_EQUAL(LW(0), 0)
         ADD(LW(15), 1)
     END_IF
-    CALL(btlevtcmd_CheckStatus, -2, 3, LW(0))
+    CALL(btlevtcmd_CheckStatus, BTL_UNIT_SELF, STATUS_DIZZY, LW(0))
     IF_INT_NOT_EQUAL(LW(0), 0)
         ADD(LW(15), 1)
     END_IF
-    CALL(btlevtcmd_CheckStatus, -2, 4, LW(0))
+    CALL(btlevtcmd_CheckStatus, BTL_UNIT_SELF, STATUS_POISON, LW(0))
     IF_INT_NOT_EQUAL(LW(0), 0)
         ADD(LW(15), 1)
     END_IF
-    CALL(btlevtcmd_CheckStatus, -2, 5, LW(0))
+    CALL(btlevtcmd_CheckStatus, BTL_UNIT_SELF, STATUS_CONFUSE, LW(0))
     IF_INT_NOT_EQUAL(LW(0), 0)
         ADD(LW(15), 1)
     END_IF
-    CALL(btlevtcmd_CheckStatus, -2, 9, LW(0))
+    CALL(btlevtcmd_CheckStatus, BTL_UNIT_SELF, STATUS_FREEZE, LW(0))
     IF_INT_NOT_EQUAL(LW(0), 0)
         ADD(LW(15), 1)
     END_IF
     IF_INT_NOT_EQUAL(LW(15), 0)
-        CALL(btlevtcmd_OffPartsCounterAttribute, -2, 1, 2)
-        ELSE
-        CALL(btlevtcmd_OnPartsCounterAttribute, -2, 1, 2)
+        CALL(btlevtcmd_OffPartsCounterAttribute, BTL_UNIT_SELF, 1, COUNTER_ATTR_PREEMPTIVE_FRONT_SPIKY)
+    ELSE
+        CALL(btlevtcmd_OnPartsCounterAttribute, BTL_UNIT_SELF, 1, COUNTER_ATTR_PREEMPTIVE_FRONT_SPIKY)
     END_IF
     WAIT_FRAMES(1)
     GOTO(0)
     RETURN
 EVT_END()
-

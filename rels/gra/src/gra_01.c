@@ -1,84 +1,30 @@
+// gra_01 (ウスグラの道, Twilight Trail): a stretch of the trail between gra_00 and gra_02.
+
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
 #include "evt/evt_bero.h"
 #include "evt/evt_sub.h"
+#include "evt/evt_mario.h"
+#include "evt/evt_mobj.h"
+#include "evt/evt_msg.h"
+#include "evt/evt_npc.h"
+#include "evt/evt_party.h"
+#include "evt/evt_seq.h"
+#include "evt/evt_snd.h"
 #include "gra.h"
 #include "data_tables.h"
+#include "evt/evt_story.h"
 
-#pragma force_active on
-
-USER_FUNC(evt_bero_get_info);
-USER_FUNC(evt_gra_vivian_pose_set);
-USER_FUNC(evt_kagemario_init);
-USER_FUNC(evt_mario_key_onoff);
-USER_FUNC(evt_mario_mov_pos2);
-USER_FUNC(evt_mario_set_dir);
-USER_FUNC(evt_mario_set_pos);
-USER_FUNC(evt_mobj_badgeblk);
-USER_FUNC(evt_mobj_brick);
-USER_FUNC(evt_msg_print_party);
-USER_FUNC(evt_npc_change_fbat_mode);
-USER_FUNC(evt_party_run);
-USER_FUNC(evt_party_set_homing_dist);
-USER_FUNC(evt_party_set_pos);
-USER_FUNC(evt_party_stop);
-USER_FUNC(evt_seq_wait);
-USER_FUNC(evt_snd_bgmon);
-USER_FUNC(evt_snd_envon);
-
-f32 fd_gra_01_negone_one_374[2] __attribute__((aligned(8)));
-f32 fd_gra_01_neg_one_382;
-f32 fd_gra_01___local_PI_383;
-f32 fd_gra_01___local_3PIO2_385;
-f32 fd_gra_01_one_negone_373[2] __attribute__((aligned(8)));
-f32 fd_gra_01___local_PIO2_384;
-f32 fd_gra_01_one_381;
-f32 fd_gra_01_negone_one_360[2] __attribute__((aligned(8)));
-f32 fd_gra_01_neg_one_365;
-f32 fd_gra_01___local_PI_366;
-f32 fd_gra_01___local_3PIO2_368;
-f32 fd_gra_01_one_negone_359[2] __attribute__((aligned(8)));
-f32 fd_gra_01___local_PIO2_367;
-f32 fd_gra_01_one_364;
 static BeroEntry bero_entry_data[3];
-EvtWord gra_01_after_ranpel2[94];
 static TreeAccess tree_tbl[4];
-EvtWord gra_01_init_evt[107];
 
-f32 fd_gra_01_negone_one_374[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_gra_01_neg_one_382 = -1.0f;
-
-f32 fd_gra_01___local_PI_383 = 3.1415927f;
-
-f32 fd_gra_01___local_3PIO2_385 = 4.712389f;
-
-f32 fd_gra_01_one_negone_373[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_gra_01___local_PIO2_384 = 1.5707964f;
-
-f32 fd_gra_01_one_381 = 1.0f;
-
-f32 fd_gra_01_negone_one_360[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_gra_01_neg_one_365 = -1.0f;
-
-f32 fd_gra_01___local_PI_366 = 3.1415927f;
-
-f32 fd_gra_01___local_3PIO2_368 = 4.712389f;
-
-f32 fd_gra_01_one_negone_359[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_gra_01___local_PIO2_367 = 1.5707964f;
-
-f32 fd_gra_01_one_364 = 1.0f;
-
+/** Doors of this room: the west exit (w_bero1) to gra_00 and the east exit (e_bero1) to gra_02. */
 static BeroEntry bero_entry_data[] = {
     {
         "w_bero1", // hitName
         0, 0, // type..sfxId
-        20000, // directionId
-        100000, // centerPosition
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         NULL, // enterEvent
@@ -93,8 +39,8 @@ static BeroEntry bero_entry_data[] = {
     {
         "e_bero1", // hitName
         0, 0, // type..sfxId
-        20000, // directionId
-        100000, // centerPosition
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         NULL, // enterEvent
@@ -109,6 +55,11 @@ static BeroEntry bero_entry_data[] = {
     {0},
 };
 
+/**
+ * Cutscene on the first visit after Vivian has joined:
+ * Vivian is placed behind Mario, runs up and says her first trail line (stg4_gra_16_01);
+ * sets GSWF_GRA01_VIVIAN_FIRST_TRAIL_TALK so it plays once.
+ */
 EVT_BEGIN(gra_01_after_ranpel2)
     CALL(evt_mario_key_onoff, 0)
     CALL(evt_party_run, 0)
@@ -129,8 +80,8 @@ EVT_BEGIN(gra_01_after_ranpel2)
     CALL(evt_gra_vivian_pose_set, 2, STRING("PTR_W_1"))
     CALL(evt_gra_vivian_pose_set, 3, STRING("PTR_R_1"))
     CALL(evt_gra_vivian_pose_set, 7, STRING("PTR_T_1"))
-    SET_VALUE(GSWF(2075), 1)
-    CALL_CHILD(PTR(bero_case_entry))
+    SET_VALUE(GSWF(GSWF_GRA01_VIVIAN_FIRST_TRAIL_TALK), 1)
+    CALL_CHILD(bero_case_entry)
     CALL(evt_party_set_homing_dist, 0, FLOAT(50.0f))
     CALL(evt_party_run, 0)
     CALL(evt_mario_key_onoff, 1)
@@ -138,6 +89,10 @@ EVT_BEGIN(gra_01_after_ranpel2)
     RETURN
 EVT_END()
 
+/**
+ * The three trees Mario can hit on this stretch of the trail (A_ki_1 to A_ki_3, model parts S_gra01_ki01 to
+ * ki03).
+ */
 static TreeAccess tree_tbl[] = {
     {2, "A_ki_1", "S_gra01_ki01", NULL, 0, NULL},
     {2, "A_ki_2", "S_gra01_ki02", NULL, 0, NULL},
@@ -145,32 +100,36 @@ static TreeAccess tree_tbl[] = {
     {7, NULL, NULL, NULL, 0, NULL},
 };
 
+/**
+ * Init script of gra_01: trail music, the shake-tree spots and the exits, a coin block,
+ * a hidden Super Shroom block and a ten-coin brick,
+ * and Vivian's first-talk cutscene once the story reaches STORY_STG4_13_VIVIAN_JOINS.
+ */
 EVT_BEGIN(gra_01_init_evt)
-    CALL(evt_snd_bgmon, 512, STRING("BGM_STG4_GRA1"))
-    CALL(evt_snd_envon, 272, STRING("ENV_STG4_USU1"))
+    CALL(evt_snd_bgmon, PSND_FADE_OUT, STRING("BGM_STG4_GRA1"))
+    CALL(evt_snd_envon, PSND_FADE_RESTART | PSND_FADE_IN, STRING("ENV_STG4_USU1"))
     CALL(evt_kagemario_init)
     SET_VALUE(LW(0), PTR(tree_tbl))
-    CALL_CHILD(PTR(evt_sub_tree_access_entry))
+    CALL_CHILD(evt_sub_tree_access_entry)
     SET_VALUE(LW(0), PTR(bero_entry_data))
     CALL(evt_bero_get_info)
-    CALL(evt_mobj_badgeblk, STRING("blk00"), 0, 0, -100, 121, 0, GSWF(2082), 0)
+    CALL(evt_mobj_badgeblk, STRING("blk00"), 0, 0, -100, ITEM_COIN, 0, GSWF(GSWF_GRA01_COIN_BLOCK_HIT), 0)
     CALL(evt_mobj_brick, STRING("blk02"), -350, 0, -100, 0, 0, 0, LSWF(2))
     CALL(evt_mobj_brick, STRING("blk03"), -200, 60, 100, 0, 0, 0, LSWF(3))
     CALL(evt_mobj_brick, STRING("blk04"), 200, 60, 100, 0, 0, 0, LSWF(4))
-    CALL(evt_mobj_brick, STRING("blk05"), 0, 85, -100, 149, 11, 0, GSWF(2087))
-    CALL(evt_mobj_brick, STRING("blk06\0\0"), 475, 60, -100, 0, 3, 0, GSWF(2088))
+    CALL(evt_mobj_brick, STRING("blk05"), 0, 85, -100, ITEM_SUPER_SHROOM, 11, 0, GSWF(GSWF_GRA01_HIDDEN_SUPER_SHROOM_BLOCK_HIT))
+    CALL(evt_mobj_brick, STRING("blk06"), 475, 60, -100, 0, 3, 0, GSWF(GSWF_GRA01_TEN_COIN_BLOCK_EMPTIED))
     SET_VALUE(LF(0), 0)
-    IF_INT_GREATER_OR_EQUAL(GSW(0), 206)
-        IF_INT_EQUAL(GSWF(2075), 0)
+    IF_INT_GREATER_OR_EQUAL(GSW(GSW_STORY_PROGRESS), STORY_STG4_13_VIVIAN_JOINS)
+        IF_INT_EQUAL(GSWF(GSWF_GRA01_VIVIAN_FIRST_TRAIL_TALK), 0)
             SET_VALUE(LF(0), 1)
         END_IF
     END_IF
     IF_INT_EQUAL(LF(0), 0)
-        CALL_CHILD(PTR(evt_bero_info_run))
-        ELSE
-        SPAWN_EVENT(PTR(gra_01_after_ranpel2))
+        CALL_CHILD(evt_bero_info_run)
+    ELSE
+        SPAWN_EVENT(gra_01_after_ranpel2)
     END_IF
-    CALL_CHILD(PTR(evt_usu_kagemario_party_kill))
+    CALL_CHILD(evt_usu_kagemario_party_kill)
     RETURN
 EVT_END()
-

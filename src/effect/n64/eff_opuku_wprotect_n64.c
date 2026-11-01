@@ -1,3 +1,5 @@
+// Paper Mario 64 effect: water shield (wprotect) around a point that spawns water-damage splashes.
+#include "eff/n64/eff_opuku_wprotect_n64.h"
 #include "driver/camdrv.h"
 #include "driver/dispdrv.h"
 #include "driver/effdrv.h"
@@ -7,27 +9,14 @@
 #include <dolphin/mtx.h>
 #include <stdlib.h>
 #include "eff/n64/eff_water_damage_n64.h"
-
-typedef struct effN64Vtx {
-    s16 x, y, z;   // 0x0
-    s16 s, t;      // 0x6
-    u8 r, g, b, a; // 0xA
-} effN64Vtx;
+#include "eff/eff_n64.h"
+#include "libc_decls.h"
 
 typedef struct PointData {
     s8 x, y, z;
     s16 s, t;
     u8 r, g, b;
 } PointData;
-
-void effGetTexObjN64(u32 id, GXTexObj* obj);
-void effSetVtxDescN64(effN64Vtx* vtx);
-u32 effTblRandN64(u32 rand, s32 index);
-void tri2();
-#ifndef TARGET_PC /* PC port: the host libc declares these */
-double sin(double);
-double cos(double);
-#endif
 
 typedef struct EffOpukuWprotectN64Work {
     s32 type;     // 0x0
@@ -40,8 +29,8 @@ typedef struct EffOpukuWprotectN64Work {
     s32 alpha;    // 0x24
     s32 alpha2;   // 0x28
     f32 scale;    // 0x2C
-    f32 unk30;    // 0x30
-    f32 unk34;    // 0x34
+    f32 wobble;   // 0x30, recomputed each frame; never read
+    f32 scroll;   // 0x34, wraps at 128
     f32 a[4];     // 0x38
     f32 b[4];     // 0x48
     f32 c[4];     // 0x58
@@ -50,20 +39,25 @@ typedef struct EffOpukuWprotectN64Work {
     s32 g[4];     // 0x88
 } EffOpukuWprotectN64Work;
 
-void effOpukuWprotectMain(EffectEntry* effect);
-void effOpukuWprotectDisp(CameraId cameraId, EffectEntry* effect);
+static void effOpukuWprotectMain(EffectEntry* effect);
+static void effOpukuWprotectDisp(CameraId cameraId, EffectEntry* effect);
 
+/**
+ * Spawns a water shield box around (x, y, z) scaled by scale,
+ * lasting lifetime frames (<= 0 means until deleted), with four staggered bubble sprites.
+ * Via evt_eff64 "opuku_wprotect_n64". Soft-deletable; type 1 ends with splashes.
+ */
 EffectEntry* effOpukuWprotectN64Entry(s32 type, s32 lifetime, f32 x, f32 y, f32 z, f32 scale) {
     EffectEntry* effect;
     EffOpukuWprotectN64Work* work;
 
     effect = effEntry();
-    effect->type = "OpukuWprotectN64\0\0\0";
+    effect->type = "OpukuWprotectN64";
     effect->count = 1;
     work = __memAlloc(HEAP_EFFECT, sizeof(EffOpukuWprotectN64Work));
     effect->userdata = work;
     effect->callback = effOpukuWprotectMain;
-    effect->flags |= 2;
+    effect->flags |= EFFECT_FLAG_SOFT_DELETE;
     work->type = type;
     work->frame = 0;
     if (lifetime <= 0) {
@@ -79,8 +73,8 @@ EffectEntry* effOpukuWprotectN64Entry(s32 type, s32 lifetime, f32 x, f32 y, f32 
     work->colorR = 47;
     work->colorG = 127;
     work->colorB = 255;
-    work->unk30 = 0.0f;
-    work->unk34 = 0.0f;
+    work->wobble = 0.0f;
+    work->scroll = 0.0f;
     work->g[0] = -1;
     work->g[1] = -5;
     work->g[2] = -9;
@@ -88,7 +82,11 @@ EffectEntry* effOpukuWprotectN64Entry(s32 type, s32 lifetime, f32 x, f32 y, f32 
     return effect;
 }
 
-void effOpukuWprotectMain(EffectEntry* effect) {
+/**
+ * Fades the shield in and out, pulses its color, scrolls the texture and moves the bubbles upward;
+ * at the end of a type 1 shield it spawns two water-damage splashes above the shield.
+ */
+static void effOpukuWprotectMain(EffectEntry* effect) {
     EffOpukuWprotectN64Work* work = effect->userdata;
     Vec position;
     Vec tmp = {0.0f, 0.0f, 0.0f};
@@ -107,12 +105,12 @@ void effOpukuWprotectMain(EffectEntry* effect) {
     tmp.z = work->position.z;
     position = tmp;
     type = work->type;
-    if (effect->flags & 4) {
+    if (effect->flags & EFFECT_FLAG_DELETE_REQUESTED) {
         if (type == 1) {
-            effect->flags &= ~4;
+            effect->flags &= ~EFFECT_FLAG_DELETE_REQUESTED;
             work->lifetime = 4;
         } else {
-            effect->flags &= ~4;
+            effect->flags &= ~EFFECT_FLAG_DELETE_REQUESTED;
             work->lifetime = 16;
         }
     }
@@ -152,10 +150,10 @@ void effOpukuWprotectMain(EffectEntry* effect) {
     s6 = (f32)sin(6.2831855f * (6.0f * t) / 360.0f);
     c2 = (f32)cos(6.2831855f * (2.0f * t) / 360.0f);
     c1 = (f32)cos(a1);
-    work->unk30 = 32.0f * s6 * s1 + 256.0f + 32.0f * c2 + 32.0f * c1;
-    work->unk34 += 0.2f;
-    if (work->unk34 >= 128.0f) {
-        work->unk34 = 0.0f;
+    work->wobble = 32.0f * s6 * s1 + 256.0f + 32.0f * c2 + 32.0f * c1;
+    work->scroll += 0.2f;
+    if (work->scroll >= 128.0f) {
+        work->scroll = 0.0f;
     }
     for (i = 0; i < 4; i++) {
         work->g[i]++;
@@ -179,6 +177,10 @@ void effOpukuWprotectMain(EffectEntry* effect) {
     dispEntry(CAMERA_3D, dispCalcZ(&position), 2, (DispCallback)effOpukuWprotectDisp, effect);
 }
 
+/**
+ * The water shield's 40-vertex box (position, texture coordinate, grey colour),
+ * drawn with the upper vertices jittering every frame.
+ */
 PointData point_data[40] = {
     {25, 4, -25, 1025, 72, 176, 176, 176},
     {22, 0, -22, 963, 0, 176, 176, 176},
@@ -222,6 +224,7 @@ PointData point_data[40] = {
     {-22, 50, 22, 61, 1021, 240, 240, 240},
 };
 
+/** 8x8 quad drawn for each bubble rising inside the water shield. */
 static effN64Vtx size8x8_tex32x32_vtx[4] = {
     {-4, -4, 0, 0, 0, 0, 0, 0, 255},
     {4, -4, 0, 1024, 0, 0, 0, 0, 255},
@@ -229,7 +232,11 @@ static effN64Vtx size8x8_tex32x32_vtx[4] = {
     {-4, 4, 0, 0, 1024, 0, 0, 0, 255},
 };
 
-void effOpukuWprotectDisp(CameraId cameraId, EffectEntry* effect) {
+/**
+ * Draws the shield as a 40-point box whose upper vertices jitter each frame (texture 0x90),
+ * plus the rising bubble sprites (texture 0x91).
+ */
+static void effOpukuWprotectDisp(CameraId cameraId, EffectEntry* effect) {
     CameraEntry* camera;
     EffOpukuWprotectN64Work* work;
     s32 i;

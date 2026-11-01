@@ -1,3 +1,4 @@
+// Script commands for the tutorial (lecture) scenes: system level checks and camera save/load.
 #include "evt/evt_lecture.h"
 #include "driver/camdrv.h"
 #include "manager/evtmgr_cmd.h"
@@ -25,18 +26,23 @@ static f32 stXdir3;
 static f32 stXdir4;
 static void* lect_work;
 
-// s32 level
+/** s32 level */
 USER_FUNC(lect_set_systemlevel) {
     marioStSystemLevel(evtGetValue(event, *event->args));
     return EVT_RETURN_DONE;
 }
 
+/**
+ * Has no effect: reads the system level with marioStGetSystemLevel and discards the result; no arguments.
+ * The lecture scripts of every area (evt_lect_dou, evt_lect_gor, evt_lect_tik ...) still call it.
+ * Guess: a leftover debug check.
+ */
 USER_FUNC(lect_test_systemlevel) {
     marioStGetSystemLevel();
     return EVT_RETURN_DONE;
 }
 
-// save the camera, Mario, partner and follower positions
+/** save the camera, Mario, partner and follower positions */
 USER_FUNC(lect_cam_save) {
     CameraEntry* camera;
     MarioWork* mario;
@@ -72,15 +78,16 @@ USER_FUNC(lect_cam_save) {
     return EVT_RETURN_DONE;
 }
 
-// s32 msec
+/** s32 msec */
 USER_FUNC(lect_cam_load) {
+    EvtWord* args = event->args;
     s32 msec;
     CameraEntry* camera;
     MarioWork* mario;
     PartyEntry* party;
     PartyEntry* extra;
 
-    msec = evtGetValue(event, *event->args);
+    msec = evtGetValue(event, *args++);
     camera = camGetPtr(CAMERA_3D);
     mario = marioGetPtr();
     party = partyGetPtr(marioGetPartyId());
@@ -117,13 +124,13 @@ USER_FUNC(lect_cam_load) {
     return EVT_RETURN_DONE;
 }
 
-// void* evt
+/** void* evt */
 USER_FUNC(lect_juyoitem_rel_set) {
     lect_work = (void*)evtGetValue(event, *event->args);
     return EVT_RETURN_DONE;
 }
 
-// void* evt (out)
+/** void* evt (out) */
 USER_FUNC(lect_juyoitem_rel_get) {
     evtSetValue(event, *event->args, (EvtWord)lect_work);
     return EVT_RETURN_DONE;

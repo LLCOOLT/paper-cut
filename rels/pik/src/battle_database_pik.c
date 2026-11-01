@@ -1,3 +1,5 @@
+// Battle database of Poshley Heights (pik.rel): stage data, enemy groups and the encounter tables of its maps.
+
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
 #include "battle/battle_weapon_power.h"
@@ -7,22 +9,6 @@
 #include "battle/battle_stage_object.h"
 #include "driver/npcdrv.h"
 
-#pragma force_active on
-
-f32 fd_battle_database_pik_negone_one_374[2] __attribute__((aligned(8)));
-f32 fd_battle_database_pik_neg_one_382;
-f32 fd_battle_database_pik___local_PI_383;
-f32 fd_battle_database_pik___local_3PIO2_385;
-f32 fd_battle_database_pik_one_negone_373[2] __attribute__((aligned(8)));
-f32 fd_battle_database_pik___local_PIO2_384;
-f32 fd_battle_database_pik_one_381;
-f32 fd_battle_database_pik_negone_one_360[2] __attribute__((aligned(8)));
-f32 fd_battle_database_pik_neg_one_365;
-f32 fd_battle_database_pik___local_PI_366;
-f32 fd_battle_database_pik___local_3PIO2_368;
-f32 fd_battle_database_pik_one_negone_359[2] __attribute__((aligned(8)));
-f32 fd_battle_database_pik___local_PIO2_367;
-f32 fd_battle_database_pik_one_364;
 BattleStageObjectData pik_btlobject_data[2];
 BattleStageData pik_btlstage_data[1];
 BattleUnitSetup btlparty_pik_pik_06_01_off_1[2];
@@ -56,45 +42,19 @@ NpcBattleSelect btlgrpsel_pik_btlno_pik_03_09_off[2];
 NpcSetupBattleInfo btlsetup_pik_tbl[11];
 NpcTerritoryInfo btl_pik_setup_no_tbl[11];
 
-f32 fd_battle_database_pik_negone_one_374[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_battle_database_pik_neg_one_382 = -1.0f;
-
-f32 fd_battle_database_pik___local_PI_383 = 3.1415927f;
-
-f32 fd_battle_database_pik___local_3PIO2_385 = 4.712389f;
-
-f32 fd_battle_database_pik_one_negone_373[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_battle_database_pik___local_PIO2_384 = 1.5707964f;
-
-f32 fd_battle_database_pik_one_381 = 1.0f;
-
-f32 fd_battle_database_pik_negone_one_360[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_battle_database_pik_neg_one_365 = -1.0f;
-
-f32 fd_battle_database_pik___local_PI_366 = 3.1415927f;
-
-f32 fd_battle_database_pik___local_3PIO2_368 = 4.712389f;
-
-f32 fd_battle_database_pik_one_negone_359[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_battle_database_pik___local_PIO2_367 = 1.5707964f;
-
-f32 fd_battle_database_pik_one_364 = 1.0f;
-
+/** Scenery props of the Poshley Heights battle stage (stg_06_4) with their positions. */
 BattleStageObjectData pik_btlobject_data[] = {
     {"C", 2, 3, {0}, 0, 60, {0}},
     {"A2", 2, 1, {0.0f, 0.0f, -74.0f}, 0, 60, {0}},
 };
 
+/** The Poshley Heights battle stage (bti_01 backdrop, stg_06_4 scenery). */
 BattleStageData pik_btlstage_data[] = {
     {
-        "bti_01", // mGlobalStageDataDir
-        "stg_06_4", // mSpecificStageDataDir
-        2, // mNumObjects
-        pik_btlobject_data, // mObjects
+        "bti_01", // globalStageDataDir
+        "stg_06_4", // specificStageDataDir
+        2, // numObjects
+        pik_btlobject_data, // objects
         {NULL, 0, {0}, 0, NULL, 100, 0, 0, 2, 0.0f, 0, 0, 0, 0, NULL, {0}, NULL, {0}, 0x2100060, 0x20000000, 0, 26, 3, 2, NULL, 0, 0x7FF, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, {0}, NULL, {0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0}}, // bgAWeapon
         {NULL, 0, {0}, 0, NULL, 100, 0, 0, 2, 0.0f, 0, 0, 0, 0, weaponGetPowerDefault, {1, 0, 0, 0, 0, 0, 0, 0}, NULL, {0}, 0x2100060, 0x20000000, 0, 26, 3, 2, NULL, 0, 0x7FF, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, {0}, NULL, {0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0}}, // bgBWeapon
         NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, // initEvt..bgCEvt
@@ -102,22 +62,23 @@ BattleStageData pik_btlstage_data[] = {
     },
 };
 
+/** Enemies of the pik_06_01_off_1 fight: Dark Boo x2. */
 BattleUnitSetup btlparty_pik_pik_06_01_off_1[] = {
     {
-        &unit_purple_teresa, // mUnitKindParams
+        &unit_purple_teresa, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {70.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_purple_teresa, // itemDropTable
     },
     {
-        &unit_purple_teresa, // mUnitKindParams
+        &unit_purple_teresa, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {110.0f, 0.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -125,6 +86,11 @@ BattleUnitSetup btlparty_pik_pik_06_01_off_1[] = {
     },
 };
 
+/**
+ * Battle group of the pik_06_01_off_1 fight (btlparty_pik_pik_06_01_off_1):
+ * item drop odds 25 from the drop table, 25 the held item, 50 nothing;
+ * heart drop table default, flower drop table default2.
+ */
 BattleGroupSetup btlgrp_pik_pik_06_01_off_1 = {
     2, // numEnemies
     btlparty_pik_pik_06_01_off_1, // enemyData
@@ -133,35 +99,36 @@ BattleGroupSetup btlgrp_pik_pik_06_01_off_1 = {
     50, // noItemWeight
     battle_heart_drop_param_default, // hpDropTable
     battle_flower_drop_param_default2, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/** Enemies of the pik_06_02_off_1 fight: Dark Boo x3. */
 BattleUnitSetup btlparty_pik_pik_06_02_off_1[] = {
     {
-        &unit_purple_teresa, // mUnitKindParams
+        &unit_purple_teresa, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {50.0f, 0.0f, -10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_purple_teresa, // itemDropTable
     },
     {
-        &unit_purple_teresa, // mUnitKindParams
+        &unit_purple_teresa, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {90.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_purple_teresa, // itemDropTable
     },
     {
-        &unit_purple_teresa, // mUnitKindParams
+        &unit_purple_teresa, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {130.0f, 0.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -169,6 +136,11 @@ BattleUnitSetup btlparty_pik_pik_06_02_off_1[] = {
     },
 };
 
+/**
+ * Battle group of the pik_06_02_off_1 fight (btlparty_pik_pik_06_02_off_1):
+ * item drop odds 25 from the drop table, 25 the held item, 50 nothing;
+ * heart drop table default, flower drop table default2.
+ */
 BattleGroupSetup btlgrp_pik_pik_06_02_off_1 = {
     3, // numEnemies
     btlparty_pik_pik_06_02_off_1, // enemyData
@@ -177,15 +149,16 @@ BattleGroupSetup btlgrp_pik_pik_06_02_off_1 = {
     50, // noItemWeight
     battle_heart_drop_param_default, // hpDropTable
     battle_flower_drop_param_default2, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/** Enemies of the pik_06_03_off_1 fight: Dark Boo. */
 BattleUnitSetup btlparty_pik_pik_06_03_off_1[] = {
     {
-        &unit_purple_teresa, // mUnitKindParams
+        &unit_purple_teresa, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {90.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -193,6 +166,11 @@ BattleUnitSetup btlparty_pik_pik_06_03_off_1[] = {
     },
 };
 
+/**
+ * Battle group of the pik_06_03_off_1 fight (btlparty_pik_pik_06_03_off_1):
+ * item drop odds 25 from the drop table, 25 the held item, 50 nothing;
+ * heart drop table default, flower drop table default2.
+ */
 BattleGroupSetup btlgrp_pik_pik_06_03_off_1 = {
     1, // numEnemies
     btlparty_pik_pik_06_03_off_1, // enemyData
@@ -201,25 +179,26 @@ BattleGroupSetup btlgrp_pik_pik_06_03_off_1 = {
     50, // noItemWeight
     battle_heart_drop_param_default, // hpDropTable
     battle_flower_drop_param_default2, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/** Enemies of the pik_06_04_off_1 fight: Dark Boo x2. */
 BattleUnitSetup btlparty_pik_pik_06_04_off_1[] = {
     {
-        &unit_purple_teresa, // mUnitKindParams
+        &unit_purple_teresa, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {70.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_purple_teresa, // itemDropTable
     },
     {
-        &unit_purple_teresa, // mUnitKindParams
+        &unit_purple_teresa, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {110.0f, 0.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -227,6 +206,11 @@ BattleUnitSetup btlparty_pik_pik_06_04_off_1[] = {
     },
 };
 
+/**
+ * Battle group of the pik_06_04_off_1 fight (btlparty_pik_pik_06_04_off_1):
+ * item drop odds 25 from the drop table, 25 the held item, 50 nothing;
+ * heart drop table default, flower drop table default2.
+ */
 BattleGroupSetup btlgrp_pik_pik_06_04_off_1 = {
     2, // numEnemies
     btlparty_pik_pik_06_04_off_1, // enemyData
@@ -235,25 +219,26 @@ BattleGroupSetup btlgrp_pik_pik_06_04_off_1 = {
     50, // noItemWeight
     battle_heart_drop_param_default, // hpDropTable
     battle_flower_drop_param_default2, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/** Enemies of the pik_06_05_off_1 fight: Dark Boo x2. */
 BattleUnitSetup btlparty_pik_pik_06_05_off_1[] = {
     {
-        &unit_purple_teresa, // mUnitKindParams
+        &unit_purple_teresa, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {70.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_purple_teresa, // itemDropTable
     },
     {
-        &unit_purple_teresa, // mUnitKindParams
+        &unit_purple_teresa, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {110.0f, 0.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -261,6 +246,11 @@ BattleUnitSetup btlparty_pik_pik_06_05_off_1[] = {
     },
 };
 
+/**
+ * Battle group of the pik_06_05_off_1 fight (btlparty_pik_pik_06_05_off_1):
+ * item drop odds 25 from the drop table, 25 the held item, 50 nothing;
+ * heart drop table default, flower drop table default2.
+ */
 BattleGroupSetup btlgrp_pik_pik_06_05_off_1 = {
     2, // numEnemies
     btlparty_pik_pik_06_05_off_1, // enemyData
@@ -269,45 +259,46 @@ BattleGroupSetup btlgrp_pik_pik_06_05_off_1 = {
     50, // noItemWeight
     battle_heart_drop_param_default, // hpDropTable
     battle_flower_drop_param_default2, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/** Enemies of the pik_06_06_off_1 fight: Dark Boo x4. */
 BattleUnitSetup btlparty_pik_pik_06_06_off_1[] = {
     {
-        &unit_purple_teresa, // mUnitKindParams
+        &unit_purple_teresa, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {30.0f, 0.0f, -10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_purple_teresa, // itemDropTable
     },
     {
-        &unit_purple_teresa, // mUnitKindParams
+        &unit_purple_teresa, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {70.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_purple_teresa, // itemDropTable
     },
     {
-        &unit_purple_teresa, // mUnitKindParams
+        &unit_purple_teresa, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {110.0f, 0.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_purple_teresa, // itemDropTable
     },
     {
-        &unit_purple_teresa, // mUnitKindParams
+        &unit_purple_teresa, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {150.0f, 0.0f, 20.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -315,6 +306,11 @@ BattleUnitSetup btlparty_pik_pik_06_06_off_1[] = {
     },
 };
 
+/**
+ * Battle group of the pik_06_06_off_1 fight (btlparty_pik_pik_06_06_off_1):
+ * item drop odds 25 from the drop table, 25 the held item, 50 nothing;
+ * heart drop table default, flower drop table default2.
+ */
 BattleGroupSetup btlgrp_pik_pik_06_06_off_1 = {
     4, // numEnemies
     btlparty_pik_pik_06_06_off_1, // enemyData
@@ -323,15 +319,16 @@ BattleGroupSetup btlgrp_pik_pik_06_06_off_1 = {
     50, // noItemWeight
     battle_heart_drop_param_default, // hpDropTable
     battle_flower_drop_param_default2, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/** Enemies of the pik_06_07_off_1 fight: Dark Boo. */
 BattleUnitSetup btlparty_pik_pik_06_07_off_1[] = {
     {
-        &unit_purple_teresa, // mUnitKindParams
+        &unit_purple_teresa, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {90.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -339,6 +336,11 @@ BattleUnitSetup btlparty_pik_pik_06_07_off_1[] = {
     },
 };
 
+/**
+ * Battle group of the pik_06_07_off_1 fight (btlparty_pik_pik_06_07_off_1):
+ * item drop odds 25 from the drop table, 25 the held item, 50 nothing;
+ * heart drop table default, flower drop table default2.
+ */
 BattleGroupSetup btlgrp_pik_pik_06_07_off_1 = {
     1, // numEnemies
     btlparty_pik_pik_06_07_off_1, // enemyData
@@ -347,35 +349,36 @@ BattleGroupSetup btlgrp_pik_pik_06_07_off_1 = {
     50, // noItemWeight
     battle_heart_drop_param_default, // hpDropTable
     battle_flower_drop_param_default2, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/** Enemies of the pik_06_08_off_1 fight: Dark Boo x3. */
 BattleUnitSetup btlparty_pik_pik_06_08_off_1[] = {
     {
-        &unit_purple_teresa, // mUnitKindParams
+        &unit_purple_teresa, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {50.0f, 0.0f, -10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_purple_teresa, // itemDropTable
     },
     {
-        &unit_purple_teresa, // mUnitKindParams
+        &unit_purple_teresa, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {90.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_purple_teresa, // itemDropTable
     },
     {
-        &unit_purple_teresa, // mUnitKindParams
+        &unit_purple_teresa, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {130.0f, 0.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -383,6 +386,11 @@ BattleUnitSetup btlparty_pik_pik_06_08_off_1[] = {
     },
 };
 
+/**
+ * Battle group of the pik_06_08_off_1 fight (btlparty_pik_pik_06_08_off_1):
+ * item drop odds 25 from the drop table, 25 the held item, 50 nothing;
+ * heart drop table default, flower drop table default2.
+ */
 BattleGroupSetup btlgrp_pik_pik_06_08_off_1 = {
     3, // numEnemies
     btlparty_pik_pik_06_08_off_1, // enemyData
@@ -391,45 +399,46 @@ BattleGroupSetup btlgrp_pik_pik_06_08_off_1 = {
     50, // noItemWeight
     battle_heart_drop_param_default, // hpDropTable
     battle_flower_drop_param_default2, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/** Enemies of the pik_06_09_off_1 fight: Dark Boo x4. */
 BattleUnitSetup btlparty_pik_pik_06_09_off_1[] = {
     {
-        &unit_purple_teresa, // mUnitKindParams
+        &unit_purple_teresa, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {30.0f, 0.0f, -10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_purple_teresa, // itemDropTable
     },
     {
-        &unit_purple_teresa, // mUnitKindParams
+        &unit_purple_teresa, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {70.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_purple_teresa, // itemDropTable
     },
     {
-        &unit_purple_teresa, // mUnitKindParams
+        &unit_purple_teresa, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {110.0f, 0.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_purple_teresa, // itemDropTable
     },
     {
-        &unit_purple_teresa, // mUnitKindParams
+        &unit_purple_teresa, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {150.0f, 0.0f, 20.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -437,6 +446,11 @@ BattleUnitSetup btlparty_pik_pik_06_09_off_1[] = {
     },
 };
 
+/**
+ * Battle group of the pik_06_09_off_1 fight (btlparty_pik_pik_06_09_off_1):
+ * item drop odds 25 from the drop table, 25 the held item, 50 nothing;
+ * heart drop table default, flower drop table default2.
+ */
 BattleGroupSetup btlgrp_pik_pik_06_09_off_1 = {
     4, // numEnemies
     btlparty_pik_pik_06_09_off_1, // enemyData
@@ -445,163 +459,177 @@ BattleGroupSetup btlgrp_pik_pik_06_09_off_1 = {
     50, // noItemWeight
     battle_heart_drop_param_default, // hpDropTable
     battle_flower_drop_param_default2, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/** Enemy group of the pik_test1_off encounter: btlgrp_pik_pik_06_01_off_1. */
 NpcBattleSelect btlgrpsel_pik_btlno_pik_test1_off[] = {
     {50, &btlgrp_pik_pik_06_01_off_1, pik_btlstage_data},
     {0},
 };
 
+/** Enemy group of the pik_03_01_off encounter: btlgrp_pik_pik_06_01_off_1. */
 NpcBattleSelect btlgrpsel_pik_btlno_pik_03_01_off[] = {
     {20, &btlgrp_pik_pik_06_01_off_1, pik_btlstage_data},
     {0},
 };
 
+/** Enemy group of the pik_03_02_off encounter: btlgrp_pik_pik_06_02_off_1. */
 NpcBattleSelect btlgrpsel_pik_btlno_pik_03_02_off[] = {
     {20, &btlgrp_pik_pik_06_02_off_1, pik_btlstage_data},
     {0},
 };
 
+/** Enemy group of the pik_03_03_off encounter: btlgrp_pik_pik_06_03_off_1. */
 NpcBattleSelect btlgrpsel_pik_btlno_pik_03_03_off[] = {
     {20, &btlgrp_pik_pik_06_03_off_1, pik_btlstage_data},
     {0},
 };
 
+/** Enemy group of the pik_03_04_off encounter: btlgrp_pik_pik_06_04_off_1. */
 NpcBattleSelect btlgrpsel_pik_btlno_pik_03_04_off[] = {
     {20, &btlgrp_pik_pik_06_04_off_1, pik_btlstage_data},
     {0},
 };
 
+/** Enemy group of the pik_03_05_off encounter: btlgrp_pik_pik_06_05_off_1. */
 NpcBattleSelect btlgrpsel_pik_btlno_pik_03_05_off[] = {
     {20, &btlgrp_pik_pik_06_05_off_1, pik_btlstage_data},
     {0},
 };
 
+/** Enemy group of the pik_03_06_off encounter: btlgrp_pik_pik_06_06_off_1. */
 NpcBattleSelect btlgrpsel_pik_btlno_pik_03_06_off[] = {
     {20, &btlgrp_pik_pik_06_06_off_1, pik_btlstage_data},
     {0},
 };
 
+/** Enemy group of the pik_03_07_off encounter: btlgrp_pik_pik_06_07_off_1. */
 NpcBattleSelect btlgrpsel_pik_btlno_pik_03_07_off[] = {
     {20, &btlgrp_pik_pik_06_07_off_1, pik_btlstage_data},
     {0},
 };
 
+/** Enemy group of the pik_03_08_off encounter: btlgrp_pik_pik_06_08_off_1. */
 NpcBattleSelect btlgrpsel_pik_btlno_pik_03_08_off[] = {
     {20, &btlgrp_pik_pik_06_08_off_1, pik_btlstage_data},
     {0},
 };
 
+/** Enemy group of the pik_03_09_off encounter: btlgrp_pik_pik_06_09_off_1. */
 NpcBattleSelect btlgrpsel_pik_btlno_pik_03_09_off[] = {
     {20, &btlgrp_pik_pik_06_09_off_1, pik_btlstage_data},
     {0},
 };
 
+/**
+ * Encounter table of Poshley Heights: one entry per battle number with its enemy group pool and battle music.
+ */
 NpcSetupBattleInfo btlsetup_pik_tbl[] = {
     {
-        /*"マップstg_06_4"*/"\x83\x7D\x83\x62\x83\x76\x73\x74\x67\x5F\x30\x36\x5F\x34", // name
+        "マップstg_06_4", // name
         NULL, 0, // mapName..fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_pik_btlno_pik_test1_off, // select
-        0, 0, // battleFlags..field_1C
-        {{1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        0, 0, // battleFlags, randomMode
+        {{1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_ZAKO_BATTLE1", // bgmName
     },
     {
-        /*"pik_03パープルテレサ"*/"\x70\x69\x6B\x5F\x30\x33\x83\x70\x81\x5B\x83\x76\x83\x8B\x83\x65\x83\x8C\x83\x54", // name
+        "pik_03パープルテレサ", // name
         NULL, 0, // mapName..fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_pik_btlno_pik_03_01_off, // select
-        0, 0, // battleFlags..field_1C
-        {{3, 3}, {3, 3}, {10, 10}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        0, 0, // battleFlags, randomMode
+        {{3, 3}, {3, 3}, {10, 10}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_ZAKO_BATTLE1", // bgmName
     },
     {
-        /*"pik_03パープルテレサ"*/"\x70\x69\x6B\x5F\x30\x33\x83\x70\x81\x5B\x83\x76\x83\x8B\x83\x65\x83\x8C\x83\x54", // name
+        "pik_03パープルテレサ", // name
         NULL, 0, // mapName..fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_pik_btlno_pik_03_02_off, // select
-        0, 0, // battleFlags..field_1C
-        {{3, 3}, {3, 3}, {10, 10}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        0, 0, // battleFlags, randomMode
+        {{3, 3}, {3, 3}, {10, 10}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_ZAKO_BATTLE1", // bgmName
     },
     {
-        /*"pik_03パープルテレサ"*/"\x70\x69\x6B\x5F\x30\x33\x83\x70\x81\x5B\x83\x76\x83\x8B\x83\x65\x83\x8C\x83\x54", // name
+        "pik_03パープルテレサ", // name
         NULL, 0, // mapName..fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_pik_btlno_pik_03_03_off, // select
-        0, 0, // battleFlags..field_1C
-        {{3, 3}, {3, 3}, {10, 10}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        0, 0, // battleFlags, randomMode
+        {{3, 3}, {3, 3}, {10, 10}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_ZAKO_BATTLE1", // bgmName
     },
     {
-        /*"pik_03パープルテレサ"*/"\x70\x69\x6B\x5F\x30\x33\x83\x70\x81\x5B\x83\x76\x83\x8B\x83\x65\x83\x8C\x83\x54", // name
+        "pik_03パープルテレサ", // name
         NULL, 0, // mapName..fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_pik_btlno_pik_03_04_off, // select
-        0, 0, // battleFlags..field_1C
-        {{3, 3}, {3, 3}, {10, 10}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        0, 0, // battleFlags, randomMode
+        {{3, 3}, {3, 3}, {10, 10}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_ZAKO_BATTLE1", // bgmName
     },
     {
-        /*"pik_03パープルテレサ"*/"\x70\x69\x6B\x5F\x30\x33\x83\x70\x81\x5B\x83\x76\x83\x8B\x83\x65\x83\x8C\x83\x54", // name
+        "pik_03パープルテレサ", // name
         NULL, 0, // mapName..fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_pik_btlno_pik_03_05_off, // select
-        0, 0, // battleFlags..field_1C
-        {{3, 3}, {3, 3}, {10, 10}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        0, 0, // battleFlags, randomMode
+        {{3, 3}, {3, 3}, {10, 10}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_ZAKO_BATTLE1", // bgmName
     },
     {
-        /*"pik_03パープルテレサ"*/"\x70\x69\x6B\x5F\x30\x33\x83\x70\x81\x5B\x83\x76\x83\x8B\x83\x65\x83\x8C\x83\x54", // name
+        "pik_03パープルテレサ", // name
         NULL, 0, // mapName..fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_pik_btlno_pik_03_06_off, // select
-        0, 0, // battleFlags..field_1C
-        {{3, 3}, {3, 3}, {10, 10}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        0, 0, // battleFlags, randomMode
+        {{3, 3}, {3, 3}, {10, 10}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_ZAKO_BATTLE1", // bgmName
     },
     {
-        /*"pik_03パープルテレサ"*/"\x70\x69\x6B\x5F\x30\x33\x83\x70\x81\x5B\x83\x76\x83\x8B\x83\x65\x83\x8C\x83\x54", // name
+        "pik_03パープルテレサ", // name
         NULL, 0, // mapName..fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_pik_btlno_pik_03_07_off, // select
-        0, 0, // battleFlags..field_1C
-        {{3, 3}, {3, 3}, {10, 10}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        0, 0, // battleFlags, randomMode
+        {{3, 3}, {3, 3}, {10, 10}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_ZAKO_BATTLE1", // bgmName
     },
     {
-        /*"pik_03パープルテレサ"*/"\x70\x69\x6B\x5F\x30\x33\x83\x70\x81\x5B\x83\x76\x83\x8B\x83\x65\x83\x8C\x83\x54", // name
+        "pik_03パープルテレサ", // name
         NULL, 0, // mapName..fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_pik_btlno_pik_03_08_off, // select
-        0, 0, // battleFlags..field_1C
-        {{3, 3}, {3, 3}, {10, 10}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        0, 0, // battleFlags, randomMode
+        {{3, 3}, {3, 3}, {10, 10}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_ZAKO_BATTLE1", // bgmName
     },
     {
-        /*"pik_03パープルテレサ"*/"\x70\x69\x6B\x5F\x30\x33\x83\x70\x81\x5B\x83\x76\x83\x8B\x83\x65\x83\x8C\x83\x54", // name
+        "pik_03パープルテレサ", // name
         NULL, 0, // mapName..fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_pik_btlno_pik_03_09_off, // select
-        0, 0, // battleFlags..field_1C
-        {{3, 3}, {3, 3}, {10, 10}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        0, 0, // battleFlags, randomMode
+        {{3, 3}, {3, 3}, {10, 10}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_ZAKO_BATTLE1", // bgmName
     },
     {0},
 };
 
+/** Maps the BTLNO_PIK battle names to their positions in btlsetup_pik_tbl. */
 NpcTerritoryInfo btl_pik_setup_no_tbl[] = {
     {"BTLNO_PIK_TEST1", 0},
     {"BTLNO_PIK_03_01", 1},
@@ -615,4 +643,3 @@ NpcTerritoryInfo btl_pik_setup_no_tbl[] = {
     {"BTLNO_PIK_03_09", 9},
     {0},
 };
-

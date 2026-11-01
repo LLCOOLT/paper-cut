@@ -1,7 +1,10 @@
+// Declarations shared by the kpa.rel units (クッパ, Bowser's side-scrolling stages).
 #pragma once
 
+#include "version.h"
 #include "dolphin/types.h"
 #include "evt/evt_word.h"
+#include "evt/evt_cmd.h"
 
 extern EvtWord kpa_00_init_evt[];
 extern EvtWord kpa_01_init_evt[];
@@ -21,3 +24,9 @@ extern EvtWord kpa_stage_start[];
 extern EvtWord kpa_time[];
 
 extern EvtWord kpa_status_main_evt[];
+
+USER_FUNC(kpa_status_init);
+
+#if VERSION == VERSION_EU
+USER_FUNC(kpa_cancel_attack_mode); // kpa_01, called by kpa_03's jumpstand_evt
+#endif

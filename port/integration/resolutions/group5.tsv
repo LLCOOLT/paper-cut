@@ -1,0 +1,201 @@
+id	file	resolution	note
+1687	src/driver/animdrv.c	reapplied	#ifndef TARGET_PC around the decomp's remaining printf prototype (memcpy/strcmp prototypes deleted by the decomp)
+1688	src/driver/animdrv.c	reapplied	closing #endif of the libc prototype guard (with 1687)
+1692	src/driver/animdrv.c	reapplied	inline animPoseGetBaseData returns ANIM_FILE_DATA(...)
+1694	src/driver/animdrv.c	reapplied	animPoseEntry: data = ANIM_FILE_DATA(*file->handle->data)
+1695	src/driver/animdrv.c	reapplied	animPoseEntry: data = ANIM_FILE_DATA(*file->handle->data) (new file)
+1696	src/driver/animdrv.c	obsolete	decomp: fileAsyncf returns FileEntry*; animEffectAsync locals are FileEntry* and use fileAsyncMissing()
+1697	src/driver/animdrv.c	obsolete	decomp: model == NULL on FileEntry* replaces (u32)model == 0
+1698	src/driver/animdrv.c	obsolete	decomp: anim == NULL on FileEntry* replaces (u32)anim == 0
+1704	src/driver/animdrv.c	reapplied	interp keep/restore helpers (animPoseInterpBegin/End/KeepBuffers) before the demo/retail animPoseMain split, fields renamed (bufferVtxPos, vtxArrayPos, bufferPosNum, bufferTexAnimEntries...); retail animPoseMain is PORT_HOOKABLE
+1705	src/driver/animdrv.c	reapplied	portInterpInBetween() keep-buffers call after grpA/grpB setup, in both the demo and retail animPoseMain (identical code)
+1706	src/driver/animdrv.c	reapplied	sAnimNoTexEntry/sAnimNoTexMtx stand-ins after the animSetMaterial_Texture prototype (AnimTexMtx layout unchanged)
+1707	src/driver/animdrv.c	fixed-placement	wp->mpCurPoseData -> wp->curPoseData; decomp indentation
+1708	src/driver/animdrv.c	fixed-placement	wp->mpCurPoseData -> wp->curPoseData; decomp indentation
+1684	src/driver/animdrv.c	fixed-placement	ANIM_TEX_ID_OK: mBufferTexAnimNum -> bufferTexAnimNum (comment mpTexAnimEntries -> texAnimEntries)
+1711	src/driver/animdrv.c	reapplied	renderProc: GXPosition1x16(ANIM_IDX16(posIndexPtr))
+1712	src/driver/animdrv.c	reapplied	renderProc: GXNormal1x16(ANIM_IDX16(nrmIndexPtr))
+1713	src/driver/animdrv.c	reapplied	renderProc: GXColor1x16(ANIM_IDX16(clr0IndexPtr))
+1716	src/driver/animdrv.c	reapplied	renderProc: GXTexCoord1x16(ANIM_IDX32(&...texIndex...[k2])) with wp->curPoseData
+1717	src/driver/animdrv.c	fixed-placement	portAnimArrayRange block: mbUseFloatScratch/mpVtxArrayPos/mpVtxArrayNrm/mBufferPosNum/mBufferNrmNum -> useFloatScratch/vtxArrayPos/vtxArrayNrm/bufferPosNum/bufferNrmNum
+1719	src/driver/animdrv.c	fixed-placement	paperTexOfsX PC line re-indented to the decomp's nesting
+1723	src/driver/animdrv.c	obsolete	decomp: animGroupBaseAsync locals are FileEntry* (fileAsyncf returns FileEntry*)
+1724	src/driver/animdrv.c	obsolete	decomp: model == NULL / fileAsyncMissing() on FileEntry*
+1725	src/driver/animdrv.c	reapplied	animPoseGetAnimBaseDataPtr returns ANIM_FILE_DATA(...)
+1726	src/driver/animdrv.c	reapplied	PORT_MODS hooks .inc include at end of file
+1887	src/driver/npcdrv.c	fixed-placement	port includes moved below the decomp's header comment (the npcCheckInterrupt_hdr_void define they followed is gone)
+1888	src/driver/npcdrv.c	obsolete	pc_call.h was only for the cloudGetBreathPower PCCALLs, which are obsolete
+1889	src/driver/npcdrv.c	fixed-placement	removed: decomp declares itemFlagOn (itemdrv.h), partyChgPoseId (party.h, const char*: the port's char* decl would conflict) and includes pmario_sound.h
+1890	src/driver/npcdrv.c	fixed-placement	removed the half-placed cloudGetBreathPower #ifdef/#else (it swallowed the decomp's ANNOUNCE/hammer defines); decomp uses party_cloud.h's real f32 cloudGetBreathPower(Vec pos, f32 width)
+1891	src/driver/npcdrv.c	obsolete	decomp deleted the local cloudGetBreathPower prototype (party/party_cloud.h)
+1892	src/driver/npcdrv.c	obsolete	decomp deleted the local itemEntry prototype; itemdrv.h's itemEntry takes EvtWord* pickupEvt
+1893	src/driver/npcdrv.c	obsolete	decomp deleted the local atan2 prototype (uses <math.h>)
+1894	src/driver/npcdrv.c	fixed-placement	removed a stray #endif placed before npcLuigiPoseFlip (its #ifndef atan2 half is obsolete)
+1898	src/driver/npcdrv.c	reapplied	PORT_MODS hooks .h include after eff/eff_small_star.h
+1899	src/driver/npcdrv.c	obsolete	decomp: fbatHitCheckAll returns NpcEntry* (npcdrv.h) with the 0x13F1 flags spelled as FBAT_CHECK_* bits
+1900	src/driver/npcdrv.c	fixed-placement	removed stray #endif of the obsolete fbatHitCheckAll block
+1901	src/driver/npcdrv.c	reapplied	NpcEntry* PORT_HOOKABLE(fbatHitCheck)(u32 flags, void* unused) (decomp returns NpcEntry*; hook signature changed from void*)
+1903	src/driver/npcdrv.c	fixed-placement	removed KPA_FB macro block: decomp reads the fields via offsetof(FieldBattleData, kpaJumpScore/...), correct on 64-bit
+1904	src/driver/npcdrv.c	obsolete	decomp: *(s32*)(fb2 + offsetof(FieldBattleData, kpaJumpScore/kpaJumpKills)) replaces raw 0x57c/0x578
+1905	src/driver/npcdrv.c	obsolete	decomp: offsetof(FieldBattleData, kpaJumpScore)
+1906	src/driver/npcdrv.c	obsolete	decomp: offsetof(FieldBattleData, kpaJumpKills/kpaJumpScore)
+1907	src/driver/npcdrv.c	obsolete	decomp: offsetof(FieldBattleData, kpaComboCount)
+1908	src/driver/npcdrv.c	obsolete	#undef KPA_FB no longer needed
+1909	src/driver/npcdrv.c	obsolete	decomp: party_cloud.c defines cloudGetBreathPower(Vec pos, f32 width) to match the call; no PCCALL needed
+1910	src/driver/npcdrv.c	obsolete	same as 1909
+1911	src/driver/npcdrv.c	obsolete	same as 1909
+1912	src/driver/npcdrv.c	obsolete	decomp deleted the trailing prototype list (fbatHitCheckAll in npcdrv.h returns NpcEntry*)
+1913	src/driver/npcdrv.c	obsolete	same as 1912
+1914	src/driver/npcdrv.c	reapplied	PORT_MODS hooks .inc include at end of file
+1809	src/driver/mapdrv.c	reapplied	TARGET_PC includes (bedecode, gx_arrays, map_pc, tpl_pc, driver/mapfile.h) after the decomp's hitdrv.h include
+1810	src/driver/mapdrv.c	rewritten	decomp dropped the sin/cos prototypes (math.h); the guard now wraps only the file's static inline sinf, which clashes with the host libc's sinf
+1811	src/driver/mapdrv.c	reapplied	#endif of the sinf guard + portMapRegisterVtxArray(s) after <string.h>, re-indented to the decomp's 4 spaces (MapVtxArray/MapVcdTable unchanged)
+1812	src/driver/mapdrv.c	obsolete	decomp deleted the local strcat prototype
+1813	src/driver/mapdrv.c	obsolete	decomp deleted the local strcat prototype (closing #endif)
+1814	src/driver/mapdrv.c	obsolete	decomp deleted the local sprintf prototype
+1815	src/driver/mapdrv.c	obsolete	decomp deleted the local sprintf prototype (closing #endif)
+1817	src/driver/mapdrv.c	fixed-placement	mapLoadReloc_ #ifndef TARGET_PC: closing #endif moved above the decomp's doc comment for mapHdrSizeOk_
+1818	src/driver/mapdrv.c	fixed-placement	see 1817 (#endif now right after mapLoadReloc_)
+1819	src/driver/mapdrv.c	fixed-placement	re-indented to 4 spaces
+1820	src/driver/mapdrv.c	fixed-placement	pcMap decode block re-indented
+1821	src/driver/mapdrv.c	reapplied	missing #endif after mapLoadReloc_(&wp->entries[group]) (the #ifdef/#else had placed without it)
+1822	src/driver/mapdrv.c	fixed-placement	re-indented
+1824	src/driver/mapdrv.c	fixed-placement	re-indented
+1826	src/driver/mapdrv.c	fixed-placement	re-indented
+1828	src/driver/mapdrv.c	fixed-placement	sizeof(MapEntryAnimData) line re-indented (kept: the struct holds a pointer, larger than 32 on PC)
+1830	src/driver/mapdrv.c	fixed-placement	re-indented
+1831	src/driver/mapdrv.c	fixed-placement	re-indented; kept before the decomp's blank line after the dat read
+1832	src/driver/mapdrv.c	fixed-placement	re-indented
+1834	src/driver/mapdrv.c	fixed-placement	re-indented
+1836	src/driver/mapdrv.c	fixed-placement	wo-> (gone) -> wp->entries[group]; re-indented
+1838	src/driver/mapdrv.c	reapplied	PCCALL around the decomp's ((LightEntryArgOrderFn)lightEntry)(...) cast call; PC side calls lightdrv.h's lightEntry (GXColor by value, attenType/flags before the angles)
+1839	src/driver/mapdrv.c	fixed-placement	mapPcRelease moved above mapUnLoad's doc comment; re-indented
+1840	src/driver/mapdrv.c	reapplied	mapPcRelease(entry2) in mapUnLoad's free loop
+1841	src/driver/mapdrv.c	reapplied	portTplRelease(entry2->tpl) in mapUnLoad
+1842	src/driver/mapdrv.c	reapplied	mapPcRelease(entry2) in bmapUnLoad's free loop
+1843	src/driver/mapdrv.c	reapplied	portTplRelease(entry2->tpl) in bmapUnLoad
+1844	src/driver/mapdrv.c	fixed-placement	re-indented (in the retail bmapUnLoad branch)
+1845	src/driver/mapdrv.c	fixed-placement	re-indented to the nesting of bmapLoad's arcDataCheck branch
+1846	src/driver/mapdrv.c	obsolete	decomp already moved MapAnimKeyCh/MapAnimKey/MapAnimJoint to driver/mapdrv.h
+1859	src/driver/msgdrv.c	reapplied	#include "port_hook.h" before driver/msgdrv.h (after the decomp's header comment)
+1860	src/driver/msgdrv.c	fixed-placement	dropped pc_call.h: its only users (intplGetValue PCCALLs) are obsolete; port/platform.h, gameplay.h, mods.h kept
+1861	src/driver/msgdrv.c	reapplied	PORT_MODS hooks .h and the SJIS_CODE macro after the decomp's includes (GameCube side reads through const u16* like the decomp)
+1864	src/driver/msgdrv.c	fixed-placement	portTextMs line re-indented to the switch's nesting
+1865	src/driver/msgdrv.c	obsolete	decomp deleted the local cos/sin prototypes
+1866	src/driver/msgdrv.c	obsolete	decomp deleted the local cos/sin prototypes (closing #endif)
+1867	src/driver/msgdrv.c	reapplied	portInterpKeep(&c->rot) before the glyph pop update in msgDisp
+1868	src/driver/msgdrv.c	reapplied	kanjiSearch(SJIS_CODE(msg)) in msgAnalize
+1869	src/driver/msgdrv.c	reapplied	SJIS_CODE(msg) == 0x8145
+1870	src/driver/msgdrv.c	reapplied	SJIS_CODE(msg) != 0x8140 / 0x8151
+1871	src/driver/msgdrv.c	fixed-placement	<col> GXColor block re-indented to the tag chain's nesting (MsgChar.color exists in the decomp)
+1873	src/driver/msgdrv.c	fixed-placement	</col> GXColor line re-indented
+1875	src/driver/msgdrv.c	fixed-placement	re-indented (SJIS_CODE now defined via 1861)
+1876	src/driver/msgdrv.c	fixed-placement	re-indented
+1878	src/driver/msgdrv.c	fixed-placement	mods msgSearch block re-indented
+1879	src/driver/msgdrv.c	fixed-placement	portTraceMsgMissing re-indented
+1880	src/driver/msgdrv.c	reapplied	msgWindow_Entry(const char* msg, EvtWord callback, u16 priority); include/driver/msgdrv.h prototype changed to EvtWord callback too (per coordinator; EvtWord is s32 on GameCube), and its placed MsgWinData.callback line re-indented
+1881	src/driver/msgdrv.c	fixed-placement	re-indented (already 4 spaces after detab)
+1882	src/driver/msgdrv.c	reapplied	msgWindow_Continue: return if window->userdata == NULL
+1883	src/driver/msgdrv.c	reapplied	msgWindow_Repeat: return if window->userdata == NULL
+1884	src/driver/msgdrv.c	obsolete	decomp calls intplGetValue(0, start, end, step, steps) directly with system.h's signature (no cast)
+1885	src/driver/msgdrv.c	obsolete	same as 1884 (second window type)
+1886	src/driver/msgdrv.c	reapplied	PORT_MODS hooks .inc include at end of file
+1793	src/driver/itemdrv.c	fixed-placement	port_hook.h moved below the decomp's header comment
+1794	src/driver/itemdrv.c	fixed-placement	dropped pc_call.h: its only use (effHagetakaFlushN64Entry PCCALL) is obsolete
+1795	src/driver/itemdrv.c	fixed-placement	removed FontDrawEdge/FontDrawEdgeOff decls: decomp includes manager/fontmgr.h, which declares them
+1796	src/driver/itemdrv.c	fixed-placement	the TARGET_PC static for unknownVec0 had landed before the includes; moved onto unknownVec0's definition
+1797	src/driver/itemdrv.c	fixed-placement	static guard moved below the decomp's doc comment, directly on makeVecByValue
+1798	src/driver/itemdrv.c	obsolete	decomp deleted the local msgWindow_Entry prototype (driver/msgdrv.h)
+1799	src/driver/itemdrv.c	obsolete	decomp deleted the local sin/cos prototypes (math.h)
+1800	src/driver/itemdrv.c	obsolete	decomp includes eff/n64/eff_hagetaka_flush_n64.h (no local prototype)
+1801	src/driver/itemdrv.c	obsolete	same as 1800 (closing #endif)
+1802	src/driver/itemdrv.c	obsolete	decomp deleted the local itemEntry prototype; itemdrv.h declares itemEntry(x, y, z, name, itemId, type, collectFlag, EvtWord* pickupEvt)
+1803	src/driver/itemdrv.c	fixed-placement	reverted to the decomp's direct call: effHagetakaFlushN64Entry now takes (type, lifetime, x, y, z, scale) in header and definition
+1804	src/driver/itemdrv.c	reapplied	PORT_HOOKABLE(itemEntry) on the decomp's new signature (x, y, z, name, itemId, u16 type, collectFlag, EvtWord* pickupEvt); hook/mod users of the old argument order need updating
+1805	src/driver/itemdrv.c	obsolete	decomp deleted the trailing prototype list
+1806	src/driver/itemdrv.c	reapplied	PORT_MODS hooks .inc include at end of file
+1739	src/driver/effdrv.c	fixed-placement	dropped #include "eff/eff_maya_data.h": decomp's driver/effdrv.h includes it and defines MayaPoly/MayaPolyList/MayaAnimData/MayaJoint/MayaAnim itself
+1741	src/driver/effdrv.c	obsolete	decomp moved the Maya structs to driver/effdrv.h, typed (MayaHermitKey keys, MayaPoly, polyList)
+1742	src/driver/effdrv.c	obsolete	decomp: effMayaKeyInterp takes MayaHermitKey*
+1743	src/driver/effdrv.c	obsolete	decomp: effCalcMayaAnimMatrix(MayaAnim*, MayaPoly* poly, ...)
+1744	src/driver/effdrv.c	obsolete	decomp: n = poly->keyCount
+1745	src/driver/effdrv.c	obsolete	decomp: MayaHermitKey* prev/curr
+1746	src/driver/effdrv.c	obsolete	decomp: &anim->data->polyList->polys[i]
+1747	src/driver/effdrv.c	obsolete	decomp deleted the trailing prototype list (effCalcMayaAnimMatrix is static)
+1748	src/driver/envdrv.c	fixed-placement	port/platform.h include moved below the decomp's header comment
+1749	src/driver/envdrv.c	fixed-placement	"// local prototypes" comment moved out of the #else side; still needed: the decomp's _callback prototype is non-static, its definition static
+1750	src/driver/envdrv.c	fixed-placement	see 1749 (#endif)
+1751	src/driver/envdrv.c	fixed-placement	removed stray #ifndef TARGET_PC (it guarded rand, which the decomp deleted) that swallowed envDisp_FF
+1752	src/driver/envdrv.c	obsolete	decomp deleted the local rand prototype
+1754	src/driver/envdrv.c	rewritten	decomp deleted sin/cos and kept only acos: the guard now wraps just double acos(double)
+1755	src/driver/envdrv.c	reapplied	#endif after the acos prototype
+1756	src/driver/envdrv.c	fixed-placement	removed stray #ifndef TARGET_PC (it guarded tan, which the decomp deleted)
+1757	src/driver/envdrv.c	obsolete	decomp deleted the local tan prototype
+1762	src/driver/fadedrv.c	fixed-placement	dropped pc_call.h: its only use (SFX_ON PCCALL) is obsolete
+1763	src/driver/fadedrv.c	fixed-placement	removed stray #ifndef TARGET_PC (it guarded tan, which the decomp deleted)
+1764	src/driver/fadedrv.c	obsolete	decomp deleted the local tan prototype
+1765	src/driver/fadedrv.c	obsolete	decomp deleted the SFX_ON cast macro; psndSFXOn is called directly with SFX_NAME_WORD(...)
+1766	src/driver/fadedrv.c	fixed-placement	removed the PC block: decomp rewrote disp_maku's depth calc as separate statements (no double store to depth), so one store per statement already
+1767	src/driver/fadedrv.c	fixed-placement	see 1766 (#endif removed)
+1760	src/driver/extdrv.c	obsolete	decomp deleted the local atan2 prototype
+1761	src/driver/extdrv.c	fixed-placement	removed stray #endif of the obsolete atan2 guard
+1768	src/driver/hitdrv.c	fixed-placement	port_hook.h moved below the decomp's header comment
+1769	src/driver/hitdrv.c	reapplied	PORT_MODS hooks .h, TARGET_PC math.h/port/map_pc.h and HIT_DL_U16 after <string.h> (the placed hunks use HIT_DL_U16)
+1782	src/driver/hitdrv.c	reapplied	PORT_HOOKABLE(hitCheckVecFilter) on the retail definition (the demo's own copy left alone)
+1849	src/driver/mobjdrv.c	fixed-placement	port_hook.h moved below the decomp's header comment
+1851	src/driver/mobjdrv.c	fixed-placement	removed the TARGET_PC hitDelete decl + evtmgr_cmd.h include: decomp's hitdrv.h declares hitDelete and the file includes manager/evtmgr_cmd.h itself (hooks .h include kept)
+1853	src/driver/mobjdrv.c	reapplied	portMobjGetWork() definition after the inline mobjGetWork
+1921	src/driver/swdrv.c	fixed-placement	port_hook.h moved below the decomp's header comment
+1922	src/driver/swdrv.c	fixed-placement	hooks .h include had landed between swInit's doc comment and swInit; moved after the includes
+1923	src/driver/swdrv.c	fixed-placement	restored the decomp's comment ("// set specific bit") on the PORT_HOOKABLE(swSet) line
+1925	src/driver/swdrv.c	reapplied	PORT_MODS hooks .inc include at end of file
+106	include/mario/mario_pouch.h	fixed-placement	PouchStat typedef kept; blank line before the decomp's version.h include
+109	include/mario/mario_pouch.h	obsolete	decomp: pouchGetSuperCoin returns s32 in header and .c
+110	include/mario/mario_pouch.h	obsolete	decomp: pouchGetStarPiece returns s32
+111	include/mario/mario_pouch.h	rewritten	pouchGetHP is s32 in the decomp (obsolete); pouchGetMaxHP set to PouchStat to match mario_pouch.c's definition; also (coordinator item) pouchGetStarPoint declared PouchStat to match its definition
+112	include/mario/mario_pouch.h	rewritten	pouchGetFP is s32 in the decomp (obsolete); pouchGetMaxFP set to PouchStat to match mario_pouch.c
+113	include/mario/mario_pouch.h	obsolete	decomp: pouchGetAP returns s32
+115	include/mario/mario_pouch.h	obsolete	decomp: pouchAddKpaCoin returns BOOL (s32 coins)
+498	rels/aji/src/unit/unit_boss_magnum_battender_mkII.c	obsolete	decomp includes battle/battle_sub.h itself
+499	rels/aji/src/unit/unit_boss_magnum_battender_mkII.c	obsolete	decomp deleted the local atan prototype
+500	rels/aji/src/unit/unit_boss_magnum_battender_mkII.c	obsolete	same as 499 (closing #endif)
+501	rels/aji/src/unit/unit_boss_magnum_battender_mkII.c	obsolete	decomp calls intplGetValue(mode, start, end, step, steps) with system.h's real signature
+502	rels/aji/src/unit/unit_boss_magnum_battender_mkII.c	obsolete	same as 501
+503	rels/aji/src/unit/unit_boss_magnum_battender_mkII.c	obsolete	decomp deleted the AudMember raw-offset view; aud_suikomi uses BattleAudienceMember fields (baseScale, rotation, homePosition, interpFrames*) directly
+504	rels/aji/src/unit/unit_boss_magnum_battender_mkII.c	obsolete	same as 503
+505	rels/aji/src/unit/unit_boss_magnum_battender_mkII.c	obsolete	decomp deleted the local rand prototype
+506	rels/aji/src/unit/unit_boss_magnum_battender_mkII.c	obsolete	same as 505 (closing #endif)
+480	rels/aji/src/unit/unit_barriern.c	obsolete	decomp includes manager/evtmgr_cmd.h
+481	rels/aji/src/unit/unit_barriern.c	fixed-placement	removed the half-placed intplGetValue remap macro: decomp calls intplGetValue with system.h's argument order, so the macro would scramble the arguments
+482	rels/aji/src/unit/unit_barriern.c	obsolete	decomp deleted the local intplGetValue prototype (system.h)
+483	rels/aji/src/unit/unit_barriern.c	obsolete	decomp calls spline_getvalue(&pos, t, n, pts, knots, curvature) per driver/mapdrv.h
+484	rels/aji/src/unit/unit_barriern.c	obsolete	same as 483 (closing #endif)
+485	rels/aji/src/unit/unit_barriern_custom.c	obsolete	same as 480
+486	rels/aji/src/unit/unit_barriern_custom.c	fixed-placement	same as 481
+487	rels/aji/src/unit/unit_barriern_custom.c	obsolete	same as 482
+488	rels/aji/src/unit/unit_barriern_custom.c	obsolete	same as 483
+489	rels/aji/src/unit/unit_barriern_custom.c	obsolete	same as 484
+492	rels/aji/src/unit/unit_barriern_z.c	obsolete	same as 480
+493	rels/aji/src/unit/unit_barriern_z.c	fixed-placement	same as 481
+494	rels/aji/src/unit/unit_barriern_z.c	obsolete	same as 482
+495	rels/aji/src/unit/unit_barriern_z.c	obsolete	same as 483
+496	rels/aji/src/unit/unit_barriern_z.c	obsolete	same as 484
+1011	rels/tik/src/tik_00.c	reapplied	UranaiCaptureWork lwData/gwData as EvtWord (memcpy'd to/from the event's EvtWord lwData/gwData by sizeof)
+1012	rels/tik/src/tik_00.c	obsolete	decomp deleted the local tan/tanf
+1013	rels/tik/src/tik_00.c	obsolete	same as 1012 (closing #endif)
+1014	rels/tik/src/tik_00.c	reapplied	CardName.value as EvtWord
+1017	rels/tik/src/tik_05.c	fixed-placement	removed marioSetCamId decl: decomp includes mario/mario_cam.h, which declares it
+1018	rels/tik/src/tik_05.c	fixed-placement	removed a stray #ifndef TARGET_PC that swallowed the decomp's includes
+1019	rels/tik/src/tik_05.c	obsolete	decomp deleted the local sin/cos/atan2 prototypes
+1020	rels/tik/src/tik_05.c	obsolete	same as 1019
+1021	rels/tik/src/tik_05.c	obsolete	same as 1019 (second sin/cos pair)
+1015	rels/tik/src/tik_02.c	obsolete	decomp declares hitIsGroup static, matching its static definition
+1016	rels/tik/src/tik_02.c	obsolete	same as 1015
+1032	rels/tik/src/unit/unit_kamec.c	reapplied	#include "pc_call.h"
+1033	rels/tik/src/unit/unit_kamec.c	fixed-placement	PC effThunderflareN64Entry prototype gains f32 scale (the decomp's definition has (type, lifetime, x, y, z, scale)); #endif before the blank line
+1035	rels/tik/src/unit/unit_kamec.c	reapplied	PCCALL around effPokopiPchargeN64Entry, PC args (0, 60, 0, -1000, 0, 1.0f)
+1036	rels/tik/src/unit/unit_kamec.c	rewritten	PCCALL around effThunderflareN64Entry; PC call now passes scale 1.0f (6-arg real signature)
+1130	rels/yuu/include/yuu.h	rewritten	decomp moved HikokiWork/FuneWork/RollWork into yuu_00/01/02.c, but evt_yuuminigame.c's PC branch sizes them with sizeof; moved the decomp's definitions into yuu.h. NEEDS group 6 to delete the local typedefs in rels/yuu/src/yuu_00.c, yuu_01.c, yuu_02.c (they include yuu.h)
+1131	rels/yuu/include/yuu.h	obsolete	decomp deleted the extern minigame_view_monte (each file defines its own static event)
+1675	src/data/mapdata.c	fixed-placement	port_hook.h moved below the decomp's header comment
+1679	src/data/mapdata.c	reapplied	PORT_MODS hooks .inc include at end of file

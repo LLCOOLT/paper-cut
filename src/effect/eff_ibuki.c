@@ -1,3 +1,5 @@
+// Breath puff (ibuki: breath): a stream of 32 timed puffs from a point, with vapor puffs spawned along the way.
+#include "eff/eff_ibuki.h"
 #include "driver/camdrv.h"
 #include "driver/dispdrv.h"
 #include "driver/effdrv.h"
@@ -5,51 +7,50 @@
 #include "system.h"
 #include <dolphin/gx.h>
 #include <dolphin/mtx.h>
-#include "eff/eff_magic1_n64.h"
+#include "eff/n64/eff_vapor_n64.h"
 #include "libc_decls.h"
 
-EffectEntry* effVaporN64Entry(s32 type, s32 lifetime, f32 x, f32 y, f32 z, f32 scale);
-void effIbukiMain(EffectEntry* effect);
-void effIbukiDisp(CameraId cameraId, EffectEntry* effect);
+static void effIbukiMain(EffectEntry* effect);
+static void effIbukiDisp(CameraId cameraId, EffectEntry* effect);
 
 typedef struct EffIbukiWork {
-    s32 type;      // 0x0
-    Vec position;  // 0x4
-    Vec velocity;  // 0x10
-    f32 x2;        // 0x1C
-    f32 y2;        // 0x20
-    f32 vx2;       // 0x24
-    f32 vy2;       // 0x28
-    f32 scale;     // 0x2C
-    s32 life;      // 0x30
-    s32 timer;     // 0x34
-    s32 alpha;     // 0x38
-    s32 alpha2;    // 0x3C
-    f32 tex[4];    // 0x40
-    s32 delay;     // 0x50
+    s32 type;     // 0x0
+    Vec position; // 0x4
+    Vec velocity; // 0x10
+    f32 x2;       // 0x1C
+    f32 y2;       // 0x20
+    f32 vx2;      // 0x24
+    f32 vy2;      // 0x28
+    f32 scale;    // 0x2C
+    s32 life;     // 0x30
+    s32 timer;    // 0x34
+    s32 alpha;    // 0x38
+    s32 alpha2;   // 0x3C
+    f32 tex[4];   // 0x40
+    s32 delay;    // 0x50
 } EffIbukiWork;
 
-__declspec(section ".data") f32 ibuki_negone_one_a[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-__declspec(section ".data") f32 fd_eff_ibuki_negone_one_374[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-__declspec(section ".data") f32 ibuki_one_negone_a[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-__declspec(section ".data") f32 fd_eff_ibuki_one_negone_373[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-__declspec(section ".data") f32 ibuki_negone_one_b[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-__declspec(section ".data") f32 fd_eff_ibuki_negone_one_360[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-__declspec(section ".data") f32 ibuki_one_negone_b[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-__declspec(section ".data") f32 fd_eff_ibuki_one_negone_359[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
+// Model data in the exporter's layout: indexed vertex arrays (positions, normals, colours, texture coordinates),
+// display lists of GX commands (each padded to 32 bytes with GX_NOP) and, per list table, the list sizes in
+// 32-byte units for GXCallDisplayList.
+static s16 ibuki_vertex_tbl[] __attribute__((aligned(32))) = {0, 0, 0, 3840, 0, 0, 7679, 0, 0, 17919, 0, 0, 21760, 0, 0, 0, 1280, 0, 3840, 1280, 0, 7679, 1280, 0, 17919, 1280, 0, 21760, 1280, 0, 0, 2560, 0, 3840, 3840, 0, 7679, 5120, 0, 17919, 8960, 0, 21760, 10240, 0, 0, 0, 0};
+static s16 ibuki_texcoord0_tbl[] __attribute__((aligned(32))) = {0, 8192, 2891, 11468, 2891, 16384, 0, 16384, 5782, 13107, 5782, 16384, 13492, 14336, 13492, 16384, 16384, 14336, 16384, 16384, 0, 0, 2891, 0, 5782, 0, 13492, 0, 16384, 0};
+static s16 ibuki_texcoord1_tbl[] __attribute__((aligned(32))) = {0, 8192, 2891, 11468, 2891, 16384, 0, 16384, 5782, 13107, 5782, 16384, 13492, 14336, 13492, 16384, 16384, 14336, 16384, 16384, 0, 0, 2891, 0, 5782, 0, 13492, 0, 16384, 0};
+static s8 ibuki_normal_tbl[] __attribute__((aligned(32))) = {0, 0, 64};
+static u8 ibuki_color0_tbl[] __attribute__((aligned(32))) = {0xFF, 0xFF, 0xFF, 0x00, 0xFF, 0xFF, 0xFF, 0x66, 0xFF, 0xFF, 0xFF, 0x4C, 0xFF, 0xFF, 0xFF, 0x7F};
+static u8 ibuki_dl_0_0[] __attribute__((aligned(32))) = {0x98, 0x00, 0x06, 0x0A, 0x00, 0x00, 0x0A, 0x0A, 0x0B, 0x00, 0x02, 0x0B, 0x0B, 0x05, 0x00, 0x00, 0x00, 0x00, 0x06, 0x00, 0x01, 0x01, 0x01, 0x00, 0x00, 0x00, 0x03, 0x03, 0x01, 0x00, 0x00, 0x02, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+static u8 ibuki_dl_0_1[] __attribute__((aligned(32))) = {0x98, 0x00, 0x06, 0x0B, 0x00, 0x02, 0x0B, 0x0B, 0x0C, 0x00, 0x03, 0x0C, 0x0C, 0x06, 0x00, 0x01, 0x01, 0x01, 0x07, 0x00, 0x01, 0x04, 0x04, 0x01, 0x00, 0x00, 0x02, 0x02, 0x02, 0x00, 0x00, 0x05, 0x05, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+static u8 ibuki_dl_0_2[] __attribute__((aligned(32))) = {0x98, 0x00, 0x06, 0x0C, 0x00, 0x03, 0x0C, 0x0C, 0x0D, 0x00, 0x01, 0x0D, 0x0D, 0x07, 0x00, 0x01, 0x04, 0x04, 0x08, 0x00, 0x01, 0x06, 0x06, 0x02, 0x00, 0x00, 0x05, 0x05, 0x03, 0x00, 0x00, 0x07, 0x07, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+static u8 ibuki_dl_0_3[] __attribute__((aligned(32))) = {0x98, 0x00, 0x06, 0x0D, 0x00, 0x01, 0x0D, 0x0D, 0x0E, 0x00, 0x00, 0x0E, 0x0E, 0x08, 0x00, 0x01, 0x06, 0x06, 0x09, 0x00, 0x00, 0x08, 0x08, 0x03, 0x00, 0x00, 0x07, 0x07, 0x04, 0x00, 0x00, 0x09, 0x09, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+/** The four display lists of the breath stream's strip mesh. */
+static u8* ibuki_dl_0_tbl[] = {ibuki_dl_0_0, ibuki_dl_0_1, ibuki_dl_0_2, ibuki_dl_0_3};
+/** Sizes in 32-byte units of the four display lists of the breath stream's strip mesh; used by effIbukiDisp. */
+static u8 ibuki_dl_0_size_tbl[4] = {2, 2, 2, 2};
 
-static s16 ibuki_vertex_tbl[] __attribute__((aligned(32))) = { 0, 0, 0, 3840, 0, 0, 7679, 0, 0, 17919, 0, 0, 21760, 0, 0, 0, 1280, 0, 3840, 1280, 0, 7679, 1280, 0, 17919, 1280, 0, 21760, 1280, 0, 0, 2560, 0, 3840, 3840, 0, 7679, 5120, 0, 17919, 8960, 0, 21760, 10240, 0, 0, 0, 0 };
-static s16 ibuki_texcoord0_tbl[] = { 0, 8192, 2891, 11468, 2891, 16384, 0, 16384, 5782, 13107, 5782, 16384, 13492, 14336, 13492, 16384, 16384, 14336, 16384, 16384, 0, 0, 2891, 0, 5782, 0, 13492, 0, 16384, 0, 0, 0 };
-static s16 ibuki_texcoord1_tbl[] = { 0, 8192, 2891, 11468, 2891, 16384, 0, 16384, 5782, 13107, 5782, 16384, 13492, 14336, 13492, 16384, 16384, 14336, 16384, 16384, 0, 0, 2891, 0, 5782, 0, 13492, 0, 16384, 0, 0, 0 };
-static u8 ibuki_dl_0_0[] = { 0x98, 0x00, 0x06, 0x0A, 0x00, 0x00, 0x0A, 0x0A, 0x0B, 0x00, 0x02, 0x0B, 0x0B, 0x05, 0x00, 0x00, 0x00, 0x00, 0x06, 0x00, 0x01, 0x01, 0x01, 0x00, 0x00, 0x00, 0x03, 0x03, 0x01, 0x00, 0x00, 0x02, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
-static u8 ibuki_dl_0_1[] = { 0x98, 0x00, 0x06, 0x0B, 0x00, 0x02, 0x0B, 0x0B, 0x0C, 0x00, 0x03, 0x0C, 0x0C, 0x06, 0x00, 0x01, 0x01, 0x01, 0x07, 0x00, 0x01, 0x04, 0x04, 0x01, 0x00, 0x00, 0x02, 0x02, 0x02, 0x00, 0x00, 0x05, 0x05, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
-static u8 ibuki_dl_0_2[] = { 0x98, 0x00, 0x06, 0x0C, 0x00, 0x03, 0x0C, 0x0C, 0x0D, 0x00, 0x01, 0x0D, 0x0D, 0x07, 0x00, 0x01, 0x04, 0x04, 0x08, 0x00, 0x01, 0x06, 0x06, 0x02, 0x00, 0x00, 0x05, 0x05, 0x03, 0x00, 0x00, 0x07, 0x07, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
-static u8 ibuki_dl_0_3[] = { 0x98, 0x00, 0x06, 0x0D, 0x00, 0x01, 0x0D, 0x0D, 0x0E, 0x00, 0x00, 0x0E, 0x0E, 0x08, 0x00, 0x01, 0x06, 0x06, 0x09, 0x00, 0x00, 0x08, 0x08, 0x03, 0x00, 0x00, 0x07, 0x07, 0x04, 0x00, 0x00, 0x09, 0x09, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  0x00, 0x00 };
-static s8 ibuki_normal_tbl[] = { 0, 0, 64, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-static u8 ibuki_color0_tbl[] = { 0xFF, 0xFF, 0xFF, 0x00, 0xFF, 0xFF, 0xFF, 0x66, 0xFF, 0xFF, 0xFF, 0x4C, 0xFF, 0xFF, 0xFF, 0x7F };
-static u8* ibuki_dl_0_tbl[] = { ibuki_dl_0_0, ibuki_dl_0_1, ibuki_dl_0_2, ibuki_dl_0_3 };
-static u8 ibuki_dl_0_size_tbl[8] = { 2, 2, 2, 2 };
-
+/**
+ * Spawns a breath puff stream of 32 puffs from (x, y, z); life <= 0 keeps it endless.
+ * Spawned by boss units (las, win), battle items and event scripts.
+ */
 EffectEntry* effIbukiEntry(s32 type, s32 life, f32 x, f32 y, f32 z) {
     s32 delay;
     EffectEntry* effect;
@@ -64,7 +65,7 @@ EffectEntry* effIbukiEntry(s32 type, s32 life, f32 x, f32 y, f32 z) {
     work = __memAlloc(HEAP_EFFECT, 33 * sizeof(EffIbukiWork));
     effect->userdata = work;
     effect->callback = effIbukiMain;
-    effect->flags |= 2;
+    effect->flags |= EFFECT_FLAG_SOFT_DELETE;
     work->type = type;
     work->position.x = x;
     work->position.y = y;
@@ -109,7 +110,8 @@ EffectEntry* effIbukiEntry(s32 type, s32 life, f32 x, f32 y, f32 z) {
     return effect;
 }
 
-void effIbukiMain(EffectEntry* effect) {
+/** Releases each puff after its delay and drifts it outward, spawns vapor puffs, fades out on soft delete. */
+static void effIbukiMain(EffectEntry* effect) {
     s32 delay;
     EffIbukiWork* work = effect->userdata;
     s32 i;
@@ -117,14 +119,14 @@ void effIbukiMain(EffectEntry* effect) {
     Mtx rot;
     Vec position;
     Vec spawn;
-    Vec v = { 0.0f, 0.0f, 0.0f };
+    Vec v = {0.0f, 0.0f, 0.0f};
 
     v.x = work->position.x;
     v.y = work->position.y;
     v.z = work->position.z;
     position = v;
-    if (effect->flags & 4) {
-        effect->flags &= ~4;
+    if (effect->flags & EFFECT_FLAG_DELETE_REQUESTED) {
+        effect->flags &= ~EFFECT_FLAG_DELETE_REQUESTED;
         work->life = 16;
     }
     if (work->life < 1000) {
@@ -152,7 +154,7 @@ void effIbukiMain(EffectEntry* effect) {
         spawn.x = work->position.x + irand(300);
         spawn.y = 30.0f + (work->position.y + irand(100));
         spawn.z = work->position.z;
-        PSMTXRotRad(rot, 'y', MTXDegToRad(-camGetPtr(4)->viewYaw));
+        PSMTXRotRad(rot, 'y', MTXDegToRad(-camGetPtr(CAMERA_3D)->viewYaw));
         PSMTXMultVec(rot, &spawn, &spawn);
         effVaporN64Entry(2, 30, spawn.x, spawn.y, spawn.z, 1.0f + irand(10) / 10.0f);
     }
@@ -202,9 +204,11 @@ void effIbukiMain(EffectEntry* effect) {
     dispEntry(CAMERA_3D, dispCalcZ(&position), 2, (DispCallback)effIbukiDisp, effect);
 }
 
-void effIbukiDisp(CameraId cameraId, EffectEntry* effect) {
+/** Draws the puffs from display lists, fading by per-puff alpha. */
+static void effIbukiDisp(CameraId cameraId, EffectEntry* effect) {
     s32 i;
-u8* sz; u8** dl;
+    u8* sz;
+    u8** dl;
     EffIbukiWork* work = effect->userdata;
     Mtx trans;
     Mtx rot;
@@ -247,7 +251,7 @@ u8* sz; u8** dl;
     GXSetTevAlphaOp(GX_TEVSTAGE3, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
     GXSetTevColorIn(GX_TEVSTAGE3, GX_CC_ZERO, GX_CC_CPREV, GX_CC_C0, GX_CC_ZERO);
     GXSetTevAlphaIn(GX_TEVSTAGE3, GX_CA_ZERO, GX_CA_APREV, GX_CA_A0, GX_CA_ZERO);
-    GXSetTevColor(GX_TEVREG0, (GXColor){ 255, 255, 255, alpha * alpha2 / 255 });
+    GXSetTevColor(GX_TEVREG0, (GXColor){255, 255, 255, alpha * alpha2 / 255});
     PSMTXTrans(trans, work->tex[0], work->tex[1], 0.0f);
     GXLoadTexMtxImm(trans, GX_TEXMTX0, GX_MTX2x4);
     PSMTXTrans(trans, work->tex[2], 0.02f, 0.0f);
@@ -320,7 +324,7 @@ u8* sz; u8** dl;
             PSMTXConcat(final, trans, trans);
             GXLoadPosMtxImm(trans, GX_PNMTX0);
             GXSetCurrentMtx(GX_PNMTX0);
-            GXSetChanMatColor(GX_COLOR0A0, (GXColor){ 255, 255, 255, a });
+            GXSetChanMatColor(GX_COLOR0A0, (GXColor){255, 255, 255, a});
             GXBegin(GX_QUADS, GX_VTXFMT0, 4);
             GXPosition3f32(-w / 2.0f, h, 0.0f);
             GXTexCoord2f32(0.0f, 0.0f);

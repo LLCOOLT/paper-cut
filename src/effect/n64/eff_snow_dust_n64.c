@@ -1,4 +1,4 @@
-#pragma dollar_identifiers on
+// Paper Mario 64 effect: puffs of snowy dust; used by the freeze and Crystal Star effects.
 #include "eff/n64/eff_snow_dust_n64.h"
 #include "eff/eff_n64.h"
 #include "driver/camdrv.h"
@@ -8,26 +8,28 @@
 #include "memory.h"
 #include <dolphin/gx.h>
 #include <dolphin/mtx.h>
+#include "libc_decls.h"
 
-#ifndef TARGET_PC /* PC port: the host libc declares these */
-double sin(double);
-double cos(double);
-s32 rand(void);
-#endif
-s32 irand(s32);
+static void effSnowDustMain(EffectEntry* effect);
+static void effSnowDustDisp(CameraId cameraId, EffectEntry* effect);
 
-void effSnowDustMain(EffectEntry* effect);
-void effSnowDustDisp(CameraId cameraId, EffectEntry* effect);
+/** Size of a pulsing puff (types 2 and 3) or a type 5 sparkle over its 30-step cycle: three quick swells. */
+static u8 scale_data[] = {
+    2, 4, 8, 13, 15, 13, 9, 6, 4, 3, 2, 4, 8, 13, 15, 13, 9, 6, 4, 3, 2, 4, 8, 13, 15, 13, 9, 6, 4, 3,
+};
 
-__declspec(section ".data") f32 snowdust_negone_one_a[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-__declspec(section ".data") static f32 negone_one$374[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-__declspec(section ".data") f32 snowdust_one_negone_a[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-__declspec(section ".data") static f32 one_negone$373[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-__declspec(section ".data") f32 snowdust_negone_one_b[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-__declspec(section ".data") static f32 negone_one$360[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-__declspec(section ".data") f32 snowdust_one_negone_b[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-__declspec(section ".data") static f32 one_negone$359[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
+/** Size of a type 4 sparkle over its 30-step cycle: a quick flare that then shrinks steadily away. */
+static u8 scale_data2[] = {
+    40, 90, 81, 72, 65, 59, 53, 47, 43, 38, 34, 31, 28, 25, 22, 20, 18, 16, 15, 13, 12, 10, 9, 8, 7, 7, 6, 5, 5, 4,
+};
 
+/** Alpha of a drifting snowflake (types 0 and 1) over its 30-step cycle: fades in, holds, fades out. */
+static u8 a_data[] = {
+    200, 250, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+    255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 250, 200
+};
+
+/** 8x8 quad drawn for each type 1 snowflake. */
 effN64Vtx size8x8_tex64x64_vtx[] = {
     {-4, -4, 0, 0, 0, 0, 0, 0, 255},
     {4, -4, 0, 2048, 0, 0, 0, 0, 255},
@@ -35,6 +37,7 @@ effN64Vtx size8x8_tex64x64_vtx[] = {
     {-4, 4, 0, 0, 2048, 0, 0, 0, 255},
 };
 
+/** 4x4 quad drawn for each type 0 and type 6 snowflake. */
 effN64Vtx size4x4_tex64x64_vtx[] = {
     {-2, -2, 0, 0, 0, 0, 0, 0, 255},
     {2, -2, 0, 2048, 0, 0, 0, 0, 255},
@@ -42,6 +45,7 @@ effN64Vtx size4x4_tex64x64_vtx[] = {
     {-2, 2, 0, 0, 2048, 0, 0, 0, 255},
 };
 
+/** 12x12 quad drawn for each type 2 and type 3 puff. */
 static effN64Vtx size12x12_tex64x64_vtx[] = {
     {-6, -6, 0, 0, 0, 0, 0, 0, 255},
     {6, -6, 0, 2048, 0, 0, 0, 0, 255},
@@ -49,6 +53,7 @@ static effN64Vtx size12x12_tex64x64_vtx[] = {
     {-6, 6, 0, 0, 2048, 0, 0, 0, 255},
 };
 
+/** 16x16 quad drawn for each type 4 and type 5 sparkle. */
 static effN64Vtx size16x16_tex64x64_vtx[] = {
     {-8, -8, 0, 0, 0, 0, 0, 0, 255},
     {8, -8, 0, 2048, 0, 0, 0, 0, 255},
@@ -56,27 +61,20 @@ static effN64Vtx size16x16_tex64x64_vtx[] = {
     {-8, 8, 0, 0, 2048, 0, 0, 0, 255},
 };
 
-static struct { effN64Vtx v[5]; u8 pad[2]; } size32x32_tex32x32_vtx = { { // FAKE: padded to the original symbol size (trailing zero bytes, never read)
+/** 32x32 glow diamond behind each sparkle: clear corners fading in to a solid centre vertex. */
+static effN64Vtx size32x32_tex32x32_vtx[5] = {
     {-32, 0, 0, 0, 0, 255, 255, 255, 0},
     {0, -32, 0, 1024, 0, 255, 255, 255, 0},
     {32, 0, 0, 1024, 1024, 255, 255, 255, 0},
     {0, 32, 0, 0, 1024, 255, 255, 255, 0},
     {0, 0, 0, 0, 0, 255, 255, 255, 255},
-}, {0} };
-
-static u8 scale_data[] = {
-    2, 4, 8, 13, 15, 13, 9, 6, 4, 3, 2, 4, 8, 13, 15, 13, 9, 6, 4, 3, 2, 4, 8, 13, 15, 13, 9, 6, 4, 3,
 };
 
-static u8 scale_data2[] = {
-    40, 90, 81, 72, 65, 59, 53, 47, 43, 38, 34, 31, 28, 25, 22, 20, 18, 16, 15, 13, 12, 10, 9, 8, 7, 7, 6, 5, 5, 4,
-};
-
-static u8 a_data[] = {
-    200, 250, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
-    255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 250, 200, 0, 0 // FAKE: trailing zero padding to the original symbol size (never read)
-};
-
+/**
+ * Spawns `count` snow dust particles at (x, y, z) in a w by h area;
+ * a lifetime of 0 or less lasts until soft-deleted.
+ * Used by the Crystal Star effect (eff_starstone) and event scripts.
+ */
 EffectEntry* effSnowDustN64Entry(s32 type, s32 count, s32 lifetime, f32 x, f32 y, f32 z, f32 w, f32 h, f32 scale) {
     EffectEntry* effect;
     EffSnowDustN64Work* work;
@@ -90,7 +88,7 @@ EffectEntry* effSnowDustN64Entry(s32 type, s32 count, s32 lifetime, f32 x, f32 y
     work = __memAlloc(HEAP_EFFECT, (count + 1) * sizeof(EffSnowDustN64Work));
     effect->userdata = work;
     effect->callback = effSnowDustMain;
-    effect->flags |= 2;
+    effect->flags |= EFFECT_FLAG_SOFT_DELETE;
     work->type = type;
     work->frame = 0;
     if (lifetime <= 0) {
@@ -159,7 +157,15 @@ EffectEntry* effSnowDustN64Entry(s32 type, s32 count, s32 lifetime, f32 x, f32 y
     return effect;
 }
 
-void effSnowDustMain(EffectEntry* effect) {
+/**
+ * A delete request fades the effect over 16 frames (lifetime 1000 means endless).
+ * Each particle runs a 30-frame cycle and respawns at a random spot in the w x h area facing the camera:
+ * types 0/1 drift down with a rising-then-falling alpha (a_data),
+ * 2/3 pulse in size by scale_data (type 2 also drifts randomly), 6 circles inward around the centre,
+ * and 4/5 are stationary sparkles in random pale colours.
+ * With under 30 frames left, finished cycles restart at step 20 instead of respawning.
+ */
+static void effSnowDustMain(EffectEntry* effect) {
     s32 wi, hi;
     s32 lifetime;
     EffSnowDustN64Work* work = effect->userdata;
@@ -180,8 +186,8 @@ void effSnowDustMain(EffectEntry* effect) {
     position = tmp;
     camId = work->camId;
     type = work->type;
-    if (effect->flags & 4) {
-        effect->flags &= ~4;
+    if (effect->flags & EFFECT_FLAG_DELETE_REQUESTED) {
+        effect->flags &= ~EFFECT_FLAG_DELETE_REQUESTED;
         work->lifetime = 16;
     }
     if (work->lifetime < 1000) {
@@ -320,7 +326,13 @@ void effSnowDustMain(EffectEntry* effect) {
     dispEntry(camId, dispCalcZ(&position), 2, (DispCallback)effSnowDustDisp, effect);
 }
 
-void effSnowDustDisp(CameraId cameraId, EffectEntry* effect) {
+/**
+ * Draws each live particle camera-facing, scaled by its size and the effect alpha:
+ * types 0/6 a 4x4 flake from texture 8 masked by scrolling texture 0x65, type 1 an 8x8 flake from 0x66,
+ * types 2/3 a 12x12 frame from the 0x67 strip (type 2 picks the frame per particle),
+ * and types 4/5 a 16x16 sparkle from 0x68 plus a 32x32 glow quad.
+ */
+static void effSnowDustDisp(CameraId cameraId, EffectEntry* effect) {
     CameraEntry* cam;
     EffSnowDustN64Work* work;
     s32 i;
@@ -457,18 +469,18 @@ void effSnowDustDisp(CameraId cameraId, EffectEntry* effect) {
             case 6:
                 effSetVtxDescN64(size4x4_tex64x64_vtx);
                 GXBegin(0x90, 0, 6);
-                ((void (*)())tri2)(0, 1, 2, 0, 0, 2, 3, 0);
+                tri2(0, 1, 2, 0, 0, 2, 3, 0);
                 break;
             case 1:
                 effSetVtxDescN64(size8x8_tex64x64_vtx);
                 GXBegin(0x90, 0, 6);
-                ((void (*)())tri2)(0, 1, 2, 0, 0, 2, 3, 0);
+                tri2(0, 1, 2, 0, 0, 2, 3, 0);
                 break;
             case 2:
             case 3:
                 effSetVtxDescN64(size12x12_tex64x64_vtx);
                 GXBegin(0x90, 0, 6);
-                ((void (*)())tri2)(0, 1, 2, 0, 0, 2, 3, 0);
+                tri2(0, 1, 2, 0, 0, 2, 3, 0);
                 break;
             case 4:
             case 5:
@@ -492,7 +504,7 @@ void effSnowDustDisp(CameraId cameraId, EffectEntry* effect) {
                 GXSetTevKColorSel(2, 0xc);
                 effSetVtxDescN64(size16x16_tex64x64_vtx);
                 GXBegin(0x90, 0, 6);
-                ((void (*)())tri2)(0, 1, 2, 0, 0, 2, 3, 0);
+                tri2(0, 1, 2, 0, 0, 2, 3, 0);
                 GXSetNumChans(1);
                 GXSetChanCtrl(4, 0, 0, 1, 0, 0, 2);
                 GXSetNumTevStages(1);
@@ -502,10 +514,10 @@ void effSnowDustDisp(CameraId cameraId, EffectEntry* effect) {
                 GXSetTevColorIn(0, 0xf, 0xf, 0xf, 0xc);
                 GXSetTevAlphaIn(0, 7, 5, 6, 7);
                 GXSetTevKAlphaSel(0, 0x1c);
-                effSetVtxDescN64(size32x32_tex32x32_vtx.v);
+                effSetVtxDescN64(size32x32_tex32x32_vtx);
                 GXBegin(0x90, 0, 12);
-                ((void (*)())tri2)(0, 1, 4, 0, 1, 2, 4, 0);
-                ((void (*)())tri2)(0, 4, 3, 0, 4, 2, 3, 0);
+                tri2(0, 1, 4, 0, 1, 2, 4, 0);
+                tri2(0, 4, 3, 0, 4, 2, 3, 0);
                 break;
         }
     }

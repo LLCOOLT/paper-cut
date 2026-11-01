@@ -5,7 +5,7 @@ BOOL pouchGetItem(ItemType);
 BOOL pouchRemoveItem(ItemType);
 void pouchReviseMarioParam(void);
 s32 pouchSetCoin(s32);
-s16 pouchAddCoin(s16);
+s32 pouchAddCoin(s32);
 s16 pouchAddStarPiece(s16);
 s32 pouchEquipCheckBadge(s32);
 BOOL pouchRemoveItemIndex(ItemType, s32);

@@ -1,10 +1,4 @@
-/* "seq_game" - Main Game Sequence
- * Status: 1:1, theoretically finished
- *
- * Function: the sequence running when on the overworld
- *
- * Last Update: 7/8/2022, finish seq_game
- */
+// Game sequence: the sequence that runs while Mario is in the field.
 
 #include "seq/seq_game.h"
 #include "driver/fadedrv.h"
@@ -13,36 +7,44 @@
 #include "mario/mariost.h"
 #include "pmario_sound.h"
 
-//.sbss
 #ifdef TARGET_PC
 /* this file's own none_key, apart from mariost.h's (static after extern:
  * MSVC-only extension) */
 #define none_key seq_game_none_key
 #endif
+//.sbss
 static OSTime none_key;
 
-//.sdata
+/** .sdata */
 EVT_BEGIN(maku_spread)
-WAIT_MS(2000)
-CALL(evt_fade_entry, TITLE_SCREEN_CURTAIN_LEAVE_GRADUAL2, 0, 0, 0, 0)
-RETURN
+    WAIT_MS(2000)
+    CALL(evt_fade_entry, FADE_CURTAIN_LEAVE, 0, 0, 0, 0)
+    RETURN
 EVT_END()
 
+/** Enters the field sequence: records the time (none_key, otherwise unused here) and clears system level flag 0x10. */
 void seq_gameInit(SequenceWork* wp) {
-	none_key = OSGetTime();
-	gp->systemLevelFlags &= ~0x10;
+    none_key = OSGetTime();
+    gp->systemLevelFlags &= ~SYSTEM_LEVEL_FLAG_NO_BATTLE;
 }
 
+/**
+ * Per-frame field sequence.
+ * State 0 starts the fade-in (curtain opening after a stage-show intro, else the map or area fade)
+ * and resets the next fades to a 300 ms black fade;
+ * state 1 keeps the sound listener on the 3D camera and, on a kiosk build after the idle timeout,
+ * jumps to the game-over sequence once the fade has finished.
+ */
 void seq_gameMain(SequenceWork* wp) {
     CameraEntry *camera, *camera2;
     Vec position;
 
     switch (wp->state) {
         case 0:
-            if ((gp->flags & 0x10) != 0) {
-                fadeEntry(FADE_IN_WHITE2, 900, (GXColor){0, 0, 0, 0xFF});
+            if ((gp->flags & GLOBAL_FLAG_CURTAIN_OPEN) != 0) {
+                fadeEntry(FADE_IN_WHITE_2D, 900, (GXColor){0, 0, 0, 0xFF});
                 evtEntryType(maku_spread, 0, 0, 0);
-                gp->flags &= ~0x10;
+                gp->flags &= ~GLOBAL_FLAG_CURTAIN_OPEN;
             } else if (!gp->didAreaChange) {
                 fadeEntry(gp->mapFadeOutType, gp->mapFadeOutDuration, (GXColor){0, 0, 0, 0xFF});
             } else {
@@ -54,13 +56,13 @@ void seq_gameMain(SequenceWork* wp) {
             gp->areaFadeOutDuration = 300;
             wp->state++;
             break;
-    
+
         case 1:
-            if (gp->flags & 0x1000 && gp->flags & 0x2000 && fadeIsFinish() && seqCheckSeq() == SEQ_LOGO) {
-                gp->flags &= ~0x2000;
-                seqSetSeq(SEQ_GAME_OVER, 0, 0);
+            if (gp->flags & GLOBAL_FLAG_KIOSK && gp->flags & GLOBAL_FLAG_KIOSK_TIMEOUT && fadeIsFinish() && !seqCheckSeq()) {
+                gp->flags &= ~GLOBAL_FLAG_KIOSK_TIMEOUT;
+                seqSetSeq(SEQ_GAME_OVER, NULL, NULL);
             }
-            marioGetPtr(); //unused
+            marioGetPtr(); // unused
             camera = camGetPtr(CAMERA_3D);
             position = camera->cameraPos;
             camera2 = camGetPtr(CAMERA_3D);
@@ -69,6 +71,7 @@ void seq_gameMain(SequenceWork* wp) {
     }
 }
 
+/** Leaves the field sequence; clears GLOBAL_FLAG_SKIP_MAP_EVENTS so the next map runs its events. */
 void seq_gameExit(SequenceWork* wp) {
-    gp->flags &= ~2;
+    gp->flags &= ~GLOBAL_FLAG_SKIP_MAP_EVENTS;
 }

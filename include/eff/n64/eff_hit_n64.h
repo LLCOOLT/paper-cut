@@ -1,6 +1,7 @@
+// eff_hit_n64.c: Paper Mario 64 Hit effect entry (effHitN64Entry).
 #pragma once
 
 #include "driver/effdrv.h"
 #include <dolphin/types.h>
 
-EffectEntry* effHitN64Entry(s32 type, s32 arg1, f32 x, f32 y, f32 z, f32 arg5);
+EffectEntry* effHitN64Entry(s32 type, s32 size, f32 x, f32 y, f32 z, f32 scale);

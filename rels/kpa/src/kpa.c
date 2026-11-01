@@ -1,7 +1,10 @@
+// kpa (クッパ編, Bowser's interludes): registers kpa_00..kpa_07 and runs the side-scrolling stages: the object and item
+// streams, coins, score, lives, the timer and the status display.
+
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
+#include "driver/animdrv.h"
 
-#pragma force_active on
 #include "manager/evtmgr_cmd.h"
 #include "driver/camdrv.h"
 #include "driver/dispdrv.h"
@@ -14,173 +17,74 @@
 #include "mario/mario.h"
 #include "data/mapdata.h"
 #include "evt/evt_sub.h"
+#include "evt/evt_bero.h"
+#include "evt/evt_cam.h"
+#include "evt/evt_eff.h"
+#include "evt/evt_fade.h"
+#include "evt/evt_item.h"
+#include "evt/evt_map.h"
+#include "evt/evt_mario.h"
+#include "evt/evt_mobj.h"
+#include "evt/evt_msg.h"
+#include "evt/evt_npc.h"
+#include "evt/evt_seq.h"
+#include "evt/evt_snd.h"
+#include "evt/evt_twoddisp.h"
+#include "koopa.h"
+#include "kpa_act.h"
 #include "kpa.h"
-#ifdef TARGET_PC /* declarations the GameCube code calls implicitly */
-void FontDrawEdge(void);
-void FontDrawEdgeOff(void);
-#endif
-
-typedef struct KpaWork { u8 stage; u8 lives; u8 time; } KpaWork;
-KpaWork* kwp;
-void kpaAddScore(s32 score);
-void kpa_stageclear_disp(CameraId camera, void* param);
-void FontDrawScale(f32 scale);
-void FontDrawString(f32 x, f32 y, const char* message);
-void kpa_status_disp(CameraId camera, void* param);
+#include "driver/icondrv.h"
+#include "driver/itemdrv.h"
+#include "version.h"
+#include "evt/evt_story.h"
+#include "rel_module.h"
+// FAKE: kpa.c calls iconDispGx through this prototype (the types it was compiled with) instead of the one in driver/icondrv.h; same registers, behaviour-identical.
+typedef void (*IconDispGxArgOrderFn)(f32, Vec*, s16, u16);
 #ifdef TARGET_PC
-/* The GameCube declaration takes (scale, position, flags, iconId); the definition is
- * (position, flags, iconId, scale). Win64 assigns argument registers by position, so
- * route the calls to the real order. */
-void iconDispGx(Vec* position, s16 flags, u16 iconId, f32 scale);
-#define iconDispGx(scale, position, flags, iconId) (iconDispGx)((position), (flags), (iconId), (scale))
-#else
-void iconDispGx(f32 scale, Vec* position, s16 flags, u16 iconId);
+/* PC port: Win64 assigns argument registers by position, so the calls through IconDispGxArgOrderFn
+ * land on this wrapper, which takes that order and calls the real (position, flags, iconId, scale) */
+static void kpaIconDispGx(f32 scale, Vec* position, s16 flags, u16 iconId) {
+    iconDispGx(position, flags, iconId, scale);
+}
+#define iconDispGx kpaIconDispGx
 #endif
+
+typedef struct KpaGameWork {
+    u8 stage;
+    u8 lives;
+    u8 time;
+} KpaGameWork;
+KpaGameWork* kwp;
+static void kpa_stageclear_disp(CameraId camera, void* param);
+static void kpa_status_disp(CameraId camera, void* param);
 #define NUMERIC_ID ((u16*)numeric_id)
-s32 kpaMutekiCheck(void);
-f32 kpaGetWidth(s32 type);
-void kpaFireDelete(void);
-void kpaAddCoinPos(s32 num, Vec* pos);
-void mobjKoopaOn(void);
-typedef void (*voidfunctionptr)(void);
-extern voidfunctionptr _ctors[];
-extern voidfunctionptr _dtors[];
 
-USER_FUNC(evt_bero_get_entername);
-USER_FUNC(evt_bero_mapchange);
-USER_FUNC(evt_cam3d_evt_off);
-USER_FUNC(evt_cam3d_evt_set);
-USER_FUNC(evt_cam_ctrl_onoff);
-USER_FUNC(evt_cam_letter_box_disable);
-USER_FUNC(evt_cam_letter_box_onoff);
-USER_FUNC(evt_cam_type_change);
-USER_FUNC(evt_eff);
-USER_FUNC(evt_fade_in);
-USER_FUNC(evt_fade_out);
-USER_FUNC(evt_item_entry);
-USER_FUNC(evt_item_flag_on);
-USER_FUNC(evt_koopa_chk_dead);
-USER_FUNC(evt_map_blend_off);
-USER_FUNC(evt_map_blend_set_flag);
-USER_FUNC(evt_map_set_blend);
-USER_FUNC(evt_mario_adjust_dir);
-USER_FUNC(evt_mario_cont_onoff);
-USER_FUNC(evt_mario_get_name_hitobj_ride);
-USER_FUNC(evt_mario_get_pos);
-USER_FUNC(evt_mario_key_onoff);
-USER_FUNC(evt_mario_kill_party);
-USER_FUNC(evt_mario_set_dispdir);
-USER_FUNC(evt_mario_set_mode);
-USER_FUNC(evt_mario_set_motion);
-USER_FUNC(evt_mario_set_pos);
-USER_FUNC(evt_mobj_jumpstand_blue);
-USER_FUNC(evt_mobj_jumpstand_red);
-USER_FUNC(evt_mobj_koopa_badgeblk);
-USER_FUNC(evt_mobj_koopa_blk);
-USER_FUNC(evt_mobj_koopa_brick);
-USER_FUNC(evt_mobj_koopa_dokan);
-USER_FUNC(evt_mobj_koopa_fireber_dodai);
-USER_FUNC(evt_mobj_koopa_hidden_blk);
-USER_FUNC(evt_mobj_koopa_ojama_blk);
-USER_FUNC(evt_mobj_koopa_pole);
-USER_FUNC(evt_mobj_koopa_sango);
-USER_FUNC(evt_mobj_koopa_stone_blk);
-USER_FUNC(evt_msg_print);
-USER_FUNC(evt_npc_set_autotalkpose);
-USER_FUNC(evt_seq_wait);
-USER_FUNC(evt_snd_bgmoff);
-USER_FUNC(evt_snd_bgmoff_f);
-USER_FUNC(evt_snd_bgmon);
-USER_FUNC(evt_snd_envoff);
-USER_FUNC(evt_snd_sfxoff);
-USER_FUNC(evt_snd_sfxon);
-USER_FUNC(evt_sub_get_mapname);
-USER_FUNC(evt_sub_get_stopwatch);
-USER_FUNC(evt_twoddisp_entry);
-USER_FUNC(evt_twoddisp_flag_onoff);
-USER_FUNC(evt_twoddisp_init);
-USER_FUNC(evt_twoddisp_set_base_position);
-USER_FUNC(evt_twoddisp_set_position);
-USER_FUNC(kpa_add_coin);
-USER_FUNC(kpa_chg_pose);
-USER_FUNC(kpa_get_msg);
-USER_FUNC(kpa_make_item_name);
-USER_FUNC(kpa_make_mobj_name);
+static USER_FUNC(kpa_add_coin);
+static USER_FUNC(kpa_get_msg);
+static USER_FUNC(kpa_make_item_name);
+static USER_FUNC(kpa_make_mobj_name);
+// Forward declaration; defined below (the script helper that turns on the Bowser map-object pool).
 USER_FUNC(kpa_mobj_on);
-USER_FUNC(kpa_muteki_check);
-USER_FUNC(kpa_nohitenemy_ct_clear);
-USER_FUNC(kpa_pole_hitoff);
-USER_FUNC(kpa_score_disp_init);
-USER_FUNC(kpa_set_scale);
-USER_FUNC(kpa_set_time);
-USER_FUNC(kpa_status_get_stage);
-USER_FUNC(kpa_status_main);
-USER_FUNC(kpa_time_countdown);
+static USER_FUNC(kpa_muteki_check);
+static USER_FUNC(kpa_nohitenemy_ct_clear);
+static USER_FUNC(kpa_pole_hitoff);
+static USER_FUNC(kpa_set_time);
+static USER_FUNC(kpa_status_main);
+static USER_FUNC(kpa_time_countdown);
+// Forward declaration; defined below.
 USER_FUNC(kpa_fire_off);
-USER_FUNC(kpa_get_cam_pt);
-USER_FUNC(kpa_stageclear_disp_entry);
-void kpa_stageclear_disp(CameraId camera, void* param);
-USER_FUNC(kpa_status_init);
-void kpa_status_disp(CameraId camera, void* param);
-void _unresolved(void);
-void _epilog(void);
-void _prolog(void);
 
-f32 fd_kpa_negone_one_374[2] __attribute__((aligned(8)));
-f32 fd_kpa_neg_one_382;
-f32 fd_kpa___local_PI_383;
-f32 fd_kpa___local_3PIO2_385;
-f32 fd_kpa_one_negone_373[2] __attribute__((aligned(8)));
-f32 fd_kpa___local_PIO2_384;
-f32 fd_kpa_one_381;
-f32 fd_kpa_negone_one_360[2] __attribute__((aligned(8)));
-f32 fd_kpa_neg_one_365;
-f32 fd_kpa___local_PI_366;
-f32 fd_kpa___local_3PIO2_368;
-f32 fd_kpa_one_negone_359[2] __attribute__((aligned(8)));
-f32 fd_kpa___local_PIO2_367;
-f32 fd_kpa_one_364;
-EvtWord kpa_init[49];
-EvtWord kpa_read_mobj[291];
-EvtWord kpa_coin_evt[7];
-EvtWord kpa_read_item[34];
-EvtWord kpa_dead[168];
-EvtWord kpa_fall_sub[37];
-EvtWord kpa_bgm_change[180];
-EvtWord kpa_stage_start[168];
 s32 numeric_id[5];
-EvtWord kpa_status_main_evt[9];
-EvtWord kpa_time[88];
-EvtWord kpa_stage_clear[35];
+extern EvtWord kpa_stage_clear[];
 
-f32 fd_kpa_negone_one_374[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_kpa_neg_one_382 = -1.0f;
-
-f32 fd_kpa___local_PI_383 = 3.1415927f;
-
-f32 fd_kpa___local_3PIO2_385 = 4.712389f;
-
-f32 fd_kpa_one_negone_373[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_kpa___local_PIO2_384 = 1.5707964f;
-
-f32 fd_kpa_one_381 = 1.0f;
-
-f32 fd_kpa_negone_one_360[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_kpa_neg_one_365 = -1.0f;
-
-f32 fd_kpa___local_PI_366 = 3.1415927f;
-
-f32 fd_kpa___local_3PIO2_368 = 4.712389f;
-
-f32 fd_kpa_one_negone_359[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_kpa___local_PIO2_367 = 1.5707964f;
-
-f32 fd_kpa_one_364 = 1.0f;
-
+/**
+ * Shared init for every side-scrolling stage (kpa_02..kpa_06 call it first):
+ * puts the player in Bowser mode, shows the score HUD, and resets the time to 180 s.
+ * A fresh arrival from another map also resets the try counter GSW_KPA_LIVES to 1;
+ * "kpa_replay" (after a death) keeps it.
+ * Clears the stage flags LSWF(2) = intro done, LSWF(3) = stage over, LSWF(4) = dying,
+ * LSWF(5) = reached the goal pole.
+ */
 EVT_BEGIN(kpa_init)
     CALL(evt_mario_set_mode, 2)
     CALL(evt_mario_kill_party, 0)
@@ -188,14 +92,14 @@ EVT_BEGIN(kpa_init)
     CALL(kpa_score_disp_init)
     CALL(evt_bero_get_entername, LW(0))
     IF_STR_EQUAL(LW(0), STRING("kpa_replay"))
-        SET_VALUE(GSW(1222), 180)
-        ELSE
+        SET_VALUE(GSW(GSW_KPA_TIME_LEFT), 180)
+    ELSE
         IF_STR_NOT_EQUAL(LW(0), STRING("kpa_next_map"))
-            SET_VALUE(GSW(1221), 1)
-            SET_VALUE(GSW(1222), 180)
+            SET_VALUE(GSW(GSW_KPA_LIVES), 1)
+            SET_VALUE(GSW(GSW_KPA_TIME_LEFT), 180)
         END_IF
     END_IF
-    CALL(evt_cam_type_change, 1, 4)
+    CALL(evt_cam_type_change, 1, CAMERA_3D)
     SET_VALUE(LSWF(2), 0)
     SET_VALUE(LSWF(3), 0)
     SET_VALUE(LSWF(4), 0)
@@ -203,6 +107,12 @@ EVT_BEGIN(kpa_init)
     RETURN
 EVT_END()
 
+/**
+ * Builds a stage's map objects from a table (LW(0) = address of a kpa_act_stgN_mobj stream).
+ * Each record is a type id followed by its coordinates, and -1 ends the list.
+ * Types: 0/1 big obstruction blocks (levels 1/2), 2-5 bricks, 6 badge block, 7 hidden block, 8 plain block,
+ * 9-11 pipes, 12 coral, 13-14 fire-bar bases, 15 goal pole (runs kpa_stage_clear), 16/17 red/blue jump stands.
+ */
 EVT_BEGIN(kpa_read_mobj)
     SET_INT_READ_ADDR(LW(0))
     LOOP(100)
@@ -271,11 +181,19 @@ EVT_BEGIN(kpa_read_mobj)
     RETURN
 EVT_END()
 
+/**
+ * Pickup script for the stage coins made by kpa_read_item; LW(0)..LW(2) = coin position.
+ * Adds a coin to Bowser's coin tally through kpa_add_coin.
+ */
 EVT_BEGIN(kpa_coin_evt)
     CALL(kpa_add_coin, LW(0), LW(1), LW(2))
     RETURN
 EVT_END()
 
+/**
+ * Places a stage's coins from a table (LW(0) = address of a kpa_act_stgN_item stream; records are x, y pairs,
+ * -1 ends the list). Each coin is a fixed ITEM_COIN picked up instantly, running kpa_coin_evt.
+ */
 EVT_BEGIN(kpa_read_item)
     SET_INT_READ_ADDR(LW(0))
     LOOP(0)
@@ -285,12 +203,16 @@ EVT_BEGIN(kpa_read_item)
         END_IF
         CALL(kpa_make_item_name, LW(2))
         READ_INT2(LW(3), LW(4))
-        CALL(evt_item_entry, LW(2), 121, LW(3), LW(4), 0, 16, -1, PTR(kpa_coin_evt))
-        CALL(evt_item_flag_on, LW(2), 4)
+        CALL(evt_item_entry, LW(2), ITEM_COIN, LW(3), LW(4), 0, ITEM_ENTRY_FIXED, -1, PTR(kpa_coin_evt))
+        CALL(evt_item_flag_on, LW(2), ITEM_FLAG_INSTANT_GET)
     END_LOOP
     RETURN
 EVT_END()
 
+/**
+ * REL entry point: runs the static constructors
+ * and registers the init script of each of the eight kpa maps (kpa_00..kpa_07) with the map loader.
+ */
 void _prolog(void) {
     voidfunctionptr* ctor;
 
@@ -304,9 +226,10 @@ void _prolog(void) {
     relSetEvtAddr("kpa_04", kpa_04_init_evt);
     relSetEvtAddr("kpa_05", kpa_05_init_evt);
     relSetEvtAddr("kpa_06", kpa_06_init_evt);
-    relSetEvtAddr("kpa_07\0", kpa_07_init_evt);
+    relSetEvtAddr("kpa_07", kpa_07_init_evt);
 }
 
+/** REL exit point: runs the static destructors. */
 void _epilog(void) {
     voidfunctionptr* dtor;
 
@@ -315,20 +238,33 @@ void _epilog(void) {
     }
 }
 
+/** Unresolved-import stub for the REL (empty). */
 void _unresolved(void) {
 }
 
+/**
+ * Script helper: returns the current Bowser stage number (1..3, from kwp->stage as set by kpa_status_init) in
+ * args[0].
+ */
 USER_FUNC(kpa_status_get_stage) {
     evtSetValue(event, event->args[0], kwp->stage);
     return EVT_RETURN_DONE;
 }
 
+/**
+ * Script helper: calls mobjKoopaOn() to allocate the 128-entry map-object table used by the side-scrolling
+ * stages. Runs once from kpa_init.
+ */
 USER_FUNC(kpa_mobj_on) {
     mobjKoopaOn();
     return EVT_RETURN_DONE;
 }
 
-USER_FUNC(kpa_make_mobj_name) {
+/**
+ * Script helper: writes a fresh unique map-object name ("mobj0", "mobj1", ... in hex) to args[0],
+ * so kpa_read_mobj can give every block its own name.
+ */
+static USER_FUNC(kpa_make_mobj_name) {
     static char name[16];
     static s32 no;
     EvtWord* args = event->args;
@@ -339,7 +275,8 @@ USER_FUNC(kpa_make_mobj_name) {
     return EVT_RETURN_DONE;
 }
 
-USER_FUNC(kpa_make_item_name) {
+/** Script helper: writes a fresh unique item name ("item 0", "item 1", ... in hex) to args[0] for kpa_read_item. */
+static USER_FUNC(kpa_make_item_name) {
     static char name[16];
     static s32 no;
     EvtWord* args = event->args;
@@ -350,7 +287,13 @@ USER_FUNC(kpa_make_item_name) {
     return EVT_RETURN_DONE;
 }
 
-USER_FUNC(kpa_add_coin) {
+/**
+ * Script helper for kpa_coin_evt: args[0..2] = coin x, y, z.
+ * Adds one coin to Bowser's stage coin tally and its score popup at that position (kpaAddCoinPos),
+ * then takes back the coin that the pickup itself put in Mario's pouch (pouchGetItem runs before the pickup
+ * script), so only the stage tally counts.
+ */
+static USER_FUNC(kpa_add_coin) {
     EvtWord* args = event->args;
 
     kpaAddCoinPos(1, &(Vec){evtGetFloat(event, args[0]), evtGetFloat(event, args[1]), evtGetFloat(event, args[2])});
@@ -358,6 +301,13 @@ USER_FUNC(kpa_add_coin) {
     return EVT_RETURN_DONE;
 }
 
+/**
+ * Bowser's death sequence, shared by all stages:
+ * runs once (LSWF(3)), locks controls, plays the defeated pose,
+ * and has Bowser pop up and fall off the bottom of the screen.
+ * It then bumps the try counter (max 99) and returns to the current stage with "kpa_replay" (stage 1: kpa_02, 2:
+ * kpa_03, 3: kpa_05). Called on a timeout, a pit fall or lethal damage.
+ */
 EVT_BEGIN(kpa_dead)
     IF_INT_EQUAL(LSWF(3), 1)
         RETURN
@@ -365,12 +315,14 @@ EVT_BEGIN(kpa_dead)
     SET_VALUE(LSWF(3), 1)
     CALL(evt_cam_letter_box_disable, 1)
     CALL(evt_cam_letter_box_onoff, 0, 0)
+#if VERSION >= VERSION_JP
     CALL(kpa_fire_off)
+#endif
     CALL(evt_mario_key_onoff, 0)
     CALL(evt_mario_cont_onoff, 0)
     CALL(evt_mario_adjust_dir)
     CALL(kpa_nohitenemy_ct_clear)
-    CALL(evt_cam_ctrl_onoff, 4, 0)
+    CALL(evt_cam_ctrl_onoff, CAMERA_3D, 0)
     CALL(evt_mario_set_motion, 0)
     CALL(kpa_chg_pose, STRING("KPA2_D_4"))
     SET_VALUE(LSWF(4), 1)
@@ -388,13 +340,13 @@ EVT_BEGIN(kpa_dead)
     CALL(evt_sub_get_mapname, LW(15))
     IF_STR_EQUAL(LW(15), STRING("kpa_03"))
         SET_VALUE(LW(5), 150)
-        ELSE
+    ELSE
         SET_VALUE(LW(5), 155)
     END_IF
     LOOP(0)
         IF_INT_GREATER_OR_EQUAL(LW(1), 0)
             SET_FLOAT_VALUE(LF(0), 0)
-            ELSE
+        ELSE
             SET_FLOAT_VALUE(LF(0), 1)
         END_IF
         ADD_FLOAT(LW(0), LW(1))
@@ -409,8 +361,8 @@ EVT_BEGIN(kpa_dead)
         CALL(evt_mario_set_pos, LW(4), LW(0), LW(5))
         WAIT_FRAMES(1)
     END_LOOP
-    IF_INT_LESS(GSW(1221), 99)
-        ADD(GSW(1221), 1)
+    IF_INT_LESS(GSW(GSW_KPA_LIVES), 99)
+        ADD(GSW(GSW_KPA_LIVES), 1)
     END_IF
     CALL(kpa_status_get_stage, LW(0))
     SWITCH(LW(0))
@@ -429,11 +381,15 @@ EVT_BEGIN(kpa_dead)
     RETURN
 EVT_END()
 
+/**
+ * Handler for Bowser falling into a pit: locks the letterbox, controls and camera,
+ * waits until Bowser stands on a hit object again (he has landed at the bottom of the pit), then runs kpa_dead.
+ */
 EVT_BEGIN(kpa_fall_sub)
     CALL(evt_cam_letter_box_disable, 1)
     CALL(evt_cam_letter_box_onoff, 0, 0)
     CALL(evt_mario_key_onoff, 0)
-    CALL(evt_cam_ctrl_onoff, 4, 0)
+    CALL(evt_cam_ctrl_onoff, CAMERA_3D, 0)
     CALL(evt_mario_get_pos, 0, LW(13), LW(14), LW(15))
     LOOP(0)
         CALL(evt_mario_get_name_hitobj_ride, LW(0))
@@ -442,23 +398,34 @@ EVT_BEGIN(kpa_fall_sub)
         END_IF
         WAIT_FRAMES(1)
     END_LOOP
-    CALL_CHILD(PTR(kpa_dead))
+    CALL_CHILD(kpa_dead)
     RETURN
 EVT_END()
 
-USER_FUNC(kpa_nohitenemy_ct_clear) {
+/** Script helper: zeroes the player's kpaNoHitTimer, the post-hit window in which enemies cannot hurt Bowser again. */
+static USER_FUNC(kpa_nohitenemy_ct_clear) {
     MarioWork* mario = marioGetPtr();
 
     mario->kpaNoHitTimer = 0;
     return EVT_RETURN_DONE;
 }
 
+#if VERSION >= VERSION_JP
+/**
+ * Script helper: calls kpaFireDelete(), which removes Bowser's fire-breath effect and stops its looping sound.
+ * Run when Bowser dies so the flame does not linger (JP and later).
+ */
 USER_FUNC(kpa_fire_off) {
     kpaFireDelete();
     return EVT_RETURN_DONE;
 }
+#endif
 
-USER_FUNC(kpa_set_scale) {
+/**
+ * Script helper: args[0] = scale. Resizes Bowser uniformly and scales his collision box to match.
+ * kpa_stage_start uses it to shrink him to about 0.4 for the intro and restore 1.0.
+ */
+static USER_FUNC(kpa_set_scale) {
     f32 scale = evtGetFloat(event, event->args[0]);
     MarioWork* mario = marioGetPtr();
 
@@ -468,23 +435,31 @@ USER_FUNC(kpa_set_scale) {
     return EVT_RETURN_DONE;
 }
 
+/**
+ * Background music controller for the side-scrolling stages, spawned by the stage start.
+ * Every frame it picks a track from the stage (LSW(1) = 0..2) and the time left:
+ * the normal theme, a faster "UP1" variant when 30 s or less remain (and "UP2" for the first stage).
+ * It switches to the invincibility music (BGM_STGK_FIELD2) while Bowser is invincible,
+ * the defeat jingle when LSWF(4) is set and the goal jingle when LSWF(5) is set, then stops.
+ * Changes wait 300 ms.
+ */
 EVT_BEGIN(kpa_bgm_change)
-    IF_INT_GREATER(GSW(1222), 30)
+    IF_INT_GREATER(GSW(GSW_KPA_TIME_LEFT), 30)
         SET_VALUE(LW(2), 0)
-        ELSE
+    ELSE
         SET_VALUE(LW(2), 1)
     END_IF
     SET_VALUE(LW(3), -1)
     SET_VALUE(LW(4), -1)
     LABEL(10)
-    IF_INT_GREATER(GSW(1222), 30)
+    IF_INT_GREATER(GSW(GSW_KPA_TIME_LEFT), 30)
         SET_VALUE(LW(3), 0)
         ADD(LW(3), LSW(1))
-        ELSE
+    ELSE
         IF_INT_EQUAL(LW(2), 0)
             SET_VALUE(LW(3), 3)
             ADD(LW(3), LSW(1))
-            ELSE
+        ELSE
             SET_VALUE(LW(3), 6)
         END_IF
     END_IF
@@ -503,36 +478,36 @@ EVT_BEGIN(kpa_bgm_change)
         SET_VALUE(LW(4), LW(3))
         SWITCH(LW(3))
             CASE_EQUAL(0)
-            CALL(evt_snd_bgmon, 512, STRING("BGM_STGK_FIELD1"))
-            CALL(evt_snd_bgmoff, 513)
+            CALL(evt_snd_bgmon, PSND_FADE_OUT, STRING("BGM_STGK_FIELD1"))
+            CALL(evt_snd_bgmoff, PSND_FADE_OUT | PSND_CH(1))
             CASE_EQUAL(1)
-            CALL(evt_snd_bgmon, 512, STRING("BGM_STGK_FIELD3"))
-            CALL(evt_snd_bgmoff, 513)
+            CALL(evt_snd_bgmon, PSND_FADE_OUT, STRING("BGM_STGK_FIELD3"))
+            CALL(evt_snd_bgmoff, PSND_FADE_OUT | PSND_CH(1))
             CASE_EQUAL(2)
-            CALL(evt_snd_bgmon, 512, STRING("BGM_STGK_FIELD4"))
-            CALL(evt_snd_bgmoff, 513)
+            CALL(evt_snd_bgmon, PSND_FADE_OUT, STRING("BGM_STGK_FIELD4"))
+            CALL(evt_snd_bgmoff, PSND_FADE_OUT | PSND_CH(1))
             CASE_EQUAL(3)
-            CALL(evt_snd_bgmon, 512, STRING("BGM_STGK_FIELD1_UP1"))
-            CALL(evt_snd_bgmoff, 513)
+            CALL(evt_snd_bgmon, PSND_FADE_OUT, STRING("BGM_STGK_FIELD1_UP1"))
+            CALL(evt_snd_bgmoff, PSND_FADE_OUT | PSND_CH(1))
             CASE_EQUAL(4)
-            CALL(evt_snd_bgmon, 512, STRING("BGM_STGK_FIELD3_UP1"))
-            CALL(evt_snd_bgmoff, 513)
+            CALL(evt_snd_bgmon, PSND_FADE_OUT, STRING("BGM_STGK_FIELD3_UP1"))
+            CALL(evt_snd_bgmoff, PSND_FADE_OUT | PSND_CH(1))
             CASE_EQUAL(5)
-            CALL(evt_snd_bgmon, 512, STRING("BGM_STGK_FIELD4_UP1"))
-            CALL(evt_snd_bgmoff, 513)
+            CALL(evt_snd_bgmon, PSND_FADE_OUT, STRING("BGM_STGK_FIELD4_UP1"))
+            CALL(evt_snd_bgmoff, PSND_FADE_OUT | PSND_CH(1))
             CASE_EQUAL(6)
-            CALL(evt_snd_bgmon, 512, STRING("BGM_STGK_FIELD1_UP2"))
-            CALL(evt_snd_bgmoff, 513)
+            CALL(evt_snd_bgmon, PSND_FADE_OUT, STRING("BGM_STGK_FIELD1_UP2"))
+            CALL(evt_snd_bgmoff, PSND_FADE_OUT | PSND_CH(1))
             CASE_EQUAL(7)
-            CALL(evt_snd_bgmoff, 512)
-            CALL(evt_snd_bgmon, 513, STRING("BGM_STGK_FIELD2"))
+            CALL(evt_snd_bgmoff, PSND_FADE_OUT)
+            CALL(evt_snd_bgmon, PSND_FADE_OUT | PSND_CH(1), STRING("BGM_STGK_FIELD2"))
             CASE_EQUAL(8)
-            CALL(evt_snd_bgmon, 512, STRING("BGM_FF_KUPPA_DOWN1"))
-            CALL(evt_snd_bgmoff, 513)
+            CALL(evt_snd_bgmon, PSND_FADE_OUT, STRING("BGM_FF_KUPPA_DOWN1"))
+            CALL(evt_snd_bgmoff, PSND_FADE_OUT | PSND_CH(1))
             RETURN
             CASE_EQUAL(9)
-            CALL(evt_snd_bgmon, 512, STRING("BGM_FF_KUPPA_GOAL1"))
-            CALL(evt_snd_bgmoff, 513)
+            CALL(evt_snd_bgmon, PSND_FADE_OUT, STRING("BGM_FF_KUPPA_GOAL1"))
+            CALL(evt_snd_bgmoff, PSND_FADE_OUT | PSND_CH(1))
             RETURN
         END_SWITCH
         WAIT_MS(300)
@@ -542,14 +517,21 @@ EVT_BEGIN(kpa_bgm_change)
     RETURN
 EVT_END()
 
+/**
+ * Stage intro, spawned by each side-scrolling map:
+ * fades out the sound, shrinks Bowser, frames him with the camera,
+ * shows the cross and infinity 2D icons ("batu", "mugen") and prints the try message from kpa_get_msg.
+ * Then it fades in, restores Bowser's size and control,
+ * starts the music controller and sets LSWF(2) (intro done), which also starts kpa_time.
+ */
 EVT_BEGIN(kpa_stage_start)
     CALL(evt_cam_letter_box_disable, 1)
     CALL(evt_cam_letter_box_onoff, 0, 0)
     CALL(evt_mario_key_onoff, 0)
-    CALL(evt_snd_bgmoff_f, 512, 1000)
-    CALL(evt_snd_envoff, 512)
-    CALL(evt_map_blend_set_flag, 1, STRING("mario"), 2048)
-    CALL(evt_map_blend_set_flag, 1, STRING("mario"), 4096)
+    CALL(evt_snd_bgmoff_f, PSND_FADE_OUT, 1000)
+    CALL(evt_snd_envoff, PSND_FADE_OUT)
+    CALL(evt_map_blend_set_flag, 1, STRING("mario"), ANIM_MATERIAL_FLAG_NO_BLEND)
+    CALL(evt_map_blend_set_flag, 1, STRING("mario"), ANIM_MATERIAL_FLAG_NO_BLEND2)
     CALL(evt_map_set_blend, 0, 0, 0, 0, 255)
     CALL(evt_map_set_blend, 1, 0, 0, 0, 255)
     CALL(kpa_set_scale, FLOAT(0.39941406f))
@@ -562,14 +544,14 @@ EVT_BEGIN(kpa_stage_start)
     CALL(evt_mario_set_dispdir, 180)
     CALL(evt_seq_wait, 2)
     CALL(evt_twoddisp_init)
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
     CALL(evt_twoddisp_entry, STRING("batu"), 477)
 #else
     CALL(evt_twoddisp_entry, STRING("batu"), 469)
 #endif
     CALL(evt_twoddisp_set_base_position, STRING("batu"), 20, -50)
     CALL(evt_twoddisp_set_position, STRING("batu"), 10, 0)
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
     CALL(evt_twoddisp_entry, STRING("mugen"), 529)
 #else
     CALL(evt_twoddisp_entry, STRING("mugen"), 526)
@@ -580,8 +562,8 @@ EVT_BEGIN(kpa_stage_start)
     CALL(evt_npc_set_autotalkpose, STRING("mario"), STRING("KPA2_S_1"), STRING("KPA2_T_1"))
     CALL(evt_msg_print, 0, LW(0), 0, STRING("mario"))
     CALL(evt_fade_out, 1000)
-    SPAWN_EVENT(PTR(kpa_bgm_change))
-    CALL(evt_snd_envoff, 512)
+    SPAWN_EVENT(kpa_bgm_change)
+    CALL(evt_snd_envoff, PSND_FADE_OUT)
     CALL(evt_map_blend_off, 0)
     CALL(evt_map_blend_off, 1)
     CALL(evt_twoddisp_flag_onoff, 0, STRING("batu"), 1)
@@ -596,21 +578,33 @@ EVT_BEGIN(kpa_stage_start)
     RETURN
 EVT_END()
 
+/**
+ * Icon ids of the digits 0 to 9 (ten u16 values packed into five words), used to draw the score,
+ * stage and time numbers of the Bowser interlude HUD.
+ */
 s32 numeric_id[] = {
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
     31523299, 31785447, 32047595, 32309743, 32571891,
 #else
     30999003, 31261151, 31523299, 31785447, 32047595,
 #endif
 };
 
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
+/**
+ * Icon ids of the three HUD labels of the Bowser interlude,
+ * one row per language (US and PAL only; the other versions pick their icons in the code).
+ */
 u16 kpa_status_icon_tbl[6][3] = {
     { 0x21A, 0x221, 0x21C }, { 0x21B, 0x221, 0x21C }, { 0x21B, 0x222, 0x21D },
     { 0x21B, 0x223, 0x21E }, { 0x21B, 0x224, 0x21F }, { 0x21B, 0x225, 0x220 },
 };
 #endif
 
+/**
+ * Event that calls kpa_status_main every frame so the HUD (score, coins, stage, tries, time) keeps being drawn.
+ * Started by kpa_status_init.
+ */
 EVT_BEGIN(kpa_status_main_evt)
     LOOP(0)
         CALL(kpa_status_main)
@@ -619,10 +613,16 @@ EVT_BEGIN(kpa_status_main_evt)
     RETURN
 EVT_END()
 
+/**
+ * The stage clock.
+ * Waits for the intro (LSWF(2)), then counts 180 seconds down in 10-second steps with the stopwatch helper,
+ * updating the HUD through kpa_set_time. When it runs out it disables the goal pole and runs kpa_dead.
+ * It stops quietly if the stage ends first (LSWF(3)).
+ */
 EVT_BEGIN(kpa_time)
     CALL(evt_seq_wait, 2)
     SET_VALUE(LW(1), 180)
-    SUBTRACT(LW(1), GSW(1222))
+    SUBTRACT(LW(1), GSW(GSW_KPA_TIME_LEFT))
     SET_VALUE(LW(3), LW(1))
     DIVIDE(LW(1), 10)
     MODULO(LW(3), 10)
@@ -644,7 +644,7 @@ EVT_BEGIN(kpa_time)
             IF_INT_EQUAL(LF(0), 0)
                 ADD(LW(2), LW(3))
             END_IF
-            CALL(kpa_set_time, LW(2), LW(1), GSW(1222))
+            CALL(kpa_set_time, LW(2), LW(1), GSW(GSW_KPA_TIME_LEFT))
             IF_INT_GREATER_OR_EQUAL(LW(2), 10000)
                 BREAK_LOOP
             END_IF
@@ -657,11 +657,15 @@ EVT_BEGIN(kpa_time)
         END_IF
     END_LOOP
     CALL(kpa_pole_hitoff)
-    CALL_CHILD(PTR(kpa_dead))
+    CALL_CHILD(kpa_dead)
     RETURN
 EVT_END()
 
-USER_FUNC(kpa_get_msg) {
+/**
+ * Script helper: returns the intro message id "kpa_start_NNN" in args[0].
+ * NNN = tries (capped at 30) + 30 per earlier stage - 1, so each retry shows a different line.
+ */
+static USER_FUNC(kpa_get_msg) {
     static char label[16];
     EvtWord* args = event->args;
     s32 n = kwp->lives;
@@ -675,18 +679,26 @@ USER_FUNC(kpa_get_msg) {
     return EVT_RETURN_DONE;
 }
 
-USER_FUNC(kpa_muteki_check) {
+/** Script helper: returns in LW(0) whether Bowser is currently invincible (kpaMutekiCheck). */
+static USER_FUNC(kpa_muteki_check) {
     event->lwData[0] = kpaMutekiCheck();
     return EVT_RETURN_DONE;
 }
 
-#ifdef VERSION_G8ME01
+// US moved these icons up by 8 in the icon table.
+#if VERSION >= VERSION_US
 #define KPA_ICON_OFS 8
 #else
 #define KPA_ICON_OFS 0
 #endif
 
-void kpa_status_disp(CameraId camera, void* param) {
+/**
+ * Draw callback of the Bowser HUD, queued each frame by kpa_status_main:
+ * the stage/score/tries/time labels (language- specific icons), the six-digit score, the coin count,
+ * the stage number, the try counter (leading zero dropped) and the three-digit time.
+ * The US release moved the number icons up by 8.
+ */
+static void kpa_status_disp(CameraId camera, void* param) {
     Vec pos;
     s32 digit[6];
     s32 i;
@@ -694,24 +706,24 @@ void kpa_status_disp(CameraId camera, void* param) {
 
     pos.x = -210.0f;
     pos.y = 160.0f;
-#ifdef VERSION_G8ME01
-    iconDispGx(1.0f, &pos, 0x10, kpa_status_icon_tbl[gp->language][0]);
+#if VERSION >= VERSION_US
+    ((IconDispGxArgOrderFn)iconDispGx)(1.0f, &pos, ICON_DISP_2D, kpa_status_icon_tbl[gp->language][0]);
 #else
-    iconDispGx(1.0f, &pos, 0x10, (u32)gp->language ? 0x210 : 0x206);
+    ((IconDispGxArgOrderFn)iconDispGx)(1.0f, &pos, ICON_DISP_2D, (u32)gp->language ? 0x210 : 0x206);
 #endif
     pos.x = 50.0f;
     pos.y = 160.0f;
-#ifdef VERSION_G8ME01
-    iconDispGx(1.0f, &pos, 0x10, kpa_status_icon_tbl[gp->language][1]);
+#if VERSION >= VERSION_US
+    ((IconDispGxArgOrderFn)iconDispGx)(1.0f, &pos, ICON_DISP_2D, kpa_status_icon_tbl[gp->language][1]);
 #else
-    iconDispGx(1.0f, &pos, 0x10, 0x208);
+    ((IconDispGxArgOrderFn)iconDispGx)(1.0f, &pos, ICON_DISP_2D, 0x208);
 #endif
     pos.x = 220.0f;
     pos.y = 160.0f;
-#ifdef VERSION_G8ME01
-    iconDispGx(1.0f, &pos, 0x10, kpa_status_icon_tbl[gp->language][2]);
+#if VERSION >= VERSION_US
+    ((IconDispGxArgOrderFn)iconDispGx)(1.0f, &pos, ICON_DISP_2D, kpa_status_icon_tbl[gp->language][2]);
 #else
-    iconDispGx(1.0f, &pos, 0x10, 0x207);
+    ((IconDispGxArgOrderFn)iconDispGx)(1.0f, &pos, ICON_DISP_2D, 0x207);
 #endif
 
     n = pouchGetKpaScore();
@@ -728,34 +740,34 @@ void kpa_status_disp(CameraId camera, void* param) {
     digit[4] = n / 10;
     digit[5] = n % 10;
     for (i = 0; i < 6; i++) {
-        iconDispGx(1.0f, &pos, 0x10, NUMERIC_ID[digit[i]]);
+        ((IconDispGxArgOrderFn)iconDispGx)(1.0f, &pos, ICON_DISP_2D, NUMERIC_ID[digit[i]]);
         pos.x += 20.0f;
     }
     pos.x += 20.0f;
-    iconDispGx(0.7f, &pos, 0x10, 0x18B + KPA_ICON_OFS);
+    ((IconDispGxArgOrderFn)iconDispGx)(0.7f, &pos, ICON_DISP_2D, 0x18B + KPA_ICON_OFS);
     pos.x += 30.0f;
-    iconDispGx(1.0f, &pos, 0x10, 0x1D5 + KPA_ICON_OFS);
+    ((IconDispGxArgOrderFn)iconDispGx)(1.0f, &pos, ICON_DISP_2D, 0x1D5 + KPA_ICON_OFS);
 
     n = pouchGetKpaCoin();
     digit[0] = n / 10;
     digit[1] = n % 10;
     pos.x += 20.0f;
     for (i = 0; i < 2; i++) {
-        iconDispGx(1.0f, &pos, 0x10, NUMERIC_ID[digit[i]]);
+        ((IconDispGxArgOrderFn)iconDispGx)(1.0f, &pos, ICON_DISP_2D, NUMERIC_ID[digit[i]]);
         pos.x += 20.0f;
     }
 
     pos.x = 50.0f;
-    iconDispGx(1.0f, &pos, 0x10, NUMERIC_ID[kwp->stage]);
+    ((IconDispGxArgOrderFn)iconDispGx)(1.0f, &pos, ICON_DISP_2D, NUMERIC_ID[kwp->stage]);
     pos.x += 20.0f;
-    iconDispGx(1.0f, &pos, 0x10, 0x1EE + KPA_ICON_OFS);
+    ((IconDispGxArgOrderFn)iconDispGx)(1.0f, &pos, ICON_DISP_2D, 0x1EE + KPA_ICON_OFS);
 
     n = kwp->lives;
     digit[0] = n / 10;
     digit[1] = n % 10;
     pos.x += 20.0f;
     for (i = digit[0] == 0; i < 2; i++) {
-        iconDispGx(1.0f, &pos, 0x10, NUMERIC_ID[digit[i]]);
+        ((IconDispGxArgOrderFn)iconDispGx)(1.0f, &pos, ICON_DISP_2D, NUMERIC_ID[digit[i]]);
         pos.x += 20.0f;
     }
 
@@ -766,16 +778,22 @@ void kpa_status_disp(CameraId camera, void* param) {
     digit[1] = n / 10;
     digit[2] = n % 10;
     for (i = 0; i < 3; i++) {
-        iconDispGx(1.0f, &pos, 0x10, NUMERIC_ID[digit[i]]);
+        ((IconDispGxArgOrderFn)iconDispGx)(1.0f, &pos, ICON_DISP_2D, NUMERIC_ID[digit[i]]);
         pos.x += 20.0f;
     }
 }
 
-USER_FUNC(kpa_status_main) {
+/** Script helper: queues kpa_status_disp for this frame on the 2D camera. */
+static USER_FUNC(kpa_status_main) {
     dispEntry(CAMERA_2D, 1000.0f, 0, kpa_status_disp, NULL);
     return EVT_RETURN_DONE;
 }
 
+/**
+ * Script helper: args[0] = stage, args[1] = tries, args[2] = time left.
+ * Allocates the stage work block (kwp) with those values
+ * and starts kpa_status_main_evt in a copy of the calling event's state.
+ */
 USER_FUNC(kpa_status_init) {
     EvtWord* args = event->args;
     s32 stage = evtGetValue(event, args[0]);
@@ -794,14 +812,19 @@ USER_FUNC(kpa_status_init) {
     }
     evt->uwBase = event->uwBase;
     evt->ufBase = event->ufBase;
-    kwp = _mapAlloc(sizeof(KpaWork));
+    kwp = _mapAlloc(sizeof(KpaGameWork));
     kwp->stage = stage;
     kwp->lives = lives;
     kwp->time = time;
     return EVT_RETURN_DONE;
 }
 
-USER_FUNC(kpa_set_time) {
+/**
+ * Script helper: args[0] = elapsed milliseconds in the current 10 s step, args[1] = completed 10 s steps,
+ * args[2] = result.
+ * Computes the time left (180 minus elapsed seconds), stores it in the HUD and returns it in args[2].
+ */
+static USER_FUNC(kpa_set_time) {
     EvtWord* args = event->args;
     s32 sec = evtGetValue(event, args[0]) / 1000;
     s32 time = 180 - (sec + evtGetValue(event, args[1]) * 10);
@@ -814,24 +837,34 @@ USER_FUNC(kpa_set_time) {
     return EVT_RETURN_DONE;
 }
 
-USER_FUNC(kpa_pole_hitoff) {
+/** Script helper: makes the goal pole ("pole") untouchable so a timed-out run cannot still finish. */
+static USER_FUNC(kpa_pole_hitoff) {
     MapObjectEntry* mobj = mobjNameToPtrNoAssert("pole");
 
     if (mobj != NULL) {
-        mobj->flags |= 0x100;
+        mobj->flags |= MOBJ_FLAG_NO_HIT;
     }
     return EVT_RETURN_DONE;
 }
 
-void kpa_stageclear_disp(CameraId camera, void* param) {
+/**
+ * Draw callback that prints the large stage-clear text in the middle of the screen (the Japanese "goal in"
+ * caption).
+ */
+static void kpa_stageclear_disp(CameraId camera, void* param) {
     FontDrawStart();
     FontDrawScale(2.0f);
     FontDrawEdge();
     FontDrawColor((GXColor){0xFF, 0xFF, 0xFF, 0xFF});
-    FontDrawString(-140.0f, 40.0f, "\203S\201[\203\213\203C\203\223\201I\201I");
+    FontDrawString(-140.0f, 40.0f, "ゴールイン！！");
     FontDrawEdgeOff();
 }
 
+/**
+ * Goal pole script: locks controls, plays the counter sound
+ * while kpa_time_countdown turns each remaining second into 100 points,
+ * then shows the "stageclear" effect and waits 3.5 s before returning control.
+ */
 EVT_BEGIN(kpa_stage_clear)
     CALL(evt_mario_key_onoff, 0)
     CALL(evt_snd_sfxon, STRING("SFX_KUPPA_COUNTER1"), LW(0))
@@ -843,13 +876,18 @@ EVT_BEGIN(kpa_stage_clear)
     RETURN
 EVT_END()
 
-USER_FUNC(kpa_stageclear_disp_entry) {
+/** Script helper: queues kpa_stageclear_disp for this frame on the 2D camera. */
+static USER_FUNC(kpa_stageclear_disp_entry) {
     dispEntry(CAMERA_2D, 1000.0f, 0, kpa_stageclear_disp, NULL);
     return EVT_RETURN_DONE;
 }
 
-USER_FUNC(kpa_time_countdown) {
-    KpaWork* wp = kwp;
+/**
+ * Script helper for the goal tally: each call removes one second from the time left and adds 100 points;
+ * it blocks the script (EVT_RETURN_BLOCK) until the time reaches zero.
+ */
+static USER_FUNC(kpa_time_countdown) {
+    KpaGameWork* wp = kwp;
 
     if (wp->time != 0) {
         wp->time--;
@@ -859,7 +897,8 @@ USER_FUNC(kpa_time_countdown) {
     return EVT_RETURN_DONE;
 }
 
-USER_FUNC(kpa_get_cam_pt) {
+/** Script helper: returns the 3D camera position (x, y, z) in args[0..2]. */
+static USER_FUNC(kpa_get_cam_pt) {
     EvtWord* args = event->args;
     CameraEntry* cam = camGetPtr(CAMERA_3D);
 

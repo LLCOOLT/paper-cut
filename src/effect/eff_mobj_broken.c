@@ -1,3 +1,5 @@
+// Debris from a broken map object (MObjBroken); types 0-7 pick the object, one type shows the EFF_sango model.
+#include "eff/eff_mobj_broken.h"
 #include "driver/animdrv.h"
 #include "driver/camdrv.h"
 #include "driver/dispdrv.h"
@@ -8,12 +10,7 @@
 #include "system.h"
 #include <dolphin/gx.h>
 #include <dolphin/mtx.h>
-
-#ifndef TARGET_PC /* PC port: the host libc declares these */
-double sin(double x);
-double cos(double x);
-#endif
-
+#include "libc_decls.h"
 #define PI 3.1415927f
 #define HALF_PI 1.5707964f
 
@@ -35,6 +32,7 @@ static void effMObjBrokenDisp(CameraId cameraId, EffectEntry* effect);
 static void effMObjBrokenDisp2(CameraId cameraId, EffectEntry* effect);
 static void rendermodeFunc(s32 arg);
 
+/** Inline sine, kept as a local copy so the compiler inlines it in this unit. */
 static inline f32 _sinf(f32 x) {
     f32 a = 0.00761f;
     f32 b = 0.16605f;
@@ -72,6 +70,7 @@ static inline f32 _sinf(f32 x) {
     return a;
 }
 
+/** Inline cosine, kept as a local copy so the compiler inlines it in this unit. */
 static inline f32 _cosf(f32 x) {
     f32 a = 0.03705f;
     f32 b = 0.4967f;
@@ -105,6 +104,7 @@ static inline f32 _cosf(f32 x) {
     return a;
 }
 
+/** Spawns the debris of a broken map object at (x, y, z); evt_mobj.c calls it with a type per object kind (0-7). */
 EffectEntry* effMObjBrokenEntry(s32 type, f32 x, f32 y, f32 z) {
     EffectEntry* effect;
     EffMObjBrokenWork* work;
@@ -119,27 +119,27 @@ EffectEntry* effMObjBrokenEntry(s32 type, f32 x, f32 y, f32 z) {
     effect = effEntry();
     count = 1;
     switch (type) {
-    case 0:
-    case 1:
-    case 2:
-    case 3:
-    case 4:
-    case 5:
-        count = 17;
-        break;
-    case 6:
-        count = 17;
-        break;
-    case 7:
-        count = 9;
-        break;
+        case 0:
+        case 1:
+        case 2:
+        case 3:
+        case 4:
+        case 5:
+            count = 17;
+            break;
+        case 6:
+            count = 17;
+            break;
+        case 7:
+            count = 9;
+            break;
     }
-    effect->type = "MObjBroken\0";
+    effect->type = "MObjBroken";
     effect->count = count;
     work = __memAlloc(HEAP_EFFECT, effect->count * sizeof(EffMObjBrokenWork));
     effect->userdata = work;
     effect->callback = effMObjBrokenMain;
-    effect->flags |= 2;
+    effect->flags |= EFFECT_FLAG_SOFT_DELETE;
     work->type = type;
     work->position.x = x;
     work->position.y = y;
@@ -153,34 +153,34 @@ EffectEntry* effMObjBrokenEntry(s32 type, f32 x, f32 y, f32 z) {
             n -= 8;
         }
         switch (type) {
-        case 0:
-        case 1:
-        case 2:
-            s = 6.25f;
-            col = (n - 1) % 4 / 2;
-            row = (n - 1) / 4;
-            depth = (n - 1) % 4 % 2;
-            break;
-        case 3:
-        case 4:
-        case 5:
-            s = 12.5f;
-            col = (n - 1) % 4 / 2;
-            row = (n - 1) / 4;
-            depth = (n - 1) % 4 % 2;
-            break;
-        case 6:
-            s = 12.5f;
-            col = (n - 1) % 2;
-            row = (n - 1) / 2;
-            depth = 0;
-            break;
-        case 7:
-            s = 12.5f;
-            col = (n - 1) % 2;
-            row = (n - 1) / 2;
-            depth = 0;
-            break;
+            case 0:
+            case 1:
+            case 2:
+                s = 6.25f;
+                col = (n - 1) % 4 / 2;
+                row = (n - 1) / 4;
+                depth = (n - 1) % 4 % 2;
+                break;
+            case 3:
+            case 4:
+            case 5:
+                s = 12.5f;
+                col = (n - 1) % 4 / 2;
+                row = (n - 1) / 4;
+                depth = (n - 1) % 4 % 2;
+                break;
+            case 6:
+                s = 12.5f;
+                col = (n - 1) % 2;
+                row = (n - 1) / 2;
+                depth = 0;
+                break;
+            case 7:
+                s = 12.5f;
+                col = (n - 1) % 2;
+                row = (n - 1) / 2;
+                depth = 0;
+                break;
         }
         work->position.x = col * s - s / 2.0f;
         work->position.y = row * s + s / 2.0f;
@@ -202,8 +202,14 @@ EffectEntry* effMObjBrokenEntry(s32 type, f32 x, f32 y, f32 z) {
     return effect;
 }
 
+// FAKE: match-forcing setting: the same code without it compiles differently (removal tried).
 #pragma opt_propagation off
+// FAKE: lifetimes optimisation off for effMObjBrokenMain: the original register allocation and scheduling need it
 #pragma opt_lifetimes off
+/**
+ * Per frame: throws each fragment outward with gravity, fades it and releases its pose;
+ * deletes the effect at the end.
+ */
 static void effMObjBrokenMain(EffectEntry* effect) {
     EffMObjBrokenWork* work = effect->userdata;
     s32 type;
@@ -221,7 +227,7 @@ static void effMObjBrokenMain(EffectEntry* effect) {
     pos2 = pos;
     inBattle = gp->inBattle != 0;
     type = work->type;
-    if (effect->flags & 4) {
+    if (effect->flags & EFFECT_FLAG_DELETE_REQUESTED) {
         w = work;
         for (done = 0; done < effect->count; done++, w++) {
             if (w->poseId != -1) {
@@ -232,21 +238,21 @@ static void effMObjBrokenMain(EffectEntry* effect) {
         return;
     }
     switch (type) {
-    case 7:
-        if (!animGroupBaseAsync("EFF_sango", inBattle, NULL)) {
-            return;
-        }
-        break;
+        case 7:
+            if (!animGroupBaseAsync("EFF_sango", inBattle, NULL)) {
+                return;
+            }
+            break;
     }
     work++;
     for (i = 1; i < effect->count; i++, work++) {
         switch (type) {
-        case 7:
-            if (work->poseId == -1) {
-                work->poseId = animPoseEntry("EFF_sango", inBattle);
-                animPoseSetAnim(work->poseId, (i & 1) ? "Z_2" : "Z_1", TRUE);
-            }
-            break;
+            case 7:
+                if (work->poseId == -1) {
+                    work->poseId = animPoseEntry("EFF_sango", inBattle);
+                    animPoseSetAnim(work->poseId, (i & 1) ? "Z_2" : "Z_1", TRUE);
+                }
+                break;
         }
         work->position.x += work->speed * _sinf(6.2831855f * work->angle / 360.0f);
         work->position.z += work->speed * -_cosf(6.2831855f * work->angle / 360.0f);
@@ -272,15 +278,16 @@ static void effMObjBrokenMain(EffectEntry* effect) {
         return;
     }
     if (type != 7) {
-        dispEntry(4, dispCalcZ(&pos2), 8, (DispCallback)effMObjBrokenDisp, effect);
+        dispEntry(CAMERA_3D, dispCalcZ(&pos2), 8, (DispCallback)effMObjBrokenDisp, effect);
     } else {
-        dispEntry(4, dispCalcZ(&pos2), 8, (DispCallback)effMObjBrokenDisp2, effect);
+        dispEntry(CAMERA_3D, dispCalcZ(&pos2), 8, (DispCallback)effMObjBrokenDisp2, effect);
     }
 }
 
 #pragma opt_propagation reset
 #pragma opt_lifetimes reset
 
+/** Draws the fragments as textured quads (effect textures 56-59) with alpha blending. */
 static void effMObjBrokenDisp(CameraId cameraId, EffectEntry* effect) {
     EffMObjBrokenWork* work = effect->userdata;
     CameraEntry* camera;
@@ -368,6 +375,7 @@ static void effMObjBrokenDisp(CameraId cameraId, EffectEntry* effect) {
     }
 }
 
+/** GX state callback for the EFF_sango pose: sets up alpha blending. */
 static void rendermodeFunc(s32 arg) {
     animGetPtr()->currDispMode = arg;
     GXSetBlendMode(GX_BM_BLEND, GX_BL_SRCALPHA, GX_BL_INVSRCALPHA, GX_LO_CLEAR);
@@ -376,6 +384,7 @@ static void rendermodeFunc(s32 arg) {
     GXSetZMode(GX_FALSE, GX_LEQUAL, GX_FALSE);
 }
 
+/** Draws the EFF_sango model pieces for the type that shows them, tinted with an event colour for fading. */
 static void effMObjBrokenDisp2(CameraId cameraId, EffectEntry* effect) {
     s32 off;
     EffMObjBrokenWork* work;
@@ -401,11 +410,11 @@ static void effMObjBrokenDisp2(CameraId cameraId, EffectEntry* effect) {
                 continue;
             }
             if (pass == 0) {
-                animPoseSetMaterialFlagOn(work->poseId, 0x40);
+                animPoseSetMaterialFlagOn(work->poseId, ANIM_MATERIAL_FLAG_EVT_COLOR);
                 color = (GXColor){0, 0, 0, 128};
                 animPoseSetMaterialEvtColor(work->poseId, color);
             } else {
-                animPoseSetMaterialFlagOn(work->poseId, 0x40);
+                animPoseSetMaterialFlagOn(work->poseId, ANIM_MATERIAL_FLAG_EVT_COLOR);
                 color = (GXColor){255, 255, 255, 254};
                 animPoseSetMaterialEvtColor(work->poseId, color);
             }

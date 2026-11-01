@@ -236,13 +236,13 @@ static void testDecode(void) {
     CHECK(((PortAnimHeader*)m)->magic == PORT_ANIM_MAGIC);
     CHECK(portAnimLiveCount() == 1);
     CHECK((uint8_t*)r < m || (uint8_t*)r >= m + MODEL_SIZE);
-    CHECK(r->mSize == MODEL_SIZE);
+    CHECK(r->size == MODEL_SIZE);
     CHECK(!strcmp(r->fileName, "c_test"));
     CHECK(!strcmp(r->textureName, "c_test_tex"));
     CHECK(r->flags == 6 && r->radius == 12 && r->height == -3);
     CHECK(r->bboxMin.x == -1.5f && r->bboxMin.z == -2.5f && r->bboxMax.y == 3.0f);
-    CHECK(r->shapeCount == 1 && r->drawCallCount == 2 && r->mBufferPosNum == 3 && r->mBufferNrmNum == 2);
-    CHECK(r->texIdxNum[0] == 3 && r->texVtxNum == 2 && r->mBufferNodeNum == 24 && r->mAnimCount == 3);
+    CHECK(r->shapeCount == 1 && r->drawCallCount == 2 && r->bufferPosNum == 3 && r->bufferNrmNum == 2);
+    CHECK(r->texIdxNum[0] == 3 && r->texVtxNum == 2 && r->bufferNodeNum == 24 && r->animCount == 3);
     /* the raw-offset readers elsewhere in the game (evt_mobj FLD 0xD0.., imgdrv +4) */
     CHECK(*(f32*)((u8*)r + 0xE0) == 3.0f);
     CHECK(!strcmp((char*)r + 4, "c_test"));
@@ -257,8 +257,8 @@ static void testDecode(void) {
     CHECK(r->bufferVtxPos[0].x == 0.5f && r->bufferVtxPos[2].z == 8.5f);
     CHECK(r->nrmVtxBuffer[1].z == -5.0f);
     CHECK(((f32*)r->nodeData)[3] == 30.0f);
-    CHECK(r->texAnimEntries[0].mTexBindIdx == 1 && r->texAnimEntries[0].mTransT == 0.75f &&
-          r->texAnimEntries[0].mRotate == 90.0f);
+    CHECK(r->texAnimEntries[0].texBindIdx == 1 && r->texAnimEntries[0].transT == 0.75f &&
+          r->texAnimEntries[0].rotate == 90.0f);
 
     /* GX arrays and index tables stay big-endian in the blob */
     CHECK((uint8_t*)r->clr0VtxBuffer == m + O_CLR && r->clr0VtxBuffer[0].r == 0x11 && r->clr0VtxBuffer[0].a == 0x44);
@@ -281,10 +281,10 @@ static void testDecode(void) {
     CHECK(!strcmp(r->groups[0].name, "g_root") && r->groups[0].brotherGroupId == -1 && r->groups[0].useSSC == 1);
 
     /* anim table: entries 0 and 2 share AnimData A; pointers relative to it */
-    a = r->mpAnims[0].data;
-    b = r->mpAnims[1].data;
-    CHECK(!strcmp(r->mpAnims[2].name, "S_1_alias"));
-    CHECK(a != NULL && b != NULL && a != b && r->mpAnims[2].data == a);
+    a = r->anims[0].data;
+    b = r->anims[1].data;
+    CHECK(!strcmp(r->anims[2].name, "S_1_alias"));
+    CHECK(a != NULL && b != NULL && a != b && r->anims[2].data == a);
     if (a && b) {
         CHECK(*(s32*)&a->loopInfo[0] == 1 && a->loopInfo[2] == 30.0f);
         CHECK(*(s32*)&b->loopInfo[0] == 0 && b->loopInfo[2] == 10.0f && b->keyframes == NULL);
@@ -311,7 +311,7 @@ static void testDecode(void) {
         memcpy(m, fresh, MODEL_SIZE);
         free(fresh);
         r = portAnimDecode(m, MODEL_SIZE, "reload");
-        CHECK(r != NULL && portAnimLiveCount() == 1 && r->mpAnims[1].data->loopInfo[2] == 10.0f);
+        CHECK(r != NULL && portAnimLiveCount() == 1 && r->anims[1].data->loopInfo[2] == 10.0f);
     }
     portAnimRelease(m);
     CHECK(portAnimLiveCount() == 0);

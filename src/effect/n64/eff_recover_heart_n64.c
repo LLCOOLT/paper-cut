@@ -1,3 +1,5 @@
+// Paper Mario 64 effect: recovery heart: a heart sprite rises and fades, with the recovered count drawn as digits.
+#include "eff/n64/eff_recover_heart_n64.h"
 #include "eff/eff_n64.h"
 #include "driver/camdrv.h"
 #include "driver/dispdrv.h"
@@ -5,46 +7,34 @@
 #include "memory.h"
 #include <dolphin/gx.h>
 #include <dolphin/mtx.h>
-
-#ifndef TARGET_PC /* PC port: the host libc declares these */
-double sin(double);
-double cos(double);
-#endif
-
+#include "libc_decls.h"
 typedef struct EffRecoverHeartN64Work {
-    s32 type;     // 0x0
-    Vec position; // 0x4
-    f32 velX;     // 0x10
-    f32 velY;     // 0x14
-    f32 velZ;     // 0x18
-    f32 rotZ;     // 0x1C
-    f32 unk20;    // 0x20
-    f32 offX;     // 0x24
-    s32 alpha;    // 0x28
-    s32 frame;    // 0x2C
-    s32 unk30;    // 0x30
-    s32 delay;    // 0x34
-    f32 scaleW;   // 0x38
-    f32 scaleH;   // 0x3C
-    s32 count;    // 0x40
-    s32 flag;     // 0x44
+    s32 type;        // 0x0
+    Vec position;    // 0x4
+    f32 velX;        // 0x10
+    f32 velY;        // 0x14
+    f32 velZ;        // 0x18
+    f32 rotZ;        // 0x1C
+    f32 reserved_20; // 0x20, only cleared at entry
+    f32 offX;        // 0x24
+    s32 alpha;       // 0x28
+    s32 frame;       // 0x2C
+    s32 age;         // 0x30, counts up each frame; never read
+    s32 delay;       // 0x34
+    f32 scaleW;      // 0x38
+    f32 scaleH;      // 0x3C
+    s32 count;       // 0x40
+    s32 flag;        // 0x44
 } EffRecoverHeartN64Work;
 
+/**
+ * Width and height of each heart or flower over its 7-frame pop-in: it grows, squashes and stretches,
+ * then settles.
+ */
+f32 scale_w_dat[] = {0.25f, 0.5f, 0.75f, 1.0f, 0.9f, 1.1f, 1.0f};
+f32 scale_h_dat[] = {0.25f, 0.5f, 0.75f, 1.0f, 1.2f, 0.9f, 1.0f};
 
-#ifdef __MWERKS__
-#endif
-
-#ifdef __MWERKS__
-__declspec(section ".data") f32 eff_recover_heart_n64_negone_one_a[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-__declspec(section ".data") f32 fd_recover_heart_negone_one_374[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-__declspec(section ".data") f32 eff_recover_heart_n64_one_negone_a[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-__declspec(section ".data") f32 fd_recover_heart_one_negone_373[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-__declspec(section ".data") f32 eff_recover_heart_n64_negone_one_b[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-__declspec(section ".data") f32 fd_recover_heart_negone_one_360[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-__declspec(section ".data") f32 eff_recover_heart_n64_one_negone_b[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-__declspec(section ".data") f32 fd_recover_heart_one_negone_359[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-#endif
-
+/** 32x32 quad for the large first heart or flower that carries the recovered amount. */
 effN64Vtx size32x32_tex32x32_heart_vtx[] = {
     {-16, -16, 0, 0, 0, 255, 255, 255, 255},
     {16, -16, 0, 1024, 0, 255, 255, 255, 255},
@@ -52,6 +42,7 @@ effN64Vtx size32x32_tex32x32_heart_vtx[] = {
     {-16, 16, 0, 0, 1024, 255, 255, 255, 255},
 };
 
+/** 16x16 quad for the smaller hearts or flowers that float up beside the large one. */
 effN64Vtx size16x16_tex32x32_heart_vtx[] = {
     {-8, -8, 0, 0, 0, 255, 255, 255, 255},
     {8, -8, 0, 1024, 0, 255, 255, 255, 255},
@@ -59,6 +50,7 @@ effN64Vtx size16x16_tex32x32_heart_vtx[] = {
     {-8, 8, 0, 0, 1024, 255, 255, 255, 255},
 };
 
+/** Near-white quad for a single-digit amount drawn on the heart. */
 effN64Vtx size24x24_tex32x32_heart_vtx[] = {
     {-12, -15, 0, 0, 0, 250, 250, 250, 255},
     {12, -15, 0, 1024, 0, 250, 250, 250, 255},
@@ -66,6 +58,7 @@ effN64Vtx size24x24_tex32x32_heart_vtx[] = {
     {-12, 9, 0, 0, 1024, 250, 250, 250, 255},
 };
 
+/** Near-white quad for the left-hand digit of a two-digit amount on the heart. */
 effN64Vtx size16x24_tex32x32_l_heart_vtx[] = {
     {-16, -15, 0, 0, 0, 250, 250, 250, 255},
     {4, -15, 0, 1024, 0, 250, 250, 250, 255},
@@ -73,6 +66,7 @@ effN64Vtx size16x24_tex32x32_l_heart_vtx[] = {
     {-16, 9, 0, 0, 1024, 250, 250, 250, 255},
 };
 
+/** Near-white quad for the right-hand digit of a two-digit amount on the heart. */
 effN64Vtx size16x24_tex32x32_r_heart_vtx[] = {
     {-4, -15, 0, 0, 0, 250, 250, 250, 255},
     {16, -15, 0, 1024, 0, 250, 250, 250, 255},
@@ -80,6 +74,7 @@ effN64Vtx size16x24_tex32x32_r_heart_vtx[] = {
     {-4, 9, 0, 0, 1024, 250, 250, 250, 255},
 };
 
+/** Green quad for a single-digit amount drawn on the flower. */
 effN64Vtx size24x24_tex32x32_flower_vtx[] = {
     {-12, -15, 0, 0, 0, 36, 190, 20, 255},
     {12, -15, 0, 1024, 0, 36, 190, 20, 255},
@@ -87,6 +82,7 @@ effN64Vtx size24x24_tex32x32_flower_vtx[] = {
     {-12, 9, 0, 0, 1024, 36, 190, 20, 255},
 };
 
+/** Green quad for the left-hand digit of a two-digit amount on the flower. */
 effN64Vtx size16x24_tex32x32_l_flower_vtx[] = {
     {-16, -15, 0, 0, 0, 36, 190, 20, 255},
     {4, -15, 0, 1024, 0, 36, 190, 20, 255},
@@ -94,6 +90,7 @@ effN64Vtx size16x24_tex32x32_l_flower_vtx[] = {
     {-16, 9, 0, 0, 1024, 36, 190, 20, 255},
 };
 
+/** Green quad for the right-hand digit of a two-digit amount on the flower. */
 effN64Vtx size16x24_tex32x32_r_flower_vtx[] = {
     {-4, -15, 0, 0, 0, 36, 190, 20, 255},
     {16, -15, 0, 1024, 0, 36, 190, 20, 255},
@@ -101,19 +98,19 @@ effN64Vtx size16x24_tex32x32_r_flower_vtx[] = {
     {-4, 9, 0, 0, 1024, 36, 190, 20, 255},
 };
 
-f32 scale_w_dat[] = {0.25f, 0.5f, 0.75f, 1.0f, 0.9f, 1.1f, 1.0f};
-f32 scale_h_dat[] = {0.25f, 0.5f, 0.75f, 1.0f, 1.2f, 0.9f, 1.0f};
+static void effRecoverHeartMain(EffectEntry* effect);
+static void effRecoverHeartDisp(CameraId cameraId, EffectEntry* effect);
 
-void effRecoverHeartMain(EffectEntry* effect);
-void effRecoverHeartDisp(CameraId cameraId, EffectEntry* effect);
-
+/**
+ * Spawns a rising heart sprite at (x, y, z) lasting 46 frames; a negative count selects the alternate texture.
+ * Spawned by event scripts through evt_eff.
+ */
 EffectEntry* effRecoverHeartN64Entry(s32 type, s32 count, f32 x, f32 y, f32 z) {
     EffectEntry* effect;
     EffRecoverHeartN64Work* work;
     EffRecoverHeartN64Work* p;
     s32 i;
     s32 k;
-
 
     effect = effEntry();
     effect->type = "RecoverHeartN64";
@@ -126,7 +123,7 @@ EffectEntry* effRecoverHeartN64Entry(s32 type, s32 count, f32 x, f32 y, f32 z) {
     work->position.y = y;
     work->position.z = z;
     work->frame = 46;
-    work->unk30 = 0;
+    work->age = 0;
     if (count < 0) {
         work->flag = 1;
         count = -count;
@@ -145,7 +142,7 @@ EffectEntry* effRecoverHeartN64Entry(s32 type, s32 count, f32 x, f32 y, f32 z) {
         p->offX = 0.0f;
         p->velX = 0.0f;
         p->velZ = 0.0f;
-        p->unk20 = 0.0f;
+        p->reserved_20 = 0.0f;
         p->rotZ = 0.0f;
         if (i == 1) {
             p->position.x = 0.0f;
@@ -167,7 +164,14 @@ EffectEntry* effRecoverHeartN64Entry(s32 type, s32 count, f32 x, f32 y, f32 z) {
     return effect;
 }
 
-void effRecoverHeartMain(EffectEntry* effect) {
+/**
+ * Counts the effect life down and deletes at 0.
+ * Each piece, once its spawn delay is over, pops in with a 7-frame squash-and-stretch (scale_w_dat/scale_h_dat),
+ * drifts by its velocity and sways up to 8 units sideways
+ * while tilting up to 30 degrees (both damped over the last 20 frames);
+ * over the last 10 frames it fades and its rise slows 10%/frame.
+ */
+static void effRecoverHeartMain(EffectEntry* effect) {
     s32 lifetime;
     EffRecoverHeartN64Work* work = effect->userdata;
     Vec position;
@@ -182,7 +186,7 @@ void effRecoverHeartMain(EffectEntry* effect) {
     tmp.z = work->position.z;
     position = tmp;
     work->frame--;
-    work->unk30++;
+    work->age++;
     lifetime = work->frame;
     if (lifetime < 0) {
         effDelete(effect);
@@ -223,7 +227,13 @@ void effRecoverHeartMain(EffectEntry* effect) {
     dispEntry(CAMERA_3D, dispCalcZ(&position), 2, (DispCallback)effRecoverHeartDisp, effect);
 }
 
-void effRecoverHeartDisp(CameraId cameraId, EffectEntry* effect) {
+/**
+ * Draws each piece camera-facing: types 0 and 2 use heart texture 0x50 (0x51 when `flag` is set),
+ * others the flower texture 0x52.
+ * Except for type 2, the first piece is a large 32x32 icon with the amount drawn on it from digit strip 0x53:
+ * one digit under 10, otherwise two (with `flag` set the left glyph is strip slot 10 instead of the tens digit).
+ */
+static void effRecoverHeartDisp(CameraId cameraId, EffectEntry* effect) {
     s32 j;
     CameraEntry* camera;
     EffRecoverHeartN64Work* work;
@@ -365,4 +375,3 @@ void effRecoverHeartDisp(CameraId cameraId, EffectEntry* effect) {
         }
     }
 }
-

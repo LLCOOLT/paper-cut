@@ -1,35 +1,16 @@
+// hei.rel (平原, Petal Meadows): _prolog registers each map's init script (hei_00 to hei_13, hei_bt00) and the area's battle tables.
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
 
-#pragma force_active on
 #include "data/mapdata.h"
 #include "hei.h"
+#include "rel_module.h"
 
-typedef void (*voidfunctionptr)(void);
-extern voidfunctionptr _ctors[];
-extern voidfunctionptr _dtors[];
-
-void _unresolved(void);
-void _epilog(void);
-void _prolog(void);
-
-f32 fd_hei_negone_one_374[2] __attribute__((aligned(8)));
-f32 fd_hei_neg_one_382;
-f32 fd_hei___local_PI_383;
-f32 fd_hei___local_3PIO2_385;
-f32 fd_hei_one_negone_373[2] __attribute__((aligned(8)));
-f32 fd_hei___local_PIO2_384;
-f32 fd_hei_one_381;
-f32 fd_hei_negone_one_360[2] __attribute__((aligned(8)));
-f32 fd_hei_neg_one_365;
-f32 fd_hei___local_PI_366;
-f32 fd_hei___local_3PIO2_368;
-f32 fd_hei_one_negone_359[2] __attribute__((aligned(8)));
-f32 fd_hei___local_PIO2_367;
-f32 fd_hei_one_364;
-f64 fd_hei__three_localstatic4_sqrtf;
-f64 fd_hei__half_localstatic3_sqrtf;
-
+/**
+ * Module entry point of hei.rel: runs the static constructors,
+ * registers the init script of every Petal Meadows map (hei_00..hei_13, hei_bt00)
+ * and the area's battle setup tables.
+ */
 void _prolog(void) {
     voidfunctionptr* ctor;
 
@@ -54,38 +35,7 @@ void _prolog(void) {
     relSetBtlAddr("hei", btlsetup_hei_tbl, btl_hei_setup_no_tbl);
 }
 
-f32 fd_hei_negone_one_374[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_hei_neg_one_382 = -1.0f;
-
-f32 fd_hei___local_PI_383 = 3.1415927f;
-
-f32 fd_hei___local_3PIO2_385 = 4.712389f;
-
-f32 fd_hei_one_negone_373[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_hei___local_PIO2_384 = 1.5707964f;
-
-f32 fd_hei_one_381 = 1.0f;
-
-f32 fd_hei_negone_one_360[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_hei_neg_one_365 = -1.0f;
-
-f32 fd_hei___local_PI_366 = 3.1415927f;
-
-f32 fd_hei___local_3PIO2_368 = 4.712389f;
-
-f32 fd_hei_one_negone_359[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_hei___local_PIO2_367 = 1.5707964f;
-
-f32 fd_hei_one_364 = 1.0f;
-
-f64 fd_hei__three_localstatic4_sqrtf = 3.0;
-
-f64 fd_hei__half_localstatic3_sqrtf = 0.5;
-
+/** Module exit point of hei.rel: runs the static destructors. */
 void _epilog(void) {
     voidfunctionptr* dtor;
 
@@ -93,5 +43,6 @@ void _epilog(void) {
         (*dtor)();
     }
 }
+/** Linker stub for unresolved symbols; does nothing. */
 void _unresolved(void) {
 }

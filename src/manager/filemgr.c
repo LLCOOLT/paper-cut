@@ -1,3 +1,5 @@
+// File manager: loads files into the smart heap (synchronously or through dvdmgr), keeps them cached by
+// name, and makes the pointers inside texture and animation files absolute after loading.
 #include "version.h"
 #include "manager/filemgr.h"
 #include "dolphin/os.h"
@@ -18,65 +20,65 @@
 #endif
 
 //.bss
-char _filename[0x400]; //for fileAllocf/fileAsyncf vsprintf
+#if VERSION <= VERSION_DEMO_JP
+FileManagerWork fileWork; // .bss in the demo (-sdata 8), after _filename: .bss is laid out in reverse order
+#endif
+
+char _filename[0x400]; // for fileAllocf/fileAsyncf vsprintf
 
 //.sbss
+#if VERSION >= VERSION_JP
 FileManagerWork fileWork;
+#endif
 
 //.sdata
 FileManagerWork* afp = &fileWork;
-#pragma force_active on
-u32 gap_07_804125DC_sdata[1] = {0};
-#pragma force_active reset
 
-//local prototypes
-void fileGarbageDataAdrClear(FileEntry* entry);
-void fileGarbageDataAdrSet(void* data, s32 type);
-FileEntry* _fileAlloc(const char* filename, s32 type, void (*callback)(FileEntry*));
-void dvdReadDoneCallBack(s32 error, DVDFileInfo* info);
-FileAsyncResult fileAsync(const char* filename, s32 type, FileCallback callback);
+// local prototypes
+static void fileGarbageDataAdrClear(FileEntry* entry);
+static void fileGarbageDataAdrSet(void* data, s32 type);
+static FileEntry* _fileAlloc(const char* filename, s32 type, void (*callback)(FileEntry*));
+static void dvdReadDoneCallBack(s32 error, DVDFileInfo* info);
 #ifdef TARGET_PC
 static void portFileDataAdrSet(void* data, s32 type, u32 size, const char* name);
 #endif
 
-
-
-
+/** Boot-time setup: allocates the 1024 file entries and chains them all into the free list. */
 void fileInit(void) {
-	FileEntry* ptr;
-	int i;
+    FileEntry* ptr;
+    int i;
 
-	afp->entries = __memAlloc(HEAP_DEFAULT, sizeof(FileEntry) * 0x400);
-	afp->archiveType = 0;
-	afp->firstused = 0;
-	afp->lastused = 0;
-	memset(afp->entries, 0, sizeof(FileEntry) * 0x400);
+    afp->entries = __memAlloc(HEAP_DEFAULT, sizeof(FileEntry) * 0x400);
+    afp->archiveType = 0;
+    afp->firstused = 0;
+    afp->lastused = 0;
+    memset(afp->entries, 0, sizeof(FileEntry) * 0x400);
 
-	for (ptr = afp->entries, i = 0; i < 0x400; i++, ptr++) {
-		ptr->next = ptr + 1;
-	}
+    for (ptr = afp->entries, i = 0; i < 0x400; i++, ptr++) {
+        ptr->next = ptr + 1;
+    }
 
-	afp->firstavailable = afp->entries;
-	afp->lastavailable = &afp->entries[0x3FF];
-	afp->lastavailable->next = NULL;
+    afp->firstavailable = afp->entries;
+    afp->lastavailable = &afp->entries[0x3FF];
+    afp->lastavailable->next = NULL;
 }
 
 // file types 3 and 6-10 have no C reader; only the pointer words relocated here are known
-typedef struct FileReloc48 {  // types 3, 6, 10
-	u8 reserved_00[0x48];       // 0x0
-	void* ptrs[1];                // 0x48
+typedef struct FileReloc48 { // types 3, 6, 10
+    u8 reserved_00[0x48];    // 0x0
+    void* ptrs[1];           // 0x48
 } FileReloc48;
 typedef struct FileReloc7 {
-	u8 reserved_00[0x64];       // 0x0
-	void* ptrs[3];                // 0x64
+    u8 reserved_00[0x64]; // 0x0
+    void* ptrs[3];        // 0x64
 } FileReloc7;
 typedef struct FileReloc8 {
-	u8 reserved_00[0xC8];       // 0x0
-	void* ptrs[23];               // 0xC8
+    u8 reserved_00[0xC8]; // 0x0
+    void* ptrs[23];       // 0xC8
 } FileReloc8;
 typedef struct FileReloc9 {
-	u8 reserved_00[0x58];       // 0x0
-	void* ptrs[4];                // 0x58
+    u8 reserved_00[0x58]; // 0x0
+    void* ptrs[4];        // 0x58
 } FileReloc9;
 #define FT48(d) ((FileReloc48*)(d))
 #define FT7(d) ((FileReloc7*)(d))
@@ -85,396 +87,414 @@ typedef struct FileReloc9 {
 #define POSE(d) ((AnimationPoseData*)(d))
 #define ANIM(d) ((AnimData*)(d))
 
-void fileGarbageDataAdrClear(FileEntry* entry) {
-	u16 i;
-	u32 off;
-	TEXPalette* tpl;
-	s32 j, n;
-	AnimTableEntry* e;
-	u8* q;
-	TEXHeader* img;
-	CLUTHeader* pal;
-	void* data = *entry->data;
+/**
+ * Turns the absolute pointers inside a loaded file back into offsets from its start (per file type: animation
+ * poses, animation data, TPL textures and the other relocated formats), so the data can be moved;
+ * undone by fileGarbageDataAdrSet.
+ */
+static void fileGarbageDataAdrClear(FileEntry* entry) {
+    u16 i;
+    u32 off;
+    TEXPalette* tpl;
+    s32 j, n;
+    AnimTableEntry* e;
+    u8* q;
+    TEXHeader* img;
+    CLUTHeader* pal;
+    void* data = *entry->data;
 #ifdef TARGET_PC
-	/* Typed files never move on PC (fileGarbageIsPinned), so this is unreachable. */
-	if (entry->type != 0) {
-		OSPanic("filemgr.c", __LINE__, "typed file %s (type %d) cannot be relocated on PC", entry->filename, entry->type);
-		return;
-	}
+    /* Typed files never move on PC (fileGarbageIsPinned), so this is unreachable. */
+    if (entry->type != 0) {
+        OSPanic("filemgr.c", __LINE__, "typed file %s (type %d) cannot be relocated on PC", entry->filename, entry->type);
+        return;
+    }
 #endif
-	switch (entry->type) {
-		case 1:
-			if ((void*)POSE(data)->shapes >= data) {
-				ADDR_WORD(POSE(data)->shapes) -= (AddrWord)data;
-				ADDR_WORD(POSE(data)->drawCalls) -= (AddrWord)data;
-				ADDR_WORD(POSE(data)->bufferVtxPos) -= (AddrWord)data;
-				ADDR_WORD(POSE(data)->posIndex) -= (AddrWord)data;
-				ADDR_WORD(POSE(data)->nrmVtxBuffer) -= (AddrWord)data;
-				ADDR_WORD(POSE(data)->nrmIndex) -= (AddrWord)data;
-				ADDR_WORD(POSE(data)->clr0VtxBuffer) -= (AddrWord)data;
-				ADDR_WORD(POSE(data)->clr0Index) -= (AddrWord)data;
-				ADDR_WORD(POSE(data)->texIndex[0]) -= (AddrWord)data;
-				ADDR_WORD(POSE(data)->texIndex[1]) -= (AddrWord)data;
-				ADDR_WORD(POSE(data)->texIndex[2]) -= (AddrWord)data;
-				ADDR_WORD(POSE(data)->texIndex[3]) -= (AddrWord)data;
-				ADDR_WORD(POSE(data)->texIndex[4]) -= (AddrWord)data;
-				ADDR_WORD(POSE(data)->texIndex[5]) -= (AddrWord)data;
-				ADDR_WORD(POSE(data)->texIndex[6]) -= (AddrWord)data;
-				ADDR_WORD(POSE(data)->texIndex[7]) -= (AddrWord)data;
-				ADDR_WORD(POSE(data)->texVtxBuffer) -= (AddrWord)data;
-				ADDR_WORD(POSE(data)->texAnimEntries) -= (AddrWord)data;
-				ADDR_WORD(POSE(data)->texData) -= (AddrWord)data;
-				ADDR_WORD(POSE(data)->texBinds) -= (AddrWord)data;
-				ADDR_WORD(POSE(data)->draws) -= (AddrWord)data;
-				ADDR_WORD(POSE(data)->groupVisibility) -= (AddrWord)data;
-				ADDR_WORD(POSE(data)->nodeData) -= (AddrWord)data;
-				ADDR_WORD(POSE(data)->groups) -= (AddrWord)data;
-				ADDR_WORD(POSE(data)->mpAnims) -= (AddrWord)data;
-			}
-			break;
-		case 2:
-			if ((void*)ANIM(data)->loopInfo >= data) {
-				ADDR_WORD(ANIM(data)->loopInfo) -= (AddrWord)data;
-				ADDR_WORD(ANIM(data)->keyframes) -= (AddrWord)data;
-				ADDR_WORD(ANIM(data)->vtxPosDeltas) -= (AddrWord)data;
-				ADDR_WORD(ANIM(data)->vtxNrmDeltas) -= (AddrWord)data;
-				ADDR_WORD(ANIM(data)->texDeltas) -= (AddrWord)data;
-				ADDR_WORD(ANIM(data)->visDeltas) -= (AddrWord)data;
-				ADDR_WORD(ANIM(data)->nodeDeltas) -= (AddrWord)data;
-				ADDR_WORD(ANIM(data)->valueKeys) -= (AddrWord)data;
-			}
-			break;
-		case 3:
-			if (FT48(data)->ptrs[0] >= data) {
-				ADDR_WORD(FT48(data)->ptrs[0]) -= (AddrWord)data;
-			}
-			break;
-		case 4:
-			tpl = data;
-			if (tpl->versionNumber != 0x0020AF30) {
-				OSPanic("filemgr.c", VERSION_PICK(147, 153), "invalid version number for texture palette\0");
-			}
-			if ((void*)tpl->descriptorArray >= tpl) {
-				for (i = 0; (u16)i < tpl->numDescriptors; i++) {
-					off = i * sizeof(TEXDescriptor); // FAKE: descriptor fields read by byte offset; descriptorArray[i].textureHeader/.CLUTHeader swaps the i and scaled-index registers (99.86%)
-					img = *(TEXHeader**)((u8*)tpl->descriptorArray + off);
-					if (img) {
-						if (img->unpacked) {
-							img->unpacked = FALSE;
-							img = *(TEXHeader**)((u8*)tpl->descriptorArray + off);
-							img->data -= (AddrWord)tpl;
-						}
-						*(AddrWord*)((u8*)tpl->descriptorArray + off) -= (AddrWord)tpl;
-					}
-					pal = *(CLUTHeader**)((u8*)tpl->descriptorArray + off + offsetof(TEXDescriptor, CLUTHeader));
-					if (pal) {
-						if (pal->unpacked) {
-							pal->unpacked = FALSE;
-							pal = *(CLUTHeader**)((u8*)tpl->descriptorArray + off + offsetof(TEXDescriptor, CLUTHeader));
-							pal->data -= (AddrWord)tpl;
-						}
-						*(AddrWord*)((u8*)tpl->descriptorArray + off + offsetof(TEXDescriptor, CLUTHeader)) -= (AddrWord)tpl;
-					}
-				}
-				ADDR_WORD(tpl->descriptorArray) -= (AddrWord)tpl;
-			}
-			break;
-		case 5:
-			if ((void*)POSE(data)->shapes >= data) {
-				n = ((AnimationPoseData*)data)->mAnimCount;
-				for (j = 0; j < n; j++) {
-					e = &((AnimationPoseData*)data)->mpAnims[j];
-					q = (u8*)e->data;
-					e->data = (AnimData*)(q - (AddrWord)data);
-					if ((void*)ANIM(q)->loopInfo >= q) {
-						ADDR_WORD(ANIM(q)->loopInfo) -= (AddrWord)q;
-						ADDR_WORD(ANIM(q)->keyframes) -= (AddrWord)q;
-						ADDR_WORD(ANIM(q)->vtxPosDeltas) -= (AddrWord)q;
-						ADDR_WORD(ANIM(q)->vtxNrmDeltas) -= (AddrWord)q;
-						ADDR_WORD(ANIM(q)->texDeltas) -= (AddrWord)q;
-						ADDR_WORD(ANIM(q)->visDeltas) -= (AddrWord)q;
-						ADDR_WORD(ANIM(q)->nodeDeltas) -= (AddrWord)q;
-						ADDR_WORD(ANIM(q)->valueKeys) -= (AddrWord)q;
-					}
-				}
-				ADDR_WORD(POSE(data)->shapes) -= (AddrWord)data;
-				ADDR_WORD(POSE(data)->drawCalls) -= (AddrWord)data;
-				ADDR_WORD(POSE(data)->bufferVtxPos) -= (AddrWord)data;
-				ADDR_WORD(POSE(data)->posIndex) -= (AddrWord)data;
-				ADDR_WORD(POSE(data)->nrmVtxBuffer) -= (AddrWord)data;
-				ADDR_WORD(POSE(data)->nrmIndex) -= (AddrWord)data;
-				ADDR_WORD(POSE(data)->clr0VtxBuffer) -= (AddrWord)data;
-				ADDR_WORD(POSE(data)->clr0Index) -= (AddrWord)data;
-				ADDR_WORD(POSE(data)->texIndex[0]) -= (AddrWord)data;
-				ADDR_WORD(POSE(data)->texIndex[1]) -= (AddrWord)data;
-				ADDR_WORD(POSE(data)->texIndex[2]) -= (AddrWord)data;
-				ADDR_WORD(POSE(data)->texIndex[3]) -= (AddrWord)data;
-				ADDR_WORD(POSE(data)->texIndex[4]) -= (AddrWord)data;
-				ADDR_WORD(POSE(data)->texIndex[5]) -= (AddrWord)data;
-				ADDR_WORD(POSE(data)->texIndex[6]) -= (AddrWord)data;
-				ADDR_WORD(POSE(data)->texIndex[7]) -= (AddrWord)data;
-				ADDR_WORD(POSE(data)->texVtxBuffer) -= (AddrWord)data;
-				ADDR_WORD(POSE(data)->texAnimEntries) -= (AddrWord)data;
-				ADDR_WORD(POSE(data)->texData) -= (AddrWord)data;
-				ADDR_WORD(POSE(data)->texBinds) -= (AddrWord)data;
-				ADDR_WORD(POSE(data)->draws) -= (AddrWord)data;
-				ADDR_WORD(POSE(data)->groupVisibility) -= (AddrWord)data;
-				ADDR_WORD(POSE(data)->nodeData) -= (AddrWord)data;
-				ADDR_WORD(POSE(data)->groups) -= (AddrWord)data;
-				ADDR_WORD(POSE(data)->mpAnims) -= (AddrWord)data;
-			}
-			break;
-		case 6:
-			if (FT48(data)->ptrs[0] >= data) {
-				ADDR_WORD(FT48(data)->ptrs[0]) -= (AddrWord)data;
-			}
-			break;
-		case 7:
-			if (FT7(data)->ptrs[0] >= data) {
-				ADDR_WORD(FT7(data)->ptrs[0]) -= (AddrWord)data;
-				ADDR_WORD(FT7(data)->ptrs[1]) -= (AddrWord)data;
-				ADDR_WORD(FT7(data)->ptrs[2]) -= (AddrWord)data;
-			}
-			break;
-		case 8:
-			if (FT8(data)->ptrs[0] >= data) {
-				ADDR_WORD(FT8(data)->ptrs[0]) -= (AddrWord)data;
-				ADDR_WORD(FT8(data)->ptrs[1]) -= (AddrWord)data;
-				ADDR_WORD(FT8(data)->ptrs[2]) -= (AddrWord)data;
-				ADDR_WORD(FT8(data)->ptrs[3]) -= (AddrWord)data;
-				ADDR_WORD(FT8(data)->ptrs[4]) -= (AddrWord)data;
-				ADDR_WORD(FT8(data)->ptrs[5]) -= (AddrWord)data;
-				ADDR_WORD(FT8(data)->ptrs[6]) -= (AddrWord)data;
-				ADDR_WORD(FT8(data)->ptrs[7]) -= (AddrWord)data;
-				ADDR_WORD(FT8(data)->ptrs[8]) -= (AddrWord)data;
-				ADDR_WORD(FT8(data)->ptrs[9]) -= (AddrWord)data;
-				ADDR_WORD(FT8(data)->ptrs[10]) -= (AddrWord)data;
-				ADDR_WORD(FT8(data)->ptrs[11]) -= (AddrWord)data;
-				ADDR_WORD(FT8(data)->ptrs[12]) -= (AddrWord)data;
-				ADDR_WORD(FT8(data)->ptrs[13]) -= (AddrWord)data;
-				ADDR_WORD(FT8(data)->ptrs[14]) -= (AddrWord)data;
-				ADDR_WORD(FT8(data)->ptrs[15]) -= (AddrWord)data;
-				ADDR_WORD(FT8(data)->ptrs[16]) -= (AddrWord)data;
-				ADDR_WORD(FT8(data)->ptrs[17]) -= (AddrWord)data;
-				ADDR_WORD(FT8(data)->ptrs[18]) -= (AddrWord)data;
-				ADDR_WORD(FT8(data)->ptrs[19]) -= (AddrWord)data;
-				ADDR_WORD(FT8(data)->ptrs[20]) -= (AddrWord)data;
-				ADDR_WORD(FT8(data)->ptrs[21]) -= (AddrWord)data;
-				ADDR_WORD(FT8(data)->ptrs[22]) -= (AddrWord)data;
-			}
-			break;
-		case 9:
-			if (FT9(data)->ptrs[0] >= data) {
-				ADDR_WORD(FT9(data)->ptrs[0]) -= (AddrWord)data;
-				ADDR_WORD(FT9(data)->ptrs[1]) -= (AddrWord)data;
-				ADDR_WORD(FT9(data)->ptrs[2]) -= (AddrWord)data;
-				ADDR_WORD(FT9(data)->ptrs[3]) -= (AddrWord)data;
-			}
-			break;
-		case 10:
-			if (FT48(data)->ptrs[0] >= data) {
-				ADDR_WORD(FT48(data)->ptrs[0]) -= (AddrWord)data;
-			}
-			break;
-		case 0:
-		default:
-			break;
-	}
+    switch (entry->type) {
+        case 1:
+            if ((void*)POSE(data)->shapes >= data) {
+                ADDR_WORD(POSE(data)->shapes) -= (AddrWord)data;
+                ADDR_WORD(POSE(data)->drawCalls) -= (AddrWord)data;
+                ADDR_WORD(POSE(data)->bufferVtxPos) -= (AddrWord)data;
+                ADDR_WORD(POSE(data)->posIndex) -= (AddrWord)data;
+                ADDR_WORD(POSE(data)->nrmVtxBuffer) -= (AddrWord)data;
+                ADDR_WORD(POSE(data)->nrmIndex) -= (AddrWord)data;
+                ADDR_WORD(POSE(data)->clr0VtxBuffer) -= (AddrWord)data;
+                ADDR_WORD(POSE(data)->clr0Index) -= (AddrWord)data;
+                ADDR_WORD(POSE(data)->texIndex[0]) -= (AddrWord)data;
+                ADDR_WORD(POSE(data)->texIndex[1]) -= (AddrWord)data;
+                ADDR_WORD(POSE(data)->texIndex[2]) -= (AddrWord)data;
+                ADDR_WORD(POSE(data)->texIndex[3]) -= (AddrWord)data;
+                ADDR_WORD(POSE(data)->texIndex[4]) -= (AddrWord)data;
+                ADDR_WORD(POSE(data)->texIndex[5]) -= (AddrWord)data;
+                ADDR_WORD(POSE(data)->texIndex[6]) -= (AddrWord)data;
+                ADDR_WORD(POSE(data)->texIndex[7]) -= (AddrWord)data;
+                ADDR_WORD(POSE(data)->texVtxBuffer) -= (AddrWord)data;
+                ADDR_WORD(POSE(data)->texAnimEntries) -= (AddrWord)data;
+                ADDR_WORD(POSE(data)->texData) -= (AddrWord)data;
+                ADDR_WORD(POSE(data)->texBinds) -= (AddrWord)data;
+                ADDR_WORD(POSE(data)->draws) -= (AddrWord)data;
+                ADDR_WORD(POSE(data)->groupVisibility) -= (AddrWord)data;
+                ADDR_WORD(POSE(data)->nodeData) -= (AddrWord)data;
+                ADDR_WORD(POSE(data)->groups) -= (AddrWord)data;
+                ADDR_WORD(POSE(data)->anims) -= (AddrWord)data;
+            }
+            break;
+        case 2:
+            if ((void*)ANIM(data)->loopInfo >= data) {
+                ADDR_WORD(ANIM(data)->loopInfo) -= (AddrWord)data;
+                ADDR_WORD(ANIM(data)->keyframes) -= (AddrWord)data;
+                ADDR_WORD(ANIM(data)->vtxPosDeltas) -= (AddrWord)data;
+                ADDR_WORD(ANIM(data)->vtxNrmDeltas) -= (AddrWord)data;
+                ADDR_WORD(ANIM(data)->texDeltas) -= (AddrWord)data;
+                ADDR_WORD(ANIM(data)->visDeltas) -= (AddrWord)data;
+                ADDR_WORD(ANIM(data)->nodeDeltas) -= (AddrWord)data;
+                ADDR_WORD(ANIM(data)->valueKeys) -= (AddrWord)data;
+            }
+            break;
+        case 3:
+            if (FT48(data)->ptrs[0] >= data) {
+                ADDR_WORD(FT48(data)->ptrs[0]) -= (AddrWord)data;
+            }
+            break;
+        case 4:
+            tpl = data;
+            if (tpl->versionNumber != 0x0020AF30) {
+#if VERSION >= VERSION_DEMO_EU
+                OSPanic("filemgr.c", 150, "invalid version number for texture palette");
+#else
+                OSPanic("filemgr.c", VERSION_PICK(147, 153), "invalid version number for texture palette");
+#endif
+            }
+            if ((void*)tpl->descriptorArray >= (void*)tpl) { // still absolute: make the offsets relative
+                for (i = 0; (u16)i < tpl->numDescriptors; i++) {
+                    off = i * sizeof(TEXDescriptor); // FAKE: descriptor fields read by byte offset; descriptorArray[i].textureHeader/.CLUTHeader swaps the i and scaled-index registers (99.86%)
+                    img = *(TEXHeader**)((u8*)tpl->descriptorArray + off);
+                    if (img) {
+                        if (img->unpacked) {
+                            img->unpacked = FALSE;
+                            img = *(TEXHeader**)((u8*)tpl->descriptorArray + off);
+                            img->data -= (AddrWord)tpl;
+                        }
+                        *(AddrWord*)((u8*)tpl->descriptorArray + off) -= (AddrWord)tpl;
+                    }
+                    pal = *(CLUTHeader**)((u8*)tpl->descriptorArray + off + offsetof(TEXDescriptor, CLUTHeader));
+                    if (pal) {
+                        if (pal->unpacked) {
+                            pal->unpacked = FALSE;
+                            pal = *(CLUTHeader**)((u8*)tpl->descriptorArray + off + offsetof(TEXDescriptor, CLUTHeader));
+                            pal->data -= (AddrWord)tpl;
+                        }
+                        *(AddrWord*)((u8*)tpl->descriptorArray + off + offsetof(TEXDescriptor, CLUTHeader)) -= (AddrWord)tpl;
+                    }
+                }
+                ADDR_WORD(tpl->descriptorArray) -= (AddrWord)tpl;
+            }
+            break;
+        case 5:
+            if ((void*)POSE(data)->shapes >= data) {
+                n = ((AnimationPoseData*)data)->animCount;
+                for (j = 0; j < n; j++) {
+                    e = &((AnimationPoseData*)data)->anims[j];
+                    q = (u8*)e->data;
+                    e->data = (AnimData*)(q - (AddrWord)data);
+                    if ((void*)ANIM(q)->loopInfo >= (void*)q) {
+                        ADDR_WORD(ANIM(q)->loopInfo) -= (AddrWord)q;
+                        ADDR_WORD(ANIM(q)->keyframes) -= (AddrWord)q;
+                        ADDR_WORD(ANIM(q)->vtxPosDeltas) -= (AddrWord)q;
+                        ADDR_WORD(ANIM(q)->vtxNrmDeltas) -= (AddrWord)q;
+                        ADDR_WORD(ANIM(q)->texDeltas) -= (AddrWord)q;
+                        ADDR_WORD(ANIM(q)->visDeltas) -= (AddrWord)q;
+                        ADDR_WORD(ANIM(q)->nodeDeltas) -= (AddrWord)q;
+                        ADDR_WORD(ANIM(q)->valueKeys) -= (AddrWord)q;
+                    }
+                }
+                ADDR_WORD(POSE(data)->shapes) -= (AddrWord)data;
+                ADDR_WORD(POSE(data)->drawCalls) -= (AddrWord)data;
+                ADDR_WORD(POSE(data)->bufferVtxPos) -= (AddrWord)data;
+                ADDR_WORD(POSE(data)->posIndex) -= (AddrWord)data;
+                ADDR_WORD(POSE(data)->nrmVtxBuffer) -= (AddrWord)data;
+                ADDR_WORD(POSE(data)->nrmIndex) -= (AddrWord)data;
+                ADDR_WORD(POSE(data)->clr0VtxBuffer) -= (AddrWord)data;
+                ADDR_WORD(POSE(data)->clr0Index) -= (AddrWord)data;
+                ADDR_WORD(POSE(data)->texIndex[0]) -= (AddrWord)data;
+                ADDR_WORD(POSE(data)->texIndex[1]) -= (AddrWord)data;
+                ADDR_WORD(POSE(data)->texIndex[2]) -= (AddrWord)data;
+                ADDR_WORD(POSE(data)->texIndex[3]) -= (AddrWord)data;
+                ADDR_WORD(POSE(data)->texIndex[4]) -= (AddrWord)data;
+                ADDR_WORD(POSE(data)->texIndex[5]) -= (AddrWord)data;
+                ADDR_WORD(POSE(data)->texIndex[6]) -= (AddrWord)data;
+                ADDR_WORD(POSE(data)->texIndex[7]) -= (AddrWord)data;
+                ADDR_WORD(POSE(data)->texVtxBuffer) -= (AddrWord)data;
+                ADDR_WORD(POSE(data)->texAnimEntries) -= (AddrWord)data;
+                ADDR_WORD(POSE(data)->texData) -= (AddrWord)data;
+                ADDR_WORD(POSE(data)->texBinds) -= (AddrWord)data;
+                ADDR_WORD(POSE(data)->draws) -= (AddrWord)data;
+                ADDR_WORD(POSE(data)->groupVisibility) -= (AddrWord)data;
+                ADDR_WORD(POSE(data)->nodeData) -= (AddrWord)data;
+                ADDR_WORD(POSE(data)->groups) -= (AddrWord)data;
+                ADDR_WORD(POSE(data)->anims) -= (AddrWord)data;
+            }
+            break;
+        case 6:
+            if (FT48(data)->ptrs[0] >= data) {
+                ADDR_WORD(FT48(data)->ptrs[0]) -= (AddrWord)data;
+            }
+            break;
+        case 7:
+            if (FT7(data)->ptrs[0] >= data) {
+                ADDR_WORD(FT7(data)->ptrs[0]) -= (AddrWord)data;
+                ADDR_WORD(FT7(data)->ptrs[1]) -= (AddrWord)data;
+                ADDR_WORD(FT7(data)->ptrs[2]) -= (AddrWord)data;
+            }
+            break;
+        case 8:
+            if (FT8(data)->ptrs[0] >= data) {
+                ADDR_WORD(FT8(data)->ptrs[0]) -= (AddrWord)data;
+                ADDR_WORD(FT8(data)->ptrs[1]) -= (AddrWord)data;
+                ADDR_WORD(FT8(data)->ptrs[2]) -= (AddrWord)data;
+                ADDR_WORD(FT8(data)->ptrs[3]) -= (AddrWord)data;
+                ADDR_WORD(FT8(data)->ptrs[4]) -= (AddrWord)data;
+                ADDR_WORD(FT8(data)->ptrs[5]) -= (AddrWord)data;
+                ADDR_WORD(FT8(data)->ptrs[6]) -= (AddrWord)data;
+                ADDR_WORD(FT8(data)->ptrs[7]) -= (AddrWord)data;
+                ADDR_WORD(FT8(data)->ptrs[8]) -= (AddrWord)data;
+                ADDR_WORD(FT8(data)->ptrs[9]) -= (AddrWord)data;
+                ADDR_WORD(FT8(data)->ptrs[10]) -= (AddrWord)data;
+                ADDR_WORD(FT8(data)->ptrs[11]) -= (AddrWord)data;
+                ADDR_WORD(FT8(data)->ptrs[12]) -= (AddrWord)data;
+                ADDR_WORD(FT8(data)->ptrs[13]) -= (AddrWord)data;
+                ADDR_WORD(FT8(data)->ptrs[14]) -= (AddrWord)data;
+                ADDR_WORD(FT8(data)->ptrs[15]) -= (AddrWord)data;
+                ADDR_WORD(FT8(data)->ptrs[16]) -= (AddrWord)data;
+                ADDR_WORD(FT8(data)->ptrs[17]) -= (AddrWord)data;
+                ADDR_WORD(FT8(data)->ptrs[18]) -= (AddrWord)data;
+                ADDR_WORD(FT8(data)->ptrs[19]) -= (AddrWord)data;
+                ADDR_WORD(FT8(data)->ptrs[20]) -= (AddrWord)data;
+                ADDR_WORD(FT8(data)->ptrs[21]) -= (AddrWord)data;
+                ADDR_WORD(FT8(data)->ptrs[22]) -= (AddrWord)data;
+            }
+            break;
+        case 9:
+            if (FT9(data)->ptrs[0] >= data) {
+                ADDR_WORD(FT9(data)->ptrs[0]) -= (AddrWord)data;
+                ADDR_WORD(FT9(data)->ptrs[1]) -= (AddrWord)data;
+                ADDR_WORD(FT9(data)->ptrs[2]) -= (AddrWord)data;
+                ADDR_WORD(FT9(data)->ptrs[3]) -= (AddrWord)data;
+            }
+            break;
+        case 10:
+            if (FT48(data)->ptrs[0] >= data) {
+                ADDR_WORD(FT48(data)->ptrs[0]) -= (AddrWord)data;
+            }
+            break;
+        case 0:
+        default:
+            break;
+    }
 }
 
-void fileGarbageDataAdrSet(void* data, s32 type) {
-	u16 i;
-	u32 off; u32 off2;
-	TEXPalette* tpl;
-	u8* q;
-	s32 j, n;
-	TEXHeader* img;
-	CLUTHeader* pal;
-	TEXHeader* img2;
-	CLUTHeader* pal2;
+/**
+ * Relocates a freshly loaded or moved file: adds the data address to every offset field its type stores,
+ * unless the fields are already absolute. The textures' image and palette headers are fixed up here too.
+ */
+static void fileGarbageDataAdrSet(void* data, s32 type) {
+    u16 i;
+    u32 off;
+    u32 off2;
+    TEXPalette* tpl;
+    u8* q;
+    s32 j, n;
+    TEXHeader* img;
+    CLUTHeader* pal;
+    TEXHeader* img2;
+    CLUTHeader* pal2;
 #ifdef TARGET_PC
-	/* Callers that know the blob size use portFileDataAdrSet; this is the fallback. */
-	portFileDataAdrSet(data, type, PORT_DECODE_SIZE_UNKNOWN, "filemgr.c");
-	return;
+    /* Callers that know the blob size use portFileDataAdrSet; this is the fallback. */
+    portFileDataAdrSet(data, type, PORT_DECODE_SIZE_UNKNOWN, "filemgr.c");
+    return;
 #endif
-	switch (type) {
-		case 1:
-			if ((void*)POSE(data)->shapes < data) {
-				ADDR_WORD(POSE(data)->shapes) += (AddrWord)data;
-				ADDR_WORD(POSE(data)->drawCalls) += (AddrWord)data;
-				ADDR_WORD(POSE(data)->bufferVtxPos) += (AddrWord)data;
-				ADDR_WORD(POSE(data)->posIndex) += (AddrWord)data;
-				ADDR_WORD(POSE(data)->nrmVtxBuffer) += (AddrWord)data;
-				ADDR_WORD(POSE(data)->nrmIndex) += (AddrWord)data;
-				ADDR_WORD(POSE(data)->clr0VtxBuffer) += (AddrWord)data;
-				ADDR_WORD(POSE(data)->clr0Index) += (AddrWord)data;
-				ADDR_WORD(POSE(data)->texIndex[0]) += (AddrWord)data;
-				ADDR_WORD(POSE(data)->texIndex[1]) += (AddrWord)data;
-				ADDR_WORD(POSE(data)->texIndex[2]) += (AddrWord)data;
-				ADDR_WORD(POSE(data)->texIndex[3]) += (AddrWord)data;
-				ADDR_WORD(POSE(data)->texIndex[4]) += (AddrWord)data;
-				ADDR_WORD(POSE(data)->texIndex[5]) += (AddrWord)data;
-				ADDR_WORD(POSE(data)->texIndex[6]) += (AddrWord)data;
-				ADDR_WORD(POSE(data)->texIndex[7]) += (AddrWord)data;
-				ADDR_WORD(POSE(data)->texVtxBuffer) += (AddrWord)data;
-				ADDR_WORD(POSE(data)->texAnimEntries) += (AddrWord)data;
-				ADDR_WORD(POSE(data)->texData) += (AddrWord)data;
-				ADDR_WORD(POSE(data)->texBinds) += (AddrWord)data;
-				ADDR_WORD(POSE(data)->draws) += (AddrWord)data;
-				ADDR_WORD(POSE(data)->groupVisibility) += (AddrWord)data;
-				ADDR_WORD(POSE(data)->nodeData) += (AddrWord)data;
-				ADDR_WORD(POSE(data)->groups) += (AddrWord)data;
-				ADDR_WORD(POSE(data)->mpAnims) += (AddrWord)data;
-			}
-			break;
-		case 2:
-			if ((void*)ANIM(data)->loopInfo < data) {
-				ADDR_WORD(ANIM(data)->loopInfo) += (AddrWord)data;
-				ADDR_WORD(ANIM(data)->keyframes) += (AddrWord)data;
-				ADDR_WORD(ANIM(data)->vtxPosDeltas) += (AddrWord)data;
-				ADDR_WORD(ANIM(data)->vtxNrmDeltas) += (AddrWord)data;
-				ADDR_WORD(ANIM(data)->texDeltas) += (AddrWord)data;
-				ADDR_WORD(ANIM(data)->visDeltas) += (AddrWord)data;
-				ADDR_WORD(ANIM(data)->nodeDeltas) += (AddrWord)data;
-				ADDR_WORD(ANIM(data)->valueKeys) += (AddrWord)data;
-			}
-			break;
-		case 3:
-			if (FT48(data)->ptrs[0] < data) {
-				ADDR_WORD(FT48(data)->ptrs[0]) += (AddrWord)data;
-			}
-			break;
-		case 4:
-			tpl = data;
-			if (tpl->versionNumber != 0x0020AF30) {
-				OSPanic("filemgr.c", VERSION_PICK(106, 112), "invalid version number for texture palette\0");
-			}
-			if ((void*)tpl->descriptorArray < tpl) {
-				ADDR_WORD(tpl->descriptorArray) += (AddrWord)tpl;
-				for (i = 0; (u16)i < tpl->numDescriptors; i++) {
-					off = i * sizeof(TEXDescriptor);
-					img = *(TEXHeader**)((u8*)tpl->descriptorArray + off);
-					if (img) {
-						*(TEXHeader**)((u8*)tpl->descriptorArray + off) = (TEXHeader*)((u8*)tpl + (AddrWord)img);
-						img2 = *(TEXHeader**)((u8*)tpl->descriptorArray + off);
-						if (!img2->unpacked) {
-							img2->data = (char*)tpl + (AddrWord)img2->data;
-							(*(TEXHeader**)((u8*)tpl->descriptorArray + off))->unpacked = TRUE;
-						}
-					}
-					off2 = off + offsetof(TEXDescriptor, CLUTHeader);
-					pal = *(CLUTHeader**)((u8*)tpl->descriptorArray + off2);
-					if (pal) {
-						*(CLUTHeader**)((u8*)tpl->descriptorArray + off2) = (CLUTHeader*)((u8*)tpl + (AddrWord)pal);
-						pal2 = *(CLUTHeader**)((u8*)tpl->descriptorArray + off2);
-						if (!pal2->unpacked) {
-							pal2->data = (char*)tpl + (AddrWord)pal2->data;
-							(*(CLUTHeader**)((u8*)tpl->descriptorArray + off2))->unpacked = TRUE;
-						}
-					}
-				}
-			}
-			break;
-		case 5:
-			if ((void*)POSE(data)->shapes < data) {
-				ADDR_WORD(POSE(data)->shapes) += (AddrWord)data;
-				ADDR_WORD(POSE(data)->drawCalls) += (AddrWord)data;
-				ADDR_WORD(POSE(data)->bufferVtxPos) += (AddrWord)data;
-				ADDR_WORD(POSE(data)->posIndex) += (AddrWord)data;
-				ADDR_WORD(POSE(data)->nrmVtxBuffer) += (AddrWord)data;
-				ADDR_WORD(POSE(data)->nrmIndex) += (AddrWord)data;
-				ADDR_WORD(POSE(data)->clr0VtxBuffer) += (AddrWord)data;
-				ADDR_WORD(POSE(data)->clr0Index) += (AddrWord)data;
-				ADDR_WORD(POSE(data)->texIndex[0]) += (AddrWord)data;
-				ADDR_WORD(POSE(data)->texIndex[1]) += (AddrWord)data;
-				ADDR_WORD(POSE(data)->texIndex[2]) += (AddrWord)data;
-				ADDR_WORD(POSE(data)->texIndex[3]) += (AddrWord)data;
-				ADDR_WORD(POSE(data)->texIndex[4]) += (AddrWord)data;
-				ADDR_WORD(POSE(data)->texIndex[5]) += (AddrWord)data;
-				ADDR_WORD(POSE(data)->texIndex[6]) += (AddrWord)data;
-				ADDR_WORD(POSE(data)->texIndex[7]) += (AddrWord)data;
-				ADDR_WORD(POSE(data)->texVtxBuffer) += (AddrWord)data;
-				ADDR_WORD(POSE(data)->texAnimEntries) += (AddrWord)data;
-				ADDR_WORD(POSE(data)->texData) += (AddrWord)data;
-				ADDR_WORD(POSE(data)->texBinds) += (AddrWord)data;
-				ADDR_WORD(POSE(data)->draws) += (AddrWord)data;
-				ADDR_WORD(POSE(data)->groupVisibility) += (AddrWord)data;
-				ADDR_WORD(POSE(data)->nodeData) += (AddrWord)data;
-				ADDR_WORD(POSE(data)->groups) += (AddrWord)data;
-				ADDR_WORD(POSE(data)->mpAnims) += (AddrWord)data;
-				n = ((AnimationPoseData*)data)->mAnimCount;
-				for (j = 0; j < n; j++) {
-					ADDR_WORD(((AnimationPoseData*)data)->mpAnims[j].data) += (AddrWord)data;
-					q = (u8*)((AnimationPoseData*)data)->mpAnims[j].data;
-					if ((void*)ANIM(q)->loopInfo < q) {
-						ADDR_WORD(ANIM(q)->loopInfo) += (AddrWord)q;
-						ADDR_WORD(ANIM(q)->keyframes) += (AddrWord)q;
-						ADDR_WORD(ANIM(q)->vtxPosDeltas) += (AddrWord)q;
-						ADDR_WORD(ANIM(q)->vtxNrmDeltas) += (AddrWord)q;
-						ADDR_WORD(ANIM(q)->texDeltas) += (AddrWord)q;
-						ADDR_WORD(ANIM(q)->visDeltas) += (AddrWord)q;
-						ADDR_WORD(ANIM(q)->nodeDeltas) += (AddrWord)q;
-						ADDR_WORD(ANIM(q)->valueKeys) += (AddrWord)q;
-					}
-				}
-			}
-			break;
-		case 6:
-			if (FT48(data)->ptrs[0] < data) {
-				ADDR_WORD(FT48(data)->ptrs[0]) += (AddrWord)data;
-			}
-			break;
-		case 7:
-			if (FT7(data)->ptrs[0] < data) {
-				ADDR_WORD(FT7(data)->ptrs[0]) += (AddrWord)data;
-				ADDR_WORD(FT7(data)->ptrs[1]) += (AddrWord)data;
-				ADDR_WORD(FT7(data)->ptrs[2]) += (AddrWord)data;
-			}
-			break;
-		case 8:
-			if (FT8(data)->ptrs[0] < data) {
-				ADDR_WORD(FT8(data)->ptrs[0]) += (AddrWord)data;
-				ADDR_WORD(FT8(data)->ptrs[1]) += (AddrWord)data;
-				ADDR_WORD(FT8(data)->ptrs[2]) += (AddrWord)data;
-				ADDR_WORD(FT8(data)->ptrs[3]) += (AddrWord)data;
-				ADDR_WORD(FT8(data)->ptrs[4]) += (AddrWord)data;
-				ADDR_WORD(FT8(data)->ptrs[5]) += (AddrWord)data;
-				ADDR_WORD(FT8(data)->ptrs[6]) += (AddrWord)data;
-				ADDR_WORD(FT8(data)->ptrs[7]) += (AddrWord)data;
-				ADDR_WORD(FT8(data)->ptrs[8]) += (AddrWord)data;
-				ADDR_WORD(FT8(data)->ptrs[9]) += (AddrWord)data;
-				ADDR_WORD(FT8(data)->ptrs[10]) += (AddrWord)data;
-				ADDR_WORD(FT8(data)->ptrs[11]) += (AddrWord)data;
-				ADDR_WORD(FT8(data)->ptrs[12]) += (AddrWord)data;
-				ADDR_WORD(FT8(data)->ptrs[13]) += (AddrWord)data;
-				ADDR_WORD(FT8(data)->ptrs[14]) += (AddrWord)data;
-				ADDR_WORD(FT8(data)->ptrs[15]) += (AddrWord)data;
-				ADDR_WORD(FT8(data)->ptrs[16]) += (AddrWord)data;
-				ADDR_WORD(FT8(data)->ptrs[17]) += (AddrWord)data;
-				ADDR_WORD(FT8(data)->ptrs[18]) += (AddrWord)data;
-				ADDR_WORD(FT8(data)->ptrs[19]) += (AddrWord)data;
-				ADDR_WORD(FT8(data)->ptrs[20]) += (AddrWord)data;
-				ADDR_WORD(FT8(data)->ptrs[21]) += (AddrWord)data;
-				ADDR_WORD(FT8(data)->ptrs[22]) += (AddrWord)data;
-			}
-			break;
-		case 9:
-			if (FT9(data)->ptrs[0] < data) {
-				ADDR_WORD(FT9(data)->ptrs[0]) += (AddrWord)data;
-				ADDR_WORD(FT9(data)->ptrs[1]) += (AddrWord)data;
-				ADDR_WORD(FT9(data)->ptrs[2]) += (AddrWord)data;
-				ADDR_WORD(FT9(data)->ptrs[3]) += (AddrWord)data;
-			}
-			break;
-		case 10:
-			if (FT48(data)->ptrs[0] < data) {
-				ADDR_WORD(FT48(data)->ptrs[0]) += (AddrWord)data;
-			}
-			break;
-		case 0:
-		default:
-			break;
-	}
+    switch (type) {
+        case 1:
+            if ((void*)POSE(data)->shapes < data) {
+                ADDR_WORD(POSE(data)->shapes) += (AddrWord)data;
+                ADDR_WORD(POSE(data)->drawCalls) += (AddrWord)data;
+                ADDR_WORD(POSE(data)->bufferVtxPos) += (AddrWord)data;
+                ADDR_WORD(POSE(data)->posIndex) += (AddrWord)data;
+                ADDR_WORD(POSE(data)->nrmVtxBuffer) += (AddrWord)data;
+                ADDR_WORD(POSE(data)->nrmIndex) += (AddrWord)data;
+                ADDR_WORD(POSE(data)->clr0VtxBuffer) += (AddrWord)data;
+                ADDR_WORD(POSE(data)->clr0Index) += (AddrWord)data;
+                ADDR_WORD(POSE(data)->texIndex[0]) += (AddrWord)data;
+                ADDR_WORD(POSE(data)->texIndex[1]) += (AddrWord)data;
+                ADDR_WORD(POSE(data)->texIndex[2]) += (AddrWord)data;
+                ADDR_WORD(POSE(data)->texIndex[3]) += (AddrWord)data;
+                ADDR_WORD(POSE(data)->texIndex[4]) += (AddrWord)data;
+                ADDR_WORD(POSE(data)->texIndex[5]) += (AddrWord)data;
+                ADDR_WORD(POSE(data)->texIndex[6]) += (AddrWord)data;
+                ADDR_WORD(POSE(data)->texIndex[7]) += (AddrWord)data;
+                ADDR_WORD(POSE(data)->texVtxBuffer) += (AddrWord)data;
+                ADDR_WORD(POSE(data)->texAnimEntries) += (AddrWord)data;
+                ADDR_WORD(POSE(data)->texData) += (AddrWord)data;
+                ADDR_WORD(POSE(data)->texBinds) += (AddrWord)data;
+                ADDR_WORD(POSE(data)->draws) += (AddrWord)data;
+                ADDR_WORD(POSE(data)->groupVisibility) += (AddrWord)data;
+                ADDR_WORD(POSE(data)->nodeData) += (AddrWord)data;
+                ADDR_WORD(POSE(data)->groups) += (AddrWord)data;
+                ADDR_WORD(POSE(data)->anims) += (AddrWord)data;
+            }
+            break;
+        case 2:
+            if ((void*)ANIM(data)->loopInfo < data) {
+                ADDR_WORD(ANIM(data)->loopInfo) += (AddrWord)data;
+                ADDR_WORD(ANIM(data)->keyframes) += (AddrWord)data;
+                ADDR_WORD(ANIM(data)->vtxPosDeltas) += (AddrWord)data;
+                ADDR_WORD(ANIM(data)->vtxNrmDeltas) += (AddrWord)data;
+                ADDR_WORD(ANIM(data)->texDeltas) += (AddrWord)data;
+                ADDR_WORD(ANIM(data)->visDeltas) += (AddrWord)data;
+                ADDR_WORD(ANIM(data)->nodeDeltas) += (AddrWord)data;
+                ADDR_WORD(ANIM(data)->valueKeys) += (AddrWord)data;
+            }
+            break;
+        case 3:
+            if (FT48(data)->ptrs[0] < data) {
+                ADDR_WORD(FT48(data)->ptrs[0]) += (AddrWord)data;
+            }
+            break;
+        case 4:
+            tpl = data;
+            if (tpl->versionNumber != 0x0020AF30) {
+#if VERSION >= VERSION_DEMO_EU
+                OSPanic("filemgr.c", 109, "invalid version number for texture palette");
+#else
+                OSPanic("filemgr.c", VERSION_PICK(106, 112), "invalid version number for texture palette");
+#endif
+            }
+            if ((void*)tpl->descriptorArray < (void*)tpl) { // still relative: make the offsets absolute
+                ADDR_WORD(tpl->descriptorArray) += (AddrWord)tpl;
+                for (i = 0; (u16)i < tpl->numDescriptors; i++) {
+                    off = i * sizeof(TEXDescriptor);
+                    img = *(TEXHeader**)((u8*)tpl->descriptorArray + off);
+                    if (img) {
+                        *(TEXHeader**)((u8*)tpl->descriptorArray + off) = (TEXHeader*)((u8*)tpl + (AddrWord)img);
+                        img2 = *(TEXHeader**)((u8*)tpl->descriptorArray + off);
+                        if (!img2->unpacked) {
+                            img2->data = (char*)tpl + (AddrWord)img2->data;
+                            (*(TEXHeader**)((u8*)tpl->descriptorArray + off))->unpacked = TRUE;
+                        }
+                    }
+                    off2 = off + offsetof(TEXDescriptor, CLUTHeader);
+                    pal = *(CLUTHeader**)((u8*)tpl->descriptorArray + off2);
+                    if (pal) {
+                        *(CLUTHeader**)((u8*)tpl->descriptorArray + off2) = (CLUTHeader*)((u8*)tpl + (AddrWord)pal);
+                        pal2 = *(CLUTHeader**)((u8*)tpl->descriptorArray + off2);
+                        if (!pal2->unpacked) {
+                            pal2->data = (char*)tpl + (AddrWord)pal2->data;
+                            (*(CLUTHeader**)((u8*)tpl->descriptorArray + off2))->unpacked = TRUE;
+                        }
+                    }
+                }
+            }
+            break;
+        case 5:
+            if ((void*)POSE(data)->shapes < data) {
+                ADDR_WORD(POSE(data)->shapes) += (AddrWord)data;
+                ADDR_WORD(POSE(data)->drawCalls) += (AddrWord)data;
+                ADDR_WORD(POSE(data)->bufferVtxPos) += (AddrWord)data;
+                ADDR_WORD(POSE(data)->posIndex) += (AddrWord)data;
+                ADDR_WORD(POSE(data)->nrmVtxBuffer) += (AddrWord)data;
+                ADDR_WORD(POSE(data)->nrmIndex) += (AddrWord)data;
+                ADDR_WORD(POSE(data)->clr0VtxBuffer) += (AddrWord)data;
+                ADDR_WORD(POSE(data)->clr0Index) += (AddrWord)data;
+                ADDR_WORD(POSE(data)->texIndex[0]) += (AddrWord)data;
+                ADDR_WORD(POSE(data)->texIndex[1]) += (AddrWord)data;
+                ADDR_WORD(POSE(data)->texIndex[2]) += (AddrWord)data;
+                ADDR_WORD(POSE(data)->texIndex[3]) += (AddrWord)data;
+                ADDR_WORD(POSE(data)->texIndex[4]) += (AddrWord)data;
+                ADDR_WORD(POSE(data)->texIndex[5]) += (AddrWord)data;
+                ADDR_WORD(POSE(data)->texIndex[6]) += (AddrWord)data;
+                ADDR_WORD(POSE(data)->texIndex[7]) += (AddrWord)data;
+                ADDR_WORD(POSE(data)->texVtxBuffer) += (AddrWord)data;
+                ADDR_WORD(POSE(data)->texAnimEntries) += (AddrWord)data;
+                ADDR_WORD(POSE(data)->texData) += (AddrWord)data;
+                ADDR_WORD(POSE(data)->texBinds) += (AddrWord)data;
+                ADDR_WORD(POSE(data)->draws) += (AddrWord)data;
+                ADDR_WORD(POSE(data)->groupVisibility) += (AddrWord)data;
+                ADDR_WORD(POSE(data)->nodeData) += (AddrWord)data;
+                ADDR_WORD(POSE(data)->groups) += (AddrWord)data;
+                ADDR_WORD(POSE(data)->anims) += (AddrWord)data;
+                n = ((AnimationPoseData*)data)->animCount;
+                for (j = 0; j < n; j++) {
+                    ADDR_WORD(((AnimationPoseData*)data)->anims[j].data) += (AddrWord)data;
+                    q = (u8*)((AnimationPoseData*)data)->anims[j].data;
+                    if ((void*)ANIM(q)->loopInfo < (void*)q) {
+                        ADDR_WORD(ANIM(q)->loopInfo) += (AddrWord)q;
+                        ADDR_WORD(ANIM(q)->keyframes) += (AddrWord)q;
+                        ADDR_WORD(ANIM(q)->vtxPosDeltas) += (AddrWord)q;
+                        ADDR_WORD(ANIM(q)->vtxNrmDeltas) += (AddrWord)q;
+                        ADDR_WORD(ANIM(q)->texDeltas) += (AddrWord)q;
+                        ADDR_WORD(ANIM(q)->visDeltas) += (AddrWord)q;
+                        ADDR_WORD(ANIM(q)->nodeDeltas) += (AddrWord)q;
+                        ADDR_WORD(ANIM(q)->valueKeys) += (AddrWord)q;
+                    }
+                }
+            }
+            break;
+        case 6:
+            if (FT48(data)->ptrs[0] < data) {
+                ADDR_WORD(FT48(data)->ptrs[0]) += (AddrWord)data;
+            }
+            break;
+        case 7:
+            if (FT7(data)->ptrs[0] < data) {
+                ADDR_WORD(FT7(data)->ptrs[0]) += (AddrWord)data;
+                ADDR_WORD(FT7(data)->ptrs[1]) += (AddrWord)data;
+                ADDR_WORD(FT7(data)->ptrs[2]) += (AddrWord)data;
+            }
+            break;
+        case 8:
+            if (FT8(data)->ptrs[0] < data) {
+                ADDR_WORD(FT8(data)->ptrs[0]) += (AddrWord)data;
+                ADDR_WORD(FT8(data)->ptrs[1]) += (AddrWord)data;
+                ADDR_WORD(FT8(data)->ptrs[2]) += (AddrWord)data;
+                ADDR_WORD(FT8(data)->ptrs[3]) += (AddrWord)data;
+                ADDR_WORD(FT8(data)->ptrs[4]) += (AddrWord)data;
+                ADDR_WORD(FT8(data)->ptrs[5]) += (AddrWord)data;
+                ADDR_WORD(FT8(data)->ptrs[6]) += (AddrWord)data;
+                ADDR_WORD(FT8(data)->ptrs[7]) += (AddrWord)data;
+                ADDR_WORD(FT8(data)->ptrs[8]) += (AddrWord)data;
+                ADDR_WORD(FT8(data)->ptrs[9]) += (AddrWord)data;
+                ADDR_WORD(FT8(data)->ptrs[10]) += (AddrWord)data;
+                ADDR_WORD(FT8(data)->ptrs[11]) += (AddrWord)data;
+                ADDR_WORD(FT8(data)->ptrs[12]) += (AddrWord)data;
+                ADDR_WORD(FT8(data)->ptrs[13]) += (AddrWord)data;
+                ADDR_WORD(FT8(data)->ptrs[14]) += (AddrWord)data;
+                ADDR_WORD(FT8(data)->ptrs[15]) += (AddrWord)data;
+                ADDR_WORD(FT8(data)->ptrs[16]) += (AddrWord)data;
+                ADDR_WORD(FT8(data)->ptrs[17]) += (AddrWord)data;
+                ADDR_WORD(FT8(data)->ptrs[18]) += (AddrWord)data;
+                ADDR_WORD(FT8(data)->ptrs[19]) += (AddrWord)data;
+                ADDR_WORD(FT8(data)->ptrs[20]) += (AddrWord)data;
+                ADDR_WORD(FT8(data)->ptrs[21]) += (AddrWord)data;
+                ADDR_WORD(FT8(data)->ptrs[22]) += (AddrWord)data;
+            }
+            break;
+        case 9:
+            if (FT9(data)->ptrs[0] < data) {
+                ADDR_WORD(FT9(data)->ptrs[0]) += (AddrWord)data;
+                ADDR_WORD(FT9(data)->ptrs[1]) += (AddrWord)data;
+                ADDR_WORD(FT9(data)->ptrs[2]) += (AddrWord)data;
+                ADDR_WORD(FT9(data)->ptrs[3]) += (AddrWord)data;
+            }
+            break;
+        case 10:
+            if (FT48(data)->ptrs[0] < data) {
+                ADDR_WORD(FT48(data)->ptrs[0]) += (AddrWord)data;
+            }
+            break;
+        case 0:
+        default:
+            break;
+    }
 }
 
 #ifdef TARGET_PC
@@ -482,469 +502,500 @@ void fileGarbageDataAdrSet(void* data, s32 type) {
  * allocations, so the smart-heap compactor must not move any typed file.
  * Raw files (type 0) have no internal pointers and stay movable. */
 BOOL fileGarbageIsPinned(FileEntry* file) {
-	return file->type != 0;
+    return file->type != 0;
 }
 
 /* Size of a file inside a mounted archive (arcOpen is a pure lookup). */
 static u32 portArcLength(const char* filename) {
-	u32 len = 0;
-	arcOpen(filename, NULL, &len);
-	return len ? len : PORT_DECODE_SIZE_UNKNOWN;
+    u32 len = 0;
+    arcOpen(filename, NULL, &len);
+    return len ? len : PORT_DECODE_SIZE_UNKNOWN;
 }
 
 /* fileGarbageDataAdrSet with the blob size and name, for bounds checks.
  * Types 1-3 and 6-10 have no loader in the game; their fixups are unported. */
 static void portFileDataAdrSet(void* data, s32 type, u32 size, const char* name) {
-	switch (type) {
-		case 0:
-			break;
-		case 4:
-			portTplDecode(data, size, name);
-			break;
-		case 5:
-			portAnimDecode(data, size, name);
-			if (size != PORT_DECODE_SIZE_UNKNOWN) {
-				/* Anim model vertex arrays are big-endian (port/gx_arrays.h). */
-				portGXRegisterDiscBlob(data, size);
-			}
-			break;
-		default:
-			OSPanic("filemgr.c", __LINE__, "file type %d (%s) is not supported on PC", type, name);
-			break;
-	}
+    switch (type) {
+        case 0:
+            break;
+        case 4:
+            portTplDecode(data, size, name);
+            break;
+        case 5:
+            portAnimDecode(data, size, name);
+            if (size != PORT_DECODE_SIZE_UNKNOWN) {
+                /* Anim model vertex arrays are big-endian (port/gx_arrays.h). */
+                portGXRegisterDiscBlob(data, size);
+            }
+            break;
+        default:
+            OSPanic("filemgr.c", __LINE__, "file type %d (%s) is not supported on PC", type, name);
+            break;
+    }
 }
 #endif
 
+/**
+ * Moves a file's data to data during smart-heap compaction (memory.c),
+ * unrelocating it first and relocating it at the new address.
+ * A file still being read from disc only gets its DVD read target moved.
+ */
 void fileGarbageMoveMem(void* data, FileEntry* file) {
 #ifdef TARGET_PC
-	if (fileGarbageIsPinned(file)) {
-		OSPanic("filemgr.c", __LINE__, "pinned file %s passed to fileGarbageMoveMem", file->filename);
-	}
+    if (fileGarbageIsPinned(file)) {
+        OSPanic("filemgr.c", __LINE__, "pinned file %s passed to fileGarbageMoveMem", file->filename);
+    }
 #endif
-	if (file->state == 3) {
-		if (!file->entry) {
-			fileGarbageDataAdrClear(file);
-		}
-	}
-	else {
-		fileGarbageDataAdrClear(file);
-	}
-	memmove(data, ((smartEntry*)file->data)->address, ((smartEntry*)file->data)->size);
-	*file->data = data;
-	if (file->state == 3) {
-		if (file->entry) {
-			file->entry->address = data;
-		}
-		else {
-			fileGarbageDataAdrSet(*file->data, file->type);
-		}
-	}
-	else {
-		fileGarbageDataAdrSet(*file->data, file->type);
-	}
+    if (file->state == 3) {
+        if (!file->entry) {
+            fileGarbageDataAdrClear(file);
+        }
+    } else {
+        fileGarbageDataAdrClear(file);
+    }
+    memmove(data, ((smartEntry*)file->data)->address, ((smartEntry*)file->data)->size);
+    *file->data = data;
+    if (file->state == 3) {
+        if (file->entry) {
+            file->entry->address = data;
+        } else {
+            fileGarbageDataAdrSet(*file->data, file->type);
+        }
+    } else {
+        fileGarbageDataAdrSet(*file->data, file->type);
+    }
 }
 
-void _fileGarbage(BOOL a1) {
-	FileEntry* f;
-	FileEntry* prev;
-	FileEntry* first;
-	FileEntry* next;
+/**
+ * Releases cached files so their entries and memory can be reused;
+ * memory.c and the allocators call it when they run out.
+ * Mode 1 ages preloaded files (state 3) and drops them after two passes;
+ * mode 0 drops every preloaded file at once, waiting out reads in flight.
+ * Then all released files (state 2) are freed and their entries returned to the free list.
+ */
+void _fileGarbage(BOOL mode) {
+    FileEntry* f;
+    FileEntry* prev;
+    FileEntry* first;
+    FileEntry* next;
 
-	if (a1 == 0) {
-		for (f = afp->firstused; f; f = f->next) {
-			if (f->state == 3) {
-				if (f->entry) {
-					if (OSGetCurrentThread() == &dvdmgr_thread) {
-						f->entry->status = 8;
-					}
-					else {
-						while (f->entry) {
-							OSYieldThread();
-						}
-					}
-				}
-				f->state = 2;
-			}
-		}
-	}
-	else if (a1 == 1) {
-		for (f = afp->firstused; f; f = f->next) {
-			if (f->state == 3) {
-				if (f->entry) {
-					if (OSGetCurrentThread() == &dvdmgr_thread) {
-						continue;
-					}
-					while (f->entry) {
-						OSYieldThread();
-					}
-				}
-				else {
-					f->references--;
-					if ((s16)f->references <= -2) {
-						f->state = 2;
-					}
-				}
-			}
-		}
-	}
+    if (mode == 0) {
+        for (f = afp->firstused; f; f = f->next) {
+            if (f->state == 3) {
+                if (f->entry) {
+                    if (OSGetCurrentThread() == &dvdmgr_thread) {
+                        f->entry->status = 8;
+                    } else {
+                        while (f->entry) {
+                            OSYieldThread();
+                        }
+                    }
+                }
+                f->state = 2;
+            }
+        }
+    } else if (mode == 1) {
+        for (f = afp->firstused; f; f = f->next) {
+            if (f->state == 3) {
+                if (f->entry) {
+                    if (OSGetCurrentThread() == &dvdmgr_thread) {
+                        continue;
+                    }
+                    while (f->entry) {
+                        OSYieldThread();
+                    }
+                } else {
+                    f->references--;
+                    if ((s16)f->references <= -2) {
+                        f->state = 2;
+                    }
+                }
+            }
+        }
+    }
 
-	prev = NULL;
-	first = NULL;
-	for (f = afp->firstused; f; f = next) {
-		next = f->next;
-		if (f->state == 2) {
-			f->state = 0;
-			if ((void**)&f->dataSlot != f->data) {
+    prev = NULL;
+    first = NULL;
+    for (f = afp->firstused; f; f = next) {
+        next = f->next;
+        if (f->state == 2) {
+            f->state = 0;
+            if ((void**)&f->dataSlot != f->data) {
 #ifdef TARGET_PC
-				if (f->type == 4) {
-					portTplRelease(*f->data);
-				} else if (f->type == 5) {
-					portAnimRelease(*f->data);
-					portGXUnregisterDiscBlob(*f->data);
-				}
+                if (f->type == 4) {
+                    portTplRelease(*f->data);
+                } else if (f->type == 5) {
+                    portAnimRelease(*f->data);
+                    portGXUnregisterDiscBlob(*f->data);
+                }
 #endif
-				smartFree((smartEntry*)f->data);
-			}
-			if (prev) {
-				prev->next = f->next;
-			}
-			if (!afp->firstavailable) {
-				afp->firstavailable = f;
-			}
-			else {
-				afp->lastavailable->next = f;
-			}
-			f->next = NULL;
-			afp->lastavailable = f;
-		}
-		else {
-			if (!prev) {
-				first = f;
-			}
-			prev = f;
-		}
-	}
-	afp->firstused = first;
-	afp->lastused = prev;
+                smartFree((smartEntry*)f->data);
+            }
+            if (prev) {
+                prev->next = f->next;
+            }
+            if (!afp->firstavailable) {
+                afp->firstavailable = f;
+            } else {
+                afp->lastavailable->next = f;
+            }
+            f->next = NULL;
+            afp->lastavailable = f;
+        } else {
+            if (!prev) {
+                first = f;
+            }
+            prev = f;
+        }
+    }
+    afp->firstused = first;
+    afp->lastused = prev;
 }
 
+/** fileAlloc with a printf-style file name (formatted into the shared _filename buffer). */
 FileEntry* fileAllocf(s32 type, const char* format, ...) {
-	va_list va;
+    va_list va;
 
-	va_start(va, format);
-	vsprintf(_filename, format, va);
-	return _fileAlloc(_filename, type, NULL);
+    va_start(va, format);
+    vsprintf(_filename, format, va);
+    return _fileAlloc(_filename, type, NULL);
 }
 
+/**
+ * Loads a file synchronously, or reuses the cached copy of it, and takes a reference;
+ * returns NULL if it does not exist. type picks how its internal pointers are relocated.
+ */
 FileEntry* fileAlloc(const char* filename, s32 type) {
-	return _fileAlloc(filename, type, NULL);
+    return _fileAlloc(filename, type, NULL);
 }
 
-FileEntry* _fileAlloc(const char* filename, s32 type, void (*callback)(FileEntry*)) {
-	void* handle;
-	FileEntry *search;
-	smartEntry* smart;
-	DVDEntry* entry;
-	FileEntry *newentry, *temp;
-	u32 size, test;
+/**
+ * Shared body of fileAlloc: returns a cached entry with the same name (waiting for its read,
+ * reviving it if released or preloaded), otherwise looks the name up in the open archives and then on disc,
+ * reading it into a 32-byte-aligned smart heap block. Frees cached files when no entry is left.
+ * callback is unused.
+ */
+static FileEntry* _fileAlloc(const char* filename, s32 type, void (*callback)(FileEntry*)) {
+    void* handle;
+    FileEntry* search;
+    smartEntry* smart;
+    DVDEntry* entry;
+    FileEntry *newentry, *temp;
+    u32 size, test;
 
-	for (search = afp->firstused; search; search = search->next) {
-		if (search->state && !strcmp(search->filename, filename)) {
-#ifdef VERSION_G8ME01
-			while (search->entry) { OSYieldThread(); }
+    for (search = afp->firstused; search; search = search->next) {
+        if (search->state && !strcmp(search->filename, filename)) {
+#if VERSION >= VERSION_US
+            while (search->entry) {
+                OSYieldThread();
+            }
 #else
-			while (search->entry) {;} //infinite loop????
+            // JP spins without yielding until the DVD callback clears the entry (US yields)
+            while (search->entry) {
+                ;
+            }
 #endif
-			if (search->state == 3) {
-				search->state = 1;
-				search->references = 0;
-			}
-			else if (search->state == 2) {
-				search->state = 1;
-			}
-			search->references++;
-			return search;
-		}
-	}
-	newentry = afp->firstavailable;
-	if (!newentry) {
-		_fileGarbage(1);
-		newentry = afp->firstavailable;
-	}
-	if (!newentry) {
-		_fileGarbage(0);
-		newentry = afp->firstavailable;
-	}
+            if (search->state == 3) {
+                search->state = 1;
+                search->references = 0;
+            } else if (search->state == 2) {
+                search->state = 1;
+            }
+            search->references++;
+            return search;
+        }
+    }
+    newentry = afp->firstavailable;
+    if (!newentry) {
+        _fileGarbage(1);
+        newentry = afp->firstavailable;
+    }
+    if (!newentry) {
+        _fileGarbage(0);
+        newentry = afp->firstavailable;
+    }
 
-	handle = NULL;
-	temp = newentry->next;
+    handle = NULL;
+    temp = newentry->next;
 
-	switch (afp->archiveType) {
-		case 0:
-			handle = arcOpen(filename, NULL, NULL);
-			break;
-		case 1:
-			handle = arcOpen(filename, NULL, NULL);
-			if (!handle) {
-				handle = arcOpen(filename, NULL, NULL);
-			}
-			if (!handle) {
-				handle = arcOpen(filename, NULL, NULL);
-			}
-			break;
-		case 2:
-			handle = arcOpen(filename, NULL, NULL);
-			if (!handle) {
-				handle = arcOpen(filename, NULL, NULL);
-			}
-			if (!handle) {
-				handle = arcOpen(filename, NULL, NULL);
-			}
-			break;
-	}
-	if (handle) {
+    switch (afp->archiveType) {
+        case 0:
+            handle = arcOpen(filename, NULL, NULL);
+            break;
+        case 1:
+            handle = arcOpen(filename, NULL, NULL);
+            if (!handle) {
+                handle = arcOpen(filename, NULL, NULL);
+            }
+            if (!handle) {
+                handle = arcOpen(filename, NULL, NULL);
+            }
+            break;
+        case 2:
+            handle = arcOpen(filename, NULL, NULL);
+            if (!handle) {
+                handle = arcOpen(filename, NULL, NULL);
+            }
+            if (!handle) {
+                handle = arcOpen(filename, NULL, NULL);
+            }
+            break;
+    }
+    if (handle) {
 #ifdef TARGET_PC
-		portFileDataAdrSet(handle, type, portArcLength(filename), filename);
+        portFileDataAdrSet(handle, type, portArcLength(filename), filename);
 #else
-		fileGarbageDataAdrSet(handle, type);
+        fileGarbageDataAdrSet(handle, type);
 #endif
-	}
-	if (handle) {
-		newentry->state = 1;
-		newentry->data = &newentry->dataSlot;
-		*newentry->data = handle;
-		newentry->references = 1;
-		newentry->type = type;
-		newentry->next = NULL;
-		strcpy(newentry->filename, filename);
-		newentry->entry = NULL;
-	}
-	else {
-		entry = DVDMgrOpen(filename, 2, 0);
-		if (!entry) {
-			return NULL;
-		}
-		size = DVDMgrGetLength(entry);
-		test = size + ((size & 31) ? 32 - (size & 31) : 0);
-		if (!test) {
-			DVDMgrClose(entry);
-			return NULL;
-		}
-		if (test & 31) {
-			test += 32 - (test & 31);
-		}
-		smart = smartAlloc(test, 0);
-		smart->file = newentry;
-		DVDMgrRead(entry, smart->address, test, 0);
-		DVDMgrClose(entry);
-		newentry->data = &smart->address;
-		newentry->state = 1;
-		newentry->references = 1;
-		newentry->type = type;
-		newentry->next = NULL;
-		strcpy(newentry->filename, filename);
-		newentry->entry = NULL;
+    }
+    if (handle) {
+        newentry->state = 1;
+        newentry->data = &newentry->dataSlot;
+        *newentry->data = handle;
+        newentry->references = 1;
+        newentry->type = type;
+        newentry->next = NULL;
+        strcpy(newentry->filename, filename);
+        newentry->entry = NULL;
+    } else {
+        entry = DVDMgrOpen(filename, 2, 0);
+        if (!entry) {
+            return NULL;
+        }
+        size = DVDMgrGetLength(entry);
+        test = size + ((size & 31) ? 32 - (size & 31) : 0);
+        if (!test) {
+            DVDMgrClose(entry);
+            return NULL;
+        }
+        if (test & 31) {
+            test += 32 - (test & 31);
+        }
+        smart = smartAlloc(test, 0);
+        smart->file = newentry;
+        DVDMgrRead(entry, smart->address, test, 0);
+        DVDMgrClose(entry);
+        newentry->data = &smart->address;
+        newentry->state = 1;
+        newentry->references = 1;
+        newentry->type = type;
+        newentry->next = NULL;
+        strcpy(newentry->filename, filename);
+        newentry->entry = NULL;
 #ifdef TARGET_PC
-		portFileDataAdrSet(smart->address, type, test, filename);
+        portFileDataAdrSet(smart->address, type, test, filename);
 #else
-		fileGarbageDataAdrSet(smart->address, type);
+        fileGarbageDataAdrSet(smart->address, type);
 #endif
-	}
-	afp->firstavailable = temp;
-	if (!afp->firstavailable) {
-		afp->lastavailable = NULL;
-	}
-	if (!afp->firstused) {
-		afp->firstused = newentry;
-		afp->lastused = newentry;
-	}
-	else {
-		afp->lastused->next = newentry;
-		afp->lastused = newentry;
-	}
-	return newentry;
+    }
+    afp->firstavailable = temp;
+    if (!afp->firstavailable) {
+        afp->lastavailable = NULL;
+    }
+    if (!afp->firstused) {
+        afp->firstused = newentry;
+        afp->lastused = newentry;
+    } else {
+        afp->lastused->next = newentry;
+        afp->lastused = newentry;
+    }
+    return newentry;
 }
 
+/**
+ * Drops a reference to a loaded file; at zero the file is marked released but stays cached
+ * until _fileGarbage frees it.
+ */
 void fileFree(FileEntry* handle) {
-	if (handle) {
-		if (handle->data) {
-			if (handle->state == 1) {
-				handle->references--;
-				if (!handle->references) {
-					handle->state = 2;
-				}
-			}
-		}
-	}
+    if (handle) {
+        if (handle->data) {
+            if (handle->state == 1) {
+                handle->references--;
+                if (!handle->references) {
+                    handle->state = 2;
+                }
+            }
+        }
+    }
 }
 
-void dvdReadDoneCallBack(s32 error, DVDFileInfo* info) {
-	DVDEntry* entry;
-	FileEntry* f;
+/**
+ * dvdmgr callback when an asynchronous file read ends:
+ * relocates the data and runs the file's callback,
+ * or on a canceled read (-3) marks the entry released with type 11.
+ */
+static void dvdReadDoneCallBack(s32 error, DVDFileInfo* info) {
+    DVDEntry* entry;
+    FileEntry* f;
 
-	for (f = afp->firstused; f; f = f->next) {
-		if (&f->entry->info == info) {
-			break;
-		}
-	}
-	entry = f->entry;
-	if (error == -3) {
-		f->entry = NULL;
-		f->state = 2;
-		f->type = 11;
-		DVDMgrClose(entry);
-	}
-	else {
-		f->entry = NULL;
+    for (f = afp->firstused; f; f = f->next) {
+        if (&f->entry->info == info) {
+            break;
+        }
+    }
+    entry = f->entry;
+    if (error == -3) {
+        f->entry = NULL;
+        f->state = 2;
+        f->type = 11;
+        DVDMgrClose(entry);
+    } else {
+        f->entry = NULL;
 #ifdef TARGET_PC
-		portFileDataAdrSet(*f->data, f->type, ((smartEntry*)f->data)->size, f->filename);
+        portFileDataAdrSet(*f->data, f->type, ((smartEntry*)f->data)->size, f->filename);
 #else
-		fileGarbageDataAdrSet(*f->data, f->type);
+        fileGarbageDataAdrSet(*f->data, f->type);
 #endif
-		DVDMgrClose(entry);
-		if (f->callback) {
-			f->callback(f);
-		}
-	}
+        DVDMgrClose(entry);
+        if (f->callback) {
+            f->callback(f);
+        }
+    }
 }
 
-FileAsyncResult fileAsyncf(s32 type, FileCallback callback, const char* format, ...) {
-	va_list va;
+/** fileAsync with a printf-style file name. */
+FileEntry* fileAsyncf(s32 type, FileCallback callback, const char* format, ...) {
+    va_list va;
 
-	va_start(va, format);
-	vsprintf(_filename, format, va);
-	return fileAsync(_filename, type, callback);
+    va_start(va, format);
+    vsprintf(_filename, format, va);
+    return fileAsync(_filename, type, callback);
 }
 
-FileAsyncResult fileAsync(const char* filename, s32 type, FileCallback callback) {
-	FileEntry *search, *newentry, *temp;
-	smartEntry* smart;
-	DVDEntry* entry;
-	void* handle;
-	u32 size, test;
+/**
+ * Preloads a file in the background (state 3, no reference taken), mainly animdrv's models and textures.
+ * Returns the entry once the file is loaded, NULL while the read is pending (or just started),
+ * and FILE_ASYNC_MISSING if it is not on the disc.
+ * A later fileAlloc of the same name picks up the preloaded copy.
+ */
+FileEntry* fileAsync(const char* filename, s32 type, FileCallback callback) {
+    FileEntry *search, *newentry, *temp;
+    smartEntry* smart;
+    DVDEntry* entry;
+    void* handle;
+    u32 size, test;
 
-	for (search = afp->firstused; search; search = search->next) {
-		if (search->state && !strcmp(search->filename, filename)) {
-			if (search->entry) return 0;
-			if (search->state == 3) return (FileAsyncResult)search;
-			if (search->state == 2) {
-				search->state = 3;
-			}
-			return (FileAsyncResult)search;
-		}
-	}
+    for (search = afp->firstused; search; search = search->next) {
+        if (search->state && !strcmp(search->filename, filename)) {
+            if (search->entry)
+                return NULL;
+            if (search->state == 3)
+                return search;
+            if (search->state == 2) {
+                search->state = 3;
+            }
+            return search;
+        }
+    }
 
-	newentry = afp->firstavailable;
-	if (!newentry) {
-		_fileGarbage(1);
-		newentry = afp->firstavailable;
-	}
-	if (!newentry) {
-		_fileGarbage(0);
-		newentry = afp->firstavailable;
-	}
+    newentry = afp->firstavailable;
+    if (!newentry) {
+        _fileGarbage(1);
+        newentry = afp->firstavailable;
+    }
+    if (!newentry) {
+        _fileGarbage(0);
+        newentry = afp->firstavailable;
+    }
 
-	handle = NULL;
-	temp = newentry->next;
+    handle = NULL;
+    temp = newentry->next;
 
-	switch (afp->archiveType) {
-		case 0:
-			handle = arcOpen(filename, NULL, NULL);
-			break;
-		case 1:
-			handle = arcOpen(filename, NULL, NULL);
-			if (!handle) {
-				handle = arcOpen(filename, NULL, NULL);
-			}
-			if (!handle) {
-				handle = arcOpen(filename, NULL, NULL);
-			}
-			break;
-		case 2:
-			handle = arcOpen(filename, NULL, NULL);
-			if (!handle) {
-				handle = arcOpen(filename, NULL, NULL);
-			}
-			if (!handle) {
-				handle = arcOpen(filename, NULL, NULL);
-			}
-			break;
-	}
+    switch (afp->archiveType) {
+        case 0:
+            handle = arcOpen(filename, NULL, NULL);
+            break;
+        case 1:
+            handle = arcOpen(filename, NULL, NULL);
+            if (!handle) {
+                handle = arcOpen(filename, NULL, NULL);
+            }
+            if (!handle) {
+                handle = arcOpen(filename, NULL, NULL);
+            }
+            break;
+        case 2:
+            handle = arcOpen(filename, NULL, NULL);
+            if (!handle) {
+                handle = arcOpen(filename, NULL, NULL);
+            }
+            if (!handle) {
+                handle = arcOpen(filename, NULL, NULL);
+            }
+            break;
+    }
 
-	if (handle) {
+    if (handle) {
 #ifdef TARGET_PC
-		portFileDataAdrSet(handle, type, portArcLength(filename), filename);
+        portFileDataAdrSet(handle, type, portArcLength(filename), filename);
 #else
-		fileGarbageDataAdrSet(handle, type);
+        fileGarbageDataAdrSet(handle, type);
 #endif
-	}
-	
-	if (handle) {
-		newentry->state = 3;
-		newentry->data = &newentry->dataSlot;
-		*newentry->data = handle;
-		newentry->references = 0;
-		newentry->type = type;
-		newentry->next = 0;
-		strcpy(newentry->filename, filename);
-		newentry->entry = NULL;
-		afp->firstavailable = afp->firstavailable->next;
-		if (!afp->firstavailable) {
-			afp->lastavailable = NULL;
-		}
-		if (!afp->firstused) {
-			afp->firstused = newentry;
-			afp->lastused = newentry;
-		}
-		else {
-			afp->lastused->next = newentry;
-			afp->lastused = newentry;
-		}
-		return (FileAsyncResult)newentry;
-	}
-	else {
-		entry = DVDMgrOpen(filename, 2, 0);
-		if (!entry) {
-			return -1;
-		}
-		size = DVDMgrGetLength(entry);
-		test = size + ((size & 31) ? 32 - (size & 31) : 0);
-		if (!test) {
-			DVDMgrClose(entry);
-			return 0;
-		}
-		DVDMgrClose(entry);
-		if (test & 31) {
-			test += 32 - (test & 31);
-		}
-		smart = smartAlloc(test, 0);
-		smart->file = newentry;
-		newentry->data = &smart->address;
-		newentry->state = 3;
-		newentry->references = 0;
-		newentry->type = type;
-		newentry->next = NULL;
-		newentry->callback = callback;
-		strcpy(newentry->filename, filename);
-		afp->firstavailable = temp;
-		if (!afp->firstavailable) {
-			afp->lastavailable = NULL;
-		}
-		if (!afp->firstused) {
-			afp->firstused = newentry;
-			afp->lastused = newentry;
-		}
-		else {
-			afp->lastused->next = newentry;
-			afp->lastused = newentry;
-		}
-		newentry->entry = DVDMgrOpen(filename, 2u, 0);
-		DVDMgrReadAsync(newentry->entry, smart->address, test, 0, dvdReadDoneCallBack);
-		return 0;
-	}
+    }
+
+    if (handle) {
+        newentry->state = 3;
+        newentry->data = &newentry->dataSlot;
+        *newentry->data = handle;
+        newentry->references = 0;
+        newentry->type = type;
+        newentry->next = 0;
+        strcpy(newentry->filename, filename);
+        newentry->entry = NULL;
+        afp->firstavailable = afp->firstavailable->next;
+        if (!afp->firstavailable) {
+            afp->lastavailable = NULL;
+        }
+        if (!afp->firstused) {
+            afp->firstused = newentry;
+            afp->lastused = newentry;
+        } else {
+            afp->lastused->next = newentry;
+            afp->lastused = newentry;
+        }
+        return newentry;
+    } else {
+        entry = DVDMgrOpen(filename, 2, 0);
+        if (!entry) {
+            return FILE_ASYNC_MISSING;
+        }
+        size = DVDMgrGetLength(entry);
+        test = size + ((size & 31) ? 32 - (size & 31) : 0);
+        if (!test) {
+            DVDMgrClose(entry);
+            return NULL;
+        }
+        DVDMgrClose(entry);
+        if (test & 31) {
+            test += 32 - (test & 31);
+        }
+        smart = smartAlloc(test, 0);
+        smart->file = newentry;
+        newentry->data = &smart->address;
+        newentry->state = 3;
+        newentry->references = 0;
+        newentry->type = type;
+        newentry->next = NULL;
+        newentry->callback = callback;
+        strcpy(newentry->filename, filename);
+        afp->firstavailable = temp;
+        if (!afp->firstavailable) {
+            afp->lastavailable = NULL;
+        }
+        if (!afp->firstused) {
+            afp->firstused = newentry;
+            afp->lastused = newentry;
+        } else {
+            afp->lastused->next = newentry;
+            afp->lastused = newentry;
+        }
+        newentry->entry = DVDMgrOpen(filename, 2u, 0);
+        DVDMgrReadAsync(newentry->entry, smart->address, test, 0, dvdReadDoneCallBack);
+        return NULL;
+    }
 }
 
-//TODO: enum of all archive types
+/** Archive type 0-2: how many times _fileAlloc and fileAsync try arcOpen (0 once, 1 and 2 three times). */
 void fileSetCurrentArchiveType(s32 type) {
-	afp->archiveType = type;
+    afp->archiveType = type;
 }

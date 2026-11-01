@@ -1,48 +1,21 @@
+// Rogueport Sewers (tik, chika: underground): the REL prolog/epilog, the map list, and the shared wandering event for
+// the sewer residents (tik_villager_urouro).
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
 
-#pragma force_active on
 #include "data/mapdata.h"
 #include "manager/evtmgr_cmd.h"
 #include "dolphin/mtx.h"
+#include "evt/evt_npc.h"
+#include "evt/evt_sub.h"
 #include "tik.h"
+#include "rel_module.h"
 
-typedef void (*voidfunctionptr)(void);
-extern voidfunctionptr _ctors[];
-extern voidfunctionptr _dtors[];
-
-USER_FUNC(evt_npc_add_dirdist);
-USER_FUNC(evt_npc_get_loiter_dir);
-USER_FUNC(evt_npc_get_position);
-USER_FUNC(evt_npc_move_position);
-USER_FUNC(evt_npc_reverse_ry);
-USER_FUNC(evt_npc_set_ry);
-USER_FUNC(evt_npc_status_onoff);
-USER_FUNC(evt_sub_get_dir);
-USER_FUNC(evt_sub_random);
-USER_FUNC(evt_tik_villager_urouro_check_func);
-void _unresolved(void);
-void _epilog(void);
-void _prolog(void);
-
-f32 fd_tik_negone_one_374[2] __attribute__((aligned(8)));
-f32 fd_tik_neg_one_382;
-f32 fd_tik___local_PI_383;
-f32 fd_tik___local_3PIO2_385;
-f32 fd_tik_one_negone_373[2] __attribute__((aligned(8)));
-f32 fd_tik___local_PIO2_384;
-f32 fd_tik_one_381;
-f32 fd_tik_negone_one_360[2] __attribute__((aligned(8)));
-f32 fd_tik_neg_one_365;
-f32 fd_tik___local_PI_366;
-f32 fd_tik___local_3PIO2_368;
-f32 fd_tik_one_negone_359[2] __attribute__((aligned(8)));
-f32 fd_tik___local_PIO2_367;
-f32 fd_tik_one_364;
-f64 fd_tik__three_localstatic4_sqrtf;
-f64 fd_tik__half_localstatic3_sqrtf;
-EvtWord tik_villager_urouro[101];
-
+/**
+ * REL prolog for the Rogueport Sewers module.
+ * Runs the static constructors, registers the init script of each of the 22 maps (tik_00 to tik_21)
+ * and the battle setup tables for the area.
+ */
 void _prolog(void) {
     voidfunctionptr* ctor;
 
@@ -74,6 +47,7 @@ void _prolog(void) {
     relSetBtlAddr("tik", btlsetup_tik_tbl, btl_tik_setup_no_tbl);
 }
 
+/** REL epilog. Runs the static destructors when the Rogueport Sewers module is unloaded. */
 void _epilog(void) {
     voidfunctionptr* dtor;
 
@@ -82,10 +56,17 @@ void _epilog(void) {
     }
 }
 
+/** Target of unresolved relocations in the module; does nothing. */
 void _unresolved(void) {
 }
 
-USER_FUNC(evt_tik_villager_urouro_check_func) {
+/**
+ * Script helper for the sewer residents' wandering.
+ * args[0] and args[1] are the variables holding the target X and Z;
+ * args[2], args[3] and args[4] are the home X, home Z and the allowed radius.
+ * If the target lies farther than the radius from home, the target is reset to the home point.
+ */
+static USER_FUNC(evt_tik_villager_urouro_check_func) {
     EvtWord* args = event->args;
     s32 xVar = args[0];
     s32 zVar = args[1];
@@ -107,38 +88,12 @@ USER_FUNC(evt_tik_villager_urouro_check_func) {
     return EVT_RETURN_DONE;
 }
 
-f32 fd_tik_negone_one_374[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_tik_neg_one_382 = -1.0f;
-
-f32 fd_tik___local_PI_383 = 3.1415927f;
-
-f32 fd_tik___local_3PIO2_385 = 4.712389f;
-
-f32 fd_tik_one_negone_373[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_tik___local_PIO2_384 = 1.5707964f;
-
-f32 fd_tik_one_381 = 1.0f;
-
-f32 fd_tik_negone_one_360[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_tik_neg_one_365 = -1.0f;
-
-f32 fd_tik___local_PI_366 = 3.1415927f;
-
-f32 fd_tik___local_3PIO2_368 = 4.712389f;
-
-f32 fd_tik_one_negone_359[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_tik___local_PIO2_367 = 1.5707964f;
-
-f32 fd_tik_one_364 = 1.0f;
-
-f64 fd_tik__three_localstatic4_sqrtf = 3.0;
-
-f64 fd_tik__half_localstatic3_sqrtf = 0.5;
-
+/**
+ * Wandering loop for the sewer residents (urouro = loitering about).
+ * The NPC flips to face the opposite way every few seconds, then picks a random heading of 120 to 240 degrees,
+ * walks 50 units that way (clamped to 70 units from where it started) at speed 30,
+ * and rests a second before repeating.
+ */
 EVT_BEGIN(tik_villager_urouro)
     CALL(evt_npc_status_onoff, 1, STRING("me"), 2)
     CALL(evt_npc_get_position, STRING("me"), LW(6), LW(7), LW(8))
@@ -166,4 +121,3 @@ EVT_BEGIN(tik_villager_urouro)
         WAIT_MS(1000)
     END_LOOP
 EVT_END()
-

@@ -200,8 +200,8 @@ typedef struct CHANNEL_DEFAULTS {
 #pragma pack(pop)
 #else
 #pragma pop
-#endif
 
+#endif
 typedef struct MIDI_CHANNEL_SETUP {
   // total size: 0x5
   u8 program; // offset 0x0, size 0x1

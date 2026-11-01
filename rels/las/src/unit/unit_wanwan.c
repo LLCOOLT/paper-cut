@@ -1,7 +1,8 @@
+// Palace of Shadow battle unit: the Chain-Chomp (`wanwan`): parts, stats, poses and AI scripts.
+
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
 
-#pragma force_active on
 #include "battle/battle.h"
 #include "battle/battle_unit.h"
 #include "battle/battle_sub.h"
@@ -13,50 +14,19 @@
 #include "evt/evt_eff.h"
 #include "evt/evt_sub.h"
 #include "battle/battle_database_common.h"
-#ifdef TARGET_PC /* declarations the GameCube code calls implicitly */
 #include "manager/evtmgr_cmd.h"
-#endif
+#include "libc_decls.h"
 
-#ifndef TARGET_PC /* PC port: the host libc declares these */
-double sqrt(double x);
-#endif
-void BtlUnit_SetAnim(BattleUnitPart* part, const char* anim);
+// Unit work slots (btlevtcmd_SetUnitWork / GetUnitWork)
+enum {
+    UW_WANWAN_AT_STAKE = 0,    // 1 while it waits at its stake, 0 during its lunge (written, never read)
+    UW_WANWAN_BARK_VOLUME = 1, // volume of its barking, 127 after init and each attack, fading to 32
+    UW_WANWAN_CHAIN_MODE = 2,  // chain_main: 0 free, 2 record the chain shape, 1 hold the recorded shape
+};
 
-USER_FUNC(btlevtcmd_AnimeChangePoseType);
-USER_FUNC(btlevtcmd_CheckDamageCode);
-USER_FUNC(btlevtcmd_DivePartsPosition);
-USER_FUNC(btlevtcmd_GetPartsPos);
-USER_FUNC(btlevtcmd_GetUnitId);
-USER_FUNC(btlevtcmd_GetUnitWork);
-USER_FUNC(btlevtcmd_OffAttribute);
-USER_FUNC(btlevtcmd_OnAttribute);
-USER_FUNC(btlevtcmd_PartsFaceDirectionSub);
-USER_FUNC(btlevtcmd_SetEventAttack);
-USER_FUNC(btlevtcmd_SetEventConfusion);
-USER_FUNC(btlevtcmd_SetEventDamage);
-USER_FUNC(btlevtcmd_SetEventWait);
-USER_FUNC(btlevtcmd_SetJumpSound);
-USER_FUNC(btlevtcmd_SetPartsFallAccel);
-USER_FUNC(btlevtcmd_SetUnitWork);
-USER_FUNC(btlevtcmd_StartWaitEvent);
 static USER_FUNC(chain_init);
 static USER_FUNC(chain_main);
-USER_FUNC(evt_btl_camera_set_mode);
 
-f32 fd_wanwan_negone_one_374[2] __attribute__((aligned(8)));
-f32 fd_wanwan_neg_one_382;
-f32 fd_wanwan___local_PI_383;
-f32 fd_wanwan___local_3PIO2_385;
-f32 fd_wanwan_one_negone_373[2] __attribute__((aligned(8)));
-f32 fd_wanwan___local_PIO2_384;
-f32 fd_wanwan_one_381;
-f32 fd_wanwan_negone_one_360[2] __attribute__((aligned(8)));
-f32 fd_wanwan_neg_one_365;
-f32 fd_wanwan___local_PI_366;
-f32 fd_wanwan___local_3PIO2_368;
-f32 fd_wanwan_one_negone_359[2] __attribute__((aligned(8)));
-f32 fd_wanwan___local_PIO2_367;
-f32 fd_wanwan_one_364;
 BattleUnitKind unit_wanwan;
 static BattleUnitDefense defence;
 static BattleUnitDefenseAttr defence_attr;
@@ -68,42 +38,26 @@ static BattleWeapon weapon_wanwan_attack;
 static EvtWord init_event[41];
 static EvtWord chain_event[23];
 static EvtWord damage_event[33];
+#if VERSION <= VERSION_DEMO_JP
+static EvtWord counter_damage_event[115];
+#else
 static EvtWord counter_damage_event[68];
+#endif
 static EvtWord dead_event[200];
 static EvtWord attack_event[452];
 static EvtWord wait_event[476];
 static EvtWord sound_gensui_event[22];
 static EvtWord wait_sound_event1[25];
+#if VERSION <= VERSION_DEMO_JP
+static EvtWord wait_sound_event2[11];
+#else
 static EvtWord wait_sound_event2[12];
+#endif
 
-f32 fd_wanwan_negone_one_374[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_wanwan_neg_one_382 = -1.0f;
-
-f32 fd_wanwan___local_PI_383 = 3.1415927f;
-
-f32 fd_wanwan___local_3PIO2_385 = 4.712389f;
-
-f32 fd_wanwan_one_negone_373[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_wanwan___local_PIO2_384 = 1.5707964f;
-
-f32 fd_wanwan_one_381 = 1.0f;
-
-f32 fd_wanwan_negone_one_360[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_wanwan_neg_one_365 = -1.0f;
-
-f32 fd_wanwan___local_PI_366 = 3.1415927f;
-
-f32 fd_wanwan___local_3PIO2_368 = 4.712389f;
-
-f32 fd_wanwan_one_negone_359[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_wanwan___local_PIO2_367 = 1.5707964f;
-
-f32 fd_wanwan_one_364 = 1.0f;
-
+/**
+ * Unit data of the Chain-Chomp: 7 HP, 34x36 units in size; ties together its sounds, parts,
+ * status vulnerability, init event and event table.
+ */
 BattleUnitKind unit_wanwan = {
     127,
     "btl_un_wanwan",
@@ -151,8 +105,13 @@ BattleUnitKind unit_wanwan = {
     36.0f,
     0,
     0,
+#if VERSION <= VERSION_DEMO_JP
+    -1,
+    0,
+#else
     0,
     2,
+#endif
     100,
     0,
     0.0f,
@@ -170,12 +129,33 @@ BattleUnitKind unit_wanwan = {
     data_table,
 };
 
+/**
+ * Defence of the Chain-Chomp: 5 against normal, explosion and electric hits;
+ * immune to fire and ice (defence 99 cancels the hit).
+ */
 static BattleUnitDefense defence = {{5, 99, 99, 5, 5}};
 
+/** Defence attributes of the Chain-Chomp: immune to fire hits; immune to ice hits. */
 static BattleUnitDefenseAttr defence_attr = {{0, 2, 2, 0, 0}};
 
+#if VERSION <= VERSION_DEMO_JP
+/**
+ * Demo builds: Status vulnerability of the Chain-Chomp (percent chance each status takes hold):
+ * immune to sleep; resists stop (65%), dizzy (65%), confusion (65%), freeze (65%), Tiny (65%),
+ * Attack Down (65%), Defense Down (65%), allergic (65%), fright (45%), Gale Force (30%), Slow (65%);
+ * the rest take hold at 80% or better.
+ */
+static StatusVulnerability regist = {0, 65, 65, 100, 65, 100, 100, 65, 100, 65, 100, 65, 100, 65, 65, 45, 30, 100, 65, 100, 100, 90};
+#else
+/**
+ * Retail builds: Status vulnerability of the Chain-Chomp (percent chance each status takes hold):
+ * immune to sleep, burn; resists stop (70%), dizzy (65%), confusion (65%), freeze (70%), allergic (65%),
+ * fright (45%), Gale Force (30%), Slow (65%); the rest take hold at 80% or better.
+ */
 static StatusVulnerability regist = {0, 70, 65, 100, 65, 100, 0, 70, 100, 90, 100, 90, 100, 95, 65, 45, 30, 100, 65, 100, 100, 90};
+#endif
 
+/** Pose table of the Chain-Chomp: maps its battle poses to its animations (WAN_*). */
 static PoseTableEntry pose_table[] = {
     {1, "WAN_N_1"},
     {2, "WAN_Y_1"},
@@ -184,20 +164,24 @@ static PoseTableEntry pose_table[] = {
     {4, "WAN_X_1"},
     {3, "WAN_X_1"},
     {27, "WAN_Z_1"},
-    {28, "WAN_S_1A"},
+    {BTL_POSE_NORMAL, "WAN_S_1A"},
     {29, "WAN_D_1"},
     {30, "WAN_D_1"},
     {31, "WAN_A_1"},
-    {39, "WAN_D_1"},
+    {BTL_POSE_DAMAGE, "WAN_D_1"},
     {50, "WAN_A_1"},
-    {42, "WAN_R_1"},
-    {40, "WAN_W_1"},
-    {56, "WAN_X_1"},
-    {57, "WAN_X_1"},
-    {65, "WAN_S_1A"},
-    {69, "WAN_S_1A"},
+    {BTL_POSE_RUN, "WAN_R_1"},
+    {BTL_POSE_WALK, "WAN_W_1"},
+    {BTL_POSE_DANGER, "WAN_X_1"},
+    {BTL_POSE_PERIL, "WAN_X_1"},
+    {BTL_POSE_TALK, "WAN_S_1A"},
+    {BTL_POSE_STAY_DEFAULT, "WAN_S_1A"},
 };
 
+/**
+ * Event table of the Chain-Chomp: dead_event (tag 49), counter_damage_event (tags 26, 25, 27, 28, 29, 30,
+ * 31, 32, 33, 34, 35, 36).
+ */
 static BattleDataEntry data_table[] = {
     {49, dead_event},
     {26, counter_damage_event},
@@ -216,18 +200,20 @@ static BattleDataEntry data_table[] = {
     {0, NULL},
 };
 
+/** Parts of the Chain-Chomp: 9 parts (model c_wanwan). */
 static BattleUnitKindPart parts[] = {
-    {1, "btl_un_wanwan", "c_wanwan", 0.0f, 0.0f, 0.0f, 5.0f, 30.0f, 0.0f, 0.0f, 40.0f, 0.0f, 20, 30, 255, &defence, &defence_attr, 0x10000009, 0, pose_table},
-    {2, "btl_un_wanwan", "c_wanwan", 0.0f, 0.0f, 0.0f, 15.0f, 25.0f, 0.0f, 0.0f, 30.0f, 0.0f, 20, 30, 255, &defence, &defence_attr, 0x12010000, 0, pose_table},
-    {3, "btl_un_wanwan", "c_wanwan", 0.0f, 0.0f, 0.0f, 15.0f, 25.0f, 0.0f, 0.0f, 30.0f, 0.0f, 20, 30, 255, &defence, &defence_attr, 0x12010000, 0, pose_table},
-    {4, "btl_un_wanwan", "c_wanwan", 0.0f, 0.0f, 0.0f, 15.0f, 25.0f, 0.0f, 0.0f, 30.0f, 0.0f, 20, 30, 255, &defence, &defence_attr, 0x12010000, 0, pose_table},
-    {5, "btl_un_wanwan", "c_wanwan", 0.0f, 0.0f, 0.0f, 15.0f, 25.0f, 0.0f, 0.0f, 30.0f, 0.0f, 20, 30, 255, &defence, &defence_attr, 0x12010000, 0, pose_table},
-    {6, "btl_un_wanwan", "c_wanwan", 0.0f, 0.0f, 0.0f, 15.0f, 25.0f, 0.0f, 0.0f, 30.0f, 0.0f, 20, 30, 255, &defence, &defence_attr, 0x12010000, 0, pose_table},
-    {7, "btl_un_wanwan", "c_wanwan", 0.0f, 0.0f, 0.0f, 15.0f, 25.0f, 0.0f, 0.0f, 30.0f, 0.0f, 20, 30, 255, &defence, &defence_attr, 0x12010000, 0, pose_table},
-    {8, "btl_un_wanwan", "c_wanwan", 0.0f, 0.0f, 0.0f, 15.0f, 25.0f, 0.0f, 0.0f, 30.0f, 0.0f, 20, 30, 255, &defence, &defence_attr, 0x12010000, 0, pose_table},
-    {9, "btl_un_wanwan", "c_wanwan", 0.0f, 0.0f, 0.0f, 15.0f, 25.0f, 0.0f, 0.0f, 30.0f, 0.0f, 20, 30, 255, &defence, &defence_attr, 0x12010000, 0, pose_table},
+    {1, "btl_un_wanwan", "c_wanwan", 0.0f, 0.0f, 0.0f, 5.0f, 30.0f, 0.0f, 0.0f, 40.0f, 0.0f, 20, 30, 255, &defence, &defence_attr, PART_ATTR_MAIN | PART_ATTR_GUARD_COVER | PART_ATTR_WORLD_POSITION, 0, pose_table},
+    {2, "btl_un_wanwan", "c_wanwan", 0.0f, 0.0f, 0.0f, 15.0f, 25.0f, 0.0f, 0.0f, 30.0f, 0.0f, 20, 30, 255, &defence, &defence_attr, PART_ATTR_NOT_TARGETABLE | PART_ATTR_NO_SHADOW | PART_ATTR_WORLD_POSITION, 0, pose_table},
+    {3, "btl_un_wanwan", "c_wanwan", 0.0f, 0.0f, 0.0f, 15.0f, 25.0f, 0.0f, 0.0f, 30.0f, 0.0f, 20, 30, 255, &defence, &defence_attr, PART_ATTR_NOT_TARGETABLE | PART_ATTR_NO_SHADOW | PART_ATTR_WORLD_POSITION, 0, pose_table},
+    {4, "btl_un_wanwan", "c_wanwan", 0.0f, 0.0f, 0.0f, 15.0f, 25.0f, 0.0f, 0.0f, 30.0f, 0.0f, 20, 30, 255, &defence, &defence_attr, PART_ATTR_NOT_TARGETABLE | PART_ATTR_NO_SHADOW | PART_ATTR_WORLD_POSITION, 0, pose_table},
+    {5, "btl_un_wanwan", "c_wanwan", 0.0f, 0.0f, 0.0f, 15.0f, 25.0f, 0.0f, 0.0f, 30.0f, 0.0f, 20, 30, 255, &defence, &defence_attr, PART_ATTR_NOT_TARGETABLE | PART_ATTR_NO_SHADOW | PART_ATTR_WORLD_POSITION, 0, pose_table},
+    {6, "btl_un_wanwan", "c_wanwan", 0.0f, 0.0f, 0.0f, 15.0f, 25.0f, 0.0f, 0.0f, 30.0f, 0.0f, 20, 30, 255, &defence, &defence_attr, PART_ATTR_NOT_TARGETABLE | PART_ATTR_NO_SHADOW | PART_ATTR_WORLD_POSITION, 0, pose_table},
+    {7, "btl_un_wanwan", "c_wanwan", 0.0f, 0.0f, 0.0f, 15.0f, 25.0f, 0.0f, 0.0f, 30.0f, 0.0f, 20, 30, 255, &defence, &defence_attr, PART_ATTR_NOT_TARGETABLE | PART_ATTR_NO_SHADOW | PART_ATTR_WORLD_POSITION, 0, pose_table},
+    {8, "btl_un_wanwan", "c_wanwan", 0.0f, 0.0f, 0.0f, 15.0f, 25.0f, 0.0f, 0.0f, 30.0f, 0.0f, 20, 30, 255, &defence, &defence_attr, PART_ATTR_NOT_TARGETABLE | PART_ATTR_NO_SHADOW | PART_ATTR_WORLD_POSITION, 0, pose_table},
+    {9, "btl_un_wanwan", "c_wanwan", 0.0f, 0.0f, 0.0f, 15.0f, 25.0f, 0.0f, 0.0f, 30.0f, 0.0f, 20, 30, 255, &defence, &defence_attr, PART_ATTR_NOT_TARGETABLE | PART_ATTR_NO_SHADOW | PART_ATTR_WORLD_POSITION, 0, pose_table},
 };
 
+/** Weapon of the Chain-Chomp (attack): targets one unit for 6 damage; used by attack_event. */
 static BattleWeapon weapon_wanwan_attack = {
     NULL, 0, // name..icon
     {0}, // pad_06
@@ -236,23 +222,23 @@ static BattleWeapon weapon_wanwan_attack = {
     0, 0, // baseFpCost..baseSpCost
     1, // superguardsAllowed
     1.0f, // reserved_14
-    1, // mStylishCommandMultiplier
+    1, // stylishCommandMultiplier
     1, // reserved_19
-    1, // mBingoSlotChance
+    1, // bingoSlotChance
     1, // reserved_1B
     weaponGetPowerDefault, // hpDamageFn
     {6, 0, 0, 0, 0, 0, 0, 0}, // hpDamageWork
     NULL, // fpDamageFn
     {0}, // fpDamageWork
-    0x1101260, // targetClassFlags
-    0x21002000, // targetPropertyFlags
-    0, 0, // element..damagePattern
+    TARGET_CLASS_NO_TREE_OR_SWITCH | TARGET_CLASS_NO_SYSTEM_UNIT | TARGET_CLASS_NO_OWN_ALLIANCE | TARGET_CLASS_NO_SELF | TARGET_CLASS_MAIN_PARTS | TARGET_CLASS_SINGLE, // targetClassFlags
+    TARGET_PROP_HAMMERLIKE | TARGET_PROP_FRONTMOST | TARGET_PROP_START_OPPOSING_SIDE, // targetPropertyFlags
+    ELEMENT_NORMAL, 0, // element..damagePattern
     3, // acLevel
     2, // reserved_6F
     NULL, // acHelpMsg
-    0x87, // special
-    0x72, // counterResistFlags
-    0x2004, // targetWeightFlags
+    SPECIAL_BADGE_BUFFABLE | SPECIAL_STATUS_BUFFABLE | SPECIAL_CHARGE_BUFFABLE | SPECIAL_SHATTERS_FREEZE, // special
+    COUNTER_RESIST_TOP_SPIKY | COUNTER_RESIST_FIERY | COUNTER_RESIST_ICY | COUNTER_RESIST_POISON, // counterResistFlags
+    TARGET_WEIGHT_PREFER_FRONT | TARGET_WEIGHT_UNUSED_2000, // targetWeightFlags
     0, 0, 0, 0, 0, 0, 0, 0, // sleepChance..poisonTime
     0, 0, 0, 0, 0, 0, 0, 0, // poisonStrength..burnChance
     0, 0, 0, 0, 0, 0, 0, 0, // burnTime..atkChangeTime
@@ -260,72 +246,105 @@ static BattleWeapon weapon_wanwan_attack = {
     0, 0, 0, 0, 0, 0, 0, 0, // fastChance..holdFastTime
     0, 0, 0, 0, 0, 0, // invisibleChance..fpRegenStrength
     {0}, // pad_AE
-    NULL, // mAttackEvtScript
+    NULL, // attackEvtScript
     {0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0}, // stageEffectRates
 };
 
+/**
+ * Init event of the Chain-Chomp: installs its wait, attack, damage and confusion events,
+ * sets up its chain (chain_init) and starts chain_event, sets the landing sound,
+ * and sets unit work 1 (the volume of its barking, 127 at the start) and unit work 0 = 1.
+ */
 static EVT_BEGIN(init_event)
-    CALL(btlevtcmd_SetEventWait, -2, PTR(wait_event))
-    CALL(btlevtcmd_SetEventAttack, -2, PTR(attack_event))
-    CALL(btlevtcmd_SetEventDamage, -2, PTR(damage_event))
-    CALL(btlevtcmd_SetEventConfusion, -2, PTR(attack_event))
-    CALL(btlevtcmd_SetUnitWork, -2, 0, 1)
-    CALL(chain_init, -2)
-    SPAWN_EVENT(PTR(chain_event))
-    CALL(btlevtcmd_SetJumpSound, -2, STRING("0"), STRING("SFX_ENM_WAN_LANDING1"))
-    CALL(btlevtcmd_SetUnitWork, -2, 1, 127)
-    CALL(btlevtcmd_StartWaitEvent, -2)
+    CALL(btlevtcmd_SetEventWait, BTL_UNIT_SELF, PTR(wait_event))
+    CALL(btlevtcmd_SetEventAttack, BTL_UNIT_SELF, PTR(attack_event))
+    CALL(btlevtcmd_SetEventDamage, BTL_UNIT_SELF, PTR(damage_event))
+    CALL(btlevtcmd_SetEventConfusion, BTL_UNIT_SELF, PTR(attack_event))
+    CALL(btlevtcmd_SetUnitWork, BTL_UNIT_SELF, UW_WANWAN_AT_STAKE, 1)
+    CALL(chain_init, BTL_UNIT_SELF)
+    SPAWN_EVENT(chain_event)
+    CALL(btlevtcmd_SetJumpSound, BTL_UNIT_SELF, STRING("0"), STRING("SFX_ENM_WAN_LANDING1"))
+    CALL(btlevtcmd_SetUnitWork, BTL_UNIT_SELF, UW_WANWAN_BARK_VOLUME, 127)
+    CALL(btlevtcmd_StartWaitEvent, BTL_UNIT_SELF)
     RETURN
 EVT_END()
 
+/**
+ * Event run for as long as the Chain-Chomp exists:
+ * updates its chain (chain_main) every frame and ends when the unit is gone.
+ */
 static EVT_BEGIN(chain_event)
     LABEL(0)
     WAIT_FRAMES(1)
-    CALL(btlevtcmd_GetUnitId, -2, LW(0))
+    CALL(btlevtcmd_GetUnitId, BTL_UNIT_SELF, LW(0))
     IF_INT_EQUAL(LW(0), -1)
         GOTO(99)
     END_IF
-    CALL(chain_main, -2)
+    CALL(chain_main, BTL_UNIT_SELF)
     GOTO(0)
     LABEL(99)
     RETURN
 EVT_END()
 
+/**
+ * Damage event of the Chain-Chomp: marks it as being damaged (unit work 2 = 2, attribute 4) around the default
+ * damage handling.
+ */
 static EVT_BEGIN(damage_event)
     SET_VALUE(LW(10), -2)
     SET_VALUE(LW(11), 1)
-    CALL(btlevtcmd_SetUnitWork, -2, 0, 1)
-    CALL(btlevtcmd_SetUnitWork, -2, 2, 2)
-    CALL(btlevtcmd_OnAttribute, LW(10), 4)
-    CALL_CHILD(PTR(btldefaultevt_Damage))
-    CALL(btlevtcmd_OffAttribute, LW(10), 4)
-    CALL(btlevtcmd_SetUnitWork, -2, 2, 0)
+    CALL(btlevtcmd_SetUnitWork, BTL_UNIT_SELF, UW_WANWAN_AT_STAKE, 1)
+    CALL(btlevtcmd_SetUnitWork, BTL_UNIT_SELF, UW_WANWAN_CHAIN_MODE, 2)
+    CALL(btlevtcmd_OnAttribute, LW(10), UNIT_ATTR_FLOATING)
+    CALL_CHILD(btldefaultevt_Damage)
+    CALL(btlevtcmd_OffAttribute, LW(10), UNIT_ATTR_FLOATING)
+    CALL(btlevtcmd_SetUnitWork, BTL_UNIT_SELF, UW_WANWAN_CHAIN_MODE, 0)
     RETURN
 EVT_END()
 
+/**
+ * Counter-damage event of the Chain-Chomp: after it is hit by a counter-type attack it is thrown into the air
+ * and tumbles back to the ground (in the US and later versions the landing is handled by the engine),
+ * then returns to its idle pose unless it was hit by damage code 512 without 2048.
+ */
 static EVT_BEGIN(counter_damage_event)
-    CALL(btlevtcmd_AnimeChangePoseType, -2, 1, 39)
+    CALL(btlevtcmd_AnimeChangePoseType, BTL_UNIT_SELF, 1, BTL_POSE_DAMAGE)
     CALL(btlevtcmd_SetPartsFallAccel, LW(10), 1, FLOAT(1.0f))
     CALL(btlevtcmd_GetPartsPos, LW(10), 1, LW(2), LW(3), LW(4))
     CALL(btlevtcmd_PartsFaceDirectionSub, LW(10), 1, LW(2), 25)
     ADD(LW(3), 25)
     CALL(btlevtcmd_DivePartsPosition, LW(10), 1, LW(2), LW(3), LW(4), 5, 0, 0, 0, -1)
+#if VERSION <= VERSION_DEMO_JP
+    WAIT_FRAMES(30)
+    CALL(btlevtcmd_SetPartsFallAccel, LW(10), 1, FLOAT(1.0f))
+    CALL(btlevtcmd_GetPartsPos, LW(10), 1, LW(2), LW(3), LW(4))
+    CALL(btlevtcmd_TransStageFloorPosition, LW(2), LW(3), LW(4))
+    CALL(btlevtcmd_FaceDirectionSub, LW(10), LW(2), 30)
+    CALL(btlevtcmd_JumpPartsPosition, LW(10), 1, LW(2), LW(3), LW(4), 20, -1)
+    CALL(btlevtcmd_FaceDirectionSub, LW(10), LW(2), 15)
+    CALL(btlevtcmd_JumpPartsPosition, LW(10), 1, LW(2), LW(3), LW(4), 10, -1)
+#endif
     WAIT_FRAMES(30)
     CALL(evt_btl_camera_set_mode, 0, 0)
-    CALL(btlevtcmd_CheckDamageCode, -2, 512, LW(0))
+    CALL(btlevtcmd_CheckDamageCode, BTL_UNIT_SELF, DAMAGE_FLAG_KO, LW(0))
     IF_INT_NOT_EQUAL(LW(0), 0)
-        CALL(btlevtcmd_CheckDamageCode, -2, 2048, LW(0))
+        CALL(btlevtcmd_CheckDamageCode, BTL_UNIT_SELF, DAMAGE_FLAG_LIFE_SHROOM, LW(0))
         IF_INT_EQUAL(LW(0), 0)
             RETURN
         END_IF
     END_IF
-    CALL(btlevtcmd_StartWaitEvent, -2)
+    CALL(btlevtcmd_StartWaitEvent, BTL_UNIT_SELF)
     RETURN
 EVT_END()
 
+/**
+ * Dead event of the Chain-Chomp: all 9 of its parts spin with the death sound for 48 frames,
+ * a smoke puff and the coins, experience and star points appear,
+ * and the parts tip over before the unit is killed (with a different kill mode for damage code 0x400).
+ */
 static EVT_BEGIN(dead_event)
     SET_VALUE(LW(0), 48)
-    CALL(btlevtcmd_snd_se, LW(10), STRING("SFX_BTL_ENEMY_DIE1_1"), -250000000, 0, -250000000)
+    CALL(btlevtcmd_snd_se, LW(10), STRING("SFX_BTL_ENEMY_DIE1_1"), EVT_NULLPTR, 0, EVT_NULLPTR)
     LABEL(10)
     WAIT_FRAMES(1)
     SET_VALUE(LW(11), 1)
@@ -342,7 +361,7 @@ static EVT_BEGIN(dead_event)
         CALL(btlevtcmd_SetPartsRotate, LW(10), LW(11), 0, 0, 0)
         ADD(LW(11), 1)
     END_LOOP
-    CALL(btlevtcmd_snd_se, LW(10), STRING("SFX_BTL_ENEMY_DIE1_2"), -250000000, 0, -250000000)
+    CALL(btlevtcmd_snd_se, LW(10), STRING("SFX_BTL_ENEMY_DIE1_2"), EVT_NULLPTR, 0, EVT_NULLPTR)
     CALL(btlevtcmd_GetPos, LW(10), LW(0), LW(1), LW(2))
     ADD(LW(2), 10)
     CALL(evt_eff, 0, STRING("kemuri_test"), 4, LW(0), LW(1), LW(2), FLOAT(0.7998047f), 0, 0, 0, 0, 0, 0, 0)
@@ -372,7 +391,7 @@ static EVT_BEGIN(dead_event)
         GOTO(20)
     END_IF
     CALL(btlevtcmd_GetBackItem, LW(10))
-    CALL(btlevtcmd_CheckDamageCode, LW(10), 1024, LW(0))
+    CALL(btlevtcmd_CheckDamageCode, LW(10), DAMAGE_FLAG_DEFEATED, LW(0))
     IF_INT_NOT_EQUAL(LW(0), 0)
         CALL(btlevtcmd_KillUnit, LW(10), 0)
     ELSE
@@ -381,75 +400,86 @@ static EVT_BEGIN(dead_event)
     RETURN
 EVT_END()
 
+/**
+ * Attack event of the Chain-Chomp: after the usual target selection (or item use) it hops twice on the spot,
+ * then lunges at the target with its chain stretched (sounds WAN_ATTACK1 and 2), and bites.
+ * The target may dodge, or the bite lands with the action command defence check and the camera shakes.
+ * It then jumps back to its place.
+ */
 static EVT_BEGIN(attack_event)
-    CALL(btlevtcmd_check_battleflag, LW(0), 2)
+    CALL(btlevtcmd_check_battleflag, LW(0), BATTLE_FLAG_FIRST_ATTACK)
     IF_INT_NOT_EQUAL(LW(0), 0)
         WAIT_MS(750)
         CALL(btlevtcmd_GetFirstAttackTarget, LW(3), LW(4))
     ELSE
-        CALL(btlevtcmd_EnemyItemUseCheck, -2, LW(0))
+        // If the AI wants to use a held item, it does that instead and ends its turn.
+        CALL(btlevtcmd_EnemyItemUseCheck, BTL_UNIT_SELF, LW(0))
         IF_INT_NOT_EQUAL(LW(0), 0)
             CALL_CHILD(LW(0))
-            CALL(btlevtcmd_StartWaitEvent, -2)
+            CALL(btlevtcmd_StartWaitEvent, BTL_UNIT_SELF)
             RETURN
         END_IF
-        CALL(btlevtcmd_GetEnemyBelong, -2, LW(0))
-        CALL(btlevtcmd_SamplingEnemy, -2, LW(0), PTR(&weapon_wanwan_attack))
+        CALL(btlevtcmd_GetEnemyBelong, BTL_UNIT_SELF, LW(0))
+        CALL(btlevtcmd_SamplingEnemy, BTL_UNIT_SELF, LW(0), PTR(&weapon_wanwan_attack))
         CALL(btlevtcmd_ChoiceSamplingEnemy, PTR(&weapon_wanwan_attack), LW(3), LW(4))
     END_IF
     IF_INT_EQUAL(LW(3), -1)
-        CALL(btlevtcmd_CheckToken, -2, 16, LW(0))
+        CALL(btlevtcmd_CheckToken, BTL_UNIT_SELF, TOKEN_FLAG_CONFUSED_ACTION, LW(0))
         IF_INT_NOT_EQUAL(LW(0), 0)
             CALL_CHILD(subsetevt_confuse_flustered)
             RETURN
         END_IF
         GOTO(99)
     END_IF
-    CALL(btlevtcmd_SetUnitWork, -2, 1, 127)
-    CALL(btlevtcmd_GetUnitWork, -2, 1, LW(14))
+    CALL(btlevtcmd_SetUnitWork, BTL_UNIT_SELF, UW_WANWAN_BARK_VOLUME, 127)
+    CALL(btlevtcmd_GetUnitWork, BTL_UNIT_SELF, UW_WANWAN_BARK_VOLUME, LW(14))
     CALL(btlevtcmd_WeaponAftereffect, PTR(&weapon_wanwan_attack))
-    CALL(btlevtcmd_AttackDeclare, -2, LW(3), LW(4))
+    CALL(btlevtcmd_AttackDeclare, BTL_UNIT_SELF, LW(3), LW(4))
     CALL(btlevtcmd_WaitGuardMove)
-    CALL(btlevtcmd_PayWeaponCost, -2, PTR(&weapon_wanwan_attack))
-    CALL(btlevtcmd_CalculateFaceDirection, -2, -1, LW(3), LW(4), 16, LW(15))
-    CALL(btlevtcmd_ChangePartsFaceDirection, -2, 1, LW(15))
-    CALL(btlevtcmd_SetUnitWork, -2, 0, 0)
-    CALL(btlevtcmd_StopWaitEvent, -2)
+    CALL(btlevtcmd_PayWeaponCost, BTL_UNIT_SELF, PTR(&weapon_wanwan_attack))
+    CALL(btlevtcmd_CalculateFaceDirection, BTL_UNIT_SELF, -1, LW(3), LW(4), 16, LW(15))
+    CALL(btlevtcmd_ChangePartsFaceDirection, BTL_UNIT_SELF, 1, LW(15))
+    CALL(btlevtcmd_SetUnitWork, BTL_UNIT_SELF, UW_WANWAN_AT_STAKE, 0)
+    // The idle loop is stopped and the camera moves in on the Chain-Chomp.
+    CALL(btlevtcmd_StopWaitEvent, BTL_UNIT_SELF)
     CALL(evt_btl_camera_set_mode, 0, 11)
-    CALL(evt_btl_camera_set_homing_unitparts, 0, -2, 1, LW(3), LW(4))
+    CALL(evt_btl_camera_set_homing_unitparts, 0, BTL_UNIT_SELF, 1, LW(3), LW(4))
     CALL(evt_btl_camera_set_moveSpeedLv, 0, 1)
     CALL(evt_btl_camera_set_zoom, 0, 250)
-    CALL(btlevtcmd_AnimeChangePose, -2, 1, STRING("WAN_A_1"))
+    CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("WAN_A_1"))
+    // It hops twice on the spot, barking (WAN_WAIT sounds), to get fired up.
     LOOP(2)
-        CALL(btlevtcmd_GetPartsPos, -2, 1, LW(0), LW(1), LW(2))
-        CALL(btlevtcmd_JumpPartsSetting, -2, 1, 20, 0, FLOAT(0.69921875f))
+        CALL(btlevtcmd_GetPartsPos, BTL_UNIT_SELF, 1, LW(0), LW(1), LW(2))
+        CALL(btlevtcmd_JumpPartsSetting, BTL_UNIT_SELF, 1, 20, 0, FLOAT(0.69921875f))
         BEGIN_SIBLING_EVENT
-            CALL(btlevtcmd_snd_se, -2, STRING("SFX_ENM_WAN_WAIT1"), LW(14), 0, -250000000)
-            CALL(btlevtcmd_snd_se, -2, STRING("SFX_ENM_WAN_WAIT3"), LW(14), 0, -250000000)
+            CALL(btlevtcmd_snd_se, BTL_UNIT_SELF, STRING("SFX_ENM_WAN_WAIT1"), LW(14), 0, EVT_NULLPTR)
+            CALL(btlevtcmd_snd_se, BTL_UNIT_SELF, STRING("SFX_ENM_WAN_WAIT3"), LW(14), 0, EVT_NULLPTR)
             WAIT_FRAMES(10)
-            CALL(btlevtcmd_snd_se, -2, STRING("SFX_ENM_WAN_WAIT2"), LW(14), 0, -250000000)
+            CALL(btlevtcmd_snd_se, BTL_UNIT_SELF, STRING("SFX_ENM_WAN_WAIT2"), LW(14), 0, EVT_NULLPTR)
         END_SIBLING_EVENT
-        CALL(btlevtcmd_JumpPartsPosition, -2, 1, LW(0), 0, LW(2), 20, -1)
+        CALL(btlevtcmd_JumpPartsPosition, BTL_UNIT_SELF, 1, LW(0), 0, LW(2), 20, -1)
     END_LOOP
     BEGIN_SIBLING_EVENT
         WAIT_FRAMES(20)
-        CALL(btlevtcmd_AnimeChangePose, -2, 1, STRING("WAN_S_1A"))
+        CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("WAN_S_1A"))
     END_SIBLING_EVENT
-    CALL(btlevtcmd_snd_se, -2, STRING("SFX_ENM_WAN_ATTACK1"), LW(14), 0, -250000000)
-    CALL(btlevtcmd_GetPartsPos, -2, 1, LW(0), LW(1), LW(2))
-    CALL(btlevtcmd_FaceDirectionSub, -2, LW(0), 40)
-    CALL(btlevtcmd_JumpPartsSetting, -2, 1, 30, 0, FLOAT(0.2998047f))
-    CALL(btlevtcmd_JumpPartsPosition, -2, 1, LW(0), 0, LW(2), 30, -1)
-    CALL(btlevtcmd_AnimeChangePose, -2, 1, STRING("WAN_A_1"))
-    CALL(btlevtcmd_snd_se, -2, STRING("SFX_ENM_WAN_ATTACK2"), LW(14), 0, -250000000)
+    // It lunges forward at the target with its chain stretched out behind it.
+    CALL(btlevtcmd_snd_se, BTL_UNIT_SELF, STRING("SFX_ENM_WAN_ATTACK1"), LW(14), 0, EVT_NULLPTR)
+    CALL(btlevtcmd_GetPartsPos, BTL_UNIT_SELF, 1, LW(0), LW(1), LW(2))
+    CALL(btlevtcmd_FaceDirectionSub, BTL_UNIT_SELF, LW(0), 40)
+    CALL(btlevtcmd_JumpPartsSetting, BTL_UNIT_SELF, 1, 30, 0, FLOAT(0.2998047f))
+    CALL(btlevtcmd_JumpPartsPosition, BTL_UNIT_SELF, 1, LW(0), 0, LW(2), 30, -1)
+    CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("WAN_A_1"))
+    // It leaps at the target with its mouth open (WAN_A_1).
+    CALL(btlevtcmd_snd_se, BTL_UNIT_SELF, STRING("SFX_ENM_WAN_ATTACK2"), LW(14), 0, EVT_NULLPTR)
     CALL(btlevtcmd_GetHitPos, LW(3), LW(4), LW(0), LW(1), LW(2))
     SUBTRACT(LW(1), 10)
     IF_INT_LESS(LW(1), 0)
         SET_VALUE(LW(1), 0)
     END_IF
-    CALL(btlevtcmd_JumpPartsSetting, -2, 1, 0, FLOAT(16.0f), FLOAT(0.0f))
-    CALL(btlevtcmd_JumpPartsPosition, -2, 1, LW(0), LW(1), 10, 0, -1)
-    CALL(btlevtcmd_PreCheckDamage, -2, LW(3), LW(4), PTR(&weapon_wanwan_attack), 0, LW(5))
+    CALL(btlevtcmd_JumpPartsSetting, BTL_UNIT_SELF, 1, 0, FLOAT(16.0f), FLOAT(0.0f))
+    CALL(btlevtcmd_JumpPartsPosition, BTL_UNIT_SELF, 1, LW(0), LW(1), 10, 0, -1)
+    CALL(btlevtcmd_PreCheckDamage, BTL_UNIT_SELF, LW(3), LW(4), PTR(&weapon_wanwan_attack), 0, LW(5))
     SWITCH(LW(5))
         CASE_OR_EQUAL(4)
         GOTO(90)
@@ -471,67 +501,80 @@ static EVT_BEGIN(attack_event)
         GOTO(98)
         CASE_END
     END_SWITCH
+    // The bite misses or is blocked: it drops to the ground in front of the target and growls.
     LABEL(90)
     WAIT_FRAMES(30)
-    CALL(btlevtcmd_snd_se, -2, STRING("SFX_ENM_WAN_WAIT1"), LW(14), 0, -250000000)
-    CALL(btlevtcmd_AnimeChangePose, -2, 1, STRING("WAN_S_1A"))
-    CALL(btlevtcmd_GetPos, -2, LW(0), LW(1), LW(2))
-    CALL(btlevtcmd_JumpPartsSetting, -2, 1, 0, FLOAT(8.0f), FLOAT(0.0f))
-    CALL(btlevtcmd_JumpPartsPosition, -2, 1, LW(0), LW(1), LW(2), 0, -1)
+    CALL(btlevtcmd_snd_se, BTL_UNIT_SELF, STRING("SFX_ENM_WAN_WAIT1"), LW(14), 0, EVT_NULLPTR)
+    CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("WAN_S_1A"))
+    CALL(btlevtcmd_GetPos, BTL_UNIT_SELF, LW(0), LW(1), LW(2))
+    CALL(btlevtcmd_JumpPartsSetting, BTL_UNIT_SELF, 1, 0, FLOAT(8.0f), FLOAT(0.0f))
+    CALL(btlevtcmd_JumpPartsPosition, BTL_UNIT_SELF, 1, LW(0), LW(1), LW(2), 0, -1)
     GOTO(98)
+    // The bite lands: the camera shakes, the Action Command defence result is applied and damage is dealt.
     LABEL(91)
     CALL(evt_btl_camera_shake_h, 0, 1, 1, 8, 0)
     CALL(evt_btl_camera_set_moveSpeedLv, 0, 2)
     CALL(evt_btl_camera_add_zoom, 0, -50)
     CALL(btlevtcmd_ResultACDefence, LW(3), PTR(&weapon_wanwan_attack))
-    CALL(btlevtcmd_CheckDamage, -2, LW(3), LW(4), PTR(&weapon_wanwan_attack), 256, LW(5))
+    CALL(btlevtcmd_CheckDamage, BTL_UNIT_SELF, LW(3), LW(4), PTR(&weapon_wanwan_attack), DAMAGE_FLAG_LAST_HIT, LW(5))
     WAIT_FRAMES(30)
-    CALL(btlevtcmd_snd_se, -2, STRING("SFX_ENM_WAN_WAIT1"), LW(14), 0, -250000000)
-    CALL(btlevtcmd_AnimeChangePose, -2, 1, STRING("WAN_S_1A"))
-    CALL(btlevtcmd_GetPos, -2, LW(0), LW(1), LW(2))
-    CALL(btlevtcmd_JumpPartsSetting, -2, 1, 0, FLOAT(8.0f), FLOAT(0.25f))
-    CALL(btlevtcmd_JumpPartsPosition, -2, 1, LW(0), LW(1), LW(2), 0, -1)
+    CALL(btlevtcmd_snd_se, BTL_UNIT_SELF, STRING("SFX_ENM_WAN_WAIT1"), LW(14), 0, EVT_NULLPTR)
+    CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("WAN_S_1A"))
+    CALL(btlevtcmd_GetPos, BTL_UNIT_SELF, LW(0), LW(1), LW(2))
+    CALL(btlevtcmd_JumpPartsSetting, BTL_UNIT_SELF, 1, 0, FLOAT(8.0f), FLOAT(0.25f))
+    CALL(btlevtcmd_JumpPartsPosition, BTL_UNIT_SELF, 1, LW(0), LW(1), LW(2), 0, -1)
     GOTO(98)
+    // The camera resets.
     LABEL(98)
     CALL(evt_btl_camera_set_mode, 0, 0)
     WAIT_MS(250)
     LABEL(99)
-    CALL(btlevtcmd_SetUnitWork, -2, 0, 1)
-    CALL(btlevtcmd_ChangePartsFaceDirection, -2, 1, -1)
-    CALL(btlevtcmd_StartWaitEvent, -2)
+    CALL(btlevtcmd_SetUnitWork, BTL_UNIT_SELF, UW_WANWAN_AT_STAKE, 1)
+    CALL(btlevtcmd_ChangePartsFaceDirection, BTL_UNIT_SELF, 1, -1)
+    CALL(btlevtcmd_StartWaitEvent, BTL_UNIT_SELF)
     RETURN
 EVT_END()
 
+/**
+ * Wait event of the Chain-Chomp: picks the idle behaviour by status.
+ * Asleep (status 1) it breathes with a slow tilting;
+ * stopped or frozen (statuses 2 and 9) it stays in its stunned pose;
+ * dizzy, poisoned or confused (statuses 3 to 5) it hops slowly;
+ * otherwise it hops in place barking, with sounds.
+ * Each runs in a sibling event and the event then loops forever.
+ */
 static EVT_BEGIN(wait_event)
-    CALL(btlevtcmd_SetUnitWork, -2, 2, 0)
-    CALL(btlevtcmd_CheckStatus, -2, 1, LW(15))
+    CALL(btlevtcmd_SetUnitWork, BTL_UNIT_SELF, UW_WANWAN_CHAIN_MODE, 0)
+    // Asleep: the Chain-Chomp lies still (WAN_N_1) and rocks slowly from side to side.
+    CALL(btlevtcmd_CheckStatus, BTL_UNIT_SELF, STATUS_SLEEP, LW(15))
     IF_INT_NOT_EQUAL(LW(15), 0)
-        CALL(btlevtcmd_SetUnitWork, -2, 2, 2)
-        CALL(btlevtcmd_AnimeChangePose, -2, 1, STRING("WAN_N_1"))
-        CALL(btlevtcmd_SetPartsRotateOffset, -2, 1, 0, 10, 0)
+        CALL(btlevtcmd_SetUnitWork, BTL_UNIT_SELF, UW_WANWAN_CHAIN_MODE, 2)
+        CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("WAN_N_1"))
+        CALL(btlevtcmd_SetPartsRotateOffset, BTL_UNIT_SELF, 1, 0, 10, 0)
         BEGIN_SIBLING_EVENT
             LABEL(1)
             CALL_CHILD(sound_gensui_event)
-            CALL(btlevtcmd_SetPartsRotate, -2, 1, 0, 0, 0)
+            CALL(btlevtcmd_SetPartsRotate, BTL_UNIT_SELF, 1, 0, 0, 0)
             WAIT_FRAMES(20)
             LOOP(10)
                 WAIT_FRAMES(4)
-                CALL(btlevtcmd_AddPartsRotate, -2, 1, 0, 0, 1)
+                CALL(btlevtcmd_AddPartsRotate, BTL_UNIT_SELF, 1, 0, 0, 1)
             END_LOOP
             LOOP(10)
                 WAIT_FRAMES(4)
-                CALL(btlevtcmd_AddPartsRotate, -2, 1, 0, 0, -1)
+                CALL(btlevtcmd_AddPartsRotate, BTL_UNIT_SELF, 1, 0, 0, -1)
             END_LOOP
             GOTO(1)
         END_SIBLING_EVENT
         GOTO(98)
     END_IF
-    CALL(btlevtcmd_CheckStatus, -2, 2, LW(14))
-    CALL(btlevtcmd_CheckStatus, -2, 9, LW(15))
+    // Stopped or frozen: it stays in its stunned pose (WAN_Y_1), only growling now and then.
+    CALL(btlevtcmd_CheckStatus, BTL_UNIT_SELF, STATUS_STOP, LW(14))
+    CALL(btlevtcmd_CheckStatus, BTL_UNIT_SELF, STATUS_FREEZE, LW(15))
     OR(LW(15), LW(14))
     IF_INT_NOT_EQUAL(LW(15), 0)
-        CALL(btlevtcmd_SetUnitWork, -2, 2, 2)
-        CALL(btlevtcmd_AnimeChangePose, -2, 1, STRING("WAN_Y_1"))
+        CALL(btlevtcmd_SetUnitWork, BTL_UNIT_SELF, UW_WANWAN_CHAIN_MODE, 2)
+        CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("WAN_Y_1"))
         BEGIN_SIBLING_EVENT
             LABEL(5)
             CALL_CHILD(sound_gensui_event)
@@ -541,42 +584,44 @@ static EVT_BEGIN(wait_event)
         END_SIBLING_EVENT
         GOTO(98)
     END_IF
-    CALL(btlevtcmd_CheckStatus, -2, 5, LW(13))
-    CALL(btlevtcmd_CheckStatus, -2, 4, LW(14))
-    CALL(btlevtcmd_CheckStatus, -2, 3, LW(15))
+    // Dizzy, poisoned or confused: it hops about slowly in a tired pattern, landing with a thud each time.
+    CALL(btlevtcmd_CheckStatus, BTL_UNIT_SELF, STATUS_CONFUSE, LW(13))
+    CALL(btlevtcmd_CheckStatus, BTL_UNIT_SELF, STATUS_POISON, LW(14))
+    CALL(btlevtcmd_CheckStatus, BTL_UNIT_SELF, STATUS_DIZZY, LW(15))
     OR(LW(15), LW(13))
     OR(LW(15), LW(14))
     IF_INT_NOT_EQUAL(LW(15), 0)
+        // Normally it bounces on the spot, barking and landing with a thud on each hop (WAN_A_1 and WAN_S_1A).
         BEGIN_SIBLING_EVENT
             LABEL(3)
             CALL_CHILD(sound_gensui_event)
-            CALL(btlevtcmd_AnimeChangePoseFromTable, -2, 1)
+            CALL(btlevtcmd_AnimeChangePoseFromTable, BTL_UNIT_SELF, 1)
             CALL(evt_sub_random, 20, LW(0))
             WAIT_FRAMES(LW(0))
             SET_VALUE(LW(10), 15)
             SPAWN_EVENT(wait_sound_event1)
-            CALL(btlevtcmd_GetPos, -2, LW(0), LW(1), LW(2))
-            CALL(btlevtcmd_JumpPartsSetting, -2, 1, 30, 0, FLOAT(0.25f))
-            CALL(btlevtcmd_JumpPartsPosition, -2, 1, LW(0), 0, LW(2), 30, 0)
-            CALL(btlevtcmd_snd_se, -2, STRING("SFX_ENM_WAN_LANDING1"), LW(11), 0, -250000000)
+            CALL(btlevtcmd_GetPos, BTL_UNIT_SELF, LW(0), LW(1), LW(2))
+            CALL(btlevtcmd_JumpPartsSetting, BTL_UNIT_SELF, 1, 30, 0, FLOAT(0.25f))
+            CALL(btlevtcmd_JumpPartsPosition, BTL_UNIT_SELF, 1, LW(0), 0, LW(2), 30, 0)
+            CALL(btlevtcmd_snd_se, BTL_UNIT_SELF, STRING("SFX_ENM_WAN_LANDING1"), LW(11), 0, EVT_NULLPTR)
             SET_VALUE(LW(10), 10)
             SPAWN_EVENT(wait_sound_event2)
-            CALL(btlevtcmd_FaceDirectionAdd, -2, LW(0), 5)
-            CALL(btlevtcmd_JumpPartsSetting, -2, 1, 20, 0, FLOAT(0.19921875f))
-            CALL(btlevtcmd_JumpPartsPosition, -2, 1, LW(0), 0, LW(2), 20, 0)
-            CALL(btlevtcmd_snd_se, -2, STRING("SFX_ENM_WAN_LANDING1"), LW(11), 0, -250000000)
+            CALL(btlevtcmd_FaceDirectionAdd, BTL_UNIT_SELF, LW(0), 5)
+            CALL(btlevtcmd_JumpPartsSetting, BTL_UNIT_SELF, 1, 20, 0, FLOAT(0.19921875f))
+            CALL(btlevtcmd_JumpPartsPosition, BTL_UNIT_SELF, 1, LW(0), 0, LW(2), 20, 0)
+            CALL(btlevtcmd_snd_se, BTL_UNIT_SELF, STRING("SFX_ENM_WAN_LANDING1"), LW(11), 0, EVT_NULLPTR)
             SET_VALUE(LW(10), 7)
             SPAWN_EVENT(wait_sound_event2)
-            CALL(btlevtcmd_FaceDirectionSub, -2, LW(0), 20)
-            CALL(btlevtcmd_JumpPartsSetting, -2, 1, 15, 0, FLOAT(0.39941406f))
-            CALL(btlevtcmd_JumpPartsPosition, -2, 1, LW(0), 0, LW(2), 15, 0)
-            CALL(btlevtcmd_snd_se, -2, STRING("SFX_ENM_WAN_LANDING1"), LW(11), 0, -250000000)
+            CALL(btlevtcmd_FaceDirectionSub, BTL_UNIT_SELF, LW(0), 20)
+            CALL(btlevtcmd_JumpPartsSetting, BTL_UNIT_SELF, 1, 15, 0, FLOAT(0.39941406f))
+            CALL(btlevtcmd_JumpPartsPosition, BTL_UNIT_SELF, 1, LW(0), 0, LW(2), 15, 0)
+            CALL(btlevtcmd_snd_se, BTL_UNIT_SELF, STRING("SFX_ENM_WAN_LANDING1"), LW(11), 0, EVT_NULLPTR)
             SET_VALUE(LW(10), 7)
             SPAWN_EVENT(wait_sound_event2)
-            CALL(btlevtcmd_GetPos, -2, LW(0), LW(1), LW(2))
-            CALL(btlevtcmd_JumpPartsSetting, -2, 1, 15, 0, FLOAT(0.19921875f))
-            CALL(btlevtcmd_JumpPartsPosition, -2, 1, LW(0), LW(1), LW(2), 15, 0)
-            CALL(btlevtcmd_snd_se, -2, STRING("SFX_ENM_WAN_LANDING1"), LW(11), 0, -250000000)
+            CALL(btlevtcmd_GetPos, BTL_UNIT_SELF, LW(0), LW(1), LW(2))
+            CALL(btlevtcmd_JumpPartsSetting, BTL_UNIT_SELF, 1, 15, 0, FLOAT(0.19921875f))
+            CALL(btlevtcmd_JumpPartsPosition, BTL_UNIT_SELF, 1, LW(0), LW(1), LW(2), 15, 0)
+            CALL(btlevtcmd_snd_se, BTL_UNIT_SELF, STRING("SFX_ENM_WAN_LANDING1"), LW(11), 0, EVT_NULLPTR)
             GOTO(3)
         END_SIBLING_EVENT
         GOTO(98)
@@ -588,32 +633,32 @@ static EVT_BEGIN(wait_event)
         WAIT_FRAMES(LW(0))
         SET_VALUE(LW(10), 15)
         SPAWN_EVENT(wait_sound_event1)
-        CALL(btlevtcmd_AnimeChangePose, -2, 1, STRING("WAN_A_1"))
-        CALL(btlevtcmd_GetPos, -2, LW(0), LW(1), LW(2))
-        CALL(btlevtcmd_JumpPartsSetting, -2, 1, 30, 0, FLOAT(0.25f))
-        CALL(btlevtcmd_JumpPartsPosition, -2, 1, LW(0), 0, LW(2), 30, 0)
-        CALL(btlevtcmd_snd_se, -2, STRING("SFX_ENM_WAN_LANDING1"), LW(11), 0, -250000000)
+        CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("WAN_A_1"))
+        CALL(btlevtcmd_GetPos, BTL_UNIT_SELF, LW(0), LW(1), LW(2))
+        CALL(btlevtcmd_JumpPartsSetting, BTL_UNIT_SELF, 1, 30, 0, FLOAT(0.25f))
+        CALL(btlevtcmd_JumpPartsPosition, BTL_UNIT_SELF, 1, LW(0), 0, LW(2), 30, 0)
+        CALL(btlevtcmd_snd_se, BTL_UNIT_SELF, STRING("SFX_ENM_WAN_LANDING1"), LW(11), 0, EVT_NULLPTR)
         SET_VALUE(LW(10), 10)
         SPAWN_EVENT(wait_sound_event2)
-        CALL(btlevtcmd_AnimeChangePose, -2, 1, STRING("WAN_S_1A"))
-        CALL(btlevtcmd_FaceDirectionAdd, -2, LW(0), 5)
-        CALL(btlevtcmd_JumpPartsSetting, -2, 1, 20, 0, FLOAT(0.19921875f))
-        CALL(btlevtcmd_JumpPartsPosition, -2, 1, LW(0), 0, LW(2), 20, 0)
-        CALL(btlevtcmd_snd_se, -2, STRING("SFX_ENM_WAN_LANDING1"), LW(11), 0, -250000000)
+        CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("WAN_S_1A"))
+        CALL(btlevtcmd_FaceDirectionAdd, BTL_UNIT_SELF, LW(0), 5)
+        CALL(btlevtcmd_JumpPartsSetting, BTL_UNIT_SELF, 1, 20, 0, FLOAT(0.19921875f))
+        CALL(btlevtcmd_JumpPartsPosition, BTL_UNIT_SELF, 1, LW(0), 0, LW(2), 20, 0)
+        CALL(btlevtcmd_snd_se, BTL_UNIT_SELF, STRING("SFX_ENM_WAN_LANDING1"), LW(11), 0, EVT_NULLPTR)
         SET_VALUE(LW(10), 7)
         SPAWN_EVENT(wait_sound_event2)
-        CALL(btlevtcmd_AnimeChangePose, -2, 1, STRING("WAN_A_1"))
-        CALL(btlevtcmd_FaceDirectionSub, -2, LW(0), 20)
-        CALL(btlevtcmd_JumpPartsSetting, -2, 1, 15, 0, FLOAT(0.39941406f))
-        CALL(btlevtcmd_JumpPartsPosition, -2, 1, LW(0), 0, LW(2), 15, 0)
-        CALL(btlevtcmd_snd_se, -2, STRING("SFX_ENM_WAN_LANDING1"), LW(11), 0, -250000000)
+        CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("WAN_A_1"))
+        CALL(btlevtcmd_FaceDirectionSub, BTL_UNIT_SELF, LW(0), 20)
+        CALL(btlevtcmd_JumpPartsSetting, BTL_UNIT_SELF, 1, 15, 0, FLOAT(0.39941406f))
+        CALL(btlevtcmd_JumpPartsPosition, BTL_UNIT_SELF, 1, LW(0), 0, LW(2), 15, 0)
+        CALL(btlevtcmd_snd_se, BTL_UNIT_SELF, STRING("SFX_ENM_WAN_LANDING1"), LW(11), 0, EVT_NULLPTR)
         SET_VALUE(LW(10), 7)
         SPAWN_EVENT(wait_sound_event2)
-        CALL(btlevtcmd_AnimeChangePose, -2, 1, STRING("WAN_S_1A"))
-        CALL(btlevtcmd_GetPos, -2, LW(0), LW(1), LW(2))
-        CALL(btlevtcmd_JumpPartsSetting, -2, 1, 15, 0, FLOAT(0.19921875f))
-        CALL(btlevtcmd_JumpPartsPosition, -2, 1, LW(0), LW(1), LW(2), 15, 0)
-        CALL(btlevtcmd_snd_se, -2, STRING("SFX_ENM_WAN_LANDING1"), LW(11), 0, -250000000)
+        CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("WAN_S_1A"))
+        CALL(btlevtcmd_GetPos, BTL_UNIT_SELF, LW(0), LW(1), LW(2))
+        CALL(btlevtcmd_JumpPartsSetting, BTL_UNIT_SELF, 1, 15, 0, FLOAT(0.19921875f))
+        CALL(btlevtcmd_JumpPartsPosition, BTL_UNIT_SELF, 1, LW(0), LW(1), LW(2), 15, 0)
+        CALL(btlevtcmd_snd_se, BTL_UNIT_SELF, STRING("SFX_ENM_WAN_LANDING1"), LW(11), 0, EVT_NULLPTR)
         GOTO(4)
     END_SIBLING_EVENT
     GOTO(98)
@@ -624,30 +669,50 @@ static EVT_BEGIN(wait_event)
     RETURN
 EVT_END()
 
+/**
+ * Script helper event: lowers the volume of the Chain-Chomp's barking (unit work 1) by about 30 percent,
+ * to a minimum of 32, each time it is called.
+ */
 static EVT_BEGIN(sound_gensui_event)
-    CALL(btlevtcmd_GetUnitWork, -2, 1, LW(11))
+    CALL(btlevtcmd_GetUnitWork, BTL_UNIT_SELF, UW_WANWAN_BARK_VOLUME, LW(11))
     MULTIPLY_FLOAT(LW(11), FLOAT(0.69921875f))
     IF_INT_LESS(LW(11), 32)
         SET_VALUE(LW(11), 32)
     END_IF
-    CALL(btlevtcmd_SetUnitWork, -2, 1, LW(11))
+    CALL(btlevtcmd_SetUnitWork, BTL_UNIT_SELF, UW_WANWAN_BARK_VOLUME, LW(11))
     RETURN
 EVT_END()
 
+/**
+ * Plays the Chain-Chomp's first bark sound set (WAIT1 and WAIT3, then WAIT2 after LW(10) frames) at the volume
+ * in LW(11).
+ */
 static EVT_BEGIN(wait_sound_event1)
-    CALL(btlevtcmd_snd_se, -2, STRING("SFX_ENM_WAN_WAIT1"), LW(11), 0, -250000000)
-    CALL(btlevtcmd_snd_se, -2, STRING("SFX_ENM_WAN_WAIT3"), LW(11), 0, -250000000)
+    CALL(btlevtcmd_snd_se, BTL_UNIT_SELF, STRING("SFX_ENM_WAN_WAIT1"), LW(11), 0, EVT_NULLPTR)
+    CALL(btlevtcmd_snd_se, BTL_UNIT_SELF, STRING("SFX_ENM_WAN_WAIT3"), LW(11), 0, EVT_NULLPTR)
     WAIT_FRAMES(LW(10))
-    CALL(btlevtcmd_snd_se, -2, STRING("SFX_ENM_WAN_WAIT2"), LW(11), 0, -250000000)
+    CALL(btlevtcmd_snd_se, BTL_UNIT_SELF, STRING("SFX_ENM_WAN_WAIT2"), LW(11), 0, EVT_NULLPTR)
     RETURN
 EVT_END()
 
+/** Plays the Chain-Chomp's second bark sound (WAIT4) after LW(10) frames at the volume in LW(11). */
 static EVT_BEGIN(wait_sound_event2)
     WAIT_FRAMES(LW(10))
-    CALL(btlevtcmd_snd_se, -2, STRING("SFX_ENM_WAN_WAIT4"), LW(11), 0, -250000000)
+    CALL(btlevtcmd_snd_se, BTL_UNIT_SELF, STRING("SFX_ENM_WAN_WAIT4"), LW(11), 0, EVT_NULLPTR)
     RETURN
+#if VERSION <= VERSION_DEMO_JP
+EVT_END()
+#else
 EVT_END_PAD()
+#endif
 
+/**
+ * Script helper (runs every frame): lays out the Chain-Chomp's chain.
+ * The chain has nine parts; part 9 is the stake behind the chomp and parts 2..8 are the links.
+ * Normally the links hang like a catenary between the chomp (part 1) and the stake,
+ * sagging by 300 / length squared; with work[2] == 2 it records the current shape
+ * and with work[2] == 1 it keeps the recorded shape fixed (used after the chomp is knocked loose).
+ */
 static USER_FUNC(chain_main) {
     BattleWork* wp = _battleWorkPointer;
     EvtWord* args = event->args;
@@ -682,7 +747,7 @@ static USER_FUNC(chain_main) {
     BtlUnit_GetPos(unit, &x, &y, &z);
     BtlUnit_SetPartsPos(BtlUnit_GetPartsPtr(unit, 9), x - 20.0f * unit->faceDirection, y, z);
     // 2: remember the chain's shape relative to the stake
-    if (unit->work[2] == 2) {
+    if (unit->work[UW_WANWAN_CHAIN_MODE] == 2) {
         BtlUnit_GetPartsPos(BtlUnit_GetPartsPtr(unit, 9), &x, &y, &z);
         for (i = 8; i >= 1; i--) {
             part = BtlUnit_GetPartsPtr(unit, i);
@@ -690,10 +755,10 @@ static USER_FUNC(chain_main) {
             part->work[0] = x2 - x;
             part->work[1] = y2 - y;
         }
-        unit->work[2] = 1;
+        unit->work[UW_WANWAN_CHAIN_MODE] = 1;
     }
     // 1: keep that shape
-    if (unit->work[2] == 1) {
+    if (unit->work[UW_WANWAN_CHAIN_MODE] == 1) {
         BtlUnit_GetPartsPos(BtlUnit_GetPartsPtr(unit, 9), &x, &y, &z);
         for (i = 8; i >= 1; i--) {
             part = BtlUnit_GetPartsPtr(unit, i);
@@ -707,22 +772,33 @@ static USER_FUNC(chain_main) {
     dx = x1 - x2;
     dy = y1 - y2;
     dz = z1 - z2;
+#if VERSION <= VERSION_DEMO_JP
+    len = (f32)sqrt(dx * dx + dy * dy + dz * dz) / 7;
+#else
     len = (f32)sqrt(dx * dx + dy * dy + dz * dz) / 8;
+#endif
     if (len < 10.0f) {
         len = 10.0f;
     }
     sag = 300.0f / (len * len);
+#if VERSION >= VERSION_JP
+    // keep the chomp below the top of the stage
     part = BtlUnit_GetPartsPtr(unit, 1);
     BtlUnit_GetPartsPos(part, &x, &y, &z);
     if (y > 110.0f) {
         y = 110.0f;
     }
     BtlUnit_SetPartsPos(part, x, y, z);
+#endif
     BtlUnit_GetPartsPos(BtlUnit_GetPartsPtr(unit, 1), &x, &y, &z);
     x += -(unit->faceDirection * 16);
     y += 16.0f;
     BtlUnit_SetPartsPos(BtlUnit_GetPartsPtr(unit, 2), x, y, z);
+#if VERSION <= VERSION_DEMO_JP
+    for (i = 2; i <= 6; i++) {
+#else
     for (i = 2; i <= 7; i++) {
+#endif
         BtlUnit_GetPartsPos(BtlUnit_GetPartsPtr(unit, i), &x1, &y1, &z1);
         part = BtlUnit_GetPartsPtr(unit, i + 1);
         BtlUnit_GetPartsPos(part, &x2, &y2, &z2);
@@ -759,6 +835,11 @@ static USER_FUNC(chain_main) {
     return EVT_RETURN_DONE;
 }
 
+/**
+ * Script helper: sets up the Chain-Chomp's chain at the start of battle:
+ * puts links 2..7 on the chomp, link 8 and the stake (part 9) 20 units behind it,
+ * and sets their chain animations.
+ */
 static USER_FUNC(chain_init) {
     BattleWork* wp = _battleWorkPointer;
     EvtWord* args = event->args;
@@ -788,4 +869,3 @@ static USER_FUNC(chain_init) {
     BtlUnit_SetAnim(part, "WAN_Z_2");
     return EVT_RETURN_DONE;
 }
-

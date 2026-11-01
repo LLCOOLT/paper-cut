@@ -1,3 +1,5 @@
+// Paper Mario 64 effect: flame with scrolling textures; type picks the colour pair and shape.
+#include "eff/n64/eff_flame_n64.h"
 #include "driver/camdrv.h"
 #include "driver/dispdrv.h"
 #include "driver/effdrv.h"
@@ -6,16 +8,7 @@
 #include <dolphin/mtx.h>
 #include <dolphin/os/OSFastCast.h>
 #include <string.h>
-
-typedef struct effN64Vtx {
-    s16 x, y, z;   // 0x0
-    s16 s, t;      // 0x6
-    u8 r, g, b, a; // 0xA
-} effN64Vtx;
-
-void effGetTexObjN64(u32 id, GXTexObj* obj);
-void effSetVtxDescN64(effN64Vtx* vtx);
-void tri2();
+#include "eff/eff_n64.h"
 
 typedef struct EffFlameN64Work {
     s32 type;         // 0x0
@@ -47,9 +40,13 @@ typedef struct EffFlameN64Work {
     effN64Vtx vtx[8]; // 0x70
 } EffFlameN64Work;
 
-void effFlameMain(EffectEntry* effect);
-void effFlameDisp(CameraId cameraId, EffectEntry* effect);
+static void effFlameMain(EffectEntry* effect);
+static void effFlameDisp(CameraId cameraId, EffectEntry* effect);
 
+/**
+ * Copies one s16 vertex from src to dst and transforms its position by matrix m,
+ * going through float with the fast-cast routines.
+ */
 static inline void xf(Mtx m, effN64Vtx* dst, effN64Vtx* src) {
     Vec v;
     memcpy(dst, src, sizeof(effN64Vtx));
@@ -64,16 +61,7 @@ static inline void xf(Mtx m, effN64Vtx* dst, effN64Vtx* src) {
     OSf32tos16(&v.z, &dst->z);
 }
 
-
-__declspec(section ".data") f32 flame_negone_one_a[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-__declspec(section ".data") f32 fd_eff_flame_negone_one_374[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-__declspec(section ".data") f32 flame_one_negone_a[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-__declspec(section ".data") f32 fd_eff_flame_one_negone_373[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-__declspec(section ".data") f32 flame_negone_one_b[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-__declspec(section ".data") f32 fd_eff_flame_negone_one_360[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-__declspec(section ".data") f32 flame_one_negone_b[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-__declspec(section ".data") f32 fd_eff_flame_one_negone_359[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
+/** Flame mesh for the default (yellowish) flame: eight vertices in two layers for the scrolling textures. */
 static effN64Vtx stg_flame_v[] = {
     {-50, -20, 2, 0, 0, 255, 255, 255, 255},
     {50, -20, 2, 1024, 0, 255, 255, 255, 255},
@@ -85,6 +73,7 @@ static effN64Vtx stg_flame_v[] = {
     {-50, 100, -2, 0, 1024, 255, 255, 255, 255},
 };
 
+/** Flame mesh for type 2 (the blue-green flame that spins about Y). */
 static effN64Vtx stg_flame_2_v[] = {
     {-60, 0, 18, 0, 0, 255, 255, 255, 255},
     {60, 0, 18, 2048, 0, 255, 255, 255, 255},
@@ -96,6 +85,7 @@ static effN64Vtx stg_flame_2_v[] = {
     {-60, 120, -18, 0, 2048, 255, 255, 255, 255},
 };
 
+/** Flame mesh for type 0 (the grey flame). */
 static effN64Vtx stg_flame_3_v[] = {
     {-50, -50, 2, 0, 0, 255, 255, 255, 255},
     {50, -50, 2, 1024, 0, 255, 255, 255, 255},
@@ -107,18 +97,22 @@ static effN64Vtx stg_flame_3_v[] = {
     {-50, 50, -2, 0, 1024, 255, 255, 255, 255},
 };
 
-
+/**
+ * Spawns a flame at (x, y, z) scaled by scale.
+ * Type 0 is grey, type 2 blue-green and the default yellowish;
+ * the colours and texture scroll targets are set per type. Spawned from event scripts through evt_eff.
+ */
 EffectEntry* effFlameN64Entry(s32 type, f32 x, f32 y, f32 z, f32 scale) {
     EffectEntry* effect;
     EffFlameN64Work* work;
 
     effect = effEntry();
-    effect->type = "FlameN64\0\0\0";
+    effect->type = "FlameN64";
     effect->count = 1;
     work = __memAlloc(HEAP_EFFECT, sizeof(EffFlameN64Work));
     effect->userdata = work;
     effect->callback = effFlameMain;
-    effect->flags |= 2;
+    effect->flags |= EFFECT_FLAG_SOFT_DELETE;
     work->type = type;
     work->life = 100;
     work->frame = 0;
@@ -132,86 +126,86 @@ EffectEntry* effFlameN64Entry(s32 type, f32 x, f32 y, f32 z, f32 scale) {
     work->v1 = 0.0f;
     work->u1 = 0.0f;
     switch (type) {
-    case 0:
-        work->c0r = 75;
-        work->c0g = 75;
-        work->c0b = 75;
-        work->c1r = 255;
-        work->c1g = 247;
-        work->c1b = 155;
-        work->c1a = 0;
-        work->sx = 2.0f * scale;
-        work->sy = 0.6f * scale;
-        work->sz = scale;
-        work->u0vel = -0.9f;
-        work->v0vel = 0.04f;
-        work->u0target = 0.04f;
-        work->v0target = 0.9f;
-        work->u1vel = -0.9f;
-        work->v1vel = 0.04f;
-        work->u1target = 0.04f;
-        work->v1target = 0.9f;
-        break;
-    case 1:
-        work->c0r = 75;
-        work->c0g = 75;
-        work->c0b = 75;
-        work->c1r = 255;
-        work->c1g = 0;
-        work->c1b = 0;
-        work->c1a = 0;
-        work->sx = scale;
-        work->sy = scale;
-        work->sz = scale;
-        work->u0vel = 0.0f;
-        work->v0vel = 0.04f;
-        work->u0target = 0.04f;
-        work->v0target = 0.9f;
-        work->u1vel = 0.0f;
-        work->v1vel = 0.04f;
-        work->u1target = 0.04f;
-        work->v1target = 0.9f;
-        break;
-    case 2:
-        work->c0r = 25;
-        work->c0g = 121;
-        work->c0b = 142;
-        work->c1r = 34;
-        work->c1g = 0;
-        work->c1b = 255;
-        work->c1a = 81;
-        work->sx = scale;
-        work->sy = scale;
-        work->sz = scale;
-        work->u0vel = 0.0f;
-        work->v0vel = 0.04f;
-        work->u0target = 0.2f;
-        work->v0target = 1.3f;
-        work->u1vel = 0.0f;
-        work->v1vel = 0.04f;
-        work->u1target = 0.16000001f;
-        work->v1target = 1.04f;
-        break;
-    default:
-        work->c0r = 179;
-        work->c0g = 169;
-        work->c0b = 85;
-        work->c1r = 34;
-        work->c1g = 0;
-        work->c1b = 255;
-        work->c1a = 63;
-        work->sx = scale;
-        work->sy = scale;
-        work->sz = scale;
-        work->u0vel = 0.0f;
-        work->v0vel = 0.04f;
-        work->u0target = 0.1f;
-        work->v0target = 1.7f;
-        work->u1vel = 0.0f;
-        work->v1vel = 0.04f;
-        work->u1target = 0.080000006f;
-        work->v1target = 1.36f;
-        break;
+        case 0:
+            work->c0r = 75;
+            work->c0g = 75;
+            work->c0b = 75;
+            work->c1r = 255;
+            work->c1g = 247;
+            work->c1b = 155;
+            work->c1a = 0;
+            work->sx = 2.0f * scale;
+            work->sy = 0.6f * scale;
+            work->sz = scale;
+            work->u0vel = -0.9f;
+            work->v0vel = 0.04f;
+            work->u0target = 0.04f;
+            work->v0target = 0.9f;
+            work->u1vel = -0.9f;
+            work->v1vel = 0.04f;
+            work->u1target = 0.04f;
+            work->v1target = 0.9f;
+            break;
+        case 1:
+            work->c0r = 75;
+            work->c0g = 75;
+            work->c0b = 75;
+            work->c1r = 255;
+            work->c1g = 0;
+            work->c1b = 0;
+            work->c1a = 0;
+            work->sx = scale;
+            work->sy = scale;
+            work->sz = scale;
+            work->u0vel = 0.0f;
+            work->v0vel = 0.04f;
+            work->u0target = 0.04f;
+            work->v0target = 0.9f;
+            work->u1vel = 0.0f;
+            work->v1vel = 0.04f;
+            work->u1target = 0.04f;
+            work->v1target = 0.9f;
+            break;
+        case 2:
+            work->c0r = 25;
+            work->c0g = 121;
+            work->c0b = 142;
+            work->c1r = 34;
+            work->c1g = 0;
+            work->c1b = 255;
+            work->c1a = 81;
+            work->sx = scale;
+            work->sy = scale;
+            work->sz = scale;
+            work->u0vel = 0.0f;
+            work->v0vel = 0.04f;
+            work->u0target = 0.2f;
+            work->v0target = 1.3f;
+            work->u1vel = 0.0f;
+            work->v1vel = 0.04f;
+            work->u1target = 0.16000001f;
+            work->v1target = 1.04f;
+            break;
+        default:
+            work->c0r = 179;
+            work->c0g = 169;
+            work->c0b = 85;
+            work->c1r = 34;
+            work->c1g = 0;
+            work->c1b = 255;
+            work->c1a = 63;
+            work->sx = scale;
+            work->sy = scale;
+            work->sz = scale;
+            work->u0vel = 0.0f;
+            work->v0vel = 0.04f;
+            work->u0target = 0.1f;
+            work->v0target = 1.7f;
+            work->u1vel = 0.0f;
+            work->v1vel = 0.04f;
+            work->u1target = 0.080000006f;
+            work->v1target = 1.36f;
+            break;
     }
     work->smoothed.x = work->position.x;
     work->smoothed.y = work->position.y;
@@ -219,7 +213,11 @@ EffectEntry* effFlameN64Entry(s32 type, f32 x, f32 y, f32 z, f32 scale) {
     return effect;
 }
 
-void effFlameMain(EffectEntry* effect) {
+/**
+ * Fades in, eases the two flame textures' scroll speeds toward their targets, and for type 0 eases the scale.
+ * It lives until a delete request, then fades out over 16 frames.
+ */
+static void effFlameMain(EffectEntry* effect) {
     EffFlameN64Work* work;
     Vec position;
     Vec tmp = {0.0f, 0.0f, 0.0f};
@@ -232,8 +230,8 @@ void effFlameMain(EffectEntry* effect) {
     tmp.y = work->position.y;
     tmp.z = work->position.z;
     position = tmp;
-    if (effect->flags & 4) {
-        effect->flags &= ~4;
+    if (effect->flags & EFFECT_FLAG_DELETE_REQUESTED) {
+        effect->flags &= ~EFFECT_FLAG_DELETE_REQUESTED;
         work->life = 16;
     }
     work->frame++;
@@ -247,65 +245,67 @@ void effFlameMain(EffectEntry* effect) {
     if (life < 0) {
         effDelete(effect);
     } else {
-    type = work->type;
-    frame = work->frame;
-    if (type <= 1) {
-        if (frame <= 10) {
-            work->alpha = (s32)(0.5f * (f32)(128 - work->alpha) + (f32)work->alpha);
+        type = work->type;
+        frame = work->frame;
+        if (type <= 1) {
+            if (frame <= 10) {
+                work->alpha = (s32)(0.5f * (f32)(128 - work->alpha) + (f32)work->alpha);
+            }
+        } else {
+            if (frame <= 10) {
+                work->alpha = frame * 255 / 10;
+            }
         }
-    } else {
-        if (frame <= 10) {
-            work->alpha = frame * 255 / 10;
+        if (life < 16) {
+            work->alpha = life * 16;
         }
-    }
-    if (life < 16) {
-        work->alpha = life * 16;
-    }
-    if (type == 0) {
-        work->u0vel += 0.02f * (work->u0target - work->u0vel);
-        work->v0vel += 0.02f * (work->v0target - work->v0vel);
-        work->sx += 0.04f * (work->sz - work->sx);
-        work->sy += 0.04f * (work->sz - work->sy);
-    } else {
-        work->u0vel += 0.02f * (work->u0target - work->u0vel);
-        work->v0vel += 0.02f * (work->v0target - work->v0vel);
-        work->u1vel += 0.02f * (work->u1target - work->u1vel);
-        work->v1vel += 0.02f * (work->v1target - work->v1vel);
-    }
-    work->u0 += work->u0vel;
-    if (work->u0 < 0.0f) {
-        work->u0 += 64.0f;
-    } else if (work->u0 > 64.0f) {
-        work->u0 -= 64.0f;
-    }
-    work->v0 += work->v0vel;
-    if (work->v0 < 0.0f) {
-        work->v0 += 128.0f;
-    } else if (work->v0 > 128.0f) {
-        work->v0 -= 128.0f;
-    }
-    work->u1 += work->u1vel;
-    if (work->u1 < 0.0f) {
-        work->u1 += 64.0f;
-    } else if (work->u1 > 64.0f) {
-        work->u1 -= 64.0f;
-    }
-    work->v1 += work->v1vel;
-    if (work->v1 < 0.0f) {
-        work->v1 += 128.0f;
-    } else if (work->v1 > 128.0f) {
-        work->v1 -= 128.0f;
-    }
-    work->smoothed.x += 0.1f * (work->position.x - work->smoothed.x);
-    work->smoothed.y += 0.1f * (work->position.y - work->smoothed.y);
-    work->smoothed.z += 0.1f * (work->position.z - work->smoothed.z);
-    dispEntry(CAMERA_3D, dispCalcZ(&position), 2, (DispCallback)effFlameDisp, effect);
+        if (type == 0) {
+            work->u0vel += 0.02f * (work->u0target - work->u0vel);
+            work->v0vel += 0.02f * (work->v0target - work->v0vel);
+            work->sx += 0.04f * (work->sz - work->sx);
+            work->sy += 0.04f * (work->sz - work->sy);
+        } else {
+            work->u0vel += 0.02f * (work->u0target - work->u0vel);
+            work->v0vel += 0.02f * (work->v0target - work->v0vel);
+            work->u1vel += 0.02f * (work->u1target - work->u1vel);
+            work->v1vel += 0.02f * (work->v1target - work->v1vel);
+        }
+        work->u0 += work->u0vel;
+        if (work->u0 < 0.0f) {
+            work->u0 += 64.0f;
+        } else if (work->u0 > 64.0f) {
+            work->u0 -= 64.0f;
+        }
+        work->v0 += work->v0vel;
+        if (work->v0 < 0.0f) {
+            work->v0 += 128.0f;
+        } else if (work->v0 > 128.0f) {
+            work->v0 -= 128.0f;
+        }
+        work->u1 += work->u1vel;
+        if (work->u1 < 0.0f) {
+            work->u1 += 64.0f;
+        } else if (work->u1 > 64.0f) {
+            work->u1 -= 64.0f;
+        }
+        work->v1 += work->v1vel;
+        if (work->v1 < 0.0f) {
+            work->v1 += 128.0f;
+        } else if (work->v1 > 128.0f) {
+            work->v1 -= 128.0f;
+        }
+        work->smoothed.x += 0.1f * (work->position.x - work->smoothed.x);
+        work->smoothed.y += 0.1f * (work->position.y - work->smoothed.y);
+        work->smoothed.z += 0.1f * (work->position.z - work->smoothed.z);
+        dispEntry(CAMERA_3D, dispCalcZ(&position), 2, (DispCallback)effFlameDisp, effect);
     }
 }
 
-#pragma push
-#pragma opt_dead_assignments off
-void effFlameDisp(CameraId cameraId, EffectEntry* effect) {
+/**
+ * Draws the flame from the 8-vertex meshes stg_flame_v, _2_v and _3_v (chosen by type) with textures 47-50;
+ * type 2 spins about Y, the other types face the camera. xf transforms vertices of the mesh by the view matrix.
+ */
+static void effFlameDisp(CameraId cameraId, EffectEntry* effect) {
     s32 alpha;
     s32 type;
     EffFlameN64Work* work[1];
@@ -325,70 +325,70 @@ void effFlameDisp(CameraId cameraId, EffectEntry* effect) {
     GXSetTexCoordGen2(0, 1, 4, 30, 0, 125);
     GXSetTexCoordGen2(1, 1, 4, 33, 0, 125);
     switch (type) {
-    case 0:
-    case 1:
-        GXSetNumTevStages(4);
-        GXSetTevOrder(0, 0, 0, 255);
-        GXSetTevColorOp(0, 0, 0, 0, 1, 3);
-        GXSetTevAlphaOp(0, 0, 0, 0, 1, 3);
-        GXSetTevColorIn(0, 15, 15, 15, 8);
-        GXSetTevAlphaIn(0, 7, 7, 7, 4);
-        GXSetTevOrder(1, 1, 1, 255);
-        GXSetTevColorOp(1, 0, 0, 0, 0, 0);
-        GXSetTevAlphaOp(1, 0, 0, 0, 1, 0);
-        GXSetTevColorIn(1, 15, 6, 6, 12);
-        GXSetTevAlphaIn(1, 4, 7, 3, 4);
-        GXSetTevOrder(2, 1, 1, 255);
-        GXSetTevColorOp(2, 1, 0, 0, 1, 0);
-        GXSetTevAlphaOp(2, 0, 0, 0, 1, 0);
-        GXSetTevColorIn(2, 15, 6, 8, 0);
-        GXSetTevAlphaIn(2, 7, 3, 0, 7);
-        GXSetTevOrder(3, 255, 255, 255);
-        GXSetTevColorOp(3, 1, 0, 0, 1, 0);
-        GXSetTevAlphaOp(3, 0, 0, 0, 1, 0);
-        GXSetTevColorIn(3, 15, 2, 0, 4);
-        GXSetTevAlphaIn(3, 7, 1, 0, 7);
-        effGetTexObjN64(47, &texObj);
-        GXLoadTexObj(&texObj, 0);
-        effGetTexObjN64(48, &texObj);
-        GXLoadTexObj(&texObj, 1);
-        break;
-    case 2:
-        GXSetNumTevStages(5);
-        GXSetTevOrder(0, 0, 0, 255);
-        GXSetTevColorOp(0, 0, 0, 0, 1, 3);
-        GXSetTevAlphaOp(0, 0, 0, 0, 1, 3);
-        GXSetTevColorIn(0, 15, 15, 15, 8);
-        GXSetTevAlphaIn(0, 7, 7, 7, 4);
-        GXSetTevOrder(1, 1, 1, 255);
-        GXSetTevColorOp(1, 0, 0, 0, 1, 0);
-        GXSetTevAlphaOp(1, 0, 0, 0, 0, 0);
-        GXSetTevColorIn(1, 15, 2, 8, 2);
-        GXSetTevAlphaIn(1, 7, 3, 4, 3);
-        GXSetTevOrder(2, 255, 255, 255);
-        GXSetTevColorOp(2, 0, 0, 0, 1, 0);
-        GXSetTevAlphaOp(2, 1, 0, 0, 1, 0);
-        GXSetTevColorIn(2, 15, 15, 15, 0);
-        GXSetTevAlphaIn(2, 7, 2, 3, 0);
-        GXSetTevOrder(3, 255, 255, 255);
-        GXSetTevColorOp(3, 0, 0, 0, 1, 0);
-        GXSetTevAlphaOp(3, 0, 0, 0, 0, 0);
-        GXSetTevColorIn(3, 15, 15, 15, 0);
-        GXSetTevAlphaIn(3, 7, 0, 1, 7);
-        GXSetTevOrder(4, 255, 255, 255);
-        GXSetTevColorOp(4, 0, 0, 0, 1, 0);
-        GXSetTevAlphaOp(4, 1, 0, 0, 1, 0);
-        GXSetTevColorIn(4, 15, 15, 15, 0);
-        GXSetTevAlphaIn(4, 7, 2, 1, 0);
-        effGetTexObjN64(49, &texObj);
-        GXLoadTexObj(&texObj, 0);
-        effGetTexObjN64(50, &texObj);
-        GXLoadTexObj(&texObj, 1);
-        break;
-    case 3:
-        break;
-    default:
-        break;
+        case 0:
+        case 1:
+            GXSetNumTevStages(4);
+            GXSetTevOrder(0, 0, 0, 255);
+            GXSetTevColorOp(0, 0, 0, 0, 1, 3);
+            GXSetTevAlphaOp(0, 0, 0, 0, 1, 3);
+            GXSetTevColorIn(0, 15, 15, 15, 8);
+            GXSetTevAlphaIn(0, 7, 7, 7, 4);
+            GXSetTevOrder(1, 1, 1, 255);
+            GXSetTevColorOp(1, 0, 0, 0, 0, 0);
+            GXSetTevAlphaOp(1, 0, 0, 0, 1, 0);
+            GXSetTevColorIn(1, 15, 6, 6, 12);
+            GXSetTevAlphaIn(1, 4, 7, 3, 4);
+            GXSetTevOrder(2, 1, 1, 255);
+            GXSetTevColorOp(2, 1, 0, 0, 1, 0);
+            GXSetTevAlphaOp(2, 0, 0, 0, 1, 0);
+            GXSetTevColorIn(2, 15, 6, 8, 0);
+            GXSetTevAlphaIn(2, 7, 3, 0, 7);
+            GXSetTevOrder(3, 255, 255, 255);
+            GXSetTevColorOp(3, 1, 0, 0, 1, 0);
+            GXSetTevAlphaOp(3, 0, 0, 0, 1, 0);
+            GXSetTevColorIn(3, 15, 2, 0, 4);
+            GXSetTevAlphaIn(3, 7, 1, 0, 7);
+            effGetTexObjN64(47, &texObj);
+            GXLoadTexObj(&texObj, 0);
+            effGetTexObjN64(48, &texObj);
+            GXLoadTexObj(&texObj, 1);
+            break;
+        case 2:
+            GXSetNumTevStages(5);
+            GXSetTevOrder(0, 0, 0, 255);
+            GXSetTevColorOp(0, 0, 0, 0, 1, 3);
+            GXSetTevAlphaOp(0, 0, 0, 0, 1, 3);
+            GXSetTevColorIn(0, 15, 15, 15, 8);
+            GXSetTevAlphaIn(0, 7, 7, 7, 4);
+            GXSetTevOrder(1, 1, 1, 255);
+            GXSetTevColorOp(1, 0, 0, 0, 1, 0);
+            GXSetTevAlphaOp(1, 0, 0, 0, 0, 0);
+            GXSetTevColorIn(1, 15, 2, 8, 2);
+            GXSetTevAlphaIn(1, 7, 3, 4, 3);
+            GXSetTevOrder(2, 255, 255, 255);
+            GXSetTevColorOp(2, 0, 0, 0, 1, 0);
+            GXSetTevAlphaOp(2, 1, 0, 0, 1, 0);
+            GXSetTevColorIn(2, 15, 15, 15, 0);
+            GXSetTevAlphaIn(2, 7, 2, 3, 0);
+            GXSetTevOrder(3, 255, 255, 255);
+            GXSetTevColorOp(3, 0, 0, 0, 1, 0);
+            GXSetTevAlphaOp(3, 0, 0, 0, 0, 0);
+            GXSetTevColorIn(3, 15, 15, 15, 0);
+            GXSetTevAlphaIn(3, 7, 0, 1, 7);
+            GXSetTevOrder(4, 255, 255, 255);
+            GXSetTevColorOp(4, 0, 0, 0, 1, 0);
+            GXSetTevAlphaOp(4, 1, 0, 0, 1, 0);
+            GXSetTevColorIn(4, 15, 15, 15, 0);
+            GXSetTevAlphaIn(4, 7, 2, 1, 0);
+            effGetTexObjN64(49, &texObj);
+            GXLoadTexObj(&texObj, 0);
+            effGetTexObjN64(50, &texObj);
+            GXLoadTexObj(&texObj, 1);
+            break;
+        case 3:
+            break;
+        default:
+            break;
     }
     PSMTXTrans(trn, work[0]->position.x, work[0]->position.y, work[0]->position.z);
     if (type == 2) {
@@ -404,24 +404,24 @@ void effFlameDisp(CameraId cameraId, EffectEntry* effect) {
         PSMTXConcat(mtx, trn, mtx);
     }
     switch (type) {
-    case 0:
-        xf(mtx, &work[0]->vtx[2], &stg_flame_v[2]);
-        xf(mtx, &work[0]->vtx[3], &stg_flame_v[3]);
-        xf(mtx, &work[0]->vtx[6], &stg_flame_v[6]);
-        xf(mtx, &work[0]->vtx[7], &stg_flame_v[7]);
-        break;
-    case 1:
-        xf(mtx, &work[0]->vtx[2], &stg_flame_3_v[2]);
-        xf(mtx, &work[0]->vtx[3], &stg_flame_3_v[3]);
-        xf(mtx, &work[0]->vtx[6], &stg_flame_3_v[6]);
-        xf(mtx, &work[0]->vtx[7], &stg_flame_3_v[7]);
-        break;
-    default:
-        xf(mtx, &work[0]->vtx[2], &stg_flame_2_v[2]);
-        xf(mtx, &work[0]->vtx[3], &stg_flame_2_v[3]);
-        xf(mtx, &work[0]->vtx[6], &stg_flame_2_v[6]);
-        xf(mtx, &work[0]->vtx[7], &stg_flame_2_v[7]);
-        break;
+        case 0:
+            xf(mtx, &work[0]->vtx[2], &stg_flame_v[2]);
+            xf(mtx, &work[0]->vtx[3], &stg_flame_v[3]);
+            xf(mtx, &work[0]->vtx[6], &stg_flame_v[6]);
+            xf(mtx, &work[0]->vtx[7], &stg_flame_v[7]);
+            break;
+        case 1:
+            xf(mtx, &work[0]->vtx[2], &stg_flame_3_v[2]);
+            xf(mtx, &work[0]->vtx[3], &stg_flame_3_v[3]);
+            xf(mtx, &work[0]->vtx[6], &stg_flame_3_v[6]);
+            xf(mtx, &work[0]->vtx[7], &stg_flame_3_v[7]);
+            break;
+        default:
+            xf(mtx, &work[0]->vtx[2], &stg_flame_2_v[2]);
+            xf(mtx, &work[0]->vtx[3], &stg_flame_2_v[3]);
+            xf(mtx, &work[0]->vtx[6], &stg_flame_2_v[6]);
+            xf(mtx, &work[0]->vtx[7], &stg_flame_2_v[7]);
+            break;
     }
     PSMTXTrans(trn, work[0]->position.x, work[0]->position.y, work[0]->position.z);
     if (type == 2) {
@@ -437,24 +437,24 @@ void effFlameDisp(CameraId cameraId, EffectEntry* effect) {
         PSMTXConcat(mtx, trn, mtx);
     }
     switch (type) {
-    case 0:
-        xf(mtx, &work[0]->vtx[0], &stg_flame_v[0]);
-        xf(mtx, &work[0]->vtx[1], &stg_flame_v[1]);
-        xf(mtx, &work[0]->vtx[4], &stg_flame_v[4]);
-        xf(mtx, &work[0]->vtx[5], &stg_flame_v[5]);
-        break;
-    case 1:
-        xf(mtx, &work[0]->vtx[0], &stg_flame_3_v[0]);
-        xf(mtx, &work[0]->vtx[1], &stg_flame_3_v[1]);
-        xf(mtx, &work[0]->vtx[4], &stg_flame_3_v[4]);
-        xf(mtx, &work[0]->vtx[5], &stg_flame_3_v[5]);
-        break;
-    default:
-        xf(mtx, &work[0]->vtx[0], &stg_flame_2_v[0]);
-        xf(mtx, &work[0]->vtx[1], &stg_flame_2_v[1]);
-        xf(mtx, &work[0]->vtx[4], &stg_flame_2_v[4]);
-        xf(mtx, &work[0]->vtx[5], &stg_flame_2_v[5]);
-        break;
+        case 0:
+            xf(mtx, &work[0]->vtx[0], &stg_flame_v[0]);
+            xf(mtx, &work[0]->vtx[1], &stg_flame_v[1]);
+            xf(mtx, &work[0]->vtx[4], &stg_flame_v[4]);
+            xf(mtx, &work[0]->vtx[5], &stg_flame_v[5]);
+            break;
+        case 1:
+            xf(mtx, &work[0]->vtx[0], &stg_flame_3_v[0]);
+            xf(mtx, &work[0]->vtx[1], &stg_flame_3_v[1]);
+            xf(mtx, &work[0]->vtx[4], &stg_flame_3_v[4]);
+            xf(mtx, &work[0]->vtx[5], &stg_flame_3_v[5]);
+            break;
+        default:
+            xf(mtx, &work[0]->vtx[0], &stg_flame_2_v[0]);
+            xf(mtx, &work[0]->vtx[1], &stg_flame_2_v[1]);
+            xf(mtx, &work[0]->vtx[4], &stg_flame_2_v[4]);
+            xf(mtx, &work[0]->vtx[5], &stg_flame_2_v[5]);
+            break;
     }
     GXInvalidateVtxCache();
     DCFlushRange(work[0]->vtx, sizeof(work[0]->vtx));
@@ -477,15 +477,14 @@ void effFlameDisp(CameraId cameraId, EffectEntry* effect) {
     PSMTXConcat(scl, trn, trn);
     GXLoadTexMtxImm(trn, GX_TEXMTX1, GX_MTX2x4);
     switch (type) {
-    case 0:
-    case 1:
-        GXBegin(GX_TRIANGLES, GX_VTXFMT0, 6);
-        tri2(0, 1, 2, 0, 0, 2, 3, 0);
-        break;
-    default:
-        GXBegin(GX_TRIANGLES, GX_VTXFMT0, 6);
-        tri2(2, 1, 0, 0, 3, 2, 0, 0);
-        break;
+        case 0:
+        case 1:
+            GXBegin(GX_TRIANGLES, GX_VTXFMT0, 6);
+            tri2(0, 1, 2, 0, 0, 2, 3, 0);
+            break;
+        default:
+            GXBegin(GX_TRIANGLES, GX_VTXFMT0, 6);
+            tri2(2, 1, 0, 0, 3, 2, 0, 0);
+            break;
     }
 }
-#pragma pop

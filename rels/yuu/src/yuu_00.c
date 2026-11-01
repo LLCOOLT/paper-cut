@@ -1,8 +1,10 @@
+// yuu_00 (遊技場, Pianta Parlor): minigame 1, Plane Mode (hikoki); entered from gor_03.
+
+// defer_codegen: the original emits this unit's functions in deferred order (checked by removing it).
 #pragma defer_codegen on
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
 
-#pragma force_active on
 #include "manager/evtmgr_cmd.h"
 #include "driver/camdrv.h"
 #include "mario/mario.h"
@@ -16,171 +18,86 @@
 #include "dolphin/mtx.h"
 #include "driver/icondrv.h"
 #include "evt/evt_movefloor.h"
+#include "cam_shift.h"
+#include "evt/evt_bero.h"
+#include "evt/evt_cam.h"
+#include "evt/evt_fade.h"
+#include "evt/evt_map.h"
+#include "evt/evt_mario.h"
+#include "evt/evt_msg.h"
+#include "evt/evt_seq.h"
+#include "evt/evt_snd.h"
+#include "evt/evt_sub.h"
+#include "evt/evt_yuugijou.h"
+#include "party.h"
+#include "evt/evt_yuuranking.h"
 #include "yuu.h"
+#include "icon_ids.h"
+#include "version.h"
+#include "evt/evt_story.h"
+#include "driver/mapdrv.h"
 
-#ifdef VERSION_G8ME01
-#define YUU_ICON_OFS 8
-#else
-#define YUU_ICON_OFS 0
+#ifndef TARGET_PC /* PC port: in yuu.h (evt_yuuminigame.c sizes it) */
+typedef struct HikokiWork {
+    u32 flags;
+    s32 phase;
+    s32 coins;
+    s32 result;
+    s32 monteCount;
+    EventEntry* viewEvent;
+} HikokiWork;
 #endif
-s32 yuucounter_get_data(void);
-void yuucounter_flag_on(s32 flag);
-void partyKeyOff(void);
-void monteCountDisp(void);
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
 USER_FUNC(yuuminigame1_floor_chk);
 USER_FUNC(yuuminigame1_floor_on_off);
 #endif
-typedef struct MonteSub { s32 unk0; Vec pos; f32 scale; u8 unk14[0x38 - 0x14]; } MonteSub;
-typedef struct Monte { u8 hidden; u8 unk1; s16 num; u8 state; u8 unk5[3]; MonteSub sub; MiniGameWork* wp; } Monte;
-typedef struct MonteTable { f32 x0; f32 x1; f32 y0; f32 y1; s32 num; } MonteTable;
+
 static void* yuunpc_wp;
 static Monte* monte_p;
 #define MONTETABLE (montetable)
-static void monte_disp(CameraId camera, void* param);
-void camShiftReset(void);
 
-USER_FUNC(eff_call_minigame);
-USER_FUNC(evt_bero_mapchange);
-USER_FUNC(evt_cam3d_evt_off);
-USER_FUNC(evt_cam3d_evt_set);
-USER_FUNC(evt_cam_letter_box_disable);
-USER_FUNC(evt_cam_letter_box_onoff);
-USER_FUNC(evt_change_plane);
-USER_FUNC(evt_fade_in);
-USER_FUNC(evt_fade_out);
-USER_FUNC(evt_key_get_buttontrg);
-USER_FUNC(evt_map_playanim);
-USER_FUNC(evt_mapobj_rotate);
-USER_FUNC(evt_mario_adjust_dir);
-USER_FUNC(evt_mario_key_onoff);
-USER_FUNC(evt_mario_kill_party);
-USER_FUNC(evt_mario_set_dir);
-USER_FUNC(evt_mario_set_pos);
-USER_FUNC(evt_mario_set_pose);
-USER_FUNC(evt_mario_set_prev_party_pos);
-USER_FUNC(evt_mario_wait_move_end);
-USER_FUNC(evt_moving_floor_delete);
-USER_FUNC(evt_msg_select);
-USER_FUNC(evt_seq_wait);
-USER_FUNC(evt_snd_bgmoff);
-USER_FUNC(evt_snd_bgmon);
-USER_FUNC(evt_snd_sfxoff);
-USER_FUNC(evt_snd_sfxon);
-USER_FUNC(evt_yuucounter_alloc);
-USER_FUNC(evt_yuucounter_free);
-USER_FUNC(evt_yuuminigame_alloc);
-USER_FUNC(evt_yuuranking_alloc);
-USER_FUNC(evt_yuuranking_free);
-USER_FUNC(evt_yuutitle_alloc);
-USER_FUNC(evt_yuutitle_free);
+static USER_FUNC(evt_change_plane);
 static USER_FUNC(fall_rtn);
 static USER_FUNC(re_fall_rtn);
+#if VERSION >= VERSION_JP
 USER_FUNC(yuu_00_cam_shift_reset);
-USER_FUNC(yuu_atai_init);
-USER_FUNC(yuu_atai_pop);
-USER_FUNC(yuu_atai_push);
-USER_FUNC(yuugijou_add_montemedal);
-USER_FUNC(yuugijou_get_montemedal);
-USER_FUNC(yuugijou_montemedal_disp_onoff);
-USER_FUNC(yuugijou_montemedal_wait);
-USER_FUNC(yuuminigame1_opening_chk);
-USER_FUNC(yuuminigame1_opening_on_off);
-USER_FUNC(yuuminigame1_set_phase);
-USER_FUNC(yuuminigame_get_dataadr);
-USER_FUNC(yuuminigame_set_dataadr);
-USER_FUNC(yuuranking_get_monte);
-USER_FUNC(yuuranking_wait_button);
-#ifdef VERSION_G8ME01
-USER_FUNC(evt_mapobj_flag_onoff);
+#endif
+static USER_FUNC(yuuminigame1_opening_chk);
+static USER_FUNC(yuuminigame1_opening_on_off);
+static USER_FUNC(yuuminigame1_set_phase);
+#if VERSION >= VERSION_US
 USER_FUNC(evt_sub_get_language);
-USER_FUNC(evt_sub_random);
 #endif
 BOOL yuuminigame1_gamerule(EventEntry* event, BOOL isFirstCall, MiniGameWork* wp, HikokiWork* data);
-void yuuminigame_disp_1hikoki(CameraId camera, void* param);
-void yuuminigame_main_1hikoki(EventEntry* event, BOOL isFirstCall);
-void yuuminigame_init_1hikoki(EventEntry* event, BOOL isFirstCall);
-static void monte_disp(CameraId camera, void* param);
 
-f32 fd_yuu_00_negone_one_374[2] __attribute__((aligned(8)));
-f32 fd_yuu_00_neg_one_382;
-f32 fd_yuu_00___local_PI_383;
-f32 fd_yuu_00___local_3PIO2_385;
-f32 fd_yuu_00_one_negone_373[2] __attribute__((aligned(8)));
-f32 fd_yuu_00___local_PIO2_384;
-f32 fd_yuu_00_one_381;
-f32 fd_yuu_00_negone_one_360[2] __attribute__((aligned(8)));
-f32 fd_yuu_00_neg_one_365;
-f32 fd_yuu_00___local_PI_366;
-f32 fd_yuu_00___local_3PIO2_368;
-f32 fd_yuu_00_one_negone_359[2] __attribute__((aligned(8)));
-f32 fd_yuu_00___local_PIO2_367;
-f32 fd_yuu_00_one_364;
-static MonteTable montetable[4];
-static EvtWord minigame_view_monte[4];
-EvtWord yuu_00_kaijo_init[12];
-EvtWord yuu_00_kaijo_init2[12];
-EvtWord light_sub_event[497];
-EvtWord minigame01_main[35];
-EvtWord minigame01_start_cam[40];
-EvtWord minigame01_start_cam_cancel[20];
-#ifdef VERSION_G8ME01
-EvtWord minigame01_start[1504];
-#else
-EvtWord minigame01_start[355];
-#endif
-#ifdef VERSION_G8ME01
-EvtWord minigame01_end[224];
-#else
-EvtWord minigame01_end[236];
-#endif
-#ifdef VERSION_G8ME01
-EvtWord yuu_00_init_evt[437];
-#else
-EvtWord yuu_00_init_evt[11];
-#endif
-
-f32 fd_yuu_00_negone_one_374[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_yuu_00_neg_one_382 = -1.0f;
-
-f32 fd_yuu_00___local_PI_383 = 3.1415927f;
-
-f32 fd_yuu_00___local_3PIO2_385 = 4.712389f;
-
-f32 fd_yuu_00_one_negone_373[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_yuu_00___local_PIO2_384 = 1.5707964f;
-
-f32 fd_yuu_00_one_381 = 1.0f;
-
-f32 fd_yuu_00_negone_one_360[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_yuu_00_neg_one_365 = -1.0f;
-
-f32 fd_yuu_00___local_PI_366 = 3.1415927f;
-
-f32 fd_yuu_00___local_3PIO2_368 = 4.712389f;
-
-f32 fd_yuu_00_one_negone_359[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_yuu_00___local_PIO2_367 = 1.5707964f;
-
-f32 fd_yuu_00_one_364 = 1.0f;
-
+/**
+ * Where fall_rtn scatters the Plane Mode coins: three stretches of the flight path (x range, then height range)
+ * holding 2, 2 and 1 coins. US and later spread the coins over a wider, lower band of heights.
+ */
 static MonteTable montetable[] = {
+#if VERSION <= VERSION_DEMO_JP
+    {-1200.0f, -800.0f, 450.0f, 400.0f, 2},
+    {-800.0f, -300.0f, 400.0f, 300.0f, 2},
+    {-300.0f, 200.0f, 300.0f, 150.0f, 1},
+#else
     {-1200.0f, -800.0f, 450.0f, 200.0f, 2},
     {-800.0f, -300.0f, 300.0f, 100.0f, 2},
     {-300.0f, 200.0f, 200.0f, 100.0f, 1},
+#endif
     {0},
 };
 
+/** The Plane Mode game's coin event (data->viewEvent): runs fall_rtn, which scatters and collects the coins. */
 static EVT_BEGIN(minigame_view_monte)
     CALL(fall_rtn)
     RETURN
 EVT_END()
 
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
+/**
+ * Deletes the five moving floors (platforms) of the Plane Mode course once, guarded by the floor-exists flag;
+ * runs when Mario touches a platform or the game ends. US and later only.
+ */
 EVT_BEGIN(minigame01_floor_delete)
     CALL(yuuminigame1_floor_chk, LW(0), LW(1))
     IF_INT_NOT_EQUAL(LW(1), 0)
@@ -200,20 +117,27 @@ EVT_BEGIN(minigame01_floor_delete)
 EVT_END()
 #endif
 
+/** Puts Mario on the starting spot of the Plane Mode stage (x -1550, y 400) facing right. */
 EVT_BEGIN(yuu_00_kaijo_init)
     CALL(evt_mario_set_pos, -1550, 400, 0)
     CALL(evt_mario_set_dir, 90, 0, 0)
     RETURN
 EVT_END()
 
+/** Puts Mario back at the stage spot used after the opening camera or between rounds (x -1350, y 400) facing right. */
 EVT_BEGIN(yuu_00_kaijo_init2)
     CALL(evt_mario_set_pos, -1350, 400, 0)
     CALL(evt_mario_set_dir, 90, 0, 0)
     RETURN
 EVT_END()
 
+/**
+ * Spins up the stage spotlights ("light02" and "light_c") in a background inline event;
+ * the rotation speeds up in steps and stops when GF(0) is cleared.
+ */
 EVT_BEGIN(light_sub_event)
     SET_VALUE(GF(0), 1)
+    // The first pair of spotlights (light01, light_b) sweeps back and forth until GF(0) is cleared.
     BEGIN_INLINE_EVENT
         SET_VALUE(LW(0), 96)
         LOOP(0)
@@ -271,6 +195,7 @@ EVT_BEGIN(light_sub_event)
             ADD(LW(0), 1)
             ADD(LW(2), 1)
         END_LOOP
+        // Once the show stops, the lights swing back to rest.
         WAIT_MS(300)
         SET_VALUE(LW(2), 0)
         SET_VALUE(LW(5), LW(3))
@@ -292,6 +217,7 @@ EVT_BEGIN(light_sub_event)
         CALL(evt_mapobj_rotate, 1, STRING("light01"), 0, 0, LW(3))
         CALL(evt_mapobj_rotate, 1, STRING("light_b"), 0, 0, LW(3))
     END_INLINE_EVENT
+    // The second pair (light02, light_c) does the same, 30 frames out of step with the first.
     BEGIN_INLINE_EVENT
         SET_VALUE(LW(0), 30)
         LOOP(0)
@@ -373,33 +299,57 @@ EVT_BEGIN(light_sub_event)
     RETURN
 EVT_END()
 
+/**
+ * Set-up for minigame 1 (Plane Mode): freezes Mario's controls, allocates the minigame work area,
+ * dismisses the partners, starts the spotlights and the crowd sound, and sets phase 1.
+ */
 EVT_BEGIN(minigame01_main)
     CALL(evt_mario_key_onoff, 0)
-    CALL_CHILD(PTR(yuu_00_kaijo_init))
+    CALL_CHILD(yuu_00_kaijo_init)
     CALL(evt_yuuminigame_alloc, LW(0), 0)
     CALL(yuuminigame_set_dataadr, 0, LW(0))
     CALL(evt_mario_kill_party, 0)
     CALL(evt_mario_kill_party, 1)
-    CALL_CHILD(PTR(light_sub_event))
+    CALL_CHILD(light_sub_event)
     CALL(evt_snd_sfxon, STRING("SFX_EVT_GAME_AUDIENCE1"), GW(10))
     CALL(yuuminigame_get_dataadr, 0, LW(0))
     CALL(yuuminigame1_set_phase, LW(0), 1)
     RETURN
 EVT_END()
 
+/**
+ * Opening cutscene of Plane Mode: pans the 3D camera across the course,
+ * then shows the "menu_title_minigame1" title card for a few seconds.
+ */
 EVT_BEGIN(minigame01_start_cam)
     CALL(evt_cam3d_evt_set, FLOAT(-1230.0f), FLOAT(360.0f), FLOAT(1140.0f), FLOAT(-1230.0f), FLOAT(160.0f), FLOAT(-10.0f), 0, 11)
     WAIT_FRAMES(1)
     CALL(evt_seq_wait, 2)
+#if VERSION <= VERSION_DEMO_JP
+    CALL(evt_cam3d_evt_set, FLOAT(700.0f), FLOAT(360.0f), FLOAT(1140.0f), FLOAT(700.0f), FLOAT(160.0f), FLOAT(-10.0f), 4000, 0)
+#else
     CALL(evt_cam3d_evt_set, FLOAT(700.0f), FLOAT(360.0f), FLOAT(1140.0f), FLOAT(700.0f), FLOAT(160.0f), FLOAT(-10.0f), 6000, 0)
+#endif
     WAIT_MS(1000)
     CALL(evt_yuutitle_alloc, 0, 0, STRING("menu_title_minigame1"))
-    WAIT_MS(3000)
-    CALL(evt_yuutitle_free)
+#if VERSION <= VERSION_DEMO_JP
     WAIT_MS(2000)
+#else
+    WAIT_MS(3000)
+#endif
+    CALL(evt_yuutitle_free)
+#if VERSION <= VERSION_DEMO_JP
+    WAIT_MS(1000)
+#else
+    WAIT_MS(2000)
+#endif
     RETURN
 EVT_END()
 
+/**
+ * Cleans up when the player skips the opening camera:
+ * frees the title card, turns off the event camera and puts Mario back at the start spot.
+ */
 EVT_BEGIN(minigame01_start_cam_cancel)
     CALL(evt_seq_wait, 2)
     CALL(evt_yuutitle_free)
@@ -407,15 +357,22 @@ EVT_BEGIN(minigame01_start_cam_cancel)
     WAIT_FRAMES(1)
     CALL(evt_mario_wait_move_end)
     CALL(evt_mario_set_pose, STRING("M_S_1"))
-    CALL_CHILD(PTR(yuu_00_kaijo_init2))
+    CALL_CHILD(yuu_00_kaijo_init2)
     RETURN
 EVT_END()
 
+/**
+ * Phase 1 of Plane Mode: builds the five floating platforms (S_dai_01 to S_dai_05;
+ * US and later pick a random height and direction for each), plays the opening camera (skippable),
+ * shows the countdown effect, switches Mario into plane mode and starts the coin counter.
+ */
 EVT_BEGIN(minigame01_start)
     CALL(yuu_atai_init)
     CALL(yuu_atai_push, LW(0))
     CALL(evt_map_playanim, STRING("neon_01"), 1, 0)
-#ifdef VERSION_G8ME01
+    // Platform 1 (S_dai_01) slides back and forth along X. US and later pick one of six motions at random
+    // (1, 1.5 or 2 seconds a leg, from either end); the demo and JP always use the slow one.
+#if VERSION >= VERSION_US
     CALL(evt_sub_random, 5, LW(0))
     SWITCH(LW(0))
         CASE_EQUAL(0)
@@ -450,21 +407,22 @@ EVT_BEGIN(minigame01_start)
         SPAWN_EVENT_GET_ID(PTR(moving_floor), LW(15))
         CASE_EQUAL(2)
 #endif
-    SET_VALUE(LW(0), STRING("S_dai_01"))
-    SET_VALUE(LW(1), STRING("A_dai_01"))
-    SET_VALUE(LW(2), -150)
-    SET_VALUE(LW(3), 150)
-    SET_VALUE(LW(4), 2000)
-    SET_VALUE(LW(5), 500)
-    SET_VALUE(LW(6), 0)
-    SET_VALUE(LW(7), STRING("S_dai_01_k"))
-    SET_VALUE(LW(8), 0)
-    SET_VALUE(LW(9), 0)
-    SET_VALUE(LW(10), 0)
-    SET_VALUE(LW(11), 0)
-    SET_VALUE(LW(12), 0)
-    SPAWN_EVENT_GET_ID(PTR(moving_floor), LW(15))
-#ifdef VERSION_G8ME01
+        SET_VALUE(LW(0), STRING("S_dai_01"))
+        SET_VALUE(LW(1), STRING("A_dai_01"))
+        SET_VALUE(LW(2), -150)
+        SET_VALUE(LW(3), 150)
+        SET_VALUE(LW(4), 2000)
+        SET_VALUE(LW(5), 500)
+        SET_VALUE(LW(6), 0)
+        SET_VALUE(LW(7), STRING("S_dai_01_k"))
+        SET_VALUE(LW(8), 0)
+        SET_VALUE(LW(9), 0)
+        SET_VALUE(LW(10), 0)
+        SET_VALUE(LW(11), 0)
+        SET_VALUE(LW(12), 0)
+        SPAWN_EVENT_GET_ID(PTR(moving_floor), LW(15))
+#if VERSION >= VERSION_US
+        // Motions 3 to 5: the same three speeds, starting from the other end.
         CASE_EQUAL(3)
         SET_VALUE(LW(0), STRING("S_dai_01"))
         SET_VALUE(LW(1), STRING("A_dai_01"))
@@ -513,7 +471,8 @@ EVT_BEGIN(minigame01_start)
     END_SWITCH
 #endif
     CALL(yuuminigame_set_dataadr, 1, LW(15))
-#ifdef VERSION_G8ME01
+    // Platform 2 (S_dai_02) slides along Z, with the same choice of motions.
+#if VERSION >= VERSION_US
     CALL(evt_sub_random, 5, LW(0))
     SWITCH(LW(0))
         CASE_EQUAL(0)
@@ -548,21 +507,22 @@ EVT_BEGIN(minigame01_start)
         SPAWN_EVENT_GET_ID(PTR(moving_floor), LW(15))
         CASE_EQUAL(2)
 #endif
-    SET_VALUE(LW(0), STRING("S_dai_02"))
-    SET_VALUE(LW(1), STRING("A_dai_02"))
-    SET_VALUE(LW(2), -150)
-    SET_VALUE(LW(3), 150)
-    SET_VALUE(LW(4), 2000)
-    SET_VALUE(LW(5), 500)
-    SET_VALUE(LW(6), 2)
-    SET_VALUE(LW(7), STRING("S_dai_02_k"))
-    SET_VALUE(LW(8), 0)
-    SET_VALUE(LW(9), 0)
-    SET_VALUE(LW(10), 0)
-    SET_VALUE(LW(11), 0)
-    SET_VALUE(LW(12), 0)
-    SPAWN_EVENT_GET_ID(PTR(moving_floor), LW(15))
-#ifdef VERSION_G8ME01
+        SET_VALUE(LW(0), STRING("S_dai_02"))
+        SET_VALUE(LW(1), STRING("A_dai_02"))
+        SET_VALUE(LW(2), -150)
+        SET_VALUE(LW(3), 150)
+        SET_VALUE(LW(4), 2000)
+        SET_VALUE(LW(5), 500)
+        SET_VALUE(LW(6), 2)
+        SET_VALUE(LW(7), STRING("S_dai_02_k"))
+        SET_VALUE(LW(8), 0)
+        SET_VALUE(LW(9), 0)
+        SET_VALUE(LW(10), 0)
+        SET_VALUE(LW(11), 0)
+        SET_VALUE(LW(12), 0)
+        SPAWN_EVENT_GET_ID(PTR(moving_floor), LW(15))
+#if VERSION >= VERSION_US
+        // Motions 3 to 5: the same three speeds, starting from the other end.
         CASE_EQUAL(3)
         SET_VALUE(LW(0), STRING("S_dai_02"))
         SET_VALUE(LW(1), STRING("A_dai_02"))
@@ -611,7 +571,8 @@ EVT_BEGIN(minigame01_start)
     END_SWITCH
 #endif
     CALL(yuuminigame_set_dataadr, 2, LW(15))
-#ifdef VERSION_G8ME01
+    // Platform 3 (S_dai_03) moves on X and Z at once, with the same choice of motions.
+#if VERSION >= VERSION_US
     CALL(evt_sub_random, 5, LW(0))
     SWITCH(LW(0))
         CASE_EQUAL(0)
@@ -646,25 +607,26 @@ EVT_BEGIN(minigame01_start)
         SPAWN_EVENT_GET_ID(PTR(moving_floor), LW(15))
         CASE_EQUAL(2)
 #endif
-    SET_VALUE(LW(0), STRING("S_dai_03"))
-    SET_VALUE(LW(1), STRING("A_dai_03"))
-    SET_VALUE(LW(2), -150)
-    SET_VALUE(LW(3), 150)
-    SET_VALUE(LW(4), 2000)
-    SET_VALUE(LW(5), 200)
-#ifdef VERSION_G8ME01
+        SET_VALUE(LW(0), STRING("S_dai_03"))
+        SET_VALUE(LW(1), STRING("A_dai_03"))
+        SET_VALUE(LW(2), -150)
+        SET_VALUE(LW(3), 150)
+        SET_VALUE(LW(4), 2000)
+        SET_VALUE(LW(5), 200)
+#if VERSION >= VERSION_US
         SET_VALUE(LW(6), 4)
 #else
     SET_VALUE(LW(6), 3)
 #endif
-    SET_VALUE(LW(7), STRING("S_dai_03_k"))
-    SET_VALUE(LW(8), -150)
-    SET_VALUE(LW(9), 150)
-    SET_VALUE(LW(10), 2000)
-    SET_VALUE(LW(11), 0)
-    SET_VALUE(LW(12), 0)
-    SPAWN_EVENT_GET_ID(PTR(moving_floor), LW(15))
-#ifdef VERSION_G8ME01
+        SET_VALUE(LW(7), STRING("S_dai_03_k"))
+        SET_VALUE(LW(8), -150)
+        SET_VALUE(LW(9), 150)
+        SET_VALUE(LW(10), 2000)
+        SET_VALUE(LW(11), 0)
+        SET_VALUE(LW(12), 0)
+        SPAWN_EVENT_GET_ID(PTR(moving_floor), LW(15))
+#if VERSION >= VERSION_US
+        // Motions 3 to 5: the same three speeds, starting from the other end.
         CASE_EQUAL(3)
         SET_VALUE(LW(0), STRING("S_dai_03"))
         SET_VALUE(LW(1), STRING("A_dai_03"))
@@ -713,7 +675,8 @@ EVT_BEGIN(minigame01_start)
     END_SWITCH
 #endif
     CALL(yuuminigame_set_dataadr, 3, LW(15))
-#ifdef VERSION_G8ME01
+    // Platform 4 (S_dai_04) also moves on X and Z at once.
+#if VERSION >= VERSION_US
     CALL(evt_sub_random, 5, LW(0))
     SWITCH(LW(0))
         CASE_EQUAL(0)
@@ -748,21 +711,22 @@ EVT_BEGIN(minigame01_start)
         SPAWN_EVENT_GET_ID(PTR(moving_floor), LW(15))
         CASE_EQUAL(2)
 #endif
-    SET_VALUE(LW(0), STRING("S_dai_04"))
-    SET_VALUE(LW(1), STRING("A_dai_04"))
-    SET_VALUE(LW(2), -150)
-    SET_VALUE(LW(3), 150)
-    SET_VALUE(LW(4), 2000)
-    SET_VALUE(LW(5), 200)
-    SET_VALUE(LW(6), 4)
-    SET_VALUE(LW(7), STRING("S_dai_04_k"))
-    SET_VALUE(LW(8), -150)
-    SET_VALUE(LW(9), 150)
-    SET_VALUE(LW(10), 2000)
-    SET_VALUE(LW(11), 0)
-    SET_VALUE(LW(12), 0)
-    SPAWN_EVENT_GET_ID(PTR(moving_floor), LW(15))
-#ifdef VERSION_G8ME01
+        SET_VALUE(LW(0), STRING("S_dai_04"))
+        SET_VALUE(LW(1), STRING("A_dai_04"))
+        SET_VALUE(LW(2), -150)
+        SET_VALUE(LW(3), 150)
+        SET_VALUE(LW(4), 2000)
+        SET_VALUE(LW(5), 200)
+        SET_VALUE(LW(6), 4)
+        SET_VALUE(LW(7), STRING("S_dai_04_k"))
+        SET_VALUE(LW(8), -150)
+        SET_VALUE(LW(9), 150)
+        SET_VALUE(LW(10), 2000)
+        SET_VALUE(LW(11), 0)
+        SET_VALUE(LW(12), 0)
+        SPAWN_EVENT_GET_ID(PTR(moving_floor), LW(15))
+#if VERSION >= VERSION_US
+        // Motions 3 to 5: the same three speeds, starting from the other end.
         CASE_EQUAL(3)
         SET_VALUE(LW(0), STRING("S_dai_04"))
         SET_VALUE(LW(1), STRING("A_dai_04"))
@@ -811,7 +775,8 @@ EVT_BEGIN(minigame01_start)
     END_SWITCH
 #endif
     CALL(yuuminigame_set_dataadr, 4, LW(15))
-#ifdef VERSION_G8ME01
+    // Platform 5 (S_dai_05), the last and highest-scoring one, also moves on X and Z at once.
+#if VERSION >= VERSION_US
     CALL(evt_sub_random, 5, LW(0))
     SWITCH(LW(0))
         CASE_EQUAL(0)
@@ -846,21 +811,22 @@ EVT_BEGIN(minigame01_start)
         SPAWN_EVENT_GET_ID(PTR(moving_floor), LW(15))
         CASE_EQUAL(2)
 #endif
-    SET_VALUE(LW(0), STRING("S_dai_05"))
-    SET_VALUE(LW(1), STRING("A_dai_05"))
-    SET_VALUE(LW(2), -150)
-    SET_VALUE(LW(3), 150)
-    SET_VALUE(LW(4), 2000)
-    SET_VALUE(LW(5), 200)
-    SET_VALUE(LW(6), 4)
-    SET_VALUE(LW(7), STRING("S_dai_05_k"))
-    SET_VALUE(LW(8), -150)
-    SET_VALUE(LW(9), 150)
-    SET_VALUE(LW(10), 2000)
-    SET_VALUE(LW(11), 0)
-    SET_VALUE(LW(12), 0)
-    SPAWN_EVENT_GET_ID(PTR(moving_floor), LW(15))
-#ifdef VERSION_G8ME01
+        SET_VALUE(LW(0), STRING("S_dai_05"))
+        SET_VALUE(LW(1), STRING("A_dai_05"))
+        SET_VALUE(LW(2), -150)
+        SET_VALUE(LW(3), 150)
+        SET_VALUE(LW(4), 2000)
+        SET_VALUE(LW(5), 200)
+        SET_VALUE(LW(6), 4)
+        SET_VALUE(LW(7), STRING("S_dai_05_k"))
+        SET_VALUE(LW(8), -150)
+        SET_VALUE(LW(9), 150)
+        SET_VALUE(LW(10), 2000)
+        SET_VALUE(LW(11), 0)
+        SET_VALUE(LW(12), 0)
+        SPAWN_EVENT_GET_ID(PTR(moving_floor), LW(15))
+#if VERSION >= VERSION_US
+        // Motions 3 to 5: the same three speeds, starting from the other end.
         CASE_EQUAL(3)
         SET_VALUE(LW(0), STRING("S_dai_05"))
         SET_VALUE(LW(1), STRING("A_dai_05"))
@@ -909,8 +875,9 @@ EVT_BEGIN(minigame01_start)
     END_SWITCH
 #endif
     CALL(yuuminigame_set_dataadr, 5, LW(15))
+    // The platforms are ready. On the first round the camera flies over the course; A or B skips it.
     CALL(yuu_atai_pop, LW(0))
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
     CALL(yuuminigame1_floor_on_off, LW(0), 1)
 #endif
     CALL(yuuminigame1_opening_chk, LW(0), LW(1))
@@ -921,23 +888,24 @@ EVT_BEGIN(minigame01_start)
             IF_INT_EQUAL(LW(9), 0)
                 CALL(evt_seq_wait, 2)
                 BREAK_LOOP
-                ELSE
+            ELSE
                 CALL(evt_key_get_buttontrg, 0, LW(9))
                 IF_BITS_SET(LW(9), 768)
                     DELETE_EVENT(LW(8))
                     CALL(evt_seq_wait, 2)
-                    CALL_CHILD(PTR(minigame01_start_cam_cancel))
+                    CALL_CHILD(minigame01_start_cam_cancel)
                     BREAK_LOOP
                 END_IF
             END_IF
             WAIT_FRAMES(1)
         END_LOOP
         CALL(yuuminigame1_opening_on_off, LW(0), 0)
-        CALL_CHILD(PTR(yuu_00_kaijo_init2))
+        CALL_CHILD(yuu_00_kaijo_init2)
         CALL(evt_cam3d_evt_off, 0, 11)
         WAIT_FRAMES(1)
     END_IF
-    CALL(evt_snd_bgmon, 512, STRING("BGM_EVT_MINIGAME1"))
+    // The music starts, Mario poses, the spotlights stop and the start signal plays.
+    CALL(evt_snd_bgmon, PSND_FADE_OUT, STRING("BGM_EVT_MINIGAME1"))
     WAIT_MS(200)
     CALL(evt_mario_set_pose, STRING("M_I_1"))
     WAIT_MS(400)
@@ -948,25 +916,42 @@ EVT_BEGIN(minigame01_start)
     SET_VALUE(GF(0), 0)
     CALL(eff_call_minigame, 0, 0, 0, 500)
     WAIT_MS(3000)
+    // Mario becomes a paper airplane, the controls come back and the coin counter appears.
     CALL(evt_change_plane)
+#if VERSION <= VERSION_DEMO_JP
+    CALL(evt_mario_key_onoff, 1)
+#else
     CALL(evt_cam_letter_box_onoff, 0, 0)
     CALL(evt_cam_letter_box_disable, 1)
+#endif
     WAIT_MS(1000)
     CALL(evt_yuucounter_alloc, 0, 70, 0, 0)
+#if VERSION >= VERSION_JP
     CALL(evt_mario_key_onoff, 1)
+#endif
     RETURN
 EVT_END()
 
+/**
+ * Ends a Plane Mode round: plays the success or failure effect and Mario pose,
+ * shows the score and the monte (coin) rewards, pays out the collected coins as medals,
+ * then asks whether to play again.
+ * Quitting (or having fewer than 10 medals) sets GSWF_YUU_MINIGAME_QUIT and returns Mario to gor_03;
+ * playing again charges 10 medals and resets the stage.
+ */
 EVT_BEGIN(minigame01_end)
+    // The landing is over: the crowd reacts and the moving platforms are removed.
+#if VERSION >= VERSION_JP
     CALL(evt_cam_letter_box_onoff, 1, 0)
     CALL(evt_cam_letter_box_disable, 0)
+#endif
     CALL(evt_snd_sfxon, STRING("SFX_EVT_GAME_AUDIENCE2"), 0)
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
     CALL(yuu_atai_push, LW(0))
     CALL(yuu_atai_push, LW(1))
     CALL(yuu_atai_push, LW(2))
     SET_VALUE(LW(0), LW(3))
-    CALL_CHILD(PTR(minigame01_floor_delete))
+    CALL_CHILD(minigame01_floor_delete)
     CALL(yuu_atai_pop, LW(2))
     CALL(yuu_atai_pop, LW(1))
     CALL(yuu_atai_pop, LW(0))
@@ -982,6 +967,8 @@ EVT_BEGIN(minigame01_end)
     CALL(yuuminigame_get_dataadr, 5, LW(15))
     CALL(evt_moving_floor_delete, LW(15))
 #endif
+    // Crashing on the ground (a negative score) plays the failure effect;
+    // landing on a platform plays the success effect and Mario poses by how well he did.
     CALL(evt_mario_adjust_dir)
     IF_INT_LESS(LW(0), 0)
         CALL(eff_call_minigame, 2, 0, 0, 500)
@@ -989,20 +976,21 @@ EVT_BEGIN(minigame01_end)
         WAIT_MS(3800)
         CALL(evt_mario_set_pose, STRING("M_D_2"))
         WAIT_MS(200)
-        ELSE
+    ELSE
         CALL(eff_call_minigame, 1, 0, 0, 500)
         WAIT_MS(500)
         IF_INT_LESS(LW(1), 1)
             CALL(evt_mario_set_pose, STRING("M_X_1"))
-            ELSE
+        ELSE
             IF_INT_GREATER(LW(1), 1)
                 CALL(evt_mario_set_pose, STRING("M_V_2"))
-                ELSE
+            ELSE
                 CALL(evt_mario_set_pose, STRING("M_I_1"))
             END_IF
         END_IF
         WAIT_MS(3500)
     END_IF
+    // The tally screen shows the score and Mario receives his piantas, then the ranking screen records it.
     CALL(evt_yuucounter_free)
     CALL(yuugijou_montemedal_disp_onoff, 1)
     CALL(evt_yuuranking_alloc, 0, 0, 0, 0, LW(0), LW(2), LW(1), 0)
@@ -1017,137 +1005,160 @@ EVT_BEGIN(minigame01_end)
     WAIT_FRAMES(1)
     CALL(yuuranking_wait_button)
     CALL(evt_yuuranking_free)
+    // With fewer than 10 piantas the game ends; otherwise the player picks Continue (10 piantas) or Quit.
     SET_VALUE(LW(1), 10)
     CALL(yuugijou_get_montemedal, LW(0))
     IF_INT_LESS(LW(0), LW(1))
         SET_VALUE(LW(0), 1)
-        ELSE
+    ELSE
         CALL(evt_msg_select, 0, STRING("sysyuu_00_00"))
     END_IF
+    // Quitting sends Mario back through the pipe to gor_03.
     IF_INT_NOT_EQUAL(LW(0), 0)
-        SET_VALUE(GSWF(1229), 1)
+        SET_VALUE(GSWF(GSWF_YUU_MINIGAME_QUIT), 1)
         CALL(evt_mario_set_prev_party_pos, 0, 0, -1000, 0)
         CALL(evt_mario_set_prev_party_pos, 1, 0, -1000, 0)
-        CALL(evt_snd_bgmoff, 512)
+        CALL(evt_snd_bgmoff, PSND_FADE_OUT)
         CALL(evt_bero_mapchange, STRING("gor_03"), STRING("A_dokan_02"))
         RETURN
     END_IF
+    // Continuing pays 10 piantas; the stage fades out, Mario returns to the start and the lights come back on.
     MULTIPLY(LW(1), -1)
     CALL(yuugijou_add_montemedal, 0, LW(1))
     CALL(yuugijou_montemedal_wait)
     WAIT_MS(200)
     CALL(yuugijou_montemedal_disp_onoff, 0)
-    CALL(evt_snd_bgmoff, 512)
+    CALL(evt_snd_bgmoff, PSND_FADE_OUT)
     CALL(evt_snd_sfxoff, GW(10))
     CALL(evt_fade_out, 1000)
     CALL(re_fall_rtn)
     CALL(evt_mario_set_pose, STRING("M_S_1"))
-    CALL_CHILD(PTR(yuu_00_kaijo_init2))
+    CALL_CHILD(yuu_00_kaijo_init2)
+#if VERSION >= VERSION_JP
     CALL(yuu_00_cam_shift_reset)
+#endif
     WAIT_MS(500)
-    CALL_CHILD(PTR(light_sub_event))
+    CALL_CHILD(light_sub_event)
     CALL(evt_snd_sfxon, STRING("SFX_EVT_GAME_AUDIENCE1"), GW(10))
     CALL(evt_fade_in, 1000)
     RETURN
 EVT_END()
 
+/**
+ * Map init for yuu_00 (Plane Mode room): starts the minigame set-up, runs the Pianta NPC set-up,
+ * and (US and later) hides all but the current game-language sign graphics on the stage.
+ */
 EVT_BEGIN(yuu_00_init_evt)
+    // The neon sign lights up, the game is set up and the audience appears.
     CALL(evt_map_playanim, STRING("neon_02"), 1, 0)
-    SPAWN_EVENT(PTR(minigame01_main))
-    CALL_CHILD(PTR(evt_yuunpc_minigame1))
-#ifdef VERSION_G8ME01
-    CALL(evt_mapobj_flag_onoff, 1, 1, STRING("saka_k_1"), 16384)
-    CALL(evt_mapobj_flag_onoff, 1, 1, STRING("saka_k_2"), 16384)
-    CALL(evt_mapobj_flag_onoff, 1, 1, STRING("saka_k_3"), 16384)
-    CALL(evt_mapobj_flag_onoff, 1, 1, STRING("saka_k_4"), 16384)
-    CALL(evt_mapobj_flag_onoff, 1, 1, STRING("saka_k_5"), 16384)
-    CALL(evt_mapobj_flag_onoff, 1, 1, STRING("saka_k_6"), 16384)
-    CALL(evt_mapobj_flag_onoff, 1, 1, STRING("saka_k_7"), 16384)
-    CALL(evt_mapobj_flag_onoff, 1, 1, STRING("saka_k_8"), 16384)
-    CALL(evt_mapobj_flag_onoff, 1, 1, STRING("J_mon"), 16384)
-    CALL(evt_mapobj_flag_onoff, 1, 1, STRING("E_mon"), 16384)
-    CALL(evt_mapobj_flag_onoff, 1, 1, STRING("D_mon"), 16384)
-    CALL(evt_mapobj_flag_onoff, 1, 1, STRING("F_mon"), 16384)
-    CALL(evt_mapobj_flag_onoff, 1, 1, STRING("Sp_mon"), 16384)
-    CALL(evt_mapobj_flag_onoff, 1, 1, STRING("I_mon"), 16384)
+    SPAWN_EVENT(minigame01_main)
+    CALL_CHILD(evt_yuunpc_minigame1)
+#if VERSION >= VERSION_US
+    // US and later: the sign graphics come in one set per language; hide them all, then show the set
+    // for the current language (Japanese, English, German, French, Spanish or Italian).
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("saka_k_1"), MAPOBJ_FLAG_DISABLE)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("saka_k_2"), MAPOBJ_FLAG_DISABLE)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("saka_k_3"), MAPOBJ_FLAG_DISABLE)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("saka_k_4"), MAPOBJ_FLAG_DISABLE)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("saka_k_5"), MAPOBJ_FLAG_DISABLE)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("saka_k_6"), MAPOBJ_FLAG_DISABLE)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("saka_k_7"), MAPOBJ_FLAG_DISABLE)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("saka_k_8"), MAPOBJ_FLAG_DISABLE)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("J_mon"), MAPOBJ_FLAG_DISABLE)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("E_mon"), MAPOBJ_FLAG_DISABLE)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("D_mon"), MAPOBJ_FLAG_DISABLE)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("F_mon"), MAPOBJ_FLAG_DISABLE)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("Sp_mon"), MAPOBJ_FLAG_DISABLE)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("I_mon"), MAPOBJ_FLAG_DISABLE)
     CALL(evt_sub_get_language, LW(0))
     SWITCH(LW(0))
         CASE_EQUAL(0)
-        CALL(evt_mapobj_flag_onoff, 1, 0, STRING("J_saka_k_1"), 16384)
-        CALL(evt_mapobj_flag_onoff, 1, 0, STRING("J_saka_k_2"), 16384)
-        CALL(evt_mapobj_flag_onoff, 1, 0, STRING("J_saka_k_3"), 16384)
-        CALL(evt_mapobj_flag_onoff, 1, 0, STRING("J_saka_k_4"), 16384)
-        CALL(evt_mapobj_flag_onoff, 1, 0, STRING("J_saka_k_5"), 16384)
-        CALL(evt_mapobj_flag_onoff, 1, 0, STRING("J_saka_k_6"), 16384)
-        CALL(evt_mapobj_flag_onoff, 1, 0, STRING("J_saka_k_7"), 16384)
-        CALL(evt_mapobj_flag_onoff, 1, 0, STRING("J_saka_k_8"), 16384)
-        CALL(evt_mapobj_flag_onoff, 1, 0, STRING("J_mon"), 16384)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("J_saka_k_1"), MAPOBJ_FLAG_DISABLE)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("J_saka_k_2"), MAPOBJ_FLAG_DISABLE)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("J_saka_k_3"), MAPOBJ_FLAG_DISABLE)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("J_saka_k_4"), MAPOBJ_FLAG_DISABLE)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("J_saka_k_5"), MAPOBJ_FLAG_DISABLE)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("J_saka_k_6"), MAPOBJ_FLAG_DISABLE)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("J_saka_k_7"), MAPOBJ_FLAG_DISABLE)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("J_saka_k_8"), MAPOBJ_FLAG_DISABLE)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("J_mon"), MAPOBJ_FLAG_DISABLE)
         CASE_EQUAL(1)
-        CALL(evt_mapobj_flag_onoff, 1, 0, STRING("E_saka_k_1"), 16384)
-        CALL(evt_mapobj_flag_onoff, 1, 0, STRING("E_saka_k_2"), 16384)
-        CALL(evt_mapobj_flag_onoff, 1, 0, STRING("E_saka_k_3"), 16384)
-        CALL(evt_mapobj_flag_onoff, 1, 0, STRING("E_saka_k_4"), 16384)
-        CALL(evt_mapobj_flag_onoff, 1, 0, STRING("E_saka_k_5"), 16384)
-        CALL(evt_mapobj_flag_onoff, 1, 0, STRING("E_saka_k_6"), 16384)
-        CALL(evt_mapobj_flag_onoff, 1, 0, STRING("E_saka_k_7"), 16384)
-        CALL(evt_mapobj_flag_onoff, 1, 0, STRING("E_saka_k_8"), 16384)
-        CALL(evt_mapobj_flag_onoff, 1, 0, STRING("E_mon"), 16384)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("E_saka_k_1"), MAPOBJ_FLAG_DISABLE)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("E_saka_k_2"), MAPOBJ_FLAG_DISABLE)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("E_saka_k_3"), MAPOBJ_FLAG_DISABLE)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("E_saka_k_4"), MAPOBJ_FLAG_DISABLE)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("E_saka_k_5"), MAPOBJ_FLAG_DISABLE)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("E_saka_k_6"), MAPOBJ_FLAG_DISABLE)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("E_saka_k_7"), MAPOBJ_FLAG_DISABLE)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("E_saka_k_8"), MAPOBJ_FLAG_DISABLE)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("E_mon"), MAPOBJ_FLAG_DISABLE)
         CASE_EQUAL(2)
-        CALL(evt_mapobj_flag_onoff, 1, 0, STRING("D_saka_k_1"), 16384)
-        CALL(evt_mapobj_flag_onoff, 1, 0, STRING("D_saka_k_2"), 16384)
-        CALL(evt_mapobj_flag_onoff, 1, 0, STRING("D_saka_k_3"), 16384)
-        CALL(evt_mapobj_flag_onoff, 1, 0, STRING("D_saka_k_4"), 16384)
-        CALL(evt_mapobj_flag_onoff, 1, 0, STRING("D_saka_k_5"), 16384)
-        CALL(evt_mapobj_flag_onoff, 1, 0, STRING("D_saka_k_6"), 16384)
-        CALL(evt_mapobj_flag_onoff, 1, 0, STRING("D_saka_k_7"), 16384)
-        CALL(evt_mapobj_flag_onoff, 1, 0, STRING("D_saka_k_8"), 16384)
-        CALL(evt_mapobj_flag_onoff, 1, 0, STRING("D_mon"), 16384)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("D_saka_k_1"), MAPOBJ_FLAG_DISABLE)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("D_saka_k_2"), MAPOBJ_FLAG_DISABLE)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("D_saka_k_3"), MAPOBJ_FLAG_DISABLE)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("D_saka_k_4"), MAPOBJ_FLAG_DISABLE)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("D_saka_k_5"), MAPOBJ_FLAG_DISABLE)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("D_saka_k_6"), MAPOBJ_FLAG_DISABLE)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("D_saka_k_7"), MAPOBJ_FLAG_DISABLE)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("D_saka_k_8"), MAPOBJ_FLAG_DISABLE)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("D_mon"), MAPOBJ_FLAG_DISABLE)
         CASE_EQUAL(3)
-        CALL(evt_mapobj_flag_onoff, 1, 0, STRING("F_saka_k_1"), 16384)
-        CALL(evt_mapobj_flag_onoff, 1, 0, STRING("F_saka_k_2"), 16384)
-        CALL(evt_mapobj_flag_onoff, 1, 0, STRING("F_saka_k_3"), 16384)
-        CALL(evt_mapobj_flag_onoff, 1, 0, STRING("F_saka_k_4"), 16384)
-        CALL(evt_mapobj_flag_onoff, 1, 0, STRING("F_saka_k_5"), 16384)
-        CALL(evt_mapobj_flag_onoff, 1, 0, STRING("F_saka_k_6"), 16384)
-        CALL(evt_mapobj_flag_onoff, 1, 0, STRING("F_saka_k_7"), 16384)
-        CALL(evt_mapobj_flag_onoff, 1, 0, STRING("F_saka_k_8"), 16384)
-        CALL(evt_mapobj_flag_onoff, 1, 0, STRING("F_mon"), 16384)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("F_saka_k_1"), MAPOBJ_FLAG_DISABLE)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("F_saka_k_2"), MAPOBJ_FLAG_DISABLE)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("F_saka_k_3"), MAPOBJ_FLAG_DISABLE)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("F_saka_k_4"), MAPOBJ_FLAG_DISABLE)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("F_saka_k_5"), MAPOBJ_FLAG_DISABLE)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("F_saka_k_6"), MAPOBJ_FLAG_DISABLE)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("F_saka_k_7"), MAPOBJ_FLAG_DISABLE)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("F_saka_k_8"), MAPOBJ_FLAG_DISABLE)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("F_mon"), MAPOBJ_FLAG_DISABLE)
         CASE_EQUAL(4)
-        CALL(evt_mapobj_flag_onoff, 1, 0, STRING("Sp_saka_k_1"), 16384)
-        CALL(evt_mapobj_flag_onoff, 1, 0, STRING("Sp_saka_k_2"), 16384)
-        CALL(evt_mapobj_flag_onoff, 1, 0, STRING("Sp_saka_k_3"), 16384)
-        CALL(evt_mapobj_flag_onoff, 1, 0, STRING("Sp_saka_k_4"), 16384)
-        CALL(evt_mapobj_flag_onoff, 1, 0, STRING("Sp_saka_k_5"), 16384)
-        CALL(evt_mapobj_flag_onoff, 1, 0, STRING("Sp_saka_k_6"), 16384)
-        CALL(evt_mapobj_flag_onoff, 1, 0, STRING("Sp_saka_k_7"), 16384)
-        CALL(evt_mapobj_flag_onoff, 1, 0, STRING("Sp_saka_k_8"), 16384)
-        CALL(evt_mapobj_flag_onoff, 1, 0, STRING("Sp_mon"), 16384)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("Sp_saka_k_1"), MAPOBJ_FLAG_DISABLE)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("Sp_saka_k_2"), MAPOBJ_FLAG_DISABLE)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("Sp_saka_k_3"), MAPOBJ_FLAG_DISABLE)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("Sp_saka_k_4"), MAPOBJ_FLAG_DISABLE)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("Sp_saka_k_5"), MAPOBJ_FLAG_DISABLE)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("Sp_saka_k_6"), MAPOBJ_FLAG_DISABLE)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("Sp_saka_k_7"), MAPOBJ_FLAG_DISABLE)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("Sp_saka_k_8"), MAPOBJ_FLAG_DISABLE)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("Sp_mon"), MAPOBJ_FLAG_DISABLE)
         CASE_EQUAL(5)
-        CALL(evt_mapobj_flag_onoff, 1, 0, STRING("I_saka_k_1"), 16384)
-        CALL(evt_mapobj_flag_onoff, 1, 0, STRING("I_saka_k_2"), 16384)
-        CALL(evt_mapobj_flag_onoff, 1, 0, STRING("I_saka_k_3"), 16384)
-        CALL(evt_mapobj_flag_onoff, 1, 0, STRING("I_saka_k_4"), 16384)
-        CALL(evt_mapobj_flag_onoff, 1, 0, STRING("I_saka_k_5"), 16384)
-        CALL(evt_mapobj_flag_onoff, 1, 0, STRING("I_saka_k_6"), 16384)
-        CALL(evt_mapobj_flag_onoff, 1, 0, STRING("I_saka_k_7"), 16384)
-        CALL(evt_mapobj_flag_onoff, 1, 0, STRING("i_saka_k_8"), 16384)
-        CALL(evt_mapobj_flag_onoff, 1, 0, STRING("I_mon"), 16384)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("I_saka_k_1"), MAPOBJ_FLAG_DISABLE)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("I_saka_k_2"), MAPOBJ_FLAG_DISABLE)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("I_saka_k_3"), MAPOBJ_FLAG_DISABLE)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("I_saka_k_4"), MAPOBJ_FLAG_DISABLE)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("I_saka_k_5"), MAPOBJ_FLAG_DISABLE)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("I_saka_k_6"), MAPOBJ_FLAG_DISABLE)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("I_saka_k_7"), MAPOBJ_FLAG_DISABLE)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("i_saka_k_8"), MAPOBJ_FLAG_DISABLE)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("I_mon"), MAPOBJ_FLAG_DISABLE)
     END_SWITCH
 #endif
     RETURN
 EVT_END()
 
+#if VERSION >= VERSION_JP
+/** Resets the camera shift offset (camShiftReset) so the camera returns to its normal framing after the minigame. */
 USER_FUNC(yuu_00_cam_shift_reset) {
     camShiftReset();
     return EVT_RETURN_DONE;
 }
+#endif
 
+/**
+ * Names of the floor areas below the course for yuuminigame1_gamerule;
+ * landing on one scores -5 (02, 05), -10 (03), -15 (06) or -20 (04).
+ */
 static const char yuu00_gnd_02[] = "A_ground_02";
 static const char yuu00_gnd_05[] = "A_ground_05";
 static const char yuu00_gnd_03[] = "A_ground_03";
 static const char yuu00_gnd_06[] = "A_ground_06";
 static const char yuu00_gnd_04[] = "A_ground_04";
 
+/**
+ * Returns TRUE when two points are within 20 units in 3D and within 20 in height,
+ * i.e. Mario is touching a floating coin.
+ */
 static inline BOOL get_monte_check(Vec* a, Vec* b) {
     if (PSVECDistance(a, b) < 20.0f && __fabs(a->y - b->y) < 20.0) {
         return TRUE;
@@ -1155,6 +1166,7 @@ static inline BOOL get_monte_check(Vec* a, Vec* b) {
     return FALSE;
 }
 
+/** Draw callback that renders every coin icon of a Monte array that has not been collected yet. */
 static inline void monte_disp(CameraId camera, void* param) {
     Monte* monte = param;
     s32 i;
@@ -1162,7 +1174,7 @@ static inline void monte_disp(CameraId camera, void* param) {
     if (monte != NULL) {
         for (i = 0; i < monte->num; i++) {
             if (monte[i].hidden == 0) {
-                iconDispGx(&monte[i].sub.pos, 0, 0x13F + YUU_ICON_OFS, 1.0f);
+                iconDispGx(&monte[i].icon.position, 0, ICON_13F, 1.0f);
             }
         }
     }
@@ -1170,6 +1182,12 @@ static inline void monte_disp(CameraId camera, void* param) {
 
 #define randRange(d) (irand(100.0f * (d)) / 100.0f)
 
+/**
+ * Frame-by-frame coin spawner and collector for Plane Mode.
+ * On first call it allocates the Monte array and scatters coins at random spots within the rectangles of
+ * montetable (at least 20 units apart), then each frame it checks Mario against every coin,
+ * counting and hiding collected ones with a 3D sound. Blocks forever as a view event.
+ */
 static USER_FUNC(fall_rtn) {
     MiniGameWork* wp = (MiniGameWork*)event->lwData[0];
     BOOL exists = FALSE;
@@ -1180,7 +1198,7 @@ static USER_FUNC(fall_rtn) {
     s32 k;
     SfxNameWord sfx;
     s32 j;
-    MonteSub* sub;
+    IconEntry* sub;
     f32 lo;
     f32 hi;
     Vec v;
@@ -1203,8 +1221,8 @@ static USER_FUNC(fall_rtn) {
         t = 0;
         k = 0;
         for (i = 0; i < monte_p->num; i++) {
-            sub = &monte_p[i].sub;
-            sub->pos.z = 0.0f;
+            sub = &monte_p[i].icon;
+            sub->position.z = 0.0f;
             do {
                 if (MONTETABLE[t].x0 < MONTETABLE[t].x1) {
                     lo = MONTETABLE[t].x0;
@@ -1214,7 +1232,7 @@ static USER_FUNC(fall_rtn) {
                     hi = MONTETABLE[t].x0;
                 }
                 hi -= lo;
-                sub->pos.x = lo + randRange(hi);
+                sub->position.x = lo + randRange(hi);
                 if (MONTETABLE[t].y0 < MONTETABLE[t].y1) {
                     lo = MONTETABLE[t].y0;
                     hi = MONTETABLE[t].y1;
@@ -1223,9 +1241,9 @@ static USER_FUNC(fall_rtn) {
                     hi = MONTETABLE[t].y0;
                 }
                 hi -= lo;
-                sub->pos.y = lo + randRange(hi);
+                sub->position.y = lo + randRange(hi);
                 for (j = 0; j < k; j++) {
-                    PSVECSubtract(&sub->pos, &(sub - (j + 1))->pos, &v);
+                    PSVECSubtract(&sub->position, &(sub - (j + 1))->position, &v);
                     if (PSVECMag(&v) < 20.0f) {
                         break;
                     }
@@ -1239,11 +1257,11 @@ static USER_FUNC(fall_rtn) {
         }
     }
     for (i = 0; i < monte_p->num; i++) {
-        sfx = (0, (SfxNameWord)"SFX_EVT_GAME_MONTE_COUNT1");
+        sfx = (SfxNameWord) "SFX_EVT_GAME_MONTE_COUNT1";
         m = &monte_p[i];
         switch (m->state) {
             case 0:
-                if (get_monte_check(&m->sub.pos, &marioGetPtr()->position) == 1) {
+                if (get_monte_check(&m->icon.position, &marioGetPtr()->position) == 1) {
                     data->monteCount++;
                     psndSFXOn_3D((const char*)sfx, &marioGetPtr()->position);
                     m->hidden = 1;
@@ -1260,6 +1278,10 @@ static USER_FUNC(fall_rtn) {
     return EVT_RETURN_BLOCK;
 }
 
+/**
+ * Resets the coins for the next round: stops the view event,
+ * frees the Monte array and starts a fresh minigame_view_monte event.
+ */
 static USER_FUNC(re_fall_rtn) {
     HikokiWork* data;
 
@@ -1276,12 +1298,17 @@ static USER_FUNC(re_fall_rtn) {
     return EVT_RETURN_DONE;
 }
 
-USER_FUNC(evt_change_plane) {
+/** Script call that switches Mario's motion to 0x18, the airplane glide motion used in Plane Mode. */
+static USER_FUNC(evt_change_plane) {
     marioChgMot(0x18);
     return EVT_RETURN_DONE;
 }
 
-USER_FUNC(yuuminigame1_set_phase) {
+/**
+ * args[0] = minigame work pointer, args[1] = new phase for the Plane Mode state machine (0 idle, 1 start, 2
+ * playing, 3 finish).
+ */
+static USER_FUNC(yuuminigame1_set_phase) {
     EvtWord* args = event->args;
     HikokiWork* data = ((MiniGameWork*)evtGetValue(event, args[0]))->data;
 
@@ -1289,7 +1316,11 @@ USER_FUNC(yuuminigame1_set_phase) {
     return EVT_RETURN_DONE;
 }
 
-USER_FUNC(yuuminigame1_opening_on_off) {
+/**
+ * args[0] = minigame work pointer, args[1] = on/off.
+ * Sets or clears the "opening cutscene pending" bit (flags bit 0).
+ */
+static USER_FUNC(yuuminigame1_opening_on_off) {
     EvtWord* args = event->args;
     HikokiWork* data = ((MiniGameWork*)evtGetValue(event, args[0]))->data;
 
@@ -1301,7 +1332,11 @@ USER_FUNC(yuuminigame1_opening_on_off) {
     return EVT_RETURN_DONE;
 }
 
-USER_FUNC(yuuminigame1_opening_chk) {
+/**
+ * args[0] = minigame work pointer, args[1] = output.
+ * Writes 1 if the opening cutscene is still pending (flags bit 0), else 0.
+ */
+static USER_FUNC(yuuminigame1_opening_chk) {
     EvtWord* args = event->args;
     MiniGameWork* wp = (MiniGameWork*)evtGetValue(event, args[0]);
 
@@ -1313,7 +1348,8 @@ USER_FUNC(yuuminigame1_opening_chk) {
     return EVT_RETURN_DONE;
 }
 
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
+/** args[0] = minigame work pointer, args[1] = on/off. Sets or clears the "platforms exist" bit (flags bit 1). */
 USER_FUNC(yuuminigame1_floor_on_off) {
     EvtWord* args = event->args;
     u32* flags = &((HikokiWork*)((MiniGameWork*)evtGetValue(event, args[0]))->data)->flags;
@@ -1326,6 +1362,10 @@ USER_FUNC(yuuminigame1_floor_on_off) {
     return EVT_RETURN_DONE;
 }
 
+/**
+ * args[0] = minigame work pointer, args[1] = output.
+ * Writes 1 if the platforms currently exist (flags bit 1), else 0.
+ */
 USER_FUNC(yuuminigame1_floor_chk) {
     EvtWord* args = event->args;
     u32* flags = &((HikokiWork*)((MiniGameWork*)evtGetValue(event, args[0]))->data)->flags;
@@ -1340,6 +1380,7 @@ USER_FUNC(yuuminigame1_floor_chk) {
 
 #endif
 
+/** Init callback for minigame 1: starts the coin view event and marks the opening cutscene as pending. */
 void yuuminigame_init_1hikoki(EventEntry* event, BOOL isFirstCall) {
     HikokiWork* data = ((MiniGameWork*)event->lwData[0])->data;
 
@@ -1348,6 +1389,11 @@ void yuuminigame_init_1hikoki(EventEntry* event, BOOL isFirstCall) {
     data->flags |= 1;
 }
 
+/**
+ * Per-frame state machine for Plane Mode: phase 1 starts minigame01_start,
+ * phase 2 waits for the rules check to finish, phase 3 launches minigame01_end with the coin count,
+ * result and monte count.
+ */
 void yuuminigame_main_1hikoki(EventEntry* event, BOOL isFirstCall) {
     MiniGameWork* wp = (MiniGameWork*)event->lwData[0];
     HikokiWork* data = wp->data;
@@ -1372,7 +1418,7 @@ void yuuminigame_main_1hikoki(EventEntry* event, BOOL isFirstCall) {
             wp->subEvent->lwData[0] = data->coins;
             wp->subEvent->lwData[1] = data->result;
             wp->subEvent->lwData[2] = data->monteCount;
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
             wp->subEvent->lwData[3] = event->lwData[0];
 #endif
             data->phase++;
@@ -1380,69 +1426,76 @@ void yuuminigame_main_1hikoki(EventEntry* event, BOOL isFirstCall) {
     }
 }
 
+/** Draw callback for minigame 1: draws the collected-coin counter (monteCountDisp). */
 void yuuminigame_disp_1hikoki(CameraId camera, void* param) {
     monteCountDisp();
 }
 
+// FAKE: dont_inline: MWCC would inline this function into its callers; the original calls it (checked by removing it).
 #pragma dont_inline on
+/**
+ * Rule check run each frame during Plane Mode: once Mario lands on a hit object other than in plane motion,
+ * scores the round from its name (A_dai_xx platforms give 2 or 3, A_ground_xx floors give -5 to -20),
+ * saves the coin counter, locks inputs and returns TRUE to end the round.
+ */
 BOOL yuuminigame1_gamerule(EventEntry* event, BOOL isFirstCall, MiniGameWork* wp, HikokiWork* data) {
     MarioWork* mario = marioGetPtr();
 
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
     EventEntry* sub;
 
     if (mario->hitobjStandOn != NULL) {
         sub = evtEntry(minigame01_floor_delete, 0, 0);
         sub->lwData[0] = event->lwData[0];
-        if ((u16)((mario->trigFlags & 1) ? mario->prevMotionId : mario->currMotionId) != 0x18) {
+        if ((u16)((mario->trigFlags & MARIO_TRIG_FLAG_IS_STARTING_NEW_MOTION) ? mario->prevMotionId : mario->currMotionId) != 0x18) {
 #else
-    if (mario->hitobjStandOn != NULL && (u16)((mario->trigFlags & 1) ? mario->prevMotionId : mario->currMotionId) != 0x18) {
+    if (mario->hitobjStandOn != NULL && (u16)((mario->trigFlags & MARIO_TRIG_FLAG_IS_STARTING_NEW_MOTION) ? mario->prevMotionId : mario->currMotionId) != 0x18) {
 #endif
-        data->result = 1;
-        data->coins = yuucounter_get_data();
-        if (!strcmp("A_dai_01", hitGetName(mario->hitobjStandOn))) {
-            data->result = 2;
-        }
-        if (!strcmp("A_dai_02", hitGetName(mario->hitobjStandOn))) {
-            data->result = 2;
-        }
-        if (!strcmp("A_dai_03", hitGetName(mario->hitobjStandOn))) {
-            data->result = 2;
-        }
-        if (!strcmp("A_dai_04", hitGetName(mario->hitobjStandOn))) {
-#ifdef VERSION_G8ME01
-            data->result = 2;
+            data->result = 1;
+            data->coins = yuucounter_get_data();
+            if (!strcmp("A_dai_01", hitGetName(mario->hitobjStandOn))) {
+                data->result = 2;
+            }
+            if (!strcmp("A_dai_02", hitGetName(mario->hitobjStandOn))) {
+                data->result = 2;
+            }
+            if (!strcmp("A_dai_03", hitGetName(mario->hitobjStandOn))) {
+                data->result = 2;
+            }
+            if (!strcmp("A_dai_04", hitGetName(mario->hitobjStandOn))) {
+#if VERSION >= VERSION_US
+                data->result = 2;
 #else
             data->result = 3;
 #endif
-        }
-        if (!strcmp("A_dai_05", hitGetName(mario->hitobjStandOn))) {
-#ifdef VERSION_G8ME01
-            data->result = 3;
+            }
+            if (!strcmp("A_dai_05", hitGetName(mario->hitobjStandOn))) {
+#if VERSION >= VERSION_US
+                data->result = 3;
 #else
             data->result = 5;
 #endif
-        }
-        if (!strcmp(yuu00_gnd_02, hitGetName(mario->hitobjStandOn))) {
-            data->result = -5;
-        }
-        if (!strcmp(yuu00_gnd_05, hitGetName(mario->hitobjStandOn))) {
-            data->result = -5;
-        }
-        if (!strcmp(yuu00_gnd_03, hitGetName(mario->hitobjStandOn))) {
-            data->result = -10;
-        }
-        if (!strcmp(yuu00_gnd_06, hitGetName(mario->hitobjStandOn))) {
-            data->result = -15;
-        }
-        if (!strcmp(yuu00_gnd_04, hitGetName(mario->hitobjStandOn))) {
-            data->result = -20;
-        }
-        marioKeyOff();
-        partyKeyOff();
-        yuucounter_flag_on(2);
-        return TRUE;
-#ifdef VERSION_G8ME01
+            }
+            if (!strcmp(yuu00_gnd_02, hitGetName(mario->hitobjStandOn))) {
+                data->result = -5;
+            }
+            if (!strcmp(yuu00_gnd_05, hitGetName(mario->hitobjStandOn))) {
+                data->result = -5;
+            }
+            if (!strcmp(yuu00_gnd_03, hitGetName(mario->hitobjStandOn))) {
+                data->result = -10;
+            }
+            if (!strcmp(yuu00_gnd_06, hitGetName(mario->hitobjStandOn))) {
+                data->result = -15;
+            }
+            if (!strcmp(yuu00_gnd_04, hitGetName(mario->hitobjStandOn))) {
+                data->result = -20;
+            }
+            marioKeyOff();
+            partyKeyOff();
+            yuucounter_flag_on(2);
+            return TRUE;
+#if VERSION >= VERSION_US
         }
 #endif
     }

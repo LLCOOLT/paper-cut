@@ -1,9 +1,12 @@
+// Battle menu drawing: the action, weapon-select and operation menus and the pieces they are built from.
 #pragma optimize_for_size on
+// FAKE: inlining off for the whole file (FAKES.md); without it 11 functions change length, e.g. DrawChangePartyWin 98 -> 259 instructions
 #pragma dont_inline on
 #ifdef TARGET_PC
 #include "port/platform.h"
 #endif
 #include "port_hook.h"
+#include "version.h"
 #include "battle/battle_menu_disp.h"
 #include "pc_call.h"
 #include "battle/battle_seq_command.h"
@@ -15,72 +18,65 @@
 #include "driver/windowdrv.h"
 #include "manager/fontmgr.h"
 #include "battle/battle.h"
+#include "battle/battle_disp.h"
 #include "battle/battle_item_data.h"
 #include "libc_decls.h"
-
-void FontDrawString(f32 x, f32 y, const char* msg);
-void FontDrawScale(f32 scale);
-void FontDrawColorIDX(s32 idx);
-extern ItemData itemDataTable[];
-s32 BtlUnit_GetWeaponCost(BattleUnit* unit, BattleWeapon* weapon);
-#ifndef TARGET_PC /* PC port: the host libc declares these */
-double sin(double);
-double cos(double);
-#endif
-void btlGetScreenPoint(Vec* pos, Vec* out);
-void btlDispTexPlane2(Mtx mtx, u32 id, GXColor color, s32 a);
-void btlDispGXInit2D(void);
-
+// FAKE: battle_menu_disp.c calls FontDrawStringCenterMtx through this prototype (the types it was compiled with) instead of the one in manager/fontmgr.h; same registers, behaviour-identical.
+typedef void (*FontDrawStringCenterMtxLocalFn)(Mtx, const char*);
 
 #define WP_SUBMENU(wp) ((wp)->commandMenu.subMenu)
 
 void DrawMultiItemWin(void);
-void DrawSubMenuCommonProcess(f32* x, f32* y, Mtx* a, Vec* b, f32* c, Mtx* d);
-void DrawMainIcon(BattleSubMenu* menu, BattleCommandAct* acts, Mtx* a, Vec* b, f32* c);
-void DrawSubIcon(BattleSubMenu* menu, Mtx* a, s32* enabled, u16* icons, const char** names, s32* costs, s32* p34, void* party, s32 y);
-void DrawMenuCursorAndScrollArrow(const Vec* v);
-void DrawMenuHelpWin(const char* help, f32 x, f32 y);
+static void DrawSubMenuCommonProcess(f32* x, f32* y, Mtx* a, Vec* b, f32* c, Mtx* d);
+static void DrawMainIcon(BattleSubMenu* menu, BattleCommandAct* acts, Mtx* a, Vec* b, f32* c);
+#if VERSION <= VERSION_DEMO_JP
+static void DrawSubIcon(BattleSubMenu* menu, Mtx* a, s32* enabled, u16* icons, const char** names, s32* costs, s32* p34, void* party);
+#else
+static void DrawSubIcon(BattleSubMenu* menu, Mtx* a, s32* enabled, u16* icons, const char** names, s32* costs, s32* p34, void* party, s32 y);
+#endif
+static void DrawMenuCursorAndScrollArrow(const Vec* v);
+static void DrawMenuHelpWin(const char* help, f32 x, f32 y);
 void DrawChangePartyWin(void);
 void DrawOperationWin(void);
 void DrawWeaponWin(void);
 void DrawMainMenu(BattleWork* wp);
-void DrawMenuPinchMark(void);
+static void DrawMenuPinchMark(void);
 #include "battle/battle_audience.h"
 #include "driver/camdrv.h"
 #include "driver/icondrv.h"
 #include "pmario_sound.h"
-void DrawSubIconSub(BattleSubMenu* menu, s32 i, Mtx m, s32 enabled, s32 icon, const char* name, s32 cost, s32 p34, void* party, s32 y);
-void DrawMainIconCircle(BattleSubMenu* menu, BattleCommandAct* act, Mtx m, Vec v, f32 s);
-void DrawMainIconHukidasi(BattleSubMenu* menu, BattleCommandAct* act, Mtx m, f32 s);
-BOOL BattleCommandCheckChangePositionEnable(BattleWork* wp);
-void DrawMenuPartyChangeButton_Sub(u32 id, f32 x, f32 y, f32 angle);
-void DrawMenuPartyChangeButton(void);
-void DrawSubMenuCommonProcessSub1(BattleSubMenu* menu, BattleCursor* cursor, s32 prev, s32 key);
-void btlDispGXQuads2D(f32 x0, f32 y0, f32 x1, f32 y1, u8 r, u8 g, u8 b, u8 a);
+#if VERSION <= VERSION_DEMO_JP
+static void DrawSubIconSub(BattleSubMenu* menu, s32 i, Mtx m, s32 enabled, u16 icon, const char* name, s32 cost, s32 p34, void* party);
+#else
+static void DrawSubIconSub(BattleSubMenu* menu, s32 i, Mtx m, s32 enabled, u16 icon, const char* name, s32 cost, s32 p34, void* party, s32 y);
+#endif
+static void DrawMainIconCircle(BattleSubMenu* menu, BattleCommandAct* act, Mtx m, Vec v, f32 s);
+static void DrawMainIconHukidasi(BattleSubMenu* menu, BattleCommandAct* act, Mtx m, f32 s);
+static void DrawMenuPartyChangeButton_Sub(u32 id, f32 x, f32 y, f32 angle);
+static void DrawMenuPartyChangeButton(void);
+static void DrawSubMenuCommonProcessSub1(BattleSubMenu* menu, BattleCursor* cursor, s32 prev, s32 key);
 #include "mario/mariost.h"
 #include "sdk/texPalette.h"
 #include "icon_ids.h"
 #ifdef PORT_MODS
 #include "port/hooks/src_battle_battle_menu_disp.h"
 #endif
-// US: menu animation lengths scale with the display rate (gp->framerate is 60 or 50)
-#ifdef VERSION_G8ME01
-#define FRAMES(n) (gp->framerate * (n) / 60)
-#define FRAMES_STEP(jp, n, x) ((x) * ((n) / gp->framerate))
-#else
-#define FRAMES(n) (n)
-#define FRAMES_STEP(jp, n, x) ((jp) * (x))
-#endif
-void FontDrawStringCenterMtx(Mtx mtx, const char* msg);
-void btlDispGXPoint2D(f32 x, f32 y, u8 r, u8 g, u8 b, u8 a, f32 s, f32 t);
-void FontDrawColor(GXColor color);
-void GetRingCenter(Vec* out);
-void GetRingOffset(f32 angle, f32* x, f32* y);
+static void GetRingCenter(Vec* out);
+static void GetRingOffset(f32 angle, f32* x, f32* y);
+/**
+ * Angles in degrees of the command icons around the battle menu's ring, one row each for 3, 4 and 5 commands
+ * (indexed by the icon's slot); used to place and turn the icons when the ring spins.
+ */
 f32 kakutable[3][5] = {{240.0f, 120.0f, 0.0f, 0.0f, 0.0f}, {270.0f, 180.0f, 90.0f, 0.0f, 0.0f}, {270.0f, 203.0f, 157.0f, 90.0f, 0.0f}};
 
 //.sdata
 GXColor seleItemCoordCol = {0xFF, 0xC0, 0xC0, 0xCF};
 
+/**
+ * Cycles seleItemCoordCol, the highlight colour of the selected list row, one step per frame through pale red,
+ * yellow, green, cyan, blue and magenta (each channel between 0xC0 and 0xFF).
+ * Called every frame from BattleCommandDisplay.
+ */
 void SelectedItemCoordinateColorUpDate(void) {
     static s8 seq;
     switch (seq) {
@@ -117,6 +113,11 @@ void SelectedItemCoordinateColorUpDate(void) {
     }
 }
 
+/**
+ * TRUE when the command menu may take input: the current sub-menu has finished opening (shown),
+ * or an audience attack check has fired (commandMenu.attackAudience).
+ * Polled by the battle_seq_command.c menu loops.
+ */
 BOOL BattleMenuKeyOKInACT(BattleWork* wp) {
     if (!wp->commandMenu.attackAudience && !WP_SUBMENU(wp)->shown) {
         return FALSE;
@@ -124,23 +125,32 @@ BOOL BattleMenuKeyOKInACT(BattleWork* wp) {
     return TRUE;
 }
 
+/**
+ * Loads battle/common/battle_common.tpl, the textures for the command ring, list rows and DANGER/PERIL marks,
+ * into wp->menuTex; called from btlDispInit.
+ */
 void battleMenuDispInit(void) {
     BattleWork* wp = _battleWorkPointer;
     char path[256];
 
-    sprintf(path, "%s/battle/common/battle_common.tpl\0", getMarioStDvdRoot());
+    sprintf(path, "%s/battle/common/battle_common.tpl", getMarioStDvdRoot());
     wp->menuTex = fileAlloc(path, 4);
 }
 
+/** Frees the battle menu textures loaded by battleMenuDispInit; called at battle end. */
 void battleMenuDispEnd(void) {
     fileFree(_battleWorkPointer->menuTex);
 }
 
-void GetRingCenter(Vec* out) {
+/**
+ * Screen-space centre of the command ring: the acting unit's screen position moved 22.5 right and 105 up,
+ * with x kept at -180 or more so the ring stays on screen.
+ */
+static void GetRingCenter(Vec* out) {
     BattleWork* wp = _battleWorkPointer;
     BattleUnit* unit = BattleGetUnitPtr(wp, wp->activeUnitId);
 
-    btlGetScreenPoint(&unit->mPosition, out);
+    btlGetScreenPoint(&unit->position, out);
     out->x += 22.5f;
     out->y += 105.0f;
     out->z = 0.0f;
@@ -149,13 +159,22 @@ void GetRingCenter(Vec* out) {
     }
 }
 
-void GetRingOffset(f32 angle, f32* x, f32* y) {
+/**
+ * Offset of a ring icon at angle (radians, 0 = front/bottom of the ring) on the 80 x 35 ellipse of the command
+ * ring.
+ */
+static void GetRingOffset(f32 angle, f32* x, f32* y) {
     f32 t = 4.712389f - angle;
     *x = 80.0f * (f32)cos(t);
     *y = 35.0f * (f32)sin(t);
 }
 
-void DrawMainIcon(BattleSubMenu* menu, BattleCommandAct* acts, Mtx* a, Vec* b, f32* c) {
+/**
+ * Draws the command-ring icons back to front (sorted by y, so the far side of the ring goes first):
+ * the selected one as a speech-bubble label (iconFlags bit 1), the rest as round icons.
+ * Only icons with iconFlags bit 0 are drawn.
+ */
+static void DrawMainIcon(BattleSubMenu* menu, BattleCommandAct* acts, Mtx* a, Vec* b, f32* c) {
     s32 order[5];
     f32 z[6];
     BattleWork* wp = _battleWorkPointer;
@@ -166,7 +185,7 @@ void DrawMainIcon(BattleSubMenu* menu, BattleCommandAct* acts, Mtx* a, Vec* b, f
     s32 j;
     s32 k;
 
-    if (BattleGetUnitPtr(wp, wp->activeUnitId)->currentKind == 0xDE) {
+    if (BattleGetUnitPtr(wp, wp->activeUnitId)->currentKind == UNIT_MARIO) {
         cursor = &wp->commandMenu.cursor[0];
     } else {
         cursor = &wp->commandMenu.cursor[1];
@@ -199,7 +218,13 @@ void DrawMainIcon(BattleSubMenu* menu, BattleCommandAct* acts, Mtx* a, Vec* b, f
     }
 }
 
-void DrawMainIconHukidasi(BattleSubMenu* menu, BattleCommandAct* act, Mtx m, f32 s) {
+/**
+ * Hukidasi = speech bubble.
+ * Draws the selected command as a bubble with its icon and name,
+ * with a drop shadow that shifts as the bubble turns about y by s degrees; disabled commands are greyed.
+ * The US release squeezes names wider than 90 units.
+ */
+static void DrawMainIconHukidasi(BattleSubMenu* menu, BattleCommandAct* act, Mtx m, f32 s) {
     GXColor tev;
     GXColor col;
     Mtx rot;
@@ -214,7 +239,7 @@ void DrawMainIconHukidasi(BattleSubMenu* menu, BattleCommandAct* act, Mtx m, f32
     f32 rad;
     f32 ofs;
 
-    cam = camGetPtr(8);
+    cam = camGetPtr(CAMERA_2D);
     btlDispGXInit2D();
     tev = (GXColor){0xE1, 0xE1, 0xE1, 0xFF};
     GXSetTevColor(GX_TEVREG0, tev);
@@ -259,13 +284,13 @@ void DrawMainIconHukidasi(BattleSubMenu* menu, BattleCommandAct* act, Mtx m, f32
         icon = ICON_18B;
     }
     if (act->enabled == 1) {
-        ((void (*)(Mtx, s16, u16))iconDispGx2)(out, 0x10, icon);
+        iconDispGx2(out, ICON_DISP_2D, icon);
     } else {
-        ((void (*)(Mtx, s16, u16))iconDispGx2)(out, 0x30, icon);
+        iconDispGx2(out, ICON_DISP_2D | ICON_FLAG_GRAYSCALE, icon);
     }
     name = act->name;
     PSMTXTrans(trn, 0.0f, 52.5f, 0.0f);
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
     {
         // US: long command names are squeezed to 90 units wide
         f32 w = FontGetMessageWidth(name);
@@ -285,10 +310,15 @@ void DrawMainIconHukidasi(BattleSubMenu* menu, BattleCommandAct* act, Mtx m, f32
         col = (GXColor){0x80, 0x80, 0x80, 0xFF};
     }
     FontDrawColor(col);
-    FontDrawStringCenterMtx(out, name);
+    ((FontDrawStringCenterMtxLocalFn)FontDrawStringCenterMtx)(out, name);
 }
 
-void DrawMainIconCircle(BattleSubMenu* menu, BattleCommandAct* act, Mtx m, Vec v, f32 s) {
+/**
+ * Draws one round command icon on the ring, turned about y by s degrees,
+ * scaled and darkened by its depth v.z so the far side of the ring looks smaller and dimmer;
+ * disabled commands are greyed.
+ */
+static void DrawMainIconCircle(BattleSubMenu* menu, BattleCommandAct* act, Mtx m, Vec v, f32 s) {
     GXColor tev;
     Mtx rot;
     Mtx scl;
@@ -298,14 +328,14 @@ void DrawMainIconCircle(BattleSubMenu* menu, BattleCommandAct* act, Mtx m, Vec v
     BattleWork* wp = _battleWorkPointer;
     CameraEntry* cam;
     u8 c;
-    u32 icon;
+    u16 icon;
     f32 rad;
     f32 ofs;
     f32 sc;
     s32 i;
     s32 j;
 
-    cam = camGetPtr(8);
+    cam = camGetPtr(CAMERA_2D);
     c = 0xC0 - (s32)(1.5f * v.z);
     btlDispGXInit2D();
     tev = (GXColor){0xE1, 0xE1, 0xE1, 0xFF};
@@ -333,20 +363,20 @@ void DrawMainIconCircle(BattleSubMenu* menu, BattleCommandAct* act, Mtx m, Vec v
         ofs = (-4.0f + 8.0f * (s - 180.0f) / 180.0f) / 1.3f;
     }
     {
-    f32 pos[4][8] = {{-20.0f, 40.0f, 0.0f, 40.0f, 0.0f, 20.0f, -20.0f, 20.0f}, {20.0f, 40.0f, 20.0f, 20.0f, 0.0f, 20.0f, 0.0f, 40.0f}, {-20.0f, 20.0f, 0.0f, 20.0f, 0.0f, 0.0f, -20.0f, 0.0f}, {0.0f, 20.0f, 20.0f, 20.0f, 20.0f, 0.0f, 0.0f, 0.0f}};
-    f32 uv[4][8] = {{0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f}, {0.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 0.0f}, {1.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f}};
-    for (i = 0; i < 4; i++) {
-        GXBegin(GX_QUADS, GX_VTXFMT0, 4);
-        for (j = 0; j < 7; j += 2) {
-            btlDispGXPoint2D(ofs + pos[i][j], -4.0f / 1.3f + pos[i][j + 1], 0, 0, 0, 0x80, uv[i][j], uv[i][j + 1]);
+        f32 pos[4][8] = {{-20.0f, 40.0f, 0.0f, 40.0f, 0.0f, 20.0f, -20.0f, 20.0f}, {20.0f, 40.0f, 20.0f, 20.0f, 0.0f, 20.0f, 0.0f, 40.0f}, {-20.0f, 20.0f, 0.0f, 20.0f, 0.0f, 0.0f, -20.0f, 0.0f}, {0.0f, 20.0f, 20.0f, 20.0f, 20.0f, 0.0f, 0.0f, 0.0f}};
+        f32 uv[4][8] = {{0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f}, {0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f}, {0.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 0.0f}, {1.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f}};
+        for (i = 0; i < 4; i++) {
+            GXBegin(GX_QUADS, GX_VTXFMT0, 4);
+            for (j = 0; j < 7; j += 2) {
+                btlDispGXPoint2D(ofs + pos[i][j], -4.0f / 1.3f + pos[i][j + 1], 0, 0, 0, 0x80, uv[i][j], uv[i][j + 1]);
+            }
         }
-    }
-    for (i = 0; i < 4; i++) {
-        GXBegin(GX_QUADS, GX_VTXFMT0, 4);
-        for (j = 0; j < 7; j += 2) {
-            btlDispGXPoint2D(pos[i][j], pos[i][j + 1], c, c, c, 0xFF, uv[i][j], uv[i][j + 1]);
+        for (i = 0; i < 4; i++) {
+            GXBegin(GX_QUADS, GX_VTXFMT0, 4);
+            for (j = 0; j < 7; j += 2) {
+                btlDispGXPoint2D(pos[i][j], pos[i][j + 1], c, c, c, 0xFF, uv[i][j], uv[i][j + 1]);
+            }
         }
-    }
     }
     PSMTXTrans(trn, 0.0f, 7.5f, 0.0f);
     sc = 0.66f * (1.3f - 0.005f * v.z);
@@ -361,15 +391,25 @@ void DrawMainIconCircle(BattleSubMenu* menu, BattleCommandAct* act, Mtx m, Vec v
         icon = ICON_18B;
     }
     if (act->enabled == 1) {
-        iconDispGxCol(out, 0x10, icon, (GXColor){c, c, c, 0xFF});
+        iconDispGxCol(out, ICON_DISP_2D, icon, (GXColor){c, c, c, 0xFF});
 
     } else {
-        iconDispGxCol(out, 0x30, icon, (GXColor){c, c, c, 0xFF});
-
+        iconDispGxCol(out, ICON_DISP_2D | ICON_FLAG_GRAYSCALE, icon, (GXColor){c, c, c, 0xFF});
     }
 }
 
-void DrawSubIcon(BattleSubMenu* menu, Mtx* a, s32* enabled, u16* icons, const char** names, s32* costs, s32* p34, void* party, s32 y) {
+/**
+ * Draws the visible rows (up to 7) of a sub-menu list,
+ * 24 units apart and shifted by the fractional part of scrollPos, through DrawSubIconSub.
+ * The retail versions pass y on: in the US it is 1 to squeeze long party names,
+ * in PAL it is the name width that labels are scaled down to fit.
+ */
+#if VERSION <= VERSION_DEMO_JP
+static void DrawSubIcon(BattleSubMenu* menu, Mtx* a, s32* enabled, u16* icons, const char** names, s32* costs, s32* p34, void* party) {
+#else
+/** Retail signature: y is the name-width setting described above. */
+static void DrawSubIcon(BattleSubMenu* menu, Mtx* a, s32* enabled, u16* icons, const char** names, s32* costs, s32* p34, void* party, s32 y) {
+#endif
     Mtx out[7];
     Mtx m;
     BattleWork* wp = _battleWorkPointer;
@@ -379,23 +419,43 @@ void DrawSubIcon(BattleSubMenu* menu, Mtx* a, s32* enabled, u16* icons, const ch
 
     BattleGetUnitPtr(wp, wp->activeUnitId);
     cursor = menu->cursor;
-    ofs = menu->scrollPos - (f32)(s32)menu->scrollPos; ofs = 24.0f * ofs;
+    ofs = menu->scrollPos - (f32)(s32)menu->scrollPos;
+    ofs = 24.0f * ofs;
     for (i = 0; i < 7; i++) {
         if ((s32)menu->scrollPos + i < cursor->count && (menu->rowFlags[i] & 1)) {
             PSMTXTrans(m, 100.0f, 35.0f - 24.0f * i + ofs, 0.0f);
             PSMTXConcat(m, a[i], out[i]);
+#if VERSION <= VERSION_DEMO_JP
+            DrawSubIconSub(menu, i, out[i], enabled[i], icons[i], names[i], costs[i], p34[i], party);
+#else
             DrawSubIconSub(menu, i, out[i], enabled[i], icons[i], names[i], costs[i], p34[i], party, y);
+#endif
         }
     }
 }
 
-void DrawSubIconSub(BattleSubMenu* menu, s32 i, Mtx m, s32 enabled, s32 icon, const char* name, s32 cost, s32 p34, void* party, s32 y) {
+/**
+ * Draws one sub-menu row: the row bar, icon (greyed when disabled), name, FP cost,
+ * Star Power cost (btl_cost_disp_AP) and, for the partner list, HP/max HP.
+ * The cursor row uses the cycling seleItemCoordCol; the top and bottom rows fade as the list scrolls.
+ * The demos place the HP numbers differently; the US release squeezes party names over 150 units
+ * and PAL scales names to the width y.
+ */
+#if VERSION <= VERSION_DEMO_JP
+static void DrawSubIconSub(BattleSubMenu* menu, s32 i, Mtx m, s32 enabled, u16 icon, const char* name, s32 cost, s32 p34, void* party) {
+#else
+/** Retail signature: y selects the name squeezing described above. */
+static void DrawSubIconSub(BattleSubMenu* menu, s32 i, Mtx m, s32 enabled, u16 icon, const char* name, s32 cost, s32 p34, void* party, s32 y) {
+#endif
     BattleWork* wp = _battleWorkPointer;
     CameraEntry* cam;
     BattleCursor* cursor = menu->cursor;
     f32 frac;
     u8 alpha;
-    u8 r; u8 g; u8 b; u8 a;
+    u8 r;
+    u8 g;
+    u8 b;
+    u8 a;
     Mtx scl;
     Mtx trn;
     Mtx out;
@@ -412,8 +472,8 @@ void DrawSubIconSub(BattleSubMenu* menu, s32 i, Mtx m, s32 enabled, s32 icon, co
     s32 j;
     s32 n;
 
-    cam = camGetPtr(8);
-    frac = menu->scrollPos - (( s32)menu->scrollPos) ;
+    cam = camGetPtr(CAMERA_2D);
+    frac = menu->scrollPos - ((s32)menu->scrollPos);
     alpha = 0xFF;
     if (i == 0) {
         alpha = 255.0f * (1.0f - frac);
@@ -421,7 +481,8 @@ void DrawSubIconSub(BattleSubMenu* menu, s32 i, Mtx m, s32 enabled, s32 icon, co
     if (i == 6) {
         alpha = 255.0f * frac;
     }
-    j = ((s32)menu->scrollPos ) + i ; if (j == cursor->absPos) {
+    j = ((s32)menu->scrollPos) + i;
+    if (j == cursor->absPos) {
         r = seleItemCoordCol.r;
         g = seleItemCoordCol.g;
         b = seleItemCoordCol.b;
@@ -430,7 +491,7 @@ void DrawSubIconSub(BattleSubMenu* menu, s32 i, Mtx m, s32 enabled, s32 icon, co
         b = 0xFF;
         g = 0xFF;
         r = 0xFF;
-        a = ( 144.0f * ( (u8)alpha )) / 255.0f;
+        a = (144.0f * ((u8)alpha)) / 255.0f;
     }
     btlDispGXInit2D();
     PSMTXConcat(cam->view, m, out);
@@ -446,13 +507,13 @@ void DrawSubIconSub(BattleSubMenu* menu, s32 i, Mtx m, s32 enabled, s32 icon, co
     PSMTXScale(scl, 0.5f, 0.5f, 1.0f);
     PSMTXConcat(m, trn, out);
     PSMTXConcat(out, scl, out);
-    if (!(( u16)icon) ) {
+    if (!((u16)icon)) {
         icon = ICON_18B;
     }
     if (enabled == 1) {
-        iconDispGxCol(out, 0x10, icon, (GXColor){0xFF, 0xFF, 0xFF, alpha});
+        iconDispGxCol(out, ICON_DISP_2D, icon, (GXColor){0xFF, 0xFF, 0xFF, alpha});
     } else {
-        iconDispGxCol(out, 0x30, icon, (GXColor){0xFF, 0xFF, 0xFF, alpha});
+        iconDispGxCol(out, ICON_DISP_2D | ICON_FLAG_GRAYSCALE, icon, (GXColor){0xFF, 0xFF, 0xFF, alpha});
     }
     FontDrawStart();
     {
@@ -465,24 +526,43 @@ void DrawSubIconSub(BattleSubMenu* menu, s32 i, Mtx m, s32 enabled, s32 icon, co
         FontDrawColor(fc);
     }
     PSMTXTrans(trn, -104.0f, 22.0f, 0.0f);
-    if (y == 1) {
-        PSMTXScale(scl, ( FontGetMessageWidth(name) > 150 ) ? ( 120.0f / FontGetMessageWidth(name) ) : ( 0.8f) , 0.8f, 0.8f);
+#if VERSION <= VERSION_DEMO_JP
+    PSMTXScale(scl, 0.8f, 0.8f, 0.8f);
+#else
+#if VERSION >= VERSION_DEMO_EU
+    if (y != 0) {
+        PSMTXScale(scl, (FontGetMessageWidth(name) > y) ? (0.8f * y / FontGetMessageWidth(name)) : (0.8f), 0.8f, 0.8f);
     } else {
+#else
+    if (y == 1) {
+        PSMTXScale(scl, (FontGetMessageWidth(name) > 150) ? (120.0f / FontGetMessageWidth(name)) : (0.8f), 0.8f, 0.8f);
+    } else {
+#endif
         PSMTXScale(scl, 0.8f, 0.8f, 0.8f);
     }
+#endif
     PSMTXConcat(m, trn, out);
     PSMTXConcat(out, scl, out);
     FontDrawStringMtx(out, name);
     if (cost != 0) {
         d1[2] = cost / 100;
-        d1[1] = (cost - ( d1[2] * 100) ) / 10;
-        d1[0] = (cost - ( d1[2] * 100) ) - ( d1[1] * 10) ;
+        d1[1] = (cost - (d1[2] * 100)) / 10;
+        d1[0] = (cost - (d1[2] * 100)) - (d1[1] * 10);
         if (d1[2] > 0) {
-            o1[0] = 28; o1[1] = 14; o1[2] = 0; n = 3;
+            o1[0] = 28;
+            o1[1] = 14;
+            o1[2] = 0;
+            n = 3;
         } else if (d1[1] > 0) {
-            o1[0] = 21; o1[1] = 7; o1[2] = 0; n = 2;
+            o1[0] = 21;
+            o1[1] = 7;
+            o1[2] = 0;
+            n = 2;
         } else {
-            o1[0] = 14; o1[1] = 0; o1[2] = 0; n = 1;
+            o1[0] = 14;
+            o1[1] = 0;
+            o1[2] = 0;
+            n = 1;
         }
         PSMTXScale(scl, 1.0f, 1.0f, 1.0f);
         for (j = 0; j < n; j++) {
@@ -500,15 +580,25 @@ void DrawSubIconSub(BattleSubMenu* menu, s32 i, Mtx m, s32 enabled, s32 icon, co
         FontDrawStringMtx(out, msgSearch("btl_cost_disp_FP"));
     }
     if (p34 != 0) {
+        s32 n;
         d2[2] = p34 / 100;
-        d2[1] = (p34 - ( d2[2] * 100) ) / 10;
-        d2[0] = (p34 - ( d2[2] * 100) ) - ( d2[1] * 10) ;
+        d2[1] = (p34 - (d2[2] * 100)) / 10;
+        d2[0] = (p34 - (d2[2] * 100)) - (d2[1] * 10);
         if (d2[2] > 0) {
-            o2[0] = 28; o2[1] = 14; o2[2] = 0; n = 3;
+            o2[0] = 28;
+            o2[1] = 14;
+            o2[2] = 0;
+            n = 3;
         } else if (d2[1] > 0) {
-            o2[0] = 21; o2[1] = 7; o2[2] = 0; n = 2;
+            o2[0] = 21;
+            o2[1] = 7;
+            o2[2] = 0;
+            n = 2;
         } else {
-            o2[0] = 14; o2[1] = 0; o2[2] = 0; n = 1;
+            o2[0] = 14;
+            o2[1] = 0;
+            o2[2] = 0;
+            n = 1;
         }
         PSMTXScale(scl, 1.0f, 1.0f, 1.0f);
         for (j = 0; j < n; j++) {
@@ -525,10 +615,93 @@ void DrawSubIconSub(BattleSubMenu* menu, s32 i, Mtx m, s32 enabled, s32 icon, co
         PSMTXConcat(out, scl, out);
         FontDrawStringMtx(out, msgSearch("btl_cost_disp_AP"));
     }
+    // Two copies: the demos place the HP numbers from a running x; the releases use fixed spots per language.
+#if VERSION <= VERSION_DEMO_JP
     if (party != NULL) {
-        s16* p = (s16*)((( u8*)party ) + ( (i + ( (s32)menu->scrollPos) ) * 0x18) );
+        s16* p = (s16*)(((u8*)party) + ((i + ((s32)menu->scrollPos)) * 0x18));
         s32 n;
-        s32 hp; s32 maxhp;
+        s32 hp;
+        s32 maxhp;
+        f32 x;
+        hp = p[10];
+        maxhp = p[11];
+        x = 30.0f;
+        PSMTXTrans(trn, x, 22.0f, 0.0f);
+        PSMTXScale(scl, 0.8f, 0.8f, 0.8f);
+        PSMTXConcat(m, trn, out);
+        PSMTXConcat(out, scl, out);
+        FontDrawStringMtx(out, msgSearch("btl_disp_HP"));
+        d3[2] = hp / 100;
+        d3[1] = (hp - (d3[2] * 100)) / 10;
+        d3[0] = (hp - (d3[2] * 100)) - (d3[1] * 10);
+        if (d3[2] > 0) {
+            o3[0] = 28;
+            o3[1] = 14;
+            o3[2] = 0;
+            n = 3;
+        } else if (d3[1] > 0) {
+            o3[0] = 21;
+            o3[1] = 7;
+            o3[2] = 0;
+            n = 2;
+        } else {
+            o3[0] = 14;
+            o3[1] = 0;
+            o3[2] = 0;
+            n = 1;
+        }
+        PSMTXScale(scl, 1.0f, 1.0f, 1.0f);
+        for (j = 0; j < n; j++) {
+            buf3[0] = d3[j] + '0';
+            buf3[1] = 0;
+            PSMTXTrans(trn, 32.0f + (30.0f + o3[j]), 25.0f, 0.0f);
+            PSMTXConcat(m, trn, out);
+            PSMTXConcat(out, scl, out);
+            FontDrawStringMtx(out, buf3);
+        }
+        if (((u32)gp->language) == 1) {
+            x += 10.0f;
+        }
+        PSMTXTrans(trn, 64.0f + x, 22.0f, 0.0f);
+        PSMTXScale(scl, 0.8f, 0.8f, 0.8f);
+        PSMTXConcat(m, trn, out);
+        PSMTXConcat(out, scl, out);
+        FontDrawStringMtx(out, msgSearch("btl_disp_slash"));
+        d3[2] = maxhp / 100;
+        d3[1] = (maxhp - (d3[2] * 100)) / 10;
+        d3[0] = (maxhp - (d3[2] * 100)) - (d3[1] * 10);
+        if (d3[2] > 0) {
+            o3[0] = 28;
+            o3[1] = 14;
+            o3[2] = 0;
+            n = 3;
+        } else if (d3[1] > 0) {
+            o3[0] = 21;
+            o3[1] = 7;
+            o3[2] = 0;
+            n = 2;
+        } else {
+            o3[0] = 14;
+            o3[1] = 0;
+            o3[2] = 0;
+            n = 1;
+        }
+        PSMTXScale(scl, 1.0f, 1.0f, 1.0f);
+        for (j = 0; j < n; j++) {
+            buf3[0] = d3[j] + '0';
+            buf3[1] = 0;
+            PSMTXTrans(trn, 72.0f + (x + o3[j]), 25.0f, 0.0f);
+            PSMTXConcat(m, trn, out);
+            PSMTXConcat(out, scl, out);
+            FontDrawStringMtx(out, buf3);
+        }
+    }
+#else
+    if (party != NULL) {
+        s16* p = (s16*)(((u8*)party) + ((i + ((s32)menu->scrollPos)) * 0x18));
+        s32 n;
+        s32 hp;
+        s32 maxhp;
         hp = p[10];
         maxhp = p[11];
         PSMTXTrans(trn, 30.0f, 22.0f, 0.0f);
@@ -537,20 +710,29 @@ void DrawSubIconSub(BattleSubMenu* menu, s32 i, Mtx m, s32 enabled, s32 icon, co
         PSMTXConcat(out, scl, out);
         FontDrawStringMtx(out, msgSearch("btl_disp_HP"));
         d3[2] = hp / 100;
-        d3[1] = (hp - ( d3[2] * 100) ) / 10;
-        d3[0] = (hp - ( d3[2] * 100) ) - ( d3[1] * 10) ;
+        d3[1] = (hp - (d3[2] * 100)) / 10;
+        d3[0] = (hp - (d3[2] * 100)) - (d3[1] * 10);
         if (d3[2] > 0) {
-            o3[0] = 28; o3[1] = 14; o3[2] = 0; n = 3;
+            o3[0] = 28;
+            o3[1] = 14;
+            o3[2] = 0;
+            n = 3;
         } else if (d3[1] > 0) {
-            o3[0] = 21; o3[1] = 7; o3[2] = 0; n = 2;
+            o3[0] = 21;
+            o3[1] = 7;
+            o3[2] = 0;
+            n = 2;
         } else {
-            o3[0] = 14; o3[1] = 0; o3[2] = 0; n = 1;
+            o3[0] = 14;
+            o3[1] = 0;
+            o3[2] = 0;
+            n = 1;
         }
         PSMTXScale(scl, 1.0f, 1.0f, 1.0f);
         for (j = 0; j < n; j++) {
             buf3[0] = d3[j] + '0';
             buf3[1] = 0;
-            if ((( u32)gp->language ) == 0) {
+            if (((u32)gp->language) == 0) {
                 PSMTXTrans(trn, 26.0f + (30.0f + o3[j]), 25.0f, 0.0f);
             } else {
                 PSMTXTrans(trn, 28.0f + (30.0f + o3[j]), 25.0f, 0.0f);
@@ -559,7 +741,7 @@ void DrawSubIconSub(BattleSubMenu* menu, s32 i, Mtx m, s32 enabled, s32 icon, co
             PSMTXConcat(out, scl, out);
             FontDrawStringMtx(out, buf3);
         }
-        if ((( u32)gp->language ) == 0) {
+        if (((u32)gp->language) == 0) {
             PSMTXTrans(trn, 92.0f, 22.0f, 0.0f);
         } else {
             PSMTXTrans(trn, 100.0f, 22.0f, 0.0f);
@@ -569,20 +751,29 @@ void DrawSubIconSub(BattleSubMenu* menu, s32 i, Mtx m, s32 enabled, s32 icon, co
         PSMTXConcat(out, scl, out);
         FontDrawStringMtx(out, msgSearch("btl_disp_slash"));
         d3[2] = maxhp / 100;
-        d3[1] = (maxhp - ( d3[2] * 100) ) / 10;
-        d3[0] = (maxhp - ( d3[2] * 100) ) - ( d3[1] * 10) ;
+        d3[1] = (maxhp - (d3[2] * 100)) / 10;
+        d3[0] = (maxhp - (d3[2] * 100)) - (d3[1] * 10);
         if (d3[2] > 0) {
-            o3[0] = 28; o3[1] = 14; o3[2] = 0; n = 3;
+            o3[0] = 28;
+            o3[1] = 14;
+            o3[2] = 0;
+            n = 3;
         } else if (d3[1] > 0) {
-            o3[0] = 21; o3[1] = 7; o3[2] = 0; n = 2;
+            o3[0] = 21;
+            o3[1] = 7;
+            o3[2] = 0;
+            n = 2;
         } else {
-            o3[0] = 14; o3[1] = 0; o3[2] = 0; n = 1;
+            o3[0] = 14;
+            o3[1] = 0;
+            o3[2] = 0;
+            n = 1;
         }
         PSMTXScale(scl, 1.0f, 1.0f, 1.0f);
         for (j = 0; j < n; j++) {
             buf3[0] = d3[j] + '0';
             buf3[1] = 0;
-            if ((( u32)gp->language ) == 0) {
+            if (((u32)gp->language) == 0) {
                 PSMTXTrans(trn, 76.0f + (30.0f + o3[j]), 25.0f, 0.0f);
             } else {
                 PSMTXTrans(trn, 78.0f + (30.0f + o3[j]), 25.0f, 0.0f);
@@ -592,9 +783,18 @@ void DrawSubIconSub(BattleSubMenu* menu, s32 i, Mtx m, s32 enabled, s32 icon, co
             FontDrawStringMtx(out, buf3);
         }
     }
+#endif
 }
 
-void DrawMenuPartyChangeButton(void) {
+/**
+ * Draws the switch-places button between Mario and his partner
+ * when BattleCommandCheckChangePositionEnable allows it.
+ * While an audience item throw is pending (BattleAudience_GetItemOn), flips in texture 5 instead,
+ * the throw warning:
+ * between the two with the SFX_BTL_SYS_CAUTION_THROW1 sound as it starts,
+ * or above Mario without a sound if he has no partner.
+ */
+static void DrawMenuPartyChangeButton(void) {
     Vec p;
     Vec q;
     s32 id;
@@ -613,7 +813,7 @@ void DrawMenuPartyChangeButton(void) {
 #ifdef TARGET_PC
     portInterpKeep(&menu->partyBtnAngle, sizeof(menu->partyBtnAngle)); /* steps in this draw */
 #endif
-    camGetPtr(8);
+    camGetPtr(CAMERA_2D);
     mario = BattleGetMarioPtr(wp);
     party = BattleGetPartyPtr(wp);
     if (!party) {
@@ -624,14 +824,14 @@ void DrawMenuPartyChangeButton(void) {
             } else {
                 menu->partyBtnAngle = 0.0f;
             }
-            btlGetScreenPoint(&mario->mPosition, &p);
+            btlGetScreenPoint(&mario->position, &p);
             DrawMenuPartyChangeButton_Sub(5, p.x, p.y - 20.0f, menu->partyBtnAngle);
         } else {
             menu->partyBtnAngle = 90.0f;
         }
     } else {
-        btlGetScreenPoint(&mario->mPosition, &p);
-        btlGetScreenPoint(&party->mPosition, &q);
+        btlGetScreenPoint(&mario->position, &p);
+        btlGetScreenPoint(&party->position, &q);
         x = (p.x + q.x) / 2.0f;
         y = p.y;
         BattleAudience_GetItemOn(&id, &ix, &iy, &iz, NULL);
@@ -654,7 +854,8 @@ void DrawMenuPartyChangeButton(void) {
     }
 }
 
-void DrawMenuPartyChangeButton_Sub(u32 id, f32 x, f32 y, f32 angle) {
+/** Draws battle texture plane id at screen x, y, turned about y by angle degrees (used to flip the button in). */
+static void DrawMenuPartyChangeButton_Sub(u32 id, f32 x, f32 y, f32 angle) {
     Mtx mtx;
 
     PSMTXRotRad(mtx, 'y', 0.017453292f * angle);
@@ -662,12 +863,17 @@ void DrawMenuPartyChangeButton_Sub(u32 id, f32 x, f32 y, f32 angle) {
     btlDispTexPlane2(mtx, id, (GXColor){0xFF, 0xFF, 0xFF, 0xFF}, 0);
 }
 
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
 // US: per-language "DANGER"/"PERIL" textures, the marks drawn larger outside Japanese, and the
 // Mario and partner marks split into two functions drawn in an order that keeps the front one on top.
 u16 danger_icon_tbl[6] = {6, 7, 8, 7, 9, 10};
 u16 peril_icon_tbl[6] = {11, 12, 13, 14, 15, 16};
 
+/**
+ * Draws Mario's DANGER mark when his HP is 5 or less (and below max),
+ * or the PERIL mark flashing yellow/red every 25 frames at 1 HP, using the texture for the current language,
+ * 1.5x larger outside Japanese.
+ */
 void N_DrawMenuMarioPinchMark(void) {
     Mtx m;
     Mtx out;
@@ -683,7 +889,7 @@ void N_DrawMenuMarioPinchMark(void) {
     u8 a;
     u32 id;
 
-    cam = camGetPtr(8);
+    cam = camGetPtr(CAMERA_2D);
     unit = BattleGetMarioPtr(wp);
     if (unit->currentHp > 0 && unit->currentHp < unit->maxHp && unit->currentHp <= 5) {
         if (unit->currentHp == 1) {
@@ -708,8 +914,8 @@ void N_DrawMenuMarioPinchMark(void) {
         }
         TEXGetGXTexObjFromPalette(*wp->menuTex->data, &texobj, id);
         GXLoadTexObj(&texobj, GX_TEXMAP0);
-        btlGetScreenPoint(&unit->mPosition, &p);
-        if (unit->mPosition.x > -120.0f) {
+        btlGetScreenPoint(&unit->position, &p);
+        if (unit->position.x > -120.0f) {
             PSMTXTrans(m, p.x - 20.0f, 60.0f + p.y, 20.0f);
         } else {
             PSMTXTrans(m, p.x - 20.0f, 60.0f + p.y, 0.0f);
@@ -724,6 +930,10 @@ void N_DrawMenuMarioPinchMark(void) {
     }
 }
 
+/**
+ * Draws the partner's DANGER or PERIL mark, the same as N_DrawMenuMarioPinchMark,
+ * slightly further back than Mario's.
+ */
 void N_DrawMenuPartyPinchMark(void) {
     Mtx m;
     Mtx out;
@@ -739,7 +949,7 @@ void N_DrawMenuPartyPinchMark(void) {
     u8 a;
     u32 id;
 
-    cam = camGetPtr(8);
+    cam = camGetPtr(CAMERA_2D);
     unit = BattleGetPartyPtr(wp);
     if (unit && unit->currentHp > 0 && unit->currentHp < unit->maxHp && unit->currentHp <= 5) {
         if (unit->currentHp == 1) {
@@ -764,8 +974,8 @@ void N_DrawMenuPartyPinchMark(void) {
         }
         TEXGetGXTexObjFromPalette(*wp->menuTex->data, &texobj, id);
         GXLoadTexObj(&texobj, GX_TEXMAP0);
-        btlGetScreenPoint(&unit->mPosition, &p);
-        if (unit->mPosition.x > -120.0f) {
+        btlGetScreenPoint(&unit->position, &p);
+        if (unit->position.x > -120.0f) {
             PSMTXTrans(m, p.x - 20.0f, 60.0f + p.y, 10.0f);
         } else {
             PSMTXTrans(m, p.x - 20.0f, 60.0f + p.y, 0.0f);
@@ -780,10 +990,14 @@ void N_DrawMenuPartyPinchMark(void) {
     }
 }
 
-void DrawMenuPinchMark(void) {
+/**
+ * Draws the DANGER/PERIL marks for Mario and his partner,
+ * drawing first whichever stands behind (from Mario's x position) so the front one stays on top.
+ */
+static void DrawMenuPinchMark(void) {
     BattleUnit* unit = BattleGetMarioPtr(_battleWorkPointer);
     btlDispGXInit2D();
-    if (unit->mPosition.x > -120.0f) {
+    if (unit->position.x > -120.0f) {
         N_DrawMenuPartyPinchMark();
         N_DrawMenuMarioPinchMark();
     } else {
@@ -792,7 +1006,11 @@ void DrawMenuPinchMark(void) {
     }
 }
 #else
-void DrawMenuPinchMark(void) {
+/**
+ * Draws the DANGER mark (HP 5 or less and below max) or flashing PERIL mark (1 HP) above Mario and his partner,
+ * with Japanese or English textures by language.
+ */
+static void DrawMenuPinchMark(void) {
     Mtx m;
     Mtx out;
     GXTexObj texobj;
@@ -807,7 +1025,7 @@ void DrawMenuPinchMark(void) {
     u8 a;
     u32 id;
 
-    cam = camGetPtr(8);
+    cam = camGetPtr(CAMERA_2D);
     btlDispGXInit2D();
     unit = BattleGetMarioPtr(wp);
     if (unit->currentHp > 0 && unit->currentHp < unit->maxHp && unit->currentHp <= 5) {
@@ -833,7 +1051,7 @@ void DrawMenuPinchMark(void) {
         }
         TEXGetGXTexObjFromPalette(*wp->menuTex->data, &texobj, id);
         GXLoadTexObj(&texobj, GX_TEXMAP0);
-        btlGetScreenPoint(&unit->mPosition, &p);
+        btlGetScreenPoint(&unit->position, &p);
         PSMTXTrans(m, p.x - 20.0f, 60.0f + p.y, 0.0f);
         PSMTXConcat(cam->view, m, out);
         GXLoadPosMtxImm(out, 0);
@@ -863,7 +1081,7 @@ void DrawMenuPinchMark(void) {
         }
         TEXGetGXTexObjFromPalette(*wp->menuTex->data, &texobj, id);
         GXLoadTexObj(&texobj, GX_TEXMAP0);
-        btlGetScreenPoint(&unit->mPosition, &q);
+        btlGetScreenPoint(&unit->position, &q);
         PSMTXTrans(m, q.x - 20.0f, 60.0f + q.y, 0.0f);
         PSMTXConcat(cam->view, m, out);
         GXLoadPosMtxImm(out, 0);
@@ -872,7 +1090,12 @@ void DrawMenuPinchMark(void) {
 }
 #endif
 
-void DrawMenuHelpWin(const char* msg, f32 x, f32 y) {
+/**
+ * Draws a sub-menu help window at x, y: looks up the message,
+ * strips its <tags> and draws its first three lines at 0.8 scale.
+ * With no message it shows a Japanese placeholder (there is no description!!).
+ */
+static void DrawMenuHelpWin(const char* msg, f32 x, f32 y) {
     f32 tx;
     s8 lines[4][0x30];
     s32 line;
@@ -926,11 +1149,15 @@ void DrawMenuHelpWin(const char* msg, f32 x, f32 y) {
         }
         FontDrawString(tx, y - 52.0f, (char*)lines[2]);
     } else {
-        FontDrawString(10.0f + x, y - 4.0f, "\202\271\202\302\202\337\202\242\202\315\201@\202\310\202\242\202\314\202\276\201I\201I");
+        FontDrawString(10.0f + x, y - 4.0f, "せつめいは　ないのだ！！");
     }
 }
 
-void DrawMenuCursorAndScrollArrow(const Vec* v) {
+/**
+ * Draws the sub-menu cursor icon on the selected visible row and the bobbing up/down arrows
+ * when the list can scroll further.
+ */
+static void DrawMenuCursorAndScrollArrow(const Vec* v) {
     Vec pos;
     BattleWork* wp = _battleWorkPointer;
     BattleSubMenu* menu = WP_SUBMENU(wp);
@@ -938,9 +1165,9 @@ void DrawMenuCursorAndScrollArrow(const Vec* v) {
     f32 bob;
     s32 n;
 
-    bob = intplGetValue(4, menu->bobTimer, 6, 0.0f, 10.0f);
+    bob = intplGetValue(4, 0.0f, 10.0f, menu->bobTimer, 6);
     menu->bobTimer++;
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
     if (menu->bobTimer >= gp->framerate * 12 / 60) {
 #else
     if (menu->bobTimer >= 12) {
@@ -951,13 +1178,13 @@ void DrawMenuCursorAndScrollArrow(const Vec* v) {
         pos.x = 155.0f + v->x;
         pos.y = 15.0f + v->y + bob;
         pos.z = 0.0f;
-        iconDispGx(&pos, 0x10, ICON_1B5, 0.75f);
+        iconDispGx(&pos, ICON_DISP_2D, ICON_1B5, 0.75f);
     }
     if (cursor->relPos < cursor->count - 6) {
         pos.x = 155.0f + v->x;
         pos.y = 20.0f + v->y - 164.0f - bob;
         pos.z = 0.0f;
-        iconDispGx(&pos, 0x10, ICON_1B6, 0.75f);
+        iconDispGx(&pos, ICON_DISP_2D, ICON_1B6, 0.75f);
     }
     n = cursor->absPos - cursor->relPos;
     if (n < 0) {
@@ -969,10 +1196,15 @@ void DrawMenuCursorAndScrollArrow(const Vec* v) {
     pos.x = v->x;
     pos.y = v->y - (f32)n * 24.0f;
     pos.z = 0.0f;
-    iconDispGx(&pos, 0x14, ICON_1F0, 1.0f);
+    iconDispGx(&pos, ICON_DISP_2D | ICON_DISP_FLIP_X, ICON_1F0, 1.0f);
 }
 
-void InitSubMenuCommonProcess(BattleSubMenu** out, BattleCursor** mainCursor, BattleCursor* cursor) {
+/**
+ * Allocates a fresh BattleSubMenu (freeing the old one) for the list cursor,
+ * sets every row to flip in one frame after the row above,
+ * and returns the acting unit's command-ring cursor (Mario's or the partner's) through mainCursor.
+ */
+static void InitSubMenuCommonProcess(BattleSubMenu** out, BattleCursor** mainCursor, BattleCursor* cursor) {
     BattleWork* wp = _battleWorkPointer;
     s32 i;
 
@@ -983,10 +1215,10 @@ void InitSubMenuCommonProcess(BattleSubMenu** out, BattleCursor** mainCursor, Ba
     *out = WP_SUBMENU(wp);
     (*out)->cursor = cursor;
     (*out)->scrollState = 0;
-    (*out)->reserved_10 = 0;
+    (*out)->scrollTimer = 0;
     (*out)->shown = 0;
     (*out)->prevAbsPos = cursor->absPos;
-    if (BattleGetUnitPtr(wp, wp->activeUnitId)->currentKind == 0xDE) {
+    if (BattleGetUnitPtr(wp, wp->activeUnitId)->currentKind == UNIT_MARIO) {
         *mainCursor = &wp->commandMenu.cursor[0];
     } else {
         *mainCursor = &wp->commandMenu.cursor[1];
@@ -1000,7 +1232,11 @@ void InitSubMenuCommonProcess(BattleSubMenu** out, BattleCursor** mainCursor, Ba
     }
 }
 
-void InitSubMenuCommonProcess2(BattleSubMenu* menu, BattleCursor* cursor) {
+/**
+ * Sets up the command-ring icons for a sub-menu that opens from the ring:
+ * the selected command flies to the bubble at the upper left (iconState 0), the others shrink away (10).
+ */
+static void InitSubMenuCommonProcess2(BattleSubMenu* menu, BattleCursor* cursor) {
     s32 i;
     s32 idx = cursor->absPos;
 
@@ -1020,7 +1256,11 @@ void InitSubMenuCommonProcess2(BattleSubMenu* menu, BattleCursor* cursor) {
     }
 }
 
-void InitSubMenuCommonProcess3(BattleSubMenu* menu, BattleCursor* cursor) {
+/**
+ * Sets up the command-ring icons for a sub-menu shown without the ring animation:
+ * the selected command already sits in the bubble (iconState 1) and the others are hidden (11).
+ */
+static void InitSubMenuCommonProcess3(BattleSubMenu* menu, BattleCursor* cursor) {
     s32 i;
     s32 idx = cursor->absPos;
 
@@ -1040,12 +1280,17 @@ void InitSubMenuCommonProcess3(BattleSubMenu* menu, BattleCursor* cursor) {
     }
 }
 
-void DrawSubMenuCommonProcessSub1(BattleSubMenu* menu, BattleCursor* cursor, s32 prev, s32 key) {
+/**
+ * Starts a list scroll animation when the first visible row (relPos) has moved:
+ * one row down (10) or up (20), or the wrap-around jumps from bottom to top (30) and top to bottom (40).
+ * key is the number of visible rows.
+ */
+static void DrawSubMenuCommonProcessSub1(BattleSubMenu* menu, BattleCursor* cursor, s32 prev, s32 key) {
     s32 i;
 
     if (key == 6 && cursor->count > 6 && prev == cursor->count - 6 && cursor->relPos == 0 && cursor->absPos != 1) {
         menu->scrollState = 30;
-        menu->reserved_10 = 0;
+        menu->scrollTimer = 0;
         menu->scrollFrom = cursor->count - 6;
         menu->scrollTo = 0.0f;
         for (i = 0; i < 7; i++) {
@@ -1054,7 +1299,7 @@ void DrawSubMenuCommonProcessSub1(BattleSubMenu* menu, BattleCursor* cursor, s32
         }
     } else if (key == 6 && cursor->count > 6 && prev == 0 && cursor->relPos == cursor->count - 6 && cursor->absPos != 5) {
         menu->scrollState = 40;
-        menu->reserved_10 = 0;
+        menu->scrollTimer = 0;
         menu->scrollFrom = 0.0f;
         menu->scrollTo = cursor->count - 6;
         for (i = 0; i < 7; i++) {
@@ -1063,7 +1308,7 @@ void DrawSubMenuCommonProcessSub1(BattleSubMenu* menu, BattleCursor* cursor, s32
         }
     } else if (cursor->relPos == prev + 1) {
         menu->scrollState = 10;
-        menu->reserved_10 = 0;
+        menu->scrollTimer = 0;
         menu->scrollFrom = prev;
         menu->scrollTo = prev + 1;
         for (i = 0; i < 7; i++) {
@@ -1072,7 +1317,7 @@ void DrawSubMenuCommonProcessSub1(BattleSubMenu* menu, BattleCursor* cursor, s32
         }
     } else if (cursor->relPos == prev - 1) {
         menu->scrollState = 20;
-        menu->reserved_10 = 0;
+        menu->scrollTimer = 0;
         menu->scrollFrom = prev;
         menu->scrollTo = prev - 1;
         for (i = 0; i < 7; i++) {
@@ -1082,7 +1327,13 @@ void DrawSubMenuCommonProcessSub1(BattleSubMenu* menu, BattleCursor* cursor, s32
     }
 }
 
-void DrawSubMenuCommonProcess(f32* x, f32* y, Mtx* a, Vec* b, f32* c, Mtx* d) {
+/**
+ * Per-frame animation shared by the list sub-menus:
+ * keeps the cursor row on screen, steps the scroll,
+ * the ring icons leaving for the bubble (filling a, b and c with their matrices, positions and angles)
+ * and the rows flipping in (d). Returns the help window position in x, y.
+ */
+static void DrawSubMenuCommonProcess(f32* x, f32* y, Mtx* a, Vec* b, f32* c, Mtx* d) {
     Mtx tm;
     Mtx sm;
     f32 ox;
@@ -1100,15 +1351,13 @@ void DrawSubMenuCommonProcess(f32* x, f32* y, Mtx* a, Vec* b, f32* c, Mtx* d) {
     f32 ang;
     f32 s;
     s32 sw;
-    s32 nn;
 
-    if (BattleGetUnitPtr(wp, wp->activeUnitId)->currentKind == 0xDE) {
+    if (BattleGetUnitPtr(wp, wp->activeUnitId)->currentKind == UNIT_MARIO) {
         mainCursor = &wp->commandMenu.cursor[0];
     } else {
         mainCursor = &wp->commandMenu.cursor[1];
     }
-    // FAKE: no-op (s32) cast on the min, so n is a copy of a compiler temp (target `mr r6,r3`)
-    n = (s32)((6 <= cursor->count) ? 6 : cursor->count);
+    n = (6 <= cursor->count) ? 6 : cursor->count;
     prev = cursor->relPos;
     if (cursor->absPos <= cursor->relPos) {
         cursor->relPos = cursor->absPos - 1;
@@ -1178,12 +1427,12 @@ void DrawSubMenuCommonProcess(f32* x, f32* y, Mtx* a, Vec* b, f32* c, Mtx* d) {
                 {
                     f32 px = b[i].x;
                     f32 py;
-                    b[i].x = PCCALL(((f32 (*)(s32, f32, f32, s32, s32))intplGetValue)(4, px, -60.0f, menu->iconTimer[i], FRAMES(12)), intplGetValue(4, menu->iconTimer[i], FRAMES(12), px, -60.0f));
+                    b[i].x = intplGetValue(4, px, -60.0f, menu->iconTimer[i], FPS_FRAMES(12));
                     py = b[i].y;
-                    b[i].y = PCCALL(((f32 (*)(s32, f32, f32, s32, s32))intplGetValue)(4, py, 55.0f, menu->iconTimer[i], FRAMES(12)), intplGetValue(4, menu->iconTimer[i], FRAMES(12), py, 55.0f));
+                    b[i].y = intplGetValue(4, py, 55.0f, menu->iconTimer[i], FPS_FRAMES(12));
                 }
                 PSMTXTrans(a[i], 20.0f + b[i].x, b[i].y, b[i].z);
-                c[i] = PCCALL(((f32 (*)(s32, f32, f32, s32, s32))intplGetValue)(0, 0.0f, 360.0f, menu->iconTimer[i], FRAMES(12)), intplGetValue(0, menu->iconTimer[i], FRAMES(12), 0.0f, 360.0f));
+                c[i] = intplGetValue(0, 0.0f, 360.0f, menu->iconTimer[i], FPS_FRAMES(12));
                 if (c[i] > 360.0f) {
                     c[i] -= 360.0f;
                 }
@@ -1191,7 +1440,7 @@ void DrawSubMenuCommonProcess(f32* x, f32* y, Mtx* a, Vec* b, f32* c, Mtx* d) {
                     menu->iconsArrived = 1;
                 }
                 menu->iconTimer[i]++;
-                if (menu->iconTimer[i] > FRAMES(12)) {
+                if (menu->iconTimer[i] > FPS_FRAMES(12)) {
                     menu->iconState[i] = 1;
                 }
                 break;
@@ -1236,12 +1485,12 @@ void DrawSubMenuCommonProcess(f32* x, f32* y, Mtx* a, Vec* b, f32* c, Mtx* d) {
                 menu->rowFlags[i] &= ~1;
                 menu->reserved_114[i] = 0xFF;
                 if (menu->rowTimer[i] >= 0 && i != 6) {
-                    s = PCCALL(((f32 (*)(s32, f32, f32, s32, s32))intplGetValue)(0, 90.0f, 0.0f, menu->rowTimer[i], FRAMES(12)), intplGetValue(0, menu->rowTimer[i], FRAMES(12), 90.0f, 0.0f));
+                    s = intplGetValue(0, 90.0f, 0.0f, menu->rowTimer[i], FPS_FRAMES(12));
                     menu->rowFlags[i] |= 1;
                     PSMTXRotRad(d[i], 'y', 0.017453292f * s);
                 }
                 menu->rowTimer[i]++;
-                if (menu->rowTimer[i] > FRAMES(12)) {
+                if (menu->rowTimer[i] > FPS_FRAMES(12)) {
                     menu->rowState[i] = 2;
                 }
                 break;
@@ -1266,7 +1515,7 @@ void DrawSubMenuCommonProcess(f32* x, f32* y, Mtx* a, Vec* b, f32* c, Mtx* d) {
                 }
                 menu->rowFlags[i] |= 1;
                 PSMTXIdentity(d[i]);
-                menu->scrollPos = PCCALL(((f32 (*)(s32, f32, f32, s32, s32))intplGetValue)(4, menu->scrollFrom, menu->scrollTo, menu->rowTimer[i], steps), intplGetValue(4, menu->rowTimer[i], steps, menu->scrollFrom, menu->scrollTo));
+                menu->scrollPos = intplGetValue(4, menu->scrollFrom, menu->scrollTo, menu->rowTimer[i], steps);
                 menu->rowTimer[i]++;
                 if (menu->rowTimer[i] > steps) {
                     menu->rowState[i] = 2;
@@ -1277,6 +1526,11 @@ void DrawSubMenuCommonProcess(f32* x, f32* y, Mtx* a, Vec* b, f32* c, Mtx* d) {
     }
 }
 
+/**
+ * Sets up the main command ring.
+ * With flag bit 0, the selected command flies back from the bubble and the others grow in;
+ * otherwise all icons spread out around the ring one after another (the menu opening fresh).
+ */
 void BattleMenuDisp_ActSelect_Init(BattleWork* wp, BattleCursor* cursor, BattleCommandAct* acts, BOOL flag) {
     s32 i;
     s32 idx;
@@ -1323,7 +1577,7 @@ void BattleMenuDisp_ActSelect_Init(BattleWork* wp, BattleCursor* cursor, BattleC
                 idx = 0;
             }
             menu->iconState[idx] = 0;
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
             menu->iconTimer[idx] = (i * (gp->framerate * 10 / 60)) / 2;
 #else
             menu->iconTimer[idx] = (i * 10) / 2;
@@ -1334,13 +1588,16 @@ void BattleMenuDisp_ActSelect_Init(BattleWork* wp, BattleCursor* cursor, BattleC
     }
 }
 
+/** Per-frame update of the command ring; empty, as the animation runs in DrawMainMenu. */
 void BattleMenuDisp_ActSelect_Main(BattleWork* wp) {
 }
 
+/** Draw callback of the command ring. */
 void BattleMenuDisp_ActSelect_Disp(BattleWork* wp) {
     DrawMainMenu(wp);
 }
 
+/** Closes the command ring and frees its BattleSubMenu. */
 void BattleMenuDisp_ActSelect_End(BattleWork* wp) {
     if (WP_SUBMENU(wp)) {
         BattleFree(WP_SUBMENU(wp));
@@ -1348,6 +1605,12 @@ void BattleMenuDisp_ActSelect_End(BattleWork* wp) {
     }
 }
 
+/**
+ * Animates and draws the main command ring: icons spread out around the ring,
+ * rotate one slot left or right when the cursor moves, and the selected one becomes a bubble;
+ * then draws the switch-places button and the DANGER/PERIL marks.
+ * kakutable holds the slot angles for 3, 4 and 5 commands.
+ */
 void DrawMainMenu(BattleWork* wp_) {
     Mtx mtx[5];
     Vec pos[5];
@@ -1375,211 +1638,223 @@ void DrawMainMenu(BattleWork* wp_) {
 #endif
     camGetPtr(CAMERA_2D);
     switch (menu->scrollState) {
-    case 0:
-        n = 0;
-        for (i = 0; i < cursor->count; i++) {
-            if (menu->iconState[i] == 3) {
-                n++;
-            }
-        }
-        if (n == cursor->count) {
-            menu->scrollState = 1;
-        }
-        break;
-    case 1:
-        menu->shown = 1;
-        mc = menu->cursor;
-        diff = mc->absPos - menu->prevAbsPos;
-        if (diff == 1 || -(mc->count - 1) == diff) {
-            menu->scrollState = 2;
-            menu->shown = 0;
-            menu->prevAbsPos = menu->cursor->absPos;
+        case 0:
+            n = 0;
             for (i = 0; i < cursor->count; i++) {
-                menu->iconState[i] = 4;
-                menu->iconTimer[i] = 0;
-                menu->iconTimer[i + 10] = menu->iconSlot[i];
-                menu->iconSlot[i]--;
-                if (menu->iconSlot[i] == -1) {
-                    menu->iconSlot[i] = cursor->count - 1;
+                if (menu->iconState[i] == 3) {
+                    n++;
                 }
             }
-        } else if (diff == -1 || mc->count - 1 == diff) {
+            if (n == cursor->count) {
+                menu->scrollState = 1;
+            }
+            break;
+        case 1:
+            menu->shown = 1;
+            mc = menu->cursor;
+            diff = mc->absPos - menu->prevAbsPos;
+            if (diff == 1 || -(mc->count - 1) == diff) {
+                menu->scrollState = 2;
+                menu->shown = 0;
+                menu->prevAbsPos = menu->cursor->absPos;
+                for (i = 0; i < cursor->count; i++) {
+                    menu->iconState[i] = 4;
+                    menu->iconTimer[i] = 0;
+                    menu->iconTimer[i + 10] = menu->iconSlot[i];
+                    menu->iconSlot[i]--;
+                    if (menu->iconSlot[i] == -1) {
+                        menu->iconSlot[i] = cursor->count - 1;
+                    }
+                }
+            } else if (diff == -1 || mc->count - 1 == diff) {
 
-            menu->scrollState = 2;
-            menu->shown = 0;
-            menu->prevAbsPos = menu->cursor->absPos;
-            for (i = 0; i < cursor->count; i++) {
-                menu->iconState[i] = 5;
-                menu->iconTimer[i] = 0;
-                menu->iconTimer[i + 10] = menu->iconSlot[i];
-                menu->iconSlot[i]++;
-                if (menu->iconSlot[i] == cursor->count) {
-                    menu->iconSlot[i] = 0;
+                menu->scrollState = 2;
+                menu->shown = 0;
+                menu->prevAbsPos = menu->cursor->absPos;
+                for (i = 0; i < cursor->count; i++) {
+                    menu->iconState[i] = 5;
+                    menu->iconTimer[i] = 0;
+                    menu->iconTimer[i + 10] = menu->iconSlot[i];
+                    menu->iconSlot[i]++;
+                    if (menu->iconSlot[i] == cursor->count) {
+                        menu->iconSlot[i] = 0;
+                    }
                 }
             }
-        }
-        break;
-    case 2:
-        n = 0;
-        for (i = 0; i < cursor->count; i++) {
-            if (menu->iconState[i] == 3) {
-                n++;
+            break;
+        case 2:
+            n = 0;
+            for (i = 0; i < cursor->count; i++) {
+                if (menu->iconState[i] == 3) {
+                    n++;
+                }
             }
-        }
-        if (n == cursor->count) {
+            if (n == cursor->count) {
+                menu->scrollState = 1;
+            }
+            break;
+        case 10:
             menu->scrollState = 1;
-        }
-        break;
-    case 10:
-        menu->scrollState = 1;
-        menu->shown = 1;
-        break;
+            menu->shown = 1;
+            break;
     }
 
     menu->iconsArrived = 0;
     for (i = 0; i < cursor->count; i++) {
         switch (menu->iconState[i]) {
-        case 0:
-            menu->iconTimer[i]--;
-            if (menu->iconTimer[i] <= 0) {
-                menu->iconState[i] = 1;
-                menu->iconTimer[i] = 0;
-            }
-            break;
-        case 1:
-            menu->iconFlags[i] |= 1;
-            c = 0.0f;
-            a = c + FRAMES_STEP(0.2f, 12.0f, menu->iconTimer[i]);
-            b = 3.1415927f * kakutable[cursor->count - 3][menu->iconSlot[i]] / 180.0f;
-            if (a >= b) {
-                a = b;
-            }
-            GetRingCenter(&pos[i]);
-            GetRingOffset(a, &ox, &oy);
-            pos[i].x += ox;
-            pos[i].y += oy;
-            pos[i].z = oy;
-            if (i == cursor->absPos) {
-                c = 270.0f + 90.0f * menu->iconTimer[i] / (f32)FRAMES(10);
-                if (c >= 360.0f) {
-                    c = 0.0f;
+            case 0:
+                menu->iconTimer[i]--;
+                if (menu->iconTimer[i] <= 0) {
+                    menu->iconState[i] = 1;
+                    menu->iconTimer[i] = 0;
                 }
-                PSMTXRotRad(rot, 'x', 0.017453292f * c);
-                PSMTXTrans(trans, 20.0f + pos[i].x, pos[i].y, pos[i].z);
-                PSMTXConcat(trans, rot, mtx[i]);
-                menu->iconFlags[i] |= 2;
-            } else {
-                c = 270.0f + 90.0f * menu->iconTimer[i] / (f32)FRAMES(10);
-                if (c >= 360.0f) {
-                    c = 0.0f;
+                break;
+            case 1:
+                menu->iconFlags[i] |= 1;
+                c = 0.0f;
+#if VERSION >= VERSION_US
+                a = c + menu->iconTimer[i] * (12.0f / gp->framerate);
+#else
+                a = c + 0.2f * menu->iconTimer[i];
+#endif
+                b = 3.1415927f * kakutable[cursor->count - 3][menu->iconSlot[i]] / 180.0f;
+                if (a >= b) {
+                    a = b;
                 }
-                PSMTXRotRad(rot, 'x', 0.017453292f * c);
-                PSMTXTrans(trans, pos[i].x, pos[i].y, pos[i].z);
-                PSMTXConcat(trans, rot, mtx[i]);
-            }
-            z[i] = 0.0f;
-            if (a >= b && menu->iconTimer[i] >= FRAMES(10)) {
-                menu->iconState[i] = 3;
-                menu->iconTimer[i] = -1;
-            }
-            menu->iconTimer[i]++;
-            break;
-        case 3:
-            a = 3.1415927f * kakutable[cursor->count - 3][menu->iconSlot[i]] / 180.0f;
-            GetRingCenter(&pos[i]);
-            GetRingOffset(a, &ox, &oy);
-            pos[i].x += ox;
-            pos[i].y += oy;
-            pos[i].z = oy;
-            if (i == cursor->absPos) {
-                PSMTXTrans(mtx[i], 20.0f + pos[i].x, pos[i].y, pos[i].z);
-                menu->iconFlags[i] |= 2;
-            } else {
+                GetRingCenter(&pos[i]);
+                GetRingOffset(a, &ox, &oy);
+                pos[i].x += ox;
+                pos[i].y += oy;
+                pos[i].z = oy;
+                if (i == cursor->absPos) {
+                    c = 270.0f + 90.0f * menu->iconTimer[i] / (f32)FPS_FRAMES(10);
+                    if (c >= 360.0f) {
+                        c = 0.0f;
+                    }
+                    PSMTXRotRad(rot, 'x', 0.017453292f * c);
+                    PSMTXTrans(trans, 20.0f + pos[i].x, pos[i].y, pos[i].z);
+                    PSMTXConcat(trans, rot, mtx[i]);
+                    menu->iconFlags[i] |= 2;
+                } else {
+                    c = 270.0f + 90.0f * menu->iconTimer[i] / (f32)FPS_FRAMES(10);
+                    if (c >= 360.0f) {
+                        c = 0.0f;
+                    }
+                    PSMTXRotRad(rot, 'x', 0.017453292f * c);
+                    PSMTXTrans(trans, pos[i].x, pos[i].y, pos[i].z);
+                    PSMTXConcat(trans, rot, mtx[i]);
+                }
+                z[i] = 0.0f;
+                if (a >= b && menu->iconTimer[i] >= FPS_FRAMES(10)) {
+                    menu->iconState[i] = 3;
+                    menu->iconTimer[i] = -1;
+                }
+                menu->iconTimer[i]++;
+                break;
+            case 3:
+                a = 3.1415927f * kakutable[cursor->count - 3][menu->iconSlot[i]] / 180.0f;
+                GetRingCenter(&pos[i]);
+                GetRingOffset(a, &ox, &oy);
+                pos[i].x += ox;
+                pos[i].y += oy;
+                pos[i].z = oy;
+                if (i == cursor->absPos) {
+                    PSMTXTrans(mtx[i], 20.0f + pos[i].x, pos[i].y, pos[i].z);
+                    menu->iconFlags[i] |= 2;
+                } else {
+                    PSMTXTrans(mtx[i], pos[i].x, pos[i].y, pos[i].z);
+                }
+                z[i] = 0.0f;
+                break;
+            case 4:
+                c = kakutable[cursor->count - 3][menu->iconTimer[i + 10]];
+                b = kakutable[cursor->count - 3][menu->iconSlot[i]];
+                if (0.0f == b) {
+                    b = 360.0f;
+                }
+#if VERSION >= VERSION_US
+                a = 3.1415927f * c / 180.0f + menu->iconTimer[i] * (12.0f / gp->framerate);
+#else
+                a = 3.1415927f * c / 180.0f + 0.2f * menu->iconTimer[i];
+#endif
+                b = 3.1415927f * b / 180.0f;
+                if (a >= b) {
+                    a = b;
+                    menu->iconState[i] = 3;
+                    menu->iconTimer[i] = -1;
+                }
+                GetRingCenter(&pos[i]);
+                GetRingOffset(a, &ox, &oy);
+                pos[i].x += ox;
+                pos[i].y += oy;
+                pos[i].z = oy;
                 PSMTXTrans(mtx[i], pos[i].x, pos[i].y, pos[i].z);
-            }
-            z[i] = 0.0f;
-            break;
-        case 4:
-            c = kakutable[cursor->count - 3][menu->iconTimer[i + 10]];
-            b = kakutable[cursor->count - 3][menu->iconSlot[i]];
-            if (0.0f == b) {
-                b = 360.0f;
-            }
-            a = 3.1415927f * c / 180.0f + FRAMES_STEP(0.2f, 12.0f, menu->iconTimer[i]);
-            b = 3.1415927f * b / 180.0f;
-            if (a >= b) {
-                a = b;
-                menu->iconState[i] = 3;
-                menu->iconTimer[i] = -1;
-            }
-            GetRingCenter(&pos[i]);
-            GetRingOffset(a, &ox, &oy);
-            pos[i].x += ox;
-            pos[i].y += oy;
-            pos[i].z = oy;
-            PSMTXTrans(mtx[i], pos[i].x, pos[i].y, pos[i].z);
-            z[i] = 0.0f;
-            menu->iconFlags[i] &= ~2;
-            menu->iconTimer[i]++;
-            break;
-        case 5:
-            c = kakutable[cursor->count - 3][menu->iconTimer[i + 10]];
-            if (0.0f == c) {
-                c = 360.0f;
-            }
-            a = 3.1415927f * c / 180.0f - FRAMES_STEP(0.2f, 12.0f, menu->iconTimer[i]);
-            b = 3.1415927f * kakutable[cursor->count - 3][menu->iconSlot[i]] / 180.0f;
-            if (a <= b) {
-                a = b;
-                menu->iconState[i] = 3;
-                menu->iconTimer[i] = -1;
-            }
-            GetRingCenter(&pos[i]);
-            GetRingOffset(a, &ox, &oy);
-            pos[i].x += ox;
-            pos[i].y += oy;
-            pos[i].z = oy;
-            PSMTXTrans(mtx[i], pos[i].x, pos[i].y, pos[i].z);
-            z[i] = 0.0f;
-            menu->iconFlags[i] &= ~2;
-            menu->iconTimer[i]++;
-            break;
-        case 10:
-            menu->iconFlags[i] |= 1;
-            menu->iconFlags[i] |= 2;
-            GetRingCenter(&pos[i]);
-            GetRingOffset(0.0f, &ox, &oy);
-            pos[i].x += ox;
-            pos[i].y += oy;
-            pos[i].z = oy;
-            pos[i].x = PCCALL(((f32 (*)(s32, f32, f32, s32, s32))intplGetValue)(4, -60.0f, pos[i].x, menu->iconTimer[i], FRAMES(12)), intplGetValue(4, menu->iconTimer[i], FRAMES(12), -60.0f, pos[i].x));
-            pos[i].y = PCCALL(((f32 (*)(s32, f32, f32, s32, s32))intplGetValue)(4, 55.0f, pos[i].y, menu->iconTimer[i], FRAMES(12)), intplGetValue(4, menu->iconTimer[i], FRAMES(12), 55.0f, pos[i].y));
-            PSMTXTrans(mtx[i], 20.0f + pos[i].x, pos[i].y, pos[i].z);
-            z[i] = PCCALL(((f32 (*)(s32, f32, f32, s32, s32))intplGetValue)(0, 360.0f, 0.0f, menu->iconTimer[i], FRAMES(12)), intplGetValue(0, menu->iconTimer[i], FRAMES(12), 360.0f, 0.0f));
-            menu->iconTimer[i]++;
-            if (menu->iconTimer[i] > FRAMES(12)) {
-                menu->iconState[i] = 3;
-            }
-            break;
-        case 11:
-            menu->iconFlags[i] |= 1;
-            menu->iconFlags[i] &= ~2;
-            a = 3.1415927f * kakutable[cursor->count - 3][menu->iconSlot[i]] / 180.0f;
-            GetRingCenter(&pos[i]);
-            GetRingOffset(a, &ox, &oy);
-            pos[i].x += ox;
-            pos[i].y += oy;
-            pos[i].z = oy;
-            a = 0.1f * menu->iconTimer[i];
-            if (a >= 1.0f) {
-                menu->iconState[i] = 3;
-            }
-            PSMTXScale(scale, a, a, 1.0f);
-            PSMTXTrans(trans, pos[i].x, pos[i].y, pos[i].z);
-            PSMTXConcat(trans, scale, mtx[i]);
-            z[i] = 0.0f;
-            menu->iconTimer[i]++;
-            break;
+                z[i] = 0.0f;
+                menu->iconFlags[i] &= ~2;
+                menu->iconTimer[i]++;
+                break;
+            case 5:
+                c = kakutable[cursor->count - 3][menu->iconTimer[i + 10]];
+                if (0.0f == c) {
+                    c = 360.0f;
+                }
+#if VERSION >= VERSION_US
+                a = 3.1415927f * c / 180.0f - menu->iconTimer[i] * (12.0f / gp->framerate);
+#else
+                a = 3.1415927f * c / 180.0f - 0.2f * menu->iconTimer[i];
+#endif
+                b = 3.1415927f * kakutable[cursor->count - 3][menu->iconSlot[i]] / 180.0f;
+                if (a <= b) {
+                    a = b;
+                    menu->iconState[i] = 3;
+                    menu->iconTimer[i] = -1;
+                }
+                GetRingCenter(&pos[i]);
+                GetRingOffset(a, &ox, &oy);
+                pos[i].x += ox;
+                pos[i].y += oy;
+                pos[i].z = oy;
+                PSMTXTrans(mtx[i], pos[i].x, pos[i].y, pos[i].z);
+                z[i] = 0.0f;
+                menu->iconFlags[i] &= ~2;
+                menu->iconTimer[i]++;
+                break;
+            case 10:
+                menu->iconFlags[i] |= 1;
+                menu->iconFlags[i] |= 2;
+                GetRingCenter(&pos[i]);
+                GetRingOffset(0.0f, &ox, &oy);
+                pos[i].x += ox;
+                pos[i].y += oy;
+                pos[i].z = oy;
+                pos[i].x = intplGetValue(4, -60.0f, pos[i].x, menu->iconTimer[i], FPS_FRAMES(12));
+                pos[i].y = intplGetValue(4, 55.0f, pos[i].y, menu->iconTimer[i], FPS_FRAMES(12));
+                PSMTXTrans(mtx[i], 20.0f + pos[i].x, pos[i].y, pos[i].z);
+                z[i] = intplGetValue(0, 360.0f, 0.0f, menu->iconTimer[i], FPS_FRAMES(12));
+                menu->iconTimer[i]++;
+                if (menu->iconTimer[i] > FPS_FRAMES(12)) {
+                    menu->iconState[i] = 3;
+                }
+                break;
+            case 11:
+                menu->iconFlags[i] |= 1;
+                menu->iconFlags[i] &= ~2;
+                a = 3.1415927f * kakutable[cursor->count - 3][menu->iconSlot[i]] / 180.0f;
+                GetRingCenter(&pos[i]);
+                GetRingOffset(a, &ox, &oy);
+                pos[i].x += ox;
+                pos[i].y += oy;
+                pos[i].z = oy;
+                a = 0.1f * menu->iconTimer[i];
+                if (a >= 1.0f) {
+                    menu->iconState[i] = 3;
+                }
+                PSMTXScale(scale, a, a, 1.0f);
+                PSMTXTrans(trans, pos[i].x, pos[i].y, pos[i].z);
+                PSMTXConcat(trans, scale, mtx[i]);
+                z[i] = 0.0f;
+                menu->iconTimer[i]++;
+                break;
         }
     }
     DrawMainIcon(menu, menu->acts, mtx, pos, z);
@@ -1587,6 +1862,10 @@ void DrawMainMenu(BattleWork* wp_) {
     DrawMenuPinchMark();
 }
 
+/**
+ * Sets up the move list (jumps, hammers, items, special moves or partner moves) for the given weapon table;
+ * flag bit 0 plays the ring icons' leaving animation.
+ */
 void BattleMenuDisp_WeaponSelect_Init(BattleWork* wp, BattleCursor* cursor, BattleCommandWeapon* weapons, BOOL flag) {
     BattleSubMenu* menu = NULL;
     BattleCursor* mainCursor = NULL;
@@ -1600,13 +1879,16 @@ void BattleMenuDisp_WeaponSelect_Init(BattleWork* wp, BattleCursor* cursor, Batt
     }
 }
 
+/** Per-frame update of the move list; empty. */
 void BattleMenuDisp_WeaponSelect_Main(BattleWork* wp) {
 }
 
+/** Draw callback of the move list. */
 void BattleMenuDisp_WeaponSelect_Disp(BattleWork* wp) {
     DrawWeaponWin();
 }
 
+/** Closes the move list and frees its BattleSubMenu. */
 void BattleMenuDisp_WeaponSelect_End(BattleWork* wp) {
     if (WP_SUBMENU(wp)) {
         BattleFree(WP_SUBMENU(wp));
@@ -1614,6 +1896,11 @@ void BattleMenuDisp_WeaponSelect_End(BattleWork* wp) {
     }
 }
 
+/**
+ * Draws the move list: the ring icons, rows with each move's FP and Star Power costs,
+ * the cursor and the help window (the item description for items and cooked dishes,
+ * otherwise the move's description).
+ */
 void PORT_HOOKABLE(DrawWeaponWin)(void) {
     Mtx rowMtx[7];
     Mtx iconMtx[5];
@@ -1662,7 +1949,15 @@ void PORT_HOOKABLE(DrawWeaponWin)(void) {
         }
     }
     DrawMainIcon(menu, wp->commandMenu.act, iconMtx, iconPos, iconAngle);
+#if VERSION >= VERSION_DEMO_EU
+    DrawSubIcon(menu, rowMtx, enabled, icons, names, costs, p34, NULL, 220); // name width that the label is scaled down to fit
+#else
+#if VERSION <= VERSION_DEMO_JP
+    DrawSubIcon(menu, rowMtx, enabled, icons, names, costs, p34, NULL);
+#else
     DrawSubIcon(menu, rowMtx, enabled, icons, names, costs, p34, NULL, 0);
+#endif
+#endif
     v = (Vec){-60.0f, 35.0f, 0.0f};
     DrawMenuCursorAndScrollArrow(&v);
     if (weapon) {
@@ -1681,12 +1976,13 @@ void PORT_HOOKABLE(DrawWeaponWin)(void) {
     }
 }
 
+/** Sets up the Tactics list on Mario's or the partner's cursor; flag bit 0 plays the ring icons' leaving animation. */
 void BattleMenuDisp_Operation_Init(BattleWork* wp, BOOL flag) {
     BattleSubMenu* menu;
     BattleCursor* mainCursor;
     BattleCursor* cursor;
 
-    if (BattleGetUnitPtr(wp, wp->activeUnitId)->currentKind == 0xDE) {
+    if (BattleGetUnitPtr(wp, wp->activeUnitId)->currentKind == UNIT_MARIO) {
         cursor = &wp->commandMenu.cursor[8];
     } else {
         cursor = &wp->commandMenu.cursor[9];
@@ -1699,13 +1995,16 @@ void BattleMenuDisp_Operation_Init(BattleWork* wp, BOOL flag) {
     }
 }
 
+/** Per-frame update of the Tactics list; empty. */
 void BattleMenuDisp_Operation_Main(BattleWork* wp) {
 }
 
+/** Draw callback of the Tactics list. */
 void BattleMenuDisp_Operation_Disp(BattleWork* wp) {
     DrawOperationWin();
 }
 
+/** Closes the Tactics list and frees its BattleSubMenu. */
 void BattleMenuDisp_Operation_End(BattleWork* wp) {
     if (WP_SUBMENU(wp)) {
         BattleFree(WP_SUBMENU(wp));
@@ -1713,6 +2012,10 @@ void BattleMenuDisp_Operation_End(BattleWork* wp) {
     }
 }
 
+/**
+ * Draws the Tactics list (Change Partner, Defend, Run Away, ...) with its FP costs, cursor and help window.
+ * In the demos every row shows the first row's cost.
+ */
 void DrawOperationWin(void) {
     Mtx rowMtx[7];
     Mtx iconMtx[5];
@@ -1746,12 +2049,20 @@ void DrawOperationWin(void) {
                 icons[i] = ICON_18B;
             }
             names[i] = items[idx].name;
+#if VERSION <= VERSION_DEMO_JP
+            costs[i] = items->cost; // the demo reads the first row's cost for every row
+#else
             costs[i] = items[idx].cost;
+#endif
             p34[i] = 0;
         }
     }
     DrawMainIcon(menu, wp->commandMenu.act, iconMtx, iconPos, iconAngle);
+#if VERSION <= VERSION_DEMO_JP
+    DrawSubIcon(menu, rowMtx, enabled, icons, names, costs, p34, NULL);
+#else
     DrawSubIcon(menu, rowMtx, enabled, icons, names, costs, p34, NULL, 0);
+#endif
     v = (Vec){-60.0f, 35.0f, 0.0f};
     DrawMenuCursorAndScrollArrow(&v);
     if (items[cursor->absPos].help) {
@@ -1759,6 +2070,10 @@ void DrawOperationWin(void) {
     }
 }
 
+/**
+ * Sets up the Change Partner list; here flag bit 0 skips the ring icons' leaving animation (the reverse of the
+ * other lists).
+ */
 void BattleMenuDisp_ChangePartySelect_Init(BattleWork* wp, BOOL flag) {
     BattleSubMenu* menu;
     BattleCursor* mainCursor;
@@ -1771,13 +2086,16 @@ void BattleMenuDisp_ChangePartySelect_Init(BattleWork* wp, BOOL flag) {
     }
 }
 
+/** Per-frame update of the Change Partner list; empty. */
 void BattleMenuDisp_ChangePartySelect_Main(BattleWork* wp) {
 }
 
+/** Draw callback of the Change Partner list. */
 void BattleMenuDisp_ChangePartySelect_Disp(BattleWork* wp) {
     DrawChangePartyWin();
 }
 
+/** Closes the Change Partner list and frees its BattleSubMenu. */
 void BattleMenuDisp_ChangePartySelect_End(BattleWork* wp) {
     if (WP_SUBMENU(wp)) {
         BattleFree(WP_SUBMENU(wp));
@@ -1785,6 +2103,7 @@ void BattleMenuDisp_ChangePartySelect_End(BattleWork* wp) {
     }
 }
 
+/** Draws the Change Partner list with each partner's HP, the cursor and the help window. */
 void DrawChangePartyWin(void) {
     Mtx rowMtx[7];
     Mtx iconMtx[5];
@@ -1823,7 +2142,15 @@ void DrawChangePartyWin(void) {
         }
     }
     DrawMainIcon(menu, wp->commandMenu.act, iconMtx, iconPos, iconAngle);
+#if VERSION >= VERSION_DEMO_EU
+    DrawSubIcon(menu, rowMtx, enabled, icons, names, costs, p34, items, 150); // name width that the label is scaled down to fit
+#else
+#if VERSION <= VERSION_DEMO_JP
+    DrawSubIcon(menu, rowMtx, enabled, icons, names, costs, p34, items);
+#else
     DrawSubIcon(menu, rowMtx, enabled, icons, names, costs, p34, items, 1);
+#endif
+#endif
     v = (Vec){-60.0f, 35.0f, 0.0f};
     DrawMenuCursorAndScrollArrow(&v);
     if (items[cursor->absPos].help) {
@@ -1831,6 +2158,7 @@ void DrawChangePartyWin(void) {
     }
 }
 
+/** Sets up the Double/Triple Dip choice list; flag bit 0 plays the ring icons' leaving animation. */
 void BattleMenuDisp_MultiItem_Init(BattleWork* wp, BOOL flag) {
     BattleSubMenu* menu;
     BattleCursor* mainCursor;
@@ -1843,13 +2171,16 @@ void BattleMenuDisp_MultiItem_Init(BattleWork* wp, BOOL flag) {
     }
 }
 
+/** Per-frame update of the Double/Triple Dip list; empty. */
 void BattleMenuDisp_MultiItem_Main(BattleWork* wp) {
 }
 
+/** Draw callback of the Double/Triple Dip list. */
 void BattleMenuDisp_MultiItem_Disp(BattleWork* wp) {
     DrawMultiItemWin();
 }
 
+/** Closes the Double/Triple Dip list and frees its BattleSubMenu. */
 void BattleMenuDisp_MultiItem_End(BattleWork* wp) {
     if (WP_SUBMENU(wp)) {
         BattleFree(WP_SUBMENU(wp));
@@ -1857,6 +2188,10 @@ void BattleMenuDisp_MultiItem_End(BattleWork* wp) {
     }
 }
 
+/**
+ * Draws the Double/Triple Dip list (one, two or three items this turn) with each option's FP cost,
+ * the cursor and the help window.
+ */
 void DrawMultiItemWin(void) {
     Mtx rowMtx[7];
     Mtx iconMtx[5];
@@ -1895,14 +2230,17 @@ void DrawMultiItemWin(void) {
         }
     }
     DrawMainIcon(menu, wp->commandMenu.act, iconMtx, iconPos, iconAngle);
+#if VERSION <= VERSION_DEMO_JP
+    DrawSubIcon(menu, rowMtx, enabled, icons, names, costs, p34, NULL);
+#else
     DrawSubIcon(menu, rowMtx, enabled, icons, names, costs, p34, NULL, 0);
+#endif
     v = (Vec){-60.0f, 35.0f, 0.0f};
     DrawMenuCursorAndScrollArrow(&v);
     if (items[cursor->absPos].help) {
         DrawMenuHelpWin(items[cursor->absPos].help, x, y);
     }
 }
-
 
 #ifdef PORT_MODS
 #include "port/hooks/src_battle_battle_menu_disp.inc"

@@ -1,3 +1,5 @@
+// Flame (Fire): a flickering flame with smoke puffs; types 0-8 pick the look, types 5-7 also throw sparks.
+// Used for burning units and fire attacks.
 #include "eff/eff_fire.h"
 #include "driver/camdrv.h"
 #include "driver/dispdrv.h"
@@ -7,18 +9,21 @@
 #include "memory.h"
 #include <dolphin/gx.h>
 #include <dolphin/mtx.h>
+#include "eff/n64/eff_fire_spark_n64.h"
+#include "libc_decls.h"
+#include "version.h"
 
 typedef struct EffFireSmokeWork {
-    s32 unk0;       // 0x0
-    Vec position;   // 0x4
-    Vec velocity;   // 0x10
-    s32 pad1c[3];   // 0x1C
-    f32 rotation;   // 0x28
-    f32 rotSpeed;   // 0x2C
-    u8 color[4];    // 0x30
-    s32 life;       // 0x34
-    s32 age;        // 0x38
-    f32 scale;      // 0x3C
+    s32 type;     // 0x0, always 0
+    Vec position; // 0x4
+    Vec velocity; // 0x10
+    s32 pad1c[3]; // 0x1C
+    f32 rotation; // 0x28
+    f32 rotSpeed; // 0x2C
+    u8 color[4];  // 0x30
+    s32 life;     // 0x34
+    s32 age;      // 0x38
+    f32 scale;    // 0x3C
 } EffFireSmokeWork;
 
 typedef struct FireScaleKey {
@@ -26,11 +31,29 @@ typedef struct FireScaleKey {
     f32 value;
 } FireScaleKey;
 
+/**
+ * Looping 200-frame flicker of the flame's size (frame, scale between 0.95 and 1.1) for flame types 3 and 8;
+ * read by effFireMain.
+ */
 FireScaleKey scale1[] = {
     { 0, 1.0f },     { 20, 1.1f },    { 30, 1.0f },    { 45, 1.05f },   { 60, 0.95f },
     { 70, 1.05f },   { 80, 1.025f },  { 100, 1.1f },   { 120, 1.0f },   { 130, 1.025f },
     { 160, 0.95f },  { 180, 1.025f }, { 200, 1.0f },
 };
+#if VERSION <= VERSION_DEMO_JP
+// the demo defines scale2 here, right after scale1 (.data order)
+/** Slower looping 200-frame swell of the flame's size (up to 1.2) for flame type 4; read by effFireMain. */
+FireScaleKey scale2[] = {
+    { 0, 1.0f },
+    { 100, 1.2f },
+    { 160, 0.95f },
+    { 200, 1.0f },
+};
+#endif
+/**
+ * Eight vertex colours of the layered flame for the spark-throwing types: orange fire (type 5), blue (6)
+ * and green (7). Read by effFireDisp3.
+ */
 static GXColor col_tbl[3][8] = {
     { { 0xAC, 0x2E, 0x00, 0xFF }, { 0xE0, 0x22, 0x00, 0xFF }, { 0xFD, 0x5F, 0x00, 0xFF }, { 0xFD, 0x5F, 0x04, 0xFF },
       { 0xFF, 0x69, 0x00, 0xFF }, { 0xFF, 0x8A, 0x00, 0xFF }, { 0xFF, 0xB7, 0x00, 0xFF }, { 0xFF, 0xD7, 0x00, 0xFF } },
@@ -40,14 +63,21 @@ static GXColor col_tbl[3][8] = {
       { 0xDE, 0xF6, 0x18, 0xFF }, { 0xA0, 0xF6, 0x06, 0xFF }, { 0xA0, 0xF6, 0x06, 0xFF }, { 0x92, 0xE4, 0x00, 0xFF } },
 };
 
+/**
+ * Per-frame X and Y stretch (out of 128) of a smoke puff over its first 30 frames: it widens and
+ * flattens as it ages. Read by effFireSmokeDisp.
+ */
 static u8 scale_dt[] = {
     128, 128, 129, 127, 130, 127, 131, 126, 132, 126, 132, 126, 133, 125, 134, 125, 135, 124, 136, 124, 137, 124, 138, 123, 138, 123, 139, 123, 140, 123, 141, 122, 141, 122, 142, 122, 143, 121, 143, 121, 144, 121, 145, 121, 146, 120, 146, 120, 147, 120, 148, 119, 149, 119, 149, 119, 150, 118, 151, 118, 152, 118, 152, 118, 153, 117, 154, 117, 155, 116, 156, 116, 157, 116, 158, 115, 159, 115, 160, 115, 161, 114, 162, 114, 163, 113, 165, 113, 166, 112, 167, 112, 169, 111, 170, 111, 171, 110, 173, 109, 174, 109, 176, 108, 178, 107, 180, 107, 181, 106, 183, 105, 185, 104, 187, 104, 189, 103, 192, 102,
 };
 
-void effFireMain(EffectEntry* effect);
+static void effFireMain(EffectEntry* effect);
+/** Emits one flame quad iw wide and ih tall: white at the top, black at the base. */
 static inline void effFireQuad(s32 iw, s32 ih) {
     f32 w, h;
-    GXBegin(GX_QUADS, GX_VTXFMT0, 4); w = iw; h = ih;
+    GXBegin(GX_QUADS, GX_VTXFMT0, 4);
+    w = iw;
+    h = ih;
     GXPosition3f32(-w / 2.0f, h, 0.0f);
     GXColor4u8(0xFF, 0xFF, 0xFF, 0xFF);
     GXTexCoord2f32(0.0f, 0.0f);
@@ -61,25 +91,29 @@ static inline void effFireQuad(s32 iw, s32 ih) {
     GXColor4u8(0x00, 0x00, 0x00, 0xFF);
     GXTexCoord2f32(0.0f, 1.0f);
 }
-void effFireDisp(CameraId cameraId, EffectEntry* effect);
-void effFireDisp2(CameraId cameraId, EffectEntry* effect);
-void effFireDisp3(CameraId cameraId, EffectEntry* effect);
-EffectEntry* effFireSparkN64Entry(s32 type, s32 count, s32 lifetime, f32 x, f32 y, f32 z, f32 rangeX,
-                                  f32 rangeY, f32 a, f32 b, f32 c);
+static void effFireDisp(CameraId cameraId, EffectEntry* effect);
+static void effFireDisp2(CameraId cameraId, EffectEntry* effect);
+static void effFireDisp3(CameraId cameraId, EffectEntry* effect);
 
+#if VERSION >= VERSION_JP
+/** Slower looping 200-frame swell of the flame's size (up to 1.2) for flame type 4; read by effFireMain. */
 FireScaleKey scale2[] = {
     { 0, 1.0f },
     { 100, 1.2f },
     { 160, 0.95f },
     { 200, 1.0f },
 };
+#endif
 
-void effFireSmokeDisp(CameraId cameraId, EffectEntry* effect);
-void effFireSmokeMain(EffectEntry* effect);
-
+static void effFireSmokeDisp(CameraId cameraId, EffectEntry* effect);
+static void effFireSmokeMain(EffectEntry* effect);
 
 static void effFireSmokeEntry(f32 x, f32 y, f32 z, f32 scale);
 
+/**
+ * Spawns a flame of the given type at (x, y, z); duration <= 0 keeps it burning until soft-deleted.
+ * Used for the burn status, fire attacks and event scripts.
+ */
 EffectEntry* effFireEntry(s32 type, s32 duration, f32 x, f32 y, f32 z, f32 scale) {
     EffectEntry* effect;
     EffFireWork* work;
@@ -87,17 +121,17 @@ EffectEntry* effFireEntry(s32 type, s32 duration, f32 x, f32 y, f32 z, f32 scale
     effect = effEntry();
     effect->type = "Fire";
     effect->count = 1;
-    work = __memAlloc(HEAP_EFFECT, 0x8c);
+    work = __memAlloc(HEAP_EFFECT, sizeof(EffFireWork));
     effect->userdata = work;
     effect->callback = effFireMain;
-    effect->flags |= 2;
+    effect->flags |= EFFECT_FLAG_SOFT_DELETE;
     if (duration <= 0) {
         duration = 1000;
     }
     work->type = type;
     work->alpha = 0xFF;
     {
-        Vec pos = { 0.0f, 0.0f, 0.0f };
+        Vec pos = {0.0f, 0.0f, 0.0f};
         pos.x = x;
         pos.y = y;
         pos.z = z;
@@ -152,19 +186,25 @@ EffectEntry* effFireEntry(s32 type, s32 duration, f32 x, f32 y, f32 z, f32 scale
     work->pulseScale = 0.0f;
     work->reserved_80 = 0;
     work->reserved_84 = 0;
+#if VERSION >= VERSION_JP
     work->useMapBlend = 0;
+#endif
     return effect;
 }
 
-void effFireMain(EffectEntry* effect) {
+/**
+ * Per frame: steps the scale animation from the type's key table, fades out over 16 frames on soft delete,
+ * and spawns smoke puffs.
+ */
+static void effFireMain(EffectEntry* effect) {
     EffFireWork* work = effect->userdata;
     s32 type = work->type;
     FireScaleKey* tbl;
     s32 count;
     s32 idx;
 
-    if (effect->flags & 4) {
-        effect->flags &= ~4;
+    if (effect->flags & EFFECT_FLAG_DELETE_REQUESTED) {
+        effect->flags &= ~EFFECT_FLAG_DELETE_REQUESTED;
         work->duration = 16;
     }
     if (work->duration < 1000) {
@@ -217,7 +257,8 @@ void effFireMain(EffectEntry* effect) {
                     break;
             }
             while (1) {
-                kf = work->keyFrame; idx = work->keyIdx;
+                kf = work->keyFrame;
+                idx = work->keyIdx;
                 if (kf < tbl[idx].frame) {
                     break;
                 }
@@ -250,7 +291,7 @@ void effFireMain(EffectEntry* effect) {
         default:
             work->sparkTimer++;
             if (work->sparkTimer > work->range) {
-                u8 offs[4] = { 5, 10, 10, 10 };
+                u8 offs[4] = {5, 10, 10, 10};
                 f32 px, py, pz, sc;
                 pz = work->position.z - 5.0f;
                 py = work->position.y + (f32)offs[type];
@@ -279,7 +320,8 @@ void effFireMain(EffectEntry* effect) {
     }
 }
 
-void effFireDisp(CameraId cameraId, EffectEntry* effect) {
+/** Draws the main flame billboard with an animated texture, using alpha blending. */
+static void effFireDisp(CameraId cameraId, EffectEntry* effect) {
     s32 w;
     s32 h;
     EffFireWork* work;
@@ -332,7 +374,8 @@ void effFireDisp(CameraId cameraId, EffectEntry* effect) {
     PSMTXTrans(trans, work->position.x, work->position.y, work->position.z);
     PSMTXRotRad(rot, 'y', MTXDegToRad(-camGetPtr(cameraId)->viewYaw));
     {
-        f32 s = 20.0f * work->scale; s *= 0.03125f;
+        f32 s = 20.0f * work->scale;
+        s *= 0.03125f;
         PSMTXScale(scaleMtx, s * work->scaleX, s * work->scaleY, s);
     }
     PSMTXConcat(trans, rot, m6c);
@@ -357,8 +400,8 @@ void effFireDisp(CameraId cameraId, EffectEntry* effect) {
     GXSetTevAlphaIn(GX_TEVSTAGE0, 4, 1, 6, 7);
     GXSetTevKColorSel(GX_TEVSTAGE0, 12);
     GXSetTevKAlphaSel(GX_TEVSTAGE0, 28);
-    GXSetTevKColor(GX_KCOLOR0, (GXColor){ 0xFF, 0x00, 0x00, 0xFF });
-    GXSetTevColor(GX_TEVREG0, (GXColor){ 0x00, 0x00, 0x00, 0x64 });
+    GXSetTevKColor(GX_KCOLOR0, (GXColor){0xFF, 0x00, 0x00, 0xFF});
+    GXSetTevColor(GX_TEVREG0, (GXColor){0x00, 0x00, 0x00, 0x64});
     effFireQuad(w, h);
     GXLoadPosMtxImm(m6c, GX_PNMTX0);
     GXSetNumTevStages(4);
@@ -368,21 +411,21 @@ void effFireDisp(CameraId cameraId, EffectEntry* effect) {
     GXSetTevColorIn(GX_TEVSTAGE0, 12, 14, 10, 15);
     GXSetTevAlphaIn(GX_TEVSTAGE0, 7, 7, 7, 7);
     GXSetTevKColorSel(GX_TEVSTAGE0, 12);
-    GXSetTevKColor(GX_KCOLOR0, (GXColor){ 0xF8, 0x99, 0x28, 0xFF });
+    GXSetTevKColor(GX_KCOLOR0, (GXColor){0xF8, 0x99, 0x28, 0xFF});
     GXSetTevOrder(GX_TEVSTAGE1, GX_TEXCOORD_NULL, GX_TEXMAP_NULL, GX_COLOR0A0);
     GXSetTevColorOp(GX_TEVSTAGE1, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVREG1);
     GXSetTevAlphaOp(GX_TEVSTAGE1, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVREG1);
     GXSetTevColorIn(GX_TEVSTAGE1, 12, 14, 10, 15);
     GXSetTevAlphaIn(GX_TEVSTAGE1, 7, 7, 7, 7);
     GXSetTevKColorSel(GX_TEVSTAGE1, 13);
-    GXSetTevKColor(GX_KCOLOR1, (GXColor){ 0xF1, 0x9E, 0x8F, 0xFF });
+    GXSetTevKColor(GX_KCOLOR1, (GXColor){0xF1, 0x9E, 0x8F, 0xFF});
     GXSetTevOrder(GX_TEVSTAGE2, GX_TEXCOORD0, GX_TEXMAP0, GX_COLOR_NULL);
     GXSetTevColorOp(GX_TEVSTAGE2, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
     GXSetTevAlphaOp(GX_TEVSTAGE2, 14, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
     GXSetTevColorIn(GX_TEVSTAGE2, 15, 15, 15, 2);
     GXSetTevAlphaIn(GX_TEVSTAGE2, 4, 3, 6, 7);
     GXSetTevKAlphaSel(GX_TEVSTAGE2, 0);
-    GXSetTevColor(GX_TEVREG2, (GXColor){ 0x00, 0x00, 0x00, 0x64 });
+    GXSetTevColor(GX_TEVREG2, (GXColor){0x00, 0x00, 0x00, 0x64});
     GXSetTevOrder(GX_TEVSTAGE3, GX_TEXCOORD0, GX_TEXMAP0, GX_COLOR_NULL);
     GXSetTevColorOp(GX_TEVSTAGE3, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
     GXSetTevAlphaOp(GX_TEVSTAGE3, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
@@ -391,7 +434,8 @@ void effFireDisp(CameraId cameraId, EffectEntry* effect) {
     effFireQuad(w, h);
 }
 
-void effFireDisp2(CameraId cameraId, EffectEntry* effect) {
+/** Draws the second flame layer (texture 0x48) using two texture coordinate sets. */
+static void effFireDisp2(CameraId cameraId, EffectEntry* effect) {
     CameraEntry* camera;
     EffFireWork* work;
     s32 type;
@@ -440,12 +484,12 @@ void effFireDisp2(CameraId cameraId, EffectEntry* effect) {
     switch (type) {
         case 3:
         case 4:
-            GXSetTevColor(GX_TEVREG0, (GXColor){ 0xFF, 0xCD, 0x15, 0xFF });
-            GXSetTevColor(GX_TEVREG1, (GXColor){ 0xFF, 0x51, 0x00, 0xFF });
+            GXSetTevColor(GX_TEVREG0, (GXColor){0xFF, 0xCD, 0x15, 0xFF});
+            GXSetTevColor(GX_TEVREG1, (GXColor){0xFF, 0x51, 0x00, 0xFF});
             break;
         case 8:
-            GXSetTevColor(GX_TEVREG0, (GXColor){ 0x59, 0x33, 0x59, 0xFF });
-            GXSetTevColor(GX_TEVREG1, (GXColor){ 0x00, 0x00, 0x00, 0xFF });
+            GXSetTevColor(GX_TEVREG0, (GXColor){0x59, 0x33, 0x59, 0xFF});
+            GXSetTevColor(GX_TEVREG1, (GXColor){0x00, 0x00, 0x00, 0xFF});
             break;
     }
     GXSetTevOrder(GX_TEVSTAGE1, GX_TEXCOORD1, GX_TEXMAP0, GX_COLOR_NULL);
@@ -453,14 +497,14 @@ void effFireDisp2(CameraId cameraId, EffectEntry* effect) {
     GXSetTevAlphaOp(GX_TEVSTAGE1, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
     GXSetTevColorIn(GX_TEVSTAGE1, 15, 15, 15, 0);
     GXSetTevAlphaIn(GX_TEVSTAGE1, 0, 4, 3, 7);
-    GXSetTevColor(GX_TEVREG2, (GXColor){ work->glowAlpha, work->glowAlpha, work->glowAlpha, work->glowAlpha });
+    GXSetTevColor(GX_TEVREG2, (GXColor){work->glowAlpha, work->glowAlpha, work->glowAlpha, work->glowAlpha});
     GXSetTevOrder(GX_TEVSTAGE2, GX_TEXCOORD_NULL, GX_TEXMAP_NULL, GX_COLOR_NULL);
     GXSetTevColorOp(GX_TEVSTAGE2, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
     GXSetTevAlphaOp(GX_TEVSTAGE2, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
     GXSetTevColorIn(GX_TEVSTAGE2, 15, 15, 15, 0);
     GXSetTevAlphaIn(GX_TEVSTAGE2, 7, 0, 6, 7);
     GXSetTevKAlphaSel(GX_TEVSTAGE2, 28);
-    GXSetTevKColor(GX_KCOLOR0, (GXColor){ 0, 0, 0, work->alpha });
+    GXSetTevKColor(GX_KCOLOR0, (GXColor){0, 0, 0, work->alpha});
     GXBegin(GX_QUADS, GX_VTXFMT0, 4);
     {
         f32 w = 24.0f;
@@ -500,13 +544,13 @@ void effFireDisp2(CameraId cameraId, EffectEntry* effect) {
     GXSetChanCtrl(GX_COLOR0A0, GX_FALSE, GX_SRC_REG, GX_SRC_REG, GX_LIGHT_NULL, GX_DF_NONE, GX_AF_NONE);
     switch (type) {
         case 3:
-            GXSetChanMatColor(GX_COLOR0A0, (GXColor){ 0xFF, 0xEA, 0x5D, 0x4C });
+            GXSetChanMatColor(GX_COLOR0A0, (GXColor){0xFF, 0xEA, 0x5D, 0x4C});
             break;
         case 4:
-            GXSetChanMatColor(GX_COLOR0A0, (GXColor){ 0xFF, 0xEA, 0x5D, 0x26 });
+            GXSetChanMatColor(GX_COLOR0A0, (GXColor){0xFF, 0xEA, 0x5D, 0x26});
             break;
         case 8:
-            GXSetChanMatColor(GX_COLOR0A0, (GXColor){ 0x00, 0x00, 0x00, 0x4C });
+            GXSetChanMatColor(GX_COLOR0A0, (GXColor){0x00, 0x00, 0x00, 0x4C});
             break;
     }
     GXSetNumTexGens(1);
@@ -538,8 +582,7 @@ void effFireDisp2(CameraId cameraId, EffectEntry* effect) {
         if (type == 3 || type == 8) {
             u = 2.0f;
             v = 1.0f;
-        }
-        else {
+        } else {
             u = 2.0f;
             v = 2.0f;
         }
@@ -554,7 +597,8 @@ void effFireDisp2(CameraId cameraId, EffectEntry* effect) {
     }
 }
 
-void effFireDisp3(CameraId cameraId, EffectEntry* effect) {
+/** Draws the spark particles (types 5-7) around the flame. */
+static void effFireDisp3(CameraId cameraId, EffectEntry* effect) {
     CameraEntry* camera;
     GXColor* col;
     EffFireWork* work;
@@ -592,7 +636,11 @@ void effFireDisp3(CameraId cameraId, EffectEntry* effect) {
     PSMTXScale(scaleMtx, work->scale * work->scaleX, work->scale * work->scaleY, work->scale);
     PSMTXConcat(trans, rot, mb0);
     PSMTXConcat(mb0, scaleMtx, mb0);
+#if VERSION <= VERSION_DEMO_JP
+    GXSetNumTevStages(2);
+#else
     GXSetNumTevStages(3);
+#endif
     GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP0, GX_COLOR_NULL);
     GXSetTevColorOp(GX_TEVSTAGE0, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
     GXSetTevAlphaOp(GX_TEVSTAGE0, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
@@ -603,6 +651,7 @@ void effFireDisp3(CameraId cameraId, EffectEntry* effect) {
     GXSetTevAlphaOp(GX_TEVSTAGE1, GX_TEV_ADD, GX_TB_ZERO, GX_CS_DIVIDE_2, GX_TRUE, GX_TEVPREV);
     GXSetTevColorIn(GX_TEVSTAGE1, 15, 15, 15, 10);
     GXSetTevAlphaIn(GX_TEVSTAGE1, 0, 7, 7, 4);
+#if VERSION >= VERSION_JP
     GXSetTevOrder(GX_TEVSTAGE2, GX_TEXCOORD_NULL, GX_TEXMAP_NULL, GX_COLOR_NULL);
     GXSetTevColorOp(GX_TEVSTAGE2, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
     GXSetTevAlphaOp(GX_TEVSTAGE2, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
@@ -619,7 +668,8 @@ void effFireDisp3(CameraId cameraId, EffectEntry* effect) {
         GXSetTevAlphaIn(GX_TEVSTAGE3, 7, 0, 2, 7);
         GXSetTevColor(GX_TEVREG1, blend);
     }
-    GXSetTevColor(GX_TEVREG0, (GXColor){ 0, 0, 0, work->alpha });
+    GXSetTevColor(GX_TEVREG0, (GXColor){0, 0, 0, work->alpha});
+#endif
     GXSetCullMode(GX_CULL_NONE);
     GXClearVtxDesc();
     GXSetVtxDesc(GX_VA_POS, GX_DIRECT);
@@ -665,7 +715,7 @@ void effFireDisp3(CameraId cameraId, EffectEntry* effect) {
             GXTexCoord2f32(0.0f, (1.0f / 3.0f) * (3 - i));
         }
         {
-            Vec t = { 0.0f, 0.0f, 0.0f };
+            Vec t = {0.0f, 0.0f, 0.0f};
             t.x = -w / 2.0f;
             t.y = 40.0f;
             p = t;
@@ -685,7 +735,7 @@ void effFireDisp3(CameraId cameraId, EffectEntry* effect) {
             work->scrMinY = scr.y;
         }
         {
-            Vec t = { 0.0f, 0.0f, 0.0f };
+            Vec t = {0.0f, 0.0f, 0.0f};
             t.x = w * 0.5f;
             t.y = 40.0f;
             p = t;
@@ -705,7 +755,7 @@ void effFireDisp3(CameraId cameraId, EffectEntry* effect) {
             work->scrMinY = scr.y;
         }
         {
-            Vec t = { 0.0f, 0.0f, 0.0f };
+            Vec t = {0.0f, 0.0f, 0.0f};
             t.x = w * 0.5f;
             p = t;
         }
@@ -724,7 +774,7 @@ void effFireDisp3(CameraId cameraId, EffectEntry* effect) {
             work->scrMinY = scr.y;
         }
         {
-            Vec t = { 0.0f, 0.0f, 0.0f };
+            Vec t = {0.0f, 0.0f, 0.0f};
             t.x = -w / 2.0f;
             p = t;
         }
@@ -763,12 +813,7 @@ void effFireDisp3(CameraId cameraId, EffectEntry* effect) {
     work->bboxValid = 1;
 }
 
-
-
-
-
-
-
+/** Spawns a single smoke puff at (x, y, z) that lives 60 frames, with the given scale. */
 static void effFireSmokeEntry(f32 x, f32 y, f32 z, f32 scale) {
     EffectEntry* smoke = effEntry();
     EffFireSmokeWork* sw;
@@ -777,10 +822,10 @@ static void effFireSmokeEntry(f32 x, f32 y, f32 z, f32 scale) {
     sw = __memAlloc(HEAP_EFFECT, 0x40);
     smoke->userdata = sw;
     smoke->callback = effFireSmokeMain;
-    smoke->flags |= 2;
-    sw->unk0 = 0;
+    smoke->flags |= EFFECT_FLAG_SOFT_DELETE;
+    sw->type = 0;
     sw->color[3] = 0x80;
-    sw->position = (Vec){ x, y, z };
+    sw->position = (Vec){x, y, z};
     sw->scale = scale;
     sw->life = 60;
     sw->age = 0;
@@ -793,11 +838,12 @@ static void effFireSmokeEntry(f32 x, f32 y, f32 z, f32 scale) {
     sw->color[2] = 0x38;
 }
 
-void effFireSmokeMain(EffectEntry* effect) {
+/** Moves the puff by its velocity, ages it, and fades it out over its last 16 frames. */
+static void effFireSmokeMain(EffectEntry* effect) {
     EffFireSmokeWork* work = effect->userdata;
 
-    if (effect->flags & 4) {
-        effect->flags &= ~4;
+    if (effect->flags & EFFECT_FLAG_DELETE_REQUESTED) {
+        effect->flags &= ~EFFECT_FLAG_DELETE_REQUESTED;
         work->life = 16;
     }
     if (work->life < 1000) {
@@ -824,7 +870,8 @@ void effFireSmokeMain(EffectEntry* effect) {
     dispEntry(CAMERA_3D, dispCalcZ(&work->position), 2, (DispCallback)effFireSmokeDisp, effect);
 }
 
-void effFireSmokeDisp(CameraId cameraId, EffectEntry* effect) {
+/** Draws the smoke puff as a billboard scaled by scale_dt for its age. */
+static void effFireSmokeDisp(CameraId cameraId, EffectEntry* effect) {
     EffFireSmokeWork* work = effect->userdata;
     CameraEntry* camera;
     GXTexObj texObj;
@@ -838,8 +885,7 @@ void effFireSmokeDisp(CameraId cameraId, EffectEntry* effect) {
     if (idx < 60) {
         sx = scale_dt[idx] / 128.0f;
         sy = scale_dt[idx + 1] / 128.0f;
-    }
-    else {
+    } else {
         sx = 1.5f;
         sy = 0.8f;
     }
@@ -848,7 +894,7 @@ void effFireSmokeDisp(CameraId cameraId, EffectEntry* effect) {
     GXSetNumChans(1);
     GXSetChanCtrl(GX_COLOR0A0, GX_FALSE, GX_SRC_REG, GX_SRC_REG, GX_LIGHT_NULL, GX_DF_NONE,
                   GX_AF_NONE);
-    GXSetChanMatColor(GX_COLOR0A0, (GXColor){ work->color[0], work->color[1], work->color[2], work->color[3] });
+    GXSetChanMatColor(GX_COLOR0A0, (GXColor){work->color[0], work->color[1], work->color[2], work->color[3]});
     GXSetNumTexGens(1);
     GXSetTexCoordGen2(GX_TEXCOORD0, GX_TG_MTX2x4, GX_TG_TEX0, GX_IDENTITY, GX_FALSE, GX_PTIDENTITY);
     PSMTXTrans(trans, work->position.x, work->position.y, work->position.z);

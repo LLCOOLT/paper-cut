@@ -1,72 +1,26 @@
+// unit_npc_christine: Goombella as a non-partner battle unit (NPC version).
+
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
 #include "battle/battle_event_default.h"
+#include "battle/battle_sub.h"
+#include "battle/battle_event_cmd.h"
 
-#pragma force_active on
-
-USER_FUNC(btlevtcmd_AnimeChangePoseFromTable);
-USER_FUNC(btlevtcmd_SetEventAttack);
-USER_FUNC(btlevtcmd_SetEventConfusion);
-USER_FUNC(btlevtcmd_SetEventDamage);
-USER_FUNC(btlevtcmd_SetEventWait);
-USER_FUNC(btlevtcmd_SetMaxMoveCount);
-USER_FUNC(btlevtcmd_StartWaitEvent);
-
-f32 fd_npc_christine_negone_one_374[2] __attribute__((aligned(8)));
-f32 fd_npc_christine_neg_one_382;
-f32 fd_npc_christine___local_PI_383;
-f32 fd_npc_christine___local_3PIO2_385;
-f32 fd_npc_christine_one_negone_373[2] __attribute__((aligned(8)));
-f32 fd_npc_christine___local_PIO2_384;
-f32 fd_npc_christine_one_381;
-f32 fd_npc_christine_negone_one_360[2] __attribute__((aligned(8)));
-f32 fd_npc_christine_neg_one_365;
-f32 fd_npc_christine___local_PI_366;
-f32 fd_npc_christine___local_3PIO2_368;
-f32 fd_npc_christine_one_negone_359[2] __attribute__((aligned(8)));
-f32 fd_npc_christine___local_PIO2_367;
-f32 fd_npc_christine_one_364;
 BattleUnitKind unit_npc_christine;
 static BattleUnitDefense defence;
 static BattleUnitDefenseAttr defence_attr;
 static StatusVulnerability regist;
-static PoseTableEntry pose_table[4];
 static BattleDataEntry data_table[1];
 static BattleUnitKindPart parts[1];
 static EvtWord init_event[25];
 static EvtWord damage_event[10];
-static EvtWord phase_event[2];
 static EvtWord attack_event[5];
 static EvtWord wait_event[6];
 
-f32 fd_npc_christine_negone_one_374[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_npc_christine_neg_one_382 = -1.0f;
-
-f32 fd_npc_christine___local_PI_383 = 3.1415927f;
-
-f32 fd_npc_christine___local_3PIO2_385 = 4.712389f;
-
-f32 fd_npc_christine_one_negone_373[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_npc_christine___local_PIO2_384 = 1.5707964f;
-
-f32 fd_npc_christine_one_381 = 1.0f;
-
-f32 fd_npc_christine_negone_one_360[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_npc_christine_neg_one_365 = -1.0f;
-
-f32 fd_npc_christine___local_PI_366 = 3.1415927f;
-
-f32 fd_npc_christine___local_3PIO2_368 = 4.712389f;
-
-f32 fd_npc_christine_one_negone_359[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_npc_christine___local_PIO2_367 = 1.5707964f;
-
-f32 fd_npc_christine_one_364 = 1.0f;
-
+/**
+ * Unit kind of Goombella:
+ * 10 HP, level 1, with its size, sounds and the links to its parts, status vulnerability and scripts.
+ */
 BattleUnitKind unit_npc_christine = {
     221,
     "btl_un_christine",
@@ -125,7 +79,7 @@ BattleUnitKind unit_npc_christine = {
     "SFX_BTL_DAMAGE_FIRE1",
     "SFX_BTL_DAMAGE_ICE1",
     "SFX_BTL_DAMAGE_BIRIBIRI1",
-    0x12000000,
+    UNIT_ATTR_NO_HP_GAUGE | UNIT_ATTR_IGNORE_FOR_CLEAR,
     &regist,
     1,
     parts,
@@ -133,55 +87,68 @@ BattleUnitKind unit_npc_christine = {
     data_table,
 };
 
+/** Defence of Goombella's body per damage type: 0 against every damage type. */
 static BattleUnitDefense defence = {{0, 0, 0, 0, 0}};
 
+/** Defence attributes of Goombella's body: none, so every damage type is dealt normally. */
 static BattleUnitDefenseAttr defence_attr = {{0, 0, 0, 0, 0}};
 
+/** Status vulnerability of Goombella: immune to every status. */
 static StatusVulnerability regist = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
+/**
+ * Pose table of Goombella:
+ * the animation played for each pose type (idle, hurt, walk, run, attack and so on).
+ */
 static PoseTableEntry pose_table[] = {
-    {28, "PKR_S_1"},
+    {BTL_POSE_NORMAL, "PKR_S_1"},
     {31, "PKR_S_1"},
-    {39, "PKR_S_1"},
-    {69, "PKR_S_1"},
+    {BTL_POSE_DAMAGE, "PKR_S_1"},
+    {BTL_POSE_STAY_DEFAULT, "PKR_S_1"},
 };
 
+/** Event table of Goombella: empty, so it has no special reactions. */
 static BattleDataEntry data_table[] = {
     {0, NULL},
 };
 
+/** Body part of Goombella: a single part using the model "c_pkr". */
 static BattleUnitKindPart parts[] = {
-    {1, "btl_un_christine", "c_pkr\0\0", 0.0f, 0.0f, 0.0f, 15.0f, 25.0f, 0.0f, 0.0f, 30.0f, 0.0f, 20, 30, 255, &defence, &defence_attr, 0x90009, 0, pose_table},
+    {1, "btl_un_christine", "c_pkr", 0.0f, 0.0f, 0.0f, 15.0f, 25.0f, 0.0f, 0.0f, 30.0f, 0.0f, 20, 30, 255, &defence, &defence_attr, PART_ATTR_MAIN | PART_ATTR_GUARD_COVER | PART_ATTR_NOT_TARGETABLE | PART_ATTR_UNTATTLEABLE, 0, pose_table},
 };
 
+/** Init event of Goombella as an NPC battle unit: installs attack, damage and confusion events and forbids movement. */
 static EVT_BEGIN(init_event)
-    CALL(btlevtcmd_SetEventWait, -2, PTR(wait_event))
-    CALL(btlevtcmd_SetEventAttack, -2, PTR(attack_event))
-    CALL(btlevtcmd_SetEventDamage, -2, PTR(damage_event))
-    CALL(btlevtcmd_SetEventConfusion, -2, PTR(btldefaultevt_Confuse))
-    CALL(btlevtcmd_SetMaxMoveCount, -2, 0)
-    CALL(btlevtcmd_StartWaitEvent, -2)
+    CALL(btlevtcmd_SetEventWait, BTL_UNIT_SELF, PTR(wait_event))
+    CALL(btlevtcmd_SetEventAttack, BTL_UNIT_SELF, PTR(attack_event))
+    CALL(btlevtcmd_SetEventDamage, BTL_UNIT_SELF, PTR(damage_event))
+    CALL(btlevtcmd_SetEventConfusion, BTL_UNIT_SELF, PTR(btldefaultevt_Confuse))
+    CALL(btlevtcmd_SetMaxMoveCount, BTL_UNIT_SELF, 0)
+    CALL(btlevtcmd_StartWaitEvent, BTL_UNIT_SELF)
     RETURN
 EVT_END()
 
+/** Damage event of Goombella as an NPC: runs the default damage handling. */
 static EVT_BEGIN(damage_event)
     SET_VALUE(LW(10), -2)
     SET_VALUE(LW(11), 1)
-    CALL_CHILD(PTR(btldefaultevt_Damage))
+    CALL_CHILD(btldefaultevt_Damage)
     RETURN
 EVT_END()
 
+/** Phase event of Goombella as an NPC: does nothing. */
 static EVT_BEGIN(phase_event)
     RETURN
 EVT_END()
 
+/** Attack event of Goombella as an NPC: does nothing and returns to waiting. */
 static EVT_BEGIN(attack_event)
-    CALL(btlevtcmd_StartWaitEvent, -2)
+    CALL(btlevtcmd_StartWaitEvent, BTL_UNIT_SELF)
     RETURN
 EVT_END()
 
+/** Wait (idle) event of Goombella as an NPC: shows the idle pose from the pose table. */
 static EVT_BEGIN(wait_event)
-    CALL(btlevtcmd_AnimeChangePoseFromTable, -2, 1)
+    CALL(btlevtcmd_AnimeChangePoseFromTable, BTL_UNIT_SELF, 1)
     RETURN
 EVT_END()
-

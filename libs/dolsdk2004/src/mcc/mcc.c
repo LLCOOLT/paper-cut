@@ -2,8 +2,16 @@
 #include <dolphin/mcc.h>
 
 #ifdef DEBUG
+/**
+ * Version string of the MCC (memory card channel) library in the debug build, kept in the binary as a build
+ * stamp.
+ */
 const char* __MCCVersion = "<< Dolphin SDK - MCC\tdebug build: Apr  5 2004 03:57:07 (0x2301) >>";
 #else
+/**
+ * Version string of the MCC (memory card channel) library in the release build, kept in the binary as a build
+ * stamp.
+ */
 const char* __MCCVersion = "<< Dolphin SDK - MCC\trelease build: Apr  5 2004 04:15:49 (0x2301) >>";
 #endif
 
@@ -57,8 +65,13 @@ static void MCCTxCallback(void);
 static void MCCRxCallback(void);
 static int mccInitializeCheck(u8 timeout);
 
+/** Debug print hook of the MCC library; empty in this build, calls to it are removed. */
 static void mccDebugPrint(char* str) {}
 
+/**
+ * MCC event callback for stream channels: read and write events mark isStreamDone,
+ * connect/disconnect/notify events mark isStreamConnection, for the waits in MCCStreamRead and MCCStreamWrite.
+ */
 static void callbackEventStream(MCC_CHANNEL chID, u32 event, u32 value) {
     value; // needed to bump registers. what?
 
@@ -79,6 +92,10 @@ static void callbackEventStream(MCC_CHANNEL chID, u32 event, u32 value) {
     }
 }
 
+/**
+ * Opens an MCC channel for streaming with the given block size, using callbackEventStream,
+ * and clears the stream flags.
+ */
 BOOL MCCStreamOpen(MCC_CHANNEL chID, u8 blockSize) {
     BOOL bResult;
 
@@ -93,11 +110,17 @@ BOOL MCCStreamOpen(MCC_CHANNEL chID, u8 blockSize) {
     return bResult;
 }
 
+/** Marks the stream channel unopened and closes it with MCCClose. */
 int MCCStreamClose(MCC_CHANNEL chID) {
     gChannelInfo[chID].isStreamOpened = FALSE;
     return MCCClose(chID);
 }
 
+/**
+ * Sends dataBlockSize 8 KB blocks to the host: tells the host the block count through a 32 byte header,
+ * then writes one channel-length chunk at a time, waiting up to 5 seconds for each to be consumed.
+ * Returns whether all blocks were sent.
+ */
 int MCCStreamWrite(MCC_CHANNEL chID, void* data, u32 dataBlockSize) {
     MCC_Info chanInfo;
     char* dataAddress;
@@ -159,6 +182,11 @@ int MCCStreamWrite(MCC_CHANNEL chID, void* data, u32 dataBlockSize) {
     return 0;
 }
 
+/**
+ * Receives a stream from the host: reads the block count header,
+ * then reads one channel-length chunk at a time into data, waiting up to 5 seconds for each.
+ * Returns the number of blocks read.
+ */
 u32 MCCStreamRead(MCC_CHANNEL chID, void* data) {
     MCC_Info chanInfo;
     char* dataAddress;
@@ -219,6 +247,10 @@ u32 MCCStreamRead(MCC_CHANNEL chID, void* data) {
     return 0;
 }
 
+/**
+ * Sets the adapter mode byte in the host adapter's memory (address 0x680):
+ * reads the 32 byte block, changes the first byte and writes it back.
+ */
 static int SetUsbAdapterMode(u8 mode) {
     int result = 0;
 
@@ -233,6 +265,7 @@ static int SetUsbAdapterMode(u8 mode) {
     return result;
 }
 
+/** Reads the adapter mode byte from adapter memory at 0x680; 0 if the read fails. */
 static u8 GetUsbAdapterMode(void) {
     if (HIORead(0x680, m_szAdapterMode, 0x20) != 0) {
         DCInvalidateRange(m_szAdapterMode, 0x20);
@@ -241,18 +274,24 @@ static u8 GetUsbAdapterMode(void) {
     return 0;
 }
 
+/** Zeroes the 32 byte init code at adapter address 0x600. */
 static int InitializeCodeClear(void) {
     memset(m_szInitCode, 0, 0x20);
     DCFlushRange(m_szInitCode, 0x20);
     HIOWrite(0x600, m_szInitCode, 0x20);
 }
 
+/**
+ * Writes the target's init code "HUDSON/USB2EXI/INITCODE/TARGET" at adapter address 0x600 to tell the host the
+ * console side is up.
+ */
 static int InitializeCodeSet(void) {
     strcpy(m_szInitCode, "HUDSON/USB2EXI/INITCODE/TARGET");
     DCFlushRange(m_szInitCode, 0x20);
     HIOWrite(0x600, m_szInitCode, 0x20);    
 }
 
+/** Reads adapter address 0x600 and returns whether it holds the host's code "HUDSON/USB2EXI/INITCODE/HOST". */
 static int InitializeCodeCheck(void) {
     int result;
 
@@ -264,15 +303,18 @@ static int InitializeCodeCheck(void) {
     return result;
 }
 
+/** Clears the async-operation status word. */
 static void AsyncResourceClearState(void) {
     gAsyncResourceStatus = 0;
 }
 
+/** Replaces the state bits (0xF000) of the async status word. */
 static void AsyncResourceSetState(u16 state) {
     gAsyncResourceStatus &= 0xFFFF0FFF;
     gAsyncResourceStatus |= state;    
 }
 
+/** Marks an async transfer as running (0x1000) for the channel and read/write mode. */
 static void AsyncResourceStateBusy(u8 channel, u16 mode) {
     AsyncResourceClearState();
     AsyncResourceSetState(0x1000);
@@ -280,31 +322,40 @@ static void AsyncResourceStateBusy(u8 channel, u16 mode) {
     gAsyncResourceStatus |= mode;
 }
 
+/** Marks the async transfer as completed (0x2000). */
 static void AsyncResourceStateDone(void) {
     AsyncResourceSetState(0x2000);
 }
 
+/** Returns the state bits (0xF000) of the async status word. */
 static u16 AsyncResourceGetStat(void) {
     return gAsyncResourceStatus & 0xF000;
 }
 
+/** Returns the mode bits (0xF00) of the async status word: 0 for a read, 0x100 for a write. */
 static u16 AsyncResourceGetMode(void) {
     return gAsyncResourceStatus & 0xF00;
 }
 
+/** Returns the channel number in the low byte of the async status word. */
 static u8 AsyncResourceGetChannel(void) {
     return gAsyncResourceStatus;
 }
 
+/** Returns non-zero while an async transfer is running (state 0x1000). */
 static int AsyncResourceIsBusy(void) {
     return AsyncResourceGetStat() & 0x1000;
 }
 
+/**
+ * Refreshes the local channel table from the adapter (address 0x700, 64 bytes, up to 255 tries)
+ * when it is marked dirty; returns whether the table is valid.
+ */
 static int LoadChannelInfo(MCC_ChannelInfo* info) {
     volatile int result = 0;
     u8 count;
 #ifndef DEBUG
-    int unused; // this is fake, but i cant seem to find whats messing with the stack.
+    int unused; // FAKE: dead local that pads the stack frame to the original size
 #endif
 
     if (!gIsChannelinfoDirty) {
@@ -331,6 +382,7 @@ static int LoadChannelInfo(MCC_ChannelInfo* info) {
     return result;
 }
 
+/** Writes the local channel table back to adapter address 0x700, then sends notify 5 to the host so it re-reads it. */
 static int FlushChannelInfo(MCC_ChannelInfo* info) {
     volatile int result;
     u8 count;
@@ -355,10 +407,12 @@ static int FlushChannelInfo(MCC_ChannelInfo* info) {
     return result;
 }
 
+/** Sets the flag that makes the next LoadChannelInfo reload the channel table. */
 static void SetChannelInfoDirty(int dirty) {
     gIsChannelinfoDirty = dirty;
 }
 
+/** Resets one channel entry: no blocks, disconnected, unlocked, no event mask or callback. */
 static void ClearChannelInfo(int i) {
     gChannelInfo[i].info.firstBlock = 0;
     gChannelInfo[i].info.blockLength = 0;
@@ -370,6 +424,10 @@ static void ClearChannelInfo(int i) {
     //! isStreamConnection isnt cleared. Intentional?
 }
 
+/**
+ * Builds a 16 entry map of which 8 KB adapter blocks are used by which channel (channel number + 1);
+ * block 0 is always marked used.
+ */
 static void MakeMemoryMap(u8* map) {
     u8 iMap;
     u8 jMap;
@@ -390,6 +448,7 @@ static void MakeMemoryMap(u8* map) {
     *map = 0xFF;
 }
 
+/** Returns whether the target side (bit 2) of channel chID is open; sets error 0xE for ids outside 1 to 15. */
 static int IsChannelOpened(MCC_CHANNEL chID) {
     u8 connectSide;
 
@@ -405,6 +464,10 @@ exit:;
     return 0;
 }
 
+/**
+ * Scans the block map for free runs: mode 0 returns the smallest run, mode 1 the largest (and its start index),
+ * mode 2 the total number of free blocks.
+ */
 static u8 SearchFreeBlocks(MCC_MODE mode, u8* index) {
     u8 map[16];
     u8 iMap;
@@ -447,6 +510,10 @@ static u8 SearchFreeBlocks(MCC_MODE mode, u8* index) {
     return fSize;
 }
 
+/**
+ * Sends a mailbox word (channel id in the top byte, notify bits below) to the host,
+ * first waiting up to timeout seconds for the previous mail to be taken (status bit 1 clear).
+ */
 static int NotifyCompulsorily(MCC_CHANNEL chID, u32 notify, u32 timeout) {
     u32 status;
     u32 notifyData;
@@ -454,7 +521,7 @@ static int NotifyCompulsorily(MCC_CHANNEL chID, u32 notify, u32 timeout) {
     volatile u32 tickCur;
     volatile u32 tickSec;
 #ifndef DEBUG
-    int unused; // fake but blah
+    int unused; // FAKE: dead local that pads the stack frame to the original size
 #endif
 
     status = 0;
@@ -491,17 +558,23 @@ exit:;
     return 0;
 }
 
+/** Sends system notify 1 (target starting) to the host. */
 static int NotifyInit(void) {
     return NotifyCompulsorily(0, 1, 0);
 }
 
+/** Sends system notify 2 (target initialisation done) to the host. */
 static int NotifyInitDone(void) {
     return NotifyCompulsorily(0, 2, 0);
 }
 
+/**
+ * Sends an event notify for an open channel; sets error 0xB or 0x12 if the table cannot be read
+ * or the channel is not open.
+ */
 static int NotifyChannelEvent(MCC_CHANNEL chID, u32 notify) {
 #ifndef DEBUG
-    int unused[2]; // fake but blah
+    int unused[2]; // FAKE: dead local that pads the stack frame to the original size
 #endif
 
     if (LoadChannelInfo(gChannelInfo) == 0) {
@@ -517,6 +590,7 @@ static int NotifyChannelEvent(MCC_CHANNEL chID, u32 notify) {
     return 0;
 }
 
+/** Spins until *flag equals value, giving up after timeout seconds; returns 0 on timeout. */
 static int WaitAMinute(int timeout, volatile int*  flag, int value) {
     u32 tickStart;
     u32 tickDist;
@@ -533,6 +607,13 @@ static int WaitAMinute(int timeout, volatile int*  flag, int value) {
     return 1;
 }
 
+/**
+ * Reads the host's mailbox word and dispatches it:
+ * channel 0 holds system messages (2 host ready, 3 ping, 1 host closed, 4 ping reply,
+ * 5 channel table changed) forwarded to the system event callback;
+ * other channels call the channel's event callback with read, write, connect, disconnect, lock,
+ * unlock or a raw notify value.
+ */
 static void MailboxCheck(void) {
     u32 mailbox;
     BOOL isNotify;
@@ -540,7 +621,7 @@ static void MailboxCheck(void) {
     u32 value;
     BOOL bDoCall;
 #ifndef DEBUG
-    int unused[3]; // fake but blah
+    int unused[3]; // FAKE: dead local that pads the stack frame to the original size
 #endif
 
     mailbox = 0;
@@ -628,23 +709,32 @@ static void MailboxCheck(void) {
     }
 }
 
+/** HIO interrupt callback: new host mail has arrived, so run MailboxCheck. */
 static void MCCExiCallback(void) {
     MailboxCheck();
 }
 
+/** HIO transmit callback: marks the pending async MCCWrite as done. */
 static void MCCTxCallback(void) {
     AsyncResourceStateDone();
 }
 
+/** HIO receive callback: marks the pending async MCCRead as done. */
 static void MCCRxCallback(void) {
     AsyncResourceStateDone();
 }
 
+/**
+ * Completes the handshake after HIOInit: if the host's init code is not yet present,
+ * writes the target code and waits up to timeout seconds for the host;
+ * if the host code is present, clears it, sends init-done and reports system event
+ * 2. Returns 1 when connected.
+ */
 static int mccInitializeCheck(u8 timeout) {
     int dmyFlag;
     int i;
 #ifndef DEBUG
-    int unused[3]; // fake but blah
+    int unused[3]; // FAKE: dead local that pads the stack frame to the original size
 #endif
 
     dmyFlag = 0;
@@ -693,6 +783,12 @@ static int mccInitializeCheck(u8 timeout) {
     return 0;
 }
 
+/**
+ * Starts MCC on EXI channel 0 to 2: initialises HIO with MCCExiCallback, switches the adapter to mode 1,
+ * drains pending mail, sends the init notify, clears the channel table
+ * and runs the handshake with the given timeout. callbackSysEvent receives system events.
+ * Returns 1 when connected.
+ */
 int MCCInit(MCC_EXI exiChannel, u8 timeout, MCC_CBSysEvent callbackSysEvent) {
     int dmyFlag;
     u8 adapterMode;
@@ -700,7 +796,7 @@ int MCCInit(MCC_EXI exiChannel, u8 timeout, MCC_CBSysEvent callbackSysEvent) {
     u32 status;
     int i;
 #ifndef DEBUG
-    int unused[3]; // fake but blah
+    int unused[3]; // FAKE: dead local that pads the stack frame to the original size
 #endif
 
     OSRegisterVersion(__MCCVersion);
@@ -749,6 +845,7 @@ int MCCInit(MCC_EXI exiChannel, u8 timeout, MCC_CBSysEvent callbackSysEvent) {
     return 0;
 }
 
+/** Closes every open channel and marks MCC uninitialised. */
 void MCCExit(void) {
     u8 chID;
 
@@ -768,6 +865,7 @@ void MCCExit(void) {
     gMccSession = 0;
 }
 
+/** Sends system notify 3 to the host, which answers with 4 to show that the link is alive. */
 int MCCPing(void) {
     mccDebugPrint("MCCPing\n");
     if (!gMccInitialized) {
@@ -780,6 +878,7 @@ int MCCPing(void) {
     return 0;
 }
 
+/** Calls HIOEnumDevices so the application can pick an EXI channel that has a host adapter. */
 int MCCEnumDevices(MCC_CBEnumDevices callbackEnumDevices) {
     if (callbackEnumDevices == NULL) {
         gLastError = 0xD;
@@ -795,9 +894,10 @@ int MCCEnumDevices(MCC_CBEnumDevices callbackEnumDevices) {
     return 0;
 }
 
+/** Returns the number of free 8 KB blocks: smallest run for mode 0, largest run for 1, total for 2. */
 u8 MCCGetFreeBlocks(MCC_MODE mode) {
 #ifndef DEBUG
-    int unused[3]; // fake but blah
+    int unused[3]; // FAKE: dead local that pads the stack frame to the original size
 #endif
 
     mccDebugPrint("MCCGetFreeBlocks\n");
@@ -818,14 +918,16 @@ u8 MCCGetFreeBlocks(MCC_MODE mode) {
     return 0;
 }
 
+/** Returns the error code left by the last failed MCC call. */
 u8 MCCGetLastError(void) {
     mccDebugPrint("MCCGetFreeBlocks\n"); //! wrong print?
     return gLastError;
 }
 
+/** Copies the channel's first block, block length, connect state and lock flag into *info. */
 int MCCGetChannelInfo(MCC_CHANNEL chID, MCC_Info* info) {
 #ifndef DEBUG
-    int unused[3]; // fake but blah
+    int unused[3]; // FAKE: dead local that pads the stack frame to the original size
 #endif
 
     mccDebugPrint("MCCGetChannelInfo\n");
@@ -850,10 +952,14 @@ int MCCGetChannelInfo(MCC_CHANNEL chID, MCC_Info* info) {
     return 0;
 }
 
+/**
+ * Stores the channel's connection state (disconnected, host open, target open, connected = 3) in *connect;
+ * fails with error 0x15 while an async transfer is running.
+ */
 int MCCGetConnectionStatus(MCC_CHANNEL chID, MCC_CONNECT* connect) {
     MCC_Info info;
 #ifndef DEBUG
-    int unused[2]; // fake but blah
+    int unused[2]; // FAKE: dead local that pads the stack frame to the original size
 #endif
 
     mccDebugPrint("MCCGetConnectionStatus\n");
@@ -884,10 +990,14 @@ int MCCGetConnectionStatus(MCC_CHANNEL chID, MCC_CONNECT* connect) {
     return 0;
 }
 
+/**
+ * Sends a notify value (flagged 0x10000000) to the host on a connected channel;
+ * the host receives it as a raw notify event.
+ */
 int MCCNotify(MCC_CHANNEL chID, u32 notify) {
     MCC_CONNECT connect;
 #ifndef DEBUG
-    int unused[3]; // fake but blah
+    int unused[3]; // FAKE: dead local that pads the stack frame to the original size
 #endif
 
 
@@ -914,10 +1024,14 @@ int MCCNotify(MCC_CHANNEL chID, u32 notify) {
     return 0;
 }
 
+/**
+ * Sets which events the channel suppresses (bits set mean masked: 1 connect, 2 disconnect, 4 lock, 8 unlock,
+ * 0x10 read, 0x20 write, 0x40/0x80 read/write callbacks) and returns the old mask, or 0xFFFFFFFF on error.
+ */
 u32 MCCSetChannelEventMask(MCC_CHANNEL chID, u32 event) {
     u32 oldMask;
 #ifndef DEBUG
-    int unused[2]; // fake but blah
+    int unused[2]; // FAKE: dead local that pads the stack frame to the original size
 #endif
 
     oldMask = 0xFFFFFFFF;
@@ -939,6 +1053,12 @@ u32 MCCSetChannelEventMask(MCC_CHANNEL chID, u32 event) {
     return oldMask;
 }
 
+/**
+ * Opens the target side of a channel: if the host has not opened it,
+ * reserves the largest free run of blockSize blocks;
+ * if the host already opened it, the block sizes must match and the state becomes connected.
+ * Registers callbackEvent and sends connect (event 1).
+ */
 int MCCOpen(MCC_CHANNEL chID, u8 blockSize, MCC_CBEvent callbackEvent) {
     u8 connectSide;
     u8 blockIndex;
@@ -947,7 +1067,7 @@ int MCCOpen(MCC_CHANNEL chID, u8 blockSize, MCC_CBEvent callbackEvent) {
 #endif
     u8 freeBlocks;
 #ifndef DEBUG
-    int unused[6]; // fake but blah
+    int unused[6]; // FAKE: dead local that pads the stack frame to the original size
 #endif
 
     mccDebugPrint("MCCOpen\n");
@@ -1036,10 +1156,14 @@ exit:;
     return 0;
 }
 
+/**
+ * Clears the target side of the channel (freeing it when the host side is closed too), writes the table,
+ * and sends disconnect (event 2) if the host is still connected.
+ */
 int MCCClose(MCC_CHANNEL chID) {
     u8 connectSide;
 #ifndef DEBUG
-    int unused[4]; // fake but blah
+    int unused[4]; // FAKE: dead local that pads the stack frame to the original size
 #endif
 
     connectSide = 2;
@@ -1092,9 +1216,10 @@ exit:;
     return 0;
 }
 
+/** Locks the channel against host writes; fails if already locked (error 0x13). Sends lock event 4. */
 int MCCLock(MCC_CHANNEL chID) {
 #ifndef DEBUG
-    int unused[7]; // fake but blah
+    int unused[7]; // FAKE: dead local that pads the stack frame to the original size
 #endif
 
     mccDebugPrint("MCCLock\n");
@@ -1145,9 +1270,10 @@ exit:;
     return 0;
 }
 
+/** Unlocks a locked channel; fails if not locked (error 0x14). Sends unlock event 8. */
 int MCCUnlock(MCC_CHANNEL chID) {
 #ifndef DEBUG
-    int unused[7]; // fake but blah
+    int unused[7]; // FAKE: dead local that pads the stack frame to the original size
 #endif
 
     mccDebugPrint("MCCUnlock\n");
@@ -1198,9 +1324,13 @@ exit:
     return 0;
 }
 
+/**
+ * Reads size bytes at offset in the channel's shared block area into data (32-byte aligned, size a multiple of
+ * 32) through HIORead; async starts an HIOReadAsync instead. Sends the read events when done.
+ */
 int MCCRead(MCC_CHANNEL chID, u32 offset, void* data, s32 size, MCC_SYNC_STATE async) {
 #ifndef DEBUG
-    int unused[11]; // fake but blah
+    int unused[11]; // FAKE: dead local that pads the stack frame to the original size
 #endif
 
     mccDebugPrint("MCCRead\n");
@@ -1284,9 +1414,14 @@ exit:;
     return 0;
 }
 
+/**
+ * Writes size bytes at offset in the channel's shared block area from data (32-byte aligned, size a multiple of
+ * 32) through HIOWrite; fails if the channel is locked. async starts an HIOWriteAsync instead.
+ * Sends the write events when done.
+ */
 int MCCWrite(MCC_CHANNEL chID, u32 offset, void* data, s32 size, MCC_SYNC_STATE async) {
 #ifndef DEBUG
-    int unused[11]; // fake but blah
+    int unused[11]; // FAKE: dead local that pads the stack frame to the original size
 #endif
     mccDebugPrint("MCCWrite\n");
 
@@ -1375,12 +1510,16 @@ exit:
     return 0;
 }
 
+/**
+ * Returns 0 while an async read or write is running;
+ * once finished clears the async state and sends the read or write events, and returns 1.
+ */
 int MCCCheckAsyncDone() {
     u16 stat;
     u16 mode;
     u8 chID;
 #ifndef DEBUG
-    int unused[5]; // fake but blah
+    int unused[5]; // FAKE: dead local that pads the stack frame to the original size
 #endif
 
     if (!gMccInitialized) {

@@ -4,6 +4,7 @@
 
 #include "__syn.h"
 
+/** Pitch ratios for 0 to 99 cents. */
 static f32 __SYNCentsTable[100] = {
     1.000000f,
     1.000578f,
@@ -107,6 +108,7 @@ static f32 __SYNCentsTable[100] = {
     1.058851f,
 };
 
+/** Pitch ratios for 0 to 11 octaves up (powers of two). */
 static f32 __SYNOctavesTableUp[12] = {
     1.000000f,
     2.000000f,
@@ -122,6 +124,7 @@ static f32 __SYNOctavesTableUp[12] = {
     2048.000000f,
 };
 
+/** Pitch ratios for 0 to 11 semitones up. */
 static f32 __SYNSemitonesTableUp[12] = {
     1.000000f,
     1.059463f,
@@ -137,6 +140,7 @@ static f32 __SYNSemitonesTableUp[12] = {
     1.887749f,
 };
 
+/** Pitch ratios for 0 to 127 semitones down. */
 static f32 __SYNSemitonesTableDown[128] = {
     1.000000f,
     0.943874f,
@@ -268,6 +272,10 @@ static f32 __SYNSemitonesTableDown[128] = {
     0.000652f,
 };
 
+/**
+ * Returns the pitch ratio of a voice: total of its note offset, LFO, pitch envelope and pitch bend in cents,
+ * converted to a factor with octave, semitone and cent lookup tables.
+ */
 f32 __SYNGetRelativePitch(SYNVOICE* voice) {
     s32 cents;
 
@@ -295,6 +303,10 @@ f32 __SYNGetRelativePitch(SYNVOICE* voice) {
     return 1.0f;
 }
 
+/**
+ * Sets the voice's base pitch: the sample-rate ratio relative to 32 kHz
+ * and the note's distance in cents from the region's root note plus its fine tune.
+ */
 void __SYNSetupPitch(SYNVOICE* voice) {
     voice->srcRatio = (voice->sample->sampleRate / 32000.0f);
     voice->cents = (voice->keyNum - voice->region->unityNote) * 100;
@@ -302,6 +314,10 @@ void __SYNSetupPitch(SYNVOICE* voice) {
     voice->cents = (voice->cents << 0x10);
 }
 
+/**
+ * Initialises the AX sample-rate converter of the voice with its pitch ratio (capped at 4.0)
+ * and clears its filter state.
+ */
 void __SYNSetupSrc(SYNVOICE* voice) {
     f32 srcRatio;
     u32 value;
@@ -328,6 +344,7 @@ void __SYNSetupSrc(SYNVOICE* voice) {
     voice->axvpb->sync |= 0x40001;
 }
 
+/** Recomputes the voice's pitch ratio each frame (capped at 4.0) and updates the AX sample-rate converter. */
 void __SYNUpdateSrc(SYNVOICE* voice) {
     u32 ratio = (65536.0f * (voice->srcRatio * __SYNGetRelativePitch(voice)));
 

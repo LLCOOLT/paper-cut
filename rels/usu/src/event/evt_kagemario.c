@@ -1,53 +1,36 @@
+// Shadow Mario (kagemario) in Twilight Town: while Doopliss has Mario's name, Mario is drawn as a dark silhouette by
+// a map TEV callback (gra.rel and jin.rel have the same code).
+
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
 
-#pragma force_active on
 #include "mario/mario.h"
 #include "driver/mapdrv.h"
 #include "dolphin/gx.h"
 #include "driver/animdrv.h"
 #include "party.h"
 #include "driver/swdrv.h"
+#include "evt/evt_mario.h"
+#include "evt/evt_party.h"
+#include "usu.h"
+#include "evt/evt_story.h"
 
 static void callback(MapTevCallbackInfo* info);
 static s32 color_change_evt(s32 on);
 
-static USER_FUNC(check);
-USER_FUNC(evt_mario_clear_party);
-USER_FUNC(evt_mario_kill_party);
-USER_FUNC(evt_party_cont_onoff);
-USER_FUNC(evt_party_set_pos);
-USER_FUNC(evt_party_stop);
-static USER_FUNC(test);
-static USER_FUNC(evt_kagemario_change);
-USER_FUNC(evt_kagemario_init);
-static s32 color_change_evt(s32 on);
-static void callback(MapTevCallbackInfo* info);
-
-f32 fd_evt_kagemario_negone_one_374[2] __attribute__((aligned(8)));
-f32 fd_evt_kagemario_neg_one_382;
-f32 fd_evt_kagemario___local_PI_383;
-f32 fd_evt_kagemario___local_3PIO2_385;
-f32 fd_evt_kagemario_one_negone_373[2] __attribute__((aligned(8)));
-f32 fd_evt_kagemario___local_PIO2_384;
-f32 fd_evt_kagemario_one_381;
-f32 fd_evt_kagemario_negone_one_360[2] __attribute__((aligned(8)));
-f32 fd_evt_kagemario_neg_one_365;
-f32 fd_evt_kagemario___local_PI_366;
-f32 fd_evt_kagemario___local_3PIO2_368;
-f32 fd_evt_kagemario_one_negone_359[2] __attribute__((aligned(8)));
-f32 fd_evt_kagemario___local_PIO2_367;
-f32 fd_evt_kagemario_one_364;
 static EvtWord evt_check[4];
-EvtWord evt_usu_kagemario_party_kill[42];
 
+/**
+ * Map TEV callback 10 that draws Shadow Mario: appends a TEV stage that outputs a flat color,
+ * black when Mario is in the background (flipped) mode and dark purple (77, 9, 82) otherwise.
+ */
 static void callback(MapTevCallbackInfo* info) {
     s32 stage = info->tevStage;
     s32 texCoord = info->texCoord;
     s32 texMap = info->texMap;
-    s32 field_0x18 = info->indStage;
+    s32 indStage = info->indStage;
 
-    if (marioGetPtr()->flags & 0x2000000) {
+    if (marioGetPtr()->flags & MARIO_FLAG_BG_MODE) {
         GXColor color = {0, 0, 0, 255};
         GXSetTevColor(GX_TEVREG0, color);
     } else {
@@ -62,37 +45,50 @@ static void callback(MapTevCallbackInfo* info) {
     GXSetTevSwapMode(stage, GX_TEV_SWAP0, GX_TEV_SWAP0);
     info->tevStage = stage + 1;
     info->texMap = texMap;
-    info->indStage = field_0x18;
+    info->indStage = indStage;
     info->texCoord = texCoord;
 }
 
+/**
+ * Turns the Shadow Mario look on (nonzero) or off:
+ * sets up TEV callback 10 for Mario's three paper-anim groups and toggles MARIO_FLAG_IS_SHADOW_MARIO.
+ * Always returns 0.
+ */
 static s32 color_change_evt(s32 on) {
     s32 i;
 
     if (on == 0) {
         for (i = 0; i < 3; i++) {
-            animPoseSetMaterialFlagOff(marioGetPtr()->paperAnimGroupId[i], 0x0A000000);
+            animPoseSetMaterialFlagOff(marioGetPtr()->paperAnimGroupId[i], ANIM_MATERIAL_TEV_CALLBACK(10));
         }
-        marioGetPtr()->flags &= ~0x40000000;
+        marioGetPtr()->flags &= ~MARIO_FLAG_IS_SHADOW_MARIO;
     } else {
         mapSetTevCallback(10, callback);
         for (i = 0; i < 3; i++) {
-            animPoseSetMaterialFlagOn(marioGetPtr()->paperAnimGroupId[i], 0x0A000000);
+            animPoseSetMaterialFlagOn(marioGetPtr()->paperAnimGroupId[i], ANIM_MATERIAL_TEV_CALLBACK(10));
         }
-        marioGetPtr()->flags |= 0x40000000;
+        marioGetPtr()->flags |= MARIO_FLAG_IS_SHADOW_MARIO;
     }
     return 0;
 }
 
+/**
+ * Script helper that blocks forever after clearing the Shadow Mario tint from the active partner's pose,
+ * so the partner is not drawn dark.
+ */
 static USER_FUNC(check) {
     if (partyGetPtr(0) != NULL) {
-        animPoseSetMaterialFlagOff(partyGetPtr(0)->paperAnimGroup, 0x0A000000);
+        animPoseSetMaterialFlagOff(partyGetPtr(0)->paperAnimGroup, ANIM_MATERIAL_TEV_CALLBACK(10));
     }
     return EVT_RETURN_BLOCK;
 }
 
+/**
+ * Called by the map init scripts: if the story progress byte is in the range 201 to 211 (Doopliss has Mario's
+ * name) it turns Shadow Mario on and starts the partner-tint cleaner, otherwise it turns it off.
+ */
 USER_FUNC(evt_kagemario_init) {
-    s32 sequence = swByteGet(0);
+    s32 sequence = swByteGet(GSW_STORY_PROGRESS);
 
     if (sequence >= 201 && sequence < 212) {
         color_change_evt(1);
@@ -103,53 +99,39 @@ USER_FUNC(evt_kagemario_init) {
     return EVT_RETURN_DONE;
 }
 
+/** Script helper: turns the Shadow Mario look on or off from args[0]. */
 static USER_FUNC(evt_kagemario_change) {
     color_change_evt(event->args[0]);
     return EVT_RETURN_DONE;
 }
 
+/**
+ * Script helper: clears the two remembered previous-partner ids in Mario's work area,
+ * so no partner is called back afterwards.
+ */
 static USER_FUNC(test) {
     marioGetPtr()->prevPartyMemberId[0] = 0;
     marioGetPtr()->prevPartyMemberId[1] = 0;
     return EVT_RETURN_DONE;
 }
 
-f32 fd_evt_kagemario_negone_one_374[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_evt_kagemario_neg_one_382 = -1.0f;
-
-f32 fd_evt_kagemario___local_PI_383 = 3.1415927f;
-
-f32 fd_evt_kagemario___local_3PIO2_385 = 4.712389f;
-
-f32 fd_evt_kagemario_one_negone_373[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_evt_kagemario___local_PIO2_384 = 1.5707964f;
-
-f32 fd_evt_kagemario_one_381 = 1.0f;
-
-f32 fd_evt_kagemario_negone_one_360[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_evt_kagemario_neg_one_365 = -1.0f;
-
-f32 fd_evt_kagemario___local_PI_366 = 3.1415927f;
-
-f32 fd_evt_kagemario___local_3PIO2_368 = 4.712389f;
-
-f32 fd_evt_kagemario_one_negone_359[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_evt_kagemario___local_PIO2_367 = 1.5707964f;
-
-f32 fd_evt_kagemario_one_364 = 1.0f;
-
+/**
+ * Script run once by evt_kagemario_init: calls the check helper,
+ * which keeps the partner free of the Shadow Mario tint.
+ */
 static EVT_BEGIN(evt_check)
     CALL(check)
     RETURN
 EVT_END()
 
+/**
+ * Between STORY_STG4_10_02_TRADING_PLACES and STORY_STG4_12_01_SUPERBOMBBOMB_FOUND (Mario has swapped places
+ * with Doopliss) it removes both partner slots:
+ * stops them, moves them out of the map, disables control and clears them from the party.
+ */
 EVT_BEGIN(evt_usu_kagemario_party_kill)
-    SWITCH(GSW(0))
-        CASE_BETWEEN(201, 205)
+    SWITCH(GSW(GSW_STORY_PROGRESS))
+        CASE_BETWEEN(STORY_STG4_10_02_TRADING_PLACES, STORY_STG4_12_01_SUPERBOMBBOMB_FOUND)
         CALL(evt_party_stop, 0)
         CALL(evt_party_set_pos, 0, 0, -1000, 0)
         CALL(evt_party_cont_onoff, 0, 0)
@@ -162,4 +144,3 @@ EVT_BEGIN(evt_usu_kagemario_party_kill)
     END_SWITCH
     RETURN
 EVT_END()
-

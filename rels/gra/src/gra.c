@@ -1,39 +1,23 @@
+// gra.rel (ウスグラの道, Twilight Trail): registers gra_00..gra_06 and the battle database.
+
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
 #include "manager/evtmgr_cmd.h"
 
-#pragma force_active on
 #include "data/mapdata.h"
 #include "memory.h"
 #include "string.h"
 #include "data/party_data.h"
 #include "gra.h"
+#include "rel_module.h"
 
-typedef void (*voidfunctionptr)(void);
-extern voidfunctionptr _ctors[];
-extern voidfunctionptr _dtors[];
 static void* pose_buf;
 
-void _unresolved(void);
-void _epilog(void);
-void _prolog(void);
-USER_FUNC(evt_gra_vivian_pose_set);
-
-f32 fd_gra_negone_one_374[2] __attribute__((aligned(8)));
-f32 fd_gra_neg_one_382;
-f32 fd_gra___local_PI_383;
-f32 fd_gra___local_3PIO2_385;
-f32 fd_gra_one_negone_373[2] __attribute__((aligned(8)));
-f32 fd_gra___local_PIO2_384;
-f32 fd_gra_one_381;
-f32 fd_gra_negone_one_360[2] __attribute__((aligned(8)));
-f32 fd_gra_neg_one_365;
-f32 fd_gra___local_PI_366;
-f32 fd_gra___local_3PIO2_368;
-f32 fd_gra_one_negone_359[2] __attribute__((aligned(8)));
-f32 fd_gra___local_PIO2_367;
-f32 fd_gra_one_364;
-
+/**
+ * Script helper for Vivian's pose table in Twilight Trail:
+ * sets entry args[0] of partyPoseTbl[6] (Vivian's party poses, slot 6) to the animation name string args[1],
+ * e.g. "PTR_S_4" for her idle pose. The gra cutscenes use it to change how she stands, walks and runs.
+ */
 USER_FUNC(evt_gra_vivian_pose_set) {
     EvtWord* args = event->args;
     s32 index = evtGetValue(event, args[0]);
@@ -41,6 +25,11 @@ USER_FUNC(evt_gra_vivian_pose_set) {
     return EVT_RETURN_DONE;
 }
 
+/**
+ * REL entry point of gra.rel: runs the static constructors,
+ * registers each gra_NN map's init script and the area's battle setup tables,
+ * and saves a copy of Vivian's pose table so that _epilog can restore it after the scripts' edits.
+ */
 void _prolog(void) {
     voidfunctionptr* ctor;
 
@@ -59,6 +48,10 @@ void _prolog(void) {
     memcpy(pose_buf, partyPoseTbl[6], sizeof(partyPoseTbl[6]));
 }
 
+/**
+ * REL exit point of gra.rel: runs the static destructors,
+ * puts Vivian's pose table back from the copy taken in _prolog and frees that copy.
+ */
 void _epilog(void) {
     voidfunctionptr* dtor;
 
@@ -69,34 +62,6 @@ void _epilog(void) {
     _mapFree(pose_buf);
 }
 
+/** Empty stub the linker binds to calls that were left unresolved. */
 void _unresolved(void) {
 }
-
-f32 fd_gra_negone_one_374[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_gra_neg_one_382 = -1.0f;
-
-f32 fd_gra___local_PI_383 = 3.1415927f;
-
-f32 fd_gra___local_3PIO2_385 = 4.712389f;
-
-f32 fd_gra_one_negone_373[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_gra___local_PIO2_384 = 1.5707964f;
-
-f32 fd_gra_one_381 = 1.0f;
-
-f32 fd_gra_negone_one_360[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_gra_neg_one_365 = -1.0f;
-
-f32 fd_gra___local_PI_366 = 3.1415927f;
-
-f32 fd_gra___local_3PIO2_368 = 4.712389f;
-
-f32 fd_gra_one_negone_359[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_gra___local_PIO2_367 = 1.5707964f;
-
-f32 fd_gra_one_364 = 1.0f;
-

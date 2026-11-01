@@ -2,7 +2,7 @@
 /* The hookable functions of src/battle/sac/sac_scissor.c: included at its end (PORT_MODS). */
 #include "port/hook_slot.h"
 
-void scissor_disp_control(CameraId p0, void * p1) {
+static void scissor_disp_control(CameraId p0, void * p1) {
     PortHookSlot* s = &portHookSlots[50];
     int i, skip = 0;
     if (!s->active) {
@@ -20,7 +20,7 @@ void scissor_disp_control(CameraId p0, void * p1) {
     }
 }
 
-s32 scissor_timer_main(void) {
+static s32 scissor_timer_main(void) {
     PortHookSlot* s = &portHookSlots[51];
     s32 r;
     int i, skip = 0;

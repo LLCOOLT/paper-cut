@@ -1,8 +1,11 @@
+// Paper Mario 64 effect: snowfall: `count` snow particles drifting down the screen.
+#include "eff/n64/eff_snowfall_n64.h"
 #include "eff/eff_n64.h"
 #include "driver/camdrv.h"
 #include "driver/dispdrv.h"
 #include "driver/effdrv.h"
-#ifdef VERSION_G8ME01
+#include "version.h"
+#if VERSION >= VERSION_US
 #include "mario/mariost.h"
 #endif
 #include "memory.h"
@@ -24,22 +27,26 @@ typedef struct EffSnowfallParticle {
 } EffSnowfallParticle;
 
 typedef struct EffSnowfallWork {
-    s32 active;                // 0x0
-    s32 arg;                   // 0x4
-    Vec position;              // 0x8
-    u8 pad14[0xC];             // 0x14
-    s32 life;                  // 0x20
-    s32 frame;                 // 0x24
-    s32 alpha;                 // 0x28
-    s32 count;                 // 0x2C
-    s32 pad30;                 // 0x30
-    EffSnowfallParticle p[1];  // 0x34
+    s32 active;               // 0x0
+    s32 arg;                  // 0x4
+    Vec position;             // 0x8
+    u8 pad14[0xC];            // 0x14
+    s32 life;                 // 0x20
+    s32 frame;                // 0x24
+    s32 alpha;                // 0x28
+    s32 count;                // 0x2C
+    s32 pad30;                // 0x30
+    EffSnowfallParticle p[1]; // 0x34
 } EffSnowfallWork;
 
-void effSnowfallMain(EffectEntry* effect);
-void effSnowfallDisp(CameraId cameraId, EffectEntry* effect);
-void cam_clip_chk(EffSnowfallParticle* p, s32 w, s32 h, s32 life);
+static void effSnowfallMain(EffectEntry* effect);
+static void effSnowfallDisp(CameraId cameraId, EffectEntry* effect);
+static void cam_clip_chk(EffSnowfallParticle* p, s32 w, s32 h, s32 life);
 
+/**
+ * A loose cluster of eight small flake quads drawn for every snowfall particle,
+ * so each one reads as several flakes.
+ */
 static effN64Vtx eff_snowfall_v[] = {
     {-78, 3, -38, 0, 2048, 0xFF, 0xFF, 0xFF, 0xFF},
     {-68, 3, -38, 2048, 2048, 0xFF, 0xFF, 0xFF, 0xFF},
@@ -74,8 +81,11 @@ static effN64Vtx eff_snowfall_v[] = {
     {37, -44, -57, 2048, 0, 0xFF, 0xFF, 0xFF, 0xFF},
     {27, -44, -57, 0, 0, 0xFF, 0xFF, 0xFF, 0xFF},};
 
-#pragma dont_inline on
-void cam_clip_chk(EffSnowfallParticle* p, s32 w, s32 h, s32 life) {
+/**
+ * Wraps a particle back into the box of half-width w and half-height h around the camera target;
+ * below the box it either wraps to the top or, when life < 100, stops and hides the particle.
+ */
+static void cam_clip_chk(EffSnowfallParticle* p, s32 w, s32 h, s32 life) {
     CameraEntry* cam = camGetPtr(CAMERA_3D);
     f32 cx, cy, cz, py, pz;
     s32 d;
@@ -119,8 +129,10 @@ void cam_clip_chk(EffSnowfallParticle* p, s32 w, s32 h, s32 life) {
     }
 }
 
-#pragma dont_inline reset
-
+/**
+ * Spawns `count` falling snow particles around the camera.
+ * Used by the Fahr Outpost battle stage (bom) and event scripts.
+ */
 EffectEntry* effSnowfallN64Entry(s32 arg, s32 count) {
     EffectEntry* effect;
     EffSnowfallWork* work;
@@ -160,7 +172,13 @@ EffectEntry* effSnowfallN64Entry(s32 arg, s32 count) {
 }
 
 #define W ((EffSnowfallWork*)p)
-void effSnowfallMain(EffectEntry* effect) {
+/**
+ * Moves the particles by their velocity (after each one's start delay)
+ * and wraps them around the camera with cam_clip_chk;
+ * the life only counts down from below 100, fading alpha over the last 10 frames.
+ * US and PAL draw on layer 10 (the battle camera in battle), JP on layer 10, the demos on layer 2.
+ */
+static void effSnowfallMain(EffectEntry* effect) {
     s32 i, life, count, h;
     f32 hf;
     Vec position;
@@ -202,12 +220,14 @@ void effSnowfallMain(EffectEntry* effect) {
         p->position.z += p->velocity.z;
         cam_clip_chk(p, 550, h, life);
     }
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
     if (gp->inBattle == 0) {
         dispEntry(CAMERA_3D, dispCalcZ(&position), 10, (DispCallback)effSnowfallDisp, effect);
     } else {
         dispEntry(CAMERA_3D_EFFECTB, dispCalcZ(&position), 10, (DispCallback)effSnowfallDisp, effect);
     }
+#elif VERSION <= VERSION_DEMO_JP
+    dispEntry(CAMERA_3D, dispCalcZ(&position), 2, (DispCallback)effSnowfallDisp, effect);
 #else
     dispEntry(CAMERA_3D, dispCalcZ(&position), 10, (DispCallback)effSnowfallDisp, effect);
 #endif
@@ -215,7 +235,12 @@ void effSnowfallMain(EffectEntry* effect) {
 
 #undef W
 #define W ((EffSnowfallWork*)p)
-void effSnowfallDisp(CameraId cameraId, EffectEntry* effect) {
+/**
+ * Draws each visible particle as a camera-facing cluster of small flake quads (eff_snowfall_v) with texture 99,
+ * after copying texture 100's 16x16 image into 99's mip chain each frame.
+ * White, or the map's blend colour when the first map entry has blending on.
+ */
+static void effSnowfallDisp(CameraId cameraId, EffectEntry* effect) {
     CameraEntry* cam;
     EffSnowfallParticle* p;
     Mtx trans;

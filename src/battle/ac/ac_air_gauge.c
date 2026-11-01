@@ -1,5 +1,6 @@
+// Action command: air gauge (ac_air_gauge); press A repeatedly to fill a gauge that constantly drains.
+#include <dolphin/pad.h>
 #include "battle/battle.h"
-#include "pc_call.h"
 #include "battle/battle_ac.h"
 #include "battle/battle_pad.h"
 #include "battle/battle_unit.h"
@@ -8,32 +9,21 @@
 #include "system.h"
 #include <string.h>
 #include "icon_ids.h"
+#include "version.h"
 
+// this unit is size-optimised, as in the original (the object differs without it)
 #pragma optimize_for_size on
 
-void BattleAcDrawGauge(s32 x, s32 y, s32 icon, f32 ratio, s32 a, s32 b, s32 c, s32 d, s32 e);
-void BattleAcGaugeSeInit(void);
-void BattleAcGaugeSeUpdate(f32 value);
-void BattleAcGaugeSeDelete(void);
-
 typedef struct AirGaugeWork {
-    s32 frame;      // 0x0, frames since input started
-    f32 gauge;      // 0x4, 0..100, drained by _GetGaugeDecValue
-    u32 presses;    // 0x8, A presses (1 = success when auto)
-    s32 holdFrames; // 0xC, frames A held since the last press
-    s32 unk10;      // 0x10
-    s32 endWait;    // 0x14, frames before the result
+    s32 frame;         // 0x0, frames since input started
+    f32 gauge;         // 0x4, 0..100, drained by _GetGaugeDecValue
+    u32 presses;       // 0x8, A presses (1 = success when auto)
+    s32 holdFrames;    // 0xC, frames A held since the last press
+    s32 releaseFrames; // 0x10, cleared at init, never read
+    s32 endWait;       // 0x14, frames before the result
 } AirGaugeWork;
 
 // static data from inlined header functions
-__declspec(section ".data") f32 air_lbl_0[] = {-1.0f, 1.0f};
-__declspec(section ".data") f32 air_negone_one_374[] = {-1.0f, 1.0f};
-__declspec(section ".data") f32 air_lbl_1[] = {1.0f, -1.0f};
-__declspec(section ".data") f32 air_one_negone_373[] = {1.0f, -1.0f};
-__declspec(section ".data") f32 air_lbl_2[] = {-1.0f, 1.0f};
-__declspec(section ".data") f32 air_negone_one_360[] = {-1.0f, 1.0f};
-__declspec(section ".data") f32 air_lbl_3[] = {1.0f, -1.0f};
-__declspec(section ".data") f32 air_one_negone_359[] = {1.0f, -1.0f};
 
 typedef struct GaugeKey {
     s32 frame;
@@ -42,13 +32,81 @@ typedef struct GaugeKey {
 } GaugeKey;
 
 #define GAUGE_TABLE {{0, 0.0f, 1}, {20, 1.0f, 1}, {40, 1.0f, 1}, {80, 0.0f, 0}, {-1, -1.0f, 0}}
-GaugeKey _table_0[5] = GAUGE_TABLE;
-GaugeKey _table_1[5] = GAUGE_TABLE;
-GaugeKey _table_2[5] = GAUGE_TABLE;
+#if VERSION <= VERSION_DEMO_JP
+// the demo curve rises faster and falls off sooner; table 3 already has the retail one
+#define GAUGE_TABLE_DEMO {{0, 0.0f, 1}, {10, 1.2f, 1}, {30, 0.7f, 1}, {50, 0.0f, 0}, {-1, -1.0f, 0}}
+/**
+ * Gauge curve keys {frame, value, flag; -1 ends it} of the demo curve:
+ * copy 0 of the 7 static tables the inlined header code emits, never read here.
+ */
+GaugeKey _table_0[5] = GAUGE_TABLE_DEMO;
+/**
+ * Gauge curve keys {frame, value, flag; -1 ends it} of the demo curve:
+ * copy 1 of the 7 static tables the inlined header code emits, never read here.
+ */
+GaugeKey _table_1[5] = GAUGE_TABLE_DEMO;
+/**
+ * Gauge curve keys {frame, value, flag; -1 ends it} of the demo curve:
+ * copy 2 of the 7 static tables the inlined header code emits, never read here.
+ */
+GaugeKey _table_2[5] = GAUGE_TABLE_DEMO;
+/**
+ * Gauge curve keys {frame, value, flag; -1 ends it} of the final curve:
+ * copy 3 of the 7 static tables the inlined header code emits, never read here.
+ */
 GaugeKey _table_3[5] = GAUGE_TABLE;
+/**
+ * Gauge curve keys {frame, value, flag; -1 ends it} of the demo curve:
+ * copy 4 of the 7 static tables the inlined header code emits, never read here.
+ */
+GaugeKey _table_4[5] = GAUGE_TABLE_DEMO;
+/**
+ * Gauge curve keys {frame, value, flag; -1 ends it} of the demo curve:
+ * copy 5 of the 7 static tables the inlined header code emits, never read here.
+ */
+GaugeKey _table_5[5] = GAUGE_TABLE_DEMO;
+/**
+ * Gauge curve keys {frame, value, flag; -1 ends it} of the demo curve:
+ * copy 6 of the 7 static tables the inlined header code emits, never read here.
+ */
+GaugeKey _table_6[5] = GAUGE_TABLE_DEMO;
+#else
+/**
+ * Gauge curve keys {frame, value, flag; -1 ends it} of the final curve:
+ * copy 0 of the 7 static tables the inlined header code emits, never read here.
+ */
+GaugeKey _table_0[5] = GAUGE_TABLE;
+/**
+ * Gauge curve keys {frame, value, flag; -1 ends it} of the final curve:
+ * copy 1 of the 7 static tables the inlined header code emits, never read here.
+ */
+GaugeKey _table_1[5] = GAUGE_TABLE;
+/**
+ * Gauge curve keys {frame, value, flag; -1 ends it} of the final curve:
+ * copy 2 of the 7 static tables the inlined header code emits, never read here.
+ */
+GaugeKey _table_2[5] = GAUGE_TABLE;
+/**
+ * Gauge curve keys {frame, value, flag; -1 ends it} of the final curve:
+ * copy 3 of the 7 static tables the inlined header code emits, never read here.
+ */
+GaugeKey _table_3[5] = GAUGE_TABLE;
+/**
+ * Gauge curve keys {frame, value, flag; -1 ends it} of the final curve:
+ * copy 4 of the 7 static tables the inlined header code emits, never read here.
+ */
 GaugeKey _table_4[5] = GAUGE_TABLE;
+/**
+ * Gauge curve keys {frame, value, flag; -1 ends it} of the final curve:
+ * copy 5 of the 7 static tables the inlined header code emits, never read here.
+ */
 GaugeKey _table_5[5] = GAUGE_TABLE;
+/**
+ * Gauge curve keys {frame, value, flag; -1 ends it} of the final curve:
+ * copy 6 of the 7 static tables the inlined header code emits, never read here.
+ */
 GaugeKey _table_6[5] = GAUGE_TABLE;
+#endif
 
 typedef struct AirPw {
     s32 frame;
@@ -59,14 +117,21 @@ typedef struct AirPw {
 } AirPw;
 
 static void actionCommandDisp(f32 x, f32 y);
-f32 _GetGaugeDecValue(void);
+static f32 _GetGaugeDecValue(void);
 
+/**
+ * Per-frame driver of action command 14, used by Flurrie's Gale Force.
+ * While params[1] frames run, each A press lifts the gauge for a moment (see _GetGaugeDecValue) and it
+ * otherwise drains.
+ * Sets outputParams[0] to the level reached against thresholds params[3..6] (params[2] levels), [1] to A held,
+ * [2] to the final gauge (0..100). Returns 0 when finished; confused partners get a random outcome instead.
+ */
 s32 battleAcMain_AirGauge(BattleWork* work) {
     BattleActions* ac = &work->actionCommands;
     AirGaugeWork* pw = (AirGaugeWork*)ac->work;
     BattleACDispParams* disp = (BattleACDispParams*)&ac->disp;
 
-    switch (ac->mAcState) {
+    switch (ac->acState) {
         case 0:
             memset(disp, 0, 0x2C);
             disp->iconX = -300.0f;
@@ -78,17 +143,17 @@ s32 battleAcMain_AirGauge(BattleWork* work) {
             ac->outputParams[0] = 0;
             ac->outputParams[2] = 0;
             ac->outputParams[1] = 0;
-            ac->mAcState = 99;
+            ac->acState = 99;
             ac->result = 1;
             pw->gauge = 0.0f;
             pw->presses = 0;
             pw->holdFrames = 0;
-            pw->unk10 = 0;
+            pw->releaseFrames = 0;
             break;
         case 99:
             break;
         case 100:
-            if ((ac->setupFlags & 1) && (ac->mAcUnit->mTokenFlags & 0x10)) {
+            if ((ac->setupFlags & AC_SETUP_FLAG_CONFUSED_AUTO) && (ac->acUnit->tokenFlags & TOKEN_FLAG_CONFUSED_ACTION)) {
                 if (irand(100) >= 0) {
                     ac->setupParam = ac->params[3] / 2;
                     ac->outputParams[0] = 0;
@@ -113,16 +178,16 @@ s32 battleAcMain_AirGauge(BattleWork* work) {
                     }
                     ac->outputParams[2] = 100;
                 }
-                ac->mAcState = 1001;
+                ac->acState = 1001;
                 break;
             }
             BattleAcGaugeSeInit();
-            ac->mAcState = 1000;
+            ac->acState = 1000;
         case 1000:
             pw->frame++;
-            if (((s32(*)(s32))BattlePadCheckNow)(0x100)) {
+            if (BattlePadCheckNow(PAD_BUTTON_A)) {
                 ac->outputParams[1] = 1;
-                if (((s32(*)(s32))BattlePadCheckTrigger)(0x100)) {
+                if (BattlePadCheckTrigger(PAD_BUTTON_A)) {
                     pw->presses++;
                     pw->holdFrames = 0;
                 }
@@ -132,7 +197,7 @@ s32 battleAcMain_AirGauge(BattleWork* work) {
                 pw->holdFrames = 0;
             }
             pw->gauge -= _GetGaugeDecValue();
-            if (ac->mAcUnit->badgesEquipped.AutoCommand) {
+            if (ac->acUnit->badgesEquipped.AutoCommand) {
                 pw->presses = 1;
                 pw->gauge = 100.0f;
             }
@@ -144,7 +209,7 @@ s32 battleAcMain_AirGauge(BattleWork* work) {
             }
             BattleAcGaugeSeUpdate(pw->gauge);
             if (pw->frame >= ac->params[1]) {
-                if (ac->mAcUnit->badgesEquipped.AutoCommand) {
+                if (ac->acUnit->badgesEquipped.AutoCommand) {
                     pw->presses = 1;
                     pw->gauge = 100.0f;
                 }
@@ -156,7 +221,7 @@ s32 battleAcMain_AirGauge(BattleWork* work) {
                     return 0;
                 }
                 ac->result = 2;
-                ac->mResultCount++;
+                ac->resultCount++;
                 if (pw->gauge < (f32)ac->params[3]) {
                     ac->outputParams[0] = 1;
                 } else if (ac->params[2] <= 2) {
@@ -175,7 +240,7 @@ s32 battleAcMain_AirGauge(BattleWork* work) {
                     ac->outputParams[0] = 5;
                 }
                 ac->outputParams[2] = (s32)pw->gauge;
-                ac->mAcState = 1002;
+                ac->acState = 1002;
             }
             break;
         case 1001:
@@ -183,7 +248,7 @@ s32 battleAcMain_AirGauge(BattleWork* work) {
             if (ac->setupParam < 0) {
                 if ((s32)ac->outputParams[0] > 0) {
                     ac->result = 2;
-                    ac->mResultCount++;
+                    ac->resultCount++;
                 } else {
                     ac->result = 0;
                 }
@@ -193,11 +258,11 @@ s32 battleAcMain_AirGauge(BattleWork* work) {
         case 1002:
             BattleAcGaugeSeDelete();
             pw->endWait = 60;
-            ac->mAcState = 1003;
+            ac->acState = 1003;
         case 1003:
             pw->endWait--;
             if (pw->endWait <= 0) {
-                ac->mAcState = 1004;
+                ac->acState = 1004;
             }
             break;
         case 1004:
@@ -210,23 +275,82 @@ s32 battleAcMain_AirGauge(BattleWork* work) {
     return 1;
 }
 
-f32 _GetGaugeDecValue(void) {
+/**
+ * Per-frame gauge change: a drain rate chosen by difficulty params[7],
+ * minus a lift that rises over the first 20 frames A is held after a press and fades out by frame 80,
+ * so tapping A keeps the gauge rising. Also sets the flag that shows the A icon as pressed.
+ * The demos use a steeper, shorter lift curve and lower drain rates.
+ */
+static f32 _GetGaugeDecValue(void) {
     BattleWork* work = _battleWorkPointer;
     BattleActions* ac = &work->actionCommands;
     AirPw* pw = (AirPw*)ac->work;
     GaugeKey* t;
     f32 base;
-    u32 frame;
 
     switch ((u32)ac->params[7]) {
-        case 0: base = 0.3f; t = _table_0; break;
-        case 1: base = 0.33f; t = _table_1; break;
-        case 2: base = 0.36f; t = _table_2; break;
-        case 3: base = 0.4f; t = _table_3; break;
-        case 4: base = 0.44f; t = _table_4; break;
-        case 5: base = 0.47f; t = _table_5; break;
+        // Two copies: the demos use different gauge decrease values for most levels.
+#if VERSION <= VERSION_DEMO_JP
+        case 0:
+            base = 0.0f;
+            t = _table_0;
+            break;
+        case 1:
+            base = 0.2f;
+            t = _table_1;
+            break;
+        case 2:
+            base = 0.3f;
+            t = _table_2;
+            break;
+        case 3:
+            base = 0.4f;
+            t = _table_3;
+            break;
+        case 4:
+            base = 0.45f;
+            t = _table_4;
+            break;
+        case 5:
+            base = 0.45f;
+            t = _table_5;
+            break;
         case 6:
-        default: t = _table_6; base = 0.5f; break;
+        default:
+            t = _table_6;
+            base = 0.45f;
+            break;
+#else
+        case 0:
+            base = 0.3f;
+            t = _table_0;
+            break;
+        case 1:
+            base = 0.33f;
+            t = _table_1;
+            break;
+        case 2:
+            base = 0.36f;
+            t = _table_2;
+            break;
+        case 3:
+            base = 0.4f;
+            t = _table_3;
+            break;
+        case 4:
+            base = 0.44f;
+            t = _table_4;
+            break;
+        case 5:
+            base = 0.47f;
+            t = _table_5;
+            break;
+        case 6:
+        default:
+            t = _table_6;
+            base = 0.5f;
+            break;
+#endif
     }
     while (pw->hold > t->frame) {
         t++;
@@ -239,34 +363,37 @@ f32 _GetGaugeDecValue(void) {
         return base;
     }
     pw->flag = t->flag;
-    base -= PCCALL(((f32(*)(f32, f32, s32, s32, s32))intplGetValue)(t[-1].value, t->value, 0, pw->hold - t[-1].frame,
-                                                              t->frame - t[-1].frame), intplGetValue(0, pw->hold - t[-1].frame, t->frame - t[-1].frame, t[-1].value, t->value));
+    base -= intplGetValue(0, t[-1].value, t->value, pw->hold - t[-1].frame, t->frame - t[-1].frame);
     return base;
 }
 
+/** Returns the result word: 1 while running, 2 on success, 0 on failure. */
 s32 battleAcResult_AirGauge(BattleWork* work) {
     return work->actionCommands.result;
 }
 
+/**
+ * Display callback: slides the gauge and A icon in from the left over 20 frames,
+ * and once the command ends keeps them up for 40 frames before sliding them back out.
+ */
 void battleAcDisp_AirGauge(CameraId cameraId, void* param) {
     BattleWork* work = (BattleWork*)param;
-    BattleACDispParams* disp = (BattleACDispParams*)&work->actionCommands.disp;
-    s32 i;
-    switch (work->actionCommands.mAcState) {
+    BattleActions* ac = &work->actionCommands;
+    BattleACDispParams* disp = &ac->disp;
+    switch (ac->acState) {
         case 99:
-            disp->iconX = intplGetValue(4, 20 - disp->slideTimer, 20, -300.0f, 30.0f);
+            disp->iconX = intplGetValue(4, -300.0f, 30.0f, 20 - disp->slideTimer, 20);
         case 100:
-            i = 4;
         case 1000:
             actionCommandDisp(disp->iconX, disp->iconY);
-            if (AC_SLIDE_TIMER_AT(disp, i) > 0) {
-                (AC_SLIDE_TIMER_AT(disp, i))--;
+            if (disp->slideTimer > 0) {
+                disp->slideTimer--;
             }
             break;
         case 1002:
         case 1003:
             if (disp->slideTimer >= 40) {
-                disp->iconX = intplGetValue(4, disp->slideTimer - 40, 20, 30.0f, -300.0f);
+                disp->iconX = intplGetValue(4, 30.0f, -300.0f, disp->slideTimer - 40, 20);
             } else {
                 disp->iconX = 30.0f;
             }
@@ -278,20 +405,25 @@ void battleAcDisp_AirGauge(CameraId cameraId, void* param) {
     }
 }
 
+/** Called by btlevtcmd_StopAC: jumps to the end state, which stops the gauge sound and slides the display out. */
 void battleAcDelete_AirGauge(BattleWork* work) {
-    work->actionCommands.mAcState = 1002;
+    work->actionCommands.acState = 1002;
 }
 
+// FAKE: inlining off (FAKES.md); without it actionCommandDisp is inlined into battleAcDisp_AirGauge (63 -> 235 instructions)
 #pragma dont_inline on
+/**
+ * Draws the level gauge (its fill eased toward the real value by 0.01 a frame) and the A button icon,
+ * pressed while the press lift is active.
+ */
 static void actionCommandDisp(f32 x, f32 y) {
     BattleWork* work = _battleWorkPointer;
     BattleActions* ac = &work->actionCommands;
     BattleACDispParams* disp = &ac->disp;
     AirPw* pw;
     f32 ratio;
-    f32 cur;
 
-    camGetPtr(8);
+    camGetPtr(CAMERA_2D);
     pw = (AirPw*)ac->work;
     ratio = pw->gauge / 100.0f;
     if (disp->gaugeRatio <= ratio) {
@@ -311,12 +443,12 @@ static void actionCommandDisp(f32 x, f32 y) {
         Vec pos = {0.0f, 0.0f, 0.0f};
         pos.x = -200.0f + x;
         pos.y = 58.0f + y;
-        iconDispGx(&pos, 0x10, ICON_065, 1.0f);
+        iconDispGx(&pos, ICON_DISP_2D, ICON_065, 1.0f);
     } else {
         Vec pos = {0.0f, 0.0f, 0.0f};
         pos.x = -200.0f + x;
         pos.y = 58.0f + y;
-        iconDispGx(&pos, 0x10, ICON_064, 1.0f);
+        iconDispGx(&pos, ICON_DISP_2D, ICON_064, 1.0f);
     }
 }
 #pragma dont_inline reset

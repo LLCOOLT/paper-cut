@@ -1,3 +1,4 @@
+// Paper Mario 64 effect: cloud puff sprite scaled by the given scale; types 0-3 pick the colours.
 #include "eff/n64/eff_cloud_n64.h"
 #include "eff/eff_n64.h"
 #include "driver/camdrv.h"
@@ -10,79 +11,26 @@
 #include <stdlib.h>
 #include <string.h>
 #include "libc_decls.h"
+#include <math.h>
 
-#ifndef TARGET_PC /* PC port: the host libc declares these */
-double sin(double);
-double cos(double);
-#endif
+static void effCloudMain(EffectEntry* effect);
+static void effCloudDisp(CameraId cameraId, EffectEntry* effect);
 
-#define NAN (*(f32*)__float_nan)
-
-#define FP_NAN 1
-#define FP_INFINITE 2
-#define FP_ZERO 3
-#define FP_NORMAL 4
-#define FP_SUBNORMAL 5
-
-static inline s32 __fpclassifyf(f32 x) {
-    switch (*(s32*)&x & 0x7F800000) {
-        case 0x7F800000:
-            if (*(s32*)&x & 0x007FFFFF) {
-                return FP_NAN;
-            } else {
-                return FP_INFINITE;
-            }
-            break;
-        case 0:
-            if (*(s32*)&x & 0x007FFFFF) {
-                return FP_SUBNORMAL;
-            } else {
-                return FP_ZERO;
-            }
-            break;
-        default:
-            return FP_NORMAL;
-    }
-}
-
-#define fpclassify(x) __fpclassifyf(x)
-#define isnan(x) (fpclassify(x) == FP_NAN)
-
-#ifndef TARGET_PC /* PC port: the host libc declares these */
-static inline f32 sqrtf(f32 x) {
-    const f64 _half = .5;
-    const f64 _three = 3.0;
-
-    if (x > 0.0f) {
-        f64 guess = __frsqrte(x);
-        guess = _half * guess * (_three - guess * guess * x);
-        guess = _half * guess * (_three - guess * guess * x);
-        guess = _half * guess * (_three - guess * guess * x);
-        return x * guess;
-    } else if (x < 0.0) {
-        return NAN;
-    } else if (isnan(x)) {
-        return NAN;
-    } else {
-        return x;
-    }
-}
-#endif
-
-void effCloudMain(EffectEntry* effect);
-void effCloudDisp(CameraId cameraId, EffectEntry* effect);
-
+/**
+ * Spawns a ribbon-like cloud trail whose head starts at (x, y, z) and keeps a 30-point history of its path.
+ * Types 0-3 set the two tint colours (white, cream/brown, red, orange); lifetime <= 0 means until soft-deleted.
+ */
 EffectEntry* effCloudN64Entry(s32 type, s32 lifetime, f32 x, f32 y, f32 z, f32 scale) {
     EffectEntry* effect;
     EffCloudN64Work* work;
 
     effect = effEntry();
-    effect->type = "CloudN64\0\0\0";
+    effect->type = "CloudN64";
     effect->count = 1;
     work = __memAlloc(HEAP_EFFECT, sizeof(EffCloudN64Work));
     effect->userdata = work;
     effect->callback = effCloudMain;
-    effect->flags |= 2;
+    effect->flags |= EFFECT_FLAG_SOFT_DELETE;
     work->type = type;
     work->frame = 0;
     if (lifetime <= 0) {
@@ -95,42 +43,42 @@ EffectEntry* effCloudN64Entry(s32 type, s32 lifetime, f32 x, f32 y, f32 z, f32 s
     work->position.z = z;
     work->scale = scale;
     switch (type) {
-    case 0:
-        work->r = 255;
-        work->g = 255;
-        work->b = 255;
-        work->r2 = 225;
-        work->g2 = 225;
-        work->b2 = 225;
-        work->fade = 255;
-        break;
-    case 1:
-        work->r = 255;
-        work->g = 245;
-        work->b = 230;
-        work->r2 = 45;
-        work->g2 = 35;
-        work->b2 = 15;
-        work->fade = 255;
-        break;
-    case 2:
-        work->r = 255;
-        work->g = 0;
-        work->b = 0;
-        work->r2 = 155;
-        work->g2 = 125;
-        work->b2 = 125;
-        work->fade = 255;
-        break;
-    case 3:
-        work->r = 255;
-        work->g = 255;
-        work->b = 255;
-        work->r2 = 255;
-        work->g2 = 65;
-        work->b2 = 20;
-        work->fade = 255;
-        break;
+        case 0:
+            work->r = 255;
+            work->g = 255;
+            work->b = 255;
+            work->r2 = 225;
+            work->g2 = 225;
+            work->b2 = 225;
+            work->fade = 255;
+            break;
+        case 1:
+            work->r = 255;
+            work->g = 245;
+            work->b = 230;
+            work->r2 = 45;
+            work->g2 = 35;
+            work->b2 = 15;
+            work->fade = 255;
+            break;
+        case 2:
+            work->r = 255;
+            work->g = 0;
+            work->b = 0;
+            work->r2 = 155;
+            work->g2 = 125;
+            work->b2 = 125;
+            work->fade = 255;
+            break;
+        case 3:
+            work->r = 255;
+            work->g = 255;
+            work->b = 255;
+            work->r2 = 255;
+            work->g2 = 65;
+            work->b2 = 20;
+            work->fade = 255;
+            break;
     }
     work->pos.x = x;
     work->pos.y = y;
@@ -178,7 +126,13 @@ EffectEntry* effCloudN64Entry(s32 type, s32 lifetime, f32 x, f32 y, f32 z, f32 s
     return effect;
 }
 
-void effCloudMain(EffectEntry* effect) {
+/**
+ * Fades out over the last 16 frames.
+ * Type 3 moves the head by a random-walk velocity each frame;
+ * whenever the head moved, a new trail point is added to the ring buffer along with its age
+ * and the running path length.
+ */
+static void effCloudMain(EffectEntry* effect) {
     EffCloudN64Work* work = effect->userdata;
     Vec position;
     Vec tmp = {0.0f, 0.0f, 0.0f};
@@ -193,8 +147,8 @@ void effCloudMain(EffectEntry* effect) {
     tmp.z = work->position.z;
     position = tmp;
     type = work->type;
-    if (effect->flags & 4) {
-        effect->flags &= ~4;
+    if (effect->flags & EFFECT_FLAG_DELETE_REQUESTED) {
+        effect->flags &= ~EFFECT_FLAG_DELETE_REQUESTED;
         work->lifetime = 16;
     }
     if (work->lifetime < 1000) {
@@ -244,10 +198,15 @@ void effCloudMain(EffectEntry* effect) {
         }
         work->len[idx] = prev + d;
     }
-    dispEntry(4, dispCalcZ(&position), 2, (DispCallback)effCloudDisp, effect);
+    dispEntry(CAMERA_3D, dispCalcZ(&position), 2, (DispCallback)effCloudDisp, effect);
 }
 
-void effCloudDisp(CameraId cameraId, EffectEntry* effect) {
+/**
+ * Builds a camera-facing triangle strip along the trail (width grows with the age of each point)
+ * and draws it with texture 0x83 scrolling along the path length;
+ * older points shift in colour toward the second tint.
+ */
+static void effCloudDisp(CameraId cameraId, EffectEntry* effect) {
     EffCloudN64Work* work;
     f32 scale;
     s32 frame;
@@ -274,8 +233,6 @@ void effCloudDisp(CameraId cameraId, EffectEntry* effect) {
     s32 c;
     s32 idx;
     f32 zero, ang, a1, a2, diff, x, y, z, w, sn, cs;
-
-
 
     camera = camGetPtr(cameraId);
     work = effect->userdata;
@@ -425,7 +382,7 @@ void effCloudDisp(CameraId cameraId, EffectEntry* effect) {
         GXInvalidateVtxCache();
         for (j = first, k = first * 2; j < 29; k += 2, j++) {
             GXBegin(GX_TRIANGLES, GX_VTXFMT0, 6);
-            ((void (*)())tri2)(k, k + 2, k + 1, k, k + 1, k + 2, k + 3, k);
+            tri2(k, k + 2, k + 1, k, k + 1, k + 2, k + 3, k);
         }
     }
 }

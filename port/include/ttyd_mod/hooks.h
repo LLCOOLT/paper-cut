@@ -13,12 +13,16 @@
 
 /* The headers declaring the hooked functions (their slots' types). */
 #include "battle/battle.h"
+#include "battle/battle_ac.h"
+#include "battle/battle_audience.h"
 #include "battle/battle_damage.h"
 #include "battle/battle_pad.h"
+#include "battle/battle_seq.h"
 #include "battle/battle_unit.h"
 #include "data/mapdata.h"
 #include "driver/animdrv.h"
 #include "driver/hitdrv.h"
+#include "driver/itemdrv.h"
 #include "driver/mobjdrv.h"
 #include "driver/msgdrv.h"
 #include "driver/npcdrv.h"
@@ -27,10 +31,15 @@
 #include "mario/mario.h"
 #include "mario/mario_pouch.h"
 #include "mario/mariost.h"
+#include "party.h"
 #include "pmario_sound.h"
 #include "seq/seq_load.h"
 #include "seq/seq_mapchange.h"
 #include "sound.h"
+#include "win/win_item.h"
+#include "win/win_log.h"
+#include "win/win_mario.h"
+#include "win/win_root.h"
 
 enum TtydHookSlot {
     TTYD_HOOK_marioStMain = 0,
@@ -203,9 +212,9 @@ typedef void (*TtydFn_DrawWeaponWin)(void);
 typedef int (*TtydPre_DrawWeaponWin)(void);
 typedef void (*TtydPost_DrawWeaponWin)(void);
 /* src/driver/itemdrv.c */
-typedef ItemEntry * (*TtydFn_itemEntry)(const char *, s32, s32, s32, EvtWord, f32, f32, f32);
-typedef int (*TtydPre_itemEntry)(ItemEntry * *, const char * *, s32 *, s32 *, s32 *, EvtWord *, f32 *, f32 *, f32 *);
-typedef void (*TtydPost_itemEntry)(ItemEntry * *, const char *, s32, s32, s32, EvtWord, f32, f32, f32);
+typedef ItemEntry * (*TtydFn_itemEntry)(f32, f32, f32, const char *, s32, u16, s32, EvtWord *);
+typedef int (*TtydPre_itemEntry)(ItemEntry * *, f32 *, f32 *, f32 *, const char * *, s32 *, u16 *, s32 *, EvtWord * *);
+typedef void (*TtydPost_itemEntry)(ItemEntry * *, f32, f32, f32, const char *, s32, u16, s32, EvtWord *);
 /* src/mario/mario_pouch.c */
 typedef BOOL (*TtydFn_pouchGetItem)(ItemType);
 typedef int (*TtydPre_pouchGetItem)(BOOL *, ItemType *);
@@ -223,9 +232,9 @@ typedef s32 (*TtydFn_pouchSetCoin)(s32);
 typedef int (*TtydPre_pouchSetCoin)(s32 *, s32 *);
 typedef void (*TtydPost_pouchSetCoin)(s32 *, s32);
 /* src/mario/mario_pouch.c */
-typedef s16 (*TtydFn_pouchAddCoin)(s16);
-typedef int (*TtydPre_pouchAddCoin)(s16 *, s16 *);
-typedef void (*TtydPost_pouchAddCoin)(s16 *, s16);
+typedef s32 (*TtydFn_pouchAddCoin)(s32);
+typedef int (*TtydPre_pouchAddCoin)(s32 *, s32 *);
+typedef void (*TtydPost_pouchAddCoin)(s32 *, s32);
 /* src/mario/mario_pouch.c */
 typedef s16 (*TtydFn_pouchAddStarPiece)(s16);
 typedef int (*TtydPre_pouchAddStarPiece)(s16 *, s16 *);
@@ -351,9 +360,9 @@ typedef void (*TtydFn_viPostCallback)(u32);
 typedef int (*TtydPre_viPostCallback)(u32 *);
 typedef void (*TtydPost_viPostCallback)(u32);
 /* src/driver/npcdrv.c */
-typedef void * (*TtydFn_fbatHitCheck)(u32, void *);
-typedef int (*TtydPre_fbatHitCheck)(void * *, u32 *, void * *);
-typedef void (*TtydPost_fbatHitCheck)(void * *, u32, void *);
+typedef NpcEntry * (*TtydFn_fbatHitCheck)(u32, void *);
+typedef int (*TtydPre_fbatHitCheck)(NpcEntry * *, u32 *, void * *);
+typedef void (*TtydPost_fbatHitCheck)(NpcEntry * *, u32, void *);
 /* src/pmario_sound.c */
 typedef void (*TtydFn_psndSFXOff)(s32);
 typedef int (*TtydPre_psndSFXOff)(s32 *);

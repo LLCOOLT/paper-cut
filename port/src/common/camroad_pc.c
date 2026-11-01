@@ -82,7 +82,7 @@ CamRoadMap* portCamRoadDecode(void* blob, uint32_t size, const char* name) {
 
     for (i = 0; i < R_COUNT; i++) {
         off[i] = portBE32(b + 0xE8 + 4 * i);
-        /* tables after f_e8 have a count (curveNum at 0xC8, then f_f0Num...);
+        /* tables after projection have a count (curveNum at 0xC8, then groupNum...);
          * an empty table's offset word is stale: treat it as absent. */
         if (i > R_E8 && portBE32(b + 0xC8 + 4 * (i - R_CURVES)) == 0) {
             off[i] = 0;

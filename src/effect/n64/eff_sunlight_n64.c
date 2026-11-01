@@ -1,3 +1,4 @@
+// Paper Mario 64 effect: sunlight: soft white light beams that fade in and out over `lifetime` frames.
 #include "version.h"
 #include "eff/eff_n64.h"
 #include "driver/camdrv.h"
@@ -7,11 +8,7 @@
 #include <dolphin/gx.h>
 #include <dolphin/mtx.h>
 #include "eff/n64/eff_sunlight_n64.h"
-
-#ifndef TARGET_PC /* PC port: the host libc declares these */
-double sin(double);
-#endif
-
+#include "libc_decls.h"
 typedef struct EffSunlightN64Work {
     s32 type;      // 0x0
     Vec position;  // 0x4
@@ -19,14 +16,18 @@ typedef struct EffSunlightN64Work {
     s32 frame;     // 0x14
     u8 color[7];   // 0x18
     f32 offset[5]; // 0x20
-    f32 unk34;     // 0x34
+    f32 entryArg;  // 0x34, the last entry argument; never read
     s32 alpha;     // 0x38
     s32 alphaMax;  // 0x3C
 } EffSunlightN64Work;
 
-void effSunlightMain(EffectEntry* effect);
-void effSunlightDisp(CameraId cameraId, EffectEntry* effect);
+static void effSunlightMain(EffectEntry* effect);
+static void effSunlightDisp(CameraId cameraId, EffectEntry* effect);
 
+/**
+ * Spawns sunlight beams at (x, y, z) of width `w`; a lifetime of 0 or less lasts until soft-deleted.
+ * Spawned by event scripts through evt_eff.
+ */
 EffectEntry* effSunlightN64Entry(s32 type, s32 lifetime, f32 x, f32 y, f32 z, f32 w) {
     EffectEntry* effect;
     EffSunlightN64Work* work;
@@ -37,7 +38,7 @@ EffectEntry* effSunlightN64Entry(s32 type, s32 lifetime, f32 x, f32 y, f32 z, f3
     work = __memAlloc(HEAP_EFFECT, sizeof(EffSunlightN64Work));
     effect->userdata = work;
     effect->callback = effSunlightMain;
-    effect->flags |= 2;
+    effect->flags |= EFFECT_FLAG_SOFT_DELETE;
     work->type = type;
     work->frame = 0;
     if (lifetime <= 0) {
@@ -48,7 +49,7 @@ EffectEntry* effSunlightN64Entry(s32 type, s32 lifetime, f32 x, f32 y, f32 z, f3
     work->position.x = x;
     work->position.y = y;
     work->position.z = z;
-    work->unk34 = w;
+    work->entryArg = w;
     work->color[0] = 255;
     work->color[1] = 255;
     work->color[2] = 255;
@@ -66,7 +67,13 @@ EffectEntry* effSunlightN64Entry(s32 type, s32 lifetime, f32 x, f32 y, f32 z, f3
     return effect;
 }
 
-void effSunlightMain(EffectEntry* effect) {
+/**
+ * Eases the alpha 8 per frame toward alphaMax (clamped 0-255),
+ * drops it 16 per frame over the last 16 frames (a delete request starts that; lifetime 1000 means endless)
+ * and drifts each of the five shafts' texture scroll on two sine waves.
+ * Drawn on layer 2 in JP and the demos, 10 in US and PAL.
+ */
+static void effSunlightMain(EffectEntry* effect) {
     Vec position;
     Vec tmp = {0.0f, 0.0f, 0.0f};
     EffSunlightN64Work* work;
@@ -79,8 +86,8 @@ void effSunlightMain(EffectEntry* effect) {
     tmp.y = work->position.y;
     tmp.z = work->position.z;
     position = tmp;
-    if (effect->flags & 4) {
-        effect->flags &= ~4;
+    if (effect->flags & EFFECT_FLAG_DELETE_REQUESTED) {
+        effect->flags &= ~EFFECT_FLAG_DELETE_REQUESTED;
         work->lifetime = 16;
     }
     if (work->lifetime < 1000) {
@@ -132,7 +139,12 @@ void effSunlightMain(EffectEntry* effect) {
     dispEntry(CAMERA_3D, dispCalcZ(&position), VERSION_PICK(2, 10), (DispCallback)effSunlightDisp, effect);
 }
 
-void effSunlightDisp(CameraId cameraId, EffectEntry* effect) {
+/**
+ * Draws five light shafts (testsrc__s_v) through a fixed orthographic screen view,
+ * mirrored left-right for type 0: shaft shape from texture 0x42, shimmer from texture 0x43 scrolled per shaft,
+ * shaded between the work's two colours at half alpha. Skipped while alpha is 0.
+ */
+static void effSunlightDisp(CameraId cameraId, EffectEntry* effect) {
     CameraEntry* camera = camGetPtr(cameraId);
     EffSunlightN64Work* work = effect->userdata;
     s32 alpha = work->alpha;
@@ -198,33 +210,34 @@ void effSunlightDisp(CameraId cameraId, EffectEntry* effect) {
         PSMTXConcat(scale, trans, scale);
         GXLoadTexMtxImm(scale, GX_TEXMTX1, GX_MTX2x4);
         switch (i) {
-        case 0:
-            GXBegin(GX_TRIANGLES, GX_VTXFMT0, 12);
-            tri2(0, 1, 2, 0, 0, 2, 3, 0);
-            tri2(4, 5, 6, 0, 4, 6, 7, 0);
-            break;
-        case 1:
-            GXBegin(GX_TRIANGLES, GX_VTXFMT0, 6);
-            tri2(8, 9, 10, 8, 8, 10, 11, 8);
-            break;
-        case 2:
-            GXBegin(GX_TRIANGLES, GX_VTXFMT0, 6);
-            tri2(12, 13, 14, 12, 12, 14, 15, 12);
-            break;
-        case 3:
-            GXBegin(GX_TRIANGLES, GX_VTXFMT0, 12);
-            tri2(16, 17, 18, 16, 16, 18, 19, 16);
-            tri2(20, 21, 22, 16, 20, 22, 23, 16);
-            break;
-        case 4:
-            GXBegin(GX_TRIANGLES, GX_VTXFMT0, 6);
-            tri2(24, 25, 26, 24, 24, 26, 27, 24);
-            break;
+            case 0:
+                GXBegin(GX_TRIANGLES, GX_VTXFMT0, 12);
+                tri2(0, 1, 2, 0, 0, 2, 3, 0);
+                tri2(4, 5, 6, 0, 4, 6, 7, 0);
+                break;
+            case 1:
+                GXBegin(GX_TRIANGLES, GX_VTXFMT0, 6);
+                tri2(8, 9, 10, 8, 8, 10, 11, 8);
+                break;
+            case 2:
+                GXBegin(GX_TRIANGLES, GX_VTXFMT0, 6);
+                tri2(12, 13, 14, 12, 12, 14, 15, 12);
+                break;
+            case 3:
+                GXBegin(GX_TRIANGLES, GX_VTXFMT0, 12);
+                tri2(16, 17, 18, 16, 16, 18, 19, 16);
+                tri2(20, 21, 22, 16, 20, 22, 23, 16);
+                break;
+            case 4:
+                GXBegin(GX_TRIANGLES, GX_VTXFMT0, 6);
+                tri2(24, 25, 26, 24, 24, 26, 27, 24);
+                break;
         }
     }
     GXSetProjectionv(proj);
 }
 
+/** Five long slanted light shafts in screen space, each a textured quad, drawn for the sunlight beams. */
 effN64Vtx testsrc__s_v[] = {
     {531, 442, 25, 0, 0, 255, 255, 255, 255},
     {707, 284, 25, 512, 0, 255, 255, 255, 255},

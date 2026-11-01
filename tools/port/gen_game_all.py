@@ -30,7 +30,8 @@ NEEDS = {"unit/unit_bomzou.h": "battle/battle_database_common.h",
 
 def flags():
     text = open(os.path.join(ROOT, "build-pc-us-aurora", "build.ninja"), encoding="utf-8", errors="replace").read()
-    m = re.search(r"^build CMakeFiles/ttyd_dol\.dir/src/battle/battle_damage\.c\.(?:obj|o):.*\n((?:  .*\n)+)", text, re.M)
+    # (compiled through a Shift-JIS copy or a statics wrapper: sjis/, statics/)
+    m = re.search(r"^build CMakeFiles/ttyd_dol\.dir/(?:sjis/|statics/)?src/battle/battle_damage\.c\.(?:obj|o):.*\n((?:  .*\n)+)", text, re.M)
     if not m:
         sys.exit("gen_game_all: configure build-pc-us-aurora first")
     out = []

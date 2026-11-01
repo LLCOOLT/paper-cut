@@ -1,72 +1,27 @@
+// gon_00 (ゴンババ, Hooktail Castle): entrance area reached from Petal Meadows (hei_00).
+// Has a save block, a recovery block and a blue jump pad; doors lead on to gon_01.
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
 #include "evt/evt_bero.h"
+#include "evt/evt_map.h"
+#include "evt/evt_mobj.h"
+#include "evt/evt_sub.h"
+#include "evt/evt_snd.h"
+#include "gon.h"
+#include "version.h"
+#include "mario/mariost.h"
+#include "evt/evt_story.h"
 
-#pragma force_active on
-
-USER_FUNC(evt_bero_get_info);
-USER_FUNC(evt_bero_overwrite);
-USER_FUNC(evt_map_playanim);
-USER_FUNC(evt_mobj_jumpstand_blue);
-USER_FUNC(evt_mobj_recovery_blk);
-USER_FUNC(evt_mobj_save_blk);
-USER_FUNC(evt_snd_bgmoff);
-USER_FUNC(evt_snd_envon);
-USER_FUNC(evt_snd_set_rev_mode);
-USER_FUNC(evt_sub_get_system_flag);
-
-f32 fd_gon_00_negone_one_374[2] __attribute__((aligned(8)));
-f32 fd_gon_00_neg_one_382;
-f32 fd_gon_00___local_PI_383;
-f32 fd_gon_00___local_3PIO2_385;
-f32 fd_gon_00_one_negone_373[2] __attribute__((aligned(8)));
-f32 fd_gon_00___local_PIO2_384;
-f32 fd_gon_00_one_381;
-f32 fd_gon_00_negone_one_360[2] __attribute__((aligned(8)));
-f32 fd_gon_00_neg_one_365;
-f32 fd_gon_00___local_PI_366;
-f32 fd_gon_00___local_3PIO2_368;
-f32 fd_gon_00_one_negone_359[2] __attribute__((aligned(8)));
-f32 fd_gon_00___local_PIO2_367;
-f32 fd_gon_00_one_364;
 static BeroEntry bero_entry_data[4];
 static BeroEntry e3_bero[2];
-EvtWord gon_00_init_evt[77];
 
-f32 fd_gon_00_negone_one_374[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_gon_00_neg_one_382 = -1.0f;
-
-f32 fd_gon_00___local_PI_383 = 3.1415927f;
-
-f32 fd_gon_00___local_3PIO2_385 = 4.712389f;
-
-f32 fd_gon_00_one_negone_373[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_gon_00___local_PIO2_384 = 1.5707964f;
-
-f32 fd_gon_00_one_381 = 1.0f;
-
-f32 fd_gon_00_negone_one_360[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_gon_00_neg_one_365 = -1.0f;
-
-f32 fd_gon_00___local_PI_366 = 3.1415927f;
-
-f32 fd_gon_00___local_3PIO2_368 = 4.712389f;
-
-f32 fd_gon_00_one_negone_359[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_gon_00___local_PIO2_367 = 1.5707964f;
-
-f32 fd_gon_00_one_364 = 1.0f;
-
+/** Exits (beros) of this room: w_bero to hei_00, e_bero_1 to gon_01 and e_bero_3 to gon_01. */
 static BeroEntry bero_entry_data[] = {
     {
         "w_bero", // hitName
         0, 0, // type..sfxId
-        20000, // directionId
-        100000, // centerPosition
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         NULL, // enterEvent
@@ -81,8 +36,8 @@ static BeroEntry bero_entry_data[] = {
     {
         "e_bero_1", // hitName
         0, 0, // type..sfxId
-        20000, // directionId
-        100000, // centerPosition
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         NULL, // enterEvent
@@ -97,8 +52,8 @@ static BeroEntry bero_entry_data[] = {
     {
         "e_bero_3", // hitName
         0, 0, // type..sfxId
-        20000, // directionId
-        100000, // centerPosition
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         NULL, // enterEvent
@@ -113,12 +68,13 @@ static BeroEntry bero_entry_data[] = {
     {0},
 };
 
+/** Exits (beros) of this room: w_bero to gon_00. */
 static BeroEntry e3_bero[] = {
     {
         "w_bero", // hitName
         0, 0, // type..sfxId
-        20000, // directionId
-        100000, // centerPosition
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         NULL, // enterEvent
@@ -133,27 +89,33 @@ static BeroEntry e3_bero[] = {
     {0},
 };
 
+/**
+ * Map init for gon_00 (castle entrance): sets up the doors to gon_01 and the Hooktail route log flag,
+ * the save block, recovery block and blue jump pad, the drifting dust animation, and the room's sounds.
+ * In the kiosk demo build the west exit is rerouted back to the same room instead of leading to Petal Meadows.
+ */
 EVT_BEGIN(gon_00_init_evt)
-    SET_VALUE(GSWF(255), 1)
+#if VERSION >= VERSION_JP
+    SET_VALUE(GSWF(GSWF_LOG_MAP_GON_ROUTE_SHOWN), 1)
+#endif
     SET_VALUE(LW(0), PTR(bero_entry_data))
     CALL(evt_bero_get_info)
-    CALL_CHILD(PTR(evt_bero_info_run))
+    CALL_CHILD(evt_bero_info_run)
     WAIT_FRAMES(1)
-    CALL(evt_snd_bgmoff, 512)
-    CALL(evt_snd_envon, 272, STRING("ENV_STG1_GON1"))
+    CALL(evt_snd_bgmoff, PSND_FADE_OUT)
+    CALL(evt_snd_envon, PSND_FADE_RESTART | PSND_FADE_IN, STRING("ENV_STG1_GON1"))
     CALL(evt_snd_set_rev_mode, 2)
     CALL(evt_mobj_save_blk, STRING("mobj_save"), 160, 60, -90, 0, 0)
     CALL(evt_mobj_recovery_blk, STRING("mobj_recover"), 6, -150, 260, 0, 0, 0)
     CALL(evt_mobj_jumpstand_blue, 0, STRING("mobj_jump"), 230, 0, 0, -90, 0, 0)
-    CALL(evt_map_playanim, STRING("hokori\0"), 1, 0)
+    CALL(evt_map_playanim, STRING("hokori"), 1, 0)
     CALL(evt_sub_get_system_flag, LW(0))
-    IF_BITS_SET(LW(0), 4096)
+    IF_BITS_SET(LW(0), GLOBAL_FLAG_KIOSK)
         SET_VALUE(LW(0), STRING("w_bero"))
-        CALL_CHILD(PTR(bero_case_switch_off))
+        CALL_CHILD(bero_case_switch_off)
         CALL(evt_bero_overwrite, STRING("w_bero"), PTR(e3_bero))
         SET_VALUE(LW(0), STRING("w_bero"))
-        CALL_CHILD(PTR(bero_case_switch_on))
+        CALL_CHILD(bero_case_switch_on)
     END_IF
     RETURN
 EVT_END()
-

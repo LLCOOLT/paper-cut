@@ -1,3 +1,4 @@
+// extdrv.c: the ext driver (ExtdrvPose, ExtdrvTex): many copies of one paper animation drawn as flat textured quads.
 #pragma once
 
 #include <dolphin/types.h>
@@ -10,15 +11,20 @@ typedef struct ExtdrvTexInfo {
     f32 frame;         // 0x8
 } ExtdrvTexInfo;
 
+// ExtdrvPose.flags (set by the map that uses the driver, bom_01)
+#define EXT_POSE_FLAG_ACTIVE 0x1      // drawn (extDraw, extPoseDraw) and depth-sorted by texId
+#define EXT_POSE_FLAG_FACE_CAMERA 0x2 // turns toward the camera like a paper pose (targetRy from dir)
+#define EXT_POSE_FLAG_NO_SHADOW 0x4   // no shadow drawn
+#define EXT_POSE_FLAG_SHADOW_Y 0x10   // the shadow is placed at shadowY instead of under the pose
 typedef struct ExtdrvPose {
-    u32 flags;     // 0x0
-    f32 dir;       // 0x4
-    f32 shadowY;   // 0x8
-    Mtx* mtx;      // 0xC
-    s32 texId;     // 0x10
-    f32 ry;        // 0x14
-    u8 pad_18[4];   // 0x18
-    f32 targetRy;  // 0x1C
+    u32 flags;    // 0x0
+    f32 dir;      // 0x4
+    f32 shadowY;  // 0x8
+    Mtx* mtx;     // 0xC
+    s32 texId;    // 0x10
+    f32 ry;       // 0x14
+    u8 pad_18[4]; // 0x18
+    f32 targetRy; // 0x1C
 } ExtdrvPose;
 
 typedef struct ExtdrvTex {
@@ -50,7 +56,7 @@ typedef struct ExtdrvWork {
     s32 curTex;              // 0x38
     Mtx shadowMtx;           // 0x3C
     u32 usedTmem;            // 0x6C
-} ExtdrvWork; // size 0x70
+} ExtdrvWork;                // size 0x70
 
 void extInit(void);
 void extMain(void);

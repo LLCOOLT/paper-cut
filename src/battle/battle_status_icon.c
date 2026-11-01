@@ -1,454 +1,501 @@
+// Battle status icons: the icons shown over units for statuses such as sleep and poison.
 #include "version.h"
 #include "pc_call.h"
+// this unit is size-optimised, as in the original (the object differs without it)
 #pragma optimize_for_size on
 #include "battle/battle_status_icon.h"
 #include "battle/battle.h"
+#include "battle/battle_disp.h"
 #include <string.h>
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
 #include "mario/mariost.h"
 #endif
+#include "battle/battle_unit.h"
+// FAKE: battle_status_icon.c calls BtlUnit_GetStatus through this prototype (the types it was compiled with) instead of the one in battle/battle_unit.h; same registers, behaviour-identical.
+typedef void (*BtlUnit_GetStatusS8Fn)(BattleUnit*, s8, s8*, s8*);
+// FAKE: battle_status_icon.c calls BtlUnit_CheckStatus through this prototype (the types it was compiled with) instead of the one in battle/battle_unit.h; same registers, behaviour-identical.
+typedef BOOL (*BtlUnit_CheckStatusS8Fn)(BattleUnit*, s8);
 
 typedef struct IconDispTableEntry IconDispTableEntry;
 struct IconDispTableEntry {
-	s32 id;
-	BOOL (*callback)(BattleUnit* unit, IconDispTableEntry* disp, BattleWorkStatusIconEntry* entry); //0x4
-	s32 something;
-	s32 something2;
+    s32 statusType;                                                                                 // 0x0, StatusEffectType shown by this entry
+    BOOL (*callback)(BattleUnit* unit, IconDispTableEntry* disp, BattleWorkStatusIconEntry* entry); // 0x4
+    s32 icon;                                                                                       // 0x8
+    s32 flags;                                                                                      // 0xC, StatusIconEntryFlags copied to the entry
 };
 
-BOOL _bsi_default_turn(BattleUnit* unit, IconDispTableEntry* disp, BattleWorkStatusIconEntry* entry);
-BOOL _bsi_guruguru(BattleUnit* unit, IconDispTableEntry* disp, BattleWorkStatusIconEntry* entry);
-BOOL _bsi_biribiri(BattleUnit* unit, IconDispTableEntry* disp, BattleWorkStatusIconEntry* entry);
-BOOL _bsi_allergy(BattleUnit* unit, IconDispTableEntry* disp, BattleWorkStatusIconEntry* entry);
-BOOL _bsi_regeneration(BattleUnit* unit, IconDispTableEntry* disp, BattleWorkStatusIconEntry* entry);
+static BOOL _bsi_default_turn(BattleUnit* unit, IconDispTableEntry* disp, BattleWorkStatusIconEntry* entry);
+static BOOL _bsi_guruguru(BattleUnit* unit, IconDispTableEntry* disp, BattleWorkStatusIconEntry* entry);
+static BOOL _bsi_biribiri(BattleUnit* unit, IconDispTableEntry* disp, BattleWorkStatusIconEntry* entry);
+static BOOL _bsi_allergy(BattleUnit* unit, IconDispTableEntry* disp, BattleWorkStatusIconEntry* entry);
+static BOOL _bsi_regeneration(BattleUnit* unit, IconDispTableEntry* disp, BattleWorkStatusIconEntry* entry);
 
-#ifdef VERSION_G8ME01
-__declspec(section ".data") f32 fd_bsi_0[2] = {-1.0f, 1.0f}; // MWCC trig-pool pair (+-1.0f)
-__declspec(section ".data") f32 fd_bsi_1[2] = {-1.0f, 1.0f}; // MWCC trig-pool pair (+-1.0f)
-__declspec(section ".data") f32 fd_bsi_2[2] = {1.0f, -1.0f}; // MWCC trig-pool pair (+-1.0f)
-__declspec(section ".data") f32 fd_bsi_3[2] = {1.0f, -1.0f}; // MWCC trig-pool pair (+-1.0f)
-__declspec(section ".data") f32 fd_bsi_4[2] = {-1.0f, 1.0f}; // MWCC trig-pool pair (+-1.0f)
-__declspec(section ".data") f32 fd_bsi_5[2] = {-1.0f, 1.0f}; // MWCC trig-pool pair (+-1.0f)
-__declspec(section ".data") f32 fd_bsi_6[2] = {1.0f, -1.0f}; // MWCC trig-pool pair (+-1.0f)
-__declspec(section ".data") f32 fd_bsi_7[2] = {1.0f, -1.0f}; // MWCC trig-pool pair (+-1.0f)
+#if VERSION >= VERSION_US
+/**
+ * Status icons shown over a unit, one row per status: the status, the routine that decides whether to show it,
+ * the icon and its flags; ends with -1.
+ * Used in the US release and, in the PAL release, for Japanese and English (game languages 0 and 1).
+ */
 IconDispTableEntry _disp_table[0x17] = {
-		{1, _bsi_default_turn, 22, 1},
-		{4, _bsi_default_turn, 20, 1},
-		{21, _bsi_default_turn, 21, 1},
-		{2, _bsi_default_turn, 23, 1},
-		{8, _bsi_default_turn, 24, 1},
-		{9, _bsi_default_turn, 25, 1},
-		{19, _bsi_default_turn, 26, 1},
-		{20, _bsi_default_turn, 27, 1},
-		{14, _bsi_default_turn, 28, 1},
-		{15, _bsi_default_turn, 29, 1},
-		{7, _bsi_default_turn, 41, 1},
-		{10, _bsi_default_turn, 42, 1},
-		{11, _bsi_default_turn, 43, 1},
-		{5, _bsi_default_turn, 44, 1},
-		{12, _bsi_default_turn, 45, 1},
-		{13, _bsi_default_turn, 46, 1},
-		{18, _bsi_default_turn, 47, 1},
-		{3, _bsi_guruguru, 39, 0},
-		{6, _bsi_biribiri, 38, 0},
-		{0, _bsi_allergy, 40, 0},
-		{23, _bsi_regeneration, 30, 0},
-		{24, _bsi_regeneration, 31, 0},
-		{-1, NULL, 0, 0},
+        {1, _bsi_default_turn, 22, 1},
+        {4, _bsi_default_turn, 20, 1},
+        {21, _bsi_default_turn, 21, 1},
+        {2, _bsi_default_turn, 23, 1},
+        {8, _bsi_default_turn, 24, 1},
+        {9, _bsi_default_turn, 25, 1},
+        {19, _bsi_default_turn, 26, 1},
+        {20, _bsi_default_turn, 27, 1},
+        {14, _bsi_default_turn, 28, 1},
+        {15, _bsi_default_turn, 29, 1},
+        {7, _bsi_default_turn, 41, 1},
+        {10, _bsi_default_turn, 42, 1},
+        {11, _bsi_default_turn, 43, 1},
+        {5, _bsi_default_turn, 44, 1},
+        {12, _bsi_default_turn, 45, 1},
+        {13, _bsi_default_turn, 46, 1},
+        {18, _bsi_default_turn, 47, 1},
+        {3, _bsi_guruguru, 39, 0},
+        {6, _bsi_biribiri, 38, 0},
+        {0, _bsi_allergy, 40, 0},
+        {23, _bsi_regeneration, 30, 0},
+        {24, _bsi_regeneration, 31, 0},
+        {-1, NULL, 0, 0},
 };
+/** The same icons for German (PAL game language 2), with the German HP and FP Regen icons. */
 IconDispTableEntry _disp_table_1[0x17] = {
-		{1, _bsi_default_turn, 22, 1},
-		{4, _bsi_default_turn, 20, 1},
-		{21, _bsi_default_turn, 21, 1},
-		{2, _bsi_default_turn, 23, 1},
-		{8, _bsi_default_turn, 24, 1},
-		{9, _bsi_default_turn, 25, 1},
-		{19, _bsi_default_turn, 26, 1},
-		{20, _bsi_default_turn, 27, 1},
-		{14, _bsi_default_turn, 28, 1},
-		{15, _bsi_default_turn, 29, 1},
-		{7, _bsi_default_turn, 41, 1},
-		{10, _bsi_default_turn, 42, 1},
-		{11, _bsi_default_turn, 43, 1},
-		{5, _bsi_default_turn, 44, 1},
-		{12, _bsi_default_turn, 45, 1},
-		{13, _bsi_default_turn, 46, 1},
-		{18, _bsi_default_turn, 47, 1},
-		{3, _bsi_guruguru, 39, 0},
-		{6, _bsi_biribiri, 38, 0},
-		{0, _bsi_allergy, 40, 0},
-		{23, _bsi_regeneration, 32, 0},
-		{24, _bsi_regeneration, 33, 0},
-		{-1, NULL, 0, 0},
+        {1, _bsi_default_turn, 22, 1},
+        {4, _bsi_default_turn, 20, 1},
+        {21, _bsi_default_turn, 21, 1},
+        {2, _bsi_default_turn, 23, 1},
+        {8, _bsi_default_turn, 24, 1},
+        {9, _bsi_default_turn, 25, 1},
+        {19, _bsi_default_turn, 26, 1},
+        {20, _bsi_default_turn, 27, 1},
+        {14, _bsi_default_turn, 28, 1},
+        {15, _bsi_default_turn, 29, 1},
+        {7, _bsi_default_turn, 41, 1},
+        {10, _bsi_default_turn, 42, 1},
+        {11, _bsi_default_turn, 43, 1},
+        {5, _bsi_default_turn, 44, 1},
+        {12, _bsi_default_turn, 45, 1},
+        {13, _bsi_default_turn, 46, 1},
+        {18, _bsi_default_turn, 47, 1},
+        {3, _bsi_guruguru, 39, 0},
+        {6, _bsi_biribiri, 38, 0},
+        {0, _bsi_allergy, 40, 0},
+        {23, _bsi_regeneration, 32, 0},
+        {24, _bsi_regeneration, 33, 0},
+        {-1, NULL, 0, 0},
 };
+/** The same icons for French and Spanish (PAL game languages 3 and 4), which share HP and FP Regen icons. */
 IconDispTableEntry _disp_table_2[0x17] = {
-		{1, _bsi_default_turn, 22, 1},
-		{4, _bsi_default_turn, 20, 1},
-		{21, _bsi_default_turn, 21, 1},
-		{2, _bsi_default_turn, 23, 1},
-		{8, _bsi_default_turn, 24, 1},
-		{9, _bsi_default_turn, 25, 1},
-		{19, _bsi_default_turn, 26, 1},
-		{20, _bsi_default_turn, 27, 1},
-		{14, _bsi_default_turn, 28, 1},
-		{15, _bsi_default_turn, 29, 1},
-		{7, _bsi_default_turn, 41, 1},
-		{10, _bsi_default_turn, 42, 1},
-		{11, _bsi_default_turn, 43, 1},
-		{5, _bsi_default_turn, 44, 1},
-		{12, _bsi_default_turn, 45, 1},
-		{13, _bsi_default_turn, 46, 1},
-		{18, _bsi_default_turn, 47, 1},
-		{3, _bsi_guruguru, 39, 0},
-		{6, _bsi_biribiri, 38, 0},
-		{0, _bsi_allergy, 40, 0},
-		{23, _bsi_regeneration, 34, 0},
-		{24, _bsi_regeneration, 35, 0},
-		{-1, NULL, 0, 0},
+        {1, _bsi_default_turn, 22, 1},
+        {4, _bsi_default_turn, 20, 1},
+        {21, _bsi_default_turn, 21, 1},
+        {2, _bsi_default_turn, 23, 1},
+        {8, _bsi_default_turn, 24, 1},
+        {9, _bsi_default_turn, 25, 1},
+        {19, _bsi_default_turn, 26, 1},
+        {20, _bsi_default_turn, 27, 1},
+        {14, _bsi_default_turn, 28, 1},
+        {15, _bsi_default_turn, 29, 1},
+        {7, _bsi_default_turn, 41, 1},
+        {10, _bsi_default_turn, 42, 1},
+        {11, _bsi_default_turn, 43, 1},
+        {5, _bsi_default_turn, 44, 1},
+        {12, _bsi_default_turn, 45, 1},
+        {13, _bsi_default_turn, 46, 1},
+        {18, _bsi_default_turn, 47, 1},
+        {3, _bsi_guruguru, 39, 0},
+        {6, _bsi_biribiri, 38, 0},
+        {0, _bsi_allergy, 40, 0},
+        {23, _bsi_regeneration, 34, 0},
+        {24, _bsi_regeneration, 35, 0},
+        {-1, NULL, 0, 0},
 };
+/** The same icons for Italian (PAL game language 5), with the Italian HP and FP Regen icons. */
 IconDispTableEntry _disp_table_3[0x17] = {
-		{1, _bsi_default_turn, 22, 1},
-		{4, _bsi_default_turn, 20, 1},
-		{21, _bsi_default_turn, 21, 1},
-		{2, _bsi_default_turn, 23, 1},
-		{8, _bsi_default_turn, 24, 1},
-		{9, _bsi_default_turn, 25, 1},
-		{19, _bsi_default_turn, 26, 1},
-		{20, _bsi_default_turn, 27, 1},
-		{14, _bsi_default_turn, 28, 1},
-		{15, _bsi_default_turn, 29, 1},
-		{7, _bsi_default_turn, 41, 1},
-		{10, _bsi_default_turn, 42, 1},
-		{11, _bsi_default_turn, 43, 1},
-		{5, _bsi_default_turn, 44, 1},
-		{12, _bsi_default_turn, 45, 1},
-		{13, _bsi_default_turn, 46, 1},
-		{18, _bsi_default_turn, 47, 1},
-		{3, _bsi_guruguru, 39, 0},
-		{6, _bsi_biribiri, 38, 0},
-		{0, _bsi_allergy, 40, 0},
-		{23, _bsi_regeneration, 36, 0},
-		{24, _bsi_regeneration, 37, 0},
-		{-1, NULL, 0, 0},
+        {1, _bsi_default_turn, 22, 1},
+        {4, _bsi_default_turn, 20, 1},
+        {21, _bsi_default_turn, 21, 1},
+        {2, _bsi_default_turn, 23, 1},
+        {8, _bsi_default_turn, 24, 1},
+        {9, _bsi_default_turn, 25, 1},
+        {19, _bsi_default_turn, 26, 1},
+        {20, _bsi_default_turn, 27, 1},
+        {14, _bsi_default_turn, 28, 1},
+        {15, _bsi_default_turn, 29, 1},
+        {7, _bsi_default_turn, 41, 1},
+        {10, _bsi_default_turn, 42, 1},
+        {11, _bsi_default_turn, 43, 1},
+        {5, _bsi_default_turn, 44, 1},
+        {12, _bsi_default_turn, 45, 1},
+        {13, _bsi_default_turn, 46, 1},
+        {18, _bsi_default_turn, 47, 1},
+        {3, _bsi_guruguru, 39, 0},
+        {6, _bsi_biribiri, 38, 0},
+        {0, _bsi_allergy, 40, 0},
+        {23, _bsi_regeneration, 36, 0},
+        {24, _bsi_regeneration, 37, 0},
+        {-1, NULL, 0, 0},
 };
 #else
+/**
+ * Status icons shown over a unit in the demos and the Japanese release, one row per status:
+ * the status, the routine that decides whether to show it, the icon and its flags; ends with -1.
+ */
 IconDispTableEntry _disp_table[0x17] = {
-	{1, _bsi_default_turn, 15, 1},
-	{4, _bsi_default_turn, 13, 1},
-	{21, _bsi_default_turn, 14, 1},
-	{2, _bsi_default_turn, 16, 1},
-	{8, _bsi_default_turn, 17, 1},
-	{9, _bsi_default_turn, 18, 1},
-	{19, _bsi_default_turn, 19, 1},
-	{20, _bsi_default_turn, 20, 1},
-	{14, _bsi_default_turn, 21, 1},
-	{15, _bsi_default_turn, 22, 1},
-	{7, _bsi_default_turn, 28, 1},
-	{10, _bsi_default_turn, 29, 1},
-	{11, _bsi_default_turn, 30, 1},
-	{5, _bsi_default_turn, 31, 1},
-	{12, _bsi_default_turn, 32, 1},
-	{13, _bsi_default_turn, 33, 1},
-	{18, _bsi_default_turn, 34, 1},
-	{3, _bsi_guruguru, 26, 0},
-	{6, _bsi_biribiri, 25, 0},
-	{0, _bsi_allergy, 27, 0},
-	{23, _bsi_regeneration, 23, 0},
-	{24, _bsi_regeneration, 24, 0},
-	{-1, NULL, 0, 0},
+    {1, _bsi_default_turn, 15, 1},
+    {4, _bsi_default_turn, 13, 1},
+    {21, _bsi_default_turn, 14, 1},
+    {2, _bsi_default_turn, 16, 1},
+    {8, _bsi_default_turn, 17, 1},
+    {9, _bsi_default_turn, 18, 1},
+    {19, _bsi_default_turn, 19, 1},
+    {20, _bsi_default_turn, 20, 1},
+    {14, _bsi_default_turn, 21, 1},
+    {15, _bsi_default_turn, 22, 1},
+    {7, _bsi_default_turn, 28, 1},
+    {10, _bsi_default_turn, 29, 1},
+    {11, _bsi_default_turn, 30, 1},
+    {5, _bsi_default_turn, 31, 1},
+    {12, _bsi_default_turn, 32, 1},
+    {13, _bsi_default_turn, 33, 1},
+    {18, _bsi_default_turn, 34, 1},
+    {3, _bsi_guruguru, 26, 0},
+    {6, _bsi_biribiri, 25, 0},
+    {0, _bsi_allergy, 27, 0},
+    {23, _bsi_regeneration, 23, 0},
+    {24, _bsi_regeneration, 24, 0},
+    {-1, NULL, 0, 0},
 };
 #endif
 
-
-
-//local prototypes
+// local prototypes
 void BattleStatusIconDisp(CameraId camId, void* param);
 
+/** Clears the unit's status icon work; called from BtlUnit_Entry. */
 void BattleStatusIconInit(BattleUnit* unit) {
-	memset(&unit->mStatusIconWork, 0, sizeof(BattleWorkStatusIcon));
+    memset(&unit->statusIconWork, 0, sizeof(BattleWorkStatusIcon));
 }
 
+/**
+ * Runs every frame for each unit from battle_disp.c:
+ * while the command menu is up (dispFlags bit 0), fills the unit's icon list from _disp_table,
+ * one entry per active status, placed at the unit's statusIconOffset and stacked 25.6 units apart,
+ * and registers BattleStatusIconDisp.
+ * From the US release on it picks the table by game language;
+ * the tables differ only in the HP and FP Regen icons.
+ */
 void BattleStatusIconMain(BattleUnit* unit) {
-	BattleWorkStatusIcon* icon = &unit->mStatusIconWork;
-	BattleWork* work = _battleWorkPointer;
-	u32 i;
+    BattleWorkStatusIcon* icon = &unit->statusIconWork;
+    BattleWork* work = _battleWorkPointer;
+    u32 i;
 
-	icon->mNumStatusIcons = 0;
-	if (work->flags & 0x10000 || work->dispFlags & 1) {
-		BtlUnit_GetPos(unit, &icon->mPosition.x, &icon->mPosition.y, &icon->mPosition.z);
-		icon->mPosition.x += ((f32)(unit->mStatusIconOffset[0]) * unit->mSizeMultiplier);
-		icon->mPosition.y += ((f32)(unit->mStatusIconOffset[1]) * unit->mSizeMultiplier);
-		icon->mScreenSpaceOffset.x = 13.440001f;
-		icon->mScreenSpaceOffset.z = 0.0f;
-		icon->mFlags = 0;
-		if (!(unit->mAttributeFlags & kCeiling)) {
-			icon->mDistanceBetweenIcons = 25.6f;
-			icon->mScreenSpaceOffset.y = 19.200001f;
-		}
-		else {
-			icon->mDistanceBetweenIcons = 25.6f;
-			icon->mScreenSpaceOffset.y = 0.0f;
-		}
+    icon->numStatusIcons = 0;
+    if (work->flags & BATTLE_FLAG_SHOW_ALL_STATUS_ICONS || work->dispFlags & 1) {
+        BtlUnit_GetPos(unit, &icon->position.x, &icon->position.y, &icon->position.z);
+        icon->position.x += ((f32)(unit->statusIconOffset[0]) * unit->sizeMultiplier);
+        icon->position.y += ((f32)(unit->statusIconOffset[1]) * unit->sizeMultiplier);
+        icon->screenSpaceOffset.x = 13.440001f;
+        icon->screenSpaceOffset.z = 0.0f;
+        icon->flags = 0;
+        if (!(unit->attributeFlags & UNIT_ATTR_CEILING)) {
+            icon->distanceBetweenIcons = 25.6f;
+            icon->screenSpaceOffset.y = 19.200001f;
+        } else {
+            icon->distanceBetweenIcons = 25.6f;
+            icon->screenSpaceOffset.y = 0.0f;
+        }
 
-		for (i = 0; i < 0x17; i++) {
-#ifdef VERSION_G8ME01
-			IconDispTableEntry* d;
-			BattleWorkStatusIconEntry* e;
-			switch (gp->language) {
-				case 2:
-					d = &_disp_table_1[i];
-					break;
-				case 3:
-				case 4:
-					d = &_disp_table_2[i];
-					break;
-				case 5:
-					d = &_disp_table_3[i];
-					break;
-				default:
-					d = &_disp_table[i];
-					break;
-			}
+        for (i = 0; i < 0x17; i++) {
+#if VERSION >= VERSION_US
+            IconDispTableEntry* d;
+            BattleWorkStatusIconEntry* e;
+            switch (gp->language) {
+                case 2:
+                    d = &_disp_table_1[i];
+                    break;
+                case 3:
+                case 4:
+                    d = &_disp_table_2[i];
+                    break;
+                case 5:
+                    d = &_disp_table_3[i];
+                    break;
+                default:
+                    d = &_disp_table[i];
+                    break;
+            }
 #elif defined(TARGET_PC) /* the entry holds a callback pointer: 16 bytes only on GameCube */
-			IconDispTableEntry* d = &_disp_table[i];
+            IconDispTableEntry* d = &_disp_table[i];
 #else
-			IconDispTableEntry* d = (IconDispTableEntry*)((u8*)_disp_table + i * 16);
+            IconDispTableEntry* d = (IconDispTableEntry*)((u8*)_disp_table + i * 16);
 #endif
-#ifdef VERSION_G8ME01
-			e = &icon->mIcons[icon->mNumStatusIcons];
+#if VERSION >= VERSION_US
+            e = &icon->icons[icon->numStatusIcons];
 #else
-			BattleWorkStatusIconEntry* e = &icon->mIcons[icon->mNumStatusIcons];
+            BattleWorkStatusIconEntry* e = &icon->icons[icon->numStatusIcons];
 #endif
-			if (d->id == -1) break;
-			if (d->callback(unit, d, e)) {
-				icon->mNumStatusIcons++;
-			}
-		}
-		if (icon->mNumStatusIcons > 0) {
-			dispEntry(CAMERA_2D, 901.0f, 1, BattleStatusIconDisp, unit);
-		}
-	}
+            if (d->statusType == -1)
+                break;
+            if (d->callback(unit, d, e)) {
+                icon->numStatusIcons++;
+            }
+        }
+        if (icon->numStatusIcons > 0) {
+            dispEntry(CAMERA_2D, 901.0f, 1, BattleStatusIconDisp, unit);
+        }
+    }
 }
 
+/** Status-icon cleanup when a unit is deleted; empty in every version. */
 void BattleStatusIconDelete(BattleUnit* unit) {
-	; //stubbed in retail
+    ; // stubbed in retail
 }
 
-void btlDispTexPlane(u32 id, GXColor color, f32 tX, f32 tY, f32 tZ, f32 sX, f32 sY, s32 extra);
-void btlDispTexPlane2(Mtx mtx, u32 id, GXColor color, s32 extra);
 #include "driver/icondrv.h"
-extern void btlGetScreenPoint(Vec* in, Vec* out);
 
-
+/**
+ * Draws one unit's status icons in 2D, bottom to top:
+ * the backing plate for entries without STATUS_ICON_NO_PLATE, the icon with its own scale,
+ * rotation and colour (skipped while STATUS_ICON_HIDDEN), and the remaining turn count beside it.
+ */
 void BattleStatusIconDisp(CameraId camId, void* param) {
-	BattleWorkStatusIcon* icon = &((BattleUnit*)param)->mStatusIconWork;
-	GXColor col = {0xFF, 0xFF, 0xFF, 0xFF};
-	Vec screen, p, n;
-	Mtx m, trans, scale, npivot, pivot, rx, ry, rz, nm;
-	BattleWorkStatusIconEntry* e;
-	s32 i;
+    BattleWorkStatusIcon* icon = &((BattleUnit*)param)->statusIconWork;
+    GXColor col = {0xFF, 0xFF, 0xFF, 0xFF};
+    Vec screen, p, n;
+    Mtx m, trans, scale, npivot, pivot, rx, ry, rz, nm;
+    BattleWorkStatusIconEntry* e;
+    s32 i;
 
-	btlGetScreenPoint(&icon->mPosition, &screen);
-	for (i = icon->mNumStatusIcons - 1; i >= 0; i--) {
-		e = &icon->mIcons[i];
-		p = screen;
-		p.y += icon->mDistanceBetweenIcons * (f32)i;
-		p.y += icon->mScreenSpaceOffset.y;
-		p.x += icon->mScreenSpaceOffset.x;
-		p.z += icon->mScreenSpaceOffset.z;
-		p.z -= (f32)(-(i * 2));
-		if (!(e->flags & 1)) {
-			if (!(icon->mFlags & 1)) {
-				btlDispTexPlane(VERSION_PICK(0x23, 0x30), col, p.x, p.y, p.z, 0.8f, 0.8f, 0);
-			} else {
-				btlDispTexPlane(VERSION_PICK(0x23, 0x30), col, p.x, p.y, p.z, 0.8f, -0.8f, 0);
-			}
-		}
-		if (e->icon == 0) continue;
-		if (!(e->flags & 2)) {
-			PSMTXTrans(trans, p.x + e->trans.x, p.y + e->trans.y, p.z + e->trans.z);
-			PSMTXScale(scale, 0.8f * e->scale.x, 0.8f * e->scale.y, e->scale.z);
-			PSMTXTrans(npivot, -e->pivot.x, -e->pivot.y, -e->pivot.z);
-			PSMTXTrans(pivot, e->pivot.x, e->pivot.y, e->pivot.z);
-			PSMTXRotRad(rx, 'x', 0.017453292f * e->rot.x);
-			PSMTXRotRad(ry, 'y', 0.017453292f * e->rot.y);
-			PSMTXRotRad(rz, 'z', 0.017453292f * e->rot.z);
-			PSMTXIdentity(m);
-			PSMTXConcat(rz, scale, m);
-			PSMTXConcat(npivot, m, m);
-			PSMTXConcat(rz, m, m);
-			PSMTXConcat(ry, m, m);
-			PSMTXConcat(rx, m, m);
-			PSMTXConcat(pivot, m, m);
-			PSMTXConcat(trans, m, m);
-			btlDispTexPlane2(m, (u32)e->icon, e->color, 0);
-		}
-		if (e->turns != 0) {
-			n = p;
-			n.x += 21.6f;
-			n.y -= 16.0f;
-			PSMTXIdentity(nm);
-			PSMTXTrans(trans, n.x, n.y, n.z);
-			PSMTXConcat(trans, nm, nm);
-			iconNumberDispGx(nm, e->turns, TRUE, (GXColor){0xFF, 0xFF, 0xFF, 0xFF});
-		}
-	}
+    btlGetScreenPoint(&icon->position, &screen);
+    for (i = icon->numStatusIcons - 1; i >= 0; i--) {
+        e = &icon->icons[i];
+        p = screen;
+        p.y += icon->distanceBetweenIcons * (f32)i;
+        p.y += icon->screenSpaceOffset.y;
+        p.x += icon->screenSpaceOffset.x;
+        p.z += icon->screenSpaceOffset.z;
+        p.z -= (f32)(-(i * 2));
+        if (!(e->flags & STATUS_ICON_NO_PLATE)) {
+            if (!(icon->flags & 1)) {
+                btlDispTexPlane(VERSION_PICK(0x23, 0x30), col, 0, p.x, p.y, p.z, 0.8f, 0.8f);
+            } else {
+                btlDispTexPlane(VERSION_PICK(0x23, 0x30), col, 0, p.x, p.y, p.z, 0.8f, -0.8f);
+            }
+        }
+        if (e->icon == 0)
+            continue;
+        if (!(e->flags & STATUS_ICON_HIDDEN)) {
+            PSMTXTrans(trans, p.x + e->trans.x, p.y + e->trans.y, p.z + e->trans.z);
+            PSMTXScale(scale, 0.8f * e->scale.x, 0.8f * e->scale.y, e->scale.z);
+            PSMTXTrans(npivot, -e->pivot.x, -e->pivot.y, -e->pivot.z);
+            PSMTXTrans(pivot, e->pivot.x, e->pivot.y, e->pivot.z);
+            PSMTXRotRad(rx, 'x', 0.017453292f * e->rot.x);
+            PSMTXRotRad(ry, 'y', 0.017453292f * e->rot.y);
+            PSMTXRotRad(rz, 'z', 0.017453292f * e->rot.z);
+            PSMTXIdentity(m);
+            PSMTXConcat(rz, scale, m);
+            PSMTXConcat(npivot, m, m);
+            PSMTXConcat(rz, m, m);
+            PSMTXConcat(ry, m, m);
+            PSMTXConcat(rx, m, m);
+            PSMTXConcat(pivot, m, m);
+            PSMTXConcat(trans, m, m);
+            btlDispTexPlane2(m, (u32)e->icon, e->color, 0);
+        }
+        if (e->turns != 0) {
+            n = p;
+            n.x += 21.6f;
+            n.y -= 16.0f;
+            PSMTXIdentity(nm);
+            PSMTXTrans(trans, n.x, n.y, n.z);
+            PSMTXConcat(trans, nm, nm);
+            iconNumberDispGx(nm, e->turns, TRUE, (GXColor){0xFF, 0xFF, 0xFF, 0xFF});
+        }
+    }
 }
-
 
 #include "system.h"
 
-
-
-BOOL _bsi_default_turn(BattleUnit* unit, IconDispTableEntry* disp, BattleWorkStatusIconEntry* entry) {
-	s32 type = disp->id;
-	s8 turns, strength;
-	s32 kind;
-	if (_battleWorkPointer->flags & 0x10000) {
-		if (type != 1 && !PCCALL(((BOOL(*)(BattleUnit*, s8))BtlUnit_CheckStatus)(unit, disp->id), BtlUnit_CheckStatus(unit, disp->id))) return FALSE;
-		kind = (s32)unit->currentKind;
-		if (!((kind >= 1 && kind < 0xd8) || (kind >= 0xde && kind < 0xe0) || (kind >= 0xe0 && kind < 0xe7))) return FALSE;
-	} else if (!PCCALL(((BOOL(*)(BattleUnit*, s8))BtlUnit_CheckStatus)(unit, disp->id), BtlUnit_CheckStatus(unit, disp->id))) {
-		return FALSE;
-	}
-	PCCALL(((void(*)(BattleUnit*, s8, s8*, s8*))BtlUnit_GetStatus)(unit, type, &turns, &strength), BtlUnit_GetStatus(unit, type, &turns, &strength));
-	entry->type = type;
-	entry->turns = turns >= 0 ? turns : -turns;
-	entry->icon = disp->something;
-	entry->scale = (Vec){1.0f,1.0f,1.0f};
-	entry->pivot = (Vec){0.0f,0.0f,0.0f};
-	entry->rot = (Vec){0.0f,0.0f,0.0f};
-	entry->color = (GXColor){0xFF, 0xFF, 0xFF, 0xFF};
-	entry->flags = disp->something2;
-	entry->trans = (Vec){0.0f,0.0f,0.0f};
-	return TRUE;
+/**
+ * Icon builder for the plain turn-count statuses (Sleep, Poison, Stop, Burn, Freeze, Fast, Slow,
+ * attack and defense changes, Dodgy, Huge, Tiny, Confused, Invisible, Payback):
+ * fills the entry with the status's icon and turn count and returns TRUE if the unit has the status.
+ */
+static BOOL _bsi_default_turn(BattleUnit* unit, IconDispTableEntry* disp, BattleWorkStatusIconEntry* entry) {
+    s32 type = disp->statusType;
+    s8 turns, strength;
+    s32 kind;
+    if (_battleWorkPointer->flags & BATTLE_FLAG_SHOW_ALL_STATUS_ICONS) {
+        if (type != 1 && !BtlUnit_CheckStatus(unit, (s8)disp->statusType))
+            return FALSE;
+        kind = (s32)unit->currentKind;
+        if (!((kind >= 1 && kind < 0xd8) || (kind >= 0xde && kind < 0xe0) || (kind >= 0xe0 && kind < 0xe7)))
+            return FALSE;
+    } else if (!BtlUnit_CheckStatus(unit, (s8)disp->statusType)) {
+        return FALSE;
+    }
+    PCCALL(((BtlUnit_GetStatusS8Fn)BtlUnit_GetStatus)(unit, type, &turns, &strength), BtlUnit_GetStatus(unit, type, &turns, &strength));
+    entry->type = type;
+    entry->turns = turns >= 0 ? turns : -turns;
+    entry->icon = disp->icon;
+    entry->scale = (Vec){1.0f, 1.0f, 1.0f};
+    entry->pivot = (Vec){0.0f, 0.0f, 0.0f};
+    entry->rot = (Vec){0.0f, 0.0f, 0.0f};
+    entry->color = (GXColor){0xFF, 0xFF, 0xFF, 0xFF};
+    entry->flags = disp->flags;
+    entry->trans = (Vec){0.0f, 0.0f, 0.0f};
+    return TRUE;
 }
 
-BOOL _bsi_guruguru(BattleUnit* unit, IconDispTableEntry* disp, BattleWorkStatusIconEntry* entry) {
-	int type = disp->id;
-	s8 turns, strength;
-	Vec v;
-	if (!PCCALL(((BOOL(*)(BattleUnit*, s8))BtlUnit_CheckStatus)(unit, type), BtlUnit_CheckStatus(unit, type))) {
-		unit->mStatusIconWork.dizzyAngle = 0.0f;
-		return FALSE;
-	}
-	unit->mStatusIconWork.dizzyAngle += 4.0f;
-	PCCALL(((void(*)(BattleUnit*, s8, s8*, s8*))BtlUnit_GetStatus)(unit, type, &turns, &strength), BtlUnit_GetStatus(unit, type, &turns, &strength));
-	entry->type = type;
-	entry->turns = turns >= 0 ? turns : -turns;
-	entry->icon = disp->something;
-	entry->scale = (Vec){1.0f,1.0f,1.0f};
-	entry->pivot = (Vec){0.0f,0.0f,0.0f};
-	v = (Vec){0.0f,0.0f,0.0f};
-	v.z = unit->mStatusIconWork.dizzyAngle;
-	entry->rot = v;
-	entry->color = (GXColor){0xFF, 0xFF, 0xFF, 0xFF};
-	entry->flags = disp->something2;
-	entry->trans = (Vec){0.0f,4.0f,0.0f};
-	return TRUE;
+/**
+ * Guruguru = Dizzy.
+ * Builds the Dizzy icon, spinning it 4 degrees per frame about its centre and raised 4 units;
+ * resets the spin and returns FALSE when the unit is not Dizzy.
+ */
+static BOOL _bsi_guruguru(BattleUnit* unit, IconDispTableEntry* disp, BattleWorkStatusIconEntry* entry) {
+    int type = disp->statusType;
+    s8 turns, strength;
+    Vec v;
+    if (!BtlUnit_CheckStatus(unit, (s8)type)) {
+        unit->statusIconWork.dizzyAngle = 0.0f;
+        return FALSE;
+    }
+    unit->statusIconWork.dizzyAngle += 4.0f;
+    PCCALL(((BtlUnit_GetStatusS8Fn)BtlUnit_GetStatus)(unit, type, &turns, &strength), BtlUnit_GetStatus(unit, type, &turns, &strength));
+    entry->type = type;
+    entry->turns = turns >= 0 ? turns : -turns;
+    entry->icon = disp->icon;
+    entry->scale = (Vec){1.0f, 1.0f, 1.0f};
+    entry->pivot = (Vec){0.0f, 0.0f, 0.0f};
+    v = (Vec){0.0f, 0.0f, 0.0f};
+    v.z = unit->statusIconWork.dizzyAngle;
+    entry->rot = v;
+    entry->color = (GXColor){0xFF, 0xFF, 0xFF, 0xFF};
+    entry->flags = disp->flags;
+    entry->trans = (Vec){0.0f, 4.0f, 0.0f};
+    return TRUE;
 }
 
-BOOL _bsi_allergy(BattleUnit* unit, IconDispTableEntry* disp, BattleWorkStatusIconEntry* entry) {
-	int type = disp->id;
-	s8 turns, strength;
-	if (!PCCALL(((BOOL(*)(BattleUnit*, s8))BtlUnit_CheckStatus)(unit, type), BtlUnit_CheckStatus(unit, type))) {
-		unit->mStatusIconWork.allergyBlinkTimer = 0;
-		return FALSE;
-	}
-	PCCALL(((void(*)(BattleUnit*, s8, s8*, s8*))BtlUnit_GetStatus)(unit, type, &turns, &strength), BtlUnit_GetStatus(unit, type, &turns, &strength));
-	entry->type = type;
-	entry->turns = turns >= 0 ? turns : -turns;
-	entry->icon = disp->something;
-	entry->scale = (Vec){1.0f,1.0f,1.0f};
-	entry->pivot = (Vec){0.0f,0.0f,0.0f};
-	entry->rot = (Vec){0.0f,0.0f,0.0f};
-	entry->color = (GXColor){0xFF, 0xFF, 0xFF, 0xFF};
-	entry->flags = disp->something2;
-	entry->trans = (Vec){0.0f,0.0f,0.0f};
-	unit->mStatusIconWork.allergyBlinkTimer++;
-	if (unit->mStatusIconWork.allergyBlinkTimer & 0x10) entry->flags |= 2;
-	return TRUE;
+/**
+ * Builds the Allergic icon, which blinks: it is hidden for 16 frames out of every 32.
+ * Returns FALSE (and resets the blink timer) when the unit is not Allergic.
+ */
+static BOOL _bsi_allergy(BattleUnit* unit, IconDispTableEntry* disp, BattleWorkStatusIconEntry* entry) {
+    int type = disp->statusType;
+    s8 turns, strength;
+    if (!BtlUnit_CheckStatus(unit, (s8)type)) {
+        unit->statusIconWork.allergyBlinkTimer = 0;
+        return FALSE;
+    }
+    PCCALL(((BtlUnit_GetStatusS8Fn)BtlUnit_GetStatus)(unit, type, &turns, &strength), BtlUnit_GetStatus(unit, type, &turns, &strength));
+    entry->type = type;
+    entry->turns = turns >= 0 ? turns : -turns;
+    entry->icon = disp->icon;
+    entry->scale = (Vec){1.0f, 1.0f, 1.0f};
+    entry->pivot = (Vec){0.0f, 0.0f, 0.0f};
+    entry->rot = (Vec){0.0f, 0.0f, 0.0f};
+    entry->color = (GXColor){0xFF, 0xFF, 0xFF, 0xFF};
+    entry->flags = disp->flags;
+    entry->trans = (Vec){0.0f, 0.0f, 0.0f};
+    unit->statusIconWork.allergyBlinkTimer++;
+    if (unit->statusIconWork.allergyBlinkTimer & 0x10)
+        entry->flags |= STATUS_ICON_HIDDEN;
+    return TRUE;
 }
 
-BOOL _bsi_biribiri(BattleUnit* unit, IconDispTableEntry* disp, BattleWorkStatusIconEntry* entry) {
-	s32 type = disp->id;
-	s8 turns, strength;
-	if (!PCCALL(((BOOL(*)(BattleUnit*, s8))BtlUnit_CheckStatus)(unit, disp->id), BtlUnit_CheckStatus(unit, disp->id))) {
-		unit->mStatusIconWork.elecState = 0;
-		unit->mStatusIconWork.elecTimer = 0;
-		return FALSE;
-	}
-	entry->scale = (Vec){1.0f,1.0f,1.0f};
-	switch (unit->mStatusIconWork.elecState) {
-		case 0:
-			unit->mStatusIconWork.elecState++;
-			unit->mStatusIconWork.elecTimer = irand(6) + 4;
-		case 1:
-			entry->scale = (Vec){1.0f,1.0f,1.0f};
-			unit->mStatusIconWork.elecTimer--;
-			if (unit->mStatusIconWork.elecTimer < 0) {
-				unit->mStatusIconWork.elecState++;
-				unit->mStatusIconWork.elecTimer = irand(100) + 30;
-			}
-			break;
-		case 2:
-			entry->scale = (Vec){0.8f,0.8f,1.0f};
-			unit->mStatusIconWork.elecTimer--;
-			if (unit->mStatusIconWork.elecTimer < 0) {
-				unit->mStatusIconWork.elecTimer = irand(6) + 4;
-				unit->mStatusIconWork.elecState = 1;
-			}
-			break;
-	}
-	PCCALL(((void(*)(BattleUnit*, s8, s8*, s8*))BtlUnit_GetStatus)(unit, type, &turns, &strength), BtlUnit_GetStatus(unit, type, &turns, &strength));
-	entry->type = type;
-	entry->turns = turns >= 0 ? turns : -turns;
-	entry->icon = disp->something;
-	entry->pivot = (Vec){0.0f,0.0f,0.0f};
-	entry->rot = (Vec){0.0f,0.0f,0.0f};
-	entry->color = (GXColor){0xFF, 0xFF, 0xFF, 0xFF};
-	entry->flags = disp->something2;
-	entry->trans = (Vec){0.0f,0.0f,0.0f};
-	return TRUE;
+/**
+ * Biribiri = Electrified.
+ * Builds the Electrified icon, which flickers: full size for 4-9 frames, then shrunk to 0.8 for 30-129 frames,
+ * at random lengths. Returns FALSE and resets the flicker when the unit is not Electrified.
+ */
+static BOOL _bsi_biribiri(BattleUnit* unit, IconDispTableEntry* disp, BattleWorkStatusIconEntry* entry) {
+    s32 type = disp->statusType;
+    s8 turns, strength;
+    if (!BtlUnit_CheckStatus(unit, (s8)disp->statusType)) {
+        unit->statusIconWork.elecState = 0;
+        unit->statusIconWork.elecTimer = 0;
+        return FALSE;
+    }
+    entry->scale = (Vec){1.0f, 1.0f, 1.0f};
+    switch (unit->statusIconWork.elecState) {
+        case 0:
+            unit->statusIconWork.elecState++;
+            unit->statusIconWork.elecTimer = irand(6) + 4;
+        case 1:
+            entry->scale = (Vec){1.0f, 1.0f, 1.0f};
+            unit->statusIconWork.elecTimer--;
+            if (unit->statusIconWork.elecTimer < 0) {
+                unit->statusIconWork.elecState++;
+                unit->statusIconWork.elecTimer = irand(100) + 30;
+            }
+            break;
+        case 2:
+            entry->scale = (Vec){0.8f, 0.8f, 1.0f};
+            unit->statusIconWork.elecTimer--;
+            if (unit->statusIconWork.elecTimer < 0) {
+                unit->statusIconWork.elecTimer = irand(6) + 4;
+                unit->statusIconWork.elecState = 1;
+            }
+            break;
+    }
+    PCCALL(((BtlUnit_GetStatusS8Fn)BtlUnit_GetStatus)(unit, type, &turns, &strength), BtlUnit_GetStatus(unit, type, &turns, &strength));
+    entry->type = type;
+    entry->turns = turns >= 0 ? turns : -turns;
+    entry->icon = disp->icon;
+    entry->pivot = (Vec){0.0f, 0.0f, 0.0f};
+    entry->rot = (Vec){0.0f, 0.0f, 0.0f};
+    entry->color = (GXColor){0xFF, 0xFF, 0xFF, 0xFF};
+    entry->flags = disp->flags;
+    entry->trans = (Vec){0.0f, 0.0f, 0.0f};
+    return TRUE;
 }
 
-
-BOOL _bsi_regeneration(BattleUnit* unit, IconDispTableEntry* disp, BattleWorkStatusIconEntry* entry) {
-	s32 type = disp->id;
-	s16* ctr;
-	GXColor c0, c1, col;
-	s32 t;
-	s8 turns, strength;
-	if (type == 0x17) {
-		ctr = &unit->mStatusIconWork.hpRegenTimer;
-		c0 = (GXColor){0xED, 0x14, 0x5B, 0xFF};
-		c1 = (GXColor){0xFF, 0xEA, 0x05, 0xFF};
-	} else if (type == 0x18) {
-		ctr = &unit->mStatusIconWork.fpRegenTimer;
-		c0 = (GXColor){0x3D, 0xD1, 0x09, 0xFF};
-		c1 = (GXColor){0x61, 0xE9, 0xE7, 0xFF};
-	} else {
-		return FALSE;
-	}
-	if (!PCCALL(((BOOL(*)(BattleUnit*, s8))BtlUnit_CheckStatus)(unit, disp->id), BtlUnit_CheckStatus(unit, disp->id))) {
-		*ctr = 0;
-		return FALSE;
-	}
-	(*ctr)++; t = (*ctr * 12) % 720;
-	if (t >= 360) t = 720 - t;
-	PCCALL(((void(*)(BattleUnit*, s8, s8*, s8*))BtlUnit_GetStatus)(unit, type, &turns, &strength), BtlUnit_GetStatus(unit, type, &turns, &strength));
-	entry->type = type;
-	entry->turns = turns >= 0 ? turns : -turns;
-	entry->icon = disp->something;
-	entry->scale = (Vec){1.0f,1.0f,1.0f};
-	entry->pivot = (Vec){0.0f,0.0f,0.0f};
-	entry->rot = (Vec){0.0f,0.0f,0.0f};
-	col = (GXColor){0x00, 0x00, 0x00, 0xFF};
-	col.r = intplGetValue(11, t, 360, c0.r, c1.r);
-	col.g = intplGetValue(11, t, 360, c0.g, c1.g);
-	col.b = intplGetValue(11, t, 360, c0.b, c1.b);
-	entry->color = col;
-	entry->flags = disp->something2;
-	entry->trans = (Vec){0.0f,0.0f,0.0f};
-	return TRUE;
+/**
+ * Builds the HP Regen or FP Regen icon (status 23 or 24),
+ * tinting it back and forth over 60 frames between pink-red and yellow (HP) or green and cyan (FP).
+ * Returns FALSE when the unit lacks the status or for any other status.
+ */
+static BOOL _bsi_regeneration(BattleUnit* unit, IconDispTableEntry* disp, BattleWorkStatusIconEntry* entry) {
+    s32 type = disp->statusType;
+    s16* ctr;
+    GXColor c0, c1, col;
+    s32 t;
+    s8 turns, strength;
+    if (type == STATUS_HP_REGEN) {
+        ctr = &unit->statusIconWork.hpRegenTimer;
+        c0 = (GXColor){0xED, 0x14, 0x5B, 0xFF};
+        c1 = (GXColor){0xFF, 0xEA, 0x05, 0xFF};
+    } else if (type == STATUS_FP_REGEN) {
+        ctr = &unit->statusIconWork.fpRegenTimer;
+        c0 = (GXColor){0x3D, 0xD1, 0x09, 0xFF};
+        c1 = (GXColor){0x61, 0xE9, 0xE7, 0xFF};
+    } else {
+        return FALSE;
+    }
+    if (!PCCALL(((BtlUnit_CheckStatusS8Fn)BtlUnit_CheckStatus)(unit, disp->statusType), BtlUnit_CheckStatus(unit, disp->statusType))) {
+        *ctr = 0;
+        return FALSE;
+    }
+    (*ctr)++;
+    t = (*ctr * 12) % 720;
+    if (t >= 360)
+        t = 720 - t;
+    PCCALL(((BtlUnit_GetStatusS8Fn)BtlUnit_GetStatus)(unit, type, &turns, &strength), BtlUnit_GetStatus(unit, type, &turns, &strength));
+    entry->type = type;
+    entry->turns = turns >= 0 ? turns : -turns;
+    entry->icon = disp->icon;
+    entry->scale = (Vec){1.0f, 1.0f, 1.0f};
+    entry->pivot = (Vec){0.0f, 0.0f, 0.0f};
+    entry->rot = (Vec){0.0f, 0.0f, 0.0f};
+    col = (GXColor){0x00, 0x00, 0x00, 0xFF};
+    col.r = intplGetValue(11, c0.r, c1.r, t, 360);
+    col.g = intplGetValue(11, c0.g, c1.g, t, 360);
+    col.b = intplGetValue(11, c0.b, c1.b, t, 360);
+    entry->color = col;
+    entry->flags = disp->flags;
+    entry->trans = (Vec){0.0f, 0.0f, 0.0f};
+    return TRUE;
 }

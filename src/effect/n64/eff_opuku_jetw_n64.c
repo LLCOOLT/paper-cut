@@ -1,4 +1,4 @@
-#pragma dollar_identifiers on
+// Paper Mario 64 effect: water jet (jetw) from a point with a scale and lifetime.
 #include "eff/n64/eff_opuku_jetw_n64.h"
 #include "driver/camdrv.h"
 #include "driver/dispdrv.h"
@@ -14,15 +14,10 @@ typedef struct JetwEnt {
     u8 alpha, pad;
 } JetwEnt;
 
-static __declspec(section ".data") f32 eff_opuku_jetw_n64_negone_one_a[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-static __declspec(section ".data") f32 negone_one$374[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-__declspec(section ".data") f32 eff_opuku_jetw_n64_one_negone_a[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-static __declspec(section ".data") f32 one_negone$373[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-__declspec(section ".data") f32 eff_opuku_jetw_n64_negone_one_b[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-static __declspec(section ".data") f32 negone_one$360[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-__declspec(section ".data") f32 eff_opuku_jetw_n64_one_negone_b[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-static __declspec(section ".data") f32 one_negone$359[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
+/**
+ * Steps of the type 0 water spray's three streams (20 per stream): blob offset, size,
+ * tilt and fade as each blob rises.
+ */
 static JetwEnt adata[] = {
     {0, 0, 30, 140, 0, 255, 0},
     {0, 6, 30, 120, 0, 250, 0},
@@ -90,41 +85,49 @@ static struct {
     JetwEnt e[33];
     s16 pad;
 } a2data = {{
-    {0, 0, 30, 140, 0, 255, 0},
-    {0, 6, 30, 120, 0, 240, 0},
-    {1, 12, 30, 110, -5, 230, 0},
-    {1, 17, 50, 100, -20, 220, 0},
-    {2, 22, 60, 90, -30, 210, 0},
-    {2, 26, 70, 90, -40, 200, 0},
-    {3, 28, 80, 85, -50, 190, 0},
-    {4, 32, 90, 80, -60, 180, 0},
-    {5, 35, 100, 77, -70, 120, 0},
-    {7, 38, 110, 65, -80, 80, 0},
-    {8, 40, 120, 54, -90, 40, 0},
-    {0, 0, 30, 140, 0, 255, 0},
-    {0, 6, 30, 120, 0, 240, 0},
-    {-1, 12, 30, 110, 5, 230, 0},
-    {-1, 17, 50, 100, 20, 220, 0},
-    {-2, 22, 60, 90, 30, 210, 0},
-    {-2, 26, 70, 90, 40, 200, 0},
-    {-3, 28, 80, 85, 50, 190, 0},
-    {-4, 32, 90, 80, 60, 180, 0},
-    {-5, 35, 100, 77, 70, 120, 0},
-    {-7, 38, 110, 65, 80, 80, 0},
-    {-8, 40, 120, 54, 90, 40, 0},
-    {0, 0, 30, 140, 0, 255, 0},
-    {0, 6, 30, 120, 0, 240, 0},
-    {0, 12, 30, 110, 5, 230, 0},
-    {0, 17, 50, 100, 20, 220, 0},
-    {0, 22, 60, 90, 30, 210, 0},
-    {0, 26, 70, 90, 40, 200, 0},
-    {0, 28, 80, 85, 50, 190, 0},
-    {0, 32, 90, 80, 60, 180, 0},
-    {0, 36, 100, 77, 70, 120, 0},
-    {0, 39, 110, 65, 80, 80, 0},
-    {0, 42, 120, 54, 90, 40, 0},
-}, 0};
+                {0, 0, 30, 140, 0, 255, 0},
+                {0, 6, 30, 120, 0, 240, 0},
+                {1, 12, 30, 110, -5, 230, 0},
+                {1, 17, 50, 100, -20, 220, 0},
+                {2, 22, 60, 90, -30, 210, 0},
+                {2, 26, 70, 90, -40, 200, 0},
+                {3, 28, 80, 85, -50, 190, 0},
+                {4, 32, 90, 80, -60, 180, 0},
+                {5, 35, 100, 77, -70, 120, 0},
+                {7, 38, 110, 65, -80, 80, 0},
+                {8, 40, 120, 54, -90, 40, 0},
+                {0, 0, 30, 140, 0, 255, 0},
+                {0, 6, 30, 120, 0, 240, 0},
+                {-1, 12, 30, 110, 5, 230, 0},
+                {-1, 17, 50, 100, 20, 220, 0},
+                {-2, 22, 60, 90, 30, 210, 0},
+                {-2, 26, 70, 90, 40, 200, 0},
+                {-3, 28, 80, 85, 50, 190, 0},
+                {-4, 32, 90, 80, 60, 180, 0},
+                {-5, 35, 100, 77, 70, 120, 0},
+                {-7, 38, 110, 65, 80, 80, 0},
+                {-8, 40, 120, 54, 90, 40, 0},
+                {0, 0, 30, 140, 0, 255, 0},
+                {0, 6, 30, 120, 0, 240, 0},
+                {0, 12, 30, 110, 5, 230, 0},
+                {0, 17, 50, 100, 20, 220, 0},
+                {0, 22, 60, 90, 30, 210, 0},
+                {0, 26, 70, 90, 40, 200, 0},
+                {0, 28, 80, 85, 50, 190, 0},
+                {0, 32, 90, 80, 60, 180, 0},
+                {0, 36, 100, 77, 70, 120, 0},
+                {0, 39, 110, 65, 80, 80, 0},
+                {0, 42, 120, 54, 90, 40, 0},
+            },
+            0};
 
+/**
+ * Extra tilt in degrees for each spray blob, picked by stream
+ * and step so neighbouring blobs turn differently.
+ */
+static s32 dat_ry[] = {0, 40, 55, 190, 20, 130, 270, 300};
+
+/** 16x16 quad drawn for the central blob and for every blob in the spray streams. */
 static effN64Vtx size16x16_tex32x32_vtx[] = {
     {-8, -8, 0, 0, 0, 255, 255, 255, 255},
     {8, -8, 0, 1024, 0, 255, 255, 255, 255},
@@ -132,6 +135,7 @@ static effN64Vtx size16x16_tex32x32_vtx[] = {
     {-8, 8, 0, 0, 1024, 255, 255, 255, 255},
 };
 
+/** A tall 6x22 quad standing on its origin; nothing in this effect draws it. */
 effN64Vtx size6x22_tex32x32_vtx[] = {
     {-3, 0, 0, 0, 0, 255, 255, 255, 255},
     {3, 0, 0, 1024, 0, 255, 255, 255, 255},
@@ -139,27 +143,25 @@ effN64Vtx size6x22_tex32x32_vtx[] = {
     {-3, 22, 0, 0, 1024, 255, 255, 255, 255},
 };
 
+static void effOpukuJetwMain(EffectEntry* effect);
+static void effOpukuJetwDisp(CameraId cameraId, EffectEntry* effect);
 
-static s32 jetw_ry_tbl[] = {0, 40, 55, 190, 20, 130, 270, 300};
-#pragma force_active on
-__declspec(section ".data") u32 gap_05_803A382C_data[1] = {0};
-#pragma force_active reset
-
-
-void effOpukuJetwMain(EffectEntry* effect);
-void effOpukuJetwDisp(CameraId cameraId, EffectEntry* effect);
-
+/**
+ * Spawns a spray of blobs at (x, y, z) scaled by scale, lasting lifetime frames (<= 0 until deleted).
+ * Type 0 uses the longer 20-step tables, other types 11 steps.
+ * Default blue; the Blooper boss (unit_boss_gesso) recolors it black as ink and rotates it. Soft-deletable.
+ */
 EffectEntry* effOpukuJetwN64Entry(s32 type, s32 lifetime, f32 x, f32 y, f32 z, f32 scale) {
     EffectEntry* effect;
     EffOpukuJetwN64Work* work;
 
     effect = effEntry();
-    effect->type = "OpukuJetwN64\0\0\0";
+    effect->type = "OpukuJetwN64";
     effect->count = 1;
     work = __memAlloc(HEAP_EFFECT, sizeof(EffOpukuJetwN64Work));
     effect->userdata = work;
     effect->callback = effOpukuJetwMain;
-    effect->flags |= 2;
+    effect->flags |= EFFECT_FLAG_SOFT_DELETE;
     work->type = type;
     work->frame = 0;
     if (lifetime <= 0) {
@@ -184,7 +186,11 @@ EffectEntry* effOpukuJetwN64Entry(s32 type, s32 lifetime, f32 x, f32 y, f32 z, f
     return effect;
 }
 
-void effOpukuJetwMain(EffectEntry* effect) {
+/**
+ * Fades the spray in over the first 8 frames and counts down its lifetime;
+ * a delete request starts a 16-frame wind-down.
+ */
+static void effOpukuJetwMain(EffectEntry* effect) {
     EffOpukuJetwN64Work* work = effect->userdata;
     Vec position;
     Vec tmp = {0.0f, 0.0f, 0.0f};
@@ -193,8 +199,8 @@ void effOpukuJetwMain(EffectEntry* effect) {
     tmp.y = work->position.y;
     tmp.z = work->position.z;
     position = tmp;
-    if (effect->flags & 4) {
-        effect->flags &= ~4;
+    if (effect->flags & EFFECT_FLAG_DELETE_REQUESTED) {
+        effect->flags &= ~EFFECT_FLAG_DELETE_REQUESTED;
         work->lifetime = 16;
     }
     if (work->lifetime < 1000) {
@@ -211,7 +217,11 @@ void effOpukuJetwMain(EffectEntry* effect) {
     dispEntry(CAMERA_3D, dispCalcZ(&position), 2, (DispCallback)effOpukuJetwDisp, effect);
 }
 
-void effOpukuJetwDisp(CameraId cameraId, EffectEntry* effect) {
+/**
+ * Draws a central blob, then three streams of 16x16 sprites (texture 0x34) whose positions, sizes,
+ * rotations and alphas come from step tables and advance with the frame.
+ */
+static void effOpukuJetwDisp(CameraId cameraId, EffectEntry* effect) {
     Mtx mtx;
     Mtx scale;
     Mtx rot;
@@ -232,16 +242,16 @@ void effOpukuJetwDisp(CameraId cameraId, EffectEntry* effect) {
     g = work->colorG;
     b = work->colorB;
     switch (work->type) {
-    case 0:
-        tbl = adata;
-        n = 20;
-        m = 3;
-        break;
-    default:
-        tbl = a2data.e;
-        n = 11;
-        m = 3;
-        break;
+        case 0:
+            tbl = adata;
+            n = 20;
+            m = 3;
+            break;
+        default:
+            tbl = a2data.e;
+            n = 11;
+            m = 3;
+            break;
     }
     PSMTXTrans(mtx, work->position.x, work->position.y, work->position.z);
     PSMTXRotRad(rot, 'y', 0.017453292f * -camGetPtr(CAMERA_3D)->viewYaw);
@@ -286,7 +296,7 @@ void effOpukuJetwDisp(CameraId cameraId, EffectEntry* effect) {
                     PSMTXTrans(mtx, (f32)ptr[idx].x, 10.0f + (f32)ptr[idx].y, 0.0f);
                     PSMTXScale(scale, 0.01f * (f32)tbl[idx].sx, 0.01f * (f32)tbl[idx].sy, 1.0f);
                     PSMTXConcat(mtx, scale, mtx);
-                    PSMTXRotRad(rot, 'z', 0.017453292f * ((f32)ptr[idx].rot + (f32)jetw_ry_tbl[(j + i) & 7]));
+                    PSMTXRotRad(rot, 'z', 0.017453292f * ((f32)ptr[idx].rot + (f32)dat_ry[(j + i) & 7]));
                     PSMTXConcat(mtx, rot, mtx);
                     PSMTXConcat(mtx2, mtx, mtx);
                     GXLoadPosMtxImm(mtx, GX_PNMTX0);
@@ -300,4 +310,3 @@ void effOpukuJetwDisp(CameraId cameraId, EffectEntry* effect) {
         }
     }
 }
-

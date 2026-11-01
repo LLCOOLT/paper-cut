@@ -1,8 +1,9 @@
+// tou_07 (闘技場, Glitz Pit): the champion's room; exits to tou_04, tou_08, tou_10, tou_13.
+
 #include "battle/battle_unit.h"
 #include "eff/eff_starstone.h"
 #include "evt/evt_cmd.h"
 
-#pragma force_active on
 #include "pmario_sound.h"
 #include "mario/mario_pouch.h"
 #include "mario/mario.h"
@@ -15,135 +16,36 @@
 #include "evt/evt_sub.h"
 #include "tou.h"
 #include "evt/evt_npc.h"
+#include "evt/evt_cam.h"
+#include "evt/evt_case.h"
+#include "evt/evt_eff.h"
+#include "evt/evt_fade.h"
+#include "evt/evt_hit.h"
+#include "evt/evt_item.h"
+#include "evt/evt_map.h"
+#include "evt/evt_mario.h"
+#include "evt/evt_mobj.h"
+#include "evt/evt_msg.h"
+#include "evt/evt_party.h"
+#include "evt/evt_pouch.h"
+#include "evt/evt_seq.h"
+#include "evt/evt_snd.h"
+#include "version.h"
+#include "evt/evt_story.h"
+#include "driver/casedrv.h"
+#include "driver/mapdrv.h"
+#include "driver/camdrv.h"
 
-USER_FUNC(evt_bero_get_entername);
-USER_FUNC(evt_bero_get_info);
-USER_FUNC(evt_bero_mapchange);
-USER_FUNC(evt_cam3d_evt_off);
-USER_FUNC(evt_cam3d_evt_set);
-USER_FUNC(evt_cam_letter_box_disable);
-USER_FUNC(evt_cam_shake);
-USER_FUNC(evt_eff);
-USER_FUNC(evt_eff_delete);
-USER_FUNC(evt_eff_fukidashi);
-USER_FUNC(evt_exit_case_evt);
-USER_FUNC(evt_fade_end_wait);
-USER_FUNC(evt_fade_entry);
-USER_FUNC(evt_fade_set_mapchange_type);
-USER_FUNC(evt_fade_set_spot_pos);
-USER_FUNC(evt_hitobj_name_callback);
-USER_FUNC(evt_hitobj_onoff);
-USER_FUNC(evt_item_entry);
-USER_FUNC(evt_item_flag_on);
-USER_FUNC(evt_item_get_item);
-USER_FUNC(evt_item_get_item_end_wait);
-USER_FUNC(evt_key_get_buttontrg);
-USER_FUNC(evt_map_checkanim);
-USER_FUNC(evt_map_playanim);
-USER_FUNC(evt_mapobj_flag_onoff);
-USER_FUNC(evt_mapobj_rotate);
-USER_FUNC(evt_mario_adjust_dir);
-USER_FUNC(evt_mario_balloon_bikkuri);
-USER_FUNC(evt_mario_balloon_off);
-USER_FUNC(evt_mario_flag_onoff);
-USER_FUNC(evt_mario_get_exparty);
-USER_FUNC(evt_mario_get_party);
-USER_FUNC(evt_mario_get_pos);
-USER_FUNC(evt_mario_goodbye_party);
-USER_FUNC(evt_mario_jump_pos);
-USER_FUNC(evt_mario_key_onoff);
-USER_FUNC(evt_mario_mov_pos2);
-USER_FUNC(evt_mario_set_dir);
-USER_FUNC(evt_mario_set_dir_npc);
-USER_FUNC(evt_mario_set_party_pos);
-USER_FUNC(evt_mario_set_pos);
-USER_FUNC(evt_mario_set_pose);
-USER_FUNC(evt_mobj_get_position);
-USER_FUNC(evt_mobj_wait_animation_end);
-USER_FUNC(evt_msg_continue);
-USER_FUNC(evt_msg_print);
-USER_FUNC(evt_msg_print_party);
-USER_FUNC(evt_msg_select);
-USER_FUNC(evt_msg_toge);
-USER_FUNC(evt_npc_delete);
-USER_FUNC(evt_npc_entry);
-USER_FUNC(evt_npc_flag_onoff);
-USER_FUNC(evt_npc_move_position);
-USER_FUNC(evt_npc_set_anim);
-USER_FUNC(evt_npc_set_position);
-USER_FUNC(evt_npc_set_ry);
-USER_FUNC(evt_npc_setup);
-USER_FUNC(evt_npc_status_onoff);
-USER_FUNC(evt_party_move_pos2);
-USER_FUNC(evt_party_run);
-USER_FUNC(evt_party_set_dir);
-USER_FUNC(evt_party_set_dir_npc);
-USER_FUNC(evt_party_set_pos);
-USER_FUNC(evt_party_stop);
-USER_FUNC(evt_pouch_all_party_recovery);
-USER_FUNC(evt_pouch_mario_recovery);
-USER_FUNC(evt_pouch_open_mail);
-USER_FUNC(evt_pouch_receive_mail);
-USER_FUNC(evt_run_case_evt);
-USER_FUNC(evt_seq_wait);
-USER_FUNC(evt_set_dir_to_target);
-USER_FUNC(evt_snd_bgmoff);
-USER_FUNC(evt_snd_bgmon);
-USER_FUNC(evt_snd_envoff);
-USER_FUNC(evt_snd_envon);
-USER_FUNC(evt_snd_sfxon_3d);
-USER_FUNC(evt_sub_animgroup_async);
-USER_FUNC(evt_sub_get_mapname);
-USER_FUNC(evt_sub_intpl_msec_get_value);
-USER_FUNC(evt_sub_intpl_msec_init);
-USER_FUNC(evt_sub_rumble_onoff);
-USER_FUNC(evt_tou_get_ranking);
-USER_FUNC(mario_recovery);
 static USER_FUNC(paper_off);
 static USER_FUNC(paper_on);
-USER_FUNC(tou_07_snd_on);
-USER_FUNC(tou_07_snd_off);
+#if VERSION >= VERSION_JP
 USER_FUNC(tou_07_icon_off);
 USER_FUNC(tou_07_belt_camid);
-
-f32 fd_tou_07_negone_one_374[2] __attribute__((aligned(8)));
-f32 fd_tou_07_neg_one_382;
-f32 fd_tou_07___local_PI_383;
-f32 fd_tou_07___local_3PIO2_385;
-f32 fd_tou_07_one_negone_373[2] __attribute__((aligned(8)));
-f32 fd_tou_07___local_PIO2_384;
-f32 fd_tou_07_one_381;
-f32 fd_tou_07_negone_one_360[2] __attribute__((aligned(8)));
-f32 fd_tou_07_neg_one_365;
-f32 fd_tou_07___local_PI_366;
-f32 fd_tou_07___local_3PIO2_368;
-f32 fd_tou_07_one_negone_359[2] __attribute__((aligned(8)));
-f32 fd_tou_07___local_PIO2_367;
-f32 fd_tou_07_one_364;
-static EvtWord n_door_open[12];
-static EvtWord n_door_close[12];
-static BeroEntry bero_data[3];
-static EvtWord init_gans[2];
-static EvtWord talk_gans[2];
-static NpcSetupInfo npcEnt[4];
-static EvtWord evt_sensyu[169];
-static EvtWord evt_champion[578];
-EvtWord evt_champion_re[308];
-static EvtWord evt_dakuto[39];
-EvtWord evt_dakuto2[44];
-#ifdef VERSION_G8ME01
-EvtWord evt_tou_bed[440];
-#else
-EvtWord evt_tou_bed[432];
 #endif
-static EvtWord bed_entry[10];
-static EvtWord mobj_box00[34];
-EvtWord tou_07_init_evt[286];
 
-#ifdef VERSION_G8ME01
-s32 marioKeyOffChk(void);
-s32 marioCtrlOffChk(void);
+#if VERSION >= VERSION_US
 
+/** Script helper: args[0] receives 1 if Mario's key input or control is currently disabled, else 0. */
 USER_FUNC(tou_07_mario_keyoff_check) {
     EvtWord* args = event->args;
 
@@ -156,74 +58,63 @@ USER_FUNC(tou_07_mario_keyoff_check) {
 }
 #endif
 
+#if VERSION >= VERSION_JP
+/** Script helper: re-enables sound effects (clears the SFX mute flag). */
 USER_FUNC(tou_07_snd_on) {
-    psndClearFlag(0x80);
+    psndClearFlag(PSND_FLAG_MUTE_SFX);
     return EVT_RETURN_DONE;
 }
+#endif
 
+#if VERSION >= VERSION_JP
+/** Script helper: mutes sound effects (sets the SFX mute flag), used while Mario sleeps in the bed. */
 USER_FUNC(tou_07_snd_off) {
-    psndSetFlag(0x80);
+    psndSetFlag(PSND_FLAG_MUTE_SFX);
     return EVT_RETURN_DONE;
 }
+#endif
 
-USER_FUNC(mario_recovery) {
+/** Script helper: restores Mario's HP and FP to their maximums (the bed's rest). */
+static USER_FUNC(mario_recovery) {
     pouchSetHP(pouchGetMaxHP());
     pouchSetFP(pouchGetMaxFP());
     return EVT_RETURN_DONE;
 }
 
+/** Script helper: ends the paper-slit transformation on Mario (marioPaperOff). */
 static USER_FUNC(paper_off) {
     marioPaperOff();
     return EVT_RETURN_DONE;
 }
 
-f32 fd_tou_07_negone_one_374[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_tou_07_neg_one_382 = -1.0f;
-
-f32 fd_tou_07___local_PI_383 = 3.1415927f;
-
-f32 fd_tou_07___local_3PIO2_385 = 4.712389f;
-
-f32 fd_tou_07_one_negone_373[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_tou_07___local_PIO2_384 = 1.5707964f;
-
-f32 fd_tou_07_one_381 = 1.0f;
-
-f32 fd_tou_07_negone_one_360[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_tou_07_neg_one_365 = -1.0f;
-
-f32 fd_tou_07___local_PI_366 = 3.1415927f;
-
-f32 fd_tou_07___local_3PIO2_368 = 4.712389f;
-
-f32 fd_tou_07_one_negone_359[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_tou_07___local_PIO2_367 = 1.5707964f;
-
-f32 fd_tou_07_one_364 = 1.0f;
-
+/**
+ * Door animation callback for the room door (door_1), opening: LW(0) is the swing angle;
+ * turns door_1 about the Y axis by 0.44 times the angle.
+ */
 static EVT_BEGIN(n_door_open)
     MULTIPLY_FLOAT(LW(0), FLOAT(0.44433594f))
     CALL(evt_mapobj_rotate, 1, STRING("door_1"), 0, LW(0), 0)
     RETURN
 EVT_END()
 
+/**
+ * Door animation callback for the room door (door_1), closing:
+ * turns door_1 about the Y axis by -0.44 times the angle.
+ */
 static EVT_BEGIN(n_door_close)
     MULTIPLY_FLOAT(LW(0), FLOAT(-0.44433594f))
     CALL(evt_mapobj_rotate, 1, STRING("door_1"), 0, LW(0), 0)
     RETURN
 EVT_END()
 
+/** Doors of the champion's room: the north door to the corridor (tou_04) and the east door to tou_13. */
 static BeroEntry bero_data[] = {
     {
         "n_bero", // hitName
         1, // type
         4, // sfxId
-        20000, // directionId
-        100000, // centerPosition
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         NULL, // enterEvent
@@ -240,8 +131,8 @@ static BeroEntry bero_data[] = {
         "e_bero", // hitName
         0, // type
         1, // sfxId
-        20000, // directionId
-        100000, // centerPosition
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         NULL, // enterEvent
@@ -254,18 +145,21 @@ static BeroEntry bero_data[] = {
     {0},
 };
 
+/** NPC init for Grubba (ガンス) in this room: does nothing. */
 static EVT_BEGIN(init_gans)
     RETURN
 EVT_END()
 
+/** Talk script of Grubba in this room: does nothing. */
 static EVT_BEGIN(talk_gans)
     RETURN
 EVT_END()
 
+/** NPCs of the champion's room: Grubba, Jolene and a guard. */
 static NpcSetupInfo npcEnt[] = {
     {
-        /*"ガンス"*/"\x83\x4B\x83\x93\x83\x58", // name
-        0x40000600, // flags
+        "ガンス", // name
+        NPC_FLAG_NO_WALL_HIT | NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM, // flags
         0, // reactionFlags
         init_gans, // initEvent
         NULL, // regularEvent
@@ -276,8 +170,8 @@ static NpcSetupInfo npcEnt[] = {
         0.0f, 0.0f, 0.0f, 0.0f, 0, // searchRange..battleInfoId
     },
     {
-        /*"キノシコワ"*/"\x83\x4C\x83\x6D\x83\x56\x83\x52\x83\x8F", // name
-        0x40000620, // flags
+        "キノシコワ", // name
+        NPC_FLAG_NO_WALL_HIT | NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM | NPC_FLAG_INTANGIBLE, // flags
         0, // reactionFlags
         init_gans, // initEvent
         NULL, // regularEvent
@@ -288,8 +182,8 @@ static NpcSetupInfo npcEnt[] = {
         0.0f, 0.0f, 0.0f, 0.0f, 0, // searchRange..battleInfoId
     },
     {
-        /*"ガードマン"*/"\x83\x4B\x81\x5B\x83\x68\x83\x7D\x83\x93", // name
-        0x40000600, // flags
+        "ガードマン", // name
+        NPC_FLAG_NO_WALL_HIT | NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM, // flags
         0, // reactionFlags
         init_gans, // initEvent
         NULL, // regularEvent
@@ -302,6 +196,12 @@ static NpcSetupInfo npcEnt[] = {
     {0},
 };
 
+/**
+ * Grubba's tour of the champion's room, run from the map init while GSWF_TOU_GRUBBA_ESCORT_PENDING is set:
+ * Grubba (ガンス) opens the door and walks in ahead of Mario and the partner,
+ * the door shuts and he shows off the room the champion gets the key to (stg3_tou_49),
+ * then the map changes to tou_08 with a page-flip transition.
+ */
 static EVT_BEGIN(evt_sensyu)
     CALL(evt_mario_key_onoff, 0)
     CALL(evt_party_stop, 0)
@@ -311,11 +211,11 @@ static EVT_BEGIN(evt_sensyu)
     CALL(evt_cam3d_evt_set, 0, 145, 534, 0, 50, -8, 0, 11)
     CALL(evt_seq_wait, 2)
     SET_VALUE(LW(1), 0)
-    SPAWN_EVENT(PTR(bero_open_door_play_se))
+    SPAWN_EVENT(bero_open_door_play_se)
     CALL(evt_sub_intpl_msec_init, 11, 0, -180, 500)
     LOOP(0)
         CALL(evt_sub_intpl_msec_get_value)
-        CALL_CHILD(PTR(n_door_open))
+        CALL_CHILD(n_door_open)
         IF_INT_EQUAL(LW(1), 0)
             BREAK_LOOP
         END_IF
@@ -337,23 +237,32 @@ static EVT_BEGIN(evt_sensyu)
     CALL(evt_mario_mov_pos2, 35, -50, FLOAT(60.0f))
     CALL(evt_mario_set_dir_npc, STRING("ガンス"))
     SET_VALUE(LW(1), 0)
-    SPAWN_EVENT(PTR(bero_close_door_play_se))
+    SPAWN_EVENT(bero_close_door_play_se)
     CALL(evt_sub_intpl_msec_init, 11, -180, 0, 500)
     LOOP(0)
         CALL(evt_sub_intpl_msec_get_value)
-        CALL_CHILD(PTR(n_door_open))
+        CALL_CHILD(n_door_open)
         IF_INT_EQUAL(LW(1), 0)
             BREAK_LOOP
         END_IF
     END_LOOP
     CALL(evt_msg_print, 0, STRING("stg3_tou_49"), 0, STRING("ガンス"))
     WAIT_MS(300)
-    CALL(evt_fade_set_mapchange_type, 0, 49, 0, 50, 0)
+    CALL(evt_fade_set_mapchange_type, 0, FADE_PAGE_FLIP_Z1, 0, FADE_PAGE_FLIP_A1, 0)
     CALL(evt_bero_mapchange, STRING("tou_08"), 0)
     RETURN
 EVT_END()
 
+/**
+ * Scene when Mario is led to the champion's room after the title match:
+ * Jolene (キノシコワ) shows Mario and the partner in, says stg3_tou_449, and leaves;
+ * the partner and Mario puzzle over what they find (stg3_tou_450 to 450_05)
+ * until Mario's mail arrives with the vibration jingle and a "!" balloon, he reads it (stg3_tou_450_06, 450_07),
+ * mail 43 is received and opened, and the story advances to STORY_STG3_30_NEW_CHAMPION.
+ */
 static EVT_BEGIN(evt_champion)
+    // Mario and his partner stand at the door of the champion's room with Jolene; she opens the door
+    // and shows them in.
     CALL(evt_mario_key_onoff, 0)
     CALL(evt_mario_set_pos, 0, 0, -160)
     CALL(evt_party_set_pos, 0, 0, 0, -165)
@@ -363,11 +272,11 @@ static EVT_BEGIN(evt_champion)
     CALL(evt_npc_set_ry, STRING("キノシコワ"), 90)
     CALL(evt_seq_wait, 2)
     SET_VALUE(LW(1), 0)
-    SPAWN_EVENT(PTR(bero_open_door_play_se))
+    SPAWN_EVENT(bero_open_door_play_se)
     CALL(evt_sub_intpl_msec_init, 11, 0, -180, 500)
     LOOP(0)
         CALL(evt_sub_intpl_msec_get_value)
-        CALL_CHILD(PTR(n_door_open))
+        CALL_CHILD(n_door_open)
         IF_INT_EQUAL(LW(1), 0)
             BREAK_LOOP
         END_IF
@@ -380,36 +289,42 @@ static EVT_BEGIN(evt_champion)
         CALL(evt_party_move_pos2, 0, 3, -110, FLOAT(60.0f))
         CALL(evt_party_stop, 0)
         WAIT_MS(100)
+#if VERSION <= VERSION_DEMO_JP
+        CALL(evt_party_move_pos2, 0, 60, -100, FLOAT(60.0f))
+#else
         CALL(evt_party_move_pos2, 0, 70, -110, FLOAT(60.0f))
+#endif
         CALL(evt_party_set_dir_npc, 0, STRING("キノシコワ"))
     END_INLINE_EVENT
     CALL(evt_mario_mov_pos2, 3, -110, FLOAT(60.0f))
     CALL(evt_mario_mov_pos2, 40, -100, FLOAT(60.0f))
     CALL(evt_mario_set_dir_npc, STRING("キノシコワ"))
     SET_VALUE(LW(1), 0)
-    SPAWN_EVENT(PTR(bero_close_door_play_se))
+    SPAWN_EVENT(bero_close_door_play_se)
     CALL(evt_sub_intpl_msec_init, 11, -180, 0, 500)
     LOOP(0)
         CALL(evt_sub_intpl_msec_get_value)
-        CALL_CHILD(PTR(n_door_open))
+        CALL_CHILD(n_door_open)
         IF_INT_EQUAL(LW(1), 0)
             BREAK_LOOP
         END_IF
     END_LOOP
+    // The camera moves in and Jolene says this is now the champion's room.
     CALL(evt_cam3d_evt_set, 20, 90, 189, 20, 60, -9, 500, 11)
     WAIT_MS(500)
     CALL(evt_msg_print, 0, STRING("stg3_tou_449"), 0, STRING("キノシコワ"))
     WAIT_MS(300)
+    // Jolene bows out and leaves, closing the door behind her.
     CALL(evt_npc_set_anim, STRING("キノシコワ"), STRING("M_1"))
     WAIT_MS(600)
     CALL(evt_npc_set_anim, STRING("キノシコワ"), STRING("S_1"))
     CALL(evt_npc_move_position, STRING("キノシコワ"), 0, -140, 0, FLOAT(80.0f), 1)
     SET_VALUE(LW(1), 0)
-    SPAWN_EVENT(PTR(bero_open_door_play_se))
+    SPAWN_EVENT(bero_open_door_play_se)
     CALL(evt_sub_intpl_msec_init, 11, 0, 180, 500)
     LOOP(0)
         CALL(evt_sub_intpl_msec_get_value)
-        CALL_CHILD(PTR(n_door_open))
+        CALL_CHILD(n_door_open)
         IF_INT_EQUAL(LW(1), 0)
             BREAK_LOOP
         END_IF
@@ -420,15 +335,16 @@ static EVT_BEGIN(evt_champion)
     END_INLINE_EVENT
     WAIT_MS(1000)
     SET_VALUE(LW(1), 0)
-    SPAWN_EVENT(PTR(bero_close_door_play_se))
+    SPAWN_EVENT(bero_close_door_play_se)
     CALL(evt_sub_intpl_msec_init, 11, 180, 0, 500)
     LOOP(0)
         CALL(evt_sub_intpl_msec_get_value)
-        CALL_CHILD(PTR(n_door_open))
+        CALL_CHILD(n_door_open)
         IF_INT_EQUAL(LW(1), 0)
             BREAK_LOOP
         END_IF
     END_LOOP
+    // The partner looks around the room with Mario, puzzled and then startled by what they find.
     CALL(evt_cam3d_evt_set, 63, 78, 139, 63, 55, -9, 1000, 11)
     CALL(evt_party_move_pos2, 0, 85, -100, FLOAT(60.0f))
     CALL(evt_party_set_dir, 0, 270, 200)
@@ -450,6 +366,7 @@ static EVT_BEGIN(evt_champion)
     CALL(evt_snd_sfxon_3d, STRING("SFX_VOICE_MARIO_FIND1"), LW(0), LW(1), LW(2), 0)
     CALL(evt_eff_fukidashi, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
     WAIT_MS(1000)
+    // The camera sweeps around the room as the two trade thoughts about it.
     CALL(evt_cam3d_evt_set, -75, 68, 270, 59, 78, 2, 1000, 11)
     WAIT_MS(1000)
     LOOP(2)
@@ -469,8 +386,9 @@ static EVT_BEGIN(evt_champion)
         CALL(evt_eff_fukidashi, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
         WAIT_MS(1500)
     END_INLINE_EVENT
-    CALL(evt_snd_bgmoff, 1024)
-    CALL(evt_snd_bgmon, 1, STRING("BGM_FF_MAIL_RECEPTION2"))
+    // The jingle of Mario's phone mail sounds and he starts to vibrate; a "!" balloon appears over his head.
+    CALL(evt_snd_bgmoff, PSND_FADE_HOLD)
+    CALL(evt_snd_bgmon, PSND_CH(1), STRING("BGM_FF_MAIL_RECEPTION2"))
     SPAWN_EVENT_GET_ID(PTR(evt_sub_mail_vibration), LW(10))
     WAIT_MS(500)
     CALL(evt_msg_print_party, STRING("stg3_tou_450_05"))
@@ -482,6 +400,7 @@ static EVT_BEGIN(evt_champion)
         WAIT_FRAMES(1)
     END_LOOP
     CALL(evt_mario_balloon_bikkuri)
+    // Mario waits for A to be pressed, then the mail arrives with a rumble.
     LOOP(0)
         CALL(evt_key_get_buttontrg, 0, LW(0))
         IF_INT_EQUAL(LW(0), 256)
@@ -490,8 +409,8 @@ static EVT_BEGIN(evt_champion)
         WAIT_FRAMES(1)
     END_LOOP
     CALL(evt_mario_balloon_off)
-    CALL(evt_snd_bgmoff, 513)
-    CALL(evt_snd_bgmon, 288, 0)
+    CALL(evt_snd_bgmoff, PSND_FADE_OUT | PSND_CH(1))
+    CALL(evt_snd_bgmon, PSND_FADE_RESUME | PSND_FADE_IN, 0)
     CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
     CALL(evt_snd_sfxon_3d, STRING("SFX_MAIL_RECEPTION1"), LW(0), LW(1), LW(2), 0)
     DELETE_EVENT(LW(10))
@@ -503,22 +422,32 @@ static EVT_BEGIN(evt_champion)
     CALL(evt_snd_sfxon_3d, STRING("SFX_MAIL_RECEPTION2"), LW(0), LW(1), LW(2), 0)
     CALL(evt_mario_set_pose, STRING("M_N_10"))
     WAIT_MS(500)
+    // He reads the mail, and the partner reacts.
     CALL(evt_msg_print, 0, STRING("stg3_tou_450_06"), 0, 0)
     WAIT_MS(300)
     CALL(evt_mario_set_pose, STRING("M_S_1"))
     CALL(evt_msg_print_party, STRING("stg3_tou_450_07"))
     WAIT_MS(300)
+    // The mail is received and opened, the story moves on to the new champion and control returns.
     CALL(evt_cam3d_evt_off, 500, 11)
     WAIT_MS(500)
     CALL(evt_pouch_receive_mail, 43)
     CALL(evt_pouch_open_mail, 43)
-    SET_VALUE(GSW(0), 158)
+    SET_VALUE(GSW(GSW_STORY_PROGRESS), STORY_STG3_30_NEW_CHAMPION)
     CALL(evt_party_run, 0)
     CALL(evt_mario_key_onoff, 1)
     RETURN
 EVT_END()
 
+/**
+ * Scene when Mario wins the title back after STORY_STG3_34_RETURN_TO_ROGUEPORT (GSWF_TOU_REMATCH_CHAMPION still
+ * 0): Jolene (キノシコワ) congratulates him on his comeback (stg3_tou_re_140)
+ * and gives him the Champ's Belt (in JP and later shown as a belt NPC with a star stone glow above Mario).
+ * She guesses he means to move on and keeps him registered to defend his title (re_141, re_142),
+ * says she must plan Rawk Hawk's return (re_143) and leaves through the door; sets GSWF_TOU_REMATCH_CHAMPION.
+ */
 EVT_BEGIN(evt_champion_re)
+    // Jolene waits in the champion's room with Mario and his partner; the camera frames her.
     CALL(evt_mario_key_onoff, 0)
     CALL(evt_mario_set_pos, 65, 0, -95)
     CALL(evt_party_set_pos, 0, 95, 0, -105)
@@ -529,12 +458,19 @@ EVT_BEGIN(evt_champion_re)
     CALL(evt_cam3d_evt_set, 45, 91, 266, 45, 57, -11, 0, 11)
     CALL(evt_seq_wait, 2)
     WAIT_MS(1000)
+    // She congratulates Mario on winning the title back.
     CALL(evt_msg_print, 0, STRING("stg3_tou_re_140"), 0, STRING("キノシコワ"))
-    CALL(evt_npc_flag_onoff, 1, STRING("キノシコワ"), 32)
+#if VERSION >= VERSION_JP
+    CALL(evt_npc_flag_onoff, 1, STRING("キノシコワ"), NPC_FLAG_INTANGIBLE)
+#endif
     CALL(evt_npc_move_position, STRING("キノシコワ"), 40, -95, 0, FLOAT(80.0f), 1)
     WAIT_MS(500)
     CALL(evt_npc_move_position, STRING("キノシコワ"), 30, -95, 0, FLOAT(80.0f), 1)
     CALL(evt_set_dir_to_target, STRING("キノシコワ"), STRING("mario"))
+    // She hands him the Champ's Belt, which is held up for the fanfare.
+#if VERSION <= VERSION_DEMO_JP
+    CALL(evt_item_entry, STRING("belt"), ITEM_CHAMPS_BELT, 0, -1000, 0, ITEM_ENTRY_FIXED_NO_TOUCH, -1, 0)
+#else
     CALL(evt_npc_entry, STRING("ベルト"), STRING("c_bred_h"))
     CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
     ADD(LW(1), 56)
@@ -544,12 +480,16 @@ EVT_BEGIN(evt_champion_re)
     ADD(LW(2), 15)
     CALL(evt_eff, STRING("belt"), STRING("starstone"), 9, LW(0), LW(1), LW(2), FLOAT(0.75f), 0, 0, 0, 0, 0, 0, 0)
     CALL(tou_07_belt_camid)
-    CALL(evt_item_entry, STRING("belt"), 65, 0, -1000, 0, 17, -1, 0)
+    CALL(evt_item_entry, STRING("belt"), ITEM_CHAMPS_BELT, 0, -1000, 0, ITEM_ENTRY_FIXED_NO_TOUCH, -1, 0)
     CALL(tou_07_icon_off)
+#endif
     CALL(evt_item_get_item, STRING("belt"))
     CALL(evt_item_get_item_end_wait, STRING("belt"))
+#if VERSION >= VERSION_JP
     CALL(evt_npc_delete, STRING("ベルト"))
     CALL(evt_eff_delete, STRING("belt"))
+#endif
+    // She guesses he means to move on and keeps him registered to defend his title.
     CALL(evt_msg_print, 0, STRING("stg3_tou_re_141"), 0, STRING("キノシコワ"))
     CALL(evt_mario_set_pose, STRING("M_N_2"))
     WAIT_MS(300)
@@ -558,6 +498,7 @@ EVT_BEGIN(evt_champion_re)
     CALL(evt_mario_set_pose, STRING("M_N_2"))
     WAIT_MS(300)
     CALL(evt_mario_set_pose, STRING("M_S_1"))
+    // She says she must plan Rawk Hawk's return, bows out and leaves through the door.
     CALL(evt_msg_print, 0, STRING("stg3_tou_re_143"), 0, STRING("キノシコワ"))
     WAIT_MS(300)
     CALL(evt_npc_set_anim, STRING("キノシコワ"), STRING("M_1"))
@@ -566,7 +507,7 @@ EVT_BEGIN(evt_champion_re)
     CALL(evt_npc_status_onoff, 1, STRING("キノシコワ"), 2)
     CALL(evt_npc_move_position, STRING("キノシコワ"), 0, -130, 0, FLOAT(80.0f), 1)
     SET_VALUE(LW(1), 0)
-    SPAWN_EVENT(PTR(bero_open_door_play_se))
+    SPAWN_EVENT(bero_open_door_play_se)
     CALL(evt_sub_intpl_msec_init, 11, 0, 180, 500)
     LOOP(0)
         CALL(evt_sub_intpl_msec_get_value)
@@ -583,7 +524,7 @@ EVT_BEGIN(evt_champion_re)
     END_INLINE_EVENT
     WAIT_MS(800)
     SET_VALUE(LW(1), 0)
-    SPAWN_EVENT(PTR(bero_close_door_play_se))
+    SPAWN_EVENT(bero_close_door_play_se)
     CALL(evt_sub_intpl_msec_init, 11, 180, 0, 500)
     LOOP(0)
         CALL(evt_sub_intpl_msec_get_value)
@@ -594,26 +535,38 @@ EVT_BEGIN(evt_champion_re)
         END_IF
         WAIT_FRAMES(1)
     END_LOOP
-    SET_VALUE(GSWF(2503), 1)
+    // The rematch champion flag is set and control returns to Mario.
+    SET_VALUE(GSWF(GSWF_TOU_REMATCH_CHAMPION), 1)
     CALL(evt_cam3d_evt_off, 500, 11)
     CALL(evt_mario_key_onoff, 1)
     RETURN
 EVT_END()
 
+/**
+ * Air duct scene: the duct cover is knocked off with a camera shake and clang,
+ * the vent cover object kankikuti is hidden and the wall hit object win_kabe switched off.
+ * The first time the story advances to STORY_STG3_30_01_AIR_DUCT_ENTRANCE;
+ * on later visits GSWF_TOU07_DUCT_ENTRY_OPEN_REVISIT is set instead. The case event then exits.
+ */
 static EVT_BEGIN(evt_dakuto)
-    CALL(evt_cam_shake, 4, FLOAT(0.049804688f), FLOAT(0.0f), 500)
+    CALL(evt_cam_shake, CAMERA_3D, FLOAT(0.049804688f), FLOAT(0.0f), 500)
     CALL(evt_snd_sfxon_3d, STRING("SFX_STG3_DUCT_KOUSHI_HIT1"), 135, 80, -95, 0)
-    CALL(evt_mapobj_flag_onoff, 1, 1, STRING("kankikuti"), 1)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("kankikuti"), MAPOBJ_FLAG_HIDE)
     CALL(evt_hitobj_onoff, STRING("win_kabe"), 1, 0)
-    IF_INT_LESS(GSW(0), 159)
-        SET_VALUE(GSW(0), 159)
-        ELSE
-        SET_VALUE(GSWF(2502), 1)
+    IF_INT_LESS(GSW(GSW_STORY_PROGRESS), STORY_STG3_30_01_AIR_DUCT_ENTRANCE)
+        SET_VALUE(GSW(GSW_STORY_PROGRESS), STORY_STG3_30_01_AIR_DUCT_ENTRANCE)
+    ELSE
+        SET_VALUE(GSWF(GSWF_TOU07_DUCT_ENTRY_OPEN_REVISIT), 1)
     END_IF
     CALL(evt_exit_case_evt)
     RETURN
 EVT_END()
 
+/**
+ * Hitting the air duct cover (win_kabe) with the hammer or pressing A at it before it is knocked off:
+ * the cover rattles (two SFX_STG3_AIRDUCT_SHAKE1 sounds and the anm_futa animation) but stays on;
+ * evt_dakuto handles the hit that knocks it off.
+ */
 EVT_BEGIN(evt_dakuto2)
     CALL(evt_cam_letter_box_disable, 1)
     CALL(evt_mario_key_onoff, 0)
@@ -630,13 +583,19 @@ EVT_BEGIN(evt_dakuto2)
     RETURN
 EVT_END()
 
+/**
+ * Rest in the Glitz Pit bed (stg3_yado_00/01, with a yes/no prompt):
+ * partners leave, Mario hops in and sleeps with the sound muted, HP and FP are restored,
+ * and the partners return.
+ */
 EVT_BEGIN(evt_tou_bed)
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
     CALL(tou_07_mario_keyoff_check, LW(0))
     IF_INT_EQUAL(LW(0), 1)
         RETURN
     END_IF
 #endif
+    // Work out which Glitz Pit room's bed this is, since the camera and bed spot differ per room.
     CALL(evt_mario_key_onoff, 0)
     SET_VALUE(LF(0), 0)
     SET_VALUE(LF(1), 0)
@@ -651,9 +610,11 @@ EVT_BEGIN(evt_tou_bed)
     IF_STR_EQUAL(LW(0), STRING("tou_10"))
         SET_VALUE(LF(2), 1)
     END_IF
+    // The attendant asks whether Mario wants to rest; saying no ends the scene.
     CALL(evt_msg_print, 0, STRING("stg3_yado_00"), 0, 0)
     CALL(evt_msg_select, 0, STRING("stg3_yado_01"))
     CALL(evt_msg_continue)
+    // Mario sends his partners away and the camera frames the bed.
     IF_INT_EQUAL(LW(0), 0)
         CALL(evt_mario_get_party, LW(12))
         CALL(evt_mario_get_exparty, LW(13))
@@ -669,6 +630,7 @@ EVT_BEGIN(evt_tou_bed)
             CALL(evt_cam3d_evt_set, -75, 160, 266, 155, 65, -10, 0, 11)
         END_IF
         WAIT_FRAMES(1)
+        // Mario hops into the bed.
         CALL(evt_mario_flag_onoff, 1, 768)
         IF_INT_EQUAL(LF(0), 1)
             CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
@@ -690,6 +652,8 @@ EVT_BEGIN(evt_tou_bed)
         END_IF
         CALL(evt_mario_adjust_dir)
         WAIT_MS(200)
+        // He falls asleep: the music is swapped for a lullaby, the screen irises out and Mario
+        // and his partners recover.
         BEGIN_INLINE_EVENT_GET_ID(LW(10))
             CALL(paper_on, FLOAT(-45.0f))
         END_INLINE_EVENT
@@ -699,20 +663,23 @@ EVT_BEGIN(evt_tou_bed)
             WAIT_MS(200)
             CALL(evt_snd_sfxon_3d, STRING("SFX_OFF_MARIO_SLEEP2"), LW(0), LW(1), LW(2), 0)
         END_INLINE_EVENT
+#if VERSION >= VERSION_JP
         CALL(tou_07_snd_off)
-        CALL(evt_snd_bgmoff, 1024)
-        CALL(evt_snd_bgmon, 1, STRING("BGM_FF_GO_SLEEPING1"))
-        CALL(evt_fade_entry, 4, 1000, 0, 0, 0)
+#endif
+        CALL(evt_snd_bgmoff, PSND_FADE_HOLD)
+        CALL(evt_snd_bgmon, PSND_CH(1), STRING("BGM_FF_GO_SLEEPING1"))
+        CALL(evt_fade_entry, FADE_OUT_SPOT, 1000, 0, 0, 0)
         CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
         CALL(evt_fade_set_spot_pos, LW(0), LW(1), LW(2))
         CALL(evt_fade_end_wait)
         IF_INT_EQUAL(LF(0), 1)
             CALL(evt_pouch_mario_recovery)
-            ELSE
+        ELSE
             CALL(mario_recovery)
         END_IF
         CALL(evt_pouch_all_party_recovery)
         WAIT_MS(3000)
+        // The sleep ends: Mario wakes and the partners return to their places beside him.
         DELETE_EVENT(LW(10))
         CALL(paper_off)
         CALL(evt_mario_set_pose, STRING("M_S_1"))
@@ -744,146 +711,179 @@ EVT_BEGIN(evt_tou_bed)
             END_IF
             CALL(evt_mario_set_pos, 228, 17, -90)
         END_IF
+        // The camera and music return to normal and the screen fades back in.
         CALL(evt_mario_set_dir, 270, 0, 0)
         CALL(evt_party_set_dir, 0, 270, 0)
         CALL(evt_party_set_dir, 1, 270, 0)
         CALL(evt_mario_adjust_dir)
         CALL(evt_cam3d_evt_off, 0, 11)
         WAIT_FRAMES(1)
-        CALL(evt_snd_bgmoff, 513)
-        CALL(evt_snd_bgmon, 288, 0)
+        CALL(evt_snd_bgmoff, PSND_FADE_OUT | PSND_CH(1))
+        CALL(evt_snd_bgmon, PSND_FADE_RESUME | PSND_FADE_IN, 0)
+#if VERSION >= VERSION_JP
         CALL(tou_07_snd_on)
-        CALL(evt_fade_entry, 9, 1000, 0, 0, 0)
+#endif
+        CALL(evt_fade_entry, FADE_IN_BLACK, 1000, 0, 0, 0)
     END_IF
+    // Control returns to the player.
     CALL(evt_party_run, 0)
     CALL(evt_party_run, 1)
     CALL(evt_mario_key_onoff, 1)
     RETURN
 EVT_END()
 
+/** Bed entry point: registers evt_tou_bed to run when Mario presses A in front of the bed named in LW(0). */
 static EVT_BEGIN(bed_entry)
-    CALL(evt_run_case_evt, 9, 1, LW(0), 0, PTR(evt_tou_bed), 0)
+    CALL(evt_run_case_evt, CASE_COND_FRONT_A, 1, LW(0), 0, PTR(evt_tou_bed), 0)
     RETURN
 EVT_END()
 
+/**
+ * Opens the room's item box (mobj_box00): takes control from Mario,
+ * the box pops an item (ITEM_POWER_PLUS, the Power Plus badge) and Mario receives it.
+ */
 static EVT_BEGIN(mobj_box00)
     CALL(evt_mario_key_onoff, 0)
     CALL(evt_mobj_get_position, STRING("mobj_box00"), LW(0), LW(1), LW(2))
-    CALL(evt_item_entry, STRING("item00"), 260, LW(0), LW(1), LW(2), 16, -1, 0)
-    CALL(evt_item_flag_on, STRING("item00"), 2)
+    CALL(evt_item_entry, STRING("item00"), ITEM_POWER_PLUS, LW(0), LW(1), LW(2), ITEM_ENTRY_FIXED, -1, 0)
+    CALL(evt_item_flag_on, STRING("item00"), ITEM_FLAG_NO_TOUCH)
     CALL(evt_mobj_wait_animation_end, STRING("mobj_box00"))
     CALL(evt_item_get_item, STRING("item00"))
     CALL(evt_mario_key_onoff, 1)
     RETURN
 EVT_END()
 
+/**
+ * Map init for tou_07, the champion's room: bed collision, the paper-slit animation, NPCs,
+ * the champion's belt and the air duct entrance, depending on story progress (including the new champion stage).
+ */
 EVT_BEGIN(tou_07_init_evt)
+    // Set up the doors, the bed and the paper-slit animation, and place the NPCs.
     SET_VALUE(LW(0), PTR(bero_data))
     CALL(evt_bero_get_info)
-    CALL_CHILD(PTR(evt_bero_info_run))
+    CALL_CHILD(evt_bero_info_run)
     CALL(evt_hitobj_name_callback, STRING("a_bed"), PTR(bed_entry))
     CALL(evt_sub_animgroup_async, STRING("p_slit"))
     CALL(evt_npc_setup, PTR(npcEnt))
-    IF_INT_EQUAL(GSWF(2389), 0)
+    // If Mario has no rank left to climb, the story jumps to the new-champion point.
+    IF_INT_EQUAL(GSWF(GSWF_TOU_MATCH_RESULT_PENDING), 0)
         CALL(evt_tou_get_ranking, LW(0))
         IF_INT_EQUAL(LW(0), 0)
-            IF_INT_LESS(GSW(0), 158)
-                SET_VALUE(GSW(0), 158)
+            IF_INT_LESS(GSW(GSW_STORY_PROGRESS), STORY_STG3_30_NEW_CHAMPION)
+                SET_VALUE(GSW(GSW_STORY_PROGRESS), STORY_STG3_30_NEW_CHAMPION)
             END_IF
         END_IF
     END_IF
+    // Show the champion's belt display, or the empty case if Mario is not the champion.
     CALL(evt_tou_get_ranking, LW(0))
     IF_INT_EQUAL(LW(0), 0)
-        CALL(evt_mapobj_flag_onoff, 1, 1, STRING("e_1"), 1)
-        CALL(evt_mapobj_flag_onoff, 1, 0, STRING("e_2"), 1)
-        ELSE
-        CALL(evt_mapobj_flag_onoff, 1, 0, STRING("e_1"), 1)
-        CALL(evt_mapobj_flag_onoff, 1, 1, STRING("e_2"), 1)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("e_1"), MAPOBJ_FLAG_HIDE)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("e_2"), MAPOBJ_FLAG_HIDE)
+    ELSE
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("e_1"), MAPOBJ_FLAG_HIDE)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("e_2"), MAPOBJ_FLAG_HIDE)
     END_IF
-    SWITCH(GSW(0))
-        CASE_LESS(159)
+    // Pick between the closed air duct (hammer the wall to open it) and the open duct entrance,
+    // depending on the story.
+    SWITCH(GSW(GSW_STORY_PROGRESS))
+        CASE_LESS(STORY_STG3_30_01_AIR_DUCT_ENTRANCE)
         SET_VALUE(LF(0), 0)
-        CASE_LESS(172)
+        CASE_LESS(STORY_STG3_34_RETURN_TO_ROGUEPORT)
         SET_VALUE(LF(0), 1)
         CASE_DEFAULT
-        IF_INT_EQUAL(GSWF(2502), 0)
+        IF_INT_EQUAL(GSWF(GSWF_TOU07_DUCT_ENTRY_OPEN_REVISIT), 0)
             SET_VALUE(LF(0), 0)
-            ELSE
+        ELSE
             SET_VALUE(LF(0), 1)
         END_IF
     END_SWITCH
     IF_INT_EQUAL(LF(0), 0)
-        CALL(evt_run_case_evt, 14, 1, STRING("win_kabe"), 0, PTR(evt_dakuto), 0)
-        CALL(evt_run_case_evt, 13, 1, STRING("win_kabe"), 0, PTR(evt_dakuto2), 0)
-        CALL(evt_run_case_evt, 9, 1, STRING("win_kabe"), 0, PTR(evt_dakuto2), 0)
-        ELSE
-        CALL(evt_mapobj_flag_onoff, 1, 1, STRING("kankikuti"), 1)
+        CALL(evt_run_case_evt, CASE_COND_HAMMER_2, 1, STRING("win_kabe"), 0, PTR(evt_dakuto), 0)
+        CALL(evt_run_case_evt, CASE_COND_HAMMER, 1, STRING("win_kabe"), 0, PTR(evt_dakuto2), 0)
+        CALL(evt_run_case_evt, CASE_COND_FRONT_A, 1, STRING("win_kabe"), 0, PTR(evt_dakuto2), 0)
+    ELSE
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("kankikuti"), MAPOBJ_FLAG_HIDE)
         CALL(evt_hitobj_onoff, STRING("win_kabe"), 1, 0)
     END_IF
-    CALL(evt_run_case_evt, 9, 1, STRING("M_make"), 0, PTR(evt_tou_match_make_default), 0)
-    CALL_CHILD(PTR(evt_tou_monitor_init))
-    IF_INT_EQUAL(GSWF(2389), 1)
-        SET_VALUE(GSWF(2389), 0)
-        SWITCH(GSW(0))
-            CASE_BETWEEN(127, 137)
-            CALL(evt_snd_bgmon, 512, STRING("BGM_STG3_TOU2"))
-            CALL(evt_snd_envon, 272, STRING("ENV_STG3_TOU2"))
-            CALL(evt_snd_bgmoff, 26624)
-            CASE_GREATER_OR_EQUAL(165)
-            CALL(evt_snd_bgmon, 512, STRING("BGM_STG3_TOU2"))
-            CALL(evt_snd_envon, 272, STRING("ENV_STG3_TOU2"))
-            CALL(evt_snd_bgmoff, 26624)
+    // Match-making is set up at the board and the match monitor starts.
+    CALL(evt_run_case_evt, CASE_COND_FRONT_A, 1, STRING("M_make"), 0, PTR(evt_tou_match_make_default), 0)
+    CALL_CHILD(evt_tou_monitor_init)
+    // Back from a match: choose the music, then run the title ceremony or champion scene that fits the story.
+    IF_INT_EQUAL(GSWF(GSWF_TOU_MATCH_RESULT_PENDING), 1)
+        SET_VALUE(GSWF(GSWF_TOU_MATCH_RESULT_PENDING), 0)
+        SWITCH(GSW(GSW_STORY_PROGRESS))
+            CASE_BETWEEN(STORY_STG3_00_WELCOME_TO_GLITZVILLE, STORY_STG3_12_MINI_YOSHI_EGG)
+            CALL(evt_snd_bgmon, PSND_FADE_OUT, STRING("BGM_STG3_TOU2"))
+            CALL(evt_snd_envon, PSND_FADE_RESTART | PSND_FADE_IN, STRING("ENV_STG3_TOU2"))
+            CALL(evt_snd_bgmoff, PSND_FADE_DIP_TO(70))
+            CASE_GREATER_OR_EQUAL(STORY_STG3_33_PEACH_THE_SECRET_WEAPON)
+            CALL(evt_snd_bgmon, PSND_FADE_OUT, STRING("BGM_STG3_TOU2"))
+            CALL(evt_snd_envon, PSND_FADE_RESTART | PSND_FADE_IN, STRING("ENV_STG3_TOU2"))
+            CALL(evt_snd_bgmoff, PSND_FADE_DIP_TO(70))
             CASE_DEFAULT
-            CALL(evt_snd_bgmon, 512, STRING("BGM_STG3_TOU1"))
-            CALL(evt_snd_envon, 272, STRING("ENV_STG3_TOU6"))
+            CALL(evt_snd_bgmon, PSND_FADE_OUT, STRING("BGM_STG3_TOU1"))
+            CALL(evt_snd_envon, PSND_FADE_RESTART | PSND_FADE_IN, STRING("ENV_STG3_TOU6"))
         END_SWITCH
-        IF_INT_LESS(GSW(0), 158)
-            SPAWN_EVENT(PTR(evt_champion))
+        IF_INT_LESS(GSW(GSW_STORY_PROGRESS), STORY_STG3_30_NEW_CHAMPION)
+            SPAWN_EVENT(evt_champion)
             RETURN
         END_IF
-        IF_INT_LESS(GSW(0), 172)
-            SPAWN_EVENT(PTR(evt_tou_match_after_default))
+        IF_INT_LESS(GSW(GSW_STORY_PROGRESS), STORY_STG3_34_RETURN_TO_ROGUEPORT)
+            SPAWN_EVENT(evt_tou_match_after_default)
             RETURN
         END_IF
-        IF_INT_EQUAL(GSWF(2503), 0)
-            SPAWN_EVENT(PTR(evt_champion_re))
-            ELSE
-            SPAWN_EVENT(PTR(evt_tou_match_after_default))
-        END_IF
-        RETURN
-    END_IF
-    IF_INT_EQUAL(GSWF(2375), 1)
-        CALL(evt_snd_bgmon, 512, STRING("BGM_EVT_STG3_GANCE1"))
-        CALL(evt_snd_envoff, 512)
-        SPAWN_EVENT(PTR(evt_sensyu))
-        RETURN
-    END_IF
-    IF_INT_EQUAL(GSW(0), 163)
-        CALL(evt_snd_bgmoff, 512)
-        CALL(evt_snd_envoff, 512)
+        IF_INT_EQUAL(GSWF(GSWF_TOU_REMATCH_CHAMPION), 0)
+            SPAWN_EVENT(evt_champion_re)
         ELSE
-        SWITCH(GSW(0))
-            CASE_BETWEEN(127, 138)
-            CALL(evt_snd_bgmon, 512, STRING("BGM_STG3_TOU2"))
-            CALL(evt_snd_envon, 272, STRING("ENV_STG3_TOU6"))
-            CALL(evt_snd_bgmoff, 26624)
+            SPAWN_EVENT(evt_tou_match_after_default)
+        END_IF
+        RETURN
+    END_IF
+    // Otherwise, the pending Grubba escort starts his speech scene.
+    IF_INT_EQUAL(GSWF(GSWF_TOU_GRUBBA_ESCORT_PENDING), 1)
+        CALL(evt_snd_bgmon, PSND_FADE_OUT, STRING("BGM_EVT_STG3_GANCE1"))
+        CALL(evt_snd_envoff, PSND_FADE_OUT)
+        SPAWN_EVENT(evt_sensyu)
+        RETURN
+    END_IF
+    // Choose the music and ambience for the story point.
+    IF_INT_EQUAL(GSW(GSW_STORY_PROGRESS), STORY_STG3_31_GRUBBAS_PLANS)
+        CALL(evt_snd_bgmoff, PSND_FADE_OUT)
+        CALL(evt_snd_envoff, PSND_FADE_OUT)
+    ELSE
+        SWITCH(GSW(GSW_STORY_PROGRESS))
+            CASE_BETWEEN(STORY_STG3_00_WELCOME_TO_GLITZVILLE, STORY_STG3_20_MAJORS_10TH)
+            CALL(evt_snd_bgmon, PSND_FADE_OUT, STRING("BGM_STG3_TOU2"))
+#if VERSION <= VERSION_DEMO_JP
+            CALL(evt_snd_envon, PSND_FADE_RESTART | PSND_FADE_IN, STRING("ENV_STG3_TOU2"))
+#else
+            CALL(evt_snd_envon, PSND_FADE_RESTART | PSND_FADE_IN, STRING("ENV_STG3_TOU6"))
+#endif
+            CALL(evt_snd_bgmoff, PSND_FADE_DIP_TO(70))
             CASE_DEFAULT
-            CALL(evt_snd_bgmon, 512, STRING("BGM_STG3_TOU1"))
-            CALL(evt_snd_bgmoff, 26624)
-            CALL(evt_snd_envon, 272, STRING("ENV_STG3_TOU6"))
+            CALL(evt_snd_bgmon, PSND_FADE_OUT, STRING("BGM_STG3_TOU1"))
+            CALL(evt_snd_bgmoff, PSND_FADE_DIP_TO(70))
+            CALL(evt_snd_envon, PSND_FADE_RESTART | PSND_FADE_IN, STRING("ENV_STG3_TOU6"))
         END_SWITCH
     END_IF
+    // A guard escort is waiting at the east door: the door is closed and the guard spawns.
+#if VERSION >= VERSION_JP
     CALL(evt_bero_get_entername, LW(0))
     IF_STR_EQUAL(LW(0), STRING("e_bero"))
-        IF_INT_EQUAL(GSWF(2388), 1)
+        IF_INT_EQUAL(GSWF(GSWF_TOU_MATCH_RESERVED), 1)
             SET_VALUE(LW(0), STRING("n_bero"))
-            CALL_CHILD(PTR(bero_case_switch_off))
-            SPAWN_EVENT(PTR(evt_gardman_spawn))
+            CALL_CHILD(bero_case_switch_off)
+            SPAWN_EVENT(evt_gardman_spawn)
         END_IF
     END_IF
+#endif
     RETURN
 EVT_END()
 
+/**
+ * Script helper: args[0] = display direction; turns Mario into his paper-slit pose (p_slit) on the first call
+ * and holds that direction for the rest of the scene.
+ */
 static USER_FUNC(paper_on) {
     f32 value = evtGetFloat(event, event->args[0]);
     MarioWork* mario = marioGetPtr();
@@ -897,11 +897,20 @@ static USER_FUNC(paper_on) {
     return EVT_RETURN_BLOCK;
 }
 
+#if VERSION >= VERSION_JP
+/** Script helper: hides the belt item's icon. */
 USER_FUNC(tou_07_icon_off) {
     iconFlagOn(itemNameToPtr("belt")->name, 2);
     return EVT_RETURN_DONE;
 }
+#endif
 
+#if VERSION >= VERSION_JP
+/**
+ * Script helper: moves the belt's star stone effect ("belt")
+ * and the belt NPC (ベルト) to camera 7 (CAMERA_3D_EFFECTB),
+ * the camera itemdrv also puts Mario on while an important item is being received, so they are drawn with him.
+ */
 USER_FUNC(tou_07_belt_camid) {
     EffectEntry* eff = effNameToPtr("belt");
     // ベルト
@@ -911,4 +920,4 @@ USER_FUNC(tou_07_belt_camid) {
     npc->cameraId = 7;
     return EVT_RETURN_DONE;
 }
-
+#endif

@@ -1,7 +1,7 @@
+// aji_05 (敵のアジト, X-Naut Fortress): an electrified floor-panel room (hikaru_yuka).
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
 
-#pragma force_active on
 #include "stdio.h"
 #include "mario/mario.h"
 #include "party.h"
@@ -17,105 +17,66 @@
 #ifdef TARGET_PC /* declarations the GameCube code calls implicitly */
 #include "manager/evtmgr_cmd.h"
 #endif
+#include "manager/evtmgr_cmd.h"
+#include "evt/evt_item.h"
+#include "evt/evt_mario.h"
+#include "evt/evt_snd.h"
+#include "evt/evt_story.h"
+#include "driver/mapdrv.h"
 
-void mapGrpFlagOn(const char* name, u32 flags);
-void mapGrpFlagOff(const char* name, u32 flags);
-
-USER_FUNC(_hikaru_off);
-USER_FUNC(_hikaru_on);
-USER_FUNC(evt_bero_get_info);
-USER_FUNC(evt_hitobj_attr_onoff);
-USER_FUNC(evt_item_entry);
-USER_FUNC(evt_item_get_item);
-USER_FUNC(evt_mapobj_flag_onoff);
-USER_FUNC(evt_mapobj_trans);
-USER_FUNC(evt_mario_key_onoff);
-USER_FUNC(evt_mario_set_dir);
-USER_FUNC(evt_mobj_badgeblk);
-USER_FUNC(evt_mobj_get_position);
-USER_FUNC(evt_mobj_wait_animation_end);
-USER_FUNC(evt_snd_bgmon);
-USER_FUNC(evt_snd_envon);
-USER_FUNC(evt_snd_set_rev_mode);
+static USER_FUNC(_hikaru_off);
+static USER_FUNC(_hikaru_on);
 static USER_FUNC(ride_chk);
 static USER_FUNC(thunder_main);
 static USER_FUNC(loop_onoff);
 
-f32 fd_aji_05_negone_one_374[2] __attribute__((aligned(8)));
-f32 fd_aji_05_neg_one_382;
-f32 fd_aji_05___local_PI_383;
-f32 fd_aji_05___local_3PIO2_385;
-f32 fd_aji_05_one_negone_373[2] __attribute__((aligned(8)));
-f32 fd_aji_05___local_PIO2_384;
-f32 fd_aji_05_one_381;
-f32 fd_aji_05_negone_one_360[2] __attribute__((aligned(8)));
-f32 fd_aji_05_neg_one_365;
-f32 fd_aji_05___local_PI_366;
-f32 fd_aji_05___local_3PIO2_368;
-f32 fd_aji_05_one_negone_359[2] __attribute__((aligned(8)));
-f32 fd_aji_05___local_PIO2_367;
-f32 fd_aji_05_one_364;
-static EvtWord e_door_close[22];
-static EvtWord e_door_open[22];
 static BeroEntry bero_entry_data[2];
-static EvtWord evt_box[95];
-static EvtWord hikaru_on[4];
 static EvtWord hikaru_off[4];
 static HitDamageReturn dmgReturnPt[2];
 static EvtWord hikaru_yuka_init[48];
-EvtWord aji_05_init_evt[77];
 
-f32 fd_aji_05_negone_one_374[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_aji_05_neg_one_382 = -1.0f;
-
-f32 fd_aji_05___local_PI_383 = 3.1415927f;
-
-f32 fd_aji_05___local_3PIO2_385 = 4.712389f;
-
-f32 fd_aji_05_one_negone_373[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_aji_05___local_PIO2_384 = 1.5707964f;
-
-f32 fd_aji_05_one_381 = 1.0f;
-
-f32 fd_aji_05_negone_one_360[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_aji_05_neg_one_365 = -1.0f;
-
-f32 fd_aji_05___local_PI_366 = 3.1415927f;
-
-f32 fd_aji_05___local_3PIO2_368 = 4.712389f;
-
-f32 fd_aji_05_one_negone_359[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_aji_05___local_PIO2_367 = 1.5707964f;
-
-f32 fd_aji_05_one_364 = 1.0f;
-
+/**
+ * Door close animation step: moves the two door leaves S_door1_1
+ * and S_door1_2 in opposite directions along Z by the animation value in LW(0) times -0.25;
+ * the open and close scripts apply the same transform. The demo builds use -0.2217.
+ */
 static EVT_BEGIN(e_door_close)
+#if VERSION <= VERSION_DEMO_JP
+    MULTIPLY_FLOAT(LW(0), FLOAT(-0.22167969f))
+#else
     MULTIPLY_FLOAT(LW(0), FLOAT(-0.25f))
+#endif
     CALL(evt_mapobj_trans, 0, STRING("S_door1_1"), 0, 0, LW(0))
     MULTIPLY_FLOAT(LW(0), FLOAT(-1.0f))
     CALL(evt_mapobj_trans, 0, STRING("S_door1_2"), 0, 0, LW(0))
     RETURN
 EVT_END()
 
+/**
+ * Door open animation step: moves the two door leaves S_door1_1
+ * and S_door1_2 in opposite directions along Z by the animation value in LW(0) times -0.25;
+ * the open and close scripts apply the same transform. The demo builds use -0.2217.
+ */
 static EVT_BEGIN(e_door_open)
+#if VERSION <= VERSION_DEMO_JP
+    MULTIPLY_FLOAT(LW(0), FLOAT(-0.22167969f))
+#else
     MULTIPLY_FLOAT(LW(0), FLOAT(-0.25f))
+#endif
     CALL(evt_mapobj_trans, 0, STRING("S_door1_1"), 0, 0, LW(0))
     MULTIPLY_FLOAT(LW(0), FLOAT(-1.0f))
     CALL(evt_mapobj_trans, 0, STRING("S_door1_2"), 0, 0, LW(0))
     RETURN
 EVT_END()
 
+/** Exit of this room: the east door to aji_17. */
 static BeroEntry bero_entry_data[] = {
     {
         "e_bero", // hitName
         1, // type
         10, // sfxId
-        20000, // directionId
-        100000, // centerPosition
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         NULL, // enterEvent
@@ -131,53 +92,66 @@ static BeroEntry bero_entry_data[] = {
     {0},
 };
 
+/**
+ * Item-box script for the chest at "box": gives Mario the card key (ITEM_CARD_KEY_0x1D),
+ * sets GSWF_AJI05_CARD_KEY_TAKEN, clears the A_no1 hit flag 2048,
+ * switches off the floor lights and makes the floor visibly flash between two states five times
+ * while Mario turns to face east.
+ */
 static EVT_BEGIN(evt_box)
     CALL(evt_mario_key_onoff, 0)
     CALL(evt_mobj_get_position, STRING("box"), LW(0), LW(1), LW(2))
-    CALL(evt_item_entry, STRING("dummy"), 29, LW(0), LW(1), LW(2), 17, -1, 0)
+    CALL(evt_item_entry, STRING("dummy"), ITEM_CARD_KEY_0x1D, LW(0), LW(1), LW(2), ITEM_ENTRY_FIXED_NO_TOUCH, -1, 0)
     CALL(evt_mobj_wait_animation_end, STRING("box"))
     CALL(evt_item_get_item, STRING("dummy"))
     CALL(evt_hitobj_attr_onoff, 1, 0, STRING("A_no1"), 2048)
-    SET_VALUE(GSWF(4182), 1)
+    SET_VALUE(GSWF(GSWF_AJI05_CARD_KEY_TAKEN), 1)
     WAIT_FRAMES(1)
-    CALL_CHILD(PTR(hikaru_off))
+    CALL_CHILD(hikaru_off)
     BEGIN_INLINE_EVENT
         WAIT_MS(1000)
         CALL(evt_mario_set_dir, 90, 300, 0)
     END_INLINE_EVENT
     LOOP(5)
-        CALL(evt_mapobj_flag_onoff, 1, 0, STRING("yukayu1"), 1)
-        CALL(evt_mapobj_flag_onoff, 1, 1, STRING("yukayu2"), 1)
-        CALL(evt_mapobj_flag_onoff, 1, 1, STRING("ato"), 1)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("yukayu1"), MAPOBJ_FLAG_HIDE)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("yukayu2"), MAPOBJ_FLAG_HIDE)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("ato"), MAPOBJ_FLAG_HIDE)
         WAIT_MS(150)
-        CALL(evt_mapobj_flag_onoff, 1, 1, STRING("yukayu1"), 1)
-        CALL(evt_mapobj_flag_onoff, 1, 0, STRING("yukayu2"), 1)
-        CALL(evt_mapobj_flag_onoff, 1, 0, STRING("ato"), 1)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("yukayu1"), MAPOBJ_FLAG_HIDE)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("yukayu2"), MAPOBJ_FLAG_HIDE)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("ato"), MAPOBJ_FLAG_HIDE)
         WAIT_MS(150)
     END_LOOP
     CALL(evt_mario_key_onoff, 1)
     RETURN
 EVT_END()
 
+/** Turns the glowing floor panels on by calling the _hikaru_on script function. */
 static EVT_BEGIN(hikaru_on)
     CALL(_hikaru_on)
     RETURN
 EVT_END()
 
+/** Turns the glowing floor panels off by calling the _hikaru_off script function. */
 static EVT_BEGIN(hikaru_off)
     CALL(_hikaru_off)
     RETURN
 EVT_END()
 
+/** Where Mario is put back after taking damage from the electrified floor: the map position named mod_01. */
 static HitDamageReturn dmgReturnPt[] = {
     {"mod_01", {0.0f, -1000.0f, 0.0f}},
     {0},
 };
 
+/**
+ * Setup script of the electrified floor room: resets the panels, places the treasure chest holding the card
+ * key and starts the panel and lightning scripts.
+ */
 static EvtWord hikaru_yuka_init[] = {
     CALL_CHILD(hikaru_off)
     CALL(evt_hitobj_attr_onoff, 1, 1, STRING("A_no1"), 2048)
-    CALL(evt_mobj_itembox, STRING("box"), -255, 10, -10, 2, 0, PTR(evt_box), GSWF(4178))
+    CALL(evt_mobj_itembox, STRING("box"), -255, 10, -10, 2, 0, PTR(evt_box), GSWF(GSWF_AJI05_CARD_KEY_CHEST_OPENED))
     CALL(evt_hit_damage_return_set, PTR(dmgReturnPt))
     BEGIN_INLINE_EVENT
         CALL(ride_chk)
@@ -185,49 +159,69 @@ static EvtWord hikaru_yuka_init[] = {
     BEGIN_INLINE_EVENT
         CALL(thunder_main)
     END_INLINE_EVENT
-    CALL(evt_mapobj_flag_onoff, 1, 0, STRING("yukayu1"), 1)
-    CALL(evt_mapobj_flag_onoff, 1, 1, STRING("yukayu2"), 1)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("yukayu1"), MAPOBJ_FLAG_HIDE)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("yukayu2"), MAPOBJ_FLAG_HIDE)
     CALL(evt_map_playanim, STRING("denyuka"), 1, 0)
     OPCODE_END_SCRIPT,
     RETURN
 };
 
+/**
+ * Init script of aji_05, a second glowing-floor room like aji_02:
+ * plays BGM_STG7_DUN2, sets up the exits and a Sleepy Sheep badge block,
+ * and keeps the floor panels reacting to Mario (hikaru_yuka_init)
+ * until the chest's card key has been taken (GSWF_AJI05_CARD_KEY_TAKEN);
+ * afterwards the panel lights are all off.
+ */
 EVT_BEGIN(aji_05_init_evt)
-    CALL(evt_snd_bgmon, 512, STRING("BGM_STG7_DUN2"))
-    CALL(evt_snd_envon, 272, STRING("ENV_STG7_AJI1"))
+    CALL(evt_snd_bgmon, PSND_FADE_OUT, STRING("BGM_STG7_DUN2"))
+    CALL(evt_snd_envon, PSND_FADE_RESTART | PSND_FADE_IN, STRING("ENV_STG7_AJI1"))
+#if VERSION >= VERSION_JP
     CALL(evt_snd_set_rev_mode, 1)
+#endif
     SET_VALUE(LW(0), PTR(bero_entry_data))
     CALL(evt_bero_get_info)
-    CALL_CHILD(PTR(evt_bero_info_run))
-    CALL(evt_mapobj_flag_onoff, 1, 1, STRING("no1"), 1)
-    IF_INT_EQUAL(GSWF(4182), 0)
-        CALL_CHILD(PTR(hikaru_yuka_init))
-        CALL(evt_mapobj_flag_onoff, 1, 1, STRING("ato"), 1)
-        ELSE
-        CALL_CHILD(PTR(hikaru_off))
+    CALL_CHILD(evt_bero_info_run)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("no1"), MAPOBJ_FLAG_HIDE)
+    IF_INT_EQUAL(GSWF(GSWF_AJI05_CARD_KEY_TAKEN), 0)
+        CALL_CHILD(hikaru_yuka_init)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("ato"), MAPOBJ_FLAG_HIDE)
+    ELSE
+        CALL_CHILD(hikaru_off)
         CALL(evt_hitobj_attr_onoff, 1, 0, STRING("A_no1"), 2048)
-        CALL(evt_mapobj_flag_onoff, 1, 1, STRING("yukayu1"), 1)
-        CALL(evt_mapobj_flag_onoff, 1, 0, STRING("yukayu2"), 1)
-        CALL(evt_mapobj_flag_onoff, 1, 0, STRING("ato"), 1)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("yukayu1"), MAPOBJ_FLAG_HIDE)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("yukayu2"), MAPOBJ_FLAG_HIDE)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("ato"), MAPOBJ_FLAG_HIDE)
     END_IF
-    CALL(evt_mobj_badgeblk, STRING("mobj00"), -75, 60, -125, 138, 0, GSWF(4212), 0)
-    SPAWN_EVENT(PTR(evt_emergency))
+    CALL(evt_mobj_badgeblk, STRING("mobj00"), -75, 60, -125, ITEM_SLEEPY_SHEEP, 0, GSWF(GSWF_AJI05_SLEEPY_SHEEP_BLOCK_HIT), 0)
+    SPAWN_EVENT(evt_emergency)
     RETURN
 EVT_END()
 
+/**
+ * Script function that runs while the floor puzzle is active:
+ * lights the panel hikaru_NN under Mario (or under Yoshi when he is ridden),
+ * keeping each lit for 30 frames after the last touch and showing the dark twin nashi_NN otherwise.
+ * Finishes once GSWF_AJI05_CARD_KEY_TAKEN is set.
+ */
 static USER_FUNC(ride_chk) {
     static s32 onoff[24];
     char hitName[64];
     char name[64];
+#if VERSION >= VERSION_JP
     MarioWork* mario = marioGetPtr();
     PartyEntry* party = partyGetPtr(0);
+#endif
+#if VERSION >= VERSION_JP
     HitEntry* hit;
+#endif
     s32 i;
 
     if (isFirstCall) {
         memset(onoff, 0, sizeof(onoff));
     }
-    if (party != NULL && party->currentMemberId == 4 && (party->flags & 0x100)) {
+#if VERSION >= VERSION_JP
+    if (party != NULL && party->currentMemberId == PARTY_MEMBER_YOSHI && (party->flags & PARTY_FLAG_IS_BEING_USED)) {
         hit = mario->hitobjStandOn;
         if (hit == NULL) {
             hit = mario->hitobjJumpFrom;
@@ -235,11 +229,22 @@ static USER_FUNC(ride_chk) {
     } else {
         hit = (HitEntry*)mario->hitobjUnder;
     }
+#endif
     // panels stay lit for 30 frames after being touched
     for (i = 0; i < 24; i++) {
+#if VERSION <= VERSION_DEMO_JP
+        MarioWork* mario = marioGetPtr();
+
+        if (mario->hitobjUnder != NULL) {
+#else
         if (hit != NULL) {
+#endif
             sprintf(hitName, "A_hikaru_%02d", i + 1);
+#if VERSION <= VERSION_DEMO_JP
+            if (strcmp(mario->hitobjUnder->joint->name, hitName) == 0) {
+#else
             if (strcmp(hit->joint->name, hitName) == 0) {
+#endif
                 onoff[i] = 30;
             }
         }
@@ -260,12 +265,17 @@ static USER_FUNC(ride_chk) {
             mapGrpFlagOff(name, 1);
         }
     }
-    if (evtGetValue(event, GSWF(4182))) {
+    if (evtGetValue(event, GSWF(GSWF_AJI05_CARD_KEY_TAKEN))) {
         return EVT_RETURN_DONE;
     }
     return EVT_RETURN_BLOCK;
 }
 
+/**
+ * Script function that plays an electric shock when Mario is in the spike-damage motion
+ * (MARIO_MOTION_DAMAGE_TOGE): SFX_STG7_ELECTRIC_SHOCK1 and a blue-green spark effect at his position,
+ * once per hit.
+ */
 static USER_FUNC(thunder_main) {
     MarioWork* mario = marioGetPtr();
 
@@ -273,7 +283,7 @@ static USER_FUNC(thunder_main) {
         event->userdata[0] = 0;
     }
     if (event->userdata[0] == 0) {
-        if (mario->currMotionId == 0x20) {
+        if (mario->currMotionId == MARIO_MOTION_DAMAGE_TOGE) {
             EffectEntry* eff;
 
             event->userdata[0] = 1;
@@ -286,13 +296,14 @@ static USER_FUNC(thunder_main) {
             ((EffAkariChargeN64Work*)eff->userdata)->elem[0].g2 = 0;
             ((EffAkariChargeN64Work*)eff->userdata)->elem[0].b2 = 0;
         }
-    } else if (mario->currMotionId != 0x20) {
+    } else if (mario->currMotionId != MARIO_MOTION_DAMAGE_TOGE) {
         event->userdata[0] = 0;
     }
     return EVT_RETURN_BLOCK;
 }
 
-USER_FUNC(_hikaru_off) {
+/** Script function: hides all 24 panel lights (hikaru_NN and nashi_NN). */
+static USER_FUNC(_hikaru_off) {
     char name[64];
     s32 i;
 
@@ -305,7 +316,11 @@ USER_FUNC(_hikaru_off) {
     return EVT_RETURN_DONE;
 }
 
-USER_FUNC(_hikaru_on) {
+/**
+ * Script function: shows the dark panel objects nashi_01 to 24
+ * and hides the lit ones hikaru_01 to 24 (every panel in its unlit state).
+ */
+static USER_FUNC(_hikaru_on) {
     char name[64];
     s32 i;
 
@@ -318,6 +333,10 @@ USER_FUNC(_hikaru_on) {
     return EVT_RETURN_DONE;
 }
 
+/**
+ * Script function that runs the panel light-up show:
+ * lights the panels one after another, twice, then finishes (timing in event->userdata).
+ */
 static USER_FUNC(loop_onoff) {
     char name[64];
     s32 i;
@@ -355,4 +374,3 @@ static USER_FUNC(loop_onoff) {
     }
     return EVT_RETURN_BLOCK;
 }
-

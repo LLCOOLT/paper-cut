@@ -1,9 +1,9 @@
+// Keelhaul Key (muj) battle unit: X-Naut horde group 3 (gundan_zako_group3) in Lord Crump's fight: its parts,
+// defence/status tables, and attack events.
 #include "version.h"
-#pragma dollar_identifiers on
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
 
-#pragma force_active on
 #include "battle/battle.h"
 #include "battle/battle_unit.h"
 #include "battle/battle_stage_object.h"
@@ -15,76 +15,28 @@
 #include "battle/battle_weapon_power.h"
 #include "evt/evt_eff.h"
 #include "evt/evt_sub.h"
-#include "party/party_motion.h"
+#include "evt/evt_snd.h"
 #include "battle/battle_database_common.h"
 #include "driver/extdrv.h"
-#ifdef TARGET_PC /* declarations the GameCube code calls implicitly */
 #include "manager/evtmgr_cmd.h"
-#endif
+#include "zakogun.h"
+#include "battle/battle_sub.h"
+#include "pmario_sound.h"
+#include "muj.h"
+#include "libc_decls.h"
 
-typedef struct ZakoGun { s8 field_0x0; s8 state; s32 timer; s32 timerMax; Vec pos; Vec home; s32 poseBase; s32 poseNum; s32 poseDiv; s32 poseCount; Vec start; Vec target; Vec vel; Vec ofs; Vec rot; } ZakoGun;
-typedef struct ZakoGunWork { s32 flag; s32 targetId;
-#ifdef VERSION_G8ME01
-    u8 us_pad08[0xC]; // US: 12 more bytes here
-#endif
-    s32 state; s32 timer; Vec pos; u8 field_0x1c[0x34 - 0x1c]; f32 radius; f32 angle; f32 speed; u8 field_0x40[0x48 - 0x40]; Vec start; Vec end; s32 timer2; s32 steps; s32 count; s32 sfx; } ZakoGunWork;
-extern ZakoGun* zakogun;
-extern ZakoGunWork* work;
-BattleUnit* zakogun_get_ptr(void);
-s32 zakogun_get_kanbu_id(void);
-void zakogun_set_pose(ZakoGun* zako, s32 base, s32 num, s32 div);
-void zakogun_ext_init123_common(ExtdrvPose* pose, s32 i);
-void psndSFXOff(s32 id);
-#ifndef TARGET_PC /* PC port: the host libc declares these */
-int rand(void);
-double sqrt(double x);
-#endif
+// Unit work slots of X-Naut group 3 (btlevtcmd_SetUnitWork / GetUnitWork, unit->work)
+enum {
+    UW_BOSS_GUNDAN_ZAKO_GROUP3_AT_TARGET = 0, // set to 1 by zakogun_attack3_2 when the horde reaches the target; hit_check_event then deals the hit
+    UW_BOSS_GUNDAN_ZAKO_GROUP3_DYING = 1,     // 1 while the death scene runs; Lord Crump waits for it to end
+};
 
-USER_FUNC(btlevtcmd_AnimeChangePoseFromTable);
-USER_FUNC(btlevtcmd_CheckDamage);
-USER_FUNC(btlevtcmd_CheckStatus);
-USER_FUNC(btlevtcmd_GetDamage);
-USER_FUNC(btlevtcmd_GetSelectNextEnemy);
-USER_FUNC(btlevtcmd_GetUnitWork);
-USER_FUNC(btlevtcmd_PreCheckDamage);
-USER_FUNC(btlevtcmd_ResultACDefence);
-USER_FUNC(btlevtcmd_SetEventAttack);
-USER_FUNC(btlevtcmd_SetEventConfusion);
-USER_FUNC(btlevtcmd_SetEventDamage);
-USER_FUNC(btlevtcmd_SetEventWait);
-USER_FUNC(btlevtcmd_SetUnitWork);
-USER_FUNC(btlevtcmd_StartAvoid);
-USER_FUNC(btlevtcmd_StartWaitEvent);
-USER_FUNC(evt_btl_camera_set_mode);
-USER_FUNC(zakogun_damage_pose);
-USER_FUNC(zakogun_damage_pose_cancel);
-USER_FUNC(zakogun_set_target_id);
-USER_FUNC(zakogun_escape3);
 USER_FUNC(zakogun_dead3);
 USER_FUNC(zakogun_attack3_3);
 USER_FUNC(zakogun_attack3_2);
 USER_FUNC(zakogun_attack3_1);
 void zakogun_ext_main3(void);
-USER_FUNC(zakogun_ext_init3);
-USER_FUNC(zakogun_kanbu_on_ball);
-extern s32 zakogun_get_kanbu_id_evtcmd[];
 
-f32 negone_one$374[2] __attribute__((aligned(8)));
-f32 neg_one$382;
-f32 __local_PI$383;
-f32 __local_3PIO2$385;
-u32 gap_04_000314E4_data[1];
-f32 one_negone$373[2] __attribute__((aligned(8)));
-f32 __local_PIO2$384;
-f32 one$381;
-f32 negone_one$360[2] __attribute__((aligned(8)));
-f32 neg_one$365;
-f32 __local_PI$366;
-f32 __local_3PIO2$368;
-u32 gap_04_0003150C_data[1];
-f32 one_negone$359[2] __attribute__((aligned(8)));
-f32 __local_PIO2$367;
-f32 one$364;
 BattleUnitKind unit_boss_gundan_zako_group3;
 static BattleUnitDefense defence;
 static BattleUnitDefenseAttr defence_attr;
@@ -96,16 +48,26 @@ BattleWeapon weapon_gundan_zako_group3_attack;
 static EvtWord init_event[21];
 static EvtWord damage_event[129];
 static EvtWord dead_event[136];
+#if VERSION <= VERSION_DEMO_JP
+static EvtWord attack_event[260];
+#else
 static EvtWord attack_event[287];
+#endif
 static EvtWord hit_check_event[119];
 static EvtWord wait_event[6];
 
-USER_FUNC(zakogun_kanbu_on_ball) {
+/** Script helper: puts the horde leader on top of the formation centre, 45 units above it. */
+static USER_FUNC(zakogun_kanbu_on_ball) {
     BattleUnit* kanbu = BattleGetUnitPtr(_battleWorkPointer, zakogun_get_kanbu_id());
     BtlUnit_SetPos(kanbu, work->pos.x, 45.0f + work->pos.y, work->pos.z);
     return EVT_RETURN_DONE;
 }
 
+/**
+ * Script helper: starts formation 3 (the 500 X-Nauts in a ring):
+ * selects it (work->flag = 2), places each member on a circle with random offsets around the leader
+ * and initialises its pose.
+ */
 USER_FUNC(zakogun_ext_init3) {
     s32 i;
     ExtdrvPose* pose = extGetPosePtr();
@@ -121,9 +83,9 @@ USER_FUNC(zakogun_ext_init3) {
         zakogun[i].home.y = 0.0f;
         zakogun[i].home.z = -80.0f + 4.0f * (i / 12) + (5.0f * rand() / 32767.0f - 2.5f);
         kanbu = BattleGetUnitPtr(_battleWorkPointer, zakogun_get_kanbu_id());
-        dx = zakogun[i].home.x - kanbu->mHomePosition.x;
-        dy = zakogun[i].home.y - kanbu->mHomePosition.y;
-        dz = zakogun[i].home.z - kanbu->mHomePosition.z;
+        dx = zakogun[i].home.x - kanbu->homePosition.x;
+        dy = zakogun[i].home.y - kanbu->homePosition.y;
+        dz = zakogun[i].home.z - kanbu->homePosition.z;
         dist = sqrt(dx * dx + dy * dy + dz * dz);
         if (dist <= 30.0f) {
             zakogun[i].home.x += 30.0f * (dx / dist);
@@ -142,38 +104,10 @@ USER_FUNC(zakogun_ext_init3) {
     return EVT_RETURN_DONE;
 }
 
-f32 negone_one$374[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 neg_one$382 = -1.0f;
-
-f32 __local_PI$383 = 3.1415927f;
-
-f32 __local_3PIO2$385 = 4.712389f;
-
-u32 gap_04_000314E4_data[1] = {0};
-
-f32 one_negone$373[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 __local_PIO2$384 = 1.5707964f;
-
-f32 one$381 = 1.0f;
-
-f32 negone_one$360[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 neg_one$365 = -1.0f;
-
-f32 __local_PI$366 = 3.1415927f;
-
-f32 __local_3PIO2$368 = 4.712389f;
-
-u32 gap_04_0003150C_data[1] = {0};
-
-f32 one_negone$359[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 __local_PIO2$367 = 1.5707964f;
-
-f32 one$364 = 1.0f;
-
+/**
+ * Unit data of X-Nauts: 10 HP, 260x52 units in size; ties together its sounds, parts, status vulnerability,
+ * init event and event table.
+ */
 BattleUnitKind unit_boss_gundan_zako_group3 = {
     102,
     "btl_un_gundan_zako_group3",
@@ -232,7 +166,7 @@ BattleUnitKind unit_boss_gundan_zako_group3 = {
     "SFX_BTL_DAMAGE_FIRE1",
     "SFX_BTL_DAMAGE_ICE1",
     "SFX_BTL_DAMAGE_BIRIBIRI1",
-    0x200000,
+    UNIT_ATTR_NO_KNOCKBACK_POSE,
     &regist,
     1,
     parts,
@@ -240,58 +174,70 @@ BattleUnitKind unit_boss_gundan_zako_group3 = {
     data_table,
 };
 
+/** Defence of X-Nauts: 0 against every kind of hit. */
 static BattleUnitDefense defence = {{0, 0, 0, 0, 0}};
 
+/** Defence attributes of X-Nauts: none, every element hits it normally. */
 static BattleUnitDefenseAttr defence_attr = {{0, 0, 0, 0, 0}};
 
+/**
+ * Status vulnerability of X-Nauts (percent chance each status takes hold): immune to sleep, stop, dizzy,
+ * poison, confusion, electrified, burn, freeze, Huge, Tiny, Attack Up, Attack Down, Defense Up,
+ * Defense Down, allergic, fright, Gale Force, Fast, Slow, Dodgy, Invisible, instant KO;
+ * the rest take hold at 80% or better.
+ */
 static StatusVulnerability regist = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
+/** Pose table of X-Nauts: maps its battle poses to its animations (Z_*). */
 static PoseTableEntry pose_table[] = {
-    {28, "Z_1"},
+    {BTL_POSE_NORMAL, "Z_1"},
     {31, "Z_1"},
-    {39, "Z_1"},
-    {69, "Z_1"},
+    {BTL_POSE_DAMAGE, "Z_1"},
+    {BTL_POSE_STAY_DEFAULT, "Z_1"},
 };
 
+/** Event table of X-Nauts: dead_event (tag 49). */
 static BattleDataEntry data_table[] = {
     {49, dead_event},
     {48, btldefaultevt_Dummy},
     {0, NULL},
 };
 
+/** Parts of X-Nauts: 1 part (model c_zako_n). */
 static BattleUnitKindPart parts[] = {
-    {1, "btl_un_gundan_zako_group3", "c_zako_n", 0.0f, 0.0f, 0.0f, 0.0f, 25.0f, 0.0f, 0.0f, 30.0f, 0.0f, 20, 30, 255, &defence, &defence_attr, 0x3000009, 0, pose_table},
+    {1, "btl_un_gundan_zako_group3", "c_zako_n", 0.0f, 0.0f, 0.0f, 0.0f, 25.0f, 0.0f, 0.0f, 30.0f, 0.0f, 20, 30, 255, &defence, &defence_attr, PART_ATTR_MAIN | PART_ATTR_GUARD_COVER | PART_ATTR_HIDDEN | PART_ATTR_NO_SHADOW, 0, pose_table},
 };
 
+/** Weapon of X-Nauts (attack): targets one unit for 5 damage; used by attack_event. */
 BattleWeapon weapon_gundan_zako_group3_attack = {
     NULL, 0, // name..icon
     {0}, // pad_06
     0, NULL, // itemId..description
     100, // baseAccuracy
     0, 0, // baseFpCost..baseSpCost
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
     2, // superguardsAllowed
 #else
     0, // superguardsAllowed
 #endif
     1.0f, // reserved_14
-    1, // mStylishCommandMultiplier
+    1, // stylishCommandMultiplier
     1, // reserved_19
-    1, // mBingoSlotChance
+    1, // bingoSlotChance
     1, // reserved_1B
     weaponGetPowerDefault, // hpDamageFn
     {5, 0, 0, 0, 0, 0, 0, 0}, // hpDamageWork
     NULL, // fpDamageFn
     {0}, // fpDamageWork
-    0x1101260, // targetClassFlags
-    0x20004004, // targetPropertyFlags
-    0, 0, // element..damagePattern
+    TARGET_CLASS_NO_TREE_OR_SWITCH | TARGET_CLASS_NO_SYSTEM_UNIT | TARGET_CLASS_NO_OWN_ALLIANCE | TARGET_CLASS_NO_SELF | TARGET_CLASS_MAIN_PARTS | TARGET_CLASS_SINGLE, // targetClassFlags
+    TARGET_PROP_NO_CEILING | TARGET_PROP_SHELL_TOSS_LIKE | TARGET_PROP_START_OPPOSING_SIDE, // targetPropertyFlags
+    ELEMENT_NORMAL, 0, // element..damagePattern
     3, // acLevel
     2, // reserved_6F
     NULL, // acHelpMsg
-    0x87, // special
-    0x7FF, // counterResistFlags
-    4, // targetWeightFlags
+    SPECIAL_BADGE_BUFFABLE | SPECIAL_STATUS_BUFFABLE | SPECIAL_CHARGE_BUFFABLE | SPECIAL_SHATTERS_FREEZE, // special
+    COUNTER_RESIST_ALL, // counterResistFlags
+    TARGET_WEIGHT_PREFER_FRONT, // targetWeightFlags
     0, 0, 0, 0, 0, 0, 0, 0, // sleepChance..poisonTime
     0, 0, 0, 0, 0, 0, 0, 0, // poisonStrength..burnChance
     0, 0, 0, 0, 0, 0, 0, 0, // burnTime..atkChangeTime
@@ -299,69 +245,80 @@ BattleWeapon weapon_gundan_zako_group3_attack = {
     0, 0, 0, 0, 0, 0, 0, 0, // fastChance..holdFastTime
     0, 0, 0, 0, 0, 0, // invisibleChance..fpRegenStrength
     {0}, // pad_AE
-    NULL, // mAttackEvtScript
+    NULL, // attackEvtScript
     {0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0}, // stageEffectRates
 };
 
+/** Init event of X-Naut group 3: installs its wait, attack, damage and confusion events and starts the wait event. */
 static EVT_BEGIN(init_event)
-    CALL(btlevtcmd_SetEventWait, -2, PTR(wait_event))
-    CALL(btlevtcmd_SetEventAttack, -2, PTR(attack_event))
-    CALL(btlevtcmd_SetEventDamage, -2, PTR(damage_event))
-    CALL(btlevtcmd_SetEventConfusion, -2, PTR(btldefaultevt_Confuse))
-    CALL(btlevtcmd_StartWaitEvent, -2)
+    CALL(btlevtcmd_SetEventWait, BTL_UNIT_SELF, PTR(wait_event))
+    CALL(btlevtcmd_SetEventAttack, BTL_UNIT_SELF, PTR(attack_event))
+    CALL(btlevtcmd_SetEventDamage, BTL_UNIT_SELF, PTR(damage_event))
+    CALL(btlevtcmd_SetEventConfusion, BTL_UNIT_SELF, PTR(btldefaultevt_Confuse))
+    CALL(btlevtcmd_StartWaitEvent, BTL_UNIT_SELF)
     RETURN
 EVT_END()
 
+/**
+ * Damage event of X-Naut group 3: the X-Nauts take the hurt pose when the hit did damage
+ * or the group has one of several statuses (KO, sleep, dizzy, confusion, freeze, stop, poison, burn, tiny,
+ * defense down, slow or allergic), then the default damage reaction runs.
+ */
 static EVT_BEGIN(damage_event)
     SET_VALUE(LW(10), -2)
     SET_VALUE(LW(11), 1)
-    CALL(btlevtcmd_GetDamage, -2, LW(0))
+    CALL(btlevtcmd_GetDamage, BTL_UNIT_SELF, LW(0))
     IF_INT_GREATER_OR_EQUAL(LW(0), 1)
         SET_VALUE(LW(15), 1)
-        ELSE
+    ELSE
         SET_VALUE(LW(15), 0)
     END_IF
-    CALL(btlevtcmd_CheckStatus, -2, 27, LW(14))
+    CALL(btlevtcmd_CheckStatus, BTL_UNIT_SELF, STATUS_INSTANT_KILL, LW(14))
     OR(LW(15), LW(14))
-    CALL(btlevtcmd_CheckStatus, -2, 1, LW(14))
+    CALL(btlevtcmd_CheckStatus, BTL_UNIT_SELF, STATUS_SLEEP, LW(14))
     OR(LW(15), LW(14))
-    CALL(btlevtcmd_CheckStatus, -2, 3, LW(14))
+    CALL(btlevtcmd_CheckStatus, BTL_UNIT_SELF, STATUS_DIZZY, LW(14))
     OR(LW(15), LW(14))
-    CALL(btlevtcmd_CheckStatus, -2, 5, LW(14))
+    CALL(btlevtcmd_CheckStatus, BTL_UNIT_SELF, STATUS_CONFUSE, LW(14))
     OR(LW(15), LW(14))
-    CALL(btlevtcmd_CheckStatus, -2, 9, LW(14))
+    CALL(btlevtcmd_CheckStatus, BTL_UNIT_SELF, STATUS_FREEZE, LW(14))
     OR(LW(15), LW(14))
-    CALL(btlevtcmd_CheckStatus, -2, 2, LW(14))
+    CALL(btlevtcmd_CheckStatus, BTL_UNIT_SELF, STATUS_STOP, LW(14))
     OR(LW(15), LW(14))
-    CALL(btlevtcmd_CheckStatus, -2, 4, LW(14))
+    CALL(btlevtcmd_CheckStatus, BTL_UNIT_SELF, STATUS_POISON, LW(14))
     OR(LW(15), LW(14))
-    CALL(btlevtcmd_CheckStatus, -2, 8, LW(14))
+    CALL(btlevtcmd_CheckStatus, BTL_UNIT_SELF, STATUS_BURN, LW(14))
     OR(LW(15), LW(14))
-    CALL(btlevtcmd_CheckStatus, -2, 11, LW(14))
+    CALL(btlevtcmd_CheckStatus, BTL_UNIT_SELF, STATUS_TINY, LW(14))
     OR(LW(15), LW(14))
-    CALL(btlevtcmd_CheckStatus, -2, 15, LW(14))
+    CALL(btlevtcmd_CheckStatus, BTL_UNIT_SELF, STATUS_DEFENSE_DOWN, LW(14))
     OR(LW(15), LW(14))
-    CALL(btlevtcmd_CheckStatus, -2, 20, LW(14))
+    CALL(btlevtcmd_CheckStatus, BTL_UNIT_SELF, STATUS_SLOW, LW(14))
     OR(LW(15), LW(14))
-    CALL(btlevtcmd_CheckStatus, -2, 0, LW(14))
+    CALL(btlevtcmd_CheckStatus, BTL_UNIT_SELF, STATUS_ALLERGIC, LW(14))
     OR(LW(15), LW(14))
     IF_INT_NOT_EQUAL(LW(15), 0)
         CALL(zakogun_damage_pose)
     END_IF
-    CALL_CHILD(PTR(btldefaultevt_Damage))
+    CALL_CHILD(btldefaultevt_Damage)
     CALL(zakogun_damage_pose_cancel)
     RETURN
 EVT_END()
 
+/**
+ * Death event of X-Naut group 3: marks the group dying (unit work 1),
+ * the 500 X-Nauts collapse (zakogun_dead3) with the enemy-death sounds and smoke,
+ * its coins and experience are stored with the Star Point effect and the unit is removed.
+ */
 static EVT_BEGIN(dead_event)
-    CALL(btlevtcmd_SetUnitWork, -2, 1, 1)
+    CALL(btlevtcmd_SetUnitWork, BTL_UNIT_SELF, UW_BOSS_GUNDAN_ZAKO_GROUP3_DYING, 1)
     CALL(zakogun_dead3)
-    CALL(btlevtcmd_snd_se, -2, STRING("SFX_BTL_ENEMY_DIE1_1"), -250000000, 0, -250000000)
+    CALL(btlevtcmd_snd_se, BTL_UNIT_SELF, STRING("SFX_BTL_ENEMY_DIE1_1"), EVT_NULLPTR, 0, EVT_NULLPTR)
     WAIT_FRAMES(48)
     BEGIN_SIBLING_EVENT
-        CALL(btlevtcmd_snd_se, -2, STRING("SFX_BTL_ENEMY_DIE1_2"), -250000000, 0, -250000000)
+        CALL(btlevtcmd_snd_se, BTL_UNIT_SELF, STRING("SFX_BTL_ENEMY_DIE1_2"), EVT_NULLPTR, 0, EVT_NULLPTR)
         LOOP(20)
-            CALL(btlevtcmd_GetPos, -2, LW(0), LW(1), LW(2))
+            CALL(btlevtcmd_GetPos, BTL_UNIT_SELF, LW(0), LW(1), LW(2))
             CALL(evt_sub_random, 300, LW(3))
             SUBTRACT(LW(3), 150)
             ADD(LW(0), LW(3))
@@ -372,31 +329,38 @@ static EVT_BEGIN(dead_event)
             WAIT_FRAMES(1)
         END_LOOP
     END_SIBLING_EVENT
-    CALL(btlevtcmd_GetCoin, -2, LW(0))
+    CALL(btlevtcmd_GetCoin, BTL_UNIT_SELF, LW(0))
     CALL(btlevtcmd_StoreCoin, LW(0))
-    CALL(btlevtcmd_GetExp, -2, LW(0))
+    CALL(btlevtcmd_GetExp, BTL_UNIT_SELF, LW(0))
     CALL(btlevtcmd_StoreExp, LW(0))
-    CALL(btlevtcmd_GetPos, -2, LW(3), LW(1), LW(2))
-    CALL(_add_star_point_disp_offset, -2, LW(3), LW(1), LW(2))
+    CALL(btlevtcmd_GetPos, BTL_UNIT_SELF, LW(3), LW(1), LW(2))
+    CALL(_add_star_point_disp_offset, BTL_UNIT_SELF, LW(3), LW(1), LW(2))
     CALL(evt_eff, STRING(""), STRING("star_point"), 0, LW(3), LW(1), LW(2), LW(0), 0, 0, 0, 0, 0, 0, 0)
     WAIT_FRAMES(20)
-    CALL(btlevtcmd_CheckDamageCode, -2, 1024, LW(0))
+    CALL(btlevtcmd_CheckDamageCode, BTL_UNIT_SELF, DAMAGE_FLAG_DEFEATED, LW(0))
     IF_INT_NOT_EQUAL(LW(0), 0)
-        CALL(btlevtcmd_KillUnit, -2, 0)
+        CALL(btlevtcmd_KillUnit, BTL_UNIT_SELF, 0)
     ELSE
-        CALL(btlevtcmd_KillUnit, -2, 2)
+        CALL(btlevtcmd_KillUnit, BTL_UNIT_SELF, 2)
     END_IF
     RETURN
 EVT_END()
 
+/**
+ * Attack event of X-Naut group 3: the X-Nauts pile into a ball (zakogun_attack3_1)
+ * and Lord Crump jumps on top (on JP and later only while he can act)
+ * and rides it (zakogun_kanbu_on_ball) as it rolls at the target (zakogun_attack3_2)
+ * while hit_check_event deals the hit.
+ * Then Crump jumps off and runs home, and zakogun_attack3_3 ends the move with the ADHERE2 sound.
+ */
 static EVT_BEGIN(attack_event)
-    CALL(btlevtcmd_SetUnitWork, -2, 0, 0)
+    CALL(btlevtcmd_SetUnitWork, BTL_UNIT_SELF, UW_BOSS_GUNDAN_ZAKO_GROUP3_AT_TARGET, 0)
     SET_VALUE(LW(9), PTR(&weapon_gundan_zako_group3_attack))
-    CALL(btlevtcmd_GetEnemyBelong, -2, LW(0))
-    CALL(btlevtcmd_SamplingEnemy, -2, LW(0), LW(9))
+    CALL(btlevtcmd_GetEnemyBelong, BTL_UNIT_SELF, LW(0))
+    CALL(btlevtcmd_SamplingEnemy, BTL_UNIT_SELF, LW(0), LW(9))
     CALL(btlevtcmd_ChoiceSamplingEnemy, LW(9), LW(3), LW(4))
     IF_INT_EQUAL(LW(3), -1)
-        CALL(btlevtcmd_CheckToken, -2, 16, LW(0))
+        CALL(btlevtcmd_CheckToken, BTL_UNIT_SELF, TOKEN_FLAG_CONFUSED_ACTION, LW(0))
         IF_INT_NOT_EQUAL(LW(0), 0)
             CALL_CHILD(subsetevt_confuse_flustered)
             RETURN
@@ -404,13 +368,16 @@ static EVT_BEGIN(attack_event)
         GOTO(99)
     END_IF
     CALL(btlevtcmd_WeaponAftereffect, LW(9))
-    CALL(btlevtcmd_AttackDeclare, -2, LW(3), LW(4))
+    CALL(btlevtcmd_AttackDeclare, BTL_UNIT_SELF, LW(3), LW(4))
     CALL(btlevtcmd_WaitGuardMove)
-    CALL(btlevtcmd_PayWeaponCost, -2, LW(9))
+    CALL(btlevtcmd_PayWeaponCost, BTL_UNIT_SELF, LW(9))
     CALL(zakogun_get_kanbu_id_evtcmd, LW(5))
+    // The releases bring the leader along only while it can act; the demo always does.
+#if VERSION >= VERSION_JP
     CALL(btlevtcmd_CheckActStatus, LW(5), LW(12))
     IF_INT_NOT_EQUAL(LW(12), 0)
         CALL(zakogun_get_kanbu_id_evtcmd, LW(5))
+#endif
         BEGIN_SIBLING_EVENT_GET_ID(LW(15))
             WAIT_FRAMES(10)
             CALL(btlevtcmd_AnimeChangePose, LW(5), 1, STRING("W_1"))
@@ -419,24 +386,32 @@ static EVT_BEGIN(attack_event)
             CALL(btlevtcmd_MovePosition, LW(5), LW(0), LW(1), LW(2), 60, -1, 0)
             CALL(btlevtcmd_AnimeChangePose, LW(5), 1, STRING("S_1"))
         END_SIBLING_EVENT
+#if VERSION >= VERSION_JP
     END_IF
+#endif
     BEGIN_SIBLING_EVENT
         WAIT_FRAMES(32)
         CALL(evt_snd_sfxon, STRING("SFX_BOSS_TEAM_3RD_ADHERE1"), 0)
     END_SIBLING_EVENT
     CALL(zakogun_attack3_1)
+#if VERSION >= VERSION_JP
     IF_INT_NOT_EQUAL(LW(12), 0)
+#endif
         DELETE_EVENT(LW(15))
         CALL(btlevtcmd_AnimeChangePose, LW(5), 1, STRING("A_1A"))
-        CALL(btlevtcmd_snd_se, LW(5), STRING("SFX_BOSS_KANBU_JUMP1"), -250000000, 0, LW(13))
+        CALL(btlevtcmd_snd_se, LW(5), STRING("SFX_BOSS_KANBU_JUMP1"), EVT_NULLPTR, 0, LW(13))
         CALL(btlevtcmd_JumpSetting, LW(5), 0, FLOAT(6.0f), FLOAT(0.2998047f))
         CALL(btlevtcmd_JumpPosition, LW(5), 0, 100, 0, 0, -1)
         CALL(btlevtcmd_AnimeChangePose, LW(5), 1, STRING("S_1"))
         CALL(evt_snd_sfxoff, LW(13))
+#if VERSION >= VERSION_JP
     END_IF
+#endif
     CALL(btlevtcmd_GetSelectEnemy, LW(3), LW(4))
     CALL(zakogun_set_target_id, LW(3))
+#if VERSION >= VERSION_JP
     IF_INT_NOT_EQUAL(LW(12), 0)
+#endif
         BEGIN_SIBLING_EVENT_GET_ID(LW(14))
             CALL(zakogun_get_kanbu_id_evtcmd, LW(5))
             CALL(btlevtcmd_AnimeChangePose, LW(5), 1, STRING("R_2"))
@@ -445,17 +420,23 @@ static EVT_BEGIN(attack_event)
                 WAIT_FRAMES(1)
             END_LOOP
         END_SIBLING_EVENT
+#if VERSION >= VERSION_JP
     END_IF
+#endif
     BEGIN_SIBLING_EVENT
         CALL_CHILD(hit_check_event)
     END_SIBLING_EVENT
     CALL(evt_snd_sfxon, STRING("SFX_BOSS_TEAM_3RD_ROUND1"), LW(13))
     CALL(zakogun_attack3_2, LW(13))
+#if VERSION >= VERSION_JP
     IF_INT_NOT_EQUAL(LW(12), 0)
+#endif
         DELETE_EVENT(LW(14))
         DELETE_EVENT(LW(15))
+#if VERSION >= VERSION_JP
     END_IF
     IF_INT_NOT_EQUAL(LW(12), 0)
+#endif
         BEGIN_INLINE_EVENT
             CALL(zakogun_get_kanbu_id_evtcmd, LW(5))
             CALL(btlevtcmd_AnimeChangePose, LW(5), 1, STRING("A_1A"))
@@ -471,13 +452,19 @@ static EVT_BEGIN(attack_event)
             CALL(btlevtcmd_AnimeChangePose, LW(5), 1, STRING("S_1"))
             CALL(btlevtcmd_ResetFaceDirection, LW(5))
         END_INLINE_EVENT
+#if VERSION >= VERSION_JP
     END_IF
+#endif
     CALL(evt_snd_sfxon, STRING("SFX_BOSS_TEAM_3RD_ADHERE2"), 0)
     CALL(zakogun_attack3_3)
-    CALL(btlevtcmd_StartWaitEvent, -2)
+    CALL(btlevtcmd_StartWaitEvent, BTL_UNIT_SELF)
     RETURN
 EVT_END()
 
+/**
+ * Per-frame update of formation 3: moves the ring of 500 X-Nauts around the formation centre (radius, angle,
+ * speed) and turns each one along the ring.
+ */
 void zakogun_ext_main3(void) {
     s32 i;
     BattleUnit* unit = zakogun_get_ptr();
@@ -519,9 +506,9 @@ void zakogun_ext_main3(void) {
                 zako->state = 10;
                 zakogun_set_pose(zako, 0x16, 10, 1);
             case 10:
-                zako->pos.x = intplGetValue(0, zako->timerMax - zako->timer, zako->timerMax, zako->start.x, zako->home.x);
-                zako->pos.y = intplGetValue(0, zako->timerMax - zako->timer, zako->timerMax, zako->start.y, zako->home.y);
-                zako->pos.z = intplGetValue(0, zako->timerMax - zako->timer, zako->timerMax, zako->start.z, zako->home.z);
+                zako->pos.x = intplGetValue(0, zako->start.x, zako->home.x, zako->timerMax - zako->timer, zako->timerMax);
+                zako->pos.y = intplGetValue(0, zako->start.y, zako->home.y, zako->timerMax - zako->timer, zako->timerMax);
+                zako->pos.z = intplGetValue(0, zako->start.z, zako->home.z, zako->timerMax - zako->timer, zako->timerMax);
                 zako->timer--;
                 if (zako->timer < 0) {
                     zako->state = 15;
@@ -529,10 +516,10 @@ void zakogun_ext_main3(void) {
                 }
                 break;
             case 15:
-                zako->pos.x = zako->home.x + (unit->mPosition.x - unit->mHomePosition.x);
+                zako->pos.x = zako->home.x + (unit->position.x - unit->homePosition.x);
                 zako->pos.y = zako->home.y;
-                if (zako->pos.y < unit->mPosition.y) {
-                    zako->pos.y = unit->mPosition.y;
+                if (zako->pos.y < unit->position.y) {
+                    zako->pos.y = unit->position.y;
                 }
                 zako->pos.z = zako->home.z;
                 break;
@@ -570,8 +557,8 @@ void zakogun_ext_main3(void) {
                 }
                 break;
             case 30:
-                zako->pos.x = intplGetValue(0, zako->timerMax - zako->timer, zako->timerMax, zako->start.x, zako->target.x);
-                zako->pos.z = intplGetValue(0, zako->timerMax - zako->timer, zako->timerMax, zako->start.z, zako->target.z);
+                zako->pos.x = intplGetValue(0, zako->start.x, zako->target.x, zako->timerMax - zako->timer, zako->timerMax);
+                zako->pos.z = intplGetValue(0, zako->start.z, zako->target.z, zako->timerMax - zako->timer, zako->timerMax);
                 zako->pos.y += zako->vel.y;
                 zako->vel.y += -0.5f;
                 zako->timer--;
@@ -603,8 +590,8 @@ void zakogun_ext_main3(void) {
                 zako->timer = zako->timerMax = 20;
                 zakogun_set_pose(zako, 0x22, 1, 1);
             case 55:
-                zako->pos.x = intplGetValue(0, zako->timerMax - zako->timer, zako->timerMax, zako->start.x, zako->target.x);
-                zako->pos.z = intplGetValue(0, zako->timerMax - zako->timer, zako->timerMax, zako->start.z, zako->target.z);
+                zako->pos.x = intplGetValue(0, zako->start.x, zako->target.x, zako->timerMax - zako->timer, zako->timerMax);
+                zako->pos.z = intplGetValue(0, zako->start.z, zako->target.z, zako->timerMax - zako->timer, zako->timerMax);
                 zako->pos.y += zako->vel.y;
                 zako->vel.y += -0.5f;
                 zako->timer--;
@@ -621,8 +608,8 @@ void zakogun_ext_main3(void) {
                 zako->state = 65;
                 zakogun_set_pose(zako, 0x16, 10, 1);
             case 65:
-                zako->pos.x = intplGetValue(0, zako->timerMax - zako->timer, zako->timerMax, zako->start.x, zako->home.x);
-                zako->pos.z = intplGetValue(0, zako->timerMax - zako->timer, zako->timerMax, zako->start.z, zako->home.z);
+                zako->pos.x = intplGetValue(0, zako->start.x, zako->home.x, zako->timerMax - zako->timer, zako->timerMax);
+                zako->pos.z = intplGetValue(0, zako->start.z, zako->home.z, zako->timerMax - zako->timer, zako->timerMax);
                 zako->timer--;
                 if (zako->timer < 0) {
                     zako->state = 15;
@@ -693,6 +680,10 @@ void zakogun_ext_main3(void) {
     }
 }
 
+/**
+ * Script helper, first step of group 3 attack: sets the formation centre at (0, 55, 0) with radius 25
+ * and builds up the ring; blocks until it is formed.
+ */
 USER_FUNC(zakogun_attack3_1) {
     s32 i;
     s32 n;
@@ -715,6 +706,10 @@ USER_FUNC(zakogun_attack3_1) {
     return n == 500 ? EVT_RETURN_DONE : EVT_RETURN_BLOCK;
 }
 
+/**
+ * Script helper, second step of group 3 attack (args[0] = sound id):
+ * moves the ring toward the target with a sound until it arrives.
+ */
 USER_FUNC(zakogun_attack3_2) {
     BattleUnit* unit = zakogun_get_ptr();
     s32 sfx = evtGetValue(event, event->args[0]);
@@ -733,8 +728,8 @@ USER_FUNC(zakogun_attack3_2) {
             work->speed -= 0.06f;
             if (work->targetId != -1) {
                 BattleUnit* target = BattleGetUnitPtr(_battleWorkPointer, work->targetId);
-                if (work->pos.x <= target->mPosition.x) {
-                    unit->work[0] = 1;
+                if (work->pos.x <= target->position.x) {
+                    unit->work[UW_BOSS_GUNDAN_ZAKO_GROUP3_AT_TARGET] = 1;
                 }
             }
             if (work->pos.x <= -200.0f) {
@@ -777,6 +772,7 @@ USER_FUNC(zakogun_attack3_2) {
     return EVT_RETURN_BLOCK;
 }
 
+/** Script helper, last step of group 3 attack: sets all 500 X-Nauts to state 50 and blocks until they have finished. */
 USER_FUNC(zakogun_attack3_3) {
     s32 i;
     s32 n;
@@ -794,6 +790,7 @@ USER_FUNC(zakogun_attack3_3) {
     return n == 500 ? EVT_RETURN_DONE : EVT_RETURN_BLOCK;
 }
 
+/** Script helper: puts the 500 X-Nauts of group 3 into their death state (80). */
 USER_FUNC(zakogun_dead3) {
     s32 i;
 
@@ -803,6 +800,10 @@ USER_FUNC(zakogun_dead3) {
     return EVT_RETURN_DONE;
 }
 
+/**
+ * Script helper: sends the 500 X-Nauts of group 3 running away (state 90, escape animation) and blocks
+ * until they are gone.
+ */
 USER_FUNC(zakogun_escape3) {
     s32 i;
     s32 n;
@@ -822,16 +823,21 @@ USER_FUNC(zakogun_escape3) {
     return n == 500 ? EVT_RETURN_DONE : EVT_RETURN_BLOCK;
 }
 
+/**
+ * Hit check of X-Naut group 3's attack: for each selected target in turn it waits
+ * until the ball reaches it (unit work 0), then starts its avoid pose on a dodge
+ * or applies the hit with the action-command defence.
+ */
 static EVT_BEGIN(hit_check_event)
     LABEL(10)
     LOOP(0)
-        CALL(btlevtcmd_GetUnitWork, -2, 0, LW(0))
+        CALL(btlevtcmd_GetUnitWork, BTL_UNIT_SELF, UW_BOSS_GUNDAN_ZAKO_GROUP3_AT_TARGET, LW(0))
         IF_INT_NOT_EQUAL(LW(0), 0)
             BREAK_LOOP
         END_IF
         WAIT_FRAMES(1)
     END_LOOP
-    CALL(btlevtcmd_PreCheckDamage, -2, LW(3), LW(4), LW(9), 0, LW(5))
+    CALL(btlevtcmd_PreCheckDamage, BTL_UNIT_SELF, LW(3), LW(4), LW(9), 0, LW(5))
     SWITCH(LW(5))
         CASE_OR_EQUAL(4)
         GOTO(90)
@@ -858,23 +864,23 @@ static EVT_BEGIN(hit_check_event)
     LABEL(91)
     CALL(evt_btl_camera_set_mode, 0, 0)
     CALL(btlevtcmd_ResultACDefence, LW(3), LW(9))
-    CALL(btlevtcmd_CheckDamage, -2, LW(3), LW(4), LW(9), 256, LW(5))
+    CALL(btlevtcmd_CheckDamage, BTL_UNIT_SELF, LW(3), LW(4), LW(9), DAMAGE_FLAG_LAST_HIT, LW(5))
     GOTO(98)
     LABEL(98)
     CALL(btlevtcmd_GetSelectNextEnemy, LW(3), LW(4))
-    CALL(btlevtcmd_SetUnitWork, -2, 0, 0)
+    CALL(btlevtcmd_SetUnitWork, BTL_UNIT_SELF, UW_BOSS_GUNDAN_ZAKO_GROUP3_AT_TARGET, 0)
     IF_INT_NOT_EQUAL(LW(3), -1)
         CALL(zakogun_set_target_id, LW(3))
         GOTO(10)
-        ELSE
+    ELSE
         CALL(zakogun_set_target_id, -1)
     END_IF
     LABEL(99)
     RETURN
 EVT_END()
 
+/** Wait (idle) event of X-Naut group 3: sets the idle pose from its pose table. */
 static EVT_BEGIN(wait_event)
-    CALL(btlevtcmd_AnimeChangePoseFromTable, -2, 1)
+    CALL(btlevtcmd_AnimeChangePoseFromTable, BTL_UNIT_SELF, 1)
     RETURN
 EVT_END()
-

@@ -80,9 +80,9 @@ s32 pouchSetCoin(s32 p0) {
     return r;
 }
 
-s16 pouchAddCoin(s16 p0) {
+s32 pouchAddCoin(s32 p0) {
     PortHookSlot* s = &portHookSlots[15];
-    s16 r;
+    s32 r;
     int i, skip = 0;
     if (!s->active) {
         return pouchAddCoin__body(p0);
@@ -92,7 +92,7 @@ s16 pouchAddCoin(s16 p0) {
         skip |= ((int (*)(__typeof__(r)*, __typeof__(p0)*))s->pre[i])(&r, &p0);
     }
     if (!skip) {
-        r = (s->replace != NULL ? ((s16 (*)(__typeof__(p0)))s->replace)(p0) : pouchAddCoin__body(p0));
+        r = (s->replace != NULL ? ((s32 (*)(__typeof__(p0)))s->replace)(p0) : pouchAddCoin__body(p0));
     }
     for (i = 0; i < s->postCount; i++) {
         ((void (*)(__typeof__(r)*, __typeof__(p0)))s->post[i])(&r, p0);

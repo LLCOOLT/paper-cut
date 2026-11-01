@@ -29,6 +29,8 @@ import sys
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 LOC = re.compile(r"<([A-Za-z]:[^:<>]+|/[^:<>]+):\d+:\d+")
 VAR = re.compile(r"^\|-(?:VarDecl|FunctionDecl) 0x[0-9a-f]+ (?:prev 0x[0-9a-f]+ )?<(\S+?)[,>].*? (?:used |referenced )*(\w+) '[^']*'(?::'[^']*')? .*?\bstatic\b")
+FUNC = re.compile(r"^[|`]-FunctionDecl 0x[0-9a-f]+ .*? (?:used |referenced )*(\w+) '")
+BODY = re.compile(r"^[| ] [|`]-CompoundStmt ")
 
 
 def game_source(path, build):
@@ -70,8 +72,18 @@ def statics(job):
                        shell=os.name != "nt")
     # (a Shift-JIS copy's #line names the original)
     main = os.path.normcase(os.path.normpath(os.path.join(ROOT, src)))
-    cur, names = "", []
+    # a static function counts only where this version defines it: the decomp
+    # declares some for every version and defines them in one version's block.
+    # Any top-level FunctionDecl of that name with a CompoundStmt body defines
+    # it (a later definition without 'static', a mods dispatcher in an .inc).
+    cur, names, funcs, bodies, pending = "", [], set(), set(), None
     for ln in r.stdout.splitlines():
+        if ln.startswith(("|-", "`-")):
+            fd = FUNC.match(ln)
+            pending = fd.group(1) if fd else None
+        elif pending and BODY.match(ln):
+            bodies.add(pending)
+            pending = None
         m = VAR.match(ln)
         if m:
             first = LOC.match("<" + m.group(1))
@@ -79,9 +91,11 @@ def statics(job):
                 cur = first.group(1)
             if os.path.normcase(os.path.normpath(os.path.join(entry["directory"], cur))) == main:
                 names.append(m.group(2))
+                if ln[2:].startswith("FunctionDecl"):
+                    funcs.add(m.group(2))
         for loc in LOC.finditer(ln):
             cur = loc.group(1)
-    return sorted(set(names))
+    return sorted(set(n for n in names if n not in funcs or n in bodies))
 
 
 def main():

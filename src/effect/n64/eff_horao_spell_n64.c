@@ -1,3 +1,6 @@
+// Paper Mario 64 effect: horao spell, two wavy 16-segment glow ribbons at fixed angles that sway, scroll their texture
+// and cycle through a 17-step green colour table; fades in over 16 frames and out over the last 16.
+#include "eff/n64/eff_horao_spell_n64.h"
 #include "driver/camdrv.h"
 #include "driver/dispdrv.h"
 #include "driver/effdrv.h"
@@ -6,20 +9,8 @@
 #include <dolphin/mtx.h>
 #include <dolphin/os/OSFastCast.h>
 #include <string.h>
-
-#ifndef TARGET_PC /* PC port: the host libc declares these */
-double sin(double);
-#endif
-
-typedef struct effN64Vtx {
-    s16 x, y, z;   // 0x0
-    s16 s, t;      // 0x6
-    u8 r, g, b, a; // 0xA
-} effN64Vtx;
-
-void effGetTexObjN64(u32 id, GXTexObj* obj);
-void effSetVtxDescN64(effN64Vtx* vtx);
-void tri2();
+#include "eff/eff_n64.h"
+#include "libc_decls.h"
 
 typedef struct EffHoraoSpellN64Work {
     s32 type;     // 0x0
@@ -37,6 +28,14 @@ typedef struct EffHoraoSpellN64Work {
     f32 scale;    // 0x38
 } EffHoraoSpellN64Work;
 
+/** Red of the glow ribbon's colour at each of its 17 points, shifting along the ribbon. */
+static u8 colr[17] = {0x78, 0x82, 0x8C, 0x96, 0xA0, 0xAA, 0xB4, 0xBE, 0xC8, 0xC8, 0xBE, 0xB4, 0xAA, 0xA0, 0x96, 0x8C, 0x82};
+/** Green of the glow ribbon's colour at each of its 17 points. */
+static u8 colg[17] = {0xAA, 0xA0, 0x96, 0x8C, 0x82, 0x78, 0x82, 0x8C, 0x96, 0xA0, 0xAA, 0xB4, 0xBE, 0xC8, 0xC8, 0xBE, 0xB4};
+/** Blue of the glow ribbon's colour at each of its 17 points (always full). */
+static u8 colb[17] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+
+/** Template points of a glow ribbon: top and bottom vertex pairs that are copied and swayed each frame. */
 effN64Vtx horao_spell_vtx[] = {
     {0, -8, 0, 0, 0, 0, 0, 0, 0},
     {0, 8, 0, 0, 1024, 0, 0, 0, 0},
@@ -72,24 +71,26 @@ effN64Vtx horao_spell_vtx[] = {
     {0, 8, 0, 7680, 1024, 0, 0, 0, 0},
 };
 
-static u8 colr[20] = {0x78, 0x82, 0x8C, 0x96, 0xA0, 0xAA, 0xB4, 0xBE, 0xC8, 0xC8, 0xBE, 0xB4, 0xAA, 0xA0, 0x96, 0x8C, 0x82};
-static u8 colg[20] = {0xAA, 0xA0, 0x96, 0x8C, 0x82, 0x78, 0x82, 0x8C, 0x96, 0xA0, 0xAA, 0xB4, 0xBE, 0xC8, 0xC8, 0xBE, 0xB4};
-static u8 colb[20] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+static void effHoraoSpellMain(EffectEntry* effect);
+static void effHoraoSpellDisp(CameraId cameraId, EffectEntry* effect);
 
-void effHoraoSpellMain(EffectEntry* effect);
-void effHoraoSpellDisp(CameraId cameraId, EffectEntry* effect);
-
+/**
+ * Spawns the horao spell effect at (x, y, z) for lifetime frames (0 = until soft-deleted).
+ * Reached only through evt_eff64; no script in the tree spawns it.
+ * The effect table labels it バトル・ホラオウ (battle horaou), next to magic_horao_n64 (ホラオウバトル).
+ * Unknown: what horaou refers to.
+ */
 EffectEntry* effHoraoSpellN64Entry(s32 type, s32 lifetime, f32 x, f32 y, f32 z, f32 scale) {
     EffectEntry* effect;
     EffHoraoSpellN64Work* work;
 
     effect = effEntry();
-    effect->type = "HoraoSpellN64\0\0";
+    effect->type = "HoraoSpellN64";
     effect->count = 1;
     work = __memAlloc(HEAP_EFFECT, sizeof(EffHoraoSpellN64Work));
     effect->userdata = work;
     effect->callback = effHoraoSpellMain;
-    effect->flags |= 2;
+    effect->flags |= EFFECT_FLAG_SOFT_DELETE;
     work->type = type;
     work->frame = 0;
     if (lifetime <= 0) {
@@ -112,7 +113,8 @@ EffectEntry* effHoraoSpellN64Entry(s32 type, s32 lifetime, f32 x, f32 y, f32 z, 
     return effect;
 }
 
-void effHoraoSpellMain(EffectEntry* effect) {
+/** Fades the alpha in over 16 frames and out over the last 16 and counts frames; a delete request leaves 16. */
+static void effHoraoSpellMain(EffectEntry* effect) {
     EffHoraoSpellN64Work* work = effect->userdata;
     Vec position;
     Vec tmp = {0.0f, 0.0f, 0.0f};
@@ -121,8 +123,8 @@ void effHoraoSpellMain(EffectEntry* effect) {
     tmp.y = work->position.y;
     tmp.z = work->position.z;
     position = tmp;
-    if (effect->flags & 4) {
-        effect->flags &= ~4;
+    if (effect->flags & EFFECT_FLAG_DELETE_REQUESTED) {
+        effect->flags &= ~EFFECT_FLAG_DELETE_REQUESTED;
         work->lifetime = 16;
     }
     if (work->lifetime < 1000) {
@@ -134,19 +136,23 @@ void effHoraoSpellMain(EffectEntry* effect) {
         return;
     }
     {
-    int frame;
-    frame = work->frame;
-    if (work->lifetime < 16) {
-        work->alpha = work->lifetime * 16;
-    }
-    if (frame < 16) {
-        work->alpha = frame * 16 + 15;
-    }
+        int frame;
+        frame = work->frame;
+        if (work->lifetime < 16) {
+            work->alpha = work->lifetime * 16;
+        }
+        if (frame < 16) {
+            work->alpha = frame * 16 + 15;
+        }
     }
     dispEntry(CAMERA_3D, dispCalcZ(&position), 2, (DispCallback)effHoraoSpellDisp, effect);
 }
 
-void effHoraoSpellDisp(CameraId cameraId, EffectEntry* effect) {
+/**
+ * Draws two 16-segment ribbons 36 degrees apart that sway with a sine and scroll texture 0x73.
+ * The vertices are rebuilt every frame in smartAlloc memory.
+ */
+static void effHoraoSpellDisp(CameraId cameraId, EffectEntry* effect) {
     GXTexObj texObj;
     Mtx mtx;
     Mtx scale;
@@ -165,7 +171,6 @@ void effHoraoSpellDisp(CameraId cameraId, EffectEntry* effect) {
     s32 j;
     effN64Vtx* vtx;
     CameraEntry* camera;
-
 
     GXColor white;
     f32 s;
@@ -265,10 +270,5 @@ void effHoraoSpellDisp(CameraId cameraId, EffectEntry* effect) {
             GXBegin(GX_TRIANGLES, GX_VTXFMT0, 6);
             tri2(k, k + 2, k + 1, k, k + 1, k + 2, k + 3, k);
         }
-
     }
 }
-
-#pragma force_active on
-u8 gap_07_80413A4C_sdata[4] = {0};
-#pragma force_active reset

@@ -1,77 +1,28 @@
+// kpa_02 (クッパ編, Bowser's interludes): the first side-scrolling stage; it ends in Petalburg (nok_00).
+
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
 #include "kpa.h"
 #include "evt/evt_npc.h"
+#include "evt/evt_bero.h"
+#include "evt/evt_cam.h"
+#include "evt/evt_mario.h"
+#include "evt/evt_seq.h"
+#include "evt/evt_sub.h"
 #include "kpa_stage_data.h"
+#include "mario/mariost.h"
+#include "evt/evt_story.h"
+#include "driver/seqdrv.h"
 
-#pragma force_active on
-
-USER_FUNC(evt_bero_mapchange);
-USER_FUNC(evt_cam_letter_box_disable);
-USER_FUNC(evt_koopa_chk_dead);
-USER_FUNC(evt_mario_get_pos);
-USER_FUNC(evt_mario_key_onoff);
-USER_FUNC(evt_mario_set_pos);
-USER_FUNC(evt_npc_setup);
-USER_FUNC(evt_seq_set_seq);
-USER_FUNC(evt_sub_get_system_flag);
-USER_FUNC(kpa_status_init);
-
-f32 fd_kpa_02_negone_one_374[2] __attribute__((aligned(8)));
-f32 fd_kpa_02_neg_one_382;
-f32 fd_kpa_02___local_PI_383;
-f32 fd_kpa_02___local_3PIO2_385;
-f32 fd_kpa_02_one_negone_373[2] __attribute__((aligned(8)));
-f32 fd_kpa_02___local_PIO2_384;
-f32 fd_kpa_02_one_381;
-f32 fd_kpa_02_negone_one_360[2] __attribute__((aligned(8)));
-f32 fd_kpa_02_neg_one_365;
-f32 fd_kpa_02___local_PI_366;
-f32 fd_kpa_02___local_3PIO2_368;
-f32 fd_kpa_02_one_negone_359[2] __attribute__((aligned(8)));
-f32 fd_kpa_02___local_PIO2_367;
-f32 fd_kpa_02_one_364;
-f64 fd_kpa_02__three_localstatic4_sqrtf;
-f64 fd_kpa_02__half_localstatic3_sqrtf;
 EvtWord kpa_act_stg1_mobj[151];
 EvtWord kpa_act_stg1_item[31];
-static EvtWord kpa_fall[41];
 static EvtWord kpa_goal[38];
 static NpcSetupInfo npcEnt[1];
-EvtWord kpa_02_init_evt[36];
 
-f32 fd_kpa_02_negone_one_374[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_kpa_02_neg_one_382 = -1.0f;
-
-f32 fd_kpa_02___local_PI_383 = 3.1415927f;
-
-f32 fd_kpa_02___local_3PIO2_385 = 4.712389f;
-
-f32 fd_kpa_02_one_negone_373[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_kpa_02___local_PIO2_384 = 1.5707964f;
-
-f32 fd_kpa_02_one_381 = 1.0f;
-
-f32 fd_kpa_02_negone_one_360[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_kpa_02_neg_one_365 = -1.0f;
-
-f32 fd_kpa_02___local_PI_366 = 3.1415927f;
-
-f32 fd_kpa_02___local_3PIO2_368 = 4.712389f;
-
-f32 fd_kpa_02_one_negone_359[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_kpa_02___local_PIO2_367 = 1.5707964f;
-
-f32 fd_kpa_02_one_364 = 1.0f;
-
-f64 fd_kpa_02__three_localstatic4_sqrtf = 3.0;
-
-f64 fd_kpa_02__half_localstatic3_sqrtf = 0.5;
-
+/**
+ * Blocks, hidden blocks, pipes and obstacle blocks of side-scrolling stage 1, listed from left to right,
+ * ending at the goal pole.
+ */
 EvtWord kpa_act_stg1_mobj[] = {
     KPA_OBJ_BRICK_2(-1225.0f, 125.0f), KPA_OBJ_BRICK_2(-1100.0f, 125.0f), KPA_OBJ_OJAMA_BLK(-1050.0f, 125.0f),
     KPA_OBJ_BRICK_2(-1000.0f, 125.0f), KPA_OBJ_BRICK_2(-1000.0f, 275.0f), KPA_OBJ_BRICK_2(-950.0f, 125.0f),
@@ -93,12 +44,18 @@ EvtWord kpa_act_stg1_mobj[] = {
     KPA_OBJ_POLE(1237.5f, 0.0f, kpa_goal), KPA_OBJ_END,
 };
 
+/** Coins Bowser can collect in side-scrolling stage 1, as x and z positions. */
 EvtWord kpa_act_stg1_item[] = {
     KPA_ITEM(-687.5f, 112.5f), KPA_ITEM(-650.0f, 112.5f), KPA_ITEM(-500.0f, 137.5f),
     KPA_ITEM(-462.5f, 137.5f), KPA_ITEM(-225.0f, 62.5f), KPA_ITEM(-187.5f, 62.5f), KPA_ITEM(150.0f, 125.0f),
     KPA_ITEM(187.5f, 125.0f), KPA_ITEM(325.0f, 162.5f), KPA_ITEM(362.5f, 162.5f), KPA_ITEM_END,
 };
 
+/**
+ * Watches Bowser in the stage: each frame it checks whether he is dead (evt_koopa_chk_dead)
+ * or has fallen below y = -20, then runs the death handler (kpa_dead) if he died,
+ * or the pit fall handler (kpa_fall_sub) if he fell.
+ */
 static EVT_BEGIN(kpa_fall)
     SET_VALUE(LF(0), 0)
     LOOP(0)
@@ -114,48 +71,60 @@ static EVT_BEGIN(kpa_fall)
         WAIT_FRAMES(1)
     END_LOOP
     IF_INT_EQUAL(LF(0), 0)
-        CALL_CHILD(PTR(kpa_fall_sub))
-        ELSE
-        CALL_CHILD(PTR(kpa_dead))
+        CALL_CHILD(kpa_fall_sub)
+    ELSE
+        CALL_CHILD(kpa_dead)
     END_IF
     RETURN
 EVT_END()
 
+/**
+ * Goal of the first Bowser stage: locks the controls,
+ * sets the story progress to STORY_STG2_25_04_BOWSER_ACTION_STAGE
+ * and changes the map to Petalburg (nok_00, entrance w_bero)
+ * after a 300 ms pause that also removes the letterbox.
+ * In kiosk demo mode it instead ends with the game over sequence.
+ */
 static EVT_BEGIN(kpa_goal)
     CALL(evt_mario_key_onoff, 0)
-    SET_VALUE(GSW(0), 116)
+    SET_VALUE(GSW(GSW_STORY_PROGRESS), STORY_STG2_25_04_BOWSER_ACTION_STAGE)
     CALL(evt_sub_get_system_flag, LW(0))
-    IF_BITS_SET(LW(0), 4096)
+    IF_BITS_SET(LW(0), GLOBAL_FLAG_KIOSK)
         CALL(evt_cam_letter_box_disable, 0)
-        CALL(evt_seq_set_seq, 5, 0, 0)
-        ELSE
+        CALL(evt_seq_set_seq, SEQ_GAME_OVER, 0, 0)
+    ELSE
         BEGIN_INLINE_EVENT
             WAIT_MS(300)
             CALL(evt_cam_letter_box_disable, 0)
         END_INLINE_EVENT
-        CALL(evt_bero_mapchange, STRING("nok_00"), STRING("w_bero\0"))
+        CALL(evt_bero_mapchange, STRING("nok_00"), STRING("w_bero"))
     END_IF
     CALL(evt_mario_key_onoff, 1)
     RETURN
 EVT_END()
 
+/** No NPCs: the side-scrolling stage is built from the block, pipe and item lists instead. */
 static NpcSetupInfo npcEnt[] = {
     {0},
 };
 
+/**
+ * Map init for kpa_02, side-scrolling stage 1: starts Bowser at x = -1450,
+ * builds the stage's blocks and coins from kpa_act_stg1_mobj/item, and starts the pit watcher, the HUD,
+ * the intro and the clock. Reaching the goal goes to Petalburg (nok_00).
+ */
 EVT_BEGIN(kpa_02_init_evt)
     CALL(evt_npc_setup, PTR(npcEnt))
-    CALL_CHILD(PTR(kpa_init))
+    CALL_CHILD(kpa_init)
     CALL(evt_mario_set_pos, -1450, 0, -5)
     SET_VALUE(LW(0), PTR(kpa_act_stg1_mobj))
-    CALL_CHILD(PTR(kpa_read_mobj))
+    CALL_CHILD(kpa_read_mobj)
     SET_VALUE(LW(0), PTR(kpa_act_stg1_item))
-    CALL_CHILD(PTR(kpa_read_item))
-    SPAWN_EVENT(PTR(kpa_fall))
-    CALL(kpa_status_init, 1, GSW(1221), GSW(1222))
+    CALL_CHILD(kpa_read_item)
+    SPAWN_EVENT(kpa_fall)
+    CALL(kpa_status_init, 1, GSW(GSW_KPA_LIVES), GSW(GSW_KPA_TIME_LEFT))
     SET_VALUE(LSW(1), 0)
-    SPAWN_EVENT(PTR(kpa_stage_start))
-    SPAWN_EVENT(PTR(kpa_time))
+    SPAWN_EVENT(kpa_stage_start)
+    SPAWN_EVENT(kpa_time)
     RETURN
 EVT_END()
-

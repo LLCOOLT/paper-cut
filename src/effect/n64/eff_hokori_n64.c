@@ -1,3 +1,4 @@
+// Paper Mario 64 effect: dust (hokori) puffs scattered near the ground in a grey-brown tint.
 #include "eff/n64/eff_hokori_n64.h"
 #include "eff/eff_n64.h"
 #include "driver/camdrv.h"
@@ -8,18 +9,7 @@
 #include <dolphin/mtx.h>
 #include <stdlib.h>
 
-
-#ifdef __MWERKS__
-__declspec(section ".data") f32 eff_hokori_n64_negone_one_a[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-static __declspec(section ".data") f32 negone_one_374[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-__declspec(section ".data") f32 eff_hokori_n64_one_negone_a[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-static __declspec(section ".data") f32 one_negone_373[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-__declspec(section ".data") f32 eff_hokori_n64_negone_one_b[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-static __declspec(section ".data") f32 negone_one_360[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-__declspec(section ".data") f32 eff_hokori_n64_one_negone_b[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-static __declspec(section ".data") f32 one_negone_359[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-#endif
-
+/** Tall 16x32 dust puff, alternating with the square one for types 0-1. */
 effN64Vtx size16x32_tex32x64_vtx[] = {
     {-8, -32, 0, 0, 1024, 0, 0, 0, 255},
     {8, -32, 0, 1024, 1024, 0, 0, 0, 255},
@@ -27,6 +17,7 @@ effN64Vtx size16x32_tex32x64_vtx[] = {
     {-8, 0, 0, 0, 3040, 0, 0, 0, 255},
 };
 
+/** Square 16x16 dust puff, alternating with the tall one for types 0-1. */
 effN64Vtx size16x16_tex32x32_vtx[] = {
     {-8, -16, 0, 0, 0, 0, 0, 0, 255},
     {8, -16, 0, 1024, 0, 0, 0, 0, 255},
@@ -34,6 +25,7 @@ effN64Vtx size16x16_tex32x32_vtx[] = {
     {-8, 0, 0, 0, 1024, 0, 0, 0, 255},
 };
 
+/** Small 8x8 dust puff, used by types above 1. */
 effN64Vtx size8x8_tex32x32_vtx[] = {
     {-4, -4, 0, 0, 0, 0, 0, 0, 255},
     {4, -4, 0, 1024, 0, 0, 0, 0, 255},
@@ -41,9 +33,14 @@ effN64Vtx size8x8_tex32x32_vtx[] = {
     {-4, 4, 0, 0, 1024, 0, 0, 0, 255},
 };
 
-void effHokoriMain(EffectEntry* effect);
-void effHokoriDisp(CameraId cameraId, EffectEntry* effect);
+static void effHokoriMain(EffectEntry* effect);
+static void effHokoriDisp(CameraId cameraId, EffectEntry* effect);
 
+/**
+ * Spawns hokori (dust) puffs near (x, y, z) for lifetime frames: four puffs, five for types 0 and 1.
+ * The tint is grey-brown by default.
+ * Called by the boss_magnum_battender unit (mri) and by event scripts through evt_eff.
+ */
 EffectEntry* effHokoriN64Entry(s32 type, s32 lifetime, f32 x, f32 y, f32 z) {
     s32 count;
     EffectEntry* effect;
@@ -53,7 +50,7 @@ EffectEntry* effHokoriN64Entry(s32 type, s32 lifetime, f32 x, f32 y, f32 z) {
 
     effect = effEntry();
     count = 4 + (type <= 1);
-    effect->type = "HokoriN64\0\0";
+    effect->type = "HokoriN64";
     effect->count = count;
     work = __memAlloc(HEAP_EFFECT, count * sizeof(EffHokoriN64Work));
     effect->userdata = work;
@@ -98,7 +95,11 @@ EffectEntry* effHokoriN64Entry(s32 type, s32 lifetime, f32 x, f32 y, f32 z) {
     return effect;
 }
 
-void effHokoriMain(EffectEntry* effect) {
+/**
+ * Counts the life down (fading over the last 24 frames) and grows each puff;
+ * types 0 and 1 also speed the growth up.
+ */
+static void effHokoriMain(EffectEntry* effect) {
     EffHokoriN64Work* work = effect->userdata;
     Vec position;
     Vec tmp = {0.0f, 0.0f, 0.0f};
@@ -139,7 +140,11 @@ void effHokoriMain(EffectEntry* effect) {
     dispEntry(CAMERA_3D, dispCalcZ(&position), 2, (DispCallback)effHokoriDisp, effect);
 }
 
-void effHokoriDisp(CameraId cameraId, EffectEntry* effect) {
+/**
+ * Draws each puff as a camera-facing sprite (texture 21 for type 0, 22 otherwise):
+ * tall and square ones alternate for types 0-1, small ones for other types.
+ */
+static void effHokoriDisp(CameraId cameraId, EffectEntry* effect) {
     CameraEntry* camera;
     EffHokoriN64Work* work;
     GXTexObj tex;
@@ -161,25 +166,25 @@ void effHokoriDisp(CameraId cameraId, EffectEntry* effect) {
     GXSetTevColor(GX_TEVREG0, (GXColor){work->r, work->g, work->b, work->alpha});
     GXSetTevColor(GX_TEVREG1, (GXColor){work->r2, work->g2, work->b2, 0});
     switch (work->type) {
-    case 0:
-        GXSetNumTevStages(1);
-        GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP0, GX_COLOR_NULL);
-        GXSetTevColorOp(GX_TEVSTAGE0, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
-        GXSetTevAlphaOp(GX_TEVSTAGE0, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
-        GXSetTevColorIn(GX_TEVSTAGE0, GX_CC_ZERO, GX_CC_ZERO, GX_CC_ZERO, GX_CC_C0);
-        GXSetTevAlphaIn(GX_TEVSTAGE0, GX_CA_ZERO, GX_CA_A0, GX_CA_TEXA, GX_CA_ZERO);
-        effGetTexObjN64(21, &tex);
-        GXLoadTexObj(&tex, GX_TEXMAP0);
-        break;
-    default:
-        GXSetNumTevStages(1);
-        GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP0, GX_COLOR_NULL);
-        GXSetTevColorOp(GX_TEVSTAGE0, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
-        GXSetTevAlphaOp(GX_TEVSTAGE0, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
-        GXSetTevColorIn(GX_TEVSTAGE0, GX_CC_C1, GX_CC_C0, GX_CC_TEXC, GX_CC_ZERO);
-        GXSetTevAlphaIn(GX_TEVSTAGE0, GX_CA_ZERO, GX_CA_A0, GX_CA_TEXA, GX_CA_ZERO);
-        effGetTexObjN64(22, &tex);
-        GXLoadTexObj(&tex, GX_TEXMAP0);
+        case 0:
+            GXSetNumTevStages(1);
+            GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP0, GX_COLOR_NULL);
+            GXSetTevColorOp(GX_TEVSTAGE0, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
+            GXSetTevAlphaOp(GX_TEVSTAGE0, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
+            GXSetTevColorIn(GX_TEVSTAGE0, GX_CC_ZERO, GX_CC_ZERO, GX_CC_ZERO, GX_CC_C0);
+            GXSetTevAlphaIn(GX_TEVSTAGE0, GX_CA_ZERO, GX_CA_A0, GX_CA_TEXA, GX_CA_ZERO);
+            effGetTexObjN64(21, &tex);
+            GXLoadTexObj(&tex, GX_TEXMAP0);
+            break;
+        default:
+            GXSetNumTevStages(1);
+            GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP0, GX_COLOR_NULL);
+            GXSetTevColorOp(GX_TEVSTAGE0, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
+            GXSetTevAlphaOp(GX_TEVSTAGE0, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
+            GXSetTevColorIn(GX_TEVSTAGE0, GX_CC_C1, GX_CC_C0, GX_CC_TEXC, GX_CC_ZERO);
+            GXSetTevAlphaIn(GX_TEVSTAGE0, GX_CA_ZERO, GX_CA_A0, GX_CA_TEXA, GX_CA_ZERO);
+            effGetTexObjN64(22, &tex);
+            GXLoadTexObj(&tex, GX_TEXMAP0);
     }
     PSMTXTrans(mtx, work->position.x, work->position.y, work->position.z);
     PSMTXRotRad(rot, 'y', 0.017453292f * -camGetPtr(CAMERA_3D)->viewYaw);
@@ -195,8 +200,14 @@ void effHokoriDisp(CameraId cameraId, EffectEntry* effect) {
         PSMTXConcat(base, mtx, mtx);
         GXLoadPosMtxImm(mtx, GX_PNMTX0);
         GXSetCurrentMtx(GX_PNMTX0);
-        if (type <= 1) { if (i & 1) vtx = size16x32_tex32x64_vtx; else vtx = size16x16_tex32x32_vtx; } else vtx = size8x8_tex32x32_vtx;
- effSetVtxDescN64(vtx);
+        if (type <= 1) {
+            if (i & 1)
+                vtx = size16x32_tex32x64_vtx;
+            else
+                vtx = size16x16_tex32x32_vtx;
+        } else
+            vtx = size8x8_tex32x32_vtx;
+        effSetVtxDescN64(vtx);
         GXBegin(GX_TRIANGLES, GX_VTXFMT0, 6);
         tri2(0, 1, 2, 0, 0, 2, 3, 0);
     }

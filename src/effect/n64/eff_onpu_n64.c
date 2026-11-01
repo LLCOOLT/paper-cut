@@ -1,3 +1,4 @@
+// Paper Mario 64 effect: music notes (onpu: musical note) at a point; types 0 and 1.
 #include "eff/n64/eff_onpu_n64.h"
 #include "eff/eff_n64.h"
 #include "driver/camdrv.h"
@@ -21,6 +22,13 @@ typedef struct EffOnpuN64Work {
     f32 targetVy; // 0x30
 } EffOnpuN64Work;
 
+/** Pastel colours the music note cycles through, as RGB entries. */
+static u8 color_rotation_data[] = {
+    0xFE, 0xAC, 0xAC, 0xFE, 0xAC, 0xD5, 0xFE, 0xB4, 0x9A, 0xD5, 0xB4, 0xFE,
+    0xB4, 0xB4, 0xFE, 0xB4, 0xDD, 0xFE, 0xB4, 0xFE, 0xFE, 0xB4, 0xFE, 0xD5,
+    0xB4, 0xFE, 0xB4, 0xD5, 0xFE, 0xB4, 0xFE, 0xFE, 0xB4, 0xFE, 0xD5, 0xAC,
+};
+/** Camera-facing 16x32 music note quad. */
 static effN64Vtx size16x32_tex16x32_vtx[] = {
     {-8, 0, 0, 0, 0, 0, 0, 0, 255},
     {8, 0, 0, 512, 0, 0, 0, 0, 255},
@@ -28,15 +36,14 @@ static effN64Vtx size16x32_tex16x32_vtx[] = {
     {-8, 32, 0, 0, 1024, 0, 0, 0, 255},
 };
 
-static u8 color_rotation_data[] = {
-    0xFE, 0xAC, 0xAC, 0xFE, 0xAC, 0xD5, 0xFE, 0xB4, 0x9A, 0xD5, 0xB4, 0xFE,
-    0xB4, 0xB4, 0xFE, 0xB4, 0xDD, 0xFE, 0xB4, 0xFE, 0xFE, 0xB4, 0xFE, 0xD5,
-    0xB4, 0xFE, 0xB4, 0xD5, 0xFE, 0xB4, 0xFE, 0xFE, 0xB4, 0xFE, 0xD5, 0xAC,
-};
+static void effOnpuMain(EffectEntry* effect);
+static void effOnpuDisp(CameraId cameraId, EffectEntry* effect);
 
-void effOnpuMain(EffectEntry* effect);
-void effOnpuDisp(CameraId cameraId, EffectEntry* effect);
-
+/**
+ * Spawns one music note at (x, y, z) living 64 frames.
+ * Type 0 rises straight up; type 1 drifts left and type 2 right while slowing to a stop.
+ * Pansy units spawn types 1 and 2 via evt_eff64 "onpu_n64".
+ */
 EffectEntry* effOnpuN64Entry(s32 type, f32 x, f32 y, f32 z) {
     EffectEntry* effect;
     EffOnpuN64Work* work;
@@ -79,7 +86,8 @@ EffectEntry* effOnpuN64Entry(s32 type, f32 x, f32 y, f32 z) {
     return effect;
 }
 
-void effOnpuMain(EffectEntry* effect) {
+/** Grows and fades the note in, moves it by its easing velocity, and fades it out over the last 10 frames. */
+static void effOnpuMain(EffectEntry* effect) {
     EffOnpuN64Work* work = effect->userdata;
     s32 lifetime;
     Vec position;
@@ -110,7 +118,11 @@ void effOnpuMain(EffectEntry* effect) {
     dispEntry(CAMERA_3D, dispCalcZ(&position), 2, (DispCallback)effOnpuDisp, effect);
 }
 
-void effOnpuDisp(CameraId cameraId, EffectEntry* effect) {
+/**
+ * Draws the note as a camera-facing 16x32 quad using two scrolling note textures (0x28, 0x29) with the color
+ * cycling.
+ */
+static void effOnpuDisp(CameraId cameraId, EffectEntry* effect) {
     CameraEntry* camera;
     EffOnpuN64Work* work;
     s32 offset;

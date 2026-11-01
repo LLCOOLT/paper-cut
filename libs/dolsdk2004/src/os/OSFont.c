@@ -9,6 +9,7 @@ static OSFontHeader* FontDataAnsi;
 static OSFontHeader* FontDataSjis;
 static int FixedPitch;
 static ParseStringCallback ParseString;
+/** Cached result of OSGetFontEncode (0xFFFF: not read yet). */
 static u16 FontEncode = 0xFFFF;
 
 // prototypes
@@ -198,17 +199,23 @@ static u16 Zenkaku2Code[]
         0x2FF, 0x300, 0x301, 0x302, 0x303, 0x304, 0x305, 0x306,
         0x307, 0x308, 0x309, 0x30A, 0x30B, 0x30C, 0x30D, 0x30E,
         0x30F, 0x310, 0x311, 0x312, 0x313, 0x314, 0x315, 0x316,
-        0x317, 0x318, 0x319, 0x31A, 0x31B, 0x000, 0 // FAKE: trailing zero pad to the original symbol size (never indexed)
+        0x317, 0x318, 0x319, 0x31A, 0x31B, 0x000
     };
 
+/** Returns whether a byte starts a two-byte Shift-JIS character (0x81-0x9F or 0xE0-0xFC). */
 static BOOL IsSjisLeadByte(u8 c) {
     return (0x81 <= c && c <= 0x9F) || (0xE0 <= c && c <= 0xFC);
 }
 
+/** Returns whether a byte is a valid second byte of a Shift-JIS character (0x40-0xFC except 0x7F). */
 static BOOL IsSjisTrailByte(u8 c) {
     return (0x40 <= c && c <= 0xFC) && (c != 0x7F);
 }
 
+/**
+ * Maps a character code (single-byte, or two-byte Shift-JIS) to a glyph index in the ROM font for the given
+ * encoding; returns 0 for characters the font lacks.
+ */
 static int GetFontCode(u16 encode, u16 code) {
     if (encode == OS_FONT_ENCODE_SJIS) {
         if (code >= 0x20 && code <= 0xDF) {
@@ -253,6 +260,7 @@ static int GetFontCode(u16 encode, u16 code) {
     return 0;
 }
 
+/** Decompresses the ROM font image (an LZ-style stream with literal and back-reference commands) from s into d. */
 static void Decode(u8* s, u8* d) {
     int i;
     int j;
@@ -313,6 +321,7 @@ static void Decode(u8* s, u8* d) {
     } while (q < os);
 }
 
+/** Returns the decompressed size stored in a font image whose header starts with "Yay", or 0 if it is not one. */
 static u32 GetFontSize(u8* buf) {
     if (buf[0] == 'Y' && buf[1] == 'a' && buf[2] == 'y') {
         return *(u32*)(buf + 0x4);
@@ -321,6 +330,10 @@ static u32 GetFontSize(u8* buf) {
     return 0;
 }
 
+/**
+ * Returns the font encoding in use, choosing the first time from the TV format:
+ * Shift-JIS on NTSC consoles with the Japanese DTV status bit, otherwise ANSI.
+ */
 u16 OSGetFontEncode(void) {
     if (FontEncode != 0xFFFF) {
         return FontEncode;
@@ -343,6 +356,10 @@ u16 OSGetFontEncode(void) {
     return FontEncode;
 }
 
+/**
+ * Selects the font encoding (ANSI, Shift-JIS, or the UTF forms) and returns the previous one;
+ * the UTF encodings switch to the wide string parser.
+ */
 u16 OSSetFontEncode(u16 encode) {
     u16 prev;
 
@@ -359,6 +376,10 @@ u16 OSSetFontEncode(u16 encode) {
     return prev;
 }
 
+/**
+ * Reads length bytes at an offset from the console's boot ROM, 0x100 bytes at a time,
+ * retrying until each read succeeds.
+ */
 static void ReadROM(void* buf, int length, int offset) {
     int len;
     while (length > 0) {
@@ -374,6 +395,10 @@ static void ReadROM(void* buf, int length, int offset) {
     }
 }
 
+/**
+ * Reads the ANSI or Shift-JIS font image from the boot ROM into img and decompresses it into fontData;
+ * returns its size or 0 on failure. For Shift-JIS it also patches a few rows of one glyph.
+ */
 static u32 ReadFont(void* img, u16 encode, void* fontData) {
     u32 size;
 #ifndef DEBUG
@@ -430,6 +455,10 @@ static u32 ReadFont(void* img, u16 encode, void* fontData) {
     return size;
 }
 
+/**
+ * Loads the ROM font(s) for the current encoding into fontData (using tmp as scratch)
+ * and returns the number of bytes used, or 0 on failure.
+ */
 u32 OSLoadFont(OSFontHeader* fontData, void* tmp) {
     u16 encode;
     u32 size;
@@ -463,6 +492,10 @@ u32 OSLoadFont(OSFontHeader* fontData, void* tmp) {
     return size;
 }
 
+/**
+ * Reads the next character from a string in the ANSI or Shift-JIS encoding,
+ * returns the pointer after it and the font and glyph index to draw it with.
+ */
 static char* ParseStringS(u16 encode, const char* string, OSFontHeader** pfont, int* pfontCode) {
     OSFontHeader* font;
     u16 code = 0;
@@ -495,6 +528,10 @@ static char* ParseStringS(u16 encode, const char* string, OSFontHeader** pfont, 
     return (char*)string;
 }
 
+/**
+ * Same as ParseStringS but also handles UTF-8, UTF-16 and UTF-32 strings,
+ * converting each character to the ANSI or Shift-JIS glyph that has it.
+ */
 static char* ParseStringW(u16 encode, const char* string, OSFontHeader** pfont, int* pfontCode) {
     OSFontHeader* font;
     u16 code = 0;
@@ -554,6 +591,10 @@ static char* ParseStringW(u16 encode, const char* string, OSFontHeader** pfont, 
     return (char*)string;
 }
 
+/**
+ * Draws the string's next character into a 4-bit texture tile buffer at the horizontal position pos (tile row
+ * stride in tiles), returns the pointer after the character and its width in *width.
+ */
 char* OSGetFontTexel(const char* string, void* image, s32 pos, s32 stride, s32* width) {
     u16 encode;
     OSFontHeader* font;
@@ -613,6 +654,10 @@ char* OSGetFontTexel(const char* string, void* image, s32 pos, s32 stride, s32* 
     return (char*)string;
 }
 
+/**
+ * Expands a 2-bit-per-pixel font sheet into the I4 or IA4 texture format using the font's color index table,
+ * then flushes it to memory.
+ */
 static void ExpandFontSheet(OSFontHeader* font, u8* src, u8* dst) { 
     int i;
     u8* colorIndex = &font->c0;
@@ -636,6 +681,10 @@ static void ExpandFontSheet(OSFontHeader* font, u8* src, u8* dst) {
     DCStoreRange(dst, font->sheetFullSize);
 }
 
+/**
+ * Loads the ROM font(s) for the current encoding into fontData and expands the sheets to GX textures
+ * so the characters can be drawn directly; returns 1 on success, 0 on failure.
+ */
 int OSInitFont(OSFontHeader* fontData) {
     u16 encode;
     u32 size;
@@ -702,6 +751,10 @@ int OSInitFont(OSFontHeader* fontData) {
     return 1;
 }
 
+/**
+ * For the string's next character, returns the texture sheet address in *image,
+ * the glyph's x/y pixel position in the sheet and its width, and the pointer after the character.
+ */
 char* OSGetFontTexture(const char* string, void** image, s32* x, s32* y, s32* width) {
     OSFontHeader* font;
     u16 encode;
@@ -729,6 +782,7 @@ char* OSGetFontTexture(const char* string, void** image, s32* x, s32* y, s32* wi
     return (char*)string;
 }
 
+/** Returns the pointer after the string's next character and, in *width, that character's width in pixels. */
 char* OSGetFontWidth(const char* string, s32* width) {
     OSFontHeader* font;
     u16 encode;
@@ -744,6 +798,10 @@ char* OSGetFontWidth(const char* string, s32* width) {
     return (char*)string;
 }
 
+/**
+ * Turns fixed-pitch spacing on or off (it affects which font a UTF character picks)
+ * and returns the previous setting.
+ */
 int OSSetFontWidth(int fixed) {
     int prev = FixedPitch;
     FixedPitch = fixed;

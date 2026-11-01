@@ -1,3 +1,4 @@
+// Paper Mario 64 effect: pokopi charge (pcharge) at a point with a scale and lifetime; types 0-9.
 #include "eff/n64/eff_pokopi_pcharge_n64.h"
 #include "eff/eff_n64.h"
 #include "driver/camdrv.h"
@@ -7,17 +8,16 @@
 #include <dolphin/gx.h>
 #include <dolphin/mtx.h>
 #include <stdlib.h>
-#include "eff/eff_magic1_n64.h"
+#include "libc_decls.h"
 
-__declspec(section ".data") f32 lbl_pcharge_0[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-__declspec(section ".data") f32 fd_pcharge_negone_one_374[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-__declspec(section ".data") f32 lbl_pcharge_1[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-__declspec(section ".data") f32 fd_pcharge_one_negone_373[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-__declspec(section ".data") f32 lbl_pcharge_2[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-__declspec(section ".data") f32 fd_pcharge_negone_one_360[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-__declspec(section ".data") f32 lbl_pcharge_3[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-__declspec(section ".data") f32 fd_pcharge_one_negone_359[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
+/**
+ * Number of charge streaks in the ring for each type.
+ * vx_data: speed of the streaks along their rays for each type.
+ */
+u8 n_data[13] = {11, 11, 11, 11, 17, 11, 11, 21, 21, 21, 21, 21, 21};
+static u8 vx_data[13] = {20, 5, 20, 20, 10, 20, 20, 8, 8, 8, 1, 1, 1};
 
+/** Short streak quads for types 0-2, each type showing its own band of the streak texture. */
 static effN64Vtx size10x10_tex32x32_vtx[] = {
     {0, -5, 0, 0, 0, 0, 0, 0, 255},
     {10, -5, 0, 1024, 0, 0, 0, 0, 255},
@@ -37,6 +37,10 @@ static effN64Vtx size10x10_tex32x32_vtx[] = {
     {0, 5, 0, 0, 4096, 0, 0, 0, 255},
 };
 
+/**
+ * The same short streak quads flipped horizontally for types 3-5;
+ * the third band is also used by types 9 and 12.
+ */
 static effN64Vtx size10x10_tex32x32_2_vtx[] = {
     {0, -5, 0, 1024, 0, 0, 0, 0, 255},
     {10, -5, 0, 0, 0, 0, 0, 0, 255},
@@ -56,6 +60,7 @@ static effN64Vtx size10x10_tex32x32_2_vtx[] = {
     {0, 5, 0, 1024, 4096, 0, 0, 0, 255},
 };
 
+/** Long 128-unit streak quad for types 6-8 and 11. */
 static effN64Vtx size128x10_tex32x32_vtx[] = {
     {0, -5, 0, 0, 0, 0, 0, 0, 255},
     {128, -5, 0, 1024, 0, 0, 0, 0, 255},
@@ -75,6 +80,7 @@ static effN64Vtx size128x10_tex32x32_vtx[] = {
     {0, 5, 0, 0, 4096, 0, 0, 0, 255},
 };
 
+/** The long streak quad flipped horizontally, drawn for type 10. */
 static effN64Vtx size128x10_tex32x32_2_vtx[] = {
     {0, -5, 0, 1024, 0, 0, 0, 0, 255},
     {128, -5, 0, 0, 0, 0, 0, 0, 255},
@@ -93,12 +99,14 @@ static effN64Vtx size128x10_tex32x32_2_vtx[] = {
     {128, 5, 0, 0, 4096, 0, 0, 0, 255},
     {0, 5, 0, 1024, 4096, 0, 0, 0, 255},
 };
-u8 n_data[16] = {11, 11, 11, 11, 17, 11, 11, 21, 21, 21, 21, 21, 21};
-static u8 vx_data[16] = {20, 5, 20, 20, 10, 20, 20, 8, 8, 8, 1, 1, 1};
+static void effPokopiPchargeMain(EffectEntry* effect);
+static void effPokopiPchargeDisp(CameraId cameraId, EffectEntry* effect);
 
-void effPokopiPchargeMain(EffectEntry* effect);
-void effPokopiPchargeDisp(CameraId cameraId, EffectEntry* effect);
-
+/**
+ * Spawns an energy-charge effect at (x, y, z): 10-20 streaks (count by type) spaced evenly around a ring,
+ * flowing inward (negative speed: types 0-2, 6, 7, 9) or outward. lifetime <= 0 means until deleted.
+ * Soft-deletable. Used by map scripts in gor, tik and tou2 via evt_eff64 "pokopi_pcharge_n64"; type 9 is orange.
+ */
 EffectEntry* effPokopiPchargeN64Entry(s32 type, s32 lifetime, f32 x, f32 y, f32 z, f32 scale) {
     EffPokopiPchargeN64Elem* work;
     s32 count;
@@ -109,12 +117,12 @@ EffectEntry* effPokopiPchargeN64Entry(s32 type, s32 lifetime, f32 x, f32 y, f32 
 
     effect = effEntry();
     count = n_data[type];
-    effect->type = "PokopiPchargeN64\0\0\0";
+    effect->type = "PokopiPchargeN64";
     effect->count = count;
     work = __memAlloc(HEAP_EFFECT, count * sizeof(EffPokopiPchargeN64Elem));
     effect->userdata = work;
     effect->callback = effPokopiPchargeMain;
-    effect->flags |= 2;
+    effect->flags |= EFFECT_FLAG_SOFT_DELETE;
     work->type = type;
     work->frame = 0;
     if (lifetime <= 0) {
@@ -156,13 +164,13 @@ EffectEntry* effPokopiPchargeN64Entry(s32 type, s32 lifetime, f32 x, f32 y, f32 
                 p->rotVel = 0.0f;
                 break;
             case 6:
-                p->speed = (f32)-(rand() % 10 + 4);
+                p->speed = (f32) - (rand() % 10 + 4);
                 p->lifetime = 10;
                 p->scale = 1.0f - 0.3f * (f32)(i % 3);
                 p->rotVel = 0.0f;
                 break;
             case 7:
-                p->speed = (f32)-(rand() % 10 + 4);
+                p->speed = (f32) - (rand() % 10 + 4);
                 p->lifetime = 10;
                 p->scale = 1.0f - 0.3f * (f32)(i % 3);
                 p->rotVel = 0.0f;
@@ -218,7 +226,11 @@ EffectEntry* effPokopiPchargeN64Entry(s32 type, s32 lifetime, f32 x, f32 y, f32 
     return effect;
 }
 
-void effPokopiPchargeMain(EffectEntry* effect) {
+/**
+ * Fades the effect in and out; each streak slides along its ray, restarts at a random angle when its cycle ends,
+ * and pulses its alpha with a sine over the cycle.
+ */
+static void effPokopiPchargeMain(EffectEntry* effect) {
     EffPokopiPchargeN64Elem* p = effect->userdata;
     s32 i;
     s32 lifetime;
@@ -231,8 +243,8 @@ void effPokopiPchargeMain(EffectEntry* effect) {
     tmp.y = p->position.y;
     tmp.z = p->position.z;
     position = tmp;
-    if (effect->flags & 4) {
-        effect->flags &= ~4;
+    if (effect->flags & EFFECT_FLAG_DELETE_REQUESTED) {
+        effect->flags &= ~EFFECT_FLAG_DELETE_REQUESTED;
         p->lifetime = 16;
     }
     if (p->lifetime < 1000) {
@@ -276,7 +288,8 @@ void effPokopiPchargeMain(EffectEntry* effect) {
     dispEntry(CAMERA_3D, dispCalcZ(&position), 2, (DispCallback)effPokopiPchargeDisp, effect);
 }
 
-void effPokopiPchargeDisp(CameraId cameraId, EffectEntry* effect) {
+/** Draws each streak as a camera-facing sprite (texture 0x86) pushed out along its ray, in a shape chosen by type. */
+static void effPokopiPchargeDisp(CameraId cameraId, EffectEntry* effect) {
     CameraEntry* camera;
     EffPokopiPchargeN64Elem* p;
     s32 i;
@@ -347,7 +360,7 @@ void effPokopiPchargeDisp(CameraId cameraId, EffectEntry* effect) {
             case 2:
                 effSetVtxDescN64(size10x10_tex32x32_vtx);
                 GXBegin(GX_TRIANGLES, GX_VTXFMT0, 6);
-                ((void (*)())tri2)(type * 4, type * 4 + 1, type * 4 + 2, 0, type * 4, type * 4 + 2, type * 4 + 3, 0);
+                tri2(type * 4, type * 4 + 1, type * 4 + 2, 0, type * 4, type * 4 + 2, type * 4 + 3, 0);
                 break;
             case 3:
             case 4:
@@ -355,7 +368,7 @@ void effPokopiPchargeDisp(CameraId cameraId, EffectEntry* effect) {
                 effSetVtxDescN64(size10x10_tex32x32_2_vtx);
                 type -= 3;
                 GXBegin(GX_TRIANGLES, GX_VTXFMT0, 6);
-                ((void (*)())tri2)(type * 4, type * 4 + 1, type * 4 + 2, 0, type * 4, type * 4 + 2, type * 4 + 3, 0);
+                tri2(type * 4, type * 4 + 1, type * 4 + 2, 0, type * 4, type * 4 + 2, type * 4 + 3, 0);
                 break;
             case 6:
             case 7:
@@ -363,18 +376,18 @@ void effPokopiPchargeDisp(CameraId cameraId, EffectEntry* effect) {
             case 11:
                 effSetVtxDescN64(size128x10_tex32x32_vtx);
                 GXBegin(GX_TRIANGLES, GX_VTXFMT0, 6);
-                ((void (*)())tri2)(0, 1, 2, 0, 0, 2, 3, 0);
+                tri2(0, 1, 2, 0, 0, 2, 3, 0);
                 break;
             case 9:
             case 12:
                 effSetVtxDescN64(&size10x10_tex32x32_2_vtx[8]);
                 GXBegin(GX_TRIANGLES, GX_VTXFMT0, 6);
-                ((void (*)())tri2)(0, 1, 2, 0, 0, 2, 3, 0);
+                tri2(0, 1, 2, 0, 0, 2, 3, 0);
                 break;
             case 10:
                 effSetVtxDescN64(size128x10_tex32x32_2_vtx);
                 GXBegin(GX_TRIANGLES, GX_VTXFMT0, 6);
-                ((void (*)())tri2)(0, 1, 2, 0, 0, 2, 3, 0);
+                tri2(0, 1, 2, 0, 0, 2, 3, 0);
                 break;
         }
     }

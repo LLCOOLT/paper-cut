@@ -1,9 +1,13 @@
+// mri_03 (巨木の中, The Great Tree): the jail: the red and blue cells (red_jail_open, blue_jail_open) holding
+// the Puni Elder and the Punies, the Elder's rescue and the Punies joining Mario.
 #include "mri_puni.h"
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
+#include "driver/animdrv.h"
 
-#pragma force_active on
 #include "driver/mapdrv.h"
+#include "driver/itemdrv.h"
+#include "mario/mario.h"
 #include "dolphin/gx.h"
 #include "memory.h"
 #include "dolphin/mtx.h"
@@ -13,211 +17,73 @@
 #include "evt/evt_npc.h"
 #include "data_tables.h"
 #include "mario/mario_pouch.h"
-#ifdef TARGET_PC /* declarations the GameCube code calls implicitly */
 #include "manager/evtmgr_cmd.h"
-#endif
+#include "evt/evt_cam.h"
+#include "evt/evt_case.h"
+#include "evt/evt_eff.h"
+#include "evt/evt_fade.h"
+#include "evt/evt_hit.h"
+#include "evt/evt_item.h"
+#include "evt/evt_map.h"
+#include "evt/evt_mario.h"
+#include "evt/evt_mobj.h"
+#include "evt/evt_msg.h"
+#include "evt/evt_party.h"
+#include "evt/evt_pouch.h"
+#include "evt/evt_seq.h"
+#include "evt/evt_snd.h"
+#include "party.h"
+#include "evt/evt_window.h"
+#include "version.h"
+#include "evt/evt_story.h"
 
 static u8* _ap;
-void puniMoveAtari(PuniData* puni, Vec pos, Vec dir, s32 flag, f32 speed);
-PuniData* puniGetPunidat(void);
-void puniModeEventparent(PuniData* puni);
-void puniMoveDecel(PuniData* puni);
+static void puniModeEventparent(PuniData* puni);
 
-USER_FUNC(evt_bero_exec_onoff);
-USER_FUNC(evt_bero_exec_wait);
-USER_FUNC(evt_bero_get_info);
-USER_FUNC(evt_bero_mapchange);
-USER_FUNC(evt_cam3d_evt_off);
-USER_FUNC(evt_cam3d_evt_set);
-USER_FUNC(evt_eff_fukidashi);
-USER_FUNC(evt_exit_case_evt);
-USER_FUNC(evt_fade_entry);
-USER_FUNC(evt_fade_in);
-USER_FUNC(evt_fade_out);
-USER_FUNC(evt_fade_set_mapchange_type);
-USER_FUNC(evt_hitobj_onoff);
-USER_FUNC(evt_item_entry);
-USER_FUNC(evt_item_flag_on);
-USER_FUNC(evt_item_get_position);
-USER_FUNC(evt_item_move_3d_position);
-USER_FUNC(evt_item_set_position);
-USER_FUNC(evt_item_set_scale);
-USER_FUNC(evt_map_blend_off);
-USER_FUNC(evt_map_blend_set_flag);
-USER_FUNC(evt_map_blend_set_mobj_flag);
-USER_FUNC(evt_map_playanim);
-USER_FUNC(evt_map_set_blend);
-USER_FUNC(evt_mapobj_flag_onoff);
-USER_FUNC(evt_mapobj_get_position);
-USER_FUNC(evt_mapobj_rotate);
-USER_FUNC(evt_mario_cont_onoff);
-USER_FUNC(evt_mario_dispflag_onoff);
-USER_FUNC(evt_mario_get_dispdir);
-USER_FUNC(evt_mario_get_pos);
-USER_FUNC(evt_mario_key_onoff);
-USER_FUNC(evt_mario_mov_pos2);
-USER_FUNC(evt_mario_set_dir);
-USER_FUNC(evt_mario_set_dispdir);
-USER_FUNC(evt_mario_set_pos);
-USER_FUNC(evt_mario_set_pose);
-USER_FUNC(evt_mario_sleep_off);
-USER_FUNC(evt_mario_sleep_on);
-USER_FUNC(evt_mobj_exec_cancel);
-USER_FUNC(evt_mobj_kururing_floor);
-USER_FUNC(evt_mobj_lock);
-USER_FUNC(evt_mri_get16bitdata);
-USER_FUNC(evt_msg_close);
-USER_FUNC(evt_msg_continue);
-USER_FUNC(evt_msg_print);
-USER_FUNC(evt_msg_repeat);
-USER_FUNC(evt_msg_toge);
-USER_FUNC(evt_msg_togelr);
-USER_FUNC(evt_npc_change_interrupt);
-USER_FUNC(evt_npc_flag_onoff);
-USER_FUNC(evt_npc_get_position);
-USER_FUNC(evt_npc_get_reglid);
-USER_FUNC(evt_npc_jump_position_nohit);
-USER_FUNC(evt_npc_move_position);
-USER_FUNC(evt_npc_restart_regular_event);
-USER_FUNC(evt_npc_set_anim);
-USER_FUNC(evt_npc_set_autotalkpose);
-USER_FUNC(evt_npc_set_position);
-USER_FUNC(evt_npc_set_ry);
-USER_FUNC(evt_npc_set_ry_lr);
-USER_FUNC(evt_npc_set_scale);
-USER_FUNC(evt_npc_setup);
-USER_FUNC(evt_npc_status_onoff);
-USER_FUNC(evt_party_cont_onoff);
-USER_FUNC(evt_party_dispflg_onoff);
-USER_FUNC(evt_party_get_dispdir);
-USER_FUNC(evt_party_get_pos);
-USER_FUNC(evt_party_jump_pos);
-USER_FUNC(evt_party_move_pos2);
-USER_FUNC(evt_party_run);
-USER_FUNC(evt_party_set_dir);
-USER_FUNC(evt_party_set_dispdir);
-USER_FUNC(evt_party_set_pos);
-USER_FUNC(evt_party_sleep_off);
-USER_FUNC(evt_party_sleep_on);
-USER_FUNC(evt_party_stop);
-USER_FUNC(evt_pouch_check_item);
-USER_FUNC(evt_pouch_remove_item);
-USER_FUNC(evt_puni_flag_onoff);
-USER_FUNC(evt_puni_get_lsw_index);
-USER_FUNC(evt_puni_get_position);
-USER_FUNC(evt_puni_init_puni);
-USER_FUNC(evt_puni_mem_init);
-USER_FUNC(evt_puni_move_position);
-USER_FUNC(evt_puni_pera_onoff);
-USER_FUNC(evt_puni_puninum_onoff);
-USER_FUNC(evt_puni_set_anim);
-USER_FUNC(evt_puni_set_hamari);
-USER_FUNC(evt_puni_set_lsw_index);
-USER_FUNC(evt_puni_set_mode);
-USER_FUNC(evt_puni_set_position);
-USER_FUNC(evt_puni_set_trap_index);
-USER_FUNC(evt_puni_set_yuka);
-USER_FUNC(evt_puni_wait_systemmode);
-USER_FUNC(evt_seq_wait);
-USER_FUNC(evt_set_dir_to_target);
-USER_FUNC(evt_snd_bgmoff);
-USER_FUNC(evt_snd_bgmoff_f);
-USER_FUNC(evt_snd_bgmon);
-USER_FUNC(evt_snd_envoff);
-USER_FUNC(evt_snd_envon);
-USER_FUNC(evt_snd_sfxon_3d);
-USER_FUNC(evt_sub_intpl_msec_get_value);
-USER_FUNC(evt_sub_intpl_msec_get_value_para);
-USER_FUNC(evt_sub_intpl_msec_init);
-USER_FUNC(evt_sub_spline_get_value);
-USER_FUNC(evt_sub_spline_init);
-USER_FUNC(evt_win_item_desttable);
-USER_FUNC(evt_win_item_maketable);
-USER_FUNC(evt_win_item_select);
-USER_FUNC(puni_away);
-USER_FUNC(puni_parent);
-#ifdef VERSION_G8ME01
-USER_FUNC(evt_mario_normalize);
-#endif
 static void alpha_tev(MapTevCallbackInfo* info);
 static USER_FUNC(alpha_init_func);
 static USER_FUNC(alpha_set_func);
-void puniModeEventparent(PuniData* puni);
+static void puniModeEventparent(PuniData* puni);
 
-f32 fd_mri_03_negone_one_374[2] __attribute__((aligned(8)));
-f32 fd_mri_03_neg_one_382;
-f32 fd_mri_03___local_PI_383;
-f32 fd_mri_03___local_3PIO2_385;
-f32 fd_mri_03_one_negone_373[2] __attribute__((aligned(8)));
-f32 fd_mri_03___local_PIO2_384;
-f32 fd_mri_03_one_381;
-f32 fd_mri_03_negone_one_360[2] __attribute__((aligned(8)));
-f32 fd_mri_03_neg_one_365;
-f32 fd_mri_03___local_PI_366;
-f32 fd_mri_03___local_3PIO2_368;
-f32 fd_mri_03_one_negone_359[2] __attribute__((aligned(8)));
-f32 fd_mri_03___local_PIO2_367;
-f32 fd_mri_03_one_364;
-EvtWord jail_alpha_mario_check[24];
-EvtWord jail_alpha[220];
-EvtWord after_2hours[73];
+extern EvtWord jail_alpha_mario_check[];
+extern EvtWord jail_alpha[];
+extern EvtWord after_2hours[];
 static f32 spline_dt[24];
 f32 spline_dt1[15];
-EvtWord elder_rescue[771];
-static EvtWord elder_init[13];
-static EvtWord elder_talk[13];
-static EvtWord sister_init[13];
-EvtWord sister_regl[21];
-static EvtWord sister_talk[8];
-static EvtWord guide_init[16];
-static EvtWord guide_talk[8];
-EvtWord puni_3_init[17];
-EvtWord puni_3_talk[20];
+extern EvtWord elder_rescue[];
+extern EvtWord sister_regl[];
+extern EvtWord puni_3_init[];
+extern EvtWord puni_3_talk[];
 static NpcSetupInfo npcEnt[5];
-EvtWord bero_custom_00[37];
+extern EvtWord bero_custom_00[];
 static BeroEntry bero_entry_data[3];
 static s16 puni_rand_position[178];
-EvtWord jail_init_00[52];
-EvtWord red_jail_open[63];
-EvtWord evt_opendoor00[19];
-static EvtWord evt_unlock00[6];
-EvtWord evt_unlock00_01[4];
+extern EvtWord jail_init_00[];
+extern EvtWord red_jail_open[];
+extern EvtWord evt_opendoor00[];
+extern EvtWord evt_unlock00_01[];
 s32 key_table00[2];
-EvtWord evt_check00[23];
-#ifdef VERSION_G8ME01
-EvtWord blue_jail_open[60];
-#else
-EvtWord blue_jail_open[65];
-#endif
-EvtWord evt_opendoor01[19];
-#ifdef VERSION_G8ME01
-static EvtWord evt_unlock01[9];
-#else
-static EvtWord evt_unlock01[8];
-#endif
+extern EvtWord evt_check00[];
+extern EvtWord blue_jail_open[];
+extern EvtWord evt_opendoor01[];
 s32 key_table01[3];
-#ifdef TARGET_PC
-EvtWord evt_check01[93]; /* PC port: ends by running bluejail_alpha (see below) */
-#else
-EvtWord evt_check01[90];
-#endif
-EvtWord bluejail_alpha[119];
-EvtWord bluejail_event[249];
-static EvtWord mario_kirimomi_event[50];
-EvtWord party_kirimomi_event[57];
+extern EvtWord evt_check01[];
+extern EvtWord bluejail_alpha[];
+extern EvtWord bluejail_event[];
+extern EvtWord party_kirimomi_event[];
 s32 JailAwayTable_New[15];
-EvtWord kinoko_small[35];
-#ifdef VERSION_G8ME01
-EvtWord guide_sister[769];
-#else
-EvtWord guide_sister[775];
-#endif
-EvtWord elder_shaberi[13];
-EvtWord toraware_elder[423];
-EvtWord guide_sister_before[128];
+extern EvtWord kinoko_small[];
+extern EvtWord guide_sister[];
+extern EvtWord elder_shaberi[];
+extern EvtWord toraware_elder[];
+extern EvtWord guide_sister_before[];
 static KusaAccess ueki_access_data[5];
-EvtWord mri_03_init_evt[206];
 
+/**
+ * TEV callback for the prison's see-through wall:
+ * adds a stage that multiplies the previous color by the alpha value kept in _ap,
+ * so the front wall can be faded out.
+ */
 static void alpha_tev(MapTevCallbackInfo* info) {
     s32 stage = info->tevStage;
     u8* alpha = _ap;
@@ -231,51 +97,29 @@ static void alpha_tev(MapTevCallbackInfo* info) {
     info->tevStage++;
 }
 
+/** Allocates the one-byte wall alpha (_ap) and sets it fully opaque. */
 static USER_FUNC(alpha_init_func) {
     _ap = _mapAlloc(1);
     *_ap = 255;
     return EVT_RETURN_DONE;
 }
 
+/** Sets the wall alpha byte (_ap) to args[0]. */
 static USER_FUNC(alpha_set_func) {
     *_ap = evtGetValue(event, event->args[0]);
     return EVT_RETURN_DONE;
 }
 
-f32 fd_mri_03_negone_one_374[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_mri_03_neg_one_382 = -1.0f;
-
-f32 fd_mri_03___local_PI_383 = 3.1415927f;
-
-f32 fd_mri_03___local_3PIO2_385 = 4.712389f;
-
-f32 fd_mri_03_one_negone_373[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_mri_03___local_PIO2_384 = 1.5707964f;
-
-f32 fd_mri_03_one_381 = 1.0f;
-
-f32 fd_mri_03_negone_one_360[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_mri_03_neg_one_365 = -1.0f;
-
-f32 fd_mri_03___local_PI_366 = 3.1415927f;
-
-f32 fd_mri_03___local_3PIO2_368 = 4.712389f;
-
-f32 fd_mri_03_one_negone_359[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_mri_03___local_PIO2_367 = 1.5707964f;
-
-f32 fd_mri_03_one_364 = 1.0f;
-
+/**
+ * Loops forever: when Mario is far enough back (z at or below -81) sets GW(2), the target wall alpha, to 80,
+ * otherwise 255, so the front wall of the prison turns translucent when he walks behind it.
+ */
 EVT_BEGIN(jail_alpha_mario_check)
     LOOP(0)
         CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
         IF_INT_LESS_OR_EQUAL(LW(2), -81)
             SET_VALUE(GW(2), 80)
-            ELSE
+        ELSE
             SET_VALUE(GW(2), 255)
         END_IF
         WAIT_FRAMES(1)
@@ -283,35 +127,41 @@ EVT_BEGIN(jail_alpha_mario_check)
     RETURN
 EVT_END()
 
+/**
+ * Prepares the prison's fade-out wall: marks the map objects, Mario,
+ * the partner and the Puni NPCs so they are not blended,
+ * then every frame moves the map blend alpha 5 steps per frame toward GW(2) (or GW(3) while GF(2) is set, for
+ * scripted scenes).
+ */
 EVT_BEGIN(jail_alpha)
-    CALL(evt_mapobj_flag_onoff, 1, 1, STRING("S"), 2048)
-    CALL(evt_mapobj_flag_onoff, 1, 0, STRING("S_hako_l_saku"), 2048)
-    CALL(evt_mapobj_flag_onoff, 1, 0, STRING("S_hako_l_doa"), 2048)
-    CALL(evt_mapobj_flag_onoff, 1, 0, STRING("S_hako_l_01"), 2048)
-    CALL(evt_mapobj_flag_onoff, 1, 0, STRING("S_hako_r_saku"), 2048)
-    CALL(evt_mapobj_flag_onoff, 1, 0, STRING("S_hako_r_doa"), 2048)
-    CALL(evt_mapobj_flag_onoff, 1, 0, STRING("S_hako_r_01"), 2048)
-    CALL(evt_map_blend_set_flag, 1, STRING("mario"), 2048)
-    CALL(evt_map_blend_set_flag, 1, STRING("party"), 2048)
-    CALL(evt_map_blend_set_flag, 1, STRING("プニ族長老"), 2048)
-    CALL(evt_map_blend_set_flag, 1, STRING("ガイド妹"), 2048)
-    CALL(evt_map_blend_set_flag, 1, STRING("ガイド"), 2048)
-    CALL(evt_map_blend_set_flag, 1, STRING("プニ族"), 2048)
-    CALL(evt_map_blend_set_flag, 1, STRING("プニ族３"), 2048)
-    CALL(evt_map_blend_set_flag, 1, STRING("ガイドsp"), 2048)
-    CALL(evt_map_blend_set_flag, 1, STRING("ガイド妹sp"), 2048)
-    CALL(evt_map_blend_set_flag, 1, STRING("ちびトゲsp"), 2048)
-    CALL(evt_map_blend_set_flag, 1, STRING("ライバルsp"), 2048)
-    IF_INT_EQUAL(GSWF(2832), 0)
-        CALL(evt_map_blend_set_mobj_flag, 1, STRING("mobj_lock00"), 2048)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("S"), MAPOBJ_FLAG_NO_BLEND)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("S_hako_l_saku"), MAPOBJ_FLAG_NO_BLEND)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("S_hako_l_doa"), MAPOBJ_FLAG_NO_BLEND)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("S_hako_l_01"), MAPOBJ_FLAG_NO_BLEND)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("S_hako_r_saku"), MAPOBJ_FLAG_NO_BLEND)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("S_hako_r_doa"), MAPOBJ_FLAG_NO_BLEND)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("S_hako_r_01"), MAPOBJ_FLAG_NO_BLEND)
+    CALL(evt_map_blend_set_flag, 1, STRING("mario"), ANIM_MATERIAL_FLAG_NO_BLEND)
+    CALL(evt_map_blend_set_flag, 1, STRING("party"), ANIM_MATERIAL_FLAG_NO_BLEND)
+    CALL(evt_map_blend_set_flag, 1, STRING("プニ族長老"), ANIM_MATERIAL_FLAG_NO_BLEND)
+    CALL(evt_map_blend_set_flag, 1, STRING("ガイド妹"), ANIM_MATERIAL_FLAG_NO_BLEND)
+    CALL(evt_map_blend_set_flag, 1, STRING("ガイド"), ANIM_MATERIAL_FLAG_NO_BLEND)
+    CALL(evt_map_blend_set_flag, 1, STRING("プニ族"), ANIM_MATERIAL_FLAG_NO_BLEND)
+    CALL(evt_map_blend_set_flag, 1, STRING("プニ族３"), ANIM_MATERIAL_FLAG_NO_BLEND)
+    CALL(evt_map_blend_set_flag, 1, STRING("ガイドsp"), ANIM_MATERIAL_FLAG_NO_BLEND)
+    CALL(evt_map_blend_set_flag, 1, STRING("ガイド妹sp"), ANIM_MATERIAL_FLAG_NO_BLEND)
+    CALL(evt_map_blend_set_flag, 1, STRING("ちびトゲsp"), ANIM_MATERIAL_FLAG_NO_BLEND)
+    CALL(evt_map_blend_set_flag, 1, STRING("ライバルsp"), ANIM_MATERIAL_FLAG_NO_BLEND)
+    IF_INT_EQUAL(GSWF(GSWF_MRI03_RED_CELL_UNLOCKED), 0)
+        CALL(evt_map_blend_set_mobj_flag, 1, STRING("mobj_lock00"), ANIM_MATERIAL_FLAG_NO_BLEND)
     END_IF
-    IF_INT_EQUAL(GSWF(2834), 0)
-        CALL(evt_map_blend_set_mobj_flag, 1, STRING("mobj_lock01"), 2048)
+    IF_INT_EQUAL(GSWF(GSWF_MRI03_BLUE_CELL_UNLOCKED), 0)
+        CALL(evt_map_blend_set_mobj_flag, 1, STRING("mobj_lock01"), ANIM_MATERIAL_FLAG_NO_BLEND)
     END_IF
-    IF_INT_EQUAL(GSWF(5613), 0)
-        CALL(evt_map_blend_set_mobj_flag, 1, STRING("kururin1"), 2048)
+    IF_INT_EQUAL(GSWF(GSWF_MRI03_STAR_PIECE_PANEL), 0)
+        CALL(evt_map_blend_set_mobj_flag, 1, STRING("kururin1"), ANIM_MATERIAL_FLAG_NO_BLEND)
     END_IF
-    SPAWN_EVENT(PTR(jail_alpha_mario_check))
+    SPAWN_EVENT(jail_alpha_mario_check)
     SET_VALUE(LW(10), 255)
     SET_VALUE(GW(2), 255)
     SET_VALUE(GW(3), 255)
@@ -331,7 +181,7 @@ EVT_BEGIN(jail_alpha)
                 END_IF
             END_IF
             CALL(evt_map_set_blend, 0, 255, 255, 255, LW(10))
-            ELSE
+        ELSE
             IF_INT_LESS(GW(3), LW(10))
                 ADD(LW(10), -5)
                 IF_INT_GREATER(GW(3), LW(10))
@@ -351,44 +201,63 @@ EVT_BEGIN(jail_alpha)
     RETURN
 EVT_END()
 
+/**
+ * Turns the prison wall fade off: clears the blend flags from the map objects and characters
+ * and resets the map blend to fully opaque.
+ */
 EVT_BEGIN(after_2hours)
     CALL(evt_map_blend_off, 0)
-    CALL(evt_mapobj_flag_onoff, 1, 0, STRING("S"), 2048)
-    CALL(evt_map_blend_set_flag, 0, STRING("mario"), 2048)
-    CALL(evt_map_blend_set_flag, 0, STRING("party"), 2048)
-    CALL(evt_map_blend_set_flag, 0, STRING("プニ族長老"), 2048)
-    CALL(evt_map_blend_set_flag, 0, STRING("ガイド妹"), 2048)
-    CALL(evt_map_blend_set_flag, 0, STRING("ガイド"), 2048)
-    CALL(evt_map_blend_set_flag, 0, STRING("プニ族"), 2048)
-    CALL(evt_map_blend_set_flag, 0, STRING("プニ族３"), 2048)
-    CALL(evt_map_blend_set_flag, 0, STRING("ガイドsp"), 2048)
-    CALL(evt_map_blend_set_flag, 0, STRING("ガイド妹sp"), 2048)
-    CALL(evt_map_blend_set_flag, 0, STRING("ちびトゲsp"), 2048)
-    CALL(evt_map_blend_set_flag, 0, STRING("ライバルsp"), 2048)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("S"), MAPOBJ_FLAG_NO_BLEND)
+    CALL(evt_map_blend_set_flag, 0, STRING("mario"), ANIM_MATERIAL_FLAG_NO_BLEND)
+    CALL(evt_map_blend_set_flag, 0, STRING("party"), ANIM_MATERIAL_FLAG_NO_BLEND)
+    CALL(evt_map_blend_set_flag, 0, STRING("プニ族長老"), ANIM_MATERIAL_FLAG_NO_BLEND)
+    CALL(evt_map_blend_set_flag, 0, STRING("ガイド妹"), ANIM_MATERIAL_FLAG_NO_BLEND)
+    CALL(evt_map_blend_set_flag, 0, STRING("ガイド"), ANIM_MATERIAL_FLAG_NO_BLEND)
+    CALL(evt_map_blend_set_flag, 0, STRING("プニ族"), ANIM_MATERIAL_FLAG_NO_BLEND)
+    CALL(evt_map_blend_set_flag, 0, STRING("プニ族３"), ANIM_MATERIAL_FLAG_NO_BLEND)
+    CALL(evt_map_blend_set_flag, 0, STRING("ガイドsp"), ANIM_MATERIAL_FLAG_NO_BLEND)
+    CALL(evt_map_blend_set_flag, 0, STRING("ガイド妹sp"), ANIM_MATERIAL_FLAG_NO_BLEND)
+    CALL(evt_map_blend_set_flag, 0, STRING("ちびトゲsp"), ANIM_MATERIAL_FLAG_NO_BLEND)
+    CALL(evt_map_blend_set_flag, 0, STRING("ライバルsp"), ANIM_MATERIAL_FLAG_NO_BLEND)
     CALL(evt_map_set_blend, 0, 0, 0, 0, 255)
     RETURN
 EVT_END()
 
+/**
+ * Eight control points (x, y, z) of the path the freed Puni Elder walks along when he leaves with Punio
+ * (elder_rescue).
+ */
 static f32 spline_dt[] = {
     132.0f, 0.0f, -153.0f, 95.267204f, 0.0f, -108.09037f, 81.30669f, 0.0f,
     -100.69795f, 79.727806f, 0.0f, -73.32686f, 117.33458f, 0.0f, -59.17779f, 162.0448f,
     0.0f, -53.076424f, 228.65108f, 0.0f, 36.325317f, 245.45486f, 0.0f, 22.319448f,
 };
 
+/**
+ * Five control points (x, y, z) of the path Punio (the guide Puni) walks along in elder_rescue after the
+ * elder leaves.
+ */
 f32 spline_dt1[] = {
     98.0f, 0.0f, -156.0f, 65.11044f, 0.0f, -80.236275f, 56.63583f, 0.0f,
     -57.388996f, -4.335236f, 0.0f, -40.86129f, -145.0f, 0.0f, -60.0f,
 };
 
+/**
+ * Cutscene when Mario opens the red cell: the Puni elder, swollen and grumbling, is freed;
+ * Punio and the sister Puni run up; the screen fades while the party rests
+ * and the elder walks off along a spline with Punio.
+ * The Puni elder joins the Puni group and the story is set to STORY_STG2_14_PUNI_ELDER_FREED.
+ */
 EVT_BEGIN(elder_rescue)
+    // Mario opens the red cell; Punio and his sister run up to the swollen Elder inside.
     CALL(evt_mario_key_onoff, 0)
     CALL(evt_party_stop, 0)
     CALL(evt_cam3d_evt_set, 105, 82, 92, 105, 30, -203, 1000, 11)
-    CALL(evt_npc_flag_onoff, 1, STRING("プニ族長老"), 1073741856)
-    CALL(evt_npc_flag_onoff, 1, STRING("ガイド"), 1073741856)
-    CALL(evt_npc_flag_onoff, 1, STRING("ガイド"), 1536)
-    CALL_CHILD(PTR(mri_guide_goryu))
-    CALL(evt_puni_set_mode, 1, 30)
+    CALL(evt_npc_flag_onoff, 1, STRING("プニ族長老"), NPC_FLAG_NO_WALL_HIT | NPC_FLAG_INTANGIBLE)
+    CALL(evt_npc_flag_onoff, 1, STRING("ガイド"), NPC_FLAG_NO_WALL_HIT | NPC_FLAG_INTANGIBLE)
+    CALL(evt_npc_flag_onoff, 1, STRING("ガイド"), NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM)
+    CALL_CHILD(mri_guide_goryu)
+    CALL(evt_puni_set_mode, 1, PUNI_MODE_INERT)
     CALL(evt_puni_get_position, 1, LW(0), LW(1), LW(2))
     CALL(evt_puni_set_position, 1, 0, -1000, 0)
     CALL(evt_npc_set_position, STRING("ガイド"), LW(0), LW(1), LW(2))
@@ -443,8 +312,9 @@ EVT_BEGIN(elder_rescue)
         ADD(LW(0), 2)
         CALL(evt_party_jump_pos, 0, LW(0), LW(1), LW(2), 400, 1, -1000)
     END_INLINE_EVENT
-    CALL(evt_snd_bgmoff, 1024)
-    CALL(evt_snd_bgmon, 1, STRING("BGM_EVT_STG2_PUNI1"))
+    CALL(evt_snd_bgmoff, PSND_FADE_HOLD)
+    // The Elder scolds Punio for coming back, and he protests that he only went to find help.
+    CALL(evt_snd_bgmon, PSND_CH(1), STRING("BGM_EVT_STG2_PUNI1"))
     CALL(evt_msg_print, 0, STRING("stg2_mri_e14_01"), 0, STRING("プニ族長老"))
     WAIT_WHILE(GF(0))
     CALL(evt_sub_intpl_msec_init, 5, FLOAT(2.5f), FLOAT(1.0f), 200)
@@ -474,10 +344,11 @@ EVT_BEGIN(elder_rescue)
     END_INLINE_EVENT
     CALL(evt_npc_jump_position_nohit, STRING("プニ族長老"), LW(0), LW(1), LW(2), 200, 18)
     CALL(evt_msg_print, 0, STRING("stg2_mri_e14_05"), 0, STRING("プニ族長老"))
-    CALL(evt_snd_bgmoff, 26625)
+    CALL(evt_snd_bgmoff, PSND_FADE_DIP_TO(70) | PSND_CH(1))
+    // The screen fades out for "several hours later" while the Elder keeps lecturing.
     CALL(evt_fade_out, 1000)
     WAIT_MS(100)
-    CALL(evt_fade_entry, 12, 0, 0, 0, 0)
+    CALL(evt_fade_entry, FADE_OUT_BLACK_2D, 0, 0, 0, 0)
     WAIT_MS(1000)
     CALL(evt_msg_toge, 1, 0, 0, 0)
     CALL(evt_msg_print, 0, STRING("stg2_mri_e14_06"), 0, 0)
@@ -491,9 +362,15 @@ EVT_BEGIN(elder_rescue)
     CALL(evt_mario_sleep_on)
     CALL(evt_party_sleep_on, 0)
     WAIT_MS(1000)
-    CALL(evt_fade_entry, 11, 0, 0, 0, 0)
-    CALL(evt_snd_bgmon, 161, 0)
+    CALL(evt_fade_entry, FADE_IN_BLACK_2D, 0, 0, 0, 0)
+    CALL(evt_snd_bgmon, PSND_FADE_RESUME | PSND_FADE_UNDIP | PSND_CH(1), 0)
     CALL(evt_fade_in, 1000)
+    // The lecture ends; Punio finally gets to say they came to rescue everyone and the Elder asks to be let
+    // out.
+    // The lecture ends; Punio finally gets to say they came to rescue everyone and the Elder asks to be let
+    // out.
+    // The lecture ends; Punio finally gets to say they came to rescue everyone and the Elder asks to be let
+    // out.
     CALL(evt_msg_print, 0, STRING("stg2_mri_e14_07"), 0, STRING("プニ族長老"))
     CALL(evt_msg_print, 0, STRING("stg2_mri_e14_08"), 0, STRING("ガイド"))
     CALL(evt_npc_get_position, STRING("プニ族長老"), LW(0), LW(1), LW(2))
@@ -517,9 +394,15 @@ EVT_BEGIN(elder_rescue)
     END_INLINE_EVENT
     CALL(evt_npc_jump_position_nohit, STRING("プニ族長老"), LW(0), LW(1), LW(2), 200, 18)
     CALL(evt_msg_print, 0, STRING("stg2_mri_e14_11"), 0, STRING("プニ族長老"))
-    CALL(evt_snd_bgmoff_f, 513, 1000)
+    CALL(evt_snd_bgmoff_f, PSND_FADE_OUT | PSND_CH(1), 1000)
     CALL(evt_cam3d_evt_off, 1000, 11)
     CALL(evt_npc_status_onoff, 1, STRING("プニ族長老"), 2)
+    // The Elder walks out along a path, then Punio follows another; he promises his sister he will come back
+    // for her.
+    // The Elder walks out along a path, then Punio follows another; he promises his sister he will come back
+    // for her.
+    // The Elder walks out along a path, then Punio follows another; he promises his sister he will come back
+    // for her.
     CALL(evt_sub_spline_init, 0, 0, PTR(spline_dt), 8, 30, 0)
     LABEL(0)
     CALL(evt_sub_spline_get_value, LW(3), LW(4), LW(5), LW(6))
@@ -563,50 +446,68 @@ EVT_BEGIN(elder_rescue)
     END_INLINE_EVENT
     WAIT_MS(300)
     CALL(evt_msg_print, 0, STRING("stg2_mri_e14_12_02"), 0, STRING("ガイド妹"))
-    CALL(evt_snd_bgmoff, 513)
-    CALL(evt_snd_bgmon, 288, 0)
+    CALL(evt_snd_bgmoff, PSND_FADE_OUT | PSND_CH(1))
+    CALL(evt_snd_bgmon, PSND_FADE_RESUME | PSND_FADE_IN, 0)
     CALL(evt_npc_get_position, STRING("ガイド"), LW(0), LW(1), LW(2))
     CALL(evt_npc_set_position, STRING("ガイド"), 0, -1000, 0)
     CALL(evt_puni_set_position, 1, LW(0), LW(1), LW(2))
-    CALL(evt_puni_set_mode, 1, 1)
+    CALL(evt_puni_set_mode, 1, PUNI_MODE_JOIN)
     SET_VALUE(GF(2), 0)
     CALL(evt_cam3d_evt_off, 500, 11)
     WAIT_MS(500)
-    SET_VALUE(GSW(0), 94)
+    // The Elder joins the Puni group, the story advances and Mario regains control.
+    SET_VALUE(GSW(GSW_STORY_PROGRESS), STORY_STG2_14_PUNI_ELDER_FREED)
     CALL(evt_party_run, 0)
     CALL(evt_mario_key_onoff, 1)
     RETURN
 EVT_END()
 
+/**
+ * Init script of the Puni elder in the cell room:
+ * until he is freed (STORY_STG2_14_PUNI_ELDER_FREED) he is held in the cell (the red one).
+ */
 static EVT_BEGIN(elder_init)
-    SWITCH(GSW(0))
-        CASE_LESS(94)
+    SWITCH(GSW(GSW_STORY_PROGRESS))
+        CASE_LESS(STORY_STG2_14_PUNI_ELDER_FREED)
         CALL(evt_npc_set_position, STRING("me"), 132, 0, -153)
     END_SWITCH
     RETURN
 EVT_END()
 
+/**
+ * Talk script of the Puni elder in the cell: while the red cell is still locked he asks Mario to free him;
+ * nothing is said afterwards.
+ */
 static EVT_BEGIN(elder_talk)
-    IF_INT_EQUAL(GSWF(2832), 0)
+    IF_INT_EQUAL(GSWF(GSWF_MRI03_RED_CELL_UNLOCKED), 0)
         CALL(evt_msg_print, 0, STRING("stg2_mri_e14_13"), 0, STRING("me"))
-        ELSE
+    ELSE
     END_IF
     RETURN
 EVT_END()
 
+/**
+ * Init script of Punio's sister in the cell room:
+ * until the story reaches STORY_STG2_20_PUNIO_AND_PETUNI she is held in the blue cell.
+ */
 static EVT_BEGIN(sister_init)
-    SWITCH(GSW(0))
-        CASE_LESS(101)
+    SWITCH(GSW(GSW_STORY_PROGRESS))
+        CASE_LESS(STORY_STG2_20_PUNIO_AND_PETUNI)
         CALL(evt_npc_set_position, STRING("me"), -192, 0, -142)
     END_SWITCH
     RETURN
 EVT_END()
 
+/**
+ * Regular (per-frame) script of the sister Puni:
+ * returns at once during the dark-figure part (STORY_STG2_12_01_A_DARK_FIGURE)
+ * and the Jabble part (STORY_STG2_18_JABBLE), otherwise just yields forever.
+ */
 EVT_BEGIN(sister_regl)
-    IF_INT_EQUAL(GSW(0), 91)
+    IF_INT_EQUAL(GSW(GSW_STORY_PROGRESS), STORY_STG2_12_01_A_DARK_FIGURE)
         RETURN
     END_IF
-    IF_INT_EQUAL(GSW(0), 98)
+    IF_INT_EQUAL(GSW(GSW_STORY_PROGRESS), STORY_STG2_18_JABBLE)
         RETURN
     END_IF
     LOOP(0)
@@ -616,37 +517,45 @@ EVT_BEGIN(sister_regl)
     RETURN
 EVT_END()
 
+/** Talk script of Punio's sister in the cell: asks Mario to help. */
 static EVT_BEGIN(sister_talk)
     CALL(evt_msg_print, 0, STRING("stg2_mri_e14_14"), 0, STRING("me"))
     RETURN
 EVT_END()
 
+/**
+ * Init script of Punio in the cell room: when he is waiting at the cell (GSWF_MRI03_PUNIO_WAITING_AT_CELL) he
+ * stands in front of the blue cell, facing it.
+ */
 static EVT_BEGIN(guide_init)
-    IF_INT_EQUAL(GSWF(2836), 1)
+    IF_INT_EQUAL(GSWF(GSWF_MRI03_PUNIO_WAITING_AT_CELL), 1)
         CALL(evt_npc_set_position, STRING("me"), -145, 0, -60)
         CALL(evt_npc_set_ry, STRING("me"), 270)
     END_IF
     RETURN
 EVT_END()
 
+/** Talk script of Punio at the cell: a line telling Mario he is waiting for his sister to be freed. */
 static EVT_BEGIN(guide_talk)
     CALL(evt_msg_print, 0, STRING("stg2_mri_e19_04_02"), 0, STRING("me"))
     RETURN
 EVT_END()
 
+/** Init for the third village Puni NPC; after chapter 2, once Mario has left the tree, it is moved to its new spot. */
 EVT_BEGIN(puni_3_init)
-    SWITCH(GSW(0))
-        CASE_GREATER_OR_EQUAL(118)
-        IF_INT_EQUAL(GSWF(2884), 1)
+    SWITCH(GSW(GSW_STORY_PROGRESS))
+        CASE_GREATER_OR_EQUAL(STORY_STG2_26_PRAISE_FROM_THE_PUNI)
+        IF_INT_EQUAL(GSWF(GSWF_MRI_LEFT_TREE_AFTER_STG2), 1)
             CALL(evt_npc_set_position, STRING("me"), 50, 0, 30)
         END_IF
     END_SWITCH
     RETURN
 EVT_END()
 
+/** Talk script of the third Puni NPC: a line before the finale and a different one afterwards. */
 EVT_BEGIN(puni_3_talk)
-    SWITCH(GSW(0))
-        CASE_LESS_OR_EQUAL(402)
+    SWITCH(GSW(GSW_STORY_PROGRESS))
+        CASE_LESS_OR_EQUAL(STORY_STG8_END_AFTER_THE_BATTLE)
         CALL(evt_msg_print, 0, STRING("stg2_mri_re_018"), 0, STRING("me"))
         CASE_DEFAULT
         CALL(evt_msg_print, 0, STRING("stg2_mri_re_018_1"), 0, STRING("me"))
@@ -654,10 +563,11 @@ EVT_BEGIN(puni_3_talk)
     RETURN
 EVT_END()
 
+/** NPCs of the jail: the Puni Elder, the guide's sister, the guide Puni and Puni 3. */
 static NpcSetupInfo npcEnt[] = {
     {
-        /*"プニ族長老"*/"\x83\x76\x83\x6A\x91\xB0\x92\xB7\x98\x56", // name
-        0x600, // flags
+        "プニ族長老", // name
+        NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM, // flags
         0, // reactionFlags
         elder_init, // initEvent
         NULL, // regularEvent
@@ -668,8 +578,8 @@ static NpcSetupInfo npcEnt[] = {
         0.0f, 0.0f, 0.0f, 0.0f, 0, // searchRange..battleInfoId
     },
     {
-        /*"ガイド妹"*/"\x83\x4B\x83\x43\x83\x68\x96\x85", // name
-        0x600, // flags
+        "ガイド妹", // name
+        NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM, // flags
         0, // reactionFlags
         sister_init, // initEvent
         sister_regl, // regularEvent
@@ -680,8 +590,8 @@ static NpcSetupInfo npcEnt[] = {
         0.0f, 0.0f, 0.0f, 0.0f, 0, // searchRange..battleInfoId
     },
     {
-        /*"ガイド"*/"\x83\x4B\x83\x43\x83\x68", // name
-        0x600, // flags
+        "ガイド", // name
+        NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM, // flags
         0, // reactionFlags
         guide_init, // initEvent
         NULL, // regularEvent
@@ -692,8 +602,8 @@ static NpcSetupInfo npcEnt[] = {
         0.0f, 0.0f, 0.0f, 0.0f, 0, // searchRange..battleInfoId
     },
     {
-        /*"プニ族３"*/"\x83\x76\x83\x6A\x91\xB0\x82\x52", // name
-        0x600, // flags
+        "プニ族３", // name
+        NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM, // flags
         0, // reactionFlags
         puni_3_init, // initEvent
         NULL, // regularEvent
@@ -706,9 +616,14 @@ static NpcSetupInfo npcEnt[] = {
     {0},
 };
 
+/**
+ * Custom door script for the door to mri_04: while the story is at the dark figure
+ * (STORY_STG2_12_01_A_DARK_FIGURE) the door triggers are switched off for 3 seconds,
+ * so Mario cannot leave during the entry scene. GF(0) is set while it runs. Returns 0 in LW(0).
+ */
 EVT_BEGIN(bero_custom_00)
     SET_VALUE(GF(0), 1)
-    IF_INT_EQUAL(GSW(0), 91)
+    IF_INT_EQUAL(GSW(GSW_STORY_PROGRESS), STORY_STG2_12_01_A_DARK_FIGURE)
         CALL(evt_bero_exec_onoff, 0, 4)
         BEGIN_INLINE_EVENT
             WAIT_MS(2000)
@@ -723,13 +638,14 @@ EVT_BEGIN(bero_custom_00)
     RETURN
 EVT_END()
 
+/** Exits of mri_03: pipe dokan to mri_20 (dokan1); west road w_bero to mri_04 (e_bero). */
 static BeroEntry bero_entry_data[] = {
     {
         "dokan", // hitName
         2, // type
         0, // sfxId
-        9, // directionId
-        100000, // centerPosition
+        BERO_DIR_DOWN, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         (s32*)bero_custom_00, // enterEvent
@@ -744,8 +660,8 @@ static BeroEntry bero_entry_data[] = {
     {
         "w_bero", // hitName
         0, 0, // type..sfxId
-        20000, // directionId
-        100000, // centerPosition
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         NULL, // enterEvent
@@ -760,6 +676,7 @@ static BeroEntry bero_entry_data[] = {
     {0},
 };
 
+/** Scattered (x, z) spots, as pairs of 16-bit values, where the Punies stand in the jail. */
 static s16 puni_rand_position[] = {
     -68, -143, -146, -199, -101, -286, -126, -253,
     -144, -149, -229, -226, -183, -191, -40, -200,
@@ -786,6 +703,7 @@ static s16 puni_rand_position[] = {
     -197, -176,
 };
 
+/** Fills the cell block with onlooker Punies (slots 14 to 102) at the scripted spots from puni_rand_position. */
 EVT_BEGIN(jail_init_00)
     SET_VALUE(LW(10), 14)
     SET_VALUE(LW(11), 0)
@@ -805,8 +723,12 @@ EVT_BEGIN(jail_init_00)
     RETURN
 EVT_END()
 
+/**
+ * Opens the red cell door: sets GSWF_MRI03_RED_CELL_DOOR_OPEN,
+ * swings the door open with a sound and turns on its collisions. Called when the door unlocks.
+ */
 EVT_BEGIN(red_jail_open)
-    SET_VALUE(GSWF(2833), 1)
+    SET_VALUE(GSWF(GSWF_MRI03_RED_CELL_DOOR_OPEN), 1)
     CALL(evt_mario_key_onoff, 0)
     WAIT_MS(1000)
     CALL(evt_mapobj_get_position, STRING("S_hako_r_doa"), LW(0), LW(1), LW(2))
@@ -827,6 +749,7 @@ EVT_BEGIN(red_jail_open)
     RETURN
 EVT_END()
 
+/** Restores the red cell door as open (and its hit objects) when Mario enters the room with it already open. */
 EVT_BEGIN(evt_opendoor00)
     CALL(evt_mapobj_rotate, 1, STRING("S_hako_r_doa"), 0, 85, 0)
     CALL(evt_hitobj_onoff, STRING("A_hako_r1"), 1, 0)
@@ -834,25 +757,36 @@ EVT_BEGIN(evt_opendoor00)
     RETURN
 EVT_END()
 
+/** Called when the red key opens the red cell: runs red_jail_open and starts the elder's rescue scene. */
 static EVT_BEGIN(evt_unlock00)
-    CALL_CHILD(PTR(red_jail_open))
-    SPAWN_EVENT(PTR(elder_rescue))
+    CALL_CHILD(red_jail_open)
+    SPAWN_EVENT(elder_rescue)
     RETURN
 EVT_END()
 
+/** Unlocks the red cell when the map is re-entered after it was unlocked: just runs red_jail_open. */
 EVT_BEGIN(evt_unlock00_01)
-    SPAWN_EVENT(PTR(red_jail_open))
+    SPAWN_EVENT(red_jail_open)
     RETURN
 EVT_END()
 
+/** Item list for the red cell door's key window: only the Red Key (-1 ends the list). */
 s32 key_table00[] = {
     ITEM_RED_KEY, -1,
 };
 
+/**
+ * Key check for the red cell door: lets Mario choose the Red Key from his key items;
+ * if he cancels, the door interaction is cancelled.
+ */
 EVT_BEGIN(evt_check00)
-    CALL(evt_pouch_check_item, 16, LW(0))
+    CALL(evt_pouch_check_item, ITEM_RED_KEY, LW(0))
     IF_INT_GREATER(LW(0), 0)
+#if VERSION <= VERSION_DEMO_JP
+        CALL(evt_win_item_select, PTR(key_table00), LW(0))
+#else
         CALL(evt_win_item_select, 0, PTR(key_table00), LW(0), 0)
+#endif
         IF_INT_EQUAL(LW(0), -1)
             CALL(evt_mobj_exec_cancel, STRING("me"))
         END_IF
@@ -860,9 +794,13 @@ EVT_BEGIN(evt_check00)
     RETURN
 EVT_END()
 
+/**
+ * Opens the blue cell door: sets GSWF_MRI03_BLUE_CELL_DOOR_OPEN, swings the door open with a sound,
+ * enables its collisions and runs the scene with Punio's sister (guide_sister).
+ */
 EVT_BEGIN(blue_jail_open)
-    SET_VALUE(GSWF(2835), 1)
-#ifndef VERSION_G8ME01
+    SET_VALUE(GSWF(GSWF_MRI03_BLUE_CELL_DOOR_OPEN), 1)
+#if VERSION <= VERSION_JP
     CALL(evt_mario_key_onoff, 0)
 #endif
     WAIT_MS(1000)
@@ -879,17 +817,18 @@ EVT_BEGIN(blue_jail_open)
     END_LOOP
     CALL(evt_hitobj_onoff, STRING("A_hako_l_01"), 1, 0)
     CALL(evt_hitobj_onoff, STRING("S_hako_l1"), 1, 0)
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
     CALL_CHILD(guide_sister)
 #endif
     CALL(evt_mario_key_onoff, 1)
-#ifndef VERSION_G8ME01
-    SPAWN_EVENT(PTR(guide_sister))
+#if VERSION <= VERSION_JP
+    SPAWN_EVENT(guide_sister)
     CALL(evt_exit_case_evt)
 #endif
     RETURN
 EVT_END()
 
+/** Restores the blue cell door as open when Mario enters the room with it already open. */
 EVT_BEGIN(evt_opendoor01)
     CALL(evt_mapobj_rotate, 1, STRING("S_hako_l_doa"), 0, 85, 0)
     CALL(evt_hitobj_onoff, STRING("A_hako_l_01"), 1, 0)
@@ -897,25 +836,39 @@ EVT_BEGIN(evt_opendoor01)
     RETURN
 EVT_END()
 
+/**
+ * Called when the blue key opens the blue cell.
+ * From US on Mario is stopped and straightened; before that the Blue Key is taken out of his inventory.
+ * Starts the blue cell opening scene.
+ */
 static EVT_BEGIN(evt_unlock01)
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
     CALL(evt_mario_key_onoff, 0)
     CALL(evt_mario_normalize)
 #else
-    CALL(evt_pouch_remove_item, 17, LW(0))
+    CALL(evt_pouch_remove_item, ITEM_BLUE_KEY, LW(0))
 #endif
-    SPAWN_EVENT(PTR(blue_jail_open))
+    SPAWN_EVENT(blue_jail_open)
     RETURN
 EVT_END()
 
+/** Item list for the blue cell door's key window: the Red Key and the Blue Key (-1 ends the list). */
 s32 key_table01[] = {
     ITEM_RED_KEY, ITEM_BLUE_KEY, -1,
 };
 
+/**
+ * Key check for the blue cell door: builds a menu of the Red Key and Blue Key and lets Mario pick;
+ * a wrong key gives a message from Punio and his sister, the right one opens the cell.
+ */
 EVT_BEGIN(evt_check01)
     CALL(evt_win_item_maketable, PTR(key_table01), LW(10))
     IF_INT_NOT_EQUAL(LW(10), 0)
+#if VERSION <= VERSION_DEMO_JP
+        CALL(evt_win_item_select, LW(10), LW(0))
+#else
         CALL(evt_win_item_select, 0, LW(10), LW(0), 0)
+#endif
         SWITCH(LW(0))
             CASE_EQUAL(17)
             CASE_EQUAL(16)
@@ -926,7 +879,7 @@ EVT_BEGIN(evt_check01)
             CALL(evt_puni_get_lsw_index, LSW(0), 0, LW(0), LW(1), LW(2), LW(3))
             IF_INT_EQUAL(LW(0), 0)
                 CALL(evt_puni_flag_onoff, 1, 0, 262144)
-                CALL(evt_npc_flag_onoff, 1, STRING("ガイドsp"), 1536)
+                CALL(evt_npc_flag_onoff, 1, STRING("ガイドsp"), NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM)
                 CALL(evt_msg_print, 0, STRING("stg2_mri_e14_16"), 0, STRING("ガイドsp"))
                 CALL(evt_puni_flag_onoff, 1, 1, 262144)
                 CALL(evt_msg_print, 0, STRING("stg2_mri_e14_17"), 0, STRING("ガイド妹"))
@@ -945,34 +898,43 @@ EVT_BEGIN(evt_check01)
 #endif
 EVT_END()
 
+/**
+ * Sets the prison's wall blend flags for the blue-cell scene:
+ * the same setup as jail_alpha but only for the cells that are still locked.
+ */
 EVT_BEGIN(bluejail_alpha)
-    CALL(evt_mapobj_flag_onoff, 1, 1, STRING("S"), 2048)
-    CALL(evt_mapobj_flag_onoff, 1, 0, STRING("S_hako_l_saku"), 2048)
-    CALL(evt_mapobj_flag_onoff, 1, 0, STRING("S_hako_l_doa"), 2048)
-    CALL(evt_mapobj_flag_onoff, 1, 0, STRING("S_hako_l_01"), 2048)
-    CALL(evt_mapobj_flag_onoff, 1, 0, STRING("S_hako_r_saku"), 2048)
-    CALL(evt_mapobj_flag_onoff, 1, 0, STRING("S_hako_r_doa"), 2048)
-    CALL(evt_mapobj_flag_onoff, 1, 0, STRING("S_hako_r_01"), 2048)
-    CALL(evt_map_blend_set_flag, 1, STRING("mario"), 2048)
-    CALL(evt_map_blend_set_flag, 1, STRING("party"), 2048)
-    CALL(evt_map_blend_set_flag, 1, STRING("プニ族長老"), 2048)
-    CALL(evt_map_blend_set_flag, 1, STRING("ガイド妹"), 2048)
-    CALL(evt_map_blend_set_flag, 1, STRING("ガイド"), 2048)
-    CALL(evt_map_blend_set_flag, 1, STRING("プニ族"), 2048)
-    CALL(evt_map_blend_set_flag, 1, STRING("ガイドsp"), 2048)
-    CALL(evt_map_blend_set_flag, 1, STRING("ガイド妹sp"), 2048)
-    CALL(evt_map_blend_set_flag, 1, STRING("ちびトゲsp"), 2048)
-    CALL(evt_map_blend_set_flag, 1, STRING("ライバルsp"), 2048)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("S"), MAPOBJ_FLAG_NO_BLEND)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("S_hako_l_saku"), MAPOBJ_FLAG_NO_BLEND)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("S_hako_l_doa"), MAPOBJ_FLAG_NO_BLEND)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("S_hako_l_01"), MAPOBJ_FLAG_NO_BLEND)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("S_hako_r_saku"), MAPOBJ_FLAG_NO_BLEND)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("S_hako_r_doa"), MAPOBJ_FLAG_NO_BLEND)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("S_hako_r_01"), MAPOBJ_FLAG_NO_BLEND)
+    CALL(evt_map_blend_set_flag, 1, STRING("mario"), ANIM_MATERIAL_FLAG_NO_BLEND)
+    CALL(evt_map_blend_set_flag, 1, STRING("party"), ANIM_MATERIAL_FLAG_NO_BLEND)
+    CALL(evt_map_blend_set_flag, 1, STRING("プニ族長老"), ANIM_MATERIAL_FLAG_NO_BLEND)
+    CALL(evt_map_blend_set_flag, 1, STRING("ガイド妹"), ANIM_MATERIAL_FLAG_NO_BLEND)
+    CALL(evt_map_blend_set_flag, 1, STRING("ガイド"), ANIM_MATERIAL_FLAG_NO_BLEND)
+    CALL(evt_map_blend_set_flag, 1, STRING("プニ族"), ANIM_MATERIAL_FLAG_NO_BLEND)
+    CALL(evt_map_blend_set_flag, 1, STRING("ガイドsp"), ANIM_MATERIAL_FLAG_NO_BLEND)
+    CALL(evt_map_blend_set_flag, 1, STRING("ガイド妹sp"), ANIM_MATERIAL_FLAG_NO_BLEND)
+    CALL(evt_map_blend_set_flag, 1, STRING("ちびトゲsp"), ANIM_MATERIAL_FLAG_NO_BLEND)
+    CALL(evt_map_blend_set_flag, 1, STRING("ライバルsp"), ANIM_MATERIAL_FLAG_NO_BLEND)
     CALL(evt_map_set_blend, 0, 255, 255, 255, 255)
-    IF_INT_EQUAL(GSWF(2832), 0)
-        CALL(evt_map_blend_set_mobj_flag, 1, STRING("mobj_lock00"), 2048)
+    IF_INT_EQUAL(GSWF(GSWF_MRI03_RED_CELL_UNLOCKED), 0)
+        CALL(evt_map_blend_set_mobj_flag, 1, STRING("mobj_lock00"), ANIM_MATERIAL_FLAG_NO_BLEND)
     END_IF
-    IF_INT_EQUAL(GSWF(2834), 0)
-        CALL(evt_map_blend_set_mobj_flag, 1, STRING("mobj_lock01"), 2048)
+    IF_INT_EQUAL(GSWF(GSWF_MRI03_BLUE_CELL_UNLOCKED), 0)
+        CALL(evt_map_blend_set_mobj_flag, 1, STRING("mobj_lock01"), ANIM_MATERIAL_FLAG_NO_BLEND)
     END_IF
     RETURN
 EVT_END()
 
+/**
+ * Cutscene inside the blue cell (story STORY_STG2_18_JABBLE):
+ * after the fade clears, a Puni in the cell gives Mario a Dried Shroom and talks with Punio's sister.
+ * Sets the story to STORY_STG2_19_INSIDE_THE_BLUE_CELL and changes map with an iris wipe.
+ */
 EVT_BEGIN(bluejail_event)
     CALL(evt_mario_key_onoff, 0)
     CALL(evt_puni_puninum_onoff, 0)
@@ -981,17 +943,17 @@ EVT_BEGIN(bluejail_event)
     CALL(evt_mario_set_pos, 0, -1000, 0)
     CALL(evt_party_set_pos, 0, 0, -1000, 0)
     DELETE_EVENT(GW(0))
-    CALL(evt_snd_bgmoff, 512)
-    CALL(evt_snd_envoff, 512)
-    CALL_CHILD(PTR(bluejail_alpha))
+    CALL(evt_snd_bgmoff, PSND_FADE_OUT)
+    CALL(evt_snd_envoff, PSND_FADE_OUT)
+    CALL_CHILD(bluejail_alpha)
     CALL(evt_npc_set_position, STRING("ガイド妹"), -192, 0, -120)
     CALL(evt_npc_set_ry_lr, STRING("ガイド妹"), 1)
-    CALL(evt_npc_flag_onoff, 1, STRING("ガイド妹"), 1073741856)
+    CALL(evt_npc_flag_onoff, 1, STRING("ガイド妹"), NPC_FLAG_NO_WALL_HIT | NPC_FLAG_INTANGIBLE)
     CALL(evt_puni_set_position, 14, 0, -1000, 0)
     CALL(evt_npc_set_position, STRING("プニ族"), -114, 0, -120)
     CALL(evt_npc_set_ry_lr, STRING("プニ族"), 0)
-    CALL(evt_npc_flag_onoff, 1, STRING("プニ族"), 1073741856)
-    CALL(evt_npc_flag_onoff, 1, STRING("プニ族"), 1536)
+    CALL(evt_npc_flag_onoff, 1, STRING("プニ族"), NPC_FLAG_NO_WALL_HIT | NPC_FLAG_INTANGIBLE)
+    CALL(evt_npc_flag_onoff, 1, STRING("プニ族"), NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM)
     CALL(evt_cam3d_evt_set, -160, 160, 540, -160, 60, 0, 0, 11)
     CALL(evt_seq_wait, 2)
     BEGIN_INLINE_EVENT
@@ -1011,8 +973,8 @@ EVT_BEGIN(bluejail_event)
     CALL(evt_msg_print, 0, STRING("stg2_mri_e19_00"), 0, STRING("プニ族"))
     CALL(evt_npc_get_position, STRING("ガイド妹"), LW(0), LW(1), LW(2))
     CALL(evt_snd_sfxon_3d, STRING("SFX_STG2_PUNIKO_KINOKO1"), LW(0), LW(1), LW(2), 0)
-    CALL(evt_item_entry, STRING("item00"), 152, LW(0), LW(1), LW(2), 16, -1, 0)
-    CALL(evt_item_flag_on, STRING("item00"), 2)
+    CALL(evt_item_entry, STRING("item00"), ITEM_DRIED_SHROOM, LW(0), LW(1), LW(2), ITEM_ENTRY_FIXED, -1, 0)
+    CALL(evt_item_flag_on, STRING("item00"), ITEM_FLAG_NO_TOUCH)
     ADD(LW(0), 20)
     CALL(evt_item_move_3d_position, STRING("item00"), LW(0), LW(1), LW(2), 300, 0)
     CALL(evt_msg_print, 0, STRING("stg2_mri_e19_01"), 0, STRING("ガイド妹"))
@@ -1026,18 +988,21 @@ EVT_BEGIN(bluejail_event)
     WAIT_MS(500)
     CALL(evt_msg_print, 0, STRING("stg2_mri_e19_04"), 0, STRING("プニ族"))
     WAIT_MS(1500)
-    SET_VALUE(GSW(0), 99)
-    CALL(evt_fade_set_mapchange_type, 0, 2, 500, 1, 500)
+    SET_VALUE(GSW(GSW_STORY_PROGRESS), STORY_STG2_19_INSIDE_THE_BLUE_CELL)
+    CALL(evt_fade_set_mapchange_type, 0, FADE_OUT_IRIS, 500, FADE_IN_IRIS, 500)
     CALL(evt_bero_mapchange, STRING("mri_08"), STRING("e_bero"))
     RETURN
 EVT_END()
 
-
-
-
+/**
+ * Makes Mario spin around on the spot (1980 degrees, five and a half turns) over 2 seconds with his facing
+ * locked, after a short wait; afterwards he faces east and the partner runs again.
+ * Spawned with party_kirimomi_event at the start of guide_sister, when the blue cell is opened
+ * and the reunion music (BGM_EVT_NOKO_SAIKAI1) starts.
+ */
 static EVT_BEGIN(mario_kirimomi_event)
     WAIT_MS(300)
-    CALL(evt_mario_dispflag_onoff, 1, 256)
+    CALL(evt_mario_dispflag_onoff, 1, MARIO_DISP_FLAG_DIR_LOCK)
     CALL(evt_mario_get_dispdir, LW(8))
     SET_VALUE(LW(9), 1980)
     ADD(LW(9), LW(8))
@@ -1050,16 +1015,21 @@ static EVT_BEGIN(mario_kirimomi_event)
         END_IF
         WAIT_FRAMES(1)
     END_LOOP
-    CALL(evt_mario_dispflag_onoff, 0, 256)
+    CALL(evt_mario_dispflag_onoff, 0, MARIO_DISP_FLAG_DIR_LOCK)
     CALL(evt_mario_set_dir, 90, 0, 0)
     CALL(evt_party_run, 0)
     RETURN
 EVT_END()
 
+/**
+ * Partner's celebration spin in the cell scenes:
+ * the partner turns around 1980 degrees over 2 seconds with its direction locked,
+ * then faces right and runs again.
+ */
 EVT_BEGIN(party_kirimomi_event)
     WAIT_MS(500)
     CALL(evt_party_stop, 0)
-    CALL(evt_party_dispflg_onoff, 0, 16, 1)
+    CALL(evt_party_dispflg_onoff, 0, PARTY_DISP_FLAG_DIR_LOCK, 1)
     CALL(evt_party_get_dispdir, 0, LW(8))
     SET_VALUE(LW(9), 1980)
     ADD(LW(9), LW(8))
@@ -1072,18 +1042,24 @@ EVT_BEGIN(party_kirimomi_event)
         END_IF
         WAIT_FRAMES(1)
     END_LOOP
-    CALL(evt_party_dispflg_onoff, 0, 16, 0)
+    CALL(evt_party_dispflg_onoff, 0, PARTY_DISP_FLAG_DIR_LOCK, 0)
     CALL(evt_party_set_dir, 0, 90, 0)
     CALL(evt_party_run, 0)
     RETURN
 EVT_END()
 
+/** Points (x, z pairs, 10000 ends the list) the Punies run to when they flee in the blue-cell scene. */
 s32 JailAwayTable_New[] = {
     -83, -216, -153, -195, -205, -154, -241, -95,
     -220, -25, -190, 0, -160, 40, 10000,
 };
 
-void puniModeEventparent(PuniData* puni) {
+/**
+ * Puni mode used in the blue-cell scene: each Puni walks to the nearest point of JailAwayTable_New
+ * and follows its path to the line, then stops;
+ * in step 10 it is pushed away from the point (-160, 40), then faces left or right depending on the side.
+ */
+static void puniModeEventparent(PuniData* puni) {
     s32* tbl = JailAwayTable_New;
     s32 i;
     s32 bestIdx;
@@ -1179,7 +1155,11 @@ void puniModeEventparent(PuniData* puni) {
     }
 }
 
-USER_FUNC(puni_parent) {
+/**
+ * Script helper that makes the Puni slot args[0] use the blue-cell mode (puniModeEventparent):
+ * picks its side (x past -180 or not) and its place in the line there. Returns nothing.
+ */
+static USER_FUNC(puni_parent) {
     s32 offset = evtGetValue(event, event->args[0]) * sizeof(PuniData);
     PuniData* puni = (PuniData*)((u8*)puniGetPunidat() + offset);
     s16 side;
@@ -1193,9 +1173,9 @@ USER_FUNC(puni_parent) {
         puni->modeVar1 = event->lwData[12] % 2;
         event->lwData[12]++;
     }
-    puni->flags |= 0x100000;
+    puni->flags |= PUNI_FLAG_COLLIDE;
     puni->groupId = side;
-    puni->mode = 29;
+    puni->mode = PUNI_MODE_FUNC;
     puni->modeStep = 0;
     puni->prevAnim = 1000;
     puni->modeFunc = puniModeEventparent;
@@ -1203,7 +1183,8 @@ USER_FUNC(puni_parent) {
     return EVT_RETURN_DONE;
 }
 
-USER_FUNC(puni_away) {
+/** Script helper that sets the Puni slot args[0] to step 10 of puniModeEventparent so it walks away from the cell. */
+static USER_FUNC(puni_away) {
     s32 offset = evtGetValue(event, event->args[0]) * sizeof(PuniData);
     PuniData* puni = (PuniData*)((u8*)puniGetPunidat() + offset);
 
@@ -1211,6 +1192,7 @@ USER_FUNC(puni_away) {
     return EVT_RETURN_DONE;
 }
 
+/** Shrinks the Dried Shroom item in two steps (scale 0.7 then 0.35), then hides it: the Puni eats it. */
 EVT_BEGIN(kinoko_small)
     CALL(evt_item_get_position, LW(10), LW(0), LW(1), LW(2))
     SET_VALUE(LW(10), STRING("item00"))
@@ -1224,8 +1206,15 @@ EVT_BEGIN(kinoko_small)
     RETURN
 EVT_END()
 
+/**
+ * Scene when the blue cell is opened (story 19 to 20):
+ * the Punies step away from the cell, Punio and his sister Petuni talk with the party,
+ * a Dried Shroom is found and shown shrinking, and Petuni joins the Puni group (GSWF_MRI_PETUNI_IN_PUNI_GROUP).
+ * Sets the story to STORY_STG2_20_PUNIO_AND_PETUNI.
+ */
 EVT_BEGIN(guide_sister)
-#ifndef VERSION_G8ME01
+#if VERSION <= VERSION_JP
+    // The Punies step back from the opened blue cell and Mario and his partner relax.
     CALL(evt_mario_key_onoff, 0)
 #endif
     SET_VALUE(LW(10), 14)
@@ -1238,24 +1227,25 @@ EVT_BEGIN(guide_sister)
             BREAK_LOOP
         END_IF
     END_LOOP
-    CALL(evt_puni_set_mode, 4, 14)
+    CALL(evt_puni_set_mode, 4, PUNI_MODE_STOP)
     CALL(evt_puni_set_anim, 4, 0)
     CALL(evt_puni_flag_onoff, 4, 0, 1048576)
-    CALL(evt_puni_set_mode, 3, 14)
+    CALL(evt_puni_set_mode, 3, PUNI_MODE_STOP)
     CALL(evt_puni_set_anim, 3, 0)
     CALL(evt_puni_flag_onoff, 3, 0, 1048576)
     SET_VALUE(LW(10), 5)
     LOOP(9)
-        CALL(evt_puni_set_mode, LW(10), 14)
+        CALL(evt_puni_set_mode, LW(10), PUNI_MODE_STOP)
         CALL(evt_puni_set_anim, LW(10), 0)
         CALL(evt_puni_flag_onoff, LW(10), 0, 1048576)
         ADD(LW(10), 1)
     END_LOOP
-    SPAWN_EVENT(PTR(mario_kirimomi_event))
-    SPAWN_EVENT(PTR(party_kirimomi_event))
-    CALL(evt_snd_bgmon, 512, STRING("BGM_EVT_NOKO_SAIKAI1"))
-    CALL(evt_npc_flag_onoff, 1, STRING("ガイド"), 1073741856)
-    CALL(evt_npc_flag_onoff, 1, STRING("ガイド妹"), 1073741856)
+    SPAWN_EVENT(mario_kirimomi_event)
+    SPAWN_EVENT(party_kirimomi_event)
+    // The reunion music starts.
+    CALL(evt_snd_bgmon, PSND_FADE_OUT, STRING("BGM_EVT_NOKO_SAIKAI1"))
+    CALL(evt_npc_flag_onoff, 1, STRING("ガイド"), NPC_FLAG_NO_WALL_HIT | NPC_FLAG_INTANGIBLE)
+    CALL(evt_npc_flag_onoff, 1, STRING("ガイド妹"), NPC_FLAG_NO_WALL_HIT | NPC_FLAG_INTANGIBLE)
     WAIT_MS(2000)
     CALL(evt_npc_get_reglid, STRING("ガイド妹"), LW(0))
     DELETE_EVENT(LW(0))
@@ -1269,6 +1259,7 @@ EVT_BEGIN(guide_sister)
     SPAWN_EVENT_GET_ID(PTR(mri_puni_walk_se), LW(9))
     CALL(evt_npc_move_position, STRING("ガイド妹"), -180, 40, 0, FLOAT(180.0f), 0)
     DELETE_EVENT(LW(9))
+    // Petuni runs out of the cell and into Punio's arms.
     CALL(evt_msg_print, 0, STRING("stg2_mri_e20_00"), 0, STRING("ガイド妹"))
     BEGIN_INLINE_EVENT
         CALL(evt_mario_mov_pos2, -230, -45, FLOAT(120.0f))
@@ -1329,6 +1320,7 @@ EVT_BEGIN(guide_sister)
     CALL(evt_msg_print, 0, STRING("stg2_mri_e20_02"), 0, LW(11))
     CALL(evt_msg_print, 0, STRING("stg2_mri_e20_03"), 0, LW(10))
     CALL(evt_msg_togelr, 0)
+    // Petuni gives her brother a gift: his favorite mushroom, a Dried Shroom, which shrinks as he eats it.
     CALL(evt_msg_print, 0, STRING("stg2_mri_e20_04"), 0, LW(11))
     CALL(evt_npc_set_ry, LW(11), 270)
     WAIT_MS(200)
@@ -1337,8 +1329,8 @@ EVT_BEGIN(guide_sister)
     WAIT_MS(200)
     CALL(evt_npc_get_position, LW(11), LW(0), LW(1), LW(2))
     CALL(evt_snd_sfxon_3d, STRING("SFX_STG2_PUNIKO_KINOKO1"), LW(0), LW(1), LW(2), 0)
-    CALL(evt_item_entry, STRING("item00"), 152, LW(0), LW(1), LW(2), 16, -1, 0)
-    CALL(evt_item_flag_on, STRING("item00"), 2)
+    CALL(evt_item_entry, STRING("item00"), ITEM_DRIED_SHROOM, LW(0), LW(1), LW(2), ITEM_ENTRY_FIXED, -1, 0)
+    CALL(evt_item_flag_on, STRING("item00"), ITEM_FLAG_NO_TOUCH)
     ADD(LW(0), 20)
     CALL(evt_item_move_3d_position, STRING("item00"), LW(0), LW(1), LW(2), 500, 0)
     CALL(evt_msg_togelr, 0)
@@ -1359,7 +1351,7 @@ EVT_BEGIN(guide_sister)
     END_INLINE_EVENT
     CALL(evt_npc_set_anim, LW(10), STRING("T_1"))
     WAIT_MS(2000)
-    SPAWN_EVENT(PTR(kinoko_small))
+    SPAWN_EVENT(kinoko_small)
     CALL(evt_msg_print, 0, STRING("stg2_mri_e20_07"), 0, LW(10))
     WAIT_FRAMES(1)
     DELETE_EVENT(LW(9))
@@ -1372,6 +1364,7 @@ EVT_BEGIN(guide_sister)
     WAIT_MS(1000)
     CALL(evt_msg_togelr, 0)
     CALL(evt_msg_print, 0, STRING("stg2_mri_e20_10"), 0, LW(11))
+    // Punio pretends it is delicious, then hugs her tight.
     CALL(evt_msg_print, 0, STRING("stg2_mri_e20_11"), 0, LW(10))
     CALL(evt_npc_get_position, LW(10), LW(0), LW(1), LW(2))
     ADD(LW(0), -20)
@@ -1389,9 +1382,10 @@ EVT_BEGIN(guide_sister)
     CALL(evt_msg_print, 0, STRING("stg2_mri_e20_14"), 0, LW(11))
     CALL(evt_cam3d_evt_off, 500, 11)
     WAIT_MS(500)
-    SET_VALUE(GSWF(2836), 0)
-    SET_VALUE(GSWF(2877), 1)
-    SET_VALUE(GSW(651), 98)
+    // Petuni joins the Puni group.
+    SET_VALUE(GSWF(GSWF_MRI03_PUNIO_WAITING_AT_CELL), 0)
+    SET_VALUE(GSWF(GSWF_MRI_PETUNI_IN_PUNI_GROUP), 1)
+    SET_VALUE(GSW(GSW_MRI_PUNI_FOLLOWERS), 98)
     CALL(evt_npc_get_position, STRING("ガイド"), LW(0), LW(1), LW(2))
     CALL(evt_npc_set_position, STRING("ガイド"), 0, -1000, 0)
     CALL(evt_puni_init_puni, 1, 1, LW(0), LW(1), LW(2), 0)
@@ -1400,7 +1394,7 @@ EVT_BEGIN(guide_sister)
     CALL(evt_puni_init_puni, 2, 1, LW(0), LW(1), LW(2), 0)
     SET_VALUE(LW(10), 1)
     LOOP(0)
-        CALL(evt_puni_set_mode, LW(10), 1)
+        CALL(evt_puni_set_mode, LW(10), PUNI_MODE_JOIN)
         CALL(evt_puni_flag_onoff, LW(10), 1, 8388608)
         ADD(LW(10), 1)
         IF_INT_EQUAL(LW(10), 103)
@@ -1409,26 +1403,28 @@ EVT_BEGIN(guide_sister)
     END_LOOP
     WAIT_MS(2000)
     BEGIN_INLINE_EVENT
-        CALL(evt_snd_bgmoff, 1024)
-        CALL(evt_snd_bgmon, 1, STRING("BGM_FF_GET_PARTY1"))
+        CALL(evt_snd_bgmoff, PSND_FADE_HOLD)
+        CALL(evt_snd_bgmon, PSND_CH(1), STRING("BGM_FF_GET_PARTY1"))
         WAIT_MS(2000)
-        CALL(evt_snd_bgmoff, 513)
-        CALL(evt_snd_bgmon, 288, 0)
+        CALL(evt_snd_bgmoff, PSND_FADE_OUT | PSND_CH(1))
+        CALL(evt_snd_bgmon, PSND_FADE_RESUME | PSND_FADE_IN, 0)
     END_INLINE_EVENT
     CALL(evt_msg_toge, 1, 0, 0, 0)
-    IF_INT_EQUAL(GSWF(2878), 0)
+    IF_INT_EQUAL(GSWF(GSWF_MRI_JABBI_IN_PUNI_GROUP), 0)
+        // The Punies in the jail join Mario's party and the new total is announced.
         CALL(evt_msg_print, 0, STRING("stg2_mri_e20_16"), 0, 0)
-        ELSE
+    ELSE
         CALL(evt_msg_print, 0, STRING("stg2_mri_e20_16_1"), 0, 0)
     END_IF
-    SET_VALUE(GSW(0), 101)
-    CALL(evt_snd_bgmon, 512, STRING("BGM_STG2_MRI1"))
-#ifndef VERSION_G8ME01
+    SET_VALUE(GSW(GSW_STORY_PROGRESS), STORY_STG2_20_PUNIO_AND_PETUNI)
+    CALL(evt_snd_bgmon, PSND_FADE_OUT, STRING("BGM_STG2_MRI1"))
+#if VERSION <= VERSION_JP
     CALL(evt_mario_key_onoff, 1)
 #endif
     RETURN
 EVT_END()
 
+/** Dialog loop for the imprisoned elder: prints the line "stg2_mri_e12_26_06" in LW(10) and repeats it forever. */
 EVT_BEGIN(elder_shaberi)
     CALL(evt_msg_print, 0, STRING("stg2_mri_e12_26_06"), 0, LW(10))
     LOOP(0)
@@ -1437,9 +1433,17 @@ EVT_BEGIN(elder_shaberi)
     RETURN
 EVT_END()
 
+/**
+ * Cutscene on entering the prison during story 12_01:
+ * the Punies find the elder captured, Punio and the party talk about it.
+ * Sets the story to STORY_STG2_12_02_PUNI_ELDER_IMPRISONED.
+ */
 EVT_BEGIN(toraware_elder)
+    // Mario enters the prison; Punio and the Punies find the Elder locked in her cell.
     CALL(evt_mario_key_onoff, 0)
+#if VERSION >= VERSION_JP
     CALL(evt_puni_wait_systemmode, 2)
+#endif
     CALL(evt_bero_exec_wait, 65536)
     WAIT_WHILE(GF(0))
     BEGIN_INLINE_EVENT
@@ -1448,7 +1452,8 @@ EVT_BEGIN(toraware_elder)
     BEGIN_INLINE_EVENT
         CALL(evt_party_set_dir, 0, 270, 200)
     END_INLINE_EVENT
-    CALL_CHILD(PTR(mri_guide_hagure_check))
+#if VERSION >= VERSION_JP
+    CALL_CHILD(mri_guide_hagure_check)
     IF_INT_NOT_EQUAL(LW(1), 0)
         CALL(evt_puni_set_lsw_index, LSW(0), 0, 0, 0, 0, 0)
         CALL(evt_puni_set_trap_index, 1, 0)
@@ -1456,11 +1461,12 @@ EVT_BEGIN(toraware_elder)
         CALL(evt_puni_flag_onoff, 1, 1, 65536)
         CALL(evt_puni_set_position, 1, 240, 0, 0)
         CALL(evt_puni_move_position, 1, 240, 40, FLOAT(120.0f))
-        CALL(evt_puni_set_mode, 1, 1)
+        CALL(evt_puni_set_mode, 1, PUNI_MODE_JOIN)
     END_IF
+#endif
     CALL(evt_puni_flag_onoff, 1, 0, 262144)
     CALL(evt_puni_set_anim, 1, 0)
-    CALL(evt_npc_flag_onoff, 1, STRING("ガイドsp"), 1073743392)
+    CALL(evt_npc_flag_onoff, 1, STRING("ガイドsp"), NPC_FLAG_NO_WALL_HIT | NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM | NPC_FLAG_INTANGIBLE)
     CALL(evt_npc_set_ry, STRING("ガイドsp"), 270)
     SET_VALUE(LW(0), STRING("ガイドsp"))
     SPAWN_EVENT_GET_ID(PTR(mri_puni_walk_se), LW(9))
@@ -1479,13 +1485,19 @@ EVT_BEGIN(toraware_elder)
         SET_VALUE(GF(0), 0)
     END_INLINE_EVENT
     SET_VALUE(LW(10), STRING("プニ族長老"))
-    CALL(evt_npc_flag_onoff, 1, LW(10), 1073741856)
+    CALL(evt_npc_flag_onoff, 1, LW(10), NPC_FLAG_NO_WALL_HIT | NPC_FLAG_INTANGIBLE)
     CALL(evt_npc_set_ry, LW(10), 90)
     SET_VALUE(LW(0), LW(10))
     SPAWN_EVENT_GET_ID(PTR(mri_puni_walk_se), LW(9))
     CALL(evt_npc_move_position, LW(10), 115, -100, 0, FLOAT(60.0f), 0)
     DELETE_EVENT(LW(9))
     WAIT_WHILE(GF(0))
+    // The Elder, calm in her cell, welcomes Punio; he asks why she is not afraid and she shrugs off the
+    // rescue.
+    // The Elder, calm in her cell, welcomes Punio; he asks why she is not afraid and she shrugs off the
+    // rescue.
+    // The Elder, calm in her cell, welcomes Punio; he asks why she is not afraid and she shrugs off the
+    // rescue.
     CALL(evt_msg_print, 0, STRING("stg2_mri_e12_26_02"), 0, LW(10))
     BEGIN_INLINE_EVENT
         CALL(evt_mario_mov_pos2, 175, -30, FLOAT(120.0f))
@@ -1504,6 +1516,7 @@ EVT_BEGIN(toraware_elder)
     SET_VALUE(LW(10), STRING("ガイド妹"))
     CALL(evt_npc_set_ry, LW(10), 90)
     CALL(evt_npc_set_position, LW(10), -165, 0, -100)
+    // Petuni, in another cell, hears her brother's voice and cries out.
     CALL(evt_msg_print, 0, STRING("stg2_mri_e12_26_07"), 0, LW(10))
     CALL(evt_eff_fukidashi, 1, STRING(""), STRING("ガイドsp"), 0, 0, 0, 0, 0, 0, 0, 60)
     WAIT_MS(1000)
@@ -1526,6 +1539,7 @@ EVT_BEGIN(toraware_elder)
         CALL(evt_party_move_pos2, 0, -75, -30, FLOAT(120.0f))
     END_INLINE_EVENT
     WAIT_MS(250)
+    // Punio and Petuni are reunited through the bars and Punio promises to rescue them all.
     CALL(evt_msg_print, 0, STRING("stg2_mri_e12_26_09"), 0, LW(10))
     CALL(evt_msg_print, 0, STRING("stg2_mri_e12_26_10"), 0, STRING("ガイドsp"))
     WAIT_MS(500)
@@ -1533,6 +1547,7 @@ EVT_BEGIN(toraware_elder)
     WAIT_MS(500)
     CALL(evt_npc_set_ry, STRING("ガイドsp"), 90)
     WAIT_MS(833)
+    // Punio tells Mario they need the cell key.
     CALL(evt_msg_print, 0, STRING("stg2_mri_e12_26_12"), 0, STRING("ガイドsp"))
     SET_VALUE(LW(0), STRING("ガイドsp"))
     SPAWN_EVENT_GET_ID(PTR(mri_puni_walk_se), LW(9))
@@ -1543,13 +1558,18 @@ EVT_BEGIN(toraware_elder)
     CALL(evt_puni_set_position, 1, LW(0), LW(1), LW(2))
     CALL(evt_cam3d_evt_off, 500, 11)
     WAIT_MS(500)
-    SET_VALUE(GSW(0), 92)
+    // The story advances and Mario regains control.
+    SET_VALUE(GSW(GSW_STORY_PROGRESS), STORY_STG2_12_02_PUNI_ELDER_IMPRISONED)
     CALL(evt_npc_restart_regular_event, STRING("ガイド妹"))
     CALL(evt_party_run, 0)
     CALL(evt_mario_key_onoff, 1)
     RETURN
 EVT_END()
 
+/**
+ * Short scene before the blue cell opens (story 19): Punio waits by the cell and talks;
+ * sets GSWF_MRI03_PUNIO_WAITING_AT_CELL and the story to STORY_STG2_19_01_PUNIO_AND_PETUNI_BEFORE.
+ */
 EVT_BEGIN(guide_sister_before)
     CALL(evt_mario_key_onoff, 0)
     CALL(evt_puni_wait_systemmode, 2)
@@ -1557,19 +1577,19 @@ EVT_BEGIN(guide_sister_before)
     CALL(evt_party_set_dir, 0, 270, 0)
     CALL(evt_bero_exec_wait, 65536)
     WAIT_MS(500)
-    CALL_CHILD(PTR(mri_guide_hagure_check))
+    CALL_CHILD(mri_guide_hagure_check)
     IF_INT_NOT_EQUAL(LW(1), 0)
         CALL(evt_puni_set_position, 1, 240, 0, 0)
         CALL(evt_puni_move_position, 1, 240, 40, FLOAT(120.0f))
     END_IF
     CALL(evt_puni_get_position, 1, LW(0), LW(1), LW(2))
     CALL(evt_puni_set_position, 1, 0, -1000, 0)
-    CALL(evt_puni_set_mode, 1, 30)
+    CALL(evt_puni_set_mode, 1, PUNI_MODE_INERT)
     CALL(evt_puni_flag_onoff, 1, 0, 8388608)
-    SET_VALUE(GSWF(2836), 1)
+    SET_VALUE(GSWF(GSWF_MRI03_PUNIO_WAITING_AT_CELL), 1)
     CALL(evt_npc_set_position, STRING("ガイド"), LW(0), LW(1), LW(2))
     CALL(evt_npc_set_ry, STRING("ガイド"), 270)
-    CALL(evt_npc_flag_onoff, 1, STRING("ガイド"), 1073743392)
+    CALL(evt_npc_flag_onoff, 1, STRING("ガイド"), NPC_FLAG_NO_WALL_HIT | NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM | NPC_FLAG_INTANGIBLE)
     CALL(evt_msg_print, 0, STRING("stg2_mri_e19_04_01"), 0, STRING("ガイド"))
     BEGIN_INLINE_EVENT
         CALL(evt_npc_change_interrupt, STRING("ガイド"), 6, 0)
@@ -1577,15 +1597,16 @@ EVT_BEGIN(guide_sister_before)
         SPAWN_EVENT_GET_ID(PTR(mri_puni_walk_se), LW(9))
         CALL(evt_npc_move_position, STRING("ガイド"), -145, -60, 0, FLOAT(120.0f), 0)
         DELETE_EVENT(LW(9))
-        CALL(evt_npc_flag_onoff, 0, STRING("ガイド"), 1073741856)
+        CALL(evt_npc_flag_onoff, 0, STRING("ガイド"), NPC_FLAG_NO_WALL_HIT | NPC_FLAG_INTANGIBLE)
         CALL(evt_npc_change_interrupt, STRING("ガイド"), 6, PTR(guide_talk))
     END_INLINE_EVENT
-    SET_VALUE(GSW(0), 100)
+    SET_VALUE(GSW(GSW_STORY_PROGRESS), STORY_STG2_19_01_PUNIO_AND_PETUNI_BEFORE)
     CALL(evt_party_run, 0)
     CALL(evt_mario_key_onoff, 1)
     RETURN
 EVT_END()
 
+/** Plants Mario can search in mri_03: A_ueki01, A_ueki03, A_ueki04, A_ueki05. */
 static KusaAccess ueki_access_data[] = {
     {1, "A_ueki01", "S_ueki01", NULL},
     {1, "A_ueki03", "S_ueki03", NULL},
@@ -1594,6 +1615,11 @@ static KusaAccess ueki_access_data[] = {
     {4, NULL, NULL, NULL},
 };
 
+/**
+ * Map init script of mri_03, the prison: sets up the Puni, cell doors, wall fade,
+ * planters and the bomb-alarm music, and starts the cell,
+ * elder and Petuni scenes for the current story progress.
+ */
 EVT_BEGIN(mri_03_init_evt)
     CALL(evt_puni_mem_init)
     CALL(evt_puni_set_yuka, 3, 0, -310, -1000, -1000, 0, 0)
@@ -1602,64 +1628,63 @@ EVT_BEGIN(mri_03_init_evt)
     SET_VALUE(LW(7), 0)
     SET_VALUE(LW(8), 0)
     SET_VALUE(LW(9), 0)
-    CALL_CHILD(PTR(mri_puni_init))
+    CALL_CHILD(mri_puni_init)
     SET_VALUE(LW(0), PTR(bero_entry_data))
     CALL(evt_bero_get_info)
-    CALL_CHILD(PTR(evt_bero_info_run))
-    SPAWN_EVENT(PTR(puni_disp_info))
-    SPAWN_EVENT(PTR(mri_countdown))
+    CALL_CHILD(evt_bero_info_run)
+    SPAWN_EVENT(puni_disp_info)
+    SPAWN_EVENT(mri_countdown)
     SET_VALUE(LW(0), PTR(ueki_access_data))
-    CALL_CHILD(PTR(evt_sub_kusa_access_entry))
-    SWITCH(GSW(0))
-        CASE_BETWEEN(109, 110)
-        CALL(evt_snd_bgmon, 512, STRING("BGM_EVT_DANGER4"))
-        CALL(evt_snd_envon, 272, STRING("ENV_STG2_MRI9"))
-        CASE_EQUAL(98)
-        CASE_GREATER_OR_EQUAL(101)
-        CALL(evt_snd_bgmon, 512, STRING("BGM_EVT_STG2_PUNI2"))
-        CALL(evt_snd_envoff, 512)
+    CALL_CHILD(evt_sub_kusa_access_entry)
+    SWITCH(GSW(GSW_STORY_PROGRESS))
+        CASE_BETWEEN(STORY_STG2_23_TIME_BOMB_ACTIVATED, STORY_STG2_23_01_X_NAUT_BATTLE)
+        CALL(evt_snd_bgmon, PSND_FADE_OUT, STRING("BGM_EVT_DANGER4"))
+        CALL(evt_snd_envon, PSND_FADE_RESTART | PSND_FADE_IN, STRING("ENV_STG2_MRI9"))
+        CASE_EQUAL(STORY_STG2_18_JABBLE)
+        CASE_GREATER_OR_EQUAL(STORY_STG2_20_PUNIO_AND_PETUNI)
+        CALL(evt_snd_bgmon, PSND_FADE_OUT, STRING("BGM_EVT_STG2_PUNI2"))
+        CALL(evt_snd_envoff, PSND_FADE_OUT)
         CASE_DEFAULT
-        CALL(evt_snd_bgmon, 512, STRING("BGM_STG2_MRI1"))
-        CALL(evt_snd_envon, 272, STRING("ENV_STG2_MRI4"))
+        CALL(evt_snd_bgmon, PSND_FADE_OUT, STRING("BGM_STG2_MRI1"))
+        CALL(evt_snd_envon, PSND_FADE_RESTART | PSND_FADE_IN, STRING("ENV_STG2_MRI4"))
     END_SWITCH
-    CALL(evt_mapobj_flag_onoff, 1, 0, STRING("S_hako_r_saku"), 2)
-    CALL(evt_mobj_kururing_floor, STRING("kururin1"), -150, 0, -200, STRING("S_yuka_oku"), 125, GSWF(5613))
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("S_hako_r_saku"), MAPOBJ_FLAG_BBOX_CULL)
+    CALL(evt_mobj_kururing_floor, STRING("kururin1"), -150, 0, -200, STRING("S_yuka_oku"), 125, GSWF(GSWF_MRI03_STAR_PIECE_PANEL))
     CALL(evt_npc_setup, PTR(npcEnt))
     CALL(evt_map_playanim, STRING("mizu_01"), 1, 0)
     CALL(evt_map_playanim, STRING("mizu_02"), 1, 0)
     CALL(evt_map_playanim, STRING("awa_01"), 1, 0)
     CALL(evt_map_playanim, STRING("awa_02"), 1, 0)
-    CALL(evt_map_playanim, STRING("hikari_01\0\0"), 1, 0)
-    SWITCH(GSW(0))
-        CASE_BETWEEN(90, 100)
-        SPAWN_EVENT(PTR(jail_init_00))
+    CALL(evt_map_playanim, STRING("hikari_01"), 1, 0)
+    SWITCH(GSW(GSW_STORY_PROGRESS))
+        CASE_BETWEEN(STORY_STG2_12_RIVAL_ARRIVAL, STORY_STG2_19_01_PUNIO_AND_PETUNI_BEFORE)
+        SPAWN_EVENT(jail_init_00)
     END_SWITCH
-    CALL(evt_mobj_lock, STRING("mobj_lock00"), 16, 65, 10, -70, 0, PTR(evt_check00), PTR(evt_unlock00), GSWF(2832))
-    IF_INT_EQUAL(GSWF(2832), 1)
-        IF_INT_EQUAL(GSWF(2833), 1)
-            SPAWN_EVENT(PTR(evt_opendoor00))
-            ELSE
-            SPAWN_EVENT(PTR(evt_unlock00_01))
+    CALL(evt_mobj_lock, STRING("mobj_lock00"), ITEM_RED_KEY, 65, 10, -70, 0, PTR(evt_check00), PTR(evt_unlock00), GSWF(GSWF_MRI03_RED_CELL_UNLOCKED))
+    IF_INT_EQUAL(GSWF(GSWF_MRI03_RED_CELL_UNLOCKED), 1)
+        IF_INT_EQUAL(GSWF(GSWF_MRI03_RED_CELL_DOOR_OPEN), 1)
+            SPAWN_EVENT(evt_opendoor00)
+        ELSE
+            SPAWN_EVENT(evt_unlock00_01)
         END_IF
     END_IF
-    CALL(evt_mobj_lock, STRING("mobj_lock01"), PTR(key_table01), -245, 10, -70, 0, PTR(evt_check01), PTR(evt_unlock01), GSWF(2834))
-    IF_INT_EQUAL(GSWF(2834), 1)
-        IF_INT_EQUAL(GSWF(2835), 1)
-            SPAWN_EVENT(PTR(evt_opendoor01))
-            ELSE
-            SPAWN_EVENT(PTR(evt_unlock01))
+    CALL(evt_mobj_lock, STRING("mobj_lock01"), PTR(key_table01), -245, 10, -70, 0, PTR(evt_check01), PTR(evt_unlock01), GSWF(GSWF_MRI03_BLUE_CELL_UNLOCKED))
+    IF_INT_EQUAL(GSWF(GSWF_MRI03_BLUE_CELL_UNLOCKED), 1)
+        IF_INT_EQUAL(GSWF(GSWF_MRI03_BLUE_CELL_DOOR_OPEN), 1)
+            SPAWN_EVENT(evt_opendoor01)
+        ELSE
+            SPAWN_EVENT(evt_unlock01)
         END_IF
     END_IF
     SPAWN_EVENT_GET_ID(PTR(jail_alpha), GW(0))
-    IF_INT_EQUAL(GSW(0), 98)
-        SPAWN_EVENT(PTR(bluejail_event))
+    IF_INT_EQUAL(GSW(GSW_STORY_PROGRESS), STORY_STG2_18_JABBLE)
+        SPAWN_EVENT(bluejail_event)
     END_IF
-    IF_INT_EQUAL(GSW(0), 91)
-        SPAWN_EVENT(PTR(toraware_elder))
+    IF_INT_EQUAL(GSW(GSW_STORY_PROGRESS), STORY_STG2_12_01_A_DARK_FIGURE)
+        SPAWN_EVENT(toraware_elder)
     END_IF
-    IF_INT_EQUAL(GSW(0), 99)
-        SPAWN_EVENT(PTR(guide_sister_before))
+    IF_INT_EQUAL(GSW(GSW_STORY_PROGRESS), STORY_STG2_19_INSIDE_THE_BLUE_CELL)
+        SPAWN_EVENT(guide_sister_before)
     END_IF
     RETURN
 EVT_END()
-

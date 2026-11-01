@@ -1,3 +1,5 @@
+// Paper Mario 64 effect: rain of water (jetwrain) from a water jet.
+#include "eff/n64/eff_opuku_jetwrain_n64.h"
 #include "driver/camdrv.h"
 #include "driver/dispdrv.h"
 #include "driver/effdrv.h"
@@ -5,21 +7,8 @@
 #include "system.h"
 #include <dolphin/gx.h>
 #include <dolphin/mtx.h>
-
-#ifndef TARGET_PC /* PC port: the host libc declares these */
-double sin(double);
-#endif
-
-
-typedef struct effN64Vtx {
-    s16 x, y, z;   // 0x0
-    s16 s, t;      // 0x6
-    u8 r, g, b, a; // 0xA
-} effN64Vtx;
-
-void effGetTexObjN64(u32 id, GXTexObj* obj);
-void effSetVtxDescN64(effN64Vtx* vtx);
-void tri2();
+#include "eff/eff_n64.h"
+#include "libc_decls.h"
 
 typedef struct EffOpukuJetwrainWork {
     s32 type;      // 0x0
@@ -34,7 +23,10 @@ typedef struct EffOpukuJetwrainWork {
     s16 v[19][13]; // 0x11A
 } EffOpukuJetwrainWork;
 
-
+/**
+ * Four screen tiles (corner, right edge, bottom edge, both edges) whose corners are rewritten from the wave
+ * heights before each tile of the copied frame is redrawn, giving the rippling-water warp.
+ */
 static effN64Vtx opuku_jetwrain_vtx[16] = {
     {-160, -120, -320, 0, 0, 0, 0, 0, 255},
     {-144, -120, -320, 0x200, 0, 0, 0, 0, 255},
@@ -54,17 +46,31 @@ static effN64Vtx opuku_jetwrain_vtx[16] = {
     {-144, -104, -320, 0x280, 0x280, 0, 0, 0, 255},
 };
 
-void effOpukuJetwrainDisp(CameraId cameraId, EffectEntry* effect);
-void effOpukuJetwrainMain(EffectEntry* effect);
+static void effOpukuJetwrainDisp(CameraId cameraId, EffectEntry* effect);
+static void effOpukuJetwrainMain(EffectEntry* effect);
 
-inline f32 sind(f32 deg) { return sin(6.2831855f * deg / 360.0f); }
+/** Returns the sine of an angle given in degrees. */
+inline f32 sind(f32 deg) {
+    return sin(6.2831855f * deg / 360.0f);
+}
 
-inline int inline_fn2(s32 a) { return a < 12; }
+/** Returns whether a < 12 (the loop bound over the wave grid columns). */
+inline int inline_fn2(s32 a) {
+    return a < 12;
+}
+/** Returns whether n < 13 (the loop bound over the wave grid width). */
 #ifdef TARGET_PC /* file-local: other files define different inline_fn()s (one external copy wins on PC) */
 static
 #endif
-inline int inline_fn(s32 arg0) { return arg0 < 13; }
+inline int inline_fn(s32 n) {
+    return n < 13;
+}
 
+/**
+ * Spawns a water-ripple screen distortion for lifetime frames (<= 0 means until deleted), scaled by scale;
+ * the position is stored but the draw covers the whole screen. Via evt_eff64 "opuku_jetwrain_n64".
+ * Soft-deletable.
+ */
 EffectEntry* effOpukuJetwrainN64Entry(s32 type, f32 x, f32 y, f32 z, f32 scale, s32 lifetime) {
     EffectEntry* effect;
     EffOpukuJetwrainWork* work;
@@ -72,12 +78,12 @@ EffectEntry* effOpukuJetwrainN64Entry(s32 type, f32 x, f32 y, f32 z, f32 scale, 
     s32 j;
 
     effect = effEntry();
-    effect->type = "OpukuJetwrainN64\0\0\0";
+    effect->type = "OpukuJetwrainN64";
     effect->count = 1;
     work = __memAlloc(HEAP_EFFECT, sizeof(EffOpukuJetwrainWork));
     effect->userdata = work;
     effect->callback = effOpukuJetwrainMain;
-    effect->flags |= 2;
+    effect->flags |= EFFECT_FLAG_SOFT_DELETE;
     work->type = type;
     work->frame = 0;
     if (lifetime <= 0) {
@@ -105,7 +111,11 @@ EffectEntry* effOpukuJetwrainN64Entry(s32 type, f32 x, f32 y, f32 z, f32 scale, 
     return effect;
 }
 
-void effOpukuJetwrainMain(EffectEntry* effect) {
+/**
+ * Fades the effect in and out and steps a 19x13 height-field wave simulation,
+ * driving the middle column with a sine.
+ */
+static void effOpukuJetwrainMain(EffectEntry* effect) {
     s32 life;
     EffOpukuJetwrainWork* work;
     Vec position;
@@ -121,8 +131,8 @@ void effOpukuJetwrainMain(EffectEntry* effect) {
     tmp.y = work->position.y;
     tmp.z = work->position.z;
     position = tmp;
-    if (effect->flags & 4) {
-        effect->flags &= ~4;
+    if (effect->flags & EFFECT_FLAG_DELETE_REQUESTED) {
+        effect->flags &= ~EFFECT_FLAG_DELETE_REQUESTED;
         work->lifetime = 32;
     }
     if (work->lifetime < 1000) {
@@ -168,7 +178,11 @@ void effOpukuJetwrainMain(EffectEntry* effect) {
     dispEntry(CAMERA_3D, dispCalcZ(&position), 2, (DispCallback)effOpukuJetwrainDisp, effect);
 }
 
-void effOpukuJetwrainDisp(CameraId cameraId, EffectEntry* effect) {
+/**
+ * Copies the frame to a texture and redraws it as 16x16 tiles whose corners are displaced by the wave heights,
+ * waiting for draw sync after every tile.
+ */
+static void effOpukuJetwrainDisp(CameraId cameraId, EffectEntry* effect) {
     s32 px;
     EffOpukuJetwrainWork* work;
     s32 alpha;
@@ -186,7 +200,8 @@ void effOpukuJetwrainDisp(CameraId cameraId, EffectEntry* effect) {
     s32 y1;
     s32 by, bx;
     s32 x0;
-    s32 k; s32 edgeX;
+    s32 k;
+    s32 edgeX;
 
     camGetPtr(cameraId);
     work = effect->userdata;
@@ -285,5 +300,3 @@ void effOpukuJetwrainDisp(CameraId cameraId, EffectEntry* effect) {
     }
     GXSetProjectionv(proj);
 }
-
-

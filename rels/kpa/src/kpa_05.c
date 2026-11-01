@@ -1,87 +1,41 @@
+// kpa_05 (クッパ編, Bowser's interludes): the third side-scrolling stage, over lava; continues in kpa_06.
+
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
 #include "manager/evtmgr_cmd.h"
 #include "kpa.h"
 #include "evt/evt_npc.h"
+#include "evt/evt_bero.h"
+#include "evt/evt_cam.h"
+#include "evt/evt_eff.h"
+#include "evt/evt_map.h"
+#include "evt/evt_mario.h"
+#include "evt/evt_mobj.h"
 #include "kpa_stage_data.h"
+#include "version.h"
+#include "evt/evt_story.h"
 
-#pragma force_active on
-
-USER_FUNC(evt_bero_mapchange);
-USER_FUNC(evt_cam_road_reset);
-USER_FUNC(evt_eff);
-USER_FUNC(evt_koopa_chk_dead);
-USER_FUNC(evt_koopa_get_level);
-USER_FUNC(evt_map_playanim);
-USER_FUNC(evt_mario_cam_off);
-USER_FUNC(evt_mario_get_name_hitobj_ride);
-USER_FUNC(evt_mario_get_pos);
-USER_FUNC(evt_mario_jump_jumpstand);
-USER_FUNC(evt_mario_set_pos);
-USER_FUNC(evt_mobj_get_position);
-USER_FUNC(evt_npc_setup);
 static USER_FUNC(kpa_get_level);
-USER_FUNC(kpa_status_init);
 
-f32 fd_kpa_05_negone_one_374[2] __attribute__((aligned(8)));
-f32 fd_kpa_05_neg_one_382;
-f32 fd_kpa_05___local_PI_383;
-f32 fd_kpa_05___local_3PIO2_385;
-f32 fd_kpa_05_one_negone_373[2] __attribute__((aligned(8)));
-f32 fd_kpa_05___local_PIO2_384;
-f32 fd_kpa_05_one_381;
-f32 fd_kpa_05_negone_one_360[2] __attribute__((aligned(8)));
-f32 fd_kpa_05_neg_one_365;
-f32 fd_kpa_05___local_PI_366;
-f32 fd_kpa_05___local_3PIO2_368;
-f32 fd_kpa_05_one_negone_359[2] __attribute__((aligned(8)));
-f32 fd_kpa_05___local_PIO2_367;
-f32 fd_kpa_05_one_364;
 static EvtWord kpa_act_stg3_mobj[118];
 EvtWord kpa_act_stg3_item[79];
-static EvtWord kpa_fall[92];
 static EvtWord jumpstand_evt[60];
 static NpcSetupInfo npcEnt[1];
-EvtWord kpa_05_init_evt[44];
 
-f32 fd_kpa_05_negone_one_374[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_kpa_05_neg_one_382 = -1.0f;
-
-f32 fd_kpa_05___local_PI_383 = 3.1415927f;
-
-f32 fd_kpa_05___local_3PIO2_385 = 4.712389f;
-
-f32 fd_kpa_05_one_negone_373[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_kpa_05___local_PIO2_384 = 1.5707964f;
-
-f32 fd_kpa_05_one_381 = 1.0f;
-
-f32 fd_kpa_05_negone_one_360[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_kpa_05_neg_one_365 = -1.0f;
-
-f32 fd_kpa_05___local_PI_366 = 3.1415927f;
-
-f32 fd_kpa_05___local_3PIO2_368 = 4.712389f;
-
-f32 fd_kpa_05_one_negone_359[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_kpa_05___local_PIO2_367 = 1.5707964f;
-
-f32 fd_kpa_05_one_364 = 1.0f;
-
+/**
+ * Blocks, hidden blocks, pipes and obstacle blocks of side-scrolling stage 3 over lava, listed from left to
+ * right.
+ */
 static EvtWord kpa_act_stg3_mobj[] = {
-    KPA_OBJ_FIREBAR_DODAI_0(-1062.5f, 100.0f, 3, -229998976),
-    KPA_OBJ_FIREBAR_DODAI_0(-687.5f, 100.0f, 2, -229997952),
-    KPA_OBJ_FIREBAR_DODAI_1(-512.5f, 225.0f, 3, -229998976), KPA_OBJ_OJAMA_BLK(-325.0f, 200.0f),
+    KPA_OBJ_FIREBAR_DODAI_0(-1062.5f, 100.0f, 3, FLOAT(1.0f)),
+    KPA_OBJ_FIREBAR_DODAI_0(-687.5f, 100.0f, 2, FLOAT(2.0f)),
+    KPA_OBJ_FIREBAR_DODAI_1(-512.5f, 225.0f, 3, FLOAT(1.0f)), KPA_OBJ_OJAMA_BLK(-325.0f, 200.0f),
     KPA_OBJ_BRICK_3(-225.0f, 25.0f), KPA_OBJ_BRICK_3(-175.0f, 25.0f), KPA_OBJ_BRICK_3(-125.0f, 25.0f),
     KPA_OBJ_BRICK_3(-75.0f, 25.0f), KPA_OBJ_BRICK_3(-25.0f, 25.0f), KPA_OBJ_BRICK_3(25.0f, 25.0f),
     KPA_OBJ_BRICK_3(75.0f, 25.0f), KPA_OBJ_BRICK_3(125.0f, 75.0f), KPA_OBJ_STONE_BLK(250.0f, 25.0f),
     KPA_OBJ_STONE_BLK(300.0f, 25.0f), KPA_OBJ_STONE_BLK(300.0f, 75.0f), KPA_OBJ_STONE_BLK(350.0f, 75.0f),
     KPA_OBJ_OJAMA_BLK(400.0f, 0.0f), KPA_OBJ_STONE_BLK(400.0f, 75.0f),
-    KPA_OBJ_FIREBAR_DODAI_1(387.5f, 125.0f, 6, -229999488), KPA_OBJ_STONE_BLK(450.0f, 75.0f),
+    KPA_OBJ_FIREBAR_DODAI_1(387.5f, 125.0f, 6, FLOAT(0.5f)), KPA_OBJ_STONE_BLK(450.0f, 75.0f),
     KPA_OBJ_STONE_BLK(500.0f, 25.0f), KPA_OBJ_STONE_BLK(500.0f, 75.0f), KPA_OBJ_STONE_BLK(550.0f, 25.0f),
     KPA_OBJ_BRICK_3(725.0f, 0.0f), KPA_OBJ_BRICK_3(775.0f, 0.0f), KPA_OBJ_OJAMA_BLK(700.0f, 175.0f),
     KPA_OBJ_BRICK_3(950.0f, 25.0f), KPA_OBJ_BRICK_3(1000.0f, 25.0f), KPA_OBJ_BRICK_3(1050.0f, 50.0f),
@@ -90,6 +44,7 @@ static EvtWord kpa_act_stg3_mobj[] = {
     KPA_OBJ_BRICK_3(1300.0f, 25.0f), KPA_OBJ_DOKAN_2(1475.0f, 200.0f), KPA_OBJ_END,
 };
 
+/** Coins Bowser can collect in side-scrolling stage 3, as x and z positions. */
 EvtWord kpa_act_stg3_item[] = {
     KPA_ITEM(-175.0f, 175.0f), KPA_ITEM(-125.0f, 175.0f), KPA_ITEM(-25.0f, 175.0f), KPA_ITEM(25.0f, 175.0f),
     KPA_ITEM(250.0f, 0.0f), KPA_ITEM(300.0f, 0.0f), KPA_ITEM(350.0f, 0.0f), KPA_ITEM(350.0f, 25.0f),
@@ -100,6 +55,11 @@ EvtWord kpa_act_stg3_item[] = {
     KPA_ITEM(1425.0f, 12.5f), KPA_ITEM(1425.0f, 50.0f), KPA_ITEM_END,
 };
 
+/**
+ * Watches Bowser in the lava stage: it waits until he is dead or standing on the "a_magu" (magma) object.
+ * In the lava case it adds a "splash" effect at his position sized by his power level (0.8, 1.7, 3.0 or 4.5)
+ * and runs the pit fall handler (kpa_fall_sub); if he died it runs kpa_dead.
+ */
 static EVT_BEGIN(kpa_fall)
     SET_VALUE(LF(0), 0)
     LOOP(0)
@@ -130,18 +90,25 @@ static EVT_BEGIN(kpa_fall)
             SET_FLOAT_VALUE(LW(3), FLOAT(4.5f))
         END_SWITCH
         CALL(evt_eff, STRING(""), STRING("splash"), 2, LW(0), LW(1), LW(2), LW(3), 0, 0, 0, 0, 0, 0, 0)
-        CALL_CHILD(PTR(kpa_fall_sub))
-        ELSE
-        CALL_CHILD(PTR(kpa_dead))
+        CALL_CHILD(kpa_fall_sub)
+    ELSE
+        CALL_CHILD(kpa_dead)
     END_IF
     RETURN
 EVT_END()
 
+/**
+ * Script of the stage's red jump stand (KPA_OBJ_JUMPSTAND_RED), run when Bowser stands on it:
+ * kills the stage clock (kpa_time, its event id in GW(15)), saves Bowser's power level,
+ * loads kpa_06 after 500 ms, turns the camera off once he is above y = 400
+ * and launches him up with evt_mario_jump_jumpstand 800 units above the platform (a lower launch speed in the US
+ * demo and earlier).
+ */
 static EVT_BEGIN(jumpstand_evt)
     DELETE_EVENT(GW(15))
     BEGIN_INLINE_EVENT
         WAIT_MS(500)
-        CALL(evt_koopa_get_level, GSW(1223))
+        CALL(evt_koopa_get_level, GSW(GSW_KPA_BOWSER_POWER))
         CALL(evt_bero_mapchange, STRING("kpa_06"), STRING("kpa_next_map"))
     END_INLINE_EVENT
     BEGIN_INLINE_EVENT
@@ -157,34 +124,45 @@ static EVT_BEGIN(jumpstand_evt)
     CALL(evt_mobj_get_position, STRING("me"), LW(0), LW(1), LW(2))
     SET_VALUE(LW(3), LW(1))
     ADD(LW(3), 800)
+#if VERSION <= VERSION_DEMO_JP
+    CALL(evt_mario_jump_jumpstand, LW(0), LW(1), LW(2), LW(0), LW(3), LW(2), LW(0), LW(3), LW(2), 2000, 1)
+#else
     CALL(evt_mario_jump_jumpstand, LW(0), LW(1), LW(2), LW(0), LW(3), LW(2), LW(0), LW(3), LW(2), 4000, 3)
+#endif
     RETURN
 EVT_END()
 
+/** No NPCs: the side-scrolling stage is built from the block, pipe and item lists instead. */
 static NpcSetupInfo npcEnt[] = {
     {0},
 };
 
+/**
+ * Map init for kpa_05, side-scrolling stage 3 (over lava):
+ * builds the blocks and coins from kpa_act_stg3_*, resets the camera road,
+ * plays the lava animation and starts the HUD, intro and clock. It continues in kpa_06.
+ */
 EVT_BEGIN(kpa_05_init_evt)
     CALL(evt_npc_setup, PTR(npcEnt))
-    CALL_CHILD(PTR(kpa_init))
+    CALL_CHILD(kpa_init)
     CALL(evt_mario_set_pos, -1500, 150, -5)
     CALL(evt_cam_road_reset)
     SET_VALUE(LW(0), PTR(kpa_act_stg3_mobj))
-    CALL_CHILD(PTR(kpa_read_mobj))
+    CALL_CHILD(kpa_read_mobj)
     SET_VALUE(LW(0), PTR(kpa_act_stg3_item))
-    CALL_CHILD(PTR(kpa_read_item))
-    CALL(evt_map_playanim, STRING("anm_magu\0\0\0"), 1, 0)
-    SPAWN_EVENT(PTR(kpa_fall))
-    CALL(kpa_status_init, 3, GSW(1221), GSW(1222))
+    CALL_CHILD(kpa_read_item)
+    CALL(evt_map_playanim, STRING("anm_magu"), 1, 0)
+    SPAWN_EVENT(kpa_fall)
+    CALL(kpa_status_init, 3, GSW(GSW_KPA_LIVES), GSW(GSW_KPA_TIME_LEFT))
     SET_VALUE(LSW(1), 2)
-    SPAWN_EVENT(PTR(kpa_stage_start))
+    SPAWN_EVENT(kpa_stage_start)
     SPAWN_EVENT_GET_ID(PTR(kpa_time), GW(15))
     RETURN
 EVT_END()
 
 s32 kpaGetLevel(void);
 
+/** Script helper: returns Bowser's current power level (kpaGetLevel) in args[0]. */
 static USER_FUNC(kpa_get_level) {
     EvtWord* args = event->args;
     evtSetValue(event, args[0], kpaGetLevel());

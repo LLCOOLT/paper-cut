@@ -1,34 +1,66 @@
+// evt_bero.c: map entrances and exits (bero): BeroEntry, BeroINFO and the script commands and scripts for them.
 #pragma once
 
 #include <dolphin/types.h>
 #include "evt/evt_cmd.h"
 
 typedef union BeroINFO {
-	const char* name;
-	s32 value;
+    const char* name;
+    s32 value;
 } BeroINFO;
 
+// BeroEntry.directionId: the direction Mario walks through the entrance, in 45-degree steps from north.
+typedef enum BeroDirection {
+    BERO_DIR_N = 0,
+    BERO_DIR_NE = 1,
+    BERO_DIR_E = 2,
+    BERO_DIR_SE = 3,
+    BERO_DIR_S = 4,
+    BERO_DIR_SW = 5,
+    BERO_DIR_W = 6,
+    BERO_DIR_NW = 7,
+    BERO_DIR_UP = 8,
+    BERO_DIR_DOWN = 9,
+    BERO_DIR_NONE = 10000, // no walk direction: the start and end positions are both the hit object's position
+    BERO_DIR_AUTO = 20000, // roads and doors: taken from the hit name prefix ("n_", "ne_", ... "nw_"); others: BERO_DIR_NONE
+} BeroDirection;
+
+// BeroEntry.centerPosition: take the entrance position from the hit object named by hitName
+#define BERO_POS_AUTO 100000
+
+// BeroEntry.type: the entrance kind in the low 12 bits (BERO_TYPE_MASK) plus flag bits.
+enum BeroType {
+    BERO_TYPE_ROAD = 0,
+    BERO_TYPE_DOOR = 1,
+    BERO_TYPE_PIPE = 2,
+    BERO_TYPE_GATE = 3,
+    BERO_TYPE_NONE = 0xF00, // no walk-in or walk-out (bero_null)
+    BERO_TYPE_MASK = 0xFFF,
+    BERO_TYPE_FLAG_BG = 0x1000,      // background pipe: Mario goes into background mode (evt_mario_bgmode_on)
+    BERO_TYPE_FLAG_NO_FADE = 0x2000, // the pipe exit sets no pipe-direction map change fade
+};
+
 typedef struct BeroEntry {
-	const char* hitName; //0x0
-	u16 type; //0x4, BeroInfoType | 0x1000 background | 0x2000 no fade; low 12 bits: 0 road, 1 door, 2 pipe, 3 gate, 0xF00 none
-	u16 sfxId; //0x6
-	s32 directionId; //0x8, 45-degree steps from north, 8 up, 9 down
-	s32 centerPosition; //0xC, x of centerPosition[3]
-	s32 centerPositionY; //0x10
-	s32 centerPositionZ; //0x14
-	s32 length; //0x18, -1 = default for type
-	EvtWord* enterEvent; //0x1C;
-	s32 caseType; //0x20, -1 = default for type
-	EvtWord* exitEvent; //0x24
-	const char* nextMapName; //0x28
-	const char* nextBeroName; //0x2C
-	u16 enterAnimeType; //0x30
-	u16 exitAnimeType; //0x32
-	const void* enterAnimeArg; //0x34, map animation name or script, by anime type
-	const void* exitAnimeArg; //0x38, map animation name or script, by anime type
+    const char* hitName;       // 0x0
+    u16 type;                  // 0x4, BeroInfoType | 0x1000 background | 0x2000 no fade; low 12 bits: 0 road, 1 door, 2 pipe, 3 gate, 0xF00 none
+    u16 sfxId;                 // 0x6
+    s32 directionId;           // 0x8, BeroDirection
+    s32 centerPosition;        // 0xC, x of centerPosition[3], or BERO_POS_AUTO
+    s32 centerPositionY;       // 0x10
+    s32 centerPositionZ;       // 0x14
+    s32 length;                // 0x18, -1 = default for type
+    EvtWord* enterEvent;       // 0x1C;
+    s32 caseType;              // 0x20, -1 = default for type
+    EvtWord* exitEvent;        // 0x24
+    const char* nextMapName;   // 0x28
+    const char* nextBeroName;  // 0x2C
+    u16 enterAnimeType;        // 0x30
+    u16 exitAnimeType;         // 0x32
+    const void* enterAnimeArg; // 0x34, map animation name or script, by anime type
+    const void* exitAnimeArg;  // 0x38, map animation name or script, by anime type
 } BeroEntry;
 
-EVT_DEF(evt_bero_info_run);
+extern EvtWord evt_bero_info_run[];
 
 USER_FUNC(evt_bero_set_reset_position);
 USER_FUNC(evt_bero_set_reset_position_current);
@@ -70,7 +102,7 @@ extern EvtWord evt_bero_info_run[];
 
 extern s32 BeroID[16];
 extern BeroEntry* BeroINFOARR[16];
-extern s32 BeroSW[16]; //switches
+extern s32 BeroSW[16]; // switches
 extern EvtWord bero_case_entry_sub[];
 extern EvtWord bero_case_exec_door[];
 extern EvtWord bero_case_exec_gate[];
@@ -78,7 +110,6 @@ extern EvtWord bero_case_exec_none[];
 extern EvtWord bero_case_exec_pipe_sub[];
 extern EvtWord bero_case_exec_road[];
 extern EvtWord bero_case_init_check[];
-void bero_get_position_pipe_sub(s32 id, s32 a, EvtWord name, s32 kind, Vec* start, Vec* end);
 extern BeroEntry bero_null[];
 extern EvtWord bero_play_out_anime[];
 extern EvtWord default_entevt[];
@@ -92,3 +123,19 @@ extern EvtWord evt_bero_info_run_road[];
 extern EvtWord evt_bero_initial_pos[];
 extern EvtWord evt_bero_mario_enter[];
 extern EvtWord evt_bero_nonride_check[];
+
+USER_FUNC(N_evt_bero_set_mario_bottomless_respawn_pos_on_bero_entry);
+USER_FUNC(N_evt_bero_set_mario_bottomless_respawn_pos_to_current_mario_pos);
+USER_FUNC(evt_bero_id_filter);
+USER_FUNC(evt_bero_get_info_num);
+USER_FUNC(bero_get_position_normal);
+USER_FUNC(evt_bero_overwrite);
+USER_FUNC(evt_bero_mario_go_init);
+USER_FUNC(evt_bero_mario_go);
+USER_FUNC(evt_bero_mario_go_wait);
+
+USER_FUNC(evt_bero_switch_on);
+USER_FUNC(evt_bero_switch_off);
+USER_FUNC(evt_bero_get_number);
+USER_FUNC(evt_bero_case_id_save);
+USER_FUNC(evt_bero_case_id_load);

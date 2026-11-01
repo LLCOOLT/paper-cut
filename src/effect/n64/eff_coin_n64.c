@@ -1,3 +1,4 @@
+// Paper Mario 64 effect: coin, four sprites at preset offsets around a point, each starting after its own delay.
 #include "eff/n64/eff_coin_n64.h"
 #include "eff/eff_n64.h"
 #include "driver/camdrv.h"
@@ -24,6 +25,7 @@ typedef struct EffCoinN64Data {
     s32 scale; // 0x10
 } EffCoinN64Data;
 
+/** The four coin sprites: start delay, offset from the spawn point and scale (in percent) of each. */
 static EffCoinN64Data _data[] = {
     {2, 0, 0, 0, 100},
     {4, 4, -2, 0, 100},
@@ -31,6 +33,7 @@ static EffCoinN64Data _data[] = {
     {8, 2, 4, 0, 40},
 };
 
+/** Camera-facing 16x16 coin sprite. */
 static effN64Vtx size16x16_tex32x32_vtx[] = {
     {-8, -8, 0, 0, 0, 0, 0, 0, 255},
     {8, -8, 0, 1024, 0, 0, 0, 0, 255},
@@ -38,10 +41,15 @@ static effN64Vtx size16x16_tex32x32_vtx[] = {
     {-8, 8, 0, 0, 1024, 0, 0, 0, 255},
 };
 
-void effCoinMain(EffectEntry* effect);
-void effCoinDisp(CameraId cameraId, EffectEntry* effect);
+static void effCoinMain(EffectEntry* effect);
+static void effCoinDisp(CameraId cameraId, EffectEntry* effect);
 
-EffectEntry* effCoinN64Entry(s32 type, f32 x, f32 y, f32 z, f32 scale) {
+/**
+ * Spawns four coin sprites around (x, y, z) at the preset offsets and delays in _data, each scaled by scale.
+ * The effect lasts 14 frames.
+ * battle_event_cmd.c spawns it at a position with scale 1; event scripts via evt_eff.
+ */
+EffectEntry* effCoinN64Entry(s32 type, s32 unused, f32 x, f32 y, f32 z, f32 scale) {
     EffectEntry* effect;
     EffCoinN64Work* work;
     EffCoinN64Data* data;
@@ -72,7 +80,11 @@ EffectEntry* effCoinN64Entry(s32 type, f32 x, f32 y, f32 z, f32 scale) {
     return effect;
 }
 
-void effCoinMain(EffectEntry* effect) {
+/**
+ * Counts the 14-frame life down, starts each coin after its own delay and steps its 10-frame animation,
+ * then deletes the effect.
+ */
+static void effCoinMain(EffectEntry* effect) {
     EffCoinN64Work* work = effect->userdata;
     s32 i;
     Vec position;
@@ -104,7 +116,11 @@ void effCoinMain(EffectEntry* effect) {
     dispEntry(CAMERA_3D, dispCalcZ(&position), 2, (DispCallback)effCoinDisp, effect);
 }
 
-void effCoinDisp(CameraId cameraId, EffectEntry* effect) {
+/**
+ * Draws each started coin as a camera-facing sprite from texture 0x84,
+ * shifting the texture window to the animation frame (two animation frames per texture step).
+ */
+static void effCoinDisp(CameraId cameraId, EffectEntry* effect) {
     CameraEntry* camera;
     EffCoinN64Work* work;
     s32 i;

@@ -399,6 +399,11 @@ def classify_elem(spec, d, where, ctype, arr):
         return {"kind": d["as"], "width": KIND_WIDTH[d["as"]], "arr": d["asCount"], "asArray": True}
     if d and d["kind"] == "AS":
         return {"kind": d["as"], "width": KIND_WIDTH[d["as"]], "arr": arr}
+    if (d and d["kind"] in ("PTR_STRING", "PTR_PAYLOAD", "PTR_NULL", "PTR_RAW") and arr == 4
+            and ctype in ("unsigned char", "char", "signed char")):
+        # a pointer the decomp declares as its 4 bytes (u8 nameRef[4]): on disc
+        # the word is an offset like any pointer's; the native field is a pointer
+        return dict(d, width=4, arr=None)
     if d:
         raise SpecError(f"{where}: '{d['kind']}' needs a pointer field, field is {ctype}")
     ms = re.match(r"^struct (\w+)$", ctype)

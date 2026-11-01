@@ -1,3 +1,5 @@
+// Peach as the player in the Peach interludes (X-Naut fortress): her poses, states (normal, transparent, happy,
+// angry...) and motions.
 #include "dolphin/types.h"
 #include "mario/mario.h"
 #include "mario/mario_motion.h"
@@ -5,38 +7,29 @@
 #include "pmario_sound.h"
 #include "system.h"
 #include "driver/animdrv.h"
+#include "driver/npcdrv.h"
+#include "mario/mario_balloon.h"
+#include "mario/mario_cam.h"
+#include "mario/mario_hit.h"
+#include "mario/mario_sbr.h"
+#include "party.h"
 #include "peach.h"
-
-#ifndef TARGET_PC /* PC port: the host libc declares these */
-int strcmp(const char*, const char*);
-#endif
-void marioChkOverhead(void);
-void marioBottomless(void);
-void marioBalloonMain(void);
-#ifdef VERSION_G8ME01
-#define mario_kemuri_80130474 mario_kemuri // US: global name
-#endif
-void mario_kemuri_80130474(void);
-void partyMain(void);
-void marioCamMain(void);
-void marioSetFallPara(void);
-void marioJump(void);
-void marioFall(void);
-void marioChkGnd(void);
-void marioChkGnd2(void);
-void marioBoots(void);
-void marioAdjustMoveDir(void);
-f32 marioGetWalkSpd(void);
-void npcSetMarioAutoTalkPose(const char*, const char*);
+#include "libc_decls.h"
+#include "mario/mario_kemuri.h"
+#include "version.h"
 
 void peachChgPose(const char* name);
-void peachTransformOff(void);
 
+/**
+ * Plays Peach's footstep sounds while she walks or dashes:
+ * one sound every d1 frames and the other on the frames in between that are multiples of d2.
+ * The sounds differ when she wears the X-Naut disguise and when she is invisible with no height.
+ */
 static inline void peachStepSe(s32 d1, s32 d2) {
-    MarioWork* mp = marioGetPtr();
+    MarioWork* mario = marioGetPtr();
     s32 a, b;
-    if (!(mp->peachFlags & 0x2000)) {
-        if ((mp->peachFlags & 0x20) && mp->scale.y == 0.0f) {
+    if (!(mario->peachFlags & PEACH_FLAG_XNAUT_DISGUISE)) {
+        if ((mario->peachFlags & PEACH_FLAG_INVISIBLE) && mario->scale.y == 0.0f) {
             a = 0x80C;
             b = 0x80B;
         } else {
@@ -47,363 +40,483 @@ static inline void peachStepSe(s32 d1, s32 d2) {
         a = 0x7E9;
         b = 0x7E8;
     }
-    if (mp->multiTimer % d1 == 0) {
-        psndSFXOn_3D(SFX_NAME_WORD(a), &mp->position);
-    } else if (mp->multiTimer % d2 == 0) {
-        psndSFXOn_3D(SFX_NAME_WORD(b), &mp->position);
+    if (mario->multiTimer % d1 == 0) {
+        psndSFXOn_3D(SFX_NAME_WORD(a), &mario->position);
+    } else if (mario->multiTimer % d2 == 0) {
+        psndSFXOn_3D(SFX_NAME_WORD(b), &mario->position);
     }
-    mp->multiTimer++;
+    mario->multiTimer++;
 }
 
+/**
+ * Condition 0 of evt_peach_set_condition: clears Peach's mood and drops the X-Naut disguise if she wears it,
+ * back to her ordinary poses.
+ */
 void peachSetStsNormal(void) {
-    MarioWork* mp = marioGetPtr();
-    if (mp->peachFlags & 0x2000) {
+    MarioWork* mario = marioGetPtr();
+    if (mario->peachFlags & PEACH_FLAG_XNAUT_DISGUISE) {
         peachTransformOff();
     } else {
-        mp->peachFlags &= ~0x7F0;
+        mario->peachFlags &= ~PEACH_FLAG_CONDITION_MASK;
         peachChgPose("P_S_1");
     }
 }
 
+/**
+ * Condition 1 of evt_peach_set_condition: after-shower look (PEACH_FLAG_AFTER_SHOWER, the P_*_2 poses),
+ * used after her shower in the X-Naut fortress.
+ */
 void peachSetStsAftershower(void) {
-    MarioWork* mp = marioGetPtr();
-    mp->peachFlags &= ~0x7F0;
-    mp->peachFlags |= 0x10;
+    MarioWork* mario = marioGetPtr();
+    mario->peachFlags &= ~PEACH_FLAG_CONDITION_MASK;
+    mario->peachFlags |= PEACH_FLAG_AFTER_SHOWER;
     peachChgPose("P_S_1");
 }
 
+/**
+ * Condition 2 of evt_peach_set_condition: invisible Peach (PEACH_FLAG_INVISIBLE, the P_*_3 poses),
+ * for the interlude where TEC turns her invisible.
+ */
 void peachSetStsInvisible(void) {
-    MarioWork* mp = marioGetPtr();
-    mp->peachFlags &= ~0x7F0;
-    mp->peachFlags |= 0x20;
+    MarioWork* mario = marioGetPtr();
+    mario->peachFlags &= ~PEACH_FLAG_CONDITION_MASK;
+    mario->peachFlags |= PEACH_FLAG_INVISIBLE;
     peachChgPose("P_S_1");
 }
 
+/** Condition 3 of evt_peach_set_condition: happy Peach (PEACH_FLAG_HAPPY, the P_*_5 poses). */
 void peachSetStsHappy(void) {
-    MarioWork* mp = marioGetPtr();
-    mp->peachFlags &= ~0x7F0;
-    mp->peachFlags |= 0x40;
+    MarioWork* mario = marioGetPtr();
+    mario->peachFlags &= ~PEACH_FLAG_CONDITION_MASK;
+    mario->peachFlags |= PEACH_FLAG_HAPPY;
     peachChgPose("P_S_1");
 }
 
+/** Condition 4 of evt_peach_set_condition: uneasy, worried Peach (PEACH_FLAG_UNEASY, the P_*_4 poses). */
 void peachSetStsUneasy(void) {
-    MarioWork* mp = marioGetPtr();
-    mp->peachFlags &= ~0x7F0;
-    mp->peachFlags |= 0x80;
+    MarioWork* mario = marioGetPtr();
+    mario->peachFlags &= ~PEACH_FLAG_CONDITION_MASK;
+    mario->peachFlags |= PEACH_FLAG_UNEASY;
     peachChgPose("P_S_1");
 }
 
+/** Condition 5 of evt_peach_set_condition: angry Peach (PEACH_FLAG_ANGRY, the P_*_6 poses). */
 void peachSetStsAngry(void) {
-    MarioWork* mp = marioGetPtr();
-    mp->peachFlags &= ~0x7F0;
-    mp->peachFlags |= 0x100;
+    MarioWork* mario = marioGetPtr();
+    mario->peachFlags &= ~PEACH_FLAG_CONDITION_MASK;
+    mario->peachFlags |= PEACH_FLAG_ANGRY;
     peachChgPose("P_S_1");
 }
 
+/**
+ * Condition 6 of evt_peach_set_condition: PEACH_FLAG_ORDINARY, the P_*_7 poses with P_T_13 as her talk pose.
+ * Set for Peach's talks with TEC in aji_17 (chapters 2, 4 and 5).
+ * Guess: a calm, matter-of-fact mood, from the name.
+ */
 void peachSetStsOrdinary(void) {
-    MarioWork* mp = marioGetPtr();
-    mp->peachFlags &= ~0x7F0;
-    mp->peachFlags |= 0x200;
+    MarioWork* mario = marioGetPtr();
+    mario->peachFlags &= ~PEACH_FLAG_CONDITION_MASK;
+    mario->peachFlags |= PEACH_FLAG_ORDINARY;
     peachChgPose("P_S_1");
 }
 
+/**
+ * Condition 7 of evt_peach_set_condition: PEACH_FLAG_CARRY, the P_*_8 poses with P_T_14 as her talk pose.
+ * No script in the tree sets condition 7. Guess: Peach carrying something in her hands, from the name.
+ */
 void peachSetStsCarry(void) {
-    MarioWork* mp = marioGetPtr();
-    mp->peachFlags &= ~0x7F0;
-    mp->peachFlags |= 0x400;
+    MarioWork* mario = marioGetPtr();
+    mario->peachFlags &= ~PEACH_FLAG_CONDITION_MASK;
+    mario->peachFlags |= PEACH_FLAG_CARRY;
     peachChgPose("P_S_1");
 }
 
+/**
+ * Peach's version of marioChgPose: maps the base pose names (P_Z_1, P_S_1, P_W_1, P_R_1, P_T_1) to the variant
+ * for her current condition, or to the X-Naut model's Z_1/S_1/...
+ * while disguised, then starts the pose unless the pose is locked or already playing.
+ */
 void peachChgPose(const char* name) {
-    MarioWork* mp = marioGetPtr();
-    if (mp->dispFlags & 2) return;
-    if (mp->peachFlags & 0x2000) {
-        if (strcmp(name, "P_Z_1") == 0) name = "Z_1";
-        else if (strcmp(name, "P_S_1") == 0) name = "S_1";
-        else if (strcmp(name, "P_W_1") == 0) name = "W_1";
-        else if (strcmp(name, "P_R_1") == 0) name = "R_1";
-        else if (strcmp(name, "P_T_1") == 0) name = "T_1";
+    MarioWork* mario = marioGetPtr();
+    if (mario->dispFlags & MARIO_DISP_FLAG_POSE_LOCK)
+        return;
+    if (mario->peachFlags & PEACH_FLAG_XNAUT_DISGUISE) {
+        if (strcmp(name, "P_Z_1") == 0)
+            name = "Z_1";
+        else if (strcmp(name, "P_S_1") == 0)
+            name = "S_1";
+        else if (strcmp(name, "P_W_1") == 0)
+            name = "W_1";
+        else if (strcmp(name, "P_R_1") == 0)
+            name = "R_1";
+        else if (strcmp(name, "P_T_1") == 0)
+            name = "T_1";
+    } else if (mario->peachFlags & PEACH_FLAG_AFTER_SHOWER) {
+        if (strcmp(name, "P_Z_1") == 0)
+            name = "P_Z_2";
+        else if (strcmp(name, "P_S_1") == 0)
+            name = "P_S_2";
+        else if (strcmp(name, "P_W_1") == 0)
+            name = "P_W_2";
+        else if (strcmp(name, "P_R_1") == 0)
+            name = "P_R_2";
+        else if (strcmp(name, "P_T_1") == 0)
+            name = "P_T_2";
+    } else if (mario->peachFlags & PEACH_FLAG_INVISIBLE) {
+        if (strcmp(name, "P_Z_1") == 0)
+            name = "P_Z_3";
+        else if (strcmp(name, "P_S_1") == 0)
+            name = "P_S_3";
+        else if (strcmp(name, "P_W_1") == 0)
+            name = "P_W_3";
+        else if (strcmp(name, "P_R_1") == 0)
+            name = "P_R_3";
+        else if (strcmp(name, "P_T_1") == 0)
+            name = "P_T_3";
+    } else if (mario->peachFlags & PEACH_FLAG_UNEASY) {
+        if (strcmp(name, "P_Z_1") == 0)
+            name = "P_Z_4";
+        else if (strcmp(name, "P_S_1") == 0)
+            name = "P_S_4";
+        else if (strcmp(name, "P_W_1") == 0)
+            name = "P_W_4";
+        else if (strcmp(name, "P_R_1") == 0)
+            name = "P_R_4";
+        else if (strcmp(name, "P_T_1") == 0)
+            name = "P_T_4";
+    } else if (mario->peachFlags & PEACH_FLAG_HAPPY) {
+        if (strcmp(name, "P_Z_1") == 0)
+            name = "P_Z_5";
+        else if (strcmp(name, "P_S_1") == 0)
+            name = "P_S_5";
+        else if (strcmp(name, "P_W_1") == 0)
+            name = "P_W_5";
+        else if (strcmp(name, "P_R_1") == 0)
+            name = "P_R_5";
+        else if (strcmp(name, "P_T_1") == 0)
+            name = "P_T_5";
+    } else if (mario->peachFlags & PEACH_FLAG_ANGRY) {
+        if (strcmp(name, "P_Z_1") == 0)
+            name = "P_Z_6";
+        else if (strcmp(name, "P_S_1") == 0)
+            name = "P_S_6";
+        else if (strcmp(name, "P_W_1") == 0)
+            name = "P_W_6";
+        else if (strcmp(name, "P_R_1") == 0)
+            name = "P_R_6";
+        else if (strcmp(name, "P_T_1") == 0)
+            name = "P_T_6";
+    } else if (mario->peachFlags & PEACH_FLAG_ORDINARY) {
+        if (strcmp(name, "P_Z_1") == 0)
+            name = "P_Z_7";
+        else if (strcmp(name, "P_S_1") == 0)
+            name = "P_S_7";
+        else if (strcmp(name, "P_W_1") == 0)
+            name = "P_W_7";
+        else if (strcmp(name, "P_R_1") == 0)
+            name = "P_R_7";
+        else if (strcmp(name, "P_T_1") == 0)
+            name = "P_T_13";
+    } else if (mario->peachFlags & PEACH_FLAG_CARRY) {
+        if (strcmp(name, "P_Z_1") == 0)
+            name = "P_Z_8";
+        else if (strcmp(name, "P_S_1") == 0)
+            name = "P_S_8";
+        else if (strcmp(name, "P_W_1") == 0)
+            name = "P_W_8";
+        else if (strcmp(name, "P_R_1") == 0)
+            name = "P_R_8";
+        else if (strcmp(name, "P_T_1") == 0)
+            name = "P_T_14";
     }
-    else if (mp->peachFlags & 0x10) {
-        if (strcmp(name, "P_Z_1") == 0) name = "P_Z_2";
-        else if (strcmp(name, "P_S_1") == 0) name = "P_S_2";
-        else if (strcmp(name, "P_W_1") == 0) name = "P_W_2";
-        else if (strcmp(name, "P_R_1") == 0) name = "P_R_2";
-        else if (strcmp(name, "P_T_1") == 0) name = "P_T_2";
-    }
-    else if (mp->peachFlags & 0x20) {
-        if (strcmp(name, "P_Z_1") == 0) name = "P_Z_3";
-        else if (strcmp(name, "P_S_1") == 0) name = "P_S_3";
-        else if (strcmp(name, "P_W_1") == 0) name = "P_W_3";
-        else if (strcmp(name, "P_R_1") == 0) name = "P_R_3";
-        else if (strcmp(name, "P_T_1") == 0) name = "P_T_3";
-    }
-    else if (mp->peachFlags & 0x80) {
-        if (strcmp(name, "P_Z_1") == 0) name = "P_Z_4";
-        else if (strcmp(name, "P_S_1") == 0) name = "P_S_4";
-        else if (strcmp(name, "P_W_1") == 0) name = "P_W_4";
-        else if (strcmp(name, "P_R_1") == 0) name = "P_R_4";
-        else if (strcmp(name, "P_T_1") == 0) name = "P_T_4";
-    }
-    else if (mp->peachFlags & 0x40) {
-        if (strcmp(name, "P_Z_1") == 0) name = "P_Z_5";
-        else if (strcmp(name, "P_S_1") == 0) name = "P_S_5";
-        else if (strcmp(name, "P_W_1") == 0) name = "P_W_5";
-        else if (strcmp(name, "P_R_1") == 0) name = "P_R_5";
-        else if (strcmp(name, "P_T_1") == 0) name = "P_T_5";
-    }
-    else if (mp->peachFlags & 0x100) {
-        if (strcmp(name, "P_Z_1") == 0) name = "P_Z_6";
-        else if (strcmp(name, "P_S_1") == 0) name = "P_S_6";
-        else if (strcmp(name, "P_W_1") == 0) name = "P_W_6";
-        else if (strcmp(name, "P_R_1") == 0) name = "P_R_6";
-        else if (strcmp(name, "P_T_1") == 0) name = "P_T_6";
-    }
-    else if (mp->peachFlags & 0x200) {
-        if (strcmp(name, "P_Z_1") == 0) name = "P_Z_7";
-        else if (strcmp(name, "P_S_1") == 0) name = "P_S_7";
-        else if (strcmp(name, "P_W_1") == 0) name = "P_W_7";
-        else if (strcmp(name, "P_R_1") == 0) name = "P_R_7";
-        else if (strcmp(name, "P_T_1") == 0) name = "P_T_13";
-    }
-    else if (mp->peachFlags & 0x400) {
-        if (strcmp(name, "P_Z_1") == 0) name = "P_Z_8";
-        else if (strcmp(name, "P_S_1") == 0) name = "P_S_8";
-        else if (strcmp(name, "P_W_1") == 0) name = "P_W_8";
-        else if (strcmp(name, "P_R_1") == 0) name = "P_R_8";
-        else if (strcmp(name, "P_T_1") == 0) name = "P_T_14\0";
-    }
-    if (mp->animName == NULL || strcmp(mp->animName, name) != 0) {
-        mp->animName = name;
-        mp->poseTime = 0;
-        mp->dispFlags &= ~0x30000000;
-        mp->trigFlags |= 0x1000;
+    if (mario->animName == NULL || strcmp(mario->animName, name) != 0) {
+        mario->animName = name;
+        mario->poseTime = 0;
+        mario->dispFlags &= ~(MARIO_DISP_FLAG_ANIM_SET_2 | MARIO_DISP_FLAG_POSE_UNUSED);
+        mario->trigFlags |= MARIO_TRIG_FLAG_CHG_ANIM;
     }
 }
 
+/**
+ * Puts Peach in the X-Naut disguise (evt_peach_transform_gundan_on):
+ * switches her model to the X-Naut c_zako_n, its talk poses and a 30x30 collision box.
+ */
 void peachTransformOn(void) {
-    MarioWork* mp = marioGetPtr();
-    if (mp->characterId != 1) {
+    MarioWork* mario = marioGetPtr();
+    if (mario->characterId != 1) {
         marioSetCharMode(1);
     }
-    if (!(mp->peachFlags & 0x2000)) {
-        mp->peachFlags |= 0x2000;
-        if (mp->paperAnimGroupId[0] >= 0) {
-            animPoseRelease(mp->paperAnimGroupId[0]);
+    if (!(mario->peachFlags & PEACH_FLAG_XNAUT_DISGUISE)) {
+        mario->peachFlags |= PEACH_FLAG_XNAUT_DISGUISE;
+        if (mario->paperAnimGroupId[0] >= 0) {
+            animPoseRelease(mario->paperAnimGroupId[0]);
         }
-        mp->paperAnimGroupId[0] = animPoseEntry("c_zako_n", 2);
+        mario->paperAnimGroupId[0] = animPoseEntry("c_zako_n", 2);
         npcSetMarioAutoTalkPose("S_1", "T_1");
-        mp->wPlayerCollisionBox.y = 30.0f;
-        mp->wPlayerCollisionBox.x = 30.0f;
+        mario->wPlayerCollisionBox.y = 30.0f;
+        mario->wPlayerCollisionBox.x = 30.0f;
     }
 }
 
+/**
+ * Takes off Peach's X-Naut disguise (evt_peach_transform_gundan_off):
+ * back to the c_peach model, her own talk poses and her 20 wide, 47 tall collision box.
+ */
 void peachTransformOff(void) {
-    MarioWork* mp = marioGetPtr();
-    if (mp->characterId != 1) {
+    MarioWork* mario = marioGetPtr();
+    if (mario->characterId != 1) {
         marioSetCharMode(1);
     }
-    if (mp->peachFlags & 0x2000) {
-        mp->peachFlags &= ~0x2000;
-        if (mp->paperAnimGroupId[0] >= 0) {
-            animPoseRelease(mp->paperAnimGroupId[0]);
+    if (mario->peachFlags & PEACH_FLAG_XNAUT_DISGUISE) {
+        mario->peachFlags &= ~PEACH_FLAG_XNAUT_DISGUISE;
+        if (mario->paperAnimGroupId[0] >= 0) {
+            animPoseRelease(mario->paperAnimGroupId[0]);
         }
-        mp->paperAnimGroupId[0] = animPoseEntry("c_peach", 2);
+        mario->paperAnimGroupId[0] = animPoseEntry("c_peach", 2);
         npcSetMarioAutoTalkPose("P_S_1", "P_T_1");
-        mp->wPlayerCollisionBox.y = 47.0f;
-        mp->wPlayerCollisionBox.x = 20.0f;
+        mario->wPlayerCollisionBox.y = 47.0f;
+        mario->wPlayerCollisionBox.x = 20.0f;
     }
 }
 
-void peachPreInit(void) {}
+/** Called by marioSetCharMode when the player becomes Peach; does nothing. */
+void peachPreInit(void) {
+}
 
+/**
+ * Peach's per-frame player update, run by marioMain instead of Mario's:
+ * moves her, handles stepping, jumping and falling against the ground, counts down forced movement,
+ * and updates balloons, dust, the partner slot and the camera. Always returns 1.
+ */
 s32 peachMain(void) {
-    MarioWork* mp = marioGetPtr();
-    if (mp->currMotionId == 8) {
-        mp->basePos = mp->position;
-        mp->floorMove.x = 0.0f;
-        mp->floorMove.y = 0.0f;
-        mp->floorMove.z = 0.0f;
+    MarioWork* mario = marioGetPtr();
+    if (mario->currMotionId == MARIO_MOTION_JUMP_3) {
+        mario->basePos = mario->position;
+        mario->floorMove.x = 0.0f;
+        mario->floorMove.y = 0.0f;
+        mario->floorMove.z = 0.0f;
         marioBottomless();
         marioPreDisp();
         marioBalloonMain();
-        mario_kemuri_80130474();
+        mario_kemuri();
         partyMain();
         marioCamMain();
-        mp->frameCounter++;
+        mario->frameCounter++;
         return 1;
     }
-    if (mp->flags & 0x40000) {
+    if (mario->flags & MARIO_FLAG_IS_STEPPING) {
         marioMove();
         marioChkOverhead();
-        if (mp->airTimer > 100) {
-            marioChgMot(10);
+        if (mario->airTimer > 100) {
+            marioChgMot(MARIO_MOTION_FALL);
             marioSetFallPara();
         }
-    } else if (mp->flags & 0x10000) {
+    } else if (mario->flags & MARIO_FLAG_IS_JUMPING) {
         marioJump();
         marioMove();
         marioChkOverhead();
-        if (mp->airTimer > 5) marioChkGnd2();
-    } else if (mp->flags & 0x20000) {
+        if (mario->airTimer > 5)
+            marioChkGnd2();
+    } else if (mario->flags & MARIO_FLAG_IS_FALLING) {
         marioMove();
         marioFall();
         marioChkOverhead();
-        if (mp->currMotionId != 16 && mp->currMotionId != 17 && mp->airTimer > 5) marioChkGnd2();
+        if (mario->currMotionId != MARIO_MOTION_HIP && mario->currMotionId != MARIO_MOTION_HIP_2 && mario->airTimer > 5)
+            marioChkGnd2();
     } else {
         marioMove();
         marioChkOverhead();
         marioChkGnd();
     }
-    if (mp->flags & 0x20) {
-        mp->forceMoveTimer--;
-        if (mp->forceMoveTimer <= 0) {
-            mp->forceMoveTimer = 0;
-            mp->flags &= ~0x20;
+    if (mario->flags & MARIO_FLAG_FORCED_MOVEMENT) {
+        mario->forceMoveTimer--;
+        if (mario->forceMoveTimer <= 0) {
+            mario->forceMoveTimer = 0;
+            mario->flags &= ~MARIO_FLAG_FORCED_MOVEMENT;
         }
     }
     marioBoots();
     marioBottomless();
     marioPreDisp();
     marioBalloonMain();
-    mario_kemuri_80130474();
+    mario_kemuri();
     partyMain();
     marioCamMain();
-    mp->frameCounter++;
-    mp->basePos = mp->position;
-    mp->floorMove.x = 0.0f;
-    mp->floorMove.y = 0.0f;
-    mp->floorMove.z = 0.0f;
+    mario->frameCounter++;
+    mario->basePos = mario->position;
+    mario->floorMove.x = 0.0f;
+    mario->floorMove.y = 0.0f;
+    mario->floorMove.z = 0.0f;
     return 1;
 }
 
+/**
+ * Peach's standing motion (from mot_stay): switches to walking on stick input.
+ * With no condition set, after 50 seconds idle she plays P_U_1, stands again,
+ * then dozes off in P_N_1 until control is taken away.
+ */
 void peach_stay(void) {
-    MarioWork* mp = marioGetPtr();
-#define MT (mp->multiTimer)
-    if (mp->trigFlags & 1) {
-        mp->trigFlags &= ~1;
-        mp->flags &= 0xFFF0FFFF;
-        mp->airTimer = 0;
+    MarioWork* mario = marioGetPtr();
+#define MT (mario->multiTimer)
+    if (mario->trigFlags & MARIO_TRIG_FLAG_IS_STARTING_NEW_MOTION) {
+        mario->trigFlags &= ~MARIO_TRIG_FLAG_IS_STARTING_NEW_MOTION;
+        mario->flags &= ~(MARIO_FLAG_IS_JUMPING | MARIO_FLAG_IS_FALLING | MARIO_FLAG_IS_STEPPING | MARIO_FLAG_HAS_INPUT_JUMP);
+        mario->airTimer = 0;
         MT = 0;
-        mp->currSubMotionId = 0;
+        mario->currSubMotionId = 0;
         peachChgPose("P_S_1");
-        if (!(mp->flags & 0x20)) {
-            mp->baseSpeed = 0.0f;
+        if (!(mario->flags & MARIO_FLAG_FORCED_MOVEMENT)) {
+            mario->baseSpeed = 0.0f;
         }
     }
-    if (mp->controlStickSensitivity > 0.0f) {
-        marioChgMot(1);
+    if (mario->controlStickSensitivity > 0.0f) {
+        marioChgMot(MARIO_MOTION_WALK);
     }
-    if (!(mp->flags & 8)) {
-    switch (mp->dispFlags & 0x40000000) { case 0:
-    { if (!(mp->peachFlags & 0x27F0)) {
-        switch (mp->currSubMotionId) {
-        case 0:
-            if (++MT >= sysMsec2Frame(50000)) {
-                marioChgPose("P_U_1");
-                MT = 80;
-                mp->currSubMotionId = 1;
-                mp->soundId[0] = psndSFXOn_3D((char*)0x101, &mp->position);
-                marioAdjustMoveDir();
-            }
-            break;
-        case 1:
-            if (--MT < 0) {
-                marioChgPose("P_S_1");
-                MT = 100;
-                mp->currSubMotionId = 2;
-            }
-            break;
-        case 2:
-            if (--MT < 0) {
-                marioChgPose("P_N_1");
-                MT = 0;
-                mp->currSubMotionId = 20;
-                mp->mot.peach.sleepTimer = 0;
-            }
-            break;
-        case 20:
-            if (++mp->mot.peach.sleepTimer >= sysMsec2Frame(10000)) {
-                mp->mot.peach.sleepTimer = sysMsec2Frame(10000);
-            }
-            if (++MT >= 100) {
-                MT = 0;
-            }
-            if (mp->flags & 8) {
-                marioChgPose("P_S_1");
-                mp->currSubMotionId = 0;
-            }
-            break;
-        }
+    if (!(mario->flags & MARIO_FLAG_KEY_OFF)) {
+        switch (mario->dispFlags & MARIO_DISP_FLAG_PAPER_ON) {
+            case 0: {
+                if (!(mario->peachFlags & (PEACH_FLAG_CONDITION_MASK | PEACH_FLAG_XNAUT_DISGUISE))) {
+                    switch (mario->currSubMotionId) {
+                        case 0:
+                            if (++MT >= sysMsec2Frame(50000)) {
+                                marioChgPose("P_U_1");
+                                MT = 80;
+                                mario->currSubMotionId = 1;
+                                mario->soundId[0] = psndSFXOn_3D((char*)0x101, &mario->position);
+                                marioAdjustMoveDir();
+                            }
+                            break;
+                        case 1:
+                            if (--MT < 0) {
+                                marioChgPose("P_S_1");
+                                MT = 100;
+                                mario->currSubMotionId = 2;
+                            }
+                            break;
+                        case 2:
+                            if (--MT < 0) {
+                                marioChgPose("P_N_1");
+                                MT = 0;
+                                mario->currSubMotionId = 20;
+                                mario->mot.peach.sleepTimer = 0;
+                            }
+                            break;
+                        case 20:
+                            if (++mario->mot.peach.sleepTimer >= sysMsec2Frame(10000)) {
+                                mario->mot.peach.sleepTimer = sysMsec2Frame(10000);
+                            }
+                            if (++MT >= 100) {
+                                MT = 0;
+                            }
+                            if (mario->flags & MARIO_FLAG_KEY_OFF) {
+                                marioChgPose("P_S_1");
+                                mario->currSubMotionId = 0;
+                            }
+                            break;
+                    }
+                }
+            } break;
         }
     }
-    break; } }
 #undef MT
 }
 
+/**
+ * Peach's walking motion (from mot_walk): walks at Mario's walk speed,
+ * switches to dashing when the stick is pushed far, to standing when it is released,
+ * with footsteps every 20 frames.
+ */
 void peach_walk(void) {
-    MarioWork* mp = marioGetPtr();
-    if (mp->trigFlags & 1) {
-        mp->trigFlags &= ~1;
-        mp->flags &= 0xFFF0FFFF;
-        if (mp->forceMoveTimer == 0) {
-            mp->baseSpeed = marioGetWalkSpd();
+    MarioWork* mario = marioGetPtr();
+    if (mario->trigFlags & MARIO_TRIG_FLAG_IS_STARTING_NEW_MOTION) {
+        mario->trigFlags &= ~MARIO_TRIG_FLAG_IS_STARTING_NEW_MOTION;
+        mario->flags &= ~(MARIO_FLAG_IS_JUMPING | MARIO_FLAG_IS_FALLING | MARIO_FLAG_IS_STEPPING | MARIO_FLAG_HAS_INPUT_JUMP);
+        if (mario->forceMoveTimer == 0) {
+            mario->baseSpeed = marioGetWalkSpd();
         }
         peachChgPose("P_W_1");
-        mp->currSubMotionId = 0;
-        mp->multiTimer = 0;
+        mario->currSubMotionId = 0;
+        mario->multiTimer = 0;
     }
-    if (mp->forceMoveTimer == 0) {
-        mp->baseSpeed = marioGetWalkSpd();
+    if (mario->forceMoveTimer == 0) {
+        mario->baseSpeed = marioGetWalkSpd();
     }
-    if ((s8)mp->wStickDir1 * (s8)mp->wStickDir1 + (s8)mp->wStickDir2 * (s8)mp->wStickDir2 > 3025) {
-        marioChgMot(2);
+    if ((s8)mario->wStickDir1 * (s8)mario->wStickDir1 + (s8)mario->wStickDir2 * (s8)mario->wStickDir2 > 3025) {
+        marioChgMot(MARIO_MOTION_DASH);
     } else {
-        mp->directionView = mp->controlStickAngle;
+        mario->directionView = mario->controlStickAngle;
         peachStepSe(40, 20);
-        if (!mp->controlStickSensitivity) {
-            marioChgMot(0);
+        if (!mario->controlStickSensitivity) {
+            marioChgMot(MARIO_MOTION_STAY);
         }
     }
 }
 
+/**
+ * Peach's dashing motion (from mot_walk): runs at Mario's dash speed,
+ * drops back to walking when the stick eases off (unless the movement is forced) and to standing when released.
+ */
 void peach_dash(void) {
-    MarioWork* mp = marioGetPtr();
-    if (mp->trigFlags & 1) {
-        mp->trigFlags &= ~1;
-        mp->flags &= 0xFFF0FFFF;
-        if (mp->forceMoveTimer == 0) {
-            mp->baseSpeed = marioGetDashSpd();
+    MarioWork* mario = marioGetPtr();
+    if (mario->trigFlags & MARIO_TRIG_FLAG_IS_STARTING_NEW_MOTION) {
+        mario->trigFlags &= ~MARIO_TRIG_FLAG_IS_STARTING_NEW_MOTION;
+        mario->flags &= ~(MARIO_FLAG_IS_JUMPING | MARIO_FLAG_IS_FALLING | MARIO_FLAG_IS_STEPPING | MARIO_FLAG_HAS_INPUT_JUMP);
+        if (mario->forceMoveTimer == 0) {
+            mario->baseSpeed = marioGetDashSpd();
         }
         peachChgPose("P_R_1");
-        mp->currSubMotionId = 0;
-        mp->multiTimer = 0;
+        mario->currSubMotionId = 0;
+        mario->multiTimer = 0;
     }
-    if (mp->forceMoveTimer == 0) {
-        mp->baseSpeed = marioGetDashSpd();
+    if (mario->forceMoveTimer == 0) {
+        mario->baseSpeed = marioGetDashSpd();
     }
-    if (mp->flags & 0x20) {
+    if (mario->flags & MARIO_FLAG_FORCED_MOVEMENT) {
         peachStepSe(20, 10);
-    } else if ((s8)mp->wStickDir1 * (s8)mp->wStickDir1 + (s8)mp->wStickDir2 * (s8)mp->wStickDir2 <= 3025) {
-        marioChgMot(1);
+    } else if ((s8)mario->wStickDir1 * (s8)mario->wStickDir1 + (s8)mario->wStickDir2 * (s8)mario->wStickDir2 <= 3025) {
+        marioChgMot(MARIO_MOTION_WALK);
     } else {
-        mp->directionView = mp->controlStickAngle;
+        mario->directionView = mario->controlStickAngle;
         peachStepSe(20, 10);
-        if (!mp->controlStickSensitivity) {
-            marioChgMot(0);
+        if (!mario->controlStickSensitivity) {
+            marioChgMot(MARIO_MOTION_STAY);
         }
     }
 }
 
+/**
+ * Peach's talking motion (from mario_motion): stops her and turns her to the talk pose.
+ * In the PAL release she returns to the standing pose after 60 frames while in the X-Naut disguise.
+ */
 void peach_talk(void) {
-    MarioWork* mp = marioGetPtr();
-    if (mp->trigFlags & 1) {
-        mp->trigFlags &= ~1;
-        mp->multiTimer = 0;
-        mp->airTimer = 0;
-        mp->currSubMotionId = 0;
-        mp->baseSpeed = 0.0f;
+    MarioWork* mario = marioGetPtr();
+    if (mario->trigFlags & MARIO_TRIG_FLAG_IS_STARTING_NEW_MOTION) {
+        mario->trigFlags &= ~MARIO_TRIG_FLAG_IS_STARTING_NEW_MOTION;
+        mario->multiTimer = 0;
+        mario->airTimer = 0;
+        mario->currSubMotionId = 0;
+        mario->baseSpeed = 0.0f;
+#if VERSION >= VERSION_DEMO_EU
+        if (mario->peachFlags & PEACH_FLAG_XNAUT_DISGUISE) {
+            mario->multiTimer = 60;
+            mario->currSubMotionId = 10;
+        }
+#endif
         marioAdjustMoveDir();
         peachChgPose("P_T_1");
     }
+#if VERSION >= VERSION_DEMO_EU
+    // PAL: while transformed, the talk pose drops back to the stand pose after 60 frames
+    switch (mario->currSubMotionId) {
+        case 10:
+            if (--mario->multiTimer <= 0) {
+                peachChgPose("P_S_1");
+                mario->currSubMotionId = 11;
+            }
+            break;
+        case 0:
+        case 11:
+            break;
+    }
+#endif
 }

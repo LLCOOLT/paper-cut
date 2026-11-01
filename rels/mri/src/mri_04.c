@@ -1,8 +1,10 @@
+// mri_04 (巨木の中, The Great Tree): the room where Ms. Mowz (chuchurina) appears and fights an X-Naut, with
+// the little Jabbi (chibitoge), planters and item boxes.
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
 
-#pragma force_active on
 #include "driver/npcdrv.h"
+#include "driver/itemdrv.h"
 #include "evt/evt_npc.h"
 #include "mario/mariost.h"
 #include "system.h"
@@ -14,138 +16,37 @@
 #ifdef TARGET_PC /* declarations the GameCube code calls implicitly */
 #include "manager/evtmgr_cmd.h"
 #endif
+#include "manager/evtmgr_cmd.h"
+#include "evt/evt_cam.h"
+#include "evt/evt_eff.h"
+#include "evt/evt_item.h"
+#include "evt/evt_map.h"
+#include "evt/evt_mario.h"
+#include "evt/evt_mobj.h"
+#include "evt/evt_msg.h"
+#include "evt/evt_party.h"
+#include "evt/evt_seq.h"
+#include "evt/evt_snd.h"
+#include "mri_puni.h"
+#include "version.h"
+#include "evt/evt_story.h"
+#include "driver/mapdrv.h"
+#include "driver/camdrv.h"
 
-USER_FUNC(N_evt_bero_set_mario_bottomless_respawn_pos_to_current_mario_pos);
-USER_FUNC(bero_get_position_normal);
-USER_FUNC(evt_bero_exec_onoff);
-USER_FUNC(evt_bero_exec_wait);
-USER_FUNC(evt_bero_get_end_position);
-USER_FUNC(evt_bero_get_info);
-USER_FUNC(evt_bero_get_into_info);
-USER_FUNC(evt_bero_get_start_position);
-USER_FUNC(evt_bero_mapchange);
-USER_FUNC(evt_cam3d_evt_off);
-USER_FUNC(evt_cam3d_evt_set);
-USER_FUNC(evt_cam_shake);
 static USER_FUNC(evt_chuchu_back_loop);
-USER_FUNC(evt_eff);
-USER_FUNC(evt_eff_fukidashi);
-USER_FUNC(evt_eff_softdelete);
-USER_FUNC(evt_item_delete_check);
-USER_FUNC(evt_item_entry);
-USER_FUNC(evt_item_flag_on);
-USER_FUNC(evt_item_get_item);
-USER_FUNC(evt_map_playanim);
-USER_FUNC(evt_mapobj_flag_onoff);
-USER_FUNC(evt_mario_cont_onoff);
-USER_FUNC(evt_mario_get_pos);
-USER_FUNC(evt_mario_key_onoff);
-USER_FUNC(evt_mario_mov_pos2);
-USER_FUNC(evt_mario_normalize);
-USER_FUNC(evt_mario_set_dir);
-USER_FUNC(evt_mario_set_pos);
-USER_FUNC(evt_mario_set_pose);
-USER_FUNC(evt_mobj_get_position);
-USER_FUNC(evt_mobj_itembox);
-USER_FUNC(evt_mobj_wait_animation_end);
-USER_FUNC(evt_msg_print);
-USER_FUNC(evt_msg_print_party);
-USER_FUNC(evt_msg_toge);
-USER_FUNC(evt_npc_battle_start);
-USER_FUNC(evt_npc_flag_onoff);
-USER_FUNC(evt_npc_get_position);
-USER_FUNC(evt_npc_jump_position_nohit);
-USER_FUNC(evt_npc_move_position);
-USER_FUNC(evt_npc_set_anim);
-USER_FUNC(evt_npc_set_battle_info);
-USER_FUNC(evt_npc_set_color);
-USER_FUNC(evt_npc_set_position);
-USER_FUNC(evt_npc_set_rotate);
-USER_FUNC(evt_npc_set_rotate_offset);
-USER_FUNC(evt_npc_set_ry);
-USER_FUNC(evt_npc_setup);
-USER_FUNC(evt_npc_wait_battle_end);
-USER_FUNC(evt_party_cont_onoff);
-USER_FUNC(evt_party_move_pos2);
-USER_FUNC(evt_party_run);
-USER_FUNC(evt_party_set_dir);
-USER_FUNC(evt_party_set_pos);
-USER_FUNC(evt_party_stop);
-USER_FUNC(evt_puni_get_flag);
-USER_FUNC(evt_puni_init_puni);
-USER_FUNC(evt_puni_mem_init);
-USER_FUNC(evt_puni_move_position2);
-USER_FUNC(evt_puni_set_anim);
-USER_FUNC(evt_puni_set_dir);
-USER_FUNC(evt_puni_set_hamari);
-USER_FUNC(evt_puni_set_mode);
-USER_FUNC(evt_puni_set_position);
-USER_FUNC(evt_puni_set_yuka);
-USER_FUNC(evt_puni_wait_systemmode);
-USER_FUNC(evt_seq_wait);
-USER_FUNC(evt_snd_bgmoff);
-USER_FUNC(evt_snd_bgmon);
-USER_FUNC(evt_snd_envoff);
-USER_FUNC(evt_snd_envon);
-USER_FUNC(evt_snd_sfxon_3d);
-USER_FUNC(mri_npc_buruburu);
 
-f32 fd_mri_04_negone_one_374[2] __attribute__((aligned(8)));
-f32 fd_mri_04_neg_one_382;
-f32 fd_mri_04___local_PI_383;
-f32 fd_mri_04___local_3PIO2_385;
-f32 fd_mri_04_one_negone_373[2] __attribute__((aligned(8)));
-f32 fd_mri_04___local_PIO2_384;
-f32 fd_mri_04_one_381;
-f32 fd_mri_04_negone_one_360[2] __attribute__((aligned(8)));
-f32 fd_mri_04_neg_one_365;
-f32 fd_mri_04___local_PI_366;
-f32 fd_mri_04___local_3PIO2_368;
-f32 fd_mri_04_one_negone_359[2] __attribute__((aligned(8)));
-f32 fd_mri_04___local_PIO2_367;
-f32 fd_mri_04_one_364;
-static EvtWord bero_custom[13];
 static BeroEntry bero_entry_data[2];
-static EvtWord chibitoge_init[21];
-static EvtWord chibitoge_talk[111];
 static NpcSetupInfo npcEnt[2];
-static EvtWord chuchurina_sogu[814];
-EvtWord black_shadow[341];
-static EvtWord evt_ueki_02[20];
+extern EvtWord black_shadow[];
 static KusaAccess ueki_access_data[5];
-EvtWord item_mri_04[34];
-EvtWord mri_04_init_evt[178];
+extern EvtWord item_mri_04[];
 
-f32 fd_mri_04_negone_one_374[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_mri_04_neg_one_382 = -1.0f;
-
-f32 fd_mri_04___local_PI_383 = 3.1415927f;
-
-f32 fd_mri_04___local_3PIO2_385 = 4.712389f;
-
-f32 fd_mri_04_one_negone_373[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_mri_04___local_PIO2_384 = 1.5707964f;
-
-f32 fd_mri_04_one_381 = 1.0f;
-
-f32 fd_mri_04_negone_one_360[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_mri_04_neg_one_365 = -1.0f;
-
-f32 fd_mri_04___local_PI_366 = 3.1415927f;
-
-f32 fd_mri_04___local_3PIO2_368 = 4.712389f;
-
-f32 fd_mri_04_one_negone_359[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_mri_04___local_PIO2_367 = 1.5707964f;
-
-f32 fd_mri_04_one_364 = 1.0f;
-
+/**
+ * Door script for the loading zone: returns 1 in LW(0) (use the custom entry)
+ * while the elder is imprisoned (STORY_STG2_12_02_PUNI_ELDER_IMPRISONED), otherwise 0.
+ */
 static EVT_BEGIN(bero_custom)
-    IF_INT_EQUAL(GSW(0), 92)
+    IF_INT_EQUAL(GSW(GSW_STORY_PROGRESS), STORY_STG2_12_02_PUNI_ELDER_IMPRISONED)
         SET_VALUE(LW(0), 1)
         RETURN
     END_IF
@@ -153,12 +54,13 @@ static EVT_BEGIN(bero_custom)
     RETURN
 EVT_END()
 
+/** Exit of mri_04: east road e_bero to mri_03 (w_bero). */
 static BeroEntry bero_entry_data[] = {
     {
         "e_bero", // hitName
         0, 0, // type..sfxId
-        20000, // directionId
-        100000, // centerPosition
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         (s32*)bero_custom, // enterEvent
@@ -173,11 +75,15 @@ static BeroEntry bero_entry_data[] = {
     {0},
 };
 
+/**
+ * Init script of the little Jabbi: once Mario has left the tree
+ * after the Puni praise he waits at the left of the room, until he has given his mushroom.
+ */
 static EVT_BEGIN(chibitoge_init)
-    SWITCH(GSW(0))
-        CASE_GREATER_OR_EQUAL(118)
-        IF_INT_EQUAL(GSWF(2884), 1)
-            IF_INT_EQUAL(GSWF(2840), 0)
+    SWITCH(GSW(GSW_STORY_PROGRESS))
+        CASE_GREATER_OR_EQUAL(STORY_STG2_26_PRAISE_FROM_THE_PUNI)
+        IF_INT_EQUAL(GSWF(GSWF_MRI_LEFT_TREE_AFTER_STG2), 1)
+            IF_INT_EQUAL(GSWF(GSWF_MRI04_JABBI_MUSHROOM_GIVEN), 0)
                 CALL(evt_npc_set_position, STRING("me"), -120, 0, -15)
             END_IF
         END_IF
@@ -185,9 +91,14 @@ static EVT_BEGIN(chibitoge_init)
     RETURN
 EVT_END()
 
+/**
+ * Talk script of the little Jabbi: he jumps to the ledge (two thirds across the room), talks,
+ * then jumps down beside Mario and gives him a Mushroom item before running out of the room.
+ * Sets GSWF_MRI04_JABBI_MUSHROOM_GIVEN.
+ */
 static EVT_BEGIN(chibitoge_talk)
     CALL(evt_msg_toge, 1, 0, 0, 0)
-    CALL(evt_npc_flag_onoff, 1, STRING("me"), 1073741856)
+    CALL(evt_npc_flag_onoff, 1, STRING("me"), NPC_FLAG_NO_WALL_HIT | NPC_FLAG_INTANGIBLE)
     SET_VALUE(GF(0), 1)
     BEGIN_INLINE_EVENT
         CALL(evt_npc_jump_position_nohit, STRING("me"), -60, 67, -40, 500, 80)
@@ -203,21 +114,22 @@ static EVT_BEGIN(chibitoge_talk)
     ADD(LW(0), 25)
     CALL(evt_npc_jump_position_nohit, STRING("me"), LW(0), LW(1), LW(2), 500, 30)
     WAIT_MS(1000)
-    CALL(evt_item_entry, STRING("chibitoge_item"), 148, 0, -1000, 0, 16, -1, 0)
+    CALL(evt_item_entry, STRING("chibitoge_item"), ITEM_MUSHROOM, 0, -1000, 0, ITEM_ENTRY_FIXED, -1, 0)
     CALL(evt_item_get_item, STRING("chibitoge_item"))
     CALL(evt_npc_set_ry, STRING("me"), 90)
     WAIT_MS(200)
     CALL(evt_npc_move_position, STRING("me"), -60, 40, 0, FLOAT(120.0f), 0)
     CALL(evt_npc_move_position, STRING("me"), 75, 40, 0, FLOAT(120.0f), 0)
     CALL(evt_npc_set_position, STRING("me"), 0, -1000, 0)
-    SET_VALUE(GSWF(2840), 1)
+    SET_VALUE(GSWF(GSWF_MRI04_JABBI_MUSHROOM_GIVEN), 1)
     RETURN
 EVT_END()
 
+/** The single NPC of the room, Jabble (ちびトゲ), the little Jabbi. */
 static NpcSetupInfo npcEnt[] = {
     {
-        /*"ちびトゲ"*/"\x82\xBF\x82\xD1\x83\x67\x83\x51", // name
-        0x600, // flags
+        "ちびトゲ", // name
+        NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM, // flags
         0, // reactionFlags
         chibitoge_init, // initEvent
         NULL, // regularEvent
@@ -230,6 +142,10 @@ static NpcSetupInfo npcEnt[] = {
     {0},
 };
 
+/**
+ * Spins the NPC Ms. Mowz (チュチュリーナ) around the z axis for args[0] milliseconds (one full turn, smoothed),
+ * as a somersault; blocks until it ends.
+ */
 static USER_FUNC(evt_chuchu_back_loop) {
     EvtWord* args = event->args;
     // チュチュリーナ
@@ -242,18 +158,27 @@ static USER_FUNC(evt_chuchu_back_loop) {
     }
     elapsed = OSTicksToMilliseconds((u32)gp->renderTime - event->userdata[0]);
     if (elapsed < total) {
-        npc->rotation.z = intplGetValue(11, elapsed, total, 0.0f, 360.0f);
+        npc->rotation.z = intplGetValue(11, 0.0f, 360.0f, elapsed, total);
         return EVT_RETURN_BLOCK;
     }
     npc->rotation.z = 0.0f;
     return EVT_RETURN_DONE;
 }
 
+/**
+ * Cutscene when Mario comes through the loading zone while the elder is imprisoned:
+ * Ms. Mowz (Chuchurina) and a Third Force underling are in the room,
+ * Ms. Mowz greets him and kisses him (the kiss surprises Mario), he and his partner walk in and Punio follows;
+ * the scene plays the conversation (stg2_mri_e13_00 to 05) and hands the story on from there.
+ */
 static EVT_BEGIN(chuchurina_sogu)
+    // Mario enters through the loading zone; Ms. Mowz and an X-Naut underling are already in the room.
     CALL(evt_mario_key_onoff, 0)
     CALL(evt_party_stop, 0)
+#if VERSION >= VERSION_JP
     CALL(evt_seq_wait, 2)
     CALL(evt_bero_exec_onoff, 0, 2)
+#endif
     CALL(evt_mario_normalize)
     CALL(evt_npc_set_position, STRING("チュチュリーナ"), -75, 0, 30)
     CALL(evt_npc_set_ry, STRING("チュチュリーナ"), 90)
@@ -286,8 +211,11 @@ static EVT_BEGIN(chuchurina_sogu)
         CALL(evt_party_move_pos2, 0, 145, LW(2), FLOAT(120.0f))
     END_INLINE_EVENT
     BEGIN_INLINE_EVENT
+#if VERSION <= VERSION_DEMO_JP
+        CALL(evt_bero_exec_onoff, 0, 2)
+#endif
         CALL(evt_puni_wait_systemmode, 2)
-        CALL(evt_puni_set_mode, 1, 30)
+        CALL(evt_puni_set_mode, 1, PUNI_MODE_INERT)
         CALL(evt_puni_set_position, 1, 0, -1000, 0)
         WAIT_MS(400)
         CALL(evt_bero_get_start_position, LW(0), LW(1), LW(2))
@@ -298,14 +226,18 @@ static EVT_BEGIN(chuchurina_sogu)
         CALL(evt_puni_set_anim, 1, 0)
         CALL(evt_bero_exec_onoff, 1, 2)
     END_INLINE_EVENT
+#if VERSION <= VERSION_DEMO_JP
+    CALL(evt_seq_wait, 2)
+#endif
     CALL(evt_npc_set_anim, STRING("第三勢力部下"), STRING("D_2"))
     CALL(evt_bero_exec_wait, 65536)
     WAIT_MS(1500)
-    CALL(evt_snd_bgmoff, 1024)
-    CALL(evt_snd_bgmon, 1, STRING("BGM_EVT_CYUCYURINA1"))
-    CALL(evt_snd_envoff, 512)
-    CALL(evt_npc_flag_onoff, 1, STRING("チュチュリーナ"), 1073741856)
-    CALL(evt_npc_flag_onoff, 0, STRING("チュチュリーナ"), 1024)
+    CALL(evt_snd_bgmoff, PSND_FADE_HOLD)
+    // Ms. Mowz's theme plays as she greets Mario with a kiss and tells him about the badges in the tree.
+    CALL(evt_snd_bgmon, PSND_CH(1), STRING("BGM_EVT_CYUCYURINA1"))
+    CALL(evt_snd_envoff, PSND_FADE_OUT)
+    CALL(evt_npc_flag_onoff, 1, STRING("チュチュリーナ"), NPC_FLAG_NO_WALL_HIT | NPC_FLAG_INTANGIBLE)
+    CALL(evt_npc_flag_onoff, 0, STRING("チュチュリーナ"), NPC_FLAG_MOVE_ANIM)
     BEGIN_INLINE_EVENT
         CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
         CALL(evt_snd_sfxon_3d, STRING("SFX_VOICE_MARIO_FIND1"), LW(0), LW(1), LW(2), 0)
@@ -358,6 +290,7 @@ static EVT_BEGIN(chuchurina_sogu)
     CALL(evt_npc_set_anim, STRING("チュチュリーナ"), STRING("PCH_R_1"))
     CALL(evt_npc_move_position, STRING("チュチュリーナ"), 65, 0, 0, FLOAT(120.0f), 0)
     CALL(evt_npc_set_anim, STRING("チュチュリーナ"), STRING("PCH_S_1"))
+    // She says the Crystal Star is near the bottom of the tree and that the cell key is in the room.
     CALL(evt_msg_print, 0, STRING("stg2_mri_e13_03"), 0, STRING("チュチュリーナ"))
     CALL(evt_cam3d_evt_set, FLOAT(137.39941f), FLOAT(25.299805f), FLOAT(635.6992f), FLOAT(36.69922f), FLOAT(131.19922f), FLOAT(-83.69922f), 400, 11)
     BEGIN_INLINE_EVENT
@@ -385,14 +318,19 @@ static EVT_BEGIN(chuchurina_sogu)
     CALL(evt_npc_set_anim, STRING("チュチュリーナ"), STRING("PCH_W_1"))
     CALL(evt_npc_get_position, STRING("チュチュリーナ"), LW(0), LW(1), LW(2))
     CALL(evt_snd_sfxon_3d, STRING("SFX_STG2_CHURINA_ESCAPE1"), LW(0), LW(1), LW(2), 0)
+#if VERSION <= VERSION_DEMO_JP
+    CALL(evt_npc_jump_position_nohit, STRING("チュチュリーナ"), -18, 68, -120, 300, 20)
+#else
     CALL(evt_npc_jump_position_nohit, STRING("チュチュリーナ"), -18, 135, -200, 300, 10)
-    CALL(evt_npc_flag_onoff, 1, STRING("チュチュリーナ"), 128)
+#endif
+    CALL(evt_npc_flag_onoff, 1, STRING("チュチュリーナ"), NPC_FLAG_HIDDEN)
     WAIT_MS(700)
-    CALL(evt_snd_bgmoff, 513)
-    CALL(evt_snd_bgmon, 288, 0)
-    CALL(evt_snd_envon, 272, STRING("ENV_STG2_MRI5"))
+    CALL(evt_snd_bgmoff, PSND_FADE_OUT | PSND_CH(1))
+    CALL(evt_snd_bgmon, PSND_FADE_RESUME | PSND_FADE_IN, 0)
+    CALL(evt_snd_envon, PSND_FADE_RESTART | PSND_FADE_IN, STRING("ENV_STG2_MRI5"))
     CALL(evt_cam3d_evt_set, 125, 90, 262, 125, 40, 0, 0, 11)
     WAIT_FRAMES(1)
+    // The music ends; Mario's partner reacts and Ms. Mowz slips away.
     CALL(evt_msg_print_party, STRING("stg2_mri_e13_06"))
     CALL(evt_mario_set_dir, 270, 100, 0)
     WAIT_MS(500)
@@ -406,9 +344,10 @@ static EVT_BEGIN(chuchurina_sogu)
     CALL(evt_npc_set_ry, STRING("第三勢力部下"), 90)
     WAIT_MS(500)
     CALL(evt_eff_fukidashi, 1, STRING(""), STRING("第三勢力部下"), 0, 0, 0, 0, 0, 0, 0, 60)
-    CALL(evt_npc_flag_onoff, 1, STRING("第三勢力部下"), 512)
-    CALL(evt_npc_flag_onoff, 1, STRING("第三勢力部下"), 1073741856)
+    CALL(evt_npc_flag_onoff, 1, STRING("第三勢力部下"), NPC_FLAG_TALK_ANIM)
+    CALL(evt_npc_flag_onoff, 1, STRING("第三勢力部下"), NPC_FLAG_NO_WALL_HIT | NPC_FLAG_INTANGIBLE)
     WAIT_MS(500)
+    // The X-Naut underling gets up and blames Mario for his bruises.
     CALL(evt_msg_print, 0, STRING("stg2_mri_e13_07"), 0, STRING("第三勢力部下"))
     CALL(evt_npc_set_anim, STRING("第三勢力部下"), STRING("R_1"))
     CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
@@ -418,22 +357,32 @@ static EVT_BEGIN(chuchurina_sogu)
         CALL(evt_npc_move_position, STRING("第三勢力部下"), LW(0), LW(2), 0, FLOAT(180.0f), 0)
     END_INLINE_EVENT
     WAIT_MS(400)
+    // The battle with the underling (battle info 5) starts and the script waits for it to end.
     CALL(evt_npc_set_battle_info, STRING("第三勢力部下"), 5)
     CALL(evt_npc_battle_start, STRING("第三勢力部下"))
     CALL(evt_npc_wait_battle_end)
     CALL(evt_cam3d_evt_off, 0, 4)
     SET_VALUE(LW(10), STRING("第三勢力部下"))
-    SPAWN_EVENT(PTR(enemy_event_dead_event_sub))
+    SPAWN_EVENT(enemy_event_dead_event_sub)
     WAIT_MS(500)
-    CALL(evt_item_entry, STRING("item_key"), 16, 60, 0, 0, 4, GSWF(2839), 0)
-    CALL(evt_puni_set_mode, 1, 1)
-    SET_VALUE(GSW(0), 93)
+    // He drops the Red Key, which pops out of him.
+    CALL(evt_item_entry, STRING("item_key"), ITEM_RED_KEY, 60, 0, 0, ITEM_ENTRY_LAUNCH, GSWF(GSWF_MRI04_RED_KEY_TAKEN), 0)
+    CALL(evt_puni_set_mode, 1, PUNI_MODE_JOIN)
+    // The story advances and Mario regains control.
+    SET_VALUE(GSW(GSW_STORY_PROGRESS), STORY_STG2_13_MS_MOWZ)
+#if VERSION >= VERSION_JP
     CALL(N_evt_bero_set_mario_bottomless_respawn_pos_to_current_mario_pos)
+#endif
     CALL(evt_party_run, 0)
     CALL(evt_mario_key_onoff, 1)
     RETURN
 EVT_END()
 
+/**
+ * Chapter 2 cutscene on first entering mri_04 (story STG2_12):
+ * Ms. Mowz, shown as a dark silhouette, leaps in and knocks out an X-Naut grunt with a strike
+ * and a camera shake. Sets the story to STORY_STG2_12_01_A_DARK_FIGURE and returns to mri_03.
+ */
 EVT_BEGIN(black_shadow)
     CALL(evt_mario_key_onoff, 0)
     CALL(evt_mario_cont_onoff, 0)
@@ -443,12 +392,12 @@ EVT_BEGIN(black_shadow)
     SET_VALUE(LW(8), STRING("チュチュリーナ"))
     CALL(evt_npc_set_ry, LW(8), 90)
     CALL(evt_npc_set_position, LW(8), 0, -1000, 0)
-    CALL(evt_npc_flag_onoff, 1, LW(8), 1073743392)
+    CALL(evt_npc_flag_onoff, 1, LW(8), NPC_FLAG_NO_WALL_HIT | NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM | NPC_FLAG_INTANGIBLE)
     CALL(evt_npc_set_color, LW(8), 20, 20, 20, 255)
     SET_VALUE(LW(9), STRING("第三勢力部下"))
     CALL(evt_npc_set_ry, LW(9), 270)
     CALL(evt_npc_set_position, LW(9), 0, 0, 40)
-    CALL(evt_npc_flag_onoff, 1, LW(9), 1536)
+    CALL(evt_npc_flag_onoff, 1, LW(9), NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM)
     CALL(evt_puni_wait_systemmode, 2)
     SET_VALUE(LW(10), 1)
     LOOP(0)
@@ -494,12 +443,12 @@ EVT_BEGIN(black_shadow)
     ADD(LW(1), 20)
     CALL(evt_eff, STRING(""), STRING("small_star"), 3, LW(0), LW(1), LW(2), 0, -1, 0, 3, 0, 0, 0, 0)
     BEGIN_INLINE_EVENT
-        CALL(evt_cam_shake, 4, FLOAT(0.0f), FLOAT(0.009765625f), 50)
+        CALL(evt_cam_shake, CAMERA_3D, FLOAT(0.0f), FLOAT(0.009765625f), 50)
     END_INLINE_EVENT
     BEGIN_INLINE_EVENT
         CALL(mri_npc_buruburu, LW(9), 0, FLOAT(1.0f), 100, 300)
     END_INLINE_EVENT
-    CALL(evt_npc_flag_onoff, 0, LW(9), 1536)
+    CALL(evt_npc_flag_onoff, 0, LW(9), NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM)
     BEGIN_INLINE_EVENT
         CALL(evt_npc_get_position, LW(9), LW(0), LW(1), LW(2))
         CALL(evt_snd_sfxon_3d, STRING("SFX_STG2_3RD_DOWN1"), LW(0), LW(1), LW(2), 0)
@@ -509,19 +458,24 @@ EVT_BEGIN(black_shadow)
     CALL(evt_npc_set_anim, LW(8), STRING("PCH_S_1"))
     CALL(evt_msg_print, 0, STRING("stg2_mri_e12_26_00_02"), 0, LW(9))
     WAIT_MS(1000)
-    SET_VALUE(GSW(0), 91)
+    SET_VALUE(GSW(GSW_STORY_PROGRESS), STORY_STG2_12_01_A_DARK_FIGURE)
     CALL(evt_bero_mapchange, STRING("mri_03"), STRING("dokan"))
     RETURN
 EVT_END()
 
+/** Planter hit script 2: the first time it is hit it launches a coin out of the planter (remembered with a flag). */
 static EVT_BEGIN(evt_ueki_02)
     CALL(evt_item_delete_check, STRING("item_ueki_02"), LW(0))
     IF_INT_EQUAL(LW(0), 1)
-        CALL(evt_item_entry, STRING("item_ueki_02"), 121, 85, 0, 85, 4, GSWF(2838), 0)
+        CALL(evt_item_entry, STRING("item_ueki_02"), ITEM_COIN, 85, 0, 85, ITEM_ENTRY_LAUNCH, GSWF(GSWF_MRI04_PLANTER_COIN_TAKEN), 0)
     END_IF
     RETURN
 EVT_END()
 
+/**
+ * Plants Mario can search in mri_04: A_ueki01, A_ueki02 (runs evt_ueki_02 when searched), A_ueki04,
+ * A_ueki05.
+ */
 static KusaAccess ueki_access_data[] = {
     {1, "A_ueki01", "S_ueki01", NULL},
     {1, "A_ueki02", "S_ueki02", evt_ueki_02},
@@ -530,17 +484,27 @@ static KusaAccess ueki_access_data[] = {
     {4, NULL, NULL, NULL},
 };
 
+/**
+ * Script run when Mario opens the chest in this room:
+ * shows the Ultra Shroom coming out of mobj_box00 and gives it to Mario.
+ */
 EVT_BEGIN(item_mri_04)
     CALL(evt_mario_key_onoff, 0)
     CALL(evt_mobj_get_position, STRING("mobj_box00"), LW(0), LW(1), LW(2))
-    CALL(evt_item_entry, STRING("item00"), 150, LW(0), LW(1), LW(2), 16, -1, 0)
-    CALL(evt_item_flag_on, STRING("item00"), 2)
+    CALL(evt_item_entry, STRING("item00"), ITEM_ULTRA_SHROOM, LW(0), LW(1), LW(2), ITEM_ENTRY_FIXED, -1, 0)
+    CALL(evt_item_flag_on, STRING("item00"), ITEM_FLAG_NO_TOUCH)
     CALL(evt_mobj_wait_animation_end, STRING("mobj_box00"))
     CALL(evt_item_get_item, STRING("item00"))
     CALL(evt_mario_key_onoff, 1)
     RETURN
 EVT_END()
 
+/**
+ * Map init script of mri_04, the small side room:
+ * sets up the Puni, the planter, the Ultra Shroom chest and the second chest, plays the room's water animations,
+ * and starts the Ms. Mowz scenes (black silhouette at story 12, her meeting with Mario at 12_02)
+ * and drops the Red Key from story 13 on.
+ */
 EVT_BEGIN(mri_04_init_evt)
     CALL(evt_puni_mem_init)
     CALL(evt_puni_set_yuka, 4, 0, -310, -1000, -1000, 0, 0)
@@ -549,30 +513,30 @@ EVT_BEGIN(mri_04_init_evt)
     SET_VALUE(LW(7), 0)
     SET_VALUE(LW(8), 0)
     SET_VALUE(LW(9), 0)
-    CALL_CHILD(PTR(mri_puni_init))
+    CALL_CHILD(mri_puni_init)
     SET_VALUE(LW(0), PTR(bero_entry_data))
     CALL(evt_bero_get_info)
-    CALL_CHILD(PTR(evt_bero_info_run))
+    CALL_CHILD(evt_bero_info_run)
     CALL(evt_npc_setup, PTR(npcEnt))
-    SPAWN_EVENT(PTR(puni_disp_info))
-    SPAWN_EVENT(PTR(mri_countdown))
+    SPAWN_EVENT(puni_disp_info)
+    SPAWN_EVENT(mri_countdown)
     SET_VALUE(LW(0), PTR(ueki_access_data))
-    CALL_CHILD(PTR(evt_sub_kusa_access_entry))
-    SWITCH(GSW(0))
-        CASE_EQUAL(90)
-        CALL(evt_snd_bgmoff, 512)
-        CALL(evt_snd_envoff, 512)
-        CASE_BETWEEN(109, 110)
-        CALL(evt_snd_bgmon, 512, STRING("BGM_EVT_DANGER4"))
-        CALL(evt_snd_envon, 272, STRING("ENV_STG2_MRI9"))
+    CALL_CHILD(evt_sub_kusa_access_entry)
+    SWITCH(GSW(GSW_STORY_PROGRESS))
+        CASE_EQUAL(STORY_STG2_12_RIVAL_ARRIVAL)
+        CALL(evt_snd_bgmoff, PSND_FADE_OUT)
+        CALL(evt_snd_envoff, PSND_FADE_OUT)
+        CASE_BETWEEN(STORY_STG2_23_TIME_BOMB_ACTIVATED, STORY_STG2_23_01_X_NAUT_BATTLE)
+        CALL(evt_snd_bgmon, PSND_FADE_OUT, STRING("BGM_EVT_DANGER4"))
+        CALL(evt_snd_envon, PSND_FADE_RESTART | PSND_FADE_IN, STRING("ENV_STG2_MRI9"))
         CASE_DEFAULT
-        CALL(evt_snd_bgmon, 512, STRING("BGM_STG2_MRI1"))
-        CALL(evt_snd_envon, 272, STRING("ENV_STG2_MRI5"))
+        CALL(evt_snd_bgmon, PSND_FADE_OUT, STRING("BGM_STG2_MRI1"))
+        CALL(evt_snd_envon, PSND_FADE_RESTART | PSND_FADE_IN, STRING("ENV_STG2_MRI5"))
     END_SWITCH
-    CALL(evt_mobj_itembox, STRING("mobj_box00"), -155, 0, 35, 0, 0, PTR(item_mri_04), GSWF(2837))
-    IF_INT_EQUAL(GSW(0), 90)
+    CALL(evt_mobj_itembox, STRING("mobj_box00"), -155, 0, 35, 0, 0, PTR(item_mri_04), GSWF(GSWF_MRI04_ULTRA_SHROOM_CHEST_OPENED))
+    IF_INT_EQUAL(GSW(GSW_STORY_PROGRESS), STORY_STG2_12_RIVAL_ARRIVAL)
         CALL(evt_mobj_itembox, STRING("mobj_box01"), -105, 0, 70, 0, 0, 0, 0)
-        ELSE
+    ELSE
         CALL(evt_mobj_itembox, STRING("mobj_box01"), -105, 0, 70, 0, 0, 0, 1)
     END_IF
     CALL(evt_map_playanim, STRING("mizu_01"), 1, 0)
@@ -580,16 +544,15 @@ EVT_BEGIN(mri_04_init_evt)
     CALL(evt_map_playanim, STRING("awa_01"), 1, 0)
     CALL(evt_map_playanim, STRING("awa_02"), 1, 0)
     CALL(evt_map_playanim, STRING("hikari_01"), 1, 0)
-    IF_INT_EQUAL(GSW(0), 90)
-        SPAWN_EVENT(PTR(black_shadow))
+    IF_INT_EQUAL(GSW(GSW_STORY_PROGRESS), STORY_STG2_12_RIVAL_ARRIVAL)
+        SPAWN_EVENT(black_shadow)
     END_IF
-    IF_INT_EQUAL(GSW(0), 92)
-        SPAWN_EVENT(PTR(chuchurina_sogu))
+    IF_INT_EQUAL(GSW(GSW_STORY_PROGRESS), STORY_STG2_12_02_PUNI_ELDER_IMPRISONED)
+        SPAWN_EVENT(chuchurina_sogu)
     END_IF
-    IF_INT_GREATER_OR_EQUAL(GSW(0), 93)
-        CALL(evt_item_entry, STRING("item_key"), 16, 60, 0, 0, 14, GSWF(2839), 0)
+    IF_INT_GREATER_OR_EQUAL(GSW(GSW_STORY_PROGRESS), STORY_STG2_13_MS_MOWZ)
+        CALL(evt_item_entry, STRING("item_key"), ITEM_RED_KEY, 60, 0, 0, ITEM_ENTRY_FALL_THROWN, GSWF(GSWF_MRI04_RED_KEY_TAKEN), 0)
     END_IF
-    CALL(evt_mapobj_flag_onoff, 1, 0, STRING("S\0\0"), 2)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("S"), MAPOBJ_FLAG_BBOX_CULL)
     RETURN
 EVT_END()
-

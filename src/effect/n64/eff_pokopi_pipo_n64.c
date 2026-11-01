@@ -1,3 +1,6 @@
+// Paper Mario 64 effect: a green blob lobbed from a start point to an end point along an arc,
+// squashing and stretching as it moves; lasts `duration` frames plus a fade-out.
+#include "eff/n64/eff_pokopi_pipo_n64.h"
 #include "eff/eff_n64.h"
 #include "driver/camdrv.h"
 #include "driver/dispdrv.h"
@@ -8,30 +11,30 @@
 #include <stdlib.h>
 
 typedef struct EffPokopiPipoN64Work {
-    s32 type;      // 0x0
-    Vec position;  // 0x4
-    Vec start;     // 0x10
-    Vec end;       // 0x1C
-    s32 unk28;     // 0x28 lifetime
-    s32 frame;     // 0x2C
-    s32 r;         // 0x30
-    s32 g;         // 0x34
-    s32 b;         // 0x38
-    s32 alpha;     // 0x3C
-    f32 scale;     // 0x40
-    f32 velX;      // 0x44
-    f32 velY;      // 0x48
-    f32 velZ;      // 0x4C
-    f32 angle;     // 0x50
-    f32 angleVel;  // 0x54
-    f32 scaleX;    // 0x58
-    f32 scaleY;    // 0x5C
-    s32 scaleIdx;  // 0x60
-    s32 falling;   // 0x64
-    s32 duration;  // 0x68
+    s32 type;     // 0x0
+    Vec position; // 0x4
+    Vec start;    // 0x10
+    Vec end;      // 0x1C
+    s32 timeLeft; // 0x28 lifetime
+    s32 frame;    // 0x2C
+    s32 r;        // 0x30
+    s32 g;        // 0x34
+    s32 b;        // 0x38
+    s32 alpha;    // 0x3C
+    f32 scale;    // 0x40
+    f32 velX;     // 0x44
+    f32 velY;     // 0x48
+    f32 velZ;     // 0x4C
+    f32 angle;    // 0x50
+    f32 angleVel; // 0x54
+    f32 scaleX;   // 0x58
+    f32 scaleY;   // 0x5C
+    s32 scaleIdx; // 0x60
+    s32 falling;  // 0x64
+    s32 duration; // 0x68
 } EffPokopiPipoN64Work;
 
-
+/** 32x32 camera-facing quad drawn for the lobbed blob. */
 static effN64Vtx size32x32_tex32x32_vtx[] = {
     {-16, -16, 0, 0, 0, 0, 0, 0, 255},
     {16, -16, 0, 1024, 0, 0, 0, 0, 255},
@@ -39,12 +42,17 @@ static effN64Vtx size32x32_tex32x32_vtx[] = {
     {-16, 16, 0, 0, 1024, 0, 0, 0, 255},
 };
 
-static u8 w_scale_data[8] = {110, 150, 130, 110, 100, 95, 100};
-static u8 h_scale_data[8] = {80, 60, 80, 100, 120, 110, 100};
+/** Width and height in percent over the squash-and-stretch the blob plays when it lands. */
+static u8 w_scale_data[7] = {110, 150, 130, 110, 100, 95, 100};
+static u8 h_scale_data[7] = {80, 60, 80, 100, 120, 110, 100};
 
-void effPokopiPipoMain(EffectEntry* effect);
-void effPokopiPipoDisp(CameraId cameraId, EffectEntry* effect);
+static void effPokopiPipoMain(EffectEntry* effect);
+static void effPokopiPipoDisp(CameraId cameraId, EffectEntry* effect);
 
+/**
+ * Spawns a lobbed blob that flies from (x, y, z) to (x2, y2, z2) in duration frames on a gravity arc,
+ * spinning with a random angle speed. Via evt_eff64 "pokopi_pipo_n64"; no script callers found.
+ */
 EffectEntry* effPokopiPipoN64Entry(s32 type, s32 duration, f32 x, f32 y, f32 z, f32 x2, f32 y2, f32 z2, f32 scale) {
     EffectEntry* effect;
     EffPokopiPipoN64Work* work;
@@ -55,13 +63,13 @@ EffectEntry* effPokopiPipoN64Entry(s32 type, s32 duration, f32 x, f32 y, f32 z, 
     work = __memAlloc(HEAP_EFFECT, sizeof(EffPokopiPipoN64Work));
     effect->userdata = work;
     effect->callback = effPokopiPipoMain;
-    effect->flags |= 2;
+    effect->flags |= EFFECT_FLAG_SOFT_DELETE;
     work->type = type;
     work->frame = 0;
     if (duration <= 0) {
-        work->unk28 = 1000;
+        work->timeLeft = 1000;
     } else {
-        work->unk28 = duration + 60;
+        work->timeLeft = duration + 60;
     }
     work->duration = duration;
     work->alpha = 255;
@@ -94,7 +102,11 @@ EffectEntry* effPokopiPipoN64Entry(s32 type, s32 duration, f32 x, f32 y, f32 z, 
     return effect;
 }
 
-void effPokopiPipoMain(EffectEntry* effect) {
+/**
+ * Moves the blob under gravity (-0.2 per frame), bounces it off a floor at height 14.3,
+ * and at the end of the flight plays a squash-and-stretch table; deletes 60 frames after the flight.
+ */
+static void effPokopiPipoMain(EffectEntry* effect) {
     EffPokopiPipoN64Work* work = effect->userdata;
     Vec position;
     Vec tmp = {0.0f, 0.0f, 0.0f};
@@ -105,15 +117,15 @@ void effPokopiPipoMain(EffectEntry* effect) {
     tmp.y = work->position.y;
     tmp.z = work->position.z;
     position = tmp;
-    if (effect->flags & 4) {
-        effect->flags &= ~4;
-        work->unk28 = 16;
+    if (effect->flags & EFFECT_FLAG_DELETE_REQUESTED) {
+        effect->flags &= ~EFFECT_FLAG_DELETE_REQUESTED;
+        work->timeLeft = 16;
     }
-    if (work->unk28 < 1000) {
-        work->unk28--;
+    if (work->timeLeft < 1000) {
+        work->timeLeft--;
     }
     work->frame++;
-    if (work->unk28 < 0) {
+    if (work->timeLeft < 0) {
         effDelete(effect);
         return;
     }
@@ -143,7 +155,8 @@ void effPokopiPipoMain(EffectEntry* effect) {
     dispEntry(CAMERA_3D, dispCalcZ(&position), 2, (DispCallback)effPokopiPipoDisp, effect);
 }
 
-void effPokopiPipoDisp(CameraId cameraId, EffectEntry* effect) {
+/** Draws the blob as a camera-facing, spinning quad (texture 0x95 for type 0, otherwise 0x96). */
+static void effPokopiPipoDisp(CameraId cameraId, EffectEntry* effect) {
     CameraEntry* camera;
     EffPokopiPipoN64Work* work;
     s32 alpha;

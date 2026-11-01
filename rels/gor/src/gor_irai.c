@@ -1,8 +1,10 @@
+// gor_irai: Trouble Center request system (irai): request state flags, request window and notice display.
+// Start/cancel/init/main/check/end helpers for the requests taken in Rogueport.
+
 #include "version.h"
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
 
-#pragma force_active on
 #include "driver/camdrv.h"
 #include "driver/msgdrv.h"
 #include "driver/swdrv.h"
@@ -17,72 +19,52 @@
 #include "string.h"
 #include "mario/mario_pouch.h"
 #include "evt/evt_cmd.h"
+#include "evt/evt_case.h"
+#include "evt/evt_door.h"
+#include "evt/evt_item.h"
+#include "evt/evt_mario.h"
+#include "evt/evt_msg.h"
+#include "evt/evt_npc.h"
+#include "evt/evt_party.h"
 #include "gor.h"
-#ifdef TARGET_PC /* declarations the GameCube code calls implicitly */
-void FontDrawEdge(void);
-void FontDrawEdgeOff(void);
-#endif
-#ifdef VERSION_G8ME01
-USER_FUNC(evt_mario_set_dir);
-USER_FUNC(evt_party_set_dir);
-USER_FUNC(evt_item_delete_check);
-USER_FUNC(evt_item_delete);
-#endif
+#include "pmario_sound.h"
+#include "evt/evt_story.h"
+#include <demo/DEMOPad.h>
+#include <dolphin/pad.h>
+#include "evt/evt_pouch.h"
+#include "driver/casedrv.h"
 
-typedef struct IraiWork { s32 state; s32 count; s32 list[30]; s32 cursor; s32 last; s32 top; s32 yubiX; s32 yubiY; s32 field_0x94; f32 scroll; char client[30][21]; char contents[30][31]; u8 field_0x6B4[0x416C - 0x6B4]; } IraiWork;
-#ifdef TARGET_PC
-/* The GameCube declaration takes (message, x, y); the definition is (x, y, message).
- * Win64 assigns argument registers by position, so route the calls to the real order. */
-void FontDrawString(f32 x, f32 y, const char* msg);
-#define FontDrawString(message, x, y) (FontDrawString)((x), (y), (message))
+typedef struct IraiWork {
+    s32 state;
+    s32 count;
+    s32 list[30];
+    s32 cursor;
+    s32 last;
+    s32 top;
+    s32 yubiX;
+    s32 yubiY;
+    s32 cursorTimer;
+    f32 scroll;
+#if VERSION >= VERSION_DEMO_EU
+    // PAL: the request names and texts get 101 bytes each, and there is no unused tail
+    char client[30][101];
+    char contents[30][101];
 #else
-void FontDrawString(const char* message, f32 x, f32 y);
+    char client[30][21];
+    char contents[30][31];
+    u8 textWork[0x416C - 0x6B4]; // never accessed
 #endif
-void FontDrawScale(f32 scale);
-#ifdef TARGET_PC
-s32 psndSFXOn(const char* name);
-#else
-void psndSFXOn(const char* name);
-#endif
-void irai_window_disp(CameraId camera, void* param);
-void irai_flag_disp(void);
-void irai_flag_clear(void);
+} IraiWork;
 
-USER_FUNC(evt_door_set_param);
-USER_FUNC(evt_mario_key_onoff);
-USER_FUNC(evt_msg_continue);
-USER_FUNC(evt_msg_print);
-USER_FUNC(evt_msg_print_add);
-USER_FUNC(evt_msg_select);
-USER_FUNC(evt_msg_toge);
-USER_FUNC(evt_npc_set_position);
-USER_FUNC(evt_pouch_add_coin);
-USER_FUNC(evt_pouch_get_coin);
-USER_FUNC(evt_run_case_evt);
-USER_FUNC(irai_cancel_func);
-USER_FUNC(irai_check_func);
-USER_FUNC(irai_end_func);
-USER_FUNC(irai_init_func);
-USER_FUNC(irai_main_func);
-USER_FUNC(irai_start_func);
-void irai_window_disp(CameraId camera, void* param);
-void irai_flag_disp(void);
-void irai_flag_clear(void);
+static void irai_window_disp(CameraId camera, void* param);
 
-f32 fd_gor_irai_negone_one_374[2] __attribute__((aligned(8)));
-f32 fd_gor_irai_neg_one_382;
-f32 fd_gor_irai___local_PI_383;
-f32 fd_gor_irai___local_3PIO2_385;
-f32 fd_gor_irai_one_negone_373[2] __attribute__((aligned(8)));
-f32 fd_gor_irai___local_PIO2_384;
-f32 fd_gor_irai_one_381;
-f32 fd_gor_irai_negone_one_360[2] __attribute__((aligned(8)));
-f32 fd_gor_irai_neg_one_365;
-f32 fd_gor_irai___local_PI_366;
-f32 fd_gor_irai___local_3PIO2_368;
-f32 fd_gor_irai_one_negone_359[2] __attribute__((aligned(8)));
-f32 fd_gor_irai___local_PIO2_367;
-f32 fd_gor_irai_one_364;
+static USER_FUNC(irai_cancel_func);
+static USER_FUNC(irai_check_func);
+static USER_FUNC(irai_end_func);
+static USER_FUNC(irai_init_func);
+static USER_FUNC(irai_main_func);
+static USER_FUNC(irai_start_func);
+
 const char* irai_msg_client[30];
 const char* irai_msg_contents[30];
 const char* irai_msg_exposition[30];
@@ -99,50 +81,12 @@ s32 irai_item_data25[2];
 s32 irai_item_data29[2];
 s32 irai_item_null[1];
 s32* irai_item_table[30];
-EvtWord irai_start_event_null[2];
-EvtWord irai_start_event01[13];
-EvtWord irai_start_event04[8];
 EvtWord* irai_start_event[30];
-EvtWord irai_end_event_null[2];
-EvtWord irai_end_event01[13];
-EvtWord irai_end_event04[8];
-#ifdef VERSION_G8ME01
-EvtWord irai_end_event19[15];
-#endif
 EvtWord* irai_end_event[30];
-EvtWord gor_irai_init[18];
-EvtWord gor_irai_lecture[40];
-EvtWord gor_irai_main[VERSION_PICK(105, 126)];
-EvtWord gor_irai_tenshu_main[VERSION_PICK(258, 261)];
+extern EvtWord gor_irai_main[];
+extern EvtWord gor_irai_tenshu_main[];
 
-f32 fd_gor_irai_negone_one_374[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_gor_irai_neg_one_382 = -1.0f;
-
-f32 fd_gor_irai___local_PI_383 = 3.1415927f;
-
-f32 fd_gor_irai___local_3PIO2_385 = 4.712389f;
-
-f32 fd_gor_irai_one_negone_373[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_gor_irai___local_PIO2_384 = 1.5707964f;
-
-f32 fd_gor_irai_one_381 = 1.0f;
-
-f32 fd_gor_irai_negone_one_360[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_gor_irai_neg_one_365 = -1.0f;
-
-f32 fd_gor_irai___local_PI_366 = 3.1415927f;
-
-f32 fd_gor_irai___local_3PIO2_368 = 4.712389f;
-
-f32 fd_gor_irai_one_negone_359[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_gor_irai___local_PIO2_367 = 1.5707964f;
-
-f32 fd_gor_irai_one_364 = 1.0f;
-
+/** Message keys of the client names, one for each Trouble Center job. */
 const char* irai_msg_client[] = {
     "irai_client_01", "irai_client_02", "irai_client_03", "irai_client_04", "irai_client_05", "irai_client_06",
     "irai_client_07", "irai_client_08", "irai_client_09", "irai_client_10", "irai_client_11", "irai_client_12",
@@ -151,6 +95,7 @@ const char* irai_msg_client[] = {
     "irai_client_25", "irai_client_26", "irai_client_27", "irai_client_28", "irai_client_29", "irai_client_30",
 };
 
+/** Message keys of the job descriptions, one for each Trouble Center job. */
 const char* irai_msg_contents[] = {
     "irai_contents_01", "irai_contents_02", "irai_contents_03", "irai_contents_04", "irai_contents_05",
     "irai_contents_06", "irai_contents_07", "irai_contents_08", "irai_contents_09", "irai_contents_10",
@@ -160,6 +105,7 @@ const char* irai_msg_contents[] = {
     "irai_contents_26", "irai_contents_27", "irai_contents_28", "irai_contents_29", "irai_contents_30",
 };
 
+/** Message keys of the help text that explains a job. */
 const char* irai_msg_exposition[] = {
     "irai_help_01",
     "irai_help_02",
@@ -193,12 +139,14 @@ const char* irai_msg_exposition[] = {
     "irai_help_30",
 };
 
+/** Message keys of the confirmation prompts shown before a job is taken. */
 const char* irai_msg_kakunin[] = {
     "irai_43", "irai_44", "irai_45", "irai_46", "irai_47", "irai_48", "irai_49", "irai_50", "irai_51", "irai_52",
     "irai_53", "irai_54", "irai_55", "irai_56", "irai_57", "irai_58", "irai_59", "irai_60", "irai_61", "irai_62",
     "irai_63", "irai_64", "irai_65", "irai_66", "irai_67", "irai_68", "irai_69", "irai_70", "irai_71", "irai_72",
 };
 
+/** Message keys shown when a job has already been taken. */
 const char* irai_msg_hikiukechu[] = {
     "irai_13",
     "irai_14",
@@ -232,46 +180,57 @@ const char* irai_msg_hikiukechu[] = {
     "irai_42",
 };
 
+/** Item the player hands over to finish Trouble Center job 1: the House Key. */
 s32 irai_item_data01[] = {
     ITEM_HOUSE_KEY, -1,
 };
 
+/** Item the player hands over to finish Trouble Center job 2: the Box. */
 s32 irai_item_data02[] = {
     ITEM_BOX, -1,
 };
 
+/** Item the player hands over to finish Trouble Center job 13: the Battle Trunks. */
 s32 irai_item_data13[] = {
     ITEM_BATTLE_TRUNKS, -1,
 };
 
+/** Item the player hands over to finish Trouble Center job 16: Attack FX B. */
 s32 irai_item_data16[] = {
     ITEM_ATTACK_FX_B_KEY_ITEM, -1,
 };
 
+/** Item the player hands over to finish Trouble Center job 17: the Routing Slip. */
 s32 irai_item_data17[] = {
     ITEM_ROUTING_SLIP, -1,
 };
 
+/** Item the player hands over to finish Trouble Center job 19: the Wedding Ring. */
 s32 irai_item_data19[] = {
     ITEM_WEDDING_RING, -1,
 };
 
+/** Item the player hands over to finish Trouble Center job 23: the Wrestling Mag. */
 s32 irai_item_data23[] = {
     ITEM_WRESTLING_MAG, -1,
 };
 
+/** Item the player hands over to finish Trouble Center job 25: the Package. */
 s32 irai_item_data25[] = {
     ITEM_PACKAGE, -1,
 };
 
+/** Item the player hands over to finish Trouble Center job 29: the Present. */
 s32 irai_item_data29[] = {
     ITEM_PRESENT, -1,
 };
 
+/** Empty item list for the Trouble Center jobs that ask for no item. */
 s32 irai_item_null[] = {
     -1,
 };
 
+/** Item lists for each Trouble Center job: the items the player can hand over to finish it. */
 s32* irai_item_table[] = {
     irai_item_data01, irai_item_data02, irai_item_null, irai_item_null, irai_item_null, irai_item_null,
     irai_item_null, irai_item_null, irai_item_null, irai_item_null, irai_item_null, irai_item_null,
@@ -280,21 +239,32 @@ s32* irai_item_table[] = {
     irai_item_data25, irai_item_null, irai_item_null, irai_item_null, irai_item_data29, irai_item_null,
 };
 
+/**
+ * Start event of a Trouble Center request that needs no setup on taking it (the default entry of
+ * irai_start_event): does nothing.
+ */
 EVT_BEGIN(irai_start_event_null)
     RETURN
 EVT_END()
 
+/**
+ * Start event of Trouble 1: moves the 盗賊団２ NPC (the second copy of the bandit gang) to (445, 0, 120)
+ * and gives the door parameter in GW(11) the _npc_01 door data,
+ * i.e. the blocked state while the request is active.
+ */
 EVT_BEGIN(irai_start_event01)
     CALL(evt_npc_set_position, STRING("盗賊団２"), 445, 0, 120)
     CALL(evt_door_set_param, GW(11), 0, PTR(&door_data_05_npc_01))
     RETURN
 EVT_END()
 
+/** Start event of Trouble 4: moves the ボロドー２ NPC (the second copy of Borodo) to (-475, 0, -180). */
 EVT_BEGIN(irai_start_event04)
     CALL(evt_npc_set_position, STRING("ボロドー２"), -475, 0, -180)
     RETURN
 EVT_END()
 
+/** Start scripts for each Trouble Center job, run when the job is taken; most do nothing. */
 EvtWord* irai_start_event[] = {
     irai_start_event01, irai_start_event_null, irai_start_event_null, irai_start_event04, irai_start_event_null,
     irai_start_event_null, irai_start_event_null, irai_start_event_null, irai_start_event_null,
@@ -306,22 +276,35 @@ EvtWord* irai_start_event[] = {
     irai_start_event_null,
 };
 
+/**
+ * End event of a Trouble Center request that needs no cleanup when it is cancelled
+ * or solved (the default entry of irai_end_event): does nothing.
+ */
 EVT_BEGIN(irai_end_event_null)
     RETURN
 EVT_END()
 
+/**
+ * End event of Trouble 1: puts the 盗賊団２ NPC back at (10, 0, -460)
+ * and restores the door parameter in GW(11) to the normal door data.
+ */
 EVT_BEGIN(irai_end_event01)
     CALL(evt_npc_set_position, STRING("盗賊団２"), 10, 0, -460)
     CALL(evt_door_set_param, GW(11), 0, PTR(&door_data_05_npc))
     RETURN
 EVT_END()
 
+/** End event of Trouble 4: puts the ボロドー２ NPC at (-475, 0, -180). */
 EVT_BEGIN(irai_end_event04)
     CALL(evt_npc_set_position, STRING("ボロドー２"), -475, 0, -180)
     RETURN
 EVT_END()
 
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
+/**
+ * End event of Trouble 19 (the request of ピートン, from its debug message):
+ * if Mario still has the field item "wr", removes it. US and PAL only.
+ */
 EVT_BEGIN(irai_end_event19)
     DEBUG_PUT_MSG(STRING("ピートンの依頼キャンセル"))
     CALL(evt_item_delete_check, STRING("wr"), LW(0))
@@ -332,10 +315,11 @@ EVT_BEGIN(irai_end_event19)
 EVT_END()
 #endif
 
+/** End scripts for each Trouble Center job, run when it is finished; most do nothing. */
 EvtWord* irai_end_event[] = {
     irai_end_event01, irai_end_event_null, irai_end_event_null, irai_end_event04, irai_end_event_null, irai_end_event_null, irai_end_event_null, irai_end_event_null,
     irai_end_event_null, irai_end_event_null, irai_end_event_null, irai_end_event_null, irai_end_event_null, irai_end_event_null, irai_end_event_null, irai_end_event_null,
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
     irai_end_event_null, irai_end_event_null, irai_end_event19, irai_end_event_null, irai_end_event_null, irai_end_event_null, irai_end_event_null, irai_end_event_null,
 #else
     irai_end_event_null, irai_end_event_null, irai_end_event_null, irai_end_event_null, irai_end_event_null, irai_end_event_null, irai_end_event_null, irai_end_event_null,
@@ -343,12 +327,22 @@ EvtWord* irai_end_event[] = {
     irai_end_event_null, irai_end_event_null, irai_end_event_null, irai_end_event_null, irai_end_event_null, irai_end_event_null,
 };
 
+/**
+ * Init event of the Trouble Center: makes the notice board (A_i04_keizi) open the request window with
+ * gor_irai_main when Mario presses A in front of it,
+ * and the Trouble Center manager (A_i04_kunter) run gor_irai_tenshu_main.
+ */
 EVT_BEGIN(gor_irai_init)
-    CALL(evt_run_case_evt, 9, 1, STRING("A_i04_keizi"), 0, PTR(gor_irai_main), 0)
-    CALL(evt_run_case_evt, 9, 1, STRING("A_i04_kunter"), 0, PTR(gor_irai_tenshu_main), 0)
+    CALL(evt_run_case_evt, CASE_COND_FRONT_A, 1, STRING("A_i04_keizi"), 0, PTR(gor_irai_main), 0)
+    CALL(evt_run_case_evt, CASE_COND_FRONT_A, 1, STRING("A_i04_kunter"), 0, PTR(gor_irai_tenshu_main), 0)
     RETURN
 EVT_END()
 
+/**
+ * The first-visit explanation of the Trouble Center, with a yes/no menu:
+ * irai_00, then irai_03 and GSWF_TROUBLE_LECTURE_HEARD set when Mario wants to hear it,
+ * or irai_02 when he declines.
+ */
 EVT_BEGIN(gor_irai_lecture)
     CALL(evt_mario_key_onoff, 0)
     CALL(evt_msg_toge, 2, 150, 12, -156)
@@ -356,17 +350,23 @@ EVT_BEGIN(gor_irai_lecture)
     CALL(evt_msg_select, 0, STRING("irai_01"))
     IF_INT_EQUAL(LW(0), 0)
         CALL(evt_msg_print_add, 0, STRING("irai_03"))
-        SET_VALUE(GSWF(5374), 1)
-        ELSE
+        SET_VALUE(GSWF(GSWF_TROUBLE_LECTURE_HEARD), 1)
+    ELSE
         CALL(evt_msg_print_add, 0, STRING("irai_02"))
     END_IF
     CALL(evt_mario_key_onoff, 1)
     RETURN
 EVT_END()
 
-#ifdef VERSION_G8ME01
+/**
+ * Reading the Trouble Center's notice board: until the lecture has been heard it plays gor_irai_lecture.
+ * Then it opens the request window (irai_init_func, irai_main_func) with the requests available at the current
+ * story progress; when a request is chosen it shows its description, asks irai_01 to accept,
+ * and on yes marks it active in GSW_TROUBLE_ACTIVE and spawns its start event.
+ */
 EVT_BEGIN(gor_irai_main)
-    IF_INT_EQUAL(GSWF(5374), 0)
+    IF_INT_EQUAL(GSWF(GSWF_TROUBLE_LECTURE_HEARD), 0)
+#if VERSION >= VERSION_US
         BEGIN_INLINE_EVENT
             CALL(evt_mario_set_dir, 270, 200, 0)
         END_INLINE_EVENT
@@ -376,120 +376,87 @@ EVT_BEGIN(gor_irai_main)
         BEGIN_INLINE_EVENT
             CALL(evt_party_set_dir, 1, 270, 200)
         END_INLINE_EVENT
-        CALL_CHILD(PTR(gor_irai_lecture))
-        RETURN
-    END_IF
-    CALL(evt_mario_key_onoff, 0)
-    CALL(irai_init_func)
-    LABEL(10)
-    CALL(irai_main_func)
-    CALL(irai_check_func)
-    IF_INT_EQUAL(LW(0), -1)
-        GOTO(100)
-    END_IF
-    SET_INT_READ_ADDR(PTR(&irai_msg_exposition))
-    SET_VALUE(LW(0), LW(11))
-    ADD(LW(0), -1)
-    READ_INT_INDEXED(LW(1), LW(0))
-    CALL(evt_msg_toge, 1, 0, 0, 0)
-    CALL(evt_msg_print, 0, LW(1), 0, 0)
-    CALL(evt_msg_toge, 1, 0, 0, 0)
-    CALL(evt_msg_print, 0, LW(12), 0, 0)
-    CALL(evt_msg_select, 0, STRING("irai_01"))
-    IF_INT_EQUAL(LW(0), 0)
-        CALL(evt_msg_print_add, 0, STRING("irai_73"))
-        CALL(irai_start_func)
-        SET_INT_READ_ADDR(PTR(irai_start_event))
-        SET_VALUE(LW(0), LW(11))
-        ADD(LW(0), -1)
-        READ_INT_INDEXED(LW(1), LW(0))
-        SPAWN_EVENT(LW(1))
-        SET_VALUE(GSW(1420), LW(11))
-        DEBUG_PUT_REG(GSW(1420))
-        ELSE
-        CALL(evt_msg_continue)
-        GOTO(10)
-    END_IF
-    LABEL(100)
-    CALL(irai_end_func)
-    CALL(evt_mario_key_onoff, 1)
-    RETURN
-EVT_END()
-#else
-EVT_BEGIN(gor_irai_main)
-    IF_INT_EQUAL(GSWF(5374), 0)
-        CALL_CHILD(PTR(gor_irai_lecture))
-        RETURN
-    END_IF
-    CALL(evt_mario_key_onoff, 0)
-    CALL(irai_init_func)
-    LABEL(10)
-    CALL(irai_main_func)
-    CALL(irai_check_func)
-    IF_INT_EQUAL(LW(0), -1)
-        GOTO(100)
-    END_IF
-    SET_INT_READ_ADDR(PTR(&irai_msg_exposition))
-    SET_VALUE(LW(0), LW(11))
-    ADD(LW(0), -1)
-    READ_INT_INDEXED(LW(1), LW(0))
-    CALL(evt_msg_toge, 1, 0, 0, 0)
-    CALL(evt_msg_print, 0, LW(1), 0, 0)
-    CALL(evt_msg_toge, 1, 0, 0, 0)
-    CALL(evt_msg_print, 0, LW(12), 0, 0)
-    CALL(evt_msg_select, 0, STRING("irai_01"))
-    IF_INT_EQUAL(LW(0), 0)
-        CALL(evt_msg_print_add, 0, STRING("irai_73"))
-        CALL(irai_start_func)
-        SET_INT_READ_ADDR(PTR(irai_start_event))
-        SET_VALUE(LW(0), LW(11))
-        ADD(LW(0), -1)
-        READ_INT_INDEXED(LW(1), LW(0))
-        SPAWN_EVENT(LW(1))
-        SET_VALUE(GSW(1420), LW(11))
-        DEBUG_PUT_REG(GSW(1420))
-        ELSE
-        CALL(evt_msg_continue)
-        GOTO(10)
-    END_IF
-    LABEL(100)
-    CALL(irai_end_func)
-    CALL(evt_mario_key_onoff, 1)
-    RETURN
-EVT_END()
 #endif
+        CALL_CHILD(gor_irai_lecture)
+        RETURN
+    END_IF
+    CALL(evt_mario_key_onoff, 0)
+    CALL(irai_init_func)
+    LABEL(10)
+    CALL(irai_main_func)
+    CALL(irai_check_func)
+    IF_INT_EQUAL(LW(0), -1)
+        GOTO(100)
+    END_IF
+    SET_INT_READ_ADDR(PTR(&irai_msg_exposition))
+    SET_VALUE(LW(0), LW(11))
+    ADD(LW(0), -1)
+    READ_INT_INDEXED(LW(1), LW(0))
+    CALL(evt_msg_toge, 1, 0, 0, 0)
+    CALL(evt_msg_print, 0, LW(1), 0, 0)
+    CALL(evt_msg_toge, 1, 0, 0, 0)
+    CALL(evt_msg_print, 0, LW(12), 0, 0)
+    CALL(evt_msg_select, 0, STRING("irai_01"))
+    IF_INT_EQUAL(LW(0), 0)
+        CALL(evt_msg_print_add, 0, STRING("irai_73"))
+        CALL(irai_start_func)
+        SET_INT_READ_ADDR(PTR(irai_start_event))
+        SET_VALUE(LW(0), LW(11))
+        ADD(LW(0), -1)
+        READ_INT_INDEXED(LW(1), LW(0))
+        SPAWN_EVENT(LW(1))
+        SET_VALUE(GSW(GSW_TROUBLE_ACTIVE), LW(11))
+        DEBUG_PUT_REG(GSW(GSW_TROUBLE_ACTIVE))
+    ELSE
+        CALL(evt_msg_continue)
+        GOTO(10)
+    END_IF
+    LABEL(100)
+    CALL(irai_end_func)
+    CALL(evt_mario_key_onoff, 1)
+    RETURN
+EVT_END()
 
+/**
+ * Talk event of the Trouble Center's manager (A_i04_kunter): after all 30 requests are solved he says irai_74;
+ * before the lecture is heard he gives it; with no active request he says irai_06;
+ * otherwise he asks about the active one, giving its current status,
+ * or lets Mario cancel it for 30 coins (irai_09 to irai_12, which clears its flags,
+ * takes back its items and runs its end event).
+ */
 EVT_BEGIN(gor_irai_tenshu_main)
-    SET_VALUE(LW(0), GSWF(5375))
-    ADD(LW(0), GSWF(5376))
-    ADD(LW(0), GSWF(5377))
-    ADD(LW(0), GSWF(5378))
-    ADD(LW(0), GSWF(5379))
-    ADD(LW(0), GSWF(5380))
-    ADD(LW(0), GSWF(5381))
-    ADD(LW(0), GSWF(5382))
-    ADD(LW(0), GSWF(5383))
-    ADD(LW(0), GSWF(5384))
-    ADD(LW(0), GSWF(5385))
-    ADD(LW(0), GSWF(5386))
-    ADD(LW(0), GSWF(5387))
-    ADD(LW(0), GSWF(5388))
-    ADD(LW(0), GSWF(5389))
-    ADD(LW(0), GSWF(5390))
-    ADD(LW(0), GSWF(5391))
-    ADD(LW(0), GSWF(5392))
-    ADD(LW(0), GSWF(5393))
-    ADD(LW(0), GSWF(5394))
-    ADD(LW(0), GSWF(5395))
-    ADD(LW(0), GSWF(5396))
-    ADD(LW(0), GSWF(5397))
-    ADD(LW(0), GSWF(5398))
-    ADD(LW(0), GSWF(5399))
-    ADD(LW(0), GSWF(5400))
-    ADD(LW(0), GSWF(5401))
-    ADD(LW(0), GSWF(5402))
-    ADD(LW(0), GSWF(5403))
-    ADD(LW(0), GSWF(5404))
+    // Count how many of the 30 trouble requests are solved.
+    SET_VALUE(LW(0), GSWF(GSWF_TROUBLE_01_SOLVED))
+    ADD(LW(0), GSWF(GSWF_TROUBLE_02_SOLVED))
+    ADD(LW(0), GSWF(GSWF_TROUBLE_03_SOLVED))
+    ADD(LW(0), GSWF(GSWF_TROUBLE_04_SOLVED))
+    ADD(LW(0), GSWF(GSWF_TROUBLE_05_SOLVED))
+    ADD(LW(0), GSWF(GSWF_TROUBLE_06_SOLVED))
+    ADD(LW(0), GSWF(GSWF_TROUBLE_07_SOLVED))
+    ADD(LW(0), GSWF(GSWF_TROUBLE_08_SOLVED))
+    ADD(LW(0), GSWF(GSWF_TROUBLE_09_SOLVED))
+    ADD(LW(0), GSWF(GSWF_TROUBLE_10_SOLVED))
+    ADD(LW(0), GSWF(GSWF_TROUBLE_11_SOLVED))
+    ADD(LW(0), GSWF(GSWF_TROUBLE_12_SOLVED))
+    ADD(LW(0), GSWF(GSWF_TROUBLE_13_SOLVED))
+    ADD(LW(0), GSWF(GSWF_TROUBLE_14_SOLVED))
+    ADD(LW(0), GSWF(GSWF_TROUBLE_15_SOLVED))
+    ADD(LW(0), GSWF(GSWF_TROUBLE_16_SOLVED))
+    ADD(LW(0), GSWF(GSWF_TROUBLE_17_SOLVED))
+    ADD(LW(0), GSWF(GSWF_TROUBLE_18_SOLVED))
+    ADD(LW(0), GSWF(GSWF_TROUBLE_19_SOLVED))
+    ADD(LW(0), GSWF(GSWF_TROUBLE_20_SOLVED))
+    ADD(LW(0), GSWF(GSWF_TROUBLE_21_SOLVED))
+    ADD(LW(0), GSWF(GSWF_TROUBLE_22_SOLVED))
+    ADD(LW(0), GSWF(GSWF_TROUBLE_23_SOLVED))
+    ADD(LW(0), GSWF(GSWF_TROUBLE_24_SOLVED))
+    ADD(LW(0), GSWF(GSWF_TROUBLE_25_SOLVED))
+    ADD(LW(0), GSWF(GSWF_TROUBLE_26_SOLVED))
+    ADD(LW(0), GSWF(GSWF_TROUBLE_27_SOLVED))
+    ADD(LW(0), GSWF(GSWF_TROUBLE_28_SOLVED))
+    ADD(LW(0), GSWF(GSWF_TROUBLE_29_SOLVED))
+    ADD(LW(0), GSWF(GSWF_TROUBLE_30_SOLVED))
+    // All 30 are solved: the manager says there is no more trouble.
     IF_INT_EQUAL(LW(0), 30)
         CALL(evt_mario_key_onoff, 0)
         CALL(evt_msg_toge, 2, 150, 12, -156)
@@ -497,55 +464,66 @@ EVT_BEGIN(gor_irai_tenshu_main)
         CALL(evt_mario_key_onoff, 1)
         RETURN
     END_IF
-    IF_INT_EQUAL(GSWF(5374), 0)
-        CALL_CHILD(PTR(gor_irai_lecture))
+    // The first time, the manager gives his lecture on how the Trouble Center works.
+    IF_INT_EQUAL(GSWF(GSWF_TROUBLE_LECTURE_HEARD), 0)
+        CALL_CHILD(gor_irai_lecture)
         RETURN
     END_IF
     CALL(evt_mario_key_onoff, 0)
-    IF_INT_EQUAL(GSW(1420), 0)
+    // No request is active: he tells Mario to look at the board.
+    IF_INT_EQUAL(GSW(GSW_TROUBLE_ACTIVE), 0)
         CALL(evt_msg_toge, 2, 150, 12, -156)
         CALL(evt_msg_print, 0, STRING("irai_06"), 0, 0)
-        ELSE
+    ELSE
         CALL(evt_msg_toge, 2, 150, 12, -156)
+        // A request is active: he asks what Mario wants to know (about the trouble, cancel it, or what the
+        // place is).
         CALL(evt_msg_print, 0, STRING("irai_07"), 0, 0)
         CALL(evt_msg_select, 0, STRING("irai_08"))
         IF_INT_EQUAL(LW(0), -1)
             CALL(evt_msg_continue)
             DEBUG_PUT_MSG(STRING("依頼メニューキャンセル"))
         END_IF
+        // About this trouble: he reminds Mario of the status of the current request.
         IF_INT_EQUAL(LW(0), 0)
-            SET_VALUE(LW(10), GSW(1420))
+            SET_VALUE(LW(10), GSW(GSW_TROUBLE_ACTIVE))
             SET_INT_READ_ADDR(PTR(&irai_msg_hikiukechu))
             ADD(LW(10), -1)
             READ_INT_INDEXED(LW(11), LW(10))
             CALL(evt_msg_print_add, 0, LW(11))
         END_IF
+        // Cancel: he asks for a 30-coin fee.
         IF_INT_EQUAL(LW(0), 1)
             CALL(evt_msg_print_add, 0, STRING("irai_09"))
             CALL(evt_msg_select, 0, STRING("irai_01"))
             IF_INT_EQUAL(LW(0), 0)
+                // Mario can pay: the coins are taken, the request is cleared and its items return to their
+                // owners.
                 CALL(evt_pouch_get_coin, LW(10))
                 IF_INT_GREATER_OR_EQUAL(LW(10), 30)
                     CALL(evt_msg_print_add, 0, STRING("irai_10"))
                     CALL(evt_pouch_add_coin, -30)
-                    SET_VALUE(LW(11), GSW(1420))
-                    CALL(irai_cancel_func, GSW(1420))
-                    SET_VALUE(GSW(1420), 0)
+                    SET_VALUE(LW(11), GSW(GSW_TROUBLE_ACTIVE))
+                    CALL(irai_cancel_func, GSW(GSW_TROUBLE_ACTIVE))
+                    SET_VALUE(GSW(GSW_TROUBLE_ACTIVE), 0)
                     SET_INT_READ_ADDR(PTR(irai_end_event))
                     SET_VALUE(LW(0), LW(11))
                     ADD(LW(0), -1)
                     READ_INT_INDEXED(LW(1), LW(0))
                     SPAWN_EVENT(LW(1))
-                    ELSE
+                ELSE
+                    // Not enough coins: the request stays.
                     CALL(evt_msg_print_add, 0, STRING("irai_11"))
                 END_IF
-                ELSE
+            ELSE
+                // Mario declined to cancel.
                 CALL(evt_msg_print_add, 0, STRING("irai_12"))
             END_IF
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
             SET_VALUE(LW(0), 1)
 #endif
         END_IF
+        // What is this place: the manager explains the Trouble Center.
         IF_INT_EQUAL(LW(0), 2)
             CALL(evt_msg_print_add, 0, STRING("irai_04"))
         END_IF
@@ -554,36 +532,47 @@ EVT_BEGIN(gor_irai_tenshu_main)
     RETURN
 EVT_END()
 
-void irai_flag_clear(void) {
+/**
+ * Clears the working story flags and bytes of the request in progress (the GSWF_TROUBLE_WORK range and the
+ * GSW_TROUBLE_WORK range), so a new request starts clean.
+ */
+static void irai_flag_clear(void) {
     s32 i;
 
-    for (i = GSWF(5405); i <= GSWF(5421); i++) {
+    for (i = GSWF(GSWF_TROUBLE_WORK_BASE); i <= GSWF(GSWF_TROUBLE_WORK_LAST); i++) {
         swClear(i + EVTDAT_GSWF_BASE);
     }
-    for (i = GSW(1469); i <= GSW(1474); i++) {
+    for (i = GSW(GSW_TROUBLE_WORK_FIRST); i <= GSW(GSW_TROUBLE_WORK_LAST); i++) {
         swByteSet(i + EVTDAT_GSW_BASE, 0);
     }
 }
 
-void irai_flag_disp(void) {
+/** Empty loops over the request work flags and bytes; the debug print they once contained is gone. */
+static void irai_flag_disp(void) {
     s32 i;
 
-    for (i = GSWF(5405); i <= GSWF(5421); i++) {
+    for (i = GSWF(GSWF_TROUBLE_WORK_BASE); i <= GSWF(GSWF_TROUBLE_WORK_LAST); i++) {
     }
-    for (i = GSW(1469); i <= GSW(1474); i++) {
+    for (i = GSW(GSW_TROUBLE_WORK_FIRST); i <= GSW(GSW_TROUBLE_WORK_LAST); i++) {
     }
 }
 
-USER_FUNC(irai_start_func) {
+/** Script helper that starts a request: clears its working flags. */
+static USER_FUNC(irai_start_func) {
     irai_flag_clear();
     return EVT_RETURN_DONE;
 }
 
+/** Returns the zero-based request index from the script argument, which holds the request number counted from 1. */
 static inline s32 irai_get_no(EventEntry* event) {
     return evtGetValue(event, event->args[0]) - 1;
 }
 
-USER_FUNC(irai_cancel_func) {
+/**
+ * Script helper that cancels request args[0]: clears the working flags
+ * and removes every copy of each of its items (irai_item_table) from Mario's pouch.
+ */
+static USER_FUNC(irai_cancel_func) {
     s32 no = irai_get_no(event);
     s32* items;
     ItemType item;
@@ -606,7 +595,13 @@ USER_FUNC(irai_cancel_func) {
     return EVT_RETURN_DONE;
 }
 
-USER_FUNC(irai_init_func) {
+/**
+ * Script helper that prepares the request window:
+ * allocates the work block, fills the list with the requests that exist at the current story progress (6 at the
+ * start, then 3 more at story progress 56, 112, 164, 215, 261 (2 requests), 281, 339, 373 and 401),
+ * copies each request's client and contents text, and stores the work block in LW(10).
+ */
+static USER_FUNC(irai_init_func) {
     IraiWork* wp;
     s32 seq;
     s32 n;
@@ -617,7 +612,7 @@ USER_FUNC(irai_init_func) {
     wp = _mapAlloc(sizeof(IraiWork));
     memset(wp, 0, sizeof(IraiWork));
     wp->state = 0;
-    seq = swByteGet(0);
+    seq = swByteGet(GSW_STORY_PROGRESS);
     wp->list[0] = 1;
     wp->list[1] = 2;
     wp->list[2] = 3;
@@ -684,13 +679,20 @@ USER_FUNC(irai_init_func) {
     wp->cursor = 0;
     wp->last = wp->cursor;
     wp->top = 0;
-    wp->field_0x94 = 0;
+    wp->cursorTimer = 0;
     wp->scroll = 0.0f;
     event->lwData[10] = (EvtWord)wp;
     return EVT_RETURN_DONE;
 }
 
-USER_FUNC(irai_main_func) {
+/**
+ * Script helper that runs the request window each frame (work block in LW(10)):
+ * first creates the pointer hand, scroll arrow and L/R button icons,
+ * then A picks the highlighted request (only when no request is active and it is not solved yet), B cancels,
+ * the stick moves the cursor and L and R page through the list.
+ * Finishes with LW(0) set to the chosen request number, or -1 if cancelled.
+ */
+static USER_FUNC(irai_main_func) {
     IraiWork* wp = (IraiWork*)event->lwData[10];
     s32 prev;
     s32 n;
@@ -698,37 +700,37 @@ USER_FUNC(irai_main_func) {
     switch (wp->state) {
         case 0:
             iconEntry2D("iraiYubi", VERSION_PICK(0x1F0, 0x1F8));
-            iconFlagOn("iraiYubi", 4);
+            iconFlagOn("iraiYubi", ICON_FLAG_FLIP_X);
             iconEntry2D("iraiArrowUp", VERSION_PICK(0x205, 0x20C));
-            iconFlagOn("iraiArrowUp", 8);
+            iconFlagOn("iraiArrowUp", ICON_FLAG_FLIP_Y);
             iconEntry2D("iraiArrowDown", VERSION_PICK(0x205, 0x20C));
             iconEntry2D("iraiLButton", VERSION_PICK(0x7E, 0x86));
             iconSetScale("iraiLButton", 0.8f);
             iconEntry2D("iraiRButton", VERSION_PICK(0x80, 0x88));
             iconSetScale("iraiRButton", 0.8f);
-            iconFlagOn("iraiYubi", 2);
-            iconFlagOn("iraiArrowUp", 2);
-            iconFlagOn("iraiArrowDown", 2);
-            iconFlagOn("iraiLButton", 2);
-            iconFlagOn("iraiRButton", 2);
+            iconFlagOn("iraiYubi", ICON_FLAG_HIDDEN);
+            iconFlagOn("iraiArrowUp", ICON_FLAG_HIDDEN);
+            iconFlagOn("iraiArrowDown", ICON_FLAG_HIDDEN);
+            iconFlagOn("iraiLButton", ICON_FLAG_HIDDEN);
+            iconFlagOn("iraiRButton", ICON_FLAG_HIDDEN);
             wp->state = 1;
             psndSFXOn((const char*)0x2A);
             break;
         case 1:
-            if ((keyGetButtonTrg(0) & 0x100) && swByteGet(1420) == 0 && !swGet(wp->list[wp->cursor] + 5374)) {
+            if ((keyGetButtonTrg(0) & PAD_BUTTON_A) && swByteGet(GSW_TROUBLE_ACTIVE) == 0 && !swGet(wp->list[wp->cursor] + GSWF_TROUBLE_SOLVED_BASE)) {
                 psndSFXOn((const char*)0x12);
                 wp->state = 100;
                 break;
             }
-            if (keyGetButtonTrg(0) & 0x200) {
+            if (keyGetButtonTrg(0) & PAD_BUTTON_B) {
                 psndSFXOn((const char*)0x13);
                 wp->state = 101;
                 break;
             }
             prev = wp->cursor;
-            if (keyGetDirRep(0) & 0x2000) {
+            if (keyGetDirRep(0) & DEMO_STICK_DOWN) {
                 if (wp->count - 1 <= wp->cursor) {
-                    if (keyGetDirTrg(0) & 0x2000) {
+                    if (keyGetDirTrg(0) & DEMO_STICK_DOWN) {
                         psndSFXOn((const char*)5);
                         wp->cursor++;
                     }
@@ -737,9 +739,9 @@ USER_FUNC(irai_main_func) {
                     wp->cursor++;
                 }
             }
-            if (keyGetDirRep(0) & 0x1000) {
+            if (keyGetDirRep(0) & DEMO_STICK_UP) {
                 if (wp->cursor <= 0) {
-                    if (keyGetDirTrg(0) & 0x1000) {
+                    if (keyGetDirTrg(0) & DEMO_STICK_UP) {
                         psndSFXOn((const char*)5);
                         wp->cursor--;
                     }
@@ -768,7 +770,7 @@ USER_FUNC(irai_main_func) {
                     wp->top--;
                 }
             }
-            if (wp->top > 0 && (keyGetButtonTrg(0) & 0x40)) {
+            if (wp->top > 0 && (keyGetButtonTrg(0) & PAD_TRIGGER_L)) {
                 n = 10;
                 if (wp->top < 10) {
                     n = wp->top;
@@ -777,7 +779,7 @@ USER_FUNC(irai_main_func) {
                 wp->cursor -= n;
                 psndSFXOn((const char*)5);
             }
-            if (wp->top < wp->count - 10 && (keyGetButtonTrg(0) & 0x20)) {
+            if (wp->top < wp->count - 10 && (keyGetButtonTrg(0) & PAD_TRIGGER_R)) {
                 n = 10;
                 if (-wp->top + (wp->count - 10) < 10) {
                     n = -wp->top + (wp->count - 10);
@@ -787,31 +789,31 @@ USER_FUNC(irai_main_func) {
                 psndSFXOn((const char*)5);
             }
             if (wp->cursor != wp->last) {
-                wp->field_0x94 = 0;
+                wp->cursorTimer = 0;
             }
             wp->last = wp->cursor;
             wp->scroll += (wp->top * 30 - wp->scroll) / 6.0f;
             wp->yubiX = -129;
             wp->yubiY = 120 - (wp->cursor - wp->top) * 30;
             iconSetPos("iraiYubi", wp->yubiX, wp->yubiY, 0.0f);
-            iconFlagOff("iraiYubi", 2);
+            iconFlagOff("iraiYubi", ICON_FLAG_HIDDEN);
             iconSetPos("iraiArrowUp", 231.0f, 178.0f, 0.0f);
             iconSetPos("iraiArrowDown", 231.0f, -190.0f, 0.0f);
             iconSetPos("iraiLButton", 261.0f, 146.0f, 0.0f);
             iconSetPos("iraiRButton", 261.0f, -190.0f, 0.0f);
             if (wp->top == 0) {
-                iconFlagOn("iraiArrowUp", 2);
-                iconFlagOn("iraiLButton", 2);
+                iconFlagOn("iraiArrowUp", ICON_FLAG_HIDDEN);
+                iconFlagOn("iraiLButton", ICON_FLAG_HIDDEN);
             } else {
-                iconFlagOff("iraiArrowUp", 2);
-                iconFlagOff("iraiLButton", 2);
+                iconFlagOff("iraiArrowUp", ICON_FLAG_HIDDEN);
+                iconFlagOff("iraiLButton", ICON_FLAG_HIDDEN);
             }
             if (wp->top >= wp->count - 10) {
-                iconFlagOn("iraiArrowDown", 2);
-                iconFlagOn("iraiRButton", 2);
+                iconFlagOn("iraiArrowDown", ICON_FLAG_HIDDEN);
+                iconFlagOn("iraiRButton", ICON_FLAG_HIDDEN);
             } else {
-                iconFlagOff("iraiArrowDown", 2);
-                iconFlagOff("iraiRButton", 2);
+                iconFlagOff("iraiArrowDown", ICON_FLAG_HIDDEN);
+                iconFlagOff("iraiRButton", ICON_FLAG_HIDDEN);
             }
             break;
         case 100:
@@ -839,7 +841,12 @@ USER_FUNC(irai_main_func) {
     return EVT_RETURN_BLOCK;
 }
 
-USER_FUNC(irai_check_func) {
+/**
+ * Script helper that sets up the text for the chosen request:
+ * LW(12) is the confirmation message irai_msg_kakunin for the request in LW(0) and LW(11) the request number,
+ * or 0 and -1 when the window was cancelled.
+ */
+static USER_FUNC(irai_check_func) {
     if (event->lwData[0] != -1) {
         event->lwData[12] = (EvtWord)irai_msg_kakunin[event->lwData[0] - 1];
         event->lwData[11] = event->lwData[0];
@@ -850,39 +857,48 @@ USER_FUNC(irai_check_func) {
     return EVT_RETURN_DONE;
 }
 
-USER_FUNC(irai_end_func) {
+/** Script helper that frees the request window's work block (LW(10)). */
+static USER_FUNC(irai_end_func) {
     _mapFree((void*)event->lwData[10]);
     return EVT_RETURN_DONE;
 }
 
-#ifdef VERSION_G8ME01
-void FontDrawScaleVec(Vec scale);
+// US and PAL fit the window texts to their boxes (centred and squeezed); JP and the demos draw them as they are
+#if VERSION >= VERSION_US
 
 // US: text centered in a boxW-wide box at x, x-squeezed to maxW; w is the width variable of the caller.
-#define iraiDrawCentered(msg, x, y, boxW, maxW, scale, trans, w) { \
-    w = FontGetMessageWidth(msg);                                    \
-    if (w > (maxW)) {                                                \
-        PSMTXScale(scale, (maxW) / w, 1.0f, 1.0f);                   \
-        w = (maxW);                                                  \
-    } else {                                                         \
-        PSMTXScale(scale, 1.0f, 1.0f, 1.0f);                         \
-    }                                                                \
-    PSMTXTrans(trans, (x) + ((boxW) - w) / 2, y, 0.0f);              \
-    PSMTXConcat(trans, scale, trans);                                \
-    FontDrawStringMtx(trans, msg);                                   \
-}
+#define iraiDrawCentered(msg, x, y, boxW, maxW, scale, trans, w) \
+    {                                                            \
+        w = FontGetMessageWidth(msg);                            \
+        if (w > (maxW)) {                                        \
+            PSMTXScale(scale, (maxW) / w, 1.0f, 1.0f);           \
+            w = (maxW);                                          \
+        } else {                                                 \
+            PSMTXScale(scale, 1.0f, 1.0f, 1.0f);                 \
+        }                                                        \
+        PSMTXTrans(trans, (x) + ((boxW) - w) / 2, y, 0.0f);      \
+        PSMTXConcat(trans, scale, trans);                        \
+        FontDrawStringMtx(trans, msg);                           \
+    }
 
 // US: one row cell, x-squeezed to fit maxW. "y" is stored in the caller's float var v (the
 // original reuses one float local for these; this keeps the MWCC float register choice).
-#define iraiDrawFit(msg, x, y, maxW, v) {                                              \
-    f32 w_;                                                                            \
-    v = (y);                                                                           \
-    w_ = FontGetMessageWidth(msg);                                                     \
-    FontDrawScaleVec((Vec){w_ > (maxW) ? 0.85f * ((maxW) / w_) : 0.85f, 0.85f, 0.85f}); \
-    FontDrawString(msg, x, v);                                                         \
-}
+#define iraiDrawFit(msg, x, y, maxW, v)                                                     \
+    {                                                                                       \
+        f32 w_;                                                                             \
+        v = (y);                                                                            \
+        w_ = FontGetMessageWidth(msg);                                                      \
+        FontDrawScaleVec((Vec){w_ > (maxW) ? 0.85f * ((maxW) / w_) : 0.85f, 0.85f, 0.85f}); \
+        FontDrawString(x, v, msg);                                                          \
+    }
 
-void irai_window_disp(CameraId camera, void* param) {
+/**
+ * Draw callback of the request window (US and PAL):
+ * draws the blue title frames and header texts,
+ * the list of requests (client and contents columns) clipped to the window,
+ * with texts centred or squeezed to fit; solved requests are grey and the active one is red.
+ */
+static void irai_window_disp(CameraId camera, void* param) {
     IraiWork* wp = param;
     u32 left;
     u32 top;
@@ -930,12 +946,12 @@ void irai_window_disp(CameraId camera, void* param) {
     FontDrawColor((GXColor){0x00, 0x00, 0x00, 0xFF});
     FontDrawScale(0.85f);
     for (i = 0; i < wp->count; i++) {
-        if (swGet(wp->list[i] + 5374)) {
+        if (swGet(wp->list[i] + GSWF_TROUBLE_SOLVED_BASE)) {
             FontDrawColor((GXColor){0x80, 0x80, 0x80, 0xFF});
         } else {
             FontDrawColor((GXColor){0x00, 0x00, 0x00, 0xFF});
         }
-        if (wp->list[i] == swByteGet(1420)) {
+        if (wp->list[i] == swByteGet(GSW_TROUBLE_ACTIVE)) {
             FontDrawColor((GXColor){0xFF, 0x00, 0x00, 0xFF});
         }
         no = wp->list[i] - 1;
@@ -945,11 +961,21 @@ void irai_window_disp(CameraId camera, void* param) {
     GXSetScissor(left, top, width, height);
 }
 #else
+/**
+ * Adds an integer to a float; kept as a separate function
+ * so the draw code's arithmetic compiles as in the original.
+ */
 static inline f32 iraiAddI(f32 a, s32 b) {
     return a + b;
 }
 
-void irai_window_disp(CameraId camera, void* param) {
+/**
+ * Draw callback of the request window (JP and the demos):
+ * draws the blue title frames and header texts,
+ * the list of requests (client and contents columns) clipped to the window with the texts as they are;
+ * solved requests are grey and the active one is red.
+ */
+static void irai_window_disp(CameraId camera, void* param) {
     f32 negX;
     IraiWork* wp = param;
     u32 left;
@@ -967,8 +993,9 @@ void irai_window_disp(CameraId camera, void* param) {
     FontDrawScale(0.85f);
     msg = msgSearch("irai_name1_win");
     FontDrawEdge();
-    FontDrawString(msg, -270.0f, 152.0f);
-    FontDrawString(msgSearch("irai_name2_win"), -270.0f, 127.0f);
+    FontDrawString(-270.0f, 152.0f, msg);
+    msg = msgSearch("irai_name2_win");
+    FontDrawString(-270.0f, 127.0f, msg);
     FontDrawEdgeOff();
     windowDispGX_Waku_col(0, (GXColor){0xFF, 0xFF, 0xFF, 0xFF}, -129.0f, 170.0f, 410.0f, 340.0f, 12.0f);
     windowDispGX_Waku_col(0, (GXColor){0x2B, 0xA3, 0xFF, 0xFF}, -103.0f, 190.0f, 120.0f, 40.0f, 12.0f);
@@ -979,11 +1006,11 @@ void irai_window_disp(CameraId camera, void* param) {
     negX = -77.0f;
     msg = msgSearch("irai_client_win");
     FontDrawEdge();
-    FontDrawString(msg, negX, 180.0f);
+    FontDrawString(negX, 180.0f, msg);
     FontDrawEdgeOff();
     msg = msgSearch("irai_contents_win");
     FontDrawEdge();
-    FontDrawString(msg, 115.0f, 180.0f);
+    FontDrawString(115.0f, 180.0f, msg);
     FontDrawEdgeOff();
     GXGetScissor(&left, &top, &width, &height);
     GXSetScissor(175, 98, 410, 304);
@@ -991,17 +1018,17 @@ void irai_window_disp(CameraId camera, void* param) {
     FontDrawColor((GXColor){0x00, 0x00, 0x00, 0xFF});
     FontDrawScale(0.85f);
     for (i = 0; i < wp->count; i++) {
-        if (swGet(wp->list[i] + 5374)) {
+        if (swGet(wp->list[i] + GSWF_TROUBLE_SOLVED_BASE)) {
             FontDrawColor((GXColor){0x80, 0x80, 0x80, 0xFF});
         } else {
             FontDrawColor((GXColor){0x00, 0x00, 0x00, 0xFF});
         }
-        if (wp->list[i] == swByteGet(1420)) {
+        if (wp->list[i] == swByteGet(GSW_TROUBLE_ACTIVE)) {
             FontDrawColor((GXColor){0xFF, 0x00, 0x00, 0xFF});
         }
         no = wp->list[i] - 1;
-        FontDrawString(wp->client[no], -119.0f, iraiAddI(wp->scroll, 140 - i * 30));
-        FontDrawString(wp->contents[no], 51.0f, wp->scroll + (140 - i * 30));
+        FontDrawString(-119.0f, iraiAddI(wp->scroll, 140 - i * 30), wp->client[no]);
+        FontDrawString(51.0f, wp->scroll + (140 - i * 30), wp->contents[no]);
     }
     GXSetScissor(left, top, width, height);
 }

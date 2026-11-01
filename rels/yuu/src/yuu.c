@@ -1,33 +1,17 @@
+// yuu: Pianta Parlor (遊技場, yugijo) minigame REL: prolog/epilog and the yuu_00..yuu_03 init table.
+
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
 
-#pragma force_active on
 #include "data/mapdata.h"
 #include "yuu.h"
+#include "rel_module.h"
 
-typedef void (*voidfunctionptr)(void);
-extern voidfunctionptr _ctors[];
-extern voidfunctionptr _dtors[];
-
-void _unresolved(void);
-void _epilog(void);
-void _prolog(void);
-
-f32 fd_yuu_negone_one_374[2] __attribute__((aligned(8)));
-f32 fd_yuu_neg_one_382;
-f32 fd_yuu___local_PI_383;
-f32 fd_yuu___local_3PIO2_385;
-f32 fd_yuu_one_negone_373[2] __attribute__((aligned(8)));
-f32 fd_yuu___local_PIO2_384;
-f32 fd_yuu_one_381;
-f32 fd_yuu_negone_one_360[2] __attribute__((aligned(8)));
-f32 fd_yuu_neg_one_365;
-f32 fd_yuu___local_PI_366;
-f32 fd_yuu___local_3PIO2_368;
-f32 fd_yuu_one_negone_359[2] __attribute__((aligned(8)));
-f32 fd_yuu___local_PIO2_367;
-f32 fd_yuu_one_364;
-
+/**
+ * REL entry point: runs the static constructors,
+ * then registers the init event scripts of the four Pianta Parlor maps (yuu_00 to yuu_03) with relSetEvtAddr
+ * so the map loader can start them.
+ */
 void _prolog(void) {
     voidfunctionptr* ctor;
 
@@ -37,37 +21,10 @@ void _prolog(void) {
     relSetEvtAddr("yuu_00", yuu_00_init_evt);
     relSetEvtAddr("yuu_01", yuu_01_init_evt);
     relSetEvtAddr("yuu_02", yuu_02_init_evt);
-    relSetEvtAddr("yuu_03\0", yuu_03_init_evt);
+    relSetEvtAddr("yuu_03", yuu_03_init_evt);
 }
 
-f32 fd_yuu_negone_one_374[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_yuu_neg_one_382 = -1.0f;
-
-f32 fd_yuu___local_PI_383 = 3.1415927f;
-
-f32 fd_yuu___local_3PIO2_385 = 4.712389f;
-
-f32 fd_yuu_one_negone_373[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_yuu___local_PIO2_384 = 1.5707964f;
-
-f32 fd_yuu_one_381 = 1.0f;
-
-f32 fd_yuu_negone_one_360[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_yuu_neg_one_365 = -1.0f;
-
-f32 fd_yuu___local_PI_366 = 3.1415927f;
-
-f32 fd_yuu___local_3PIO2_368 = 4.712389f;
-
-f32 fd_yuu_one_negone_359[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_yuu___local_PIO2_367 = 1.5707964f;
-
-f32 fd_yuu_one_364 = 1.0f;
-
+/** REL exit point: runs the static destructors when the yuu module is unloaded. */
 void _epilog(void) {
     voidfunctionptr* dtor;
 
@@ -75,5 +32,6 @@ void _epilog(void) {
         (*dtor)();
     }
 }
+/** Linker stub for unresolved imports; does nothing. */
 void _unresolved(void) {
 }

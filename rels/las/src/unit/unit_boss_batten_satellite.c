@@ -1,59 +1,24 @@
+// Palace of Shadow battle unit: Grodus X, the satellites Sir Grodus summons (`boss_batten_satellite`): parts, stats, poses and AI scripts.
+
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
+#include "las.h"
 
-#pragma force_active on
 #include "manager/evtmgr_cmd.h"
 #include "battle/battle_event_default.h"
 #include "battle/battle_event_cmd.h"
 #include "battle/battle_camera.h"
 #include "battle/battle_event_subset.h"
 #include "battle/battle_weapon_power.h"
-#include "party/party_motion.h"
+#include "evt/evt_snd.h"
 #include "battle/battle_database_common.h"
+#include "battle/battle_sub.h"
+#include "system.h"
 
 s32 bts_x_flag_data;
-#ifdef TARGET_PC
-/* real prototype (system.c) is (mode, currStep, steps, start, end); Win64 assigns argument
- * registers by position, so route the calls to the real order */
-f32 intplGetValue(s32 mode, s32 currStep, s32 steps, f32 start, f32 end);
-#define intplGetValue(mode, currStep, start, end, steps) (intplGetValue)((mode), (currStep), (steps), (start), (end))
-#else
-f32 intplGetValue(s32 mode, s32 currStep, f32 start, f32 end, s32 steps);
-#endif
 
-USER_FUNC(btlevtcmd_AnimeChangePoseFromTable);
-USER_FUNC(btlevtcmd_OnUnitFlag);
-USER_FUNC(btlevtcmd_SetEventAttack);
-USER_FUNC(btlevtcmd_SetEventConfusion);
-USER_FUNC(btlevtcmd_SetEventDamage);
-USER_FUNC(btlevtcmd_SetEventWait);
-USER_FUNC(btlevtcmd_SetHpGaugeOffset);
-USER_FUNC(btlevtcmd_StartWaitEvent);
-USER_FUNC(bts_x_flag_wait);
-USER_FUNC(bts_x_flag_get);
-USER_FUNC(bts_x_flag_add);
-USER_FUNC(bts_x_flag_set);
-static USER_FUNC(bts_wariai_enzan_0f);
-static USER_FUNC(bts_wariai_enzan_0);
-USER_FUNC(bts_wariai_enzan_1f_intpl_w);
-static USER_FUNC(bts_wariai_enzan_1f_intpl);
-static USER_FUNC(bts_wariai_enzan_1f);
 static USER_FUNC(bts_wariai_enzan_1);
 
-f32 fd_boss_batten_satellite_negone_one_374[2] __attribute__((aligned(8)));
-f32 fd_boss_batten_satellite_neg_one_382;
-f32 fd_boss_batten_satellite___local_PI_383;
-f32 fd_boss_batten_satellite___local_3PIO2_385;
-f32 fd_boss_batten_satellite_one_negone_373[2] __attribute__((aligned(8)));
-f32 fd_boss_batten_satellite___local_PIO2_384;
-f32 fd_boss_batten_satellite_one_381;
-f32 fd_boss_batten_satellite_negone_one_360[2] __attribute__((aligned(8)));
-f32 fd_boss_batten_satellite_neg_one_365;
-f32 fd_boss_batten_satellite___local_PI_366;
-f32 fd_boss_batten_satellite___local_3PIO2_368;
-f32 fd_boss_batten_satellite_one_negone_359[2] __attribute__((aligned(8)));
-f32 fd_boss_batten_satellite___local_PIO2_367;
-f32 fd_boss_batten_satellite_one_364;
 BattleWeapon weapon_batten_satellite_attack;
 BattleUnitKind unit_boss_batten_satellite;
 static BattleUnitDefense defence;
@@ -61,45 +26,16 @@ static BattleUnitDefenseAttr defence_attr;
 static StatusVulnerability regist;
 static PoseTableEntry pose_table[18];
 static BattleDataEntry data_table[15];
-EvtWord dmg_counter_event[149];
+extern EvtWord dmg_counter_event[];
 static BattleUnitKindPart parts[1];
 static EvtWord init_event[30];
-static EvtWord entry_event[2];
 static EvtWord damage_event[10];
-static EvtWord phase_event[2];
 static EvtWord dead_event[2];
 static EvtWord attack_event[10];
-EvtWord batten_satellite_attack_attack_event[304];
+extern EvtWord batten_satellite_attack_attack_event[];
 static EvtWord wait_event[6];
 
-f32 fd_boss_batten_satellite_negone_one_374[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_boss_batten_satellite_neg_one_382 = -1.0f;
-
-f32 fd_boss_batten_satellite___local_PI_383 = 3.1415927f;
-
-f32 fd_boss_batten_satellite___local_3PIO2_385 = 4.712389f;
-
-f32 fd_boss_batten_satellite_one_negone_373[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_boss_batten_satellite___local_PIO2_384 = 1.5707964f;
-
-f32 fd_boss_batten_satellite_one_381 = 1.0f;
-
-f32 fd_boss_batten_satellite_negone_one_360[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_boss_batten_satellite_neg_one_365 = -1.0f;
-
-f32 fd_boss_batten_satellite___local_PI_366 = 3.1415927f;
-
-f32 fd_boss_batten_satellite___local_3PIO2_368 = 4.712389f;
-
-f32 fd_boss_batten_satellite_one_negone_359[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_boss_batten_satellite___local_PIO2_367 = 1.5707964f;
-
-f32 fd_boss_batten_satellite_one_364 = 1.0f;
-
+/** Weapon of Grodus X's attack: damage 4. */
 BattleWeapon weapon_batten_satellite_attack = {
     NULL, 0, // name..icon
     {0}, // pad_06
@@ -108,23 +44,23 @@ BattleWeapon weapon_batten_satellite_attack = {
     0, 0, // baseFpCost..baseSpCost
     1, // superguardsAllowed
     1.0f, // reserved_14
-    1, // mStylishCommandMultiplier
+    1, // stylishCommandMultiplier
     1, // reserved_19
-    1, // mBingoSlotChance
+    1, // bingoSlotChance
     1, // reserved_1B
     weaponGetPowerDefault, // hpDamageFn
     {4, 0, 0, 0, 0, 0, 0, 0}, // hpDamageWork
     NULL, // fpDamageFn
     {0}, // fpDamageWork
-    0x1101260, // targetClassFlags
-    0x20000000, // targetPropertyFlags
-    0, 0, // element..damagePattern
+    TARGET_CLASS_NO_TREE_OR_SWITCH | TARGET_CLASS_NO_SYSTEM_UNIT | TARGET_CLASS_NO_OWN_ALLIANCE | TARGET_CLASS_NO_SELF | TARGET_CLASS_MAIN_PARTS | TARGET_CLASS_SINGLE, // targetClassFlags
+    TARGET_PROP_START_OPPOSING_SIDE, // targetPropertyFlags
+    ELEMENT_NORMAL, 0, // element..damagePattern
     3, // acLevel
     2, // reserved_6F
     NULL, // acHelpMsg
-    0x87, // special
-    2, // counterResistFlags
-    0x80002004, // targetWeightFlags
+    SPECIAL_BADGE_BUFFABLE | SPECIAL_STATUS_BUFFABLE | SPECIAL_CHARGE_BUFFABLE | SPECIAL_SHATTERS_FREEZE, // special
+    COUNTER_RESIST_TOP_SPIKY, // counterResistFlags
+    TARGET_WEIGHT_PREFER_FRONT | TARGET_WEIGHT_UNUSED_2000 | TARGET_WEIGHT_RANDOM, // targetWeightFlags
     0, 0, 0, 0, 0, 0, 0, 0, // sleepChance..poisonTime
     0, 0, 0, 0, 0, 0, 0, 0, // poisonStrength..burnChance
     0, 0, 0, 0, 0, 0, 0, 0, // burnTime..atkChangeTime
@@ -132,10 +68,14 @@ BattleWeapon weapon_batten_satellite_attack = {
     0, 0, 0, 0, 0, 0, 0, 0, // fastChance..holdFastTime
     0, 0, 0, 0, 0, 0, // invisibleChance..fpRegenStrength
     {0}, // pad_AE
-    NULL, // mAttackEvtScript
+    NULL, // attackEvtScript
     {0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0}, // stageEffectRates
 };
 
+/**
+ * Unit data of Grodus's satellite (Grodus X) in the Palace of Shadow: 3 HP;
+ * names its parts, status table and init script.
+ */
 BattleUnitKind unit_boss_batten_satellite = {
     147,
     "btl_un_batten_satellite",
@@ -157,8 +97,13 @@ BattleUnitKind unit_boss_batten_satellite = {
     0.0f,
     0.0f,
     0.0f,
+#if VERSION <= VERSION_DEMO_JP
+    0,
+    0,
+#else
     -3,
     -6,
+#endif
     0.0f,
     0.0f,
     0.0f,
@@ -194,7 +139,7 @@ BattleUnitKind unit_boss_batten_satellite = {
     "SFX_BTL_DAMAGE_FIRE1",
     "SFX_BTL_DAMAGE_ICE1",
     "SFX_BTL_DAMAGE_BIRIBIRI1",
-    0x4,
+    UNIT_ATTR_FLOATING,
     &regist,
     1,
     parts,
@@ -202,12 +147,38 @@ BattleUnitKind unit_boss_batten_satellite = {
     data_table,
 };
 
+/**
+ * Defence of Grodus's satellite (Grodus X) against each element (normal, fire, ice, explosion, electric):
+ * none, so every hit does its full damage.
+ */
 static BattleUnitDefense defence = {{0, 0, 0, 0, 0}};
 
+/**
+ * Damage modifiers of Grodus's satellite (Grodus X) per element (normal, fire, ice, explosion, electric):
+ * none, so no element is a weakness, an immunity or a heal.
+ */
 static BattleUnitDefenseAttr defence_attr = {{0, 0, 0, 0, 0}};
 
+#if VERSION <= VERSION_DEMO_JP
+/**
+ * Demo values of the status vulnerability of Grodus's satellite (Grodus X):
+ * percent chance that each status takes hold (100 is normal); immune to Sleep, Poison, Fright;
+ * strongly resistant to Confuse.
+ */
+static StatusVulnerability regist = {0, 75, 75, 0, 10, 100, 100, 75, 100, 75, 100, 75, 100, 75, 75, 0, 75, 100, 75, 100, 100, 90};
+#else
+/**
+ * JP, US and PAL values of the status vulnerability of Grodus's satellite (Grodus X):
+ * percent chance that each status takes hold (100 is normal); immune to Sleep, Poison, Fright;
+ * strongly resistant to Confuse.
+ */
 static StatusVulnerability regist = {0, 75, 90, 0, 10, 100, 100, 75, 100, 75, 100, 75, 100, 95, 75, 0, 90, 100, 75, 100, 100, 90};
+#endif
 
+/**
+ * Pose table of Grodus's satellite (Grodus X): animation names for each pose type (idle, walk, hurt, attack
+ * and so on).
+ */
 static PoseTableEntry pose_table[] = {
     {1, "N_1"},
     {2, "Y_1"},
@@ -225,10 +196,14 @@ static PoseTableEntry pose_table[] = {
     {40, "S_1"},
     {56, "X_1"},
     {57, "X_1"},
-    {65, "A_1"},
-    {69, "S_1"},
+    {BTL_POSE_TALK, "A_1"},
+    {BTL_POSE_STAY_DEFAULT, "S_1"},
 };
 
+/**
+ * Data table of Grodus's satellite (Grodus X): event scripts
+ * and values the battle looks up by tag (damage reactions, dodge, first strike and so on).
+ */
 static BattleDataEntry data_table[] = {
     {24, dmg_counter_event},
     {25, dmg_counter_event},
@@ -247,8 +222,14 @@ static BattleDataEntry data_table[] = {
     {0, NULL},
 };
 
+/**
+ * Event script: a satellite's reaction when it is hit:
+ * flags the unit, plays the miss sound for pose 43 (otherwise picks a pose type by the hit kind),
+ * plays the damage pose type, runs the unit's data event 10 alongside
+ * and turns the satellite to face the hit direction, and starts it falling with acceleration 1.
+ */
 EVT_BEGIN(dmg_counter_event)
-    CALL(btlevtcmd_OnUnitFlag, LW(10), 1)
+    CALL(btlevtcmd_OnUnitFlag, LW(10), UNIT_FLAG_SHOW_HP_GAUGE)
     SWITCH(LW(0))
         CASE_EQUAL(43)
         CALL(evt_snd_sfxon, STRING("SFX_BTL_ATTACK_MISS3"), 0)
@@ -273,14 +254,14 @@ EVT_BEGIN(dmg_counter_event)
     CALL(btlevtcmd_DivePosition, LW(10), LW(2), LW(3), LW(4), 10, 0, 0, 0, -1)
     WAIT_MS(500)
     CALL(evt_btl_camera_set_mode, 0, 0)
-    CALL(btlevtcmd_CheckDamageCode, LW(10), 512, LW(0))
+    CALL(btlevtcmd_CheckDamageCode, LW(10), DAMAGE_FLAG_KO, LW(0))
     IF_INT_NOT_EQUAL(LW(0), 0)
-        CALL(btlevtcmd_CheckDamageCode, LW(10), 2048, LW(0))
+        CALL(btlevtcmd_CheckDamageCode, LW(10), DAMAGE_FLAG_LIFE_SHROOM, LW(0))
         IF_INT_EQUAL(LW(0), 0)
             RETURN
         END_IF
     END_IF
-    CALL(btlevtcmd_snd_se, -2, STRING("SFX_BOSS_SATELLITE_ATTACK2"), -250000000, 0, -250000000)
+    CALL(btlevtcmd_snd_se, BTL_UNIT_SELF, STRING("SFX_BOSS_SATELLITE_ATTACK2"), EVT_NULLPTR, 0, EVT_NULLPTR)
     CALL(btlevtcmd_GetHomePos, LW(10), LW(5), LW(6), LW(7))
     WAIT_MS(80)
     SET_VALUE(LW(8), 42)
@@ -288,80 +269,105 @@ EVT_BEGIN(dmg_counter_event)
         CALL(bts_wariai_enzan_1, LW(8), 42, LW(2), LW(5), LW(12))
         CALL(bts_wariai_enzan_1, LW(8), 42, LW(3), LW(6), LW(13))
         CALL(bts_wariai_enzan_1, LW(8), 42, LW(4), LW(7), LW(14))
-        CALL(btlevtcmd_SetPos, -2, LW(12), LW(13), LW(14))
+        CALL(btlevtcmd_SetPos, BTL_UNIT_SELF, LW(12), LW(13), LW(14))
         WAIT_FRAMES(1)
     END_LOOP
     RETURN
 EVT_END()
 
+/** Part of Grodus's satellite (Grodus X): its one body part with hit box, defence tables and pose table. */
 static BattleUnitKindPart parts[] = {
-    {1, "btl_un_batten_satellite", "c_shuryo_p", 0.0f, 0.0f, 0.0f, -4.0f, -2.0f, 0.0f, -6.0f, 1.0f, 0.0f, 14, 14, 255, &defence, &defence_attr, 0x600009, 0, pose_table},
+    {1, "btl_un_batten_satellite", "c_shuryo_p", 0.0f, 0.0f, 0.0f, -4.0f, -2.0f, 0.0f, -6.0f, 1.0f, 0.0f, 14, 14, 255, &defence, &defence_attr, PART_ATTR_MAIN | PART_ATTR_GUARD_COVER | PART_ATTR_HAMMERLIKE_CANNOT_TARGET | PART_ATTR_SHELL_TOSSLIKE_CANNOT_TARGET, 0, pose_table},
 };
 
+/**
+ * Init event of the Grodus satellite: installs its wait, attack,
+ * damage and confusion events and offsets its HP gauge.
+ */
 static EVT_BEGIN(init_event)
-    CALL(btlevtcmd_SetEventWait, -2, PTR(wait_event))
-    CALL(btlevtcmd_SetEventAttack, -2, PTR(attack_event))
-    CALL(btlevtcmd_SetEventDamage, -2, PTR(damage_event))
-    CALL(btlevtcmd_SetEventConfusion, -2, PTR(btldefaultevt_Confuse))
-    CALL(btlevtcmd_SetHpGaugeOffset, -2, -5, -13)
-    CALL(btlevtcmd_OnUnitFlag, -2, 3145728)
-    CALL(btlevtcmd_StartWaitEvent, -2)
+    CALL(btlevtcmd_SetEventWait, BTL_UNIT_SELF, PTR(wait_event))
+    CALL(btlevtcmd_SetEventAttack, BTL_UNIT_SELF, PTR(attack_event))
+    CALL(btlevtcmd_SetEventDamage, BTL_UNIT_SELF, PTR(damage_event))
+    CALL(btlevtcmd_SetEventConfusion, BTL_UNIT_SELF, PTR(btldefaultevt_Confuse))
+    CALL(btlevtcmd_SetHpGaugeOffset, BTL_UNIT_SELF, -5, -13)
+    CALL(btlevtcmd_OnUnitFlag, BTL_UNIT_SELF, UNIT_FLAG_FLOAT | UNIT_FLAG_FLOAT_ACTIVE)
+    CALL(btlevtcmd_StartWaitEvent, BTL_UNIT_SELF)
     RETURN
 EVT_END()
 
+/** Entry event of the Grodus satellite: does nothing (an empty script). */
 static EVT_BEGIN(entry_event)
     RETURN
 EVT_END()
 
+/** Damage event of the Grodus satellite: default damage handling. */
 static EVT_BEGIN(damage_event)
     SET_VALUE(LW(10), -2)
     SET_VALUE(LW(11), 1)
-    CALL_CHILD(PTR(btldefaultevt_Damage))
+    CALL_CHILD(btldefaultevt_Damage)
     RETURN
 EVT_END()
 
+/** Phase event of the Grodus satellite: does nothing (an empty script). */
 static EVT_BEGIN(phase_event)
     RETURN
 EVT_END()
 
+/**
+ * Dead event of the Grodus satellite: does nothing here (an empty script);
+ * the satellite is removed by Grodus's own dead event.
+ */
 static EVT_BEGIN(dead_event)
     RETURN
 EVT_END()
 
+/**
+ * Attack event of the Grodus satellite: always uses weapon_batten_satellite_attack
+ * (batten_satellite_attack_attack_event).
+ */
 static EVT_BEGIN(attack_event)
     SET_VALUE(LW(9), PTR(&weapon_batten_satellite_attack))
-    CALL_CHILD(PTR(batten_satellite_attack_attack_event))
-    CALL(btlevtcmd_StartWaitEvent, -2)
+    CALL_CHILD(batten_satellite_attack_attack_event)
+    CALL(btlevtcmd_StartWaitEvent, BTL_UNIT_SELF)
     RETURN
 EVT_END()
 
+/**
+ * Event script: a satellite's attack.
+ * It plays pose F_1, picks a target, declares the attack and pays its cost,
+ * and plays SFX_BOSS_SATELLITE_ATTACK1; if no target was found it ends, flustered if confused.
+ */
 EVT_BEGIN(batten_satellite_attack_attack_event)
-    CALL(btlevtcmd_AnimeChangePose, -2, 1, STRING("F_1"))
+    // The satellite shows its F_1 pose and looks for a target.
+    CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("F_1"))
     WAIT_MS(400)
-    CALL(btlevtcmd_AnimeChangePoseType, -2, 1, 69)
-    CALL(btlevtcmd_GetEnemyBelong, -2, LW(0))
-    CALL(btlevtcmd_SamplingEnemy, -2, LW(0), LW(9))
+    CALL(btlevtcmd_AnimeChangePoseType, BTL_UNIT_SELF, 1, BTL_POSE_STAY_DEFAULT)
+    CALL(btlevtcmd_GetEnemyBelong, BTL_UNIT_SELF, LW(0))
+    // Pick a target for the attack; a confused unit that has none flusters.
+    CALL(btlevtcmd_SamplingEnemy, BTL_UNIT_SELF, LW(0), LW(9))
     CALL(btlevtcmd_ChoiceSamplingEnemy, LW(9), LW(3), LW(4))
     IF_INT_EQUAL(LW(3), -1)
-        CALL(btlevtcmd_CheckToken, -2, 16, LW(0))
+        CALL(btlevtcmd_CheckToken, BTL_UNIT_SELF, TOKEN_FLAG_CONFUSED_ACTION, LW(0))
         IF_INT_NOT_EQUAL(LW(0), 0)
             CALL_CHILD(subsetevt_confuse_flustered)
         END_IF
         RETURN
     END_IF
     CALL(btlevtcmd_WeaponAftereffect, LW(9))
-    CALL(btlevtcmd_AttackDeclare, -2, LW(3), LW(4))
+    // Announce the attack; the camera swings to follow it.
+    CALL(btlevtcmd_AttackDeclare, BTL_UNIT_SELF, LW(3), LW(4))
     CALL(btlevtcmd_WaitGuardMove)
-    CALL(btlevtcmd_PayWeaponCost, -2, LW(9))
-    CALL(btlevtcmd_snd_se, -2, STRING("SFX_BOSS_SATELLITE_ATTACK1"), -250000000, 0, -250000000)
-    CALL(btlevtcmd_GetPos, -2, LW(0), LW(1), LW(2))
+    CALL(btlevtcmd_PayWeaponCost, BTL_UNIT_SELF, LW(9))
+    CALL(btlevtcmd_snd_se, BTL_UNIT_SELF, STRING("SFX_BOSS_SATELLITE_ATTACK1"), EVT_NULLPTR, 0, EVT_NULLPTR)
+    CALL(btlevtcmd_GetPos, BTL_UNIT_SELF, LW(0), LW(1), LW(2))
     CALL(btlevtcmd_GetHitPos, LW(3), LW(4), LW(13), LW(6), LW(7))
     SET_VALUE(LW(8), 9)
     LOOP(LW(8))
         CALL(bts_wariai_enzan_1, LW(8), 9, LW(0), LW(13), LW(10))
         CALL(bts_wariai_enzan_1, LW(8), 9, LW(1), LW(6), LW(11))
         CALL(bts_wariai_enzan_1, LW(8), 9, LW(2), LW(7), LW(12))
-        CALL(btlevtcmd_SetPos, -2, LW(10), LW(11), LW(12))
+        // It dashes toward the target in a straight line.
+        CALL(btlevtcmd_SetPos, BTL_UNIT_SELF, LW(10), LW(11), LW(12))
         WAIT_FRAMES(1)
     END_LOOP
     SUBTRACT(LW(13), LW(0))
@@ -380,11 +386,12 @@ EVT_BEGIN(batten_satellite_attack_attack_event)
             CALL(bts_wariai_enzan_1, LW(8), 4, LW(0), LW(13), LW(10))
             CALL(bts_wariai_enzan_1, LW(8), 4, LW(1), LW(6), LW(11))
             CALL(bts_wariai_enzan_1, LW(8), 4, LW(2), LW(7), LW(12))
-            CALL(btlevtcmd_SetPos, -2, LW(10), LW(11), LW(12))
+            CALL(btlevtcmd_SetPos, BTL_UNIT_SELF, LW(10), LW(11), LW(12))
             WAIT_FRAMES(1)
         END_LOOP
     END_SIBLING_EVENT
-    CALL(btlevtcmd_PreCheckDamage, -2, LW(3), LW(4), LW(9), 256, LW(5))
+    // Find out whether the attack will connect or miss.
+    CALL(btlevtcmd_PreCheckDamage, BTL_UNIT_SELF, LW(3), LW(4), LW(9), DAMAGE_FLAG_LAST_HIT, LW(5))
     SWITCH(LW(5))
         CASE_OR_EQUAL(4)
         GOTO(90)
@@ -406,31 +413,37 @@ EVT_BEGIN(batten_satellite_attack_attack_event)
         GOTO(98)
         CASE_END
     END_SWITCH
+    // The attack misses or is dodged.
     LABEL(90)
     GOTO(98)
+    // The attack connects.
     LABEL(91)
+    // Deal the damage, reduced by the action command defence.
     CALL(btlevtcmd_ResultACDefence, LW(3), LW(9))
-    CALL(btlevtcmd_CheckDamage, -2, LW(3), LW(4), LW(9), 256, LW(5))
+    CALL(btlevtcmd_CheckDamage, BTL_UNIT_SELF, LW(3), LW(4), LW(9), DAMAGE_FLAG_LAST_HIT, LW(5))
+    // Return to its place.
     LABEL(98)
-    CALL(btlevtcmd_snd_se, -2, STRING("SFX_BOSS_SATELLITE_ATTACK2"), -250000000, 0, -250000000)
-    CALL(btlevtcmd_GetHomePos, -2, LW(0), LW(1), LW(2))
+    CALL(btlevtcmd_snd_se, BTL_UNIT_SELF, STRING("SFX_BOSS_SATELLITE_ATTACK2"), EVT_NULLPTR, 0, EVT_NULLPTR)
+    CALL(btlevtcmd_GetHomePos, BTL_UNIT_SELF, LW(0), LW(1), LW(2))
     WAIT_MS(80)
     SET_VALUE(LW(8), 42)
     LOOP(LW(8))
         CALL(bts_wariai_enzan_1, LW(8), 42, LW(13), LW(0), LW(10))
         CALL(bts_wariai_enzan_1, LW(8), 42, LW(6), LW(1), LW(11))
         CALL(bts_wariai_enzan_1, LW(8), 42, LW(7), LW(2), LW(12))
-        CALL(btlevtcmd_SetPos, -2, LW(10), LW(11), LW(12))
+        CALL(btlevtcmd_SetPos, BTL_UNIT_SELF, LW(10), LW(11), LW(12))
         WAIT_FRAMES(1)
     END_LOOP
     RETURN
 EVT_END()
 
+/** Wait event of the Grodus satellite: plays its idle pose from the pose table. */
 static EVT_BEGIN(wait_event)
-    CALL(btlevtcmd_AnimeChangePoseFromTable, -2, 1)
+    CALL(btlevtcmd_AnimeChangePoseFromTable, BTL_UNIT_SELF, 1)
     RETURN
 EVT_END()
 
+/** Script helper: blocks until the shared satellite counter bts_x_flag_data equals args[0]. */
 USER_FUNC(bts_x_flag_wait) {
     s32 v = evtGetValue(event, event->args[0]);
 
@@ -440,21 +453,30 @@ USER_FUNC(bts_x_flag_wait) {
     return EVT_RETURN_BLOCK;
 }
 
-USER_FUNC(bts_x_flag_get) {
+/** Script helper: returns the shared satellite counter bts_x_flag_data in args[0]. */
+static USER_FUNC(bts_x_flag_get) {
     evtSetValue(event, event->args[0], bts_x_flag_data);
     return EVT_RETURN_DONE;
 }
 
+/** Script helper: adds args[0] to the shared satellite counter bts_x_flag_data. */
 USER_FUNC(bts_x_flag_add) {
     bts_x_flag_data += evtGetValue(event, event->args[0]);
     return EVT_RETURN_DONE;
 }
 
+/** Script helper: sets the shared satellite counter bts_x_flag_data to args[0]. */
 USER_FUNC(bts_x_flag_set) {
     bts_x_flag_data = evtGetValue(event, event->args[0]);
     return EVT_RETURN_DONE;
 }
 
+/**
+ * Script helper ("wariai" is ratio): float version.
+ * Computes (a*c + d*(b-a)) / b with a = args[0] - 1 and b = args[1]
+ * - 1, c = args[2] and d = args[3], and returns it as a float in args[4]; a mixing ratio used to place satellite
+ * afterimages.
+ */
 static USER_FUNC(bts_wariai_enzan_0f) {
     EvtWord* args = event->args;
     f32 a = evtGetFloat(event, args[0]) - 1.0f;
@@ -466,6 +488,7 @@ static USER_FUNC(bts_wariai_enzan_0f) {
     return EVT_RETURN_DONE;
 }
 
+/** Script helper: the same mixing ratio as bts_wariai_enzan_0f but stores the result as an integer in args[4]. */
 static USER_FUNC(bts_wariai_enzan_0) {
     EvtWord* args = event->args;
     f32 a = evtGetFloat(event, args[0]) - 1.0f;
@@ -477,7 +500,12 @@ static USER_FUNC(bts_wariai_enzan_0) {
     return EVT_RETURN_DONE;
 }
 
-USER_FUNC(bts_wariai_enzan_1f_intpl_w) {
+/**
+ * Script helper: two-stage ramp blend between c = args[2] and d = args[3]:
+ * the weights r1 (from time args[5]) and r2 (from time args[6]) each rise from 0 to 1 and fall back
+ * after 14 frames, and the result c * (1 - w) + d * w with w = r1 * r2 is returned as a float in args[4].
+ */
+static USER_FUNC(bts_wariai_enzan_1f_intpl_w) {
     EvtWord* args = event->args;
     f32 a = evtGetFloat(event, args[0]) - 1.0f;
     f32 b = evtGetFloat(event, args[1]);
@@ -496,9 +524,9 @@ USER_FUNC(bts_wariai_enzan_1f_intpl_w) {
             evtSetFloat(event, out, c);
             return EVT_RETURN_DONE;
         }
-        r1 = 1.0f - intplGetValue(t1, b - a, 1.0f, 0.0f, b);
+        r1 = 1.0f - intplGetValue(t1, 1.0f, 0.0f, b - a, b);
     } else {
-        r1 = intplGetValue(t1, b - a, 0.0f, 1.0f, b);
+        r1 = intplGetValue(t1, 0.0f, 1.0f, b - a, b);
     }
     if (t2 >= 14.0f) {
         t2 = t1 - 14.0f;
@@ -506,15 +534,20 @@ USER_FUNC(bts_wariai_enzan_1f_intpl_w) {
             evtSetFloat(event, out, c);
             return EVT_RETURN_DONE;
         }
-        r2 = 1.0f - intplGetValue(t2, b - a, 1.0f, 0.0f, b);
+        r2 = 1.0f - intplGetValue(t2, 1.0f, 0.0f, b - a, b);
     } else {
-        r2 = intplGetValue(t2, b - a, 0.0f, 1.0f, b);
+        r2 = intplGetValue(t2, 0.0f, 1.0f, b - a, b);
     }
     w = r1 * r2;
     evtSetFloat(event, out, c * (1.0f - w) + d * w);
     return EVT_RETURN_DONE;
 }
 
+/**
+ * Script helper: single-stage ramp blend between c = args[2]
+ * and d = args[3] with the weight rising over the first 14 frames of args[5] and falling again over the next 14;
+ * returns the float in args[4], c after 28 frames.
+ */
 static USER_FUNC(bts_wariai_enzan_1f_intpl) {
     EvtWord* args = event->args;
     f32 a = evtGetFloat(event, args[0]) - 1.0f;
@@ -531,14 +564,18 @@ static USER_FUNC(bts_wariai_enzan_1f_intpl) {
             evtSetFloat(event, out, c);
             return EVT_RETURN_DONE;
         }
-        r = 1.0f - intplGetValue(t, b - a, 1.0f, 0.0f, b);
+        r = 1.0f - intplGetValue(t, 1.0f, 0.0f, b - a, b);
     } else {
-        r = intplGetValue(t, b - a, 0.0f, 1.0f, b);
+        r = intplGetValue(t, 0.0f, 1.0f, b - a, b);
     }
     evtSetFloat(event, out, (1.0f - r) * c + r * d);
     return EVT_RETURN_DONE;
 }
 
+/**
+ * Script helper: float ratio mix (a*c + d*(b-a)) / b with a = args[0] - 1, b = args[1], c = args[2],
+ * d = args[3], returned in args[4].
+ */
 static USER_FUNC(bts_wariai_enzan_1f) {
     EvtWord* args = event->args;
     f32 a = evtGetFloat(event, args[0]) - 1.0f;
@@ -550,6 +587,7 @@ static USER_FUNC(bts_wariai_enzan_1f) {
     return EVT_RETURN_DONE;
 }
 
+/** Script helper: the same mix as bts_wariai_enzan_1f but returned as an integer in args[4]. */
 static USER_FUNC(bts_wariai_enzan_1) {
     EvtWord* args = event->args;
     f32 a = evtGetFloat(event, args[0]) - 1.0f;

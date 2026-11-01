@@ -731,6 +731,34 @@ gradle wrapper --gradle-version 8.12   # once; or run an installed gradle direct
   returning from `SDL_main`.
 - Touch layout editing, haptics on touch, per-game button hints.
 
+## The game code and the decomp
+
+The game code (src/, rels/, include/, libs/, config/, configure.py and the
+decomp's tools) is [LLCOOLT/ttyd](https://github.com/LLCOOLT/ttyd) as it is,
+plus the port's changes, nearly all inside `#ifdef TARGET_PC`.
+
+- **Branch `decomp-vendor`** holds the decomp's files exactly, one commit per
+  decomp update (now `pal-decomp` bb1fe46fd). `main` merges it, so an update
+  is: commit the decomp's files on `decomp-vendor`, merge it into `main`, and
+  resolve in the decomp's favour (its code wins; a port change is put back on
+  top of it or dropped when the decomp made it unnecessary).
+- **The 2026-10-30 integration** (decomp 85ac972be to bb1fe46fd: the cleanup,
+  PAL and two demos) was too large to merge hunk by hunk.
+  `tools/port/integration/reapply_port.py` placed the port's changes it could
+  place exactly; the rest were merged by hand. `port/integration/ledger.tsv`
+  records every one of the port's 3,257 game-file hunks and what became of it
+  (placed, re-applied, rewritten, or obsolete with the decomp change that
+  covers it); `port/integration/decomp_notes.md` lists what the decomp could
+  take back.
+- **The checks that keep the port honest:** the GameCube builds still match
+  (local CI's `gamecube` stage: the port's changes do not touch GameCube code),
+  `proto_audit` (prototypes against definitions, per version), the pointer-width
+  audit build and `fncast_audit`, `tools/check_versions.py` (no per-version
+  macros in game code), and the map sweep with golden audio.
+- **Versions:** the decomp builds JP, US, PAL (G8MP01) and the US and JP demos.
+  The port builds JP and US; `port/sources_<version>.cmake` exist for all five
+  (from each version's splits), the rest of the port follows.
+
 ## Web
 
 A spike: the game built as WebAssembly with Emscripten, headless, run in

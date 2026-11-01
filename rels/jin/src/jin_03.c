@@ -1,145 +1,128 @@
+// jin_03 (ダイム寺院, Creepy Steeple): staircase room joining jin_00, jin_01 and jin_02,
+// with a spinning (kururin) floor tile.
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
 #include "evt/evt_bero.h"
+#include "evt/evt_hit.h"
+#include "evt/evt_map.h"
+#include "evt/evt_mobj.h"
+#include "evt/evt_snd.h"
 #include "jin.h"
+#include "evt/evt_story.h"
+#include "driver/mapdrv.h"
 
-#pragma force_active on
-
-USER_FUNC(evt_bero_get_info);
-USER_FUNC(evt_hitobj_onoff);
-USER_FUNC(evt_kagemario_init);
-USER_FUNC(evt_mapobj_flag_onoff);
-USER_FUNC(evt_mapobj_rotate);
-USER_FUNC(evt_mobj_kururing_floor);
-USER_FUNC(evt_snd_bgmon);
-USER_FUNC(evt_snd_envon);
-USER_FUNC(evt_snd_set_rev_mode);
-
-f32 fd_jin_03_negone_one_374[2] __attribute__((aligned(8)));
-f32 fd_jin_03_neg_one_382;
-f32 fd_jin_03___local_PI_383;
-f32 fd_jin_03___local_3PIO2_385;
-f32 fd_jin_03_one_negone_373[2] __attribute__((aligned(8)));
-f32 fd_jin_03___local_PIO2_384;
-f32 fd_jin_03_one_381;
-f32 fd_jin_03_negone_one_360[2] __attribute__((aligned(8)));
-f32 fd_jin_03_neg_one_365;
-f32 fd_jin_03___local_PI_366;
-f32 fd_jin_03___local_3PIO2_368;
-f32 fd_jin_03_one_negone_359[2] __attribute__((aligned(8)));
-f32 fd_jin_03___local_PIO2_367;
-f32 fd_jin_03_one_364;
-static EvtWord n_close[12];
-static EvtWord n_open[12];
-static EvtWord s_close[12];
-static EvtWord s_open[12];
-static EvtWord w1_close[12];
-static EvtWord w1_open[12];
-static EvtWord w2_close[12];
-static EvtWord w2_open[12];
-EvtWord w3_close[12];
-EvtWord w3_open[12];
+extern EvtWord w3_close[];
+extern EvtWord w3_open[];
 static BeroEntry bero_entry_data[6];
-EvtWord jin_03_kaidan_temae_kesu[13];
-EvtWord jin_03_kaidan_naka_kesu[13];
-EvtWord jin_03_kaidan_oku_kesu[13];
-EvtWord jin_03_init_evt[55];
+extern EvtWord jin_03_kaidan_temae_kesu[];
+extern EvtWord jin_03_kaidan_naka_kesu[];
+extern EvtWord jin_03_kaidan_oku_kesu[];
 
-f32 fd_jin_03_negone_one_374[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_jin_03_neg_one_382 = -1.0f;
-
-f32 fd_jin_03___local_PI_383 = 3.1415927f;
-
-f32 fd_jin_03___local_3PIO2_385 = 4.712389f;
-
-f32 fd_jin_03_one_negone_373[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_jin_03___local_PIO2_384 = 1.5707964f;
-
-f32 fd_jin_03_one_381 = 1.0f;
-
-f32 fd_jin_03_negone_one_360[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_jin_03_neg_one_365 = -1.0f;
-
-f32 fd_jin_03___local_PI_366 = 3.1415927f;
-
-f32 fd_jin_03___local_3PIO2_368 = 4.712389f;
-
-f32 fd_jin_03_one_negone_359[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_jin_03___local_PIO2_367 = 1.5707964f;
-
-f32 fd_jin_03_one_364 = 1.0f;
-
+/**
+ * Door animation callback: closes door01 as Mario arrives through n_bero (from jin_01);
+ * LW(0) is the door angle and the door turns around Y by 0.44 times it, negated.
+ */
 static EVT_BEGIN(n_close)
     MULTIPLY_FLOAT(LW(0), FLOAT(-0.44433594f))
     CALL(evt_mapobj_rotate, 0, STRING("door01"), 0, LW(0), 0)
     RETURN
 EVT_END()
 
+/**
+ * Door animation callback: opens door01 as Mario leaves through n_bero (to jin_01);
+ * LW(0) is the door angle and the door turns around Y by 0.44 times it.
+ */
 static EVT_BEGIN(n_open)
     MULTIPLY_FLOAT(LW(0), FLOAT(0.44433594f))
     CALL(evt_mapobj_rotate, 0, STRING("door01"), 0, LW(0), 0)
     RETURN
 EVT_END()
 
+/**
+ * Door animation callback: closes door02 as Mario arrives through s_bero (from jin_02);
+ * LW(0) is the door angle and the door turns around Y by 0.44 times it.
+ */
 static EVT_BEGIN(s_close)
     MULTIPLY_FLOAT(LW(0), FLOAT(0.44433594f))
     CALL(evt_mapobj_rotate, 0, STRING("door02"), 0, LW(0), 0)
     RETURN
 EVT_END()
 
+/**
+ * Door animation callback: opens door02 as Mario leaves through s_bero (to jin_02);
+ * LW(0) is the door angle and the door turns around Y by 0.44 times it, negated.
+ */
 static EVT_BEGIN(s_open)
     MULTIPLY_FLOAT(LW(0), FLOAT(-0.44433594f))
     CALL(evt_mapobj_rotate, 0, STRING("door02"), 0, LW(0), 0)
     RETURN
 EVT_END()
 
+/**
+ * Door animation callback: closes door00A as Mario arrives through w_bero3 (from jin_00);
+ * LW(0) is the door angle and the door turns around Y by 0.44 times it.
+ */
 static EVT_BEGIN(w1_close)
     MULTIPLY_FLOAT(LW(0), FLOAT(0.44433594f))
     CALL(evt_mapobj_rotate, 0, STRING("door00A"), 0, LW(0), 0)
     RETURN
 EVT_END()
 
+/**
+ * Door animation callback: opens door00A as Mario leaves through w_bero3 (to jin_00);
+ * LW(0) is the door angle and the door turns around Y by 0.44 times it, negated.
+ */
 static EVT_BEGIN(w1_open)
     MULTIPLY_FLOAT(LW(0), FLOAT(-0.44433594f))
     CALL(evt_mapobj_rotate, 0, STRING("door00A"), 0, LW(0), 0)
     RETURN
 EVT_END()
 
+/**
+ * Door animation callback: closes door00B as Mario arrives through w_bero2 (from jin_00);
+ * LW(0) is the door angle and the door turns around Y by 0.44 times it.
+ */
 static EVT_BEGIN(w2_close)
     MULTIPLY_FLOAT(LW(0), FLOAT(0.44433594f))
     CALL(evt_mapobj_rotate, 0, STRING("door00B"), 0, LW(0), 0)
     RETURN
 EVT_END()
 
+/**
+ * Door animation callback: opens door00B as Mario leaves through w_bero2 (to jin_00);
+ * LW(0) is the door angle and the door turns around Y by 0.44 times it, negated.
+ */
 static EVT_BEGIN(w2_open)
     MULTIPLY_FLOAT(LW(0), FLOAT(-0.44433594f))
     CALL(evt_mapobj_rotate, 0, STRING("door00B"), 0, LW(0), 0)
     RETURN
 EVT_END()
 
+/** Door animation callback for the door00C door's closing: rotates it by 0.444 times the value in LW(0). */
 EVT_BEGIN(w3_close)
     MULTIPLY_FLOAT(LW(0), FLOAT(0.44433594f))
     CALL(evt_mapobj_rotate, 0, STRING("door00C"), 0, LW(0), 0)
     RETURN
 EVT_END()
 
+/** Door animation callback for the door00C door's opening: rotates it by -0.444 times the value in LW(0). */
 EVT_BEGIN(w3_open)
     MULTIPLY_FLOAT(LW(0), FLOAT(-0.44433594f))
     CALL(evt_mapobj_rotate, 0, STRING("door00C"), 0, LW(0), 0)
     RETURN
 EVT_END()
 
+/**
+ * Doors of this room: the north exit (n_bero) to jin_01, the south exit (s_bero) to jin_02, the west exit
+ * (w_bero3) to jin_00, the west exit (w_bero1) to jin_00 and the west exit (w_bero2) to jin_00.
+ */
 static BeroEntry bero_entry_data[] = {
     {
         "n_bero", // hitName
         1, // type
         2, // sfxId
-        20000, // directionId
-        100000, // centerPosition
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         NULL, // enterEvent
@@ -156,8 +139,8 @@ static BeroEntry bero_entry_data[] = {
         "s_bero", // hitName
         1, // type
         2, // sfxId
-        20000, // directionId
-        100000, // centerPosition
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         NULL, // enterEvent
@@ -174,8 +157,8 @@ static BeroEntry bero_entry_data[] = {
         "w_bero3", // hitName
         1, // type
         2, // sfxId
-        20000, // directionId
-        100000, // centerPosition
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         NULL, // enterEvent
@@ -192,8 +175,8 @@ static BeroEntry bero_entry_data[] = {
         "w_bero1", // hitName
         1, // type
         2, // sfxId
-        20000, // directionId
-        100000, // centerPosition
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         NULL, // enterEvent
@@ -210,8 +193,8 @@ static BeroEntry bero_entry_data[] = {
         "w_bero2", // hitName
         1, // type
         2, // sfxId
-        20000, // directionId
-        100000, // centerPosition
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         NULL, // enterEvent
@@ -227,46 +210,53 @@ static BeroEntry bero_entry_data[] = {
     {0},
 };
 
+/** Hides the first staircase section (kaidan01) and its collision. */
 EVT_BEGIN(jin_03_kaidan_temae_kesu)
-    CALL(evt_mapobj_flag_onoff, 1, 1, STRING("kaidan01"), 1)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("kaidan01"), MAPOBJ_FLAG_HIDE)
     CALL(evt_hitobj_onoff, STRING("a_kaidan01"), 1, 0)
     RETURN
 EVT_END()
 
+/** Hides the middle staircase section (kaidan02) and its collision. */
 EVT_BEGIN(jin_03_kaidan_naka_kesu)
-    CALL(evt_mapobj_flag_onoff, 1, 1, STRING("kaidan02"), 1)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("kaidan02"), MAPOBJ_FLAG_HIDE)
     CALL(evt_hitobj_onoff, STRING("a_kaidan02"), 1, 0)
     RETURN
 EVT_END()
 
+/** Hides the last staircase section (kaidan03) and its collision. */
 EVT_BEGIN(jin_03_kaidan_oku_kesu)
-    CALL(evt_mapobj_flag_onoff, 1, 1, STRING("kaidan03"), 1)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("kaidan03"), MAPOBJ_FLAG_HIDE)
     CALL(evt_hitobj_onoff, STRING("a_kaidan03"), 1, 0)
     RETURN
 EVT_END()
 
+/**
+ * Creepy Steeple jin_03 map init: starts the steeple music and reverb, the shadow-Mario tint and the exits,
+ * hides two of the three staircase sections according to the stair stage LSW(1) (set by the switches in jin_01
+ * and jin_02) and adds the spinning floor tile that hides a Star Piece.
+ */
 EVT_BEGIN(jin_03_init_evt)
-    CALL(evt_snd_bgmon, 512, STRING("BGM_STG4_JIN1"))
-    CALL(evt_snd_envon, 272, STRING("ENV_STG4_JIN1"))
+    CALL(evt_snd_bgmon, PSND_FADE_OUT, STRING("BGM_STG4_JIN1"))
+    CALL(evt_snd_envon, PSND_FADE_RESTART | PSND_FADE_IN, STRING("ENV_STG4_JIN1"))
     CALL(evt_snd_set_rev_mode, 2)
     CALL(evt_kagemario_init)
     SET_VALUE(LW(0), PTR(bero_entry_data))
     CALL(evt_bero_get_info)
-    CALL_CHILD(PTR(evt_bero_info_run))
-    CALL_CHILD(PTR(evt_usu_kagemario_party_kill))
+    CALL_CHILD(evt_bero_info_run)
+    CALL_CHILD(evt_usu_kagemario_party_kill)
     IF_INT_EQUAL(LSW(1), 0)
-        SPAWN_EVENT(PTR(jin_03_kaidan_temae_kesu))
-        SPAWN_EVENT(PTR(jin_03_kaidan_oku_kesu))
-        ELSE
+        SPAWN_EVENT(jin_03_kaidan_temae_kesu)
+        SPAWN_EVENT(jin_03_kaidan_oku_kesu)
+    ELSE
         IF_INT_EQUAL(LSW(1), 1)
-            SPAWN_EVENT(PTR(jin_03_kaidan_naka_kesu))
-            SPAWN_EVENT(PTR(jin_03_kaidan_oku_kesu))
-            ELSE
-            SPAWN_EVENT(PTR(jin_03_kaidan_temae_kesu))
-            SPAWN_EVENT(PTR(jin_03_kaidan_naka_kesu))
+            SPAWN_EVENT(jin_03_kaidan_naka_kesu)
+            SPAWN_EVENT(jin_03_kaidan_oku_kesu)
+        ELSE
+            SPAWN_EVENT(jin_03_kaidan_temae_kesu)
+            SPAWN_EVENT(jin_03_kaidan_naka_kesu)
         END_IF
     END_IF
-    CALL(evt_mobj_kururing_floor, STRING("kururin1"), 125, 0, 0, STRING("S_yuka\0"), 125, GSWF(5634))
+    CALL(evt_mobj_kururing_floor, STRING("kururin1"), 125, 0, 0, STRING("S_yuka"), 125, GSWF(GSWF_JIN03_STAR_PIECE_PANEL))
     RETURN
 EVT_END()
-

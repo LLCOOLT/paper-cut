@@ -1,3 +1,4 @@
+// bgdrv.c: the background driver (BackgroundWork, bgEntry/bgSetColor): the backdrop behind a map or battle stage.
 #pragma once
 
 #include <dolphin/gx.h>
@@ -7,22 +8,24 @@
 #define PORT_ENUM_BASE(type)
 #endif
 typedef enum BackgroundFlags PORT_ENUM_BASE(int) {
-	BG_RENDERING = (1 << 0),
-	BG_DO_MULTIPLY = (1 << 1),
-	BG_NO_AUTOSCROLL = (1 << 2),
-	BG_NO_TRANSLATION = (1 << 3)
+    BG_RENDERING = (1 << 0),
+    // no texture (bgEntry found no file): draws a flat quad in the multiply colour (green), tinted like the
+    // texture would be
+    BG_FLAT_COLOR = (1 << 1),
+    BG_NO_AUTOSCROLL = (1 << 2),
+    BG_NO_TRANSLATION = (1 << 3)
 } BackgroundFlags;
 
 typedef struct BackgroundWork {
-	u16 flags; //0x0
-	u8 align2[2]; //0x2
-	f32 trans_x; //0x4
-	f32 trans_y; //0x8
-	f32 scrl_x; //0xC
-	f32 scrl_y; //0x10
-	GXColor color; //0x14
-	GXColor multiply; //0x18, see BG_DO_MULTIPLY
-	void* data; //0x1C
+    u16 flags;        // 0x0
+    u8 align2[2];     // 0x2
+    f32 trans_x;      // 0x4
+    f32 trans_y;      // 0x8
+    f32 scrl_x;       // 0xC
+    f32 scrl_y;       // 0x10
+    GXColor color;    // 0x14
+    GXColor multiply; // 0x18, the flat colour drawn under BG_FLAT_COLOR
+    void* data;       // 0x1C
 } BackgroundWork;
 
 void bgInit(void);

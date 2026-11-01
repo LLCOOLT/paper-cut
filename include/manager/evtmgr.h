@@ -1,3 +1,4 @@
+// evtmgr.c: the event (script) manager: EventEntry, EventOpcode, the LW/LF/GW/GF banks and the script run loop.
 #pragma once
 
 #include "evt/evt_word.h"
@@ -11,6 +12,14 @@
  * that size as a fixed underlying type (": u8"). */
 #define PORT_ENUM_BASE(type)
 #endif
+// Sizes of an event's variable banks and nesting stacks.
+#define EVT_LW_COUNT 16    // LW(0)..LW(15): local words of one event
+#define EVT_LF_COUNT 96    // LF(0)..LF(95): local flags of one event, 32 per word
+#define EVT_GW_COUNT 32    // GW(0)..GW(31): global words shared by all events
+#define EVT_GF_COUNT 96    // GF(0)..GF(95): global flags, 32 per word
+#define EVT_LOOP_DEPTH 8   // nested DO loops one event can run
+#define EVT_SWITCH_DEPTH 8 // nested SWITCH blocks one event can run
+
 #pragma enumsalwaysint off
 typedef enum EventOpcode PORT_ENUM_BASE(u8) {
     OPCODE_NEXT = 0,
@@ -139,7 +148,7 @@ typedef struct EventEntry EventEntry;
 
 typedef s32 (*UserFunction)(EventEntry* evt, BOOL blocked);
 
-// TODO: s32, see evtRestart
+// One script command: the header word (opcode in the low half, parameter count in the high half), then the label.
 typedef struct EventCommand {
     union {
         s32 header;
@@ -151,7 +160,6 @@ typedef struct EventCommand {
     s32 label;
 } EventCommand;
 
-// unknown, TODO: look at evt_msg_toge/_evt_msg_print
 typedef struct EventEntryMsg {
     f32 x; // 0x0
     f32 y; // 0x4
@@ -161,7 +169,8 @@ typedef enum EventEntry_Flags PORT_ENUM_BASE(int) {
     EVENT_ACTIVE = (1 << 0),
     EVENT_STOPPED = (1 << 1),
 
-    EVENT_WAITING_ON_CHILD = (1 << 4)
+    EVENT_WAITING_ON_CHILD = (1 << 4),
+    EVENT_START_NOW = (1 << 5), // started from inside evtmgrMain: evtEntry adds it to the current frame's run table
 } EventEntry_Flags;
 
 struct EventEntry {
@@ -195,12 +204,12 @@ struct EventEntry {
             union {
                 u32 userdata3;
                 f32 userdata3f;
-            };                         // 0x84, 4th scratch word after userdata[3] (state/counter/window id/float z/saved flags)
+            }; // 0x84, 4th scratch word after userdata[3] (state/counter/window id/float z/saved flags)
             union {
                 OSTime wInterpRelatedTime; // 0x88
                 s32* wInterpWork;          // 0x88, some user funcs keep a work block pointer here instead
             };
-            u32 field_0x90[2];         // 0x90, unknown
+            u32 userdataTail[2]; // 0x90, last two scratch words (only used through userWork)
 #ifdef TARGET_PC
             /* PC port: the float view of userdata[] gets its own words. A userdata
              * word is 8 bytes here, so in the union userdataf[2] would land inside
@@ -221,9 +230,9 @@ struct EventEntry {
             s32 stop;                // 0x8C, set by _disp_heart_entry_stop
             s32 unitId;              // 0x90
             s32 partId;              // 0x94
-        } heart; // 0x78, Vivian's heart icon (_disp_heart_entry)
+        } heart;                     // 0x78, Vivian's heart icon (_disp_heart_entry)
     };
-    UserFunction userfunc;     // 0x98
+    UserFunction userfunc; // 0x98
 #ifdef TARGET_PC
     /* PC port: lwData words are 8 bytes, so a 4-byte float view in the union
      * would put lwDataF[k] inside LW(k/2); C code that keeps private floats there
@@ -232,16 +241,16 @@ struct EventEntry {
     f32 lwDataF[16];
 #else
     union {
-        EvtWord lwData[16];    // 0x9C, validated
-        f32 lwDataF[16];       // 0x9C, the same words used as floats
+        EvtWord lwData[EVT_LW_COUNT]; // 0x9C, validated
+        f32 lwDataF[EVT_LW_COUNT];    // 0x9C, the same words used as floats
     };
 #endif
-    s32 lfData[3];             // 0xDC, validated
-    void* loopStartPtrs[8];    // 0xE8
-    EvtWord loopCounters[8];   // 0x108
-    s8 switchStates[8];        // 0x128, validated
-    EvtWord switchValues[8];   // 0x130, validated
-    union {                    // Current addr for read/readf instructions
+    s32 lfData[EVT_LF_COUNT / 32];          // 0xDC, validated
+    void* loopStartPtrs[EVT_LOOP_DEPTH];    // 0xE8
+    EvtWord loopCounters[EVT_LOOP_DEPTH];   // 0x108
+    s8 switchStates[EVT_SWITCH_DEPTH];      // 0x128, validated
+    EvtWord switchValues[EVT_SWITCH_DEPTH]; // 0x130, validated
+    union {                                 // Current addr for read/readf instructions
         EvtWord* readAddr;
         f32* readfAddr;
     }; // 0x150
@@ -250,7 +259,7 @@ struct EventEntry {
     s32 eventId;                // 0x15C, validated
     s32 unitId;                 // 0x160
     f32 timescale;              // 0x164, number of instructions per frame
-    f32 commandsLeft;           // 0x168, TODO rename/retype
+    f32 commandsLeft;           // 0x168, instruction budget carried between frames (timescale accumulator)
     s32 caseId;                 // 0x16C
     NpcEntry* ownerNPC;         // 0x170, verified
     MapObjectEntry* thisMapObj; // 0x174, verified
@@ -259,30 +268,30 @@ struct EventEntry {
     u32 printWindowFlags;       // 0x180, verified, is u32, does use 0x80000000
     union {
         struct {
-            EventEntryMsg msgPos;       // 0x184, message window x,y (z is msgPosZ): evt_msg.c copies it to win->pos
+            EventEntryMsg msgPos; // 0x184, message window x,y (z is msgPosZ): evt_msg.c copies it to win->pos
             union {
-                u32 msgPosZ;            // 0x18C, message window z (copied as a word by evtmgr)
-                f32 msgPosZf;           // 0x18C, the same z as a float (evt_msg_toge)
+                u32 msgPosZ;  // 0x18C, message window z (copied as a word by evtmgr)
+                f32 msgPosZf; // 0x18C, the same z as a float (evt_msg_toge)
             };
         };
-        Vec msgPosVec;                  // 0x184, x/y/z as one Vec (evt_msg speaker position)
+        Vec msgPosVec; // 0x184, x/y/z as one Vec (evt_msg speaker position)
     };
-    u32 msgPriority;            // 0x190
-    u32 field_0x194;            // 0x194
-    OSTime savedTime;           // 0x198, TODO rename
-    void* restartFrom;          // 0x1A0, validated
-    const char* name;           // 0x1A4
-    void* currCommand;          // 0x1A8
-    u32 field_0x1AC;            // 0x1AC
+    u32 msgPriority;   // 0x190
+    u32 pad_194;       // 0x194, aligns savedTime
+    OSTime savedTime;  // 0x198, start time of a timed wait
+    void* restartFrom; // 0x1A0, validated
+    const char* name;  // 0x1A4
+    void* currCommand; // 0x1A8
+    u32 pad_1AC;       // 0x1AC, pads to the 8-byte alignment
 };
 
 typedef struct EventWork {
-    s32 count;           // 0x0
-    EvtWord gwData[32];  // 0x4
-    s32 gfData[3];       // 0x84
-    EventEntry* entries; // 0x90
-    u32 pad_94;      // 0x94
-    OSTime lastUpdate;   // 0x98
+    s32 count;                     // 0x0
+    EvtWord gwData[EVT_GW_COUNT];  // 0x4
+    s32 gfData[EVT_GF_COUNT / 32]; // 0x84
+    EventEntry* entries;           // 0x90
+    u32 pad_94;                    // 0x94
+    OSTime lastUpdate;             // 0x98
 } EventWork;
 
 EventWork* evtGetWork(void);

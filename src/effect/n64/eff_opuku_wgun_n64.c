@@ -1,3 +1,5 @@
+// Paper Mario 64 effect: water gun (wgun) shot from one point toward another.
+#include "eff/n64/eff_opuku_wgun_n64.h"
 #include "system.h"
 #include "driver/camdrv.h"
 #include "driver/dispdrv.h"
@@ -7,22 +9,14 @@
 #include <dolphin/mtx.h>
 #include <dolphin/os/OSFastCast.h>
 #include <stdlib.h>
+#include "eff/eff_n64.h"
+#include "libc_decls.h"
+#include <dolphin/os.h>
 
-typedef struct effN64Vtx {
-    s16 x, y, z;   // 0x0
-    s16 s, t;      // 0x6
-    u8 r, g, b, a; // 0xA
-} effN64Vtx;
-
-void effGetTexObjN64(u32 id, GXTexObj* obj);
-void effSetVtxDescN64(effN64Vtx* vtx);
-void tri2();
-#ifndef TARGET_PC /* PC port: the host libc declares these */
-double sin(double);
-double cos(double);
-#endif
-
-static inline f32 dsin(f32 a) { return sin(6.2831855f * a / 360.0f); }
+/** Returns the sine of an angle given in degrees. */
+static inline f32 dsin(f32 a) {
+    return sin(6.2831855f * a / 360.0f);
+}
 typedef struct EffOpukuWgunN64Work {
     s32 type;        // 0x0
     Vec position;    // 0x4
@@ -51,32 +45,13 @@ typedef struct EffOpukuWgunN64Work {
     u8 alphas[12];   // 0x1D8
 } EffOpukuWgunN64Work;
 
-void effOpukuWgunMain(EffectEntry* effect);
-void effOpukuWgunDisp(CameraId cameraId, EffectEntry* effect);
+static void effOpukuWgunMain(EffectEntry* effect);
+static void effOpukuWgunDisp(CameraId cameraId, EffectEntry* effect);
 
-void DCFlushRange(void* addr, u32 nBytes);
-#ifndef TARGET_PC /* PC port: the SDK headers declare these (Aurora's signatures differ) */
-void GXBegin(GXPrimitive type, GXVtxFmt vtxfmt, u16 nverts);
-void GXInvalidateVtxCache(void);
-void GXLoadPosMtxImm(const f32 mtx[3][4], u32 id);
-void GXLoadTexMtxImm(const f32 mtx[][4], u32 id, GXTexMtxType type);
-void GXLoadTexObj(GXTexObj* obj, GXTexMapID id);
-void GXSetChanCtrl(GXChannelID chan, GXBool enable, GXColorSrc amb_src, GXColorSrc mat_src, u32 light_mask, GXDiffuseFn diff_fn, GXAttnFn attn_fn);
-void GXSetCullMode(GXCullMode mode);
-void GXSetCurrentMtx(u32 id);
-void GXSetNumChans(u8 nChans);
-void GXSetNumTevStages(u8 nStages);
-void GXSetNumTexGens(u8 nTexGens);
-void GXSetTevAlphaIn(GXTevStageID stage, GXTevAlphaArg a, GXTevAlphaArg b, GXTevAlphaArg c, GXTevAlphaArg d);
-void GXSetTevAlphaOp(GXTevStageID stage, GXTevOp op, GXTevBias bias, GXTevScale scale, GXBool clamp, GXTevRegID out_reg);
-void GXSetTevColor(GXTevRegID id, GXColor color);
-void GXSetTevColorIn(GXTevStageID stage, GXTevColorArg a, GXTevColorArg b, GXTevColorArg c, GXTevColorArg d);
-void GXSetTevColorOp(GXTevStageID stage, GXTevOp op, GXTevBias bias, GXTevScale scale, GXBool clamp, GXTevRegID out_reg);
-void GXSetTevOrder(GXTevStageID stage, GXTexCoordID coord, GXTexMapID map, GXChannelID color);
-void GXSetTexCoordGen2(GXTexCoordID dst_coord, GXTexGenType func, GXTexGenSrc src_param, u32 mtx, GXBool normalize, u32 pt_texmtx);
-void PSMTXMultVec(const Mtx m, const Vec* src, Vec* dst);
-void PSMTXScale(Mtx m, f32 xS, f32 yS, f32 zS);
-#endif
+/**
+ * Spawns a water-gun shot from (x1, y1, z1) to (x2, y2, z2) living `lifetime` frames at `scale`.
+ * Spawned only by event scripts through evt_eff.
+ */
 EffectEntry* effOpukuWgunN64Entry(s32 type, s32 lifetime, f32 x1, f32 y1, f32 z1, f32 x2, f32 y2, f32 z2,
                                   f32 scale) {
     EffectEntry* effect;
@@ -85,12 +60,12 @@ EffectEntry* effOpukuWgunN64Entry(s32 type, s32 lifetime, f32 x1, f32 y1, f32 z1
     s32 k;
 
     effect = effEntry();
-    effect->type = "OpukuWgunN64\0\0\0";
+    effect->type = "OpukuWgunN64";
     effect->count = 1;
     work = __memAlloc(HEAP_EFFECT, sizeof(EffOpukuWgunN64Work));
     effect->userdata = work;
     effect->callback = effOpukuWgunMain;
-    effect->flags |= 2;
+    effect->flags |= EFFECT_FLAG_SOFT_DELETE;
     work->type = type;
     work->frame = 0;
     if (lifetime <= 0) {
@@ -140,7 +115,12 @@ EffectEntry* effOpukuWgunN64Entry(s32 type, s32 lifetime, f32 x1, f32 y1, f32 z1
     return effect;
 }
 
-void effOpukuWgunMain(EffectEntry* effect) {
+/**
+ * Releases the twelve ribbon points one after another
+ * and moves each from the start to the end point over the shot time (type 1 along a 120-unit arc, fading with
+ * progress).
+ */
+static void effOpukuWgunMain(EffectEntry* effect) {
     EffOpukuWgunN64Work* work = effect->userdata;
     Vec position;
     Vec tmp = {0.0f, 0.0f, 0.0f};
@@ -155,8 +135,8 @@ void effOpukuWgunMain(EffectEntry* effect) {
     tmp.z = work->position.z;
     position = tmp;
     type = work->type;
-    if (effect->flags & 4) {
-        effect->flags &= ~4;
+    if (effect->flags & EFFECT_FLAG_DELETE_REQUESTED) {
+        effect->flags &= ~EFFECT_FLAG_DELETE_REQUESTED;
         work->lifetime = 16;
     }
     if (work->lifetime < 1000) {
@@ -200,9 +180,16 @@ void effOpukuWgunMain(EffectEntry* effect) {
     dispEntry(CAMERA_3D, dispCalcZ(&position), 2, (DispCallback)effOpukuWgunDisp, effect);
 }
 
+/**
+ * Alpha of each of the twelve water-gun ribbon points: solid along the shot,
+ * fading over the last three at the tail.
+ */
 static u8 a_data[12] = {255, 255, 255, 255, 255, 255, 255, 255, 255, 200, 128, 32};
-void effOpukuWgunDisp(CameraId cameraId, EffectEntry* effect) {
-    s32 k;
+/**
+ * Builds a camera-view ribbon through the twelve points (width grows with each point age, texture 0x8D or 0x8E)
+ * and draws it as quads.
+ */
+static void effOpukuWgunDisp(CameraId cameraId, EffectEntry* effect) {
     CameraEntry* camera;
     EffOpukuWgunN64Work* work;
     Mtx scale;
@@ -260,8 +247,7 @@ void effOpukuWgunDisp(CameraId cameraId, EffectEntry* effect) {
         p->x = 20.0f * (work->x[i] + dx);
         p->y = 20.0f * (work->y[i] + dy);
         p->z = 20.0f * (work->z[i] + zero);
-        // FAKE: (u32)(i * 64) * 5 == i * 320 (the old k IV) for i in 0..11; the unsigned multiply is strength-reduced by the back-end loop pass, so no li k = 0 competes with the work IV copy in the block after smartAlloc (target order li r28 / mr r30)
-        p->s = (u32)(i * 64) * 5;
+        p->s = (i * 10) << 5;
         p->t = 0;
         p->r = (i & 1) * 255;
         p->g = ((i >> 1) & 1) * 255;
@@ -271,7 +257,7 @@ void effOpukuWgunDisp(CameraId cameraId, EffectEntry* effect) {
         p->x = 20.0f * (work->x[i] - dx);
         p->y = 20.0f * (work->y[i] - dy);
         p->z = 20.0f * (work->z[i] + zero);
-        p->s = (u32)(i * 64) * 5;
+        p->s = (i * 10) << 5;
         p->t = 1024;
         p->r = (i & 1) * 255;
         p->g = ((i >> 1) & 1) * 255;
@@ -351,5 +337,3 @@ void effOpukuWgunDisp(CameraId cameraId, EffectEntry* effect) {
         n += 2;
     }
 }
-
-

@@ -2,7 +2,7 @@
 /* The hookable functions of src/statuswindow.c: included at its end (PORT_MODS). */
 #include "port/hook_slot.h"
 
-void statusWinDisp(CameraId p0, void * p1) {
+static void statusWinDisp(CameraId p0, void * p1) {
     PortHookSlot* s = &portHookSlots[6];
     int i, skip = 0;
     if (!s->active) {

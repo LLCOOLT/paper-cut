@@ -1,3 +1,4 @@
+// Coin speech bubble (CoinFukidashi, fukidashi: speech balloon) showing a number; bobs up and down and fades in and out.
 #include "eff/eff_batfukidashi.h"
 #include "driver/dispdrv.h"
 #include "manager/fontmgr.h"
@@ -5,6 +6,10 @@
 #include <dolphin/gx.h>
 #include <dolphin/mtx.h>
 #include <stdio.h>
+#ifdef TARGET_PC /* PC port: the header's prototypes are skipped on PC (these are static here) */
+static void effCoinFukidashiMain(EffectEntry* effect);
+static void effCoinFukidashiDisp(CameraId cameraId, EffectEntry* effect);
+#endif
 
 typedef struct EffCoinFukidashiWork {
     s32 type;     // 0x0
@@ -22,20 +27,24 @@ static u8 offset_tbl[] = {
     0x28, 0x23, 0x1E, 0x19, 0x14, 0x0F, 0x0A, 0x06, 0x02, 0x00, 0x00, 0x00, 0x00, 0x01, 0x02, 0x04,
     0x06, 0x08, 0x0A, 0x0C, 0x0F, 0x11, 0x14, 0x16, 0x19, 0x1C, 0x1E, 0x21, 0x23, 0x25, 0x28, 0x28,
     0x28, 0x28, 0x28, 0x28, 0x28, 0x28, 0x28, 0x28, 0x28, 0x28, 0x28, 0x28, 0x28, 0x28, 0x28, 0x28,
-    0x28, 0x28, 0x28, 0x28, 0x28, 0x28, 0x28, 0x28, 0x28, 0x28, 0x28, 0x28, 0x28, 0, 0, 0 // FAKE: trailing zero padding to the original symbol size (never read)
+    0x28, 0x28, 0x28, 0x28, 0x28, 0x28, 0x28, 0x28, 0x28, 0x28, 0x28, 0x28, 0x28
 };
 
+/**
+ * Spawns the coin price bubble at (x, y, z) showing `number`; duration <= 0 keeps it until soft-deleted.
+ * Spawned by coin blocks (evt_mobj.c).
+ */
 EffectEntry* effCoinFukidashiEntry(s32 type, s32 number, s32 duration, f32 x, f32 y, f32 z) {
     EffectEntry* effect;
     EffCoinFukidashiWork* work;
 
     effect = effEntry();
-    effect->type = "CoinFukidashi\0\0";
+    effect->type = "CoinFukidashi";
     effect->count = 1;
     work = __memAlloc(HEAP_EFFECT, sizeof(EffCoinFukidashiWork) * effect->count);
     effect->userdata = work;
     effect->callback = effCoinFukidashiMain;
-    effect->flags |= 2;
+    effect->flags |= EFFECT_FLAG_SOFT_DELETE;
     work->type = type;
     work->position.x = x;
     work->position.y = y;
@@ -45,8 +54,7 @@ EffectEntry* effCoinFukidashiEntry(s32 type, s32 number, s32 duration, f32 x, f3
     work->number = number;
     if (duration <= 0) {
         work->timer = 1000;
-    }
-    else {
+    } else {
         work->timer = duration;
     }
     work->frame = 0;
@@ -54,15 +62,19 @@ EffectEntry* effCoinFukidashiEntry(s32 type, s32 number, s32 duration, f32 x, f3
     return effect;
 }
 
-void effCoinFukidashiMain(EffectEntry* effect) {
+/**
+ * Per frame: fades in (+16 alpha), bobs along offset_tbl (61-frame loop),
+ * and fades out over 16 frames once the duration runs out or a soft delete was requested.
+ */
+static void effCoinFukidashiMain(EffectEntry* effect) {
     EffCoinFukidashiWork* work = effect->userdata;
     Vec position;
 
-    position = (Vec){ work->position.x, work->position.y, work->position.z };
+    position = (Vec){work->position.x, work->position.y, work->position.z};
 
     // soft delete: start fading out
-    if (effect->flags & 4) {
-        effect->flags &= ~4;
+    if (effect->flags & EFFECT_FLAG_DELETE_REQUESTED) {
+        effect->flags &= ~EFFECT_FLAG_DELETE_REQUESTED;
         work->timer = 16;
     }
     if (work->timer < 1000) {
@@ -70,8 +82,7 @@ void effCoinFukidashiMain(EffectEntry* effect) {
     }
     if (work->timer < 16) {
         work->alpha = work->timer * 16;
-    }
-    else {
+    } else {
         work->alpha += 16;
         if (work->alpha > 255) {
             work->alpha = 255;
@@ -89,7 +100,8 @@ void effCoinFukidashiMain(EffectEntry* effect) {
     dispEntry(CAMERA_3D, dispCalcZ(&position), 2, (DispCallback)effCoinFukidashiDisp, effect);
 }
 
-void effCoinFukidashiDisp(CameraId cameraId, EffectEntry* effect) {
+/** Draws the camera-facing bubble sprite (texture 0x25) and then the number printed inside it. */
+static void effCoinFukidashiDisp(CameraId cameraId, EffectEntry* effect) {
     CameraEntry* camera;
     EffCoinFukidashiWork* work;
     s32 alpha;
@@ -114,7 +126,7 @@ void effCoinFukidashiDisp(CameraId cameraId, EffectEntry* effect) {
     GXSetNumTevStages(1);
     GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP0, GX_COLOR0A0);
     GXSetTevOp(GX_TEVSTAGE0, GX_MODULATE);
-    GXSetChanMatColor(GX_COLOR0A0, (GXColor){ 0xFF, 0xFF, 0xFF, alpha });
+    GXSetChanMatColor(GX_COLOR0A0, (GXColor){0xFF, 0xFF, 0xFF, alpha});
     PSMTXTrans(mtx, work->position.x, work->position.y + work->offsetY, work->position.z);
     PSMTXScale(scale, work->scale, work->scale, work->scale);
     PSMTXRotRad(rot, 'y', MTXDegToRad(-camGetPtr(cameraId)->viewYaw));

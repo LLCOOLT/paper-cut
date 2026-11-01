@@ -1,65 +1,34 @@
+// evt_yuuminigame: Pianta Parlor minigame framework: shared work alloc/free, main and display callbacks.
+
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
 
-#pragma force_active on
 #include "manager/evtmgr_cmd.h"
 #include "memory.h"
 #include "driver/camdrv.h"
 #include "string.h"
 #include "driver/dispdrv.h"
 #include "yuu.h"
+#include "eff/eff_minigame.h"
 
 /* Script words: they hold the minigame work pointers (EvtWord). */
 static EvtWord dataadr[32];
 EvtWord stackt[4];
 s32 stackp;
-void* effMiniGameEntry(s32 type, f32 x, f32 y, f32 z);
-s32 yuuminigame_init_1hikoki(EventEntry* event, BOOL isFirstCall);
-s32 yuuminigame_main_1hikoki(EventEntry* event, BOOL isFirstCall);
-void yuuminigame_disp_1hikoki(CameraId camera, void* param);
-s32 yuuminigame_init_2fune(EventEntry* event, BOOL isFirstCall);
-s32 yuuminigame_main_2fune(EventEntry* event, BOOL isFirstCall);
-void yuuminigame_disp_2fune(CameraId camera, void* param);
-s32 yuuminigame_init_3roll(EventEntry* event, BOOL isFirstCall);
-s32 yuuminigame_main_3roll(EventEntry* event, BOOL isFirstCall);
-void yuuminigame_disp_3roll(CameraId camera, void* param);
-s32 yuuminigame_init_4slit(EventEntry* event, BOOL isFirstCall);
-s32 yuuminigame_main_4slit(EventEntry* event, BOOL isFirstCall);
-void yuuminigame_disp_4slit(CameraId camera, void* param);
-void evt_yuuminigame_disp_func(CameraId camera, void* param);
+static void evt_yuuminigame_disp_func(CameraId camera, void* param);
 
-USER_FUNC(evt_yuuminigame_main_func);
-USER_FUNC(yuu_atai_init);
-USER_FUNC(yuu_atai_pop);
-USER_FUNC(yuu_atai_push);
-USER_FUNC(eff_call_minigame);
-USER_FUNC(yuuminigame_set_dataadr);
-USER_FUNC(yuuminigame_get_dataadr);
-USER_FUNC(evt_yuuminigame_free);
-USER_FUNC(evt_yuuminigame_alloc);
-void evt_yuuminigame_disp_func(CameraId camera, void* param);
-
-f32 fd_evt_yuuminigame_negone_one_374[2] __attribute__((aligned(8)));
-f32 fd_evt_yuuminigame_neg_one_382;
-f32 fd_evt_yuuminigame___local_PI_383;
-f32 fd_evt_yuuminigame___local_3PIO2_385;
-f32 fd_evt_yuuminigame_one_negone_373[2] __attribute__((aligned(8)));
-f32 fd_evt_yuuminigame___local_PIO2_384;
-f32 fd_evt_yuuminigame_one_381;
-f32 fd_evt_yuuminigame_negone_one_360[2] __attribute__((aligned(8)));
-f32 fd_evt_yuuminigame_neg_one_365;
-f32 fd_evt_yuuminigame___local_PI_366;
-f32 fd_evt_yuuminigame___local_3PIO2_368;
-f32 fd_evt_yuuminigame_one_negone_359[2] __attribute__((aligned(8)));
-f32 fd_evt_yuuminigame___local_PIO2_367;
-f32 fd_evt_yuuminigame_one_364;
 static EvtWord main_evt[4];
 
+/** Empties the small value stack used to pass values between scripts (yuu_atai means "value"). */
 USER_FUNC(yuu_atai_init) {
     stackp = 0;
     return EVT_RETURN_DONE;
 }
 
+/**
+ * args[0] = output.
+ * Pops the top value of the 4-entry value stack into it; leaves it untouched if the stack is empty.
+ */
 USER_FUNC(yuu_atai_pop) {
     EvtWord* args = event->args;
 
@@ -70,6 +39,7 @@ USER_FUNC(yuu_atai_pop) {
     return EVT_RETURN_DONE;
 }
 
+/** args[0] = value. Pushes it on the 4-entry value stack; ignored when the stack is full. */
 USER_FUNC(yuu_atai_push) {
     EvtWord* args = event->args;
 
@@ -80,6 +50,10 @@ USER_FUNC(yuu_atai_push) {
     return EVT_RETURN_DONE;
 }
 
+/**
+ * args[0] = effect type (0 start countdown, 1 success, 2 failure), args[1] to args[3] = x, y, z.
+ * Spawns the minigame banner effect.
+ */
 USER_FUNC(eff_call_minigame) {
     EvtWord* args = event->args;
     s32 type = evtGetValue(event, args[0]);
@@ -91,6 +65,10 @@ USER_FUNC(eff_call_minigame) {
     return EVT_RETURN_DONE;
 }
 
+/**
+ * args[0] = slot (0 to 31), args[1] = value.
+ * Stores a pointer or event id in the shared slot table scripts use to find the minigame work and moving floors.
+ */
 USER_FUNC(yuuminigame_set_dataadr) {
     EvtWord* args = event->args;
     s32 index = evtGetValue(event, args[0]);
@@ -101,6 +79,10 @@ USER_FUNC(yuuminigame_set_dataadr) {
     return EVT_RETURN_DONE;
 }
 
+/**
+ * args[0] = slot, args[1] = output.
+ * Reads back the value stored with yuuminigame_set_dataadr (0 if the slot is out of range).
+ */
 USER_FUNC(yuuminigame_get_dataadr) {
     EvtWord* args = event->args;
     s32 index = evtGetValue(event, args[0]);
@@ -113,6 +95,10 @@ USER_FUNC(yuuminigame_get_dataadr) {
     return EVT_RETURN_DONE;
 }
 
+/**
+ * args[0] = minigame work pointer (cleared to 0 afterwards).
+ * Asks the minigame event to quit, blocks until it has stopped, then frees the minigame data and work area.
+ */
 USER_FUNC(evt_yuuminigame_free) {
     EvtWord* args = event->args;
     MiniGameWork* wp = (MiniGameWork*)evtGetValue(event, args[0]);
@@ -121,9 +107,9 @@ USER_FUNC(evt_yuuminigame_free) {
         return EVT_RETURN_DONE;
     }
     if (isFirstCall) {
-        wp->flags |= 1;
+        wp->flags |= MINIGAME_FLAG_QUIT;
     }
-    if (!(wp->flags & 2)) {
+    if (!(wp->flags & MINIGAME_FLAG_STOPPED)) {
         return EVT_RETURN_BLOCK;
     }
     switch (wp->type) {
@@ -139,6 +125,11 @@ USER_FUNC(evt_yuuminigame_free) {
     return EVT_RETURN_DONE;
 }
 
+/**
+ * args[0] = output work pointer, args[1] = minigame type (0 Plane Mode, 1 Boat Mode, 2 Tube Mode, 3 Paper Mode).
+ * Allocates the work area and per-game data, hooks up that game's init, main and draw callbacks,
+ * starts the main event and calls the init callback.
+ */
 USER_FUNC(evt_yuuminigame_alloc) {
     EvtWord* args = event->args;
     MiniGameWork* wp = _mapAlloc(sizeof(MiniGameWork));
@@ -194,8 +185,13 @@ USER_FUNC(evt_yuuminigame_alloc) {
             wp->data = _mapAlloc(sizeof(SlitWork));
             memset(wp->data, 0, sizeof(SlitWork));
 #else
+#if VERSION <= VERSION_DEMO_JP
+            wp->data = _mapAlloc(0x24);
+            memset(wp->data, 0, 0x24);
+#else
             wp->data = _mapAlloc(0x28);
             memset(wp->data, 0, 0x28);
+#endif
 #endif
             yuunpc_yuuminigame4_ptr = wp;
             break;
@@ -204,11 +200,16 @@ USER_FUNC(evt_yuuminigame_alloc) {
     return EVT_RETURN_DONE;
 }
 
-USER_FUNC(evt_yuuminigame_main_func) {
+/**
+ * Body of the minigame event: each frame it runs the game's main callback
+ * unless a sub event (start or end script) is still running, queues the draw callback,
+ * and stops once the quit flag is set.
+ */
+static USER_FUNC(evt_yuuminigame_main_func) {
     MiniGameWork* wp = (MiniGameWork*)event->lwData[0];
 
-    if (wp->flags & 1) {
-        wp->flags |= 2;
+    if (wp->flags & MINIGAME_FLAG_QUIT) {
+        wp->flags |= MINIGAME_FLAG_STOPPED;
         return EVT_RETURN_DONE;
     }
     if (wp->subEvent != NULL) {
@@ -223,40 +224,13 @@ disp:
     return EVT_RETURN_BLOCK;
 }
 
-void evt_yuuminigame_disp_func(CameraId camera, void* param) {
+/** 2D draw callback that forwards to the current minigame's own disp callback. */
+static void evt_yuuminigame_disp_func(CameraId camera, void* param) {
     ((MiniGameWork*)param)->disp(camera, param);
 }
 
-f32 fd_evt_yuuminigame_negone_one_374[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_evt_yuuminigame_neg_one_382 = -1.0f;
-
-f32 fd_evt_yuuminigame___local_PI_383 = 3.1415927f;
-
-f32 fd_evt_yuuminigame___local_3PIO2_385 = 4.712389f;
-
-f32 fd_evt_yuuminigame_one_negone_373[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_evt_yuuminigame___local_PIO2_384 = 1.5707964f;
-
-f32 fd_evt_yuuminigame_one_381 = 1.0f;
-
-f32 fd_evt_yuuminigame_negone_one_360[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_evt_yuuminigame_neg_one_365 = -1.0f;
-
-f32 fd_evt_yuuminigame___local_PI_366 = 3.1415927f;
-
-f32 fd_evt_yuuminigame___local_3PIO2_368 = 4.712389f;
-
-f32 fd_evt_yuuminigame_one_negone_359[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_evt_yuuminigame___local_PIO2_367 = 1.5707964f;
-
-f32 fd_evt_yuuminigame_one_364 = 1.0f;
-
+/** The minigame's per-frame event, started by evt_yuuminigame_alloc; runs evt_yuuminigame_main_func. */
 static EVT_BEGIN(main_evt)
     CALL(evt_yuuminigame_main_func)
     RETURN
 EVT_END()
-

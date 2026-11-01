@@ -1,22 +1,14 @@
+// Paper Mario 64 effect: a bobbing counter sprite whose digit steps toward the count given as `lifetime` (one step
+// every 8 frames); each step down drops a type-10 copy that falls away and fades. Type 1 shows no digit.
+#include "eff/n64/eff_pturn_n64.h"
 #include "driver/camdrv.h"
 #include "driver/dispdrv.h"
 #include "driver/effdrv.h"
 #include "memory.h"
 #include <dolphin/gx.h>
 #include <dolphin/mtx.h>
-
-#ifndef TARGET_PC /* PC port: the host libc declares these */
-double cos(double);
-#endif
-typedef struct effN64Vtx {
-    s16 x, y, z;
-    s16 s, t;
-    u8 r, g, b, a;
-} effN64Vtx;
-
-void effGetTexObjN64(u32 id, GXTexObj* obj);
-void effSetVtxDescN64(effN64Vtx* vtx);
-void tri2();
+#include "eff/eff_n64.h"
+#include "libc_decls.h"
 
 typedef struct PturnElem {
     s32 type;   // 0x0
@@ -35,31 +27,13 @@ typedef struct PturnElem {
     s32 delay;  // 0x44
 } PturnElem;
 
-__declspec(section ".data") f32 eff_pturn_n64_negone_one_a[] = {
-    -1.0f, 1.0f,
-};
-__declspec(section ".data") f32 pturn_negone_one_374[] = {
-    -1.0f, 1.0f,
-};
-__declspec(section ".data") f32 eff_pturn_n64_one_negone_a[] = {
-    1.0f, -1.0f,
-};
-__declspec(section ".data") f32 pturn_one_negone_373[] = {
-    1.0f, -1.0f,
-};
-__declspec(section ".data") f32 eff_pturn_n64_negone_one_b[] = {
-    -1.0f, 1.0f,
-};
-__declspec(section ".data") f32 pturn_negone_one_360[] = {
-    -1.0f, 1.0f,
-};
-__declspec(section ".data") f32 eff_pturn_n64_one_negone_b[] = {
-    1.0f, -1.0f,
-};
-__declspec(section ".data") f32 pturn_one_negone_359[] = {
-    1.0f, -1.0f,
-};
+/**
+ * Size of the counter badge over its first frames: it shrinks in from five times its size
+ * and settles with a bounce.
+ */
+f32 scale_dat[9] = {5.0f, 4.5f, 4.0f, 3.0f, 2.0f, 1.0f, 0.7f, 1.2f, 1.0f};
 
+/** 48x48 quad drawn for the badge, its texture coordinates turn the texture 45 degrees. */
 effN64Vtx size48x48_tex32x32_pturn_vtx[] = {
     {-24, -24, 0, -512, 512, 255, 255, 255, 255},
     {24, -24, 0, 512, -512, 255, 255, 255, 255},
@@ -67,6 +41,7 @@ effN64Vtx size48x48_tex32x32_pturn_vtx[] = {
     {-24, 24, 0, 512, 1536, 255, 255, 255, 255},
 };
 
+/** Yellow 24x24 quad for a single-digit count over the badge. */
 effN64Vtx size24x24_tex32x32_pturn_vtx[] = {
     {-12, -12, 0, 0, 0, 250, 250, 0, 255},
     {12, -12, 0, 1024, 0, 250, 250, 0, 255},
@@ -74,6 +49,7 @@ effN64Vtx size24x24_tex32x32_pturn_vtx[] = {
     {-12, 12, 0, 0, 1024, 250, 250, 0, 255},
 };
 
+/** Yellow quad for the left-hand digit of a two-digit count. */
 effN64Vtx size16x24_tex32x32_l_pturn_vtx[] = {
     {-16, -12, 0, 0, 0, 250, 250, 0, 255},
     {4, -12, 0, 1024, 0, 250, 250, 0, 255},
@@ -81,6 +57,7 @@ effN64Vtx size16x24_tex32x32_l_pturn_vtx[] = {
     {-16, 12, 0, 0, 1024, 250, 250, 0, 255},
 };
 
+/** Yellow quad for the right-hand digit of a two-digit count. */
 effN64Vtx size16x24_tex32x32_r_pturn_vtx[] = {
     {-4, -12, 0, 0, 0, 250, 250, 0, 255},
     {16, -12, 0, 1024, 0, 250, 250, 0, 255},
@@ -88,24 +65,30 @@ effN64Vtx size16x24_tex32x32_r_pturn_vtx[] = {
     {-4, 12, 0, 0, 1024, 250, 250, 0, 255},
 };
 
-f32 scale_dat[9] = {5.0f, 4.5f, 4.0f, 3.0f, 2.0f, 1.0f, 0.7f, 1.2f, 1.0f};
+static void effPturnMain(EffectEntry* effect);
+static void effPturnDisp(CameraId cameraId, EffectEntry* effect);
+static void pturn_main_dispp(CameraId cameraId, EffectEntry* effect);
+static void pturn_num_dispp(CameraId cameraId, EffectEntry* effect);
 
-void effPturnMain(EffectEntry* effect);
-void effPturnDisp(CameraId cameraId, EffectEntry* effect);
-void pturn_main_dispp(CameraId cameraId, EffectEntry* effect);
-void pturn_num_dispp(CameraId cameraId, EffectEntry* effect);
-
+/**
+ * A bobbing badge (N64 texture 0x92) with a one- or two-digit count (texture 0x53) above (x, y, z);
+ * the effect table labels it 行動不能 ("unable to act").
+ * Type 0 steps its displayed count toward lifetime, type 1 shows the badge without digits,
+ * and type 10 is the short-lived badge that type 0 throws off when the count falls.
+ * Reached only through evt_eff64 "pturn_n64"; no script in the tree spawns it.
+ * Guess: the immobilised-status icon with its turns left.
+ */
 EffectEntry* effPturnN64Entry(s32 type, s32 lifetime, f32 x, f32 y, f32 z) {
     EffectEntry* effect;
     PturnElem* work;
 
     effect = effEntry();
-    effect->type = "PturnN64\0\0\0";
+    effect->type = "PturnN64";
     effect->count = 2;
     work = __memAlloc(HEAP_EFFECT, sizeof(PturnElem) * 2);
     effect->userdata = work;
     effect->callback = effPturnMain;
-    effect->flags |= 2;
+    effect->flags |= EFFECT_FLAG_SOFT_DELETE;
     work->type = type;
     work->scale2 = 1.0f;
     if (type == 1) {
@@ -119,15 +102,15 @@ EffectEntry* effPturnN64Entry(s32 type, s32 lifetime, f32 x, f32 y, f32 z) {
     work->pos.y = y;
     work->pos.z = z;
     switch (type) {
-    case 0:
-        work->age = 100;
-        break;
-    case 1:
-        work->age = 100;
-        break;
-    case 10:
-        work->age = 21;
-        break;
+        case 0:
+            work->age = 100;
+            break;
+        case 1:
+            work->age = 100;
+            break;
+        case 10:
+            work->age = 21;
+            break;
     }
     work->frame = 0;
     work->delay = 0;
@@ -145,7 +128,11 @@ EffectEntry* effPturnN64Entry(s32 type, s32 lifetime, f32 x, f32 y, f32 z) {
     return effect;
 }
 
-void effPturnMain(EffectEntry* effect) {
+/**
+ * Steps the displayed count toward its target (one per 8 frames), bobs the badge,
+ * and on delete tumbles it away with gravity while fading.
+ */
+static void effPturnMain(EffectEntry* effect) {
     PturnElem* work = effect->userdata;
     Vec position;
     Vec tmp = {0.0f, 0.0f, 0.0f};
@@ -165,8 +152,8 @@ void effPturnMain(EffectEntry* effect) {
     tmp.y = work->pos.y;
     tmp.z = work->pos.z;
     position = tmp;
-    if (effect->flags & 4) {
-        effect->flags &= ~4;
+    if (effect->flags & EFFECT_FLAG_DELETE_REQUESTED) {
+        effect->flags &= ~EFFECT_FLAG_DELETE_REQUESTED;
         work->age = 21;
     }
     if (work->age < 100) {
@@ -243,10 +230,11 @@ void effPturnMain(EffectEntry* effect) {
         }
         work->age++;
     }
-    dispEntry(4, dispCalcZ(&position), 2, (DispCallback)effPturnDisp, effect);
+    dispEntry(CAMERA_3D, dispCalcZ(&position), 2, (DispCallback)effPturnDisp, effect);
 }
 
-void effPturnDisp(CameraId cameraId, EffectEntry* effect) {
+/** Draws the badge, and the digits for every type except 1, while the effect is active. */
+static void effPturnDisp(CameraId cameraId, EffectEntry* effect) {
     PturnElem* work = effect->userdata;
     if (work->active != 0) {
         pturn_main_dispp(cameraId, effect);
@@ -256,7 +244,8 @@ void effPturnDisp(CameraId cameraId, EffectEntry* effect) {
     }
 }
 
-void pturn_main_dispp(CameraId cameraId, EffectEntry* effect) {
+/** Draws the badge sprite (texture 0x92) as a camera-facing quad with the bob offset, scale and alpha. */
+static void pturn_main_dispp(CameraId cameraId, EffectEntry* effect) {
     CameraEntry* camera;
     PturnElem* p;
     GXTexObj texObj;
@@ -323,7 +312,8 @@ void pturn_main_dispp(CameraId cameraId, EffectEntry* effect) {
     }
 }
 
-void pturn_num_dispp(CameraId cameraId, EffectEntry* effect) {
+/** Draws the one- or two-digit count (texture 0x53, digits 32 rows apart) over the badge when it is above zero. */
+static void pturn_num_dispp(CameraId cameraId, EffectEntry* effect) {
     CameraEntry* camera;
     GXTexObj texObj;
     Mtx mtx;

@@ -1,3 +1,5 @@
+// Shadow Queen charge-up (queen2): a dark sphere fades in and grows while a charge light gathers,
+// then two flashes (Boo and indirect effects) as the sphere fades out.
 #include "eff/eff_queen2.h"
 #include "eff/eff_indirect.h"
 #include "eff/eff_teresa.h"
@@ -8,35 +10,39 @@
 #include <dolphin/gx.h>
 #include <dolphin/mtx.h>
 
+static void effQueen2Disp(CameraId cameraId, EffectEntry* effect);
+static void effQueen2Main(EffectEntry* effect);
+
 typedef struct EffQueen2Work {
     s32 type;            // 0x0
     Vec position;        // 0x4
     f32 scale;           // 0x10
     f32 baseScale;       // 0x14
     s32 alpha;           // 0x18
-    s32 field_0x1C;      // 0x1C
+    s32 reserved_1C;     // 0x1C, never read or written
     s32 timer;           // 0x20
     s32 state;           // 0x24
     EffectEntry* charge; // 0x28
 } EffQueen2Work;
 
+/** Spawns the Shadow Queen charge-up at (x, y, z), including its charge light; reached through evt_eff ("queen2"). */
 EffectEntry* effQueen2Entry(s32 type, f32 x, f32 y, f32 z) {
     EffQueen2Work* work;
     EffectEntry* effect;
 
     effect = effEntry();
-    effect->type = "Queen2\0";
+    effect->type = "Queen2";
     effect->count = 1;
     work = __memAlloc(HEAP_EFFECT, sizeof(EffQueen2Work) * effect->count);
     effect->userdata = work;
     effect->callback = effQueen2Main;
-    effect->flags |= 2;
+    effect->flags |= EFFECT_FLAG_SOFT_DELETE;
     work->type = type;
     work->position.x = x;
     work->position.y = y;
     work->position.z = z;
     {
-        Vec position = { 0.0f, 0.0f, 0.0f };
+        Vec position = {0.0f, 0.0f, 0.0f};
 
         position.x = x;
         position.y = y;
@@ -51,15 +57,16 @@ EffectEntry* effQueen2Entry(s32 type, f32 x, f32 y, f32 z) {
     return effect;
 }
 
-void effQueen2Main(EffectEntry* effect) {
+/** Per frame: fades in and grows the sphere, soft-deletes the charge light, then ends the effect after the flashes. */
+static void effQueen2Main(EffectEntry* effect) {
     EffQueen2Work* work = effect->userdata;
     Vec position;
 
-    position = (Vec){ work->position.x, work->position.y, work->position.z };
+    position = (Vec){work->position.x, work->position.y, work->position.z};
 
     // soft delete
-    if (effect->flags & 4) {
-        effect->flags &= ~4;
+    if (effect->flags & EFFECT_FLAG_DELETE_REQUESTED) {
+        effect->flags &= ~EFFECT_FLAG_DELETE_REQUESTED;
         if (work->charge) {
             effDelete(work->charge);
         }
@@ -68,18 +75,17 @@ void effQueen2Main(EffectEntry* effect) {
     }
     switch (work->state) {
         case 0:
-            work->alpha = intplGetValue(11, work->timer++, 60, 0.0f, 128.0f);
+            work->alpha = intplGetValue(11, 0.0f, 128.0f, work->timer++, 60);
             if (work->timer > 60) {
                 work->timer = 0;
                 work->state++;
             }
             break;
-        case 1:
-            {
-                f32 base = work->baseScale;
-                s32 t = work->timer++;
-                work->scale = intplGetValue(11, t, 120, base, 3.0f);
-            }
+        case 1: {
+            f32 base = work->baseScale;
+            s32 t = work->timer++;
+            work->scale = intplGetValue(11, base, 3.0f, t, 120);
+        }
             if (work->timer > 120) {
                 work->timer = 0;
                 work->state++;
@@ -123,7 +129,8 @@ void effQueen2Main(EffectEntry* effect) {
     dispEntry(CAMERA_3D, dispCalcZ(&position), 2, (DispCallback)effQueen2Disp, effect);
 }
 
-void effQueen2Disp(CameraId cameraId, EffectEntry* effect) {
+/** Draws the dark sphere scaled by the camera distance so it keeps its apparent size. */
+static void effQueen2Disp(CameraId cameraId, EffectEntry* effect) {
     EffQueen2Work* work = effect->userdata;
     CameraEntry* camera;
     Mtx trans;
@@ -132,7 +139,7 @@ void effQueen2Disp(CameraId cameraId, EffectEntry* effect) {
     camera = camGetPtr(cameraId);
     GXSetNumChans(1);
     GXSetChanCtrl(GX_COLOR0A0, GX_FALSE, GX_SRC_REG, GX_SRC_REG, GX_LIGHT_NULL, GX_DF_NONE, GX_AF_NONE);
-    GXSetChanMatColor(GX_COLOR0A0, (GXColor){ 0, 0, 0, work->alpha });
+    GXSetChanMatColor(GX_COLOR0A0, (GXColor){0, 0, 0, work->alpha});
     GXSetNumTexGens(0);
     GXSetNumTevStages(1);
     GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD_NULL, GX_TEXMAP_NULL, GX_COLOR0A0);

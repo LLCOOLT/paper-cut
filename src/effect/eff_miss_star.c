@@ -1,3 +1,4 @@
+// Small stars ("SmallStar", miss star) around a point; count, delay and index come from the caller.
 #include "eff/eff_miss_star.h"
 #include "driver/dispdrv.h"
 #include "mario/mariost.h"
@@ -6,20 +7,27 @@
 #include <dolphin/gx.h>
 #include <dolphin/mtx.h>
 
+static void effMissStarDisp(CameraId cameraId, EffectEntry* effect);
+static void effMissStarMain(EffectEntry* effect);
+
 typedef struct EffMissStarWork {
-    Vec position;     // 0x0
-    Vec velocity;     // 0xC
-    Vec accel;        // 0x18
-    s32 life;         // 0x24
-    s32 delay;        // 0x28
-    f32 rotZ;         // 0x2C
-    f32 rotZSpeed;    // 0x30
-    f32 rotY;         // 0x34
-    f32 scale;        // 0x38
-    s32 fadeLife;     // 0x3C
-    f32 alpha;        // 0x40
+    Vec position;  // 0x0
+    Vec velocity;  // 0xC
+    Vec accel;     // 0x18
+    s32 life;      // 0x24
+    s32 delay;     // 0x28
+    f32 rotZ;      // 0x2C
+    f32 rotZSpeed; // 0x30
+    f32 rotY;      // 0x34
+    f32 scale;     // 0x38
+    s32 fadeLife;  // 0x3C
+    f32 alpha;     // 0x40
 } EffMissStarWork;
 
+/**
+ * Launch directions of the miss stars, fanning from straight up round the side to straight down;
+ * the caller's index picks the first and each star takes the next one.
+ */
 Vec spd_tbl[15] = {
     { 0.0f, 4.5f, 0.0f },  { 1.0f, 4.0f, 0.0f },  { 2.0f, 3.0f, 0.0f },
     { 3.0f, 2.0f, 0.0f },  { 3.5f, 1.0f, 0.0f },  { 4.0f, 0.0f, 0.0f },
@@ -28,7 +36,8 @@ Vec spd_tbl[15] = {
     { 2.0f, -3.0f, 0.0f }, { 1.0f, -4.0f, 0.0f }, { 0.0f, -4.5f, 0.0f },
 };
 
-Vec scale_tbl[15] = {
+/** Size of each miss star in turn, between 0.8 and 1.1 so the burst looks uneven. */
+static Vec scale_tbl[15] = {
     { 1.0f, 1.0f, 1.0f },    { 0.8f, 0.8f, 0.8f },    { 0.9f, 0.9f, 0.9f },
     { 1.1f, 1.1f, 1.1f },    { 1.0f, 1.0f, 1.0f },    { 0.8f, 0.8f, 0.8f },
     { 0.9f, 0.9f, 0.9f },    { 1.1f, 1.1f, 1.1f },    { 1.0f, 1.0f, 1.0f },
@@ -36,6 +45,10 @@ Vec scale_tbl[15] = {
     { 1.0f, 1.0f, 1.0f },    { 0.8f, 0.8f, 0.8f },    { 0.9f, 0.9f, 0.9f },
 };
 
+/**
+ * Spawns `count` small stars around (x, y, z) after `delay` frames;
+ * battle_damage.c uses it when an attack misses (index selects the direction).
+ */
 EffectEntry* effMissStarEntry(s32 count, s32 delay, f32 x, f32 y, f32 z, s32 index) {
     EffectEntry* effect;
     EffMissStarWork* work;
@@ -91,14 +104,18 @@ EffectEntry* effMissStarEntry(s32 count, s32 delay, f32 x, f32 y, f32 z, s32 ind
     return effect;
 }
 
-void effMissStarMain(EffectEntry* effect) {
+/**
+ * Per frame: moves, spins and fades each star, turns it to face the camera and deletes the effect
+ * when all are gone.
+ */
+static void effMissStarMain(EffectEntry* effect) {
     EffMissStarWork* work = effect->userdata;
     Vec position;
     Vec position2;
     s32 i;
     f32 decay = 0.8f;
 
-    position = (Vec){ work->position.x, work->position.y, work->position.z };
+    position = (Vec){work->position.x, work->position.y, work->position.z};
     position2 = position;
     for (i = 0; i < effect->count; i++, work++) {
         if (work->delay != 0) {
@@ -136,7 +153,8 @@ void effMissStarMain(EffectEntry* effect) {
     dispEntry(CAMERA_3D, dispCalcZ(&position2), 1, (DispCallback)effMissStarDisp, effect);
 }
 
-void effMissStarDisp(CameraId cameraId, EffectEntry* effect) {
+/** Draws each star as a camera-facing textured quad (effect texture 24). */
+static void effMissStarDisp(CameraId cameraId, EffectEntry* effect) {
     EffMissStarWork* work = effect->userdata;
     GXTexObj texObj;
     Mtx mtx;

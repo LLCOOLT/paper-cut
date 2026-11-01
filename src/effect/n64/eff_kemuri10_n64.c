@@ -1,3 +1,4 @@
+// Paper Mario 64 smoke effect 10 (kemuri: smoke) moving along a direction vector with a scale.
 #include "eff/n64/eff_kemuri10_n64.h"
 #include "eff/eff_n64.h"
 #include "driver/camdrv.h"
@@ -8,61 +9,10 @@
 #include <dolphin/gx.h>
 #include <dolphin/mtx.h>
 #include "libc_decls.h"
+#include <math.h>
+#include "version.h"
 
-
-#define NAN (*(f32*)__float_nan)
-
-#define FP_NAN 1
-#define FP_INFINITE 2
-#define FP_ZERO 3
-#define FP_NORMAL 4
-#define FP_SUBNORMAL 5
-
-static inline s32 __fpclassifyf(f32 x) {
-    switch (*(s32*)&x & 0x7F800000) {
-        case 0x7F800000:
-            if (*(s32*)&x & 0x007FFFFF) {
-                return FP_NAN;
-            } else {
-                return FP_INFINITE;
-            }
-            break;
-        case 0:
-            if (*(s32*)&x & 0x007FFFFF) {
-                return FP_SUBNORMAL;
-            } else {
-                return FP_ZERO;
-            }
-            break;
-        default:
-            return FP_NORMAL;
-    }
-}
-
-#define fpclassify(x) __fpclassifyf(x)
-#define isnan(x) (fpclassify(x) == FP_NAN)
-
-#ifndef TARGET_PC /* PC port: the host libc declares these */
-static inline f32 sqrtf(f32 x) {
-    const f64 _half = .5;
-    const f64 _three = 3.0;
-
-    if (x > 0.0f) {
-        f64 guess = __frsqrte(x);
-        guess = _half * guess * (_three - guess * guess * x);
-        guess = _half * guess * (_three - guess * guess * x);
-        guess = _half * guess * (_three - guess * guess * x);
-        return x * guess;
-    } else if (x < 0.0) {
-        return NAN;
-    } else if (isnan(x)) {
-        return NAN;
-    } else {
-        return x;
-    }
-}
-#endif
-
+/** Smoke cloud mesh (192 vertices) of the puff left beside a moving NPC. */
 static effN64Vtx stg_houki_kemuri_v[] = {
     {0, -50, 20, 0, 512, 255, 255, 255, 255},
     {35, -35, 20, 256, 512, 255, 255, 255, 255},
@@ -102,9 +52,14 @@ static effN64Vtx stg_houki_kemuri_v[] = {
     {0, 50, 20, 1024, 512, 255, 255, 255, 255},
 };
 
-void effKemuri10Main(EffectEntry* effect);
-void effKemuri10Disp(CameraId cameraId, EffectEntry* effect);
+static void effKemuri10Main(EffectEntry* effect);
+static void effKemuri10Disp(CameraId cameraId, EffectEntry* effect);
 
+/**
+ * Spawns smoke effect 10 at (x, y, z) heading along (dx, dy, dz);
+ * a zero direction makes no effect (NULL is returned).
+ * Spawned by evt_npc.c beside a moving NPC and by event scripts through evt_eff.
+ */
 EffectEntry* effKemuri10N64Entry(s32 type, f32 x, f32 y, f32 z, f32 dx, f32 dy, f32 dz, f32 scale) {
     EffectEntry* effect;
     EffKemuri10N64Work* work;
@@ -190,11 +145,18 @@ EffectEntry* effKemuri10N64Entry(s32 type, f32 x, f32 y, f32 z, f32 dx, f32 dy, 
     work->rot[1][3] = zr;
     work->rot[2][3] = zr;
     work->scale = 0.1f * scale;
+#if VERSION >= VERSION_JP
     work->camera = 4;
+#endif
     return effect;
 }
 
-void effKemuri10Main(EffectEntry* effect) {
+/**
+ * Lives 16 frames.
+ * The alpha rises and the velocity decays for the first 11 frames, then both drop off quickly;
+ * the scale grows by 5% per frame and the texture offset scrolls.
+ */
+static void effKemuri10Main(EffectEntry* effect) {
     EffKemuri10N64Work* work;
     Vec position;
     Vec tmp = {0.0f, 0.0f, 0.0f};
@@ -208,7 +170,9 @@ void effKemuri10Main(EffectEntry* effect) {
     tmp.z = work->position.z;
     position = tmp;
     timer = work->timer;
+#if VERSION >= VERSION_JP
     camera = work->camera;
+#endif
     work->timer = timer - 1;
     work->counter++;
     timer = work->timer;
@@ -224,7 +188,10 @@ void effKemuri10Main(EffectEntry* effect) {
             work->velocity.z *= 0.8f;
         }
         if (timer < 5) {
-            { f32 fa = work->alpha; work->alpha = (fa *= 0.6f); }
+            {
+                f32 fa = work->alpha;
+                work->alpha = (fa *= 0.6f);
+            }
             work->velocity.x *= 0.7f;
             work->velocity.y *= 0.7f;
             work->velocity.z *= 0.7f;
@@ -236,10 +203,15 @@ void effKemuri10Main(EffectEntry* effect) {
         work->scale *= 1.05f;
         work++;
     }
+#if VERSION <= VERSION_DEMO_JP
+    dispEntry(CAMERA_3D, dispCalcZ(&position), 2, (DispCallback)effKemuri10Disp, effect);
+#else
     dispEntry((CameraId)camera, dispCalcZ(&position), 2, (DispCallback)effKemuri10Disp, effect);
+#endif
 }
 
-void effKemuri10Disp(CameraId cameraId, EffectEntry* effect) {
+/** Draws the smoke cloud mesh (stg_houki_kemuri_v, 192 vertices) with texture 0x1F, oriented by the direction frame. */
+static void effKemuri10Disp(CameraId cameraId, EffectEntry* effect) {
     CameraEntry* camera = camGetPtr(cameraId);
     EffKemuri10N64Work* work = effect->userdata;
     s32 idx;

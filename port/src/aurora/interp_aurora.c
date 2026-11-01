@@ -40,10 +40,10 @@
 
 #undef bool
 
-void camEvalNearFar(CameraEntry* camera); /* camdrv.c */
+void portCamEvalNearFar(CameraEntry* camera); /* camdrv.c (camEvalNearFar is static) */
 extern s32 entry_n;           /* dispdrv.c: the draw list */
 extern DispEntry** pSortWork;
-void extMakeTexture(CameraId camId, void* param); /* extdrv.c */
+extern DispCallback portExtMakeTexture; /* extdrv.c: its static extMakeTexture */
 
 #define CAM_JUMP 250.0f   /* a camera moving more in one frame cut */
 #define BODY_JUMP 150.0f  /* an actor moving more in one frame teleported */
@@ -266,7 +266,7 @@ static void drawScene(void) {
                       camera->viewport[4], camera->viewport[5]);
         GXSetScissor(camera->scissor[0], camera->scissor[1], camera->scissor[2], camera->scissor[3]);
         if (camera->flags & 0x40 && camera->projType == GX_PERSPECTIVE) {
-            camEvalNearFar(camera);
+            portCamEvalNearFar(camera);
             MTXPerspective(camera->projection, camera->fovY, camera->aspect, camera->near, camera->far);
         }
         portWidescreenCamera((CameraId)id); /* as camDraw */
@@ -295,7 +295,7 @@ int portInterpReady(void) {
     /* extdrv's textures are made (smartAlloc'd) by the next draw, once, and
      * the draws after it use them: that frame is the game's own */
     for (i = 0; i < entry_n; i++) {
-        if (pSortWork[i]->callback == (DispCallback)extMakeTexture) {
+        if (pSortWork[i]->callback == portExtMakeTexture) {
             return FALSE;
         }
     }

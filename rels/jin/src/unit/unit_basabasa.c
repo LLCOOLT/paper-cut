@@ -1,3 +1,4 @@
+// Swooper (basabasa): enemy battle unit; Creepy Steeple's copy of the unit data and scripts.
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
 #include "battle/battle_event_default.h"
@@ -5,79 +6,14 @@
 #include "battle/battle_weapon_power.h"
 #include "battle/battle_database_common.h"
 #include "data_tables.h"
+#include "battle/battle_sub.h"
+#include "battle/battle_event_cmd.h"
 
-#pragma force_active on
+// Unit work slots of the Swooper (initial values come from the battle setup).
+enum {
+    UW_BASABASA_START_FLYING = 0, // 1: starts the battle already in flight instead of hanging from the ceiling
+};
 
-USER_FUNC(btlevtcmd_AddHomePos);
-USER_FUNC(btlevtcmd_AddPos);
-USER_FUNC(btlevtcmd_AnimeChangePose);
-USER_FUNC(btlevtcmd_AnimeChangePoseFromTable);
-USER_FUNC(btlevtcmd_AnimeChangePoseType);
-USER_FUNC(btlevtcmd_AnimeSetPoseSoundTable);
-USER_FUNC(btlevtcmd_AnimeSetPoseTable);
-USER_FUNC(btlevtcmd_AttackDeclare);
-USER_FUNC(btlevtcmd_CalculateFaceDirection);
-USER_FUNC(btlevtcmd_ChangeFaceDirection);
-USER_FUNC(btlevtcmd_CheckAttribute);
-USER_FUNC(btlevtcmd_CheckDamage);
-USER_FUNC(btlevtcmd_CheckDamageCode);
-USER_FUNC(btlevtcmd_CheckToken);
-USER_FUNC(btlevtcmd_ChoiceSamplingEnemy);
-USER_FUNC(btlevtcmd_DivePosition);
-USER_FUNC(btlevtcmd_EnemyItemUseCheck);
-USER_FUNC(btlevtcmd_FaceDirectionAdd);
-USER_FUNC(btlevtcmd_GetDamageCode);
-USER_FUNC(btlevtcmd_GetEnemyBelong);
-USER_FUNC(btlevtcmd_GetHitPos);
-USER_FUNC(btlevtcmd_GetHomePos);
-USER_FUNC(btlevtcmd_GetPos);
-USER_FUNC(btlevtcmd_GetTotalDamage);
-USER_FUNC(btlevtcmd_GetUnitWork);
-USER_FUNC(btlevtcmd_OffAttribute);
-USER_FUNC(btlevtcmd_OnAttribute);
-USER_FUNC(btlevtcmd_PayWeaponCost);
-USER_FUNC(btlevtcmd_PreCheckDamage);
-USER_FUNC(btlevtcmd_ResetFaceDirection);
-USER_FUNC(btlevtcmd_ResultACDefence);
-USER_FUNC(btlevtcmd_SamplingEnemy);
-USER_FUNC(btlevtcmd_SetEventAttack);
-USER_FUNC(btlevtcmd_SetEventCeilFall);
-USER_FUNC(btlevtcmd_SetEventConfusion);
-USER_FUNC(btlevtcmd_SetEventDamage);
-USER_FUNC(btlevtcmd_SetEventWait);
-USER_FUNC(btlevtcmd_SetHitCursorOffset);
-USER_FUNC(btlevtcmd_SetHitOffset);
-USER_FUNC(btlevtcmd_SetKissHitOffset);
-USER_FUNC(btlevtcmd_SetMoveSpeed);
-USER_FUNC(btlevtcmd_SetPos);
-USER_FUNC(btlevtcmd_SetPossessionItemOffset);
-USER_FUNC(btlevtcmd_SetStatusIconOffset);
-USER_FUNC(btlevtcmd_StartAvoid);
-USER_FUNC(btlevtcmd_StartWaitEvent);
-USER_FUNC(btlevtcmd_WaitAttackEnd);
-USER_FUNC(btlevtcmd_WaitGuardMove);
-USER_FUNC(btlevtcmd_WeaponAftereffect);
-USER_FUNC(evt_btl_camera_add_zoom);
-USER_FUNC(evt_btl_camera_set_homing_unit);
-USER_FUNC(evt_btl_camera_set_mode);
-USER_FUNC(evt_btl_camera_set_moveSpeedLv);
-USER_FUNC(evt_btl_camera_set_zoom);
-USER_FUNC(evt_btl_camera_shake_h);
-
-f32 fd_basabasa_negone_one_374[2] __attribute__((aligned(8)));
-f32 fd_basabasa_neg_one_382;
-f32 fd_basabasa___local_PI_383;
-f32 fd_basabasa___local_3PIO2_385;
-f32 fd_basabasa_one_negone_373[2] __attribute__((aligned(8)));
-f32 fd_basabasa___local_PIO2_384;
-f32 fd_basabasa_one_381;
-f32 fd_basabasa_negone_one_360[2] __attribute__((aligned(8)));
-f32 fd_basabasa_neg_one_365;
-f32 fd_basabasa___local_PI_366;
-f32 fd_basabasa___local_3PIO2_368;
-f32 fd_basabasa_one_negone_359[2] __attribute__((aligned(8)));
-f32 fd_basabasa___local_PIO2_367;
-f32 fd_basabasa_one_364;
 BattleUnitKind unit_basabasa;
 static BattleUnitDefense defence;
 static BattleUnitDefenseAttr defence_attr;
@@ -89,7 +25,6 @@ static BattleUnitKindPart parts[1];
 static StatusVulnerability regist;
 static BattleWeapon weapon_basabasa_attack;
 static PoseSoundTiming pose_sound_timing_table[9];
-static EvtWord ceil_sky_event[98];
 static EvtWord init_event[78];
 static EvtWord dmg_first_attack_pos[12];
 static EvtWord damage_event[10];
@@ -99,34 +34,10 @@ static EvtWord ceil_fall_ready_event[23];
 static EvtWord attack_event[448];
 static EvtWord wait_event[6];
 
-f32 fd_basabasa_negone_one_374[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_basabasa_neg_one_382 = -1.0f;
-
-f32 fd_basabasa___local_PI_383 = 3.1415927f;
-
-f32 fd_basabasa___local_3PIO2_385 = 4.712389f;
-
-f32 fd_basabasa_one_negone_373[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_basabasa___local_PIO2_384 = 1.5707964f;
-
-f32 fd_basabasa_one_381 = 1.0f;
-
-f32 fd_basabasa_negone_one_360[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_basabasa_neg_one_365 = -1.0f;
-
-f32 fd_basabasa___local_PI_366 = 3.1415927f;
-
-f32 fd_basabasa___local_3PIO2_368 = 4.712389f;
-
-f32 fd_basabasa_one_negone_359[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_basabasa___local_PIO2_367 = 1.5707964f;
-
-f32 fd_basabasa_one_364 = 1.0f;
-
+/**
+ * Unit kind of the Swooper:
+ * 6 HP, level 17, with its size, sounds and the links to its parts, status vulnerability and scripts.
+ */
 BattleUnitKind unit_basabasa = {
     74,
     "btl_un_basabasa",
@@ -185,7 +96,7 @@ BattleUnitKind unit_basabasa = {
     "SFX_BTL_DAMAGE_FIRE1",
     "SFX_BTL_DAMAGE_ICE1",
     "SFX_BTL_DAMAGE_BIRIBIRI1",
-    0x4040002,
+    UNIT_ATTR_CEILING | UNIT_ATTR_REQUIRED_FOR_CLEAR | UNIT_ATTR_BILLBOARD,
     &regist,
     1,
     parts,
@@ -193,10 +104,15 @@ BattleUnitKind unit_basabasa = {
     data_table,
 };
 
+/** Defence of the Swooper's body per damage type: 0 against every damage type. */
 static BattleUnitDefense defence = {{0, 0, 0, 0, 0}};
 
+/** Defence attributes of the Swooper's body: none, so every damage type is dealt normally. */
 static BattleUnitDefenseAttr defence_attr = {{0, 0, 0, 0, 0}};
 
+/**
+ * Stand-in weapon for the damage check when the Swooper's drain attack runs into a counter from its target (no damage of its own).
+ */
 static BattleWeapon weapon_basabasa_drain_attack_biribiri_counterd = {
     NULL, 0, // name..icon
     {0}, // pad_06
@@ -204,21 +120,21 @@ static BattleWeapon weapon_basabasa_drain_attack_biribiri_counterd = {
     100, // baseAccuracy
     0, 0, 0, // baseFpCost..superguardsAllowed
     1.0f, // reserved_14
-    1, // mStylishCommandMultiplier
+    1, // stylishCommandMultiplier
     1, // reserved_19
-    1, // mBingoSlotChance
+    1, // bingoSlotChance
     1, // reserved_1B
     NULL, // hpDamageFn
     {0}, // hpDamageWork
     NULL, // fpDamageFn
     {0}, // fpDamageWork
-    0x1101260, // targetClassFlags
-    0x20000000, // targetPropertyFlags
-    0, 0, // element..damagePattern
+    TARGET_CLASS_NO_TREE_OR_SWITCH | TARGET_CLASS_NO_SYSTEM_UNIT | TARGET_CLASS_NO_OWN_ALLIANCE | TARGET_CLASS_NO_SELF | TARGET_CLASS_MAIN_PARTS | TARGET_CLASS_SINGLE, // targetClassFlags
+    TARGET_PROP_START_OPPOSING_SIDE, // targetPropertyFlags
+    ELEMENT_NORMAL, 0, // element..damagePattern
     3, // acLevel
     2, // reserved_6F
     NULL, 0, 0, // acHelpMsg..counterResistFlags
-    0x2000, // targetWeightFlags
+    TARGET_WEIGHT_UNUSED_2000, // targetWeightFlags
     0, 0, 0, 0, 0, 0, 0, 0, // sleepChance..poisonTime
     0, 0, 0, 0, 0, 0, 0, 0, // poisonStrength..burnChance
     0, 0, 0, 0, 0, 0, 0, 0, // burnTime..atkChangeTime
@@ -226,10 +142,14 @@ static BattleWeapon weapon_basabasa_drain_attack_biribiri_counterd = {
     0, 0, 0, 0, 0, 0, 0, 0, // fastChance..holdFastTime
     0, 0, 0, 0, 0, 0, // invisibleChance..fpRegenStrength
     {0}, // pad_AE
-    NULL, // mAttackEvtScript
+    NULL, // attackEvtScript
     {0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0}, // stageEffectRates
 };
 
+/**
+ * Pose table of the Swooper:
+ * the animation played for each pose type (idle, hurt, walk, run, attack and so on).
+ */
 static PoseTableEntry pose_table[] = {
     {1, "BSA_N_1"},
     {2, "BSA_Y_1"},
@@ -237,20 +157,24 @@ static PoseTableEntry pose_table[] = {
     {5, "BSA_K_1"},
     {4, "BSA_X_1"},
     {3, "BSA_X_1"},
-    {28, "BSA_S_1"},
+    {BTL_POSE_NORMAL, "BSA_S_1"},
     {29, "BSA_Q_1"},
     {30, "BSA_Q_1"},
     {31, "BSA_S_1"},
-    {39, "BSA_D_1"},
+    {BTL_POSE_DAMAGE, "BSA_D_1"},
     {50, "BSA_A_1"},
-    {42, "BSA_R_1"},
-    {40, "BSA_W_1"},
-    {56, "BSA_X_1"},
-    {57, "BSA_X_1"},
-    {65, "BSA_T_1"},
-    {69, "BSA_S_1"},
+    {BTL_POSE_RUN, "BSA_R_1"},
+    {BTL_POSE_WALK, "BSA_W_1"},
+    {BTL_POSE_DANGER, "BSA_X_1"},
+    {BTL_POSE_PERIL, "BSA_X_1"},
+    {BTL_POSE_TALK, "BSA_T_1"},
+    {BTL_POSE_STAY_DEFAULT, "BSA_S_1"},
 };
 
+/**
+ * Pose table of the Swooper while on the ceiling:
+ * the animation played for each pose type (idle, hurt, walk, run, attack and so on).
+ */
 static PoseTableEntry pose_table_ceil[] = {
     {1, "BSA_N_2"},
     {2, "BSA_Y_2"},
@@ -258,20 +182,24 @@ static PoseTableEntry pose_table_ceil[] = {
     {5, "BSA_K_2"},
     {4, "BSA_X_2"},
     {3, "BSA_X_2"},
-    {28, "BSA_S_2"},
+    {BTL_POSE_NORMAL, "BSA_S_2"},
     {29, "BSA_Q_2"},
     {30, "BSA_Q_2"},
     {31, "BSA_S_2"},
-    {39, "BSA_D_2"},
+    {BTL_POSE_DAMAGE, "BSA_D_2"},
     {50, "BSA_A_1"},
-    {42, "BSA_S_1"},
-    {40, "BSA_S_1"},
-    {56, "BSA_X_2"},
-    {57, "BSA_X_2"},
-    {65, "BSA_T_2"},
-    {69, "BSA_S_2"},
+    {BTL_POSE_RUN, "BSA_S_1"},
+    {BTL_POSE_WALK, "BSA_S_1"},
+    {BTL_POSE_DANGER, "BSA_X_2"},
+    {BTL_POSE_PERIL, "BSA_X_2"},
+    {BTL_POSE_TALK, "BSA_T_2"},
+    {BTL_POSE_STAY_DEFAULT, "BSA_S_2"},
 };
 
+/**
+ * Event table of the Swooper:
+ * the reaction when it is hurt while attacking (tags 25-36), its reaction to a First Strike.
+ */
 static BattleDataEntry data_table[] = {
     {26, counter_damage_event},
     {25, counter_damage_event},
@@ -289,12 +217,28 @@ static BattleDataEntry data_table[] = {
     {0, NULL},
 };
 
+/** Body part of the Swooper: a single part using the model "c_basabasa". */
 static BattleUnitKindPart parts[] = {
-    {1, "btl_un_basabasa", "c_basabasa", 0.0f, 0.0f, 0.0f, 0.0f, 25.0f, 0.0f, 0.0f, 0.0f, 0.0f, 20, 30, 255, &defence, &defence_attr, 0x600009, 0, pose_table_ceil},
+    {1, "btl_un_basabasa", "c_basabasa", 0.0f, 0.0f, 0.0f, 0.0f, 25.0f, 0.0f, 0.0f, 0.0f, 0.0f, 20, 30, 255, &defence, &defence_attr, PART_ATTR_MAIN | PART_ATTR_GUARD_COVER | PART_ATTR_HAMMERLIKE_CANNOT_TARGET | PART_ATTR_SHELL_TOSSLIKE_CANNOT_TARGET, 0, pose_table_ceil},
 };
 
+#if VERSION <= VERSION_DEMO_JP
+/**
+ * Status vulnerability of the Swooper in the demo, as a percent of the normal chance:
+ * sleep 80%, stop 85%, freeze 80%, instant kill 95%;
+ * raised chance for gale force 110% (and 7 other statuses lowered).
+ */
+static StatusVulnerability regist = {80, 85, 100, 100, 80, 100, 100, 80, 100, 80, 100, 80, 100, 80, 80, 80, 110, 100, 80, 100, 100, 95};
+#else
+/**
+ * Status vulnerability of the Swooper in the retail versions, as a percent of the normal chance:
+ * sleep 80%, stop 85%, freeze 80%, instant kill 95%;
+ * raised chance for dizzy 105% (and 8 other statuses lowered).
+ */
 static StatusVulnerability regist = {80, 85, 105, 100, 80, 100, 100, 80, 100, 90, 100, 90, 100, 95, 80, 80, 95, 100, 80, 100, 100, 95};
+#endif
 
+/** Swooper's attack: 3 damage to a single target, a plain attack. */
 static BattleWeapon weapon_basabasa_attack = {
     NULL, 0, // name..icon
     {0}, // pad_06
@@ -303,23 +247,23 @@ static BattleWeapon weapon_basabasa_attack = {
     0, 0, // baseFpCost..baseSpCost
     1, // superguardsAllowed
     1.0f, // reserved_14
-    1, // mStylishCommandMultiplier
+    1, // stylishCommandMultiplier
     1, // reserved_19
-    1, // mBingoSlotChance
+    1, // bingoSlotChance
     1, // reserved_1B
     weaponGetPowerDefault, // hpDamageFn
     {3, 0, 0, 0, 0, 0, 0, 0}, // hpDamageWork
     NULL, // fpDamageFn
     {0}, // fpDamageWork
-    0x1101260, // targetClassFlags
-    0x20000000, // targetPropertyFlags
-    0, 0, // element..damagePattern
+    TARGET_CLASS_NO_TREE_OR_SWITCH | TARGET_CLASS_NO_SYSTEM_UNIT | TARGET_CLASS_NO_OWN_ALLIANCE | TARGET_CLASS_NO_SELF | TARGET_CLASS_MAIN_PARTS | TARGET_CLASS_SINGLE, // targetClassFlags
+    TARGET_PROP_START_OPPOSING_SIDE, // targetPropertyFlags
+    ELEMENT_NORMAL, 0, // element..damagePattern
     3, // acLevel
     2, // reserved_6F
     NULL, // acHelpMsg
-    0x5087, // special
+    SPECIAL_BADGE_BUFFABLE | SPECIAL_STATUS_BUFFABLE | SPECIAL_CHARGE_BUFFABLE | SPECIAL_SHATTERS_FREEZE | SPECIAL_FLIPS_SHELLED | SPECIAL_GROUNDS_WINGED, // special
     0, // counterResistFlags
-    0x80002000, // targetWeightFlags
+    TARGET_WEIGHT_UNUSED_2000 | TARGET_WEIGHT_RANDOM, // targetWeightFlags
     0, 0, 0, 0, 0, 0, 0, 0, // sleepChance..poisonTime
     0, 0, 0, 0, 0, 0, 0, 0, // poisonStrength..burnChance
     0, 0, 0, 0, 0, 0, 0, 0, // burnTime..atkChangeTime
@@ -327,14 +271,17 @@ static BattleWeapon weapon_basabasa_attack = {
     0, 0, 0, 0, 0, 0, 0, 0, // fastChance..holdFastTime
     0, 0, 0, 0, 0, 0, // invisibleChance..fpRegenStrength
     {0}, // pad_AE
-    NULL, // mAttackEvtScript
+    NULL, // attackEvtScript
     {0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0}, // stageEffectRates
 };
 
+/**
+ * Sound timing of the Swooper: the sound effect played at set points of its idle, walk and run animations.
+ */
 static PoseSoundTiming pose_sound_timing_table[] = {
     {"BSA_S_1", 0.01f, NULL, "SFX_ENM_BASA_WAIT1", 0, 1},
-    {"BSA_W_1", 0.01f, NULL, "SFX_ENM_BASA_MOVE1\0", 0, 1},
-    {"BSA_R_1", 0.01f, NULL, "SFX_ENM_BASA_MOVE1\0", 0, 1},
+    {"BSA_W_1", 0.01f, NULL, "SFX_ENM_BASA_MOVE1", 0, 1},
+    {"BSA_R_1", 0.01f, NULL, "SFX_ENM_BASA_MOVE1", 0, 1},
     {"BSA_T_1", 0.01f, NULL, "SFX_ENM_BASA_WAIT1", 0, 1},
     {"BSA_A_1", 0.01f, NULL, "SFX_ENM_BASA_WAIT1", 0, 1},
     {"BSA_N_1", 0.01f, NULL, "SFX_ENM_BASA_WAIT1", 0, 1},
@@ -343,73 +290,94 @@ static PoseSoundTiming pose_sound_timing_table[] = {
     {NULL, 0.0f, NULL, NULL, 0, 1},
 };
 
+/**
+ * Brings a Swooper down from the ceiling when it is first hit or attacks:
+ * if its ceiling attribute is still set (attribute 2) it clears it, sets the flying attribute (4),
+ * switches to the flying pose table and moves it 30 units down with new hit, cursor,
+ * kiss and status icon offsets. Leaves its home position in LW(0) to LW(2).
+ */
 static EVT_BEGIN(ceil_sky_event)
-    CALL(btlevtcmd_CheckAttribute, -2, 2, LW(0))
+    CALL(btlevtcmd_CheckAttribute, BTL_UNIT_SELF, UNIT_ATTR_CEILING, LW(0))
     IF_INT_EQUAL(LW(0), 0)
         GOTO(99)
     END_IF
-    CALL(btlevtcmd_OffAttribute, -2, 2)
-    CALL(btlevtcmd_OnAttribute, -2, 4)
-    CALL(btlevtcmd_SetPossessionItemOffset, -2, 0, 0, 0)
-    CALL(btlevtcmd_SetEventCeilFall, -2, 0)
-    CALL(btlevtcmd_AnimeSetPoseTable, -2, 1, PTR(pose_table))
-    CALL(btlevtcmd_AnimeChangePoseType, -2, 1, 40)
+    CALL(btlevtcmd_OffAttribute, BTL_UNIT_SELF, UNIT_ATTR_CEILING)
+    CALL(btlevtcmd_OnAttribute, BTL_UNIT_SELF, UNIT_ATTR_FLOATING)
+    CALL(btlevtcmd_SetPossessionItemOffset, BTL_UNIT_SELF, 0, 0, 0)
+    CALL(btlevtcmd_SetEventCeilFall, BTL_UNIT_SELF, 0)
+    CALL(btlevtcmd_AnimeSetPoseTable, BTL_UNIT_SELF, 1, PTR(pose_table))
+    CALL(btlevtcmd_AnimeChangePoseType, BTL_UNIT_SELF, 1, BTL_POSE_WALK)
     WAIT_FRAMES(1)
-    CALL(btlevtcmd_AddPos, -2, 0, -30, 0)
-    CALL(btlevtcmd_AddHomePos, -2, 0, -30, 0)
-    CALL(btlevtcmd_SetEventDamage, -2, PTR(damage_event))
-    CALL(btlevtcmd_SetHitOffset, -2, 1, 0, 0, 0)
-    CALL(btlevtcmd_SetHitCursorOffset, -2, 1, 0, 30, 0)
-    CALL(btlevtcmd_SetKissHitOffset, -2, 16, 21, 0)
-    CALL(btlevtcmd_SetStatusIconOffset, -2, 6, 32)
-    CALL(btlevtcmd_AddHomePos, -2, 0, -40, 0)
+    CALL(btlevtcmd_AddPos, BTL_UNIT_SELF, 0, -30, 0)
+    CALL(btlevtcmd_AddHomePos, BTL_UNIT_SELF, 0, -30, 0)
+    CALL(btlevtcmd_SetEventDamage, BTL_UNIT_SELF, PTR(damage_event))
+    CALL(btlevtcmd_SetHitOffset, BTL_UNIT_SELF, 1, 0, 0, 0)
+    CALL(btlevtcmd_SetHitCursorOffset, BTL_UNIT_SELF, 1, 0, 30, 0)
+    CALL(btlevtcmd_SetKissHitOffset, BTL_UNIT_SELF, 16, 21, 0)
+    CALL(btlevtcmd_SetStatusIconOffset, BTL_UNIT_SELF, 6, 32)
+    CALL(btlevtcmd_AddHomePos, BTL_UNIT_SELF, 0, -40, 0)
     LABEL(99)
-    CALL(btlevtcmd_GetHomePos, -2, LW(0), LW(1), LW(2))
+    CALL(btlevtcmd_GetHomePos, BTL_UNIT_SELF, LW(0), LW(1), LW(2))
     RETURN
 EVT_END()
 
+/**
+ * Init event of the Swooper: installs wait, attack, ceiling damage (damage_event_ceil),
+ * confusion and ceiling-fall (ceil_fall_ready_event) events and the hang-from-ceiling hit offsets;
+ * if unit work 0 is 1 it starts already in flight (ceil_sky_event).
+ */
 static EVT_BEGIN(init_event)
-    CALL(btlevtcmd_SetEventWait, -2, PTR(wait_event))
-    CALL(btlevtcmd_SetEventAttack, -2, PTR(attack_event))
-    CALL(btlevtcmd_SetEventDamage, -2, PTR(damage_event_ceil))
-    CALL(btlevtcmd_SetEventConfusion, -2, PTR(attack_event))
-    CALL(btlevtcmd_SetEventCeilFall, -2, PTR(ceil_fall_ready_event))
-    CALL(btlevtcmd_SetPossessionItemOffset, -2, 0, -20, 0)
-    CALL(btlevtcmd_AnimeSetPoseSoundTable, -2, 1, PTR(pose_sound_timing_table))
-    CALL(btlevtcmd_SetHitOffset, -2, 1, 0, -50, 0)
-    CALL(btlevtcmd_SetHitCursorOffset, -2, 1, 0, -30, 0)
-    CALL(btlevtcmd_SetStatusIconOffset, -2, 6, 10)
-    CALL(btlevtcmd_SetKissHitOffset, -2, 16, -18, 0)
-    CALL(btlevtcmd_GetUnitWork, -2, 0, LW(0))
+    CALL(btlevtcmd_SetEventWait, BTL_UNIT_SELF, PTR(wait_event))
+    CALL(btlevtcmd_SetEventAttack, BTL_UNIT_SELF, PTR(attack_event))
+    CALL(btlevtcmd_SetEventDamage, BTL_UNIT_SELF, PTR(damage_event_ceil))
+    CALL(btlevtcmd_SetEventConfusion, BTL_UNIT_SELF, PTR(attack_event))
+    CALL(btlevtcmd_SetEventCeilFall, BTL_UNIT_SELF, PTR(ceil_fall_ready_event))
+    CALL(btlevtcmd_SetPossessionItemOffset, BTL_UNIT_SELF, 0, -20, 0)
+    CALL(btlevtcmd_AnimeSetPoseSoundTable, BTL_UNIT_SELF, 1, PTR(pose_sound_timing_table))
+    CALL(btlevtcmd_SetHitOffset, BTL_UNIT_SELF, 1, 0, -50, 0)
+    CALL(btlevtcmd_SetHitCursorOffset, BTL_UNIT_SELF, 1, 0, -30, 0)
+    CALL(btlevtcmd_SetStatusIconOffset, BTL_UNIT_SELF, 6, 10)
+    CALL(btlevtcmd_SetKissHitOffset, BTL_UNIT_SELF, 16, -18, 0)
+    CALL(btlevtcmd_GetUnitWork, BTL_UNIT_SELF, UW_BASABASA_START_FLYING, LW(0))
     IF_INT_EQUAL(LW(0), 1)
-        CALL_CHILD(PTR(ceil_sky_event))
-        CALL(btlevtcmd_SetPos, -2, LW(0), LW(1), LW(2))
+        CALL_CHILD(ceil_sky_event)
+        CALL(btlevtcmd_SetPos, BTL_UNIT_SELF, LW(0), LW(1), LW(2))
     END_IF
-    CALL(btlevtcmd_StartWaitEvent, -2)
+    CALL(btlevtcmd_StartWaitEvent, BTL_UNIT_SELF)
     RETURN
 EVT_END()
 
+/**
+ * Data-table event 48, run when the battle opens with Mario's or his partner's First Strike on the Swooper:
+ * it drops from the ceiling (ceil_sky_event), sets its height to 10 and waits for the attack to end.
+ */
 static EVT_BEGIN(dmg_first_attack_pos)
-    CALL_CHILD(PTR(ceil_sky_event))
-    CALL(btlevtcmd_SetPos, -2, LW(0), 10, LW(2))
+    CALL_CHILD(ceil_sky_event)
+    CALL(btlevtcmd_SetPos, BTL_UNIT_SELF, LW(0), 10, LW(2))
     CALL(btlevtcmd_WaitAttackEnd)
     RETURN
 EVT_END()
 
+/** Damage event of the Swooper: runs the default damage handling. */
 static EVT_BEGIN(damage_event)
     SET_VALUE(LW(10), -2)
     SET_VALUE(LW(11), 1)
-    CALL_CHILD(PTR(btldefaultevt_Damage))
+    CALL_CHILD(btldefaultevt_Damage)
     RETURN
 EVT_END()
 
+/**
+ * Damage event of the Swooper while it hangs from the ceiling:
+ * runs the default damage handling and then, unless the hit was a counter-type hit (512 without 2048)
+ * or did no damage, makes it drop to its flying position (ceil_sky_event) and dive down.
+ */
 static EVT_BEGIN(damage_event_ceil)
     SET_VALUE(LW(10), -2)
     SET_VALUE(LW(11), 1)
-    CALL_CHILD(PTR(btldefaultevt_Damage))
-    CALL(btlevtcmd_CheckDamageCode, -2, 512, LW(0))
+    CALL_CHILD(btldefaultevt_Damage)
+    CALL(btlevtcmd_CheckDamageCode, BTL_UNIT_SELF, DAMAGE_FLAG_KO, LW(0))
     IF_INT_NOT_EQUAL(LW(0), 0)
-        CALL(btlevtcmd_CheckDamageCode, -2, 2048, LW(0))
+        CALL(btlevtcmd_CheckDamageCode, BTL_UNIT_SELF, DAMAGE_FLAG_LIFE_SHROOM, LW(0))
         IF_INT_EQUAL(LW(0), 0)
             RETURN
         END_IF
@@ -418,83 +386,104 @@ static EVT_BEGIN(damage_event_ceil)
     IF_INT_EQUAL(LW(12), 0)
         RETURN
     END_IF
-    CALL_CHILD(PTR(ceil_sky_event))
-    CALL(btlevtcmd_DivePosition, -2, LW(0), LW(1), LW(2), 60, 0, 0, 0, -1)
+    CALL_CHILD(ceil_sky_event)
+    CALL(btlevtcmd_DivePosition, BTL_UNIT_SELF, LW(0), LW(1), LW(2), 60, 0, 0, 0, -1)
     RETURN
 EVT_END()
 
+/**
+ * Damage event used for the Swooper's counter-damage case:
+ * drops it from the ceiling (ceil_sky_event) and runs the shared counter damage handling
+ * (subsetevt_counter_damage).
+ */
 static EVT_BEGIN(counter_damage_event)
-    CALL_CHILD(PTR(ceil_sky_event))
+    CALL_CHILD(ceil_sky_event)
     SET_VALUE(LW(10), -2)
     SET_VALUE(LW(11), 1)
     CALL(btlevtcmd_GetDamageCode, LW(10), LW(0))
-    CALL_CHILD(PTR(subsetevt_counter_damage))
+    CALL_CHILD(subsetevt_counter_damage)
     RETURN
 EVT_END()
 
+/**
+ * Event run when the ceiling-fall hit lands on a hanging Swooper:
+ * runs the default damage handling, then drops it to its flying position (ceil_sky_event) and dives down.
+ */
 static EVT_BEGIN(ceil_fall_ready_event)
     SET_VALUE(LW(10), -2)
     SET_VALUE(LW(11), 1)
-    CALL_CHILD(PTR(btldefaultevt_Damage))
-    CALL_CHILD(PTR(ceil_sky_event))
-    CALL(btlevtcmd_DivePosition, -2, LW(0), LW(1), LW(2), 60, 0, 0, 0, -1)
+    CALL_CHILD(btldefaultevt_Damage)
+    CALL_CHILD(ceil_sky_event)
+    CALL(btlevtcmd_DivePosition, BTL_UNIT_SELF, LW(0), LW(1), LW(2), 60, 0, 0, 0, -1)
     RETURN
 EVT_END()
 
+/**
+ * The Swooper's swoop attack (weapon_basabasa_attack): uses an enemy item if it has one;
+ * otherwise, dropping from the ceiling first if it still hangs there,
+ * it flaps up and down twice and dives into one target.
+ * The pre-damage check decides between a dodge and a hit, then it flies back home.
+ */
 static EVT_BEGIN(attack_event)
-    CALL(btlevtcmd_EnemyItemUseCheck, -2, LW(0))
+    // It may use an enemy item instead of attacking.
+    CALL(btlevtcmd_EnemyItemUseCheck, BTL_UNIT_SELF, LW(0))
     IF_INT_NOT_EQUAL(LW(0), 0)
         CALL_CHILD(LW(0))
-        CALL(btlevtcmd_StartWaitEvent, -2)
+        CALL(btlevtcmd_StartWaitEvent, BTL_UNIT_SELF)
         RETURN
     END_IF
-    CALL(btlevtcmd_GetEnemyBelong, -2, LW(0))
-    CALL(btlevtcmd_SamplingEnemy, -2, LW(0), PTR(&weapon_basabasa_attack))
+    CALL(btlevtcmd_GetEnemyBelong, BTL_UNIT_SELF, LW(0))
+    // Target: it picks one for its attack; with none, a confused one flusters, otherwise the attack ends.
+    CALL(btlevtcmd_SamplingEnemy, BTL_UNIT_SELF, LW(0), PTR(&weapon_basabasa_attack))
     CALL(btlevtcmd_ChoiceSamplingEnemy, PTR(&weapon_basabasa_attack), LW(3), LW(4))
     IF_INT_EQUAL(LW(3), -1)
-        CALL(btlevtcmd_CheckToken, -2, 16, LW(0))
+        CALL(btlevtcmd_CheckToken, BTL_UNIT_SELF, TOKEN_FLAG_CONFUSED_ACTION, LW(0))
         IF_INT_NOT_EQUAL(LW(0), 0)
-            CALL_CHILD(PTR(subsetevt_confuse_flustered))
+            CALL_CHILD(subsetevt_confuse_flustered)
             RETURN
         END_IF
         GOTO(99)
     END_IF
     CALL(btlevtcmd_WeaponAftereffect, PTR(&weapon_basabasa_attack))
-    CALL(btlevtcmd_AttackDeclare, -2, LW(3), LW(4))
+    // The attack is declared.
+    CALL(btlevtcmd_AttackDeclare, BTL_UNIT_SELF, LW(3), LW(4))
     CALL(btlevtcmd_WaitGuardMove)
-    CALL(btlevtcmd_PayWeaponCost, -2, PTR(&weapon_basabasa_attack))
-    CALL(btlevtcmd_CalculateFaceDirection, -2, -1, LW(3), LW(4), 16, LW(15))
-    CALL(btlevtcmd_ChangeFaceDirection, -2, LW(15))
+    CALL(btlevtcmd_PayWeaponCost, BTL_UNIT_SELF, PTR(&weapon_basabasa_attack))
+    CALL(btlevtcmd_CalculateFaceDirection, BTL_UNIT_SELF, -1, LW(3), LW(4), 16, LW(15))
+    CALL(btlevtcmd_ChangeFaceDirection, BTL_UNIT_SELF, LW(15))
     CALL(evt_btl_camera_set_mode, 0, 8)
-    CALL(evt_btl_camera_set_homing_unit, 0, -2, LW(3))
+    CALL(evt_btl_camera_set_homing_unit, 0, BTL_UNIT_SELF, LW(3))
     CALL(evt_btl_camera_set_moveSpeedLv, 0, 1)
     CALL(evt_btl_camera_set_zoom, 0, 250)
-    CALL(btlevtcmd_CheckAttribute, -2, 2, LW(0))
+    // If it still hangs from the ceiling, it drops down first.
+    CALL(btlevtcmd_CheckAttribute, BTL_UNIT_SELF, UNIT_ATTR_CEILING, LW(0))
     IF_INT_EQUAL(LW(0), 1)
-        CALL(btlevtcmd_AnimeChangePoseType, -2, 1, 40)
+        CALL(btlevtcmd_AnimeChangePoseType, BTL_UNIT_SELF, 1, BTL_POSE_WALK)
         WAIT_FRAMES(1)
-        CALL(btlevtcmd_AddPos, -2, 0, -30, 0)
-        CALL(btlevtcmd_SetMoveSpeed, -2, FLOAT(2.5f))
-        CALL(btlevtcmd_GetPos, -2, LW(0), LW(1), LW(2))
-        CALL(btlevtcmd_FaceDirectionAdd, -2, LW(0), 30)
+        CALL(btlevtcmd_AddPos, BTL_UNIT_SELF, 0, -30, 0)
+        CALL(btlevtcmd_SetMoveSpeed, BTL_UNIT_SELF, FLOAT(2.5f))
+        CALL(btlevtcmd_GetPos, BTL_UNIT_SELF, LW(0), LW(1), LW(2))
+        CALL(btlevtcmd_FaceDirectionAdd, BTL_UNIT_SELF, LW(0), 30)
         SUBTRACT(LW(1), 40)
-        CALL(btlevtcmd_DivePosition, -2, LW(0), LW(1), LW(2), 0, -16, 0, 0, -1)
-        CALL(btlevtcmd_AnimeChangePoseType, -2, 1, 42)
+        // Wind-up: it flaps up and down twice in front of the target.
+        CALL(btlevtcmd_DivePosition, BTL_UNIT_SELF, LW(0), LW(1), LW(2), 0, -16, 0, 0, -1)
+        CALL(btlevtcmd_AnimeChangePoseType, BTL_UNIT_SELF, 1, BTL_POSE_RUN)
     END_IF
-    CALL(btlevtcmd_AnimeChangePoseType, -2, 1, 42)
-    CALL(btlevtcmd_GetPos, -2, LW(0), LW(1), LW(2))
+    CALL(btlevtcmd_AnimeChangePoseType, BTL_UNIT_SELF, 1, BTL_POSE_RUN)
+    CALL(btlevtcmd_GetPos, BTL_UNIT_SELF, LW(0), LW(1), LW(2))
     ADD(LW(1), -6)
     LOOP(2)
         ADD(LW(1), 13)
-        CALL(btlevtcmd_DivePosition, -2, LW(0), LW(1), LW(2), 10, 10, 0, 0, -1)
+        CALL(btlevtcmd_DivePosition, BTL_UNIT_SELF, LW(0), LW(1), LW(2), 10, 10, 0, 0, -1)
         ADD(LW(1), -13)
-        CALL(btlevtcmd_DivePosition, -2, LW(0), LW(1), LW(2), 10, -10, 0, 0, -1)
+        CALL(btlevtcmd_DivePosition, BTL_UNIT_SELF, LW(0), LW(1), LW(2), 10, -10, 0, 0, -1)
     END_LOOP
-    CALL(btlevtcmd_SetMoveSpeed, -2, FLOAT(3.5f))
+    CALL(btlevtcmd_SetMoveSpeed, BTL_UNIT_SELF, FLOAT(3.5f))
     CALL(btlevtcmd_GetHitPos, LW(3), LW(4), LW(0), LW(1), LW(2))
     SUBTRACT(LW(1), 10)
-    CALL(btlevtcmd_DivePosition, -2, LW(0), LW(1), LW(2), 0, -16, 0, 0, -1)
-    CALL(btlevtcmd_PreCheckDamage, -2, LW(3), LW(4), PTR(&weapon_basabasa_attack), 256, LW(5))
+    // It dives at the target; the pre-damage check decides between a dodge and a hit.
+    CALL(btlevtcmd_DivePosition, BTL_UNIT_SELF, LW(0), LW(1), LW(2), 0, -16, 0, 0, -1)
+    CALL(btlevtcmd_PreCheckDamage, BTL_UNIT_SELF, LW(3), LW(4), PTR(&weapon_basabasa_attack), DAMAGE_FLAG_LAST_HIT, LW(5))
     SWITCH(LW(5))
         CASE_OR_EQUAL(4)
         GOTO(90)
@@ -516,54 +505,58 @@ static EVT_BEGIN(attack_event)
         GOTO(98)
         CASE_END
     END_SWITCH
+    // Miss: it swoops past the target (which dodges for some kinds of miss).
     LABEL(90)
-    CALL(btlevtcmd_SetMoveSpeed, -2, FLOAT(3.5f))
+    CALL(btlevtcmd_SetMoveSpeed, BTL_UNIT_SELF, FLOAT(3.5f))
     CALL(btlevtcmd_GetHitPos, LW(3), LW(4), LW(0), LW(1), LW(2))
-    CALL(btlevtcmd_FaceDirectionAdd, -2, LW(0), 50)
+    CALL(btlevtcmd_FaceDirectionAdd, BTL_UNIT_SELF, LW(0), 50)
     ADD(LW(1), 10)
-    CALL(btlevtcmd_DivePosition, -2, LW(0), LW(1), LW(2), 0, 0, 0, 0, -1)
+    CALL(btlevtcmd_DivePosition, BTL_UNIT_SELF, LW(0), LW(1), LW(2), 0, 0, 0, 0, -1)
     WAIT_MS(200)
     GOTO(98)
+    // Hit: the dive lands for its damage and it rebounds into the air.
     LABEL(91)
     CALL(evt_btl_camera_shake_h, 0, 1, 1, 8, 0)
     CALL(evt_btl_camera_set_moveSpeedLv, 0, 2)
     CALL(evt_btl_camera_add_zoom, 0, -50)
     CALL(btlevtcmd_ResultACDefence, LW(3), PTR(&weapon_basabasa_attack))
-    CALL(btlevtcmd_CheckDamage, -2, LW(3), LW(4), PTR(&weapon_basabasa_attack), 256, LW(5))
-    CALL(btlevtcmd_SetMoveSpeed, -2, FLOAT(3.5f))
+    CALL(btlevtcmd_CheckDamage, BTL_UNIT_SELF, LW(3), LW(4), PTR(&weapon_basabasa_attack), DAMAGE_FLAG_LAST_HIT, LW(5))
+    CALL(btlevtcmd_SetMoveSpeed, BTL_UNIT_SELF, FLOAT(3.5f))
     CALL(btlevtcmd_GetHitPos, LW(3), LW(4), LW(0), LW(1), LW(2))
-    CALL(btlevtcmd_FaceDirectionAdd, -2, LW(0), 50)
+    CALL(btlevtcmd_FaceDirectionAdd, BTL_UNIT_SELF, LW(0), 50)
     ADD(LW(1), 10)
-    CALL(btlevtcmd_DivePosition, -2, LW(0), LW(1), LW(2), 0, 0, 4, 0, -1)
+    CALL(btlevtcmd_DivePosition, BTL_UNIT_SELF, LW(0), LW(1), LW(2), 0, 0, 4, 0, -1)
     WAIT_MS(200)
     GOTO(98)
+    // It flies back to its home position.
     LABEL(98)
     CALL(evt_btl_camera_set_mode, 0, 0)
-    CALL(btlevtcmd_AnimeChangePoseType, -2, 1, 42)
-    CALL(btlevtcmd_SetMoveSpeed, -2, FLOAT(6.0f))
-    CALL(btlevtcmd_GetHomePos, -2, LW(0), LW(1), LW(2))
-    CALL(btlevtcmd_CheckAttribute, -2, 2, LW(7))
+    CALL(btlevtcmd_AnimeChangePoseType, BTL_UNIT_SELF, 1, BTL_POSE_RUN)
+    CALL(btlevtcmd_SetMoveSpeed, BTL_UNIT_SELF, FLOAT(6.0f))
+    CALL(btlevtcmd_GetHomePos, BTL_UNIT_SELF, LW(0), LW(1), LW(2))
+    CALL(btlevtcmd_CheckAttribute, BTL_UNIT_SELF, UNIT_ATTR_CEILING, LW(7))
     IF_INT_EQUAL(LW(7), 1)
         SUBTRACT(LW(1), 30)
     END_IF
-    CALL(btlevtcmd_DivePosition, -2, LW(0), LW(1), LW(2), 0, -10, 0, 0, -1)
+    CALL(btlevtcmd_DivePosition, BTL_UNIT_SELF, LW(0), LW(1), LW(2), 0, -10, 0, 0, -1)
     LABEL(99)
-    CALL(btlevtcmd_CheckAttribute, -2, 2, LW(0))
+    // If it started on the ceiling, it hangs back up there.
+    CALL(btlevtcmd_CheckAttribute, BTL_UNIT_SELF, UNIT_ATTR_CEILING, LW(0))
     IF_INT_EQUAL(LW(0), 1)
-        CALL(btlevtcmd_AnimeChangePose, -2, 1, STRING("BSA_S_2"))
+        CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("BSA_S_2"))
         WAIT_FRAMES(1)
-        CALL(btlevtcmd_AddPos, -2, 0, 30, 0)
-        ELSE
-        CALL(btlevtcmd_AnimeChangePose, -2, 1, STRING("BSA_S_1"))
+        CALL(btlevtcmd_AddPos, BTL_UNIT_SELF, 0, 30, 0)
+    ELSE
+        CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("BSA_S_1"))
         WAIT_FRAMES(1)
     END_IF
-    CALL(btlevtcmd_ResetFaceDirection, -2)
-    CALL(btlevtcmd_StartWaitEvent, -2)
+    CALL(btlevtcmd_ResetFaceDirection, BTL_UNIT_SELF)
+    CALL(btlevtcmd_StartWaitEvent, BTL_UNIT_SELF)
     RETURN
 EVT_END()
 
+/** Wait (idle) event of the Swooper: shows the idle pose from the pose table. */
 static EVT_BEGIN(wait_event)
-    CALL(btlevtcmd_AnimeChangePoseFromTable, -2, 1)
+    CALL(btlevtcmd_AnimeChangePoseFromTable, BTL_UNIT_SELF, 1)
     RETURN
 EVT_END()
-

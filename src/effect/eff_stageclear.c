@@ -1,3 +1,6 @@
+// Stage clear banner: letter sprites pop in one by one with confetti and camera shake; type 0 is the stage-clear
+// text (per language), type 1 a shorter variant. effStageClearEndChk reports when it has finished.
+#include "eff/eff_stageclear.h"
 #include "driver/camdrv.h"
 #include "driver/dispdrv.h"
 #include "driver/effdrv.h"
@@ -11,49 +14,40 @@
 #include <dolphin/mtx.h>
 #include "evt/evt_cam.h"
 #include "evt/evt_cmd.h"
-
-#ifndef TARGET_PC /* PC port: the host libc declares these */
-double tan(double);
-int rand(void);
-#endif
-#ifdef TARGET_PC /* the real prototype; on GameCube x, y, z ride through in f1-f3 */
-EffectEntry* effMiniGameEntry(s32 type, f32 x, f32 y, f32 z);
-#else
-EffectEntry* effMiniGameEntry(s32);
-#endif
+#include "version.h"
+#include "libc_decls.h"
+#include "eff/eff_minigame.h"
 
 typedef struct StageClearWork {
-    s32 type;     // 0x0
-    Vec position; // 0xC
-    f32 pad10;    // 0x10
-    f32 scale;    // 0x14
-    s32 delay;    // 0x18
-    s32 frame;    // 0x1C
+    s32 type;          // 0x0
+    Vec position;      // 0x4
+    f32 reserved_10;   // 0x10, never read or written
+    f32 scale;         // 0x14
+    s32 delay;         // 0x18
+    s32 frame;         // 0x1C
     EventEntry* shake; // 0x20
-    s32 confetti; // 0x24
-    s32 done;     // 0x28
+    s32 confetti;      // 0x24
+    s32 done;          // 0x28
 } StageClearWork;
 
+static void effStageClearMain(EffectEntry* effect);
+static void effStageClearDisp(CameraId cameraId, EffectEntry* effect);
 
-void effStageClearMain(EffectEntry* effect);
-void effStageClearDisp(CameraId cameraId, EffectEntry* effect);
-
-#ifndef VERSION_G8ME01
+#if VERSION <= VERSION_JP
+/** Letter textures of the stage-clear banner, Japanese then English, each with a matching shadow list. */
+static s32 tex_jp[] = {0x9C, 0x9D, 0x9E, 0x9F, 0xA0, 0xA1, 0xA2, 0xA3};
+s32 tex_shadow_jp[] = {0xA4, 0xA5, 0xA6, 0xA7, 0xA8, 0xA9, 0xAA, 0xAB};
 static s32 tex_us[] = {0x9C, 0x9D, 0x9E, 0x9F, 0xA0, 0xA1, 0xA2, 0xA0, 0x9E, 0xA3, 0xA0, 0xA4, 0xA5};
 s32 tex_shadow_us[] = {0xA6, 0xA7, 0xA8, 0xA9, 0xAA, 0xAB, 0xAC, 0xAA, 0xA8, 0xAD, 0xAA, 0xAE, 0xAF};
+static s32* texid_tbl[] = {tex_jp, tex_shadow_jp, tex_us, tex_shadow_us};
+/** Rainbow (niji) texture laid over the banner letters, Japanese then English. */
+static u32 niji_tbl[] = {0xAC, 0xB0};
 #endif
-#ifndef VERSION_G8ME01
-static EVT_BEGIN(evt_shake)
-    IF_INT_EQUAL(-29999999, 0)
-        CALL(evt_cam_shake, 5, -229999990, -229999990, 50)
-    ELSE
-        CALL(evt_cam_shake, 5, -229999980, -229999980, 100)
-    END_IF
-    RETURN
-EVT_END()
-#endif
-
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
+/**
+ * Letter textures of the stage-clear banner for each language, each with a matching shadow list;
+ * -1 is a gap between words.
+ */
 static s16 tex_jp[] = {128, 129, 130, 131, 132, 133, 134, 135};
 s16 tex_shadow_jp[] = {136, 137, 138, 139, 140, 141, 142, 143};
 static s16 tex_us[] = {132, 133, 134, -1, 135, 136, -1, 137, 138, 139, 140, 141, 132, 142};
@@ -66,37 +60,59 @@ static s16 tex_lang5[] = {135, 136, 137, -1, 138, 139, 140, -1, 141, 142, 143, 1
 static s16 tex_shadow_lang5[] = {147, 148, 149, -1, 150, 151, 152, -1, 153, 154, 155, 156};
 static s16 tex_lang6[] = {130, 131, 132, 133, 134, 131, 135, 136};
 static s16 tex_shadow_lang6[] = {137, 138, 139, 140, 141, 138, 142, 143};
-typedef struct TexSet { s16* tex; s16* shadow; s32 count; } TexSet;
-static TexSet texid_tbl[6] = { { tex_jp, tex_shadow_jp, 8 }, { tex_us, tex_shadow_us, 14 }, { tex_lang3, tex_shadow_lang3, 12 }, { tex_lang4, tex_shadow_lang4, 16 }, { tex_lang5, tex_shadow_lang5, 12 }, { tex_lang6, tex_shadow_lang6, 8 } };
+typedef struct TexSet {
+    s16* tex;
+    s16* shadow;
+    s32 count;
+} TexSet;
+/** Banner letters, shadows and letter count for each language. */
+static TexSet texid_tbl[6] = {{tex_jp, tex_shadow_jp, 8}, {tex_us, tex_shadow_us, 14}, {tex_lang3, tex_shadow_lang3, 12}, {tex_lang4, tex_shadow_lang4, 16}, {tex_lang5, tex_shadow_lang5, 12}, {tex_lang6, tex_shadow_lang6, 8}};
+/** Rainbow (niji) texture laid over each language's banner letters. */
 u32 niji_tbl[] = {144, 154, 150, 156, 158, 144};
+/** Shakes the camera when a banner letter lands: 50 frames lightly, or 100 frames harder for the last letter (LW 1). */
 static EVT_BEGIN(evt_shake)
-    IF_INT_EQUAL(-29999999, 0)
-        CALL(evt_cam_shake, 5, -229999990, -229999990, 50)
+    IF_INT_EQUAL(LW(1), 0)
+        CALL(evt_cam_shake, 5, FLOAT(0.01f), FLOAT(0.01f), 50)
     ELSE
-        CALL(evt_cam_shake, 5, -229999980, -229999980, 100)
+        CALL(evt_cam_shake, 5, FLOAT(0.02f), FLOAT(0.02f), 100)
     END_IF
     RETURN
 EVT_END()
-#else
-static s32 tex_jp[] = {0x9C, 0x9D, 0x9E, 0x9F, 0xA0, 0xA1, 0xA2, 0xA3};
-s32 tex_shadow_jp[] = {0xA4, 0xA5, 0xA6, 0xA7, 0xA8, 0xA9, 0xAA, 0xAB};
-static s32* texid_tbl[] = {tex_jp, tex_shadow_jp, tex_us, tex_shadow_us};
-static u32 niji_tbl[] = {0xAC, 0xB0};
 #endif
+/** Shake pattern handed to an ordinary letter's camera-shake event in LW 0; evt_shake does not read it. */
 s32 shake_dt[] = {2, 6, 2, 0, -1};
+/** Stronger shake pattern handed to the last letter's shake event; also unread. */
 s32 shake_dt2[] = {12, 36, 12, 0, -1};
-#ifdef VERSION_G8ME01
-static u8 scale_dt[] = {0x00, 0x00, 0x16, 0x2E, 0x47, 0x5D, 0x6E, 0x78, 0x77, 0x6E, 0x66, 0x00}; /* US: trailing pad byte kept in the table */
+#if VERSION <= VERSION_JP
+/** Shakes the camera when a banner letter lands: 50 frames lightly, or 100 frames harder for the last letter (LW 1). */
+static EVT_BEGIN(evt_shake)
+    IF_INT_EQUAL(LW(1), 0)
+        CALL(evt_cam_shake, 5, FLOAT(0.01f), FLOAT(0.01f), 50)
+    ELSE
+        CALL(evt_cam_shake, 5, FLOAT(0.02f), FLOAT(0.02f), 100)
+    END_IF
+    RETURN
+EVT_END()
+#endif
+#if VERSION >= VERSION_US
+/** Size percentages per frame as a banner letter pops in: it overshoots to 120% and settles near 100%. */
+static u8 scale_dt[] = {0x00, 0x00, 0x16, 0x2E, 0x47, 0x5D, 0x6E, 0x78, 0x77, 0x6E, 0x66}; /* US: trailing pad byte kept in the table */
 #else
-static u8 scale_dt[] = {0x00, 0x00, 0x16, 0x2E, 0x47, 0x5D, 0x6E, 0x78, 0x77, 0x6E, 0x66, 0x00};
+/** Size percentages per frame as a banner letter pops in: it overshoots to 120% and settles near 100%. */
+static u8 scale_dt[] = {0x00, 0x00, 0x16, 0x2E, 0x47, 0x5D, 0x6E, 0x78, 0x77, 0x6E, 0x66};
 #endif
 
+/**
+ * Spawns the banner at (x, y, z): one record per letter texture,
+ * laid out left to right and popped in with a staggered delay.
+ * Type 1 with a non-zero language returns the minigame effect instead; types 10 and up use the effect camera.
+ */
 EffectEntry* effStageClearEntry(s32 type, f32 x, f32 y, f32 z) {
     EffectEntry* effect;
     StageClearWork* work;
     StageClearWork* p;
     s32 i;
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
     s32 n;
     GXTexObj texObj;
     f32 a;
@@ -107,14 +123,10 @@ EffectEntry* effStageClearEntry(s32 type, f32 x, f32 y, f32 z) {
 #endif
 
     if (type == 1 && gp->language != 0U) {
-#ifdef TARGET_PC
         return effMiniGameEntry(1, x, y, z);
-#else
-        return effMiniGameEntry(1);
-#endif
     }
     effect = effEntry();
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
     switch (type % 10) {
         case 0:
             n = texid_tbl[gp->language].count + 1;
@@ -131,7 +143,7 @@ EffectEntry* effStageClearEntry(s32 type, f32 x, f32 y, f32 z) {
         n = 7;
     }
 #endif
-    effect->type = "StageClear\0";
+    effect->type = "StageClear";
     effect->count = n;
     work = __memAlloc(HEAP_EFFECT, effect->count * sizeof(StageClearWork));
     effect->userdata = work;
@@ -146,7 +158,7 @@ EffectEntry* effStageClearEntry(s32 type, f32 x, f32 y, f32 z) {
     work->confetti = irand(5) + 1;
     work->done = 0;
     for (i = 1, p = work + 1; i < effect->count; i++, p++) {
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
         a = 0.0f;
         b = a;
         for (j = 0; j < i - 1; j++) {
@@ -179,7 +191,7 @@ EffectEntry* effStageClearEntry(s32 type, f32 x, f32 y, f32 z) {
         p->position.z = 0.0f;
         p->scale = 0.0f;
         p->delay = (s32)((f32)i * (0.2f * (f32)gp->framerate));
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
         p->delay = (s32)((f32)gp->framerate * (96.0f * (f32)i / (f32)texid_tbl[gp->language].count) / 60.0f);
 #endif
         p->frame = 0;
@@ -188,7 +200,12 @@ EffectEntry* effStageClearEntry(s32 type, f32 x, f32 y, f32 z) {
     return effect;
 }
 
-void effStageClearMain(EffectEntry* effect) {
+/**
+ * Pops each letter in (plays a sound, then follows scale_dt),
+ * starts a camera-shake event as each letter lands and sets `done` once all have.
+ * Never deletes itself; the owner removes it after effStageClearEndChk. Type 1 also drops confetti.
+ */
+static void effStageClearMain(EffectEntry* effect) {
     StageClearWork* work = effect->userdata;
     Vec pos;
     Vec tmp;
@@ -233,7 +250,8 @@ void effStageClearMain(EffectEntry* effect) {
         }
     }
     if (n >= effect->count - 1) {
-        ((StageClearWork*)effect->userdata)->done = 1;
+        work = effect->userdata;
+        work->done = 1;
     }
     if (type % 10 == 1 && n >= effect->count - 1 && gp->retraceCount % 60 == 0) {
         work = effect->userdata;
@@ -250,11 +268,16 @@ void effStageClearMain(EffectEntry* effect) {
     if (type < 10) {
         dispEntry(CAMERA_3D, dispCalcZ(&pos), 2, (DispCallback)effStageClearDisp, effect);
     } else {
-        dispEntry((CameraId)5, dispCalcZ(&pos), 8, (DispCallback)effStageClearDisp, effect);
+        dispEntry((CameraId)CAMERA_3D_EFFECTA, dispCalcZ(&pos), 8, (DispCallback)effStageClearDisp, effect);
     }
 }
 
-void effStageClearDisp(CameraId cameraId, EffectEntry* effect) {
+/**
+ * Draws the letters in screen space with the 2D camera:
+ * a dark offset shadow pass first, then the letters,
+ * with a scrolling rainbow texture blended over the type 0 text.
+ */
+static void effStageClearDisp(CameraId cameraId, EffectEntry* effect) {
     StageClearWork* work = effect->userdata;
     CameraEntry* cam;
     f32 scale;
@@ -286,7 +309,7 @@ void effStageClearDisp(CameraId cameraId, EffectEntry* effect) {
     }
     GXGetProjectionv(proj);
     GXGetViewportv(vp);
-    cam = camGetPtr(8);
+    cam = camGetPtr(CAMERA_2D);
     GXSetProjection(cam->projection, cam->projType);
     GXSetBlendMode(GX_BM_BLEND, GX_BL_SRCALPHA, GX_BL_INVSRCALPHA, GX_LO_CLEAR);
     GXSetZCompLoc(GX_TRUE);
@@ -314,7 +337,7 @@ void effStageClearDisp(CameraId cameraId, EffectEntry* effect) {
             dy = (f32)(-s * 4);
             if (s != 0) {
                 if (type % 10 == 0) {
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
                     if (texid_tbl[gp->language].shadow[i - 1] == -1) {
                         continue;
                     }
@@ -335,7 +358,7 @@ void effStageClearDisp(CameraId cameraId, EffectEntry* effect) {
                 GXSetTevAlphaIn(GX_TEVSTAGE0, GX_CA_ZERO, GX_CA_TEXA, GX_CA_A0, GX_CA_ZERO);
                 GXSetTevColor(GX_TEVREG0, (GXColor){0, 0, 0, 0x80});
             } else if (type % 10 == 0) {
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
                 if (texid_tbl[gp->language].tex[i - 1] == -1) {
                     continue;
                 }
@@ -344,7 +367,7 @@ void effStageClearDisp(CameraId cameraId, EffectEntry* effect) {
                 effGetTexObj(texid_tbl[gp->language * 2][i - 1], &tex);
 #endif
                 GXLoadTexObj(&tex, GX_TEXMAP0);
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
                 effGetTexObj(niji_tbl[gp->language], &tex);
 #else
                 effGetTexObj(niji_tbl[gp->language != 0], &tex);
@@ -411,19 +434,9 @@ void effStageClearDisp(CameraId cameraId, EffectEntry* effect) {
     GXSetViewport(vp[0], vp[1], vp[2], vp[3], vp[4], vp[5]);
 }
 
+/** Returns non-zero once every letter has landed (the `done` flag set by Main). */
 s32 effStageClearEndChk(EffectEntry* effect) {
-    return ((StageClearWork*)effect->userdata)->done != 0;
+    StageClearWork* work = effect->userdata;
+
+    return work->done != 0;
 }
-
-
-#pragma force_active on
-#pragma force_active on
-#ifdef VERSION_G8ME01
-__declspec(section ".data") u32 gap_05_803B114C_data[5] = {0, 0, 0, 0, 0};
-u8 gap_07_8041BCDB_sdata[4] = {0, 0, 0, 0};
-#else
-__declspec(section ".data") u32 gap_05_803ADD14_data[3] = {0, 0, 0};
-u32 gap_07_80415C34_sdata[3] = {0, 0, 0};
-#endif
-#pragma force_active reset
-#pragma force_active reset

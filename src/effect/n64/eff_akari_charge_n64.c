@@ -1,3 +1,5 @@
+// Paper Mario 64 effect: akari (light) charge, 21 yellow sparks spin around a glow; type 0 draws in the 3D scene,
+// other types as a 2D overlay.
 #include "eff/n64/eff_akari_charge_n64.h"
 #include "eff/eff_n64.h"
 #include "driver/camdrv.h"
@@ -8,63 +10,10 @@
 #include <dolphin/gx.h>
 #include <dolphin/mtx.h>
 #include <stdlib.h>
-#include "eff/eff_magic1_n64.h"
 #include "libc_decls.h"
+#include <math.h>
 
-#define NAN (*(f32*)__float_nan)
-
-#define FP_NAN 1
-#define FP_INFINITE 2
-#define FP_ZERO 3
-#define FP_NORMAL 4
-#define FP_SUBNORMAL 5
-
-static inline s32 __fpclassifyf(f32 x) {
-    switch (*(s32*)&x & 0x7F800000) {
-        case 0x7F800000:
-            if (*(s32*)&x & 0x007FFFFF) {
-                return FP_NAN;
-            } else {
-                return FP_INFINITE;
-            }
-            break;
-        case 0:
-            if (*(s32*)&x & 0x007FFFFF) {
-                return FP_SUBNORMAL;
-            } else {
-                return FP_ZERO;
-            }
-            break;
-        default:
-            return FP_NORMAL;
-    }
-}
-
-#define fpclassify(x) __fpclassifyf(x)
-#define isnan(x) (fpclassify(x) == FP_NAN)
-
-#ifndef TARGET_PC /* PC port: the host libc declares these */
-static inline f32 sqrtf(f32 x) {
-    const f64 _half = .5;
-    const f64 _three = 3.0;
-
-    if (x > 0.0f) {
-        f64 guess = __frsqrte(x);
-        guess = _half * guess * (_three - guess * guess * x);
-        guess = _half * guess * (_three - guess * guess * x);
-        guess = _half * guess * (_three - guess * guess * x);
-        return x * guess;
-    } else if (x < 0.0) {
-        return NAN;
-    } else if (isnan(x)) {
-        return NAN;
-    } else {
-        return x;
-    }
-}
-#endif
-
-
+/** Spark quad of the charge glow (an 8x16 texture window), stretched along each spark's last step into a streak. */
 static effN64Vtx size2x8_tex8x16_vtx[] = {
     {-4, -4, 0, 0, 0, 255, 255, 255, 255},
     {4, -4, 0, 512, 0, 0, 0, 0, 255},
@@ -72,9 +21,15 @@ static effN64Vtx size2x8_tex8x16_vtx[] = {
     {-4, 20, 0, 0, 1024, 255, 0, 0, 255},
 };
 
-void effAkariChargeMain(EffectEntry* effect);
-void effAkariChargeDisp(CameraId cameraId, EffectEntry* effect);
+static void effAkariChargeMain(EffectEntry* effect);
+static void effAkariChargeDisp(CameraId cameraId, EffectEntry* effect);
 
+/**
+ * Spawns the glow at (x, y, z), `size` times its normal scale,
+ * for `lifetime` frames (0 or less: until soft deleted).
+ * Type 0 draws on the 3D camera, other types on the 2D camera.
+ * Used for spell charge-ups (mahorn and kurokumorn units, aji).
+ */
 EffectEntry* effAkariChargeN64Entry(s32 type, s32 lifetime, f32 x, f32 y, f32 z, f32 size) {
     EffectEntry* effect;
     EffAkariChargeN64Work* work;
@@ -82,12 +37,12 @@ EffectEntry* effAkariChargeN64Entry(s32 type, s32 lifetime, f32 x, f32 y, f32 z,
     s32 i;
 
     effect = effEntry();
-    effect->type = "AkariChargeN64\0";
+    effect->type = "AkariChargeN64";
     effect->count = 22;
     work = __memAlloc(HEAP_EFFECT, sizeof(EffAkariChargeN64Work));
     effect->userdata = work;
     effect->callback = effAkariChargeMain;
-    effect->flags |= 2;
+    effect->flags |= EFFECT_FLAG_SOFT_DELETE;
     work->elem[0].type = type;
     work->elem[0].frame = 0;
     if (lifetime <= 0) {
@@ -119,7 +74,13 @@ EffectEntry* effAkariChargeN64Entry(s32 type, s32 lifetime, f32 x, f32 y, f32 z,
     return effect;
 }
 
-void effAkariChargeMain(EffectEntry* effect) {
+/**
+ * Fades the glow in over 16 frames and out at the end.
+ * Every third spark restarts on a random 20-70 frame cycle,
+ * random-walking from the centre and remembering its last two positions as a trail;
+ * each picks a random texture column.
+ */
+static void effAkariChargeMain(EffectEntry* effect) {
     EffAkariChargeN64Elem* p = effect->userdata;
     s32 i;
     s32 type;
@@ -134,8 +95,8 @@ void effAkariChargeMain(EffectEntry* effect) {
     tmp.z = p->position.z;
     position = tmp;
     type = p->type;
-    if (effect->flags & 4) {
-        effect->flags &= ~4;
+    if (effect->flags & EFFECT_FLAG_DELETE_REQUESTED) {
+        effect->flags &= ~EFFECT_FLAG_DELETE_REQUESTED;
         p->lifetime = 16;
     }
     if (p->lifetime < 1000) {
@@ -198,7 +159,12 @@ void effAkariChargeMain(EffectEntry* effect) {
     }
 }
 
-void effAkariChargeDisp(CameraId cameraId, EffectEntry* effect) {
+/**
+ * Draws each spark as a streak stretched along its last step (scale = step length) in the glow colour,
+ * with the texture column and scroll animated; type 1 temporarily switches to the 3D camera's projection with
+ * depth testing off.
+ */
+static void effAkariChargeDisp(CameraId cameraId, EffectEntry* effect) {
     CameraEntry* camera;
     EffAkariChargeN64Elem* p;
     s32 i;

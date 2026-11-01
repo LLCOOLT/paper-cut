@@ -1,3 +1,4 @@
+// Script commands for the cameras: position, target, shake, zoom and 3D camera modes.
 #include "evt/evt_cam.h"
 #include "driver/camdrv.h"
 #include "driver/npcdrv.h"
@@ -9,41 +10,27 @@
 #include "pmario_sound.h"
 #include "system.h"
 #include <dolphin/os.h>
+#include "cam_shift.h"
 #include "libc_decls.h"
+#include "cam_road.h"
+#include <math.h>
 
-typedef struct CamRoadOut {
-    Vec f_0;
-    Vec pos; // 0xc
-    Vec at;  // 0x18
-} CamRoadOut;
-
-void camRoadMain(CamRoadOut* out, f32 a, f32 b, f32 c, f32 d, f32 e, f32 f, f32 g);
-void camRoadReset(void);
-void camShiftReset(void);
-void camShiftMain(CameraEntry* camera, MarioWork* mario, f32* out);
 void OSReport(const char* msg, ...);
-#ifndef TARGET_PC /* PC port: the host libc declares these */
-double sin(double);
-double cos(double);
-#endif
 
-static inline s32 cam_fpclassifyf(f32 x) { switch (*(s32*)&x & 0x7F800000) { case 0x7F800000: if (*(s32*)&x & 0x007FFFFF) { return 1; } else { return 2; } break; case 0: if (*(s32*)&x & 0x007FFFFF) { return 5; } else { return 3; } break; default: return 4; } }
-static inline f32 cam_sqrtf(f32 x) { if (x > 0.0f) { f64 guess = __frsqrte(x); guess = 0.5 * guess * (3.0 - guess * guess * x); guess = 0.5 * guess * (3.0 - guess * guess * x); guess = 0.5 * guess * (3.0 - guess * guess * x); return x * guess; } else if (x < 0.0) { return *(f32*)__float_nan; } else if (cam_fpclassifyf(x) == 1) { return *(f32*)__float_nan; } return x; }
-
-// CameraId id, BOOL on
+/** CameraId id, BOOL on */
 USER_FUNC(evt_cam_ctrl_onoff) {
     EvtWord* args = event->args;
     CameraId id = evtGetValue(event, args[0]);
 
     if (evtGetValue(event, args[1])) {
         camCtrlOn(id);
-    }
-    else {
+    } else {
         camCtrlOff(id);
     }
     return EVT_RETURN_DONE;
 }
 
+/** Returns the eye position of camera args[0] in the float variables args[1..3]. */
 USER_FUNC(evt_cam_get_pos) {
     EvtWord* args = event->args;
     CameraEntry* camera = camGetPtr(evtGetValue(event, args[0]));
@@ -54,6 +41,7 @@ USER_FUNC(evt_cam_get_pos) {
     return EVT_RETURN_DONE;
 }
 
+/** Returns the look-at point of camera args[0] in the float variables args[1..3]. */
 USER_FUNC(evt_cam_get_at) {
     EvtWord* args = event->args;
     CameraEntry* camera = camGetPtr(evtGetValue(event, args[0]));
@@ -64,11 +52,11 @@ USER_FUNC(evt_cam_get_at) {
     return EVT_RETURN_DONE;
 }
 
-// CameraId id, f32 x, f32 y, s32 msec
+/** CameraId id, f32 x, f32 y, s32 msec */
 USER_FUNC(evt_cam_shake) {
     EvtWord* args = event->args;
-    int new_var;
-    int new_var2;
+    int shift;
+    int camId;
     CameraId id;
     u64 now;
     s32 msec;
@@ -79,10 +67,10 @@ USER_FUNC(evt_cam_shake) {
 
     id = evtGetValue(event, args[0]);
     x = evtGetFloat(event, args[1]);
-    new_var2 = id;
+    camId = id;
     y = evtGetFloat(event, args[2]);
     msec = evtGetValue(event, args[3]);
-    now = *(u64*)&event->lifetime;
+    now = event->lifetime;
     if (isFirstCall) {
         event->userdata[0] = 0;
 #ifdef TARGET_PC
@@ -103,20 +91,19 @@ USER_FUNC(evt_cam_shake) {
     event->userdata[0]++;
     event->userdata[0] %= 4;
     if (event->userdata[0] < 2) {
-        PSMTX44Trans(camGetPtr(new_var2)->projAdjust, x, y, 0.0f);
+        PSMTX44Trans(camGetPtr(camId)->projAdjust, x, y, 0.0f);
+    } else {
+        PSMTX44Trans(camGetPtr(camId)->projAdjust, -x, -y, 0.0f);
     }
-    else {
-        PSMTX44Trans(camGetPtr(new_var2)->projAdjust, -x, -y, 0.0f);
-    }
-    camGetPtr(new_var2)->flags |= 8;
+    camGetPtr(camId)->flags |= CAM_FLAG_PROJ_ADJUST;
     if (msec) {
         if ((u64)msec < OSTicksToMilliseconds(now - *(u64*)&event->userdata[1])) {
-            camGetPtr(id)->flags &= ~8;
+            camGetPtr(id)->flags &= ~CAM_FLAG_PROJ_ADJUST;
             padRumbleOff(0);
             return EVT_RETURN_DONE;
         }
     }
-    len = cam_sqrtf(x * x + y * y);
+    len = sqrtf(x * x + y * y);
     onTime = 13000.0f * len;
     offTime = 50.0f * (1.0f - len);
     last = event->wInterpRelatedTime;
@@ -132,17 +119,16 @@ USER_FUNC(evt_cam_shake) {
         if (!event->userWork[3]) {
             padRumbleOn(0);
             if (onTime < OSTicksToMilliseconds(now - last)) {
-                new_var = 32;
+                shift = 32;
                 event->userWork[3] = 1 - event->userWork[3];
 #ifdef TARGET_PC
                 event->wInterpRelatedTime = now;
 #else
-                ((u32*)&event->wInterpRelatedTime)[0] = (now >> new_var) & 0xFFFFFFFF;
+                ((u32*)&event->wInterpRelatedTime)[0] = (now >> shift) & 0xFFFFFFFF;
                 ((u32*)&event->wInterpRelatedTime)[1] = now & 0xFFFFFFFF;
 #endif
             }
-        }
-        else {
+        } else {
             padRumbleOff(0);
             if (offTime < OSTicksToMilliseconds(now - last)) {
                 event->userWork[3] = 1 - event->userWork[3];
@@ -158,7 +144,7 @@ USER_FUNC(evt_cam_shake) {
     return EVT_RETURN_BLOCK;
 }
 
-// s32 percent, s32 msec, s32 dist, s32 curve
+/** s32 percent, s32 msec, s32 dist, s32 curve */
 USER_FUNC(evt_cam3d_evt_zoom_in) {
     EvtWord* args = event->args;
     s32 percent, msec, dist, curve;
@@ -188,7 +174,7 @@ USER_FUNC(evt_cam3d_evt_zoom_in) {
     return EVT_RETURN_DONE;
 }
 
-// s32 x, s32 y, s32 z, s32 percent, s32 msec, s32 curve
+/** s32 x, s32 y, s32 z, s32 percent, s32 msec, s32 curve */
 USER_FUNC(evt_cam3d_evt_set_at) {
     EvtWord* args = event->args;
     s32 x, y, z, percent, msec, curve;
@@ -219,7 +205,7 @@ USER_FUNC(evt_cam3d_evt_set_at) {
     return EVT_RETURN_DONE;
 }
 
-// s32 posX, posY, posZ, atX, atY, atZ, msec, curve
+/** s32 posX, posY, posZ, atX, atY, atZ, msec, curve */
 USER_FUNC(evt_cam3d_evt_set) {
     EvtWord* args = event->args;
     f32 px, py, pz, ax, ay, az;
@@ -249,7 +235,7 @@ USER_FUNC(evt_cam3d_evt_set) {
     return EVT_RETURN_DONE;
 }
 
-// s32 posX, posY, posZ (relative to at), atX, atY, atZ (relative to mario), msec, curve
+/** s32 posX, posY, posZ (relative to at), atX, atY, atZ (relative to mario), msec, curve */
 USER_FUNC(evt_cam3d_evt_set_rel) {
     EvtWord* args = event->args;
     f32 px, py, pz, ax, ay, az;
@@ -294,7 +280,7 @@ USER_FUNC(evt_cam3d_evt_set_rel) {
     return EVT_RETURN_DONE;
 }
 
-// const char* npc, s32 posX, posY, posZ, atX, atY, atZ, msec, curve
+/** const char* npc, s32 posX, posY, posZ, atX, atY, atZ, msec, curve */
 USER_FUNC(evt_cam3d_evt_set_npc_rel) {
     EvtWord* args = event->args;
     const char* name;
@@ -331,7 +317,7 @@ USER_FUNC(evt_cam3d_evt_set_npc_rel) {
     return EVT_RETURN_DONE;
 }
 
-// s32 posX, posY, posZ, atX, atY, atZ (rotated by camera yaw), msec, curve
+/** s32 posX, posY, posZ, atX, atY, atZ (rotated by camera yaw), msec, curve */
 USER_FUNC(evt_cam3d_evt_set_rel_dir) {
     EvtWord* args = event->args;
     f32 px, py, pz, ax, ay, az;
@@ -372,12 +358,13 @@ USER_FUNC(evt_cam3d_evt_set_rel_dir) {
     return EVT_RETURN_DONE;
 }
 
-// unused (dead-stripped): only its string and 100.0f survive
-static void evt_cam_debug_print(f32 a) /* restore */ {
+/** unused (dead-stripped): only its string and 100.0f survive */
+// FAKE: uncalled stand-in for a stripped function; keeps its format string and orders 100.0f
+static void evt_cam_debug_print(f32 a) {
     OSReport("%f%f%f%f%f%f%d%s", a / 100.0f);
 }
 
-// s32 msec, s32 curve
+/** s32 msec, s32 curve */
 USER_FUNC(evt_cam3d_evt_off) {
     EvtWord* args = event->args;
     s32 msec, curve;
@@ -395,21 +382,20 @@ USER_FUNC(evt_cam3d_evt_off) {
     return EVT_RETURN_DONE;
 }
 
-// BOOL on
+/** BOOL on */
 USER_FUNC(evt_cam3d_road_shift_onoff) {
     s32 on = evtGetValue(event, *event->args);
     CameraEntry* camera = camGetPtr(CAMERA_3D);
 
     if (on) {
-        camera->flags &= ~0x20;
-    }
-    else {
-        camera->flags |= 0x20;
+        camera->flags &= ~CAM_FLAG_ROAD_SHIFT_OFF;
+    } else {
+        camera->flags |= CAM_FLAG_ROAD_SHIFT_OFF;
     }
     return EVT_RETURN_DONE;
 }
 
-// s32 x, s32 y, s32 z, s32 dolly, s32 msec, s32 curve
+/** s32 x, s32 y, s32 z, s32 dolly, s32 msec, s32 curve */
 USER_FUNC(evt_cam3d_evt_set_xyz) {
     EvtWord* args = event->args;
     s32 x, y, z, dolly, msec, curve;
@@ -433,7 +419,7 @@ USER_FUNC(evt_cam3d_evt_set_xyz) {
     return EVT_RETURN_DONE;
 }
 
-// s32 msec, s32 curve
+/** s32 msec, s32 curve */
 USER_FUNC(evt_cam3d_evt_xyz_off) {
     EvtWord* args = event->args;
     s32 msec, curve;
@@ -451,7 +437,7 @@ USER_FUNC(evt_cam3d_evt_xyz_off) {
     return EVT_RETURN_DONE;
 }
 
-// f32 x, f32 y, f32 z, out f32 shift
+/** f32 x, f32 y, f32 z, out f32 shift */
 USER_FUNC(evt_cam3d_get_shift) {
     EvtWord* args = event->args;
     MarioWork* mario;
@@ -479,6 +465,10 @@ USER_FUNC(evt_cam3d_get_shift) {
     return EVT_RETURN_DONE;
 }
 
+/**
+ * Pins the 3D event camera where it is now: stored and preset eye/target become the current ones
+ * and a zero-length move (state 3) starts, so later event moves begin from here.
+ */
 USER_FUNC(evt_cam3d_evt_set_now) {
     CameraEntry* camera = camGetPtr(CAMERA_3D);
 
@@ -493,11 +483,11 @@ USER_FUNC(evt_cam3d_evt_set_now) {
     return EVT_RETURN_DONE;
 }
 
-// f32 x, f32 y, f32 z, f32 w, out f32 posX, posY, posZ, atX, atY, atZ
+/** f32 x, f32 y, f32 z, f32 w, out f32 posX, posY, posZ, atX, atY, atZ */
 USER_FUNC(evt_cam3d_event_from_road) {
     EvtWord* args = event->args;
     f32 x, y, z, w;
-    CamRoadOut out;
+    CameraParams out;
 
     x = evtGetFloat(event, args[0]);
     y = evtGetFloat(event, args[1]);
@@ -513,6 +503,10 @@ USER_FUNC(evt_cam3d_event_from_road) {
     return EVT_RETURN_DONE;
 }
 
+/**
+ * Re-centres the 3D field camera on Mario's current position and resets the camera road and camera shift,
+ * so it snaps to him instead of easing over from its old spot.
+ */
 USER_FUNC(evt_cam_road_reset) {
     MarioWork* mario = marioGetPtr();
     CameraEntry* camera = camGetPtr(CAMERA_3D);
@@ -530,7 +524,7 @@ USER_FUNC(evt_cam_road_reset) {
     return EVT_RETURN_DONE;
 }
 
-// f32 x, f32 y, f32 z
+/** f32 x, f32 y, f32 z */
 USER_FUNC(evt_cam_road_reset2) {
     EvtWord* args = event->args;
     f32 x, y, z;
@@ -556,6 +550,7 @@ USER_FUNC(evt_cam_road_reset2) {
     return EVT_RETURN_DONE;
 }
 
+/** Clears the camera shift offset of the 3D field camera (camShiftReset). */
 USER_FUNC(evt_cam_shift_reset) {
     marioGetPtr();
     camGetPtr(CAMERA_3D);
@@ -563,7 +558,7 @@ USER_FUNC(evt_cam_shift_reset) {
     return EVT_RETURN_DONE;
 }
 
-// BOOL ortho, CameraId id
+/** BOOL ortho, CameraId id */
 USER_FUNC(evt_cam_type_change) {
     EvtWord* args = event->args;
     s32 type = evtGetValue(event, args[0]);
@@ -571,14 +566,13 @@ USER_FUNC(evt_cam_type_change) {
 
     if (type == 0) {
         camSetTypePersp(id);
-    }
-    else {
+    } else {
         camSetTypeOrtho(id);
     }
     return EVT_RETURN_DONE;
 }
 
-// BOOL on, BOOL flag
+/** BOOL on, BOOL flag */
 USER_FUNC(evt_cam_letter_box_onoff) {
     EvtWord* args = event->args;
     s32 on = evtGetValue(event, args[0]);
@@ -586,54 +580,51 @@ USER_FUNC(evt_cam_letter_box_onoff) {
     CameraEntry* camera = camGetPtr(CAMERA_2D);
 
     if (on) {
-        camera->flags |= 0x100;
-        psndSetFlag(0x20);
+        camera->flags |= CAM_FLAG_LETTER_BOX;
+        psndSetFlag(PSND_FLAG_IDLE_MIX);
         camera->letterBoxAlpha = 255;
         camera->letterBoxTop = 0;
         camera->letterBoxBottom = 0;
         camera->letterBoxCamId = CAMERA_2D;
-    }
-    else {
-        camera->flags &= ~0x100;
-        psndClearFlag(0x20);
+    } else {
+        camera->flags &= ~CAM_FLAG_LETTER_BOX;
+        psndClearFlag(PSND_FLAG_IDLE_MIX);
     }
     if (flag) {
-        camera->flags |= 0x400;
+        camera->flags |= CAM_FLAG_LETTER_BOX_SNAP;
     }
     return EVT_RETURN_DONE;
 }
 
-// BOOL disable
+/** BOOL disable */
 USER_FUNC(evt_cam_letter_box_disable) {
     s32 disable = evtGetValue(event, *event->args);
     CameraEntry* camera = camGetPtr(CAMERA_2D);
 
     if (disable) {
-        camera->flags |= 0x200;
-        psndSetFlag(0x40);
-    }
-    else {
-        camera->flags &= ~0x200;
-        psndClearFlag(0x40);
+        camera->flags |= CAM_FLAG_LETTER_BOX_DISABLE;
+        psndSetFlag(PSND_FLAG_IDLE_MIX_OFF);
+    } else {
+        camera->flags &= ~CAM_FLAG_LETTER_BOX_DISABLE;
+        psndClearFlag(PSND_FLAG_IDLE_MIX_OFF);
     }
     return EVT_RETURN_DONE;
 }
 
+/** Blocks the script until the 2D camera's letterbox bars are on and fully in (top 49, bottom 44). */
 USER_FUNC(evt_cam_letter_box_wait) {
     CameraEntry* camera = camGetPtr(CAMERA_2D);
 
-    if ((camera->flags & 0x100) && camera->letterBoxTop == 49 && camera->letterBoxBottom == 44) {
+    if ((camera->flags & CAM_FLAG_LETTER_BOX) && camera->letterBoxTop == 49 && camera->letterBoxBottom == 44) {
         return EVT_RETURN_DONE;
     }
     return EVT_RETURN_BLOCK;
 }
 
-// CameraId id
+/** CameraId id */
 USER_FUNC(evt_cam_letter_box_camid) {
     CameraId id = evtGetValue(event, *event->args);
 
     camGetPtr(CAMERA_2D)->letterBoxCamId = id;
     return EVT_RETURN_DONE;
 }
-
-void __div2u();

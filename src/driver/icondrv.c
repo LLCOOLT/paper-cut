@@ -1,22 +1,12 @@
-#define iconNumberDispGx iconNumberDispGx_f32
-#define iconNumberDispGx3D iconNumberDispGx3D_f32
-#ifdef VERSION_G8ME01
-/* FAKE: the header declares these with s16 ids; the US definitions take s32 (only the low 16 bits are used) */
-#define iconGetTexObj iconGetTexObj_hdr
-#define iconGetWidthHight iconGetWidthHight_hdr
-#endif
+// Icon driver: loads icon.tpl/icon.bin and draws icons (animated or still, 2D or 3D) and icon
+// digit numbers, one set of entries for the field and one for battle.
 #include "driver/icondrv.h"
-#ifdef VERSION_G8ME01
-#undef iconGetTexObj
-#undef iconGetWidthHight
-#endif
-#undef iconNumberDispGx
-#undef iconNumberDispGx3D
 #include "driver/camdrv.h"
 #include <dolphin/gx.h>
 #include <dolphin/mtx.h>
 #include "driver/dispdrv.h"
 #include "driver/mapdrv.h"
+#include "driver/animdrv.h"
 #include "evt/evt_cmd.h"
 #include "manager/dvdmgr.h"
 #include "manager/evtmgr_cmd.h"
@@ -24,6 +14,7 @@
 #include "memory.h"
 #include "system.h"
 #include "sdk/texPalette.h"
+#include "driver/shadowdrv.h"
 #include <string.h>
 
 #include <stdio.h>
@@ -31,7 +22,8 @@
 #include "port/bedecode.h"
 #endif
 #include "icon_ids.h"
-
+#include "version.h"
+#include "evt/evt_story.h"
 
 //.sbss
 static IconWork work[2];
@@ -55,51 +47,53 @@ typedef struct IconBinData {
     IconFrame frames[1]; // 0x8
 } IconBinData;
 
-void iconDispGxCol(Mtx pos, s16 flags, s32 iconId, GXColor color);
-
-#define ICON_ANIM_TPL(data, dst)                                   \
-    if ((data)->numIcons > 1) {                                    \
-        s32 total = 0;                                             \
-        s32 i;                                                     \
-        s32 t;                                                     \
-        for (i = 0; i < (data)->numIcons; i++) {                   \
-            total += (data)->frames[i].delay;                      \
-        }                                                          \
-        t = gp->retraceCount % total;                              \
-        for (i = 0; i < (data)->numIcons; i++) {                   \
-            if (t < (data)->frames[i].delay) {                     \
-                dst = (data)->frames[i].tplId;                     \
-                break;                                             \
-            }                                                      \
-            t -= (data)->frames[i].delay;                          \
-        }                                                          \
+#define ICON_ANIM_TPL(data, dst)                 \
+    if ((data)->numIcons > 1) {                  \
+        s32 total = 0;                           \
+        s32 i;                                   \
+        s32 t;                                   \
+        for (i = 0; i < (data)->numIcons; i++) { \
+            total += (data)->frames[i].delay;    \
+        }                                        \
+        t = gp->retraceCount % total;            \
+        for (i = 0; i < (data)->numIcons; i++) { \
+            if (t < (data)->frames[i].delay) {   \
+                dst = (data)->frames[i].tplId;   \
+                break;                           \
+            }                                    \
+            t -= (data)->frames[i].delay;        \
+        }                                        \
     }
 
-#define ICON_ANIM_TPL_S(data, dst)                                   \
-    if ((data)->numIcons > 1) {                                    \
-        s32 i;                                                     \
-        s32 t;                                                     \
-        s32 total = 0;                                             \
-        for (i = 0; i < (data)->numIcons; i++) {                   \
-            total += (data)->frames[i].delay;                      \
-        }                                                          \
-        t = (s32)gp->retraceCount % total;                              \
-        for (i = 0; i < (data)->numIcons; i++) {                   \
-            if (t < (data)->frames[i].delay) {                     \
-                dst = (data)->frames[i].tplId;                     \
-                break;                                             \
-            }                                                      \
-            t -= (data)->frames[i].delay;                          \
-        }                                                          \
+#define ICON_ANIM_TPL_S(data, dst)               \
+    if ((data)->numIcons > 1) {                  \
+        s32 i;                                   \
+        s32 t;                                   \
+        s32 total = 0;                           \
+        for (i = 0; i < (data)->numIcons; i++) { \
+            total += (data)->frames[i].delay;    \
+        }                                        \
+        t = (s32)gp->retraceCount % total;       \
+        for (i = 0; i < (data)->numIcons; i++) { \
+            if (t < (data)->frames[i].delay) {   \
+                dst = (data)->frames[i].tplId;   \
+                break;                           \
+            }                                    \
+            t -= (data)->frames[i].delay;        \
+        }                                        \
     }
 
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
 // US: language-specific variants of icons 0x49 and 0x67 (indexed by gp->language)
 u16 icon_049_lang_tbl[6] = {0x49, 0x4A, 0x4B, 0x4C, 0x49, 0x4D};
 u16 icon_067_lang_tbl[6] = {0x67, 0x68, 0x69, 0x6A, 0x67, 0x6B};
 #endif
 
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
+/**
+ * Returns icon iconId's frame data in icon.bin, or NULL until both icon.tpl and icon.bin have loaded.
+ * The US and later builds swap icons 0x49 and 0x67 for their variant in the current language.
+ */
 static inline IconBinData* iconGetBinData(s32 iconId) {
     IconBinary* bin = icon_bin;
     if (!icon_tpl_ok || !icon_bin_ok) {
@@ -116,6 +110,10 @@ static inline IconBinData* iconGetBinData(s32 iconId) {
     return (IconBinData*)((u8*)bin + bin->offset[(u16)iconId]);
 }
 #else
+/**
+ * Returns icon iconId's frame data in icon.bin, or NULL until both icon.tpl and icon.bin have loaded.
+ * The US and later builds swap icons 0x49 and 0x67 for their variant in the current language.
+ */
 static inline IconBinData* iconGetBinData(u16 iconId) {
     IconBinary* bin = icon_bin;
     if (!icon_tpl_ok || !icon_bin_ok) {
@@ -126,42 +124,45 @@ static inline IconBinData* iconGetBinData(u16 iconId) {
 #endif
 
 // local prototypes
-void _callback_tpl(s32 error, DVDFileInfo* info);
-void _callback_bin(s32 error, DVDFileInfo* info);
-void iconDisp(CameraId camId, void* param);
-void iconGX(Mtx mtx, IconEntry* entry);
+static void _callback_tpl(s32 error, DVDFileInfo* info);
+static void _callback_bin(s32 error, DVDFileInfo* info);
+static void iconDisp(CameraId camId, void* param);
+static void iconGX(Mtx mtx, IconEntry* entry);
 
-// TODO: inline function? I see nothing in the symbol map
-#define iconGetWork() (gp->inBattle ? &work[1] : &work[0])
+/** the field or the battle icon work (inlined everywhere; no symbol of its own) */
+static inline IconWork* iconGetWork(void) {
+    return gp->inBattle ? &work[1] : &work[0];
+}
 
-
-// TODO: remove? no function in original symbol map
+/** looks a name up in one icon work (inlined; no symbol of its own) */
 inline IconEntry* iconFindIn(IconWork* wp, const char* name) {
     int i;
     IconEntry* entry = wp->entries;
 
     for (i = 0; i < wp->count; i++, entry++) {
-        if (entry->uflags & 1 && !strcmp(entry->name, name)) {
+        if (entry->uflags & ICON_FLAG_USED && !strcmp(entry->name, name)) {
             return entry;
         }
     }
     return NULL;
 }
 
+/** Returns the live icon with this name in the current (field or battle) set, or NULL; same search as iconNameToPtr. */
 inline IconEntry* iconGetEntry(const char* name) {
     IconWork* wp = iconGetWork();
     IconEntry* entry = wp->entries;
     int i;
 
     for (i = 0; i < wp->count; i++, entry++) {
-        if (entry->uflags & 1 && !strcmp(entry->name, name)) {
+        if (entry->uflags & ICON_FLAG_USED && !strcmp(entry->name, name)) {
             return entry;
         }
     }
     return NULL;
 }
 
-void _callback_tpl(s32 error, DVDFileInfo* info) {
+/** DVD read callback for icon.tpl: unpacks the texture palette, closes the file and marks the textures ready. */
+static void _callback_tpl(s32 error, DVDFileInfo* info) {
     DVDEntry* entry = info->cb.userData;
     UnpackTexPalette(icon_tpl);
     DVDMgrClose(entry);
@@ -172,7 +173,8 @@ void _callback_tpl(s32 error, DVDFileInfo* info) {
 static u32 icon_bin_size; /* bytes read into icon_bin */
 #endif
 
-void _callback_bin(s32 error, DVDFileInfo* info) {
+/** DVD read callback for icon.bin (per-icon size and animation frames): closes the file and marks it ready. */
+static void _callback_bin(s32 error, DVDFileInfo* info) {
 #ifdef TARGET_PC
     /* PC port: icon.bin is all u16 (count, offsets, entries): swap the whole
      * file to native once, as it arrives. */
@@ -182,6 +184,10 @@ void _callback_bin(s32 error, DVDFileInfo* info) {
     icon_bin_ok = TRUE;
 }
 
+/**
+ * Allocates the 32-entry field and battle icon tables and starts asynchronous reads of icon.tpl
+ * and icon.bin from the disc; called once at boot. Icons draw nothing until both reads finish.
+ */
 void iconInit(void) {
     char path[128];
     DVDEntry* entry;
@@ -223,17 +229,23 @@ void iconInit(void) {
     }
 }
 
+/** Empty in every release build. */
 void iconTexSetup(void) {
     ; // stubbed in retail
 }
 
+/** Clears every icon of the current (field or battle) set. */
 void iconReInit(void) {
     IconWork* wp = iconGetWork();
     memset(wp->entries, 0, sizeof(IconEntry) * wp->count);
 }
 
-s32 shadowEntry(f32 x, f32 y, f32 z, f32 size);
-
+/**
+ * Per-frame update: finishes the set-up of icons made before icon.bin loaded,
+ * steps animated icons through their frames (delays in frames),
+ * and queues each visible icon for drawing on the 2D, effect or 3D camera,
+ * with a small ground shadow for 3D icons.
+ */
 void iconMain(void) {
     IconWork* wp;
     int i;
@@ -244,13 +256,14 @@ void iconMain(void) {
     if (!icon_tpl_ok || !icon_bin_ok)
         return;
     for (entry = wp->entries, i = 0; i < wp->count; i++, entry++) {
-        if (entry->uflags & 1) {
-            if (entry->uflags & 0x2000) {
-                entry->uflags &= ~0x2000;
-#ifdef VERSION_G8ME01
+        if (entry->uflags & ICON_FLAG_USED) {
+            if (entry->uflags & ICON_FLAG_PENDING_BIN) {
+                entry->uflags &= ~ICON_FLAG_PENDING_BIN;
+#if VERSION >= VERSION_US
                 data = iconGetBinData(entry->iconId);
 #endif
-                // warning: data may be invalid (JP)
+                // BUG (JP and demo; fixed in US): data is not fetched for this entry, so the deferred set-up
+                // uses whatever data last held (the previous entry's frame data, or an unset value for the first)
                 entry->width = data->width;
                 entry->height = data->height;
                 entry->numIcons = data->numIcons;
@@ -258,10 +271,10 @@ void iconMain(void) {
                 entry->tplId = data->frames[0].tplId;
                 entry->frameDelay = data->frames[0].delay;
                 if (data->type & 1) {
-                    entry->uflags |= 0x1000;
+                    entry->uflags |= ICON_FLAG_ANIMATED;
                 }
             }
-            if (entry->uflags & 0x1000) {
+            if (entry->uflags & ICON_FLAG_ANIMATED) {
                 if (entry->frameDelay) {
                     entry->frameDelay--;
                 }
@@ -275,14 +288,13 @@ void iconMain(void) {
                     entry->frameDelay = data->frames[entry->currIcon].delay;
                 }
             }
-            if (!(entry->uflags & 2)) {
-                if (entry->uflags & 0x10) {
+            if (!(entry->uflags & ICON_FLAG_HIDDEN)) {
+                if (entry->uflags & ICON_FLAG_2D) {
                     dispEntry(CAMERA_2D, 200.0f, 1, iconDisp, entry);
-                }
-                else if (entry->uflags & 0x100) {
+                } else if (entry->uflags & ICON_FLAG_EFFECT_A) {
                     shadowEntry(entry->position.x, entry->position.y, entry->position.z, 10.0f);
                     dispEntry(CAMERA_3D_EFFECTA, dispCalcZ(&entry->position), 1, iconDisp, entry);
-                } else if (entry->uflags & 0x200) {
+                } else if (entry->uflags & ICON_FLAG_EFFECT_B) {
                     shadowEntry(entry->position.x, entry->position.y, entry->position.z, 10.0f);
                     dispEntry(CAMERA_3D_EFFECTB, dispCalcZ(&entry->position), 1, iconDisp, entry);
                 } else {
@@ -298,22 +310,27 @@ void iconMain(void) {
     }
 }
 
-void iconEntry(const char* name, s16 iconId) {
+/**
+ * Creates a named 3D icon showing iconId at the origin, scale 1, opaque white.
+ * On maps whose first map entry has flag 2 the map blend colour is not applied to it;
+ * later versions make an exception for Rogueport Sewers' X-Naut Fortress (aji) during the last-mail story step.
+ */
+void iconEntry(const char* name, u16 iconId) {
     IconWork* wp = iconGetWork();
     int i;
     IconEntry* entry = iconFindIn(wp, name); // inline
     IconBinData* data;
 
     for (entry = wp->entries, i = 0; i < wp->count; i++, entry++) {
-        if (!(entry->uflags & 1)) { // looking for unused entry to allocate
+        if (!(entry->uflags & ICON_FLAG_USED)) { // looking for unused entry to allocate
             break;
         }
     }
 
     memset(entry, 0, sizeof(IconEntry));
-    entry->position = (Vec){ 0.0f, 0.0f, 0.0f };
+    entry->position = (Vec){0.0f, 0.0f, 0.0f};
     entry->scale = 1.0f;
-    entry->color = (GXColor){ 0xFF, 0xFF, 0xFF, 0xFF };
+    entry->color = (GXColor){0xFF, 0xFF, 0xFF, 0xFF};
     strcpy(entry->name, name);
     entry->iconId = iconId;
     data = iconGetBinData(entry->iconId);
@@ -325,21 +342,26 @@ void iconEntry(const char* name, s16 iconId) {
         entry->tplId = data->frames[0].tplId;
         entry->frameDelay = data->frames[0].delay;
         if (data->type & 1) {
-            entry->uflags |= 0x1000;
+            entry->uflags |= ICON_FLAG_ANIMATED;
         }
     } else {
-        entry->uflags |= 0x2000;
+        entry->uflags |= ICON_FLAG_PENDING_BIN;
     }
-    entry->uflags |= 1;
-    if (mapGetWork()->entries[0].flags & 2) {
-        if (!strncmp(gp->currentMapName, "aji", 3) && evtGetValue(0, GSW(0)) == 0x178) {
-            entry->uflags &= ~0x40;
+    entry->uflags |= ICON_FLAG_USED;
+    if (mapGetWork()->entries[0].flags & MAPENT_FLAG_BLEND) {
+#if VERSION <= VERSION_DEMO_JP
+        entry->uflags |= ICON_FLAG_NO_MAP_BLEND;
+#else
+        if (!strncmp(gp->currentMapName, "aji", 3) && evtGetValue(0, GSW(GSW_STORY_PROGRESS)) == STORY_STG7_25_THE_LAST_MAIL) {
+            entry->uflags &= ~ICON_FLAG_NO_MAP_BLEND;
         } else {
-            entry->uflags |= 0x40;
+            entry->uflags |= ICON_FLAG_NO_MAP_BLEND;
         }
+#endif
     }
 }
 
+/** Creates a named icon showing iconId drawn with the 2D (screen) camera. */
 void iconEntry2D(const char* name, s16 iconId) {
     IconWork* wp = iconGetWork();
     int i;
@@ -347,15 +369,15 @@ void iconEntry2D(const char* name, s16 iconId) {
     IconBinData* data;
 
     for (entry = wp->entries, i = 0; i < wp->count; i++, entry++) {
-        if (!(entry->uflags & 1)) { // looking for unused entry to allocate
+        if (!(entry->uflags & ICON_FLAG_USED)) { // looking for unused entry to allocate
             break;
         }
     }
 
     memset(entry, 0, sizeof(IconEntry));
-    entry->position = (Vec){ 0.0f, 0.0f, 0.0f };
+    entry->position = (Vec){0.0f, 0.0f, 0.0f};
     entry->scale = 1.0f;
-    entry->color = (GXColor){ 0xFF, 0xFF, 0xFF, 0xFF };
+    entry->color = (GXColor){0xFF, 0xFF, 0xFF, 0xFF};
     strcpy(entry->name, name);
     entry->iconId = iconId;
     data = iconGetBinData(entry->iconId);
@@ -367,28 +389,30 @@ void iconEntry2D(const char* name, s16 iconId) {
         entry->tplId = data->frames[0].tplId;
         entry->frameDelay = data->frames[0].delay;
         if (data->type & 1) {
-            entry->uflags |= 0x1000;
+            entry->uflags |= ICON_FLAG_ANIMATED;
         }
     } else {
-        entry->uflags |= 0x2000;
+        entry->uflags |= ICON_FLAG_PENDING_BIN;
     }
-    entry->uflags |= 0x11;
+    entry->uflags |= ICON_FLAG_USED | ICON_FLAG_2D;
 }
 
+/** Frees the icon with this name. */
 void iconDelete(const char* name) {
     IconWork* wp = iconGetWork();
     IconEntry* entry = wp->entries;
     int i;
 
     for (i = 0; i < wp->count; i++, entry++) {
-        if (entry->uflags & 1 && !strcmp(entry->name, name)) {
-            entry->uflags &= ~1; // no longer in use
+        if (entry->uflags & ICON_FLAG_USED && !strcmp(entry->name, name)) {
+            entry->uflags &= ~ICON_FLAG_USED; // no longer in use
             break;
         }
     }
 }
 
-void iconChange(const char* name, s16 iconId) {
+/** Switches the named icon to show iconId, restarting its animation. */
+void iconChange(const char* name, u16 iconId) {
     IconEntry* entry = iconNameToPtr(name); // inline
     IconBinData* data;
 
@@ -401,12 +425,16 @@ void iconChange(const char* name, s16 iconId) {
     entry->tplId = data->frames[0].tplId;
     entry->frameDelay = data->frames[0].delay;
     if (data->type & 1) {
-        entry->uflags |= 0x1000;
+        entry->uflags |= ICON_FLAG_ANIMATED;
     }
-    entry->uflags |= 1;
+    entry->uflags |= ICON_FLAG_USED;
 }
 
-void iconDisp(CameraId camId, void* param) {
+/**
+ * Draw callback for a named icon: places it at its position and scale,
+ * turned to face the camera (billboarded on the y axis), and draws it.
+ */
+static void iconDisp(CameraId camId, void* param) {
     IconEntry* entry = param; // cast to correct type
     CameraEntry* camera;
     Mtx trans, scale, rot, mtx;
@@ -421,135 +449,121 @@ void iconDisp(CameraId camId, void* param) {
     iconGX(mtx, entry);
 }
 
-void iconDispGxAlpha(Vec *position, s16 flags, u16 iconId, u8 alpha, f32 scale)
-{
-  IconEntry entry;
-  Mtx transmtx;
-  Mtx scalemtx;
-  Mtx rotmtx;
-  Mtx mtx;
-  CameraEntry *camera;
-  IconBinData *data;
-  IconEntry *ep;
-  camera = camGetCurPtr();
-  ep = &entry;
-  if ((!icon_tpl_ok) || (!icon_bin_ok))
-  {
-    return;
-  }
-  PSMTXTrans(transmtx, position->x, position->y, position->z);
-  PSMTXScale(scalemtx, scale, scale, scale);
-  PSMTXRotRad(rotmtx, 'y', (-camera->viewYaw) * 0.01745329252f);
-  PSMTXConcat(transmtx, rotmtx, mtx);
-  PSMTXConcat(mtx, scalemtx, mtx);
-  PSMTXConcat(camera->view, mtx, mtx);
-  entry.color = (GXColor){0xFF, 0xFF, 0xFF, alpha};
-  entry.uflags = flags;
-  iconId++;
-  iconId--;
-  entry.iconId = iconId;
-  data = iconGetBinData(iconId);
-  entry.width = data->width;
-  entry.height = data->height;
-  entry.tplId = data->frames[0].tplId;
-  entry.frameDelay = data->frames[0].delay;
-  if (data->numIcons > 1)
-  {
-    s32 i;
-    s32 t;
-    s32 total = 0;
-    for (i = 0; i < data->numIcons; i++)
-    {
-      total += data->frames[i].delay;
+/**
+ * Immediately draws icon iconId at a world position as a camera-facing billboard with the given alpha and scale,
+ * picking the animation frame from the retrace count; for draw callbacks that show icons without a named entry.
+ */
+void iconDispGxAlpha(Vec* position, s16 flags, u16 iconId, u8 alpha, f32 scale) {
+    IconEntry entry;
+    Mtx transmtx;
+    Mtx scalemtx;
+    Mtx rotmtx;
+    Mtx mtx;
+    CameraEntry* camera;
+    IconBinData* data;
+    IconEntry* ep;
+    camera = camGetCurPtr();
+    ep = &entry;
+    if ((!icon_tpl_ok) || (!icon_bin_ok)) {
+        return;
     }
+    PSMTXTrans(transmtx, position->x, position->y, position->z);
+    PSMTXScale(scalemtx, scale, scale, scale);
+    PSMTXRotRad(rotmtx, 'y', (-camera->viewYaw) * 0.01745329252f);
+    PSMTXConcat(transmtx, rotmtx, mtx);
+    PSMTXConcat(mtx, scalemtx, mtx);
+    PSMTXConcat(camera->view, mtx, mtx);
+    entry.color = (GXColor){0xFF, 0xFF, 0xFF, alpha};
+    entry.uflags = flags;
+    iconId++;
+    iconId--;
+    entry.iconId = iconId;
+    data = iconGetBinData(iconId);
+    entry.width = data->width;
+    entry.height = data->height;
+    entry.tplId = data->frames[0].tplId;
+    entry.frameDelay = data->frames[0].delay;
+    if (data->numIcons > 1) {
+        s32 i;
+        s32 t;
+        s32 total = 0;
+        for (i = 0; i < data->numIcons; i++) {
+            total += data->frames[i].delay;
+        }
 
-    t = ((s32) gp->retraceCount) % total;
-    for (i = 0; i < data->numIcons; i++)
-    {
-      if (t < data->frames[i].delay)
-      {
-        entry.tplId = data->frames[i].tplId;
-        break;
-      }
-      t -= data->frames[i].delay;
-    }
-
-  }
-  ;
-  iconGX(mtx, ep);
+        t = ((s32)gp->retraceCount) % total;
+        for (i = 0; i < data->numIcons; i++) {
+            if (t < data->frames[i].delay) {
+                entry.tplId = data->frames[i].tplId;
+                break;
+            }
+            t -= data->frames[i].delay;
+        }
+    };
+    iconGX(mtx, ep);
 }
 
+/** Immediately draws icon iconId at a world position, opaque; see iconDispGxAlpha. */
 void iconDispGx(Vec* position, s16 flags, u16 iconId, f32 scale) {
     iconDispGxAlpha(position, flags, iconId, 0xFF, scale);
 }
 
-void iconDispGx2(Mtx mtx, s16 flags, s16 iconId)
-{
-  IconEntry entry;
-  Mtx m;
-  CameraEntry *camera;
-  IconBinData *data;
-  IconEntry *ep;
-  u16 id;
-  camera = camGetCurPtr();
-  ep = &entry;
-  if ((!icon_tpl_ok) || (!icon_bin_ok))
-  {
-    return;
-  }
-  entry.uflags = flags;
-  entry.color = (GXColor){0xFF, 0xFF, 0xFF, 0xFF};
-  if (icon_bin_ok && icon_bin_ok)
-  {
-  }
-#ifdef VERSION_G8ME01
-  /* FAKE: (u16)(s16) round-trip is a no-op on the u16 field (the s32 id goes through s16 first); it steers MWCC's register choice */
-  ep->iconId = (u16)(s16)iconId;
-  data = iconGetBinData((u16)iconId);
-#else
-  entry.iconId = (id = iconId);
-  data = iconGetBinData(id);
-#endif
-  entry.width = data->width;
-  entry.height = data->height;
-  entry.tplId = data->frames[0].tplId;
-  entry.frameDelay = data->frames[0].delay;
-  if (data->numIcons > 1)
-  {
-    s32 i;
-    s32 t;
-    s32 total = 0;
-    for (i = 0; i < data->numIcons; i++)
-    {
-      total += data->frames[i].delay;
-    }
-
-    t = ((s32) gp->retraceCount) % total;
-    for (i = i * 0; i < data->numIcons; i++)
-    {
-      if (t < data->frames[i].delay)
-      {
-        entry.tplId = data->frames[i].tplId;
-        break;
-      }
-      t -= data->frames[i].delay;
-    }
-
-  }
-  ;
-  PSMTXConcat(camera->view, mtx, m);
-  iconGX(m, ep);
-}
-
-void iconDispGxCol(Mtx pos, s16 flags, s32 iconId, GXColor color) {
+/**
+ * Immediately draws icon iconId with a caller-built matrix (in the current camera's space), opaque white;
+ * the battle menus and audience use it.
+ */
+void iconDispGx2(Mtx mtx, s16 flags, u16 iconId) {
     IconEntry entry;
     Mtx m;
     CameraEntry* camera;
     IconBinData* data;
     IconEntry* ep;
-#ifndef VERSION_G8ME01
-    u16 id;
-#endif
+    camera = camGetCurPtr();
+    ep = &entry;
+    if ((!icon_tpl_ok) || (!icon_bin_ok)) {
+        return;
+    }
+    entry.uflags = flags;
+    entry.color = (GXColor){0xFF, 0xFF, 0xFF, 0xFF};
+    if (icon_bin_ok && icon_bin_ok) {
+    }
+    ep->iconId = iconId;
+    data = iconGetBinData(ep->iconId);
+    entry.width = data->width;
+    entry.height = data->height;
+    entry.tplId = data->frames[0].tplId;
+    entry.frameDelay = data->frames[0].delay;
+    if (data->numIcons > 1) {
+        s32 i;
+        s32 t;
+        s32 total = 0;
+        for (i = 0; i < data->numIcons; i++) {
+            total += data->frames[i].delay;
+        }
+
+        t = ((s32)gp->retraceCount) % total;
+        for (i = i * 0; i < data->numIcons; i++) {
+            if (t < data->frames[i].delay) {
+                entry.tplId = data->frames[i].tplId;
+                break;
+            }
+            t -= data->frames[i].delay;
+        }
+    };
+    PSMTXConcat(camera->view, mtx, m);
+    iconGX(m, ep);
+}
+
+/**
+ * Immediately draws icon iconId with a caller-built matrix, tinted by color;
+ * used for the digit icons of iconNumberDispGx.
+ */
+void iconDispGxCol(Mtx pos, s16 flags, u16 iconId, GXColor color) {
+    IconEntry entry;
+    Mtx m;
+    CameraEntry* camera;
+    IconBinData* data;
+    IconEntry* ep;
 
     camera = camGetCurPtr();
     ep = &entry;
@@ -560,14 +574,8 @@ void iconDispGxCol(Mtx pos, s16 flags, s32 iconId, GXColor color) {
     entry.color = color;
     if (icon_bin_ok && icon_bin_ok) {
     }
-#ifdef VERSION_G8ME01
-    /* FAKE: (u16)(s16) round-trip is a no-op on the u16 field (the s32 id goes through s16 first); it steers MWCC's register choice */
-    ep->iconId = (u16)(s16)iconId;
-    data = iconGetBinData((u16)iconId);
-#else
-    entry.iconId = (id = iconId);
-    data = iconGetBinData(id);
-#endif
+    ep->iconId = iconId;
+    data = iconGetBinData(ep->iconId);
     entry.width = data->width;
     entry.height = data->height;
     entry.tplId = data->frames[0].tplId;
@@ -577,9 +585,14 @@ void iconDispGxCol(Mtx pos, s16 flags, s32 iconId, GXColor color) {
     iconGX(m, ep);
 }
 
-#ifdef VERSION_G8ME01
+/**
+ * Fills texObj with the first frame of icon iconId's texture (a 1x1 dummy until the icon files load),
+ * for callers that draw the icon themselves. The JP release and the demos take the id as s16.
+ */
+#if VERSION >= VERSION_US
 void iconGetTexObj(GXTexObj* texObj, s32 iconId) {
 #else
+/** JP and demo signature: the id is an s16. */
 void iconGetTexObj(GXTexObj* texObj, s16 iconId) {
 #endif
     static char dummy[] ATTRIBUTE_ALIGN(32) = "";
@@ -590,7 +603,7 @@ void iconGetTexObj(GXTexObj* texObj, s16 iconId) {
         GXInitTexObj(texObj, dummy, 1, 1, GX_TF_I4, GX_CLAMP, GX_CLAMP, GX_FALSE);
         return;
     }
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
     data = iconGetBinData(iconId);
 #else
     data = iconGetBinData((u16)iconId);
@@ -601,9 +614,14 @@ void iconGetTexObj(GXTexObj* texObj, s16 iconId) {
     GXInitTexObjLOD(texObj, GX_LINEAR, GX_LINEAR, 0.0f, 0.0f, 0.0f, GX_FALSE, GX_FALSE, GX_ANISO_1);
 }
 
-#ifdef VERSION_G8ME01
+/**
+ * Returns icon iconId's display size from icon.bin, or its texture's size when icon.bin gives 0x0.
+ * The JP release and the demos take the id as s16.
+ */
+#if VERSION >= VERSION_US
 void iconGetWidthHight(u16* width, u16* height, s32 iconId) {
 #else
+/** JP and demo signature: the id is an s16. */
 void iconGetWidthHight(u16* width, u16* height, s16 iconId) {
 #endif
     IconBinData* entry;
@@ -619,22 +637,26 @@ void iconGetWidthHight(u16* width, u16* height, s16 iconId) {
     }
 }
 
-void iconGX(Mtx mtx, IconEntry* entry) {
+/**
+ * Sets up GX and draws one icon quad with matrix mtx:
+ * flips, 2D or map-lit 3D lighting, grayscale and colour tint, culling. Shared by every icon draw path.
+ */
+static void iconGX(Mtx mtx, IconEntry* entry) {
     static char dummy[] ATTRIBUTE_ALIGN(32) = "";
     f32 x, y, w, hn;
     f32 h;
     Mtx scalemtx, m;
     GXTexObj texObj;
-    Vec pos = { 0.0f, 0.0f, 0.0f };
+    Vec pos = {0.0f, 0.0f, 0.0f};
     CameraEntry* camera;
 
     pos.x = mtx[0][3];
     pos.y = mtx[1][3];
     pos.z = mtx[2][3];
-    MTXScale(scalemtx, (entry->uflags & 4) ? -1.0f : 1.0f, (entry->uflags & 8) ? -1.0f : 1.0f, 1.0f);
+    MTXScale(scalemtx, (entry->uflags & ICON_FLAG_FLIP_X) ? -1.0f : 1.0f, (entry->uflags & ICON_FLAG_FLIP_Y) ? -1.0f : 1.0f, 1.0f);
     MTXConcat(mtx, scalemtx, m);
     camera = camGetPtr(CAMERA_2D);
-    if (camGetCurPtr() != camera && (entry->uflags & 0x10)) {
+    if (camGetCurPtr() != camera && (entry->uflags & ICON_FLAG_2D)) {
         MTXScale(scalemtx, 1.0f, -1.0f, 1.0f);
         MTXConcat(m, scalemtx, m);
     }
@@ -650,14 +672,14 @@ void iconGX(Mtx mtx, IconEntry* entry) {
         }
     }
     GXLoadTexObj(&texObj, GX_TEXMAP0);
-    if (!(entry->uflags & 0x10)) {
-        mapSetMaterialLight(4, pos);
+    if (!(entry->uflags & ICON_FLAG_2D)) {
+        mapSetMaterialLight(ANIM_MATERIAL_LIGHT_NO_VTX_COLOR, pos);
     } else {
         GXSetNumChans(1);
-        GXSetChanMatColor(GX_COLOR0A0, (GXColor){ 0xFF, 0xFF, 0xFF, 0xFF });
+        GXSetChanMatColor(GX_COLOR0A0, (GXColor){0xFF, 0xFF, 0xFF, 0xFF});
         GXSetChanCtrl(GX_COLOR0A0, GX_FALSE, GX_SRC_REG, GX_SRC_REG, GX_LIGHT_NULL, GX_DF_NONE, GX_AF_NONE);
     }
-    if (entry->uflags & 0x20) {
+    if (entry->uflags & ICON_FLAG_GRAYSCALE) {
         GXSetNumTevStages(3);
         GXSetTevSwapModeTable(GX_TEV_SWAP1, GX_CH_RED, GX_CH_RED, GX_CH_RED, GX_CH_ALPHA);
         GXSetTevSwapModeTable(GX_TEV_SWAP2, GX_CH_GREEN, GX_CH_GREEN, GX_CH_GREEN, GX_CH_ALPHA);
@@ -665,7 +687,7 @@ void iconGX(Mtx mtx, IconEntry* entry) {
         GXSetTevSwapMode(GX_TEVSTAGE0, GX_TEV_SWAP0, GX_TEV_SWAP1);
         GXSetTevSwapMode(GX_TEVSTAGE1, GX_TEV_SWAP0, GX_TEV_SWAP2);
         GXSetTevSwapMode(GX_TEVSTAGE2, GX_TEV_SWAP0, GX_TEV_SWAP3);
-        GXSetTevColor(GX_TEVREG0, (GXColor){ 0x55, 0x55, 0x55, 0xFF });
+        GXSetTevColor(GX_TEVREG0, (GXColor){0x55, 0x55, 0x55, 0xFF});
         GXSetTevColor(GX_TEVREG1, entry->color);
         GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP0, GX_COLOR_NULL);
         GXSetTevColorOp(GX_TEVSTAGE0, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
@@ -695,8 +717,13 @@ void iconGX(Mtx mtx, IconEntry* entry) {
         GXSetTevAlphaOp(GX_TEVSTAGE1, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
         GXSetTevColorIn(GX_TEVSTAGE1, GX_CC_ZERO, GX_CC_C0, GX_CC_CPREV, GX_CC_ZERO);
         GXSetTevAlphaIn(GX_TEVSTAGE1, GX_CA_ZERO, GX_CA_A0, GX_CA_APREV, GX_CA_ZERO);
-        if (!(entry->uflags & 0x10) && !(entry->uflags & 0x40) && !(entry->uflags & 0x80) &&
-            (mapGetWork()->entries[0].flags & 2)) {
+#if VERSION <= VERSION_DEMO_JP
+        if (!(entry->uflags & ICON_FLAG_2D) && !(entry->uflags & ICON_FLAG_NO_MAP_BLEND) &&
+            (mapGetWork()->entries[0].flags & MAPENT_FLAG_BLEND)) {
+#else
+        if (!(entry->uflags & ICON_FLAG_2D) && !(entry->uflags & ICON_FLAG_NO_MAP_BLEND) && !(entry->uflags & ICON_FLAG_ITEM_NO_BLEND) &&
+            (mapGetWork()->entries[0].flags & MAPENT_FLAG_BLEND)) {
+#endif
             GXColor blend;
             mapGetBlend(&blend);
             GXSetTevColor(GX_TEVREG1, blend);
@@ -710,10 +737,10 @@ void iconGX(Mtx mtx, IconEntry* entry) {
         GXSetNumTexGens(1);
         GXSetTexCoordGen2(GX_TEXCOORD0, GX_TG_MTX2x4, GX_TG_TEX0, GX_IDENTITY, GX_FALSE, GX_PTIDENTITY);
     }
-    if (!(entry->uflags & 0x10)) {
+    if (!(entry->uflags & ICON_FLAG_2D)) {
         mapSetMaterialFog();
     } else {
-        GXSetFog(GX_FOG_NONE, 0.0f, 0.0f, 0.0f, 0.0f, (GXColor){ 0xFF, 0xFF, 0xFF, 0xFF });
+        GXSetFog(GX_FOG_NONE, 0.0f, 0.0f, 0.0f, 0.0f, (GXColor){0xFF, 0xFF, 0xFF, 0xFF});
     }
     if (entry->color.a < 0xFF) {
         GXSetBlendMode(GX_BM_BLEND, GX_BL_SRCALPHA, GX_BL_INVSRCALPHA, GX_LO_CLEAR);
@@ -726,12 +753,12 @@ void iconGX(Mtx mtx, IconEntry* entry) {
         GXSetAlphaCompare(GX_GEQUAL, 0x80, GX_AOP_OR, GX_NEVER, 0);
         GXSetZMode(GX_TRUE, GX_LEQUAL, GX_TRUE);
     }
-    if (entry->uflags & 0x10) {
+    if (entry->uflags & ICON_FLAG_2D) {
         GXSetZMode(GX_FALSE, GX_LEQUAL, GX_FALSE);
     }
-    if (entry->uflags & 0x400) {
+    if (entry->uflags & ICON_FLAG_CULL_BACK) {
         GXSetCullMode(GX_CULL_BACK);
-    } else if (entry->uflags & 0x800) {
+    } else if (entry->uflags & ICON_FLAG_CULL_FRONT) {
         GXSetCullMode(GX_CULL_FRONT);
     } else {
         GXSetCullMode(GX_CULL_NONE);
@@ -751,7 +778,7 @@ void iconGX(Mtx mtx, IconEntry* entry) {
     x = -w / 2.0f;
     y = h;
     hn = -h;
-    if (!(entry->uflags & 0x10)) {
+    if (!(entry->uflags & ICON_FLAG_2D)) {
         x *= 0.6f;
         y *= 0.6f;
         w *= 0.6f;
@@ -777,32 +804,33 @@ void iconGX(Mtx mtx, IconEntry* entry) {
     GXTexCoord2f32(1.0f, 1.0f);
     GXPosition3f32(x, y + hn, 0.0f);
     GXTexCoord2f32(0.0f, 1.0f);
-    if (entry->uflags & 0x20) {
+    if (entry->uflags & ICON_FLAG_GRAYSCALE) {
         GXSetTevSwapMode(GX_TEVSTAGE0, GX_TEV_SWAP0, GX_TEV_SWAP0);
         GXSetTevSwapMode(GX_TEVSTAGE1, GX_TEV_SWAP0, GX_TEV_SWAP0);
         GXSetTevSwapMode(GX_TEVSTAGE2, GX_TEV_SWAP0, GX_TEV_SWAP0);
     }
 }
 
+/** Returns the live icon with this name in the current (field or battle) set, or NULL. */
 IconEntry* iconNameToPtr(const char* name) {
     IconWork* wp = iconGetWork();
     IconEntry* entry = wp->entries;
     int i;
 
     for (i = 0; i < wp->count; i++, entry++) {
-        if (entry->uflags & 1 && !strcmp(entry->name, name)) {
+        if (entry->uflags & ICON_FLAG_USED && !strcmp(entry->name, name)) {
             return entry;
         }
     }
     return NULL;
 }
 
+/** Moves the named icon to (x, y, z): world units for 3D icons, screen units for 2D ones. */
 void iconSetPos(const char* name, f32 x, f32 y, f32 z) {
-    IconWork* workptr = iconGetWork();
     IconEntry* entry = iconNameToPtr(name); // inline
 
     if (entry) {
-        Vec temp = { 0 };
+        Vec temp = {0};
         temp.x = x;
         temp.y = y;
         temp.z = z;
@@ -810,6 +838,7 @@ void iconSetPos(const char* name, f32 x, f32 y, f32 z) {
     }
 }
 
+/** Sets ICON_FLAG_* bits on the named icon (hide, flip, grayscale, ...). */
 void iconFlagOn(const char* name, s16 flags) {
     IconEntry* entry = iconNameToPtr(name); // inline
     if (entry) {
@@ -817,6 +846,7 @@ void iconFlagOn(const char* name, s16 flags) {
     }
 }
 
+/** Clears ICON_FLAG_* bits on the named icon. */
 void iconFlagOff(const char* name, s16 mask) {
     IconEntry* entry = iconNameToPtr(name); // inline
     if (entry) {
@@ -824,6 +854,7 @@ void iconFlagOff(const char* name, s16 mask) {
     }
 }
 
+/** Sets the named icon's scale. */
 void iconSetScale(const char* name, f32 scale) {
     IconEntry* entry = iconNameToPtr(name); // inline
     if (entry) {
@@ -831,6 +862,7 @@ void iconSetScale(const char* name, f32 scale) {
     }
 }
 
+/** Sets the named icon's transparency (0xFF opaque); translucent 3D icons are drawn in the translucent pass. */
 void iconSetAlpha(const char* name, u8 alpha) {
     IconEntry* entry = iconNameToPtr(name); // inline
     if (entry) {
@@ -840,9 +872,14 @@ void iconSetAlpha(const char* name, u8 alpha) {
     }
 }
 
-static u16 suuji[] = { ICON_1D9, ICON_1DB, ICON_1DD, ICON_1DF, ICON_1E1, ICON_1E3, ICON_1E5, ICON_1E7, ICON_1E9, ICON_1EB };   // 0-9
-u16 suuji_s[] = { ICON_1DA, ICON_1DC, ICON_1DE, ICON_1E0, ICON_1E2, ICON_1E4, ICON_1E6, ICON_1E8, ICON_1EA, ICON_1EC }; // 0-9 small
+/** Icons of the digits 0 to 9, large and small, used by the number drawing (iconNumberDispGx). */
+static u16 suuji[] = {ICON_1D9, ICON_1DB, ICON_1DD, ICON_1DF, ICON_1E1, ICON_1E3, ICON_1E5, ICON_1E7, ICON_1E9, ICON_1EB}; // 0-9
+u16 suuji_s[] = {ICON_1DA, ICON_1DC, ICON_1DE, ICON_1E0, ICON_1E2, ICON_1E4, ICON_1E6, ICON_1E8, ICON_1EA, ICON_1EC};      // 0-9 small
 
+/**
+ * Draws number (up to five digits, right to left from mtx, tinted by color) with the 2D digit icons,
+ * large or small; returns the width drawn in screen units.
+ */
 s32 iconNumberDispGx(Mtx mtx, s32 number, BOOL small, GXColor color) {
     s32 digits[5];
     Mtx m;
@@ -881,16 +918,23 @@ s32 iconNumberDispGx(Mtx mtx, s32 number, BOOL small, GXColor color) {
     for (dp = digits, i = 0; i < count; dp++, i++) {
         MTXTrans(m, (f32)-i * width, 0.0f, 0.0f);
         MTXConcat(mtx, m, m);
-        iconDispGxCol(m, 0x10, !small ? (s32)suuji[*dp] : (s32)suuji_s[*dp], color);
+        iconDispGxCol(m, ICON_FLAG_2D, !small ? suuji[*dp] : suuji_s[*dp], color);
         ret += width;
     }
     return ret;
 }
 
+/**
+ * Like iconNumberDispGx with narrower digit spacing for numbers drawn in 3D,
+ * as for the battle-end experience counts.
+ */
 s32 iconNumberDispGx3D(Mtx mtx, s32 number, BOOL small, GXColor color) {
 #ifdef TARGET_PC
     s32 digits[5]; /* PC port: five digits are written (the GameCube's fifth lands in the next stack slot) */
 #else
+    // BUG: the array is one short for the five digits it holds. digits[4] (the ten-thousands digit) is
+    // the first word of m, so it is right for the count test but MTXTrans has overwritten it by the time the loop
+    // draws it: numbers of 10000 and up index suuji with the bits of a float. (digits[5] moves m: other code.)
     s32 digits[4];
 #endif
     Mtx m;
@@ -929,7 +973,7 @@ s32 iconNumberDispGx3D(Mtx mtx, s32 number, BOOL small, GXColor color) {
     for (dp = digits, i = 0; i < count; dp++, i++) {
         MTXTrans(m, (f32)-i * width, 0.0f, 0.0f);
         MTXConcat(mtx, m, m);
-        iconDispGxCol(m, 0, !small ? (s32)suuji[*dp] : (s32)suuji_s[*dp], color);
+        iconDispGxCol(m, 0, !small ? suuji[*dp] : suuji_s[*dp], color);
         ret += width;
     }
     return ret;

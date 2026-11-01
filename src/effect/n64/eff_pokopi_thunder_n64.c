@@ -1,3 +1,4 @@
+// Paper Mario 64 effect: a jagged yellow lightning bolt between two points, wobbling from frame to frame.
 #include "eff/n64/eff_pokopi_thunder_n64.h"
 #include "driver/camdrv.h"
 #include "driver/dispdrv.h"
@@ -7,70 +8,15 @@
 #include <dolphin/gx.h>
 #include <dolphin/mtx.h>
 #include "dolphin/os.h"
-#include "eff/eff_magic1_n64.h"
 #include "libc_decls.h"
-typedef struct effN64Vtx {
-    s16 x, y, z;
-    s16 s, t;
-    u8 r, g, b, a;
-} effN64Vtx;
-void effGetTexObjN64(u32 id, GXTexObj* obj);
-void effSetVtxDescN64(effN64Vtx* vtx);
-void tri2();
+#include <math.h>
+#include "eff/eff_n64.h"
 
-#define NAN (*(f32*)__float_nan)
-
-#define FP_NAN 1
-#define FP_INFINITE 2
-#define FP_ZERO 3
-#define FP_NORMAL 4
-#define FP_SUBNORMAL 5
-
-static inline s32 __fpclassifyf(f32 x) {
-    switch (*(s32*)&x & 0x7F800000) {
-        case 0x7F800000:
-            if (*(s32*)&x & 0x007FFFFF) {
-                return FP_NAN;
-            } else {
-                return FP_INFINITE;
-            }
-            break;
-        case 0:
-            if (*(s32*)&x & 0x007FFFFF) {
-                return FP_SUBNORMAL;
-            } else {
-                return FP_ZERO;
-            }
-            break;
-        default:
-            return FP_NORMAL;
-    }
-}
-
-#define fpclassify(x) __fpclassifyf(x)
-#define isnan(x) (fpclassify(x) == FP_NAN)
-
-#ifndef TARGET_PC /* PC port: the host libc declares these */
-static inline f32 sqrtf(f32 x) {
-    const f64 _half = .5;
-    const f64 _three = 3.0;
-
-    if (x > 0.0f) {
-        f64 guess = __frsqrte(x);
-        guess = _half * guess * (_three - guess * guess * x);
-        guess = _half * guess * (_three - guess * guess * x);
-        guess = _half * guess * (_three - guess * guess * x);
-        return x * guess;
-    } else if (x < 0.0) {
-        return NAN;
-    } else if (isnan(x)) {
-        return NAN;
-    } else {
-        return x;
-    }
-}
-#endif
-
+/**
+ * Wobble frames of the lightning bolt (yuragi, "sway"), one row per frame:
+ * twelve sideways offsets of the bolt's points,
+ * then twelve ribbon widths that thin it out toward the far end. Used by types 0 and 2.
+ */
 u8 yuragi_data[11][24] = {
 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 10, 9, 3, 1, 0, 0, 0, 0, 0, 0, 0, 0,
 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 8, 7, 6, 5, 4, 3, 2, 1, 0, 0, 0, 0,
@@ -84,6 +30,7 @@ u8 yuragi_data[11][24] = {
 30, 30, 25, 25, 35, 20, 15, 10, 15, 15, 5, 0, 2, 2, 2, 2, 2, 2, 6, 2, 2, 2, 6, 5,
 27, 27, 22, 22, 32, 17, 12, 7, 12, 12, 2, 0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0
 };
+/** The wobble frames used by type 1, a looser bolt with wider swings. */
 u8 yuragi_data2[11][24] = {
 25, 25, 25, 5, 25, 5, 25, 25, 5, 25, 25, 25, 4, 3, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0,
 15, 15, 15, 25, 15, 15, 5, 25, 25, 15, 25, 25, 4, 4, 4, 4, 4, 3, 2, 1, 0, 0, 0, 0,
@@ -100,11 +47,16 @@ u8 yuragi_data2[11][24] = {
 
 static u8 (*yuragi_data_table[2])[24] = {yuragi_data, yuragi_data2};
 
+static void effPokopiThunderMain(EffectEntry* effect);
+static void effPokopiThunderDisp(CameraId cameraId, EffectEntry* effect);
 
-
-void effPokopiThunderMain(EffectEntry* effect);
-void effPokopiThunderDisp(CameraId cameraId, EffectEntry* effect);
-
+/**
+ * Spawns a lightning bolt from (x, y, z) to (x2, y2, z2) scaled by scale,
+ * lasting duration frames (<= 0 means until deleted).
+ * Type 10 and above (type mod 10 picks the shape) draws with camera 8 instead of 4.
+ * Returns NULL if the two points coincide.
+ * Used by Dark Puff-type units, the X-Naut leader fight and aji_10 via evt_eff64.
+ */
 EffectEntry* effPokopiThunderN64Entry(s32 type, s32 duration, f32 x, f32 y, f32 z, f32 x2, f32 y2, f32 z2, f32 scale) {
     EffectEntry* effect;
     EffPokopiThunderN64Work* work;
@@ -126,13 +78,13 @@ EffectEntry* effPokopiThunderN64Entry(s32 type, s32 duration, f32 x, f32 y, f32 
     work = __memAlloc(HEAP_EFFECT, sizeof(EffPokopiThunderN64Work));
     effect->userdata = work;
     effect->callback = effPokopiThunderMain;
-    effect->flags |= 2;
+    effect->flags |= EFFECT_FLAG_SOFT_DELETE;
     work->type = type;
     work->frame = 0;
     if (duration <= 0) {
-        work->unk28 = 1000;
+        work->timeLeft = 1000;
     } else {
-        work->unk28 = duration;
+        work->timeLeft = duration;
     }
     work->alpha = 255;
     dy = y - y2;
@@ -167,12 +119,16 @@ EffectEntry* effPokopiThunderN64Entry(s32 type, s32 duration, f32 x, f32 y, f32 
     return effect;
 }
 
+/** Returns i * step. */
 #ifdef TARGET_PC /* file-local: other files define different inline_fn()s (one external copy wins on PC) */
 static
 #endif
-inline float inline_fn(s32 arg0, float arg1) { return ((f32)arg0) * arg1; }
+inline float inline_fn(s32 i, float step) {
+    return ((f32)i) * step;
+}
 
-void effPokopiThunderMain(EffectEntry* effect) {
+/** Counts down the lifetime and halves the alpha every frame after the first 11 frames (40 for type 2). */
+static void effPokopiThunderMain(EffectEntry* effect) {
     EffPokopiThunderN64Work* work = effect->userdata;
     Vec position;
     Vec tmp = {0.0f, 0.0f, 0.0f};
@@ -184,15 +140,15 @@ void effPokopiThunderMain(EffectEntry* effect) {
     tmp.z = work->position.z;
     position = tmp;
     type = work->type;
-    if (effect->flags & 4) {
-        effect->flags &= ~4;
-        work->unk28 = 16;
+    if (effect->flags & EFFECT_FLAG_DELETE_REQUESTED) {
+        effect->flags &= ~EFFECT_FLAG_DELETE_REQUESTED;
+        work->timeLeft = 16;
     }
-    if (work->unk28 < 1000) {
-        work->unk28--;
+    if (work->timeLeft < 1000) {
+        work->timeLeft--;
     }
     work->frame++;
-    if (work->unk28 < 0) {
+    if (work->timeLeft < 0) {
         effDelete(effect);
         return;
     }
@@ -207,9 +163,16 @@ void effPokopiThunderMain(EffectEntry* effect) {
     dispEntry(work->cameraId, dispCalcZ(&position), 2, (DispCallback)effPokopiThunderDisp, effect);
 }
 
-inline float pt_dy(EffPokopiThunderN64Work* a, EffPokopiThunderN64Work* b) { return a->end.y - b->start.y; }
+/** Returns a->end.y - b->start.y, the vertical span of the bolt. */
+inline float pt_dy(EffPokopiThunderN64Work* a, EffPokopiThunderN64Work* b) {
+    return a->end.y - b->start.y;
+}
 
-void effPokopiThunderDisp(CameraId cameraId, EffectEntry* effect) {
+/**
+ * Rebuilds a 12-point jagged ribbon along the bolt each frame, wobbling the points from the frame table,
+ * and draws it as quads with texture 0x54.
+ */
+static void effPokopiThunderDisp(CameraId cameraId, EffectEntry* effect) {
     CameraEntry* camera;
     s32 alpha;
     f32 scale;
@@ -371,4 +334,3 @@ void effPokopiThunderDisp(CameraId cameraId, EffectEntry* effect) {
         GXSetViewport(vp[0], vp[1], vp[2], vp[3], vp[4], vp[5]);
     }
 }
-

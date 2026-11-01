@@ -1,12 +1,13 @@
-#define MATH_NO_SQRTF 1
 #include <dolphin.h>
 #include <dolphin/mtx.h>
 
+/** The constants 0 and 1, loaded by the paired-single matrix routines. */
 static f32 Unit01[2] = {
     0.0f,
     1.0f
 };
 
+/** Sets a 3x4 matrix to the identity (C reference version). */
 void C_MTXIdentity(Mtx m) {
     ASSERTMSGLINE(189, m, "MtxIdentity():  NULL Mtx 'm' ");
     m[0][0] = 1;
@@ -24,6 +25,7 @@ void C_MTXIdentity(Mtx m) {
 }
 
 #ifndef TARGET_PC /* paired-single; PC uses the C_ version */
+/** Sets a 3x4 matrix to the identity (paired-singles version). */
 void PSMTXIdentity(register Mtx m) {
     register f32 c_zero = 0.0f;
     register f32 c_one = 1.0f;
@@ -43,6 +45,7 @@ void PSMTXIdentity(register Mtx m) {
 }
 #endif
 
+/** Copies a 3x4 matrix (C reference version). */
 void C_MTXCopy(const Mtx src, Mtx dst) {
     ASSERTMSGLINE(250, src, "MTXCopy():  NULL MtxPtr 'src' ");
     ASSERTMSGLINE(251, dst, "MTXCopy():  NULL MtxPtr 'dst' ");
@@ -63,6 +66,7 @@ void C_MTXCopy(const Mtx src, Mtx dst) {
 }
 
 #ifndef TARGET_PC /* paired-single; PC uses the C_ version */
+/** Copies a 3x4 matrix (paired-singles version). */
 asm void PSMTXCopy(const register Mtx src, register Mtx dst) {
     psq_l f0, 0(src), 0, 0
     psq_st f0, 0(dst), 0, 0
@@ -79,6 +83,7 @@ asm void PSMTXCopy(const register Mtx src, register Mtx dst) {
 }
 #endif
 
+/** Multiplies two 3x4 matrices, ab = a * b, which concatenates the two transforms (C reference version). */
 void C_MTXConcat(const Mtx a, const Mtx b, Mtx ab) {
     Mtx mTmp;
     MtxPtr m;
@@ -114,6 +119,7 @@ void C_MTXConcat(const Mtx a, const Mtx b, Mtx ab) {
 }
 
 #ifndef TARGET_PC /* paired-single; PC uses the C_ version */
+/** Multiplies two 3x4 matrices, ab = a * b (paired-singles version, hand-written assembly). */
 asm void PSMTXConcat(const register Mtx a, const register Mtx b, register Mtx ab) {
     nofralloc
     stwu r1, -64(r1)
@@ -170,6 +176,10 @@ asm void PSMTXConcat(const register Mtx a, const register Mtx b, register Mtx ab
 }
 #endif
 
+/**
+ * Multiplies the matrix a by each of count matrices (count must be greater than 1) from srcBase,
+ * writing a * src[i] to dstBase[i].
+ */
 void C_MTXConcatArray(const Mtx a, const Mtx* srcBase, Mtx* dstBase, u32 count) {
     u32 i;
 
@@ -188,7 +198,7 @@ void C_MTXConcatArray(const Mtx a, const Mtx* srcBase, Mtx* dstBase, u32 count) 
 #if DEBUG
 #pragma push
 #pragma optimization_level 1
-// This function will not compile at optimization level 0
+/** Debug builds only (not compiled here): upstream's setting, as this function will not compile at level 0. */
 #endif
 #ifndef TARGET_PC /* paired-single; PC uses the C_ version */
 void PSMTXConcatArray(const register Mtx a, const register Mtx* srcBase, register Mtx* dstBase, register u32 count) {
@@ -285,6 +295,7 @@ void PSMTXConcatArray(const register Mtx a, const register Mtx* srcBase, registe
 #pragma pop
 #endif
 
+/** Transposes the 3x3 part of a matrix into a 3x4 destination with a zero translation (C reference version). */
 void C_MTXTranspose(const Mtx src, Mtx xPose) {
     Mtx mTmp;
     MtxPtr m;
@@ -316,6 +327,7 @@ void C_MTXTranspose(const Mtx src, Mtx xPose) {
 }
 
 #ifndef TARGET_PC /* paired-single; PC uses the C_ version */
+/** Transposes a matrix (paired-singles version). */
 void PSMTXTranspose(const register Mtx src, register Mtx xPose) {
     register f32 c_zero = 0;
     register f32 row0a;
@@ -353,6 +365,10 @@ void PSMTXTranspose(const register Mtx src, register Mtx xPose) {
 }
 #endif
 
+/**
+ * Inverts a 3x4 affine matrix; returns 0 and leaves the output untouched
+ * when the determinant is zero (C reference version).
+ */
 u32 C_MTXInverse(const Mtx src, Mtx inv) {
     Mtx mTmp;
     MtxPtr m;
@@ -399,6 +415,7 @@ u32 C_MTXInverse(const Mtx src, Mtx inv) {
 }
 
 #ifndef TARGET_PC /* paired-single; PC uses the C_ version */
+/** Inverts a 3x4 affine matrix, returning 0 if singular (paired-singles version). */
 asm u32 PSMTXInverse(const register Mtx src, register Mtx inv) {
     psq_l f0, 0(src), 1, 0
     psq_l f1, 4(src), 0, 0
@@ -465,6 +482,7 @@ skip_return:
 }
 #endif
 
+/** Computes the inverse transpose of a matrix, the matrix GX uses to transform normals (C reference version). */
 u32 C_MTXInvXpose(const Mtx src, Mtx invX) {
     Mtx mTmp;
     MtxPtr m;
@@ -511,6 +529,7 @@ u32 C_MTXInvXpose(const Mtx src, Mtx invX) {
 }
 
 #ifndef TARGET_PC /* paired-single; PC uses the C_ version */
+/** Computes the inverse transpose of a matrix for transforming normals (paired-singles version). */
 asm u32 PSMTXInvXpose(const register Mtx src, register Mtx invX) {
 	psq_l f0, 0(src), 1, 0
 	psq_l f1, 4(src), 0, 0
@@ -565,6 +584,7 @@ skip_return:
 }
 #endif
 
+/** Builds a rotation matrix about the X, Y or Z axis (given as 'x', 'y' or 'z') from an angle in radians. */
 void C_MTXRotRad(Mtx m, char axis, f32 rad) {
     f32 sinA;
     f32 cosA;
@@ -576,6 +596,7 @@ void C_MTXRotRad(Mtx m, char axis, f32 rad) {
 }
 
 #ifndef TARGET_PC /* paired-single; PC uses the C_ version */
+/** Builds a single-axis rotation matrix from an angle in radians (paired-singles version). */
 void PSMTXRotRad(Mtx m, char axis, f32 rad) {
     f32 sinA, cosA;
     sinA = sinf(rad);
@@ -584,6 +605,7 @@ void PSMTXRotRad(Mtx m, char axis, f32 rad) {
 }
 #endif
 
+/** Builds a single-axis rotation matrix from a precomputed sine and cosine. */
 void C_MTXRotTrig(Mtx m, char axis, f32 sinA, f32 cosA) {
     ASSERTMSGLINE(1502, m, "MTXRotTrig():  NULL MtxPtr 'm' ");
     switch(axis) {
@@ -639,6 +661,7 @@ void C_MTXRotTrig(Mtx m, char axis, f32 sinA, f32 cosA) {
 }
 
 #ifndef TARGET_PC /* paired-single; PC uses the C_ version */
+/** Builds a single-axis rotation matrix from a precomputed sine and cosine (paired-singles version). */
 void PSMTXRotTrig(register Mtx m, register char axis, register f32 sinA, register f32 cosA) {
     register f32 fc0, fc1, nsinA;
     register f32 fw0, fw1, fw2, fw3;
@@ -704,6 +727,7 @@ void PSMTXRotTrig(register Mtx m, register char axis, register f32 sinA, registe
 #endif
 
 #ifndef TARGET_PC /* paired-single; PC uses the C_ version */
+/** Shared worker for PSMTXRotAxisRad: builds the axis-angle rotation matrix from a unit axis, sine and cosine. */
 static void __PSMTXRotAxisRadInternal(register Mtx m, const register Vec* axis, register f32 sT, register f32 cT) {
     register f32 tT, fc0;
     register f32 tmp0, tmp1, tmp2, tmp3, tmp4;
@@ -758,6 +782,7 @@ static void __PSMTXRotAxisRadInternal(register Mtx m, const register Vec* axis, 
 #endif
 
 #ifndef TARGET_PC /* paired-single; PC uses the C_ version */
+/** Builds a rotation matrix about an arbitrary axis from an angle in radians; the axis is normalized first. */
 void PSMTXRotAxisRad(Mtx m, const Vec* axis, f32 rad) {
     f32 sinT, cosT;
 
@@ -768,6 +793,7 @@ void PSMTXRotAxisRad(Mtx m, const Vec* axis, f32 rad) {
 }
 #endif
 
+/** Builds a rotation matrix about an arbitrary axis from an angle in radians (C reference version). */
 void C_MTXRotAxisRad(Mtx m, const Vec* axis, f32 rad) {
     Vec vN;
     f32 s;
@@ -807,6 +833,7 @@ void C_MTXRotAxisRad(Mtx m, const Vec* axis, f32 rad) {
     m[2][3] = 0;
 }
 
+/** Builds a translation matrix (C reference version). */
 void C_MTXTrans(Mtx m, f32 xT, f32 yT, f32 zT) {
     ASSERTMSGLINE(1866, m, "MTXTrans():  NULL MtxPtr 'm' ");
     m[0][0] = 1;
@@ -824,6 +851,7 @@ void C_MTXTrans(Mtx m, f32 xT, f32 yT, f32 zT) {
 }
 
 #ifndef TARGET_PC /* paired-single; PC uses the C_ version */
+/** Builds a translation matrix (paired-singles version). */
 void PSMTXTrans(register Mtx m, register f32 xT, register f32 yT, register f32 zT) {
     register f32 c0 = 0.0f;
     register f32 c1 = 1.0f;
@@ -843,6 +871,10 @@ void PSMTXTrans(register Mtx m, register f32 xT, register f32 yT, register f32 z
 }
 #endif
 
+/**
+ * Applies a translation to an existing matrix, dest = src * T(x, y, z),
+ * without a full multiply (C reference version).
+ */
 void C_MTXTransApply(const Mtx src, Mtx dst, f32 xT, f32 yT, f32 zT) {
     ASSERTMSGLINE(1933, src, "MTXTransApply(): NULL MtxPtr 'src' ");
     ASSERTMSGLINE(1934, dst, "MTXTransApply(): NULL MtxPtr 'src' "); //! wrong assert string
@@ -865,6 +897,7 @@ void C_MTXTransApply(const Mtx src, Mtx dst, f32 xT, f32 yT, f32 zT) {
 }
 
 #ifndef TARGET_PC /* paired-single; PC uses the C_ version */
+/** Applies a translation to an existing matrix without a full multiply (paired-singles version). */
 asm void PSMTXTransApply(const register Mtx src, register Mtx dst, register f32 xT, register f32 yT, register f32 zT) {
     nofralloc
     psq_l fp4, 0(src), 0, 0
@@ -889,6 +922,7 @@ asm void PSMTXTransApply(const register Mtx src, register Mtx dst, register f32 
 }
 #endif
 
+/** Builds a scale matrix (C reference version). */
 void C_MTXScale(Mtx m, f32 xS, f32 yS, f32 zS) {
     ASSERTMSGLINE(2008, m, "MTXScale():  NULL MtxPtr 'm' ");
     m[0][0] = xS;
@@ -906,6 +940,7 @@ void C_MTXScale(Mtx m, f32 xS, f32 yS, f32 zS) {
 }
 
 #ifndef TARGET_PC /* paired-single; PC uses the C_ version */
+/** Builds a scale matrix (paired-singles version). */
 void PSMTXScale(register Mtx m, register f32 xS, register f32 yS, register f32 zS) {
     register f32 c0 = 0.0f;
 
@@ -922,6 +957,7 @@ void PSMTXScale(register Mtx m, register f32 xS, register f32 yS, register f32 z
 }
 #endif
 
+/** Scales the rows of an existing matrix by x, y, z without a full multiply (C reference version). */
 void C_MTXScaleApply(const Mtx src, Mtx dst, f32 xS, f32 yS, f32 zS) {
     ASSERTMSGLINE(2070, src, "MTXScaleApply(): NULL MtxPtr 'src' ");
     ASSERTMSGLINE(2071, dst, "MTXScaleApply(): NULL MtxPtr 'dst' ");
@@ -940,6 +976,7 @@ void C_MTXScaleApply(const Mtx src, Mtx dst, f32 xS, f32 yS, f32 zS) {
 }
 
 #ifndef TARGET_PC /* paired-single; PC uses the C_ version */
+/** Scales the rows of an existing matrix by x, y, z (paired-singles version). */
 asm void PSMTXScaleApply(const register Mtx src, register Mtx dst, register f32 xS, register f32 yS, register f32 zS) {
     nofralloc
     frsp xS, xS
@@ -967,6 +1004,7 @@ asm void PSMTXScaleApply(const register Mtx src, register Mtx dst, register f32 
 }
 #endif
 
+/** Converts a unit quaternion to a 3x4 rotation matrix (C reference version). */
 void C_MTXQuat(Mtx m, const Quaternion* q) {
     f32 s;
     f32 xs;
@@ -1013,6 +1051,7 @@ void C_MTXQuat(Mtx m, const Quaternion* q) {
 }
 
 #ifndef TARGET_PC /* paired-single; PC uses the C_ version */
+/** Converts a unit quaternion to a 3x4 rotation matrix (paired-singles version). */
 void PSMTXQuat(register Mtx m, const register Quaternion* q) {
     register f32 c_zero, c_one, c_two, scale;
     register f32 tmp0, tmp1, tmp2, tmp3, tmp4;
@@ -1063,7 +1102,10 @@ void PSMTXQuat(register Mtx m, const register Quaternion* q) {
 }
 #endif
 
-#if defined(MTX_UNUSED_FUNCS) || defined(TARGET_PC) // FAKE: dead-stripped in the original binary; excluded to keep data layout; PC uses these C_ versions
+/**
+ * Builds a matrix that reflects points across the plane through a point with a given normal (used for mirrors
+ * and water).
+ */
 void C_MTXReflect(Mtx m, const Vec* p, const Vec* n) {
     f32 vxy;
     f32 vxz;
@@ -1087,9 +1129,9 @@ void C_MTXReflect(Mtx m, const Vec* p, const Vec* n) {
     m[2][2] = (1 - (2 * n->z * n->z));
     m[2][3] = (pdotn * n->z);
 }
-#endif
 
 #ifndef TARGET_PC /* paired-single; PC uses the C_ version */
+/** Builds a plane reflection matrix (paired-singles version). */
 void PSMTXReflect(register Mtx m, const register Vec* p, const register Vec* n) {
     register f32 c_one;
     register f32 vn_xy, vn_z1;
@@ -1131,6 +1173,7 @@ void PSMTXReflect(register Mtx m, const register Vec* p, const register Vec* n) 
 }
 #endif
 
+/** Builds a view matrix from a camera position, up vector and target point. */
 void C_MTXLookAt(Mtx m, const Point3d* camPos, const Vec* camUp, const Point3d* target) {
     Vec vLook;
     Vec vRight;
@@ -1162,6 +1205,7 @@ void C_MTXLookAt(Mtx m, const Point3d* camPos, const Vec* camUp, const Point3d* 
     m[2][3] = -((camPos->z * vLook.z) + ((camPos->x * vLook.x) + (camPos->y * vLook.y)));
 }
 
+/** Builds a texture-projection matrix for a frustum light, scaled and biased into texture coordinates. */
 void C_MTXLightFrustum(Mtx m, f32 t, f32 b, f32 l, f32 r, f32 n, f32 scaleS, f32 scaleT, f32 transS, f32 transT) {
     f32 tmp;
 
@@ -1185,6 +1229,7 @@ void C_MTXLightFrustum(Mtx m, f32 t, f32 b, f32 l, f32 r, f32 n, f32 scaleS, f32
     m[2][3] = 0;
 }
 
+/** Builds a texture-projection matrix for a perspective spotlight from a field of view and aspect ratio. */
 void C_MTXLightPerspective(Mtx m, f32 fovY, f32 aspect, f32 scaleS, f32 scaleT, f32 transS, f32 transT) {
     f32 angle;
     f32 cot;
@@ -1210,6 +1255,7 @@ void C_MTXLightPerspective(Mtx m, f32 fovY, f32 aspect, f32 scaleS, f32 scaleT, 
     m[2][3] = 0;
 }
 
+/** Builds a texture-projection matrix for an orthographic light volume. */
 void C_MTXLightOrtho(Mtx m, f32 t, f32 b, f32 l, f32 r, f32 scaleS, f32 scaleT, f32 transS, f32 transT) {
     f32 tmp;
 

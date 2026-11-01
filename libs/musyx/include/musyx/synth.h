@@ -303,9 +303,7 @@ extern SYNTH_MESSAGE_CALLBACK synthMessageCallback;
 
 u32 synthGetTicksPerSecond(SYNTH_VOICE* svoice);
 void synthKillVoicesByMacroReferences(u16* ref);
-#if MUSY_TARGET == MUSY_TARGET_PC
 void synthKillVoicesBySampleReferences(u16* ref);
-#endif
 void synthExit();
 void synthInit(u32 mixFrq, u32 numVoices);
 void synthSetBpm(u32 pbm, u8 set, u8 section);

@@ -1,8 +1,8 @@
+// Pirate's Grotto (dou) battle setups: enemy groups, battle stages and the field-battle tables for the area's maps.
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
 #include "manager/evtmgr_cmd.h"
 
-#pragma force_active on
 #include "battle/battle_stage_object.h"
 #include "system.h"
 #include "battle/battle_weapon_power.h"
@@ -10,26 +10,11 @@
 #include "dou.h"
 #include "battle/battle_stage.h"
 #include "driver/npcdrv.h"
-
-f32 sinfd(f32 degrees);
+#include "battle/battle_sub.h"
 
 static USER_FUNC(_wave_offset);
 extern BattleUnitKind unit_killer_cannon;
 
-f32 fd_battle_database_dou_negone_one_374[2] __attribute__((aligned(8)));
-f32 fd_battle_database_dou_neg_one_382;
-f32 fd_battle_database_dou___local_PI_383;
-f32 fd_battle_database_dou___local_3PIO2_385;
-f32 fd_battle_database_dou_one_negone_373[2] __attribute__((aligned(8)));
-f32 fd_battle_database_dou___local_PIO2_384;
-f32 fd_battle_database_dou_one_381;
-f32 fd_battle_database_dou_negone_one_360[2] __attribute__((aligned(8)));
-f32 fd_battle_database_dou_neg_one_365;
-f32 fd_battle_database_dou___local_PI_366;
-f32 fd_battle_database_dou___local_3PIO2_368;
-f32 fd_battle_database_dou_one_negone_359[2] __attribute__((aligned(8)));
-f32 fd_battle_database_dou___local_PIO2_367;
-f32 fd_battle_database_dou_one_364;
 BattleStageObjectData dou_btlobject_data[51];
 BattleStageData dou_btlstage_data[6];
 BattleUnitSetup btlparty_dou_dou_00_01_off_1[3];
@@ -103,36 +88,12 @@ NpcBattleSelect btlgrpsel_dou_btlno_dou_13_04_off[2];
 NpcBattleSelect btlgrpsel_dou_btlno_dou_13_99_off[2];
 NpcSetupBattleInfo btlsetup_dou_tbl[28];
 NpcTerritoryInfo btl_dou_setup_no_tbl[28];
-EvtWord bgset_dou_wave_event[77];
+extern EvtWord bgset_dou_wave_event[];
 
-f32 fd_battle_database_dou_negone_one_374[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_battle_database_dou_neg_one_382 = -1.0f;
-
-f32 fd_battle_database_dou___local_PI_383 = 3.1415927f;
-
-f32 fd_battle_database_dou___local_3PIO2_385 = 4.712389f;
-
-f32 fd_battle_database_dou_one_negone_373[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_battle_database_dou___local_PIO2_384 = 1.5707964f;
-
-f32 fd_battle_database_dou_one_381 = 1.0f;
-
-f32 fd_battle_database_dou_negone_one_360[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_battle_database_dou_neg_one_365 = -1.0f;
-
-f32 fd_battle_database_dou___local_PI_366 = 3.1415927f;
-
-f32 fd_battle_database_dou___local_3PIO2_368 = 4.712389f;
-
-f32 fd_battle_database_dou_one_negone_359[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_battle_database_dou___local_PIO2_367 = 1.5707964f;
-
-f32 fd_battle_database_dou_one_364 = 1.0f;
-
+/**
+ * Props of the Pirate's Grotto battle stage: each entry names a model of the backdrop and where it stands,
+ * the last entries being the background layers.
+ */
 BattleStageObjectData dou_btlobject_data[] = {
     {"taki", 2, 2, {0}, 0, 60, {0}},
     {"B_kabe", 2, 2, {0}, 10, 50, {0}},
@@ -187,12 +148,16 @@ BattleStageObjectData dou_btlobject_data[] = {
     {"nami_01", 2, 3, {0}, 0, 60, {0}},
 };
 
+/**
+ * Battle stage of Pirate's Grotto: the stage model directories, the props above, the backdrop weapons and the
+ * background event that runs during the fight.
+ */
 BattleStageData dou_btlstage_data[] = {
     {
-        "bti_01", // mGlobalStageDataDir
-        "stg_05_4", // mSpecificStageDataDir
-        5, // mNumObjects
-        dou_btlobject_data, // mObjects
+        "bti_01", // globalStageDataDir
+        "stg_05_4", // specificStageDataDir
+        5, // numObjects
+        dou_btlobject_data, // objects
         {NULL, 0, {0}, 0, NULL, 100, 0, 0, 2, 0.0f, 0, 0, 0, 0, NULL, {0}, NULL, {0}, 0x2100060, 0x20000000, 0, 26, 3, 2, NULL, 0, 0x7FF, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, {0}, NULL, {0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0}}, // bgAWeapon
         {NULL, 0, {0}, 0, NULL, 100, 0, 0, 2, 0.0f, 0, 0, 0, 0, weaponGetPowerDefault, {1, 0, 0, 0, 0, 0, 0, 0}, NULL, {0}, 0x2100060, 0x20000000, 0, 26, 3, 2, NULL, 0, 0x7FF, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, {0}, NULL, {0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0}}, // bgBWeapon
         NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, // initEvt..bgCEvt
@@ -202,10 +167,10 @@ BattleStageData dou_btlstage_data[] = {
         1, // disableBgBDestroy
     },
     {
-        "bti_01", // mGlobalStageDataDir
-        "stg_05_4", // mSpecificStageDataDir
-        2, // mNumObjects
-        &dou_btlobject_data[5], // mObjects
+        "bti_01", // globalStageDataDir
+        "stg_05_4", // specificStageDataDir
+        2, // numObjects
+        &dou_btlobject_data[5], // objects
         {NULL, 0, {0}, 0, NULL, 100, 0, 0, 2, 0.0f, 0, 0, 0, 0, NULL, {0}, NULL, {0}, 0x2100060, 0x20000000, 0, 26, 3, 2, NULL, 0, 0x7FF, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, {0}, NULL, {0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0}}, // bgAWeapon
         {NULL, 0, {0}, 0, NULL, 100, 0, 0, 2, 0.0f, 0, 0, 0, 0, weaponGetPowerDefault, {1, 0, 0, 0, 0, 0, 0, 0}, NULL, {0}, 0x2100060, 0x20000000, 0, 26, 3, 2, NULL, 0, 0x7FF, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, {0}, NULL, {0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0}}, // bgBWeapon
         NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, // initEvt..bgCEvt
@@ -215,20 +180,40 @@ BattleStageData dou_btlstage_data[] = {
         1, // disableBgBDestroy
     },
     {
-        "bti_01", // mGlobalStageDataDir
-        "stg_05_5", // mSpecificStageDataDir
-        8, // mNumObjects
-        &dou_btlobject_data[7], // mObjects
+        "bti_01", // globalStageDataDir
+        "stg_05_5", // specificStageDataDir
+        8, // numObjects
+        &dou_btlobject_data[7], // objects
         {NULL, 0, {0}, 0, NULL, 100, 0, 0, 2, 0.0f, 0, 0, 0, 0, NULL, {0}, NULL, {0}, 0x2100060, 0x20000000, 0, 26, 3, 2, NULL, 0, 0x7FF, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, {0}, NULL, {0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0}}, // bgAWeapon
         {NULL, 0, {0}, 0, NULL, 100, 0, 0, 2, 0.0f, 0, 0, 0, 0, weaponGetPowerDefault, {1, 0, 0, 0, 0, 0, 0, 0}, NULL, {0}, 0x2100060, 0x20000000, 0, 26, 3, 2, NULL, 0, 0x7FF, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, {0}, NULL, {0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0}}, // bgBWeapon
         NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, // initEvt..bgCEvt
         0, 0, 0, 0, // reserved_1B0..disableBgBDestroy
     },
     {
-        "bti_01", // mGlobalStageDataDir
-        "stg_05_3", // mSpecificStageDataDir
-        13, // mNumObjects
-        &dou_btlobject_data[15], // mObjects
+        "bti_01", // globalStageDataDir
+        "stg_05_3", // specificStageDataDir
+        13, // numObjects
+        &dou_btlobject_data[15], // objects
+        {NULL, 0, {0}, 0, NULL, 100, 0, 0, 2, 0.0f, 0, 0, 0, 0, weaponGetPowerDefault, {1, 0, 0, 0, 0, 0, 0, 0}, NULL, {0}, 0x2100060, 0x20000000, 0, 26, 3, 2, NULL, 0, 0x7FF, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, {0}, NULL, {0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0}}, // bgAWeapon
+        {NULL, 0, {0}, 0, NULL, 100, 0, 0, 2, 0.0f, 0, 0, 0, 0, weaponGetPowerDefault, {1, 0, 0, 0, 0, 0, 0, 0}, NULL, {0}, 0x2100060, 0x20000000, 0, 26, 3, 2, NULL, 0, 0x7FF, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, {0}, NULL, {0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0}}, // bgBWeapon
+        NULL, NULL, NULL, NULL, NULL, NULL, // initEvt..bgA2Evt
+        bgset_dou_wave_event, // bgBEvt
+        NULL, 0, // bgCEvt..reserved_1B0
+#if VERSION <= VERSION_DEMO_JP
+        0, // disableBgA1Destroy
+        0, // disableBgA2Destroy
+        0, // disableBgBDestroy
+#else
+        1, // disableBgA1Destroy
+        1, // disableBgA2Destroy
+        1, // disableBgBDestroy
+#endif
+    },
+    {
+        "bti_01", // globalStageDataDir
+        "stg_05_3", // specificStageDataDir
+        12, // numObjects
+        &dou_btlobject_data[28], // objects
         {NULL, 0, {0}, 0, NULL, 100, 0, 0, 2, 0.0f, 0, 0, 0, 0, weaponGetPowerDefault, {1, 0, 0, 0, 0, 0, 0, 0}, NULL, {0}, 0x2100060, 0x20000000, 0, 26, 3, 2, NULL, 0, 0x7FF, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, {0}, NULL, {0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0}}, // bgAWeapon
         {NULL, 0, {0}, 0, NULL, 100, 0, 0, 2, 0.0f, 0, 0, 0, 0, weaponGetPowerDefault, {1, 0, 0, 0, 0, 0, 0, 0}, NULL, {0}, 0x2100060, 0x20000000, 0, 26, 3, 2, NULL, 0, 0x7FF, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, {0}, NULL, {0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0}}, // bgBWeapon
         NULL, NULL, NULL, NULL, NULL, NULL, // initEvt..bgA2Evt
@@ -239,24 +224,10 @@ BattleStageData dou_btlstage_data[] = {
         1, // disableBgBDestroy
     },
     {
-        "bti_01", // mGlobalStageDataDir
-        "stg_05_3", // mSpecificStageDataDir
-        12, // mNumObjects
-        &dou_btlobject_data[28], // mObjects
-        {NULL, 0, {0}, 0, NULL, 100, 0, 0, 2, 0.0f, 0, 0, 0, 0, weaponGetPowerDefault, {1, 0, 0, 0, 0, 0, 0, 0}, NULL, {0}, 0x2100060, 0x20000000, 0, 26, 3, 2, NULL, 0, 0x7FF, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, {0}, NULL, {0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0}}, // bgAWeapon
-        {NULL, 0, {0}, 0, NULL, 100, 0, 0, 2, 0.0f, 0, 0, 0, 0, weaponGetPowerDefault, {1, 0, 0, 0, 0, 0, 0, 0}, NULL, {0}, 0x2100060, 0x20000000, 0, 26, 3, 2, NULL, 0, 0x7FF, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, {0}, NULL, {0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0}}, // bgBWeapon
-        NULL, NULL, NULL, NULL, NULL, NULL, // initEvt..bgA2Evt
-        bgset_dou_wave_event, // bgBEvt
-        NULL, 0, // bgCEvt..reserved_1B0
-        1, // disableBgA1Destroy
-        1, // disableBgA2Destroy
-        1, // disableBgBDestroy
-    },
-    {
-        "bti_01", // mGlobalStageDataDir
-        "stg_05_3", // mSpecificStageDataDir
-        11, // mNumObjects
-        &dou_btlobject_data[40], // mObjects
+        "bti_01", // globalStageDataDir
+        "stg_05_3", // specificStageDataDir
+        11, // numObjects
+        &dou_btlobject_data[40], // objects
         {NULL, 0, {0}, 0, NULL, 100, 0, 0, 2, 0.0f, 0, 0, 0, 0, weaponGetPowerDefault, {1, 0, 0, 0, 0, 0, 0, 0}, NULL, {0}, 0x2100060, 0x20000000, 0, 26, 3, 2, NULL, 0, 0x7FF, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, {0}, NULL, {0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0}}, // bgAWeapon
         {NULL, 0, {0}, 0, NULL, 100, 0, 0, 2, 0.0f, 0, 0, 0, 0, weaponGetPowerDefault, {1, 0, 0, 0, 0, 0, 0, 0}, NULL, {0}, 0x2100060, 0x20000000, 0, 26, 3, 2, NULL, 0, 0x7FF, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, {0}, NULL, {0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0}}, // bgBWeapon
         NULL, NULL, NULL, NULL, NULL, NULL, // initEvt..bgA2Evt
@@ -268,32 +239,36 @@ BattleStageData dou_btlstage_data[] = {
     },
 };
 
+/**
+ * Enemy party of battle dou_00_01 in Pirate's Grotto: 3 x Goomba (start positions and item drop tables
+ * included).
+ */
 BattleUnitSetup btlparty_dou_dou_00_01_off_1[] = {
     {
-        &unit_kuriboo, // mUnitKindParams
+        &unit_kuriboo, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {50.0f, 0.0f, -10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         NULL, // itemDropTable
     },
     {
-        &unit_kuriboo, // mUnitKindParams
+        &unit_kuriboo, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {90.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         NULL, // itemDropTable
     },
     {
-        &unit_kuriboo, // mUnitKindParams
+        &unit_kuriboo, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {130.0f, 0.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -301,6 +276,10 @@ BattleUnitSetup btlparty_dou_dou_00_01_off_1[] = {
     },
 };
 
+/**
+ * Enemy group of battle dou_00_01 in Pirate's Grotto: the party above with its item-drop weights and the
+ * heart and flower drop tables.
+ */
 BattleGroupSetup btlgrp_dou_dou_00_01_off_1 = {
     3, // numEnemies
     btlparty_dou_dou_00_01_off_1, // enemyData
@@ -309,35 +288,39 @@ BattleGroupSetup btlgrp_dou_dou_00_01_off_1 = {
     50, // noItemWeight
     battle_heart_drop_param_default, // hpDropTable
     battle_flower_drop_param_default, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/**
+ * Enemy party of battle dou_01_01 in Pirate's Grotto: 3 x Ember (start positions and item drop tables
+ * included).
+ */
 BattleUnitSetup btlparty_dou_dou_01_01_off_01[] = {
     {
-        &unit_hermos, // mUnitKindParams
+        &unit_hermos, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {50.0f, 40.0f, -10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_hermos, // itemDropTable
     },
     {
-        &unit_hermos, // mUnitKindParams
+        &unit_hermos, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {90.0f, 40.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_hermos, // itemDropTable
     },
     {
-        &unit_hermos, // mUnitKindParams
+        &unit_hermos, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {130.0f, 40.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -345,6 +328,10 @@ BattleUnitSetup btlparty_dou_dou_01_01_off_01[] = {
     },
 };
 
+/**
+ * Enemy group of battle dou_01_01 in Pirate's Grotto: the party above with its item-drop weights and the
+ * heart and flower drop tables.
+ */
 BattleGroupSetup btlgrp_dou_dou_01_01_off_01 = {
     3, // numEnemies
     btlparty_dou_dou_01_01_off_01, // enemyData
@@ -353,25 +340,29 @@ BattleGroupSetup btlgrp_dou_dou_01_01_off_01 = {
     50, // noItemWeight
     battle_heart_drop_param_default, // hpDropTable
     battle_flower_drop_param_default2, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/**
+ * Enemy party of battle dou_02_01 in Pirate's Grotto: 2 x Lava Bubble (start positions and item drop tables
+ * included).
+ */
 BattleUnitSetup btlparty_dou_dou_02_01_off_01[] = {
     {
-        &unit_bubble, // mUnitKindParams
+        &unit_bubble, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {70.0f, 40.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_bubble, // itemDropTable
     },
     {
-        &unit_bubble, // mUnitKindParams
+        &unit_bubble, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {110.0f, 40.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -379,6 +370,10 @@ BattleUnitSetup btlparty_dou_dou_02_01_off_01[] = {
     },
 };
 
+/**
+ * Enemy group of battle dou_02_01 in Pirate's Grotto: the party above with its item-drop weights and the
+ * heart and flower drop tables.
+ */
 BattleGroupSetup btlgrp_dou_dou_02_01_off_01 = {
     2, // numEnemies
     btlparty_dou_dou_02_01_off_01, // enemyData
@@ -387,45 +382,49 @@ BattleGroupSetup btlgrp_dou_dou_02_01_off_01 = {
     50, // noItemWeight
     battle_heart_drop_param_default, // hpDropTable
     battle_flower_drop_param_default2, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/**
+ * Enemy party of battle dou_02_02 in Pirate's Grotto: 4 x Lava Bubble (start positions and item drop tables
+ * included).
+ */
 BattleUnitSetup btlparty_dou_dou_02_02_off_01[] = {
     {
-        &unit_bubble, // mUnitKindParams
+        &unit_bubble, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {30.0f, 40.0f, -10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_bubble, // itemDropTable
     },
     {
-        &unit_bubble, // mUnitKindParams
+        &unit_bubble, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {70.0f, 40.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_bubble, // itemDropTable
     },
     {
-        &unit_bubble, // mUnitKindParams
+        &unit_bubble, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {110.0f, 40.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_bubble, // itemDropTable
     },
     {
-        &unit_bubble, // mUnitKindParams
+        &unit_bubble, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {150.0f, 40.0f, 20.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -433,6 +432,10 @@ BattleUnitSetup btlparty_dou_dou_02_02_off_01[] = {
     },
 };
 
+/**
+ * Enemy group of battle dou_02_02 in Pirate's Grotto: the party above with its item-drop weights and the
+ * heart and flower drop tables.
+ */
 BattleGroupSetup btlgrp_dou_dou_02_02_off_01 = {
     4, // numEnemies
     btlparty_dou_dou_02_02_off_01, // enemyData
@@ -441,25 +444,29 @@ BattleGroupSetup btlgrp_dou_dou_02_02_off_01 = {
     50, // noItemWeight
     battle_heart_drop_param_default, // hpDropTable
     battle_flower_drop_param_default2, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/**
+ * Enemy party of battle dou_03_01 in Pirate's Grotto: Bill Blaster and Bulky Bob-omb (start positions and
+ * item drop tables included).
+ */
 BattleUnitSetup btlparty_dou_dou_03_01_off_01[] = {
     {
-        &unit_killer_cannon, // mUnitKindParams
+        &unit_killer_cannon, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {70.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_killer_cannon, // itemDropTable
     },
     {
-        &unit_heavy_bom, // mUnitKindParams
+        &unit_heavy_bom, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {150.0f, 0.0f, 20.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -467,6 +474,10 @@ BattleUnitSetup btlparty_dou_dou_03_01_off_01[] = {
     },
 };
 
+/**
+ * Enemy group of battle dou_03_01 in Pirate's Grotto: the party above with its item-drop weights and the
+ * heart and flower drop tables.
+ */
 BattleGroupSetup btlgrp_dou_dou_03_01_off_01 = {
     2, // numEnemies
     btlparty_dou_dou_03_01_off_01, // enemyData
@@ -475,25 +486,29 @@ BattleGroupSetup btlgrp_dou_dou_03_01_off_01 = {
     50, // noItemWeight
     battle_heart_drop_param_default2, // hpDropTable
     battle_flower_drop_param_default, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/**
+ * Enemy party of battle dou_03_99 in Pirate's Grotto: 2 x Bullet Bill (start positions and item drop tables
+ * included).
+ */
 BattleUnitSetup btlparty_dou_dou_03_99_off_01[] = {
     {
-        &unit_killer, // mUnitKindParams
+        &unit_killer, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {70.0f, 40.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_killer, // itemDropTable
     },
     {
-        &unit_killer, // mUnitKindParams
+        &unit_killer, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {110.0f, 40.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -501,6 +516,10 @@ BattleUnitSetup btlparty_dou_dou_03_99_off_01[] = {
     },
 };
 
+/**
+ * Enemy group of battle dou_03_99 in Pirate's Grotto: the party above with its item-drop weights and the
+ * heart and flower drop tables.
+ */
 BattleGroupSetup btlgrp_dou_dou_03_99_off_01 = {
     2, // numEnemies
     btlparty_dou_dou_03_99_off_01, // enemyData
@@ -509,25 +528,29 @@ BattleGroupSetup btlgrp_dou_dou_03_99_off_01 = {
     50, // noItemWeight
     battle_heart_drop_param_default, // hpDropTable
     battle_flower_drop_param_default, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/**
+ * Enemy party of battle dou_03_02 in Pirate's Grotto: 2 x Bulky Bob-omb (start positions and item drop tables
+ * included).
+ */
 BattleUnitSetup btlparty_dou_dou_03_02_off_01[] = {
     {
-        &unit_heavy_bom, // mUnitKindParams
+        &unit_heavy_bom, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {70.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_heavy_bom, // itemDropTable
     },
     {
-        &unit_heavy_bom, // mUnitKindParams
+        &unit_heavy_bom, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {110.0f, 0.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -535,6 +558,10 @@ BattleUnitSetup btlparty_dou_dou_03_02_off_01[] = {
     },
 };
 
+/**
+ * Enemy group of battle dou_03_02 in Pirate's Grotto: the party above with its item-drop weights and the
+ * heart and flower drop tables.
+ */
 BattleGroupSetup btlgrp_dou_dou_03_02_off_01 = {
     2, // numEnemies
     btlparty_dou_dou_03_02_off_01, // enemyData
@@ -543,35 +570,39 @@ BattleGroupSetup btlgrp_dou_dou_03_02_off_01 = {
     50, // noItemWeight
     battle_heart_drop_param_default2, // hpDropTable
     battle_flower_drop_param_default, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/**
+ * Enemy party of battle dou_03_03 in Pirate's Grotto: 3 x Bulky Bob-omb (start positions and item drop tables
+ * included).
+ */
 BattleUnitSetup btlparty_dou_dou_03_03_off_01[] = {
     {
-        &unit_heavy_bom, // mUnitKindParams
+        &unit_heavy_bom, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {50.0f, 0.0f, -10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_heavy_bom, // itemDropTable
     },
     {
-        &unit_heavy_bom, // mUnitKindParams
+        &unit_heavy_bom, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {90.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_heavy_bom, // itemDropTable
     },
     {
-        &unit_heavy_bom, // mUnitKindParams
+        &unit_heavy_bom, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {130.0f, 0.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -579,6 +610,10 @@ BattleUnitSetup btlparty_dou_dou_03_03_off_01[] = {
     },
 };
 
+/**
+ * Enemy group of battle dou_03_03 in Pirate's Grotto: the party above with its item-drop weights and the
+ * heart and flower drop tables.
+ */
 BattleGroupSetup btlgrp_dou_dou_03_03_off_01 = {
     3, // numEnemies
     btlparty_dou_dou_03_03_off_01, // enemyData
@@ -587,25 +622,29 @@ BattleGroupSetup btlgrp_dou_dou_03_03_off_01 = {
     50, // noItemWeight
     battle_heart_drop_param_default2, // hpDropTable
     battle_flower_drop_param_default, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/**
+ * Enemy party of battle dou_05_01 in Pirate's Grotto: 2 x Ember (start positions and item drop tables
+ * included).
+ */
 BattleUnitSetup btlparty_dou_dou_05_01_off_01[] = {
     {
-        &unit_hermos, // mUnitKindParams
+        &unit_hermos, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {70.0f, 40.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_hermos, // itemDropTable
     },
     {
-        &unit_hermos, // mUnitKindParams
+        &unit_hermos, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {110.0f, 40.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -613,6 +652,10 @@ BattleUnitSetup btlparty_dou_dou_05_01_off_01[] = {
     },
 };
 
+/**
+ * Enemy group of battle dou_05_01 in Pirate's Grotto: the party above with its item-drop weights and the
+ * heart and flower drop tables.
+ */
 BattleGroupSetup btlgrp_dou_dou_05_01_off_01 = {
     2, // numEnemies
     btlparty_dou_dou_05_01_off_01, // enemyData
@@ -621,25 +664,29 @@ BattleGroupSetup btlgrp_dou_dou_05_01_off_01 = {
     50, // noItemWeight
     battle_heart_drop_param_default, // hpDropTable
     battle_flower_drop_param_default2, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/**
+ * Enemy party of battle dou_05_02 in Pirate's Grotto: 2 x Parabuzzy (start positions and item drop tables
+ * included).
+ */
 BattleUnitSetup btlparty_dou_dou_05_02_off_01[] = {
     {
-        &unit_patamet, // mUnitKindParams
+        &unit_patamet, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {70.0f, 40.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_patamet, // itemDropTable
     },
     {
-        &unit_patamet, // mUnitKindParams
+        &unit_patamet, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {110.0f, 40.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -647,6 +694,10 @@ BattleUnitSetup btlparty_dou_dou_05_02_off_01[] = {
     },
 };
 
+/**
+ * Enemy group of battle dou_05_02 in Pirate's Grotto: the party above with its item-drop weights and the
+ * heart and flower drop tables.
+ */
 BattleGroupSetup btlgrp_dou_dou_05_02_off_01 = {
     2, // numEnemies
     btlparty_dou_dou_05_02_off_01, // enemyData
@@ -655,35 +706,39 @@ BattleGroupSetup btlgrp_dou_dou_05_02_off_01 = {
     50, // noItemWeight
     battle_heart_drop_param_default2, // hpDropTable
     battle_flower_drop_param_default, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/**
+ * Enemy party of battle dou_06_01 in Pirate's Grotto: 3 x Parabuzzy (start positions and item drop tables
+ * included).
+ */
 BattleUnitSetup btlparty_dou_dou_06_01_off_01[] = {
     {
-        &unit_patamet, // mUnitKindParams
+        &unit_patamet, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {50.0f, 40.0f, -10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_patamet, // itemDropTable
     },
     {
-        &unit_patamet, // mUnitKindParams
+        &unit_patamet, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {90.0f, 40.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_patamet, // itemDropTable
     },
     {
-        &unit_patamet, // mUnitKindParams
+        &unit_patamet, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {130.0f, 40.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -691,6 +746,10 @@ BattleUnitSetup btlparty_dou_dou_06_01_off_01[] = {
     },
 };
 
+/**
+ * Enemy group of battle dou_06_01 in Pirate's Grotto: the party above with its item-drop weights and the
+ * heart and flower drop tables.
+ */
 BattleGroupSetup btlgrp_dou_dou_06_01_off_01 = {
     3, // numEnemies
     btlparty_dou_dou_06_01_off_01, // enemyData
@@ -699,45 +758,49 @@ BattleGroupSetup btlgrp_dou_dou_06_01_off_01 = {
     50, // noItemWeight
     battle_heart_drop_param_default2, // hpDropTable
     battle_flower_drop_param_default, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/**
+ * Enemy party of battle dou_06_02 in Pirate's Grotto: 3 x Parabuzzy and Lava Bubble (start positions and item
+ * drop tables included).
+ */
 BattleUnitSetup btlparty_dou_dou_06_02_off_01[] = {
     {
-        &unit_patamet, // mUnitKindParams
+        &unit_patamet, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {30.0f, 40.0f, -10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_patamet, // itemDropTable
     },
     {
-        &unit_patamet, // mUnitKindParams
+        &unit_patamet, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {70.0f, 40.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_patamet, // itemDropTable
     },
     {
-        &unit_bubble, // mUnitKindParams
+        &unit_bubble, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {110.0f, 40.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         NULL, // itemDropTable
     },
     {
-        &unit_patamet, // mUnitKindParams
+        &unit_patamet, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {150.0f, 40.0f, 20.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -745,6 +808,10 @@ BattleUnitSetup btlparty_dou_dou_06_02_off_01[] = {
     },
 };
 
+/**
+ * Enemy group of battle dou_06_02 in Pirate's Grotto: the party above with its item-drop weights and the
+ * heart and flower drop tables.
+ */
 BattleGroupSetup btlgrp_dou_dou_06_02_off_01 = {
     4, // numEnemies
     btlparty_dou_dou_06_02_off_01, // enemyData
@@ -753,15 +820,19 @@ BattleGroupSetup btlgrp_dou_dou_06_02_off_01 = {
     50, // noItemWeight
     battle_heart_drop_param_default2, // hpDropTable
     battle_flower_drop_param_default, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/**
+ * Enemy party of battle dou_06_03 in Pirate's Grotto: Parabuzzy (start positions and item drop tables
+ * included).
+ */
 BattleUnitSetup btlparty_dou_dou_06_03_off_01[] = {
     {
-        &unit_patamet, // mUnitKindParams
+        &unit_patamet, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {90.0f, 40.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -769,6 +840,10 @@ BattleUnitSetup btlparty_dou_dou_06_03_off_01[] = {
     },
 };
 
+/**
+ * Enemy group of battle dou_06_03 in Pirate's Grotto: the party above with its item-drop weights and the
+ * heart and flower drop tables.
+ */
 BattleGroupSetup btlgrp_dou_dou_06_03_off_01 = {
     1, // numEnemies
     btlparty_dou_dou_06_03_off_01, // enemyData
@@ -777,35 +852,39 @@ BattleGroupSetup btlgrp_dou_dou_06_03_off_01 = {
     50, // noItemWeight
     battle_heart_drop_param_default2, // hpDropTable
     battle_flower_drop_param_default, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/**
+ * Enemy party of battle dou_07_01 in Pirate's Grotto: 3 x Ember (start positions and item drop tables
+ * included).
+ */
 BattleUnitSetup btlparty_dou_dou_07_01_off_01[] = {
     {
-        &unit_hermos, // mUnitKindParams
+        &unit_hermos, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {50.0f, 40.0f, -10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_hermos, // itemDropTable
     },
     {
-        &unit_hermos, // mUnitKindParams
+        &unit_hermos, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {90.0f, 40.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_hermos, // itemDropTable
     },
     {
-        &unit_hermos, // mUnitKindParams
+        &unit_hermos, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {130.0f, 40.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -813,6 +892,10 @@ BattleUnitSetup btlparty_dou_dou_07_01_off_01[] = {
     },
 };
 
+/**
+ * Enemy group of battle dou_07_01 in Pirate's Grotto: the party above with its item-drop weights and the
+ * heart and flower drop tables.
+ */
 BattleGroupSetup btlgrp_dou_dou_07_01_off_01 = {
     3, // numEnemies
     btlparty_dou_dou_07_01_off_01, // enemyData
@@ -821,45 +904,49 @@ BattleGroupSetup btlgrp_dou_dou_07_01_off_01 = {
     50, // noItemWeight
     battle_heart_drop_param_default, // hpDropTable
     battle_flower_drop_param_default, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/**
+ * Enemy party of battle dou_08_01 in Pirate's Grotto: 4 x Bulky Bob-omb (start positions and item drop tables
+ * included).
+ */
 BattleUnitSetup btlparty_dou_dou_08_01_off_01[] = {
     {
-        &unit_heavy_bom, // mUnitKindParams
+        &unit_heavy_bom, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {30.0f, 0.0f, -10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_heavy_bom, // itemDropTable
     },
     {
-        &unit_heavy_bom, // mUnitKindParams
+        &unit_heavy_bom, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {70.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_heavy_bom, // itemDropTable
     },
     {
-        &unit_heavy_bom, // mUnitKindParams
+        &unit_heavy_bom, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {110.0f, 0.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_heavy_bom, // itemDropTable
     },
     {
-        &unit_heavy_bom, // mUnitKindParams
+        &unit_heavy_bom, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {150.0f, 0.0f, 20.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -867,6 +954,10 @@ BattleUnitSetup btlparty_dou_dou_08_01_off_01[] = {
     },
 };
 
+/**
+ * Enemy group of battle dou_08_01 in Pirate's Grotto: the party above with its item-drop weights and the
+ * heart and flower drop tables.
+ */
 BattleGroupSetup btlgrp_dou_dou_08_01_off_01 = {
     4, // numEnemies
     btlparty_dou_dou_08_01_off_01, // enemyData
@@ -875,35 +966,39 @@ BattleGroupSetup btlgrp_dou_dou_08_01_off_01 = {
     50, // noItemWeight
     battle_heart_drop_param_default2, // hpDropTable
     battle_flower_drop_param_default, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/**
+ * Enemy party of battle dou_09_01 in Pirate's Grotto: 2 x Lava Bubble and Ember (start positions and item
+ * drop tables included).
+ */
 BattleUnitSetup btlparty_dou_dou_09_01_off_01[] = {
     {
-        &unit_bubble, // mUnitKindParams
+        &unit_bubble, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {50.0f, 40.0f, -10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_bubble, // itemDropTable
     },
     {
-        &unit_bubble, // mUnitKindParams
+        &unit_bubble, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {90.0f, 40.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_bubble, // itemDropTable
     },
     {
-        &unit_hermos, // mUnitKindParams
+        &unit_hermos, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {130.0f, 40.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -911,6 +1006,10 @@ BattleUnitSetup btlparty_dou_dou_09_01_off_01[] = {
     },
 };
 
+/**
+ * Enemy group of battle dou_09_01 in Pirate's Grotto: the party above with its item-drop weights and the
+ * heart and flower drop tables.
+ */
 BattleGroupSetup btlgrp_dou_dou_09_01_off_01 = {
     3, // numEnemies
     btlparty_dou_dou_09_01_off_01, // enemyData
@@ -919,35 +1018,39 @@ BattleGroupSetup btlgrp_dou_dou_09_01_off_01 = {
     50, // noItemWeight
     battle_heart_drop_param_default, // hpDropTable
     battle_flower_drop_param_default2, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/**
+ * Enemy party of battle dou_09_02 in Pirate's Grotto: 2 x Ember and Lava Bubble (start positions and item
+ * drop tables included).
+ */
 BattleUnitSetup btlparty_dou_dou_09_02_off_01[] = {
     {
-        &unit_hermos, // mUnitKindParams
+        &unit_hermos, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {50.0f, 40.0f, -10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_hermos, // itemDropTable
     },
     {
-        &unit_hermos, // mUnitKindParams
+        &unit_hermos, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {90.0f, 40.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_hermos, // itemDropTable
     },
     {
-        &unit_bubble, // mUnitKindParams
+        &unit_bubble, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {130.0f, 40.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -955,6 +1058,10 @@ BattleUnitSetup btlparty_dou_dou_09_02_off_01[] = {
     },
 };
 
+/**
+ * Enemy group of battle dou_09_02 in Pirate's Grotto: the party above with its item-drop weights and the
+ * heart and flower drop tables.
+ */
 BattleGroupSetup btlgrp_dou_dou_09_02_off_01 = {
     3, // numEnemies
     btlparty_dou_dou_09_02_off_01, // enemyData
@@ -963,25 +1070,29 @@ BattleGroupSetup btlgrp_dou_dou_09_02_off_01 = {
     50, // noItemWeight
     battle_heart_drop_param_default, // hpDropTable
     battle_flower_drop_param_default2, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/**
+ * Enemy party of battle dou_12_01 in Pirate's Grotto: 2 x Bill Blaster (start positions and item drop tables
+ * included).
+ */
 BattleUnitSetup btlparty_dou_dou_12_01_off_01[] = {
     {
-        &unit_killer_cannon, // mUnitKindParams
+        &unit_killer_cannon, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {70.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_killer_cannon, // itemDropTable
     },
     {
-        &unit_killer_cannon, // mUnitKindParams
+        &unit_killer_cannon, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {110.0f, 0.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -989,6 +1100,10 @@ BattleUnitSetup btlparty_dou_dou_12_01_off_01[] = {
     },
 };
 
+/**
+ * Enemy group of battle dou_12_01 in Pirate's Grotto: the party above with its item-drop weights and the
+ * heart and flower drop tables.
+ */
 BattleGroupSetup btlgrp_dou_dou_12_01_off_01 = {
     2, // numEnemies
     btlparty_dou_dou_12_01_off_01, // enemyData
@@ -997,25 +1112,29 @@ BattleGroupSetup btlgrp_dou_dou_12_01_off_01 = {
     50, // noItemWeight
     battle_heart_drop_param_default2, // hpDropTable
     battle_flower_drop_param_default, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/**
+ * Enemy party of battle dou_12_99 in Pirate's Grotto: 2 x Bullet Bill (start positions and item drop tables
+ * included).
+ */
 BattleUnitSetup btlparty_dou_dou_12_99_off_01[] = {
     {
-        &unit_killer, // mUnitKindParams
+        &unit_killer, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {70.0f, 40.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_killer, // itemDropTable
     },
     {
-        &unit_killer, // mUnitKindParams
+        &unit_killer, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {110.0f, 40.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -1023,6 +1142,10 @@ BattleUnitSetup btlparty_dou_dou_12_99_off_01[] = {
     },
 };
 
+/**
+ * Enemy group of battle dou_12_99 in Pirate's Grotto: the party above with its item-drop weights and the
+ * heart and flower drop tables.
+ */
 BattleGroupSetup btlgrp_dou_dou_12_99_off_01 = {
     2, // numEnemies
     btlparty_dou_dou_12_99_off_01, // enemyData
@@ -1031,25 +1154,29 @@ BattleGroupSetup btlgrp_dou_dou_12_99_off_01 = {
     50, // noItemWeight
     battle_heart_drop_param_default, // hpDropTable
     battle_flower_drop_param_default, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/**
+ * Enemy party of battle dou_13_01 in Pirate's Grotto: 2 x Bill Blaster (start positions and item drop tables
+ * included).
+ */
 BattleUnitSetup btlparty_dou_dou_13_01_off_01[] = {
     {
-        &unit_killer_cannon, // mUnitKindParams
+        &unit_killer_cannon, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {70.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_killer_cannon, // itemDropTable
     },
     {
-        &unit_killer_cannon, // mUnitKindParams
+        &unit_killer_cannon, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {110.0f, 0.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -1057,6 +1184,10 @@ BattleUnitSetup btlparty_dou_dou_13_01_off_01[] = {
     },
 };
 
+/**
+ * Enemy group of battle dou_13_01 in Pirate's Grotto: the party above with its item-drop weights and the
+ * heart and flower drop tables.
+ */
 BattleGroupSetup btlgrp_dou_dou_13_01_off_01 = {
     2, // numEnemies
     btlparty_dou_dou_13_01_off_01, // enemyData
@@ -1065,25 +1196,29 @@ BattleGroupSetup btlgrp_dou_dou_13_01_off_01 = {
     50, // noItemWeight
     battle_heart_drop_param_default2, // hpDropTable
     battle_flower_drop_param_default, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/**
+ * Enemy party of battle dou_13_99 in Pirate's Grotto: 2 x Bullet Bill (start positions and item drop tables
+ * included).
+ */
 BattleUnitSetup btlparty_dou_dou_13_99_off_01[] = {
     {
-        &unit_killer, // mUnitKindParams
+        &unit_killer, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {70.0f, 40.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_killer, // itemDropTable
     },
     {
-        &unit_killer, // mUnitKindParams
+        &unit_killer, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {110.0f, 40.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -1091,6 +1226,10 @@ BattleUnitSetup btlparty_dou_dou_13_99_off_01[] = {
     },
 };
 
+/**
+ * Enemy group of battle dou_13_99 in Pirate's Grotto: the party above with its item-drop weights and the
+ * heart and flower drop tables.
+ */
 BattleGroupSetup btlgrp_dou_dou_13_99_off_01 = {
     2, // numEnemies
     btlparty_dou_dou_13_99_off_01, // enemyData
@@ -1099,418 +1238,453 @@ BattleGroupSetup btlgrp_dou_dou_13_99_off_01 = {
     50, // noItemWeight
     battle_heart_drop_param_default, // hpDropTable
     battle_flower_drop_param_default, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/** Developer test battle 1 in Pirate's Grotto: always fights dou_00_01_off_1. */
 NpcBattleSelect btlgrpsel_dou_btlno_dou_test1_off[] = {
     {50, &btlgrp_dou_dou_00_01_off_1, &dou_btlstage_data[3]},
     {0},
 };
 
+/** Developer test battle 2 in Pirate's Grotto: always fights dou_00_01_off_1. */
 NpcBattleSelect btlgrpsel_dou_btlno_dou_test2_off[] = {
     {50, &btlgrp_dou_dou_00_01_off_1, dou_btlstage_data},
     {0},
 };
 
+/** Developer test battle 3 in Pirate's Grotto: always fights dou_00_01_off_1. */
 NpcBattleSelect btlgrpsel_dou_btlno_dou_test3_off[] = {
     {50, &btlgrp_dou_dou_00_01_off_1, &dou_btlstage_data[2]},
     {0},
 };
 
+/** Battle 01_01 in Pirate's Grotto always fights one group, dou_01_01_off_01. */
 NpcBattleSelect btlgrpsel_dou_btlno_dou_01_01_off[] = {
     {20, &btlgrp_dou_dou_01_01_off_01, dou_btlstage_data},
     {0},
 };
 
+/** Battle 02_01 in Pirate's Grotto always fights one group, dou_02_01_off_01. */
 NpcBattleSelect btlgrpsel_dou_btlno_dou_02_01_off[] = {
     {20, &btlgrp_dou_dou_02_01_off_01, &dou_btlstage_data[3]},
     {0},
 };
 
+/** Battle 02_02 in Pirate's Grotto always fights one group, dou_02_02_off_01. */
 NpcBattleSelect btlgrpsel_dou_btlno_dou_02_02_off[] = {
     {20, &btlgrp_dou_dou_02_02_off_01, &dou_btlstage_data[3]},
     {0},
 };
 
+/** Battle 03_01 in Pirate's Grotto always fights one group, dou_03_01_off_01. */
 NpcBattleSelect btlgrpsel_dou_btlno_dou_03_01_off[] = {
     {20, &btlgrp_dou_dou_03_01_off_01, dou_btlstage_data},
     {0},
 };
 
+/** Battle 03_99 in Pirate's Grotto always fights one group, dou_03_99_off_01. */
 NpcBattleSelect btlgrpsel_dou_btlno_dou_03_99_off[] = {
     {20, &btlgrp_dou_dou_03_99_off_01, dou_btlstage_data},
     {0},
 };
 
+/** Battle 03_02 in Pirate's Grotto always fights one group, dou_03_02_off_01. */
 NpcBattleSelect btlgrpsel_dou_btlno_dou_03_02_off[] = {
     {20, &btlgrp_dou_dou_03_02_off_01, dou_btlstage_data},
     {0},
 };
 
+/** Battle 03_03 in Pirate's Grotto always fights one group, dou_03_03_off_01. */
 NpcBattleSelect btlgrpsel_dou_btlno_dou_03_03_off[] = {
     {20, &btlgrp_dou_dou_03_03_off_01, &dou_btlstage_data[4]},
     {0},
 };
 
+/** Battle 05_01 in Pirate's Grotto always fights one group, dou_05_01_off_01. */
 NpcBattleSelect btlgrpsel_dou_btlno_dou_05_01_off[] = {
     {20, &btlgrp_dou_dou_05_01_off_01, dou_btlstage_data},
     {0},
 };
 
+/** Battle 05_02 in Pirate's Grotto always fights one group, dou_05_02_off_01. */
 NpcBattleSelect btlgrpsel_dou_btlno_dou_05_02_off[] = {
     {20, &btlgrp_dou_dou_05_02_off_01, dou_btlstage_data},
     {0},
 };
 
+/** Battle 06_01 in Pirate's Grotto always fights one group, dou_06_01_off_01. */
 NpcBattleSelect btlgrpsel_dou_btlno_dou_06_01_off[] = {
     {20, &btlgrp_dou_dou_06_01_off_01, &dou_btlstage_data[1]},
     {0},
 };
 
+/** Battle 06_02 in Pirate's Grotto always fights one group, dou_06_02_off_01. */
 NpcBattleSelect btlgrpsel_dou_btlno_dou_06_02_off[] = {
     {20, &btlgrp_dou_dou_06_02_off_01, &dou_btlstage_data[1]},
     {0},
 };
 
+/** Battle 06_03 in Pirate's Grotto always fights one group, dou_06_03_off_01. */
 NpcBattleSelect btlgrpsel_dou_btlno_dou_06_03_off[] = {
     {20, &btlgrp_dou_dou_06_03_off_01, &dou_btlstage_data[1]},
     {0},
 };
 
+/** Battle 07_01 in Pirate's Grotto always fights one group, dou_07_01_off_01. */
 NpcBattleSelect btlgrpsel_dou_btlno_dou_07_01_off[] = {
     {20, &btlgrp_dou_dou_07_01_off_01, dou_btlstage_data},
     {0},
 };
 
+/** Battle 08_01 in Pirate's Grotto always fights one group, dou_08_01_off_01. */
 NpcBattleSelect btlgrpsel_dou_btlno_dou_08_01_off[] = {
     {20, &btlgrp_dou_dou_08_01_off_01, &dou_btlstage_data[4]},
     {0},
 };
 
+/** Battle 09_01 in Pirate's Grotto always fights one group, dou_09_01_off_01. */
 NpcBattleSelect btlgrpsel_dou_btlno_dou_09_01_off[] = {
     {20, &btlgrp_dou_dou_09_01_off_01, &dou_btlstage_data[4]},
     {0},
 };
 
+/** Battle 09_02 in Pirate's Grotto always fights one group, dou_09_02_off_01. */
 NpcBattleSelect btlgrpsel_dou_btlno_dou_09_02_off[] = {
     {20, &btlgrp_dou_dou_09_02_off_01, &dou_btlstage_data[4]},
     {0},
 };
 
+/** Battle 12_01 in Pirate's Grotto always fights one group, dou_12_01_off_01. */
 NpcBattleSelect btlgrpsel_dou_btlno_dou_12_01_off[] = {
     {20, &btlgrp_dou_dou_12_01_off_01, &dou_btlstage_data[5]},
     {0},
 };
 
+/** Battle 12_02 in Pirate's Grotto always fights one group, dou_12_01_off_01. */
 NpcBattleSelect btlgrpsel_dou_btlno_dou_12_02_off[] = {
     {20, &btlgrp_dou_dou_12_01_off_01, &dou_btlstage_data[5]},
     {0},
 };
 
+/** Battle 12_99 in Pirate's Grotto always fights one group, dou_12_99_off_01. */
 NpcBattleSelect btlgrpsel_dou_btlno_dou_12_99_off[] = {
     {20, &btlgrp_dou_dou_12_99_off_01, &dou_btlstage_data[5]},
     {0},
 };
 
+/** Battle 13_01 in Pirate's Grotto always fights one group, dou_13_01_off_01. */
 NpcBattleSelect btlgrpsel_dou_btlno_dou_13_01_off[] = {
     {20, &btlgrp_dou_dou_13_01_off_01, &dou_btlstage_data[1]},
     {0},
 };
 
+/** Battle 13_02 in Pirate's Grotto always fights one group, dou_13_01_off_01. */
 NpcBattleSelect btlgrpsel_dou_btlno_dou_13_02_off[] = {
     {20, &btlgrp_dou_dou_13_01_off_01, &dou_btlstage_data[1]},
     {0},
 };
 
+/** Battle 13_03 in Pirate's Grotto always fights one group, dou_13_01_off_01. */
 NpcBattleSelect btlgrpsel_dou_btlno_dou_13_03_off[] = {
     {20, &btlgrp_dou_dou_13_01_off_01, &dou_btlstage_data[1]},
     {0},
 };
 
+/** Battle 13_04 in Pirate's Grotto always fights one group, dou_13_01_off_01. */
 NpcBattleSelect btlgrpsel_dou_btlno_dou_13_04_off[] = {
     {20, &btlgrp_dou_dou_13_01_off_01, &dou_btlstage_data[1]},
     {0},
 };
 
+/** Battle 13_99 in Pirate's Grotto always fights one group, dou_13_99_off_01. */
 NpcBattleSelect btlgrpsel_dou_btlno_dou_13_99_off[] = {
     {20, &btlgrp_dou_dou_13_99_off_01, &dou_btlstage_data[1]},
     {0},
 };
 
+/**
+ * Field battle setups of Pirate's Grotto: one entry per battle id in btl_dou_setup_no_tbl, giving the stage,
+ * the group selection and the battle music.
+ */
 NpcSetupBattleInfo btlsetup_dou_tbl[] = {
     {
-        /*"マップstg_05_3"*/"\x83\x7D\x83\x62\x83\x76\x73\x74\x67\x5F\x30\x35\x5F\x33", // name
+        "マップstg_05_3", // name
         NULL, 0, // mapName..fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_dou_btlno_dou_test1_off, // select
-        0, 0, // battleFlags..field_1C
-        {{1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        0, 0, // battleFlags, randomMode
+        {{1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_ZAKO_BATTLE1", // bgmName
     },
     {
-        /*"マップstg_05_4"*/"\x83\x7D\x83\x62\x83\x76\x73\x74\x67\x5F\x30\x35\x5F\x34", // name
+        "マップstg_05_4", // name
         NULL, 0, // mapName..fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_dou_btlno_dou_test2_off, // select
-        0, 0, // battleFlags..field_1C
-        {{1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        0, 0, // battleFlags, randomMode
+        {{1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_ZAKO_BATTLE1", // bgmName
     },
     {
-        /*"マップstg_05_5"*/"\x83\x7D\x83\x62\x83\x76\x73\x74\x67\x5F\x30\x35\x5F\x35", // name
+        "マップstg_05_5", // name
         NULL, 0, // mapName..fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_dou_btlno_dou_test3_off, // select
-        0, 0, // battleFlags..field_1C
-        {{1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        0, 0, // battleFlags, randomMode
+        {{1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_ZAKO_BATTLE1", // bgmName
     },
     {
-        /*"DOU01エルモス"*/"\x44\x4F\x55\x30\x31\x83\x47\x83\x8B\x83\x82\x83\x58", // name
+        "DOU01エルモス", // name
         NULL, 0, // mapName..fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_dou_btlno_dou_01_01_off, // select
-        0, 0, // battleFlags..field_1C
-        {{3, 3}, {3, 3}, {3, 3}, {0}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {0}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        0, 0, // battleFlags, randomMode
+        {{3, 3}, {3, 3}, {3, 3}, {0}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {0}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_ZAKO_BATTLE1", // bgmName
     },
     {
-        /*"DOU02バブル"*/"\x44\x4F\x55\x30\x32\x83\x6F\x83\x75\x83\x8B", // name
+        "DOU02バブル", // name
         NULL, 0, // mapName..fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_dou_btlno_dou_02_01_off, // select
-        0, 0, // battleFlags..field_1C
-        {{3, 3}, {3, 3}, {3, 3}, {0}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {0}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        0, 0, // battleFlags, randomMode
+        {{3, 3}, {3, 3}, {3, 3}, {0}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {0}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_ZAKO_BATTLE1", // bgmName
     },
     {
-        /*"DOU02バブル"*/"\x44\x4F\x55\x30\x32\x83\x6F\x83\x75\x83\x8B", // name
+        "DOU02バブル", // name
         NULL, 0, // mapName..fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_dou_btlno_dou_02_02_off, // select
-        0, 0, // battleFlags..field_1C
-        {{3, 3}, {3, 3}, {3, 3}, {0}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {0}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        0, 0, // battleFlags, randomMode
+        {{3, 3}, {3, 3}, {3, 3}, {0}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {0}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_ZAKO_BATTLE1", // bgmName
     },
     {
-        /*"DOU03キラー大砲"*/"\x44\x4F\x55\x30\x33\x83\x4C\x83\x89\x81\x5B\x91\xE5\x96\x43", // name
+        "DOU03キラー大砲", // name
         NULL, 0, // mapName..fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_dou_btlno_dou_03_01_off, // select
-        0, 0, // battleFlags..field_1C
-        {{3, 3}, {3, 3}, {3, 3}, {0}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {0}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        0, 0, // battleFlags, randomMode
+        {{3, 3}, {3, 3}, {3, 3}, {0}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {0}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_ZAKO_BATTLE1", // bgmName
     },
     {
-        /*"DOU03キラー"*/"\x44\x4F\x55\x30\x33\x83\x4C\x83\x89\x81\x5B", // name
+        "DOU03キラー", // name
         NULL, 0, // mapName..fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_dou_btlno_dou_03_99_off, // select
-        0, 0, // battleFlags..field_1C
-        {{3, 3}, {3, 3}, {3, 3}, {0}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {0}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        0, 0, // battleFlags, randomMode
+        {{3, 3}, {3, 3}, {3, 3}, {0}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {0}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_ZAKO_BATTLE1", // bgmName
     },
     {
-        /*"DOU03ヘビーボム"*/"\x44\x4F\x55\x30\x33\x83\x77\x83\x72\x81\x5B\x83\x7B\x83\x80", // name
+        "DOU03ヘビーボム", // name
         NULL, 0, // mapName..fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_dou_btlno_dou_03_02_off, // select
-        0, 0, // battleFlags..field_1C
-        {{3, 3}, {3, 3}, {3, 3}, {0}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {10, 10}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        0, 0, // battleFlags, randomMode
+        {{3, 3}, {3, 3}, {3, 3}, {0}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {10, 10}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_ZAKO_BATTLE1", // bgmName
     },
     {
-        /*"DOU03ヘビーボム"*/"\x44\x4F\x55\x30\x33\x83\x77\x83\x72\x81\x5B\x83\x7B\x83\x80", // name
+        "DOU03ヘビーボム", // name
         NULL, 0, // mapName..fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_dou_btlno_dou_03_03_off, // select
-        0, 0, // battleFlags..field_1C
-        {{3, 3}, {3, 3}, {3, 3}, {0}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {10, 10}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        0, 0, // battleFlags, randomMode
+        {{3, 3}, {3, 3}, {3, 3}, {0}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {10, 10}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_ZAKO_BATTLE1", // bgmName
     },
     {
-        /*"DOU05エルモス"*/"\x44\x4F\x55\x30\x35\x83\x47\x83\x8B\x83\x82\x83\x58", // name
+        "DOU05エルモス", // name
         NULL, 0, // mapName..fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_dou_btlno_dou_05_01_off, // select
-        0, 0, // battleFlags..field_1C
-        {{3, 3}, {3, 3}, {3, 3}, {0}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        0, 0, // battleFlags, randomMode
+        {{3, 3}, {3, 3}, {3, 3}, {0}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_ZAKO_BATTLE1", // bgmName
     },
     {
-        /*"DOU05パタメット"*/"\x44\x4F\x55\x30\x35\x83\x70\x83\x5E\x83\x81\x83\x62\x83\x67", // name
+        "DOU05パタメット", // name
         NULL, 0, // mapName..fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_dou_btlno_dou_05_02_off, // select
-        0, 0, // battleFlags..field_1C
-        {{3, 3}, {3, 3}, {3, 3}, {0}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        0, 0, // battleFlags, randomMode
+        {{3, 3}, {3, 3}, {3, 3}, {0}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_ZAKO_BATTLE1", // bgmName
     },
     {
-        /*"DOU06パタメット"*/"\x44\x4F\x55\x30\x36\x83\x70\x83\x5E\x83\x81\x83\x62\x83\x67", // name
+        "DOU06パタメット", // name
         NULL, 0, // mapName..fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_dou_btlno_dou_06_01_off, // select
-        0, 0, // battleFlags..field_1C
-        {{3, 3}, {3, 3}, {3, 3}, {0}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        0, 0, // battleFlags, randomMode
+        {{3, 3}, {3, 3}, {3, 3}, {0}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_ZAKO_BATTLE1", // bgmName
     },
     {
-        /*"DOU06パタメット"*/"\x44\x4F\x55\x30\x36\x83\x70\x83\x5E\x83\x81\x83\x62\x83\x67", // name
+        "DOU06パタメット", // name
         NULL, 0, // mapName..fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_dou_btlno_dou_06_02_off, // select
-        0, 0, // battleFlags..field_1C
-        {{3, 3}, {3, 3}, {3, 3}, {0}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        0, 0, // battleFlags, randomMode
+        {{3, 3}, {3, 3}, {3, 3}, {0}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_ZAKO_BATTLE1", // bgmName
     },
     {
-        /*"DOU06パタメット"*/"\x44\x4F\x55\x30\x36\x83\x70\x83\x5E\x83\x81\x83\x62\x83\x67", // name
+        "DOU06パタメット", // name
         NULL, 0, // mapName..fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_dou_btlno_dou_06_03_off, // select
-        0, 0, // battleFlags..field_1C
-        {{3, 3}, {3, 3}, {3, 3}, {0}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        0, 0, // battleFlags, randomMode
+        {{3, 3}, {3, 3}, {3, 3}, {0}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_ZAKO_BATTLE1", // bgmName
     },
     {
-        /*"DOU07エルモス"*/"\x44\x4F\x55\x30\x37\x83\x47\x83\x8B\x83\x82\x83\x58", // name
+        "DOU07エルモス", // name
         NULL, 0, // mapName..fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_dou_btlno_dou_07_01_off, // select
-        0, 0, // battleFlags..field_1C
-        {{3, 3}, {3, 3}, {3, 3}, {0}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        0, 0, // battleFlags, randomMode
+        {{3, 3}, {3, 3}, {3, 3}, {0}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_ZAKO_BATTLE1", // bgmName
     },
     {
-        /*"DOU08ヘビーボム"*/"\x44\x4F\x55\x30\x38\x83\x77\x83\x72\x81\x5B\x83\x7B\x83\x80", // name
+        "DOU08ヘビーボム", // name
         NULL, 0, // mapName..fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_dou_btlno_dou_08_01_off, // select
-        0, 0, // battleFlags..field_1C
-        {{3, 3}, {3, 3}, {3, 3}, {0}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {10, 10}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        0, 0, // battleFlags, randomMode
+        {{3, 3}, {3, 3}, {3, 3}, {0}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {10, 10}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_ZAKO_BATTLE1", // bgmName
     },
     {
-        /*"DOU09バブル"*/"\x44\x4F\x55\x30\x39\x83\x6F\x83\x75\x83\x8B", // name
+        "DOU09バブル", // name
         NULL, 0, // mapName..fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_dou_btlno_dou_09_01_off, // select
-        0, 0, // battleFlags..field_1C
-        {{3, 3}, {3, 3}, {3, 3}, {0}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        0, 0, // battleFlags, randomMode
+        {{3, 3}, {3, 3}, {3, 3}, {0}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_ZAKO_BATTLE1", // bgmName
     },
     {
-        /*"DOU09エルモス"*/"\x44\x4F\x55\x30\x39\x83\x47\x83\x8B\x83\x82\x83\x58", // name
+        "DOU09エルモス", // name
         NULL, 0, // mapName..fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_dou_btlno_dou_09_02_off, // select
-        0, 0, // battleFlags..field_1C
-        {{3, 3}, {3, 3}, {3, 3}, {0}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        0, 0, // battleFlags, randomMode
+        {{3, 3}, {3, 3}, {3, 3}, {0}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_ZAKO_BATTLE1", // bgmName
     },
     {
-        /*"DOU12キラー大砲"*/"\x44\x4F\x55\x31\x32\x83\x4C\x83\x89\x81\x5B\x91\xE5\x96\x43", // name
+        "DOU12キラー大砲", // name
         NULL, 0, // mapName..fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_dou_btlno_dou_12_01_off, // select
-        0, 0, // battleFlags..field_1C
-        {{3, 3}, {3, 3}, {3, 3}, {0}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        0, 0, // battleFlags, randomMode
+        {{3, 3}, {3, 3}, {3, 3}, {0}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_ZAKO_BATTLE1", // bgmName
     },
     {
-        /*"DOU12キラー大砲"*/"\x44\x4F\x55\x31\x32\x83\x4C\x83\x89\x81\x5B\x91\xE5\x96\x43", // name
+        "DOU12キラー大砲", // name
         NULL, 0, // mapName..fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_dou_btlno_dou_12_02_off, // select
-        0, 0, // battleFlags..field_1C
-        {{3, 3}, {3, 3}, {3, 3}, {0}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        0, 0, // battleFlags, randomMode
+        {{3, 3}, {3, 3}, {3, 3}, {0}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_ZAKO_BATTLE1", // bgmName
     },
     {
-        /*"DOU12キラー"*/"\x44\x4F\x55\x31\x32\x83\x4C\x83\x89\x81\x5B", // name
+        "DOU12キラー", // name
         NULL, 0, // mapName..fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_dou_btlno_dou_12_99_off, // select
-        0, 0, // battleFlags..field_1C
-        {{3, 3}, {3, 3}, {3, 3}, {0}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        0, 0, // battleFlags, randomMode
+        {{3, 3}, {3, 3}, {3, 3}, {0}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_ZAKO_BATTLE1", // bgmName
     },
     {
-        /*"DOU13キラー大砲"*/"\x44\x4F\x55\x31\x33\x83\x4C\x83\x89\x81\x5B\x91\xE5\x96\x43", // name
+        "DOU13キラー大砲", // name
         NULL, 0, // mapName..fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_dou_btlno_dou_13_01_off, // select
-        0, 0, // battleFlags..field_1C
-        {{3, 3}, {3, 3}, {3, 3}, {0}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        0, 0, // battleFlags, randomMode
+        {{3, 3}, {3, 3}, {3, 3}, {0}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_ZAKO_BATTLE1", // bgmName
     },
     {
-        /*"DOU13キラー大砲"*/"\x44\x4F\x55\x31\x33\x83\x4C\x83\x89\x81\x5B\x91\xE5\x96\x43", // name
+        "DOU13キラー大砲", // name
         NULL, 0, // mapName..fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_dou_btlno_dou_13_02_off, // select
-        0, 0, // battleFlags..field_1C
-        {{3, 3}, {3, 3}, {3, 3}, {0}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        0, 0, // battleFlags, randomMode
+        {{3, 3}, {3, 3}, {3, 3}, {0}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_ZAKO_BATTLE1", // bgmName
     },
     {
-        /*"DOU13キラー大砲"*/"\x44\x4F\x55\x31\x33\x83\x4C\x83\x89\x81\x5B\x91\xE5\x96\x43", // name
+        "DOU13キラー大砲", // name
         NULL, 0, // mapName..fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_dou_btlno_dou_13_03_off, // select
-        0, 0, // battleFlags..field_1C
-        {{3, 3}, {3, 3}, {3, 3}, {0}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        0, 0, // battleFlags, randomMode
+        {{3, 3}, {3, 3}, {3, 3}, {0}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_ZAKO_BATTLE1", // bgmName
     },
     {
-        /*"DOU13キラー大砲"*/"\x44\x4F\x55\x31\x33\x83\x4C\x83\x89\x81\x5B\x91\xE5\x96\x43", // name
+        "DOU13キラー大砲", // name
         NULL, 0, // mapName..fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_dou_btlno_dou_13_04_off, // select
-        0, 0, // battleFlags..field_1C
-        {{3, 3}, {3, 3}, {3, 3}, {0}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        0, 0, // battleFlags, randomMode
+        {{3, 3}, {3, 3}, {3, 3}, {0}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_ZAKO_BATTLE1", // bgmName
     },
     {
-        /*"DOU13キラー"*/"\x44\x4F\x55\x31\x33\x83\x4C\x83\x89\x81\x5B", // name
+        "DOU13キラー", // name
         NULL, 0, // mapName..fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_dou_btlno_dou_13_99_off, // select
-        0, 0, // battleFlags..field_1C
-        {{3, 3}, {3, 3}, {3, 3}, {0}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        0, 0, // battleFlags, randomMode
+        {{3, 3}, {3, 3}, {3, 3}, {0}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_ZAKO_BATTLE1", // bgmName
     },
     {0},
 };
 
+/**
+ * Battle ids of Pirate's Grotto (BTLNO_DOU_*) and their index into btlsetup_dou_tbl; handed to the battle
+ * system by relSetBtlAddr.
+ */
 NpcTerritoryInfo btl_dou_setup_no_tbl[] = {
     {"BTLNO_DOU_TEST1", 0},
     {"BTLNO_DOU_TEST2", 1},
@@ -1542,6 +1716,13 @@ NpcTerritoryInfo btl_dou_setup_no_tbl[] = {
     {0},
 };
 
+/**
+ * Script helper that sways one battle-stage wave object (name in args[0]):
+ * adds a horizontal offset ampX * sin(step * 360 / periodX) (args[1] is the script variable holding the step,
+ * args[2] the period in frames, args[3] the amplitude)
+ * and a vertical offset ampY * sin(step * 360 / periodY + 270) + ampY (args[4] to args[6] likewise),
+ * then advances both steps, wrapping at the period.
+ */
 static USER_FUNC(_wave_offset) {
     EvtWord* args = event->args;
     const char* name = (const char*)evtGetValue(event, args[0]);
@@ -1570,6 +1751,11 @@ static USER_FUNC(_wave_offset) {
     return EVT_RETURN_DONE;
 }
 
+/**
+ * Background event of the Pirate's Grotto battle stages:
+ * every frame sways the five water-wave objects nami_00 to nami_04 with _wave_offset,
+ * each with its own period and amplitude, forever.
+ */
 EVT_BEGIN(bgset_dou_wave_event)
     SET_VALUE(LW(0), 0)
     SET_VALUE(LW(1), 200)
@@ -1589,4 +1775,3 @@ EVT_BEGIN(bgset_dou_wave_event)
     GOTO(0)
     RETURN
 EVT_END()
-

@@ -2,6 +2,7 @@
 #include <dolphin/mtx.h>
 #include "fake_tgmath.h"
 
+/** Adds two quaternions component by component (C reference version). */
 void C_QUATAdd(const Quaternion* p, const Quaternion* q, Quaternion* r) {
     ASSERTMSGLINE(77, p, "QUATAdd():  NULL QuaternionPtr 'p' ");
     ASSERTMSGLINE(78, q, "QUATAdd():  NULL QuaternionPtr 'q' ");
@@ -14,6 +15,7 @@ void C_QUATAdd(const Quaternion* p, const Quaternion* q, Quaternion* r) {
 }
 
 #ifndef TARGET_PC /* paired-single; PC uses the C_ version */
+/** Adds two quaternions component by component (paired-singles version). */
 void PSQUATAdd(const register Quaternion* p, const register Quaternion* q, register Quaternion* r) {
     register f32 pxy, qxy, rxy, pzw, qzw, rzw;
 
@@ -28,8 +30,9 @@ void PSQUATAdd(const register Quaternion* p, const register Quaternion* q, regis
         psq_st rzw, 8(r), 0, 0
     }
 }
-#endif
 
+#endif
+/** Subtracts one quaternion from another (C reference version). */
 void C_QUATSubtract(const Quaternion* p, const Quaternion* q, Quaternion* r) {
     ASSERTMSGLINE(133, p, "QUATSubtract():  NULL QuaternionPtr 'p' ");
     ASSERTMSGLINE(134, q, "QUATSubtract():  NULL QuaternionPtr 'q' ");
@@ -42,6 +45,7 @@ void C_QUATSubtract(const Quaternion* p, const Quaternion* q, Quaternion* r) {
 }
 
 #ifndef TARGET_PC /* paired-single; PC uses the C_ version */
+/** Subtracts one quaternion from another (paired-singles version). */
 void PSQUATSubtract(const register Quaternion* p, const register Quaternion* q, register Quaternion* r) {
     register f32 pxy, qxy, rxy, pzw, qzw, rzw;
 
@@ -56,8 +60,9 @@ void PSQUATSubtract(const register Quaternion* p, const register Quaternion* q, 
         psq_st rzw, 8(r), 0, 0
     }
 }
-#endif
 
+#endif
+/** Multiplies two quaternions, composing rotation p followed by q (C reference version). */
 void C_QUATMultiply(const Quaternion* p, const Quaternion* q, Quaternion* pq) {
     Quaternion* r;
     Quaternion pqTmp;
@@ -83,6 +88,7 @@ void C_QUATMultiply(const Quaternion* p, const Quaternion* q, Quaternion* pq) {
 }
 
 #ifndef TARGET_PC /* paired-single; PC uses the C_ version */
+/** Multiplies two quaternions (paired-singles version). */
 void PSQUATMultiply(const register Quaternion* p, const register Quaternion* q, register Quaternion* pq) {
     register f32 pxy, pzw;
     register f32 qxy, qzw;
@@ -115,8 +121,9 @@ void PSQUATMultiply(const register Quaternion* p, const register Quaternion* q, 
         psq_st rzw, 0x8(pq), 0, 0
     }
 }
-#endif
 
+#endif
+/** Multiplies every component of a quaternion by a scalar (C reference version). */
 void C_QUATScale(const Quaternion* q, Quaternion* r, f32 scale) {
     ASSERTMSGLINE(306, q, "QUATScale():  NULL QuaternionPtr 'q' ");
     ASSERTMSGLINE(307, r, "QUATScale():  NULL QuaternionPtr 'r' ");
@@ -128,6 +135,7 @@ void C_QUATScale(const Quaternion* q, Quaternion* r, f32 scale) {
 }
 
 #ifndef TARGET_PC /* paired-single; PC uses the C_ version */
+/** Multiplies every component of a quaternion by a scalar (paired-singles version). */
 void PSQUATScale(const register Quaternion* q, register Quaternion* r, register f32 scale) {
     register f32 rxy, rzw;
     
@@ -140,8 +148,9 @@ void PSQUATScale(const register Quaternion* q, register Quaternion* r, register 
         psq_st rzw, 8(r), 0, 0
     }
 }
-#endif
 
+#endif
+/** Returns the four-component dot product of two quaternions (C reference version). */
 f32 C_QUATDotProduct(const Quaternion* p, const Quaternion* q) {
     ASSERTMSGLINE(357, p, "QUATDotProduct():  NULL QuaternionPtr 'p' ");
     ASSERTMSGLINE(358, q, "QUATDotProduct():  NULL QuaternionPtr 'q' ");
@@ -150,6 +159,7 @@ f32 C_QUATDotProduct(const Quaternion* p, const Quaternion* q) {
 }
 
 #ifndef TARGET_PC /* paired-single; PC uses the C_ version */
+/** Returns the four-component dot product of two quaternions (paired-singles version). */
 f32 PSQUATDotProduct(const register Quaternion* p, const register Quaternion* q) {
     register f32 pxy, pzw, qxy, qzw, dp;
 
@@ -165,8 +175,12 @@ f32 PSQUATDotProduct(const register Quaternion* p, const register Quaternion* q)
 
     return dp;
 }
-#endif
 
+/**
+ * Scales a quaternion to unit length; if its squared length is below 0.00001 the result is all zeros (C
+ * reference version).
+ */
+#endif
 void C_QUATNormalize(const Quaternion* src, Quaternion* unit) {
     f32 mag;
     ASSERTMSGLINE(407, src, "QUATNormalize():  NULL QuaternionPtr 'src' ");
@@ -186,6 +200,7 @@ void C_QUATNormalize(const Quaternion* src, Quaternion* unit) {
 }
 
 #ifndef TARGET_PC /* paired-single; PC uses the C_ version */
+/** Scales a quaternion to unit length, giving zeros for a near-zero input (paired-singles version). */
 void PSQUATNormalize(const register Quaternion* src, register Quaternion* unit) {
     register f32 sxy, szw;
     register f32 mag, rsqmag;
@@ -217,8 +232,12 @@ void PSQUATNormalize(const register Quaternion* src, register Quaternion* unit) 
         psq_st szw, 0x8(unit), 0, 0
     }
 }
-#endif
 
+/**
+ * Computes the inverse (the conjugate over the squared length);
+ * a zero quaternion is treated as length 1 (C reference version).
+ */
+#endif
 void C_QUATInverse(const Quaternion* src, Quaternion* inv) {
     f32 mag, norminv;
     ASSERTMSGLINE(498, src, "QUATInverse():  NULL QuaternionPtr 'src' ");
@@ -237,6 +256,7 @@ void C_QUATInverse(const Quaternion* src, Quaternion* inv) {
 }
 
 #ifndef TARGET_PC /* paired-single; PC uses the C_ version */
+/** Computes the inverse of a quaternion (paired-singles version). */
 void PSQUATInverse(const register Quaternion* src, register Quaternion* inv) {
     register f32 sxy, szw;
     register f32 izz, iww;
@@ -274,8 +294,9 @@ void PSQUATInverse(const register Quaternion* src, register Quaternion* inv) {
         psq_st izz, 0x8(inv), 1, 0
     }
 }
-#endif
 
+#endif
+/** Computes r = inverse(q) * p (C reference version). */
 void C_QUATDivide(const Quaternion* p, const Quaternion* q, Quaternion* r) {
     Quaternion qtmp;
     ASSERTMSGLINE(606, p, "QUATDivide():  NULL QuaternionPtr 'p' ");
@@ -287,14 +308,19 @@ void C_QUATDivide(const Quaternion* p, const Quaternion* q, Quaternion* r) {
 }
 
 #ifndef TARGET_PC /* paired-single; PC uses the C_ version */
+/** Computes r = inverse(q) * p (paired-singles version). */
 void PSQUATDivide(const Quaternion* p, const Quaternion* q, Quaternion* r) {
     Quaternion qtmp;
 
     PSQUATInverse(q, &qtmp);
     PSQUATMultiply(&qtmp, p, r);
 }
-#endif
 
+/**
+ * Exponential of a pure quaternion: uses only x, y, z and gives a unit quaternion with w = cos(theta),
+ * theta being the vector length.
+ */
+#endif
 void C_QUATExp(const Quaternion* q, Quaternion* r)  {
     f32 theta, scale;
     ASSERTMSGLINE(643, q, "QUATExp():  NULL QuaternionPtr 'q' ");
@@ -314,6 +340,10 @@ void C_QUATExp(const Quaternion* q, Quaternion* r)  {
     r->w = cosf(theta);
 }
 
+/**
+ * Logarithm of a unit quaternion: gives a pure quaternion (w = 0) whose vector part is the axis scaled by the
+ * half-angle.
+ */
 void C_QUATLogN(const Quaternion* q, Quaternion* r) {
     f32 theta, scale, mag;
     ASSERTMSGLINE(676, q, "QUATLogN():  NULL QuaternionPtr 'q' ");
@@ -339,6 +369,10 @@ void C_QUATLogN(const Quaternion* q, Quaternion* r) {
     r->w = 0.0f;
 }
 
+/**
+ * Copies q to r, negating it if its dot product with qto is negative
+ * so the two lie in the same hemisphere (shortest path).
+ */
 void C_QUATMakeClosest(const Quaternion* q, const Quaternion* qto, Quaternion* r) {
     f32 dot;
     ASSERTMSGLINE(722, q, "QUATMakeClosest():  NULL QuaternionPtr 'q' ");
@@ -356,6 +390,7 @@ void C_QUATMakeClosest(const Quaternion* q, const Quaternion* qto, Quaternion* r
     }
 }
 
+/** Builds a unit quaternion for a rotation of an angle in radians about an axis. */
 void C_QUATRotAxisRad(Quaternion* r, const Vec* axis, f32 rad) {
     f32 half, sh, ch;
     Vec nAxis;
@@ -375,6 +410,10 @@ void C_QUATRotAxisRad(Quaternion* r, const Vec* axis, f32 rad) {
     r->w = ch;
 }
 
+/**
+ * Converts the rotation part of a 3x4 matrix to a unit quaternion,
+ * branching on the trace or the largest diagonal element for stability.
+ */
 void C_QUATMtx(Quaternion* r, const Mtx m) {
     f32 tr,s;
     s32 i, j, k;
@@ -423,6 +462,7 @@ void C_QUATMtx(Quaternion* r, const Mtx m) {
     }
 }
 
+/** Linear interpolation r = p + t * (q - p), componentwise; the result is not renormalized. */
 void C_QUATLerp(const Quaternion* p, const Quaternion* q, Quaternion* r, f32 t) {
     ASSERTMSGLINE(842, p, "QUATLerp():  NULL QuaternionPtr 'p' ");
     ASSERTMSGLINE(843, q, "QUATLerp():  NULL QuaternionPtr 'q' ");
@@ -434,6 +474,11 @@ void C_QUATLerp(const Quaternion* p, const Quaternion* q, Quaternion* r, f32 t) 
     r->w = t * (q->w - p->w) + p->w;
 }
 
+/**
+ * Spherical interpolation between p and q by t;
+ * negates q's weight when the dot product is negative (shortest arc) and falls back to linear weights
+ * when the quaternions are nearly equal.
+ */
 void C_QUATSlerp(const Quaternion* p, const Quaternion* q, Quaternion* r, f32 t) {
     f32 theta, sin_th, cos_th;
     f32 tp, tq;
@@ -467,6 +512,10 @@ void C_QUATSlerp(const Quaternion* p, const Quaternion* q, Quaternion* r, f32 t)
     r->w = (tp * p->w) + (tq * q->w);
 }
 
+/**
+ * Spherical quadrangle interpolation: slerps p to q and a to b by t, then slerps those results by 2t(1-t);
+ * a smooth cubic path between key quaternions.
+ */
 void C_QUATSquad(const Quaternion* p, const Quaternion* a, const Quaternion* b, const Quaternion* q, Quaternion* r, f32 t) {
     Quaternion pq, ab;
     f32 t2;
@@ -483,6 +532,10 @@ void C_QUATSquad(const Quaternion* p, const Quaternion* a, const Quaternion* b, 
     C_QUATSlerp(&pq, &ab, r, t2);
 }
 
+/**
+ * Computes the squad control quaternion for key q from its neighbours qprev and qnext,
+ * using exp of minus a quarter of the summed logs.
+ */
 void C_QUATCompA(const Quaternion* qprev, const Quaternion* q, const Quaternion* qnext, Quaternion* a) {
     Quaternion qm, qp, lqm, lqp, qpqm, exq;
 

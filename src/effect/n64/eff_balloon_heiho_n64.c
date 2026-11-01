@@ -1,3 +1,4 @@
+// Paper Mario 64 effect: balloon with a Shy Guy (heiho); types 0-2 pick one of three textures, moved by speed and accel.
 #include "eff/n64/eff_balloon_heiho_n64.h"
 #include "eff/eff_n64.h"
 #include "driver/camdrv.h"
@@ -17,6 +18,7 @@ typedef struct EffBalloonHeihoN64Work {
     s32 frame;    // 0x20
 } EffBalloonHeihoN64Work;
 
+/** Camera-facing 32x64 balloon Shy Guy sprite, split into four horizontal strips. */
 static effN64Vtx size32x64_tex32x64_vtx[] = {
     {-16, 64, 0, 0, 2048, 0, 0, 0, 255},
     {16, 64, 0, 1024, 2048, 0, 0, 0, 255},
@@ -28,9 +30,14 @@ static effN64Vtx size32x64_tex32x64_vtx[] = {
     {16, 0, 0, 1024, 0, 0, 0, 0, 255},
 };
 
-void effBalloonHeihoMain(EffectEntry* effect);
-void effBalloonHeihoDisp(CameraId cameraId, EffectEntry* effect);
+static void effBalloonHeihoMain(EffectEntry* effect);
+static void effBalloonHeihoDisp(CameraId cameraId, EffectEntry* effect);
 
+/**
+ * Spawns a rising balloon Shy Guy (heiho) at (x, y, z) for `lifetime` frames.
+ * Type 0, 1 or 2 is the red, blue or yellow version; `accel` is its upward acceleration.
+ * Callers: Glitzville scenes (tou_00, tou_20).
+ */
 EffectEntry* effBalloonHeihoN64Entry(s32 type, s32 lifetime, f32 x, f32 y, f32 z, f32 accel, f32 scale) {
     EffectEntry* effect;
     EffBalloonHeihoN64Work* work;
@@ -53,7 +60,8 @@ EffectEntry* effBalloonHeihoN64Entry(s32 type, s32 lifetime, f32 x, f32 y, f32 z
     return effect;
 }
 
-void effBalloonHeihoMain(EffectEntry* effect) {
+/** Accelerates upward (speed capped at 2 per frame) until the lifetime runs out. */
+static void effBalloonHeihoMain(EffectEntry* effect) {
     EffBalloonHeihoN64Work* work = effect->userdata;
     Vec position;
     Vec tmp = {0.0f, 0.0f, 0.0f};
@@ -76,7 +84,8 @@ void effBalloonHeihoMain(EffectEntry* effect) {
     dispEntry(CAMERA_3D, dispCalcZ(&position), 2, (DispCallback)effBalloonHeihoDisp, effect);
 }
 
-void effBalloonHeihoDisp(CameraId cameraId, EffectEntry* effect) {
+/** Draws a camera-facing 32x64 sprite, split into four strips, with the colour's texture and map fog applied. */
+static void effBalloonHeihoDisp(CameraId cameraId, EffectEntry* effect) {
     CameraEntry* camera;
     EffBalloonHeihoN64Work* work;
     s32 type;

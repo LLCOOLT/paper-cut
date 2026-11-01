@@ -1,8 +1,10 @@
+// las_14 (ラストダンジョン, Palace of Shadow): a riddle room off las_10: the cloud puzzle solved with Flurrie (cloud
+// map capture).
+
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
 #include "manager/evtmgr_cmd.h"
 
-#pragma force_active on
 #include "driver/hitdrv.h"
 #include "driver/camdrv.h"
 #include "dolphin/mtx.h"
@@ -19,85 +21,57 @@
 #include "stdio.h"
 #include "evt/evt_bero.h"
 #include "las.h"
+#include "evt/evt_cloud_map.h"
+#include "evt/evt_case.h"
+#include "evt/evt_hit.h"
+#include "evt/evt_img.h"
+#include "evt/evt_item.h"
+#include "evt/evt_map.h"
+#include "evt/evt_mario.h"
+#include "evt/evt_mobj.h"
+#include "evt/evt_msg.h"
+#include "evt/evt_snd.h"
+#include "driver/mapdrv.h"
+#include "evt/evt_story.h"
+#include "driver/casedrv.h"
 
-USER_FUNC(evt_img_alloc_capture);
-typedef struct CloudWork { s32 used; s32 state; char animName[0x20]; char imgName[0x20]; char offscreenName[0x20]; char groupNames[8][0x20]; char hitName[0x20]; s32 limit; s32 counter; EventEntry* evt; void* endEvt; s32 timer; s32 x; s32 y; s32 w; s32 h; f32 lastFrame; } CloudWork;
-void mapGrpSetOffScreen(const char* name, const char* offscreen);
-void mapGrpClearOffScreen(const char* name);
-static CloudWork* cloud;
+static CloudMapWork* cloud;
 static u8 cloud_once_flag;
-static void _mapsetofs_all(CloudWork* wp);
-static void _mapclsofs_all(CloudWork* wp);
-static BOOL _get_boundingbox(const char* name, s32* x, s32* y, s32* w, s32* h);
-static void _img_alloc_capture(EvtWord a0, EvtWord a1, EvtWord a2, EvtWord a3, EvtWord a4, EvtWord a5, EvtWord a6, EvtWord a7);
 
-USER_FUNC(evt_bero_get_info);
 static USER_FUNC(evt_cloud_main);
-USER_FUNC(evt_hitobj_onoff);
-USER_FUNC(evt_item_entry);
-USER_FUNC(evt_item_get_item);
-USER_FUNC(evt_las_cloud_ent);
-USER_FUNC(evt_las_cloud_init);
-USER_FUNC(evt_mapobj_rotate);
-USER_FUNC(evt_mario_key_onoff);
-USER_FUNC(evt_mobj_flag_onoff);
-USER_FUNC(evt_mobj_get_position);
-USER_FUNC(evt_mobj_hit_onoff);
-USER_FUNC(evt_mobj_itembox);
-USER_FUNC(evt_mobj_wait_animation_end);
-USER_FUNC(evt_msg_print);
-USER_FUNC(evt_run_case_evt);
-USER_FUNC(evt_snd_bgmoff);
-USER_FUNC(evt_snd_bgmon);
-USER_FUNC(evt_snd_envon);
-USER_FUNC(evt_snd_set_rev_mode);
-static void _mapclsofs_all(CloudWork* wp);
-static void _mapsetofs_all(CloudWork* wp);
-static BOOL _get_boundingbox(const char* name, s32* x, s32* y, s32* w, s32* h);
-static void _img_alloc_capture(EvtWord a0, EvtWord a1, EvtWord a2, EvtWord a3, EvtWord a4, EvtWord a5, EvtWord a6, EvtWord a7);
+static USER_FUNC(evt_las_cloud_ent);
+static USER_FUNC(evt_las_cloud_init);
 
-f32 fd_las_14_negone_one_374[2] __attribute__((aligned(8)));
-f32 fd_las_14_neg_one_382;
-f32 fd_las_14___local_PI_383;
-f32 fd_las_14___local_3PIO2_385;
-f32 fd_las_14_one_negone_373[2] __attribute__((aligned(8)));
-f32 fd_las_14___local_PIO2_384;
-f32 fd_las_14_one_381;
-f32 fd_las_14_negone_one_360[2] __attribute__((aligned(8)));
-f32 fd_las_14_neg_one_365;
-f32 fd_las_14___local_PI_366;
-f32 fd_las_14___local_3PIO2_368;
-f32 fd_las_14_one_negone_359[2] __attribute__((aligned(8)));
-f32 fd_las_14___local_PIO2_367;
-f32 fd_las_14_one_364;
-static EvtWord w_door_close[12];
-static EvtWord w_door_open[12];
 static BeroEntry bero_entry_data[2];
-static EvtWord box_evt[30];
 static const char* capturemap[3];
 static Vec v_list[8];
-static EvtWord evt_cloud_main_evt[4];
-static EvtWord cloud_evt[35];
-EvtWord touch_evt[2];
-static EvtWord hint_plate[14];
-EvtWord las_14_init_evt[81];
 
-static void _img_alloc_capture(EvtWord a0, EvtWord a1, EvtWord a2, EvtWord a3, EvtWord a4, EvtWord a5, EvtWord a6, EvtWord a7) {
+/**
+ * Calls the evt_img_alloc_capture script command from C:
+ * builds a fake event with the eight arguments (image name, shadow id, offscreen name, alloc mode, and the x, y,
+ * width, height of the capture rectangle).
+ */
+static void _img_alloc_capture(EvtWord imgName, EvtWord shadowId, EvtWord offscreenName, EvtWord allocMode, EvtWord x, EvtWord y, EvtWord w, EvtWord h) {
     EventEntry event;
     EvtWord args[10];
 
     event.args = args;
-    args[0] = a0;
-    args[1] = a1;
-    args[2] = a2;
-    args[3] = a3;
-    args[4] = a4;
-    args[5] = a5;
-    args[6] = a6;
-    args[7] = a7;
+    args[0] = imgName;
+    args[1] = shadowId;
+    args[2] = offscreenName;
+    args[3] = allocMode;
+    args[4] = x;
+    args[5] = y;
+    args[6] = w;
+    args[7] = h;
     evt_img_alloc_capture(&event, TRUE);
 }
 
+/**
+ * Projects the eight corners of a 100 by 100 by 100 box around the hit object named name to the screen
+ * and returns in x, y, w, h the rectangle that bounds them, clamped to the 608 by 480 capture buffer.
+ * Always returns TRUE.
+ */
 static BOOL _get_boundingbox(const char* name, s32* x, s32* y, s32* w, s32* h) {
     Vec pos;
     Vec screen;
@@ -163,7 +137,11 @@ static BOOL _get_boundingbox(const char* name, s32* x, s32* y, s32* w, s32* h) {
     return TRUE;
 }
 
-static void _mapsetofs_all(CloudWork* wp) {
+/**
+ * Attaches the cloud offscreen buffer of wp to every map group listed in wp->groupNames (up to 8),
+ * so those groups are drawn into the capture.
+ */
+static void _mapsetofs_all(CloudMapWork* wp) {
     s32 i;
 
     for (i = 0; i < 8; i++) {
@@ -174,7 +152,8 @@ static void _mapsetofs_all(CloudWork* wp) {
     }
 }
 
-static void _mapclsofs_all(CloudWork* wp) {
+/** Detaches the cloud offscreen buffer from every map group listed in wp->groupNames. */
+static void _mapclsofs_all(CloudMapWork* wp) {
     s32 i;
 
     for (i = 0; i < 8; i++) {
@@ -185,53 +164,34 @@ static void _mapclsofs_all(CloudWork* wp) {
     }
 }
 
-f32 fd_las_14_negone_one_374[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_las_14_neg_one_382 = -1.0f;
-
-f32 fd_las_14___local_PI_383 = 3.1415927f;
-
-f32 fd_las_14___local_3PIO2_385 = 4.712389f;
-
-f32 fd_las_14_one_negone_373[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_las_14___local_PIO2_384 = 1.5707964f;
-
-f32 fd_las_14_one_381 = 1.0f;
-
-f32 fd_las_14_negone_one_360[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_las_14_neg_one_365 = -1.0f;
-
-f32 fd_las_14___local_PI_366 = 3.1415927f;
-
-f32 fd_las_14___local_3PIO2_368 = 4.712389f;
-
-f32 fd_las_14_one_negone_359[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_las_14___local_PIO2_367 = 1.5707964f;
-
-f32 fd_las_14_one_364 = 1.0f;
-
+/**
+ * Door animation script (closing) for the west door, used as the enter/exit animation of this room's bero entry.
+ * LW(0) holds the angle step of the swing, and the script turns the door panel S_door1 by it.
+ */
 static EVT_BEGIN(w_door_close)
     MULTIPLY_FLOAT(LW(0), FLOAT(0.44433594f))
     CALL(evt_mapobj_rotate, 1, STRING("S_door1"), 0, LW(0), 0)
     RETURN
 EVT_END()
 
+/**
+ * Door animation script (opening) for the west door, used as the enter/exit animation of this room's bero entry.
+ * LW(0) holds the angle step of the swing, and the script turns the door panel S_door1 by it.
+ */
 static EVT_BEGIN(w_door_open)
     MULTIPLY_FLOAT(LW(0), FLOAT(-0.44433594f))
     CALL(evt_mapobj_rotate, 1, STRING("S_door1"), 0, LW(0), 0)
     RETURN
 EVT_END()
 
+/** Exit of las_14: west door w_bero_1 to las_10 (se_bero_1). */
 static BeroEntry bero_entry_data[] = {
     {
         "w_bero_1", // hitName
         1, // type
         1, // sfxId
-        20000, // directionId
-        100000, // centerPosition
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         NULL, // enterEvent
@@ -247,22 +207,31 @@ static BeroEntry bero_entry_data[] = {
     {0},
 };
 
+/** Event script: the key chest of las_14 opens and Mario receives Palace Key 0x29. */
 static EVT_BEGIN(box_evt)
     CALL(evt_mario_key_onoff, 0)
     CALL(evt_mobj_get_position, STRING("box"), LW(0), LW(1), LW(2))
-    CALL(evt_item_entry, STRING("key"), 41, LW(0), LW(1), LW(2), 17, -1, 0)
+    CALL(evt_item_entry, STRING("key"), ITEM_PALACE_KEY_0x29, LW(0), LW(1), LW(2), ITEM_ENTRY_FIXED_NO_TOUCH, -1, 0)
     CALL(evt_mobj_wait_animation_end, STRING("box"))
     CALL(evt_item_get_item, STRING("key"))
     CALL(evt_mario_key_onoff, 1)
     RETURN
 EVT_END()
 
+/**
+ * Map groups (S_kabe1, S_ten) that the cloud of this room (evt_las_cloud_ent) draws into its offscreen
+ * buffer; the cloud's paper animation is a capture of them. The empty string ends the list.
+ */
 static const char* capturemap[] = {
     "S_kabe1",
     "S_ten",
     "",
 };
 
+/**
+ * The eight corners of a 100-unit box around a cloud's hit object; _get_boundingbox projects them to the
+ * screen to size the cloud capture.
+ */
 static Vec v_list[] = {
     {-50.0f, 100.0f, 50.0f},
     {50.0f, 100.0f, 50.0f},
@@ -274,28 +243,39 @@ static Vec v_list[] = {
     {-50.0f, 0.0f, -50.0f},
 };
 
+/**
+ * Event script: runs the cloud-blowing mechanism (evt_cloud_main) of las_14,
+ * the room where Flurrie's gust uncovers the way.
+ */
 static EVT_BEGIN(evt_cloud_main_evt)
     CALL(evt_cloud_main)
     RETURN
 EVT_END()
 
+/**
+ * Event script: the cloud puzzle of las_14 is solved.
+ * The key chest becomes visible and solid, the collision A_kura is turned on,
+ * GSWF_LAS14_FLURRIE_GUST_SOLVED is set and a success jingle plays.
+ */
 static EVT_BEGIN(cloud_evt)
-    CALL(evt_mobj_flag_onoff, 0, STRING("box"), 16384)
+    CALL(evt_mobj_flag_onoff, 0, STRING("box"), MOBJ_FLAG_INVISIBLE)
     CALL(evt_mobj_hit_onoff, STRING("box"), 1)
     CALL(evt_hitobj_onoff, STRING("A_kura"), 1, 0)
-    SET_VALUE(GSWF(4344), 1)
-    CALL(evt_snd_bgmoff, 1024)
-    CALL(evt_snd_bgmon, 1, STRING("BGM_FF_ENV_SUCCESS1"))
+    SET_VALUE(GSWF(GSWF_LAS14_FLURRIE_GUST_SOLVED), 1)
+    CALL(evt_snd_bgmoff, PSND_FADE_HOLD)
+    CALL(evt_snd_bgmon, PSND_CH(1), STRING("BGM_FF_ENV_SUCCESS1"))
     WAIT_MS(2000)
-    CALL(evt_snd_bgmoff, 513)
-    CALL(evt_snd_bgmon, 288, 0)
+    CALL(evt_snd_bgmoff, PSND_FADE_OUT | PSND_CH(1))
+    CALL(evt_snd_bgmon, PSND_FADE_RESUME | PSND_FADE_IN, 0)
     RETURN
 EVT_END()
 
+/** Event script: touch handler on the cloud hit area; intentionally empty. */
 EVT_BEGIN(touch_evt)
     RETURN
 EVT_END()
 
+/** Event script: reading the hint plate of las_14 (stg8_las_39). */
 static EVT_BEGIN(hint_plate)
     CALL(evt_mario_key_onoff, 0)
     CALL(evt_msg_print, 0, STRING("stg8_las_39"), 0, 0)
@@ -303,32 +283,46 @@ static EVT_BEGIN(hint_plate)
     RETURN
 EVT_END()
 
+/**
+ * Map init script for las_14, a Riddle Tower room (the chest holds Palace Key 0x29):
+ * music, the door to las_10, the cloud Flurrie must blow away (hit area A_kura)
+ * until GSWF_LAS14_FLURRIE_GUST_SOLVED, the key chest (hidden until solved) and the hint plate.
+ */
 EVT_BEGIN(las_14_init_evt)
-    CALL(evt_snd_bgmon, 512, STRING("BGM_STG8_LST2"))
-    CALL(evt_snd_envon, 272, STRING("ENV_STG8_LAS1"))
+    CALL(evt_snd_bgmon, PSND_FADE_OUT, STRING("BGM_STG8_LST2"))
+    CALL(evt_snd_envon, PSND_FADE_RESTART | PSND_FADE_IN, STRING("ENV_STG8_LAS1"))
+#if VERSION >= VERSION_JP
     CALL(evt_snd_set_rev_mode, 2)
+#endif
     SET_VALUE(LW(0), PTR(bero_entry_data))
     CALL(evt_bero_get_info)
-    CALL_CHILD(PTR(evt_bero_info_run))
+    CALL_CHILD(evt_bero_info_run)
     CALL(evt_hitobj_onoff, STRING("A_taka"), 1, 0)
-    IF_INT_EQUAL(GSWF(4344), 0)
+    IF_INT_EQUAL(GSWF(GSWF_LAS14_FLURRIE_GUST_SOLVED), 0)
         CALL(evt_las_cloud_init)
         CALL(evt_las_cloud_ent, PTR(&capturemap), STRING("A_kura"), PTR(cloud_evt))
-        CALL(evt_run_case_evt, 9, 1, STRING("A_kura"), 0, PTR(touch_evt), 0)
-        ELSE
+        CALL(evt_run_case_evt, CASE_COND_FRONT_A, 1, STRING("A_kura"), 0, PTR(touch_evt), 0)
+    ELSE
         CALL(evt_hitobj_onoff, STRING("A_kura"), 1, 0)
     END_IF
-    CALL(evt_mobj_itembox, STRING("box"), 0, 0, 0, 0, 0, PTR(box_evt), GSWF(4365))
-    IF_INT_EQUAL(GSWF(4344), 0)
-        CALL(evt_mobj_flag_onoff, 1, STRING("box"), 16384)
+    CALL(evt_mobj_itembox, STRING("box"), 0, 0, 0, 0, 0, PTR(box_evt), GSWF(GSWF_LAS14_KEY_CHEST_OPENED))
+    IF_INT_EQUAL(GSWF(GSWF_LAS14_FLURRIE_GUST_SOLVED), 0)
+        CALL(evt_mobj_flag_onoff, 1, STRING("box"), MOBJ_FLAG_INVISIBLE)
         CALL(evt_mobj_hit_onoff, STRING("box"), 0)
     END_IF
-    CALL(evt_run_case_evt, 9, 1, STRING("A_pure"), 0, PTR(hint_plate), 0)
+    CALL(evt_run_case_evt, CASE_COND_FRONT_A, 1, STRING("A_pure"), 0, PTR(hint_plate), 0)
     RETURN
 EVT_END()
 
+/**
+ * Script helper (runs as its own event, one per cloud): the state machine of the cloud puzzle.
+ * While Flurrie is the partner and her gust hits the cloud's hit area, it captures the cloud's paper animation,
+ * plays the wind sound, and counts how long she keeps blowing;
+ * once the count passes the limit (180) it runs the end event and the cloud disappears for good.
+ * If she stops for more than half a second it resets.
+ */
 static USER_FUNC(evt_cloud_main) {
-    CloudWork* wp = (CloudWork*)event->lwData[0];
+    CloudMapWork* wp = (CloudMapWork*)event->lwData[0];
     s32 group = gp->inBattle != 0;
     MarioWork* mario = marioGetPtr();
     PartyEntry* party = partyGetPtr(0);
@@ -476,10 +470,14 @@ static USER_FUNC(evt_cloud_main) {
     return EVT_RETURN_BLOCK;
 }
 
-USER_FUNC(evt_las_cloud_init) {
+/**
+ * Script helper: allocates the work area for 16 clouds with their image
+ * and offscreen names ("i_name_N", "o_name_N") and resets the once-only flag.
+ */
+static USER_FUNC(evt_las_cloud_init) {
     s32 i;
 
-    cloud = _mapAlloc(sizeof(CloudWork) * 16);
+    cloud = _mapAlloc(sizeof(CloudMapWork) * 16);
     for (i = 0; i < 16; i++) {
         cloud[i].used = 0;
         sprintf(cloud[i].imgName, "i_name_%1d", i);
@@ -489,12 +487,17 @@ USER_FUNC(evt_las_cloud_init) {
     return EVT_RETURN_DONE;
 }
 
-USER_FUNC(evt_las_cloud_ent) {
+/**
+ * Script helper: registers a cloud puzzle.
+ * args[0] is the list of map groups to capture, args[1] the cloud's hit object name,
+ * args[2] the event to run when the cloud has been blown away; starts evt_cloud_main_evt for it.
+ */
+static USER_FUNC(evt_las_cloud_ent) {
     EvtWord* args = event->args;
     char** groups;
     char* hitName;
     void* endEvt;
-    CloudWork* wp;
+    CloudMapWork* wp;
     s32 i;
     s32 j;
 
@@ -529,4 +532,3 @@ USER_FUNC(evt_las_cloud_ent) {
     wp->evt->lwData[0] = (EvtWord)wp;
     return EVT_RETURN_DONE;
 }
-

@@ -1,11 +1,11 @@
+// evt_yuucounter: Pianta Parlor score/counter display: flag and data store plus on-screen counter.
+
 #ifdef TARGET_PC
 #include "port/platform.h"
 #endif
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
-#include "pc_call.h"
 
-#pragma force_active on
 #include "dolphin/os.h"
 #include "memory.h"
 #include "manager/evtmgr_cmd.h"
@@ -15,53 +15,47 @@
 #include "dolphin/mtx.h"
 #include "mario/mario.h"
 #include "driver/camdrv.h"
+#include "driver/icondrv.h"
+#include "yuu.h"
 #include "icon_ids.h"
+#include "evt/evt_yuugijou.h"
 
-typedef struct YuuCounterWork { EventEntry* event; u16 flags; u32 dispFlags; s32 type; f32 x; f32 y; s32 data; s32 field_0x1C; s64 elapsed; OSTime lastTime; s32 limit; s32 field_0x34; } YuuCounterWork;
+typedef struct YuuCounterWork {
+    EventEntry* event;
+    u16 flags;
+    u32 dispFlags;
+    s32 type;
+    f32 x;
+    f32 y;
+    s32 data;
+    s32 pad_1C;
+    s64 elapsed;
+    OSTime lastTime;
+    s32 limit;
+    s32 startCount;
+} YuuCounterWork;
 static void* yuunpc_wp;
 static YuuCounterWork* _wp;
-#ifdef TARGET_PC
-/* Defined in evt_yuugijou.c as (s32 value) and stored for evtSetValue: the script
- * address travels as a word, which must be EvtWord on PC to keep all 64 bits. */
-void evtYuuSetWindowEvt(EvtWord value);
-#else
-void evtYuuSetWindowEvt(EvtWord* evt);
-#endif
-void evt_yuucounter_disp_func(CameraId camera, void* param);
+
+static void evt_yuucounter_disp_func(CameraId camera, void* param);
+/**
+ * Colours of the minigame counter: plain white for the digits and unit icon,
+ * and translucent white for the backdrop drawn behind them.
+ */
 static const GXColor white = {0xFF, 0xFF, 0xFF, 0xFF};
 static const GXColor bgColor = {0xFF, 0xFF, 0xFF, 0x99};
-s32 yuunpc_juni(Vec* pos);
-void iconDispGxCol(Mtx pos, s16 flags, u16 iconId, GXColor color);
 
-USER_FUNC(evt_yuucounter_main_func);
-USER_FUNC(yuucounter_disp_flag_onoff);
-u32 yuucounter_flag(u32 mask);
-void yuucounter_flag_off(u32 mask);
-void yuucounter_flag_on(u32 mask);
-void yuucounter_set_data(s32 data);
-s32 yuucounter_get_data(void);
-USER_FUNC(evt_yuucounter_free);
-USER_FUNC(evt_yuucounter_alloc);
-void evt_yuucounter_disp_func(CameraId camera, void* param);
-
-f32 fd_evt_yuucounter_negone_one_374[2] __attribute__((aligned(8)));
-f32 fd_evt_yuucounter_neg_one_382;
-f32 fd_evt_yuucounter___local_PI_383;
-f32 fd_evt_yuucounter___local_3PIO2_385;
-f32 fd_evt_yuucounter_one_negone_373[2] __attribute__((aligned(8)));
-f32 fd_evt_yuucounter___local_PIO2_384;
-f32 fd_evt_yuucounter_one_381;
-f32 fd_evt_yuucounter_negone_one_360[2] __attribute__((aligned(8)));
-f32 fd_evt_yuucounter_neg_one_365;
-f32 fd_evt_yuucounter___local_PI_366;
-f32 fd_evt_yuucounter___local_3PIO2_368;
-f32 fd_evt_yuucounter_one_negone_359[2] __attribute__((aligned(8)));
-f32 fd_evt_yuucounter___local_PIO2_367;
-f32 fd_evt_yuucounter_one_364;
 static EvtWord main_evt[4];
-EvtWord yuucounter_window_disp_evt[6];
-EvtWord yuucounter_window_null_evt[2];
 
+#if VERSION >= VERSION_JP
+extern EvtWord yuucounter_window_disp_evt[];
+extern EvtWord yuucounter_window_null_evt[];
+#endif
+
+/**
+ * Returns the bits of the counter's display flags selected by mask (1 hide, 2 freeze the value,
+ * 4 restart the timer baseline), or 0 if no counter exists.
+ */
 u32 yuucounter_flag(u32 mask) {
     if (_wp == NULL) {
         return 0;
@@ -69,6 +63,7 @@ u32 yuucounter_flag(u32 mask) {
     return _wp->dispFlags & mask;
 }
 
+/** Clears the masked display flag bits of the counter; does nothing if no counter exists. */
 void yuucounter_flag_off(u32 mask) {
     if (_wp == NULL) {
         return;
@@ -76,6 +71,10 @@ void yuucounter_flag_off(u32 mask) {
     _wp->dispFlags &= ~mask;
 }
 
+/**
+ * Sets the masked display flag bits of the counter (the minigames use 2 to freeze the value when a round ends);
+ * does nothing if no counter exists.
+ */
 void yuucounter_flag_on(u32 mask) {
     if (_wp == NULL) {
         return;
@@ -83,6 +82,7 @@ void yuucounter_flag_on(u32 mask) {
     _wp->dispFlags |= mask;
 }
 
+/** Overwrites the counter's current value; does nothing if no counter exists. */
 void yuucounter_set_data(s32 data) {
     if (_wp == NULL) {
         return;
@@ -90,6 +90,10 @@ void yuucounter_set_data(s32 data) {
     _wp->data = data;
 }
 
+/**
+ * Returns the counter's current value (distance, remaining milliseconds or rank, depending on its type),
+ * or 0 if no counter exists.
+ */
 s32 yuucounter_get_data(void) {
     if (_wp == NULL) {
         return 0;
@@ -97,6 +101,7 @@ s32 yuucounter_get_data(void) {
     return _wp->data;
 }
 
+/** Script call that asks the counter's event to stop, blocks until it has, then frees the counter work area. */
 USER_FUNC(evt_yuucounter_free) {
     YuuCounterWork* wp = _wp;
 
@@ -114,6 +119,13 @@ USER_FUNC(evt_yuucounter_free) {
     return EVT_RETURN_DONE;
 }
 
+/**
+ * args: [0] = x, [1] = y of the on-screen counter,
+ * [2] = type (0 distance in Plane Mode, 1 countdown timer, 2 rank),
+ * [3] = limit in seconds for type 1 or start count for type 2.
+ * Allocates the counter and starts its draw event;
+ * on JP and later also tells the Pianta Parlor window event whether to show the timer.
+ */
 USER_FUNC(evt_yuucounter_alloc) {
     EvtWord* args = event->args;
     YuuCounterWork* wp = _mapAlloc(sizeof(YuuCounterWork));
@@ -133,20 +145,26 @@ USER_FUNC(evt_yuucounter_alloc) {
             wp->data = wp->limit;
             break;
         case 2:
-            wp->field_0x34 = value;
+            wp->startCount = value;
             break;
     }
     wp->event = evtEntry(main_evt, 0, 0);
     wp->event->lwData[0] = (EvtWord)wp;
+#if VERSION >= VERSION_JP
     if (wp->type == 1) {
-        PCCALL(evtYuuSetWindowEvt(yuucounter_window_disp_evt), evtYuuSetWindowEvt((EvtWord)yuucounter_window_disp_evt));
+        evtYuuSetWindowEvt(yuucounter_window_disp_evt);
     } else {
-        PCCALL(evtYuuSetWindowEvt(yuucounter_window_null_evt), evtYuuSetWindowEvt((EvtWord)yuucounter_window_null_evt));
+        evtYuuSetWindowEvt(yuucounter_window_null_evt);
     }
+#endif
     return EVT_RETURN_DONE;
 }
 
-USER_FUNC(evt_yuucounter_main_func) {
+/**
+ * Body of the counter event: queues the 2D draw callback each frame until the free request flag is set,
+ * then marks itself stopped.
+ */
+static USER_FUNC(evt_yuucounter_main_func) {
     YuuCounterWork* wp = (YuuCounterWork*)event->lwData[0];
 
     if (wp->flags & 1) {
@@ -157,7 +175,14 @@ USER_FUNC(evt_yuucounter_main_func) {
     return EVT_RETURN_BLOCK;
 }
 
-void evt_yuucounter_disp_func(CameraId camera, void* param) {
+/**
+ * Updates and draws the counter.
+ * Type 0 derives the value from Mario's x position,
+ * type 1 counts the remaining time down from the limit using render time,
+ * type 2 asks yuunpc_juni for Mario's current rank;
+ * then draws the translucent backdrop, the digits and the unit icon with icon sprites.
+ */
+static void evt_yuucounter_disp_func(CameraId camera, void* param) {
     YuuCounterWork* wp = param;
     GXColor color = white;
     GXColor numColor;
@@ -202,10 +227,12 @@ void evt_yuucounter_disp_func(CameraId camera, void* param) {
         case 1:
             if (!(wp->dispFlags & 2)) {
                 if (wp->data >= 0) {
+#if VERSION >= VERSION_JP
                     if (wp->dispFlags & 4) {
                         wp->dispFlags &= ~4;
                         wp->lastTime = gp->renderTime;
                     }
+#endif
                     wp->elapsed += (s32)gp->renderTime - (s32)wp->lastTime;
                     wp->lastTime = gp->renderTime;
                     wp->data = wp->limit - OSTicksToMilliseconds(wp->elapsed);
@@ -241,7 +268,7 @@ void evt_yuucounter_disp_func(CameraId camera, void* param) {
     PSMTXTrans(base, wp->x, wp->y, 0.0f);
     PSMTXScale(scaleMtx, scale, 1.0f, 1.0f);
     PSMTXConcat(base, scaleMtx, mtx);
-    iconDispGxCol(mtx, 0x10, ICON_1F6, bgColor);
+    iconDispGxCol(mtx, ICON_FLAG_2D, ICON_1F6, bgColor);
 
     switch (wp->type) {
         case 0: {
@@ -259,7 +286,7 @@ void evt_yuucounter_disp_func(CameraId camera, void* param) {
                 if (!skip) {
                     PSMTXTrans(mtx, xOfs + (f32)(j * 30), 8.0f, 0.0f);
                     PSMTXConcat(base, mtx, mtx);
-                    iconDispGxCol(mtx, 0x10, digit + ICON_1F7, numColor);
+                    iconDispGxCol(mtx, ICON_FLAG_2D, digit + ICON_1F7, numColor);
                 }
             }
             break;
@@ -272,13 +299,13 @@ void evt_yuucounter_disp_func(CameraId camera, void* param) {
             for (i = 0; i < 3; i++) {
                 PSMTXTrans(mtx, xOfs + (f32)(i * 30) - (f32)((i == 0) * 16), 8.0f, 0.0f);
                 PSMTXConcat(base, mtx, mtx);
-                iconDispGxCol(mtx, 0x10, digits[i] + ICON_1F7, numColor);
+                iconDispGxCol(mtx, ICON_FLAG_2D, digits[i] + ICON_1F7, numColor);
             }
             PSMTXTrans(mtx, 8.0f + xOfs, 12.0f, 0.0f);
             PSMTXScale(scaleMtx, 2.0f, 2.0f, 2.0f);
             PSMTXConcat(mtx, scaleMtx, mtx);
             PSMTXConcat(base, mtx, mtx);
-            iconDispGxCol(mtx, 0x10, iconId, iconColor);
+            iconDispGxCol(mtx, ICON_FLAG_2D, iconId, iconColor);
             break;
         case 2:
             skip2 = TRUE;
@@ -297,7 +324,7 @@ void evt_yuucounter_disp_func(CameraId camera, void* param) {
                 if (!skip2) {
                     PSMTXTrans(mtx, xOfs + (f32)(k * 30), 8.0f, 0.0f);
                     PSMTXConcat(base, mtx, mtx);
-                    iconDispGxCol(mtx, 0x10, digit + ICON_1F7, numColor);
+                    iconDispGxCol(mtx, ICON_FLAG_2D, digit + ICON_1F7, numColor);
                 }
             }
             break;
@@ -306,7 +333,7 @@ void evt_yuucounter_disp_func(CameraId camera, void* param) {
     if (iconId != -1) {
         PSMTXTrans(mtx, 90.0f + xOfs - 12.0f, 10.0f, 0.0f);
         PSMTXConcat(base, mtx, mtx);
-        iconDispGxCol(mtx, 0x10, iconId, iconColor);
+        iconDispGxCol(mtx, ICON_FLAG_2D, iconId, iconColor);
     }
 
     switch (wp->type) {
@@ -319,7 +346,7 @@ void evt_yuucounter_disp_func(CameraId camera, void* param) {
                 PSMTXScale(scaleMtx, 0.5f, 0.5f, 0.5f);
                 PSMTXConcat(mtx, scaleMtx, mtx);
                 PSMTXConcat(base, mtx, mtx);
-                iconDispGxCol(mtx, 0x10, digits[i] + ICON_1F7, numColor);
+                iconDispGxCol(mtx, ICON_FLAG_2D, digits[i] + ICON_1F7, numColor);
             }
             break;
         case 2:
@@ -327,6 +354,8 @@ void evt_yuucounter_disp_func(CameraId camera, void* param) {
     }
 }
 
+#if VERSION >= VERSION_JP
+/** args[0] = on/off, args[1] = flag mask. Sets or clears those display flag bits of the counter (JP and later). */
 USER_FUNC(yuucounter_disp_flag_onoff) {
     EvtWord* args = event->args;
     BOOL on = evtGetValue(event, args[0]);
@@ -340,45 +369,26 @@ USER_FUNC(yuucounter_disp_flag_onoff) {
     }
     return EVT_RETURN_DONE;
 }
+#endif
 
-f32 fd_evt_yuucounter_negone_one_374[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_evt_yuucounter_neg_one_382 = -1.0f;
-
-f32 fd_evt_yuucounter___local_PI_383 = 3.1415927f;
-
-f32 fd_evt_yuucounter___local_3PIO2_385 = 4.712389f;
-
-f32 fd_evt_yuucounter_one_negone_373[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_evt_yuucounter___local_PIO2_384 = 1.5707964f;
-
-f32 fd_evt_yuucounter_one_381 = 1.0f;
-
-f32 fd_evt_yuucounter_negone_one_360[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_evt_yuucounter_neg_one_365 = -1.0f;
-
-f32 fd_evt_yuucounter___local_PI_366 = 3.1415927f;
-
-f32 fd_evt_yuucounter___local_3PIO2_368 = 4.712389f;
-
-f32 fd_evt_yuucounter_one_negone_359[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_evt_yuucounter___local_PIO2_367 = 1.5707964f;
-
-f32 fd_evt_yuucounter_one_364 = 1.0f;
-
+/** The counter's per-frame event, started by evt_yuucounter_alloc; runs evt_yuucounter_main_func. */
 static EVT_BEGIN(main_evt)
     CALL(evt_yuucounter_main_func)
     RETURN
 EVT_END()
 
+#if VERSION >= VERSION_JP
+/**
+ * Script run for timer counters: sets display flag 4 so the timer restarts its baseline
+ * when the window opens (JP and later).
+ */
 EVT_BEGIN(yuucounter_window_disp_evt)
     CALL(yuucounter_disp_flag_onoff, 1, 4)
     RETURN
 EVT_END()
 
+/** Empty script used for counters that are not timers (JP and later). */
 EVT_BEGIN(yuucounter_window_null_evt)
     RETURN
 EVT_END()
+#endif

@@ -1,35 +1,17 @@
+// pik.rel (ピカリーヒルズ, Poshley Heights): registers pik_00..pik_04 and the battle database.
+
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
 
-#pragma force_active on
 #include "data/mapdata.h"
 #include "pik.h"
+#include "rel_module.h"
 
-typedef void (*voidfunctionptr)(void);
-extern voidfunctionptr _ctors[];
-extern voidfunctionptr _dtors[];
-
-void _unresolved(void);
-void _epilog(void);
-void _prolog(void);
-
-f32 fd_pik_negone_one_374[2] __attribute__((aligned(8)));
-f32 fd_pik_neg_one_382;
-f32 fd_pik___local_PI_383;
-f32 fd_pik___local_3PIO2_385;
-f32 fd_pik_one_negone_373[2] __attribute__((aligned(8)));
-f32 fd_pik___local_PIO2_384;
-f32 fd_pik_one_381;
-f32 fd_pik_negone_one_360[2] __attribute__((aligned(8)));
-f32 fd_pik_neg_one_365;
-f32 fd_pik___local_PI_366;
-f32 fd_pik___local_3PIO2_368;
-f32 fd_pik_one_negone_359[2] __attribute__((aligned(8)));
-f32 fd_pik___local_PIO2_367;
-f32 fd_pik_one_364;
-f64 fd_pik__three_localstatic4_sqrtf;
-f64 fd_pik__half_localstatic3_sqrtf;
-
+/**
+ * Module entry point: runs the static constructors,
+ * then registers the init scripts of pik_00 to pik_04
+ * and the battle setup tables for Poshley Heights with the REL loader.
+ */
 void _prolog(void) {
     voidfunctionptr* ctor;
 
@@ -44,38 +26,7 @@ void _prolog(void) {
     relSetBtlAddr("pik", btlsetup_pik_tbl, btl_pik_setup_no_tbl);
 }
 
-f32 fd_pik_negone_one_374[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_pik_neg_one_382 = -1.0f;
-
-f32 fd_pik___local_PI_383 = 3.1415927f;
-
-f32 fd_pik___local_3PIO2_385 = 4.712389f;
-
-f32 fd_pik_one_negone_373[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_pik___local_PIO2_384 = 1.5707964f;
-
-f32 fd_pik_one_381 = 1.0f;
-
-f32 fd_pik_negone_one_360[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_pik_neg_one_365 = -1.0f;
-
-f32 fd_pik___local_PI_366 = 3.1415927f;
-
-f32 fd_pik___local_3PIO2_368 = 4.712389f;
-
-f32 fd_pik_one_negone_359[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_pik___local_PIO2_367 = 1.5707964f;
-
-f32 fd_pik_one_364 = 1.0f;
-
-f64 fd_pik__three_localstatic4_sqrtf = 3.0;
-
-f64 fd_pik__half_localstatic3_sqrtf = 0.5;
-
+/** Module exit point: runs the static destructors. */
 void _epilog(void) {
     voidfunctionptr* dtor;
 
@@ -83,5 +34,6 @@ void _epilog(void) {
         (*dtor)();
     }
 }
+/** Placeholder the linker points unresolved relocations at; it does nothing. */
 void _unresolved(void) {
 }

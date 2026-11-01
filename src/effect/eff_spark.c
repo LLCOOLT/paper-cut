@@ -1,56 +1,70 @@
+// Spark: five electric sparks burst outward in a ring around a point, repeating; type 0/1 set the sequence length.
+// Used for the electrified status in battle.
 #include "eff/eff_spark.h"
 #include "driver/dispdrv.h"
 #include "memory.h"
 #include <dolphin/gx.h>
 #include <dolphin/mtx.h>
-#include "eff/eff_magic1_n64.h"
 #include "libc_decls.h"
 
+static void effSparkDisp(CameraId cameraId, EffectEntry* effect);
+static void effSparkMain(EffectEntry* effect);
+
 typedef struct EffSparkParticle {
-    s32 type;   // 0x0
-    f32 x;      // 0x4
-    f32 y;      // 0x8
-    f32 z;      // 0xC
-    f32 velX;   // 0x10
-    f32 velY;   // 0x14
-    f32 destX;  // 0x18
-    f32 destY;  // 0x1C
-    s32 seq;    // 0x20
-    f32 angle;  // 0x24
-    s32 life;   // 0x28
-    s32 counter;// 0x2C
-    s32 alpha;  // 0x30
-    f32 scale;  // 0x34
+    s32 type;    // 0x0
+    f32 x;       // 0x4
+    f32 y;       // 0x8
+    f32 z;       // 0xC
+    f32 velX;    // 0x10
+    f32 velY;    // 0x14
+    f32 destX;   // 0x18
+    f32 destY;   // 0x1C
+    s32 seq;     // 0x20
+    f32 angle;   // 0x24
+    s32 life;    // 0x28
+    s32 counter; // 0x2C
+    s32 alpha;   // 0x30
+    f32 scale;   // 0x34
 } EffSparkParticle;
 
 typedef struct EffSparkWork {
-    s32 type;                  // 0x0
-    f32 x;                     // 0x4
-    f32 y;                     // 0x8
-    f32 z;                     // 0xC
-    f32 unk10;                 // 0x10
-    f32 unk14;                 // 0x14
-    f32 unk18;                 // 0x18
-    f32 unk1C;                 // 0x1C
-    s32 unk20;                 // 0x20
-    f32 unk24;                 // 0x24
-    s32 life;                  // 0x28
-    s32 counter;               // 0x2C
-    s32 alpha;                 // 0x30
-    f32 scale;                 // 0x34
-    EffSparkParticle part[5];  // 0x38
+    s32 type;                 // 0x0
+    f32 x;                    // 0x4
+    f32 y;                    // 0x8
+    f32 z;                    // 0xC
+    f32 velX;                 // 0x10, header mirrors EffSparkParticle
+    f32 velY;                 // 0x14
+    f32 destX;                // 0x18
+    f32 destY;                // 0x1C
+    s32 seq;                  // 0x20
+    f32 angle;                // 0x24
+    s32 life;                 // 0x28
+    s32 counter;              // 0x2C
+    s32 alpha;                // 0x30
+    f32 scale;                // 0x34
+    EffSparkParticle part[5]; // 0x38
 } EffSparkWork;
 
-static s32 max_seq_num[2] = { 24, 12 };
-static u8 a_data[24] = { 0xFA, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
-                         0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
+/** Length in frames of one spark cycle: 24 for type 0, 12 for type 1. */
+static s32 max_seq_num[2] = {24, 12};
+/** Spark size per frame of a type 0 cycle: full size briefly, then shrinking away. */
 static f32 scale_data[24] = {
     0.9f, 1.0f, 1.0f, 0.9f, 0.85f, 0.8f, 0.75f, 0.7f, 0.65f, 0.6f, 0.55f, 0.5f,
     0.45f, 0.4f, 0.35f, 0.3f, 0.25f, 0.2f, 0.15f, 0.1f, 0.05f, 0.03f, 0.02f, 0.01f,
 };
-static f32 scale_data2[12] = { 0.9f, 1.0f, 1.0f, 0.9f, 0.8f, 0.7f, 0.6f, 0.5f, 0.4f, 0.3f, 0.2f, 0.1f };
-static u8 a_data2[12] = { 0xFA, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
+/** Spark alpha per frame of a type 0 cycle, fully opaque after the first frame. */
+static u8 a_data[24] = { 0xFA, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+                         0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
+/** Spark size per frame of the shorter type 1 cycle. */
+static f32 scale_data2[12] = {0.9f, 1.0f, 1.0f, 0.9f, 0.8f, 0.7f, 0.6f, 0.5f, 0.4f, 0.3f, 0.2f, 0.1f};
+/** Spark alpha per frame of the type 1 cycle. */
+static u8 a_data2[12] = {0xFA, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
 
+/**
+ * Spawns the spark ring at (x, y, z).
+ * `type` 0 or 1 picks the sequence length (24 or 12 frames);
+ * the five sparks start with staggered sequence counters. The battle status code shows it for electrified units.
+ */
 EffectEntry* effSparkEntry(s32 type, f32 x, f32 y, f32 z) {
     EffectEntry* effect;
     EffSparkWork* work;
@@ -63,7 +77,7 @@ EffectEntry* effSparkEntry(s32 type, f32 x, f32 y, f32 z) {
     work = __memAlloc(HEAP_EFFECT, 0x150);
     effect->userdata = work;
     effect->callback = effSparkMain;
-    effect->flags |= 2;
+    effect->flags |= EFFECT_FLAG_SOFT_DELETE;
     work->type = type;
     work->counter = 0;
     work->life = 1000;
@@ -73,17 +87,20 @@ EffectEntry* effSparkEntry(s32 type, f32 x, f32 y, f32 z) {
     work->z = z;
     work->scale = 0.9f;
     {
-    EffSparkParticle* p = work->part;
-    f = max_seq_num[type] / 2.0f;
-    for (i = 1; i < 6; i++, p++) {
-        p->seq = -1.0f - f * (i & 1);
-    }
+        EffSparkParticle* p = work->part;
+        f = max_seq_num[type] / 2.0f;
+        for (i = 1; i < 6; i++, p++) {
+            p->seq = -1.0f - f * (i & 1);
+        }
     }
     return effect;
 }
 
-void effSparkMain(EffectEntry* effect) {
-    s32 parity;
+/**
+ * Advances each spark's sequence: at frame 0 it starts 16 units from the centre on its own angle,
+ * moves outward with decaying velocity and follows the scale/alpha tables. Soft delete fades the whole effect.
+ */
+static void effSparkMain(EffectEntry* effect) {
     EffSparkParticle* p = effect->userdata;
     s32 i;
     s32 type;
@@ -93,11 +110,11 @@ void effSparkMain(EffectEntry* effect) {
     Vec position;
     f32 a, b, rad, ang;
 
-    position = (Vec){ p->x, p->y, p->z };
+    position = (Vec){p->x, p->y, p->z};
     type = p->type;
     alpha = p->alpha;
-    if (effect->flags & 4) {
-        effect->flags &= ~4;
+    if (effect->flags & EFFECT_FLAG_DELETE_REQUESTED) {
+        effect->flags &= ~EFFECT_FLAG_DELETE_REQUESTED;
         p->life = 16;
     }
     if (p->life < 1000) {
@@ -114,16 +131,16 @@ void effSparkMain(EffectEntry* effect) {
     counter = p->counter;
     p++;
     switch (type) {
-    case 0:
-        a = 0.1f;
-        b = 0.2f;
-        break;
-    default:
-        a = 0.2f;
-        b = a;
-        break;
+        case 0:
+            a = 0.1f;
+            b = 0.2f;
+            break;
+        default:
+            a = 0.2f;
+            b = a;
+            break;
     }
-    for (i = 1, parity; i < effect->count; i++, p++) {
+    for (i = 1; i < effect->count; i++, p++) {
         p->seq++;
         if (p->seq >= max_seq_num[type]) {
             p->seq = 0;
@@ -144,14 +161,14 @@ void effSparkMain(EffectEntry* effect) {
             p->scale = 1.0f;
         }
         switch (type) {
-        case 0:
-            p->alpha = a_data[p->seq];
-            p->scale = scale_data[p->seq];
-            break;
-        default:
-            p->alpha = a_data2[p->seq];
-            p->scale = scale_data2[p->seq];
-            break;
+            case 0:
+                p->alpha = a_data[p->seq];
+                p->scale = scale_data[p->seq];
+                break;
+            default:
+                p->alpha = a_data2[p->seq];
+                p->scale = scale_data2[p->seq];
+                break;
         }
         if ((counter & 1) == (i & 1)) {
             p->x += p->velX;
@@ -170,7 +187,8 @@ void effSparkMain(EffectEntry* effect) {
     dispEntry(CAMERA_3D, dispCalcZ(&position), prio, (DispCallback)effSparkDisp, effect);
 }
 
-void effSparkDisp(CameraId cameraId, EffectEntry* effect) {
+/** Draws each active spark as a camera-facing textured quad rotated to its angle. */
+static void effSparkDisp(CameraId cameraId, EffectEntry* effect) {
     EffSparkParticle* p = effect->userdata;
     CameraEntry* camera;
     GXTexObj texObj;
@@ -207,7 +225,6 @@ void effSparkDisp(CameraId cameraId, EffectEntry* effect) {
     PSMTXConcat(mtx, rot, base);
     PSMTXConcat(base, scale, base);
 
-
     size = 16.0f;
 
     for (i = 1, p++; i < effect->count; i++, p++) {
@@ -223,7 +240,7 @@ void effSparkDisp(CameraId cameraId, EffectEntry* effect) {
         PSMTXConcat(camera->view, mtx2, mtx2);
         GXLoadPosMtxImm(mtx2, GX_PNMTX0);
         GXSetCurrentMtx(GX_PNMTX0);
-        GXSetChanMatColor(GX_COLOR0A0, (GXColor){ 0xFF, 0xFF, 0xFF, (alpha * p->alpha) >> 8 });
+        GXSetChanMatColor(GX_COLOR0A0, (GXColor){0xFF, 0xFF, 0xFF, (alpha * p->alpha) >> 8});
         GXBegin(GX_QUADS, GX_VTXFMT0, 4);
         GXPosition3f32(-size / 2, size / 2, 0.0f);
         GXTexCoord2f32(0.0f, 0.0f);

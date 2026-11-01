@@ -1,3 +1,4 @@
+// Paper Mario 64 effect: sweat drops flung out in a fan (six for type 0, four for type 1); used by the Yoshi partner.
 #include "eff/n64/eff_sweat_n64.h"
 #include "eff/eff_n64.h"
 #include "driver/camdrv.h"
@@ -8,15 +9,21 @@
 #include <dolphin/mtx.h>
 
 #ifndef TARGET_PC /* PC port: the host libc declares it */
+// FAKE: local prototype: sin takes a float (libc: double); this file was compiled with it and the header prototype changes the code.
 double sin(float);
 #endif
 #ifndef TARGET_PC /* PC port: the host libc declares it */
+// FAKE: local prototype: cos takes a float (libc: double); this file was compiled with it and the header prototype changes the code.
 double cos(float);
+
 #endif
+static void effSweatMain(EffectEntry* effect);
+static void effSweatDisp(CameraId cameraId, EffectEntry* effect);
 
-void effSweatMain(EffectEntry* effect);
-void effSweatDisp(CameraId cameraId, EffectEntry* effect);
-
+/**
+ * Spawns sweat drops at (x, y, z) for `life` frames, fanned around `angle`.
+ * Used by the Yoshi partner and event scripts.
+ */
 EffectEntry* effSweatN64Entry(s32 type, f32 x, f32 y, f32 z, f32 base, f32 angle, s32 life) {
     EffectEntry* effect;
     EffSweatN64Work* work;
@@ -31,12 +38,12 @@ EffectEntry* effSweatN64Entry(s32 type, f32 x, f32 y, f32 z, f32 base, f32 angle
     effect = effEntry();
     count = 1;
     switch (type) {
-    case 0:
-        count = 7;
-        break;
-    case 1:
-        count = 5;
-        break;
+        case 0:
+            count = 7;
+            break;
+        case 1:
+            count = 5;
+            break;
     }
     effect->type = "SweatN64";
     effect->count = count;
@@ -56,12 +63,12 @@ EffectEntry* effSweatN64Entry(s32 type, f32 x, f32 y, f32 z, f32 base, f32 angle
         dir.z = -(f32)cos(0.0f);
         axis = dir;
         switch (type) {
-        case 0:
-            spread = (i - 1) % 3 * 14;
-            break;
-        case 1:
-            spread = (i - 1) % 4 * 16;
-            break;
+            case 0:
+                spread = (i - 1) % 3 * 14;
+                break;
+            case 1:
+                spread = (i - 1) % 4 * 16;
+                break;
         }
         if (angle > 0.0f) {
             spread *= -1.0f;
@@ -86,7 +93,13 @@ EffectEntry* effSweatN64Entry(s32 type, f32 x, f32 y, f32 z, f32 base, f32 angle
     return effect;
 }
 
-void effSweatMain(EffectEntry* effect) {
+/**
+ * After its start delay each drop moves by its velocity:
+ * sideways speed damps 6% per frame and it falls with gravity 0.05 up to 0.1 per frame;
+ * it fades in over 8 frames and out over its last 16. The effect deletes once every drop's life is over.
+ * CAMERA_3D, layer 2.
+ */
+static void effSweatMain(EffectEntry* effect) {
     EffSweatN64Work* work = effect->userdata;
     Vec position;
     Vec tmp = {0.0f, 0.0f, 0.0f};
@@ -137,8 +150,13 @@ void effSweatMain(EffectEntry* effect) {
     }
 }
 
+// FAKE: match-forcing setting: the same code without it compiles differently (removal tried).
 #pragma opt_loop_invariants off
-void effSweatDisp(CameraId cameraId, EffectEntry* effect) {
+/**
+ * Draws each started drop as a camera-facing 6.4 x 9.6 white quad of the TTYD sweat-drop texture 93,
+ * tilted by its angle and mirrored when the angle is positive.
+ */
+static void effSweatDisp(CameraId cameraId, EffectEntry* effect) {
     CameraEntry* camera;
     EffSweatN64Work* work;
     Mtx trans;

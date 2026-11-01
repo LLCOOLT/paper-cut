@@ -1,3 +1,4 @@
+// Paper Mario 64 effect: a single snowflake that falls while tumbling for `lifetime` frames.
 #include "eff/n64/eff_snow_n64.h"
 #include "eff/eff_n64.h"
 #include "driver/camdrv.h"
@@ -8,18 +9,19 @@
 #include <dolphin/mtx.h>
 
 typedef struct EffSnowN64Work {
-    Vec position;   // 0x0
-    Vec velocity;   // 0xC
-    f32 rotX;       // 0x18
-    f32 rotY;       // 0x1C
-    f32 rotSpeedX;  // 0x20
-    f32 rotSpeedY;  // 0x24
-    s32 timer;      // 0x28
+    Vec position;  // 0x0
+    Vec velocity;  // 0xC
+    f32 rotX;      // 0x18
+    f32 rotY;      // 0x1C
+    f32 rotSpeedX; // 0x20
+    f32 rotSpeedY; // 0x24
+    s32 timer;     // 0x28
 } EffSnowN64Work;
 
-void effSnowMain(EffectEntry* effect);
-void effSnowDisp(CameraId cameraId, EffectEntry* effect);
+static void effSnowMain(EffectEntry* effect);
+static void effSnowDisp(CameraId cameraId, EffectEntry* effect);
 
+/** Spawns one snowflake at (x, y, z) living `lifetime` frames. Spawned by event scripts through evt_eff. */
 EffectEntry* effSnowN64Entry(s32 lifetime, f32 x, f32 y, f32 z) {
     static s32 kaiten;
     EffectEntry* effect;
@@ -48,7 +50,12 @@ EffectEntry* effSnowN64Entry(s32 lifetime, f32 x, f32 y, f32 z) {
     return effect;
 }
 
-void effSnowMain(EffectEntry* effect) {
+/**
+ * Moves the flake by its velocity, rocks its tilt between 10 and 45 degrees and turns it about Y;
+ * it wraps to stay within 200 units of Mario on X and Z so the snow follows him.
+ * Deletes when the timer runs out. CAMERA_3D, layer 2.
+ */
+static void effSnowMain(EffectEntry* effect) {
     EffSnowN64Work* work = effect->userdata;
     MarioWork* mario;
     Vec position;
@@ -90,7 +97,11 @@ void effSnowMain(EffectEntry* effect) {
     dispEntry(CAMERA_3D, dispCalcZ(&position), 2, (DispCallback)effSnowDisp, effect);
 }
 
-void effSnowDisp(CameraId cameraId, EffectEntry* effect) {
+/**
+ * Draws the flake as a 32x32 white quad of texture 7 (tiled twice) at its position,
+ * facing the camera and then tilted and turned by its rotation.
+ */
+static void effSnowDisp(CameraId cameraId, EffectEntry* effect) {
     CameraEntry* camera;
     EffSnowN64Work* work;
     Mtx trans;

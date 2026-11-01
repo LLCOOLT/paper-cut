@@ -1,8 +1,9 @@
+// Rogueport Sewers (tik, chika: underground): battle database: the enemy groups (BattleSetup) and stages of the sewers,
+// the Blooper fight and Professor Frankly's lecture battle.
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
 #include "manager/evtmgr_cmd.h"
 
-#pragma force_active on
 #include "battle/battle_stage_object.h"
 #include "system.h"
 #include "battle/battle_weapon_power.h"
@@ -10,26 +11,11 @@
 #include "tik.h"
 #include "battle/battle_stage.h"
 #include "driver/npcdrv.h"
-
-f32 sinfd(f32 degrees);
+#include "battle/battle_sub.h"
+#include "evt/evt_story.h"
 
 static USER_FUNC(_wave_offset);
-extern BattleUnitKind unit_boss_gesso;
 
-f32 fd_battle_database_tik_negone_one_374[2] __attribute__((aligned(8)));
-f32 fd_battle_database_tik_neg_one_382;
-f32 fd_battle_database_tik___local_PI_383;
-f32 fd_battle_database_tik___local_3PIO2_385;
-f32 fd_battle_database_tik_one_negone_373[2] __attribute__((aligned(8)));
-f32 fd_battle_database_tik___local_PIO2_384;
-f32 fd_battle_database_tik_one_381;
-f32 fd_battle_database_tik_negone_one_360[2] __attribute__((aligned(8)));
-f32 fd_battle_database_tik_neg_one_365;
-f32 fd_battle_database_tik___local_PI_366;
-f32 fd_battle_database_tik___local_3PIO2_368;
-f32 fd_battle_database_tik_one_negone_359[2] __attribute__((aligned(8)));
-f32 fd_battle_database_tik___local_PIO2_367;
-f32 fd_battle_database_tik_one_364;
 BattleStageObjectData tik_btlobject_data[20];
 BattleStageData tik_btlstage_data[4];
 BattleUnitSetup btlparty_tik_tik_gesso[1];
@@ -165,36 +151,12 @@ NpcBattleSelect btlgrpsel_tik_btlno_tik_20_05_off[2];
 NpcBattleSelect btlgrpsel_tik_btlno_tik_20_06_off[2];
 NpcSetupBattleInfo btlsetup_tik_tbl[30];
 NpcTerritoryInfo btl_tik_setup_no_tbl[30];
-EvtWord bgset_tik_wave_event[59];
+extern EvtWord bgset_tik_wave_event[];
 
-f32 fd_battle_database_tik_negone_one_374[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_battle_database_tik_neg_one_382 = -1.0f;
-
-f32 fd_battle_database_tik___local_PI_383 = 3.1415927f;
-
-f32 fd_battle_database_tik___local_3PIO2_385 = 4.712389f;
-
-f32 fd_battle_database_tik_one_negone_373[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_battle_database_tik___local_PIO2_384 = 1.5707964f;
-
-f32 fd_battle_database_tik_one_381 = 1.0f;
-
-f32 fd_battle_database_tik_negone_one_360[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_battle_database_tik_neg_one_365 = -1.0f;
-
-f32 fd_battle_database_tik___local_PI_366 = 3.1415927f;
-
-f32 fd_battle_database_tik___local_3PIO2_368 = 4.712389f;
-
-f32 fd_battle_database_tik_one_negone_359[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_battle_database_tik___local_PIO2_367 = 1.5707964f;
-
-f32 fd_battle_database_tik_one_364 = 1.0f;
-
+/**
+ * Scenery props of the Rogueport Sewers battle stages (stg_00_1, stg_00_2 and stg_00_3), in order, with their
+ * positions.
+ */
 BattleStageObjectData tik_btlobject_data[] = {
     {"isi_2", 2, 0, {-150.0f, 0.0f, -23.0f}, 10, 50, {0}},
     {"isi_3", 2, 0, {-60.0f, 0.0f, -54.0f}, 20, 40, {0}},
@@ -218,12 +180,16 @@ BattleStageObjectData tik_btlobject_data[] = {
     {"C", 2, 3, {0}, 0, 60, {0}},
 };
 
+/**
+ * The four Rogueport Sewers battle stages, each with its slice of tik_btlobject_data and the wave background
+ * script.
+ */
 BattleStageData tik_btlstage_data[] = {
     {
-        "bti_01", // mGlobalStageDataDir
-        "stg_00_2", // mSpecificStageDataDir
-        8, // mNumObjects
-        tik_btlobject_data, // mObjects
+        "bti_01", // globalStageDataDir
+        "stg_00_2", // specificStageDataDir
+        8, // numObjects
+        tik_btlobject_data, // objects
         {NULL, 0, {0}, 0, NULL, 100, 0, 0, 2, 0.0f, 0, 0, 0, 0, weaponGetPowerDefault, {1, 0, 0, 0, 0, 0, 0, 0}, NULL, {0}, 0x2100060, 0x20000000, 0, 26, 3, 2, NULL, 0, 0x7FF, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, {0}, NULL, {0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0}}, // bgAWeapon
         {NULL, 0, {0}, 0, NULL, 100, 0, 0, 2, 0.0f, 0, 0, 0, 0, weaponGetPowerDefault, {1, 0, 0, 0, 0, 0, 0, 0}, NULL, {0}, 0x2100060, 0x20000000, 0, 26, 3, 2, NULL, 0, 0x7FF, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, {0}, NULL, {0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0}}, // bgBWeapon
         NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, // initEvt..bgCEvt
@@ -233,30 +199,30 @@ BattleStageData tik_btlstage_data[] = {
         1, // disableBgBDestroy
     },
     {
-        "bti_01", // mGlobalStageDataDir
-        "stg_00_2", // mSpecificStageDataDir
-        5, // mNumObjects
-        &tik_btlobject_data[8], // mObjects
+        "bti_01", // globalStageDataDir
+        "stg_00_2", // specificStageDataDir
+        5, // numObjects
+        &tik_btlobject_data[8], // objects
         {NULL, 0, {0}, 0, NULL, 100, 0, 0, 2, 0.0f, 0, 0, 0, 0, NULL, {0}, NULL, {0}, 0x2100060, 0x20000000, 0, 26, 3, 2, NULL, 0, 0x7FF, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, {0}, NULL, {0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0}}, // bgAWeapon
         {NULL, 0, {0}, 0, NULL, 100, 0, 0, 2, 0.0f, 0, 0, 0, 0, weaponGetPowerDefault, {1, 0, 0, 0, 0, 0, 0, 0}, NULL, {0}, 0x2100060, 0x20000000, 0, 26, 3, 2, NULL, 0, 0x7FF, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, {0}, NULL, {0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0}}, // bgBWeapon
         NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, // initEvt..bgCEvt
         0, 0, 0, 0, // reserved_1B0..disableBgBDestroy
     },
     {
-        "bti_01", // mGlobalStageDataDir
-        "stg_00_3", // mSpecificStageDataDir
-        2, // mNumObjects
-        &tik_btlobject_data[13], // mObjects
+        "bti_01", // globalStageDataDir
+        "stg_00_3", // specificStageDataDir
+        2, // numObjects
+        &tik_btlobject_data[13], // objects
         {NULL, 0, {0}, 0, NULL, 100, 0, 0, 2, 0.0f, 0, 0, 0, 0, NULL, {0}, NULL, {0}, 0x2100060, 0x20000000, 0, 26, 3, 2, NULL, 0, 0x7FF, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, {0}, NULL, {0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0}}, // bgAWeapon
         {NULL, 0, {0}, 0, NULL, 100, 0, 0, 2, 0.0f, 0, 0, 0, 0, NULL, {0}, NULL, {0}, 0x2100060, 0x20000000, 0, 26, 3, 2, NULL, 0, 0x7FF, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, {0}, NULL, {0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0}}, // bgBWeapon
         NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, // initEvt..bgCEvt
         0, 0, 0, 0, // reserved_1B0..disableBgBDestroy
     },
     {
-        "bti_01", // mGlobalStageDataDir
-        "stg_00_1", // mSpecificStageDataDir
-        5, // mNumObjects
-        &tik_btlobject_data[15], // mObjects
+        "bti_01", // globalStageDataDir
+        "stg_00_1", // specificStageDataDir
+        5, // numObjects
+        &tik_btlobject_data[15], // objects
         {NULL, 0, {0}, 0, NULL, 100, 0, 0, 2, 0.0f, 0, 0, 0, 0, weaponGetPowerDefault, {1, 0, 0, 0, 0, 0, 0, 0}, NULL, {0}, 0x2100060, 0x20000000, 0, 26, 3, 2, NULL, 0, 0x7FF, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, {0}, NULL, {0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0}}, // bgAWeapon
         {NULL, 0, {0}, 0, NULL, 100, 0, 0, 2, 0.0f, 0, 0, 0, 0, weaponGetPowerDefault, {1, 0, 0, 0, 0, 0, 0, 0}, NULL, {0}, 0x2100060, 0x20000000, 0, 26, 3, 2, NULL, 0, 0x7FF, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, {0}, NULL, {0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0}}, // bgBWeapon
         NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, // initEvt..bgCEvt
@@ -264,12 +230,13 @@ BattleStageData tik_btlstage_data[] = {
     },
 };
 
+/** Enemies of the tik_gesso fight: Blooper. */
 BattleUnitSetup btlparty_tik_tik_gesso[] = {
     {
-        &unit_boss_gesso, // mUnitKindParams
+        &unit_boss_gesso, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {122.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -277,6 +244,10 @@ BattleUnitSetup btlparty_tik_tik_gesso[] = {
     },
 };
 
+/**
+ * Battle group of the tik_gesso fight (btlparty_tik_tik_gesso): never drops an item;
+ * default heart and flower drop tables.
+ */
 BattleGroupSetup btlgrp_tik_tik_gesso = {
     1, // numEnemies
     btlparty_tik_tik_gesso, // enemyData
@@ -284,45 +255,49 @@ BattleGroupSetup btlgrp_tik_tik_gesso = {
     100, // noItemWeight
     battle_heart_drop_param_default, // hpDropTable
     battle_flower_drop_param_default, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/**
+ * Enemies of the tik_01_01_off_1 fight: Goomba, Spiky Goomba, Paragoomba, Goomba (Professor Frankly's
+ * lecture).
+ */
 BattleUnitSetup btlparty_tik_tik_01_01_off_1[] = {
     {
-        &unit_kuriboo, // mUnitKindParams
+        &unit_kuriboo, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {30.0f, 0.0f, -10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_kurikuri, // itemDropTable
     },
     {
-        &unit_togekuri, // mUnitKindParams
+        &unit_togekuri, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {70.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_togekuri, // itemDropTable
     },
     {
-        &unit_patakuri, // mUnitKindParams
+        &unit_patakuri, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {110.0f, 40.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_patakuri, // itemDropTable
     },
     {
-        &unit_lecture_frankli_kuriboo, // mUnitKindParams
+        &unit_lecture_frankli_kuriboo, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {150.0f, 0.0f, 20.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -330,6 +305,10 @@ BattleUnitSetup btlparty_tik_tik_01_01_off_1[] = {
     },
 };
 
+/**
+ * Battle group of the tik_01_01_off_1 fight (btlparty_tik_tik_01_01_off_1): never drops an item;
+ * default heart and flower drop tables.
+ */
 BattleGroupSetup btlgrp_tik_tik_01_01_off_1 = {
     4, // numEnemies
     btlparty_tik_tik_01_01_off_1, // enemyData
@@ -337,25 +316,26 @@ BattleGroupSetup btlgrp_tik_tik_01_01_off_1 = {
     100, // noItemWeight
     battle_heart_drop_param_default, // hpDropTable
     battle_flower_drop_param_default, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/** Enemies of the tik_01_02_off_1 fight: Spiky Goomba x2. */
 BattleUnitSetup btlparty_tik_tik_01_02_off_1[] = {
     {
-        &unit_togekuri, // mUnitKindParams
+        &unit_togekuri, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {70.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_togekuri, // itemDropTable
     },
     {
-        &unit_togekuri, // mUnitKindParams
+        &unit_togekuri, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {110.0f, 0.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -363,6 +343,10 @@ BattleUnitSetup btlparty_tik_tik_01_02_off_1[] = {
     },
 };
 
+/**
+ * Battle group of the tik_01_02_off_1 fight (btlparty_tik_tik_01_02_off_1):
+ * item drop odds 25 from the drop table, 25 the held item, 50 nothing; default heart and flower drop tables.
+ */
 BattleGroupSetup btlgrp_tik_tik_01_02_off_1 = {
     2, // numEnemies
     btlparty_tik_tik_01_02_off_1, // enemyData
@@ -371,15 +355,16 @@ BattleGroupSetup btlgrp_tik_tik_01_02_off_1 = {
     50, // noItemWeight
     battle_heart_drop_param_default, // hpDropTable
     battle_flower_drop_param_default, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/** Enemies of the tik_04_01_off_1 fight: Spinia. */
 BattleUnitSetup btlparty_tik_tik_04_01_off_1[] = {
     {
-        &unit_hinnya, // mUnitKindParams
+        &unit_hinnya, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {90.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -387,6 +372,10 @@ BattleUnitSetup btlparty_tik_tik_04_01_off_1[] = {
     },
 };
 
+/**
+ * Battle group of the tik_04_01_off_1 fight (btlparty_tik_tik_04_01_off_1):
+ * item drop odds 25 from the drop table, 25 the held item, 50 nothing; default heart and flower drop tables.
+ */
 BattleGroupSetup btlgrp_tik_tik_04_01_off_1 = {
     1, // numEnemies
     btlparty_tik_tik_04_01_off_1, // enemyData
@@ -395,15 +384,16 @@ BattleGroupSetup btlgrp_tik_tik_04_01_off_1 = {
     50, // noItemWeight
     battle_heart_drop_param_default, // hpDropTable
     battle_flower_drop_param_default, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/** Enemies of the tik_04_01_on_1 fight: Spinia. */
 BattleUnitSetup btlparty_tik_tik_04_01_on_1[] = {
     {
-        &unit_hinnya, // mUnitKindParams
+        &unit_hinnya, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {90.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -411,6 +401,10 @@ BattleUnitSetup btlparty_tik_tik_04_01_on_1[] = {
     },
 };
 
+/**
+ * Battle group of the tik_04_01_on_1 fight (btlparty_tik_tik_04_01_on_1):
+ * item drop odds 25 from the drop table, 25 the held item, 50 nothing; default heart and flower drop tables.
+ */
 BattleGroupSetup btlgrp_tik_tik_04_01_on_1 = {
     1, // numEnemies
     btlparty_tik_tik_04_01_on_1, // enemyData
@@ -419,25 +413,26 @@ BattleGroupSetup btlgrp_tik_tik_04_01_on_1 = {
     50, // noItemWeight
     battle_heart_drop_param_default, // hpDropTable
     battle_flower_drop_param_default, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/** Enemies of the tik_04_01_on_2 fight: Spinia x2. */
 BattleUnitSetup btlparty_tik_tik_04_01_on_2[] = {
     {
-        &unit_hinnya, // mUnitKindParams
+        &unit_hinnya, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {70.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_hinnya, // itemDropTable
     },
     {
-        &unit_hinnya, // mUnitKindParams
+        &unit_hinnya, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {110.0f, 0.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -445,6 +440,10 @@ BattleUnitSetup btlparty_tik_tik_04_01_on_2[] = {
     },
 };
 
+/**
+ * Battle group of the tik_04_01_on_2 fight (btlparty_tik_tik_04_01_on_2):
+ * item drop odds 25 from the drop table, 25 the held item, 50 nothing; default heart and flower drop tables.
+ */
 BattleGroupSetup btlgrp_tik_tik_04_01_on_2 = {
     2, // numEnemies
     btlparty_tik_tik_04_01_on_2, // enemyData
@@ -453,25 +452,26 @@ BattleGroupSetup btlgrp_tik_tik_04_01_on_2 = {
     50, // noItemWeight
     battle_heart_drop_param_default, // hpDropTable
     battle_flower_drop_param_default, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/** Enemies of the tik_04_02_off_1 fight: Spinia x2. */
 BattleUnitSetup btlparty_tik_tik_04_02_off_1[] = {
     {
-        &unit_hinnya, // mUnitKindParams
+        &unit_hinnya, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {70.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_hinnya, // itemDropTable
     },
     {
-        &unit_hinnya, // mUnitKindParams
+        &unit_hinnya, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {110.0f, 0.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -479,6 +479,10 @@ BattleUnitSetup btlparty_tik_tik_04_02_off_1[] = {
     },
 };
 
+/**
+ * Battle group of the tik_04_02_off_1 fight (btlparty_tik_tik_04_02_off_1):
+ * item drop odds 25 from the drop table, 25 the held item, 50 nothing; default heart and flower drop tables.
+ */
 BattleGroupSetup btlgrp_tik_tik_04_02_off_1 = {
     2, // numEnemies
     btlparty_tik_tik_04_02_off_1, // enemyData
@@ -487,25 +491,26 @@ BattleGroupSetup btlgrp_tik_tik_04_02_off_1 = {
     50, // noItemWeight
     battle_heart_drop_param_default, // hpDropTable
     battle_flower_drop_param_default, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/** Enemies of the tik_04_02_on_1 fight: Spinia x2. */
 BattleUnitSetup btlparty_tik_tik_04_02_on_1[] = {
     {
-        &unit_hinnya, // mUnitKindParams
+        &unit_hinnya, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {70.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_hinnya, // itemDropTable
     },
     {
-        &unit_hinnya, // mUnitKindParams
+        &unit_hinnya, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {110.0f, 0.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -513,6 +518,10 @@ BattleUnitSetup btlparty_tik_tik_04_02_on_1[] = {
     },
 };
 
+/**
+ * Battle group of the tik_04_02_on_1 fight (btlparty_tik_tik_04_02_on_1):
+ * item drop odds 25 from the drop table, 25 the held item, 50 nothing; default heart and flower drop tables.
+ */
 BattleGroupSetup btlgrp_tik_tik_04_02_on_1 = {
     2, // numEnemies
     btlparty_tik_tik_04_02_on_1, // enemyData
@@ -521,35 +530,36 @@ BattleGroupSetup btlgrp_tik_tik_04_02_on_1 = {
     50, // noItemWeight
     battle_heart_drop_param_default, // hpDropTable
     battle_flower_drop_param_default, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/** Enemies of the tik_04_02_on_2 fight: Spinia x3. */
 BattleUnitSetup btlparty_tik_tik_04_02_on_2[] = {
     {
-        &unit_hinnya, // mUnitKindParams
+        &unit_hinnya, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {50.0f, 0.0f, -10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_hinnya, // itemDropTable
     },
     {
-        &unit_hinnya, // mUnitKindParams
+        &unit_hinnya, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {90.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_hinnya, // itemDropTable
     },
     {
-        &unit_hinnya, // mUnitKindParams
+        &unit_hinnya, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {130.0f, 0.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -557,6 +567,10 @@ BattleUnitSetup btlparty_tik_tik_04_02_on_2[] = {
     },
 };
 
+/**
+ * Battle group of the tik_04_02_on_2 fight (btlparty_tik_tik_04_02_on_2):
+ * item drop odds 25 from the drop table, 25 the held item, 50 nothing; default heart and flower drop tables.
+ */
 BattleGroupSetup btlgrp_tik_tik_04_02_on_2 = {
     3, // numEnemies
     btlparty_tik_tik_04_02_on_2, // enemyData
@@ -565,25 +579,26 @@ BattleGroupSetup btlgrp_tik_tik_04_02_on_2 = {
     50, // noItemWeight
     battle_heart_drop_param_default, // hpDropTable
     battle_flower_drop_param_default, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/** Enemies of the tik_04_03_off_1 fight: Magikoopa, Paratroopa. */
 BattleUnitSetup btlparty_tik_tik_04_03_off_1[] = {
     {
-        &unit_kamec, // mUnitKindParams
+        &unit_kamec, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {70.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_kamec, // itemDropTable
     },
     {
-        &unit_patapata, // mUnitKindParams
+        &unit_patapata, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {110.0f, 40.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -591,6 +606,11 @@ BattleUnitSetup btlparty_tik_tik_04_03_off_1[] = {
     },
 };
 
+/**
+ * Battle group of the tik_04_03_off_1 fight (btlparty_tik_tik_04_03_off_1):
+ * item drop odds 25 from the drop table, 25 the held item, 50 nothing;
+ * heart drop table default, flower drop table default4.
+ */
 BattleGroupSetup btlgrp_tik_tik_04_03_off_1 = {
     2, // numEnemies
     btlparty_tik_tik_04_03_off_1, // enemyData
@@ -599,25 +619,26 @@ BattleGroupSetup btlgrp_tik_tik_04_03_off_1 = {
     50, // noItemWeight
     battle_heart_drop_param_default, // hpDropTable
     battle_flower_drop_param_default4, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/** Enemies of the tik_04_03_off_2 fight: Magikoopa x2. */
 BattleUnitSetup btlparty_tik_tik_04_03_off_2[] = {
     {
-        &unit_kamec, // mUnitKindParams
+        &unit_kamec, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {70.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_kamec, // itemDropTable
     },
     {
-        &unit_kamec, // mUnitKindParams
+        &unit_kamec, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {110.0f, 0.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -625,6 +646,11 @@ BattleUnitSetup btlparty_tik_tik_04_03_off_2[] = {
     },
 };
 
+/**
+ * Battle group of the tik_04_03_off_2 fight (btlparty_tik_tik_04_03_off_2):
+ * item drop odds 25 from the drop table, 25 the held item, 50 nothing;
+ * heart drop table default, flower drop table default4.
+ */
 BattleGroupSetup btlgrp_tik_tik_04_03_off_2 = {
     2, // numEnemies
     btlparty_tik_tik_04_03_off_2, // enemyData
@@ -633,25 +659,26 @@ BattleGroupSetup btlgrp_tik_tik_04_03_off_2 = {
     50, // noItemWeight
     battle_heart_drop_param_default, // hpDropTable
     battle_flower_drop_param_default4, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/** Enemies of the tik_04_03_off_3 fight: Magikoopa, Koopatrol. */
 BattleUnitSetup btlparty_tik_tik_04_03_off_3[] = {
     {
-        &unit_kamec, // mUnitKindParams
+        &unit_kamec, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {70.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_kamec, // itemDropTable
     },
     {
-        &unit_togenoko, // mUnitKindParams
+        &unit_togenoko, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {110.0f, 0.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -659,6 +686,11 @@ BattleUnitSetup btlparty_tik_tik_04_03_off_3[] = {
     },
 };
 
+/**
+ * Battle group of the tik_04_03_off_3 fight (btlparty_tik_tik_04_03_off_3):
+ * item drop odds 25 from the drop table, 25 the held item, 50 nothing;
+ * heart drop table default, flower drop table default4.
+ */
 BattleGroupSetup btlgrp_tik_tik_04_03_off_3 = {
     2, // numEnemies
     btlparty_tik_tik_04_03_off_3, // enemyData
@@ -667,25 +699,26 @@ BattleGroupSetup btlgrp_tik_tik_04_03_off_3 = {
     50, // noItemWeight
     battle_heart_drop_param_default, // hpDropTable
     battle_flower_drop_param_default4, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/** Enemies of the tik_04_04_off_1 fight: Koopatrol, Spiky Goomba. */
 BattleUnitSetup btlparty_tik_tik_04_04_off_1[] = {
     {
-        &unit_togenoko, // mUnitKindParams
+        &unit_togenoko, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {70.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_togenoko, // itemDropTable
     },
     {
-        &unit_togekuri, // mUnitKindParams
+        &unit_togekuri, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {110.0f, 0.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -693,6 +726,11 @@ BattleUnitSetup btlparty_tik_tik_04_04_off_1[] = {
     },
 };
 
+/**
+ * Battle group of the tik_04_04_off_1 fight (btlparty_tik_tik_04_04_off_1):
+ * item drop odds 25 from the drop table, 25 the held item, 50 nothing;
+ * heart drop table default4, flower drop table default.
+ */
 BattleGroupSetup btlgrp_tik_tik_04_04_off_1 = {
     2, // numEnemies
     btlparty_tik_tik_04_04_off_1, // enemyData
@@ -701,25 +739,26 @@ BattleGroupSetup btlgrp_tik_tik_04_04_off_1 = {
     50, // noItemWeight
     battle_heart_drop_param_default4, // hpDropTable
     battle_flower_drop_param_default, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/** Enemies of the tik_04_04_off_2 fight: Koopatrol x2. */
 BattleUnitSetup btlparty_tik_tik_04_04_off_2[] = {
     {
-        &unit_togenoko, // mUnitKindParams
+        &unit_togenoko, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {70.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_togenoko, // itemDropTable
     },
     {
-        &unit_togenoko, // mUnitKindParams
+        &unit_togenoko, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {110.0f, 0.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -727,6 +766,11 @@ BattleUnitSetup btlparty_tik_tik_04_04_off_2[] = {
     },
 };
 
+/**
+ * Battle group of the tik_04_04_off_2 fight (btlparty_tik_tik_04_04_off_2):
+ * item drop odds 25 from the drop table, 25 the held item, 50 nothing;
+ * heart drop table default4, flower drop table default.
+ */
 BattleGroupSetup btlgrp_tik_tik_04_04_off_2 = {
     2, // numEnemies
     btlparty_tik_tik_04_04_off_2, // enemyData
@@ -735,25 +779,26 @@ BattleGroupSetup btlgrp_tik_tik_04_04_off_2 = {
     50, // noItemWeight
     battle_heart_drop_param_default4, // hpDropTable
     battle_flower_drop_param_default, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/** Enemies of the tik_04_04_off_3 fight: Koopatrol, Magikoopa. */
 BattleUnitSetup btlparty_tik_tik_04_04_off_3[] = {
     {
-        &unit_togenoko, // mUnitKindParams
+        &unit_togenoko, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {70.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_togenoko, // itemDropTable
     },
     {
-        &unit_kamec, // mUnitKindParams
+        &unit_kamec, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {110.0f, 0.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -761,6 +806,11 @@ BattleUnitSetup btlparty_tik_tik_04_04_off_3[] = {
     },
 };
 
+/**
+ * Battle group of the tik_04_04_off_3 fight (btlparty_tik_tik_04_04_off_3):
+ * item drop odds 25 from the drop table, 25 the held item, 50 nothing;
+ * heart drop table default4, flower drop table default.
+ */
 BattleGroupSetup btlgrp_tik_tik_04_04_off_3 = {
     2, // numEnemies
     btlparty_tik_tik_04_04_off_3, // enemyData
@@ -769,35 +819,36 @@ BattleGroupSetup btlgrp_tik_tik_04_04_off_3 = {
     50, // noItemWeight
     battle_heart_drop_param_default4, // hpDropTable
     battle_flower_drop_param_default, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/** Enemies of the tik_07_01_off_1 fight: Spania x3. */
 BattleUnitSetup btlparty_tik_tik_07_01_off_1[] = {
     {
-        &unit_hannya, // mUnitKindParams
+        &unit_hannya, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {50.0f, 0.0f, -10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_hannya, // itemDropTable
     },
     {
-        &unit_hannya, // mUnitKindParams
+        &unit_hannya, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {90.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_hannya, // itemDropTable
     },
     {
-        &unit_hannya, // mUnitKindParams
+        &unit_hannya, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {130.0f, 0.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -805,6 +856,10 @@ BattleUnitSetup btlparty_tik_tik_07_01_off_1[] = {
     },
 };
 
+/**
+ * Battle group of the tik_07_01_off_1 fight (btlparty_tik_tik_07_01_off_1):
+ * item drop odds 25 from the drop table, 25 the held item, 50 nothing; default heart and flower drop tables.
+ */
 BattleGroupSetup btlgrp_tik_tik_07_01_off_1 = {
     3, // numEnemies
     btlparty_tik_tik_07_01_off_1, // enemyData
@@ -813,25 +868,26 @@ BattleGroupSetup btlgrp_tik_tik_07_01_off_1 = {
     50, // noItemWeight
     battle_heart_drop_param_default, // hpDropTable
     battle_flower_drop_param_default, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/** Enemies of the tik_07_01_off_2 fight: Spania, Spinia. */
 BattleUnitSetup btlparty_tik_tik_07_01_off_2[] = {
     {
-        &unit_hannya, // mUnitKindParams
+        &unit_hannya, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {70.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_hannya, // itemDropTable
     },
     {
-        &unit_hinnya, // mUnitKindParams
+        &unit_hinnya, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {110.0f, 0.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -839,6 +895,10 @@ BattleUnitSetup btlparty_tik_tik_07_01_off_2[] = {
     },
 };
 
+/**
+ * Battle group of the tik_07_01_off_2 fight (btlparty_tik_tik_07_01_off_2):
+ * item drop odds 25 from the drop table, 25 the held item, 50 nothing; default heart and flower drop tables.
+ */
 BattleGroupSetup btlgrp_tik_tik_07_01_off_2 = {
     2, // numEnemies
     btlparty_tik_tik_07_01_off_2, // enemyData
@@ -847,25 +907,26 @@ BattleGroupSetup btlgrp_tik_tik_07_01_off_2 = {
     50, // noItemWeight
     battle_heart_drop_param_default, // hpDropTable
     battle_flower_drop_param_default, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/** Enemies of the tik_07_02_off_1 fight: Spania x2. */
 BattleUnitSetup btlparty_tik_tik_07_02_off_1[] = {
     {
-        &unit_hannya, // mUnitKindParams
+        &unit_hannya, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {70.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_hannya, // itemDropTable
     },
     {
-        &unit_hannya, // mUnitKindParams
+        &unit_hannya, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {110.0f, 0.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -873,6 +934,10 @@ BattleUnitSetup btlparty_tik_tik_07_02_off_1[] = {
     },
 };
 
+/**
+ * Battle group of the tik_07_02_off_1 fight (btlparty_tik_tik_07_02_off_1):
+ * item drop odds 25 from the drop table, 25 the held item, 50 nothing; default heart and flower drop tables.
+ */
 BattleGroupSetup btlgrp_tik_tik_07_02_off_1 = {
     2, // numEnemies
     btlparty_tik_tik_07_02_off_1, // enemyData
@@ -881,35 +946,36 @@ BattleGroupSetup btlgrp_tik_tik_07_02_off_1 = {
     50, // noItemWeight
     battle_heart_drop_param_default, // hpDropTable
     battle_flower_drop_param_default, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/** Enemies of the tik_07_02_off_2 fight: Spania x2, Spinia. */
 BattleUnitSetup btlparty_tik_tik_07_02_off_2[] = {
     {
-        &unit_hannya, // mUnitKindParams
+        &unit_hannya, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {50.0f, 0.0f, -10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_hannya, // itemDropTable
     },
     {
-        &unit_hinnya, // mUnitKindParams
+        &unit_hinnya, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {90.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_hinnya, // itemDropTable
     },
     {
-        &unit_hannya, // mUnitKindParams
+        &unit_hannya, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {130.0f, 0.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -917,6 +983,10 @@ BattleUnitSetup btlparty_tik_tik_07_02_off_2[] = {
     },
 };
 
+/**
+ * Battle group of the tik_07_02_off_2 fight (btlparty_tik_tik_07_02_off_2):
+ * item drop odds 25 from the drop table, 25 the held item, 50 nothing; default heart and flower drop tables.
+ */
 BattleGroupSetup btlgrp_tik_tik_07_02_off_2 = {
     3, // numEnemies
     btlparty_tik_tik_07_02_off_2, // enemyData
@@ -925,25 +995,26 @@ BattleGroupSetup btlgrp_tik_tik_07_02_off_2 = {
     50, // noItemWeight
     battle_heart_drop_param_default, // hpDropTable
     battle_flower_drop_param_default, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/** Enemies of the tik_07_03_off_1 fight: Koopatrol, Koopa Troopa. */
 BattleUnitSetup btlparty_tik_tik_07_03_off_1[] = {
     {
-        &unit_togenoko, // mUnitKindParams
+        &unit_togenoko, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {70.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_togenoko, // itemDropTable
     },
     {
-        &unit_nokonoko, // mUnitKindParams
+        &unit_nokonoko, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {110.0f, 0.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -951,6 +1022,11 @@ BattleUnitSetup btlparty_tik_tik_07_03_off_1[] = {
     },
 };
 
+/**
+ * Battle group of the tik_07_03_off_1 fight (btlparty_tik_tik_07_03_off_1):
+ * item drop odds 25 from the drop table, 25 the held item, 50 nothing;
+ * heart drop table default4, flower drop table default.
+ */
 BattleGroupSetup btlgrp_tik_tik_07_03_off_1 = {
     2, // numEnemies
     btlparty_tik_tik_07_03_off_1, // enemyData
@@ -959,25 +1035,26 @@ BattleGroupSetup btlgrp_tik_tik_07_03_off_1 = {
     50, // noItemWeight
     battle_heart_drop_param_default4, // hpDropTable
     battle_flower_drop_param_default, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/** Enemies of the tik_07_03_off_2 fight: Koopatrol x2. */
 BattleUnitSetup btlparty_tik_tik_07_03_off_2[] = {
     {
-        &unit_togenoko, // mUnitKindParams
+        &unit_togenoko, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {70.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_togenoko, // itemDropTable
     },
     {
-        &unit_togenoko, // mUnitKindParams
+        &unit_togenoko, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {110.0f, 0.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -985,6 +1062,11 @@ BattleUnitSetup btlparty_tik_tik_07_03_off_2[] = {
     },
 };
 
+/**
+ * Battle group of the tik_07_03_off_2 fight (btlparty_tik_tik_07_03_off_2):
+ * item drop odds 25 from the drop table, 25 the held item, 50 nothing;
+ * heart drop table default4, flower drop table default.
+ */
 BattleGroupSetup btlgrp_tik_tik_07_03_off_2 = {
     2, // numEnemies
     btlparty_tik_tik_07_03_off_2, // enemyData
@@ -993,25 +1075,26 @@ BattleGroupSetup btlgrp_tik_tik_07_03_off_2 = {
     50, // noItemWeight
     battle_heart_drop_param_default4, // hpDropTable
     battle_flower_drop_param_default, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/** Enemies of the tik_07_03_off_3 fight: Koopatrol, Hammer Bro. */
 BattleUnitSetup btlparty_tik_tik_07_03_off_3[] = {
     {
-        &unit_togenoko, // mUnitKindParams
+        &unit_togenoko, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {70.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_togenoko, // itemDropTable
     },
     {
-        &unit_hammer_bros, // mUnitKindParams
+        &unit_hammer_bros, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {110.0f, 0.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -1019,6 +1102,11 @@ BattleUnitSetup btlparty_tik_tik_07_03_off_3[] = {
     },
 };
 
+/**
+ * Battle group of the tik_07_03_off_3 fight (btlparty_tik_tik_07_03_off_3):
+ * item drop odds 25 from the drop table, 25 the held item, 50 nothing;
+ * heart drop table default4, flower drop table default.
+ */
 BattleGroupSetup btlgrp_tik_tik_07_03_off_3 = {
     2, // numEnemies
     btlparty_tik_tik_07_03_off_3, // enemyData
@@ -1027,25 +1115,26 @@ BattleGroupSetup btlgrp_tik_tik_07_03_off_3 = {
     50, // noItemWeight
     battle_heart_drop_param_default4, // hpDropTable
     battle_flower_drop_param_default, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/** Enemies of the tik_07_04_off_1 fight: Hammer Bro, Spania. */
 BattleUnitSetup btlparty_tik_tik_07_04_off_1[] = {
     {
-        &unit_hammer_bros, // mUnitKindParams
+        &unit_hammer_bros, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {70.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_hammer_bros, // itemDropTable
     },
     {
-        &unit_hannya, // mUnitKindParams
+        &unit_hannya, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {110.0f, 0.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -1053,6 +1142,11 @@ BattleUnitSetup btlparty_tik_tik_07_04_off_1[] = {
     },
 };
 
+/**
+ * Battle group of the tik_07_04_off_1 fight (btlparty_tik_tik_07_04_off_1):
+ * item drop odds 25 from the drop table, 25 the held item, 50 nothing;
+ * heart drop table default3, flower drop table default2.
+ */
 BattleGroupSetup btlgrp_tik_tik_07_04_off_1 = {
     2, // numEnemies
     btlparty_tik_tik_07_04_off_1, // enemyData
@@ -1061,25 +1155,26 @@ BattleGroupSetup btlgrp_tik_tik_07_04_off_1 = {
     50, // noItemWeight
     battle_heart_drop_param_default3, // hpDropTable
     battle_flower_drop_param_default2, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/** Enemies of the tik_07_04_off_2 fight: Hammer Bro x2. */
 BattleUnitSetup btlparty_tik_tik_07_04_off_2[] = {
     {
-        &unit_hammer_bros, // mUnitKindParams
+        &unit_hammer_bros, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {70.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_hammer_bros, // itemDropTable
     },
     {
-        &unit_hammer_bros, // mUnitKindParams
+        &unit_hammer_bros, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {110.0f, 0.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -1087,6 +1182,11 @@ BattleUnitSetup btlparty_tik_tik_07_04_off_2[] = {
     },
 };
 
+/**
+ * Battle group of the tik_07_04_off_2 fight (btlparty_tik_tik_07_04_off_2):
+ * item drop odds 25 from the drop table, 25 the held item, 50 nothing;
+ * heart drop table default3, flower drop table default2.
+ */
 BattleGroupSetup btlgrp_tik_tik_07_04_off_2 = {
     2, // numEnemies
     btlparty_tik_tik_07_04_off_2, // enemyData
@@ -1095,25 +1195,26 @@ BattleGroupSetup btlgrp_tik_tik_07_04_off_2 = {
     50, // noItemWeight
     battle_heart_drop_param_default3, // hpDropTable
     battle_flower_drop_param_default2, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/** Enemies of the tik_07_04_off_3 fight: Hammer Bro, Koopatrol. */
 BattleUnitSetup btlparty_tik_tik_07_04_off_3[] = {
     {
-        &unit_hammer_bros, // mUnitKindParams
+        &unit_hammer_bros, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {70.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_hammer_bros, // itemDropTable
     },
     {
-        &unit_togenoko, // mUnitKindParams
+        &unit_togenoko, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {110.0f, 0.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -1121,6 +1222,11 @@ BattleUnitSetup btlparty_tik_tik_07_04_off_3[] = {
     },
 };
 
+/**
+ * Battle group of the tik_07_04_off_3 fight (btlparty_tik_tik_07_04_off_3):
+ * item drop odds 25 from the drop table, 25 the held item, 50 nothing;
+ * heart drop table default3, flower drop table default2.
+ */
 BattleGroupSetup btlgrp_tik_tik_07_04_off_3 = {
     2, // numEnemies
     btlparty_tik_tik_07_04_off_3, // enemyData
@@ -1129,15 +1235,16 @@ BattleGroupSetup btlgrp_tik_tik_07_04_off_3 = {
     50, // noItemWeight
     battle_heart_drop_param_default3, // hpDropTable
     battle_flower_drop_param_default2, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/** Enemies of the tik_15_01_off_1 fight: Goomba. */
 BattleUnitSetup btlparty_tik_tik_15_01_off_1[] = {
     {
-        &unit_kuriboo, // mUnitKindParams
+        &unit_kuriboo, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {90.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -1145,6 +1252,10 @@ BattleUnitSetup btlparty_tik_tik_15_01_off_1[] = {
     },
 };
 
+/**
+ * Battle group of the tik_15_01_off_1 fight (btlparty_tik_tik_15_01_off_1):
+ * item drop odds 25 from the drop table, 25 the held item, 50 nothing; default heart and flower drop tables.
+ */
 BattleGroupSetup btlgrp_tik_tik_15_01_off_1 = {
     1, // numEnemies
     btlparty_tik_tik_15_01_off_1, // enemyData
@@ -1153,15 +1264,16 @@ BattleGroupSetup btlgrp_tik_tik_15_01_off_1 = {
     50, // noItemWeight
     battle_heart_drop_param_default, // hpDropTable
     battle_flower_drop_param_default, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/** Enemies of the tik_15_02_off_1 fight: Paragoomba. */
 BattleUnitSetup btlparty_tik_tik_15_02_off_1[] = {
     {
-        &unit_patakuri, // mUnitKindParams
+        &unit_patakuri, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {90.0f, 40.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -1169,6 +1281,10 @@ BattleUnitSetup btlparty_tik_tik_15_02_off_1[] = {
     },
 };
 
+/**
+ * Battle group of the tik_15_02_off_1 fight (btlparty_tik_tik_15_02_off_1):
+ * item drop odds 25 from the drop table, 25 the held item, 50 nothing; default heart and flower drop tables.
+ */
 BattleGroupSetup btlgrp_tik_tik_15_02_off_1 = {
     1, // numEnemies
     btlparty_tik_tik_15_02_off_1, // enemyData
@@ -1177,15 +1293,16 @@ BattleGroupSetup btlgrp_tik_tik_15_02_off_1 = {
     50, // noItemWeight
     battle_heart_drop_param_default, // hpDropTable
     battle_flower_drop_param_default, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/** Enemies of the tik_15_03_off_1 fight: Spiky Goomba. */
 BattleUnitSetup btlparty_tik_tik_15_03_off_1[] = {
     {
-        &unit_togekuri, // mUnitKindParams
+        &unit_togekuri, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {90.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -1193,6 +1310,10 @@ BattleUnitSetup btlparty_tik_tik_15_03_off_1[] = {
     },
 };
 
+/**
+ * Battle group of the tik_15_03_off_1 fight (btlparty_tik_tik_15_03_off_1):
+ * item drop odds 25 from the drop table, 25 the held item, 50 nothing; default heart and flower drop tables.
+ */
 BattleGroupSetup btlgrp_tik_tik_15_03_off_1 = {
     1, // numEnemies
     btlparty_tik_tik_15_03_off_1, // enemyData
@@ -1201,25 +1322,26 @@ BattleGroupSetup btlgrp_tik_tik_15_03_off_1 = {
     50, // noItemWeight
     battle_heart_drop_param_default, // hpDropTable
     battle_flower_drop_param_default, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/** Enemies of the tik_15_04_off_1 fight: Hammer Bro, Goomba. */
 BattleUnitSetup btlparty_tik_tik_15_04_off_1[] = {
     {
-        &unit_hammer_bros, // mUnitKindParams
+        &unit_hammer_bros, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {70.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_hammer_bros, // itemDropTable
     },
     {
-        &unit_kuriboo, // mUnitKindParams
+        &unit_kuriboo, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {110.0f, 0.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -1227,6 +1349,11 @@ BattleUnitSetup btlparty_tik_tik_15_04_off_1[] = {
     },
 };
 
+/**
+ * Battle group of the tik_15_04_off_1 fight (btlparty_tik_tik_15_04_off_1):
+ * item drop odds 25 from the drop table, 25 the held item, 50 nothing;
+ * heart drop table default3, flower drop table default2.
+ */
 BattleGroupSetup btlgrp_tik_tik_15_04_off_1 = {
     2, // numEnemies
     btlparty_tik_tik_15_04_off_1, // enemyData
@@ -1235,25 +1362,26 @@ BattleGroupSetup btlgrp_tik_tik_15_04_off_1 = {
     50, // noItemWeight
     battle_heart_drop_param_default3, // hpDropTable
     battle_flower_drop_param_default2, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/** Enemies of the tik_15_04_off_2 fight: Hammer Bro x2. */
 BattleUnitSetup btlparty_tik_tik_15_04_off_2[] = {
     {
-        &unit_hammer_bros, // mUnitKindParams
+        &unit_hammer_bros, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {70.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_hammer_bros, // itemDropTable
     },
     {
-        &unit_hammer_bros, // mUnitKindParams
+        &unit_hammer_bros, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {110.0f, 0.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -1261,6 +1389,11 @@ BattleUnitSetup btlparty_tik_tik_15_04_off_2[] = {
     },
 };
 
+/**
+ * Battle group of the tik_15_04_off_2 fight (btlparty_tik_tik_15_04_off_2):
+ * item drop odds 25 from the drop table, 25 the held item, 50 nothing;
+ * heart drop table default3, flower drop table default2.
+ */
 BattleGroupSetup btlgrp_tik_tik_15_04_off_2 = {
     2, // numEnemies
     btlparty_tik_tik_15_04_off_2, // enemyData
@@ -1269,25 +1402,26 @@ BattleGroupSetup btlgrp_tik_tik_15_04_off_2 = {
     50, // noItemWeight
     battle_heart_drop_param_default3, // hpDropTable
     battle_flower_drop_param_default2, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/** Enemies of the tik_15_04_off_3 fight: Hammer Bro, Magikoopa. */
 BattleUnitSetup btlparty_tik_tik_15_04_off_3[] = {
     {
-        &unit_hammer_bros, // mUnitKindParams
+        &unit_hammer_bros, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {70.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_hammer_bros, // itemDropTable
     },
     {
-        &unit_kamec, // mUnitKindParams
+        &unit_kamec, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {110.0f, 0.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -1295,6 +1429,11 @@ BattleUnitSetup btlparty_tik_tik_15_04_off_3[] = {
     },
 };
 
+/**
+ * Battle group of the tik_15_04_off_3 fight (btlparty_tik_tik_15_04_off_3):
+ * item drop odds 25 from the drop table, 25 the held item, 50 nothing;
+ * heart drop table default3, flower drop table default2.
+ */
 BattleGroupSetup btlgrp_tik_tik_15_04_off_3 = {
     2, // numEnemies
     btlparty_tik_tik_15_04_off_3, // enemyData
@@ -1303,25 +1442,26 @@ BattleGroupSetup btlgrp_tik_tik_15_04_off_3 = {
     50, // noItemWeight
     battle_heart_drop_param_default3, // hpDropTable
     battle_flower_drop_param_default2, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/** Enemies of the tik_15_05_off_1 fight: Magikoopa, Paragoomba. */
 BattleUnitSetup btlparty_tik_tik_15_05_off_1[] = {
     {
-        &unit_kamec, // mUnitKindParams
+        &unit_kamec, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {70.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_kamec, // itemDropTable
     },
     {
-        &unit_patakuri, // mUnitKindParams
+        &unit_patakuri, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {110.0f, 40.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -1329,6 +1469,11 @@ BattleUnitSetup btlparty_tik_tik_15_05_off_1[] = {
     },
 };
 
+/**
+ * Battle group of the tik_15_05_off_1 fight (btlparty_tik_tik_15_05_off_1):
+ * item drop odds 25 from the drop table, 25 the held item, 50 nothing;
+ * heart drop table default, flower drop table default4.
+ */
 BattleGroupSetup btlgrp_tik_tik_15_05_off_1 = {
     2, // numEnemies
     btlparty_tik_tik_15_05_off_1, // enemyData
@@ -1337,25 +1482,26 @@ BattleGroupSetup btlgrp_tik_tik_15_05_off_1 = {
     50, // noItemWeight
     battle_heart_drop_param_default, // hpDropTable
     battle_flower_drop_param_default4, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/** Enemies of the tik_15_05_off_2 fight: Magikoopa x2. */
 BattleUnitSetup btlparty_tik_tik_15_05_off_2[] = {
     {
-        &unit_kamec, // mUnitKindParams
+        &unit_kamec, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {70.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_kamec, // itemDropTable
     },
     {
-        &unit_kamec, // mUnitKindParams
+        &unit_kamec, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {110.0f, 0.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -1363,6 +1509,11 @@ BattleUnitSetup btlparty_tik_tik_15_05_off_2[] = {
     },
 };
 
+/**
+ * Battle group of the tik_15_05_off_2 fight (btlparty_tik_tik_15_05_off_2):
+ * item drop odds 25 from the drop table, 25 the held item, 50 nothing;
+ * heart drop table default, flower drop table default4.
+ */
 BattleGroupSetup btlgrp_tik_tik_15_05_off_2 = {
     2, // numEnemies
     btlparty_tik_tik_15_05_off_2, // enemyData
@@ -1371,25 +1522,26 @@ BattleGroupSetup btlgrp_tik_tik_15_05_off_2 = {
     50, // noItemWeight
     battle_heart_drop_param_default, // hpDropTable
     battle_flower_drop_param_default4, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/** Enemies of the tik_15_05_off_3 fight: Magikoopa, Hammer Bro. */
 BattleUnitSetup btlparty_tik_tik_15_05_off_3[] = {
     {
-        &unit_kamec, // mUnitKindParams
+        &unit_kamec, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {70.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_kamec, // itemDropTable
     },
     {
-        &unit_hammer_bros, // mUnitKindParams
+        &unit_hammer_bros, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {110.0f, 0.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -1397,6 +1549,11 @@ BattleUnitSetup btlparty_tik_tik_15_05_off_3[] = {
     },
 };
 
+/**
+ * Battle group of the tik_15_05_off_3 fight (btlparty_tik_tik_15_05_off_3):
+ * item drop odds 25 from the drop table, 25 the held item, 50 nothing;
+ * heart drop table default, flower drop table default4.
+ */
 BattleGroupSetup btlgrp_tik_tik_15_05_off_3 = {
     2, // numEnemies
     btlparty_tik_tik_15_05_off_3, // enemyData
@@ -1405,25 +1562,26 @@ BattleGroupSetup btlgrp_tik_tik_15_05_off_3 = {
     50, // noItemWeight
     battle_heart_drop_param_default, // hpDropTable
     battle_flower_drop_param_default4, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/** Enemies of the tik_18_01_off_1 fight: Spania x2. */
 BattleUnitSetup btlparty_tik_tik_18_01_off_1[] = {
     {
-        &unit_hannya, // mUnitKindParams
+        &unit_hannya, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {70.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_hannya, // itemDropTable
     },
     {
-        &unit_hannya, // mUnitKindParams
+        &unit_hannya, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {110.0f, 0.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -1431,6 +1589,10 @@ BattleUnitSetup btlparty_tik_tik_18_01_off_1[] = {
     },
 };
 
+/**
+ * Battle group of the tik_18_01_off_1 fight (btlparty_tik_tik_18_01_off_1):
+ * item drop odds 25 from the drop table, 25 the held item, 50 nothing; default heart and flower drop tables.
+ */
 BattleGroupSetup btlgrp_tik_tik_18_01_off_1 = {
     2, // numEnemies
     btlparty_tik_tik_18_01_off_1, // enemyData
@@ -1439,35 +1601,36 @@ BattleGroupSetup btlgrp_tik_tik_18_01_off_1 = {
     50, // noItemWeight
     battle_heart_drop_param_default, // hpDropTable
     battle_flower_drop_param_default, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/** Enemies of the tik_18_01_off_2 fight: Spania, Spinia x2. */
 BattleUnitSetup btlparty_tik_tik_18_01_off_2[] = {
     {
-        &unit_hannya, // mUnitKindParams
+        &unit_hannya, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {50.0f, 0.0f, -10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_hannya, // itemDropTable
     },
     {
-        &unit_hinnya, // mUnitKindParams
+        &unit_hinnya, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {90.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_hinnya, // itemDropTable
     },
     {
-        &unit_hinnya, // mUnitKindParams
+        &unit_hinnya, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {130.0f, 0.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -1475,6 +1638,10 @@ BattleUnitSetup btlparty_tik_tik_18_01_off_2[] = {
     },
 };
 
+/**
+ * Battle group of the tik_18_01_off_2 fight (btlparty_tik_tik_18_01_off_2):
+ * item drop odds 25 from the drop table, 25 the held item, 50 nothing; default heart and flower drop tables.
+ */
 BattleGroupSetup btlgrp_tik_tik_18_01_off_2 = {
     3, // numEnemies
     btlparty_tik_tik_18_01_off_2, // enemyData
@@ -1483,45 +1650,46 @@ BattleGroupSetup btlgrp_tik_tik_18_01_off_2 = {
     50, // noItemWeight
     battle_heart_drop_param_default, // hpDropTable
     battle_flower_drop_param_default, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/** Enemies of the tik_18_02_off_1 fight: Spania x4. */
 BattleUnitSetup btlparty_tik_tik_18_02_off_1[] = {
     {
-        &unit_hannya, // mUnitKindParams
+        &unit_hannya, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {30.0f, 0.0f, -10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_hannya, // itemDropTable
     },
     {
-        &unit_hannya, // mUnitKindParams
+        &unit_hannya, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {70.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_hannya, // itemDropTable
     },
     {
-        &unit_hannya, // mUnitKindParams
+        &unit_hannya, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {110.0f, 0.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_hannya, // itemDropTable
     },
     {
-        &unit_hannya, // mUnitKindParams
+        &unit_hannya, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {150.0f, 0.0f, 20.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -1529,6 +1697,10 @@ BattleUnitSetup btlparty_tik_tik_18_02_off_1[] = {
     },
 };
 
+/**
+ * Battle group of the tik_18_02_off_1 fight (btlparty_tik_tik_18_02_off_1):
+ * item drop odds 25 from the drop table, 25 the held item, 50 nothing; default heart and flower drop tables.
+ */
 BattleGroupSetup btlgrp_tik_tik_18_02_off_1 = {
     4, // numEnemies
     btlparty_tik_tik_18_02_off_1, // enemyData
@@ -1537,25 +1709,26 @@ BattleGroupSetup btlgrp_tik_tik_18_02_off_1 = {
     50, // noItemWeight
     battle_heart_drop_param_default, // hpDropTable
     battle_flower_drop_param_default, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/** Enemies of the tik_18_02_off_2 fight: Spania, Spinia. */
 BattleUnitSetup btlparty_tik_tik_18_02_off_2[] = {
     {
-        &unit_hannya, // mUnitKindParams
+        &unit_hannya, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {70.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_hannya, // itemDropTable
     },
     {
-        &unit_hinnya, // mUnitKindParams
+        &unit_hinnya, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {110.0f, 0.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -1563,6 +1736,10 @@ BattleUnitSetup btlparty_tik_tik_18_02_off_2[] = {
     },
 };
 
+/**
+ * Battle group of the tik_18_02_off_2 fight (btlparty_tik_tik_18_02_off_2):
+ * item drop odds 25 from the drop table, 25 the held item, 50 nothing; default heart and flower drop tables.
+ */
 BattleGroupSetup btlgrp_tik_tik_18_02_off_2 = {
     2, // numEnemies
     btlparty_tik_tik_18_02_off_2, // enemyData
@@ -1571,25 +1748,26 @@ BattleGroupSetup btlgrp_tik_tik_18_02_off_2 = {
     50, // noItemWeight
     battle_heart_drop_param_default, // hpDropTable
     battle_flower_drop_param_default, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/** Enemies of the tik_18_03_off_1 fight: Magikoopa, Paragoomba. */
 BattleUnitSetup btlparty_tik_tik_18_03_off_1[] = {
     {
-        &unit_kamec, // mUnitKindParams
+        &unit_kamec, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {70.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_kamec, // itemDropTable
     },
     {
-        &unit_patakuri, // mUnitKindParams
+        &unit_patakuri, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {110.0f, 40.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -1597,6 +1775,11 @@ BattleUnitSetup btlparty_tik_tik_18_03_off_1[] = {
     },
 };
 
+/**
+ * Battle group of the tik_18_03_off_1 fight (btlparty_tik_tik_18_03_off_1):
+ * item drop odds 25 from the drop table, 25 the held item, 50 nothing;
+ * heart drop table default, flower drop table default4.
+ */
 BattleGroupSetup btlgrp_tik_tik_18_03_off_1 = {
     2, // numEnemies
     btlparty_tik_tik_18_03_off_1, // enemyData
@@ -1605,25 +1788,26 @@ BattleGroupSetup btlgrp_tik_tik_18_03_off_1 = {
     50, // noItemWeight
     battle_heart_drop_param_default, // hpDropTable
     battle_flower_drop_param_default4, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/** Enemies of the tik_18_03_off_2 fight: Magikoopa x2. */
 BattleUnitSetup btlparty_tik_tik_18_03_off_2[] = {
     {
-        &unit_kamec, // mUnitKindParams
+        &unit_kamec, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {70.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_kamec, // itemDropTable
     },
     {
-        &unit_kamec, // mUnitKindParams
+        &unit_kamec, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {110.0f, 0.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -1631,6 +1815,11 @@ BattleUnitSetup btlparty_tik_tik_18_03_off_2[] = {
     },
 };
 
+/**
+ * Battle group of the tik_18_03_off_2 fight (btlparty_tik_tik_18_03_off_2):
+ * item drop odds 25 from the drop table, 25 the held item, 50 nothing;
+ * heart drop table default, flower drop table default4.
+ */
 BattleGroupSetup btlgrp_tik_tik_18_03_off_2 = {
     2, // numEnemies
     btlparty_tik_tik_18_03_off_2, // enemyData
@@ -1639,25 +1828,26 @@ BattleGroupSetup btlgrp_tik_tik_18_03_off_2 = {
     50, // noItemWeight
     battle_heart_drop_param_default, // hpDropTable
     battle_flower_drop_param_default4, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/** Enemies of the tik_18_03_off_3 fight: Magikoopa, Koopatrol. */
 BattleUnitSetup btlparty_tik_tik_18_03_off_3[] = {
     {
-        &unit_kamec, // mUnitKindParams
+        &unit_kamec, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {70.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_kamec, // itemDropTable
     },
     {
-        &unit_togenoko, // mUnitKindParams
+        &unit_togenoko, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {110.0f, 0.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -1665,6 +1855,11 @@ BattleUnitSetup btlparty_tik_tik_18_03_off_3[] = {
     },
 };
 
+/**
+ * Battle group of the tik_18_03_off_3 fight (btlparty_tik_tik_18_03_off_3):
+ * item drop odds 25 from the drop table, 25 the held item, 50 nothing;
+ * heart drop table default, flower drop table default4.
+ */
 BattleGroupSetup btlgrp_tik_tik_18_03_off_3 = {
     2, // numEnemies
     btlparty_tik_tik_18_03_off_3, // enemyData
@@ -1673,25 +1868,26 @@ BattleGroupSetup btlgrp_tik_tik_18_03_off_3 = {
     50, // noItemWeight
     battle_heart_drop_param_default, // hpDropTable
     battle_flower_drop_param_default4, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/** Enemies of the tik_18_04_off_1 fight: Koopatrol, Spania. */
 BattleUnitSetup btlparty_tik_tik_18_04_off_1[] = {
     {
-        &unit_togenoko, // mUnitKindParams
+        &unit_togenoko, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {70.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_togenoko, // itemDropTable
     },
     {
-        &unit_hannya, // mUnitKindParams
+        &unit_hannya, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {110.0f, 0.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -1699,6 +1895,11 @@ BattleUnitSetup btlparty_tik_tik_18_04_off_1[] = {
     },
 };
 
+/**
+ * Battle group of the tik_18_04_off_1 fight (btlparty_tik_tik_18_04_off_1):
+ * item drop odds 25 from the drop table, 25 the held item, 50 nothing;
+ * heart drop table default4, flower drop table default.
+ */
 BattleGroupSetup btlgrp_tik_tik_18_04_off_1 = {
     2, // numEnemies
     btlparty_tik_tik_18_04_off_1, // enemyData
@@ -1707,25 +1908,26 @@ BattleGroupSetup btlgrp_tik_tik_18_04_off_1 = {
     50, // noItemWeight
     battle_heart_drop_param_default4, // hpDropTable
     battle_flower_drop_param_default, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/** Enemies of the tik_18_04_off_2 fight: Koopatrol x2. */
 BattleUnitSetup btlparty_tik_tik_18_04_off_2[] = {
     {
-        &unit_togenoko, // mUnitKindParams
+        &unit_togenoko, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {70.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_togenoko, // itemDropTable
     },
     {
-        &unit_togenoko, // mUnitKindParams
+        &unit_togenoko, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {110.0f, 0.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -1733,6 +1935,11 @@ BattleUnitSetup btlparty_tik_tik_18_04_off_2[] = {
     },
 };
 
+/**
+ * Battle group of the tik_18_04_off_2 fight (btlparty_tik_tik_18_04_off_2):
+ * item drop odds 25 from the drop table, 25 the held item, 50 nothing;
+ * heart drop table default4, flower drop table default.
+ */
 BattleGroupSetup btlgrp_tik_tik_18_04_off_2 = {
     2, // numEnemies
     btlparty_tik_tik_18_04_off_2, // enemyData
@@ -1741,25 +1948,26 @@ BattleGroupSetup btlgrp_tik_tik_18_04_off_2 = {
     50, // noItemWeight
     battle_heart_drop_param_default4, // hpDropTable
     battle_flower_drop_param_default, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/** Enemies of the tik_18_04_off_3 fight: Koopatrol, Magikoopa. */
 BattleUnitSetup btlparty_tik_tik_18_04_off_3[] = {
     {
-        &unit_togenoko, // mUnitKindParams
+        &unit_togenoko, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {70.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_togenoko, // itemDropTable
     },
     {
-        &unit_kamec, // mUnitKindParams
+        &unit_kamec, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {110.0f, 0.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -1767,6 +1975,11 @@ BattleUnitSetup btlparty_tik_tik_18_04_off_3[] = {
     },
 };
 
+/**
+ * Battle group of the tik_18_04_off_3 fight (btlparty_tik_tik_18_04_off_3):
+ * item drop odds 25 from the drop table, 25 the held item, 50 nothing;
+ * heart drop table default4, flower drop table default.
+ */
 BattleGroupSetup btlgrp_tik_tik_18_04_off_3 = {
     2, // numEnemies
     btlparty_tik_tik_18_04_off_3, // enemyData
@@ -1775,55 +1988,56 @@ BattleGroupSetup btlgrp_tik_tik_18_04_off_3 = {
     50, // noItemWeight
     battle_heart_drop_param_default4, // hpDropTable
     battle_flower_drop_param_default, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/** Enemies of the tik_20_01_off_1 fight: Spania x5. */
 BattleUnitSetup btlparty_tik_tik_20_01_off_1[] = {
     {
-        &unit_hannya, // mUnitKindParams
+        &unit_hannya, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {10.0f, 0.0f, -20.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_hannya, // itemDropTable
     },
     {
-        &unit_hannya, // mUnitKindParams
+        &unit_hannya, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {50.0f, 0.0f, -10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_hannya, // itemDropTable
     },
     {
-        &unit_hannya, // mUnitKindParams
+        &unit_hannya, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {90.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_hannya, // itemDropTable
     },
     {
-        &unit_hannya, // mUnitKindParams
+        &unit_hannya, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {130.0f, 0.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_hannya, // itemDropTable
     },
     {
-        &unit_hannya, // mUnitKindParams
+        &unit_hannya, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {170.0f, 0.0f, 20.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -1831,6 +2045,10 @@ BattleUnitSetup btlparty_tik_tik_20_01_off_1[] = {
     },
 };
 
+/**
+ * Battle group of the tik_20_01_off_1 fight (btlparty_tik_tik_20_01_off_1):
+ * item drop odds 25 from the drop table, 25 the held item, 50 nothing; default heart and flower drop tables.
+ */
 BattleGroupSetup btlgrp_tik_tik_20_01_off_1 = {
     5, // numEnemies
     btlparty_tik_tik_20_01_off_1, // enemyData
@@ -1839,45 +2057,46 @@ BattleGroupSetup btlgrp_tik_tik_20_01_off_1 = {
     50, // noItemWeight
     battle_heart_drop_param_default, // hpDropTable
     battle_flower_drop_param_default, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/** Enemies of the tik_20_02_off_1 fight: Spania x4. */
 BattleUnitSetup btlparty_tik_tik_20_02_off_1[] = {
     {
-        &unit_hannya, // mUnitKindParams
+        &unit_hannya, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {30.0f, 0.0f, -10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_hannya, // itemDropTable
     },
     {
-        &unit_hannya, // mUnitKindParams
+        &unit_hannya, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {70.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_hannya, // itemDropTable
     },
     {
-        &unit_hannya, // mUnitKindParams
+        &unit_hannya, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {110.0f, 0.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_hannya, // itemDropTable
     },
     {
-        &unit_hannya, // mUnitKindParams
+        &unit_hannya, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {150.0f, 0.0f, 20.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -1885,6 +2104,10 @@ BattleUnitSetup btlparty_tik_tik_20_02_off_1[] = {
     },
 };
 
+/**
+ * Battle group of the tik_20_02_off_1 fight (btlparty_tik_tik_20_02_off_1):
+ * item drop odds 25 from the drop table, 25 the held item, 50 nothing; default heart and flower drop tables.
+ */
 BattleGroupSetup btlgrp_tik_tik_20_02_off_1 = {
     4, // numEnemies
     btlparty_tik_tik_20_02_off_1, // enemyData
@@ -1893,35 +2116,36 @@ BattleGroupSetup btlgrp_tik_tik_20_02_off_1 = {
     50, // noItemWeight
     battle_heart_drop_param_default, // hpDropTable
     battle_flower_drop_param_default, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/** Enemies of the tik_20_03_off_1 fight: Spania x3. */
 BattleUnitSetup btlparty_tik_tik_20_03_off_1[] = {
     {
-        &unit_hannya, // mUnitKindParams
+        &unit_hannya, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {50.0f, 0.0f, -10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_hannya, // itemDropTable
     },
     {
-        &unit_hannya, // mUnitKindParams
+        &unit_hannya, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {90.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_hannya, // itemDropTable
     },
     {
-        &unit_hannya, // mUnitKindParams
+        &unit_hannya, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {130.0f, 0.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -1929,6 +2153,10 @@ BattleUnitSetup btlparty_tik_tik_20_03_off_1[] = {
     },
 };
 
+/**
+ * Battle group of the tik_20_03_off_1 fight (btlparty_tik_tik_20_03_off_1):
+ * item drop odds 25 from the drop table, 25 the held item, 50 nothing; default heart and flower drop tables.
+ */
 BattleGroupSetup btlgrp_tik_tik_20_03_off_1 = {
     3, // numEnemies
     btlparty_tik_tik_20_03_off_1, // enemyData
@@ -1937,45 +2165,46 @@ BattleGroupSetup btlgrp_tik_tik_20_03_off_1 = {
     50, // noItemWeight
     battle_heart_drop_param_default, // hpDropTable
     battle_flower_drop_param_default, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/** Enemies of the tik_20_04_off_1 fight: Spania x4. */
 BattleUnitSetup btlparty_tik_tik_20_04_off_1[] = {
     {
-        &unit_hannya, // mUnitKindParams
+        &unit_hannya, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {30.0f, 0.0f, -10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_hannya, // itemDropTable
     },
     {
-        &unit_hannya, // mUnitKindParams
+        &unit_hannya, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {70.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_hannya, // itemDropTable
     },
     {
-        &unit_hannya, // mUnitKindParams
+        &unit_hannya, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {110.0f, 0.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_hannya, // itemDropTable
     },
     {
-        &unit_hannya, // mUnitKindParams
+        &unit_hannya, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {150.0f, 0.0f, 20.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -1983,6 +2212,10 @@ BattleUnitSetup btlparty_tik_tik_20_04_off_1[] = {
     },
 };
 
+/**
+ * Battle group of the tik_20_04_off_1 fight (btlparty_tik_tik_20_04_off_1):
+ * item drop odds 25 from the drop table, 25 the held item, 50 nothing; default heart and flower drop tables.
+ */
 BattleGroupSetup btlgrp_tik_tik_20_04_off_1 = {
     4, // numEnemies
     btlparty_tik_tik_20_04_off_1, // enemyData
@@ -1991,55 +2224,56 @@ BattleGroupSetup btlgrp_tik_tik_20_04_off_1 = {
     50, // noItemWeight
     battle_heart_drop_param_default, // hpDropTable
     battle_flower_drop_param_default, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/** Enemies of the tik_20_05_off_1 fight: Spania x5. */
 BattleUnitSetup btlparty_tik_tik_20_05_off_1[] = {
     {
-        &unit_hannya, // mUnitKindParams
+        &unit_hannya, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {10.0f, 0.0f, -20.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_hannya, // itemDropTable
     },
     {
-        &unit_hannya, // mUnitKindParams
+        &unit_hannya, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {50.0f, 0.0f, -10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_hannya, // itemDropTable
     },
     {
-        &unit_hannya, // mUnitKindParams
+        &unit_hannya, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {90.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_hannya, // itemDropTable
     },
     {
-        &unit_hannya, // mUnitKindParams
+        &unit_hannya, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {130.0f, 0.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_hannya, // itemDropTable
     },
     {
-        &unit_hannya, // mUnitKindParams
+        &unit_hannya, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {170.0f, 0.0f, 20.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -2047,6 +2281,10 @@ BattleUnitSetup btlparty_tik_tik_20_05_off_1[] = {
     },
 };
 
+/**
+ * Battle group of the tik_20_05_off_1 fight (btlparty_tik_tik_20_05_off_1):
+ * item drop odds 25 from the drop table, 25 the held item, 50 nothing; default heart and flower drop tables.
+ */
 BattleGroupSetup btlgrp_tik_tik_20_05_off_1 = {
     5, // numEnemies
     btlparty_tik_tik_20_05_off_1, // enemyData
@@ -2055,55 +2293,56 @@ BattleGroupSetup btlgrp_tik_tik_20_05_off_1 = {
     50, // noItemWeight
     battle_heart_drop_param_default, // hpDropTable
     battle_flower_drop_param_default, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/** Enemies of the tik_20_06_off_1 fight: Spunia, Spania x4. */
 BattleUnitSetup btlparty_tik_tik_20_06_off_1[] = {
     {
-        &unit_hennya, // mUnitKindParams
+        &unit_hennya, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {10.0f, 0.0f, -20.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_hennya, // itemDropTable
     },
     {
-        &unit_hannya, // mUnitKindParams
+        &unit_hannya, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {50.0f, 0.0f, -10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_hannya, // itemDropTable
     },
     {
-        &unit_hannya, // mUnitKindParams
+        &unit_hannya, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {90.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_hannya, // itemDropTable
     },
     {
-        &unit_hannya, // mUnitKindParams
+        &unit_hannya, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {130.0f, 0.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_hannya, // itemDropTable
     },
     {
-        &unit_hannya, // mUnitKindParams
+        &unit_hannya, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {170.0f, 0.0f, 20.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -2111,6 +2350,10 @@ BattleUnitSetup btlparty_tik_tik_20_06_off_1[] = {
     },
 };
 
+/**
+ * Battle group of the tik_20_06_off_1 fight (btlparty_tik_tik_20_06_off_1):
+ * item drop odds 25 from the drop table, 25 the held item, 50 nothing; default heart and flower drop tables.
+ */
 BattleGroupSetup btlgrp_tik_tik_20_06_off_1 = {
     5, // numEnemies
     btlparty_tik_tik_20_06_off_1, // enemyData
@@ -2119,61 +2362,81 @@ BattleGroupSetup btlgrp_tik_tik_20_06_off_1 = {
     50, // noItemWeight
     battle_heart_drop_param_default, // hpDropTable
     battle_flower_drop_param_default, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/** Enemy group of the tik_test1_off encounter: btlgrp_tik_tik_01_01_off_1. */
 NpcBattleSelect btlgrpsel_tik_btlno_tik_test1_off[] = {
     {50, &btlgrp_tik_tik_01_01_off_1, &tik_btlstage_data[3]},
     {0},
 };
 
+/** Enemy group of the tik_test2_off encounter: btlgrp_tik_tik_01_01_off_1. */
 NpcBattleSelect btlgrpsel_tik_btlno_tik_test2_off[] = {
     {50, &btlgrp_tik_tik_01_01_off_1, tik_btlstage_data},
     {0},
 };
 
+/** Enemy group of the tik_test3_off encounter: btlgrp_tik_tik_01_01_off_1. */
 NpcBattleSelect btlgrpsel_tik_btlno_tik_test3_off[] = {
     {50, &btlgrp_tik_tik_01_01_off_1, &tik_btlstage_data[2]},
     {0},
 };
 
+/** Enemy group of the tik_gesso_off encounter: btlgrp_tik_tik_gesso. */
 NpcBattleSelect btlgrpsel_tik_btlno_tik_gesso_off[] = {
     {50, &btlgrp_tik_tik_gesso, tik_btlstage_data},
     {0},
 };
 
+/** Enemy group of the tik_01_01_off encounter: btlgrp_tik_tik_01_01_off_1. */
 NpcBattleSelect btlgrpsel_tik_btlno_tik_01_01_off[] = {
     {50, &btlgrp_tik_tik_01_01_off_1, &tik_btlstage_data[3]},
     {0},
 };
 
+/** Enemy group of the tik_01_02_off encounter: btlgrp_tik_tik_01_02_off_1. */
 NpcBattleSelect btlgrpsel_tik_btlno_tik_01_02_off[] = {
     {50, &btlgrp_tik_tik_01_02_off_1, &tik_btlstage_data[3]},
     {0},
 };
 
+/**
+ * Enemy groups that may start the tik_04_01_on encounter, picked by weight: btlgrp_tik_tik_04_01_on_1 (weight
+ * 20), btlgrp_tik_tik_04_01_on_2 (weight 20).
+ */
 NpcBattleSelect btlgrpsel_tik_btlno_tik_04_01_on[] = {
     {20, &btlgrp_tik_tik_04_01_on_1, &tik_btlstage_data[3]},
     {20, &btlgrp_tik_tik_04_01_on_2, &tik_btlstage_data[3]},
     {0},
 };
 
+/** Enemy group of the tik_04_01_off encounter: btlgrp_tik_tik_04_01_off_1. */
 NpcBattleSelect btlgrpsel_tik_btlno_tik_04_01_off[] = {
     {20, &btlgrp_tik_tik_04_01_off_1, &tik_btlstage_data[3]},
     {0},
 };
 
+/**
+ * Enemy groups that may start the tik_04_02_on encounter, picked by weight: btlgrp_tik_tik_04_02_on_1 (weight
+ * 20), btlgrp_tik_tik_04_02_on_2 (weight 20).
+ */
 NpcBattleSelect btlgrpsel_tik_btlno_tik_04_02_on[] = {
     {20, &btlgrp_tik_tik_04_02_on_1, &tik_btlstage_data[3]},
     {20, &btlgrp_tik_tik_04_02_on_2, &tik_btlstage_data[3]},
     {0},
 };
 
+/** Enemy group of the tik_04_02_off encounter: btlgrp_tik_tik_04_02_off_1. */
 NpcBattleSelect btlgrpsel_tik_btlno_tik_04_02_off[] = {
     {20, &btlgrp_tik_tik_04_02_off_1, &tik_btlstage_data[3]},
     {0},
 };
 
+/**
+ * Enemy groups that may start the tik_04_03_off encounter, picked by weight: btlgrp_tik_tik_04_03_off_1
+ * (weight 20), btlgrp_tik_tik_04_03_off_2 (weight 20), btlgrp_tik_tik_04_03_off_3 (weight 20).
+ */
 NpcBattleSelect btlgrpsel_tik_btlno_tik_04_03_off[] = {
     {20, &btlgrp_tik_tik_04_03_off_1, &tik_btlstage_data[3]},
     {20, &btlgrp_tik_tik_04_03_off_2, &tik_btlstage_data[3]},
@@ -2181,6 +2444,10 @@ NpcBattleSelect btlgrpsel_tik_btlno_tik_04_03_off[] = {
     {0},
 };
 
+/**
+ * Enemy groups that may start the tik_04_04_off encounter, picked by weight: btlgrp_tik_tik_04_04_off_1
+ * (weight 20), btlgrp_tik_tik_04_04_off_2 (weight 20), btlgrp_tik_tik_04_04_off_3 (weight 20).
+ */
 NpcBattleSelect btlgrpsel_tik_btlno_tik_04_04_off[] = {
     {20, &btlgrp_tik_tik_04_04_off_1, &tik_btlstage_data[3]},
     {20, &btlgrp_tik_tik_04_04_off_2, &tik_btlstage_data[3]},
@@ -2188,18 +2455,30 @@ NpcBattleSelect btlgrpsel_tik_btlno_tik_04_04_off[] = {
     {0},
 };
 
+/**
+ * Enemy groups that may start the tik_07_01_off encounter, picked by weight: btlgrp_tik_tik_07_01_off_1
+ * (weight 20), btlgrp_tik_tik_07_01_off_2 (weight 20).
+ */
 NpcBattleSelect btlgrpsel_tik_btlno_tik_07_01_off[] = {
     {20, &btlgrp_tik_tik_07_01_off_1, &tik_btlstage_data[3]},
     {20, &btlgrp_tik_tik_07_01_off_2, &tik_btlstage_data[3]},
     {0},
 };
 
+/**
+ * Enemy groups that may start the tik_07_02_off encounter, picked by weight: btlgrp_tik_tik_07_02_off_1
+ * (weight 20), btlgrp_tik_tik_07_02_off_2 (weight 20).
+ */
 NpcBattleSelect btlgrpsel_tik_btlno_tik_07_02_off[] = {
     {20, &btlgrp_tik_tik_07_02_off_1, &tik_btlstage_data[3]},
     {20, &btlgrp_tik_tik_07_02_off_2, &tik_btlstage_data[3]},
     {0},
 };
 
+/**
+ * Enemy groups that may start the tik_07_03_off encounter, picked by weight: btlgrp_tik_tik_07_03_off_1
+ * (weight 20), btlgrp_tik_tik_07_03_off_2 (weight 20), btlgrp_tik_tik_07_03_off_3 (weight 20).
+ */
 NpcBattleSelect btlgrpsel_tik_btlno_tik_07_03_off[] = {
     {20, &btlgrp_tik_tik_07_03_off_1, &tik_btlstage_data[3]},
     {20, &btlgrp_tik_tik_07_03_off_2, &tik_btlstage_data[3]},
@@ -2207,6 +2486,10 @@ NpcBattleSelect btlgrpsel_tik_btlno_tik_07_03_off[] = {
     {0},
 };
 
+/**
+ * Enemy groups that may start the tik_07_04_off encounter, picked by weight: btlgrp_tik_tik_07_04_off_1
+ * (weight 20), btlgrp_tik_tik_07_04_off_2 (weight 20), btlgrp_tik_tik_07_04_off_3 (weight 20).
+ */
 NpcBattleSelect btlgrpsel_tik_btlno_tik_07_04_off[] = {
     {20, &btlgrp_tik_tik_07_04_off_1, &tik_btlstage_data[3]},
     {20, &btlgrp_tik_tik_07_04_off_2, &tik_btlstage_data[3]},
@@ -2214,21 +2497,28 @@ NpcBattleSelect btlgrpsel_tik_btlno_tik_07_04_off[] = {
     {0},
 };
 
+/** Enemy group of the tik_15_01_off encounter: btlgrp_tik_tik_15_01_off_1. */
 NpcBattleSelect btlgrpsel_tik_btlno_tik_15_01_off[] = {
     {20, &btlgrp_tik_tik_15_01_off_1, &tik_btlstage_data[3]},
     {0},
 };
 
+/** Enemy group of the tik_15_02_off encounter: btlgrp_tik_tik_15_02_off_1. */
 NpcBattleSelect btlgrpsel_tik_btlno_tik_15_02_off[] = {
     {20, &btlgrp_tik_tik_15_02_off_1, &tik_btlstage_data[3]},
     {0},
 };
 
+/** Enemy group of the tik_15_03_off encounter: btlgrp_tik_tik_15_03_off_1. */
 NpcBattleSelect btlgrpsel_tik_btlno_tik_15_03_off[] = {
     {20, &btlgrp_tik_tik_15_03_off_1, &tik_btlstage_data[3]},
     {0},
 };
 
+/**
+ * Enemy groups that may start the tik_15_04_off encounter, picked by weight: btlgrp_tik_tik_15_04_off_1
+ * (weight 20), btlgrp_tik_tik_15_04_off_2 (weight 20), btlgrp_tik_tik_15_04_off_3 (weight 20).
+ */
 NpcBattleSelect btlgrpsel_tik_btlno_tik_15_04_off[] = {
     {20, &btlgrp_tik_tik_15_04_off_1, &tik_btlstage_data[3]},
     {20, &btlgrp_tik_tik_15_04_off_2, &tik_btlstage_data[3]},
@@ -2236,6 +2526,10 @@ NpcBattleSelect btlgrpsel_tik_btlno_tik_15_04_off[] = {
     {0},
 };
 
+/**
+ * Enemy groups that may start the tik_15_05_off encounter, picked by weight: btlgrp_tik_tik_15_05_off_1
+ * (weight 20), btlgrp_tik_tik_15_05_off_2 (weight 20), btlgrp_tik_tik_15_05_off_3 (weight 20).
+ */
 NpcBattleSelect btlgrpsel_tik_btlno_tik_15_05_off[] = {
     {20, &btlgrp_tik_tik_15_05_off_1, &tik_btlstage_data[3]},
     {20, &btlgrp_tik_tik_15_05_off_2, &tik_btlstage_data[3]},
@@ -2243,18 +2537,30 @@ NpcBattleSelect btlgrpsel_tik_btlno_tik_15_05_off[] = {
     {0},
 };
 
+/**
+ * Enemy groups that may start the tik_18_01_off encounter, picked by weight: btlgrp_tik_tik_18_01_off_1
+ * (weight 20), btlgrp_tik_tik_18_01_off_2 (weight 20).
+ */
 NpcBattleSelect btlgrpsel_tik_btlno_tik_18_01_off[] = {
     {20, &btlgrp_tik_tik_18_01_off_1, &tik_btlstage_data[3]},
     {20, &btlgrp_tik_tik_18_01_off_2, &tik_btlstage_data[3]},
     {0},
 };
 
+/**
+ * Enemy groups that may start the tik_18_02_off encounter, picked by weight: btlgrp_tik_tik_18_02_off_1
+ * (weight 20), btlgrp_tik_tik_18_02_off_2 (weight 20).
+ */
 NpcBattleSelect btlgrpsel_tik_btlno_tik_18_02_off[] = {
     {20, &btlgrp_tik_tik_18_02_off_1, &tik_btlstage_data[3]},
     {20, &btlgrp_tik_tik_18_02_off_2, &tik_btlstage_data[3]},
     {0},
 };
 
+/**
+ * Enemy groups that may start the tik_18_03_off encounter, picked by weight: btlgrp_tik_tik_18_03_off_1
+ * (weight 20), btlgrp_tik_tik_18_03_off_2 (weight 20), btlgrp_tik_tik_18_03_off_3 (weight 20).
+ */
 NpcBattleSelect btlgrpsel_tik_btlno_tik_18_03_off[] = {
     {20, &btlgrp_tik_tik_18_03_off_1, &tik_btlstage_data[3]},
     {20, &btlgrp_tik_tik_18_03_off_2, &tik_btlstage_data[3]},
@@ -2262,6 +2568,10 @@ NpcBattleSelect btlgrpsel_tik_btlno_tik_18_03_off[] = {
     {0},
 };
 
+/**
+ * Enemy groups that may start the tik_18_04_off encounter, picked by weight: btlgrp_tik_tik_18_04_off_1
+ * (weight 20), btlgrp_tik_tik_18_04_off_2 (weight 20), btlgrp_tik_tik_18_04_off_3 (weight 20).
+ */
 NpcBattleSelect btlgrpsel_tik_btlno_tik_18_04_off[] = {
     {20, &btlgrp_tik_tik_18_04_off_1, &tik_btlstage_data[3]},
     {20, &btlgrp_tik_tik_18_04_off_2, &tik_btlstage_data[3]},
@@ -2269,334 +2579,345 @@ NpcBattleSelect btlgrpsel_tik_btlno_tik_18_04_off[] = {
     {0},
 };
 
+/** Enemy group of the tik_20_01_off encounter: btlgrp_tik_tik_20_01_off_1. */
 NpcBattleSelect btlgrpsel_tik_btlno_tik_20_01_off[] = {
     {20, &btlgrp_tik_tik_20_01_off_1, &tik_btlstage_data[3]},
     {0},
 };
 
+/** Enemy group of the tik_20_02_off encounter: btlgrp_tik_tik_20_02_off_1. */
 NpcBattleSelect btlgrpsel_tik_btlno_tik_20_02_off[] = {
     {20, &btlgrp_tik_tik_20_02_off_1, &tik_btlstage_data[3]},
     {0},
 };
 
+/** Enemy group of the tik_20_03_off encounter: btlgrp_tik_tik_20_03_off_1. */
 NpcBattleSelect btlgrpsel_tik_btlno_tik_20_03_off[] = {
     {20, &btlgrp_tik_tik_20_03_off_1, &tik_btlstage_data[3]},
     {0},
 };
 
+/** Enemy group of the tik_20_04_off encounter: btlgrp_tik_tik_20_04_off_1. */
 NpcBattleSelect btlgrpsel_tik_btlno_tik_20_04_off[] = {
     {20, &btlgrp_tik_tik_20_04_off_1, &tik_btlstage_data[3]},
     {0},
 };
 
+/** Enemy group of the tik_20_05_off encounter: btlgrp_tik_tik_20_05_off_1. */
 NpcBattleSelect btlgrpsel_tik_btlno_tik_20_05_off[] = {
     {20, &btlgrp_tik_tik_20_05_off_1, &tik_btlstage_data[3]},
     {0},
 };
 
+/** Enemy group of the tik_20_06_off encounter: btlgrp_tik_tik_20_06_off_1. */
 NpcBattleSelect btlgrpsel_tik_btlno_tik_20_06_off[] = {
     {20, &btlgrp_tik_tik_20_06_off_1, &tik_btlstage_data[3]},
     {0},
 };
 
+/**
+ * Encounter table of the Rogueport Sewers: one entry per battle number with its stage, enemy group pool,
+ * battle music and random-roll ranges.
+ */
 NpcSetupBattleInfo btlsetup_tik_tbl[] = {
     {
-        /*"マップstg_00_1"*/"\x83\x7D\x83\x62\x83\x76\x73\x74\x67\x5F\x30\x30\x5F\x31", // name
+        "マップstg_00_1", // name
         NULL, 0, // mapName..fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_tik_btlno_tik_test1_off, // select
-        0, 0, // battleFlags..field_1C
-        {{1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        0, 0, // battleFlags, randomMode
+        {{1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_ZAKO_BATTLE1", // bgmName
     },
     {
-        /*"マップstg_00_2"*/"\x83\x7D\x83\x62\x83\x76\x73\x74\x67\x5F\x30\x30\x5F\x32", // name
+        "マップstg_00_2", // name
         NULL, 0, // mapName..fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_tik_btlno_tik_test2_off, // select
-        0, 0, // battleFlags..field_1C
-        {{1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        0, 0, // battleFlags, randomMode
+        {{1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_ZAKO_BATTLE1", // bgmName
     },
     {
-        /*"マップstg_00_3"*/"\x83\x7D\x83\x62\x83\x76\x73\x74\x67\x5F\x30\x30\x5F\x33", // name
+        "マップstg_00_3", // name
         NULL, 0, // mapName..fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_tik_btlno_tik_test3_off, // select
-        0, 0, // battleFlags..field_1C
-        {{1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        0, 0, // battleFlags, randomMode
+        {{1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_ZAKO_BATTLE1", // bgmName
     },
     {
-        /*"tik12ゲッソー"*/"\x74\x69\x6B\x31\x32\x83\x51\x83\x62\x83\x5C\x81\x5B", // name
+        "tik12ゲッソー", // name
         "tik_02", // mapName
         0, // fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_tik_btlno_tik_gesso_off, // select
-        0x20000010, // battleFlags
-        0, // field_1C
-        {{5, 5}, {0}, {0}, {0}, {0}, {5, 5}, {0}, {0}, {0}, {0}, {5, 5}, {0}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        NPC_BATTLE_MAX_COUNT | NPC_BATTLE_MARIO_PAUSE3_VOICE, // battleFlags
+        0, // randomMode
+        {{5, 5}, {0}, {0}, {0}, {0}, {5, 5}, {0}, {0}, {0}, {0}, {5, 5}, {0}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_CHUBOSS_BATTLE1", // bgmName
     },
     {
-        /*"tik01クリボー３人衆"*/"\x74\x69\x6B\x30\x31\x83\x4E\x83\x8A\x83\x7B\x81\x5B\x82\x52\x90\x6C\x8F\x4F", // name
+        "tik01クリボー３人衆", // name
         "tik_01", // mapName
         0, // fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_tik_btlno_tik_01_01_off, // select
-        0x20000010, // battleFlags
-        0, // field_1C
-        {{0}, {0}, {0}, {0}, {0}, {0}, {0}, {0}, {0}, {0}, {5, 5}, {0}, {0}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        NPC_BATTLE_MAX_COUNT | NPC_BATTLE_MARIO_PAUSE3_VOICE, // battleFlags
+        0, // randomMode
+        {{0}, {0}, {0}, {0}, {0}, {0}, {0}, {0}, {0}, {0}, {5, 5}, {0}, {0}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_ZAKO_BATTLE1", // bgmName
     },
     {
-        /*"tik01トゲクリボー"*/"\x74\x69\x6B\x30\x31\x83\x67\x83\x51\x83\x4E\x83\x8A\x83\x7B\x81\x5B", // name
+        "tik01トゲクリボー", // name
         NULL, 0, // mapName..fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_tik_btlno_tik_01_02_off, // select
-        0, 0, // battleFlags..field_1C
-        {{5, 5}, {0}, {0}, {0}, {0}, {5, 5}, {0}, {0}, {0}, {0}, {10, 10}, {0}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        0, 0, // battleFlags, randomMode
+        {{5, 5}, {0}, {0}, {0}, {0}, {5, 5}, {0}, {0}, {0}, {0}, {10, 10}, {0}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_ZAKO_BATTLE1", // bgmName
     },
     {
-        /*"tik04ヒンニャー1"*/"\x74\x69\x6B\x30\x34\x83\x71\x83\x93\x83\x6A\x83\x83\x81\x5B\x31", // name
+        "tik04ヒンニャー1", // name
         NULL, 0, // mapName..fixedItem
-        GSWF(1246), // swFlag
+        GSWF(GSWF_GOR02_FIRST_EPIGRAPHY_DONE), // swFlag
         btlgrpsel_tik_btlno_tik_04_01_on, // altSelect
         btlgrpsel_tik_btlno_tik_04_01_off, // select
-        0, 0, // battleFlags..field_1C
-        {{5, 5}, {0}, {0}, {0}, {0}, {5, 5}, {0}, {0}, {0}, {0}, {5, 5}, {0}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        0, 0, // battleFlags, randomMode
+        {{5, 5}, {0}, {0}, {0}, {0}, {5, 5}, {0}, {0}, {0}, {0}, {5, 5}, {0}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_ZAKO_BATTLE1", // bgmName
     },
     {
-        /*"tik04ヒンニャー2"*/"\x74\x69\x6B\x30\x34\x83\x71\x83\x93\x83\x6A\x83\x83\x81\x5B\x32", // name
+        "tik04ヒンニャー2", // name
         NULL, 0, // mapName..fixedItem
-        GSWF(1246), // swFlag
+        GSWF(GSWF_GOR02_FIRST_EPIGRAPHY_DONE), // swFlag
         btlgrpsel_tik_btlno_tik_04_02_on, // altSelect
         btlgrpsel_tik_btlno_tik_04_02_off, // select
-        0, 0, // battleFlags..field_1C
-        {{5, 5}, {0}, {0}, {0}, {0}, {5, 5}, {0}, {0}, {0}, {0}, {5, 5}, {0}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        0, 0, // battleFlags, randomMode
+        {{5, 5}, {0}, {0}, {0}, {0}, {5, 5}, {0}, {0}, {0}, {0}, {5, 5}, {0}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_ZAKO_BATTLE1", // bgmName
     },
     {
-        /*"tik04カメック"*/"\x74\x69\x6B\x30\x34\x83\x4A\x83\x81\x83\x62\x83\x4E", // name
+        "tik04カメック", // name
         NULL, 0, // mapName..fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_tik_btlno_tik_04_03_off, // select
-        0, 0, // battleFlags..field_1C
-        {{3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        0, 0, // battleFlags, randomMode
+        {{3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_ZAKO_BATTLE1", // bgmName
     },
     {
-        /*"tik04トゲノコ"*/"\x74\x69\x6B\x30\x34\x83\x67\x83\x51\x83\x6D\x83\x52", // name
+        "tik04トゲノコ", // name
         NULL, 0, // mapName..fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_tik_btlno_tik_04_04_off, // select
-        0, 0, // battleFlags..field_1C
-        {{3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        0, 0, // battleFlags, randomMode
+        {{3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_ZAKO_BATTLE1", // bgmName
     },
     {
-        /*"tik07ハンニャー1"*/"\x74\x69\x6B\x30\x37\x83\x6E\x83\x93\x83\x6A\x83\x83\x81\x5B\x31", // name
+        "tik07ハンニャー1", // name
         NULL, 0, // mapName..fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_tik_btlno_tik_07_01_off, // select
-        0, 0, // battleFlags..field_1C
-        {{5, 5}, {0}, {0}, {0}, {5, 5}, {5, 5}, {0}, {0}, {5, 5}, {0}, {5, 5}, {5, 5}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        0, 0, // battleFlags, randomMode
+        {{5, 5}, {0}, {0}, {0}, {5, 5}, {5, 5}, {0}, {0}, {5, 5}, {0}, {5, 5}, {5, 5}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_ZAKO_BATTLE1", // bgmName
     },
     {
-        /*"tik07ハンニャー2"*/"\x74\x69\x6B\x30\x37\x83\x6E\x83\x93\x83\x6A\x83\x83\x81\x5B\x32", // name
+        "tik07ハンニャー2", // name
         NULL, 0, // mapName..fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_tik_btlno_tik_07_02_off, // select
-        0, 0, // battleFlags..field_1C
-        {{5, 5}, {0}, {0}, {0}, {5, 5}, {5, 5}, {0}, {0}, {5, 5}, {0}, {5, 5}, {5, 5}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        0, 0, // battleFlags, randomMode
+        {{5, 5}, {0}, {0}, {0}, {5, 5}, {5, 5}, {0}, {0}, {5, 5}, {0}, {5, 5}, {5, 5}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_ZAKO_BATTLE1", // bgmName
     },
     {
-        /*"tik07トゲノコ"*/"\x74\x69\x6B\x30\x37\x83\x67\x83\x51\x83\x6D\x83\x52", // name
+        "tik07トゲノコ", // name
         NULL, 0, // mapName..fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_tik_btlno_tik_07_03_off, // select
-        0, 0, // battleFlags..field_1C
-        {{3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        0, 0, // battleFlags, randomMode
+        {{3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_ZAKO_BATTLE1", // bgmName
     },
     {
-        /*"tik07ハンマーブロス"*/"\x74\x69\x6B\x30\x37\x83\x6E\x83\x93\x83\x7D\x81\x5B\x83\x75\x83\x8D\x83\x58", // name
+        "tik07ハンマーブロス", // name
         NULL, 0, // mapName..fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_tik_btlno_tik_07_04_off, // select
-        0, 0, // battleFlags..field_1C
-        {{3, 3}, {3, 3}, {3, 3}, {3, 10}, {10, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        0, 0, // battleFlags, randomMode
+        {{3, 3}, {3, 3}, {3, 3}, {3, 10}, {10, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_ZAKO_BATTLE1", // bgmName
     },
     {
-        /*"tik15クリボー"*/"\x74\x69\x6B\x31\x35\x83\x4E\x83\x8A\x83\x7B\x81\x5B", // name
+        "tik15クリボー", // name
         NULL, 0, // mapName..fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_tik_btlno_tik_15_01_off, // select
-        0, 0, // battleFlags..field_1C
-        {{5, 5}, {0}, {0}, {0}, {0}, {5, 5}, {0}, {0}, {0}, {0}, {10, 10}, {0}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        0, 0, // battleFlags, randomMode
+        {{5, 5}, {0}, {0}, {0}, {0}, {5, 5}, {0}, {0}, {0}, {0}, {10, 10}, {0}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_ZAKO_BATTLE1", // bgmName
     },
     {
-        /*"tik15パタクリボー"*/"\x74\x69\x6B\x31\x35\x83\x70\x83\x5E\x83\x4E\x83\x8A\x83\x7B\x81\x5B", // name
+        "tik15パタクリボー", // name
         NULL, 0, // mapName..fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_tik_btlno_tik_15_02_off, // select
-        0, 0, // battleFlags..field_1C
-        {{5, 5}, {0}, {0}, {0}, {0}, {5, 5}, {0}, {0}, {0}, {0}, {10, 10}, {0}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        0, 0, // battleFlags, randomMode
+        {{5, 5}, {0}, {0}, {0}, {0}, {5, 5}, {0}, {0}, {0}, {0}, {10, 10}, {0}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_ZAKO_BATTLE1", // bgmName
     },
     {
-        /*"tik15トゲクリボー"*/"\x74\x69\x6B\x31\x35\x83\x67\x83\x51\x83\x4E\x83\x8A\x83\x7B\x81\x5B", // name
+        "tik15トゲクリボー", // name
         NULL, 0, // mapName..fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_tik_btlno_tik_15_03_off, // select
-        0, 0, // battleFlags..field_1C
-        {{5, 5}, {0}, {0}, {0}, {0}, {5, 5}, {0}, {0}, {0}, {0}, {10, 10}, {0}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        0, 0, // battleFlags, randomMode
+        {{5, 5}, {0}, {0}, {0}, {0}, {5, 5}, {0}, {0}, {0}, {0}, {10, 10}, {0}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_ZAKO_BATTLE1", // bgmName
     },
     {
-        /*"tik15ハンマーブロス"*/"\x74\x69\x6B\x31\x35\x83\x6E\x83\x93\x83\x7D\x81\x5B\x83\x75\x83\x8D\x83\x58", // name
+        "tik15ハンマーブロス", // name
         NULL, 0, // mapName..fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_tik_btlno_tik_15_04_off, // select
-        0, 0, // battleFlags..field_1C
-        {{3, 3}, {3, 3}, {3, 3}, {3, 10}, {10, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        0, 0, // battleFlags, randomMode
+        {{3, 3}, {3, 3}, {3, 3}, {3, 10}, {10, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_ZAKO_BATTLE1", // bgmName
     },
     {
-        /*"tik15カメック"*/"\x74\x69\x6B\x31\x35\x83\x4A\x83\x81\x83\x62\x83\x4E", // name
+        "tik15カメック", // name
         NULL, 0, // mapName..fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_tik_btlno_tik_15_05_off, // select
-        0, 0, // battleFlags..field_1C
-        {{3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        0, 0, // battleFlags, randomMode
+        {{3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_ZAKO_BATTLE1", // bgmName
     },
     {
-        /*"tik18ハンニャー1"*/"\x74\x69\x6B\x31\x38\x83\x6E\x83\x93\x83\x6A\x83\x83\x81\x5B\x31", // name
+        "tik18ハンニャー1", // name
         NULL, 0, // mapName..fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_tik_btlno_tik_18_01_off, // select
-        0, 0, // battleFlags..field_1C
-        {{5, 5}, {0}, {0}, {0}, {5, 5}, {5, 5}, {0}, {0}, {5, 5}, {0}, {5, 5}, {5, 5}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        0, 0, // battleFlags, randomMode
+        {{5, 5}, {0}, {0}, {0}, {5, 5}, {5, 5}, {0}, {0}, {5, 5}, {0}, {5, 5}, {5, 5}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_ZAKO_BATTLE1", // bgmName
     },
     {
-        /*"tik18ハンニャー2"*/"\x74\x69\x6B\x31\x38\x83\x6E\x83\x93\x83\x6A\x83\x83\x81\x5B\x32", // name
+        "tik18ハンニャー2", // name
         NULL, 0, // mapName..fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_tik_btlno_tik_18_02_off, // select
-        0, 0, // battleFlags..field_1C
-        {{5, 5}, {0}, {0}, {0}, {5, 5}, {5, 5}, {0}, {0}, {5, 5}, {0}, {5, 5}, {5, 5}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        0, 0, // battleFlags, randomMode
+        {{5, 5}, {0}, {0}, {0}, {5, 5}, {5, 5}, {0}, {0}, {5, 5}, {0}, {5, 5}, {5, 5}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_ZAKO_BATTLE1", // bgmName
     },
     {
-        /*"tik18カメック"*/"\x74\x69\x6B\x31\x38\x83\x4A\x83\x81\x83\x62\x83\x4E", // name
+        "tik18カメック", // name
         NULL, 0, // mapName..fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_tik_btlno_tik_18_03_off, // select
-        0, 0, // battleFlags..field_1C
-        {{3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        0, 0, // battleFlags, randomMode
+        {{3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_ZAKO_BATTLE1", // bgmName
     },
     {
-        /*"tik18トゲノコ"*/"\x74\x69\x6B\x31\x38\x83\x67\x83\x51\x83\x6D\x83\x52", // name
+        "tik18トゲノコ", // name
         NULL, 0, // mapName..fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_tik_btlno_tik_18_04_off, // select
-        0, 0, // battleFlags..field_1C
-        {{3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        0, 0, // battleFlags, randomMode
+        {{3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_ZAKO_BATTLE1", // bgmName
     },
     {
-        /*"tik20ハンニャー"*/"\x74\x69\x6B\x32\x30\x83\x6E\x83\x93\x83\x6A\x83\x83\x81\x5B", // name
+        "tik20ハンニャー", // name
         NULL, 0, // mapName..fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_tik_btlno_tik_20_01_off, // select
-        0, 0, // battleFlags..field_1C
-        {{2, 2}, {2, 2}, {2, 2}, {2, 2}, {2, 2}, {2, 2}, {2, 2}, {2, 2}, {2, 2}, {2, 2}, {2, 2}, {2, 2}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        0, 0, // battleFlags, randomMode
+        {{2, 2}, {2, 2}, {2, 2}, {2, 2}, {2, 2}, {2, 2}, {2, 2}, {2, 2}, {2, 2}, {2, 2}, {2, 2}, {2, 2}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_ZAKO_BATTLE1", // bgmName
     },
     {
-        /*"tik20ハンニャー"*/"\x74\x69\x6B\x32\x30\x83\x6E\x83\x93\x83\x6A\x83\x83\x81\x5B", // name
+        "tik20ハンニャー", // name
         NULL, 0, // mapName..fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_tik_btlno_tik_20_02_off, // select
-        0, 0, // battleFlags..field_1C
-        {{2, 2}, {2, 2}, {2, 2}, {2, 2}, {2, 2}, {2, 2}, {2, 2}, {2, 2}, {2, 2}, {2, 2}, {2, 2}, {2, 2}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        0, 0, // battleFlags, randomMode
+        {{2, 2}, {2, 2}, {2, 2}, {2, 2}, {2, 2}, {2, 2}, {2, 2}, {2, 2}, {2, 2}, {2, 2}, {2, 2}, {2, 2}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_ZAKO_BATTLE1", // bgmName
     },
     {
-        /*"tik20ハンニャー"*/"\x74\x69\x6B\x32\x30\x83\x6E\x83\x93\x83\x6A\x83\x83\x81\x5B", // name
+        "tik20ハンニャー", // name
         NULL, 0, // mapName..fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_tik_btlno_tik_20_03_off, // select
-        0, 0, // battleFlags..field_1C
-        {{2, 2}, {2, 2}, {2, 2}, {2, 2}, {2, 2}, {2, 2}, {2, 2}, {2, 2}, {2, 2}, {2, 2}, {2, 2}, {2, 2}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        0, 0, // battleFlags, randomMode
+        {{2, 2}, {2, 2}, {2, 2}, {2, 2}, {2, 2}, {2, 2}, {2, 2}, {2, 2}, {2, 2}, {2, 2}, {2, 2}, {2, 2}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_ZAKO_BATTLE1", // bgmName
     },
     {
-        /*"tik20ハンニャー"*/"\x74\x69\x6B\x32\x30\x83\x6E\x83\x93\x83\x6A\x83\x83\x81\x5B", // name
+        "tik20ハンニャー", // name
         NULL, 0, // mapName..fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_tik_btlno_tik_20_04_off, // select
-        0, 0, // battleFlags..field_1C
-        {{2, 2}, {2, 2}, {2, 2}, {2, 2}, {2, 2}, {2, 2}, {2, 2}, {2, 2}, {2, 2}, {2, 2}, {2, 2}, {2, 2}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        0, 0, // battleFlags, randomMode
+        {{2, 2}, {2, 2}, {2, 2}, {2, 2}, {2, 2}, {2, 2}, {2, 2}, {2, 2}, {2, 2}, {2, 2}, {2, 2}, {2, 2}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_ZAKO_BATTLE1", // bgmName
     },
     {
-        /*"tik20ハンニャー"*/"\x74\x69\x6B\x32\x30\x83\x6E\x83\x93\x83\x6A\x83\x83\x81\x5B", // name
+        "tik20ハンニャー", // name
         NULL, 0, // mapName..fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_tik_btlno_tik_20_05_off, // select
-        0, 0, // battleFlags..field_1C
-        {{2, 2}, {2, 2}, {2, 2}, {2, 2}, {2, 2}, {2, 2}, {2, 2}, {2, 2}, {2, 2}, {2, 2}, {2, 2}, {2, 2}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        0, 0, // battleFlags, randomMode
+        {{2, 2}, {2, 2}, {2, 2}, {2, 2}, {2, 2}, {2, 2}, {2, 2}, {2, 2}, {2, 2}, {2, 2}, {2, 2}, {2, 2}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_ZAKO_BATTLE1", // bgmName
     },
     {
-        /*"tik20ヘンニャー"*/"\x74\x69\x6B\x32\x30\x83\x77\x83\x93\x83\x6A\x83\x83\x81\x5B", // name
+        "tik20ヘンニャー", // name
         NULL, 0, // mapName..fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_tik_btlno_tik_20_06_off, // select
-        0, 0, // battleFlags..field_1C
-        {{2, 2}, {2, 2}, {2, 2}, {2, 2}, {2, 2}, {2, 2}, {2, 2}, {2, 2}, {2, 2}, {2, 2}, {2, 2}, {2, 2}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        0, 0, // battleFlags, randomMode
+        {{2, 2}, {2, 2}, {2, 2}, {2, 2}, {2, 2}, {2, 2}, {2, 2}, {2, 2}, {2, 2}, {2, 2}, {2, 2}, {2, 2}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_ZAKO_BATTLE1", // bgmName
     },
     {0},
 };
 
+/** Maps the BTLNO_TIK battle names to their positions in btlsetup_tik_tbl. */
 NpcTerritoryInfo btl_tik_setup_no_tbl[] = {
     {"BTLNO_TIK_TEST1", 0},
     {"BTLNO_TIK_TEST2", 1},
@@ -2630,6 +2951,13 @@ NpcTerritoryInfo btl_tik_setup_no_tbl[] = {
     {0},
 };
 
+/**
+ * Script helper that moves one wave object of the sewer battle stage up and down and sideways.
+ * args: [0] stage object name, [1] and [4] the variables holding the X and Y phase counters,
+ * [2] and [5] the X and Y periods in frames, [3] and [6] the X and Y amplitudes.
+ * It sets the object's position offset to a sine in X and a raised sine in Y, then advances both counters,
+ * wrapping at their periods.
+ */
 static USER_FUNC(_wave_offset) {
     EvtWord* args = event->args;
     const char* name = (const char*)evtGetValue(event, args[0]);
@@ -2658,6 +2986,12 @@ static USER_FUNC(_wave_offset) {
     return EVT_RETURN_DONE;
 }
 
+/**
+ * Background animation of the sewer battle stage:
+ * forever (one frame at a time) runs _wave_offset on the three wave objects nami_1, nami_2 and nami_3,
+ * with periods of 600, 1100 and 1250 frames and amplitudes of 20 to 50 units in X and 6 to 8 in Y,
+ * so the water in the background rolls.
+ */
 EVT_BEGIN(bgset_tik_wave_event)
     SET_VALUE(LW(0), 0)
     SET_VALUE(LW(1), 0)
@@ -2675,4 +3009,3 @@ EVT_BEGIN(bgset_tik_wave_event)
     GOTO(0)
     RETURN
 EVT_END()
-

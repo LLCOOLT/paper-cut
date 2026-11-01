@@ -1,3 +1,5 @@
+// Battle database of Twilight Trail (gra.rel): stage data, enemy groups and the encounter tables of its maps.
+
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
 #include "battle/battle_weapon_power.h"
@@ -6,23 +8,8 @@
 #include "battle/battle_stage.h"
 #include "battle/battle_stage_object.h"
 #include "driver/npcdrv.h"
+#include "evt/evt_story.h"
 
-#pragma force_active on
-
-f32 fd_battle_database_gra_negone_one_374[2] __attribute__((aligned(8)));
-f32 fd_battle_database_gra_neg_one_382;
-f32 fd_battle_database_gra___local_PI_383;
-f32 fd_battle_database_gra___local_3PIO2_385;
-f32 fd_battle_database_gra_one_negone_373[2] __attribute__((aligned(8)));
-f32 fd_battle_database_gra___local_PIO2_384;
-f32 fd_battle_database_gra_one_381;
-f32 fd_battle_database_gra_negone_one_360[2] __attribute__((aligned(8)));
-f32 fd_battle_database_gra_neg_one_365;
-f32 fd_battle_database_gra___local_PI_366;
-f32 fd_battle_database_gra___local_3PIO2_368;
-f32 fd_battle_database_gra_one_negone_359[2] __attribute__((aligned(8)));
-f32 fd_battle_database_gra___local_PIO2_367;
-f32 fd_battle_database_gra_one_364;
 BattleStageObjectData gra_btlobject_data[22];
 BattleStageData gra_btlstage_data[2];
 BattleUnitSetup btlparty_gra_gra_00_01_off_1[1];
@@ -102,34 +89,10 @@ NpcBattleSelect btlgrpsel_gra_btlno_gra_05_03_off[4];
 NpcSetupBattleInfo btlsetup_gra_tbl[14];
 NpcTerritoryInfo btl_gra_setup_no_tbl[14];
 
-f32 fd_battle_database_gra_negone_one_374[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_battle_database_gra_neg_one_382 = -1.0f;
-
-f32 fd_battle_database_gra___local_PI_383 = 3.1415927f;
-
-f32 fd_battle_database_gra___local_3PIO2_385 = 4.712389f;
-
-f32 fd_battle_database_gra_one_negone_373[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_battle_database_gra___local_PIO2_384 = 1.5707964f;
-
-f32 fd_battle_database_gra_one_381 = 1.0f;
-
-f32 fd_battle_database_gra_negone_one_360[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_battle_database_gra_neg_one_365 = -1.0f;
-
-f32 fd_battle_database_gra___local_PI_366 = 3.1415927f;
-
-f32 fd_battle_database_gra___local_3PIO2_368 = 4.712389f;
-
-f32 fd_battle_database_gra_one_negone_359[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_battle_database_gra___local_PIO2_367 = 1.5707964f;
-
-f32 fd_battle_database_gra_one_364 = 1.0f;
-
+/**
+ * Scenery objects of the Twilight Trail battle stages (trees, rocks, grass and the back and front wall
+ * pieces); each stage in gra_btlstage_data uses a slice of this list.
+ */
 BattleStageObjectData gra_btlobject_data[] = {
     {"ki_1", 2, 0, {-100.0f, 0.0f, -30.0f}, 0, 60, {0}},
     {"isi_A", 2, 0, {150.0f, 0.0f, -30.0f}, 10, 50, {0}},
@@ -146,7 +109,11 @@ BattleStageObjectData gra_btlobject_data[] = {
     {"kusa_3", 2, 1, {-77.0f, 0.0f, 77.0f}, 20, 40, {0}},
     {"kusa_4", 2, 1, {-155.0f, 0.0f, 71.0f}, 30, 30, {0}},
     {"kusamura_mae", 2, 1, {0.0f, 0.0f, 72.0f}, 0, 60, {0}},
+#if VERSION <= VERSION_DEMO_JP
+    {"kusamura_usiro", 2, 1, {0.0f, 0.0f, -70.0f}, 10, 50, {0}},
+#else
     {"kusamura_usiro", 2, 1, {0.0f, 0.0f, -65.0f}, 10, 50, {0}},
+#endif
     {"iwa", 2, 1, {0.0f, 0.0f, -71.0f}, 20, 40, {0}},
     {"ki_1", 2, 0, {100.0f, 0.0f, -51.0f}, 0, 60, {0}},
     {"ki_2", 2, 0, {-123.0f, 0.0f, -48.0f}, 10, 50, {0}},
@@ -155,22 +122,26 @@ BattleStageObjectData gra_btlobject_data[] = {
     {"ao", 2, 3, {0}, 0, 60, {0}},
 };
 
+/**
+ * The 2 battle stages of Twilight Trail: each pairs a stage model (stg_04_0, stg_04_1) with a slice of the
+ * scenery objects above.
+ */
 BattleStageData gra_btlstage_data[] = {
     {
-        "bti_01", // mGlobalStageDataDir
-        "stg_04_0", // mSpecificStageDataDir
-        10, // mNumObjects
-        gra_btlobject_data, // mObjects
+        "bti_01", // globalStageDataDir
+        "stg_04_0", // specificStageDataDir
+        10, // numObjects
+        gra_btlobject_data, // objects
         {NULL, 0, {0}, 0, NULL, 100, 0, 0, 2, 0.0f, 0, 0, 0, 0, weaponGetPowerDefault, {1, 0, 0, 0, 0, 0, 0, 0}, NULL, {0}, 0x2100060, 0x20000000, 0, 26, 3, 2, NULL, 0, 0x7FF, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, {0}, NULL, {0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0}}, // bgAWeapon
         {NULL, 0, {0}, 0, NULL, 100, 0, 0, 2, 0.0f, 0, 0, 0, 0, weaponGetPowerDefault, {1, 0, 0, 0, 0, 0, 0, 0}, NULL, {0}, 0x2100060, 0x20000000, 0, 26, 3, 2, NULL, 0, 0x7FF, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, {0}, NULL, {0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0}}, // bgBWeapon
         NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, // initEvt..bgCEvt
         0, 0, 0, 0, // reserved_1B0..disableBgBDestroy
     },
     {
-        "bti_01", // mGlobalStageDataDir
-        "stg_04_1", // mSpecificStageDataDir
-        11, // mNumObjects
-        &gra_btlobject_data[10], // mObjects
+        "bti_01", // globalStageDataDir
+        "stg_04_1", // specificStageDataDir
+        11, // numObjects
+        &gra_btlobject_data[10], // objects
         {NULL, 0, {0}, 0, NULL, 100, 0, 0, 2, 0.0f, 0, 0, 0, 0, weaponGetPowerDefault, {1, 0, 0, 0, 0, 0, 0, 0}, NULL, {0}, 0x2100060, 0x20000000, 0, 26, 3, 2, NULL, 0, 0x7FF, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, {0}, NULL, {0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0}}, // bgAWeapon
         {NULL, 0, {0}, 0, NULL, 100, 0, 0, 2, 0.0f, 0, 0, 0, 0, weaponGetPowerDefault, {1, 0, 0, 0, 0, 0, 0, 0}, NULL, {0}, 0x2100060, 0x20000000, 0, 26, 3, 2, NULL, 0, 0x7FF, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, {0}, NULL, {0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0}}, // bgBWeapon
         NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, // initEvt..bgCEvt
@@ -180,12 +151,16 @@ BattleStageData gra_btlstage_data[] = {
     },
 };
 
+/**
+ * Enemy lineup of formation 1 of BTLNO_GRA_00_01 and BTLNO_GRA_00_02, in Twilight Trail (gra_00): Doopliss
+ * disguised as Mario.
+ */
 BattleUnitSetup btlparty_gra_gra_00_01_off_1[] = {
     {
-        &unit_faker_mario_gra, // mUnitKindParams
+        &unit_faker_mario_gra, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {90.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -193,6 +168,10 @@ BattleUnitSetup btlparty_gra_gra_00_01_off_1[] = {
     },
 };
 
+/**
+ * Formation 1 of BTLNO_GRA_00_01 and BTLNO_GRA_00_02: the lineup above with the default heart and flower
+ * drops. Item drop weights: 0 held, 0 random, 100 none.
+ */
 BattleGroupSetup btlgrp_gra_gra_00_01_off_1 = {
     1, // numEnemies
     btlparty_gra_gra_00_01_off_1, // enemyData
@@ -200,35 +179,36 @@ BattleGroupSetup btlgrp_gra_gra_00_01_off_1 = {
     100, // noItemWeight
     battle_heart_drop_param_default, // hpDropTable
     battle_flower_drop_param_default, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/** Enemy lineup of formation 1 of BTLNO_GRA_01_01, in Twilight Trail (gra_01): Hyper Goomba x3. */
 BattleUnitSetup btlparty_gra_gra_01_01_off_1[] = {
     {
-        &unit_hyper_kuriboo, // mUnitKindParams
+        &unit_hyper_kuriboo, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {50.0f, 0.0f, -10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_hyper_kuriboo, // itemDropTable
     },
     {
-        &unit_hyper_kuriboo, // mUnitKindParams
+        &unit_hyper_kuriboo, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {90.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_hyper_kuriboo, // itemDropTable
     },
     {
-        &unit_hyper_kuriboo, // mUnitKindParams
+        &unit_hyper_kuriboo, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {130.0f, 0.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -236,6 +216,10 @@ BattleUnitSetup btlparty_gra_gra_01_01_off_1[] = {
     },
 };
 
+/**
+ * Formation 1 of BTLNO_GRA_01_01: the lineup above with the default heart and flower drops. Item drop
+ * weights: 25 held, 25 random, 50 none.
+ */
 BattleGroupSetup btlgrp_gra_gra_01_01_off_1 = {
     3, // numEnemies
     btlparty_gra_gra_01_01_off_1, // enemyData
@@ -244,35 +228,39 @@ BattleGroupSetup btlgrp_gra_gra_01_01_off_1 = {
     50, // noItemWeight
     battle_heart_drop_param_default, // hpDropTable
     battle_flower_drop_param_default, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/**
+ * Enemy lineup of formation 1 of BTLNO_GRA_01_01, in Twilight Trail (gra_01) while Mario is Doopliss's
+ * shadow: Hyper Goomba x3.
+ */
 BattleUnitSetup btlparty_gra_gra_01_01_on_1[] = {
     {
-        &unit_hyper_kuriboo, // mUnitKindParams
+        &unit_hyper_kuriboo, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {50.0f, 0.0f, -10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_hyper_kuriboo, // itemDropTable
     },
     {
-        &unit_hyper_kuriboo, // mUnitKindParams
+        &unit_hyper_kuriboo, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {90.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_hyper_kuriboo, // itemDropTable
     },
     {
-        &unit_hyper_kuriboo, // mUnitKindParams
+        &unit_hyper_kuriboo, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {130.0f, 0.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -280,6 +268,10 @@ BattleUnitSetup btlparty_gra_gra_01_01_on_1[] = {
     },
 };
 
+/**
+ * Formation 1 of BTLNO_GRA_01_01: the lineup above with the default heart and flower drops. Item drop
+ * weights: 25 held, 25 random, 50 none.
+ */
 BattleGroupSetup btlgrp_gra_gra_01_01_on_1 = {
     3, // numEnemies
     btlparty_gra_gra_01_01_on_1, // enemyData
@@ -288,35 +280,39 @@ BattleGroupSetup btlgrp_gra_gra_01_01_on_1 = {
     50, // noItemWeight
     battle_heart_drop_param_default, // hpDropTable
     battle_flower_drop_param_default, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/**
+ * Enemy lineup of formation 2 of BTLNO_GRA_01_01, in Twilight Trail (gra_01) while Mario is Doopliss's
+ * shadow: Hyper Goomba, Hyper Paragoomba, Crazee Dayzee.
+ */
 BattleUnitSetup btlparty_gra_gra_01_01_on_2[] = {
     {
-        &unit_hyper_kuriboo, // mUnitKindParams
+        &unit_hyper_kuriboo, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {50.0f, 0.0f, -10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_hyper_kuriboo, // itemDropTable
     },
     {
-        &unit_hyper_patakuri, // mUnitKindParams
+        &unit_hyper_patakuri, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {90.0f, 40.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_hyper_patakuri, // itemDropTable
     },
     {
-        &unit_pansy, // mUnitKindParams
+        &unit_pansy, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {130.0f, 0.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -324,6 +320,10 @@ BattleUnitSetup btlparty_gra_gra_01_01_on_2[] = {
     },
 };
 
+/**
+ * Formation 2 of BTLNO_GRA_01_01: the lineup above with the default heart and flower drops. Item drop
+ * weights: 25 held, 25 random, 50 none.
+ */
 BattleGroupSetup btlgrp_gra_gra_01_01_on_2 = {
     3, // numEnemies
     btlparty_gra_gra_01_01_on_2, // enemyData
@@ -332,35 +332,39 @@ BattleGroupSetup btlgrp_gra_gra_01_01_on_2 = {
     50, // noItemWeight
     battle_heart_drop_param_default, // hpDropTable
     battle_flower_drop_param_default, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/**
+ * Enemy lineup of formation 3 of BTLNO_GRA_01_01, in Twilight Trail (gra_01) while Mario is Doopliss's
+ * shadow: Hyper Goomba, Hyper Spiky Goomba, Crazee Dayzee.
+ */
 BattleUnitSetup btlparty_gra_gra_01_01_on_3[] = {
     {
-        &unit_hyper_kuriboo, // mUnitKindParams
+        &unit_hyper_kuriboo, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {50.0f, 0.0f, -10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_hyper_kuriboo, // itemDropTable
     },
     {
-        &unit_hyper_togekuri, // mUnitKindParams
+        &unit_hyper_togekuri, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {90.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_hyper_togekuri, // itemDropTable
     },
     {
-        &unit_pansy, // mUnitKindParams
+        &unit_pansy, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {130.0f, 0.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -368,6 +372,10 @@ BattleUnitSetup btlparty_gra_gra_01_01_on_3[] = {
     },
 };
 
+/**
+ * Formation 3 of BTLNO_GRA_01_01: the lineup above with the default heart and flower drops. Item drop
+ * weights: 25 held, 25 random, 50 none.
+ */
 BattleGroupSetup btlgrp_gra_gra_01_01_on_3 = {
     3, // numEnemies
     btlparty_gra_gra_01_01_on_3, // enemyData
@@ -376,35 +384,36 @@ BattleGroupSetup btlgrp_gra_gra_01_01_on_3 = {
     50, // noItemWeight
     battle_heart_drop_param_default, // hpDropTable
     battle_flower_drop_param_default, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/** Enemy lineup of formation 1 of BTLNO_GRA_01_03, in Twilight Trail (gra_01): Hyper Paragoomba x3. */
 BattleUnitSetup btlparty_gra_gra_01_03_off_1[] = {
     {
-        &unit_hyper_patakuri, // mUnitKindParams
+        &unit_hyper_patakuri, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {50.0f, 40.0f, -10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_hyper_patakuri, // itemDropTable
     },
     {
-        &unit_hyper_patakuri, // mUnitKindParams
+        &unit_hyper_patakuri, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {90.0f, 40.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_hyper_patakuri, // itemDropTable
     },
     {
-        &unit_hyper_patakuri, // mUnitKindParams
+        &unit_hyper_patakuri, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {130.0f, 40.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -412,6 +421,10 @@ BattleUnitSetup btlparty_gra_gra_01_03_off_1[] = {
     },
 };
 
+/**
+ * Formation 1 of BTLNO_GRA_01_03: the lineup above with the default heart and flower drops. Item drop
+ * weights: 25 held, 25 random, 50 none.
+ */
 BattleGroupSetup btlgrp_gra_gra_01_03_off_1 = {
     3, // numEnemies
     btlparty_gra_gra_01_03_off_1, // enemyData
@@ -420,35 +433,39 @@ BattleGroupSetup btlgrp_gra_gra_01_03_off_1 = {
     50, // noItemWeight
     battle_heart_drop_param_default, // hpDropTable
     battle_flower_drop_param_default, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/**
+ * Enemy lineup of formation 1 of BTLNO_GRA_01_03, in Twilight Trail (gra_01) while Mario is Doopliss's
+ * shadow: Hyper Paragoomba x3.
+ */
 BattleUnitSetup btlparty_gra_gra_01_03_on_1[] = {
     {
-        &unit_hyper_patakuri, // mUnitKindParams
+        &unit_hyper_patakuri, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {50.0f, 40.0f, -10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_hyper_patakuri, // itemDropTable
     },
     {
-        &unit_hyper_patakuri, // mUnitKindParams
+        &unit_hyper_patakuri, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {90.0f, 40.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_hyper_patakuri, // itemDropTable
     },
     {
-        &unit_hyper_patakuri, // mUnitKindParams
+        &unit_hyper_patakuri, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {130.0f, 40.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -456,6 +473,10 @@ BattleUnitSetup btlparty_gra_gra_01_03_on_1[] = {
     },
 };
 
+/**
+ * Formation 1 of BTLNO_GRA_01_03: the lineup above with the default heart and flower drops. Item drop
+ * weights: 25 held, 25 random, 50 none.
+ */
 BattleGroupSetup btlgrp_gra_gra_01_03_on_1 = {
     3, // numEnemies
     btlparty_gra_gra_01_03_on_1, // enemyData
@@ -464,45 +485,49 @@ BattleGroupSetup btlgrp_gra_gra_01_03_on_1 = {
     50, // noItemWeight
     battle_heart_drop_param_default, // hpDropTable
     battle_flower_drop_param_default, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/**
+ * Enemy lineup of formation 2 of BTLNO_GRA_01_03, in Twilight Trail (gra_01) while Mario is Doopliss's
+ * shadow: Hyper Paragoomba x4.
+ */
 BattleUnitSetup btlparty_gra_gra_01_03_on_2[] = {
     {
-        &unit_hyper_patakuri, // mUnitKindParams
+        &unit_hyper_patakuri, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {30.0f, 40.0f, -10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_hyper_patakuri, // itemDropTable
     },
     {
-        &unit_hyper_patakuri, // mUnitKindParams
+        &unit_hyper_patakuri, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {70.0f, 40.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_hyper_patakuri, // itemDropTable
     },
     {
-        &unit_hyper_patakuri, // mUnitKindParams
+        &unit_hyper_patakuri, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {110.0f, 40.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_hyper_patakuri, // itemDropTable
     },
     {
-        &unit_hyper_patakuri, // mUnitKindParams
+        &unit_hyper_patakuri, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {150.0f, 40.0f, 20.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -510,6 +535,10 @@ BattleUnitSetup btlparty_gra_gra_01_03_on_2[] = {
     },
 };
 
+/**
+ * Formation 2 of BTLNO_GRA_01_03: the lineup above with the default heart and flower drops. Item drop
+ * weights: 25 held, 25 random, 50 none.
+ */
 BattleGroupSetup btlgrp_gra_gra_01_03_on_2 = {
     4, // numEnemies
     btlparty_gra_gra_01_03_on_2, // enemyData
@@ -518,45 +547,49 @@ BattleGroupSetup btlgrp_gra_gra_01_03_on_2 = {
     50, // noItemWeight
     battle_heart_drop_param_default, // hpDropTable
     battle_flower_drop_param_default, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/**
+ * Enemy lineup of formation 3 of BTLNO_GRA_01_03, in Twilight Trail (gra_01) while Mario is Doopliss's
+ * shadow: Hyper Paragoomba x2, Crazee Dayzee x2.
+ */
 BattleUnitSetup btlparty_gra_gra_01_03_on_3[] = {
     {
-        &unit_hyper_patakuri, // mUnitKindParams
+        &unit_hyper_patakuri, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {30.0f, 40.0f, -10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_hyper_patakuri, // itemDropTable
     },
     {
-        &unit_hyper_patakuri, // mUnitKindParams
+        &unit_hyper_patakuri, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {70.0f, 40.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_hyper_patakuri, // itemDropTable
     },
     {
-        &unit_pansy, // mUnitKindParams
+        &unit_pansy, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {110.0f, 0.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_pansy, // itemDropTable
     },
     {
-        &unit_pansy, // mUnitKindParams
+        &unit_pansy, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {150.0f, 0.0f, 20.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -564,6 +597,10 @@ BattleUnitSetup btlparty_gra_gra_01_03_on_3[] = {
     },
 };
 
+/**
+ * Formation 3 of BTLNO_GRA_01_03: the lineup above with the default heart and flower drops. Item drop
+ * weights: 25 held, 25 random, 50 none.
+ */
 BattleGroupSetup btlgrp_gra_gra_01_03_on_3 = {
     4, // numEnemies
     btlparty_gra_gra_01_03_on_3, // enemyData
@@ -572,35 +609,36 @@ BattleGroupSetup btlgrp_gra_gra_01_03_on_3 = {
     50, // noItemWeight
     battle_heart_drop_param_default, // hpDropTable
     battle_flower_drop_param_default, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/** Enemy lineup of formation 1 of BTLNO_GRA_01_04, in Twilight Trail (gra_01): Hyper Spiky Goomba x3. */
 BattleUnitSetup btlparty_gra_gra_01_04_off_1[] = {
     {
-        &unit_hyper_togekuri, // mUnitKindParams
+        &unit_hyper_togekuri, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {50.0f, 0.0f, -10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_hyper_togekuri, // itemDropTable
     },
     {
-        &unit_hyper_togekuri, // mUnitKindParams
+        &unit_hyper_togekuri, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {90.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_hyper_togekuri, // itemDropTable
     },
     {
-        &unit_hyper_togekuri, // mUnitKindParams
+        &unit_hyper_togekuri, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {130.0f, 0.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -608,6 +646,10 @@ BattleUnitSetup btlparty_gra_gra_01_04_off_1[] = {
     },
 };
 
+/**
+ * Formation 1 of BTLNO_GRA_01_04: the lineup above with the default heart and flower drops. Item drop
+ * weights: 25 held, 25 random, 50 none.
+ */
 BattleGroupSetup btlgrp_gra_gra_01_04_off_1 = {
     3, // numEnemies
     btlparty_gra_gra_01_04_off_1, // enemyData
@@ -616,35 +658,39 @@ BattleGroupSetup btlgrp_gra_gra_01_04_off_1 = {
     50, // noItemWeight
     battle_heart_drop_param_default, // hpDropTable
     battle_flower_drop_param_default, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/**
+ * Enemy lineup of formation 1 of BTLNO_GRA_01_04, in Twilight Trail (gra_01) while Mario is Doopliss's
+ * shadow: Hyper Spiky Goomba x3.
+ */
 BattleUnitSetup btlparty_gra_gra_01_04_on_1[] = {
     {
-        &unit_hyper_togekuri, // mUnitKindParams
+        &unit_hyper_togekuri, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {50.0f, 0.0f, -10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_hyper_togekuri, // itemDropTable
     },
     {
-        &unit_hyper_togekuri, // mUnitKindParams
+        &unit_hyper_togekuri, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {90.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_hyper_togekuri, // itemDropTable
     },
     {
-        &unit_hyper_togekuri, // mUnitKindParams
+        &unit_hyper_togekuri, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {130.0f, 0.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -652,6 +698,10 @@ BattleUnitSetup btlparty_gra_gra_01_04_on_1[] = {
     },
 };
 
+/**
+ * Formation 1 of BTLNO_GRA_01_04: the lineup above with the default heart and flower drops. Item drop
+ * weights: 25 held, 25 random, 50 none.
+ */
 BattleGroupSetup btlgrp_gra_gra_01_04_on_1 = {
     3, // numEnemies
     btlparty_gra_gra_01_04_on_1, // enemyData
@@ -660,45 +710,49 @@ BattleGroupSetup btlgrp_gra_gra_01_04_on_1 = {
     50, // noItemWeight
     battle_heart_drop_param_default, // hpDropTable
     battle_flower_drop_param_default, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/**
+ * Enemy lineup of formation 2 of BTLNO_GRA_01_04, in Twilight Trail (gra_01) while Mario is Doopliss's
+ * shadow: Hyper Spiky Goomba x2, Hyper Paragoomba x2.
+ */
 BattleUnitSetup btlparty_gra_gra_01_04_on_2[] = {
     {
-        &unit_hyper_togekuri, // mUnitKindParams
+        &unit_hyper_togekuri, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {30.0f, 0.0f, -10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_hyper_togekuri, // itemDropTable
     },
     {
-        &unit_hyper_togekuri, // mUnitKindParams
+        &unit_hyper_togekuri, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {70.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_hyper_togekuri, // itemDropTable
     },
     {
-        &unit_hyper_patakuri, // mUnitKindParams
+        &unit_hyper_patakuri, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {110.0f, 40.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_hyper_patakuri, // itemDropTable
     },
     {
-        &unit_hyper_patakuri, // mUnitKindParams
+        &unit_hyper_patakuri, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {150.0f, 40.0f, 20.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -706,6 +760,10 @@ BattleUnitSetup btlparty_gra_gra_01_04_on_2[] = {
     },
 };
 
+/**
+ * Formation 2 of BTLNO_GRA_01_04: the lineup above with the default heart and flower drops. Item drop
+ * weights: 25 held, 25 random, 50 none.
+ */
 BattleGroupSetup btlgrp_gra_gra_01_04_on_2 = {
     4, // numEnemies
     btlparty_gra_gra_01_04_on_2, // enemyData
@@ -714,35 +772,39 @@ BattleGroupSetup btlgrp_gra_gra_01_04_on_2 = {
     50, // noItemWeight
     battle_heart_drop_param_default, // hpDropTable
     battle_flower_drop_param_default, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/**
+ * Enemy lineup of formation 3 of BTLNO_GRA_01_04, in Twilight Trail (gra_01) while Mario is Doopliss's
+ * shadow: Hyper Spiky Goomba, Hyper Goomba, Crazee Dayzee.
+ */
 BattleUnitSetup btlparty_gra_gra_01_04_on_3[] = {
     {
-        &unit_hyper_togekuri, // mUnitKindParams
+        &unit_hyper_togekuri, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {50.0f, 0.0f, -10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_hyper_togekuri, // itemDropTable
     },
     {
-        &unit_hyper_kuriboo, // mUnitKindParams
+        &unit_hyper_kuriboo, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {90.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_hyper_kuriboo, // itemDropTable
     },
     {
-        &unit_pansy, // mUnitKindParams
+        &unit_pansy, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {130.0f, 0.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -750,6 +812,10 @@ BattleUnitSetup btlparty_gra_gra_01_04_on_3[] = {
     },
 };
 
+/**
+ * Formation 3 of BTLNO_GRA_01_04: the lineup above with the default heart and flower drops. Item drop
+ * weights: 25 held, 25 random, 50 none.
+ */
 BattleGroupSetup btlgrp_gra_gra_01_04_on_3 = {
     3, // numEnemies
     btlparty_gra_gra_01_04_on_3, // enemyData
@@ -758,25 +824,26 @@ BattleGroupSetup btlgrp_gra_gra_01_04_on_3 = {
     50, // noItemWeight
     battle_heart_drop_param_default, // hpDropTable
     battle_flower_drop_param_default, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/** Enemy lineup of formation 1 of BTLNO_GRA_03_01, in Twilight Trail (gra_03): Hyper Paragoomba x2. */
 BattleUnitSetup btlparty_gra_gra_03_01_off_1[] = {
     {
-        &unit_hyper_patakuri, // mUnitKindParams
+        &unit_hyper_patakuri, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {70.0f, 40.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_hyper_patakuri, // itemDropTable
     },
     {
-        &unit_hyper_patakuri, // mUnitKindParams
+        &unit_hyper_patakuri, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {110.0f, 40.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -784,6 +851,10 @@ BattleUnitSetup btlparty_gra_gra_03_01_off_1[] = {
     },
 };
 
+/**
+ * Formation 1 of BTLNO_GRA_03_01: the lineup above with the default heart and flower drops. Item drop
+ * weights: 25 held, 25 random, 50 none.
+ */
 BattleGroupSetup btlgrp_gra_gra_03_01_off_1 = {
     2, // numEnemies
     btlparty_gra_gra_03_01_off_1, // enemyData
@@ -792,35 +863,39 @@ BattleGroupSetup btlgrp_gra_gra_03_01_off_1 = {
     50, // noItemWeight
     battle_heart_drop_param_default, // hpDropTable
     battle_flower_drop_param_default, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/**
+ * Enemy lineup of formation 2 of BTLNO_GRA_03_01, in Twilight Trail (gra_03): Hyper Paragoomba x2, Crazee
+ * Dayzee.
+ */
 BattleUnitSetup btlparty_gra_gra_03_01_off_2[] = {
     {
-        &unit_hyper_patakuri, // mUnitKindParams
+        &unit_hyper_patakuri, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {50.0f, 40.0f, -10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_hyper_patakuri, // itemDropTable
     },
     {
-        &unit_hyper_patakuri, // mUnitKindParams
+        &unit_hyper_patakuri, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {90.0f, 40.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_hyper_patakuri, // itemDropTable
     },
     {
-        &unit_pansy, // mUnitKindParams
+        &unit_pansy, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {130.0f, 0.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -828,6 +903,10 @@ BattleUnitSetup btlparty_gra_gra_03_01_off_2[] = {
     },
 };
 
+/**
+ * Formation 2 of BTLNO_GRA_03_01: the lineup above with the default heart and flower drops. Item drop
+ * weights: 25 held, 25 random, 50 none.
+ */
 BattleGroupSetup btlgrp_gra_gra_03_01_off_2 = {
     3, // numEnemies
     btlparty_gra_gra_03_01_off_2, // enemyData
@@ -836,25 +915,26 @@ BattleGroupSetup btlgrp_gra_gra_03_01_off_2 = {
     50, // noItemWeight
     battle_heart_drop_param_default, // hpDropTable
     battle_flower_drop_param_default, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/** Enemy lineup of formation 1 of BTLNO_GRA_03_04, in Twilight Trail (gra_03): Crazee Dayzee x2. */
 BattleUnitSetup btlparty_gra_gra_03_04_off_1[] = {
     {
-        &unit_pansy, // mUnitKindParams
+        &unit_pansy, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {70.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_pansy, // itemDropTable
     },
     {
-        &unit_pansy, // mUnitKindParams
+        &unit_pansy, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {110.0f, 0.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -862,6 +942,10 @@ BattleUnitSetup btlparty_gra_gra_03_04_off_1[] = {
     },
 };
 
+/**
+ * Formation 1 of BTLNO_GRA_03_04: the lineup above with the default heart and flower drops. Item drop
+ * weights: 25 held, 25 random, 50 none.
+ */
 BattleGroupSetup btlgrp_gra_gra_03_04_off_1 = {
     2, // numEnemies
     btlparty_gra_gra_03_04_off_1, // enemyData
@@ -870,35 +954,39 @@ BattleGroupSetup btlgrp_gra_gra_03_04_off_1 = {
     50, // noItemWeight
     battle_heart_drop_param_default, // hpDropTable
     battle_flower_drop_param_default3, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/**
+ * Enemy lineup of formation 2 of BTLNO_GRA_03_04, in Twilight Trail (gra_03): Crazee Dayzee x2, Amazy
+ * Dayzee.
+ */
 BattleUnitSetup btlparty_gra_gra_03_04_off_2[] = {
     {
-        &unit_pansy, // mUnitKindParams
+        &unit_pansy, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {50.0f, 0.0f, -10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_pansy, // itemDropTable
     },
     {
-        &unit_pansy, // mUnitKindParams
+        &unit_pansy, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {90.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_pansy, // itemDropTable
     },
     {
-        &unit_twinkling_pansy, // mUnitKindParams
+        &unit_twinkling_pansy, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {130.0f, 0.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -906,6 +994,10 @@ BattleUnitSetup btlparty_gra_gra_03_04_off_2[] = {
     },
 };
 
+/**
+ * Formation 2 of BTLNO_GRA_03_04: the lineup above with the default heart and flower drops. Item drop
+ * weights: 25 held, 25 random, 50 none.
+ */
 BattleGroupSetup btlgrp_gra_gra_03_04_off_2 = {
     3, // numEnemies
     btlparty_gra_gra_03_04_off_2, // enemyData
@@ -914,35 +1006,39 @@ BattleGroupSetup btlgrp_gra_gra_03_04_off_2 = {
     50, // noItemWeight
     battle_heart_drop_param_default, // hpDropTable
     battle_flower_drop_param_default3, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/**
+ * Enemy lineup of formation 3 of BTLNO_GRA_03_04, in Twilight Trail (gra_03): Crazee Dayzee, Hyper Spiky
+ * Goomba, Hyper Paragoomba.
+ */
 BattleUnitSetup btlparty_gra_gra_03_04_off_3[] = {
     {
-        &unit_pansy, // mUnitKindParams
+        &unit_pansy, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {50.0f, 0.0f, -10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_pansy, // itemDropTable
     },
     {
-        &unit_hyper_togekuri, // mUnitKindParams
+        &unit_hyper_togekuri, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {90.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_hyper_togekuri, // itemDropTable
     },
     {
-        &unit_hyper_patakuri, // mUnitKindParams
+        &unit_hyper_patakuri, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {130.0f, 40.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -950,6 +1046,10 @@ BattleUnitSetup btlparty_gra_gra_03_04_off_3[] = {
     },
 };
 
+/**
+ * Formation 3 of BTLNO_GRA_03_04: the lineup above with the default heart and flower drops. Item drop
+ * weights: 25 held, 25 random, 50 none.
+ */
 BattleGroupSetup btlgrp_gra_gra_03_04_off_3 = {
     3, // numEnemies
     btlparty_gra_gra_03_04_off_3, // enemyData
@@ -958,45 +1058,46 @@ BattleGroupSetup btlgrp_gra_gra_03_04_off_3 = {
     50, // noItemWeight
     battle_heart_drop_param_default, // hpDropTable
     battle_flower_drop_param_default3, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/** Enemy lineup of formation 1 of BTLNO_GRA_03_05, in Twilight Trail (gra_03): Crazee Dayzee x4. */
 BattleUnitSetup btlparty_gra_gra_03_05_off_1[] = {
     {
-        &unit_pansy, // mUnitKindParams
+        &unit_pansy, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {30.0f, 0.0f, -10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_pansy, // itemDropTable
     },
     {
-        &unit_pansy, // mUnitKindParams
+        &unit_pansy, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {70.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_pansy, // itemDropTable
     },
     {
-        &unit_pansy, // mUnitKindParams
+        &unit_pansy, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {110.0f, 0.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_pansy, // itemDropTable
     },
     {
-        &unit_pansy, // mUnitKindParams
+        &unit_pansy, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {150.0f, 0.0f, 20.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -1004,6 +1105,10 @@ BattleUnitSetup btlparty_gra_gra_03_05_off_1[] = {
     },
 };
 
+/**
+ * Formation 1 of BTLNO_GRA_03_05: the lineup above with the default heart and flower drops. Item drop
+ * weights: 25 held, 25 random, 50 none.
+ */
 BattleGroupSetup btlgrp_gra_gra_03_05_off_1 = {
     4, // numEnemies
     btlparty_gra_gra_03_05_off_1, // enemyData
@@ -1012,35 +1117,39 @@ BattleGroupSetup btlgrp_gra_gra_03_05_off_1 = {
     50, // noItemWeight
     battle_heart_drop_param_default, // hpDropTable
     battle_flower_drop_param_default3, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/**
+ * Enemy lineup of formation 2 of BTLNO_GRA_03_05, in Twilight Trail (gra_03): Crazee Dayzee x2, Amazy
+ * Dayzee.
+ */
 BattleUnitSetup btlparty_gra_gra_03_05_off_2[] = {
     {
-        &unit_pansy, // mUnitKindParams
+        &unit_pansy, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {50.0f, 0.0f, -10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_pansy, // itemDropTable
     },
     {
-        &unit_pansy, // mUnitKindParams
+        &unit_pansy, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {90.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_pansy, // itemDropTable
     },
     {
-        &unit_twinkling_pansy, // mUnitKindParams
+        &unit_twinkling_pansy, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {130.0f, 0.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -1048,6 +1157,10 @@ BattleUnitSetup btlparty_gra_gra_03_05_off_2[] = {
     },
 };
 
+/**
+ * Formation 2 of BTLNO_GRA_03_05: the lineup above with the default heart and flower drops. Item drop
+ * weights: 25 held, 25 random, 50 none.
+ */
 BattleGroupSetup btlgrp_gra_gra_03_05_off_2 = {
     3, // numEnemies
     btlparty_gra_gra_03_05_off_2, // enemyData
@@ -1056,45 +1169,49 @@ BattleGroupSetup btlgrp_gra_gra_03_05_off_2 = {
     50, // noItemWeight
     battle_heart_drop_param_default, // hpDropTable
     battle_flower_drop_param_default3, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/**
+ * Enemy lineup of formation 3 of BTLNO_GRA_03_05, in Twilight Trail (gra_03): Crazee Dayzee x2, Hyper
+ * Paragoomba, Hyper Spiky Goomba.
+ */
 BattleUnitSetup btlparty_gra_gra_03_05_off_3[] = {
     {
-        &unit_pansy, // mUnitKindParams
+        &unit_pansy, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {30.0f, 0.0f, -10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_pansy, // itemDropTable
     },
     {
-        &unit_pansy, // mUnitKindParams
+        &unit_pansy, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {70.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_pansy, // itemDropTable
     },
     {
-        &unit_hyper_patakuri, // mUnitKindParams
+        &unit_hyper_patakuri, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {110.0f, 40.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_hyper_patakuri, // itemDropTable
     },
     {
-        &unit_hyper_togekuri, // mUnitKindParams
+        &unit_hyper_togekuri, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {150.0f, 0.0f, 20.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -1102,6 +1219,10 @@ BattleUnitSetup btlparty_gra_gra_03_05_off_3[] = {
     },
 };
 
+/**
+ * Formation 3 of BTLNO_GRA_03_05: the lineup above with the default heart and flower drops. Item drop
+ * weights: 25 held, 25 random, 50 none.
+ */
 BattleGroupSetup btlgrp_gra_gra_03_05_off_3 = {
     4, // numEnemies
     btlparty_gra_gra_03_05_off_3, // enemyData
@@ -1110,35 +1231,38 @@ BattleGroupSetup btlgrp_gra_gra_03_05_off_3 = {
     50, // noItemWeight
     battle_heart_drop_param_default, // hpDropTable
     battle_flower_drop_param_default3, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/**
+ * Enemy lineup of formation 1 of BTLNO_GRA_04_02, in Twilight Trail (gra_04): Crazee Dayzee x2, Hyper Cleft.
+ */
 BattleUnitSetup btlparty_gra_gra_04_02_off_1[] = {
     {
-        &unit_pansy, // mUnitKindParams
+        &unit_pansy, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {50.0f, 0.0f, -10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_pansy, // itemDropTable
     },
     {
-        &unit_hyper_sinemon, // mUnitKindParams
+        &unit_hyper_sinemon, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {90.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_hyper_sinemon, // itemDropTable
     },
     {
-        &unit_pansy, // mUnitKindParams
+        &unit_pansy, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {130.0f, 0.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -1146,6 +1270,10 @@ BattleUnitSetup btlparty_gra_gra_04_02_off_1[] = {
     },
 };
 
+/**
+ * Formation 1 of BTLNO_GRA_04_02: the lineup above with the default heart and flower drops. Item drop
+ * weights: 25 held, 25 random, 50 none.
+ */
 BattleGroupSetup btlgrp_gra_gra_04_02_off_1 = {
     3, // numEnemies
     btlparty_gra_gra_04_02_off_1, // enemyData
@@ -1154,25 +1282,26 @@ BattleGroupSetup btlgrp_gra_gra_04_02_off_1 = {
     50, // noItemWeight
     battle_heart_drop_param_default, // hpDropTable
     battle_flower_drop_param_default3, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/** Enemy lineup of formation 2 of BTLNO_GRA_04_02, in Twilight Trail (gra_04): Crazee Dayzee, Hyper Cleft. */
 BattleUnitSetup btlparty_gra_gra_04_02_off_2[] = {
     {
-        &unit_pansy, // mUnitKindParams
+        &unit_pansy, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {70.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_pansy, // itemDropTable
     },
     {
-        &unit_hyper_sinemon, // mUnitKindParams
+        &unit_hyper_sinemon, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {110.0f, 0.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -1180,6 +1309,10 @@ BattleUnitSetup btlparty_gra_gra_04_02_off_2[] = {
     },
 };
 
+/**
+ * Formation 2 of BTLNO_GRA_04_02: the lineup above with the default heart and flower drops. Item drop
+ * weights: 25 held, 25 random, 50 none.
+ */
 BattleGroupSetup btlgrp_gra_gra_04_02_off_2 = {
     2, // numEnemies
     btlparty_gra_gra_04_02_off_2, // enemyData
@@ -1188,35 +1321,39 @@ BattleGroupSetup btlgrp_gra_gra_04_02_off_2 = {
     50, // noItemWeight
     battle_heart_drop_param_default, // hpDropTable
     battle_flower_drop_param_default3, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/**
+ * Enemy lineup of formation 3 of BTLNO_GRA_04_02, in Twilight Trail (gra_04): Crazee Dayzee x2, Amazy
+ * Dayzee.
+ */
 BattleUnitSetup btlparty_gra_gra_04_02_off_3[] = {
     {
-        &unit_pansy, // mUnitKindParams
+        &unit_pansy, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {50.0f, 0.0f, -10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_pansy, // itemDropTable
     },
     {
-        &unit_pansy, // mUnitKindParams
+        &unit_pansy, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {90.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_pansy, // itemDropTable
     },
     {
-        &unit_twinkling_pansy, // mUnitKindParams
+        &unit_twinkling_pansy, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {130.0f, 0.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -1224,6 +1361,10 @@ BattleUnitSetup btlparty_gra_gra_04_02_off_3[] = {
     },
 };
 
+/**
+ * Formation 3 of BTLNO_GRA_04_02: the lineup above with the default heart and flower drops. Item drop
+ * weights: 25 held, 25 random, 50 none.
+ */
 BattleGroupSetup btlgrp_gra_gra_04_02_off_3 = {
     3, // numEnemies
     btlparty_gra_gra_04_02_off_3, // enemyData
@@ -1232,25 +1373,26 @@ BattleGroupSetup btlgrp_gra_gra_04_02_off_3 = {
     50, // noItemWeight
     battle_heart_drop_param_default, // hpDropTable
     battle_flower_drop_param_default3, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/** Enemy lineup of formation 1 of BTLNO_GRA_05_01, in Twilight Trail (gra_05): Hyper Cleft x2. */
 BattleUnitSetup btlparty_gra_gra_05_01_off_1[] = {
     {
-        &unit_hyper_sinemon, // mUnitKindParams
+        &unit_hyper_sinemon, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {70.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_hyper_sinemon, // itemDropTable
     },
     {
-        &unit_hyper_sinemon, // mUnitKindParams
+        &unit_hyper_sinemon, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {110.0f, 0.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -1258,6 +1400,10 @@ BattleUnitSetup btlparty_gra_gra_05_01_off_1[] = {
     },
 };
 
+/**
+ * Formation 1 of BTLNO_GRA_05_01: the lineup above with the default heart and flower drops. Item drop
+ * weights: 25 held, 25 random, 50 none.
+ */
 BattleGroupSetup btlgrp_gra_gra_05_01_off_1 = {
     2, // numEnemies
     btlparty_gra_gra_05_01_off_1, // enemyData
@@ -1266,35 +1412,38 @@ BattleGroupSetup btlgrp_gra_gra_05_01_off_1 = {
     50, // noItemWeight
     battle_heart_drop_param_default2, // hpDropTable
     battle_flower_drop_param_default, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/**
+ * Enemy lineup of formation 2 of BTLNO_GRA_05_01, in Twilight Trail (gra_05): Hyper Cleft x2, Amazy Dayzee.
+ */
 BattleUnitSetup btlparty_gra_gra_05_01_off_2[] = {
     {
-        &unit_hyper_sinemon, // mUnitKindParams
+        &unit_hyper_sinemon, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {50.0f, 0.0f, -10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_hyper_sinemon, // itemDropTable
     },
     {
-        &unit_hyper_sinemon, // mUnitKindParams
+        &unit_hyper_sinemon, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {90.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_hyper_sinemon, // itemDropTable
     },
     {
-        &unit_twinkling_pansy, // mUnitKindParams
+        &unit_twinkling_pansy, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {130.0f, 0.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -1302,6 +1451,10 @@ BattleUnitSetup btlparty_gra_gra_05_01_off_2[] = {
     },
 };
 
+/**
+ * Formation 2 of BTLNO_GRA_05_01: the lineup above with the default heart and flower drops. Item drop
+ * weights: 25 held, 25 random, 50 none.
+ */
 BattleGroupSetup btlgrp_gra_gra_05_01_off_2 = {
     3, // numEnemies
     btlparty_gra_gra_05_01_off_2, // enemyData
@@ -1310,35 +1463,36 @@ BattleGroupSetup btlgrp_gra_gra_05_01_off_2 = {
     50, // noItemWeight
     battle_heart_drop_param_default2, // hpDropTable
     battle_flower_drop_param_default, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/** Enemy lineup of formation 1 of BTLNO_GRA_05_03, in Twilight Trail (gra_05): Hyper Cleft x3. */
 BattleUnitSetup btlparty_gra_gra_05_03_off_1[] = {
     {
-        &unit_hyper_sinemon, // mUnitKindParams
+        &unit_hyper_sinemon, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {50.0f, 0.0f, -10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_hyper_sinemon, // itemDropTable
     },
     {
-        &unit_hyper_sinemon, // mUnitKindParams
+        &unit_hyper_sinemon, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {90.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_hyper_sinemon, // itemDropTable
     },
     {
-        &unit_hyper_sinemon, // mUnitKindParams
+        &unit_hyper_sinemon, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {130.0f, 0.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -1346,6 +1500,10 @@ BattleUnitSetup btlparty_gra_gra_05_03_off_1[] = {
     },
 };
 
+/**
+ * Formation 1 of BTLNO_GRA_05_03: the lineup above with the default heart and flower drops. Item drop
+ * weights: 25 held, 25 random, 50 none.
+ */
 BattleGroupSetup btlgrp_gra_gra_05_03_off_1 = {
     3, // numEnemies
     btlparty_gra_gra_05_03_off_1, // enemyData
@@ -1354,35 +1512,38 @@ BattleGroupSetup btlgrp_gra_gra_05_03_off_1 = {
     50, // noItemWeight
     battle_heart_drop_param_default2, // hpDropTable
     battle_flower_drop_param_default, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/**
+ * Enemy lineup of formation 2 of BTLNO_GRA_05_03, in Twilight Trail (gra_05): Hyper Cleft x2, Amazy Dayzee.
+ */
 BattleUnitSetup btlparty_gra_gra_05_03_off_2[] = {
     {
-        &unit_hyper_sinemon, // mUnitKindParams
+        &unit_hyper_sinemon, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {50.0f, 0.0f, -10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_hyper_sinemon, // itemDropTable
     },
     {
-        &unit_hyper_sinemon, // mUnitKindParams
+        &unit_hyper_sinemon, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {90.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_hyper_sinemon, // itemDropTable
     },
     {
-        &unit_twinkling_pansy, // mUnitKindParams
+        &unit_twinkling_pansy, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {130.0f, 0.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -1390,6 +1551,10 @@ BattleUnitSetup btlparty_gra_gra_05_03_off_2[] = {
     },
 };
 
+/**
+ * Formation 2 of BTLNO_GRA_05_03: the lineup above with the default heart and flower drops. Item drop
+ * weights: 25 held, 25 random, 50 none.
+ */
 BattleGroupSetup btlgrp_gra_gra_05_03_off_2 = {
     3, // numEnemies
     btlparty_gra_gra_05_03_off_2, // enemyData
@@ -1398,45 +1563,49 @@ BattleGroupSetup btlgrp_gra_gra_05_03_off_2 = {
     50, // noItemWeight
     battle_heart_drop_param_default2, // hpDropTable
     battle_flower_drop_param_default, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/**
+ * Enemy lineup of formation 3 of BTLNO_GRA_05_03, in Twilight Trail (gra_05): Hyper Cleft x2, Crazee Dayzee
+ * x2.
+ */
 BattleUnitSetup btlparty_gra_gra_05_03_off_3[] = {
     {
-        &unit_hyper_sinemon, // mUnitKindParams
+        &unit_hyper_sinemon, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {30.0f, 0.0f, -10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_hyper_sinemon, // itemDropTable
     },
     {
-        &unit_pansy, // mUnitKindParams
+        &unit_pansy, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {70.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_hyper_sinemon, // itemDropTable
     },
     {
-        &unit_pansy, // mUnitKindParams
+        &unit_pansy, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {110.0f, 0.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_twinkling_pansy, // itemDropTable
     },
     {
-        &unit_hyper_sinemon, // mUnitKindParams
+        &unit_hyper_sinemon, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {150.0f, 0.0f, 20.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -1444,6 +1613,10 @@ BattleUnitSetup btlparty_gra_gra_05_03_off_3[] = {
     },
 };
 
+/**
+ * Formation 3 of BTLNO_GRA_05_03: the lineup above with the default heart and flower drops. Item drop
+ * weights: 25 held, 25 random, 50 none.
+ */
 BattleGroupSetup btlgrp_gra_gra_05_03_off_3 = {
     4, // numEnemies
     btlparty_gra_gra_05_03_off_3, // enemyData
@@ -1452,29 +1625,38 @@ BattleGroupSetup btlgrp_gra_gra_05_03_off_3 = {
     50, // noItemWeight
     battle_heart_drop_param_default2, // hpDropTable
     battle_flower_drop_param_default, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/** Debug battle GRA_TEST1: Hyper Goomba x3 on stage stg_04_0. */
 NpcBattleSelect btlgrpsel_gra_btlno_gra_test1_off[] = {
     {50, &btlgrp_gra_gra_01_01_off_1, gra_btlstage_data},
     {0},
 };
 
+/** Debug battle GRA_TEST2: Hyper Goomba x3 on stage stg_04_1. */
 NpcBattleSelect btlgrpsel_gra_btlno_gra_test2_off[] = {
     {50, &btlgrp_gra_gra_01_01_off_1, &gra_btlstage_data[1]},
     {0},
 };
 
+/** BTLNO_GRA_00_01 always fights Doopliss disguised as Mario on stage stg_04_0. */
 NpcBattleSelect btlgrpsel_gra_btlno_gra_00_01_off[] = {
     {50, &btlgrp_gra_gra_00_01_off_1, gra_btlstage_data},
     {0},
 };
 
+/** BTLNO_GRA_00_02 always fights Doopliss disguised as Mario on stage stg_04_0. */
 NpcBattleSelect btlgrpsel_gra_btlno_gra_00_02_off[] = {
     {50, &btlgrp_gra_gra_00_01_off_1, gra_btlstage_data},
     {0},
 };
 
+/**
+ * BTLNO_GRA_01_01 while Mario is Doopliss's shadow picks one of its formations by weight (10:10:10) on stage
+ * stg_04_0: Hyper Goomba x3; Hyper Goomba, Hyper Paragoomba, Crazee Dayzee; Hyper Goomba, Hyper Spiky
+ * Goomba, Crazee Dayzee.
+ */
 NpcBattleSelect btlgrpsel_gra_btlno_gra_01_01_on[] = {
     {10, &btlgrp_gra_gra_01_01_on_1, gra_btlstage_data},
     {10, &btlgrp_gra_gra_01_01_on_2, gra_btlstage_data},
@@ -1482,11 +1664,16 @@ NpcBattleSelect btlgrpsel_gra_btlno_gra_01_01_on[] = {
     {0},
 };
 
+/** BTLNO_GRA_01_01 always fights Hyper Goomba x3 on stage stg_04_0. */
 NpcBattleSelect btlgrpsel_gra_btlno_gra_01_01_off[] = {
     {50, &btlgrp_gra_gra_01_01_off_1, gra_btlstage_data},
     {0},
 };
 
+/**
+ * BTLNO_GRA_01_03 while Mario is Doopliss's shadow picks one of its formations by weight (10:10:10) on stage
+ * stg_04_0: Hyper Paragoomba x3; Hyper Paragoomba x4; Hyper Paragoomba x2, Crazee Dayzee x2.
+ */
 NpcBattleSelect btlgrpsel_gra_btlno_gra_01_03_on[] = {
     {10, &btlgrp_gra_gra_01_03_on_1, gra_btlstage_data},
     {10, &btlgrp_gra_gra_01_03_on_2, gra_btlstage_data},
@@ -1494,11 +1681,17 @@ NpcBattleSelect btlgrpsel_gra_btlno_gra_01_03_on[] = {
     {0},
 };
 
+/** BTLNO_GRA_01_03 always fights Hyper Paragoomba x3 on stage stg_04_0. */
 NpcBattleSelect btlgrpsel_gra_btlno_gra_01_03_off[] = {
     {50, &btlgrp_gra_gra_01_03_off_1, gra_btlstage_data},
     {0},
 };
 
+/**
+ * BTLNO_GRA_01_04 while Mario is Doopliss's shadow picks one of its formations by weight (10:10:10) on stage
+ * stg_04_0: Hyper Spiky Goomba x3; Hyper Spiky Goomba x2, Hyper Paragoomba x2; Hyper Spiky Goomba, Hyper
+ * Goomba, Crazee Dayzee.
+ */
 NpcBattleSelect btlgrpsel_gra_btlno_gra_01_04_on[] = {
     {10, &btlgrp_gra_gra_01_04_on_1, gra_btlstage_data},
     {10, &btlgrp_gra_gra_01_04_on_2, gra_btlstage_data},
@@ -1506,17 +1699,26 @@ NpcBattleSelect btlgrpsel_gra_btlno_gra_01_04_on[] = {
     {0},
 };
 
+/** BTLNO_GRA_01_04 always fights Hyper Spiky Goomba x3 on stage stg_04_0. */
 NpcBattleSelect btlgrpsel_gra_btlno_gra_01_04_off[] = {
     {50, &btlgrp_gra_gra_01_04_off_1, gra_btlstage_data},
     {0},
 };
 
+/**
+ * BTLNO_GRA_03_01 picks one of its formations by weight (10:10) on stage stg_04_0: Hyper Paragoomba x2;
+ * Hyper Paragoomba x2, Crazee Dayzee.
+ */
 NpcBattleSelect btlgrpsel_gra_btlno_gra_03_01_off[] = {
     {10, &btlgrp_gra_gra_03_01_off_1, gra_btlstage_data},
     {10, &btlgrp_gra_gra_03_01_off_2, gra_btlstage_data},
     {0},
 };
 
+/**
+ * BTLNO_GRA_03_04 picks one of its formations by weight (50:10:40) on stage stg_04_1: Crazee Dayzee x2;
+ * Crazee Dayzee x2, Amazy Dayzee; Crazee Dayzee, Hyper Spiky Goomba, Hyper Paragoomba.
+ */
 NpcBattleSelect btlgrpsel_gra_btlno_gra_03_04_off[] = {
     {50, &btlgrp_gra_gra_03_04_off_1, &gra_btlstage_data[1]},
     {10, &btlgrp_gra_gra_03_04_off_2, &gra_btlstage_data[1]},
@@ -1524,6 +1726,10 @@ NpcBattleSelect btlgrpsel_gra_btlno_gra_03_04_off[] = {
     {0},
 };
 
+/**
+ * BTLNO_GRA_03_05 picks one of its formations by weight (30:10:30) on stage stg_04_1: Crazee Dayzee x4;
+ * Crazee Dayzee x2, Amazy Dayzee; Crazee Dayzee x2, Hyper Paragoomba, Hyper Spiky Goomba.
+ */
 NpcBattleSelect btlgrpsel_gra_btlno_gra_03_05_off[] = {
     {30, &btlgrp_gra_gra_03_05_off_1, &gra_btlstage_data[1]},
     {10, &btlgrp_gra_gra_03_05_off_2, &gra_btlstage_data[1]},
@@ -1531,6 +1737,10 @@ NpcBattleSelect btlgrpsel_gra_btlno_gra_03_05_off[] = {
     {0},
 };
 
+/**
+ * BTLNO_GRA_04_02 picks one of its formations by weight (60:30:10) on stage stg_04_1: Crazee Dayzee x2,
+ * Hyper Cleft; Crazee Dayzee, Hyper Cleft; Crazee Dayzee x2, Amazy Dayzee.
+ */
 NpcBattleSelect btlgrpsel_gra_btlno_gra_04_02_off[] = {
     {60, &btlgrp_gra_gra_04_02_off_1, &gra_btlstage_data[1]},
     {30, &btlgrp_gra_gra_04_02_off_2, &gra_btlstage_data[1]},
@@ -1538,12 +1748,20 @@ NpcBattleSelect btlgrpsel_gra_btlno_gra_04_02_off[] = {
     {0},
 };
 
+/**
+ * BTLNO_GRA_05_01 picks one of its formations by weight (100:10) on stage stg_04_1: Hyper Cleft x2; Hyper
+ * Cleft x2, Amazy Dayzee.
+ */
 NpcBattleSelect btlgrpsel_gra_btlno_gra_05_01_off[] = {
     {100, &btlgrp_gra_gra_05_01_off_1, &gra_btlstage_data[1]},
     {10, &btlgrp_gra_gra_05_01_off_2, &gra_btlstage_data[1]},
     {0},
 };
 
+/**
+ * BTLNO_GRA_05_03 picks one of its formations by weight (50:10:40) on stage stg_04_1: Hyper Cleft x3; Hyper
+ * Cleft x2, Amazy Dayzee; Hyper Cleft x2, Crazee Dayzee x2.
+ */
 NpcBattleSelect btlgrpsel_gra_btlno_gra_05_03_off[] = {
     {50, &btlgrp_gra_gra_05_03_off_1, &gra_btlstage_data[1]},
     {10, &btlgrp_gra_gra_05_03_off_2, &gra_btlstage_data[1]},
@@ -1551,142 +1769,151 @@ NpcBattleSelect btlgrpsel_gra_btlno_gra_05_03_off[] = {
     {0},
 };
 
+/**
+ * Battle setups of Twilight Trail, one per BTLNO_GRA_* name in btl_gra_setup_no_tbl: the test stages, then
+ * the enemy kinds met on gra_00 to gra_05; each names the formations to pick from (a second set while Mario
+ * is Doopliss's shadow), reward rolls and music.
+ */
 NpcSetupBattleInfo btlsetup_gra_tbl[] = {
     {
-        /*"マップstg_04_0"*/"\x83\x7D\x83\x62\x83\x76\x73\x74\x67\x5F\x30\x34\x5F\x30", // name
+        "マップstg_04_0", // name
         NULL, 0, // mapName..fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_gra_btlno_gra_test1_off, // select
-        0, 0, // battleFlags..field_1C
-        {{1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        0, 0, // battleFlags, randomMode
+        {{1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_ZAKO_BATTLE1", // bgmName
     },
     {
-        /*"マップstg_04_1"*/"\x83\x7D\x83\x62\x83\x76\x73\x74\x67\x5F\x30\x34\x5F\x31", // name
+        "マップstg_04_1", // name
         NULL, 0, // mapName..fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_gra_btlno_gra_test2_off, // select
-        0, 0, // battleFlags..field_1C
-        {{1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        0, 0, // battleFlags, randomMode
+        {{1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_ZAKO_BATTLE1", // bgmName
     },
     {
-        /*"GRA00ランペルその１"*/"\x47\x52\x41\x30\x30\x83\x89\x83\x93\x83\x79\x83\x8B\x82\xBB\x82\xCC\x82\x50", // name
+        "GRA00ランペルその１", // name
         NULL, 0, // mapName..fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_gra_btlno_gra_00_01_off, // select
-        0x20000000, // battleFlags
-        0, // field_1C
-        {{4, 4}, {4, 4}, {0}, {0}, {4, 4}, {4, 4}, {0}, {4, 4}, {4, 4}, {0}, {4, 4}, {4, 4}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        NPC_BATTLE_MARIO_PAUSE3_VOICE, // battleFlags
+        0, // randomMode
+        {{4, 4}, {4, 4}, {0}, {0}, {4, 4}, {4, 4}, {0}, {4, 4}, {4, 4}, {0}, {4, 4}, {4, 4}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_BOSS_STG4_RUNPELL1", // bgmName
     },
     {
-        /*"GRA00ランペルその２"*/"\x47\x52\x41\x30\x30\x83\x89\x83\x93\x83\x79\x83\x8B\x82\xBB\x82\xCC\x82\x51", // name
+        "GRA00ランペルその２", // name
         NULL, 0, // mapName..fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_gra_btlno_gra_00_02_off, // select
-        0x20000000, // battleFlags
-        0, // field_1C
-        {{4, 4}, {4, 4}, {0}, {0}, {4, 4}, {4, 4}, {0}, {4, 4}, {4, 4}, {0}, {4, 4}, {4, 4}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        NPC_BATTLE_MARIO_PAUSE3_VOICE, // battleFlags
+        0, // randomMode
+        {{4, 4}, {4, 4}, {0}, {0}, {4, 4}, {4, 4}, {0}, {4, 4}, {4, 4}, {0}, {4, 4}, {4, 4}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_BOSS_STG4_RUNPELL1", // bgmName
     },
     {
-        /*"GRA01ハイパークリボー"*/"\x47\x52\x41\x30\x31\x83\x6E\x83\x43\x83\x70\x81\x5B\x83\x4E\x83\x8A\x83\x7B\x81\x5B", // name
+        "GRA01ハイパークリボー", // name
         NULL, 0, // mapName..fixedItem
-        GSWF(2081), // swFlag
+        GSWF(GSWF_STG4_MARIO_IS_SHADOW), // swFlag
         btlgrpsel_gra_btlno_gra_01_01_on, // altSelect
         btlgrpsel_gra_btlno_gra_01_01_off, // select
-        0, 0, // battleFlags..field_1C
-        {{4, 4}, {4, 4}, {0}, {0}, {4, 4}, {4, 4}, {0}, {4, 4}, {4, 4}, {0}, {10, 10}, {4, 4}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        0, 0, // battleFlags, randomMode
+        {{4, 4}, {4, 4}, {0}, {0}, {4, 4}, {4, 4}, {0}, {4, 4}, {4, 4}, {0}, {10, 10}, {4, 4}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_ZAKO_BATTLE1", // bgmName
     },
     {
-        /*"GRA01ハイパーパタクリ"*/"\x47\x52\x41\x30\x31\x83\x6E\x83\x43\x83\x70\x81\x5B\x83\x70\x83\x5E\x83\x4E\x83\x8A", // name
+        "GRA01ハイパーパタクリ", // name
         NULL, 0, // mapName..fixedItem
-        GSWF(2081), // swFlag
+        GSWF(GSWF_STG4_MARIO_IS_SHADOW), // swFlag
         btlgrpsel_gra_btlno_gra_01_03_on, // altSelect
         btlgrpsel_gra_btlno_gra_01_03_off, // select
-        0, 0, // battleFlags..field_1C
-        {{4, 4}, {4, 4}, {0}, {0}, {4, 4}, {4, 4}, {0}, {4, 4}, {4, 4}, {0}, {10, 10}, {4, 4}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        0, 0, // battleFlags, randomMode
+        {{4, 4}, {4, 4}, {0}, {0}, {4, 4}, {4, 4}, {0}, {4, 4}, {4, 4}, {0}, {10, 10}, {4, 4}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_ZAKO_BATTLE1", // bgmName
     },
     {
-        /*"GRA01ハイパートゲクリ"*/"\x47\x52\x41\x30\x31\x83\x6E\x83\x43\x83\x70\x81\x5B\x83\x67\x83\x51\x83\x4E\x83\x8A", // name
+        "GRA01ハイパートゲクリ", // name
         NULL, 0, // mapName..fixedItem
-        GSWF(2081), // swFlag
+        GSWF(GSWF_STG4_MARIO_IS_SHADOW), // swFlag
         btlgrpsel_gra_btlno_gra_01_04_on, // altSelect
         btlgrpsel_gra_btlno_gra_01_04_off, // select
-        0, 0, // battleFlags..field_1C
-        {{4, 4}, {4, 4}, {0}, {0}, {4, 4}, {4, 4}, {0}, {4, 4}, {4, 4}, {0}, {10, 10}, {4, 4}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        0, 0, // battleFlags, randomMode
+        {{4, 4}, {4, 4}, {0}, {0}, {4, 4}, {4, 4}, {0}, {4, 4}, {4, 4}, {0}, {10, 10}, {4, 4}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_ZAKO_BATTLE1", // bgmName
     },
     {
-        /*"GRA03ハイパークリボー"*/"\x47\x52\x41\x30\x33\x83\x6E\x83\x43\x83\x70\x81\x5B\x83\x4E\x83\x8A\x83\x7B\x81\x5B", // name
+        "GRA03ハイパークリボー", // name
         NULL, 0, // mapName..fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_gra_btlno_gra_03_01_off, // select
-        0, 0, // battleFlags..field_1C
-        {{4, 4}, {4, 4}, {0}, {0}, {4, 4}, {4, 4}, {0}, {4, 4}, {4, 4}, {0}, {10, 10}, {4, 4}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        0, 0, // battleFlags, randomMode
+        {{4, 4}, {4, 4}, {0}, {0}, {4, 4}, {4, 4}, {0}, {4, 4}, {4, 4}, {0}, {10, 10}, {4, 4}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_ZAKO_BATTLE1", // bgmName
     },
     {
-        /*"GRA03パンジーさん"*/"\x47\x52\x41\x30\x33\x83\x70\x83\x93\x83\x57\x81\x5B\x82\xB3\x82\xF1", // name
+        "GRA03パンジーさん", // name
         NULL, 0, // mapName..fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_gra_btlno_gra_03_04_off, // select
-        0, 0, // battleFlags..field_1C
-        {{4, 4}, {4, 4}, {0}, {0}, {4, 4}, {4, 4}, {10, 10}, {4, 4}, {4, 4}, {0}, {4, 4}, {4, 4}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        0, 0, // battleFlags, randomMode
+        {{4, 4}, {4, 4}, {0}, {0}, {4, 4}, {4, 4}, {10, 10}, {4, 4}, {4, 4}, {0}, {4, 4}, {4, 4}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_ZAKO_BATTLE1", // bgmName
     },
     {
-        /*"GRA03パンジーさん"*/"\x47\x52\x41\x30\x33\x83\x70\x83\x93\x83\x57\x81\x5B\x82\xB3\x82\xF1", // name
+        "GRA03パンジーさん", // name
         NULL, 0, // mapName..fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_gra_btlno_gra_03_05_off, // select
-        0, 0, // battleFlags..field_1C
-        {{4, 4}, {4, 4}, {0}, {0}, {4, 4}, {4, 4}, {10, 10}, {4, 4}, {4, 4}, {0}, {4, 4}, {4, 4}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        0, 0, // battleFlags, randomMode
+        {{4, 4}, {4, 4}, {0}, {0}, {4, 4}, {4, 4}, {10, 10}, {4, 4}, {4, 4}, {0}, {4, 4}, {4, 4}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_ZAKO_BATTLE1", // bgmName
     },
     {
-        /*"GRA04パンジーさん"*/"\x47\x52\x41\x30\x34\x83\x70\x83\x93\x83\x57\x81\x5B\x82\xB3\x82\xF1", // name
+        "GRA04パンジーさん", // name
         NULL, 0, // mapName..fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_gra_btlno_gra_04_02_off, // select
-        0, 0, // battleFlags..field_1C
-        {{4, 4}, {4, 4}, {0}, {0}, {4, 4}, {4, 4}, {10, 10}, {4, 4}, {4, 4}, {0}, {4, 4}, {4, 4}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        0, 0, // battleFlags, randomMode
+        {{4, 4}, {4, 4}, {0}, {0}, {4, 4}, {4, 4}, {10, 10}, {4, 4}, {4, 4}, {0}, {4, 4}, {4, 4}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_ZAKO_BATTLE1", // bgmName
     },
     {
-        /*"GRA05ハイパーシンエモン"*/"\x47\x52\x41\x30\x35\x83\x6E\x83\x43\x83\x70\x81\x5B\x83\x56\x83\x93\x83\x47\x83\x82\x83\x93", // name
+        "GRA05ハイパーシンエモン", // name
         NULL, 0, // mapName..fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_gra_btlno_gra_05_01_off, // select
-        0, 0, // battleFlags..field_1C
-        {{4, 4}, {4, 4}, {0}, {0}, {4, 4}, {4, 4}, {4, 4}, {4, 4}, {4, 4}, {0}, {4, 4}, {4, 4}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        0, 0, // battleFlags, randomMode
+        {{4, 4}, {4, 4}, {0}, {0}, {4, 4}, {4, 4}, {4, 4}, {4, 4}, {4, 4}, {0}, {4, 4}, {4, 4}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_ZAKO_BATTLE1", // bgmName
     },
     {
-        /*"GRA05ハイパーシンエモン"*/"\x47\x52\x41\x30\x35\x83\x6E\x83\x43\x83\x70\x81\x5B\x83\x56\x83\x93\x83\x47\x83\x82\x83\x93", // name
+        "GRA05ハイパーシンエモン", // name
         NULL, 0, // mapName..fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_gra_btlno_gra_05_03_off, // select
-        0, 0, // battleFlags..field_1C
-        {{4, 4}, {4, 4}, {0}, {0}, {4, 4}, {4, 4}, {4, 4}, {4, 4}, {4, 4}, {0}, {4, 4}, {4, 4}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        0, 0, // battleFlags, randomMode
+        {{4, 4}, {4, 4}, {0}, {0}, {4, 4}, {4, 4}, {4, 4}, {4, 4}, {4, 4}, {0}, {4, 4}, {4, 4}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_ZAKO_BATTLE1", // bgmName
     },
     {0},
 };
 
+/**
+ * Names of the Twilight Trail battles (BTLNO_* strings) paired with their index in btlsetup_gra_tbl;
+ * relSetBtlAddr registers it with the setup table when the area loads.
+ */
 NpcTerritoryInfo btl_gra_setup_no_tbl[] = {
     {"BTLNO_GRA_TEST1", 0},
     {"BTLNO_GRA_TEST2", 1},
@@ -1703,4 +1930,3 @@ NpcTerritoryInfo btl_gra_setup_no_tbl[] = {
     {"BTLNO_GRA_05_03", 12},
     {0},
 };
-

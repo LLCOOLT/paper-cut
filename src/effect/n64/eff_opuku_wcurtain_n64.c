@@ -1,3 +1,5 @@
+// Paper Mario 64 effect: curtain of water (wcurtain) at a point with a scale and lifetime.
+#include "eff/n64/eff_opuku_wcurtain_n64.h"
 #include "driver/camdrv.h"
 #include "driver/dispdrv.h"
 #include "driver/effdrv.h"
@@ -6,17 +8,7 @@
 #include <dolphin/mtx.h>
 #include <dolphin/os/OSFastCast.h>
 #include <stdlib.h>
-
-
-typedef struct effN64Vtx {
-    s16 x, y, z;   // 0x0
-    s16 s, t;      // 0x6
-    u8 r, g, b, a; // 0xA
-} effN64Vtx;
-
-void effGetTexObjN64(u32 id, GXTexObj* obj);
-void effSetVtxDescN64(effN64Vtx* vtx);
-void tri2();
+#include "eff/eff_n64.h"
 
 typedef struct EffOpukuWcurtainN64Work {
     s32 type;       // 0x0
@@ -32,9 +24,13 @@ typedef struct EffOpukuWcurtainN64Work {
     f32 speed[12];  // 0x5C
 } EffOpukuWcurtainN64Work;
 
-void effOpukuWcurtainMain(EffectEntry* effect);
-void effOpukuWcurtainDisp(CameraId cameraId, EffectEntry* effect);
+static void effOpukuWcurtainMain(EffectEntry* effect);
+static void effOpukuWcurtainDisp(CameraId cameraId, EffectEntry* effect);
 
+/**
+ * Spawns a water curtain at (x, y, z) scaled by scale, lasting lifetime frames (<= 0 means until deleted):
+ * twelve vertical strips with randomized fall speeds. Via evt_eff64 "opuku_wcurtain_n64". Soft-deletable.
+ */
 EffectEntry* effOpukuWcurtainN64Entry(s32 type, s32 lifetime, f32 x, f32 y, f32 z, f32 scale) {
     EffectEntry* effect;
     EffOpukuWcurtainN64Work* work;
@@ -46,7 +42,7 @@ EffectEntry* effOpukuWcurtainN64Entry(s32 type, s32 lifetime, f32 x, f32 y, f32 
     work = __memAlloc(HEAP_EFFECT, sizeof(EffOpukuWcurtainN64Work));
     effect->userdata = work;
     effect->callback = effOpukuWcurtainMain;
-    effect->flags |= 2;
+    effect->flags |= EFFECT_FLAG_SOFT_DELETE;
     work->type = type;
     work->frame = 0;
     if (lifetime <= 0) {
@@ -70,7 +66,11 @@ EffectEntry* effOpukuWcurtainN64Entry(s32 type, s32 lifetime, f32 x, f32 y, f32 
     return effect;
 }
 
-void effOpukuWcurtainMain(EffectEntry* effect) {
+/**
+ * Fades the curtain in and out and accelerates each strip downward (speed gains -0.05 per frame, with a cap near
+ * 5).
+ */
+static void effOpukuWcurtainMain(EffectEntry* effect) {
     EffOpukuWcurtainN64Work* work = effect->userdata;
     Vec position;
     Vec tmp = {0.0f, 0.0f, 0.0f};
@@ -80,8 +80,8 @@ void effOpukuWcurtainMain(EffectEntry* effect) {
     tmp.y = work->position.y;
     tmp.z = work->position.z;
     position = tmp;
-    if (effect->flags & 4) {
-        effect->flags &= ~4;
+    if (effect->flags & EFFECT_FLAG_DELETE_REQUESTED) {
+        effect->flags &= ~EFFECT_FLAG_DELETE_REQUESTED;
         work->lifetime = 16;
     }
     if (work->lifetime < 1000) {
@@ -109,7 +109,11 @@ void effOpukuWcurtainMain(EffectEntry* effect) {
     dispEntry(CAMERA_3D, dispCalcZ(&position), 2, (DispCallback)effOpukuWcurtainDisp, effect);
 }
 
-void effOpukuWcurtainDisp(CameraId cameraId, EffectEntry* effect) {
+/**
+ * Builds twelve vertical strips (texture 0x8F, alpha dropping 20 per strip),
+ * scales and positions them in world space, and draws them as a row of quads.
+ */
+static void effOpukuWcurtainDisp(CameraId cameraId, EffectEntry* effect) {
     CameraEntry* camera;
     EffOpukuWcurtainN64Work* work;
     Mtx mtx;
@@ -196,5 +200,3 @@ void effOpukuWcurtainDisp(CameraId cameraId, EffectEntry* effect) {
         tri2(frame, frame + 2, frame + 1, frame, frame + 1, frame + 2, frame + 3, frame);
     }
 }
-
-

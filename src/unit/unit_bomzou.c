@@ -1,3 +1,4 @@
+// Battle unit data for the Bob-omb bomb (unit_bomzou) and its explosion weapon, used by Bobbery.
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
 #include "battle/battle_event_default.h"
@@ -6,73 +7,51 @@
 #include "battle/battle_weapon_power.h"
 #include "evt/evt_eff.h"
 #include "battle/battle_database_common.h"
+#include "battle/battle_sub.h"
+#include "evt/evt_sub.h"
+#include "evt/evt_snd.h"
+#include "version.h"
 
-USER_FUNC(btlevtcmd_AfterReactionEntry);
-USER_FUNC(btlevtcmd_AnimeChangePose);
-USER_FUNC(btlevtcmd_AnimeChangePoseFromTable);
-USER_FUNC(btlevtcmd_AnimeSetPoseTable);
-USER_FUNC(btlevtcmd_CheckPhase);
-USER_FUNC(btlevtcmd_GetPos);
-USER_FUNC(btlevtcmd_GetUnitWork);
-USER_FUNC(btlevtcmd_PhaseEventStartDeclare);
-USER_FUNC(btlevtcmd_SetEventAttack);
-USER_FUNC(btlevtcmd_SetEventConfusion);
-USER_FUNC(btlevtcmd_SetEventDamage);
-USER_FUNC(btlevtcmd_SetEventPhase);
-USER_FUNC(btlevtcmd_SetEventWait);
-USER_FUNC(btlevtcmd_SetMaxMoveCount);
-USER_FUNC(btlevtcmd_SetUnitWork);
-USER_FUNC(btlevtcmd_StartWaitEvent);
-USER_FUNC(evt_eff64);
-USER_FUNC(evt_snd_sfxoff);
-USER_FUNC(evt_sub_random);
+// Unit work slots of a Bomb Squad bomb (btlevtcmd_SetUnitWork / GetUnitWork)
+enum {
+    UW_BOMZOU_FUSE_TURNS = 0,   // turns left on the fuse; it explodes when this reaches 0
+    UW_BOMZOU_SIZZLE_SOUND = 1, // sound id of the fuse sizzle loop (set by Bobbery's throw), 0 when none
+};
 
 static BattleUnitDefense defence;
 static BattleUnitDefenseAttr defence_attr;
+BattleUnitKind unit_bomzou;
+BattleWeapon weapon_bomzou_explosion;
 static StatusVulnerability regist;
 static PoseTableEntry pose_table_3[4];
 static PoseTableEntry pose_table_2[4];
 static PoseTableEntry pose_table_1[4];
-BattleUnitKind unit_bomzou;
-BattleWeapon weapon_bomzou_explosion;
+static BattleDataEntry data_table[4];
 static BattleUnitKindPart parts[1];
 static EvtWord init_event[70];
-static EvtWord phase_event[67];
-static EvtWord wait_event[57];
-EvtWord end_battle_evt[19];
-static EvtWord explosion_event[173];
-static BattleDataEntry data_table[4];
 static EvtWord damage_event[10];
+static EvtWord phase_event[67];
 static EvtWord attack_event[5];
+static EvtWord wait_event[57];
 static EvtWord dead_event[6];
+extern EvtWord end_battle_evt[];
+#if VERSION <= VERSION_DEMO_JP
+static EvtWord explosion_event[172];
+#else
+static EvtWord explosion_event[173];
+#endif
 
+/** Damage reduction of the bomb: none. It has 1 HP, so any hit knocks it out (and sets it off). */
 static BattleUnitDefense defence = {{0, 0, 0, 0, 0}};
 
+/** The bomb has no elemental defence. */
 static BattleUnitDefenseAttr defence_attr = {{0, 0, 0, 0, 0}};
 
-static StatusVulnerability regist = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-
-static PoseTableEntry pose_table_3[] = {
-    {28, "B_2"},
-    {31, "B_2"},
-    {39, "B_2"},
-    {69, "B_2"},
-};
-
-static PoseTableEntry pose_table_2[] = {
-    {28, "B_3"},
-    {31, "B_3"},
-    {39, "B_3"},
-    {69, "B_3"},
-};
-
-static PoseTableEntry pose_table_1[] = {
-    {28, "B_4"},
-    {31, "B_4"},
-    {39, "B_4"},
-    {69, "B_4"},
-};
-
+/**
+ * Unit data of the bomb that Admiral Bobbery's Bomb Squad leaves on the field (its debug name in the game
+ * text is "BOMBZO GLOBAL 1701"): 1 HP, no HP gauge or damage numbers,
+ * explodes when its fuse runs out or when it is destroyed.
+ */
 BattleUnitKind unit_bomzou = {
     219,
     "btl_un_bomzou",
@@ -131,7 +110,7 @@ BattleUnitKind unit_bomzou = {
     "SFX_BTL_DAMAGE_FIRE1",
     "SFX_BTL_DAMAGE_ICE1",
     "SFX_BTL_DAMAGE_BIRIBIRI1",
-    0x12400000,
+    UNIT_ATTR_NO_DAMAGE_NUMBER | UNIT_ATTR_NO_HP_GAUGE | UNIT_ATTR_IGNORE_FOR_CLEAR,
     &regist,
     1,
     parts,
@@ -139,6 +118,10 @@ BattleUnitKind unit_bomzou = {
     data_table,
 };
 
+/**
+ * The bomb's blast: 3 damage with the explosion element to every enemy in range, ignoring guarding,
+ * able to shatter frozen enemies; used by explosion_event.
+ */
 BattleWeapon weapon_bomzou_explosion = {
     NULL, 0, // name..icon
     {0}, // pad_06
@@ -149,16 +132,16 @@ BattleWeapon weapon_bomzou_explosion = {
     {3, 0, 0, 0, 0, 0, 0, 0}, // hpDamageWork
     NULL, // fpDamageFn
     {0}, // fpDamageWork
-    0x2200020, // targetClassFlags
-    0x20000000, // targetPropertyFlags
-    3, // element
+    TARGET_CLASS_NO_TREE_OR_SWITCH | TARGET_CLASS_ANY_PART | TARGET_CLASS_MULTIPLE, // targetClassFlags
+    TARGET_PROP_START_OPPOSING_SIDE, // targetPropertyFlags
+    ELEMENT_EXPLOSION, // element
     0, // damagePattern
     3, // acLevel
     2, // reserved_6F
     NULL, // acHelpMsg
-    0x20080, // special
-    0x7FF, // counterResistFlags
-    4, // targetWeightFlags
+    SPECIAL_SHATTERS_FREEZE | SPECIAL_UNGUARDABLE, // special
+    COUNTER_RESIST_ALL, // counterResistFlags
+    TARGET_WEIGHT_PREFER_FRONT, // targetWeightFlags
     0, 0, 0, 0, 0, 0, 0, 0, // sleepChance..poisonTime
     0, 0, 0, 0, 0, 0, 0, 0, // poisonStrength..burnChance
     0, 0, 0, 0, 0, 0, 0, 0, // burnTime..atkChangeTime
@@ -166,71 +149,140 @@ BattleWeapon weapon_bomzou_explosion = {
     0, 0, 0, 0, 0, 0, 0, 0, // fastChance..holdFastTime
     0, 0, 0, 0, 0, 0, // invisibleChance..fpRegenStrength
     {0}, // pad_AE
-    NULL, // mAttackEvtScript
+    NULL, // attackEvtScript
     {0, 10, 10, 100, 30, 5, 5, 5, 5, 0, 0, 0}, // stageEffectRates
 };
 
-static BattleUnitKindPart parts[] = {
-    {1, "btl_un_bomzou", "c_bakudan", 0.0f, 0.0f, 0.0f, 15.0f, 25.0f, 0.0f, 0.0f, 30.0f, 0.0f, 20, 30, 255, &defence, &defence_attr, 0x80009, 0, pose_table_3},
+/** The bomb has no status vulnerabilities (all zero). */
+static StatusVulnerability regist = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+
+/** Poses while the fuse has 3 or more turns left (all frames use B_2). */
+static PoseTableEntry pose_table_3[] = {
+    {28, "B_2"},
+    {31, "B_2"},
+    {39, "B_2"},
+    {BTL_POSE_STAY_DEFAULT, "B_2"},
 };
 
+/** Poses while the fuse has 2 turns left (all frames use B_3). */
+static PoseTableEntry pose_table_2[] = {
+    {28, "B_3"},
+    {31, "B_3"},
+    {39, "B_3"},
+    {BTL_POSE_STAY_DEFAULT, "B_3"},
+};
+
+/** Poses while the fuse has 1 turn left (all frames use B_4). */
+static PoseTableEntry pose_table_1[] = {
+    {28, "B_4"},
+    {31, "B_4"},
+    {39, "B_4"},
+    {BTL_POSE_STAY_DEFAULT, "B_4"},
+};
+
+/**
+ * Data table events: knocked out (49) queues the blast, tag 53 is the blast itself,
+ * and the battle end (63) cuts off the fuse sound.
+ */
+static BattleDataEntry data_table[] = {
+    {49, dead_event},
+    {53, explosion_event},
+    {63, end_battle_evt},
+    {0, NULL},
+};
+
+/**
+ * The bomb's single part: the bomb model (c_bakudan), the main target,
+ * which cannot be tattled or have its HP shown.
+ */
+static BattleUnitKindPart parts[] = {
+    {1, "btl_un_bomzou", "c_bakudan", 0.0f, 0.0f, 0.0f, 15.0f, 25.0f, 0.0f, 0.0f, 30.0f, 0.0f, 20, 30, 255, &defence, &defence_attr, PART_ATTR_MAIN | PART_ATTR_GUARD_COVER | PART_ATTR_UNTATTLEABLE, 0, pose_table_3},
+};
+
+/**
+ * Init for a bomb that Bobbery's Bomb Squad leaves on the field:
+ * registers the wait, phase, attack and damage scripts,
+ * sets the fuse to 2 turns (unit work 0) and clears the stored sizzle sound id (unit work 1).
+ */
 static EVT_BEGIN(init_event)
-    CALL(btlevtcmd_SetEventWait, -2, PTR(wait_event))
-    CALL(btlevtcmd_SetEventPhase, -2, PTR(phase_event))
-    CALL(btlevtcmd_SetEventAttack, -2, PTR(attack_event))
-    CALL(btlevtcmd_SetEventDamage, -2, PTR(damage_event))
-    CALL(btlevtcmd_SetEventConfusion, -2, PTR(btldefaultevt_Confuse))
-    CALL(btlevtcmd_SetUnitWork, -2, 0, 2)
-    CALL(btlevtcmd_SetUnitWork, -2, 1, 0)
-    CALL(btlevtcmd_SetMaxMoveCount, -2, 0)
-    CALL(btlevtcmd_GetUnitWork, -2, 0, LW(0))
+    CALL(btlevtcmd_SetEventWait, BTL_UNIT_SELF, PTR(wait_event))
+    CALL(btlevtcmd_SetEventPhase, BTL_UNIT_SELF, PTR(phase_event))
+    CALL(btlevtcmd_SetEventAttack, BTL_UNIT_SELF, PTR(attack_event))
+    CALL(btlevtcmd_SetEventDamage, BTL_UNIT_SELF, PTR(damage_event))
+    CALL(btlevtcmd_SetEventConfusion, BTL_UNIT_SELF, PTR(btldefaultevt_Confuse))
+    CALL(btlevtcmd_SetUnitWork, BTL_UNIT_SELF, UW_BOMZOU_FUSE_TURNS, 2)
+    CALL(btlevtcmd_SetUnitWork, BTL_UNIT_SELF, UW_BOMZOU_SIZZLE_SOUND, 0)
+    CALL(btlevtcmd_SetMaxMoveCount, BTL_UNIT_SELF, 0)
+    CALL(btlevtcmd_GetUnitWork, BTL_UNIT_SELF, UW_BOMZOU_FUSE_TURNS, LW(0))
     SWITCH(LW(0))
         CASE_GREATER_OR_EQUAL(3)
-        CALL(btlevtcmd_AnimeSetPoseTable, -2, 1, PTR(pose_table_3))
+        CALL(btlevtcmd_AnimeSetPoseTable, BTL_UNIT_SELF, 1, PTR(pose_table_3))
         CASE_GREATER_OR_EQUAL(2)
-        CALL(btlevtcmd_AnimeSetPoseTable, -2, 1, PTR(pose_table_2))
+        CALL(btlevtcmd_AnimeSetPoseTable, BTL_UNIT_SELF, 1, PTR(pose_table_2))
         CASE_GREATER_OR_EQUAL(1)
-        CALL(btlevtcmd_AnimeSetPoseTable, -2, 1, PTR(pose_table_1))
+        CALL(btlevtcmd_AnimeSetPoseTable, BTL_UNIT_SELF, 1, PTR(pose_table_1))
     END_SWITCH
-    CALL(btlevtcmd_AnimeChangePose, -2, 1, STRING("B_1"))
+    CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("B_1"))
     RETURN
 EVT_END()
 
+/** Hit reaction: the default damage script with no special pose (LW10 = -2). */
+static EVT_BEGIN(damage_event)
+    SET_VALUE(LW(10), -2)
+    SET_VALUE(LW(11), 1)
+    CALL_CHILD(btldefaultevt_Damage)
+    RETURN
+EVT_END()
+
+/**
+ * At the start of each player phase, burns one turn off the fuse and swaps the pose table to the shorter fuse;
+ * when the fuse reaches 0 it takes the phase, plays the "B_2" pose for 36 frames and explodes.
+ */
 static EVT_BEGIN(phase_event)
-    CALL(btlevtcmd_CheckPhase, LW(0), 67108865)
+    CALL(btlevtcmd_CheckPhase, LW(0), BATTLE_PHASE_BEFORE_PLAYER)
     IF_INT_NOT_EQUAL(LW(0), 0)
-        CALL(btlevtcmd_GetUnitWork, -2, 0, LW(0))
+        CALL(btlevtcmd_GetUnitWork, BTL_UNIT_SELF, UW_BOMZOU_FUSE_TURNS, LW(0))
         SUBTRACT(LW(0), 1)
-        CALL(btlevtcmd_SetUnitWork, -2, 0, LW(0))
+        CALL(btlevtcmd_SetUnitWork, BTL_UNIT_SELF, UW_BOMZOU_FUSE_TURNS, LW(0))
         SWITCH(LW(0))
             CASE_GREATER_OR_EQUAL(3)
-            CALL(btlevtcmd_AnimeSetPoseTable, -2, 1, PTR(pose_table_3))
+            CALL(btlevtcmd_AnimeSetPoseTable, BTL_UNIT_SELF, 1, PTR(pose_table_3))
             CASE_GREATER_OR_EQUAL(2)
-            CALL(btlevtcmd_AnimeSetPoseTable, -2, 1, PTR(pose_table_2))
+            CALL(btlevtcmd_AnimeSetPoseTable, BTL_UNIT_SELF, 1, PTR(pose_table_2))
             CASE_GREATER_OR_EQUAL(1)
-            CALL(btlevtcmd_AnimeSetPoseTable, -2, 1, PTR(pose_table_1))
+            CALL(btlevtcmd_AnimeSetPoseTable, BTL_UNIT_SELF, 1, PTR(pose_table_1))
         END_SWITCH
         IF_INT_LESS_OR_EQUAL(LW(0), 0)
-            CALL(btlevtcmd_PhaseEventStartDeclare, -2)
-            CALL(btlevtcmd_AnimeChangePose, -2, 1, STRING("B_2"))
+            CALL(btlevtcmd_PhaseEventStartDeclare, BTL_UNIT_SELF)
+            CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("B_2"))
             WAIT_FRAMES(36)
-            CALL_CHILD(PTR(explosion_event))
-            ELSE
-            CALL(btlevtcmd_StartWaitEvent, -2)
+            CALL_CHILD(explosion_event)
+        ELSE
+            CALL(btlevtcmd_StartWaitEvent, BTL_UNIT_SELF)
         END_IF
     END_IF
     RETURN
 EVT_END()
 
+/** The bomb never acts on its own turn; it just returns to its idle loop. */
+static EVT_BEGIN(attack_event)
+    CALL(btlevtcmd_StartWaitEvent, BTL_UNIT_SELF)
+    RETURN
+EVT_END()
+
+/**
+ * Idle loop: plays the fuse pose, and once only one turn is left on the fuse puffs a sweat effect above the bomb
+ * every 45-89 frames as a warning.
+ */
 static EVT_BEGIN(wait_event)
-    CALL(btlevtcmd_AnimeChangePoseFromTable, -2, 1)
+    CALL(btlevtcmd_AnimeChangePoseFromTable, BTL_UNIT_SELF, 1)
     LABEL(0)
-    CALL(btlevtcmd_GetUnitWork, -2, 0, LW(0))
+    CALL(btlevtcmd_GetUnitWork, BTL_UNIT_SELF, UW_BOMZOU_FUSE_TURNS, LW(0))
     IF_INT_GREATER(LW(0), 1)
         WAIT_FRAMES(1)
         GOTO(0)
     END_IF
-    CALL(btlevtcmd_GetPos, -2, LW(0), LW(1), LW(2))
+    CALL(btlevtcmd_GetPos, BTL_UNIT_SELF, LW(0), LW(1), LW(2))
     ADD(LW(1), 10)
     CALL(evt_eff64, 0, STRING("sweat_n64"), 1, LW(0), LW(1), LW(2), 15, -45, 15, 0, 0, 0, 0, 0)
     CALL(evt_sub_random, 45, LW(0))
@@ -240,42 +292,61 @@ static EVT_BEGIN(wait_event)
     RETURN
 EVT_END()
 
+/**
+ * Death data event (tag 49): queues explosion_event (tag 53) as an after-reaction,
+ * so a bomb that is knocked out still blows up.
+ */
+static EVT_BEGIN(dead_event)
+    CALL(btlevtcmd_AfterReactionEntry, BTL_UNIT_SELF, 53)
+    RETURN
+EVT_END()
+
+/**
+ * Battle-end data event (tag 63, run by the battle end sequence):
+ * stops the fuse sizzle loop whose sound id Bobbery's Bomb Squad throw stored in unit work 1,
+ * so the sound does not outlive the battle.
+ */
 EVT_BEGIN(end_battle_evt)
-    CALL(btlevtcmd_GetUnitWork, -2, 1, LW(0))
+    CALL(btlevtcmd_GetUnitWork, BTL_UNIT_SELF, UW_BOMZOU_SIZZLE_SOUND, LW(0))
     IF_INT_NOT_EQUAL(LW(0), 0)
         CALL(evt_snd_sfxoff, LW(0))
-        CALL(btlevtcmd_SetUnitWork, -2, 1, 0)
+        CALL(btlevtcmd_SetUnitWork, BTL_UNIT_SELF, UW_BOMZOU_SIZZLE_SOUND, 0)
     END_IF
     RETURN
 EVT_END()
 
+/**
+ * The blast: stops the fuse sizzle, plays the fire pillar effect, sound and screen shake, clears stage fog,
+ * hides the bomb, damages every enemy within 50 units horizontally with weapon_bomzou_explosion (3 damage),
+ * then removes the bomb.
+ */
 static EVT_BEGIN(explosion_event)
-    CALL(btlevtcmd_GetUnitWork, -2, 1, LW(0))
+    CALL(btlevtcmd_GetUnitWork, BTL_UNIT_SELF, UW_BOMZOU_SIZZLE_SOUND, LW(0))
     IF_INT_NOT_EQUAL(LW(0), 0)
         CALL(evt_snd_sfxoff, LW(0))
-        CALL(btlevtcmd_SetUnitWork, -2, 1, 0)
+        CALL(btlevtcmd_SetUnitWork, BTL_UNIT_SELF, UW_BOMZOU_SIZZLE_SOUND, 0)
     END_IF
-    CALL(btlevtcmd_GetPos, -2, LW(0), LW(1), LW(2))
+    CALL(btlevtcmd_GetPos, BTL_UNIT_SELF, LW(0), LW(1), LW(2))
     CALL(evt_eff, STRING(""), STRING("hibashira"), 2, LW(0), LW(1), LW(2), LW(0), LW(1), LW(2), 1, FLOAT(1.0f), 60, 0, 0)
-    CALL(btlevtcmd_snd_se, -2, STRING("SFX_BTL_THUNDERS_BOMB2\0"), -250000000, 0, -250000000)
+    CALL(btlevtcmd_snd_se, BTL_UNIT_SELF, STRING("SFX_BTL_THUNDERS_BOMB2"), EVT_NULLPTR, 0, EVT_NULLPTR)
     CALL(btlevtcmd_StageDispellFog)
-    CALL(btlevtcmd_OnAttribute, -2, 16777216)
-    CALL(btlevtcmd_OnPartsAttribute, -2, 1, 50331648)
+    CALL(btlevtcmd_OnAttribute, BTL_UNIT_SELF, UNIT_ATTR_HIDDEN)
+    CALL(btlevtcmd_OnPartsAttribute, BTL_UNIT_SELF, 1, PART_ATTR_HIDDEN | PART_ATTR_NO_SHADOW)
     CALL(evt_btl_camera_shake_h, 0, 10, 0, 60, 4)
-    CALL(btlevtcmd_AnimeChangePose, -2, 1, STRING("B_2"))
-    CALL(btlevtcmd_SamplingEnemy, -2, 1, PTR(&weapon_bomzou_explosion))
+    CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("B_2"))
+    CALL(btlevtcmd_SamplingEnemy, BTL_UNIT_SELF, 1, PTR(&weapon_bomzou_explosion))
     CALL(btlevtcmd_ChoiceSamplingEnemy, PTR(&weapon_bomzou_explosion), LW(3), LW(4))
     IF_INT_EQUAL(LW(3), -1)
         GOTO(99)
     END_IF
     SET_VALUE(LW(10), 0)
     LABEL(10)
-    CALL(btlevtcmd_GetUnitId, -2, LW(0))
+    CALL(btlevtcmd_GetUnitId, BTL_UNIT_SELF, LW(0))
     IF_INT_EQUAL(LW(0), LW(3))
         GOTO(80)
     END_IF
-    CALL(btlevtcmd_GetPos, -2, LW(0), -250000000, -250000000)
-    CALL(btlevtcmd_GetHitPos, LW(3), LW(4), LW(1), -250000000, -250000000)
+    CALL(btlevtcmd_GetPos, BTL_UNIT_SELF, LW(0), EVT_NULLPTR, EVT_NULLPTR)
+    CALL(btlevtcmd_GetHitPos, LW(3), LW(4), LW(1), EVT_NULLPTR, EVT_NULLPTR)
     SUBTRACT(LW(0), LW(1))
     IF_INT_LESS_OR_EQUAL(LW(0), -1)
         MULTIPLY(LW(0), -1)
@@ -283,9 +354,9 @@ static EVT_BEGIN(explosion_event)
     IF_INT_GREATER(LW(0), 50)
         GOTO(80)
     END_IF
-    CALL(btlevtcmd_PreCheckDamage, -2, LW(3), LW(4), PTR(&weapon_bomzou_explosion), 256, LW(5))
+    CALL(btlevtcmd_PreCheckDamage, BTL_UNIT_SELF, LW(3), LW(4), PTR(&weapon_bomzou_explosion), 256, LW(5))
     IF_INT_EQUAL(LW(5), 1)
-        CALL(btlevtcmd_CheckDamage, -2, LW(3), LW(4), PTR(&weapon_bomzou_explosion), 256, LW(5))
+        CALL(btlevtcmd_CheckDamage, BTL_UNIT_SELF, LW(3), LW(4), PTR(&weapon_bomzou_explosion), 256, LW(5))
     END_IF
     LABEL(80)
     CALL(btlevtcmd_GetSelectNextEnemy, LW(3), LW(4))
@@ -294,31 +365,10 @@ static EVT_BEGIN(explosion_event)
         GOTO(10)
     END_IF
     LABEL(99)
-    CALL(btlevtcmd_KillUnit, -2, 0)
+    CALL(btlevtcmd_KillUnit, BTL_UNIT_SELF, 0)
     RETURN
+#if VERSION <= VERSION_DEMO_JP
+EVT_END()
+#else
 EVT_END_PAD()
-
-static BattleDataEntry data_table[] = {
-    {49, dead_event},
-    {53, explosion_event},
-    {63, end_battle_evt},
-    {0, NULL},
-};
-
-static EVT_BEGIN(damage_event)
-    SET_VALUE(LW(10), -2)
-    SET_VALUE(LW(11), 1)
-    CALL_CHILD(PTR(btldefaultevt_Damage))
-    RETURN
-EVT_END()
-
-static EVT_BEGIN(attack_event)
-    CALL(btlevtcmd_StartWaitEvent, -2)
-    RETURN
-EVT_END()
-
-static EVT_BEGIN(dead_event)
-    CALL(btlevtcmd_AfterReactionEntry, -2, 53)
-    RETURN
-EVT_END()
-
+#endif

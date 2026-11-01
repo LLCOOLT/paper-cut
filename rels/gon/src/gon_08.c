@@ -1,187 +1,102 @@
+// gon_08 (ゴンババ, Hooktail Castle): room linking gon_04, gon_09 and gon_12.
+// Nokkos (nokkosu) gives a side request with a Special Card reward; Life Shroom, floating block, Castle Key (0x0F) lock (story 52).
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
 #include "evt/evt_bero.h"
 #include "evt/evt_npc.h"
 #include "mario/mario_pouch.h"
+#include "evt/evt_cam.h"
+#include "evt/evt_hit.h"
+#include "evt/evt_item.h"
+#include "driver/itemdrv.h"
+#include "evt/evt_map.h"
+#include "evt/evt_mario.h"
+#include "evt/evt_mobj.h"
+#include "evt/evt_msg.h"
+#include "evt/evt_party.h"
+#include "evt/evt_pouch.h"
+#include "evt/evt_snd.h"
+#include "evt/evt_sub.h"
+#include "evt/evt_window.h"
+#include "gon.h"
+#include "version.h"
+#include "evt/evt_story.h"
+#include "driver/mapdrv.h"
 
-#pragma force_active on
-
-USER_FUNC(evt_bero_get_info);
-USER_FUNC(evt_cam_shake);
-USER_FUNC(evt_hitobj_onoff);
-USER_FUNC(evt_item_entry);
-USER_FUNC(evt_item_flag_on);
-USER_FUNC(evt_item_get_item);
-USER_FUNC(evt_mapobj_flag_onoff);
-USER_FUNC(evt_mapobj_rotate);
-USER_FUNC(evt_mario_get_name_hitobj_head);
-USER_FUNC(evt_mario_get_party);
-USER_FUNC(evt_mario_get_pos);
-USER_FUNC(evt_mario_goodbye_party);
-USER_FUNC(evt_mario_hello_party);
-USER_FUNC(evt_mario_party_use_check);
-USER_FUNC(evt_mobj_exec_cancel);
-USER_FUNC(evt_mobj_flag_onoff);
-USER_FUNC(evt_mobj_float_blk);
-USER_FUNC(evt_mobj_get_kindname);
-USER_FUNC(evt_mobj_get_position);
-USER_FUNC(evt_mobj_get_y_position);
-USER_FUNC(evt_mobj_hitevt_onoff);
-USER_FUNC(evt_mobj_lock);
-USER_FUNC(evt_mobj_set_y_position);
-USER_FUNC(evt_mobj_switch_float_blk);
-USER_FUNC(evt_msg_print);
-USER_FUNC(evt_npc_change_fbat_mode);
-USER_FUNC(evt_npc_entry);
-USER_FUNC(evt_npc_flag_onoff);
-USER_FUNC(evt_npc_jump_position_nohit);
-USER_FUNC(evt_npc_pera_onoff);
-USER_FUNC(evt_npc_set_anim);
-USER_FUNC(evt_npc_set_height);
-USER_FUNC(evt_npc_set_position);
-USER_FUNC(evt_npc_set_rotate);
-USER_FUNC(evt_npc_set_ry);
-USER_FUNC(evt_npc_set_width);
-USER_FUNC(evt_npc_setup);
-USER_FUNC(evt_party_outofscreen);
-USER_FUNC(evt_party_set_pos);
-USER_FUNC(evt_party_wait_landon);
-USER_FUNC(evt_pouch_check_item);
-USER_FUNC(evt_snd_bgmon);
-USER_FUNC(evt_snd_envon);
-USER_FUNC(evt_snd_set_rev_mode);
-USER_FUNC(evt_snd_sfx_pos);
-USER_FUNC(evt_snd_sfxoff);
-USER_FUNC(evt_snd_sfxon_3d);
-USER_FUNC(evt_sub_intpl_get_value);
-USER_FUNC(evt_sub_intpl_init);
-USER_FUNC(evt_sub_rumble_onoff);
-USER_FUNC(evt_sub_save_playtime);
-USER_FUNC(evt_win_item_select);
-#ifdef VERSION_G8ME01
-USER_FUNC(evt_mario_mov_pos2);
-USER_FUNC(evt_mario_set_dir);
-USER_FUNC(evt_npc_get_position);
-USER_FUNC(evt_npc_set_ry_lr);
-USER_FUNC(evt_npc_wait_pera);
-USER_FUNC(evt_party_get_pos);
-USER_FUNC(evt_party_move_pos2);
-USER_FUNC(evt_party_run);
-USER_FUNC(evt_party_set_dir);
-USER_FUNC(evt_party_stop);
-USER_FUNC(evt_set_dir_to_target);
-#endif
-
-f32 fd_gon_08_negone_one_374[2] __attribute__((aligned(8)));
-f32 fd_gon_08_neg_one_382;
-f32 fd_gon_08___local_PI_383;
-f32 fd_gon_08___local_3PIO2_385;
-f32 fd_gon_08_one_negone_373[2] __attribute__((aligned(8)));
-f32 fd_gon_08___local_PIO2_384;
-f32 fd_gon_08_one_381;
-f32 fd_gon_08_negone_one_360[2] __attribute__((aligned(8)));
-f32 fd_gon_08_neg_one_365;
-f32 fd_gon_08___local_PI_366;
-f32 fd_gon_08___local_3PIO2_368;
-f32 fd_gon_08_one_negone_359[2] __attribute__((aligned(8)));
-f32 fd_gon_08___local_PIO2_367;
-f32 fd_gon_08_one_364;
-static EvtWord door01_close[12];
-static EvtWord door01_open[12];
-static EvtWord door02_close[12];
-static EvtWord door02_open[12];
-static EvtWord door03_close[12];
-static EvtWord door03_open[12];
 static BeroEntry bero_entry_data[4];
-static EvtWord init_0[37];
-#ifdef VERSION_G8ME01
-static EvtWord main_0[465];
-#else
-static EvtWord main_0[491];
-#endif
 static s32 key_tbl[2];
-static EvtWord evt_chk[23];
-static EvtWord evt_unlock[10];
-EvtWord nokkosu_init[16];
-#ifdef VERSION_G8ME01
-EvtWord nokkosu_talk[226];
-#else
-EvtWord nokkosu_talk[157];
-#endif
+extern EvtWord nokkosu_init[];
+extern EvtWord nokkosu_talk[];
 static NpcSetupInfo npcEnt[2];
-EvtWord gon_08_init_evt[220];
 
-f32 fd_gon_08_negone_one_374[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_gon_08_neg_one_382 = -1.0f;
-
-f32 fd_gon_08___local_PI_383 = 3.1415927f;
-
-f32 fd_gon_08___local_3PIO2_385 = 4.712389f;
-
-f32 fd_gon_08_one_negone_373[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_gon_08___local_PIO2_384 = 1.5707964f;
-
-f32 fd_gon_08_one_381 = 1.0f;
-
-f32 fd_gon_08_negone_one_360[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_gon_08_neg_one_365 = -1.0f;
-
-f32 fd_gon_08___local_PI_366 = 3.1415927f;
-
-f32 fd_gon_08___local_3PIO2_368 = 4.712389f;
-
-f32 fd_gon_08_one_negone_359[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_gon_08___local_PIO2_367 = 1.5707964f;
-
-f32 fd_gon_08_one_364 = 1.0f;
-
+/**
+ * Door animation callback, closing for the e_bero_1 exit to gon_04:
+ * rotates map object "door__01" about Y by -0.444 times the value in LW(0).
+ */
 static EVT_BEGIN(door01_close)
     MULTIPLY_FLOAT(LW(0), FLOAT(-0.44433594f))
     CALL(evt_mapobj_rotate, 1, STRING("door__01"), 0, LW(0), 0)
     RETURN
 EVT_END()
 
+/**
+ * Door animation callback, opening for the e_bero_1 exit to gon_04:
+ * rotates map object "door__01" about Y by 0.444 times the value in LW(0).
+ */
 static EVT_BEGIN(door01_open)
     MULTIPLY_FLOAT(LW(0), FLOAT(0.44433594f))
     CALL(evt_mapobj_rotate, 1, STRING("door__01"), 0, LW(0), 0)
     RETURN
 EVT_END()
 
+/**
+ * Door animation callback, closing for the e_bero_2 exit to gon_09:
+ * rotates map object "door__02" about Y by -0.444 times the value in LW(0).
+ */
 static EVT_BEGIN(door02_close)
     MULTIPLY_FLOAT(LW(0), FLOAT(-0.44433594f))
     CALL(evt_mapobj_rotate, 1, STRING("door__02"), 0, LW(0), 0)
     RETURN
 EVT_END()
 
+/**
+ * Door animation callback, opening for the e_bero_2 exit to gon_09:
+ * rotates map object "door__02" about Y by 0.444 times the value in LW(0).
+ */
 static EVT_BEGIN(door02_open)
     MULTIPLY_FLOAT(LW(0), FLOAT(0.44433594f))
     CALL(evt_mapobj_rotate, 1, STRING("door__02"), 0, LW(0), 0)
     RETURN
 EVT_END()
 
+/**
+ * Door animation callback, closing for the w_bero exit to gon_12:
+ * rotates map object "door__03" about Y by 0.444 times the value in LW(0).
+ */
 static EVT_BEGIN(door03_close)
     MULTIPLY_FLOAT(LW(0), FLOAT(0.44433594f))
     CALL(evt_mapobj_rotate, 1, STRING("door__03"), 0, LW(0), 0)
     RETURN
 EVT_END()
 
+/**
+ * Door animation callback, opening for the w_bero exit to gon_12:
+ * rotates map object "door__03" about Y by -0.444 times the value in LW(0).
+ */
 static EVT_BEGIN(door03_open)
     MULTIPLY_FLOAT(LW(0), FLOAT(-0.44433594f))
     CALL(evt_mapobj_rotate, 1, STRING("door__03"), 0, LW(0), 0)
     RETURN
 EVT_END()
 
+/** Exits (beros) of this room: e_bero_1 to gon_04, e_bero_2 to gon_09 and w_bero to gon_12. */
 static BeroEntry bero_entry_data[] = {
     {
         "e_bero_1", // hitName
         1, // type
         12, // sfxId
-        20000, // directionId
-        100000, // centerPosition
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         NULL, // enterEvent
@@ -198,8 +113,8 @@ static BeroEntry bero_entry_data[] = {
         "e_bero_2", // hitName
         1, // type
         12, // sfxId
-        20000, // directionId
-        100000, // centerPosition
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         NULL, // enterEvent
@@ -216,8 +131,8 @@ static BeroEntry bero_entry_data[] = {
         "w_bero", // hitName
         1, // type
         12, // sfxId
-        20000, // directionId
-        100000, // centerPosition
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         NULL, // enterEvent
@@ -233,6 +148,11 @@ static BeroEntry bero_entry_data[] = {
     {0},
 };
 
+/**
+ * Map-init helper for the floating block blk_0 and its switch (sw_0):
+ * if the local flag LSWF(3) says the switch has been used,
+ * it lifts the block 600 units above its resting height.
+ */
 static EVT_BEGIN(init_0)
     IF_INT_EQUAL(0, 0)
         IF_INT_NOT_EQUAL(LSWF(3), 0)
@@ -240,7 +160,7 @@ static EVT_BEGIN(init_0)
             ADD_FLOAT(LW(5), FLOAT(600.0f))
             CALL(evt_mobj_set_y_position, STRING("blk_0"), LW(5))
         END_IF
-        ELSE
+    ELSE
         IF_INT_EQUAL(LSWF(3), 0)
             CALL(evt_mobj_get_y_position, STRING("blk_0"), LW(5))
             ADD_FLOAT(LW(5), FLOAT(600.0f))
@@ -250,38 +170,50 @@ static EVT_BEGIN(init_0)
     RETURN
 EVT_END()
 
+/**
+ * Handler of the sw_0 switch for the floating block blk_0:
+ * the camera shakes with rumble while the block rises
+ * or falls 600 units (the direction follows LSWF(3), which is toggled), with block-float sounds;
+ * if Mario or his partner bumps the block with the head during the move,
+ * it reverses and the switch is cancelled.
+ */
 static EVT_BEGIN(main_0)
+#if VERSION >= VERSION_JP
     SET_TYPE(239)
+#endif
+    // The switch is pressed: the block stops reacting to hits while it moves.
     CALL(evt_mobj_hitevt_onoff, STRING("me"), 0)
     IF_INT_NOT_EQUAL(1, 0)
+        // The block rises if it is down and falls if it is up (remembered in a room flag).
         SET_VALUE(LW(10), 0)
         IF_INT_EQUAL(0, 0)
             IF_INT_EQUAL(LSWF(3), 0)
                 SET_VALUE(LW(10), 0)
-                ELSE
+            ELSE
                 SET_VALUE(LW(10), 1)
             END_IF
-            ELSE
+        ELSE
             IF_INT_EQUAL(LSWF(3), 0)
                 SET_VALUE(LW(10), 1)
-                ELSE
+            ELSE
                 SET_VALUE(LW(10), 0)
             END_IF
         END_IF
+        // Work out the target height, a fixed distance up or down, and the speed.
         IF_INT_EQUAL(LW(10), 0)
             CALL(evt_mobj_get_y_position, STRING("blk_0"), LW(2))
             SET_FLOAT_VALUE(LW(3), LW(2))
             ADD_FLOAT(LW(3), FLOAT(600.0f))
             SET_FLOAT_VALUE(LW(8), FLOAT(0.0f))
             SET_FLOAT_VALUE(LW(9), FLOAT(2.0f))
-            ELSE
+        ELSE
             CALL(evt_mobj_get_y_position, STRING("blk_0"), LW(2))
             SET_FLOAT_VALUE(LW(3), LW(2))
             SUBTRACT_FLOAT(LW(3), FLOAT(600.0f))
             SET_FLOAT_VALUE(LW(8), FLOAT(-0.19921875f))
             SET_FLOAT_VALUE(LW(9), 0)
         END_IF
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
         BEGIN_INLINE_EVENT
 #else
         BEGIN_SIBLING_EVENT
@@ -301,11 +233,12 @@ static EVT_BEGIN(main_0)
             IF_INT_EQUAL(LW(1), 1)
                 GOTO(0)
             END_IF
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
         END_INLINE_EVENT
 #else
         END_SIBLING_EVENT
 #endif
+        // After the camera shake, the block starts to float and its movement sound plays.
         WAIT_MS(500)
         CALL(evt_mobj_get_position, STRING("blk_0"), LW(12), LW(13), LW(14))
         CALL(evt_mobj_get_kindname, STRING("blk_0"), LW(11))
@@ -323,27 +256,32 @@ static EVT_BEGIN(main_0)
             SET_VALUE(LF(1), 0)
             IF_INT_EQUAL(LF(0), 1)
                 CALL(evt_snd_sfxon_3d, STRING("SFX_MOBJ_BLOCK_B_FLOAT_MOVE1"), LW(12), LW(13), LW(14), LW(15))
-                ELSE
+            ELSE
                 CALL(evt_snd_sfxon_3d, STRING("SFX_MOBJ_BLOCK_S_FLOAT_MOVE1"), LW(12), LW(13), LW(14), LW(15))
             END_IF
-            ELSE
+        ELSE
             SET_VALUE(LF(1), 1)
             IF_INT_EQUAL(LF(0), 1)
                 CALL(evt_snd_sfxon_3d, STRING("SFX_MOBJ_BLOCK_B_FLOAT_DOWN1"), LW(12), LW(13), LW(14), LW(15))
-                ELSE
+            ELSE
                 CALL(evt_snd_sfxon_3d, STRING("SFX_MOBJ_BLOCK_S_FLOAT_DOWN1"), LW(12), LW(13), LW(14), LW(15))
             END_IF
         END_IF
         SET_FLOAT_VALUE(LW(4), LW(2))
         SET_VALUE(LF(0), 0)
+        // Each frame the block moves toward its target height.
         LOOP(0)
+            // BUG: with no partner out the head test uses the bare mobj name, but mobj hit objects are
+            // named "MOBJ_" + name, so it never matches; with a partner it tests LW(7), which nothing sets,
+            // instead of the partner's head object. Fix: test "MOBJ_" + name, and fill LW(7) with
+            // evt_party_get_name_hitobj_head.
             CALL(evt_mario_get_party, LW(5))
             IF_INT_EQUAL(LW(5), 0)
                 CALL(evt_mario_get_name_hitobj_head, LW(6))
                 IF_STR_EQUAL(LW(6), STRING("blk_0"))
                     GOTO(1)
                 END_IF
-                ELSE
+            ELSE
                 CALL(evt_mario_get_name_hitobj_head, LW(6))
                 IF_STR_EQUAL(LW(6), STRING("MOBJ_blk_0"))
                     GOTO(1)
@@ -354,6 +292,8 @@ static EVT_BEGIN(main_0)
             END_IF
             GOTO(2)
             LABEL(1)
+            // If a falling block lands on Mario or his partner it turns around and rises again, and the switch
+            // is cancelled.
             IF_INT_EQUAL(LW(10), 1)
                 SET_FLOAT_VALUE(LW(5), LW(2))
                 SET_FLOAT_VALUE(LW(2), LW(3))
@@ -363,7 +303,7 @@ static EVT_BEGIN(main_0)
                 SET_FLOAT_VALUE(LW(10), 0)
                 IF_INT_EQUAL(LSWF(3), 0)
                     SET_VALUE(LSWF(3), 1)
-                    ELSE
+                ELSE
                     SET_VALUE(LSWF(3), 0)
                 END_IF
                 CALL(evt_mobj_exec_cancel, STRING("sw_0"))
@@ -381,7 +321,7 @@ static EVT_BEGIN(main_0)
                     SET_FLOAT_VALUE(LW(4), LW(3))
                     SET_VALUE(LF(0), 1)
                 END_IF
-                ELSE
+            ELSE
                 IF_INT_LESS_OR_EQUAL(LW(4), LW(3))
                     SET_FLOAT_VALUE(LW(4), LW(3))
                     SET_VALUE(LF(0), 1)
@@ -394,8 +334,10 @@ static EVT_BEGIN(main_0)
             WAIT_FRAMES(1)
         END_LOOP
         IF_INT_EQUAL(LF(1), 0)
+            // The block has arrived: the moving sound stops.
             CALL(evt_snd_sfxoff, LW(15))
         END_IF
+        // The landing thud plays for a block that came down.
         BEGIN_INLINE_EVENT
             CALL(evt_mobj_get_position, STRING("blk_0"), LW(13), LW(14), LW(15))
             CALL(evt_mobj_get_kindname, STRING("blk_0"), LW(12))
@@ -413,8 +355,9 @@ static EVT_BEGIN(main_0)
                 CALL(evt_snd_sfxon_3d, STRING("SFX_MOBJ_BLOCK_B_FLOAT_STOP1"), LW(13), LW(14), LW(15), 0)
             END_IF
         END_INLINE_EVENT
+        // A block that came down shakes the camera again and the scene waits a moment.
         IF_INT_EQUAL(LW(10), 1)
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
             BEGIN_INLINE_EVENT
 #else
             BEGIN_SIBLING_EVENT
@@ -432,19 +375,21 @@ static EVT_BEGIN(main_0)
                 IF_INT_EQUAL(LW(1), 1)
                     GOTO(2)
                 END_IF
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
             END_INLINE_EVENT
 #else
             END_SIBLING_EVENT
 #endif
             WAIT_MS(1000)
         END_IF
+        // Remember the block's new position for the next press.
         IF_INT_EQUAL(LSWF(3), 0)
             SET_VALUE(LSWF(3), 1)
-            ELSE
+        ELSE
             SET_VALUE(LSWF(3), 0)
         END_IF
-        ELSE
+    ELSE
+        // Unused: cancel the switch and wait a few frames.
         CALL(evt_mobj_exec_cancel, STRING("sw_0"))
         SET_VALUE(LW(0), 0)
         LOOP(0)
@@ -461,14 +406,23 @@ static EVT_BEGIN(main_0)
     RETURN
 EVT_END()
 
+/** Items offered in the item menu at the lock: only the Castle Key (0x0F). */
 static s32 key_tbl[] = {
     ITEM_CASTLE_KEY_0x0F, -1,
 };
 
+/**
+ * Check for the locked door ("me"): if Mario carries a Castle Key (ITEM_CASTLE_KEY_0x0F),
+ * opens the item select window with key_tbl; cancelling it cancels the lock execution so the door stays locked.
+ */
 static EVT_BEGIN(evt_chk)
-    CALL(evt_pouch_check_item, 15, LW(0))
+    CALL(evt_pouch_check_item, ITEM_CASTLE_KEY_0x0F, LW(0))
     IF_INT_GREATER(LW(0), 0)
+#if VERSION <= VERSION_DEMO_JP
+        CALL(evt_win_item_select, PTR(key_tbl), LW(0))
+#else
         CALL(evt_win_item_select, 0, PTR(key_tbl), LW(0), 0)
+#endif
         IF_INT_EQUAL(LW(0), -1)
             CALL(evt_mobj_exec_cancel, STRING("me"))
         END_IF
@@ -476,16 +430,25 @@ static EVT_BEGIN(evt_chk)
     RETURN
 EVT_END()
 
+/**
+ * Runs when the door lock is opened with the Castle Key:
+ * switches on the e_bero_2 bero case and sets the story to STORY_STG1_15_02_LOCK_3.
+ */
 static EVT_BEGIN(evt_unlock)
     SET_VALUE(LW(0), STRING("e_bero_2"))
-    CALL_CHILD(PTR(bero_case_switch_on))
-    SET_VALUE(GSW(0), 52)
+    CALL_CHILD(bero_case_switch_on)
+    SET_VALUE(GSW(GSW_STORY_PROGRESS), STORY_STG1_15_02_LOCK_3)
     RETURN
 EVT_END()
 
+/**
+ * NPC init for Nokkos (ノッコス), the Koopa who asks for Mario's help in the Trouble Center request 7:
+ * when that request is active he is placed on the high ledge (y 500) and faces right;
+ * otherwise he stays where the map put him.
+ */
 EVT_BEGIN(nokkosu_init)
-    IF_INT_EQUAL(GSW(1420), 7)
-#ifdef VERSION_G8ME01
+    IF_INT_EQUAL(GSW(GSW_TROUBLE_ACTIVE), 7)
+#if VERSION >= VERSION_US
         CALL(evt_npc_set_position, STRING("me"), -185, 500, -165)
 #else
         CALL(evt_npc_set_position, STRING("me"), -230, 500, -120)
@@ -495,16 +458,28 @@ EVT_BEGIN(nokkosu_init)
     RETURN
 EVT_END()
 
+/**
+ * Talk event for Nokkos, the request-7 client: Mario
+ * and the partner walk up (Koops is swapped in if someone else was along)
+ * and hear his request (irai_07_00 to irai_07_06), he hands over a Special Card, jumps down to the floor,
+ * the play time is saved in GSW_GON08_TROUBLE07_TIME and the request is marked solved (GSWF_TROUBLE_07_SOLVED,
+ * GSW_TROUBLE_ACTIVE cleared).
+ */
 EVT_BEGIN(nokkosu_talk)
-    CALL(evt_npc_flag_onoff, 1, STRING("me"), 1073741856)
-#ifdef VERSION_G8ME01
+    // Nokkos is made intangible so he can move freely.
+    CALL(evt_npc_flag_onoff, 1, STRING("me"), NPC_FLAG_NO_WALL_HIT | NPC_FLAG_INTANGIBLE)
+#if VERSION >= VERSION_US
     BEGIN_INLINE_EVENT
+        // Mario walks up to Nokkos and faces him.
         CALL(evt_mario_mov_pos2, -206, -147, FLOAT(120.0f))
         CALL(evt_mario_set_dir, 90, 200, 0)
     END_INLINE_EVENT
 #else
+    // Nokkos greets Mario.
     CALL(evt_msg_print, 0, STRING("irai_07_00"), 0, STRING("me"))
 #endif
+#if VERSION >= VERSION_JP
+    // Wait until the partner is free, then put the partner beside Mario.
     LOOP(0)
         CALL(evt_mario_party_use_check, LW(0))
         IF_INT_EQUAL(LW(0), 0)
@@ -515,7 +490,7 @@ EVT_BEGIN(nokkosu_talk)
     CALL(evt_party_wait_landon, 0)
     CALL(evt_party_outofscreen, 0, LW(0))
     IF_INT_EQUAL(LW(0), 0)
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
         CALL(evt_party_set_pos, 0, -200, 500, -87)
 #else
         CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
@@ -524,65 +499,74 @@ EVT_BEGIN(nokkosu_talk)
         CALL(evt_party_set_pos, 0, LW(0), LW(1), LW(2))
 #endif
     END_IF
-#ifdef VERSION_G8ME01
+#endif
+#if VERSION >= VERSION_US
+    // The partner walks up next to Mario and Nokkos greets them.
     CALL(evt_party_move_pos2, 0, -228, -130, FLOAT(120.0f))
     CALL(evt_party_set_dir, 0, 90, 200)
     CALL(evt_npc_set_ry_lr, STRING("me"), 0)
     CALL(evt_msg_print, 0, STRING("irai_07_00"), 0, STRING("me"))
 #endif
+    // Koops is swapped in if another partner was along.
     CALL(evt_mario_get_party, LW(0))
     IF_INT_NOT_EQUAL(LW(0), 2)
         CALL(evt_mario_goodbye_party, 0)
         CALL(evt_mario_hello_party, 0, 2)
     END_IF
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
     CALL(evt_party_stop, 0)
 #endif
+    // Koops comments on the visit.
     CALL(evt_msg_print, 0, STRING("irai_07_01"), 0, STRING("party"))
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
     CALL(evt_npc_get_position, STRING("me"), LW(0), LW(1), LW(2))
     CALL(evt_party_get_pos, 0, LW(3), LW(4), LW(5))
     IF_INT_GREATER_OR_EQUAL(LW(3), LW(0))
         CALL(evt_npc_set_ry, STRING("me"), 90)
-        ELSE
+    ELSE
         CALL(evt_npc_set_ry, STRING("me"), 270)
     END_IF
     WAIT_FRAMES(1)
     CALL(evt_npc_wait_pera, STRING("me"))
 #endif
+    // Nokkos explains his trouble; Mario and the partner answer.
     CALL(evt_msg_print, 0, STRING("irai_07_02"), 0, STRING("me"))
     CALL(evt_msg_print, 0, STRING("irai_07_03"), 0, STRING("party"))
     CALL(evt_msg_print, 0, STRING("irai_07_04"), 0, STRING("me"))
     CALL(evt_msg_print, 0, STRING("irai_07_05"), 0, STRING("party"))
     CALL(evt_msg_print, 0, STRING("irai_07_06"), 0, STRING("me"))
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
     CALL(evt_set_dir_to_target, STRING("me"), STRING("mario"))
     WAIT_FRAMES(1)
     CALL(evt_npc_wait_pera, STRING("me"))
     CALL(evt_party_run, 0)
 #endif
-    CALL(evt_item_entry, STRING("irai_item"), 91, 0, -1000, 0, 16, -1, 0)
-    CALL(evt_item_flag_on, STRING("irai_item"), 2)
+    // Nokkos hands over a Special Card as thanks.
+    CALL(evt_item_entry, STRING("irai_item"), ITEM_SPECIAL_CARD, 0, -1000, 0, ITEM_ENTRY_FIXED, -1, 0)
+    CALL(evt_item_flag_on, STRING("irai_item"), ITEM_FLAG_NO_TOUCH)
     CALL(evt_item_get_item, STRING("irai_item"))
     CALL(evt_msg_print, 0, STRING("irai_07_07"), 0, STRING("me"))
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
     CALL(evt_npc_set_ry, STRING("me"), 90)
     WAIT_FRAMES(1)
     CALL(evt_npc_wait_pera, STRING("me"))
 #endif
+    // Nokkos jumps down off the ledge and out of sight.
     CALL(evt_npc_jump_position_nohit, STRING("me"), -66, 100, -112, 800, 220)
     CALL(evt_npc_set_position, STRING("me"), 0, -1000, 0)
-    CALL(evt_sub_save_playtime, GSW(1421))
-    SET_VALUE(GSW(1420), 0)
-    SET_VALUE(GSWF(5381), 1)
+    // The time is recorded and the request is marked solved.
+    CALL(evt_sub_save_playtime, GSW(GSW_GON08_TROUBLE07_TIME))
+    SET_VALUE(GSW(GSW_TROUBLE_ACTIVE), 0)
+    SET_VALUE(GSWF(GSWF_TROUBLE_07_SOLVED), 1)
     CALL(evt_msg_print, 0, STRING("sys_request_finish"), 0, 0)
     RETURN
 EVT_END()
 
+/** NPC setup of gon_08: Nokkos, who gives the side request. */
 static NpcSetupInfo npcEnt[] = {
     {
-        /*"ノッコス"*/"\x83\x6D\x83\x62\x83\x52\x83\x58", // name
-        0x600, // flags
+        "ノッコス", // name
+        NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM, // flags
         0, // reactionFlags
         nokkosu_init, // initEvent
         NULL, // regularEvent
@@ -595,21 +579,26 @@ static NpcSetupInfo npcEnt[] = {
     {0},
 };
 
+/**
+ * Map init for gon_08: sets up the doors, Nokkos, the dormant Dry Bones, the Life Shroom,
+ * the floating block and switch (blk_0 and sw_0),
+ * and the lock that Castle Key 0x0F opens (STORY_STG1_15_02_LOCK_3).
+ */
 EVT_BEGIN(gon_08_init_evt)
     SET_VALUE(LW(0), PTR(bero_entry_data))
     CALL(evt_bero_get_info)
-    CALL_CHILD(PTR(evt_bero_info_run))
+    CALL_CHILD(evt_bero_info_run)
     CALL(evt_npc_setup, PTR(npcEnt))
-    CALL(evt_snd_bgmon, 512, STRING("BGM_STG1_GON1"))
-    CALL(evt_snd_envon, 272, STRING("ENV_STG1_GON1"))
+    CALL(evt_snd_bgmon, PSND_FADE_OUT, STRING("BGM_STG1_GON1"))
+    CALL(evt_snd_envon, PSND_FADE_RESTART | PSND_FADE_IN, STRING("ENV_STG1_GON1"))
     CALL(evt_snd_set_rev_mode, 2)
     CALL(evt_npc_entry, STRING("\"カロン00\""), STRING("c_karon_g"))
     CALL(evt_npc_set_position, STRING("\"カロン00\""), -169, 100, -66)
     CALL(evt_npc_set_rotate, STRING("\"カロン00\""), 0, 0, 0)
     CALL(evt_npc_set_anim, STRING("\"カロン00\""), STRING("KRN_Z_2"))
     CALL(evt_npc_pera_onoff, STRING("\"カロン00\""), 0)
-    CALL(evt_npc_flag_onoff, 0, STRING("\"カロン00\""), 1048576)
-    CALL(evt_npc_flag_onoff, 1, STRING("\"カロン00\""), 33554432)
+    CALL(evt_npc_flag_onoff, 0, STRING("\"カロン00\""), NPC_FLAG_NO_AUTO_UPDATE)
+    CALL(evt_npc_flag_onoff, 1, STRING("\"カロン00\""), NPC_FLAG_NO_BILLBOARD)
     CALL(evt_npc_set_width, STRING("\"カロン00\""), 30)
     CALL(evt_npc_set_height, STRING("\"カロン00\""), 7)
     CALL(evt_npc_entry, STRING("\"カロン01\""), STRING("c_karon_g"))
@@ -617,8 +606,8 @@ EVT_BEGIN(gon_08_init_evt)
     CALL(evt_npc_set_rotate, STRING("\"カロン01\""), 0, 180, 0)
     CALL(evt_npc_set_anim, STRING("\"カロン01\""), STRING("KRN_Z_2"))
     CALL(evt_npc_pera_onoff, STRING("\"カロン01\""), 0)
-    CALL(evt_npc_flag_onoff, 0, STRING("\"カロン01\""), 1048576)
-    CALL(evt_npc_flag_onoff, 1, STRING("\"カロン01\""), 33554432)
+    CALL(evt_npc_flag_onoff, 0, STRING("\"カロン01\""), NPC_FLAG_NO_AUTO_UPDATE)
+    CALL(evt_npc_flag_onoff, 1, STRING("\"カロン01\""), NPC_FLAG_NO_BILLBOARD)
     CALL(evt_npc_set_width, STRING("\"カロン01\""), 30)
     CALL(evt_npc_set_height, STRING("\"カロン01\""), 7)
     CALL(evt_npc_entry, STRING("\"カロン02\""), STRING("c_karon_g"))
@@ -626,23 +615,22 @@ EVT_BEGIN(gon_08_init_evt)
     CALL(evt_npc_set_rotate, STRING("\"カロン02\""), 0, 0, 0)
     CALL(evt_npc_set_anim, STRING("\"カロン02\""), STRING("KRN_Z_2"))
     CALL(evt_npc_pera_onoff, STRING("\"カロン02\""), 0)
-    CALL(evt_npc_flag_onoff, 0, STRING("\"カロン02\""), 1048576)
-    CALL(evt_npc_flag_onoff, 1, STRING("\"カロン02\""), 33554432)
+    CALL(evt_npc_flag_onoff, 0, STRING("\"カロン02\""), NPC_FLAG_NO_AUTO_UPDATE)
+    CALL(evt_npc_flag_onoff, 1, STRING("\"カロン02\""), NPC_FLAG_NO_BILLBOARD)
     CALL(evt_npc_set_width, STRING("\"カロン02\""), 30)
     CALL(evt_npc_set_height, STRING("\"カロン02\""), 7)
     CALL(evt_npc_change_fbat_mode, 1)
-    CALL(evt_item_entry, STRING("item_00"), 151, -215, 500, 10, 16, GSWF(1505), 0)
+    CALL(evt_item_entry, STRING("item_00"), ITEM_LIFE_SHROOM, -215, 500, 10, ITEM_ENTRY_FIXED, GSWF(GSWF_GON08_LIFE_SHROOM_TAKEN), 0)
     CALL(evt_mobj_float_blk, STRING("blk_0"), 0, 0, 0, 0, 2, 0, LSWF(3))
-    CALL_CHILD(PTR(init_0))
+    CALL_CHILD(init_0)
     CALL(evt_mobj_switch_float_blk, STRING("sw_0"), 0, 100, -185, STRING("blk_0"), 0, PTR(main_0), LSWF(3))
-    CALL(evt_mobj_flag_onoff, 1, STRING("blk_0"), 128)
-    CALL(evt_mapobj_flag_onoff, 1, 1, STRING("fuyu_boxS"), 1)
+    CALL(evt_mobj_flag_onoff, 1, STRING("blk_0"), MOBJ_FLAG_NO_CULL)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("fuyu_boxS"), MAPOBJ_FLAG_HIDE)
     CALL(evt_hitobj_onoff, STRING("a_fuyu_box"), 1, 0)
-    IF_INT_LESS(GSW(0), 52)
-        CALL(evt_mobj_lock, STRING("mobj_lock00"), 15, 240, 710, 0, 270, PTR(evt_chk), PTR(evt_unlock), GSWF(1496))
+    IF_INT_LESS(GSW(GSW_STORY_PROGRESS), STORY_STG1_15_02_LOCK_3)
+        CALL(evt_mobj_lock, STRING("mobj_lock00"), ITEM_CASTLE_KEY_0x0F, 240, 710, 0, 270, PTR(evt_chk), PTR(evt_unlock), GSWF(GSWF_GON08_DOOR_UNLOCKED))
         SET_VALUE(LW(0), STRING("e_bero_2"))
-        CALL_CHILD(PTR(bero_case_switch_off))
+        CALL_CHILD(bero_case_switch_off)
     END_IF
     RETURN
 EVT_END()
-

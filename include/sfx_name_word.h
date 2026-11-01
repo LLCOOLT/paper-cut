@@ -1,3 +1,4 @@
+// SfxNameWord: a sound-name parameter that holds either a name pointer or an id (SFX_NAME_WORD, SFX_NAME_IS_ID).
 #pragma once
 
 #include <dolphin/types.h>
@@ -28,4 +29,5 @@ typedef u32 SfxNameWord;
  * SfxNameWord round trip changes register allocation in psndENVSearch) */
 #define SFX_NAME_ID(name) ((s32)(name))
 #define SFX_NAME_IS_ID(name) (SFX_NAME_ID(name) >= 0)
+
 #endif

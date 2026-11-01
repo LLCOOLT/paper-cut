@@ -10,12 +10,12 @@ format camroad
 header cam_road.h
 
 struct CamRoadMap
-  f_e8 payload     # Vec header data (f_e8->x: fov)
+  projection payload     # Vec header data (projection->x: fov)
   curves payload if curveNum   # CamRoadCurve[curveNum], 0xb8 each
-  f_f0 payload if f_f0Num     # curve collision groups, 0x68 each
-  f_f4 payload if f_f4Num     # strips {s32 idxOfs, num}
-  f_f8 payload if f_f8Num     # Vec pairs (points, normals)
-  f_fc payload if f_fcNum     # Vec vertices
-  f_100 payload if f_100Num    # s32 indices
-  f_104 payload if f_104Num    # curve limit groups, 0x68 each
-  f_108 payload if f_108Num    # unused by the game code: left big-endian
+  groups payload if groupNum     # floor groups, 0x68 each
+  strips payload if stripNum     # strips {s32 idxOfs, num}
+  curveVtx payload if curveVtxNum     # Vec pairs (points, normals)
+  groupVtx payload if groupVtxNum     # Vec vertices
+  stripIdx payload if stripIdxNum    # s32 indices
+  collGroups payload if collGroupNum    # curve limit groups, 0x68 each
+  extra payload if extraNum    # unused by the game code: left big-endian

@@ -1,5 +1,8 @@
+// tou2: Glitz Pit arena REL shared code/prolog (registers tou_03) plus ranking, rule and champion belt helpers.
+
 #include "tou2.h"
 #include "dolphin/types.h"
+#include "dolphin/pad.h"
 #include "dolphin/mtx.h"
 #include "dolphin/gx.h"
 #include "driver/swdrv.h"
@@ -27,143 +30,20 @@
 #include "icon_ids.h"
 #include "mario/mariost.h"
 #include "data/npc_data.h"
-
-#pragma force_active on
-
-typedef struct RankEntry {
-    u16 flags;
-    // pad 2 bytes
-    s32 id;
-    union {
-        s16 total;
-        u8 bytes[2];
-    } points;
-    // pad 2 bytes
-} RankEntry;
-
-#ifndef PORT_ENUM_BASE
-#define PORT_ENUM_BASE(type)
-#endif
-typedef enum RankFlags PORT_ENUM_BASE(int) {
-    RANK_BELOW = 1 << 0, // This fighter is below us in the rankings
-    RANK_HIDDEN = 1 << 1, // This fighter is hidden from us
-    RANK_PLAYER = 1 << 2, // This is the player
-} RankFlags;
-
-typedef struct RankData {
-    s32 count;
-    RankEntry* entries;
-} RankData;
-
-typedef struct FighterData {
-    u16 flags;
-    // pad 2 bytes
-    const char* name;
-    const char* title;
-    s32 setupId;
-    const char* taunt;
-    const char* victory;
-    s16 field_18; // priority, order, sortId?
-    // pad 2 bytes
-} FighterData;
-
-// This includes a bunch of "story markers" for the various important fights
-typedef enum FighterFlags PORT_ENUM_BASE(int) {
-    FIGHT_MAJOR = 1 << 0,
-    FIGHT_MINOR = 1 << 1,
-    FIGHT_CHAMPION = 1 << 2,
-    FIGHT_PLAYER = 1 << 3,
-    FIGHT_BANDITS = 1 << 8,
-    FIGHT_KOOPAS = 1 << 9,
-    FIGHT_GOOMBAS = 1 << 10,
-    FIGHT_CLEFTS = 1 << 11,
-    FIGHT_KOOPATROL = 1 << 12,
-} FighterFlags;
-
-typedef enum FighterId PORT_ENUM_BASE(int) {
-    FIGHTER_RAWK_HAWK = 0,
-    FIGHTER_KOOPINATOR = 1,
-    FIGHTER_CHOMPS = 2,
-    FIGHTER_BROS = 3,
-    FIGHTER_CRAW = 4,
-    FIGHTER_MAGIKOOPA = 5,
-    FIGHTER_FUZZY = 6,
-    FIGHTER_SHADY_KOOPAS = 7,
-    FIGHTER_BRISTLES = 8,
-    FIGHTER_SPIKE_TOPS = 9,
-    FIGHTER_IRON_CLEFTS = 10,
-    FIGHTER_BANDITS = 11,
-    FIGHTER_BOB_OMB = 12,
-    FIGHTER_BALD_CLEFTS = 13,
-    FIGHTER_BOGGLY = 14,
-    FIGHTER_LAKITU = 15,
-    FIGHTER_DULL_BONES = 16,
-    FIGHTER_POKEYS = 17,
-    FIGHTER_KP_KOOPAS = 18,
-    FIGHTER_GOOMBAS = 19,
-    FIGHTER_PLAYER = 20,
-    FIGHTER_SWOOPS = 21,
-    FIGHTER_SPINIA = 22,
-} FighterId;
-
-typedef struct RuleData {
-    const char* name;
-    const char* desc;
-    s32 id;
-    s32 field_C;
-    s32 field_10;
-} RuleData;
-
-typedef struct DispWork {
-    f32 scroll;
-    f32 target;
-    s32 page;
-} DispWork;
-
-typedef void (*voidfunctionptr)(void);
-extern voidfunctionptr _ctors[];
-extern voidfunctionptr _dtors[];
-extern NpcSetupBattleInfo btlsetup_tou_tbl[];
-
-#ifndef TARGET_PC /* PC port: the host libc declares these */
-double atan2(double y, double x);
-int rand(void);
-#endif
-void FontDrawScale(f32 scale);
-void FontDrawMessageMtx(Mtx mtx, const char* msg);
+#include "map/tou_ranking.h"
+#include "libc_decls.h"
+#include "version.h"
+#include "evt/evt_story.h"
+#include "rel_module.h"
 
 static RankData rank_work;
-static DispWork disp_work;
+static RankDispWork disp_work;
 static s32 champion_belt_onoff;
 
-f32 fd_tou2_negone_one_374[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_tou2_neg_one_382 = -1.0f;
-
-f32 fd_tou2___local_PI_383 = 3.1415927f;
-
-f32 fd_tou2___local_3PIO2_385 = 4.712389f;
-
-f32 fd_tou2_one_negone_373[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_tou2___local_PIO2_384 = 1.5707964f;
-
-f32 fd_tou2_one_381 = 1.0f;
-
-f32 fd_tou2_negone_one_360[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_tou2_neg_one_365 = -1.0f;
-
-f32 fd_tou2___local_PI_366 = 3.1415927f;
-
-f32 fd_tou2___local_3PIO2_368 = 4.712389f;
-
-f32 fd_tou2_one_negone_359[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_tou2___local_PIO2_367 = 1.5707964f;
-
-f32 fd_tou2_one_364 = 1.0f;
-
+/**
+ * The Glitz Pit roster for the first visit, in FighterId order: each team's flags, name and title messages,
+ * battle setup, pre-fight taunt and victory lines, and starting ranking points.
+ */
 static FighterData fighterDt[23] = {
     { FIGHT_CHAMPION, "stg3_tou_sensyu_00", "stg3_tou_sensyu2_00", 22, "stg3_tou_400_02", "stg3_tou_400_03", 250 },                // Rawk Hawk
     { FIGHT_KOOPATROL | FIGHT_MAJOR, "stg3_tou_sensyu_01", "stg3_tou_sensyu2_01", 19, "stg3_tou_118_00", "stg3_tou_118_01", 200 }, // The Koopinator
@@ -190,6 +70,10 @@ static FighterData fighterDt[23] = {
     { FIGHT_MINOR, "stg3_tou_sensyu_22", "stg3_tou_sensyu2_22", 21, "stg3_tou_118_36_04", "stg3_tou_118_36_05", 0 },               // The Destructors
 };
 
+/**
+ * The roster for the comeback from STORY_STG3_34_RETURN_TO_ROGUEPORT on, with the rematch messages;
+ * Wings of Night and The Destructors are left out.
+ */
 static FighterData fighterDt_re[21] = {
     { FIGHT_CHAMPION, "stg3_tou_re_315", "stg3_tou_re_338", 22, "stg3_tou_re_289", "stg3_tou_re_290", 250 },                // Rawk Hawk
     { FIGHT_KOOPATROL | FIGHT_MAJOR, "stg3_tou_re_316", "stg3_tou_re_339", 19, "stg3_tou_re_179", "stg3_tou_re_180", 200 }, // The Koopinator
@@ -216,6 +100,10 @@ static FighterData fighterDt_re[21] = {
     //{ FIGHT_MINOR, "stg3_tou_re_337", "stg3_tou_re_360", 21, "stg3_tou_re_219", "stg3_tou_re_220", 0 },                     // The Destructors (cut)
 };
 
+/**
+ * Grubba's special match conditions in the minor league (rank worse than 10):
+ * his request message, the condition text, the rule id and its two parameters.
+ */
 static RuleData ruleDt_2bu[10] = {
     { "stg3_tou_107_01", "stg3_tou_cp_000", 18, 3, 3 },
     { "stg3_tou_107_02", "stg3_tou_cp_001", 1, 1, 1 },
@@ -229,6 +117,7 @@ static RuleData ruleDt_2bu[10] = {
     { "stg3_tou_107_16", "stg3_tou_cp_009", 43, 1, 1 },
 };
 
+/** The match conditions in the major league (rank 10 or better): stricter counts and four extra rules. */
 static RuleData ruleDt_1bu[14] = {
     { "stg3_tou_107_01", "stg3_tou_cp_010", 18, 5, 5 },
     { "stg3_tou_107_02", "stg3_tou_cp_011", 1, 1, 1 },
@@ -246,6 +135,7 @@ static RuleData ruleDt_1bu[14] = {
     { "stg3_tou_107_20", "stg3_tou_cp_024", 63, 255, 255 },
 };
 
+/** The match conditions throughout the comeback: the major-league set with the rematch messages. */
 static RuleData ruleDt_re[14] = {
     { "stg3_tou_re_362", "stg3_tou_cp_040", 18, 5, 5 },
     { "stg3_tou_re_363", "stg3_tou_cp_041", 1, 1, 1 },
@@ -263,20 +153,22 @@ static RuleData ruleDt_re[14] = {
     { "stg3_tou_re_376", "stg3_tou_cp_054", 63, 255, 255 },
 };
 
+/** Pointers to the fighter ranking and to the ranking board's display work. */
 static RankData* rank_wp = &rank_work;
-static DispWork* dwp = &disp_work;
-static const char* suuji[] = { "０", "１", "２", "３", "４", "５", "６", "７", "８", "９" };
+static RankDispWork* dwp = &disp_work;
+/** Full-width digits 0-9 used to print rank numbers on the ranking board. */
+static const char* suuji[] = {"０", "１", "２", "３", "４", "５", "６", "７", "８", "９"};
 
 // disp_proc templates
-static const GXColor titleColor = { 0xDC, 0xC8, 0xDC, 0xFF };
-static const GXColor numberColor = { 0xDC, 0xC8, 0xDC, 0xFF };
-static const GXColor playerColor = { 0xFF, 0x00, 0x00, 0xFF };
-static const GXColor nameColor = { 0xDC, 0xC8, 0xDC, 0xFF };
-static const Vec cursorPos = { 0.0f, 0.0f, 0.0f };
-static const Vec upArrowPos = { 0.0f, 125.0f, 0.0f };
-static const Vec upButtonPos = { 0.0f, 75.0f, 0.0f };
-static const Vec downArrowPos = { 0.0f, -140.0f, 0.0f };
-static const Vec downButtonPos = { 0.0f, -125.0f, 0.0f };
+static const GXColor titleColor = {0xDC, 0xC8, 0xDC, 0xFF};
+static const GXColor numberColor = {0xDC, 0xC8, 0xDC, 0xFF};
+static const GXColor playerColor = {0xFF, 0x00, 0x00, 0xFF};
+static const GXColor nameColor = {0xDC, 0xC8, 0xDC, 0xFF};
+static const Vec cursorPos = {0.0f, 0.0f, 0.0f};
+static const Vec upArrowPos = {0.0f, 125.0f, 0.0f};
+static const Vec upButtonPos = {0.0f, 75.0f, 0.0f};
+static const Vec downArrowPos = {0.0f, -140.0f, 0.0f};
+static const Vec downButtonPos = {0.0f, -125.0f, 0.0f};
 
 // local prototypes
 static f32 camGetRy(void);
@@ -287,11 +179,22 @@ static void rankingControll(void);
 static void insert(s32* arr, s32 n, s32 from, s32 to);
 static void rankingExit(void);
 static void rankingInit(void);
+/**
+ * Script helper: arg0 = 1 hides the Champ's Belt that tou_champion_belt draws on Rawk Hawk,
+ * 0 shows it again (used when the belt is handed over after the title match).
+ */
 USER_FUNC(tou_champion_belt_onoff) {
     champion_belt_onoff = evtGetValue(event, event->args[0]);
     return EVT_RETURN_DONE;
 }
 
+/**
+ * Script helper that keeps the Champ's Belt sparkle effect (a star-stone effect) attached to the champion NPC
+ * named by arg0.
+ * Each frame it moves the effect to the NPC's "locator8" bone and turns it to face the camera;
+ * it parks the effect at y=-1000 when the NPC has been moved below y=-1000 or the belt is switched off.
+ * Blocks forever, so the caller runs it in its own thread.
+ */
 USER_FUNC(tou_champion_belt) {
     NpcEntry* npc;
     EffectEntry* eff;
@@ -336,6 +239,7 @@ USER_FUNC(tou_champion_belt) {
     return EVT_RETURN_BLOCK;
 }
 
+/** Returns the 3D camera's yaw in degrees (0 to 360), computed from the camera position and look-at point. */
 static f32 camGetRy(void) {
     CameraEntry* cam = camGetPtr(CAMERA_3D);
     f32 ry = reviseAngle(57.29579f * atan2f(-(cam->cameraAt.x - cam->cameraPos.x), -(cam->cameraAt.z - cam->cameraPos.z)));
@@ -346,16 +250,22 @@ static f32 camGetRy(void) {
     return ry;
 }
 
+/** Single-precision wrapper around atan2 (radians). */
 f32 atan2f(f32 y, f32 x) {
     return atan2(y, x);
 }
 
+/**
+ * Script helper that opens the Glitz Pit ranking board.
+ * The first call picks the page that holds the player's rank (11 fighters per page) and
+ * then every frame handles L/R to flip pages and B to close; returns YIELD (finished) when B is pressed.
+ */
 static USER_FUNC(evt_tou_print_ranking) {
     s32 i;
     s32 rank;
 
     if (isFirstCall) {
-        memset(dwp, 0, sizeof(DispWork));
+        memset(dwp, 0, sizeof(RankDispWork));
         rank = 0;
         for (i = 0; i < rank_wp->count; i++) {
             if (!(rank_wp->entries[i].flags & RANK_HIDDEN)) {
@@ -370,15 +280,15 @@ static USER_FUNC(evt_tou_print_ranking) {
         printRanking();
         return EVT_RETURN_BLOCK;
     }
-    if (keyGetButtonTrg(0) & 0x200) {
+    if (keyGetButtonTrg(0) & PAD_BUTTON_B) {
         psndSFXOn((const char*)0x13);
         return EVT_RETURN_YIELD;
     }
-    if (dwp->page > 0 && (keyGetButtonTrg(0) & 0x40)) {
+    if (dwp->page > 0 && (keyGetButtonTrg(0) & PAD_TRIGGER_L)) {
         psndSFXOn((const char*)5);
         dwp->page--;
     }
-    if (dwp->page < 1 && (keyGetButtonTrg(0) & 0x20)) {
+    if (dwp->page < 1 && (keyGetButtonTrg(0) & PAD_TRIGGER_R)) {
         dwp->page++;
         psndSFXOn((const char*)5);
     }
@@ -388,6 +298,11 @@ static USER_FUNC(evt_tou_print_ranking) {
     return EVT_RETURN_BLOCK;
 }
 
+/**
+ * 2D draw callback for the ranking board: a window with the "Ranking" title,
+ * the visible fighters' ranks and names (the player's row in red), the scrolling page animation,
+ * and the up/down arrows with the L/R button icons.
+ */
 static void disp_proc(CameraId cameraId, void* param) {
     FighterData* fighters;
     f32 winW;
@@ -403,17 +318,17 @@ static void disp_proc(CameraId cameraId, void* param) {
     Mtx scale;
     Mtx mtx;
     char entry[0x100];
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
     const char* title;
     const char* name;
     f32 nameW;
 #endif
 
-    fighters = evtGetValue(NULL, GSW(0)) < 172 ? fighterDt : fighterDt_re;
+    fighters = evtGetValue(NULL, GSW(GSW_STORY_PROGRESS)) < STORY_STG3_34_RETURN_TO_ROGUEPORT ? fighterDt : fighterDt_re;
     winW = 250.0f;
     left = -winW / 2.0f;
     windowDispGX_System(0, 0xFF, left - 30.0f, 165.0f, 310.0f, 330.0f);
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
     if ((u32)gp->language == 0) {
         title = "\x83\x89\x83\x93\x83\x4C\x83\x93\x83\x4F";
     } else {
@@ -432,7 +347,7 @@ static void disp_proc(CameraId cameraId, void* param) {
         FontDrawColor(color);
     }
     top = 135.0f;
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
     FontDrawMessage(-width / 2, top, title);
 #else
     FontDrawMessage(-width / 2, top, "\x83\x89\x83\x93\x83\x4C\x83\x93\x83\x4F");
@@ -445,7 +360,6 @@ static void disp_proc(CameraId cameraId, void* param) {
         GXSetScissor(scissorX, (u16)sy, scissorW, (u16)sh);
     }
 
-
     num = 0;
     for (i = 0; i < rank_wp->count; i++) {
         x = 10.0f + left;
@@ -455,7 +369,7 @@ static void disp_proc(CameraId cameraId, void* param) {
         }
         PSMTXScale(scale, 0.8f, 0.8f, 0.8f);
         if (num != 0) {
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
             if ((u32)gp->language == 0) {
                 sprintf(entry, "%s%s", num / 10 ? suuji[num / 10] : "", suuji[num % 10]);
             } else {
@@ -481,7 +395,7 @@ static void disp_proc(CameraId cameraId, void* param) {
             GXColor color = nameColor;
             FontDrawColor(color);
         }
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
         name = msgSearch(fighters[rank_wp->entries[i].id].name);
         nameW = FontGetMessageWidth(name);
         x = 40.0f + x;
@@ -510,58 +424,74 @@ static void disp_proc(CameraId cameraId, void* param) {
         Vec pos = cursorPos;
         pos.x = 15.0f + left;
         pos.y = y - 24.0f;
-        iconDispGx(&pos, 0x10, ICON_123, 0.8f);
+        iconDispGx(&pos, ICON_FLAG_2D, ICON_123, 0.8f);
     }
     GXSetScissor(0, 0, 608, 480);
     if (dwp->page > 0) {
         {
             Vec pos = upArrowPos;
             pos.x = left + winW;
-            iconDispGx(&pos, 0x10, ICON_205, -1.0f);
+            iconDispGx(&pos, ICON_FLAG_2D, ICON_205, -1.0f);
         }
         {
             Vec pos = upButtonPos;
             pos.x = left + winW;
-            iconDispGx(&pos, 0x10, ICON_07E, 0.6f);
+            iconDispGx(&pos, ICON_FLAG_2D, ICON_07E, 0.6f);
         }
     }
     if (dwp->page < 1) {
         {
             Vec pos = downArrowPos;
             pos.x = left + winW;
-            iconDispGx(&pos, 0x10, ICON_205, 1.0f);
+            iconDispGx(&pos, ICON_FLAG_2D, ICON_205, 1.0f);
         }
         {
             Vec pos = downButtonPos;
             pos.x = left + winW;
-            iconDispGx(&pos, 0x10, ICON_080, 0.6f);
+            iconDispGx(&pos, ICON_FLAG_2D, ICON_080, 0.6f);
         }
     }
 }
 
+// FAKE: dont_inline: MWCC would inline this function into its callers; the original calls it (checked by removing it).
 #pragma dont_inline on
+/**
+ * Left over from a debug build: walks the ranking but prints nothing.
+ * Kept as a call target (not inlined) to match the original.
+ */
 static void printRanking(void) {
     s32 i;
 
-    evtGetValue(NULL, GSW(0));
+    evtGetValue(NULL, GSW(GSW_STORY_PROGRESS));
     for (i = 0; i < rank_wp->count; i++) {
     }
 }
 #pragma dont_inline reset
 
+/**
+ * Script helper: arg0 is the result bitmask of the last match's special rule.
+ * Bit 2 (value 4) means the rule was met and sets GSWF_TOU_LAST_RULE_MET; any other result clears it.
+ */
 USER_FUNC(evt_tou_set_rule_result) {
     s32 result = evtGetValue(event, event->args[0]);
 
     if (result & 4) {
-        swSet(2443);
+        swSet(GSWF_TOU_LAST_RULE_MET);
     } else if (result & 2) {
-        swClear(2443);
+        swClear(GSWF_TOU_LAST_RULE_MET);
     } else if (result & 1) {
-        swClear(2443);
+        swClear(GSWF_TOU_LAST_RULE_MET);
     }
     return EVT_RETURN_DONE;
 }
 
+/**
+ * Script helper that records a finished match.
+ * arg0 = 0 if Mario won (the opponent in arg1 is moved below him and GSWF_TOU_LAST_MATCH_WON is set),
+ * non-zero if he lost (the opponent goes above him again).
+ * Then every visible fighter's points change by a random -3..+3,
+ * the opponent id is saved in GSW_TOU_LAST_OPPONENT_ID, and the ranking is re-sorted with rankingControll.
+ */
 USER_FUNC(evt_tou_set_ranking_win_lose) {
     EvtWord* args = event->args;
     s32 lose = evtGetValue(event, args[0]);
@@ -577,7 +507,7 @@ USER_FUNC(evt_tou_set_ranking_win_lose) {
                 break;
             }
         }
-        swSet(2442);
+        swSet(GSWF_TOU_LAST_MATCH_WON);
     } else {
         for (i = 0; i < rank_wp->count; i++) {
             if (id == rank_wp->entries[i].id) {
@@ -585,7 +515,7 @@ USER_FUNC(evt_tou_set_ranking_win_lose) {
                 break;
             }
         }
-        swClear(2442);
+        swClear(GSWF_TOU_LAST_MATCH_WON);
     }
 
     min = 1000;
@@ -605,12 +535,17 @@ USER_FUNC(evt_tou_set_ranking_win_lose) {
             }
         }
     }
-    swByteSet(507, id);
-    swSet(2532);
+    swByteSet(GSW_TOU_LAST_OPPONENT_ID, id);
+    swSet(GSWF_TOU_LAST_OPPONENT_VALID);
     rankingControll();
     return EVT_RETURN_DONE;
 }
 
+/**
+ * Script helper: arg0 = rule id, arg1 receives the message text describing that special rule.
+ * The rule table depends on story progress and on whether the player is ranked lower than 11th;
+ * an unknown id falls back to the last entry.
+ */
 static USER_FUNC(evt_tou_get_rule_msg2) {
     EvtWord* args = event->args;
     s32 id = evtGetValue(event, args[0]);
@@ -619,7 +554,16 @@ static USER_FUNC(evt_tou_get_rule_msg2) {
     s32 i;
     s32 rank;
 
-    if (evtGetValue(NULL, GSW(0)) < 172) {
+    if (evtGetValue(NULL, GSW(GSW_STORY_PROGRESS)) < STORY_STG3_34_RETURN_TO_ROGUEPORT) {
+#if VERSION <= VERSION_DEMO_JP
+        // the demo also counts the fighters taken out of the ranking
+        for (i = 0; i < rank_wp->count; i++) {
+            if (rank_wp->entries[i].flags & RANK_PLAYER) {
+                break;
+            }
+        }
+        rank = i;
+#else
         rank = 0;
         for (i = 0; i < rank_wp->count; i++) {
             if (!(rank_wp->entries[i].flags & RANK_HIDDEN)) {
@@ -629,6 +573,7 @@ static USER_FUNC(evt_tou_get_rule_msg2) {
                 rank++;
             }
         }
+#endif
         if (rank > 10) {
             rules = ruleDt_2bu;
             num = 10;
@@ -652,6 +597,12 @@ static USER_FUNC(evt_tou_get_rule_msg2) {
     return EVT_RETURN_DONE;
 }
 
+/**
+ * Script helper that picks the special rule for the next match.
+ * arg0 = 0 forces the rule with id 6, 10 picks a random rule other than 48, 32 and 64,
+ * anything else picks any rule at random.
+ * Outputs: arg1 = rule name, arg2 = rule id, arg3/arg4 = the rule's two parameters.
+ */
 static USER_FUNC(evt_tou_get_rule_info) {
     EvtWord* args = event->args;
     s32 type = evtGetValue(event, args[0]);
@@ -660,7 +611,16 @@ static USER_FUNC(evt_tou_get_rule_info) {
     s32 i;
     s32 rank;
 
-    if (evtGetValue(NULL, GSW(0)) < 172) {
+    if (evtGetValue(NULL, GSW(GSW_STORY_PROGRESS)) < STORY_STG3_34_RETURN_TO_ROGUEPORT) {
+#if VERSION <= VERSION_DEMO_JP
+        // the demo also counts the fighters taken out of the ranking
+        for (i = 0; i < rank_wp->count; i++) {
+            if (rank_wp->entries[i].flags & RANK_PLAYER) {
+                break;
+            }
+        }
+        rank = i;
+#else
         rank = 0;
         for (i = 0; i < rank_wp->count; i++) {
             if (!(rank_wp->entries[i].flags & RANK_HIDDEN)) {
@@ -670,6 +630,7 @@ static USER_FUNC(evt_tou_get_rule_info) {
                 rank++;
             }
         }
+#endif
         if (rank > 10) {
             rules = ruleDt_2bu;
             num = 10;
@@ -699,17 +660,23 @@ static USER_FUNC(evt_tou_get_rule_info) {
     }
     evtSetValue(event, args[1], (EvtWord)rules[i].name);
     evtSetValue(event, args[2], rules[i].id);
-    evtSetValue(event, args[3], rules[i].field_C);
-    evtSetValue(event, args[4], rules[i].field_10);
+    evtSetValue(event, args[3], rules[i].param);
+    evtSetValue(event, args[4], rules[i].param2);
     return EVT_RETURN_DONE;
 }
 
+/**
+ * Script helper: arg0 = fighter id, arg1 = index of the enemy inside that fighter's battle group.
+ * Finds the NPC tribe (model) of that enemy through its Tattle entry,
+ * with hand-written overrides for a few special enemies, and returns arg2 = model name,
+ * arg3 = Japanese tribe name, which the arena script uses to spawn the opponent's NPC.
+ */
 USER_FUNC(evt_tou_get_fighter_tribe) {
     EvtWord* args = event->args;
     s32 id = evtGetValue(event, args[0]);
     s32 idx = evtGetValue(event, args[1]);
     s32 setupId = fighterDt[id].setupId;
-    TattleEntry* tattle = battleGetUnitMonosiriPtr(btlsetup_tou_tbl[setupId].select->groupSetup->enemyData[idx].mUnitKindParams->mUnitType);
+    TattleEntry* tattle = battleGetUnitMonosiriPtr(btlsetup_tou_tbl[setupId].select->groupSetup->enemyData[idx].unitKindParams->unitType);
     NpcTribeInfo* tribe;
     const char* name;
     BOOL found = FALSE;
@@ -751,6 +718,7 @@ USER_FUNC(evt_tou_get_fighter_tribe) {
     return EVT_RETURN_DONE;
 }
 
+/** Script helper: arg0 = fighter id; arg1 receives how many enemies that fighter's battle setup contains. */
 USER_FUNC(evt_tou_get_fighter_num) {
     EvtWord* args = event->args;
     s32 id = evtGetValue(event, args[0]);
@@ -759,16 +727,24 @@ USER_FUNC(evt_tou_get_fighter_num) {
     return EVT_RETURN_DONE;
 }
 
+/**
+ * Script helper: arg0 = fighter id; arg1 receives the taunt message key
+ * and arg2 the victory message key shown around that fighter's match.
+ */
 USER_FUNC(evt_tou_get_fighter_battle_msg) {
     EvtWord* args = event->args;
     s32 id = evtGetValue(event, args[0]);
-    FighterData* fighters = evtGetValue(NULL, GSW(0)) < 172 ? fighterDt : fighterDt_re;
+    FighterData* fighters = evtGetValue(NULL, GSW(GSW_STORY_PROGRESS)) < STORY_STG3_34_RETURN_TO_ROGUEPORT ? fighterDt : fighterDt_re;
 
     evtSetValue(event, args[1], (EvtWord)fighters[id].taunt);
     evtSetValue(event, args[2], (EvtWord)fighters[id].victory);
     return EVT_RETURN_DONE;
 }
 
+/**
+ * Script helper: arg0 = fighter id; arg1 receives the fighter's current position in the visible ranking (0 is
+ * the champion).
+ */
 static USER_FUNC(evt_tou_get_fighter_rank) {
     EvtWord* args = event->args;
     s32 id = evtGetValue(event, args[0]);
@@ -788,28 +764,42 @@ static USER_FUNC(evt_tou_get_fighter_rank) {
     return EVT_RETURN_DONE;
 }
 
+/**
+ * Script helper: arg0 = fighter id; arg1 receives the message text of the fighter's team title (for example "The
+ * Koopinator").
+ */
 USER_FUNC(evt_tou_get_fighter_name2) {
     EvtWord* args = event->args;
     s32 id = evtGetValue(event, args[0]);
-    FighterData* fighters = evtGetValue(NULL, GSW(0)) < 172 ? fighterDt : fighterDt_re;
+    FighterData* fighters = evtGetValue(NULL, GSW(GSW_STORY_PROGRESS)) < STORY_STG3_34_RETURN_TO_ROGUEPORT ? fighterDt : fighterDt_re;
 
     evtSetValue(event, args[1], (EvtWord)msgSearch(fighters[id].title));
     return EVT_RETURN_DONE;
 }
 
+/**
+ * Script helper: arg0 = fighter id; arg1 receives the fighter's name text
+ * and arg2 the battle setup id (index into btlsetup_tou_tbl).
+ */
 USER_FUNC(evt_tou_get_fighter_info) {
     EvtWord* args = event->args;
     s32 id = evtGetValue(event, args[0]);
-    FighterData* fighters = evtGetValue(NULL, GSW(0)) < 172 ? fighterDt : fighterDt_re;
+    FighterData* fighters = evtGetValue(NULL, GSW(GSW_STORY_PROGRESS)) < STORY_STG3_34_RETURN_TO_ROGUEPORT ? fighterDt : fighterDt_re;
 
     evtSetValue(event, args[1], (EvtWord)msgSearch(fighters[id].name));
     evtSetValue(event, args[2], fighterDt[id].setupId);
     return EVT_RETURN_DONE;
 }
 
+/**
+ * Script helper: arg0 receives the id of the next opponent.
+ * If the last special rule was met it is the fighter ranked directly above the player,
+ * otherwise the one directly below (or above if there is none);
+ * the champion's slot picks the second fighter in the list.
+ */
 static USER_FUNC(evt_tou_get_next_match) {
     EvtWord* args = event->args;
-    BOOL reverse = evtGetValue(event, GSWF(2443));
+    BOOL reverse = evtGetValue(event, GSWF(GSWF_TOU_LAST_RULE_MET));
     s32 list[32];
     s32 i;
     s32 rank;
@@ -833,7 +823,11 @@ static USER_FUNC(evt_tou_get_next_match) {
     if (rank > 0) {
         if (reverse) {
             evtSetValue(event, args[0], list[rank - 1]);
+#if VERSION <= VERSION_DEMO_JP
+        } else if (rank != num - 1) {
+#else
         } else if (rank + 1 < num) {
+#endif
             evtSetValue(event, args[0], list[rank + 1]);
         } else {
             evtSetValue(event, args[0], list[rank - 1]);
@@ -845,6 +839,7 @@ static USER_FUNC(evt_tou_get_next_match) {
     return EVT_RETURN_DONE;
 }
 
+/** Script helper: arg0 receives the player's current rank (0 is the champion). */
 USER_FUNC(evt_tou_get_ranking) {
     EvtWord* args = event->args;
     s32 i;
@@ -863,6 +858,13 @@ USER_FUNC(evt_tou_get_ranking) {
     return EVT_RETURN_DONE;
 }
 
+/**
+ * Re-sorts the ranking.
+ * Fighters not yet beaten ("above" the player) and beaten ones ("below") are sorted by points,
+ * with the champion, the title contenders and other fixed-position fighters forced into their slots;
+ * the player's entry is put between the two groups, the table is rewritten,
+ * and the player's rank is saved in GSW_TOU_PLAYER_RANK.
+ */
 static void rankingControll(void) {
     s32 above[32];
     s32 below[32];
@@ -980,10 +982,10 @@ static void rankingControll(void) {
             }
         }
 
-        // Check if a match is booked (2532), and move our opponent (507) to above us for the fight. 
-        if (swGet(2532)) {
+        // Check if a match is booked (2532), and move our opponent (507) to above us for the fight.
+        if (swGet(GSWF_TOU_LAST_OPPONENT_VALID)) {
             for (idx = 0; idx < nAbove; idx++) {
-                if (above[idx] == swByteGet(507)) {
+                if (above[idx] == swByteGet(GSW_TOU_LAST_OPPONENT_ID)) {
                     break;
                 }
             }
@@ -1026,7 +1028,7 @@ static void rankingControll(void) {
                 insert(below, nBelow, idx, 0);
             }
         }
-        
+
         if (nBelow > 0) {
             for (idx = 0; idx < nBelow; idx++) {
                 if (fighterDt[rank_wp->entries[below[idx]].id].flags & 0x800) {
@@ -1046,9 +1048,9 @@ static void rankingControll(void) {
         }
 
         // Check if a match is booked (2532), and move our opponent (507) to above us for the fight.
-        if (swGet(2532)) {
+        if (swGet(GSWF_TOU_LAST_OPPONENT_VALID)) {
             for (idx = 0; idx < nBelow; idx++) {
-                if (below[idx] == swByteGet(507)) {
+                if (below[idx] == swByteGet(GSW_TOU_LAST_OPPONENT_ID)) {
                     break;
                 }
             }
@@ -1062,7 +1064,7 @@ static void rankingControll(void) {
     for (i = 0; i < nAbove; i++) {
         buf[i] = rank_wp->entries[above[i]];
     }
-    // TODO: fixup
+    // Put the player's own entry between the two lists.
     buf[nAbove].flags = RANK_PLAYER;
     buf[nAbove].id = FIGHTER_PLAYER;
     buf[nAbove].points.total = 0;
@@ -1083,9 +1085,10 @@ static void rankingControll(void) {
             rank++;
         }
     }
-    swByteSet(580, rank);
+    swByteSet(GSW_TOU_PLAYER_RANK, rank);
 }
 
+/** Moves arr[from] to index to, shifting the elements in between by one place. */
 static void insert(s32* arr, s32 n, s32 from, s32 to) {
     s32 i;
 
@@ -1104,32 +1107,45 @@ static void insert(s32* arr, s32 n, s32 from, s32 to) {
     }
 }
 
+#if VERSION >= VERSION_JP
+/**
+ * Script helper that resets the arena ranking when the player starts the tournament again:
+ * saves and frees the old table, takes the Champ's Belt from the inventory,
+ * clears the per-fighter and story flags of the Glitz Pit run, and builds a fresh ranking.
+ */
 USER_FUNC(tou2_rankingReset) {
     s32 i;
 
     rankingExit();
     pouchRemoveItem(0x41);
     for (i = 0; i < 20; i++) {
-        swClear(i + 2465);
+        swClear(i + GSWF_TOU_FIGHTER_BELOW_BASE);
     }
-    swClear(2392);
-    swClear(2399);
-    swClear(2400);
-    swClear(2383);
-    swClear(2529);
-    swClear(2532);
-    swClear(2403);
+    swClear(GSWF_TOU10_FIRST_MATCH_AFTER_SEEN);
+    swClear(GSWF_TOU_CHAMP_OPENING_SEEN);
+    swClear(GSWF_TOU_CHAMP_WIN_SEEN);
+    swClear(GSWF_TOU_TITLE_MATCH_RESERVED);
+    swClear(GSWF_TOU_RANKING_SAVED);
+    swClear(GSWF_TOU_LAST_OPPONENT_VALID);
+    swClear(GSWF_TOU02_LOBBY_CROWD_CHAMP_SEEN);
     rankingInit();
     return EVT_RETURN_DONE;
 }
+#endif
 
+/**
+ * Script helper that saves the ranking to the game state
+ * and rebuilds it (used when story progress changes which fighters are listed).
+ */
 static USER_FUNC(evt_rankingReInit) {
     rankingExit();
     rankingInit();
     return EVT_RETURN_DONE;
 }
 
+// FAKE: dont_inline: MWCC would inline this function into its callers; the original calls it (checked by removing it).
 #pragma dont_inline on
+/** Saves each fighter's below-player flag and points into the saved game state (GSW) and frees the ranking table. */
 static void rankingExit(void) {
     s32 i;
     s32 j;
@@ -1137,18 +1153,24 @@ static void rankingExit(void) {
 
     for (i = 0, entry = rank_wp->entries; i < rank_wp->count; i++, entry++) {
         if (entry->flags & RANK_BELOW) {
-            swSet(entry->id + 2465);
+            swSet(entry->id + GSWF_TOU_FIGHTER_BELOW_BASE);
         } else {
-            swClear(entry->id + 2465);
+            swClear(entry->id + GSWF_TOU_FIGHTER_BELOW_BASE);
         }
         for (j = 0; j < 2; j++) {
-            swByteSet(2 * entry->id + 519 + j, entry->points.bytes[j]);
+            swByteSet(2 * entry->id + GSW_TOU_FIGHTER_POINTS_BASE + j, entry->points.bytes[j]);
         }
     }
     _mapFree(rank_wp->entries);
 }
 #pragma dont_inline reset
 
+/**
+ * Allocates the ranking table, restores each fighter's below-player flag
+ * and points from the saved game state (or the starting points on the first run),
+ * hides fighters who have not joined yet or have left according to story progress (Sir Swoop, Bandy Andy, The
+ * Destructors), and sorts it.
+ */
 static void rankingInit(void) {
     s32 temp;
     s32 count;
@@ -1157,7 +1179,7 @@ static void rankingInit(void) {
 
     memset(rank_wp, 0, sizeof(RankData));
     // We need to handle the excluded entries if we're doing rematches
-    temp = evtGetValue(NULL, GSW(0));
+    temp = evtGetValue(NULL, GSW(GSW_STORY_PROGRESS));
     count = 21;
     if (temp < 172) {
         count = 23;
@@ -1169,61 +1191,70 @@ static void rankingInit(void) {
     for (i = 0, entry = rank_wp->entries; i < rank_wp->count; i++, entry++) {
         entry->flags = 0;
         entry->id = i;
-        if (swGet(entry->id + 2465)) {
+        if (swGet(entry->id + GSWF_TOU_FIGHTER_BELOW_BASE)) {
             entry->flags |= RANK_BELOW;
         }
-        if (swGet(2529)) {
+        if (swGet(GSWF_TOU_RANKING_SAVED)) {
             int j;
             for (j = 0; j < 2; j++) {
-                entry->points.bytes[j] = swByteGet(2 * entry->id + 519 + j);
+                entry->points.bytes[j] = swByteGet(2 * entry->id + GSW_TOU_FIGHTER_POINTS_BASE + j);
             }
         } else {
-            entry->points.total = fighterDt[entry->id].field_18;
+            entry->points.total = fighterDt[entry->id].initPoints;
         }
         if (entry->id == FIGHTER_PLAYER) {
             entry->flags |= RANK_PLAYER;
         }
     }
 
-    swSet(2529);
+    swSet(GSWF_TOU_RANKING_SAVED);
 
     // Set up the initial run-through
-    if (evtGetValue(NULL, GSW(0)) < 172) {
+    if (evtGetValue(NULL, GSW(GSW_STORY_PROGRESS)) < STORY_STG3_34_RETURN_TO_ROGUEPORT) {
         rank_wp->entries[FIGHTER_SWOOPS].flags |= RANK_HIDDEN;
         rank_wp->entries[FIGHTER_SPINIA].flags |= RANK_HIDDEN;
 
         // If we're past this point in the story, hide King K
-        if (evtGetValue(NULL, GSWF(2412))) {
+        if (evtGetValue(NULL, GSWF(GSWF_TOU_RANK12_KING_K_GONE))) {
             rank_wp->entries[FIGHTER_KP_KOOPAS].flags |= RANK_HIDDEN;
         }
 
         // If we're past this story, Sir Swoop has been introduced
-        if (evtGetValue(NULL, GSWF(2413))) {
+        if (evtGetValue(NULL, GSWF(GSWF_TOU_RANK11_SWOOPS_JOINS))) {
             rank_wp->entries[FIGHTER_SWOOPS].flags &= ~RANK_HIDDEN;
 
-            if (!evtGetValue(NULL, GSWF(2530))) {
+            if (!evtGetValue(NULL, GSWF(GSWF_TOU_SWOOPS_ADDED))) {
                 rank_wp->entries[FIGHTER_SWOOPS].flags |= RANK_BELOW;
             }
-            evtSetValue(NULL, GSWF(2530), TRUE);
+            evtSetValue(NULL, GSWF(GSWF_TOU_SWOOPS_ADDED), TRUE);
         }
 
         // If we're past this point in the story, Bandy Andy got "retired" and The Destructors were added.
-        if (evtGetValue(NULL, GSWF(2421))) {
+#if VERSION <= VERSION_DEMO_JP
+        if (evtGetValue(NULL, GSW(GSW_STORY_PROGRESS)) >= STORY_STG3_20_06_RAWK_HAWKS_WARNING) {
+#else
+        if (evtGetValue(NULL, GSWF(GSWF_TOU_MAIL4_RECEIVED))) {
+#endif
             rank_wp->entries[FIGHTER_BANDITS].flags |= RANK_HIDDEN;
             rank_wp->entries[FIGHTER_SPINIA].flags &= ~RANK_HIDDEN;
 
-            if (!evtGetValue(NULL, GSWF(2531))) {
+            if (!evtGetValue(NULL, GSWF(GSWF_TOU_SPINIA_ADDED))) {
                 rank_wp->entries[FIGHTER_SPINIA].flags |= RANK_BELOW;
             }
-            evtSetValue(NULL, GSWF(2531), TRUE);
+            evtSetValue(NULL, GSWF(GSWF_TOU_SPINIA_ADDED), TRUE);
         }
     }
     rankingControll();
 }
 
+/** REL linker stub for unresolved imports; does nothing. */
 void _unresolved(void) {
 }
 
+/**
+ * REL unload entry: saves the ranking, clears the tou_03 event and tou battle tables
+ * and runs the static destructors.
+ */
 void _epilog(void) {
     voidfunctionptr* dtor;
 
@@ -1235,6 +1266,10 @@ void _epilog(void) {
     }
 }
 
+/**
+ * REL load entry: runs the static constructors,
+ * registers the tou_03 map init script and the tou battle setup tables, and builds the ranking.
+ */
 void _prolog(void) {
     voidfunctionptr* ctor;
 
@@ -1245,5 +1280,3 @@ void _prolog(void) {
     relSetBtlAddr("tou", btlsetup_tou_tbl, btl_tou_setup_no_tbl);
     rankingInit();
 }
-
-#pragma force_active reset

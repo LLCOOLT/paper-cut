@@ -1,10 +1,5 @@
-/* "evtmgr" - Event Manager
-* Status: 1:1, just needs comments and struct cleanup
-*
-* Function: helps manage all the scripts the game uses
-*
-* Last Update: 7/10/2022, completed evtmgr
-*/
+// Event manager: the event (script) entries: creating, ordering by priority, running each frame,
+// pausing and deleting them, and their child/brother relations.
 
 #include "manager/evtmgr.h"
 #include "evt/evt_msg.h"
@@ -27,671 +22,740 @@ BOOL runMainF;
 s32 evtID = 1;
 f32 evtSpd = 1.0f;
 
-//local definitions
-void make_pri_table(void);
-void evtEntryRunCheck(EventEntry* entry);
+// local definitions
+static void make_pri_table(void);
+static void evtEntryRunCheck(EventEntry* entry);
 
+/**
+ * The event pool in use: battles run their scripts in a second pool of 256 entries (with its own GW/GF
+ * variables), so field events survive a battle untouched.
+ */
 EventWork* evtGetWork(void) {
-	return gp->inBattle ? &work[1] : &work[0];
+    return gp->inBattle ? &work[1] : &work[0];
 }
 
+// FAKE: keeps the following function(s) out of line as in the target; removing it changes the code
 #pragma dont_inline on
-void make_pri_table(void) {
-	EventWork* wp = evtGetWork();
-	EventEntry* entry = wp->entries;
-	s32 idI, idJ;
-	s32 slotI, slotJ;
-	s32 priEntryCount;
-	s32 n, i, j;
+/**
+ * Builds this frame's run order for evtmgrMain:
+ * every active event's slot and id, sorted by priority, highest first.
+ */
+static void make_pri_table(void) {
+    EventWork* wp = evtGetWork();
+    EventEntry* entry = wp->entries;
+    s32 idI, idJ;
+    s32 slotI, slotJ;
+    s32 priEntryCount;
+    s32 n, i, j;
 
-	priEntryCount = 0;
-	for (n = 0; n < wp->count; n++, entry++) {
-		if (entry->flags & EVENT_ACTIVE) {
-			priTbl[priEntryCount] = n;
-			priIDTbl[priEntryCount] = entry->eventId;
-			priEntryCount++;
-		}
-	}
-	priTblNum = priEntryCount;
+    priEntryCount = 0;
+    for (n = 0; n < wp->count; n++, entry++) {
+        if (entry->flags & EVENT_ACTIVE) {
+            priTbl[priEntryCount] = n;
+            priIDTbl[priEntryCount] = entry->eventId;
+            priEntryCount++;
+        }
+    }
+    priTblNum = priEntryCount;
 
-	//Bubble sort
-	for (i = 0; i < priEntryCount - 1; i++) {
-		for (j = i + 1; j < priEntryCount; j++) {
-			slotI = priTbl[i];
-			slotJ = priTbl[j];
-			if (wp->entries[slotI].priority < wp->entries[slotJ].priority) {
-				idI = priIDTbl[i];
-				idJ = priIDTbl[j];
-				priTbl[i] = slotJ;
-				priIDTbl[i] = idJ;
-				priTbl[j] = slotI;
-				priIDTbl[j] = idI;
-			}
-		}
-	}
+    // Bubble sort
+    for (i = 0; i < priEntryCount - 1; i++) {
+        for (j = i + 1; j < priEntryCount; j++) {
+            slotI = priTbl[i];
+            slotJ = priTbl[j];
+            if (wp->entries[slotI].priority < wp->entries[slotJ].priority) {
+                idI = priIDTbl[i];
+                idJ = priIDTbl[j];
+                priTbl[i] = slotJ;
+                priIDTbl[i] = idJ;
+                priTbl[j] = slotI;
+                priIDTbl[j] = idI;
+            }
+        }
+    }
 }
 #pragma dont_inline reset
 
-#pragma warn_no_side_effect off
+/**
+ * Scans an event's script up to END_SCRIPT and records the position
+ * after each LABEL (up to 16) for GOTO to jump to.
+ */
 inline void make_jump_table(EventEntry* entry) {
-	s32 params, opcode;
-	s32 label;
-	int i, n;
-	EvtWord* cmd;
+    s32 params, opcode;
+    s32 label;
+    int i, n;
+    EvtWord* cmd;
 
-	for (i = 0; i < 16; i++) { //initialize both tables
-		entry->labelIdTable[i] = -1;
-		entry->labelAddressTable[i] = 0;
-	}
+    for (i = 0; i < 16; i++) { // initialize both tables
+        entry->labelIdTable[i] = -1;
+        entry->labelAddressTable[i] = 0;
+    }
 
-	n = 0;
-	cmd = entry->nextCommand;
-	while (1) {
-		opcode = *cmd & 0xFFFF; //load the base opcode and arg_count
-		params = *cmd++ >> 16; //increment to first argument
+    n = 0;
+    cmd = entry->nextCommand;
+    while (1) {
+        opcode = *cmd & 0xFFFF; // load the base opcode and arg_count
+        params = *cmd++ >> 16;  // increment to first argument
 #ifdef TARGET_PC
 		label = params != 0 ? *cmd : 0; /* PC port: END has no argument; the word after it is past the script */
 #else
-		label = *cmd; //load label, which will be cast to an s8 (0-0xFF valid)
+        label = *cmd;           // load label, which will be cast to an s8 (0-0xFF valid)
 #endif
-		cmd += params; //set cmd to the opcode *after* the label
+        cmd += params;          // set cmd to the opcode *after* the label
 
-		switch (opcode) {
-			case OPCODE_END_SCRIPT:
-				return; //exit loop
-			case OPCODE_LABEL:
-				entry->labelIdTable[n] = (s8)label;
-				entry->labelAddressTable[n] = (EvtWord*)cmd;
-				n++;
-		}
-		if (n >= 16) { //needed to match, optimization leftover from some debug assert
-			"unused";
-		}
-	}
+        switch (opcode) {
+            case OPCODE_END_SCRIPT:
+                return; // exit loop
+            case OPCODE_LABEL:
+                entry->labelIdTable[n] = (s8)label;
+                entry->labelAddressTable[n] = (EvtWord*)cmd;
+                n++;
+        }
+        if (n >= 16) {
+            (void)0; // a compiled-out check: the label tables hold 16 labels
+        }
+    }
 }
-#pragma warn_no_side_effect on
 
+/**
+ * Boot-time setup: allocates the field and battle event pools (256 entries each),
+ * clears their GW/GF variables and the message state.
+ */
 void evtmgrInit(void) {
-	EventWork* wp;
+    EventWork* wp;
 
-	wp = &work[0];
-	wp->count = 0x100;
-	wp->entries = __memAlloc(HEAP_DEFAULT, wp->count * sizeof(EventEntry));
-	wp->lastUpdate = gp->renderTime;
-	memset(wp->entries, 0, wp->count * sizeof(EventEntry));
-	memset(wp->gwData, 0, sizeof(wp->gwData));
-	memset(wp->gfData, 0, sizeof(wp->gfData));
+    wp = &work[0];
+    wp->count = 0x100;
+    wp->entries = __memAlloc(HEAP_DEFAULT, wp->count * sizeof(EventEntry));
+    wp->lastUpdate = gp->renderTime;
+    memset(wp->entries, 0, wp->count * sizeof(EventEntry));
+    memset(wp->gwData, 0, sizeof(wp->gwData));
+    memset(wp->gfData, 0, sizeof(wp->gfData));
 
-	wp = &work[1];
-	wp->count = 0x100;
-	wp->entries = __memAlloc(HEAP_DEFAULT, wp->count * sizeof(EventEntry));
-	wp->lastUpdate = gp->renderTime;
-	memset(wp->entries, 0, wp->count * sizeof(EventEntry));
-	memset(wp->gwData, 0, sizeof(wp->gwData));
-	memset(wp->gfData, 0, sizeof(wp->gfData));
-	evtMax = 0;
-	priTblNum = 0;
-	runMainF = FALSE;
-	evt_msg_init();
+    wp = &work[1];
+    wp->count = 0x100;
+    wp->entries = __memAlloc(HEAP_DEFAULT, wp->count * sizeof(EventEntry));
+    wp->lastUpdate = gp->renderTime;
+    memset(wp->entries, 0, wp->count * sizeof(EventEntry));
+    memset(wp->gwData, 0, sizeof(wp->gwData));
+    memset(wp->gfData, 0, sizeof(wp->gfData));
+    evtMax = 0;
+    priTblNum = 0;
+    runMainF = FALSE;
+    evt_msg_init();
 }
 
+/**
+ * Kills every event in the current pool (GW/GF variables are kept);
+ * runs on map changes and on entering and leaving battle.
+ */
 void evtmgrReInit(void) {
-	EventWork* wp = evtGetWork();
+    EventWork* wp = evtGetWork();
 
-	wp->lastUpdate = gp->renderTime;
-	memset(wp->entries, 0, wp->count * sizeof(EventEntry));
-	evtMax = 0;
-	runMainF = FALSE;
-	evt_msg_init();
+    wp->lastUpdate = gp->renderTime;
+    memset(wp->entries, 0, wp->count * sizeof(EventEntry));
+    evtMax = 0;
+    runMainF = FALSE;
+    evt_msg_init();
 }
 
-void evtEntryRunCheck(EventEntry* entry) {
-	switch (_mariostSystemLevel) {
-		case 1:
-			evtStopAll(1);
-			break;
-		case 2:
-			evtStopAll(2);
-			break;
-		case 3:
-			evtStopAll(0x10);
-			break;
-		case 4:
-			evtStopAll(0xEF);
-		case 0:
-			break;
-	}
+/**
+ * Re-applies the current system level (marioStSystemLevel: pause menus and the like) by stopping all events of
+ * the types it suspends, so an event started while the game is paused starts paused too.
+ */
+static void evtEntryRunCheck(EventEntry* entry) {
+    switch (_mariostSystemLevel) {
+        case 1:
+            evtStopAll(1);
+            break;
+        case 2:
+            evtStopAll(2);
+            break;
+        case 3:
+            evtStopAll(0x10);
+            break;
+        case 4:
+            evtStopAll(0xEF);
+        case 0:
+            break;
+    }
 }
 
+/**
+ * Starts a new script in a free event slot with the given priority (higher runs first) and flags,
+ * type 0xEF (stopped by every system level). Its LW/LF variables start at 0.
+ * Started during evtmgrMain with EVENT_START_NOW, it also runs this frame. Does not check that a slot is free.
+ */
 EventEntry* evtEntry(void* evtCode, u8 priority, u8 flags) {
-	EventWork* wp = evtGetWork();
-	EventEntry* entry;
-	int i, id;
+    EventWork* wp = evtGetWork();
+    EventEntry* entry;
+    int i, id;
 
-	//search until we find one not-in-use
-	entry = wp->entries;
-	for (i = 0, id = 0; i < wp->count; i++, id++, entry++) {
-		if (!(entry->flags & EVENT_ACTIVE)) {
-			break;
-		}
-	}
+    // search until we find one not-in-use
+    entry = wp->entries;
+    for (i = 0, id = 0; i < wp->count; i++, id++, entry++) {
+        if (!(entry->flags & EVENT_ACTIVE)) {
+            break;
+        }
+    }
 
-	evtMax++;
-	memset(entry, 0, sizeof(EventEntry));
-	entry->flags = (u8)(flags | EVENT_ACTIVE);
-	entry->nextCommand = evtCode;
-	entry->restartFrom = evtCode;
-	entry->currCommand = evtCode;
-	entry->opcode = OPCODE_NEXT;
-	entry->waitingEvent = NULL;
-	entry->waitingOnEvent = NULL;
-	entry->brotherEvent = NULL;
-	entry->priority = priority;
-	entry->eventId = evtID++;
-	entry->unitId = -1;
-	entry->loopDepth = -1;
-	entry->switchDepth = -1;
-	entry->type = 0xEF;
-	entry->name = NULL;
-	entry->timescale = evtSpd;
-	entry->commandsLeft = 0.0f;
-	entry->caseId = -1;
-	entry->ownerNPC = NULL;
-	entry->lifetime = 0;
-	for (i = 0; i < 16; i++) {
-		entry->lwData[i] = 0;
-	}
-	for (i = 0; i < 3; i++) {
-		entry->lfData[i] = 0;
-	}
+    evtMax++;
+    memset(entry, 0, sizeof(EventEntry));
+    entry->flags = (u8)(flags | EVENT_ACTIVE);
+    entry->nextCommand = evtCode;
+    entry->restartFrom = evtCode;
+    entry->currCommand = evtCode;
+    entry->opcode = OPCODE_NEXT;
+    entry->waitingEvent = NULL;
+    entry->waitingOnEvent = NULL;
+    entry->brotherEvent = NULL;
+    entry->priority = priority;
+    entry->eventId = evtID++;
+    entry->unitId = -1;
+    entry->loopDepth = -1;
+    entry->switchDepth = -1;
+    entry->type = 0xEF;
+    entry->name = NULL;
+    entry->timescale = evtSpd;
+    entry->commandsLeft = 0.0f;
+    entry->caseId = -1;
+    entry->ownerNPC = NULL;
+    entry->lifetime = 0;
+    for (i = 0; i < 16; i++) {
+        entry->lwData[i] = 0;
+    }
+    for (i = 0; i < 3; i++) {
+        entry->lfData[i] = 0;
+    }
 
-	make_jump_table(entry);
+    make_jump_table(entry);
 
-	if (runMainF && entry->flags & 0x20) {
-		priTbl[priTblNum] = id;
-		priIDTbl[priTblNum] = entry->eventId;
-		priTblNum++;
-	}
+    if (runMainF && entry->flags & EVENT_START_NOW) {
+        priTbl[priTblNum] = id;
+        priIDTbl[priTblNum] = entry->eventId;
+        priTblNum++;
+    }
 
-	evtEntryRunCheck(entry);
+    evtEntryRunCheck(entry);
 
-	if (!evtID) {
-		evtID = 1;
-	}
+    if (!evtID) {
+        evtID = 1;
+    }
 
-	return entry;
+    return entry;
 }
 
+/**
+ * evtEntry with an explicit type mask, which decides which system levels pause the event (0 = never paused,
+ * used for sounds and lectures that must play on while the game is paused).
+ */
 EventEntry* evtEntryType(void* evtCode, u8 priority, u8 flags, u8 type) {
-	EventWork* wp = evtGetWork();
-	EventEntry* entry;
-	int i, id;
+    EventWork* wp = evtGetWork();
+    EventEntry* entry;
+    int i, id;
 
-	//search until we find one not-in-use
-	entry = wp->entries;
-	for (i = 0, id = 0; i < wp->count; i++, id++, entry++) {
-		if (!(entry->flags & EVENT_ACTIVE)) {
-			break;
-		}
-	}
+    // search until we find one not-in-use
+    entry = wp->entries;
+    for (i = 0, id = 0; i < wp->count; i++, id++, entry++) {
+        if (!(entry->flags & EVENT_ACTIVE)) {
+            break;
+        }
+    }
 
-	evtMax++;
-	memset(entry, 0, sizeof(EventEntry));
-	entry->flags = (u8)(flags | EVENT_ACTIVE);
-	entry->nextCommand = evtCode;
-	entry->restartFrom = evtCode;
-	entry->currCommand = evtCode;
-	entry->opcode = OPCODE_NEXT;
-	entry->waitingEvent = NULL;
-	entry->waitingOnEvent = NULL;
-	entry->brotherEvent = NULL;
-	entry->priority = priority;
-	entry->eventId = evtID++;
-	entry->unitId = -1;
-	entry->loopDepth = -1;
-	entry->switchDepth = -1;
-	entry->type = type;
-	entry->name = NULL;
-	entry->timescale = evtSpd;
-	entry->commandsLeft = 0.0f;
-	entry->caseId = -1;
-	entry->ownerNPC = NULL;
-	entry->lifetime = 0;
-	for (i = 0; i < 16; i++) {
-		entry->lwData[i] = 0;
-	}
-	for (i = 0; i < 3; i++) {
-		entry->lfData[i] = 0;
-	}
+    evtMax++;
+    memset(entry, 0, sizeof(EventEntry));
+    entry->flags = (u8)(flags | EVENT_ACTIVE);
+    entry->nextCommand = evtCode;
+    entry->restartFrom = evtCode;
+    entry->currCommand = evtCode;
+    entry->opcode = OPCODE_NEXT;
+    entry->waitingEvent = NULL;
+    entry->waitingOnEvent = NULL;
+    entry->brotherEvent = NULL;
+    entry->priority = priority;
+    entry->eventId = evtID++;
+    entry->unitId = -1;
+    entry->loopDepth = -1;
+    entry->switchDepth = -1;
+    entry->type = type;
+    entry->name = NULL;
+    entry->timescale = evtSpd;
+    entry->commandsLeft = 0.0f;
+    entry->caseId = -1;
+    entry->ownerNPC = NULL;
+    entry->lifetime = 0;
+    for (i = 0; i < 16; i++) {
+        entry->lwData[i] = 0;
+    }
+    for (i = 0; i < 3; i++) {
+        entry->lfData[i] = 0;
+    }
 
-	make_jump_table(entry);
+    make_jump_table(entry);
 
-	if (runMainF && entry->flags & 0x20) {
-		priTbl[priTblNum] = id;
-		priIDTbl[priTblNum] = entry->eventId;
-		priTblNum++;
-	}
-	evtEntryRunCheck(entry);
-	if (!evtID) {
-		evtID = 1;
-	}
-	return entry;
+    if (runMainF && entry->flags & EVENT_START_NOW) {
+        priTbl[priTblNum] = id;
+        priIDTbl[priTblNum] = entry->eventId;
+        priTblNum++;
+    }
+    evtEntryRunCheck(entry);
+    if (!evtID) {
+        evtID = 1;
+    }
+    return entry;
 }
 
+/**
+ * Starts a child script for CALL_CHILD: the parent waits until it ends.
+ * The child copies the parent's LW/LF variables, UW/UF bases, owner, unit, type and message window state,
+ * runs one priority higher and runs this frame; evtDelete copies the variables back to the parent.
+ */
 EventEntry* evtChildEntry(EventEntry* parent, void* evtCode, u8 flags) {
-	EventWork* wp = evtGetWork();
-	EventEntry* entry;
-	int i, id;
+    EventWork* wp = evtGetWork();
+    EventEntry* entry;
+    int i, id;
 
-	//search until we find one not-in-use
-	entry = wp->entries;
-	for (i = 0, id = 0; i < wp->count; i++, id++, entry++) {
-		if (!(entry->flags & EVENT_ACTIVE)) {
-			break;
-		}
-	}
+    // search until we find one not-in-use
+    entry = wp->entries;
+    for (i = 0, id = 0; i < wp->count; i++, id++, entry++) {
+        if (!(entry->flags & EVENT_ACTIVE)) {
+            break;
+        }
+    }
 
-	evtMax++;
-	parent->waitingOnEvent = entry;
-	parent->flags |= EVENT_WAITING_ON_CHILD;
-	memset(entry, 0, sizeof(EventEntry));
-	entry->flags = (u8)(flags | EVENT_ACTIVE);
-	entry->nextCommand = evtCode;
-	entry->restartFrom = evtCode;
-	entry->currCommand = evtCode;
-	entry->opcode = OPCODE_NEXT;
-	entry->waitingEvent = parent;
-	entry->waitingOnEvent = NULL;
-	entry->brotherEvent = NULL;
-	entry->priority = (u8)(parent->priority + 1);
-	entry->eventId = evtID++;
-	entry->unitId = parent->unitId;
-	entry->loopDepth = -1;
-	entry->switchDepth = -1;
-	entry->type = parent->type;
-	entry->name = NULL;
-	entry->uwBase = parent->uwBase;
-	entry->ufBase = parent->ufBase;
-	entry->timescale = evtSpd;
-	entry->commandsLeft = 0.0f;
-	entry->caseId = -1;
-	entry->ownerNPC = parent->ownerNPC;
-	entry->lifetime = 0;
+    evtMax++;
+    parent->waitingOnEvent = entry;
+    parent->flags |= EVENT_WAITING_ON_CHILD;
+    memset(entry, 0, sizeof(EventEntry));
+    entry->flags = (u8)(flags | EVENT_ACTIVE);
+    entry->nextCommand = evtCode;
+    entry->restartFrom = evtCode;
+    entry->currCommand = evtCode;
+    entry->opcode = OPCODE_NEXT;
+    entry->waitingEvent = parent;
+    entry->waitingOnEvent = NULL;
+    entry->brotherEvent = NULL;
+    entry->priority = (u8)(parent->priority + 1);
+    entry->eventId = evtID++;
+    entry->unitId = parent->unitId;
+    entry->loopDepth = -1;
+    entry->switchDepth = -1;
+    entry->type = parent->type;
+    entry->name = NULL;
+    entry->uwBase = parent->uwBase;
+    entry->ufBase = parent->ufBase;
+    entry->timescale = evtSpd;
+    entry->commandsLeft = 0.0f;
+    entry->caseId = -1;
+    entry->ownerNPC = parent->ownerNPC;
+    entry->lifetime = 0;
 
-	entry->selectWindowId = parent->selectWindowId;
-	entry->printWindowId = parent->printWindowId;
-	entry->printWindowFlags = parent->printWindowFlags;
-	entry->msgPos = parent->msgPos;
-	entry->msgPosZ = parent->msgPosZ;
-	entry->msgPriority = parent->msgPriority;
+    entry->selectWindowId = parent->selectWindowId;
+    entry->printWindowId = parent->printWindowId;
+    entry->printWindowFlags = parent->printWindowFlags;
+    entry->msgPos = parent->msgPos;
+    entry->msgPosZ = parent->msgPosZ;
+    entry->msgPriority = parent->msgPriority;
 
-	for (i = 0; i < 16; i++) {
-		entry->lwData[i] = parent->lwData[i];
-	}
-	for (i = 0; i < 3; i++) {
-		entry->lfData[i] = parent->lfData[i];
-	}
+    for (i = 0; i < 16; i++) {
+        entry->lwData[i] = parent->lwData[i];
+    }
+    for (i = 0; i < 3; i++) {
+        entry->lfData[i] = parent->lfData[i];
+    }
 
-	make_jump_table(entry);
+    make_jump_table(entry);
 
-	if (runMainF) {
-		priTbl[priTblNum] = id;
-		priIDTbl[priTblNum] = entry->eventId;
-		priTblNum++;
-	}
+    if (runMainF) {
+        priTbl[priTblNum] = id;
+        priIDTbl[priTblNum] = entry->eventId;
+        priTblNum++;
+    }
 
-	evtEntryRunCheck(entry);
+    evtEntryRunCheck(entry);
 
-	if (!evtID) {
-		evtID = 1;
-	}
-	return entry;
+    if (!evtID) {
+        evtID = 1;
+    }
+    return entry;
 }
 
+/**
+ * Starts a script alongside brother (BEGIN_SIBLING_EVENT):
+ * same priority, type, owner and copied variables, but the caller keeps running.
+ * Deleting or stopping brother does the same to it.
+ */
 EventEntry* evtBrotherEntry(EventEntry* brother, void* evtCode, u8 flags) {
-	EventWork* wp = evtGetWork();
-	EventEntry* entry;
-	int i, id;
+    EventWork* wp = evtGetWork();
+    EventEntry* entry;
+    int i, id;
 
-	//search until we find one not-in-use
-	entry = wp->entries;
-	for (i = 0, id = 0; i < wp->count; i++, id++, entry++) {
-		if (!(entry->flags & EVENT_ACTIVE)) {
-			break;
-		}
-	}
+    // search until we find one not-in-use
+    entry = wp->entries;
+    for (i = 0, id = 0; i < wp->count; i++, id++, entry++) {
+        if (!(entry->flags & EVENT_ACTIVE)) {
+            break;
+        }
+    }
 
-	evtMax++;
-	memset(entry, 0, sizeof(EventEntry));
-	entry->flags = (u8)(flags | EVENT_ACTIVE);
-	entry->nextCommand = evtCode;
-	entry->restartFrom = evtCode;
-	entry->currCommand = evtCode;
-	entry->opcode = OPCODE_NEXT;
-	entry->waitingEvent = NULL;
-	entry->brotherEvent = brother;
-	entry->waitingOnEvent = NULL;
-	entry->priority = brother->priority;
-	entry->eventId = evtID++;
-	entry->unitId = brother->unitId;
-	entry->loopDepth = -1;
-	entry->switchDepth = -1;
-	entry->type = brother->type;
-	entry->name = NULL;
-	entry->uwBase = brother->uwBase;
-	entry->ufBase = brother->ufBase;
-	entry->timescale = evtSpd;
-	entry->commandsLeft = 0.0f;
-	entry->caseId = -1;
-	entry->ownerNPC = brother->ownerNPC;
-	entry->lifetime = 0;
+    evtMax++;
+    memset(entry, 0, sizeof(EventEntry));
+    entry->flags = (u8)(flags | EVENT_ACTIVE);
+    entry->nextCommand = evtCode;
+    entry->restartFrom = evtCode;
+    entry->currCommand = evtCode;
+    entry->opcode = OPCODE_NEXT;
+    entry->waitingEvent = NULL;
+    entry->brotherEvent = brother;
+    entry->waitingOnEvent = NULL;
+    entry->priority = brother->priority;
+    entry->eventId = evtID++;
+    entry->unitId = brother->unitId;
+    entry->loopDepth = -1;
+    entry->switchDepth = -1;
+    entry->type = brother->type;
+    entry->name = NULL;
+    entry->uwBase = brother->uwBase;
+    entry->ufBase = brother->ufBase;
+    entry->timescale = evtSpd;
+    entry->commandsLeft = 0.0f;
+    entry->caseId = -1;
+    entry->ownerNPC = brother->ownerNPC;
+    entry->lifetime = 0;
 
-	for (i = 0; i < 16; i++) {
-		entry->lwData[i] = brother->lwData[i];
-	}
-	for (i = 0; i < 3; i++) {
-		entry->lfData[i] = brother->lfData[i];
-	}
+    for (i = 0; i < 16; i++) {
+        entry->lwData[i] = brother->lwData[i];
+    }
+    for (i = 0; i < 3; i++) {
+        entry->lfData[i] = brother->lfData[i];
+    }
 
-	make_jump_table(entry);
+    make_jump_table(entry);
 
-	if (runMainF) {
-		priTbl[priTblNum] = id;
-		priIDTbl[priTblNum] = entry->eventId;
-		priTblNum++;
-	}
+    if (runMainF) {
+        priTbl[priTblNum] = id;
+        priIDTbl[priTblNum] = entry->eventId;
+        priTblNum++;
+    }
 
-	if (!evtID) {
-		evtID = 1;
-	}
+    if (!evtID) {
+        evtID = 1;
+    }
 
-	evtEntryRunCheck(entry);
+    evtEntryRunCheck(entry);
 
-	return entry;
+    return entry;
 }
 
+/** Starts an event's script over from its first command (loops, switches, timing and labels reset; variables kept). */
 EventEntry* evtRestart(EventEntry* entry) {
-	entry->currCommand = entry->nextCommand = entry->restartFrom;
-	entry->opcode = 0;
-	entry->timescale = 1.0f;
-	entry->commandsLeft = 0.0f;
-	entry->loopDepth = -1;
-	entry->switchDepth = -1;
-	entry->timescale = evtSpd;
-	entry->commandsLeft = 0.0f;
-	entry->lifetime = 0;
-	make_jump_table(entry);
-	evtEntryRunCheck(entry);
-	return entry;
+    entry->currCommand = entry->nextCommand = entry->restartFrom;
+    entry->opcode = 0;
+    entry->timescale = 1.0f;
+    entry->commandsLeft = 0.0f;
+    entry->loopDepth = -1;
+    entry->switchDepth = -1;
+    entry->timescale = evtSpd;
+    entry->commandsLeft = 0.0f;
+    entry->lifetime = 0;
+    make_jump_table(entry);
+    evtEntryRunCheck(entry);
+    return entry;
 }
 
+/**
+ * Runs every active event once per frame (from mariost.c), highest priority first,
+ * skipping stopped events and ones waiting on a child.
+ * Each event runs as many commands as its speed allows until one yields;
+ * a command returning 1 ends the whole pass for this frame.
+ * Also advances each event's lifetime by the frame's time (capped after long stalls).
+ */
 void evtmgrMain(void) {
-	EventWork* wp = evtGetWork();
-	EventEntry* entry;
-	BOOL finished;
-	OSTime delta;
-	int i, ret;
-	s32* entryNum;
-	s32* eventId;
+    EventWork* wp = evtGetWork();
+    EventEntry* entry;
+    BOOL finished;
+    OSTime delta;
+    int i, ret;
+    s32* entryNum;
+    s32* eventId;
 
-	runMainF = TRUE; //we're in evtmgrMain
+    runMainF = TRUE; // we're in evtmgrMain
 
-	delta = gp->renderTime - wp->lastUpdate;
-	if (delta < 0) {
-		delta = 0;
-	}
+    delta = gp->renderTime - wp->lastUpdate;
+    if (delta < 0) {
+        delta = 0;
+    }
 
-	if (OSTicksToMilliseconds(delta) > 500) {
-		delta = OSMillisecondsToTicks(1000 / gp->framerate);
-	}
-	wp->lastUpdate = gp->renderTime;
-	make_pri_table();
+    if (OSTicksToMilliseconds(delta) > 500) {
+        delta = OSMillisecondsToTicks(1000 / gp->framerate);
+    }
+    wp->lastUpdate = gp->renderTime;
+    make_pri_table();
 
-	entryNum = priTbl;
-	eventId = priIDTbl;
-	for (i = 0; i < priTblNum; i++) {
-		entry = &wp->entries[*entryNum];
-		if ((entry->flags & EVENT_ACTIVE) && (entry->eventId == *eventId)) {
-			if (!(entry->flags & (0x80 | EVENT_WAITING_ON_CHILD | EVENT_STOPPED))) {
-				finished = FALSE;
-				entry->lifetime += delta;
-				entry->commandsLeft += entry->timescale;
+    entryNum = priTbl;
+    eventId = priIDTbl;
+    for (i = 0; i < priTblNum; i++) {
+        entry = &wp->entries[*entryNum];
+        if ((entry->flags & EVENT_ACTIVE) && (entry->eventId == *eventId)) {
+            if (!(entry->flags & (0x80 | EVENT_WAITING_ON_CHILD | EVENT_STOPPED))) {
+                finished = FALSE;
+                entry->lifetime += delta;
+                entry->commandsLeft += entry->timescale;
 
-				while (TRUE) {
-					if (entry->commandsLeft < 1.0f) {
-						break;
-					}
-					entry->commandsLeft -= 1.0f;
-					ret = evtmgrCmd(entry);
-					if (ret == 1) {
-						finished = TRUE;
-						break;
-					}
-					if (ret == -1) {
-						break;
-					}
-				}
+                while (TRUE) {
+                    if (entry->commandsLeft < 1.0f) {
+                        break;
+                    }
+                    entry->commandsLeft -= 1.0f;
+                    ret = evtmgrCmd(entry);
+                    if (ret == 1) {
+                        finished = TRUE;
+                        break;
+                    }
+                    if (ret == -1) {
+                        break;
+                    }
+                }
 
-				if (finished != FALSE) {
-					break;
-				}
-			}
-		}
-		entryNum++;
-		eventId++;
-	}
-	runMainF = FALSE;
+                if (finished != FALSE) {
+                    break;
+                }
+            }
+        }
+        entryNum++;
+        eventId++;
+    }
+    runMainF = FALSE;
 }
 
+/**
+ * Ends an event together with its child and all its brother events.
+ * A child hands its LW/LF variables and message window state back to the parent, which then resumes.
+ */
 void evtDelete(EventEntry* entry) {
-	EventWork* wp = evtGetWork();
-	EventEntry* waiting;
-	int i;
+    EventWork* wp = evtGetWork();
+    EventEntry* waiting;
+    int i;
 
-	if (entry->flags & EVENT_ACTIVE) {
-		if (entry->waitingOnEvent) {
-			evtDelete(entry->waitingOnEvent);
-		}
+    if (entry->flags & EVENT_ACTIVE) {
+        if (entry->waitingOnEvent) {
+            evtDelete(entry->waitingOnEvent);
+        }
 
-		waiting = wp->entries;
-		for (i = 0; i < wp->count; i++, waiting++) {
-			if ((waiting->flags & EVENT_ACTIVE) && (waiting->brotherEvent == entry)) {
-				evtDelete(waiting);
-			}
-		}
+        waiting = wp->entries;
+        for (i = 0; i < wp->count; i++, waiting++) {
+            if ((waiting->flags & EVENT_ACTIVE) && (waiting->brotherEvent == entry)) {
+                evtDelete(waiting);
+            }
+        }
 
-		waiting = entry->waitingEvent;
-		if (waiting != NULL) {
-			waiting->flags &= ~EVENT_WAITING_ON_CHILD;
-			waiting->waitingOnEvent = NULL;
-			for (i = 0; i < 16; i++) {
-				waiting->lwData[i] = entry->lwData[i];
-			}
-			for (i = 0; i < 3; i++) {
-				waiting->lfData[i] = entry->lfData[i];
-			}
-			waiting->selectWindowId = entry->selectWindowId;
-			waiting->printWindowId = entry->printWindowId;
-			waiting->printWindowFlags = entry->printWindowFlags;
-			waiting->msgPos = entry->msgPos;
-			waiting->msgPosZ = entry->msgPosZ;
-			waiting->msgPriority = entry->msgPriority;
-		}
-		entry->flags &= ~EVENT_ACTIVE;
-		memset(entry, 0, sizeof(EventEntry));
-		evtMax--;
-	}
+        waiting = entry->waitingEvent;
+        if (waiting != NULL) {
+            waiting->flags &= ~EVENT_WAITING_ON_CHILD;
+            waiting->waitingOnEvent = NULL;
+            for (i = 0; i < 16; i++) {
+                waiting->lwData[i] = entry->lwData[i];
+            }
+            for (i = 0; i < 3; i++) {
+                waiting->lfData[i] = entry->lfData[i];
+            }
+            waiting->selectWindowId = entry->selectWindowId;
+            waiting->printWindowId = entry->printWindowId;
+            waiting->printWindowFlags = entry->printWindowFlags;
+            waiting->msgPos = entry->msgPos;
+            waiting->msgPosZ = entry->msgPosZ;
+            waiting->msgPriority = entry->msgPriority;
+        }
+        entry->flags &= ~EVENT_ACTIVE;
+        memset(entry, 0, sizeof(EventEntry));
+        evtMax--;
+    }
 }
 
+/** Ends the event with this id (and its children and brothers) if it is still running. */
 void evtDeleteID(s32 eventId) {
-	EventWork* wp = evtGetWork();
-	EventEntry* entry = wp->entries;
-	int i;
+    EventWork* wp = evtGetWork();
+    EventEntry* entry = wp->entries;
+    int i;
 
-	for (i = 0; i < wp->count; i++, entry++) {
-		if ((entry->flags & EVENT_ACTIVE) && (entry->eventId == eventId)) {
-			evtDelete(entry);
-		}
-	}
+    for (i = 0; i < wp->count; i++, entry++) {
+        if ((entry->flags & EVENT_ACTIVE) && (entry->eventId == eventId)) {
+            evtDelete(entry);
+        }
+    }
 }
 
+/** TRUE while the event with this id is still running; scripts poll it through IS_EVENT_RUNNING. */
 BOOL evtCheckID(s32 eventId) {
-	int i;
+    int i;
 
-	EventWork* wp = evtGetWork();
-	EventEntry* entry = wp->entries;
-	for (i = 0; i < wp->count; i++, entry++) {
-		if ((entry->flags & EVENT_ACTIVE) && (entry->eventId == eventId)) {
-			return TRUE;
-		}
-	}
-	return FALSE;
+    EventWork* wp = evtGetWork();
+    EventEntry* entry = wp->entries;
+    for (i = 0; i < wp->count; i++, entry++) {
+        if ((entry->flags & EVENT_ACTIVE) && (entry->eventId == eventId)) {
+            return TRUE;
+        }
+    }
+    return FALSE;
 }
 
+/** Changes an event's priority; takes effect from the next frame's ordering. */
 void evtSetPri(EventEntry* entry, u32 priority) {
-	entry->priority = (u8)priority;
+    entry->priority = (u8)priority;
 }
 
+/** Sets how many commands per frame the event runs (speed times the global evtSpd). */
 void evtSetSpeed(EventEntry* entry, f32 speed) {
-	entry->timescale = speed * evtSpd;
+    entry->timescale = speed * evtSpd;
 }
 
+/** Changes an event's type mask, the set of system levels that pause it. */
 void evtSetType(EventEntry* entry, u32 type) {
-	entry->type = (u8)type;
+    entry->type = (u8)type;
 }
 
+/** Pauses an event, its child and brother events, each only if its type mask shares a bit with type. */
 void evtStop(EventEntry* entry, u32 type) {
-	EventWork* wp = gp->inBattle ? &work[1] : &work[0];
-	EventEntry* brother;
-	int i;
+    EventWork* wp = gp->inBattle ? &work[1] : &work[0];
+    EventEntry* brother;
+    int i;
 
-	if (entry->waitingOnEvent) {
-		evtStop(entry->waitingOnEvent, type);
-	}
+    if (entry->waitingOnEvent) {
+        evtStop(entry->waitingOnEvent, type);
+    }
 
-	brother = wp->entries;
-	for (i = 0; i < wp->count; i++, brother++) {
-		if ((brother->flags & EVENT_ACTIVE) && (brother->brotherEvent == entry)) {
-			evtStop(brother, type);
-		}
-	}
+    brother = wp->entries;
+    for (i = 0; i < wp->count; i++, brother++) {
+        if ((brother->flags & EVENT_ACTIVE) && (brother->brotherEvent == entry)) {
+            evtStop(brother, type);
+        }
+    }
 
-	if (entry->type & type) {
-		entry->flags |= EVENT_STOPPED;
-	}
+    if (entry->type & type) {
+        entry->flags |= EVENT_STOPPED;
+    }
 }
 
+/** Resumes events paused by evtStop, again only those whose type mask shares a bit with type. */
 void evtStart(EventEntry* entry, u32 type) {
-	EventWork* wp = gp->inBattle ? &work[1] : &work[0];
-	EventEntry* brother;
-	int i;
+    EventWork* wp = gp->inBattle ? &work[1] : &work[0];
+    EventEntry* brother;
+    int i;
 
-	if (entry->waitingOnEvent) {
-		evtStart(entry->waitingOnEvent, type);
-	}
+    if (entry->waitingOnEvent) {
+        evtStart(entry->waitingOnEvent, type);
+    }
 
-	brother = wp->entries;
-	for (i = 0; i < wp->count; i++, brother++) {
-		if ((brother->flags & EVENT_ACTIVE) && (brother->brotherEvent == entry)) {
-			evtStart(brother, type);
-		}
-	}
+    brother = wp->entries;
+    for (i = 0; i < wp->count; i++, brother++) {
+        if ((brother->flags & EVENT_ACTIVE) && (brother->brotherEvent == entry)) {
+            evtStart(brother, type);
+        }
+    }
 
-	if (entry->type & type) {
-		entry->flags &= ~EVENT_STOPPED;
-	}
+    if (entry->type & type) {
+        entry->flags &= ~EVENT_STOPPED;
+    }
 }
 
+/** Pauses the event with this id (and its children and brothers) regardless of type. */
 void evtStopID(s32 eventId) {
-	EventWork* wp = evtGetWork();
-	EventEntry* entry = wp->entries;
-	int i;
+    EventWork* wp = evtGetWork();
+    EventEntry* entry = wp->entries;
+    int i;
 
-	for (i = 0; i < wp->count; i++, entry++) {
-		if ((entry->flags & EVENT_ACTIVE) && (entry->eventId == eventId)) {
-			evtStop(entry, 0xEF);
-		}
-	}
+    for (i = 0; i < wp->count; i++, entry++) {
+        if ((entry->flags & EVENT_ACTIVE) && (entry->eventId == eventId)) {
+            evtStop(entry, 0xEF);
+        }
+    }
 }
 
+/** Resumes the event with this id (and its children and brothers) regardless of type. */
 void evtStartID(s32 eventId) {
-	EventWork* wp = evtGetWork();
-	EventEntry* entry = wp->entries;
-	int i;
+    EventWork* wp = evtGetWork();
+    EventEntry* entry = wp->entries;
+    int i;
 
-	for (i = 0; i < wp->count; i++, entry++) {
-		if ((entry->flags & EVENT_ACTIVE) && (entry->eventId == eventId)) {
-			evtStart(entry, 0xEF);
-		}
-	}
+    for (i = 0; i < wp->count; i++, entry++) {
+        if ((entry->flags & EVENT_ACTIVE) && (entry->eventId == eventId)) {
+            evtStart(entry, 0xEF);
+        }
+    }
 }
 
+/** Pauses every event whose type matches; marioStSystemLevel uses it when menus or cutscenes freeze the game. */
 void evtStopAll(u32 type) {
-	EventWork* wp = evtGetWork();
-	EventEntry* entry = wp->entries;
-	int i;
+    EventWork* wp = evtGetWork();
+    EventEntry* entry = wp->entries;
+    int i;
 
-	for (i = 0; i < wp->count; i++, entry++) {
-		if (entry->flags & EVENT_ACTIVE) {
-			evtStop(entry, type);
-		}
-	}
+    for (i = 0; i < wp->count; i++, entry++) {
+        if (entry->flags & EVENT_ACTIVE) {
+            evtStop(entry, type);
+        }
+    }
 }
 
+/** Resumes every event whose type matches; marioStSystemLevel(0) resumes them all. */
 void evtStartAll(u32 type) {
-	EventWork* wp = evtGetWork();
-	EventEntry* entry = wp->entries;
-	int i;
+    EventWork* wp = evtGetWork();
+    EventEntry* entry = wp->entries;
+    int i;
 
-	for (i = 0; i < wp->count; i++, entry++) {
-		if (entry->flags & EVENT_ACTIVE) {
-			evtStart(entry, type);
-		}
-	}
+    for (i = 0; i < wp->count; i++, entry++) {
+        if (entry->flags & EVENT_ACTIVE) {
+            evtStart(entry, type);
+        }
+    }
 }
 
+/** Pauses every matching event except entry (its own children and brothers too, if they match). */
 void evtStopOther(EventEntry* entry, u32 type) {
-	EventWork* wp = evtGetWork();
-	EventEntry* search = wp->entries;
-	int i;
+    EventWork* wp = evtGetWork();
+    EventEntry* search = wp->entries;
+    int i;
 
-	for (i = 0; i < wp->count; i++, search++) {
-		if ((search->flags & EVENT_ACTIVE) && (search != entry)) {
-			evtStop(search, type);
-		}
-	}
+    for (i = 0; i < wp->count; i++, search++) {
+        if ((search->flags & EVENT_ACTIVE) && (search != entry)) {
+            evtStop(search, type);
+        }
+    }
 }
 
+/** Resumes every matching event except entry. */
 void evtStartOther(EventEntry* entry, u32 type) {
-	EventWork* wp = evtGetWork();
-	EventEntry* search = wp->entries;
-	int i;
+    EventWork* wp = evtGetWork();
+    EventEntry* search = wp->entries;
+    int i;
 
-	for (i = 0; i < wp->count; i++, search++) {
-		if ((search->flags & EVENT_ACTIVE) && (search != entry)) {
-			evtStart(search, type);
-		}
-	}
+    for (i = 0; i < wp->count; i++, search++) {
+        if ((search->flags & EVENT_ACTIVE) && (search != entry)) {
+            evtStart(search, type);
+        }
+    }
 }
 
+/** The event in pool slot index, or NULL if that slot is free. */
 EventEntry* evtGetPtr(s32 index) {
-	EventWork* wp = evtGetWork();
-	EventEntry* entry = &wp->entries[index];
-	if (entry->flags & EVENT_ACTIVE) {
-		return entry;
-	}
-	return NULL;
+    EventWork* wp = evtGetWork();
+    EventEntry* entry = &wp->entries[index];
+    if (entry->flags & EVENT_ACTIVE) {
+        return entry;
+    }
+    return NULL;
 }
 
+/** The running event with this id, or NULL once it has ended; ids are what scripts store to refer to events. */
 EventEntry* evtGetPtrID(s32 eventId) {
-	EventWork* wp = evtGetWork();
-	EventEntry* entry = wp->entries;
-	int i;
+    EventWork* wp = evtGetWork();
+    EventEntry* entry = wp->entries;
+    int i;
 
-	for (i = 0; i < wp->count; i++, entry++) {
-		if ((entry->flags & EVENT_ACTIVE) && (entry->eventId == eventId)) {
-			return entry;
-		}
-	}
-	return NULL;
+    for (i = 0; i < wp->count; i++, entry++) {
+        if ((entry->flags & EVENT_ACTIVE) && (entry->eventId == eventId)) {
+            return entry;
+        }
+    }
+    return NULL;
 }

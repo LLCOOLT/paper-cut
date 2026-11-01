@@ -1,3 +1,4 @@
+// Pause menu: the badge window (equip and unequip badges).
 #include "version.h"
 #include "win/win_main.h"
 #include "data/item_data.h"
@@ -7,29 +8,15 @@
 #include "mario/mario_pouch.h"
 #include <dolphin/gx.h>
 #include "mario/mariost.h"
+#include "win/win_badge.h"
+#include "win/win_mario.h"
 #include "icon_ids.h"
 #include "libc_decls.h"
+#include "pmario_sound.h"
+#include <dolphin/pad.h>
+#include <demo/DEMOPad.h>
 
-extern ItemData itemDataTable[];
-
-#ifdef TARGET_PC
-#include "sfx_name_word.h"
-s32 psndSFXOn(const char* name);
-/* every call here passes a sound id: hand it over as a name-or-id word */
-#define psndSFXOn(id) (psndSFXOn)(SFX_NAME_WORD(id))
-#else
-void psndSFXOn(s32 id);
-#endif
-void winTexInit_x2(TEXPalette* tpl);
-void winTexSet_x2(u32 a, u32 b, Vec translate, Vec scale, GXColor color);
-void winIconInit(void);
-void winIconGrayInit(void);
-void winIconSet(u32 id, Vec translate, Vec scale, GXColor color);
-void winFontInit(void);
-void winFontSet(Vec translate, Vec scale, GXColor color, const char* fmt, ...);
-void winFontSetR(Vec translate, Vec scale, GXColor color, const char* fmt, ...);
-const char* winZenkakuStr(s32 n);
-
+/** Builds the "Equipped" tab's list from the pouch: one entry (slot index, badge id, equipped) per equipped badge. */
 void winMakeEquipList(WindowWork* w) {
     s32 n = 0;
     s32 i;
@@ -46,6 +33,7 @@ void winMakeEquipList(WindowWork* w) {
     w->badge.count = n;
 }
 
+/** Resets the Badges window when the pause menu opens: "All Badges" tab, cursors and pages at the top. */
 void winBadgeInit(WindowWork* w) {
     w->badge.state = 0;
     w->badge.tab = 0;
@@ -56,6 +44,11 @@ void winBadgeInit(WindowWork* w) {
     winMakeEquipList(w);
 }
 
+/**
+ * Run from win_root.c each time the Badges window comes to the front:
+ * snaps the list scroll to the saved pages, sets the help text for the current tab
+ * and rebuilds the equipped list.
+ */
 void winBadgeInit2(WindowWork* w) {
     w->helpTgtX = -270.0f;
     w->helpTgtY = 125 - w->badge.tab * 40;
@@ -65,17 +58,23 @@ void winBadgeInit2(WindowWork* w) {
     winMakeEquipList(w);
 }
 
-void winBadgeExit(void) {
+/** Closing hook for the Badges window; empty. */
+void winBadgeExit(WindowWork* w) {
 }
 
-void mario_change(WindowWork* w, s32 unused) {
-    s32 hasLeft = pouchEquipCheckBadge(0x147);
-    s32 hasRight = pouchEquipCheckBadge(0x148);
+/**
+ * After a badge change, reloads the menu's Mario models
+ * so they show the L Emblem / W Emblem outfits (a_mario_l, a_mario_w, a_mario_wl),
+ * or the matching 8-bit Mario animations when Mario is in 8-bit form.
+ */
+static void mario_change(WindowWork* w, s32 unused) {
+    s32 hasLeft = pouchEquipCheckBadge(ITEM_L_EMBLEM);
+    s32 hasRight = pouchEquipCheckBadge(ITEM_W_EMBLEM);
     const char* model;
     const char* animL;
     const char* animR;
 
-    if (w->flags & 0x2000) {
+    if (w->flags & WIN_FLAG_8BIT_MARIO) {
         if (hasLeft && !hasRight) {
             animL = "S_2";
             animR = "W_15";
@@ -93,13 +92,13 @@ void mario_change(WindowWork* w, s32 unused) {
             animPoseRelease(w->mario.poseId);
             w->mario.poseId = animPoseEntry("d_mario", 0);
             animPoseSetAnim(w->mario.poseId, animL, 1);
-            animPoseSetMaterialFlagOn(w->mario.poseId, 0x1800);
+            animPoseSetMaterialFlagOn(w->mario.poseId, ANIM_MATERIAL_FLAG_NO_BLEND | ANIM_MATERIAL_FLAG_NO_BLEND2);
         }
         if (w->log.pose != -1) {
             animPoseRelease(w->log.pose);
             w->log.pose = animPoseEntry("d_mario", 0);
             animPoseSetAnim(w->log.pose, animR, 1);
-            animPoseSetMaterialFlagOn(w->log.pose, 0x1800);
+            animPoseSetMaterialFlagOn(w->log.pose, ANIM_MATERIAL_FLAG_NO_BLEND | ANIM_MATERIAL_FLAG_NO_BLEND2);
         }
     } else {
         if (hasLeft && !hasRight) {
@@ -115,171 +114,172 @@ void mario_change(WindowWork* w, s32 unused) {
             animPoseRelease(w->mario.poseId);
             w->mario.poseId = animPoseEntry(model, 0);
             animPoseSetAnim(w->mario.poseId, "M_S_1", 1);
-            animPoseSetMaterialFlagOn(w->mario.poseId, 0x1800);
+            animPoseSetMaterialFlagOn(w->mario.poseId, ANIM_MATERIAL_FLAG_NO_BLEND | ANIM_MATERIAL_FLAG_NO_BLEND2);
         }
         if (w->log.pose != -1) {
             animPoseRelease(w->log.pose);
             w->log.pose = animPoseEntry(model, 0);
             animPoseSetAnim(w->log.pose, "M_W_1", 1);
-            animPoseSetMaterialFlagOn(w->log.pose, 0x1800);
+            animPoseSetMaterialFlagOn(w->log.pose, ANIM_MATERIAL_FLAG_NO_BLEND | ANIM_MATERIAL_FLAG_NO_BLEND2);
         }
     }
 }
 
+/* sort_data tables for the badge list (winSortEntry type) */
+enum { WIN_SORT_BADGE_ALL = 2,
+       WIN_SORT_BADGE_EQUIP = 3 };
+
+/**
+ * Badges window input.
+ * State 0 picks the "All Badges" / "Equipped" tab,
+ * state 10 moves through the list (L/R page) and equips or removes the badge on A if BP allows,
+ * state 1000 runs the Z sort menu. Returns -1 on B (back), -2 on Start (close the menu), else 0.
+ */
 s32 winBadgeMain(WindowWork* w) {
     PouchData* pouch = pouchGetPtr();
     s32 tab;
     s32 cnt;
     s32 pages;
     s32 mode;
-    s32 m;
 
     switch (w->badge.state) {
-    case 0:
-        if (w->buttonTrg & 0x200) {
-            psndSFXOn(0x20013);
-            return -1;
-        }
-        if (w->buttonTrg & 0x1000) {
-            return -2;
-        }
-        if (w->dirRep & 0x3000) {
-            w->badge.tab = 1 - w->badge.tab;
-            psndSFXOn(0x20005);
-            if (w->badge.tab) {
-                winMakeEquipList(w);
+        case 0:
+            if (w->buttonTrg & PAD_BUTTON_B) {
+                psndSFXOn(SFX_NAME_WORD(0x20013));
+                return -1;
             }
-        } else if (w->buttonTrg & 0x100) {
-            if (w->badge.tab == 0 && !pouchGetHaveBadgeCnt()) {
+            if (w->buttonTrg & PAD_BUTTON_START) {
+                return -2;
+            }
+            if (w->dirRep & (DEMO_STICK_UP | DEMO_STICK_DOWN)) {
+                w->badge.tab = 1 - w->badge.tab;
+                psndSFXOn(SFX_NAME_WORD(0x20005));
+                if (w->badge.tab) {
+                    winMakeEquipList(w);
+                }
+            } else if (w->buttonTrg & PAD_BUTTON_A) {
+                if (w->badge.tab == 0 && !pouchGetHaveBadgeCnt()) {
+                    break;
+                }
+                if (w->badge.tab == 1 && w->badge.count == 0) {
+                    break;
+                }
+                psndSFXOn(SFX_NAME_WORD(0x20012));
+                w->badge.state = 10;
                 break;
+            } else if (w->buttonTrg & PAD_TRIGGER_Z) {
+                winSortEntry(w, w->badge.tab == 0 ? WIN_SORT_BADGE_ALL : WIN_SORT_BADGE_EQUIP, -310.0f, 150.0f);
+                w->savedState = w->badge.state;
+                psndSFXOn(SFX_NAME_WORD(0x20012));
+                w->badge.state = 1000;
             }
-            if (w->badge.tab == 1 && w->badge.count == 0) {
-                break;
-            }
-            psndSFXOn(0x20012);
-            w->badge.state = 10;
+            w->helpTgtX = -270.0f;
+            w->helpTgtY = VERSION_PICK(125, 130) - w->badge.tab * VERSION_PICK(40, 45);
+            winMsgEntry(w, 0, w->badge.tab == 0 ? "msg_menu_badge_all" : "msg_menu_badge_equip", 0);
             break;
-        } else if (w->buttonTrg & 0x10) {
-            // FAKE: an untyped copy of w is loaded into r3 before m is chosen (a WindowWork* copy or w itself is propagated into the call)
-            void* p = w;
-            s32 m = 3;
+        case 10:
             if (w->badge.tab == 0) {
-                m = 2;
-            }
-            winSortEntry(p, m, -310.0f, 150.0f);
-            w->savedState = w->badge.state;
-            psndSFXOn(0x20012);
-            w->badge.state = 1000;
-        }
-        w->helpTgtX = -270.0f;
-        w->helpTgtY = VERSION_PICK(125, 130) - w->badge.tab * VERSION_PICK(40, 45);
-        winMsgEntry(w, 0, w->badge.tab == 0 ? "msg_menu_badge_all" : "msg_menu_badge_equip", 0);
-        break;
-    case 10:
-        if (w->badge.tab == 0) {
-            cnt = pouchGetHaveBadgeCnt();
-        } else {
-            cnt = w->badge.count;
-        }
-        pages = (cnt + 7) / 8;
-        tab = w->badge.tab;
-        if (w->buttonTrg & 0x100) {
-            if (tab == 0) {
-                s32 idx = w->badge.sel[tab];
-                if (pouchEquipCheckBadgeIndex(idx)) {
-                    psndSFXOn(0x20039);
-                    pouchUnEquipBadgeIndex(idx);
-                } else if (pouch->availableBP >= itemDataTable[pouchHaveBadge(idx)].bp_cost) {
-                    psndSFXOn(0x20038);
-                    pouchEquipBadgeIndex(idx);
-                } else {
-                    psndSFXOn(0x20014);
-                }
-                pouchReviseMarioParam();
-                pouchRevisePartyParam();
-                mario_change(w, pouchHaveBadge(idx));
+                cnt = pouchGetHaveBadgeCnt();
             } else {
-                // FAKE: the selection is read through w advanced by tab words (sel[0] of the shifted work); w->badge.sel[tab] swaps r27/r28, an s32* &w->badge.sel[tab] folds 0x3E4 into an addi + lwzx
-                WindowWork* wt = (WindowWork*)((s32*)w + tab);
-                s32 idx = w->badge.list[wt->badge.sel[0]].idx;
-                if (w->badge.list[wt->badge.sel[0]].equipped) {
-                    psndSFXOn(0x20039);
-                    pouchUnEquipBadgeIndex(idx);
-                    w->badge.list[wt->badge.sel[0]].equipped = 0;
-                } else if (pouch->availableBP >= itemDataTable[pouchHaveBadge(idx)].bp_cost) {
-                    psndSFXOn(0x20038);
-                    pouchEquipBadgeIndex(idx);
-                    w->badge.list[wt->badge.sel[0]].equipped = 1;
+                cnt = w->badge.count;
+            }
+            pages = (cnt + 7) / 8;
+            tab = w->badge.tab;
+            if (w->buttonTrg & PAD_BUTTON_A) {
+                if (tab == 0) {
+                    s32 idx = w->badge.sel[tab];
+                    if (pouchEquipCheckBadgeIndex(idx)) {
+                        psndSFXOn(SFX_NAME_WORD(0x20039));
+                        pouchUnEquipBadgeIndex(idx);
+                    } else if (pouch->availableBP >= itemDataTable[pouchHaveBadge(idx)].bp_cost) {
+                        psndSFXOn(SFX_NAME_WORD(0x20038));
+                        pouchEquipBadgeIndex(idx);
+                    } else {
+                        psndSFXOn(SFX_NAME_WORD(0x20014));
+                    }
+                    pouchReviseMarioParam();
+                    pouchRevisePartyParam();
+                    mario_change(w, pouchHaveBadge(idx));
+                } else {
+                    // FAKE: the selection is read through w advanced by tab words (sel[0] of the shifted work); w->badge.sel[tab] swaps r27/r28, an s32* &w->badge.sel[tab] folds 0x3E4 into an addi + lwzx
+                    WindowWork* wt = (WindowWork*)((s32*)w + tab);
+                    s32 idx = w->badge.list[wt->badge.sel[0]].idx;
+                    if (w->badge.list[wt->badge.sel[0]].equipped) {
+                        psndSFXOn(SFX_NAME_WORD(0x20039));
+                        pouchUnEquipBadgeIndex(idx);
+                        w->badge.list[wt->badge.sel[0]].equipped = 0;
+                    } else if (pouch->availableBP >= itemDataTable[pouchHaveBadge(idx)].bp_cost) {
+                        psndSFXOn(SFX_NAME_WORD(0x20038));
+                        pouchEquipBadgeIndex(idx);
+                        w->badge.list[wt->badge.sel[0]].equipped = 1;
+                    }
+                    pouchReviseMarioParam();
+                    pouchRevisePartyParam();
+                    mario_change(w, pouchHaveBadge(idx));
                 }
-                pouchReviseMarioParam();
-                pouchRevisePartyParam();
-                mario_change(w, pouchHaveBadge(idx));
+            } else if (w->buttonTrg & PAD_BUTTON_B) {
+                psndSFXOn(SFX_NAME_WORD(0x20013));
+                w->badge.state = 0;
+            } else if (w->buttonTrg & PAD_BUTTON_START) {
+                return -2;
+            } else if (w->buttonRep & PAD_TRIGGER_L) {
+                w->badge.page[tab]--;
+                if (w->badge.page[tab] < 0) {
+                    w->badge.page[tab] = 0;
+                }
+                w->badge.sel[tab] = w->badge.page[tab] * 8;
+                psndSFXOn(SFX_NAME_WORD(0x20035));
+            } else if (w->buttonRep & PAD_TRIGGER_R) {
+                w->badge.page[tab]++;
+                if (w->badge.page[tab] >= pages) {
+                    w->badge.page[tab] = pages - 1;
+                }
+                w->badge.sel[tab] = w->badge.page[tab] * 8;
+                psndSFXOn(SFX_NAME_WORD(0x20035));
+            } else if (w->dirRep & DEMO_STICK_UP) {
+                w->badge.sel[tab]--;
+                psndSFXOn(SFX_NAME_WORD(0x20035));
+            } else if (w->dirRep & DEMO_STICK_DOWN) {
+                w->badge.sel[tab]++;
+                psndSFXOn(SFX_NAME_WORD(0x20035));
+            } else if (w->buttonTrg & PAD_TRIGGER_Z) {
+                winSortEntry(w, tab == 0 ? WIN_SORT_BADGE_ALL : WIN_SORT_BADGE_EQUIP, -310.0f, 150.0f);
+                w->savedState = w->badge.state;
+                psndSFXOn(SFX_NAME_WORD(0x20012));
+                w->badge.state = 1000;
             }
-        } else if (w->buttonTrg & 0x200) {
-            psndSFXOn(0x20013);
-            w->badge.state = 0;
-        } else if (w->buttonTrg & 0x1000) {
-            return -2;
-        } else if (w->buttonRep & 0x40) {
-            w->badge.page[tab]--;
-            if (w->badge.page[tab] < 0) {
-                w->badge.page[tab] = 0;
+            if (w->badge.sel[tab] < 0) {
+                w->badge.sel[tab] = cnt - 1;
             }
-            w->badge.sel[tab] = w->badge.page[tab] * 8;
-            psndSFXOn(0x20035);
-        } else if (w->buttonRep & 0x20) {
-            w->badge.page[tab]++;
-            if (w->badge.page[tab] >= pages) {
-                w->badge.page[tab] = pages - 1;
+            if (w->badge.sel[tab] >= cnt) {
+                w->badge.sel[tab] = 0;
             }
-            w->badge.sel[tab] = w->badge.page[tab] * 8;
-            psndSFXOn(0x20035);
-        } else if (w->dirRep & 0x1000) {
-            w->badge.sel[tab]--;
-            psndSFXOn(0x20035);
-        } else if (w->dirRep & 0x2000) {
-            w->badge.sel[tab]++;
-            psndSFXOn(0x20035);
-        } else if (w->buttonTrg & 0x10) {
-            // FAKE: an untyped copy of w is loaded into r3 before m is chosen (a WindowWork* copy or w itself is propagated into the call)
-            void* p = w;
-            m = 3;
-            if (tab == 0) {
-                m = 2;
+            w->badge.page[tab] = w->badge.sel[tab] / 8;
+            w->helpTgtX = -110.0f;
+            w->helpTgtY = 110 - (w->badge.sel[tab] % 8) * 23;
+            if (w->badge.tab == 0) {
+                mode = pouchHaveBadge(w->badge.sel[tab]);
+            } else {
+                mode = w->badge.list[w->badge.sel[tab]].id;
             }
-            winSortEntry(p, m, -310.0f, 150.0f);
-            w->savedState = w->badge.state;
-            psndSFXOn(0x20012);
-            w->badge.state = 1000;
-        }
-        if (w->badge.sel[tab] < 0) {
-            w->badge.sel[tab] = cnt - 1;
-        }
-        if (w->badge.sel[tab] >= cnt) {
-            w->badge.sel[tab] = 0;
-        }
-        w->badge.page[tab] = w->badge.sel[tab] / 8;
-        w->helpTgtX = -110.0f;
-        w->helpTgtY = 110 - (w->badge.sel[tab] % 8) * 23;
-        if (w->badge.tab == 0) {
-            mode = pouchHaveBadge(w->badge.sel[tab]);
-        } else {
-            mode = w->badge.list[w->badge.sel[tab]].id;
-        }
-        winMsgEntry(w, mode, itemDataTable[mode].menu_description, 0);
-        break;
-    case 1000:
-        if (!winSortWait(w)) {
-            w->badge.state = w->savedState;
-        }
-        if (w->buttonTrg & 0x1000) {
-            return -2;
-        }
-        break;
+            winMsgEntry(w, mode, itemDataTable[mode].menu_description, 0);
+            break;
+        case 1000:
+            if (!winSortWait(w)) {
+                w->badge.state = w->savedState;
+            }
+            if (w->buttonTrg & PAD_BUTTON_START) {
+                return -2;
+            }
+            break;
     }
     return 0;
 }
 
+/**
+ * Every frame: eases each tab's list scroll a quarter of the way toward its current page (184 units per 8-row
+ * page).
+ */
 void winBadgeMain2(WindowWork* w) {
     s32 i;
     for (i = 0; i < 2; i++) {
@@ -288,13 +288,14 @@ void winBadgeMain2(WindowWork* w) {
     }
 }
 
-#ifdef VERSION_G8ME01
-void winFontSetWidth(Vec translate, Vec scale, GXColor color, f32 width, const char* fmt, ...);
-#endif
-void badge_disp(WindowWork* w, f32 xo, f32 yo);
+static void badge_disp(WindowWork* w, f32 xo, f32 yo);
 
 #define Q ((pouch->maximumBP + 9) / 10)
 
+/**
+ * Draws the Badges window (menu slot n): the two tabs,
+ * the BP panel with total and remaining BP and a pip per BP point, then the badge list via badge_disp.
+ */
 void winBadgeDisp(s32 camId, void* param, s32 n) {
     WindowWork* w = param;
     GXColor white = {255, 255, 255, 255};
@@ -309,7 +310,7 @@ void winBadgeDisp(s32 camId, void* param, s32 n) {
     f32 d;
     f32 x = w->menu[n].x;
     f32 y = w->menu[n].y;
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
     f32 tw;
 #endif
 
@@ -332,23 +333,31 @@ void winBadgeDisp(s32 camId, void* param, s32 n) {
     }
     winKirinukiGX(w, 1, x - 260.0f, yy = 20.0f + (40.0f + y), 150.0f, 158 - (10 - Q) * 13);
     winFontInit();
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
     {
         // US: BP label per language (indexed by gp->language)
-        const char* bpLabel[7] = {"\202a\202o", "BP", "OP", "PB", "PM", "PT", "BP"};
+        const char* bpLabel[7] = {"ＢＰ", "BP", "OP", "PB", "PM", "PT", "BP"};
         winFontSet((Vec){x - 220.0f, yy = yy - 4.0f, 0.0f}, (Vec){0.8f, 0.8f, 0.8f}, black, bpLabel[gp->language]);
     }
 #else
-    winFontSet((Vec){x - 220.0f, yy = yy - 4.0f, 0.0f}, (Vec){0.8f, 0.8f, 0.8f}, black, "\202a\202o");
+    winFontSet((Vec){x - 220.0f, yy = yy - 4.0f, 0.0f}, (Vec){0.8f, 0.8f, 0.8f}, black, "ＢＰ");
 #endif
+#if VERSION <= VERSION_DEMO_JP
+    winFontSet((Vec){x - 175.0f, yy, 0.0f}, (Vec){0.8f, 0.8f, 0.8f}, black, "%d", pouch->maximumBP);
+#else
     winFontSetR((Vec){(x - 175.0f) - 18.0f, yy, 0.0f}, (Vec){0.8f, 0.8f, 0.8f}, black, "%s", winZenkakuStr(pouch->maximumBP));
-#ifdef VERSION_G8ME01
+#endif
+#if VERSION >= VERSION_US
     tw = FontGetMessageWidth(msgSearch("msg_menu_badge_nokori")) * 0.5f + 60.0f;
     winFontSet((Vec){4.0f + (16.0f + ((x - 260.0f) + (150.0f - tw))), ((20.0f + (y - 108.0f)) - 18.0f) + (10 - Q) * 13, 0.0f}, (Vec){0.5f, 0.5f, 0.5f}, black, msgSearch("msg_menu_badge_nokori"));
 #else
     winFontSet((Vec){x - 180.0f, ((20.0f + (y - 108.0f)) - 18.0f) + (10 - Q) * 13, 0.0f}, (Vec){0.5f, 0.5f, 0.5f}, black, msgSearch("msg_menu_badge_nokori"));
 #endif
+#if VERSION <= VERSION_DEMO_JP
+    winFontSet((Vec){x - 145.0f, ((20.0f + (y - 102.0f)) - 18.0f) + (10 - Q) * 13, 0.0f}, (Vec){0.8f, 0.8f, 0.8f}, black, "%d", pouch->availableBP);
+#else
     winFontSetR((Vec){VERSION_PICK((x - 145.0f) - 16.0f, 4.0f + ((x - 145.0f) - 16.0f)), ((20.0f + (y - 102.0f)) - 18.0f) + (10 - Q) * 13, 0.0f}, (Vec){0.8f, 0.8f, 0.8f}, black, "%s", winZenkakuStr(pouch->availableBP));
+#endif
     winTexInit((TEXPalette*)*w->res->data);
     d = 28.0f + y;
     for (i = 0; i < pouch->availableBP; i++) {
@@ -360,20 +369,28 @@ void winBadgeDisp(s32 camId, void* param, s32 n) {
     badge_disp(w, x, y);
 }
 
-static inline s32 badgeTexA(s32 e) { s32 t = 0x1D; if (e) t = 0x1C; return t; }
-static inline s32 badgeTexB(s32 e) { if (e) return 0x1C; return 0x1D; }
-void badge_disp(WindowWork* w, f32 xo, f32 yo) {
-    WindowWork* p0;
+/**
+ * Draws the scrolling badge list for the current tab:
+ * equipped highlight, icon, name, BP cost and cost pips, plus the page arrows and the Z sort hint.
+ * The JP and later releases gray out badges Mario cannot afford.
+ */
+static void badge_disp(WindowWork* w, f32 xo, f32 yo) {
     ItemData* item;
     s8* cost;
     s32 j;
+#if VERSION <= VERSION_DEMO_JP
+    GXColor colA;
+    GXColor colB;
+    GXColor colU;
+    GXColor colD;
+#else
     GXColor colA = {255, 255, 255, 255};
     GXColor colB;
     GXColor colU;
     GXColor colD;
+#endif
     char buf[64];
     s32 cnt;
-    s32 rowOff;
     s32 i;
     s32 badge;
     s32 equipped;
@@ -382,36 +399,54 @@ void badge_disp(WindowWork* w, f32 xo, f32 yo) {
     f32 width;
     s32 tw;
 
+#if VERSION <= VERSION_DEMO_JP
+    colA = (GXColor){255, 255, 255, 255};
+    colB = (GXColor){0, 0, 0, 255};
+    colU = colA;
+    colD = colB;
+#endif
     if (w->badge.tab == 0) {
         cnt = pouchGetHaveBadgeCnt();
     } else {
         cnt = w->badge.count;
     }
     GXSetScissor(0, 0x77, 0x260, 0xB8);
-    p0 = w;
-    // FAKE: p0 is a WindowWork* stepped one WinBadgeEnt at a time, so list[0] reads w->badge.list[i] with the 0x404 kept in the load displacement (w->badge.list[i] or a WinBadgeEnt* walk: 99.95-99.96%, induction order / base differ)
-    for (i = 0, rowOff = 0; i < cnt; p0 = (WindowWork*)((WinBadgeEnt*)p0 + 1), rowOff += 23, i++) {
+    for (i = 0; i < cnt; i++) {
         if (w->badge.tab == 0) {
             badge = pouchHaveBadge(i);
         } else {
-            badge = p0->badge.list[0].id;
+            badge = w->badge.list[i].id;
         }
         scroll = w->badge.scroll[w->badge.tab];
         if (w->badge.tab == 0) {
             equipped = pouchEquipCheckBadgeIndex(i);
         } else {
-            equipped = p0->badge.list[0].equipped;
+            equipped = w->badge.list[i].equipped;
         }
-        if ((scroll + ((yo + 110.0f) - (f32)rowOff)) > 240.0f) {
+        if ((scroll + ((yo + 110.0f) - (f32)(i * 23))) > 240.0f) {
             continue;
         }
-        if ((scroll + ((yo + 110.0f) - (f32)rowOff)) < -240.0f) {
+        if ((scroll + ((yo + 110.0f) - (f32)(i * 23))) < -240.0f) {
             break;
         }
         if (equipped) {
             winTexInit((TEXPalette*)*w->res->data);
-            winTexSet(0x1E, (Vec){82.0f + xo, (scroll + ((yo + 110.0f) - (f32)rowOff)), 0.0f}, (Vec){44.0f, 1.0f, 1.0f}, (GXColor){0xFF, 0xFF, 0xFF, 0xFF});
+#if VERSION <= VERSION_DEMO_JP
+            winTexSet(0x1E, (Vec){82.0f + xo, (scroll + ((yo + 110.0f) - (f32)(i * 23))), 0.0f}, (Vec){44.0f, 1.0f, 1.0f}, colA);
+#else
+            winTexSet(0x1E, (Vec){82.0f + xo, (scroll + ((yo + 110.0f) - (f32)(i * 23))), 0.0f}, (Vec){44.0f, 1.0f, 1.0f}, (GXColor){0xFF, 0xFF, 0xFF, 0xFF});
+#endif
         }
+#if VERSION <= VERSION_DEMO_JP
+        // The demo draws every badge in black, with a plain "%d" cost.
+        winIconInit();
+        winIconSet(itemDataTable[badge].icon_id, (Vec){xo - 75.0f, (scroll + ((yo + 110.0f) - (f32)(i * 23))), 0.0f}, (Vec){0.54f, 0.54f, 0.54f}, colA);
+        item = &itemDataTable[badge];
+        winFontInit();
+        winFontSet((Vec){xo - 55.0f, scroll + (12.0f + ((yo + 110.0f) - (f32)(i * 23))), 0.0f}, (Vec){0.9f, 0.9f, 0.9f}, colB, item->id);
+        cost = &item->bp_cost;
+        winFontSet((Vec){130.0f + xo, scroll + (12.0f + ((yo + 110.0f) - (f32)(i * 23))), 0.0f}, (Vec){0.9f, 0.9f, 0.9f}, colB, "%d", *cost);
+#else
         if (!equipped && itemDataTable[badge].bp_cost > pouchGetPtr()->availableBP) {
             colB = (GXColor){0x7F, 0x7F, 0x7F, 0xFF};
             gray = 1;
@@ -424,27 +459,33 @@ void badge_disp(WindowWork* w, f32 xo, f32 yo) {
         } else {
             winIconGrayInit();
         }
-        winIconSet(itemDataTable[badge].icon_id, (Vec){xo - 75.0f, (scroll + ((yo + 110.0f) - (f32)rowOff)), 0.0f}, (Vec){0.54f, 0.54f, 0.54f}, colA);
+        winIconSet(itemDataTable[badge].icon_id, (Vec){xo - 75.0f, (scroll + ((yo + 110.0f) - (f32)(i * 23))), 0.0f}, (Vec){0.54f, 0.54f, 0.54f}, colA);
         item = &itemDataTable[badge];
         winFontInit();
-#ifdef VERSION_G8ME01
-        winFontSetWidth((Vec){xo - 55.0f, scroll + (12.0f + ((yo + 110.0f) - (f32)rowOff)), 0.0f}, (Vec){0.9f, 0.9f, 0.9f}, colB, 170.0f, msgSearch(item->name));
+#if VERSION >= VERSION_US
+        winFontSetWidth((Vec){xo - 55.0f, scroll + (12.0f + ((yo + 110.0f) - (f32)(i * 23))), 0.0f}, (Vec){0.9f, 0.9f, 0.9f}, colB, 170.0f, msgSearch(item->name));
 #else
-        winFontSet((Vec){xo - 55.0f, scroll + (12.0f + ((yo + 110.0f) - (f32)rowOff)), 0.0f}, (Vec){0.9f, 0.9f, 0.9f}, colB, item->id);
+        winFontSet((Vec){xo - 55.0f, scroll + (12.0f + ((yo + 110.0f) - (f32)(i * 23))), 0.0f}, (Vec){0.9f, 0.9f, 0.9f}, colB, item->id);
 #endif
         cost = &item->bp_cost;
         sprintf(buf, "%s", winZenkakuStr(*cost));
-        winFontSet((Vec){(142.0f + xo) - (f32)(FontGetMessageWidth(buf) / 2), scroll + (12.0f + ((yo + 110.0f) - (f32)rowOff)), 0.0f}, (Vec){0.9f, 0.9f, 0.9f}, colB, buf);
+        winFontSet((Vec){(142.0f + xo) - (f32)(FontGetMessageWidth(buf) / 2), scroll + (12.0f + ((yo + 110.0f) - (f32)(i * 23))), 0.0f}, (Vec){0.9f, 0.9f, 0.9f}, colB, buf);
+#endif
         winTexInit((TEXPalette*)*w->res->data);
         for (j = 0; j < *cost; j++) {
-            { s32 t; winTexSet((t = 0x1D, equipped ? t = 0x1C : 0, t), (Vec){(160.0f + xo) + j * 13, (scroll + ((yo + 110.0f) - (f32)rowOff)), 0.0f}, (Vec){1.0f, 1.0f, 1.0f}, colA); }
+            {
+                s32 t;
+                winTexSet((t = 0x1D, equipped ? t = 0x1C : 0, t), (Vec){(160.0f + xo) + j * 13, (scroll + ((yo + 110.0f) - (f32)(i * 23))), 0.0f}, (Vec){1.0f, 1.0f, 1.0f}, colA);
+            }
         }
     }
     GXSetScissor(0, 0, 0x260, 0x1E0);
     {
         f32 ax;
+#if VERSION >= VERSION_JP
         colU = (GXColor){255, 255, 255, 255};
         colD = (GXColor){0, 0, 0, 255};
+#endif
 
         if (w->badge.page[w->badge.tab] > 0) {
             winTexInit((TEXPalette*)*w->res->data);

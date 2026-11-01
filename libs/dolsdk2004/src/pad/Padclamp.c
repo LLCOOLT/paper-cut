@@ -1,15 +1,12 @@
-#define MATH_NO_SQRTF 1
 #include <math.h>
 #include <dolphin.h>
 #include <dolphin/pad.h>
 
-// FAKE: wrapper pads the object to the original 12-byte symbol size
-#ifdef VERSION_G8ME01
-// US object is the bare 10-byte region (section ends at 0x803041D2)
-static const struct { PADClampRegion r; } ClampRegion = { {
-#else
-static const struct { PADClampRegion r; u8 pad[2]; } ClampRegion = { {
-#endif
+/**
+ * Limits used to clamp raw controller readings: trigger minimum and maximum, then the same three values for
+ * each stick.
+ */
+static const PADClampRegion ClampRegion = {
     // Triggers
     30,
     180,
@@ -27,13 +24,17 @@ static const struct { PADClampRegion r; u8 pad[2]; } ClampRegion = { {
     // Stick radii
     56,
     44,
-} };
+};
 
 // prototypes
 static void ClampStick(s8* px, s8* py, s8 max, s8 xy, s8 min);
 static void ClampCircle(s8* px, s8* py, s8 radius, s8 min);
 static void ClampTrigger(u8* trigger, u8 min, u8 max);
 
+/**
+ * Clamps an analog stick to an octagon: removes a dead zone of min,
+ * then scales (x, y) down when the weighted distance (xy for the diagonal, max for the axes) exceeds max.
+ */
 static void ClampStick(s8* px, s8* py, s8 max, s8 xy, s8 min) {
     int x = *px;
     int y = *py;
@@ -89,6 +90,10 @@ static void ClampStick(s8* px, s8* py, s8 max, s8 xy, s8 min) {
     *py = (s8)(signY * y);
 }
 
+/**
+ * Clamps an analog stick to a circle: removes a dead zone of min on each axis,
+ * then scales the vector down when its length exceeds radius.
+ */
 static void ClampCircle(s8* px, s8* py, s8 radius, s8 min) {
     int x = *px;
     int y = *py;
@@ -122,6 +127,7 @@ static void ClampCircle(s8* px, s8* py, s8 radius, s8 min) {
     *py = y;
 }
 
+/** Clamps an analog trigger: values up to min read as 0, values above max are limited to max, and min is subtracted. */
 static void ClampTrigger(u8* trigger, u8 min, u8 max) {
     if (*trigger <= min) {
         *trigger = 0;
@@ -133,27 +139,33 @@ static void ClampTrigger(u8* trigger, u8 min, u8 max) {
     }
 }
 
+/**
+ * For each of the four PADStatus entries with no error,
+ * clamps the stick and sub-stick to octagons and both triggers with the constants in ClampRegion.
+ * Call it after PADRead.
+ */
 void PADClamp(PADStatus * status) {
     int i;
 
     for (i = 0; i < 4; i++, status++) {
         if (status->err == PAD_ERR_NONE) {
-            ClampStick(&status->stickX, &status->stickY, ClampRegion.r.maxStick, ClampRegion.r.xyStick, ClampRegion.r.minStick);
-            ClampStick(&status->substickX, &status->substickY, ClampRegion.r.maxSubstick, ClampRegion.r.xySubstick, ClampRegion.r.minSubstick);
-            ClampTrigger(&status->triggerLeft, ClampRegion.r.minTrigger, ClampRegion.r.maxTrigger);
-            ClampTrigger(&status->triggerRight, ClampRegion.r.minTrigger, ClampRegion.r.maxTrigger);
+            ClampStick(&status->stickX, &status->stickY, ClampRegion.maxStick, ClampRegion.xyStick, ClampRegion.minStick);
+            ClampStick(&status->substickX, &status->substickY, ClampRegion.maxSubstick, ClampRegion.xySubstick, ClampRegion.minSubstick);
+            ClampTrigger(&status->triggerLeft, ClampRegion.minTrigger, ClampRegion.maxTrigger);
+            ClampTrigger(&status->triggerRight, ClampRegion.minTrigger, ClampRegion.maxTrigger);
         }
     }
 }
 
+/** Like PADClamp, but clamps the stick and sub-stick to circles (ClampRegion radii) instead of octagons. */
 void PADClampCircle(PADStatus* status) {
     int i;
     for (i = 0; i < 4; ++i, status++) {
         if (status->err == PAD_ERR_NONE) {
-            ClampCircle(&status->stickX, &status->stickY, ClampRegion.r.radStick, ClampRegion.r.minStick);
-            ClampCircle(&status->substickX, &status->substickY, ClampRegion.r.radSubstick, ClampRegion.r.minSubstick);
-            ClampTrigger(&status->triggerLeft, ClampRegion.r.minTrigger, ClampRegion.r.maxTrigger);
-            ClampTrigger(&status->triggerRight, ClampRegion.r.minTrigger, ClampRegion.r.maxTrigger);
+            ClampCircle(&status->stickX, &status->stickY, ClampRegion.radStick, ClampRegion.minStick);
+            ClampCircle(&status->substickX, &status->substickY, ClampRegion.radSubstick, ClampRegion.minSubstick);
+            ClampTrigger(&status->triggerLeft, ClampRegion.minTrigger, ClampRegion.maxTrigger);
+            ClampTrigger(&status->triggerRight, ClampRegion.minTrigger, ClampRegion.maxTrigger);
         }
     }
 }

@@ -35,7 +35,7 @@ _Static_assert(offsetof(struct GlobalWork, systemLv1Time) == 80, "GlobalWork.sys
 _Static_assert(offsetof(struct GlobalWork, systemLv2Time) == 88, "GlobalWork.systemLv2Time: native offset");
 _Static_assert(offsetof(struct GlobalWork, systemLv3Time) == 96, "GlobalWork.systemLv3Time: native offset");
 _Static_assert(offsetof(struct GlobalWork, countdown) == 104, "GlobalWork.countdown: native offset");
-_Static_assert(offsetof(struct GlobalWork, mLotteryInfo) == 168, "GlobalWork.mLotteryInfo: native offset");
+_Static_assert(offsetof(struct GlobalWork, lotteryInfo) == 168, "GlobalWork.lotteryInfo: native offset");
 _Static_assert(offsetof(struct GlobalWork, pad_E8) == 232, "GlobalWork.pad_E8: native offset");
 _Static_assert(offsetof(struct GlobalWork, mapFadeOutType) == 248, "GlobalWork.mapFadeOutType: native offset");
 _Static_assert(offsetof(struct GlobalWork, mapFadeOutDuration) == 252, "GlobalWork.mapFadeOutDuration: native offset");
@@ -56,11 +56,11 @@ _Static_assert(offsetof(struct GlobalWork, fbatData) == 376, "GlobalWork.fbatDat
 _Static_assert(offsetof(struct GlobalWork, language) == 384, "GlobalWork.language: native offset");
 _Static_assert(offsetof(struct GlobalWork, fbWidth) == 388, "GlobalWork.fbWidth: native offset");
 _Static_assert(offsetof(struct GlobalWork, efbHeight) == 390, "GlobalWork.efbHeight: native offset");
-_Static_assert(offsetof(struct GlobalWork, mGSW0) == 392, "GlobalWork.mGSW0: native offset");
-_Static_assert(offsetof(struct GlobalWork, mGSWF) == 396, "GlobalWork.mGSWF: native offset");
-_Static_assert(offsetof(struct GlobalWork, mGSW) == 1420, "GlobalWork.mGSW: native offset");
-_Static_assert(offsetof(struct GlobalWork, mLSWF) == 3468, "GlobalWork.mLSWF: native offset");
-_Static_assert(offsetof(struct GlobalWork, mLSW) == 3532, "GlobalWork.mLSW: native offset");
+_Static_assert(offsetof(struct GlobalWork, gsw0) == 392, "GlobalWork.gsw0: native offset");
+_Static_assert(offsetof(struct GlobalWork, gswf) == 396, "GlobalWork.gswf: native offset");
+_Static_assert(offsetof(struct GlobalWork, gsw) == 1420, "GlobalWork.gsw: native offset");
+_Static_assert(offsetof(struct GlobalWork, lswf) == 3468, "GlobalWork.lswf: native offset");
+_Static_assert(offsetof(struct GlobalWork, lsw) == 3532, "GlobalWork.lsw: native offset");
 _Static_assert(offsetof(struct GlobalWork, lastSlot) == 4556, "GlobalWork.lastSlot: native offset");
 _Static_assert(offsetof(struct GlobalWork, playerName) == 4560, "GlobalWork.playerName: native offset");
 _Static_assert(offsetof(struct GlobalWork, saveSlot) == 4580, "GlobalWork.saveSlot: native offset");
@@ -85,8 +85,8 @@ _Static_assert(offsetof(struct GlobalWork, rumbleForcedOff) == 4864, "GlobalWork
 _Static_assert(offsetof(struct GlobalWork, rumbleForcedOffLatch) == 4868, "GlobalWork.rumbleForcedOffLatch: native offset");
 _Static_assert(offsetof(struct GlobalWork, rumbleForcedOffTime) == 4872, "GlobalWork.rumbleForcedOffTime: native offset");
 _Static_assert(offsetof(struct GlobalWork, rumbleHardStop) == 4904, "GlobalWork.rumbleHardStop: native offset");
-_Static_assert(offsetof(struct GlobalWork, mDeltaGame) == 4908, "GlobalWork.mDeltaGame: native offset");
-_Static_assert(offsetof(struct GlobalWork, mDeltaRender) == 4912, "GlobalWork.mDeltaRender: native offset");
+_Static_assert(offsetof(struct GlobalWork, deltaGame) == 4908, "GlobalWork.deltaGame: native offset");
+_Static_assert(offsetof(struct GlobalWork, deltaRender) == 4912, "GlobalWork.deltaRender: native offset");
 _Static_assert(offsetof(struct GlobalWork, pad_131C) == 4916, "GlobalWork.pad_131C: native offset");
 _Static_assert(offsetof(struct GlobalWork, keyDataValid) == 4924, "GlobalWork.keyDataValid: native offset");
 _Static_assert(offsetof(struct GlobalWork, button) == 4928, "GlobalWork.button: native offset");
@@ -126,7 +126,7 @@ _Static_assert(offsetof(struct GlobalWork, systemLv1Time) == 80, "GlobalWork.sys
 _Static_assert(offsetof(struct GlobalWork, systemLv2Time) == 88, "GlobalWork.systemLv2Time: native offset");
 _Static_assert(offsetof(struct GlobalWork, systemLv3Time) == 96, "GlobalWork.systemLv3Time: native offset");
 _Static_assert(offsetof(struct GlobalWork, countdown) == 104, "GlobalWork.countdown: native offset");
-_Static_assert(offsetof(struct GlobalWork, mLotteryInfo) == 168, "GlobalWork.mLotteryInfo: native offset");
+_Static_assert(offsetof(struct GlobalWork, lotteryInfo) == 168, "GlobalWork.lotteryInfo: native offset");
 _Static_assert(offsetof(struct GlobalWork, pad_E8) == 232, "GlobalWork.pad_E8: native offset");
 _Static_assert(offsetof(struct GlobalWork, mapFadeOutType) == 248, "GlobalWork.mapFadeOutType: native offset");
 _Static_assert(offsetof(struct GlobalWork, mapFadeOutDuration) == 252, "GlobalWork.mapFadeOutDuration: native offset");
@@ -147,11 +147,11 @@ _Static_assert(offsetof(struct GlobalWork, fbatData) == 360, "GlobalWork.fbatDat
 _Static_assert(offsetof(struct GlobalWork, language) == 364, "GlobalWork.language: native offset");
 _Static_assert(offsetof(struct GlobalWork, fbWidth) == 368, "GlobalWork.fbWidth: native offset");
 _Static_assert(offsetof(struct GlobalWork, efbHeight) == 370, "GlobalWork.efbHeight: native offset");
-_Static_assert(offsetof(struct GlobalWork, mGSW0) == 372, "GlobalWork.mGSW0: native offset");
-_Static_assert(offsetof(struct GlobalWork, mGSWF) == 376, "GlobalWork.mGSWF: native offset");
-_Static_assert(offsetof(struct GlobalWork, mGSW) == 1400, "GlobalWork.mGSW: native offset");
-_Static_assert(offsetof(struct GlobalWork, mLSWF) == 3448, "GlobalWork.mLSWF: native offset");
-_Static_assert(offsetof(struct GlobalWork, mLSW) == 3512, "GlobalWork.mLSW: native offset");
+_Static_assert(offsetof(struct GlobalWork, gsw0) == 372, "GlobalWork.gsw0: native offset");
+_Static_assert(offsetof(struct GlobalWork, gswf) == 376, "GlobalWork.gswf: native offset");
+_Static_assert(offsetof(struct GlobalWork, gsw) == 1400, "GlobalWork.gsw: native offset");
+_Static_assert(offsetof(struct GlobalWork, lswf) == 3448, "GlobalWork.lswf: native offset");
+_Static_assert(offsetof(struct GlobalWork, lsw) == 3512, "GlobalWork.lsw: native offset");
 _Static_assert(offsetof(struct GlobalWork, lastSlot) == 4536, "GlobalWork.lastSlot: native offset");
 _Static_assert(offsetof(struct GlobalWork, playerName) == 4540, "GlobalWork.playerName: native offset");
 _Static_assert(offsetof(struct GlobalWork, saveSlot) == 4560, "GlobalWork.saveSlot: native offset");
@@ -176,8 +176,8 @@ _Static_assert(offsetof(struct GlobalWork, rumbleForcedOff) == 4840, "GlobalWork
 _Static_assert(offsetof(struct GlobalWork, rumbleForcedOffLatch) == 4844, "GlobalWork.rumbleForcedOffLatch: native offset");
 _Static_assert(offsetof(struct GlobalWork, rumbleForcedOffTime) == 4848, "GlobalWork.rumbleForcedOffTime: native offset");
 _Static_assert(offsetof(struct GlobalWork, rumbleHardStop) == 4880, "GlobalWork.rumbleHardStop: native offset");
-_Static_assert(offsetof(struct GlobalWork, mDeltaGame) == 4884, "GlobalWork.mDeltaGame: native offset");
-_Static_assert(offsetof(struct GlobalWork, mDeltaRender) == 4888, "GlobalWork.mDeltaRender: native offset");
+_Static_assert(offsetof(struct GlobalWork, deltaGame) == 4884, "GlobalWork.deltaGame: native offset");
+_Static_assert(offsetof(struct GlobalWork, deltaRender) == 4888, "GlobalWork.deltaRender: native offset");
 _Static_assert(offsetof(struct GlobalWork, pad_131C) == 4892, "GlobalWork.pad_131C: native offset");
 _Static_assert(offsetof(struct GlobalWork, keyDataValid) == 4900, "GlobalWork.keyDataValid: native offset");
 _Static_assert(offsetof(struct GlobalWork, button) == 4904, "GlobalWork.button: native offset");
@@ -232,11 +232,11 @@ _Static_assert(PORT_FSIZE(struct GlobalWork, mapEventId) == 4, "GlobalWork.mapEv
 _Static_assert(PORT_FSIZE(struct GlobalWork, language) == 4, "GlobalWork.language: native width differs from disc");
 _Static_assert(PORT_FSIZE(struct GlobalWork, fbWidth) == 2, "GlobalWork.fbWidth: native width differs from disc");
 _Static_assert(PORT_FSIZE(struct GlobalWork, efbHeight) == 2, "GlobalWork.efbHeight: native width differs from disc");
-_Static_assert(PORT_FSIZE(struct GlobalWork, mGSW0) == 4, "GlobalWork.mGSW0: native width differs from disc");
-_Static_assert(PORT_FSIZE(struct GlobalWork, mGSWF[0]) == 4, "GlobalWork.mGSWF: native width differs from disc");
-_Static_assert(PORT_FSIZE(struct GlobalWork, mGSW[0]) == 1, "GlobalWork.mGSW: native width differs from disc");
-_Static_assert(PORT_FSIZE(struct GlobalWork, mLSWF[0]) == 4, "GlobalWork.mLSWF: native width differs from disc");
-_Static_assert(PORT_FSIZE(struct GlobalWork, mLSW[0]) == 1, "GlobalWork.mLSW: native width differs from disc");
+_Static_assert(PORT_FSIZE(struct GlobalWork, gsw0) == 4, "GlobalWork.gsw0: native width differs from disc");
+_Static_assert(PORT_FSIZE(struct GlobalWork, gswf[0]) == 4, "GlobalWork.gswf: native width differs from disc");
+_Static_assert(PORT_FSIZE(struct GlobalWork, gsw[0]) == 1, "GlobalWork.gsw: native width differs from disc");
+_Static_assert(PORT_FSIZE(struct GlobalWork, lswf[0]) == 4, "GlobalWork.lswf: native width differs from disc");
+_Static_assert(PORT_FSIZE(struct GlobalWork, lsw[0]) == 1, "GlobalWork.lsw: native width differs from disc");
 _Static_assert(PORT_FSIZE(struct GlobalWork, lastSlot) == 4, "GlobalWork.lastSlot: native width differs from disc");
 _Static_assert(PORT_FSIZE(struct GlobalWork, playerName[0]) == 1, "GlobalWork.playerName: native width differs from disc");
 _Static_assert(PORT_FSIZE(struct GlobalWork, saveSlot) == 4, "GlobalWork.saveSlot: native width differs from disc");
@@ -260,8 +260,8 @@ _Static_assert(PORT_FSIZE(struct GlobalWork, rumbleForcedOff[0]) == 1, "GlobalWo
 _Static_assert(PORT_FSIZE(struct GlobalWork, rumbleForcedOffLatch[0]) == 1, "GlobalWork.rumbleForcedOffLatch: native width differs from disc");
 _Static_assert(PORT_FSIZE(struct GlobalWork, rumbleForcedOffTime[0]) == 8, "GlobalWork.rumbleForcedOffTime: native width differs from disc");
 _Static_assert(PORT_FSIZE(struct GlobalWork, rumbleHardStop[0]) == 1, "GlobalWork.rumbleHardStop: native width differs from disc");
-_Static_assert(PORT_FSIZE(struct GlobalWork, mDeltaGame) == 4, "GlobalWork.mDeltaGame: native width differs from disc");
-_Static_assert(PORT_FSIZE(struct GlobalWork, mDeltaRender) == 4, "GlobalWork.mDeltaRender: native width differs from disc");
+_Static_assert(PORT_FSIZE(struct GlobalWork, deltaGame) == 4, "GlobalWork.deltaGame: native width differs from disc");
+_Static_assert(PORT_FSIZE(struct GlobalWork, deltaRender) == 4, "GlobalWork.deltaRender: native width differs from disc");
 _Static_assert(PORT_FSIZE(struct GlobalWork, pad_131C[0]) == 1, "GlobalWork.pad_131C: native width differs from disc");
 _Static_assert(PORT_FSIZE(struct GlobalWork, keyDataValid) == 4, "GlobalWork.keyDataValid: native width differs from disc");
 _Static_assert(PORT_FSIZE(struct GlobalWork, button[0]) == 4, "GlobalWork.button: native width differs from disc");
@@ -300,7 +300,7 @@ static const PortField portBE_cardsave_GlobalWork_fields[] = {
     { "systemLv2Time", 0x58, offsetof(struct GlobalWork, systemLv2Time), PORT_FK_S64, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct GlobalWork, systemLv2Time), 0, NULL, NULL },
     { "systemLv3Time", 0x60, offsetof(struct GlobalWork, systemLv3Time), PORT_FK_S64, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct GlobalWork, systemLv3Time), 0, NULL, NULL },
     { "countdown", 0x68, offsetof(struct GlobalWork, countdown), PORT_FK_EMBED, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct GlobalWork, countdown), 0, &portBE_cardsave_CountdownWork, NULL },
-    { "mLotteryInfo", 0xA8, offsetof(struct GlobalWork, mLotteryInfo), PORT_FK_EMBED, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct GlobalWork, mLotteryInfo), 0, &portBE_cardsave_lottery_info, NULL },
+    { "lotteryInfo", 0xA8, offsetof(struct GlobalWork, lotteryInfo), PORT_FK_EMBED, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct GlobalWork, lotteryInfo), 0, &portBE_cardsave_lottery_info, NULL },
     { "pad_E8", 0xE8, offsetof(struct GlobalWork, pad_E8), PORT_FK_U8, PORT_CNT_ONE, 0, 1, 16, 0x0, 1, PORT_FSIZE(struct GlobalWork, pad_E8[0]), PORT_FSIZE(struct GlobalWork, pad_E8[0]), 0, NULL, NULL },
     { "mapFadeOutType", 0xF8, offsetof(struct GlobalWork, mapFadeOutType), PORT_FK_U32, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct GlobalWork, mapFadeOutType), 0, NULL, NULL },
     { "mapFadeOutDuration", 0xFC, offsetof(struct GlobalWork, mapFadeOutDuration), PORT_FK_S32, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct GlobalWork, mapFadeOutDuration), 0, NULL, NULL },
@@ -321,11 +321,11 @@ static const PortField portBE_cardsave_GlobalWork_fields[] = {
     { "language", 0x16C, offsetof(struct GlobalWork, language), PORT_FK_S32, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct GlobalWork, language), 0, NULL, NULL },
     { "fbWidth", 0x170, offsetof(struct GlobalWork, fbWidth), PORT_FK_U16, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct GlobalWork, fbWidth), 0, NULL, NULL },
     { "efbHeight", 0x172, offsetof(struct GlobalWork, efbHeight), PORT_FK_U16, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct GlobalWork, efbHeight), 0, NULL, NULL },
-    { "mGSW0", 0x174, offsetof(struct GlobalWork, mGSW0), PORT_FK_S32, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct GlobalWork, mGSW0), 0, NULL, NULL },
-    { "mGSWF", 0x178, offsetof(struct GlobalWork, mGSWF), PORT_FK_U32, PORT_CNT_ONE, 0, 1, 256, 0x0, 4, PORT_FSIZE(struct GlobalWork, mGSWF[0]), PORT_FSIZE(struct GlobalWork, mGSWF[0]), 0, NULL, NULL },
-    { "mGSW", 0x578, offsetof(struct GlobalWork, mGSW), PORT_FK_U8, PORT_CNT_ONE, 0, 1, 2048, 0x0, 1, PORT_FSIZE(struct GlobalWork, mGSW[0]), PORT_FSIZE(struct GlobalWork, mGSW[0]), 0, NULL, NULL },
-    { "mLSWF", 0xD78, offsetof(struct GlobalWork, mLSWF), PORT_FK_U32, PORT_CNT_ONE, 0, 1, 16, 0x0, 4, PORT_FSIZE(struct GlobalWork, mLSWF[0]), PORT_FSIZE(struct GlobalWork, mLSWF[0]), 0, NULL, NULL },
-    { "mLSW", 0xDB8, offsetof(struct GlobalWork, mLSW), PORT_FK_U8, PORT_CNT_ONE, 0, 1, 1024, 0x0, 1, PORT_FSIZE(struct GlobalWork, mLSW[0]), PORT_FSIZE(struct GlobalWork, mLSW[0]), 0, NULL, NULL },
+    { "gsw0", 0x174, offsetof(struct GlobalWork, gsw0), PORT_FK_S32, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct GlobalWork, gsw0), 0, NULL, NULL },
+    { "gswf", 0x178, offsetof(struct GlobalWork, gswf), PORT_FK_U32, PORT_CNT_ONE, 0, 1, 256, 0x0, 4, PORT_FSIZE(struct GlobalWork, gswf[0]), PORT_FSIZE(struct GlobalWork, gswf[0]), 0, NULL, NULL },
+    { "gsw", 0x578, offsetof(struct GlobalWork, gsw), PORT_FK_U8, PORT_CNT_ONE, 0, 1, 2048, 0x0, 1, PORT_FSIZE(struct GlobalWork, gsw[0]), PORT_FSIZE(struct GlobalWork, gsw[0]), 0, NULL, NULL },
+    { "lswf", 0xD78, offsetof(struct GlobalWork, lswf), PORT_FK_U32, PORT_CNT_ONE, 0, 1, 16, 0x0, 4, PORT_FSIZE(struct GlobalWork, lswf[0]), PORT_FSIZE(struct GlobalWork, lswf[0]), 0, NULL, NULL },
+    { "lsw", 0xDB8, offsetof(struct GlobalWork, lsw), PORT_FK_U8, PORT_CNT_ONE, 0, 1, 1024, 0x0, 1, PORT_FSIZE(struct GlobalWork, lsw[0]), PORT_FSIZE(struct GlobalWork, lsw[0]), 0, NULL, NULL },
     { "lastSlot", 0x11B8, offsetof(struct GlobalWork, lastSlot), PORT_FK_S32, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct GlobalWork, lastSlot), 0, NULL, NULL },
     { "playerName", 0x11BC, offsetof(struct GlobalWork, playerName), PORT_FK_U8, PORT_CNT_ONE, 0, 1, 20, 0x0, 1, PORT_FSIZE(struct GlobalWork, playerName[0]), PORT_FSIZE(struct GlobalWork, playerName[0]), 0, NULL, NULL },
     { "saveSlot", 0x11D0, offsetof(struct GlobalWork, saveSlot), PORT_FK_S32, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct GlobalWork, saveSlot), 0, NULL, NULL },
@@ -349,8 +349,8 @@ static const PortField portBE_cardsave_GlobalWork_fields[] = {
     { "rumbleForcedOffLatch", 0x12EC, offsetof(struct GlobalWork, rumbleForcedOffLatch), PORT_FK_U8, PORT_CNT_ONE, 0, 1, 4, 0x0, 1, PORT_FSIZE(struct GlobalWork, rumbleForcedOffLatch[0]), PORT_FSIZE(struct GlobalWork, rumbleForcedOffLatch[0]), 0, NULL, NULL },
     { "rumbleForcedOffTime", 0x12F0, offsetof(struct GlobalWork, rumbleForcedOffTime), PORT_FK_S64, PORT_CNT_ONE, 0, 1, 4, 0x0, 8, PORT_FSIZE(struct GlobalWork, rumbleForcedOffTime[0]), PORT_FSIZE(struct GlobalWork, rumbleForcedOffTime[0]), 0, NULL, NULL },
     { "rumbleHardStop", 0x1310, offsetof(struct GlobalWork, rumbleHardStop), PORT_FK_U8, PORT_CNT_ONE, 0, 1, 4, 0x0, 1, PORT_FSIZE(struct GlobalWork, rumbleHardStop[0]), PORT_FSIZE(struct GlobalWork, rumbleHardStop[0]), 0, NULL, NULL },
-    { "mDeltaGame", 0x1314, offsetof(struct GlobalWork, mDeltaGame), PORT_FK_U32, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct GlobalWork, mDeltaGame), 0, NULL, NULL },
-    { "mDeltaRender", 0x1318, offsetof(struct GlobalWork, mDeltaRender), PORT_FK_U32, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct GlobalWork, mDeltaRender), 0, NULL, NULL },
+    { "deltaGame", 0x1314, offsetof(struct GlobalWork, deltaGame), PORT_FK_U32, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct GlobalWork, deltaGame), 0, NULL, NULL },
+    { "deltaRender", 0x1318, offsetof(struct GlobalWork, deltaRender), PORT_FK_U32, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct GlobalWork, deltaRender), 0, NULL, NULL },
     { "pad_131C", 0x131C, offsetof(struct GlobalWork, pad_131C), PORT_FK_U8, PORT_CNT_ONE, 0, 1, 8, 0x0, 1, PORT_FSIZE(struct GlobalWork, pad_131C[0]), PORT_FSIZE(struct GlobalWork, pad_131C[0]), 0, NULL, NULL },
     { "keyDataValid", 0x1324, offsetof(struct GlobalWork, keyDataValid), PORT_FK_S32, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct GlobalWork, keyDataValid), 0, NULL, NULL },
     { "button", 0x1328, offsetof(struct GlobalWork, button), PORT_FK_U32, PORT_CNT_ONE, 0, 1, 4, 0x0, 4, PORT_FSIZE(struct GlobalWork, button[0]), PORT_FSIZE(struct GlobalWork, button[0]), 0, NULL, NULL },
@@ -506,35 +506,35 @@ _Static_assert(offsetof(struct PouchData, pad_82) == 130, "PouchData.pad_82: nat
 _Static_assert(offsetof(struct PouchData, audienceCount) == 132, "PouchData.audienceCount: native offset");
 _Static_assert(offsetof(struct PouchData, rank) == 136, "PouchData.rank: native offset");
 _Static_assert(offsetof(struct PouchData, level) == 138, "PouchData.level: native offset");
-_Static_assert(offsetof(struct PouchData, mStarPowersObtained) == 140, "PouchData.mStarPowersObtained: native offset");
+_Static_assert(offsetof(struct PouchData, starPowersObtained) == 140, "PouchData.starPowersObtained: native offset");
 _Static_assert(offsetof(struct PouchData, baseMaxHP) == 142, "PouchData.baseMaxHP: native offset");
 _Static_assert(offsetof(struct PouchData, baseMaxFP) == 144, "PouchData.baseMaxFP: native offset");
 _Static_assert(offsetof(struct PouchData, availableBP) == 146, "PouchData.availableBP: native offset");
 _Static_assert(offsetof(struct PouchData, maximumBP) == 148, "PouchData.maximumBP: native offset");
-_Static_assert(offsetof(struct PouchData, mStarPoints) == 150, "PouchData.mStarPoints: native offset");
+_Static_assert(offsetof(struct PouchData, starPoints) == 150, "PouchData.starPoints: native offset");
 _Static_assert(offsetof(struct PouchData, jumpLevel) == 152, "PouchData.jumpLevel: native offset");
 _Static_assert(offsetof(struct PouchData, hammerLevel) == 153, "PouchData.hammerLevel: native offset");
-_Static_assert(offsetof(struct PouchData, mStarPieceCount) == 154, "PouchData.mStarPieceCount: native offset");
-_Static_assert(offsetof(struct PouchData, mShineSpriteCount) == 156, "PouchData.mShineSpriteCount: native offset");
-_Static_assert(offsetof(struct PouchData, mPowerBounceRecord) == 158, "PouchData.mPowerBounceRecord: native offset");
+_Static_assert(offsetof(struct PouchData, starPieceCount) == 154, "PouchData.starPieceCount: native offset");
+_Static_assert(offsetof(struct PouchData, shineSpriteCount) == 156, "PouchData.shineSpriteCount: native offset");
+_Static_assert(offsetof(struct PouchData, powerBounceRecord) == 158, "PouchData.powerBounceRecord: native offset");
 _Static_assert(offsetof(struct PouchData, keyItems) == 160, "PouchData.keyItems: native offset");
 _Static_assert(offsetof(struct PouchData, heldItems) == 402, "PouchData.heldItems: native offset");
 _Static_assert(offsetof(struct PouchData, storedItems) == 442, "PouchData.storedItems: native offset");
 _Static_assert(offsetof(struct PouchData, badges) == 506, "PouchData.badges: native offset");
 _Static_assert(offsetof(struct PouchData, equippedBadges) == 906, "PouchData.equippedBadges: native offset");
-_Static_assert(offsetof(struct PouchData, mEmailIds) == 1306, "PouchData.mEmailIds: native offset");
+_Static_assert(offsetof(struct PouchData, emailIds) == 1306, "PouchData.emailIds: native offset");
 _Static_assert(offsetof(struct PouchData, pad_57E) == 1406, "PouchData.pad_57E: native offset");
-_Static_assert(offsetof(struct PouchData, mEmailReceivedFlags) == 1408, "PouchData.mEmailReceivedFlags: native offset");
-_Static_assert(offsetof(struct PouchData, mEmailReadFlags) == 1424, "PouchData.mEmailReadFlags: native offset");
+_Static_assert(offsetof(struct PouchData, emailReceivedFlags) == 1408, "PouchData.emailReceivedFlags: native offset");
+_Static_assert(offsetof(struct PouchData, emailReadFlags) == 1424, "PouchData.emailReadFlags: native offset");
 _Static_assert(offsetof(struct PouchData, pad_5A0) == 1440, "PouchData.pad_5A0: native offset");
-_Static_assert(offsetof(struct PouchData, mShopPoints) == 1456, "PouchData.mShopPoints: native offset");
+_Static_assert(offsetof(struct PouchData, shopPoints) == 1456, "PouchData.shopPoints: native offset");
 _Static_assert(offsetof(struct PouchData, pad_5B2) == 1458, "PouchData.pad_5B2: native offset");
 _Static_assert(offsetof(struct PouchData, shopPointRewardFlags) == 1460, "PouchData.shopPointRewardFlags: native offset");
-_Static_assert(offsetof(struct PouchData, mMerleeCurseUsesRemaining) == 1464, "PouchData.mMerleeCurseUsesRemaining: native offset");
-_Static_assert(offsetof(struct PouchData, mTurnsUntilMerleeActivation) == 1465, "PouchData.mTurnsUntilMerleeActivation: native offset");
-_Static_assert(offsetof(struct PouchData, mMerleeNextCurseType) == 1466, "PouchData.mMerleeNextCurseType: native offset");
-_Static_assert(offsetof(struct PouchData, mSuperBowserCoins) == 1467, "PouchData.mSuperBowserCoins: native offset");
-_Static_assert(offsetof(struct PouchData, mSuperBowserScore) == 1468, "PouchData.mSuperBowserScore: native offset");
+_Static_assert(offsetof(struct PouchData, merleeCurseUsesRemaining) == 1464, "PouchData.merleeCurseUsesRemaining: native offset");
+_Static_assert(offsetof(struct PouchData, turnsUntilMerleeActivation) == 1465, "PouchData.turnsUntilMerleeActivation: native offset");
+_Static_assert(offsetof(struct PouchData, merleeNextCurseType) == 1466, "PouchData.merleeNextCurseType: native offset");
+_Static_assert(offsetof(struct PouchData, superBowserCoins) == 1467, "PouchData.superBowserCoins: native offset");
+_Static_assert(offsetof(struct PouchData, superBowserScore) == 1468, "PouchData.superBowserScore: native offset");
 _Static_assert(offsetof(struct PouchData, yoshiName) == 1472, "PouchData.yoshiName: native offset");
 _Static_assert(offsetof(struct PouchData, pad_5D0) == 1488, "PouchData.pad_5D0: native offset");
 #else /* 32-bit headless bring-up build */
@@ -553,35 +553,35 @@ _Static_assert(offsetof(struct PouchData, pad_82) == 130, "PouchData.pad_82: nat
 _Static_assert(offsetof(struct PouchData, audienceCount) == 132, "PouchData.audienceCount: native offset");
 _Static_assert(offsetof(struct PouchData, rank) == 136, "PouchData.rank: native offset");
 _Static_assert(offsetof(struct PouchData, level) == 138, "PouchData.level: native offset");
-_Static_assert(offsetof(struct PouchData, mStarPowersObtained) == 140, "PouchData.mStarPowersObtained: native offset");
+_Static_assert(offsetof(struct PouchData, starPowersObtained) == 140, "PouchData.starPowersObtained: native offset");
 _Static_assert(offsetof(struct PouchData, baseMaxHP) == 142, "PouchData.baseMaxHP: native offset");
 _Static_assert(offsetof(struct PouchData, baseMaxFP) == 144, "PouchData.baseMaxFP: native offset");
 _Static_assert(offsetof(struct PouchData, availableBP) == 146, "PouchData.availableBP: native offset");
 _Static_assert(offsetof(struct PouchData, maximumBP) == 148, "PouchData.maximumBP: native offset");
-_Static_assert(offsetof(struct PouchData, mStarPoints) == 150, "PouchData.mStarPoints: native offset");
+_Static_assert(offsetof(struct PouchData, starPoints) == 150, "PouchData.starPoints: native offset");
 _Static_assert(offsetof(struct PouchData, jumpLevel) == 152, "PouchData.jumpLevel: native offset");
 _Static_assert(offsetof(struct PouchData, hammerLevel) == 153, "PouchData.hammerLevel: native offset");
-_Static_assert(offsetof(struct PouchData, mStarPieceCount) == 154, "PouchData.mStarPieceCount: native offset");
-_Static_assert(offsetof(struct PouchData, mShineSpriteCount) == 156, "PouchData.mShineSpriteCount: native offset");
-_Static_assert(offsetof(struct PouchData, mPowerBounceRecord) == 158, "PouchData.mPowerBounceRecord: native offset");
+_Static_assert(offsetof(struct PouchData, starPieceCount) == 154, "PouchData.starPieceCount: native offset");
+_Static_assert(offsetof(struct PouchData, shineSpriteCount) == 156, "PouchData.shineSpriteCount: native offset");
+_Static_assert(offsetof(struct PouchData, powerBounceRecord) == 158, "PouchData.powerBounceRecord: native offset");
 _Static_assert(offsetof(struct PouchData, keyItems) == 160, "PouchData.keyItems: native offset");
 _Static_assert(offsetof(struct PouchData, heldItems) == 402, "PouchData.heldItems: native offset");
 _Static_assert(offsetof(struct PouchData, storedItems) == 442, "PouchData.storedItems: native offset");
 _Static_assert(offsetof(struct PouchData, badges) == 506, "PouchData.badges: native offset");
 _Static_assert(offsetof(struct PouchData, equippedBadges) == 906, "PouchData.equippedBadges: native offset");
-_Static_assert(offsetof(struct PouchData, mEmailIds) == 1306, "PouchData.mEmailIds: native offset");
+_Static_assert(offsetof(struct PouchData, emailIds) == 1306, "PouchData.emailIds: native offset");
 _Static_assert(offsetof(struct PouchData, pad_57E) == 1406, "PouchData.pad_57E: native offset");
-_Static_assert(offsetof(struct PouchData, mEmailReceivedFlags) == 1408, "PouchData.mEmailReceivedFlags: native offset");
-_Static_assert(offsetof(struct PouchData, mEmailReadFlags) == 1424, "PouchData.mEmailReadFlags: native offset");
+_Static_assert(offsetof(struct PouchData, emailReceivedFlags) == 1408, "PouchData.emailReceivedFlags: native offset");
+_Static_assert(offsetof(struct PouchData, emailReadFlags) == 1424, "PouchData.emailReadFlags: native offset");
 _Static_assert(offsetof(struct PouchData, pad_5A0) == 1440, "PouchData.pad_5A0: native offset");
-_Static_assert(offsetof(struct PouchData, mShopPoints) == 1456, "PouchData.mShopPoints: native offset");
+_Static_assert(offsetof(struct PouchData, shopPoints) == 1456, "PouchData.shopPoints: native offset");
 _Static_assert(offsetof(struct PouchData, pad_5B2) == 1458, "PouchData.pad_5B2: native offset");
 _Static_assert(offsetof(struct PouchData, shopPointRewardFlags) == 1460, "PouchData.shopPointRewardFlags: native offset");
-_Static_assert(offsetof(struct PouchData, mMerleeCurseUsesRemaining) == 1464, "PouchData.mMerleeCurseUsesRemaining: native offset");
-_Static_assert(offsetof(struct PouchData, mTurnsUntilMerleeActivation) == 1465, "PouchData.mTurnsUntilMerleeActivation: native offset");
-_Static_assert(offsetof(struct PouchData, mMerleeNextCurseType) == 1466, "PouchData.mMerleeNextCurseType: native offset");
-_Static_assert(offsetof(struct PouchData, mSuperBowserCoins) == 1467, "PouchData.mSuperBowserCoins: native offset");
-_Static_assert(offsetof(struct PouchData, mSuperBowserScore) == 1468, "PouchData.mSuperBowserScore: native offset");
+_Static_assert(offsetof(struct PouchData, merleeCurseUsesRemaining) == 1464, "PouchData.merleeCurseUsesRemaining: native offset");
+_Static_assert(offsetof(struct PouchData, turnsUntilMerleeActivation) == 1465, "PouchData.turnsUntilMerleeActivation: native offset");
+_Static_assert(offsetof(struct PouchData, merleeNextCurseType) == 1466, "PouchData.merleeNextCurseType: native offset");
+_Static_assert(offsetof(struct PouchData, superBowserCoins) == 1467, "PouchData.superBowserCoins: native offset");
+_Static_assert(offsetof(struct PouchData, superBowserScore) == 1468, "PouchData.superBowserScore: native offset");
 _Static_assert(offsetof(struct PouchData, yoshiName) == 1472, "PouchData.yoshiName: native offset");
 _Static_assert(offsetof(struct PouchData, pad_5D0) == 1488, "PouchData.pad_5D0: native offset");
 #endif
@@ -598,35 +598,35 @@ _Static_assert(PORT_FSIZE(struct PouchData, pad_82) == 2, "PouchData.pad_82: nat
 _Static_assert(PORT_FSIZE(struct PouchData, audienceCount) == 4, "PouchData.audienceCount: native width differs from disc");
 _Static_assert(PORT_FSIZE(struct PouchData, rank) == 2, "PouchData.rank: native width differs from disc");
 _Static_assert(PORT_FSIZE(struct PouchData, level) == 2, "PouchData.level: native width differs from disc");
-_Static_assert(PORT_FSIZE(struct PouchData, mStarPowersObtained) == 2, "PouchData.mStarPowersObtained: native width differs from disc");
+_Static_assert(PORT_FSIZE(struct PouchData, starPowersObtained) == 2, "PouchData.starPowersObtained: native width differs from disc");
 _Static_assert(PORT_FSIZE(struct PouchData, baseMaxHP) == 2, "PouchData.baseMaxHP: native width differs from disc");
 _Static_assert(PORT_FSIZE(struct PouchData, baseMaxFP) == 2, "PouchData.baseMaxFP: native width differs from disc");
 _Static_assert(PORT_FSIZE(struct PouchData, availableBP) == 2, "PouchData.availableBP: native width differs from disc");
 _Static_assert(PORT_FSIZE(struct PouchData, maximumBP) == 2, "PouchData.maximumBP: native width differs from disc");
-_Static_assert(PORT_FSIZE(struct PouchData, mStarPoints) == 2, "PouchData.mStarPoints: native width differs from disc");
+_Static_assert(PORT_FSIZE(struct PouchData, starPoints) == 2, "PouchData.starPoints: native width differs from disc");
 _Static_assert(PORT_FSIZE(struct PouchData, jumpLevel) == 1, "PouchData.jumpLevel: native width differs from disc");
 _Static_assert(PORT_FSIZE(struct PouchData, hammerLevel) == 1, "PouchData.hammerLevel: native width differs from disc");
-_Static_assert(PORT_FSIZE(struct PouchData, mStarPieceCount) == 2, "PouchData.mStarPieceCount: native width differs from disc");
-_Static_assert(PORT_FSIZE(struct PouchData, mShineSpriteCount) == 2, "PouchData.mShineSpriteCount: native width differs from disc");
-_Static_assert(PORT_FSIZE(struct PouchData, mPowerBounceRecord) == 2, "PouchData.mPowerBounceRecord: native width differs from disc");
+_Static_assert(PORT_FSIZE(struct PouchData, starPieceCount) == 2, "PouchData.starPieceCount: native width differs from disc");
+_Static_assert(PORT_FSIZE(struct PouchData, shineSpriteCount) == 2, "PouchData.shineSpriteCount: native width differs from disc");
+_Static_assert(PORT_FSIZE(struct PouchData, powerBounceRecord) == 2, "PouchData.powerBounceRecord: native width differs from disc");
 _Static_assert(PORT_FSIZE(struct PouchData, keyItems[0]) == 2, "PouchData.keyItems: native width differs from disc");
 _Static_assert(PORT_FSIZE(struct PouchData, heldItems[0]) == 2, "PouchData.heldItems: native width differs from disc");
 _Static_assert(PORT_FSIZE(struct PouchData, storedItems[0]) == 2, "PouchData.storedItems: native width differs from disc");
 _Static_assert(PORT_FSIZE(struct PouchData, badges[0]) == 2, "PouchData.badges: native width differs from disc");
 _Static_assert(PORT_FSIZE(struct PouchData, equippedBadges[0]) == 2, "PouchData.equippedBadges: native width differs from disc");
-_Static_assert(PORT_FSIZE(struct PouchData, mEmailIds[0]) == 1, "PouchData.mEmailIds: native width differs from disc");
+_Static_assert(PORT_FSIZE(struct PouchData, emailIds[0]) == 1, "PouchData.emailIds: native width differs from disc");
 _Static_assert(PORT_FSIZE(struct PouchData, pad_57E[0]) == 1, "PouchData.pad_57E: native width differs from disc");
-_Static_assert(PORT_FSIZE(struct PouchData, mEmailReceivedFlags[0]) == 4, "PouchData.mEmailReceivedFlags: native width differs from disc");
-_Static_assert(PORT_FSIZE(struct PouchData, mEmailReadFlags[0]) == 4, "PouchData.mEmailReadFlags: native width differs from disc");
+_Static_assert(PORT_FSIZE(struct PouchData, emailReceivedFlags[0]) == 4, "PouchData.emailReceivedFlags: native width differs from disc");
+_Static_assert(PORT_FSIZE(struct PouchData, emailReadFlags[0]) == 4, "PouchData.emailReadFlags: native width differs from disc");
 _Static_assert(PORT_FSIZE(struct PouchData, pad_5A0[0]) == 1, "PouchData.pad_5A0: native width differs from disc");
-_Static_assert(PORT_FSIZE(struct PouchData, mShopPoints) == 2, "PouchData.mShopPoints: native width differs from disc");
+_Static_assert(PORT_FSIZE(struct PouchData, shopPoints) == 2, "PouchData.shopPoints: native width differs from disc");
 _Static_assert(PORT_FSIZE(struct PouchData, pad_5B2[0]) == 1, "PouchData.pad_5B2: native width differs from disc");
 _Static_assert(PORT_FSIZE(struct PouchData, shopPointRewardFlags) == 4, "PouchData.shopPointRewardFlags: native width differs from disc");
-_Static_assert(PORT_FSIZE(struct PouchData, mMerleeCurseUsesRemaining) == 1, "PouchData.mMerleeCurseUsesRemaining: native width differs from disc");
-_Static_assert(PORT_FSIZE(struct PouchData, mTurnsUntilMerleeActivation) == 1, "PouchData.mTurnsUntilMerleeActivation: native width differs from disc");
-_Static_assert(PORT_FSIZE(struct PouchData, mMerleeNextCurseType) == 1, "PouchData.mMerleeNextCurseType: native width differs from disc");
-_Static_assert(PORT_FSIZE(struct PouchData, mSuperBowserCoins) == 1, "PouchData.mSuperBowserCoins: native width differs from disc");
-_Static_assert(PORT_FSIZE(struct PouchData, mSuperBowserScore) == 4, "PouchData.mSuperBowserScore: native width differs from disc");
+_Static_assert(PORT_FSIZE(struct PouchData, merleeCurseUsesRemaining) == 1, "PouchData.merleeCurseUsesRemaining: native width differs from disc");
+_Static_assert(PORT_FSIZE(struct PouchData, turnsUntilMerleeActivation) == 1, "PouchData.turnsUntilMerleeActivation: native width differs from disc");
+_Static_assert(PORT_FSIZE(struct PouchData, merleeNextCurseType) == 1, "PouchData.merleeNextCurseType: native width differs from disc");
+_Static_assert(PORT_FSIZE(struct PouchData, superBowserCoins) == 1, "PouchData.superBowserCoins: native width differs from disc");
+_Static_assert(PORT_FSIZE(struct PouchData, superBowserScore) == 4, "PouchData.superBowserScore: native width differs from disc");
 _Static_assert(PORT_FSIZE(struct PouchData, yoshiName[0]) == 1, "PouchData.yoshiName: native width differs from disc");
 _Static_assert(PORT_FSIZE(struct PouchData, pad_5D0[0]) == 1, "PouchData.pad_5D0: native width differs from disc");
 static const PortField portBE_cardsave_PouchData_fields[] = {
@@ -644,35 +644,35 @@ static const PortField portBE_cardsave_PouchData_fields[] = {
     { "audienceCount", 0x84, offsetof(struct PouchData, audienceCount), PORT_FK_F32, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct PouchData, audienceCount), 0, NULL, NULL },
     { "rank", 0x88, offsetof(struct PouchData, rank), PORT_FK_S16, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct PouchData, rank), 0, NULL, NULL },
     { "level", 0x8A, offsetof(struct PouchData, level), PORT_FK_S16, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct PouchData, level), 0, NULL, NULL },
-    { "mStarPowersObtained", 0x8C, offsetof(struct PouchData, mStarPowersObtained), PORT_FK_U16, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct PouchData, mStarPowersObtained), 0, NULL, NULL },
+    { "starPowersObtained", 0x8C, offsetof(struct PouchData, starPowersObtained), PORT_FK_U16, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct PouchData, starPowersObtained), 0, NULL, NULL },
     { "baseMaxHP", 0x8E, offsetof(struct PouchData, baseMaxHP), PORT_FK_S16, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct PouchData, baseMaxHP), 0, NULL, NULL },
     { "baseMaxFP", 0x90, offsetof(struct PouchData, baseMaxFP), PORT_FK_S16, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct PouchData, baseMaxFP), 0, NULL, NULL },
     { "availableBP", 0x92, offsetof(struct PouchData, availableBP), PORT_FK_S16, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct PouchData, availableBP), 0, NULL, NULL },
     { "maximumBP", 0x94, offsetof(struct PouchData, maximumBP), PORT_FK_S16, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct PouchData, maximumBP), 0, NULL, NULL },
-    { "mStarPoints", 0x96, offsetof(struct PouchData, mStarPoints), PORT_FK_S16, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct PouchData, mStarPoints), 0, NULL, NULL },
+    { "starPoints", 0x96, offsetof(struct PouchData, starPoints), PORT_FK_S16, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct PouchData, starPoints), 0, NULL, NULL },
     { "jumpLevel", 0x98, offsetof(struct PouchData, jumpLevel), PORT_FK_S8, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct PouchData, jumpLevel), 0, NULL, NULL },
     { "hammerLevel", 0x99, offsetof(struct PouchData, hammerLevel), PORT_FK_S8, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct PouchData, hammerLevel), 0, NULL, NULL },
-    { "mStarPieceCount", 0x9A, offsetof(struct PouchData, mStarPieceCount), PORT_FK_S16, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct PouchData, mStarPieceCount), 0, NULL, NULL },
-    { "mShineSpriteCount", 0x9C, offsetof(struct PouchData, mShineSpriteCount), PORT_FK_S16, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct PouchData, mShineSpriteCount), 0, NULL, NULL },
-    { "mPowerBounceRecord", 0x9E, offsetof(struct PouchData, mPowerBounceRecord), PORT_FK_U16, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct PouchData, mPowerBounceRecord), 0, NULL, NULL },
+    { "starPieceCount", 0x9A, offsetof(struct PouchData, starPieceCount), PORT_FK_S16, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct PouchData, starPieceCount), 0, NULL, NULL },
+    { "shineSpriteCount", 0x9C, offsetof(struct PouchData, shineSpriteCount), PORT_FK_S16, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct PouchData, shineSpriteCount), 0, NULL, NULL },
+    { "powerBounceRecord", 0x9E, offsetof(struct PouchData, powerBounceRecord), PORT_FK_U16, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct PouchData, powerBounceRecord), 0, NULL, NULL },
     { "keyItems", 0xA0, offsetof(struct PouchData, keyItems), PORT_FK_S16, PORT_CNT_ONE, 0, 1, 121, 0x0, 2, PORT_FSIZE(struct PouchData, keyItems[0]), PORT_FSIZE(struct PouchData, keyItems[0]), 0, NULL, NULL },
     { "heldItems", 0x192, offsetof(struct PouchData, heldItems), PORT_FK_S16, PORT_CNT_ONE, 0, 1, 20, 0x0, 2, PORT_FSIZE(struct PouchData, heldItems[0]), PORT_FSIZE(struct PouchData, heldItems[0]), 0, NULL, NULL },
     { "storedItems", 0x1BA, offsetof(struct PouchData, storedItems), PORT_FK_S16, PORT_CNT_ONE, 0, 1, 32, 0x0, 2, PORT_FSIZE(struct PouchData, storedItems[0]), PORT_FSIZE(struct PouchData, storedItems[0]), 0, NULL, NULL },
     { "badges", 0x1FA, offsetof(struct PouchData, badges), PORT_FK_S16, PORT_CNT_ONE, 0, 1, 200, 0x0, 2, PORT_FSIZE(struct PouchData, badges[0]), PORT_FSIZE(struct PouchData, badges[0]), 0, NULL, NULL },
     { "equippedBadges", 0x38A, offsetof(struct PouchData, equippedBadges), PORT_FK_S16, PORT_CNT_ONE, 0, 1, 200, 0x0, 2, PORT_FSIZE(struct PouchData, equippedBadges[0]), PORT_FSIZE(struct PouchData, equippedBadges[0]), 0, NULL, NULL },
-    { "mEmailIds", 0x51A, offsetof(struct PouchData, mEmailIds), PORT_FK_U8, PORT_CNT_ONE, 0, 1, 100, 0x0, 1, PORT_FSIZE(struct PouchData, mEmailIds[0]), PORT_FSIZE(struct PouchData, mEmailIds[0]), 0, NULL, NULL },
+    { "emailIds", 0x51A, offsetof(struct PouchData, emailIds), PORT_FK_U8, PORT_CNT_ONE, 0, 1, 100, 0x0, 1, PORT_FSIZE(struct PouchData, emailIds[0]), PORT_FSIZE(struct PouchData, emailIds[0]), 0, NULL, NULL },
     { "pad_57E", 0x57E, offsetof(struct PouchData, pad_57E), PORT_FK_U8, PORT_CNT_ONE, 0, 1, 2, 0x0, 1, PORT_FSIZE(struct PouchData, pad_57E[0]), PORT_FSIZE(struct PouchData, pad_57E[0]), 0, NULL, NULL },
-    { "mEmailReceivedFlags", 0x580, offsetof(struct PouchData, mEmailReceivedFlags), PORT_FK_U32, PORT_CNT_ONE, 0, 1, 4, 0x0, 4, PORT_FSIZE(struct PouchData, mEmailReceivedFlags[0]), PORT_FSIZE(struct PouchData, mEmailReceivedFlags[0]), 0, NULL, NULL },
-    { "mEmailReadFlags", 0x590, offsetof(struct PouchData, mEmailReadFlags), PORT_FK_U32, PORT_CNT_ONE, 0, 1, 4, 0x0, 4, PORT_FSIZE(struct PouchData, mEmailReadFlags[0]), PORT_FSIZE(struct PouchData, mEmailReadFlags[0]), 0, NULL, NULL },
+    { "emailReceivedFlags", 0x580, offsetof(struct PouchData, emailReceivedFlags), PORT_FK_U32, PORT_CNT_ONE, 0, 1, 4, 0x0, 4, PORT_FSIZE(struct PouchData, emailReceivedFlags[0]), PORT_FSIZE(struct PouchData, emailReceivedFlags[0]), 0, NULL, NULL },
+    { "emailReadFlags", 0x590, offsetof(struct PouchData, emailReadFlags), PORT_FK_U32, PORT_CNT_ONE, 0, 1, 4, 0x0, 4, PORT_FSIZE(struct PouchData, emailReadFlags[0]), PORT_FSIZE(struct PouchData, emailReadFlags[0]), 0, NULL, NULL },
     { "pad_5A0", 0x5A0, offsetof(struct PouchData, pad_5A0), PORT_FK_U8, PORT_CNT_ONE, 0, 1, 16, 0x0, 1, PORT_FSIZE(struct PouchData, pad_5A0[0]), PORT_FSIZE(struct PouchData, pad_5A0[0]), 0, NULL, NULL },
-    { "mShopPoints", 0x5B0, offsetof(struct PouchData, mShopPoints), PORT_FK_S16, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct PouchData, mShopPoints), 0, NULL, NULL },
+    { "shopPoints", 0x5B0, offsetof(struct PouchData, shopPoints), PORT_FK_S16, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct PouchData, shopPoints), 0, NULL, NULL },
     { "pad_5B2", 0x5B2, offsetof(struct PouchData, pad_5B2), PORT_FK_U8, PORT_CNT_ONE, 0, 1, 2, 0x0, 1, PORT_FSIZE(struct PouchData, pad_5B2[0]), PORT_FSIZE(struct PouchData, pad_5B2[0]), 0, NULL, NULL },
     { "shopPointRewardFlags", 0x5B4, offsetof(struct PouchData, shopPointRewardFlags), PORT_FK_U32, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct PouchData, shopPointRewardFlags), 0, NULL, NULL },
-    { "mMerleeCurseUsesRemaining", 0x5B8, offsetof(struct PouchData, mMerleeCurseUsesRemaining), PORT_FK_U8, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct PouchData, mMerleeCurseUsesRemaining), 0, NULL, NULL },
-    { "mTurnsUntilMerleeActivation", 0x5B9, offsetof(struct PouchData, mTurnsUntilMerleeActivation), PORT_FK_S8, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct PouchData, mTurnsUntilMerleeActivation), 0, NULL, NULL },
-    { "mMerleeNextCurseType", 0x5BA, offsetof(struct PouchData, mMerleeNextCurseType), PORT_FK_U8, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct PouchData, mMerleeNextCurseType), 0, NULL, NULL },
-    { "mSuperBowserCoins", 0x5BB, offsetof(struct PouchData, mSuperBowserCoins), PORT_FK_U8, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct PouchData, mSuperBowserCoins), 0, NULL, NULL },
-    { "mSuperBowserScore", 0x5BC, offsetof(struct PouchData, mSuperBowserScore), PORT_FK_U32, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct PouchData, mSuperBowserScore), 0, NULL, NULL },
+    { "merleeCurseUsesRemaining", 0x5B8, offsetof(struct PouchData, merleeCurseUsesRemaining), PORT_FK_U8, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct PouchData, merleeCurseUsesRemaining), 0, NULL, NULL },
+    { "turnsUntilMerleeActivation", 0x5B9, offsetof(struct PouchData, turnsUntilMerleeActivation), PORT_FK_S8, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct PouchData, turnsUntilMerleeActivation), 0, NULL, NULL },
+    { "merleeNextCurseType", 0x5BA, offsetof(struct PouchData, merleeNextCurseType), PORT_FK_U8, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct PouchData, merleeNextCurseType), 0, NULL, NULL },
+    { "superBowserCoins", 0x5BB, offsetof(struct PouchData, superBowserCoins), PORT_FK_U8, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct PouchData, superBowserCoins), 0, NULL, NULL },
+    { "superBowserScore", 0x5BC, offsetof(struct PouchData, superBowserScore), PORT_FK_U32, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct PouchData, superBowserScore), 0, NULL, NULL },
     { "yoshiName", 0x5C0, offsetof(struct PouchData, yoshiName), PORT_FK_U8, PORT_CNT_ONE, 0, 1, 16, 0x0, 1, PORT_FSIZE(struct PouchData, yoshiName[0]), PORT_FSIZE(struct PouchData, yoshiName[0]), 0, NULL, NULL },
     { "pad_5D0", 0x5D0, offsetof(struct PouchData, pad_5D0), PORT_FK_U8, PORT_CNT_ONE, 0, 1, 4, 0x0, 1, PORT_FSIZE(struct PouchData, pad_5D0[0]), PORT_FSIZE(struct PouchData, pad_5D0[0]), 0, NULL, NULL },
 };

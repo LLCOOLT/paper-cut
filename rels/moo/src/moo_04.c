@@ -1,117 +1,41 @@
+// moo_04 (月, the Moon): a scene map: a flight scene with an X-Naut (stg7_aji messages) and an epilogue scene (ep_45).
+
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
 
-#pragma force_active on
 #include "mario/mario.h"
 #include "party.h"
 #include "manager/evtmgr_cmd.h"
 #include "evt/evt_npc.h"
+#include "evt/evt_bero.h"
+#include "evt/evt_bg.h"
+#include "evt/evt_cam.h"
+#include "evt/evt_eff.h"
+#include "evt/evt_fade.h"
+#include "evt/evt_map.h"
+#include "evt/evt_mario.h"
+#include "evt/evt_msg.h"
+#include "evt/evt_party.h"
+#include "evt/evt_seq.h"
+#include "evt/evt_snd.h"
+#include "evt/evt_sub.h"
+#include "moo.h"
+#include "math.h"
+#include "evt/evt_story.h"
+#include "driver/mapdrv.h"
 
-#ifndef TARGET_PC /* PC port: the host libc declares these */
-double fmod(double x, double y);
-#endif
-
-USER_FUNC(evt_bero_mapchange);
-USER_FUNC(evt_bg_disp_onoff);
-USER_FUNC(evt_cam3d_evt_set);
-USER_FUNC(evt_eff64);
-USER_FUNC(evt_eff_delete);
-USER_FUNC(evt_fade_end_wait);
-USER_FUNC(evt_fade_entry);
-USER_FUNC(evt_fade_set_mapchange_type);
-USER_FUNC(evt_mapobj_flag_onoff);
-USER_FUNC(evt_mario_cont_onoff);
-USER_FUNC(evt_mario_dispflag_onoff);
-USER_FUNC(evt_mario_get_party);
-USER_FUNC(evt_mario_key_onoff);
-USER_FUNC(evt_mario_kill_party);
-USER_FUNC(evt_mario_set_dir);
-USER_FUNC(evt_mario_set_pos);
-USER_FUNC(evt_mario_set_pose);
-USER_FUNC(evt_msg_print);
-USER_FUNC(evt_npc_add_rotate);
-USER_FUNC(evt_npc_get_position);
-USER_FUNC(evt_npc_get_scale);
-USER_FUNC(evt_npc_set_position);
-USER_FUNC(evt_npc_set_rotate_offset);
-USER_FUNC(evt_npc_set_scale);
-USER_FUNC(evt_npc_setup);
-USER_FUNC(evt_party_cont_onoff);
-USER_FUNC(evt_party_set_dir);
-USER_FUNC(evt_party_set_pos);
-USER_FUNC(evt_party_set_pose);
-USER_FUNC(evt_party_stop);
-USER_FUNC(evt_seq_wait);
-USER_FUNC(evt_snd_bgm_scope);
-USER_FUNC(evt_snd_bgmoff_f);
-USER_FUNC(evt_snd_bgmon);
-USER_FUNC(evt_snd_envoff_f);
-USER_FUNC(evt_snd_envon);
-USER_FUNC(evt_snd_sfx_pos);
-USER_FUNC(evt_snd_sfxoff);
-USER_FUNC(evt_snd_sfxon);
-USER_FUNC(evt_snd_sfxon_3d);
-USER_FUNC(evt_sub_intpl_msec_get_value);
-USER_FUNC(evt_sub_intpl_msec_init);
-USER_FUNC(evt_sub_spline_get_value);
-USER_FUNC(evt_sub_spline_init);
 static USER_FUNC(mario_kirimomi);
 
-f32 fd_moo_04_negone_one_374[2] __attribute__((aligned(8)));
-f32 fd_moo_04_neg_one_382;
-f32 fd_moo_04___local_PI_383;
-f32 fd_moo_04___local_3PIO2_385;
-f32 fd_moo_04_one_negone_373[2] __attribute__((aligned(8)));
-f32 fd_moo_04___local_PIO2_384;
-f32 fd_moo_04_one_381;
-f32 fd_moo_04_negone_one_360[2] __attribute__((aligned(8)));
-f32 fd_moo_04_neg_one_365;
-f32 fd_moo_04___local_PI_366;
-f32 fd_moo_04___local_3PIO2_368;
-f32 fd_moo_04_one_negone_359[2] __attribute__((aligned(8)));
-f32 fd_moo_04___local_PIO2_367;
-f32 fd_moo_04_one_364;
 static f32 spline_dt[9];
-static EvtWord party_damage_pose[52];
-static EvtWord mario_fly[168];
-EvtWord kanbu_fly[198];
 static NpcSetupInfo npcEnt[2];
-static EvtWord epilogue_evt[64];
-EvtWord moo_04_init_evt[220];
 
-f32 fd_moo_04_negone_one_374[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_moo_04_neg_one_382 = -1.0f;
-
-f32 fd_moo_04___local_PI_383 = 3.1415927f;
-
-f32 fd_moo_04___local_3PIO2_385 = 4.712389f;
-
-f32 fd_moo_04_one_negone_373[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_moo_04___local_PIO2_384 = 1.5707964f;
-
-f32 fd_moo_04_one_381 = 1.0f;
-
-f32 fd_moo_04_negone_one_360[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_moo_04_neg_one_365 = -1.0f;
-
-f32 fd_moo_04___local_PI_366 = 3.1415927f;
-
-f32 fd_moo_04___local_3PIO2_368 = 4.712389f;
-
-f32 fd_moo_04_one_negone_359[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_moo_04___local_PIO2_367 = 1.5707964f;
-
-f32 fd_moo_04_one_364 = 1.0f;
-
+/** Three control points (x, y, z) of the path the partner flies along during the five seconds of the flight scene. */
 static f32 spline_dt[] = {
     -12.916925f, 123.84991f, 512.97614f, 17.94919f, 46.050007f, 5.011878f, 65.15421f, 48.400024f,
     -75.32023f,
 };
 
+/** Event script: puts the active partner (by party id) into its hurt pose during the flight. */
 static EVT_BEGIN(party_damage_pose)
     CALL(evt_mario_get_party, LW(0))
     SWITCH(LW(0))
@@ -134,6 +58,11 @@ static EVT_BEGIN(party_damage_pose)
     RETURN
 EVT_END()
 
+/**
+ * Event script: the flight to the Moon (story progress below STORY_STG7_06_TO_THE_MOON).
+ * Mario and the partner tumble along a spline for 5 seconds, shrinking as they go away from the camera,
+ * with a flying sound, then the map changes to moo_00.
+ */
 static EVT_BEGIN(mario_fly)
     CALL(evt_mario_key_onoff, 0)
     CALL(evt_party_stop, 0)
@@ -141,7 +70,7 @@ static EVT_BEGIN(mario_fly)
     CALL(evt_snd_sfxon, STRING("SFX_STG7_MARIO_FLY1"), LW(10))
     CALL(evt_mario_dispflag_onoff, 1, 2)
     CALL(evt_mario_set_pose, STRING("M_N_7"))
-    CALL_CHILD(PTR(party_damage_pose))
+    CALL_CHILD(party_damage_pose)
     WAIT_FRAMES(1)
     CALL(evt_mario_cont_onoff, 0)
     CALL(evt_party_cont_onoff, 0, 0)
@@ -192,6 +121,13 @@ static EVT_BEGIN(mario_fly)
     RETURN
 EVT_END()
 
+/**
+ * Event script: Lord Crump (the NPC 幹部) blasted into space after the Magnus von Grapple 2.0 fight,
+ * while the story is still before STORY_STG7_20_LORD_CRUMP_DEFEATED:
+ * he spins as he flies off at shrinking scale with the SFX_STG7_3RD_FLY1 sound,
+ * a flash (wangflush) lights up and the map changes back to aji_14 at "tuzuki",
+ * where the aftermath sets that flag.
+ */
 EVT_BEGIN(kanbu_fly)
     WAIT_MS(2000)
     CALL(evt_npc_set_position, STRING("幹部"), 25, 75, -70)
@@ -253,10 +189,11 @@ EVT_BEGIN(kanbu_fly)
     RETURN
 EVT_END()
 
+/** The single NPC of the scene, an X-Naut officer (幹部) who can move and talk. */
 static NpcSetupInfo npcEnt[] = {
     {
-        /*"幹部"*/"\x8A\xB2\x95\x94", // name
-        0x40000600, // flags
+        "幹部", // name
+        NPC_FLAG_NO_WALL_HIT | NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM, // flags
         0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, // reactionFlags..returnEvent
         NULL, 0, // blowEvent..territoryType
         {0}, // territoryBase
@@ -266,8 +203,13 @@ static NpcSetupInfo npcEnt[] = {
     {0},
 };
 
+/**
+ * Event script: the epilogue scene after the ending:
+ * the camera shows the Moon, a text (ep_45) is displayed,
+ * the music and ambience fade out and the map changes to gor_00 (epilogue2).
+ */
 static EVT_BEGIN(epilogue_evt)
-    CALL(evt_snd_bgmon, 512, STRING("BGM_STG7_DUN1"))
+    CALL(evt_snd_bgmon, PSND_FADE_OUT, STRING("BGM_STG7_DUN1"))
     CALL(evt_snd_bgm_scope, 0, 1)
     CALL(evt_mario_cont_onoff, 0)
     CALL(evt_mario_key_onoff, 0)
@@ -278,35 +220,43 @@ static EVT_BEGIN(epilogue_evt)
     WAIT_MS(500)
     CALL(evt_msg_print, 0, STRING("ep_45"), 0, 0)
     WAIT_MS(2000)
-    CALL(evt_snd_bgmoff_f, 512, 3000)
-    CALL(evt_snd_envoff_f, 512, 3000)
-    CALL(evt_fade_set_mapchange_type, 1, 10, 900, 9, 900)
+    CALL(evt_snd_bgmoff_f, PSND_FADE_OUT, 3000)
+    CALL(evt_snd_envoff_f, PSND_FADE_OUT, 3000)
+    CALL(evt_fade_set_mapchange_type, 1, FADE_OUT_BLACK, 900, FADE_IN_BLACK, 900)
     CALL(evt_bero_mapchange, STRING("gor_00"), STRING("epilogue2"))
     RETURN
 EVT_END()
 
+/**
+ * Map init script for moo_04, the space backdrop.
+ * By story progress: before the Moon it runs the flight (mario_fly);
+ * until Lord Crump is defeated it runs the officer flight (kanbu_fly);
+ * after the final battle it runs the epilogue; otherwise it shows the message stg7_aji_63 and a crystal flash,
+ * sets the story progress to STORY_STG7_26_THE_HIDEOUT_EXPLODES with a white fade
+ * and changes to tik_00 with the teleporter arrival flag.
+ */
 EVT_BEGIN(moo_04_init_evt)
-    IF_INT_NOT_EQUAL(GSW(0), 402)
-        CALL(evt_snd_bgmon, 512, STRING("BGM_STG7_MON1"))
-        CALL(evt_snd_envon, 272, STRING("ENV_STG7_MOO4"))
+    IF_INT_NOT_EQUAL(GSW(GSW_STORY_PROGRESS), STORY_STG8_END_AFTER_THE_BATTLE)
+        CALL(evt_snd_bgmon, PSND_FADE_OUT, STRING("BGM_STG7_MON1"))
+        CALL(evt_snd_envon, PSND_FADE_RESTART | PSND_FADE_IN, STRING("ENV_STG7_MOO4"))
     END_IF
     CALL(evt_npc_setup, PTR(npcEnt))
-    SWITCH(GSW(0))
-        CASE_LESS(358)
+    SWITCH(GSW(GSW_STORY_PROGRESS))
+        CASE_LESS(STORY_STG7_06_TO_THE_MOON)
         CALL(evt_cam3d_evt_set, 0, 134, 533, 0, 38, -8, 0, 11)
-        SPAWN_EVENT(PTR(mario_fly))
+        SPAWN_EVENT(mario_fly)
         WAIT_FRAMES(1)
-        CASE_LESS(373)
+        CASE_LESS(STORY_STG7_20_LORD_CRUMP_DEFEATED)
         CALL(evt_cam3d_evt_set, 20, 200, 533, 20, 104, -8, 0, 11)
         CALL(evt_mario_cont_onoff, 0)
         CALL(evt_party_cont_onoff, 0, 0)
         CALL(evt_mario_set_pos, 0, -1000, 0)
         CALL(evt_party_set_pos, 0, 0, -1000, 0)
         WAIT_FRAMES(1)
-        SPAWN_EVENT(PTR(kanbu_fly))
-        CASE_EQUAL(402)
+        SPAWN_EVENT(kanbu_fly)
+        CASE_EQUAL(STORY_STG8_END_AFTER_THE_BATTLE)
         CALL(evt_mario_kill_party, 0)
-        SPAWN_EVENT(PTR(epilogue_evt))
+        SPAWN_EVENT(epilogue_evt)
         CASE_DEFAULT
         CALL(evt_cam3d_evt_set, 75, 160, 533, 75, 65, -8, 0, 11)
         BEGIN_INLINE_EVENT
@@ -323,22 +273,26 @@ EVT_BEGIN(moo_04_init_evt)
             CALL(evt_eff64, 0, STRING("crystal_n64"), 6, 30, 90, -75, FLOAT(1.0f), 50, 0, 0, 0, 0, 0, 0)
             WAIT_MS(1000)
             CALL(evt_eff64, STRING("hikari"), STRING("radiation_n64"), 2, 30, 90, -75, FLOAT(1.0f), 0, 0, 0, 0, 0, 0, 0)
-            SET_VALUE(GSW(0), 377)
-            CALL(evt_fade_entry, 17, 2000, 255, 255, 255)
+            SET_VALUE(GSW(GSW_STORY_PROGRESS), STORY_STG7_26_THE_HIDEOUT_EXPLODES)
+            CALL(evt_fade_entry, FADE_OUT_WHITE, 2000, 255, 255, 255)
             CALL(evt_fade_end_wait)
-            CALL(evt_mapobj_flag_onoff, 1, 1, STRING("S"), 1)
+            CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("S"), MAPOBJ_FLAG_HIDE)
             CALL(evt_bg_disp_onoff, 0)
             CALL(evt_eff_delete, STRING("hikari"))
-            CALL(evt_fade_entry, 16, 2000, 255, 255, 255)
+            CALL(evt_fade_entry, FADE_IN_WHITE, 2000, 255, 255, 255)
             CALL(evt_fade_end_wait)
-            CALL(evt_fade_set_mapchange_type, 1, 10, 1000, 9, 1000)
-            SET_VALUE(GSWF(4175), 1)
+            CALL(evt_fade_set_mapchange_type, 1, FADE_OUT_BLACK, 1000, FADE_IN_BLACK, 1000)
+            SET_VALUE(GSWF(GSWF_TIK00_TELEPORTER_ARRIVAL), 1)
             CALL(evt_bero_mapchange, STRING("tik_00"), 0)
         END_INLINE_EVENT
     END_SWITCH
     RETURN
 EVT_END()
 
+/**
+ * Script helper: makes Mario and the partner spin end over end during the flight.
+ * args[0] is their scale, which shrinks over the flight; both rotate 10 degrees per call.
+ */
 static USER_FUNC(mario_kirimomi) {
     f32 scale = evtGetFloat(event, event->args[0]);
     MarioWork* mario = marioGetPtr();
@@ -362,4 +316,3 @@ static USER_FUNC(mario_kirimomi) {
     }
     return EVT_RETURN_DONE;
 }
-

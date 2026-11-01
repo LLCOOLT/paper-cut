@@ -1,5 +1,5 @@
+// Action command: hold the control stick left or right as prompted (ac_lst_rc_keep).
 #include "battle/ac/ac_table.h"
-#include "pc_call.h"
 #include "battle/battle.h"
 #include "battle/battle_ac.h"
 #include "battle/battle_pad.h"
@@ -11,25 +11,35 @@
 #include "icon_ids.h"
 
 typedef struct LstRcWork {
-    s32 timer;  // 0x2BC
-    s32 count;  // 0x2C0
-    s16 held0;  // 0x2C4
-    s16 held1;  // 0x2C6
+    s32 timer;    // 0x2BC
+    s32 count;    // 0x2C0
+    s16 held0;    // 0x2C4
+    s16 held1;    // 0x2C6
     s32 endTimer; // 0x2C8
 } LstRcWork;
 
 #define LR_WORK(ac) ((LstRcWork*)(ac)->work)
 
+/**
+ * Release window of the unused two-stick hammer charge command, by difficulty (80 frames at the easiest
+ * down to 5), and the names of the star icons it removes when it ends.
+ */
 s32 ac_lstrckeep_ok_frame[] = {0x50, 0x46, 0x3C, 0x28, 0x14, 0x0A, 0x05};
 const char* ac_lstrckeep_iconname[] = {"_AcSkl1", "_AcSkl2", "_AcSkl3", "_AcSkl4"};
 
 static void actionCommandDisp(f32 x, f32 y, s32 n);
 
+/**
+ * Per-frame driver of action command 4, which no battle script in the tree sets up: a two-stick hammer charge.
+ * Tilt the Control Stick left and the C-Stick right within 120 frames,
+ * keep holding while three stars light (step lengths params[0..3]),
+ * then let go of both during the last step (params[4] frames) within a difficulty window of 80 down to 5 frames.
+ * Letting go early, or for over 5 frames, or never, fails.
+ */
 s32 battleAcMain_LstRcKeep(BattleWork* work) {
     BattleActions* ac = &work->actionCommands;
     LstRcWork* lw = LR_WORK(ac);
     BattleACDispParams* disp = (BattleACDispParams*)&ac->disp;
-    const char** p;
     s32 loop;
     s32 off;
     s32 autoCmd = 0;
@@ -38,12 +48,12 @@ s32 battleAcMain_LstRcKeep(BattleWork* work) {
     s32 tm;
     s32 n;
     s32 i;
-    if (ac->mAcUnit->badgesEquipped.AutoCommand) {
+    if (ac->acUnit->badgesEquipped.AutoCommand) {
         autoCmd = 1;
     }
     do {
         loop = 0;
-        switch (ac->mAcState) {
+        switch (ac->acState) {
             case 0:
                 ac->result = 1;
                 lw->count = 0;
@@ -51,18 +61,18 @@ s32 battleAcMain_LstRcKeep(BattleWork* work) {
                 disp->iconX = -300.0f;
                 disp->iconY = 0.0f;
                 disp->slideTimer = 20;
-                ac->mAcState = 99;
+                ac->acState = 99;
                 break;
             case 99:
                 break;
             case 100:
                 lw->timer = 120;
-                ac->mAcState = 1000;
+                ac->acState = 1000;
                 lw->held0 = 0;
                 lw->held1 = 0;
             case 1000:
-                if ((ac->setupFlags & 1) && (ac->mAcUnit->mTokenFlags & kConfusedAction)) {
-                    if (ac->setupFlags & 2) {
+                if ((ac->setupFlags & AC_SETUP_FLAG_CONFUSED_AUTO) && (ac->acUnit->tokenFlags & TOKEN_FLAG_CONFUSED_ACTION)) {
+                    if (ac->setupFlags & AC_SETUP_FLAG_RETRIES) {
                         ac->setupParam--;
                         if (ac->setupParam >= 0) {
                             break;
@@ -72,32 +82,32 @@ s32 battleAcMain_LstRcKeep(BattleWork* work) {
                         ac->result = 0;
                     } else {
                         ac->result = 2;
-                        ac->mResultCount++;
+                        ac->resultCount++;
                     }
                     return 0;
                 }
                 if (lw->held0 == 0) {
-                    if (BattlePadCheckTrigger(0x40000)) {
+                    if (BattlePadCheckTrigger(BTL_PAD_STICK_LEFT)) {
                         lw->held0 = 1;
                     }
                 } else {
                     lw->held0++;
-                    if (((s32)BattlePadCheckNow(0x40000) == 0)) {
+                    if (((s32)BattlePadCheckNow(BTL_PAD_STICK_LEFT) == 0)) {
                         lw->held0 = 0;
                     }
                 }
                 if (lw->held1 == 0) {
-                    if (BattlePadCheckTrigger(0x800000)) {
+                    if (BattlePadCheckTrigger(BTL_PAD_SUBSTICK_RIGHT)) {
                         lw->held1 = 1;
                     }
                 } else {
                     lw->held1++;
-                    if (((s32)BattlePadCheckNow(0x800000) == 0)) {
+                    if (((s32)BattlePadCheckNow(BTL_PAD_SUBSTICK_RIGHT) == 0)) {
                         lw->held1 = 0;
                     }
                 }
                 if ((lw->held0 != 0 && lw->held1 != 0) || ac->countdown > 0 || autoCmd) {
-                    ac->mAcState = 1001;
+                    ac->acState = 1001;
                     lw->timer = ac->params[0];
                     lw->held1 = (lw->held0 = (lw->count = 0));
                     break;
@@ -106,7 +116,7 @@ s32 battleAcMain_LstRcKeep(BattleWork* work) {
                 if (lw->timer <= 0) {
                     ac->result = 0;
                     loop = 1;
-                    ac->mAcState = 1003;
+                    ac->acState = 1003;
                 }
                 break;
             case 1001:
@@ -114,24 +124,24 @@ s32 battleAcMain_LstRcKeep(BattleWork* work) {
                     ac->countdown--;
                     ac->result = 2;
                     loop = 1;
-                    ac->mAcState = 1003;
+                    ac->acState = 1003;
                 }
                 lw->timer--;
                 if (lw->held0 > 0) {
                     lw->held0++;
-                } else if (((s32)BattlePadCheckNow(0x40000) == 0)) {
+                } else if (((s32)BattlePadCheckNow(BTL_PAD_STICK_LEFT) == 0)) {
                     lw->held0 = 1;
                 }
                 if (lw->held1 > 0) {
                     lw->held1++;
-                } else if (((s32)BattlePadCheckNow(0x800000) == 0)) {
+                } else if (((s32)BattlePadCheckNow(BTL_PAD_SUBSTICK_RIGHT) == 0)) {
                     lw->held1 = 1;
                 }
                 if (!autoCmd) {
                     if (lw->held0 > 5 || lw->held1 > 5) {
                         ac->result &= ~1;
                         loop = 1;
-                        ac->mAcState = 1003;
+                        ac->acState = 1003;
                         break;
                     }
                 }
@@ -141,7 +151,7 @@ s32 battleAcMain_LstRcKeep(BattleWork* work) {
                     if (lw->count >= 5) {
                         ac->result &= ~1;
                         loop = 1;
-                        ac->mAcState = 1003;
+                        ac->acState = 1003;
                         break;
                     }
                     lw->timer = ac->params[lw->count];
@@ -153,7 +163,7 @@ s32 battleAcMain_LstRcKeep(BattleWork* work) {
                 ok = 0;
                 if (lw->count == 4) {
                     d = ac->params[4] - tm;
-                    if (d <= ac_lstrckeep_ok_frame[PCCALL(((s32(*)(BattleWork*))BattleActionCommandGetDifficulty)(work), BattleActionCommandGetDifficulty(work))]) {
+                    if (d <= ac_lstrckeep_ok_frame[BattleActionCommandGetDifficulty(work)]) {
                         ok = 1;
                     }
                 }
@@ -164,34 +174,37 @@ s32 battleAcMain_LstRcKeep(BattleWork* work) {
                     ac->result |= 2;
                     ac->result &= ~1;
                     loop = 1;
-                    ac->mAcState = 1003;
+                    ac->acState = 1003;
                     break;
                 }
                 if (ok) {
                     ac->result |= 2;
                     ac->result &= ~1;
                     loop = 1;
-                    ac->mAcState = 1003;
+                    ac->acState = 1003;
                     break;
                 }
                 ac->result &= ~1;
                 loop = 1;
-                ac->mAcState = 1003;
+                ac->acState = 1003;
                 break;
             case 1003:
-                n = lw->count - 1; if (n >= 0) {
-                for (i = 0, off = 0; i <= n; i++, off += 4) { iconDelete(ac_lstrckeep_iconname[off >> 2]);
-                } }
-                ac->mAcState = 1004;
+                n = lw->count - 1;
+                if (n >= 0) {
+                    for (i = 0, off = 0; i <= n; i++, off += 4) {
+                        iconDelete(ac_lstrckeep_iconname[off >> 2]);
+                    }
+                }
+                ac->acState = 1004;
             case 1004:
             case 1005:
                 lw->endTimer = 60;
-                ac->mAcState = 1006;
+                ac->acState = 1006;
                 break;
             case 1006:
                 lw->endTimer--;
                 if (lw->endTimer <= 0) {
-                    ac->mAcState = 1007;
+                    ac->acState = 1007;
                 }
                 break;
             case 1007:
@@ -205,21 +218,26 @@ s32 battleAcMain_LstRcKeep(BattleWork* work) {
     return 1;
 }
 
+/** Returns the result word: 1 while running, 2 on success, 0 on failure. */
 s32 battleAcResult_LstRcKeep(BattleWork* work) {
     return work->actionCommands.result;
 }
 
+/**
+ * Display callback: slides the prompt in from the left over 20 frames, lights the stars as the steps pass,
+ * and after the command is stopped keeps it up for 40 frames before sliding it back out.
+ */
 void battleAcDisp_LstRcKeep(CameraId cameraId, void* param) {
     BattleWork* work = (BattleWork*)param;
     BattleActions* ac = &work->actionCommands;
     BattleACDispParams* disp = &ac->disp;
     LstRcWork* lw = (LstRcWork*)ac->work;
-    switch (ac->mAcState) {
+    switch (ac->acState) {
         case 99:
         case 100:
         case 1000:
             disp->iconStep = -1;
-            disp->iconX = intplGetValue(4, 20 - disp->slideTimer, 20, -300.0f, 30.0f);
+            disp->iconX = intplGetValue(4, -300.0f, 30.0f, 20 - disp->slideTimer, 20);
             actionCommandDisp(disp->iconX, disp->iconY, disp->iconStep);
             if (disp->slideTimer > 0) {
                 (disp->slideTimer)--;
@@ -227,7 +245,7 @@ void battleAcDisp_LstRcKeep(CameraId cameraId, void* param) {
             break;
         case 1001:
             disp->iconStep = lw->count - 1;
-            disp->iconX = intplGetValue(4, 20 - disp->slideTimer, 20, -300.0f, 30.0f);
+            disp->iconX = intplGetValue(4, -300.0f, 30.0f, 20 - disp->slideTimer, 20);
             actionCommandDisp(disp->iconX, disp->iconY, disp->iconStep);
             if (disp->slideTimer > 0) {
                 (disp->slideTimer)--;
@@ -241,7 +259,7 @@ void battleAcDisp_LstRcKeep(CameraId cameraId, void* param) {
         case 1005:
         case 1006:
             if (disp->slideTimer >= 40) {
-                disp->iconX = intplGetValue(4, disp->slideTimer - 40, 20, 30.0f, -300.0f);
+                disp->iconX = intplGetValue(4, 30.0f, -300.0f, disp->slideTimer - 40, 20);
             } else {
                 disp->iconX = 30.0f;
             }
@@ -253,44 +271,49 @@ void battleAcDisp_LstRcKeep(CameraId cameraId, void* param) {
     }
 }
 
+/** Called by btlevtcmd_StopAC: starts the 60-frame wait after which the command clears its callbacks. */
 void battleAcDelete_LstRcKeep(BattleWork* work) {
-    work->actionCommands.mAcState = 1005;
+    work->actionCommands.acState = 1005;
 }
 
-#pragma dont_inline on
+// actionCommandDisp size-optimised, as in the original (the object differs without it)
 #pragma optimize_for_size on
+/**
+ * Draws the two stick icons (shown tilted until the last step),
+ * the bar and its three numbered stars lit up to step n, and the final star, lit on the last step.
+ */
 static void actionCommandDisp(f32 x, f32 y, s32 n) {
     s32 off;
     s32 i;
-    camGetPtr(8);
+    camGetPtr(CAMERA_2D);
     if (n < 3) {
         Vec pos = {0.0f, 0.0f, 0.0f};
         pos.x = -168.0f + x;
         pos.y = 70.0f + y;
-        iconDispGx(&pos, 0x10, ICON_071, 1.0f);
+        iconDispGx(&pos, ICON_DISP_2D, ICON_071, 1.0f);
     } else {
         Vec pos = {0.0f, 0.0f, 0.0f};
         pos.x = -168.0f + x;
         pos.y = 70.0f + y;
-        iconDispGx(&pos, 0x10, ICON_070, 1.0f);
+        iconDispGx(&pos, ICON_DISP_2D, ICON_070, 1.0f);
     }
     if (n < 3) {
         Vec pos = {0.0f, 0.0f, 0.0f};
         pos.x = -232.0f + x;
         pos.y = 70.0f + y;
-        iconDispGx(&pos, 0x10, ICON_078, 1.0f);
+        iconDispGx(&pos, ICON_DISP_2D, ICON_078, 1.0f);
     } else {
         Vec pos = {0.0f, 0.0f, 0.0f};
         pos.x = -232.0f + x;
         pos.y = 70.0f + y;
-        iconDispGx(&pos, 0x10, ICON_079, 1.0f);
+        iconDispGx(&pos, ICON_DISP_2D, ICON_079, 1.0f);
     }
     {
         Vec pos = {0.0f, 0.0f, 0.0f};
         pos.x = -200.0f + x;
         y = 25.0f + y;
         pos.y = y;
-        iconDispGx(&pos, 0x10, ICON_08E, 1.0f);
+        iconDispGx(&pos, ICON_DISP_2D, ICON_08E, 1.0f);
     }
     i = 0;
     off = 0;
@@ -299,26 +322,24 @@ static void actionCommandDisp(f32 x, f32 y, s32 n) {
             Vec pos = {0.0f, 0.0f, 0.0f};
             pos.x = x + (f32)(off - 0x102);
             pos.y = y;
-            iconDispGx(&pos, 0x10, ICON_092 + i, 1.0f);
+            iconDispGx(&pos, ICON_DISP_2D, ICON_092 + i, 1.0f);
         } else {
             Vec pos = {0.0f, 0.0f, 0.0f};
             pos.x = x + (f32)(off - 0x102);
             pos.y = y;
-            iconDispGx(&pos, 0x10, ICON_091, 0.5f);
+            iconDispGx(&pos, ICON_DISP_2D, ICON_091, 0.5f);
         }
     }
     if (n < 3) {
         Vec pos = {0.0f, 0.0f, 0.0f};
         pos.x = -151.0f + x;
         pos.y = y;
-        iconDispGx(&pos, 0x10, ICON_091, 1.0f);
+        iconDispGx(&pos, ICON_DISP_2D, ICON_091, 1.0f);
     } else {
         Vec pos = {0.0f, 0.0f, 0.0f};
         pos.x = -151.0f + x;
         pos.y = y;
-        iconDispGx(&pos, 0x10, ICON_095, 1.0f);
+        iconDispGx(&pos, ICON_DISP_2D, ICON_095, 1.0f);
     }
 }
 #pragma optimize_for_size reset
-#pragma dont_inline reset
-

@@ -1,3 +1,5 @@
+// Paper Mario 64 effect: one glass shard that flies off in a random direction, falls and spins while its texture
+// shimmers; types 0-1 white, 2-3 green, odd types add a glint. Used when a Yux barrier shatters and for ice shards.
 #include "driver/effdrv.h"
 #include "eff/n64/eff_glass_n64.h"
 #include "eff/eff_n64.h"
@@ -8,7 +10,7 @@
 #include <dolphin/mtx.h>
 #include <stdlib.h>
 
-
+/** 16x16 glass shard sprite. */
 static effN64Vtx size16x16_tex32x32_vtx[] = {
     {-8, -8, 0, 0, 0, 0, 0, 0, 255},
     {8, -8, 0, 1024, 0, 0, 0, 0, 255},
@@ -16,28 +18,34 @@ static effN64Vtx size16x16_tex32x32_vtx[] = {
     {-8, 8, 0, 0, 1024, 0, 0, 0, 255},
 };
 
-static struct { effN64Vtx v[5]; u8 pad[2]; } size48x48_tex32x32_vtx = { { // FAKE: padded to the original symbol size (trailing zero bytes, never read)
+/** 48x48 four-point flash the odd shard types add at the end of their glint cycle; its edges fade out. */
+static effN64Vtx size48x48_tex32x32_vtx[5] = {
     {-32, 0, 0, 0, 0, 255, 255, 255, 0},
     {0, -32, 0, 1024, 0, 255, 255, 255, 0},
     {32, 0, 0, 1024, 1024, 255, 255, 255, 0},
     {0, 32, 0, 0, 1024, 255, 255, 255, 0},
     {0, 0, 0, 0, 0, 255, 255, 255, 200},
-}, {0} };
+};
 
-void effGlassDisp(CameraId cameraId, EffectEntry* effect);
-void effGlassMain(EffectEntry* effect);
+static void effGlassDisp(CameraId cameraId, EffectEntry* effect);
+static void effGlassMain(EffectEntry* effect);
 
+/**
+ * Spawns one tumbling glass shard at (x, y, z) with a random velocity and spin.
+ * Types 0-1 are white and 2-3 are green; the type parity picks the texture column.
+ * Used by effFreezeMain, barrier units in aji/las/moo, evt_eff.
+ */
 EffectEntry* effGlassN64Entry(s32 type, s32 lifetime, f32 x, f32 y, f32 z, f32 scale) {
     EffectEntry* effect;
     EffGlassN64Work* work;
 
     effect = effEntry();
-    effect->type = "GlassN64\0\0\0";
+    effect->type = "GlassN64";
     effect->count = 1;
     work = __memAlloc(HEAP_EFFECT, sizeof(EffGlassN64Work));
     effect->userdata = work;
     effect->callback = effGlassMain;
-    effect->flags |= 2;
+    effect->flags |= EFFECT_FLAG_SOFT_DELETE;
     work->type = type;
     work->frame = 0;
     if (lifetime <= 0) {
@@ -83,7 +91,8 @@ EffectEntry* effGlassN64Entry(s32 type, s32 lifetime, f32 x, f32 y, f32 z, f32 s
     return effect;
 }
 
-void effGlassMain(EffectEntry* effect) {
+/** Applies gravity to the shard, spins it in Z, scrolls its glint texture and fades it out over the last 16 frames. */
+static void effGlassMain(EffectEntry* effect) {
     EffGlassN64Work* work = effect->userdata;
     Vec position;
     Vec tmp = {0.0f, 0.0f, 0.0f};
@@ -92,8 +101,8 @@ void effGlassMain(EffectEntry* effect) {
     tmp.y = work->position.y;
     tmp.z = work->position.z;
     position = tmp;
-    if (effect->flags & 4) {
-        effect->flags &= ~4;
+    if (effect->flags & EFFECT_FLAG_DELETE_REQUESTED) {
+        effect->flags &= ~EFFECT_FLAG_DELETE_REQUESTED;
         work->lifetime = 16;
     }
     if (work->lifetime < 1000) {
@@ -122,7 +131,11 @@ void effGlassMain(EffectEntry* effect) {
     dispEntry(CAMERA_3D, dispCalcZ(&position), 2, (DispCallback)effGlassDisp, effect);
 }
 
-void effGlassDisp(CameraId cameraId, EffectEntry* effect) {
+/**
+ * Draws the shard as a 16x16 sprite using texture 0x59, blending two glint rows;
+ * at the end of the glint cycle the odd type adds a larger flash.
+ */
+static void effGlassDisp(CameraId cameraId, EffectEntry* effect) {
     s32 type;
     EffGlassN64Work* work;
     s32 alpha;
@@ -205,7 +218,7 @@ void effGlassDisp(CameraId cameraId, EffectEntry* effect) {
         GXSetTevAlphaOp(GX_TEVSTAGE0, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
         GXSetTevColorIn(GX_TEVSTAGE0, GX_CC_ZERO, GX_CC_ZERO, GX_CC_ZERO, GX_CC_C0);
         GXSetTevAlphaIn(GX_TEVSTAGE0, GX_CA_ZERO, GX_CA_A0, GX_CA_RASA, GX_CA_ZERO);
-        effSetVtxDescN64(size48x48_tex32x32_vtx.v);
+        effSetVtxDescN64(size48x48_tex32x32_vtx);
         GXLoadPosMtxImm(viewMtx, 0);
         GXSetCurrentMtx(0);
         GXBegin(GX_TRIANGLES, GX_VTXFMT0, 12);

@@ -1,3 +1,4 @@
+// Movie sequence: plays the opening THP movie (simple THP player).
 #include "seq/seq_demo.h"
 #include "dolphin/ai.h"
 #include "dolphin/dvd.h"
@@ -16,12 +17,6 @@
 #include "manager/dvdmgr.h"
 #include "addr_word.h"
 #ifdef TARGET_PC
-/* PC port: prototypes for functions this file called undeclared (implicit int) */
-BOOL THPInit(void);
-u32 THPAudioDecode(s16* audioBuffer, u8* audioFrame, s32 flag);
-s32 THPVideoDecode(void* file, void* tileY, void* tileU, void* tileV, void* work);
-#endif
-#ifdef TARGET_PC
 #include "port/ai_pc.h"
 #include "port/bedecode.h"
 /* PC port: THP is big-endian; frame payloads are parsed by Aurora's THPVideoDecode/THPAudioDecode */
@@ -29,6 +24,8 @@ s32 THPVideoDecode(void* file, void* tileY, void* tileU, void* tileV, void* work
 #else
 #define THP_BE32(p) (*(u32*)(p))
 #endif
+#include "dolphin/thp.h"
+#include "version.h"
 
 typedef struct THPHeader {
     char magic[4];             // 0x0
@@ -144,6 +141,19 @@ static u16 VolumeTable[] = {
 // clang-format on
 
 //.bss
+#if VERSION <= VERSION_DEMO_JP
+#include "manager/filemgr.h"
+
+// work for the demo's movie sequence (seq_demoInit and on, at the end of the file)
+typedef struct SeqDemoWork {
+    BOOL fullScreen; // 0x0, draw the movie once at full size instead of twice at half size
+    s32 frame;       // 0x4, frame last drawn (-1 when none)
+    FileEntry* tpl;  // 0x8, mariost.tpl
+    u8 pad_C[4];     // 0xC
+} SeqDemoWork;
+
+static SeqDemoWork work;
+#endif
 THPSimple SimpleControl;
 s32 WorkBuffer[16];
 s16 SoundBuffer[2][SAMPLES_PER_AUDIO_FRAME * 2] ATTRIBUTE_ALIGN(32);
@@ -159,14 +169,20 @@ AIDCallback OldAIDCallback;
 BOOL Initialized;
 
 // Forward Declarations
-void __THPSimpleDVDCallback(s32 result, DVDFileInfo* fileInfo);
+static void __THPSimpleDVDCallback(s32 result, DVDFileInfo* fileInfo);
 BOOL VideoDecode(u8* videoFrame);
-void THPAudioMixCallback(void);
+static void THPAudioMixCallback(void);
 void THPGXRestore(void);
 void THPGXYuv2RgbSetup(GXRenderModeObj* rmode);
 void THPGXYuv2RgbDraw(u8* y_data, u8* u_data, u8* v_data, s16 x, s16 y, s16 textureWidth, s16 textureHeight,
                       s16 polygonWidth, s16 polygonHeight);
 
+/**
+ * Starts the THPSimple movie player (Nintendo's THP sample player):
+ * enables the locked cache, initialises the THP decoder and hooks the AI DMA callback to mix movie audio.
+ * audioSystem 0 drives AI DMA itself, 1 and 2 chain to the previous callback (the sound library's).
+ * FALSE on failure.
+ */
 BOOL THPSimpleInit(s32 audioSystem) {
     memset(&SimpleControl, 0, sizeof(THPSimple));
     LCEnable();
@@ -202,6 +218,7 @@ BOOL THPSimpleInit(s32 audioSystem) {
     return TRUE;
 }
 
+/** Shuts the player down: disables the locked cache and restores the previous AI DMA callback. */
 void THPSimpleQuit(void) {
     LCDisable();
     {
@@ -214,6 +231,10 @@ void THPSimpleQuit(void) {
     Initialized = FALSE;
 }
 
+/**
+ * Opens a THP file and reads its header and component info (video size, audio format);
+ * FALSE unless it is a version 1.1 THP and nothing is already open. Resets the read, decode and volume state.
+ */
 BOOL THPSimpleOpen(char* fileName) {
     s32 offset, i;
 
@@ -311,6 +332,7 @@ BOOL THPSimpleOpen(char* fileName) {
     return TRUE;
 }
 
+/** Closes the open movie; refuses (FALSE) while prefetching, while audio is playing or with a read in flight. */
 BOOL THPSimpleClose(void) {
     if (SimpleControl.open && SimpleControl.preFetchState == FALSE) {
         if (SimpleControl.audioExist) {
@@ -330,6 +352,10 @@ BOOL THPSimpleClose(void) {
     return FALSE;
 }
 
+/**
+ * Bytes needed for THPSimpleSetBuffer: ten frame read buffers, the Y/U/V textures,
+ * three audio buffers and 4 KB of decoder work. 0 when no movie is open.
+ */
 u32 THPSimpleCalcNeedMemory(void) {
     u32 size;
 
@@ -347,6 +373,10 @@ u32 THPSimpleCalcNeedMemory(void) {
     return 0;
 }
 
+/**
+ * Carves the caller's buffer (sized by THPSimpleCalcNeedMemory) into the texture, read,
+ * audio and decoder work buffers.
+ */
 BOOL THPSimpleSetBuffer(u8* buffer) {
     u32 i;
     u8* ptr;
@@ -392,6 +422,10 @@ BOOL THPSimpleSetBuffer(u8* buffer) {
     return TRUE;
 }
 
+/**
+ * Starts an async DVD read of the next movie frame into the current read buffer,
+ * wrapping to the first frame when looping; does nothing after a DVD error or when not prefetching.
+ */
 void ReadFrameAsync(void) {
     if (!SimpleControl.dvdError && SimpleControl.preFetchState == TRUE) {
         if (SimpleControl.totalReadFrame > SimpleControl.header.numFrames - 1) {
@@ -409,7 +443,12 @@ void ReadFrameAsync(void) {
     }
 }
 
-void __THPSimpleDVDCallback(s32 result, DVDFileInfo* fileInfo) {
+/**
+ * Read completion: marks the buffer valid with its frame number,
+ * takes the next frame's size from the frame header,
+ * advances the ring and chains the next read if that buffer is free. Flags a fatal DVD error.
+ */
+static void __THPSimpleDVDCallback(s32 result, DVDFileInfo* fileInfo) {
     if (result == DVD_RESULT_FATAL_ERROR) {
         SimpleControl.dvdError = TRUE;
     } else if (result != DVD_RESULT_CANCELED) {
@@ -426,6 +465,7 @@ void __THPSimpleDVDCallback(s32 result, DVDFileInfo* fileInfo) {
     }
 }
 
+/** Restarts the async read chain if it stopped because the ring was full and a buffer has since been freed. */
 inline void CheckPrefetch(void) {
     BOOL enabled = OSDisableInterrupts();
     if (!SimpleControl.readBuffer[SimpleControl.readIndex].isValid && !SimpleControl.readProgress) {
@@ -434,6 +474,10 @@ inline void CheckPrefetch(void) {
     OSRestoreInterrupts(enabled);
 }
 
+/**
+ * Synchronously fills the read buffers (up to ten frames) before playback and enables prefetching;
+ * loop makes the reads wrap to the start.
+ */
 BOOL THPSimplePreLoad(s32 loop) {
     u32 i, readNum;
 
@@ -477,14 +521,17 @@ BOOL THPSimplePreLoad(s32 loop) {
     return FALSE;
 }
 
+/** Lets the AI callback mix movie audio into the output. */
 void THPSimpleAudioStart(void) {
     SimpleControl.audioState = TRUE;
 }
 
+/** Stops mixing movie audio (required before THPSimpleLoadStop or THPSimpleClose). */
 void THPSimpleAudioStop(void) {
     SimpleControl.audioState = FALSE;
 }
 
+/** Stops prefetching, cancels any read in flight and rewinds the movie to its first frame. FALSE while audio plays. */
 BOOL THPSimpleLoadStop(void) {
     s32 i;
 
@@ -522,6 +569,12 @@ BOOL THPSimpleLoadStop(void) {
     return FALSE;
 }
 
+/**
+ * Decodes the oldest buffered frame: video into the Y/U/V textures
+ * and audio track audioTrack into the next audio buffer.
+ * Returns 0 on success, 1 on a video decode error, 2 when no frame is buffered yet,
+ * 3 when the audio buffers are full, 4 for a bad track.
+ */
 s32 THPSimpleDecode(s32 audioTrack) {
     BOOL old;
     u32 i;
@@ -595,6 +648,7 @@ s32 THPSimpleDecode(s32 audioTrack) {
     return 2;
 }
 
+/** Decodes one video component into the Y/U/V textures and records the frame number; FALSE on a decode error. */
 BOOL VideoDecode(u8* videoFrame) {
     s32 ret = THPVideoDecode(videoFrame, SimpleControl.textureSet.ytexture, SimpleControl.textureSet.utexture,
                              SimpleControl.textureSet.vtexture, SimpleControl.thpWork);
@@ -606,6 +660,10 @@ BOOL VideoDecode(u8* videoFrame) {
     return FALSE;
 }
 
+/**
+ * Draws the last decoded frame as a polygonW x polygonH quad at (x, y) in screen pixels;
+ * returns its frame number, or -1 when nothing has been decoded.
+ */
 s32 THPSimpleDrawCurrentFrame(GXRenderModeObj* rmode, u32 x, u32 y, u32 polygonW, u32 polygonH) {
     if (SimpleControl.textureSet.frameNumber >= 0) {
         THPGXYuv2RgbSetup(rmode);
@@ -618,7 +676,12 @@ s32 THPSimpleDrawCurrentFrame(GXRenderModeObj* rmode, u32 x, u32 y, u32 polygonW
     return -1;
 }
 
-void MixAudio(s16* destination, s16* source, u32 sample) {
+/**
+ * Fills sample stereo pairs of destination with movie audio at the current volume (ramping toward the target),
+ * added to source (the sound library's output) with clamping;
+ * silence or source alone when no movie audio is ready.
+ */
+static void MixAudio(s16* destination, s16* source, u32 sample) {
     u32 sampleNum, requestSample, i;
     s32 mix;
     s16 *dst, *libsrc, *thpsrc;
@@ -769,6 +832,7 @@ void MixAudio(s16* destination, s16* source, u32 sample) {
     }
 }
 
+/** Copies the open movie's video size and type; FALSE when nothing is open. */
 BOOL THPSimpleGetVideoInfo(THPVideoInfo* videoInfo) {
     if (SimpleControl.open) {
         memcpy(videoInfo, &SimpleControl.videoInfo, sizeof(THPVideoInfo));
@@ -777,6 +841,7 @@ BOOL THPSimpleGetVideoInfo(THPVideoInfo* videoInfo) {
     return FALSE;
 }
 
+/** Copies the open movie's audio format (channels, frequency, tracks); FALSE when nothing is open. */
 BOOL THPSimpleGetAudioInfo(THPAudioInfo* audioInfo) {
     if (SimpleControl.open) {
         memcpy(audioInfo, &SimpleControl.audioInfo, sizeof(THPAudioInfo));
@@ -785,6 +850,7 @@ BOOL THPSimpleGetAudioInfo(THPAudioInfo* audioInfo) {
     return FALSE;
 }
 
+/** Frames per second of the open movie (0 when none). */
 f32 THPSimpleGetFrameRate(void) {
     if (SimpleControl.open) {
         return SimpleControl.header.frameRate;
@@ -792,6 +858,7 @@ f32 THPSimpleGetFrameRate(void) {
     return 0.0f;
 }
 
+/** Number of frames in the open movie (0 when none). */
 u32 THPSimpleGetTotalFrame(void) {
     if (SimpleControl.open) {
         return SimpleControl.header.numFrames;
@@ -799,7 +866,12 @@ u32 THPSimpleGetTotalFrame(void) {
     return 0;
 }
 
-void THPAudioMixCallback(void) {
+/**
+ * AI DMA callback, every 5 ms: flips the double buffer, queues the next DMA and mixes the movie audio into it,
+ * after running the previous callback so the sound library's output is mixed in (audioSystem 1 lags it one
+ * buffer).
+ */
+static void THPAudioMixCallback(void) {
     if (AudioSystem == 0) {
         SoundBufferIndex ^= 1;
         AIInitDMA((AddrWord)SoundBuffer[SoundBufferIndex], BYTES_PER_AUDIO_FRAME);
@@ -848,6 +920,7 @@ void THPAudioMixCallback(void) {
     }
 }
 
+/** Sets the movie volume (0..127, squared through VolumeTable) with a linear ramp over time ms (max 60 s). */
 BOOL THPSimpleSetVolume(s32 vol, s32 time) {
     BOOL old;
     s32 samplePerMs;
@@ -894,6 +967,7 @@ BOOL THPSimpleSetVolume(s32 vol, s32 time) {
     return FALSE;
 }
 
+/** Current movie volume (0..127), or -1 when nothing is open. */
 s32 THPSimpleGetVolume(void) {
     if (SimpleControl.open) {
         return (s32)SimpleControl.curVolume;
@@ -904,6 +978,7 @@ s32 THPSimpleGetVolume(void) {
 
 /* THPDraw.c */
 
+/** Undoes THPGXYuv2RgbSetup: resets the TEV swap tables and restores the saved viewport and projection. */
 void THPGXRestore(void) {
     GXSetTevSwapMode(GX_TEVSTAGE0, GX_TEV_SWAP0, GX_TEV_SWAP0);
     GXSetTevSwapMode(GX_TEVSTAGE1, GX_TEV_SWAP0, GX_TEV_SWAP0);
@@ -919,6 +994,11 @@ void THPGXRestore(void) {
     GXSetProjectionv(_pm);
 }
 
+/**
+ * Sets GX up to draw a YUV movie frame: screen-space ortho projection, no blending or depth,
+ * and four TEV stages that convert the Y, U and V textures to RGB.
+ * Saves the viewport and projection for THPGXRestore.
+ */
 void THPGXYuv2RgbSetup(GXRenderModeObj* rmode) {
     s32 scrWidth, scrHeight;
     Mtx44 pMtx;
@@ -977,13 +1057,14 @@ void THPGXYuv2RgbSetup(GXRenderModeObj* rmode) {
     GXSetTevAlphaOp(GX_TEVSTAGE3, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
     GXSetTevSwapMode(GX_TEVSTAGE3, GX_TEV_SWAP0, GX_TEV_SWAP0);
     GXSetTevKColorSel(GX_TEVSTAGE3, GX_TEV_KCSEL_K2);
-    GXSetTevColorS10(GX_TEVREG0, (GXColorS10){ -90, 0, -114, 135 });
-    GXSetTevKColor(GX_KCOLOR0, (GXColor){ 0, 0, 226, 88 });
-    GXSetTevKColor(GX_KCOLOR1, (GXColor){ 179, 0, 0, 182 });
-    GXSetTevKColor(GX_KCOLOR2, (GXColor){ 255, 0, 255, 128 });
+    GXSetTevColorS10(GX_TEVREG0, (GXColorS10){-90, 0, -114, 135});
+    GXSetTevKColor(GX_KCOLOR0, (GXColor){0, 0, 226, 88});
+    GXSetTevKColor(GX_KCOLOR1, (GXColor){179, 0, 0, 182});
+    GXSetTevKColor(GX_KCOLOR2, (GXColor){255, 0, 255, 128});
     GXSetTevSwapModeTable(GX_TEV_SWAP0, GX_CH_RED, GX_CH_GREEN, GX_CH_BLUE, GX_CH_ALPHA);
 }
 
+/** Draws one movie frame quad from its Y (full size) and U/V (half size) I8 textures; needs THPGXYuv2RgbSetup. */
 void THPGXYuv2RgbDraw(u8* y_data, u8* u_data, u8* v_data, s16 x, s16 y, s16 textureWidth, s16 textureHeight,
                       s16 polygonWidth, s16 polygonHeight) {
     GXTexObj tobj0, tobj1, tobj2;
@@ -1013,3 +1094,140 @@ void THPGXYuv2RgbDraw(u8* y_data, u8* u_data, u8* v_data, s16 x, s16 y, s16 text
     GXTexCoord2u16(0, 1);
     GXEnd();
 }
+
+#if VERSION <= VERSION_DEMO_JP
+/* The demo's movie sequence: plays demo.thp, then returns to the title screen. */
+
+#include "driver/camdrv.h"
+#include "driver/dispdrv.h"
+#include "driver/fadedrv.h"
+#include "driver/icondrv.h"
+#include "manager/filemgr.h"
+#include "memory.h"
+#include "sdk/DEMOInit.h"
+#include <dolphin/pad.h>
+#include "sdk/texPalette.h"
+#include "statuswindow.h"
+#include "system.h"
+#include <stdlib.h>
+#include <string.h>
+
+#include "gxsub.h"
+
+/** Pointer to the demo sequence state (work, above); the demo scenes read and write it through wp. */
+static SeqDemoWork* wp = &work;
+
+static void demoDisp(CameraId cameraId, void* param);
+
+/**
+ * Enters the demo's movie sequence: frees field memory, hides the status bar,
+ * randomly picks full-size or two half-size pictures, opens demo.thp in a map-heap buffer,
+ * preloads it and starts its audio.
+ */
+void seq_demoInit(SequenceWork* seq) {
+    iconReInit();
+    memClear(HEAP_MALLOC);
+    memClear(HEAP_EXT);
+    smartAutoFree(1);
+    statusWinDispOff();
+    wp->frame = 0;
+    wp->fullScreen = rand() % 100 <= 50;
+    wp->tpl = fileAllocf(4, "%s/mariost.tpl", getMarioStDvdRoot());
+    THPSimpleInit(2);
+    THPSimpleOpen("demo.thp");
+    THPSimpleSetBuffer(_mapAlloc(THPSimpleCalcNeedMemory()));
+    THPSimpleAudioStop();
+    THPSimplePreLoad(FALSE);
+    THPSimpleAudioStart();
+}
+
+/** Leaves the movie sequence: frees icons and heap memory, shows the status bar again and frees mariost.tpl. */
+void seq_demoExit(SequenceWork* seq) {
+    iconReInit();
+    memClear(HEAP_MALLOC);
+    statusWinDispOn();
+    fileFree(wp->tpl);
+}
+
+/**
+ * Per-frame movie sequence: fades in, plays until A or Start or the movie's end, stops and closes the player,
+ * fades out and returns to the title screen. Queues demoDisp while the movie plays.
+ */
+void seq_demoMain(SequenceWork* seq) {
+    switch (seq->state) {
+        case 0:
+            fadeEntry(FADE_IN_BLACK, 200, (GXColor){0, 0, 0, 255});
+            seq->state++;
+            break;
+        case 1:
+            if (fadeIsFinish()) {
+                if (keyGetButtonTrg(0) & (PAD_BUTTON_A | PAD_BUTTON_START)) {
+                    seq->state++;
+                } else if (wp->frame >= THPSimpleGetTotalFrame() - 2) {
+                    seq->state++;
+                }
+            }
+            break;
+        case 2:
+            THPSimpleAudioStop();
+            THPSimpleLoadStop();
+            THPSimpleClose();
+            THPSimpleQuit();
+            fadeEntry(FADE_OUT_BLACK, 200, (GXColor){0, 0, 0, 255});
+            seq->state++;
+            break;
+        case 3:
+            if (fadeIsFinish()) {
+                seqSetSeq(SEQ_TITLE, NULL, NULL);
+                return;
+            }
+            break;
+    }
+    if (seq->state < 2) {
+        dispEntry(CAMERA_2D, 0.0f, 0, demoDisp, NULL);
+    }
+}
+
+/**
+ * 2D-camera draw callback: decodes the next movie frame
+ * and draws it centred (or twice at half size at two offsets),
+ * then draws mariost.tpl image 5 (the title logo's top half) at a third of its size near the top left.
+ */
+static void demoDisp(CameraId cameraId, void* param) {
+    GXRenderModeObj* rmode;
+    THPVideoInfo video;
+    THPAudioInfo audio;
+    u32 x, y;
+    CameraEntry* camera;
+    GXTexObj texObj;
+    GXColor color;
+
+    rmode = DEMOGetRenderModeObj();
+    THPSimpleGetVideoInfo(&video);
+    THPSimpleGetAudioInfo(&audio);
+    rmode = DEMOGetRenderModeObj();
+    x = (rmode->fbWidth - video.xSize) / 2;
+    y = (rmode->efbHeight - video.ySize) / 2;
+    if (THPSimpleDecode(0) == 1) {
+        return;
+    }
+    if (wp->fullScreen) {
+        wp->frame = THPSimpleDrawCurrentFrame(rmode, x, y, video.xSize, video.ySize);
+    } else {
+        wp->frame = THPSimpleDrawCurrentFrame(rmode, x, y, video.xSize / 2, video.ySize / 2);
+        wp->frame = THPSimpleDrawCurrentFrame(rmode, video.xSize / 2, video.ySize / 2, video.xSize / 2, video.ySize / 2);
+    }
+    camera = camGetPtr(cameraId);
+    GXSetProjection(camera->projection, camera->projType);
+    GXSetViewport(camera->viewport[0], camera->viewport[1], camera->viewport[2], camera->viewport[3],
+                  camera->viewport[4], camera->viewport[5]);
+    GXSetScissor(camera->scissor[0], camera->scissor[1], camera->scissor[2], camera->scissor[3]);
+    TEXGetGXTexObjFromPalette(*wp->tpl->data, &texObj, 5);
+    gxsubMiscSetGX(-1);
+    gxsubFillSetTexObj(&texObj);
+    color = (GXColor){0xFF, 0xFF, 0xFF, 0xFF};
+    gxsubFillGX(-274, 210, GXGetTexObjWidth(&texObj) / 3, GXGetTexObjHeight(&texObj) / 3, &color);
+    gxsubFillSetTexObj(NULL);
+    gxsubMiscSetGX(-1);
+}
+#endif

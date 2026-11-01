@@ -1,3 +1,6 @@
+// Paper Mario 64 effect: a single flat sprite that stretches over `time` frames (progress 0-7);
+// the failure counterpart of eff_rothammer_success_n64.c.
+#include "eff/n64/eff_rothammer_fail_n64.h"
 #include "eff/eff_n64.h"
 #include "driver/camdrv.h"
 #include "driver/effdrv.h"
@@ -5,27 +8,24 @@
 #include "memory.h"
 #include <dolphin/gx.h>
 #include <dolphin/mtx.h>
+#include "libc_decls.h"
 
+// FAKE: match-forcing setting: the same code without it compiles differently (removal tried).
 #pragma opt_propagation off
-#pragma opt_lifetimes off
-
-#ifndef TARGET_PC /* PC port: the host libc declares these */
-double sin(double);
-double cos(double);
-#endif
 
 typedef struct EffRotHammerFailN64Work {
-    s16 type;      // 0x0
-    Vec position;  // 0x4
-    Vec velocity;  // 0x10
-    f32 scaleY;    // 0x1C
-    f32 scaleX;    // 0x20
-    s32 lifetime;  // 0x24
-    s32 frame;     // 0x28
-    s32 total;     // 0x2C
-    f32 progress;  // 0x30
+    s16 type;     // 0x0
+    Vec position; // 0x4
+    Vec velocity; // 0x10
+    f32 scaleY;   // 0x1C
+    f32 scaleX;   // 0x20
+    s32 lifetime; // 0x24
+    s32 frame;    // 0x28
+    s32 total;    // 0x2C
+    f32 progress; // 0x30
 } EffRotHammerFailN64Work;
 
+/** 24x24 camera-facing quad, texture mirrored horizontally, drawn for the smoke puff. */
 static effN64Vtx size24x24_tex32x32_vtx[] = {
     {-12, -12, 0, 0, 0, 0, 0, 0, 255},
     {12, -12, 0, -1024, 0, 0, 0, 0, 255},
@@ -33,25 +33,29 @@ static effN64Vtx size24x24_tex32x32_vtx[] = {
     {-12, 12, 0, 0, 1024, 0, 0, 0, 255},
 };
 
-void effRotHammerFailMain(EffectEntry* effect);
-void effRotHammerFailDisp(CameraId cameraId, EffectEntry* effect);
+static void effRotHammerFailMain(EffectEntry* effect);
+static void effRotHammerFailDisp(CameraId cameraId, EffectEntry* effect);
 
-#pragma opt_lifetimes reset
-EffectEntry* effRotHammerFailN64Entry(s32 type, s32 time, f32 x, f32 y, f32 z) {
+/**
+ * Spawns one smoke puff at (x, y, z) that plays its 7-frame animation over `time` frames (scale is ignored).
+ * Spawned by event scripts through evt_eff.
+ */
+EffectEntry* effRotHammerFailN64Entry(s32 type, s32 time, f32 x, f32 y, f32 z, f32 scale) {
     EffectEntry* effect;
     EffRotHammerFailN64Work* child;
     f32 zero;
     EffRotHammerFailN64Work* work;
 
-
     effect = effEntry();
-    effect->type = "RotHammerFailN64\0\0\0";
+    effect->type = "RotHammerFailN64";
     effect->count = 2;
     effect->userdata = work = __memAlloc(HEAP_EFFECT, sizeof(EffRotHammerFailN64Work) * 2);
     zero = 0.0f;
     effect->callback = effRotHammerFailMain;
     work->lifetime = time;
-    child = work++; child = work; work--;
+    child = work++;
+    child = work;
+    work--;
     work->frame = 0;
     work->total = time;
     work->progress = zero;
@@ -70,8 +74,12 @@ EffectEntry* effRotHammerFailN64Entry(s32 type, s32 time, f32 x, f32 y, f32 z) {
     return effect;
 }
 
-#pragma opt_lifetimes off
-void effRotHammerFailMain(EffectEntry* effect) {
+/**
+ * Steps the animation progress 0-7 over the total time,
+ * eases the spread distance from 10 toward 30 by 10% per frame and places the puff that far out along +Z
+ * while it rises (vy +0.04 per frame, damped 10%). Deletes when the lifetime runs out. CAMERA_3D, layer 2.
+ */
+static void effRotHammerFailMain(EffectEntry* effect) {
     EffRotHammerFailN64Work* work = effect->userdata;
     Vec position;
     Vec tmp = {0.0f, 0.0f, 0.0f};
@@ -102,7 +110,11 @@ void effRotHammerFailMain(EffectEntry* effect) {
     dispEntry(CAMERA_3D, dispCalcZ(&position), 2, (DispCallback)effRotHammerFailDisp, effect);
 }
 
-void effRotHammerFailDisp(CameraId cameraId, EffectEntry* effect) {
+/**
+ * Draws the puff as a camera-facing 24x24 quad of the 7-frame strip in texture 0xD,
+ * cross-fading between the current and next frame, in pale grey (E6,DE,DE).
+ */
+static void effRotHammerFailDisp(CameraId cameraId, EffectEntry* effect) {
     CameraEntry* camera;
     EffRotHammerFailN64Work* work;
     s32 isSix;

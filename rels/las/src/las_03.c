@@ -1,3 +1,5 @@
+// las_03 (ラストダンジョン, Palace of Shadow): the hall with the spike traps (toge).
+
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
 #include "evt/evt_bero.h"
@@ -6,87 +8,32 @@
 #ifdef TARGET_PC /* declarations the GameCube code calls implicitly */
 #include "manager/evtmgr_cmd.h"
 #endif
-
-#pragma force_active on
+#include "manager/evtmgr_cmd.h"
+#include "evt/evt_hit.h"
+#include "evt/evt_map.h"
+#include "evt/evt_mario.h"
+#include "evt/evt_mobj.h"
+#include "evt/evt_seq.h"
+#include "evt/evt_snd.h"
+#include "evt/evt_sub.h"
+#include "las.h"
+#include "evt/evt_story.h"
 
 u16 toge_flag;
 
-USER_FUNC(evt_bero_exec_wait);
-USER_FUNC(evt_bero_get_info);
-USER_FUNC(evt_hit_bind_mapobj);
-USER_FUNC(evt_hit_bind_update);
-USER_FUNC(evt_hit_damage_return_set);
-USER_FUNC(evt_mapobj_get_position);
-USER_FUNC(evt_mapobj_rotate);
-USER_FUNC(evt_mapobj_trans);
-USER_FUNC(evt_mario_get_motion);
-USER_FUNC(evt_mario_get_pos);
-USER_FUNC(evt_mobj_badgeblk);
-USER_FUNC(evt_seq_wait);
-USER_FUNC(evt_snd_bgmon);
-USER_FUNC(evt_snd_envon);
-USER_FUNC(evt_snd_set_rev_mode);
-USER_FUNC(evt_snd_sfxon_3d);
-USER_FUNC(evt_sub_area_check);
-USER_FUNC(evt_sub_intpl_msec_get_value);
-USER_FUNC(evt_sub_intpl_msec_init);
-USER_FUNC(get_toge_name);
-USER_FUNC(toge_check_flag);
-USER_FUNC(toge_flag_onoff);
+static USER_FUNC(get_toge_name);
+static USER_FUNC(toge_check_flag);
+static USER_FUNC(toge_flag_onoff);
 
-f32 fd_las_03_negone_one_374[2] __attribute__((aligned(8)));
-f32 fd_las_03_neg_one_382;
-f32 fd_las_03___local_PI_383;
-f32 fd_las_03___local_3PIO2_385;
-f32 fd_las_03_one_negone_373[2] __attribute__((aligned(8)));
-f32 fd_las_03___local_PIO2_384;
-f32 fd_las_03_one_381;
-f32 fd_las_03_negone_one_360[2] __attribute__((aligned(8)));
-f32 fd_las_03_neg_one_365;
-f32 fd_las_03___local_PI_366;
-f32 fd_las_03___local_3PIO2_368;
-f32 fd_las_03_one_negone_359[2] __attribute__((aligned(8)));
-f32 fd_las_03___local_PIO2_367;
-f32 fd_las_03_one_364;
-static EvtWord w_door_close[22];
-static EvtWord w_door_open[22];
-static EvtWord e_door_close[22];
-static EvtWord e_door_open[22];
 static BeroEntry bero_entry_data[3];
 static HitDamageReturn dmgRetPoint[3];
 const char* toge_data[18];
-EvtWord toge_evt_sub[121];
-EvtWord toge_evt[86];
-EvtWord las_03_init_evt[32];
 
-f32 fd_las_03_negone_one_374[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_las_03_neg_one_382 = -1.0f;
-
-f32 fd_las_03___local_PI_383 = 3.1415927f;
-
-f32 fd_las_03___local_3PIO2_385 = 4.712389f;
-
-f32 fd_las_03_one_negone_373[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_las_03___local_PIO2_384 = 1.5707964f;
-
-f32 fd_las_03_one_381 = 1.0f;
-
-f32 fd_las_03_negone_one_360[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_las_03_neg_one_365 = -1.0f;
-
-f32 fd_las_03___local_PI_366 = 3.1415927f;
-
-f32 fd_las_03___local_3PIO2_368 = 4.712389f;
-
-f32 fd_las_03_one_negone_359[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_las_03___local_PIO2_367 = 1.5707964f;
-
-f32 fd_las_03_one_364 = 1.0f;
-
+/**
+ * Door animation script (closing) for the west door, used as the enter/exit animation of this room's bero entry.
+ * LW(0) holds the angle step of the swing, and the script turns the door panels S_doa_l_01 and S_doa_l_02 by it,
+ * the second one the opposite way.
+ */
 static EVT_BEGIN(w_door_close)
     MULTIPLY_FLOAT(LW(0), FLOAT(-0.38867188f))
     CALL(evt_mapobj_rotate, 0, STRING("S_doa_l_01"), 0, LW(0), 0)
@@ -95,6 +42,11 @@ static EVT_BEGIN(w_door_close)
     RETURN
 EVT_END()
 
+/**
+ * Door animation script (opening) for the west door, used as the enter/exit animation of this room's bero entry.
+ * LW(0) holds the angle step of the swing, and the script turns the door panels S_doa_l_01 and S_doa_l_02 by it,
+ * the second one the opposite way.
+ */
 static EVT_BEGIN(w_door_open)
     MULTIPLY_FLOAT(LW(0), FLOAT(0.38867188f))
     CALL(evt_mapobj_rotate, 0, STRING("S_doa_l_01"), 0, LW(0), 0)
@@ -103,6 +55,11 @@ static EVT_BEGIN(w_door_open)
     RETURN
 EVT_END()
 
+/**
+ * Door animation script (closing) for the east door, used as the enter/exit animation of this room's bero entry.
+ * LW(0) holds the angle step of the swing, and the script turns the door panels S_doa_r_01 and S_doa_r_02 by it,
+ * the second one the opposite way.
+ */
 static EVT_BEGIN(e_door_close)
     MULTIPLY_FLOAT(LW(0), FLOAT(0.38867188f))
     CALL(evt_mapobj_rotate, 0, STRING("S_doa_r_01"), 0, LW(0), 0)
@@ -111,6 +68,11 @@ static EVT_BEGIN(e_door_close)
     RETURN
 EVT_END()
 
+/**
+ * Door animation script (opening) for the east door, used as the enter/exit animation of this room's bero entry.
+ * LW(0) holds the angle step of the swing, and the script turns the door panels S_doa_r_01 and S_doa_r_02 by it,
+ * the second one the opposite way.
+ */
 static EVT_BEGIN(e_door_open)
     MULTIPLY_FLOAT(LW(0), FLOAT(-0.38867188f))
     CALL(evt_mapobj_rotate, 0, STRING("S_doa_r_01"), 0, LW(0), 0)
@@ -119,13 +81,14 @@ static EVT_BEGIN(e_door_open)
     RETURN
 EVT_END()
 
+/** Exits of las_03: west door w_bero to las_02 (e_bero); east door e_bero_1 to las_04 (w_bero). */
 static BeroEntry bero_entry_data[] = {
     {
         "w_bero", // hitName
         1, // type
         6, // sfxId
-        20000, // directionId
-        100000, // centerPosition
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         NULL, // enterEvent
@@ -142,8 +105,8 @@ static BeroEntry bero_entry_data[] = {
         "e_bero_1", // hitName
         1, // type
         6, // sfxId
-        20000, // directionId
-        100000, // centerPosition
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         NULL, // enterEvent
@@ -159,12 +122,20 @@ static BeroEntry bero_entry_data[] = {
     {0},
 };
 
+/**
+ * Where Mario is put back after damage from falling: the floor panels A_yuka_02 and A_yuka_03 send him to
+ * the point set at y = -1000 (the spike pit below).
+ */
 static HitDamageReturn dmgRetPoint[] = {
     {"A_yuka_02", {0.0f, -1000.0f, 0.0f}},
     {"A_yuka_03", {0.0f, -1000.0f, 0.0f}},
     {0},
 };
 
+/**
+ * Spike trap objects of the hall as pairs: the model S_toge_NN and its hit area A_toge_NN, one pair per
+ * trap.
+ */
 const char* toge_data[] = {
     "S_toge_01",
     "A_toge_01",
@@ -186,6 +157,11 @@ const char* toge_data[] = {
     "A_toge_09",
 };
 
+/**
+ * Event script: one spike trap (index LW(0)) fires.
+ * If its busy bit is clear it sets the bit, pops the spikes up 30 units in 150 ms, holds them for a second,
+ * retracts them over 400 ms and clears the bit. Does nothing if that trap is already active.
+ */
 EVT_BEGIN(toge_evt_sub)
     SET_VALUE(LW(2), LW(0))
     CALL(get_toge_name, LW(2), LW(3), LW(4))
@@ -223,9 +199,15 @@ EVT_BEGIN(toge_evt_sub)
     RETURN
 EVT_END()
 
+/**
+ * Event script: runs the spike floor.
+ * Sets the damage-return points, binds the 9 trap hit objects to their map objects,
+ * then every frame checks whether Mario is within 90 units of one of the 9 traps (unless he is in motion 32)
+ * and spawns toge_evt_sub for it.
+ */
 EVT_BEGIN(toge_evt)
     CALL(evt_hit_damage_return_set, PTR(dmgRetPoint))
-    CALL_CHILD(PTR(evt_gazigazi_entry))
+    CALL_CHILD(evt_gazigazi_entry)
     SET_INT_READ_ADDR(PTR(&toge_data))
     LOOP(9)
         READ_INT2(LW(0), LW(1))
@@ -244,7 +226,7 @@ EVT_BEGIN(toge_evt)
                 CALL(evt_sub_area_check, 1, LW(6), LW(8), 90, LW(1), LW(3), LW(9))
                 IF_INT_EQUAL(LW(9), 1)
                     SET_VALUE(LW(0), LW(4))
-                    SPAWN_EVENT(PTR(toge_evt_sub))
+                    SPAWN_EVENT(toge_evt_sub)
                 END_IF
                 ADD(LW(4), 1)
                 IF_INT_GREATER_OR_EQUAL(LW(4), 9)
@@ -257,33 +239,51 @@ EVT_BEGIN(toge_evt)
     RETURN
 EVT_END()
 
+/**
+ * Map init script for las_03: music and ambience, the doors to las_02 and las_04,
+ * the All or Nothing badge block, and starts the spike trap event.
+ */
 EVT_BEGIN(las_03_init_evt)
-    CALL(evt_snd_bgmon, 512, STRING("BGM_STG8_LST1"))
-    CALL(evt_snd_envon, 272, STRING("ENV_STG8_LAS1"))
+    CALL(evt_snd_bgmon, PSND_FADE_OUT, STRING("BGM_STG8_LST1"))
+    CALL(evt_snd_envon, PSND_FADE_RESTART | PSND_FADE_IN, STRING("ENV_STG8_LAS1"))
+#if VERSION >= VERSION_JP
     CALL(evt_snd_set_rev_mode, 2)
+#endif
     SET_VALUE(LW(0), PTR(bero_entry_data))
     CALL(evt_bero_get_info)
-    CALL_CHILD(PTR(evt_bero_info_run))
-    CALL(evt_mobj_badgeblk, STRING("mobj_badge_gat\0"), -350, 0, -100, 264, 0, GSWF(4375), 1)
-    SPAWN_EVENT(PTR(toge_evt))
+    CALL_CHILD(evt_bero_info_run)
+    CALL(evt_mobj_badgeblk, STRING("mobj_badge_gat"), -350, 0, -100, ITEM_ALL_OR_NOTHING, 0, GSWF(GSWF_LAS03_ALL_OR_NOTHING_BLOCK_HIT), 1)
+    SPAWN_EVENT(toge_evt)
     RETURN
 EVT_END()
 
-USER_FUNC(get_toge_name) {
+/**
+ * Script helper: for trap index args[0] returns the map object name in args[1]
+ * and the hit object name in args[2] from toge_data.
+ */
+static USER_FUNC(get_toge_name) {
     EvtWord* args = event->args;
     s32 idx = evtGetValue(event, args[0]);
-    evtSetValue(event, args[1], toge_data[idx * 2]);
-    evtSetValue(event, args[2], toge_data[idx * 2 + 1]);
+    evtSetValue(event, args[1], (EvtWord)toge_data[idx * 2]);
+    evtSetValue(event, args[2], (EvtWord)toge_data[idx * 2 + 1]);
     return EVT_RETURN_DONE;
 }
-USER_FUNC(toge_check_flag) {
+/**
+ * Script helper: returns in args[1] whether bit args[0] (a trap index) of toge_flag is set,
+ * that is whether that spike trap is currently active.
+ */
+static USER_FUNC(toge_check_flag) {
     EvtWord* args = event->args;
     s32 bit = evtGetValue(event, args[0]);
 
     evtSetValue(event, args[1], toge_flag & (1 << bit));
     return EVT_RETURN_DONE;
 }
-USER_FUNC(toge_flag_onoff) {
+/**
+ * Script helper: sets (args[1] nonzero) or clears the bit args[0] in toge_flag,
+ * marking one spike trap as active or idle.
+ */
+static USER_FUNC(toge_flag_onoff) {
     EvtWord* args = event->args;
     s32 bit = evtGetValue(event, args[0]);
     s32 on = evtGetValue(event, args[1]);

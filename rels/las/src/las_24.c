@@ -1,106 +1,39 @@
+// las_24 (ラストダンジョン, Palace of Shadow): the room with the cloud blocks and the breaking floor.
+
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
 #include "evt/evt_bero.h"
+#include "evt/evt_cloud.h"
+#include "evt/evt_hit.h"
+#include "evt/evt_item.h"
+#include "evt/evt_map.h"
+#include "evt/evt_mario.h"
+#include "evt/evt_mobj.h"
+#include "evt/evt_party.h"
+#include "evt/evt_snd.h"
+#include "evt/evt_sub.h"
 #include "las.h"
+#include "version.h"
+#include "evt/evt_story.h"
+#include "driver/mapdrv.h"
 
-#pragma force_active on
-
-USER_FUNC(evt_bero_get_info);
-USER_FUNC(evt_cloud_ent);
-USER_FUNC(evt_cloud_init);
-USER_FUNC(evt_hit_bind_mapobj);
-USER_FUNC(evt_hitobj_onoff);
-USER_FUNC(evt_item_entry);
-USER_FUNC(evt_item_get_item);
-USER_FUNC(evt_map_playanim);
-USER_FUNC(evt_mapobj_flag_onoff);
-USER_FUNC(evt_mapobj_rotate);
-USER_FUNC(evt_mario_get_party);
-USER_FUNC(evt_mario_jump_jumpstand);
-USER_FUNC(evt_mario_key_onoff);
-USER_FUNC(evt_mobj_badgeblk);
-USER_FUNC(evt_mobj_breaking_floor);
-USER_FUNC(evt_mobj_brick);
-USER_FUNC(evt_mobj_flag_onoff);
-USER_FUNC(evt_mobj_floatswitch_red);
-USER_FUNC(evt_mobj_get_position);
-USER_FUNC(evt_mobj_itembox);
-USER_FUNC(evt_mobj_jumpstand_red);
-USER_FUNC(evt_mobj_lv_blk);
-USER_FUNC(evt_mobj_set_scale);
-USER_FUNC(evt_mobj_wait_animation_end);
-USER_FUNC(evt_party_get_name_hitobj_ride);
-USER_FUNC(evt_party_get_pos);
-USER_FUNC(evt_party_jump_pos);
-USER_FUNC(evt_snd_bgmon);
-USER_FUNC(evt_snd_envon);
-USER_FUNC(evt_snd_set_rev_mode);
-USER_FUNC(evt_sub_get_sincos);
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
+// Declaration of the script helper that stretches a duration for the game's frame rate (defined at the end of this
+// file; US and later).
 USER_FUNC(las_24_adjust_for_framerate);
 #endif
 
-f32 fd_las_24_negone_one_374[2] __attribute__((aligned(8)));
-f32 fd_las_24_neg_one_382;
-f32 fd_las_24___local_PI_383;
-f32 fd_las_24___local_3PIO2_385;
-f32 fd_las_24_one_negone_373[2] __attribute__((aligned(8)));
-f32 fd_las_24___local_PIO2_384;
-f32 fd_las_24_one_381;
-f32 fd_las_24_negone_one_360[2] __attribute__((aligned(8)));
-f32 fd_las_24_neg_one_365;
-f32 fd_las_24___local_PI_366;
-f32 fd_las_24___local_3PIO2_368;
-f32 fd_las_24_one_negone_359[2] __attribute__((aligned(8)));
-f32 fd_las_24___local_PIO2_367;
-f32 fd_las_24_one_364;
-static EvtWord w_door_close[22];
-static EvtWord w_door_open[22];
 static BeroEntry bero_entry_data[4];
 static const char* haguruma_hontai[15];
 static const char* haguruma_hontai2[6];
 static const char* haguruma_kage[12];
 static const char* haguruma_kage2[5];
-static EvtWord haguruma_evt[194];
-EvtWord cloud_blk_evt[10];
-EvtWord break_floor_evt[5];
-EvtWord jump_evt[68];
-#ifdef VERSION_G8ME01
-static EvtWord dai_evt[17];
-#else
-static EvtWord dai_evt[13];
-#endif
-static EvtWord box_evt[33];
-EvtWord las_24_init_evt[190];
 
-f32 fd_las_24_negone_one_374[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_las_24_neg_one_382 = -1.0f;
-
-f32 fd_las_24___local_PI_383 = 3.1415927f;
-
-f32 fd_las_24___local_3PIO2_385 = 4.712389f;
-
-f32 fd_las_24_one_negone_373[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_las_24___local_PIO2_384 = 1.5707964f;
-
-f32 fd_las_24_one_381 = 1.0f;
-
-f32 fd_las_24_negone_one_360[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_las_24_neg_one_365 = -1.0f;
-
-f32 fd_las_24___local_PI_366 = 3.1415927f;
-
-f32 fd_las_24___local_3PIO2_368 = 4.712389f;
-
-f32 fd_las_24_one_negone_359[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_las_24___local_PIO2_367 = 1.5707964f;
-
-f32 fd_las_24_one_364 = 1.0f;
-
+/**
+ * Door animation script (closing) for the west door, used as the enter/exit animation of this room's bero entry.
+ * LW(0) holds the angle step of the swing, and the script turns the door panels S_doa_01 and S_doa_02 by it,
+ * the second one the opposite way.
+ */
 static EVT_BEGIN(w_door_close)
     MULTIPLY_FLOAT(LW(0), FLOAT(-0.38867188f))
     CALL(evt_mapobj_rotate, 0, STRING("S_doa_01"), 0, LW(0), 0)
@@ -109,6 +42,11 @@ static EVT_BEGIN(w_door_close)
     RETURN
 EVT_END()
 
+/**
+ * Door animation script (opening) for the west door, used as the enter/exit animation of this room's bero entry.
+ * LW(0) holds the angle step of the swing, and the script turns the door panels S_doa_01 and S_doa_02 by it,
+ * the second one the opposite way.
+ */
 static EVT_BEGIN(w_door_open)
     MULTIPLY_FLOAT(LW(0), FLOAT(0.38867188f))
     CALL(evt_mapobj_rotate, 0, STRING("S_doa_01"), 0, LW(0), 0)
@@ -117,13 +55,17 @@ static EVT_BEGIN(w_door_open)
     RETURN
 EVT_END()
 
+/**
+ * Exits of las_24: west door w_bero to las_22 (e_bero); south road s_bero_1 to las_23 (n_bero_2); south road
+ * s_bero_2 to las_25 (n_bero_1).
+ */
 static BeroEntry bero_entry_data[] = {
     {
         "w_bero", // hitName
         1, // type
         6, // sfxId
-        20000, // directionId
-        100000, // centerPosition
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         NULL, // enterEvent
@@ -139,8 +81,8 @@ static BeroEntry bero_entry_data[] = {
     {
         "s_bero_1", // hitName
         0, 0, // type..sfxId
-        20000, // directionId
-        100000, // centerPosition
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         NULL, // enterEvent
@@ -155,8 +97,8 @@ static BeroEntry bero_entry_data[] = {
     {
         "s_bero_2", // hitName
         0, 0, // type..sfxId
-        20000, // directionId
-        100000, // centerPosition
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         NULL, // enterEvent
@@ -171,6 +113,7 @@ static BeroEntry bero_entry_data[] = {
     {0},
 };
 
+/** Front faces of the first group of gears of this room, turned together by haguruma_evt. */
 static const char* haguruma_hontai[] = {
     "S_hgm_01a",
     "S_hgm_02a",
@@ -189,6 +132,7 @@ static const char* haguruma_hontai[] = {
     "S_hgm_24a",
 };
 
+/** Front faces of the second group of gears, turned the other way. */
 static const char* haguruma_hontai2[] = {
     "S_hgm_05a",
     "S_hgm_09a",
@@ -198,6 +142,7 @@ static const char* haguruma_hontai2[] = {
     "S_hgm_18a",
 };
 
+/** Shadow faces of the first group of gears, turned with haguruma_hontai. */
 static const char* haguruma_kage[] = {
     "S_hgm_01b",
     "S_hgm_02b",
@@ -213,6 +158,7 @@ static const char* haguruma_kage[] = {
     "S_hgm_16b",
 };
 
+/** Shadow faces of the second group of gears, turned with haguruma_hontai2. */
 static const char* haguruma_kage2[] = {
     "S_hgm_05b",
     "S_hgm_09b",
@@ -221,6 +167,11 @@ static const char* haguruma_kage2[] = {
     "S_hgm_17b",
 };
 
+/**
+ * Event script: runs while the room is loaded and spins the gears of the turntable room (see las_22):
+ * the same two counter-rotating gear sets plus the sine-driven gear pairs S_hgm_21..23,
+ * with different gear counts.
+ */
 static EVT_BEGIN(haguruma_evt)
     SET_FLOAT_VALUE(LW(0), FLOAT(20.0f))
     SET_FLOAT_VALUE(LW(1), FLOAT(0.0f))
@@ -285,17 +236,27 @@ static EVT_BEGIN(haguruma_evt)
     RETURN
 EVT_END()
 
+/**
+ * Event script: runs when the cloud over the big stone block has been blown away by Flurrie.
+ * Sets GSWF_LAS24_BLOCK_UNCOVERED and makes the block solid.
+ */
 EVT_BEGIN(cloud_blk_evt)
-    SET_VALUE(GSWF(4356), 1)
-    CALL(evt_mobj_flag_onoff, 0, STRING("blk"), 256)
+    SET_VALUE(GSWF(GSWF_LAS24_BLOCK_UNCOVERED), 1)
+    CALL(evt_mobj_flag_onoff, 0, STRING("blk"), MOBJ_FLAG_NO_HIT)
     RETURN
 EVT_END()
 
+/** Event script: runs when the breaking floor gives way; sets the story to STORY_STG8_12_LARGE_STONE_BLOCK. */
 EVT_BEGIN(break_floor_evt)
-    SET_VALUE(GSW(0), 396)
+    SET_VALUE(GSW(GSW_STORY_PROGRESS), STORY_STG8_12_LARGE_STONE_BLOCK)
     RETURN
 EVT_END()
 
+/**
+ * Event script: the red jump stand.
+ * Mario jumps from the stand at (-500, -200) to the ledge at (-450, -200);
+ * if a partner is present it first jumps to the ledge when it stands on the stand ("MOBJ_jump").
+ */
 EVT_BEGIN(jump_evt)
     BEGIN_INLINE_EVENT
         CALL(evt_mario_get_party, LW(0))
@@ -322,77 +283,97 @@ EVT_BEGIN(jump_evt)
     RETURN
 EVT_END()
 
+/**
+ * Event script: starts the moving platform S_move_dai (hit object A_move_dai) via move_dai.
+ * The movement time is 7200, scaled for the frame rate in the US and later versions.
+ */
 static EVT_BEGIN(dai_evt)
     SET_VALUE(LW(0), STRING("S_move_dai"))
     SET_VALUE(LW(1), STRING("A_move_dai"))
     SET_VALUE(LW(2), 7200)
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
     CALL(las_24_adjust_for_framerate, LW(2), LW(2))
 #endif
-    CALL_CHILD(PTR(move_dai))
+    CALL_CHILD(move_dai)
     RETURN
 EVT_END()
 
+/**
+ * Event script: the key chest of las_24 opens and Mario receives Palace Key 0x30;
+ * the story progress is set to STORY_STG8_13_KEY.
+ */
 static EVT_BEGIN(box_evt)
     CALL(evt_mario_key_onoff, 0)
     CALL(evt_mobj_get_position, STRING("box"), LW(0), LW(1), LW(2))
-    CALL(evt_item_entry, STRING("key"), 48, LW(0), LW(1), LW(2), 17, -1, 0)
+    CALL(evt_item_entry, STRING("key"), ITEM_PALACE_KEY_0x30, LW(0), LW(1), LW(2), ITEM_ENTRY_FIXED_NO_TOUCH, -1, 0)
     CALL(evt_mobj_wait_animation_end, STRING("box"))
     CALL(evt_item_get_item, STRING("key"))
-    SET_VALUE(GSW(0), 397)
+    SET_VALUE(GSW(GSW_STORY_PROGRESS), STORY_STG8_13_KEY)
     CALL(evt_mario_key_onoff, 1)
     RETURN
 EVT_END()
 
+/**
+ * Map init script for las_24, the cloud and breaking floor room:
+ * music, the door set, the gear animation, the cloud over the big stone block (until
+ * STORY_STG8_12_LARGE_STONE_BLOCK), the big stone block, the breaking floor, a red jump stand,
+ * a moving platform with its red floating switch, a coin block,
+ * a hidden brick with Point Swap and the key chest with Palace Key 0x30.
+ */
 EVT_BEGIN(las_24_init_evt)
-    CALL(evt_snd_bgmon, 512, STRING("BGM_STG8_LST3"))
-    CALL(evt_snd_envon, 272, STRING("ENV_STG8_LAS7"))
+    CALL(evt_snd_bgmon, PSND_FADE_OUT, STRING("BGM_STG8_LST3"))
+    CALL(evt_snd_envon, PSND_FADE_RESTART | PSND_FADE_IN, STRING("ENV_STG8_LAS7"))
+#if VERSION >= VERSION_JP
     CALL(evt_snd_set_rev_mode, 2)
+#endif
     SET_VALUE(LW(0), PTR(bero_entry_data))
     CALL(evt_bero_get_info)
-    CALL_CHILD(PTR(evt_bero_info_run))
-    CALL(evt_mapobj_flag_onoff, 0, 0, STRING("S_hgm_05a"), 2)
-    CALL(evt_mapobj_flag_onoff, 0, 0, STRING("S_hgm_19a"), 2)
-    CALL(evt_mapobj_flag_onoff, 0, 0, STRING("S_hgm_24a"), 2)
-    SPAWN_EVENT(PTR(haguruma_evt))
+    CALL_CHILD(evt_bero_info_run)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_SINGLE, 0, STRING("S_hgm_05a"), MAPOBJ_FLAG_BBOX_CULL)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_SINGLE, 0, STRING("S_hgm_19a"), MAPOBJ_FLAG_BBOX_CULL)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_SINGLE, 0, STRING("S_hgm_24a"), MAPOBJ_FLAG_BBOX_CULL)
+    SPAWN_EVENT(haguruma_evt)
     CALL(evt_map_playanim, STRING("kusari"), 1, 0)
-    IF_INT_LESS(GSW(0), 396)
-        IF_INT_EQUAL(GSWF(4356), 0)
+    IF_INT_LESS(GSW(GSW_STORY_PROGRESS), STORY_STG8_12_LARGE_STONE_BLOCK)
+        IF_INT_EQUAL(GSWF(GSWF_LAS24_BLOCK_UNCOVERED), 0)
             CALL(evt_cloud_init)
             CALL(evt_cloud_ent, 0, STRING("S_hako"), STRING("A_hako"), PTR(cloud_blk_evt))
-            ELSE
-            CALL(evt_mapobj_flag_onoff, 1, 1, STRING("S_hako"), 1)
+        ELSE
+            CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("S_hako"), MAPOBJ_FLAG_HIDE)
             CALL(evt_hitobj_onoff, STRING("A_hako"), 1, 0)
         END_IF
-        ELSE
-        CALL(evt_mapobj_flag_onoff, 1, 1, STRING("S_hako"), 1)
+    ELSE
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("S_hako"), MAPOBJ_FLAG_HIDE)
         CALL(evt_hitobj_onoff, STRING("A_hako"), 1, 0)
     END_IF
-    CALL(evt_mobj_lv_blk, STRING("blk"), -495, 100, 0, 0, GSWF(4357), STRING("MOBJ_Lv2BigBigBlock"))
-    IF_INT_EQUAL(GSWF(4357), 0)
-        CALL(evt_mobj_flag_onoff, 0, STRING("blk"), 64)
-        IF_INT_EQUAL(GSWF(4356), 0)
-            CALL(evt_mobj_flag_onoff, 1, STRING("blk"), 256)
+    CALL(evt_mobj_lv_blk, STRING("blk"), -495, 100, 0, 0, GSWF(GSWF_LAS24_BIG_BLOCK_BROKEN), STRING("MOBJ_Lv2BigBigBlock"))
+    IF_INT_EQUAL(GSWF(GSWF_LAS24_BIG_BLOCK_BROKEN), 0)
+        CALL(evt_mobj_flag_onoff, 0, STRING("blk"), MOBJ_FLAG_FALL)
+        IF_INT_EQUAL(GSWF(GSWF_LAS24_BLOCK_UNCOVERED), 0)
+            CALL(evt_mobj_flag_onoff, 1, STRING("blk"), MOBJ_FLAG_NO_HIT)
             CALL(evt_mobj_set_scale, STRING("blk"), FLOAT(0.9980469f), FLOAT(0.9980469f), FLOAT(0.9980469f))
         END_IF
     END_IF
-    CALL(evt_mobj_breaking_floor, STRING("brkflr"), -500, 100, 0, 0, PTR(break_floor_evt), GSWF(4358))
+    CALL(evt_mobj_breaking_floor, STRING("brkflr"), -500, 100, 0, 0, PTR(break_floor_evt), GSWF(GSWF_LAS24_FLOOR_BROKEN))
     CALL(evt_mobj_jumpstand_red, 0, STRING("jump"), -500, -200, 0, PTR(jump_evt), 0)
     CALL(evt_hit_bind_mapobj, STRING("A_move_dai"), STRING("S_move_dai"))
-    CALL(evt_mapobj_flag_onoff, 1, 1, STRING("S_move_dai"), 1)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("S_move_dai"), MAPOBJ_FLAG_HIDE)
     CALL(evt_hitobj_onoff, STRING("A_move_dai"), 0, 0)
     CALL(evt_mobj_floatswitch_red, 0, STRING("dai_switch"), -150, -440, 75, PTR(dai_evt), 0)
-    CALL(evt_mobj_badgeblk, STRING("mobj_hatena_gat"), -625, -200, -100, 121, 0, GSWF(4390), 0)
-    CALL(evt_mobj_brick, STRING("mobj_kakusi"), -625, -115, -100, 161, 11, 0, GSWF(4391))
-    CALL(evt_mobj_itembox, STRING("box"), -255, -380, 75, 0, 0, PTR(box_evt), GSWF(4370))
+    CALL(evt_mobj_badgeblk, STRING("mobj_hatena_gat"), -625, -200, -100, ITEM_COIN, 0, GSWF(GSWF_LAS24_COIN_BLOCK_HIT), 0)
+    CALL(evt_mobj_brick, STRING("mobj_kakusi"), -625, -115, -100, ITEM_POINT_SWAP, 11, 0, GSWF(GSWF_LAS24_POINT_SWAP_HIDDEN_BLOCK_HIT))
+    CALL(evt_mobj_itembox, STRING("box"), -255, -380, 75, 0, 0, PTR(box_evt), GSWF(GSWF_LAS24_KEY_CHEST_OPENED))
     RETURN
 EVT_END()
 
-
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
 #include "mario/mariost.h"
 #include "manager/evtmgr_cmd.h"
 
+/**
+ * Script helper: reads a duration in args[0] and returns it in args[1],
+ * multiplied by 1.2 when the frame rate is not 60 so the platform ride lasts as long on PAL timing.
+ */
 USER_FUNC(las_24_adjust_for_framerate) {
     EvtWord* args = event->args;
     s32 value = evtGetValue(event, args[0]);

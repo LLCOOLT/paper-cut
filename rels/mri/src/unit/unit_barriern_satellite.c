@@ -1,7 +1,8 @@
+// The Great Tree (mri) battle unit: Mini-Yux (barriern_satellite), the shield a Yux creates: its parts, defence/status
+// tables, and attack events.
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
 
-#pragma force_active on
 #include "battle/battle.h"
 #include "battle/battle_unit.h"
 #include "battle/battle_sub.h"
@@ -9,36 +10,19 @@
 #ifdef TARGET_PC /* declarations the GameCube code calls implicitly */
 #include "manager/evtmgr_cmd.h"
 #endif
+#include "manager/evtmgr_cmd.h"
+#include "battle/battle_event_cmd.h"
+#include "evt/evt_sub.h"
+#include "version.h"
 
-USER_FUNC(btlevtcmd_AnimeChangePose);
-USER_FUNC(btlevtcmd_AnimeChangePoseFromTable);
-USER_FUNC(btlevtcmd_CheckActStatus);
-USER_FUNC(btlevtcmd_CheckStatus);
-USER_FUNC(btlevtcmd_GetUnitWork);
-USER_FUNC(btlevtcmd_OnUnitFlag);
-USER_FUNC(btlevtcmd_SetEventAttack);
-USER_FUNC(btlevtcmd_SetEventConfusion);
-USER_FUNC(btlevtcmd_SetEventDamage);
-USER_FUNC(btlevtcmd_SetEventUnisonPhase);
-USER_FUNC(btlevtcmd_SetEventWait);
-USER_FUNC(btlevtcmd_StartWaitEvent);
-USER_FUNC(evt_sub_random);
+// Unit work slots of the Mini-Yux (btlevtcmd_Get/SetUnitWork); the Yux that spawns it fills both.
+enum {
+    UW_BARRIERN_SATELLITE_PARENT_ID = 0, // unit id of the Yux that spawned it
+    UW_BARRIERN_SATELLITE_IDLE_POSE = 1, // set to 1 at spawn: the wait event plays the S_4 pose now and then
+};
+
 static USER_FUNC(battleGetBarriernSatelliteInitPos);
 
-f32 fd_barriern_satellite_negone_one_374[2] __attribute__((aligned(8)));
-f32 fd_barriern_satellite_neg_one_382;
-f32 fd_barriern_satellite___local_PI_383;
-f32 fd_barriern_satellite___local_3PIO2_385;
-f32 fd_barriern_satellite_one_negone_373[2] __attribute__((aligned(8)));
-f32 fd_barriern_satellite___local_PIO2_384;
-f32 fd_barriern_satellite_one_381;
-f32 fd_barriern_satellite_negone_one_360[2] __attribute__((aligned(8)));
-f32 fd_barriern_satellite_neg_one_365;
-f32 fd_barriern_satellite___local_PI_366;
-f32 fd_barriern_satellite___local_3PIO2_368;
-f32 fd_barriern_satellite_one_negone_359[2] __attribute__((aligned(8)));
-f32 fd_barriern_satellite___local_PIO2_367;
-f32 fd_barriern_satellite_one_364;
 BattleUnitKind unit_barriern_satellite;
 static BattleUnitDefense defence;
 static BattleUnitDefenseAttr defence_attr;
@@ -48,39 +32,14 @@ static PoseTableEntry pose_table[17];
 static BattleDataEntry data_table[1];
 static EvtWord init_event[29];
 static EvtWord damage_event[10];
-static EvtWord phase_event[2];
 static EvtWord unison_phase_event[5];
 static EvtWord attack_event[5];
 static EvtWord wait_event[56];
 
-f32 fd_barriern_satellite_negone_one_374[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_barriern_satellite_neg_one_382 = -1.0f;
-
-f32 fd_barriern_satellite___local_PI_383 = 3.1415927f;
-
-f32 fd_barriern_satellite___local_3PIO2_385 = 4.712389f;
-
-f32 fd_barriern_satellite_one_negone_373[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_barriern_satellite___local_PIO2_384 = 1.5707964f;
-
-f32 fd_barriern_satellite_one_381 = 1.0f;
-
-f32 fd_barriern_satellite_negone_one_360[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_barriern_satellite_neg_one_365 = -1.0f;
-
-f32 fd_barriern_satellite___local_PI_366 = 3.1415927f;
-
-f32 fd_barriern_satellite___local_3PIO2_368 = 4.712389f;
-
-f32 fd_barriern_satellite_one_negone_359[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_barriern_satellite___local_PIO2_367 = 1.5707964f;
-
-f32 fd_barriern_satellite_one_364 = 1.0f;
-
+/**
+ * Unit data of the Mini-Yux: 1 HP, 16x16 units in size; ties together its sounds, parts,
+ * status vulnerability, init event and event table.
+ */
 BattleUnitKind unit_barriern_satellite = {
     30,
     "btl_un_barriern_satellite",
@@ -102,8 +61,13 @@ BattleUnitKind unit_barriern_satellite = {
     0.0f,
     0.0f,
     0.0f,
+#if VERSION <= VERSION_DEMO_JP
+    0,
+    -16,
+#else
     -3,
     -6,
+#endif
     0.0f,
     0.0f,
     0.0f,
@@ -139,7 +103,7 @@ BattleUnitKind unit_barriern_satellite = {
     "SFX_BTL_DAMAGE_FIRE1",
     "SFX_BTL_DAMAGE_ICE1",
     "SFX_BTL_DAMAGE_BIRIBIRI1",
-    0x4,
+    UNIT_ATTR_FLOATING,
     &regist,
     6,
     parts,
@@ -147,21 +111,37 @@ BattleUnitKind unit_barriern_satellite = {
     data_table,
 };
 
+/** Defence of the Mini-Yux: 0 against every kind of hit. */
 static BattleUnitDefense defence = {{0, 0, 0, 0, 0}};
 
+/** Defence attributes of the Mini-Yux: none, every element hits it normally. */
 static BattleUnitDefenseAttr defence_attr = {{0, 0, 0, 0, 0}};
 
+/** Parts of the Mini-Yux: 6 parts (model c_baria). */
 static BattleUnitKindPart parts[] = {
-    {1, "btl_un_barriern_satellite", "c_baria", 0.0f, 0.0f, 0.0f, 0.0f, 5.0f, 0.0f, 0.0f, 10.0f, 0.0f, 20, 30, 255, &defence, &defence_attr, 0x600009, 0, pose_table},
-    {2, "btl_un_barriern_satellite", "c_baria", 0.0f, 0.0f, 0.0f, 0.0f, 5.0f, 0.0f, 0.0f, 10.0f, 0.0f, 20, 30, 255, &defence, &defence_attr, 0x13010000, 0, pose_table},
-    {3, "btl_un_barriern_satellite", "c_baria", 0.0f, 0.0f, 0.0f, 0.0f, 5.0f, 0.0f, 0.0f, 10.0f, 0.0f, 20, 30, 255, &defence, &defence_attr, 0x13010000, 0, pose_table},
-    {4, "btl_un_barriern_satellite", "c_baria", 0.0f, 0.0f, 0.0f, 0.0f, 5.0f, 0.0f, 0.0f, 10.0f, 0.0f, 20, 30, 255, &defence, &defence_attr, 0x13010000, 0, pose_table},
-    {5, "btl_un_barriern_satellite", "c_baria", 0.0f, 0.0f, 0.0f, 0.0f, 5.0f, 0.0f, 0.0f, 10.0f, 0.0f, 20, 30, 255, &defence, &defence_attr, 0x13010000, 0, pose_table},
-    {6, "btl_un_barriern_satellite", "c_baria", 0.0f, 0.0f, 0.0f, 0.0f, 5.0f, 0.0f, 0.0f, 10.0f, 0.0f, 20, 30, 255, &defence, &defence_attr, 0x13010000, 0, pose_table},
+    {1, "btl_un_barriern_satellite", "c_baria", 0.0f, 0.0f, 0.0f, 0.0f, 5.0f, 0.0f, 0.0f, 10.0f, 0.0f, 20, 30, 255, &defence, &defence_attr, PART_ATTR_MAIN | PART_ATTR_GUARD_COVER | PART_ATTR_HAMMERLIKE_CANNOT_TARGET | PART_ATTR_SHELL_TOSSLIKE_CANNOT_TARGET, 0, pose_table},
+    {2, "btl_un_barriern_satellite", "c_baria", 0.0f, 0.0f, 0.0f, 0.0f, 5.0f, 0.0f, 0.0f, 10.0f, 0.0f, 20, 30, 255, &defence, &defence_attr, PART_ATTR_NOT_TARGETABLE | PART_ATTR_HIDDEN | PART_ATTR_NO_SHADOW | PART_ATTR_WORLD_POSITION, 0, pose_table},
+    {3, "btl_un_barriern_satellite", "c_baria", 0.0f, 0.0f, 0.0f, 0.0f, 5.0f, 0.0f, 0.0f, 10.0f, 0.0f, 20, 30, 255, &defence, &defence_attr, PART_ATTR_NOT_TARGETABLE | PART_ATTR_HIDDEN | PART_ATTR_NO_SHADOW | PART_ATTR_WORLD_POSITION, 0, pose_table},
+    {4, "btl_un_barriern_satellite", "c_baria", 0.0f, 0.0f, 0.0f, 0.0f, 5.0f, 0.0f, 0.0f, 10.0f, 0.0f, 20, 30, 255, &defence, &defence_attr, PART_ATTR_NOT_TARGETABLE | PART_ATTR_HIDDEN | PART_ATTR_NO_SHADOW | PART_ATTR_WORLD_POSITION, 0, pose_table},
+    {5, "btl_un_barriern_satellite", "c_baria", 0.0f, 0.0f, 0.0f, 0.0f, 5.0f, 0.0f, 0.0f, 10.0f, 0.0f, 20, 30, 255, &defence, &defence_attr, PART_ATTR_NOT_TARGETABLE | PART_ATTR_HIDDEN | PART_ATTR_NO_SHADOW | PART_ATTR_WORLD_POSITION, 0, pose_table},
+    {6, "btl_un_barriern_satellite", "c_baria", 0.0f, 0.0f, 0.0f, 0.0f, 5.0f, 0.0f, 0.0f, 10.0f, 0.0f, 20, 30, 255, &defence, &defence_attr, PART_ATTR_NOT_TARGETABLE | PART_ATTR_HIDDEN | PART_ATTR_NO_SHADOW | PART_ATTR_WORLD_POSITION, 0, pose_table},
 };
 
+#if VERSION <= VERSION_DEMO_JP
+/**
+ * Demo builds: Status vulnerability of the Mini-Yux (percent chance each status takes hold):
+ * immune to poison, burn, freeze, fright; the rest take hold at 80% or better.
+ */
+static StatusVulnerability regist = {80, 100, 100, 0, 90, 100, 0, 0, 100, 90, 100, 90, 100, 90, 90, 0, 100, 100, 90, 100, 100, 100};
+#else
+/**
+ * Retail builds: Status vulnerability of the Mini-Yux (percent chance each status takes hold):
+ * immune to poison, burn, freeze, fright; the rest take hold at 80% or better.
+ */
 static StatusVulnerability regist = {80, 100, 100, 0, 90, 100, 0, 0, 100, 90, 100, 90, 100, 95, 90, 0, 100, 100, 90, 100, 100, 100};
+#endif
 
+/** Pose table of the Mini-Yux: maps its battle poses to its animations. */
 static PoseTableEntry pose_table[] = {
     {1, "N_2"},
     {2, "Y_2"},
@@ -179,60 +159,73 @@ static PoseTableEntry pose_table[] = {
     {40, "W_2"},
     {56, "X_2"},
     {57, "X_2"},
-    {69, "S_2"},
+    {BTL_POSE_STAY_DEFAULT, "S_2"},
 };
 
+/** Event table of the Mini-Yux: it has no special event scripts. */
 static BattleDataEntry data_table[] = {
     {0, NULL},
 };
 
+/**
+ * Init script of the Mini-Yux: sets its wait, unison phase, attack, damage and confusion events and a unit flag;
+ * then starts its wait event.
+ */
 static EVT_BEGIN(init_event)
-    CALL(btlevtcmd_SetEventWait, -2, PTR(wait_event))
-    CALL(btlevtcmd_SetEventUnisonPhase, -2, PTR(unison_phase_event))
-    CALL(btlevtcmd_SetEventAttack, -2, PTR(attack_event))
-    CALL(btlevtcmd_SetEventDamage, -2, PTR(damage_event))
-    CALL(btlevtcmd_SetEventConfusion, -2, PTR(btldefaultevt_Confuse))
-    CALL(btlevtcmd_OnUnitFlag, -2, 3145728)
-    CALL(btlevtcmd_StartWaitEvent, -2)
+    CALL(btlevtcmd_SetEventWait, BTL_UNIT_SELF, PTR(wait_event))
+    CALL(btlevtcmd_SetEventUnisonPhase, BTL_UNIT_SELF, PTR(unison_phase_event))
+    CALL(btlevtcmd_SetEventAttack, BTL_UNIT_SELF, PTR(attack_event))
+    CALL(btlevtcmd_SetEventDamage, BTL_UNIT_SELF, PTR(damage_event))
+    CALL(btlevtcmd_SetEventConfusion, BTL_UNIT_SELF, PTR(btldefaultevt_Confuse))
+    CALL(btlevtcmd_OnUnitFlag, BTL_UNIT_SELF, UNIT_FLAG_FLOAT | UNIT_FLAG_FLOAT_ACTIVE)
+    CALL(btlevtcmd_StartWaitEvent, BTL_UNIT_SELF)
     RETURN
 EVT_END()
 
+/** Damage event of the Mini-Yux: runs the default damage reaction. */
 static EVT_BEGIN(damage_event)
     SET_VALUE(LW(10), -2)
     SET_VALUE(LW(11), 1)
-    CALL_CHILD(PTR(btldefaultevt_Damage))
+    CALL_CHILD(btldefaultevt_Damage)
     RETURN
 EVT_END()
 
+/** Phase event of the Mini-Yux: nothing; its Yux does the acting. */
 static EVT_BEGIN(phase_event)
     RETURN
 EVT_END()
 
+/** Unison-phase event of the Mini-Yux: restarts its wait event and does nothing else. */
 static EVT_BEGIN(unison_phase_event)
-    CALL(btlevtcmd_StartWaitEvent, -2)
+    CALL(btlevtcmd_StartWaitEvent, BTL_UNIT_SELF)
     RETURN
 EVT_END()
 
+/** Attack event of the Mini-Yux: restarts its wait event; the Yux makes the attacks itself. */
 static EVT_BEGIN(attack_event)
-    CALL(btlevtcmd_StartWaitEvent, -2)
+    CALL(btlevtcmd_StartWaitEvent, BTL_UNIT_SELF)
     RETURN
 EVT_END()
 
+/**
+ * Idle loop of the Mini-Yux: plays its idle pose and, every 30 to 150 frames, if its flag is set and it can act,
+ * plays the S_4 pose for 3 seconds.
+ */
 static EVT_BEGIN(wait_event)
-    CALL(btlevtcmd_AnimeChangePoseFromTable, -2, 1)
+    CALL(btlevtcmd_AnimeChangePoseFromTable, BTL_UNIT_SELF, 1)
     LABEL(0)
     CALL(evt_sub_random, 120, LW(0))
     ADD(LW(0), 30)
     WAIT_FRAMES(LW(0))
-    CALL(btlevtcmd_GetUnitWork, -2, 1, LW(0))
+    CALL(btlevtcmd_GetUnitWork, BTL_UNIT_SELF, UW_BARRIERN_SATELLITE_IDLE_POSE, LW(0))
     IF_INT_NOT_EQUAL(LW(0), 0)
-        CALL(btlevtcmd_CheckActStatus, -2, LW(0))
+        CALL(btlevtcmd_CheckActStatus, BTL_UNIT_SELF, LW(0))
         IF_INT_NOT_EQUAL(LW(0), 0)
-            CALL(btlevtcmd_CheckStatus, -2, 5, LW(0))
+            CALL(btlevtcmd_CheckStatus, BTL_UNIT_SELF, STATUS_CONFUSE, LW(0))
             IF_INT_EQUAL(LW(0), 0)
-                CALL(btlevtcmd_AnimeChangePose, -2, 1, STRING("S_4"))
+                CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("S_4"))
                 WAIT_FRAMES(180)
-                CALL(btlevtcmd_AnimeChangePoseFromTable, -2, 1)
+                CALL(btlevtcmd_AnimeChangePoseFromTable, BTL_UNIT_SELF, 1)
             END_IF
         END_IF
     END_IF
@@ -240,10 +233,14 @@ static EVT_BEGIN(wait_event)
     RETURN
 EVT_END()
 
+/**
+ * Gives the starting ring offset of Mini-Yux number args[2] when there are args[1] of them (1 to 4 in a ring);
+ * the same helper as in the Yux's file.
+ */
 static USER_FUNC(battleGetBarriernSatelliteInitPos) {
     EvtWord* args = event->args;
     BattleUnit* unit;
-    s32 num;
+    s32 max;
     s32 index;
     s32 id;
     s32 x;
@@ -273,13 +270,13 @@ static USER_FUNC(battleGetBarriernSatelliteInitPos) {
     id = evtGetValue(event, args[0]);
     id = BattleTransID(event, id);
     unit = BattleGetUnitPtr(wp, id);
-    num = evtGetValue(event, args[1]);
+    max = evtGetValue(event, args[1]);
     index = evtGetValue(event, args[2]);
     x = args[3];
     y = args[4];
     z = args[5];
     p = VecData;
-    for (i = 0; i < num; i++) {
+    for (i = 0; i < max; i++) {
         for (j = 0; j < i; j++) {
             p++;
         }
@@ -292,4 +289,3 @@ static USER_FUNC(battleGetBarriernSatelliteInitPos) {
     evtSetValue(event, z, (s32)p->z);
     return EVT_RETURN_DONE;
 }
-

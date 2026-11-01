@@ -36,10 +36,34 @@ def strip_comments(t):
     return re.sub(r"//[^\n]*", "", t)
 
 
-def pc_only(t):
-    """Blank the lines the PC build does not compile: #ifndef TARGET_PC bodies
-    and the #else of #ifdef TARGET_PC (other conditions count as active)."""
-    out, stack = [], []  # stack of (is_target_pc_cond, active_now)
+# include/version.h: the ordered version values the game code tests, read from the header
+with open(os.path.join(ROOT, "include", "version.h"), encoding="utf-8") as _f:
+    VERSION_VALUES = {m.group(1): int(m.group(2))
+                      for m in re.finditer(r"^#define (VERSION_[A-Z0-9_]+) (\d+)\b", _f.read(), re.M)}
+# the versions the PC port builds (name, VERSION value)
+PORT_VERSIONS = (("JP", VERSION_VALUES["VERSION_JP"]), ("US", VERSION_VALUES["VERSION_US"]))
+
+
+def version_cond(cond, version):
+    """True/False for a condition on VERSION (include/version.h), None otherwise."""
+    if not re.search(r"\bVERSION\b", cond):
+        return None
+    e = re.sub(r"\bVERSION_[A-Z0-9_]+\b", lambda m: str(VERSION_VALUES.get(m.group(0), "X")), cond)
+    e = re.sub(r"\bVERSION\b", str(version), e).replace("&&", " and ").replace("||", " or ")
+    e = re.sub(r"!(?!=)", " not ", e)
+    if re.search(r"[A-Za-z_]", re.sub(r"\b(and|or|not)\b", "", e)):
+        return None  # mixed with other macros: count as active
+    try:
+        return bool(eval(e, {"__builtins__": {}}))
+    except Exception:
+        return None
+
+
+def pc_only(t, version=None):
+    """Blank the lines the PC build does not compile: #ifndef TARGET_PC bodies,
+    the #else of #ifdef TARGET_PC and, for a version, the branches of
+    #if VERSION ... it does not take (other conditions count as active)."""
+    out, stack = [], []  # [kind ("pc"/"ver"/"other"), active, taken]
     for line in t.split("\n"):
         s = line.strip()
         m = re.match(r"#\s*(ifdef|ifndef|if|elif|else|endif)\b(.*)", s)
@@ -48,16 +72,32 @@ def pc_only(t):
             if d in ("ifdef", "ifndef", "if"):
                 pc = re.fullmatch(r"(defined\s*\(?\s*)?TARGET_PC\s*\)?", cond) is not None or \
                     re.fullmatch(r"!\s*defined\s*\(?\s*TARGET_PC\s*\)?", cond) is not None
-                neg = d == "ifndef" or cond.startswith("!")
-                stack.append((pc, not (pc and neg)))
-            elif d in ("else", "elif") and stack:
-                pc, act = stack[-1]
-                stack[-1] = (pc, not act if pc else True)
+                vc = version_cond(cond, version) if version is not None and d == "if" else None
+                if pc:
+                    act = not (d == "ifndef" or cond.startswith("!"))
+                    stack.append(["pc", act, act])
+                elif vc is not None:
+                    stack.append(["ver", vc, vc])
+                else:
+                    stack.append(["other", True, True])
+            elif d == "elif" and stack:
+                e = stack[-1]
+                if e[0] == "ver":
+                    vc = version_cond(cond, version)
+                    act = not e[2] and (vc if vc is not None else True)
+                    e[1], e[2] = act, e[2] or act
+                elif e[0] == "pc":
+                    e[1], e[2] = not e[2], True
+                else:
+                    e[1] = True
+            elif d == "else" and stack:
+                e = stack[-1]
+                e[1] = not e[2] if e[0] in ("pc", "ver") else True
             elif d == "endif" and stack:
                 stack.pop()
             out.append("")
             continue
-        out.append(line if all(act for _, act in stack) else "")
+        out.append(line if all(e[1] for e in stack) else "")
     return "\n".join(out)
 
 
@@ -152,16 +192,23 @@ def ptype(p):
     return p.strip()
 
 
-def scan():
+FILES = None
+
+
+def scan(version=None):
+    global FILES
     defs, protos = {}, collections.defaultdict(list)
-    files = []
-    for pat in ("src/**/*.c", "rels/**/*.c", "include/**/*.h", "rels/*/include/**/*.h", "libs/dolsdk2004/include/**/*.h"):
-        files += glob.glob(os.path.join(ROOT, pat), recursive=True)
-    collect_typedefs(strip_comments(open(f, encoding="utf-8", errors="replace").read()) for f in files)
-    files = [f for f in files if "libs" not in f.replace("\\", "/").split("/")]
-    for f in files:
+    if FILES is None:
+        files = []
+        for pat in ("src/**/*.c", "rels/**/*.c", "include/**/*.h", "rels/*/include/**/*.h",
+                    "libs/dolsdk2004/include/**/*.h"):
+            files += glob.glob(os.path.join(ROOT, pat), recursive=True)
+        collect_typedefs(strip_comments(open(f, encoding="utf-8", errors="replace").read()) for f in files)
+        FILES = [(f, strip_comments(open(f, encoding="utf-8", errors="replace").read()))
+                 for f in files if "libs" not in f.replace("\\", "/").split("/")]
+    for f, stripped in FILES:
         rel = os.path.relpath(f, ROOT).replace("\\", "/")
-        text = pc_only(strip_comments(open(f, encoding="utf-8", errors="replace").read()))
+        text = pc_only(stripped, version)
         for m in DECL.finditer(text):
             ret, name, ps, end = m.group(1), m.group(2), m.group(3), m.group(4)
             if name in SKIP_NAMES or ret.strip().split()[-1] in ("return", "else", "case", "goto") or "=" in ret:
@@ -179,8 +226,27 @@ def scan():
 
 def main():
     verbose = "-v" in sys.argv
-    defs, protos = scan()
     hits = collections.defaultdict(list)
+    defs_of = {}
+    # each version as it compiles (#if VERSION ... resolved), merged
+    for vname, vval in PORT_VERSIONS:
+        defs, protos = scan(vval)
+        audit(defs, protos, hits, defs_of, vname)
+    total = 0
+    for name in sorted(hits):
+        drel, dline, (_, _, dretT, dps) = defs_of[name]
+        print(f"{name}: defined {drel}:{dline} as {dretT} {name}({dps})")
+        seen = collections.OrderedDict()
+        for rel, line, why, decl, v in hits[name]:
+            seen.setdefault((rel, line, why, decl), []).append(v)
+        for (rel, line, why, decl), vs in seen.items():
+            total += 1
+            print(f"    {rel}:{line}: {why}   [{decl}]   ({'/'.join(vs)})")
+    print(f"proto_audit: {total} mismatched prototypes of {len(hits)} functions")
+    return 1 if total else 0
+
+
+def audit(defs, protos, hits, defs_of, vname):
     for name, ps in protos.items():
         if name not in defs:
             continue
@@ -193,7 +259,8 @@ def main():
                 # unprototyped 'T f();') of a variadic definition, or the
                 # reverse, reads garbage there (other 64-bit ABIs tolerate it).
                 why.append("variadic mismatch" if pst else "unprototyped () declaration of a variadic function")
-                hits[name].append((rel, line, ", ".join(why), f"{retT} {name}({pst})"))
+                hits[name].append((rel, line, ", ".join(why), f"{retT} {name}({pst})", vname))
+                defs_of.setdefault(name, defs[name])
                 continue
             if "..." in dk or "..." in k:
                 continue
@@ -211,16 +278,8 @@ def main():
             if ret != dret and "void" not in (ret, dret):
                 why.append(f"return {ret} vs {dret}")
             if why:
-                hits[name].append((rel, line, ", ".join(why), f"{retT} {name}({pst})"))
-    total = 0
-    for name in sorted(hits):
-        drel, dline, (_, _, dretT, dps) = defs[name]
-        print(f"{name}: defined {drel}:{dline} as {dretT} {name}({dps})")
-        for rel, line, why, decl in hits[name]:
-            total += 1
-            print(f"    {rel}:{line}: {why}   [{decl}]")
-    print(f"proto_audit: {total} mismatched prototypes of {len(hits)} functions")
-    return 1 if total else 0
+                hits[name].append((rel, line, ", ".join(why), f"{retT} {name}({pst})", vname))
+                defs_of.setdefault(name, defs[name])
 
 
 if __name__ == "__main__":

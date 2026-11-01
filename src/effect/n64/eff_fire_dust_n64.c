@@ -1,3 +1,5 @@
+// Paper Mario 64 effect: fire dust, count glowing particles spread within a range and height.
+#include "eff/n64/eff_fire_dust_n64.h"
 #include "eff/eff_n64.h"
 #include "driver/camdrv.h"
 #include "driver/dispdrv.h"
@@ -6,12 +8,7 @@
 #include <dolphin/gx.h>
 #include <dolphin/mtx.h>
 #include <stdlib.h>
-
-#ifndef TARGET_PC /* PC port: the host libc declares these */
-double cos(double);
-double sin(double);
-#endif
-
+#include "libc_decls.h"
 typedef struct EffFireDustWork {
     s32 type;       // 0x0
     Vec position;   // 0x4
@@ -24,19 +21,21 @@ typedef struct EffFireDustWork {
     s32 lifetime;   // 0x38
     s32 frame;      // 0x3c
     s32 cr, cg, cb; // 0x40
-    s32 pad4c;      // 0x4c
+    s32 alpha;      // 0x4c
     s32 r, g, b;    // 0x50
     s32 ca;         // 0x5c
     f32 scale;      // 0x60
-    f32 unk64;      // 0x64
-    f32 unk68;      // 0x68
+    f32 phase1;     // 0x64, random start, advanced each frame; never read
+    f32 phase2;     // 0x68, random start, advanced each frame; never read
 } EffFireDustWork;
 
+/** Fire-dust particle size over its 20-step cycle: swells to 1.5 then shrinks (the ten steps are listed twice). */
 static f32 scale_data[] = {
     0.2f, 0.4f, 0.8f, 1.3f, 1.5f, 1.3f, 0.9f, 0.6f, 0.4f, 0.3f,
     0.2f, 0.4f, 0.8f, 1.3f, 1.5f, 1.3f, 0.9f, 0.6f, 0.4f, 0.3f,
 };
 
+/** Fire-dust particle quads: eight cells of the texture strip, one picked per particle. */
 static effN64Vtx size8x8_tex22x22_vtx[] = {
     {-8, -8, 0, 0, 0, 0, 0, 0, 255},
     {8, -8, 0, 704, 0, 0, 0, 0, 255},
@@ -72,10 +71,14 @@ static effN64Vtx size8x8_tex22x22_vtx[] = {
     {-8, 8, 0, 4928, 704, 0, 0, 0, 255},
 };
 
-void effFireDustMain(EffectEntry* effect);
-void effFireDustDisp(CameraId cameraId, EffectEntry* effect);
+static void effFireDustMain(EffectEntry* effect);
+static void effFireDustDisp(CameraId cameraId, EffectEntry* effect);
 static void main_dl(EffectEntry* effect, Mtx mtx);
 
+/**
+ * Spawns count particles of glowing fire dust around (x, y, z) on a ring of radius a with a vertical spread of
+ * b, running for lifetime frames (0 = until soft-deleted). Each starts after a staggered delay.
+ */
 EffectEntry* effFireDustN64Entry(s32 type, s32 count, s32 lifetime, f32 x, f32 y, f32 z, f32 a, f32 b) {
     EffectEntry* effect;
     EffFireDustWork* work;
@@ -89,7 +92,7 @@ EffectEntry* effFireDustN64Entry(s32 type, s32 count, s32 lifetime, f32 x, f32 y
     work = __memAlloc(HEAP_EFFECT, sizeof(EffFireDustWork) * (count + 2));
     effect->userdata = work;
     effect->callback = effFireDustMain;
-    effect->flags |= 2;
+    effect->flags |= EFFECT_FLAG_SOFT_DELETE;
     work->type = type;
     work->frame = 0;
     if (lifetime <= 0) {
@@ -97,7 +100,7 @@ EffectEntry* effFireDustN64Entry(s32 type, s32 count, s32 lifetime, f32 x, f32 y
     } else {
         work->lifetime = lifetime;
     }
-    work->pad4c = 255;
+    work->alpha = 255;
     work->position.x = x;
     work->position.y = y;
     work->position.z = z;
@@ -123,7 +126,11 @@ EffectEntry* effFireDustN64Entry(s32 type, s32 count, s32 lifetime, f32 x, f32 y
     return effect;
 }
 
-void effFireDustMain(EffectEntry* effect) {
+/**
+ * Each particle runs a 20-step cycle: it respawns on the ring at a random angle and height, flies outward,
+ * and eases toward half its speed while its scale follows scale_data. A delete request leaves 16 frames of fade.
+ */
+static void effFireDustMain(EffectEntry* effect) {
     s32 height;
     EffFireDustWork* p;
     Vec position;
@@ -138,8 +145,8 @@ void effFireDustMain(EffectEntry* effect) {
     tmp.y = p->position.y;
     tmp.z = p->position.z;
     position = tmp;
-    if (effect->flags & 4) {
-        effect->flags &= ~4;
+    if (effect->flags & EFFECT_FLAG_DELETE_REQUESTED) {
+        effect->flags &= ~EFFECT_FLAG_DELETE_REQUESTED;
         p->lifetime = 16;
     }
     if (p->lifetime < 1000) {
@@ -150,7 +157,7 @@ void effFireDustMain(EffectEntry* effect) {
         effDelete(effect);
     } else {
         if (p->lifetime < 8) {
-            p->pad4c = p->lifetime * 32;
+            p->alpha = p->lifetime * 32;
         }
         height = (s32)p->height;
         range = p->range;
@@ -177,18 +184,18 @@ void effFireDustMain(EffectEntry* effect) {
                 p->targetVel.x = 0.5f * p->vel.x;
                 p->targetVel.y = 0.5f * p->vel.y;
                 p->targetVel.z = 0.5f * p->vel.z;
-                p->unk64 = (f32)(rand() % 15);
-                p->unk68 = (f32)(rand() % 15);
+                p->phase1 = (f32)(rand() % 15);
+                p->phase2 = (f32)(rand() % 15);
                 p->rot = 0.0f;
-                p->pad4c = 255;
+                p->alpha = 255;
             }
             p->scale = 2.0f * scale_data[p->index];
             p->rot += 4.0f;
             p->position.x += p->vel.x;
             p->position.y += p->vel.y;
             p->position.z += p->vel.z;
-            p->unk64 += 0.2f;
-            p->unk68 += 0.6f;
+            p->phase1 += 0.2f;
+            p->phase2 += 0.6f;
             p->vel.x += 0.04f * (p->targetVel.x - p->vel.x);
             p->vel.y += 0.04f * (p->targetVel.y - p->vel.y);
             p->vel.z += 0.04f * (p->targetVel.z - p->vel.z);
@@ -197,7 +204,11 @@ void effFireDustMain(EffectEntry* effect) {
     }
 }
 
-void effFireDustDisp(CameraId cameraId, EffectEntry* effect) {
+/**
+ * Draws the particle set three times, turned 120 degrees apart around Y, with texture 0x20;
+ * main_dl does the per-particle drawing under each camera matrix.
+ */
+static void effFireDustDisp(CameraId cameraId, EffectEntry* effect) {
     CameraEntry* camera;
     EffFireDustWork* work;
     GXTexObj texObj;
@@ -239,6 +250,7 @@ void effFireDustDisp(CameraId cameraId, EffectEntry* effect) {
     main_dl(effect, mtx);
 }
 
+/** Draws every live fire-dust particle as a spinning, scaled yellow sprite under the camera matrix cam. */
 static void main_dl(EffectEntry* effect, Mtx cam) {
     EffFireDustWork* p;
     Mtx tr;
@@ -250,7 +262,7 @@ static void main_dl(EffectEntry* effect, Mtx cam) {
     effN64Vtx* vtx;
 
     p = effect->userdata;
-    a = (f32)p->pad4c / 255.0f;
+    a = (f32)p->alpha / 255.0f;
     r = p->r;
     g = p->g;
     b = p->b;
@@ -267,16 +279,32 @@ static void main_dl(EffectEntry* effect, Mtx cam) {
         PSMTXConcat(cam, tr, tr);
         GXLoadPosMtxImm(tr, GX_PNMTX0);
         GXSetCurrentMtx(GX_PNMTX0);
-        GXSetTevColor(GX_TEVREG0, (GXColor){r, g, b, (s32)((f32)p->pad4c * a)});
+        GXSetTevColor(GX_TEVREG0, (GXColor){r, g, b, (s32)((f32)p->alpha * a)});
         switch (i & 7) {
-            case 0: vtx = &size8x8_tex22x22_vtx[12]; break;
-            case 1: vtx = &size8x8_tex22x22_vtx[16]; break;
-            case 2: vtx = &size8x8_tex22x22_vtx[20]; break;
-            case 3: vtx = &size8x8_tex22x22_vtx[24]; break;
-            case 4: vtx = &size8x8_tex22x22_vtx[28]; break;
-            case 5: vtx = &size8x8_tex22x22_vtx[0]; break;
-            case 6: vtx = &size8x8_tex22x22_vtx[4]; break;
-            case 7: vtx = &size8x8_tex22x22_vtx[8]; break;
+            case 0:
+                vtx = &size8x8_tex22x22_vtx[12];
+                break;
+            case 1:
+                vtx = &size8x8_tex22x22_vtx[16];
+                break;
+            case 2:
+                vtx = &size8x8_tex22x22_vtx[20];
+                break;
+            case 3:
+                vtx = &size8x8_tex22x22_vtx[24];
+                break;
+            case 4:
+                vtx = &size8x8_tex22x22_vtx[28];
+                break;
+            case 5:
+                vtx = &size8x8_tex22x22_vtx[0];
+                break;
+            case 6:
+                vtx = &size8x8_tex22x22_vtx[4];
+                break;
+            case 7:
+                vtx = &size8x8_tex22x22_vtx[8];
+                break;
         }
         effSetVtxDescN64(vtx);
         GXBegin(GX_TRIANGLES, GX_VTXFMT0, 6);

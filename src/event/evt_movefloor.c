@@ -1,571 +1,610 @@
+// Script commands and scripts for moving floors (platforms that follow a path).
+#include "evt/evt_movefloor.h"
 #include "evt/evt_cmd.h"
 #include "driver/mapdrv.h"
 #include "manager/evtmgr.h"
 #include "manager/evtmgr_cmd.h"
 #include "mario/mariost.h"
+#include "evt/evt_bero.h"
+#include "evt/evt_hit.h"
+#include "evt/evt_map.h"
+#include "evt/evt_mario.h"
+#include "evt/evt_sub.h"
+#include "evt/evt_party.h"
+#include "evt/evt_snd.h"
 #include "memory.h"
 #include "pmario_sound.h"
 #include <string.h>
-
-s32 psndGetFlag();
-void mapObjGetPos();
+#include "version.h"
 
 typedef struct MovingFloor {
-	u32 flags;       // 0x0
-	s32 kind;        // 0x4
-	f32 speed;       // 0x8
-	f32 pos;         // 0xC
-	f32 cur;         // 0x10
-	u32 pad14;       // 0x14
-	OSTime start;    // 0x18
-	s32 mode;        // 0x20
-	s32 phase;       // 0x24
-	s32 idx;         // 0x28
-	f32 a[3];        // 0x2C
-	f32 b[3];        // 0x38
-	f32 pos3[3];     // 0x44
-	f32 prev[3];     // 0x50
-	f32 yoff;        // 0x5C
-	f32 prevYoff;    // 0x60
-	f32 scale;       // 0x64
-	s32 time[3];     // 0x68
-	s32 stmsec;      // 0x74
-	u32 seHalt;      // 0x78
-	u32 seId;        // 0x7C
-	f32 turn;        // 0x80
-	f32 angle;       // 0x84
+    u32 flags;    // 0x0
+    s32 kind;     // 0x4
+    f32 speed;    // 0x8
+    f32 pos;      // 0xC
+    f32 cur;      // 0x10
+    u32 pad14;    // 0x14
+    OSTime start; // 0x18
+    s32 mode;     // 0x20
+    s32 phase;    // 0x24
+    s32 idx;      // 0x28
+    f32 a[3];     // 0x2C
+    f32 b[3];     // 0x38
+    f32 pos3[3];  // 0x44
+    f32 prev[3];  // 0x50
+    f32 yoff;     // 0x5C
+    f32 prevYoff; // 0x60
+    f32 scale;    // 0x64
+    s32 time[3];  // 0x68
+    s32 stmsec;   // 0x74
+    u32 seHalt;   // 0x78
+    u32 seId;     // 0x7C
+    f32 turn;     // 0x80
+    f32 angle;    // 0x84
 } MovingFloor;
 
-USER_FUNC(evt_bero_exec_wait);
-USER_FUNC(evt_bero_get_info_nextarea);
-USER_FUNC(evt_bero_get_now_number);
-USER_FUNC(evt_hit_bind_mapobj);
-USER_FUNC(evt_hit_bind_update);
-USER_FUNC(evt_mapobj_get_position);
-USER_FUNC(evt_mapobj_rotate);
-USER_FUNC(evt_mapobj_scale);
-USER_FUNC(evt_mapobj_trans);
-USER_FUNC(evt_mario_get_exparty);
-USER_FUNC(evt_mario_get_name_hitobj_head);
-USER_FUNC(evt_mario_get_name_hitobj_ride);
-USER_FUNC(evt_mario_get_party);
-USER_FUNC(evt_mario_set_hosei_xyz);
-USER_FUNC(evt_party_get_name_hitobj_head);
-USER_FUNC(evt_party_get_name_hitobj_ride);
-USER_FUNC(evt_party_set_hosei_xyz);
-USER_FUNC(evt_snd_sfxoff);
-USER_FUNC(evt_snd_sfxon_3d);
-USER_FUNC(evt_sub_get_areaname);
-USER_FUNC(moving_floor_get_end);
-USER_FUNC(moving_floor_get_kind);
-USER_FUNC(moving_floor_get_mode);
-USER_FUNC(moving_floor_get_pause);
-USER_FUNC(moving_floor_get_stmsec);
-USER_FUNC(moving_floor_getf_now_bpoint);
-USER_FUNC(moving_floor_getf_pos);
-USER_FUNC(moving_floor_getf_xz_scale);
-USER_FUNC(moving_floor_halt_se);
-USER_FUNC(moving_floor_reverse);
-USER_FUNC(moving_floor_set_se);
-USER_FUNC(moving_floor_stop_se);
-USER_FUNC(moving_floor_update_turn);
-
-static f32 sintbl[450] = {
-	0.0f, 0.017452f, 0.034899f, 0.052336f, 0.069756f, 0.087156f, 0.104528f, 0.121869f,
-	0.139173f, 0.156434f, 0.173648f, 0.190809f, 0.207912f, 0.224951f, 0.241922f, 0.258819f,
-	0.275637f, 0.292372f, 0.309017f, 0.325568f, 0.34202f, 0.358368f, 0.374607f, 0.390731f,
-	0.406737f, 0.422618f, 0.438371f, 0.45399f, 0.469471f, 0.48481f, 0.5f, 0.515038f,
-	0.529919f, 0.544639f, 0.559193f, 0.573576f, 0.587785f, 0.601815f, 0.615661f, 0.62932f,
-	0.642788f, 0.656059f, 0.669131f, 0.681998f, 0.694658f, 0.707107f, 0.71934f, 0.731354f,
-	0.743145f, 0.754709f, 0.766044f, 0.777146f, 0.788011f, 0.798635f, 0.809017f, 0.819152f,
-	0.829037f, 0.83867f, 0.848048f, 0.857167f, 0.866025f, 0.87462f, 0.882947f, 0.891006f,
-	0.898794f, 0.906308f, 0.913545f, 0.920505f, 0.927184f, 0.93358f, 0.939693f, 0.945518f,
-	0.951056f, 0.956305f, 0.961262f, 0.965926f, 0.970296f, 0.97437f, 0.978148f, 0.981627f,
-	0.984808f, 0.987688f, 0.990268f, 0.992546f, 0.994522f, 0.996195f, 0.997564f, 0.99863f,
-	0.999391f, 0.999848f, 1.0f, 0.999848f, 0.999391f, 0.99863f, 0.997564f, 0.996195f,
-	0.994522f, 0.992546f, 0.990268f, 0.987688f, 0.984808f, 0.981627f, 0.978148f, 0.97437f,
-	0.970296f, 0.965926f, 0.961262f, 0.956305f, 0.951057f, 0.945519f, 0.939693f, 0.933581f,
-	0.927184f, 0.920505f, 0.913546f, 0.906308f, 0.898794f, 0.891007f, 0.882948f, 0.87462f,
-	0.866026f, 0.857168f, 0.848048f, 0.838671f, 0.829038f, 0.819152f, 0.809017f, 0.798636f,
-	0.788011f, 0.777146f, 0.766045f, 0.75471f, 0.743145f, 0.731354f, 0.71934f, 0.707107f,
-	0.694659f, 0.681999f, 0.669131f, 0.656059f, 0.642788f, 0.629321f, 0.615662f, 0.601815f,
-	0.587786f, 0.573577f, 0.559193f, 0.544639f, 0.52992f, 0.515039f, 0.5f, 0.48481f,
-	0.469472f, 0.453991f, 0.438372f, 0.422619f, 0.406737f, 0.390732f, 0.374607f, 0.358369f,
-	0.342021f, 0.325569f, 0.309017f, 0.292372f, 0.275638f, 0.25882f, 0.241923f, 0.224952f,
-	0.207912f, 0.190809f, 0.173649f, 0.156435f, 0.139174f, 0.12187f, 0.104529f, 0.087156f,
-	0.069757f, 0.052337f, 0.0349f, 0.017453f, 1e-6f, -0.017452f, -0.034899f, -0.052335f,
-	-0.069756f, -0.087155f, -0.104528f, -0.121869f, -0.139173f, -0.156434f, -0.173648f, -0.190808f,
-	-0.207911f, -0.22495f, -0.241921f, -0.258819f, -0.275637f, -0.292371f, -0.309016f, -0.325568f,
-	-0.342019f, -0.358367f, -0.374606f, -0.39073f, -0.406736f, -0.422618f, -0.438371f, -0.45399f,
-	-0.469471f, -0.484809f, -0.499999f, -0.515037f, -0.529919f, -0.544639f, -0.559192f, -0.573576f,
-	-0.587785f, -0.601814f, -0.615661f, -0.62932f, -0.642787f, -0.656058f, -0.66913f, -0.681998f,
-	-0.694658f, -0.707106f, -0.719339f, -0.731353f, -0.743144f, -0.754709f, -0.766044f, -0.777145f,
-	-0.78801f, -0.798635f, -0.809016f, -0.819152f, -0.829037f, -0.83867f, -0.848048f, -0.857167f,
-	-0.866025f, -0.874619f, -0.882947f, -0.891006f, -0.898794f, -0.906307f, -0.913545f, -0.920504f,
-	-0.927183f, -0.93358f, -0.939692f, -0.945518f, -0.951056f, -0.956304f, -0.961261f, -0.965926f,
-	-0.970295f, -0.97437f, -0.978147f, -0.981627f, -0.984808f, -0.987688f, -0.990268f, -0.992546f,
-	-0.994522f, -0.996195f, -0.997564f, -0.998629f, -0.999391f, -0.999848f, -1.0f, -0.999848f,
-	-0.999391f, -0.99863f, -0.997564f, -0.996195f, -0.994522f, -0.992546f, -0.990268f, -0.987688f,
-	-0.984808f, -0.981627f, -0.978148f, -0.97437f, -0.970296f, -0.965926f, -0.961262f, -0.956305f,
-	-0.951057f, -0.945519f, -0.939693f, -0.933581f, -0.927184f, -0.920505f, -0.913546f, -0.906308f,
-	-0.898795f, -0.891007f, -0.882948f, -0.87462f, -0.866026f, -0.857168f, -0.848049f, -0.838671f,
-	-0.829038f, -0.819153f, -0.809018f, -0.798636f, -0.788011f, -0.777147f, -0.766045f, -0.75471f,
-	-0.743146f, -0.731354f, -0.719341f, -0.707108f, -0.694659f, -0.681999f, -0.669132f, -0.65606f,
-	-0.642788f, -0.629321f, -0.615662f, -0.601816f, -0.587786f, -0.573577f, -0.559194f, -0.54464f,
-	-0.52992f, -0.515039f, -0.500001f, -0.484811f, -0.469473f, -0.453991f, -0.438372f, -0.422619f,
-	-0.406737f, -0.390732f, -0.374608f, -0.358369f, -0.342022f, -0.325569f, -0.309018f, -0.292373f,
-	-0.275638f, -0.25882f, -0.241923f, -0.224952f, -0.207913f, -0.19081f, -0.173649f, -0.156435f,
-	-0.139175f, -0.121871f, -0.10453f, -0.087157f, -0.069758f, -0.052337f, -0.034901f, -0.017454f,
-	-1e-6f, 0.017451f, 0.034899f, 0.052335f, 0.069755f, 0.087154f, 0.104527f, 0.121868f,
-	0.139172f, 0.156433f, 0.173647f, 0.190808f, 0.20791f, 0.22495f, 0.241921f, 0.258818f,
-	0.275636f, 0.292371f, 0.309015f, 0.325567f, 0.342019f, 0.358367f, 0.374605f, 0.39073f,
-	0.406736f, 0.422617f, 0.43837f, 0.45399f, 0.469471f, 0.484809f, 0.499999f, 0.515037f,
-	0.529918f, 0.544638f, 0.559191f, 0.573575f, 0.587784f, 0.601814f, 0.615661f, 0.629319f,
-	0.642787f, 0.656058f, 0.66913f, 0.681997f, 0.694657f, 0.707105f, 0.719339f, 0.731353f,
-	0.743144f, 0.754709f, 0.766044f, 0.777145f, 0.78801f, 0.798635f, 0.809016f, 0.819151f,
-	0.829037f, 0.83867f, 0.848047f, 0.857166f, 0.866025f, 0.874619f, 0.882947f, 0.891006f,
-	0.898793f, 0.906307f, 0.913545f, 0.920504f, 0.927183f, 0.93358f, 0.939692f, 0.945518f,
-	0.951056f, 0.956304f, 0.961261f, 0.965925f, 0.970295f, 0.97437f, 0.978147f, 0.981627f,
-	0.984808f, 0.987688f, 0.990268f, 0.992546f, 0.994522f, 0.996195f, 0.997564f, 0.998629f,
-	0.999391f, 0.999848f,
+// MovingFloor.flags bits.
+enum MovingFloorFlags {
+    MOVING_FLOOR_FLAG_MID_POINT = 0x1, // mode 3 stopped at the middle of its travel: no stop time (moving_floor_get_stmsec)
+    MOVING_FLOOR_FLAG_PAUSED = 0x2,    // read by moving_floor_get_pause; nothing in this file sets it
 };
 
+/**
+ * Sine of each whole degree from 0 to 449 (the extra quarter turn lets it double as a cosine table).
+ * Only the WOBBLE macro reads it, for the 3-unit bob of kind 1 moving floors.
+ */
+static f32 sintbl[450] = {
+    0.0f, 0.017452f, 0.034899f, 0.052336f, 0.069756f, 0.087156f, 0.104528f, 0.121869f,
+    0.139173f, 0.156434f, 0.173648f, 0.190809f, 0.207912f, 0.224951f, 0.241922f, 0.258819f,
+    0.275637f, 0.292372f, 0.309017f, 0.325568f, 0.34202f, 0.358368f, 0.374607f, 0.390731f,
+    0.406737f, 0.422618f, 0.438371f, 0.45399f, 0.469471f, 0.48481f, 0.5f, 0.515038f,
+    0.529919f, 0.544639f, 0.559193f, 0.573576f, 0.587785f, 0.601815f, 0.615661f, 0.62932f,
+    0.642788f, 0.656059f, 0.669131f, 0.681998f, 0.694658f, 0.707107f, 0.71934f, 0.731354f,
+    0.743145f, 0.754709f, 0.766044f, 0.777146f, 0.788011f, 0.798635f, 0.809017f, 0.819152f,
+    0.829037f, 0.83867f, 0.848048f, 0.857167f, 0.866025f, 0.87462f, 0.882947f, 0.891006f,
+    0.898794f, 0.906308f, 0.913545f, 0.920505f, 0.927184f, 0.93358f, 0.939693f, 0.945518f,
+    0.951056f, 0.956305f, 0.961262f, 0.965926f, 0.970296f, 0.97437f, 0.978148f, 0.981627f,
+    0.984808f, 0.987688f, 0.990268f, 0.992546f, 0.994522f, 0.996195f, 0.997564f, 0.99863f,
+    0.999391f, 0.999848f, 1.0f, 0.999848f, 0.999391f, 0.99863f, 0.997564f, 0.996195f,
+    0.994522f, 0.992546f, 0.990268f, 0.987688f, 0.984808f, 0.981627f, 0.978148f, 0.97437f,
+    0.970296f, 0.965926f, 0.961262f, 0.956305f, 0.951057f, 0.945519f, 0.939693f, 0.933581f,
+    0.927184f, 0.920505f, 0.913546f, 0.906308f, 0.898794f, 0.891007f, 0.882948f, 0.87462f,
+    0.866026f, 0.857168f, 0.848048f, 0.838671f, 0.829038f, 0.819152f, 0.809017f, 0.798636f,
+    0.788011f, 0.777146f, 0.766045f, 0.75471f, 0.743145f, 0.731354f, 0.71934f, 0.707107f,
+    0.694659f, 0.681999f, 0.669131f, 0.656059f, 0.642788f, 0.629321f, 0.615662f, 0.601815f,
+    0.587786f, 0.573577f, 0.559193f, 0.544639f, 0.52992f, 0.515039f, 0.5f, 0.48481f,
+    0.469472f, 0.453991f, 0.438372f, 0.422619f, 0.406737f, 0.390732f, 0.374607f, 0.358369f,
+    0.342021f, 0.325569f, 0.309017f, 0.292372f, 0.275638f, 0.25882f, 0.241923f, 0.224952f,
+    0.207912f, 0.190809f, 0.173649f, 0.156435f, 0.139174f, 0.12187f, 0.104529f, 0.087156f,
+    0.069757f, 0.052337f, 0.0349f, 0.017453f, 1e-6f, -0.017452f, -0.034899f, -0.052335f,
+    -0.069756f, -0.087155f, -0.104528f, -0.121869f, -0.139173f, -0.156434f, -0.173648f, -0.190808f,
+    -0.207911f, -0.22495f, -0.241921f, -0.258819f, -0.275637f, -0.292371f, -0.309016f, -0.325568f,
+    -0.342019f, -0.358367f, -0.374606f, -0.39073f, -0.406736f, -0.422618f, -0.438371f, -0.45399f,
+    -0.469471f, -0.484809f, -0.499999f, -0.515037f, -0.529919f, -0.544639f, -0.559192f, -0.573576f,
+    -0.587785f, -0.601814f, -0.615661f, -0.62932f, -0.642787f, -0.656058f, -0.66913f, -0.681998f,
+    -0.694658f, -0.707106f, -0.719339f, -0.731353f, -0.743144f, -0.754709f, -0.766044f, -0.777145f,
+    -0.78801f, -0.798635f, -0.809016f, -0.819152f, -0.829037f, -0.83867f, -0.848048f, -0.857167f,
+    -0.866025f, -0.874619f, -0.882947f, -0.891006f, -0.898794f, -0.906307f, -0.913545f, -0.920504f,
+    -0.927183f, -0.93358f, -0.939692f, -0.945518f, -0.951056f, -0.956304f, -0.961261f, -0.965926f,
+    -0.970295f, -0.97437f, -0.978147f, -0.981627f, -0.984808f, -0.987688f, -0.990268f, -0.992546f,
+    -0.994522f, -0.996195f, -0.997564f, -0.998629f, -0.999391f, -0.999848f, -1.0f, -0.999848f,
+    -0.999391f, -0.99863f, -0.997564f, -0.996195f, -0.994522f, -0.992546f, -0.990268f, -0.987688f,
+    -0.984808f, -0.981627f, -0.978148f, -0.97437f, -0.970296f, -0.965926f, -0.961262f, -0.956305f,
+    -0.951057f, -0.945519f, -0.939693f, -0.933581f, -0.927184f, -0.920505f, -0.913546f, -0.906308f,
+    -0.898795f, -0.891007f, -0.882948f, -0.87462f, -0.866026f, -0.857168f, -0.848049f, -0.838671f,
+    -0.829038f, -0.819153f, -0.809018f, -0.798636f, -0.788011f, -0.777147f, -0.766045f, -0.75471f,
+    -0.743146f, -0.731354f, -0.719341f, -0.707108f, -0.694659f, -0.681999f, -0.669132f, -0.65606f,
+    -0.642788f, -0.629321f, -0.615662f, -0.601816f, -0.587786f, -0.573577f, -0.559194f, -0.54464f,
+    -0.52992f, -0.515039f, -0.500001f, -0.484811f, -0.469473f, -0.453991f, -0.438372f, -0.422619f,
+    -0.406737f, -0.390732f, -0.374608f, -0.358369f, -0.342022f, -0.325569f, -0.309018f, -0.292373f,
+    -0.275638f, -0.25882f, -0.241923f, -0.224952f, -0.207913f, -0.19081f, -0.173649f, -0.156435f,
+    -0.139175f, -0.121871f, -0.10453f, -0.087157f, -0.069758f, -0.052337f, -0.034901f, -0.017454f,
+    -1e-6f, 0.017451f, 0.034899f, 0.052335f, 0.069755f, 0.087154f, 0.104527f, 0.121868f,
+    0.139172f, 0.156433f, 0.173647f, 0.190808f, 0.20791f, 0.22495f, 0.241921f, 0.258818f,
+    0.275636f, 0.292371f, 0.309015f, 0.325567f, 0.342019f, 0.358367f, 0.374605f, 0.39073f,
+    0.406736f, 0.422617f, 0.43837f, 0.45399f, 0.469471f, 0.484809f, 0.499999f, 0.515037f,
+    0.529918f, 0.544638f, 0.559191f, 0.573575f, 0.587784f, 0.601814f, 0.615661f, 0.629319f,
+    0.642787f, 0.656058f, 0.66913f, 0.681997f, 0.694657f, 0.707105f, 0.719339f, 0.731353f,
+    0.743144f, 0.754709f, 0.766044f, 0.777145f, 0.78801f, 0.798635f, 0.809016f, 0.819151f,
+    0.829037f, 0.83867f, 0.848047f, 0.857166f, 0.866025f, 0.874619f, 0.882947f, 0.891006f,
+    0.898793f, 0.906307f, 0.913545f, 0.920504f, 0.927183f, 0.93358f, 0.939692f, 0.945518f,
+    0.951056f, 0.956304f, 0.961261f, 0.965925f, 0.970295f, 0.97437f, 0.978147f, 0.981627f,
+    0.984808f, 0.987688f, 0.990268f, 0.992546f, 0.994522f, 0.996195f, 0.997564f, 0.998629f,
+    0.999391f, 0.999848f,
+};
 
 #define GETW() ((MovingFloor*)evtGetValue(event, event->args[0]))
-#define WOBBLE(w)                                                                                  \
-	if ((w)->kind == 1) {                                                                          \
-		(w)->yoff = 3.0f * sintbl[(s32)(5.625f * (f32)((gp->retraceCount + event->eventId * 39) & 63))]; \
-	} else {                                                                                       \
-		(w)->yoff = 0.0f;                                                                          \
-	}
+#define WOBBLE(w)                                                                                        \
+    if ((w)->kind == 1) {                                                                                \
+        (w)->yoff = 3.0f * sintbl[(s32)(5.625f * (f32)((gp->retraceCount + event->eventId * 39) & 63))]; \
+    } else {                                                                                             \
+        (w)->yoff = 0.0f;                                                                                \
+    }
 
-USER_FUNC(evt_moving_floor_alloc) {
-	EvtWord* args = event->args;
-	MovingFloor* w = (MovingFloor*)_mapAlloc(sizeof(MovingFloor));
-	memset(w, 0, sizeof(MovingFloor));
-	w->mode = event->lwData[6];
-	w->kind = event->lwData[12];
-	switch (w->mode) {
-		case 0:
-			w->flags &= ~1;
-			w->idx = 0;
-			w->scale = 1.0f;
-			w->a[0] = event->lwData[2];
-			w->b[0] = event->lwData[3];
-			w->time[0] = event->lwData[4];
-			w->pos3[0] = w->a[0];
-			w->turn = event->lwData[11];
-			break;
-		case 1:
-			w->idx = 1;
-			w->scale = 1.0f;
-			w->a[1] = event->lwData[2];
-			w->b[1] = event->lwData[3];
-			w->time[1] = event->lwData[4];
-			w->pos3[1] = w->a[1];
-			w->turn = event->lwData[11];
-			break;
-		case 2:
-			w->idx = 2;
-			w->scale = 1.0f;
-			w->a[2] = event->lwData[2];
-			w->b[2] = event->lwData[3];
-			w->time[2] = event->lwData[4];
-			w->pos3[2] = w->a[2];
-			w->turn = event->lwData[11];
-			break;
-		case 3:
-			w->idx = 0;
-			w->scale = 1.0f;
-			w->a[0] = event->lwData[2];
-			w->b[0] = event->lwData[3];
-			w->time[0] = event->lwData[4];
-			w->pos3[0] = 0.5f * w->a[0] + 0.5f * w->b[0];
-			w->a[2] = event->lwData[8];
-			w->b[2] = event->lwData[9];
-			w->time[2] = event->lwData[10];
-			w->pos3[2] = 0.5f * w->a[2] + 0.5f * w->b[2];
-			w->turn = event->lwData[11];
-			break;
-		case 4:
-			w->idx = 2;
-			w->scale = 1.0f;
-			w->a[0] = event->lwData[2];
-			w->b[0] = event->lwData[3];
-			w->time[0] = event->lwData[4];
-			w->pos3[0] = w->a[0];
-			w->a[2] = event->lwData[8];
-			w->b[2] = event->lwData[9];
-			w->time[2] = event->lwData[10];
-			w->pos3[2] = w->a[2];
-			w->turn = event->lwData[11];
-			break;
-		case 5:
-			w->flags &= ~1;
-			w->idx = 0;
-			w->scale = 1.0f;
-			w->a[0] = event->lwData[2];
-			w->b[0] = event->lwData[3];
-			w->time[0] = event->lwData[4];
-			w->pos3[0] = w->a[0];
-			w->turn = event->lwData[11];
-			break;
-	}
-	w->stmsec = event->lwData[5];
-	w->prev[0] = w->pos3[0];
-	w->prev[1] = w->pos3[1];
-	w->prev[2] = w->pos3[2];
-	w->prevYoff = w->yoff;
-	WOBBLE(w)
-	evtSetValue(event, args[0], (EvtWord)w);
-	return EVT_RETURN_DONE;
+/**
+ * Allocates the moving floor's work block on the map heap and fills it from the moving_floor script's LW values:
+ * LW(6) the mode (0-2 slide along X, Y or Z; 3 and 4 move on X and Z together; 5 one-shot),
+ * LW(2)/LW(3)/LW(4) the start, end and travel time in ms (LW(8)-LW(10) the same for the Z leg),
+ * LW(5) the stop time at each end in ms, LW(11) the turn per frame in degrees
+ * and LW(12) the kind (1 bobs up and down). Returns the block in args[0].
+ */
+static USER_FUNC(evt_moving_floor_alloc) {
+    EvtWord* args = event->args;
+    MovingFloor* w = (MovingFloor*)_mapAlloc(sizeof(MovingFloor));
+    memset(w, 0, sizeof(MovingFloor));
+    w->mode = event->lwData[6];
+    w->kind = event->lwData[12];
+    switch (w->mode) {
+        case 0:
+            w->flags &= ~MOVING_FLOOR_FLAG_MID_POINT;
+            w->idx = 0;
+            w->scale = 1.0f;
+            w->a[0] = event->lwData[2];
+            w->b[0] = event->lwData[3];
+            w->time[0] = event->lwData[4];
+            w->pos3[0] = w->a[0];
+            w->turn = event->lwData[11];
+            break;
+        case 1:
+            w->idx = 1;
+            w->scale = 1.0f;
+            w->a[1] = event->lwData[2];
+            w->b[1] = event->lwData[3];
+            w->time[1] = event->lwData[4];
+            w->pos3[1] = w->a[1];
+            w->turn = event->lwData[11];
+            break;
+        case 2:
+            w->idx = 2;
+            w->scale = 1.0f;
+            w->a[2] = event->lwData[2];
+            w->b[2] = event->lwData[3];
+            w->time[2] = event->lwData[4];
+            w->pos3[2] = w->a[2];
+            w->turn = event->lwData[11];
+            break;
+        case 3:
+            w->idx = 0;
+            w->scale = 1.0f;
+            w->a[0] = event->lwData[2];
+            w->b[0] = event->lwData[3];
+            w->time[0] = event->lwData[4];
+            w->pos3[0] = 0.5f * w->a[0] + 0.5f * w->b[0];
+            w->a[2] = event->lwData[8];
+            w->b[2] = event->lwData[9];
+            w->time[2] = event->lwData[10];
+            w->pos3[2] = 0.5f * w->a[2] + 0.5f * w->b[2];
+            w->turn = event->lwData[11];
+            break;
+        case 4:
+            w->idx = 2;
+            w->scale = 1.0f;
+            w->a[0] = event->lwData[2];
+            w->b[0] = event->lwData[3];
+            w->time[0] = event->lwData[4];
+            w->pos3[0] = w->a[0];
+            w->a[2] = event->lwData[8];
+            w->b[2] = event->lwData[9];
+            w->time[2] = event->lwData[10];
+            w->pos3[2] = w->a[2];
+            w->turn = event->lwData[11];
+            break;
+        case 5:
+            w->flags &= ~MOVING_FLOOR_FLAG_MID_POINT;
+            w->idx = 0;
+            w->scale = 1.0f;
+            w->a[0] = event->lwData[2];
+            w->b[0] = event->lwData[3];
+            w->time[0] = event->lwData[4];
+            w->pos3[0] = w->a[0];
+            w->turn = event->lwData[11];
+            break;
+    }
+    w->stmsec = event->lwData[5];
+    w->prev[0] = w->pos3[0];
+    w->prev[1] = w->pos3[1];
+    w->prev[2] = w->pos3[2];
+    w->prevYoff = w->yoff;
+    WOBBLE(w)
+    evtSetValue(event, args[0], (EvtWord)w);
+    return EVT_RETURN_DONE;
 }
 
-USER_FUNC(evt_moving_floor_free) {
-	EvtWord* args = event->args;
-	MovingFloor* w = GETW();
-	if (w == NULL) {
-		return EVT_RETURN_DONE;
-	}
-	_mapFree(w);
-	evtSetValue(event, args[0], 0);
-	return EVT_RETURN_DONE;
+/** Frees a moving floor's work block from the map heap and clears args[0]. */
+static USER_FUNC(evt_moving_floor_free) {
+    EvtWord* args = event->args;
+    MovingFloor* w = GETW();
+    if (w == NULL) {
+        return EVT_RETURN_DONE;
+    }
+    _mapFree(w);
+    evtSetValue(event, args[0], 0);
+    return EVT_RETURN_DONE;
 }
 
-USER_FUNC(evt_moving_floor_init) {
-	MovingFloor* w = GETW();
-	s32 dir;
-	f32 t;
-	f32 d;
-	switch (w->mode) {
-		case 0:
-			dir = w->phase;
-			t = 0.0f;
-			w->phase++;
-			if (w->phase >= 2) {
-				w->phase = 0;
-			}
-			break;
-		case 1:
-			dir = w->phase;
-			t = 0.0f;
-			w->phase++;
-			if (w->phase >= 2) {
-				w->phase = 0;
-			}
-			break;
-		case 2:
-			dir = w->phase;
-			t = 0.0f;
-			w->phase++;
-			if (w->phase >= 2) {
-				w->phase = 0;
-			}
-			break;
-		case 3:
-			switch (w->phase) {
-				case 0:
-					dir = 1;
-					t = 0.5f;
-					w->flags &= ~1;
-					w->idx = 0;
-					w->scale = 1.0f;
-					break;
-				case 1:
-					dir = 0;
-					t = 0.0f;
-					w->flags |= 1;
-					w->idx = 0;
-					w->scale = 0.5f;
-					break;
-				case 2:
-					dir = 1;
-					t = 0.5f;
-					w->flags &= ~1;
-					w->idx = 2;
-					w->scale = 1.0f;
-					break;
-				case 3:
-					dir = 0;
-					t = 0.0f;
-					w->flags |= 1;
-					w->idx = 2;
-					w->scale = 0.5f;
-					break;
-				case 4:
-					dir = 0;
-					t = 0.5f;
-					w->flags &= ~1;
-					w->idx = 0;
-					w->scale = 1.0f;
-					break;
-				case 5:
-					dir = 1;
-					t = 0.0f;
-					w->flags |= 1;
-					w->idx = 0;
-					w->scale = 0.5f;
-					break;
-				case 6:
-					dir = 0;
-					t = 0.5f;
-					w->flags &= ~1;
-					w->idx = 2;
-					w->scale = 1.0f;
-					break;
-				case 7:
-					dir = 1;
-					t = 0.0f;
-					w->flags |= 1;
-					w->idx = 2;
-					w->scale = 0.5f;
-					break;
-			}
-			w->phase++;
-			if (w->phase >= 8) {
-				w->phase = 0;
-			}
-			break;
-		case 4:
-			switch (w->phase) {
-				case 0:
-					w->idx = 2;
-					w->scale = 1.0f;
-					dir = 0;
-					t = 0.0f;
-					break;
-				case 1:
-					w->idx = 0;
-					w->scale = 1.0f;
-					dir = 0;
-					t = 0.0f;
-					break;
-				case 2:
-					w->idx = 2;
-					w->scale = 1.0f;
-					dir = 1;
-					t = 0.0f;
-					break;
-				case 3:
-					w->idx = 0;
-					w->scale = 1.0f;
-					dir = 1;
-					t = 0.0f;
-					break;
-			}
-			w->phase++;
-			if (w->phase >= 4) {
-				w->phase = 0;
-			}
-			break;
-		case 5:
-			dir = w->phase;
-			t = 1.0f;
-			break;
-	}
-	if (dir) {
-		d = w->a[w->idx] - w->b[w->idx];
-	} else {
-		d = w->b[w->idx] - w->a[w->idx];
-	}
-	w->speed = d / (f32)w->time[w->idx];
-	if (dir) {
-		w->pos = w->b[w->idx] * (1.0f - t) + w->a[w->idx] * t;
-	} else {
-		w->pos = w->a[w->idx] * (1.0f - t) + w->b[w->idx] * t;
-	}
-	w->cur = (f32)w->time[w->idx] * t;
-	return EVT_RETURN_DONE;
+/**
+ * Starts the floor's next leg: picks the axis, direction and start fraction for the current phase of its mode
+ * and sets the speed so the leg takes its configured time.
+ * Modes 0-2 go back and forth, mode 3 cycles eight half-legs, mode 4 four legs, mode 5 stays put.
+ */
+static USER_FUNC(evt_moving_floor_init) {
+    MovingFloor* w = GETW();
+    s32 dir;
+    f32 t;
+    f32 d;
+    switch (w->mode) {
+        case 0:
+            dir = w->phase;
+            t = 0.0f;
+            w->phase++;
+            if (w->phase >= 2) {
+                w->phase = 0;
+            }
+            break;
+        case 1:
+            dir = w->phase;
+            t = 0.0f;
+            w->phase++;
+            if (w->phase >= 2) {
+                w->phase = 0;
+            }
+            break;
+        case 2:
+            dir = w->phase;
+            t = 0.0f;
+            w->phase++;
+            if (w->phase >= 2) {
+                w->phase = 0;
+            }
+            break;
+        case 3:
+            switch (w->phase) {
+                case 0:
+                    dir = 1;
+                    t = 0.5f;
+                    w->flags &= ~MOVING_FLOOR_FLAG_MID_POINT;
+                    w->idx = 0;
+                    w->scale = 1.0f;
+                    break;
+                case 1:
+                    dir = 0;
+                    t = 0.0f;
+                    w->flags |= MOVING_FLOOR_FLAG_MID_POINT;
+                    w->idx = 0;
+                    w->scale = 0.5f;
+                    break;
+                case 2:
+                    dir = 1;
+                    t = 0.5f;
+                    w->flags &= ~MOVING_FLOOR_FLAG_MID_POINT;
+                    w->idx = 2;
+                    w->scale = 1.0f;
+                    break;
+                case 3:
+                    dir = 0;
+                    t = 0.0f;
+                    w->flags |= MOVING_FLOOR_FLAG_MID_POINT;
+                    w->idx = 2;
+                    w->scale = 0.5f;
+                    break;
+                case 4:
+                    dir = 0;
+                    t = 0.5f;
+                    w->flags &= ~MOVING_FLOOR_FLAG_MID_POINT;
+                    w->idx = 0;
+                    w->scale = 1.0f;
+                    break;
+                case 5:
+                    dir = 1;
+                    t = 0.0f;
+                    w->flags |= MOVING_FLOOR_FLAG_MID_POINT;
+                    w->idx = 0;
+                    w->scale = 0.5f;
+                    break;
+                case 6:
+                    dir = 0;
+                    t = 0.5f;
+                    w->flags &= ~MOVING_FLOOR_FLAG_MID_POINT;
+                    w->idx = 2;
+                    w->scale = 1.0f;
+                    break;
+                case 7:
+                    dir = 1;
+                    t = 0.0f;
+                    w->flags |= MOVING_FLOOR_FLAG_MID_POINT;
+                    w->idx = 2;
+                    w->scale = 0.5f;
+                    break;
+            }
+            w->phase++;
+            if (w->phase >= 8) {
+                w->phase = 0;
+            }
+            break;
+        case 4:
+            switch (w->phase) {
+                case 0:
+                    w->idx = 2;
+                    w->scale = 1.0f;
+                    dir = 0;
+                    t = 0.0f;
+                    break;
+                case 1:
+                    w->idx = 0;
+                    w->scale = 1.0f;
+                    dir = 0;
+                    t = 0.0f;
+                    break;
+                case 2:
+                    w->idx = 2;
+                    w->scale = 1.0f;
+                    dir = 1;
+                    t = 0.0f;
+                    break;
+                case 3:
+                    w->idx = 0;
+                    w->scale = 1.0f;
+                    dir = 1;
+                    t = 0.0f;
+                    break;
+            }
+            w->phase++;
+            if (w->phase >= 4) {
+                w->phase = 0;
+            }
+            break;
+        case 5:
+            dir = w->phase;
+            t = 1.0f;
+            break;
+    }
+    if (dir) {
+        d = w->a[w->idx] - w->b[w->idx];
+    } else {
+        d = w->b[w->idx] - w->a[w->idx];
+    }
+    w->speed = d / (f32)w->time[w->idx];
+    if (dir) {
+        w->pos = w->b[w->idx] * (1.0f - t) + w->a[w->idx] * t;
+    } else {
+        w->pos = w->a[w->idx] * (1.0f - t) + w->b[w->idx] * t;
+    }
+    w->cur = (f32)w->time[w->idx] * t;
+    return EVT_RETURN_DONE;
 }
 
-USER_FUNC(evt_moving_floor_main) {
-	EvtWord* args = event->args;
-	MovingFloor* w = GETW();
-	s32 us = (((u32)event->lifetime - (u32)w->start) * 8) / (OS_TIMER_CLOCK / 125000);
-	f32 t = (f32)us;
-	w->pos += w->speed * t / 1000.0f;
-	w->cur += t / 1000.0f;
-	w->prev[0] = w->pos3[0];
-	w->prev[1] = w->pos3[1];
-	w->prev[2] = w->pos3[2];
-	w->prevYoff = w->yoff;
-	WOBBLE(w)
-	w->pos3[w->idx] = w->pos;
-	evtSetFloat(event, args[1], w->pos3[0]);
-	evtSetFloat(event, args[2], w->pos3[1] + w->yoff);
-	evtSetFloat(event, args[3], w->pos3[2]);
-	return EVT_RETURN_DONE;
+/**
+ * Advances the floor by the time elapsed since the last update (in ms, from the event's lifetime timer)
+ * and returns its new X, Y and Z in args[1]-args[3], with the kind 1 bob added to Y.
+ */
+static USER_FUNC(evt_moving_floor_main) {
+    EvtWord* args = event->args;
+    MovingFloor* w = GETW();
+    s32 us = (((u32)event->lifetime - (u32)w->start) * 8) / (OS_TIMER_CLOCK / 125000);
+    f32 t = (f32)us;
+    w->pos += w->speed * t / 1000.0f;
+    w->cur += t / 1000.0f;
+    w->prev[0] = w->pos3[0];
+    w->prev[1] = w->pos3[1];
+    w->prev[2] = w->pos3[2];
+    w->prevYoff = w->yoff;
+    WOBBLE(w)
+    w->pos3[w->idx] = w->pos;
+    evtSetFloat(event, args[1], w->pos3[0]);
+    evtSetFloat(event, args[2], w->pos3[1] + w->yoff);
+    evtSetFloat(event, args[3], w->pos3[2]);
+    return EVT_RETURN_DONE;
 }
 
-USER_FUNC(evt_moving_floor_main2) {
-	MovingFloor* w = GETW();
-	w->start = event->lifetime;
-	return EVT_RETURN_DONE;
+/** Stamps the current event time as the start of the next time step of the moving floor. */
+static USER_FUNC(evt_moving_floor_main2) {
+    MovingFloor* w = GETW();
+    w->start = event->lifetime;
+    return EVT_RETURN_DONE;
 }
 
-USER_FUNC(moving_floor_get_end) {
-	EvtWord* args = event->args;
-	MovingFloor* w = GETW();
-	s32 a = (s32)w->cur;
-	s32 b = (s32)((f32)w->time[w->idx] * w->scale);
-	if (a >= b) {
-		evtSetValue(event, args[1], 1);
-	} else {
-		evtSetValue(event, args[1], 0);
-	}
-	return EVT_RETURN_DONE;
+/** Sets args[1] to 1 once the current leg has run its full time (scaled to half for mode 3's half-legs), else 0. */
+static USER_FUNC(moving_floor_get_end) {
+    EvtWord* args = event->args;
+    MovingFloor* w = GETW();
+    s32 a = (s32)w->cur;
+    s32 b = (s32)((f32)w->time[w->idx] * w->scale);
+    if (a >= b) {
+        evtSetValue(event, args[1], 1);
+    } else {
+        evtSetValue(event, args[1], 0);
+    }
+    return EVT_RETURN_DONE;
 }
 
-USER_FUNC(moving_floor_get_pause) {
-	EvtWord* args = event->args;
-	MovingFloor* w = GETW();
-	if (w->flags & 2) {
-		evtSetValue(event, args[1], 1);
-	} else {
-		evtSetValue(event, args[1], 0);
-	}
-	return EVT_RETURN_DONE;
+/** Sets args[1] to 1 while the floor is paused (MOVING_FLOOR_FLAG_PAUSED), else 0. Nothing in this file sets the flag. */
+static USER_FUNC(moving_floor_get_pause) {
+    EvtWord* args = event->args;
+    MovingFloor* w = GETW();
+    if (w->flags & MOVING_FLOOR_FLAG_PAUSED) {
+        evtSetValue(event, args[1], 1);
+    } else {
+        evtSetValue(event, args[1], 0);
+    }
+    return EVT_RETURN_DONE;
 }
 
-USER_FUNC(moving_floor_get_kind) {
-	EvtWord* args = event->args;
-	MovingFloor* w = GETW();
-	evtSetValue(event, args[1], w->kind);
-	return EVT_RETURN_DONE;
+/** Returns the floor's kind in args[1]: 0 carries Mario and partners along, 1 bobs in place without carrying. */
+static USER_FUNC(moving_floor_get_kind) {
+    EvtWord* args = event->args;
+    MovingFloor* w = GETW();
+    evtSetValue(event, args[1], w->kind);
+    return EVT_RETURN_DONE;
 }
 
-USER_FUNC(moving_floor_get_mode) {
-	EvtWord* args = event->args;
-	MovingFloor* w = GETW();
-	evtSetValue(event, args[1], w->mode);
-	return EVT_RETURN_DONE;
+/** Returns the floor's mode (from LW(6)) in args[1]. */
+static USER_FUNC(moving_floor_get_mode) {
+    EvtWord* args = event->args;
+    MovingFloor* w = GETW();
+    evtSetValue(event, args[1], w->mode);
+    return EVT_RETURN_DONE;
 }
 
-USER_FUNC(moving_floor_update_turn) {
-	EvtWord* args = event->args;
-	MovingFloor* w = GETW();
-	w->angle += w->turn;
-	if (w->angle < 0.0f) {
-		w->angle += 360.0f;
-	}
-	if (w->angle >= 360.0f) {
-		w->angle -= 360.0f;
-	}
-	evtSetFloat(event, args[1], w->angle);
-	return EVT_RETURN_DONE;
+/** Adds the floor's turn speed to its Y rotation, wrapped to 0-360 degrees, and returns the angle in args[1]. */
+static USER_FUNC(moving_floor_update_turn) {
+    EvtWord* args = event->args;
+    MovingFloor* w = GETW();
+    w->angle += w->turn;
+    if (w->angle < 0.0f) {
+        w->angle += 360.0f;
+    }
+    if (w->angle >= 360.0f) {
+        w->angle -= 360.0f;
+    }
+    evtSetFloat(event, args[1], w->angle);
+    return EVT_RETURN_DONE;
 }
 
-USER_FUNC(moving_floor_getf_pos) {
-	EvtWord* args = event->args;
-	MovingFloor* w = GETW();
-	w->prevYoff = w->yoff;
-	WOBBLE(w)
-	evtSetFloat(event, args[1], w->pos3[0]);
-	evtSetFloat(event, args[2], w->pos3[1] + w->yoff);
-	evtSetFloat(event, args[3], w->pos3[2]);
-	return EVT_RETURN_DONE;
+/** Returns the floor's current X, Y and Z in args[1]-args[3] without moving it, refreshing the kind 1 bob. */
+static USER_FUNC(moving_floor_getf_pos) {
+    EvtWord* args = event->args;
+    MovingFloor* w = GETW();
+    w->prevYoff = w->yoff;
+    WOBBLE(w)
+    evtSetFloat(event, args[1], w->pos3[0]);
+    evtSetFloat(event, args[2], w->pos3[1] + w->yoff);
+    evtSetFloat(event, args[3], w->pos3[2]);
+    return EVT_RETURN_DONE;
 }
 
-USER_FUNC(moving_floor_getf_now_bpoint) {
-	EvtWord* args = event->args;
-	MovingFloor* w = GETW();
-	evtSetFloat(event, args[1], w->pos3[0] - w->prev[0]);
-	evtSetFloat(event, args[2], (w->pos3[1] + w->yoff) - (w->prev[1] + w->prevYoff));
-	evtSetFloat(event, args[3], w->pos3[2] - w->prev[2]);
-	return EVT_RETURN_DONE;
+/**
+ * Returns how far the floor moved in the last step (X, Y, Z deltas in args[1]-args[3]);
+ * the script shifts anyone riding it by this amount.
+ */
+static USER_FUNC(moving_floor_getf_now_bpoint) {
+    EvtWord* args = event->args;
+    MovingFloor* w = GETW();
+    evtSetFloat(event, args[1], w->pos3[0] - w->prev[0]);
+    evtSetFloat(event, args[2], (w->pos3[1] + w->yoff) - (w->prev[1] + w->prevYoff));
+    evtSetFloat(event, args[3], w->pos3[2] - w->prev[2]);
+    return EVT_RETURN_DONE;
 }
 
-USER_FUNC(moving_floor_get_stmsec) {
-	EvtWord* args = event->args;
-	MovingFloor* w = GETW();
-	if (w->flags & 1) {
-		evtSetValue(event, args[1], 0);
-	} else {
-		evtSetValue(event, args[1], w->stmsec * 60 / 1000);
-	}
-	return EVT_RETURN_DONE;
+/**
+ * Returns the stop time at each end of the floor's travel in frames (from the ms value in LW(5)),
+ * or 0 during mode 3's mid-point stops. PAL converts with the 50 Hz frame rate instead of a fixed 60.
+ */
+static USER_FUNC(moving_floor_get_stmsec) {
+    EvtWord* args = event->args;
+    MovingFloor* w = GETW();
+    if (w->flags & MOVING_FLOOR_FLAG_MID_POINT) {
+        evtSetValue(event, args[1], 0);
+    } else {
+#if VERSION >= VERSION_DEMO_EU
+        evtSetValue(event, args[1], w->stmsec * gp->framerate / 1000);
+#else
+        evtSetValue(event, args[1], w->stmsec * 60 / 1000);
+#endif
+    }
+    return EVT_RETURN_DONE;
 }
 
-USER_FUNC(moving_floor_getf_xz_scale) {
-	EvtWord* args = event->args;
-	MovingFloor* w = GETW();
-	f32 v = evtGetFloat(event, (s32)(w->pos3[1] + w->yoff));
-	evtSetFloat(event, args[1], (500.0f - v) / 500.0f);
-	return EVT_RETURN_DONE;
+/** Returns in args[1] the X/Z scale for the floor's shadow object, shrinking as the floor rises: (500 - y) / 500. */
+static USER_FUNC(moving_floor_getf_xz_scale) {
+    EvtWord* args = event->args;
+    MovingFloor* w = GETW();
+    f32 v = evtGetFloat(event, (s32)(w->pos3[1] + w->yoff));
+    evtSetFloat(event, args[1], (500.0f - v) / 500.0f);
+    return EVT_RETURN_DONE;
 }
 
-USER_FUNC(moving_floor_reverse) {
-	MovingFloor* w = GETW();
-	f32 e;
-	if (w->speed >= 0.0f) {
-		return EVT_RETURN_DONE;
-	}
-	w->speed *= -1.0f;
-	e = (f32)w->time[w->idx] * w->scale;
-	w->cur = e - w->cur;
-	w->phase ^= 1;
-	return EVT_RETURN_DONE;
+/**
+ * Turns the floor back the way it came when its speed is negative,
+ * keeping the time already spent so it retraces the same leg;
+ * the script calls it when Mario's or a partner's head hits a vertical (mode 1) floor from below.
+ */
+static USER_FUNC(moving_floor_reverse) {
+    MovingFloor* w = GETW();
+    f32 e;
+    if (w->speed >= 0.0f) {
+        return EVT_RETURN_DONE;
+    }
+    w->speed *= -1.0f;
+    e = (f32)w->time[w->idx] * w->scale;
+    w->cur = e - w->cur;
+    w->phase ^= 1;
+    return EVT_RETURN_DONE;
 }
 
-USER_FUNC(moving_floor_set_se) {
-	EvtWord* args = event->args;
-	MovingFloor* w = GETW();
-	char* name = (char*)evtGetValue(event, args[1]);
-	MapObject* obj;
-	Vec pos;
-	s32 flags;
-	if (w->seHalt) {
-		return EVT_RETURN_DONE;
-	}
-	if (w->seId == 0) {
-		mapObjGetPos(name, &pos);
-		obj = mapGetMapObj(name);
-		if (obj == NULL) {
-			mapErrorEntry(0, name);
-			return EVT_RETURN_DONE;
-		}
-		flags = 0;
-		if ((psndGetFlag() & 0x100) && !(obj->flags & 0x1800)) {
-			flags = 0x10000;
-		}
-		w->seId = psndSFXOn_3D(SFX_NAME_WORD(flags | 0x424), &pos);
-	}
-	return EVT_RETURN_DONE;
+/**
+ * Starts the floor's looping movement sound (SFX 0x424) at the map object args[1]'s position,
+ * unless sounds are halted or already playing.
+ * With PSND_FLAG_MUTE_DOOR_SFX set it adds sound flag 0x10000 unless the object has flags 0x1800.
+ */
+static USER_FUNC(moving_floor_set_se) {
+    EvtWord* args = event->args;
+    MovingFloor* w = GETW();
+    char* name = (char*)evtGetValue(event, args[1]);
+    MapObject* obj;
+    Vec pos;
+    s32 flags;
+    if (w->seHalt) {
+        return EVT_RETURN_DONE;
+    }
+    if (w->seId == 0) {
+        mapObjGetPos(name, &pos);
+        obj = mapGetMapObj(name);
+        if (obj == NULL) {
+            mapErrorEntry(0, name);
+            return EVT_RETURN_DONE;
+        }
+        flags = 0;
+        if ((psndGetFlag() & PSND_FLAG_MUTE_DOOR_SFX) && !(obj->flags & (MAPOBJ_FLAG_NO_BLEND | MAPOBJ_FLAG_NO_BLEND2))) {
+            flags = PSND_ID_DOOR_MUTE;
+        }
+        w->seId = psndSFXOn_3D(SFX_NAME_WORD(flags | 0x424), &pos);
+    }
+    return EVT_RETURN_DONE;
 }
 
-USER_FUNC(moving_floor_stop_se) {
-	MovingFloor* w = GETW();
-	if (w->seHalt == 0 && w->seId) {
-		psndSFXOff(w->seId);
-		w->seId = 0;
-	}
-	return EVT_RETURN_DONE;
+/** Stops the floor's movement sound if one is playing and sounds are not halted. */
+static USER_FUNC(moving_floor_stop_se) {
+    MovingFloor* w = GETW();
+    if (w->seHalt == 0 && w->seId) {
+        psndSFXOff(w->seId);
+        w->seId = 0;
+    }
+    return EVT_RETURN_DONE;
 }
 
-USER_FUNC(moving_floor_halt_se) {
-	MovingFloor* w = GETW();
-	w->seHalt = 1;
-	return EVT_RETURN_DONE;
+/** Halts the floor's sounds for good; set when Mario leaves the map so no sound outlives it. */
+static USER_FUNC(moving_floor_halt_se) {
+    MovingFloor* w = GETW();
+    w->seHalt = 1;
+    return EVT_RETURN_DONE;
 }
 
+/**
+ * Stops and deletes a running moving_floor script: args[0] is its event id.
+ * Stops its sound, frees its work block (the script's LW(9)) and kills the event.
+ */
 USER_FUNC(evt_moving_floor_delete) {
-	s32 id = evtGetValue(event, event->args[0]);
-	EventEntry* e = evtGetPtrID(id);
-	MovingFloor* w = (MovingFloor*)e->lwData[9];
-	if (w->seHalt == 0 && w->seId) {
-		psndSFXOff(w->seId);
-		w->seId = 0;
-	}
-	if (w != NULL) {
-		_mapFree(w);
-		e->lwData[9] = 0;
-	}
-	if (evtCheckID(id)) {
-		evtDeleteID(id);
-	}
-	return EVT_RETURN_DONE;
+    s32 id = evtGetValue(event, event->args[0]);
+    EventEntry* e = evtGetPtrID(id);
+    MovingFloor* w = (MovingFloor*)e->lwData[9];
+    if (w->seHalt == 0 && w->seId) {
+        psndSFXOff(w->seId);
+        w->seId = 0;
+    }
+    if (w != NULL) {
+        _mapFree(w);
+        e->lwData[9] = 0;
+    }
+    if (evtCheckID(id)) {
+        evtDeleteID(id);
+    }
+    return EVT_RETURN_DONE;
 }
 
+/**
+ * Spawned by moving_floor: waits until Mario takes a loading zone to another area,
+ * then stops and halts the floor's sound. Skipped in the yuu (Pianta Parlor) area.
+ */
 EVT_BEGIN(moving_floor_bero_check)
     CALL(evt_sub_get_areaname, LW(0))
     IF_STR_EQUAL(LW(0), STRING("yuu"))
@@ -573,7 +612,7 @@ EVT_BEGIN(moving_floor_bero_check)
     END_IF
     LOOP(0)
         CALL(evt_bero_exec_wait, 65536)
-        DEBUG_PUT_MSG(STRING("\216\251\223\256\215\355\217\234\203`\203F\203b\203N\221\322\202\277\000\000\000"))
+        DEBUG_PUT_MSG(STRING("自動削除チェック待ち"))
         CALL(evt_bero_exec_wait, 1)
         CALL(evt_bero_get_now_number, LW(10))
         CALL(evt_bero_get_info_nextarea, LW(10), LW(3), LW(4))
@@ -581,17 +620,25 @@ EVT_BEGIN(moving_floor_bero_check)
             BREAK_LOOP
         END_IF
     END_LOOP
-    DEBUG_PUT_MSG(STRING("\216\251\223\256\215\355\217\234\212\256\227\271\000\000\000"))
+    DEBUG_PUT_MSG(STRING("自動削除完了"))
     CALL(moving_floor_stop_se, LW(9))
     CALL(moving_floor_halt_se, LW(9))
     RETURN
 EVT_END()
 
+/**
+ * Generic moving platform script, run as a child with LW(0) the map object, LW(1) the hit object bound to it,
+ * LW(7) an optional shadow object and the rest of the setup in LW values read by evt_moving_floor_alloc.
+ * Moves the floor leg by leg forever, carries Mario and partners standing on it (kind 0),
+ * plays its sound while it moves and waits the stop time at each end.
+ */
 EVT_BEGIN(moving_floor)
+    // Set up the floor and bind its collision to it; a side script silences it when Mario leaves the area.
     CALL(evt_moving_floor_alloc, LW(9))
     CALL(evt_hit_bind_mapobj, LW(1), LW(0))
     SPAWN_EVENT(moving_floor_bero_check)
     LOOP(0)
+        // Start the next leg (a one-shot mode 5 floor skips straight to waiting).
         CALL(evt_moving_floor_init, LW(9))
         CALL(evt_moving_floor_main2, LW(9))
         CALL(moving_floor_get_mode, LW(9), LW(8))
@@ -599,6 +646,8 @@ EVT_BEGIN(moving_floor)
             GOTO(0)
         END_IF
         LOOP(0)
+            // While the floor is paused it holds its place, only turning and bobbing,
+            // with its shadow following.
             LOOP(0)
                 CALL(moving_floor_get_pause, LW(9), LW(8))
                 IF_INT_EQUAL(LW(8), 0)
@@ -618,6 +667,7 @@ EVT_BEGIN(moving_floor)
                     CALL(evt_mapobj_scale, 1, LW(7), LW(8), 1, LW(8))
                 END_IF
             END_LOOP
+            // Each frame: move the floor, its collision and its shadow along the leg.
             WAIT_FRAMES(1)
             CALL(evt_moving_floor_main, LW(9), LW(12), LW(13), LW(14))
             CALL(evt_moving_floor_main2, LW(9))
@@ -631,6 +681,7 @@ EVT_BEGIN(moving_floor)
                 CALL(moving_floor_getf_xz_scale, LW(9), LW(8))
                 CALL(evt_mapobj_scale, 1, LW(7), LW(8), 1, LW(8))
             END_IF
+            // A floor moving along Y turns back when it comes down on the head of Mario or a partner.
             CALL(evt_mario_get_name_hitobj_head, LW(2))
             CALL(evt_mario_get_party, LW(10))
             SET_VALUE(LW(3), 0)
@@ -657,6 +708,7 @@ EVT_BEGIN(moving_floor)
             IF_INT_EQUAL(LF(0), 1)
                 CALL(moving_floor_reverse, LW(9))
             END_IF
+            // A kind 0 floor carries whoever stands on it.
             CALL(moving_floor_get_kind, LW(9), LW(8))
             IF_INT_EQUAL(LW(8), 0)
                 CALL(moving_floor_getf_now_bpoint, LW(9), LW(12), LW(13), LW(14))
@@ -673,6 +725,7 @@ EVT_BEGIN(moving_floor)
                     CALL(evt_party_set_hosei_xyz, 1, LW(12), LW(13), LW(14))
                 END_IF
             END_IF
+            // At the end of the leg, stop; otherwise its sound plays only while it is actually moving.
             CALL(moving_floor_get_end, LW(9), LW(8))
             IF_INT_NOT_EQUAL(LW(8), 0)
                 BREAK_LOOP
@@ -694,6 +747,8 @@ EVT_BEGIN(moving_floor)
                 END_IF
             END_IF
         END_LOOP
+        // Wait the stop time at the end of the leg, still turning and bobbing;
+        // a mode 5 floor waits here forever.
         CALL(moving_floor_stop_se, LW(9))
         LABEL(0)
         CALL(moving_floor_get_stmsec, LW(9), LW(10))
@@ -740,10 +795,19 @@ EVT_BEGIN(moving_floor)
             END_IF
         END_LOOP
     END_LOOP
+    // Never reached: the floor runs until the map unloads.
     CALL(evt_moving_floor_free, LW(9))
     RETURN
 EVT_END()
 
+/**
+ * One of a pair of balance-scale platforms (tik_07's kur_1 and kur_2 in the Rogueport Sewers):
+ * standing on one moves the shared position so it sinks and its partner rises,
+ * and with nobody on either they drift back to the starting position.
+ * LW(0)/LW(1) are the map and hit objects, LW(2)/LW(3) the top and bottom heights, LW(4) the step per frame,
+ * LW(5) which side, LW(6) a shared 0-10000 position value and LW(7) a shared ridden-bits word;
+ * carries riders and plays SFX_STG1_TIK_FLOOR_MOVE1 while moving.
+ */
 EVT_BEGIN(ridedown_floor)
     CALL(evt_hit_bind_mapobj, LW(1), LW(0))
     SET_VALUE(LW(10), LW(2))
@@ -752,6 +816,8 @@ EVT_BEGIN(ridedown_floor)
     GET_INT_INDEXED(LW(6), LW(15))
     SET_VALUE(LW(9), 0)
     LOOP(0)
+        // Clear this platform's ridden bit, then set it again if Mario stands on it,
+        // pushing the shared position toward this side.
         IF_INT_EQUAL(LW(5), 0)
             GET_INT_INDEXED(LW(7), LW(12))
             AND(LW(12), 65534)
@@ -785,6 +851,7 @@ EVT_BEGIN(ridedown_floor)
                 SET_INT_INDEXED(LW(7), LW(12))
             END_IF
         END_IF
+        // With nobody on either platform, the first one drifts the shared position back to where it started.
         GET_INT_INDEXED(LW(7), LW(12))
         IF_INT_EQUAL(LW(12), 0)
             IF_INT_EQUAL(LW(5), 0)
@@ -803,6 +870,8 @@ EVT_BEGIN(ridedown_floor)
                 SET_INT_INDEXED(LW(6), LW(11))
             END_IF
         END_IF
+        // Turn the shared position into this platform's height (the two sides move opposite ways)
+        // and move it.
         GET_INT_INDEXED(LW(6), LW(11))
         MULTIPLY(LW(11), LW(10))
         MULTIPLY_FLOAT(LW(11), FLOAT(0.009765625f))
@@ -816,6 +885,7 @@ EVT_BEGIN(ridedown_floor)
         END_IF
         CALL(evt_mapobj_trans, 1, LW(0), 0, LW(12), 0)
         CALL(evt_hit_bind_update, LW(1))
+        // Carry Mario and partners standing on it by the height change.
         SET_FLOAT_VALUE(LW(13), LW(12))
         SUBTRACT_FLOAT(LW(13), LW(14))
         SET_FLOAT_VALUE(LW(14), LW(12))
@@ -831,6 +901,7 @@ EVT_BEGIN(ridedown_floor)
         IF_STR_EQUAL(LW(11), LW(1))
             CALL(evt_party_set_hosei_xyz, 1, 0, LW(13), 0)
         END_IF
+        // Its moving sound plays only while the height is changing.
         IF_FLOAT_EQUAL(LW(13), FLOAT(0.0f))
             IF_INT_NOT_EQUAL(LW(9), 0)
                 CALL(evt_snd_sfxoff, LW(9))
@@ -839,11 +910,10 @@ EVT_BEGIN(ridedown_floor)
         ELSE
             IF_INT_EQUAL(LW(9), 0)
                 CALL(evt_mapobj_get_position, LW(0), LW(11), LW(12), LW(13))
-                CALL(evt_snd_sfxon_3d, STRING("SFX_STG1_TIK_FLOOR_MOVE1\000\000\000"), LW(11), LW(12), LW(13), LW(9))
+                CALL(evt_snd_sfxon_3d, STRING("SFX_STG1_TIK_FLOOR_MOVE1"), LW(11), LW(12), LW(13), LW(9))
             END_IF
         END_IF
         WAIT_FRAMES(1)
     END_LOOP
     RETURN
 EVT_END()
-

@@ -1,3 +1,4 @@
+// Creepy Steeple (jin) battle database: stages, the Doopliss, fake-Mario and Atomic Boo boss setups, and Boo, Swooper, Buzzy Beetle and Spike Top groups per room.
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
 #include "battle/battle_weapon_power.h"
@@ -7,24 +8,6 @@
 #include "battle/battle_stage_object.h"
 #include "driver/npcdrv.h"
 
-#pragma force_active on
-
-extern BattleUnitKind unit_faker_mario;
-
-f32 fd_battle_database_jin_negone_one_374[2] __attribute__((aligned(8)));
-f32 fd_battle_database_jin_neg_one_382;
-f32 fd_battle_database_jin___local_PI_383;
-f32 fd_battle_database_jin___local_3PIO2_385;
-f32 fd_battle_database_jin_one_negone_373[2] __attribute__((aligned(8)));
-f32 fd_battle_database_jin___local_PIO2_384;
-f32 fd_battle_database_jin_one_381;
-f32 fd_battle_database_jin_negone_one_360[2] __attribute__((aligned(8)));
-f32 fd_battle_database_jin_neg_one_365;
-f32 fd_battle_database_jin___local_PI_366;
-f32 fd_battle_database_jin___local_3PIO2_368;
-f32 fd_battle_database_jin_one_negone_359[2] __attribute__((aligned(8)));
-f32 fd_battle_database_jin___local_PIO2_367;
-f32 fd_battle_database_jin_one_364;
 BattleStageObjectData jin_btlobject_data[18];
 BattleStageData jin_btlstage_data[6];
 BattleUnitSetup btlparty_jin_jin_04_ramper[1];
@@ -107,34 +90,11 @@ NpcBattleSelect btlgrpsel_jin_btlno_jin_10_06_off[2];
 NpcSetupBattleInfo btlsetup_jin_tbl[26];
 NpcTerritoryInfo btl_jin_setup_no_tbl[26];
 
-f32 fd_battle_database_jin_negone_one_374[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_battle_database_jin_neg_one_382 = -1.0f;
-
-f32 fd_battle_database_jin___local_PI_383 = 3.1415927f;
-
-f32 fd_battle_database_jin___local_3PIO2_385 = 4.712389f;
-
-f32 fd_battle_database_jin_one_negone_373[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_battle_database_jin___local_PIO2_384 = 1.5707964f;
-
-f32 fd_battle_database_jin_one_381 = 1.0f;
-
-f32 fd_battle_database_jin_negone_one_360[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_battle_database_jin_neg_one_365 = -1.0f;
-
-f32 fd_battle_database_jin___local_PI_366 = 3.1415927f;
-
-f32 fd_battle_database_jin___local_3PIO2_368 = 4.712389f;
-
-f32 fd_battle_database_jin_one_negone_359[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_battle_database_jin___local_PIO2_367 = 1.5707964f;
-
-f32 fd_battle_database_jin_one_364 = 1.0f;
-
+/**
+ * Scenery objects of the Creepy Steeple battle stages (the ceiling frame and the lamp, desk, fridge and bath
+ * of the Doopliss room, plus the back and front wall pieces); each stage in jin_btlstage_data uses a slice
+ * of this list.
+ */
 BattleStageObjectData jin_btlobject_data[] = {
     {"B", 2, 2, {0}, 0, 60, {0}},
     {"C", 2, 3, {0}, 0, 60, {0}},
@@ -156,62 +116,66 @@ BattleStageObjectData jin_btlobject_data[] = {
     {"C", 2, 3, {0}, 0, 90, {0}},
 };
 
+/**
+ * The 6 battle stages of Creepy Steeple: each pairs a stage model (stg_04_3, stg_04_2, stg_04_4, stg_04_5,
+ * stg_04_6) with a slice of the scenery objects above.
+ */
 BattleStageData jin_btlstage_data[] = {
     {
-        "bti_01", // mGlobalStageDataDir
-        "stg_04_3", // mSpecificStageDataDir
-        2, // mNumObjects
-        jin_btlobject_data, // mObjects
+        "bti_01", // globalStageDataDir
+        "stg_04_3", // specificStageDataDir
+        2, // numObjects
+        jin_btlobject_data, // objects
         {NULL, 0, {0}, 0, NULL, 100, 0, 0, 2, 0.0f, 0, 0, 0, 0, NULL, {0}, NULL, {0}, 0x2100060, 0x20000000, 0, 26, 3, 2, NULL, 0, 0x7FF, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, {0}, NULL, {0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0}}, // bgAWeapon
         {NULL, 0, {0}, 0, NULL, 100, 0, 0, 2, 0.0f, 0, 0, 0, 0, weaponGetPowerDefault, {1, 0, 0, 0, 0, 0, 0, 0}, NULL, {0}, 0x2100060, 0x20000000, 0, 26, 3, 2, NULL, 0, 0x7FF, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, {0}, NULL, {0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0}}, // bgBWeapon
         NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, // initEvt..bgCEvt
         0, 0, 0, 0, // reserved_1B0..disableBgBDestroy
     },
     {
-        "bti_01", // mGlobalStageDataDir
-        "stg_04_3", // mSpecificStageDataDir
-        4, // mNumObjects
-        &jin_btlobject_data[2], // mObjects
+        "bti_01", // globalStageDataDir
+        "stg_04_3", // specificStageDataDir
+        4, // numObjects
+        &jin_btlobject_data[2], // objects
         {NULL, 0, {0}, 0, NULL, 100, 0, 0, 2, 0.0f, 0, 0, 0, 0, NULL, {0}, NULL, {0}, 0x2100060, 0x20000000, 0, 26, 3, 2, NULL, 0, 0x7FF, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, {0}, NULL, {0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0}}, // bgAWeapon
         {NULL, 0, {0}, 0, NULL, 100, 0, 0, 2, 0.0f, 0, 0, 0, 0, weaponGetPowerDefault, {1, 0, 0, 0, 0, 0, 0, 0}, NULL, {0}, 0x2100060, 0x20000000, 0, 26, 3, 2, NULL, 0, 0x7FF, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, {0}, NULL, {0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0}}, // bgBWeapon
         NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, // initEvt..bgCEvt
         0, 0, 0, 0, // reserved_1B0..disableBgBDestroy
     },
     {
-        "bti_01", // mGlobalStageDataDir
-        "stg_04_2", // mSpecificStageDataDir
-        2, // mNumObjects
-        &jin_btlobject_data[6], // mObjects
+        "bti_01", // globalStageDataDir
+        "stg_04_2", // specificStageDataDir
+        2, // numObjects
+        &jin_btlobject_data[6], // objects
         {NULL, 0, {0}, 0, NULL, 100, 0, 0, 2, 0.0f, 0, 0, 0, 0, NULL, {0}, NULL, {0}, 0x2100060, 0x20000000, 0, 26, 3, 2, NULL, 0, 0x7FF, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, {0}, NULL, {0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0}}, // bgAWeapon
         {NULL, 0, {0}, 0, NULL, 100, 0, 0, 2, 0.0f, 0, 0, 0, 0, weaponGetPowerDefault, {1, 0, 0, 0, 0, 0, 0, 0}, NULL, {0}, 0x2100060, 0x20000000, 0, 26, 3, 2, NULL, 0, 0x7FF, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, {0}, NULL, {0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0}}, // bgBWeapon
         NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, // initEvt..bgCEvt
         0, 0, 0, 0, // reserved_1B0..disableBgBDestroy
     },
     {
-        "bti_01", // mGlobalStageDataDir
-        "stg_04_4", // mSpecificStageDataDir
-        6, // mNumObjects
-        &jin_btlobject_data[8], // mObjects
+        "bti_01", // globalStageDataDir
+        "stg_04_4", // specificStageDataDir
+        6, // numObjects
+        &jin_btlobject_data[8], // objects
         {NULL, 0, {0}, 0, NULL, 100, 0, 0, 2, 0.0f, 0, 0, 0, 0, weaponGetPowerDefault, {1, 0, 0, 0, 0, 0, 0, 0}, NULL, {0}, 0x2100060, 0x20000000, 0, 26, 3, 2, NULL, 0, 0x7FF, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, {0}, NULL, {0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0}}, // bgAWeapon
         {NULL, 0, {0}, 0, NULL, 100, 0, 0, 2, 0.0f, 0, 0, 0, 0, weaponGetPowerDefault, {1, 0, 0, 0, 0, 0, 0, 0}, NULL, {0}, 0x2100060, 0x20000000, 0, 26, 3, 2, NULL, 0, 0x7FF, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, {0}, NULL, {0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0}}, // bgBWeapon
         NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, // initEvt..bgCEvt
         0, 0, 0, 0, // reserved_1B0..disableBgBDestroy
     },
     {
-        "bti_01", // mGlobalStageDataDir
-        "stg_04_5", // mSpecificStageDataDir
-        2, // mNumObjects
-        &jin_btlobject_data[14], // mObjects
+        "bti_01", // globalStageDataDir
+        "stg_04_5", // specificStageDataDir
+        2, // numObjects
+        &jin_btlobject_data[14], // objects
         {NULL, 0, {0}, 0, NULL, 100, 0, 0, 2, 0.0f, 0, 0, 0, 0, NULL, {0}, NULL, {0}, 0x2100060, 0x20000000, 0, 26, 3, 2, NULL, 0, 0x7FF, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, {0}, NULL, {0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0}}, // bgAWeapon
         {NULL, 0, {0}, 0, NULL, 100, 0, 0, 2, 0.0f, 0, 0, 0, 0, weaponGetPowerDefault, {1, 0, 0, 0, 0, 0, 0, 0}, NULL, {0}, 0x2100060, 0x20000000, 0, 26, 3, 2, NULL, 0, 0x7FF, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, {0}, NULL, {0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0}}, // bgBWeapon
         NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, // initEvt..bgCEvt
         0, 0, 0, 0, // reserved_1B0..disableBgBDestroy
     },
     {
-        "bti_01", // mGlobalStageDataDir
-        "stg_04_6", // mSpecificStageDataDir
-        2, // mNumObjects
-        &jin_btlobject_data[16], // mObjects
+        "bti_01", // globalStageDataDir
+        "stg_04_6", // specificStageDataDir
+        2, // numObjects
+        &jin_btlobject_data[16], // objects
         {NULL, 0, {0}, 0, NULL, 100, 0, 0, 2, 0.0f, 0, 0, 0, 0, NULL, {0}, NULL, {0}, 0x2100060, 0x20000000, 0, 26, 3, 2, NULL, 0, 0x7FF, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, {0}, NULL, {0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0}}, // bgAWeapon
         {NULL, 0, {0}, 0, NULL, 100, 0, 0, 2, 0.0f, 0, 0, 0, 0, weaponGetPowerDefault, {1, 0, 0, 0, 0, 0, 0, 0}, NULL, {0}, 0x2100060, 0x20000000, 0, 26, 3, 2, NULL, 0, 0x7FF, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, {0}, NULL, {0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0}}, // bgBWeapon
         NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, // initEvt..bgCEvt
@@ -219,12 +183,13 @@ BattleStageData jin_btlstage_data[] = {
     },
 };
 
+/** Enemy lineup of formation 04_ramper of BTLNO_JIN_01_01, in Creepy Steeple: Doopliss. */
 BattleUnitSetup btlparty_jin_jin_04_ramper[] = {
     {
-        &unit_boss_rampell, // mUnitKindParams
+        &unit_boss_rampell, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {90.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -232,6 +197,10 @@ BattleUnitSetup btlparty_jin_jin_04_ramper[] = {
     },
 };
 
+/**
+ * Formation 04_ramper of BTLNO_JIN_01_01: the lineup above with the default heart and flower drops. Item
+ * drop weights: 0 held, 0 random, 100 none.
+ */
 BattleGroupSetup btlgrp_jin_jin_04_ramper = {
     1, // numEnemies
     btlparty_jin_jin_04_ramper, // enemyData
@@ -239,15 +208,19 @@ BattleGroupSetup btlgrp_jin_jin_04_ramper = {
     100, // noItemWeight
     battle_heart_drop_param_default, // hpDropTable
     battle_flower_drop_param_default, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/**
+ * Enemy lineup of formation 01_faker_mario of BTLNO_JIN_01_02, in Creepy Steeple: Doopliss disguised as
+ * Mario.
+ */
 BattleUnitSetup btlparty_jin_jin_01_faker_mario[] = {
     {
-        &unit_faker_mario, // mUnitKindParams
+        &unit_faker_mario, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {90.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -255,6 +228,10 @@ BattleUnitSetup btlparty_jin_jin_01_faker_mario[] = {
     },
 };
 
+/**
+ * Formation 01_faker_mario of BTLNO_JIN_01_02: the lineup above with the default heart and flower drops.
+ * Item drop weights: 0 held, 0 random, 100 none.
+ */
 BattleGroupSetup btlgrp_jin_jin_01_faker_mario = {
     1, // numEnemies
     btlparty_jin_jin_01_faker_mario, // enemyData
@@ -262,15 +239,16 @@ BattleGroupSetup btlgrp_jin_jin_01_faker_mario = {
     100, // noItemWeight
     battle_heart_drop_param_default, // hpDropTable
     battle_flower_drop_param_default, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/** Enemy lineup of formation 00_atmic_teresa of BTLNO_JIN_00_01, in Creepy Steeple (jin_00): Atomic Boo. */
 BattleUnitSetup btlparty_jin_jin_00_atmic_teresa[] = {
     {
-        &unit_atmic_teresa, // mUnitKindParams
+        &unit_atmic_teresa, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {70.0f, 20.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -278,6 +256,10 @@ BattleUnitSetup btlparty_jin_jin_00_atmic_teresa[] = {
     },
 };
 
+/**
+ * Formation 00_atmic_teresa of BTLNO_JIN_00_01: the lineup above with the default heart and flower drops.
+ * Item drop weights: 0 held, 10 random, 0 none.
+ */
 BattleGroupSetup btlgrp_jin_jin_00_atmic_teresa = {
     1, // numEnemies
     btlparty_jin_jin_00_atmic_teresa, // enemyData
@@ -286,15 +268,19 @@ BattleGroupSetup btlgrp_jin_jin_00_atmic_teresa = {
     0, // noItemWeight
     battle_heart_drop_param_default, // hpDropTable
     battle_flower_drop_param_default, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/**
+ * Enemy lineup of formation 1 of BTLNO_JIN_00_02 and BTLNO_JIN_00_03 and BTLNO_JIN_00_04 and BTLNO_JIN_00_05
+ * and BTLNO_JIN_00_06 and BTLNO_JIN_00_09, in Creepy Steeple (jin_00): Boo.
+ */
 BattleUnitSetup btlparty_jin_jin_00_01_off_1[] = {
     {
-        &unit_teresa, // mUnitKindParams
+        &unit_teresa, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {90.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -302,6 +288,11 @@ BattleUnitSetup btlparty_jin_jin_00_01_off_1[] = {
     },
 };
 
+/**
+ * Formation 1 of BTLNO_JIN_00_02 and BTLNO_JIN_00_03 and BTLNO_JIN_00_04 and BTLNO_JIN_00_05 and
+ * BTLNO_JIN_00_06 and BTLNO_JIN_00_09: the lineup above with the default heart and flower drops. Item drop
+ * weights: 25 held, 25 random, 50 none.
+ */
 BattleGroupSetup btlgrp_jin_jin_00_01_off_1 = {
     1, // numEnemies
     btlparty_jin_jin_00_01_off_1, // enemyData
@@ -310,25 +301,29 @@ BattleGroupSetup btlgrp_jin_jin_00_01_off_1 = {
     50, // noItemWeight
     battle_heart_drop_param_default, // hpDropTable
     battle_flower_drop_param_default, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/**
+ * Enemy lineup of formation 2 of BTLNO_JIN_00_02 and BTLNO_JIN_00_03 and BTLNO_JIN_00_04 and BTLNO_JIN_00_05
+ * and BTLNO_JIN_00_06 and BTLNO_JIN_00_09, in Creepy Steeple (jin_00): Boo x2.
+ */
 BattleUnitSetup btlparty_jin_jin_00_01_off_2[] = {
     {
-        &unit_teresa, // mUnitKindParams
+        &unit_teresa, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {70.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_teresa, // itemDropTable
     },
     {
-        &unit_teresa, // mUnitKindParams
+        &unit_teresa, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {110.0f, 0.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -336,6 +331,11 @@ BattleUnitSetup btlparty_jin_jin_00_01_off_2[] = {
     },
 };
 
+/**
+ * Formation 2 of BTLNO_JIN_00_02 and BTLNO_JIN_00_03 and BTLNO_JIN_00_04 and BTLNO_JIN_00_05 and
+ * BTLNO_JIN_00_06 and BTLNO_JIN_00_09: the lineup above with the default heart and flower drops. Item drop
+ * weights: 25 held, 25 random, 50 none.
+ */
 BattleGroupSetup btlgrp_jin_jin_00_01_off_2 = {
     2, // numEnemies
     btlparty_jin_jin_00_01_off_2, // enemyData
@@ -344,35 +344,39 @@ BattleGroupSetup btlgrp_jin_jin_00_01_off_2 = {
     50, // noItemWeight
     battle_heart_drop_param_default, // hpDropTable
     battle_flower_drop_param_default2, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/**
+ * Enemy lineup of formation 3 of BTLNO_JIN_00_02 and BTLNO_JIN_00_03 and BTLNO_JIN_00_04 and BTLNO_JIN_00_05
+ * and BTLNO_JIN_00_06 and BTLNO_JIN_00_09, in Creepy Steeple (jin_00): Boo x3.
+ */
 BattleUnitSetup btlparty_jin_jin_00_01_off_3[] = {
     {
-        &unit_teresa, // mUnitKindParams
+        &unit_teresa, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {50.0f, 0.0f, -10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_teresa, // itemDropTable
     },
     {
-        &unit_teresa, // mUnitKindParams
+        &unit_teresa, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {90.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_teresa, // itemDropTable
     },
     {
-        &unit_teresa, // mUnitKindParams
+        &unit_teresa, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {130.0f, 0.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -380,6 +384,11 @@ BattleUnitSetup btlparty_jin_jin_00_01_off_3[] = {
     },
 };
 
+/**
+ * Formation 3 of BTLNO_JIN_00_02 and BTLNO_JIN_00_03 and BTLNO_JIN_00_04 and BTLNO_JIN_00_05 and
+ * BTLNO_JIN_00_06 and BTLNO_JIN_00_09: the lineup above with the default heart and flower drops. Item drop
+ * weights: 25 held, 25 random, 50 none.
+ */
 BattleGroupSetup btlgrp_jin_jin_00_01_off_3 = {
     3, // numEnemies
     btlparty_jin_jin_00_01_off_3, // enemyData
@@ -388,45 +397,49 @@ BattleGroupSetup btlgrp_jin_jin_00_01_off_3 = {
     50, // noItemWeight
     battle_heart_drop_param_default, // hpDropTable
     battle_flower_drop_param_default2, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/**
+ * Enemy lineup of formation 4 of BTLNO_JIN_00_02 and BTLNO_JIN_00_03 and BTLNO_JIN_00_04 and BTLNO_JIN_00_05
+ * and BTLNO_JIN_00_06 and BTLNO_JIN_00_09, in Creepy Steeple (jin_00): Boo x4.
+ */
 BattleUnitSetup btlparty_jin_jin_00_01_off_4[] = {
     {
-        &unit_teresa, // mUnitKindParams
+        &unit_teresa, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {30.0f, 0.0f, -10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_teresa, // itemDropTable
     },
     {
-        &unit_teresa, // mUnitKindParams
+        &unit_teresa, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {70.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_teresa, // itemDropTable
     },
     {
-        &unit_teresa, // mUnitKindParams
+        &unit_teresa, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {110.0f, 0.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_teresa, // itemDropTable
     },
     {
-        &unit_teresa, // mUnitKindParams
+        &unit_teresa, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {150.0f, 0.0f, 20.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -434,6 +447,11 @@ BattleUnitSetup btlparty_jin_jin_00_01_off_4[] = {
     },
 };
 
+/**
+ * Formation 4 of BTLNO_JIN_00_02 and BTLNO_JIN_00_03 and BTLNO_JIN_00_04 and BTLNO_JIN_00_05 and
+ * BTLNO_JIN_00_06 and BTLNO_JIN_00_09: the lineup above with the default heart and flower drops. Item drop
+ * weights: 25 held, 25 random, 50 none.
+ */
 BattleGroupSetup btlgrp_jin_jin_00_01_off_4 = {
     4, // numEnemies
     btlparty_jin_jin_00_01_off_4, // enemyData
@@ -442,25 +460,29 @@ BattleGroupSetup btlgrp_jin_jin_00_01_off_4 = {
     50, // noItemWeight
     battle_heart_drop_param_default, // hpDropTable
     battle_flower_drop_param_default2, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/**
+ * Enemy lineup of formation 1 of BTLNO_JIN_01_03 and BTLNO_JIN_02_03, in Creepy Steeple (jin_01): Swooper
+ * x2.
+ */
 BattleUnitSetup btlparty_jin_jin_01_01_off_1[] = {
     {
-        &unit_basabasa, // mUnitKindParams
+        &unit_basabasa, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {70.0f, 130.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_basabasa, // itemDropTable
     },
     {
-        &unit_basabasa, // mUnitKindParams
+        &unit_basabasa, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {110.0f, 130.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -468,6 +490,10 @@ BattleUnitSetup btlparty_jin_jin_01_01_off_1[] = {
     },
 };
 
+/**
+ * Formation 1 of BTLNO_JIN_01_03 and BTLNO_JIN_02_03: the lineup above with the default heart and flower
+ * drops. Item drop weights: 25 held, 25 random, 50 none.
+ */
 BattleGroupSetup btlgrp_jin_jin_01_01_off_1 = {
     2, // numEnemies
     btlparty_jin_jin_01_01_off_1, // enemyData
@@ -476,35 +502,39 @@ BattleGroupSetup btlgrp_jin_jin_01_01_off_1 = {
     50, // noItemWeight
     battle_heart_drop_param_default, // hpDropTable
     battle_flower_drop_param_default, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/**
+ * Enemy lineup of formation 2 of BTLNO_JIN_01_03 and BTLNO_JIN_02_03, in Creepy Steeple (jin_01): Swooper
+ * x3.
+ */
 BattleUnitSetup btlparty_jin_jin_01_01_off_2[] = {
     {
-        &unit_basabasa, // mUnitKindParams
+        &unit_basabasa, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {50.0f, 130.0f, -10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_basabasa, // itemDropTable
     },
     {
-        &unit_basabasa, // mUnitKindParams
+        &unit_basabasa, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {90.0f, 130.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_basabasa, // itemDropTable
     },
     {
-        &unit_basabasa, // mUnitKindParams
+        &unit_basabasa, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {130.0f, 130.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -512,6 +542,10 @@ BattleUnitSetup btlparty_jin_jin_01_01_off_2[] = {
     },
 };
 
+/**
+ * Formation 2 of BTLNO_JIN_01_03 and BTLNO_JIN_02_03: the lineup above with the default heart and flower
+ * drops. Item drop weights: 25 held, 25 random, 50 none.
+ */
 BattleGroupSetup btlgrp_jin_jin_01_01_off_2 = {
     3, // numEnemies
     btlparty_jin_jin_01_01_off_2, // enemyData
@@ -520,35 +554,39 @@ BattleGroupSetup btlgrp_jin_jin_01_01_off_2 = {
     50, // noItemWeight
     battle_heart_drop_param_default, // hpDropTable
     battle_flower_drop_param_default, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/**
+ * Enemy lineup of formation 3 of BTLNO_JIN_01_03 and BTLNO_JIN_02_03, in Creepy Steeple (jin_01): Swooper
+ * x2, Boo.
+ */
 BattleUnitSetup btlparty_jin_jin_01_01_off_3[] = {
     {
-        &unit_basabasa, // mUnitKindParams
+        &unit_basabasa, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {50.0f, 130.0f, -10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_basabasa, // itemDropTable
     },
     {
-        &unit_teresa, // mUnitKindParams
+        &unit_teresa, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {90.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_teresa, // itemDropTable
     },
     {
-        &unit_basabasa, // mUnitKindParams
+        &unit_basabasa, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {130.0f, 130.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -556,6 +594,10 @@ BattleUnitSetup btlparty_jin_jin_01_01_off_3[] = {
     },
 };
 
+/**
+ * Formation 3 of BTLNO_JIN_01_03 and BTLNO_JIN_02_03: the lineup above with the default heart and flower
+ * drops. Item drop weights: 25 held, 25 random, 50 none.
+ */
 BattleGroupSetup btlgrp_jin_jin_01_01_off_3 = {
     3, // numEnemies
     btlparty_jin_jin_01_01_off_3, // enemyData
@@ -564,25 +606,29 @@ BattleGroupSetup btlgrp_jin_jin_01_01_off_3 = {
     50, // noItemWeight
     battle_heart_drop_param_default, // hpDropTable
     battle_flower_drop_param_default, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/**
+ * Enemy lineup of formation 1 of BTLNO_JIN_01_05 and BTLNO_JIN_02_01, in Creepy Steeple (jin_01): Swooper
+ * x2.
+ */
 BattleUnitSetup btlparty_jin_jin_01_03_off_1[] = {
     {
-        &unit_basabasa, // mUnitKindParams
+        &unit_basabasa, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {70.0f, 130.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_basabasa, // itemDropTable
     },
     {
-        &unit_basabasa, // mUnitKindParams
+        &unit_basabasa, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {110.0f, 130.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -590,6 +636,10 @@ BattleUnitSetup btlparty_jin_jin_01_03_off_1[] = {
     },
 };
 
+/**
+ * Formation 1 of BTLNO_JIN_01_05 and BTLNO_JIN_02_01: the lineup above with the default heart and flower
+ * drops. Item drop weights: 25 held, 25 random, 50 none.
+ */
 BattleGroupSetup btlgrp_jin_jin_01_03_off_1 = {
     2, // numEnemies
     btlparty_jin_jin_01_03_off_1, // enemyData
@@ -598,45 +648,49 @@ BattleGroupSetup btlgrp_jin_jin_01_03_off_1 = {
     50, // noItemWeight
     battle_heart_drop_param_default, // hpDropTable
     battle_flower_drop_param_default, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/**
+ * Enemy lineup of formation 2 of BTLNO_JIN_01_05 and BTLNO_JIN_02_01, in Creepy Steeple (jin_01): Swooper
+ * x4.
+ */
 BattleUnitSetup btlparty_jin_jin_01_03_off_2[] = {
     {
-        &unit_basabasa, // mUnitKindParams
+        &unit_basabasa, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {30.0f, 130.0f, -10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_basabasa, // itemDropTable
     },
     {
-        &unit_basabasa, // mUnitKindParams
+        &unit_basabasa, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {70.0f, 130.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_basabasa, // itemDropTable
     },
     {
-        &unit_basabasa, // mUnitKindParams
+        &unit_basabasa, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {110.0f, 130.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_basabasa, // itemDropTable
     },
     {
-        &unit_basabasa, // mUnitKindParams
+        &unit_basabasa, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {150.0f, 130.0f, 20.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -644,6 +698,10 @@ BattleUnitSetup btlparty_jin_jin_01_03_off_2[] = {
     },
 };
 
+/**
+ * Formation 2 of BTLNO_JIN_01_05 and BTLNO_JIN_02_01: the lineup above with the default heart and flower
+ * drops. Item drop weights: 25 held, 25 random, 50 none.
+ */
 BattleGroupSetup btlgrp_jin_jin_01_03_off_2 = {
     4, // numEnemies
     btlparty_jin_jin_01_03_off_2, // enemyData
@@ -652,25 +710,29 @@ BattleGroupSetup btlgrp_jin_jin_01_03_off_2 = {
     50, // noItemWeight
     battle_heart_drop_param_default, // hpDropTable
     battle_flower_drop_param_default, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/**
+ * Enemy lineup of formation 3 of BTLNO_JIN_01_05 and BTLNO_JIN_02_01, in Creepy Steeple (jin_01): Swooper,
+ * Boo.
+ */
 BattleUnitSetup btlparty_jin_jin_01_03_off_3[] = {
     {
-        &unit_basabasa, // mUnitKindParams
+        &unit_basabasa, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {70.0f, 130.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_basabasa, // itemDropTable
     },
     {
-        &unit_teresa, // mUnitKindParams
+        &unit_teresa, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {110.0f, 0.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -678,6 +740,10 @@ BattleUnitSetup btlparty_jin_jin_01_03_off_3[] = {
     },
 };
 
+/**
+ * Formation 3 of BTLNO_JIN_01_05 and BTLNO_JIN_02_01: the lineup above with the default heart and flower
+ * drops. Item drop weights: 25 held, 25 random, 50 none.
+ */
 BattleGroupSetup btlgrp_jin_jin_01_03_off_3 = {
     2, // numEnemies
     btlparty_jin_jin_01_03_off_3, // enemyData
@@ -686,25 +752,26 @@ BattleGroupSetup btlgrp_jin_jin_01_03_off_3 = {
     50, // noItemWeight
     battle_heart_drop_param_default, // hpDropTable
     battle_flower_drop_param_default, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/** Enemy lineup of formation 1 that no battle selects: Swooper x2. */
 BattleUnitSetup btlparty_jin_jin_03_01_off_1[] = {
     {
-        &unit_basabasa, // mUnitKindParams
+        &unit_basabasa, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {70.0f, 130.0f, 0.0f}, // position
         0, // hitOffsetX
         {1, 0, 0, 0}, // unitWork
         battle_item_basabasa, // itemDropTable
     },
     {
-        &unit_basabasa, // mUnitKindParams
+        &unit_basabasa, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {110.0f, 130.0f, 10.0f}, // position
         0, // hitOffsetX
         {1, 0, 0, 0}, // unitWork
@@ -712,6 +779,10 @@ BattleUnitSetup btlparty_jin_jin_03_01_off_1[] = {
     },
 };
 
+/**
+ * Group setup of formation 1 that no battle selects: the lineup above with the default heart and flower
+ * drops. Item drop weights: 25 held, 25 random, 50 none.
+ */
 BattleGroupSetup btlgrp_jin_jin_03_01_off_1 = {
     2, // numEnemies
     btlparty_jin_jin_03_01_off_1, // enemyData
@@ -720,25 +791,26 @@ BattleGroupSetup btlgrp_jin_jin_03_01_off_1 = {
     50, // noItemWeight
     battle_heart_drop_param_default, // hpDropTable
     battle_flower_drop_param_default, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/** Enemy lineup of formation 1 that no battle selects: Swooper x2. */
 BattleUnitSetup btlparty_jin_jin_03_02_off_1[] = {
     {
-        &unit_basabasa, // mUnitKindParams
+        &unit_basabasa, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {70.0f, 130.0f, 0.0f}, // position
         0, // hitOffsetX
         {1, 0, 0, 0}, // unitWork
         battle_item_basabasa, // itemDropTable
     },
     {
-        &unit_basabasa, // mUnitKindParams
+        &unit_basabasa, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {110.0f, 130.0f, 10.0f}, // position
         0, // hitOffsetX
         {1, 0, 0, 0}, // unitWork
@@ -746,6 +818,10 @@ BattleUnitSetup btlparty_jin_jin_03_02_off_1[] = {
     },
 };
 
+/**
+ * Group setup of formation 1 that no battle selects: the lineup above with the default heart and flower
+ * drops. Item drop weights: 25 held, 25 random, 50 none.
+ */
 BattleGroupSetup btlgrp_jin_jin_03_02_off_1 = {
     2, // numEnemies
     btlparty_jin_jin_03_02_off_1, // enemyData
@@ -754,25 +830,26 @@ BattleGroupSetup btlgrp_jin_jin_03_02_off_1 = {
     50, // noItemWeight
     battle_heart_drop_param_default, // hpDropTable
     battle_flower_drop_param_default, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/** Enemy lineup of formation 1 that no battle selects: Boo x2. */
 BattleUnitSetup btlparty_jin_jin_07_01_off_1[] = {
     {
-        &unit_teresa, // mUnitKindParams
+        &unit_teresa, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {70.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_teresa, // itemDropTable
     },
     {
-        &unit_teresa, // mUnitKindParams
+        &unit_teresa, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {110.0f, 0.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -780,6 +857,10 @@ BattleUnitSetup btlparty_jin_jin_07_01_off_1[] = {
     },
 };
 
+/**
+ * Group setup of formation 1 that no battle selects: the lineup above with the default heart and flower
+ * drops. Item drop weights: 25 held, 25 random, 50 none.
+ */
 BattleGroupSetup btlgrp_jin_jin_07_01_off_1 = {
     2, // numEnemies
     btlparty_jin_jin_07_01_off_1, // enemyData
@@ -788,35 +869,36 @@ BattleGroupSetup btlgrp_jin_jin_07_01_off_1 = {
     50, // noItemWeight
     battle_heart_drop_param_default, // hpDropTable
     battle_flower_drop_param_default2, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/** Enemy lineup of formation 2 that no battle selects: Boo x3. */
 BattleUnitSetup btlparty_jin_jin_07_01_off_2[] = {
     {
-        &unit_teresa, // mUnitKindParams
+        &unit_teresa, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {50.0f, 0.0f, -10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_teresa, // itemDropTable
     },
     {
-        &unit_teresa, // mUnitKindParams
+        &unit_teresa, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {90.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_teresa, // itemDropTable
     },
     {
-        &unit_teresa, // mUnitKindParams
+        &unit_teresa, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {130.0f, 0.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -824,6 +906,10 @@ BattleUnitSetup btlparty_jin_jin_07_01_off_2[] = {
     },
 };
 
+/**
+ * Group setup of formation 2 that no battle selects: the lineup above with the default heart and flower
+ * drops. Item drop weights: 25 held, 25 random, 50 none.
+ */
 BattleGroupSetup btlgrp_jin_jin_07_01_off_2 = {
     3, // numEnemies
     btlparty_jin_jin_07_01_off_2, // enemyData
@@ -832,25 +918,26 @@ BattleGroupSetup btlgrp_jin_jin_07_01_off_2 = {
     50, // noItemWeight
     battle_heart_drop_param_default, // hpDropTable
     battle_flower_drop_param_default2, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/** Enemy lineup of formation 1 that no battle selects: Boo x2. */
 BattleUnitSetup btlparty_jin_jin_07_02_off_1[] = {
     {
-        &unit_teresa, // mUnitKindParams
+        &unit_teresa, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {70.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_teresa, // itemDropTable
     },
     {
-        &unit_teresa, // mUnitKindParams
+        &unit_teresa, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {110.0f, 0.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -858,6 +945,10 @@ BattleUnitSetup btlparty_jin_jin_07_02_off_1[] = {
     },
 };
 
+/**
+ * Group setup of formation 1 that no battle selects: the lineup above with the default heart and flower
+ * drops. Item drop weights: 25 held, 25 random, 50 none.
+ */
 BattleGroupSetup btlgrp_jin_jin_07_02_off_1 = {
     2, // numEnemies
     btlparty_jin_jin_07_02_off_1, // enemyData
@@ -866,35 +957,36 @@ BattleGroupSetup btlgrp_jin_jin_07_02_off_1 = {
     50, // noItemWeight
     battle_heart_drop_param_default, // hpDropTable
     battle_flower_drop_param_default2, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/** Enemy lineup of formation 2 that no battle selects: Boo x3. */
 BattleUnitSetup btlparty_jin_jin_07_02_off_2[] = {
     {
-        &unit_teresa, // mUnitKindParams
+        &unit_teresa, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {50.0f, 0.0f, -10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_teresa, // itemDropTable
     },
     {
-        &unit_teresa, // mUnitKindParams
+        &unit_teresa, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {90.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_teresa, // itemDropTable
     },
     {
-        &unit_teresa, // mUnitKindParams
+        &unit_teresa, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {130.0f, 0.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -902,6 +994,10 @@ BattleUnitSetup btlparty_jin_jin_07_02_off_2[] = {
     },
 };
 
+/**
+ * Group setup of formation 2 that no battle selects: the lineup above with the default heart and flower
+ * drops. Item drop weights: 25 held, 25 random, 50 none.
+ */
 BattleGroupSetup btlgrp_jin_jin_07_02_off_2 = {
     3, // numEnemies
     btlparty_jin_jin_07_02_off_2, // enemyData
@@ -910,15 +1006,16 @@ BattleGroupSetup btlgrp_jin_jin_07_02_off_2 = {
     50, // noItemWeight
     battle_heart_drop_param_default, // hpDropTable
     battle_flower_drop_param_default2, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/** Enemy lineup of formation 1 of BTLNO_JIN_09_01, in Creepy Steeple (jin_09): Buzzy Beetle. */
 BattleUnitSetup btlparty_jin_jin_09_01_off_1[] = {
     {
-        &unit_met, // mUnitKindParams
+        &unit_met, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {90.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -926,6 +1023,10 @@ BattleUnitSetup btlparty_jin_jin_09_01_off_1[] = {
     },
 };
 
+/**
+ * Formation 1 of BTLNO_JIN_09_01: the lineup above with the default heart and flower drops. Item drop
+ * weights: 25 held, 25 random, 50 none.
+ */
 BattleGroupSetup btlgrp_jin_jin_09_01_off_1 = {
     1, // numEnemies
     btlparty_jin_jin_09_01_off_1, // enemyData
@@ -934,25 +1035,26 @@ BattleGroupSetup btlgrp_jin_jin_09_01_off_1 = {
     50, // noItemWeight
     battle_heart_drop_param_default2, // hpDropTable
     battle_flower_drop_param_default, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/** Enemy lineup of formation 1 of BTLNO_JIN_10_01, in Creepy Steeple (jin_10): Buzzy Beetle x2. */
 BattleUnitSetup btlparty_jin_jin_10_01_off_1[] = {
     {
-        &unit_met, // mUnitKindParams
+        &unit_met, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {70.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_met, // itemDropTable
     },
     {
-        &unit_met, // mUnitKindParams
+        &unit_met, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {110.0f, 0.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -960,6 +1062,10 @@ BattleUnitSetup btlparty_jin_jin_10_01_off_1[] = {
     },
 };
 
+/**
+ * Formation 1 of BTLNO_JIN_10_01: the lineup above with the default heart and flower drops. Item drop
+ * weights: 25 held, 25 random, 50 none.
+ */
 BattleGroupSetup btlgrp_jin_jin_10_01_off_1 = {
     2, // numEnemies
     btlparty_jin_jin_10_01_off_1, // enemyData
@@ -968,15 +1074,16 @@ BattleGroupSetup btlgrp_jin_jin_10_01_off_1 = {
     50, // noItemWeight
     battle_heart_drop_param_default2, // hpDropTable
     battle_flower_drop_param_default, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/** Enemy lineup of formation 1 of BTLNO_JIN_10_02, in Creepy Steeple (jin_10): Spike Top. */
 BattleUnitSetup btlparty_jin_jin_10_02_off_1[] = {
     {
-        &unit_togemet, // mUnitKindParams
+        &unit_togemet, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {90.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -984,6 +1091,10 @@ BattleUnitSetup btlparty_jin_jin_10_02_off_1[] = {
     },
 };
 
+/**
+ * Formation 1 of BTLNO_JIN_10_02: the lineup above with the default heart and flower drops. Item drop
+ * weights: 25 held, 25 random, 50 none.
+ */
 BattleGroupSetup btlgrp_jin_jin_10_02_off_1 = {
     1, // numEnemies
     btlparty_jin_jin_10_02_off_1, // enemyData
@@ -992,15 +1103,16 @@ BattleGroupSetup btlgrp_jin_jin_10_02_off_1 = {
     50, // noItemWeight
     battle_heart_drop_param_default2, // hpDropTable
     battle_flower_drop_param_default, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/** Enemy lineup of formation 1 of BTLNO_JIN_10_03, in Creepy Steeple (jin_10): Buzzy Beetle. */
 BattleUnitSetup btlparty_jin_jin_10_03_off_1[] = {
     {
-        &unit_met, // mUnitKindParams
+        &unit_met, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {90.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -1008,6 +1120,10 @@ BattleUnitSetup btlparty_jin_jin_10_03_off_1[] = {
     },
 };
 
+/**
+ * Formation 1 of BTLNO_JIN_10_03: the lineup above with the default heart and flower drops. Item drop
+ * weights: 25 held, 25 random, 50 none.
+ */
 BattleGroupSetup btlgrp_jin_jin_10_03_off_1 = {
     1, // numEnemies
     btlparty_jin_jin_10_03_off_1, // enemyData
@@ -1016,45 +1132,46 @@ BattleGroupSetup btlgrp_jin_jin_10_03_off_1 = {
     50, // noItemWeight
     battle_heart_drop_param_default2, // hpDropTable
     battle_flower_drop_param_default, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/** Enemy lineup of formation 1 of BTLNO_JIN_10_04, in Creepy Steeple (jin_10): Buzzy Beetle x4. */
 BattleUnitSetup btlparty_jin_jin_10_04_off_1[] = {
     {
-        &unit_met, // mUnitKindParams
+        &unit_met, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {30.0f, 0.0f, -10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_met, // itemDropTable
     },
     {
-        &unit_met, // mUnitKindParams
+        &unit_met, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {70.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_met, // itemDropTable
     },
     {
-        &unit_met, // mUnitKindParams
+        &unit_met, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {110.0f, 0.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_met, // itemDropTable
     },
     {
-        &unit_met, // mUnitKindParams
+        &unit_met, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {150.0f, 0.0f, 20.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -1062,6 +1179,10 @@ BattleUnitSetup btlparty_jin_jin_10_04_off_1[] = {
     },
 };
 
+/**
+ * Formation 1 of BTLNO_JIN_10_04: the lineup above with the default heart and flower drops. Item drop
+ * weights: 25 held, 25 random, 50 none.
+ */
 BattleGroupSetup btlgrp_jin_jin_10_04_off_1 = {
     4, // numEnemies
     btlparty_jin_jin_10_04_off_1, // enemyData
@@ -1070,25 +1191,26 @@ BattleGroupSetup btlgrp_jin_jin_10_04_off_1 = {
     50, // noItemWeight
     battle_heart_drop_param_default2, // hpDropTable
     battle_flower_drop_param_default, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/** Enemy lineup of formation 1 of BTLNO_JIN_10_05, in Creepy Steeple (jin_10): Spike Top x2. */
 BattleUnitSetup btlparty_jin_jin_10_05_off_1[] = {
     {
-        &unit_togemet, // mUnitKindParams
+        &unit_togemet, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {70.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_togemet, // itemDropTable
     },
     {
-        &unit_togemet, // mUnitKindParams
+        &unit_togemet, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {110.0f, 0.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -1096,6 +1218,10 @@ BattleUnitSetup btlparty_jin_jin_10_05_off_1[] = {
     },
 };
 
+/**
+ * Formation 1 of BTLNO_JIN_10_05: the lineup above with the default heart and flower drops. Item drop
+ * weights: 25 held, 25 random, 50 none.
+ */
 BattleGroupSetup btlgrp_jin_jin_10_05_off_1 = {
     2, // numEnemies
     btlparty_jin_jin_10_05_off_1, // enemyData
@@ -1104,35 +1230,36 @@ BattleGroupSetup btlgrp_jin_jin_10_05_off_1 = {
     50, // noItemWeight
     battle_heart_drop_param_default2, // hpDropTable
     battle_flower_drop_param_default, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/** Enemy lineup of formation 1 of BTLNO_JIN_10_06, in Creepy Steeple (jin_10): Buzzy Beetle x2, Spike Top. */
 BattleUnitSetup btlparty_jin_jin_10_06_off_1[] = {
     {
-        &unit_met, // mUnitKindParams
+        &unit_met, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {50.0f, 0.0f, -10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_met, // itemDropTable
     },
     {
-        &unit_met, // mUnitKindParams
+        &unit_met, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {90.0f, 0.0f, 0.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
         battle_item_met, // itemDropTable
     },
     {
-        &unit_togemet, // mUnitKindParams
+        &unit_togemet, // unitKindParams
         1, // alliance
         {0}, // pad_05
-        0x4000004, // attackPhase
+        BATTLE_PHASE_ENEMY, // attackPhase
         {130.0f, 0.0f, 10.0f}, // position
         0, // hitOffsetX
         {0}, // unitWork
@@ -1140,6 +1267,10 @@ BattleUnitSetup btlparty_jin_jin_10_06_off_1[] = {
     },
 };
 
+/**
+ * Formation 1 of BTLNO_JIN_10_06: the lineup above with the default heart and flower drops. Item drop
+ * weights: 25 held, 25 random, 50 none.
+ */
 BattleGroupSetup btlgrp_jin_jin_10_06_off_1 = {
     3, // numEnemies
     btlparty_jin_jin_10_06_off_1, // enemyData
@@ -1148,49 +1279,61 @@ BattleGroupSetup btlgrp_jin_jin_10_06_off_1 = {
     50, // noItemWeight
     battle_heart_drop_param_default2, // hpDropTable
     battle_flower_drop_param_default, // fpDropTable
-    5, // field_1C
+    5, // reserved_1C
 };
 
+/** Debug battle JIN_TEST1: Boo on stage stg_04_2. */
 NpcBattleSelect btlgrpsel_jin_btlno_jin_test1_off[] = {
     {50, &btlgrp_jin_jin_00_01_off_1, &jin_btlstage_data[2]},
     {0},
 };
 
+/** Debug battle JIN_TEST2: Boo on stage stg_04_3. */
 NpcBattleSelect btlgrpsel_jin_btlno_jin_test2_off[] = {
     {50, &btlgrp_jin_jin_00_01_off_1, jin_btlstage_data},
     {0},
 };
 
+/** Debug battle JIN_TEST3: Boo on stage stg_04_4. */
 NpcBattleSelect btlgrpsel_jin_btlno_jin_test3_off[] = {
     {50, &btlgrp_jin_jin_00_01_off_1, &jin_btlstage_data[3]},
     {0},
 };
 
+/** Debug battle JIN_TEST4: Boo on stage stg_04_5. */
 NpcBattleSelect btlgrpsel_jin_btlno_jin_test4_off[] = {
     {50, &btlgrp_jin_jin_00_01_off_1, &jin_btlstage_data[4]},
     {0},
 };
 
+/** Debug battle JIN_TEST5: Boo on stage stg_04_6. */
 NpcBattleSelect btlgrpsel_jin_btlno_jin_test5_off[] = {
     {50, &btlgrp_jin_jin_00_01_off_1, &jin_btlstage_data[5]},
     {0},
 };
 
+/** BTLNO_JIN_01_01 always fights Doopliss on stage stg_04_4. */
 NpcBattleSelect btlgrpsel_jin_btlno_jin_01_01_off[] = {
     {50, &btlgrp_jin_jin_04_ramper, &jin_btlstage_data[3]},
     {0},
 };
 
+/** BTLNO_JIN_01_02 always fights Doopliss disguised as Mario on stage stg_04_4. */
 NpcBattleSelect btlgrpsel_jin_btlno_jin_01_02_off[] = {
     {50, &btlgrp_jin_jin_01_faker_mario, &jin_btlstage_data[3]},
     {0},
 };
 
+/** BTLNO_JIN_00_01 always fights Atomic Boo on stage stg_04_2. */
 NpcBattleSelect btlgrpsel_jin_btlno_jin_00_01_off[] = {
     {50, &btlgrp_jin_jin_00_atmic_teresa, &jin_btlstage_data[2]},
     {0},
 };
 
+/**
+ * BTLNO_JIN_00_02 picks one of its formations by weight (10:20:10:10) on stage stg_04_2: Boo; Boo x2; Boo
+ * x3; Boo x4.
+ */
 NpcBattleSelect btlgrpsel_jin_btlno_jin_00_02_off[] = {
     {10, &btlgrp_jin_jin_00_01_off_1, &jin_btlstage_data[2]},
     {20, &btlgrp_jin_jin_00_01_off_2, &jin_btlstage_data[2]},
@@ -1199,6 +1342,10 @@ NpcBattleSelect btlgrpsel_jin_btlno_jin_00_02_off[] = {
     {0},
 };
 
+/**
+ * BTLNO_JIN_00_03 picks one of its formations by weight (10:20:10:10) on stage stg_04_2: Boo; Boo x2; Boo
+ * x3; Boo x4.
+ */
 NpcBattleSelect btlgrpsel_jin_btlno_jin_00_03_off[] = {
     {10, &btlgrp_jin_jin_00_01_off_1, &jin_btlstage_data[2]},
     {20, &btlgrp_jin_jin_00_01_off_2, &jin_btlstage_data[2]},
@@ -1207,6 +1354,10 @@ NpcBattleSelect btlgrpsel_jin_btlno_jin_00_03_off[] = {
     {0},
 };
 
+/**
+ * BTLNO_JIN_00_04 picks one of its formations by weight (10:20:10:10) on stage stg_04_2: Boo; Boo x2; Boo
+ * x3; Boo x4.
+ */
 NpcBattleSelect btlgrpsel_jin_btlno_jin_00_04_off[] = {
     {10, &btlgrp_jin_jin_00_01_off_1, &jin_btlstage_data[2]},
     {20, &btlgrp_jin_jin_00_01_off_2, &jin_btlstage_data[2]},
@@ -1215,6 +1366,10 @@ NpcBattleSelect btlgrpsel_jin_btlno_jin_00_04_off[] = {
     {0},
 };
 
+/**
+ * BTLNO_JIN_00_05 picks one of its formations by weight (10:20:10:10) on stage stg_04_2: Boo; Boo x2; Boo
+ * x3; Boo x4.
+ */
 NpcBattleSelect btlgrpsel_jin_btlno_jin_00_05_off[] = {
     {10, &btlgrp_jin_jin_00_01_off_1, &jin_btlstage_data[2]},
     {20, &btlgrp_jin_jin_00_01_off_2, &jin_btlstage_data[2]},
@@ -1223,6 +1378,10 @@ NpcBattleSelect btlgrpsel_jin_btlno_jin_00_05_off[] = {
     {0},
 };
 
+/**
+ * BTLNO_JIN_00_06 picks one of its formations by weight (10:20:10:10) on stage stg_04_2: Boo; Boo x2; Boo
+ * x3; Boo x4.
+ */
 NpcBattleSelect btlgrpsel_jin_btlno_jin_00_06_off[] = {
     {10, &btlgrp_jin_jin_00_01_off_1, &jin_btlstage_data[2]},
     {20, &btlgrp_jin_jin_00_01_off_2, &jin_btlstage_data[2]},
@@ -1231,6 +1390,10 @@ NpcBattleSelect btlgrpsel_jin_btlno_jin_00_06_off[] = {
     {0},
 };
 
+/**
+ * BTLNO_JIN_00_09 picks one of its formations by weight (10:20:10:10) on stage stg_04_2: Boo; Boo x2; Boo
+ * x3; Boo x4.
+ */
 NpcBattleSelect btlgrpsel_jin_btlno_jin_00_09_off[] = {
     {10, &btlgrp_jin_jin_00_01_off_1, &jin_btlstage_data[2]},
     {20, &btlgrp_jin_jin_00_01_off_2, &jin_btlstage_data[2]},
@@ -1239,6 +1402,10 @@ NpcBattleSelect btlgrpsel_jin_btlno_jin_00_09_off[] = {
     {0},
 };
 
+/**
+ * BTLNO_JIN_01_03 picks one of its formations by weight (20:10:10) on stage stg_04_3: Swooper x2; Swooper
+ * x3; Swooper x2, Boo.
+ */
 NpcBattleSelect btlgrpsel_jin_btlno_jin_01_03_off[] = {
     {20, &btlgrp_jin_jin_01_01_off_1, &jin_btlstage_data[1]},
     {10, &btlgrp_jin_jin_01_01_off_2, &jin_btlstage_data[1]},
@@ -1246,6 +1413,10 @@ NpcBattleSelect btlgrpsel_jin_btlno_jin_01_03_off[] = {
     {0},
 };
 
+/**
+ * BTLNO_JIN_01_05 picks one of its formations by weight (10:10:20) on stage stg_04_3: Swooper x2; Swooper
+ * x4; Swooper, Boo.
+ */
 NpcBattleSelect btlgrpsel_jin_btlno_jin_01_05_off[] = {
     {10, &btlgrp_jin_jin_01_03_off_1, &jin_btlstage_data[1]},
     {10, &btlgrp_jin_jin_01_03_off_2, &jin_btlstage_data[1]},
@@ -1253,6 +1424,10 @@ NpcBattleSelect btlgrpsel_jin_btlno_jin_01_05_off[] = {
     {0},
 };
 
+/**
+ * BTLNO_JIN_02_01 picks one of its formations by weight (50:10:20) on stage stg_04_3: Swooper x2; Swooper
+ * x4; Swooper, Boo.
+ */
 NpcBattleSelect btlgrpsel_jin_btlno_jin_02_01_off[] = {
     {50, &btlgrp_jin_jin_01_03_off_1, &jin_btlstage_data[1]},
     {10, &btlgrp_jin_jin_01_03_off_2, &jin_btlstage_data[1]},
@@ -1260,6 +1435,10 @@ NpcBattleSelect btlgrpsel_jin_btlno_jin_02_01_off[] = {
     {0},
 };
 
+/**
+ * BTLNO_JIN_02_03 picks one of its formations by weight (50:10:10) on stage stg_04_3: Swooper x2; Swooper
+ * x3; Swooper x2, Boo.
+ */
 NpcBattleSelect btlgrpsel_jin_btlno_jin_02_03_off[] = {
     {50, &btlgrp_jin_jin_01_01_off_1, &jin_btlstage_data[1]},
     {10, &btlgrp_jin_jin_01_01_off_2, &jin_btlstage_data[1]},
@@ -1267,311 +1446,327 @@ NpcBattleSelect btlgrpsel_jin_btlno_jin_02_03_off[] = {
     {0},
 };
 
+/** BTLNO_JIN_09_01 always fights Buzzy Beetle on stage stg_04_6. */
 NpcBattleSelect btlgrpsel_jin_btlno_jin_09_01_off[] = {
     {50, &btlgrp_jin_jin_09_01_off_1, &jin_btlstage_data[5]},
     {0},
 };
 
+/** BTLNO_JIN_10_01 always fights Buzzy Beetle x2 on stage stg_04_6. */
 NpcBattleSelect btlgrpsel_jin_btlno_jin_10_01_off[] = {
     {50, &btlgrp_jin_jin_10_01_off_1, &jin_btlstage_data[5]},
     {0},
 };
 
+/** BTLNO_JIN_10_02 always fights Spike Top on stage stg_04_6. */
 NpcBattleSelect btlgrpsel_jin_btlno_jin_10_02_off[] = {
     {50, &btlgrp_jin_jin_10_02_off_1, &jin_btlstage_data[5]},
     {0},
 };
 
+/** BTLNO_JIN_10_03 always fights Buzzy Beetle on stage stg_04_6. */
 NpcBattleSelect btlgrpsel_jin_btlno_jin_10_03_off[] = {
     {50, &btlgrp_jin_jin_10_03_off_1, &jin_btlstage_data[5]},
     {0},
 };
 
+/** BTLNO_JIN_10_04 always fights Buzzy Beetle x4 on stage stg_04_6. */
 NpcBattleSelect btlgrpsel_jin_btlno_jin_10_04_off[] = {
     {50, &btlgrp_jin_jin_10_04_off_1, &jin_btlstage_data[5]},
     {0},
 };
 
+/** BTLNO_JIN_10_05 always fights Spike Top x2 on stage stg_04_6. */
 NpcBattleSelect btlgrpsel_jin_btlno_jin_10_05_off[] = {
     {50, &btlgrp_jin_jin_10_05_off_1, &jin_btlstage_data[5]},
     {0},
 };
 
+/** BTLNO_JIN_10_06 always fights Buzzy Beetle x2, Spike Top on stage stg_04_6. */
 NpcBattleSelect btlgrpsel_jin_btlno_jin_10_06_off[] = {
     {50, &btlgrp_jin_jin_10_06_off_1, &jin_btlstage_data[5]},
     {0},
 };
 
+/**
+ * Battle setups of Creepy Steeple, one per BTLNO_JIN_* name in btl_jin_setup_no_tbl: the test stages, the
+ * Doopliss and Atomic Boo boss fights and the enemy kinds met in the rooms; each names the formations to
+ * pick from, battle flags, reward rolls and music.
+ */
 NpcSetupBattleInfo btlsetup_jin_tbl[] = {
     {
-        /*"マップstg_04_2"*/"\x83\x7D\x83\x62\x83\x76\x73\x74\x67\x5F\x30\x34\x5F\x32", // name
+        "マップstg_04_2", // name
         NULL, 0, // mapName..fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_jin_btlno_jin_test1_off, // select
-        0, 0, // battleFlags..field_1C
-        {{1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        0, 0, // battleFlags, randomMode
+        {{1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_ZAKO_BATTLE1", // bgmName
     },
     {
-        /*"マップstg_04_3"*/"\x83\x7D\x83\x62\x83\x76\x73\x74\x67\x5F\x30\x34\x5F\x33", // name
+        "マップstg_04_3", // name
         NULL, 0, // mapName..fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_jin_btlno_jin_test2_off, // select
-        0, 0, // battleFlags..field_1C
-        {{1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        0, 0, // battleFlags, randomMode
+        {{1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_ZAKO_BATTLE1", // bgmName
     },
     {
-        /*"マップstg_04_4"*/"\x83\x7D\x83\x62\x83\x76\x73\x74\x67\x5F\x30\x34\x5F\x34", // name
+        "マップstg_04_4", // name
         NULL, 0, // mapName..fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_jin_btlno_jin_test3_off, // select
-        0, 0, // battleFlags..field_1C
-        {{1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        0, 0, // battleFlags, randomMode
+        {{1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_ZAKO_BATTLE1", // bgmName
     },
     {
-        /*"マップstg_04_5"*/"\x83\x7D\x83\x62\x83\x76\x73\x74\x67\x5F\x30\x34\x5F\x35", // name
+        "マップstg_04_5", // name
         NULL, 0, // mapName..fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_jin_btlno_jin_test4_off, // select
-        0, 0, // battleFlags..field_1C
-        {{1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        0, 0, // battleFlags, randomMode
+        {{1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_ZAKO_BATTLE1", // bgmName
     },
     {
-        /*"マップstg_04_6"*/"\x83\x7D\x83\x62\x83\x76\x73\x74\x67\x5F\x30\x34\x5F\x36", // name
+        "マップstg_04_6", // name
         NULL, 0, // mapName..fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_jin_btlno_jin_test5_off, // select
-        0, 0, // battleFlags..field_1C
-        {{1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        0, 0, // battleFlags, randomMode
+        {{1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_ZAKO_BATTLE1", // bgmName
     },
     {
-        /*"JIN_04ランペルその１"*/"\x4A\x49\x4E\x5F\x30\x34\x83\x89\x83\x93\x83\x79\x83\x8B\x82\xBB\x82\xCC\x82\x50", // name
+        "JIN_04ランペルその１", // name
         "jin_04", // mapName
         0, // fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_jin_btlno_jin_01_01_off, // select
-        0x20000010, // battleFlags
-        0, // field_1C
-        {{3, 3}, {3, 3}, {3, 3}, {0}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {0}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        NPC_BATTLE_MAX_COUNT | NPC_BATTLE_MARIO_PAUSE3_VOICE, // battleFlags
+        0, // randomMode
+        {{3, 3}, {3, 3}, {3, 3}, {0}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {0}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_BOSS_STG4_RUNPELL1", // bgmName
     },
     {
-        /*"JIN_04ランペルその２"*/"\x4A\x49\x4E\x5F\x30\x34\x83\x89\x83\x93\x83\x79\x83\x8B\x82\xBB\x82\xCC\x82\x51", // name
+        "JIN_04ランペルその２", // name
         "jin_04", // mapName
         0, // fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_jin_btlno_jin_01_02_off, // select
-        0x20000010, // battleFlags
-        6, // field_1C
-        {{3, 3}, {3, 3}, {3, 3}, {0}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {0}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        NPC_BATTLE_MAX_COUNT | NPC_BATTLE_MARIO_PAUSE3_VOICE, // battleFlags
+        6, // randomMode
+        {{3, 3}, {3, 3}, {3, 3}, {0}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {0}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_BOSS_STG4_FAKEMARIO1", // bgmName
     },
     {
-        /*"JIN_00アトミックテレサ"*/"\x4A\x49\x4E\x5F\x30\x30\x83\x41\x83\x67\x83\x7E\x83\x62\x83\x4E\x83\x65\x83\x8C\x83\x54", // name
+        "JIN_00アトミックテレサ", // name
         NULL, 0, // mapName..fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_jin_btlno_jin_00_01_off, // select
-        0x20000010, // battleFlags
-        0, // field_1C
-        {{0}, {0}, {10, 10}, {0}, {0}, {0}, {0}, {0}, {0}, {0}, {0}, {0}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        NPC_BATTLE_MAX_COUNT | NPC_BATTLE_MARIO_PAUSE3_VOICE, // battleFlags
+        0, // randomMode
+        {{0}, {0}, {10, 10}, {0}, {0}, {0}, {0}, {0}, {0}, {0}, {0}, {0}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_CHUBOSS_BATTLE1", // bgmName
     },
     {
-        /*"JIN_00テレサ"*/"\x4A\x49\x4E\x5F\x30\x30\x83\x65\x83\x8C\x83\x54", // name
+        "JIN_00テレサ", // name
         NULL, 0, // mapName..fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_jin_btlno_jin_00_02_off, // select
-        0, 0, // battleFlags..field_1C
-        {{4, 4}, {4, 4}, {10, 10}, {0}, {4, 4}, {4, 4}, {4, 4}, {4, 4}, {4, 4}, {0}, {4, 4}, {4, 4}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        0, 0, // battleFlags, randomMode
+        {{4, 4}, {4, 4}, {10, 10}, {0}, {4, 4}, {4, 4}, {4, 4}, {4, 4}, {4, 4}, {0}, {4, 4}, {4, 4}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_ZAKO_BATTLE1", // bgmName
     },
     {
-        /*"JIN_00テレサ"*/"\x4A\x49\x4E\x5F\x30\x30\x83\x65\x83\x8C\x83\x54", // name
+        "JIN_00テレサ", // name
         NULL, 0, // mapName..fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_jin_btlno_jin_00_03_off, // select
-        0, 0, // battleFlags..field_1C
-        {{4, 4}, {4, 4}, {10, 10}, {0}, {4, 4}, {4, 4}, {4, 4}, {4, 4}, {4, 4}, {0}, {4, 4}, {4, 4}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        0, 0, // battleFlags, randomMode
+        {{4, 4}, {4, 4}, {10, 10}, {0}, {4, 4}, {4, 4}, {4, 4}, {4, 4}, {4, 4}, {0}, {4, 4}, {4, 4}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_ZAKO_BATTLE1", // bgmName
     },
     {
-        /*"JIN_00テレサ"*/"\x4A\x49\x4E\x5F\x30\x30\x83\x65\x83\x8C\x83\x54", // name
+        "JIN_00テレサ", // name
         NULL, 0, // mapName..fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_jin_btlno_jin_00_04_off, // select
-        0, 0, // battleFlags..field_1C
-        {{4, 4}, {4, 4}, {10, 10}, {0}, {4, 4}, {4, 4}, {4, 4}, {4, 4}, {4, 4}, {0}, {4, 4}, {4, 4}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        0, 0, // battleFlags, randomMode
+        {{4, 4}, {4, 4}, {10, 10}, {0}, {4, 4}, {4, 4}, {4, 4}, {4, 4}, {4, 4}, {0}, {4, 4}, {4, 4}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_ZAKO_BATTLE1", // bgmName
     },
     {
-        /*"JIN_00テレサ"*/"\x4A\x49\x4E\x5F\x30\x30\x83\x65\x83\x8C\x83\x54", // name
+        "JIN_00テレサ", // name
         NULL, 0, // mapName..fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_jin_btlno_jin_00_05_off, // select
-        0, 0, // battleFlags..field_1C
-        {{4, 4}, {4, 4}, {10, 10}, {0}, {4, 4}, {4, 4}, {4, 4}, {4, 4}, {4, 4}, {0}, {4, 4}, {4, 4}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        0, 0, // battleFlags, randomMode
+        {{4, 4}, {4, 4}, {10, 10}, {0}, {4, 4}, {4, 4}, {4, 4}, {4, 4}, {4, 4}, {0}, {4, 4}, {4, 4}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_ZAKO_BATTLE1", // bgmName
     },
     {
-        /*"JIN_00テレサ"*/"\x4A\x49\x4E\x5F\x30\x30\x83\x65\x83\x8C\x83\x54", // name
+        "JIN_00テレサ", // name
         NULL, 0, // mapName..fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_jin_btlno_jin_00_06_off, // select
-        0, 0, // battleFlags..field_1C
-        {{4, 4}, {4, 4}, {10, 10}, {0}, {4, 4}, {4, 4}, {4, 4}, {4, 4}, {4, 4}, {0}, {4, 4}, {4, 4}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        0, 0, // battleFlags, randomMode
+        {{4, 4}, {4, 4}, {10, 10}, {0}, {4, 4}, {4, 4}, {4, 4}, {4, 4}, {4, 4}, {0}, {4, 4}, {4, 4}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_ZAKO_BATTLE1", // bgmName
     },
     {
-        /*"JIN_00テレサ"*/"\x4A\x49\x4E\x5F\x30\x30\x83\x65\x83\x8C\x83\x54", // name
+        "JIN_00テレサ", // name
         NULL, 0, // mapName..fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_jin_btlno_jin_00_09_off, // select
-        0, 0, // battleFlags..field_1C
-        {{4, 4}, {4, 4}, {10, 10}, {0}, {4, 4}, {4, 4}, {4, 4}, {4, 4}, {4, 4}, {0}, {4, 4}, {4, 4}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        0, 0, // battleFlags, randomMode
+        {{4, 4}, {4, 4}, {10, 10}, {0}, {4, 4}, {4, 4}, {4, 4}, {4, 4}, {4, 4}, {0}, {4, 4}, {4, 4}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_ZAKO_BATTLE1", // bgmName
     },
     {
-        /*"JIN_01バサバサ"*/"\x4A\x49\x4E\x5F\x30\x31\x83\x6F\x83\x54\x83\x6F\x83\x54", // name
+        "JIN_01バサバサ", // name
         "jin_04", // mapName
         0, // fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_jin_btlno_jin_01_03_off, // select
-        0, 0, // battleFlags..field_1C
-        {{3, 3}, {3, 3}, {3, 3}, {0}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {0}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        0, 0, // battleFlags, randomMode
+        {{3, 3}, {3, 3}, {3, 3}, {0}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {0}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_ZAKO_BATTLE1", // bgmName
     },
     {
-        /*"JIN_01バサバサ"*/"\x4A\x49\x4E\x5F\x30\x31\x83\x6F\x83\x54\x83\x6F\x83\x54", // name
+        "JIN_01バサバサ", // name
         "jin_04", // mapName
         0, // fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_jin_btlno_jin_01_05_off, // select
-        0, 0, // battleFlags..field_1C
-        {{3, 3}, {3, 3}, {3, 3}, {0}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {0}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        0, 0, // battleFlags, randomMode
+        {{3, 3}, {3, 3}, {3, 3}, {0}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {0}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_ZAKO_BATTLE1", // bgmName
     },
     {
-        /*"JIN_02バサバサ"*/"\x4A\x49\x4E\x5F\x30\x32\x83\x6F\x83\x54\x83\x6F\x83\x54", // name
+        "JIN_02バサバサ", // name
         "jin_04", // mapName
         0, // fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_jin_btlno_jin_02_01_off, // select
-        0, 0, // battleFlags..field_1C
-        {{3, 3}, {3, 3}, {3, 3}, {0}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {0}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        0, 0, // battleFlags, randomMode
+        {{3, 3}, {3, 3}, {3, 3}, {0}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {0}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_ZAKO_BATTLE1", // bgmName
     },
     {
-        /*"JIN_02バサバサ"*/"\x4A\x49\x4E\x5F\x30\x32\x83\x6F\x83\x54\x83\x6F\x83\x54", // name
+        "JIN_02バサバサ", // name
         "jin_04", // mapName
         0, // fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_jin_btlno_jin_02_03_off, // select
-        0, 0, // battleFlags..field_1C
-        {{3, 3}, {3, 3}, {3, 3}, {0}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {0}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        0, 0, // battleFlags, randomMode
+        {{3, 3}, {3, 3}, {3, 3}, {0}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {0}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_ZAKO_BATTLE1", // bgmName
     },
     {
-        /*"JIN_09メット"*/"\x4A\x49\x4E\x5F\x30\x39\x83\x81\x83\x62\x83\x67", // name
+        "JIN_09メット", // name
         "jin_04", // mapName
         0, // fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_jin_btlno_jin_09_01_off, // select
-        0, 0, // battleFlags..field_1C
-        {{4, 4}, {4, 4}, {0}, {0}, {4, 4}, {4, 4}, {4, 4}, {4, 4}, {4, 4}, {0}, {4, 4}, {4, 4}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        0, 0, // battleFlags, randomMode
+        {{4, 4}, {4, 4}, {0}, {0}, {4, 4}, {4, 4}, {4, 4}, {4, 4}, {4, 4}, {0}, {4, 4}, {4, 4}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_ZAKO_BATTLE1", // bgmName
     },
     {
-        /*"JIN_10メット"*/"\x4A\x49\x4E\x5F\x31\x30\x83\x81\x83\x62\x83\x67", // name
+        "JIN_10メット", // name
         "jin_04", // mapName
         0, // fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_jin_btlno_jin_10_01_off, // select
-        0, 0, // battleFlags..field_1C
-        {{4, 4}, {4, 4}, {0}, {0}, {4, 4}, {4, 4}, {4, 4}, {4, 4}, {4, 4}, {0}, {4, 4}, {4, 4}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        0, 0, // battleFlags, randomMode
+        {{4, 4}, {4, 4}, {0}, {0}, {4, 4}, {4, 4}, {4, 4}, {4, 4}, {4, 4}, {0}, {4, 4}, {4, 4}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_ZAKO_BATTLE1", // bgmName
     },
     {
-        /*"JIN_10トゲメット"*/"\x4A\x49\x4E\x5F\x31\x30\x83\x67\x83\x51\x83\x81\x83\x62\x83\x67", // name
+        "JIN_10トゲメット", // name
         "jin_04", // mapName
         0, // fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_jin_btlno_jin_10_02_off, // select
-        0, 0, // battleFlags..field_1C
-        {{4, 4}, {4, 4}, {0}, {0}, {4, 4}, {4, 4}, {4, 4}, {4, 4}, {4, 4}, {0}, {4, 4}, {4, 4}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        0, 0, // battleFlags, randomMode
+        {{4, 4}, {4, 4}, {0}, {0}, {4, 4}, {4, 4}, {4, 4}, {4, 4}, {4, 4}, {0}, {4, 4}, {4, 4}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_ZAKO_BATTLE1", // bgmName
     },
     {
-        /*"JIN_10メット"*/"\x4A\x49\x4E\x5F\x31\x30\x83\x81\x83\x62\x83\x67", // name
+        "JIN_10メット", // name
         "jin_04", // mapName
         0, // fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_jin_btlno_jin_10_03_off, // select
-        0, 0, // battleFlags..field_1C
-        {{4, 4}, {4, 4}, {0}, {0}, {4, 4}, {4, 4}, {4, 4}, {4, 4}, {4, 4}, {0}, {4, 4}, {4, 4}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        0, 0, // battleFlags, randomMode
+        {{4, 4}, {4, 4}, {0}, {0}, {4, 4}, {4, 4}, {4, 4}, {4, 4}, {4, 4}, {0}, {4, 4}, {4, 4}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_ZAKO_BATTLE1", // bgmName
     },
     {
-        /*"JIN_10メット"*/"\x4A\x49\x4E\x5F\x31\x30\x83\x81\x83\x62\x83\x67", // name
+        "JIN_10メット", // name
         "jin_04", // mapName
         0, // fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_jin_btlno_jin_10_04_off, // select
-        0, 0, // battleFlags..field_1C
-        {{4, 4}, {4, 4}, {0}, {0}, {4, 4}, {4, 4}, {4, 4}, {4, 4}, {4, 4}, {0}, {4, 4}, {4, 4}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        0, 0, // battleFlags, randomMode
+        {{4, 4}, {4, 4}, {0}, {0}, {4, 4}, {4, 4}, {4, 4}, {4, 4}, {4, 4}, {0}, {4, 4}, {4, 4}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_ZAKO_BATTLE1", // bgmName
     },
     {
-        /*"JIN_10トゲメット"*/"\x4A\x49\x4E\x5F\x31\x30\x83\x67\x83\x51\x83\x81\x83\x62\x83\x67", // name
+        "JIN_10トゲメット", // name
         "jin_04", // mapName
         0, // fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_jin_btlno_jin_10_05_off, // select
-        0, 0, // battleFlags..field_1C
-        {{4, 4}, {4, 4}, {0}, {0}, {4, 4}, {4, 4}, {4, 4}, {4, 4}, {4, 4}, {0}, {4, 4}, {4, 4}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        0, 0, // battleFlags, randomMode
+        {{4, 4}, {4, 4}, {0}, {0}, {4, 4}, {4, 4}, {4, 4}, {4, 4}, {4, 4}, {0}, {4, 4}, {4, 4}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_ZAKO_BATTLE1", // bgmName
     },
     {
-        /*"JIN_10メット"*/"\x4A\x49\x4E\x5F\x31\x30\x83\x81\x83\x62\x83\x67", // name
+        "JIN_10メット", // name
         "jin_04", // mapName
         0, // fixedItem
         -1, // swFlag
         NULL, // altSelect
         btlgrpsel_jin_btlno_jin_10_06_off, // select
-        0, 0, // battleFlags..field_1C
-        {{4, 4}, {4, 4}, {0}, {0}, {4, 4}, {4, 4}, {4, 4}, {4, 4}, {4, 4}, {0}, {4, 4}, {4, 4}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // field_20
+        0, 0, // battleFlags, randomMode
+        {{4, 4}, {4, 4}, {0}, {0}, {4, 4}, {4, 4}, {4, 4}, {4, 4}, {4, 4}, {0}, {4, 4}, {4, 4}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
         "BGM_ZAKO_BATTLE1", // bgmName
     },
     {0},
 };
 
+/**
+ * Names of the Creepy Steeple battles (BTLNO_* strings) paired with their index in btlsetup_jin_tbl;
+ * relSetBtlAddr registers it with the setup table when the area loads.
+ */
 NpcTerritoryInfo btl_jin_setup_no_tbl[] = {
     {"BTLNO_JIN_TEST1", 0},
     {"BTLNO_JIN_TEST2", 1},
@@ -1600,4 +1795,3 @@ NpcTerritoryInfo btl_jin_setup_no_tbl[] = {
     {"BTLNO_JIN_10_06", 24},
     {0},
 };
-

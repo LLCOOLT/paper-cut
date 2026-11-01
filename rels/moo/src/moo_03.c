@@ -1,86 +1,26 @@
+// moo_03 (月, the Moon): the scene after the cannon shot, where Mario and his partners arrive on the Moon.
+
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
 
-#pragma force_active on
 #include "mario/mario.h"
+#include "evt/evt_bero.h"
+#include "evt/evt_cam.h"
+#include "evt/evt_map.h"
+#include "evt/evt_mario.h"
+#include "evt/evt_msg.h"
+#include "evt/evt_party.h"
+#include "evt/evt_snd.h"
+#include "evt/evt_sub.h"
+#include "moo.h"
+#include "math.h"
 #include "party.h"
+#include "libc_decls.h"
 
-#ifndef TARGET_PC /* PC port: the host libc declares these */
-double tan(double x);
-double fmod(double x, double y);
-#endif
-
-USER_FUNC(evt_bero_mapchange);
-USER_FUNC(evt_cam3d_evt_set);
-USER_FUNC(evt_map_playanim);
-USER_FUNC(evt_mario_cont_onoff);
-USER_FUNC(evt_mario_dispflag_onoff);
-USER_FUNC(evt_mario_get_party);
-USER_FUNC(evt_mario_key_onoff);
-USER_FUNC(evt_mario_set_dir);
-USER_FUNC(evt_mario_set_pos);
-USER_FUNC(evt_mario_set_pose);
-USER_FUNC(evt_msg_print);
-USER_FUNC(evt_party_cont_onoff);
-USER_FUNC(evt_party_set_dir);
-USER_FUNC(evt_party_set_pos);
-USER_FUNC(evt_party_set_pose);
-USER_FUNC(evt_party_stop);
-USER_FUNC(evt_snd_bgmon);
-USER_FUNC(evt_snd_envon);
-USER_FUNC(evt_snd_sfxoff);
-USER_FUNC(evt_snd_sfxon);
-USER_FUNC(evt_sub_intpl_msec_get_value);
-USER_FUNC(evt_sub_intpl_msec_init);
 static USER_FUNC(mario_kirimomi);
 static USER_FUNC(z);
 
-f32 fd_moo_03_negone_one_374[2] __attribute__((aligned(8)));
-f32 fd_moo_03_neg_one_382;
-f32 fd_moo_03___local_PI_383;
-f32 fd_moo_03___local_3PIO2_385;
-f32 fd_moo_03_one_negone_373[2] __attribute__((aligned(8)));
-f32 fd_moo_03___local_PIO2_384;
-f32 fd_moo_03_one_381;
-f32 fd_moo_03_negone_one_360[2] __attribute__((aligned(8)));
-f32 fd_moo_03_neg_one_365;
-f32 fd_moo_03___local_PI_366;
-f32 fd_moo_03___local_3PIO2_368;
-f32 fd_moo_03_one_negone_359[2] __attribute__((aligned(8)));
-f32 fd_moo_03___local_PIO2_367;
-f32 fd_moo_03_one_364;
-static EvtWord party_damage_pose[52];
-static EvtWord mario_fly[203];
-EvtWord moo_03_init_evt[35];
-
-f32 fd_moo_03_negone_one_374[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_moo_03_neg_one_382 = -1.0f;
-
-f32 fd_moo_03___local_PI_383 = 3.1415927f;
-
-f32 fd_moo_03___local_3PIO2_385 = 4.712389f;
-
-f32 fd_moo_03_one_negone_373[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_moo_03___local_PIO2_384 = 1.5707964f;
-
-f32 fd_moo_03_one_381 = 1.0f;
-
-f32 fd_moo_03_negone_one_360[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_moo_03_neg_one_365 = -1.0f;
-
-f32 fd_moo_03___local_PI_366 = 3.1415927f;
-
-f32 fd_moo_03___local_3PIO2_368 = 4.712389f;
-
-f32 fd_moo_03_one_negone_359[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_moo_03___local_PIO2_367 = 1.5707964f;
-
-f32 fd_moo_03_one_364 = 1.0f;
-
+/** Event script: puts the active partner (by party id) into its hurt pose during the flight through space. */
 static EVT_BEGIN(party_damage_pose)
     CALL(evt_mario_get_party, LW(0))
     SWITCH(LW(0))
@@ -103,6 +43,11 @@ static EVT_BEGIN(party_damage_pose)
     RETURN
 EVT_END()
 
+/**
+ * Event script: the flight through space, run when moo_03 loads.
+ * Mario and the partner, in their hurt poses, glide across the screen from left to right (X -304 to 304) with a
+ * flying sound, the partner speaks a line (stg7_moo_01_xxx, one per partner) and the map changes to moo_04.
+ */
 static EVT_BEGIN(mario_fly)
     CALL(evt_mario_key_onoff, 0)
     CALL(evt_party_stop, 0)
@@ -110,7 +55,7 @@ static EVT_BEGIN(mario_fly)
     CALL(evt_snd_sfxon, STRING("SFX_STG7_MARIO_FLY1"), LW(10))
     CALL(evt_mario_dispflag_onoff, 1, 2)
     CALL(evt_mario_set_pose, STRING("M_F_1"))
-    CALL_CHILD(PTR(party_damage_pose))
+    CALL_CHILD(party_damage_pose)
     WAIT_FRAMES(1)
     CALL(evt_mario_cont_onoff, 0)
     CALL(evt_party_cont_onoff, 0, 0)
@@ -173,13 +118,18 @@ static EVT_BEGIN(mario_fly)
     RETURN
 EVT_END()
 
+/**
+ * Map init script for moo_03, the space view during the flight to the Moon:
+ * music and ambience, one animating star, camera distance set from the field of view (z)
+ * and the flight scene (mario_fly) with Mario and the partner tumbling.
+ */
 EVT_BEGIN(moo_03_init_evt)
-    CALL(evt_snd_bgmon, 512, STRING("BGM_STG7_MON1"))
-    CALL(evt_snd_envon, 272, STRING("ENV_STG7_MOO3"))
+    CALL(evt_snd_bgmon, PSND_FADE_OUT, STRING("BGM_STG7_MON1"))
+    CALL(evt_snd_envon, PSND_FADE_RESTART | PSND_FADE_IN, STRING("ENV_STG7_MOO3"))
     CALL(evt_map_playanim, STRING("hosi_01"), 1, 0)
     CALL(z)
     CALL(evt_cam3d_evt_set, 0, 0, LW(0), 0, 0, 0, 0, 11)
-    SPAWN_EVENT(PTR(mario_fly))
+    SPAWN_EVENT(mario_fly)
     WAIT_FRAMES(10)
     BEGIN_INLINE_EVENT
         CALL(mario_kirimomi)
@@ -187,6 +137,10 @@ EVT_BEGIN(moo_03_init_evt)
     RETURN
 EVT_END()
 
+/**
+ * Script helper: stores in LW(0) the camera distance, as an event float,
+ * at which 240 units fit the field of view (tan of 12.5 degrees).
+ */
 static USER_FUNC(z) {
     f32 t = tan(0.21816612780094147);
     // evt float encoding of the distance that fits 240 units in the fov
@@ -194,6 +148,10 @@ static USER_FUNC(z) {
     return EVT_RETURN_DONE;
 }
 
+/**
+ * Script helper (runs every frame, blocking): spins Mario
+ * and the partner about their centres (10 degrees per call) while they fly through space.
+ */
 static USER_FUNC(mario_kirimomi) {
     MarioWork* mario = marioGetPtr();
     PartyEntry* party = partyGetPtr(0);
@@ -213,4 +171,3 @@ static USER_FUNC(mario_kirimomi) {
     }
     return EVT_RETURN_BLOCK;
 }
-

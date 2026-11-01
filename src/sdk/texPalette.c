@@ -1,14 +1,20 @@
+// TPL texture palette helpers (SDK charPipeline): unpack a .tpl and build GXTexObjs from it.
 #include <charPipeline/texPalette.h>
 #include <dolphin/gx/GXTexture.h>
 #include <dolphin/os.h>
 #include <macros.h>
+
 #ifdef TARGET_PC
 #include "port/bedecode.h"
 #include "port/tpl_pc.h"
 #endif
-
 #define PALETTE_VERSION 0x0020AF30
 
+/**
+ * Turns a TPL loaded in memory into usable form:
+ * checks the version and converts the descriptor, texture and CLUT offsets to pointers (only once).
+ * Used by the effect and background drivers after loading a .tpl.
+ */
 void UnpackTexPalette(TEXPalettePtr pal) {
 #ifdef TARGET_PC
     /* PC port: disc TPLs are big-endian with 32-bit offsets; the native root
@@ -46,11 +52,16 @@ void UnpackTexPalette(TEXPalettePtr pal) {
 #endif
 }
 
+/** Returns the descriptor for texture id (the range check is a debug-only assert). */
 TEXDescriptorPtr TEXGet(TEXPalettePtr pal, u32 id) {
     ASSERTMSGLINE(0x90, id < pal->numDescriptors, "GetTexture():  Texture Not Found ");
     return &pal->descriptorArray[id];
 }
 
+/**
+ * Fills a GXTexObj from texture id of a TPL: size, format, wrap,
+ * filters and LOD range (mipmapped when the LODs differ).
+ */
 void TEXGetGXTexObjFromPalette(TEXPalettePtr pal, GXTexObj* to, u32 id) {
     TEXDescriptorPtr tdp;
     GXBool mipMap;

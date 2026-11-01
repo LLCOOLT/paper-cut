@@ -1,5 +1,5 @@
+// Countdown timer: the on-screen time limit that timed events start, save, restart and end.
 #include "countdown.h"
-#include "pc_call.h"
 
 #include "driver/camdrv.h"
 #include "driver/dispdrv.h"
@@ -11,9 +11,9 @@
 #include <dolphin/mtx.h>
 #include <dolphin/os.h>
 #include <string.h>
-
-s32 psndSFXOff(s32 id);
-s32 psndSFXOn(const char* name);
+#include "pmario_sound.h"
+#include "version.h"
+#include "evt/evt_story.h"
 
 //.sdata2
 static const GXColor sWhite = {255, 255, 255, 255};
@@ -22,24 +22,31 @@ static const GXColor sShadow = {255, 255, 255, 153};
 //.sbss
 static CountdownWork* wp;
 
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
 #define CD_ICON_OFS 7
 #else
 #define CD_ICON_OFS 0
 #endif
 static void countDownDisp(CameraId cameraId, void* param);
 
+/** Points the countdown at gp->countdown and clears it. Called during game initialisation. */
 void countDownInit(void) {
     wp = &gp->countdown;
     memset(&gp->countdown, 0, sizeof(gp->countdown));
 }
 
+/**
+ * Resumes a countdown that was running when the game was saved (called by seq_load):
+ * if less than the restart time remains, sets the clock back so exactly the restart time (ms) remains,
+ * then restarts the ticking sound (the bomb timer before chapter 7, the alarm from chapter 7 on).
+ * The US and PAL releases clamp the remaining time at zero first and clear the time-up flag.
+ */
 void countDownSaveReStart(void) {
     CountdownWork* work = wp;
-    if ((work->flags & 1) != 0) {
+    if ((work->flags & COUNTDOWN_FLAG_RUNNING) != 0) {
         u32 ticks = OS_TIMER_CLOCK / 1000;
         s64 ms = work->elapsed / ticks;
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
         s32 rem = work->limit - ms;
         if (rem < 0) {
             rem = 0;
@@ -51,17 +58,22 @@ void countDownSaveReStart(void) {
             work->elapsed = (s64)ticks * (u32)(work->limit - work->restart);
         }
         wp->prevTime = gp->renderTime;
-        if (evtGetValue(NULL, GSW(0)) < 0x160) {
+        if (evtGetValue(NULL, GSW(GSW_STORY_PROGRESS)) < STORY_STG7_00_START) {
             wp->sfxId = psndSFXOn("SFX_STG2_BOMB_TIMER1");
         } else {
             wp->sfxId = psndSFXOn("SFX_STG7_ALART_WARNING1");
         }
-#ifdef VERSION_G8ME01
-        wp->flags &= ~2;
+#if VERSION >= VERSION_US
+        wp->flags &= ~COUNTDOWN_FLAG_TIME_UP;
 #endif
     }
 }
 
+/**
+ * Starts a countdown of limit milliseconds (restart is the minimum time a resumed save gets back),
+ * slides the display in from the right at (180, -180)
+ * and starts the ticking sound (bomb timer before chapter 7, alarm after).
+ */
 void countDownStart(u32 limit, u32 restart) {
     wp->limit = limit;
     wp->restart = restart;
@@ -74,60 +86,76 @@ void countDownStart(u32 limit, u32 restart) {
     wp->x = 180.0f;
     wp->y = -180.0f;
     wp->flags = 0;
-    wp->flags |= 1;
-    if (evtGetValue(NULL, GSW(0)) < 0x160) {
+    wp->flags |= COUNTDOWN_FLAG_RUNNING;
+    if (evtGetValue(NULL, GSW(GSW_STORY_PROGRESS)) < STORY_STG7_00_START) {
         wp->sfxId = psndSFXOn("SFX_STG2_BOMB_TIMER1");
     } else {
         wp->sfxId = psndSFXOn("SFX_STG7_ALART_WARNING1");
     }
 }
 
+/** Changes the minimum time (ms) a countdown gets back when a save is loaded mid-countdown. */
 void countDownSetRestartTime(u32 restart) {
     wp->restart = restart;
 }
 
+/**
+ * Per frame: slides the display in or out over 30 frames,
+ * adds the elapsed render time unless stopped (flag 8) or the game is paused,
+ * sets the time-up flag (2) once the limit is reached and queues the draw.
+ * JP and later releases also stop the ticking sound at time-up.
+ */
 void countDownMain(void) {
-    if ((wp->flags & 1) != 0) {
+    if ((wp->flags & COUNTDOWN_FLAG_RUNNING) != 0) {
         switch (wp->state) {
-        case 0:
-            if (++wp->counter < 30) {
-                wp->offX = PCCALL(((f32 (*)(f32, f32, s32, s32, s32))intplGetValue)(300.0f, 0.0f, 11, wp->counter, 30), intplGetValue(11, wp->counter, 30, 300.0f, 0.0f));
-            } else {
-                wp->counter = 0;
-                wp->state++;
-            }
-            break;
-        case 1:
-            if ((wp->flags & 2) != 0) {
-                psndSFXOff(wp->sfxId);
-                wp->sfxId = -1;
-            }
-            break;
-        case 2:
-            if (++wp->counter < 30) {
-                wp->offX = PCCALL(((f32 (*)(f32, f32, s32, s32, s32))intplGetValue)(0.0f, 300.0f, 11, wp->counter, 30), intplGetValue(11, wp->counter, 30, 0.0f, 300.0f));
-            } else {
-                wp->counter = 0;
-                wp->state++;
-                wp->flags &= ~1;
-                psndSFXOff(wp->sfxId);
-            }
-            break;
+            case 0:
+                if (++wp->counter < 30) {
+                    wp->offX = intplGetValue(11, 300.0f, 0.0f, wp->counter, 30);
+                } else {
+                    wp->counter = 0;
+                    wp->state++;
+                }
+                break;
+            case 1:
+#if VERSION >= VERSION_JP
+                if ((wp->flags & COUNTDOWN_FLAG_TIME_UP) != 0) {
+                    psndSFXOff(wp->sfxId);
+                    wp->sfxId = -1;
+                }
+#endif
+                break;
+            case 2:
+                if (++wp->counter < 30) {
+                    wp->offX = intplGetValue(11, 0.0f, 300.0f, wp->counter, 30);
+                } else {
+                    wp->counter = 0;
+                    wp->state++;
+                    wp->flags &= ~COUNTDOWN_FLAG_RUNNING;
+                    psndSFXOff(wp->sfxId);
+                }
+                break;
         }
-        if ((wp->flags & 8) == 0 && marioStGetSystemLevel() == 0U) {
+        if ((wp->flags & COUNTDOWN_FLAG_FROZEN) == 0 && marioStGetSystemLevel() == 0U) {
             wp->elapsed += (s32)((u32)gp->renderTime - (u32)wp->prevTime);
         }
         wp->prevTime = gp->renderTime;
         {
             CountdownWork* work = wp;
             if (work->elapsed / (OS_TIMER_CLOCK / 1000) >= work->limit) {
-                work->flags |= 2;
+                work->flags |= COUNTDOWN_FLAG_TIME_UP;
             }
         }
         dispEntry(CAMERA_2D, 1000.0f, 0, countDownDisp, NULL);
     }
 }
 
+// The demo draws the countdown icons with icon flag 0x4, retail with 0x10.
+
+/**
+ * Draws the timer in the 2D camera: a shadow bar, three second digits,
+ * a separator and two smaller hundredths digits, all from the icon set (the US and PAL icon ids are 7 higher).
+ * Hidden while flag 4 is set.
+ */
 static void countDownDisp(CameraId cameraId, void* param) {
     GXColor white = sWhite;
     GXColor white2;
@@ -142,11 +170,11 @@ static void countDownDisp(CameraId cameraId, void* param) {
     white2 = sWhite;
     flags = work->flags;
     remaining = work->limit - work->elapsed / (OS_TIMER_CLOCK / 1000);
-    if ((flags & 4) == 0) {
+    if ((flags & COUNTDOWN_FLAG_HIDDEN) == 0) {
         s32 sec, msec;
         s32 digits[3];
         s32 i;
-        if ((flags & 2) != 0) {
+        if ((flags & COUNTDOWN_FLAG_TIME_UP) != 0) {
             remaining = 0;
         }
         sec = remaining / 1000;
@@ -156,7 +184,7 @@ static void countDownDisp(CameraId cameraId, void* param) {
         PSMTXConcat(base, scale, mtx);
         {
             GXColor shadow = sShadow;
-            iconDispGxCol(mtx, 0x10, 0x1f6 + CD_ICON_OFS, shadow);
+            iconDispGxCol(mtx, ICON_DISP_2D, 0x1f6 + CD_ICON_OFS, shadow);
         }
         digits[0] = sec / 100;
         sec %= 100;
@@ -165,11 +193,11 @@ static void countDownDisp(CameraId cameraId, void* param) {
         for (i = 0; i < 3; i++) {
             PSMTXTrans(mtx, i * 30 - 50, 8.0f, 0.0f);
             PSMTXConcat(base, mtx, mtx);
-            iconDispGxCol(mtx, 0x10, (u16)(digits[i] + 0x1f7 + CD_ICON_OFS), white2);
+            iconDispGxCol(mtx, ICON_DISP_2D, (u16)(digits[i] + 0x1f7 + CD_ICON_OFS), white2);
         }
         PSMTXTrans(mtx, 28.0f, 10.0f, 0.0f);
         PSMTXConcat(base, mtx, mtx);
-        iconDispGxCol(mtx, 0x10, 0x201 + CD_ICON_OFS, white3);
+        iconDispGxCol(mtx, ICON_DISP_2D, 0x201 + CD_ICON_OFS, white3);
         digits[0] = msec / 100;
         digits[1] = (msec % 100) / 10;
         for (i = 0; i < 2; i++) {
@@ -177,31 +205,36 @@ static void countDownDisp(CameraId cameraId, void* param) {
             PSMTXScale(scale, 0.5f, 0.5f, 0.5f);
             PSMTXConcat(mtx, scale, mtx);
             PSMTXConcat(base, mtx, mtx);
-            iconDispGxCol(mtx, 0x10, (u16)(digits[i] + 0x1f7 + CD_ICON_OFS), white2);
+            iconDispGxCol(mtx, ICON_DISP_2D, (u16)(digits[i] + 0x1f7 + CD_ICON_OFS), white2);
         }
     }
 }
 
+/** Returns -1 when no countdown is running, 1 when its time is up and 0 while it is still counting. */
 s32 countDownGetStatus(void) {
     CountdownWork* work = wp;
-    return !(work->flags & 1) ? -1 : (work->flags >> 1) & 1;
+    return !(work->flags & COUNTDOWN_FLAG_RUNNING) ? -1 : (work->flags >> 1) & 1;
 }
 
+/** Slides a running countdown off screen and stops its sound (state 2 of countDownMain). */
 void countDownEnd(void) {
-    if ((wp->flags & 1) != 0) {
+    if ((wp->flags & COUNTDOWN_FLAG_RUNNING) != 0) {
         wp->state = 2;
     }
 }
 
+/** Freezes the countdown (flag 8) and stops its sound; the display stays up. */
 void countDownStop(void) {
-    wp->flags |= 8;
+    wp->flags |= COUNTDOWN_FLAG_FROZEN;
     psndSFXOff(wp->sfxId);
 }
 
+/** Sets countdown flags (1 running, 2 time up, 4 hidden, 8 frozen). */
 void countDownFlagOn(u16 flag) {
     wp->flags |= flag;
 }
 
+/** Clears countdown flags (1 running, 2 time up, 4 hidden, 8 frozen). */
 void countDownFlagOff(u16 flag) {
     wp->flags &= ~flag;
 }

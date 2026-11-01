@@ -1,3 +1,5 @@
+// Paper Mario 64 effect: `count` colored sparkle stars scatter from a point with the given velocity (stardust).
+#include "eff/n64/eff_stardust2_n64.h"
 #include "eff/eff_n64.h"
 #include "driver/camdrv.h"
 #include "driver/dispdrv.h"
@@ -6,12 +8,7 @@
 #include <dolphin/gx.h>
 #include <dolphin/mtx.h>
 #include "libc_decls.h"
-
-#ifndef TARGET_PC /* PC port: the host libc declares these */
-double sin(double);
-double cos(double);
-#endif
-
+#include "version.h"
 typedef struct EffStardust2N64Work {
     s16 flag;     // 0x0
     s16 type;     // 0x2
@@ -24,9 +21,25 @@ typedef struct EffStardust2N64Work {
     s32 camera;   // 0x2c
 } EffStardust2N64Work;
 
-void effStardust2Main(EffectEntry* effect);
-void effStardust2Disp(CameraId cameraId, EffectEntry* effect);
+static void effStardust2Main(EffectEntry* effect);
+static void effStardust2Disp(CameraId cameraId, EffectEntry* effect);
 
+/** RGB colours the sparkles cycle through (pinks, purples and blues), three bytes per step. */
+static u8 color_rotation_data[] = {
+    0xFE, 0xAC, 0xAC, 0xFE, 0xAC, 0xD5, 0xFE, 0xB4, 0x9A, 0xD5, 0xB4, 0xFE,
+    0xB4, 0xB4, 0xFE, 0xB4, 0xDD, 0xFE, 0xB4, 0xFE, 0xFE, 0xB4, 0xFE, 0xD5,
+    0xB4, 0xFE, 0xB4, 0xD5, 0xFE, 0xB4, 0xFE, 0xFE, 0xB4, 0xFE, 0xD5, 0xAC,
+};
+
+/** Distance out along its direction, in percent, over a sparkle's 14-frame burst. */
+static u8 speed_data[] = {0x1E, 0x3C, 0x5A, 0x64, 0x68, 0x6A, 0x6C, 0x6E, 0x70, 0x71, 0x71, 0x6E, 0x6B, 0x67};
+
+/** Size in percent over a sparkle's 14-frame burst or pulse: it swells, then wobbles slightly. */
+static u8 scale_data[] = {0x1E, 0x3C, 0x5A, 0x64, 0x68, 0x6A, 0x6C, 0x6E, 0x70, 0x71, 0x71, 0x6E, 0x6B, 0x67};
+
+/**
+ * Eight 16x16 quads, one per 22x22 cell of the sparkle strip, that each sparkle steps through as it twinkles.
+ */
 static effN64Vtx size8x8_tex22x22_vtx[] = {
     {-8, -8, 0, 0, 0, 0, 0, 0, 0xFF},
     {8, -8, 0, 704, 0, 0, 0, 0, 0xFF},
@@ -63,16 +76,10 @@ static effN64Vtx size8x8_tex22x22_vtx[] = {
 
 };
 
-static u8 color_rotation_data[] = {
-    0xFE, 0xAC, 0xAC, 0xFE, 0xAC, 0xD5, 0xFE, 0xB4, 0x9A, 0xD5, 0xB4, 0xFE,
-    0xB4, 0xB4, 0xFE, 0xB4, 0xDD, 0xFE, 0xB4, 0xFE, 0xFE, 0xB4, 0xFE, 0xD5,
-    0xB4, 0xFE, 0xB4, 0xD5, 0xFE, 0xB4, 0xFE, 0xFE, 0xB4, 0xFE, 0xD5, 0xAC,
-};
-
-static u8 speed_data[] = {0x1E, 0x3C, 0x5A, 0x64, 0x68, 0x6A, 0x6C, 0x6E, 0x70, 0x71, 0x71, 0x6E, 0x6B, 0x67, 0, 0};
-
-static u8 scale_data[] = {0x1E, 0x3C, 0x5A, 0x64, 0x68, 0x6A, 0x6C, 0x6E, 0x70, 0x71, 0x71, 0x6E, 0x6B, 0x67, 0, 0};
-
+/**
+ * Spawns `count` sparkle stars at (x, y, z) with velocity scale (vx, vy), drawn on `camera`.
+ * Used by eff_stardust.c, eff_kemutest, the Shadow Queen (black_peach) boss unit and event scripts.
+ */
 EffectEntry* effStardust2N64Entry(s32 type, s32 count, s32 camera, f32 x, f32 y, f32 z, f32 vx, f32 vy) {
     s32 n;
     EffectEntry* effect;
@@ -87,7 +94,7 @@ EffectEntry* effStardust2N64Entry(s32 type, s32 count, s32 camera, f32 x, f32 y,
     f32 nm;
 
     effect = effEntry();
-    effect->type = "Stardust2N64\0\0\0";
+    effect->type = "Stardust2N64";
     effect->count = count + 1;
     w = __memAlloc(HEAP_EFFECT, sizeof(EffStardust2N64Work) * (count + 1));
     effect->userdata = w;
@@ -130,44 +137,53 @@ EffectEntry* effStardust2N64Entry(s32 type, s32 count, s32 camera, f32 x, f32 y,
         p->frame = 0;
         p->scale = 1.0f;
         switch (type) {
-        case 0:
-        case 1:
-            p->velocity.z = 0.0f;
-            p->velocity.x = sn * tx;
-            p->velocity.y = cs * ty;
-            p->position.z = 0.0f;
-            break;
-        case 2:
-        case 5:
-            p->velocity.x = sn * tx;
-            p->position.y = fy;
-            p->position.z = cs * tx;
-            p->velocity.y = 0.03f * (f32)(-(rand() % 10));
-            p->velocity.z = 0.04f * (f32)(rand() % 10) + 0.01f;
-            break;
-        case 3:
-            p->position.x = 0.005f * (sn * vx * (f32)(rand() % 100));
-            p->position.y = 0.005f * (cs * vy * (f32)(rand() % 100));
-            p->position.z = 0.0f;
-            p->velocity.y = 0.0f;
-            p->velocity.x = 0.0f;
-            p->velocity.z = 0.0f;
-            p->life += i + i;
-            break;
-        default:
-            p->velocity.x = sn * tx;
-            p->position.y = fy;
-            p->position.z = cs * tx;
-            p->velocity.y = 0.03f * (f32)(-(rand() % 10));
-            p->velocity.z = 0.04f * (f32)(rand() % 10) + 0.01f;
-            break;
+            case 0:
+            case 1:
+                p->velocity.z = 0.0f;
+                p->velocity.x = sn * tx;
+                p->velocity.y = cs * ty;
+                p->position.z = 0.0f;
+                break;
+            case 2:
+            case 5:
+                p->velocity.x = sn * tx;
+                p->position.y = fy;
+                p->position.z = cs * tx;
+                p->velocity.y = 0.03f * (f32)(-(rand() % 10));
+                p->velocity.z = 0.04f * (f32)(rand() % 10) + 0.01f;
+                break;
+            case 3:
+                p->position.x = 0.005f * (sn * vx * (f32)(rand() % 100));
+                p->position.y = 0.005f * (cs * vy * (f32)(rand() % 100));
+                p->position.z = 0.0f;
+                p->velocity.y = 0.0f;
+                p->velocity.x = 0.0f;
+                p->velocity.z = 0.0f;
+                p->life += i + i;
+                break;
+            default:
+                p->velocity.x = sn * tx;
+                p->position.y = fy;
+                p->position.z = cs * tx;
+                p->velocity.y = 0.03f * (f32)(-(rand() % 10));
+                p->velocity.z = 0.04f * (f32)(rand() % 10) + 0.01f;
+                break;
         }
     }
     return effect;
 }
 
+// FAKE: match-forcing setting: the same code without it compiles differently (removal tried).
 #pragma opt_propagation off
-void effStardust2Main(EffectEntry* effect) {
+/**
+ * Types 0/1: each sparkle bursts out along its direction (speed_data, scale_data) for 14 frames,
+ * then turns into type 10 and drifts outward in a fan, slowing 4% per frame, sinking and shrinking.
+ * Type 3 only pulses for 14 frames, then drifts as type 30. Types 0/1/3 end with the effect life.
+ * Other types run a staggered life per sparkle (hidden until its last 30 frames):
+ * it pops in, then falls (type 5 from the start), type 4 also circling the Y axis 12 degrees per frame;
+ * the effect ends when every sparkle is done. Each sparkle cycles through 8 shapes; drawn on the work's camera.
+ */
+static void effStardust2Main(EffectEntry* effect) {
     EffStardust2N64Work* w = effect->userdata;
     Vec position;
     Vec tmp = {0.0f, 0.0f, 0.0f};
@@ -196,84 +212,102 @@ void effStardust2Main(EffectEntry* effect) {
     w++;
     for (i = 0; i < effect->count - 1; i++, w++) {
         switch (type) {
-        case 0:
-        case 1:
-            w->color = (frame + i) & 7;
-            w->velocity.z += -0.02f;
-            idx = frame - 1;
-            if (idx < 14) {
-                s = 0.01f * (f32)speed_data[idx];
-                w->position.x = w->velocity.x * s;
-                w->position.y = w->velocity.y * s + w->velocity.z;
-                w->scale = 0.01f * (f32)scale_data[idx];
-            } else {
-                f32 one = 1.0f;
-                f32 base = 360.0f / (f32)(effect->count - 1) * (f32)i + 60.0f;
-                if (i & 1) {
-                    base -= 120.0f;
+            case 0:
+            case 1:
+                w->color = (frame + i) & 7;
+                w->velocity.z += -0.02f;
+#if VERSION <= VERSION_DEMO_JP
+                if (frame - 1 < 14) {
+                    s = 0.01f * (f32)speed_data[frame - 1];
+                    w->position.x = w->velocity.x * s;
+                    w->position.y = w->velocity.y * s + w->velocity.z;
+                    w->scale = 0.01f * (f32)scale_data[frame - 1];
+#else
+                idx = frame - 1;
+                if (idx < 14) {
+                    s = 0.01f * (f32)speed_data[idx];
+                    w->position.x = w->velocity.x * s;
+                    w->position.y = w->velocity.y * s + w->velocity.z;
+                    w->scale = 0.01f * (f32)scale_data[idx];
+#endif
+                } else {
+                    f32 one = 1.0f;
+                    f32 base = 360.0f / (f32)(effect->count - 1) * (f32)i + 60.0f;
+                    if (i & 1) {
+                        base -= 120.0f;
+                    }
+                    w->type = 10;
+                    ang = 6.2831855f * base / 360.0f;
+                    w->velocity.x = one * (f32)sin(ang);
+                    w->velocity.y = one * (f32)cos(ang);
+                    w->velocity.z = -0.05f;
                 }
-                w->type = 10;
-                ang = 6.2831855f * base / 360.0f;
-                w->velocity.x = one * (f32)sin(ang);
-                w->velocity.y = one * (f32)cos(ang);
-                w->velocity.z = -0.05f;
-            }
-            break;
-        case 10:
-        case 30:
-            w->color = (frame + i) & 7;
-            w->velocity.x *= 0.96f;
-            w->velocity.y *= 0.96f;
-            w->velocity.y += w->velocity.z;
-            w->position.x += w->velocity.x;
-            w->position.y += w->velocity.y;
-            w->scale += 0.1f * (0.1f - w->scale);
-            break;
-        case 3:
-            w->color = (frame + i + i) & 7;
-            idx = frame - 1;
-            if (idx < 14) {
-                w->scale = 0.01f * (f32)scale_data[idx];
-            } else {
-                w->type = 30;
-            }
-            break;
-        case 2:
-        case 4:
-        case 5:
-        default:
-            w->color = (frame + i + i) & 7;
-            if (w->life < 0) {
-                done++;
-            }
-            w->life--;
-            if (w->life > 30 || w->life < 0) {
-                w->color = -1;
                 break;
-            }
-            w->frame++;
-            frame = w->frame;
-            idx = frame - 1;
-            if (idx < 14) {
-                w->scale = 0.01f * (f32)scale_data[idx];
-                if (type == 5) {
+            case 10:
+            case 30:
+                w->color = (frame + i) & 7;
+                w->velocity.x *= 0.96f;
+                w->velocity.y *= 0.96f;
+                w->velocity.y += w->velocity.z;
+                w->position.x += w->velocity.x;
+                w->position.y += w->velocity.y;
+                w->scale += 0.1f * (0.1f - w->scale);
+                break;
+            case 3:
+                w->color = (frame + i + i) & 7;
+#if VERSION <= VERSION_DEMO_JP
+                if (frame - 1 < 14) {
+                    w->scale = 0.01f * (f32)scale_data[frame - 1];
+#else
+                idx = frame - 1;
+                if (idx < 14) {
+                    w->scale = 0.01f * (f32)scale_data[idx];
+#endif
+                } else {
+                    w->type = 30;
+                }
+                break;
+            case 2:
+            case 4:
+            case 5:
+            default:
+                w->color = (frame + i + i) & 7;
+                if (w->life < 0) {
+                    done++;
+                }
+                w->life--;
+                if (w->life > 30 || w->life < 0) {
+                    w->color = -1;
+                    break;
+                }
+                w->frame++;
+                frame = w->frame;
+#if VERSION <= VERSION_DEMO_JP
+                if (frame - 1 < 14) {
+                    w->scale = 0.01f * (f32)scale_data[frame - 1];
+#else
+                idx = frame - 1;
+                if (idx < 14) {
+                    w->scale = 0.01f * (f32)scale_data[idx];
+#endif
+                    if (type == 5) {
+                        w->velocity.y += w->velocity.z;
+                        w->position.y += w->velocity.y;
+                    }
+                } else {
+                    w->scale += 0.1f * (0.1f - w->scale);
                     w->velocity.y += w->velocity.z;
                     w->position.y += w->velocity.y;
                 }
-            } else {
-                w->scale += 0.1f * (0.1f - w->scale);
-                w->velocity.y += w->velocity.z;
-                w->position.y += w->velocity.y;
-            }
-            if (type == 4) {
-                ang = 6.2831855f * (f32)(frame * 12) / 360.0f;
-                w->position.x = w->velocity.x * (f32)sin(ang);
-                w->position.z = w->velocity.x * (f32)cos(ang);
-            } else {
-                w->position.x = w->velocity.x;
-            }
-            w->velocity.y *= 0.96f;
-            break;
+                if (type == 4) {
+                    ang = 6.2831855f * (f32)(frame * 12) / 360.0f;
+                    w->position.x = w->velocity.x * (f32)sin(ang);
+                    w->position.z = w->velocity.x * (f32)cos(ang);
+                } else {
+                    w->position.x = w->velocity.x;
+                }
+                w->velocity.y *= 0.96f;
+                break;
         }
     }
     if ((u32)type > 1 && type != 3 && type < 10 && done >= effect->count - 1) {
@@ -284,7 +318,12 @@ void effStardust2Main(EffectEntry* effect) {
 }
 
 #pragma opt_propagation reset
-void effStardust2Disp(CameraId cameraId, EffectEntry* effect) {
+/**
+ * Draws each visible sparkle as a camera-facing 8x8 quad cut from the 8-frame sparkle strip (texture 0x20),
+ * coloured from color_rotation_data and tinted per type:
+ * orange for 0-2/10, pale peach for 3/30, yellow for 5, pink otherwise.
+ */
+static void effStardust2Disp(CameraId cameraId, EffectEntry* effect) {
     CameraEntry* cam;
     EffStardust2N64Work* w;
     s32 type;
@@ -324,30 +363,30 @@ void effStardust2Disp(CameraId cameraId, EffectEntry* effect) {
     GXSetTevAlphaIn(GX_TEVSTAGE0, GX_CA_ZERO, GX_CA_A0, GX_CA_TEXA, GX_CA_ZERO);
     GXSetCullMode(GX_CULL_NONE);
     switch (type) {
-    case 0:
-    case 1:
-    case 2:
-    case 10:
-        fr = 1.0f;
-        fg = 0.5f;
-        fb = 0.1f;
-        break;
-    case 3:
-    case 30:
-        fr = 1.0f;
-        fg = 0.8f;
-        fb = 0.7f;
-        break;
-    case 5:
-        fr = 1.4f;
-        fb = 0.7f;
-        fg = fr;
-        break;
-    default:
-        fg = 0.7f;
-        fr = 1.4f;
-        fb = fg;
-        break;
+        case 0:
+        case 1:
+        case 2:
+        case 10:
+            fr = 1.0f;
+            fg = 0.5f;
+            fb = 0.1f;
+            break;
+        case 3:
+        case 30:
+            fr = 1.0f;
+            fg = 0.8f;
+            fb = 0.7f;
+            break;
+        case 5:
+            fr = 1.4f;
+            fb = 0.7f;
+            fg = fr;
+            break;
+        default:
+            fg = 0.7f;
+            fr = 1.4f;
+            fb = fg;
+            break;
     }
     for (i = 0; i < effect->count - 1; i++, w++) {
         camera = w->color;
@@ -378,30 +417,30 @@ void effStardust2Disp(CameraId cameraId, EffectEntry* effect) {
         }
         GXSetTevColor(GX_TEVREG0, (GXColor){r, g, b, 255});
         switch (camera & 7) {
-        case 0:
-            vtx = size8x8_tex22x22_vtx + 12;
-            break;
-        case 1:
-            vtx = size8x8_tex22x22_vtx + 16;
-            break;
-        case 2:
-            vtx = size8x8_tex22x22_vtx + 20;
-            break;
-        case 3:
-            vtx = size8x8_tex22x22_vtx + 24;
-            break;
-        case 4:
-            vtx = size8x8_tex22x22_vtx + 28;
-            break;
-        case 5:
-            vtx = size8x8_tex22x22_vtx;
-            break;
-        case 6:
-            vtx = size8x8_tex22x22_vtx + 4;
-            break;
-        case 7:
-            vtx = size8x8_tex22x22_vtx + 8;
-            break;
+            case 0:
+                vtx = size8x8_tex22x22_vtx + 12;
+                break;
+            case 1:
+                vtx = size8x8_tex22x22_vtx + 16;
+                break;
+            case 2:
+                vtx = size8x8_tex22x22_vtx + 20;
+                break;
+            case 3:
+                vtx = size8x8_tex22x22_vtx + 24;
+                break;
+            case 4:
+                vtx = size8x8_tex22x22_vtx + 28;
+                break;
+            case 5:
+                vtx = size8x8_tex22x22_vtx;
+                break;
+            case 6:
+                vtx = size8x8_tex22x22_vtx + 4;
+                break;
+            case 7:
+                vtx = size8x8_tex22x22_vtx + 8;
+                break;
         }
         effSetVtxDescN64(vtx);
         GXBegin(GX_TRIANGLES, GX_VTXFMT0, 6);
@@ -409,6 +448,7 @@ void effStardust2Disp(CameraId cameraId, EffectEntry* effect) {
     }
 }
 
+/** Sets the camera the sparkles are drawn on (used by tik_05). */
 void effStardust2N64SetDrawCam(EffectEntry* effect, s32 camera) {
     EffStardust2N64Work* w = effect->userdata;
     w->camera = camera;

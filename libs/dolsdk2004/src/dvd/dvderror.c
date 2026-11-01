@@ -5,6 +5,7 @@
 #include "os/__os.h"
 #include "__dvd.h"
 
+/** The 18 known drive error codes; ErrorCode2Num turns a code into its index here. */
 static u32 ErrorTable[18] = {
     0x00000000,
     0x00023A00,
@@ -28,6 +29,10 @@ static u32 ErrorTable[18] = {
 
 #define DIDNT_MATCH 29
 
+/**
+ * Looks a drive error code up in the table of 18 known codes and returns its index.
+ * The codes 0x100000 to 0x100008 map to 17; anything unknown returns 29.
+ */
 static u8 ErrorCode2Num(u32 errorCode) {
 	u32 i;
 
@@ -45,6 +50,10 @@ static u8 ErrorCode2Num(u32 errorCode) {
 	return DIDNT_MATCH;
 }
 
+/**
+ * Packs a drive error into one byte: the status in the top byte (capped at 6) times 30 plus the index from
+ * ErrorCode2Num. The special values 0x01234567 and 0x01234568 give 0xFF and 0xFE.
+ */
 static u8 Convert(u32 error) {
     u32 statusCode;
     u32 errorCode;
@@ -66,6 +75,10 @@ static u8 Convert(u32 error) {
     return statusCode * 30 + errorNum;
 }
 
+/**
+ * Converts a drive error and saves the byte in the dvdErrorCode field of the console's extended SRAM,
+ * so it is kept after the console is switched off.
+ */
 void __DVDStoreErrorCode(u32 error) {
 	OSSramEx* sram;
     u8 num;

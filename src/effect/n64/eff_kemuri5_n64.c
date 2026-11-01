@@ -1,3 +1,5 @@
+// Paper Mario 64 smoke effect 5 (kemuri: smoke) at a point, oriented by an angle.
+#include "eff/n64/eff_kemuri5_n64.h"
 #include "driver/camdrv.h"
 #include "driver/dispdrv.h"
 #include "driver/effdrv.h"
@@ -7,32 +9,31 @@
 #include <dolphin/gx.h>
 #include <dolphin/mtx.h>
 #include <stdlib.h>
+#include "libc_decls.h"
 
 typedef struct EffKemuri5N64Work {
-    s32 active;    // 0x0
-    u16 field_4;   // 0x4
-    s16 timer;     // 0x6
-    u8 alpha;      // 0x8
-    u8 pad_9[3];   // 0x9
-    Vec position;  // 0xC
-    Vec scale;     // 0x18
-    f32 baseScaleX; // 0x24
-    f32 baseScaleY; // 0x28
-    f32 angle;     // 0x2C
-    f32 speed;     // 0x30
-    f32 velY;      // 0x34
-    f32 accelY;    // 0x38
-    f32 accelY2;   // 0x3C
-    f32 field_40;  // 0x40
-    f32 dirX;      // 0x44
-    f32 dirZ;      // 0x48
+    s32 active;      // 0x0
+    u16 type;        // 0x4, never read or written
+    s16 timer;       // 0x6
+    u8 alpha;        // 0x8
+    u8 pad_9[3];     // 0x9
+    Vec position;    // 0xC
+    Vec scale;       // 0x18
+    f32 baseScaleX;  // 0x24
+    f32 baseScaleY;  // 0x28
+    f32 angle;       // 0x2C
+    f32 speed;       // 0x30
+    f32 velY;        // 0x34
+    f32 accelY;      // 0x38
+    f32 accelY2;     // 0x3C
+    f32 reserved_40; // 0x40, only cleared at entry
+    f32 dirX;        // 0x44
+    f32 dirZ;        // 0x48
 } EffKemuri5N64Work;
 
 #ifndef TARGET_PC /* PC port: the host libc declares these */
-double sin(double);
-double cos(double);
 #endif
-
+/** Camera-facing landing puff quad. */
 static effN64Vtx kmr_a_1_v[] = {
     {-8, 7, 0, 0, 0, 255, 255, 255, 255},
     {7, 7, 0, 512, 0, 255, 255, 255, 255},
@@ -40,22 +41,29 @@ static effN64Vtx kmr_a_1_v[] = {
     {7, -8, 0, 512, 512, 255, 255, 255, 255},
 };
 
-void effKemuri5Main(EffectEntry* effect);
+static void effKemuri5Main(EffectEntry* effect);
+/** Returns the brown-yellow puff tint with the given alpha. */
 static inline GXColor mkc(u8 a) {
     GXColor c = {0x70, 0x60, 0x18, 0};
     c.a = a;
     return c;
 }
 
-void effKemuri5Disp(CameraId cameraId, EffectEntry* effect);
+static void effKemuri5Disp(CameraId cameraId, EffectEntry* effect);
 
+// FAKE: match-forcing setting: the same code without it compiles differently (removal tried).
 #pragma opt_propagation off
-#pragma opt_lifetimes off
+/**
+ * Spawns eight dust puffs at (x, y, z) fanned 45 degrees apart from the angle, with randomized sizes; 30 frames.
+ * Called via evt_eff "kemuri5".
+ * Spawns eight cloud-smoke puffs ("landing" in the effect table) at (x, y, z), 45 degrees apart from the angle,
+ * with randomized sizes; 30 frames. Called via evt_eff64 "kemuri5_n64".
+ */
 EffectEntry* effKemuri5N64Entry(f32 x, f32 y, f32 z, f32 angle) {
     s32 ang;
     EffectEntry* effect;
     EffKemuri5N64Work* work;
-    f32 new_var;
+    f32 angF;
     s32 i;
     f32 rad;
     f32 a = angle;
@@ -69,7 +77,7 @@ EffectEntry* effKemuri5N64Entry(f32 x, f32 y, f32 z, f32 angle) {
     for (i = 0, ang = 0; i < 8; i++, work++) {
 
         work->active = 1;
-        work->field_40 = 0.0f;
+        work->reserved_40 = 0.0f;
         work->position.x = x;
         work->position.y = y;
         work->position.z = z;
@@ -81,12 +89,12 @@ EffectEntry* effKemuri5N64Entry(f32 x, f32 y, f32 z, f32 angle) {
         work->baseScaleY = 0.03f * (f32)(rand() % 11) + 1.7f;
         work->angle = (f32)(rand() % 61);
         work->timer = 30;
-        new_var = (f32)ang; // FAKE: early float conversion temp; (f32)ang / implicit int at use both differ
+        angF = (f32)ang; // FAKE: early float conversion temp; (f32)ang / implicit int at use both differ
         work->velY = 0.5f;
         work->accelY = -0.02f;
         work->accelY2 = 0.00005f;
         work->speed = -3.9f;
-        rad = 6.2831855f * reviseAngle(a + new_var) / 360.0f;
+        rad = 6.2831855f * reviseAngle(a + angF) / 360.0f;
         work->dirX = (f32)sin(rad);
         work->dirZ = (f32)cos(rad);
         ang += 45;
@@ -94,7 +102,8 @@ EffectEntry* effKemuri5N64Entry(f32 x, f32 y, f32 z, f32 angle) {
     return effect;
 }
 
-void effKemuri5Main(EffectEntry* effect) {
+/** Pulses each puff size with a sine/cosine of its angle, drifts it outward and up, shrinks it, fades late in life. */
+static void effKemuri5Main(EffectEntry* effect) {
     EffKemuri5N64Work* work = effect->userdata;
     Vec position;
     Vec tmp = {0.0f, 0.0f, 0.0f};
@@ -115,8 +124,14 @@ void effKemuri5Main(EffectEntry* effect) {
         }
         anyActive = 1;
         work->angle = reviseAngle(12.0f + work->angle);
-        { f32 sv = (f32)sin(6.2831855f * work->angle / 360.0f); work->scale.x = 0.1f * sv + work->baseScaleX; }
-        { f32 cv = (f32)cos(6.2831855f * work->angle / 360.0f); work->scale.y = 0.1f * cv + work->baseScaleY; }
+        {
+            f32 sv = (f32)sin(6.2831855f * work->angle / 360.0f);
+            work->scale.x = 0.1f * sv + work->baseScaleX;
+        }
+        {
+            f32 cv = (f32)cos(6.2831855f * work->angle / 360.0f);
+            work->scale.y = 0.1f * cv + work->baseScaleY;
+        }
         work->speed *= 0.83f;
         work->position.x = work->speed * work->dirX + work->position.x;
         work->position.z = work->speed * work->dirZ + work->position.z;
@@ -140,9 +155,9 @@ void effKemuri5Main(EffectEntry* effect) {
 }
 
 #pragma opt_propagation reset
-#pragma opt_lifetimes reset
 
-void effKemuri5Disp(CameraId cameraId, EffectEntry* effect) {
+/** Draws each puff as a camera-facing (Y-billboarded) textured quad using effect texture 0x4E. */
+static void effKemuri5Disp(CameraId cameraId, EffectEntry* effect) {
     CameraEntry* camera = camGetPtr(cameraId);
     EffKemuri5N64Work* work = effect->userdata;
     s32 i;

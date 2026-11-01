@@ -1,3 +1,5 @@
+// Paper Mario 64 smoke effect 2 (kemuri: smoke) drifting along a direction (dirX, dirZ); types 0-2.
+#include "eff/n64/eff_kemuri2_n64.h"
 #include "driver/camdrv.h"
 #include "driver/dispdrv.h"
 #include "driver/effdrv.h"
@@ -8,34 +10,41 @@
 #include <dolphin/mtx.h>
 
 typedef struct EffKemuri2N64Work {
-    s32 active;     // 0x0
-    u16 type;       // 0x4
-    u8 pad_6[2];    // 0x6
-    Vec position;   // 0x8
+    s32 active;   // 0x0
+    u16 type;     // 0x4
+    u8 pad_6[2];  // 0x6
+    Vec position; // 0x8
     u8 pad_14[0x44 - 0x14];
-    f32 field_44;   // 0x44
-    f32 velY;       // 0x48
-    f32 accelY;     // 0x4C
-    f32 dirX;       // 0x50
-    f32 dirZ;       // 0x54
-    s32 kind;       // 0x58
-    s32 counter;    // 0x5C
-    s32 frame;      // 0x60
+    f32 speed;   // 0x44, sideways speed along (dirX, dirZ)
+    f32 velY;    // 0x48
+    f32 accelY;  // 0x4C
+    f32 dirX;    // 0x50
+    f32 dirZ;    // 0x54
+    s32 kind;    // 0x58
+    s32 counter; // 0x5C
+    s32 frame;   // 0x60
 } EffKemuri2N64Work;
 
-static s8 anim_data_0[] = {0, 1, 2, 2, 3, 3, 4, 4, 5, 5, 5, 6, 6, 6, -1, 0};
-static s8 anim_data_1[] = {0, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 6, 7, 7, 7, -1, 0, 0, 0};
+/** Short puff animation (types 0-1): the sprite cell on each frame, ending at the -1 marker. */
+static s8 anim_data_0[] = {0, 1, 2, 2, 3, 3, 4, 4, 5, 5, 5, 6, 6, 6, -1};
+/** Longer puff animation (type 2): the sprite cell on each frame, ending at the -1 marker. */
+static s8 anim_data_1[] = {0, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 6, 7, 7, 7, -1};
 static s8* anim_data_table[] = {anim_data_0, anim_data_1};
 
-void effKemuri2Main(EffectEntry* effect);
+static void effKemuri2Main(EffectEntry* effect);
 static void effKemuri2Disp(CameraId cameraId, EffectEntry* effect);
 
+/**
+ * Spawns a single smoke puff at (x, y, z) that drifts along (dirX, dirZ) and rises.
+ * Type 2 uses the longer animation; types 0-2 pick the texture and size.
+ * Spawned only from event scripts through evt_eff.
+ */
 EffectEntry* effKemuri2N64Entry(s32 type, f32 x, f32 y, f32 z, f32 dirX, f32 dirZ) {
     EffectEntry* effect;
     EffKemuri2N64Work* work;
 
     effect = effEntry();
-    effect->type = "Kemuri2N64\0";
+    effect->type = "Kemuri2N64";
     effect->count = 1;
     work = __memAlloc(HEAP_EFFECT, sizeof(EffKemuri2N64Work));
     effect->userdata = work;
@@ -49,13 +58,17 @@ EffectEntry* effKemuri2N64Entry(s32 type, f32 x, f32 y, f32 z, f32 dirX, f32 dir
     work->position.x = x;
     work->position.y = y;
     work->position.z = z;
-    work->field_44 = 0.33333334f;
+    work->speed = 0.33333334f;
     work->velY = 1.75f;
     work->accelY = -0.16f;
     return effect;
 }
 
-void effKemuri2Main(EffectEntry* effect) {
+/**
+ * Steps through the animation frame table (anim_data_0 or _1) and moves the puff,
+ * and deletes it at the -1 end marker.
+ */
+static void effKemuri2Main(EffectEntry* effect) {
     EffKemuri2N64Work* work = effect->userdata;
     Vec position;
     Vec tmp = {0.0f, 0.0f, 0.0f};
@@ -70,14 +83,15 @@ void effKemuri2Main(EffectEntry* effect) {
         return;
     }
     for (i = 0; i < effect->count; i++, work++) {
-        work->position.x += work->field_44 * work->dirX;
-        work->position.z += work->field_44 * work->dirZ;
+        work->position.x += work->speed * work->dirX;
+        work->position.z += work->speed * work->dirZ;
         work->velY += work->accelY;
         work->position.y += work->velY;
     }
     dispEntry(CAMERA_3D, dispCalcZ(&position), 2, (DispCallback)effKemuri2Disp, effect);
 }
 
+/** Binds the texture for the puff type (0xC, 0xD or 0xE) and draws one centred quad (16x16 for type 0, else 24x24). */
 static void main_dl(s32 type) {
     GXTexObj texObj;
     s16 w;
@@ -146,6 +160,10 @@ static void main_dl(s32 type) {
     GXTexCoord2f32(0.0f, 1.0f);
 }
 
+/**
+ * Draws each puff as a camera-facing sprite via main_dl,
+ * picking the cell (wf * cell units) from the type's sprite sheet (176, 224 or 256 texels wide).
+ */
 static void effKemuri2Disp(CameraId cameraId, EffectEntry* effect) {
     CameraEntry* camera = camGetPtr(cameraId);
     EffKemuri2N64Work* work = effect->userdata;

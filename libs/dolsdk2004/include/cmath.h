@@ -1,10 +1,10 @@
 #ifndef _DOLPHIN_CMATH_H_
 #define _DOLPHIN_CMATH_H_
 
+
 #ifdef TARGET_PC
 #include <math.h>
 #else
-
 float powf(float x, float y);
 float tanf(float);
 

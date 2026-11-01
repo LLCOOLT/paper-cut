@@ -1,4 +1,3 @@
-#define MATH_NO_SQRTF 1
 #include "musyx/dsp_import.h"
 #if MUSY_TARGET == MUSY_TARGET_DOLPHIN
 
@@ -896,6 +895,7 @@ char dspSlave[] ATTRIBUTE_ALIGN(32) = {
     0x03, 0xC0, 0x80, 0x00, 0x02, 0x9C, 0x0E, 0x97, 0x02, 0xDF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 };
 #endif
+/** Size in bytes of the DSP slave program above. */
 u16 dspSlaveLength = sizeof(dspSlave);
 
 #endif

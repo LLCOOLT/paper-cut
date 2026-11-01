@@ -3,7 +3,7 @@
  * #includes (PORT_MODS), for calls made before their definitions. */
 s32 BattlePreCheckDamage(BattleUnit *, BattleUnit *, BattleUnitPart *, BattleWeapon *, u32);
 s32 BattleCheckDamage(BattleUnit *, BattleUnit *, BattleUnitPart *, BattleWeapon *, s32);
-s32 BattleCalculateDamage(BattleUnit *, BattleUnit *, BattleUnitPart *, BattleWeapon *, u32 *, u32);
-s32 BattleCalculateFpDamage(BattleUnit *, BattleUnit *, BattleUnitPart *, BattleWeapon *, u32 *, u32);
+static s32 BattleCalculateDamage(BattleUnit *, BattleUnit *, BattleUnitPart *, BattleWeapon *, u32 *, u32);
+static s32 BattleCalculateFpDamage(BattleUnit *, BattleUnit *, BattleUnitPart *, BattleWeapon *, u32 *, u32);
 void BattleDamageDirect(s32, BattleUnit *, BattleUnitPart *, s32, s32, u32, u32, s32);
 s32 BattleSetStatusDamageFromWeapon(BattleUnit *, BattleUnit *, BattleUnitPart *, BattleWeapon *, u32);

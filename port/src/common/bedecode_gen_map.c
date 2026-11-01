@@ -186,7 +186,7 @@ _Static_assert(sizeof(struct MapMaterial) == 320, "MapMaterial: native size diff
 _Static_assert(offsetof(struct MapMaterial, name) == 0, "MapMaterial.name: native offset");
 _Static_assert(offsetof(struct MapMaterial, color) == 8, "MapMaterial.color: native offset");
 _Static_assert(offsetof(struct MapMaterial, lightMode) == 12, "MapMaterial.lightMode: native offset");
-_Static_assert(offsetof(struct MapMaterial, pad9) == 13, "MapMaterial.pad9: native offset");
+_Static_assert(offsetof(struct MapMaterial, pad_09) == 13, "MapMaterial.pad_09: native offset");
 _Static_assert(offsetof(struct MapMaterial, blendMode) == 14, "MapMaterial.blendMode: native offset");
 _Static_assert(offsetof(struct MapMaterial, samplerCount) == 15, "MapMaterial.samplerCount: native offset");
 _Static_assert(offsetof(struct MapMaterial, samplers) == 16, "MapMaterial.samplers: native offset");
@@ -198,7 +198,7 @@ _Static_assert(sizeof(struct MapMaterial) == 276, "MapMaterial: native size diff
 _Static_assert(offsetof(struct MapMaterial, name) == 0, "MapMaterial.name: native offset");
 _Static_assert(offsetof(struct MapMaterial, color) == 4, "MapMaterial.color: native offset");
 _Static_assert(offsetof(struct MapMaterial, lightMode) == 8, "MapMaterial.lightMode: native offset");
-_Static_assert(offsetof(struct MapMaterial, pad9) == 9, "MapMaterial.pad9: native offset");
+_Static_assert(offsetof(struct MapMaterial, pad_09) == 9, "MapMaterial.pad_09: native offset");
 _Static_assert(offsetof(struct MapMaterial, blendMode) == 10, "MapMaterial.blendMode: native offset");
 _Static_assert(offsetof(struct MapMaterial, samplerCount) == 11, "MapMaterial.samplerCount: native offset");
 _Static_assert(offsetof(struct MapMaterial, samplers) == 12, "MapMaterial.samplers: native offset");
@@ -208,7 +208,7 @@ _Static_assert(offsetof(struct MapMaterial, tevMode) == 272, "MapMaterial.tevMod
 #endif
 _Static_assert(PORT_FSIZE(struct MapMaterial, color) == 4, "MapMaterial.color: not 4 x 1 bytes");
 _Static_assert(PORT_FSIZE(struct MapMaterial, lightMode) == 1, "MapMaterial.lightMode: native width differs from disc");
-_Static_assert(PORT_FSIZE(struct MapMaterial, pad9) == 1, "MapMaterial.pad9: native width differs from disc");
+_Static_assert(PORT_FSIZE(struct MapMaterial, pad_09) == 1, "MapMaterial.pad_09: native width differs from disc");
 _Static_assert(PORT_FSIZE(struct MapMaterial, blendMode) == 1, "MapMaterial.blendMode: native width differs from disc");
 _Static_assert(PORT_FSIZE(struct MapMaterial, samplerCount) == 1, "MapMaterial.samplerCount: native width differs from disc");
 _Static_assert(PORT_FSIZE(struct MapMaterial, xforms) == 224, "MapMaterial.xforms: not 56 x 4 bytes");
@@ -217,7 +217,7 @@ static const PortField portBE_map_MapMaterial_fields[] = {
     { "name", 0x0, offsetof(struct MapMaterial, name), PORT_FK_PTR_STRING, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct MapMaterial, name), 0, NULL, NULL },
     { "color", 0x4, offsetof(struct MapMaterial, color), PORT_FK_U8, PORT_CNT_ONE, 0, 1, 4, 0x0, 1, 1, 1, 0, NULL, NULL },
     { "lightMode", 0x8, offsetof(struct MapMaterial, lightMode), PORT_FK_U8, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct MapMaterial, lightMode), 0, NULL, NULL },
-    { "pad9", 0x9, offsetof(struct MapMaterial, pad9), PORT_FK_U8, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct MapMaterial, pad9), 0, NULL, NULL },
+    { "pad_09", 0x9, offsetof(struct MapMaterial, pad_09), PORT_FK_U8, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct MapMaterial, pad_09), 0, NULL, NULL },
     { "blendMode", 0xA, offsetof(struct MapMaterial, blendMode), PORT_FK_U8, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct MapMaterial, blendMode), 0, NULL, NULL },
     { "samplerCount", 0xB, offsetof(struct MapMaterial, samplerCount), PORT_FK_U8, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct MapMaterial, samplerCount), 0, NULL, NULL },
     { "samplers", 0xC, offsetof(struct MapMaterial, samplers), PORT_FK_PTR_STRUCT, PORT_CNT_ONE, 0, 1, 8, 0x0, 4, PORT_FSIZE(struct MapMaterial, samplers[0]), PORT_FSIZE(struct MapMaterial, samplers[0]), 0, &portBE_map_MapMatSampler, NULL },
@@ -231,25 +231,25 @@ const PortType portBE_map_MapMaterial = { "MapMaterial", 0x114, sizeof(struct Ma
 #if UINTPTR_MAX > 0xFFFFFFFFu
 _Static_assert(sizeof(struct MapMatSampler) == 16, "MapMatSampler: native size differs from x86_64; regenerate or fix the header");
 _Static_assert(offsetof(struct MapMatSampler, tex) == 0, "MapMatSampler.tex: native offset");
-_Static_assert(offsetof(struct MapMatSampler, pad4) == 8, "MapMatSampler.pad4: native offset");
+_Static_assert(offsetof(struct MapMatSampler, pad_04) == 8, "MapMatSampler.pad_04: native offset");
 _Static_assert(offsetof(struct MapMatSampler, wrapS) == 12, "MapMatSampler.wrapS: native offset");
 _Static_assert(offsetof(struct MapMatSampler, wrapT) == 13, "MapMatSampler.wrapT: native offset");
 _Static_assert(offsetof(struct MapMatSampler, blendMode) == 14, "MapMatSampler.blendMode: native offset");
 #else /* 32-bit headless bring-up build */
 _Static_assert(sizeof(struct MapMatSampler) == 12, "MapMatSampler: native size differs from i686");
 _Static_assert(offsetof(struct MapMatSampler, tex) == 0, "MapMatSampler.tex: native offset");
-_Static_assert(offsetof(struct MapMatSampler, pad4) == 4, "MapMatSampler.pad4: native offset");
+_Static_assert(offsetof(struct MapMatSampler, pad_04) == 4, "MapMatSampler.pad_04: native offset");
 _Static_assert(offsetof(struct MapMatSampler, wrapS) == 8, "MapMatSampler.wrapS: native offset");
 _Static_assert(offsetof(struct MapMatSampler, wrapT) == 9, "MapMatSampler.wrapT: native offset");
 _Static_assert(offsetof(struct MapMatSampler, blendMode) == 10, "MapMatSampler.blendMode: native offset");
 #endif
-_Static_assert(PORT_FSIZE(struct MapMatSampler, pad4[0]) == 1, "MapMatSampler.pad4: native width differs from disc");
+_Static_assert(PORT_FSIZE(struct MapMatSampler, pad_04[0]) == 1, "MapMatSampler.pad_04: native width differs from disc");
 _Static_assert(PORT_FSIZE(struct MapMatSampler, wrapS) == 1, "MapMatSampler.wrapS: native width differs from disc");
 _Static_assert(PORT_FSIZE(struct MapMatSampler, wrapT) == 1, "MapMatSampler.wrapT: native width differs from disc");
 _Static_assert(PORT_FSIZE(struct MapMatSampler, blendMode) == 1, "MapMatSampler.blendMode: native width differs from disc");
 static const PortField portBE_map_MapMatSampler_fields[] = {
     { "tex", 0x0, offsetof(struct MapMatSampler, tex), PORT_FK_PTR_STRUCT, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct MapMatSampler, tex), 0, &portBE_map_MapTexInfo, NULL },
-    { "pad4", 0x4, offsetof(struct MapMatSampler, pad4), PORT_FK_U8, PORT_CNT_ONE, 0, 1, 4, 0x0, 1, PORT_FSIZE(struct MapMatSampler, pad4[0]), PORT_FSIZE(struct MapMatSampler, pad4[0]), 0, NULL, NULL },
+    { "pad_04", 0x4, offsetof(struct MapMatSampler, pad_04), PORT_FK_U8, PORT_CNT_ONE, 0, 1, 4, 0x0, 1, PORT_FSIZE(struct MapMatSampler, pad_04[0]), PORT_FSIZE(struct MapMatSampler, pad_04[0]), 0, NULL, NULL },
     { "wrapS", 0x8, offsetof(struct MapMatSampler, wrapS), PORT_FK_U8, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct MapMatSampler, wrapS), 0, NULL, NULL },
     { "wrapT", 0x9, offsetof(struct MapMatSampler, wrapT), PORT_FK_U8, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct MapMatSampler, wrapT), 0, NULL, NULL },
     { "blendMode", 0xA, offsetof(struct MapMatSampler, blendMode), PORT_FK_U8, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct MapMatSampler, blendMode), 0, NULL, NULL },
@@ -261,7 +261,7 @@ const PortType portBE_map_MapMatSampler = { "MapMatSampler", 0xC, sizeof(struct 
 _Static_assert(sizeof(struct MapTexInfo) == 24, "MapTexInfo: native size differs from x86_64; regenerate or fix the header");
 _Static_assert(offsetof(struct MapTexInfo, name) == 0, "MapTexInfo.name: native offset");
 _Static_assert(offsetof(struct MapTexInfo, format) == 8, "MapTexInfo.format: native offset");
-_Static_assert(offsetof(struct MapTexInfo, pad5) == 9, "MapTexInfo.pad5: native offset");
+_Static_assert(offsetof(struct MapTexInfo, pad_05) == 9, "MapTexInfo.pad_05: native offset");
 _Static_assert(offsetof(struct MapTexInfo, width) == 12, "MapTexInfo.width: native offset");
 _Static_assert(offsetof(struct MapTexInfo, height) == 14, "MapTexInfo.height: native offset");
 _Static_assert(offsetof(struct MapTexInfo, data) == 16, "MapTexInfo.data: native offset");
@@ -269,19 +269,19 @@ _Static_assert(offsetof(struct MapTexInfo, data) == 16, "MapTexInfo.data: native
 _Static_assert(sizeof(struct MapTexInfo) == 16, "MapTexInfo: native size differs from i686");
 _Static_assert(offsetof(struct MapTexInfo, name) == 0, "MapTexInfo.name: native offset");
 _Static_assert(offsetof(struct MapTexInfo, format) == 4, "MapTexInfo.format: native offset");
-_Static_assert(offsetof(struct MapTexInfo, pad5) == 5, "MapTexInfo.pad5: native offset");
+_Static_assert(offsetof(struct MapTexInfo, pad_05) == 5, "MapTexInfo.pad_05: native offset");
 _Static_assert(offsetof(struct MapTexInfo, width) == 8, "MapTexInfo.width: native offset");
 _Static_assert(offsetof(struct MapTexInfo, height) == 10, "MapTexInfo.height: native offset");
 _Static_assert(offsetof(struct MapTexInfo, data) == 12, "MapTexInfo.data: native offset");
 #endif
 _Static_assert(PORT_FSIZE(struct MapTexInfo, format) == 1, "MapTexInfo.format: native width differs from disc");
-_Static_assert(PORT_FSIZE(struct MapTexInfo, pad5[0]) == 1, "MapTexInfo.pad5: native width differs from disc");
+_Static_assert(PORT_FSIZE(struct MapTexInfo, pad_05[0]) == 1, "MapTexInfo.pad_05: native width differs from disc");
 _Static_assert(PORT_FSIZE(struct MapTexInfo, width) == 2, "MapTexInfo.width: native width differs from disc");
 _Static_assert(PORT_FSIZE(struct MapTexInfo, height) == 2, "MapTexInfo.height: native width differs from disc");
 static const PortField portBE_map_MapTexInfo_fields[] = {
     { "name", 0x0, offsetof(struct MapTexInfo, name), PORT_FK_PTR_STRING, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct MapTexInfo, name), 0, NULL, NULL },
     { "format", 0x4, offsetof(struct MapTexInfo, format), PORT_FK_U8, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct MapTexInfo, format), 0, NULL, NULL },
-    { "pad5", 0x5, offsetof(struct MapTexInfo, pad5), PORT_FK_U8, PORT_CNT_ONE, 0, 1, 3, 0x0, 1, PORT_FSIZE(struct MapTexInfo, pad5[0]), PORT_FSIZE(struct MapTexInfo, pad5[0]), 0, NULL, NULL },
+    { "pad_05", 0x5, offsetof(struct MapTexInfo, pad_05), PORT_FK_U8, PORT_CNT_ONE, 0, 1, 3, 0x0, 1, PORT_FSIZE(struct MapTexInfo, pad_05[0]), PORT_FSIZE(struct MapTexInfo, pad_05[0]), 0, NULL, NULL },
     { "width", 0x8, offsetof(struct MapTexInfo, width), PORT_FK_U16, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct MapTexInfo, width), 0, NULL, NULL },
     { "height", 0xA, offsetof(struct MapTexInfo, height), PORT_FK_U16, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct MapTexInfo, height), 0, NULL, NULL },
     { "data", 0xC, offsetof(struct MapTexInfo, data), PORT_FK_PTR_NULL, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct MapTexInfo, data), 0, NULL, NULL },
@@ -362,7 +362,7 @@ _Static_assert(offsetof(struct MapFileLight, name) == 0, "MapFileLight.name: nat
 _Static_assert(offsetof(struct MapFileLight, type) == 8, "MapFileLight.type: native offset");
 _Static_assert(offsetof(struct MapFileLight, position) == 16, "MapFileLight.position: native offset");
 _Static_assert(offsetof(struct MapFileLight, rotation) == 28, "MapFileLight.rotation: native offset");
-_Static_assert(offsetof(struct MapFileLight, pad20) == 40, "MapFileLight.pad20: native offset");
+_Static_assert(offsetof(struct MapFileLight, pad_20) == 40, "MapFileLight.pad_20: native offset");
 _Static_assert(offsetof(struct MapFileLight, color) == 52, "MapFileLight.color: native offset");
 _Static_assert(offsetof(struct MapFileLight, spotAngle) == 56, "MapFileLight.spotAngle: native offset");
 _Static_assert(offsetof(struct MapFileLight, attenAngle) == 60, "MapFileLight.attenAngle: native offset");
@@ -375,7 +375,7 @@ _Static_assert(offsetof(struct MapFileLight, name) == 0, "MapFileLight.name: nat
 _Static_assert(offsetof(struct MapFileLight, type) == 4, "MapFileLight.type: native offset");
 _Static_assert(offsetof(struct MapFileLight, position) == 8, "MapFileLight.position: native offset");
 _Static_assert(offsetof(struct MapFileLight, rotation) == 20, "MapFileLight.rotation: native offset");
-_Static_assert(offsetof(struct MapFileLight, pad20) == 32, "MapFileLight.pad20: native offset");
+_Static_assert(offsetof(struct MapFileLight, pad_20) == 32, "MapFileLight.pad_20: native offset");
 _Static_assert(offsetof(struct MapFileLight, color) == 44, "MapFileLight.color: native offset");
 _Static_assert(offsetof(struct MapFileLight, spotAngle) == 48, "MapFileLight.spotAngle: native offset");
 _Static_assert(offsetof(struct MapFileLight, attenAngle) == 52, "MapFileLight.attenAngle: native offset");
@@ -385,7 +385,7 @@ _Static_assert(offsetof(struct MapFileLight, magic) == 64, "MapFileLight.magic: 
 #endif
 _Static_assert(PORT_FSIZE(struct MapFileLight, position) == 12, "MapFileLight.position: not 3 x 4 bytes");
 _Static_assert(PORT_FSIZE(struct MapFileLight, rotation) == 12, "MapFileLight.rotation: not 3 x 4 bytes");
-_Static_assert(PORT_FSIZE(struct MapFileLight, pad20[0]) == 1, "MapFileLight.pad20: native width differs from disc");
+_Static_assert(PORT_FSIZE(struct MapFileLight, pad_20[0]) == 1, "MapFileLight.pad_20: native width differs from disc");
 _Static_assert(PORT_FSIZE(struct MapFileLight, color) == 4, "MapFileLight.color: not 4 x 1 bytes");
 _Static_assert(PORT_FSIZE(struct MapFileLight, spotAngle) == 4, "MapFileLight.spotAngle: native width differs from disc");
 _Static_assert(PORT_FSIZE(struct MapFileLight, attenAngle) == 4, "MapFileLight.attenAngle: native width differs from disc");
@@ -397,7 +397,7 @@ static const PortField portBE_map_MapFileLight_fields[] = {
     { "type", 0x4, offsetof(struct MapFileLight, type), PORT_FK_PTR_STRING, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct MapFileLight, type), 0, NULL, NULL },
     { "position", 0x8, offsetof(struct MapFileLight, position), PORT_FK_F32, PORT_CNT_ONE, 0, 1, 3, 0x0, 4, 4, 4, 0, NULL, NULL },
     { "rotation", 0x14, offsetof(struct MapFileLight, rotation), PORT_FK_F32, PORT_CNT_ONE, 0, 1, 3, 0x0, 4, 4, 4, 0, NULL, NULL },
-    { "pad20", 0x20, offsetof(struct MapFileLight, pad20), PORT_FK_U8, PORT_CNT_ONE, 0, 1, 12, 0x0, 1, PORT_FSIZE(struct MapFileLight, pad20[0]), PORT_FSIZE(struct MapFileLight, pad20[0]), 0, NULL, NULL },
+    { "pad_20", 0x20, offsetof(struct MapFileLight, pad_20), PORT_FK_U8, PORT_CNT_ONE, 0, 1, 12, 0x0, 1, PORT_FSIZE(struct MapFileLight, pad_20[0]), PORT_FSIZE(struct MapFileLight, pad_20[0]), 0, NULL, NULL },
     { "color", 0x2C, offsetof(struct MapFileLight, color), PORT_FK_U8, PORT_CNT_ONE, 0, 1, 4, 0x0, 1, 1, 1, 0, NULL, NULL },
     { "spotAngle", 0x30, offsetof(struct MapFileLight, spotAngle), PORT_FK_F32, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct MapFileLight, spotAngle), 0, NULL, NULL },
     { "attenAngle", 0x34, offsetof(struct MapFileLight, attenAngle), PORT_FK_F32, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct MapFileLight, attenAngle), 0, NULL, NULL },
@@ -502,26 +502,26 @@ _Static_assert(sizeof(struct MapVtxRec) == 24, "MapVtxRec: native size differs f
 _Static_assert(offsetof(struct MapVtxRec, pos) == 0, "MapVtxRec.pos: native offset");
 _Static_assert(offsetof(struct MapVtxRec, nrm) == 2, "MapVtxRec.nrm: native offset");
 _Static_assert(offsetof(struct MapVtxRec, clr) == 4, "MapVtxRec.clr: native offset");
-_Static_assert(offsetof(struct MapVtxRec, unk6) == 6, "MapVtxRec.unk6: native offset");
+_Static_assert(offsetof(struct MapVtxRec, clr1) == 6, "MapVtxRec.clr1: native offset");
 _Static_assert(offsetof(struct MapVtxRec, tex) == 8, "MapVtxRec.tex: native offset");
 #else /* 32-bit headless bring-up build */
 _Static_assert(sizeof(struct MapVtxRec) == 24, "MapVtxRec: native size differs from i686");
 _Static_assert(offsetof(struct MapVtxRec, pos) == 0, "MapVtxRec.pos: native offset");
 _Static_assert(offsetof(struct MapVtxRec, nrm) == 2, "MapVtxRec.nrm: native offset");
 _Static_assert(offsetof(struct MapVtxRec, clr) == 4, "MapVtxRec.clr: native offset");
-_Static_assert(offsetof(struct MapVtxRec, unk6) == 6, "MapVtxRec.unk6: native offset");
+_Static_assert(offsetof(struct MapVtxRec, clr1) == 6, "MapVtxRec.clr1: native offset");
 _Static_assert(offsetof(struct MapVtxRec, tex) == 8, "MapVtxRec.tex: native offset");
 #endif
 _Static_assert(PORT_FSIZE(struct MapVtxRec, pos) == 2, "MapVtxRec.pos: native width differs from disc");
 _Static_assert(PORT_FSIZE(struct MapVtxRec, nrm) == 2, "MapVtxRec.nrm: native width differs from disc");
 _Static_assert(PORT_FSIZE(struct MapVtxRec, clr) == 2, "MapVtxRec.clr: native width differs from disc");
-_Static_assert(PORT_FSIZE(struct MapVtxRec, unk6) == 2, "MapVtxRec.unk6: native width differs from disc");
+_Static_assert(PORT_FSIZE(struct MapVtxRec, clr1) == 2, "MapVtxRec.clr1: native width differs from disc");
 _Static_assert(PORT_FSIZE(struct MapVtxRec, tex[0]) == 2, "MapVtxRec.tex: native width differs from disc");
 static const PortField portBE_map_MapVtxRec_fields[] = {
     { "pos", 0x0, offsetof(struct MapVtxRec, pos), PORT_FK_S16, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct MapVtxRec, pos), 0, NULL, NULL },
     { "nrm", 0x2, offsetof(struct MapVtxRec, nrm), PORT_FK_S16, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct MapVtxRec, nrm), 0, NULL, NULL },
     { "clr", 0x4, offsetof(struct MapVtxRec, clr), PORT_FK_S16, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct MapVtxRec, clr), 0, NULL, NULL },
-    { "unk6", 0x6, offsetof(struct MapVtxRec, unk6), PORT_FK_S16, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct MapVtxRec, unk6), 0, NULL, NULL },
+    { "clr1", 0x6, offsetof(struct MapVtxRec, clr1), PORT_FK_S16, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct MapVtxRec, clr1), 0, NULL, NULL },
     { "tex", 0x8, offsetof(struct MapVtxRec, tex), PORT_FK_S16, PORT_CNT_ONE, 0, 1, 8, 0x0, 2, PORT_FSIZE(struct MapVtxRec, tex[0]), PORT_FSIZE(struct MapVtxRec, tex[0]), 0, NULL, NULL },
 };
 const PortType portBE_map_MapVtxRec = { "MapVtxRec", 0x18, sizeof(struct MapVtxRec), _Alignof(struct MapVtxRec), 5, portBE_map_MapVtxRec_fields };
@@ -667,26 +667,26 @@ const PortType portBE_map_MapAnimLightParamList = { "MapAnimLightParamList", 0x4
 /* MapAnimJoint: disc 0x5C bytes, native (x86_64) 0x60 */
 #if UINTPTR_MAX > 0xFFFFFFFFu
 _Static_assert(sizeof(struct MapAnimJoint) == 96, "MapAnimJoint: native size differs from x86_64; regenerate or fix the header");
-_Static_assert(offsetof(struct MapAnimJoint, name) == 0, "MapAnimJoint.name: native offset");
+_Static_assert(offsetof(struct MapAnimJoint, nameRef) == 0, "MapAnimJoint.nameRef: native offset");
 _Static_assert(offsetof(struct MapAnimJoint, base) == 8, "MapAnimJoint.base: native offset");
-_Static_assert(offsetof(struct MapAnimJoint, pad_28) == 44, "MapAnimJoint.pad_28: native offset");
+_Static_assert(offsetof(struct MapAnimJoint, baseRest) == 44, "MapAnimJoint.baseRest: native offset");
 _Static_assert(offsetof(struct MapAnimJoint, keyCount) == 92, "MapAnimJoint.keyCount: native offset");
 _Static_assert(offsetof(struct MapAnimJoint, keys) == 96, "MapAnimJoint.keys: native offset");
 #else /* 32-bit headless bring-up build */
 _Static_assert(sizeof(struct MapAnimJoint) == 92, "MapAnimJoint: native size differs from i686");
-_Static_assert(offsetof(struct MapAnimJoint, name) == 0, "MapAnimJoint.name: native offset");
+_Static_assert(offsetof(struct MapAnimJoint, nameRef) == 0, "MapAnimJoint.nameRef: native offset");
 _Static_assert(offsetof(struct MapAnimJoint, base) == 4, "MapAnimJoint.base: native offset");
-_Static_assert(offsetof(struct MapAnimJoint, pad_28) == 40, "MapAnimJoint.pad_28: native offset");
+_Static_assert(offsetof(struct MapAnimJoint, baseRest) == 40, "MapAnimJoint.baseRest: native offset");
 _Static_assert(offsetof(struct MapAnimJoint, keyCount) == 88, "MapAnimJoint.keyCount: native offset");
 _Static_assert(offsetof(struct MapAnimJoint, keys) == 92, "MapAnimJoint.keys: native offset");
 #endif
 _Static_assert(PORT_FSIZE(struct MapAnimJoint, base[0]) == 4, "MapAnimJoint.base: native width differs from disc");
-_Static_assert(PORT_FSIZE(struct MapAnimJoint, pad_28[0]) == 1, "MapAnimJoint.pad_28: native width differs from disc");
+_Static_assert(PORT_FSIZE(struct MapAnimJoint, baseRest[0]) == 1, "MapAnimJoint.baseRest: native width differs from disc");
 _Static_assert(PORT_FSIZE(struct MapAnimJoint, keyCount) == 4, "MapAnimJoint.keyCount: native width differs from disc");
 static const PortField portBE_map_MapAnimJoint_fields[] = {
-    { "name", 0x0, offsetof(struct MapAnimJoint, name), PORT_FK_PTR_STRING, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct MapAnimJoint, name), 0, NULL, NULL },
+    { "nameRef", 0x0, offsetof(struct MapAnimJoint, nameRef), PORT_FK_PTR_STRING, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct MapAnimJoint, nameRef), 0, NULL, NULL },
     { "base", 0x4, offsetof(struct MapAnimJoint, base), PORT_FK_F32, PORT_CNT_ONE, 0, 1, 9, 0x0, 4, PORT_FSIZE(struct MapAnimJoint, base[0]), PORT_FSIZE(struct MapAnimJoint, base[0]), 0, NULL, NULL },
-    { "pad_28", 0x28, offsetof(struct MapAnimJoint, pad_28), PORT_FK_U8, PORT_CNT_ONE, 0, 1, 48, 0x0, 1, PORT_FSIZE(struct MapAnimJoint, pad_28[0]), PORT_FSIZE(struct MapAnimJoint, pad_28[0]), 0, NULL, NULL },
+    { "baseRest", 0x28, offsetof(struct MapAnimJoint, baseRest), PORT_FK_U8, PORT_CNT_ONE, 0, 1, 48, 0x0, 1, PORT_FSIZE(struct MapAnimJoint, baseRest[0]), PORT_FSIZE(struct MapAnimJoint, baseRest[0]), 0, NULL, NULL },
     { "keyCount", 0x58, offsetof(struct MapAnimJoint, keyCount), PORT_FK_S32, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct MapAnimJoint, keyCount), 0, NULL, NULL },
     { "keys", 0x5C, offsetof(struct MapAnimJoint, keys), PORT_FK_EMBED, PORT_CNT_FIELD, 4, 2, 0, 0x58, 424, PORT_FSIZE(struct MapAnimJoint, keys[0]), PORT_FSIZE(struct MapAnimJoint, keys[0]), 0, &portBE_map_MapAnimKey, NULL },
 };
@@ -790,26 +790,26 @@ _Static_assert(sizeof(struct MapAnimKeyCh) == 20, "MapAnimKeyCh: native size dif
 _Static_assert(offsetof(struct MapAnimKeyCh, value) == 0, "MapAnimKeyCh.value: native offset");
 _Static_assert(offsetof(struct MapAnimKeyCh, tanIn) == 4, "MapAnimKeyCh.tanIn: native offset");
 _Static_assert(offsetof(struct MapAnimKeyCh, tanOut) == 8, "MapAnimKeyCh.tanOut: native offset");
-_Static_assert(offsetof(struct MapAnimKeyCh, unkC) == 12, "MapAnimKeyCh.unkC: native offset");
+_Static_assert(offsetof(struct MapAnimKeyCh, extra) == 12, "MapAnimKeyCh.extra: native offset");
 _Static_assert(offsetof(struct MapAnimKeyCh, step) == 16, "MapAnimKeyCh.step: native offset");
 #else /* 32-bit headless bring-up build */
 _Static_assert(sizeof(struct MapAnimKeyCh) == 20, "MapAnimKeyCh: native size differs from i686");
 _Static_assert(offsetof(struct MapAnimKeyCh, value) == 0, "MapAnimKeyCh.value: native offset");
 _Static_assert(offsetof(struct MapAnimKeyCh, tanIn) == 4, "MapAnimKeyCh.tanIn: native offset");
 _Static_assert(offsetof(struct MapAnimKeyCh, tanOut) == 8, "MapAnimKeyCh.tanOut: native offset");
-_Static_assert(offsetof(struct MapAnimKeyCh, unkC) == 12, "MapAnimKeyCh.unkC: native offset");
+_Static_assert(offsetof(struct MapAnimKeyCh, extra) == 12, "MapAnimKeyCh.extra: native offset");
 _Static_assert(offsetof(struct MapAnimKeyCh, step) == 16, "MapAnimKeyCh.step: native offset");
 #endif
 _Static_assert(PORT_FSIZE(struct MapAnimKeyCh, value) == 4, "MapAnimKeyCh.value: native width differs from disc");
 _Static_assert(PORT_FSIZE(struct MapAnimKeyCh, tanIn) == 4, "MapAnimKeyCh.tanIn: native width differs from disc");
 _Static_assert(PORT_FSIZE(struct MapAnimKeyCh, tanOut) == 4, "MapAnimKeyCh.tanOut: native width differs from disc");
-_Static_assert(PORT_FSIZE(struct MapAnimKeyCh, unkC) == 4, "MapAnimKeyCh.unkC: native width differs from disc");
+_Static_assert(PORT_FSIZE(struct MapAnimKeyCh, extra) == 4, "MapAnimKeyCh.extra: native width differs from disc");
 _Static_assert(PORT_FSIZE(struct MapAnimKeyCh, step) == 4, "MapAnimKeyCh.step: native width differs from disc");
 static const PortField portBE_map_MapAnimKeyCh_fields[] = {
     { "value", 0x0, offsetof(struct MapAnimKeyCh, value), PORT_FK_F32, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct MapAnimKeyCh, value), 0, NULL, NULL },
     { "tanIn", 0x4, offsetof(struct MapAnimKeyCh, tanIn), PORT_FK_F32, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct MapAnimKeyCh, tanIn), 0, NULL, NULL },
     { "tanOut", 0x8, offsetof(struct MapAnimKeyCh, tanOut), PORT_FK_F32, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct MapAnimKeyCh, tanOut), 0, NULL, NULL },
-    { "unkC", 0xC, offsetof(struct MapAnimKeyCh, unkC), PORT_FK_F32, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct MapAnimKeyCh, unkC), 0, NULL, NULL },
+    { "extra", 0xC, offsetof(struct MapAnimKeyCh, extra), PORT_FK_F32, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct MapAnimKeyCh, extra), 0, NULL, NULL },
     { "step", 0x10, offsetof(struct MapAnimKeyCh, step), PORT_FK_S32, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct MapAnimKeyCh, step), 0, NULL, NULL },
 };
 const PortType portBE_map_MapAnimKeyCh = { "MapAnimKeyCh", 0x14, sizeof(struct MapAnimKeyCh), _Alignof(struct MapAnimKeyCh), 5, portBE_map_MapAnimKeyCh_fields };

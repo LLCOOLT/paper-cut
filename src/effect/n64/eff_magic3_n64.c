@@ -1,3 +1,4 @@
+// Paper Mario 64 magic effect 3 at a point for a given life.
 #include "eff/eff_n64.h"
 #include "driver/camdrv.h"
 #include "driver/dispdrv.h"
@@ -7,61 +8,8 @@
 #include <dolphin/gx.h>
 #include <dolphin/mtx.h>
 #include "eff/n64/eff_magic3_n64.h"
-#include "eff/eff_magic1_n64.h"
 #include "libc_decls.h"
-
-#define NAN (*(f32*)__float_nan)
-
-#define FP_NAN 1
-#define FP_INFINITE 2
-#define FP_ZERO 3
-#define FP_NORMAL 4
-#define FP_SUBNORMAL 5
-
-static inline s32 __fpclassifyf(f32 x) {
-    switch (*(s32*)&x & 0x7F800000) {
-        case 0x7F800000:
-            if (*(s32*)&x & 0x007FFFFF) {
-                return FP_NAN;
-            } else {
-                return FP_INFINITE;
-            }
-            break;
-        case 0:
-            if (*(s32*)&x & 0x007FFFFF) {
-                return FP_SUBNORMAL;
-            } else {
-                return FP_ZERO;
-            }
-            break;
-        default:
-            return FP_NORMAL;
-    }
-}
-
-#define fpclassify(x) __fpclassifyf(x)
-#define isnan(x) (fpclassify(x) == FP_NAN)
-
-#ifndef TARGET_PC /* PC port: the host libc declares these */
-static inline f32 sqrtf(f32 x) {
-    const f64 _half = .5;
-    const f64 _three = 3.0;
-
-    if (x > 0.0f) {
-        f64 guess = __frsqrte(x);
-        guess = _half * guess * (_three - guess * guess * x);
-        guess = _half * guess * (_three - guess * guess * x);
-        guess = _half * guess * (_three - guess * guess * x);
-        return x * guess;
-    } else if (x < 0.0) {
-        return NAN;
-    } else if (isnan(x)) {
-        return NAN;
-    } else {
-        return x;
-    }
-}
-#endif
+#include <math.h>
 
 typedef struct EffMagic3N64Work {
     s32 type;     // 0x0
@@ -74,11 +22,17 @@ typedef struct EffMagic3N64Work {
     s32 age;      // 0x2C
 } EffMagic3N64Work;
 
-void effMagic3Main(EffectEntry* effect);
-void effMagic3Disp(CameraId cameraId, EffectEntry* effect);
+static void effMagic3Main(EffectEntry* effect);
+static void effMagic3Disp(CameraId cameraId, EffectEntry* effect);
 
+// FAKE: match-forcing setting: the same code without it compiles differently (removal tried).
 #pragma opt_propagation off
+// FAKE: strength reduction optimisation off for effMagic3N64Entry: the original register allocation and scheduling need it
 #pragma opt_strength_reduction off
+/**
+ * Spawns five sparks at (x, y, z) that shoot upward in a 100-degree fan facing the camera and
+ * then die out over life frames. Via evt_eff64 "magic3_n64"; no script callers found.
+ */
 EffectEntry* effMagic3N64Entry(s32 type, f32 x, f32 y, f32 z, s32 life) {
     s32 j;
     EffectEntry* effect;
@@ -123,7 +77,7 @@ EffectEntry* effMagic3N64Entry(s32 type, f32 x, f32 y, f32 z, s32 life) {
     if (inv > 0.0f) {
         inv = 1.0f / sqrtf(inv);
     }
-    effect->type = "Magic3N64\0\0";
+    effect->type = "Magic3N64";
     effect->count = 5;
     nx *= 18.0f;
     ny *= 18.0f;
@@ -158,9 +112,13 @@ EffectEntry* effMagic3N64Entry(s32 type, f32 x, f32 y, f32 z, s32 life) {
 
 #pragma opt_propagation reset
 #pragma opt_strength_reduction reset
-inline f32 magic3_scale(f32 a, f32 b) { return 3.0f * a + b; }
+/** Returns 3 * a + b (a size term used while the sparks fade out). */
+inline f32 magic3_scale(f32 a, f32 b) {
+    return 3.0f * a + b;
+}
 
-void effMagic3Main(EffectEntry* effect) {
+/** Slows each spark (80% per frame, 70% near the end), fades alpha in then out, and pulses its size with sine waves. */
+static void effMagic3Main(EffectEntry* effect) {
     s32 life;
     EffMagic3N64Work* work = effect->userdata;
     Vec position;
@@ -203,7 +161,8 @@ void effMagic3Main(EffectEntry* effect) {
     dispEntry(CAMERA_3D, dispCalcZ(&position), 2, (DispCallback)effMagic3Disp, effect);
 }
 
-void effMagic3Disp(CameraId cameraId, EffectEntry* effect) {
+/** Draws each spark as a camera-facing, rotated streak quad (32x16, effect texture 0x1E). */
+static void effMagic3Disp(CameraId cameraId, EffectEntry* effect) {
     CameraEntry* camera;
     EffMagic3N64Work* work;
     GXTexObj texObj;
@@ -250,6 +209,7 @@ void effMagic3Disp(CameraId cameraId, EffectEntry* effect) {
     }
 }
 
+/** Camera-facing 32x16 streak each magic spark is drawn with. */
 effN64Vtx size32x16_tex64x32_vtx[] = {
     {-16, -8, 0, 0, 0, 0, 0, 0, 255},
     {16, -8, 0, 2048, 0, 0, 0, 0, 255},

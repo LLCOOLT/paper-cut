@@ -24,10 +24,10 @@ extern const PortType portBE_anim_AnimValueKey;
 /* AnimationPoseData: disc 0x1B0 bytes, native (x86_64) 0x218 */
 #if UINTPTR_MAX > 0xFFFFFFFFu
 _Static_assert(sizeof(struct AnimationPoseData) == 536, "AnimationPoseData: native size differs from x86_64; regenerate or fix the header");
-_Static_assert(offsetof(struct AnimationPoseData, mSize) == 0, "AnimationPoseData.mSize: native offset");
+_Static_assert(offsetof(struct AnimationPoseData, size) == 0, "AnimationPoseData.size: native offset");
 _Static_assert(offsetof(struct AnimationPoseData, fileName) == 4, "AnimationPoseData.fileName: native offset");
 _Static_assert(offsetof(struct AnimationPoseData, textureName) == 68, "AnimationPoseData.textureName: native offset");
-_Static_assert(offsetof(struct AnimationPoseData, mBuildTime) == 132, "AnimationPoseData.mBuildTime: native offset");
+_Static_assert(offsetof(struct AnimationPoseData, buildTime) == 132, "AnimationPoseData.buildTime: native offset");
 _Static_assert(offsetof(struct AnimationPoseData, flags) == 196, "AnimationPoseData.flags: native offset");
 _Static_assert(offsetof(struct AnimationPoseData, radius) == 200, "AnimationPoseData.radius: native offset");
 _Static_assert(offsetof(struct AnimationPoseData, height) == 204, "AnimationPoseData.height: native offset");
@@ -35,22 +35,22 @@ _Static_assert(offsetof(struct AnimationPoseData, bboxMin) == 208, "AnimationPos
 _Static_assert(offsetof(struct AnimationPoseData, bboxMax) == 220, "AnimationPoseData.bboxMax: native offset");
 _Static_assert(offsetof(struct AnimationPoseData, shapeCount) == 232, "AnimationPoseData.shapeCount: native offset");
 _Static_assert(offsetof(struct AnimationPoseData, drawCallCount) == 236, "AnimationPoseData.drawCallCount: native offset");
-_Static_assert(offsetof(struct AnimationPoseData, mBufferPosNum) == 240, "AnimationPoseData.mBufferPosNum: native offset");
-_Static_assert(offsetof(struct AnimationPoseData, mBufferPosIdxNum) == 244, "AnimationPoseData.mBufferPosIdxNum: native offset");
-_Static_assert(offsetof(struct AnimationPoseData, mBufferNrmNum) == 248, "AnimationPoseData.mBufferNrmNum: native offset");
-_Static_assert(offsetof(struct AnimationPoseData, mBufferNrmIdxNum) == 252, "AnimationPoseData.mBufferNrmIdxNum: native offset");
+_Static_assert(offsetof(struct AnimationPoseData, bufferPosNum) == 240, "AnimationPoseData.bufferPosNum: native offset");
+_Static_assert(offsetof(struct AnimationPoseData, bufferPosIdxNum) == 244, "AnimationPoseData.bufferPosIdxNum: native offset");
+_Static_assert(offsetof(struct AnimationPoseData, bufferNrmNum) == 248, "AnimationPoseData.bufferNrmNum: native offset");
+_Static_assert(offsetof(struct AnimationPoseData, bufferNrmIdxNum) == 252, "AnimationPoseData.bufferNrmIdxNum: native offset");
 _Static_assert(offsetof(struct AnimationPoseData, clr0Num) == 256, "AnimationPoseData.clr0Num: native offset");
 _Static_assert(offsetof(struct AnimationPoseData, clr0IdxNum) == 260, "AnimationPoseData.clr0IdxNum: native offset");
 _Static_assert(offsetof(struct AnimationPoseData, texIdxNum) == 264, "AnimationPoseData.texIdxNum: native offset");
 _Static_assert(offsetof(struct AnimationPoseData, texVtxNum) == 296, "AnimationPoseData.texVtxNum: native offset");
-_Static_assert(offsetof(struct AnimationPoseData, mBufferTexAnimNum) == 300, "AnimationPoseData.mBufferTexAnimNum: native offset");
+_Static_assert(offsetof(struct AnimationPoseData, bufferTexAnimNum) == 300, "AnimationPoseData.bufferTexAnimNum: native offset");
 _Static_assert(offsetof(struct AnimationPoseData, texDataCount) == 304, "AnimationPoseData.texDataCount: native offset");
 _Static_assert(offsetof(struct AnimationPoseData, texBindCount) == 308, "AnimationPoseData.texBindCount: native offset");
 _Static_assert(offsetof(struct AnimationPoseData, drawCount) == 312, "AnimationPoseData.drawCount: native offset");
-_Static_assert(offsetof(struct AnimationPoseData, mBufferVisibilityNum) == 316, "AnimationPoseData.mBufferVisibilityNum: native offset");
-_Static_assert(offsetof(struct AnimationPoseData, mBufferNodeNum) == 320, "AnimationPoseData.mBufferNodeNum: native offset");
+_Static_assert(offsetof(struct AnimationPoseData, bufferVisibilityNum) == 316, "AnimationPoseData.bufferVisibilityNum: native offset");
+_Static_assert(offsetof(struct AnimationPoseData, bufferNodeNum) == 320, "AnimationPoseData.bufferNodeNum: native offset");
 _Static_assert(offsetof(struct AnimationPoseData, groupCount) == 324, "AnimationPoseData.groupCount: native offset");
-_Static_assert(offsetof(struct AnimationPoseData, mAnimCount) == 328, "AnimationPoseData.mAnimCount: native offset");
+_Static_assert(offsetof(struct AnimationPoseData, animCount) == 328, "AnimationPoseData.animCount: native offset");
 _Static_assert(offsetof(struct AnimationPoseData, shapes) == 336, "AnimationPoseData.shapes: native offset");
 _Static_assert(offsetof(struct AnimationPoseData, drawCalls) == 344, "AnimationPoseData.drawCalls: native offset");
 _Static_assert(offsetof(struct AnimationPoseData, bufferVtxPos) == 352, "AnimationPoseData.bufferVtxPos: native offset");
@@ -68,13 +68,13 @@ _Static_assert(offsetof(struct AnimationPoseData, draws) == 496, "AnimationPoseD
 _Static_assert(offsetof(struct AnimationPoseData, groupVisibility) == 504, "AnimationPoseData.groupVisibility: native offset");
 _Static_assert(offsetof(struct AnimationPoseData, nodeData) == 512, "AnimationPoseData.nodeData: native offset");
 _Static_assert(offsetof(struct AnimationPoseData, groups) == 520, "AnimationPoseData.groups: native offset");
-_Static_assert(offsetof(struct AnimationPoseData, mpAnims) == 528, "AnimationPoseData.mpAnims: native offset");
+_Static_assert(offsetof(struct AnimationPoseData, anims) == 528, "AnimationPoseData.anims: native offset");
 #else /* 32-bit headless bring-up build */
 _Static_assert(sizeof(struct AnimationPoseData) == 432, "AnimationPoseData: native size differs from i686");
-_Static_assert(offsetof(struct AnimationPoseData, mSize) == 0, "AnimationPoseData.mSize: native offset");
+_Static_assert(offsetof(struct AnimationPoseData, size) == 0, "AnimationPoseData.size: native offset");
 _Static_assert(offsetof(struct AnimationPoseData, fileName) == 4, "AnimationPoseData.fileName: native offset");
 _Static_assert(offsetof(struct AnimationPoseData, textureName) == 68, "AnimationPoseData.textureName: native offset");
-_Static_assert(offsetof(struct AnimationPoseData, mBuildTime) == 132, "AnimationPoseData.mBuildTime: native offset");
+_Static_assert(offsetof(struct AnimationPoseData, buildTime) == 132, "AnimationPoseData.buildTime: native offset");
 _Static_assert(offsetof(struct AnimationPoseData, flags) == 196, "AnimationPoseData.flags: native offset");
 _Static_assert(offsetof(struct AnimationPoseData, radius) == 200, "AnimationPoseData.radius: native offset");
 _Static_assert(offsetof(struct AnimationPoseData, height) == 204, "AnimationPoseData.height: native offset");
@@ -82,22 +82,22 @@ _Static_assert(offsetof(struct AnimationPoseData, bboxMin) == 208, "AnimationPos
 _Static_assert(offsetof(struct AnimationPoseData, bboxMax) == 220, "AnimationPoseData.bboxMax: native offset");
 _Static_assert(offsetof(struct AnimationPoseData, shapeCount) == 232, "AnimationPoseData.shapeCount: native offset");
 _Static_assert(offsetof(struct AnimationPoseData, drawCallCount) == 236, "AnimationPoseData.drawCallCount: native offset");
-_Static_assert(offsetof(struct AnimationPoseData, mBufferPosNum) == 240, "AnimationPoseData.mBufferPosNum: native offset");
-_Static_assert(offsetof(struct AnimationPoseData, mBufferPosIdxNum) == 244, "AnimationPoseData.mBufferPosIdxNum: native offset");
-_Static_assert(offsetof(struct AnimationPoseData, mBufferNrmNum) == 248, "AnimationPoseData.mBufferNrmNum: native offset");
-_Static_assert(offsetof(struct AnimationPoseData, mBufferNrmIdxNum) == 252, "AnimationPoseData.mBufferNrmIdxNum: native offset");
+_Static_assert(offsetof(struct AnimationPoseData, bufferPosNum) == 240, "AnimationPoseData.bufferPosNum: native offset");
+_Static_assert(offsetof(struct AnimationPoseData, bufferPosIdxNum) == 244, "AnimationPoseData.bufferPosIdxNum: native offset");
+_Static_assert(offsetof(struct AnimationPoseData, bufferNrmNum) == 248, "AnimationPoseData.bufferNrmNum: native offset");
+_Static_assert(offsetof(struct AnimationPoseData, bufferNrmIdxNum) == 252, "AnimationPoseData.bufferNrmIdxNum: native offset");
 _Static_assert(offsetof(struct AnimationPoseData, clr0Num) == 256, "AnimationPoseData.clr0Num: native offset");
 _Static_assert(offsetof(struct AnimationPoseData, clr0IdxNum) == 260, "AnimationPoseData.clr0IdxNum: native offset");
 _Static_assert(offsetof(struct AnimationPoseData, texIdxNum) == 264, "AnimationPoseData.texIdxNum: native offset");
 _Static_assert(offsetof(struct AnimationPoseData, texVtxNum) == 296, "AnimationPoseData.texVtxNum: native offset");
-_Static_assert(offsetof(struct AnimationPoseData, mBufferTexAnimNum) == 300, "AnimationPoseData.mBufferTexAnimNum: native offset");
+_Static_assert(offsetof(struct AnimationPoseData, bufferTexAnimNum) == 300, "AnimationPoseData.bufferTexAnimNum: native offset");
 _Static_assert(offsetof(struct AnimationPoseData, texDataCount) == 304, "AnimationPoseData.texDataCount: native offset");
 _Static_assert(offsetof(struct AnimationPoseData, texBindCount) == 308, "AnimationPoseData.texBindCount: native offset");
 _Static_assert(offsetof(struct AnimationPoseData, drawCount) == 312, "AnimationPoseData.drawCount: native offset");
-_Static_assert(offsetof(struct AnimationPoseData, mBufferVisibilityNum) == 316, "AnimationPoseData.mBufferVisibilityNum: native offset");
-_Static_assert(offsetof(struct AnimationPoseData, mBufferNodeNum) == 320, "AnimationPoseData.mBufferNodeNum: native offset");
+_Static_assert(offsetof(struct AnimationPoseData, bufferVisibilityNum) == 316, "AnimationPoseData.bufferVisibilityNum: native offset");
+_Static_assert(offsetof(struct AnimationPoseData, bufferNodeNum) == 320, "AnimationPoseData.bufferNodeNum: native offset");
 _Static_assert(offsetof(struct AnimationPoseData, groupCount) == 324, "AnimationPoseData.groupCount: native offset");
-_Static_assert(offsetof(struct AnimationPoseData, mAnimCount) == 328, "AnimationPoseData.mAnimCount: native offset");
+_Static_assert(offsetof(struct AnimationPoseData, animCount) == 328, "AnimationPoseData.animCount: native offset");
 _Static_assert(offsetof(struct AnimationPoseData, shapes) == 332, "AnimationPoseData.shapes: native offset");
 _Static_assert(offsetof(struct AnimationPoseData, drawCalls) == 336, "AnimationPoseData.drawCalls: native offset");
 _Static_assert(offsetof(struct AnimationPoseData, bufferVtxPos) == 340, "AnimationPoseData.bufferVtxPos: native offset");
@@ -115,12 +115,12 @@ _Static_assert(offsetof(struct AnimationPoseData, draws) == 412, "AnimationPoseD
 _Static_assert(offsetof(struct AnimationPoseData, groupVisibility) == 416, "AnimationPoseData.groupVisibility: native offset");
 _Static_assert(offsetof(struct AnimationPoseData, nodeData) == 420, "AnimationPoseData.nodeData: native offset");
 _Static_assert(offsetof(struct AnimationPoseData, groups) == 424, "AnimationPoseData.groups: native offset");
-_Static_assert(offsetof(struct AnimationPoseData, mpAnims) == 428, "AnimationPoseData.mpAnims: native offset");
+_Static_assert(offsetof(struct AnimationPoseData, anims) == 428, "AnimationPoseData.anims: native offset");
 #endif
-_Static_assert(PORT_FSIZE(struct AnimationPoseData, mSize) == 4, "AnimationPoseData.mSize: native width differs from disc");
+_Static_assert(PORT_FSIZE(struct AnimationPoseData, size) == 4, "AnimationPoseData.size: native width differs from disc");
 _Static_assert(PORT_FSIZE(struct AnimationPoseData, fileName[0]) == 1, "AnimationPoseData.fileName: native width differs from disc");
 _Static_assert(PORT_FSIZE(struct AnimationPoseData, textureName[0]) == 1, "AnimationPoseData.textureName: native width differs from disc");
-_Static_assert(PORT_FSIZE(struct AnimationPoseData, mBuildTime[0]) == 1, "AnimationPoseData.mBuildTime: native width differs from disc");
+_Static_assert(PORT_FSIZE(struct AnimationPoseData, buildTime[0]) == 1, "AnimationPoseData.buildTime: native width differs from disc");
 _Static_assert(PORT_FSIZE(struct AnimationPoseData, flags) == 4, "AnimationPoseData.flags: native width differs from disc");
 _Static_assert(PORT_FSIZE(struct AnimationPoseData, radius) == 4, "AnimationPoseData.radius: native width differs from disc");
 _Static_assert(PORT_FSIZE(struct AnimationPoseData, height) == 4, "AnimationPoseData.height: native width differs from disc");
@@ -128,27 +128,27 @@ _Static_assert(PORT_FSIZE(struct AnimationPoseData, bboxMin) == 12, "AnimationPo
 _Static_assert(PORT_FSIZE(struct AnimationPoseData, bboxMax) == 12, "AnimationPoseData.bboxMax: not 3 x 4 bytes");
 _Static_assert(PORT_FSIZE(struct AnimationPoseData, shapeCount) == 4, "AnimationPoseData.shapeCount: native width differs from disc");
 _Static_assert(PORT_FSIZE(struct AnimationPoseData, drawCallCount) == 4, "AnimationPoseData.drawCallCount: native width differs from disc");
-_Static_assert(PORT_FSIZE(struct AnimationPoseData, mBufferPosNum) == 4, "AnimationPoseData.mBufferPosNum: native width differs from disc");
-_Static_assert(PORT_FSIZE(struct AnimationPoseData, mBufferPosIdxNum) == 4, "AnimationPoseData.mBufferPosIdxNum: native width differs from disc");
-_Static_assert(PORT_FSIZE(struct AnimationPoseData, mBufferNrmNum) == 4, "AnimationPoseData.mBufferNrmNum: native width differs from disc");
-_Static_assert(PORT_FSIZE(struct AnimationPoseData, mBufferNrmIdxNum) == 4, "AnimationPoseData.mBufferNrmIdxNum: native width differs from disc");
+_Static_assert(PORT_FSIZE(struct AnimationPoseData, bufferPosNum) == 4, "AnimationPoseData.bufferPosNum: native width differs from disc");
+_Static_assert(PORT_FSIZE(struct AnimationPoseData, bufferPosIdxNum) == 4, "AnimationPoseData.bufferPosIdxNum: native width differs from disc");
+_Static_assert(PORT_FSIZE(struct AnimationPoseData, bufferNrmNum) == 4, "AnimationPoseData.bufferNrmNum: native width differs from disc");
+_Static_assert(PORT_FSIZE(struct AnimationPoseData, bufferNrmIdxNum) == 4, "AnimationPoseData.bufferNrmIdxNum: native width differs from disc");
 _Static_assert(PORT_FSIZE(struct AnimationPoseData, clr0Num) == 4, "AnimationPoseData.clr0Num: native width differs from disc");
 _Static_assert(PORT_FSIZE(struct AnimationPoseData, clr0IdxNum) == 4, "AnimationPoseData.clr0IdxNum: native width differs from disc");
 _Static_assert(PORT_FSIZE(struct AnimationPoseData, texIdxNum[0]) == 4, "AnimationPoseData.texIdxNum: native width differs from disc");
 _Static_assert(PORT_FSIZE(struct AnimationPoseData, texVtxNum) == 4, "AnimationPoseData.texVtxNum: native width differs from disc");
-_Static_assert(PORT_FSIZE(struct AnimationPoseData, mBufferTexAnimNum) == 4, "AnimationPoseData.mBufferTexAnimNum: native width differs from disc");
+_Static_assert(PORT_FSIZE(struct AnimationPoseData, bufferTexAnimNum) == 4, "AnimationPoseData.bufferTexAnimNum: native width differs from disc");
 _Static_assert(PORT_FSIZE(struct AnimationPoseData, texDataCount) == 4, "AnimationPoseData.texDataCount: native width differs from disc");
 _Static_assert(PORT_FSIZE(struct AnimationPoseData, texBindCount) == 4, "AnimationPoseData.texBindCount: native width differs from disc");
 _Static_assert(PORT_FSIZE(struct AnimationPoseData, drawCount) == 4, "AnimationPoseData.drawCount: native width differs from disc");
-_Static_assert(PORT_FSIZE(struct AnimationPoseData, mBufferVisibilityNum) == 4, "AnimationPoseData.mBufferVisibilityNum: native width differs from disc");
-_Static_assert(PORT_FSIZE(struct AnimationPoseData, mBufferNodeNum) == 4, "AnimationPoseData.mBufferNodeNum: native width differs from disc");
+_Static_assert(PORT_FSIZE(struct AnimationPoseData, bufferVisibilityNum) == 4, "AnimationPoseData.bufferVisibilityNum: native width differs from disc");
+_Static_assert(PORT_FSIZE(struct AnimationPoseData, bufferNodeNum) == 4, "AnimationPoseData.bufferNodeNum: native width differs from disc");
 _Static_assert(PORT_FSIZE(struct AnimationPoseData, groupCount) == 4, "AnimationPoseData.groupCount: native width differs from disc");
-_Static_assert(PORT_FSIZE(struct AnimationPoseData, mAnimCount) == 4, "AnimationPoseData.mAnimCount: native width differs from disc");
+_Static_assert(PORT_FSIZE(struct AnimationPoseData, animCount) == 4, "AnimationPoseData.animCount: native width differs from disc");
 static const PortField portBE_anim_AnimationPoseData_fields[] = {
-    { "mSize", 0x0, offsetof(struct AnimationPoseData, mSize), PORT_FK_U32, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct AnimationPoseData, mSize), 0, NULL, NULL },
+    { "size", 0x0, offsetof(struct AnimationPoseData, size), PORT_FK_U32, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct AnimationPoseData, size), 0, NULL, NULL },
     { "fileName", 0x4, offsetof(struct AnimationPoseData, fileName), PORT_FK_U8, PORT_CNT_ONE, 0, 1, 64, 0x0, 1, PORT_FSIZE(struct AnimationPoseData, fileName[0]), PORT_FSIZE(struct AnimationPoseData, fileName[0]), 0, NULL, NULL },
     { "textureName", 0x44, offsetof(struct AnimationPoseData, textureName), PORT_FK_U8, PORT_CNT_ONE, 0, 1, 64, 0x0, 1, PORT_FSIZE(struct AnimationPoseData, textureName[0]), PORT_FSIZE(struct AnimationPoseData, textureName[0]), 0, NULL, NULL },
-    { "mBuildTime", 0x84, offsetof(struct AnimationPoseData, mBuildTime), PORT_FK_U8, PORT_CNT_ONE, 0, 1, 64, 0x0, 1, PORT_FSIZE(struct AnimationPoseData, mBuildTime[0]), PORT_FSIZE(struct AnimationPoseData, mBuildTime[0]), 0, NULL, NULL },
+    { "buildTime", 0x84, offsetof(struct AnimationPoseData, buildTime), PORT_FK_U8, PORT_CNT_ONE, 0, 1, 64, 0x0, 1, PORT_FSIZE(struct AnimationPoseData, buildTime[0]), PORT_FSIZE(struct AnimationPoseData, buildTime[0]), 0, NULL, NULL },
     { "flags", 0xC4, offsetof(struct AnimationPoseData, flags), PORT_FK_U32, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct AnimationPoseData, flags), 0, NULL, NULL },
     { "radius", 0xC8, offsetof(struct AnimationPoseData, radius), PORT_FK_S32, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct AnimationPoseData, radius), 0, NULL, NULL },
     { "height", 0xCC, offsetof(struct AnimationPoseData, height), PORT_FK_S32, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct AnimationPoseData, height), 0, NULL, NULL },
@@ -156,22 +156,22 @@ static const PortField portBE_anim_AnimationPoseData_fields[] = {
     { "bboxMax", 0xDC, offsetof(struct AnimationPoseData, bboxMax), PORT_FK_F32, PORT_CNT_ONE, 0, 1, 3, 0x0, 4, 4, 4, 0, NULL, NULL },
     { "shapeCount", 0xE8, offsetof(struct AnimationPoseData, shapeCount), PORT_FK_S32, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct AnimationPoseData, shapeCount), 0, NULL, NULL },
     { "drawCallCount", 0xEC, offsetof(struct AnimationPoseData, drawCallCount), PORT_FK_S32, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct AnimationPoseData, drawCallCount), 0, NULL, NULL },
-    { "mBufferPosNum", 0xF0, offsetof(struct AnimationPoseData, mBufferPosNum), PORT_FK_U32, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct AnimationPoseData, mBufferPosNum), 0, NULL, NULL },
-    { "mBufferPosIdxNum", 0xF4, offsetof(struct AnimationPoseData, mBufferPosIdxNum), PORT_FK_U32, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct AnimationPoseData, mBufferPosIdxNum), 0, NULL, NULL },
-    { "mBufferNrmNum", 0xF8, offsetof(struct AnimationPoseData, mBufferNrmNum), PORT_FK_U32, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct AnimationPoseData, mBufferNrmNum), 0, NULL, NULL },
-    { "mBufferNrmIdxNum", 0xFC, offsetof(struct AnimationPoseData, mBufferNrmIdxNum), PORT_FK_U32, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct AnimationPoseData, mBufferNrmIdxNum), 0, NULL, NULL },
+    { "bufferPosNum", 0xF0, offsetof(struct AnimationPoseData, bufferPosNum), PORT_FK_U32, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct AnimationPoseData, bufferPosNum), 0, NULL, NULL },
+    { "bufferPosIdxNum", 0xF4, offsetof(struct AnimationPoseData, bufferPosIdxNum), PORT_FK_U32, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct AnimationPoseData, bufferPosIdxNum), 0, NULL, NULL },
+    { "bufferNrmNum", 0xF8, offsetof(struct AnimationPoseData, bufferNrmNum), PORT_FK_U32, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct AnimationPoseData, bufferNrmNum), 0, NULL, NULL },
+    { "bufferNrmIdxNum", 0xFC, offsetof(struct AnimationPoseData, bufferNrmIdxNum), PORT_FK_U32, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct AnimationPoseData, bufferNrmIdxNum), 0, NULL, NULL },
     { "clr0Num", 0x100, offsetof(struct AnimationPoseData, clr0Num), PORT_FK_U32, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct AnimationPoseData, clr0Num), 0, NULL, NULL },
     { "clr0IdxNum", 0x104, offsetof(struct AnimationPoseData, clr0IdxNum), PORT_FK_U32, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct AnimationPoseData, clr0IdxNum), 0, NULL, NULL },
     { "texIdxNum", 0x108, offsetof(struct AnimationPoseData, texIdxNum), PORT_FK_U32, PORT_CNT_ONE, 0, 1, 8, 0x0, 4, PORT_FSIZE(struct AnimationPoseData, texIdxNum[0]), PORT_FSIZE(struct AnimationPoseData, texIdxNum[0]), 0, NULL, NULL },
     { "texVtxNum", 0x128, offsetof(struct AnimationPoseData, texVtxNum), PORT_FK_U32, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct AnimationPoseData, texVtxNum), 0, NULL, NULL },
-    { "mBufferTexAnimNum", 0x12C, offsetof(struct AnimationPoseData, mBufferTexAnimNum), PORT_FK_U32, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct AnimationPoseData, mBufferTexAnimNum), 0, NULL, NULL },
+    { "bufferTexAnimNum", 0x12C, offsetof(struct AnimationPoseData, bufferTexAnimNum), PORT_FK_U32, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct AnimationPoseData, bufferTexAnimNum), 0, NULL, NULL },
     { "texDataCount", 0x130, offsetof(struct AnimationPoseData, texDataCount), PORT_FK_S32, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct AnimationPoseData, texDataCount), 0, NULL, NULL },
     { "texBindCount", 0x134, offsetof(struct AnimationPoseData, texBindCount), PORT_FK_S32, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct AnimationPoseData, texBindCount), 0, NULL, NULL },
     { "drawCount", 0x138, offsetof(struct AnimationPoseData, drawCount), PORT_FK_S32, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct AnimationPoseData, drawCount), 0, NULL, NULL },
-    { "mBufferVisibilityNum", 0x13C, offsetof(struct AnimationPoseData, mBufferVisibilityNum), PORT_FK_U32, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct AnimationPoseData, mBufferVisibilityNum), 0, NULL, NULL },
-    { "mBufferNodeNum", 0x140, offsetof(struct AnimationPoseData, mBufferNodeNum), PORT_FK_U32, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct AnimationPoseData, mBufferNodeNum), 0, NULL, NULL },
+    { "bufferVisibilityNum", 0x13C, offsetof(struct AnimationPoseData, bufferVisibilityNum), PORT_FK_U32, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct AnimationPoseData, bufferVisibilityNum), 0, NULL, NULL },
+    { "bufferNodeNum", 0x140, offsetof(struct AnimationPoseData, bufferNodeNum), PORT_FK_U32, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct AnimationPoseData, bufferNodeNum), 0, NULL, NULL },
     { "groupCount", 0x144, offsetof(struct AnimationPoseData, groupCount), PORT_FK_S32, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct AnimationPoseData, groupCount), 0, NULL, NULL },
-    { "mAnimCount", 0x148, offsetof(struct AnimationPoseData, mAnimCount), PORT_FK_S32, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct AnimationPoseData, mAnimCount), 0, NULL, NULL },
+    { "animCount", 0x148, offsetof(struct AnimationPoseData, animCount), PORT_FK_S32, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct AnimationPoseData, animCount), 0, NULL, NULL },
     { "shapes", 0x14C, offsetof(struct AnimationPoseData, shapes), PORT_FK_PTR_STRUCT, PORT_CNT_FIELD, 4, 0, 0, 0xE8, 0, 0, PORT_FSIZE(struct AnimationPoseData, shapes), 0, &portBE_anim_AnimPoseShape, NULL },
     { "drawCalls", 0x150, offsetof(struct AnimationPoseData, drawCalls), PORT_FK_PTR_STRUCT, PORT_CNT_FIELD, 4, 0, 0, 0xEC, 0, 0, PORT_FSIZE(struct AnimationPoseData, drawCalls), 0, &portBE_anim_AnimDrawCallEntry, NULL },
     { "bufferVtxPos", 0x154, offsetof(struct AnimationPoseData, bufferVtxPos), PORT_FK_PTR_RAW, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct AnimationPoseData, bufferVtxPos), 0, NULL, NULL },
@@ -189,7 +189,7 @@ static const PortField portBE_anim_AnimationPoseData_fields[] = {
     { "groupVisibility", 0x1A0, offsetof(struct AnimationPoseData, groupVisibility), PORT_FK_PTR_PAYLOAD, PORT_CNT_FIELD, 4, 0, 0, 0x13C, 0, 0, PORT_FSIZE(struct AnimationPoseData, groupVisibility), 0, NULL, NULL },
     { "nodeData", 0x1A4, offsetof(struct AnimationPoseData, nodeData), PORT_FK_PTR_RAW, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct AnimationPoseData, nodeData), 0, NULL, NULL },
     { "groups", 0x1A8, offsetof(struct AnimationPoseData, groups), PORT_FK_PTR_STRUCT, PORT_CNT_FIELD, 4, 0, 0, 0x144, 0, 0, PORT_FSIZE(struct AnimationPoseData, groups), 0, &portBE_anim_AnimPoseGroup, NULL },
-    { "mpAnims", 0x1AC, offsetof(struct AnimationPoseData, mpAnims), PORT_FK_PTR_STRUCT, PORT_CNT_FIELD, 4, 0, 0, 0x148, 0, 0, PORT_FSIZE(struct AnimationPoseData, mpAnims), 0, &portBE_anim_AnimTableEntry, NULL },
+    { "anims", 0x1AC, offsetof(struct AnimationPoseData, anims), PORT_FK_PTR_STRUCT, PORT_CNT_FIELD, 4, 0, 0, 0x148, 0, 0, PORT_FSIZE(struct AnimationPoseData, anims), 0, &portBE_anim_AnimTableEntry, NULL },
 };
 const PortType portBE_anim_AnimationPoseData = { "AnimationPoseData", 0x1B0, sizeof(struct AnimationPoseData), _Alignof(struct AnimationPoseData), 45, portBE_anim_AnimationPoseData_fields };
 
@@ -274,38 +274,38 @@ const PortType portBE_anim_AnimDrawCallEntry = { "AnimDrawCallEntry", 0x8, sizeo
 /* AnimTexMtx: disc 0x18 bytes, native (x86_64) 0x18 */
 #if UINTPTR_MAX > 0xFFFFFFFFu
 _Static_assert(sizeof(struct AnimTexMtx) == 24, "AnimTexMtx: native size differs from x86_64; regenerate or fix the header");
-_Static_assert(offsetof(struct AnimTexMtx, mTexBindIdx) == 0, "AnimTexMtx.mTexBindIdx: native offset");
+_Static_assert(offsetof(struct AnimTexMtx, texBindIdx) == 0, "AnimTexMtx.texBindIdx: native offset");
 _Static_assert(offsetof(struct AnimTexMtx, align) == 1, "AnimTexMtx.align: native offset");
-_Static_assert(offsetof(struct AnimTexMtx, mTransS) == 4, "AnimTexMtx.mTransS: native offset");
-_Static_assert(offsetof(struct AnimTexMtx, mTransT) == 8, "AnimTexMtx.mTransT: native offset");
-_Static_assert(offsetof(struct AnimTexMtx, mScaleS) == 12, "AnimTexMtx.mScaleS: native offset");
-_Static_assert(offsetof(struct AnimTexMtx, mScaleT) == 16, "AnimTexMtx.mScaleT: native offset");
-_Static_assert(offsetof(struct AnimTexMtx, mRotate) == 20, "AnimTexMtx.mRotate: native offset");
+_Static_assert(offsetof(struct AnimTexMtx, transS) == 4, "AnimTexMtx.transS: native offset");
+_Static_assert(offsetof(struct AnimTexMtx, transT) == 8, "AnimTexMtx.transT: native offset");
+_Static_assert(offsetof(struct AnimTexMtx, scaleS) == 12, "AnimTexMtx.scaleS: native offset");
+_Static_assert(offsetof(struct AnimTexMtx, scaleT) == 16, "AnimTexMtx.scaleT: native offset");
+_Static_assert(offsetof(struct AnimTexMtx, rotate) == 20, "AnimTexMtx.rotate: native offset");
 #else /* 32-bit headless bring-up build */
 _Static_assert(sizeof(struct AnimTexMtx) == 24, "AnimTexMtx: native size differs from i686");
-_Static_assert(offsetof(struct AnimTexMtx, mTexBindIdx) == 0, "AnimTexMtx.mTexBindIdx: native offset");
+_Static_assert(offsetof(struct AnimTexMtx, texBindIdx) == 0, "AnimTexMtx.texBindIdx: native offset");
 _Static_assert(offsetof(struct AnimTexMtx, align) == 1, "AnimTexMtx.align: native offset");
-_Static_assert(offsetof(struct AnimTexMtx, mTransS) == 4, "AnimTexMtx.mTransS: native offset");
-_Static_assert(offsetof(struct AnimTexMtx, mTransT) == 8, "AnimTexMtx.mTransT: native offset");
-_Static_assert(offsetof(struct AnimTexMtx, mScaleS) == 12, "AnimTexMtx.mScaleS: native offset");
-_Static_assert(offsetof(struct AnimTexMtx, mScaleT) == 16, "AnimTexMtx.mScaleT: native offset");
-_Static_assert(offsetof(struct AnimTexMtx, mRotate) == 20, "AnimTexMtx.mRotate: native offset");
+_Static_assert(offsetof(struct AnimTexMtx, transS) == 4, "AnimTexMtx.transS: native offset");
+_Static_assert(offsetof(struct AnimTexMtx, transT) == 8, "AnimTexMtx.transT: native offset");
+_Static_assert(offsetof(struct AnimTexMtx, scaleS) == 12, "AnimTexMtx.scaleS: native offset");
+_Static_assert(offsetof(struct AnimTexMtx, scaleT) == 16, "AnimTexMtx.scaleT: native offset");
+_Static_assert(offsetof(struct AnimTexMtx, rotate) == 20, "AnimTexMtx.rotate: native offset");
 #endif
-_Static_assert(PORT_FSIZE(struct AnimTexMtx, mTexBindIdx) == 1, "AnimTexMtx.mTexBindIdx: native width differs from disc");
+_Static_assert(PORT_FSIZE(struct AnimTexMtx, texBindIdx) == 1, "AnimTexMtx.texBindIdx: native width differs from disc");
 _Static_assert(PORT_FSIZE(struct AnimTexMtx, align[0]) == 1, "AnimTexMtx.align: native width differs from disc");
-_Static_assert(PORT_FSIZE(struct AnimTexMtx, mTransS) == 4, "AnimTexMtx.mTransS: native width differs from disc");
-_Static_assert(PORT_FSIZE(struct AnimTexMtx, mTransT) == 4, "AnimTexMtx.mTransT: native width differs from disc");
-_Static_assert(PORT_FSIZE(struct AnimTexMtx, mScaleS) == 4, "AnimTexMtx.mScaleS: native width differs from disc");
-_Static_assert(PORT_FSIZE(struct AnimTexMtx, mScaleT) == 4, "AnimTexMtx.mScaleT: native width differs from disc");
-_Static_assert(PORT_FSIZE(struct AnimTexMtx, mRotate) == 4, "AnimTexMtx.mRotate: native width differs from disc");
+_Static_assert(PORT_FSIZE(struct AnimTexMtx, transS) == 4, "AnimTexMtx.transS: native width differs from disc");
+_Static_assert(PORT_FSIZE(struct AnimTexMtx, transT) == 4, "AnimTexMtx.transT: native width differs from disc");
+_Static_assert(PORT_FSIZE(struct AnimTexMtx, scaleS) == 4, "AnimTexMtx.scaleS: native width differs from disc");
+_Static_assert(PORT_FSIZE(struct AnimTexMtx, scaleT) == 4, "AnimTexMtx.scaleT: native width differs from disc");
+_Static_assert(PORT_FSIZE(struct AnimTexMtx, rotate) == 4, "AnimTexMtx.rotate: native width differs from disc");
 static const PortField portBE_anim_AnimTexMtx_fields[] = {
-    { "mTexBindIdx", 0x0, offsetof(struct AnimTexMtx, mTexBindIdx), PORT_FK_U8, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct AnimTexMtx, mTexBindIdx), 0, NULL, NULL },
+    { "texBindIdx", 0x0, offsetof(struct AnimTexMtx, texBindIdx), PORT_FK_U8, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct AnimTexMtx, texBindIdx), 0, NULL, NULL },
     { "align", 0x1, offsetof(struct AnimTexMtx, align), PORT_FK_U8, PORT_CNT_ONE, 0, 1, 3, 0x0, 1, PORT_FSIZE(struct AnimTexMtx, align[0]), PORT_FSIZE(struct AnimTexMtx, align[0]), 0, NULL, NULL },
-    { "mTransS", 0x4, offsetof(struct AnimTexMtx, mTransS), PORT_FK_F32, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct AnimTexMtx, mTransS), 0, NULL, NULL },
-    { "mTransT", 0x8, offsetof(struct AnimTexMtx, mTransT), PORT_FK_F32, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct AnimTexMtx, mTransT), 0, NULL, NULL },
-    { "mScaleS", 0xC, offsetof(struct AnimTexMtx, mScaleS), PORT_FK_F32, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct AnimTexMtx, mScaleS), 0, NULL, NULL },
-    { "mScaleT", 0x10, offsetof(struct AnimTexMtx, mScaleT), PORT_FK_F32, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct AnimTexMtx, mScaleT), 0, NULL, NULL },
-    { "mRotate", 0x14, offsetof(struct AnimTexMtx, mRotate), PORT_FK_F32, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct AnimTexMtx, mRotate), 0, NULL, NULL },
+    { "transS", 0x4, offsetof(struct AnimTexMtx, transS), PORT_FK_F32, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct AnimTexMtx, transS), 0, NULL, NULL },
+    { "transT", 0x8, offsetof(struct AnimTexMtx, transT), PORT_FK_F32, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct AnimTexMtx, transT), 0, NULL, NULL },
+    { "scaleS", 0xC, offsetof(struct AnimTexMtx, scaleS), PORT_FK_F32, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct AnimTexMtx, scaleS), 0, NULL, NULL },
+    { "scaleT", 0x10, offsetof(struct AnimTexMtx, scaleT), PORT_FK_F32, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct AnimTexMtx, scaleT), 0, NULL, NULL },
+    { "rotate", 0x14, offsetof(struct AnimTexMtx, rotate), PORT_FK_F32, PORT_CNT_ONE, 0, 0, 0, 0x0, 0, 0, PORT_FSIZE(struct AnimTexMtx, rotate), 0, NULL, NULL },
 };
 const PortType portBE_anim_AnimTexMtx = { "AnimTexMtx", 0x18, sizeof(struct AnimTexMtx), _Alignof(struct AnimTexMtx), 7, portBE_anim_AnimTexMtx_fields };
 

@@ -1,3 +1,4 @@
+// Paper Mario 64 smoke effect 6 (kemuri: smoke) at a point.
 #include "eff/n64/eff_kemuri6_n64.h"
 #include "eff/eff_n64.h"
 #include "driver/camdrv.h"
@@ -8,12 +9,7 @@
 #include <dolphin/gx.h>
 #include <dolphin/mtx.h>
 #include <stdlib.h>
-
-#ifndef TARGET_PC /* PC port: the host libc declares these */
-double sin(double x);
-double cos(double x);
-#endif
-
+#include "libc_decls.h"
 typedef struct EffKemuri6N64Work {
     BOOL active;     // 0x0
     u16 type;        // 0x4
@@ -32,10 +28,11 @@ typedef struct EffKemuri6N64Work {
     f32 velocity;    // 0x38
     f32 accel;       // 0x3C
     f32 accelAdd;    // 0x40
-    f32 field_0x44;  // 0x44
+    f32 reserved_44; // 0x44, only cleared at entry
     u8 pad_48[8];    // 0x48
 } EffKemuri6N64Work;
 
+/** Camera-facing walking puff quad. */
 static effN64Vtx kmr_a_1_v[] = {
     {-8, 7, 0, 0, 0, 255, 255, 255, 255},
     {7, 7, 0, 512, 0, 255, 255, 255, 255},
@@ -43,9 +40,13 @@ static effN64Vtx kmr_a_1_v[] = {
     {7, -8, 0, 512, 512, 255, 255, 255, 255},
 };
 
-void effKemuri6Main(EffectEntry* effect);
-void effKemuri6Disp(CameraId cameraId, EffectEntry* effect);
+static void effKemuri6Main(EffectEntry* effect);
+static void effKemuri6Disp(CameraId cameraId, EffectEntry* effect);
 
+/**
+ * Spawns one randomly sized and rotated cloud-smoke puff ("walking" in the effect table) at (x, y, z);
+ * 15 frames. Called via evt_eff64 "kemuri6_n64"; type 0 can hold briefly while Mario is idle.
+ */
 EffectEntry* effKemuri6N64Entry(s32 type, f32 x, f32 y, f32 z) {
     EffectEntry* effect;
     EffKemuri6N64Work* work;
@@ -61,7 +62,7 @@ EffectEntry* effKemuri6N64Entry(s32 type, f32 x, f32 y, f32 z) {
         work->active = TRUE;
         work->type = type;
         work->accelAdd = 0.0f;
-        work->field_0x44 = 0.0f;
+        work->reserved_44 = 0.0f;
         work->position.x = x;
         work->position.y = y;
         work->position.z = z;
@@ -82,7 +83,8 @@ EffectEntry* effKemuri6N64Entry(s32 type, f32 x, f32 y, f32 z) {
     return effect;
 }
 
-void effKemuri6Main(EffectEntry* effect) {
+/** Pulses the puff size, raises it with a decelerating velocity and fades it; type 0 holds once if Mario is idle. */
+static void effKemuri6Main(EffectEntry* effect) {
     EffKemuri6N64Work* work;
     int i;
     BOOL disp;
@@ -132,7 +134,8 @@ void effKemuri6Main(EffectEntry* effect) {
     }
 }
 
-void effKemuri6Disp(CameraId cameraId, EffectEntry* effect) {
+/** Draws the puff as a Y-billboarded textured quad (effect texture 0x4E) rolled by its rotation. */
+static void effKemuri6Disp(CameraId cameraId, EffectEntry* effect) {
     CameraEntry* camera;
     EffKemuri6N64Work* work;
     int i;

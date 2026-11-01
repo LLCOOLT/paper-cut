@@ -123,7 +123,9 @@ struct MapAnimLightParamList
   items[count] -> MapAnimLightData2
 
 struct MapAnimJoint
-  name string
+  # the joint's map object name: mapdrv.c reads it through MapAnimNm.name
+  # (the decomp declares it as its 4 bytes, u8 nameRef[4])
+  nameRef string
   keys[keyCount]
 
 struct MapAnimMatData

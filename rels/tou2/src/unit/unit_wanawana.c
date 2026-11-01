@@ -1,7 +1,8 @@
+// unit_wanawana: wanawana battle unit (a trap; UNIT_UNUSED_WANAWANA in the unit table).
+
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
 
-#pragma force_active on
 #include "battle/battle_unit.h"
 #include "driver/animdrv.h"
 #include "driver/camdrv.h"
@@ -13,95 +14,33 @@
 #include "battle/battle.h"
 #include "driver/dispdrv.h"
 #include "battle/battle_event_default.h"
-#ifdef TARGET_PC /* declarations the GameCube code calls implicitly */
 #include "battle/battle_sub.h"
-#endif
+#include "unit/unit_wanawana.h"
+#include "battle/battle_event_cmd.h"
+#include "evt/evt_map.h"
+#include "driver/mapdrv.h"
+#include "libc_decls.h"
 
-#ifndef TARGET_PC /* PC port: the host libc declares these */
-double tan(double x);
-#else
-/* this file's own tanf, apart from the C library's (a static function after
- * <math.h>'s extern one is an MSVC-only extension) */
-#define tanf unit_wanawana_tanf
-#endif
-typedef struct WanaWork { s32 ready; s32 poseId; Mtx mtx; GXTexObj obj; BattleUnitPart* part; smartEntry* tex; } WanaWork;
-void test_kururing_mapdisp(CameraId camera);
-static f32 tanf(f32 x);
-void replace_callback(BattleUnitPart* part, s32 type);
-void replace_disp(CameraId camera, void* param);
-
-USER_FUNC(btlevtcmd_AnimeChangePoseFromTable);
-USER_FUNC(btlevtcmd_EnemyItemUseCheck);
-USER_FUNC(btlevtcmd_SetEventAttack);
-USER_FUNC(btlevtcmd_SetEventConfusion);
-USER_FUNC(btlevtcmd_SetEventDamage);
-USER_FUNC(btlevtcmd_SetEventWait);
-USER_FUNC(btlevtcmd_StartWaitEvent);
-USER_FUNC(evt_mapobj_flag_onoff);
-USER_FUNC(replace_evt);
-void replace_callback(BattleUnitPart* part, s32 type);
-void replace_disp(CameraId camera, void* param);
-static f32 tanf(f32 x);
-
-f32 fd_wanawana_negone_one_374[2] __attribute__((aligned(8)));
-f32 fd_wanawana_neg_one_382;
-f32 fd_wanawana___local_PI_383;
-f32 fd_wanawana___local_3PIO2_385;
-f32 fd_wanawana_one_negone_373[2] __attribute__((aligned(8)));
-f32 fd_wanawana___local_PIO2_384;
-f32 fd_wanawana_one_381;
-f32 fd_wanawana_negone_one_360[2] __attribute__((aligned(8)));
-f32 fd_wanawana_neg_one_365;
-f32 fd_wanawana___local_PI_366;
-f32 fd_wanawana___local_3PIO2_368;
-f32 fd_wanawana_one_negone_359[2] __attribute__((aligned(8)));
-f32 fd_wanawana___local_PIO2_367;
-f32 fd_wanawana_one_364;
 BattleUnitKind unit_wanawana;
 static BattleUnitDefense defence;
 static BattleUnitDefenseAttr defence_attr;
 static StatusVulnerability regist;
-static PoseTableEntry pose_table[4];
 static BattleDataEntry data_table[1];
 static BattleUnitKindPart parts[1];
 static EvtWord init_event[29];
 static EvtWord damage_event[10];
-static EvtWord phase_event[2];
 static EvtWord attack_event[19];
 static EvtWord wait_event[6];
 
-static f32 tanf(f32 x) {
+/** Out-of-line f32 wrapper of tan. */
+static f32 tanFloat(f32 x) {
     return tan(x);
 }
 
-f32 fd_wanawana_negone_one_374[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_wanawana_neg_one_382 = -1.0f;
-
-f32 fd_wanawana___local_PI_383 = 3.1415927f;
-
-f32 fd_wanawana___local_3PIO2_385 = 4.712389f;
-
-f32 fd_wanawana_one_negone_373[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_wanawana___local_PIO2_384 = 1.5707964f;
-
-f32 fd_wanawana_one_381 = 1.0f;
-
-f32 fd_wanawana_negone_one_360[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_wanawana_neg_one_365 = -1.0f;
-
-f32 fd_wanawana___local_PI_366 = 3.1415927f;
-
-f32 fd_wanawana___local_3PIO2_368 = 4.712389f;
-
-f32 fd_wanawana_one_negone_359[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_wanawana___local_PIO2_367 = 1.5707964f;
-
-f32 fd_wanawana_one_364 = 1.0f;
-
+/**
+ * Unit data of the Trap: 2 HP and level 1, with its parts, status vulnerability, init event and event data
+ * table.
+ */
 BattleUnitKind unit_wanawana = {
     199,
     "btl_un_wanawana",
@@ -168,28 +107,50 @@ BattleUnitKind unit_wanawana = {
     data_table,
 };
 
+/**
+ * Defense of the Trap against normal, fire, ice, explosion and electric attacks: none, so it takes full
+ * damage from every element.
+ */
 static BattleUnitDefense defence = {{0, 0, 0, 0, 0}};
 
+/** Damage-type reactions of the Trap: none, so every element hurts it normally. */
 static BattleUnitDefenseAttr defence_attr = {{0, 0, 0, 0, 0}};
 
+/**
+ * Status vulnerability of the Trap, as the percent chance each status takes hold: every status lands at
+ * the normal rate.
+ */
 static StatusVulnerability regist = {100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100};
 
+/** Pose table of the Trap: maps each battle pose (idle, hurt, attacking and so on) to its animation. */
 static PoseTableEntry pose_table[] = {
     {28, "S_1"},
     {31, "S_1"},
     {39, "S_1"},
-    {69, "S_1"},
+    {BTL_POSE_STAY_DEFAULT, "S_1"},
 };
 
+/** Event data table of the Trap: no custom reactions, so the standard battle handlers run for every event. */
 static BattleDataEntry data_table[] = {
     {0, NULL},
 };
 
+/**
+ * Parts of the Trap: a single body part (part 1, model nakayama_test4), each with its defense tables,
+ * attributes and pose table.
+ */
 static BattleUnitKindPart parts[] = {
-    {1, "btl_un_wanawana", "nakayama_test4", 0.0f, 0.0f, 0.0f, 0.0f, 40.0f, 0.0f, 0.0f, 40.0f, 0.0f, 20, 30, 255, &defence, &defence_attr, 0x9, 0, pose_table},
+    {1, "btl_un_wanawana", "nakayama_test4", 0.0f, 0.0f, 0.0f, 0.0f, 40.0f, 0.0f, 0.0f, 40.0f, 0.0f, 20, 30, 255, &defence, &defence_attr, PART_ATTR_MAIN | PART_ATTR_GUARD_COVER, 0, pose_table},
 };
 
-void replace_disp(CameraId camera, void* param) {
+/**
+ * Shadow-camera draw callback queued by replace_evt:
+ * points the camera straight down over the trap part, sized to
+ * its pose's bounding box, draws the map objects flagged MAPOBJ_FLAG_KURURING_PASS (the S_yuka floor group, see
+ * init_event) with test_kururing_mapdisp and copies the result into the trap's half-size RGB5A3 texture,
+ * then restores the camera and marks the texture ready.
+ */
+static void replace_disp(CameraId camera, void* param) {
     WanaWork* wp = param;
     CameraEntry saved;
     AnimationPoseData* data;
@@ -213,7 +174,7 @@ void replace_disp(CameraId camera, void* param) {
     cam->cameraUp = (Vec){0.0f, 0.0f, -1.0f};
     cam->cameraAt = pos;
     cam->cameraPos = pos;
-    cam->cameraPos.y += (h / 2.0f) / tanf(0.21816616f);
+    cam->cameraPos.y += (h / 2.0f) / tanFloat(0.21816616f);
     C_MTXPerspective(cam->projection, 25.0f, (f32)w / (f32)h, 1.0f, 32767.0f);
     cam->projType = GX_PERSPECTIVE;
     C_MTXLookAt(cam->view, &cam->cameraPos, &cam->cameraUp, &cam->cameraAt);
@@ -233,8 +194,12 @@ void replace_disp(CameraId camera, void* param) {
     wp->ready = 1;
 }
 
-void replace_callback(BattleUnitPart* part, s32 type) {
-    WanaWork* wp = (WanaWork*)part->mOwner->countersetWeapon;
+/**
+ * Display callback of the trap part (set by replace_evt): once the floor texture is ready it binds it as the
+ * paper texture with an identity matrix for draw type 0 and clears the paper texture for any other type.
+ */
+static void replace_callback(BattleUnitPart* part, s32 type) {
+    WanaWork* wp = (WanaWork*)part->owner->countersetWeapon;
 
     if (wp->ready) {
         Mtx mtx;
@@ -250,7 +215,14 @@ void replace_callback(BattleUnitPart* part, s32 type) {
     }
 }
 
-USER_FUNC(replace_evt) {
+/**
+ * Script helper that sets up the wanawana trap's floor-copy texture:
+ * allocates the work (kept in the unit's countersetWeapon slot) and an RGB5A3 texture as wide
+ * and deep as the part's
+ * bounding box, turns on ANIM_POSE_FLAG_TEX_OVERLAY for its pose, installs replace_callback and queues
+ * replace_disp.
+ */
+static USER_FUNC(replace_evt) {
     BattleUnitPart* part = BattleGetUnitPartsPtr(BattleTransID(event, -2), 1);
     BattleUnit* unit = BattleGetUnitPtr(_battleWorkPointer, BattleTransID(event, -2));
     AnimationPoseData* data = animPoseGetAnimBaseDataPtr(part->poseId);
@@ -277,7 +249,7 @@ USER_FUNC(replace_evt) {
     GXInitTexObj(&wp->obj, wp->tex->address, w / 2, h / 2, GX_TF_RGB5A3, GX_CLAMP, GX_CLAMP, GX_FALSE);
     GXInitTexObjLOD(&wp->obj, GX_NEAR, GX_NEAR, 0.0f, 0.0f, 0.0f, GX_FALSE, GX_FALSE, GX_ANISO_1);
     PSMTXIdentity(wp->mtx);
-    animGetPtr()->poses[part->poseId].flags |= 0x10;
+    animGetPtr()->poses[part->poseId].flags |= ANIM_POSE_FLAG_TEX_OVERLAY;
     part->dispCallback = replace_callback;
     unit->countersetWeapon = (struct BattleWeapon*)wp; // reused as the WanaWork pointer
     unit->screenTexBuf = wp->tex;
@@ -286,41 +258,54 @@ USER_FUNC(replace_evt) {
     return EVT_RETURN_DONE;
 }
 
+/**
+ * Init script of the unused wanawana trap unit:
+ * registers its wait, attack and damage handlers (confusion uses the default handler),
+ * turns on the MAPOBJ_FLAG_KURURING_PASS flag of the S_yuka map object group,
+ * runs replace_evt and starts the idle event.
+ * The flag makes test_kururing_mapdisp draw the S_yuka floor objects into the trap's texture (replace_disp).
+ */
 static EVT_BEGIN(init_event)
-    CALL(btlevtcmd_SetEventWait, -2, PTR(wait_event))
-    CALL(btlevtcmd_SetEventAttack, -2, PTR(attack_event))
-    CALL(btlevtcmd_SetEventDamage, -2, PTR(damage_event))
-    CALL(btlevtcmd_SetEventConfusion, -2, PTR(btldefaultevt_Confuse))
-    CALL(evt_mapobj_flag_onoff, 1, 1, STRING("S_yuka"), 4194304)
+    CALL(btlevtcmd_SetEventWait, BTL_UNIT_SELF, PTR(wait_event))
+    CALL(btlevtcmd_SetEventAttack, BTL_UNIT_SELF, PTR(attack_event))
+    CALL(btlevtcmd_SetEventDamage, BTL_UNIT_SELF, PTR(damage_event))
+    CALL(btlevtcmd_SetEventConfusion, BTL_UNIT_SELF, PTR(btldefaultevt_Confuse))
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("S_yuka"), MAPOBJ_FLAG_KURURING_PASS)
     CALL(replace_evt)
-    CALL(btlevtcmd_StartWaitEvent, -2)
+    CALL(btlevtcmd_StartWaitEvent, BTL_UNIT_SELF)
     RETURN
 EVT_END()
 
+/**
+ * Damage reaction: runs the default damage handling (btldefaultevt_Damage) with LW(10) = -2 (the unit itself)
+ * and LW(11) = 1.
+ */
 static EVT_BEGIN(damage_event)
     SET_VALUE(LW(10), -2)
     SET_VALUE(LW(11), 1)
-    CALL_CHILD(PTR(btldefaultevt_Damage))
+    CALL_CHILD(btldefaultevt_Damage)
     RETURN
 EVT_END()
 
+/** Phase event: empty, it does nothing. */
 static EVT_BEGIN(phase_event)
     RETURN
 EVT_END()
 
+/** Attack event: uses an item if it has one; otherwise it does nothing and goes back to idling. */
 static EVT_BEGIN(attack_event)
-    CALL(btlevtcmd_EnemyItemUseCheck, -2, LW(0))
+    CALL(btlevtcmd_EnemyItemUseCheck, BTL_UNIT_SELF, LW(0))
     IF_INT_NOT_EQUAL(LW(0), 0)
         CALL_CHILD(LW(0))
-        CALL(btlevtcmd_StartWaitEvent, -2)
+        CALL(btlevtcmd_StartWaitEvent, BTL_UNIT_SELF)
         RETURN
     END_IF
-    CALL(btlevtcmd_StartWaitEvent, -2)
+    CALL(btlevtcmd_StartWaitEvent, BTL_UNIT_SELF)
     RETURN
 EVT_END()
 
+/** Idle event: sets the unit's body part 1 to the pose given by its pose table for its current state. */
 static EVT_BEGIN(wait_event)
-    CALL(btlevtcmd_AnimeChangePoseFromTable, -2, 1)
+    CALL(btlevtcmd_AnimeChangePoseFromTable, BTL_UNIT_SELF, 1)
     RETURN
 EVT_END()
-

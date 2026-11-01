@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-"""Refresh the README progress badges and status table from build/G8MJ01/report.json.
+"""Refresh the README progress badges and tables from build/<version>/report.json.
 
-Run after `python -m ninja` (which writes the report):  python tools/update_readme.py
+The badges and the first table come from G8MJ01; every other version that has been built gets its own table.
+Run after `python -m ninja` for each version (it writes the report):  python tools/update_readme.py
 """
 import json
 import os
@@ -107,19 +108,29 @@ def main():
             + (f" ({tc['needed_fns']} needed, {tc['paved_fns']} over matching C) |\n\n" if "needed_fns" in tc else " |\n\n")
         )
     us = ""
-    us_report = os.path.join(ROOT, "build", "G8ME01", "report.json")
-    if os.path.exists(us_report):  # US (G8ME01) figures, once that version has been built
-        ur = json.load(open(us_report, encoding="utf-8"))
-        um = ur["measures"]
-        urows = [("All", um)] + [(c["name"], c["measures"]) for c in ur.get("categories", [])]
-        utable = table[:2] + [
+    # Other versions, each once it has been built (L 2026-10-26: PAL and the demo get tables too)
+    for ver, label in (("G8ME01", "US (G8ME01)"), ("G8MP01", "Europe (G8MP01)"),
+                       ("G8ME01_DEMO", "June US demo (G8ME01_DEMO)"), ("G8MJ01_DEMO", "Japanese demo (G8MJ01_DEMO)"),
+                       ("G8ME01_DEMO2", "September US demo (G8ME01_DEMO2)"),
+                       ("G8MP01_DEMO", "European demo (G8MP01_DEMO)")):
+        vr_path = os.path.join(ROOT, "build", ver, "report.json")
+        if not os.path.exists(vr_path):
+            continue
+        vr = json.load(open(vr_path, encoding="utf-8"))
+        vm = vr["measures"]
+        vrows = [("All", vm)] + [(c["name"], c["measures"]) for c in vr.get("categories", [])]
+        vtable = table[:2] + [
             f"| {n} | {pct(m, 'matched_code_percent'):.2f}% | {pct(m, 'complete_code_percent'):.2f}% "
             f"| {m.get('complete_units', 0)} / {m.get('total_units', 0)} "
             f"| {m.get('matched_functions', 0)} / {m.get('total_functions', 0)} |"
-            for n, m in urows
+            for n, m in vrows
         ]
-        us = (f"\n\n**US (G8ME01)**, data matched {pct(um, 'matched_data_percent'):.2f}%:\n\n"
-              + "\n".join(utable))
+        us += (f"\n\n**{label}**, data matched {pct(vm, 'matched_data_percent'):.2f}%:\n\n"
+               + "\n".join(vtable))
+        if pct(vm, 'matched_data_percent') < 100.0:
+            us += ("\n\nobjdiff compares data symbol by symbol, and data it cannot pair with a symbol of the version's config "
+                   "counts as unmatched, so this figure can stay below 100% while the build check above confirms that every "
+                   "file is byte-identical.")
     section = (
         "<!-- progress-start -->\n"
         + head

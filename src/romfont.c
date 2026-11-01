@@ -1,21 +1,31 @@
+// ROM font: draws text with the console's built-in (IPL) font, for messages shown before the game font is loaded.
 #include "romfont.h"
 #include "dolphin/mtx.h"
 #include "dolphin/types.h"
 #include "memory.h"
-#ifdef VERSION_G8ME01
+#include "version.h"
+#if VERSION != VERSION_JP
 #include "mario/mariost.h"
 #endif
 #include <dolphin/os.h>
+#include "libc_decls.h"
 
 //.sbss
-static u32 romfont_sbss_pad; /* FAKE: tail pad, emitted after work (sbss is reverse order) */
+/**
+ * State of the system-font cache: the language of the font
+ * and the glyph table built by romFontMake; wp points to it.
+ */
 static RomFontWork work;
 
 //.sdata
 static RomFontWork* wp = &work;
 
 //.rodata string, .sdata table
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
+/**
+ * Japanese system messages of the retail release: the progressive-scan prompt and its replies, the disc-cover
+ * and disc-read errors, the fatal error text and the language names. romFontGetMessage indexes every msg_ table alike.
+ */
 const char* msg_jp[21] = {
     "\203v\203\215\203O\203\214\203b\203V\203u\203\202\201[\203h\202\305\225\\\216\246\202\265\202\334\202\267\202\251\201H",
     "\202\315\201@\202\242\201@\201@\201@\201@\201@\201@\202\242\202\242\202\246",
@@ -40,19 +50,39 @@ const char* msg_jp[21] = {
     NULL,
 };
 
+/**
+ * English system messages, laid out like msg_jp
+ * (the progressive prompt wording differs in the PAL release).
+ */
 const char* msg_us[21] = {
+#if VERSION >= VERSION_DEMO_EU
+    "Would you like to display\nin progressive scan mode?",
+#else
     "Would you like to display\nin Progressive Mode?",
+#endif
     "Yes              N o",
     "[    ]",
+#if VERSION >= VERSION_DEMO_EU
+    "Progressive scan mode\nhas been turned on.",
+#else
     "Progressive Mode\nhas been turned on.",
+#endif
+#if VERSION >= VERSION_DEMO_EU
+    "Progressive scan mode\nhas been turned off.",
+#else
     "Progressive Mode\nhas been turned off.",
+#endif
     "This game is compatible with 60Hz mode.\nPlease select mode.\n\nIf your television does not display\ncorrectly in 60Hz mode,\nplease select 50Hz mode.",
     "60Hz mode      50Hz mode",
     "[             ]",
     "Screen display has been set to\n60Hz mode.",
     "Screen display has been set to\n50Hz mode.",
     "The Disc Cover is open.\nIf you want to continue the game,\nplease close the Disc Cover.",
+#if VERSION >= VERSION_DEMO_EU
+    "Please insert\nthe \"Paper Mario\" Game Disc.",
+#else
     "Please insert\nthe \"Paper Mario: The\nThousand-Year Door\"\nGame Disc.",
+#endif
     "The Game Disc could not be read.\nPlease read the Nintendo GameCube\nInstruction Booklet\nfor more information.",
     "An error has occurred.\nTurn the power off and refer to\nthe Nintendo GameCube\nInstruction Booklet\nfor further instructions.",
     "English",
@@ -64,19 +94,28 @@ const char* msg_us[21] = {
     NULL,
 };
 
+/** German system messages, laid out like msg_jp. */
 const char* msg_ge[21] = {
     "",
     "",
     "",
     "",
     "",
+#if VERSION >= VERSION_DEMO_EU
+    "Dieses Spiel unterst\374tzt den 60Hz-Modus.\nBitte Modus ausw\344hlen.\n\nSollte das TV-Ger\344t im 60Hz-Modus kein\neinwandfreies Bild darstellen,\nbitte den 50Hz-Modus ausw\344hlen.",
+#else
     "Dieses Spiel unterst\374tzt den 60Hz-Modus.\nBitte Modus auswahlen.\n\nSollte das TV-Gerat im 60Hz-Modus kein\neinwandfreies Bild darstellen,\nbitte den 50Hz-Modus auswahlen.",
+#endif
     "60Hz-Modus     50Hz-Modus",
     "[               ]",
     "Die Bildschirmdarstellung erfolgt im\n60Hz-Modus.",
     "Die Bildschirmdarstellung erfolgt im\n50Hz-Modus.",
     "Der Disc-Deckel ist ge\366ffnet.\nBitte den Disc-Deckel schlie\337en,\num mit dem Spiel fortzufahren.",
+#if VERSION >= VERSION_DEMO_EU
+    "Bitte legen Sie die \"Paper Mario\"-Disc ein.",
+#else
     "Bitte legen Sie die \"Paper Mario\" Disc ein.",
+#endif
     "Diese Game Disc kann\nnicht gelesen werden.\nBitte lesen Sie die\nBedienungsanleitung des\nNintendo GameCube, um weitere\nInformationen zu erhalten.",
     "Ein Fehler ist aufgetreten.\nBitte schalten Sie den\nNintendo GameCube aus und lesen\nSie die Bedienungsanleitung,\num weitere Informationen zu erhalten.",
     "English",
@@ -88,20 +127,29 @@ const char* msg_ge[21] = {
     NULL,
 };
 
+/** French system messages, laid out like msg_jp. */
 const char* msg_fr[21] = {
     "",
     "",
     "",
     "",
     "",
+#if VERSION >= VERSION_DEMO_EU
+    "Ce jeu est compatible\navec le mode 60 Hz.\nVeuillez choisir un mode.\n\nSi votre t\351l\351viseur n'affiche pas\ncorrectement le mode 60 Hz,\nchoisissez le mode 50 Hz.",
+#else
     "Ce jeu est compatible\navec le mode 60 Hz.\nVeuillez choisir un mode.\n\nSi votre televiseur n'affiche pas\ncorrectement le mode 60 Hz,\nchoisissez le mode 50 Hz.",
+#endif
     "Mode 60 Hz     Mode 50 Hz",
     "[               ]",
     "L'affichage est en mode 60 Hz.",
     "L'affichage est en mode 50 Hz.",
     "Le couvercle est ouvert.\nPour continuer \340 jouer,\nveuillez fermer le couvercle.",
     "Veuillez ins\351rer le disque \"Paper Mario\".",
+#if VERSION >= VERSION_DEMO_EU
+    "La lecture du disque a \351chou\351.\nVeuillez vous r\351f\351rer\nau manuel d'instructions\nNintendo GameCube pour\nde plus amples informations.",
+#else
     "La lecture du disque a echoue.\nVeuillez vous r\351f\351rer\nau manuel d'instructions\nNintendo GameCube pour\nde plus amples informations.",
+#endif
     "Une erreur est survenue.\nEteignez la console et r\351f\351rez-vous\nau manuel d'instructions\nNintendo GameCube pour\nde plus amples informations.",
     "English",
     "Deutsch",
@@ -112,6 +160,7 @@ const char* msg_fr[21] = {
     NULL,
 };
 
+/** Spanish system messages, laid out like msg_jp. */
 const char* msg_sp[21] = {
     "",
     "",
@@ -136,6 +185,7 @@ const char* msg_sp[21] = {
     NULL,
 };
 
+/** Italian system messages, laid out like msg_jp. */
 const char* msg_it[21] = {
     "",
     "",
@@ -160,9 +210,22 @@ const char* msg_it[21] = {
     NULL,
 };
 
-static const char** msg_tbl[6] = { msg_jp, msg_us, msg_ge, msg_fr, msg_sp, msg_it };
+/**
+ * The system message tables by language number (gp->language):
+ * Japanese, English, German, French, Spanish, Italian.
+ */
+static const char** msg_tbl[6] = {msg_jp, msg_us, msg_ge, msg_fr, msg_sp, msg_it};
 #else
+#if VERSION <= VERSION_DEMO_JP
+/** Japanese system messages: progressive-scan prompt and replies, disc-cover and disc-read errors. */
+const char* msg_jp[9] = {
+#else
+/**
+ * Japanese system messages: progressive-scan prompt and replies,
+ * disc-cover and disc-read errors, fatal error text.
+ */
 const char* msg_jp[10] = {
+#endif
     "プログレッシブモードで表示しますか？",
     "は　い　　　　　　いいえ",
     "【　　　　】",
@@ -171,10 +234,13 @@ const char* msg_jp[10] = {
     "ディスクカバーが開いています。\n\nゲームを続ける場合は、\nディスクカバーを閉めてください。",
     "ペーパーマリオＲＰＧの\nディスクをセットしてください。",
     "ディスクを読めませんでした。\n\nくわしくは、本体の取扱説明書を\nお読みください。",
+#if VERSION >= VERSION_JP
     "エラーが発生しました。\n\n本体のパワーボタンを押して電源をOFFにし、\n本体の取扱説明書の指示に従ってください。",
+#endif
     NULL
 };
 
+/** English system messages, laid out like msg_jp. */
 const char* msg_us[9] = {
     "Would you like to display in progressive scan mode?",
     "Yes              N o",
@@ -187,14 +253,20 @@ const char* msg_us[9] = {
     NULL
 };
 
+/** The system message tables by language number: Japanese, then English. */
 static const char** msg_tbl[2] = { msg_jp, msg_us };
 #endif
 
 // local prototypes
-void romFontMake(void);
+static void romFontMake(void);
 
+/**
+ * Returns system message msg (progressive-scan prompt, disc errors, language names) in the console's language.
+ * Non-JP releases fall back to the English table when the IPL font is ASCII but gp->language is Japanese;
+ * JP always returns the Japanese text. Used by seq_logo and the disc-error screen in mariost.
+ */
 const char* romFontGetMessage(s32 msg) {
-#ifdef VERSION_G8ME01
+#if VERSION != VERSION_JP
     if (wp->language != 0 && (u32)gp->language == 0) {
         return msg_tbl[1][msg];
     }
@@ -204,6 +276,7 @@ const char* romFontGetMessage(s32 msg) {
 #endif
 }
 
+/** Called once at boot from mariost: picks Japanese (SJIS IPL font) or Western text and bakes the glyph cache. */
 void romFontInit(void) {
     wp->glyphs = 0;
     wp->uniqueChars = 0;
@@ -215,7 +288,12 @@ void romFontInit(void) {
     romFontMake();
 }
 
-void romFontMake(void) {
+/**
+ * Builds the glyph cache: collects every character used by the message tables, sorts and dedups them,
+ * loads the IPL font from ROM and stores one texel glyph and width per character in wp->glyphs.
+ * The temporary buffers are freed.
+ */
+static void romFontMake(void) {
     char c[16];
     s32 width;
     OSFontHeader* fontData;
@@ -229,7 +307,7 @@ void romFontMake(void) {
     u16 prev;
     s32 t;
 
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
     chars = __memAlloc(HEAP_DEFAULT, 0x2000);
 #else
     chars = __memAlloc(HEAP_DEFAULT, 0x800);
@@ -237,7 +315,7 @@ void romFontMake(void) {
     numChars = 0;
 
     /* 1. Collect every printable code from the system message strings. */
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
     for (t = 0; t < 6; t++) {
 #else
     for (t = 0; t < 2; t++) {
@@ -246,10 +324,10 @@ void romFontMake(void) {
             /* ASCII mode (language != 0): only scan the English table (t != 0). */
             s32 k = 0;
             if (wp->language == 0 || t != 0) {
-                for (k;;) {
+                for (;;) {
                     u32 b = str[k];
                     u16 w = *(u16*)(str + k);
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
                     if (wp->language != 0) {
                         if (b == 0) {
                             break;
@@ -289,13 +367,9 @@ void romFontMake(void) {
         }
     }
 
-    /* 3. Deduplicate the sorted list; wp->unk4 = unique count. */
+    /* 3. Deduplicate the sorted list; wp->uniqueChars = unique count. */
     wp->uniqueChars = 0;
-#ifdef VERSION_G8ME01
-    uniqueChars = __memAlloc(HEAP_DEFAULT, 0x2000);
-#else
-    uniqueChars = __memAlloc(HEAP_DEFAULT, 0x800);
-#endif
+    uniqueChars = __memAlloc(HEAP_DEFAULT, VERSION_PICK(0x800, 0x2000));
     prev = 0xFFFF;
     for (i = 0; i < numChars; i++) {
         if (chars[i] != prev) {
@@ -340,10 +414,10 @@ void romFontMake(void) {
     __memFree(HEAP_DEFAULT, chars);
 }
 
-#ifndef TARGET_PC /* PC port: the host libc declares these */
-double tan(double);
-#endif
 
+#ifndef TARGET_PC /* PC port: the host libc declares these */
+#endif
+/** Looks a character code up in the glyph cache; falls back to the first glyph when the code was not baked. */
 static inline RomFontChar* romFontFindChar(u16 code) {
     RomFontWork* w = wp;
     RomFontChar* table = w->glyphs;
@@ -356,7 +430,7 @@ static inline RomFontChar* romFontFindChar(u16 code) {
     return table; // not found
 }
 
-// Not quite matched, see: https://decomp.me/scratch/cdEUS
+/** Not quite matched, see: https://decomp.me/scratch/cdEUS */
 void romFontPrintGX(f32 x, f32 y, f32 scale, GXColor* color, const char* msg, ...) {
     char buf[1024];  // 0x158
     Mtx mtx;         // 0x128
@@ -412,11 +486,11 @@ void romFontPrintGX(f32 x, f32 y, f32 scale, GXColor* color, const char* msg, ..
     GXSetCurrentMtx(GX_PNMTX0);
 
     // --- walk the formatted string, one 24x24 quad per glyph ---
-    for (i;;) {
+    for (;;) {
         u32 c = buf[i];
         u16 c16 = *(u16*)&buf[i]; // big-endian lead<<8 | trail, for double-byte
 
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
         if (wp->language != 0) {
             if (c == 0x0A) {
                 curX = 0;
@@ -469,8 +543,12 @@ void romFontPrintGX(f32 x, f32 y, f32 scale, GXColor* color, const char* msg, ..
     }
 }
 
+/**
+ * Returns the pixel width of the widest line of message (lines split on '\n'), using the cached glyph widths.
+ * SJIS double-byte codes count as one glyph unless the US/PAL ASCII font is active.
+ */
 s32 romFontGetWidth(const char* message) {
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
     s32 width = 0;
     s32 i = 0;
     s32 max = 0;
@@ -489,7 +567,7 @@ s32 romFontGetWidth(const char* message) {
     for (;;) {
         c = message[i];
         c16 = *(u16*)&message[i];
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
         if (wp->language != 0) {
             if (c == 0x00) {
                 if (max < width) {

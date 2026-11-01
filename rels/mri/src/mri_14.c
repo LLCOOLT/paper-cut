@@ -1,8 +1,9 @@
+// mri_14 (巨木の中, The Great Tree): the deepest room: the Crystal Star appears and Lord Crump takes it
+// (dai3_kanbu), then leaves a time bomb (time_bomb); moving floor and planters.
 #include "battle/battle_unit.h"
 #include "eff/eff_starstone.h"
 #include "evt/evt_cmd.h"
 
-#pragma force_active on
 #include "driver/fadedrv.h"
 #include "mario/mariost.h"
 #include "driver/itemdrv.h"
@@ -13,135 +14,55 @@
 #include "manager/evtmgr_cmd.h"
 #include "evt/evt_bero.h"
 #include "evt/evt_sub.h"
+#include "evt/evt_cam.h"
+#include "evt/evt_case.h"
+#include "evt/evt_eff.h"
+#include "evt/evt_fade.h"
+#include "evt/evt_hit.h"
+#include "evt/evt_item.h"
+#include "evt/evt_map.h"
+#include "evt/evt_mario.h"
+#include "evt/evt_msg.h"
+#include "evt/evt_paper.h"
+#include "evt/evt_party.h"
+#include "evt/evt_seq.h"
+#include "evt/evt_snd.h"
+#include "mri_puni.h"
 #include "mri.h"
 #include "data_tables.h"
+#include "version.h"
+#include "evt/evt_story.h"
+#include "driver/casedrv.h"
+#include "driver/mapdrv.h"
+#include "driver/camdrv.h"
 
-USER_FUNC(evt_bero_exec_onoff);
-USER_FUNC(evt_bero_get_info);
-USER_FUNC(evt_bero_mapchange);
-USER_FUNC(evt_cam3d_evt_off);
-USER_FUNC(evt_cam3d_evt_set);
-USER_FUNC(evt_cam_shake);
-USER_FUNC(evt_eff64);
-USER_FUNC(evt_eff_fukidashi);
-USER_FUNC(evt_fade_set_mapchange_type);
-USER_FUNC(evt_hit_bind_mapobj);
-USER_FUNC(evt_hit_bind_update);
-USER_FUNC(evt_item_delete);
-USER_FUNC(evt_item_entry);
-USER_FUNC(evt_item_flag_on);
-USER_FUNC(evt_item_get_position);
-USER_FUNC(evt_item_move_3d_position);
-USER_FUNC(evt_item_set_position);
-USER_FUNC(evt_map_playanim);
-USER_FUNC(evt_mapobj_flag_onoff);
-USER_FUNC(evt_mapobj_get_position);
-USER_FUNC(evt_mapobj_rotate);
-USER_FUNC(evt_mapobj_trans);
-USER_FUNC(evt_mario_cont_onoff);
-USER_FUNC(evt_mario_get_pos);
-USER_FUNC(evt_mario_key_onoff);
-USER_FUNC(evt_mario_mov_pos2);
-USER_FUNC(evt_mario_normalize);
-USER_FUNC(evt_mario_set_dir);
-USER_FUNC(evt_mario_set_pos);
-USER_FUNC(evt_msg_print);
-USER_FUNC(evt_msg_print_party);
-USER_FUNC(evt_npc_flag_onoff);
-USER_FUNC(evt_npc_get_position);
-USER_FUNC(evt_npc_jump_position_nohit);
-USER_FUNC(evt_npc_move_position);
-USER_FUNC(evt_npc_set_anim);
-USER_FUNC(evt_npc_set_anim_localtime);
-USER_FUNC(evt_npc_set_autotalkpose);
-USER_FUNC(evt_npc_set_paper);
-USER_FUNC(evt_npc_set_paper_anim);
-USER_FUNC(evt_npc_set_position);
-USER_FUNC(evt_npc_set_rotate);
-USER_FUNC(evt_npc_set_ry);
-USER_FUNC(evt_npc_set_scale);
-USER_FUNC(evt_paper_entry);
-USER_FUNC(evt_party_cont_onoff);
-USER_FUNC(evt_party_move_pos2);
-USER_FUNC(evt_party_run);
-USER_FUNC(evt_party_set_dir);
-USER_FUNC(evt_party_set_pos);
-USER_FUNC(evt_party_stop);
-USER_FUNC(evt_puni_flag_onoff);
-USER_FUNC(evt_puni_get_flag);
-USER_FUNC(evt_puni_get_position);
-USER_FUNC(evt_puni_mem_init);
-USER_FUNC(evt_puni_set_anim);
-USER_FUNC(evt_puni_set_dir);
-USER_FUNC(evt_puni_set_hamari);
-USER_FUNC(evt_puni_set_mode);
-USER_FUNC(evt_puni_set_yuka);
-USER_FUNC(evt_puni_wait_systemmode);
-USER_FUNC(evt_run_case_evt);
-USER_FUNC(evt_seq_wait);
-USER_FUNC(evt_snd_bgmoff);
-USER_FUNC(evt_snd_bgmoff_f);
-USER_FUNC(evt_snd_bgmon);
-USER_FUNC(evt_snd_envon);
-USER_FUNC(evt_snd_sfxoff);
-USER_FUNC(evt_snd_sfxon);
-USER_FUNC(evt_snd_sfxon_3d);
-USER_FUNC(evt_sub_area_check);
-USER_FUNC(evt_sub_countdown_start);
-USER_FUNC(evt_sub_intpl_msec_get_value);
-USER_FUNC(evt_sub_intpl_msec_get_value_para);
-USER_FUNC(evt_sub_intpl_msec_init);
-USER_FUNC(evt_target_flag_onoff);
-USER_FUNC(evt_target_set_position);
 static USER_FUNC(evtflash);
-USER_FUNC(starstone_rotate_func);
+static USER_FUNC(starstone_rotate_func);
 
-f32 fd_mri_14_negone_one_374[2] __attribute__((aligned(8)));
-f32 fd_mri_14_neg_one_382;
-f32 fd_mri_14___local_PI_383;
-f32 fd_mri_14___local_3PIO2_385;
-f32 fd_mri_14_one_negone_373[2] __attribute__((aligned(8)));
-f32 fd_mri_14___local_PIO2_384;
-f32 fd_mri_14_one_381;
-f32 fd_mri_14_negone_one_360[2] __attribute__((aligned(8)));
-f32 fd_mri_14_neg_one_365;
-f32 fd_mri_14___local_PI_366;
-f32 fd_mri_14___local_3PIO2_368;
-f32 fd_mri_14_one_negone_359[2] __attribute__((aligned(8)));
-f32 fd_mri_14___local_PIO2_367;
-f32 fd_mri_14_one_364;
-static EvtWord first_time_w_bero[60];
 static BeroEntry bero_entry_data[3];
-EvtWord npc_rotate[28];
-EvtWord kanbu_urouro[75];
-EvtWord dai3_kanbu[192];
-EvtWord flash_and_wait[16];
-EvtWord flash2_and_wait[26];
-EvtWord starstone_rotate[6];
-EvtWord starstone_rotate_exec[13];
-static EvtWord starstone_fuwafuwa[71];
-EvtWord npc_dokan[209];
-static EvtWord punipuni_mario_halt[33];
-#ifdef VERSION_G8ME01
-EvtWord time_bomb[931];
-#else
-EvtWord time_bomb[937];
-#endif
-EvtWord bomb_check[14];
-static EvtWord yuka_move[96];
-static EvtWord yuka_check[116];
+extern EvtWord npc_rotate[];
+extern EvtWord kanbu_urouro[];
+extern EvtWord dai3_kanbu[];
+extern EvtWord flash_and_wait[];
+extern EvtWord flash2_and_wait[];
+extern EvtWord starstone_rotate[];
+extern EvtWord starstone_rotate_exec[];
+extern EvtWord npc_dokan[];
+extern EvtWord time_bomb[];
+extern EvtWord bomb_check[];
 static KusaAccess ueki_access_data[7];
-static EvtWord punipuni_ball00_init[35];
-static EvtWord punipuni_ball00[57];
-EvtWord mri_14_init_evt[179];
 
+/**
+ * Screen flash: fades out over 20 frames, holds for 50 ms, then fades back in over 80 frames.
+ * Used for the light bursts while the Crystal Star appears.
+ */
 static USER_FUNC(evtflash) {
     if (isFirstCall) {
         event->userdata[2] = 0;
     }
     switch (event->userdata[2]) {
         case 0:
-            fadeEntry(10, 20, (GXColor){0xFF, 0xFF, 0xFF, 0xFF});
+            fadeEntry(FADE_OUT_BLACK, 20, (GXColor){0xFF, 0xFF, 0xFF, 0xFF});
             event->userdata[2]++;
         case 1:
             if (fadeIsFinish() != TRUE) {
@@ -161,7 +82,7 @@ static USER_FUNC(evtflash) {
             event->userdata[2]++;
             return EVT_RETURN_BLOCK;
         case 3:
-            fadeEntry(9, 80, (GXColor){0xFF, 0xFF, 0xFF, 0xFF});
+            fadeEntry(FADE_IN_BLACK, 80, (GXColor){0xFF, 0xFF, 0xFF, 0xFF});
             event->userdata[2]++;
         case 4:
             if (fadeIsFinish() != TRUE) {
@@ -172,38 +93,16 @@ static USER_FUNC(evtflash) {
     return EVT_RETURN_DONE;
 }
 
-f32 fd_mri_14_negone_one_374[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_mri_14_neg_one_382 = -1.0f;
-
-f32 fd_mri_14___local_PI_383 = 3.1415927f;
-
-f32 fd_mri_14___local_3PIO2_385 = 4.712389f;
-
-f32 fd_mri_14_one_negone_373[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_mri_14___local_PIO2_384 = 1.5707964f;
-
-f32 fd_mri_14_one_381 = 1.0f;
-
-f32 fd_mri_14_negone_one_360[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_mri_14_neg_one_365 = -1.0f;
-
-f32 fd_mri_14___local_PI_366 = 3.1415927f;
-
-f32 fd_mri_14___local_3PIO2_368 = 4.712389f;
-
-f32 fd_mri_14_one_negone_359[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_mri_14___local_PIO2_367 = 1.5707964f;
-
-f32 fd_mri_14_one_364 = 1.0f;
-
+/**
+ * Entry script of the west loading zone: at STORY_STG2_22_LORD_CRUMP_APPEARS,
+ * if the time bomb scene is still pending, Mario and his partner are placed inside the room,
+ * the loading zone flickers off and on, and they walk in; returns 1 in LW(0) to skip the normal entry.
+ * Otherwise returns 0.
+ */
 static EVT_BEGIN(first_time_w_bero)
-    IF_INT_EQUAL(GSW(0), 108)
-        IF_INT_EQUAL(GSWF(2864), 1)
-            SET_VALUE(GSWF(2864), 0)
+    IF_INT_EQUAL(GSW(GSW_STORY_PROGRESS), STORY_STG2_22_LORD_CRUMP_APPEARS)
+        IF_INT_EQUAL(GSWF(GSWF_MRI14_TIME_BOMB_SCENE_PENDING), 1)
+            SET_VALUE(GSWF(GSWF_MRI14_TIME_BOMB_SCENE_PENDING), 0)
             CALL(evt_mario_set_pos, -450, 0, 0)
             CALL(evt_party_set_pos, 0, -480, 0, 0)
             WAIT_MS(1000)
@@ -225,12 +124,13 @@ static EVT_BEGIN(first_time_w_bero)
     RETURN
 EVT_END()
 
+/** Exits of mri_14: west road w_bero to mri_13 (e_bero); pipe dokan to mri_15 (dokan). */
 static BeroEntry bero_entry_data[] = {
     {
         "w_bero", // hitName
         0, 0, // type..sfxId
-        20000, // directionId
-        100000, // centerPosition
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         (s32*)first_time_w_bero, // enterEvent
@@ -246,8 +146,8 @@ static BeroEntry bero_entry_data[] = {
         "dokan", // hitName
         2, // type
         0, // sfxId
-        2, // directionId
-        100000, // centerPosition
+        BERO_DIR_E, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         NULL, // enterEvent
@@ -262,6 +162,10 @@ static BeroEntry bero_entry_data[] = {
     {0},
 };
 
+/**
+ * Spins the NPC named in LW(10) around its y axis.
+ * LW(1) and LW(2) are the start and end angles and LW(3) the time in ms; used to turn Lord Crump around.
+ */
 EVT_BEGIN(npc_rotate)
     CALL(evt_sub_intpl_msec_init, 0, LW(1), LW(2), LW(3))
     LOOP(0)
@@ -275,6 +179,10 @@ EVT_BEGIN(npc_rotate)
     RETURN
 EVT_END()
 
+/**
+ * Makes Lord Crump pace back and forth along z=-215 between x=30 and x=120 while the rest of the scene plays,
+ * until GF(0) is set and he stops at x=75. Clears GF(1) when it ends.
+ */
 EVT_BEGIN(kanbu_urouro)
     CALL(evt_npc_set_ry, LW(10), 270)
     WAIT_MS(200)
@@ -300,6 +208,12 @@ EVT_BEGIN(kanbu_urouro)
     RETURN
 EVT_END()
 
+/**
+ * Cutscene when Mario first arrives in mri_14 after the elevator (story STG2_21_06_WATER_SWITCH):
+ * Lord Crump (the third-force executive) paces, notices Mario and speaks, then walks off.
+ * Sets GSWF_MRI14_TIME_BOMB_SCENE_PENDING and the story to STORY_STG2_22_LORD_CRUMP_APPEARS,
+ * and re-enters mri_14 through the west door so the bomb scene can start.
+ */
 EVT_BEGIN(dai3_kanbu)
     CALL(evt_mario_key_onoff, 0)
     CALL(evt_mario_cont_onoff, 0)
@@ -308,12 +222,12 @@ EVT_BEGIN(dai3_kanbu)
     CALL(evt_party_set_pos, 0, 0, -1000, 0)
     SET_VALUE(LW(10), STRING("第三勢力幹部"))
     CALL(evt_npc_set_ry, LW(10), 270)
-    CALL(evt_npc_flag_onoff, 1, LW(10), 1073743392)
+    CALL(evt_npc_flag_onoff, 1, LW(10), NPC_FLAG_NO_WALL_HIT | NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM | NPC_FLAG_INTANGIBLE)
     CALL(evt_npc_set_position, LW(10), 150, 0, -215)
     SET_VALUE(GF(0), 0)
     SET_VALUE(GF(1), 1)
-    SPAWN_EVENT(PTR(kanbu_urouro))
-    CALL(evt_snd_bgmoff, 1024)
+    SPAWN_EVENT(kanbu_urouro)
+    CALL(evt_snd_bgmoff, PSND_FADE_HOLD)
     CALL(evt_cam3d_evt_set, 0, 300, 1000, 0, 30, -1, 0, 11)
     CALL(evt_seq_wait, 2)
     WAIT_MS(1000)
@@ -325,18 +239,18 @@ EVT_BEGIN(dai3_kanbu)
     SET_VALUE(LW(1), 0)
     SET_VALUE(LW(2), 180)
     SET_VALUE(LW(3), 400)
-    SPAWN_EVENT(PTR(npc_rotate))
+    SPAWN_EVENT(npc_rotate)
     WAIT_MS(500)
     SET_VALUE(LW(1), 180)
     SET_VALUE(LW(2), 0)
     SET_VALUE(LW(3), 400)
-    SPAWN_EVENT(PTR(npc_rotate))
+    SPAWN_EVENT(npc_rotate)
     WAIT_MS(500)
     CALL(evt_msg_print, 0, STRING("stg2_mri_e22_00"), 0, STRING("第三勢力幹部"))
     SET_VALUE(LW(1), 0)
     SET_VALUE(LW(2), 180)
     SET_VALUE(LW(3), 200)
-    SPAWN_EVENT(PTR(npc_rotate))
+    SPAWN_EVENT(npc_rotate)
     WAIT_MS(300)
     CALL(evt_eff_fukidashi, 1, STRING(""), LW(10), 0, 0, 0, 0, 0, 0, 0, 60)
     WAIT_MS(1200)
@@ -346,15 +260,16 @@ EVT_BEGIN(dai3_kanbu)
         CALL(evt_npc_move_position, LW(10), 200, -215, 0, FLOAT(120.0f), 0)
     END_INLINE_EVENT
     WAIT_MS(1000)
-    SET_VALUE(GSWF(2864), 1)
-    SET_VALUE(GSW(0), 108)
-    CALL(evt_snd_bgmoff, 513)
-    CALL(evt_snd_bgmon, 288, 0)
-    CALL(evt_fade_set_mapchange_type, 0, 2, 500, 9, 500)
+    SET_VALUE(GSWF(GSWF_MRI14_TIME_BOMB_SCENE_PENDING), 1)
+    SET_VALUE(GSW(GSW_STORY_PROGRESS), STORY_STG2_22_LORD_CRUMP_APPEARS)
+    CALL(evt_snd_bgmoff, PSND_FADE_OUT | PSND_CH(1))
+    CALL(evt_snd_bgmon, PSND_FADE_RESUME | PSND_FADE_IN, 0)
+    CALL(evt_fade_set_mapchange_type, 0, FADE_OUT_IRIS, 500, FADE_IN_BLACK, 500)
     CALL(evt_bero_mapchange, STRING("mri_14"), STRING("w_bero"))
     RETURN
 EVT_END()
 
+/** Flashes the screen once with the light sound while GF(0) is set. */
 EVT_BEGIN(flash_and_wait)
     WAIT_WHILE(GF(0))
     SET_VALUE(GF(0), 1)
@@ -364,7 +279,11 @@ EVT_BEGIN(flash_and_wait)
     RETURN
 EVT_END()
 
-USER_FUNC(starstone_rotate_func) {
+/**
+ * Sets the y rotation of the item named in args[0] (the Crystal Star) to the angle in args[1].
+ * Never finishes by itself (it blocks each frame).
+ */
+static USER_FUNC(starstone_rotate_func) {
     EvtWord* args = event->args;
     char* name = (char*)evtGetValue(event, args[0]);
     f32 angle = evtGetValue(event, args[1]);
@@ -373,7 +292,11 @@ USER_FUNC(starstone_rotate_func) {
     return EVT_RETURN_BLOCK;
 }
 
-USER_FUNC(evt_npc_set_anim_localtime) {
+/**
+ * Sets the animation time of the NPC named in args[0] to the float in args[1],
+ * to pose a paper animation frame by frame.
+ */
+static USER_FUNC(evt_npc_set_anim_localtime) {
     EvtWord* args = event->args;
     const char* name = (const char*)evtGetValue(event, args[0]);
     f32 time = evtGetFloat(event, args[1]);
@@ -382,6 +305,7 @@ USER_FUNC(evt_npc_set_anim_localtime) {
     return EVT_RETURN_DONE;
 }
 
+/** Flashes the screen twice in a row with the light sound while GF(0) is set. */
 EVT_BEGIN(flash2_and_wait)
     WAIT_WHILE(GF(0))
     SET_VALUE(GF(0), 1)
@@ -396,11 +320,13 @@ EVT_BEGIN(flash2_and_wait)
     RETURN
 EVT_END()
 
+/** Rotates the Crystal Star item named in LW(0) to the angle held in GW(10). */
 EVT_BEGIN(starstone_rotate)
     CALL(starstone_rotate_func, LW(0), GW(10))
     RETURN
 EVT_END()
 
+/** Loops forever adding 6 degrees per frame to the rotation angle GW(10), so the Crystal Star spins. */
 EVT_BEGIN(starstone_rotate_exec)
     LOOP(0)
         ADD(GW(10), 6)
@@ -410,6 +336,7 @@ EVT_BEGIN(starstone_rotate_exec)
     RETURN
 EVT_END()
 
+/** Makes the Star Piece (item00) bob up and down by 5 units in a half-second cycle, forever. */
 static EVT_BEGIN(starstone_fuwafuwa)
     LOOP(0)
         CALL(evt_sub_intpl_msec_init, 11, 0, 500, 500)
@@ -437,6 +364,10 @@ static EVT_BEGIN(starstone_fuwafuwa)
     RETURN
 EVT_END()
 
+/**
+ * Plays Lord Crump's pipe trip: turns the NPC LW(10) into the paper pipe model p_dokan_x
+ * and flips through its frames (PM_D_1A and PM_D_1B), as if he were sucked into a pipe.
+ */
 EVT_BEGIN(npc_dokan)
     BEGIN_INLINE_EVENT
         CALL(evt_npc_set_paper, LW(10), STRING("p_dokan_x"))
@@ -509,6 +440,7 @@ EVT_BEGIN(npc_dokan)
     RETURN
 EVT_END()
 
+/** Holds Mario for up to 4 seconds (GF(11)) while the Puni switch is being set, ending early when GF(10) is cleared. */
 static EVT_BEGIN(punipuni_mario_halt)
     SET_VALUE(GF(11), 1)
     CALL(evt_mario_key_onoff, 0)
@@ -529,18 +461,27 @@ static EVT_BEGIN(punipuni_mario_halt)
     RETURN
 EVT_END()
 
+/**
+ * The time bomb scene (story 22 to 23): with the Puni still, the room shakes with growing quakes and flashes,
+ * the Crystal Star appears in a ripple of light, Lord Crump grabs it,
+ * sets a time bomb that switches on the countdown and flees through a pipe, and the party reacts.
+ * Sets the story to STORY_STG2_23_TIME_BOMB_ACTIVATED.
+ */
 EVT_BEGIN(time_bomb)
+    // Controls off, the music fades out and the room begins to shake.
     CALL(evt_mario_key_onoff, 0)
+#if VERSION >= VERSION_JP
     CALL(evt_mario_normalize)
+#endif
     SET_VALUE(GF(10), 0)
     WAIT_WHILE(GF(15))
     WAIT_MS(1000)
-    CALL(evt_snd_bgmoff_f, 512, 3000)
+    CALL(evt_snd_bgmoff_f, PSND_FADE_OUT, 3000)
     CALL(evt_npc_set_ry, STRING("第三勢力幹部"), 270)
-    CALL(evt_npc_flag_onoff, 1, STRING("第三勢力幹部"), 1073743392)
+    CALL(evt_npc_flag_onoff, 1, STRING("第三勢力幹部"), NPC_FLAG_NO_WALL_HIT | NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM | NPC_FLAG_INTANGIBLE)
     SET_VALUE(LW(10), 1)
     LOOP(0)
-        CALL(evt_puni_set_mode, LW(10), 30)
+        CALL(evt_puni_set_mode, LW(10), PUNI_MODE_INERT)
         CALL(evt_puni_set_anim, LW(10), 0)
         ADD(LW(10), 1)
         IF_INT_EQUAL(LW(10), 103)
@@ -552,54 +493,57 @@ EVT_BEGIN(time_bomb)
         CALL(evt_cam3d_evt_set, 555, 507, 846, 0, 50, 0, 2000, 11)
     END_INLINE_EVENT
     CALL(evt_snd_sfxon, STRING("SFX_STG2_QUAKE1"), LW(11))
-    CALL(evt_cam_shake, 4, FLOAT(0.0009765625f), FLOAT(0.0f), 300)
-    CALL(evt_cam_shake, 4, FLOAT(0.001953125f), FLOAT(0.0f), 300)
-    CALL(evt_cam_shake, 4, FLOAT(0.0029296875f), FLOAT(0.0f), 300)
-    CALL(evt_cam_shake, 4, FLOAT(0.00390625f), FLOAT(0.0f), 300)
+    CALL(evt_cam_shake, CAMERA_3D, FLOAT(0.0009765625f), FLOAT(0.0f), 300)
+    CALL(evt_cam_shake, CAMERA_3D, FLOAT(0.001953125f), FLOAT(0.0f), 300)
+    CALL(evt_cam_shake, CAMERA_3D, FLOAT(0.0029296875f), FLOAT(0.0f), 300)
+    CALL(evt_cam_shake, CAMERA_3D, FLOAT(0.00390625f), FLOAT(0.0f), 300)
     SET_VALUE(GF(0), 0)
-    SPAWN_EVENT(PTR(flash_and_wait))
-    CALL(evt_cam_shake, 4, FLOAT(0.0048828125f), FLOAT(0.0f), 300)
-    CALL(evt_cam_shake, 4, FLOAT(0.005859375f), FLOAT(0.0f), 300)
-    CALL(evt_cam_shake, 4, FLOAT(0.0068359375f), FLOAT(0.0f), 300)
-#ifndef VERSION_G8ME01
-    SPAWN_EVENT(PTR(flash2_and_wait))
+    // The quakes grow stronger and the room flashes.
+    SPAWN_EVENT(flash_and_wait)
+    CALL(evt_cam_shake, CAMERA_3D, FLOAT(0.0048828125f), FLOAT(0.0f), 300)
+    CALL(evt_cam_shake, CAMERA_3D, FLOAT(0.005859375f), FLOAT(0.0f), 300)
+    CALL(evt_cam_shake, CAMERA_3D, FLOAT(0.0068359375f), FLOAT(0.0f), 300)
+#if VERSION <= VERSION_JP
+    SPAWN_EVENT(flash2_and_wait)
 #endif
-    CALL(evt_cam_shake, 4, FLOAT(0.0078125f), FLOAT(0.0f), 300)
-    CALL(evt_cam_shake, 4, FLOAT(0.0087890625f), FLOAT(0.0f), 300)
-    CALL(evt_cam_shake, 4, FLOAT(0.009765625f), FLOAT(0.0f), 300)
-    CALL(evt_cam_shake, 4, FLOAT(0.009765625f), FLOAT(0.0f), 300)
-#ifndef VERSION_G8ME01
-    SPAWN_EVENT(PTR(flash2_and_wait))
+    CALL(evt_cam_shake, CAMERA_3D, FLOAT(0.0078125f), FLOAT(0.0f), 300)
+    CALL(evt_cam_shake, CAMERA_3D, FLOAT(0.0087890625f), FLOAT(0.0f), 300)
+    CALL(evt_cam_shake, CAMERA_3D, FLOAT(0.009765625f), FLOAT(0.0f), 300)
+    CALL(evt_cam_shake, CAMERA_3D, FLOAT(0.009765625f), FLOAT(0.0f), 300)
+#if VERSION <= VERSION_JP
+    SPAWN_EVENT(flash2_and_wait)
 #endif
-    CALL(evt_cam_shake, 4, FLOAT(0.009765625f), FLOAT(0.0f), 300)
-    CALL(evt_cam_shake, 4, FLOAT(0.009765625f), FLOAT(0.0f), 300)
-#ifndef VERSION_G8ME01
-    SPAWN_EVENT(PTR(flash_and_wait))
+    CALL(evt_cam_shake, CAMERA_3D, FLOAT(0.009765625f), FLOAT(0.0f), 300)
+    CALL(evt_cam_shake, CAMERA_3D, FLOAT(0.009765625f), FLOAT(0.0f), 300)
+#if VERSION <= VERSION_JP
+    SPAWN_EVENT(flash_and_wait)
 #endif
-    CALL(evt_cam_shake, 4, FLOAT(0.009765625f), FLOAT(0.0f), 300)
-    CALL(evt_cam_shake, 4, FLOAT(0.009765625f), FLOAT(0.0f), 300)
+    CALL(evt_cam_shake, CAMERA_3D, FLOAT(0.009765625f), FLOAT(0.0f), 300)
+    CALL(evt_cam_shake, CAMERA_3D, FLOAT(0.009765625f), FLOAT(0.0f), 300)
     BEGIN_INLINE_EVENT
-        CALL(evt_cam_shake, 4, FLOAT(0.009765625f), FLOAT(0.0f), 200)
-        CALL(evt_cam_shake, 4, FLOAT(0.0087890625f), FLOAT(0.0f), 200)
-        SPAWN_EVENT(PTR(flash_and_wait))
-        CALL(evt_cam_shake, 4, FLOAT(0.0078125f), FLOAT(0.0f), 200)
-        CALL(evt_cam_shake, 4, FLOAT(0.0068359375f), FLOAT(0.0f), 200)
-        CALL(evt_cam_shake, 4, FLOAT(0.005859375f), FLOAT(0.0f), 200)
-        CALL(evt_cam_shake, 4, FLOAT(0.0048828125f), FLOAT(0.0f), 200)
-        CALL(evt_cam_shake, 4, FLOAT(0.00390625f), FLOAT(0.0f), 200)
-        CALL(evt_cam_shake, 4, FLOAT(0.0029296875f), FLOAT(0.0f), 200)
-        CALL(evt_cam_shake, 4, FLOAT(0.001953125f), FLOAT(0.0f), 200)
-        CALL(evt_cam_shake, 4, FLOAT(0.0009765625f), FLOAT(0.0f), 200)
+        CALL(evt_cam_shake, CAMERA_3D, FLOAT(0.009765625f), FLOAT(0.0f), 200)
+        CALL(evt_cam_shake, CAMERA_3D, FLOAT(0.0087890625f), FLOAT(0.0f), 200)
+        SPAWN_EVENT(flash_and_wait)
+        CALL(evt_cam_shake, CAMERA_3D, FLOAT(0.0078125f), FLOAT(0.0f), 200)
+        CALL(evt_cam_shake, CAMERA_3D, FLOAT(0.0068359375f), FLOAT(0.0f), 200)
+        CALL(evt_cam_shake, CAMERA_3D, FLOAT(0.005859375f), FLOAT(0.0f), 200)
+        CALL(evt_cam_shake, CAMERA_3D, FLOAT(0.0048828125f), FLOAT(0.0f), 200)
+        CALL(evt_cam_shake, CAMERA_3D, FLOAT(0.00390625f), FLOAT(0.0f), 200)
+        CALL(evt_cam_shake, CAMERA_3D, FLOAT(0.0029296875f), FLOAT(0.0f), 200)
+        CALL(evt_cam_shake, CAMERA_3D, FLOAT(0.001953125f), FLOAT(0.0f), 200)
+        CALL(evt_cam_shake, CAMERA_3D, FLOAT(0.0009765625f), FLOAT(0.0f), 200)
     END_INLINE_EVENT
     WAIT_MS(2000)
     CALL(evt_snd_sfxoff, LW(11))
     CALL(evt_cam3d_evt_set, 200, 305, -33, 0, 140, -338, 1000, 11)
     WAIT_MS(2000)
+#if VERSION >= VERSION_JP
     CALL(evt_party_stop, 0)
     CALL(evt_mario_set_pos, 0, 0, -89)
     CALL(evt_mario_set_dir, 90, 0, 0)
     CALL(evt_party_set_pos, 0, -50, 0, -89)
     CALL(evt_party_set_dir, 0, 90, 0)
+#endif
     BEGIN_INLINE_EVENT
         CALL(evt_eff64, STRING("ripple00"), STRING("ripple_n64"), 0, 0, 150, -340, 0, 0, 0, 0, 0, 0, 0, 0)
         WAIT_MS(400)
@@ -608,9 +552,10 @@ EVT_BEGIN(time_bomb)
         CALL(evt_eff64, STRING("ripple02"), STRING("ripple_n64"), 0, 0, 150, -340, 0, 0, 0, 0, 0, 0, 0, 0)
         WAIT_MS(400)
     END_INLINE_EVENT
+    // The Crystal Star appears in a ripple of light and spins above the floor.
     CALL(evt_snd_sfxon, STRING("SFX_STG2_STARSTONE_APPEAR1"), 0)
-    CALL(evt_item_entry, STRING("item00"), 115, 0, 120, -340, 16, -1, 0)
-    CALL(evt_item_flag_on, STRING("item00"), 2)
+    CALL(evt_item_entry, STRING("item00"), ITEM_EMERALD_STAR, 0, 120, -340, ITEM_ENTRY_FIXED, -1, 0)
+    CALL(evt_item_flag_on, STRING("item00"), ITEM_FLAG_NO_TOUCH)
     SET_VALUE(LW(0), STRING("item00"))
     SET_VALUE(GW(10), 0)
     SPAWN_EVENT_GET_ID(PTR(starstone_rotate), LW(14))
@@ -622,6 +567,13 @@ EVT_BEGIN(time_bomb)
     CALL(evt_item_move_3d_position, STRING("item00"), 0, 400, -340, 750, 0)
     CALL(evt_item_set_position, STRING("item00"), 0, -1000, 0)
     WAIT_MS(500)
+#if VERSION <= VERSION_DEMO_JP
+    CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
+    ADD(LW(0), 30)
+    CALL(evt_party_set_pos, 0, LW(0), LW(1), LW(2))
+    CALL(evt_party_set_dir, 0, 270, -1)
+    CALL(evt_mario_set_dir, 270, 0, 0)
+#endif
     CALL(evt_puni_set_dir, 1, 270)
     CALL(evt_cam3d_evt_set, 200, 213, 91, 0, 60, -215, 500, 11)
     WAIT_MS(500)
@@ -632,7 +584,8 @@ EVT_BEGIN(time_bomb)
     CALL(evt_cam3d_evt_set, 0, 95, 283, 0, 55, -215, 0, 11)
     WAIT_FRAMES(1)
     CALL(evt_msg_print_party, STRING("stg2_mri_e23_00_00"))
-    CALL(evt_snd_bgmon, 512, STRING("BGM_EVT_3RD_ENEMY"))
+    // Lord Crump grabs the Crystal Star to the Third Force's theme.
+    CALL(evt_snd_bgmon, PSND_FADE_OUT, STRING("BGM_EVT_3RD_ENEMY"))
     CALL(evt_npc_set_position, STRING("第三勢力幹部"), 175, 0, -194)
     CALL(evt_npc_move_position, STRING("第三勢力幹部"), 0, -215, 0, FLOAT(180.0f), 0)
     BEGIN_INLINE_EVENT
@@ -661,9 +614,10 @@ EVT_BEGIN(time_bomb)
     WAIT_MS(1000)
     CALL(evt_cam3d_evt_set, 248, 125, 212, -7, 38, -208, 500, 11)
     WAIT_MS(500)
-    CALL(evt_snd_envon, 272, STRING("ENV_STG2_MRI9"))
+    CALL(evt_snd_envon, PSND_FADE_RESTART | PSND_FADE_IN, STRING("ENV_STG2_MRI9"))
     CALL(evt_msg_print_party, STRING("stg2_mri_e23_00"))
     SET_VALUE(LW(10), STRING("第三勢力幹部"))
+    // He gloats, then reveals a remote time bomb switch to bury Mario and the Punies.
     CALL(evt_msg_print, 0, STRING("stg2_mri_e23_01"), 0, LW(10))
     WAIT_MS(500)
     CALL(evt_eff_fukidashi, 1, STRING(""), LW(10), 0, 0, 0, 0, 0, 0, 0, 60)
@@ -698,7 +652,8 @@ EVT_BEGIN(time_bomb)
     CALL(evt_msg_print, 0, STRING("stg2_mri_e23_04"), 0, LW(10))
     CALL(evt_npc_get_position, LW(10), LW(0), LW(1), LW(2))
     CALL(evt_snd_sfxon_3d, STRING("SFX_STG2_BOMB_TIMER_SET1"), LW(0), LW(1), LW(2), 0)
-    CALL(evt_snd_bgmon, 512, STRING("BGM_EVT_DANGER4"))
+    // He sets the timer, the danger music begins and Crump flees down a pipe.
+    CALL(evt_snd_bgmon, PSND_FADE_OUT, STRING("BGM_EVT_DANGER4"))
     CALL(evt_sub_countdown_start, 300000, 300000)
     CALL(evt_npc_set_anim, LW(10), STRING("I_7"))
     WAIT_MS(1000)
@@ -710,7 +665,7 @@ EVT_BEGIN(time_bomb)
     CALL(evt_npc_jump_position_nohit, LW(10), LW(0), LW(1), LW(2), 200, 27)
     BEGIN_INLINE_EVENT
         WAIT_MS(150)
-        CALL(evt_cam_shake, 4, FLOAT(0.01953125f), FLOAT(0.0f), 1000)
+        CALL(evt_cam_shake, CAMERA_3D, FLOAT(0.01953125f), FLOAT(0.0f), 1000)
     END_INLINE_EVENT
     BEGIN_INLINE_EVENT
         WAIT_MS(350)
@@ -731,34 +686,43 @@ EVT_BEGIN(time_bomb)
     END_INLINE_EVENT
     BEGIN_INLINE_EVENT
         SET_VALUE(LW(0), STRING("dokan"))
-        CALL_CHILD(PTR(bero_case_switch_on))
+        CALL_CHILD(bero_case_switch_on)
     END_INLINE_EVENT
     WAIT_MS(1200)
     CALL(evt_npc_set_ry, LW(10), 90)
     WAIT_MS(200)
     CALL(evt_npc_move_position, LW(10), 250, -160, 0, FLOAT(180.0f), 0)
     WAIT_MS(500)
-    CALL_CHILD(PTR(npc_dokan))
+    CALL_CHILD(npc_dokan)
     WAIT_MS(2000)
     CALL(evt_cam3d_evt_set, 0, 105, 269, 0, 45, -76, 0, 11)
+#if VERSION <= VERSION_DEMO_JP
+    CALL(evt_party_set_dir, 0, 270, -1)
+#endif
     WAIT_MS(200)
     CALL(evt_msg_print_party, STRING("stg2_mri_e23_05"))
     CALL(evt_cam3d_evt_off, 300, 11)
     SET_VALUE(LW(10), 1)
     LOOP(0)
-        CALL(evt_puni_set_mode, LW(10), 1)
+        CALL(evt_puni_set_mode, LW(10), PUNI_MODE_JOIN)
         CALL(evt_puni_flag_onoff, LW(10), 1, 32768)
         ADD(LW(10), 1)
         IF_INT_EQUAL(LW(10), 103)
             BREAK_LOOP
         END_IF
     END_LOOP
-    SET_VALUE(GSW(0), 109)
+    SET_VALUE(GSW(GSW_STORY_PROGRESS), STORY_STG2_23_TIME_BOMB_ACTIVATED)
+#if VERSION >= VERSION_JP
     CALL(evt_party_run, 0)
+#endif
     CALL(evt_mario_key_onoff, 1)
     RETURN
 EVT_END()
 
+/**
+ * Waits until the floor counter GW(0) reaches zero (enough Punies stand on the plate) and
+ * then starts the time bomb scene.
+ */
 EVT_BEGIN(bomb_check)
     LOOP(0)
         IF_INT_EQUAL(GW(0), 0)
@@ -766,13 +730,18 @@ EVT_BEGIN(bomb_check)
         END_IF
         WAIT_FRAMES(1)
     END_LOOP
-    SPAWN_EVENT(PTR(time_bomb))
+    SPAWN_EVENT(time_bomb)
     RETURN
 EVT_END()
 
+/**
+ * Display event of the Puni weight counter: hides the unused drum covers
+ * and every frame turns the three drums (S_isk_02 ones, S_isk_03 tens, S_isk_04 hundreds) to show GW(0) (0 to
+ * 101), 36 degrees per digit; the tens cover is shown only while the value is below 10.
+ */
 static EVT_BEGIN(yuka_move)
-    CALL(evt_mapobj_flag_onoff, 1, 1, STRING("S_isk_02_c"), 1)
-    CALL(evt_mapobj_flag_onoff, 1, 1, STRING("S_isk_03_c"), 1)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("S_isk_02_c"), MAPOBJ_FLAG_HIDE)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("S_isk_03_c"), MAPOBJ_FLAG_HIDE)
     LOOP(0)
         SET_VALUE(LW(2), GW(0))
         DIVIDE(LW(2), 100)
@@ -791,15 +760,20 @@ static EVT_BEGIN(yuka_move)
         CALL(evt_mapobj_rotate, 1, STRING("S_isk_03"), LW(11), 0, 0)
         CALL(evt_mapobj_rotate, 1, STRING("S_isk_04"), LW(12), 0, 0)
         IF_INT_GREATER_OR_EQUAL(GW(0), 10)
-            CALL(evt_mapobj_flag_onoff, 1, 1, STRING("S_isk_03_c"), 1)
-            ELSE
-            CALL(evt_mapobj_flag_onoff, 1, 0, STRING("S_isk_03_c"), 1)
+            CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("S_isk_03_c"), MAPOBJ_FLAG_HIDE)
+        ELSE
+            CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("S_isk_03_c"), MAPOBJ_FLAG_HIDE)
         END_IF
         WAIT_FRAMES(1)
     END_LOOP
     RETURN
 EVT_END()
 
+/**
+ * Counts the Punies standing on the weight platform every frame (alive, not lost,
+ * within the platform's area and height band) and keeps GW(0), the number of Punies still missing,
+ * at 101 minus the count (clamped to 0 to 101). The counter click sound plays whenever the value changes.
+ */
 static EVT_BEGIN(yuka_check)
     SET_VALUE(LW(12), GW(0))
     CALL(evt_puni_wait_systemmode, 2)
@@ -846,6 +820,7 @@ static EVT_BEGIN(yuka_check)
     RETURN
 EVT_END()
 
+/** Plants Mario can search in mri_14: A_ueki01, A_ueki03, A_ueki04, A_ueki06, A_ueki07, A_ueki08. */
 static KusaAccess ueki_access_data[] = {
     {1, "A_ueki01", "S_ueki01", NULL},
     {1, "A_ueki03", "S_ueki03", NULL},
@@ -856,42 +831,68 @@ static KusaAccess ueki_access_data[] = {
     {4, NULL, NULL, NULL},
 };
 
+/**
+ * Init script of the orb pedestal: runs the shared Puni-switch setup;
+ * if the orb is already on the pedestal it is shown there and its target is on,
+ * otherwise the beam of light is hidden. The target is placed in the middle of the room.
+ */
 static EVT_BEGIN(punipuni_ball00_init)
-    CALL_CHILD(PTR(mri_punipuni_setup))
-    IF_INT_EQUAL(GSWF(2863), 1)
+    CALL_CHILD(mri_punipuni_setup)
+    IF_INT_EQUAL(GSWF(GSWF_MRI14_ORB_ON_PEDESTAL), 1)
         CALL(evt_item_set_position, LW(10), 0, 30, -100)
         CALL(evt_target_flag_onoff, LW(11), 0, 3)
-        ELSE
-        CALL(evt_mapobj_flag_onoff, 1, 1, STRING("S_sui_hikari"), 1)
+    ELSE
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("S_sui_hikari"), MAPOBJ_FLAG_HIDE)
     END_IF
     CALL(evt_target_set_position, LW(11), 0, 0, 0)
     SET_VALUE(GF(15), 0)
     RETURN
 EVT_END()
 
+/**
+ * Hit/talk script of the orb pedestal: if empty, Mario picks an item to put on it (cancel ends the script),
+ * the orb appears with the light beam; if full, Mario takes the orb back.
+ * In the demo, at STORY_STG2_22_LORD_CRUMP_APPEARS he is released at once
+ * and held by punipuni_mario_halt for the cutscene.
+ */
 static EVT_BEGIN(punipuni_ball00)
     CALL(evt_mario_key_onoff, 0)
-    IF_INT_EQUAL(GSWF(2863), 0)
-        CALL_CHILD(PTR(mri_punipuni_itemselect))
+    IF_INT_EQUAL(GSWF(GSWF_MRI14_ORB_ON_PEDESTAL), 0)
+        CALL_CHILD(mri_punipuni_itemselect)
         IF_INT_EQUAL(LW(1), 0)
             GOTO(100)
         END_IF
-        SET_VALUE(GSWF(2863), 1)
+        SET_VALUE(GSWF(GSWF_MRI14_ORB_ON_PEDESTAL), 1)
         CALL(evt_item_set_position, LW(10), 0, 30, -100)
-        CALL(evt_mapobj_flag_onoff, 1, 0, STRING("S_sui_hikari"), 1)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("S_sui_hikari"), MAPOBJ_FLAG_HIDE)
         SET_VALUE(GF(15), 1)
-        CALL_CHILD(PTR(mri_punipuni_itemset))
+        CALL_CHILD(mri_punipuni_itemset)
         SET_VALUE(GF(15), 0)
-        ELSE
-        SET_VALUE(GSWF(2863), 0)
-        CALL(evt_mapobj_flag_onoff, 1, 1, STRING("S_sui_hikari"), 1)
-        CALL_CHILD(PTR(mri_punipuni_itemremove))
+#if VERSION <= VERSION_DEMO_JP
+        IF_INT_EQUAL(GSW(GSW_STORY_PROGRESS), STORY_STG2_22_LORD_CRUMP_APPEARS)
+            CALL(evt_mario_key_onoff, 1)
+            SET_VALUE(GF(10), 1)
+            SPAWN_EVENT(punipuni_mario_halt)
+            RETURN
+        END_IF
+#endif
+    ELSE
+        SET_VALUE(GSWF(GSWF_MRI14_ORB_ON_PEDESTAL), 0)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("S_sui_hikari"), MAPOBJ_FLAG_HIDE)
+        CALL_CHILD(mri_punipuni_itemremove)
     END_IF
     LABEL(100)
     CALL(evt_mario_key_onoff, 1)
     RETURN
 EVT_END()
 
+/**
+ * Map init script of mri_14, the Crystal Star room:
+ * sets up the Puni, planters, doors, counters and Puni Orb pedestal,
+ * plays the bomb-alarm music while the bomb is ticking,
+ * and starts the Lord Crump cutscene (dai3_kanbu)
+ * or the time bomb scene (bomb_check) depending on the story state.
+ */
 EVT_BEGIN(mri_14_init_evt)
     CALL(evt_puni_mem_init)
     CALL(evt_puni_set_yuka, 14, 0, -310, -1000, -1000, 0, 0)
@@ -900,56 +901,55 @@ EVT_BEGIN(mri_14_init_evt)
     SET_VALUE(LW(7), 0)
     SET_VALUE(LW(8), 0)
     SET_VALUE(LW(9), 0)
-    IF_INT_NOT_EQUAL(GSW(0), 107)
-        CALL_CHILD(PTR(mri_puni_init))
-        ELSE
-        CALL_CHILD(PTR(mri_puni_init_none))
+    IF_INT_NOT_EQUAL(GSW(GSW_STORY_PROGRESS), STORY_STG2_21_06_WATER_SWITCH)
+        CALL_CHILD(mri_puni_init)
+    ELSE
+        CALL_CHILD(mri_puni_init_none)
     END_IF
     SET_VALUE(LW(0), PTR(bero_entry_data))
     CALL(evt_bero_get_info)
-    CALL_CHILD(PTR(evt_bero_info_run))
-    SPAWN_EVENT(PTR(puni_disp_info))
-    SPAWN_EVENT(PTR(mri_countdown))
+    CALL_CHILD(evt_bero_info_run)
+    SPAWN_EVENT(puni_disp_info)
+    SPAWN_EVENT(mri_countdown)
     SET_VALUE(LW(0), PTR(ueki_access_data))
-    CALL_CHILD(PTR(evt_sub_kusa_access_entry))
+    CALL_CHILD(evt_sub_kusa_access_entry)
     CALL(evt_paper_entry, STRING("p_dokan_x"))
-    SWITCH(GSW(0))
-        CASE_BETWEEN(109, 110)
-        CALL(evt_snd_bgmon, 512, STRING("BGM_EVT_DANGER4"))
-        CALL(evt_snd_envon, 272, STRING("ENV_STG2_MRI9"))
+    SWITCH(GSW(GSW_STORY_PROGRESS))
+        CASE_BETWEEN(STORY_STG2_23_TIME_BOMB_ACTIVATED, STORY_STG2_23_01_X_NAUT_BATTLE)
+        CALL(evt_snd_bgmon, PSND_FADE_OUT, STRING("BGM_EVT_DANGER4"))
+        CALL(evt_snd_envon, PSND_FADE_RESTART | PSND_FADE_IN, STRING("ENV_STG2_MRI9"))
         CASE_DEFAULT
-        CALL(evt_snd_bgmon, 512, STRING("BGM_STG2_MRI1"))
-        CALL(evt_snd_envon, 272, STRING("ENV_STG2_MRI1"))
+        CALL(evt_snd_bgmon, PSND_FADE_OUT, STRING("BGM_STG2_MRI1"))
+        CALL(evt_snd_envon, PSND_FADE_RESTART | PSND_FADE_IN, STRING("ENV_STG2_MRI1"))
     END_SWITCH
     CALL(evt_map_playanim, STRING("mizu_01"), 1, 0)
     CALL(evt_map_playanim, STRING("mizu_02"), 1, 0)
     CALL(evt_map_playanim, STRING("awa_01"), 1, 0)
     CALL(evt_map_playanim, STRING("awa_02"), 1, 0)
     CALL(evt_map_playanim, STRING("sui_hikari"), 1, 0)
-    IF_INT_EQUAL(GSW(0), 107)
-        SPAWN_EVENT(PTR(dai3_kanbu))
+    IF_INT_EQUAL(GSW(GSW_STORY_PROGRESS), STORY_STG2_21_06_WATER_SWITCH)
+        SPAWN_EVENT(dai3_kanbu)
     END_IF
     SET_VALUE(LW(10), STRING("punipuni"))
     SET_VALUE(LW(11), 0)
-    SPAWN_EVENT(PTR(punipuni_ball00_init))
-    CALL(evt_run_case_evt, 9, 1, STRING("A_dai_mae"), 0, PTR(punipuni_ball00), 0)
+    SPAWN_EVENT(punipuni_ball00_init)
+    CALL(evt_run_case_evt, CASE_COND_FRONT_A, 1, STRING("A_dai_mae"), 0, PTR(punipuni_ball00), 0)
     SET_VALUE(GW(0), 101)
-    SPAWN_EVENT(PTR(yuka_check))
-    SPAWN_EVENT(PTR(yuka_move))
-    IF_INT_LESS(GSW(0), 109)
-        SPAWN_EVENT(PTR(bomb_check))
+    SPAWN_EVENT(yuka_check)
+    SPAWN_EVENT(yuka_move)
+    IF_INT_LESS(GSW(GSW_STORY_PROGRESS), STORY_STG2_23_TIME_BOMB_ACTIVATED)
+        SPAWN_EVENT(bomb_check)
     END_IF
-    IF_INT_LESS(GSW(0), 109)
+    IF_INT_LESS(GSW(GSW_STORY_PROGRESS), STORY_STG2_23_TIME_BOMB_ACTIVATED)
         CALL(evt_hit_bind_mapobj, STRING("A_dokan"), STRING("S_dokan"))
         CALL(evt_mapobj_trans, 1, STRING("S_dokan"), 0, 200, 0)
         CALL(evt_hit_bind_update, STRING("A_dokan"))
         SET_VALUE(LW(0), STRING("dokan"))
-        CALL_CHILD(PTR(bero_case_switch_off))
+        CALL_CHILD(bero_case_switch_off)
     END_IF
-    SET_VALUE(LW(0), STRING("S_sui\0\0"))
+    SET_VALUE(LW(0), STRING("S_sui"))
     SET_RAW_VALUE(LW(1), GW(0))
     SET_VALUE(LW(2), 100)
-    SPAWN_EVENT(PTR(mri_hikari_color))
+    SPAWN_EVENT(mri_hikari_color)
     RETURN
 EVT_END()
-

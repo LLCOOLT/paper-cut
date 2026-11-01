@@ -1,6 +1,8 @@
+// Star-power special move Power Lift (sac_muki): the cursor game that raises Mario's attack and defense.
 #pragma optimize_for_size on
+#include <demo/DEMOPad.h>
+#include <dolphin/pad.h>
 #include "eff/eff_starstone.h"
-#include "pc_call.h"
 #include "battle/battle.h"
 #include "eff/n64/eff_stamp_n64.h"
 #include "battle/battle_audience.h"
@@ -21,101 +23,80 @@
 #include "battle/battle_event_cmd.h"
 #include "battle/battle_camera.h"
 #include "battle/sac/sac_common.h"
-#include "party/party_motion.h"
+#include "evt/evt_snd.h"
 #include "battle/battle_database_common.h"
+#include "pmario_sound.h"
+#include "battle/battle_sub.h"
+#include "battle/battle_disp.h"
+#include "battle/sac/sac_muki.h"
+#include "eff/eff_hit.h"
+#include "libc_decls.h"
 // US battle texture ids are 0x16 higher for these entries.
 #define BTL_TEX(id) ((id) + VERSION_PICK(0, 0x16))
 
-
-#ifndef TARGET_PC /* PC port: the host libc declares these */
-double cos(double);
-double sin(double);
-#endif
-void btlDispTexPlane2(Mtx, u32, GXColor);
-void btlDispTexPlane3(Mtx, u32, GXColor, GXColor, GXColor, GXColor);
-void btlDispGXInit2DRasta(void);
-void btlDispGXQuads2DRasta(f32 x, f32 y0, f32 x1, f32 y1, u8 r, u8 g, u8 b, u8 a);
-void btlGetScreenPoint(Vec* in, Vec* out);
-void BtlUnit_SetAnim(BattleUnitPart* part, const char* anim);
-void BattleAudienceSoundHandBeat(void);
-void BattleAudienceSoundCallKind(s32 kind);
-void BattleAudienceSoundBooingKind(s32 kind);
-#ifdef TARGET_PC
-s32 psndSFXOn(const char* name);
-#else
-void psndSFXOn(const char* name);
-#endif
-EffectEntry* effStarStoneEntry(s32 type, f32 x, f32 y, f32 z, f32 size);
-EffectEntry* effHitEntry(s32 type, s32 arg1, f32 x, f32 y, f32 z, f32 arg5);
-
-#define INTPL(mode, cur, steps, a, b) PCCALL(((f32(*)(f32, f32, s32, s32, s32))intplGetValue)(a, b, mode, cur, steps), intplGetValue(mode, cur, steps, a, b))
-
-USER_FUNC(btlevtcmd_ACSuccessEffect);
 static USER_FUNC(star_stone_appear);
 static USER_FUNC(wait_game_end);
 static USER_FUNC(start_game);
 static USER_FUNC(set_weapon);
-USER_FUNC(end_muki);
-USER_FUNC(main_muki);
+static USER_FUNC(main_muki);
 
 typedef struct MukiObj { // 0x38
-    s32 kind;          // 0x
-    s32 timer;         // 0x4
-    s32 type;          // 0x8
-    Vec pos;           // 0xc
-    Vec scale;         // 0x18
-    Vec rot;           // 0x24
-    EffectEntry* eff;  // 0x30
-    u8 alpha;          // 0x34
-    u8 pad35[3];
+    s32 kind;            // 0x
+    s32 timer;           // 0x4
+    s32 type;            // 0x8
+    Vec pos;             // 0xc
+    Vec scale;           // 0x18
+    Vec rot;             // 0x24
+    EffectEntry* eff;    // 0x30
+    u8 alpha;            // 0x34
 } MukiObj;
 
 typedef struct Muki3D { // 0x24
-    s32 kind;          // 0x
-    s32 timer;         // 0x4
-    Vec pos;           // 0x8
-    Vec scale;         // 0x14
-    MukiObj* link;     // 0x20
+    s32 kind;           // 0x
+    s32 timer;          // 0x4
+    Vec pos;            // 0x8
+    Vec scale;          // 0x14
+    MukiObj* link;      // 0x20
 } Muki3D;
 
 typedef struct MukiWork {
-    u32 flags;             // 0x
-    s32 state;             // 0x4
-    s32 timer;             // 0x8
-    s32 timeLeft;          // 0xc
-    s32 unitId;            // 0x10
-    f32 f14;               // 0x14
-    f32 f18;               // 0x18
-    f32 f1c;               // 0x1c
-    f32 f20;               // 0x20
-    s32 t24;               // 0x24
-    s32 t28;               // 0x28
-    f32 f2c;               // 0x2c
-    f32 f30;               // 0x30
-    s32 t34;               // 0x34
-    s32 kind38;            // 0x38
-    s32 t3c;               // 0x3c
-    s32 idx;               // 0x40
-    Vec cpos;              // 0x44
-    Vec cfrom;             // 0x50
-    Vec cto;               // 0x5c
-    Vec cscale;            // 0x68
-    GXColor col74;         // 0x74
-    Muki3D o3d[9];         // 0x78
-    MukiObj obj[9];        // 0x1bc
-    s32 star;              // 0x3b4
-    s32 starTimer;         // 0x3b8
-    Vec spos;              // 0x3bc
-    Vec from;              // 0x3c8
-    Vec to;                // 0x3d4
-    u8 pad3e0[0xc];
-    Vec scale;             // 0x3ec
-    Vec rot;               // 0x3f8
-    EffectEntry* eff;      // 0x404
+    u32 flags;            // 0x
+    s32 state;            // 0x4
+    s32 timer;            // 0x8
+    s32 timeLeft;         // 0xc
+    s32 unitId;           // 0x10
+    f32 f14;              // 0x14
+    f32 f18;              // 0x18
+    f32 f1c;              // 0x1c
+    f32 f20;              // 0x20
+    s32 t24;              // 0x24
+    s32 t28;              // 0x28
+    f32 f2c;              // 0x2c
+    f32 f30;              // 0x30
+    s32 t34;              // 0x34
+    s32 kind38;           // 0x38
+    s32 t3c;              // 0x3c
+    s32 idx;              // 0x40
+    Vec cpos;             // 0x44
+    Vec cfrom;            // 0x50
+    Vec cto;              // 0x5c
+    Vec cscale;           // 0x68
+    GXColor col74;        // 0x74
+    Muki3D o3d[9];        // 0x78
+    MukiObj obj[9];       // 0x1bc
+    s32 star;             // 0x3b4
+    s32 starTimer;        // 0x3b8
+    Vec spos;             // 0x3bc
+    Vec from;             // 0x3c8
+    Vec to;               // 0x3d4
+    u8 reserved_3E0[0xc]; // 0x3e0, never accessed
+    Vec scale;            // 0x3ec
+    Vec rot;              // 0x3f8
+    EffectEntry* eff;     // 0x404
 #ifdef TARGET_PC
     _Alignas(8) u8 weapon[sizeof(BattleWeapon)]; // a native BattleWeapon (0xE8 bytes on PC)
 #else
-    u8 weapon[0xc0];       // 0x408
+    u8 weapon[0xc0];      // 0x408
 #endif
 } MukiWork;
 
@@ -128,15 +109,25 @@ static void disp_2D(CameraId cam, void* param);
 static MukiWork* get_ptr(void);
 static void main_star(void);
 static void main_base(void);
-void main_icon(s32 idx);
-void main_point(s32 idx);
-void main_cursor(void);
-
+static void main_icon(s32 idx);
+static void main_point(s32 idx);
+static void main_cursor(void);
 
 static BattleWeapon weapon;
-EvtWord nice_event_pow[8];
-EvtWord marioAttackEvent_Muki[254];
+extern EvtWord nice_event_pow[];
 
+/** the demo defines the event first */
+#if VERSION <= VERSION_DEMO_JP
+EVT_BEGIN(nice_event_pow)
+    CALL(btlevtcmd_ACSuccessEffect, LW(0), -100, 175, 0)
+    RETURN
+EVT_END()
+#endif
+
+/**
+ * Power Lift's weapon template (3 SP, targets Mario and the partner): set_weapon copies it and adds a sure
+ * 3-turn Attack or Defense boost of the points earned in the minigame.
+ */
 static BattleWeapon weapon = {
     "btl_wn_sac_mukimuki_body", // name
     ICON_19A, // icon
@@ -148,22 +139,22 @@ static BattleWeapon weapon = {
     3, // baseSpCost
     0, // superguardsAllowed
     1.0f, // reserved_14
-    1, // mStylishCommandMultiplier
+    1, // stylishCommandMultiplier
     5, // reserved_19
-    100, // mBingoSlotChance
+    100, // bingoSlotChance
     50, // reserved_1B
     NULL, // hpDamageFn
     {0}, // hpDamageWork
     NULL, // fpDamageFn
     {0}, // fpDamageWork
-    0x2100070, // targetClassFlags
-    0x10000000, // targetPropertyFlags
-    0, 0, // element..damagePattern
+    TARGET_CLASS_NO_ENEMY | TARGET_CLASS_NO_TREE_OR_SWITCH | TARGET_CLASS_NO_SYSTEM_UNIT | TARGET_CLASS_MAIN_PARTS | TARGET_CLASS_MULTIPLE, // targetClassFlags
+    TARGET_PROP_START_OWN_SIDE, // targetPropertyFlags
+    ELEMENT_NORMAL, 0, // element..damagePattern
     3, // acLevel
     2, // reserved_6F
     "msg_sac_4", // acHelpMsg
-    0x20008, // special
-    0x7FF, // counterResistFlags
+    SPECIAL_ALWAYS_HITS | SPECIAL_UNGUARDABLE, // special
+    COUNTER_RESIST_ALL, // counterResistFlags
     0, 0, 0, 0, 0, 0, 0, 0, // targetWeightFlags..poisonChance
     0, 0, 0, 0, 0, 0, 0, 0, // poisonTime..dodgyTime
     0, 0, 0, 0, 0, 0, 0, 0, // burnChance..atkChangeChance
@@ -171,17 +162,27 @@ static BattleWeapon weapon = {
     0, 0, 0, 0, 0, 0, 0, 0, // chargeStrength..paybackTime
     0, 0, 0, 0, 0, 0, 0, // holdFastTime..fpRegenStrength
     {0}, // pad_AE
-    marioAttackEvent_Muki, // mAttackEvtScript
+    marioAttackEvent_Muki, // attackEvtScript
     {0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0}, // stageEffectRates
 };
 
+/**
+ * Shows the Nice/Good/Great/Wonderful/Excellent popup for level LW(0);
+ * main_base starts it when the game ends with any boost earned. The demos define it before the weapon template.
+ */
+#if VERSION >= VERSION_JP
 EVT_BEGIN(nice_event_pow)
     CALL(btlevtcmd_ACSuccessEffect, LW(0), -100, 175, 0)
     RETURN
 EVT_END()
+#endif
 
-
-USER_FUNC(main_muki) {
+/**
+ * Per-frame driver of the Power Lift minigame, run as a sibling event by marioAttackEvent_Muki;
+ * args[0] is the partner's unit id (-1 when absent or KO'd).
+ * The first call clears the work and makes the arrow effects; it never finishes itself.
+ */
+static USER_FUNC(main_muki) {
     MukiWork* w = get_ptr();
     EvtWord* args = event->args;
     s32 i;
@@ -206,12 +207,17 @@ USER_FUNC(main_muki) {
         main_icon(i);
     }
     main_star();
-    dispEntry(8, 901.0f, 1, disp_2D, 0);
-    dispEntry(4, 0.0f, 1, disp_3D, 0);
-    dispEntry(4, 0.0f, 2, disp_3D_alpha, 0);
+    dispEntry(CAMERA_2D, 901.0f, 1, disp_2D, 0);
+    dispEntry(CAMERA_3D, 0.0f, 1, disp_3D, 0);
+    dispEntry(CAMERA_3D, 0.0f, 2, disp_3D_alpha, 0);
     return 0;
 }
 
+/**
+ * Game state machine: grows the 3x3 grid in, slides the gauges in, runs the 900-frame timer,
+ * then shrinks the grid and pops the rating (from the attack + defense levels earned) when time is up.
+ * Also eases the shown gauge values toward the earned ones.
+ */
 static void main_base(void) {
     MukiWork* w = get_ptr();
     BattleUnit* mario = BattleGetMarioPtr(_battleWorkPointer);
@@ -228,98 +234,98 @@ static void main_base(void) {
         w->t28--;
     }
     switch (w->state) {
-    case 1:
-        w->state = 2;
-        w->f14 = w->f18 = 0.0f;
-        w->f1c = w->f20 = 0.0f;
-        w->f2c = -400.0f;
-        w->f30 = 90.0f;
-        w->timeLeft = 899;
-        for (i = 0; i < 9; i++) {
-            w->o3d[i].kind = 1;
-        }
-    case 2:
-        n = 0;
-        for (i = 0; i < 9; i++) {
-            if (w->o3d[i].kind != 4) {
-                break;
-            }
-            n++;
-        }
-        if (n == 9) {
-            w->state = 3;
-            w->timer = 0;
-        }
-        break;
-    case 3:
-        w->timer++;
-        w->f2c = INTPL(4, w->timer, 30, -400.0f, -120.0f);
-        if (w->timer >= 30) {
-            w->state = 4;
-            w->timer = 0;
-            w->kind38 = 1;
+        case 1:
+            w->state = 2;
+            w->f14 = w->f18 = 0.0f;
+            w->f1c = w->f20 = 0.0f;
+            w->f2c = -400.0f;
+            w->f30 = 90.0f;
+            w->timeLeft = 899;
             for (i = 0; i < 9; i++) {
-                w->o3d[i].kind = 5;
+                w->o3d[i].kind = 1;
             }
-        }
-        break;
-    case 4:
-        if (w->flags & 1) {
-            w->t34++;
-            if (w->t34 == 30) {
-                BtlUnit_SetAnim(part, "M_X_1");
-            }
-        }
-        w->timeLeft--;
-        if (w->timeLeft <= 0) {
-            w->state = 5;
-            w->timer = 0;
-            w->kind38 = 7;
-            BtlUnit_SetAnim(part, "M_S_1");
+        case 2:
+            n = 0;
             for (i = 0; i < 9; i++) {
-                w->o3d[i].kind = 6;
-                w->obj[i].kind = 9;
-            }
-            n = (s32)(w->f14 + w->f1c);
-            if (n >= 1) {
-                if (n == 1) {
-                    n = 2;
-                } else if (n == 2) {
-                    n = 3;
-                } else if (n == 3) {
-                    n = 4;
-                } else if (n == 4) {
-                    n = 5;
-                } else if (n >= 5) {
-                    n = 6;
+                if (w->o3d[i].kind != 4) {
+                    break;
                 }
-                evtEntry(nice_event_pow, 0, 0x20)->lwData[0] = n;
+                n++;
             }
-        }
-        break;
-    case 5:
-        n = 0;
-        for (i = 0; i < 9; i++) {
-            if (w->o3d[i].kind != 8) {
-                break;
+            if (n == 9) {
+                w->state = 3;
+                w->timer = 0;
             }
-            n++;
-        }
-        if (n == 9) {
-            w->state = 6;
-            w->timer = 0;
-        }
-        break;
-    case 6:
-        w->timer++;
-        if (w->timer >= 30) {
-            w->state = 7;
-            w->timer = 0;
-        }
-        break;
-    case 0:
-    case 7:
-        break;
+            break;
+        case 3:
+            w->timer++;
+            w->f2c = intplGetValue(4, -400.0f, -120.0f, w->timer, 30);
+            if (w->timer >= 30) {
+                w->state = 4;
+                w->timer = 0;
+                w->kind38 = 1;
+                for (i = 0; i < 9; i++) {
+                    w->o3d[i].kind = 5;
+                }
+            }
+            break;
+        case 4:
+            if (w->flags & 1) {
+                w->t34++;
+                if (w->t34 == 30) {
+                    BtlUnit_SetAnim(part, "M_X_1");
+                }
+            }
+            w->timeLeft--;
+            if (w->timeLeft <= 0) {
+                w->state = 5;
+                w->timer = 0;
+                w->kind38 = 7;
+                BtlUnit_SetAnim(part, "M_S_1");
+                for (i = 0; i < 9; i++) {
+                    w->o3d[i].kind = 6;
+                    w->obj[i].kind = 9;
+                }
+                n = (s32)(w->f14 + w->f1c);
+                if (n >= 1) {
+                    if (n == 1) {
+                        n = 2;
+                    } else if (n == 2) {
+                        n = 3;
+                    } else if (n == 3) {
+                        n = 4;
+                    } else if (n == 4) {
+                        n = 5;
+                    } else if (n >= 5) {
+                        n = 6;
+                    }
+                    evtEntry(nice_event_pow, 0, EVENT_START_NOW)->lwData[0] = n;
+                }
+            }
+            break;
+        case 5:
+            n = 0;
+            for (i = 0; i < 9; i++) {
+                if (w->o3d[i].kind != 8) {
+                    break;
+                }
+                n++;
+            }
+            if (n == 9) {
+                w->state = 6;
+                w->timer = 0;
+            }
+            break;
+        case 6:
+            w->timer++;
+            if (w->timer >= 30) {
+                w->state = 7;
+                w->timer = 0;
+            }
+            break;
+        case 0:
+        case 7:
+            break;
     }
     d = w->f14 - w->f18;
     if (d != 0.0f) {
@@ -355,23 +361,29 @@ static void main_base(void) {
     }
 }
 
-#define AUD_CALL(num)                         \
-    if ((num) >= 1 && (num) <= 49) {          \
-        BattleAudienceSoundCallKind(1);       \
-    }                                         \
-    if ((num) >= 50 && (num) <= 99) {         \
-        BattleAudienceSoundCallKind(1);       \
-        BattleAudienceSoundHandBeat();        \
-    }                                         \
-    if ((num) >= 100 && (num) <= 149) {       \
-        BattleAudienceSoundCallKind(2);       \
-    }                                         \
-    if ((num) >= 150) {                       \
-        BattleAudienceSoundCallKind(2);       \
-        BattleAudienceSoundHandBeat();        \
+#define AUD_CALL(num)                   \
+    if ((num) >= 1 && (num) <= 49) {    \
+        BattleAudienceSoundCallKind(1); \
+    }                                   \
+    if ((num) >= 50 && (num) <= 99) {   \
+        BattleAudienceSoundCallKind(1); \
+        BattleAudienceSoundHandBeat();  \
+    }                                   \
+    if ((num) >= 100 && (num) <= 149) { \
+        BattleAudienceSoundCallKind(2); \
+    }                                   \
+    if ((num) >= 150) {                 \
+        BattleAudienceSoundCallKind(2); \
+        BattleAudienceSoundHandBeat();  \
     }
 
-void main_cursor(void) {
+/**
+ * The cursor on the 3x3 grid: moves square to square with the Control Stick (slower while Mario is dizzy)
+ * and on A hits what is in its square: a red arrow adds to the attack gauge,
+ * a blue arrow to the defense gauge (0.25 in JP and the demos, 0.2 in US and PAL, up to level 9),
+ * a poison mushroom makes Mario dizzy and the crowd boo.
+ */
+static void main_cursor(void) {
     MukiWork* w = get_ptr();
     BattleUnit* mario = BattleGetMarioPtr(_battleWorkPointer);
     BattleUnitPart* part = BtlUnit_GetPartsPtr(mario, BtlUnit_GetBodyPartsId(mario));
@@ -382,359 +394,374 @@ void main_cursor(void) {
     EffectEntry* eff;
 
     switch (w->kind38) {
-    case 1:
-        if (w->o3d[4].kind < 5) {
-            break;
-        }
-        w->kind38 = 2;
-        w->cpos = w->o3d[4].pos;
-        w->cpos.z += 5.0f;
-        w->cscale = (Vec){0.5f, 0.5f, 1.0f};
-        w->idx = 4;
-        w->col74 = (GXColor){0xFF, 0xFF, 0xFF, 0xFF};
-    case 2:
-        w->col74 = (GXColor){0xFF, 0xFF, 0xFF, 0xFF};
-        if (w->t34 >= 120) {
-            BtlUnit_SetAnim(part, "M_I_Y");
-            w->flags &= ~1;
-            w->t34 = 0;
-        }
-        if (keyGetButtonTrg(0) & 0x100) {
-            w->kind38 = 5;
-            ob = w->o3d[w->idx].link;
-            if (ob) {
-                ob->kind = 5;
-                effHitEntry(0, 5, ob->pos.x, ob->pos.y, ob->pos.z, 1.0f);
-                switch (ob->type) {
-                case 0:
-                    prev = w->f14;
-                    w->f14 += VERSION_PICK(0.25f, 0.2f);
-                    if (w->f14 > 9.0f) {
-                        w->f14 = 9.0f;
+        case 1:
+            if (w->o3d[4].kind < 5) {
+                break;
+            }
+            w->kind38 = 2;
+            w->cpos = w->o3d[4].pos;
+            w->cpos.z += 5.0f;
+            w->cscale = (Vec){0.5f, 0.5f, 1.0f};
+            w->idx = 4;
+            w->col74 = (GXColor){0xFF, 0xFF, 0xFF, 0xFF};
+        case 2:
+            w->col74 = (GXColor){0xFF, 0xFF, 0xFF, 0xFF};
+            if (w->t34 >= 120) {
+                BtlUnit_SetAnim(part, "M_I_Y");
+                w->flags &= ~1;
+                w->t34 = 0;
+            }
+            if (keyGetButtonTrg(0) & PAD_BUTTON_A) {
+                w->kind38 = 5;
+                ob = w->o3d[w->idx].link;
+                if (ob) {
+                    ob->kind = 5;
+#if VERSION <= VERSION_DEMO_JP
+                    effHitEntry(0, 0x20, ob->pos.x, ob->pos.y, ob->pos.z, 1.0f);
+#else
+                    effHitEntry(0, 5, ob->pos.x, ob->pos.y, ob->pos.z, 1.0f);
+#endif
+                    switch (ob->type) {
+                        case 0:
+                            prev = w->f14;
+                            w->f14 += VERSION_PICK(0.25f, 0.2f);
+                            if (w->f14 > 9.0f) {
+                                w->f14 = 9.0f;
+                            }
+                            if ((s32)w->f14 > (s32)prev) {
+                                w->t24 = 60;
+                                psndSFXOn("SFX_BTL_SAC_BODY6");
+                                AUD_CALL(num)
+                            }
+                            psndSFXOn("SFX_BTL_SAC_BODY4");
+                            break;
+                        case 1:
+                            prev = w->f1c;
+                            w->f1c += VERSION_PICK(0.25f, 0.2f);
+                            if (w->f1c > 9.0f) {
+                                w->f1c = 9.0f;
+                            }
+                            if ((s32)w->f1c > (s32)prev) {
+                                w->t28 = 60;
+                                psndSFXOn("SFX_BTL_SAC_BODY6");
+                                AUD_CALL(num)
+                            }
+                            psndSFXOn("SFX_BTL_SAC_BODY4");
+                            break;
+                        case 2:
+                            BtlUnit_SetAnim(part, "M_D_1");
+                            BtlUnit_GetPos(mario, &x, &y, &z);
+                            eff = effStampN64Entry(2, x, 20.0f + y, 10.0f + z);
+                            ((EffStampN64Work*)eff->userdata)->r = 0;
+                            ((EffStampN64Work*)eff->userdata)->g = 200;
+                            ((EffStampN64Work*)eff->userdata)->b = 0;
+                            ((EffStampN64Work*)eff->userdata)->r2 = 0;
+                            ((EffStampN64Work*)eff->userdata)->g2 = 10;
+                            ((EffStampN64Work*)eff->userdata)->b2 = 0;
+                            w->t34 = 0;
+                            w->flags |= 1;
+                            psndSFXOn("SFX_BTL_SAC_BODY5");
+                            if (num >= 1 && num <= 49) {
+                                BattleAudienceSoundBooingKind(1);
+                            }
+                            if (num >= 50 && num <= 99) {
+                                BattleAudienceSoundBooingKind(1);
+                            }
+                            if (num >= 100 && num <= 149) {
+                                BattleAudienceSoundBooingKind(2);
+                            }
+                            if (num >= 150) {
+                                BattleAudienceSoundBooingKind(3);
+                            }
+                            break;
                     }
-                    if ((s32)w->f14 > (s32)prev) {
-                        w->t24 = 60;
-                        psndSFXOn("SFX_BTL_SAC_BODY6");
-                        AUD_CALL(num)
-                    }
-                    psndSFXOn("SFX_BTL_SAC_BODY4");
-                    break;
-                case 1:
-                    prev = w->f1c;
-                    w->f1c += VERSION_PICK(0.25f, 0.2f);
-                    if (w->f1c > 9.0f) {
-                        w->f1c = 9.0f;
-                    }
-                    if ((s32)w->f1c > (s32)prev) {
-                        w->t28 = 60;
-                        psndSFXOn("SFX_BTL_SAC_BODY6");
-                        AUD_CALL(num)
-                    }
-                    psndSFXOn("SFX_BTL_SAC_BODY4");
-                    break;
-                case 2:
-                    BtlUnit_SetAnim(part, "M_D_1");
-                    BtlUnit_GetPos(mario, &x, &y, &z);
-                    eff = effStampN64Entry(2, x, 20.0f + y, 10.0f + z);
-                    ((EffStampN64Work*)eff->userdata)->r = 0;
-                    ((EffStampN64Work*)eff->userdata)->g = 200;
-                    ((EffStampN64Work*)eff->userdata)->b = 0;
-                    ((EffStampN64Work*)eff->userdata)->r2 = 0;
-                    ((EffStampN64Work*)eff->userdata)->g2 = 10;
-                    ((EffStampN64Work*)eff->userdata)->b2 = 0;
-                    w->t34 = 0;
-                    w->flags |= 1;
-                    psndSFXOn("SFX_BTL_SAC_BODY5");
-                    if (num >= 1 && num <= 49) {
-                        BattleAudienceSoundBooingKind(1);
-                    }
-                    if (num >= 50 && num <= 99) {
-                        BattleAudienceSoundBooingKind(1);
-                    }
-                    if (num >= 100 && num <= 149) {
-                        BattleAudienceSoundBooingKind(2);
-                    }
-                    if (num >= 150) {
-                        BattleAudienceSoundBooingKind(3);
-                    }
-                    break;
                 }
             }
-        }
-        if (keyGetDirTrg(0) & 0x8000) {
-            if (w->idx % 3 != 2) {
-                w->kind38 = 3;
-                w->idx++;
+            if (keyGetDirTrg(0) & DEMO_STICK_RIGHT) {
+                if (w->idx % 3 != 2) {
+                    w->kind38 = 3;
+                    w->idx++;
+                }
             }
-        }
-        if (keyGetDirTrg(0) & 0x4000) {
-            if (w->idx % 3) {
-                w->kind38 = 3;
-                w->idx--;
+            if (keyGetDirTrg(0) & DEMO_STICK_LEFT) {
+                if (w->idx % 3) {
+                    w->kind38 = 3;
+                    w->idx--;
+                }
             }
-        }
-        if (keyGetDirTrg(0) & 0x1000) {
-            if (w->idx / 3) {
-                w->kind38 = 3;
-                w->idx -= 3;
+            if (keyGetDirTrg(0) & DEMO_STICK_UP) {
+                if (w->idx / 3) {
+                    w->kind38 = 3;
+                    w->idx -= 3;
+                }
             }
-        }
-        if (keyGetDirTrg(0) & 0x2000) {
-            if (w->idx / 3 != 2) {
-                w->kind38 = 3;
-                w->idx += 3;
+            if (keyGetDirTrg(0) & DEMO_STICK_DOWN) {
+                if (w->idx / 3 != 2) {
+                    w->kind38 = 3;
+                    w->idx += 3;
+                }
             }
-        }
-        break;
-    case 3:
-        w->kind38 = 4;
-        w->t3c = 0;
-        w->cfrom = w->cpos;
-        w->cto = w->o3d[w->idx].pos;
-        psndSFXOn("SFX_BTL_SAC_BODY3\0\0");
-    case 4:
-        w->t3c++;
-        w->col74 = (GXColor){0x0, 0x0, 0xFF, 0xFF};
-        if (!(w->flags & 1)) {
-            w->cpos.x = INTPL(4, w->t3c, 5, w->cfrom.x, w->cto.x);
-            w->cpos.y = INTPL(4, w->t3c, 5, w->cfrom.y, w->cto.y);
-            if (w->t3c >= 5) {
-                w->kind38 = 2;
-            }
-        } else {
-            w->cpos.x = INTPL(4, w->t3c, 25, w->cfrom.x, w->cto.x);
-            w->cpos.y = INTPL(4, w->t3c, 25, w->cfrom.y, w->cto.y);
-            if (w->t3c >= 25) {
-                w->kind38 = 2;
-            }
-        }
-        break;
-    case 5:
-        w->kind38 = 6;
-        w->t3c = 0;
-    case 6:
-        w->t3c++;
-        w->col74 = (GXColor){0xFF, 0x0, 0x0, 0xFF};
-        if (w->t3c >= 1) {
-            w->kind38 = 2;
+            break;
+        case 3:
+            w->kind38 = 4;
             w->t3c = 0;
-        }
-        break;
-    case 0:
-    case 7:
-        break;
+            w->cfrom = w->cpos;
+            w->cto = w->o3d[w->idx].pos;
+            psndSFXOn("SFX_BTL_SAC_BODY3");
+        case 4:
+            w->t3c++;
+            w->col74 = (GXColor){0x0, 0x0, 0xFF, 0xFF};
+            if (!(w->flags & 1)) {
+                w->cpos.x = intplGetValue(4, w->cfrom.x, w->cto.x, w->t3c, 5);
+                w->cpos.y = intplGetValue(4, w->cfrom.y, w->cto.y, w->t3c, 5);
+                if (w->t3c >= 5) {
+                    w->kind38 = 2;
+                }
+            } else {
+                w->cpos.x = intplGetValue(4, w->cfrom.x, w->cto.x, w->t3c, 25);
+                w->cpos.y = intplGetValue(4, w->cfrom.y, w->cto.y, w->t3c, 25);
+                if (w->t3c >= 25) {
+                    w->kind38 = 2;
+                }
+            }
+            break;
+        case 5:
+            w->kind38 = 6;
+            w->t3c = 0;
+        case 6:
+            w->t3c++;
+            w->col74 = (GXColor){0xFF, 0x0, 0x0, 0xFF};
+            if (w->t3c >= 1) {
+                w->kind38 = 2;
+                w->t3c = 0;
+            }
+            break;
+        case 0:
+        case 7:
+            break;
     }
 }
 
-void main_point(s32 idx) {
+/**
+ * One grid square: grows in after a random delay,
+ * then while the game runs now and then spawns an arrow or mushroom (main_icon) in it when empty,
+ * and shrinks away at the end.
+ */
+static void main_point(s32 idx) {
     MukiWork* w = get_ptr();
     Muki3D* o = &w->o3d[idx];
     s32 i;
 
     switch (o->kind) {
-    case 1: {
-        o->kind = 2;
-        o->timer = irand(30) + 30;
-        {
-        Vec p = {0.0f, 0.0f, 20.0f};
-        p.x = (f32)((idx % 3) * 48 - 48);
-        p.y = (f32)(125 - (idx / 3) * 48);
-        o->pos = p;
-        }
-        o->scale = (Vec){0.0f, 0.0f, 1.0f};
-        o->link = NULL;
-    }
-    case 2:
-        o->timer--;
-        if (o->timer <= 30) {
-            o->scale.x = o->scale.y = INTPL(0, 30 - o->timer, 30, 0.0f, 0.5f);
-        }
-        if (o->timer <= 0) {
-            o->kind = 3;
-            o->timer = 0;
-        }
-        break;
-    case 3:
-        o->kind = 4;
-        o->timer = 0;
-        o->scale = (Vec){0.5f, 0.5f, 1.0f};
-        break;
-    case 5:
-        if (o->link) {
-            if (o->link->kind == 0) {
-                o->link = NULL;
+        case 1: {
+            o->kind = 2;
+            o->timer = irand(30) + 30;
+            {
+                Vec p = {0.0f, 0.0f, 20.0f};
+                p.x = (f32)((idx % 3) * 48 - 48);
+                p.y = (f32)(125 - (idx / 3) * 48);
+                o->pos = p;
             }
-        } else if (irand(65) == 0) {
-            for (i = 0; i < 9; i++) {
-                MukiObj* ob = &w->obj[i];
-                if (ob->kind == 0) {
-                    ob->kind = 1;
-                    ob->pos = o->pos;
-                    ob->pos.z = 0.0f;
-                    o->link = ob;
-                    break;
+            o->scale = (Vec){0.0f, 0.0f, 1.0f};
+            o->link = NULL;
+        }
+        case 2:
+            o->timer--;
+            if (o->timer <= 30) {
+                o->scale.x = o->scale.y = intplGetValue(0, 0.0f, 0.5f, 30 - o->timer, 30);
+            }
+            if (o->timer <= 0) {
+                o->kind = 3;
+                o->timer = 0;
+            }
+            break;
+        case 3:
+            o->kind = 4;
+            o->timer = 0;
+            o->scale = (Vec){0.5f, 0.5f, 1.0f};
+            break;
+        case 5:
+            if (o->link) {
+                if (o->link->kind == 0) {
+                    o->link = NULL;
+                }
+            } else if (irand(65) == 0) {
+                for (i = 0; i < 9; i++) {
+                    MukiObj* ob = &w->obj[i];
+                    if (ob->kind == 0) {
+                        ob->kind = 1;
+                        ob->pos = o->pos;
+                        ob->pos.z = 0.0f;
+                        o->link = ob;
+                        break;
+                    }
                 }
             }
-        }
-        break;
-    case 6:
-        o->kind = 7;
-        o->timer = irand(30) + 30;
-        o->link = NULL;
-    case 7:
-        o->timer--;
-        if (o->timer <= 30) {
-            o->scale.x = o->scale.y = INTPL(0, 30 - o->timer, 30, 0.5f, 0.0f);
-        }
-        if (o->timer <= 0) {
-            o->kind = 8;
-            o->timer = 0;
-        }
-        break;
-    case 0:
-    case 4:
-    case 8:
-        break;
+            break;
+        case 6:
+            o->kind = 7;
+            o->timer = irand(30) + 30;
+            o->link = NULL;
+        case 7:
+            o->timer--;
+            if (o->timer <= 30) {
+                o->scale.x = o->scale.y = intplGetValue(0, 0.5f, 0.0f, 30 - o->timer, 30);
+            }
+            if (o->timer <= 0) {
+                o->kind = 8;
+                o->timer = 0;
+            }
+            break;
+        case 0:
+        case 4:
+        case 8:
+            break;
     }
 }
 
-void main_icon(s32 idx) {
+/**
+ * One arrow or poison mushroom in a square: spins in as a random type (0 attack, 1 defense, 2 mushroom),
+ * stays 90 frames, then spins out; a hit removes it at once and the end of the game fades it.
+ */
+static void main_icon(s32 idx) {
     MukiWork* w = get_ptr();
     MukiObj* o = &w->obj[idx];
 
     switch (o->kind) {
-    case 0:
-        o->pos = (Vec){0.0f, -1000.0f, 0.0f};
-        o->alpha = 0xFF;
-        break;
-    case 1:
-        o->kind = 2;
-        o->timer = 0;
-        o->type = irand(3);
-        o->rot.y = 0.0f;
-        o->scale = (Vec){0.3f, 0.3f, 0.3f};
-    case 2:
-        o->timer++;
-        o->rot.y = INTPL(4, o->timer, 30, 180.0f, 1080.0f);
-        o->alpha = INTPL(0, o->timer, 30, 0.0f, 255.0f);
-        if (o->timer >= 30) {
-            o->kind = 7;
-        }
-        break;
-    case 3:
-        o->kind = 4;
-        o->timer = 0;
-        o->rot.y = 0.0f;
-    case 4:
-        o->timer++;
-        o->rot.y = INTPL(1, o->timer, 30, 0.0f, 900.0f);
-        o->alpha = INTPL(0, o->timer, 30, 255.0f, 0.0f);
-        if (o->timer >= 30) {
+        case 0:
+            o->pos = (Vec){0.0f, -1000.0f, 0.0f};
+            o->alpha = 0xFF;
+            break;
+        case 1:
+            o->kind = 2;
+            o->timer = 0;
+            o->type = irand(3);
+            o->rot.y = 0.0f;
+            o->scale = (Vec){0.3f, 0.3f, 0.3f};
+        case 2:
+            o->timer++;
+            o->rot.y = intplGetValue(4, 180.0f, 1080.0f, o->timer, 30);
+            o->alpha = intplGetValue(0, 0.0f, 255.0f, o->timer, 30);
+            if (o->timer >= 30) {
+                o->kind = 7;
+            }
+            break;
+        case 3:
+            o->kind = 4;
+            o->timer = 0;
+            o->rot.y = 0.0f;
+        case 4:
+            o->timer++;
+            o->rot.y = intplGetValue(1, 0.0f, 900.0f, o->timer, 30);
+            o->alpha = intplGetValue(0, 255.0f, 0.0f, o->timer, 30);
+            if (o->timer >= 30) {
+                o->kind = 0;
+            }
+            break;
+        case 5:
+            o->kind = 6;
+        case 6:
             o->kind = 0;
-        }
-        break;
-    case 5:
-        o->kind = 6;
-    case 6:
-        o->kind = 0;
-        break;
-    case 7:
-        o->kind = 8;
-        o->timer = 0;
-        o->rot.y = 0.0f;
-        break;
-    case 8:
-        o->timer++;
-        o->alpha = 0xFF;
-        if (o->timer >= 90) {
-            o->kind = 3;
-        }
-        break;
-    case 9:
-        if (o->alpha >= 8) {
-            o->alpha -= 8;
-        } else {
-            o->alpha = 0;
-        }
-        break;
+            break;
+        case 7:
+            o->kind = 8;
+            o->timer = 0;
+            o->rot.y = 0.0f;
+            break;
+        case 8:
+            o->timer++;
+            o->alpha = 0xFF;
+            if (o->timer >= 90) {
+                o->kind = 3;
+            }
+            break;
+        case 9:
+            if (o->alpha >= 8) {
+                o->alpha -= 8;
+            } else {
+                o->alpha = 0;
+            }
+            break;
     }
     if (o->eff) {
-        EffStarStoneWork* e = (EffStarStoneWork*)o->eff->userdata;
+        EffStarStoneWork* e = o->eff->userdata;
         e->position.x = o->pos.x;
         e->position.y = o->pos.y;
         e->position.z = o->pos.z;
-        e->f18 = o->rot.x;
+        e->spinY = o->rot.x;
         e->rotY = o->rot.y;
-        e->f20 = o->rot.z;
+        e->tiltZ = o->rot.z;
         e->scale = 9.0f * o->scale.x;
         e->a = o->alpha;
     }
 }
 
+/** The star that rises out of Mario at the start, grows and spins, then flies off the top of the screen. */
 static void main_star(void) {
     MukiWork* w = get_ptr();
     BattleUnit* mario = BattleGetMarioPtr(_battleWorkPointer);
 
     switch (w->star) {
-    case 1:
-        w->star = 2;
-        w->starTimer = 0;
-        w->eff = effStarStoneEntry(2, 0.0f, -1000.0f, 0.0f, 1.0f);
-        BtlUnit_GetPos(mario, &w->spos.x, &w->spos.y, &w->spos.z);
-        w->spos.y += mario->mSizeMultiplier * (f32)mario->mHeight + 37.0f;
-        w->from = w->spos;
-        w->to = w->spos;
-        w->to.y += 50.0f;
-        w->to.z += -1.0f;
-        w->scale = (Vec){0.0f, 0.0f, 0.0f};
-        w->rot = (Vec){0.0f, 0.0f, 0.0f};
-    case 2:
-        w->starTimer++;
-        if (w->starTimer <= 100) {
-            w->spos.x = INTPL(0, w->starTimer, 100, w->from.x, w->to.x);
-            w->spos.y = INTPL(0, w->starTimer, 100, w->from.y, w->to.y);
-            w->spos.z = INTPL(0, w->starTimer, 100, w->from.z, w->to.z);
-            w->scale.x = w->scale.y = w->scale.z = INTPL(0, w->starTimer, 100, 0.0f, 2.0f);
-        } else {
-            w->spos.x = w->to.x;
-            w->spos.y = w->to.y;
-            w->spos.z = w->to.z;
-            w->scale.x = w->scale.y = w->scale.z = 2.0f;
-        }
-        w->rot.y = INTPL(4, w->starTimer, 120, 0.0f, 2160.0f);
-        if (w->starTimer >= 120) {
-            w->star = 3;
+        case 1:
+            w->star = 2;
             w->starTimer = 0;
+            w->eff = effStarStoneEntry(2, 0.0f, -1000.0f, 0.0f, 1.0f);
+            BtlUnit_GetPos(mario, &w->spos.x, &w->spos.y, &w->spos.z);
+            w->spos.y += mario->sizeMultiplier * (f32)mario->height + 37.0f;
             w->from = w->spos;
-            w->to.y = 300.0f;
-        }
-        break;
-    case 3:
-        w->starTimer++;
-        w->spos.y = INTPL(1, w->starTimer, 60, w->from.y, w->to.y);
-        if (w->starTimer >= 60) {
-            w->star = 5;
-            w->starTimer = 0;
-        }
-        break;
-    case 0:
-    case 4:
-    case 5:
-        break;
+            w->to = w->spos;
+            w->to.y += 50.0f;
+            w->to.z += -1.0f;
+            w->scale = (Vec){0.0f, 0.0f, 0.0f};
+            w->rot = (Vec){0.0f, 0.0f, 0.0f};
+        case 2:
+            w->starTimer++;
+            if (w->starTimer <= 100) {
+                w->spos.x = intplGetValue(0, w->from.x, w->to.x, w->starTimer, 100);
+                w->spos.y = intplGetValue(0, w->from.y, w->to.y, w->starTimer, 100);
+                w->spos.z = intplGetValue(0, w->from.z, w->to.z, w->starTimer, 100);
+                w->scale.x = w->scale.y = w->scale.z = intplGetValue(0, 0.0f, 2.0f, w->starTimer, 100);
+            } else {
+                w->spos.x = w->to.x;
+                w->spos.y = w->to.y;
+                w->spos.z = w->to.z;
+                w->scale.x = w->scale.y = w->scale.z = 2.0f;
+            }
+            w->rot.y = intplGetValue(4, 0.0f, 2160.0f, w->starTimer, 120);
+            if (w->starTimer >= 120) {
+                w->star = 3;
+                w->starTimer = 0;
+                w->from = w->spos;
+                w->to.y = 300.0f;
+            }
+            break;
+        case 3:
+            w->starTimer++;
+            w->spos.y = intplGetValue(1, w->from.y, w->to.y, w->starTimer, 60);
+            if (w->starTimer >= 60) {
+                w->star = 5;
+                w->starTimer = 0;
+            }
+            break;
+        case 0:
+        case 4:
+        case 5:
+            break;
     }
     if (w->eff) {
-        EffStarStoneWork* e = (EffStarStoneWork*)w->eff->userdata;
+        EffStarStoneWork* e = w->eff->userdata;
         e->position.x = w->spos.x;
         e->position.y = w->spos.y;
         e->position.z = w->spos.z;
-        e->f18 = w->rot.x;
+        e->spinY = w->rot.x;
         e->rotY = w->rot.y;
-        e->f20 = w->rot.z;
+        e->tiltZ = w->rot.z;
         e->scale = 1.5f * w->scale.x;
     }
 }
 
-USER_FUNC(end_muki) {
+/** Cleanup when the move ends: deletes the star and the grid icon effects. */
+static USER_FUNC(end_muki) {
     MukiWork* w = get_ptr();
     s32 i;
 
@@ -746,9 +773,19 @@ USER_FUNC(end_muki) {
     return 2;
 }
 
-static inline f32 addf(f32 a, f32 b) { return a + b; }
-static inline f32 mulf(f32 x, f32 y) { return x * y; }
-#define TEXPLANE2(m, id, c) PCCALL(((void (*)(Mtx, u32, GXColor, s32))btlDispTexPlane2)(m, id, c, 0), btlDispTexPlane2(m, id, c))
+/** Float add, kept as a function so disp_2D matches the original's operation order. */
+static inline f32 addf(f32 a, f32 b) {
+    return a + b;
+}
+/** Float multiply, kept as a function so disp_3D_alpha matches the original's operation order. */
+static inline f32 mulf(f32 x, f32 y) {
+    return x * y;
+}
+/**
+ * Draws the two gauges on the left: attack (red) and defense (blue),
+ * each a bar filled by the fractional part of the level with the level number beside it,
+ * blinking when a new level is reached.
+ */
 static void disp_2D(CameraId cam, void* param) {
     MukiWork* w = get_ptr();
     Mtx m;
@@ -774,22 +811,28 @@ static void disp_2D(CameraId cam, void* param) {
         y = s.y;
         c = (GXColor){0xFF, 0xFF, 0xFF, 0xFF};
         PSMTXTrans(m, (x = s.x) - 32.0f - 8.0f, y, 0.0f);
-        TEXPLANE2(m, BTL_TEX(0x43), c);
+        btlDispTexPlane2(m, BTL_TEX(0x43), c, 0);
         PSMTXScale(m, 16.0f, 1.0f, 1.0f);
         PSMTXTransApply(m, m, x, y, 0.0f);
-        TEXPLANE2(m, BTL_TEX(0x44), c);
+        btlDispTexPlane2(m, BTL_TEX(0x44), c, 0);
         PSMTXScale(m, -1.0f, 1.0f, 1.0f);
         PSMTXTransApply(m, m, 8.0f + addf(x, 32.0f), y, 0.0f);
-        TEXPLANE2(m, BTL_TEX(0x43), c);
+        btlDispTexPlane2(m, BTL_TEX(0x43), c, 0);
         x = x - 32.0f - 8.0f;
         frac = w->f18 - (f32)(s32)w->f18;
         btlDispGXInit2DRasta();
-        GXLoadPosMtxImm(camGetPtr(8)->view, 0);
+        GXLoadPosMtxImm(camGetPtr(CAMERA_2D)->view, 0);
         d = w->f14 - w->f18;
         if (d != 0.0f) {
-            r = 0xFF; g = 0xB4; b = 0xB4; a = 0xFF;
+            r = 0xFF;
+            g = 0xB4;
+            b = 0xB4;
+            a = 0xFF;
         } else {
-            r = 0xF0; g = 0xA0; b = 0xA0; a = 0xFF;
+            r = 0xF0;
+            g = 0xA0;
+            b = 0xA0;
+            a = 0xFF;
         }
         btlDispGXQuads2DRasta(x, 8.0f + y, x + (frac *= 80.0f), y - 8.0f, r, g, b, a);
         t = w->t24 % 12;
@@ -798,10 +841,10 @@ static void disp_2D(CameraId cam, void* param) {
             PSMTXTransApply(m, m, x - 30.0f, y, 0.0f);
             col[0] = col[1] = (GXColor){0xE9, 0x4A, 0x3F, 0xFF};
             col[2] = col[3] = (GXColor){0xFE, 0xE6, 0x3E, 0xFF};
-            PCCALL(((void (*)(Mtx, u32, GXColor, GXColor, GXColor, GXColor, s32))btlDispTexPlane3)(m, BTL_TEX(0x45), col[0], col[1], col[2], col[3], 0), btlDispTexPlane3(m, BTL_TEX(0x45), col[0], col[1], col[2], col[3]));
+            btlDispTexPlane3(m, BTL_TEX(0x45), col[0], col[1], col[2], col[3], 0);
             PSMTXScale(m, 0.7f, 0.7f, 0.7f);
             PSMTXTransApply(m, m, x - 35.0f, y - 14.0f, 0.0f);
-            iconDispGx2(m, 0x10, ICON_1ED);
+            iconDispGx2(m, ICON_DISP_2D, ICON_1ED);
             PSMTXScale(m, 0.7f, 0.7f, 0.7f);
             PSMTXTransApply(m, m, x - 25.0f, y - 14.0f, 0.0f);
             iconNumberDispGx(m, (s32)w->f18, 0, (GXColor){0xFF, 0xFF, 0xFF, 0xFF});
@@ -822,21 +865,27 @@ static void disp_2D(CameraId cam, void* param) {
         y = s.y;
         c = (GXColor){0xFF, 0xFF, 0xFF, 0xFF};
         PSMTXTrans(m, x - 32.0f - 8.0f, y, 0.0f);
-        TEXPLANE2(m, BTL_TEX(0x43), c);
+        btlDispTexPlane2(m, BTL_TEX(0x43), c, 0);
         PSMTXScale(m, 16.0f, 1.0f, 1.0f);
         PSMTXTransApply(m, m, x, y, 0.0f);
-        TEXPLANE2(m, BTL_TEX(0x44), c);
+        btlDispTexPlane2(m, BTL_TEX(0x44), c, 0);
         PSMTXScale(m, -1.0f, 1.0f, 1.0f);
         PSMTXTransApply(m, m, 8.0f + addf(x, 32.0f), y, 0.0f);
-        TEXPLANE2(m, BTL_TEX(0x43), c);
+        btlDispTexPlane2(m, BTL_TEX(0x43), c, 0);
         x = x - 32.0f - 8.0f;
         frac = w->f20 - (f32)(s32)w->f20;
         btlDispGXInit2DRasta();
-        GXLoadPosMtxImm(camGetPtr(8)->view, 0);
+        GXLoadPosMtxImm(camGetPtr(CAMERA_2D)->view, 0);
         if (d != 0.0f) {
-            r = 0xB4; g = 0xB4; b = 0xFF; a = 0xFF;
+            r = 0xB4;
+            g = 0xB4;
+            b = 0xFF;
+            a = 0xFF;
         } else {
-            r = 0xA0; g = 0xA0; b = 0xF0; a = 0xFF;
+            r = 0xA0;
+            g = 0xA0;
+            b = 0xF0;
+            a = 0xFF;
         }
         btlDispGXQuads2DRasta(x, 8.0f + y, x + (frac *= 80.0f), y - 8.0f, r, g, b, a);
         t = w->t28 % 12;
@@ -845,10 +894,10 @@ static void disp_2D(CameraId cam, void* param) {
             PSMTXTransApply(m, m, x - 30.0f, y, 0.0f);
             col[0] = col[1] = (GXColor){0x3F, 0x3F, 0xE9, 0xFF};
             col[2] = col[3] = (GXColor){0x74, 0xC9, 0xFF, 0xFF};
-            PCCALL(((void (*)(Mtx, u32, GXColor, GXColor, GXColor, GXColor, s32))btlDispTexPlane3)(m, BTL_TEX(0x45), col[0], col[1], col[2], col[3], 0), btlDispTexPlane3(m, BTL_TEX(0x45), col[0], col[1], col[2], col[3]));
+            btlDispTexPlane3(m, BTL_TEX(0x45), col[0], col[1], col[2], col[3], 0);
             PSMTXScale(m, 0.7f, 0.7f, 0.7f);
             PSMTXTransApply(m, m, x - 35.0f, y - 14.0f, 0.0f);
-            iconDispGx2(m, 0x10, ICON_1ED);
+            iconDispGx2(m, ICON_DISP_2D, ICON_1ED);
             PSMTXScale(m, 0.7f, 0.7f, 0.7f);
             PSMTXTransApply(m, m, x - 25.0f, y - 14.0f, 0.0f);
             iconNumberDispGx(m, (s32)w->f20, 0, (GXColor){0xFF, 0xFF, 0xFF, 0xFF});
@@ -856,6 +905,7 @@ static void disp_2D(CameraId cam, void* param) {
     }
 }
 
+/** Draws the frame of each grid square and the cursor (white, blue while moving, red on the frame A is pressed). */
 static void disp_3D(CameraId cam, void* param) {
     MukiWork* w = get_ptr();
     s32 a[8] = {-8, 8, 8, 8, 8, -8, -8, -8};
@@ -871,7 +921,7 @@ static void disp_3D(CameraId cam, void* param) {
                 PSMTXScale(m, o->scale.x * (f32)c[j * 2], o->scale.y * (f32)c[j * 2 + 1], o->scale.z);
                 PSMTXTransApply(m, m, o->pos.x, o->pos.y, o->pos.z);
                 PSMTXTransApply(m, m, o->scale.x * (f32)a[j * 2], o->scale.y * (f32)a[j * 2 + 1], 0.0f);
-                PCCALL(((void (*)(Mtx, u32, GXColor, s32))btlDispTexPlane2)(m, BTL_TEX(0x42), (GXColor){0xDE, 0xDE, 0xDE, 0xFF}, 0), btlDispTexPlane2(m, BTL_TEX(0x42), (GXColor){0xDE, 0xDE, 0xDE, 0xFF}));
+                btlDispTexPlane2(m, BTL_TEX(0x42), (GXColor){0xDE, 0xDE, 0xDE, 0xFF}, 0);
             }
         }
     }
@@ -880,11 +930,12 @@ static void disp_3D(CameraId cam, void* param) {
             PSMTXScale(m, w->cscale.x * (f32)c[j * 2], w->cscale.y * (f32)c[j * 2 + 1], w->cscale.z);
             PSMTXTransApply(m, m, w->cpos.x, w->cpos.y, w->cpos.z);
             PSMTXTransApply(m, m, w->cscale.x * (f32)b[j * 2], w->cscale.y * (f32)b[j * 2 + 1], 0.0f);
-            TEXPLANE2(m, BTL_TEX(0x41), w->col74);
+            btlDispTexPlane2(m, BTL_TEX(0x41), w->col74, 0);
         }
     }
 }
 
+/** Draws the arrows and mushrooms in the grid: red attack arrows, blue defense arrows and the poison mushroom. */
 static void disp_3D_alpha(CameraId cam, void* param) {
     MukiWork* w = get_ptr();
     s32 i;
@@ -897,48 +948,49 @@ static void disp_3D_alpha(CameraId cam, void* param) {
             f32 a;
             f32 c;
             switch (o->type) {
-            case 0:
-                PSMTXRotRad(m, 'y', 0.017453292f * o->rot.y);
-                PSMTXScaleApply(m, m, 2.0f * o->scale.x, 2.0f * o->scale.y, o->scale.z);
-                PSMTXTransApply(m, m, o->pos.x, o->pos.y, o->pos.z);
-                c = 2.0f * o->rot.y; a = mulf(c, 3.141592f) / 360.0f;
-                c = (f32)cos(a);
-                PSMTXTransApply(m, m, 15.0f * (f32)sin(a), 0.0f, 15.0f * c);
-                {
-                col[0] = col[1] = (GXColor){0xE9, 0x4A, 0x3F, o->alpha};
-                col[2] = col[3] = (GXColor){0xFE, 0xE6, 0x3E, o->alpha};
-                PCCALL(((void (*)(Mtx, u32, GXColor, GXColor, GXColor, GXColor, s32))btlDispTexPlane3)(m, BTL_TEX(0x45), col[0], col[1], col[2], col[3], 0), btlDispTexPlane3(m, BTL_TEX(0x45), col[0], col[1], col[2], col[3]));
-                }
-                break;
-            case 1: {
+                case 0:
+                    PSMTXRotRad(m, 'y', 0.017453292f * o->rot.y);
+                    PSMTXScaleApply(m, m, 2.0f * o->scale.x, 2.0f * o->scale.y, o->scale.z);
+                    PSMTXTransApply(m, m, o->pos.x, o->pos.y, o->pos.z);
+                    c = 2.0f * o->rot.y;
+                    a = mulf(c, 3.141592f) / 360.0f;
+                    c = (f32)cos(a);
+                    PSMTXTransApply(m, m, 15.0f * (f32)sin(a), 0.0f, 15.0f * c);
+                    {
+                        col[0] = col[1] = (GXColor){0xE9, 0x4A, 0x3F, o->alpha};
+                        col[2] = col[3] = (GXColor){0xFE, 0xE6, 0x3E, o->alpha};
+                        btlDispTexPlane3(m, BTL_TEX(0x45), col[0], col[1], col[2], col[3], 0);
+                    }
+                    break;
+                case 1: {
 
-                PSMTXRotRad(m, 'y', 0.017453292f * o->rot.y);
-                PSMTXScaleApply(m, m, 2.0f * o->scale.x, 2.0f * o->scale.y, o->scale.z);
-                PSMTXTransApply(m, m, o->pos.x, o->pos.y, o->pos.z);
-                c = 2.0f * o->rot.y; a = mulf(c, 3.141592f) / 360.0f;
-                c = (f32)cos(a);
-                PSMTXTransApply(m, m, 15.0f * (f32)sin(a), 0.0f, 15.0f * c);
-                {
-                col[0] = col[1] = (GXColor){0x3F, 0x3F, 0xE9, o->alpha};
-                col[2] = col[3] = (GXColor){0x74, 0xC9, 0xFF, o->alpha};
-                PCCALL(((void (*)(Mtx, u32, GXColor, GXColor, GXColor, GXColor, s32))btlDispTexPlane3)(m, BTL_TEX(0x45), col[0], col[1], col[2], col[3], 0), btlDispTexPlane3(m, BTL_TEX(0x45), col[0], col[1], col[2], col[3]));
-                }
-                }
-break;
-            case 2: {
+                    PSMTXRotRad(m, 'y', 0.017453292f * o->rot.y);
+                    PSMTXScaleApply(m, m, 2.0f * o->scale.x, 2.0f * o->scale.y, o->scale.z);
+                    PSMTXTransApply(m, m, o->pos.x, o->pos.y, o->pos.z);
+                    c = 2.0f * o->rot.y;
+                    a = mulf(c, 3.141592f) / 360.0f;
+                    c = (f32)cos(a);
+                    PSMTXTransApply(m, m, 15.0f * (f32)sin(a), 0.0f, 15.0f * c);
+                    {
+                        col[0] = col[1] = (GXColor){0x3F, 0x3F, 0xE9, o->alpha};
+                        col[2] = col[3] = (GXColor){0x74, 0xC9, 0xFF, o->alpha};
+                        btlDispTexPlane3(m, BTL_TEX(0x45), col[0], col[1], col[2], col[3], 0);
+                    }
+                } break;
+                case 2: {
 
-                PSMTXRotRad(m, 'y', 0.017453292f * o->rot.y);
-                PSMTXScaleApply(m, m, o->scale.x, o->scale.y, o->scale.z);
-                PSMTXTransApply(m, m, o->pos.x, o->pos.y, o->pos.z);
-                c = 2.0f * o->rot.y; a = mulf(c, 3.141592f) / 360.0f;
-                c = (f32)cos(a);
-                PSMTXTransApply(m, m, 15.0f * (f32)sin(a), 0.0f, 15.0f * c);
-                {
-                col[0] = (GXColor){0xFF, 0xFF, 0xFF, o->alpha};
-                TEXPLANE2(m, BTL_TEX(0x31), col[0]);
-                }
-                }
-break;
+                    PSMTXRotRad(m, 'y', 0.017453292f * o->rot.y);
+                    PSMTXScaleApply(m, m, o->scale.x, o->scale.y, o->scale.z);
+                    PSMTXTransApply(m, m, o->pos.x, o->pos.y, o->pos.z);
+                    c = 2.0f * o->rot.y;
+                    a = mulf(c, 3.141592f) / 360.0f;
+                    c = (f32)cos(a);
+                    PSMTXTransApply(m, m, 15.0f * (f32)sin(a), 0.0f, 15.0f * c);
+                    {
+                        col[0] = (GXColor){0xFF, 0xFF, 0xFF, o->alpha};
+                        btlDispTexPlane2(m, BTL_TEX(0x31), col[0], 0);
+                    }
+                } break;
             }
         }
     }
@@ -947,13 +999,19 @@ break;
 #ifdef TARGET_PC
 BATTLE_AC_WORK_FITS(MukiWork);
 #endif
+// FAKE: inlining off (FAKES.md); without it get_ptr is inlined into its callers (9 shrink, e.g. star_stone_appear 11 -> 5 instructions)
 #pragma dont_inline on
+/** The minigame's work area, kept in the battle's shared action-command work buffer. */
 static MukiWork* get_ptr(void) {
     return (MukiWork*)_battleWorkPointer->actionCommands.work;
 }
 
 #pragma dont_inline reset
 
+/**
+ * Builds the boost weapon: copies the template and gives it a sure 3-turn attack up (args[0] 0)
+ * or defense up (1) of args[1] points, and returns its address in args[2].
+ */
 static USER_FUNC(set_weapon) {
     EvtWord* args = event->args;
     s32 type = evtGetValue(event, args[0]);
@@ -963,42 +1021,44 @@ static USER_FUNC(set_weapon) {
     /* PC port: GameCube byte offsets 0x96.. are not where these fields sit in the native BattleWeapon */
     memcpy(w->weapon, &weapon, sizeof(BattleWeapon));
     switch (type) {
-    case 0:
-        ((BattleWeapon*)w->weapon)->atkChangeChance = 100;
-        ((BattleWeapon*)w->weapon)->atkChangeTime = 3;
-        ((BattleWeapon*)w->weapon)->atkChangeStrength = power;
-        break;
-    case 1:
-        ((BattleWeapon*)w->weapon)->defChangeChance = 100;
-        ((BattleWeapon*)w->weapon)->defChangeTime = 3;
-        ((BattleWeapon*)w->weapon)->defChangeStrength = power;
-        break;
+        case 0:
+            ((BattleWeapon*)w->weapon)->atkChangeChance = 100;
+            ((BattleWeapon*)w->weapon)->atkChangeTime = 3;
+            ((BattleWeapon*)w->weapon)->atkChangeStrength = power;
+            break;
+        case 1:
+            ((BattleWeapon*)w->weapon)->defChangeChance = 100;
+            ((BattleWeapon*)w->weapon)->defChangeTime = 3;
+            ((BattleWeapon*)w->weapon)->defChangeStrength = power;
+            break;
     }
 #else
     memcpy(w->weapon, &weapon, 0xc0);
     switch (type) {
-    case 0:
-        w->weapon[0x96] = 100;
-        w->weapon[0x97] = 3;
-        w->weapon[0x98] = power;
-        break;
-    case 1:
-        w->weapon[0x99] = 100;
-        w->weapon[0x9a] = 3;
-        w->weapon[0x9b] = power;
-        break;
+        case 0:
+            w->weapon[0x96] = 100;
+            w->weapon[0x97] = 3;
+            w->weapon[0x98] = power;
+            break;
+        case 1:
+            w->weapon[0x99] = 100;
+            w->weapon[0x9a] = 3;
+            w->weapon[0x9b] = power;
+            break;
     }
 #endif
     evtSetValue(event, args[2], (EvtWord)w->weapon);
     return 2;
 }
 
+/** Starts the grid game (main_base state 1). */
 static USER_FUNC(start_game) {
     MukiWork* w = get_ptr();
     w->state = 1;
     return 2;
 }
 
+/** Waits for the game to finish and returns the earned attack level in args[0] and defense level in args[1]. */
 static USER_FUNC(wait_game_end) {
     MukiWork* w = get_ptr();
     EvtWord* args = event->args;
@@ -1010,16 +1070,22 @@ static USER_FUNC(wait_game_end) {
     return 0;
 }
 
+/** Starts the star rising out of Mario (main_star). */
 static USER_FUNC(star_stone_appear) {
     MukiWork* w = get_ptr();
     w->star = 1;
     return 2;
 }
 
+/**
+ * Attack event of Power Lift: pays the Star Power, plays the star intro, runs the 3x3 grid game,
+ * then raises Mario's and the partner's attack and defense for 3 turns by the levels earned.
+ * PAL stops the US double run of the enemy return and cleanup when only defense was raised.
+ */
 EVT_BEGIN(marioAttackEvent_Muki)
-    CALL(btlevtcmd_GetUnitId, -4, LW(14))
+    CALL(btlevtcmd_GetUnitId, BTL_UNIT_PARTNER, LW(14))
     CALL(btlevtcmd_GetBodyId, LW(14), LW(15))
-    CALL(btlevtcmd_CheckStatus, LW(14), 27, LW(0))
+    CALL(btlevtcmd_CheckStatus, LW(14), STATUS_INSTANT_KILL, LW(0))
     IF_INT_NOT_EQUAL(LW(0), 0)
         SET_VALUE(LW(14), -1)
     END_IF
@@ -1027,10 +1093,10 @@ EVT_BEGIN(marioAttackEvent_Muki)
     IF_INT_EQUAL(LW(3), -1)
         GOTO(99)
     END_IF
-    CALL(btlevtcmd_AttackDeclare, -2, LW(3), LW(4))
+    CALL(btlevtcmd_AttackDeclare, BTL_UNIT_SELF, LW(3), LW(4))
     CALL(btlevtcmd_WaitGuardMove)
-    CALL(btlevtcmd_CommandPayWeaponCost, -2)
-    CALL(btlevtcmd_CommandGetWeaponAddress, -2, LW(0))
+    CALL(btlevtcmd_CommandPayWeaponCost, BTL_UNIT_SELF)
+    CALL(btlevtcmd_CommandGetWeaponAddress, BTL_UNIT_SELF, LW(0))
     CALL(btlevtcmd_WeaponAftereffect, LW(0))
     CALL(btlevtcmd_reset_move_color_lv_all)
     BEGIN_SIBLING_EVENT
@@ -1039,22 +1105,22 @@ EVT_BEGIN(marioAttackEvent_Muki)
     CALL_CHILD(sac_start_camera_evt)
     WAIT_MS(500)
     CALL(sac_enemy_slide_go)
-    CALL(btlevtcmd_snd_se, -2, STRING("SFX_BTL_SAC_START1"), -250000000, 0, -250000000)
+    CALL(btlevtcmd_snd_se, BTL_UNIT_SELF, STRING("SFX_BTL_SAC_START1"), EVT_NULLPTR, 0, EVT_NULLPTR)
     CALL_CHILD(sac_mario_item_on_evt)
     WAIT_MS(500)
-    CALL(btlevtcmd_snd_se, -2, STRING("SFX_BTL_SAC_START2"), -250000000, 0, LW(11))
+    CALL(btlevtcmd_snd_se, BTL_UNIT_SELF, STRING("SFX_BTL_SAC_START2"), EVT_NULLPTR, 0, LW(11))
     CALL(star_stone_appear)
     BEGIN_SIBLING_EVENT
         CALL_CHILD(sac_start_stardust)
     END_SIBLING_EVENT
     WAIT_FRAMES(100)
-    CALL(btlevtcmd_snd_se, -2, STRING("SFX_BTL_SAC_START3"), -250000000, 0, -250000000)
+    CALL(btlevtcmd_snd_se, BTL_UNIT_SELF, STRING("SFX_BTL_SAC_START3"), EVT_NULLPTR, 0, EVT_NULLPTR)
     CALL(evt_snd_sfxoff, LW(11))
     CALL(evt_btl_camera_set_mode, 0, 0)
     WAIT_FRAMES(40)
     CALL_CHILD(sac_mario_item_on_end_evt)
     CALL_CHILD(sac_mario_back_home)
-    CALL(btlevtcmd_AnimeChangePose, -2, 1, STRING("M_I_Y"))
+    CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("M_I_Y"))
     WAIT_MS(1000)
     BEGIN_SIBLING_EVENT
         CALL(sac_handbeat)
@@ -1069,41 +1135,64 @@ EVT_BEGIN(marioAttackEvent_Muki)
     ADD(LW(2), LW(1))
     IF_INT_NOT_EQUAL(LW(2), 0)
         CALL(evt_btl_camera_set_mode, 0, 7)
-        CALL(evt_btl_camera_set_homing_unit, 0, -2, -1)
+        CALL(evt_btl_camera_set_homing_unit, 0, BTL_UNIT_SELF, BTL_UNIT_NONE)
         CALL(evt_btl_camera_set_zoom, 0, 200)
         CALL(evt_btl_camera_set_moveSpeedLv, 0, 2)
         CALL(evt_btl_camera_set_zoomSpeedLv, 0, 2)
         WAIT_MS(1000)
         CALL(sac_wao)
+#if VERSION >= VERSION_DEMO_EU
+        BEGIN_INLINE_EVENT_GET_ID(LW(12))
+#else
         BEGIN_INLINE_EVENT
+#endif
             WAIT_MS(1000)
             CALL(evt_btl_camera_set_mode, 0, 0)
             CALL(sac_enemy_slide_return)
             CALL(end_muki)
         END_INLINE_EVENT
+#if VERSION >= VERSION_DEMO_EU
+        SET_VALUE(LW(13), 0)
+        IF_INT_NOT_EQUAL(LW(1), 0)
+            SET_VALUE(LW(13), 1)
+        END_IF
+#endif
         BEGIN_INLINE_EVENT
             WAIT_MS(400)
             IF_INT_NOT_EQUAL(LW(1), 0)
                 CALL(set_weapon, 1, LW(1), LW(9))
                 IF_INT_NOT_EQUAL(LW(14), -1)
-                    CALL(btlevtcmd_CheckDamage, -2, LW(14), LW(15), LW(9), 256, LW(5))
+                    CALL(btlevtcmd_CheckDamage, BTL_UNIT_SELF, LW(14), LW(15), LW(9), DAMAGE_FLAG_LAST_HIT, LW(5))
                 END_IF
-                CALL(btlevtcmd_CheckDamage, -2, -2, 1, LW(9), 256, LW(5))
+                CALL(btlevtcmd_CheckDamage, BTL_UNIT_SELF, BTL_UNIT_SELF, 1, LW(9), DAMAGE_FLAG_LAST_HIT, LW(5))
             END_IF
         END_INLINE_EVENT
         IF_INT_NOT_EQUAL(LW(0), 0)
+#if VERSION >= VERSION_DEMO_EU
+            SET_VALUE(LW(13), 1)
+#endif
             CALL(set_weapon, 0, LW(0), LW(9))
             IF_INT_NOT_EQUAL(LW(14), -1)
-                CALL(btlevtcmd_CheckDamage, -2, LW(14), LW(15), LW(9), 256, LW(5))
+                CALL(btlevtcmd_CheckDamage, BTL_UNIT_SELF, LW(14), LW(15), LW(9), DAMAGE_FLAG_LAST_HIT, LW(5))
             END_IF
-            CALL(btlevtcmd_CheckDamage, -2, -2, 1, LW(9), 256, LW(5))
+            CALL(btlevtcmd_CheckDamage, BTL_UNIT_SELF, BTL_UNIT_SELF, 1, LW(9), DAMAGE_FLAG_LAST_HIT, LW(5))
             RETURN
         END_IF
     END_IF
-    CALL(sac_enemy_slide_return)
-    WAIT_MS(1000)
-    CALL(end_muki)
-    WAIT_MS(1000)
-    CALL(btlevtcmd_StartWaitEvent, -2)
+#if VERSION >= VERSION_DEMO_EU
+    // PAL: LW(13) is set when only the second hit (LW(1)) is left, whose path already returns the
+    // enemies through the inline event; US ran sac_enemy_slide_return and end_muki twice there
+    IF_INT_EQUAL(LW(13), 0)
+        DELETE_EVENT(LW(12))
+#endif
+        CALL(sac_enemy_slide_return)
+        WAIT_MS(1000)
+        CALL(end_muki)
+        WAIT_MS(1000)
+        CALL(btlevtcmd_StartWaitEvent, BTL_UNIT_SELF)
+#if VERSION >= VERSION_DEMO_EU
+    ELSE
+    END_IF
+#endif
     RETURN
 EVT_END()

@@ -20,21 +20,21 @@ struct AnimationPoseData
   shapes -> AnimPoseShape[shapeCount]
   drawCalls -> AnimDrawCallEntry[drawCallCount]
   bufferVtxPos raw
-  posIndex payload if mBufferPosIdxNum
+  posIndex payload if bufferPosIdxNum
   nrmVtxBuffer raw
-  nrmIndex payload if mBufferNrmIdxNum
+  nrmIndex payload if bufferNrmIdxNum
   clr0VtxBuffer payload if clr0Num
   clr0Index payload if clr0IdxNum
   texIndex payload if texIdxNum   # slot i gated by texIdxNum[i]; unused slots hold stale words
   texVtxBuffer payload if texVtxNum
-  texAnimEntries -> AnimTexMtx[mBufferTexAnimNum]
+  texAnimEntries -> AnimTexMtx[bufferTexAnimNum]
   texData -> AnimPoseTexEntry[texDataCount]
   texBinds -> AnimTexBind[texBindCount]
   draws -> AnimPoseShapeDraw[drawCount]
-  groupVisibility payload if mBufferVisibilityNum
+  groupVisibility payload if bufferVisibilityNum
   nodeData raw
   groups -> AnimPoseGroup[groupCount]
-  mpAnims -> AnimTableEntry[mAnimCount]
+  anims -> AnimTableEntry[animCount]
 
 struct AnimPoseShapeVertex
 

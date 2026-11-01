@@ -12,8 +12,13 @@ static int OnReset(BOOL final);
 SISteeringControl __SISteering[4];
 BOOL __SIResetSteering;
 
+/** Reset hook registered with the OS (priority 127) so the serial interface is shut down on reset. */
 static OSResetFunctionInfo ResetFunctionInfo = {OnReset, 127};
 
+/**
+ * Initialises the steering wheel (racing controller) support once:
+ * clears each port's state and wait queue, refreshes the sampling rate and registers the reset hook.
+ */
 void SIInitSteering(void) {
     static BOOL initialized;
     SISteeringControl* sc;
@@ -34,8 +39,13 @@ void SIInitSteering(void) {
     }
 }
 
+/** Empty callback used when the caller gives none. */
 static void DefaultCallback(s32, s32) {}
 
+/**
+ * Reserves the port's steering state for a new operation by storing callback;
+ * returns -2 if one is already in progress.
+ */
 static s32 SISteeringBegin(SISteeringControl* sc, SISteeringCallback callback) {
     BOOL enabled;
     s32 ret;
@@ -54,6 +64,7 @@ static s32 SISteeringBegin(SISteeringControl* sc, SISteeringCallback callback) {
     return ret;
 }
 
+/** After the reset command finishes, enables polling of the wheel on chan unless the system is resetting. */
 static void ResetProc(s32 chan) {
     SISteeringControl* sc = &__SISteering[chan];
 
@@ -62,6 +73,10 @@ static void ResetProc(s32 chan) {
     }
 }
 
+/**
+ * Sends the reset command (0xFF) to the steering wheel on chan and then starts polling it;
+ * callback runs with the result. Returns 0, or -2 if busy.
+ */
 s32 SIResetSteeringAsync(s32 chan, SISteeringCallback callback) {
     SISteeringControl* sc;
     s32 ret;
@@ -76,6 +91,7 @@ s32 SIResetSteeringAsync(s32 chan, SISteeringCallback callback) {
     return __SISteeringTransfer(chan, 1, 3, ResetProc);
 }
 
+/** Blocking version of SIResetSteeringAsync: waits for the reset to finish and returns its result. */
 s32 SIResetSteering(s32 chan) {
     SISteeringControl* sc;
     s32 ret;
@@ -93,6 +109,10 @@ s32 SIResetSteering(s32 chan) {
     return __SISteeringSync(chan);
 }
 
+/**
+ * OS reset hook (priority 127): tells enabled wheels to stop (control 0x400, level 0), waits three retraces,
+ * then disables their polling and lets the reset proceed.
+ */
 static int OnReset(BOOL final) {
     static s32 count;
     s32 chan;

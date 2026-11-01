@@ -1,109 +1,53 @@
+// win_06 (ウィンディん家周辺, Boggly Woods): the edge of the woods with the pipe to Rogueport Sewers (tik_03); path to win_00.
+
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
 
-#pragma force_active on
 #include "manager/evtmgr_cmd.h"
 #include "driver/camdrv.h"
 #include "mario/mariost.h"
 #include "memory.h"
 #include "string.h"
+#include "math.h"
 #include "dolphin/mtx.h"
 #include "evt/evt_bero.h"
+#include "evt/evt_cam.h"
+#include "evt/evt_map.h"
+#include "evt/evt_mario.h"
+#include "evt/evt_mobj.h"
+#include "evt/evt_msg.h"
+#include "evt/evt_party.h"
+#include "evt/evt_snd.h"
+#include "evt/evt_sub.h"
+#include "evt/evt_telop.h"
+#include "win.h"
+#include "cam_kaiten.h"
+#include "evt/evt_story.h"
+#include "driver/mapdrv.h"
+#include "libc_decls.h"
 
-typedef struct KaitenParam { Vec pos; Vec target; f32 angle; f32 dist; } KaitenParam;
 static KaitenParam* ckp0;
 static KaitenParam* ckp1;
 static KaitenParam* ckpw;
-#ifndef TARGET_PC /* PC port: the host libc declares these */
-double sin(double x);
-double cos(double x);
-double atan2(double y, double x);
-#endif
 
+#ifndef TARGET_PC /* PC port: the host libc declares these */
+#endif
 static USER_FUNC(cam_kaiten_get_para);
 static USER_FUNC(cam_kaiten_init);
 static USER_FUNC(cam_kaiten_set_direct);
 static USER_FUNC(cam_kaiten_set_para);
-USER_FUNC(camps25);
-USER_FUNC(camps30);
-USER_FUNC(evt_bero_exec_wait);
-USER_FUNC(evt_bero_get_info);
-USER_FUNC(evt_cam3d_evt_off);
-USER_FUNC(evt_cam3d_evt_set);
-USER_FUNC(evt_cam_letter_box_onoff);
-USER_FUNC(evt_mapobj_flag_onoff);
-USER_FUNC(evt_mario_cont_onoff);
-USER_FUNC(evt_mario_key_onoff);
-USER_FUNC(evt_mario_mov_pos2);
-USER_FUNC(evt_mario_set_dir);
-USER_FUNC(evt_mobj_save_blk);
-USER_FUNC(evt_msg_print);
-USER_FUNC(evt_msg_print_party);
-USER_FUNC(evt_party_cont_onoff);
-USER_FUNC(evt_party_get_pos);
-USER_FUNC(evt_party_move_pos2);
-USER_FUNC(evt_party_run);
-USER_FUNC(evt_party_set_dir);
-USER_FUNC(evt_party_stop);
-USER_FUNC(evt_snd_bgm_scope);
-USER_FUNC(evt_snd_bgmoff);
-USER_FUNC(evt_snd_bgmon);
-USER_FUNC(evt_snd_bgmon_f);
-USER_FUNC(evt_snd_envon);
-USER_FUNC(evt_sub_intpl_msec_get_value_para);
-USER_FUNC(evt_sub_intpl_msec_init);
-USER_FUNC(evt_telop_entry);
+static USER_FUNC(camps25);
+static USER_FUNC(camps30);
 
-f32 fd_win_06_negone_one_374[2] __attribute__((aligned(8)));
-f32 fd_win_06_neg_one_382;
-f32 fd_win_06___local_PI_383;
-f32 fd_win_06___local_3PIO2_385;
-f32 fd_win_06_one_negone_373[2] __attribute__((aligned(8)));
-f32 fd_win_06___local_PIO2_384;
-f32 fd_win_06_one_381;
-f32 fd_win_06_negone_one_360[2] __attribute__((aligned(8)));
-f32 fd_win_06_neg_one_365;
-f32 fd_win_06___local_PI_366;
-f32 fd_win_06___local_3PIO2_368;
-f32 fd_win_06_one_negone_359[2] __attribute__((aligned(8)));
-f32 fd_win_06___local_PIO2_367;
-f32 fd_win_06_one_364;
-static EvtWord first_evt_dokan[18];
 static BeroEntry bero_entry_data[3];
-EvtWord welcome_wonderforest_init[6];
-EvtWord welcome_wonderforest[260];
-EvtWord win_06_init_evt[82];
 
-f32 fd_win_06_negone_one_374[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_win_06_neg_one_382 = -1.0f;
-
-f32 fd_win_06___local_PI_383 = 3.1415927f;
-
-f32 fd_win_06___local_3PIO2_385 = 4.712389f;
-
-f32 fd_win_06_one_negone_373[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_win_06___local_PIO2_384 = 1.5707964f;
-
-f32 fd_win_06_one_381 = 1.0f;
-
-f32 fd_win_06_negone_one_360[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_win_06_neg_one_365 = -1.0f;
-
-f32 fd_win_06___local_PI_366 = 3.1415927f;
-
-f32 fd_win_06___local_3PIO2_368 = 4.712389f;
-
-f32 fd_win_06_one_negone_359[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_win_06___local_PIO2_367 = 1.5707964f;
-
-f32 fd_win_06_one_364 = 1.0f;
-
+/**
+ * Enter script of the "dokan1" pipe (from tik_03): only at STORY_STG1_END_TO_STAGE_2 does it set GF(0) and wait,
+ * so Mario stays in the pipe until welcome_wonderforest clears GF(0) after its camera orbit;
+ * otherwise it returns at once. Always returns LW(0) = 0.
+ */
 static EVT_BEGIN(first_evt_dokan)
-    IF_INT_NOT_EQUAL(GSW(0), 70)
+    IF_INT_NOT_EQUAL(GSW(GSW_STORY_PROGRESS), STORY_STG1_END_TO_STAGE_2)
         SET_VALUE(LW(0), 0)
         RETURN
     END_IF
@@ -113,13 +57,17 @@ static EVT_BEGIN(first_evt_dokan)
     RETURN
 EVT_END()
 
+/**
+ * Exits of this map: the pipe down to Rogueport Sewers (tik_03), which holds Mario on his first arrival,
+ * and the east path to win_00.
+ */
 static BeroEntry bero_entry_data[] = {
     {
         "dokan1", // hitName
         2, // type
         0, // sfxId
-        9, // directionId
-        100000, // centerPosition
+        BERO_DIR_DOWN, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         (s32*)first_evt_dokan, // enterEvent
@@ -134,8 +82,8 @@ static BeroEntry bero_entry_data[] = {
     {
         "e_bero", // hitName
         0, 0, // type..sfxId
-        20000, // directionId
-        100000, // centerPosition
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         NULL, // enterEvent
@@ -150,11 +98,17 @@ static BeroEntry bero_entry_data[] = {
     {0},
 };
 
+/** Starts the Chapter 2 arrival scene with the letterbox bars on. */
 EVT_BEGIN(welcome_wonderforest_init)
     CALL(evt_cam_letter_box_onoff, 1, 0)
     RETURN
 EVT_END()
 
+/**
+ * Chapter 2 opening cutscene in Boggly Woods: shows the area title card after 5 seconds
+ * while the camera orbits Mario for 7.5 seconds,
+ * then Mario and the party react ("stg2_win_e00_00") and the story becomes STORY_STG2_00_BOGGLY_WOODS.
+ */
 EVT_BEGIN(welcome_wonderforest)
     CALL(evt_mario_key_onoff, 0)
     CALL(evt_mario_cont_onoff, 0)
@@ -224,7 +178,7 @@ EVT_BEGIN(welcome_wonderforest)
     CALL(evt_msg_print, 0, STRING("stg2_win_e00_00"), 0, STRING("extparty"))
     CALL(evt_cam3d_evt_off, 500, 11)
     WAIT_MS(500)
-    SET_VALUE(GSW(0), 71)
+    SET_VALUE(GSW(GSW_STORY_PROGRESS), STORY_STG2_00_BOGGLY_WOODS)
     CALL(evt_snd_bgm_scope, 0, 0)
     CALL(evt_party_run, 0)
     CALL(evt_party_run, 1)
@@ -233,34 +187,44 @@ EVT_BEGIN(welcome_wonderforest)
     RETURN
 EVT_END()
 
+/**
+ * Map init script of win_06, where Mario arrives in Boggly Woods by pipe:
+ * plays the ambience and the Boggly Woods BGM (before STORY_STG2_00 the music starts only after 9 seconds),
+ * registers exits, turns bounding-box culling off for four scenery groups,
+ * sets up and spawns welcome_wonderforest at STORY_STG1_END_TO_STAGE_2, and places the save block.
+ */
 EVT_BEGIN(win_06_init_evt)
-    IF_INT_LESS(GSW(0), 71)
+    IF_INT_LESS(GSW(GSW_STORY_PROGRESS), STORY_STG2_00_BOGGLY_WOODS)
         BEGIN_INLINE_EVENT
-            CALL(evt_snd_bgmoff, 512)
-            CALL(evt_snd_envon, 272, STRING("ENV_STG2_WIN1"))
+            CALL(evt_snd_bgmoff, PSND_FADE_OUT)
+            CALL(evt_snd_envon, PSND_FADE_RESTART | PSND_FADE_IN, STRING("ENV_STG2_WIN1"))
             WAIT_MS(9000)
-            CALL(evt_snd_bgmon_f, 768, STRING("BGM_STG2_WIN1"), 2000)
+            CALL(evt_snd_bgmon_f, PSND_FADE_IN | PSND_FADE_OUT, STRING("BGM_STG2_WIN1"), 2000)
             CALL(evt_snd_bgm_scope, 0, 1)
         END_INLINE_EVENT
-        ELSE
-        CALL(evt_snd_bgmon, 512, STRING("BGM_STG2_WIN1"))
-        CALL(evt_snd_envon, 272, STRING("ENV_STG2_WIN1"))
+    ELSE
+        CALL(evt_snd_bgmon, PSND_FADE_OUT, STRING("BGM_STG2_WIN1"))
+        CALL(evt_snd_envon, PSND_FADE_RESTART | PSND_FADE_IN, STRING("ENV_STG2_WIN1"))
     END_IF
     SET_VALUE(LW(0), PTR(bero_entry_data))
     CALL(evt_bero_get_info)
-    CALL_CHILD(PTR(evt_bero_info_run))
-    CALL(evt_mapobj_flag_onoff, 1, 0, STRING("S_tree_mki"), 2)
-    CALL(evt_mapobj_flag_onoff, 1, 0, STRING("S_kusa"), 2)
-    CALL(evt_mapobj_flag_onoff, 1, 0, STRING("group22"), 2)
-    CALL(evt_mapobj_flag_onoff, 1, 0, STRING("S_oku_01H081"), 2)
-    IF_INT_EQUAL(GSW(0), 70)
-        CALL_CHILD(PTR(welcome_wonderforest_init))
-        SPAWN_EVENT(PTR(welcome_wonderforest))
+    CALL_CHILD(evt_bero_info_run)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("S_tree_mki"), MAPOBJ_FLAG_BBOX_CULL)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("S_kusa"), MAPOBJ_FLAG_BBOX_CULL)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("group22"), MAPOBJ_FLAG_BBOX_CULL)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("S_oku_01H081"), MAPOBJ_FLAG_BBOX_CULL)
+    IF_INT_EQUAL(GSW(GSW_STORY_PROGRESS), STORY_STG1_END_TO_STAGE_2)
+        CALL_CHILD(welcome_wonderforest_init)
+        SPAWN_EVENT(welcome_wonderforest)
     END_IF
     CALL(evt_mobj_save_blk, STRING("mobj_save"), 275, 60, -50, 0, 0)
     RETURN
 EVT_END()
 
+/**
+ * Script helper: stores a camera-orbit parameter set in slot args[0] (0, 1 or the working copy):
+ * position (args[1..3]), target (args[4..6]), angle (args[7]) and distance (args[8]).
+ */
 static USER_FUNC(cam_kaiten_set_para) {
     EvtWord* args = event->args;
     KaitenParam* p;
@@ -288,6 +252,10 @@ static USER_FUNC(cam_kaiten_set_para) {
     return EVT_RETURN_DONE;
 }
 
+/**
+ * Script helper: reads the camera-orbit parameter set in slot args[0] back into args[1..8] (position, target,
+ * angle, distance).
+ */
 static USER_FUNC(cam_kaiten_get_para) {
     EvtWord* args = event->args;
     KaitenParam* p;
@@ -315,8 +283,12 @@ static USER_FUNC(cam_kaiten_get_para) {
     return EVT_RETURN_DONE;
 }
 
+/**
+ * Script helper: places the 3D camera at the working orbit's angle
+ * and distance around its target in one step (0 frames), so a loop can move the camera around it every frame.
+ */
 static USER_FUNC(cam_kaiten_set_direct) {
-    CameraEntry* camera = camGetPtr(4);
+    CameraEntry* camera = camGetPtr(CAMERA_3D);
     f32 s = sin(6.2831855f * ckpw->angle / 360.0f);
     f32 c = cos(6.2831855f * ckpw->angle / 360.0f);
 
@@ -333,10 +305,19 @@ static USER_FUNC(cam_kaiten_set_direct) {
     return EVT_RETURN_DONE;
 }
 
+/** Identity function (returns x unchanged); inline helper kept from the original source. */
 static inline f32 fid(f32 x) {
     return x;
 }
 
+/**
+ * Script helper: allocates the three orbit parameter sets,
+ * fills sets 0 and 1 from the two position/target vectors in args[0..11],
+ * computes each one's angle (degrees, around the target in the xz plane) and xz distance,
+ * and copies set 0 into the working set.
+ * The source clears set 1 twice instead of the working set;
+ * harmless, since every field of the working set is then written.
+ */
 static USER_FUNC(cam_kaiten_init) {
     EvtWord* args = event->args;
     Vec target;
@@ -385,16 +366,18 @@ static USER_FUNC(cam_kaiten_init) {
     return EVT_RETURN_DONE;
 }
 
-USER_FUNC(camps25) {
+/** Script helper: sets the 3D camera's vertical field of view to 25 degrees. */
+static USER_FUNC(camps25) {
     f32 fovY = 25.0f;
 
-    camGetPtr(4)->fovY = fovY;
+    camGetPtr(CAMERA_3D)->fovY = fovY;
     return EVT_RETURN_DONE;
 }
 
-USER_FUNC(camps30) {
+/** Script helper: sets the 3D camera's vertical field of view to 30 degrees. */
+static USER_FUNC(camps30) {
     f32 fovY = 30.0f;
 
-    camGetPtr(4)->fovY = fovY;
+    camGetPtr(CAMERA_3D)->fovY = fovY;
     return EVT_RETURN_DONE;
 }

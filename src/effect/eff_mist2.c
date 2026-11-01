@@ -1,3 +1,4 @@
+// Mist effect 2: puffs that grow, spin and fade around a point; type 0 spawns 30 puffs, other types 10.
 #include "driver/camdrv.h"
 #include "eff/eff_mist2.h"
 #include "driver/dispdrv.h"
@@ -8,14 +9,12 @@
 #include "system.h"
 #include <dolphin/gx.h>
 #include <dolphin/mtx.h>
-#ifndef TARGET_PC /* PC port: the host libc declares these */
-double sin(double);
-double cos(double);
-#endif
+#include "libc_decls.h"
 
-void effMist2Main(EffectEntry* effect);
-void effMist2Disp(CameraId cameraId, EffectEntry* effect);
+static void effMist2Main(EffectEntry* effect);
+static void effMist2Disp(CameraId cameraId, EffectEntry* effect);
 
+/** Spawns the second mist effect at (x, y, z) for `life` frames; called through evt_eff ("mist2", the black mist). */
 EffectEntry* effMist2Entry(s32 type, s32 life, f32 x, f32 y, f32 z, f32 a, f32 b) {
     EffectEntry* effect;
     EffMist2Work* work;
@@ -32,7 +31,7 @@ EffectEntry* effMist2Entry(s32 type, s32 life, f32 x, f32 y, f32 z, f32 a, f32 b
     work = __memAlloc(HEAP_EFFECT, count * sizeof(EffMist2Work));
     effect->userdata = work;
     effect->callback = effMist2Main;
-    effect->flags |= 2;
+    effect->flags |= EFFECT_FLAG_SOFT_DELETE;
     work->type = type;
     work->position.x = x;
     work->position.y = y;
@@ -76,7 +75,8 @@ EffectEntry* effMist2Entry(s32 type, s32 life, f32 x, f32 y, f32 z, f32 a, f32 b
     return effect;
 }
 
-void effMist2Main(EffectEntry* effect) {
+/** Per frame: grows, spins and fades each puff and deletes the effect when its life is over. */
+static void effMist2Main(EffectEntry* effect) {
     EffMist2Work* work = effect->userdata;
     Vec position;
     Vec v = {0.0f, 0.0f, 0.0f};
@@ -90,8 +90,8 @@ void effMist2Main(EffectEntry* effect) {
     v.z = work->position.z;
     position = v;
     type = work->type;
-    if (effect->flags & 4) {
-        effect->flags &= ~4;
+    if (effect->flags & EFFECT_FLAG_DELETE_REQUESTED) {
+        effect->flags &= ~EFFECT_FLAG_DELETE_REQUESTED;
         work->life = 32;
     }
     if (work->life < 1000) {
@@ -146,7 +146,8 @@ void effMist2Main(EffectEntry* effect) {
     dispEntry(CAMERA_3D, dispCalcZ(&position), 2, (DispCallback)effMist2Disp, effect);
 }
 
-void effMist2Disp(CameraId cameraId, EffectEntry* effect) {
+/** Draws each puff as a rotated textured quad (effect texture 0x5E). */
+static void effMist2Disp(CameraId cameraId, EffectEntry* effect) {
     EffMist2Work* work = effect->userdata;
     Mtx trans;
     Mtx rot;

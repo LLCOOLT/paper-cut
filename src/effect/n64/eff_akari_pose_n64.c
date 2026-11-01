@@ -1,3 +1,5 @@
+// Paper Mario 64 effect: akari (light) pose, count flares step through a texture sequence and fade around a point.
+#include "eff/n64/eff_akari_pose_n64.h"
 #include "eff/eff_n64.h"
 #include "driver/camdrv.h"
 #include "driver/dispdrv.h"
@@ -5,12 +7,7 @@
 #include "memory.h"
 #include <dolphin/gx.h>
 #include <dolphin/mtx.h>
-
-#ifndef TARGET_PC /* PC port: the host libc declares these */
-double sin(double);
-double cos(double);
-#endif
-
+#include "libc_decls.h"
 typedef struct EffAkariPoseN64Work {
     s32 type;     // 0x0
     Vec position; // 0x4
@@ -26,16 +23,34 @@ typedef struct EffAkariPoseN64Work {
     f32 scale;    // 0x34
 } EffAkariPoseN64Work;
 
+/** Flare size at each step of the 24-step sequence (type 0): pops to full size, then shrinks to almost nothing. */
 static f32 scale_data[] = {
     0.9f, 1.0f, 1.0f, 0.9f, 0.85f, 0.8f, 0.75f, 0.7f, 0.65f, 0.6f, 0.55f, 0.5f,
     0.45f, 0.4f, 0.35f, 0.3f, 0.25f, 0.2f, 0.15f, 0.1f, 0.05f, 0.03f, 0.02f, 0.01f,
 };
 
+/** Length in steps of the flare sequence for type 0 (24) and type 1 (12). */
+static s32 max_seq_num[] = {24, 12};
+
+/** Flare alpha at each step of the type 0 sequence: opaque for all 24 steps. */
+static u8 a_data[] = {
+    0xFA, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+};
+
+/** Flare size at each step of the 12-step sequence (type 1): pops to full size, then shrinks to zero. */
 static f32 scale_data2[] = {
     0.9f, 1.0f, 1.0f, 0.9f, 0.8f, 0.7f, 0.6f, 0.5f, 0.4f, 0.3f, 0.2f, 0.1f,
     0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
 };
 
+/** Flare alpha at each step of the type 1 sequence: opaque for 12 steps, invisible after. */
+static u8 a_data2[] = {
+    0xFA, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+};
+
+/** Camera-facing 16x16 quad each flare is drawn with. */
 static effN64Vtx size16x16_tex32x32_vtx[] = {
     {-8, -8, 0, 0, 0, 0, 0, 0, 255},
     {8, -8, 0, 1024, 0, 0, 0, 0, 255},
@@ -43,25 +58,14 @@ static effN64Vtx size16x16_tex32x32_vtx[] = {
     {-8, 8, 0, 0, 1024, 0, 0, 0, 255},
 };
 
-static s32 max_seq_num[] = {24, 12};
+static void effAkariPoseMain(EffectEntry* effect);
+static void effAkariPoseDisp(CameraId cameraId, EffectEntry* effect);
 
-static u8 a_data[] = {
-    0xFA, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
-    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
-};
-
-static u8 a_data2[] = {
-    0xFA, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-};
-
-#pragma force_active on
-u8 gap_07_80412D70_sdata[16] = {0};
-#pragma force_active reset
-
-void effAkariPoseMain(EffectEntry* effect);
-void effAkariPoseDisp(CameraId cameraId, EffectEntry* effect);
-
+/**
+ * Spawns `count` flares around (x, y, z), `scale` times the base size,
+ * for `lifetime` frames (0 or less: until soft deleted).
+ * Type 0 or 1 selects a 24 or 12 frame sequence (the AKR_B_1 / AKR_B_2 patterns in the effect table).
+ */
 EffectEntry* effAkariPoseN64Entry(s32 type, s32 count, s32 lifetime, f32 x, f32 y, f32 z, f32 scale) {
     f32 half;
     EffectEntry* effect;
@@ -70,12 +74,12 @@ EffectEntry* effAkariPoseN64Entry(s32 type, s32 count, s32 lifetime, f32 x, f32 
     s32 i;
 
     effect = effEntry();
-    effect->type = "AkariPoseN64\0\0\0";
+    effect->type = "AkariPoseN64";
     effect->count = count + 1;
     work = __memAlloc(HEAP_EFFECT, (count + 1) * sizeof(EffAkariPoseN64Work));
     effect->userdata = work;
     effect->callback = effAkariPoseMain;
-    effect->flags |= 2;
+    effect->flags |= EFFECT_FLAG_SOFT_DELETE;
     work->type = type;
     work->frame = 0;
     if (lifetime <= 0) {
@@ -96,7 +100,12 @@ EffectEntry* effAkariPoseN64Entry(s32 type, s32 count, s32 lifetime, f32 x, f32 
     return effect;
 }
 
-void effAkariPoseMain(EffectEntry* effect) {
+/**
+ * Steps each flare through its sequence with staggered starts:
+ * it begins 16 units out at an evenly spaced angle, moves outward with decaying velocity,
+ * and takes scale and alpha from the sequence tables.
+ */
+static void effAkariPoseMain(EffectEntry* effect) {
     EffAkariPoseN64Work* work = effect->userdata;
     Vec position;
     Vec tmp = {0.0f, 0.0f, 0.0f};
@@ -110,8 +119,8 @@ void effAkariPoseMain(EffectEntry* effect) {
     tmp.z = work->position.z;
     position = tmp;
     type = work->type;
-    if (effect->flags & 4) {
-        effect->flags &= ~4;
+    if (effect->flags & EFFECT_FLAG_DELETE_REQUESTED) {
+        effect->flags &= ~EFFECT_FLAG_DELETE_REQUESTED;
         work->lifetime = 16;
     }
     if (work->lifetime < 1000) {
@@ -177,11 +186,12 @@ void effAkariPoseMain(EffectEntry* effect) {
         work->vx += b * (work->targetVx - work->vx);
         work->vy += b * (work->targetVy - work->vy);
     }
-    
+
     dispEntry(CAMERA_3D, dispCalcZ(&position), 2, (DispCallback)effAkariPoseDisp, effect);
 }
 
-void effAkariPoseDisp(CameraId cameraId, EffectEntry* effect) {
+/** Draws each started flare as a rotated, camera-facing 16x16 textured quad. */
+static void effAkariPoseDisp(CameraId cameraId, EffectEntry* effect) {
     CameraEntry* cam;
     EffAkariPoseN64Work* work;
     s32 alpha;
@@ -231,4 +241,3 @@ void effAkariPoseDisp(CameraId cameraId, EffectEntry* effect) {
         tri2(0, 1, 2, 0, 0, 2, 3, 0);
     }
 }
-

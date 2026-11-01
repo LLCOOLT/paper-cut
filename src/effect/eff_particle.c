@@ -1,3 +1,5 @@
+// Generic particle effect (Particle): count particles with random motion from a point for a given life.
+#include "eff/eff_particle.h"
 #include "driver/camdrv.h"
 #include "driver/dispdrv.h"
 #include "driver/effdrv.h"
@@ -7,28 +9,25 @@
 #include <dolphin/gx.h>
 #include <dolphin/mtx.h>
 #include "libc_decls.h"
-
-#ifndef TARGET_PC /* PC port: the host libc declares these */
-double log(double);
-#endif
+#include <math.h>
 
 typedef struct ParticleItem {
-    s32 next;  // 0x0
-    Vec pos;   // 0x4
-    Vec vel;   // 0x10
-    s32 life;  // 0x1C
+    s32 next; // 0x0
+    Vec pos;  // 0x4
+    Vec vel;  // 0x10
+    s32 life; // 0x1C
 } ParticleItem;
 
 typedef struct ParticleEmitter {
-    Mtx mtx;       // 0x0
-    Vec pos;       // 0x30
-    Vec vecA;      // 0x3C
-    Vec vecB;      // 0x48
-    f32 accum;     // 0x54
-    f32 rate;      // 0x58
-    f32 lifeMean;  // 0x5C
-    f32 lifeStd;   // 0x60
-    f32 pad[2];    // 0x64
+    Mtx mtx;      // 0x0
+    Vec pos;      // 0x30
+    Vec vecA;     // 0x3C
+    Vec vecB;     // 0x48
+    f32 accum;    // 0x54
+    f32 rate;     // 0x58
+    f32 lifeMean; // 0x5C
+    f32 lifeStd;  // 0x60
+    f32 pad[2];   // 0x64
 } ParticleEmitter;
 
 typedef struct ParticleWork {
@@ -48,6 +47,10 @@ typedef struct ParticleWork {
     f32 speed;            // 0xAC
 } ParticleWork;
 
+/**
+ * Spark (hibana) colour by remaining life, indexed by life / 8:
+ * a particle fades from white through yellow to a dark, transparent orange as it dies.
+ */
 GXColor hibana_col[32] = {
     {0x5F, 0x28, 0x00, 0x00},
     {0x69, 0x35, 0x00, 0x08},
@@ -83,25 +86,21 @@ GXColor hibana_col[32] = {
     {0xFF, 0xFF, 0xFF, 0xFF}
 };
 
+/** Random seed of the particle generator, advanced by pt_frand for every random draw in this file. */
 s32 seed = 1;
-#pragma force_active on
-u32 gap_07_80417BC4_sdata[1] = {0};
-#pragma force_active reset
 
-
-static inline s32 pt_fpclassifyf(f32 x) { switch (*(s32*)&x & 0x7F800000) { case 0x7F800000: if (*(s32*)&x & 0x007FFFFF) { return 1; } else { return 2; } break; case 0: if (*(s32*)&x & 0x007FFFFF) { return 5; } else { return 3; } break; default: return 4; } }
-static inline f32 pt_sqrtf(f32 x) { if (x > 0.0f) { f64 guess = __frsqrte(x); guess = 0.5 * guess * (3.0 - guess * guess * x); guess = 0.5 * guess * (3.0 - guess * guess * x); guess = 0.5 * guess * (3.0 - guess * guess * x); return x * guess; } else if (x < 0.0) { return *(f32*)__float_nan; } else if (pt_fpclassifyf(x) == 1) { return *(f32*)__float_nan; } return x; }
-
+/** Pseudo-random f32 in [0, 1) from a linear congruential generator on the global seed. */
 static inline f32 pt_frand(void) {
     seed = seed * 0x5EEDF715 + 0x1B0CB173;
     return (f32)(u32)seed * 2.3283064e-10f;
 }
 
-void effParticleDisp(CameraId cameraId, EffectEntry* effect);
-void effParticleMain(EffectEntry* effect);
-void EmitterEmit(EffectEntry* effect, ParticleEmitter* emitter);
-void ParticleEmit(EffectEntry* effect, ParticleItem* p, ParticleEmitter* emitter);
+static void effParticleDisp(CameraId cameraId, EffectEntry* effect);
+static void effParticleMain(EffectEntry* effect);
+static void EmitterEmit(EffectEntry* effect, ParticleEmitter* emitter);
+static void ParticleEmit(EffectEntry* effect, ParticleItem* p, ParticleEmitter* emitter);
 
+/** Gaussian-distributed random number (polar Box-Muller), caching the second value for the next call. */
 static inline f32 pt_gauss(void) {
     static f32 y2;
     static s32 use_last;
@@ -117,7 +116,7 @@ static inline f32 pt_gauss(void) {
             w = x1 * x1 + x2 * x2;
         } while (w > 1.0f);
         w = (-2.0f * (f32)log(w)) / w;
-        w = pt_sqrtf(w);
+        w = sqrtf(w);
         y1 = x1 * w;
         y2 = x2 * w;
         use_last = 1;
@@ -125,12 +124,14 @@ static inline f32 pt_gauss(void) {
     return y1;
 }
 
-// Stand-in for a function the original linker dead-stripped; its signed int->float constant is last in .rodata.
+/** Stand-in for a function the original linker dead-stripped; its signed int->float constant is last in .rodata. */
+// FAKE: uncalled stand-in for a stripped function; creates the int-to-float double in .rodata
 void particleStrippedPool(f32* f, s32 i) {
     *f = (f32)i;
 }
 
-void ParticleEmit(EffectEntry* effect, ParticleItem* p, ParticleEmitter* emitter) {
+/** Initialises one particle from the emitter: random direction and speed, life and size. */
+static void ParticleEmit(EffectEntry* effect, ParticleItem* p, ParticleEmitter* emitter) {
     ParticleWork* work = effect->userdata;
     f32 w;
     f32 r;
@@ -146,14 +147,15 @@ void ParticleEmit(EffectEntry* effect, ParticleItem* p, ParticleEmitter* emitter
     p->vel.x *= 0.5f;
     p->vel.z *= 0.5f;
     w *= 0.25f;
-    p->vel.y = pt_sqrtf(1.0f - w);
+    p->vel.y = sqrtf(1.0f - w);
     PSVECScale(&p->vel, &p->vel, work->speed);
     PSMTXMultVec(emitter->mtx, &p->vel, &p->vel);
     PSVECScale(&p->vel, &p->pos, 2.5f);
     PSVECAdd(&emitter->pos, &p->pos, &p->pos);
 }
 
-void EmitterEmit(EffectEntry* effect, ParticleEmitter* emitter) {
+/** Spawns the next batch of particles for an emitter. */
+static void EmitterEmit(EffectEntry* effect, ParticleEmitter* emitter) {
     ParticleWork* work = effect->userdata;
     u32 prev, n;
     s32 idx;
@@ -181,6 +183,10 @@ void EmitterEmit(EffectEntry* effect, ParticleEmitter* emitter) {
     }
 }
 
+/**
+ * Spawns an emitter at (x, y, z) that throws `count` particles toward (dx, dy, dz) for `life` frames;
+ * reached through evt_eff ("particle").
+ */
 EffectEntry* effParticleEntry(s32 type, f32 x, f32 y, f32 z, f32 dx, f32 dy, f32 dz, s32 count, s32 life) {
     EffectEntry* effect;
     ParticleWork* work;
@@ -194,7 +200,7 @@ EffectEntry* effParticleEntry(s32 type, f32 x, f32 y, f32 z, f32 dx, f32 dy, f32
     work = __memAlloc(HEAP_EFFECT, effect->count * sizeof(ParticleWork) + (count + 2) * sizeof(ParticleItem));
     effect->userdata = work;
     effect->callback = effParticleMain;
-    effect->flags |= 2;
+    effect->flags |= EFFECT_FLAG_SOFT_DELETE;
     work->type = type;
     work->pos.x = x;
     work->pos.y = y;
@@ -244,7 +250,8 @@ EffectEntry* effParticleEntry(s32 type, f32 x, f32 y, f32 z, f32 dx, f32 dy, f32
     return effect;
 }
 
-void effParticleMain(EffectEntry* effect) {
+/** Per frame: emits new particles, moves and ages the live ones and deletes the effect when none remain. */
+static void effParticleMain(EffectEntry* effect) {
     ParticleWork* work = effect->userdata;
     Vec zero = {0.0f, 0.0f, 0.0f};
     Vec pos;
@@ -259,8 +266,8 @@ void effParticleMain(EffectEntry* effect) {
     t.y = work->pos.y;
     t.z = work->pos.z;
     pos = t;
-    if (effect->flags & 4) {
-        effect->flags &= ~4;
+    if (effect->flags & EFFECT_FLAG_DELETE_REQUESTED) {
+        effect->flags &= ~EFFECT_FLAG_DELETE_REQUESTED;
         work->life = 16;
     }
     if (work->life < 1000) {
@@ -296,7 +303,8 @@ void effParticleMain(EffectEntry* effect) {
     dispEntry(CAMERA_3D, dispCalcZ(&pos), 2, (DispCallback)effParticleDisp, effect);
 }
 
-void effParticleDisp(CameraId cameraId, EffectEntry* effect) {
+/** Draws every live particle as a camera-facing textured quad (effect texture 0x61). */
+static void effParticleDisp(CameraId cameraId, EffectEntry* effect) {
     ParticleWork* work = effect->userdata;
     CameraEntry* cam = camGetPtr(cameraId);
     s32 alpha = work->alpha;

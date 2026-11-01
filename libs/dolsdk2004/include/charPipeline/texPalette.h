@@ -7,7 +7,7 @@
 extern "C" {
 #endif
 
-typedef struct {
+typedef struct CLUTHeader {
     u16 numEntries;
     u8 unpacked;
     u8 pad8;
@@ -15,7 +15,7 @@ typedef struct {
     Ptr data;
 } CLUTHeader, *CLUTHeaderPtr;
 
-typedef struct {
+typedef struct TEXHeader {
     u16 height;
     u16 width;
     u32 format;
@@ -31,12 +31,12 @@ typedef struct {
     u8 unpacked;
 } TEXHeader, *TEXHeaderPtr;
 
-typedef struct {
+typedef struct TEXDescriptor {
     TEXHeaderPtr textureHeader;
     CLUTHeaderPtr CLUTHeader;
 } TEXDescriptor, *TEXDescriptorPtr;
 
-typedef struct {
+typedef struct TEXPalette {
     u32 versionNumber;
     u32 numDescriptors;
     TEXDescriptorPtr descriptorArray;

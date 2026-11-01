@@ -2,8 +2,10 @@
 
 #include "__vi.h"
 
+/** Setup bytes for the video encoder chip in NTSC mode: two ranges of 4 and 38 bytes. */
 static u8 ntscRange0[4] = { 0x00, 0x00, 0x19, 0x1D };
 
+/** Second block of video encoder setup bytes for NTSC mode (38 bytes). */
 static u8 ntscRange1[38] = {
     0x2D, 0x76, 0xA5, 0x2A,
     0x2E, 0x2E, 0x00, 0x15,
@@ -17,8 +19,10 @@ static u8 ntscRange1[38] = {
     0x00, 0x00
 };
 
+/** Setup bytes for the video encoder chip in PAL mode: two ranges of 4 and 38 bytes. */
 static u8 palRange0[4] = { 0x00, 0x00, 0x21, 0x1D };
 
+/** Second block of video encoder setup bytes for PAL mode (38 bytes). */
 static u8 palRange1[38] = {
     0x0C, 0x7D, 0xAF, 0x23,
     0x35, 0x35, 0x00, 0x06,
@@ -32,8 +36,14 @@ static u8 palRange1[38] = {
     0x00, 0x00
 };
 
+/** Value written to encoder register 0x3A. */
 static u8 value3a = 19;
 
+/**
+ * Writes the register set of the Philips SAA7120 video encoder over I2C (device address 0x88):
+ * registers 0 to 37 and 42 to 57 cleared, 38 to 41 from range0, register 0x3A from value3a,
+ * and 90 to 127 from range1.
+ */
 static void send7120Data(u8 *range0, u8 *range1) {
     u8 i;
     u8 buffer[2];
@@ -67,6 +77,10 @@ static void send7120Data(u8 *range0, u8 *range1) {
     }
 }
 
+/**
+ * Resets and programs the Philips SAA7120 digital video encoder with the NTSC register tables.
+ * Not used by this build, because getEncoderType() returns 1.
+ */
 void __VIInitPhilips(void) {
     __VIInitI2C();
     send7120Data(ntscRange0, ntscRange1);

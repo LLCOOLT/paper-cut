@@ -5,6 +5,7 @@
 
 #define LATENCY 8
 
+/** Controller sampling interval in milliseconds set with SISetSamplingRate. */
 static u32 SamplingRate = 0;
 
 typedef struct XY {
@@ -12,6 +13,10 @@ typedef struct XY {
     u8 count;
 } XY;
 
+/**
+ * Poll line interval and polls per frame for each sampling interval 0-11 ms on 60 Hz (NTSC, MPAL, EURGB60)
+ * video.
+ */
 static XY XYNTSC[12] = {
     {0x00F6, 0x02},
     {0x000E, 0x13},
@@ -27,6 +32,7 @@ static XY XYNTSC[12] = {
     {0x0083, 0x02},
 };
 
+/** Poll line interval and polls per frame for each sampling interval 0-11 ms on 50 Hz PAL video. */
 static XY XYPAL[12] = {
     {0x0128, 0x02},
     {0x000F, 0x15},
@@ -42,6 +48,11 @@ static XY XYPAL[12] = {
     {0x009C, 0x02},
 };
 
+/**
+ * Sets how many times per frame the SI polls the controllers, from a millisecond interval (clamped to 11).
+ * The table gives the line spacing and poll count for the current TV format (NTSC/MPAL/EuRGB60 or PAL),
+ * doubled in progressive mode, and passes them to SISetXY.
+ */
 void SISetSamplingRate(u32 msec) {
     XY* xy;
     BOOL progressive;
@@ -67,7 +78,7 @@ void SISetSamplingRate(u32 msec) {
 #ifdef VERSION_G8ME01
         OSReport("SISetSamplingRate: unknown TV format. Use default.");
 #else
-        OSReport("SISetSamplingRate: unknown TV format. Use default.\0");
+        OSReport("SISetSamplingRate: unknown TV format. Use default.");
 #endif
         msec = 0;
         xy = XYNTSC;
@@ -79,11 +90,16 @@ void SISetSamplingRate(u32 msec) {
     OSRestoreInterrupts(enabled);
 }
 
+/** Re-applies the last sampling rate, for example after the TV format changes. */
 void SIRefreshSamplingRate(void) {
     SISetSamplingRate(SamplingRate);
 }
 
 #if DEBUG
+/**
+ * Debug-build test hook that prints the poll timing table (count, line spacing, last poll line) of a TV format
+ * through OSReport.
+ */
 void __SITestSamplingRate(u32 tvmode) {
     u32 msec;
     u32 line;

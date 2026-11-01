@@ -1,3 +1,4 @@
+// rsh: Excess Express (ressha, train), shared code for the whole area: car door open/close, window scenery, random passenger NPCs and their talk events, REL prolog/epilog.
 #ifdef TARGET_PC
 #include "port/platform.h"
 #endif
@@ -5,7 +6,6 @@
 #include "evt/evt_cmd.h"
 #include "manager/evtmgr_cmd.h"
 
-#pragma force_active on
 #include "stdio.h"
 #include "string.h"
 #include "evt/evt_npc.h"
@@ -19,98 +19,49 @@
 #include "driver/imgdrv.h"
 #include "data/mapdata.h"
 #include "driver/swdrv.h"
+#include "evt/evt_bero.h"
+#include "evt/evt_cam.h"
+#include "evt/evt_case.h"
+#include "evt/evt_hit.h"
+#include "evt/evt_img.h"
+#include "evt/evt_map.h"
+#include "evt/evt_mario.h"
+#include "evt/evt_msg.h"
+#include "evt/evt_offscreen.h"
+#include "evt/evt_paper.h"
+#include "evt/evt_party.h"
+#include "evt/evt_snd.h"
+#include "evt/evt_sub.h"
 #include "npc_event.h"
 #include "rsh.h"
+#include "version.h"
+#include "evt/evt_story.h"
+#include "rel_module.h"
+#include "driver/casedrv.h"
+#include "libc_decls.h"
 
-typedef struct RshRndNpc { const char* name; const char* model; EvtWord* talkEvt; } RshRndNpc;
-#ifndef TARGET_PC /* PC port: the host libc declares these */
-double tan(double x);
-#endif
-typedef void (*voidfunctionptr)(void);
-extern voidfunctionptr _ctors[];
-extern voidfunctionptr _dtors[];
+typedef struct RshRndNpc {
+    const char* name;
+    const char* model;
+    EvtWord* talkEvt;
+} RshRndNpc;
 
-USER_FUNC(debug_print_func);
-USER_FUNC(evt_bero_mapchange);
-USER_FUNC(evt_cam_letter_box_disable);
-USER_FUNC(evt_hit_get_position);
-USER_FUNC(evt_hitobj_attr_onoff);
-USER_FUNC(evt_img_alloc_capture);
-USER_FUNC(evt_img_entry);
-USER_FUNC(evt_img_free_capture);
-USER_FUNC(evt_img_onoff);
-USER_FUNC(evt_img_set_paper);
-USER_FUNC(evt_img_set_paper_anim);
-USER_FUNC(evt_img_wait_animend);
-USER_FUNC(evt_map_checkanim);
-USER_FUNC(evt_map_playanim);
-USER_FUNC(evt_map_set_tevcallback);
-USER_FUNC(evt_mapobj_clear_offscreen);
-USER_FUNC(evt_mapobj_flag_onoff);
-USER_FUNC(evt_mapobj_set_offscreen);
-USER_FUNC(evt_mario_get_party);
-USER_FUNC(evt_mario_get_pos);
-USER_FUNC(evt_mario_key_onoff);
-USER_FUNC(evt_mario_mov_pos);
-USER_FUNC(evt_mario_party_door_move);
-USER_FUNC(evt_msg_print);
-USER_FUNC(evt_msg_print_add);
-USER_FUNC(evt_msg_select);
-USER_FUNC(evt_npc_check);
-USER_FUNC(evt_npc_entry);
-USER_FUNC(evt_npc_flag_onoff);
-USER_FUNC(evt_npc_set_offscreen);
-USER_FUNC(evt_npc_set_position);
-USER_FUNC(evt_npc_set_ry);
-USER_FUNC(evt_npc_set_tribe);
-USER_FUNC(evt_npc_setup);
-USER_FUNC(evt_offscreen_entry);
-USER_FUNC(evt_paper_entry);
-USER_FUNC(evt_party_run);
-USER_FUNC(evt_party_stop);
-USER_FUNC(evt_rsh_get_rnd_npc);
-USER_FUNC(evt_rsh_get_rnd_npc_data);
-USER_FUNC(evt_rsh_get_rnd_npc_talk_evt);
-USER_FUNC(evt_rsh_set_rnd_npc);
-USER_FUNC(evt_rsh_set_rnd_npc_talk_evt);
-USER_FUNC(evt_run_case_evt);
-USER_FUNC(evt_snd_bgmoff);
-USER_FUNC(evt_snd_bgmon);
-USER_FUNC(evt_snd_sfxon_3d);
-USER_FUNC(evt_sub_get_mapname);
-USER_FUNC(evt_sub_random);
-BOOL img_wait(void);
-RshRndNpc* _get_rnd_npc_data(s32 room, s32 group, s32 index);
-void rsh_window_tev(MapTevCallbackInfo* info);
-void _unresolved(void);
-void _epilog(void);
-void _prolog(void);
+static USER_FUNC(debug_print_func);
+static USER_FUNC(evt_rsh_get_rnd_npc);
+static USER_FUNC(evt_rsh_get_rnd_npc_data);
+static USER_FUNC(evt_rsh_get_rnd_npc_talk_evt);
+static USER_FUNC(evt_rsh_set_rnd_npc);
+static USER_FUNC(evt_rsh_set_rnd_npc_talk_evt);
+static BOOL img_wait(void);
+static RshRndNpc* _get_rnd_npc_data(s32 room, s32 group, s32 index);
+static void rsh_window_tev(MapTevCallbackInfo* info);
 
-f32 fd_rsh_negone_one_374[2] __attribute__((aligned(8)));
-f32 fd_rsh_neg_one_382;
-f32 fd_rsh___local_PI_383;
-f32 fd_rsh___local_3PIO2_385;
-f32 fd_rsh_one_negone_373[2] __attribute__((aligned(8)));
-f32 fd_rsh___local_PIO2_384;
-f32 fd_rsh_one_381;
-f32 fd_rsh_negone_one_360[2] __attribute__((aligned(8)));
-f32 fd_rsh_neg_one_365;
-f32 fd_rsh___local_PI_366;
-f32 fd_rsh___local_3PIO2_368;
-f32 fd_rsh_one_negone_359[2] __attribute__((aligned(8)));
-f32 fd_rsh___local_PIO2_367;
-f32 fd_rsh_one_364;
-f64 fd_rsh__three_localstatic4_sqrtf;
-f64 fd_rsh__half_localstatic3_sqrtf;
-EvtWord simi_check[57];
-EvtWord simi_offscreen_check[41];
-EvtWord kami_check[85];
-EvtWord kami_offscreen_check[41];
-EvtWord evt_rsh_door_init[23];
-EvtWord evt_rsh_door_entry[46];
-EvtWord evt_rsh_door_open[548];
-EvtWord evt_rsh_door_close[404];
-EvtWord evt_rsh_window[30];
+extern EvtWord simi_check[];
+extern EvtWord simi_offscreen_check[];
+extern EvtWord kami_check[];
+extern EvtWord kami_offscreen_check[];
+extern EvtWord evt_rsh_door_open[];
+extern EvtWord evt_rsh_door_close[];
 RshRndNpc rsh_01_rnd_npc_1[5];
 RshRndNpc rsh_01_rnd_npc_2[3];
 RshRndNpc rsh_01_rnd_npc_3[2];
@@ -120,46 +71,46 @@ RshRndNpc rsh_04_rnd_npc_1[2];
 RshRndNpc rsh_04_rnd_npc_2[2];
 RshRndNpc rsh_04_rnd_npc_3[2];
 RshRndNpc rsh_04_rnd_npc_4[4];
-EvtWord evt_rsh_rnd_npc_2_1_talk[8];
-EvtWord evt_rsh_rnd_npc_2_2_talk[16];
-EvtWord evt_rsh_rnd_npc_2_3_talk[16];
-EvtWord evt_rsh_rnd_npc_2_4_talk[8];
-EvtWord evt_rsh_rnd_npc_2_5_talk[8];
-EvtWord evt_rsh_rnd_npc_2_6_talk[8];
-EvtWord evt_rsh_rnd_npc_2_7_talk[8];
-EvtWord evt_rsh_rnd_npc_2_8_talk[8];
-EvtWord evt_rsh_rnd_npc_2_9_talk[8];
-EvtWord evt_rsh_rnd_npc_2_10_talk[8];
-EvtWord evt_rsh_rnd_npc_3_1_talk[8];
-EvtWord evt_rsh_rnd_npc_3_2_talk[8];
-EvtWord evt_rsh_rnd_npc_3_3_talk[8];
-EvtWord evt_rsh_rnd_npc_3_4_talk[8];
-EvtWord evt_rsh_rnd_npc_3_5_talk[25];
-EvtWord evt_rsh_rnd_npc_3_6_talk[8];
-EvtWord evt_rsh_rnd_npc_3_7_talk[8];
-EvtWord evt_rsh_rnd_npc_3_8_talk[8];
-EvtWord evt_rsh_rnd_npc_3_9_talk[8];
-EvtWord evt_rsh_rnd_npc_3_10_talk[8];
-EvtWord evt_rsh_rnd_npc_4_1_talk[8];
-EvtWord evt_rsh_rnd_npc_4_2_talk[8];
-EvtWord evt_rsh_rnd_npc_4_3_talk[16];
-EvtWord evt_rsh_rnd_npc_4_4_talk[8];
-EvtWord evt_rsh_rnd_npc_4_5_talk[8];
-EvtWord evt_rsh_rnd_npc_4_6_talk[8];
-EvtWord evt_rsh_rnd_npc_4_7_talk[8];
-EvtWord evt_rsh_rnd_npc_4_8_talk[39];
-EvtWord evt_rsh_rnd_npc_4_9_talk[8];
-EvtWord evt_rsh_rnd_npc_4_10_talk[8];
-EvtWord evt_rsh_rnd_npc_5_1_talk[8];
-EvtWord evt_rsh_rnd_npc_5_2_talk[8];
-EvtWord evt_rsh_rnd_npc_5_3_talk[47];
-EvtWord evt_rsh_rnd_npc_5_4_talk[8];
-EvtWord evt_rsh_rnd_npc_5_5_talk[8];
-EvtWord evt_rsh_rnd_npc_5_6_talk[8];
-EvtWord evt_rsh_rnd_npc_5_7_talk[8];
-EvtWord evt_rsh_rnd_npc_5_8_talk[8];
-EvtWord evt_rsh_rnd_npc_5_9_talk[8];
-EvtWord evt_rsh_rnd_npc_5_10_talk[8];
+extern EvtWord evt_rsh_rnd_npc_2_1_talk[];
+extern EvtWord evt_rsh_rnd_npc_2_2_talk[];
+extern EvtWord evt_rsh_rnd_npc_2_3_talk[];
+extern EvtWord evt_rsh_rnd_npc_2_4_talk[];
+extern EvtWord evt_rsh_rnd_npc_2_5_talk[];
+extern EvtWord evt_rsh_rnd_npc_2_6_talk[];
+extern EvtWord evt_rsh_rnd_npc_2_7_talk[];
+extern EvtWord evt_rsh_rnd_npc_2_8_talk[];
+extern EvtWord evt_rsh_rnd_npc_2_9_talk[];
+extern EvtWord evt_rsh_rnd_npc_2_10_talk[];
+extern EvtWord evt_rsh_rnd_npc_3_1_talk[];
+extern EvtWord evt_rsh_rnd_npc_3_2_talk[];
+extern EvtWord evt_rsh_rnd_npc_3_3_talk[];
+extern EvtWord evt_rsh_rnd_npc_3_4_talk[];
+extern EvtWord evt_rsh_rnd_npc_3_5_talk[];
+extern EvtWord evt_rsh_rnd_npc_3_6_talk[];
+extern EvtWord evt_rsh_rnd_npc_3_7_talk[];
+extern EvtWord evt_rsh_rnd_npc_3_8_talk[];
+extern EvtWord evt_rsh_rnd_npc_3_9_talk[];
+extern EvtWord evt_rsh_rnd_npc_3_10_talk[];
+extern EvtWord evt_rsh_rnd_npc_4_1_talk[];
+extern EvtWord evt_rsh_rnd_npc_4_2_talk[];
+extern EvtWord evt_rsh_rnd_npc_4_3_talk[];
+extern EvtWord evt_rsh_rnd_npc_4_4_talk[];
+extern EvtWord evt_rsh_rnd_npc_4_5_talk[];
+extern EvtWord evt_rsh_rnd_npc_4_6_talk[];
+extern EvtWord evt_rsh_rnd_npc_4_7_talk[];
+extern EvtWord evt_rsh_rnd_npc_4_8_talk[];
+extern EvtWord evt_rsh_rnd_npc_4_9_talk[];
+extern EvtWord evt_rsh_rnd_npc_4_10_talk[];
+extern EvtWord evt_rsh_rnd_npc_5_1_talk[];
+extern EvtWord evt_rsh_rnd_npc_5_2_talk[];
+extern EvtWord evt_rsh_rnd_npc_5_3_talk[];
+extern EvtWord evt_rsh_rnd_npc_5_4_talk[];
+extern EvtWord evt_rsh_rnd_npc_5_5_talk[];
+extern EvtWord evt_rsh_rnd_npc_5_6_talk[];
+extern EvtWord evt_rsh_rnd_npc_5_7_talk[];
+extern EvtWord evt_rsh_rnd_npc_5_8_talk[];
+extern EvtWord evt_rsh_rnd_npc_5_9_talk[];
+extern EvtWord evt_rsh_rnd_npc_5_10_talk[];
 const char* rsh_01_rnd_npc_1_list[5];
 const char* rsh_01_rnd_npc_2_list[3];
 const char* rsh_01_rnd_npc_3_list[2];
@@ -169,46 +120,15 @@ const char* rsh_04_rnd_npc_1_list[2];
 const char* rsh_04_rnd_npc_2_list[2];
 const char* rsh_04_rnd_npc_3_list[2];
 const char* rsh_04_rnd_npc_4_list[4];
-EvtWord debug_print_rnd_npc[61];
-EvtWord evt_rsh_rnd_npc_init[94];
-EvtWord evt_rsh_01_rnd_npc_entry[137];
+extern EvtWord debug_print_rnd_npc[];
 NpcSetupInfo rsh_03_rnd_npc_2_ent[2];
-EvtWord evt_rsh_03_rnd_npc_entry[95];
 NpcSetupInfo rsh_04_rnd_npc_3_ent[2];
-EvtWord evt_rsh_04_rnd_npc_entry[185];
 
-f32 fd_rsh_negone_one_374[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_rsh_neg_one_382 = -1.0f;
-
-f32 fd_rsh___local_PI_383 = 3.1415927f;
-
-f32 fd_rsh___local_3PIO2_385 = 4.712389f;
-
-f32 fd_rsh_one_negone_373[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_rsh___local_PIO2_384 = 1.5707964f;
-
-f32 fd_rsh_one_381 = 1.0f;
-
-f32 fd_rsh_negone_one_360[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_rsh_neg_one_365 = -1.0f;
-
-f32 fd_rsh___local_PI_366 = 3.1415927f;
-
-f32 fd_rsh___local_3PIO2_368 = 4.712389f;
-
-f32 fd_rsh_one_negone_359[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_rsh___local_PIO2_367 = 1.5707964f;
-
-f32 fd_rsh_one_364 = 1.0f;
-
-f64 fd_rsh__three_localstatic4_sqrtf = 3.0;
-
-f64 fd_rsh__half_localstatic3_sqrtf = 0.5;
-
+/**
+ * Shows the stained floor object (s_yuka_simi, probably the spilled stew) in rsh_02_a
+ * and rsh_03_a from the start of chapter 6 until the end of day 1,
+ * and the clean floor (s_yuka) at every other story stage.
+ */
 EVT_BEGIN(simi_check)
     SET_VALUE(LF(0), 0)
     CALL(evt_sub_get_mapname, LW(10))
@@ -219,18 +139,22 @@ EVT_BEGIN(simi_check)
         SET_VALUE(LF(0), 1)
     END_IF
     IF_INT_EQUAL(LF(0), 1)
-        SWITCH(GSW(0))
-            CASE_BETWEEN(283, 302)
-            CALL(evt_mapobj_flag_onoff, 1, 1, STRING("s_yuka"), 1)
-            CALL(evt_mapobj_flag_onoff, 1, 0, STRING("s_yuka_simi"), 1)
+        SWITCH(GSW(GSW_STORY_PROGRESS))
+            CASE_BETWEEN(STORY_STG6_01_THE_CONDUCTOR, STORY_STG6_20_END_OF_DAY_1)
+            CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("s_yuka"), MAPOBJ_FLAG_HIDE)
+            CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("s_yuka_simi"), MAPOBJ_FLAG_HIDE)
             CASE_DEFAULT
-            CALL(evt_mapobj_flag_onoff, 1, 0, STRING("s_yuka"), 1)
-            CALL(evt_mapobj_flag_onoff, 1, 1, STRING("s_yuka_simi"), 1)
+            CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("s_yuka"), MAPOBJ_FLAG_HIDE)
+            CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("s_yuka_simi"), MAPOBJ_FLAG_HIDE)
         END_SWITCH
     END_IF
     RETURN
 EVT_END()
 
+/**
+ * Companion of simi_check: clears the offscreen-capture binding of whichever floor object (s_yuka or
+ * s_yuka_simi) is the visible one, so the door transition shows the right floor in rsh_02_a and rsh_03_a.
+ */
 EVT_BEGIN(simi_offscreen_check)
     SET_VALUE(LF(0), 0)
     CALL(evt_sub_get_mapname, LW(10))
@@ -241,8 +165,8 @@ EVT_BEGIN(simi_offscreen_check)
         SET_VALUE(LF(0), 1)
     END_IF
     IF_INT_EQUAL(LF(0), 1)
-        SWITCH(GSW(0))
-            CASE_BETWEEN(283, 302)
+        SWITCH(GSW(GSW_STORY_PROGRESS))
+            CASE_BETWEEN(STORY_STG6_01_THE_CONDUCTOR, STORY_STG6_20_END_OF_DAY_1)
             CALL(evt_mapobj_clear_offscreen, 0, STRING("s_yuka"))
             CASE_DEFAULT
             CALL(evt_mapobj_clear_offscreen, 0, STRING("s_yuka_simi"))
@@ -251,44 +175,53 @@ EVT_BEGIN(simi_offscreen_check)
     RETURN
 EVT_END()
 
+/**
+ * Swaps the floor objects that carry the stolen paper in rsh_01_a (yuka_3_kami,
+ * while the story is at the document stage) and rsh_02_a (yuka_5_kami, during the vital clue stages) with their
+ * plain floors.
+ */
 EVT_BEGIN(kami_check)
     CALL(evt_sub_get_mapname, LW(10))
     IF_STR_EQUAL(LW(10), STRING("rsh_01_a"))
-        IF_INT_EQUAL(GSW(0), 304)
-            CALL(evt_mapobj_flag_onoff, 1, 0, STRING("yuka_3_kami"), 1)
-            CALL(evt_mapobj_flag_onoff, 1, 1, STRING("yuka_3"), 1)
-            ELSE
-            CALL(evt_mapobj_flag_onoff, 1, 1, STRING("yuka_3_kami"), 1)
-            CALL(evt_mapobj_flag_onoff, 1, 0, STRING("yuka_3"), 1)
+        IF_INT_EQUAL(GSW(GSW_STORY_PROGRESS), STORY_STG6_22_DOCUMENT)
+            CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("yuka_3_kami"), MAPOBJ_FLAG_HIDE)
+            CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("yuka_3"), MAPOBJ_FLAG_HIDE)
+        ELSE
+            CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("yuka_3_kami"), MAPOBJ_FLAG_HIDE)
+            CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("yuka_3"), MAPOBJ_FLAG_HIDE)
         END_IF
     END_IF
     IF_STR_EQUAL(LW(10), STRING("rsh_02_a"))
-        SWITCH(GSW(0))
-            CASE_BETWEEN(306, 307)
-            CALL(evt_mapobj_flag_onoff, 1, 0, STRING("yuka_5_kami"), 1)
-            CALL(evt_mapobj_flag_onoff, 1, 1, STRING("yuka_5_kami_2"), 1)
-            CALL(evt_mapobj_flag_onoff, 1, 1, STRING("yuka_5"), 1)
+        SWITCH(GSW(GSW_STORY_PROGRESS))
+            CASE_BETWEEN(STORY_STG6_24_A_VITAL_CLUE, STORY_STG6_24_02_ANOTHER_CLUE)
+            CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("yuka_5_kami"), MAPOBJ_FLAG_HIDE)
+            CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("yuka_5_kami_2"), MAPOBJ_FLAG_HIDE)
+            CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("yuka_5"), MAPOBJ_FLAG_HIDE)
             CASE_DEFAULT
-            CALL(evt_mapobj_flag_onoff, 1, 1, STRING("yuka_5_kami"), 1)
-            CALL(evt_mapobj_flag_onoff, 1, 1, STRING("yuka_5_kami_2"), 1)
-            CALL(evt_mapobj_flag_onoff, 1, 0, STRING("yuka_5"), 1)
+            CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("yuka_5_kami"), MAPOBJ_FLAG_HIDE)
+            CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("yuka_5_kami_2"), MAPOBJ_FLAG_HIDE)
+            CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("yuka_5"), MAPOBJ_FLAG_HIDE)
         END_SWITCH
     END_IF
     RETURN
 EVT_END()
 
+/**
+ * Companion of kami_check: clears the offscreen-capture binding of whichever paper
+ * or plain floor object is currently visible in rsh_01_a and rsh_02_a.
+ */
 EVT_BEGIN(kami_offscreen_check)
     CALL(evt_sub_get_mapname, LW(10))
     IF_STR_EQUAL(LW(10), STRING("rsh_01_a"))
-        IF_INT_EQUAL(GSW(0), 304)
+        IF_INT_EQUAL(GSW(GSW_STORY_PROGRESS), STORY_STG6_22_DOCUMENT)
             CALL(evt_mapobj_clear_offscreen, 0, STRING("yuka_3"))
-            ELSE
+        ELSE
             CALL(evt_mapobj_clear_offscreen, 0, STRING("yuka_3_kami"))
         END_IF
     END_IF
     IF_STR_EQUAL(LW(10), STRING("rsh_02_a"))
-        SWITCH(GSW(0))
-            CASE_BETWEEN(306, 307)
+        SWITCH(GSW(GSW_STORY_PROGRESS))
+            CASE_BETWEEN(STORY_STG6_24_A_VITAL_CLUE, STORY_STG6_24_02_ANOTHER_CLUE)
             CALL(evt_mapobj_clear_offscreen, 0, STRING("yuka_5"))
             CASE_DEFAULT
             CALL(evt_mapobj_clear_offscreen, 0, STRING("yuka_5_kami"))
@@ -297,6 +230,10 @@ EVT_BEGIN(kami_offscreen_check)
     RETURN
 EVT_END()
 
+/**
+ * Sets up the cabin-door transition for a car: registers the OFF_d_meku page-turn paper,
+ * the capture_img image used to animate the door, and the offscreen buffer, with the image switched off.
+ */
 EVT_BEGIN(evt_rsh_door_init)
     CALL(evt_paper_entry, STRING("OFF_d_meku"))
     CALL(evt_img_entry, STRING("capture_img"))
@@ -307,6 +244,13 @@ EVT_BEGIN(evt_rsh_door_init)
     RETURN
 EVT_END()
 
+/**
+ * Registers one cabin door.
+ * LW(0) points to a table of seven entries (room, backdrop, door object, outside hit, open animation,
+ * inside hit, close animation).
+ * Hides the room and its backdrop and wires evt_rsh_door_open to the outside hit
+ * and evt_rsh_door_close to the inside hit.
+ */
 EVT_BEGIN(evt_rsh_door_entry)
     SET_INT_READ_ADDR(LW(0))
     READ_INT(LW(1))
@@ -316,13 +260,21 @@ EVT_BEGIN(evt_rsh_door_entry)
     READ_INT(LW(5))
     READ_INT(LW(6))
     READ_INT(LW(7))
-    CALL(evt_mapobj_flag_onoff, 1, 1, LW(1), 1)
-    CALL(evt_mapobj_flag_onoff, 1, 1, LW(2), 1)
-    CALL(evt_run_case_evt, 9, 1, LW(4), 0, PTR(evt_rsh_door_open), 0)
-    CALL(evt_run_case_evt, 9, 1, LW(6), 0, PTR(evt_rsh_door_close), 0)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, LW(1), MAPOBJ_FLAG_HIDE)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, LW(2), MAPOBJ_FLAG_HIDE)
+    CALL(evt_run_case_evt, CASE_COND_FRONT_A, 1, LW(4), 0, PTR(evt_rsh_door_open), 0)
+    CALL(evt_run_case_evt, CASE_COND_FRONT_A, 1, LW(6), 0, PTR(evt_rsh_door_close), 0)
     RETURN
 EVT_END()
 
+/**
+ * Runs when Mario walks into a cabin door (LW(0) is the door table of evt_rsh_door_entry):
+ * locks input, plays the door slide sound and animation, walks Mario in,
+ * then plays the page-turn capture while the cabin is revealed.
+ * Also plays the story reactions that happen on entering a cabin:
+ * the partner comments in cabin 5 at the blanket and conductor stages,
+ * the BGM dip in cabins 5 and 4 for the ghost scenes, and Zip Toad becoming touchable.
+ */
 EVT_BEGIN(evt_rsh_door_open)
     SET_INT_READ_ADDR(LW(0))
     READ_INT(LW(1))
@@ -334,43 +286,58 @@ EVT_BEGIN(evt_rsh_door_open)
     READ_INT(LW(7))
     CALL(evt_hitobj_attr_onoff, 0, 1, LW(4), 8388608)
     CALL(evt_hitobj_attr_onoff, 0, 1, LW(6), 8388608)
+#if VERSION >= VERSION_JP
     CALL(evt_cam_letter_box_disable, 1)
+#endif
+    // Mario walks into the cabin as the door slides open and the page turns to reveal it.
     CALL(evt_mario_key_onoff, 0)
     CALL(img_wait)
-    CALL(evt_mapobj_flag_onoff, 1, 0, LW(1), 1)
-    CALL(evt_mapobj_flag_onoff, 1, 0, LW(2), 1)
-    CALL_CHILD(PTR(kami_check))
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, LW(1), MAPOBJ_FLAG_HIDE)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, LW(2), MAPOBJ_FLAG_HIDE)
+    CALL_CHILD(kami_check)
     CALL(evt_hit_get_position, LW(4), LW(10), LW(11), LW(12))
     CALL(evt_snd_sfxon_3d, STRING("SFX_DOOR_OPEN_SLIDE1"), LW(10), LW(11), LW(12), 0)
     CALL(evt_map_playanim, LW(5), 0, 0)
     CALL(evt_map_checkanim, LW(5), LW(10), LW(11))
     WAIT_MS(500)
-    CALL(evt_mapobj_flag_onoff, 1, 1, LW(3), 1)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, LW(3), MAPOBJ_FLAG_HIDE)
     CALL(evt_hit_get_position, LW(4), LW(10), LW(11), LW(12))
     SUBTRACT(LW(12), 50)
     CALL(evt_mario_party_door_move, LW(10), LW(12), FLOAT(80.0f))
     CALL(evt_img_free_capture, STRING("capture_img"), 0)
     CALL(evt_img_free_capture, STRING("capture_img"), 1)
     CALL(evt_img_free_capture, STRING("capture_img"), 2)
+#if VERSION <= VERSION_DEMO_JP
+    CALL(evt_img_alloc_capture, STRING("capture_img"), 0, STRING("offscreen"), 0, 0, 0, 0, 0)
+    CALL(evt_img_alloc_capture, STRING("capture_img"), 1, STRING("offscreen"), 0, 0, 0, 0, 0)
+    CALL(evt_img_alloc_capture, STRING("capture_img"), 2, STRING("offscreen"), 0, 0, 0, 0, 0)
+#else
     CALL(evt_img_alloc_capture, STRING("capture_img"), 0, STRING("offscreen"), 1, 0, 0, 0, 0)
+#endif
     CALL(evt_mapobj_set_offscreen, 1, STRING("rouka"), STRING("offscreen"))
-    CALL_CHILD(PTR(simi_offscreen_check))
+    CALL_CHILD(simi_offscreen_check)
     CALL(evt_mapobj_set_offscreen, 1, STRING("w_tobira"), STRING("offscreen"))
     CALL(evt_mapobj_set_offscreen, 1, STRING("e_tobira"), STRING("offscreen"))
-    CALL(evt_mapobj_flag_onoff, 1, 1, STRING("rouka"), 1)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("rouka"), MAPOBJ_FLAG_HIDE)
     CALL(evt_npc_check, STRING("車掌"), LW(0))
     IF_INT_EQUAL(LW(0), 1)
         CALL(evt_npc_set_offscreen, STRING("車掌"), STRING("offscreen"))
-        CALL(evt_npc_flag_onoff, 1, STRING("車掌"), 128)
+        CALL(evt_npc_flag_onoff, 1, STRING("車掌"), NPC_FLAG_HIDDEN)
     END_IF
     BEGIN_INLINE_EVENT
         WAIT_MS(300)
         CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
         CALL(evt_snd_sfxon_3d, STRING("SFX_OFF6_ROOM_IN1"), LW(0), LW(1), LW(2), 0)
     END_INLINE_EVENT
+#if VERSION <= VERSION_DEMO_JP
+    CALL(evt_img_set_virtual_point, STRING("capture_img"), 0, 0, -80)
+#endif
     CALL(evt_img_set_paper_anim, STRING("capture_img"), STRING("A_1"))
     CALL(evt_img_onoff, STRING("capture_img"), 1)
     BEGIN_INLINE_EVENT
+#if VERSION <= VERSION_DEMO_JP
+        CALL(evt_img_wait_animend, STRING("capture_img"))
+#endif
         CALL(evt_mapobj_clear_offscreen, 1, STRING("rouka"))
         CALL(evt_mapobj_clear_offscreen, 1, STRING("w_tobira"))
         CALL(evt_mapobj_clear_offscreen, 1, STRING("e_tobira"))
@@ -378,11 +345,16 @@ EVT_BEGIN(evt_rsh_door_open)
         IF_INT_EQUAL(LW(0), 1)
             CALL(evt_npc_set_offscreen, STRING("車掌"), 0)
         END_IF
+#if VERSION >= VERSION_JP
         CALL(evt_img_wait_animend, STRING("capture_img"))
+#endif
         CALL(evt_img_onoff, STRING("capture_img"), 0)
     END_INLINE_EVENT
+    // Control returns once Mario is inside.
     CALL(evt_mario_key_onoff, 1)
+#if VERSION >= VERSION_JP
     CALL(evt_cam_letter_box_disable, 0)
+#endif
     CALL(evt_hitobj_attr_onoff, 0, 0, LW(4), 8388608)
     CALL(evt_hitobj_attr_onoff, 0, 0, LW(6), 8388608)
     SET_VALUE(LF(0), 0)
@@ -397,9 +369,11 @@ EVT_BEGIN(evt_rsh_door_open)
         SET_VALUE(LF(0), 1)
     END_IF
     IF_INT_EQUAL(LF(0), 1)
+        // Entering cabin 5 at the blanket stage makes Mario's partner remark that they should leave
+        // everything to the conductor.
         IF_STR_EQUAL(LW(1), STRING("heya_5"))
-            SWITCH(GSW(0))
-                CASE_EQUAL(301)
+            SWITCH(GSW(GSW_STORY_PROGRESS))
+                CASE_EQUAL(STORY_STG6_19_GIVE_BLANKET)
                 CALL(evt_mario_key_onoff, 0)
                 CALL(evt_img_wait_animend, STRING("capture_img"))
                 CALL(evt_party_stop, 0)
@@ -423,9 +397,11 @@ EVT_BEGIN(evt_rsh_door_open)
                 END_SWITCH
                 CALL(evt_party_run, 0)
                 CALL(evt_mario_key_onoff, 1)
-                CASE_BETWEEN(306, 307)
-                CALL(evt_snd_bgmoff, 18432)
-                CASE_EQUAL(326)
+                // During the vital clue stage the background music dips for the ghost scenes.
+                CASE_BETWEEN(STORY_STG6_24_A_VITAL_CLUE, STORY_STG6_24_02_ANOTHER_CLUE)
+                CALL(evt_snd_bgmoff, PSND_FADE_DIP_TO(50))
+                // When the conductor appears, the partner comments on entering cabin 5.
+                CASE_EQUAL(STORY_STG6_43_CONDUCTOR_APPEARS)
                 CALL(evt_mario_key_onoff, 0)
                 CALL(evt_img_wait_animend, STRING("capture_img"))
                 CALL(evt_party_stop, 0)
@@ -454,6 +430,15 @@ EVT_BEGIN(evt_rsh_door_open)
                 CALL(evt_img_wait_animend, STRING("capture_img"))
                 CALL(evt_mario_key_onoff, 1)
             END_SWITCH
+#if VERSION >= VERSION_DEMO_EU
+            // Once Zip Toad has appeared, entering the cabins makes him touchable.
+            IF_INT_EQUAL(GSW(GSW_STORY_PROGRESS), STORY_STG6_25_ZIP_TOAD_APPEARS)
+                CALL(evt_npc_check, STRING("トロン"), LW(10))
+                IF_INT_EQUAL(LW(10), 1)
+                    CALL(evt_npc_flag_onoff, 0, STRING("トロン"), NPC_FLAG_INTANGIBLE)
+                END_IF
+            END_IF
+#endif
         END_IF
     END_IF
     SET_VALUE(LF(0), 0)
@@ -469,13 +454,21 @@ EVT_BEGIN(evt_rsh_door_open)
     END_IF
     IF_INT_EQUAL(LF(0), 1)
         IF_STR_EQUAL(LW(1), STRING("heya_4"))
-            IF_INT_EQUAL(GSWF(3434), 1)
-                SET_VALUE(GSWF(3435), 1)
+            IF_INT_EQUAL(GSWF(GSWF_RSH02_GOURMET_CABIN_TALK), 1)
+                SET_VALUE(GSWF(GSWF_RSH02_CABIN4_ENTERED_AFTER_GOURMET), 1)
             END_IF
-            IF_INT_EQUAL(GSWF(3445), 1)
-                CALL(evt_snd_bgmoff, 2048)
+            IF_INT_EQUAL(GSWF(GSWF_RSH02_GHOST_APPEARED), 1)
+                CALL(evt_snd_bgmoff, PSND_FADE_DIP_TO(10))
             END_IF
-            SET_VALUE(GSWF(3459), 1)
+#if VERSION >= VERSION_DEMO_EU
+            IF_INT_EQUAL(GSW(GSW_STORY_PROGRESS), STORY_STG6_25_ZIP_TOAD_APPEARS)
+                CALL(evt_npc_check, STRING("トロン"), LW(10))
+                IF_INT_EQUAL(LW(10), 1)
+                    CALL(evt_npc_flag_onoff, 1, STRING("トロン"), NPC_FLAG_INTANGIBLE)
+                END_IF
+            END_IF
+#endif
+            SET_VALUE(GSWF(GSWF_RSH02_INSIDE_CABIN4), 1)
         END_IF
     END_IF
     SET_VALUE(LF(0), 0)
@@ -491,15 +484,22 @@ EVT_BEGIN(evt_rsh_door_open)
     END_IF
     IF_INT_EQUAL(LF(0), 1)
         IF_STR_EQUAL(LW(1), STRING("heya_5"))
-            SET_VALUE(GSWF(3446), 1)
+            // Remember which cabin Mario is now inside.
+            SET_VALUE(GSWF(GSWF_RSH04_INSIDE_CABIN5), 1)
         END_IF
         IF_STR_EQUAL(LW(1), STRING("heya_3"))
-            SET_VALUE(GSWF(3447), 1)
+            SET_VALUE(GSWF(GSWF_RSH04_INSIDE_CABIN3), 1)
         END_IF
     END_IF
     RETURN
 EVT_END()
 
+/**
+ * Runs when Mario leaves a cabin (LW(0) is the door table of evt_rsh_door_entry):
+ * locks input, captures the cabin, walks Mario back out to the corridor and plays the page-turn in reverse.
+ * Also starts the scripted rsh_04 map changes at the Pennington's assistant and give-autograph stages,
+ * and plays the ghost voice in rsh_02_c once.
+ */
 EVT_BEGIN(evt_rsh_door_close)
     SET_INT_READ_ADDR(LW(0))
     READ_INT(LW(1))
@@ -509,36 +509,40 @@ EVT_BEGIN(evt_rsh_door_close)
     READ_INT(LW(5))
     READ_INT(LW(6))
     READ_INT(LW(7))
+#if VERSION >= VERSION_JP
     CALL(evt_cam_letter_box_disable, 1)
+#endif
     CALL(evt_mario_key_onoff, 0)
     CALL(evt_hitobj_attr_onoff, 0, 1, LW(4), 8388608)
     CALL(evt_hitobj_attr_onoff, 0, 1, LW(6), 8388608)
     CALL(img_wait)
     BEGIN_INLINE_EVENT
-        IF_INT_EQUAL(GSW(0), 288)
+        // Leaving a cabin at certain stages starts a scripted map change to rsh_04.
+        IF_INT_EQUAL(GSW(GSW_STORY_PROGRESS), STORY_STG6_06_PENNINGTONS_ASSISTANT)
             CALL(evt_sub_get_mapname, LW(0))
             IF_STR_EQUAL(LW(0), STRING("rsh_04_a"))
                 WAIT_MS(1000)
-                SET_VALUE(GSWF(3444), 1)
+                SET_VALUE(GSWF(GSWF_RSH_SCRIPTED_ENTRY_PENDING), 1)
                 CALL(evt_bero_mapchange, STRING("rsh_04_b"), STRING("e_bero"))
             END_IF
         END_IF
     END_INLINE_EVENT
     BEGIN_INLINE_EVENT
-        IF_INT_EQUAL(GSW(0), 294)
+        IF_INT_EQUAL(GSW(GSW_STORY_PROGRESS), STORY_STG6_12_GIVE_AUTOGRAPH)
             CALL(evt_sub_get_mapname, LW(0))
             IF_STR_EQUAL(LW(0), STRING("rsh_04_b"))
                 WAIT_MS(1000)
-                SET_VALUE(GSWF(3444), 1)
+                SET_VALUE(GSWF(GSWF_RSH_SCRIPTED_ENTRY_PENDING), 1)
                 CALL(evt_bero_mapchange, STRING("rsh_04_c"), STRING("e_bero"))
             END_IF
         END_IF
     END_INLINE_EVENT
-    IF_INT_EQUAL(GSW(0), 297)
+    // In rsh_02_c the ghost's voice is heard once as Mario leaves.
+    IF_INT_EQUAL(GSW(GSW_STORY_PROGRESS), STORY_STG6_15_GHOST_REQUEST)
         CALL(evt_sub_get_mapname, LW(10))
         IF_STR_EQUAL(LW(10), STRING("rsh_02_c"))
-            IF_INT_EQUAL(GSWF(3439), 0)
-                SET_VALUE(GSWF(3439), 1)
+            IF_INT_EQUAL(GSWF(GSWF_RSH02_GHOST_VOICE_HEARD), 0)
+                SET_VALUE(GSWF(GSWF_RSH02_GHOST_VOICE_HEARD), 1)
                 CALL(evt_msg_print, 0, STRING("stg6_rsh_123"), 0, STRING("ゆうれい"))
             END_IF
         END_IF
@@ -547,15 +551,16 @@ EVT_BEGIN(evt_rsh_door_close)
         CALL(evt_sub_get_mapname, LW(10))
         IF_STR_EQUAL(LW(10), STRING("rsh_02_a"))
             IF_STR_EQUAL(LW(1), STRING("heya_5"))
-                SWITCH(GSW(0))
-                    CASE_BETWEEN(306, 307)
-                    CALL(evt_snd_bgmon, 160, 0)
+                SWITCH(GSW(GSW_STORY_PROGRESS))
+                    CASE_BETWEEN(STORY_STG6_24_A_VITAL_CLUE, STORY_STG6_24_02_ANOTHER_CLUE)
+                    CALL(evt_snd_bgmon, PSND_FADE_RESUME | PSND_FADE_UNDIP, 0)
                 END_SWITCH
             END_IF
         END_IF
     END_INLINE_EVENT
     BEGIN_INLINE_EVENT
         CALL(evt_sub_get_mapname, LW(10))
+#if VERSION >= VERSION_JP
         SET_VALUE(LF(0), 0)
         IF_STR_EQUAL(LW(10), STRING("rsh_02_a"))
             SET_VALUE(LF(0), 1)
@@ -563,29 +568,40 @@ EVT_BEGIN(evt_rsh_door_close)
         IF_STR_EQUAL(LW(10), STRING("rsh_02_b"))
             SET_VALUE(LF(0), 1)
         END_IF
+#endif
         IF_STR_EQUAL(LW(10), STRING("rsh_02_c"))
+#if VERSION >= VERSION_JP
             SET_VALUE(LF(0), 1)
         END_IF
         IF_INT_EQUAL(LF(0), 1)
+#endif
             IF_STR_EQUAL(LW(1), STRING("heya_4"))
-                IF_INT_EQUAL(GSWF(3445), 1)
-                    CALL(evt_snd_bgmon, 160, 0)
+                IF_INT_EQUAL(GSWF(GSWF_RSH02_GHOST_APPEARED), 1)
+                    CALL(evt_snd_bgmon, PSND_FADE_RESUME | PSND_FADE_UNDIP, 0)
                 END_IF
             END_IF
         END_IF
     END_INLINE_EVENT
-    SET_VALUE(GSWF(3446), 0)
-    SET_VALUE(GSWF(3447), 0)
-    SET_VALUE(GSWF(3459), 0)
+    // Remember that Mario is no longer inside a cabin.
+    SET_VALUE(GSWF(GSWF_RSH04_INSIDE_CABIN5), 0)
+    SET_VALUE(GSWF(GSWF_RSH04_INSIDE_CABIN3), 0)
+    SET_VALUE(GSWF(GSWF_RSH02_INSIDE_CABIN4), 0)
     CALL(evt_map_playanim, LW(5), 2, 0)
     CALL(evt_img_free_capture, STRING("capture_img"), 0)
     CALL(evt_img_free_capture, STRING("capture_img"), 1)
     CALL(evt_img_free_capture, STRING("capture_img"), 2)
+#if VERSION <= VERSION_DEMO_JP
+    CALL(evt_img_alloc_capture, STRING("capture_img"), 0, STRING("offscreen"), 0, 0, 0, 608, 480)
+    CALL(evt_img_alloc_capture, STRING("capture_img"), 1, STRING("offscreen"), 0, 0, 0, 608, 480)
+    CALL(evt_img_alloc_capture, STRING("capture_img"), 2, STRING("offscreen"), 0, 0, 0, 608, 480)
+#else
     CALL(evt_img_alloc_capture, STRING("capture_img"), 0, STRING("offscreen"), 1, 0, 0, 608, 480)
+#endif
     CALL(evt_mapobj_set_offscreen, 1, STRING("rouka"), STRING("offscreen"))
     CALL(evt_img_onoff, STRING("capture_img"), 0)
-    CALL_CHILD(PTR(kami_offscreen_check))
-    CALL_CHILD(PTR(simi_offscreen_check))
+    // The cabin is captured and the page turns back as Mario walks out into the corridor.
+    CALL_CHILD(kami_offscreen_check)
+    CALL_CHILD(simi_offscreen_check)
     CALL(evt_npc_check, STRING("車掌"), LW(0))
     IF_INT_EQUAL(LW(0), 1)
         CALL(evt_npc_set_offscreen, STRING("車掌"), STRING("offscreen"))
@@ -594,6 +610,9 @@ EVT_BEGIN(evt_rsh_door_close)
         CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
         CALL(evt_snd_sfxon_3d, STRING("SFX_OFF6_ROOM_OUT1"), LW(0), LW(1), LW(2), 0)
     END_INLINE_EVENT
+#if VERSION <= VERSION_DEMO_JP
+    CALL(evt_img_set_virtual_point, STRING("capture_img"), 0, 0, -70)
+#endif
     CALL(evt_img_set_paper_anim, STRING("capture_img"), STRING("A_2"))
     CALL(evt_img_onoff, STRING("capture_img"), 1)
     BEGIN_INLINE_EVENT
@@ -601,13 +620,28 @@ EVT_BEGIN(evt_rsh_door_close)
         CALL(evt_hit_get_position, LW(6), LW(13), LW(14), LW(15))
         CALL(evt_mario_mov_pos, LW(13), LW(12), 300)
     END_INLINE_EVENT
+#if VERSION <= VERSION_DEMO_JP
+    CALL(evt_img_wait_animend, STRING("capture_img"))
+    CALL(evt_img_onoff, STRING("capture_img"), 0)
+    CALL(evt_mapobj_clear_offscreen, 1, STRING("rouka"))
+    CALL(evt_mapobj_clear_offscreen, 1, LW(1))
+    CALL(evt_mapobj_clear_offscreen, 1, LW(2))
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("rouka"), MAPOBJ_FLAG_HIDE)
+    CALL(evt_npc_check, STRING("車掌"), LW(0))
+    IF_INT_EQUAL(LW(0), 1)
+        CALL(evt_npc_flag_onoff, 0, STRING("車掌"), NPC_FLAG_HIDDEN)
+    END_IF
+    IF_INT_EQUAL(LW(0), 1)
+        CALL(evt_npc_set_offscreen, STRING("車掌"), 0)
+    END_IF
+#else
     BEGIN_INLINE_EVENT
         CALL(evt_mapobj_clear_offscreen, 1, STRING("rouka"))
         CALL(evt_mapobj_clear_offscreen, 1, LW(1))
         CALL(evt_mapobj_clear_offscreen, 1, LW(2))
         CALL(evt_npc_check, STRING("車掌"), LW(0))
         IF_INT_EQUAL(LW(0), 1)
-            CALL(evt_npc_flag_onoff, 0, STRING("車掌"), 128)
+            CALL(evt_npc_flag_onoff, 0, STRING("車掌"), NPC_FLAG_HIDDEN)
         END_IF
         IF_INT_EQUAL(LW(0), 1)
             CALL(evt_npc_set_offscreen, STRING("車掌"), 0)
@@ -615,8 +649,9 @@ EVT_BEGIN(evt_rsh_door_close)
     END_INLINE_EVENT
     CALL(evt_img_wait_animend, STRING("capture_img"))
     CALL(evt_img_onoff, STRING("capture_img"), 0)
-    CALL(evt_mapobj_flag_onoff, 1, 0, STRING("rouka"), 1)
-    CALL_CHILD(PTR(simi_check))
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("rouka"), MAPOBJ_FLAG_HIDE)
+#endif
+    CALL_CHILD(simi_check)
     BEGIN_INLINE_EVENT
         CALL(evt_hit_get_position, LW(6), LW(10), LW(11), LW(12))
         ADD(LW(12), 50)
@@ -624,19 +659,27 @@ EVT_BEGIN(evt_rsh_door_close)
     END_INLINE_EVENT
     CALL(evt_hit_get_position, LW(4), LW(10), LW(11), LW(12))
     CALL(evt_snd_sfxon_3d, STRING("SFX_DOOR_SHUT_SLIDE1_2"), LW(10), LW(11), LW(12), 0)
-    CALL(evt_mapobj_flag_onoff, 1, 0, LW(3), 1)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, LW(3), MAPOBJ_FLAG_HIDE)
     CALL(evt_map_playanim, LW(7), 0, 0)
     CALL(evt_map_checkanim, LW(7), LW(10), LW(11))
     WAIT_MS(LW(11))
-    CALL(evt_mapobj_flag_onoff, 1, 1, LW(1), 1)
-    CALL(evt_mapobj_flag_onoff, 1, 1, LW(2), 1)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, LW(1), MAPOBJ_FLAG_HIDE)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, LW(2), MAPOBJ_FLAG_HIDE)
     CALL(evt_hitobj_attr_onoff, 0, 0, LW(4), 8388608)
     CALL(evt_hitobj_attr_onoff, 0, 0, LW(6), 8388608)
     CALL(evt_mario_key_onoff, 1)
+#if VERSION >= VERSION_JP
     CALL(evt_cam_letter_box_disable, 0)
+#endif
     RETURN
 EVT_END()
 
+/**
+ * Sets up the moving scenery in the train windows.
+ * LW(0) points to a zero-terminated list of map object names;
+ * each gets the rsh_window_tev TEV callback and has its display list disabled
+ * so the window shows the screen capture of the scenery.
+ */
 EVT_BEGIN(evt_rsh_window)
     CALL(evt_map_set_tevcallback, 1, PTR(rsh_window_tev))
     SET_INT_READ_ADDR(LW(0))
@@ -645,88 +688,134 @@ EVT_BEGIN(evt_rsh_window)
         IF_INT_EQUAL(LW(1), 0)
             BREAK_LOOP
         END_IF
-        CALL(evt_mapobj_flag_onoff, 0, 1, LW(1), 16777216)
-        CALL(evt_mapobj_flag_onoff, 0, 0, LW(1), 256)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_SINGLE, 1, LW(1), MAPOBJ_TEV_CALLBACK(1))
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_SINGLE, 0, LW(1), MAPOBJ_FLAG_DISPLAY_LIST)
     END_LOOP
     RETURN
 EVT_END()
 
-static const s32 rsh_texmtx_tbl[] = {
+// rsh_window_tev's texture matrices. The demo map has it as a static local (texmtx_tbl$606); as one it would be
+// emitted after the strings of rsh_01_rnd_npc_1 instead of before them, so it stays at file scope.
+static const s32 texmtx_tbl[] = {
     GX_TEXMTX0, GX_TEXMTX1, GX_TEXMTX2, GX_TEXMTX3, GX_TEXMTX4, GX_TEXMTX5, GX_TEXMTX6, GX_TEXMTX7, GX_TEXMTX8, GX_TEXMTX9,
 };
 
+/**
+ * Candidate passengers for random slot 1 of the car rsh_01: the model, NPC name and talk event of each, one
+ * of which is rolled for a new game.
+ */
 RshRndNpc rsh_01_rnd_npc_1[] = {
-    {"c_kinopiko_v", /*"キノピオ女紫"*/"\x83\x4C\x83\x6D\x83\x73\x83\x49\x8F\x97\x8E\x87", evt_rsh_rnd_npc_2_1_talk},
-    {"c_kinopio_b", /*"キノピオ青"*/"\x83\x4C\x83\x6D\x83\x73\x83\x49\x90\xC2", evt_rsh_rnd_npc_2_2_talk},
-    {"c_kinopio_g", /*"キノピオ緑"*/"\x83\x4C\x83\x6D\x83\x73\x83\x49\x97\xCE", evt_rsh_rnd_npc_2_3_talk},
-    {"c_nokonoko", /*"ノコノコ"*/"\x83\x6D\x83\x52\x83\x6D\x83\x52", evt_rsh_rnd_npc_2_4_talk},
-    {"c_kuribo_n", /*"NPCクリボー"*/"\x4E\x50\x43\x83\x4E\x83\x8A\x83\x7B\x81\x5B", evt_rsh_rnd_npc_2_5_talk},
+    {"c_kinopiko_v", "キノピオ女紫", evt_rsh_rnd_npc_2_1_talk},
+    {"c_kinopio_b", "キノピオ青", evt_rsh_rnd_npc_2_2_talk},
+    {"c_kinopio_g", "キノピオ緑", evt_rsh_rnd_npc_2_3_talk},
+    {"c_nokonoko", "ノコノコ", evt_rsh_rnd_npc_2_4_talk},
+    {"c_kuribo_n", "NPCクリボー", evt_rsh_rnd_npc_2_5_talk},
 };
 
+/**
+ * Candidate passengers for random slot 2 of the car rsh_01: the model, NPC name and talk event of each, one
+ * of which is rolled for a new game.
+ */
 RshRndNpc rsh_01_rnd_npc_2[] = {
-    {"c_kinopiko_p", /*"キノピオ女桃"*/"\x83\x4C\x83\x6D\x83\x73\x83\x49\x8F\x97\x93\x8D", evt_rsh_rnd_npc_2_6_talk},
-    {"c_kinopio_b", /*"キノピオ青"*/"\x83\x4C\x83\x6D\x83\x73\x83\x49\x90\xC2", evt_rsh_rnd_npc_2_8_talk},
-    {"c_kinopiko", /*"キノピオ女"*/"\x83\x4C\x83\x6D\x83\x73\x83\x49\x8F\x97", evt_rsh_rnd_npc_2_9_talk},
+    {"c_kinopiko_p", "キノピオ女桃", evt_rsh_rnd_npc_2_6_talk},
+    {"c_kinopio_b", "キノピオ青", evt_rsh_rnd_npc_2_8_talk},
+    {"c_kinopiko", "キノピオ女", evt_rsh_rnd_npc_2_9_talk},
 };
 
+/**
+ * Candidate passengers for random slot 3 of the car rsh_01: the model, NPC name and talk event of each, one
+ * of which is rolled for a new game.
+ */
 RshRndNpc rsh_01_rnd_npc_3[] = {
-    {"c_kokinopio_y", /*"キノピオ子黄緑"*/"\x83\x4C\x83\x6D\x83\x73\x83\x49\x8E\x71\x89\xA9\x97\xCE", evt_rsh_rnd_npc_2_7_talk},
-    {"c_kokinopio_b", /*"キノピオ子青"*/"\x83\x4C\x83\x6D\x83\x73\x83\x49\x8E\x71\x90\xC2", evt_rsh_rnd_npc_2_10_talk},
+    {"c_kokinopio_y", "キノピオ子黄緑", evt_rsh_rnd_npc_2_7_talk},
+    {"c_kokinopio_b", "キノピオ子青", evt_rsh_rnd_npc_2_10_talk},
 };
 
+/**
+ * Candidate passengers for random slot 1 of the car rsh_03: the model, NPC name and talk event of each, one
+ * of which is rolled for a new game.
+ */
 RshRndNpc rsh_03_rnd_npc_1[] = {
-    {"c_kinopio", /*"キノピオ"*/"\x83\x4C\x83\x6D\x83\x73\x83\x49", evt_rsh_rnd_npc_3_1_talk},
-    {"c_kinopiko_p", /*"キノピオ女桃"*/"\x83\x4C\x83\x6D\x83\x73\x83\x49\x8F\x97\x93\x8D", evt_rsh_rnd_npc_3_2_talk},
-    {"c_kinopiko_v", /*"キノピオ女紫"*/"\x83\x4C\x83\x6D\x83\x73\x83\x49\x8F\x97\x8E\x87", evt_rsh_rnd_npc_3_3_talk},
-    {"c_kinopio_b", /*"キノピオ青"*/"\x83\x4C\x83\x6D\x83\x73\x83\x49\x90\xC2", evt_rsh_rnd_npc_3_4_talk},
-    {"c_kinopiko_p", /*"キノピオ女桃"*/"\x83\x4C\x83\x6D\x83\x73\x83\x49\x8F\x97\x93\x8D", evt_rsh_rnd_npc_3_5_talk},
-    {"c_kinopiko_v", /*"キノピオ女紫"*/"\x83\x4C\x83\x6D\x83\x73\x83\x49\x8F\x97\x8E\x87", evt_rsh_rnd_npc_3_7_talk},
-    {"c_nokonoko", /*"ノコノコ"*/"\x83\x6D\x83\x52\x83\x6D\x83\x52", evt_rsh_rnd_npc_3_8_talk},
-    {"c_yoshi", /*"ヨッシー大"*/"\x83\x88\x83\x62\x83\x56\x81\x5B\x91\xE5", evt_rsh_rnd_npc_3_9_talk},
-    {"c_nokonoko", /*"ノコノコ"*/"\x83\x6D\x83\x52\x83\x6D\x83\x52", evt_rsh_rnd_npc_4_1_talk},
-    {"c_yoshi", /*"ヨッシー大"*/"\x83\x88\x83\x62\x83\x56\x81\x5B\x91\xE5", evt_rsh_rnd_npc_4_2_talk},
-    {"c_jugem_n", /*"ＮＰＣジュゲム"*/"\x82\x6D\x82\x6F\x82\x62\x83\x57\x83\x85\x83\x51\x83\x80", evt_rsh_rnd_npc_4_3_talk},
-    {"c_kinopio_b", /*"キノピオ青"*/"\x83\x4C\x83\x6D\x83\x73\x83\x49\x90\xC2", evt_rsh_rnd_npc_4_4_talk},
-    {"c_nokonoko", /*"ノコノコ"*/"\x83\x6D\x83\x52\x83\x6D\x83\x52", evt_rsh_rnd_npc_4_5_talk},
+    {"c_kinopio", "キノピオ", evt_rsh_rnd_npc_3_1_talk},
+    {"c_kinopiko_p", "キノピオ女桃", evt_rsh_rnd_npc_3_2_talk},
+    {"c_kinopiko_v", "キノピオ女紫", evt_rsh_rnd_npc_3_3_talk},
+    {"c_kinopio_b", "キノピオ青", evt_rsh_rnd_npc_3_4_talk},
+    {"c_kinopiko_p", "キノピオ女桃", evt_rsh_rnd_npc_3_5_talk},
+    {"c_kinopiko_v", "キノピオ女紫", evt_rsh_rnd_npc_3_7_talk},
+    {"c_nokonoko", "ノコノコ", evt_rsh_rnd_npc_3_8_talk},
+    {"c_yoshi", "ヨッシー大", evt_rsh_rnd_npc_3_9_talk},
+    {"c_nokonoko", "ノコノコ", evt_rsh_rnd_npc_4_1_talk},
+    {"c_yoshi", "ヨッシー大", evt_rsh_rnd_npc_4_2_talk},
+    {"c_jugem_n", "ＮＰＣジュゲム", evt_rsh_rnd_npc_4_3_talk},
+    {"c_kinopio_b", "キノピオ青", evt_rsh_rnd_npc_4_4_talk},
+    {"c_nokonoko", "ノコノコ", evt_rsh_rnd_npc_4_5_talk},
 };
 
+/**
+ * Candidate passengers for random slot 2 of the car rsh_03: the model, NPC name and talk event of each, one
+ * of which is rolled for a new game.
+ */
 RshRndNpc rsh_03_rnd_npc_2[] = {
-    {"c_kokinopio_g", /*"キノピオ子緑"*/"\x83\x4C\x83\x6D\x83\x73\x83\x49\x8E\x71\x97\xCE", evt_rsh_rnd_npc_3_6_talk},
-    {"c_kokinopio_y", /*"キノピオ子黄緑"*/"\x83\x4C\x83\x6D\x83\x73\x83\x49\x8E\x71\x89\xA9\x97\xCE", evt_rsh_rnd_npc_3_10_talk},
-    {"c_kinopio", /*"キノピオ"*/"\x83\x4C\x83\x6D\x83\x73\x83\x49", evt_rsh_rnd_npc_4_6_talk},
-    {"c_kokinopio_g", /*"キノピオ子緑"*/"\x83\x4C\x83\x6D\x83\x73\x83\x49\x8E\x71\x97\xCE", evt_rsh_rnd_npc_4_7_talk},
-    {"c_kuribo_n", /*"NPCクリボー"*/"\x4E\x50\x43\x83\x4E\x83\x8A\x83\x7B\x81\x5B", evt_rsh_rnd_npc_4_8_talk},
-    {"c_kinopio_g", /*"キノピオ緑"*/"\x83\x4C\x83\x6D\x83\x73\x83\x49\x97\xCE", evt_rsh_rnd_npc_4_9_talk},
-    {"c_nokonoko", /*"ノコノコ"*/"\x83\x6D\x83\x52\x83\x6D\x83\x52", evt_rsh_rnd_npc_4_10_talk},
+    {"c_kokinopio_g", "キノピオ子緑", evt_rsh_rnd_npc_3_6_talk},
+    {"c_kokinopio_y", "キノピオ子黄緑", evt_rsh_rnd_npc_3_10_talk},
+    {"c_kinopio", "キノピオ", evt_rsh_rnd_npc_4_6_talk},
+    {"c_kokinopio_g", "キノピオ子緑", evt_rsh_rnd_npc_4_7_talk},
+    {"c_kuribo_n", "NPCクリボー", evt_rsh_rnd_npc_4_8_talk},
+    {"c_kinopio_g", "キノピオ緑", evt_rsh_rnd_npc_4_9_talk},
+    {"c_nokonoko", "ノコノコ", evt_rsh_rnd_npc_4_10_talk},
 };
 
+/**
+ * Candidate passengers for random slot 1 of the car rsh_04: the model, NPC name and talk event of each, one
+ * of which is rolled for a new game.
+ */
 RshRndNpc rsh_04_rnd_npc_1[] = {
-    {"c_kinopio_g", /*"キノピオ緑"*/"\x83\x4C\x83\x6D\x83\x73\x83\x49\x97\xCE", evt_rsh_rnd_npc_5_2_talk},
-    {"c_kinopio_b", /*"キノピオ青"*/"\x83\x4C\x83\x6D\x83\x73\x83\x49\x90\xC2", evt_rsh_rnd_npc_5_10_talk},
+    {"c_kinopio_g", "キノピオ緑", evt_rsh_rnd_npc_5_2_talk},
+    {"c_kinopio_b", "キノピオ青", evt_rsh_rnd_npc_5_10_talk},
 };
 
+/**
+ * Candidate passengers for random slot 2 of the car rsh_04: the model, NPC name and talk event of each, one
+ * of which is rolled for a new game.
+ */
 RshRndNpc rsh_04_rnd_npc_2[] = {
-    {"c_nokonoko", /*"ノコノコ"*/"\x83\x6D\x83\x52\x83\x6D\x83\x52", evt_rsh_rnd_npc_5_8_talk},
-    {"c_kinopio", /*"キノピオ"*/"\x83\x4C\x83\x6D\x83\x73\x83\x49", evt_rsh_rnd_npc_5_9_talk},
+    {"c_nokonoko", "ノコノコ", evt_rsh_rnd_npc_5_8_talk},
+    {"c_kinopio", "キノピオ", evt_rsh_rnd_npc_5_9_talk},
 };
 
+/**
+ * Candidate passengers for random slot 3 of the car rsh_04: the model, NPC name and talk event of each, one
+ * of which is rolled for a new game.
+ */
 RshRndNpc rsh_04_rnd_npc_3[] = {
-    {"c_kokinopio_g", /*"キノピオ子緑"*/"\x83\x4C\x83\x6D\x83\x73\x83\x49\x8E\x71\x97\xCE", evt_rsh_rnd_npc_5_5_talk},
-    {"c_kokinopio", /*"キノピオ子"*/"\x83\x4C\x83\x6D\x83\x73\x83\x49\x8E\x71", evt_rsh_rnd_npc_5_6_talk},
+    {"c_kokinopio_g", "キノピオ子緑", evt_rsh_rnd_npc_5_5_talk},
+    {"c_kokinopio", "キノピオ子", evt_rsh_rnd_npc_5_6_talk},
 };
 
+/**
+ * Candidate passengers for random slot 4 of the car rsh_04: the model, NPC name and talk event of each, one
+ * of which is rolled for a new game.
+ */
 RshRndNpc rsh_04_rnd_npc_4[] = {
-    {"c_kokinopio_b", /*"キノピオ子青"*/"\x83\x4C\x83\x6D\x83\x73\x83\x49\x8E\x71\x90\xC2", evt_rsh_rnd_npc_5_1_talk},
-    {"c_kokinopio_y", /*"キノピオ子黄緑"*/"\x83\x4C\x83\x6D\x83\x73\x83\x49\x8E\x71\x89\xA9\x97\xCE", evt_rsh_rnd_npc_5_3_talk},
-    {"c_kokinopio_b", /*"キノピオ子青"*/"\x83\x4C\x83\x6D\x83\x73\x83\x49\x8E\x71\x90\xC2", evt_rsh_rnd_npc_5_4_talk},
-    {"c_kinopiko", /*"キノピオ女"*/"\x83\x4C\x83\x6D\x83\x73\x83\x49\x8F\x97", evt_rsh_rnd_npc_5_7_talk},
+    {"c_kokinopio_b", "キノピオ子青", evt_rsh_rnd_npc_5_1_talk},
+    {"c_kokinopio_y", "キノピオ子黄緑", evt_rsh_rnd_npc_5_3_talk},
+    {"c_kokinopio_b", "キノピオ子青", evt_rsh_rnd_npc_5_4_talk},
+    {"c_kinopiko", "キノピオ女", evt_rsh_rnd_npc_5_7_talk},
 };
 
+/**
+ * Talk script for passenger 2-1, a purple Toadette that car rsh_01 can seat as passenger group 1 (drawn at
+ * random per save; message stg6_rsh_c_15). The passenger says one line and nothing changes.
+ */
 EVT_BEGIN(evt_rsh_rnd_npc_2_1_talk)
     CALL(evt_msg_print, 0, STRING("stg6_rsh_c_15"), 0, STRING("me"))
     RETURN
 EVT_END()
 
+/**
+ * Talk script for passenger 2-2, a blue Toad that car rsh_01 can seat as passenger group 1 (drawn at random per
+ * save; message stg6_rsh_c_16). It ends with a choice menu (stg6_rsh_c_16_sel) and a reply.
+ */
 EVT_BEGIN(evt_rsh_rnd_npc_2_2_talk)
     CALL(evt_msg_print, 0, STRING("stg6_rsh_c_16"), 0, STRING("me"))
     CALL(evt_msg_select, 0, STRING("stg6_rsh_c_16_sel"))
@@ -734,6 +823,10 @@ EVT_BEGIN(evt_rsh_rnd_npc_2_2_talk)
     RETURN
 EVT_END()
 
+/**
+ * Talk script for passenger 2-3, a green Toad that car rsh_01 can seat as passenger group 1 (drawn at random per
+ * save; message stg6_rsh_c_17). It ends with a choice menu (stg6_rsh_c_17_sel) and a reply.
+ */
 EVT_BEGIN(evt_rsh_rnd_npc_2_3_talk)
     CALL(evt_msg_print, 0, STRING("stg6_rsh_c_17"), 0, STRING("me"))
     CALL(evt_msg_select, 0, STRING("stg6_rsh_c_17_sel"))
@@ -741,107 +834,188 @@ EVT_BEGIN(evt_rsh_rnd_npc_2_3_talk)
     RETURN
 EVT_END()
 
+/**
+ * Talk script for passenger 2-4, a Koopa that car rsh_01 can seat as passenger group 1 (drawn at random per
+ * save; message stg6_rsh_c_18). The passenger says one line and nothing changes.
+ */
 EVT_BEGIN(evt_rsh_rnd_npc_2_4_talk)
     CALL(evt_msg_print, 0, STRING("stg6_rsh_c_18"), 0, STRING("me"))
     RETURN
 EVT_END()
 
+/**
+ * Talk script for passenger 2-5, a Goomba that car rsh_01 can seat as passenger group 1 (drawn at random per
+ * save; message stg6_rsh_c_19). The passenger says one line and nothing changes.
+ */
 EVT_BEGIN(evt_rsh_rnd_npc_2_5_talk)
     CALL(evt_msg_print, 0, STRING("stg6_rsh_c_19"), 0, STRING("me"))
     RETURN
 EVT_END()
 
+/**
+ * Talk script for passenger 2-6, a pink Toadette that car rsh_01 can seat as passenger group 2 (drawn at random
+ * per save; message stg6_rsh_c_20). The passenger says one line and nothing changes.
+ */
 EVT_BEGIN(evt_rsh_rnd_npc_2_6_talk)
     CALL(evt_msg_print, 0, STRING("stg6_rsh_c_20"), 0, STRING("me"))
     RETURN
 EVT_END()
 
+/**
+ * Talk script for passenger 2-7, a yellow-green child Toad that car rsh_01 can seat as passenger group 3 (drawn
+ * at random per save; message stg6_rsh_c_21). The passenger says one line and nothing changes.
+ */
 EVT_BEGIN(evt_rsh_rnd_npc_2_7_talk)
     CALL(evt_msg_print, 0, STRING("stg6_rsh_c_21"), 0, STRING("me"))
     RETURN
 EVT_END()
 
+/**
+ * Talk script for passenger 2-8, a blue Toad that car rsh_01 can seat as passenger group 2 (drawn at random per
+ * save; message stg6_rsh_c_22). The passenger says one line and nothing changes.
+ */
 EVT_BEGIN(evt_rsh_rnd_npc_2_8_talk)
     CALL(evt_msg_print, 0, STRING("stg6_rsh_c_22"), 0, STRING("me"))
     RETURN
 EVT_END()
 
+/**
+ * Talk script for passenger 2-9, a Toadette that car rsh_01 can seat as passenger group 2 (drawn at random per
+ * save; message stg6_rsh_c_23). The passenger says one line and nothing changes.
+ */
 EVT_BEGIN(evt_rsh_rnd_npc_2_9_talk)
     CALL(evt_msg_print, 0, STRING("stg6_rsh_c_23"), 0, STRING("me"))
     RETURN
 EVT_END()
 
+/**
+ * Talk script for passenger 2-10, a blue child Toad that car rsh_01 can seat as passenger group 3 (drawn at
+ * random per save; message stg6_rsh_c_24). The passenger says one line and nothing changes.
+ */
 EVT_BEGIN(evt_rsh_rnd_npc_2_10_talk)
     CALL(evt_msg_print, 0, STRING("stg6_rsh_c_24"), 0, STRING("me"))
     RETURN
 EVT_END()
 
+/**
+ * Talk script for passenger 3-1, a Toad that car rsh_03 can seat as passenger group 1 (drawn at random per save;
+ * message stg6_rsh_c_25). The passenger says one line and nothing changes.
+ */
 EVT_BEGIN(evt_rsh_rnd_npc_3_1_talk)
     CALL(evt_msg_print, 0, STRING("stg6_rsh_c_25"), 0, STRING("me"))
     RETURN
 EVT_END()
 
+/**
+ * Talk script for passenger 3-2, a pink Toadette that car rsh_03 can seat as passenger group 1 (drawn at random
+ * per save; message stg6_rsh_c_26). The passenger says one line and nothing changes.
+ */
 EVT_BEGIN(evt_rsh_rnd_npc_3_2_talk)
     CALL(evt_msg_print, 0, STRING("stg6_rsh_c_26"), 0, STRING("me"))
     RETURN
 EVT_END()
 
+/**
+ * Talk script for passenger 3-3, a purple Toadette that car rsh_03 can seat as passenger group 1 (drawn at
+ * random per save; message stg6_rsh_c_27). The passenger says one line and nothing changes.
+ */
 EVT_BEGIN(evt_rsh_rnd_npc_3_3_talk)
     CALL(evt_msg_print, 0, STRING("stg6_rsh_c_27"), 0, STRING("me"))
     RETURN
 EVT_END()
 
+/**
+ * Talk script for passenger 3-4, a blue Toad that car rsh_03 can seat as passenger group 1 (drawn at random per
+ * save; message stg6_rsh_c_28). The passenger says one line and nothing changes.
+ */
 EVT_BEGIN(evt_rsh_rnd_npc_3_4_talk)
     CALL(evt_msg_print, 0, STRING("stg6_rsh_c_28"), 0, STRING("me"))
     RETURN
 EVT_END()
 
+/**
+ * Talk script for passenger 3-5, a pink Toadette that car rsh_03 can seat as passenger group 1 (drawn at random
+ * per save; message stg6_rsh_c_29).
+ * It asks a two-way question (stg6_rsh_c_29_sel) and answers differently for each choice.
+ */
 EVT_BEGIN(evt_rsh_rnd_npc_3_5_talk)
     CALL(evt_msg_print, 0, STRING("stg6_rsh_c_29"), 0, STRING("me"))
     CALL(evt_msg_select, 0, STRING("stg6_rsh_c_29_sel"))
     IF_INT_EQUAL(LW(0), 0)
         CALL(evt_msg_print_add, 0, STRING("stg6_rsh_c_29_01"))
-        ELSE
+    ELSE
         CALL(evt_msg_print_add, 0, STRING("stg6_rsh_c_29_02"))
     END_IF
     RETURN
 EVT_END()
 
+/**
+ * Talk script for passenger 3-6, a green child Toad that car rsh_03 can seat as passenger group 2 (drawn at
+ * random per save; message stg6_rsh_c_30). The passenger says one line and nothing changes.
+ */
 EVT_BEGIN(evt_rsh_rnd_npc_3_6_talk)
     CALL(evt_msg_print, 0, STRING("stg6_rsh_c_30"), 0, STRING("me"))
     RETURN
 EVT_END()
 
+/**
+ * Talk script for passenger 3-7, a purple Toadette that car rsh_03 can seat as passenger group 1 (drawn at
+ * random per save; message stg6_rsh_c_31). The passenger says one line and nothing changes.
+ */
 EVT_BEGIN(evt_rsh_rnd_npc_3_7_talk)
     CALL(evt_msg_print, 0, STRING("stg6_rsh_c_31"), 0, STRING("me"))
     RETURN
 EVT_END()
 
+/**
+ * Talk script for passenger 3-8, a Koopa that car rsh_03 can seat as passenger group 1 (drawn at random per
+ * save; message stg6_rsh_c_32). The passenger says one line and nothing changes.
+ */
 EVT_BEGIN(evt_rsh_rnd_npc_3_8_talk)
     CALL(evt_msg_print, 0, STRING("stg6_rsh_c_32"), 0, STRING("me"))
     RETURN
 EVT_END()
 
+/**
+ * Talk script for passenger 3-9, a Yoshi that car rsh_03 can seat as passenger group 1 (drawn at random per
+ * save; message stg6_rsh_c_33). The passenger says one line and nothing changes.
+ */
 EVT_BEGIN(evt_rsh_rnd_npc_3_9_talk)
     CALL(evt_msg_print, 0, STRING("stg6_rsh_c_33"), 0, STRING("me"))
     RETURN
 EVT_END()
 
+/**
+ * Talk script for passenger 3-10, a yellow-green child Toad that car rsh_03 can seat as passenger group 2 (drawn
+ * at random per save; message stg6_rsh_c_34). The passenger says one line and nothing changes.
+ */
 EVT_BEGIN(evt_rsh_rnd_npc_3_10_talk)
     CALL(evt_msg_print, 0, STRING("stg6_rsh_c_34"), 0, STRING("me"))
     RETURN
 EVT_END()
 
+/**
+ * Talk script for passenger 4-1, a Koopa that car rsh_03 can seat as passenger group 1 (drawn at random per
+ * save; message stg6_rsh_c_35). The passenger says one line and nothing changes.
+ */
 EVT_BEGIN(evt_rsh_rnd_npc_4_1_talk)
     CALL(evt_msg_print, 0, STRING("stg6_rsh_c_35"), 0, STRING("me"))
     RETURN
 EVT_END()
 
+/**
+ * Talk script for passenger 4-2, a Yoshi that car rsh_03 can seat as passenger group 1 (drawn at random per
+ * save; message stg6_rsh_c_36). The passenger says one line and nothing changes.
+ */
 EVT_BEGIN(evt_rsh_rnd_npc_4_2_talk)
     CALL(evt_msg_print, 0, STRING("stg6_rsh_c_36"), 0, STRING("me"))
     RETURN
 EVT_END()
 
+/**
+ * Talk script for passenger 4-3, a Lakitu that car rsh_03 can seat as passenger group 1 (drawn at random per
+ * save; message stg6_rsh_c_37). It ends with a choice menu (stg6_rsh_c_37_sel) and a reply.
+ */
 EVT_BEGIN(evt_rsh_rnd_npc_4_3_talk)
     CALL(evt_msg_print, 0, STRING("stg6_rsh_c_37"), 0, STRING("me"))
     CALL(evt_msg_select, 0, STRING("stg6_rsh_c_37_sel"))
@@ -849,64 +1023,108 @@ EVT_BEGIN(evt_rsh_rnd_npc_4_3_talk)
     RETURN
 EVT_END()
 
+/**
+ * Talk script for passenger 4-4, a blue Toad that car rsh_03 can seat as passenger group 1 (drawn at random per
+ * save; message stg6_rsh_c_38). The passenger says one line and nothing changes.
+ */
 EVT_BEGIN(evt_rsh_rnd_npc_4_4_talk)
     CALL(evt_msg_print, 0, STRING("stg6_rsh_c_38"), 0, STRING("me"))
     RETURN
 EVT_END()
 
+/**
+ * Talk script for passenger 4-5, a Koopa that car rsh_03 can seat as passenger group 1 (drawn at random per
+ * save; message stg6_rsh_c_39). The passenger says one line and nothing changes.
+ */
 EVT_BEGIN(evt_rsh_rnd_npc_4_5_talk)
     CALL(evt_msg_print, 0, STRING("stg6_rsh_c_39"), 0, STRING("me"))
     RETURN
 EVT_END()
 
+/**
+ * Talk script for passenger 4-6, a Toad that car rsh_03 can seat as passenger group 2 (drawn at random per save;
+ * message stg6_rsh_c_40). The passenger says one line and nothing changes.
+ */
 EVT_BEGIN(evt_rsh_rnd_npc_4_6_talk)
     CALL(evt_msg_print, 0, STRING("stg6_rsh_c_40"), 0, STRING("me"))
     RETURN
 EVT_END()
 
+/**
+ * Talk script for passenger 4-7, a green child Toad that car rsh_03 can seat as passenger group 2 (drawn at
+ * random per save; message stg6_rsh_c_41). The passenger says one line and nothing changes.
+ */
 EVT_BEGIN(evt_rsh_rnd_npc_4_7_talk)
     CALL(evt_msg_print, 0, STRING("stg6_rsh_c_41"), 0, STRING("me"))
     RETURN
 EVT_END()
 
+/**
+ * Talk script for passenger 4-8, a Goomba that car rsh_03 can seat as passenger group 2 (drawn at random per
+ * save; message stg6_rsh_c_42).
+ * The first time it asks a two-way question; answering the first option sets GSWF_RSH_PASSENGER_4_8_ANSWERED
+ * and later talks only play the closing line (stg6_rsh_c_42_03).
+ */
 EVT_BEGIN(evt_rsh_rnd_npc_4_8_talk)
-    IF_INT_EQUAL(GSWF(3457), 0)
+    IF_INT_EQUAL(GSWF(GSWF_RSH_PASSENGER_4_8_ANSWERED), 0)
         CALL(evt_msg_print, 0, STRING("stg6_rsh_c_42"), 0, STRING("me"))
         CALL(evt_msg_select, 0, STRING("stg6_rsh_c_42_sel"))
         IF_INT_EQUAL(LW(0), 0)
             CALL(evt_msg_print_add, 0, STRING("stg6_rsh_c_42_01"))
-            SET_VALUE(GSWF(3457), 1)
-            ELSE
+            SET_VALUE(GSWF(GSWF_RSH_PASSENGER_4_8_ANSWERED), 1)
+        ELSE
             CALL(evt_msg_print_add, 0, STRING("stg6_rsh_c_42_02"))
         END_IF
-        ELSE
+    ELSE
         CALL(evt_msg_print, 0, STRING("stg6_rsh_c_42_03"), 0, STRING("me"))
     END_IF
     RETURN
 EVT_END()
 
+/**
+ * Talk script for passenger 4-9, a green Toad that car rsh_03 can seat as passenger group 2 (drawn at random per
+ * save; message stg6_rsh_c_43). The passenger says one line and nothing changes.
+ */
 EVT_BEGIN(evt_rsh_rnd_npc_4_9_talk)
     CALL(evt_msg_print, 0, STRING("stg6_rsh_c_43"), 0, STRING("me"))
     RETURN
 EVT_END()
 
+/**
+ * Talk script for passenger 4-10, a Koopa that car rsh_03 can seat as passenger group 2 (drawn at random per
+ * save; message stg6_rsh_c_44). The passenger says one line and nothing changes.
+ */
 EVT_BEGIN(evt_rsh_rnd_npc_4_10_talk)
     CALL(evt_msg_print, 0, STRING("stg6_rsh_c_44"), 0, STRING("me"))
     RETURN
 EVT_END()
 
+/**
+ * Talk script for passenger 5-1, a blue child Toad that car rsh_04 can seat as passenger group 4 (drawn at
+ * random per save; message stg6_rsh_c_45). The passenger says one line and nothing changes.
+ */
 EVT_BEGIN(evt_rsh_rnd_npc_5_1_talk)
     CALL(evt_msg_print, 0, STRING("stg6_rsh_c_45"), 0, STRING("me"))
     RETURN
 EVT_END()
 
+/**
+ * Talk script for passenger 5-2, a green Toad that car rsh_04 can seat as passenger group 1 (drawn at random per
+ * save; message stg6_rsh_c_46). The passenger says one line and nothing changes.
+ */
 EVT_BEGIN(evt_rsh_rnd_npc_5_2_talk)
     CALL(evt_msg_print, 0, STRING("stg6_rsh_c_46"), 0, STRING("me"))
     RETURN
 EVT_END()
 
+/**
+ * Talk script for passenger 5-3, a yellow-green child Toad that car rsh_04 can seat as passenger group 4 (drawn
+ * at random per save; message stg6_rsh_c_47).
+ * The first time it offers a three-way choice and sets GSWF_RSH_PASSENGER_5_3_ANSWERED;
+ * later talks only print the closing line (stg6_rsh_c_47_04).
+ */
 EVT_BEGIN(evt_rsh_rnd_npc_5_3_talk)
-    IF_INT_EQUAL(GSWF(3458), 0)
+    IF_INT_EQUAL(GSWF(GSWF_RSH_PASSENGER_5_3_ANSWERED), 0)
         CALL(evt_msg_print, 0, STRING("stg6_rsh_c_47"), 0, STRING("me"))
         CALL(evt_msg_select, 0, STRING("stg6_rsh_c_47_sel"))
         SWITCH(LW(0))
@@ -917,48 +1135,80 @@ EVT_BEGIN(evt_rsh_rnd_npc_5_3_talk)
             CASE_EQUAL(2)
             CALL(evt_msg_print_add, 0, STRING("stg6_rsh_c_47_03"))
         END_SWITCH
-        SET_VALUE(GSWF(3458), 1)
-        ELSE
+        SET_VALUE(GSWF(GSWF_RSH_PASSENGER_5_3_ANSWERED), 1)
+    ELSE
         CALL(evt_msg_print, 0, STRING("stg6_rsh_c_47_04"), 0, STRING("me"))
     END_IF
     RETURN
 EVT_END()
 
+/**
+ * Talk script for passenger 5-4, a blue child Toad that car rsh_04 can seat as passenger group 4 (drawn at
+ * random per save; message stg6_rsh_c_48). The passenger says one line and nothing changes.
+ */
 EVT_BEGIN(evt_rsh_rnd_npc_5_4_talk)
     CALL(evt_msg_print, 0, STRING("stg6_rsh_c_48"), 0, STRING("me"))
     RETURN
 EVT_END()
 
+/**
+ * Talk script for passenger 5-5, a green child Toad that car rsh_04 can seat as passenger group 3 (drawn at
+ * random per save; message stg6_rsh_c_49). The passenger says one line and nothing changes.
+ */
 EVT_BEGIN(evt_rsh_rnd_npc_5_5_talk)
     CALL(evt_msg_print, 0, STRING("stg6_rsh_c_49"), 0, STRING("me"))
     RETURN
 EVT_END()
 
+/**
+ * Talk script for passenger 5-6, a child Toad that car rsh_04 can seat as passenger group 3 (drawn at random per
+ * save; message stg6_rsh_c_50). The passenger says one line and nothing changes.
+ */
 EVT_BEGIN(evt_rsh_rnd_npc_5_6_talk)
     CALL(evt_msg_print, 0, STRING("stg6_rsh_c_50"), 0, STRING("me"))
     RETURN
 EVT_END()
 
+/**
+ * Talk script for passenger 5-7, a Toadette that car rsh_04 can seat as passenger group 4 (drawn at random per
+ * save; message stg6_rsh_c_51). The passenger says one line and nothing changes.
+ */
 EVT_BEGIN(evt_rsh_rnd_npc_5_7_talk)
     CALL(evt_msg_print, 0, STRING("stg6_rsh_c_51"), 0, STRING("me"))
     RETURN
 EVT_END()
 
+/**
+ * Talk script for passenger 5-8, a Koopa that car rsh_04 can seat as passenger group 2 (drawn at random per
+ * save; message stg6_rsh_c_52). The passenger says one line and nothing changes.
+ */
 EVT_BEGIN(evt_rsh_rnd_npc_5_8_talk)
     CALL(evt_msg_print, 0, STRING("stg6_rsh_c_52"), 0, STRING("me"))
     RETURN
 EVT_END()
 
+/**
+ * Talk script for passenger 5-9, a Toad that car rsh_04 can seat as passenger group 2 (drawn at random per save;
+ * message stg6_rsh_c_53). The passenger says one line and nothing changes.
+ */
 EVT_BEGIN(evt_rsh_rnd_npc_5_9_talk)
     CALL(evt_msg_print, 0, STRING("stg6_rsh_c_53"), 0, STRING("me"))
     RETURN
 EVT_END()
 
+/**
+ * Talk script for passenger 5-10, a blue Toad that car rsh_04 can seat as passenger group 1 (drawn at random per
+ * save; message stg6_rsh_c_54). The passenger says one line and nothing changes.
+ */
 EVT_BEGIN(evt_rsh_rnd_npc_5_10_talk)
     CALL(evt_msg_print, 0, STRING("stg6_rsh_c_54"), 0, STRING("me"))
     RETURN
 EVT_END()
 
+/**
+ * Shift-JIS labels (car-passenger numbers) of the candidates in rsh_01_rnd_npc_1; only the leftover debug
+ * print uses them.
+ */
 const char* rsh_01_rnd_npc_1_list[] = {
     /*"２−１"*/"\x82\x51\x81\x7C\x82\x50",
     /*"２−２"*/"\x82\x51\x81\x7C\x82\x51",
@@ -967,17 +1217,29 @@ const char* rsh_01_rnd_npc_1_list[] = {
     /*"２−５"*/"\x82\x51\x81\x7C\x82\x54",
 };
 
+/**
+ * Shift-JIS labels (car-passenger numbers) of the candidates in rsh_01_rnd_npc_2; only the leftover debug
+ * print uses them.
+ */
 const char* rsh_01_rnd_npc_2_list[] = {
     /*"２−６"*/"\x82\x51\x81\x7C\x82\x55",
     /*"２−８"*/"\x82\x51\x81\x7C\x82\x57",
     /*"２−９"*/"\x82\x51\x81\x7C\x82\x58",
 };
 
+/**
+ * Shift-JIS labels (car-passenger numbers) of the candidates in rsh_01_rnd_npc_3; only the leftover debug
+ * print uses them.
+ */
 const char* rsh_01_rnd_npc_3_list[] = {
     /*"２−７"*/"\x82\x51\x81\x7C\x82\x56",
     /*"２−１０"*/"\x82\x51\x81\x7C\x82\x50\x82\x4F",
 };
 
+/**
+ * Shift-JIS labels (car-passenger numbers) of the candidates in rsh_03_rnd_npc_1; only the leftover debug
+ * print uses them.
+ */
 const char* rsh_03_rnd_npc_1_list[] = {
     /*"３−１"*/"\x82\x52\x81\x7C\x82\x50",
     /*"３−２"*/"\x82\x52\x81\x7C\x82\x51",
@@ -994,6 +1256,10 @@ const char* rsh_03_rnd_npc_1_list[] = {
     /*"４−５"*/"\x82\x53\x81\x7C\x82\x54",
 };
 
+/**
+ * Shift-JIS labels (car-passenger numbers) of the candidates in rsh_03_rnd_npc_2; only the leftover debug
+ * print uses them.
+ */
 const char* rsh_03_rnd_npc_2_list[] = {
     /*"３−６"*/"\x82\x52\x81\x7C\x82\x55",
     /*"３−１０"*/"\x82\x52\x81\x7C\x82\x50\x82\x4F",
@@ -1004,21 +1270,37 @@ const char* rsh_03_rnd_npc_2_list[] = {
     /*"４−１０"*/"\x82\x53\x81\x7C\x82\x50\x82\x4F",
 };
 
+/**
+ * Shift-JIS labels (car-passenger numbers) of the candidates in rsh_04_rnd_npc_1; only the leftover debug
+ * print uses them.
+ */
 const char* rsh_04_rnd_npc_1_list[] = {
     /*"５−２"*/"\x82\x54\x81\x7C\x82\x51",
     /*"５−１０"*/"\x82\x54\x81\x7C\x82\x50\x82\x4F",
 };
 
+/**
+ * Shift-JIS labels (car-passenger numbers) of the candidates in rsh_04_rnd_npc_2; only the leftover debug
+ * print uses them.
+ */
 const char* rsh_04_rnd_npc_2_list[] = {
     /*"５−８"*/"\x82\x54\x81\x7C\x82\x57",
     /*"５−９"*/"\x82\x54\x81\x7C\x82\x58",
 };
 
+/**
+ * Shift-JIS labels (car-passenger numbers) of the candidates in rsh_04_rnd_npc_3; only the leftover debug
+ * print uses them.
+ */
 const char* rsh_04_rnd_npc_3_list[] = {
     /*"５−５"*/"\x82\x54\x81\x7C\x82\x54",
     /*"５−６"*/"\x82\x54\x81\x7C\x82\x55",
 };
 
+/**
+ * Shift-JIS labels (car-passenger numbers) of the candidates in rsh_04_rnd_npc_4; only the leftover debug
+ * print uses them.
+ */
 const char* rsh_04_rnd_npc_4_list[] = {
     /*"５−１"*/"\x82\x54\x81\x7C\x82\x50",
     /*"５−３"*/"\x82\x54\x81\x7C\x82\x52",
@@ -1026,6 +1308,10 @@ const char* rsh_04_rnd_npc_4_list[] = {
     /*"５−７"*/"\x82\x54\x81\x7C\x82\x56",
 };
 
+/**
+ * Debug leftover: loops over the nine random passenger slots and calls debug_print_func for each,
+ * which only formats a string and prints nothing.
+ */
 EVT_BEGIN(debug_print_rnd_npc)
     SET_VALUE(LW(0), 0)
     LOOP(9)
@@ -1054,12 +1340,18 @@ typedef struct RshDebugStr {
     char str[256];
 } RshDebugStr;
 
+/** Zeroed 256-byte template for the debug line buffer of the leftover debug print. */
 static const RshDebugStr rsh_debug_str_init = {0};
 
+/**
+ * Rolls the random passengers of the whole train on a new game:
+ * clears the three packed state words GSW_RSH_RANDOM_NPC_STATE_A..C, then for each passenger slot of rsh_01,
+ * rsh_03 and rsh_04 picks a random candidate and stores it with evt_rsh_set_rnd_npc.
+ */
 EVT_BEGIN(evt_rsh_rnd_npc_init)
-    SET_VALUE(GSW(821), 0)
-    SET_VALUE(GSW(822), 0)
-    SET_VALUE(GSW(823), 0)
+    SET_VALUE(GSW(GSW_RSH_RANDOM_NPC_STATE_A), 0)
+    SET_VALUE(GSW(GSW_RSH_RANDOM_NPC_STATE_B), 0)
+    SET_VALUE(GSW(GSW_RSH_RANDOM_NPC_STATE_C), 0)
     CALL(evt_sub_random, 4, LW(0))
     CALL(evt_rsh_set_rnd_npc, 0, 0, LW(0))
     CALL(evt_sub_random, 2, LW(0))
@@ -1078,10 +1370,15 @@ EVT_BEGIN(evt_rsh_rnd_npc_init)
     CALL(evt_rsh_set_rnd_npc, 2, 2, LW(0))
     CALL(evt_sub_random, 3, LW(0))
     CALL(evt_rsh_set_rnd_npc, 2, 3, LW(0))
-    CALL_CHILD(PTR(debug_print_rnd_npc))
+    CALL_CHILD(debug_print_rnd_npc)
     RETURN
 EVT_END()
 
+/**
+ * Spawns the three random passengers of rsh_01 (Passenger 1..3):
+ * looks up each stored pick, entries the NPC with its model, places and turns it at a fixed spot,
+ * turns talk animation on and hooks its talk script.
+ */
 EVT_BEGIN(evt_rsh_01_rnd_npc_entry)
     CALL(evt_rsh_get_rnd_npc, 0, 0, LW(0))
     CALL(evt_rsh_get_rnd_npc_data, 0, 0, LW(0), LW(1), LW(2))
@@ -1090,7 +1387,7 @@ EVT_BEGIN(evt_rsh_01_rnd_npc_entry)
     CALL(evt_npc_set_tribe, STRING("乗客１"), LW(2))
     CALL(evt_npc_set_position, STRING("乗客１"), -275, 0, -225)
     CALL(evt_npc_set_ry, STRING("乗客１"), 90)
-    CALL(evt_npc_flag_onoff, 1, STRING("乗客１"), 512)
+    CALL(evt_npc_flag_onoff, 1, STRING("乗客１"), NPC_FLAG_TALK_ANIM)
     CALL(evt_rsh_set_rnd_npc_talk_evt, STRING("乗客１"), LW(3))
     CALL(evt_rsh_get_rnd_npc, 0, 1, LW(0))
     CALL(evt_rsh_get_rnd_npc_data, 0, 1, LW(0), LW(1), LW(2))
@@ -1099,7 +1396,7 @@ EVT_BEGIN(evt_rsh_01_rnd_npc_entry)
     CALL(evt_npc_set_tribe, STRING("乗客２"), LW(2))
     CALL(evt_npc_set_position, STRING("乗客２"), -45, 0, -175)
     CALL(evt_npc_set_ry, STRING("乗客２"), 90)
-    CALL(evt_npc_flag_onoff, 1, STRING("乗客２"), 512)
+    CALL(evt_npc_flag_onoff, 1, STRING("乗客２"), NPC_FLAG_TALK_ANIM)
     CALL(evt_rsh_set_rnd_npc_talk_evt, STRING("乗客２"), LW(3))
     CALL(evt_rsh_get_rnd_npc, 0, 2, LW(0))
     CALL(evt_rsh_get_rnd_npc_data, 0, 2, LW(0), LW(1), LW(2))
@@ -1108,14 +1405,18 @@ EVT_BEGIN(evt_rsh_01_rnd_npc_entry)
     CALL(evt_npc_set_tribe, STRING("乗客３"), LW(2))
     CALL(evt_npc_set_position, STRING("乗客３"), 85, 16, -255)
     CALL(evt_npc_set_ry, STRING("乗客３"), 270)
-    CALL(evt_npc_flag_onoff, 1, STRING("乗客３"), 512)
+    CALL(evt_npc_flag_onoff, 1, STRING("乗客３"), NPC_FLAG_TALK_ANIM)
     CALL(evt_rsh_set_rnd_npc_talk_evt, STRING("乗客３"), LW(3))
     RETURN
 EVT_END()
 
+/**
+ * Setup of passenger 2 of the dining car when it is a wandering passenger: territory and the npc_urouro move
+ * and return events.
+ */
 NpcSetupInfo rsh_03_rnd_npc_2_ent[] = {
     {
-        /*"乗客２"*/"\x8F\xE6\x8B\x71\x82\x51", // name
+        "乗客２", // name
         0, 0, // flags..reactionFlags
         npc_urouro_init_event, // initEvent
         npc_urouro_move_event, // regularEvent
@@ -1131,6 +1432,11 @@ NpcSetupInfo rsh_03_rnd_npc_2_ent[] = {
     {0},
 };
 
+/**
+ * Spawns the two random passengers of rsh_03.
+ * Passenger 2 additionally gets rsh_03_rnd_npc_2_ent,
+ * which makes it wander near (-360, -10) with the generic npc_urouro events.
+ */
 EVT_BEGIN(evt_rsh_03_rnd_npc_entry)
     CALL(evt_rsh_get_rnd_npc, 1, 0, LW(0))
     CALL(evt_rsh_get_rnd_npc_data, 1, 0, LW(0), LW(1), LW(2))
@@ -1139,7 +1445,7 @@ EVT_BEGIN(evt_rsh_03_rnd_npc_entry)
     CALL(evt_npc_set_tribe, STRING("乗客１"), LW(2))
     CALL(evt_npc_set_position, STRING("乗客１"), 460, 0, -60)
     CALL(evt_npc_set_ry, STRING("乗客１"), 270)
-    CALL(evt_npc_flag_onoff, 1, STRING("乗客１"), 512)
+    CALL(evt_npc_flag_onoff, 1, STRING("乗客１"), NPC_FLAG_TALK_ANIM)
     CALL(evt_rsh_set_rnd_npc_talk_evt, STRING("乗客１"), LW(3))
     CALL(evt_rsh_get_rnd_npc, 1, 1, LW(0))
     CALL(evt_rsh_get_rnd_npc_data, 1, 1, LW(0), LW(1), LW(2))
@@ -1149,14 +1455,18 @@ EVT_BEGIN(evt_rsh_03_rnd_npc_entry)
     CALL(evt_npc_setup, PTR(rsh_03_rnd_npc_2_ent))
     CALL(evt_npc_set_position, STRING("乗客２"), -360, 0, -10)
     CALL(evt_npc_set_ry, STRING("乗客２"), 90)
-    CALL(evt_npc_flag_onoff, 1, STRING("乗客２"), 1536)
+    CALL(evt_npc_flag_onoff, 1, STRING("乗客２"), NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM)
     CALL(evt_rsh_set_rnd_npc_talk_evt, STRING("乗客２"), LW(3))
     RETURN
 EVT_END()
 
+/**
+ * Setup of passenger 3 of car rsh_04 when it is a wandering passenger: territory and the npc_urouro move and
+ * return events.
+ */
 NpcSetupInfo rsh_04_rnd_npc_3_ent[] = {
     {
-        /*"乗客３"*/"\x8F\xE6\x8B\x71\x82\x52", // name
+        "乗客３", // name
         0, 0, // flags..reactionFlags
         npc_urouro_init_event, // initEvent
         npc_urouro_move_event, // regularEvent
@@ -1172,6 +1482,11 @@ NpcSetupInfo rsh_04_rnd_npc_3_ent[] = {
     {0},
 };
 
+/**
+ * Spawns the four random passengers of rsh_04.
+ * Passenger 3 wanders near (-180, -145) with the generic npc_urouro events;
+ * passenger 4 stands at a different spot in the demo than in the releases.
+ */
 EVT_BEGIN(evt_rsh_04_rnd_npc_entry)
     CALL(evt_rsh_get_rnd_npc, 2, 0, LW(0))
     CALL(evt_rsh_get_rnd_npc_data, 2, 0, LW(0), LW(1), LW(2))
@@ -1180,7 +1495,7 @@ EVT_BEGIN(evt_rsh_04_rnd_npc_entry)
     CALL(evt_npc_set_tribe, STRING("乗客１"), LW(2))
     CALL(evt_npc_set_position, STRING("乗客１"), 265, 0, -150)
     CALL(evt_npc_set_ry, STRING("乗客１"), 270)
-    CALL(evt_npc_flag_onoff, 1, STRING("乗客１"), 512)
+    CALL(evt_npc_flag_onoff, 1, STRING("乗客１"), NPC_FLAG_TALK_ANIM)
     CALL(evt_rsh_set_rnd_npc_talk_evt, STRING("乗客１"), LW(3))
     CALL(evt_rsh_get_rnd_npc, 2, 1, LW(0))
     CALL(evt_rsh_get_rnd_npc_data, 2, 1, LW(0), LW(1), LW(2))
@@ -1189,7 +1504,7 @@ EVT_BEGIN(evt_rsh_04_rnd_npc_entry)
     CALL(evt_npc_set_tribe, STRING("乗客２"), LW(2))
     CALL(evt_npc_set_position, STRING("乗客２"), -230, 0, -215)
     CALL(evt_npc_set_ry, STRING("乗客２"), 90)
-    CALL(evt_npc_flag_onoff, 1, STRING("乗客２"), 512)
+    CALL(evt_npc_flag_onoff, 1, STRING("乗客２"), NPC_FLAG_TALK_ANIM)
     CALL(evt_rsh_set_rnd_npc_talk_evt, STRING("乗客２"), LW(3))
     CALL(evt_rsh_get_rnd_npc, 2, 2, LW(0))
     CALL(evt_rsh_get_rnd_npc_data, 2, 2, LW(0), LW(1), LW(2))
@@ -1199,21 +1514,29 @@ EVT_BEGIN(evt_rsh_04_rnd_npc_entry)
     CALL(evt_npc_setup, PTR(rsh_04_rnd_npc_3_ent))
     CALL(evt_npc_set_position, STRING("乗客３"), -180, 0, -145)
     CALL(evt_npc_set_ry, STRING("乗客３"), 270)
-    CALL(evt_npc_flag_onoff, 1, STRING("乗客３"), 1536)
+    CALL(evt_npc_flag_onoff, 1, STRING("乗客３"), NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM)
     CALL(evt_rsh_set_rnd_npc_talk_evt, STRING("乗客３"), LW(3))
     CALL(evt_rsh_get_rnd_npc, 2, 3, LW(0))
     CALL(evt_rsh_get_rnd_npc_data, 2, 3, LW(0), LW(1), LW(2))
     CALL(evt_rsh_get_rnd_npc_talk_evt, 2, 3, LW(0), LW(3))
     CALL(evt_npc_entry, STRING("乗客４"), LW(1))
     CALL(evt_npc_set_tribe, STRING("乗客４"), LW(2))
+#if VERSION <= VERSION_DEMO_JP
+    CALL(evt_npc_set_position, STRING("乗客４"), -50, 30, -260)
+#else
     CALL(evt_npc_set_position, STRING("乗客４"), -85, 16, -255)
+#endif
     CALL(evt_npc_set_ry, STRING("乗客４"), 90)
-    CALL(evt_npc_flag_onoff, 1, STRING("乗客４"), 1536)
+    CALL(evt_npc_flag_onoff, 1, STRING("乗客４"), NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM)
     CALL(evt_rsh_set_rnd_npc_talk_evt, STRING("乗客４"), LW(3))
     RETURN
 EVT_END()
 
-USER_FUNC(debug_print_func) {
+/**
+ * Debug leftover: formats the "RSH_xx:group(label, value)" line for a passenger pick into a stack buffer
+ * but never prints it. Args: room, group, index, value.
+ */
+static USER_FUNC(debug_print_func) {
     EvtWord* args = event->args;
     s32 room = evtGetValue(event, args[0]);
     s32 group = evtGetValue(event, args[1]);
@@ -1226,54 +1549,55 @@ USER_FUNC(debug_print_func) {
     *(RshDebugStr*)header = rsh_debug_str_init;
 
     switch (room) {
-    case 0:
-        strcpy(header, "RSH_01:");
-        switch (group) {
         case 0:
-            list = (const char**)rsh_01_rnd_npc_1_list;
+            strcpy(header, "RSH_01:");
+            switch (group) {
+                case 0:
+                    list = (const char**)rsh_01_rnd_npc_1_list;
+                    break;
+                case 1:
+                    list = (const char**)rsh_01_rnd_npc_2_list;
+                    break;
+                case 2:
+                    list = (const char**)rsh_01_rnd_npc_3_list;
+                    break;
+            }
             break;
         case 1:
-            list = (const char**)rsh_01_rnd_npc_2_list;
+            strcpy(header, "RSH_03:");
+            switch (group) {
+                case 0:
+                    list = (const char**)rsh_03_rnd_npc_1_list;
+                    break;
+                case 1:
+                    list = (const char**)rsh_03_rnd_npc_2_list;
+                    break;
+            }
             break;
         case 2:
-            list = (const char**)rsh_01_rnd_npc_3_list;
+            strcpy(header, "RSH_04:");
+            switch (group) {
+                case 0:
+                    list = (const char**)rsh_04_rnd_npc_1_list;
+                    break;
+                case 1:
+                    list = (const char**)rsh_04_rnd_npc_2_list;
+                    break;
+                case 2:
+                    list = (const char**)rsh_04_rnd_npc_3_list;
+                    break;
+                case 3:
+                    list = (const char**)rsh_04_rnd_npc_4_list;
+                    break;
+            }
             break;
-        }
-        break;
-    case 1:
-        strcpy(header, "RSH_03:");
-        switch (group) {
-        case 0:
-            list = (const char**)rsh_03_rnd_npc_1_list;
-            break;
-        case 1:
-            list = (const char**)rsh_03_rnd_npc_2_list;
-            break;
-        }
-        break;
-    case 2:
-        strcpy(header, "RSH_04:");
-        switch (group) {
-        case 0:
-            list = (const char**)rsh_04_rnd_npc_1_list;
-            break;
-        case 1:
-            list = (const char**)rsh_04_rnd_npc_2_list;
-            break;
-        case 2:
-            list = (const char**)rsh_04_rnd_npc_3_list;
-            break;
-        case 3:
-            list = (const char**)rsh_04_rnd_npc_4_list;
-            break;
-        }
-        break;
     }
     sprintf(buf, "%s%d(%s, %s)\n", header, group, list[index], value);
     return EVT_RETURN_DONE;
 }
 
-USER_FUNC(evt_rsh_set_rnd_npc_talk_evt) {
+/** Sets the talkEvt of the named NPC. Args: [0] NPC name, [1] event script to run when Mario talks to it. */
+static USER_FUNC(evt_rsh_set_rnd_npc_talk_evt) {
     EvtWord* args = event->args;
     const char* name = (const char*)evtGetValue(event, args[0]);
     EvtWord* evt = (EvtWord*)evtGetValue(event, args[1]); // event script for the npc talk
@@ -1282,7 +1606,11 @@ USER_FUNC(evt_rsh_set_rnd_npc_talk_evt) {
     return EVT_RETURN_DONE;
 }
 
-USER_FUNC(evt_rsh_get_rnd_npc_talk_evt) {
+/**
+ * Looks up the talk script of a passenger candidate.
+ * Args: [0] room (0 = rsh_01, 1 = rsh_03, 2 = rsh_04), [1] group, [2] index; [3] receives the script address.
+ */
+static USER_FUNC(evt_rsh_get_rnd_npc_talk_evt) {
     EvtWord* args = event->args;
     s32 room = evtGetValue(event, args[0]);
     s32 group = evtGetValue(event, args[1]);
@@ -1292,7 +1620,11 @@ USER_FUNC(evt_rsh_get_rnd_npc_talk_evt) {
     return EVT_RETURN_DONE;
 }
 
-USER_FUNC(evt_rsh_get_rnd_npc_data) {
+/**
+ * Looks up the model data of a passenger candidate.
+ * Args: [0] room, [1] group, [2] index; [3] receives the NPC type name, [4] its Japanese model name.
+ */
+static USER_FUNC(evt_rsh_get_rnd_npc_data) {
     EvtWord* args = event->args;
     s32 room = evtGetValue(event, args[0]);
     s32 group = evtGetValue(event, args[1]);
@@ -1304,49 +1636,53 @@ USER_FUNC(evt_rsh_get_rnd_npc_data) {
     return EVT_RETURN_DONE;
 }
 
-RshRndNpc* _get_rnd_npc_data(s32 room, s32 group, s32 index) {
+/**
+ * Returns the candidate table entry for a room (0 = rsh_01, 1 = rsh_03, 2 = rsh_04), passenger group and index;
+ * unknown room/group falls back to the first rsh_01 candidate.
+ */
+static RshRndNpc* _get_rnd_npc_data(s32 room, s32 group, s32 index) {
     RshRndNpc* data = NULL;
 
     switch (room) {
-    case 0:
-        switch (group) {
         case 0:
-            data = rsh_01_rnd_npc_1;
+            switch (group) {
+                case 0:
+                    data = rsh_01_rnd_npc_1;
+                    break;
+                case 1:
+                    data = rsh_01_rnd_npc_2;
+                    break;
+                case 2:
+                    data = rsh_01_rnd_npc_3;
+                    break;
+            }
             break;
         case 1:
-            data = rsh_01_rnd_npc_2;
+            switch (group) {
+                case 0:
+                    data = rsh_03_rnd_npc_1;
+                    break;
+                case 1:
+                    data = rsh_03_rnd_npc_2;
+                    break;
+            }
             break;
         case 2:
-            data = rsh_01_rnd_npc_3;
+            switch (group) {
+                case 0:
+                    data = rsh_04_rnd_npc_1;
+                    break;
+                case 1:
+                    data = rsh_04_rnd_npc_2;
+                    break;
+                case 2:
+                    data = rsh_04_rnd_npc_3;
+                    break;
+                case 3:
+                    data = rsh_04_rnd_npc_4;
+                    break;
+            }
             break;
-        }
-        break;
-    case 1:
-        switch (group) {
-        case 0:
-            data = rsh_03_rnd_npc_1;
-            break;
-        case 1:
-            data = rsh_03_rnd_npc_2;
-            break;
-        }
-        break;
-    case 2:
-        switch (group) {
-        case 0:
-            data = rsh_04_rnd_npc_1;
-            break;
-        case 1:
-            data = rsh_04_rnd_npc_2;
-            break;
-        case 2:
-            data = rsh_04_rnd_npc_3;
-            break;
-        case 3:
-            data = rsh_04_rnd_npc_4;
-            break;
-        }
-        break;
     }
     if (data == NULL) {
         data = rsh_01_rnd_npc_1;
@@ -1355,7 +1691,14 @@ RshRndNpc* _get_rnd_npc_data(s32 room, s32 group, s32 index) {
     return &data[index];
 }
 
-USER_FUNC(evt_rsh_set_rnd_npc) {
+/**
+ * Stores a random passenger pick in the packed save word of its car.
+ * Args: [0] room, [1] group, [2] candidate index.
+ * The state words GSW_RSH_RANDOM_NPC_STATE_A (rsh_01),
+ * B (rsh_03) and C (rsh_04) hold each group's index in a few bits;
+ * the index is ORed in, so the words must be cleared first.
+ */
+static USER_FUNC(evt_rsh_set_rnd_npc) {
     EvtWord* args = event->args;
     s32 room = evtGetValue(event, args[0]);
     s32 group = evtGetValue(event, args[1]);
@@ -1363,56 +1706,60 @@ USER_FUNC(evt_rsh_set_rnd_npc) {
     s32 value;
 
     switch (room) {
-    case 0:
-        value = evtGetValue(NULL, GSW(821));
-        switch (group) {
         case 0:
-            value |= index & 7;
+            value = evtGetValue(NULL, GSW(GSW_RSH_RANDOM_NPC_STATE_A));
+            switch (group) {
+                case 0:
+                    value |= index & 7;
+                    break;
+                case 1:
+                    value |= (index & 3) << 3;
+                    break;
+                case 2:
+                    value |= (index & 1) << 5;
+                    break;
+            }
+            evtSetValue(NULL, GSW(GSW_RSH_RANDOM_NPC_STATE_A), value);
             break;
         case 1:
-            value |= (index & 3) << 3;
+            value = evtGetValue(NULL, GSW(GSW_RSH_RANDOM_NPC_STATE_B));
+            switch (group) {
+                case 0:
+                    value |= index & 0xF;
+                    break;
+                case 1:
+                    value |= (index & 7) << 4;
+                    break;
+            }
+            evtSetValue(NULL, GSW(GSW_RSH_RANDOM_NPC_STATE_B), value);
             break;
         case 2:
-            value |= (index & 1) << 5;
+            value = evtGetValue(NULL, GSW(GSW_RSH_RANDOM_NPC_STATE_C));
+            switch (group) {
+                case 0:
+                    value |= index & 1;
+                    break;
+                case 1:
+                    value |= (index & 1) << 1;
+                    break;
+                case 2:
+                    value |= (index & 1) << 2;
+                    break;
+                case 3:
+                    value |= (index & 3) << 3;
+                    break;
+            }
+            evtSetValue(NULL, GSW(GSW_RSH_RANDOM_NPC_STATE_C), value);
             break;
-        }
-        evtSetValue(NULL, GSW(821), value);
-        break;
-    case 1:
-        value = evtGetValue(NULL, GSW(822));
-        switch (group) {
-        case 0:
-            value |= index & 0xF;
-            break;
-        case 1:
-            value |= (index & 7) << 4;
-            break;
-        }
-        evtSetValue(NULL, GSW(822), value);
-        break;
-    case 2:
-        value = evtGetValue(NULL, GSW(823));
-        switch (group) {
-        case 0:
-            value |= index & 1;
-            break;
-        case 1:
-            value |= (index & 1) << 1;
-            break;
-        case 2:
-            value |= (index & 1) << 2;
-            break;
-        case 3:
-            value |= (index & 3) << 3;
-            break;
-        }
-        evtSetValue(NULL, GSW(823), value);
-        break;
     }
     return EVT_RETURN_DONE;
 }
 
-USER_FUNC(evt_rsh_get_rnd_npc) {
+/**
+ * Reads a random passenger pick back out of the packed state word.
+ * Args: [0] room, [1] group; [2] receives the candidate index (0 for unknown groups).
+ */
+static USER_FUNC(evt_rsh_get_rnd_npc) {
     EvtWord* args = event->args;
     s32 room = evtGetValue(event, args[0]);
     s32 group = evtGetValue(event, args[1]);
@@ -1420,69 +1767,76 @@ USER_FUNC(evt_rsh_get_rnd_npc) {
     s32 index;
 
     switch (room) {
-    case 0:
-        value = evtGetValue(NULL, GSW(821));
-        switch (group) {
         case 0:
-            index = value & 7;
+            value = evtGetValue(NULL, GSW(GSW_RSH_RANDOM_NPC_STATE_A));
+            switch (group) {
+                case 0:
+                    index = value & 7;
+                    break;
+                case 1:
+                    index = (value >> 3) & 3;
+                    break;
+                case 2:
+                    index = (value >> 5) & 1;
+                    break;
+                default:
+                    index = 0;
+                    break;
+            }
             break;
         case 1:
-            index = (value >> 3) & 3;
+            value = evtGetValue(NULL, GSW(GSW_RSH_RANDOM_NPC_STATE_B));
+            switch (group) {
+                case 0:
+                    index = value & 0xF;
+                    break;
+                case 1:
+                    index = (value >> 4) & 7;
+                    break;
+                default:
+                    index = 0;
+                    break;
+            }
             break;
         case 2:
-            index = (value >> 5) & 1;
+            value = evtGetValue(NULL, GSW(GSW_RSH_RANDOM_NPC_STATE_C));
+            switch (group) {
+                case 0:
+                    index = value & 1;
+                    break;
+                case 1:
+                    index = (value >> 1) & 1;
+                    break;
+                case 2:
+                    index = (value >> 2) & 1;
+                    break;
+                case 3:
+                    index = (value >> 3) & 3;
+                    break;
+                default:
+                    index = 0;
+                    break;
+            }
             break;
-        default:
-            index = 0;
-            break;
-        }
-        break;
-    case 1:
-        value = evtGetValue(NULL, GSW(822));
-        switch (group) {
-        case 0:
-            index = value & 0xF;
-            break;
-        case 1:
-            index = (value >> 4) & 7;
-            break;
-        default:
-            index = 0;
-            break;
-        }
-        break;
-    case 2:
-        value = evtGetValue(NULL, GSW(823));
-        switch (group) {
-        case 0:
-            index = value & 1;
-            break;
-        case 1:
-            index = (value >> 1) & 1;
-            break;
-        case 2:
-            index = (value >> 2) & 1;
-            break;
-        case 3:
-            index = (value >> 3) & 3;
-            break;
-        default:
-            index = 0;
-            break;
-        }
-        break;
     }
     evtSetValue(event, args[2], index);
     return EVT_RETURN_DONE;
 }
 
-void rsh_window_tev(MapTevCallbackInfo* info) {
+/**
+ * TEV callback for the train windows: copies the part of the frame buffer behind the window object into a
+ * half-size RGB5A3 texture and re-applies it as a projected texture with a frustum matched to the 3D camera,
+ * so the scenery seems to flow past the glass.
+ * Returns early on the first frame (it only marks the object to get a screen bounding box) and
+ * when the box is empty.
+ */
+static void rsh_window_tev(MapTevCallbackInfo* info) {
     MapObject* p;
     u32 flags;
     GXTevStageID tevStage;
     GXTexMapID texMap;
     GXTexCoordID texCoord;
-    int field_0x18;
+    int indStage;
     u16 x0, y0, x1, y1;
     s32 height, width;
     s32 halfHeight, halfWidth;
@@ -1495,17 +1849,17 @@ void rsh_window_tev(MapTevCallbackInfo* info) {
     tevStage = info->tevStage;
     texMap = info->texCoord;
     texCoord = info->texMap;
-    field_0x18 = info->indStage;
+    indStage = info->indStage;
     flags = p->flags;
-    if (flags & 0x20) {
+    if (flags & MAPOBJ_FLAG_IN_GROUP) {
         while ((p = p->parent) != NULL) {
             u32 f = p->flags;
-            if (f & 0x10) {
-                if (!(f & 0x20000000)) {
+            if (f & MAPOBJ_FLAG_GROUP) {
+                if (!(f & MAPOBJ_FLAG_BBOX)) {
 #ifdef TARGET_PC
                     portInterpKeep(&p->flags, sizeof(p->flags)); /* a one-shot the next draw takes */
 #endif
-                    p->flags = f | 0x20000000;
+                    p->flags = f | MAPOBJ_FLAG_BBOX;
                     return;
                 }
                 x0 = p->screenRect[0];
@@ -1516,11 +1870,11 @@ void rsh_window_tev(MapTevCallbackInfo* info) {
             }
         }
     } else {
-        if (!(flags & 0x20000000)) {
+        if (!(flags & MAPOBJ_FLAG_BBOX)) {
 #ifdef TARGET_PC
             portInterpKeep(&p->flags, sizeof(p->flags)); /* a one-shot the next draw takes */
 #endif
-            p->flags = flags | 0x20000000;
+            p->flags = flags | MAPOBJ_FLAG_BBOX;
             return;
         }
         x0 = p->screenRect[0];
@@ -1528,6 +1882,8 @@ void rsh_window_tev(MapTevCallbackInfo* info) {
         x1 = p->screenRect[2];
         y1 = p->screenRect[3];
     }
+    // BUG: when no parent is a group (MAPOBJ_FLAG_GROUP) the loop above ends with x0..y1 never set,
+    // and they are read uninitialised here.
     if (x0 == 0x3FF || y0 == 0x3FF || x1 == 0x3FF || y1 == 0x3FF) {
         return;
     }
@@ -1557,13 +1913,13 @@ void rsh_window_tev(MapTevCallbackInfo* info) {
     GXTexModeSync();
     GXInitTexObj(&tex, buf, halfWidth, halfHeight, GX_TF_RGB5A3, GX_CLAMP, GX_CLAMP, GX_FALSE);
     GXInitTexObjLOD(&tex, GX_NEAR, GX_NEAR, 0.0f, 0.0f, 0.0f, GX_FALSE, GX_FALSE, GX_ANISO_1);
-    t = tan(6.2831855f * (camGetPtr(4)->fovY / 2.0f) / 360.0f);
+    t = tan(6.2831855f * (camGetPtr(CAMERA_3D)->fovY / 2.0f) / 360.0f);
     C_MTXLightFrustum(mtx, gp->efbHeight / 2 - y1, gp->efbHeight / 2 - y0, x0 - gp->fbWidth / 2,
                       x1 - gp->fbWidth / 2, gp->efbHeight / 2.0f / t, 0.5f, 0.5f, 0.4f, 0.6f);
     PSMTXConcat(mtx, camGetCurPtr()->view, mtx);
     PSMTXConcat(mtx, info->mtx, mtx);
-    GXSetTexCoordGen2(texCoord, GX_TG_MTX3x4, GX_TG_POS, rsh_texmtx_tbl[texMap], GX_FALSE, GX_PTIDENTITY);
-    GXLoadTexMtxImm(mtx, rsh_texmtx_tbl[texMap], GX_MTX3x4);
+    GXSetTexCoordGen2(texCoord, GX_TG_MTX3x4, GX_TG_POS, texmtx_tbl[texMap], GX_FALSE, GX_PTIDENTITY);
+    GXLoadTexMtxImm(mtx, texmtx_tbl[texMap], GX_MTX3x4);
     GXLoadTexObj(&tex, texMap);
     GXSetTevOrder(tevStage, texCoord, texMap, GX_COLOR_NULL);
     GXSetTevColorOp(tevStage, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
@@ -1577,11 +1933,16 @@ void rsh_window_tev(MapTevCallbackInfo* info) {
     texMap++;
     info->tevStage = tevStage;
     info->texMap = texCoord;
-    info->indStage = field_0x18;
+    info->indStage = indStage;
     info->texCoord = texMap;
 }
 
-BOOL img_wait(void) {
+/**
+ * Script helper polled by evt_rsh_door_open/close:
+ * returns TRUE once the capture_img door animation has ended (flag 2 set or one loop done),
+ * FALSE while it is still playing.
+ */
+static BOOL img_wait(void) {
     ImageEntry* img = imgNameToPtr("capture_img", gp->inBattle != 0);
 
     if (!(img->flags & 2) && img->loopTimes < 1.0f) {
@@ -1590,9 +1951,11 @@ BOOL img_wait(void) {
     return TRUE;
 }
 
+/** Linker stub for unresolved references in the relocatable module; does nothing. */
 void _unresolved(void) {
 }
 
+/** REL epilog: runs the module's global destructors from the _dtors table when the module is unloaded. */
 void _epilog(void) {
     voidfunctionptr* dtor;
 
@@ -1601,13 +1964,19 @@ void _epilog(void) {
     }
 }
 
+/**
+ * REL entry point: runs the global constructors,
+ * then registers each map's init script with relSetEvtAddr (the first-visit scripts until the story reaches
+ * STORY_STG6_54_WELCOME_BACK, the "nidome" second-visit scripts afterwards)
+ * and installs the battle setup table for the rsh module.
+ */
 void _prolog(void) {
     voidfunctionptr* ctor;
 
     for (ctor = _ctors; *ctor != NULL; ctor++) {
         (*ctor)();
     }
-    if (swByteGet(0) < 0x153) {
+    if (swByteGet(GSW_STORY_PROGRESS) < STORY_STG6_54_WELCOME_BACK) {
         relSetEvtAddr("rsh_00_a", rsh_00_a_init_evt);
         relSetEvtAddr("rsh_00_b", rsh_00_b_init_evt);
         relSetEvtAddr("rsh_00_c", rsh_00_c_init_evt);
@@ -1654,7 +2023,3 @@ void _prolog(void) {
     }
     relSetBtlAddr("rsh", btlsetup_rsh_tbl, btl_rsh_setup_no_tbl);
 }
-
-
-#pragma force_active on
-#pragma force_active reset

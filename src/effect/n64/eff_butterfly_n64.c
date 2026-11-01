@@ -1,3 +1,4 @@
+// Paper Mario 64 effect: butterfly that flutters around a home point.
 #include "eff/n64/eff_butterfly_n64.h"
 #include "eff/eff_n64.h"
 #include "driver/camdrv.h"
@@ -8,82 +9,31 @@
 #include <dolphin/gx.h>
 #include <dolphin/mtx.h>
 #include <stdlib.h>
-#include "eff/eff_magic1_n64.h"
 #include "libc_decls.h"
-
-
-#define NAN (*(f32*)__float_nan)
-
-#define FP_NAN 1
-#define FP_INFINITE 2
-#define FP_ZERO 3
-#define FP_NORMAL 4
-#define FP_SUBNORMAL 5
-
-static inline s32 __fpclassifyf(f32 x) {
-    switch (*(s32*)&x & 0x7F800000) {
-        case 0x7F800000:
-            if (*(s32*)&x & 0x007FFFFF) {
-                return FP_NAN;
-            } else {
-                return FP_INFINITE;
-            }
-            break;
-        case 0:
-            if (*(s32*)&x & 0x007FFFFF) {
-                return FP_SUBNORMAL;
-            } else {
-                return FP_ZERO;
-            }
-            break;
-        default:
-            return FP_NORMAL;
-    }
-}
-
-#define fpclassify(x) __fpclassifyf(x)
-#define isnan(x) (fpclassify(x) == FP_NAN)
-
-#ifndef TARGET_PC /* PC port: the host libc declares these */
-static inline f32 sqrtf(f32 x) {
-    const f64 _half = .5;
-    const f64 _three = 3.0;
-
-    if (x > 0.0f) {
-        f64 guess = __frsqrte(x);
-        guess = _half * guess * (_three - guess * guess * x);
-        guess = _half * guess * (_three - guess * guess * x);
-        guess = _half * guess * (_three - guess * guess * x);
-        return x * guess;
-    } else if (x < 0.0) {
-        return NAN;
-    } else if (isnan(x)) {
-        return NAN;
-    }
-    return x;
-}
-#endif
+#include <math.h>
 
 typedef struct EffButterflyN64Work {
-    s32 type;       // 0x0
-    s32 lifetime;   // 0x4
-    s32 frame;      // 0x8
-    Vec position;   // 0xC
-    Vec home;       // 0x18
-    s32 alpha;      // 0x24
-    f32 rotY;       // 0x28
-    s32 bobIdx;     // 0x2C
-    s32 timer;      // 0x30
-    f32 radiusXZ;   // 0x34
-    f32 radiusY;    // 0x38
-    Vec velocity;   // 0x3C
+    s32 type;     // 0x0
+    s32 lifetime; // 0x4
+    s32 frame;    // 0x8
+    Vec position; // 0xC
+    Vec home;     // 0x18
+    s32 alpha;    // 0x24
+    f32 rotY;     // 0x28
+    s32 bobIdx;   // 0x2C
+    s32 timer;    // 0x30
+    f32 radiusXZ; // 0x34
+    f32 radiusY;  // 0x38
+    Vec velocity; // 0x3C
 } EffButterflyN64Work;
 
-static s8 y_data[32] = {-1, -2, -3, -4, -5, -6, -7, -8, -9, -10, -11, -12, -13, -14, -15, -16, -17, -18, -19, -17, -15, -13, -11, -9, -7, -5, -3, -1, 0, 0, 0, 0};
+/** Bob height of the butterfly over its 30-step cycle: dips 19 units and comes back up. */
+static s8 y_data[30] = {-1, -2, -3, -4, -5, -6, -7, -8, -9, -10, -11, -12, -13, -14, -15, -16, -17, -18, -19, -17, -15, -13, -11, -9, -7, -5, -3, -1, 0, 0};
 
-void effButterflyMain(EffectEntry* effect);
-void effButterflyDisp(CameraId cameraId, EffectEntry* effect);
+static void effButterflyMain(EffectEntry* effect);
+static void effButterflyDisp(CameraId cameraId, EffectEntry* effect);
 
+/** Butterfly wing poses: one six-vertex set per bob step, with the wing tips rising set by set so the wings flap. */
 effN64Vtx but_02_v[] = {
     {0, 0, 250, 0, 2048, 255, 255, 255, 255},
     {318, 31, 250, 1024, 2048, 255, 255, 255, 255},
@@ -266,17 +216,22 @@ effN64Vtx but_02_v[] = {
     {-318, 27, 250, 1024, 2048, 255, 255, 255, 255},
     {-318, 27, -254, 1024, 0, 255, 255, 255, 255},};
 
+/**
+ * Spawns a butterfly that wanders within 50 units horizontally and 30 vertically of (x, y, z);
+ * type picks the texture (type + 0x78). It lives until soft-deleted.
+ * Spawned only from event scripts through evt_eff.
+ */
 EffectEntry* effButterflyN64Entry(s32 type, f32 x, f32 y, f32 z) {
     EffectEntry* effect;
     EffButterflyN64Work* work;
 
     effect = effEntry();
-    effect->type = "ButterflyN64\0\0\0";
+    effect->type = "ButterflyN64";
     effect->count = 1;
     work = __memAlloc(HEAP_EFFECT, sizeof(EffButterflyN64Work));
     effect->userdata = work;
     effect->callback = effButterflyMain;
-    effect->flags |= 2;
+    effect->flags |= EFFECT_FLAG_SOFT_DELETE;
     work->type = type;
     work->lifetime = 1000;
     work->alpha = 255;
@@ -294,7 +249,12 @@ EffectEntry* effButterflyN64Entry(s32 type, f32 x, f32 y, f32 z) {
     return effect;
 }
 
-void effButterflyMain(EffectEntry* effect) {
+/**
+ * Every 10-109 frames picks a new random point around the home position
+ * and flies toward it at one unit per frame.
+ * After a delete request it flutters on for 900 more frames, fading out over the last 16.
+ */
+static void effButterflyMain(EffectEntry* effect) {
     EffButterflyN64Work* work = effect->userdata;
     Vec position;
     Vec tmp = {0.0f, 0.0f, 0.0f};
@@ -307,8 +267,8 @@ void effButterflyMain(EffectEntry* effect) {
     tmp.y = work->position.y;
     tmp.z = work->position.z;
     position = tmp;
-    if (effect->flags & 4) {
-        effect->flags &= ~4;
+    if (effect->flags & EFFECT_FLAG_DELETE_REQUESTED) {
+        effect->flags &= ~EFFECT_FLAG_DELETE_REQUESTED;
         work->lifetime = 900;
     }
     if (work->lifetime < 1000) {
@@ -364,7 +324,12 @@ void effButterflyMain(EffectEntry* effect) {
     dispEntry(CAMERA_3D, dispCalcZ(&position), 1, (DispCallback)effButterflyDisp, effect);
 }
 
-void effButterflyDisp(CameraId cameraId, EffectEntry* effect) {
+/**
+ * Draws the butterfly facing its heading, bobbing with y_data.
+ * bobIdx also selects the six-vertex set in but_02_v;
+ * the wing tips rise from set to set (y 31, 42, 58, 79 ...), so the wings flap.
+ */
+static void effButterflyDisp(CameraId cameraId, EffectEntry* effect) {
     CameraEntry* camera;
     EffButterflyN64Work* work;
     GXTexObj texObj;

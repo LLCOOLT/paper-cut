@@ -1,75 +1,31 @@
+// kpa_03 (クッパ編, Bowser's interludes): the second side-scrolling stage, by the sea; continues in kpa_04.
+
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
 #include "kpa.h"
 #include "evt/evt_npc.h"
+#include "evt/evt_bero.h"
+#include "evt/evt_map.h"
+#include "evt/evt_mario.h"
+#include "evt/evt_mobj.h"
+#include "evt/evt_seq.h"
 #include "kpa_stage_data.h"
+#include "version.h"
+#include "evt/evt_story.h"
 
-#pragma force_active on
-
-USER_FUNC(evt_bero_mapchange);
-USER_FUNC(evt_koopa_chk_dead);
-USER_FUNC(evt_koopa_get_level);
-USER_FUNC(evt_map_playanim);
-USER_FUNC(evt_mario_cam_off);
-USER_FUNC(evt_mario_get_pos);
-USER_FUNC(evt_mario_jump_jumpstand);
-USER_FUNC(evt_mario_set_hosei_xyz);
-USER_FUNC(evt_mario_set_pos);
-USER_FUNC(evt_mobj_get_position);
-USER_FUNC(evt_npc_setup);
-USER_FUNC(evt_seq_wait);
-USER_FUNC(kpa_status_init);
-
-f32 fd_kpa_03_negone_one_374[2] __attribute__((aligned(8)));
-f32 fd_kpa_03_neg_one_382;
-f32 fd_kpa_03___local_PI_383;
-f32 fd_kpa_03___local_3PIO2_385;
-f32 fd_kpa_03_one_negone_373[2] __attribute__((aligned(8)));
-f32 fd_kpa_03___local_PIO2_384;
-f32 fd_kpa_03_one_381;
-f32 fd_kpa_03_negone_one_360[2] __attribute__((aligned(8)));
-f32 fd_kpa_03_neg_one_365;
-f32 fd_kpa_03___local_PI_366;
-f32 fd_kpa_03___local_3PIO2_368;
-f32 fd_kpa_03_one_negone_359[2] __attribute__((aligned(8)));
-f32 fd_kpa_03___local_PIO2_367;
-f32 fd_kpa_03_one_364;
 static EvtWord kpa_act_stg2_mobj[209];
 EvtWord kpa_act_stg2_item[85];
-static EvtWord kpa_fall[41];
-EvtWord kairyu_evt[38];
+#if VERSION == VERSION_EU
+static EvtWord jumpstand_evt[62];
+#else
 static EvtWord jumpstand_evt[60];
+#endif
 static NpcSetupInfo npcEnt[1];
-EvtWord kpa_03_init_evt[44];
 
-f32 fd_kpa_03_negone_one_374[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_kpa_03_neg_one_382 = -1.0f;
-
-f32 fd_kpa_03___local_PI_383 = 3.1415927f;
-
-f32 fd_kpa_03___local_3PIO2_385 = 4.712389f;
-
-f32 fd_kpa_03_one_negone_373[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_kpa_03___local_PIO2_384 = 1.5707964f;
-
-f32 fd_kpa_03_one_381 = 1.0f;
-
-f32 fd_kpa_03_negone_one_360[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_kpa_03_neg_one_365 = -1.0f;
-
-f32 fd_kpa_03___local_PI_366 = 3.1415927f;
-
-f32 fd_kpa_03___local_3PIO2_368 = 4.712389f;
-
-f32 fd_kpa_03_one_negone_359[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_kpa_03___local_PIO2_367 = 1.5707964f;
-
-f32 fd_kpa_03_one_364 = 1.0f;
-
+/**
+ * Blocks, hidden blocks, pipes and obstacle blocks of side-scrolling stage 2 by the sea, listed from left to
+ * right.
+ */
 static EvtWord kpa_act_stg2_mobj[] = {
     KPA_OBJ_SANGO(-1275.0f, 0.0f), KPA_OBJ_BRICK_2(-1100.0f, 200.0f), KPA_OBJ_SANGO(-1100.0f, 250.0f),
     KPA_OBJ_BRICK_2(-925.0f, 0.0f), KPA_OBJ_BRICK_2(-925.0f, 50.0f), KPA_OBJ_BRICK_2(-925.0f, 100.0f),
@@ -97,6 +53,7 @@ static EvtWord kpa_act_stg2_mobj[] = {
     KPA_OBJ_BRICK_2(1475.0f, 350.0f), KPA_OBJ_END,
 };
 
+/** Coins Bowser can collect in side-scrolling stage 2, as x and z positions. */
 EvtWord kpa_act_stg2_item[] = {
     KPA_ITEM(-1050.0f, 212.5f), KPA_ITEM(-1000.0f, 212.5f), KPA_ITEM(-875.0f, 12.5f),
     KPA_ITEM(-875.0f, 62.5f), KPA_ITEM(-825.0f, 12.5f), KPA_ITEM(-825.0f, 62.5f), KPA_ITEM(-775.0f, 12.5f),
@@ -108,6 +65,11 @@ EvtWord kpa_act_stg2_item[] = {
     KPA_ITEM(1150.0f, 387.5f), KPA_ITEM_END,
 };
 
+/**
+ * Watches Bowser in the stage: each frame it checks whether he is dead (evt_koopa_chk_dead)
+ * or has fallen below y = -20, then runs the death handler (kpa_dead) if he died,
+ * or the pit fall handler (kpa_fall_sub) if he fell.
+ */
 static EVT_BEGIN(kpa_fall)
     SET_VALUE(LF(0), 0)
     LOOP(0)
@@ -123,13 +85,17 @@ static EVT_BEGIN(kpa_fall)
         WAIT_FRAMES(1)
     END_LOOP
     IF_INT_EQUAL(LF(0), 0)
-        CALL_CHILD(PTR(kpa_fall_sub))
-        ELSE
-        CALL_CHILD(PTR(kpa_dead))
+        CALL_CHILD(kpa_fall_sub)
+    ELSE
+        CALL_CHILD(kpa_dead)
     END_IF
     RETURN
 EVT_END()
 
+/**
+ * Gives Bowser a small constant push (hosei) while he is between x = -175 and -100 below y = 400:
+ * the sea current at this part of stage 2. Runs until the stage ends.
+ */
 EVT_BEGIN(kairyu_evt)
     CALL(evt_seq_wait, 2)
     LOOP(0)
@@ -149,11 +115,22 @@ EVT_BEGIN(kairyu_evt)
     RETURN
 EVT_END()
 
+/**
+ * Script of the stage's red jump stand (KPA_OBJ_JUMPSTAND_RED), run when Bowser stands on it:
+ * kills the stage clock (kpa_time, its event id in GW(15)),
+ * saves Bowser's current power level (evt_koopa_get_level), loads kpa_04 after 600 ms,
+ * turns the camera off once he is above y = 400
+ * and launches him up with evt_mario_jump_jumpstand 700 units above the platform (a lower launch speed in the US
+ * demo and earlier). The EU release also cancels the attack mode first.
+ */
 static EVT_BEGIN(jumpstand_evt)
     DELETE_EVENT(GW(15))
+#if VERSION == VERSION_EU
+    CALL(kpa_cancel_attack_mode)
+#endif
     BEGIN_INLINE_EVENT
         WAIT_MS(600)
-        CALL(evt_koopa_get_level, GSW(1223))
+        CALL(evt_koopa_get_level, GSW(GSW_KPA_BOWSER_POWER))
         CALL(evt_bero_mapchange, STRING("kpa_04"), STRING("kpa_next_map"))
     END_INLINE_EVENT
     BEGIN_INLINE_EVENT
@@ -169,29 +146,38 @@ static EVT_BEGIN(jumpstand_evt)
     CALL(evt_mobj_get_position, STRING("me"), LW(0), LW(1), LW(2))
     SET_VALUE(LW(3), LW(1))
     ADD(LW(3), 700)
+#if VERSION <= VERSION_DEMO_JP
+    CALL(evt_mario_jump_jumpstand, LW(0), LW(1), LW(2), LW(0), LW(3), LW(2), LW(0), LW(3), LW(2), 2000, 1)
+#else
     CALL(evt_mario_jump_jumpstand, LW(0), LW(1), LW(2), LW(0), LW(3), LW(2), LW(0), LW(3), LW(2), 4000, 3)
+#endif
     RETURN
 EVT_END()
 
+/** No NPCs: the side-scrolling stage is built from the block, pipe and item lists instead. */
 static NpcSetupInfo npcEnt[] = {
     {0},
 };
 
+/**
+ * Map init for kpa_03, side-scrolling stage 2 (by the sea):
+ * builds the blocks and coins from kpa_act_stg2_*, plays the sea animation, and starts the pit watcher, HUD,
+ * intro, current and clock. It continues in kpa_04.
+ */
 EVT_BEGIN(kpa_03_init_evt)
     CALL(evt_npc_setup, PTR(npcEnt))
-    CALL_CHILD(PTR(kpa_init))
+    CALL_CHILD(kpa_init)
     CALL(evt_mario_set_pos, -1400, 0, -5)
     SET_VALUE(LW(0), PTR(kpa_act_stg2_mobj))
-    CALL_CHILD(PTR(kpa_read_mobj))
+    CALL_CHILD(kpa_read_mobj)
     SET_VALUE(LW(0), PTR(kpa_act_stg2_item))
-    CALL_CHILD(PTR(kpa_read_item))
+    CALL_CHILD(kpa_read_item)
     CALL(evt_map_playanim, STRING("anm_umi"), 1, 0)
-    SPAWN_EVENT(PTR(kpa_fall))
-    CALL(kpa_status_init, 2, GSW(1221), GSW(1222))
+    SPAWN_EVENT(kpa_fall)
+    CALL(kpa_status_init, 2, GSW(GSW_KPA_LIVES), GSW(GSW_KPA_TIME_LEFT))
     SET_VALUE(LSW(1), 1)
-    SPAWN_EVENT(PTR(kpa_stage_start))
-    SPAWN_EVENT(PTR(kairyu_evt))
+    SPAWN_EVENT(kpa_stage_start)
+    SPAWN_EVENT(kairyu_evt)
     SPAWN_EVENT_GET_ID(PTR(kpa_time), GW(15))
     RETURN
 EVT_END()
-

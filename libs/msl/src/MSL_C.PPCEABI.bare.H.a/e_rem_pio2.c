@@ -1,5 +1,6 @@
 #include "fdlibm.h"
 
+/** Bits of 2/pi in 24-bit chunks, used to reduce large angles modulo pi/2. */
 static const int two_over_pi[] = {
     0xA2F983, 0x6E4E44, 0x1529FC, 0x2757D1, 0xF534DD, 0xC0DB62,
     0x95993C, 0x439041, 0xFE5163, 0xABDEBB, 0xC561B7, 0x246E3A,
@@ -14,6 +15,7 @@ static const int two_over_pi[] = {
     0x4D7327, 0x310606, 0x1556CA, 0x73A8C9, 0x60E27B, 0xC08C6B,
 };
 
+/** High words of n*pi/2 for small n, used for quick angle reduction. */
 static const int npio2_hw[] = {
     0x3FF921FB, 0x400921FB, 0x4012D97C, 0x401921FB, 0x401F6A7A, 0x4022D97C,
     0x4025FDBB, 0x402921FB, 0x402C463A, 0x402F6A7A, 0x4031475C, 0x4032D97C,
@@ -35,6 +37,7 @@ pio2_2t = 2.02226624879595063154e-21,
 pio2_3 = 2.02226624871116645580e-21,
 pio2_3t = 8.47842766036889956997e-32;
 
+/** Argument reduction for sin/cos/tan: reduces x modulo pi/2 into a two-part remainder and returns the quadrant. */
 int __ieee754_rem_pio2(double x, double* y) {
     double z, w, t, r, fn;
     double tx[3];

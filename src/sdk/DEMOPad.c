@@ -1,16 +1,23 @@
+// DEMOPad: the SDK demo-library pad reader (button edges, repeat, stick directions) used by makeKey.
 #include <demo/DEMOPad.h>
+
 #ifdef TARGET_PC
 #include "port/platform.h"
 #endif
-
 #define DEMO_STICK_THRESHOLD 48
 
 DEMOPadStatus DemoPad[PAD_MAX_CONTROLLERS];
 u32 DemoNumValidPads;
 PADStatus Pad[PAD_MAX_CONTROLLERS];
+/** Bit of each controller port, used by DEMOPadRead to reset ports with no controller attached. */
 u32 PadChanMask[PAD_MAX_CONTROLLERS] = {PAD_CHAN0_BIT, PAD_CHAN1_BIT, PAD_CHAN2_BIT, PAD_CHAN3_BIT};
 
-void DEMOPadCopy(PADStatus* pad, DEMOPadStatus* dmpad) {
+/**
+ * Updates one demo pad from a PAD read: stick and C-stick directions past 48,
+ * newly pressed and released buttons and directions, and stick deltas.
+ * On a transfer error the edges are cleared and the last state kept.
+ */
+static void DEMOPadCopy(PADStatus* pad, DEMOPadStatus* dmpad) {
     u16 dirs;
 
     if (pad->err != PAD_ERR_TRANSFER) {
@@ -61,6 +68,7 @@ void DEMOPadCopy(PADStatus* pad, DEMOPadStatus* dmpad) {
     }
 }
 
+/** Reads all four controllers, counts the connected ones, updates DemoPad and resets any unplugged channel. */
 void DEMOPadRead(void) {
     s32 i;
     u32 ResetReq = 0;
@@ -86,6 +94,7 @@ void DEMOPadRead(void) {
     }
 }
 
+/** Initialises the PAD library and zeroes all four DemoPad entries. */
 void DEMOPadInit(void) {
     s32 i;
 

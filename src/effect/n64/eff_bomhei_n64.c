@@ -1,3 +1,4 @@
+// Paper Mario 64 effect: Bob-omb (bomhei) sprite scaled over its duration; non-zero types also spin it.
 #include "eff/n64/eff_bomhei_n64.h"
 #include "eff/eff_n64.h"
 #include "driver/camdrv.h"
@@ -7,18 +8,19 @@
 #include <dolphin/mtx.h>
 
 typedef struct EffBomheiN64Work {
-    s16 type;       // 0x0
-    u8 pad_2[2];    // 0x2
-    Vec position;   // 0x4
-    f32 scale;      // 0x10
-    s32 timer;      // 0x14
-    s32 frame;      // 0x18
-    s32 duration;   // 0x1C
-    f32 progress;   // 0x20
-    f32 rotation;   // 0x24
-    f32 rotSpeed;   // 0x28
+    s16 type;     // 0x0
+    u8 pad_2[2];  // 0x2
+    Vec position; // 0x4
+    f32 scale;    // 0x10
+    s32 timer;    // 0x14
+    s32 frame;    // 0x18
+    s32 duration; // 0x1C
+    f32 progress; // 0x20
+    f32 rotation; // 0x24
+    f32 rotSpeed; // 0x28
 } EffBomheiN64Work;
 
+/** Camera-facing 32x32 Bob-omb sprite, cross-faded between frames of its texture sheet. */
 static effN64Vtx size32x32_tex32x32_vtx[] = {
     {-16, -16, 0, 0, 0, 0, 0, 0, 255},
     {16, -16, 0, 1024, 0, 0, 0, 0, 255},
@@ -26,15 +28,19 @@ static effN64Vtx size32x32_tex32x32_vtx[] = {
     {-16, 16, 0, 0, 1024, 0, 0, 0, 255},
 };
 
-void effBomheiMain(EffectEntry* effect);
-void effBomheiDisp(CameraId cameraId, EffectEntry* effect);
+static void effBomheiMain(EffectEntry* effect);
+static void effBomheiDisp(CameraId cameraId, EffectEntry* effect);
 
+/**
+ * Spawns a Bob-omb sprite at (x, y, z), `scale` times its size, living `duration` frames;
+ * type 0 stays upright and any other type spins at 40 degrees per frame.
+ */
 EffectEntry* effBomheiN64Entry(s32 type, s32 duration, f32 x, f32 y, f32 z, f32 scale) {
     EffectEntry* effect;
     EffBomheiN64Work* work;
 
     effect = effEntry();
-    effect->type = "BomheiN64\0\0";
+    effect->type = "BomheiN64";
     effect->count = 1;
     work = __memAlloc(HEAP_EFFECT, sizeof(EffBomheiN64Work));
     effect->userdata = work;
@@ -57,7 +63,8 @@ EffectEntry* effBomheiN64Entry(s32 type, s32 duration, f32 x, f32 y, f32 z, f32 
     return effect;
 }
 
-void effBomheiMain(EffectEntry* effect) {
+/** Advances a progress value from 0 to 9 across the duration, which Disp uses to cross-fade between sprite frames. */
+static void effBomheiMain(EffectEntry* effect) {
     EffBomheiN64Work* work = effect->userdata;
     Vec position;
     Vec tmp = {0.0f, 0.0f, 0.0f};
@@ -77,7 +84,11 @@ void effBomheiMain(EffectEntry* effect) {
     dispEntry(CAMERA_3D, dispCalcZ(&position), 2, (DispCallback)effBomheiDisp, effect);
 }
 
-void effBomheiDisp(CameraId cameraId, EffectEntry* effect) {
+/**
+ * Draws the sprite, cross-fading between two frames of one texture sheet by the progress fraction;
+ * tinted yellow until progress passes 4, then white.
+ */
+static void effBomheiDisp(CameraId cameraId, EffectEntry* effect) {
     CameraEntry* camera;
     EffBomheiN64Work* work;
     s32 alpha;

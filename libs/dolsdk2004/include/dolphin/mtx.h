@@ -74,6 +74,7 @@ void PSMTXScaleApply(const Mtx src, Mtx dst, f32 xS, f32 yS, f32 zS);
 void PSMTXQuat(Mtx m, const Quaternion* q);
 void PSMTXReflect(Mtx m, const Vec* p, const Vec* n);
 
+
 #ifdef TARGET_PC
 /* No paired-single unit on PC: route PS* to the portable C_* versions. */
 #define PSMTXIdentity C_MTXIdentity
@@ -130,7 +131,6 @@ void PSMTXReflect(Mtx m, const Vec* p, const Vec* n);
 #define PSQUATInverse C_QUATInverse
 #define PSQUATDivide C_QUATDivide
 #endif
-
 #ifdef DEBUG
 #define MTXIdentity   C_MTXIdentity
 #define MTXCopy       C_MTXCopy

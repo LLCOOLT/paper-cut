@@ -2,7 +2,7 @@
 /* The hookable functions of src/sequence/seq_title.c: included at its end (PORT_MODS). */
 #include "port/hook_slot.h"
 
-void titleMain(SequenceWork * p0) {
+static void titleMain(SequenceWork * p0) {
     PortHookSlot* s = &portHookSlots[39];
     int i, skip = 0;
     if (!s->active) {

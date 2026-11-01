@@ -1,7 +1,7 @@
+// eki_06 (駅, Riverside Station): far room with three floor switches, a paper-fold origami, a box and a power-up block; door to eki_05.
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
 
-#pragma force_active on
 #include "manager/evtmgr_cmd.h"
 #include "driver/mobjdrv.h"
 #include "driver/animdrv.h"
@@ -10,109 +10,56 @@
 #include "pmario_sound.h"
 #include "string.h"
 #include "evt/evt_bero.h"
+#include "evt/evt_cam.h"
+#include "evt/evt_hit.h"
+#include "evt/evt_map.h"
+#include "evt/evt_mario.h"
+#include "evt/evt_mobj.h"
+#include "evt/evt_npc.h"
+#include "evt/evt_snd.h"
 #include "eki.h"
+#include "evt/evt_story.h"
+#include "driver/mapdrv.h"
 
 static s32 lock;
 
-USER_FUNC(evt_bero_get_info);
-USER_FUNC(evt_cam3d_evt_off);
-USER_FUNC(evt_cam3d_evt_set);
-USER_FUNC(evt_hitobj_onoff);
-USER_FUNC(evt_map_checkanim);
-USER_FUNC(evt_map_playanim);
-USER_FUNC(evt_mapobj_flag_onoff);
-USER_FUNC(evt_mapobj_get_position);
-USER_FUNC(evt_mapobj_rotate);
-USER_FUNC(evt_mapobj_trans);
-USER_FUNC(evt_mario_get_pos);
-USER_FUNC(evt_mario_key_onoff);
-USER_FUNC(evt_mario_mov_pos2);
-USER_FUNC(evt_mario_normalize);
-USER_FUNC(evt_mobj_delete);
-USER_FUNC(evt_mobj_get_position);
-USER_FUNC(evt_mobj_powerupblk);
-USER_FUNC(evt_mobj_set_anim);
-USER_FUNC(evt_mobj_wait_animation_end);
-USER_FUNC(evt_npc_change_fbat_mode);
-USER_FUNC(evt_npc_get_ReactionOfLivingBody);
-USER_FUNC(evt_snd_bgmoff);
-USER_FUNC(evt_snd_bgmon);
-USER_FUNC(evt_snd_envon);
-USER_FUNC(evt_snd_sfxon_3d);
-USER_FUNC(sw_entry);
-s32 sw_main(MapObjectEntry* mobj);
-void sw_reset(void);
-s32 sw_cnt(MapObjectEntry* mobj);
-void sw_cntup(MapObjectEntry* mobj);
+static USER_FUNC(sw_entry);
+static s32 sw_main(MapObjectEntry* mobj);
+static void sw_reset(void);
+static s32 sw_cnt(MapObjectEntry* mobj);
+static void sw_cntup(MapObjectEntry* mobj);
 
-f32 fd_eki_06_negone_one_374[2] __attribute__((aligned(8)));
-f32 fd_eki_06_neg_one_382;
-f32 fd_eki_06___local_PI_383;
-f32 fd_eki_06___local_3PIO2_385;
-f32 fd_eki_06_one_negone_373[2] __attribute__((aligned(8)));
-f32 fd_eki_06___local_PIO2_384;
-f32 fd_eki_06_one_381;
-f32 fd_eki_06_negone_one_360[2] __attribute__((aligned(8)));
-f32 fd_eki_06_neg_one_365;
-f32 fd_eki_06___local_PI_366;
-f32 fd_eki_06___local_3PIO2_368;
-f32 fd_eki_06_one_negone_359[2] __attribute__((aligned(8)));
-f32 fd_eki_06___local_PIO2_367;
-f32 fd_eki_06_one_364;
-static EvtWord e_close[12];
-static EvtWord e_open[12];
 static BeroEntry bero_data[3];
-EvtWord evt_box_open[115];
-EvtWord evt_sw_complete[272];
-EvtWord eki_06_init_evt[132];
+extern EvtWord evt_box_open[];
 
-f32 fd_eki_06_negone_one_374[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_eki_06_neg_one_382 = -1.0f;
-
-f32 fd_eki_06___local_PI_383 = 3.1415927f;
-
-f32 fd_eki_06___local_3PIO2_385 = 4.712389f;
-
-f32 fd_eki_06_one_negone_373[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_eki_06___local_PIO2_384 = 1.5707964f;
-
-f32 fd_eki_06_one_381 = 1.0f;
-
-f32 fd_eki_06_negone_one_360[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_eki_06_neg_one_365 = -1.0f;
-
-f32 fd_eki_06___local_PI_366 = 3.1415927f;
-
-f32 fd_eki_06___local_3PIO2_368 = 4.712389f;
-
-f32 fd_eki_06_one_negone_359[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_eki_06___local_PIO2_367 = 1.5707964f;
-
-f32 fd_eki_06_one_364 = 1.0f;
-
+/**
+ * Door animation callback, closing for the e_bero_1 exit to eki_05:
+ * rotates map object "door" about Y by -0.444 times the value in LW(0).
+ */
 static EVT_BEGIN(e_close)
     MULTIPLY_FLOAT(LW(0), FLOAT(-0.44433594f))
     CALL(evt_mapobj_rotate, 0, STRING("door"), 0, LW(0), 0)
     RETURN
 EVT_END()
 
+/**
+ * Door animation callback, opening for the e_bero_1 exit to eki_05:
+ * rotates map object "door" about Y by 0.444 times the value in LW(0).
+ */
 static EVT_BEGIN(e_open)
     MULTIPLY_FLOAT(LW(0), FLOAT(0.44433594f))
     CALL(evt_mapobj_rotate, 0, STRING("door"), 0, LW(0), 0)
     RETURN
 EVT_END()
 
+/** Exits (beros) of this room: e_bero_1 to eki_05 and e_bero_2 to eki_05. */
 static BeroEntry bero_data[] = {
     {
         "e_bero_1", // hitName
         1, // type
         3, // sfxId
-        20000, // directionId
-        100000, // centerPosition
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         NULL, // enterEvent
@@ -128,8 +75,8 @@ static BeroEntry bero_data[] = {
     {
         "e_bero_2", // hitName
         0, 0, // type..sfxId
-        20000, // directionId
-        100000, // centerPosition
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         NULL, // enterEvent
@@ -144,8 +91,14 @@ static BeroEntry bero_data[] = {
     {0},
 };
 
+/**
+ * Spawned by the map init: waits until the partner has stopped reacting,
+ * then plays the box (anm_hako) opening with a camera shot
+ * and creates the three counting switches (MOBJ_eki_06_su1 to su3) it reveals,
+ * and advances the story to STORY_STG6_34_3_BLUE_BLOCKS. Does nothing when that step has already been reached.
+ */
 EVT_BEGIN(evt_box_open)
-    IF_INT_GREATER_OR_EQUAL(GSW(0), 317)
+    IF_INT_GREATER_OR_EQUAL(GSW(GSW_STORY_PROGRESS), STORY_STG6_34_3_BLUE_BLOCKS)
         RETURN
     END_IF
     LABEL(0)
@@ -173,11 +126,17 @@ EVT_BEGIN(evt_box_open)
     CALL(evt_hitobj_onoff, STRING("a_hako"), 1, 0)
     CALL(evt_cam3d_evt_off, 500, 11)
     WAIT_MS(500)
-    SET_VALUE(GSW(0), 317)
+    SET_VALUE(GSW(GSW_STORY_PROGRESS), STORY_STG6_34_3_BLUE_BLOCKS)
     CALL(evt_mario_key_onoff, 1)
     RETURN
 EVT_END()
 
+/**
+ * Runs when the three counting switches have been hit the right number of times:
+ * plays their completion animations and sounds, removes them,
+ * unfolds the origami stairs (anm_kaidan167, one step at a time) with a camera shot,
+ * plays the success jingle and sets the story to STORY_STG6_35_ORIGAMI_STAIRS.
+ */
 EVT_BEGIN(evt_sw_complete)
     CALL(evt_mario_key_onoff, 0)
     CALL(evt_cam3d_evt_set, -140, 152, 528, -140, 57, -12, 500, 11)
@@ -214,8 +173,8 @@ EVT_BEGIN(evt_sw_complete)
     CALL(evt_mobj_delete, STRING("MOBJ_eki_06_su3"))
     CALL(evt_cam3d_evt_set, -80, 202, 448, -80, 107, -92, 500, 11)
     WAIT_MS(500)
-    CALL(evt_mapobj_flag_onoff, 1, 0, STRING("origami"), 1)
-    CALL(evt_mapobj_flag_onoff, 1, 1, STRING("n_origami"), 1)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("origami"), MAPOBJ_FLAG_HIDE)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("n_origami"), MAPOBJ_FLAG_HIDE)
     CALL(evt_hitobj_onoff, STRING("a_ori"), 1, 1)
     BEGIN_INLINE_EVENT
         CALL(evt_mapobj_get_position, STRING("origami"), LW(0), LW(1), LW(2))
@@ -241,22 +200,26 @@ EVT_BEGIN(evt_sw_complete)
         END_LOOP
     END_INLINE_EVENT
     WAIT_FRAMES(100)
-    CALL(evt_mapobj_flag_onoff, 1, 1, STRING("oku_1"), 1)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("oku_1"), MAPOBJ_FLAG_HIDE)
     WAIT_FRAMES(32)
-    CALL(evt_mapobj_flag_onoff, 1, 1, STRING("oku_2"), 1)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("oku_2"), MAPOBJ_FLAG_HIDE)
     WAIT_FRAMES(34)
-    CALL(evt_mapobj_flag_onoff, 1, 1, STRING("oku_3"), 1)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("oku_3"), MAPOBJ_FLAG_HIDE)
     CALL(evt_map_checkanim, STRING("anm_kaidan167"), LW(0), LW(1))
     WAIT_MS(LW(1))
-    CALL(evt_snd_bgmon, 512, STRING("BGM_FF_ENV_SUCCESS1"))
+    CALL(evt_snd_bgmon, PSND_FADE_OUT, STRING("BGM_FF_ENV_SUCCESS1"))
     CALL(evt_cam3d_evt_off, 500, 11)
     WAIT_MS(500)
-    SET_VALUE(GSW(0), 318)
+    SET_VALUE(GSW(GSW_STORY_PROGRESS), STORY_STG6_35_ORIGAMI_STAIRS)
     CALL(evt_mario_key_onoff, 1)
     RETURN
 EVT_END()
 
-void sw_cntup(MapObjectEntry* mobj) {
+/**
+ * Adds one to the hit counter (GW(0), GW(1) or GW(2)) of the counting switch that was just hit,
+ * chosen by the switch's name.
+ */
+static void sw_cntup(MapObjectEntry* mobj) {
     if (strcmp(mobj->name, "MOBJ_eki_06_su1") == 0) {
         evtSetValue(NULL, GW(0), evtGetValue(NULL, GW(0)) + 1);
     } else if (strcmp(mobj->name, "MOBJ_eki_06_su2") == 0) {
@@ -266,8 +229,8 @@ void sw_cntup(MapObjectEntry* mobj) {
     }
 }
 
-
-s32 sw_cnt(MapObjectEntry* mobj) {
+/** Returns the hit counter (GW(0) to GW(2)) of the counting switch named by mobj, or 0 for any other object. */
+static s32 sw_cnt(MapObjectEntry* mobj) {
     if (strcmp(mobj->name, "MOBJ_eki_06_su1") == 0) {
         return evtGetValue(NULL, GW(0));
     }
@@ -280,11 +243,16 @@ s32 sw_cnt(MapObjectEntry* mobj) {
     return 0;
 }
 
-void sw_reset(void) {
+/**
+ * Called when a switch has been hit too many times:
+ * sets the switches back to their idle poses and clears the counters of the ones that were at their trigger
+ * count (1, 10 and 3 hits).
+ */
+static void sw_reset(void) {
     MapObjectEntry* mobj;
 
     mobj = mobjNameToPtr("MOBJ_eki_06_su1");
-    mobj->flags &= ~2;
+    mobj->flags &= ~MOBJ_FLAG_NO_SHADOW;
     switch (sw_cnt(mobj)) {
         case 2:
             animPoseSetAnim(mobj->poseId, "ANIM_5", 1);
@@ -293,7 +261,7 @@ void sw_reset(void) {
     }
 
     mobj = mobjNameToPtr("MOBJ_eki_06_su2");
-    mobj->flags &= ~2;
+    mobj->flags &= ~MOBJ_FLAG_NO_SHADOW;
     switch (sw_cnt(mobj)) {
         case 11:
             animPoseSetAnim(mobj->poseId, "ANIM_7", 1);
@@ -302,7 +270,7 @@ void sw_reset(void) {
     }
 
     mobj = mobjNameToPtr("MOBJ_eki_06_su3");
-    mobj->flags &= ~2;
+    mobj->flags &= ~MOBJ_FLAG_NO_SHADOW;
     switch (sw_cnt(mobj)) {
         case 4:
             animPoseSetAnim(mobj->poseId, "ANIM_7", 1);
@@ -311,19 +279,26 @@ void sw_reset(void) {
     }
 }
 
-s32 sw_main(MapObjectEntry* mobj) {
+/**
+ * Per-frame function of each counting switch.
+ * When hit (stomp, hammer or partner action) it counts the hit and plays its press animation,
+ * locking the other switches meanwhile; the puzzle is solved when the three switches have been hit exactly 1,
+ * 10 and 3 times (evt_sw_complete is then started), otherwise the switch pops back up,
+ * and an overcount resets all counters.
+ */
+static s32 sw_main(MapObjectEntry* mobj) {
     switch (mobj->state) {
         case 2:
             break;
         case 0:
-            if (!(mobj->flags & 8)) {
+            if (!(mobj->flags & MOBJ_FLAG_HIT)) {
                 break;
             }
             if (lock != 0) {
                 break;
             }
             lock = 1;
-            if (mobj->hitFlag == 0x200000) {
+            if (mobj->hitFlag == MOBJ_HIT_STAND_ON) {
                 marioChgMot(5);
             }
             psndSFXOn_3D("SFX_STG6_OBJ_SWITCH_ON1", &mobj->position);
@@ -364,12 +339,12 @@ s32 sw_main(MapObjectEntry* mobj) {
                 mobj->state++;
                 break;
             }
-            mobjNameToPtr("MOBJ_eki_06_su1")->flags |= 2;
-            mobjNameToPtr("MOBJ_eki_06_su2")->flags |= 2;
-            mobjNameToPtr("MOBJ_eki_06_su3")->flags |= 2;
+            mobjNameToPtr("MOBJ_eki_06_su1")->flags |= MOBJ_FLAG_NO_SHADOW;
+            mobjNameToPtr("MOBJ_eki_06_su2")->flags |= MOBJ_FLAG_NO_SHADOW;
+            mobjNameToPtr("MOBJ_eki_06_su3")->flags |= MOBJ_FLAG_NO_SHADOW;
             if (strcmp(mobj->name, "MOBJ_eki_06_su1") == 0) {
                 if (sw_cnt(mobj) == 1) {
-                    animPoseSetAnim(mobj->poseId, "ANIM_3\0", 1);
+                    animPoseSetAnim(mobj->poseId, "ANIM_3", 1);
                 } else {
                     animPoseSetAnim(mobj->poseId, "ANIM_1", 1);
                 }
@@ -388,7 +363,7 @@ s32 sw_main(MapObjectEntry* mobj) {
                     animPoseSetAnim(mobj->poseId, "ANIM_1", 1);
                 }
             }
-            mobj->flags &= ~8;
+            mobj->flags &= ~MOBJ_FLAG_HIT;
             mobj->state = 0;
             lock = 0;
             break;
@@ -396,7 +371,12 @@ s32 sw_main(MapObjectEntry* mobj) {
     return 0;
 }
 
-USER_FUNC(sw_entry) {
+/**
+ * Script helper: loads the switch model named by args[0]
+ * and spawns it as a map object at (args[1], args[2], args[3]) with sw_main as its per-frame function.
+ * Blocks until the model has finished loading.
+ */
+static USER_FUNC(sw_entry) {
     EvtWord* args = event->args;
     const char* name;
     f32 x, y, z;
@@ -412,14 +392,14 @@ USER_FUNC(sw_entry) {
     }
     mobjEntry(name, name);
     mobj = mobjNameToPtr(name);
-    mobj->flags |= 6;
+    mobj->flags |= MOBJ_FLAG_CALC_MTX | MOBJ_FLAG_NO_SHADOW;
     pos = (Vec){0.0f, 0.0f, 0.0f};
     pos.x = x;
     pos.y = y;
     pos.z = z;
     mobj->position = pos;
     mobj->mainFunc = sw_main;
-    mobj->flags |= 0xA10000;
+    mobj->flags |= MOBJ_HIT_PARTY_ACTION | MOBJ_HIT_STAND_ON | MOBJ_HIT_HAMMER;
     mobj->state = 0;
     mobjCalcMtx(mobj);
     animPoseSetAnim(mobj->poseId, "ANIM_1", 1);
@@ -427,39 +407,45 @@ USER_FUNC(sw_entry) {
     return EVT_RETURN_DONE;
 }
 
+/**
+ * Map init for eki_06: sets up the door to eki_05,
+ * the box and the three counting switches according to the story step (before STORY_STG6_34_3_BLUE_BLOCKS the
+ * stairs are hidden; at that step the switches exist;
+ * later the stairs are already unfolded), and the Shine Sprite power-up block.
+ */
 EVT_BEGIN(eki_06_init_evt)
     SET_VALUE(LW(0), PTR(bero_data))
     CALL(evt_bero_get_info)
-    CALL_CHILD(PTR(evt_bero_info_run))
-    CALL(evt_snd_bgmoff, 512)
-    CALL(evt_snd_envon, 272, STRING("ENV_STG6_EKI2"))
+    CALL_CHILD(evt_bero_info_run)
+    CALL(evt_snd_bgmoff, PSND_FADE_OUT)
+    CALL(evt_snd_envon, PSND_FADE_RESTART | PSND_FADE_IN, STRING("ENV_STG6_EKI2"))
     CALL(evt_npc_change_fbat_mode, 1)
-    SPAWN_EVENT(PTR(evt_box_open))
-    SWITCH(GSW(0))
-        CASE_LESS(317)
+    SPAWN_EVENT(evt_box_open)
+    SWITCH(GSW(GSW_STORY_PROGRESS))
+        CASE_LESS(STORY_STG6_34_3_BLUE_BLOCKS)
         CALL(evt_hitobj_onoff, STRING("a_ori"), 1, 0)
-        CASE_EQUAL(317)
+        CASE_EQUAL(STORY_STG6_34_3_BLUE_BLOCKS)
         SET_VALUE(GW(0), 0)
         SET_VALUE(GW(1), 0)
         SET_VALUE(GW(2), 0)
         CALL(sw_entry, STRING("MOBJ_eki_06_su3"), -240, 0, 40)
         CALL(sw_entry, STRING("MOBJ_eki_06_su2"), -140, 0, 40)
         CALL(sw_entry, STRING("MOBJ_eki_06_su1"), -40, 0, 40)
-        CALL(evt_mapobj_flag_onoff, 1, 1, STRING("origami"), 1)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("origami"), MAPOBJ_FLAG_HIDE)
         CALL(evt_hitobj_onoff, STRING("a_ori"), 1, 0)
         CASE_DEFAULT
         CALL(evt_map_playanim, STRING("anm_kaidan167"), 2, 0)
-        CALL(evt_mapobj_flag_onoff, 1, 1, STRING("n_origami"), 1)
-        CALL(evt_mapobj_flag_onoff, 1, 1, STRING("oku_1"), 1)
-        CALL(evt_mapobj_flag_onoff, 1, 1, STRING("oku_2"), 1)
-        CALL(evt_mapobj_flag_onoff, 1, 1, STRING("oku_3"), 1)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("n_origami"), MAPOBJ_FLAG_HIDE)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("oku_1"), MAPOBJ_FLAG_HIDE)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("oku_2"), MAPOBJ_FLAG_HIDE)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("oku_3"), MAPOBJ_FLAG_HIDE)
     END_SWITCH
-    IF_INT_LESS(GSW(0), 317)
-        ELSE
+    IF_INT_LESS(GSW(GSW_STORY_PROGRESS), STORY_STG6_34_3_BLUE_BLOCKS)
+    ELSE
         CALL(evt_map_playanim, STRING("anm_hako"), 2, 0)
         CALL(evt_hitobj_onoff, STRING("a_hako"), 1, 0)
     END_IF
     CALL(evt_mapobj_trans, 1, STRING("HAKO"), 0, FLOAT(0.099609375f), 0)
-    CALL(evt_mobj_powerupblk, STRING("pblk01"), 95, 295, -80, 0, GSWF(5562), 0)
+    CALL(evt_mobj_powerupblk, STRING("pblk01"), 95, 295, -80, 0, GSWF(GSWF_EKI06_SHINE_SPRITE), 0)
     RETURN
 EVT_END()

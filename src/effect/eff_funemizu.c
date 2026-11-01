@@ -1,4 +1,4 @@
-#pragma dollar_identifiers on
+// Boat water (funemizu: boat water): ripples and splash spray around a boat, tinted with a per-map water colour.
 #include "eff/eff_funemizu.h"
 #include "driver/camdrv.h"
 #include "driver/dispdrv.h"
@@ -9,93 +9,121 @@
 #include <dolphin/gx.h>
 #include <dolphin/mtx.h>
 #include <string.h>
-#include "eff/eff_magic1_n64.h"
 #include "libc_decls.h"
+#include "version.h"
 
-void effFunemizuMain(EffectEntry* effect);
-void effFunemizuDisp(CameraId cameraId, EffectEntry* effect);
-void effFunemizuShibukiDisp(CameraId cameraId, EffectEntry* effect);
+static void effFunemizuMain(EffectEntry* effect);
+static void effFunemizuDisp(CameraId cameraId, EffectEntry* effect);
+static void effFunemizuShibukiDisp(CameraId cameraId, EffectEntry* effect);
 
 typedef struct ColorEntry {
     char* name;
     GXColor color;
 } ColorEntry;
 
+#if VERSION >= VERSION_JP
+/** Water tint used when the current map has no entry in funemizu_color_tbl: plain white. */
 static const GXColor funemizu_default_color = {0xFF, 0xFF, 0xFF, 0xFF};
+#endif
 
-__declspec(section ".data") f32 eff_funemizu_negone_one_a[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-__declspec(section ".data") static f32 negone_one$374[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-__declspec(section ".data") f32 eff_funemizu_one_negone_a[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-__declspec(section ".data") static f32 one_negone$373[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-__declspec(section ".data") f32 eff_funemizu_negone_one_b[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-__declspec(section ".data") static f32 negone_one$360[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-__declspec(section ".data") f32 eff_funemizu_one_negone_b[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-__declspec(section ".data") static f32 one_negone$359[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
+// Model data in the exporter's layout: indexed vertex arrays (positions, normals, colours, texture coordinates),
+// display lists of GX commands (each padded to 32 bytes with GX_NOP) and, per list table, the list sizes in
+// 32-byte units for GXCallDisplayList.
+static s16 funemizu_vertex_tbl[] __attribute__((aligned(32))) = {20079, -636, 0, 13766, 0, 0, 8902, 0, 0, 5574, 0, 0, 0, 0, 0, 13766, 1536, 0, 8902, 2560, 0, 5574, 2560, 0, 512, 0, 0, 18154, 899, 0, 13766, 3328, 0, 8902, 5376, 0, 5574, 5488, 0, 2246, 2982, 0, 14542, -396, 1249, 10016, 0, 1249, 6528, 0, 1249, 4142, 0, 1249, 512, 0, 1249, 10016, 957, 1249, 6528, 1596, 1249, 4142, 1596, 1249, 13161, 560, 1249, 10016, 2074, 1249, 6528, 3351, 1249, 4142, 3422, 1249, 1755, 1859, 1249};
+static s16 funemizu_texcoord0_tbl[] __attribute__((aligned(32))) = {1024, 4096, 1024, 2048, 0, 3072, 2048, 4096, 2048, 2048, 3072, 4096, 3072, 2048, 4096, 4096, 4096, 2048, 1024, 256, 0, 256, 2048, 256, 3072, 256, 4096, 256, -19456, 4096, -19456, 2048, -20480, 3072, -18432, 4096, -18432, 2048, -17408, 4096, -17408, 2048, -16384, 3072, -19456, 256, -20480, 256, -18432, 256, -17408, 256, -16384, 256};
+static s8 funemizu_normal_tbl[] __attribute__((aligned(32))) = {0, 0, 64};
+static u8 funemizu_color0_tbl[] __attribute__((aligned(32))) = {0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+static u8 funemizu_dl_0_0[] __attribute__((aligned(32))) = {0x98, 0x00, 0x0A, 0x09, 0x00, 0x01, 0x0A, 0x00, 0x00, 0x00, 0x02, 0x0A, 0x00, 0x01, 0x09, 0x05, 0x00, 0x01, 0x01, 0x0B, 0x00, 0x01, 0x0B, 0x06, 0x00, 0x01, 0x04, 0x0C, 0x00, 0x01, 0x0C, 0x07, 0x00, 0x01, 0x06, 0x0D, 0x00, 0x01, 0x0D, 0x08, 0x00, 0x00, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+static u8 funemizu_dl_0_1[] __attribute__((aligned(32))) = {0x98, 0x00, 0x07, 0x04, 0x00, 0x00, 0x07, 0x08, 0x00, 0x00, 0x08, 0x03, 0x00, 0x00, 0x05, 0x07, 0x00, 0x01, 0x06, 0x02, 0x00, 0x00, 0x03, 0x06, 0x00, 0x01, 0x04, 0x01, 0x00, 0x00, 0x00, 0x00};
+static u8 funemizu_dl_0_2[] __attribute__((aligned(32))) = {0x98, 0x00, 0x04, 0x00, 0x00, 0x00, 0x02, 0x01, 0x00, 0x00, 0x00, 0x05, 0x00, 0x01, 0x01, 0x06, 0x00, 0x01, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+/** The three display lists of the type 0 wake's base layer, drawn with the sizes below. */
+static u8* funemizu_dl_0_tbl[] = {funemizu_dl_0_0, funemizu_dl_0_1, funemizu_dl_0_2};
+/**
+ * Sizes in 32-byte units of the three display lists of the type 0 wake's base layer (the wake of
+ * Mario's paper boat and of ships); used by funemizuCallDL.
+ */
+static u8 funemizu_dl_0_size_tbl[] = {0x02, 0x01, 0x01};
+static u8 funemizu_dl_1_0[] __attribute__((aligned(32))) = {0x98, 0x00, 0x0A, 0x16, 0x00, 0x01, 0x17, 0x0E, 0x00, 0x00, 0x10, 0x17, 0x00, 0x01, 0x16, 0x13, 0x00, 0x01, 0x0F, 0x18, 0x00, 0x01, 0x18, 0x14, 0x00, 0x01, 0x12, 0x19, 0x00, 0x01, 0x19, 0x15, 0x00, 0x01, 0x14, 0x1A, 0x00, 0x01, 0x1A, 0x12, 0x00, 0x00, 0x15, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+static u8 funemizu_dl_1_1[] __attribute__((aligned(32))) = {0x98, 0x00, 0x04, 0x12, 0x00, 0x00, 0x15, 0x15, 0x00, 0x01, 0x14, 0x11, 0x00, 0x00, 0x13, 0x10, 0x00, 0x00, 0x11, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+static u8 funemizu_dl_1_2[] __attribute__((aligned(32))) = {0x98, 0x00, 0x04, 0x0E, 0x00, 0x00, 0x10, 0x0F, 0x00, 0x00, 0x0E, 0x13, 0x00, 0x01, 0x0F, 0x14, 0x00, 0x01, 0x12, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+static u8 funemizu_dl_1_3[] __attribute__((aligned(32))) = {0x98, 0x00, 0x04, 0x15, 0x00, 0x01, 0x14, 0x14, 0x00, 0x01, 0x12, 0x10, 0x00, 0x00, 0x11, 0x0F, 0x00, 0x00, 0x0E, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+static u8* funemizu_dl_1_tbl[] = {funemizu_dl_1_0, funemizu_dl_1_1, funemizu_dl_1_2, funemizu_dl_1_3};
+/**
+ * Sizes in 32-byte units of the four display lists of the type 0 wake's stretched, scrolling outer layer;
+ * used by effFunemizuDisp.
+ */
+static u8 funemizu_dl_1_size_tbl[] = {0x02, 0x01, 0x01, 0x01};
+static s16 gor_fune_vertex_tbl[] __attribute__((aligned(32))) = {23605, 0, 0, 16368, 0, 0, 12081, 0, 0, 8184, 0, 0, 4287, 0, 0, 0, 0, 0, 24198, 333, 0, 17754, 3291, 0, 13886, 6565, 0, 10323, 9024, 0, 6398, 9314, 0, 0, 0, 0, 24139, 2048, 0, 18190, 4665, 0, 14467, 8397, 0, 10977, 11084, 0, 7124, 11603, 0, 2223, 9774, 0, 23605, 0, 0, 16368, 0, 0, 12081, 0, 0, 8184, 0, 0, 4287, 0, 0, 0, 0, 0, 24198, 200, 0, 17754, 1974, 0, 13886, 4553, 0, 10323, 6438, 0, 6398, 6612, 0, 0, 0, 0, 24139, 1229, 0, 18190, 2799, 0, 14467, 5652, 0, 10977, 7674, 0, 7124, 7986, 0, 2966, 6422, 0};
+static s16 gor_fune_texcoord0_tbl[] __attribute__((aligned(32))) = {-3325, 16384, -3325, 6276, -11004, 6276, -11004, 16384, 4352, 16384, 4352, 6276, 12031, 16384, 12031, 6276, 19709, 16384, 19709, 6276, 27388, 16384, 27388, 6276, -3325, 1024, -11004, 512, 4352, 1024, 12031, 1024, 19709, 1024, 27388, 512, -3325, 15564, -11004, 15564, 4352, 15564, 12031, 15564, 19709, 15564, 27388, 15564};
+static u8 gor_fune_dl_0_0[] __attribute__((aligned(32))) = {0x98, 0x00, 0x0C, 0x0C, 0x00, 0x01, 0x0D, 0x06, 0x00, 0x00, 0x02, 0x0D, 0x00, 0x01, 0x0C, 0x07, 0x00, 0x01, 0x01, 0x0E, 0x00, 0x01, 0x0E, 0x08, 0x00, 0x01, 0x05, 0x0F, 0x00, 0x01, 0x0F, 0x09, 0x00, 0x01, 0x07, 0x10, 0x00, 0x01, 0x10, 0x0A, 0x00, 0x01, 0x09, 0x11, 0x00, 0x01, 0x11, 0x0B, 0x00, 0x00, 0x0B, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+static u8 gor_fune_dl_0_1[] __attribute__((aligned(32))) = {0x98, 0x00, 0x0C, 0x05, 0x00, 0x00, 0x0A, 0x0B, 0x00, 0x00, 0x0B, 0x04, 0x00, 0x00, 0x08, 0x0A, 0x00, 0x01, 0x09, 0x03, 0x00, 0x00, 0x06, 0x09, 0x00, 0x01, 0x07, 0x02, 0x00, 0x00, 0x04, 0x08, 0x00, 0x01, 0x05, 0x01, 0x00, 0x00, 0x00, 0x07, 0x00, 0x01, 0x01, 0x00, 0x00, 0x00, 0x03, 0x06, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+static u8 gor_fune_dl_1_0[] __attribute__((aligned(32))) = {0x98, 0x00, 0x0C, 0x1E, 0x00, 0x01, 0x0D, 0x18, 0x00, 0x00, 0x02, 0x1F, 0x00, 0x01, 0x0C, 0x19, 0x00, 0x01, 0x01, 0x20, 0x00, 0x01, 0x0E, 0x1A, 0x00, 0x01, 0x05, 0x21, 0x00, 0x01, 0x0F, 0x1B, 0x00, 0x01, 0x07, 0x22, 0x00, 0x01, 0x10, 0x1C, 0x00, 0x01, 0x09, 0x23, 0x00, 0x01, 0x11, 0x1D, 0x00, 0x00, 0x0B, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+static u8 gor_fune_dl_1_1[] __attribute__((aligned(32))) = {0x98, 0x00, 0x0C, 0x17, 0x00, 0x00, 0x17, 0x1D, 0x00, 0x00, 0x0B, 0x16, 0x00, 0x00, 0x16, 0x1C, 0x00, 0x01, 0x09, 0x15, 0x00, 0x00, 0x15, 0x1B, 0x00, 0x01, 0x07, 0x14, 0x00, 0x00, 0x14, 0x1A, 0x00, 0x01, 0x05, 0x13, 0x00, 0x00, 0x12, 0x19, 0x00, 0x01, 0x01, 0x12, 0x00, 0x00, 0x13, 0x18, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
-static s16 funemizu_vertex_tbl[] = { 20079, -636, 0, 13766, 0, 0, 8902, 0, 0, 5574, 0, 0, 0, 0, 0, 13766, 1536, 0, 8902, 2560, 0, 5574, 2560, 0, 512, 0, 0, 18154, 899, 0, 13766, 3328, 0, 8902, 5376, 0, 5574, 5488, 0, 2246, 2982, 0, 14542, -396, 1249, 10016, 0, 1249, 6528, 0, 1249, 4142, 0, 1249, 512, 0, 1249, 10016, 957, 1249, 6528, 1596, 1249, 4142, 1596, 1249, 13161, 560, 1249, 10016, 2074, 1249, 6528, 3351, 1249, 4142, 3422, 1249, 1755, 1859, 1249, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-static s16 funemizu_texcoord0_tbl[] = { 1024, 4096, 1024, 2048, 0, 3072, 2048, 4096, 2048, 2048, 3072, 4096, 3072, 2048, 4096, 4096, 4096, 2048, 1024, 256, 0, 256, 2048, 256, 3072, 256, 4096, 256, -19456, 4096, -19456, 2048, -20480, 3072, -18432, 4096, -18432, 2048, -17408, 4096, -17408, 2048, -16384, 3072, -19456, 256, -20480, 256, -18432, 256, -17408, 256, -16384, 256, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-static u8 funemizu_dl_0_0[] = { 0x98, 0x00, 0x0A, 0x09, 0x00, 0x01, 0x0A, 0x00, 0x00, 0x00, 0x02, 0x0A, 0x00, 0x01, 0x09, 0x05, 0x00, 0x01, 0x01, 0x0B, 0x00, 0x01, 0x0B, 0x06, 0x00, 0x01, 0x04, 0x0C, 0x00, 0x01, 0x0C, 0x07, 0x00, 0x01, 0x06, 0x0D, 0x00, 0x01, 0x0D, 0x08, 0x00, 0x00, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
-static u8 funemizu_dl_1_0[] = { 0x98, 0x00, 0x0A, 0x16, 0x00, 0x01, 0x17, 0x0E, 0x00, 0x00, 0x10, 0x17, 0x00, 0x01, 0x16, 0x13, 0x00, 0x01, 0x0F, 0x18, 0x00, 0x01, 0x18, 0x14, 0x00, 0x01, 0x12, 0x19, 0x00, 0x01, 0x19, 0x15, 0x00, 0x01, 0x14, 0x1A, 0x00, 0x01, 0x1A, 0x12, 0x00, 0x00, 0x15, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
-static s16 gor_fune_vertex_tbl[] = { 23605, 0, 0, 16368, 0, 0, 12081, 0, 0, 8184, 0, 0, 4287, 0, 0, 0, 0, 0, 24198, 333, 0, 17754, 3291, 0, 13886, 6565, 0, 10323, 9024, 0, 6398, 9314, 0, 0, 0, 0, 24139, 2048, 0, 18190, 4665, 0, 14467, 8397, 0, 10977, 11084, 0, 7124, 11603, 0, 2223, 9774, 0, 23605, 0, 0, 16368, 0, 0, 12081, 0, 0, 8184, 0, 0, 4287, 0, 0, 0, 0, 0, 24198, 200, 0, 17754, 1974, 0, 13886, 4553, 0, 10323, 6438, 0, 6398, 6612, 0, 0, 0, 0, 24139, 1229, 0, 18190, 2799, 0, 14467, 5652, 0, 10977, 7674, 0, 7124, 7986, 0, 2966, 6422, 0, 0, 0, 0, 0 };
-static s16 gor_fune_texcoord0_tbl[] = { -3325, 16384, -3325, 6276, -11004, 6276, -11004, 16384, 4352, 16384, 4352, 6276, 12031, 16384, 12031, 6276, 19709, 16384, 19709, 6276, 27388, 16384, 27388, 6276, -3325, 1024, -11004, 512, 4352, 1024, 12031, 1024, 19709, 1024, 27388, 512, -3325, 15564, -11004, 15564, 4352, 15564, 12031, 15564, 19709, 15564, 27388, 15564 };
-static u8 gor_fune_dl_0_0[] = { 0x98, 0x00, 0x0C, 0x0C, 0x00, 0x01, 0x0D, 0x06, 0x00, 0x00, 0x02, 0x0D, 0x00, 0x01, 0x0C, 0x07, 0x00, 0x01, 0x01, 0x0E, 0x00, 0x01, 0x0E, 0x08, 0x00, 0x01, 0x05, 0x0F, 0x00, 0x01, 0x0F, 0x09, 0x00, 0x01, 0x07, 0x10, 0x00, 0x01, 0x10, 0x0A, 0x00, 0x01, 0x09, 0x11, 0x00, 0x01, 0x11, 0x0B, 0x00, 0x00, 0x0B, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
-static u8 gor_fune_dl_0_1[] = { 0x98, 0x00, 0x0C, 0x05, 0x00, 0x00, 0x0A, 0x0B, 0x00, 0x00, 0x0B, 0x04, 0x00, 0x00, 0x08, 0x0A, 0x00, 0x01, 0x09, 0x03, 0x00, 0x00, 0x06, 0x09, 0x00, 0x01, 0x07, 0x02, 0x00, 0x00, 0x04, 0x08, 0x00, 0x01, 0x05, 0x01, 0x00, 0x00, 0x00, 0x07, 0x00, 0x01, 0x01, 0x00, 0x00, 0x00, 0x03, 0x06, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
-static u8 gor_fune_dl_1_0[] = { 0x98, 0x00, 0x0C, 0x1E, 0x00, 0x01, 0x0D, 0x18, 0x00, 0x00, 0x02, 0x1F, 0x00, 0x01, 0x0C, 0x19, 0x00, 0x01, 0x01, 0x20, 0x00, 0x01, 0x0E, 0x1A, 0x00, 0x01, 0x05, 0x21, 0x00, 0x01, 0x0F, 0x1B, 0x00, 0x01, 0x07, 0x22, 0x00, 0x01, 0x10, 0x1C, 0x00, 0x01, 0x09, 0x23, 0x00, 0x01, 0x11, 0x1D, 0x00, 0x00, 0x0B, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
-static u8 gor_fune_dl_1_1[] = { 0x98, 0x00, 0x0C, 0x17, 0x00, 0x00, 0x17, 0x1D, 0x00, 0x00, 0x0B, 0x16, 0x00, 0x00, 0x16, 0x1C, 0x00, 0x01, 0x09, 0x15, 0x00, 0x00, 0x15, 0x1B, 0x00, 0x01, 0x07, 0x14, 0x00, 0x00, 0x14, 0x1A, 0x00, 0x01, 0x05, 0x13, 0x00, 0x00, 0x12, 0x19, 0x00, 0x01, 0x01, 0x12, 0x00, 0x00, 0x13, 0x18, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+#if VERSION <= VERSION_DEMO_JP
+static s8 gor_fune_normal_tbl[] __attribute__((aligned(32))) = {0, 0, 64};
+#else
+static s8 gor_fune_normal_tbl[] __attribute__((aligned(32))) = {0, 0, 64, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+#endif
+static u8 gor_fune_color0_tbl[] __attribute__((aligned(32))) = {0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+/** The two base-layer display lists of the type 2 wake, drawn with the sizes below. */
+static u8* gor_fune_dl_0_tbl[] = {gor_fune_dl_0_0, gor_fune_dl_0_1};
+/**
+ * Sizes in 32-byte units of the base-layer display lists of the type 2 wake, the second wake mesh gor_00
+ * shows beside the ship arriving in Rogueport harbour; used by effFunemizuDisp.
+ * The outer layer's lists and sizes follow.
+ */
+static u8 gor_fune_dl_0_size_tbl[] = {0x02, 0x02};
+static u8* gor_fune_dl_1_tbl[] = {gor_fune_dl_1_0, gor_fune_dl_1_1};
+static u8 gor_fune_dl_1_size_tbl[] = {0x02, 0x02};
 
-static struct { ColorEntry e[32]; char* term; } funemizu_color_tbl = { {
-    { "dou_02", {0x0E, 0x2C, 0xA2, 0x00} },
-    { "dou_03", {0x0E, 0x2C, 0xA2, 0x00} },
-    { "dou_04", {0x0E, 0x2C, 0xA2, 0x00} },
-    { "dou_05", {0x0E, 0x2C, 0xA2, 0x00} },
-    { "dou_07", {0x0E, 0x2C, 0xA2, 0x00} },
-    { "dou_08", {0x0E, 0x2C, 0xA2, 0x00} },
-    { "dou_09", {0x0E, 0x2C, 0xA2, 0x00} },
-    { "dou_10", {0x0E, 0x2C, 0xA2, 0x00} },
-    { "dou_11", {0x0E, 0x2C, 0xA2, 0x00} },
-    { "dou_12", {0x0E, 0x2C, 0xA2, 0x00} },
-    { "gon_01", {0x00, 0x61, 0x49, 0x00} },
-    { "gor_00", {0x00, 0x30, 0x65, 0x00} },
-    { "gor_02", {0x00, 0x30, 0x65, 0x00} },
-    { "hei_01", {0x51, 0xC3, 0xCB, 0x00} },
-    { "las_04", {0x08, 0x1C, 0x2C, 0x00} },
-    { "las_09", {0x45, 0x79, 0x8E, 0x00} },
-    { "mri_16", {0x00, 0xA6, 0xFF, 0x00} },
-    { "muj_00", {0x0E, 0x2C, 0xA2, 0x00} },
-    { "muj_02", {0x20, 0x30, 0x5D, 0x00} },
-    { "muj_04", {0x0E, 0x2C, 0xA2, 0x00} },
-    { "muj_10", {0x0E, 0x2C, 0xA2, 0x00} },
-    { "nok_00", {0x69, 0xC3, 0xD7, 0x00} },
-    { "nok_01", {0x69, 0xC3, 0xD7, 0x00} },
-    { "pik_00", {0x82, 0xE3, 0xDF, 0x00} },
-    { "pik_01", {0x6D, 0xCB, 0xFF, 0x00} },
-    { "pik_04", {0x6D, 0xCB, 0xFF, 0x00} },
-    { "tik_02", {0x04, 0x2C, 0x51, 0x00} },
-    { "tik_15", {0x30, 0x4D, 0x59, 0x00} },
-    { "tik_16", {0x30, 0x4D, 0x59, 0x00} },
-    { "tik_17", {0x30, 0x4D, 0x59, 0x00} },
-    { "tik_18", {0x30, 0x4D, 0x59, 0x00} },
-    { "tik_20", {0x30, 0x4D, 0x59, 0x00} },
-    }, NULL };
+#if VERSION >= VERSION_JP
+// The demo has no per-map water colours.
+static struct {
+    ColorEntry e[32];
+    char* term;
+} funemizu_color_tbl = {{
+                            {"dou_02", {0x0E, 0x2C, 0xA2, 0x00}},
+                            {"dou_03", {0x0E, 0x2C, 0xA2, 0x00}},
+                            {"dou_04", {0x0E, 0x2C, 0xA2, 0x00}},
+                            {"dou_05", {0x0E, 0x2C, 0xA2, 0x00}},
+                            {"dou_07", {0x0E, 0x2C, 0xA2, 0x00}},
+                            {"dou_08", {0x0E, 0x2C, 0xA2, 0x00}},
+                            {"dou_09", {0x0E, 0x2C, 0xA2, 0x00}},
+                            {"dou_10", {0x0E, 0x2C, 0xA2, 0x00}},
+                            {"dou_11", {0x0E, 0x2C, 0xA2, 0x00}},
+                            {"dou_12", {0x0E, 0x2C, 0xA2, 0x00}},
+                            {"gon_01", {0x00, 0x61, 0x49, 0x00}},
+                            {"gor_00", {0x00, 0x30, 0x65, 0x00}},
+                            {"gor_02", {0x00, 0x30, 0x65, 0x00}},
+                            {"hei_01", {0x51, 0xC3, 0xCB, 0x00}},
+                            {"las_04", {0x08, 0x1C, 0x2C, 0x00}},
+                            {"las_09", {0x45, 0x79, 0x8E, 0x00}},
+                            {"mri_16", {0x00, 0xA6, 0xFF, 0x00}},
+                            {"muj_00", {0x0E, 0x2C, 0xA2, 0x00}},
+                            {"muj_02", {0x20, 0x30, 0x5D, 0x00}},
+                            {"muj_04", {0x0E, 0x2C, 0xA2, 0x00}},
+                            {"muj_10", {0x0E, 0x2C, 0xA2, 0x00}},
+                            {"nok_00", {0x69, 0xC3, 0xD7, 0x00}},
+                            {"nok_01", {0x69, 0xC3, 0xD7, 0x00}},
+                            {"pik_00", {0x82, 0xE3, 0xDF, 0x00}},
+                            {"pik_01", {0x6D, 0xCB, 0xFF, 0x00}},
+                            {"pik_04", {0x6D, 0xCB, 0xFF, 0x00}},
+                            {"tik_02", {0x04, 0x2C, 0x51, 0x00}},
+                            {"tik_15", {0x30, 0x4D, 0x59, 0x00}},
+                            {"tik_16", {0x30, 0x4D, 0x59, 0x00}},
+                            {"tik_17", {0x30, 0x4D, 0x59, 0x00}},
+                            {"tik_18", {0x30, 0x4D, 0x59, 0x00}},
+                            {"tik_20", {0x30, 0x4D, 0x59, 0x00}},
+                        },
+                        NULL};
+#endif
 
-static s8 funemizu_normal_tbl[] = { 0, 0, 64, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-static u8 funemizu_color0_tbl[] = { 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
-static u8 funemizu_dl_0_1[] = { 0x98, 0x00, 0x07, 0x04, 0x00, 0x00, 0x07, 0x08, 0x00, 0x00, 0x08, 0x03, 0x00, 0x00, 0x05, 0x07, 0x00, 0x01, 0x06, 0x02, 0x00, 0x00, 0x03, 0x06, 0x00, 0x01, 0x04, 0x01, 0x00, 0x00, 0x00, 0x00 };
-static u8 funemizu_dl_0_2[] = { 0x98, 0x00, 0x04, 0x00, 0x00, 0x00, 0x02, 0x01, 0x00, 0x00, 0x00, 0x05, 0x00, 0x01, 0x01, 0x06, 0x00, 0x01, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
-static u8* funemizu_dl_0_tbl[] = { funemizu_dl_0_0, funemizu_dl_0_1, funemizu_dl_0_2 };
-static u8 funemizu_dl_0_size_tbl[] = { 0x02, 0x01, 0x01, 0x00 };
-static u8 funemizu_dl_1_1[] __attribute__((aligned(32))) = { 0x98, 0x00, 0x04, 0x12, 0x00, 0x00, 0x15, 0x15, 0x00, 0x01, 0x14, 0x11, 0x00, 0x00, 0x13, 0x10, 0x00, 0x00, 0x11, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
-static u8 funemizu_dl_1_2[] = { 0x98, 0x00, 0x04, 0x0E, 0x00, 0x00, 0x10, 0x0F, 0x00, 0x00, 0x0E, 0x13, 0x00, 0x01, 0x0F, 0x14, 0x00, 0x01, 0x12, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
-static u8 funemizu_dl_1_3[] = { 0x98, 0x00, 0x04, 0x15, 0x00, 0x01, 0x14, 0x14, 0x00, 0x01, 0x12, 0x10, 0x00, 0x00, 0x11, 0x0F, 0x00, 0x00, 0x0E, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
-static u8* funemizu_dl_1_tbl[] = { funemizu_dl_1_0, funemizu_dl_1_1, funemizu_dl_1_2, funemizu_dl_1_3 };
-static u8 funemizu_dl_1_size_tbl[] = { 0x02, 0x01, 0x01, 0x01 };
-static s8 gor_fune_normal_tbl[] __attribute__((aligned(32))) = { 0, 0, 64, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-static u8 gor_fune_color0_tbl[] = { 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
-static u8* gor_fune_dl_0_tbl[] = { gor_fune_dl_0_0, gor_fune_dl_0_1 };
-static u8 gor_fune_dl_0_size_tbl[] = { 0x02, 0x02, 0x00, 0x00 };
-static u8* gor_fune_dl_1_tbl[] = { gor_fune_dl_1_0, gor_fune_dl_1_1 };
-static u8 gor_fune_dl_1_size_tbl[] = { 0x02, 0x02, 0x00, 0x00 };
-
+#if VERSION >= VERSION_JP
+/**
+ * Returns the water colour for the current map:
+ * exact name match in the table first, then a 3-letter area prefix, then the default.
+ */
 GXColor effFunemizuGetMapColor(void) {
     ColorEntry* e;
     for (e = funemizu_color_tbl.e; e != NULL; e++) {
@@ -116,8 +144,13 @@ GXColor effFunemizuGetMapColor(void) {
     }
     return funemizu_default_color;
 }
+#endif
 
-
+/**
+ * Spawns boat water: types 0 and 2 are the ripple wake,
+ * type 1 a spray burst (size picks how many pieces, max 10).
+ * Spawned by the ship motion (mot_ship.c) and by scripts in gor and muj.
+ */
 EffectEntry* effFunemizuEntry(s32 type, f32 x, f32 y, f32 z, f32 size, f32 yaw) {
     EffectEntry* effect;
     EffFunemizuWork* work;
@@ -133,7 +166,7 @@ EffectEntry* effFunemizuEntry(s32 type, f32 x, f32 y, f32 z, f32 size, f32 yaw) 
     if (count > 10) {
         count = 10;
     }
-    effect->type = "funemizu\0\0\0";
+    effect->type = "funemizu";
     effect->count = count;
     work = __memAlloc(HEAP_EFFECT, effect->count * sizeof(EffFunemizuWork));
     effect->userdata = work;
@@ -143,12 +176,12 @@ EffectEntry* effFunemizuEntry(s32 type, f32 x, f32 y, f32 z, f32 size, f32 yaw) 
     work->position.x = x;
     work->position.y = y;
     work->position.z = z;
-    work->f18 = 0.0f;
-    work->f1c = 0.0f;
-    work->f20 = 0.0f;
-    work->f24 = 0.0f;
-    work->f2c = 0.0f;
-    work->f28 = 0.0f;
+    work->layer1Width = 0.0f;
+    work->layer2Width = 0.0f;
+    work->layer1Height = 0.0f;
+    work->layer2Height = 0.0f;
+    work->layer2Scroll = 0.0f;
+    work->layer1Scroll = 0.0f;
     work->timer = 0;
     work->scale = 1.0f;
     work->cam = CAMERA_3D;
@@ -156,23 +189,26 @@ EffectEntry* effFunemizuEntry(s32 type, f32 x, f32 y, f32 z, f32 size, f32 yaw) 
         p->position.x = 0.0f;
         p->position.y = 0.0f;
         p->position.z = 0.0f;
-        p->f10 = size / 2;
-        p->f14 = yaw;
-        p->f34 = p->f10 + irand(2);
-        p->f38 = 0.1f + irand(10) / 100.0f;
+        p->speed = size / 2;
+        p->yaw = yaw;
+        p->velY = p->speed + irand(2);
+        p->gravity = 0.1f + irand(10) / 100.0f;
         p->delay = irand(5);
         p->alpha = 255;
     }
     return effect;
 }
 
-void effFunemizuMain(EffectEntry* effect) {
+/** Advances the wake and spray timers, spawns a spray piece from the wake, and deletes spent ones. */
+static void effFunemizuMain(EffectEntry* effect) {
     EffFunemizuWork* work = effect->userdata;
     Vec position;
     Vec v = {0.0f, 0.0f, 0.0f};
     s32 i;
     s32 type;
+#if VERSION >= VERSION_JP
     CameraId cam;
+#endif
     s32 dead = 0;
     f32 a, b, s, c, t, f;
 
@@ -181,13 +217,15 @@ void effFunemizuMain(EffectEntry* effect) {
     v.z = work->position.z;
     position = v;
     type = work->type;
+#if VERSION >= VERSION_JP
     cam = work->cam;
+#endif
     work->timer++;
     if (work->timer > 1000) {
         work->timer -= 1000;
     }
     if (work->type == 0 || work->type == 2) {
-        f = work->f10;
+        f = work->speed;
         a = f;
         b = f - 1.0f;
         if (a < 0.0f) {
@@ -202,38 +240,38 @@ void effFunemizuMain(EffectEntry* effect) {
         if (b > 1.0f) {
             b = 1.0f;
         }
-        work->f18 += (a - work->f18) / 10.0f;
-        work->f1c += (b - work->f1c) / 10.0f;
-        if (work->f10 > 1.0f) {
-            work->f20 += (a - work->f20) / 10.0f;
-            work->f24 += (b - work->f24) / 10.0f;
+        work->layer1Width += (a - work->layer1Width) / 10.0f;
+        work->layer2Width += (b - work->layer2Width) / 10.0f;
+        if (work->speed > 1.0f) {
+            work->layer1Height += (a - work->layer1Height) / 10.0f;
+            work->layer2Height += (b - work->layer2Height) / 10.0f;
         } else {
-            work->f20 += (a - work->f20) / 2;
-            work->f24 += (b - work->f24) / 2;
+            work->layer1Height += (a - work->layer1Height) / 2;
+            work->layer2Height += (b - work->layer2Height) / 2;
         }
-        work->f28 += 0.05f * work->f18;
-        work->f2c += 0.1f * work->f1c;
-        if (work->f10 > 0.1f && work->timer % 10 == 0) {
-            t = 6.2831855f * (work->f14 - camGetPtr(CAMERA_3D)->viewYaw) / 360.0f;
+        work->layer1Scroll += 0.05f * work->layer1Width;
+        work->layer2Scroll += 0.1f * work->layer2Width;
+        if (work->speed > 0.1f && work->timer % 10 == 0) {
+            t = 6.2831855f * (work->yaw - camGetPtr(CAMERA_3D)->viewYaw) / 360.0f;
             s = sin(t);
             c = cos(t);
-            effFunemizuEntry(1, work->position.x - 14.0f * c, work->position.y, work->position.z - 14.0f * s, work->f10, work->f14);
+            effFunemizuEntry(1, work->position.x - 14.0f * c, work->position.y, work->position.z - 14.0f * s, work->speed, work->yaw);
         }
     } else {
         EffFunemizuWork* p;
-        work->f18 = 1.0f;
+        work->layer1Width = 1.0f;
         for (i = 1, work++; i < effect->count; i++, work++) {
             if (work->position.y < 0.0f) {
                 dead++;
             } else if (work->delay) {
                 work->delay--;
             } else {
-                c = cos(6.2831855f * work->f14 / 360.0f);
-                work->position.x += work->f10 * c;
-                s = sin(6.2831855f * work->f14 / 360.0f);
-                work->position.z += work->f10 * -s;
-                work->position.y += work->f34;
-                work->f34 -= work->f38;
+                c = cos(6.2831855f * work->yaw / 360.0f);
+                work->position.x += work->speed * c;
+                s = sin(6.2831855f * work->yaw / 360.0f);
+                work->position.z += work->speed * -s;
+                work->position.y += work->velY;
+                work->velY -= work->gravity;
                 work->alpha -= 8;
                 if (work->alpha < 0) {
                     work->alpha = 0;
@@ -245,28 +283,46 @@ void effFunemizuMain(EffectEntry* effect) {
             return;
         }
     }
+#if VERSION <= VERSION_DEMO_JP
+    // The demo reads the camera through work after the splash loop has moved it, and draws in layer 8.
+    if (type == 0 || type == 2) {
+        dispEntry(work->cam, dispCalcZ(&position), 8, (DispCallback)effFunemizuDisp, effect);
+    } else {
+        dispEntry(work->cam, dispCalcZ(&position), 8, (DispCallback)effFunemizuShibukiDisp, effect);
+    }
+#else
     if (type == 0 || type == 2) {
         dispEntry(cam, dispCalcZ(&position), 2, (DispCallback)effFunemizuDisp, effect);
     } else {
         dispEntry(cam, dispCalcZ(&position), 2, (DispCallback)effFunemizuShibukiDisp, effect);
     }
+#endif
 }
 
-static inline void funemizuCallDL(u32 *p_u) {
+/** Calls the three display lists of the wake mesh. */
+static inline void funemizuCallDL(u32* p_u) {
     u32 u = *p_u;
     for (u = 0; u < 3; u++) {
         GXCallDisplayList(funemizu_dl_0_tbl[u], funemizu_dl_0_size_tbl[u] * 32);
     }
     *p_u = u;
 }
-void effFunemizuDisp(CameraId cameraId, EffectEntry* effect) {
+/** Draws the wake ripple mesh tinted with the map's water colour. */
+static void effFunemizuDisp(CameraId cameraId, EffectEntry* effect) {
     EffFunemizuWork* work = effect->userdata;
     Mtx trans;
     Mtx scale;
     Mtx rot;
     Mtx mtx;
     GXTexObj texObj;
+#if VERSION <= VERSION_DEMO_JP
+    f32 proj[7];
+    f32 vp[6];
+    f32 sx, sy, sz;
+    u8 argb[4];
+#else
     GXColor color;
+#endif
     CameraEntry* cam;
     f32 z;
     s32 type;
@@ -275,6 +331,49 @@ void effFunemizuDisp(CameraId cameraId, EffectEntry* effect) {
 
     cam = camGetPtr(cameraId);
     type = work->type;
+#if VERSION <= VERSION_DEMO_JP
+    // The demo eases the water colour toward the frame buffer under the boat.
+    GXSetProjection(cam->projection, cam->projType);
+    GXGetProjectionv(proj);
+    GXGetViewportv(vp);
+    GXProject(work->position.x, work->position.y, work->position.z, cam->view, proj, vp, &sx, &sy, &sz);
+    if (sx > 0.0f && sx < 608.0f && sy > 0.0f && sy < 480.0f) {
+        // FAKE: unprototyped call: the SDK u16 parameters would add two narrowings (FAKES.md)
+        ((void (*)())GXPeekARGB)((s32)sx, (s32)sy, argb);
+        if (type == 0) {
+            {
+                s32 r = funemizu_color0_tbl[0];
+                s32 g = funemizu_color0_tbl[1];
+                s32 b = funemizu_color0_tbl[2];
+                r += (argb[1] - r) / 16;
+                g += (argb[2] - g) / 16;
+                b += (argb[3] - b) / 16;
+                funemizu_color0_tbl[0] = r;
+                funemizu_color0_tbl[1] = g;
+                funemizu_color0_tbl[2] = b;
+            }
+            DCFlushRange(funemizu_color0_tbl, 4);
+        } else {
+            {
+                s32 r = gor_fune_color0_tbl[0];
+                s32 g = gor_fune_color0_tbl[1];
+                s32 b = gor_fune_color0_tbl[2];
+                r += (argb[1] - r) / 16;
+                g += (argb[2] - g) / 16;
+                b += (argb[3] - b) / 16;
+                gor_fune_color0_tbl[0] = r;
+                gor_fune_color0_tbl[1] = g;
+                gor_fune_color0_tbl[2] = b;
+            }
+            DCFlushRange(gor_fune_color0_tbl, 4);
+        }
+    }
+    if (work->cam != 4) {
+        gor_fune_color0_tbl[0] = 0x00;
+        gor_fune_color0_tbl[1] = 0x00;
+        gor_fune_color0_tbl[2] = 0xFF;
+    }
+#else
     color = effFunemizuGetMapColor();
     if (type == 0) {
         funemizu_color0_tbl[0] = color.r;
@@ -285,12 +384,13 @@ void effFunemizuDisp(CameraId cameraId, EffectEntry* effect) {
         gor_fune_color0_tbl[1] = color.g;
         gor_fune_color0_tbl[2] = color.b;
     }
+#endif
     GXSetBlendMode(GX_BM_BLEND, GX_BL_SRCALPHA, GX_BL_INVSRCALPHA, GX_LO_CLEAR);
     GXSetZCompLoc(GX_TRUE);
     GXSetAlphaCompare(GX_ALWAYS, 0, GX_AOP_AND, GX_ALWAYS, 0);
     GXSetZMode(GX_TRUE, GX_LEQUAL, GX_FALSE);
     PSMTXTrans(trans, work->position.x, work->position.y, work->position.z);
-    PSMTXRotRad(rot, 'y', MTXDegToRad(work->f14 - camGetPtr(cameraId)->viewYaw));
+    PSMTXRotRad(rot, 'y', MTXDegToRad(work->yaw - camGetPtr(cameraId)->viewYaw));
     PSMTXScale(scale, work->scale, work->scale, work->scale);
     PSMTXConcat(trans, rot, trans);
     PSMTXConcat(trans, scale, trans);
@@ -319,11 +419,11 @@ void effFunemizuDisp(CameraId cameraId, EffectEntry* effect) {
         PSMTXConcat(mtx, trans, trans);
         PSMTXScale(scale, 1.0f, 1.0f, z);
         PSMTXConcat(trans, scale, trans);
-        PSMTXScale(scale, work->f18, work->f20, work->f18);
+        PSMTXScale(scale, work->layer1Width, work->layer1Height, work->layer1Width);
         PSMTXConcat(trans, scale, scale);
         GXLoadPosMtxImm(scale, GX_PNMTX0);
         GXSetCurrentMtx(GX_PNMTX0);
-        PSMTXTrans(scale, work->f28, 0.0f, 0.0f);
+        PSMTXTrans(scale, work->layer1Scroll, 0.0f, 0.0f);
         GXLoadTexMtxImm(scale, GX_TEXMTX0, GX_MTX2x4);
         if (type == 0) {
             GXClearVtxDesc();
@@ -358,11 +458,11 @@ void effFunemizuDisp(CameraId cameraId, EffectEntry* effect) {
                 GXCallDisplayList(gor_fune_dl_0_tbl[u], gor_fune_dl_0_size_tbl[u] * 32);
             }
         }
-        PSMTXScale(scale, work->f1c, work->f24, work->f1c);
+        PSMTXScale(scale, work->layer2Width, work->layer2Height, work->layer2Width);
         PSMTXConcat(trans, scale, scale);
         GXLoadPosMtxImm(scale, GX_PNMTX0);
         GXSetCurrentMtx(GX_PNMTX0);
-        PSMTXTrans(scale, work->f2c, 0.0f, 0.0f);
+        PSMTXTrans(scale, work->layer2Scroll, 0.0f, 0.0f);
         GXLoadTexMtxImm(scale, GX_TEXMTX0, GX_MTX2x4);
         if (type == 0) {
             GXClearVtxDesc();
@@ -402,7 +502,8 @@ void effFunemizuDisp(CameraId cameraId, EffectEntry* effect) {
     }
 }
 
-void effFunemizuShibukiDisp(CameraId cameraId, EffectEntry* effect) {
+/** Draws the spray (shibuki) pieces as camera-facing quads. */
+static void effFunemizuShibukiDisp(CameraId cameraId, EffectEntry* effect) {
     EffFunemizuWork* work = effect->userdata;
     Mtx trans;
     Mtx rot;
@@ -420,7 +521,7 @@ void effFunemizuShibukiDisp(CameraId cameraId, EffectEntry* effect) {
     GXSetAlphaCompare(GX_ALWAYS, 0, GX_AOP_AND, GX_ALWAYS, 0);
     GXSetZMode(GX_TRUE, GX_LEQUAL, GX_FALSE);
     PSMTXTrans(trans, work->position.x, work->position.y, work->position.z);
-    PSMTXRotRad(rot, 'y', MTXDegToRad(work->f14 - camGetPtr(cameraId)->viewYaw));
+    PSMTXRotRad(rot, 'y', MTXDegToRad(work->yaw - camGetPtr(cameraId)->viewYaw));
     PSMTXConcat(trans, rot, trans);
     PSMTXConcat(cam->view, trans, mtx);
     GXSetNumChans(1);
@@ -429,6 +530,10 @@ void effFunemizuShibukiDisp(CameraId cameraId, EffectEntry* effect) {
     GXSetTexCoordGen2(GX_TEXCOORD0, GX_TG_MTX2x4, GX_TG_TEX0, GX_IDENTITY, GX_FALSE, GX_PTIDENTITY);
     GXSetNumTevStages(1);
     GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP0, GX_COLOR0A0);
+#if VERSION <= VERSION_DEMO_JP
+    GXSetTevColorOp(GX_TEVSTAGE0, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
+    GXSetTevAlphaOp(GX_TEVSTAGE0, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
+#endif
     GXSetTevOp(GX_TEVSTAGE0, GX_MODULATE);
     effGetTexObj(0x40, &texObj);
     GXLoadTexObj(&texObj, GX_TEXMAP0);
@@ -459,6 +564,3 @@ void effFunemizuShibukiDisp(CameraId cameraId, EffectEntry* effect) {
         }
     }
 }
-
-#pragma force_active on
-#pragma force_active reset

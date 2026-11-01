@@ -1,3 +1,4 @@
+// Scripts and commands for the map damage hazard that moves toward Mario (Gazigazi).
 #include "evt/evt_cmd.h"
 #include "evt/evt_npc.h"
 #include "evt/evt_snd.h"
@@ -10,25 +11,26 @@
 #include "system.h"
 #include <dolphin/os.h>
 
-USER_FUNC(evt_npc_pera_onoff);
-USER_FUNC(evt_npc_set_ry);
-USER_FUNC(evt_npc_set_anim);
-USER_FUNC(evt_npc_wait_anim);
-
-USER_FUNC(evt_gazigazi_move_position);
-USER_FUNC(camdir);
+static USER_FUNC(evt_gazigazi_move_position);
+static USER_FUNC(camdir);
 
 #define GAZIGAZI "\x83\x4B\x83\x57\x83\x4B\x83\x57" // "ガジガジ"
 
+/**
+ * Creates the Gazigazi biter NPC (model c_gazigazi) out of sight at y -1000, not billboarded.
+ * The init scripts of the maps with hazard water run it (CALL_CHILD in dou, tik, las, muj, pik and others),
+ * next to their evt_hit_damage_return_set, so evt_gazigazi_appear has its NPC.
+ */
 EVT_BEGIN(evt_gazigazi_entry)
     CALL(evt_npc_entry, STRING(GAZIGAZI), STRING("c_gazigazi"))
     CALL(evt_npc_set_position, STRING(GAZIGAZI), 0, -1000, 0)
     CALL(evt_npc_pera_onoff, STRING(GAZIGAZI), 0)
     CALL(evt_npc_set_ry, STRING(GAZIGAZI), FLOAT(0.0f))
-    CALL(evt_npc_flag_onoff, 1, STRING(GAZIGAZI), 0x02000000)
+    CALL(evt_npc_flag_onoff, 1, STRING(GAZIGAZI), NPC_FLAG_NO_BILLBOARD)
     RETURN
 EVT_END()
 
+/** Plays the bite sound at LW(0..2) and loops the biting animation until evt_gazigazi_appear deletes it. */
 EVT_BEGIN(evt_gazigazi_anim_loop)
     CALL(evt_snd_sfxon_3d, STRING("SFX_MARIO_GAJIGAJI1"), LW(0), LW(1), LW(2), 0)
     LOOP(0)
@@ -38,6 +40,11 @@ EVT_BEGIN(evt_gazigazi_anim_loop)
     RETURN
 EVT_END()
 
+/**
+ * Spawned by mot_damage's evt_gazigazi when Mario takes hazard damage:
+ * the biter rises 40 units at LW(0..2) over 300 ms, chomps,
+ * sinks back over 600 ms and is parked out of sight again.
+ */
 EVT_BEGIN(evt_gazigazi_appear)
     SET_VALUE(LW(10), LW(0))
     SET_VALUE(LW(11), LW(1))
@@ -51,7 +58,7 @@ EVT_BEGIN(evt_gazigazi_appear)
     ADD(LW(13), 0)
     ADD(LW(14), -10)
     ADD(LW(15), 0)
-    CALL(evt_npc_flag_onoff, 1, STRING(GAZIGAZI), 0x40000020)
+    CALL(evt_npc_flag_onoff, 1, STRING(GAZIGAZI), NPC_FLAG_NO_WALL_HIT | NPC_FLAG_INTANGIBLE)
     CALL(evt_npc_set_rotate_offset, STRING(GAZIGAZI), 0, 20, 0)
     CALL(camdir)
     CALL(evt_npc_set_rotate, STRING(GAZIGAZI), FLOAT(0.0f), LW(3), FLOAT(270.0f))
@@ -68,7 +75,12 @@ EVT_BEGIN(evt_gazigazi_appear)
     RETURN
 EVT_END()
 
-USER_FUNC(camdir) {
+/**
+ * Faces the biter toward the camera: LW(3) = Y rotation, LW(4) = 1.0 or -1.0 Z scale,
+ * flipped when the damage return point lies behind Mario relative to the camera.
+ * Reads the bite position from LW(0) and LW(2).
+ */
+static USER_FUNC(camdir) {
     f32 yaw;
     s32 dir;
     CameraEntry* camera;
@@ -91,8 +103,8 @@ USER_FUNC(camdir) {
     return EVT_RETURN_DONE;
 }
 
-// const char* name, s32 x0, s32 y0, s32 z0, s32 x1, s32 y1, s32 z1, s32 msec, s32 mode
-USER_FUNC(evt_gazigazi_move_position) {
+/** const char* name, s32 x0, s32 y0, s32 z0, s32 x1, s32 y1, s32 z1, s32 msec, s32 mode */
+static USER_FUNC(evt_gazigazi_move_position) {
     EvtWord* args = event->args;
     const char* name;
     f32 y0, x0, z0, x1, y1, z1;
@@ -116,9 +128,9 @@ USER_FUNC(evt_gazigazi_move_position) {
     }
     elapsed = OSTicksToMilliseconds((u32)gp->renderTime - event->userdata[0]);
     if (elapsed < msec) {
-        x0 = intplGetValue(mode, (s32)elapsed, msec, x0, x1);
-        y0 = intplGetValue(mode, (s32)elapsed, msec, y0, y1);
-        z0 = intplGetValue(mode, (s32)elapsed, msec, z0, z1);
+        x0 = intplGetValue(mode, x0, x1, (s32)elapsed, msec);
+        y0 = intplGetValue(mode, y0, y1, (s32)elapsed, msec);
+        z0 = intplGetValue(mode, z0, z1, (s32)elapsed, msec);
         {
             Vec pos = {0.0f, 0.0f, 0.0f};
             pos.x = x0;

@@ -72,16 +72,26 @@ def find_definition(name, sources):
             continue
         lines = open(os.path.join(ROOT, src), encoding="utf-8", errors="replace").read().split("\n")
         for i, ln in enumerate(lines):
-            if pat.match(ln.rstrip("\r")) and not ln.lstrip().startswith("static"):
+            if pat.match(ln.rstrip("\r")):
                 # the body follows: '{' at the end of this line or alone on a later one
                 rest = "\n".join(lines[i:i + 8])
                 if re.search(r"\)\s*\{", rest) and ";" not in rest.split("{", 1)[0]:
                     found.append((src, i))
-    # several in one file: the versions' own definitions (#ifdef VERSION_...),
-    # each version compiles one; all of them are edited
+    # several in one file: the versions' own definitions (#if VERSION ...),
+    # each version compiles one; all of them are edited. A static function (the
+    # decomp makes file-local functions static) is hookable too; its prototype
+    # and dispatcher are then static as well (STATIC).
     if not found or len({src for src, _ in found}) != 1:
-        raise Error(f"{name}: {len(found) or 'no'} global definition(s) in the game's sources")
+        raise Error(f"{name}: {len(found) or 'no'} definition(s) in the game's sources")
     return found
+
+
+STATIC = set()  # hookable functions whose definition is static
+
+
+def is_static(src, lineno):
+    with open(os.path.join(ROOT, src), encoding="utf-8", errors="replace") as f:
+        return f.read().split("\n")[lineno].lstrip().startswith("static")
 
 
 def stem(src):
@@ -240,7 +250,7 @@ def dispatcher(index, name, ret, params):
     pre_a = ", ".join(x for x in ("" if void else "&r", addr) if x)
     post_a = ", ".join(x for x in ("" if void else "&r", args) if x)
     o = []
-    o.append(f"{ret} {name}({decl}) {{")
+    o.append(f"{'static ' if name in STATIC else ''}{ret} {name}({decl}) {{")
     o.append(f"    PortHookSlot* s = &portHookSlots[{index}];")
     if not void:
         o.append(f"    {declare(ret, 'r')};")
@@ -283,6 +293,8 @@ def generate(version, names, apply):
         for src, lineno in found:
             check_edits(name, src, lineno)
         src = found[0][0]
+        if is_static(*found[0]):
+            STATIC.add(name)
         ret, params = signature(version, name, src)
         entries.append((i, name, src, ret, params))
     return entries
@@ -308,7 +320,7 @@ def outputs(entries):
         p = [head.rstrip("\n"), f"/* The hookable functions of {src}: their prototypes, included after its",
              " * #includes (PORT_MODS), for calls made before their definitions. */"]
         for index, name, _, ret, params in es:
-            p.append(f"{ret} {name}({', '.join(params) or 'void'});")
+            p.append(f"{'static ' if name in STATIC else ''}{ret} {name}({', '.join(params) or 'void'});")
         files[os.path.join(INC_DIR, stem(src) + ".h")] = "\n".join(p) + "\n"
     lst = [head.rstrip("\n"), "/* The hook slots, for the host (port/mods/mod_api.cpp). */",
            f"#define PORT_HOOK_COUNT {len(entries)}",

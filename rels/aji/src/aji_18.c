@@ -1,83 +1,42 @@
+// aji_18 (敵のアジト, X-Naut Fortress): the door with three key locks (key_lock_koujyou) and the machine.
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
 
-#pragma force_active on
 #include "mario/mario_pouch.h"
 #include "mario/mariost.h"
 #include "driver/fadedrv.h"
 #include "evt/evt_bero.h"
+#include "evt/evt_cam.h"
+#include "evt/evt_case.h"
+#include "evt/evt_fade.h"
+#include "evt/evt_map.h"
+#include "evt/evt_mario.h"
+#include "evt/evt_msg.h"
+#include "evt/evt_party.h"
+#include "evt/evt_pouch.h"
+#include "evt/evt_seq.h"
+#include "evt/evt_snd.h"
+#include "evt/evt_window.h"
 #include "aji.h"
+#include "version.h"
+#include "evt/evt_story.h"
+#include "evt/evt_sub.h"
+#include "driver/mapdrv.h"
+#include "driver/casedrv.h"
 
 s32 key_list[4];
 
-USER_FUNC(evt_bero_exec_wait);
-USER_FUNC(evt_bero_get_entername);
-USER_FUNC(evt_bero_get_info);
-USER_FUNC(evt_cam3d_evt_off);
-USER_FUNC(evt_cam3d_evt_set);
-USER_FUNC(evt_del_case_evt);
-USER_FUNC(evt_exit_case_evt);
-USER_FUNC(evt_fade_end_wait);
-USER_FUNC(evt_mapobj_flag_onoff);
-USER_FUNC(evt_mapobj_trans);
-USER_FUNC(evt_mario_get_party);
-USER_FUNC(evt_mario_get_pos);
-USER_FUNC(evt_mario_key_onoff);
-USER_FUNC(evt_mario_mov_pos2);
-USER_FUNC(evt_mario_set_dir);
-USER_FUNC(evt_mario_set_party);
-USER_FUNC(evt_mario_set_pose);
-USER_FUNC(evt_msg_print);
-USER_FUNC(evt_msg_print_party);
-USER_FUNC(evt_party_move_pos2);
-USER_FUNC(evt_party_run);
-USER_FUNC(evt_party_set_dir);
-USER_FUNC(evt_party_stop);
-USER_FUNC(evt_pouch_all_party_recovery);
-USER_FUNC(evt_pouch_check_item);
-USER_FUNC(evt_pouch_mario_recovery);
-USER_FUNC(evt_pouch_remove_item);
-USER_FUNC(evt_run_case_evt);
-USER_FUNC(evt_seq_wait);
-USER_FUNC(evt_snd_bgmon);
-USER_FUNC(evt_snd_envon);
-USER_FUNC(evt_snd_set_rev_mode);
-USER_FUNC(evt_snd_sfxon_3d);
-USER_FUNC(evt_win_item_select);
-#ifdef VERSION_G8ME01
-USER_FUNC(N_evt_sub_status_gauge_force_update);
-#endif
 static USER_FUNC(make_list);
 static USER_FUNC(sysflag);
 
-f32 fd_aji_18_negone_one_374[2] __attribute__((aligned(8)));
-f32 fd_aji_18_neg_one_382;
-f32 fd_aji_18___local_PI_383;
-f32 fd_aji_18___local_3PIO2_385;
-f32 fd_aji_18_one_negone_373[2] __attribute__((aligned(8)));
-f32 fd_aji_18___local_PIO2_384;
-f32 fd_aji_18_one_381;
-f32 fd_aji_18_negone_one_360[2] __attribute__((aligned(8)));
-f32 fd_aji_18_neg_one_365;
-f32 fd_aji_18___local_PI_366;
-f32 fd_aji_18___local_3PIO2_368;
-f32 fd_aji_18_one_negone_359[2] __attribute__((aligned(8)));
-f32 fd_aji_18___local_PIO2_367;
-f32 fd_aji_18_one_364;
-static EvtWord w_door_close[22];
-static EvtWord w_door_open[22];
-static EvtWord e_door_close[22];
-static EvtWord e_door_open[22];
 static BeroEntry bero_entry_data[3];
-EvtWord evt_machine[266];
-EvtWord key_lock_koujyou[14];
-static EvtWord evt_koopa_after[118];
-#ifdef VERSION_G8ME01
-EvtWord aji_18_init_evt[301];
-#else
-EvtWord aji_18_init_evt[299];
-#endif
+extern EvtWord evt_machine[];
+extern EvtWord key_lock_koujyou[];
 
+/**
+ * Script function: fills key_list with the Card Keys (item IDs 0x1D, 0x1E, 0x1F) that Mario carries,
+ * ending the list with -1, for the key slot menu.
+ */
 static USER_FUNC(make_list) {
     s32 n = 0;
 
@@ -94,73 +53,82 @@ static USER_FUNC(make_list) {
     return EVT_RETURN_DONE;
 }
 
-f32 fd_aji_18_negone_one_374[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_aji_18_neg_one_382 = -1.0f;
-
-f32 fd_aji_18___local_PI_383 = 3.1415927f;
-
-f32 fd_aji_18___local_3PIO2_385 = 4.712389f;
-
-f32 fd_aji_18_one_negone_373[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_aji_18___local_PIO2_384 = 1.5707964f;
-
-f32 fd_aji_18_one_381 = 1.0f;
-
-f32 fd_aji_18_negone_one_360[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_aji_18_neg_one_365 = -1.0f;
-
-f32 fd_aji_18___local_PI_366 = 3.1415927f;
-
-f32 fd_aji_18___local_3PIO2_368 = 4.712389f;
-
-f32 fd_aji_18_one_negone_359[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_aji_18___local_PIO2_367 = 1.5707964f;
-
-f32 fd_aji_18_one_364 = 1.0f;
-
+/**
+ * Door close animation step: moves the two door leaves S_door1_1
+ * and S_door1_2 in opposite directions along Z by the animation value in LW(0) times 0.25;
+ * the open and close scripts apply the same transform. The demo builds use 0.2217.
+ */
 static EVT_BEGIN(w_door_close)
+#if VERSION <= VERSION_DEMO_JP
+    MULTIPLY_FLOAT(LW(0), FLOAT(0.22167969f))
+#else
     MULTIPLY_FLOAT(LW(0), FLOAT(0.25f))
+#endif
     CALL(evt_mapobj_trans, 0, STRING("S_door1_1"), 0, 0, LW(0))
     MULTIPLY_FLOAT(LW(0), FLOAT(-1.0f))
     CALL(evt_mapobj_trans, 0, STRING("S_door1_2"), 0, 0, LW(0))
     RETURN
 EVT_END()
 
+/**
+ * Door open animation step: moves the two door leaves S_door1_1
+ * and S_door1_2 in opposite directions along Z by the animation value in LW(0) times 0.25;
+ * the open and close scripts apply the same transform. The demo builds use 0.2217.
+ */
 static EVT_BEGIN(w_door_open)
+#if VERSION <= VERSION_DEMO_JP
+    MULTIPLY_FLOAT(LW(0), FLOAT(0.22167969f))
+#else
     MULTIPLY_FLOAT(LW(0), FLOAT(0.25f))
+#endif
     CALL(evt_mapobj_trans, 0, STRING("S_door1_1"), 0, 0, LW(0))
     MULTIPLY_FLOAT(LW(0), FLOAT(-1.0f))
     CALL(evt_mapobj_trans, 0, STRING("S_door1_2"), 0, 0, LW(0))
     RETURN
 EVT_END()
 
+/**
+ * Door close animation step: moves the two door leaves S_door2_1
+ * and S_door2_2 in opposite directions along Z by the animation value in LW(0) times 0.25;
+ * the open and close scripts apply the same transform. The demo builds use 0.2217.
+ */
 static EVT_BEGIN(e_door_close)
+#if VERSION <= VERSION_DEMO_JP
+    MULTIPLY_FLOAT(LW(0), FLOAT(0.22167969f))
+#else
     MULTIPLY_FLOAT(LW(0), FLOAT(0.25f))
+#endif
     CALL(evt_mapobj_trans, 0, STRING("S_door2_1"), 0, 0, LW(0))
     MULTIPLY_FLOAT(LW(0), FLOAT(-1.0f))
     CALL(evt_mapobj_trans, 0, STRING("S_door2_2"), 0, 0, LW(0))
     RETURN
 EVT_END()
 
+/**
+ * Door open animation step: moves the two door leaves S_door2_1
+ * and S_door2_2 in opposite directions along Z by the animation value in LW(0) times 0.25;
+ * the open and close scripts apply the same transform. The demo builds use 0.2217.
+ */
 static EVT_BEGIN(e_door_open)
+#if VERSION <= VERSION_DEMO_JP
+    MULTIPLY_FLOAT(LW(0), FLOAT(0.22167969f))
+#else
     MULTIPLY_FLOAT(LW(0), FLOAT(0.25f))
+#endif
     CALL(evt_mapobj_trans, 0, STRING("S_door2_1"), 0, 0, LW(0))
     MULTIPLY_FLOAT(LW(0), FLOAT(-1.0f))
     CALL(evt_mapobj_trans, 0, STRING("S_door2_2"), 0, 0, LW(0))
     RETURN
 EVT_END()
 
+/** Exits of this room: the west door to aji_01 and the east door to aji_13. */
 static BeroEntry bero_entry_data[] = {
     {
         "w_bero", // hitName
         1, // type
         10, // sfxId
-        20000, // directionId
-        100000, // centerPosition
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         NULL, // enterEvent
@@ -177,8 +145,8 @@ static BeroEntry bero_entry_data[] = {
         "e_bero", // hitName
         1, // type
         10, // sfxId
-        20000, // directionId
-        100000, // centerPosition
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         NULL, // enterEvent
@@ -194,72 +162,83 @@ static BeroEntry bero_entry_data[] = {
     {0},
 };
 
+/**
+ * Case script of the three key slots of the factory door (A_kagi1 to 3):
+ * Mario puts a Card Key (ITEM_CARD_KEY_0x1D, 0x1E or 0x1F) from the item menu into the slot it belongs to.
+ * A right key lights the slot (GSWF_AJI18_CARD_KEY_SLOT_1 to 3) and is used up; a wrong one gets stg7_aji_67_01.
+ * When all three slots are filled the story becomes STORY_STG7_16_FACTORY_DOOR
+ * and the door's lamp turns from red to green.
+ */
 EVT_BEGIN(evt_machine)
     CALL(evt_mario_key_onoff, 0)
     CALL(evt_msg_print, 0, STRING("stg7_aji_67"), 0, 0)
     SET_VALUE(LW(10), 0)
-    CALL(evt_pouch_check_item, 29, LW(11))
+    CALL(evt_pouch_check_item, ITEM_CARD_KEY_0x1D, LW(11))
     ADD(LW(10), LW(11))
-    CALL(evt_pouch_check_item, 30, LW(11))
+    CALL(evt_pouch_check_item, ITEM_CARD_KEY_0x1E, LW(11))
     ADD(LW(10), LW(11))
-    CALL(evt_pouch_check_item, 31, LW(11))
+    CALL(evt_pouch_check_item, ITEM_CARD_KEY_0x1F, LW(11))
     ADD(LW(10), LW(11))
     IF_INT_EQUAL(LW(10), 0)
         CALL(evt_mario_key_onoff, 1)
         RETURN
     END_IF
     CALL(make_list)
+#if VERSION <= VERSION_DEMO_JP
+    CALL(evt_win_item_select, PTR(key_list), LW(10))
+#else
     CALL(evt_win_item_select, 0, PTR(key_list), LW(10), 0)
+#endif
     SWITCH(LW(10))
         CASE_EQUAL(29)
         IF_INT_EQUAL(LW(0), 0)
-            CALL(evt_mapobj_flag_onoff, 1, 1, STRING("S_kagi1_aka"), 1)
-            CALL(evt_mapobj_flag_onoff, 1, 0, STRING("S_kagi1_mid"), 1)
-            SET_VALUE(GSWF(4191), 1)
+            CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("S_kagi1_aka"), MAPOBJ_FLAG_HIDE)
+            CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("S_kagi1_mid"), MAPOBJ_FLAG_HIDE)
+            SET_VALUE(GSWF(GSWF_AJI18_CARD_KEY_SLOT_1), 1)
             CALL(evt_pouch_remove_item, LW(10), LW(1))
             CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
             CALL(evt_snd_sfxon_3d, STRING("SFX_STG7_DOOR_UNLOCK1"), LW(0), LW(1), LW(2), 0)
             CALL(evt_exit_case_evt)
-            ELSE
+        ELSE
             CALL(evt_msg_print, 0, STRING("stg7_aji_67_01"), 0, 0)
         END_IF
         CASE_EQUAL(30)
         IF_INT_EQUAL(LW(0), 1)
-            CALL(evt_mapobj_flag_onoff, 1, 1, STRING("S_kagi2_aka"), 1)
-            CALL(evt_mapobj_flag_onoff, 1, 0, STRING("S_kagi2_mid"), 1)
-            SET_VALUE(GSWF(4192), 1)
+            CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("S_kagi2_aka"), MAPOBJ_FLAG_HIDE)
+            CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("S_kagi2_mid"), MAPOBJ_FLAG_HIDE)
+            SET_VALUE(GSWF(GSWF_AJI18_CARD_KEY_SLOT_2), 1)
             CALL(evt_pouch_remove_item, LW(10), LW(1))
             CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
             CALL(evt_snd_sfxon_3d, STRING("SFX_STG7_DOOR_UNLOCK1"), LW(0), LW(1), LW(2), 0)
             CALL(evt_exit_case_evt)
-            ELSE
+        ELSE
             CALL(evt_msg_print, 0, STRING("stg7_aji_67_01"), 0, 0)
         END_IF
         CASE_EQUAL(31)
         IF_INT_EQUAL(LW(0), 2)
-            CALL(evt_mapobj_flag_onoff, 1, 1, STRING("S_kagi3_aka"), 1)
-            CALL(evt_mapobj_flag_onoff, 1, 0, STRING("S_kagi3_mid"), 1)
-            SET_VALUE(GSWF(4193), 1)
+            CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("S_kagi3_aka"), MAPOBJ_FLAG_HIDE)
+            CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("S_kagi3_mid"), MAPOBJ_FLAG_HIDE)
+            SET_VALUE(GSWF(GSWF_AJI18_CARD_KEY_SLOT_3), 1)
             CALL(evt_pouch_remove_item, LW(10), LW(1))
             CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
             CALL(evt_snd_sfxon_3d, STRING("SFX_STG7_DOOR_UNLOCK1"), LW(0), LW(1), LW(2), 0)
             CALL(evt_exit_case_evt)
-            ELSE
+        ELSE
             CALL(evt_msg_print, 0, STRING("stg7_aji_67_01"), 0, 0)
         END_IF
         CASE_DEFAULT
     END_SWITCH
-    IF_INT_EQUAL(GSWF(4191), 1)
-        IF_INT_EQUAL(GSWF(4192), 1)
-            IF_INT_EQUAL(GSWF(4193), 1)
-                SET_VALUE(GSW(0), 369)
+    IF_INT_EQUAL(GSWF(GSWF_AJI18_CARD_KEY_SLOT_1), 1)
+        IF_INT_EQUAL(GSWF(GSWF_AJI18_CARD_KEY_SLOT_2), 1)
+            IF_INT_EQUAL(GSWF(GSWF_AJI18_CARD_KEY_SLOT_3), 1)
+                SET_VALUE(GSW(GSW_STORY_PROGRESS), STORY_STG7_16_FACTORY_DOOR)
                 CALL(evt_del_case_evt, 0, GW(10))
                 SET_VALUE(LW(0), STRING("e_bero"))
-                CALL_CHILD(PTR(bero_case_switch_on))
+                CALL_CHILD(bero_case_switch_on)
                 CALL(evt_cam3d_evt_set, -140, 90, 369, 150, 60, -98, 500, 11)
                 WAIT_MS(1200)
-                CALL(evt_mapobj_flag_onoff, 1, 0, STRING("S_lights1_m"), 1)
-                CALL(evt_mapobj_flag_onoff, 1, 1, STRING("S_lights1_r"), 1)
+                CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("S_lights1_m"), MAPOBJ_FLAG_HIDE)
+                CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("S_lights1_r"), MAPOBJ_FLAG_HIDE)
                 CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
                 CALL(evt_snd_sfxon_3d, STRING("SFX_STG7_DOOR_LAMP1"), LW(0), LW(1), LW(2), 0)
                 WAIT_MS(700)
@@ -271,6 +250,7 @@ EVT_BEGIN(evt_machine)
     RETURN
 EVT_END()
 
+/** Case script of the exit e_bero while the factory door is locked: shows the locked-door text stg7_aji_67_02. */
 EVT_BEGIN(key_lock_koujyou)
     CALL(evt_mario_key_onoff, 0)
     CALL(evt_msg_print, 0, STRING("stg7_aji_67_02"), 0, 0)
@@ -278,6 +258,11 @@ EVT_BEGIN(key_lock_koujyou)
     RETURN
 EVT_END()
 
+/**
+ * Scene played when Mario returns through e_bero after Lord Crump's defeat:
+ * Mario and the partner walk in, the partner speaks stg7_aji_43 to 45 (Mario thinks, then nods),
+ * and the partner is set to run after Mario again.
+ */
 static EVT_BEGIN(evt_koopa_after)
     CALL(evt_mario_key_onoff, 0)
     CALL(evt_seq_wait, 2)
@@ -315,107 +300,130 @@ static EVT_BEGIN(evt_koopa_after)
     RETURN
 EVT_END()
 
+/**
+ * Script function: if the global flag GLOBAL_FLAG_LOADED is set (a game was just loaded),
+ * clears it and starts a side- curtain fade-in, so a loaded save does not appear with the screen already open.
+ */
 static USER_FUNC(sysflag) {
-    if (gp->flags & 1) {
-        gp->flags &= ~1;
-        fadeEntry(0x1C, 0, (GXColor){0, 0, 0, 0});
+    if (gp->flags & GLOBAL_FLAG_LOADED) {
+        gp->flags &= ~GLOBAL_FLAG_LOADED;
+        fadeEntry(FADE_CURTAIN_SIDES_A2, 0, (GXColor){0, 0, 0, 0});
     }
     return EVT_RETURN_DONE;
 }
 
+/**
+ * Init script of aji_18, the room with the factory door:
+ * plays BGM_STG7_DUN2, sets up the exits, lights the three key slots by their flags (all filled from
+ * STORY_STG7_16_FACTORY_DOOR on), attaches evt_machine to each empty slot
+ * and locks the exit e_bero (key_lock_koujyou) before that point and between Lord Crump's defeat
+ * and STORY_STG7_25_00_1_BOWSER_POSHLEY_SANCTUM.
+ * In that last stretch, entering from e_bero puts a partner back with Mario if he has none,
+ * heals Mario and the partners, and starts evt_koopa_after.
+ */
 EVT_BEGIN(aji_18_init_evt)
     CALL(sysflag)
-    CALL(evt_snd_bgmon, 512, STRING("BGM_STG7_DUN2"))
-    CALL(evt_snd_envon, 272, STRING("ENV_STG7_AJI1"))
+    // The fortress music and ambience start and the exits are set up.
+    CALL(evt_snd_bgmon, PSND_FADE_OUT, STRING("BGM_STG7_DUN2"))
+    CALL(evt_snd_envon, PSND_FADE_RESTART | PSND_FADE_IN, STRING("ENV_STG7_AJI1"))
+#if VERSION >= VERSION_JP
     CALL(evt_snd_set_rev_mode, 1)
+#endif
     SET_VALUE(LW(0), PTR(bero_entry_data))
     CALL(evt_bero_get_info)
-    CALL_CHILD(PTR(evt_bero_info_run))
-    IF_INT_GREATER_OR_EQUAL(GSW(0), 369)
-        SET_VALUE(GSWF(4191), 1)
-        SET_VALUE(GSWF(4192), 1)
-        SET_VALUE(GSWF(4193), 1)
+    CALL_CHILD(evt_bero_info_run)
+    // From the factory-door story point on, all three card-key slots count as filled; each slot shows green
+    // when filled and red when empty.
+    IF_INT_GREATER_OR_EQUAL(GSW(GSW_STORY_PROGRESS), STORY_STG7_16_FACTORY_DOOR)
+        SET_VALUE(GSWF(GSWF_AJI18_CARD_KEY_SLOT_1), 1)
+        SET_VALUE(GSWF(GSWF_AJI18_CARD_KEY_SLOT_2), 1)
+        SET_VALUE(GSWF(GSWF_AJI18_CARD_KEY_SLOT_3), 1)
     END_IF
-    IF_INT_EQUAL(GSWF(4191), 1)
-        CALL(evt_mapobj_flag_onoff, 1, 1, STRING("S_kagi1_aka"), 1)
-        CALL(evt_mapobj_flag_onoff, 1, 0, STRING("S_kagi1_mid"), 1)
-        ELSE
-        CALL(evt_mapobj_flag_onoff, 1, 0, STRING("S_kagi1_aka"), 1)
-        CALL(evt_mapobj_flag_onoff, 1, 1, STRING("S_kagi1_mid"), 1)
+    IF_INT_EQUAL(GSWF(GSWF_AJI18_CARD_KEY_SLOT_1), 1)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("S_kagi1_aka"), MAPOBJ_FLAG_HIDE)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("S_kagi1_mid"), MAPOBJ_FLAG_HIDE)
+    ELSE
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("S_kagi1_aka"), MAPOBJ_FLAG_HIDE)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("S_kagi1_mid"), MAPOBJ_FLAG_HIDE)
     END_IF
-    IF_INT_EQUAL(GSWF(4192), 1)
-        CALL(evt_mapobj_flag_onoff, 1, 1, STRING("S_kagi2_aka"), 1)
-        CALL(evt_mapobj_flag_onoff, 1, 0, STRING("S_kagi2_mid"), 1)
-        ELSE
-        CALL(evt_mapobj_flag_onoff, 1, 0, STRING("S_kagi2_aka"), 1)
-        CALL(evt_mapobj_flag_onoff, 1, 1, STRING("S_kagi2_mid"), 1)
+    IF_INT_EQUAL(GSWF(GSWF_AJI18_CARD_KEY_SLOT_2), 1)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("S_kagi2_aka"), MAPOBJ_FLAG_HIDE)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("S_kagi2_mid"), MAPOBJ_FLAG_HIDE)
+    ELSE
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("S_kagi2_aka"), MAPOBJ_FLAG_HIDE)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("S_kagi2_mid"), MAPOBJ_FLAG_HIDE)
     END_IF
-    IF_INT_EQUAL(GSWF(4193), 1)
-        CALL(evt_mapobj_flag_onoff, 1, 1, STRING("S_kagi3_aka"), 1)
-        CALL(evt_mapobj_flag_onoff, 1, 0, STRING("S_kagi3_mid"), 1)
-        ELSE
-        CALL(evt_mapobj_flag_onoff, 1, 0, STRING("S_kagi3_aka"), 1)
-        CALL(evt_mapobj_flag_onoff, 1, 1, STRING("S_kagi3_mid"), 1)
+    IF_INT_EQUAL(GSWF(GSWF_AJI18_CARD_KEY_SLOT_3), 1)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("S_kagi3_aka"), MAPOBJ_FLAG_HIDE)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("S_kagi3_mid"), MAPOBJ_FLAG_HIDE)
+    ELSE
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("S_kagi3_aka"), MAPOBJ_FLAG_HIDE)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("S_kagi3_mid"), MAPOBJ_FLAG_HIDE)
     END_IF
     SET_VALUE(LW(0), 0)
-    CALL(evt_pouch_check_item, 29, LW(1))
+    CALL(evt_pouch_check_item, ITEM_CARD_KEY_0x1D, LW(1))
     ADD(LW(0), LW(1))
-    CALL(evt_pouch_check_item, 30, LW(1))
+    CALL(evt_pouch_check_item, ITEM_CARD_KEY_0x1E, LW(1))
     ADD(LW(0), LW(1))
-    CALL(evt_pouch_check_item, 31, LW(1))
+    CALL(evt_pouch_check_item, ITEM_CARD_KEY_0x1F, LW(1))
     ADD(LW(0), LW(1))
-    IF_INT_EQUAL(GSWF(4191), 0)
+    IF_INT_EQUAL(GSWF(GSWF_AJI18_CARD_KEY_SLOT_1), 0)
         SET_VALUE(LW(0), 0)
-        CALL(evt_run_case_evt, 9, 1, STRING("A_kagi1"), 0, PTR(evt_machine), 0)
+        CALL(evt_run_case_evt, CASE_COND_FRONT_A, 1, STRING("A_kagi1"), 0, PTR(evt_machine), 0)
     END_IF
-    IF_INT_EQUAL(GSWF(4192), 0)
+    IF_INT_EQUAL(GSWF(GSWF_AJI18_CARD_KEY_SLOT_2), 0)
         SET_VALUE(LW(0), 1)
-        CALL(evt_run_case_evt, 9, 1, STRING("A_kagi2"), 0, PTR(evt_machine), 0)
+        CALL(evt_run_case_evt, CASE_COND_FRONT_A, 1, STRING("A_kagi2"), 0, PTR(evt_machine), 0)
     END_IF
-    IF_INT_EQUAL(GSWF(4193), 0)
+    IF_INT_EQUAL(GSWF(GSWF_AJI18_CARD_KEY_SLOT_3), 0)
         SET_VALUE(LW(0), 2)
-        CALL(evt_run_case_evt, 9, 1, STRING("A_kagi3"), 0, PTR(evt_machine), 0)
+        CALL(evt_run_case_evt, CASE_COND_FRONT_A, 1, STRING("A_kagi3"), 0, PTR(evt_machine), 0)
     END_IF
-    IF_INT_LESS(GSW(0), 369)
-        CALL(evt_run_case_evt, 9, 1, STRING("e_bero"), 0, PTR(key_lock_koujyou), GW(10))
+    // Before the factory door opens, the east exit is locked behind the key slots, and the light panels show
+    // red.
+    IF_INT_LESS(GSW(GSW_STORY_PROGRESS), STORY_STG7_16_FACTORY_DOOR)
+        CALL(evt_run_case_evt, CASE_COND_FRONT_A, 1, STRING("e_bero"), 0, PTR(key_lock_koujyou), GW(10))
         SET_VALUE(LW(0), STRING("e_bero"))
-        CALL_CHILD(PTR(bero_case_switch_off))
-        CALL(evt_mapobj_flag_onoff, 1, 1, STRING("S_lights1_m"), 1)
-        CALL(evt_mapobj_flag_onoff, 1, 0, STRING("S_lights1_r"), 1)
-        ELSE
-        CALL(evt_mapobj_flag_onoff, 1, 0, STRING("S_lights1_m"), 1)
-        CALL(evt_mapobj_flag_onoff, 1, 1, STRING("S_lights1_r"), 1)
+        CALL_CHILD(bero_case_switch_off)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("S_lights1_m"), MAPOBJ_FLAG_HIDE)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("S_lights1_r"), MAPOBJ_FLAG_HIDE)
+    ELSE
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("S_lights1_m"), MAPOBJ_FLAG_HIDE)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("S_lights1_r"), MAPOBJ_FLAG_HIDE)
     END_IF
-    SWITCH(GSW(0))
-        CASE_BETWEEN(373, 375)
-        CALL(evt_run_case_evt, 9, 1, STRING("e_bero"), 0, PTR(key_lock_koujyou), 0)
+    // Between Lord Crump's defeat and the story point after the Moon, the east exit is locked again.
+    SWITCH(GSW(GSW_STORY_PROGRESS))
+        CASE_BETWEEN(STORY_STG7_20_LORD_CRUMP_DEFEATED, STORY_STG7_25_00_1_BOWSER_POSHLEY_SANCTUM)
+        CALL(evt_run_case_evt, CASE_COND_FRONT_A, 1, STRING("e_bero"), 0, PTR(key_lock_koujyou), 0)
         SET_VALUE(LW(0), STRING("e_bero"))
-        CALL_CHILD(PTR(bero_case_switch_off))
-        CALL(evt_mapobj_flag_onoff, 1, 1, STRING("S_lights1_m"), 1)
-        CALL(evt_mapobj_flag_onoff, 1, 0, STRING("S_lights1_r"), 1)
+        CALL_CHILD(bero_case_switch_off)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("S_lights1_m"), MAPOBJ_FLAG_HIDE)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("S_lights1_r"), MAPOBJ_FLAG_HIDE)
     END_SWITCH
-    SWITCH(GSW(0))
-        CASE_BETWEEN(373, 375)
+    // In that stretch, entering from the east door gives Mario a partner back if he has none, heals everyone
+    // and starts evt_koopa_after.
+    SWITCH(GSW(GSW_STORY_PROGRESS))
+        CASE_BETWEEN(STORY_STG7_20_LORD_CRUMP_DEFEATED, STORY_STG7_25_00_1_BOWSER_POSHLEY_SANCTUM)
         CALL(evt_bero_get_entername, LW(0))
         IF_STR_EQUAL(LW(0), STRING("e_bero"))
             CALL(evt_mario_get_party, LW(15))
             IF_INT_EQUAL(LW(15), 0)
                 CALL(evt_mario_set_party, 0, 1)
                 CALL(evt_party_run, 0)
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
             END_IF
 #endif
                 CALL(evt_pouch_mario_recovery)
                 CALL(evt_pouch_all_party_recovery)
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
             CALL(N_evt_sub_status_gauge_force_update)
 #else
             END_IF
 #endif
-            SPAWN_EVENT(PTR(evt_koopa_after))
+            SPAWN_EVENT(evt_koopa_after)
         END_IF
     END_SWITCH
-    SPAWN_EVENT(PTR(evt_emergency))
+    // The emergency lights start.
+    SPAWN_EVENT(evt_emergency)
     RETURN
 EVT_END()
-

@@ -1,3 +1,5 @@
+// Paper Mario 64 effect: rappa (trumpet): star-like sparks fired from a point in the direction set by pitch and yaw,
+// slowing down and fading over 30 frames.
 #include "eff/n64/eff_rappa_n64.h"
 #include "eff/eff_n64.h"
 #include "driver/camdrv.h"
@@ -6,12 +8,7 @@
 #include <dolphin/gx.h>
 #include <dolphin/mtx.h>
 #include <stdlib.h>
-
-#ifndef TARGET_PC /* PC port: the host libc declares these */
-double sin(double);
-double cos(double);
-#endif
-
+#include "libc_decls.h"
 typedef struct EffRappaN64Work {
     s32 type;     // 0x0
     Vec position; // 0x4
@@ -25,6 +22,13 @@ typedef struct EffRappaN64Work {
     s32 frame;    // 0x34
 } EffRappaN64Work;
 
+/** RGB colours the trumpet sparks cycle through (pinks, purples and blues), three bytes per step. */
+static u8 color_rotation_data[] = {
+    0xFE, 0xAC, 0xAC, 0xFE, 0xAC, 0xD5, 0xFE, 0xB4, 0x9A, 0xD5, 0xB4, 0xFE,
+    0xB4, 0xB4, 0xFE, 0xB4, 0xDD, 0xFE, 0xB4, 0xFE, 0xFE, 0xB4, 0xFE, 0xD5,
+    0xB4, 0xFE, 0xB4, 0xD5, 0xFE, 0xB4, 0xFE, 0xFE, 0xB4, 0xFE, 0xD5, 0xAC,
+};
+/** 16x16 camera-facing quad drawn for each trumpet spark. */
 static effN64Vtx size16x16_tex32x32_vtx[] = {
     {-8, -8, 0, 0, 0, 0, 0, 0, 255},
     {8, -8, 0, 1024, 0, 0, 0, 0, 255},
@@ -32,17 +36,13 @@ static effN64Vtx size16x16_tex32x32_vtx[] = {
     {-8, 8, 0, 0, 1024, 0, 0, 0, 255},
 };
 
-static u8 color_rotation_data[] = {
-    0xFE, 0xAC, 0xAC, 0xFE, 0xAC, 0xD5, 0xFE, 0xB4, 0x9A, 0xD5, 0xB4, 0xFE,
-    0xB4, 0xB4, 0xFE, 0xB4, 0xDD, 0xFE, 0xB4, 0xFE, 0xFE, 0xB4, 0xFE, 0xD5,
-    0xB4, 0xFE, 0xB4, 0xD5, 0xFE, 0xB4, 0xFE, 0xFE, 0xB4, 0xFE, 0xD5, 0xAC,
-};
+static void effRappaMain(EffectEntry* effect);
+static void effRappaDisp(CameraId cameraId, EffectEntry* effect);
 
-
-
-void effRappaMain(EffectEntry* effect);
-void effRappaDisp(CameraId cameraId, EffectEntry* effect);
-
+/**
+ * Spawns `num` sparks at (x, y, z) fired along pitch/yaw (degrees), living 30 frames;
+ * returns NULL when num is 0. Spawned by event scripts through evt_eff.
+ */
 EffectEntry* effRappaN64Entry(s32 type, s32 num, f32 x, f32 y, f32 z, f32 pitch, f32 yaw) {
     EffectEntry* effect;
     EffRappaN64Work* work;
@@ -57,7 +57,7 @@ EffectEntry* effRappaN64Entry(s32 type, s32 num, f32 x, f32 y, f32 z, f32 pitch,
     if (num == 0) {
         return NULL;
     }
-    effect->type = "RappaN64\0\0\0";
+    effect->type = "RappaN64";
     effect->count = num + 1;
     work = __memAlloc(HEAP_EFFECT, sizeof(EffRappaN64Work) * (num + 1));
     effect->userdata = work;
@@ -79,7 +79,10 @@ EffectEntry* effRappaN64Entry(s32 type, s32 num, f32 x, f32 y, f32 z, f32 pitch,
         radP = 6.2831855f * pitch / 360.0f;
         sinA = sin(radP);
         rad = 6.2831855f * (yaw + (f32)((i & 2) * (i / 2) * 4)) / 360.0f;
-        { f32 c = cos(rad); work->velocity.x = c * sinA; }
+        {
+            f32 c = cos(rad);
+            work->velocity.x = c * sinA;
+        }
         work->velocity.y = (f32)sin(rad);
         work->velocity.z = (f32)cos(rad) * (f32)cos(radP);
         work->speed = speed;
@@ -88,7 +91,12 @@ EffectEntry* effRappaN64Entry(s32 type, s32 num, f32 x, f32 y, f32 z, f32 pitch,
     return effect;
 }
 
-void effRappaMain(EffectEntry* effect) {
+/**
+ * Moves each spark along its direction at its speed, which drops 10% per frame;
+ * over the last 10 frames the alpha drops 20% per frame and each spark grows by speed/10.
+ * Deletes when the lifetime runs out. CAMERA_3D, layer 2.
+ */
+static void effRappaMain(EffectEntry* effect) {
     EffRappaN64Work* work = effect->userdata;
     Vec position;
     Vec tmp = {0.0f, 0.0f, 0.0f};
@@ -122,6 +130,7 @@ void effRappaMain(EffectEntry* effect) {
     dispEntry(CAMERA_3D, dispCalcZ(&position), 2, (DispCallback)effRappaDisp, effect);
 }
 
+/** Builds a GXColor from four byte components. */
 static inline GXColor mkcol(u8 r, u8 g, u8 b, u8 a) {
     GXColor c = {0};
     c.r = r;
@@ -131,7 +140,12 @@ static inline GXColor mkcol(u8 r, u8 g, u8 b, u8 a) {
     return c;
 }
 
-void effRappaDisp(CameraId cameraId, EffectEntry* effect) {
+/**
+ * Draws each spark as a camera-facing 16x16 quad of texture 0x1D in a flat colour from color_rotation_data;
+ * each spark is one step further along the table and the whole set advances 3 steps per frame,
+ * so the colours cycle.
+ */
+static void effRappaDisp(CameraId cameraId, EffectEntry* effect) {
     CameraEntry* camera;
     s32 j0, j1, j2;
     EffRappaN64Work* work;
@@ -145,7 +159,8 @@ void effRappaDisp(CameraId cameraId, EffectEntry* effect) {
 
     camera = camGetPtr(cameraId);
     work = effect->userdata;
-    idx = (work->frame - 1) * 3; idx %= 36;
+    idx = (work->frame - 1) * 3;
+    idx %= 36;
     alpha = work->alpha;
     GXSetNumChans(0);
     GXSetNumTexGens(1);
@@ -167,10 +182,12 @@ void effRappaDisp(CameraId cameraId, EffectEntry* effect) {
     j1 = idx + 4;
     j2 = idx + 5;
     for (i = 1; i < effect->count; j0 += 3, j1 += 3, j2 += 3, i++, work++) {
-        do { GXSetTevColor(GX_TEVREG0, mkcol(color_rotation_data[j0 % 36], color_rotation_data[j1 % 36], color_rotation_data[j2 % 36], alpha));
-        PSMTXTrans(mtx, work->position.x, work->position.y, work->position.z);
-        PSMTXRotRad(rot, 'y', 0.017453292f * -camGetPtr(CAMERA_3D)->viewYaw);
-        PSMTXScale(scale, work->scaleOfs, work->scaleOfs, 1.0f); } while (0);
+        do {
+            GXSetTevColor(GX_TEVREG0, mkcol(color_rotation_data[j0 % 36], color_rotation_data[j1 % 36], color_rotation_data[j2 % 36], alpha));
+            PSMTXTrans(mtx, work->position.x, work->position.y, work->position.z);
+            PSMTXRotRad(rot, 'y', 0.017453292f * -camGetPtr(CAMERA_3D)->viewYaw);
+            PSMTXScale(scale, work->scaleOfs, work->scaleOfs, 1.0f);
+        } while (0);
         PSMTXConcat(mtx, rot, mtx);
         PSMTXConcat(mtx, scale, mtx);
         PSMTXConcat(camera->view, mtx, mtx);

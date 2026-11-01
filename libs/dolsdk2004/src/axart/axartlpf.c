@@ -3,6 +3,7 @@
 #include <dolphin/mix.h>
 #include "fake_tgmath.h"
 
+/** Low-pass filter coefficient pairs (a0, b0) for the 24 roll-off frequencies an articulator can select. */
 static u16 __coefs[48] = {
     0x6A09, 0x15F6, 0x6871, 0x178E, 0x6463, 0x1B9C,
 	0x5DB3, 0x224C, 0x5618, 0x29E7, 0x4D7A, 0x3285,
@@ -14,6 +15,11 @@ static u16 __coefs[48] = {
 	0x032D, 0x7CD2, 0x027D, 0x7D82, 0x01FE, 0x7E01
 };
 
+/**
+ * Applies a low-pass filter articulator to a voice when its 'update' flag is set.
+ * The first time it turns the voice's LPF on; afterwards it just reloads coefficients (a0, b0) chosen from a
+ * 24-entry roll-off frequency table, and sets the matching AX sync flags.
+ */
 void AXARTLpf(AXART_LPF* articulator, AXVPB* voice) {
     u32 i;
     ASSERTLINE(68, articulator);

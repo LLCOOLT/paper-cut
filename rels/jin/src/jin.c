@@ -1,41 +1,22 @@
+// jin (ダイム寺院, Creepy Steeple): shared code for the whole area: REL prolog/epilog (registers jin_00 to jin_11 and
+// battle tables, swaps the Vivian pose table) and evt_jin_vivian_pose_set.
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
 #include "manager/evtmgr_cmd.h"
 
-#pragma force_active on
 #include "data/mapdata.h"
 #include "memory.h"
 #include "string.h"
 #include "data/party_data.h"
 #include "jin.h"
+#include "rel_module.h"
 
-typedef void (*voidfunctionptr)(void);
-extern voidfunctionptr _ctors[];
-extern voidfunctionptr _dtors[];
 static void* pose_buf;
 
-void _unresolved(void);
-void _epilog(void);
-void _prolog(void);
-USER_FUNC(evt_jin_vivian_pose_set);
-
-f32 fd_jin_negone_one_374[2] __attribute__((aligned(8)));
-f32 fd_jin_neg_one_382;
-f32 fd_jin___local_PI_383;
-f32 fd_jin___local_3PIO2_385;
-f32 fd_jin_one_negone_373[2] __attribute__((aligned(8)));
-f32 fd_jin___local_PIO2_384;
-f32 fd_jin_one_381;
-f32 fd_jin_negone_one_360[2] __attribute__((aligned(8)));
-f32 fd_jin_neg_one_365;
-f32 fd_jin___local_PI_366;
-f32 fd_jin___local_3PIO2_368;
-f32 fd_jin_one_negone_359[2] __attribute__((aligned(8)));
-f32 fd_jin___local_PIO2_367;
-f32 fd_jin_one_364;
-f64 fd_jin__three_localstatic4_sqrtf;
-f64 fd_jin__half_localstatic3_sqrtf;
-
+/**
+ * Script helper: sets entry args[0] of Vivian's pose table (partyPoseTbl[6]) to the animation name args[1],
+ * so Vivian uses different poses inside the steeple; the original table is restored when the REL unloads.
+ */
 USER_FUNC(evt_jin_vivian_pose_set) {
     EvtWord* args = event->args;
     s32 index = evtGetValue(event, args[0]);
@@ -43,6 +24,11 @@ USER_FUNC(evt_jin_vivian_pose_set) {
     return EVT_RETURN_DONE;
 }
 
+/**
+ * Module entry point of jin.rel: runs the static constructors,
+ * registers the init scripts of jin_00..jin_11 and the area's battle tables,
+ * and keeps a copy of Vivian's pose table so scripts can change it.
+ */
 void _prolog(void) {
     voidfunctionptr* ctor;
 
@@ -66,6 +52,7 @@ void _prolog(void) {
     memcpy(pose_buf, partyPoseTbl[6], sizeof(partyPoseTbl[6]));
 }
 
+/** Module exit point of jin.rel: runs the static destructors and restores Vivian's original pose table. */
 void _epilog(void) {
     voidfunctionptr* dtor;
 
@@ -76,38 +63,6 @@ void _epilog(void) {
     _mapFree(pose_buf);
 }
 
+/** Linker stub for unresolved symbols; does nothing. */
 void _unresolved(void) {
 }
-
-f32 fd_jin_negone_one_374[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_jin_neg_one_382 = -1.0f;
-
-f32 fd_jin___local_PI_383 = 3.1415927f;
-
-f32 fd_jin___local_3PIO2_385 = 4.712389f;
-
-f32 fd_jin_one_negone_373[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_jin___local_PIO2_384 = 1.5707964f;
-
-f32 fd_jin_one_381 = 1.0f;
-
-f32 fd_jin_negone_one_360[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_jin_neg_one_365 = -1.0f;
-
-f32 fd_jin___local_PI_366 = 3.1415927f;
-
-f32 fd_jin___local_3PIO2_368 = 4.712389f;
-
-f32 fd_jin_one_negone_359[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_jin___local_PIO2_367 = 1.5707964f;
-
-f32 fd_jin_one_364 = 1.0f;
-
-f64 fd_jin__three_localstatic4_sqrtf = 3.0;
-
-f64 fd_jin__half_localstatic3_sqrtf = 0.5;
-

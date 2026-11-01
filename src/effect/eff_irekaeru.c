@@ -1,4 +1,6 @@
-#ifdef VERSION_G8ME01
+// Swap effect (irekaeru: swap places): plays the language-specific EFF_Irekae animation at a point, fading in and out.
+#include "version.h"
+#if VERSION >= VERSION_US
 #include "mario/mariost.h"
 #endif
 #include "eff/eff_irekaeru.h"
@@ -7,31 +9,40 @@
 #include "mario/mariost.h"
 #include "memory.h"
 #include <dolphin/mtx.h>
-#ifdef VERSION_G8ME01
+#ifdef TARGET_PC /* PC port: the header's prototypes are skipped on PC (these are static here) */
+static void effIrekaeruMain(EffectEntry* effect);
+static void effIrekaeruDisp(CameraId cameraId, EffectEntry* effect);
+#endif
+#if VERSION >= VERSION_US
+/**
+ * Animation group of the partner-swap effect by language
+ * (Japanese, English, German, French, Spanish, Italian).
+ */
 const char* eff_irekae_str_tbl[6] = {"EFF_Irekae", "EFF_Irekae", "EFF_Irekae_D", "EFF_Irekae_F_Sp", "EFF_Irekae_F_Sp", "EFF_Irekae_I"};
 #endif
 
 typedef struct EffIrekaeruWork {
-    s32 type;       // 0x0
-    Vec position;   // 0x4
-    f32 scale;      // 0x10
-    s32 poseId;     // 0x14
-    s32 state;      // 0x18
-    s32 field_0x1C; // 0x1C
-    s32 alpha;      // 0x20
+    s32 type;     // 0x0
+    Vec position; // 0x4
+    f32 scale;    // 0x10
+    s32 poseId;   // 0x14
+    s32 state;    // 0x18
+    s32 timer;    // 0x1C, only cleared at entry
+    s32 alpha;    // 0x20
 } EffIrekaeruWork;
 
+/** Spawns the swap (irekaeru) animation at (x, y, z); spawned by event scripts. */
 EffectEntry* effIrekaeruEntry(s32 type, f32 x, f32 y, f32 z) {
     EffectEntry* effect;
     EffIrekaeruWork* work;
 
     effect = effEntry();
-    effect->type = "Irekaeru\0\0\0";
+    effect->type = "Irekaeru";
     effect->count = 1;
     work = __memAlloc(HEAP_EFFECT, sizeof(EffIrekaeruWork) * effect->count);
     effect->userdata = work;
     effect->callback = effIrekaeruMain;
-    effect->flags |= 2;
+    effect->flags |= EFFECT_FLAG_SOFT_DELETE;
     work->type = type;
     work->position.x = x;
     work->position.y = y;
@@ -39,26 +50,27 @@ EffectEntry* effIrekaeruEntry(s32 type, f32 x, f32 y, f32 z) {
     work->scale = 1.0f;
     work->poseId = -1;
     work->state = 0;
-    work->field_0x1C = 0;
+    work->timer = 0;
     work->alpha = 0;
     return effect;
 }
 
-void effIrekaeruMain(EffectEntry* effect) {
+/** Loads the pose, fades it in, plays it, then fades out and deletes it; a soft delete deletes it immediately. */
+static void effIrekaeruMain(EffectEntry* effect) {
     EffIrekaeruWork* work = effect->userdata;
     Vec position;
     BOOL inBattle;
 
-    position = (Vec){ work->position.x, work->position.y, work->position.z };
-#ifdef VERSION_G8ME01
+    position = (Vec){work->position.x, work->position.y, work->position.z};
+#if VERSION >= VERSION_US
     inBattle = !!gp->inBattle;
 #else
     inBattle = gp->inBattle != 0;
 #endif
 
     // soft delete
-    if (effect->flags & 4) {
-        effect->flags &= ~4;
+    if (effect->flags & EFFECT_FLAG_DELETE_REQUESTED) {
+        effect->flags &= ~EFFECT_FLAG_DELETE_REQUESTED;
         if (work->poseId != -1) {
             animPoseRelease(work->poseId);
         }
@@ -67,14 +79,14 @@ void effIrekaeruMain(EffectEntry* effect) {
     }
     switch (work->state) {
         case 0:
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
             if (!animGroupBaseAsync(eff_irekae_str_tbl[gp->language], inBattle, NULL)) {
 #else
             if (!animGroupBaseAsync("EFF_Irekae", inBattle, NULL)) {
 #endif
                 return;
             }
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
             work->poseId = animPoseEntry(eff_irekae_str_tbl[gp->language], (u32)inBattle);
 #else
             work->poseId = animPoseEntry("EFF_Irekae", (u32)inBattle);
@@ -96,8 +108,7 @@ void effIrekaeruMain(EffectEntry* effect) {
         if (work->alpha > 255) {
             work->alpha = 255;
         }
-    }
-    else {
+    } else {
         work->alpha -= 20;
         if (work->alpha < 0) {
             work->alpha = 0;
@@ -106,7 +117,8 @@ void effIrekaeruMain(EffectEntry* effect) {
     dispEntry(CAMERA_3D, dispCalcZ(&position), 2, (DispCallback)effIrekaeruDisp, effect);
 }
 
-void effIrekaeruDisp(CameraId cameraId, EffectEntry* effect) {
+/** Draws the EFF_Irekae pose billboarded to the camera with the current alpha. */
+static void effIrekaeruDisp(CameraId cameraId, EffectEntry* effect) {
     EffIrekaeruWork* work = effect->userdata;
     Mtx mtx;
     Mtx scale;
@@ -118,8 +130,8 @@ void effIrekaeruDisp(CameraId cameraId, EffectEntry* effect) {
         PSMTXRotRad(rot, 'y', MTXDegToRad(-camGetPtr(cameraId)->viewYaw));
         PSMTXConcat(mtx, rot, mtx);
         PSMTXConcat(mtx, scale, mtx);
-        animPoseSetMaterialFlagOn(work->poseId, 0x40);
-        animPoseSetMaterialEvtColor(work->poseId, (GXColor){ 0xFF, 0xFF, 0xFF, work->alpha });
+        animPoseSetMaterialFlagOn(work->poseId, ANIM_MATERIAL_FLAG_EVT_COLOR);
+        animPoseSetMaterialEvtColor(work->poseId, (GXColor){0xFF, 0xFF, 0xFF, work->alpha});
         animPoseMain(work->poseId);
         animPoseDrawMtx(work->poseId, mtx, 1, 0.0f, 2.0f);
         animPoseDrawMtx(work->poseId, mtx, 2, 0.0f, 2.0f);

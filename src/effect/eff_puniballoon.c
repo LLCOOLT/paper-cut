@@ -1,3 +1,4 @@
+// Puni balloon (puni: the Punies): a wobbling balloon (type 0) that pops into a burst of small pieces (type 1).
 #include "driver/camdrv.h"
 #include "eff/eff_puniballoon.h"
 #include "driver/dispdrv.h"
@@ -7,18 +8,17 @@
 #include "system.h"
 #include <dolphin/gx.h>
 #include <dolphin/mtx.h>
+#include "libc_decls.h"
 
-#ifndef TARGET_PC /* PC port: the host libc declares these */
-double sin(double);
-int rand(void);
-#endif
-
-EffectEntry* effPuniBalloonEntry(s32 type, f32 x, f32 y, f32 z, f32 scale);
-void effPuniBalloonMain(EffectEntry* effect);
-void effPuniBalloonDisp(CameraId cameraId, EffectEntry* effect);
+static void effPuniBalloonMain(EffectEntry* effect);
+static void effPuniBalloonDisp(CameraId cameraId, EffectEntry* effect);
 static void balloon_1(CameraId cameraId, EffectEntry* effect);
 static void balloon_0(CameraId cameraId, EffectEntry* effect);
 
+/**
+ * Spawns a Puni balloon (type 0) or its pop burst (type 1) at (x, y, z) scaled by `scale`;
+ * used by the Great Tree (mri) Puni scenes and evt_eff ("puniballoon").
+ */
 EffectEntry* effPuniBalloonEntry(s32 type, f32 x, f32 y, f32 z, f32 scale) {
     EffectEntry* effect;
     PuniBalloonWork* work;
@@ -29,19 +29,19 @@ EffectEntry* effPuniBalloonEntry(s32 type, f32 x, f32 y, f32 z, f32 scale) {
     effect = effEntry();
     n = 1;
     switch (type) {
-    case 0:
-        n = 1;
-        break;
-    case 1:
-        n = 11;
-        break;
+        case 0:
+            n = 1;
+            break;
+        case 1:
+            n = 11;
+            break;
     }
     effect->type = "PuniBalloon";
     effect->count = n;
     work = __memAlloc(HEAP_EFFECT, effect->count * sizeof(PuniBalloonWork));
     effect->userdata = work;
     effect->callback = effPuniBalloonMain;
-    effect->flags |= 2;
+    effect->flags |= EFFECT_FLAG_SOFT_DELETE;
     work->type = type;
     work->position.x = x;
     work->position.y = y;
@@ -50,7 +50,7 @@ EffectEntry* effPuniBalloonEntry(s32 type, f32 x, f32 y, f32 z, f32 scale) {
     work->life = type == 0 ? 1000 : 30;
     work->frame = 0;
     work->scale = 0.0f;
-    work->field_0x1C = scale;
+    work->baseScale = scale;
     for (i = 1, p = work + 1; i < effect->count; i++, p++) {
         p->position.x = 0.0f;
         p->position.y = 0.0f;
@@ -63,7 +63,8 @@ EffectEntry* effPuniBalloonEntry(s32 type, f32 x, f32 y, f32 z, f32 scale) {
     return effect;
 }
 
-void effPuniBalloonMain(EffectEntry* effect) {
+/** Per frame: advances the frame counter, ends the effect after the pop and registers the draw callback. */
+static void effPuniBalloonMain(EffectEntry* effect) {
     PuniBalloonWork* work = effect->userdata;
     Vec pos;
     Vec tmp;
@@ -78,8 +79,8 @@ void effPuniBalloonMain(EffectEntry* effect) {
     pos = tmp;
     type = work->type;
 
-    if (effect->flags & 4) {
-        effect->flags &= ~4;
+    if (effect->flags & EFFECT_FLAG_DELETE_REQUESTED) {
+        effect->flags &= ~EFFECT_FLAG_DELETE_REQUESTED;
         work->life = 16;
     }
     if (work->life < 1000) {
@@ -109,7 +110,8 @@ void effPuniBalloonMain(EffectEntry* effect) {
     dispEntry(CAMERA_3D, dispCalcZ(&pos), 2, (DispCallback)effPuniBalloonDisp, effect);
 }
 
-void effPuniBalloonDisp(CameraId cameraId, EffectEntry* effect) {
+/** Draw callback: dispatches to balloon_0 (the balloon) or balloon_1 (the burst) by type. */
+static void effPuniBalloonDisp(CameraId cameraId, EffectEntry* effect) {
     PuniBalloonWork* work = effect->userdata;
     if (work->type == 0) {
         balloon_0(cameraId, effect);
@@ -118,6 +120,7 @@ void effPuniBalloonDisp(CameraId cameraId, EffectEntry* effect) {
     }
 }
 
+/** Draws the wobbling balloon (scale pulses with a sine) as a camera-facing textured quad (effect texture 0x26). */
 static void balloon_0(CameraId cameraId, EffectEntry* effect) {
     PuniBalloonWork* work = effect->userdata;
     CameraEntry* cam = camGetPtr(cameraId);
@@ -129,7 +132,7 @@ static void balloon_0(CameraId cameraId, EffectEntry* effect) {
     scale = work->scale;
     sv = (f32)sin((f32)work->frame / 10.0f);
     scale += 0.1f * sv;
-    scale *= work->field_0x1C;
+    scale *= work->baseScale;
     PSMTXTrans(mT, work->position.x, work->position.y, work->position.z);
     PSMTXRotRad(mR, 'y', 0.017453292f * -camGetPtr(cameraId)->viewYaw);
     PSMTXConcat(mT, mR, mX);
@@ -171,7 +174,7 @@ static void balloon_0(CameraId cameraId, EffectEntry* effect) {
     GXSetTevDirect(GX_TEVSTAGE0);
 }
 
-
+/** Draws the burst of small pieces after the balloon pops, using the same texture. */
 static void balloon_1(CameraId cameraId, EffectEntry* effect) {
     PuniBalloonWork* work = effect->userdata;
     PuniBalloonWork* p;

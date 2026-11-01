@@ -1,12 +1,17 @@
+// Energy orb (Energy): a glowing sprite that spins, scales and pulses in brightness; type picks the colour pair.
+// Spawned by Mario's battle moves.
 #include "eff/eff_energy.h"
 #include "driver/dispdrv.h"
 #include "memory.h"
 #include <dolphin/gx.h>
 #include <dolphin/mtx.h>
 #include "version.h"
+#ifdef TARGET_PC /* PC port: the header's prototypes are skipped on PC (these are static here) */
+static void effEnergyMain(EffectEntry* effect);
+static void effEnergyDisp(CameraId cameraId, EffectEntry* effect);
+#endif
 // US effect texture ids are 0x1C lower for these entries.
 #define EFF_TEX(id) ((id) - VERSION_PICK(0, 0x1C))
-
 
 typedef struct EffEnergyWork {
     s32 type;        // 0x0, index into color_tbl
@@ -31,13 +36,18 @@ static GXColor color_tbl[] = {
     { 0xF5, 0x5A, 0xC5, 0xFF }, { 0xFD, 0xBC, 0xFB, 0xFF },
 };
 
+/**
+ * Spawns the energy orb at (x, y, z) for `duration` frames with start size `size`,
+ * spin speed `rotSpeed` and growth `scaleSpeed`; type picks the colour pair.
+ * Used by Mario's Jump and Hammer star effects in battle_mario.c.
+ */
 EffectEntry* effEnergyEntry(s32 type, s32 duration, f32 x, f32 y, f32 z, f32 size, f32 rotSpeed,
                             f32 scaleSpeed) {
     EffectEntry* effect;
     EffEnergyWork* work;
 
     effect = effEntry();
-    effect->type = "Energy\0";
+    effect->type = "Energy";
     effect->count = 1;
     work = __memAlloc(HEAP_EFFECT, sizeof(EffEnergyWork) * effect->count);
     effect->userdata = work;
@@ -56,22 +66,22 @@ EffectEntry* effEnergyEntry(s32 type, s32 duration, f32 x, f32 y, f32 z, f32 siz
     work->brightSpeed = 32;
     if (duration <= 0) {
         work->timer = 1000;
-    }
-    else {
+    } else {
         work->timer = duration;
     }
     return effect;
 }
 
-void effEnergyMain(EffectEntry* effect) {
+/** Spins and grows the orb, pulses its brightness between limits, and fades it over 16 frames on soft delete. */
+static void effEnergyMain(EffectEntry* effect) {
     EffEnergyWork* work = effect->userdata;
     Vec position;
 
-    position = (Vec){ work->position.x, work->position.y, work->position.z };
+    position = (Vec){work->position.x, work->position.y, work->position.z};
 
     // soft delete: start fading out
-    if (effect->flags & 4) {
-        effect->flags &= ~4;
+    if (effect->flags & EFFECT_FLAG_DELETE_REQUESTED) {
+        effect->flags &= ~EFFECT_FLAG_DELETE_REQUESTED;
         work->timer = 16;
     }
     if (work->timer < 1000) {
@@ -99,7 +109,8 @@ void effEnergyMain(EffectEntry* effect) {
     dispEntry(CAMERA_3D, dispCalcZ(&position), 2, (DispCallback)effEnergyDisp, effect);
 }
 
-void effEnergyDisp(CameraId cameraId, EffectEntry* effect) {
+/** Draws the orb as a camera-facing sprite rotated around Z, with colours chosen by type. */
+static void effEnergyDisp(CameraId cameraId, EffectEntry* effect) {
     EffEnergyWork* work = effect->userdata;
     CameraEntry* camera;
     s32 type;
@@ -128,7 +139,7 @@ void effEnergyDisp(CameraId cameraId, EffectEntry* effect) {
     GXSetNumChans(1);
     GXSetChanCtrl(GX_COLOR0A0, GX_FALSE, GX_SRC_REG, GX_SRC_REG, GX_LIGHT_NULL, GX_DF_NONE, GX_AF_NONE);
     GXSetChanMatColor(GX_COLOR0A0,
-                      (GXColor){ work->brightness, work->brightness, work->brightness, work->alpha });
+                      (GXColor){work->brightness, work->brightness, work->brightness, work->alpha});
     GXSetTevColor(GX_TEVREG0, color_tbl[type * 2]);
     GXSetTevColor(GX_TEVREG1, color_tbl[type * 2 + 1]);
     GXSetNumTevStages(1);

@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
 """Write port/sources_<version>.cmake from the object list in configure.py, so
 the PC build compiles exactly the game/REL sources the matching build does for
-that version (objects are gated per version by MatchingFor; JP-only files such
-as seq_demo.c and the dig/qiz RELs are left out of the US list).
+that version. configure.py lists every object for every version; which ones a
+version has is set by its splits (config/<version>/splits.txt for the DOL,
+config/<version>/<rel>/splits.txt for each REL), as for the matching build:
+JP-only files such as seq_demo.c and the dig/qiz RELs are left out of the US
+list, the US demo has six RELs.
 
-Usage: gen_sources.py [--version G8MJ01|G8ME01]   (default: every version)"""
-import argparse, os, sys
+Usage: gen_sources.py [--version G8MJ01|...]   (default: every version)"""
+import argparse, os, re, sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -27,17 +30,33 @@ def load_libs(text, version):
         sys.argv = argv
     return g["VERSIONS"], g["config"].libs
 
+def split_units(version, rel=None):
+    """The units a version's splits name (paths relative to the source dir), or
+    None when there is no splits file (that module is not in this version)."""
+    p = os.path.join(ROOT, "config", version, *([rel] if rel else []), "splits.txt")
+    if not os.path.exists(p):
+        return None
+    with open(p, encoding="utf-8") as f:
+        return {m.group(1) for m in re.finditer(r"(?m)^(\S[^\n]*?):\s*$", f.read()) if m.group(1) != "Sections"}
+
 def write_version(text, version):
     _, libs = load_libs(text, version)
     dol, rels = [], {}
+    dol_units = split_units(version)
     for lib in libs:
         src_dir = lib.get("src_dir", "src")
         if src_dir.startswith("libs/"):
             continue  # SDK / MusyX / runtime: replaced or built separately
+        units = split_units(version, lib["lib"]) if src_dir.startswith("rels/") else dol_units
+        if units is None:
+            continue  # this REL is not in this version
         for obj in lib["objects"]:
             if not obj.completed:
                 continue  # not part of this version
-            path = f"{src_dir}/{obj.options.get('source') or obj.name}"
+            name = obj.options.get('source') or obj.name
+            if obj.name not in units and name not in units:
+                continue  # not in this version's splits
+            path = f"{src_dir}/{name}"
             if not path.endswith(".c") or not os.path.exists(os.path.join(ROOT, path)):
                 continue
             if src_dir.startswith("rels/"):

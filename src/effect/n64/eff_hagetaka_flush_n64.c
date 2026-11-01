@@ -1,3 +1,5 @@
+// Paper Mario 64 effect: hagetaka flash, a 10-frame green twinkle that grows and then shrinks over its last 4
+// frames; itemdrv spawns it at random around coins and Pianta tokens.
 #include "eff/n64/eff_hagetaka_flush_n64.h"
 #include "eff/eff_n64.h"
 #include "driver/camdrv.h"
@@ -5,6 +7,7 @@
 #include "memory.h"
 #include <dolphin/gx.h>
 #include <dolphin/mtx.h>
+#include "version.h"
 
 typedef struct EffHagetakaFlushN64Work {
     s32 type;      // 0x0
@@ -19,6 +22,16 @@ typedef struct EffHagetakaFlushN64Work {
     f32 scale;     // 0x2C
 } EffHagetakaFlushN64Work;
 
+#if VERSION <= VERSION_DEMO_JP
+// The demo defines the colours first
+static u8 color_rotation_data[] = {
+    0xFF, 0xFF, 0x52, 0xFF, 0xFF, 0x52, 0xB5, 0x94,
+    0x00, 0xB5, 0x94, 0x00, 0xFF, 0xFF, 0xD6, 0xFF,
+    0xFF, 0xD6, 0xB5, 0x94, 0x00, 0xB5, 0x94, 0x00,
+};
+#endif
+
+/** Camera-facing 16x16 twinkle sprite. */
 static effN64Vtx size16x16_tex64x64_vtx[] = {
     {-8, -8, 0, 0, 1024, 0, 0, 0, 255},
     {8, -8, 0, 2048, 1024, 0, 0, 0, 255},
@@ -26,26 +39,33 @@ static effN64Vtx size16x16_tex64x64_vtx[] = {
     {-8, 8, 0, 0, 3072, 0, 0, 0, 255},
 };
 
+#if VERSION >= VERSION_JP
+/** Colours the twinkle cycles through: yellow, gold and pale yellow. */
 static u8 color_rotation_data[] = {
     0xFF, 0xFF, 0x52, 0xFF, 0xFF, 0x52, 0xB5, 0x94,
     0x00, 0xB5, 0x94, 0x00, 0xFF, 0xFF, 0xD6, 0xFF,
     0xFF, 0xD6, 0xB5, 0x94, 0x00, 0xB5, 0x94, 0x00,
 };
+#endif
 
-void effHagetakaFlushMain(EffectEntry* effect);
-void effHagetakaFlushDisp(CameraId cameraId, EffectEntry* effect);
+static void effHagetakaFlushMain(EffectEntry* effect);
+static void effHagetakaFlushDisp(CameraId cameraId, EffectEntry* effect);
 
-EffectEntry* effHagetakaFlushN64Entry(s32 type, f32 x, f32 y, f32 z, f32 scale) {
+/**
+ * Spawns a short green twinkle at (x, y, z) that lasts 10 frames.
+ * itemdrv.c spawns it randomly around field items 0x79 and 0x7A, and event scripts spawn it via evt_eff.
+ */
+EffectEntry* effHagetakaFlushN64Entry(s32 type, s32 lifetime, f32 x, f32 y, f32 z, f32 scale) {
     EffectEntry* effect;
     EffHagetakaFlushN64Work* work;
 
     effect = effEntry();
-    effect->type = "HagetakaFlushN64\0\0\0";
+    effect->type = "HagetakaFlushN64";
     effect->count = 1;
     work = __memAlloc(HEAP_EFFECT, sizeof(EffHagetakaFlushN64Work));
     effect->userdata = work;
     effect->callback = effHagetakaFlushMain;
-    effect->flags |= 2;
+    effect->flags |= EFFECT_FLAG_SOFT_DELETE;
     work->type = type;
     work->frame = 0;
     work->timer = 10;
@@ -61,7 +81,8 @@ EffectEntry* effHagetakaFlushN64Entry(s32 type, f32 x, f32 y, f32 z, f32 scale) 
     return effect;
 }
 
-void effHagetakaFlushMain(EffectEntry* effect) {
+/** Grows the twinkle by 0.2 each frame and halves its scale over the last 4 frames, then deletes it. */
+static void effHagetakaFlushMain(EffectEntry* effect) {
     EffHagetakaFlushN64Work* work = effect->userdata;
     Vec position;
     Vec tmp = {0.0f, 0.0f, 0.0f};
@@ -71,8 +92,8 @@ void effHagetakaFlushMain(EffectEntry* effect) {
     tmp.y = work->position.y;
     tmp.z = work->position.z;
     position = tmp;
-    if (effect->flags & 4) {
-        effect->flags &= ~4;
+    if (effect->flags & EFFECT_FLAG_DELETE_REQUESTED) {
+        effect->flags &= ~EFFECT_FLAG_DELETE_REQUESTED;
         work->timer = 10;
     }
     if (work->timer < 1000) {
@@ -92,7 +113,8 @@ void effHagetakaFlushMain(EffectEntry* effect) {
     dispEntry(CAMERA_3D, dispCalcZ(&position), 2, (DispCallback)effHagetakaFlushDisp, effect);
 }
 
-void effHagetakaFlushDisp(CameraId cameraId, EffectEntry* effect) {
+/** Draws a camera-facing 16x16 sprite from texture 0x1C, scaled by baseScale * scale. */
+static void effHagetakaFlushDisp(CameraId cameraId, EffectEntry* effect) {
     CameraEntry* camera;
     EffHagetakaFlushN64Work* work;
     s32 alpha;

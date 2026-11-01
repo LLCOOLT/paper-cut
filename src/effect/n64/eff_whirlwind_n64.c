@@ -1,3 +1,4 @@
+// Paper Mario 64 effect: four spinning wind bands around a Mario target, used in battle; `life` sets the duration.
 #include "mario/mario.h"
 #include "eff/eff_n64.h"
 #include "eff/n64/eff_whirlwind_n64.h"
@@ -9,11 +10,15 @@
 #include <dolphin/mtx.h>
 #include <stdlib.h>
 
+/**
+ * Colours a wind band can take (white, red or blue), as red, green and blue tables;
+ * the type picks one per band.
+ */
+u8 col_r[3] = {0xFF, 0xFF, 0x40};
+u8 col_g[3] = {0xFF, 0x40, 0x40};
+u8 col_b[3] = {0xFF, 0x40, 0xFF};
 
-u8 col_r[4] = {0xFF, 0xFF, 0x40, 0x00};
-u8 col_g[4] = {0xFF, 0x40, 0x40, 0x00};
-u8 col_b[4] = {0xFF, 0x40, 0xFF, 0x00};
-
+/** The wind band mesh: a thin curved strip that wraps around the centre, drawn once for each band. */
 effN64Vtx eff_whirlwind_v[] = {
     {-5, -2, 9, 939, 0, 0xFF, 0xFF, 0xFF, 0xFF},
     {-5, 2, 9, 939, 512, 0xFF, 0xFF, 0xFF, 0xFF},
@@ -43,9 +48,13 @@ effN64Vtx eff_whirlwind_v[] = {
     {-5, 2, -9, 597, 512, 0xFF, 0xFF, 0xFF, 0xFF},
 };
 
-void effWhirlwindMain(EffectEntry* effect);
-void effWhirlwindDisp(CameraId cameraId, EffectEntry* effect);
+static void effWhirlwindMain(EffectEntry* effect);
+static void effWhirlwindDisp(CameraId cameraId, EffectEntry* effect);
 
+/**
+ * Spawns four wind bands around a Mario work target for `life` frames; type is nonzero when facing left.
+ * Used by battle_mario, battle_event_subset and event scripts.
+ */
 EffectEntry* effWhirlwindN64Entry(s32 type, MarioWork* target, f32 scale, s32 life) {
     f32 quarter;
     EffectEntry* effect;
@@ -53,7 +62,7 @@ EffectEntry* effWhirlwindN64Entry(s32 type, MarioWork* target, f32 scale, s32 li
     s32 i;
 
     effect = effEntry();
-    effect->type = "WhirlwindN64\0\0\0";
+    effect->type = "WhirlwindN64";
     effect->count = 5;
     work = __memAlloc(HEAP_EFFECT, sizeof(EffWhirlwindN64Work) * 5);
     effect->userdata = work;
@@ -141,7 +150,15 @@ EffectEntry* effWhirlwindN64Entry(s32 type, MarioWork* target, f32 scale, s32 li
     return effect;
 }
 
-void effWhirlwindMain(EffectEntry* effect) {
+/**
+ * Follows the target's position each frame.
+ * Type 8: alpha eases to 255, size shrinks with the remaining life and it fades over the last 10 frames,
+ * while each band tumbles and alternate bands spin opposite ways (40 degrees per frame).
+ * Other types: alpha eases to 100, the bands spin about Y, and over the last 10 frames they fade 20% per frame,
+ * widen toward twice the base size and their spin slows to a stop. Deletes when the life runs out.
+ * CAMERA_3D, layer 2.
+ */
+static void effWhirlwindMain(EffectEntry* effect) {
     EffWhirlwindN64Work* work = effect->userdata;
     Vec position;
     Vec tmp = {0.0f, 0.0f, 0.0f};
@@ -163,22 +180,22 @@ void effWhirlwindMain(EffectEntry* effect) {
     type = work->type;
     switch (type) {
         case 8:
-        if (life > 5) {
-            work->alpha = work->alpha + 0.05f * (255 - work->alpha);
-        }
-        work->scale = work->baseScale * life / work->duration;
-        if (life < 10) {
-            work->alpha = life * 25;
-        }
+            if (life > 5) {
+                work->alpha = work->alpha + 0.05f * (255 - work->alpha);
+            }
+            work->scale = work->baseScale * life / work->duration;
+            if (life < 10) {
+                work->alpha = life * 25;
+            }
             break;
         default:
-        if (life > 5) {
-            work->alpha = work->alpha + 0.3f * (100 - work->alpha);
-        }
-        if (life < 10) {
-            work->alpha *= 0.8f;
-            work->scale += 0.1f * (2.0f * work->baseScale - work->scale);
-        }
+            if (life > 5) {
+                work->alpha = work->alpha + 0.3f * (100 - work->alpha);
+            }
+            if (life < 10) {
+                work->alpha *= 0.8f;
+                work->scale += 0.1f * (2.0f * work->baseScale - work->scale);
+            }
     }
     if (work->target != NULL) {
         Vec* p = &work->target->position;
@@ -211,7 +228,12 @@ void effWhirlwindMain(EffectEntry* effect) {
     dispEntry(CAMERA_3D, dispCalcZ(&position), 2, (DispCallback)effWhirlwindDisp, effect);
 }
 
-void effWhirlwindDisp(CameraId cameraId, EffectEntry* effect) {
+/**
+ * Draws each band from the eff_whirlwind_v mesh with texture 0x58 in the band's colour,
+ * set out from the centre (types below 8 pull in as they widen) and turned by its rotations,
+ * around the camera-facing centre.
+ */
+static void effWhirlwindDisp(CameraId cameraId, EffectEntry* effect) {
     CameraEntry* camera;
     EffWhirlwindN64Work* work;
     s32 i;

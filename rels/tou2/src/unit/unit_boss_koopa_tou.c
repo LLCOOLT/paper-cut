@@ -1,8 +1,9 @@
+// unit_boss_koopa_tou: Bowser, boss unit used in the Glitz Pit REL, battle unit.
+
 #include "version.h"
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
 
-#pragma force_active on
 #include "driver/icondrv.h"
 #include "driver/camdrv.h"
 #include "battle/battle.h"
@@ -16,77 +17,34 @@
 #include "battle/battle_event_subset.h"
 #include "battle/battle_weapon_power.h"
 #include "evt/evt_eff.h"
-#include "party/party_motion.h"
+#include "evt/evt_snd.h"
 #include "battle/battle_database_common.h"
-#ifdef TARGET_PC
-/* PC port: prototypes for functions this file called undeclared (implicit int) */
-s32 BattleTransID(EventEntry* evt, s32 type);
-#endif
+#include "battle/battle_sub.h"
+#include "unit/unit_boss_koopa.h"
+#include "evt/evt_msg.h"
 
-void btlMovePos(f32 speed, f32 angle, f32* x, f32* z);
-typedef struct IconJumpWork { Vec start; Vec pos; Vec end; s32 frames; f32 speed; f32 gravity; f32 vy; u8 pad[0x7C - 0x34]; } IconJumpWork;
-static void _disp_icon(CameraId camera, void* param);
+// Unit work slots of Bowser in the Glitz Pit.
+enum {
+    UW_BOSS_KOOPA_TOU_FIRST_HIT = 1,      // cleared at init, never read here
+    UW_BOSS_KOOPA_TOU_HALF_HP = 2,        // half his max HP: the threshold for his half-HP line
+    UW_BOSS_KOOPA_TOU_HALF_HP_TALKED = 3, // 1 once his half-HP line was said
+    UW_BOSS_KOOPA_TOU_OPENING_STEP = 4,   // first attacks: fire breath, bite, hip drop, then random (0-3)
+};
 
-USER_FUNC(btlevtcmd_AnimeChangePoseFromTable);
-USER_FUNC(btlevtcmd_AnimeChangePoseType);
-USER_FUNC(btlevtcmd_CheckPhase);
-USER_FUNC(btlevtcmd_CheckStatus);
-USER_FUNC(btlevtcmd_DrawLots);
-USER_FUNC(btlevtcmd_EnemyItemUseCheck);
-USER_FUNC(btlevtcmd_GetHp);
-USER_FUNC(btlevtcmd_GetMaxHp);
-USER_FUNC(btlevtcmd_GetPos);
-USER_FUNC(btlevtcmd_GetUnitWork);
-USER_FUNC(btlevtcmd_PhaseEventStartDeclare);
-USER_FUNC(btlevtcmd_ResetFaceDirection);
-USER_FUNC(btlevtcmd_SetEventAttack);
-USER_FUNC(btlevtcmd_SetEventConfusion);
-USER_FUNC(btlevtcmd_SetEventDamage);
-USER_FUNC(btlevtcmd_SetEventEntry);
-USER_FUNC(btlevtcmd_SetEventPhase);
-USER_FUNC(btlevtcmd_SetEventWait);
-USER_FUNC(btlevtcmd_SetRunSound);
-USER_FUNC(btlevtcmd_SetStayPose);
-USER_FUNC(btlevtcmd_SetTalkPose);
-USER_FUNC(btlevtcmd_SetUnitWork);
-USER_FUNC(btlevtcmd_SetWalkSound);
-USER_FUNC(btlevtcmd_StartWaitEvent);
-USER_FUNC(btlevtcmd_StatusWindowOnOff);
-USER_FUNC(evt_btl_camera_set_mode);
-USER_FUNC(evt_btl_camera_set_moveto);
-USER_FUNC(evt_msg_print);
-static void _disp_icon(CameraId camera, void* param);
 static USER_FUNC(_icon_jump_icon);
 static USER_FUNC(party_cannot_use_command);
 static USER_FUNC(mario_cannot_use_command);
 
-f32 fd_boss_koopa_tou_negone_one_374[2] __attribute__((aligned(8)));
-f32 fd_boss_koopa_tou_neg_one_382;
-f32 fd_boss_koopa_tou___local_PI_383;
-f32 fd_boss_koopa_tou___local_3PIO2_385;
-f32 fd_boss_koopa_tou_one_negone_373[2] __attribute__((aligned(8)));
-f32 fd_boss_koopa_tou___local_PIO2_384;
-f32 fd_boss_koopa_tou_one_381;
-f32 fd_boss_koopa_tou_negone_one_360[2] __attribute__((aligned(8)));
-f32 fd_boss_koopa_tou_neg_one_365;
-f32 fd_boss_koopa_tou___local_PI_366;
-f32 fd_boss_koopa_tou___local_3PIO2_368;
-f32 fd_boss_koopa_tou_one_negone_359[2] __attribute__((aligned(8)));
-f32 fd_boss_koopa_tou___local_PIO2_367;
-f32 fd_boss_koopa_tou_one_364;
 BattleUnitKind unit_boss_koopa_tou;
 static BattleUnitDefense defence;
 static BattleUnitDefenseAttr defence_attr;
 static StatusVulnerability regist;
-static PoseTableEntry pose_table[18];
-static PoseTableEntry pose_table_forward_leaning[18];
 static BattleDataEntry data_table[2];
 static BattleUnitKindPart parts[1];
 static BattleWeapon weapon_koopa_hip_attack;
 static BattleWeapon weapon_koopa_bite_attack;
 static BattleWeapon weapon_koopa_critical_bite_attack;
 static BattleWeapon weapon_koopa_fire_attack;
-static EvtWord koopa_zoom[25];
 static EvtWord init_event[72];
 static EvtWord entry_event[45];
 static EvtWord damage_event[10];
@@ -99,36 +57,11 @@ static EvtWord bite_attack_event[267];
 static EvtWord critical_bite_attack_event[250];
 static EvtWord fire_attack_event[345];
 static EvtWord wait_event[6];
-static const char* cmd_disable_string[5];
 
-f32 fd_boss_koopa_tou_negone_one_374[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_boss_koopa_tou_neg_one_382 = -1.0f;
-
-f32 fd_boss_koopa_tou___local_PI_383 = 3.1415927f;
-
-f32 fd_boss_koopa_tou___local_3PIO2_385 = 4.712389f;
-
-f32 fd_boss_koopa_tou_one_negone_373[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_boss_koopa_tou___local_PIO2_384 = 1.5707964f;
-
-f32 fd_boss_koopa_tou_one_381 = 1.0f;
-
-f32 fd_boss_koopa_tou_negone_one_360[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_boss_koopa_tou_neg_one_365 = -1.0f;
-
-f32 fd_boss_koopa_tou___local_PI_366 = 3.1415927f;
-
-f32 fd_boss_koopa_tou___local_3PIO2_368 = 4.712389f;
-
-f32 fd_boss_koopa_tou_one_negone_359[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_boss_koopa_tou___local_PIO2_367 = 1.5707964f;
-
-f32 fd_boss_koopa_tou_one_364 = 1.0f;
-
+/**
+ * Unit kind of the Bowser (HP 30, level 39): its size, offsets, damage sounds, status vulnerability,
+ * parts and init event.
+ */
 BattleUnitKind unit_boss_koopa_tou = {
     63,
     "btl_un_koopa",
@@ -195,12 +128,27 @@ BattleUnitKind unit_boss_koopa_tou = {
     data_table,
 };
 
+/** Defence of the Bowser: 1 damage points off every hit. */
 static BattleUnitDefense defence = {{1, 1, 1, 1, 1}};
 
+/** Element reactions of the Bowser: no special reaction to any element. */
 static BattleUnitDefenseAttr defence_attr = {{0, 0, 0, 0, 0}};
 
+#if VERSION <= VERSION_DEMO_JP
+/**
+ * Status vulnerability of the Bowser (percent chance to take each status):
+ * immune to fright, gale force and instant kill; resists most other statuses.
+ */
+static StatusVulnerability regist = {80, 60, 70, 50, 60, 50, 100, 40, 100, 75, 100, 75, 100, 60, 60, 0, 0, 100, 60, 100, 100, 0};
+#else
+/**
+ * Status vulnerability of the Bowser (percent chance to take each status):
+ * immune to fright, gale force and instant kill; resists most other statuses.
+ */
 static StatusVulnerability regist = {70, 60, 60, 100, 70, 100, 100, 40, 100, 75, 100, 75, 100, 90, 60, 0, 0, 100, 60, 100, 100, 0};
+#endif
 
+/** Pose table of the Bowser: maps each battle pose to the animation it plays (KPA_* animations). */
 static PoseTableEntry pose_table[] = {
     {1, "KPA_N_3"},
     {2, "KPA_Z_6"},
@@ -208,20 +156,24 @@ static PoseTableEntry pose_table[] = {
     {5, "KPA_K_2"},
     {4, "KPA_S_2"},
     {3, "KPA_S_2"},
-    {28, "KPA_S_1"},
+    {BTL_POSE_NORMAL, "KPA_S_1"},
     {29, "KPA_Q_2"},
     {30, "KPA_Q_2"},
     {31, "KPA_D_1"},
-    {39, "KPA_D_1"},
+    {BTL_POSE_DAMAGE, "KPA_D_1"},
     {50, "KPA_S_1"},
-    {42, "KPA_R_1"},
-    {40, "KPA_W_1"},
-    {56, "KPA_S_1"},
-    {57, "KPA_S_1"},
-    {65, "KPA_T_1"},
-    {69, "KPA_S_1"},
+    {BTL_POSE_RUN, "KPA_R_1"},
+    {BTL_POSE_WALK, "KPA_W_1"},
+    {BTL_POSE_DANGER, "KPA_S_1"},
+    {BTL_POSE_PERIL, "KPA_S_1"},
+    {BTL_POSE_TALK, "KPA_T_1"},
+    {BTL_POSE_STAY_DEFAULT, "KPA_S_1"},
 };
 
+/**
+ * Pose table (forward leaning) of the Bowser: maps each battle pose to the animation it plays (KPA_*
+ * animations).
+ */
 static PoseTableEntry pose_table_forward_leaning[] = {
     {1, "KPA_N_2"},
     {2, "KPA_Z_5"},
@@ -229,29 +181,32 @@ static PoseTableEntry pose_table_forward_leaning[] = {
     {5, "KPA_K_1"},
     {4, "KPA_X_1"},
     {3, "KPA_X_1"},
-    {28, "KPA_S_8"},
+    {BTL_POSE_NORMAL, "KPA_S_8"},
     {29, "KPA_D_4"},
     {30, "KPA_D_4"},
     {31, "KPA_D_4"},
-    {39, "KPA_D_4"},
+    {BTL_POSE_DAMAGE, "KPA_D_4"},
     {50, "KPA_S_8"},
-    {42, "KPA_R_1"},
-    {40, "KPA_W_1"},
-    {56, "KPA_S_8"},
-    {57, "KPA_S_8"},
-    {65, "KPA_T_9"},
-    {69, "KPA_S_8"},
+    {BTL_POSE_RUN, "KPA_R_1"},
+    {BTL_POSE_WALK, "KPA_W_1"},
+    {BTL_POSE_DANGER, "KPA_S_8"},
+    {BTL_POSE_PERIL, "KPA_S_8"},
+    {BTL_POSE_TALK, "KPA_T_9"},
+    {BTL_POSE_STAY_DEFAULT, "KPA_S_8"},
 };
 
+/** Data table of the Bowser: event handlers for being defeated. */
 static BattleDataEntry data_table[] = {
     {49, dead_event},
     {0, NULL},
 };
 
+/** Body part of the Bowser (model c_koopa): hit position, defences, attributes and pose table. */
 static BattleUnitKindPart parts[] = {
-    {1, "btl_un_koopa", "c_koopa", 0.0f, 0.0f, 0.0f, 34.0f, 62.0f, 0.0f, 22.0f, 78.0f, 0.0f, 70, 80, 255, &defence, &defence_attr, 0x9, 0, pose_table},
+    {1, "btl_un_koopa", "c_koopa", 0.0f, 0.0f, 0.0f, 34.0f, 62.0f, 0.0f, 22.0f, 78.0f, 0.0f, 70, 80, 255, &defence, &defence_attr, PART_ATTR_MAIN | PART_ATTR_GUARD_COVER, 0, pose_table},
 };
 
+/** Weapon of Bowser's Hip Drop: 3 damage, jump-type contact attack. */
 static BattleWeapon weapon_koopa_hip_attack = {
     NULL, 0, // name..icon
     {0}, // pad_06
@@ -260,24 +215,24 @@ static BattleWeapon weapon_koopa_hip_attack = {
     0, 0, // baseFpCost..baseSpCost
     1, // superguardsAllowed
     1.0f, // reserved_14
-    1, // mStylishCommandMultiplier
+    1, // stylishCommandMultiplier
     1, // reserved_19
-    1, // mBingoSlotChance
+    1, // bingoSlotChance
     1, // reserved_1B
     weaponGetPowerDefault, // hpDamageFn
     {3, 0, 0, 0, 0, 0, 0, 0}, // hpDamageWork
     NULL, // fpDamageFn
     {0}, // fpDamageWork
-    0x1101260, // targetClassFlags
-    0x20001004, // targetPropertyFlags
-    0, // element
+    TARGET_CLASS_NO_TREE_OR_SWITCH | TARGET_CLASS_NO_SYSTEM_UNIT | TARGET_CLASS_NO_OWN_ALLIANCE | TARGET_CLASS_NO_SELF | TARGET_CLASS_MAIN_PARTS | TARGET_CLASS_SINGLE, // targetClassFlags
+    TARGET_PROP_NO_CEILING | TARGET_PROP_JUMPLIKE | TARGET_PROP_START_OPPOSING_SIDE, // targetPropertyFlags
+    ELEMENT_NORMAL, // element
     10, // damagePattern
     3, // acLevel
     2, // reserved_6F
     NULL, // acHelpMsg
-    0x1087, // special
-    0xC, // counterResistFlags
-    0x80000000, // targetWeightFlags
+    SPECIAL_BADGE_BUFFABLE | SPECIAL_STATUS_BUFFABLE | SPECIAL_CHARGE_BUFFABLE | SPECIAL_SHATTERS_FREEZE | SPECIAL_FLIPS_SHELLED, // special
+    COUNTER_RESIST_PREEMPTIVE_SPIKY | COUNTER_RESIST_FRONT_SPIKY, // counterResistFlags
+    TARGET_WEIGHT_RANDOM, // targetWeightFlags
     0, 0, 0, 0, 0, 0, 0, 0, // sleepChance..poisonTime
     0, 0, 0, 0, 0, 0, 0, 0, // poisonStrength..burnChance
     0, 0, 0, 0, 0, 0, 0, 0, // burnTime..atkChangeTime
@@ -285,10 +240,11 @@ static BattleWeapon weapon_koopa_hip_attack = {
     0, 0, 0, 0, 0, 0, 0, 0, // fastChance..holdFastTime
     0, 0, 0, 0, 0, 0, // invisibleChance..fpRegenStrength
     {0}, // pad_AE
-    NULL, // mAttackEvtScript
+    NULL, // attackEvtScript
     {0, 25, 25, 100, 0, 0, 0, 0, 0, 0, 0, 0}, // stageEffectRates
 };
 
+/** Weapon of Bowser's bite: 3 damage, hammer-type contact attack; may inflict poison (30%). */
 static BattleWeapon weapon_koopa_bite_attack = {
     NULL, 0, // name..icon
     {0}, // pad_06
@@ -297,23 +253,23 @@ static BattleWeapon weapon_koopa_bite_attack = {
     0, 0, // baseFpCost..baseSpCost
     1, // superguardsAllowed
     1.0f, // reserved_14
-    1, // mStylishCommandMultiplier
+    1, // stylishCommandMultiplier
     1, // reserved_19
-    1, // mBingoSlotChance
+    1, // bingoSlotChance
     1, // reserved_1B
     weaponGetPowerDefault, // hpDamageFn
     {3, 0, 0, 0, 0, 0, 0, 0}, // hpDamageWork
     NULL, // fpDamageFn
     {0}, // fpDamageWork
-    0x1101260, // targetClassFlags
-    0x21002000, // targetPropertyFlags
-    0, 0, // element..damagePattern
+    TARGET_CLASS_NO_TREE_OR_SWITCH | TARGET_CLASS_NO_SYSTEM_UNIT | TARGET_CLASS_NO_OWN_ALLIANCE | TARGET_CLASS_NO_SELF | TARGET_CLASS_MAIN_PARTS | TARGET_CLASS_SINGLE, // targetClassFlags
+    TARGET_PROP_HAMMERLIKE | TARGET_PROP_FRONTMOST | TARGET_PROP_START_OPPOSING_SIDE, // targetPropertyFlags
+    ELEMENT_NORMAL, 0, // element..damagePattern
     3, // acLevel
     2, // reserved_6F
     NULL, // acHelpMsg
-    0x87, // special
-    2, // counterResistFlags
-    4, // targetWeightFlags
+    SPECIAL_BADGE_BUFFABLE | SPECIAL_STATUS_BUFFABLE | SPECIAL_CHARGE_BUFFABLE | SPECIAL_SHATTERS_FREEZE, // special
+    COUNTER_RESIST_TOP_SPIKY, // counterResistFlags
+    TARGET_WEIGHT_PREFER_FRONT, // targetWeightFlags
     0, 0, 0, 0, 0, 0, // sleepChance..dizzyTime
     30, // poisonChance
     10, // poisonTime
@@ -324,10 +280,11 @@ static BattleWeapon weapon_koopa_bite_attack = {
     0, 0, 0, 0, 0, 0, 0, 0, // fastTime..invisibleChance
     0, 0, 0, 0, 0, // invisibleTime..fpRegenStrength
     {0}, // pad_AE
-    NULL, // mAttackEvtScript
+    NULL, // attackEvtScript
     {0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0}, // stageEffectRates
 };
 
+/** Weapon of Bowser's critical bite: 2 damage, hammer-type contact attack. */
 static BattleWeapon weapon_koopa_critical_bite_attack = {
     NULL, 0, // name..icon
     {0}, // pad_06
@@ -336,23 +293,23 @@ static BattleWeapon weapon_koopa_critical_bite_attack = {
     0, 0, // baseFpCost..baseSpCost
     1, // superguardsAllowed
     1.0f, // reserved_14
-    1, // mStylishCommandMultiplier
+    1, // stylishCommandMultiplier
     1, // reserved_19
-    1, // mBingoSlotChance
+    1, // bingoSlotChance
     1, // reserved_1B
     weaponGetPowerDefault, // hpDamageFn
     {2, 0, 0, 0, 0, 0, 0, 0}, // hpDamageWork
     NULL, // fpDamageFn
     {0}, // fpDamageWork
-    0x1101260, // targetClassFlags
-    0x21002000, // targetPropertyFlags
-    0, 0, // element..damagePattern
+    TARGET_CLASS_NO_TREE_OR_SWITCH | TARGET_CLASS_NO_SYSTEM_UNIT | TARGET_CLASS_NO_OWN_ALLIANCE | TARGET_CLASS_NO_SELF | TARGET_CLASS_MAIN_PARTS | TARGET_CLASS_SINGLE, // targetClassFlags
+    TARGET_PROP_HAMMERLIKE | TARGET_PROP_FRONTMOST | TARGET_PROP_START_OPPOSING_SIDE, // targetPropertyFlags
+    ELEMENT_NORMAL, 0, // element..damagePattern
     3, // acLevel
     2, // reserved_6F
     NULL, // acHelpMsg
-    0x87, // special
-    2, // counterResistFlags
-    4, // targetWeightFlags
+    SPECIAL_BADGE_BUFFABLE | SPECIAL_STATUS_BUFFABLE | SPECIAL_CHARGE_BUFFABLE | SPECIAL_SHATTERS_FREEZE, // special
+    COUNTER_RESIST_TOP_SPIKY, // counterResistFlags
+    TARGET_WEIGHT_PREFER_FRONT, // targetWeightFlags
     0, 0, 0, 0, 0, 0, 0, 0, // sleepChance..poisonTime
     0, 0, 0, 0, 0, 0, 0, 0, // poisonStrength..burnChance
     0, 0, 0, 0, 0, 0, 0, 0, // burnTime..atkChangeTime
@@ -360,39 +317,40 @@ static BattleWeapon weapon_koopa_critical_bite_attack = {
     0, 0, 0, 0, 0, 0, 0, 0, // fastChance..holdFastTime
     0, 0, 0, 0, 0, 0, // invisibleChance..fpRegenStrength
     {0}, // pad_AE
-    NULL, // mAttackEvtScript
+    NULL, // attackEvtScript
     {0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0}, // stageEffectRates
 };
 
+/** Weapon of Bowser's Fire Breath: 3 damage. */
 static BattleWeapon weapon_koopa_fire_attack = {
     NULL, 0, // name..icon
     {0}, // pad_06
     0, NULL, // itemId..description
     100, // baseAccuracy
     0, 0, // baseFpCost..baseSpCost
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
     2, // superguardsAllowed
 #else
     0, // superguardsAllowed
 #endif
     1.0f, // reserved_14
-    1, // mStylishCommandMultiplier
+    1, // stylishCommandMultiplier
     1, // reserved_19
-    1, // mBingoSlotChance
+    1, // bingoSlotChance
     1, // reserved_1B
     weaponGetPowerDefault, // hpDamageFn
     {3, 0, 0, 0, 0, 0, 0, 0}, // hpDamageWork
     NULL, // fpDamageFn
     {0}, // fpDamageWork
-    0x2101260, // targetClassFlags
-    0x20000000, // targetPropertyFlags
-    1, // element
+    TARGET_CLASS_NO_TREE_OR_SWITCH | TARGET_CLASS_NO_SYSTEM_UNIT | TARGET_CLASS_NO_OWN_ALLIANCE | TARGET_CLASS_NO_SELF | TARGET_CLASS_MAIN_PARTS | TARGET_CLASS_MULTIPLE, // targetClassFlags
+    TARGET_PROP_START_OPPOSING_SIDE, // targetPropertyFlags
+    ELEMENT_FIRE, // element
     0, // damagePattern
     3, // acLevel
     2, // reserved_6F
     NULL, // acHelpMsg
-    0x47, // special
-    0x7FF, // counterResistFlags
+    SPECIAL_BADGE_BUFFABLE | SPECIAL_STATUS_BUFFABLE | SPECIAL_CHARGE_BUFFABLE | SPECIAL_PIERCES_DEFENSE, // special
+    COUNTER_RESIST_ALL, // counterResistFlags
     0, 0, 0, 0, 0, 0, 0, 0, // targetWeightFlags..poisonChance
     0, 0, 0, 0, 0, 0, 0, 0, // poisonTime..dodgyTime
     0, 0, 0, 0, 0, 0, 0, 0, // burnChance..atkChangeChance
@@ -400,63 +358,83 @@ static BattleWeapon weapon_koopa_fire_attack = {
     0, 0, 0, 0, 0, 0, 0, 0, // chargeStrength..paybackTime
     0, 0, 0, 0, 0, 0, 0, // holdFastTime..fpRegenStrength
     {0}, // pad_AE
-    NULL, // mAttackEvtScript
+    NULL, // attackEvtScript
     {0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0}, // stageEffectRates
 };
 
+/**
+ * Camera helper for Bowser's talk: moves the camera to x = LW(0), looking at him from the front,
+ * over 30 frames and waits 37 frames for it to arrive.
+ */
 static EVT_BEGIN(koopa_zoom)
     CALL(evt_btl_camera_set_mode, 0, 3)
-    CALL(btlevtcmd_GetPos, -2, LW(0), LW(1), LW(2))
+    CALL(btlevtcmd_GetPos, BTL_UNIT_SELF, LW(0), LW(1), LW(2))
     CALL(evt_btl_camera_set_moveto, 0, LW(0), 95, 350, LW(0), 45, -300, 30, 11)
     WAIT_FRAMES(37)
     RETURN
 EVT_END()
 
+/**
+ * Init event of Bowser: registers his wait, phase, attack,
+ * damage and entry events (confusion uses the default confuse event), sets unit work 1 and 4 to 0,
+ * work 2 to half his max HP (the threshold for his half-HP line) and work 3 to 0 (that line not yet shown),
+ * and sets his walk and run sounds, then starts the wait event.
+ */
 static EVT_BEGIN(init_event)
-    CALL(btlevtcmd_SetEventWait, -2, PTR(wait_event))
-    CALL(btlevtcmd_SetEventPhase, -2, PTR(phase_event))
-    CALL(btlevtcmd_SetEventAttack, -2, PTR(attack_event))
-    CALL(btlevtcmd_SetEventDamage, -2, PTR(damage_event))
-    CALL(btlevtcmd_SetEventConfusion, -2, PTR(btldefaultevt_Confuse))
-    CALL(btlevtcmd_SetEventEntry, -2, PTR(entry_event))
-    CALL(btlevtcmd_SetUnitWork, -2, 1, 0)
-    CALL(btlevtcmd_GetMaxHp, -2, LW(0))
+    CALL(btlevtcmd_SetEventWait, BTL_UNIT_SELF, PTR(wait_event))
+    CALL(btlevtcmd_SetEventPhase, BTL_UNIT_SELF, PTR(phase_event))
+    CALL(btlevtcmd_SetEventAttack, BTL_UNIT_SELF, PTR(attack_event))
+    CALL(btlevtcmd_SetEventDamage, BTL_UNIT_SELF, PTR(damage_event))
+    CALL(btlevtcmd_SetEventConfusion, BTL_UNIT_SELF, PTR(btldefaultevt_Confuse))
+    CALL(btlevtcmd_SetEventEntry, BTL_UNIT_SELF, PTR(entry_event))
+    CALL(btlevtcmd_SetUnitWork, BTL_UNIT_SELF, UW_BOSS_KOOPA_TOU_FIRST_HIT, 0)
+    CALL(btlevtcmd_GetMaxHp, BTL_UNIT_SELF, LW(0))
     DIVIDE(LW(0), 2)
-    CALL(btlevtcmd_SetUnitWork, -2, 2, LW(0))
-    CALL(btlevtcmd_SetUnitWork, -2, 3, 0)
-    CALL(btlevtcmd_SetUnitWork, -2, 4, 0)
-    CALL(btlevtcmd_SetWalkSound, -2, STRING("SFX_BOSS_KOOPA_MOVE1L"), STRING("SFX_BOSS_KOOPA_MOVE1R"), 0, 15, 15)
-    CALL(btlevtcmd_SetRunSound, -2, STRING("SFX_BOSS_KOOPA_MOVE1L"), STRING("SFX_BOSS_KOOPA_MOVE1R"), 0, 8, 8)
-    CALL(btlevtcmd_StartWaitEvent, -2)
+    CALL(btlevtcmd_SetUnitWork, BTL_UNIT_SELF, UW_BOSS_KOOPA_TOU_HALF_HP, LW(0))
+    CALL(btlevtcmd_SetUnitWork, BTL_UNIT_SELF, UW_BOSS_KOOPA_TOU_HALF_HP_TALKED, 0)
+    CALL(btlevtcmd_SetUnitWork, BTL_UNIT_SELF, UW_BOSS_KOOPA_TOU_OPENING_STEP, 0)
+    CALL(btlevtcmd_SetWalkSound, BTL_UNIT_SELF, STRING("SFX_BOSS_KOOPA_MOVE1L"), STRING("SFX_BOSS_KOOPA_MOVE1R"), 0, 15, 15)
+    CALL(btlevtcmd_SetRunSound, BTL_UNIT_SELF, STRING("SFX_BOSS_KOOPA_MOVE1L"), STRING("SFX_BOSS_KOOPA_MOVE1R"), 0, 8, 8)
+    CALL(btlevtcmd_StartWaitEvent, BTL_UNIT_SELF)
     RETURN
 EVT_END()
 
+/**
+ * Bowser's entrance: he stands still, then laughs and strikes a pose ("KPA_Y_2") while the camera zooms in,
+ * and says stg3_tou_403_06_01 before the fight starts.
+ */
 static EVT_BEGIN(entry_event)
     CALL(btlevtcmd_StatusWindowOnOff, 0)
     WAIT_FRAMES(60)
-    CALL(btlevtcmd_AnimeChangePose, -2, 1, STRING("KPA_S_1"))
+    CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("KPA_S_1"))
     WAIT_FRAMES(60)
     CALL_CHILD(koopa_zoom)
-    CALL(btlevtcmd_snd_se, -2, STRING("SFX_VOICE_KOOPA_LAUGH2_1"), -250000000, 0, -250000000)
-    CALL(btlevtcmd_AnimeChangePose, -2, 1, STRING("KPA_Y_2"))
+    CALL(btlevtcmd_snd_se, BTL_UNIT_SELF, STRING("SFX_VOICE_KOOPA_LAUGH2_1"), EVT_NULLPTR, 0, EVT_NULLPTR)
+    CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("KPA_Y_2"))
     WAIT_MS(1000)
-    CALL(evt_msg_print, 2, STRING("stg3_tou_403_06_01"), 0, -2)
+    CALL(evt_msg_print, 2, STRING("stg3_tou_403_06_01"), 0, BTL_UNIT_SELF)
     WAIT_MS(300)
     CALL(btlevtcmd_StatusWindowOnOff, 1)
     CALL(evt_btl_camera_set_mode, 0, 0)
     RETURN
 EVT_END()
 
+/** Damage event: runs the default battle damage reaction on the unit itself (part 1). */
 static EVT_BEGIN(damage_event)
     SET_VALUE(LW(10), -2)
     SET_VALUE(LW(11), 1)
-    CALL_CHILD(PTR(btldefaultevt_Damage))
+    CALL_CHILD(btldefaultevt_Damage)
     RETURN
 EVT_END()
 
+/**
+ * Bowser's defeat: if he is away from his home spot he walks back to it, waits for the attack to end,
+ * zooms the camera and has him say the closing line (stg3_tou_403_06_03) with a satisfied voice
+ * and the "KPA_D_2" collapse pose, then runs the common no-spin death.
+ */
 static EVT_BEGIN(dead_event)
-    CALL(btlevtcmd_GetHomePos, -2, LW(0), LW(1), LW(2))
-    CALL(btlevtcmd_GetPos, -2, LW(3), LW(4), LW(5))
+    CALL(btlevtcmd_GetHomePos, BTL_UNIT_SELF, LW(0), LW(1), LW(2))
+    CALL(btlevtcmd_GetPos, BTL_UNIT_SELF, LW(3), LW(4), LW(5))
     SET_VALUE(LW(6), 1)
     IF_INT_EQUAL(LW(0), LW(3))
         IF_INT_EQUAL(LW(1), LW(4))
@@ -466,21 +444,21 @@ static EVT_BEGIN(dead_event)
         END_IF
     END_IF
     IF_INT_EQUAL(LW(6), 1)
-        CALL(btlevtcmd_SetMoveSpeed, -2, FLOAT(6.0f))
-        CALL(btlevtcmd_AnimeChangePoseType, -2, 1, 42)
-        CALL(btlevtcmd_MovePosition, -2, LW(0), LW(1), LW(2), 0, -1, 0)
-        CALL(btlevtcmd_AnimeChangePoseType, -2, 1, 43)
-        CALL(btlevtcmd_ResetFaceDirection, -2)
+        CALL(btlevtcmd_SetMoveSpeed, BTL_UNIT_SELF, FLOAT(6.0f))
+        CALL(btlevtcmd_AnimeChangePoseType, BTL_UNIT_SELF, 1, BTL_POSE_RUN)
+        CALL(btlevtcmd_MovePosition, BTL_UNIT_SELF, LW(0), LW(1), LW(2), 0, -1, 0)
+        CALL(btlevtcmd_AnimeChangePoseType, BTL_UNIT_SELF, 1, BTL_POSE_STAY)
+        CALL(btlevtcmd_ResetFaceDirection, BTL_UNIT_SELF)
     END_IF
     CALL(btlevtcmd_WaitAttackEnd)
     CALL(btlevtcmd_StatusWindowOnOff, 0)
     CALL_CHILD(koopa_zoom)
-    CALL(btlevtcmd_SetTalkPose, -2, STRING("KPA_D_1"))
-    CALL(btlevtcmd_SetStayPose, -2, STRING("KPA_D_1"))
-    CALL(evt_msg_print, 2, STRING("stg3_tou_403_06_03"), 0, -2)
+    CALL(btlevtcmd_SetTalkPose, BTL_UNIT_SELF, STRING("KPA_D_1"))
+    CALL(btlevtcmd_SetStayPose, BTL_UNIT_SELF, STRING("KPA_D_1"))
+    CALL(evt_msg_print, 2, STRING("stg3_tou_403_06_03"), 0, BTL_UNIT_SELF)
     WAIT_MS(300)
-    CALL(btlevtcmd_snd_se, -2, STRING("SFX_VOICE_KOOPA_SATIATED2_2"), -250000000, 0, -250000000)
-    CALL(btlevtcmd_AnimeChangePose, -2, 1, STRING("KPA_D_2"))
+    CALL(btlevtcmd_snd_se, BTL_UNIT_SELF, STRING("SFX_VOICE_KOOPA_SATIATED2_2"), EVT_NULLPTR, 0, EVT_NULLPTR)
+    CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("KPA_D_2"))
     WAIT_MS(700)
     SET_VALUE(LW(10), -2)
     CALL_CHILD(subsetevt_dead_core_nospin_norotate)
@@ -489,125 +467,152 @@ static EVT_BEGIN(dead_event)
     RETURN
 EVT_END()
 
+/**
+ * Phase event of Bowser: after the player's phase, unless he is marked with the instant-kill status (27),
+ * it declares the phase event and runs harf_hp_event, then restarts the wait event.
+ */
 static EVT_BEGIN(phase_event)
-    CALL(btlevtcmd_CheckStatus, -2, 27, LW(0))
+    CALL(btlevtcmd_CheckStatus, BTL_UNIT_SELF, STATUS_INSTANT_KILL, LW(0))
     IF_INT_EQUAL(LW(0), 1)
         GOTO(99)
     END_IF
-    CALL(btlevtcmd_CheckPhase, LW(0), 67108867)
+    CALL(btlevtcmd_CheckPhase, LW(0), BATTLE_PHASE_AFTER_PLAYER)
     IF_INT_NOT_EQUAL(LW(0), 0)
-        CALL(btlevtcmd_PhaseEventStartDeclare, -2)
-        CALL_CHILD(PTR(harf_hp_event))
-        CALL(btlevtcmd_StartWaitEvent, -2)
+        CALL(btlevtcmd_PhaseEventStartDeclare, BTL_UNIT_SELF)
+        CALL_CHILD(harf_hp_event)
+        CALL(btlevtcmd_StartWaitEvent, BTL_UNIT_SELF)
     END_IF
     LABEL(99)
     RETURN
 EVT_END()
 
+/**
+ * Bowser's half-HP line ("harf" is the original spelling of "half"):
+ * the first time his HP drops below the value in unit work 2 (half his max HP) it sets unit work 3,
+ * zooms in on him and has him say stg3_tou_403_06_02 in a new talk pose.
+ */
 static EVT_BEGIN(harf_hp_event)
-    CALL(btlevtcmd_GetUnitWork, -2, 3, LW(1))
+    CALL(btlevtcmd_GetUnitWork, BTL_UNIT_SELF, UW_BOSS_KOOPA_TOU_HALF_HP_TALKED, LW(1))
     IF_INT_EQUAL(LW(1), 0)
-        CALL(btlevtcmd_GetHp, -2, LW(0))
-        CALL(btlevtcmd_GetUnitWork, -2, 2, LW(1))
+        CALL(btlevtcmd_GetHp, BTL_UNIT_SELF, LW(0))
+        CALL(btlevtcmd_GetUnitWork, BTL_UNIT_SELF, UW_BOSS_KOOPA_TOU_HALF_HP, LW(1))
         IF_INT_LESS(LW(0), LW(1))
-            CALL(btlevtcmd_SetUnitWork, -2, 3, 1)
+            CALL(btlevtcmd_SetUnitWork, BTL_UNIT_SELF, UW_BOSS_KOOPA_TOU_HALF_HP_TALKED, 1)
             CALL(btlevtcmd_StatusWindowOnOff, 0)
-            CALL_CHILD(PTR(koopa_zoom))
-            CALL(btlevtcmd_SetTalkPose, -2, STRING("KPA_T_3"))
-            CALL(btlevtcmd_SetStayPose, -2, STRING("KPA_S_4"))
-            CALL(evt_msg_print, 2, STRING("stg3_tou_403_06_02"), 0, -2)
+            CALL_CHILD(koopa_zoom)
+            CALL(btlevtcmd_SetTalkPose, BTL_UNIT_SELF, STRING("KPA_T_3"))
+            CALL(btlevtcmd_SetStayPose, BTL_UNIT_SELF, STRING("KPA_S_4"))
+            CALL(evt_msg_print, 2, STRING("stg3_tou_403_06_02"), 0, BTL_UNIT_SELF)
             WAIT_MS(300)
             CALL(btlevtcmd_StatusWindowOnOff, 1)
             CALL(evt_btl_camera_set_mode, 0, 0)
-            CALL(btlevtcmd_AnimeChangePoseType, -2, 1, 43)
+            CALL(btlevtcmd_AnimeChangePoseType, BTL_UNIT_SELF, 1, BTL_POSE_STAY)
         END_IF
     END_IF
     RETURN
 EVT_END()
 
+/**
+ * Bowser's move choice. He uses an enemy item if one fits.
+ * His first three turns are scripted by unit work 4: fire breath, then bite, then hip drop.
+ * After that he draws lots with weights 30 (hip drop), 30 (bite),
+ * 0 (critical bite, never drawn) and 30 (fire breath). LW(9) receives the weapon each sub-event uses.
+ */
 static EVT_BEGIN(attack_event)
-    CALL(btlevtcmd_EnemyItemUseCheck, -2, LW(0))
+    CALL(btlevtcmd_EnemyItemUseCheck, BTL_UNIT_SELF, LW(0))
     IF_INT_NOT_EQUAL(LW(0), 0)
         CALL_CHILD(LW(0))
-        CALL(btlevtcmd_StartWaitEvent, -2)
+        CALL(btlevtcmd_StartWaitEvent, BTL_UNIT_SELF)
         RETURN
     END_IF
-    CALL(btlevtcmd_GetUnitWork, -2, 4, LW(0))
+    CALL(btlevtcmd_GetUnitWork, BTL_UNIT_SELF, UW_BOSS_KOOPA_TOU_OPENING_STEP, LW(0))
     SWITCH(LW(0))
         CASE_EQUAL(0)
         SET_VALUE(LW(9), PTR(&weapon_koopa_fire_attack))
-        CALL_CHILD(PTR(fire_attack_event))
-        CALL(btlevtcmd_SetUnitWork, -2, 4, 1)
+        CALL_CHILD(fire_attack_event)
+        CALL(btlevtcmd_SetUnitWork, BTL_UNIT_SELF, UW_BOSS_KOOPA_TOU_OPENING_STEP, 1)
         CASE_EQUAL(1)
         SET_VALUE(LW(9), PTR(&weapon_koopa_bite_attack))
-        CALL_CHILD(PTR(bite_attack_event))
-        CALL(btlevtcmd_SetUnitWork, -2, 4, 2)
+        CALL_CHILD(bite_attack_event)
+        CALL(btlevtcmd_SetUnitWork, BTL_UNIT_SELF, UW_BOSS_KOOPA_TOU_OPENING_STEP, 2)
         CASE_EQUAL(2)
         SET_VALUE(LW(9), PTR(&weapon_koopa_hip_attack))
-        CALL_CHILD(PTR(hip_attack_event))
-        CALL(btlevtcmd_SetUnitWork, -2, 4, 3)
+        CALL_CHILD(hip_attack_event)
+        CALL(btlevtcmd_SetUnitWork, BTL_UNIT_SELF, UW_BOSS_KOOPA_TOU_OPENING_STEP, 3)
         CASE_DEFAULT
         CALL(btlevtcmd_DrawLots, LW(0), 4, 30, 30, 0, 30)
         SWITCH(LW(0))
             CASE_EQUAL(0)
             SET_VALUE(LW(9), PTR(&weapon_koopa_hip_attack))
-            CALL_CHILD(PTR(hip_attack_event))
+            CALL_CHILD(hip_attack_event)
             CASE_EQUAL(1)
             SET_VALUE(LW(9), PTR(&weapon_koopa_bite_attack))
-            CALL_CHILD(PTR(bite_attack_event))
+            CALL_CHILD(bite_attack_event)
             CASE_EQUAL(2)
             SET_VALUE(LW(9), PTR(&weapon_koopa_critical_bite_attack))
-            CALL_CHILD(PTR(critical_bite_attack_event))
+            CALL_CHILD(critical_bite_attack_event)
             CASE_EQUAL(3)
             SET_VALUE(LW(9), PTR(&weapon_koopa_fire_attack))
-            CALL_CHILD(PTR(fire_attack_event))
+            CALL_CHILD(fire_attack_event)
         END_SWITCH
     END_SWITCH
     LABEL(90)
-    CALL(btlevtcmd_ResetFaceDirection, -2)
-    CALL(btlevtcmd_StartWaitEvent, -2)
+    CALL(btlevtcmd_ResetFaceDirection, BTL_UNIT_SELF)
+    CALL(btlevtcmd_StartWaitEvent, BTL_UNIT_SELF)
     RETURN
 EVT_END()
 
-#ifdef VERSION_G8ME01
+/**
+ * Bowser's Hip Drop: walks to the target, jumps up and slams down on it (camera shake on a hit).
+ * If the action command result is 3 or less and the target is Mario or a partner,
+ * it also seals one of that character's commands:
+ * the lost command's icon is tossed across the screen with _icon_jump_icon
+ * and an announcement message is shown (the US and later versions pass the partner to party_cannot_use_command).
+ * Then he walks back home.
+ */
 static EVT_BEGIN(hip_attack_event)
-    CALL(btlevtcmd_GetEnemyBelong, -2, LW(0))
-    CALL(btlevtcmd_SamplingEnemy, -2, LW(0), LW(9))
+    // Choose a target; a confused Bowser with none is flustered.
+    CALL(btlevtcmd_GetEnemyBelong, BTL_UNIT_SELF, LW(0))
+    CALL(btlevtcmd_SamplingEnemy, BTL_UNIT_SELF, LW(0), LW(9))
     CALL(btlevtcmd_ChoiceSamplingEnemy, LW(9), LW(3), LW(4))
     IF_INT_EQUAL(LW(3), -1)
-        CALL(btlevtcmd_CheckToken, -2, 16, LW(0))
+        CALL(btlevtcmd_CheckToken, BTL_UNIT_SELF, TOKEN_FLAG_CONFUSED_ACTION, LW(0))
         IF_INT_NOT_EQUAL(LW(0), 0)
             CALL_CHILD(subsetevt_confuse_flustered)
         END_IF
         RETURN
     END_IF
+    // The attack is announced.
     CALL(btlevtcmd_WeaponAftereffect, LW(9))
-    CALL(btlevtcmd_AttackDeclare, -2, LW(3), LW(4))
+    CALL(btlevtcmd_AttackDeclare, BTL_UNIT_SELF, LW(3), LW(4))
     CALL(btlevtcmd_WaitGuardMove)
-    CALL(btlevtcmd_PayWeaponCost, -2, LW(9))
-    CALL(btlevtcmd_CalculateFaceDirection, -2, -1, LW(3), LW(4), 16, LW(15))
-    CALL(btlevtcmd_ChangeFaceDirection, -2, LW(15))
-    CALL(btlevtcmd_AnimeChangePoseType, -2, 1, 40)
-    CALL(btlevtcmd_GetPos, -2, LW(0), LW(1), LW(2))
-    CALL(btlevtcmd_FaceDirectionAdd, -2, LW(0), 40)
-    CALL(btlevtcmd_SetMoveSpeed, -2, FLOAT(2.0f))
-    CALL(btlevtcmd_MovePosition, -2, LW(0), LW(1), LW(2), 0, -1, 0)
-    CALL(btlevtcmd_snd_se, -2, STRING("SFX_BOSS_KOOPA_JUMP1"), -250000000, 0, -250000000)
-    CALL(btlevtcmd_AnimeChangePose, -2, 1, STRING("KPA_A_2A"))
+    CALL(btlevtcmd_PayWeaponCost, BTL_UNIT_SELF, LW(9))
+    CALL(btlevtcmd_CalculateFaceDirection, BTL_UNIT_SELF, -1, LW(3), LW(4), 16, LW(15))
+    CALL(btlevtcmd_ChangeFaceDirection, BTL_UNIT_SELF, LW(15))
+    // Bowser stomps up to the target, then crouches and leaps into the air.
+    CALL(btlevtcmd_AnimeChangePoseType, BTL_UNIT_SELF, 1, BTL_POSE_WALK)
+    CALL(btlevtcmd_GetPos, BTL_UNIT_SELF, LW(0), LW(1), LW(2))
+    CALL(btlevtcmd_FaceDirectionAdd, BTL_UNIT_SELF, LW(0), 40)
+    CALL(btlevtcmd_SetMoveSpeed, BTL_UNIT_SELF, FLOAT(2.0f))
+    CALL(btlevtcmd_MovePosition, BTL_UNIT_SELF, LW(0), LW(1), LW(2), 0, -1, 0)
+    CALL(btlevtcmd_snd_se, BTL_UNIT_SELF, STRING("SFX_BOSS_KOOPA_JUMP1"), EVT_NULLPTR, 0, EVT_NULLPTR)
+    CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("KPA_A_2A"))
     WAIT_MS(300)
-    CALL(btlevtcmd_AnimeChangePose, -2, 1, STRING("KPA_A_2B"))
+    CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("KPA_A_2B"))
+    // He tucks in and drops, aiming his Hip Drop at the target.
     BEGIN_SIBLING_EVENT
         WAIT_FRAMES(25)
-        CALL(btlevtcmd_AnimeChangePose, -2, 1, STRING("KPA_A_2C"))
+        CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("KPA_A_2C"))
         WAIT_FRAMES(15)
-        CALL(btlevtcmd_AnimeChangePose, -2, 1, STRING("KPA_A_2D"))
+        CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("KPA_A_2D"))
     END_SIBLING_EVENT
-    CALL(btlevtcmd_SetFallAccel, -2, FLOAT(0.25f))
+    CALL(btlevtcmd_SetFallAccel, BTL_UNIT_SELF, FLOAT(0.25f))
     CALL(btlevtcmd_GetHitPos, LW(3), LW(4), LW(0), LW(1), LW(2))
     SUBTRACT(LW(2), 20)
-    CALL(btlevtcmd_JumpPosition, -2, LW(0), LW(1), LW(2), 50, -1)
-    CALL(btlevtcmd_snd_se, -2, STRING("SFX_BOSS_KOOPA_HIP_ATTACK1"), -250000000, 0, -250000000)
-    CALL(btlevtcmd_PreCheckDamage, -2, LW(3), LW(4), LW(9), 256, LW(5))
+    CALL(btlevtcmd_JumpPosition, BTL_UNIT_SELF, LW(0), LW(1), LW(2), 50, -1)
+    CALL(btlevtcmd_snd_se, BTL_UNIT_SELF, STRING("SFX_BOSS_KOOPA_HIP_ATTACK1"), EVT_NULLPTR, 0, EVT_NULLPTR)
+    // Check how the target defends against the slam.
+    CALL(btlevtcmd_PreCheckDamage, BTL_UNIT_SELF, LW(3), LW(4), LW(9), 256, LW(5))
     SWITCH(LW(5))
         CASE_OR_EQUAL(4)
         GOTO(90)
@@ -629,19 +634,23 @@ static EVT_BEGIN(hip_attack_event)
         GOTO(98)
         CASE_END
     END_SWITCH
+    // The target dodged: Bowser lands next to it and waits.
     LABEL(90)
-    CALL(btlevtcmd_JumpContinue, -2)
-    CALL(btlevtcmd_AnimeChangePose, -2, 1, STRING("KPA_A_2E"))
+    CALL(btlevtcmd_JumpContinue, BTL_UNIT_SELF)
+    CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("KPA_A_2E"))
     WAIT_MS(500)
     GOTO(98)
+    // The Hip Drop lands: the damage is dealt and the camera shakes.
     LABEL(91)
     CALL(btlevtcmd_ResultACDefence, LW(3), LW(9))
-    CALL(btlevtcmd_CheckDamage, -2, LW(3), LW(4), LW(9), 256, LW(5))
+    CALL(btlevtcmd_CheckDamage, BTL_UNIT_SELF, LW(3), LW(4), LW(9), 256, LW(5))
     CALL(evt_btl_camera_shake_h, 0, 3, 0, 50, 13)
-    CALL(btlevtcmd_JumpContinue, -2)
+    CALL(btlevtcmd_JumpContinue, BTL_UNIT_SELF)
     WAIT_MS(500)
-    CALL(btlevtcmd_AnimeChangePose, -2, 1, STRING("KPA_A_2E"))
+    CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("KPA_A_2E"))
     WAIT_MS(300)
+    // If Mario guards poorly, one of his commands is sealed: its icon is tossed across the screen
+    // and an announcement tells which.
     CALL(btlevtcmd_GetResultACDefence, LW(7))
     IF_INT_LESS_OR_EQUAL(LW(7), 3)
         SET_VALUE(LW(15), 0)
@@ -650,135 +659,19 @@ static EVT_BEGIN(hip_attack_event)
             CASE_EQUAL(222)
             CALL(mario_cannot_use_command, LW(15))
             CASE_BETWEEN(224, 230)
-            CALL(party_cannot_use_command, LW(15), LW(3))
-            CASE_DEFAULT
-            SET_VALUE(LW(0), -1)
-        END_SWITCH
-        IF_INT_NOT_EQUAL(LW(0), -1)
-            IF_INT_NOT_EQUAL(LW(15), 0)
-                BEGIN_INLINE_EVENT
-                    CALL(btlevtcmd_GetPos, -2, LW(0), LW(1), LW(2))
-                    CALL(btlevtcmd_GetPos, -2, LW(5), LW(6), LW(7))
-                    CALL(btlevtcmd_FaceDirectionSub, LW(3), LW(5), 60)
-                    CALL(btlevtcmd_TransStageFloorPosition, LW(5), LW(6), LW(7))
-                    CALL(_icon_jump_icon, LW(15), LW(0), LW(1), LW(2), LW(5), LW(6), LW(7), FLOAT(0.5f), 30)
-                    SET_VALUE(LW(0), LW(5))
-                    SET_VALUE(LW(1), LW(6))
-                    SET_VALUE(LW(2), LW(7))
-                    CALL(btlevtcmd_FaceDirectionSub, LW(3), LW(5), 40)
-                    CALL(_icon_jump_icon, LW(15), LW(0), LW(1), LW(2), LW(5), LW(6), LW(7), FLOAT(0.5f), 20)
-                    SET_VALUE(LW(0), LW(5))
-                    SET_VALUE(LW(1), LW(6))
-                    SET_VALUE(LW(2), LW(7))
-                    CALL(btlevtcmd_FaceDirectionSub, LW(3), LW(5), 25)
-                    CALL(_icon_jump_icon, LW(15), LW(0), LW(1), LW(2), LW(5), LW(6), LW(7), FLOAT(0.5f), 12)
-                END_INLINE_EVENT
-            END_IF
-            BEGIN_SIBLING_EVENT
-                CALL(btlevtcmd_AnnounceMessage, 0, 0, 0, LW(0), 120)
-            END_SIBLING_EVENT
-        END_IF
-    END_IF
-    LABEL(98)
-    CALL(evt_btl_camera_set_mode, 0, 0)
-    WAIT_MS(250)
-    CALL(btlevtcmd_AnimeChangePose, -2, 1, STRING("KPA_R_1"))
-    CALL(btlevtcmd_GetHomePos, -2, LW(0), LW(1), LW(2))
-    CALL(btlevtcmd_SetMoveSpeed, -2, FLOAT(4.0f))
-    CALL(btlevtcmd_MovePosition, -2, LW(0), LW(1), LW(2), 0, -1, 0)
-    CALL(btlevtcmd_AnimeChangePose, -2, 1, STRING("KPA_S_1"))
-    RETURN
-EVT_END()
-#else
-static EVT_BEGIN(hip_attack_event)
-    CALL(btlevtcmd_GetEnemyBelong, -2, LW(0))
-    CALL(btlevtcmd_SamplingEnemy, -2, LW(0), LW(9))
-    CALL(btlevtcmd_ChoiceSamplingEnemy, LW(9), LW(3), LW(4))
-    IF_INT_EQUAL(LW(3), -1)
-        CALL(btlevtcmd_CheckToken, -2, 16, LW(0))
-        IF_INT_NOT_EQUAL(LW(0), 0)
-            CALL_CHILD(subsetevt_confuse_flustered)
-        END_IF
-        RETURN
-    END_IF
-    CALL(btlevtcmd_WeaponAftereffect, LW(9))
-    CALL(btlevtcmd_AttackDeclare, -2, LW(3), LW(4))
-    CALL(btlevtcmd_WaitGuardMove)
-    CALL(btlevtcmd_PayWeaponCost, -2, LW(9))
-    CALL(btlevtcmd_CalculateFaceDirection, -2, -1, LW(3), LW(4), 16, LW(15))
-    CALL(btlevtcmd_ChangeFaceDirection, -2, LW(15))
-    CALL(btlevtcmd_AnimeChangePoseType, -2, 1, 40)
-    CALL(btlevtcmd_GetPos, -2, LW(0), LW(1), LW(2))
-    CALL(btlevtcmd_FaceDirectionAdd, -2, LW(0), 40)
-    CALL(btlevtcmd_SetMoveSpeed, -2, FLOAT(2.0f))
-    CALL(btlevtcmd_MovePosition, -2, LW(0), LW(1), LW(2), 0, -1, 0)
-    CALL(btlevtcmd_snd_se, -2, STRING("SFX_BOSS_KOOPA_JUMP1"), -250000000, 0, -250000000)
-    CALL(btlevtcmd_AnimeChangePose, -2, 1, STRING("KPA_A_2A"))
-    WAIT_MS(300)
-    CALL(btlevtcmd_AnimeChangePose, -2, 1, STRING("KPA_A_2B"))
-    BEGIN_SIBLING_EVENT
-        WAIT_FRAMES(25)
-        CALL(btlevtcmd_AnimeChangePose, -2, 1, STRING("KPA_A_2C"))
-        WAIT_FRAMES(15)
-        CALL(btlevtcmd_AnimeChangePose, -2, 1, STRING("KPA_A_2D"))
-    END_SIBLING_EVENT
-    CALL(btlevtcmd_SetFallAccel, -2, FLOAT(0.25f))
-    CALL(btlevtcmd_GetHitPos, LW(3), LW(4), LW(0), LW(1), LW(2))
-    SUBTRACT(LW(2), 20)
-    CALL(btlevtcmd_JumpPosition, -2, LW(0), LW(1), LW(2), 50, -1)
-    CALL(btlevtcmd_snd_se, -2, STRING("SFX_BOSS_KOOPA_HIP_ATTACK1"), -250000000, 0, -250000000)
-    CALL(btlevtcmd_PreCheckDamage, -2, LW(3), LW(4), LW(9), 256, LW(5))
-    SWITCH(LW(5))
-        CASE_OR_EQUAL(4)
-        GOTO(90)
-        CASE_END
-        CASE_EQUAL(3)
-        CALL(btlevtcmd_StartAvoid, LW(3), 38)
-        GOTO(90)
-        CASE_END
-        CASE_EQUAL(6)
-        CALL(btlevtcmd_StartAvoid, LW(3), 39)
-        GOTO(90)
-        CASE_EQUAL(2)
-        CALL(btlevtcmd_StartAvoid, LW(3), 40)
-        GOTO(90)
-        CASE_EQUAL(1)
-        GOTO(91)
-        CASE_END
-        CASE_DEFAULT
-        GOTO(98)
-        CASE_END
-    END_SWITCH
-    LABEL(90)
-    CALL(btlevtcmd_JumpContinue, -2)
-    CALL(btlevtcmd_AnimeChangePose, -2, 1, STRING("KPA_A_2E"))
-    WAIT_MS(500)
-    GOTO(98)
-    LABEL(91)
-    CALL(btlevtcmd_ResultACDefence, LW(3), LW(9))
-    CALL(btlevtcmd_CheckDamage, -2, LW(3), LW(4), LW(9), 256, LW(5))
-    CALL(evt_btl_camera_shake_h, 0, 3, 0, 50, 13)
-    CALL(btlevtcmd_JumpContinue, -2)
-    WAIT_MS(500)
-    CALL(btlevtcmd_AnimeChangePose, -2, 1, STRING("KPA_A_2E"))
-    WAIT_MS(300)
-    CALL(btlevtcmd_GetResultACDefence, LW(7))
-    IF_INT_LESS_OR_EQUAL(LW(7), 3)
-        SET_VALUE(LW(15), 0)
-        CALL(btlevtcmd_GetUnitKind, LW(3), LW(0))
-        SWITCH(LW(0))
-            CASE_EQUAL(222)
-            CALL(mario_cannot_use_command, LW(15))
-            CASE_BETWEEN(224, 230)
+#if VERSION <= VERSION_JP
             CALL(party_cannot_use_command, LW(15))
+#else
+            CALL(party_cannot_use_command, LW(15), LW(3))
+#endif
             CASE_DEFAULT
             SET_VALUE(LW(0), -1)
         END_SWITCH
         IF_INT_NOT_EQUAL(LW(0), -1)
             IF_INT_NOT_EQUAL(LW(15), 0)
                 BEGIN_INLINE_EVENT
-                    CALL(btlevtcmd_GetPos, -2, LW(0), LW(1), LW(2))
-                    CALL(btlevtcmd_GetPos, -2, LW(5), LW(6), LW(7))
+                    CALL(btlevtcmd_GetPos, BTL_UNIT_SELF, LW(0), LW(1), LW(2))
+                    CALL(btlevtcmd_GetPos, BTL_UNIT_SELF, LW(5), LW(6), LW(7))
                     CALL(btlevtcmd_FaceDirectionSub, LW(3), LW(5), 60)
                     CALL(btlevtcmd_TransStageFloorPosition, LW(5), LW(6), LW(7))
                     CALL(_icon_jump_icon, LW(15), LW(0), LW(1), LW(2), LW(5), LW(6), LW(7), FLOAT(0.5f), 30)
@@ -799,53 +692,57 @@ static EVT_BEGIN(hip_attack_event)
             END_SIBLING_EVENT
         END_IF
     END_IF
+    // Bowser walks back home and returns to his stance.
     LABEL(98)
     CALL(evt_btl_camera_set_mode, 0, 0)
     WAIT_MS(250)
-    CALL(btlevtcmd_AnimeChangePose, -2, 1, STRING("KPA_R_1"))
-    CALL(btlevtcmd_GetHomePos, -2, LW(0), LW(1), LW(2))
-    CALL(btlevtcmd_SetMoveSpeed, -2, FLOAT(4.0f))
-    CALL(btlevtcmd_MovePosition, -2, LW(0), LW(1), LW(2), 0, -1, 0)
-    CALL(btlevtcmd_AnimeChangePose, -2, 1, STRING("KPA_S_1"))
+    CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("KPA_R_1"))
+    CALL(btlevtcmd_GetHomePos, BTL_UNIT_SELF, LW(0), LW(1), LW(2))
+    CALL(btlevtcmd_SetMoveSpeed, BTL_UNIT_SELF, FLOAT(4.0f))
+    CALL(btlevtcmd_MovePosition, BTL_UNIT_SELF, LW(0), LW(1), LW(2), 0, -1, 0)
+    CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("KPA_S_1"))
     RETURN
 EVT_END()
-#endif
 
+/**
+ * Bowser's Bite: walks to the side of the target, bites down (two bite sounds) and does the weapon damage,
+ * then walks back home.
+ */
 static EVT_BEGIN(bite_attack_event)
-    CALL(btlevtcmd_GetEnemyBelong, -2, LW(0))
-    CALL(btlevtcmd_SamplingEnemy, -2, LW(0), LW(9))
+    CALL(btlevtcmd_GetEnemyBelong, BTL_UNIT_SELF, LW(0))
+    CALL(btlevtcmd_SamplingEnemy, BTL_UNIT_SELF, LW(0), LW(9))
     CALL(btlevtcmd_ChoiceSamplingEnemy, LW(9), LW(3), LW(4))
     IF_INT_EQUAL(LW(3), -1)
-        CALL(btlevtcmd_CheckToken, -2, 16, LW(0))
+        CALL(btlevtcmd_CheckToken, BTL_UNIT_SELF, TOKEN_FLAG_CONFUSED_ACTION, LW(0))
         IF_INT_NOT_EQUAL(LW(0), 0)
             CALL_CHILD(subsetevt_confuse_flustered)
         END_IF
         RETURN
     END_IF
     CALL(btlevtcmd_WeaponAftereffect, LW(9))
-    CALL(btlevtcmd_AttackDeclare, -2, LW(3), LW(4))
+    CALL(btlevtcmd_AttackDeclare, BTL_UNIT_SELF, LW(3), LW(4))
     CALL(btlevtcmd_WaitGuardMove)
-    CALL(btlevtcmd_PayWeaponCost, -2, LW(9))
+    CALL(btlevtcmd_PayWeaponCost, BTL_UNIT_SELF, LW(9))
     CALL(evt_btl_camera_set_mode, 0, 8)
-    CALL(evt_btl_camera_set_homing_unit, 0, -2, LW(3))
+    CALL(evt_btl_camera_set_homing_unit, 0, BTL_UNIT_SELF, LW(3))
     CALL(evt_btl_camera_set_moveSpeedLv, 0, 2)
     CALL(evt_btl_camera_set_zoom, 0, 200)
-    CALL(btlevtcmd_AnimeChangePose, -2, 1, STRING("KPA_R_1"))
+    CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("KPA_R_1"))
     CALL(btlevtcmd_GetPos, LW(3), LW(0), LW(1), LW(2))
     CALL(btlevtcmd_FaceDirectionAdd, LW(3), LW(0), 65)
-    CALL(btlevtcmd_CalculateFaceDirection, -2, -1, LW(0), LW(2), 1, LW(15))
-    CALL(btlevtcmd_ChangeFaceDirection, -2, LW(15))
-    CALL(btlevtcmd_SetMoveSpeed, -2, FLOAT(4.0f))
-    CALL(btlevtcmd_MovePosition, -2, LW(0), 0, LW(2), 0, -1, 1)
-    CALL(btlevtcmd_AnimeChangePose, -2, 1, STRING("KPA_A_3A"))
-    CALL(btlevtcmd_snd_se, -2, STRING("SFX_BOSS_KOOPA_BITE1"), -250000000, 0, -250000000)
-    CALL(btlevtcmd_CalculateFaceDirection, -2, -1, LW(3), LW(4), 16, LW(15))
-    CALL(btlevtcmd_ChangeFaceDirection, -2, LW(15))
+    CALL(btlevtcmd_CalculateFaceDirection, BTL_UNIT_SELF, -1, LW(0), LW(2), 1, LW(15))
+    CALL(btlevtcmd_ChangeFaceDirection, BTL_UNIT_SELF, LW(15))
+    CALL(btlevtcmd_SetMoveSpeed, BTL_UNIT_SELF, FLOAT(4.0f))
+    CALL(btlevtcmd_MovePosition, BTL_UNIT_SELF, LW(0), 0, LW(2), 0, -1, 1)
+    CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("KPA_A_3A"))
+    CALL(btlevtcmd_snd_se, BTL_UNIT_SELF, STRING("SFX_BOSS_KOOPA_BITE1"), EVT_NULLPTR, 0, EVT_NULLPTR)
+    CALL(btlevtcmd_CalculateFaceDirection, BTL_UNIT_SELF, -1, LW(3), LW(4), 16, LW(15))
+    CALL(btlevtcmd_ChangeFaceDirection, BTL_UNIT_SELF, LW(15))
     WAIT_MS(170)
-    CALL(btlevtcmd_AnimeChangePose, -2, 1, STRING("KPA_A_3B"))
+    CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("KPA_A_3B"))
     WAIT_MS(150)
-    CALL(btlevtcmd_snd_se, -2, STRING("SFX_BOSS_KOOPA_BITE2"), -250000000, 0, -250000000)
-    CALL(btlevtcmd_PreCheckDamage, -2, LW(3), LW(4), LW(9), 256, LW(5))
+    CALL(btlevtcmd_snd_se, BTL_UNIT_SELF, STRING("SFX_BOSS_KOOPA_BITE2"), EVT_NULLPTR, 0, EVT_NULLPTR)
+    CALL(btlevtcmd_PreCheckDamage, BTL_UNIT_SELF, LW(3), LW(4), LW(9), 256, LW(5))
     SWITCH(LW(5))
         CASE_OR_EQUAL(4)
         GOTO(90)
@@ -869,57 +766,62 @@ static EVT_BEGIN(bite_attack_event)
     END_SWITCH
     LABEL(90)
     WAIT_MS(100)
-    CALL(btlevtcmd_AnimeChangePose, -2, 1, STRING("KPA_A_3C"))
+    CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("KPA_A_3C"))
     WAIT_MS(150)
     GOTO(98)
     LABEL(91)
     WAIT_MS(100)
     CALL(btlevtcmd_ResultACDefence, LW(3), LW(9))
-    CALL(btlevtcmd_CheckDamage, -2, LW(3), LW(4), LW(9), 256, LW(5))
-    CALL(btlevtcmd_AnimeChangePose, -2, 1, STRING("KPA_A_3C"))
+    CALL(btlevtcmd_CheckDamage, BTL_UNIT_SELF, LW(3), LW(4), LW(9), 256, LW(5))
+    CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("KPA_A_3C"))
     WAIT_MS(150)
     LABEL(98)
     CALL(evt_btl_camera_set_mode, 0, 0)
     WAIT_MS(250)
-    CALL(btlevtcmd_AnimeChangePose, -2, 1, STRING("KPA_R_1"))
-    CALL(btlevtcmd_GetHomePos, -2, LW(0), LW(1), LW(2))
-    CALL(btlevtcmd_SetMoveSpeed, -2, FLOAT(4.0f))
-    CALL(btlevtcmd_MovePosition, -2, LW(0), LW(1), LW(2), 0, -1, 0)
-    CALL(btlevtcmd_AnimeChangePose, -2, 1, STRING("KPA_S_1"))
+    CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("KPA_R_1"))
+    CALL(btlevtcmd_GetHomePos, BTL_UNIT_SELF, LW(0), LW(1), LW(2))
+    CALL(btlevtcmd_SetMoveSpeed, BTL_UNIT_SELF, FLOAT(4.0f))
+    CALL(btlevtcmd_MovePosition, BTL_UNIT_SELF, LW(0), LW(1), LW(2), 0, -1, 0)
+    CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("KPA_S_1"))
     RETURN
 EVT_END()
 
+/**
+ * Bowser's strong Bite: like bite_attack_event but on a hit he holds the target in his jaws for 1.5 seconds
+ * ("KPA_A_4") before the damage lands.
+ * It is in the code but attack_event gives it zero weight, so it never runs.
+ */
 static EVT_BEGIN(critical_bite_attack_event)
-    CALL(btlevtcmd_GetEnemyBelong, -2, LW(0))
-    CALL(btlevtcmd_SamplingEnemy, -2, LW(0), LW(9))
+    CALL(btlevtcmd_GetEnemyBelong, BTL_UNIT_SELF, LW(0))
+    CALL(btlevtcmd_SamplingEnemy, BTL_UNIT_SELF, LW(0), LW(9))
     CALL(btlevtcmd_ChoiceSamplingEnemy, LW(9), LW(3), LW(4))
     IF_INT_EQUAL(LW(3), -1)
-        CALL(btlevtcmd_CheckToken, -2, 16, LW(0))
+        CALL(btlevtcmd_CheckToken, BTL_UNIT_SELF, TOKEN_FLAG_CONFUSED_ACTION, LW(0))
         IF_INT_NOT_EQUAL(LW(0), 0)
             CALL_CHILD(subsetevt_confuse_flustered)
         END_IF
         RETURN
     END_IF
     CALL(btlevtcmd_WeaponAftereffect, LW(9))
-    CALL(btlevtcmd_AttackDeclare, -2, LW(3), LW(4))
+    CALL(btlevtcmd_AttackDeclare, BTL_UNIT_SELF, LW(3), LW(4))
     CALL(btlevtcmd_WaitGuardMove)
-    CALL(btlevtcmd_PayWeaponCost, -2, LW(9))
-    CALL(btlevtcmd_AnimeChangePose, -2, 1, STRING("KPA_R_1"))
+    CALL(btlevtcmd_PayWeaponCost, BTL_UNIT_SELF, LW(9))
+    CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("KPA_R_1"))
     CALL(btlevtcmd_GetPos, LW(3), LW(0), LW(1), LW(2))
     CALL(btlevtcmd_FaceDirectionAdd, LW(3), LW(0), 65)
-    CALL(btlevtcmd_CalculateFaceDirection, -2, -1, LW(0), LW(2), 1, LW(15))
-    CALL(btlevtcmd_ChangeFaceDirection, -2, LW(15))
-    CALL(btlevtcmd_SetMoveSpeed, -2, FLOAT(4.0f))
-    CALL(btlevtcmd_MovePosition, -2, LW(0), 0, LW(2), 0, -1, 1)
-    CALL(btlevtcmd_AnimeChangePose, -2, 1, STRING("KPA_A_3A"))
-    CALL(btlevtcmd_snd_se, -2, STRING("SFX_BOSS_KOOPA_BITE1"), -250000000, 0, -250000000)
-    CALL(btlevtcmd_CalculateFaceDirection, -2, -1, LW(3), LW(4), 16, LW(15))
-    CALL(btlevtcmd_ChangeFaceDirection, -2, LW(15))
+    CALL(btlevtcmd_CalculateFaceDirection, BTL_UNIT_SELF, -1, LW(0), LW(2), 1, LW(15))
+    CALL(btlevtcmd_ChangeFaceDirection, BTL_UNIT_SELF, LW(15))
+    CALL(btlevtcmd_SetMoveSpeed, BTL_UNIT_SELF, FLOAT(4.0f))
+    CALL(btlevtcmd_MovePosition, BTL_UNIT_SELF, LW(0), 0, LW(2), 0, -1, 1)
+    CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("KPA_A_3A"))
+    CALL(btlevtcmd_snd_se, BTL_UNIT_SELF, STRING("SFX_BOSS_KOOPA_BITE1"), EVT_NULLPTR, 0, EVT_NULLPTR)
+    CALL(btlevtcmd_CalculateFaceDirection, BTL_UNIT_SELF, -1, LW(3), LW(4), 16, LW(15))
+    CALL(btlevtcmd_ChangeFaceDirection, BTL_UNIT_SELF, LW(15))
     WAIT_MS(170)
-    CALL(btlevtcmd_AnimeChangePose, -2, 1, STRING("KPA_A_3B"))
+    CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("KPA_A_3B"))
     WAIT_MS(150)
-    CALL(btlevtcmd_snd_se, -2, STRING("SFX_BOSS_KOOPA_BITE3"), -250000000, 0, -250000000)
-    CALL(btlevtcmd_PreCheckDamage, -2, LW(3), LW(4), LW(9), 256, LW(5))
+    CALL(btlevtcmd_snd_se, BTL_UNIT_SELF, STRING("SFX_BOSS_KOOPA_BITE3"), EVT_NULLPTR, 0, EVT_NULLPTR)
+    CALL(btlevtcmd_PreCheckDamage, BTL_UNIT_SELF, LW(3), LW(4), LW(9), 256, LW(5))
     SWITCH(LW(5))
         CASE_OR_EQUAL(4)
         GOTO(90)
@@ -943,82 +845,94 @@ static EVT_BEGIN(critical_bite_attack_event)
     END_SWITCH
     LABEL(90)
     WAIT_MS(100)
-    CALL(btlevtcmd_AnimeChangePose, -2, 1, STRING("KPA_A_3C"))
+    CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("KPA_A_3C"))
     WAIT_MS(150)
     GOTO(98)
     LABEL(91)
-    CALL(btlevtcmd_AnimeChangePose, -2, 1, STRING("KPA_A_4"))
+    CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("KPA_A_4"))
     WAIT_MS(1500)
     CALL(btlevtcmd_ResultACDefence, LW(3), LW(9))
-    CALL(btlevtcmd_CheckDamage, -2, LW(3), LW(4), LW(9), 256, LW(5))
-    CALL(btlevtcmd_AnimeChangePose, -2, 1, STRING("KPA_A_3C"))
+    CALL(btlevtcmd_CheckDamage, BTL_UNIT_SELF, LW(3), LW(4), LW(9), 256, LW(5))
+    CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("KPA_A_3C"))
     WAIT_MS(150)
     LABEL(98)
     CALL(evt_btl_camera_set_mode, 0, 0)
     WAIT_MS(250)
-    CALL(btlevtcmd_AnimeChangePose, -2, 1, STRING("KPA_R_1"))
-    CALL(btlevtcmd_GetHomePos, -2, LW(0), LW(1), LW(2))
-    CALL(btlevtcmd_SetMoveSpeed, -2, FLOAT(4.0f))
-    CALL(btlevtcmd_MovePosition, -2, LW(0), LW(1), LW(2), 0, -1, 0)
+    CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("KPA_R_1"))
+    CALL(btlevtcmd_GetHomePos, BTL_UNIT_SELF, LW(0), LW(1), LW(2))
+    CALL(btlevtcmd_SetMoveSpeed, BTL_UNIT_SELF, FLOAT(4.0f))
+    CALL(btlevtcmd_MovePosition, BTL_UNIT_SELF, LW(0), LW(1), LW(2), 0, -1, 0)
     RETURN
 EVT_END()
 
+/**
+ * Bowser's Fire Breath: moves in front of the party,
+ * breathes fire for about 1.5 seconds and hits every target in turn (AttackDeclareAll,
+ * with the action command result taken from the first),
+ * using the "gonbaba_breath" fire effect scaled by his size. Then he returns to his home position.
+ */
 static EVT_BEGIN(fire_attack_event)
-    CALL(btlevtcmd_GetEnemyBelong, -2, LW(0))
-    CALL(btlevtcmd_SamplingEnemy, -2, LW(0), LW(9))
+    // Choose the targets; a confused Bowser with none is flustered.
+    CALL(btlevtcmd_GetEnemyBelong, BTL_UNIT_SELF, LW(0))
+    CALL(btlevtcmd_SamplingEnemy, BTL_UNIT_SELF, LW(0), LW(9))
     CALL(btlevtcmd_ChoiceSamplingEnemy, LW(9), LW(3), LW(4))
     IF_INT_EQUAL(LW(3), -1)
-        CALL(btlevtcmd_CheckToken, -2, 16, LW(0))
+        CALL(btlevtcmd_CheckToken, BTL_UNIT_SELF, TOKEN_FLAG_CONFUSED_ACTION, LW(0))
         IF_INT_NOT_EQUAL(LW(0), 0)
             CALL_CHILD(subsetevt_confuse_flustered)
         END_IF
         RETURN
     END_IF
+    // The attack is announced.
     CALL(btlevtcmd_WeaponAftereffect, LW(9))
-    CALL(btlevtcmd_AttackDeclareAll, -2)
+    CALL(btlevtcmd_AttackDeclareAll, BTL_UNIT_SELF)
     CALL(btlevtcmd_WaitGuardMove)
-    CALL(btlevtcmd_PayWeaponCost, -2, LW(9))
-    CALL(btlevtcmd_AnimeChangePose, -2, 1, STRING("KPA_R_1"))
+    CALL(btlevtcmd_PayWeaponCost, BTL_UNIT_SELF, LW(9))
+    // Bowser stomps out in front of the party and faces it, the camera swinging to frame the line-up.
+    CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("KPA_R_1"))
     CALL(btlevtcmd_GetPos, LW(3), LW(0), LW(1), LW(2))
     CALL(btlevtcmd_FaceDirectionAdd, LW(3), LW(0), 120)
     CALL(evt_btl_camera_set_mode, 0, 8)
-    CALL(evt_btl_camera_set_homing_unit, 0, -2, LW(3))
+    CALL(evt_btl_camera_set_homing_unit, 0, BTL_UNIT_SELF, LW(3))
     CALL(evt_btl_camera_set_moveSpeedLv, 0, 2)
     CALL(evt_btl_camera_set_zoom, 0, 200)
-    CALL(btlevtcmd_CalculateFaceDirection, -2, -1, LW(0), LW(2), 1, LW(15))
-    CALL(btlevtcmd_ChangeFaceDirection, -2, LW(15))
-    CALL(btlevtcmd_SetMoveSpeed, -2, FLOAT(4.0f))
-    CALL(btlevtcmd_MovePosition, -2, LW(0), 0, LW(2), 0, -1, 1)
-    CALL(btlevtcmd_CalculateFaceDirection, -2, -1, LW(3), LW(4), 16, LW(15))
-    CALL(btlevtcmd_ChangeFaceDirection, -2, LW(15))
+    CALL(btlevtcmd_CalculateFaceDirection, BTL_UNIT_SELF, -1, LW(0), LW(2), 1, LW(15))
+    CALL(btlevtcmd_ChangeFaceDirection, BTL_UNIT_SELF, LW(15))
+    CALL(btlevtcmd_SetMoveSpeed, BTL_UNIT_SELF, FLOAT(4.0f))
+    CALL(btlevtcmd_MovePosition, BTL_UNIT_SELF, LW(0), 0, LW(2), 0, -1, 1)
+    CALL(btlevtcmd_CalculateFaceDirection, BTL_UNIT_SELF, -1, LW(3), LW(4), 16, LW(15))
+    CALL(btlevtcmd_ChangeFaceDirection, BTL_UNIT_SELF, LW(15))
     WAIT_MS(170)
-    CALL(btlevtcmd_AnimeChangePose, -2, 1, STRING("KPA_A_1A"))
+    // He rears back and inhales with a roar.
+    CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("KPA_A_1A"))
     WAIT_MS(300)
-    CALL(btlevtcmd_snd_se, -2, STRING("SFX_VOICE_KOOPA_FIRE1"), -250000000, 0, -250000000)
-    CALL(btlevtcmd_snd_se, -2, STRING("SFX_BOSS_KOOPA_FIRE_BREATH1"), -250000000, 0, LW(15))
+    CALL(btlevtcmd_snd_se, BTL_UNIT_SELF, STRING("SFX_VOICE_KOOPA_FIRE1"), EVT_NULLPTR, 0, EVT_NULLPTR)
+    CALL(btlevtcmd_snd_se, BTL_UNIT_SELF, STRING("SFX_BOSS_KOOPA_FIRE_BREATH1"), EVT_NULLPTR, 0, LW(15))
     BEGIN_INLINE_EVENT
         WAIT_MS(1500)
         CALL(evt_snd_sfxoff, LW(15))
     END_INLINE_EVENT
-    CALL(btlevtcmd_AnimeChangePose, -2, 1, STRING("KPA_A_1B"))
+    // He breathes out a long jet of fire for about a second and a half.
+    CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("KPA_A_1B"))
     WAIT_MS(300)
-    CALL(btlevtcmd_GetPos, -2, LW(0), LW(1), LW(2))
-    CALL(btlevtcmd_GetStatusMg, -2, LW(5))
+    CALL(btlevtcmd_GetPos, BTL_UNIT_SELF, LW(0), LW(1), LW(2))
+    CALL(btlevtcmd_GetStatusMg, BTL_UNIT_SELF, LW(5))
     SET_FLOAT_VALUE(LW(6), FLOAT(60.0f))
     MULTIPLY_FLOAT(LW(6), LW(5))
-    CALL(btlevtcmd_FaceDirectionAdd, -2, LW(0), LW(6))
+    CALL(btlevtcmd_FaceDirectionAdd, BTL_UNIT_SELF, LW(0), LW(6))
     SET_FLOAT_VALUE(LW(6), FLOAT(22.5f))
     MULTIPLY_FLOAT(LW(6), LW(5))
     ADD_FLOAT(LW(1), LW(6))
     SUBTRACT(LW(2), 5)
     MULTIPLY_FLOAT(LW(5), FLOAT(3.5f))
     CALL(evt_eff, STRING(""), STRING("gonbaba_breath"), 7, LW(0), LW(1), LW(2), LW(5), 90, 0, 0, 0, 0, 0, 0)
-    CALL(btlevtcmd_AnimeChangePose, -2, 1, STRING("KPA_A_1C"))
+    CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("KPA_A_1C"))
     WAIT_MS(300)
     CALL(btlevtcmd_GetSelectEnemy, LW(3), LW(4))
     SET_VALUE(LW(10), 0)
     LABEL(10)
-    CALL(btlevtcmd_PreCheckDamage, -2, LW(3), LW(4), LW(9), 256, LW(5))
+    // Each target is checked in turn: those who dodge duck out of the flames, the rest take the damage.
+    CALL(btlevtcmd_PreCheckDamage, BTL_UNIT_SELF, LW(3), LW(4), LW(9), 256, LW(5))
     SWITCH(LW(5))
         CASE_OR_EQUAL(4)
         GOTO(90)
@@ -1046,30 +960,33 @@ static EVT_BEGIN(fire_attack_event)
     IF_INT_EQUAL(LW(10), 0)
         CALL(btlevtcmd_ResultACDefence, LW(3), LW(9))
     END_IF
-    CALL(btlevtcmd_CheckDamage, -2, LW(3), LW(4), LW(9), 256, LW(5))
+    CALL(btlevtcmd_CheckDamage, BTL_UNIT_SELF, LW(3), LW(4), LW(9), 256, LW(5))
     LABEL(97)
     CALL(btlevtcmd_GetSelectNextEnemy, LW(3), LW(4))
     IF_INT_NOT_EQUAL(LW(3), -1)
         ADD(LW(10), 1)
         GOTO(10)
     END_IF
+    // The flames die down and Bowser walks back home.
     LABEL(98)
     WAIT_MS(1200)
-    CALL(btlevtcmd_AnimeChangePose, -2, 1, STRING("KPA_A_1D"))
+    CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("KPA_A_1D"))
     CALL(evt_btl_camera_set_mode, 0, 0)
     WAIT_MS(250)
-    CALL(btlevtcmd_AnimeChangePose, -2, 1, STRING("KPA_R_1"))
-    CALL(btlevtcmd_GetHomePos, -2, LW(0), LW(1), LW(2))
-    CALL(btlevtcmd_SetMoveSpeed, -2, FLOAT(4.0f))
-    CALL(btlevtcmd_MovePosition, -2, LW(0), LW(1), LW(2), 0, -1, 0)
+    CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("KPA_R_1"))
+    CALL(btlevtcmd_GetHomePos, BTL_UNIT_SELF, LW(0), LW(1), LW(2))
+    CALL(btlevtcmd_SetMoveSpeed, BTL_UNIT_SELF, FLOAT(4.0f))
+    CALL(btlevtcmd_MovePosition, BTL_UNIT_SELF, LW(0), LW(1), LW(2), 0, -1, 0)
     RETURN
 EVT_END()
 
+/** Wait event: sets the idle animation from the unit's pose table. */
 static EVT_BEGIN(wait_event)
-    CALL(btlevtcmd_AnimeChangePoseFromTable, -2, 1)
+    CALL(btlevtcmd_AnimeChangePoseFromTable, BTL_UNIT_SELF, 1)
     RETURN
 EVT_END()
 
+/** Message keys announcing which command (jump, hammer, item, partner move or partner item) was sealed. */
 static const char* cmd_disable_string[] = {
     "btl_jump_cmd_disable",
     "btl_hammer_cmd_disable",
@@ -1078,12 +995,18 @@ static const char* cmd_disable_string[] = {
     "btl_party_item_cmd_disable",
 };
 
+/** Draw callback of _icon_jump_icon: draws the flying icon at its current position. */
 static void _disp_icon(CameraId camera, void* param) {
     EventEntry* event = param;
 
     iconDispGx(&((IconJumpWork*)event->userdatap[0])->pos, 0, event->userdata[1], 1.0f);
 }
 
+/**
+ * Script helper that tosses an icon along an arc:
+ * arg0 = icon id, arg1..3 = start, arg4..6 = end, arg7 = gravity, arg8 = frames.
+ * Runs until it lands; used to show the command that Bowser takes away.
+ */
 static USER_FUNC(_icon_jump_icon) {
     EvtWord* args = event->args;
     s32 icon = evtGetValue(event, args[0]);
@@ -1137,11 +1060,19 @@ static USER_FUNC(_icon_jump_icon) {
     return EVT_RETURN_BLOCK;
 }
 
+/**
+ * Script helper for Bowser's command-sealing attack when it hits the partner:
+ * at random it seals the partner's special-move
+ * or item command for 3 turns (before US in BattleWork commandDisabled[3] or [4];
+ * in US and later in usCommandDisabled[0] or [1] of the partner unit passed in args[1]).
+ * LW(0) receives the announcement message key (btl_party_tech_cmd_disable or btl_party_item_cmd_disable)
+ * and args[0] the id of the command icon that the attack script tosses at the partner.
+ */
 static USER_FUNC(party_cannot_use_command) {
     BattleWork* wp = _battleWorkPointer;
     s32 r = irand(1);
     s32 var = event->args[0];
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
     s32 id = evtGetValue(event, event->args[1]);
     s32 weapon = 0;
     BattleUnit* unit;
@@ -1151,7 +1082,7 @@ static USER_FUNC(party_cannot_use_command) {
 #else
     s32 weapon = 0;
 #endif
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
 
     switch (r) {
         case 0:
@@ -1184,6 +1115,13 @@ static USER_FUNC(party_cannot_use_command) {
     return EVT_RETURN_DONE;
 }
 
+/**
+ * Script helper for Bowser's command-sealing attack when it hits Mario:
+ * at random it seals his jump, hammer or item command for 3 turns (BattleWork commandDisabled[0..2]).
+ * LW(0) receives the announcement message key (btl_jump_cmd_disable,
+ * btl_hammer_cmd_disable or btl_item_cmd_disable)
+ * and args[0] the id of the command icon that the attack script tosses at Mario (the ids differ before US).
+ */
 static USER_FUNC(mario_cannot_use_command) {
     BattleWork* wp = _battleWorkPointer;
     s32 r = irand(2);
@@ -1193,7 +1131,7 @@ static USER_FUNC(mario_cannot_use_command) {
     switch (r) {
         case 0:
             wp->commandDisabled[0] = 3;
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
             weapon = 334;
 #else
             weapon = 326;
@@ -1201,7 +1139,7 @@ static USER_FUNC(mario_cannot_use_command) {
             break;
         case 1:
             wp->commandDisabled[1] = 3;
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
             weapon = 337;
 #else
             weapon = 329;
@@ -1209,7 +1147,7 @@ static USER_FUNC(mario_cannot_use_command) {
             break;
         case 2:
             wp->commandDisabled[2] = 3;
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
             weapon = 340;
 #else
             weapon = 332;
@@ -1220,4 +1158,3 @@ static USER_FUNC(mario_cannot_use_command) {
     evtSetValue(event, var, weapon);
     return EVT_RETURN_DONE;
 }
-

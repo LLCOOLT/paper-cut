@@ -1,3 +1,4 @@
+// Paper Mario 64 effect: guruguru (spinning), num sprites circling a point at a given radius.
 #include "eff/n64/eff_guruguru_n64.h"
 #include "driver/camdrv.h"
 #include "driver/dispdrv.h"
@@ -6,7 +7,9 @@
 #include "memory.h"
 #include <dolphin/gx.h>
 #include <dolphin/mtx.h>
+#include "libc_decls.h"
 
+/** Camera-facing 16x16 quad each circling sprite is drawn with. */
 static effN64Vtx size16x16_tex32x32_vtx[] = {
     {-8, -8, 0, 0, 0, 0, 0, 0, 255},
     {8, -8, 0, 64, 0, 0, 0, 0, 255},
@@ -14,14 +17,13 @@ static effN64Vtx size16x16_tex32x32_vtx[] = {
     {-8, 8, 0, 0, 32, 0, 0, 0, 255},
 };
 
-#ifndef TARGET_PC /* PC port: the host libc declares these */
-double sin(double);
-double cos(double);
-#endif
+static void effGuruguruMain(EffectEntry* effect);
+static void effGuruguruDisp(CameraId cameraId, EffectEntry* effect);
 
-void effGuruguruMain(EffectEntry* effect);
-void effGuruguruDisp(CameraId cameraId, EffectEntry* effect);
-
+/**
+ * Spawns num yellow sprites circling (x, y, z); the radius opens up to the given radius.
+ * Used by the Palace of Shadow rels las_09 and las_28 and by event scripts through evt_eff.
+ */
 EffectEntry* effGuruguruN64Entry(s32 type, s32 num, f32 x, f32 y, f32 z, f32 radius) {
     EffectEntry* effect;
     EffGuruguruN64Work* work;
@@ -55,7 +57,11 @@ EffectEntry* effGuruguruN64Entry(s32 type, s32 num, f32 x, f32 y, f32 z, f32 rad
     return effect;
 }
 
-void effGuruguruMain(EffectEntry* effect) {
+/**
+ * Opens the radius by 10% of the remaining distance each frame and advances every sprite around the circle,
+ * spinning each in Z by 20 degrees per frame.
+ */
+static void effGuruguruMain(EffectEntry* effect) {
     EffGuruguruN64Work* work = effect->userdata;
     Vec position;
     Vec tmp = {0.0f, 0.0f, 0.0f};
@@ -92,7 +98,8 @@ void effGuruguruMain(EffectEntry* effect) {
     }
 }
 
-void effGuruguruDisp(CameraId cameraId, EffectEntry* effect) {
+/** Draws each sprite as a camera-facing yellow quad (texture 0x1D) at its position on the circle. */
+static void effGuruguruDisp(CameraId cameraId, EffectEntry* effect) {
     CameraEntry* camera = camGetPtr(cameraId);
     EffGuruguruN64Work* work = effect->userdata;
     Mtx mtx;
@@ -138,4 +145,3 @@ void effGuruguruDisp(CameraId cameraId, EffectEntry* effect) {
         }
     }
 }
-

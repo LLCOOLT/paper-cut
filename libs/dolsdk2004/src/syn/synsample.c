@@ -11,6 +11,10 @@ static void __SYNSetupAdpcm(SYNVOICE* voice);
 static void __SYNSetupPcm16(SYNVOICE* voice);
 static void __SYNSetupPcm8(SYNVOICE* voice);
 
+/**
+ * Converts a sample count into an offset in ADPCM nibbles:
+ * 14 samples per 16-nibble frame, past the 2-nibble header.
+ */
 static u32 __SYNGetNibbleAddress(u32 count) {
     u32 samples = count;
     u32 frames = (samples / 14);
@@ -19,6 +23,11 @@ static u32 __SYNGetNibbleAddress(u32 count) {
     return (frames * 0x10) + 2 + samplesLeft;
 }
 
+/**
+ * Fills the AX voice for an ADPCM sample: looping when the region has a loop (loop start and end addresses,
+ * the loop's predictor state), otherwise ending at the sample length and looping to the zero sample;
+ * also copies the ADPCM coefficients.
+ */
 static void __SYNSetupAdpcm(SYNVOICE* voice) {
     AXVPB* axvpb = voice->axvpb;
 
@@ -39,8 +48,8 @@ static void __SYNSetupAdpcm(SYNVOICE* voice) {
         ASSERTLINE(80, (sampleLoop & 0x000f) > 1);
         ASSERTLINE(81, (sampleEnd & 0x000f) > 1);
 
-        // the hell? why not just write the members??? what is this doing???
-        // why not just write to the members directly?
+        // Writes pb.addr and pb.adpcm as consecutive 32-bit words: loopFlag 1 / format 0 (0x10000), the loop, end
+        // and current nibble addresses, then the 10 words of ADPCM coefficients and gain/predictor state.
         sampleStart = sampleStart + 2;
         p = (u32*)&axvpb->pb.addr;
         *(p) = 0x10000; p += 1;
@@ -79,7 +88,7 @@ static void __SYNSetupAdpcm(SYNVOICE* voice) {
         ASSERTLINE(135, (sampleStart & 0x000f) == 0);
         ASSERTLINE(136, (sampleEnd & 0x000f) > 1);
 
-        // same wtf writes here
+        // The same word-by-word block for a one-shot sample: loopFlag 0, loop address at the zero buffer.
         sampleStart = sampleStart + 2;
         p = (void*)&axvpb->pb.addr;
         *(p) = 0; p += 1;
@@ -101,6 +110,10 @@ static void __SYNSetupAdpcm(SYNVOICE* voice) {
     }
 }
 
+/**
+ * Fills the AX voice for a 16-bit PCM sample, looping when the region has a loop,
+ * otherwise ending at the sample length.
+ */
 static void __SYNSetupPcm16(SYNVOICE* voice) {
     AXVPB* axvpb = voice->axvpb;
 
@@ -161,6 +174,10 @@ static void __SYNSetupPcm16(SYNVOICE* voice) {
     axvpb->sync |= 0x21000;
 }
 
+/**
+ * Fills the AX voice for an 8-bit PCM sample, looping when the region has a loop,
+ * otherwise ending at the sample length.
+ */
 static void __SYNSetupPcm8(SYNVOICE* voice) {
     AXVPB* axvpb = voice->axvpb;
 
@@ -221,6 +238,7 @@ static void __SYNSetupPcm8(SYNVOICE* voice) {
     axvpb->sync |= 0x21000;
 }
 
+/** Sets up the voice's sample playback by dispatching on the sample format (ADPCM, 16-bit or 8-bit PCM). */
 void __SYNSetupSample(SYNVOICE* voice) {
     ASSERTLINE(361, voice);
 

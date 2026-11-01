@@ -1,97 +1,32 @@
+// dou_02 (洞窟, Pirate's Grotto): water room between dou_01 and dou_12 with a spear trap and bobbing platforms.
+// Gate Handle and Star Piece items.
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
 #include "evt/evt_bero.h"
 #include "evt/evt_damage.h"
 #include "dou.h"
 #include "driver/hitdrv.h"
+#include "evt/evt_case.h"
+#include "evt/evt_hit.h"
+#include "evt/evt_item.h"
+#include "evt/evt_map.h"
+#include "evt/evt_mobj.h"
+#include "evt/evt_snd.h"
+#include "evt/evt_sub.h"
+#include "version.h"
+#include "evt/evt_story.h"
+#include "driver/casedrv.h"
 
-#pragma force_active on
-
-USER_FUNC(evt_bero_get_info);
-USER_FUNC(evt_hit_bind_mapobj);
-USER_FUNC(evt_hit_bind_update);
-USER_FUNC(evt_hit_damage_return_set);
-USER_FUNC(evt_hitobj_attr_onoff);
-USER_FUNC(evt_item_entry);
-USER_FUNC(evt_map_entry_airport_harbor);
-USER_FUNC(evt_map_playanim);
-USER_FUNC(evt_mapobj_get_position);
-USER_FUNC(evt_mapobj_trans);
-USER_FUNC(evt_mobj_powerupblk);
-USER_FUNC(evt_run_case_evt);
-USER_FUNC(evt_snd_bgmon);
-USER_FUNC(evt_snd_envon);
-USER_FUNC(evt_snd_set_rev_mode);
-USER_FUNC(evt_snd_sfxon_3d);
-USER_FUNC(evt_sub_intpl_msec_get_value);
-USER_FUNC(evt_sub_intpl_msec_init);
-USER_FUNC(evt_sub_random);
-
-f32 fd_dou_02_negone_one_374[2] __attribute__((aligned(8)));
-f32 fd_dou_02_neg_one_382;
-f32 fd_dou_02___local_PI_383;
-f32 fd_dou_02___local_3PIO2_385;
-f32 fd_dou_02_one_negone_373[2] __attribute__((aligned(8)));
-f32 fd_dou_02___local_PIO2_384;
-f32 fd_dou_02_one_381;
-f32 fd_dou_02_negone_one_360[2] __attribute__((aligned(8)));
-f32 fd_dou_02_neg_one_365;
-f32 fd_dou_02___local_PI_366;
-f32 fd_dou_02___local_3PIO2_368;
-f32 fd_dou_02_one_negone_359[2] __attribute__((aligned(8)));
-f32 fd_dou_02___local_PIO2_367;
-f32 fd_dou_02_one_364;
 static BeroEntry bero_entry_data[4];
-static EvtWord yari_trap_sub[119];
-static EvtWord yari_trap[11];
-static EvtWord dou_puka_event_init0[8];
-static EvtWord dou_puka_event_0[24];
-static EvtWord dou_puka_event_rev_0[10];
-static EvtWord dou_puka_event_main0[21];
-static EvtWord dou_puka_event_sub0[45];
-static EvtWord dou_puka_event_init1[8];
-static EvtWord dou_puka_event_1[24];
-static EvtWord dou_puka_event_rev_1[10];
-static EvtWord dou_puka_event_main1[21];
-static EvtWord dou_puka_event_sub1[45];
 static HitDamageReturn hitDmgRetPoints[8];
-static EvtWord evt_ride_ship[15];
-EvtWord dou_02_init_evt[139];
 
-f32 fd_dou_02_negone_one_374[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_dou_02_neg_one_382 = -1.0f;
-
-f32 fd_dou_02___local_PI_383 = 3.1415927f;
-
-f32 fd_dou_02___local_3PIO2_385 = 4.712389f;
-
-f32 fd_dou_02_one_negone_373[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_dou_02___local_PIO2_384 = 1.5707964f;
-
-f32 fd_dou_02_one_381 = 1.0f;
-
-f32 fd_dou_02_negone_one_360[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_dou_02_neg_one_365 = -1.0f;
-
-f32 fd_dou_02___local_PI_366 = 3.1415927f;
-
-f32 fd_dou_02___local_3PIO2_368 = 4.712389f;
-
-f32 fd_dou_02_one_negone_359[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_dou_02___local_PIO2_367 = 1.5707964f;
-
-f32 fd_dou_02_one_364 = 1.0f;
-
+/** Exits (beros) of this room: w_bero_1 to dou_01, e_bero_1 to dou_12 and e_bero_2 to dou_12. */
 static BeroEntry bero_entry_data[] = {
     {
         "w_bero_1", // hitName
         0, 0, // type..sfxId
-        20000, // directionId
-        100000, // centerPosition
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         NULL, // enterEvent
@@ -106,8 +41,8 @@ static BeroEntry bero_entry_data[] = {
     {
         "e_bero_1", // hitName
         0, 0, // type..sfxId
-        20000, // directionId
-        100000, // centerPosition
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         NULL, // enterEvent
@@ -122,8 +57,8 @@ static BeroEntry bero_entry_data[] = {
     {
         "e_bero_2", // hitName
         0, 0, // type..sfxId
-        20000, // directionId
-        100000, // centerPosition
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         NULL, // enterEvent
@@ -138,6 +73,12 @@ static BeroEntry bero_entry_data[] = {
     {0},
 };
 
+/**
+ * Spear trap loop (only one at a time, guarded by GW(15)):
+ * the spear s02_yari shoots up 50 units in 0.15 seconds with SFX_MOBJ_FLOOR_TRAP1, stays up for 1 second,
+ * retracts over 0.3 seconds with SFX_MOBJ_FLOOR_TRAP2, the hit flag 2048 on "bb" is cleared while it is down,
+ * and after 2.5 seconds (2.8 seconds at 50 Hz in the PAL release) it repeats until GW(15) is set to 2.
+ */
 static EVT_BEGIN(yari_trap_sub)
     IF_INT_NOT_EQUAL(GW(15), 0)
         RETURN
@@ -171,7 +112,16 @@ static EVT_BEGIN(yari_trap_sub)
             WAIT_FRAMES(1)
         END_LOOP
         CALL(evt_hitobj_attr_onoff, 1, 0, STRING("bb"), 2048)
+#if VERSION >= VERSION_DEMO_EU
+        CALL(evt_sub_get_framerate, LW(0))
+        IF_INT_EQUAL(LW(0), 50)
+            WAIT_MS(2800)
+        ELSE
+            WAIT_MS(2500)
+        END_IF
+#else
         WAIT_MS(2500)
+#endif
         IF_INT_EQUAL(GW(15), 2)
             BREAK_LOOP
         END_IF
@@ -180,19 +130,33 @@ static EVT_BEGIN(yari_trap_sub)
     RETURN
 EVT_END()
 
+/**
+ * Starts the spear trap: binds the spear's hit area a02_yari to its map object s02_yari,
+ * clears GW(15) and spawns yari_trap_sub.
+ */
 static EVT_BEGIN(yari_trap)
     CALL(evt_hit_bind_mapobj, STRING("a02_yari"), STRING("s02_yari"))
     SET_VALUE(GW(15), 0)
-    SPAWN_EVENT(PTR(yari_trap_sub))
+    SPAWN_EVENT(yari_trap_sub)
     RETURN
 EVT_END()
 
+/**
+ * Clears the state and offset registers of floating platform 0 (state 0 = idle, 1 = being ridden,
+ * 2 = stepped off; offset = its current height).
+ */
 static EVT_BEGIN(dou_puka_event_init0)
     SET_VALUE(GW(0), 0)
     SET_VALUE(GW(1), 0)
     RETURN
 EVT_END()
 
+/**
+ * Stand-on case script for floating platform 0:
+ * if idle it marks the platform as ridden, runs the extra callback in LW(3)
+ * when there is one (e.g. the boat or barrel creak sound), then the shared dip animation dou_puka_event,
+ * and marks it as stepped off.
+ */
 static EVT_BEGIN(dou_puka_event_0)
     IF_INT_NOT_EQUAL(GW(0), 0)
         RETURN
@@ -202,11 +166,15 @@ static EVT_BEGIN(dou_puka_event_0)
     IF_INT_NOT_EQUAL(LW(3), 0)
         CALL_CHILD(LW(3))
     END_IF
-    CALL_CHILD(PTR(dou_puka_event))
+    CALL_CHILD(dou_puka_event)
     SET_VALUE(GW(0), 2)
     RETURN
 EVT_END()
 
+/**
+ * Step-off case script for floating platform 0:
+ * once the dip has finished (state 2) it sets the platform back to idle so it can bob again.
+ */
 static EVT_BEGIN(dou_puka_event_rev_0)
     IF_INT_NOT_EQUAL(GW(0), 2)
         RETURN
@@ -215,6 +183,11 @@ static EVT_BEGIN(dou_puka_event_rev_0)
     RETURN
 EVT_END()
 
+/**
+ * Frame loop for floating platform 0: binds the hit area in LW(1) to the map object in LW(0),
+ * then every frame moves the object to the height held in the platform's offset register
+ * and updates the hit area.
+ */
 static EVT_BEGIN(dou_puka_event_main0)
     CALL(evt_hit_bind_mapobj, LW(1), LW(0))
     LOOP(0)
@@ -225,6 +198,10 @@ static EVT_BEGIN(dou_puka_event_main0)
     RETURN
 EVT_END()
 
+/**
+ * Idle bobbing of floating platform 0: after a random 0.2 to 0.6 second delay it runs the shared bobbing loop
+ * dou_normal_puka, pauses it while the platform is being ridden and restarts it once Mario steps off.
+ */
 static EVT_BEGIN(dou_puka_event_sub0)
     CALL(evt_sub_random, 400, LW(0))
     ADD(LW(0), 200)
@@ -250,12 +227,22 @@ static EVT_BEGIN(dou_puka_event_sub0)
     RETURN
 EVT_END()
 
+/**
+ * Clears the state and offset registers of floating platform 1 (state 0 = idle, 1 = being ridden,
+ * 2 = stepped off; offset = its current height).
+ */
 static EVT_BEGIN(dou_puka_event_init1)
     SET_VALUE(GW(2), 0)
     SET_VALUE(GW(3), 0)
     RETURN
 EVT_END()
 
+/**
+ * Stand-on case script for floating platform 1:
+ * if idle it marks the platform as ridden, runs the extra callback in LW(3)
+ * when there is one (e.g. the boat or barrel creak sound), then the shared dip animation dou_puka_event,
+ * and marks it as stepped off.
+ */
 static EVT_BEGIN(dou_puka_event_1)
     IF_INT_NOT_EQUAL(GW(2), 0)
         RETURN
@@ -265,11 +252,15 @@ static EVT_BEGIN(dou_puka_event_1)
     IF_INT_NOT_EQUAL(LW(3), 0)
         CALL_CHILD(LW(3))
     END_IF
-    CALL_CHILD(PTR(dou_puka_event))
+    CALL_CHILD(dou_puka_event)
     SET_VALUE(GW(2), 2)
     RETURN
 EVT_END()
 
+/**
+ * Step-off case script for floating platform 1:
+ * once the dip has finished (state 2) it sets the platform back to idle so it can bob again.
+ */
 static EVT_BEGIN(dou_puka_event_rev_1)
     IF_INT_NOT_EQUAL(GW(2), 2)
         RETURN
@@ -278,6 +269,11 @@ static EVT_BEGIN(dou_puka_event_rev_1)
     RETURN
 EVT_END()
 
+/**
+ * Frame loop for floating platform 1: binds the hit area in LW(1) to the map object in LW(0),
+ * then every frame moves the object to the height held in the platform's offset register
+ * and updates the hit area.
+ */
 static EVT_BEGIN(dou_puka_event_main1)
     CALL(evt_hit_bind_mapobj, LW(1), LW(0))
     LOOP(0)
@@ -288,6 +284,10 @@ static EVT_BEGIN(dou_puka_event_main1)
     RETURN
 EVT_END()
 
+/**
+ * Idle bobbing of floating platform 1: after a random 0.2 to 0.6 second delay it runs the shared bobbing loop
+ * dou_normal_puka, pauses it while the platform is being ridden and restarts it once Mario steps off.
+ */
 static EVT_BEGIN(dou_puka_event_sub1)
     CALL(evt_sub_random, 400, LW(0))
     ADD(LW(0), 200)
@@ -313,6 +313,9 @@ static EVT_BEGIN(dou_puka_event_sub1)
     RETURN
 EVT_END()
 
+/**
+ * Hazard-water floors of this room (map hit names) and the point each puts Mario back at after he is bitten.
+ */
 static HitDamageReturn hitDmgRetPoints[] = {
     {"mod_01", {0.0f, -1000.0f, 0.0f}},
     {"mod_02", {0.0f, -1000.0f, 0.0f}},
@@ -324,46 +327,55 @@ static HitDamageReturn hitDmgRetPoints[] = {
     {0},
 };
 
+/**
+ * Extra callback when Mario steps onto a floating boat platform:
+ * plays SFX_STG5_SHIP_ON1 at the map object named in LW(0).
+ */
 static EVT_BEGIN(evt_ride_ship)
     CALL(evt_mapobj_get_position, LW(0), LW(10), LW(11), LW(12))
     CALL(evt_snd_sfxon_3d, STRING("SFX_STG5_SHIP_ON1"), LW(10), LW(11), LW(12), 0)
     RETURN
 EVT_END()
 
+/**
+ * Init script of dou_02, the water room between dou_01 and dou_12:
+ * waves, the spear trap, two bobbing boats (fune) that dip when Mario stands on them,
+ * the Gate Handle and Star Piece items, a Shine Sprite block, the gazigazi hazards,
+ * and the ship-change platform for the boat move.
+ */
 EVT_BEGIN(dou_02_init_evt)
-    CALL(evt_snd_bgmon, 512, STRING("BGM_STG5_DOU1"))
-    CALL(evt_snd_envon, 272, STRING("ENV_STG5_DOU3"))
+    CALL(evt_snd_bgmon, PSND_FADE_OUT, STRING("BGM_STG5_DOU1"))
+    CALL(evt_snd_envon, PSND_FADE_RESTART | PSND_FADE_IN, STRING("ENV_STG5_DOU3"))
     CALL(evt_snd_set_rev_mode, 2)
     SET_VALUE(LW(0), PTR(bero_entry_data))
     CALL(evt_bero_get_info)
-    CALL_CHILD(PTR(evt_bero_info_run))
+    CALL_CHILD(evt_bero_info_run)
     CALL(evt_map_playanim, STRING("nami"), 1, 0)
     CALL(evt_map_playanim, STRING("moku"), 1, 0)
-    SPAWN_EVENT(PTR(yari_trap))
+    SPAWN_EVENT(yari_trap)
     SET_VALUE(LW(0), STRING("s02_fune_01"))
     SET_VALUE(LW(1), STRING("a02_fune_01"))
     SET_VALUE(LW(2), STRING("a02_fune_ata1"))
     SET_VALUE(LW(3), PTR(evt_ride_ship))
-    CALL_CHILD(PTR(dou_puka_event_init0))
-    SPAWN_EVENT(PTR(dou_puka_event_main0))
-    SPAWN_EVENT(PTR(dou_puka_event_sub0))
-    CALL(evt_run_case_evt, 0, 1, STRING("a02_fune_ata1"), 0, PTR(dou_puka_event_0), 0)
-    CALL(evt_run_case_evt, 1, 1, STRING("a02_fune_ata1"), 0, PTR(dou_puka_event_rev_0), 0)
+    CALL_CHILD(dou_puka_event_init0)
+    SPAWN_EVENT(dou_puka_event_main0)
+    SPAWN_EVENT(dou_puka_event_sub0)
+    CALL(evt_run_case_evt, CASE_COND_STAND_ON, 1, STRING("a02_fune_ata1"), 0, PTR(dou_puka_event_0), 0)
+    CALL(evt_run_case_evt, CASE_COND_NOT_STAND_ON, 1, STRING("a02_fune_ata1"), 0, PTR(dou_puka_event_rev_0), 0)
     SET_VALUE(LW(0), STRING("s02_fune02"))
     SET_VALUE(LW(1), STRING("a02_fune_02"))
     SET_VALUE(LW(2), STRING("a02_fune_ata2"))
     SET_VALUE(LW(3), PTR(evt_ride_ship))
-    CALL_CHILD(PTR(dou_puka_event_init1))
-    SPAWN_EVENT(PTR(dou_puka_event_main1))
-    SPAWN_EVENT(PTR(dou_puka_event_sub1))
-    CALL(evt_run_case_evt, 0, 1, STRING("a02_fune_ata2"), 0, PTR(dou_puka_event_1), 0)
-    CALL(evt_run_case_evt, 1, 1, STRING("a02_fune_ata2"), 0, PTR(dou_puka_event_rev_1), 0)
-    CALL(evt_item_entry, STRING("handle"), 72, 147, 42, 101, 0, GSWF(2975), 0)
-    CALL(evt_item_entry, STRING("item_00"), 125, -25, 25, 100, 16, GSWF(5644), 0)
-    CALL(evt_mobj_powerupblk, STRING("pblk1"), -300, 145, -130, 0, GSWF(5554), 0)
+    CALL_CHILD(dou_puka_event_init1)
+    SPAWN_EVENT(dou_puka_event_main1)
+    SPAWN_EVENT(dou_puka_event_sub1)
+    CALL(evt_run_case_evt, CASE_COND_STAND_ON, 1, STRING("a02_fune_ata2"), 0, PTR(dou_puka_event_1), 0)
+    CALL(evt_run_case_evt, CASE_COND_NOT_STAND_ON, 1, STRING("a02_fune_ata2"), 0, PTR(dou_puka_event_rev_1), 0)
+    CALL(evt_item_entry, STRING("handle"), ITEM_GATE_HANDLE, 147, 42, 101, ITEM_ENTRY_STAY, GSWF(GSWF_DOU02_GATE_HANDLE_TAKEN), 0)
+    CALL(evt_item_entry, STRING("item_00"), ITEM_STAR_PIECE, -25, 25, 100, ITEM_ENTRY_FIXED, GSWF(GSWF_DOU02_STAR_PIECE), 0)
+    CALL(evt_mobj_powerupblk, STRING("pblk1"), -300, 145, -130, 0, GSWF(GSWF_DOU02_SHINE_SPRITE), 0)
     CALL(evt_hit_damage_return_set, PTR(hitDmgRetPoints))
-    CALL_CHILD(PTR(evt_gazigazi_entry))
-    CALL(evt_map_entry_airport_harbor, 1, STRING("S_Ship_Change\0\0"), STRING("Ship_Change"))
+    CALL_CHILD(evt_gazigazi_entry)
+    CALL(evt_map_entry_airport_harbor, 1, STRING("S_Ship_Change"), STRING("Ship_Change"))
     RETURN
 EVT_END()
-

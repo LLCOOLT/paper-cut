@@ -1,8 +1,10 @@
+// evt_yuuranking: Pianta Parlor ranking board: score records and their display for the minigames.
+// Rogueport-side copy of the helpers in the yuu REL.
+
 #include "version.h"
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
 
-#pragma force_active on
 #include "manager/fontmgr.h"
 #include "driver/msgdrv.h"
 #include "dolphin/mtx.h"
@@ -17,51 +19,29 @@
 #include "system.h"
 #include "mario/mariost.h"
 #include "evt/evt_yuugijou.h"
+#include "pmario_sound.h"
+#include "evt/evt_yuuranking.h"
+#include "evt/evt_story.h"
+#include <dolphin/pad.h>
 
+/** White colour, kept from the original but never used. */
 const GXColor yuuranking_unused_color = {0xFF, 0xFF, 0xFF, 0xFF};
-void FontDrawMessageMtx(Mtx mtx, const char* msg);
-typedef struct YuuRankingWork { EventEntry* event; u16 flags; u32 dispFlags; f32 x; f32 y; s32 type; s32 mode; s32 score; s32 bonus; s32 mul; s32 rank; s32 max; s32 phase; s32 monte; s32 dispScore; s32 timer; } YuuRankingWork;
-#ifdef VERSION_G8ME01
+
+#if VERSION >= VERSION_US
 // US keeps separate rankings for 60Hz (record rows 0-3) and 50Hz (rows 4-7) play.
 #define YURANK(f) ((f) + (gp->framerate == 50 ? 1 : 0) * 4)
 #else
 #define YURANK(f) (f)
 #endif
-void FontDrawStringPitch(f32 x, f32 y, f32 pitch, const char* str);
-void FontDrawScale(f32 scale);
-s32 psndSFXOn(const char* name);
-void psndSFXOff(s32 id);
 
 static USER_FUNC(evt_yuuranking_main_func);
 static USER_FUNC(yuuranking_get_monte);
-USER_FUNC(yuuranking_wait_button);
-USER_FUNC(evt_yuuranking_free);
-USER_FUNC(evt_yuuranking_alloc);
 static s32 yuu_kesan(s32 type, s32 score, s32 bonus, s32 mul, s32 max);
-static void evt_yuuranking_disp_func(CameraId camera, void* param);
-void gor_yuuranking_draw_msg_fit(f32 x, f32 y, f32 scale, const char* msg, s32 width);
-#ifdef VERSION_G8ME01
-void gor_yuuranking_draw_msg_fit_right(f32 x, f32 y, f32 scale, const char* msg, s32 width);
-void gor_yuuranking_draw_msg_fit_center(f32 x, f32 y, f32 scale, const char* msg, s32 width);
-#endif
-static s32 fontlenpitch(const char* str, s32 pitch);
 
-f32 fd_evt_yuuranking_negone_one_374[2] __attribute__((aligned(8)));
-f32 fd_evt_yuuranking_neg_one_382;
-f32 fd_evt_yuuranking___local_PI_383;
-f32 fd_evt_yuuranking___local_3PIO2_385;
-f32 fd_evt_yuuranking_one_negone_373[2] __attribute__((aligned(8)));
-f32 fd_evt_yuuranking___local_PIO2_384;
-f32 fd_evt_yuuranking_one_381;
-f32 fd_evt_yuuranking_negone_one_360[2] __attribute__((aligned(8)));
-f32 fd_evt_yuuranking_neg_one_365;
-f32 fd_evt_yuuranking___local_PI_366;
-f32 fd_evt_yuuranking___local_3PIO2_368;
-f32 fd_evt_yuuranking_one_negone_359[2] __attribute__((aligned(8)));
-f32 fd_evt_yuuranking___local_PIO2_367;
-f32 fd_evt_yuuranking_one_364;
-static EvtWord main_evt[4];
-
+/**
+ * Width of a string in a fixed-pitch font: the number of characters (a two-byte character counts once) times
+ * pitch, or the proportional message width when pitch is 0.
+ */
 static s32 fontlenpitch(const char* str, s32 pitch) {
     s32 i;
     s32 n;
@@ -81,8 +61,8 @@ static s32 fontlenpitch(const char* str, s32 pitch) {
     return FontGetMessageWidth(str);
 }
 
-#ifdef VERSION_G8ME01
-// US: centered in [x, x + width], squeezed to fit width.
+#if VERSION >= VERSION_US
+/** US: centered in [x, x + width], squeezed to fit width. */
 static inline void yuuDrawCenter(f32 x, f32 y, f32 scale, const char* msg, s32 width) {
     Mtx trans;
     Mtx scl;
@@ -103,8 +83,8 @@ static inline void yuuDrawCenter(f32 x, f32 y, f32 scale, const char* msg, s32 w
 }
 #endif
 
-#ifdef VERSION_G8ME01
-// US: left-aligned at x, squeezed to fit width.
+#if VERSION >= VERSION_US
+/** US: left-aligned at x, squeezed to fit width. */
 static inline void yuuDrawLeft(f32 x, f32 y, f32 scale, const char* msg, s32 width) {
     Mtx trans;
     Mtx scl;
@@ -123,7 +103,7 @@ static inline void yuuDrawLeft(f32 x, f32 y, f32 scale, const char* msg, s32 wid
 }
 #endif
 
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
 // US: right-aligned at x, squeezed to fit width.
 // FAKE: x offset + work pointer instead of x, so wp->x is read after the width test as in the target
 static inline void yuuDrawRight(f32 xo, f32 y, f32 scale, const char* msg, s32 width, YuuRankingWork* wp) {
@@ -144,6 +124,8 @@ static inline void yuuDrawRight(f32 xo, f32 y, f32 scale, const char* msg, s32 w
 }
 #endif
 
+#if VERSION >= VERSION_JP
+/** Draws message msg at (x, y) with the given scale, squeezing it horizontally when it is wider than width. */
 void gor_yuuranking_draw_msg_fit(f32 x, f32 y, f32 scale, const char* msg, s32 width) {
     Mtx trans;
     Mtx scl;
@@ -160,9 +142,10 @@ void gor_yuuranking_draw_msg_fit(f32 x, f32 y, f32 scale, const char* msg, s32 w
     PSMTXConcat(trans, scl, mtx);
     FontDrawMessageMtx(mtx, msg);
 }
+#endif
 
-#ifdef VERSION_G8ME01
-// US: centered text, squeezed to fit width.
+#if VERSION >= VERSION_US
+/** US: centered text, squeezed to fit width. */
 void gor_yuuranking_draw_msg_fit_center(f32 x, f32 y, f32 scale, const char* msg, s32 width) {
     Mtx trans;
     Mtx scl;
@@ -182,7 +165,7 @@ void gor_yuuranking_draw_msg_fit_center(f32 x, f32 y, f32 scale, const char* msg
     FontDrawMessageMtx(mtx, msg);
 }
 
-// US: right-aligned text, squeezed to fit width.
+/** US: right-aligned text, squeezed to fit width. */
 void gor_yuuranking_draw_msg_fit_right(f32 x, f32 y, f32 scale, const char* msg, s32 width) {
     Mtx trans;
     Mtx scl;
@@ -203,47 +186,25 @@ void gor_yuuranking_draw_msg_fit_right(f32 x, f32 y, f32 scale, const char* msg,
 }
 #endif
 
-f32 fd_evt_yuuranking_negone_one_374[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_evt_yuuranking_neg_one_382 = -1.0f;
-
-f32 fd_evt_yuuranking___local_PI_383 = 3.1415927f;
-
-f32 fd_evt_yuuranking___local_3PIO2_385 = 4.712389f;
-
-f32 fd_evt_yuuranking_one_negone_373[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_evt_yuuranking___local_PIO2_384 = 1.5707964f;
-
-f32 fd_evt_yuuranking_one_381 = 1.0f;
-
-f32 fd_evt_yuuranking_negone_one_360[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_evt_yuuranking_neg_one_365 = -1.0f;
-
-f32 fd_evt_yuuranking___local_PI_366 = 3.1415927f;
-
-f32 fd_evt_yuuranking___local_3PIO2_368 = 4.712389f;
-
-f32 fd_evt_yuuranking_one_negone_359[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_evt_yuuranking___local_PIO2_367 = 1.5707964f;
-
-f32 fd_evt_yuuranking_one_364 = 1.0f;
-
  static EVT_BEGIN(main_evt)
     CALL(evt_yuuranking_main_func)
     RETURN
 EVT_END()
 
+/**
+ * Draw callback of the Pianta Parlor ranking and result board:
+ * draws the frame and title of the minigame, the five ranked scores with their rank labels,
+ * the player's score and the Monte (token) count that is being counted up.
+ * US keeps separate 60Hz and 50Hz tables.
+ */
 static void evt_yuuranking_disp_func(CameraId camera, void* param) {
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
     const char* head;
 #endif
     YuuRankingWork* wp = param;
     const char* titles[4] = {"menu_title_minigame1", "menu_title_minigame4", "menu_title_minigame3", "menu_title_minigame2"};
     const char* scoreTitles[4] = {"menu_title_score", "menu_title_score", "menu_title_score", "menu_title_score"};
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
     const char* ranks[2][6] = {{"\x81\x40\x82\x50", "\x81\x40\x82\x51", "\x81\x40\x82\x52", "\x81\x40\x82\x53", "\x81\x40\x82\x54", "menu_subtitle2_rankgai"}, {VERSION_PICK("1", " 1"), VERSION_PICK("2", " 2"), VERSION_PICK("3", " 3"), VERSION_PICK("4", " 4"), VERSION_PICK("5", " 5"), "menu_subtitle2_rankgai"}};
 #else
     const char* ranks[6] = {"\x81\x40\x82\x50", "\x81\x40\x82\x51", "\x81\x40\x82\x52", "\x81\x40\x82\x53", "\x81\x40\x82\x54", "menu_subtitle2_rankgai"};
@@ -252,14 +213,21 @@ static void evt_yuuranking_disp_func(CameraId camera, void* param) {
     const char* str;
     const char* title;
     const u8* rk;
+#if VERSION <= VERSION_DEMO_JP
+    // The demo declares these in the opposite order (it shows in the registers they get)
+    s32 min;
+    s32 sec;
+    s32 score;
+#else
     s32 score;
     s32 sec;
     s32 min;
+#endif
     s32 rscore;
     s32 rmin;
     s32 rsec;
     s32 i;
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
     s32 fr;
 #endif
     f32 ofs;
@@ -291,7 +259,11 @@ static void evt_yuuranking_disp_func(CameraId camera, void* param) {
                 FontDrawStart();
                 FontDrawScale(1.0f);
                 FontDrawColor((GXColor){0x00, 0x00, 0x00, 0xFF});
+#if VERSION <= VERSION_DEMO_JP
+                FontDrawMessage(-150.4f + wp->x, 56.0f + wp->y, msgSearch("menu_subtitle1_minigame1"));
+#else
                 gor_yuuranking_draw_msg_fit(-150.4f + wp->x, 56.0f + wp->y, 1.0f, msgSearch("menu_subtitle1_minigame1"), 165);
+#endif
                 if (wp->dispScore >= 0) {
                     sprintf(buf, "%3d%s%02d", wp->dispScore / 1000, msgSearch("menu_decimal_point"), (wp->dispScore % 1000) / 10);
                     FontDrawStringPitch(wp->x + (150.4f - fontlenpitch(buf, 18)), 56.0f + wp->y, 18.0f, buf);
@@ -299,7 +271,11 @@ static void evt_yuuranking_disp_func(CameraId camera, void* param) {
                         FontDrawStart();
                         FontDrawScale(1.0f);
                         FontDrawColor((GXColor){0x00, 0x00, 0x00, 0xFF});
+#if VERSION <= VERSION_DEMO_JP
+                        FontDrawMessage(-150.4f + wp->x, 32.0f + wp->y, msgSearch("menu_subtitle4_getmonte"));
+#else
                         gor_yuuranking_draw_msg_fit(-150.4f + wp->x, 32.0f + wp->y, 1.0f, msgSearch("menu_subtitle4_getmonte"), 165);
+#endif
                         sprintf(buf, "%4d", wp->bonus);
                         FontDrawStringPitch(wp->x + (150.4f - fontlenpitch(buf, 18)), 32.0f + wp->y, 18.0f, buf);
                     }
@@ -308,7 +284,11 @@ static void evt_yuuranking_disp_func(CameraId camera, void* param) {
                         FontDrawScale(1.0f);
                         FontDrawColor((GXColor){0x00, 0x00, 0x00, 0xFF});
                         if (wp->mul > 1) {
+#if VERSION <= VERSION_DEMO_JP
+                            FontDrawMessage(-150.4f + wp->x, 8.0f + wp->y, msgSearch("menu_subtitle2_minigame1"));
+#else
                             gor_yuuranking_draw_msg_fit(-150.4f + wp->x, 8.0f + wp->y, 1.0f, msgSearch("menu_subtitle2_minigame1"), 165);
+#endif
                             if (wp->mul < 0x100) {
                                 sprintf(buf, msgSearch("menu_subtitle4_minigame1"), wp->mul);
                             } else {
@@ -316,7 +296,11 @@ static void evt_yuuranking_disp_func(CameraId camera, void* param) {
                             }
                             FontDrawStringPitch(wp->x + (150.4f - fontlenpitch(buf, 18)), 8.0f + wp->y, 18.0f, buf);
                         } else if (wp->mul < 0) {
+#if VERSION <= VERSION_DEMO_JP
+                            FontDrawMessage(-150.4f + wp->x, 8.0f + wp->y, msgSearch("menu_subtitle5_minigame1"));
+#else
                             gor_yuuranking_draw_msg_fit(-150.4f + wp->x, 8.0f + wp->y, 1.0f, msgSearch("menu_subtitle5_minigame1"), 165);
+#endif
                             sprintf(buf, msgSearch("menu_subtitle6_minigame1"), -wp->mul);
                             FontDrawStringPitch(wp->x + (150.4f - fontlenpitch(buf, 18)), 8.0f + wp->y, 18.0f, buf);
                         }
@@ -324,7 +308,7 @@ static void evt_yuuranking_disp_func(CameraId camera, void* param) {
                 } else {
                     FontDrawColor((GXColor){0xFF, 0x3F, 0x3F, 0xFF});
                     sprintf(buf, msgSearch("menu_error_minigame1"));
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
                     yuuDrawRight(150.4f, 56.0f + wp->y, 1.0f, buf, 140, wp);
 #else
                     FontDrawStringPitch(wp->x + (150.4f - fontlenpitch(buf, 18)), 56.0f + wp->y, 18.0f, buf);
@@ -334,18 +318,31 @@ static void evt_yuuranking_disp_func(CameraId camera, void* param) {
             case 3:
             case 2:
                 FontDrawStart();
+#if VERSION <= VERSION_DEMO_JP
+                FontDrawScale(1.0f);
+#endif
                 FontDrawColor((GXColor){0x00, 0x00, 0x00, 0xFF});
                 switch (wp->type) {
                     case 3:
+#if VERSION <= VERSION_DEMO_JP
+                        FontDrawMessage(-150.4f + wp->x, 56.0f + wp->y, msgSearch("menu_subtitle1_minigame2"));
+#else
                         str = msgSearch("menu_subtitle1_minigame2");
+#endif
                         break;
                     case 2:
+#if VERSION <= VERSION_DEMO_JP
+                        FontDrawMessage(-150.4f + wp->x, 56.0f + wp->y, msgSearch("menu_subtitle1_minigame3"));
+#else
                         str = msgSearch("menu_subtitle1_minigame3");
+#endif
                         break;
                 }
+#if VERSION >= VERSION_JP
                 gor_yuuranking_draw_msg_fit(-150.4f + wp->x, 56.0f + wp->y, 1.0f, str, 165);
                 FontDrawScale(1.0f);
-#ifdef VERSION_G8ME01
+#endif
+#if VERSION >= VERSION_US
                 if (wp->dispScore >= 0) {
                     sec = wp->dispScore / 1000;
                     min = sec / 60;
@@ -362,34 +359,60 @@ static void evt_yuuranking_disp_func(CameraId camera, void* param) {
                     FontDrawStringPitch(wp->x + (150.4f - fontlenpitch(buf, 18)), 56.0f + wp->y, 18.0f, buf);
                     if (wp->phase >= 4) {
                         FontDrawStart();
+#if VERSION <= VERSION_DEMO_JP
+                        FontDrawScale(1.0f);
+#endif
                         FontDrawColor((GXColor){0x00, 0x00, 0x00, 0xFF});
                         switch (wp->type) {
                             case 3:
+#if VERSION <= VERSION_DEMO_JP
+                                FontDrawMessage(-150.4f + wp->x, 32.0f + wp->y, msgSearch("menu_subtitle4_getmonte"));
+#else
                                 str = msgSearch("menu_subtitle4_getmonte");
+#endif
                                 break;
                             case 2:
+#if VERSION <= VERSION_DEMO_JP
+                                FontDrawMessage(-150.4f + wp->x, 32.0f + wp->y, msgSearch("menu_subtitle4_getmonte"));
+#else
                                 str = msgSearch("menu_subtitle4_getmonte");
+#endif
                                 break;
                         }
+#if VERSION >= VERSION_JP
                         gor_yuuranking_draw_msg_fit(-150.4f + wp->x, 32.0f + wp->y, 1.0f, str, 165);
                         FontDrawScale(1.0f);
+#endif
                         sprintf(buf, "%4d", wp->bonus);
                         FontDrawStringPitch(wp->x + (150.4f - fontlenpitch(buf, 18)), 32.0f + wp->y, 18.0f, buf);
                     }
                     if (wp->phase >= 7) {
                         FontDrawStart();
+#if VERSION <= VERSION_DEMO_JP
+                        FontDrawScale(1.0f);
+#endif
                         FontDrawColor((GXColor){0x00, 0x00, 0x00, 0xFF});
                         if (wp->mul > 1) {
                             switch (wp->type) {
                                 case 3:
+#if VERSION <= VERSION_DEMO_JP
+                                    FontDrawMessage(-150.4f + wp->x, 8.0f + wp->y, msgSearch("menu_subtitle2_minigame2"));
+#else
                                     str = msgSearch("menu_subtitle2_minigame2");
+#endif
                                     break;
                                 case 2:
+#if VERSION <= VERSION_DEMO_JP
+                                    FontDrawMessage(-150.4f + wp->x, 8.0f + wp->y, msgSearch("menu_subtitle2_minigame3"));
+#else
                                     str = msgSearch("menu_subtitle2_minigame3");
+#endif
                                     break;
                             }
+#if VERSION >= VERSION_JP
                             gor_yuuranking_draw_msg_fit(-150.4f + wp->x, 8.0f + wp->y, 1.0f, str, 165);
                             FontDrawScale(1.0f);
+#endif
                             if (wp->mul < 0x100) {
                                 sprintf(buf, msgSearch("menu_subtitle4_minigame1"), wp->mul);
                             } else {
@@ -397,8 +420,12 @@ static void evt_yuuranking_disp_func(CameraId camera, void* param) {
                             }
                             FontDrawStringPitch(wp->x + (150.4f - fontlenpitch(buf, 18)), 8.0f + wp->y, 18.0f, buf);
                         } else if (wp->mul < 0) {
+#if VERSION <= VERSION_DEMO_JP
+                            FontDrawMessage(-150.4f + wp->x, 8.0f + wp->y, msgSearch("menu_subtitle5_minigame1"));
+#else
                             gor_yuuranking_draw_msg_fit(-150.4f + wp->x, 8.0f + wp->y, 1.0f, msgSearch("menu_subtitle5_minigame1"), 165);
                             FontDrawScale(1.0f);
+#endif
                             sprintf(buf, msgSearch("menu_subtitle6_minigame1"), -wp->mul);
                             FontDrawStringPitch(wp->x + (150.4f - fontlenpitch(buf, 18)), 8.0f + wp->y, 18.0f, buf);
                         }
@@ -410,7 +437,7 @@ static void evt_yuuranking_disp_func(CameraId camera, void* param) {
                     } else {
                         sprintf(buf, msgSearch("menu_error_minigame3"));
                     }
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
                     yuuDrawLeft(37.59999f + wp->x, 56.0f + wp->y, 1.0f, buf, 140);
 #else
                     FontDrawStringPitch(wp->x + (150.4f - fontlenpitch(buf, 18)), 56.0f + wp->y, 18.0f, buf);
@@ -421,7 +448,11 @@ static void evt_yuuranking_disp_func(CameraId camera, void* param) {
                 FontDrawStart();
                 FontDrawScale(1.0f);
                 FontDrawColor((GXColor){0x00, 0x00, 0x00, 0xFF});
+#if VERSION <= VERSION_DEMO_JP
+                FontDrawMessage(-150.4f + wp->x, 56.0f + wp->y, msgSearch("menu_subtitle1_minigame4"));
+#else
                 gor_yuuranking_draw_msg_fit(-150.4f + wp->x, 56.0f + wp->y, 1.0f, msgSearch("menu_subtitle1_minigame4"), 165);
+#endif
                 if (wp->dispScore < wp->max) {
                     sprintf(buf, "%4d", wp->dispScore + 1);
                     FontDrawStringPitch(wp->x + (150.4f - fontlenpitch(buf, 18)), 56.0f + wp->y, 18.0f, buf);
@@ -430,7 +461,11 @@ static void evt_yuuranking_disp_func(CameraId camera, void* param) {
                         FontDrawScale(1.0f);
                         FontDrawColor((GXColor){0x00, 0x00, 0x00, 0xFF});
                         if (wp->mul > 1) {
+#if VERSION <= VERSION_DEMO_JP
+                            FontDrawMessage(-150.4f + wp->x, 8.0f + wp->y, msgSearch("menu_subtitle2_minigame4"));
+#else
                             gor_yuuranking_draw_msg_fit(-150.4f + wp->x, 8.0f + wp->y, 1.0f, msgSearch("menu_subtitle2_minigame4"), 165);
+#endif
                             if (wp->mul < 0x100) {
                                 sprintf(buf, msgSearch("menu_subtitle4_minigame1"), wp->mul);
                             } else {
@@ -438,7 +473,11 @@ static void evt_yuuranking_disp_func(CameraId camera, void* param) {
                             }
                             FontDrawStringPitch(wp->x + (150.4f - fontlenpitch(buf, 18)), 8.0f + wp->y, 18.0f, buf);
                         } else if (wp->mul < 0) {
+#if VERSION <= VERSION_DEMO_JP
+                            FontDrawMessage(-150.4f + wp->x, 8.0f + wp->y, msgSearch("menu_subtitle5_minigame1"));
+#else
                             gor_yuuranking_draw_msg_fit(-150.4f + wp->x, 8.0f + wp->y, 1.0f, msgSearch("menu_subtitle5_minigame1"), 165);
+#endif
                             sprintf(buf, msgSearch("menu_subtitle6_minigame1"), -wp->mul);
                             FontDrawStringPitch(wp->x + (150.4f - fontlenpitch(buf, 18)), 8.0f + wp->y, 18.0f, buf);
                         }
@@ -446,7 +485,7 @@ static void evt_yuuranking_disp_func(CameraId camera, void* param) {
                 } else {
                     FontDrawColor((GXColor){0xFF, 0x3F, 0x3F, 0xFF});
                     sprintf(buf, msgSearch("menu_error_minigame4"));
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
                     yuuDrawLeft(37.59999f + wp->x, 56.0f + wp->y, 1.0f, buf, 140);
 #else
                     FontDrawStringPitch(wp->x + (150.4f - fontlenpitch(buf, 18)), 56.0f + wp->y, 18.0f, buf);
@@ -457,21 +496,27 @@ static void evt_yuuranking_disp_func(CameraId camera, void* param) {
         FontDrawStart();
         FontDrawScale(1.0f);
         FontDrawColor((GXColor){0x00, 0x00, 0x00, 0xFF});
+#if VERSION <= VERSION_DEMO_JP
+        sprintf(buf, msgSearch("menu_subtitle3_totalmonte"));
+        FontDrawMessage(-150.4f + wp->x, -40.0f + wp->y, buf);
+#else
         gor_yuuranking_draw_msg_fit(-150.4f + wp->x, -40.0f + wp->y, 1.0f, msgSearch("menu_subtitle3_totalmonte"), 165);
+#endif
         ix = 70.0f + (10.399994f + wp->x);
         iy = (-40.0f + wp->y) - 24.0f;
         PSMTXTrans(mtx, ix - 10, iy + 2, 0.0f);
-#ifdef VERSION_G8ME01
-        iconDispGxCol(mtx, 0x10, 0x147, (GXColor){0xFF, 0xFF, 0xFF, 0xFF});
+#if VERSION >= VERSION_US
+        iconDispGxCol(mtx, ICON_FLAG_2D, 0x147, (GXColor){0xFF, 0xFF, 0xFF, 0xFF});
 #else
-        iconDispGxCol(mtx, 0x10, 0x13F, (GXColor){0xFF, 0xFF, 0xFF, 0xFF});
+        iconDispGxCol(mtx, ICON_FLAG_2D, 0x13F, (GXColor){0xFF, 0xFF, 0xFF, 0xFF});
 #endif
         PSMTXTrans(mtx, ix + 60, iy + 2, 0.0f);
         iconNumberDispGx(mtx, wp->monte, FALSE, (GXColor){0xFF, 0xFF, 0xFF, 0xFF});
     } else {
         FontDrawStart();
         FontDrawScale(1.0f);
-#ifdef VERSION_G8ME01
+        // US and PAL squeeze the headers to fit (yuuDrawLeft, yuuDrawCenter); the other versions draw them as they are
+#if VERSION >= VERSION_US
         yuuDrawLeft(-150.4f + wp->x, 80.0f + wp->y, 1.0f, msgSearch("menu_subtitle5_rank"), 60);
         yuuDrawLeft(75.19998f + wp->x, 80.0f + wp->y, 1.0f, msgSearch("menu_subtitle1_monte"), 100);
         switch (wp->type) {
@@ -523,7 +568,7 @@ static void evt_yuuranking_disp_func(CameraId camera, void* param) {
             } else {
                 FontDrawColor((GXColor){0xFF, 0x3F, 0x3F, 0xFF});
             }
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
             rk = (const u8*)ranks[gp->language != 0][i];
 #else
             rk = (const u8*)ranks[i];
@@ -532,15 +577,18 @@ static void evt_yuuranking_disp_func(CameraId camera, void* param) {
                 rk = (const u8*)msgSearch((const char*)rk);
             }
             if (i == 5) {
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
                 yuuDrawLeft(18.8f + (-188.0f + wp->x), wp->y + (104.0f - 24.0f * ofs), 1.0f, (const char*)rk, 80);
-#else
+#elif VERSION >= VERSION_JP
                 FontDrawMessage(18.8f + (-188.0f + wp->x), wp->y + (104.0f - 24.0f * ofs), (const char*)rk);
+#endif
+#if VERSION <= VERSION_DEMO_JP
+                FontDrawMessage(-188.0f + wp->x, wp->y + (104.0f - 24.0f * ofs), (const char*)rk);
 #endif
             } else {
                 FontDrawStringPitch(-150.4f + wp->x, wp->y + (104.0f - 24.0f * ofs), 18.0f, (const char*)rk);
             }
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
             FontDrawStart();
             FontDrawScale(1.0f);
             if (i != wp->rank) {
@@ -551,7 +599,7 @@ static void evt_yuuranking_disp_func(CameraId camera, void* param) {
 #endif
             switch (wp->type) {
                 case 0:
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
                     if (YURANK(yuwp->recordScore)[wp->type][i] >= 0) {
                         sprintf(buf, "%3d%s%02d", YURANK(yuwp->recordScore)[wp->type][i] / 1000, msgSearch("menu_decimal_point"), (YURANK(yuwp->recordScore)[wp->type][i] % 1000) / 10);
 #else
@@ -563,7 +611,7 @@ static void evt_yuuranking_disp_func(CameraId camera, void* param) {
                         sprintf(buf, "%4d", YURANK(yuwp->recordParam)[wp->type][i]);
                         FontDrawStringPitch(75.19998f + wp->x, wp->y + (104.0f - 24.0f * ofs), 18.0f, buf);
                     } else {
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
                         yuuDrawLeft(-75.200005f + wp->x, wp->y + (104.0f - 24.0f * ofs), 1.0f, msgSearch("menu_error_minigame1"), 160);
 #else
                         sprintf(buf, msgSearch("menu_error_minigame1"));
@@ -573,7 +621,7 @@ static void evt_yuuranking_disp_func(CameraId camera, void* param) {
                     break;
                 case 3:
                 case 2:
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
                     if (YURANK(yuwp->recordScore)[wp->type][i] >= 0) {
                         rsec = YURANK(yuwp->recordScore)[wp->type][i] / 1000;
                         fr = gp->framerate == 50 ? 1 : 0;
@@ -586,7 +634,7 @@ static void evt_yuuranking_disp_func(CameraId camera, void* param) {
                         rmin = rsec / 60;
                         rsec = rsec % 60;
 #endif
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
                         sprintf(buf, "%1d%s%02d%s%02d", rmin, msgSearch("menu_colon"), rsec, msgSearch("menu_colon"), ((yuwp->recordScore + fr * 4)[wp->type][i] % 1000) / 10);
 #else
                         sprintf(buf, "%1d%s%02d%s%02d", rmin, msgSearch("menu_colon"), rsec, msgSearch("menu_colon"), (rscore % 1000) / 10);
@@ -600,7 +648,7 @@ static void evt_yuuranking_disp_func(CameraId camera, void* param) {
                         } else {
                             sprintf(buf, msgSearch("menu_error_minigame3"));
                         }
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
                         yuuDrawLeft(-75.200005f + wp->x, wp->y + (104.0f - 24.0f * ofs), 1.0f, buf, 160);
 #else
                         FontDrawMessage(-75.200005f + wp->x, wp->y + (104.0f - 24.0f * ofs), buf);
@@ -610,7 +658,7 @@ static void evt_yuuranking_disp_func(CameraId camera, void* param) {
                 case 1:
                     if (YURANK(yuwp->recordScore)[wp->type][i] < wp->max) {
                         sprintf(buf, "%4d", YURANK(yuwp->recordScore)[wp->type][i] + 1);
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
                         FontDrawStringPitch(-75.200005f + wp->x, wp->y + (104.0f - 24.0f * ofs), 18.0f, buf);
 #else
                         FontDrawStringPitch(-37.600006f + wp->x, wp->y + (104.0f - 24.0f * ofs), 18.0f, buf);
@@ -618,7 +666,7 @@ static void evt_yuuranking_disp_func(CameraId camera, void* param) {
                         sprintf(buf, "%4d", YURANK(yuwp->recordParam)[wp->type][i]);
                         FontDrawStringPitch(75.19998f + wp->x, wp->y + (104.0f - 24.0f * ofs), 18.0f, buf);
                     } else {
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
                         yuuDrawLeft(-75.200005f + wp->x, wp->y + (104.0f - 24.0f * ofs), 1.0f, msgSearch("menu_error_minigame4"), 160);
 #else
                         sprintf(buf, msgSearch("menu_error_minigame4"));
@@ -631,7 +679,13 @@ static void evt_yuuranking_disp_func(CameraId camera, void* param) {
     }
 }
 
- static USER_FUNC(evt_yuuranking_main_func) {
+/**
+ * Per-frame driver of the ranking board (work block in LW(0)).
+ * In mode 0 (the result screen) it counts the score up with a sound,
+ * then counts the Monte (tokens) up or down to the base amount, and, when a multiplier applies,
+ * a second time to the final amount; in the other mode it only draws the board. Stops when the quit flag is set.
+ */
+static USER_FUNC(evt_yuuranking_main_func) {
     YuuRankingWork* wp = (YuuRankingWork*)event->lwData[0];
     static s32 snd_id;
 
@@ -803,6 +857,12 @@ static void evt_yuuranking_disp_func(CameraId camera, void* param) {
 
 static YuuRankingWork* _wp;
 
+/**
+ * Converts a minigame score into the number of Monte (tokens) it is worth:
+ * type 0 by score divided by 30000 (25000 in the demos), types 2 and 3 by the score above a base,
+ * type 1 (a time) by how far under max it is out of 15;
+ * then adds bonus and applies mul (a multiplier below 0x100, an additive amount above it). Never negative.
+ */
 static s32 yuu_kesan(s32 type, s32 score, s32 bonus, s32 mul, s32 max) {
     s32 ret;
 
@@ -811,21 +871,35 @@ static s32 yuu_kesan(s32 type, s32 score, s32 bonus, s32 mul, s32 max) {
     }
     switch (type) {
         case 0:
+#if VERSION <= VERSION_DEMO_JP
+            ret = score / 25000;
+#else
             ret = score / 30000;
+#endif
             break;
         case 3:
+#if VERSION <= VERSION_DEMO_JP
+            ret = score / 10000;
+#else
             ret = (score - 74000) / 2000;
+#endif
             break;
         case 2:
+#if VERSION <= VERSION_DEMO_JP
+            ret = score / 10000;
+#else
             ret = (score - 109000) / 2000;
+#endif
             break;
         case 1:
             ret = ((max - score) * 15) / max;
             break;
     }
+#if VERSION >= VERSION_JP
     if (ret < 0) {
         ret = 0;
     }
+#endif
     ret += bonus;
     if (mul > 0) {
         if (mul < 0x100) {
@@ -845,10 +919,17 @@ static s32 yuu_kesan(s32 type, s32 score, s32 bonus, s32 mul, s32 max) {
     return ret;
 }
 
+/**
+ * Script helper that opens the ranking board: allocates the work block
+ * and fills it from the script arguments (x, y, minigame type, mode, score, bonus, multiplier).
+ * In mode 1 it inserts the new score into the saved top-5 table of that minigame, shifting lower entries down,
+ * computes its Monte value with yuu_kesan, and sets GSWF_YUU_PLANE_GAME_RECORD for a new first place in game 0.
+ * Then starts the driver script.
+ */
 USER_FUNC(evt_yuuranking_alloc) {
     EvtWord* args = event->args;
     YuuRankingWork* wp = _mapAlloc(sizeof(YuuRankingWork));
-#ifdef VERSION_G8ME01
+#if VERSION >= VERSION_US
     s32 score;
     s32 i;
     s32 j;
@@ -869,41 +950,56 @@ USER_FUNC(evt_yuuranking_alloc) {
     wp->mul = evtGetValue(event, args[6]);
     switch (wp->type) {
         case 0:
-            YURANK(yuwp->recordOn)[wp->type][5] = 0;
-            YURANK(yuwp->recordScore)[wp->type][5] = 0;
-            YURANK(yuwp->recordParam)[wp->type][5] = 0;
+            YURANK(yuwp->recordOn)
+            [wp->type][5] = 0;
+            YURANK(yuwp->recordScore)
+            [wp->type][5] = 0;
+            YURANK(yuwp->recordParam)
+            [wp->type][5] = 0;
             wp->rank = -1;
             if (wp->mode == 1) {
                 score = wp->score;
                 if (score >= 0) {
                     for (i = 0; i < 6; i++) {
                         if (YURANK(yuwp->recordOn)[wp->type][i] == 0) {
-                            YURANK(yuwp->recordOn)[wp->type][i] = 1;
-                            YURANK(yuwp->recordScore)[wp->type][i] = wp->score;
-                            YURANK(yuwp->recordParam)[wp->type][i] = yuu_kesan(wp->type, wp->score, wp->bonus, wp->mul, wp->max);
+                            YURANK(yuwp->recordOn)
+                            [wp->type][i] = 1;
+                            YURANK(yuwp->recordScore)
+                            [wp->type][i] = wp->score;
+                            YURANK(yuwp->recordParam)
+                            [wp->type][i] = yuu_kesan(wp->type, wp->score, wp->bonus, wp->mul, wp->max);
                             wp->rank = i;
                             break;
                         }
                         if (score >= YURANK(yuwp->recordScore)[wp->type][i]) {
                             for (j = 4; j > i; j--) {
-                                YURANK(yuwp->recordOn)[wp->type][j] = YURANK(yuwp->recordOn)[wp->type][j - 1];
-                                YURANK(yuwp->recordScore)[wp->type][j] = YURANK(yuwp->recordScore)[wp->type][j - 1];
-                                YURANK(yuwp->recordParam)[wp->type][j] = YURANK(yuwp->recordParam)[wp->type][j - 1];
+                                YURANK(yuwp->recordOn)
+                                [wp->type][j] = YURANK(yuwp->recordOn)[wp->type][j - 1];
+                                YURANK(yuwp->recordScore)
+                                [wp->type][j] = YURANK(yuwp->recordScore)[wp->type][j - 1];
+                                YURANK(yuwp->recordParam)
+                                [wp->type][j] = YURANK(yuwp->recordParam)[wp->type][j - 1];
                             }
-                            YURANK(yuwp->recordOn)[wp->type][i] = 1;
-                            YURANK(yuwp->recordScore)[wp->type][i] = wp->score;
-                            YURANK(yuwp->recordParam)[wp->type][i] = yuu_kesan(wp->type, wp->score, wp->bonus, wp->mul, wp->max);
+                            YURANK(yuwp->recordOn)
+                            [wp->type][i] = 1;
+                            YURANK(yuwp->recordScore)
+                            [wp->type][i] = wp->score;
+                            YURANK(yuwp->recordParam)
+                            [wp->type][i] = yuu_kesan(wp->type, wp->score, wp->bonus, wp->mul, wp->max);
                             wp->rank = i;
                             if (i == 0) {
-                                evtSetValue(NULL, GSWF(1240), TRUE);
+                                evtSetValue(NULL, GSWF(GSWF_YUU_PLANE_GAME_RECORD), TRUE);
                             }
                             break;
                         }
                     }
                 } else {
-                    YURANK(yuwp->recordOn)[wp->type][5] = 1;
-                    YURANK(yuwp->recordScore)[wp->type][5] = wp->score;
-                    YURANK(yuwp->recordParam)[wp->type][5] = 0;
+                    YURANK(yuwp->recordOn)
+                    [wp->type][5] = 1;
+                    YURANK(yuwp->recordScore)
+                    [wp->type][5] = wp->score;
+                    YURANK(yuwp->recordParam)
+                    [wp->type][5] = 0;
                     wp->rank = 5;
                 }
             } else if (wp->mode == 0) {
@@ -915,45 +1011,60 @@ USER_FUNC(evt_yuuranking_alloc) {
             break;
         case 3:
         case 2:
-            YURANK(yuwp->recordOn)[wp->type][5] = 0;
-            YURANK(yuwp->recordScore)[wp->type][5] = 0;
-            YURANK(yuwp->recordParam)[wp->type][5] = 0;
+            YURANK(yuwp->recordOn)
+            [wp->type][5] = 0;
+            YURANK(yuwp->recordScore)
+            [wp->type][5] = 0;
+            YURANK(yuwp->recordParam)
+            [wp->type][5] = 0;
             wp->rank = -1;
             if (wp->mode == 1) {
                 score = wp->score;
                 if (score >= 0) {
                     for (i = 0; i < 6; i++) {
                         if (YURANK(yuwp->recordOn)[wp->type][i] == 0) {
-                            YURANK(yuwp->recordOn)[wp->type][i] = 1;
-                            YURANK(yuwp->recordScore)[wp->type][i] = wp->score;
-                            YURANK(yuwp->recordParam)[wp->type][i] = yuu_kesan(wp->type, wp->score, wp->bonus, wp->mul, wp->max);
+                            YURANK(yuwp->recordOn)
+                            [wp->type][i] = 1;
+                            YURANK(yuwp->recordScore)
+                            [wp->type][i] = wp->score;
+                            YURANK(yuwp->recordParam)
+                            [wp->type][i] = yuu_kesan(wp->type, wp->score, wp->bonus, wp->mul, wp->max);
                             wp->rank = i;
                             break;
                         }
                         if (score >= YURANK(yuwp->recordScore)[wp->type][i]) {
                             for (j = 4; j > i; j--) {
-                                YURANK(yuwp->recordOn)[wp->type][j] = YURANK(yuwp->recordOn)[wp->type][j - 1];
-                                YURANK(yuwp->recordScore)[wp->type][j] = YURANK(yuwp->recordScore)[wp->type][j - 1];
-                                YURANK(yuwp->recordParam)[wp->type][j] = YURANK(yuwp->recordParam)[wp->type][j - 1];
+                                YURANK(yuwp->recordOn)
+                                [wp->type][j] = YURANK(yuwp->recordOn)[wp->type][j - 1];
+                                YURANK(yuwp->recordScore)
+                                [wp->type][j] = YURANK(yuwp->recordScore)[wp->type][j - 1];
+                                YURANK(yuwp->recordParam)
+                                [wp->type][j] = YURANK(yuwp->recordParam)[wp->type][j - 1];
                             }
-                            YURANK(yuwp->recordOn)[wp->type][i] = 1;
-                            YURANK(yuwp->recordScore)[wp->type][i] = wp->score;
-                            YURANK(yuwp->recordParam)[wp->type][i] = yuu_kesan(wp->type, wp->score, wp->bonus, wp->mul, wp->max);
+                            YURANK(yuwp->recordOn)
+                            [wp->type][i] = 1;
+                            YURANK(yuwp->recordScore)
+                            [wp->type][i] = wp->score;
+                            YURANK(yuwp->recordParam)
+                            [wp->type][i] = yuu_kesan(wp->type, wp->score, wp->bonus, wp->mul, wp->max);
                             wp->rank = i;
                             if (i == 0) {
                                 if (wp->type == 3) {
-                                    evtSetValue(NULL, GSWF(1241), TRUE);
+                                    evtSetValue(NULL, GSWF(GSWF_YUU_BOAT_GAME_RECORD), TRUE);
                                 } else {
-                                    evtSetValue(NULL, GSWF(1242), TRUE);
+                                    evtSetValue(NULL, GSWF(GSWF_YUU_TUBE_GAME_RECORD), TRUE);
                                 }
                             }
                             break;
                         }
                     }
                 } else {
-                    YURANK(yuwp->recordOn)[wp->type][5] = 1;
-                    YURANK(yuwp->recordScore)[wp->type][5] = wp->score;
-                    YURANK(yuwp->recordParam)[wp->type][5] = 0;
+                    YURANK(yuwp->recordOn)
+                    [wp->type][5] = 1;
+                    YURANK(yuwp->recordScore)
+                    [wp->type][5] = wp->score;
+                    YURANK(yuwp->recordParam)
+                    [wp->type][5] = 0;
                     wp->rank = 5;
                 }
             } else if (wp->mode == 0) {
@@ -965,41 +1076,56 @@ USER_FUNC(evt_yuuranking_alloc) {
             break;
         case 1:
             wp->max = evtGetValue(event, args[7]);
-            YURANK(yuwp->recordOn)[wp->type][5] = 0;
-            YURANK(yuwp->recordScore)[wp->type][5] = 0;
-            YURANK(yuwp->recordParam)[wp->type][5] = 0;
+            YURANK(yuwp->recordOn)
+            [wp->type][5] = 0;
+            YURANK(yuwp->recordScore)
+            [wp->type][5] = 0;
+            YURANK(yuwp->recordParam)
+            [wp->type][5] = 0;
             wp->rank = -1;
             if (wp->mode == 1) {
                 score = wp->score;
                 if (score < wp->max) {
                     for (i = 0; i < 6; i++) {
                         if (YURANK(yuwp->recordOn)[wp->type][i] == 0) {
-                            YURANK(yuwp->recordOn)[wp->type][i] = 1;
-                            YURANK(yuwp->recordScore)[wp->type][i] = wp->score;
-                            YURANK(yuwp->recordParam)[wp->type][i] = yuu_kesan(wp->type, wp->score, wp->bonus, wp->mul, wp->max);
+                            YURANK(yuwp->recordOn)
+                            [wp->type][i] = 1;
+                            YURANK(yuwp->recordScore)
+                            [wp->type][i] = wp->score;
+                            YURANK(yuwp->recordParam)
+                            [wp->type][i] = yuu_kesan(wp->type, wp->score, wp->bonus, wp->mul, wp->max);
                             wp->rank = i;
                             break;
                         }
                         if (score <= YURANK(yuwp->recordScore)[wp->type][i]) {
                             for (j = 4; j > i; j--) {
-                                YURANK(yuwp->recordOn)[wp->type][j] = YURANK(yuwp->recordOn)[wp->type][j - 1];
-                                YURANK(yuwp->recordScore)[wp->type][j] = YURANK(yuwp->recordScore)[wp->type][j - 1];
-                                YURANK(yuwp->recordParam)[wp->type][j] = YURANK(yuwp->recordParam)[wp->type][j - 1];
+                                YURANK(yuwp->recordOn)
+                                [wp->type][j] = YURANK(yuwp->recordOn)[wp->type][j - 1];
+                                YURANK(yuwp->recordScore)
+                                [wp->type][j] = YURANK(yuwp->recordScore)[wp->type][j - 1];
+                                YURANK(yuwp->recordParam)
+                                [wp->type][j] = YURANK(yuwp->recordParam)[wp->type][j - 1];
                             }
-                            YURANK(yuwp->recordOn)[wp->type][i] = 1;
-                            YURANK(yuwp->recordScore)[wp->type][i] = wp->score;
-                            YURANK(yuwp->recordParam)[wp->type][i] = yuu_kesan(wp->type, wp->score, wp->bonus, wp->mul, wp->max);
+                            YURANK(yuwp->recordOn)
+                            [wp->type][i] = 1;
+                            YURANK(yuwp->recordScore)
+                            [wp->type][i] = wp->score;
+                            YURANK(yuwp->recordParam)
+                            [wp->type][i] = yuu_kesan(wp->type, wp->score, wp->bonus, wp->mul, wp->max);
                             wp->rank = i;
                             if (i == 0) {
-                                evtSetValue(NULL, GSWF(1243), TRUE);
+                                evtSetValue(NULL, GSWF(GSWF_YUU_PAPER_GAME_RECORD), TRUE);
                             }
                             break;
                         }
                     }
                 } else {
-                    YURANK(yuwp->recordOn)[wp->type][5] = 1;
-                    YURANK(yuwp->recordScore)[wp->type][5] = wp->score;
-                    YURANK(yuwp->recordParam)[wp->type][5] = 0;
+                    YURANK(yuwp->recordOn)
+                    [wp->type][5] = 1;
+                    YURANK(yuwp->recordScore)
+                    [wp->type][5] = wp->score;
+                    YURANK(yuwp->recordParam)
+                    [wp->type][5] = 0;
                     wp->rank = 5;
                 }
             } else {
@@ -1023,6 +1149,10 @@ USER_FUNC(evt_yuuranking_alloc) {
     return EVT_RETURN_DONE;
 }
 
+/**
+ * Script helper that closes the ranking board: sets the quit flag on the first call,
+ * waits until the driver acknowledges it, then frees the work block.
+ */
 USER_FUNC(evt_yuuranking_free) {
     YuuRankingWork* wp = _wp;
 
@@ -1040,13 +1170,17 @@ USER_FUNC(evt_yuuranking_free) {
     return EVT_RETURN_DONE;
 }
 
+/**
+ * Script helper that waits for A or B while the board is shown;
+ * on press it clears the wait flag, plays a sound and finishes.
+ */
 USER_FUNC(yuuranking_wait_button) {
     YuuRankingWork* wp = _wp;
 
     if (isFirstCall) {
         wp->dispFlags |= 2;
     }
-    if (!(wp->dispFlags & 4) && (keyGetButtonTrg(0) & 0x300)) {
+    if (!(wp->dispFlags & 4) && (keyGetButtonTrg(0) & (PAD_BUTTON_A | PAD_BUTTON_B))) {
         wp->dispFlags &= ~2;
         psndSFXOn((const char*)0x12);
         return EVT_RETURN_DONE;
@@ -1054,8 +1188,8 @@ USER_FUNC(yuuranking_wait_button) {
     return EVT_RETURN_BLOCK;
 }
 
- static USER_FUNC(yuuranking_get_monte) {
+/** Script helper that returns in args[0] the number of Monte (tokens) won, from the board's work block. */
+static USER_FUNC(yuuranking_get_monte) {
     evtSetValue(event, event->args[0], _wp->monte);
     return EVT_RETURN_DONE;
 }
-

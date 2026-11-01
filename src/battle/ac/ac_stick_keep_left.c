@@ -1,5 +1,5 @@
+// Action command: hold the control stick to the left (ac_stick_keep_left) for the required duration.
 #include "battle/battle.h"
-#include "pc_call.h"
 #include "battle/battle_ac.h"
 #include "battle/battle_pad.h"
 #include "battle/battle_unit.h"
@@ -9,7 +9,9 @@
 #include "system.h"
 #include <string.h>
 #include "icon_ids.h"
+#include "pmario_sound.h"
 
+// this unit is size-optimised, as in the original (the object differs without it)
 #pragma optimize_for_size on
 
 typedef struct SklWork {
@@ -23,12 +25,21 @@ typedef struct SklWork {
 #define SKL_W(w) ((SklWork*)(w)->actionCommands.work)
 #define SKL_D(w) (&(w)->actionCommands.disp)
 
-s32 psndSFXOn(const char* name);
-
+/**
+ * Frames allowed to let go of the stick after the last light, by difficulty (80 at the easiest down to 5).
+ * Used by Mario's hammer attacks and Frankly's battle lesson.
+ */
 s32 ac_stickkeepleft_ok_frame[7] = {80, 70, 60, 40, 20, 10, 5};
 
 static void actionCommandDisp(f32 x, f32 y, s32 unused);
 
+/**
+ * Per-frame driver of action command 3, used by Mario's hammer attacks and Frankly's battle lesson.
+ * Tilt the stick left within 120 frames and hold it while params[0] lights come on, one every params[1] frames,
+ * then let go within a difficulty window (80 down to 5 frames) after the last, big one lights.
+ * outputParams[2]: 1 let go early, 2 held too long, 3 success.
+ * acFlags bit 1 ignores early releases and passes a held-too-long. A non-zero params[2] freezes.
+ */
 s32 battleAcMain_StickKeepLeft(BattleWork* work) {
     const char* sfx[2];
     SklWork* cw;
@@ -43,11 +54,11 @@ s32 battleAcMain_StickKeepLeft(BattleWork* work) {
     autoCommand = 0;
     cw = SKL_W(work);
     disp = SKL_D(work);
-    if (work->actionCommands.mAcUnit->badgesEquipped.AutoCommand) {
+    if (work->actionCommands.acUnit->badgesEquipped.AutoCommand) {
         autoCommand = 1;
     }
     SKL_P(work)->params[3] = 0;
-    if (work->actionCommands.mAcState != 0) {
+    if (work->actionCommands.acState != 0) {
         if (SKL_P(work)->params[2] != 0) {
             SKL_P(work)->params[3] = 1;
         } else {
@@ -55,13 +66,13 @@ s32 battleAcMain_StickKeepLeft(BattleWork* work) {
         }
     }
     sfx[0] = "SFX_AC_PI1";
-    sfx[1] = "SFX_AC_PONE1\0\0\0";
+    sfx[1] = "SFX_AC_PONE1";
     do {
         loop = 0;
         if (SKL_P(work)->params[3] != 0) {
             break;
         }
-        switch (work->actionCommands.mAcState) {
+        switch (work->actionCommands.acState) {
             case 0:
                 work->actionCommands.result = 1;
                 cw->idx = 0;
@@ -77,17 +88,17 @@ s32 battleAcMain_StickKeepLeft(BattleWork* work) {
                 for (i = 0; i < 12; i++) {
                     cw->sfx[i] = -1;
                 }
-                work->actionCommands.mAcState = 99;
+                work->actionCommands.acState = 99;
                 break;
             case 99:
                 break;
             case 100:
                 cw->timer = 120;
-                work->actionCommands.mAcState = 1000;
+                work->actionCommands.acState = 1000;
                 // fallthrough
             case 1000:
-                if ((work->actionCommands.setupFlags & 1) && (work->actionCommands.mAcUnit->mTokenFlags & 0x10)) {
-                    if (work->actionCommands.setupFlags & 2) {
+                if ((work->actionCommands.setupFlags & AC_SETUP_FLAG_CONFUSED_AUTO) && (work->actionCommands.acUnit->tokenFlags & TOKEN_FLAG_CONFUSED_ACTION)) {
+                    if (work->actionCommands.setupFlags & AC_SETUP_FLAG_RETRIES) {
                         work->actionCommands.setupParam--;
                         if (work->actionCommands.setupParam >= 0) {
                             break;
@@ -97,19 +108,19 @@ s32 battleAcMain_StickKeepLeft(BattleWork* work) {
                         work->actionCommands.result = 0;
                     } else {
                         work->actionCommands.result = 2;
-                        work->actionCommands.mResultCount++;
+                        work->actionCommands.resultCount++;
                     }
                     return 0;
                 }
-                if (!((s32(*)(s32))BattlePadCheckNow)(0x40000) && (&(work)->actionCommands)->countdown <= 0 && autoCommand == 0) {
+                if (!BattlePadCheckNow(BTL_PAD_STICK_LEFT) && (&(work)->actionCommands)->countdown <= 0 && autoCommand == 0) {
                     if (--cw->timer <= 0) {
                         work->actionCommands.result = 0;
                         loop = 1;
-                        work->actionCommands.mAcState = 1003;
+                        work->actionCommands.acState = 1003;
                     }
                 } else {
                     work->actionCommands.outputParams[0] = 1;
-                    work->actionCommands.mAcState = 1001;
+                    work->actionCommands.acState = 1001;
                     cw->timer = 1;
                     cw->idx = 1;
                     work->actionCommands.outputParams[1] = 0;
@@ -120,7 +131,7 @@ s32 battleAcMain_StickKeepLeft(BattleWork* work) {
                     (&(work)->actionCommands)->countdown--;
                     loop = 1;
                     work->actionCommands.result = 2;
-                    work->actionCommands.mAcState = 1003;
+                    work->actionCommands.acState = 1003;
                 }
                 cw->timer--;
                 if (cw->timer < 0) {
@@ -128,7 +139,7 @@ s32 battleAcMain_StickKeepLeft(BattleWork* work) {
                     work->actionCommands.outputParams[1]++;
                     if (cw->idx >= SKL_P(work)->params[0] + 2) {
                         work->actionCommands.result &= ~1;
-                        work->actionCommands.mAcState = 1003;
+                        work->actionCommands.acState = 1003;
                         work->actionCommands.outputParams[2] = 2;
                         if (SKL_P(work)->acFlags & 2) {
                             work->actionCommands.result |= 2;
@@ -150,7 +161,7 @@ s32 battleAcMain_StickKeepLeft(BattleWork* work) {
                     }
                     cw->timer = SKL_P(work)->params[1];
                 } else {
-                    if (((s32(*)(s32))BattlePadCheckNow)(0x40000) && autoCommand == 0) {
+                    if (BattlePadCheckNow(BTL_PAD_STICK_LEFT) && autoCommand == 0) {
                         break;
                     }
                     ok = 0;
@@ -160,7 +171,7 @@ s32 battleAcMain_StickKeepLeft(BattleWork* work) {
                         }
                     } else {
                         diff = SKL_P(work)->params[1] - cw->timer;
-                        if (diff > ac_stickkeepleft_ok_frame[PCCALL(((s32(*)(BattleWork*))BattleActionCommandGetDifficulty)(work), BattleActionCommandGetDifficulty(work))]) {
+                        if (diff > ac_stickkeepleft_ok_frame[BattleActionCommandGetDifficulty(work)]) {
                             if (!(SKL_P(work)->acFlags & 2)) {
                                 work->actionCommands.outputParams[2] = 1;
                             }
@@ -176,35 +187,36 @@ s32 battleAcMain_StickKeepLeft(BattleWork* work) {
                         work->actionCommands.result |= 2;
                         work->actionCommands.result &= ~1;
                         loop = 1;
-                        work->actionCommands.mAcState = 1003;
+                        work->actionCommands.acState = 1003;
                     } else if (ok) {
                         work->actionCommands.result |= 2;
                         work->actionCommands.result &= ~1;
                         loop = 1;
-                        work->actionCommands.mAcState = 1003;
+                        work->actionCommands.acState = 1003;
                     } else if (!(SKL_P(work)->acFlags & 2)) {
                         work->actionCommands.result &= ~1;
                         loop = 1;
-                        work->actionCommands.mAcState = 1003;
+                        work->actionCommands.acState = 1003;
                     }
                 }
                 break;
-            case 1003:
-                {
-                    s32 k;
-                    j = cw->idx - 2; if (j >= 0) for (k = 0; k <= j; k++) {
+            case 1003: {
+                s32 k;
+                j = cw->idx - 2;
+                if (j >= 0)
+                    for (k = 0; k <= j; k++) {
                     }
-                }
-                work->actionCommands.mAcState = 1004;
+            }
+                work->actionCommands.acState = 1004;
                 break;
             case 1005:
                 cw->endTimer = 60;
-                work->actionCommands.mAcState = 1006;
+                work->actionCommands.acState = 1006;
                 break;
             case 1006:
                 cw->endTimer--;
                 if (cw->endTimer <= 0) {
-                    work->actionCommands.mAcState = 1007;
+                    work->actionCommands.acState = 1007;
                 }
                 break;
             case 1007:
@@ -218,22 +230,28 @@ s32 battleAcMain_StickKeepLeft(BattleWork* work) {
     return 1;
 }
 
+/** Returns the result word: 1 while running, 2 on success, 0 on failure. */
 s32 battleAcResult_StickKeepLeft(BattleWork* work) {
     return work->actionCommands.result;
 }
 
+/**
+ * Display callback: slides the prompt in from the left over 20 frames, lights it step by step,
+ * and once the command is stopped keeps it up for 40 frames before sliding it back out;
+ * the slide pauses while params[2] freezes it.
+ */
 void battleAcDisp_StickKeepLeft(CameraId camId, void* param) {
     BattleWork* work = (BattleWork*)param;
     BattleActions* ac = &work->actionCommands;
     SklWork* cw = (SklWork*)ac->work;
     BattleACDispParams* disp = &ac->disp;
 
-    switch (work->actionCommands.mAcState) {
+    switch (work->actionCommands.acState) {
         case 0x63:
         case 0x64:
         case 0x3E8:
             disp->iconStep = -1;
-            disp->iconX = intplGetValue(4, 20 - disp->slideTimer, 20, -300.0f, 30.0f);
+            disp->iconX = intplGetValue(4, -300.0f, 30.0f, 20 - disp->slideTimer, 20);
             actionCommandDisp(disp->iconX, disp->iconY, disp->iconStep);
             if (SKL_P(work)->params[3] == 0 && disp->slideTimer > 0) {
                 disp->slideTimer--;
@@ -241,7 +259,7 @@ void battleAcDisp_StickKeepLeft(CameraId camId, void* param) {
             break;
         case 0x3E9:
             disp->iconStep = cw->idx - 1;
-            disp->iconX = intplGetValue(4, 20 - disp->slideTimer, 20, -300.0f, 30.0f);
+            disp->iconX = intplGetValue(4, -300.0f, 30.0f, 20 - disp->slideTimer, 20);
             actionCommandDisp(disp->iconX, disp->iconY, disp->iconStep);
             if (SKL_P(work)->params[3] == 0 && disp->slideTimer > 0) {
                 disp->slideTimer--;
@@ -255,7 +273,7 @@ void battleAcDisp_StickKeepLeft(CameraId camId, void* param) {
         case 0x3ED:
         case 0x3EE:
             if (disp->slideTimer >= 40) {
-                disp->iconX = intplGetValue(4, disp->slideTimer - 40, 20, 30.0f, -300.0f);
+                disp->iconX = intplGetValue(4, 30.0f, -300.0f, disp->slideTimer - 40, 20);
             } else {
                 disp->iconX = 30.0f;
             }
@@ -267,11 +285,16 @@ void battleAcDisp_StickKeepLeft(CameraId camId, void* param) {
     }
 }
 
+/** Called by btlevtcmd_StopAC: starts the slide-out and the 60-frame end wait. */
 void battleAcDelete_StickKeepLeft(BattleWork* work) {
-    work->actionCommands.mAcState = 0x3ED;
+    work->actionCommands.acState = 0x3ED;
 }
 
-#pragma dont_inline on
+/**
+ * Draws the stick icon (flashing until it is tilted, released once the last light is on), the bar,
+ * the numbered lights up to the current step and the final star;
+ * acFlags bit 0 packs them closer for long counts.
+ */
 static void actionCommandDisp(f32 x, f32 y, s32 unused) {
     s32 count;
     s32 idx;
@@ -283,24 +306,24 @@ static void actionCommandDisp(f32 x, f32 y, s32 unused) {
     f32 spacing;
     f32 yy;
     f32 stepX;
-    char n1[8] = "_AcSkl1";
+    char n1[8] = "_AcSkl1"; // n1..n5 unused; kept because the original emits their initialisers
     char n2[8] = "_AcSkl2";
     char n3[8] = "_AcSkl3";
     char n4[8] = "_AcSkl4";
     char n5[8] = "_AcSkl5";
 
     ac = SKL_P(_battleWorkPointer);
-    camGetPtr(8);
+    camGetPtr(CAMERA_2D);
     count = ac->params[0];
     idx = ((SklWork*)ac->work)->idx - 1;
-    switch (ac->mAcState) {
+    switch (ac->acState) {
         case 0:
         case 0x63:
         case 0x64: {
             Vec p = {0.0f, 0.0f, 0.0f};
             p.x = -200.0f + x;
             p.y = 70.0f + y;
-            iconDispGx(&p, 0x10, ICON_079, 1.0f);
+            iconDispGx(&p, ICON_DISP_2D, ICON_079, 1.0f);
             break;
         }
         case 0x3E8:
@@ -308,12 +331,12 @@ static void actionCommandDisp(f32 x, f32 y, s32 unused) {
                 Vec p = {0.0f, 0.0f, 0.0f};
                 p.x = -200.0f + x;
                 p.y = 70.0f + y;
-                iconDispGx(&p, 0x10, ICON_078, 1.0f);
+                iconDispGx(&p, ICON_DISP_2D, ICON_078, 1.0f);
             } else {
                 Vec p = {0.0f, 0.0f, 0.0f};
                 p.x = -200.0f + x;
                 p.y = 70.0f + y;
-                iconDispGx(&p, 0x10, ICON_079, 1.0f);
+                iconDispGx(&p, ICON_DISP_2D, ICON_079, 1.0f);
             }
             break;
         default:
@@ -321,12 +344,12 @@ static void actionCommandDisp(f32 x, f32 y, s32 unused) {
                 Vec p = {0.0f, 0.0f, 0.0f};
                 p.x = -200.0f + x;
                 p.y = 70.0f + y;
-                iconDispGx(&p, 0x10, ICON_078, 1.0f);
+                iconDispGx(&p, ICON_DISP_2D, ICON_078, 1.0f);
             } else {
                 Vec p = {0.0f, 0.0f, 0.0f};
                 p.x = -200.0f + x;
                 p.y = 70.0f + y;
-                iconDispGx(&p, 0x10, ICON_079, 1.0f);
+                iconDispGx(&p, ICON_DISP_2D, ICON_079, 1.0f);
             }
             break;
     }
@@ -347,19 +370,19 @@ static void actionCommandDisp(f32 x, f32 y, s32 unused) {
         p.x = -288.0f + x;
         yy = 25.0f + y;
         p.y = yy;
-        iconDispGx(&p, 0x10, ICON_08F, 1.0f);
+        iconDispGx(&p, ICON_DISP_2D, ICON_08F, 1.0f);
     }
     for (i = 1; i < n; i++) {
         Vec p = {0.0f, 0.0f, 0.0f};
         p.x = x + (spacing * (f32)i + -288.0f);
         p.y = yy;
-        iconDispGx(&p, 0x10, ICON_08E, 1.0f);
+        iconDispGx(&p, ICON_DISP_2D, ICON_08E, 1.0f);
     }
     {
         Vec p = {0.0f, 0.0f, 0.0f};
         p.x = x + (spacing * (f32)i + -288.0f);
         p.y = yy;
-        iconDispGx(&p, 0x10, ICON_090, 1.0f);
+        iconDispGx(&p, ICON_DISP_2D, ICON_090, 1.0f);
     }
     stepX = 33.0f;
     if (ac->acFlags & 1) {
@@ -372,29 +395,29 @@ static void actionCommandDisp(f32 x, f32 y, s32 unused) {
                 Vec p = {0.0f, 0.0f, 0.0f};
                 p.x = x + (stepX * (f32)j + -258.0f);
                 p.y = yy;
-                iconDispGx(&p, 0x10, (u16)(ICON_092 + j), 1.0f);
+                iconDispGx(&p, ICON_DISP_2D, (u16)(ICON_092 + j), 1.0f);
             } else {
                 Vec p = {0.0f, 0.0f, 0.0f};
                 p.x = x + (stepX * (f32)j + -258.0f);
                 p.y = yy;
-                iconDispGx(&p, 0x10, ICON_094, 1.0f);
+                iconDispGx(&p, ICON_DISP_2D, ICON_094, 1.0f);
             }
         } else {
             Vec p = {0.0f, 0.0f, 0.0f};
             p.x = x + (stepX * (f32)j + -258.0f);
             p.y = yy;
-            iconDispGx(&p, 0x10, ICON_091, 0.5f);
+            iconDispGx(&p, ICON_DISP_2D, ICON_091, 0.5f);
         }
     }
     if (idx < count) {
         Vec p = {0.0f, 0.0f, 0.0f};
         p.x = x + (stepX * (f32)m + -250.0f);
         p.y = yy;
-        iconDispGx(&p, 0x10, ICON_091, 1.0f);
+        iconDispGx(&p, ICON_DISP_2D, ICON_091, 1.0f);
     } else {
         Vec p = {0.0f, 0.0f, 0.0f};
         p.x = x + (stepX * (f32)m + -250.0f);
         p.y = yy;
-        iconDispGx(&p, 0x10, ICON_095, 1.0f);
+        iconDispGx(&p, ICON_DISP_2D, ICON_095, 1.0f);
     }
 }

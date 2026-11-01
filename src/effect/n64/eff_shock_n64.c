@@ -1,3 +1,4 @@
+// Paper Mario 64 effect: a yellow electric shock flash that expands and fades; also spawned by the thunder effect.
 #include "eff/n64/eff_shock_n64.h"
 #include "eff/eff_n64.h"
 #include "driver/camdrv.h"
@@ -11,6 +12,10 @@
 GXColor shock_zero_color0;
 GXColor shock_zero_color1;
 
+/**
+ * The jagged shock-flash mesh: white-edged spikes around a dark inner rim,
+ * drawn textured and then plain for types 1-3.
+ */
 effN64Vtx testsrc_shock_v[] = {
     {242, -140, 0, 1800, 576, 0xFF, 0xFF, 0xFF, 0xFF},
     {189, -51, 0, 1630, 862, 0x00, 0x00, 0x00, 0xFF},
@@ -110,15 +115,19 @@ effN64Vtx testsrc_shock_v[] = {
     {-178, -103, 0, 453, -330, 0xFF, 0xFF, 0xFF, 0xFF},
 };
 
-void effShockMain(EffectEntry* effect);
-void effShockDisp(CameraId cameraId, EffectEntry* effect);
+static void effShockMain(EffectEntry* effect);
+static void effShockDisp(CameraId cameraId, EffectEntry* effect);
 
+/**
+ * Spawns a 30-frame shock flash at (x, y, z) with extents a and b.
+ * Used by the Shadow Queen (black_peach) battle code in las and by event scripts through evt_eff.
+ */
 EffectEntry* effShockN64Entry(s32 type, f32 x, f32 y, f32 z, f32 a, f32 b) {
     EffectEntry* effect;
     EffShockN64Work* w;
 
     effect = effEntry();
-    effect->type = "ShockN64\0\0\0";
+    effect->type = "ShockN64";
     effect->count = 1;
     w = __memAlloc(HEAP_EFFECT, sizeof(EffShockN64Work));
     effect->userdata = w;
@@ -140,29 +149,35 @@ EffectEntry* effShockN64Entry(s32 type, f32 x, f32 y, f32 z, f32 a, f32 b) {
     w->offset = 0.5f * a;
     w->offset2 = 0.5f * b;
     switch (type) {
-    case 0:
-    case 1:
-    case 3:
-        w->col0[0] = 255;
-        w->col0[1] = 255;
-        w->col0[2] = 0;
-        w->col1[0] = 255;
-        w->col1[1] = 255;
-        w->col1[2] = 255;
-        break;
-    default:
-        w->col0[0] = 70;
-        w->col0[1] = 180;
-        w->col0[2] = 120;
-        w->col1[0] = 255;
-        w->col1[1] = 255;
-        w->col1[2] = 255;
-        break;
+        case 0:
+        case 1:
+        case 3:
+            w->col0[0] = 255;
+            w->col0[1] = 255;
+            w->col0[2] = 0;
+            w->col1[0] = 255;
+            w->col1[1] = 255;
+            w->col1[2] = 255;
+            break;
+        default:
+            w->col0[0] = 70;
+            w->col0[1] = 180;
+            w->col0[2] = 120;
+            w->col1[0] = 255;
+            w->col1[1] = 255;
+            w->col1[2] = 255;
+            break;
     }
     return effect;
 }
 
-void effShockMain(EffectEntry* effect) {
+/**
+ * The 30-frame life counts down (a life of 100 or more would hold).
+ * Type 2 grows 10% per frame for 20 frames, other types ease their scale toward 8;
+ * the type-1 yellow layer fades 10% per frame and the main alpha fades 20% per frame over the last 5 frames.
+ * Deletes when the life runs out. CAMERA_3D, layer 2.
+ */
+static void effShockMain(EffectEntry* effect) {
     EffShockN64Work* w = effect->userdata;
     Vec position;
     Vec tmp = {0.0f, 0.0f, 0.0f};
@@ -193,7 +208,9 @@ void effShockMain(EffectEntry* effect) {
         w->scale += 0.05f * (8.0f - w->scale);
     }
     w->c14 *= 0.9f;
-    if (life < 5) { w->c18 *= 0.8f; }
+    if (life < 5) {
+        w->c18 *= 0.8f;
+    }
     if (age > 6) {
         w->c10 -= 13;
         if (w->c10 < 0) {
@@ -203,7 +220,12 @@ void effShockMain(EffectEntry* effect) {
     dispEntry(CAMERA_3D, dispCalcZ(&position), 2, (DispCallback)effShockDisp, effect);
 }
 
-void effShockDisp(CameraId cameraId, EffectEntry* effect) {
+/**
+ * Types 1-3 draw the camera-facing shock-wave mesh (testsrc_shock_v) raised by half of `b`:
+ * an outer ring textured with 0x85 (yellow and fading for type 1) and an untextured inner pass,
+ * both in the work's two colours. Type 0 and types above 3 draw nothing.
+ */
+static void effShockDisp(CameraId cameraId, EffectEntry* effect) {
     CameraEntry* camera;
     EffShockN64Work* w;
     s32 type;
@@ -306,4 +328,3 @@ void effShockDisp(CameraId cameraId, EffectEntry* effect) {
         tri2(0x26, 0x25, 0x2f, 0x0, 0x26, 0x2f, 0x2c, 0x0);
     }
 }
-

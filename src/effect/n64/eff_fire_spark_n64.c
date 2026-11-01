@@ -1,3 +1,5 @@
+// Paper Mario 64 effect: fire sparks, count sparks launched within a range with a set upward and forward speed.
+#include "eff/n64/eff_fire_spark_n64.h"
 #include "eff/eff_n64.h"
 #include "driver/camdrv.h"
 #include "driver/dispdrv.h"
@@ -5,11 +7,7 @@
 #include "memory.h"
 #include <dolphin/gx.h>
 #include <dolphin/mtx.h>
-
-#ifndef TARGET_PC /* PC port: the host libc declares these */
-int rand(void);
-#endif
-
+#include "libc_decls.h"
 typedef struct EffFireSparkN64Work {
     s32 type;           // 0x0
     Vec position;       // 0x4
@@ -29,13 +27,15 @@ typedef struct EffFireSparkN64Work {
     f32 speedZ;         // 0x6c
 } EffFireSparkN64Work;
 
-void effFireSparkMain(EffectEntry* effect);
-void effFireSparkDisp(CameraId cameraId, EffectEntry* effect);
+static void effFireSparkMain(EffectEntry* effect);
+static void effFireSparkDisp(CameraId cameraId, EffectEntry* effect);
 
+/** Spark size over its 30-step cycle: grows in, holds at full size, then shrinks away. */
 static f32 scale_data[30] = {
     0.01f, 0.05f, 0.1f, 0.2f, 0.35f, 0.5f, 0.65f, 0.8f, 0.95f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.95f, 0.8f, 0.65f, 0.5f, 0.35f, 0.2f, 0.1f, 0.05f, 0.01f,
 };
 
+/** Camera-facing 4x4 spark sprite. */
 effN64Vtx size4x4_tex32x32_vtx[] = {
     {-2, -2, 0, 0, 0, 0, 0, 0, 255},
     {2, -2, 0, 1024, 0, 0, 0, 0, 255},
@@ -43,6 +43,10 @@ effN64Vtx size4x4_tex32x32_vtx[] = {
     {-2, 2, 0, 0, 1024, 0, 0, 0, 255},
 };
 
+/**
+ * Spawns count small sparks that rise from a strip of width rangeX and height rangeY around (x, y, z);
+ * speedY and speedZ set how fast they drift. eff_fire.c spawns it for fire embers; event scripts via evt_eff.
+ */
 EffectEntry* effFireSparkN64Entry(s32 type, s32 count, s32 lifetime, f32 x, f32 y, f32 z, f32 rangeX, f32 rangeY,
                                   f32 scale, f32 speedY, f32 speedZ) {
     EffectEntry* effect;
@@ -52,12 +56,12 @@ EffectEntry* effFireSparkN64Entry(s32 type, s32 count, s32 lifetime, f32 x, f32 
     s32 i;
 
     effect = effEntry();
-    effect->type = "FireSparkN64\0\0\0";
+    effect->type = "FireSparkN64";
     effect->count = count;
     work = __memAlloc(HEAP_EFFECT, sizeof(EffFireSparkN64Work) * count);
     effect->userdata = work;
     effect->callback = effFireSparkMain;
-    effect->flags |= 2;
+    effect->flags |= EFFECT_FLAG_SOFT_DELETE;
     work->type = type;
     work->frame = 0;
     if (lifetime <= 0) {
@@ -90,7 +94,12 @@ EffectEntry* effFireSparkN64Entry(s32 type, s32 count, s32 lifetime, f32 x, f32 
     return effect;
 }
 
-void effFireSparkMain(EffectEntry* effect) {
+/**
+ * Fades in over the first 16 frames and out over the last 16.
+ * Each spark runs a 30-step cycle: it respawns at a random spot in the strip,
+ * drifts with a velocity that eases toward a random target, and scales by scale_data.
+ */
+static void effFireSparkMain(EffectEntry* effect) {
     Vec position;
     Vec tmp = {0.0f, 0.0f, 0.0f};
     f32 halfX;
@@ -107,8 +116,8 @@ void effFireSparkMain(EffectEntry* effect) {
     tmp.y = work->position.y;
     tmp.z = work->position.z;
     position = tmp;
-    if (effect->flags & 4) {
-        effect->flags &= ~4;
+    if (effect->flags & EFFECT_FLAG_DELETE_REQUESTED) {
+        effect->flags &= ~EFFECT_FLAG_DELETE_REQUESTED;
         work->lifetime = 16;
     }
     if (work->lifetime < 1000) {
@@ -169,7 +178,11 @@ void effFireSparkMain(EffectEntry* effect) {
     dispEntry(CAMERA_3D, dispCalcZ(&position), 2, (DispCallback)effFireSparkDisp, effect);
 }
 
-void effFireSparkDisp(CameraId cameraId, EffectEntry* effect) {
+/**
+ * Draws each live spark as a camera-facing sprite blending texture 0x8b with 0x65,
+ * one texture row per spark (i % 4) and scrolled by its own offset.
+ */
+static void effFireSparkDisp(CameraId cameraId, EffectEntry* effect) {
     s32 i;
     EffFireSparkN64Work* work;
     CameraEntry* camera;

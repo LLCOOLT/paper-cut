@@ -1,3 +1,4 @@
+// Uranoko: plays the MOBJ_EFF_uranoko model animation at a point, fading out at the end of its duration.
 #include "eff/eff_uranoko.h"
 #include "driver/animdrv.h"
 #include "driver/dispdrv.h"
@@ -5,6 +6,13 @@
 #include "memory.h"
 #include <dolphin/mtx.h>
 
+static void effUranokoDisp(CameraId cameraId, EffectEntry* effect);
+static void effUranokoMain(EffectEntry* effect);
+
+/**
+ * Spawns the black aura at (x, y, z) for `duration` frames (0 or less: until removed).
+ * Callers: the ura_noko and ura_pata enemy units (jon, tou2) and evt_eff "uranoko".
+ */
 EffectEntry* effUranokoEntry(s32 type, s32 duration, f32 x, f32 y, f32 z) {
     EffectEntry* effect;
     EffUranokoWork* work;
@@ -15,7 +23,7 @@ EffectEntry* effUranokoEntry(s32 type, s32 duration, f32 x, f32 y, f32 z) {
     work = __memAlloc(HEAP_EFFECT, sizeof(EffUranokoWork) * effect->count);
     effect->userdata = work;
     effect->callback = effUranokoMain;
-    effect->flags |= 2;
+    effect->flags |= EFFECT_FLAG_SOFT_DELETE;
     work->type = type;
     work->position.x = x;
     work->position.y = y;
@@ -25,8 +33,7 @@ EffectEntry* effUranokoEntry(s32 type, s32 duration, f32 x, f32 y, f32 z) {
     work->frame = 0;
     if (duration <= 0) {
         work->timer = 1000;
-    }
-    else {
+    } else {
         work->timer = duration;
     }
     work->alpha = 255;
@@ -34,12 +41,13 @@ EffectEntry* effUranokoEntry(s32 type, s32 duration, f32 x, f32 y, f32 z) {
     return effect;
 }
 
-void effUranokoMain(EffectEntry* effect) {
+/** Waits for the MOBJ_EFF_uranoko group, starts the A_1 animation, eases the scale up to 1 and fades out at the end. */
+static void effUranokoMain(EffectEntry* effect) {
     EffUranokoWork* work = effect->userdata;
     Vec position;
     BOOL inBattle;
 
-    position = (Vec){ work->position.x, work->position.y, work->position.z };
+    position = (Vec){work->position.x, work->position.y, work->position.z};
     inBattle = gp->inBattle != 0;
 
     if (!animGroupBaseAsync("MOBJ_EFF_uranoko", inBattle, NULL)) {
@@ -51,8 +59,8 @@ void effUranokoMain(EffectEntry* effect) {
     }
 
     // soft delete: start fading out
-    if (effect->flags & 4) {
-        effect->flags &= ~4;
+    if (effect->flags & EFFECT_FLAG_DELETE_REQUESTED) {
+        effect->flags &= ~EFFECT_FLAG_DELETE_REQUESTED;
         work->timer = 16;
     }
     if (work->timer < 1000) {
@@ -73,7 +81,8 @@ void effUranokoMain(EffectEntry* effect) {
     dispEntry(CAMERA_3D, dispCalcZ(&position), 2, (DispCallback)effUranokoDisp, effect);
 }
 
-void effUranokoDisp(CameraId cameraId, EffectEntry* effect) {
+/** Draws the aura pose camera-facing, with the fade alpha as an event colour. */
+static void effUranokoDisp(CameraId cameraId, EffectEntry* effect) {
     EffUranokoWork* work = effect->userdata;
     Mtx mtx;
     Mtx scale;
@@ -87,8 +96,8 @@ void effUranokoDisp(CameraId cameraId, EffectEntry* effect) {
         PSMTXRotRad(rot, 'y', MTXDegToRad(-camGetPtr(cameraId)->viewYaw));
         PSMTXConcat(mtx, rot, mtx);
         PSMTXConcat(mtx, scale, mtx);
-        animPoseSetMaterialFlagOn(work->poseId, 0x40);
-        animPoseSetMaterialEvtColor(work->poseId, (GXColor){ 0xFF, 0xFF, 0xFF, work->alpha });
+        animPoseSetMaterialFlagOn(work->poseId, ANIM_MATERIAL_FLAG_EVT_COLOR);
+        animPoseSetMaterialEvtColor(work->poseId, (GXColor){0xFF, 0xFF, 0xFF, work->alpha});
         animPoseMain(work->poseId);
         animPoseDrawMtx(work->poseId, mtx, 1, 0.0f, 6.0f);
         animPoseDrawMtx(work->poseId, mtx, 2, 0.0f, 6.0f);

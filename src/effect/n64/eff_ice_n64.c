@@ -1,3 +1,5 @@
+// Paper Mario 64 effect: ice shards, eight ice pieces thrown up and spinning.
+#include "eff/n64/eff_ice_n64.h"
 #include "eff/eff_n64.h"
 #include "driver/camdrv.h"
 #include "driver/dispdrv.h"
@@ -6,43 +8,41 @@
 #include <dolphin/gx.h>
 #include <dolphin/mtx.h>
 #include <stdlib.h>
-
-#ifndef TARGET_PC /* PC port: the host libc declares these */
-double sin(double);
-double cos(double);
-#endif
+#include "libc_decls.h"
 
 typedef struct EffIceN64Piece {
-    s32 unk0;     // 0x0
-    f32 x;        // 0x4
-    f32 y;        // 0x8
-    f32 z;        // 0xC
-    f32 velX;     // 0x10
-    f32 velY;     // 0x14
-    f32 rotZ;     // 0x18
-    f32 rotVel;   // 0x1C
-    f32 rotY;     // 0x20
-    f32 unk24;    // 0x24
-    f32 unk28;    // 0x28
-    f32 unk2C;    // 0x2C
+    s32 type;        // 0x0, unused; same slot as EffIceN64Work.type
+    f32 x;           // 0x4
+    f32 y;           // 0x8
+    f32 z;           // 0xC
+    f32 velX;        // 0x10
+    f32 velY;        // 0x14
+    f32 rotZ;        // 0x18
+    f32 rotVel;      // 0x1C
+    f32 rotY;        // 0x20
+    f32 reserved_24; // 0x24, unused; EffIceN64Work keeps alpha here
+    f32 reserved_28; // 0x28, unused; EffIceN64Work keeps lifetime here
+    f32 reserved_2C; // 0x2C, unused; EffIceN64Work keeps frame here
 } EffIceN64Piece;
 
 typedef struct EffIceN64Work {
-    s32 type;       // 0x0
-    Vec position;   // 0x4
-    s32 pad10[5];   // 0x10
-    s32 alpha;      // 0x24
-    s32 lifetime;   // 0x28
-    s32 frame;      // 0x2C
+    s32 type;                 // 0x0
+    Vec position;             // 0x4
+    s32 pad10[5];             // 0x10
+    s32 alpha;                // 0x24
+    s32 lifetime;             // 0x28
+    s32 frame;                // 0x2C
     EffIceN64Piece pieces[8]; // 0x30
 } EffIceN64Work;
 
+/** Large 32x32 ice shard with texture 7, used by the even-numbered (spinning) shards. */
 effN64Vtx ice_vtx[] = {
     {-16, -16, 0, 0, 0, 0, 0, 0, 255},
     {16, -16, 0, 2048, 0, 0, 0, 0, 255},
     {16, 16, 0, 2048, 2048, 0, 0, 0, 255},
     {-16, 16, 0, 0, 2048, 0, 0, 0, 255},
 };
+/** Small 8x8 ice shard with texture 8, used by the odd-numbered (plain) shards. */
 effN64Vtx ice_s_vtx[] = {
     {-4, -4, 0, 0, 0, 0, 0, 0, 255},
     {4, -4, 0, 2048, 0, 0, 0, 0, 255},
@@ -53,6 +53,10 @@ effN64Vtx ice_s_vtx[] = {
 static void effIceMain(EffectEntry* effect);
 static void effIceDisp(CameraId cameraId, EffectEntry* effect);
 
+/**
+ * Spawns eight ice shards at (x, y, z) that fly up and spin for 30 frames.
+ * battle_damage.c spawns it on ice damage; event scripts also use it through evt_eff.
+ */
 EffectEntry* effIceN64Entry(s32 type, f32 x, f32 y, f32 z) {
     EffectEntry* effect;
     EffIceN64Work* work;
@@ -60,7 +64,7 @@ EffectEntry* effIceN64Entry(s32 type, f32 x, f32 y, f32 z) {
     s32 i;
 
     effect = effEntry();
-    effect->type = "IceN64\0";
+    effect->type = "IceN64";
     effect->count = 9;
     work = __memAlloc(HEAP_EFFECT, sizeof(EffIceN64Work));
     effect->userdata = work;
@@ -86,12 +90,13 @@ EffectEntry* effIceN64Entry(s32 type, f32 x, f32 y, f32 z) {
     return effect;
 }
 
-#pragma opt_propagation off
+// FAKE: match-forcing setting: the same code without it compiles differently (removal tried).
 #pragma opt_lifetimes off
+/** Fades the shards in, then out over the last 10 frames, and moves each shard with gravity, drag and spin. */
 static void effIceMain(EffectEntry* effect) {
     EffIceN64Work* work = effect->userdata;
     Vec calcPos;
-    Vec pos = { 0.0f, 0.0f, 0.0f };
+    Vec pos = {0.0f, 0.0f, 0.0f};
     f32 t;
     f32 u;
     f32 s;
@@ -138,7 +143,10 @@ static void effIceMain(EffectEntry* effect) {
     dispEntry(CAMERA_3D, dispCalcZ(&calcPos), 2, (DispCallback)effIceDisp, effect);
 }
 
-#pragma opt_propagation reset
+/**
+ * Draws the eight shards, alternating between a plain shard (texture 8, odd indices)
+ * and a spinning one (texture 7, even indices).
+ */
 static void effIceDisp(CameraId cameraId, EffectEntry* effect) {
 
     EffIceN64Work* work;
@@ -168,7 +176,7 @@ static void effIceDisp(CameraId cameraId, EffectEntry* effect) {
     PSMTXConcat(trans, rot, mtx);
     PSMTXConcat(cam->view, mtx, mtx);
     {
-        GXSetTevColor(GX_TEVREG0, (GXColor){ 0x14, 0x64, 0x14, work->alpha });
+        GXSetTevColor(GX_TEVREG0, (GXColor){0x14, 0x64, 0x14, work->alpha});
     }
     work = (EffIceN64Work*)((EffIceN64Piece*)work + 1);
     for (i = 1; i < effect->count; i++, work = (EffIceN64Work*)((EffIceN64Piece*)work + 1)) {

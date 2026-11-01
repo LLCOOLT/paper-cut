@@ -1,3 +1,4 @@
+// Paper Mario 64 effect: blow, count puffs streamed from a point along a direction vector.
 #include "eff/eff_n64.h"
 #include "eff/n64/eff_blow_n64.h"
 #include "driver/camdrv.h"
@@ -7,61 +8,8 @@
 #include "system.h"
 #include <dolphin/gx.h>
 #include <dolphin/mtx.h>
-#include "eff/eff_magic1_n64.h"
 #include "libc_decls.h"
-
-#define NAN (*(f32*)__float_nan)
-
-#define FP_NAN 1
-#define FP_INFINITE 2
-#define FP_ZERO 3
-#define FP_NORMAL 4
-#define FP_SUBNORMAL 5
-
-static inline s32 __fpclassifyf(f32 x) {
-    switch (*(s32*)&x & 0x7F800000) {
-        case 0x7F800000:
-            if (*(s32*)&x & 0x007FFFFF) {
-                return FP_NAN;
-            } else {
-                return FP_INFINITE;
-            }
-            break;
-        case 0:
-            if (*(s32*)&x & 0x007FFFFF) {
-                return FP_SUBNORMAL;
-            } else {
-                return FP_ZERO;
-            }
-            break;
-        default:
-            return FP_NORMAL;
-    }
-}
-
-#define fpclassify(x) __fpclassifyf(x)
-#define isnan(x) (fpclassify(x) == FP_NAN)
-
-#ifndef TARGET_PC /* PC port: the host libc declares these */
-static inline f32 sqrtf(f32 x) {
-    const f64 _half = .5;
-    const f64 _three = 3.0;
-
-    if (x > 0.0f) {
-        f64 guess = __frsqrte(x);
-        guess = _half * guess * (_three - guess * guess * x);
-        guess = _half * guess * (_three - guess * guess * x);
-        guess = _half * guess * (_three - guess * guess * x);
-        return x * guess;
-    } else if (x < 0.0) {
-        return NAN;
-    } else if (isnan(x)) {
-        return NAN;
-    } else {
-        return x;
-    }
-}
-#endif
+#include <math.h>
 
 typedef struct EffBlowN64Work {
     s32 type;     // 0x0
@@ -82,6 +30,7 @@ typedef struct EffBlowN64Work {
     s32 delay;    // 0x64
 } EffBlowN64Work;
 
+/** Camera-facing 16x16 quad each blown streak is stretched and rotated from. */
 static effN64Vtx size16x16_tex32x32_vtx[] = {
     {-8, -8, 0, 0, 0, 0xFF, 0xFF, 0xFF, 0xFF},
     {8, -8, 0, 1024, 0, 0xFF, 0xFF, 0xFF, 0xFF},
@@ -89,9 +38,14 @@ static effN64Vtx size16x16_tex32x32_vtx[] = {
     {-8, 8, 0, 0, 1024, 0xFF, 0xFF, 0xFF, 0xFF},
 };
 
-void effBlowMain(EffectEntry* effect);
-void effBlowDisp(CameraId cameraId, EffectEntry* effect);
+static void effBlowMain(EffectEntry* effect);
+static void effBlowDisp(CameraId cameraId, EffectEntry* effect);
 
+/**
+ * Spawns `count` streaks at (x, y, z) travelling along the direction (dx, dy, dz);
+ * returns NULL for a zero count or a zero direction.
+ * Each streak gets a sideways acceleration around the axis (the table calls this effect a fountain).
+ */
 EffectEntry* effBlowN64Entry(s32 type, s32 count, f32 x, f32 y, f32 z, f32 dx, f32 dy, f32 dz) {
     EffectEntry* effect;
     EffBlowN64Work* w;
@@ -187,7 +141,13 @@ EffectEntry* effBlowN64Entry(s32 type, s32 count, f32 x, f32 y, f32 z, f32 dx, f
     return effect;
 }
 
-void effBlowMain(EffectEntry* effect) {
+/**
+ * Launches streaks in waves (two frames apart per group of five):
+ * each moves along the direction with drag, widens and shortens late in its life, then loses speed and alpha.
+ * Streaks respawn while state is 0; the effect ends once state goes from 1 to 2.
+ * Nothing in the tree sets state 1 (and no script spawns blow_n64), so as built it runs until deleted.
+ */
+static void effBlowMain(EffectEntry* effect) {
     EffBlowN64Work* work = effect->userdata;
     Vec position;
     Vec tmp = {0.0f, 0.0f, 0.0f};
@@ -280,7 +240,8 @@ void effBlowMain(EffectEntry* effect) {
     dispEntry(CAMERA_3D, dispCalcZ(&position), 2, (DispCallback)effBlowDisp, effect);
 }
 
-void effBlowDisp(CameraId cameraId, EffectEntry* effect) {
+/** Draws each streak as a rotated, stretched camera-facing quad tinted light cyan. */
+static void effBlowDisp(CameraId cameraId, EffectEntry* effect) {
     CameraEntry* camera;
     EffBlowN64Work* work;
     s32 i;

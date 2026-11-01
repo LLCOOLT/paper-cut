@@ -25,8 +25,8 @@ typedef void (*AppLoaderCallback)(appInitCallback*, appGetNextCallback*, appGetE
 #ifndef TARGET_PC /* lomem globals; not on PC */
 OSExecParams* __OSExecParams AT_ADDRESS(0x800030F0);
 s32 __OSAppLoaderOffset AT_ADDRESS(0x800030F4);
-#endif
 
+#endif
 void OSExecv(const char* dolfile, const char** argv);
 void OSExecl(const char* dolfile, const char* arg0, ...);
 

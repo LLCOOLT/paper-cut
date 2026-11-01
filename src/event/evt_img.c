@@ -1,3 +1,5 @@
+// Script commands for 2D images and pictures (imgdrv).
+#include "evt/evt_img.h"
 #include "driver/animdrv.h"
 #include "driver/imgdrv.h"
 #include "driver/offscreendrv.h"
@@ -5,19 +7,15 @@
 #include "mario/mariost.h"
 #include "manager/evtmgr_cmd.h"
 #include <dolphin/gx.h>
+#include "sdk/DEMOInit.h"
 
-typedef struct DEMORenderModeObj {
-    u8 pad[4];
-    u16 fbWidth;
-    u16 efbHeight;
-} DEMORenderModeObj;
-extern DEMORenderModeObj* DEMOGetRenderModeObj(void);
-
+/** Creates an image entry named args[0] in the field or battle image list. */
 USER_FUNC(evt_img_entry) {
     imgEntry((const char*)evtGetValue(event, event->args[0]), gp->inBattle != 0);
     return EVT_RETURN_DONE;
 }
 
+/** Sets the screen offset of image args[0] to the floats args[1], args[2]. */
 USER_FUNC(evt_img_set_position) {
     EvtWord* args = event->args;
     const char* name = (const char*)evtGetValue(event, args[0]);
@@ -29,6 +27,7 @@ USER_FUNC(evt_img_set_position) {
     return EVT_RETURN_DONE;
 }
 
+/** Gives image args[0] the paper pose of animation file args[1] and restarts its clock. */
 USER_FUNC(evt_img_set_paper) {
     EvtWord* args = event->args;
     const char* name = (const char*)evtGetValue(event, args[0]);
@@ -37,10 +36,11 @@ USER_FUNC(evt_img_set_paper) {
     ImageEntry* img = imgNameToPtr(name, group);
     img->poseId = animPaperPoseGetId(anim, group);
     img->animTime = animTimeGetTime(group);
-    animPoseSetMaterialFlagOn(img->poseId, 0x1800);
+    animPoseSetMaterialFlagOn(img->poseId, ANIM_MATERIAL_FLAG_NO_BLEND | ANIM_MATERIAL_FLAG_NO_BLEND2);
     return EVT_RETURN_DONE;
 }
 
+/** Plays animation args[1] on image args[0]'s paper pose, from the start. */
 USER_FUNC(evt_img_set_paper_anim) {
     EvtWord* args = event->args;
     const char* name = (const char*)evtGetValue(event, args[0]);
@@ -52,12 +52,18 @@ USER_FUNC(evt_img_set_paper_anim) {
     return EVT_RETURN_DONE;
 }
 
+/**
+ * Sets up screen capture slot args[1] (0-2) of image args[0]:
+ * from offscreen args[2] when the rectangle args[4..7] is all zero,
+ * else that screen rectangle (rounded to even). args[3] picks the allocation mode.
+ * Silently does nothing if the slot is in use or the size clashes with another slot.
+ */
 USER_FUNC(evt_img_alloc_capture) {
     EvtWord* args = event->args;
     const char* name = (const char*)evtGetValue(event, args[0]);
     s32 shadowId = evtGetValue(event, args[1]);
     const char* offName = (const char*)evtGetValue(event, args[2]);
-    s32 unk = evtGetValue(event, args[3]);
+    s32 allocMode = evtGetValue(event, args[3]);
     s32 x = evtGetValue(event, args[4]);
     s32 y = evtGetValue(event, args[5]);
     s32 w = evtGetValue(event, args[6]);
@@ -72,7 +78,7 @@ USER_FUNC(evt_img_alloc_capture) {
     } else {
         offId = -1;
     }
-    if (sh->flags & 4) {
+    if (sh->flags & IMG_SHADOW_USED) {
         return EVT_RETURN_DONE;
     }
     x -= x & 1;
@@ -80,7 +86,7 @@ USER_FUNC(evt_img_alloc_capture) {
     w += w & 1;
     h += h & 1;
     for (i = 0; i < 3; i++) {
-        if (i != shadowId && (img->shadows[i].flags & 4) && (img->width != (u16)w || img->height != (u16)h)) {
+        if (i != shadowId && (img->shadows[i].flags & IMG_SHADOW_USED) && (img->width != (u16)w || img->height != (u16)h)) {
             return EVT_RETURN_DONE;
         }
     }
@@ -96,7 +102,7 @@ USER_FUNC(evt_img_alloc_capture) {
             sh->copyFmt = 6;
             sh->texFmt = 6;
         }
-        img->flags |= 4;
+        img->flags |= IMG_FLAG_OFFSCREEN_RECT;
     } else {
         if (x < 0 || y < 0 || w <= 0 || h <= 0 ||
             x + w > DEMOGetRenderModeObj()->fbWidth || y + h > DEMOGetRenderModeObj()->efbHeight) {
@@ -115,14 +121,15 @@ USER_FUNC(evt_img_alloc_capture) {
         }
     }
     sh->offscreenId = offId;
-    sh->flags = 0x14;
-    sh->allocMode = unk;
-    if (unk != 0) {
-        sh->flags |= 0x100;
+    sh->flags = IMG_SHADOW_USED | IMG_SHADOW_PENDING;
+    sh->allocMode = allocMode;
+    if (allocMode != 0) {
+        sh->flags |= IMG_SHADOW_COPY_ONCE;
     }
     return EVT_RETURN_DONE;
 }
 
+/** Frees capture slot args[1] of image args[0]. */
 USER_FUNC(evt_img_free_capture) {
     EvtWord* args = event->args;
     const char* name = (const char*)evtGetValue(event, args[0]);
@@ -131,19 +138,21 @@ USER_FUNC(evt_img_free_capture) {
     return EVT_RETURN_DONE;
 }
 
+/** Shows (args[1] nonzero) or hides image args[0] by clearing or setting IMG_FLAG_HIDDEN. */
 USER_FUNC(evt_img_onoff) {
     EvtWord* args = event->args;
     const char* name = (const char*)evtGetValue(event, args[0]);
     s32 on = evtGetValue(event, args[1]);
     ImageEntry* img = imgNameToPtr(name, gp->inBattle != 0);
     if (on != 0) {
-        img->flags &= ~2;
+        img->flags &= ~IMG_FLAG_HIDDEN;
     } else {
-        img->flags |= 2;
+        img->flags |= IMG_FLAG_HIDDEN;
     }
     return EVT_RETURN_DONE;
 }
 
+/** Anchors image args[0] to the world point args[1..3]. */
 USER_FUNC(evt_img_set_virtual_point) {
     EvtWord* args = event->args;
     const char* name = (const char*)evtGetValue(event, args[0]);
@@ -152,7 +161,7 @@ USER_FUNC(evt_img_set_virtual_point) {
     f32 z = evtGetFloat(event, args[3]);
     ImageEntry* img = imgNameToPtr(name, gp->inBattle != 0);
     Vec tmp;
-    Vec pos = { 0.0f, 0.0f, 0.0f };
+    Vec pos = {0.0f, 0.0f, 0.0f};
     pos.x = x;
     pos.y = y;
     pos.z = z;
@@ -161,17 +170,20 @@ USER_FUNC(evt_img_set_virtual_point) {
     return EVT_RETURN_DONE;
 }
 
+/** Removes the world anchor from image args[0]. */
 USER_FUNC(evt_img_clear_virtual_point) {
     imgClearVirtualPoint(imgNameToPtr((const char*)evtGetValue(event, event->args[0]), gp->inBattle != 0));
     return EVT_RETURN_DONE;
 }
 
+/** Frees image args[0] and its resources. */
 USER_FUNC(evt_img_release) {
     ImageEntry* img = imgNameToPtr((const char*)evtGetValue(event, event->args[0]), gp->inBattle != 0);
     imgRelease(img, gp->inBattle != 0);
     return EVT_RETURN_DONE;
 }
 
+/** Blocks until image args[0]'s animation has played through at least once. */
 USER_FUNC(evt_img_wait_animend) {
     ImageEntry* img = imgNameToPtr((const char*)evtGetValue(event, event->args[0]), gp->inBattle != 0);
     if (isFirstCall) {
@@ -183,6 +195,7 @@ USER_FUNC(evt_img_wait_animend) {
     return EVT_RETURN_DONE;
 }
 
+/** Selects which capture slot (args[1]) image args[0] draws as its shadow. */
 USER_FUNC(evt_img_set_shadow) {
     EvtWord* args = event->args;
     const char* name = (const char*)evtGetValue(event, args[0]);
@@ -191,6 +204,7 @@ USER_FUNC(evt_img_set_shadow) {
     return EVT_RETURN_DONE;
 }
 
+/** Sets the playback speed of image args[0]'s paper animation to the float args[1]. */
 USER_FUNC(evt_img_set_paper_timerate) {
     EvtWord* args = event->args;
     const char* name = (const char*)evtGetValue(event, args[0]);
@@ -200,6 +214,7 @@ USER_FUNC(evt_img_set_paper_timerate) {
     return EVT_RETURN_DONE;
 }
 
+/** Tints image args[0]'s pose with the colour args[1..4] (r, g, b, a). */
 USER_FUNC(evt_img_set_color) {
     EvtWord* args = event->args;
     const char* name = (const char*)evtGetValue(event, args[0]);
@@ -208,11 +223,12 @@ USER_FUNC(evt_img_set_color) {
     u8 b = evtGetValue(event, args[3]);
     u8 a = evtGetValue(event, args[4]);
     ImageEntry* img = imgNameToPtr(name, gp->inBattle != 0);
-    animPoseSetMaterialFlagOn(img->poseId, 0x40);
+    animPoseSetMaterialFlagOn(img->poseId, ANIM_MATERIAL_FLAG_EVT_COLOR);
     animPoseSetMaterialEvtColor(img->poseId, (GXColor){r, g, b, a});
     return EVT_RETURN_DONE;
 }
 
+/** Sets the draw order value of image args[0] to the float args[1]. */
 USER_FUNC(N_evt_img_set_z) {
     EvtWord* args = event->args;
     const char* name = (const char*)evtGetValue(event, args[0]);

@@ -1,7 +1,8 @@
+// bom.rel (ボム村, Fahr Outpost): registers bom_00..bom_04 and the battle database; puffs of breath in the cold.
+
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
 
-#pragma force_active on
 #include "data/mapdata.h"
 #include "mario/mario.h"
 #include "party.h"
@@ -12,38 +13,17 @@
 #include "string.h"
 #include "system.h"
 #include "bom.h"
+#include "eff/eff_mist.h"
+#include "rel_module.h"
 
-typedef void (*voidfunctionptr)(void);
-extern voidfunctionptr _ctors[];
-extern voidfunctionptr _dtors[];
-void* effMistEntry(s32 type, s32 lifetime, f32 x, f32 y, f32 z, f32 angle);
-
-USER_FUNC(bress);
-void _unresolved(void);
-void _epilog(void);
-void _prolog(void);
-
-f32 fd_bom_negone_one_374[2] __attribute__((aligned(8)));
-f32 fd_bom_neg_one_382;
-f32 fd_bom___local_PI_383;
-f32 fd_bom___local_3PIO2_385;
-f32 fd_bom_one_negone_373[2] __attribute__((aligned(8)));
-f32 fd_bom___local_PIO2_384;
-f32 fd_bom_one_381;
-f32 fd_bom_negone_one_360[2] __attribute__((aligned(8)));
-f32 fd_bom_neg_one_365;
-f32 fd_bom___local_PI_366;
-f32 fd_bom___local_3PIO2_368;
-f32 fd_bom_one_negone_359[2] __attribute__((aligned(8)));
-f32 fd_bom___local_PIO2_367;
-f32 fd_bom_one_364;
-f64 fd_bom__three_localstatic4_sqrtf;
-f64 fd_bom__half_localstatic3_sqrtf;
-EvtWord evt_bress[4];
-
+/**
+ * Module unresolved-symbol stub: if a relocation could not be resolved the REL linker points it here;
+ * it does nothing.
+ */
 void _unresolved(void) {
 }
 
+/** REL module epilog: runs the static destructors (_dtors) when bom.rel is unloaded. */
 void _epilog(void) {
     voidfunctionptr* dtor;
 
@@ -52,6 +32,11 @@ void _epilog(void) {
     }
 }
 
+/**
+ * REL module prolog, run when bom.rel is loaded:
+ * runs the static constructors, registers the five map init scripts (bom_00 to bom_04)
+ * and the Fahr Outpost battle setup tables, and starts the breath-cloud script evt_bress.
+ */
 void _prolog(void) {
     voidfunctionptr* ctor;
 
@@ -67,39 +52,14 @@ void _prolog(void) {
     evtEntryType(evt_bress, 0, 0, 0);
 }
 
-f32 fd_bom_negone_one_374[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_bom_neg_one_382 = -1.0f;
-
-f32 fd_bom___local_PI_383 = 3.1415927f;
-
-f32 fd_bom___local_3PIO2_385 = 4.712389f;
-
-f32 fd_bom_one_negone_373[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_bom___local_PIO2_384 = 1.5707964f;
-
-f32 fd_bom_one_381 = 1.0f;
-
-f32 fd_bom_negone_one_360[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_bom_neg_one_365 = -1.0f;
-
-f32 fd_bom___local_PI_366 = 3.1415927f;
-
-f32 fd_bom___local_3PIO2_368 = 4.712389f;
-
-f32 fd_bom_one_negone_359[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_bom___local_PIO2_367 = 1.5707964f;
-
-f32 fd_bom_one_364 = 1.0f;
-
-f64 fd_bom__three_localstatic4_sqrtf = 3.0;
-
-f64 fd_bom__half_localstatic3_sqrtf = 0.5;
-
-USER_FUNC(bress) {
+/**
+ * Breath-puff script helper, run every frame by evt_bress:
+ * spawns a small mist effect in front of Mario and the first partner every 1 to 2 seconds (randomised, 60 to 119
+ * frames), and in front of every active NPC, each with its own timer.
+ * No puffs while Mario is in certain states (marioChkSts 4, 8, 0x10), and from the JP release on,
+ * none while vivianGetStatus() returns 2 (Vivian's shadow state). Simulates visible breath in the cold.
+ */
+static USER_FUNC(bress) {
     static f32 offset[8] = {0.0f, 10.0f, 24.0f, 10.0f, 15.0f, 20.0f, 20.0f, 10.0f};
     MarioWork* mario = marioGetPtr();
     PartyEntry* party = partyGetPtr(0);
@@ -131,13 +91,21 @@ USER_FUNC(bress) {
             timers[i]--;
         }
     }
+#if VERSION <= VERSION_DEMO_JP
+    if (mario != NULL && event->userdata[0] == 0 && !marioChkSts(4) && !marioChkSts(0x10) && !marioChkSts(8)) {
+#else
     if (mario != NULL && event->userdata[0] == 0 && !marioChkSts(4) && !marioChkSts(0x10) && !marioChkSts(8) &&
         vivianGetStatus() != 2) {
+#endif
         effMistEntry(4, 30, mario->position.x, 24.0f + mario->position.y, mario->position.z, 270.0f - mario->displayDirection);
         event->userdata[0] = irand(60) + 60;
     }
+#if VERSION <= VERSION_DEMO_JP
+    if (party != NULL && event->userdata[1] == 0 && !marioChkSts(4) && !marioChkSts(0x10) && !marioChkSts(8)) {
+#else
     if (party != NULL && event->userdata[1] == 0 && !marioChkSts(4) && !marioChkSts(0x10) && !marioChkSts(8) &&
         vivianGetStatus() != 2) {
+#endif
         effMistEntry(4, 30, party->position.x, party->position.y + offset[party->currentMemberId], party->position.z,
                      270.0f - party->displayDirection);
         event->userdata[1] = irand(60) + 60;
@@ -146,7 +114,7 @@ USER_FUNC(bress) {
         event->userdata[2] = irand(60) + 60;
     }
     for (i = 0, npc = npcWork->entries; i < npcWork->total; i++, npc++) {
-        if ((npc->flags & 1) && timers[i] == 0) {
+        if ((npc->flags & NPC_FLAG_USED) && timers[i] == 0) {
             AnimationPose* pose = animPoseGetAnimPosePtr(npc->poseId);
             effMistEntry(4, 30, npc->position.x, npc->height / 2 + npc->position.y, npc->position.z,
                          270.0f - pose->peraTargetRotY);
@@ -156,8 +124,11 @@ USER_FUNC(bress) {
     return EVT_RETURN_BLOCK;
 }
 
+/**
+ * Event script started at module load (not tied to one map):
+ * runs the bress breath-puff helper for the lifetime of the module.
+ */
 EVT_BEGIN(evt_bress)
     CALL(bress)
     RETURN
 EVT_END()
-

@@ -1,3 +1,6 @@
+// Paper Mario 64 effect: fire ring, one 90-vertex mesh with two scrolling flame textures that grows, spawns fire
+// dust and fades out over its last 10 frames.
+#include "eff/n64/eff_fire_ring_n64.h"
 #include "eff/eff_n64.h"
 #include "driver/camdrv.h"
 #include "driver/dispdrv.h"
@@ -5,29 +8,26 @@
 #include "memory.h"
 #include <dolphin/gx.h>
 #include <dolphin/mtx.h>
-#ifndef TARGET_PC /* PC port: the host libc declares these */
-double sin(double x);
-double cos(double x);
-#endif
-
+#include "eff/n64/eff_fire_dust_n64.h"
+#include "libc_decls.h"
 typedef struct EffFireRingN64Work {
-    s32 type;      // 0x0
-    Vec position;  // 0x4
-    f32 unk10[3];  // 0x10
-    f32 scale;     // 0x1c
-    f32 scaleVel;  // 0x20
-    s32 alpha;     // 0x24
-    s32 lifetime;  // 0x28
-    s32 frame;     // 0x2c
-    f32 uv[4];     // 0x30
-    f32 uvVel[4];  // 0x40
-    u8 r, g, b;    // 0x50
+    s32 type;           // 0x0
+    Vec position;       // 0x4
+    f32 reserved_10[3]; // 0x10, never read or written
+    f32 scale;          // 0x1c
+    f32 scaleVel;       // 0x20
+    s32 alpha;          // 0x24
+    s32 lifetime;       // 0x28
+    s32 frame;          // 0x2c
+    f32 uv[4];          // 0x30
+    f32 uvVel[4];       // 0x40
+    u8 r, g, b;         // 0x50
 } EffFireRingN64Work;
 
-EffectEntry* effFireDustN64Entry(s32 type, s32 lifetime, s32 unk, f32 x, f32 y, f32 z, f32 a, f32 b);
-void effFireRingMain(EffectEntry* effect);
-void effFireRingDisp(CameraId cameraId, EffectEntry* effect);
+static void effFireRingMain(EffectEntry* effect);
+static void effFireRingDisp(CameraId cameraId, EffectEntry* effect);
 
+/** The fire ring mesh: 90 vertices of a flat ring, with coordinates for the two scrolling flame textures. */
 static effN64Vtx stg__s_v[] = {
     {99, 0, 205, 9173, 4096, 255, 255, 255, 255},
     {54, 0, 113, 9641, 2048, 255, 255, 255, 255},
@@ -91,6 +91,10 @@ static effN64Vtx stg__s_v[] = {
     {-178, 0, 142, 14461, 4096, 255, 255, 255, 255},
 };
 
+/**
+ * Spawns an expanding ring of fire at (x, y, z) that grows by 0.1 * scale per frame for lifetime frames
+ * and scrolls two flame textures. The only caller is event scripts through evt_eff.
+ */
 EffectEntry* effFireRingN64Entry(s32 type, s32 lifetime, f32 x, f32 y, f32 z, f32 scale) {
     EffectEntry* effect;
     EffFireRingN64Work* work;
@@ -124,7 +128,11 @@ EffectEntry* effFireRingN64Entry(s32 type, s32 lifetime, f32 x, f32 y, f32 z, f3
     return effect;
 }
 
-void effFireRingMain(EffectEntry* effect) {
+/**
+ * Grows the ring, scrolls the two texture layers (wrapped at 128), fades out over the last 10 frames,
+ * and on odd frames spawns a short fire-dust ring at the centre whose radius is 8 * frame.
+ */
+static void effFireRingMain(EffectEntry* effect) {
     EffFireRingN64Work* work;
     Vec position;
     Vec tmp = {0.0f, 0.0f, 0.0f};
@@ -160,19 +168,31 @@ void effFireRingMain(EffectEntry* effect) {
         work->uv[1] += work->uvVel[1];
         work->uv[2] += work->uvVel[2];
         work->uv[3] += work->uvVel[3];
-        if (work->uv[0] > 128.0f) work->uv[0] -= 128.0f;
-        if (work->uv[1] > 128.0f) work->uv[1] -= 128.0f;
-        if (work->uv[2] > 128.0f) work->uv[2] -= 128.0f;
-        if (work->uv[3] > 128.0f) work->uv[3] -= 128.0f;
-        if (work->uv[0] < 0.0f) work->uv[0] += 128.0f;
-        if (work->uv[1] < 0.0f) work->uv[1] += 128.0f;
-        if (work->uv[2] < 0.0f) work->uv[2] += 128.0f;
-        if (work->uv[3] < 0.0f) work->uv[3] += 128.0f;
+        if (work->uv[0] > 128.0f)
+            work->uv[0] -= 128.0f;
+        if (work->uv[1] > 128.0f)
+            work->uv[1] -= 128.0f;
+        if (work->uv[2] > 128.0f)
+            work->uv[2] -= 128.0f;
+        if (work->uv[3] > 128.0f)
+            work->uv[3] -= 128.0f;
+        if (work->uv[0] < 0.0f)
+            work->uv[0] += 128.0f;
+        if (work->uv[1] < 0.0f)
+            work->uv[1] += 128.0f;
+        if (work->uv[2] < 0.0f)
+            work->uv[2] += 128.0f;
+        if (work->uv[3] < 0.0f)
+            work->uv[3] += 128.0f;
         dispEntry(CAMERA_3D, dispCalcZ(&position), 2, (DispCallback)effFireRingDisp, effect);
     }
 }
 
-void effFireRingDisp(CameraId cameraId, EffectEntry* effect) {
+/**
+ * Draws the ring mesh with the two flame textures (0x2d and 0x2e),
+ * using the scrolled coordinates and the work colour.
+ */
+static void effFireRingDisp(CameraId cameraId, EffectEntry* effect) {
     CameraEntry* camera;
     EffFireRingN64Work* work;
     GXTexObj texObj;

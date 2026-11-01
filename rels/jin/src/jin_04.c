@@ -1,7 +1,8 @@
+// jin_04 (ダイム寺院, Creepy Steeple): Doopliss (Rampell) boss room: Doopliss and fake-Mario scenes and battles,
+// Goombella, Koops, Flurrie and Yoshi cutscenes, Ruby Star; door to jin_00.
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
 
-#pragma force_active on
 #include "mario/mario_pouch.h"
 #include "evt/evt_bero.h"
 #include "evt/evt_sub.h"
@@ -10,170 +11,71 @@
 #ifdef TARGET_PC /* declarations the GameCube code calls implicitly */
 #include "manager/evtmgr_cmd.h"
 #endif
+#include "manager/evtmgr_cmd.h"
+#include "evt/evt_cam.h"
+#include "evt/evt_case.h"
+#include "evt/evt_eff.h"
+#include "evt/evt_fade.h"
+#include "evt/evt_hit.h"
+#include "evt/evt_item.h"
+#include "evt/evt_map.h"
+#include "evt/evt_mario.h"
+#include "evt/evt_mobj.h"
+#include "evt/evt_msg.h"
+#include "evt/evt_party.h"
+#include "evt/evt_seq.h"
+#include "evt/evt_snd.h"
+#include "party.h"
+#include "evt/evt_story.h"
+#include "evt/evt_pouch.h"
+#include "driver/casedrv.h"
+#include <dolphin/pad.h>
 
-USER_FUNC(L_evt_party_dokan);
-USER_FUNC(evt_bero_get_info);
-USER_FUNC(evt_cam3d_evt_off);
-USER_FUNC(evt_cam3d_evt_set);
-USER_FUNC(evt_cam3d_evt_set_npc_rel);
-USER_FUNC(evt_cam3d_evt_set_rel);
-USER_FUNC(evt_eff);
-USER_FUNC(evt_eff64);
-USER_FUNC(evt_exit_case_evt);
-USER_FUNC(evt_fade_end_wait);
-USER_FUNC(evt_hitobj_onoff);
-USER_FUNC(evt_item_entry);
-USER_FUNC(evt_item_get_position);
-USER_FUNC(evt_item_set_position);
-USER_FUNC(evt_jin_vivian_pose_set);
-USER_FUNC(evt_kagemario_change);
-USER_FUNC(evt_kagemario_init);
-USER_FUNC(evt_key_get_buttontrg);
-USER_FUNC(evt_mapobj_rotate);
-USER_FUNC(evt_mario_dispflag_onoff);
-USER_FUNC(evt_mario_get_dispdir);
-USER_FUNC(evt_mario_get_party);
-USER_FUNC(evt_mario_get_pos);
-USER_FUNC(evt_mario_hello_party);
-USER_FUNC(evt_mario_jump_pos);
-USER_FUNC(evt_mario_key_onoff);
-USER_FUNC(evt_mario_kill_party);
-USER_FUNC(evt_mario_mov_pos);
-USER_FUNC(evt_mario_normalize);
-USER_FUNC(evt_mario_set_dir);
-USER_FUNC(evt_mario_set_dispdir);
-USER_FUNC(evt_mario_set_pos);
-USER_FUNC(evt_mario_set_pose);
-USER_FUNC(evt_mobj_get_position);
-USER_FUNC(evt_mobj_jumpstand_red);
-USER_FUNC(evt_mobj_recovery_blk);
-USER_FUNC(evt_msg_continue);
-USER_FUNC(evt_msg_print);
-USER_FUNC(evt_msg_print_add);
-USER_FUNC(evt_msg_print_party);
-USER_FUNC(evt_msg_select);
-USER_FUNC(evt_msg_toge);
-USER_FUNC(evt_npc_battle_start);
-USER_FUNC(evt_npc_delete);
-USER_FUNC(evt_npc_entry);
-USER_FUNC(evt_npc_flag_onoff);
-USER_FUNC(evt_npc_get_position);
-USER_FUNC(evt_npc_jump_position_nohit);
-USER_FUNC(evt_npc_move_position);
-USER_FUNC(evt_npc_set_anim);
-USER_FUNC(evt_npc_set_autotalkpose);
-USER_FUNC(evt_npc_set_battle_info);
-USER_FUNC(evt_npc_set_position);
-USER_FUNC(evt_npc_set_ry);
-USER_FUNC(evt_npc_set_stay_anim);
-USER_FUNC(evt_npc_set_tribe);
-USER_FUNC(evt_npc_setup);
-USER_FUNC(evt_npc_sound_data_set);
-USER_FUNC(evt_npc_wait_battle_end);
-USER_FUNC(evt_party_dispflg_onoff);
-USER_FUNC(evt_party_get_pos);
-USER_FUNC(evt_party_jump_pos);
-USER_FUNC(evt_party_move_pos);
-USER_FUNC(evt_party_move_pos2);
-USER_FUNC(evt_party_run);
-USER_FUNC(evt_party_set_dir);
-USER_FUNC(evt_party_set_pos);
-USER_FUNC(evt_party_set_pose);
-USER_FUNC(evt_party_stop);
-USER_FUNC(evt_pouch_party_join);
-USER_FUNC(evt_pouch_party_left);
-USER_FUNC(evt_run_case_evt);
-USER_FUNC(evt_seq_wait);
-USER_FUNC(evt_snd_bgmoff);
-USER_FUNC(evt_snd_bgmoff_f);
-USER_FUNC(evt_snd_bgmon);
-USER_FUNC(evt_snd_envoff);
-USER_FUNC(evt_snd_envon);
-USER_FUNC(evt_snd_set_rev_mode);
-USER_FUNC(evt_snd_sfxon_3d);
-USER_FUNC(evt_sub_intpl_msec_get_value);
-USER_FUNC(evt_sub_intpl_msec_init);
 static USER_FUNC(getYoshiColor);
-USER_FUNC(vivian_away);
+static USER_FUNC(vivian_away);
 
-f32 fd_jin_04_negone_one_374[2] __attribute__((aligned(8)));
-f32 fd_jin_04_neg_one_382;
-f32 fd_jin_04___local_PI_383;
-f32 fd_jin_04___local_3PIO2_385;
-f32 fd_jin_04_one_negone_373[2] __attribute__((aligned(8)));
-f32 fd_jin_04___local_PIO2_384;
-f32 fd_jin_04_one_381;
-f32 fd_jin_04_negone_one_360[2] __attribute__((aligned(8)));
-f32 fd_jin_04_neg_one_365;
-f32 fd_jin_04___local_PI_366;
-f32 fd_jin_04___local_3PIO2_368;
-f32 fd_jin_04_one_negone_359[2] __attribute__((aligned(8)));
-f32 fd_jin_04___local_PIO2_367;
-f32 fd_jin_04_one_364;
-static EvtWord s_close[12];
-static EvtWord s_open[12];
 static BeroEntry bero_entry_data[2];
-EvtWord ranperu_toujou[338];
-EvtWord starstone_jump_se[15];
-EvtWord irekawatta_mario_init[67];
-EvtWord irekawatta_mario[495];
-EvtWord yoshi_color[65];
-EvtWord ranperu_lastbattle[378];
-EvtWord hontonosugata_mario_init[125];
-EvtWord hontonosugata_mario[948];
-EvtWord ranperu_init[20];
-EvtWord nisemario_init[22];
+extern EvtWord ranperu_toujou[];
+extern EvtWord starstone_jump_se[];
+extern EvtWord irekawatta_mario_init[];
+extern EvtWord irekawatta_mario[];
+extern EvtWord yoshi_color[];
+extern EvtWord ranperu_lastbattle[];
+extern EvtWord hontonosugata_mario_init[];
+extern EvtWord hontonosugata_mario[];
+extern EvtWord ranperu_init[];
+extern EvtWord nisemario_init[];
 static NpcSetupInfo npcEnt[7];
-EvtWord jin_04_jumpstand[181];
-EvtWord jin_04_init_evt[103];
+extern EvtWord jin_04_jumpstand[];
 
-f32 fd_jin_04_negone_one_374[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_jin_04_neg_one_382 = -1.0f;
-
-f32 fd_jin_04___local_PI_383 = 3.1415927f;
-
-f32 fd_jin_04___local_3PIO2_385 = 4.712389f;
-
-f32 fd_jin_04_one_negone_373[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_jin_04___local_PIO2_384 = 1.5707964f;
-
-f32 fd_jin_04_one_381 = 1.0f;
-
-f32 fd_jin_04_negone_one_360[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_jin_04_neg_one_365 = -1.0f;
-
-f32 fd_jin_04___local_PI_366 = 3.1415927f;
-
-f32 fd_jin_04___local_3PIO2_368 = 4.712389f;
-
-f32 fd_jin_04_one_negone_359[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_jin_04___local_PIO2_367 = 1.5707964f;
-
-f32 fd_jin_04_one_364 = 1.0f;
-
+/**
+ * Door animation callback: closes door00 as Mario arrives through s_bero (from jin_00);
+ * LW(0) is the door angle and the door turns around Y by 0.44 times it.
+ */
 static EVT_BEGIN(s_close)
     MULTIPLY_FLOAT(LW(0), FLOAT(0.44433594f))
     CALL(evt_mapobj_rotate, 0, STRING("door00"), 0, LW(0), 0)
     RETURN
 EVT_END()
 
+/**
+ * Door animation callback: opens door00 as Mario leaves through s_bero (to jin_00);
+ * LW(0) is the door angle and the door turns around Y by 0.44 times it, negated.
+ */
 static EVT_BEGIN(s_open)
     MULTIPLY_FLOAT(LW(0), FLOAT(-0.44433594f))
     CALL(evt_mapobj_rotate, 0, STRING("door00"), 0, LW(0), 0)
     RETURN
 EVT_END()
 
+/** Doors of this room: the south exit (s_bero) to jin_00. */
 static BeroEntry bero_entry_data[] = {
     {
         "s_bero", // hitName
         1, // type
         2, // sfxId
-        20000, // directionId
-        100000, // centerPosition
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         NULL, // enterEvent
@@ -189,7 +91,14 @@ static BeroEntry bero_entry_data[] = {
     {0},
 };
 
+/**
+ * Doopliss' entrance (case script when Mario steps on the floor, before the first Doopliss battle):
+ * Doopliss (Rampell in the scripts) is on the stairs, speaks with Mario and Goombella, jumps down to Mario,
+ * and the first Doopliss battle starts.
+ * Afterwards the Mario-swap scene (irekawatta_mario) runs and the story becomes "Doopliss battle".
+ */
 EVT_BEGIN(ranperu_toujou)
+    // Mario and his partner turn to face Doopliss, who is on the stairs above.
     CALL(evt_mario_normalize)
     WAIT_MS(500)
     BEGIN_INLINE_EVENT
@@ -200,14 +109,15 @@ EVT_BEGIN(ranperu_toujou)
         WAIT_MS(300)
         CALL(evt_party_set_dir, 0, 90, 200)
     END_INLINE_EVENT
+    // Doopliss talks with Mario and his partner while the camera cuts between them.
     CALL(evt_npc_set_anim, STRING("ランペル"), STRING("S_2"))
     CALL(evt_npc_set_autotalkpose, STRING("ランペル"), STRING("S_2"), STRING("T_2"))
     CALL(evt_msg_toge, 1, 0, 0, 0)
     CALL(evt_msg_print, 0, STRING("stg4_jin_00"), 0, 0)
     CALL(evt_cam3d_evt_set, 108, 766, 141, 105, 726, -98, 800, 11)
     WAIT_MS(800)
-    CALL(evt_snd_bgmoff, 1024)
-    CALL(evt_snd_bgmon, 1, STRING("BGM_FF_ENV_RPL_APPEAR1"))
+    CALL(evt_snd_bgmoff, PSND_FADE_HOLD)
+    CALL(evt_snd_bgmon, PSND_CH(1), STRING("BGM_FF_ENV_RPL_APPEAR1"))
     CALL(evt_party_stop, 0)
     WAIT_MS(300)
     CALL(evt_msg_print, 0, STRING("stg4_jin_01"), 0, STRING("ランペル"))
@@ -226,6 +136,7 @@ EVT_BEGIN(ranperu_toujou)
     SUBTRACT(LW(5), LW(2))
     ADD(LW(4), 40)
     CALL(evt_cam3d_evt_set_rel, -30, 60, 300, LW(3), LW(4), LW(5), 600, 11)
+    // He jumps down and walks up to Mario.
     CALL(evt_npc_set_anim, STRING("ランペル"), STRING("S_1"))
     CALL(evt_npc_set_autotalkpose, STRING("ランペル"), STRING("S_1"), STRING("T_1"))
     CALL(evt_npc_jump_position_nohit, STRING("ランペル"), 85, 670, -65, 350, FLOAT(30.0f))
@@ -250,6 +161,7 @@ EVT_BEGIN(ranperu_toujou)
         END_LOOP
     END_INLINE_EVENT
     CALL(evt_npc_move_position, STRING("ランペル"), 67, 50, 1400, 0, 0)
+    // More banter until Doopliss challenges Mario.
     CALL(evt_msg_print, 0, STRING("stg4_jin_04"), 0, STRING("ランペル"))
     CALL(evt_cam3d_evt_set, -85, 750, 294, -85, 710, 47, 0, 11)
     WAIT_MS(300)
@@ -266,46 +178,65 @@ EVT_BEGIN(ranperu_toujou)
     CALL(evt_msg_print, 0, STRING("stg4_jin_07"), 0, STRING("ランペル"))
     CALL(evt_cam3d_evt_set, 10, 900, 732, 10, 774, 15, 1500, 11)
     WAIT_MS(1500)
+    // The first battle against Doopliss starts.
     CALL(evt_npc_set_battle_info, STRING("ランペル"), 5)
     CALL(evt_npc_battle_start, STRING("ランペル"))
     CALL(evt_npc_wait_battle_end)
-    CALL_CHILD(PTR(irekawatta_mario_init))
-    CALL(evt_snd_bgmoff, 512)
-    SET_VALUE(GSW(0), 200)
+    // Afterwards the swap scene runs and the story advances to "Doopliss battle".
+    CALL_CHILD(irekawatta_mario_init)
+    CALL(evt_snd_bgmoff, PSND_FADE_OUT)
+    SET_VALUE(GSW(GSW_STORY_PROGRESS), STORY_STG4_10_DOOPLISS_BATTLE)
     SET_VALUE(LW(0), 0)
-    SPAWN_EVENT(PTR(irekawatta_mario))
+    SPAWN_EVENT(irekawatta_mario)
     CALL(evt_exit_case_evt)
     RETURN
 EVT_END()
 
+/**
+ * Plays the Star Stone jump sound at the Ruby Star's position;
+ * used for each bounce as Doopliss tosses the Ruby Star.
+ */
 EVT_BEGIN(starstone_jump_se)
     CALL(evt_item_get_position, STRING("rubystar"), LW(0), LW(1), LW(2))
     CALL(evt_snd_sfxon_3d, STRING("SFX_EVT_STARSTONE_JUMP1"), LW(0), LW(1), LW(2), 0)
     RETURN
 EVT_END()
 
+/**
+ * Sets the stage for the Mario-and-Doopliss swap:
+ * Mario's partner stops, the shadow-Mario tint comes on,
+ * Doopliss is moved off screen and the fake Mario NPC takes his place at (-8, 670, 41), Mario at (80, 670, 50).
+ */
 EVT_BEGIN(irekawatta_mario_init)
     CALL(evt_party_stop, 0)
     CALL(evt_kagemario_change, 1)
     CALL(evt_npc_set_position, STRING("ランペル"), 0, -1000, 0)
     CALL(evt_npc_set_position, STRING("にせマリオ"), -8, 670, 41)
     CALL(evt_npc_set_ry, STRING("にせマリオ"), 90)
-    CALL(evt_npc_flag_onoff, 1, STRING("にせマリオ"), 32768)
+    CALL(evt_npc_flag_onoff, 1, STRING("にせマリオ"), NPC_FLAG_INSTANT_TURN)
     CALL(evt_party_set_pos, 0, -40, 670, 41)
     CALL(evt_party_set_dir, 0, 90, 0)
     CALL(evt_mario_set_pos, 80, 670, 50)
     CALL(evt_mario_set_dir, 270, 0, 0)
     CALL(evt_cam3d_evt_set, 75, 785, 422, 75, 715, 25, 0, 11)
     WAIT_FRAMES(1)
-    CALL(evt_npc_flag_onoff, 0, STRING("にせマリオ"), 32768)
+    CALL(evt_npc_flag_onoff, 0, STRING("にせマリオ"), NPC_FLAG_INSTANT_TURN)
     RETURN
 EVT_END()
 
+/**
+ * Cutscene after Doopliss wins the first battle:
+ * Mario spins to the floor, the Ruby Star bounces away on Doopliss' head,
+ * Doopliss takes Mario's shape and the fake Mario sends the partners away (they leave the party),
+ * Mario is left as a shadow. Ends with GSWF_STG4_MARIO_IS_SHADOW set and the story at "Trading Places".
+ * Also entered directly (LW(0) = 1) when the map is re-entered at the "Doopliss battle" step.
+ */
 EVT_BEGIN(irekawatta_mario)
     IF_INT_EQUAL(LW(0), 1)
         GOTO(100)
     END_IF
-    CALL_CHILD(PTR(irekawatta_mario_init))
+    // Stage the scene; Mario spins and falls to the floor.
+    CALL_CHILD(irekawatta_mario_init)
     CALL(evt_mario_set_pose, STRING("M_S_1"))
     WAIT_MS(100)
     CALL(evt_mario_set_pose, STRING("M_D_1"))
@@ -323,13 +254,14 @@ EVT_BEGIN(irekawatta_mario)
         END_IF
     END_LOOP
     WAIT_MS(500)
+    // Doopliss bounces the Ruby Star across the floor on his head.
     CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
     CALL(evt_snd_sfxon_3d, STRING("SFX_VOICE_MARIO_DOWN1"), LW(0), LW(1), LW(2), 0)
     CALL(evt_mario_dispflag_onoff, 1, 2)
     CALL(evt_mario_set_pose, STRING("M_D_2"))
     WAIT_MS(800)
     CALL(evt_cam3d_evt_set, -8, 800, 422, -8, 730, 28, 2000, 11)
-    CALL(evt_item_entry, STRING("rubystar"), 117, 0, -1000, 0, 17, -1, 0)
+    CALL(evt_item_entry, STRING("rubystar"), ITEM_RUBY_STAR, 0, -1000, 0, ITEM_ENTRY_FIXED_NO_TOUCH, -1, 0)
     CALL(evt_npc_sound_data_set, STRING("ランペル"), 0, 0, 0, 0, 0)
     CALL(evt_npc_set_position, STRING("ランペル"), 85, 470, 51)
     BEGIN_INLINE_EVENT
@@ -345,22 +277,29 @@ EVT_BEGIN(irekawatta_mario)
         END_LOOP
     END_INLINE_EVENT
     CALL(evt_npc_jump_position_nohit, STRING("ランペル"), 35, 470, 51, 600, FLOAT(30.0f))
-    SPAWN_EVENT(PTR(starstone_jump_se))
+    SPAWN_EVENT(starstone_jump_se)
     CALL(evt_npc_jump_position_nohit, STRING("ランペル"), 10, 470, 51, 300, FLOAT(15.0f))
-    SPAWN_EVENT(PTR(starstone_jump_se))
+    SPAWN_EVENT(starstone_jump_se)
     CALL(evt_npc_jump_position_nohit, STRING("ランペル"), -2, 470, 51, 150, FLOAT(7.5f))
-    SPAWN_EVENT(PTR(starstone_jump_se))
+    SPAWN_EVENT(starstone_jump_se)
     CALL(evt_npc_jump_position_nohit, STRING("ランペル"), -8, 470, 51, 79, FLOAT(3.25f))
-    SPAWN_EVENT(PTR(starstone_jump_se))
+    SPAWN_EVENT(starstone_jump_se)
     CALL(evt_npc_set_position, STRING("ランペル"), -8, 470, 51)
     WAIT_MS(300)
     WAIT_MS(500)
+    // The Ruby Star scene plays while the music fades out.
     SET_VALUE(LW(0), -1)
     SET_VALUE(LW(1), STRING("rubystar"))
-    CALL(evt_snd_bgmoff_f, 512, 2000)
-    CALL_CHILD(PTR(evt_sub_starstone))
+#if VERSION <= VERSION_DEMO_JP
+    CALL_CHILD(evt_sub_starstone)
+    CALL(evt_snd_bgmoff_f, PSND_FADE_OUT, 2000)
+#else
+    CALL(evt_snd_bgmoff_f, PSND_FADE_OUT, 2000)
+    CALL_CHILD(evt_sub_starstone)
+#endif
     WAIT_MS(500)
     GOTO(101)
+    // Re-entry path: rebuild the same scene when the map is entered at this step.
     LABEL(100)
     CALL(evt_party_stop, 0)
     CALL(evt_mario_key_onoff, 0)
@@ -377,6 +316,7 @@ EVT_BEGIN(irekawatta_mario)
     CALL(evt_mario_set_pose, STRING("M_D_2"))
     CALL(evt_seq_wait, 2)
     CALL(evt_fade_end_wait)
+    // The fake Mario (Doopliss in Mario's shape) talks to the partner.
     LABEL(101)
     CALL(evt_npc_set_stay_anim, STRING("にせマリオ"))
     CALL(evt_npc_set_ry, STRING("にせマリオ"), 270)
@@ -388,6 +328,7 @@ EVT_BEGIN(irekawatta_mario)
         WAIT_MS(300)
         CALL(evt_party_set_dir, 0, 270, 300)
     END_INLINE_EVENT
+    // Doopliss and the fake Mario jump away, and Mario's partners leave his party.
     CALL(evt_npc_move_position, STRING("にせマリオ"), -45, 105, 500, 0, 0)
     CALL(evt_npc_set_position, STRING("ランペル"), -45, 470, 105)
     WAIT_MS(500)
@@ -425,23 +366,28 @@ EVT_BEGIN(irekawatta_mario)
     CALL(evt_pouch_party_left, 2)
     CALL(evt_pouch_party_left, 5)
     CALL(evt_pouch_party_left, 4)
+    // Mario presses A to continue and the Steeple music returns.
     LOOP(0)
         CALL(evt_key_get_buttontrg, 0, LW(0))
-        IF_BITS_SET(LW(0), 256)
+        IF_BITS_SET(LW(0), PAD_BUTTON_A)
             BREAK_LOOP
         END_IF
         WAIT_FRAMES(1)
     END_LOOP
-    CALL(evt_snd_bgmon, 512, STRING("BGM_STG4_JIN1"))
-    CALL(evt_snd_envon, 272, STRING("ENV_STG4_JIN1"))
+    CALL(evt_snd_bgmon, PSND_FADE_OUT, STRING("BGM_STG4_JIN1"))
+#if VERSION >= VERSION_JP
+    CALL(evt_snd_envon, PSND_FADE_RESTART | PSND_FADE_IN, STRING("ENV_STG4_JIN1"))
+#endif
     CALL(evt_cam3d_evt_off, 1000, 11)
-    SET_VALUE(GSW(0), 201)
-    SET_VALUE(GSWF(2081), 1)
+    // The story advances to "Trading Places", Mario stays a shadow and control returns.
+    SET_VALUE(GSW(GSW_STORY_PROGRESS), STORY_STG4_10_02_TRADING_PLACES)
+    SET_VALUE(GSWF(GSWF_STG4_MARIO_IS_SHADOW), 1)
     CALL(evt_mario_dispflag_onoff, 0, 2)
     CALL(evt_mario_key_onoff, 1)
     RETURN
 EVT_END()
 
+/** Re-creates the Yoshi NPC with the sprite of the player's chosen Yoshi colour (c_babyyoshi to c_babyyoshi7). */
 EVT_BEGIN(yoshi_color)
     CALL(evt_npc_delete, STRING("ヨッシー"))
     CALL(getYoshiColor, LW(0))
@@ -463,12 +409,20 @@ EVT_BEGIN(yoshi_color)
     END_SWITCH
     CALL(evt_npc_entry, STRING("ヨッシー"), LW(0))
     CALL(evt_npc_set_tribe, STRING("ヨッシー"), STRING("ヨッシー"))
-    CALL(evt_npc_flag_onoff, 1, STRING("ヨッシー"), 1074267648)
+    CALL(evt_npc_flag_onoff, 1, STRING("ヨッシー"), NPC_FLAG_NO_WALL_HIT | NPC_FLAG_SHADOW_NO_COLLISION | NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM)
     CALL(evt_npc_set_position, STRING("ヨッシー"), 0, -1000, 0)
     RETURN
 EVT_END()
 
+/**
+ * Cutscene on stepping onto the floor at the "Name Guessing" story step:
+ * Mario's partners (Goombella, Koops, Flurrie, Yoshi) stand around the fake Mario, who taunts them;
+ * Vivian asks Mario a yes/no question (stg4_jin_19), learns she has been helping Mario all along and leaves his
+ * side (vivian_away; the fake Mario mocks the quarrel), then Mario fights the fake Mario (the second Doopliss
+ * battle) and the story becomes "Doopliss battle 2".
+ */
 EVT_BEGIN(ranperu_lastbattle)
+    // Doopliss is parked off screen, Mario freezes, and Vivian joins if no partner is with him.
     CALL(evt_npc_set_position, STRING("ランペル"), 0, -1000, 0)
     CALL(evt_mario_key_onoff, 0)
     CALL(evt_mario_normalize)
@@ -485,6 +439,7 @@ EVT_BEGIN(ranperu_lastbattle)
         WAIT_MS(300)
         CALL(evt_party_set_dir, 0, 90, 200)
     END_INLINE_EVENT
+    // The fake Mario and the partners (Goombella, Koops, Flurrie and Yoshi) stand in a row.
     CALL(evt_npc_set_position, STRING("にせマリオ"), 75, 670, 41)
     CALL(evt_npc_set_position, STRING("クリスチーヌ"), 113, 670, 43)
     CALL(evt_npc_set_position, STRING("ノコタロウ"), 135, 670, 61)
@@ -496,11 +451,12 @@ EVT_BEGIN(ranperu_lastbattle)
     CALL(evt_npc_set_ry, STRING("クラウダ"), 270)
     CALL(evt_npc_set_ry, STRING("ヨッシー"), 270)
     CALL(evt_msg_toge, 1, 0, 0, 0)
+    // The fake Mario taunts them and each partner answers in turn as the camera moves along the row.
     CALL(evt_msg_print, 0, STRING("stg4_jin_11"), 0, STRING("にせマリオ"))
     CALL(evt_cam3d_evt_set, 0, 780, 389, 0, 711, -6, 800, 11)
     WAIT_MS(800)
-    CALL(evt_snd_bgmoff, 1024)
-    CALL(evt_snd_bgmon, 1, STRING("BGM_FF_ENV_RPL_APPEAR1"))
+    CALL(evt_snd_bgmoff, PSND_FADE_HOLD)
+    CALL(evt_snd_bgmon, PSND_CH(1), STRING("BGM_FF_ENV_RPL_APPEAR1"))
     CALL(evt_msg_print, 0, STRING("stg4_jin_12"), 0, STRING("にせマリオ"))
     CALL(evt_npc_set_ry, STRING("にせマリオ"), 90)
     CALL(evt_msg_continue)
@@ -529,6 +485,7 @@ EVT_BEGIN(ranperu_lastbattle)
     WAIT_MS(600)
     CALL(evt_npc_set_ry, STRING("にせマリオ"), 270)
     WAIT_MS(600)
+    // The fake Mario speaks again; Vivian questions Mario and leaves his side.
     CALL(evt_msg_print, 0, STRING("stg4_jin_18"), 0, STRING("にせマリオ"))
     CALL(evt_jin_vivian_pose_set, 1, STRING("PTR_S_4"))
     CALL(evt_jin_vivian_pose_set, 7, STRING("PTR_T_5"))
@@ -548,24 +505,30 @@ EVT_BEGIN(ranperu_lastbattle)
     CALL(evt_mario_set_dir, 90, 0, 0)
     CALL(evt_cam3d_evt_set, 10, 900, 732, 10, 774, 15, 1500, 11)
     WAIT_MS(1000)
-    CALL(evt_snd_bgmoff, 512)
+    // The second battle against the fake Mario starts.
+    CALL(evt_snd_bgmoff, PSND_FADE_OUT)
     CALL(evt_npc_set_battle_info, STRING("にせマリオ"), 6)
     CALL(evt_npc_battle_start, STRING("にせマリオ"))
     CALL(evt_npc_wait_battle_end)
-    CALL_CHILD(PTR(hontonosugata_mario_init))
-    SET_VALUE(GSW(0), 211)
-    SPAWN_EVENT(PTR(hontonosugata_mario))
+    // Afterwards the stage is set again and the story advances to "Doopliss battle 2".
+    CALL_CHILD(hontonosugata_mario_init)
+    SET_VALUE(GSW(GSW_STORY_PROGRESS), STORY_STG4_15_DOOPLISS_BATTLE_2)
+    SPAWN_EVENT(hontonosugata_mario)
     CALL(evt_exit_case_evt)
     RETURN
 EVT_END()
 
+/**
+ * Sets the stage after the second battle: positions the fake Mario, Doopliss and the partners in a row,
+ * puts Vivian's poses back to normal and Mario and his partner at the left.
+ */
 EVT_BEGIN(hontonosugata_mario_init)
     CALL(evt_jin_vivian_pose_set, 1, STRING("PTR_S_1"))
     CALL(evt_jin_vivian_pose_set, 7, STRING("PTR_T_1"))
     CALL(evt_npc_set_position, STRING("ランペル"), -15, 670, 41)
-    CALL(evt_npc_flag_onoff, 1, STRING("ランペル"), 128)
-    CALL(evt_npc_flag_onoff, 1, STRING("にせマリオ"), 1073741856)
-    CALL(evt_npc_flag_onoff, 1, STRING("ランペル"), 1073741856)
+    CALL(evt_npc_flag_onoff, 1, STRING("ランペル"), NPC_FLAG_HIDDEN)
+    CALL(evt_npc_flag_onoff, 1, STRING("にせマリオ"), NPC_FLAG_NO_WALL_HIT | NPC_FLAG_INTANGIBLE)
+    CALL(evt_npc_flag_onoff, 1, STRING("ランペル"), NPC_FLAG_NO_WALL_HIT | NPC_FLAG_INTANGIBLE)
     CALL(evt_npc_set_position, STRING("にせマリオ"), 0, 670, 41)
     CALL(evt_npc_set_position, STRING("クリスチーヌ"), 109, 670, 41)
     CALL(evt_npc_set_position, STRING("ノコタロウ"), 78, 670, 75)
@@ -583,21 +546,28 @@ EVT_BEGIN(hontonosugata_mario_init)
     CALL(evt_mario_set_pos, -106, 670, 35)
     CALL(evt_party_set_pos, 0, -66, 670, 35)
     CALL(evt_cam3d_evt_set, -22, 745, 290, -22, 695, -6, 0, 11)
-    CALL(evt_snd_bgmoff, 512)
+    CALL(evt_snd_bgmoff, PSND_FADE_OUT)
     WAIT_FRAMES(1)
     RETURN
 EVT_END()
 
+/**
+ * Cutscene after the second Doopliss battle: Doopliss is beaten, the Ruby Star hops to Mario,
+ * Mario's real shape returns (the shadow tint goes off), Doopliss runs away, the partners cheer,
+ * Vivian takes the Ruby Star and brings it back and the partners rejoin.
+ * The story advances to "The Ruby Star" and the Star Stone cutscene (evt_sub_starstone) plays.
+ */
 EVT_BEGIN(hontonosugata_mario)
-    CALL_CHILD(PTR(hontonosugata_mario_init))
-    CALL(evt_item_entry, STRING("rubystar"), 117, 0, -1000, 0, 17, -1, 0)
+    // Stage the scene; the Ruby Star appears at the fake Mario's position and bounces along.
+    CALL_CHILD(hontonosugata_mario_init)
+    CALL(evt_item_entry, STRING("rubystar"), ITEM_RUBY_STAR, 0, -1000, 0, ITEM_ENTRY_FIXED_NO_TOUCH, -1, 0)
     CALL(evt_npc_entry, STRING("ダミー"), STRING("c_mario"))
-    CALL(evt_npc_flag_onoff, 1, STRING("ダミー"), 128)
+    CALL(evt_npc_flag_onoff, 1, STRING("ダミー"), NPC_FLAG_HIDDEN)
     CALL(evt_npc_get_position, STRING("にせマリオ"), LW(0), LW(1), LW(2))
     SUBTRACT(LW(0), 30)
     ADD(LW(2), 5)
     CALL(evt_npc_set_position, STRING("ダミー"), LW(0), LW(1), LW(2))
-    CALL(evt_npc_flag_onoff, 1, STRING("ダミー"), 1073741856)
+    CALL(evt_npc_flag_onoff, 1, STRING("ダミー"), NPC_FLAG_NO_WALL_HIT | NPC_FLAG_INTANGIBLE)
     CALL(evt_npc_get_position, STRING("にせマリオ"), LW(0), LW(1), LW(2))
     CALL(evt_snd_sfxon_3d, STRING("SFX_STG4_LANPEL_M_DOWN1"), LW(0), LW(1), LW(2), 0)
     CALL(evt_npc_set_anim, STRING("にせマリオ"), STRING("EM_D_4"))
@@ -609,15 +579,15 @@ EVT_BEGIN(hontonosugata_mario)
         SUBTRACT(LW(0), 25)
         ADD(LW(2), 20)
         CALL(evt_npc_jump_position_nohit, STRING("ダミー"), LW(0), 670, LW(2), 300, FLOAT(15.0f))
-        SPAWN_EVENT(PTR(starstone_jump_se))
+        SPAWN_EVENT(starstone_jump_se)
         SUBTRACT(LW(0), 12)
         ADD(LW(2), 10)
         CALL(evt_npc_jump_position_nohit, STRING("ダミー"), LW(0), 670, LW(2), 150, FLOAT(7.5f))
-        SPAWN_EVENT(PTR(starstone_jump_se))
+        SPAWN_EVENT(starstone_jump_se)
         SUBTRACT(LW(0), 6)
         ADD(LW(2), 5)
         CALL(evt_npc_jump_position_nohit, STRING("ダミー"), LW(0), 670, LW(2), 75, FLOAT(3.25f))
-        SPAWN_EVENT(PTR(starstone_jump_se))
+        SPAWN_EVENT(starstone_jump_se)
         SET_VALUE(GF(0), 1)
     END_INLINE_EVENT
     BEGIN_INLINE_EVENT
@@ -631,16 +601,17 @@ EVT_BEGIN(hontonosugata_mario)
         END_LOOP
     END_INLINE_EVENT
     WAIT_MS(340)
+    // Doopliss and the fake Mario flicker back and forth, faster and faster.
     SET_VALUE(LW(4), 100)
-    CALL(evt_npc_flag_onoff, 0, STRING("ランペル"), 128)
-    CALL(evt_npc_flag_onoff, 1, STRING("にせマリオ"), 128)
+    CALL(evt_npc_flag_onoff, 0, STRING("ランペル"), NPC_FLAG_HIDDEN)
+    CALL(evt_npc_flag_onoff, 1, STRING("にせマリオ"), NPC_FLAG_HIDDEN)
     WAIT_MS(LW(4))
     LOOP(0)
-        CALL(evt_npc_flag_onoff, 1, STRING("ランペル"), 128)
-        CALL(evt_npc_flag_onoff, 0, STRING("にせマリオ"), 128)
+        CALL(evt_npc_flag_onoff, 1, STRING("ランペル"), NPC_FLAG_HIDDEN)
+        CALL(evt_npc_flag_onoff, 0, STRING("にせマリオ"), NPC_FLAG_HIDDEN)
         WAIT_MS(LW(4))
-        CALL(evt_npc_flag_onoff, 0, STRING("ランペル"), 128)
-        CALL(evt_npc_flag_onoff, 1, STRING("にせマリオ"), 128)
+        CALL(evt_npc_flag_onoff, 0, STRING("ランペル"), NPC_FLAG_HIDDEN)
+        CALL(evt_npc_flag_onoff, 1, STRING("にせマリオ"), NPC_FLAG_HIDDEN)
         WAIT_MS(LW(4))
         SUBTRACT(LW(4), 10)
         IF_INT_LESS_OR_EQUAL(LW(4), 10)
@@ -650,6 +621,7 @@ EVT_BEGIN(hontonosugata_mario)
     WAIT_MS(600)
     CALL(evt_cam3d_evt_set, 67, 750, 290, 67, 700, -6, 400, 11)
     WAIT_MS(400)
+    // Mario spins in a cloud of stardust and his real shape returns.
     CALL(evt_msg_toge, 1, 0, 0, 0)
     CALL(evt_msg_print, 0, STRING("stg4_jin_27"), 0, 0)
     CALL(evt_cam3d_evt_set, -106, 751, 282, -106, 719, 92, 800, 11)
@@ -707,6 +679,7 @@ EVT_BEGIN(hontonosugata_mario)
     CALL(evt_cam3d_evt_set, -8, 823, 564, -8, 727, 22, 800, 11)
     WAIT_MS(800)
     CALL(evt_npc_set_anim, STRING("ランペル"), STRING("O_1"))
+    // Doopliss taunts them one last time and hops away across the room.
     WAIT_MS(1000)
     CALL(evt_npc_set_tribe, STRING("ランペル"), STRING("ランペル音付き"))
     CALL(evt_npc_set_autotalkpose, STRING("ランペル"), STRING("S_3"), STRING("T_3"))
@@ -724,7 +697,7 @@ EVT_BEGIN(hontonosugata_mario)
     WAIT_MS(400)
     CALL(evt_npc_set_ry, STRING("ランペル"), 270)
     CALL(evt_msg_print, 0, STRING("stg4_jin_28"), 0, STRING("ランペル"))
-    CALL(evt_npc_flag_onoff, 0, STRING("ランペル"), 1024)
+    CALL(evt_npc_flag_onoff, 0, STRING("ランペル"), NPC_FLAG_MOVE_ANIM)
     CALL(evt_npc_set_anim, STRING("ランペル"), STRING("R_2"))
     CALL(evt_npc_set_ry, STRING("ランペル"), 90)
     CALL(evt_npc_jump_position_nohit, STRING("ランペル"), 47, 696, -66, 500, 80)
@@ -735,6 +708,7 @@ EVT_BEGIN(hontonosugata_mario)
     CALL(evt_npc_set_position, STRING("ランペル"), 0, -1000, 0)
     CALL(evt_cam3d_evt_set, 110, 730, 240, 110, 690, -6, 800, 11)
     WAIT_MS(800)
+    // The partners cheer one by one.
     CALL(evt_msg_print, 0, STRING("stg4_jin_29"), 0, STRING("クリスチーヌ"))
     CALL(evt_cam3d_evt_set, 76, 732, 261, 76, 692, -6, 400, 11)
     WAIT_MS(400)
@@ -788,7 +762,8 @@ EVT_BEGIN(hontonosugata_mario)
     CALL(evt_cam3d_evt_set, -16, 790, 433, -16, 731, 92, 0, 11)
     WAIT_FRAMES(1)
     WAIT_MS(500)
-    CALL(evt_party_dispflg_onoff, 0, 16, 0)
+    CALL(evt_party_dispflg_onoff, 0, PARTY_DISP_FLAG_DIR_LOCK, 0)
+    // The partner picks up the Ruby Star and carries it back to Mario.
     CALL(evt_item_get_position, STRING("rubystar"), LW(0), LW(1), LW(2))
     SUBTRACT(LW(2), 5)
     CALL(evt_party_move_pos, 0, LW(0), LW(2), 500)
@@ -821,23 +796,30 @@ EVT_BEGIN(hontonosugata_mario)
     CALL(evt_jin_vivian_pose_set, 3, STRING("PTR_R_1"))
     CALL(evt_jin_vivian_pose_set, 7, STRING("PTR_T_1"))
     CALL(evt_jin_vivian_pose_set, 1, STRING("PTR_S_1"))
+    // The partners rejoin the party, the story advances and the Ruby Star scene plays.
     CALL(evt_pouch_party_join, 1)
     CALL(evt_pouch_party_join, 2)
     CALL(evt_pouch_party_join, 5)
     CALL(evt_pouch_party_join, 4)
     CALL(evt_pouch_party_join, 6)
-    SET_VALUE(GSW(0), 212)
-    SET_VALUE(GSW(0), 213)
+    SET_VALUE(GSW(GSW_STORY_PROGRESS), STORY_STG4_15_02_BACK_TO_NORMAL)
+    SET_VALUE(GSW(GSW_STORY_PROGRESS), STORY_STG4_15_03_THE_RUBY_STAR)
     SET_VALUE(LW(0), 4)
     SET_VALUE(LW(1), STRING("rubystar"))
-    CALL(evt_snd_bgmoff_f, 512, 2000)
-    CALL_CHILD(PTR(evt_sub_starstone))
+#if VERSION >= VERSION_JP
+    CALL(evt_snd_bgmoff_f, PSND_FADE_OUT, 2000)
+#endif
+    CALL_CHILD(evt_sub_starstone)
     RETURN
 EVT_END()
 
+/**
+ * Init script of Doopliss (Rampell): stands at (110, 695, -85) before the first battle,
+ * afterwards parked off screen.
+ */
 EVT_BEGIN(ranperu_init)
-    SWITCH(GSW(0))
-        CASE_LESS(200)
+    SWITCH(GSW(GSW_STORY_PROGRESS))
+        CASE_LESS(STORY_STG4_10_DOOPLISS_BATTLE)
         CALL(evt_npc_set_position, STRING("me"), 110, 695, -85)
         CASE_DEFAULT
         CALL(evt_npc_set_position, STRING("me"), 0, -1000, 0)
@@ -845,9 +827,13 @@ EVT_BEGIN(ranperu_init)
     RETURN
 EVT_END()
 
+/**
+ * Init script of the fake Mario: stands at (-8, 670, 81) during the "Doopliss battle" step,
+ * otherwise parked off screen.
+ */
 EVT_BEGIN(nisemario_init)
-    SWITCH(GSW(0))
-        CASE_EQUAL(200)
+    SWITCH(GSW(GSW_STORY_PROGRESS))
+        CASE_EQUAL(STORY_STG4_10_DOOPLISS_BATTLE)
         CALL(evt_npc_set_position, STRING("me"), -8, 670, 81)
         BREAK_SWITCH
         CASE_DEFAULT
@@ -857,10 +843,14 @@ EVT_BEGIN(nisemario_init)
     RETURN
 EVT_END()
 
+/**
+ * NPCs of the boss room: Doopliss (Rampell), the fake Mario, Goombella (クリスチーヌ), Koops (ノコタロウ),
+ * Flurrie (クラウダ) and Yoshi.
+ */
 static NpcSetupInfo npcEnt[] = {
     {
-        /*"ランペル"*/"\x83\x89\x83\x93\x83\x79\x83\x8B", // name
-        0x600, // flags
+        "ランペル", // name
+        NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM, // flags
         0, // reactionFlags
         ranperu_init, // initEvent
         NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, // regularEvent..territoryType
@@ -869,8 +859,8 @@ static NpcSetupInfo npcEnt[] = {
         0.0f, 0.0f, 0.0f, 0.0f, 0, // searchRange..battleInfoId
     },
     {
-        /*"にせマリオ"*/"\x82\xC9\x82\xB9\x83\x7D\x83\x8A\x83\x49", // name
-        0x600, // flags
+        "にせマリオ", // name
+        NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM, // flags
         0, // reactionFlags
         nisemario_init, // initEvent
         NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, // regularEvent..territoryType
@@ -879,8 +869,8 @@ static NpcSetupInfo npcEnt[] = {
         0.0f, 0.0f, 0.0f, 0.0f, 0, // searchRange..battleInfoId
     },
     {
-        /*"クリスチーヌ"*/"\x83\x4E\x83\x8A\x83\x58\x83\x60\x81\x5B\x83\x6B", // name
-        0x600, // flags
+        "クリスチーヌ", // name
+        NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM, // flags
         0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, // reactionFlags..returnEvent
         NULL, 0, // blowEvent..territoryType
         {0}, // territoryBase
@@ -888,8 +878,8 @@ static NpcSetupInfo npcEnt[] = {
         0.0f, 0.0f, 0.0f, 0.0f, 0, // searchRange..battleInfoId
     },
     {
-        /*"ノコタロウ"*/"\x83\x6D\x83\x52\x83\x5E\x83\x8D\x83\x45", // name
-        0x600, // flags
+        "ノコタロウ", // name
+        NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM, // flags
         0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, // reactionFlags..returnEvent
         NULL, 0, // blowEvent..territoryType
         {0}, // territoryBase
@@ -897,8 +887,8 @@ static NpcSetupInfo npcEnt[] = {
         0.0f, 0.0f, 0.0f, 0.0f, 0, // searchRange..battleInfoId
     },
     {
-        /*"クラウダ"*/"\x83\x4E\x83\x89\x83\x45\x83\x5F", // name
-        0x600, // flags
+        "クラウダ", // name
+        NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM, // flags
         0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, // reactionFlags..returnEvent
         NULL, 0, // blowEvent..territoryType
         {0}, // territoryBase
@@ -906,8 +896,8 @@ static NpcSetupInfo npcEnt[] = {
         0.0f, 0.0f, 0.0f, 0.0f, 0, // searchRange..battleInfoId
     },
     {
-        /*"ヨッシー"*/"\x83\x88\x83\x62\x83\x56\x81\x5B", // name
-        0x600, // flags
+        "ヨッシー", // name
+        NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM, // flags
         0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, // reactionFlags..returnEvent
         NULL, 0, // blowEvent..territoryType
         {0}, // territoryBase
@@ -917,19 +907,27 @@ static NpcSetupInfo npcEnt[] = {
     {0},
 };
 
+/**
+ * Script for the red jump stand (mobj_jump): Mario and his partner are launched up onto the ledge,
+ * landing at (-75, 670, 50) on the first use (the partner jumps along when it can)
+ * and at (-30, 450, 110) on the second form of the stand's effect.
+ */
 EVT_BEGIN(jin_04_jumpstand)
     IF_INT_EQUAL(LW(0), 0)
-        SWITCH(GSW(0))
-            CASE_OR_EQUAL(199)
-            CASE_OR_EQUAL(210)
+        SWITCH(GSW(GSW_STORY_PROGRESS))
+            CASE_OR_EQUAL(STORY_STG4_09_05_LOCK)
+            CASE_OR_EQUAL(STORY_STG4_14_NAME_GUESSING)
             CALL(evt_cam3d_evt_set, -55, 790, 438, -55, 727, 79, 600, 11)
             CALL(evt_mario_key_onoff, 0)
             CASE_END
         END_SWITCH
         CALL(evt_mario_key_onoff, 0)
         CALL(evt_mario_dispflag_onoff, 1, 4)
+        // The demo always makes the partner jump along; the releases only when L_evt_party_dokan returns 1.
+#if VERSION >= VERSION_JP
         CALL(L_evt_party_dokan, 0, LW(0))
         IF_INT_EQUAL(LW(0), 1)
+#endif
             BEGIN_INLINE_EVENT_GET_ID(LW(10))
                 CALL(evt_party_stop, 0)
                 WAIT_MS(300)
@@ -939,7 +937,9 @@ EVT_BEGIN(jin_04_jumpstand)
                 CALL(evt_party_jump_pos, 0, -100, 670, 50, 1000, 0, -1000)
                 CALL(evt_party_run, 0)
             END_INLINE_EVENT
+#if VERSION >= VERSION_JP
         END_IF
+#endif
         CALL(evt_mario_jump_pos, -75, 670, 50, 1000, 0, -1000)
         LOOP(0)
             IS_EVENT_RUNNING(LW(10), LW(11))
@@ -950,11 +950,13 @@ EVT_BEGIN(jin_04_jumpstand)
         END_LOOP
         CALL(evt_mario_key_onoff, 1)
         CALL(evt_mario_dispflag_onoff, 0, 4)
-        ELSE
+    ELSE
         CALL(evt_mario_key_onoff, 0)
         CALL(evt_mario_dispflag_onoff, 1, 4)
+#if VERSION >= VERSION_JP
         CALL(L_evt_party_dokan, 0, LW(0))
         IF_INT_EQUAL(LW(0), 1)
+#endif
             BEGIN_INLINE_EVENT_GET_ID(LW(10))
                 CALL(evt_party_stop, 0)
                 WAIT_MS(300)
@@ -964,7 +966,9 @@ EVT_BEGIN(jin_04_jumpstand)
                 CALL(evt_party_jump_pos, 0, -60, 450, 130, 500, 0, -1000)
                 CALL(evt_party_run, 0)
             END_INLINE_EVENT
+#if VERSION >= VERSION_JP
         END_IF
+#endif
         CALL(evt_hitobj_onoff, STRING("MOBJ_mobj_jump"), 0, 0)
         CALL(evt_mario_jump_pos, -30, 450, 110, 500, 0, -1000)
         CALL(evt_hitobj_onoff, STRING("MOBJ_mobj_jump"), 0, 1)
@@ -974,50 +978,67 @@ EVT_BEGIN(jin_04_jumpstand)
     RETURN
 EVT_END()
 
+/**
+ * Creepy Steeple jin_04 map init: sets the music for the story step, the shadow-Mario tint, the exit to jin_00,
+ * the recovery block and the red jump stand, and sets up the Doopliss
+ * and fake-Mario scenes depending on the story progress.
+ */
 EVT_BEGIN(jin_04_init_evt)
-    SWITCH(GSW(0))
-        CASE_EQUAL(200)
-        CALL(evt_snd_bgmoff, 512)
-        CALL(evt_snd_envoff, 512)
+    SWITCH(GSW(GSW_STORY_PROGRESS))
+        CASE_EQUAL(STORY_STG4_10_DOOPLISS_BATTLE)
+        CALL(evt_snd_bgmoff, PSND_FADE_OUT)
+#if VERSION <= VERSION_DEMO_JP
+        CALL(evt_snd_envon, PSND_FADE_RESTART | PSND_FADE_IN, STRING("ENV_STG4_JIN1"))
+        CALL(evt_snd_set_rev_mode, 2)
+#else
+        CALL(evt_snd_envoff, PSND_FADE_OUT)
+#endif
         CASE_DEFAULT
-        CALL(evt_snd_bgmon, 512, STRING("BGM_STG4_JIN1"))
-        CALL(evt_snd_envon, 272, STRING("ENV_STG4_JIN1"))
+        CALL(evt_snd_bgmon, PSND_FADE_OUT, STRING("BGM_STG4_JIN1"))
+        CALL(evt_snd_envon, PSND_FADE_RESTART | PSND_FADE_IN, STRING("ENV_STG4_JIN1"))
+#if VERSION <= VERSION_DEMO_JP
+        CALL(evt_snd_set_rev_mode, 2)
+#endif
     END_SWITCH
+#if VERSION >= VERSION_JP
     CALL(evt_snd_set_rev_mode, 2)
+#endif
     CALL(evt_kagemario_init)
     SET_VALUE(LW(0), PTR(bero_entry_data))
     CALL(evt_bero_get_info)
-    CALL_CHILD(PTR(evt_bero_info_run))
-    CALL_CHILD(PTR(evt_usu_kagemario_party_kill))
+    CALL_CHILD(evt_bero_info_run)
+    CALL_CHILD(evt_usu_kagemario_party_kill)
     CALL(evt_npc_setup, PTR(npcEnt))
     CALL(evt_mobj_recovery_blk, STRING("mobj_recover"), 10, -100, 60, 150, 0, 0)
     CALL(evt_mobj_jumpstand_red, 0, STRING("mobj_jump"), -75, 450, 100, PTR(jin_04_jumpstand), 0)
-    SWITCH(GSW(0))
-        CASE_LESS(200)
-        CALL(evt_run_case_evt, 0, 1, STRING("a_yuka\0"), 0, PTR(ranperu_toujou), 0)
-        CASE_EQUAL(210)
-        CALL_CHILD(PTR(yoshi_color))
-        CALL(evt_run_case_evt, 0, 1, STRING("a_yuka\0"), 0, PTR(ranperu_lastbattle), 0)
-        CASE_EQUAL(200)
-        CALL_CHILD(PTR(yoshi_color))
+    SWITCH(GSW(GSW_STORY_PROGRESS))
+        CASE_LESS(STORY_STG4_10_DOOPLISS_BATTLE)
+        CALL(evt_run_case_evt, CASE_COND_STAND_ON, 1, STRING("a_yuka"), 0, PTR(ranperu_toujou), 0)
+        CASE_EQUAL(STORY_STG4_14_NAME_GUESSING)
+        CALL_CHILD(yoshi_color)
+        CALL(evt_run_case_evt, CASE_COND_STAND_ON, 1, STRING("a_yuka"), 0, PTR(ranperu_lastbattle), 0)
+        CASE_EQUAL(STORY_STG4_10_DOOPLISS_BATTLE)
+        CALL_CHILD(yoshi_color)
         SET_VALUE(LW(0), 1)
-        SPAWN_EVENT(PTR(irekawatta_mario))
-        CASE_EQUAL(211)
+        SPAWN_EVENT(irekawatta_mario)
+        CASE_EQUAL(STORY_STG4_15_DOOPLISS_BATTLE_2)
         CALL(evt_mario_key_onoff, 0)
         BEGIN_INLINE_EVENT
             CALL(evt_seq_wait, 2)
-            SPAWN_EVENT(PTR(hontonosugata_mario))
+            SPAWN_EVENT(hontonosugata_mario)
         END_INLINE_EVENT
     END_SWITCH
     RETURN
 EVT_END()
 
+/** Script helper: returns the colour index of the player's Yoshi in args[0]. */
 static USER_FUNC(getYoshiColor) {
     EvtWord* args = event->args;
     evtSetValue(event, args[0], pouchGetPartyColor(4));
     return EVT_RETURN_DONE;
 }
-USER_FUNC(vivian_away) {
+/** Script helper: sets a flag in Vivian's party data so she is treated as having left the party. */
+static USER_FUNC(vivian_away) {
     pouchGetPtr()->partyData[6].flags |= 2;
     return EVT_RETURN_DONE;
 }

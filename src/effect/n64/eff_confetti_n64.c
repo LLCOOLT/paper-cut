@@ -1,3 +1,4 @@
+// Paper Mario 64 effect: confetti burst; type % 10 picks the piece count and motion.
 #include "eff/eff_n64.h"
 #include "eff/n64/eff_confetti_n64.h"
 #include "driver/camdrv.h"
@@ -7,7 +8,6 @@
 #include "system.h"
 #include <dolphin/gx.h>
 #include <dolphin/mtx.h>
-#include "eff/eff_magic1_n64.h"
 #include "libc_decls.h"
 
 typedef struct EffConfettiN64Work {
@@ -23,9 +23,17 @@ typedef struct EffConfettiN64Work {
     s32 camId;    // 0x34
 } EffConfettiN64Work;
 
-void effConfettiMain(EffectEntry* effect);
-void effConfettiDisp(CameraId cameraId, EffectEntry* effect);
+static void effConfettiMain(EffectEntry* effect);
+static void effConfettiDisp(CameraId cameraId, EffectEntry* effect);
 
+/** Twelve pastel RGB colours for the confetti pieces, one per piece in turn. */
+u8 color_table[] = {
+    0xE8, 0xA0, 0xA8, 0xA8, 0x50, 0x58, 0xA0, 0xA8, 0xE8, 0x48, 0x48, 0xE8,
+    0xA0, 0xE8, 0xA0, 0x60, 0xB0, 0x78, 0xE0, 0xE0, 0x58, 0xB0, 0xA0, 0x38,
+    0xE8, 0xA0, 0xE8, 0xB0, 0x40, 0xA0, 0xA0, 0xD8, 0xD8, 0x58, 0xA8, 0xA8,
+};
+
+/** Single 6x6 confetti piece quad, used by every type except the type 3 shower. */
 effN64Vtx size6x6_tex16x16_vtx[] = {
     {-3, -3, 0, 0, 0, 0xFF, 0xFF, 0xFF, 0xFF},
     {3, -3, 0, 0x200, 0, 0xFF, 0xFF, 0xFF, 0xFF},
@@ -33,6 +41,7 @@ effN64Vtx size6x6_tex16x16_vtx[] = {
     {-3, 3, 0, 0, 0x200, 0xFF, 0xFF, 0xFF, 0xFF},
 };
 
+/** Four small 6x6 quads per confetti piece, used by the type 3 falling shower. */
 effN64Vtx size6x6_tex16x16_2_vtx[] = {
     {-3, -3, 0, 0, 0, 0xFF, 0xFF, 0xFF, 0xFF},
     {3, -3, 0, 0x200, 0, 0xFF, 0xFF, 0xFF, 0xFF},
@@ -52,20 +61,21 @@ effN64Vtx size6x6_tex16x16_2_vtx[] = {
     {-14, 12, -50, 0, 0x1A00, 0xFF, 0xFF, 0xFF, 0xFF},
 };
 
-u8 color_table[] = {
-    0xE8, 0xA0, 0xA8, 0xA8, 0x50, 0x58, 0xA0, 0xA8, 0xE8, 0x48, 0x48, 0xE8,
-    0xA0, 0xE8, 0xA0, 0x60, 0xB0, 0x78, 0xE0, 0xE0, 0x58, 0xB0, 0xA0, 0x38,
-    0xE8, 0xA0, 0xE8, 0xB0, 0x40, 0xA0, 0xA0, 0xD8, 0xD8, 0x58, 0xA8, 0xA8,
-};
+/** Flutter cycle of a confetti piece: the texture frame on each of six steps, forward and back. */
+u8 anm_seq[] = {0, 1, 2, 3, 2, 1};
 
-u8 anm_seq[] = {0, 1, 2, 3, 2, 1, 0, 0};
-
+/** Chooses which camera the confetti is drawn on (default 4); effConfettiMain only uses it for types below 10. */
 void effConfettiN64SetCamId(EffectEntry* effect, s32 camId) {
     EffConfettiN64Work* w = effect->userdata;
     w->camId = camId;
 }
 
-EffectEntry* effConfettiN64Entry(s32 type, s32 arg1, f32 x, f32 y, f32 z, f32 scale) {
+/**
+ * Spawns a confetti burst of 12, 18, 24 or 48 pieces.
+ * type % 10 picks the piece count and motion (3 = a falling shower, 4-6 = bursts that slow down and sag);
+ * life is in frames. battle_stage_object.c spawns type 4 with life 90.
+ */
+EffectEntry* effConfettiN64Entry(s32 type, s32 life, f32 x, f32 y, f32 z, f32 scale) {
     s32 mod;
     EffectEntry* effect;
     EffConfettiN64Work* w;
@@ -82,41 +92,41 @@ EffectEntry* effConfettiN64Entry(s32 type, s32 arg1, f32 x, f32 y, f32 z, f32 sc
     effect = effEntry();
     mod = type % 10;
     switch (mod) {
-    case 0:
-        n = 12;
-        break;
-    case 1:
-        n = 18;
-        break;
-    case 2:
-        n = 24;
-        break;
-    case 4:
-        n = 12;
-        break;
-    case 5:
-        n = 18;
-        break;
-    case 6:
-        n = 24;
-        break;
-    default:
-        n = 48;
-        break;
+        case 0:
+            n = 12;
+            break;
+        case 1:
+            n = 18;
+            break;
+        case 2:
+            n = 24;
+            break;
+        case 4:
+            n = 12;
+            break;
+        case 5:
+            n = 18;
+            break;
+        case 6:
+            n = 24;
+            break;
+        default:
+            n = 48;
+            break;
     }
     switch (mod) {
-    case 0:
-    case 4:
-        speed = 3.0f;
-        break;
-    case 1:
-    case 5:
-        speed = 4.0f;
-        break;
-    case 6:
-    default:
-        speed = 5.0f;
-        break;
+        case 0:
+        case 4:
+            speed = 3.0f;
+            break;
+        case 1:
+        case 5:
+            speed = 4.0f;
+            break;
+        case 6:
+        default:
+            speed = 5.0f;
+            break;
     }
     effect->type = "ConfettiN64";
     cnt = n + 1;
@@ -128,7 +138,7 @@ EffectEntry* effConfettiN64Entry(s32 type, s32 arg1, f32 x, f32 y, f32 z, f32 sc
     w[0].position.y = y;
     w[0].position.z = z;
     w[0].frame = 0;
-    w[0].life = arg1;
+    w[0].life = life;
     w[0].type = type;
     w[0].count = n;
     w[0].alpha = 0xFF;
@@ -172,7 +182,12 @@ EffectEntry* effConfettiN64Entry(s32 type, s32 arg1, f32 x, f32 y, f32 z, f32 sc
     return effect;
 }
 
-void effConfettiMain(EffectEntry* effect) {
+/**
+ * Counts the life down (alpha fades over the last 10 frames) and moves every piece by its velocity;
+ * type 3 pieces respawn at the top after their 120-frame life,
+ * types 4-6 damp their speed and then fall with accelY.
+ */
+static void effConfettiMain(EffectEntry* effect) {
     s32 mod;
     EffConfettiN64Work* w;
     s32 i;
@@ -212,41 +227,41 @@ void effConfettiMain(EffectEntry* effect) {
     anm = (frame >> 1) % 6;
     for (i = 0; i < count; i++, w++) {
         switch (mod) {
-        case 3:
-            if (w->delay > 0) {
-                w->delay--;
+            case 3:
                 if (w->delay > 0) {
-                    continue;
+                    w->delay--;
+                    if (w->delay > 0) {
+                        continue;
+                    }
                 }
-            }
-            w->life--;
-            if (w->life < 0) {
-                w->position.x = 0.1f * (f32)(rand() % 701) - 35.0f;
-                w->position.y = 0.0f;
-                w->position.z = 0.1f * (f32)(rand() % 301) - 15.0f;
-                w->velocity.x = 0.03f * (w->position.x + 0.1f * (f32)(rand() % 101) - 5.0f);
-                w->velocity.y = -1.7f - 0.01f * (0.1f * (f32)(rand() % 801));
-                w->velocity.z = 0.05f * (0.1f * (f32)(rand() % 201) - 10.0f);
-                w->life = 120;
                 w->life--;
-            }
-            break;
-        default:
-            if (w->delay > 0) {
-                w->delay--;
+                if (w->life < 0) {
+                    w->position.x = 0.1f * (f32)(rand() % 701) - 35.0f;
+                    w->position.y = 0.0f;
+                    w->position.z = 0.1f * (f32)(rand() % 301) - 15.0f;
+                    w->velocity.x = 0.03f * (w->position.x + 0.1f * (f32)(rand() % 101) - 5.0f);
+                    w->velocity.y = -1.7f - 0.01f * (0.1f * (f32)(rand() % 801));
+                    w->velocity.z = 0.05f * (0.1f * (f32)(rand() % 201) - 10.0f);
+                    w->life = 120;
+                    w->life--;
+                }
+                break;
+            default:
                 if (w->delay > 0) {
-                    continue;
+                    w->delay--;
+                    if (w->delay > 0) {
+                        continue;
+                    }
                 }
-            }
-            if (mod >= 4) {
-                w->velocity.x *= 0.98f;
-                w->velocity.y *= 0.98f;
-                w->velocity.z *= 0.98f;
-                if (frame > 5 && w->velocity.y > -0.5f) {
-                    w->velocity.y += w->accelY;
+                if (mod >= 4) {
+                    w->velocity.x *= 0.98f;
+                    w->velocity.y *= 0.98f;
+                    w->velocity.z *= 0.98f;
+                    if (frame > 5 && w->velocity.y > -0.5f) {
+                        w->velocity.y += w->accelY;
+                    }
                 }
-            }
-            break;
+                break;
         }
         w->position.x += w->velocity.x;
         w->position.y += w->velocity.y;
@@ -255,13 +270,17 @@ void effConfettiMain(EffectEntry* effect) {
     if (type < 10) {
         dispEntry(camId, dispCalcZ(&position), 2, (DispCallback)effConfettiDisp, effect);
     } else if (type < 20) {
-        dispEntry(7, dispCalcZ(&position), 2, (DispCallback)effConfettiDisp, effect);
+        dispEntry(CAMERA_3D_EFFECTB, dispCalcZ(&position), 2, (DispCallback)effConfettiDisp, effect);
     } else {
-        dispEntry(8, dispCalcZ(&position), 2, (DispCallback)effConfettiDisp, effect);
+        dispEntry(CAMERA_2D, dispCalcZ(&position), 2, (DispCallback)effConfettiDisp, effect);
     }
 }
 
-void effConfettiDisp(CameraId cameraId, EffectEntry* effect) {
+/**
+ * Draws each active piece as a camera-facing sprite from texture 0x4B,
+ * stepping through the six-entry anm_seq flutter cycle. Type 3 draws four small quads per piece.
+ */
+static void effConfettiDisp(CameraId cameraId, EffectEntry* effect) {
     s32 anm;
     s32 type;
     EffConfettiN64Work* w;
@@ -319,19 +338,19 @@ void effConfettiDisp(CameraId cameraId, EffectEntry* effect) {
         PSMTXConcat(scale, tmp, scale);
         GXLoadTexMtxImm(scale, GX_TEXMTX0, GX_MTX2x4);
         switch (type % 10) {
-        case 3:
-            effSetVtxDescN64(size6x6_tex16x16_2_vtx);
-            GXBegin(GX_TRIANGLES, GX_VTXFMT0, 24);
-            tri2(0, 1, 2, 0, 0, 2, 3, 0);
-            tri2(4, 5, 6, 4, 4, 6, 7, 4);
-            tri2(8, 9, 10, 8, 8, 10, 11, 8);
-            tri2(12, 13, 14, 12, 12, 14, 15, 12);
-            break;
-        default:
-            effSetVtxDescN64(size6x6_tex16x16_vtx);
-            GXBegin(GX_TRIANGLES, GX_VTXFMT0, 6);
-            tri2(0, 1, 2, 0, 0, 2, 3, 0);
-            break;
+            case 3:
+                effSetVtxDescN64(size6x6_tex16x16_2_vtx);
+                GXBegin(GX_TRIANGLES, GX_VTXFMT0, 24);
+                tri2(0, 1, 2, 0, 0, 2, 3, 0);
+                tri2(4, 5, 6, 4, 4, 6, 7, 4);
+                tri2(8, 9, 10, 8, 8, 10, 11, 8);
+                tri2(12, 13, 14, 12, 12, 14, 15, 12);
+                break;
+            default:
+                effSetVtxDescN64(size6x6_tex16x16_vtx);
+                GXBegin(GX_TRIANGLES, GX_VTXFMT0, 6);
+                tri2(0, 1, 2, 0, 0, 2, 3, 0);
+                break;
         }
     }
 }

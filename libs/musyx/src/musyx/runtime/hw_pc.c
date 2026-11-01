@@ -27,6 +27,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+/** Base address of the audio output buffers in memory. */
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -64,10 +65,16 @@ u32 salGetStartDelay(void);
 static volatile int sMutexReady;
 static volatile int sStarted;
 static SND_SOME_CALLBACK userCallback = NULL;
+
 static s16 sDest[QUANTUM_FRAMES * 2];  /* DSP OUTPUT target (salAiGetDest) */
 static s16 sQuantum[QUANTUM_FRAMES * 2]; /* last rendered quantum */
 static u32 sQuantumPos = QUANTUM_FRAMES; /* frames of sQuantum already consumed */
-
+/** PC build version of the frame callback runner (interrupt control compiled out). */
+  // OSEnableInterrupts();
+  // OSDisableInterrupts();
+/** PC build: advances the output buffer index and runs or defers the frame callback; AI DMA calls are commented out. */
+  // AIInitDMA(OSCachedToPhysical(salAIBufferBase) + (salAIBufferIndex * DMA_BUFFER_LEN),
+  //           DMA_BUFFER_LEN);
 static void ensureMutex(void) {
   if (!sMutexReady) {
     mutexInit();
@@ -75,6 +82,7 @@ static void ensureMutex(void) {
   }
 }
 
+/** PC build: marks the (nonexistent) DSP as booted. */
 /* One 5 ms "AI interrupt": MusyX renders sDest and advances its logic. */
 static void runQuantum(void) {
   if (sStarted && userCallback != NULL) {
@@ -92,6 +100,7 @@ static void runQuantum(void) {
 #endif
 }
 
+/** PC build: marks the DSP done and runs a deferred frame callback. */
 void salPcRender(s16* out, u32 frames) {
   while (frames != 0) {
     u32 n;
@@ -109,6 +118,10 @@ void salPcRender(s16* out, u32 frames) {
   }
 }
 
+/** PC build: allocates the four output buffers and reports 32000 Hz, without registering an AI DMA callback. */
+    // DCFlushRange(salAIBufferBase, DMA_BUFFER_LEN * 4);
+    // AIRegisterDMACallback(salCallback);
+    // AIInitDMA(OSCachedToPhysical(salAIBufferBase) + (salAIBufferIndex * 0x280), 0x280);
 #ifdef TTYD_BACKEND_AURORA
 static void SDLCALL audioCallback(void* user, SDL_AudioStream* stream, int additional, int total) {
   s16 buf[QUANTUM_FRAMES * 2];
@@ -119,8 +132,10 @@ static void SDLCALL audioCallback(void* user, SDL_AudioStream* stream, int addit
     SDL_PutAudioStreamData(stream, buf, sizeof(buf));
     additional -= (int)sizeof(buf);
   }
+
 }
 
+/** PC build: does nothing (the GameCube version starts AI DMA). */
 /* No audio device: called once per video frame (vi_aurora.c), renders the
  * frames due into a null sink as the headless backend does, so MusyX and the
  * game's waits on sound still advance. */
@@ -145,6 +160,7 @@ static FILE* sWav;
 static u32 sWavFrames;
 static double sDue;
 
+/** PC build: frees the output buffers. */
 static void wavHeader(FILE* f, u32 frames) {
   u8 h[44];
   u32 data = frames * 4;
@@ -292,6 +308,7 @@ bool salInitAi(SND_SOME_CALLBACK callback, u32 unk, u32* outFreq) {
   return TRUE;
 }
 
+/** PC build: computes the destination index but returns NULL. */
 bool salStartAi() {
   sStarted = TRUE;
 #ifdef TTYD_BACKEND_AURORA
@@ -302,6 +319,7 @@ bool salStartAi() {
   return TRUE;
 }
 
+/** PC build: nothing to start, returns TRUE. */
 bool salExitAi() {
 #ifdef TTYD_BACKEND_AURORA
   if (sStream != NULL) {
@@ -318,8 +336,10 @@ bool salExitAi() {
   return TRUE;
 }
 
+/** PC build: empty. */
 void* salAiGetDest() { return sDest; }
 
+/** PC build: empty. */
 bool salInitDsp(u32 flags) {
   (void)flags;
   return TRUE;
@@ -329,33 +349,44 @@ bool salExitDsp() { return TRUE; }
 
 void salStartDsp(u16* cmdList) { salPcRunCommandList(cmdList); }
 
+/** PC build: builds the command list but there is no DSP to send it to. */
 void salCtrlDsp(s16* dest) {
   salBuildCommandList(dest, salGetStartDelay());
   salStartDsp(dspCmdList);
 }
 
+/** PC build: always 0. */
 u32 salGetStartDelay(void) { return 0; }
 
+/** PC build: sets the nesting level to 1 and creates the robust global mutex used as the "interrupt" lock. */
 void hwInitIrq() {
+  // oldState = OSDisableInterrupts();
   ensureMutex();
   /* As on the GameCube, initialisation runs with "interrupts" disabled until
    * hwInit's hwEnableIrq. */
   mutexLock();
 }
 
+/** PC build: empty. */
 void hwExitIrq() {}
 
+/** PC build: drops the nesting level (the interrupt restore is commented out). */
+    // OSRestoreInterrupts(oldState);
 void hwEnableIrq() { mutexUnlock(); }
 
+/** PC build: raises the nesting level (the interrupt disable is commented out). */
 void hwDisableIrq() {
+    // oldState = OSDisableInterrupts();
   ensureMutex();
   mutexLock();
 }
 
+/** PC build: takes the global mutex. */
 void hwIRQEnterCritical() {
   ensureMutex();
   mutexLock();
 }
 
+/** PC build: releases the global mutex. */
 void hwIRQLeaveCritical() { mutexUnlock(); }
 #endif

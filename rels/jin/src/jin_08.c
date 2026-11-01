@@ -1,125 +1,61 @@
+// jin_08 (ダイム寺院, Creepy Steeple): parrot (oumu) room: chests with Mr. Softener and Power Plus, The Letter P, a key
+// and lock; door to jin_07.
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
 #include "evt/evt_bero.h"
 #include "jin.h"
 #include "evt/evt_npc.h"
 #include "mario/mario_pouch.h"
+#include "evt/evt_case.h"
+#include "evt/evt_item.h"
+#include "driver/itemdrv.h"
+#include "evt/evt_map.h"
+#include "evt/evt_mario.h"
+#include "evt/evt_mobj.h"
+#include "evt/evt_msg.h"
+#include "evt/evt_party.h"
+#include "evt/evt_pouch.h"
+#include "evt/evt_snd.h"
+#include "evt/evt_sub.h"
+#include "evt/evt_window.h"
+#include "evt/evt_story.h"
+#include "driver/casedrv.h"
+#include <dolphin/pad.h>
 
-#pragma force_active on
-
-USER_FUNC(evt_bero_get_info);
-USER_FUNC(evt_exit_case_evt);
-USER_FUNC(evt_item_entry);
-USER_FUNC(evt_item_flag_on);
-USER_FUNC(evt_item_get_item);
-USER_FUNC(evt_kagemario_init);
-USER_FUNC(evt_key_get_buttontrg);
-USER_FUNC(evt_mapobj_get_position);
-USER_FUNC(evt_mapobj_rotate);
-USER_FUNC(evt_mario_balloon_off);
-USER_FUNC(evt_mario_balloon_tenten);
-USER_FUNC(evt_mario_get_party);
-USER_FUNC(evt_mario_get_pos);
-USER_FUNC(evt_mario_key_onoff);
-USER_FUNC(evt_mario_mov_pos2);
-USER_FUNC(evt_mobj_exec_cancel);
-USER_FUNC(evt_mobj_get_position);
-USER_FUNC(evt_mobj_itembox);
-USER_FUNC(evt_mobj_kururing_floor);
-USER_FUNC(evt_mobj_lock);
-USER_FUNC(evt_mobj_wait_animation_end);
-USER_FUNC(evt_msg_print);
-USER_FUNC(evt_msg_toge);
-USER_FUNC(evt_npc_get_position);
-USER_FUNC(evt_npc_setup);
-USER_FUNC(evt_party_cont_onoff);
-USER_FUNC(evt_party_get_status);
-USER_FUNC(evt_pouch_check_item);
-USER_FUNC(evt_pouch_remove_item);
-USER_FUNC(evt_run_case_evt);
-USER_FUNC(evt_snd_bgmon);
-USER_FUNC(evt_snd_envon);
-USER_FUNC(evt_snd_set_rev_mode);
-USER_FUNC(evt_snd_sfxon_3d);
-USER_FUNC(evt_sub_area_check);
-USER_FUNC(evt_sub_intpl_msec_get_value);
-USER_FUNC(evt_sub_intpl_msec_init);
-USER_FUNC(evt_win_item_select);
-USER_FUNC(mainwindow_opendisable);
-USER_FUNC(mainwindow_openenable);
-
-f32 fd_jin_08_negone_one_374[2] __attribute__((aligned(8)));
-f32 fd_jin_08_neg_one_382;
-f32 fd_jin_08___local_PI_383;
-f32 fd_jin_08___local_3PIO2_385;
-f32 fd_jin_08_one_negone_373[2] __attribute__((aligned(8)));
-f32 fd_jin_08___local_PIO2_384;
-f32 fd_jin_08_one_381;
-f32 fd_jin_08_negone_one_360[2] __attribute__((aligned(8)));
-f32 fd_jin_08_neg_one_365;
-f32 fd_jin_08___local_PI_366;
-f32 fd_jin_08___local_3PIO2_368;
-f32 fd_jin_08_one_negone_359[2] __attribute__((aligned(8)));
-f32 fd_jin_08___local_PIO2_367;
-f32 fd_jin_08_one_364;
-static EvtWord e_close[12];
-static EvtWord e_open[12];
-EvtWord evt_roll_in[41];
+extern EvtWord evt_roll_in[];
 static BeroEntry bero_entry_data[3];
-static EvtWord evt_open[73];
-EvtWord evt_open_kagi[73];
-static EvtWord evt_unlock[11];
-EvtWord oumu_init[2];
-EvtWord oumu_talk[61];
-EvtWord oumu_juyo_talk[37];
-EvtWord oumu_check[176];
+extern EvtWord evt_open_kagi[];
+extern EvtWord oumu_init[];
+extern EvtWord oumu_talk[];
+extern EvtWord oumu_juyo_talk[];
+extern EvtWord oumu_check[];
 static NpcSetupInfo npcEnt[2];
 static s32 lock_tbl[2];
-static EvtWord lock_item_check[23];
-static EvtWord mobj_box01[34];
-static EvtWord mobj_box02[34];
-EvtWord jin_08_init_evt[138];
 
-f32 fd_jin_08_negone_one_374[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_jin_08_neg_one_382 = -1.0f;
-
-f32 fd_jin_08___local_PI_383 = 3.1415927f;
-
-f32 fd_jin_08___local_3PIO2_385 = 4.712389f;
-
-f32 fd_jin_08_one_negone_373[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_jin_08___local_PIO2_384 = 1.5707964f;
-
-f32 fd_jin_08_one_381 = 1.0f;
-
-f32 fd_jin_08_negone_one_360[2] __attribute__((aligned(8))) = {-1.0f, 1.0f};
-
-f32 fd_jin_08_neg_one_365 = -1.0f;
-
-f32 fd_jin_08___local_PI_366 = 3.1415927f;
-
-f32 fd_jin_08___local_3PIO2_368 = 4.712389f;
-
-f32 fd_jin_08_one_negone_359[2] __attribute__((aligned(8))) = {1.0f, -1.0f};
-
-f32 fd_jin_08___local_PIO2_367 = 1.5707964f;
-
-f32 fd_jin_08_one_364 = 1.0f;
-
+/**
+ * Door animation callback: closes door07 as Mario arrives through e_bero_1 (from jin_07);
+ * LW(0) is the door angle and the door turns around Y by 0.44 times it.
+ */
 static EVT_BEGIN(e_close)
     MULTIPLY_FLOAT(LW(0), FLOAT(0.44433594f))
     CALL(evt_mapobj_rotate, 0, STRING("door07"), 0, LW(0), 0)
     RETURN
 EVT_END()
 
+/**
+ * Door animation callback: opens door07 as Mario leaves through e_bero_1 (to jin_07);
+ * LW(0) is the door angle and the door turns around Y by 0.44 times it, negated.
+ */
 static EVT_BEGIN(e_open)
     MULTIPLY_FLOAT(LW(0), FLOAT(-0.44433594f))
     CALL(evt_mapobj_rotate, 0, STRING("door07"), 0, LW(0), 0)
     RETURN
 EVT_END()
 
+/**
+ * Exit event for the west exit (e_bero_2) along a ramp: Mario walks back three short steps of decreasing speed;
+ * returns 1 in LW(0).
+ */
 EVT_BEGIN(evt_roll_in)
     CALL(evt_mario_key_onoff, 0)
     CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
@@ -134,13 +70,18 @@ EVT_BEGIN(evt_roll_in)
     RETURN
 EVT_END()
 
+/**
+ * Doors of this room:
+ * e_bero_1, the Steeple Key door back to jin_07 (it stays shut until unlocked), and e_bero_2,
+ * the ramp exit that also leads to jin_07.
+ */
 static BeroEntry bero_entry_data[] = {
     {
         "e_bero_1", // hitName
         1, // type
         2, // sfxId
-        20000, // directionId
-        100000, // centerPosition
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
         0, 0, // centerPositionY..centerPositionZ
         -1, // length
         NULL, // enterEvent
@@ -156,7 +97,7 @@ static BeroEntry bero_entry_data[] = {
     {
         "e_bero_2", // hitName
         0, 0, // type..sfxId
-        2, // directionId
+        BERO_DIR_E, // directionId
         200, // centerPosition
         75, // centerPositionY
         -50, // centerPositionZ
@@ -173,6 +114,10 @@ static BeroEntry bero_entry_data[] = {
     {0},
 };
 
+/**
+ * Chest script for the first chest (hako): the lid swings open (hako_futa) with SFX_STG4_TBOX_OPEN1
+ * and Mario receives The Letter P; sets story progress to STORY_STG4_13_04_THE_LETTER_P and ends the case event.
+ */
 static EVT_BEGIN(evt_open)
     CALL(evt_mario_key_onoff, 0)
     CALL(evt_mapobj_get_position, STRING("hako"), LW(10), LW(11), LW(12))
@@ -188,14 +133,18 @@ static EVT_BEGIN(evt_open)
         END_IF
     END_LOOP
     CALL(evt_mapobj_get_position, STRING("hako"), LW(0), LW(1), LW(2))
-    CALL(evt_item_entry, STRING("n_character"), 68, LW(0), LW(1), LW(2), 17, -1, 0)
+    CALL(evt_item_entry, STRING("n_character"), ITEM_THE_LETTER_P, LW(0), LW(1), LW(2), ITEM_ENTRY_FIXED_NO_TOUCH, -1, 0)
     CALL(evt_item_get_item, STRING("n_character"))
-    SET_VALUE(GSW(0), 209)
+    SET_VALUE(GSW(GSW_STORY_PROGRESS), STORY_STG4_13_04_THE_LETTER_P)
     CALL(evt_mario_key_onoff, 1)
     CALL(evt_exit_case_evt)
     RETURN
 EVT_END()
 
+/**
+ * Chest script for the second chest (hako2): the lid swings open
+ * and Mario receives the Steeple Key (ITEM_STEEPLE_KEY_0x17); sets GSWF_JIN08_STEEPLE_KEY_TAKEN.
+ */
 EVT_BEGIN(evt_open_kagi)
     CALL(evt_mario_key_onoff, 0)
     CALL(evt_mapobj_get_position, STRING("hako2"), LW(10), LW(11), LW(12))
@@ -211,29 +160,40 @@ EVT_BEGIN(evt_open_kagi)
         END_IF
     END_LOOP
     CALL(evt_mapobj_get_position, STRING("hako2"), LW(0), LW(1), LW(2))
-    CALL(evt_item_entry, STRING("key00"), 23, LW(0), LW(1), LW(2), 17, -1, 0)
+    CALL(evt_item_entry, STRING("key00"), ITEM_STEEPLE_KEY_0x17, LW(0), LW(1), LW(2), ITEM_ENTRY_FIXED_NO_TOUCH, -1, 0)
     CALL(evt_item_get_item, STRING("key00"))
-    SET_VALUE(GSWF(2230), 1)
+    SET_VALUE(GSWF(GSWF_JIN08_STEEPLE_KEY_TAKEN), 1)
     CALL(evt_mario_key_onoff, 1)
     CALL(evt_exit_case_evt)
     RETURN
 EVT_END()
 
+/**
+ * Runs when the Steeple Key is used on the lock:
+ * switches the e_bero_1 door entry on and takes the Steeple Key (ITEM_STEEPLE_KEY_0x17) out of Mario's pouch.
+ */
 static EVT_BEGIN(evt_unlock)
     SET_VALUE(LW(0), STRING("e_bero_1"))
-    CALL_CHILD(PTR(bero_case_switch_on))
-    CALL(evt_pouch_remove_item, 23, LW(0))
+    CALL_CHILD(bero_case_switch_on)
+    CALL(evt_pouch_remove_item, ITEM_STEEPLE_KEY_0x17, LW(0))
     RETURN
 EVT_END()
 
+/** Init script of the parrot (oumu) NPC; empty. */
 EVT_BEGIN(oumu_init)
     RETURN
 EVT_END()
 
+/**
+ * Talk script of the parrot: repeats stg4_jin_40..42 one after the other (using LSW(2))
+ * before the Ruby Star is recovered, then different lines for after the Ruby Star and after the final battle.
+ */
 EVT_BEGIN(oumu_talk)
+#if VERSION >= VERSION_JP
     CALL(evt_msg_toge, 1, 0, 0, 0)
-    SWITCH(GSW(0))
-        CASE_LESS(213)
+#endif
+    SWITCH(GSW(GSW_STORY_PROGRESS))
+        CASE_LESS(STORY_STG4_15_03_THE_RUBY_STAR)
         SWITCH(LSW(2))
             CASE_EQUAL(0)
             CALL(evt_msg_print, 0, STRING("stg4_jin_40"), 0, STRING("オウム"))
@@ -244,7 +204,7 @@ EVT_BEGIN(oumu_talk)
             CASE_EQUAL(2)
             CALL(evt_msg_print, 0, STRING("stg4_jin_42"), 0, STRING("オウム"))
         END_SWITCH
-        CASE_LESS_OR_EQUAL(402)
+        CASE_LESS_OR_EQUAL(STORY_STG8_END_AFTER_THE_BATTLE)
         CALL(evt_msg_print, 0, STRING("stg4_jin_48_01"), 0, STRING("オウム"))
         CASE_DEFAULT
         CALL(evt_msg_print, 0, STRING("stg4_jin_48_01_1"), 0, STRING("オウム"))
@@ -252,20 +212,32 @@ EVT_BEGIN(oumu_talk)
     RETURN
 EVT_END()
 
+/**
+ * Special talk with the parrot, triggered by walking up to it with Vivian once she has joined (before the Peach
+ * report step): it speaks (stg4_jin_43 the first time, stg4_jin_44 afterwards)
+ * and LSWF(1) is set for the jin_07 follow-up.
+ */
 EVT_BEGIN(oumu_juyo_talk)
     CALL(evt_mario_key_onoff, 0)
+#if VERSION >= VERSION_JP
     CALL(evt_msg_toge, 1, 0, 0, 0)
-    IF_INT_EQUAL(GSWF(2232), 0)
+#endif
+    IF_INT_EQUAL(GSWF(GSWF_JIN08_PARROT_REVEALED_DOOPLISS_NAME), 0)
         CALL(evt_msg_print, 0, STRING("stg4_jin_43"), 0, STRING("オウム"))
-        SET_VALUE(GSWF(2232), 1)
+        SET_VALUE(GSWF(GSWF_JIN08_PARROT_REVEALED_DOOPLISS_NAME), 1)
         SET_VALUE(LSWF(1), 1)
-        ELSE
+    ELSE
         CALL(evt_msg_print, 0, STRING("stg4_jin_44"), 0, STRING("オウム"))
     END_IF
     CALL(evt_mario_key_onoff, 1)
     RETURN
 EVT_END()
 
+/**
+ * Per-frame watcher near the parrot: shows an "..." balloon when Mario stands within 50 units of it
+ * and lets him talk with A (oumu_talk); when Vivian is out with him it starts the special Vivian talk
+ * and waits for her to return.
+ */
 EVT_BEGIN(oumu_check)
     LOOP(0)
         CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
@@ -274,11 +246,11 @@ EVT_BEGIN(oumu_check)
         CALL(evt_mario_get_party, LW(0))
         IF_INT_NOT_EQUAL(LW(0), 6)
             SET_VALUE(LF(1), 1)
-            ELSE
+        ELSE
             CALL(evt_party_get_status, 6, LW(0))
             IF_INT_NOT_EQUAL(LW(0), 2)
                 SET_VALUE(LF(1), 1)
-                ELSE
+            ELSE
                 SET_VALUE(LF(1), 0)
             END_IF
         END_IF
@@ -288,7 +260,7 @@ EVT_BEGIN(oumu_check)
                     CALL(evt_mario_balloon_tenten)
                     SET_VALUE(LF(0), 1)
                 END_IF
-                ELSE
+            ELSE
                 IF_INT_EQUAL(LF(0), 1)
                     CALL(evt_mario_balloon_off)
                     SET_VALUE(LF(0), 0)
@@ -296,27 +268,29 @@ EVT_BEGIN(oumu_check)
             END_IF
             IF_INT_EQUAL(LF(0), 1)
                 CALL(evt_key_get_buttontrg, 0, LW(0))
-                IF_BITS_SET(LW(0), 256)
+                IF_BITS_SET(LW(0), PAD_BUTTON_A)
                     CALL(evt_mario_balloon_off)
                     SET_VALUE(LF(0), 0)
                     CALL(evt_mario_key_onoff, 0)
-                    CALL_CHILD(PTR(oumu_talk))
+                    CALL_CHILD(oumu_talk)
                     CALL(evt_mario_key_onoff, 1)
                 END_IF
             END_IF
-            ELSE
+        ELSE
             IF_INT_EQUAL(LF(0), 1)
                 CALL(evt_mario_balloon_off)
                 SET_VALUE(LF(0), 0)
             END_IF
             IF_INT_EQUAL(LW(6), 1)
-                IF_INT_GREATER_OR_EQUAL(GSW(0), 206)
-                    IF_INT_LESS(GSW(0), 215)
+                IF_INT_GREATER_OR_EQUAL(GSW(GSW_STORY_PROGRESS), STORY_STG4_13_VIVIAN_JOINS)
+                    IF_INT_LESS(GSW(GSW_STORY_PROGRESS), STORY_STG4_15_05_PEACH_X_NAUT_PHD_REPORT)
                         CALL(evt_mario_key_onoff, 0)
                         CALL(evt_party_cont_onoff, 0, 0)
+#if VERSION >= VERSION_JP
                         CALL(mainwindow_opendisable)
+#endif
                         WAIT_MS(1000)
-                        CALL_CHILD(PTR(oumu_juyo_talk))
+                        CALL_CHILD(oumu_juyo_talk)
                         CALL(evt_party_cont_onoff, 0, 1)
                         LOOP(0)
                             CALL(evt_party_get_status, 6, LW(0))
@@ -325,10 +299,14 @@ EVT_BEGIN(oumu_check)
                             END_IF
                             WAIT_FRAMES(1)
                         END_LOOP
+#if VERSION >= VERSION_JP
                         CALL(evt_msg_toge, 1, 0, 0, 0)
+#endif
                         CALL(evt_msg_print, 0, STRING("stg4_jin_45"), 0, STRING("オウム"))
                         CALL(evt_mario_key_onoff, 1)
+#if VERSION >= VERSION_JP
                         CALL(mainwindow_openenable)
+#endif
                     END_IF
                 END_IF
             END_IF
@@ -338,10 +316,11 @@ EVT_BEGIN(oumu_check)
     RETURN
 EVT_END()
 
+/** NPCs of this room: the parrot. */
 static NpcSetupInfo npcEnt[] = {
     {
-        /*"オウム"*/"\x83\x49\x83\x45\x83\x80", // name
-        0x40000600, // flags
+        "オウム", // name
+        NPC_FLAG_NO_WALL_HIT | NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM, // flags
         0, // reactionFlags
         oumu_init, // initEvent
         NULL, // regularEvent
@@ -354,14 +333,23 @@ static NpcSetupInfo npcEnt[] = {
     {0},
 };
 
+/** Items the key picker offers for the locked door: only the Steeple Key (-1 ends the list). */
 static s32 lock_tbl[] = {
     ITEM_STEEPLE_KEY_0x17, -1,
 };
 
+/**
+ * Check script of the locked door: if Mario has a Steeple Key (ITEM_STEEPLE_KEY_0x17) it opens the key picker
+ * and cancels the unlock (evt_mobj_exec_cancel) if he backs out of it.
+ */
 static EVT_BEGIN(lock_item_check)
-    CALL(evt_pouch_check_item, 23, LW(0))
+    CALL(evt_pouch_check_item, ITEM_STEEPLE_KEY_0x17, LW(0))
     IF_INT_GREATER(LW(0), 0)
+#if VERSION <= VERSION_DEMO_JP
+        CALL(evt_win_item_select, PTR(lock_tbl), LW(0))
+#else
         CALL(evt_win_item_select, 0, PTR(lock_tbl), LW(0), 0)
+#endif
         IF_INT_EQUAL(LW(0), -1)
             CALL(evt_mobj_exec_cancel, STRING("me"))
         END_IF
@@ -369,62 +357,86 @@ static EVT_BEGIN(lock_item_check)
     RETURN
 EVT_END()
 
+/**
+ * Chest script for the Power Plus chest (mobj_box01):
+ * the item appears at the chest while it opens and Mario receives the badge; control is locked meanwhile.
+ */
 static EVT_BEGIN(mobj_box01)
     CALL(evt_mario_key_onoff, 0)
     CALL(evt_mobj_get_position, STRING("mobj_box01"), LW(0), LW(1), LW(2))
-    CALL(evt_item_entry, STRING("item01"), 260, LW(0), LW(1), LW(2), 16, -1, 0)
-    CALL(evt_item_flag_on, STRING("item01"), 258)
+    CALL(evt_item_entry, STRING("item01"), ITEM_POWER_PLUS, LW(0), LW(1), LW(2), ITEM_ENTRY_FIXED, -1, 0)
+#if VERSION <= VERSION_DEMO_JP
+    CALL(evt_item_flag_on, STRING("item01"), ITEM_FLAG_NO_TOUCH)
+#else
+    CALL(evt_item_flag_on, STRING("item01"), ITEM_FLAG_BADGE_RETURN | ITEM_FLAG_NO_TOUCH)
+#endif
     CALL(evt_mobj_wait_animation_end, STRING("mobj_box01"))
     CALL(evt_item_get_item, STRING("item01"))
     CALL(evt_mario_key_onoff, 1)
     RETURN
 EVT_END()
 
+/**
+ * Chest script for the Mr. Softener chest (mobj_box02):
+ * the item appears at the chest while it opens and Mario receives it; control is locked meanwhile.
+ */
 static EVT_BEGIN(mobj_box02)
     CALL(evt_mario_key_onoff, 0)
     CALL(evt_mobj_get_position, STRING("mobj_box02"), LW(0), LW(1), LW(2))
-    CALL(evt_item_entry, STRING("item02"), 147, LW(0), LW(1), LW(2), 16, -1, 0)
-    CALL(evt_item_flag_on, STRING("item02"), 2)
+    CALL(evt_item_entry, STRING("item02"), ITEM_MR_SOFTENER, LW(0), LW(1), LW(2), ITEM_ENTRY_FIXED, -1, 0)
+    CALL(evt_item_flag_on, STRING("item02"), ITEM_FLAG_NO_TOUCH)
     CALL(evt_mobj_wait_animation_end, STRING("mobj_box02"))
     CALL(evt_item_get_item, STRING("item02"))
     CALL(evt_mario_key_onoff, 1)
     RETURN
 EVT_END()
 
+/**
+ * Creepy Steeple jin_08 map init: sets music and reverb, the shadow-Mario tint, the exits and the parrot,
+ * the Letter P chest and the Steeple Key chest, the locked door to jin_07 (opened with the Steeple Key),
+ * the spinning floor tile with a Star Piece and the Power Plus and Mr. Softener chests.
+ */
 EVT_BEGIN(jin_08_init_evt)
-    CALL(evt_snd_bgmon, 512, STRING("BGM_STG4_JIN1"))
-    CALL(evt_snd_envon, 272, STRING("ENV_STG4_JIN1"))
+    CALL(evt_snd_bgmon, PSND_FADE_OUT, STRING("BGM_STG4_JIN1"))
+    CALL(evt_snd_envon, PSND_FADE_RESTART | PSND_FADE_IN, STRING("ENV_STG4_JIN1"))
     CALL(evt_snd_set_rev_mode, 2)
     CALL(evt_kagemario_init)
     SET_VALUE(LW(0), PTR(bero_entry_data))
     CALL(evt_bero_get_info)
-    CALL_CHILD(PTR(evt_bero_info_run))
-    CALL_CHILD(PTR(evt_usu_kagemario_party_kill))
+    CALL_CHILD(evt_bero_info_run)
+    CALL_CHILD(evt_usu_kagemario_party_kill)
     CALL(evt_npc_setup, PTR(npcEnt))
-    IF_INT_LESS(GSW(0), 209)
+    IF_INT_LESS(GSW(GSW_STORY_PROGRESS), STORY_STG4_13_04_THE_LETTER_P)
         CALL(evt_mapobj_rotate, 1, STRING("hako_futa"), 90, 0, 0)
-        CALL(evt_run_case_evt, 9, 1, STRING("a_isu"), 0, PTR(evt_open), 0)
-        ELSE
+        CALL(evt_run_case_evt, CASE_COND_FRONT_A, 1, STRING("a_isu"), 0, PTR(evt_open), 0)
+    ELSE
         CALL(evt_mapobj_rotate, 1, STRING("hako_futa"), 0, 0, 0)
     END_IF
-    IF_INT_EQUAL(GSWF(2230), 0)
+    IF_INT_EQUAL(GSWF(GSWF_JIN08_STEEPLE_KEY_TAKEN), 0)
         CALL(evt_mapobj_rotate, 1, STRING("hako_futa2"), 0, 0, 0)
-        CALL(evt_run_case_evt, 9, 1, STRING("a_hoko2"), 0, PTR(evt_open_kagi), 0)
-        ELSE
+        CALL(evt_run_case_evt, CASE_COND_FRONT_A, 1, STRING("a_hoko2"), 0, PTR(evt_open_kagi), 0)
+    ELSE
         CALL(evt_mapobj_rotate, 1, STRING("hako_futa2"), -90, 0, 0)
     END_IF
-    CALL(evt_mobj_lock, STRING("mobj_lock00"), 23, 195, 10, 25, 270, PTR(lock_item_check), PTR(evt_unlock), GSWF(2231))
-    IF_INT_EQUAL(GSWF(2231), 1)
+    CALL(evt_mobj_lock, STRING("mobj_lock00"), ITEM_STEEPLE_KEY_0x17, 195, 10, 25, 270, PTR(lock_item_check), PTR(evt_unlock), GSWF(GSWF_JIN08_DOOR_UNLOCKED))
+    IF_INT_EQUAL(GSWF(GSWF_JIN08_DOOR_UNLOCKED), 1)
         SET_VALUE(LW(0), STRING("e_bero_1"))
-        CALL_CHILD(PTR(bero_case_switch_on))
-        ELSE
+        CALL_CHILD(bero_case_switch_on)
+    ELSE
         SET_VALUE(LW(0), STRING("e_bero_1"))
-        CALL_CHILD(PTR(bero_case_switch_off))
+        CALL_CHILD(bero_case_switch_off)
     END_IF
-    CALL(evt_mobj_kururing_floor, STRING("kururin1"), 115, 0, 105, STRING("group87"), 125, GSWF(5637))
-    CALL(evt_mobj_itembox, STRING("mobj_box01"), 60, 0, -65, 0, 0, PTR(mobj_box01), GSWF(2239))
-    CALL(evt_mobj_itembox, STRING("mobj_box02"), 120, 0, -65, 0, 0, PTR(mobj_box02), GSWF(2240))
-    SPAWN_EVENT(PTR(oumu_check))
+    CALL(evt_mobj_kururing_floor, STRING("kururin1"), 115, 0, 105, STRING("group87"), 125, GSWF(GSWF_JIN08_STAR_PIECE_PANEL))
+#if VERSION <= VERSION_DEMO_JP
+    CALL(evt_mobj_itembox, STRING("mobj_box01"), 80, 0, -75, 0, 0, PTR(mobj_box01), GSWF(GSWF_JIN08_POWER_PLUS_CHEST_OPENED))
+#else
+    CALL(evt_mobj_itembox, STRING("mobj_box01"), 60, 0, -65, 0, 0, PTR(mobj_box01), GSWF(GSWF_JIN08_POWER_PLUS_CHEST_OPENED))
+#endif
+#if VERSION <= VERSION_DEMO_JP
+    CALL(evt_mobj_itembox, STRING("mobj_box02"), 120, 0, -80, 0, 0, PTR(mobj_box02), GSWF(GSWF_JIN08_MR_SOFTENER_CHEST_OPENED))
+#else
+    CALL(evt_mobj_itembox, STRING("mobj_box02"), 120, 0, -65, 0, 0, PTR(mobj_box02), GSWF(GSWF_JIN08_MR_SOFTENER_CHEST_OPENED))
+#endif
+    SPAWN_EVENT(oumu_check)
     RETURN
 EVT_END()
-
