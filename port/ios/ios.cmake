@@ -1,22 +1,28 @@
 # The iOS app around the ttyd target. Included from CMakeLists.txt when
 # CMAKE_SYSTEM_NAME is iOS (toolchain: cmake/toolchains/ios.cmake).
 #
-# Produces <build>/ttyd-jp.app (or ttyd-us.app), and with the ttyd_ipa target
+# Produces <build>/ttyd-jp.app (or ttyd-us.app, ttyd-eu.app), and with the ttyd_ipa target
 # an unsigned <build>/ttyd-jp.ipa for sideloading tools, which sign it with
 # the user's Apple ID. No game data and no game artwork go into the bundle.
 
 if(TTYD_VERSION STREQUAL "G8ME01")
-    set(_ios_region US)
     set(_ios_suffix us)
+elseif(TTYD_VERSION STREQUAL "G8MP01")
+    set(_ios_suffix eu)
 else()
-    set(_ios_region JP)
     set(_ios_suffix jp)
 endif()
 set(TTYD_IOS_BUNDLE_ID_PREFIX "io.github.ttyd-port" CACHE STRING
-    "iOS bundle identifier prefix; .jp or .us is appended (one app per version)")
+    "iOS bundle identifier prefix; .jp, .us or .eu is appended (one app per version)")
 set(TTYD_IOS_BUNDLE_ID "${TTYD_IOS_BUNDLE_ID_PREFIX}.${_ios_suffix}")
-set(TTYD_IOS_DISPLAY_NAME "Paper Cut ${_ios_region}")
-set(TTYD_IOS_VERSION "0.1")
+# the name under the icon: Paper Cut, whichever version (the launcher names it)
+set(TTYD_IOS_DISPLAY_NAME "Paper Cut" CACHE STRING "The app's name on the Home Screen")
+# the release's version when it is one (TTYD_PORT_VERSION, e.g. 0.2.0), else 0.2
+if(TTYD_PORT_VERSION MATCHES "^[0-9]+(\\.[0-9]+)*$")
+    set(TTYD_IOS_VERSION "${TTYD_PORT_VERSION}")
+else()
+    set(TTYD_IOS_VERSION "0.2")
+endif()
 set(TTYD_IOS_BUILD "1")
 if(CMAKE_OSX_DEPLOYMENT_TARGET)
     set(TTYD_IOS_DEPLOYMENT_TARGET ${CMAKE_OSX_DEPLOYMENT_TARGET})

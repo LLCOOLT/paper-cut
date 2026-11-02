@@ -1,11 +1,13 @@
 // The "Modes" tab (port/include/port/modes.h): the boss rush and the endless
 // Glitz Pit, started from here while a file is in play; the run's time or
 // round over the picture; the best ones kept in <user>/modes.txt.
+#include "port/layout.h"
 #include "port/mod_host.h"
 #include "port/modes.h"
 #include "port/settings.h"
 #include <SDL3/SDL.h>
 #include <imgui.h>
+#include <cfloat>
 #include <cstdio>
 #include <cstdlib>
 #include <string>
@@ -130,10 +132,25 @@ void frame(void*) {
   } else {
     line = "Round " + std::to_string(s->step) + ": " + s->next + "   " + clock(s->ms);
   }
-  portModHostDrawRect(380.0f, 8.0f, 252.0f, s->condition != nullptr && !s->finished ? 44.0f : 22.0f, 0x00000090u);
-  portModHostDrawText(386.0f, 10.0f, 14.0f, 0xFFFFFFFFu, line.c_str());
-  if (s->condition != nullptr && !s->finished) {
-    portModHostDrawText(386.0f, 30.0f, 13.0f, 0xFFE080FFu, plain(s->condition).c_str());
+  // the box as wide as its text (a long boss name or condition), right-aligned in the 640 x 480 picture
+  const bool cond = s->condition != nullptr && !s->finished;
+  const std::string condText = cond ? plain(s->condition) : std::string();
+  float w = ImGui::GetFont()->CalcTextSizeA(14.0f, FLT_MAX, 0.0f, line.c_str()).x;
+  if (cond) {
+    const float cw = ImGui::GetFont()->CalcTextSizeA(13.0f, FLT_MAX, 0.0f, condText.c_str()).x;
+    w = cw > w ? cw : w;
+  }
+  // the text is scaled by the picture's height, x by its width (a picture wider or narrower than 4:3)
+  PortLayout layout;
+  if (portLayoutGet(&layout) && layout.picW > 0.0f && layout.picH > 0.0f) {
+    w *= (layout.picH / 480.0f) / (layout.picW / 640.0f);
+  }
+  w += 16.0f;
+  const float x = w < 624.0f ? 632.0f - w : 8.0f;
+  portModHostDrawRect(x, 8.0f, w, cond ? 44.0f : 22.0f, 0x00000090u);
+  portModHostDrawText(x + 6.0f, 10.0f, 14.0f, 0xFFFFFFFFu, line.c_str());
+  if (cond) {
+    portModHostDrawText(x + 6.0f, 30.0f, 13.0f, 0xFFE080FFu, condText.c_str());
   }
 }
 

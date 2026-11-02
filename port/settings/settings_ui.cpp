@@ -31,6 +31,7 @@
 #include <cstring>
 #include <deque>
 #include <cfloat>
+#include <cmath>
 #include <ctime>
 #include <string>
 #include <vector>
@@ -85,6 +86,7 @@ void setOpen(bool open) {
   sOpen = open;
   PADBlockInput(open);
   if (!open) {
+    portUiReleaseInput();
     portSettingsSave();
   }
 }
@@ -191,6 +193,126 @@ void remapSection() {
     sRebind = -1;
   }
   note("Choose a button on the left, then press the controller button that should do it.");
+}
+
+// The keyboard's keys for controller 1 (Aurora's key bindings, saved by it in
+// keyboard_bindings.dat). Each row: a GameCube button, or a stick direction.
+struct KeyRow {
+  const char* name;
+  bool axis;      // a stick direction (PADKeyAxisBinding), else a button
+  u16 target;     // PAD_BUTTON_* / PAD_TRIGGER_*, or PAD_AXIS_*
+  SDL_Scancode key; // the default (UNKNOWN: none)
+  const char* second = nullptr; // a stick direction's second key: the port's setting, not Aurora's (one key each)
+};
+// WASD and the arrows move, Space is A; clear of the port's own keys (F1,
+// F5-F8, F11, F12, Tab; Shift, Ctrl and Alt for the walk boost). The D-pad,
+// which the game hardly uses, has no keys until the player gives it some.
+constexpr KeyRow kKeyRows[] = {
+    {"Stick up", true, PAD_AXIS_LEFT_Y_POS, SDL_SCANCODE_W},
+    {"Stick down", true, PAD_AXIS_LEFT_Y_NEG, SDL_SCANCODE_S},
+    {"Stick left", true, PAD_AXIS_LEFT_X_NEG, SDL_SCANCODE_A},
+    {"Stick right", true, PAD_AXIS_LEFT_X_POS, SDL_SCANCODE_D},
+    {"Stick up (second key)", true, PAD_AXIS_LEFT_Y_POS, SDL_SCANCODE_UP, "key2_stick_up"},
+    {"Stick down (second key)", true, PAD_AXIS_LEFT_Y_NEG, SDL_SCANCODE_DOWN, "key2_stick_down"},
+    {"Stick left (second key)", true, PAD_AXIS_LEFT_X_NEG, SDL_SCANCODE_LEFT, "key2_stick_left"},
+    {"Stick right (second key)", true, PAD_AXIS_LEFT_X_POS, SDL_SCANCODE_RIGHT, "key2_stick_right"},
+    {"A", false, PAD_BUTTON_A, SDL_SCANCODE_SPACE},
+    {"B", false, PAD_BUTTON_B, SDL_SCANCODE_E},
+    {"X", false, PAD_BUTTON_X, SDL_SCANCODE_R},
+    {"Y", false, PAD_BUTTON_Y, SDL_SCANCODE_F},
+    {"Z", false, PAD_TRIGGER_Z, SDL_SCANCODE_Q},
+    {"L", false, PAD_TRIGGER_L, SDL_SCANCODE_1},
+    {"R", false, PAD_TRIGGER_R, SDL_SCANCODE_3},
+    {"Start", false, PAD_BUTTON_START, SDL_SCANCODE_RETURN},
+    {"D-pad up", false, PAD_BUTTON_UP, SDL_SCANCODE_UNKNOWN},
+    {"D-pad down", false, PAD_BUTTON_DOWN, SDL_SCANCODE_UNKNOWN},
+    {"D-pad left", false, PAD_BUTTON_LEFT, SDL_SCANCODE_UNKNOWN},
+    {"D-pad right", false, PAD_BUTTON_RIGHT, SDL_SCANCODE_UNKNOWN},
+};
+int sKeyRebind = -1; // the kKeyRows row waiting for a key (portSettingsEvent takes it)
+
+// the second keys' settings, declared at start with their defaults
+const bool sSecondKeysDeclared = [] {
+  for (const KeyRow& row : kKeyRows) {
+    if (row.second != nullptr) {
+      portSettingsDeclare(row.second, row.key, PAD_KEY_INVALID, SDL_SCANCODE_COUNT - 1);
+    }
+  }
+  return true;
+}();
+
+s32 boundKey(const KeyRow& row) {
+  u32 count = 0;
+  if (row.second != nullptr) {
+    const int* v = portSettingsFind(row.second);
+    return v != nullptr ? *v : PAD_KEY_INVALID;
+  }
+  if (row.axis) {
+    const PADKeyAxisBinding* axes = PADGetKeyAxisBindings(0, &count);
+    for (u32 i = 0; axes != nullptr && i < count; i++) {
+      if (axes[i].padAxis == row.target) {
+        return axes[i].scancode;
+      }
+    }
+  } else {
+    const PADKeyButtonBinding* buttons = PADGetKeyButtonBindings(0, &count);
+    for (u32 i = 0; buttons != nullptr && i < count; i++) {
+      if (buttons[i].padButton == row.target) {
+        return buttons[i].scancode;
+      }
+    }
+  }
+  return PAD_KEY_INVALID;
+}
+
+void bindKey(const KeyRow& row, s32 scancode) {
+  if (row.second != nullptr) {
+    if (int* v = portSettingsFind(row.second)) {
+      *v = scancode;
+      portSettingsSave();
+    }
+    return;
+  }
+  if (row.axis) {
+    PADSetKeyAxisBinding(0, PADKeyAxisBinding{scancode, row.target, 100});
+  } else {
+    PADSetKeyButtonBinding(0, PADKeyButtonBinding{scancode, row.target});
+  }
+  PADSerializeMappings();
+}
+
+void keyboardSection() {
+  ImGui::Separator();
+  ImGui::TextUnformatted("Keyboard keys");
+  for (size_t i = 0; i < sizeof(kKeyRows) / sizeof(kKeyRows[0]); i++) {
+    const KeyRow& row = kKeyRows[i];
+    ImGui::PushID(static_cast<int>(i) + 1000);
+    const s32 key = boundKey(row);
+    const char* label = sKeyRebind == static_cast<int>(i) ? "Press a key..."
+                        : key > PAD_KEY_INVALID         ? SDL_GetScancodeName(static_cast<SDL_Scancode>(key))
+                                                         : "(none)";
+    if (ImGui::Button(label[0] != '\0' ? label : "?", ImVec2(ImGui::GetFontSize() * 9.f, 0.f))) {
+      sKeyRebind = static_cast<int>(i);
+    }
+    ImGui::SameLine();
+    ImGui::Text("GameCube %s", row.name);
+    ImGui::PopID();
+  }
+  if (ImGui::Button("Restore default keys")) {
+    PADRestoreDefaultKeyBindings(0);
+    PADSetKeyboardActive(0, TRUE);
+    PADSerializeMappings();
+    for (const KeyRow& row : kKeyRows) {
+      if (row.second != nullptr) {
+        if (int* v = portSettingsFind(row.second)) {
+          *v = row.key;
+        }
+      }
+    }
+    portSettingsSave();
+    sKeyRebind = -1;
+  }
+  note("Choose a row, then press the key that should do it (Escape: leave it as it is).");
 }
 
 constexpr const char* kFfSpeeds[] = {"2x", "3x", "4x", "5x", "6x", "7x", "8x"};
@@ -821,6 +943,8 @@ const Item kItems[] = {
 #endif
     {"Controls", "Controller buttons", nullptr, 0, [](PortSettings*, const Item&) { remapSection(); },
      "remap rebind buttons swap a b mapping gamepad", nullptr},
+    {"Controls", "Keyboard keys", nullptr, 0, [](PortSettings*, const Item&) { keyboardSection(); },
+     "keyboard keys keybinds bindings remap wasd", nullptr},
 
     // Gameplay
     {"Gameplay", "Action Command cue",
@@ -943,8 +1067,14 @@ void drawExtra(PortSettings*, const Item& it) {
   const Extra& e = *static_cast<const Extra*>(it.data);
   int* v = portSettingsFind(e.key);
   if (v == nullptr) {
-    ImGui::TextDisabled("%s (not declared: %s)", it.label, e.key);
-    return;
+    // A feature that declares its setting only where it applies (once the
+    // game runs) leaves the launcher's Settings tab without it: declared here
+    // from the control's range, its lowest value the default, and named in the
+    // log so the feature can declare it at start (as display.cpp does).
+    const int lo = e.kind == 2 ? e.min : 0;
+    const int hi = e.kind == 0 ? 1 : e.kind == 1 ? e.count - 1 : e.max;
+    std::fprintf(stderr, "settings: %s declared by the settings page (declare it at start)\n", e.key);
+    v = portSettingsDeclare(e.key, lo, lo, hi);
   }
   bool edited = false;
   if (e.kind == 0) {
@@ -1198,6 +1328,85 @@ extern "C" void portSettingsAddOverlay(void (*draw)(int pageOpen), int (*event)(
 }
 
 // A touch at window point (x, y) is on the settings page or the crash notice.
+// Before PADInit (main_aurora.c): the default keys (kKeyRows; the C-stick and
+// the analog triggers unbound). Aurora has none, so the keyboard did nothing.
+extern "C" void portKeyboardDefaults(void) {
+  PADDefaultKeyBindings d;
+  const u16 buttons[PAD_BUTTON_COUNT] = {PAD_BUTTON_A,    PAD_BUTTON_B,    PAD_BUTTON_X,    PAD_BUTTON_Y,
+                                         PAD_BUTTON_START, PAD_TRIGGER_Z,   PAD_TRIGGER_L,   PAD_TRIGGER_R,
+                                         PAD_BUTTON_UP,   PAD_BUTTON_DOWN, PAD_BUTTON_LEFT, PAD_BUTTON_RIGHT};
+  for (int i = 0; i < PAD_BUTTON_COUNT; i++) {
+    d.buttons[i] = PADKeyButtonBinding{PAD_KEY_INVALID, buttons[i]};
+  }
+  for (int i = 0; i < PAD_AXIS_COUNT; i++) {
+    d.axes[i] = PADKeyAxisBinding{PAD_KEY_INVALID, static_cast<PADAxis>(i), 100};
+  }
+  for (const KeyRow& row : kKeyRows) {
+    const s32 key = row.key != SDL_SCANCODE_UNKNOWN ? row.key : PAD_KEY_INVALID;
+    if (row.second != nullptr) {
+      continue; // the port's own (portKeyboardApplyPad)
+    }
+    if (row.axis) {
+      d.axes[row.target].scancode = key;
+    } else {
+      for (PADKeyButtonBinding& b : d.buttons) {
+        if (b.padButton == row.target) {
+          b.scancode = key;
+        }
+      }
+    }
+  }
+  PADSetDefaultKeyBindings(0, &d);
+}
+
+// After each PADRead (DEMOPadRead): the stick's second keys (the arrows by
+// default) held move it as its first keys do, when the stick isn't already
+// pushed and nothing else has the keyboard (the settings page, ImGui)
+extern "C" void portKeyboardApplyPad(PADStatus* pad) {
+  if (sOpen || gPortLauncherShown || ImGui::GetCurrentContext() == nullptr || ImGui::GetIO().WantCaptureKeyboard) {
+    return;
+  }
+  int count = 0;
+  const bool* keys = SDL_GetKeyboardState(&count);
+  auto held = [&](const char* setting) {
+    const int* v = portSettingsFind(setting);
+    return v != nullptr && *v > 0 && *v < count && keys[*v];
+  };
+  int x = (held("key2_stick_right") ? 1 : 0) - (held("key2_stick_left") ? 1 : 0);
+  int y = (held("key2_stick_up") ? 1 : 0) - (held("key2_stick_down") ? 1 : 0);
+  if ((x == 0 && y == 0) || std::abs(pad[0].stickX) > 16 || std::abs(pad[0].stickY) > 16) {
+    return;
+  }
+  const float k = x != 0 && y != 0 ? 0.7071f : 1.f; // the same speed diagonally
+  pad[0].err = PAD_ERR_NONE;
+  pad[0].stickX = static_cast<s8>(x * 100 * k);
+  pad[0].stickY = static_cast<s8>(y * 100 * k);
+}
+
+// After PADInit (DEMOPadInit): the keyboard on with the defaults, unless the
+// player's own saved bindings already turned it on
+extern "C" void portKeyboardActivate(void) {
+  u32 count = 0;
+  if (PADGetKeyButtonBindings(0, &count) == nullptr) {
+    PADSetKeyboardActive(0, TRUE);
+  }
+}
+
+void portUiReleaseInput() {
+  if (ImGui::GetCurrentContext() == nullptr) {
+    return;
+  }
+  ImGuiIO& io = ImGui::GetIO();
+  ImGui::SetWindowFocus(nullptr);
+  io.ConfigFlags &= ~(ImGuiConfigFlags_NavEnableKeyboard | ImGuiConfigFlags_NavEnableGamepad);
+  io.ClearInputKeys();
+}
+
+// the touch controls' settings button (port/touch/touch_overlay.cpp)
+extern "C" void portSettingsToggle(void) {
+  setOpen(!sOpen);
+}
+
 extern "C" int portSettingsOwnsPoint(float x, float y) {
   for (int i = 0; i < sWinCount; i++) {
     if (x >= sWinMin[i].x && x < sWinMax[i].x && y >= sWinMin[i].y && y < sWinMax[i].y) {
@@ -1207,9 +1416,82 @@ extern "C" int portSettingsOwnsPoint(float x, float y) {
   return 0;
 }
 
+bool gPortLauncherShown;
+
+namespace {
+
+// Touches as ImGui's mouse while the launcher or the settings page is shown:
+// Aurora turns SDL's touch-to-mouse events off (the game takes touches as
+// its own), so ImGui saw none. One finger: down presses where it lands, up
+// releases there (a tap); a drag mostly up or down scrolls the window under
+// it instead, its press let go off the item first so nothing is clicked; a
+// sideways drag stays a press (sliders).
+SDL_FingerID sTouchFinger;
+bool sTouchDown;
+bool sTouchScroll;
+ImVec2 sTouchStart, sTouchLast;
+
+void touchToMouse(const SDL_Event* e) {
+  if (ImGui::GetCurrentContext() == nullptr || !(sOpen || gPortLauncherShown)) {
+    sTouchDown = false;
+    return;
+  }
+  ImGuiIO& io = ImGui::GetIO();
+  const ImVec2 p(e->tfinger.x * io.DisplaySize.x, e->tfinger.y * io.DisplaySize.y);
+  if (e->type == SDL_EVENT_FINGER_DOWN) {
+    if (sTouchDown) {
+      return; // a second finger: the first one drives
+    }
+    sTouchDown = true;
+    sTouchScroll = false;
+    sTouchFinger = e->tfinger.fingerID;
+    sTouchStart = sTouchLast = p;
+    io.AddMouseSourceEvent(ImGuiMouseSource_TouchScreen);
+    io.AddMousePosEvent(p.x, p.y);
+    io.AddMouseButtonEvent(ImGuiMouseButton_Left, true);
+    return;
+  }
+  if (!sTouchDown || e->tfinger.fingerID != sTouchFinger) {
+    return;
+  }
+  io.AddMouseSourceEvent(ImGuiMouseSource_TouchScreen);
+  if (e->type == SDL_EVENT_FINGER_MOTION) {
+    const float dx = p.x - sTouchStart.x, dy = p.y - sTouchStart.y;
+    const float slop = 8.f; // points: past a tap's wobble
+    if (!sTouchScroll && std::fabs(dy) > slop && std::fabs(dy) > 2.f * std::fabs(dx)) {
+      sTouchScroll = true; // let the press go off the item, then point back for the wheel
+      io.AddMousePosEvent(-FLT_MAX, -FLT_MAX);
+      io.AddMouseButtonEvent(ImGuiMouseButton_Left, false);
+      io.AddMousePosEvent(sTouchStart.x, sTouchStart.y);
+    }
+    if (sTouchScroll) {
+      // a finger's movement in wheel steps (ImGui scrolls about 5 lines a step)
+      const float step = ImGui::GetFontSize() * 5.f;
+      io.AddMouseWheelEvent(0.f, (p.y - sTouchLast.y) / (step > 1.f ? step : 1.f));
+    } else {
+      io.AddMousePosEvent(p.x, p.y);
+    }
+    sTouchLast = p;
+    return;
+  }
+  // up or cancelled: let go, and take the pointer away so nothing stays hovered
+  if (!sTouchScroll) {
+    io.AddMousePosEvent(p.x, p.y);
+    io.AddMouseButtonEvent(ImGuiMouseButton_Left, false);
+  }
+  io.AddMousePosEvent(-FLT_MAX, -FLT_MAX);
+  sTouchDown = false;
+}
+
+} // namespace
+
 extern "C" void portSettingsEvent(const void* sdlEvent) {
   const SDL_Event* e = static_cast<const SDL_Event*>(sdlEvent);
   PortSettings* s = portSettings();
+  if (e->type == SDL_EVENT_FINGER_DOWN || e->type == SDL_EVENT_FINGER_MOTION || e->type == SDL_EVENT_FINGER_UP ||
+      e->type == SDL_EVENT_FINGER_CANCELED) {
+    touchToMouse(e);
+  }
   for (const Overlay& o : overlays()) {
     if (o.event != nullptr && o.event(sdlEvent)) {
       return; // a feature's key
@@ -1223,6 +1505,14 @@ extern "C" void portSettingsEvent(const void* sdlEvent) {
     break;
   case SDL_EVENT_KEY_DOWN:
     if (e->key.repeat) {
+      break;
+    }
+    if (sKeyRebind >= 0) {
+      // the key for the keyboard row chosen on the Controls tab (Escape: no change)
+      if (e->key.scancode != SDL_SCANCODE_ESCAPE && (sOpen || gPortLauncherShown)) {
+        bindKey(kKeyRows[sKeyRebind], e->key.scancode);
+      }
+      sKeyRebind = -1;
       break;
     }
     if (e->key.key == SDLK_TAB) {
@@ -1366,7 +1656,7 @@ extern "C" void portSettingsDraw(void) {
     if (ImGui::Button("Close")) {
       open = false;
     }
-    note("F1, Back/Select or a three-finger tap opens and closes this page.");
+    note("F1, Back/Select, the touch controls' three-bar button or a three-finger tap opens and closes this page.");
     portSettingsTabs(true);
     ImGui::PopFont();
   }

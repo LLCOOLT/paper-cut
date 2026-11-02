@@ -119,7 +119,7 @@ void jukebox(int) {
   for (int i = 1; i < portBgmCount(); i++) {
     heard += portJukeboxKnown(i);
   }
-  ImGui::Text("%d tracks heard on this file", heard);
+  ImGui::Text("%d %s heard on this file", heard, heard == 1 ? "track" : "tracks");
   ImGui::SameLine();
   ImGui::BeginDisabled(portJukeboxPlaying() < 0);
   if (ImGui::Button("Back to the map's music")) {

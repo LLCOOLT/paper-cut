@@ -58,7 +58,11 @@ static PortSettings sSettings = {
     0,    /* autoRun */
     0,    /* stickFixed */
     0,    /* tapA */
+#if defined(__ANDROID__) || (defined(__APPLE__) && TARGET_OS_IPHONE)
+    1,    /* orientation: landscape on phones and tablets (Settings > Display turns it) */
+#else
     0,    /* orientation */
+#endif
     0,    /* safeArea */
     3,    /* ffSpeed */
     0,    /* ffToggle */

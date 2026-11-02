@@ -7,8 +7,8 @@
  * Mario's current animation has a Luigi version; otherwise Mario's model
  * shows, in the L Emblem's colours. Mario's poses still run as before:
  * Luigi's is a stand-in drawn instead of them (field, battle, the menus'
- * figures). Also his name in the text, his sounds, the credits, and the
- * Luigi NPC kept out of sight. */
+ * figures). Also his name in the text, his sounds, and the brothers swapped
+ * wherever Luigi appears (his NPCs drawn as Mario, the credits). */
 
 #include <dolphin/mtx.h>
 
@@ -38,10 +38,11 @@ struct AnimationPose* portLuigiPaperPose(struct AnimationPose* pose);
  * stand-in for it goes with it. */
 void portLuigiRelease(int poseId);
 
-/* msgSearch: the message as the game shows it, with the player's name,
- * Mario, as Luigi while the option is on (every language: Mario, MARIO,
- * マリオ; not inside words, "Paper Mario", "Mario Bros." and the like). The
- * text returned stays valid (a copy kept for as long as the game runs). */
+/* msgSearch: the message as the game shows it, with the brothers' names
+ * swapped while the option is on (every language: Mario <-> Luigi, MARIO <->
+ * LUIGI, マリオ <-> ルイージ; not inside words, "Paper Mario", "Mario Bros.",
+ * "Luigi's Mansion" and the like). The text returned stays valid (a copy kept
+ * for as long as the game runs). */
 const char* portLuigiText(const char* msg);
 
 /* __psndSFXOn: the sound id (as searchPSSFXList gives it) to play: Luigi's
@@ -49,10 +50,12 @@ const char* portLuigiText(const char* msg);
  * is on. */
 int portLuigiSfx(int id);
 
-/* An NPC drawn with c_luigi (NPC_FLAG_LUIGI) is hidden and can't be
- * touched, hit or talked to while the option is on (one Luigi); it stays
- * an NPC, so the scripts that address it run as before. */
-int portLuigiHidesNpc(unsigned int npcFlags);
+/* npcdrv's draws, after the game stepped an NPC's pose poseId: while the
+ * option is on, an NPC drawn with c_luigi (NPC_FLAG_LUIGI) gets a stand-in
+ * of Mario (a_mario, a_mario_r, e_mario) and one drawn with a_mario a
+ * stand-in of Luigi, which portLuigiDrawMtx draws instead. The NPC itself is
+ * untouched: it moves, talks and collides as before. */
+void portLuigiNpcUpdate(int poseId);
 
 /* The credits' parade (end_00.c): Luigi's model and walk in Mario's place,
  * and Mario's in Luigi's, while the option is on. */

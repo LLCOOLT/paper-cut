@@ -105,27 +105,31 @@ state in CMakeLists.txt), and it checks each frame that its pose is still the
 `c_luigi` it loaded (a battle's end frees battle poses; a map change, a save
 state or a reset can free or replace the field one), loading it again if not.
 
-## Text, menus, the other Luigi, sounds
+## Text, menus, the brothers swapped, sounds
 
 All of it only while the option is on; `port/src/common/luigi_pc.c` again.
 
 - Text (`portLuigiText`, from `msgSearch` in `src/driver/msgdrv.c`, a mod's
-  message too): every message the game looks up, with the player's name as
-  Luigi's: `Mario` and `MARIO` in the Latin languages (English, French,
-  German, Spanish, Italian), `マリオ` (Shift-JIS) in Japanese. Not changed:
-  the name inside another word (French "Mariole", Spanish "Marioink"), "Paper
-  Mario" (the game's title, also the Glitzville play and the Weekly site),
-  "Mario Bros." / "Super Mario Bros." and the series ("MARIO SERIES THEME
-  MUSIC" in the credits), and in Japanese ペーパーマリオ, マリオブラザーズ,
-  マリオストーリー and マリオシリーズ. German's genitive "Marios" becomes
-  "Luigis", a shout's drawn-out letters follow ("MARIOOO!" "LUIGIII!"), and
-  "Mario and Luigi" (et, e, y, und, &, と, や) becomes "Luigi and Mario", not
-  "Luigi and Luigi" (and the other way round). Only lowercase tags (`<...>`,
-  message names) are never touched. The texts are made once per message and
-  kept on the save-state heap (the game keeps pointers to them). Checked over
-  every message file of the three discs with a host-side harness: of about
-  1,100 messages per language with the name, the only ones left as they were
-  are the ones above.
+  message too): every message the game looks up, with the brothers' names
+  swapped both ways, as on screen: `Mario` <-> `Luigi` and `MARIO` <->
+  `LUIGI` in the Latin languages (English, French, German, Spanish,
+  Italian), `マリオ` <-> `ルイージ` (Shift-JIS) in Japanese, in one pass so a
+  name put in is never swapped back. Possessives and German's genitive
+  ("Marios" <-> "Luigis") and shouts ("MARIOOO!" <-> "LUIGIII!") follow both
+  ways, and "Mario and Luigi" simply becomes "Luigi and Mario". So the player
+  is Luigi, Luigi's lines (now Mario's) speak of Mario, and Luigi's books are
+  "Super Mario" (Spanish "Paper Mario" vol. 1-5). Not changed: a name inside
+  another word (French "Mariole", Spanish "Marioink"), "Paper Mario" (the
+  game's title, also the Glitzville play and the Weekly site), "Mario Bros." /
+  "Super Mario Bros.", the series ("MARIO SERIES THEME MUSIC" in the
+  credits), "Luigi's Mansion" (also "Luigis Mansion"; the name the
+  Poshley Heights heir gives his house), and in Japanese ペーパーマリオ,
+  マリオブラザーズ, マリオストーリー, マリオシリーズ, マリオネット and
+  ルイージマンション. Tags (`<...>`) are never touched. The texts are made
+  once per message and kept on the save-state heap (the game keeps pointers
+  to them). Checked over every message file with a host-side harness: per
+  language 1,000-1,360 messages change; the only ones left as they were are
+  the exclusions above.
 - Menus: the pause menu's Mario page and the badge page's figure
   (`src/window/win_mario.c`) and the journal map's walking figure
   (`src/window/win_log.c`) go through the same stand-in as the field, in two
@@ -137,13 +141,38 @@ All of it only while the option is on; `port/src/common/luigi_pc.c` again.
 - Credits (`rels/end/src/end_00.c`): the parade's silhouettes swap the two
   brothers: Luigi's model and walk where Mario walks with Peach, Mario's where
   Luigi walks with his party.
-- The other Luigi: an NPC drawn with `c_luigi` (`NPC_FLAG_LUIGI`, set by
-  `npcEntry`: Rogueport's inn and plaza, the harbour, Mario's house in the
-  prologue and epilogue) is not drawn (nor his shadow) and is skipped by the
-  talk check, the side push, the field attacks' and the blow's hit checks
-  (`src/driver/npcdrv.c`). He is not deleted and his flags are not changed,
-  so the scenes' scripts that move him, turn him or make him speak run as
-  before (his speech balloons point at where he stands).
+- The other Luigi becomes Mario: the brothers swap in every scene. An NPC
+  drawn with `c_luigi` (`NPC_FLAG_LUIGI`, set by `npcEntry`) is drawn as
+  Mario, and one drawn with `a_mario` as Luigi, through a stand-in like the
+  player's (`portLuigiNpcUpdate` after the NPC's pose is stepped in
+  `src/driver/npcdrv.c`'s draws, which draw through `portLuigiDrawMtx`;
+  `portLuigiRelease` frees it with the NPC). The NPC itself is untouched: his
+  scripts, position, direction, talk, collision and hit checks are as before,
+  so his lines ("Hey, Bro!") now come from Mario. The stand-in takes his
+  material state (fades, colours), play rate and paper turn. Up to 8 swapped
+  NPCs at once.
+  - Luigi's animations to Mario's: `S_1`, `Z_1`, `W_1`, `R_1`, `J_1A`,
+    `J_1B` to `M_S_1`, `M_Z_1`, `M_W_1`, `M_R_1`, `M_J_1A`, `M_J_1B`; his talk
+    `T_1` (and `T_2`) to `M_I_2`; `S_2`, `Z_2` to `M_S_1`, `M_Z_1`. His scene
+    gestures by what the scripts use them for: `L_5`/`L_8` (the scene's
+    stand) `M_S_1`, `L_7`/`L_9` (their talk) `M_I_2`, `L_6` (walking up)
+    `M_W_1`, `L_11` (the dash to the door) `M_R_1`, `I_1` (holding up the
+    letter) `M_I_1`; the story-telling ones to e_mario's poses: `L_1` nod
+    `M_N_2`, `L_2` talking `M_N_B`, `L_3` thinking `M_I_5`, `L_4` a look up
+    `M_N_3`, `L_10` resolve `M_I_G`. The gestures were picked from the scripts
+    and the poses' descriptions in `tools/port/luigi_motions.py`, not side by
+    side in Blender. Back-facing (`R`) ones go to `a_mario_r`'s versions (the
+    gestures to its stand); anything else to `M_S_1`.
+  - Mario's NPCs (the digest's `ダイジェストマリオ`, Doopliss's `にせマリオ２`)
+    play Luigi's version of their animation.
+  - Where Luigi appears, all as NPCs: Mario's house (prologue, epilogue;
+    `aaa_00`), Rogueport with his party members (`gor_00`, `gor_01` with the
+    inn, `gor_02`, `gor_04`), Poshley Heights' Trouble Center request
+    (`pik_01`), the `yuu` minigame's `yuusp0` NPC (`evt_yuunpc.c`), the end
+    digest (`dig_00`). The credits' parade is not NPCs and swaps
+    in `end_00.c` (above). Not swapped: the battle audience's Luigi
+    (`AUDIENCE_LUIGI`), a 2D sprite from `audience_luigi.tpl` with no Mario
+    counterpart.
 - Sounds (`portLuigiSfx`, from `__psndSFXOn` in `src/pmario_sound.c`): Mario's
   plain-floor steps (`SFX_MARIO_MOVE1L`/`R`), jump (`SFX_MARIO_JUMP1`) and
   landing (`SFX_MARIO_LANDING1`) play as Luigi's NPC's
@@ -169,27 +198,30 @@ All of it only while the option is on; `port/src/common/luigi_pc.c` again.
   badges.
 - Luigi moves at Mario's speed, with Mario's collision (above), and jumps
   Mario's jump.
-- Text: a substitution, not a rewrite. Lines where Mario's name stands for the
-  person still read naturally, but some don't fit Luigi: other characters
-  still speak of Luigi as someone else ("your brother Luigi"), Luigi's own
-  lines (his inn talks, the Super Luigi books) call his brother Luigi, and a
-  few scenes describe Mario's look (the small one, the red cap). The save
-  file's name (the player's own, "Mario" by default) is not changed.
-- The other Luigi is hidden everywhere his NPC is, so his inn talks (his
-  stories and the Super Luigi books' sales pitch) can't be started while the
-  option is on; his scenes still play around the empty spot he stands in.
+- Text: a swap of the names, not a rewrite. What the lines say about each
+  brother stays: "You're Luigi's older brother" becomes "You're Mario's older
+  brother", and a few scenes describe Mario's look (the small one, the red
+  cap). The save file's name (the player's own, "Mario" by default) is not
+  changed.
+- Mario standing in for the other Luigi uses Mario's poses, not Luigi's
+  scene gestures, so his scenes look plainer (standing and talking where Luigi
+  waved and pointed). His lines are Luigi's, now spoken by Mario.
 - The file select draws no Mario model (only textures from `name.tpl`), so
   there is nothing there to change.
 - The fallback colours follow the option when Mario's outfit is checked (each
   field frame the partner can be used, as for a badge change); the Luigi model
-  itself switches at once. The hidden Luigi NPC, the text and the sounds
-  switch at once too; a message already open keeps its text.
+  itself switches at once. The swapped NPCs, the text and the sounds switch
+  at once too; a message already open keeps its text.
 - Peach, Bowser and 8-bit Mario are unchanged.
 - The menu tabs' titles ("Mario" on the pause menu's first tab) are textures,
   not text, and still say Mario.
 - Seen in game (US): the Mario page draws Luigi with "Luigi" by the level and
   "Luigi's Abilities" in its help, and the Gear page's help says "Luigi's
-  items". Not yet seen in game: the hidden Luigi NPC (the scripted runs never
-  reached a spot where he stands), the badge page's and the journal map's
-  figures, the credits, the sounds, and the Japanese and European text in
-  game (the text was checked with the harness only).
+  items". The prologue in Mario's house (`TTYD_MAP=aaa_00,prologue`): Mario
+  stands, walks in and says "Hey, Bro!" where Luigi was, and the trace logs
+  Luigi's `L_5`/`L_6`/`L_7`/`L_11` playing as `M_S_1`/`M_W_1`/`M_I_2`/`M_R_1`;
+  the jump sound logs as `SFX_FLD_NPC_LUIGI_JUMP1`. Not yet seen in game: the
+  other Luigi scenes (inn, Poshley Heights, the digest), the e_mario gestures,
+  the badge page's and the journal map's figures, the credits, and the
+  Japanese and European text in game (the text was checked with the harness
+  only).

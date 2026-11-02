@@ -198,25 +198,38 @@ void portLuigiUpdate(int where, int poseId, int allowed) {
     dst->scaleZFlip = src->scaleZFlip;
 }
 
+static int npcStandIn(int poseId);
+static void npcRelease(int poseId);
+
+/* the material state of src as the game set it for this draw, onto dst:
+ * fades, flashes, Charge's shine, the blur's alpha, an NPC's colour */
+static void copyMaterial(AnimationPose* dst, const AnimationPose* src) {
+    dst->materialFlag = src->materialFlag;
+    dst->materialLightFlag = src->materialLightFlag;
+    dst->materialColor = src->materialColor;
+    dst->materialColor2 = src->materialColor2;
+    dst->gxCallback = src->gxCallback;
+    dst->disableDraw = src->disableDraw;
+}
+
 void portLuigiDrawMtx(int poseId, Mtx mtx, int xluMode, float rotY, float scale) {
     AnimationPose* src;
     AnimationPose* dst;
     int where;
+    int npc;
 
+    if ((npc = npcStandIn(poseId)) >= 0) {
+        copyMaterial(animPoseGetAnimPosePtr(npc), animPoseGetAnimPosePtr(poseId));
+        animPoseDrawMtx(npc, mtx, xluMode, rotY, scale);
+        return;
+    }
     for (where = 0; where < SLOTS; where++) {
         /* (a battle's stand-in stays recorded after the battle freed it) */
         if (poseId >= 0 && sStandIn[where].source == poseId && poseValid(where, sStandIn[where].pose) &&
             animPoseGetAnimPosePtr(poseId)->paperId == -1) {
             src = animPoseGetAnimPosePtr(poseId);
             dst = animPoseGetAnimPosePtr(sStandIn[where].pose);
-            /* fades, flashes, Charge's shine and the blur's alpha: Mario's
-             * material as the game set it for this draw */
-            dst->materialFlag = src->materialFlag;
-            dst->materialLightFlag = src->materialLightFlag;
-            dst->materialColor = src->materialColor;
-            dst->materialColor2 = src->materialColor2;
-            dst->gxCallback = src->gxCallback;
-            dst->disableDraw = src->disableDraw;
+            copyMaterial(dst, src); /* Mario's, as the game set it for this draw */
             animPoseDrawMtx(sStandIn[where].pose, mtx, xluMode, rotY, scale);
             return;
         }
@@ -240,6 +253,7 @@ struct AnimationPose* portLuigiPaperPose(struct AnimationPose* pose) {
 
 void portLuigiRelease(int poseId) {
     int where;
+    npcRelease(poseId);
     for (where = PORT_LUIGI_MENU; where < SLOTS; where++) {
         if (poseId >= 0 && sStandIn[where].source == poseId) {
             if (poseValid(where, sStandIn[where].pose)) {
@@ -254,25 +268,20 @@ void portLuigiRelease(int poseId) {
 
 /* ------------------------------------------------------------------ text */
 
-/* The player's name in each spelling, Mario's and Luigi's side by side: the
- * name, the letter a shout draws out ("MARIOOO!") and Luigi's for it. */
+/* The brothers' names in each spelling, swapped both ways in one pass (so a
+ * name put in is never swapped back): the name, the letter a shout draws out
+ * ("MARIOOO!", "LUIGIII!"). Entries 2k and 2k + 1 are the two brothers. */
 static const struct {
-    const char* mario;
-    const char* luigi;
-    char stretch, luigiStretch;
+    const char* name;
+    char stretch;
 } kNames[] = {
-    {"Mario", "Luigi", 'o', 'i'},
-    {"MARIO", "LUIGI", 'O', 'I'},
-    {"\x83\x7D\x83\x8A\x83\x49", "\x83\x8B\x83\x43\x81\x5B\x83\x57", 0, 0}, /* マリオ, ルイージ (Shift-JIS) */
+    {"Mario", 'o'}, {"Luigi", 'i'}, {"MARIO", 'O'}, {"LUIGI", 'I'},
+    {"\x83\x7D\x83\x8A\x83\x49", 0},             /* マリオ (Shift-JIS) */
+    {"\x83\x8B\x83\x43\x81\x5B\x83\x57", 0},     /* ルイージ */
 };
-#define NAME_JP 2
-
-/* "Mario and Luigi" (and Luigi and Mario) are swapped, not made "Luigi and
- * Luigi": the words between the two names. */
-static const char* const kAnd[] = {
-    " and ", " AND ", " & ", " et ", " e ", " y ", " und ",
-    "\x82\xC6\x81\x40", "\x82\xC6", "\x82\xE2\x81\x40", "\x82\xE2", /* と　, と, や　, や */
-};
+#define NAMES ((int)(sizeof(kNames) / sizeof(kNames[0])))
+#define NAME_IS_JP(n) ((n) >= 4)
+#define NAME_IS_MARIO(n) (((n) & 1) == 0)
 
 /* a letter of a word in the Latin languages (ASCII, Latin-1's accented ones) */
 static int isLetter(unsigned char c) {
@@ -283,13 +292,13 @@ static int startsWith(const char* s, const char* prefix) {
     return strncmp(s, prefix, strlen(prefix)) == 0;
 }
 
-/* The name kNames[n].mario starts at s + i as the player's name: not part of
- * a longer word, a game's title ("Paper Mario", "Super Mario Bros.", マリオ
- * ストーリー) or the series' ("MARIO SERIES THEME MUSIC"). *end: past it and a
- * shout's drawn-out letters, *stretch: how many of those. prevWide: the
- * character before is a double-byte one. */
+/* The name kNames[n] starts at s + i as a brother's name: not part of a
+ * longer word or another game's or series' title ("Paper Mario", "Super Mario
+ * Bros.", "MARIO SERIES THEME MUSIC", "Luigi's Mansion", マリオストーリー,
+ * ルイージマンション). *end: past it and a shout's drawn-out letters, *stretch:
+ * how many of those. prevWide: the character before is a double-byte one. */
 static int nameAt(const char* s, size_t i, int n, int prevWide, size_t* end, int* stretch) {
-    const char* name = kNames[n].mario;
+    const char* name = kNames[n].name;
     size_t len = strlen(name);
     size_t k;
     const char* after;
@@ -299,18 +308,23 @@ static int nameAt(const char* s, size_t i, int n, int prevWide, size_t* end, int
     }
     k = i + len;
     *stretch = 0;
-    if (n == NAME_JP) {
-        /* ペーパーマリオ; マリオブラザーズ, マリオストーリー, マリオシリーズ, マリオネット */
-        static const char* const kNotAfter[] = {"\x83\x75\x83\x89", "\x83\x58\x83\x67", "\x83\x56\x83\x8A",
-                                                "\x83\x6C\x83\x62"};
+    if (NAME_IS_JP(n)) {
+        /* ペーパーマリオ; マリオブラザーズ, マリオストーリー, マリオシリーズ, マリオネット;
+         * ルイージマンション */
+        static const char* const kMarioNotAfter[] = {"\x83\x75\x83\x89", "\x83\x58\x83\x67", "\x83\x56\x83\x8A",
+                                                     "\x83\x6C\x83\x62"};
         size_t j;
-        if (i >= 8 && memcmp(s + i - 8, "\x83\x79\x81\x5B\x83\x70\x81\x5B", 8) == 0) {
-            return 0;
-        }
-        for (j = 0; j < sizeof(kNotAfter) / sizeof(kNotAfter[0]); j++) {
-            if (startsWith(s + k, kNotAfter[j])) {
+        if (NAME_IS_MARIO(n)) {
+            if (i >= 8 && memcmp(s + i - 8, "\x83\x79\x81\x5B\x83\x70\x81\x5B", 8) == 0) {
                 return 0;
             }
+            for (j = 0; j < sizeof(kMarioNotAfter) / sizeof(kMarioNotAfter[0]); j++) {
+                if (startsWith(s + k, kMarioNotAfter[j])) {
+                    return 0;
+                }
+            }
+        } else if (startsWith(s + k, "\x83\x7D\x83\x93\x83\x56\x83\x87\x83\x93")) {
+            return 0;
         }
         *end = k;
         return 1;
@@ -318,7 +332,7 @@ static int nameAt(const char* s, size_t i, int n, int prevWide, size_t* end, int
     if (i > 0 && !prevWide && isLetter((unsigned char)s[i - 1])) {
         return 0; /* the end of a longer word */
     }
-    if (i >= 6 && (s[i - 1] == ' ' || s[i - 1] == '\n') &&
+    if (NAME_IS_MARIO(n) && i >= 6 && (s[i - 1] == ' ' || s[i - 1] == '\n') &&
         (strncmp(s + i - 6, "Paper", 5) == 0 || strncmp(s + i - 6, "PAPER", 5) == 0)) {
         return 0; /* the game's own title */
     }
@@ -327,43 +341,32 @@ static int nameAt(const char* s, size_t i, int n, int prevWide, size_t* end, int
         (*stretch)++;
     }
     if (isLetter((unsigned char)s[k])) {
-        /* "Marios" (German's genitive) is the name; "Mariole", "Marioink" are other words */
+        /* "Marios", "Luigis" (German's genitive) are the name; "Mariole",
+         * "Marioink" are other words */
         if (*stretch != 0 || (s[k] != 's' && s[k] != 'S') || isLetter((unsigned char)s[k + 1])) {
             return 0;
         }
     }
-    if (*stretch == 0 && (s[k] == ' ' || s[k] == '\n')) {
-        after = s + k + 1;
-        if (startsWith(after, "Bro") || startsWith(after, "BRO") || startsWith(after, "SERIES")) {
-            return 0; /* the Mario Bros., Super Mario Bros., the series */
+    if (*stretch == 0) {
+        after = s + k;
+        if (!NAME_IS_MARIO(n)) {
+            /* Luigi's Mansion (Luigis Mansion, Luigi's|Mansion) */
+            if (*after == '\'' && (after[1] == 's' || after[1] == 'S')) {
+                after += 2;
+            } else if (*after == 's' || *after == 'S') {
+                after++;
+            }
+            if ((*after == ' ' || *after == '\n') && (startsWith(after + 1, "Mansion") || startsWith(after + 1, "MANSION"))) {
+                return 0;
+            }
+        } else if (*after == ' ' || *after == '\n') {
+            if (startsWith(after + 1, "Bro") || startsWith(after + 1, "BRO") || startsWith(after + 1, "SERIES")) {
+                return 0; /* the Mario Bros., Super Mario Bros., the series */
+            }
         }
     }
     *end = k;
     return 1;
-}
-
-/* Luigi's name kNames[n].luigi at s + i, as a word */
-static int luigiAt(const char* s, size_t i, int n, int prevWide) {
-    size_t len = strlen(kNames[n].luigi);
-    if (strncmp(s + i, kNames[n].luigi, len) != 0) {
-        return 0;
-    }
-    if (n == NAME_JP) {
-        return 1;
-    }
-    return !(i > 0 && !prevWide && isLetter((unsigned char)s[i - 1])) && !isLetter((unsigned char)s[i + len]);
-}
-
-/* one of kAnd at s + i: its length, else 0 */
-static size_t andAt(const char* s, size_t i, int n) {
-    size_t j;
-    for (j = 0; j < sizeof(kAnd) / sizeof(kAnd[0]); j++) {
-        /* the Japanese ones with the Japanese name only */
-        if (((unsigned char)kAnd[j][0] >= 0x80) == (n == NAME_JP) && startsWith(s + i, kAnd[j])) {
-            return strlen(kAnd[j]);
-        }
-    }
-    return 0;
 }
 
 static void put(char** o, const char* s, size_t len) {
@@ -371,13 +374,13 @@ static void put(char** o, const char* s, size_t len) {
     *o += len;
 }
 
-/* msg with the player's name as Luigi; out has room for twice msg */
+/* msg with the brothers' names swapped; out has room for twice msg */
 static void substitute(const char* s, char* out) {
     char* o = out;
     size_t i = 0;
     int prevWide = 0;
     int n, st;
-    size_t end, a, end2;
+    size_t end;
 
     while (s[i] != '\0') {
         unsigned char c = (unsigned char)s[i];
@@ -391,37 +394,19 @@ static void substitute(const char* s, char* out) {
             prevWide = 0;
             continue;
         }
-        for (n = 0; n < (int)(sizeof(kNames) / sizeof(kNames[0])); n++) {
+        for (n = 0; n < NAMES; n++) {
             if (nameAt(s, i, n, prevWide, &end, &st)) {
-                /* "Mario and Luigi": "Luigi and Mario" */
-                if ((a = andAt(s, end, n)) != 0 && st == 0 && luigiAt(s, end + a, n, 0)) {
-                    put(&o, kNames[n].luigi, strlen(kNames[n].luigi));
-                    put(&o, s + end, a);
-                    put(&o, kNames[n].mario, strlen(kNames[n].mario));
-                    i = end + a + strlen(kNames[n].luigi);
-                } else {
-                    put(&o, kNames[n].luigi, strlen(kNames[n].luigi));
-                    for (; st > 0; st--) {
-                        *o++ = kNames[n].luigiStretch;
-                    }
-                    i = end;
+                int other = n ^ 1;
+                put(&o, kNames[other].name, strlen(kNames[other].name));
+                for (; st > 0; st--) {
+                    *o++ = kNames[other].stretch;
                 }
+                i = end;
                 break;
             }
-            if (luigiAt(s, i, n, prevWide)) {
-                size_t l = strlen(kNames[n].luigi);
-                /* "Luigi and Mario": "Mario and Luigi" */
-                if ((a = andAt(s, i + l, n)) != 0 && nameAt(s, i + l + a, n, 0, &end2, &st) && st == 0) {
-                    put(&o, kNames[n].mario, strlen(kNames[n].mario));
-                    put(&o, s + i + l, a);
-                    put(&o, kNames[n].luigi, l);
-                    i = end2;
-                    break;
-                }
-            }
         }
-        if (n < (int)(sizeof(kNames) / sizeof(kNames[0]))) {
-            prevWide = n == NAME_JP;
+        if (n < NAMES) {
+            prevWide = NAME_IS_JP(n);
             continue;
         }
         /* a double-byte character (Shift-JIS, by the game's own rule) as a whole */
@@ -436,6 +421,7 @@ static void substitute(const char* s, char* out) {
     }
     *o = '\0';
 }
+
 
 /* The texts made, by their message's text: kept for as long as the game
  * runs (the game keeps pointers to them, a message window for one), on the
@@ -458,8 +444,13 @@ const char* portLuigiText(const char* msg) {
         return msg;
     }
     /* the quick test: no name in it */
-    if (strstr(msg, "Mario") == NULL && strstr(msg, "MARIO") == NULL && strstr(msg, kNames[NAME_JP].mario) == NULL) {
-        return msg;
+    {
+        int n;
+        for (n = 0; n < NAMES && strstr(msg, kNames[n].name) == NULL; n++) {
+        }
+        if (n == NAMES) {
+            return msg;
+        }
     }
     for (p = (const unsigned char*)msg; *p != '\0'; p++) {
         hash = (hash ^ *p) * 16777619u;
@@ -537,8 +528,224 @@ int portLuigiSfx(int id) {
 
 /* ------------------------------------------------------- NPCs, credits */
 
-int portLuigiHidesNpc(unsigned int npcFlags) {
-    return (npcFlags & NPC_FLAG_LUIGI) && portLuigiOn();
+/* The brothers swap in the scenes too: an NPC drawn with c_luigi (Luigi in
+ * Mario's house, Rogueport, Poshley Heights, the Pianta Parlor, the
+ * digest...) is drawn as Mario, and one drawn with a_mario (the digest's and
+ * Doopliss's Mario) as Luigi. As for the player, the NPC's own pose runs as
+ * before and a stand-in of the other brother follows it and is drawn instead. */
+
+/* the models a stand-in uses: Mario's front, back and event sets, Luigi's */
+enum { NPC_A_MARIO, NPC_A_MARIO_R, NPC_E_MARIO, NPC_LUIGI, NPC_MODELS };
+
+static const char* npcModel(int m) {
+    static const char* const kModel[] = {"a_mario", "a_mario_r", "e_mario"};
+    return m == NPC_LUIGI ? LUIGI_MODEL : kModel[m];
+}
+
+/* Luigi's animations (c_luigi) to Mario's: the same moves, his talk to
+ * Mario's, his scenes' gestures to the closest of Mario's event poses (by
+ * what the scripts use them for: L_5/L_8 the scene's stand, L_7/L_9 its talk,
+ * L_6 walking up, L_11 the dash to the door, I_1 holding up the letter; the
+ * story-telling ones to a nod, talking, thinking, a look up, resolve). The
+ * back-facing R ones go to a_mario_r's versions. */
+static const struct {
+    const char* luigi;
+    const char* mario;
+    int model;
+} kToMario[] = {
+    {"S_1", "M_S_1", NPC_A_MARIO},  {"Z_1", "M_Z_1", NPC_A_MARIO},   {"W_1", "M_W_1", NPC_A_MARIO},
+    {"R_1", "M_R_1", NPC_A_MARIO},  {"T_1", "M_I_2", NPC_A_MARIO},   {"J_1A", "M_J_1A", NPC_A_MARIO},
+    {"J_1B", "M_J_1B", NPC_A_MARIO}, {"S_2", "M_S_1", NPC_A_MARIO},  {"Z_2", "M_Z_1", NPC_A_MARIO},
+    {"T_2", "M_I_2", NPC_A_MARIO},  {"I_1", "M_I_1", NPC_A_MARIO},   {"L_5", "M_S_1", NPC_A_MARIO},
+    {"L_6", "M_W_1", NPC_A_MARIO},  {"L_7", "M_I_2", NPC_A_MARIO},   {"L_8", "M_S_1", NPC_A_MARIO},
+    {"L_9", "M_I_2", NPC_A_MARIO},  {"L_11", "M_R_1", NPC_A_MARIO},  {"L_1", "M_N_2", NPC_E_MARIO},
+    {"L_2", "M_N_B", NPC_E_MARIO},  {"L_3", "M_I_5", NPC_E_MARIO},   {"L_4", "M_N_3", NPC_E_MARIO},
+    {"L_10", "M_I_G", NPC_E_MARIO},
+};
+
+#define NPC_SLOTS 8
+/* per NPC (by its pose, + 1: 0 none): the stand-in's poses per model (+ 1),
+ * the one drawn and the animation it plays */
+static struct {
+    int source1;
+    int pose1[NPC_MODELS];
+    int cur;
+    char anim[24];
+} sNpc[NPC_SLOTS];
+
+static int npcPoseValid(int pose, int m, int type) {
+    AnimationPose* p;
+    if (pose < 0) {
+        return 0;
+    }
+    p = animPoseGetAnimPosePtr(pose);
+    return (p->flags & ANIM_POSE_FLAG_USED) && p->typeFlags == 0 && p->type == type &&
+           !strcmp(animPoseGetAnimBaseDataPtr(pose)->fileName, npcModel(m));
+}
+
+/* the brother an NPC's model swaps to: NPC_A_MARIO (it is Luigi),
+ * NPC_LUIGI (it is Mario), -1 (neither) */
+static int npcSwap(int poseId) {
+    const char* file = animPoseGetAnimBaseDataPtr(poseId)->fileName;
+    if (!strcmp(file, "c_luigi")) {
+        return NPC_A_MARIO;
+    }
+    if (!strcmp(file, "a_mario")) {
+        return NPC_LUIGI;
+    }
+    return -1;
+}
+
+static void npcFree(int s) {
+    int m;
+    for (m = 0; m < NPC_MODELS; m++) {
+        if (sNpc[s].pose1[m] != 0 && sNpc[s].source1 != 0 &&
+            npcPoseValid(sNpc[s].pose1[m] - 1, m, animPoseGetAnimPosePtr(sNpc[s].source1 - 1)->type)) {
+            animPoseRelease(sNpc[s].pose1[m] - 1);
+        }
+        sNpc[s].pose1[m] = 0;
+    }
+    sNpc[s].source1 = 0;
+    sNpc[s].anim[0] = '\0';
+}
+
+static void npcRelease(int poseId) {
+    int s;
+    for (s = 0; s < NPC_SLOTS; s++) {
+        if (poseId >= 0 && sNpc[s].source1 == poseId + 1) {
+            npcFree(s);
+        }
+    }
+}
+
+static int npcStandIn(int poseId) {
+    int s, pose;
+    if (poseId < 0 || !portLuigiOn() || animPoseGetAnimPosePtr(poseId)->paperId != -1) {
+        return -1;
+    }
+    for (s = 0; s < NPC_SLOTS; s++) {
+        if (sNpc[s].source1 == poseId + 1 && sNpc[s].pose1[sNpc[s].cur] != 0) {
+            pose = sNpc[s].pose1[sNpc[s].cur] - 1;
+            return npcPoseValid(pose, sNpc[s].cur, animPoseGetAnimPosePtr(poseId)->type) ? pose : -1;
+        }
+    }
+    return -1;
+}
+
+/* Mario's animation for Luigi's anim: *model and the name */
+static const char* toMario(const char* anim, int* model) {
+    char base[24];
+    size_t len = strlen(anim), i;
+    int back = len > 1 && len < sizeof(base) && anim[len - 1] == 'R';
+    static char name[24];
+
+    snprintf(base, sizeof(base), "%s", anim);
+    if (back) {
+        base[len - 1] = '\0';
+    }
+    for (i = 0; i < sizeof(kToMario) / sizeof(kToMario[0]); i++) {
+        if (!strcmp(kToMario[i].luigi, base)) {
+            if (back) {
+                /* a_mario_r has the plain moves' back views; the rest stand */
+                *model = NPC_A_MARIO_R;
+                snprintf(name, sizeof(name), "%sR", kToMario[i].model == NPC_A_MARIO ? kToMario[i].mario : "M_S_1");
+                return name;
+            }
+            *model = kToMario[i].model;
+            return kToMario[i].mario;
+        }
+    }
+    *model = back ? NPC_A_MARIO_R : NPC_A_MARIO;
+    return back ? "M_S_1R" : "M_S_1";
+}
+
+void portLuigiNpcUpdate(int poseId) {
+    AnimationPose* src;
+    AnimationPose* dst;
+    const char* anim;
+    const char* want;
+    int s, swap, model, pose, type;
+
+    if (poseId < 0) {
+        return;
+    }
+    if (!portLuigiOn()) {
+        npcRelease(poseId);
+        return;
+    }
+    if ((swap = npcSwap(poseId)) < 0) {
+        return;
+    }
+    src = animPoseGetAnimPosePtr(poseId);
+    type = src->type;
+    for (s = 0; s < NPC_SLOTS && sNpc[s].source1 != poseId + 1; s++) {
+    }
+    if (s == NPC_SLOTS) {
+        /* a free slot, or one whose NPC is gone (a map change frees poses
+         * without a release) */
+        for (s = 0; s < NPC_SLOTS; s++) {
+            int old = sNpc[s].source1 - 1;
+            if (old < 0 || !(animPoseGetAnimPosePtr(old)->flags & ANIM_POSE_FLAG_USED) || npcSwap(old) < 0) {
+                break;
+            }
+        }
+        if (s == NPC_SLOTS) {
+            return; /* (more swapped NPCs than slots: the rest as they are) */
+        }
+        memset(sNpc[s].pose1, 0, sizeof(sNpc[s].pose1));
+        sNpc[s].source1 = poseId + 1;
+        sNpc[s].anim[0] = '\0';
+    }
+    anim = animPoseGetCurrentAnim(poseId)->name;
+    if (swap == NPC_A_MARIO) {
+        want = toMario(anim, &model);
+    } else {
+        model = NPC_LUIGI;
+        want = NULL;
+    }
+load:
+    pose = sNpc[s].pose1[model] - 1;
+    if (!npcPoseValid(pose, model, type)) {
+        pose = animPoseEntry(npcModel(model), type);
+        sNpc[s].pose1[model] = pose >= 0 ? pose + 1 : 0;
+        sNpc[s].anim[0] = '\0';
+        if (pose < 0) {
+            return;
+        }
+    }
+    if (swap == NPC_LUIGI) {
+        want = luigiAnim(PORT_LUIGI_FIELD, pose, anim);
+        if (want == NULL) {
+            want = "S_1";
+        }
+    }
+    if (sNpc[s].cur != model || strcmp(sNpc[s].anim, want) != 0) {
+        /* (a name the model lacks: its stand) */
+        if (findAnim(animPoseGetAnimBaseDataPtr(pose), want) == NULL) {
+            if (model == NPC_E_MARIO) {
+                model = NPC_A_MARIO; /* (e_mario has no stand) */
+                want = "M_S_1";
+                goto load;
+            }
+            want = model == NPC_LUIGI ? "S_1" : model == NPC_A_MARIO_R ? "M_S_1R" : "M_S_1";
+        }
+        if (getenv("TTYD_LUIGI_TRACE") != NULL) {
+            printf("[luigi] npc %d: %s as %s %s\n", poseId, anim, npcModel(model), want);
+            fflush(stdout);
+        }
+        animPoseSetAnim(pose, want, TRUE);
+        snprintf(sNpc[s].anim, sizeof(sNpc[s].anim), "%s", want);
+        sNpc[s].cur = model;
+    }
+    dst = animPoseGetAnimPosePtr(pose);
+    dst->localTimeRate = src->localTimeRate;
+    animPoseMain(pose);
+    dst->flags = (dst->flags & ~(ANIM_POSE_FLAG_PERA | ANIM_POSE_FLAG_INSTANT_TURN)) |
+                 (src->flags & (ANIM_POSE_FLAG_PERA | ANIM_POSE_FLAG_INSTANT_TURN));
+    dst->peraRotY = src->peraRotY;
+    dst->rotationY = src->rotationY;
+    dst->peraTargetRotY = src->peraTargetRotY;
+    dst->scaleZFlip = src->scaleZFlip;
 }
 
 void portLuigiCreditActor(const char** model, const char** anim) {

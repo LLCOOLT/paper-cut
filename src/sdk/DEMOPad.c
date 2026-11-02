@@ -3,6 +3,10 @@
 
 #ifdef TARGET_PC
 #include "port/platform.h"
+#ifdef TTYD_BACKEND_AURORA
+void portKeyboardActivate(void);              /* port/settings/settings_ui.cpp */
+void portKeyboardApplyPad(PADStatus* pad); /* port/settings/settings_ui.cpp */
+#endif
 #endif
 #define DEMO_STICK_THRESHOLD 48
 
@@ -76,6 +80,9 @@ void DEMOPadRead(void) {
     PADRead(Pad);
 #ifdef TARGET_PC /* $TTYD_INPUT: scripted controller 1 (port/src/common/input_pc.c) */
     portInputApply(Pad);
+#ifdef TTYD_BACKEND_AURORA
+    portKeyboardApplyPad(Pad); /* the stick's second keys, the arrows by default */
+#endif
 #endif
     PADClamp(Pad);
     DemoNumValidPads = 0;
@@ -99,6 +106,9 @@ void DEMOPadInit(void) {
     s32 i;
 
     PADInit();
+#if defined(TARGET_PC) && defined(TTYD_BACKEND_AURORA)
+    portKeyboardActivate(); /* the keyboard plays too (port/settings/settings_ui.cpp) */
+#endif
     for (i = 0; i < PAD_MAX_CONTROLLERS; i++) {
         DemoPad[i].pst.button = 0;
         DemoPad[i].pst.stickX = 0;

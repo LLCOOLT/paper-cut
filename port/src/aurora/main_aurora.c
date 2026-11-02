@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <dolphin/dvd.h>
+#include <dolphin/pad.h>
 #include <dolphin/gx/GXAurora.h>
 #include "port/widescreen.h"
 #include <stdbool.h>
@@ -139,6 +140,12 @@ int aurora_main(int argc, char* argv[]) {
         }
     }
     portUiInit();
+    portKeyboardDefaults(); /* before PADInit: the default keys (settings_ui.cpp) */
+    /* the controllers and keyboard up now, so the launcher's Settings tab
+     * shows the keys and can change them (the game's own PADInit, in
+     * DEMOPadInit, then finds it done) */
+    PADInit();
+    portKeyboardActivate();
     /* The 4:3 picture keeps its shape in any window or screen (bars beside it
      * on a phone, a resized or full-screen desktop window). Aurora starts
      * with FIT as its GX state but sizes the framebuffer to the window until

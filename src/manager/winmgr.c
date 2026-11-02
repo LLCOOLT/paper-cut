@@ -1446,8 +1446,18 @@ static void select_disp(WinMgrEntry* entry) {
             winFontSet((Vec){entry->x + 60, sel->scrollY + (ofs + (entry->y - 32 - i * 24)), 0.0f}, (Vec){1.0f, 1.0f, 1.0f},
                        black, msgSearch(item->name));
 #else
+#ifdef TARGET_PC
+            {
+                /* Gameplay+: room for the spares mark, a long name narrowed to 140 (JP has no winFontSetWidth) */
+                const f32 nameW = spare ? (f32)FontGetMessageWidth(msgSearch(item->name)) : 0.0f;
+                winFontSet((Vec){entry->x + 60, sel->scrollY + (ofs + (entry->y - 32 - i * 24)), 0.0f},
+                           (Vec){nameW > 140.0f ? 140.0f / nameW : 1.0f, 1.0f, 1.0f},
+                           *((sel->items[i].flags & WINMGR_ITEM_GRAY) ? &gray : &black), msgSearch(item->name));
+            }
+#else
                         winFontSet((Vec){entry->x + 60, sel->scrollY + (ofs + (entry->y - 32 - i * 24)), 0.0f}, (Vec){1.0f, 1.0f, 1.0f},
                                    *((sel->items[i].flags & WINMGR_ITEM_GRAY) ? &gray : &black), msgSearch(item->name));
+#endif
 #endif
             show = FALSE;
             switch (sel->type) {

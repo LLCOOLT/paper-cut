@@ -15,7 +15,7 @@ Steps that download (configuring and building, which fetch dependencies; Gradle;
 
 ## The Windows runner
 
-- **Where it lives:** `C:\actions-runner-ttyd-port`, registered to `LLCOOLT/ttyd-port` with the label `ttyd-port`. The workflows ask for `[self-hosted, ttyd-port]`.
+- **Where it lives:** `C:\actions-runner-ttyd-port`, registered to `LLCOOLT/paper-cut` (named `ttyd-port` when it was registered; a rename keeps runners) with the label `ttyd-port`. The workflows ask for `[self-hosted, ttyd-port]`.
 - **The other runner:** the one in `C:\actions-runner` serves `LLCOOLT/ttyd`, the decomp repo.
 - **Starting it:** run `run.cmd` in that folder. Jobs run only while it's running, as your user, with your tools on the path: Python, LLVM, Git, `gh`, the Android SDK. To keep it running without a terminal, install it as a service (`config.cmd`'s service option, as administrator). The service then needs the same tools on its path.
 - **Disc data:** `.env` in the runner's folder sets `TTYD_LOCAL_DATA` to a checkout that has the disc images and extracted data (`orig/`, `data/`). `tools/port/ci_link_data.py` links them into the runner's checkout as directory junctions. They stay on this machine: git ignores them, and nothing uploads them.
@@ -32,14 +32,14 @@ Steps that download (configuring and building, which fetch dependencies; Gradle;
    git push origin v0.1.0
    ```
 3. The release workflow runs local CI on the Windows runner, then builds and packages, then creates a draft release with:
-   - `ttyd-port-<version>-<jp|us>-windows-x64.zip`: the game, its libraries, the C runtime, README, LICENSE, `docs/MODDING.md`, the example mods (with `hello-native`'s library), and `HOW TO PLAY.txt`;
-   - `ttyd-port-<version>-<jp|us>-android-arm64.apk`: debug-signed;
+   - `papercut-<version>-windows-x64.zip`: `Paper Cut.exe` (the launcher) and the three versions' builds (`ttyd-jp`, `ttyd-us`, `ttyd-eu`), their libraries, the C runtime, README, LICENSE, `docs/MODDING.md`, the example mods (with `hello-native`'s library), and `HOW TO PLAY.txt`;
+   - `papercut-<version>-<jp|us|eu>-android-arm64.apk`: debug-signed, one per version;
    - `SHA256SUMS.txt`.
 
    Then the Mac runner adds to the same draft:
-   - `ttyd-port-<version>-<jp|us>-macos-<arch>.zip`: the app (signed ad hoc, not notarized), with the same extras;
-   - `ttyd-port-<version>-<jp|us>-ios-unsigned.ipa`: for AltStore, SideStore or Sideloadly;
-   - `ttyd-port-<version>-<jp|us>-linux-x64.zip`: built in an Ubuntu container ([`tools/port/linux-release.Dockerfile`](../tools/port/linux-release.Dockerfile));
+   - `papercut-<version>-macos-<arch>.zip`: `Paper Cut.app`, holding the three versions' builds (signed ad hoc, not notarized), with the same extras;
+   - `papercut-<version>-<jp|us|eu>-ios-unsigned.ipa`: one app per version, for AltStore, SideStore or Sideloadly;
+   - `papercut-<version>-linux-x64.zip`: the three builds and the `papercut` script, built in an Ubuntu container ([`tools/port/linux-release.Dockerfile`](../tools/port/linux-release.Dockerfile));
    - `SHA256SUMS-macos.txt`, and those checksums in the notes.
 4. Check the draft on GitHub (Releases), then publish it.
 
@@ -49,7 +49,7 @@ To build the packages without publishing, run `python tools/port/release.py 0.1.
 
 ## The Mac runner
 
-- **Registered** to `LLCOOLT/ttyd-port` with the label `ttyd-port-mac` (only that: the Windows jobs ask for `ttyd-port`). Run it as a service (`./svc.sh install`, `./svc.sh start`) so it starts on its own; it must be awake and online while a release runs.
+- **Registered** to `LLCOOLT/paper-cut` with the label `ttyd-port-mac` (only that: the Windows jobs ask for `ttyd-port`). Run it as a service (`./svc.sh install`, `./svc.sh start`) so it starts on its own; it must be awake and online while a release runs.
 - **The runner's build** must match the Mac: the ARM64 runner on Apple silicon (an x64 runner there runs under Rosetta and builds for Intel).
 - **Tools:** Xcode, Homebrew's `cmake ninja llvm python`, Rust with `rustup target add aarch64-apple-ios`, and Docker or OrbStack for the Linux packages. The workflow's first step prints each one's version.
 - **Disc data**, for the Linux CI job's tests that play the game: `.env` sets `TTYD_LOCAL_DATA` to a folder outside `~/Documents` (which a service can't read), holding `orig/<version>/` (the disc images) and `data/<version>/` (each disc extracted with `tools/port/extract_disc.py`). Release builds hold none of it.

@@ -3,6 +3,9 @@
 // cards, all drawn here from shapes; text in Fredoka (embedded font).
 #include "launcher_style.h"
 
+#include <SDL3/SDL.h>
+#include <aurora/aurora.h>
+
 #include <cmath>
 #include <cstdint>
 #ifdef __APPLE__
@@ -96,10 +99,17 @@ float launcherFontsScale() {
 }
 
 float launcherUiScale(float touch) {
-  // the window's size against a 1280x800 one, 1x to 2x, times the device's
   const ImVec2 d = ImGui::GetIO().DisplaySize;
+  if (touch > 1.f || launcherFontsScale() > 1.f) {
+    // phones and tablets (sizes in points): from the screen's short side, so
+    // a phone either way up (about 400) gets about 0.9 (16 pt text, 43 pt
+    // buttons) and a tablet the full touch size
+    const float shortSide = std::fmin(d.x, d.y);
+    return std::fmin(std::fmax(touch, launcherFontsScale()), std::fmax(0.85f, shortSide / 440.f));
+  }
+  // the window's size against a 1280x800 one, 1x to 2x
   const float fit = std::fmin(d.x / 1280.f, d.y / 800.f);
-  return std::fmax(touch, launcherFontsScale()) * std::fmin(2.f, std::fmax(1.f, fit));
+  return std::fmin(2.f, std::fmax(1.f, fit));
 }
 
 extern "C" void portUiInit(void) {
@@ -235,6 +245,18 @@ void launcherBackdrop(float time, float scale, ImVec2* min, ImVec2* max) {
   }
   *min = ImVec2(side + 12.f * scale, valance + scallop * 0.5f + 10.f * scale);
   *max = ImVec2(size.x - side - 12.f * scale, floorTop + (size.y - floorTop) * 0.35f); // standing on the stage
+  // and clear of a phone's notch, Dynamic Island and home indicator (the
+  // backdrop runs under them)
+  SDL_Rect safe;
+  int ww = 0, wh = 0;
+  SDL_Window* w = aurora_get_window();
+  if (w != nullptr && SDL_GetWindowSafeArea(w, &safe) && SDL_GetWindowSize(w, &ww, &wh) && ww > 0 && wh > 0) {
+    const float kx = size.x / ww, ky = size.y / wh; // window units to ImGui's
+    min->x = std::fmax(min->x, safe.x * kx + 8.f * scale);
+    min->y = std::fmax(min->y, safe.y * ky + 4.f * scale);
+    max->x = std::fmin(max->x, (safe.x + safe.w) * kx - 8.f * scale);
+    max->y = std::fmin(max->y, (safe.y + safe.h) * ky - 4.f * scale);
+  }
 }
 
 void launcherPaperCard(ImDrawList* dl, ImVec2 a, ImVec2 b, float scale) {

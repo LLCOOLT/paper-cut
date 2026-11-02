@@ -33,6 +33,9 @@ typedef void (*FontDrawStringCenterMtxLocalFn)(Mtx, const char*);
 #include "port/menu_tap.h"
 #include "pmario_sound.h"
 #include <dolphin/vi.h>
+#ifdef TTYD_BACKEND_AURORA
+#include "port/hud.h"
+#endif
 /* The mouse in the battle menus (port/src/common/menu_tap_pc.c): where the last frame put the ring's
  * settled icons (drawn about 27 above that point; the front one's bubble from 76 left to 62 right of it,
  * 20 to 65 above) and the list's rows (a bar 304 x 24 from x -52, its bottom at y), in the 2D units. */
@@ -55,6 +58,9 @@ int portBattleMenuPick(int list, int* click) {
     if (*click == 0) {
         return -1;
     }
+#ifdef TTYD_BACKEND_AURORA
+    portHudBattleMenuPoint(list != 0, &gx, &gy); /* HUD size: the menus as drawn (port/hud.h) */
+#endif
     if (list == 0) {
         if (VIGetRetraceCount() - sPickIconFrame > 2) {
             return -1;
@@ -1216,6 +1222,9 @@ static void DrawMenuHelpWin(const char* msg, f32 x, f32 y) {
     s8* dst;
     s32 i;
 
+#ifdef TTYD_BACKEND_AURORA
+    portHudBattleHelpWin(1, x, y, 400.0f, 80.0f); /* HUD size: about its own middle, on screen (port/hud.h) */
+#endif
     windowDispGX_Waku_col(0, (GXColor){0xFF, 0xFF, 0xFF, 0xCF}, x, y, 400.0f, 50.0f, 10.0f);
     FontDrawStart();
     FontDrawColorIDX(0);
@@ -1264,6 +1273,9 @@ static void DrawMenuHelpWin(const char* msg, f32 x, f32 y) {
     } else {
         FontDrawString(10.0f + x, y - 4.0f, "せつめいは　ないのだ！！");
     }
+#ifdef TTYD_BACKEND_AURORA
+    portHudBattleHelpWin(0, x, y, 400.0f, 80.0f);
+#endif
 }
 
 /**

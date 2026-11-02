@@ -69,6 +69,7 @@ static void portAndroidHapticTap() {
 }
 #endif
 extern "C" int portSettingsOwnsPoint(float x, float y); // port/settings/settings_ui.cpp
+extern "C" void portSettingsToggle(void);                 // port/settings/settings_ui.cpp
 #include <imgui.h>
 
 #include <cmath>
@@ -92,6 +93,7 @@ enum Control {
   kStart,
   kFast, // fast-forward: not a controller button
   kSwap, // Gameplay+ partner quick-swap (port/include/port/gameplus.h), shown when it is on
+  kMenu, // the settings page (port/settings/settings_ui.cpp): not a controller button
   kControlCount,
 };
 
@@ -113,6 +115,7 @@ const ButtonDef kButtons[kControlCount] = {
     {"START", PAD_BUTTON_START},
     {">>", 0},
     {"P", 0},
+    {nullptr, 0}, // kMenu: three bars, drawn
 };
 
 constexpr u32 kPort = 0; // the game's controller 1
@@ -263,6 +266,7 @@ bool computeLayout(Layout& l) {
     l.c[kStart] = at(kStart, sx + sw * 0.5f + 0.07f * u, bottom - 0.07f * u, 0.04f * u);
     l.c[kFast] = at(kFast, sx + sw * 0.5f - 0.07f * u, bottom - 0.07f * u, 0.04f * u);
     l.c[kSwap] = at(kSwap, a.x - 0.26f * u, a.y - 0.33f * u, 0.04f * u);
+    l.c[kMenu] = at(kMenu, sx + sw * 0.5f + 0.21f * u, bottom - 0.07f * u, 0.04f * u);
   } else {
     l.c[kR] = at(kR, right - 0.12f * u, sy + 0.10f * u, 0.05f * u);
     l.c[kZ] = at(kZ, right - 0.12f * u, sy + 0.24f * u, 0.045f * u);
@@ -270,6 +274,7 @@ bool computeLayout(Layout& l) {
     l.c[kStart] = at(kStart, sx + sw * 0.5f, sy + 0.07f * u, 0.04f * u);
     l.c[kFast] = at(kFast, sx + sw * 0.5f - 0.13f * u, sy + 0.07f * u, 0.04f * u);
     l.c[kSwap] = at(kSwap, right - 0.12f * u, sy + 0.37f * u, 0.04f * u);
+    l.c[kMenu] = at(kMenu, sx + sw * 0.5f + 0.13f * u, sy + 0.07f * u, 0.04f * u);
   }
   l.stickZoneRight = std::fmax(sx + sw * 0.45f, l.c[kStick].x + l.c[kStick].r * 1.5f);
   l.stickZoneTop = std::fmin(sy + 0.2f * u, l.c[kStick].y - l.c[kStick].r * 1.5f);
@@ -409,6 +414,8 @@ void release(Finger& f) {
       portSpeedControl(0);
     } else if (f.control == kSwap) {
       gPortQuickSwapTouch = 0;
+    } else if (f.control == kMenu) {
+      portSettingsToggle(); // on the tap's release, so the page doesn't take this finger
     }
   }
   f.used = false;
@@ -745,6 +752,13 @@ extern "C" void portTouchDraw(void) {
       drawBean(dl, l.bean[c], l.c[c], kButtons[c].label, lit);
     } else {
       drawCircle(dl, l.c[c], kButtons[c].label, lit);
+    }
+    if (c == kMenu) { // three bars: the settings
+      const Circle& m = l.c[c];
+      for (int i = -1; i <= 1; i++) {
+        const float y = m.y + i * m.r * 0.32f;
+        dl->AddLine(ImVec2(m.x - m.r * 0.45f, y), ImVec2(m.x + m.r * 0.45f, y), white(200), m.r * 0.14f);
+      }
     }
   }
   if (sEditing) {

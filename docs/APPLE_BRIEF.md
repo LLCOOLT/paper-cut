@@ -54,7 +54,7 @@ the Windows build is proven.
    `rustup target add aarch64-apple-ios aarch64-apple-ios-sim` (nod has no
    prebuilt iOS package).
 3. `gh auth login`, then
-   `git clone --recurse-submodules -b port-v2 https://github.com/LLCOOLT/ttyd-port`
+   `git clone --recurse-submodules -b port-v2 https://github.com/LLCOOLT/paper-cut`
    and `git switch -c port-apple`.
 4. Game data (from the user's Windows PC, copied by them, e.g. USB or a
    network share; never through git): the folders `orig/G8MJ01`,

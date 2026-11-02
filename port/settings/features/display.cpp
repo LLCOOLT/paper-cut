@@ -2,6 +2,8 @@
 // declared where they apply (port/src/aurora/widescreen_aurora.c, hud_aurora.c,
 // display_aurora.c; port/include/port/display.h). Off or as before by default.
 #include "port/settings.h"
+#include "port/display.h"
+#include "port/widescreen.h"
 
 namespace {
 
@@ -16,6 +18,17 @@ constexpr const char* kPost[] = {"Off", "CRT", "Paper grain", "Sharpen"};
 constexpr const char* kPerf[] = {"Off", "Frame-time graph", "Graph and timings"};
 
 const bool sAdded = [] {
+  // declared here too, at start, with their defaults, so the launcher's Settings tab has them before
+  // the game first draws (where they apply declares them again: one value)
+  portSettingsDeclare("aspect_ratio", PORT_ASPECT_SWITCH, 0, PORT_ASPECT_WINDOW);
+  portSettingsDeclare("aspect_max", 0, 0, 2);
+  portSettingsDeclare("hud_scale", 100, 50, 150);
+  portSettingsDeclare("aniso", 0, 0, 4);
+  portSettingsDeclare("lod_bias", PORT_LOD_GAME, 0, PORT_LOD_COUNT - 1);
+  portSettingsDeclare("supersample", 0, 0, 3);
+  portSettingsDeclare("post_filter", 0, 0, 3);
+  portSettingsDeclare("vrr", 0, 0, 1);
+  portSettingsDeclare("perf_overlay", 0, 0, 2);
   portSettingsAddChoice("Display", "Aspect ratio",
                         "Wider shows more of the sides of each scene; much of the game was built for 4:3, so rooms "
                         "and scenes can end before the screen's edges.",

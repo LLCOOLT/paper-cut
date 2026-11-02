@@ -39,22 +39,73 @@ static float keepInside(float s, float lo, float hi, float edge) {
     return c < -edge + half ? -edge + half : c > edge - half ? edge - half : c;
 }
 
-/* A box (NDC) scaled by s about its middle, moved back inside the frame
- * where it would leave it. */
-static void box(float s, float x0, float x1, float y0, float y1) {
+/* The offsets that scale a box (NDC) by s about its middle and move it back
+ * inside the frame where it would leave it. */
+static void boxOffsets(float s, float x0, float x1, float y0, float y1, float* tx, float* ty) {
     const float edge = portWidescreenEdgeScale(); /* the frame's x edge in the game's NDC */
-    const float cx = keepInside(s, x0, x1, edge), cy = keepInside(s, y0, y1, 1.0f);
-    GXSetProjectionTransform(s, s, cx - s * (x0 + x1) * 0.5f, cy - s * (y0 + y1) * 0.5f);
+    *tx = keepInside(s, x0, x1, edge) - s * (x0 + x1) * 0.5f;
+    *ty = keepInside(s, y0, y1, 1.0f) - s * (y0 + y1) * 0.5f;
+}
+
+static void box(float s, float x0, float x1, float y0, float y1) {
+    float tx, ty;
+    boxOffsets(s, x0, x1, y0, y1, &tx, &ty);
+    GXSetProjectionTransform(s, s, tx, ty);
     sTransformed = 1;
 }
 
-void portHudDraw(CameraId camId, DispCallback callback, void* param) {
-    float s;
+static float scaleNow(void) {
     if (sScale == NULL) {
         sScale = portSettingsDeclare("hud_scale", 100, 50, 150);
     }
-    s = (float)*sScale / 100.0f;
+    return (float)*sScale / 100.0f;
+}
+
+/* The battle menus' transform: the command ring about the left edge (it sits
+ * over the unit, on the left); a sub-menu's list (its bubble from about x
+ * -135, the rows' bar to 255, y -95 to 135 in the 2D units) about its own
+ * middle, kept inside the frame, since about the left edge it would leave the
+ * right one past ~110 %. */
+static void battleMenuXf(int list, float s, float* tx, float* ty) {
+    if (list == 0) {
+        *tx = (1.0f - s) * -1.0f;
+        *ty = 0.0f;
+    } else {
+        boxOffsets(s, -135.0f / 304.0f, 255.0f / 304.0f, -95.0f / 240.0f, 135.0f / 240.0f, tx, ty);
+    }
+}
+
+void portHudBattleMenuPoint(int list, float* gx, float* gy) {
+    const float s = scaleNow();
+    float tx, ty;
+    if (s == 1.0f) {
+        return;
+    }
+    battleMenuXf(list, s, &tx, &ty);
+    *gx = (*gx / 304.0f - tx) / s * 304.0f;
+    *gy = (*gy / 240.0f - ty) / s * 240.0f;
+}
+
+static int sBattleMenu; /* a battle menu's draw is under way, with this transform */
+static float sBattleTx, sBattleTy;
+
+void portHudBattleHelpWin(int begin, float x, float y, float w, float h) {
+    const float s = scaleNow();
+    if (!sBattleMenu || s == 1.0f) {
+        return;
+    }
+    if (begin) {
+        box(s, x / 304.0f, (x + w) / 304.0f, (y - h) / 240.0f, y / 240.0f);
+    } else {
+        GXSetProjectionTransform(s, s, sBattleTx, sBattleTy);
+    }
+}
+
+void portHudDraw(CameraId camId, DispCallback callback, void* param) {
+    float s, tx, ty;
+    s = scaleNow();
     gPortHudStatusScale = s;
+    sBattleMenu = 0;
     if (camId == CAMERA_2D && callback != NULL && s != 1.0f) {
         if (portHudIsStatusBar(callback)) {
             about(s, 0.0f, 1.0f); /* the top of the screen */
@@ -68,7 +119,12 @@ void portHudDraw(CameraId camId, DispCallback callback, void* param) {
             return;
         }
         if (isBattleMenu(callback)) {
-            about(s, -1.0f, 0.0f); /* the left edge, where the lists are */
+            battleMenuXf(callback != BattleCommandDisplay_ActMenuDisp, s, &tx, &ty);
+            GXSetProjectionTransform(s, s, tx, ty);
+            sTransformed = 1;
+            sBattleMenu = 1;
+            sBattleTx = tx;
+            sBattleTy = ty;
             return;
         }
     }

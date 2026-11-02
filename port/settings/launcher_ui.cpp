@@ -297,7 +297,9 @@ bool touchScreen() {
 #if defined(__ANDROID__) || (defined(__APPLE__) && TARGET_OS_IPHONE)
   return true;
 #else
-  return false;
+  // $TTYD_LAUNCHER_TOUCH (tests, screenshots): sized as on a phone or tablet
+  static const bool test = SDL_getenv("TTYD_LAUNCHER_TOUCH") != nullptr;
+  return test;
 #endif
 }
 
@@ -347,10 +349,13 @@ bool bigButton(const char* label, float width, float scale) {
   return pressed;
 }
 
-void drawLibrary(Launcher& l, float scale) {
+// stacked (a narrow stage): under the details, in the rest of the space;
+// else the left of the row
+void drawLibrary(Launcher& l, float scale, bool stacked) {
   const PortVersionInfo* self = portVersionSelf();
-  const float listWidth = std::max(280.f * scale, ImGui::GetContentRegionAvail().x * 0.42f);
-  beginCard("library", ImVec2(listWidth, 0), scale);
+  const ImVec2 avail = ImGui::GetContentRegionAvail();
+  const ImVec2 size = stacked ? ImVec2(0, 0) : ImVec2(std::max(280.f * scale, avail.x * 0.42f), 0);
+  beginCard("library", size, scale);
   heading("Your discs");
   ImGui::Spacing();
   if (l.discs.empty()) {
@@ -416,8 +421,9 @@ void drawLibrary(Launcher& l, float scale) {
   ImGui::EndChild();
 }
 
-void drawDetails(Launcher& l, float scale) {
-  beginCard("details", ImVec2(0, 0), scale);
+// size: the card's (0: the rest of the row or column)
+void drawDetails(Launcher& l, float scale, ImVec2 size = ImVec2(0, 0)) {
+  beginCard("details", size, scale);
   if (l.selected < 0 || l.selected >= static_cast<int>(l.discs.size())) {
     heading("Welcome!");
     ImGui::Spacing();
@@ -462,11 +468,13 @@ void drawDetails(Launcher& l, float scale) {
   ImGui::Spacing();
   PortSettings* s = portSettings();
   bool skip = s->launcherSkip != 0;
-  if (ImGui::Checkbox("Next time, start with the last disc played", &skip)) {
+  if (ImGui::Checkbox("Skip to this disc next time", &skip)) {
     s->launcherSkip = skip ? 1 : 0;
     portSettingsSave();
   }
-  ImGui::TextDisabled("To see this screen again: Settings > System in the game.");
+  ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
+  ImGui::TextWrapped("To see this screen again: Settings > System in the game.");
+  ImGui::PopStyleColor();
   ImGui::EndChild();
 }
 
@@ -632,33 +640,55 @@ void draw(Launcher& l, float time) {
   ImVec2 stageMin, stageMax;
   launcherBackdrop(time, scale, &stageMin, &stageMax);
 
+  // A short stage (a phone held sideways, a small window): the title shrinks
+  // to the tab row's left, without the game's name, so the cards keep the
+  // height. A narrow one (a phone held upright): the Play tab's cards stack.
+  const float stageW = stageMax.x - stageMin.x;
+  const bool compact = stageMax.y - stageMin.y < 560.f * scale;
+  const bool stacked = stageW < 640.f * scale;
+
   // the port's name cut out of paper, centred at the top of the stage, and
-  // the game it plays under it
+  // the game it plays under it (each shrunk to fit the stage's width)
   ImDrawList* fg = ImGui::GetBackgroundDrawList();
   const char* title = "Paper Cut";
   const char* game = "Paper Mario: The Thousand-Year Door";
-  const float titleSize = gLauncherFonts.title->FontSize * fontScale * 1.25f;
-  const float gameSize = gLauncherFonts.heading->FontSize * fontScale;
-  const ImVec2 tsz = gLauncherFonts.title->CalcTextSizeA(titleSize, FLT_MAX, 0.f, title);
+  auto fitWidth = [&](ImFont* font, float size, const char* text, float width) {
+    const float w = font->CalcTextSizeA(size, FLT_MAX, 0.f, text).x;
+    return w > width ? size * width / w : size;
+  };
+  const float titleSize =
+      compact ? gLauncherFonts.heading->FontSize * fontScale * 1.3f
+              : fitWidth(gLauncherFonts.title, gLauncherFonts.title->FontSize * fontScale * 1.25f, title,
+                         stageW - 80.f * scale);
+  const float gameSize = fitWidth(gLauncherFonts.heading, gLauncherFonts.heading->FontSize * fontScale, game, stageW);
+  ImFont* titleFont = compact ? gLauncherFonts.heading : gLauncherFonts.title;
+  const ImVec2 tsz = titleFont->CalcTextSizeA(titleSize, FLT_MAX, 0.f, title);
   const ImVec2 gsz = gLauncherFonts.heading->CalcTextSizeA(gameSize, FLT_MAX, 0.f, game);
   const float cx = (stageMin.x + stageMax.x) * 0.5f;
   float y = stageMin.y;
-  launcherOutlinedText(fg, gLauncherFonts.title, titleSize, ImVec2(cx - tsz.x * 0.5f, y), title, kCurtain,
-                       IM_COL32(255, 255, 255, 255), 6.f * scale);
-  const float sparkleY = y + tsz.y * 0.5f;
-  for (int side = -1; side <= 1; side += 2) {
-    const float sx = cx + side * (tsz.x * 0.5f + 28.f * scale);
-    const float r = (10.f + 2.f * std::sin(time * 2.f + side)) * scale;
-    const ImVec2 c(sx, sparkleY);
-    const float k = r * 0.3f;
-    ImVec2 pts[8] = {{c.x, c.y - r * 1.6f}, {c.x + k, c.y - k}, {c.x + r * 1.6f, c.y}, {c.x + k, c.y + k},
-                     {c.x, c.y + r * 1.6f}, {c.x - k, c.y + k}, {c.x - r * 1.6f, c.y}, {c.x - k, c.y - k}};
-    fg->AddConvexPolyFilled(pts, 8, kGold);
+  float tabIndent = 0.f; // compact: the tabs start right of the title
+  if (compact) {
+    launcherOutlinedText(fg, titleFont, titleSize, ImVec2(stageMin.x + 4.f * scale, y + 2.f * scale), title, kCurtain,
+                         IM_COL32(255, 255, 255, 255), 4.f * scale);
+    tabIndent = tsz.x + 20.f * scale;
+  } else {
+    launcherOutlinedText(fg, titleFont, titleSize, ImVec2(cx - tsz.x * 0.5f, y), title, kCurtain,
+                         IM_COL32(255, 255, 255, 255), 6.f * scale);
+    const float sparkleY = y + tsz.y * 0.5f;
+    for (int side = -1; side <= 1; side += 2) {
+      const float sx = cx + side * (tsz.x * 0.5f + 28.f * scale);
+      const float r = (10.f + 2.f * std::sin(time * 2.f + side)) * scale;
+      const ImVec2 c(sx, sparkleY);
+      const float k = r * 0.3f;
+      ImVec2 pts[8] = {{c.x, c.y - r * 1.6f}, {c.x + k, c.y - k}, {c.x + r * 1.6f, c.y}, {c.x + k, c.y + k},
+                       {c.x, c.y + r * 1.6f}, {c.x - k, c.y + k}, {c.x - r * 1.6f, c.y}, {c.x - k, c.y - k}};
+      fg->AddConvexPolyFilled(pts, 8, kGold);
+    }
+    y += tsz.y - 4.f * scale;
+    launcherOutlinedText(fg, gLauncherFonts.heading, gameSize, ImVec2(cx - gsz.x * 0.5f, y), game, kGold,
+                         IM_COL32(60, 20, 30, 255), 3.f * scale);
+    y += gsz.y + 14.f * scale;
   }
-  y += tsz.y - 4.f * scale;
-  launcherOutlinedText(fg, gLauncherFonts.heading, gameSize, ImVec2(cx - gsz.x * 0.5f, y), game, kGold,
-                       IM_COL32(60, 20, 30, 255), 3.f * scale);
-  y += gsz.y + 14.f * scale;
 
   // a controller: the shoulder buttons step through the tabs, and its
   // buttons are named along the bottom
@@ -691,14 +721,25 @@ void draw(Launcher& l, float time) {
                    ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoBackground);
   ImGui::PushFont(gLauncherFonts.body);
   ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(255, 247, 228, 255)); // tab labels on the dark stage
+  if (tabIndent > 0.f) {
+    ImGui::SetCursorPosX(ImGui::GetCursorPosX() + tabIndent);
+  }
   const bool tabs = ImGui::BeginTabBar("launcher");
   ImGui::PopStyleColor();
   if (tabs) {
     if (ImGui::BeginTabItem("Play", nullptr, tabFlags(0, "Play"))) {
       l.tab = 0;
-      drawLibrary(l, scale);
-      ImGui::SameLine(0, 18.f * scale);
-      drawDetails(l, scale);
+      if (stacked) {
+        // a narrow stage (a phone held upright): Play first, the discs (set
+        // up once) under it
+        drawDetails(l, scale, ImVec2(0, ImGui::GetContentRegionAvail().y * 0.48f));
+        ImGui::Dummy(ImVec2(0, 4.f * scale));
+        drawLibrary(l, scale, true);
+      } else {
+        drawLibrary(l, scale, false);
+        ImGui::SameLine(0, 18.f * scale);
+        drawDetails(l, scale);
+      }
       ImGui::EndTabItem();
     }
     if (ImGui::BeginTabItem("Settings", nullptr, tabFlags(1, "Settings"))) {
@@ -731,6 +772,7 @@ extern "C" int portLauncherRun(const char* userPath, const char* finder, char* p
   } else if (portSettings()->launcherSkip && l.selected >= 0 && l.discs[l.selected].path == readFile(l.lastFile)) {
     play(l, l.selected);
   }
+  gPortLauncherShown = true; // touches drive the launcher (settings_ui.cpp)
   // a controller plugged in: its buttons shown from the start
   l.pad = SDL_HasGamepad() || SDL_getenv("TTYD_LAUNCHER_PAD") != nullptr;
   const Uint64 start = SDL_GetTicks();
@@ -740,6 +782,8 @@ extern "C" int portLauncherRun(const char* userPath, const char* finder, char* p
     launcherStyleEnd();
     aurora_end_frame();
   }
+  gPortLauncherShown = false;
+  portUiReleaseInput(); // the game gets the keyboard and controller from here
   std::snprintf(path, size, "%s", l.result.c_str());
   return 1;
 }

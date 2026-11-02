@@ -57,6 +57,11 @@ typedef void (*PouchSetAPS32Fn)(s32);
 static USER_FUNC(cam_r);
 // Badge tutorial helper: lets the player's input through again (defined below).
 USER_FUNC(lecture_key_mask_off);
+#ifdef TARGET_PC
+/* Apple's <stdlib.h> declares POSIX wait() (sys/wait.h): this file's own is
+ * renamed so the two don't collide */
+#define wait win_main_wait
+#endif
 static USER_FUNC(wait);
 // Item-use helper: turns off the partners' forced slit (defined below).
 USER_FUNC(all_party_slit_off);

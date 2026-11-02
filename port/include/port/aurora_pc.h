@@ -29,6 +29,10 @@ int portAuroraPickDisc(char* out, size_t size);
 int portLauncherRun(const char* userPath, const char* finder, char* path, size_t size);
 /* The launcher's and settings page's fonts (port/settings/launcher_style.cpp), once Aurora is up. */
 void portUiInit(void);
+/* The keyboard's default keys for controller 1, before PADInit, and the
+ * keyboard on after it (port/settings/settings_ui.cpp). */
+void portKeyboardDefaults(void);
+void portKeyboardActivate(void);
 
 /* Frames drawn between the game's 60 Hz frames (interp_aurora.c): the
  * display rate's multiple of 60 from $TTYD_FRAMERATE, 1 when off. */

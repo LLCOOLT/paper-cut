@@ -146,6 +146,11 @@ USER_FUNC(evt_mode_battle) {
     evtSetValue(event, args[1], sStatus.mode == PORT_MODE_ENDLESS_PIT && sCondition >= 0);
     evtSetValue(event, args[2], sCondition >= 0 ? kConditions[sCondition].rule : 0);
     evtSetValue(event, args[3], sCondition >= 0 ? kConditions[sCondition].param : 0);
+    if (sStatus.mode == PORT_MODE_ENDLESS_PIT && sCondition >= 0) {
+        /* the condition's text from the Pit map's own messages (stg3_tou_*), loaded now; looked up
+         * before the map change it was the game's red "No messages" */
+        sStatus.condition = msgSearch(kConditions[sCondition].msg);
+    }
     printf("[modes] map %s: battle %d\n", gp->currentMapName, (int)battle);
     fflush(stdout);
     return EVT_RETURN_DONE;
@@ -193,7 +198,7 @@ static void pitNextMatch(void) {
     sCondition = irand(CONDITION_COUNT);
     snprintf(sTeamName, sizeof(sTeamName), "Glitz Pit team %d of %d", (int)sTeam, PIT_TEAMS);
     sStatus.next = sTeamName;
-    sStatus.condition = msgSearch(kConditions[sCondition].msg);
+    sStatus.condition = NULL; /* its text once on the Pit's map (evt_mode_battle) */
     if ((v = portSettingsFind("difficulty")) != NULL) {
         *v = 3; /* custom: the two percentages */
     }
