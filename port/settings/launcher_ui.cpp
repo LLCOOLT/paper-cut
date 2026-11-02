@@ -12,6 +12,7 @@
 #include "port/versions.h"
 #include "settings_ui.h"
 #include "port/update_check.h"
+#include "port/resume.h"
 #include "launcher_style.h"
 
 #include <SDL3/SDL.h>
@@ -293,6 +294,43 @@ void play(Launcher& l, int i) {
   std::_Exit(0);
 }
 
+// Quick resume's save for a disc's version (port/src/aurora/resume_aurora.c):
+// its path, when there's one, and when it was written
+std::string resumeFile(const Disc& d, SDL_Time* when = nullptr) {
+  if (d.version == nullptr) {
+    return {};
+  }
+  char path[1024];
+  portResumePath(path, sizeof(path), d.version->id, 0);
+  SDL_PathInfo info;
+  if (!SDL_GetPathInfo(path, &info) || info.type != SDL_PATHTYPE_FILE) {
+    return {};
+  }
+  if (when != nullptr) {
+    *when = info.modify_time;
+  }
+  return path;
+}
+
+// Plays disc i from quick resume's save, as the save file it came from: the
+// save warp at start ($TTYD_LOAD_SAVE, warp_pc.c), here or in the version's
+// executable started (which takes this one's environment)
+void continueGame(Launcher& l, int i) {
+  const std::string path = resumeFile(l.discs[i]);
+  char sidecar[1024];
+  portResumePath(sidecar, sizeof(sidecar), l.discs[i].version->id, 1);
+  std::string slot = readFile(sidecar);
+  slot = slot.empty() || slot[0] < '0' || slot[0] > '3' ? "3" : slot.substr(0, 1);
+  if (l.discs[i].version == portVersionSelf()) {
+    portWarpRequestResume(path.c_str(), slot[0] - '0'); // here: straight to the warp
+  } else {
+    // another version's executable: through its environment (SDL_CreateProcess passes SDL's)
+    SDL_SetEnvironmentVariable(SDL_GetEnvironment(), "TTYD_LOAD_SAVE", path.c_str(), true);
+    SDL_SetEnvironmentVariable(SDL_GetEnvironment(), "TTYD_LOAD_SAVE_SLOT", slot.c_str(), true);
+  }
+  play(l, i);
+}
+
 bool touchScreen() {
 #if defined(__ANDROID__) || (defined(__APPLE__) && TARGET_OS_IPHONE)
   return true;
@@ -450,10 +488,27 @@ void drawDetails(Launcher& l, float scale, ImVec2 size = ImVec2(0, 0)) {
   ImGui::Spacing();
   const std::string problem = playProblem(d);
   ImGui::BeginDisabled(!problem.empty());
-  const char* label = d.version != nullptr && d.version != portVersionSelf() ? "Play (starts its build)" : "Play";
-  if (bigButton(label, std::min(ImGui::GetContentRegionAvail().x, 300.f * scale), scale) ||
-      (problem.empty() && ImGui::IsKeyPressed(ImGuiKey_GamepadStart, false))) {
-    play(l, l.selected);
+  SDL_Time resumed = 0;
+  const bool canContinue = problem.empty() && !resumeFile(d, &resumed).empty();
+  const float buttonWidth = std::min(ImGui::GetContentRegionAvail().x, 300.f * scale);
+  if (canContinue) {
+    // quick resume's save: Continue first (Start too), the title below it
+    if (bigButton("Continue", buttonWidth, scale) || ImGui::IsKeyPressed(ImGuiKey_GamepadStart, false)) {
+      continueGame(l, l.selected);
+    }
+    SDL_DateTime t;
+    if (SDL_TimeToDateTime(resumed, &t, true)) {
+      ImGui::TextDisabled("Where you left off, %04d-%02d-%02d %02d:%02d", t.year, t.month, t.day, t.hour, t.minute);
+    }
+    ImGui::Spacing();
+    if (ImGui::Button("Start from the title", ImVec2(buttonWidth, 0))) {
+      play(l, l.selected);
+    }
+  } else {
+    const char* label = d.version != nullptr && d.version != portVersionSelf() ? "Play (starts its build)" : "Play";
+    if (bigButton(label, buttonWidth, scale) || (problem.empty() && ImGui::IsKeyPressed(ImGuiKey_GamepadStart, false))) {
+      play(l, l.selected);
+    }
   }
   ImGui::EndDisabled();
   if (!problem.empty()) {
@@ -492,7 +547,21 @@ void drawAbout(Launcher& l, float scale) {
   ImGui::Text("This build: %s (%s)", self->name, self->version);
   portUpdateDrawNotice(); // a newer release, when the update check found one
   ImGui::Spacing();
-  ImGui::TextDisabled("Typeface: Fredoka (SIL Open Font License).");
+  heading("Licences");
+  ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
+  ImGui::TextWrapped("Paper Cut is under the MIT licence. It is built with: Aurora (MIT), SDL 3 (zlib), Dawn "
+                     "(BSD 3-Clause), nod (MIT), Dear ImGui (MIT), FreeType (FreeType License), libpng (libpng "
+                     "License), zlib (zlib), Zstandard (BSD 3-Clause), xxHash (BSD 2-Clause), {fmt} (MIT), Abseil "
+                     "(Apache 2.0), Tracy (BSD 3-Clause), SQLite (public domain), MusyX (MIT), SGI's GLU "
+                     "tessellator (SGI Free Software License B 2.0), and the Fredoka typeface (SIL Open Font "
+                     "License 1.1).");
+#if defined(__ANDROID__) || (defined(__APPLE__) && TARGET_OS_IPHONE)
+  ImGui::TextWrapped("The licence texts are in THIRD_PARTY.txt of Paper Cut's desktop packages and in its "
+                     "source (docs/THIRD_PARTY.md).");
+#else
+  ImGui::TextWrapped("The licence texts are in THIRD_PARTY.txt and OFL.txt beside Paper Cut.");
+#endif
+  ImGui::PopStyleColor();
   ImGui::EndChild();
 }
 
@@ -668,21 +737,20 @@ void draw(Launcher& l, float time) {
   float y = stageMin.y;
   float tabIndent = 0.f; // compact: the tabs start right of the title
   if (compact) {
-    launcherOutlinedText(fg, titleFont, titleSize, ImVec2(stageMin.x + 4.f * scale, y + 2.f * scale), title, kCurtain,
-                         IM_COL32(255, 255, 255, 255), 4.f * scale);
+    launcherTitleText(fg, titleFont, titleSize, ImVec2(stageMin.x + 4.f * scale, y + 2.f * scale), title);
     tabIndent = tsz.x + 20.f * scale;
   } else {
-    launcherOutlinedText(fg, titleFont, titleSize, ImVec2(cx - tsz.x * 0.5f, y), title, kCurtain,
-                         IM_COL32(255, 255, 255, 255), 6.f * scale);
-    const float sparkleY = y + tsz.y * 0.5f;
+    launcherTitleText(fg, titleFont, titleSize, ImVec2(cx - tsz.x * 0.5f, y), title);
+    // the banner's sparkles: one each side at the middle of the capitals, a
+    // small one further out and higher (sizes from the font's em S)
+    const float em = 0.826f * titleSize;
+    const float sparkleY = y + 0.629f * em;
     for (int side = -1; side <= 1; side += 2) {
-      const float sx = cx + side * (tsz.x * 0.5f + 28.f * scale);
-      const float r = (10.f + 2.f * std::sin(time * 2.f + side)) * scale;
-      const ImVec2 c(sx, sparkleY);
-      const float k = r * 0.3f;
-      ImVec2 pts[8] = {{c.x, c.y - r * 1.6f}, {c.x + k, c.y - k}, {c.x + r * 1.6f, c.y}, {c.x + k, c.y + k},
-                       {c.x, c.y + r * 1.6f}, {c.x - k, c.y + k}, {c.x - r * 1.6f, c.y}, {c.x - k, c.y - k}};
-      fg->AddConvexPolyFilled(pts, 8, kGold);
+      const float sx = cx + side * (tsz.x * 0.5f + 0.42f * em);
+      const float pulse = 1.f + 0.06f * std::sin(time * 2.f + side); // a slow twinkle
+      launcherSparkle(fg, ImVec2(sx, sparkleY), 0.177f * em * pulse, kGold);
+      launcherSparkle(fg, ImVec2(sx + side * 0.21f * em, sparkleY - 0.21f * em), 0.073f * em,
+                      (kGold & 0x00FFFFFF) | (230u << 24));
     }
     y += tsz.y - 4.f * scale;
     launcherOutlinedText(fg, gLauncherFonts.heading, gameSize, ImVec2(cx - gsz.x * 0.5f, y), game, kGold,

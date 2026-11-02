@@ -17,8 +17,18 @@ Input: the warnings of an audit build (-DTTYD_PTRWIDTH_WARNINGS=ON includes
     ninja -C build-pc-audit -k 0 > audit.log; fncast_audit.py audit.log [-v]
 """
 import collections
+import os
 import re
 import sys
+
+ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+
+
+def rel_to_root(path):
+    """A compiler's path, relative to this checkout's root when it is under it."""
+    path = path.replace("\\", "/")
+    root = ROOT.replace("\\", "/").rstrip("/") + "/"
+    return path[len(root):] if path.lower().startswith(root.lower()) else path
 
 WARN = re.compile(r"^(.*?):(\d+):(\d+): warning: cast from '([^']*)'(?: \(aka '([^']*)'\))? to '([^']*)'(?: \(aka '([^']*)'\))?"
                   r".*\[-Wcast-function-type-(?:mismatch|strict)\]")
@@ -102,7 +112,7 @@ def main():
         m = WARN.match(line.strip())
         if not m:
             continue
-        f = re.sub(r"^.*?ttyd-port[/\\]", "", m.group(1)).replace("\\", "/")
+        f = rel_to_root(m.group(1))
         src = m.group(5) or m.group(4)
         dst = m.group(7) or m.group(6)
         groups[(src, dst)].append(f"{f}:{m.group(2)}")

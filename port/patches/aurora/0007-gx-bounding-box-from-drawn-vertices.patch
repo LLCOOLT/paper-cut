@@ -1,4 +1,6 @@
-From: Claude <noreply@anthropic.com>
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: LLCOOLT <114613597+LLCOOLT@users.noreply.github.com>
+Date: Sun, 25 Oct 2026 09:40:36 -0400
 Subject: [PATCH] gx: bounding box from the drawn vertices
 
 GXClearBoundingBox writes BP 0x55/0x56, which arm a CPU bounding box; while

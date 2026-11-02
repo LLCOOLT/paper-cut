@@ -28,8 +28,9 @@
 
 namespace {
 
-// The repository whose releases are Paper Cut's.
-constexpr const char* kRepository = "LLCOOLT/ttyd-port";
+// The repository whose releases are Paper Cut's. While it is private the API
+// answers 404, which (like any non-200 or a failed curl) means no notice.
+constexpr const char* kRepository = "LLCOOLT/paper-cut";
 
 #if defined(__ANDROID__) || (defined(__APPLE__) && TARGET_OS_IPHONE)
 constexpr bool kCanCheck = false;

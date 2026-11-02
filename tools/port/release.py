@@ -5,7 +5,7 @@
 
 Targets (--targets, comma-separated; by default this machine's):
   desktop  this machine's own build: Windows, macOS or Linux
-  android  both APKs (debug-signed), with an Android SDK
+  android  the three APKs (debug-signed), with an Android SDK
   ios      an unsigned .ipa per version, for sideloading (on a Mac)
   linux    the Linux x86-64 build, inside a Docker container (on a Mac or
            another machine with Docker: tools/port/linux-release.Dockerfile)
@@ -17,7 +17,7 @@ extracted from the disc), checked to hold none of the disc's data where the
 extracted data is there to check against. Desktop: one package with all
 three builds behind the launcher, papercut-VERSION-<platform>.zip (Paper Cut
 to start, the builds, their libraries, the C runtime on Windows, README,
-LICENSE and the example mods); phones: papercut-VERSION-<jp|us|eu>-*.apk/.ipa.
+LICENSE, THIRD_PARTY.txt, OFL.txt and the example mods); phones: papercut-VERSION-<jp|us|eu>-*.apk/.ipa.
 SHA256SUMS.txt and notes.md beside them.
 
 --publish TAG: the files on the GitHub release TAG (gh; in the release
@@ -38,6 +38,7 @@ import zipfile
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import local_ci
+import third_party
 
 ROOT = local_ci.ROOT
 VERSIONS = {"jp": "G8MJ01", "us": "G8ME01", "eu": "G8MP01"}
@@ -183,7 +184,12 @@ def package_desktop(outs, version_string, dist):
             files.append((exe, f"ttyd-{short}"))
         files += [(p, os.path.basename(p)) for p in sorted(glob.glob(os.path.join(us, "*.so*")))]
         files.append((os.path.join(ROOT, "port", "assets", "icon", "papercut-256.png"), "papercut.png"))
+    # the third-party notices: every component the builds embed and link, with
+    # its licence text (tools/port/third_party.py), and the font's licence
+    notices = os.path.join(dist, f"_{name}_THIRD_PARTY.txt")
+    open(notices, "w", encoding="utf-8", newline="\n").write(third_party.text(us))
     files += [(os.path.join(ROOT, "README.md"), "README.md"), (os.path.join(ROOT, "LICENSE"), "LICENSE.txt"),
+              (notices, "THIRD_PARTY.txt"), (os.path.join(ROOT, "port", "assets", "fonts", "OFL.txt"), "OFL.txt"),
               (os.path.join(ROOT, "docs", "MODDING.md"), "docs/MODDING.md")]
     for path in glob.glob(os.path.join(ROOT, "examples", "mods", "**", "*"), recursive=True):
         if os.path.isfile(path):
@@ -224,6 +230,7 @@ def package_desktop(outs, version_string, dist):
                 info.compress_type, info.external_attr = zipfile.ZIP_DEFLATED, 0o755 << 16  # (rwxr-xr-x)
                 z.writestr(info, '#!/bin/sh\n# Paper Cut: the launcher (the US build), which starts the disc\'s '
                                  'version\nexec "$(dirname "$0")/ttyd-us" "$@"\n')
+    os.remove(notices)
     print("wrote", zpath)
     return zpath
 
@@ -263,7 +270,7 @@ def package_android(dist, version_string):
         if jdk:
             env["JAVA_HOME"] = jdk[-1]
     run([gradle, "--no-daemon", "-p", os.path.join(ROOT, "port", "android"), "-PnoDiscAssets",
-         "assembleJpDebug", "assembleUsDebug", "assembleEuDebug"], env=env)
+         f"-PTTYD_PORT_VERSION={version_string}", "assembleJpDebug", "assembleUsDebug", "assembleEuDebug"], env=env)
     out = []
     for short in ("jp", "us", "eu"):
         apk = sorted(glob.glob(os.path.join(ROOT, "port", "android", "app", "build", "outputs", "apk", short, "debug",

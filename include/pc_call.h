@@ -4,7 +4,7 @@
  * pointer of another type to get MWCC's register use. On GameCube that is the
  * call as written; on the PC port, where such calls pass arguments in the wrong
  * registers (or truncate pointers), the same call is made with the function's
- * real prototype (tools/port/fncast_fix.py writes both). */
+ * real prototype (tools/port/fncast_audit.py lists the casts). */
 #ifdef TARGET_PC
 #include <stdint.h>
 #define PCCALL(gc_call, pc_call) (pc_call)

@@ -8,6 +8,7 @@
 #include <SDL3/SDL_timer.h>
 #include <stdlib.h>
 #include "port/aurora_pc.h"
+#include "port/resume.h"
 #include "port/os_pc.h"
 #include "port/dtk_pc.h"
 #include "port/platform.h"
@@ -82,6 +83,7 @@ void portAuroraBeginFrame(void) {
         const AuroraEvent* event = aurora_update();
         for (; event != NULL && event->type != AURORA_NONE; event++) {
             if (event->type == AURORA_EXIT) {
+                portResumeFlush(); /* quick resume: where the player was */
                 aurora_shutdown();
                 exit(0);
             }
@@ -139,6 +141,7 @@ void VIWaitForRetrace(void) {
     salPcAuroraPump(1.0 / portFieldRate());
     portTraceFrame(sRetraceCount); /* $TTYD_TRACE / $TTYD_WARP, as headless */
     portWarpFrame();               /* the settings page's save warps */
+    portResumeFrame();             /* quick resume's save, made while playing */
     if (sPostCallback != NULL) {
         sPostCallback(sRetraceCount);
     }

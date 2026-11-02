@@ -1,32 +1,34 @@
-# Native PC port of the TTYD decomp
+# Paper Cut: technical reference
 
-Paper Mario: The Thousand-Year Door, Japanese (G8MJ01) and US (G8ME01), as a
-native 64-bit program, built from this decomp. The game code is the decomp's;
-the GameCube platform under it is replaced. No game data is shipped: the port
-builds without it and runs from the user's own disc image.
+Paper Cut is Paper Mario: The Thousand-Year Door, Japanese (G8MJ01), US
+(G8ME01) and European (G8MP01), as a native 64-bit program, built from the
+matching decompilation ([LLCOOLT/ttyd](https://github.com/LLCOOLT/ttyd)). The
+game code is the decomp's; the GameCube platform under it is replaced. No game
+data is shipped: Paper Cut builds without it and runs from the user's own disc
+image.
 
 ## Status
 
 | Milestone | State |
 |---|---|
-| Builds on Windows (clang + lld), JP, US and PAL, headless and Aurora | done |
-| Boots to the title (JP, US, PAL) | done |
-| Every map of the game's map table boots and runs (279 per version) | done, headless and Aurora |
+| Builds on Windows (clang + lld), JP, US and EU, headless and Aurora | done |
+| Boots to the title (JP, US, EU) | done |
+| Every map of the game's map table boots and runs (279 per version) | done: headless, all three versions (EU in all five languages); Aurora, JP and US |
 | Field play: walking, jumping, blocks, messages (scripted input) | done |
-| Battles (a battle on every map with enemies) | done, JP and US |
+| Battles (`map_sweep --battles`: every entry of every area's battle table) | done, JP and US; EU not yet swept |
 | Audio (MusyX on PC; every map plays, checked by ear) | done; SDL output not yet heard on a real device |
 | Memory card: create a file, save at a Save Block, reload | done, headless and Aurora (the same `.gci` files) |
-| GameCube matching build unchanged (SHA-1 OK, both versions) | checked after every change |
+| GameCube matching build unchanged (SHA-1 OK, all three versions) | checked after every change |
 | CI | `tools/port/local_ci.py` (below), on self-hosted runners (Windows; Linux in a container on a Mac: docs/RELEASING.md); the GitHub-hosted workflows are manual-only |
 | Linux | x86_64: built and tested on Ubuntu 24.04 in CI (headless: unit and disc tests, every map with golden audio, memory card scripts; the Aurora build is packaged but not yet played on a Linux desktop); aarch64: cross-compiled and linked only |
-| macOS (arm64, x86_64; headless and Aurora `.app`) | builds (Apple clang, Xcode 26); every map boots headless, JP and US (arm64; JP also x86_64 under Rosetta); every JP map captured on Aurora, 4:3 and widescreen; unit tests and audits pass; GameCube matching build runs here (wibo); golden audio differs from Windows (libm, Testing) |
+| macOS (arm64, x86_64; headless and Aurora; one `Paper Cut.app` holds the three builds) | builds (Apple clang, Xcode 26); every map boots headless, JP and US (arm64; JP also x86_64 under Rosetta); every JP map captured on Aurora, 4:3 and widescreen; unit tests and audits pass; GameCube matching build runs here (wibo); golden audio differs from Windows (libm, Testing); EU not yet checked on the Mac |
 | iOS | Simulator: boots from the disc in Documents, plays, touch controls drive Mario, background pause/resume; 4:3 by default, 16:9 widescreen opt-in (Settings app). Device: the US build runs on an iPhone 17 Pro (development-signed; iOS section) |
-| Android | builds (both APKs, on Windows); not yet run on a device |
+| Android | builds (three APKs: jp, us, eu; on Windows); not yet run on a device |
 
 ## Building
 
 The matching GameCube build is untouched: `python configure.py --version
-G8MJ01 && ninja` (or `G8ME01`). The PC build is a separate CMake project.
+G8MJ01 && ninja` (or `G8ME01`, `G8MP01`). The PC build is a separate CMake project.
 
 Windows (Git Bash): LLVM clang, the Visual Studio Build Tools (or Visual
 Studio 2022) and the Windows SDK. `tools/port/winenv.sh` puts clang, CMake and
@@ -87,7 +89,7 @@ table (frame lines end in `(ttyd-jp+0xOFFSET)`: `addr2line -e ttyd-jp
 own stack. The headless DVD layer resolves disc paths case-insensitively.
 
 Status: x86_64 is built and tested on Ubuntu 24.04 in CI (an x86_64 container
-on the Mac runner, `tools/port/linux_container.py`): both versions' headless
+on the Mac runner, `tools/port/linux_container.py`): the JP and US headless
 builds pass the unit and disc tests, every map with the golden audio hashes
 (recorded on Windows, and equal on Linux), and the memory card scripts. The
 Aurora build is built and packaged there (the release's Linux zips), but no
@@ -97,8 +99,8 @@ stage without WSL); arm64 floating point may change the audio hashes without
 anything being wrong, so a mismatch there needs a listen before an update.
 ### macOS
 
-Status: built and run on an Apple-silicon Mac (macOS 26, Xcode 26.3): both
-versions, headless and Aurora; unit tests pass; every map of the JP map
+Status: built and run on an Apple-silicon Mac (macOS 26, Xcode 26.3): JP
+and US, headless and Aurora (EU not yet checked there); unit tests pass; every map of the JP map
 table boots headless on arm64 and on x86_64 (Rosetta), and every US map on
 arm64. Golden audio: see
 Testing (Apple's libm rounds differently from Windows').
@@ -118,8 +120,8 @@ open build-pc-jp/ttyd-jp.app            # or: .../Contents/MacOS/ttyd-jp <disc i
 cmake --install build-pc-jp --prefix dist  # self-contained, ad hoc signed copy
 ```
 
-- Aurora builds an app bundle, `ttyd-jp.app`/`ttyd-us.app`, shown as "Paper
-  Mario TTYD (JP)"/"(US)" (`port/macos/Info.plist.in`: bundle id
+- Aurora builds an app bundle, `ttyd-jp.app`/`ttyd-us.app`/`ttyd-eu.app`, shown as
+  "Paper Cut" (`port/macos/Info.plist.in`: bundle id
   `org.ttyd-port.ttyd-jp` (`-DTTYD_MACOS_BUNDLE_ID_PREFIX`), Retina, minimum
   macOS, the disc image types). Opened without a disc, it shows the disc picker;
   Finder can open a disc image with it (Open With, or dropped on its icon:
@@ -278,8 +280,8 @@ Built and run in the Simulator (iPhone 17 Pro, iOS 26.3, Xcode 26.3): the
 disc image in Documents is found, the game boots, plays (field, HUD,
 partner), the touch controls drive Mario, and Home / back pauses and resumes
 the same process. Aurora backend, arm64, devices and the Simulator (Apple silicon Macs); one
-app per version (`ttyd-jp.app`, `ttyd-us.app`, bundle ids
-`io.github.ttyd-port.jp`/`.us`, `-DTTYD_IOS_BUNDLE_ID_PREFIX` to change).
+app per version (`ttyd-jp.app`, `ttyd-us.app`, `ttyd-eu.app`, bundle ids
+`io.github.ttyd-port.jp`/`.us`/`.eu`, `-DTTYD_IOS_BUNDLE_ID_PREFIX` to change).
 
 ### Building
 
@@ -315,7 +317,7 @@ A development profile for the app's bundle id is needed once per bundle id
 that bundle id and your team for the device (Run once, or `xcodebuild
 -allowProvisioningUpdates`); the profile lands in
 `~/Library/Developer/Xcode/UserData/Provisioning Profiles/`. Then configure
-with `-DTTYD_IOS_BUNDLE_ID_PREFIX=<prefix>` (bundle id `<prefix>.jp`/`.us`),
+with `-DTTYD_IOS_BUNDLE_ID_PREFIX=<prefix>` (bundle id `<prefix>.jp`/`.us`/`.eu`),
 `-DTTYD_IOS_CODESIGN_IDENTITY` and `-DTTYD_IOS_PROVISIONING_PROFILE`.
 
 No App Store. Sideload the `.ipa` with AltStore, SideStore or Sideloadly,
@@ -403,7 +405,7 @@ can be copied to and from Dolphin; Aurora's pipeline caches are in
   the mouse touch on desktop builds with the option on. Not yet: D-pad,
   C-stick, a layout editor, opacity and size settings, haptics on press.
 
-- **Widescreen** (16:9, opt-in: Settings app > TTYD JP/US > Widescreen,
+- **Widescreen** (16:9, opt-in: Settings app > Paper Cut > Widescreen,
   read at launch; Running has the details and the scenes it does not suit):
   sized for the iPhone 17 Pro, whose landscape safe area
   (about 750 x 402 points beside the Dynamic Island) holds a 715-point-wide
@@ -418,8 +420,8 @@ can be copied to and from Dolphin; Aurora's pipeline caches are in
   characters, their shadows drawn). Pipeline configurations are the same on
   every platform (checked: every pipeline seen on both an iPhone and a Mac
   had the same hash and config), so the seed is recorded on a desktop: run
-  `map_sweep.py` (Aurora, `--shots`) over every map and `--battles` of both
-  versions, then `tools/port/pipeline_cache.py merge
+  `map_sweep.py` (Aurora, `--shots`) over every map and `--battles` of each
+  version, then `tools/port/pipeline_cache.py merge
   data/initial_pipeline_cache.db <shots dirs>`. It comes from the user's own
   disc, so it is never committed. Aurora merges it into the user's cache at
   every launch, so an update reaches existing installs.
@@ -436,12 +438,12 @@ importing; a suspend snapshot (iOS may end the app between saves).
 
 ## Testing
 
-`python tools/port/local_ci.py` is the CI, run on this machine: both GameCube
-matching builds, the four PC builds (headless and Aurora, JP and US), unit
-tests, audits (`proto_audit`, `gen_bedecode --check`, `diag_census`), map
-sweeps with golden audio and the card scripts (headless and Aurora, then the
-headless card loaded on Aurora), plus a Linux build in WSL when
-a distribution is installed; independent stages run at once, each logs to
+`python tools/port/local_ci.py` is the CI, run on this machine: the three
+GameCube matching builds, the six PC builds (headless and Aurora, JP, US and
+EU), unit tests, audits (`proto_audit`, `gen_bedecode --check`, `diag_census`),
+map sweeps with golden audio and the card scripts (headless and Aurora, then
+the headless card loaded on Aurora), plus a quick Linux check (a build in WSL
+when a distribution is installed, else a cross-compile and link); independent stages run at once, each logs to
 `build-ci/<stage>.log`. `--quick` leaves out the sweeps and card scripts. On
 Linux (CI's container) `TTYD_BUILD_SUFFIX=-linux TTYD_CI_HEADLESS_ONLY=1` keeps
 its builds apart and leaves out Aurora. Steps that download (configuring,
@@ -559,10 +561,13 @@ in the tree is fixed at once.
   (Windows, no Linux sysroot needed): compiles the headless build and the unit
   tests for Linux against stand-in glibc headers, links with ld.lld (C library
   unresolved) and checks the RELs' ELF sections.
-- Helpers: `implicit_fix.py` (declarations for implicit calls),
-  `widen_evtword.py` (s32 locals that receive script words), `fncast_audit.py`
-  / `fncast_fix.py` (calls through recast function pointers), `sjis_src.py`
-  (Shift-JIS literals for clang).
+- `tools/port/fncast_audit.py`: classifies the calls through recast function
+  pointers in an audit build's warnings (safe, or wrong on a PC ABI).
+- `tools/port/ptrwidth_warnings.py`: compiles every game file with only the
+  int/pointer width warnings on and lists them by file and kind.
+- `tools/port/dolphin_compare.py`: runs the disc in Dolphin with the port's map
+  warp and compares each map's frame with the Aurora build's capture.
+- `tools/port/sjis_src.py`: Shift-JIS literals for clang.
 
 Classes found so far, and what catches them:
 
@@ -590,9 +595,10 @@ Classes found so far, and what catches them:
 
 ## Android
 
-Status: **builds, not yet run**. On Windows, `libmain.so` (arm64-v8a, JP and
-US) links with no undefined symbols beyond the system libraries, and the Gradle
-build makes both debug APKs (`assembleJpDebug`, `assembleUsDebug`). No device
+Status: **builds, not yet run**. On Windows, `libmain.so` (arm64-v8a, JP, US
+and EU) links with no undefined symbols beyond the system libraries, and the
+Gradle build makes the three debug APKs (`assembleJpDebug`, `assembleUsDebug`,
+`assembleEuDebug`). No device
 or emulator was available, so the game on Android is unverified (x86_64
 emulators would need Dawn built from source, below). CI job: `android` in
 `.github/workflows/pc-port.yml` (manual, like the rest).
@@ -611,7 +617,7 @@ the release Aurora pins), Dawn's arm64 package and nod's crates.
 ```bash
 cd port/android
 gradle wrapper --gradle-version 8.12   # once; or run an installed gradle directly
-./gradlew assembleJpDebug              # G8MJ01; assembleUsDebug for G8ME01
+./gradlew assembleJpDebug              # G8MJ01; assembleUsDebug G8ME01, assembleEuDebug G8MP01
 # -> app/build/outputs/apk/jp/debug/app-jp-debug.apk
 ```
 
@@ -637,8 +643,10 @@ gradle wrapper --gradle-version 8.12   # once; or run an installed gradle direct
   the NDK's `llvm-dlltool` named `dlltool.exe` on `PATH` for Cargo
   (`build*/rust-host-tools`). The `windows-msvc` toolchain needs nothing.
 
-- Flavors `jp`/`us` set `TTYD_VERSION` and the app id (`dev.ttyd.port.jp`,
-  `dev.ttyd.port.us`), so both install side by side. Release builds
+- Flavors `jp`/`us`/`eu` set `TTYD_VERSION` and the app id (`dev.ttyd.port.jp`,
+  `.us`, `.eu`), so all three install side by side. `-PTTYD_PORT_VERSION=X.Y.Z`
+  sets the app's version (versionCode X*10000 + Y*100 + Z; without it 0.2.0,
+  code 2); `release.py` passes the release's. Release builds
   (`assembleJpRelease`, optimized) are signed with the debug key, for
   sideloading.
 - ABIs: `ttyd.abis` in `port/android/gradle.properties` (or `-Pttyd.abis=`),
@@ -737,27 +745,19 @@ The game code (src/, rels/, include/, libs/, config/, configure.py and the
 decomp's tools) is [LLCOOLT/ttyd](https://github.com/LLCOOLT/ttyd) as it is,
 plus the port's changes, nearly all inside `#ifdef TARGET_PC`.
 
-- **Branch `decomp-vendor`** holds the decomp's files exactly, one commit per
-  decomp update (now `pal-decomp` bb1fe46fd). `main` merges it, so an update
-  is: commit the decomp's files on `decomp-vendor`, merge it into `main`, and
-  resolve in the decomp's favour (its code wins; a port change is put back on
-  top of it or dropped when the decomp made it unnecessary).
-- **The 2026-10-30 integration** (decomp 85ac972be to bb1fe46fd: the cleanup,
-  PAL and two demos) was too large to merge hunk by hunk.
-  `tools/port/integration/reapply_port.py` placed the port's changes it could
-  place exactly; the rest were merged by hand. `port/integration/ledger.tsv`
-  records every one of the port's 3,257 game-file hunks and what became of it
-  (placed, re-applied, rewritten, or obsolete with the decomp change that
-  covers it); `port/integration/decomp_notes.md` lists what the decomp could
-  take back.
+- **Updating to a newer decomp** is two commits: the decomp's files exactly as
+  they are, then the port's changes put back on top. The decomp's code wins: a
+  port change is re-applied on top of it, or dropped when the decomp made it
+  unnecessary.
 - **The checks that keep the port honest:** the GameCube builds still match
   (local CI's `gamecube` stage: the port's changes do not touch GameCube code),
   `proto_audit` (prototypes against definitions, per version), the pointer-width
   audit build and `fncast_audit`, `tools/check_versions.py` (no per-version
   macros in game code), and the map sweep with golden audio.
-- **Versions:** the decomp builds JP, US, PAL (G8MP01) and four demos. The port
-  builds JP, US and PAL; `port/sources_<version>.cmake` exist for the demos
-  too (from each version's splits), which come next.
+- **Versions:** JP (G8MJ01), US (G8ME01) and EU (G8MP01), one executable each;
+  `port/sources_<version>.cmake` lists each version's files (`gen_sources.py`,
+  from configure.py). The decomp's demo discs are not built here; their `#if`
+  branches stay in the game code.
 - **PAL:** the game's text is the language of the settings page's choice, else
   `$TTYD_LANGUAGE` (`en de fr es it`), else the computer's (it picks
   `msg/<language>` from the console language, `OSGetLanguage`). Its boot
@@ -793,11 +793,11 @@ How it fits:
   `tools/port/wasm_redefine_syms.py` does both for `rel_rename.py`.
 - **The disc and saves** go through Node's file system (`NODERAWFS`).
 
-Status: both versions build and link; US runs about 4,000 frames (boot,
+Status: JP and US build and link; US runs about 4,000 frames (boot,
 the opening sequences, the `dmo` area) and then traps at the first call
 whose declaration differs from its definition. WebAssembly is strict about
-those where native PCs are not; `tools/port/web_abi_audit.py` lists them
-(docs/WEB_DECOMP_ISSUES.md), to be fixed in the decomp.
+those where native PCs are not; `tools/port/web_abi_audit.py` lists them, to
+be fixed in the decomp.
 
 ## Decisions
 

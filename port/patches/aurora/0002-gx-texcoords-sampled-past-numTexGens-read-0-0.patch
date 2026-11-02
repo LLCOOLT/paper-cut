@@ -1,7 +1,7 @@
 From a6fc898b4190ca43e9a3b9f5caf73c7badb163d9 Mon Sep 17 00:00:00 2001
 From: LLCOOLT <114613597+LLCOOLT@users.noreply.github.com>
 Date: Sat, 24 Oct 2026 10:34:19 -0400
-Subject: [PATCH 2/3] gx: texcoords sampled past numTexGens read (0, 0)
+Subject: [PATCH] gx: texcoords sampled past numTexGens read (0, 0)
 
 A TEV stage may sample a texcoord the game never generated; the hardware
 (and Dolphin) give zero coordinates. Aurora aborted on the unset texgen,

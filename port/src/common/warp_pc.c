@@ -21,10 +21,21 @@ void portContinueGame(s32 slot);                         /* seq_load.c */
 
 static char sPending[1024];
 static char sStatus[160];
+static s32 sSlot = WARP_SLOT; /* the card slot it loads as (quick resume: the player's own file) */
 
 void portWarpRequestSave(const char* path) {
     snprintf(sPending, sizeof(sPending), "%s", path);
+    sSlot = WARP_SLOT;
     snprintf(sStatus, sizeof(sStatus), "Loading...");
+}
+
+/* A save loaded as card slot (0-3) at the next chance: the launcher's
+ * Continue (quick resume's save, as the player's own file). */
+void portWarpRequestResume(const char* path, int slot) {
+    portWarpRequestSave(path);
+    if (slot >= 0 && slot <= 3) {
+        sSlot = slot;
+    }
 }
 
 const char* portWarpStatus(void) {
@@ -63,7 +74,7 @@ static void loadSave(const char* path) {
     }
     for (i = 0; i < 4; i++) {
         long at = GCI_HEADER + (long)PORT_CARD_META_SIZE + (long)PORT_CARD_SLOT_SIZE * i;
-        if (at + (long)PORT_CARD_SLOT_SIZE <= size && portCardLoadSlotImage(WARP_SLOT, data + at)) {
+        if (at + (long)PORT_CARD_SLOT_SIZE <= size && portCardLoadSlotImage(sSlot, data + at)) {
             break;
         }
     }
@@ -74,7 +85,7 @@ static void loadSave(const char* path) {
     }
     printf("[warp] save %s (file slot %d)\n", name, i + 1);
     fflush(stdout);
-    portContinueGame(WARP_SLOT);
+    portContinueGame(sSlot);
     portPracticeFileLoaded();
     snprintf(sStatus, sizeof(sStatus), "Loaded %s", name);
 }
@@ -89,6 +100,12 @@ void portWarpFrame(void) {
         sEnvRead = 1;
         if (v != NULL && v[0] != 0) {
             portWarpRequestSave(v);
+            /* $TTYD_LOAD_SAVE_SLOT=0-3: as that save file (the launcher's
+             * Continue: quick resume's save, as the player's own file) */
+            v = getenv("TTYD_LOAD_SAVE_SLOT");
+            if (v != NULL && v[0] >= '0' && v[0] <= '3') {
+                sSlot = v[0] - '0';
+            }
         }
     }
     if (sPending[0] == '\0' || gp == NULL) {

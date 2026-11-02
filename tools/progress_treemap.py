@@ -22,7 +22,7 @@ import sys
 
 
 def read_versions():
-    """The version names of configure.py's VERSIONS list ("G8MJ01", ..., "G8MP01_DEMO")."""
+    """The version names of configure.py's VERSIONS list ("G8MJ01", "G8ME01", "G8MP01")."""
     path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "configure.py")
     with open(path, encoding="utf-8") as f:
         block = re.search(r"^VERSIONS = \[(.*?)^\]", f.read(), re.M | re.S)

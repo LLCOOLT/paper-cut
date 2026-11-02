@@ -13,7 +13,7 @@ The port loads mods from the **mods folder** in the user folder (next to `settin
 
 The settings page (F1) has a **Mods** tab: each mod with a switch, arrows to change the order, what it changes, and any error. "Open the mods folder" opens it on desktop. The order and switches are kept in `mods/mods.txt`.
 
-This covers phases M1–M6 of [MODDING_PLAN.md](MODDING_PLAN.md): files, textures, messages, game data, code (including porting GameCube mods), scripts and [Archipelago](#archipelago).
+This covers files, textures, messages, game data, code (including porting GameCube mods), scripts and [Archipelago](#archipelago).
 
 ## A mod
 
@@ -225,7 +225,7 @@ cmake -S . -B build-pc-us-aurora -DTTYD_LIBRARY_MODS=path/to/mymod
 
 - **Building:** `ninja -C build-pc-us-aurora` builds `path/to/mymod/src/*.c` and `*.cpp` into `build-pc-us-aurora/mods/mymod.dll` (`.so` on Linux and macOS). A mod folder with its own `CMakeLists.txt` is added as a subdirectory instead, and calls `ttyd_add_mod(<target> <sources>)` itself.
 - **Packaging:** put the library in the mod's `lib/<platform>/`: `windows-x64`, `linux-x64`, `linux-arm64`, `macos`, `android-arm64`.
-- **Versions:** a library is built for one version (US or JP), because the two versions' structs differ. A mod for both ships two builds, or two mods.
+- **Versions:** a library is built for one version (JP, US or EU), because the versions' structs differ. A mod for more than one ships a build per version (`lib/<platform>/<game ID>/`), or a mod per version.
 - **Starting and stopping:** a mod's code starts when the game starts, and can't be unloaded. Turning a mod with code on or off on the Mods tab takes effect at the next start, and the tab says so.
 - **Windows:** the game exports every function and variable, and the build writes the import library mods link against beside the game (`ttyd-us.lib`).
 

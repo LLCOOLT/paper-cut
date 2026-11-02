@@ -3,20 +3,20 @@ CI and releases
 
 GitHub runs the port's checks and builds on two **self-hosted runners**: a
 Windows PC and a Mac, both with the disc images the tests need. Self-hosted
-jobs use no GitHub Actions minutes. The GitHub-hosted workflows
-(`pc-port.yml`, `build.yml`) stay manual-only.
+jobs use no GitHub Actions minutes. The GitHub-hosted workflow
+(`pc-port.yml`) stays manual-only.
 
 | Workflow | When | What |
 |---|---|---|
-| [`ci.yml`](../.github/workflows/ci.yml) | a push to `main` or `modding`, a pull request, or by hand | `tools/port/local_ci.py` on Windows (every stage on `main` and by hand, `--quick` otherwise), and its headless stages on Linux in a container on the Mac; the logs as artifacts |
+| [`ci.yml`](../.github/workflows/ci.yml) | a push to `main`, `modding` or a `v*` branch, a pull request, or by hand | `tools/port/local_ci.py` on Windows (every stage on `main` and by hand, `--quick` otherwise), and its headless stages on Linux in a container on the Mac; the logs as artifacts |
 | [`release.yml`](../.github/workflows/release.yml) | a tag `v<version>`, or by hand (the Mac alone) | every local CI stage, then `tools/port/release.py` on the Windows runner and then the Mac runner: release builds and a **draft** GitHub release |
 
 Steps that download (configuring and building, which fetch dependencies; Gradle; the container's packages; GitHub's API) are retried after 30 seconds and 2 minutes, so a passing outage of a server doesn't fail a run.
 
 ## The Windows runner
 
-- **Where it lives:** `C:\actions-runner-ttyd-port`, registered to `LLCOOLT/paper-cut` (named `ttyd-port` when it was registered; a rename keeps runners) with the label `ttyd-port`. The workflows ask for `[self-hosted, ttyd-port]`.
-- **The other runner:** the one in `C:\actions-runner` serves `LLCOOLT/ttyd`, the decomp repo.
+- **Where it lives:** a runner folder of its own on the Windows machine, registered to `LLCOOLT/paper-cut` with the label `ttyd-port` (the repository's old name; a rename keeps runners). The workflows ask for `[self-hosted, ttyd-port]`.
+- **Other runners:** a runner for another repository (such as the decomp's, `LLCOOLT/ttyd`) needs a folder of its own.
 - **Starting it:** run `run.cmd` in that folder. Jobs run only while it's running, as your user, with your tools on the path: Python, LLVM, Git, `gh`, the Android SDK. To keep it running without a terminal, install it as a service (`config.cmd`'s service option, as administrator). The service then needs the same tools on its path.
 - **Disc data:** `.env` in the runner's folder sets `TTYD_LOCAL_DATA` to a checkout that has the disc images and extracted data (`orig/`, `data/`). `tools/port/ci_link_data.py` links them into the runner's checkout as directory junctions. They stay on this machine: git ignores them, and nothing uploads them.
 - **Build folders:** the runner's checkout keeps its build folders between runs (`clean: false`). The first run builds everything from scratch, the later ones only what changed.

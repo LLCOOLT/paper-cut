@@ -71,12 +71,42 @@ static Header* header(void) {
     return (Header*)sBase;
 }
 
+#if defined(_WIN32)
+#define COMMIT_STEP ((size_t)1 << 20)
+static size_t sCommitted; /* [sBase, sBase + sCommitted) is committed */
+#endif
+
+/* [sBase, sBase + end) usable. Windows charges every committed page to the
+ * commit limit whether it is touched or not, so the region is reserved and
+ * committed a step at a time as the top grows (a whole GiB committed per
+ * process ran a machine running a dozen of them out of commit). */
+static int commitTo(size_t end) {
+#if defined(_WIN32)
+    if (end > sCommitted) {
+        size_t want = (end + COMMIT_STEP - 1) & ~(COMMIT_STEP - 1);
+        if (want > REGION_SIZE) {
+            want = REGION_SIZE;
+        }
+        if (VirtualAlloc(sBase + sCommitted, want - sCommitted, MEM_COMMIT, PAGE_READWRITE) == NULL) {
+            return 0;
+        }
+        sCommitted = want;
+    }
+#else
+    (void)end;
+#endif
+    return 1;
+}
+
 static int init(void) {
     if (sBase != NULL) {
         return 1;
     }
 #if defined(_WIN32)
-    sBase = (uint8_t*)VirtualAlloc(NULL, REGION_SIZE, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
+    sBase = (uint8_t*)VirtualAlloc(NULL, REGION_SIZE, MEM_RESERVE, PAGE_NOACCESS);
+    if (sBase != NULL && !commitTo(FIRST_BLOCK)) {
+        sBase = NULL;
+    }
 #else
     {
         void* p = mmap(NULL, REGION_SIZE, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON, -1, 0);
@@ -164,7 +194,7 @@ static void* allocLocked(size_t size) {
         b->size |= 1;
         return (uint8_t*)b + HDR;
     }
-    if (header()->top + need > REGION_SIZE) {
+    if (header()->top + need > REGION_SIZE || !commitTo(header()->top + need)) {
         return NULL;
     }
     b = (Block*)(sBase + header()->top);
@@ -260,6 +290,15 @@ void portSnapHeapExtent(void** base, size_t* size) {
     *base = sBase;
     *size = header()->top;
     unlock();
+}
+
+int portSnapHeapCommit(size_t size) {
+    int ok;
+    lock();
+    init();
+    ok = size <= REGION_SIZE && commitTo(size);
+    unlock();
+    return ok;
 }
 
 void portSnapHeapRestored(void) {

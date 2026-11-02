@@ -1,4 +1,6 @@
-From: Claude <noreply@anthropic.com>
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: LLCOOLT <114613597+LLCOOLT@users.noreply.github.com>
+Date: Sun, 25 Oct 2026 18:34:48 -0400
 Subject: [PATCH] display: sharp textures and a blurred backdrop
 
 AuroraSetSharpTextures: every texture the game samples filtered

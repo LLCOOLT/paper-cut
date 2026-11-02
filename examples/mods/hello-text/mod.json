@@ -2,7 +2,7 @@
   "id": "dev.ttyd.hello-text",
   "name": "Hello, text",
   "version": "1.0",
-  "author": "ttyd-port",
+  "author": "Paper Cut",
   "description": "An example mod: renames the Mushroom and rewrites its description (US English).",
   "games": ["G8ME01"]
 }

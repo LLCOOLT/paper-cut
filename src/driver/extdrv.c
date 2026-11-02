@@ -15,6 +15,9 @@
 #include "eff/eff_n64.h"
 #include "version.h"
 #include "libc_decls.h"
+#ifdef TARGET_PC
+#include "port/platform.h"
+#endif
 // FAKE: extdrv.c calls animPoseDisp_MakeExtTexture through this prototype (the types it was compiled with) instead of the one in driver/animdrv.h; same registers, behaviour-identical.
 typedef void (*AnimPoseDisp_MakeExtTextureLocalFn)(const char*, const char*, f32, f32, GXTexObj*, void***, s32*, s32*, s32*, s32*);
 
@@ -360,6 +363,13 @@ void extPoseDraw(s32 index) {
     Mtx mtx;
     Mtx nrm;
 
+#ifdef TARGET_PC
+    /* the bound texture's id steps in each draw and extMain resets it: an
+     * in-between frame (docs/FRAME_INTERPOLATION.md) leaving its last id would
+     * make the next real frame skip loading that texture and draw the first
+     * sprites with whatever texture GX_TEXMAP0 last held */
+    portInterpKeep(&wp->curTex, sizeof(wp->curTex));
+#endif
     if (pose->flags & EXT_POSE_FLAG_ACTIVE) {
         texId = pose->texId;
         if (wp->curTex != texId) {
@@ -389,6 +399,9 @@ void extDraw(void) {
     ExtdrvTex* tex;
     Mtx mtx;
 
+#ifdef TARGET_PC
+    portInterpKeep(&wp->curTex, sizeof(wp->curTex)); /* as in extPoseDraw */
+#endif
     for (i = wp->poseNum - 1, sort = wp->sort; i >= 0; i--, sort++) {
         pose = &wp->poses[sort->index];
         if (pose->flags & EXT_POSE_FLAG_ACTIVE) {

@@ -12,6 +12,18 @@ def auroraDir = new File(repoRoot, "extern/aurora")
 def cmakeVersion = "3.31.6"
 def abis = (project.findProperty("ttyd.abis") ?: "arm64-v8a").toString().split(",")*.trim()
 
+// The app's version: -PTTYD_PORT_VERSION=X.Y.Z (release.py passes the
+// release's), versionCode X*10000 + Y*100 + Z; else 0.2.0, code 2.
+def portVersion = (project.findProperty("TTYD_PORT_VERSION") ?: "").toString()
+def portVersionMatch = portVersion =~ /^(\d+)\.(\d+)(?:\.(\d+))?$/
+def appVersionName = "0.2.0"
+def appVersionCode = 2
+if (portVersionMatch.matches()) {
+    appVersionName = portVersion
+    appVersionCode = portVersionMatch.group(1).toInteger() * 10000 + portVersionMatch.group(2).toInteger() * 100 +
+            (portVersionMatch.group(3) ?: "0").toInteger()
+}
+
 // SDL: the release Aurora builds (AURORA_SDL3_REF in extern/aurora). It is
 // downloaded once into build/third_party; its Java glue (org.libsdl.app) is
 // compiled here and its C sources are handed to CMake
@@ -94,8 +106,8 @@ android {
         // devices (Dawn's minimum) run Android 9 or newer.
         minSdk = 28
         targetSdk = 35
-        versionCode = 1
-        versionName = "0.1"
+        versionCode = appVersionCode
+        versionName = appVersionName
         ndk {
             abiFilters.addAll(abis)
         }
@@ -107,7 +119,9 @@ android {
                         "-DANDROID_STL=c++_static",
                         "-DFETCHCONTENT_SOURCE_DIR_SDL=${sdlDir}",
                         // -PnoDiscAssets (release builds): nothing from the disc built in
-                        "-DTTYD_NO_DISC_ASSETS=${project.hasProperty('noDiscAssets') ? 'ON' : 'OFF'}"
+                        "-DTTYD_NO_DISC_ASSETS=${project.hasProperty('noDiscAssets') ? 'ON' : 'OFF'}",
+                        // the version the settings page and the update notice show
+                        "-DTTYD_PORT_VERSION=${portVersionMatch.matches() ? portVersion : 'dev'}"
                 targets "ttyd"
             }
         }

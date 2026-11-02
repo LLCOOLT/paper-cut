@@ -19,6 +19,9 @@ void* portSnapRealloc(void* p, size_t size);
 void portSnapFree(void* p);
 /* The region's used part: [*base, *base + *size). */
 void portSnapHeapExtent(void** base, size_t* size);
+/* Before a load writes [base, base + size) back: that much usable (committed
+ * on Windows, where the region grows as it is used); 0 if it can't be. */
+int portSnapHeapCommit(size_t size);
 /* After a load put the region back: the part past its (restored) top is free. */
 void portSnapHeapRestored(void);
 

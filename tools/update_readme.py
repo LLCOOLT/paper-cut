@@ -108,11 +108,8 @@ def main():
             + (f" ({tc['needed_fns']} needed, {tc['paved_fns']} over matching C) |\n\n" if "needed_fns" in tc else " |\n\n")
         )
     us = ""
-    # Other versions, each once it has been built (L 2026-10-26: PAL and the demo get tables too)
-    for ver, label in (("G8ME01", "US (G8ME01)"), ("G8MP01", "Europe (G8MP01)"),
-                       ("G8ME01_DEMO", "June US demo (G8ME01_DEMO)"), ("G8MJ01_DEMO", "Japanese demo (G8MJ01_DEMO)"),
-                       ("G8ME01_DEMO2", "September US demo (G8ME01_DEMO2)"),
-                       ("G8MP01_DEMO", "European demo (G8MP01_DEMO)")):
+    # The other versions, each once it has been built
+    for ver, label in (("G8ME01", "US (G8ME01)"), ("G8MP01", "Europe (G8MP01)")):
         vr_path = os.path.join(ROOT, "build", ver, "report.json")
         if not os.path.exists(vr_path):
             continue

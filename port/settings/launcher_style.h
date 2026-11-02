@@ -45,3 +45,8 @@ void launcherPaperCard(ImDrawList* dl, ImVec2 a, ImVec2 b, float scale);
 // Text with a cut-out outline and a drop shadow (the title).
 void launcherOutlinedText(ImDrawList* dl, ImFont* font, float size, ImVec2 pos, const char* text, ImU32 fill,
                           ImU32 outline, float thickness);
+// The Paper Cut title as the README banner draws it: cream, a red outline, a
+// soft shadow.
+void launcherTitleText(ImDrawList* dl, ImFont* font, float size, ImVec2 pos, const char* text);
+// A four-pointed gold sparkle of tip radius r.
+void launcherSparkle(ImDrawList* dl, ImVec2 c, float r, ImU32 color);

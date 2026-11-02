@@ -36,6 +36,13 @@ import wasm_redefine_syms as wasm  # noqa: E402
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 
 
+def rel_to_root(path):
+    """A compiler's path, relative to this checkout's root when it is under it."""
+    path = path.replace("\\", "/")
+    root = ROOT.replace("\\", "/").rstrip("/") + "/"
+    return path[len(root):] if path.lower().startswith(root.lower()) else path
+
+
 # ---------------------------------------------------------------- sources
 
 def obj_source(build, obj):
@@ -307,7 +314,7 @@ def cast_mismatches(log):
             m = CAST.match(raw.strip())
             if not m:
                 continue
-            path = re.sub(r"^.*?ttyd-port[/\\]", "", m.group(1)).replace("\\", "/")
+            path = rel_to_root(m.group(1))
             path = re.sub(r"^build[^/]*/(?:sjis/)?", "", path)
             src = m.group(5) or m.group(4)
             dst = m.group(7) or m.group(6)

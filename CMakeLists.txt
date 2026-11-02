@@ -1,4 +1,4 @@
-# Native PC build of the TTYD decomp. The matching GameCube build is
+# Paper Cut: the native build of the TTYD decomp. The matching GameCube build is
 # configure.py + ninja and is unaffected by this file.
 cmake_minimum_required(VERSION 3.25)
 # macOS: 12.0 (Aurora's prebuilt Dawn is built for 12) unless asked otherwise; must
@@ -1003,6 +1003,13 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Darwin" AND TTYD_BACKEND STREQUAL "aurora")
     set(TTYD_MACOS_MIN_VERSION ${CMAKE_OSX_DEPLOYMENT_TARGET})
     if(NOT TTYD_MACOS_MIN_VERSION)
         set(TTYD_MACOS_MIN_VERSION 12.0)
+    endif()
+    # CFBundleShortVersionString: the release's version (TTYD_PORT_VERSION, e.g.
+    # 0.2.0) when it is one, else 0.2 (as port/ios/ios.cmake)
+    if(TTYD_PORT_VERSION MATCHES "^[0-9]+(\\.[0-9]+)*$")
+        set(TTYD_MACOS_VERSION "${TTYD_PORT_VERSION}")
+    else()
+        set(TTYD_MACOS_VERSION "0.2")
     endif()
     configure_file(${CMAKE_SOURCE_DIR}/port/macos/Info.plist.in ${CMAKE_BINARY_DIR}/Info.plist @ONLY)
     # the app's icon (CFBundleIconFile), in Contents/Resources

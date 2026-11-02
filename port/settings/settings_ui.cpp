@@ -8,6 +8,7 @@
 // (port/src/aurora/settings_aurora.c).
 
 #include "port/settings.h"
+#include "port/resume.h"
 #include "settings_ui.h"
 #include "launcher_style.h"
 #include "port/speed.h"
@@ -1007,7 +1008,7 @@ const Item kItems[] = {
 #if defined(__APPLE__) && TARGET_OS_IPHONE
      "Saved to Photos.",
 #elif defined(__APPLE__)
-     "Saved to Pictures/TTYD. Keyboard: F12.",
+     "Saved to Pictures/Paper Cut. Keyboard: F12.",
 #else
      "Saved to the Screenshots folder by the saves. Keyboard: F12.",
 #endif
@@ -1501,6 +1502,7 @@ extern "C" void portSettingsEvent(const void* sdlEvent) {
   case SDL_EVENT_DID_ENTER_BACKGROUND:
   case SDL_EVENT_TERMINATING:
   case SDL_EVENT_QUIT:
+    portResumeFlush();        // quick resume: where the player was (resume_aurora.c)
     portSettingsCloudPush(1); // the app may be suspended or gone next
     break;
   case SDL_EVENT_KEY_DOWN:

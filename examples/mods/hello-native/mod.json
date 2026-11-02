@@ -2,7 +2,7 @@
   "id": "dev.ttyd.hello-native",
   "name": "Hello, code",
   "version": "1.0",
-  "author": "ttyd-port",
+  "author": "Paper Cut",
   "description": "An example code mod: a coin counter over the picture, halved shop prices, and a damage multiplier for Mario's and his partner's attacks.",
   "games": ["G8ME01", "G8MJ01"],
   "options": [

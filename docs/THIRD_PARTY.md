@@ -6,7 +6,7 @@ The game links libraries that Nintendo, Metrowerks and others wrote, and one REL
 
 | Folder | What it is | Where it comes from | Licence in this tree |
 |---|---|---|---|
-| `libs/dolsdk2004/` | Nintendo's Dolphin SDK libraries (OS, GX, DVD, VI, PAD, CARD, AR/ARQ, THP, ...), as built into the game | A decompilation of the archive libraries of the 2004-04-20 Dolphin SDK; its own README is `libs/dolsdk2004/README.md`. It came into this tree with the upstream project's setup (2025) and was completed and extended here. | No licence file of its own |
+| `libs/dolsdk2004/` | Nintendo's Dolphin SDK libraries (OS, GX, DVD, VI, PAD, CARD, AR/ARQ, THP, ...), as built into the game | A decompilation of the archive libraries of the 2004-04-20 Dolphin SDK. It came into this tree with the upstream project's setup (2025) and was completed and extended here. | No licence file of its own |
 | `libs/musyx/` | MusyX, the sound library (Factor 5) | The MusyX decompilation by Axiomatic Data Laboratories, extended here | MIT, `libs/musyx/LICENSE` |
 | `libs/msl/` | Metrowerks Standard Library (C library and math) | Decompiled in this project (2026) | This repository's MIT licence |
 | `libs/runtime/` | Metrowerks PowerPC EABI runtime (`__mem`, `__va_arg`, `runtime.c`, ...) | Decompiled in this project (2026) | This repository's MIT licence |
@@ -56,13 +56,31 @@ Silicon Graphics, Inc.
 
 The launcher's typeface is [Fredoka](https://github.com/hafontia/Fredoka-One) by The Fredoka Project Authors, under the SIL Open Font License 1.1 (`port/assets/fonts/OFL.txt`). The files are static Bold (700) and Medium (500) instances made with fontTools' `varLib.instancer` from the variable `Fredoka[wdth,wght].ttf` in [google/fonts](https://github.com/google/fonts/tree/main/ofl/fredoka) (November 2026), embedded in the PC builds.
 
+## Libraries in the PC builds
+
+Paper Cut's builds embed or link these (Aurora's dependencies, fetched when the build is configured). Every desktop package carries their notices and licence texts in `THIRD_PARTY.txt` (written by `tools/port/third_party.py` from the build's own copies) and the font's in `OFL.txt`; the phone apps name them on the launcher's About tab.
+
+| Component | Used for | Licence |
+|---|---|---|
+| [Aurora](https://github.com/encounter/aurora) (`extern/aurora`, with `port/patches/aurora`) | the GameCube platform layer: graphics, input, audio, disc | MIT |
+| [SDL 3](https://libsdl.org) | windows, input, audio | zlib |
+| [Dawn](https://dawn.googlesource.com/dawn) | WebGPU (its library includes Dawn's own third-party code: Tint, SPIRV-Tools, Abseil, ...) | BSD 3-Clause |
+| [DirectX Shader Compiler](https://github.com/microsoft/DirectXShaderCompiler) (Windows: `dxcompiler.dll`, `dxil.dll`, from Dawn's package) | Direct3D 12 shaders | University of Illinois/NCSA; `dxil.dll` under Microsoft's terms |
+| [nod](https://github.com/encounter/nod) | reading disc images | MIT or Apache 2.0 |
+| [Dear ImGui](https://github.com/ocornut/imgui), [FreeType](https://freetype.org) | the settings page and launcher; font rendering | MIT; FreeType License |
+| libpng, zlib, Zstandard, xxHash | images, compression, hashing | libpng License; zlib; BSD 3-Clause; BSD 2-Clause |
+| {fmt}, Abseil, Tracy, SQLite | Aurora's support code (formatting, containers, the profiler client, the pipeline cache) | MIT; Apache 2.0; BSD 3-Clause; public domain |
+| MusyX (`libs/musyx/`), the SGI tessellator (`rels/tst/`), Fredoka (`port/assets/fonts/`) | above | MIT; SGI Free Software License B; SIL OFL 1.1 |
+
+On Windows the desktop package also carries Microsoft's Visual C++ runtime DLLs, redistributed under the Visual Studio licence terms.
+
 ## Build scripts in `tools/`
 
-`tools/project.py`, `tools/download_tool.py`, `tools/decompctx.py`, `tools/transform_dep.py` and `tools/changes_fmt.py` come from [dtk-template](https://github.com/encounter/dtk-template), the decomp-toolkit project template. `tools/ninja_syntax.py` is from the [ninja](https://github.com/ninja-build/ninja) project (Apache License 2.0, notice in the file). The other scripts were written for this project; see [tools/README.md](../tools/README.md).
+`tools/project.py`, `tools/download_tool.py`, `tools/decompctx.py`, `tools/transform_dep.py` and `tools/changes_fmt.py` come from [dtk-template](https://github.com/encounter/dtk-template), the decomp-toolkit project template. `tools/ninja_syntax.py` is from the [ninja](https://github.com/ninja-build/ninja) project (Apache License 2.0, notice in the file). The other scripts were written for this project; the port's, in `tools/port/`, are described in [PC_PORT.md](PC_PORT.md).
 
 ## Build-time tools
 
-These are not in the repository. The first build downloads them into `build/`, at the versions pinned in `configure.py` (see [BUILDING.md](BUILDING.md#downloaded-on-the-first-build)); each comes under its own licence from its authors.
+These are not in the repository. The first build downloads them into `build/`, at the versions pinned in `configure.py` (see the decompilation's [BUILDING.md](https://github.com/LLCOOLT/ttyd/blob/main/docs/BUILDING.md)); each comes under its own licence from its authors.
 
 | Tool | Used for | Source |
 |---|---|---|

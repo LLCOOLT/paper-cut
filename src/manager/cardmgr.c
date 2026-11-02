@@ -31,6 +31,8 @@ s32 CARDFormatAsync(s32 chan, CARDCallback callback);
 #endif
 #ifdef TARGET_PC
 #include "port/cardsave_pc.h"
+#include "driver/swdrv.h"   /* portCardSnapshot: the resume kind */
+#include "evt/evt_story.h"
 #endif
 /** Name of the game's save file on the memory card, used to find, create and delete it. */
 const char card_file_name[0x14] = "mariost_save_file";
@@ -488,6 +490,52 @@ BOOL portCardLoadSlotImage(s32 slot, const void* image) {
         return FALSE;
     }
     return portCardSlotFromImage(image, &wp->data->saves[slot]) && !(wp->data->saves[slot].data.flags & 1);
+}
+#endif
+
+#ifdef TARGET_PC
+/* The running game as a save slot's card image, as cardWrite saves it but
+ * without the card and without changing the live state (its save count,
+ * flags and time stay): quick resume (port/src/common/resume_pc.c). Its
+ * resume kind is 0, the map Mario is on, whatever a chapter break's save
+ * left there. FALSE: no image. */
+BOOL portCardSnapshot(void* image) {
+    static CardSaveSlot save;
+    static GlobalWork global;
+    MarioWork* mario = marioGetPtr();
+    PartyEntry* party;
+    const s32 kind = swByteGet(GSW_SAVE_RESUME_KIND);
+
+    swByteSet(GSW_SAVE_RESUME_KIND, 0);
+    memcpy(&global, gp, sizeof(GlobalWork));
+    swByteSet(GSW_SAVE_RESUME_KIND, kind);
+    memset(&save, 0, sizeof(save));
+    global.savePlayerPos = mario->position;
+    party = partyGetPtr(marioGetPartyId());
+    global.savePartyId[0] = party != NULL ? party->currentMemberId : mario->prevPartyMemberId[0];
+    party = partyGetPtr(marioGetExtraPartyId());
+    global.savePartyId[1] = party != NULL ? party->currentMemberId : mario->prevPartyMemberId[1];
+    global.saveTime = OSGetTime();
+    global.flags &= ~GLOBAL_FLAG_LOADED;
+    global.flags &= ~GLOBAL_FLAG_SKIP_MAP_EVENTS;
+    global.resetType = 0;
+#if VERSION >= VERSION_US
+    global.resetButtonDown = 0;
+    global.softResetWait = 0;
+#endif
+#if VERSION >= VERSION_JP
+    global.dvdError = 0;
+#endif
+    memcpy(&save.data.global, &global, sizeof(GlobalWork));
+    memcpy(&save.data.pouch, pouchGetPtr(), sizeof(PouchData));
+    memcpy(save.data.deadInfo, fbatGetPointer()->deadInfo, sizeof(save.data.deadInfo));
+    memcpy(&save.data.badgeShop, bdsw, sizeof(BadgeShopWork));
+    memcpy(&save.data.parlor, yuwp, sizeof(PiantaParlorWork));
+    memcpy(&save.data.informant, &_jdt.readFlags, sizeof(_jdt.readFlags));
+    save.data.flags &= ~CARD_SAVE_FLAG_EMPTY;
+    save.data.flags &= ~CARD_SAVE_FLAG_CORRUPT;
+    check_sum(&save);
+    return portCardSlotToImage(&save, (uint8_t*)image);
 }
 #endif
 

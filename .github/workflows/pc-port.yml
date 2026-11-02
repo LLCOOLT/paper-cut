@@ -15,7 +15,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        version: [G8MJ01, G8ME01]
+        version: [G8MJ01, G8ME01, G8MP01]
         backend: [headless, aurora]
     steps:
       - uses: actions/checkout@v4
@@ -54,7 +54,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        version: [G8MJ01, G8ME01]
+        version: [G8MJ01, G8ME01, G8MP01]
         backend: [headless, aurora]
     steps:
       - uses: actions/checkout@v4
@@ -95,7 +95,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        version: [G8MJ01, G8ME01]
+        version: [G8MJ01, G8ME01, G8MP01]
         backend: [headless, aurora]
     steps:
       - uses: actions/checkout@v4
@@ -138,7 +138,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        version: [G8MJ01, G8ME01]
+        version: [G8MJ01, G8ME01, G8MP01]
         platform: [OS, SIMULATOR]
     steps:
       - uses: actions/checkout@v4
@@ -198,7 +198,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        flavor: [Jp, Us]
+        flavor: [Jp, Us, Eu]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -225,5 +225,5 @@ jobs:
         run: gradle --stacktrace assemble${{ matrix.flavor }}Debug
       - uses: actions/upload-artifact@v4
         with:
-          name: ttyd-android-${{ matrix.flavor }}-debug
+          name: papercut-android-${{ matrix.flavor }}-debug
           path: port/android/app/build/outputs/apk/**/*.apk

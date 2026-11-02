@@ -1,4 +1,6 @@
-From: Claude <noreply@anthropic.com>
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: LLCOOLT <114613597+LLCOOLT@users.noreply.github.com>
+Date: Sun, 25 Oct 2026 09:40:36 -0400
 Subject: [PATCH] Present area and application-chosen orientations
 
 AuroraSetPresentArea: the picture is fitted and centered in a part of the

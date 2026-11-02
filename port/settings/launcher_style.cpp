@@ -277,3 +277,29 @@ void launcherOutlinedText(ImDrawList* dl, ImFont* font, float size, ImVec2 pos, 
   }
   dl->AddText(font, size, pos, fill, text);
 }
+
+void launcherTitleText(ImDrawList* dl, ImFont* font, float size, ImVec2 pos, const char* text) {
+  // the README banner's title (tools/port/make_readme_art.py), from the font's
+  // em S = 0.826 x ImGui's size: outline 0.0565 S, the outlined shape's shadow
+  // at (1.6, 2.0) x the outline, softened by stamps around it
+  const float t = 0.0467f * size;
+  const ImVec2 off(pos.x + 1.6f * t, pos.y + 2.f * t);
+  for (int i = 0; i < 12; i++) {
+    const float a = i * 6.283185f / 12.f;
+    const float r = t * (i % 2 == 0 ? 1.4f : 0.8f);
+    dl->AddText(font, size, ImVec2(off.x + std::cos(a) * r, off.y + std::sin(a) * r), IM_COL32(20, 10, 30, 34), text);
+  }
+  for (int i = 0; i < 16; i++) {
+    const float a = i * 6.283185f / 16.f;
+    dl->AddText(font, size, ImVec2(pos.x + std::cos(a) * t, pos.y + std::sin(a) * t), kCurtain, text);
+  }
+  dl->AddText(font, size, pos, kPaper, text);
+}
+
+void launcherSparkle(ImDrawList* dl, ImVec2 c, float r, ImU32 color) {
+  // four points, the waist at 0.1875 r (the banner's sparkles)
+  const float k = r * 0.1875f;
+  const ImVec2 pts[8] = {{c.x, c.y - r}, {c.x + k, c.y - k}, {c.x + r, c.y}, {c.x + k, c.y + k},
+                         {c.x, c.y + r}, {c.x - k, c.y + k}, {c.x - r, c.y}, {c.x - k, c.y - k}};
+  dl->AddConvexPolyFilled(pts, 8, color);
+}

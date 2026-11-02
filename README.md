@@ -1,31 +1,59 @@
-Paper Cut
-=========
+<p align="center"><img src="docs/images/banner@2x.png" alt="Paper Cut" width="640"></p>
 
-**Paper Mario: The Thousand-Year Door, as a native program.** Paper Cut plays the Japanese (G8MJ01), US (G8ME01) and European (G8MP01) releases on Windows, macOS, Linux, iOS and Android, 64-bit, with no emulator.
+**A native port of Paper Mario: The Thousand-Year Door.** Paper Cut plays the Japanese (G8MJ01), US (G8ME01) and European (G8MP01) releases on Windows, macOS, Linux, iOS and Android, 64-bit, with no emulator.
 
 The game code is C, from the decompilation in [LLCOOLT/ttyd](https://github.com/LLCOOLT/ttyd). The GameCube platform under it (graphics, audio, input, disc, memory card) is replaced, through [Aurora](https://github.com/encounter/aurora) (WebGPU/Dawn and SDL3).
 
 **No game data is included.** You need your own copy of the game: Paper Cut runs from your disc image.
 
-**Download:** packages are on the [Releases](https://github.com/LLCOOLT/paper-cut/releases) page. On a computer, one download plays every version: `papercut-<version>-<platform>.zip`. On phones there is one app per version. To build it yourself, see [Building and running](#building-and-running).
+**Download:** packages are on the [Releases](https://github.com/LLCOOLT/paper-cut/releases) page. One download per platform plays every version: `papercut-<version>-<platform>.zip` (iPhone and Android: `papercut-<version>-<us|jp|eu>-...`, since a phone app can only run its own code). To build it yourself, see [Building and running](#building-and-running).
+
+<p align="center">
+  <img src="docs/images/shot-rogueport.jpg" alt="Rogueport in widescreen" width="49%">
+  <img src="docs/images/shot-luigi.jpg" alt="Play as Luigi in Petal Meadows" width="49%">
+  <img src="docs/images/shot-launcher.png" alt="The launcher's disc library" width="49%">
+  <img src="docs/images/shot-settings.png" alt="The settings page" width="49%">
+</p>
 
 ## Getting started
 
-Start **Paper Cut** and add your disc image (.iso, .rvz, .gcm...) to the launcher's library. It recognises the version and plays it with that version's build. The launcher works with a mouse, a keyboard or a controller. It also holds the settings, so you can set things up before the game starts. With "start with the last disc played" turned on, the next start skips straight to the game.
+Start **Paper Cut** and add your disc image (.iso, .rvz, .gcm...) to the launcher's library. Paper Cut recognises which release it is and plays it. The launcher works with a mouse, a keyboard, a controller or touch. It also holds the settings, so you can set things up before the game starts. With "Skip to this disc next time" turned on, the next start goes straight to the game.
+
+**Playing with a keyboard:**
+
+| Keys | Do |
+|---|---|
+| WASD or the arrows | move (the stick) |
+| Space | A |
+| E | B |
+| R | X |
+| F | Y |
+| Q | Z |
+| 1 / 3 | L / R |
+| Enter | Start |
+
+Change any of them under Settings > Controls > Keyboard keys. The port's own keys:
+- F1: settings.
+- F5 / F8: save / load state.
+- F6 / F7: frame advance.
+- Tab: fast-forward.
+- F11: fullscreen.
+- F12: screenshot.
 
 ## Features
 
-**Playing**
-- Every map of the Japanese, US and European versions boots and runs, with every battle setup. The European version plays in English, German, French, Spanish or Italian, and any version can show the text of another disc you own.
-- The whole story is played through scripted tests at every story value, and about 120 real saves load.
-- Memory card saves are Dolphin's `.gci` files. Saves are backed up automatically, and can be converted between versions.
+**Saves and languages**
+- **Saves:** memory card saves are Dolphin's `.gci` files. They're backed up automatically and can be converted between versions.
+- **Quick resume:** Continue in the launcher picks up where you left off, even if the app was closed without saving.
+- **Languages:** the European version plays in English, German, French, Spanish or Italian, and any version can show the text of another disc you own.
 
-**Settings:** F1, a controller's Back/Select, or a three-finger tap. Tabs down the side, a search box, and a mark on every setting that changes how the game plays or what it saves.
+**Settings:** F1, a controller's Back/Select, the three-bar button on the touch controls, or a three-finger tap. Tabs down the side, a search box, and a mark on every setting that changes how the game plays or what it saves.
 
 **Display**
 - **120 Hz and up:** extra frames are drawn between the game's 60 Hz ones, with interpolated camera, characters and animation. The game's logic is untouched.
 - **Any shape of screen:** 4:3, 16:9, 16:10, 21:9 and 32:9, with the HUD sized from 50% to 150%.
 - Internal resolution of 1–8× with supersampling, anisotropic filtering, sharp text, and CRT, paper-grain and sharpen filters.
+- MSAA, texture detail, blurred letterbox bars on wide screens, and 50 or 60 Hz for the European version.
 - Variable refresh rate, and a performance overlay with frame times, 1% lows and jitter.
 
 **Gameplay+** (each option off by default):
@@ -33,13 +61,15 @@ Start **Paper Cut** and add your disc image (.iso, .rvz, .gcm...) to the launche
 - A bigger bag, badge loadouts, a walk-speed boost, and coin and Star Point multipliers.
 - Retry on Game Over, fast travel, a journal of collectibles, a Star Piece and Shine Sprite tracker, a jukebox, and Tattle without spending a turn.
 - Battle pop-ups, Pit of 100 Trials and Glitz Pit tweaks, a remake-style balance, and New Game+.
-- **Play as Luigi:** Luigi in Mario's place, with 156 animations of his own made for Paper Cut, and the text, menus and credits to match.
+- **Play as Luigi:** Luigi in Mario's place, with 156 animations of his own made for Paper Cut. The brothers swap everywhere: Mario stands in Luigi's place in the story's scenes, and the text, menus and credits follow.
 
 **Accessibility:** a difficulty slider (enemy HP and attack) and action-command assist (wider timing, or automatic).
 
 **Practice:** a speedrun timer with load removal and [LiveSplit](https://livesplit.org) support, frame advance, RNG control, stat, item and story-flag editors, a memory watch, and ten labelled save-state slots (F5 saves, F8 loads). Plus 25 achievements read from your save, which don't count while the practice tools are on.
 
-**Audio and controls:** separate music, effects and ambience volumes. The mouse works in the game's menus, lists and battle commands. Buttons can be remapped, and any MFi, Xbox, PlayStation or Switch controller works.
+**Everyday:** fast-forward (Tab), adjustable text speed, screenshots (F12), controller rumble, and a check for new releases on start. Saves are backed up automatically and, on Apple devices, kept in iCloud. If the game crashes, a report is written for you to send.
+
+**Audio and controls:** separate music, effects and ambience volumes. The mouse works in the game's menus, lists and battle commands. Keys and controller buttons can be remapped, and any MFi, Xbox, PlayStation or Switch controller works.
 
 **Mods:** a mod manager on the settings page. Mods replace or add disc files, textures and text (Dolphin texture packs work as they are), change game data, run scripts and code through hooks generated from the decompilation, and GameCube code mods can be ported from their source. Also in this area:
 - [Archipelago](https://archipelago.gg) multiworld seeds (US).
@@ -58,7 +88,7 @@ See [docs/MODDING.md](docs/MODDING.md) and [docs/MODES.md](docs/MODES.md).
 
 | Platform | State |
 |---|---|
-| Windows (x86-64) | Plays. Every map, battle and story sweep passes. Built with clang. |
+| Windows (x86-64) | Plays. Every map boots and runs on JP, US and EU; the battle and story sweeps pass on JP and US. Built with clang. |
 | macOS (arm64, x86-64) | Plays (the Aurora `.app`). Every map boots. |
 | iOS | Plays on a device (iPhone) and in the Simulator. Disc image in the app's Documents. |
 | Linux (x86-64, aarch64) | x86-64 builds on Ubuntu 24.04 (CI, in a container): every map boots and saves work, headless. Not yet played on a Linux desktop. aarch64 is cross-compiled and linked only. |
@@ -66,7 +96,7 @@ See [docs/MODDING.md](docs/MODDING.md) and [docs/MODES.md](docs/MODES.md).
 
 ## Building and running
 
-Each version is its own build: `ttyd-jp`, `ttyd-us` and `ttyd-eu`, configured with `-DTTYD_VERSION=G8MJ01`, `G8ME01` or `G8MP01`. Every build has the launcher. Build the versions you have discs for, side by side, and the launcher starts the right one for each disc. A build with a disc on its command line skips the launcher and plays it, if it's that build's version.
+For players, Paper Cut is one app. Under the hood each release is its own build of the game code, because the three differ in their code and data: `ttyd-jp`, `ttyd-us` and `ttyd-eu`, configured with `-DTTYD_VERSION=G8MJ01`, `G8ME01` or `G8MP01`. Every build has the launcher. Build the versions you have discs for, side by side, and the launcher starts the right one for each disc. A build with a disc on its command line skips the launcher and plays it, if it's that build's version.
 
 ### Windows
 
@@ -178,13 +208,14 @@ The sweeps are driven by:
 | Document | Contents |
 |---|---|
 | [docs/PC_PORT.md](docs/PC_PORT.md) | Building on each platform, running, options, settings, tests, audits, design notes |
-| [docs/VERSIONS.md](docs/VERSIONS.md) | The Japanese, US and European releases, and how one codebase builds all three |
 | [docs/FRAME_INTERPOLATION.md](docs/FRAME_INTERPOLATION.md) | How 120 Hz and up works, and how its purity is checked |
 | [docs/PLAYABLE_LUIGI.md](docs/PLAYABLE_LUIGI.md), [docs/LUIGI_ANIMS.md](docs/LUIGI_ANIMS.md) | Play as Luigi, and how his animations are made and shipped without any disc data |
 | [docs/MODDING.md](docs/MODDING.md), [docs/MODES.md](docs/MODES.md) | Making and installing mods; the boss rush, endless Glitz Pit and audience modes |
-| [docs/APPLE_BRIEF.md](docs/APPLE_BRIEF.md) | Bringing up macOS and iOS |
+| [docs/MOD_DATA.md](docs/MOD_DATA.md) | The game data mods can change |
 | [docs/RELEASING.md](docs/RELEASING.md) | CI, the self-hosted runners, and cutting a release |
 | [docs/THIRD_PARTY.md](docs/THIRD_PARTY.md) | Third-party code and assets, and their licences |
+
+The game code's own documentation (how the game is put together, the glossary of its Japanese names, the differences between the versions, the game's known bugs) is in the decompilation, [LLCOOLT/ttyd](https://github.com/LLCOOLT/ttyd/tree/main/docs).
 
 ## Credits
 

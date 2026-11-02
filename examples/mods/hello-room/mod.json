@@ -2,7 +2,7 @@
   "id": "dev.ttyd.hello-room",
   "name": "Hello, room",
   "version": "1.0",
-  "author": "ttyd-port",
+  "author": "Paper Cut",
   "description": "An example script mod: a new map, gor_99, made of Rogueport's west side (gor_01's files) with a script of its own. The debug warp goes there (TTYD_MAP=gor_99).",
   "games": ["G8ME01", "G8MJ01"],
   "maps": {"gor_99": {"init": "gor_99_init", "files": "gor_01"}}

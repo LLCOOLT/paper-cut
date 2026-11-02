@@ -21,3 +21,6 @@ config/**/*.txt  text eol=lf
 *.ico  binary
 *.icns binary
 *.rgba binary
+
+# Binary data (port/assets): never line-ending converted
+*.bin binary

@@ -27,6 +27,8 @@ void portAudioMixExtra(s16* out, u32 frames) {
   (void)out;
   (void)frames;
 }
+/* the volume settings (audio_mix_pc.c): every kind at full volume */
+void portAudioMixUpdate(void) {}
 void DCFlushRange(void* p, u32 n) {
   (void)p;
   (void)n;

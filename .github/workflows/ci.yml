@@ -5,7 +5,7 @@ name: CI
 # Self-hosted jobs use no GitHub Actions minutes.
 on:
   push:
-    branches: [main, modding]
+    branches: [main, modding, "v*"]
   pull_request:
   workflow_dispatch:
     inputs:

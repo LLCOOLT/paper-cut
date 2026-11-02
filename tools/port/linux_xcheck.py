@@ -51,7 +51,51 @@ typedef unsigned long pthread_t;
 """
 H["sys/types.h"] = "#pragma once\n#include <bits/types.h>\n"
 # port_prefix.h includes it so the game's `select` can be renamed after it
-H["sys/select.h"] = "#pragma once\n#include <sys/types.h>\n"
+H["sys/select.h"] = r"""
+#pragma once
+#include <sys/types.h>
+struct timeval { time_t tv_sec; suseconds_t tv_usec; };
+typedef struct { long fds_bits[1024 / (8 * sizeof(long))]; } fd_set;
+#define FD_SETSIZE 1024
+#define FD_ZERO(s) __builtin_memset((s), 0, sizeof(fd_set))
+#define FD_SET(d, s) ((s)->fds_bits[(d) / (8 * sizeof(long))] |= 1l << ((d) % (8 * sizeof(long))))
+#define FD_CLR(d, s) ((s)->fds_bits[(d) / (8 * sizeof(long))] &= ~(1l << ((d) % (8 * sizeof(long)))))
+#define FD_ISSET(d, s) (((s)->fds_bits[(d) / (8 * sizeof(long))] & (1l << ((d) % (8 * sizeof(long))))) != 0)
+int select(int, fd_set*, fd_set*, fd_set*, struct timeval*);
+"""
+# livesplit_pc.c: a non-blocking TCP client
+H["sys/socket.h"] = r"""
+#pragma once
+#include <sys/types.h>
+typedef unsigned int socklen_t;
+typedef unsigned short sa_family_t;
+struct sockaddr { sa_family_t sa_family; char sa_data[14]; };
+#define AF_INET 2
+#define SOCK_STREAM 1
+#define SOL_SOCKET 1
+#define SO_ERROR 4
+#define MSG_NOSIGNAL 0x4000
+int socket(int, int, int);
+int connect(int, const struct sockaddr*, socklen_t);
+int getsockopt(int, int, int, void* restrict, socklen_t* restrict);
+int setsockopt(int, int, int, const void*, socklen_t);
+ssize_t send(int, const void*, size_t, int);
+ssize_t recv(int, void*, size_t, int);
+"""
+H["netinet/in.h"] = r"""
+#pragma once
+#include <sys/socket.h>
+typedef unsigned int in_addr_t;
+typedef unsigned short in_port_t;
+struct in_addr { in_addr_t s_addr; };
+struct sockaddr_in { sa_family_t sin_family; in_port_t sin_port; struct in_addr sin_addr; unsigned char sin_zero[8]; };
+#define IPPROTO_TCP 6
+#define INADDR_LOOPBACK ((in_addr_t)0x7f000001)
+unsigned int htonl(unsigned int);
+unsigned short htons(unsigned short);
+"""
+H["netinet/tcp.h"] = "#pragma once\n#define TCP_NODELAY 1\n"
+H["arpa/inet.h"] = "#pragma once\n#include <netinet/in.h>\n"
 H["stdio.h"] = r"""
 #pragma once
 #include <bits/types.h>
@@ -293,6 +337,7 @@ int* __errno_location(void);
 #define errno (*__errno_location())
 #define EINTR 4
 #define EAGAIN 11
+#define EWOULDBLOCK EAGAIN
 #define ENOENT 2
 #define EINVAL 22
 """
@@ -523,7 +568,11 @@ H["fcntl.h"] = r"""
 #define O_CREAT 0100
 #define O_TRUNC 01000
 #define O_CLOEXEC 02000000
+#define O_NONBLOCK 04000
+#define F_GETFL 3
+#define F_SETFL 4
 int open(const char*, int, ...);
+int fcntl(int, int, ...);
 """
 H["sys/stat.h"] = r"""
 #pragma once

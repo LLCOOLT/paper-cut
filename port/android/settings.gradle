@@ -1,4 +1,4 @@
-// Android app for the TTYD PC port (docs/PC_PORT.md, "Android").
+// Android app for Paper Cut (docs/PC_PORT.md, "Android").
 // Gradle 8.12 or newer: `gradle wrapper --gradle-version 8.12` makes ./gradlew.
 pluginManagement {
     repositories {

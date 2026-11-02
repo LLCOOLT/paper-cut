@@ -33,6 +33,9 @@ void portUiInit(void);
  * keyboard on after it (port/settings/settings_ui.cpp). */
 void portKeyboardDefaults(void);
 void portKeyboardActivate(void);
+/* Before the game starts: waits, on a "Preparing graphics" screen, until Aurora
+ * has built every pipeline it knows of (port/settings/features/warmup.cpp). */
+void portPipelineWarmupWait(void);
 
 /* Frames drawn between the game's 60 Hz frames (interp_aurora.c): the
  * display rate's multiple of 60 from $TTYD_FRAMERATE, 1 when off. */

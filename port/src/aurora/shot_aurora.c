@@ -222,7 +222,7 @@ static void status(const char* text) {
     sStatusTime = SDL_GetTicks();
 }
 
-/* Where the player's screenshots go (not iOS): ~/Pictures/TTYD, or a
+/* Where the player's screenshots go (not iOS): ~/Pictures/Paper Cut, or a
  * Screenshots folder by the settings */
 static void userShotPath(char* out, size_t size) {
     char when[32];
@@ -238,7 +238,7 @@ static void userShotPath(char* out, size_t size) {
     strftime(when, sizeof(when), "%Y-%m-%d at %H.%M.%S", &tm);
 #if defined(__APPLE__)
     if (home != NULL) {
-        snprintf(folder, sizeof(folder), "%s/Pictures/TTYD", home);
+        snprintf(folder, sizeof(folder), "%s/Pictures/Paper Cut", home);
     } else
 #endif
     {
@@ -246,7 +246,7 @@ static void userShotPath(char* out, size_t size) {
     }
     (void)home;
     SDL_CreateDirectory(folder);
-    snprintf(out, size, "%s/TTYD %s.png", folder, when);
+    snprintf(out, size, "%s/Paper Cut %s.png", folder, when);
 }
 
 static void saveUserShot(const u8* rgb, u32 w, u32 h) {
@@ -258,7 +258,11 @@ static void saveUserShot(const u8* rgb, u32 w, u32 h) {
     {
         char path[1200];
         userShotPath(path, sizeof(path));
-        status(writeFile(path, png, len) ? "Screenshot saved to Pictures/TTYD" : "Screenshot could not be saved");
+#if defined(__APPLE__)
+        status(writeFile(path, png, len) ? "Screenshot saved to Pictures/Paper Cut" : "Screenshot could not be saved");
+#else
+        status(writeFile(path, png, len) ? "Screenshot saved to Screenshots" : "Screenshot could not be saved");
+#endif
     }
 #endif
     free(png);

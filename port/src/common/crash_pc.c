@@ -86,7 +86,7 @@ static void reportBegin(const char* what) {
     if (sReport == NULL) {
         return;
     }
-    fprintf(sReport, "TTYD PC port %s report\nversion: %s, built %s %s\ngame: %s\n%s%s%simage: %p\n", what,
+    fprintf(sReport, "Paper Cut %s report\nversion: %s, built %s %s\ngame: %s\n%s%s%simage: %p\n", what,
             PORT_REGION_SHORT " (" PORT_GAME_ID ")",
             __DATE__, __TIME__, sContext[0] != '\0' ? sContext : "?", sMessage[0] != '\0' ? "message: " : "",
             sMessage, sMessage[0] != '\0' ? "\n" : "", (void*)GetModuleHandleA(NULL));
@@ -391,7 +391,7 @@ static void reportBegin(const char* what) {
         /* write() to the file only: stderr gets the usual lines */
         const int fd = sReportFd;
         char buf[1024];
-        int n = snprintf(buf, sizeof(buf), "TTYD PC port %s report\nversion: %s, built %s %s\ngame: %s\n%s%s%s", what,
+        int n = snprintf(buf, sizeof(buf), "Paper Cut %s report\nversion: %s, built %s %s\ngame: %s\n%s%s%s", what,
                          PORT_REGION_SHORT " (" PORT_GAME_ID ")",
                          __DATE__, __TIME__, sContext[0] != '\0' ? sContext : "?",
                          sMessage[0] != '\0' ? "message: " : "", sMessage, sMessage[0] != '\0' ? "\n" : "");

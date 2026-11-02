@@ -397,6 +397,10 @@ static void load(Slot* s) {
     int n, i;
     const uint8_t* p = s->blob;
     const Uint64 t0 = SDL_GetTicks();
+    if (!portSnapHeapCommit(s->heapTop)) { /* before anything is written back */
+        status("Not enough memory to load the state");
+        return;
+    }
     n = regions(r, 512, s->heapTop);
     for (i = 0; i < n; i++) {
         size_t off;

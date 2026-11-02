@@ -1,24 +1,26 @@
 #!/usr/bin/env python3
-"""The port's CI, run on this machine: every check, both versions, one report.
+"""The port's CI, run on this machine: every check, all three versions (JP, US, EU), one report.
 
 Stages (each logs to build-ci/<stage>.log; independent ones run at once):
-  gamecube   both matching builds (configure.py + ninja: SHA-1 OK), in turn
-  build      the PC builds: headless and Aurora, JP and US (configured if new)
-  unit       unit tests (ctest -LE slow), both versions
+  gamecube   the three matching builds (configure.py + ninja: SHA-1 OK), in turn
+  build      the PC builds: headless and Aurora, each version (configured if new)
+  unit       unit tests (ctest -LE slow), each version
   audits     proto_audit, noproto_calls, proto_mismatch, gen_bedecode --check, gen_reflect --check,
              gen_hooks --check, diag_census (fatal classes)
-  sweep      map_sweep with golden audio, both versions
-  cards      new file, Save Block save and load, headless and Aurora, both
-             versions; the headless card then loads on Aurora
-  mods       gen_game_all, gen_evt_table and gen_statics (both versions) --check; the
+  sweep      map_sweep with golden audio, each version
+  cards      new file, Save Block save and load, headless and Aurora, each
+             version; the headless card then loads on Aurora
+  mods       gen_game_all, gen_evt_table and gen_statics (each version) --check; the
              US Aurora build with examples/mods: the examples' messages are used, their
              data patches apply, the code mod's services and a damage hook work, the
              script mod's new map loads and runs its scripts
   archipelago  the TTYD apworld's offsets as the PC's (exact, against the disc), and a
              session with a test seed against a stand-in server
-  android    both debug APKs, when the Android SDK, JDK and Gradle are there
-  linux      headless build and unit tests in WSL, when a distribution is there;
-             else compiled and linked for Linux against stand-in headers
+  android    the three debug APKs, when the Android SDK, JDK and Gradle are there
+  linux      on Windows, a quick Linux check: the headless JP build and its unit tests
+             in WSL when a distribution is installed, else compiled and linked for
+             Linux against stand-in headers. (The Linux CI proper is this script run
+             inside an Ubuntu container: linux_container.py, .github/workflows/ci.yml.)
 Data: the extracted discs in data/<version>, the images in orig/<version>/*.iso;
 stages that need them skip without.
 
@@ -366,7 +368,8 @@ def stage_archipelago(s):
 
 
 def stage_linux(s):
-    """WSL: build the headless JP version and run its unit tests (Linux CI)."""
+    """WSL: build the headless JP version and run its unit tests (a quick check; the Linux CI
+    runs this script in a container, linux_container.py)."""
     if os.name != "nt" or shutil.which("wsl") is None:
         return s.skip("not on Windows")
     r = subprocess.run(["wsl", "-l", "-q"], capture_output=True)
@@ -387,7 +390,7 @@ def stage_linux(s):
 
 
 def stage_android(s):
-    """Both debug APKs (port/android), when an Android SDK, a JDK 17 and Gradle
+    """The three debug APKs (port/android), when an Android SDK, a JDK 17 and Gradle
     are there: $ANDROID_HOME, $JAVA_HOME and gradle on PATH, else under
     ~/Android (sdk/, jdk-17/, gradle-*/)."""
     home = os.path.expanduser("~/Android")
