@@ -2,9 +2,10 @@
 #include "port/gx_arrays.h"
 
 #include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 #define PORT_GX_ARRAY_REGISTRY 64
-#define PORT_GX_BLOB_REGISTRY 64
 
 typedef struct {
     const void* data;
@@ -20,7 +21,14 @@ typedef struct {
 /* Arrays: small ring; few are live at once. */
 static ArrayEntry sArrays[PORT_GX_ARRAY_REGISTRY];
 static unsigned int sArrayNext;
+/* Disc blobs: one per live anim model or map file. It held 64 and, full, overwrote slot 0: from then on
+ * each newly loaded model lost its slot to the next one, its big-endian vertices were read as native and
+ * it drew as nothing but its shadow (chapter 5's ruin, a long run in). The file manager has 1024 entries
+ * and the maps two, so this many never fill; lookups stop at the highest slot used. */
+#define PORT_GX_BLOB_REGISTRY 1100
 static BlobEntry sBlobs[PORT_GX_BLOB_REGISTRY];
+static unsigned int sBlobTop; /* slots in use or since freed */
+static unsigned int sBlobCap; /* PORT_GX_BLOB_REGISTRY, or TTYD_GX_BLOB_CAP to see the old overflow */
 static void portGXForgetArrayRanges(const void* base, unsigned int size);
 
 static void registerArray(const void* data, unsigned int size, int le) {
@@ -50,21 +58,36 @@ void portGXRegisterNativeArray(const void* data, unsigned int size) {
 }
 
 void portGXRegisterDiscBlob(const void* base, unsigned int size) {
-    unsigned int i, freeSlot = PORT_GX_BLOB_REGISTRY;
+    unsigned int i, freeSlot = sBlobTop;
     if (!base) {
         return;
     }
-    for (i = 0; i < PORT_GX_BLOB_REGISTRY; i++) {
+    for (i = 0; i < sBlobTop; i++) {
         if (sBlobs[i].base == base) {
             sBlobs[i].size = size;
             return;
         }
-        if (!sBlobs[i].base && freeSlot == PORT_GX_BLOB_REGISTRY) {
+        if (!sBlobs[i].base && freeSlot == sBlobTop) {
             freeSlot = i;
         }
     }
-    if (freeSlot == PORT_GX_BLOB_REGISTRY) {
-        freeSlot = 0; /* full: overwrite the oldest slot rather than fail */
+    if (sBlobCap == 0) {
+        const char* lim = getenv("TTYD_GX_BLOB_CAP");
+        sBlobCap = lim != NULL && atoi(lim) > 0 && atoi(lim) < PORT_GX_BLOB_REGISTRY ? (unsigned int)atoi(lim)
+                                                                                     : PORT_GX_BLOB_REGISTRY;
+    }
+    if (freeSlot == sBlobTop) {
+        if (sBlobTop < sBlobCap) {
+            if (++sBlobTop == 65) {
+                printf("[gx] disc blobs: 65 slots in use (the old registry held 64)\n");
+                fflush(stdout);
+            }
+        } else {
+            /* the model in the slot overwritten draws as garbage from now on: say so */
+            printf("[gx] disc blob registry full (%u): slot 0 overwritten\n", sBlobCap);
+            fflush(stdout);
+            freeSlot = 0;
+        }
     }
     sBlobs[freeSlot].base = (const uint8_t*)base;
     sBlobs[freeSlot].size = size;
@@ -74,7 +97,7 @@ void portGXRegisterDiscBlob(const void* base, unsigned int size) {
 void portGXUnregisterDiscBlob(const void* base) {
     unsigned int i;
     unsigned int size = 0;
-    for (i = 0; i < PORT_GX_BLOB_REGISTRY; i++) {
+    for (i = 0; i < sBlobTop; i++) {
         if (sBlobs[i].base == base) {
             if (sBlobs[i].size > size) {
                 size = sBlobs[i].size;
@@ -142,7 +165,7 @@ void portGXForgetRange(const void* lo_, const void* hi_) {
     const uint8_t* lo = (const uint8_t*)lo_;
     const uint8_t* hi = (const uint8_t*)hi_;
     unsigned int i;
-    for (i = 0; i < PORT_GX_BLOB_REGISTRY; i++) {
+    for (i = 0; i < sBlobTop; i++) {
         if (sBlobs[i].base && sBlobs[i].base >= lo && sBlobs[i].base < hi) {
             sBlobs[i].base = NULL;
             sBlobs[i].size = 0;
@@ -173,7 +196,7 @@ int portGXIsDiscData(const void* data) {
             return !sArrays[i].le;
         }
     }
-    for (i = 0; i < PORT_GX_BLOB_REGISTRY; i++) {
+    for (i = 0; i < sBlobTop; i++) {
         if (sBlobs[i].base && p >= sBlobs[i].base && p < sBlobs[i].base + sBlobs[i].size) {
             return 1;
         }
@@ -204,7 +227,7 @@ int portGXArrayInfo(const void* data, unsigned int* size, int* le) {
             return 1;
         }
     }
-    for (i = 0; i < PORT_GX_BLOB_REGISTRY; i++) {
+    for (i = 0; i < sBlobTop; i++) {
         if (sBlobs[i].base && p >= sBlobs[i].base && p < sBlobs[i].base + sBlobs[i].size) {
             *size = (unsigned int)(sBlobs[i].base + sBlobs[i].size - p);
             *le = 0;
