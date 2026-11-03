@@ -1,0 +1,3 @@
+# Starts the game and ends (a run that checks something at start).
+wait 5
+end

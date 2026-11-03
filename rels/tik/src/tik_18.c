@@ -1,0 +1,155 @@
+// tik_18 (埋没した都市, Rogueport Sewers): the passage between tik_06, tik_07 and tik_17, with a cloud event
+// (tik_18_cloud_evt); a Magikoopa, a Koopatrol and Spanias.
+#include "battle/battle_unit.h"
+#include "evt/evt_cmd.h"
+#include "evt/evt_bero.h"
+#include "evt/evt_damage.h"
+#include "driver/hitdrv.h"
+#include "evt/evt_cloud.h"
+#include "evt/evt_hit.h"
+#include "evt/evt_map.h"
+#include "evt/evt_mobj.h"
+#include "evt/evt_npc.h"
+#include "evt/evt_snd.h"
+#include "tik.h"
+#include "evt/evt_story.h"
+#include "driver/mapdrv.h"
+
+static BeroEntry bero_entry_data[5];
+extern EvtWord tik_18_cloud_evt[];
+static HitDamageReturn hitDmgRetPoints[13];
+
+/** Doors of this room: the pipes to tik_06 and tik_07 and two east exits to tik_17. */
+static BeroEntry bero_entry_data[] = {
+    {
+        "dokan_1", // hitName
+        2, // type
+        0, // sfxId
+        BERO_DIR_DOWN, // directionId
+        BERO_POS_AUTO, // centerPosition
+        0, 0, // centerPositionY..centerPositionZ
+        -1, // length
+        NULL, // enterEvent
+        6, // caseType
+        NULL, // exitEvent
+        "tik_06", // nextMapName
+        "dokan_2", // nextBeroName
+        1, // enterAnimeType
+        1, // exitAnimeType
+        0, 0, // enterAnimeArg..exitAnimeArg
+    },
+    {
+        "dokan_2", // hitName
+        2, // type
+        0, // sfxId
+        BERO_DIR_E, // directionId
+        BERO_POS_AUTO, // centerPosition
+        0, 0, // centerPositionY..centerPositionZ
+        -1, // length
+        NULL, // enterEvent
+        10, // caseType
+        NULL, // exitEvent
+        "tik_07", // nextMapName
+        "dokan_2", // nextBeroName
+        1, // enterAnimeType
+        1, // exitAnimeType
+        0, 0, // enterAnimeArg..exitAnimeArg
+    },
+    {
+        "e_bero_1", // hitName
+        0, 0, // type..sfxId
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
+        0, 0, // centerPositionY..centerPositionZ
+        -1, // length
+        NULL, // enterEvent
+        -1, // caseType
+        NULL, // exitEvent
+        "tik_17", // nextMapName
+        "w_bero_1", // nextBeroName
+        1, // enterAnimeType
+        1, // exitAnimeType
+        0, 0, // enterAnimeArg..exitAnimeArg
+    },
+    {
+        "e_bero_2", // hitName
+        0, 0, // type..sfxId
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
+        0, 0, // centerPositionY..centerPositionZ
+        -1, // length
+        NULL, // enterEvent
+        -1, // caseType
+        NULL, // exitEvent
+        "tik_17", // nextMapName
+        "w_bero_2", // nextBeroName
+        1, // enterAnimeType
+        1, // exitAnimeType
+        0, 0, // enterAnimeArg..exitAnimeArg
+    },
+    {0},
+};
+
+/** Runs when the wind blows the cloud off the window; sets GSWF_TIK18_CLOUD_BLOWN. */
+EVT_BEGIN(tik_18_cloud_evt)
+    SET_VALUE(GSWF(GSWF_TIK18_CLOUD_BLOWN), 1)
+    RETURN
+EVT_END()
+
+/** Spots Mario is put back on after falling into one of this room's hazards (each object's own position). */
+static HitDamageReturn hitDmgRetPoints[] = {
+    {"mod_1", {0.0f, -1000.0f, 0.0f}},
+    {"mod_2", {0.0f, -1000.0f, 0.0f}},
+    {"mod_3", {0.0f, -1000.0f, 0.0f}},
+    {"mod_4", {0.0f, -1000.0f, 0.0f}},
+    {"mod_5", {0.0f, -1000.0f, 0.0f}},
+    {"mod_6", {0.0f, -1000.0f, 0.0f}},
+    {"mod_7", {0.0f, -1000.0f, 0.0f}},
+    {"mod_8", {0.0f, -1000.0f, 0.0f}},
+    {"mod_9", {0.0f, -1000.0f, 0.0f}},
+    {"mod_10", {0.0f, -1000.0f, 0.0f}},
+    {"mod_11", {0.0f, -1000.0f, 0.0f}},
+    {"mod_12", {0.0f, -1000.0f, 0.0f}},
+    {0},
+};
+
+/**
+ * Map init script of tik_18, the passage between tik_06, tik_07 and tik_17.
+ * Sets up the cloud covering a window (hidden once blown away),
+ * removes the enemy NPCs that do not belong to the story step (before or after STORY_STG5_43_X_NAUTS_RETREAT),
+ * and places two badge blocks (Slow Shroom, Gradual Syrup).
+ */
+EVT_BEGIN(tik_18_init_evt)
+    CALL(evt_snd_bgmon, PSND_FADE_OUT, STRING("BGM_STG0_TIK1"))
+    CALL(evt_snd_envon, PSND_FADE_RESTART | PSND_FADE_IN, STRING("ENV_STG0_TIK7"))
+    CALL(evt_snd_set_rev_mode, 2)
+    SET_VALUE(LW(0), PTR(bero_entry_data))
+    CALL(evt_bero_get_info)
+    CALL_CHILD(evt_bero_info_run)
+    CALL(evt_hit_damage_return_set, PTR(hitDmgRetPoints))
+    CALL_CHILD(evt_gazigazi_entry)
+    CALL(evt_map_playanim, STRING("anm_mizu"), 1, 0)
+    IF_INT_EQUAL(GSWF(GSWF_TIK18_CLOUD_BLOWN), 0)
+        CALL(evt_cloud_init)
+        CALL(evt_cloud_ent, 0, STRING("s_win_1"), STRING("a_win_1"), PTR(tik_18_cloud_evt))
+    ELSE
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("s_win_1"), MAPOBJ_FLAG_HIDE)
+        CALL(evt_hitobj_onoff, STRING("a_win_1"), 1, 0)
+    END_IF
+    IF_INT_LESS(GSW(GSW_STORY_PROGRESS), STORY_STG5_43_X_NAUTS_RETREAT)
+        CALL(evt_npc_check_delete, STRING("カメック"))
+        CALL(evt_npc_check_delete, STRING("トゲノコ"))
+    ELSE
+        CALL(evt_npc_check_delete, STRING("ハンニャー１"))
+        CALL(evt_npc_check_delete, STRING("ハンニャー２"))
+    END_IF
+    CALL(evt_map_entry_airport_harbor, 1, STRING("S_Ship_Change_01"), STRING("ue"))
+#if VERSION <= VERSION_DEMO_JP
+    CALL(evt_mobj_badgeblk, STRING("mobj_01"), 110, 0, -30, ITEM_SLOW_SHROOM, 0, GSWF(GSWF_TIK18_SLOW_SHROOM_BLOCK_HIT), 0)
+    CALL(evt_mobj_badgeblk, STRING("mobj_02"), 310, 0, -30, ITEM_GRADUAL_SYRUP, 0, GSWF(GSWF_TIK18_GRADUAL_SYRUP_BLOCK_HIT), 0)
+#else
+    CALL(evt_mobj_badgeblk, STRING("mobj_01"), 110, 0, -38, ITEM_SLOW_SHROOM, 0, GSWF(GSWF_TIK18_SLOW_SHROOM_BLOCK_HIT), 0)
+    CALL(evt_mobj_badgeblk, STRING("mobj_02"), 310, 0, -38, ITEM_GRADUAL_SYRUP, 0, GSWF(GSWF_TIK18_GRADUAL_SYRUP_BLOCK_HIT), 0)
+#endif
+    RETURN
+EVT_END()

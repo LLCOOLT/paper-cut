@@ -1,0 +1,501 @@
+// moo_00 (月, the Moon): the landing site with the save block; paths to moo_01 and moo_07.
+
+#include "battle/battle_unit.h"
+#include "evt/evt_cmd.h"
+
+#include "party.h"
+#include "mario/mario.h"
+#include "manager/evtmgr_cmd.h"
+#include "evt/evt_bero.h"
+#include "evt/evt_cam.h"
+#include "evt/evt_case.h"
+#include "evt/evt_eff.h"
+#include "evt/evt_hit.h"
+#include "evt/evt_img.h"
+#include "evt/evt_item.h"
+#include "evt/evt_map.h"
+#include "evt/evt_mario.h"
+#include "evt/evt_mobj.h"
+#include "evt/evt_msg.h"
+#include "evt/evt_offscreen.h"
+#include "evt/evt_paper.h"
+#include "evt/evt_party.h"
+#include "evt/evt_snd.h"
+#include "evt/evt_sub.h"
+#include "evt/evt_telop.h"
+#include "moo.h"
+#include "math.h"
+#include "version.h"
+#include "evt/evt_story.h"
+#include "driver/casedrv.h"
+#include "driver/mapdrv.h"
+#include "driver/camdrv.h"
+
+static USER_FUNC(mario_kirimomi);
+static USER_FUNC(mario_reset);
+static USER_FUNC(party_kirimomi);
+static USER_FUNC(party_reset);
+
+static BeroEntry bero_entry_data[3];
+static f32 spline_dt[9];
+
+/** Exits of moo_00: west road w_bero to moo_07 (e_bero); east road e_bero to moo_01 (w_bero). */
+static BeroEntry bero_entry_data[] = {
+    {
+        "w_bero", // hitName
+        0, 0, // type..sfxId
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
+        0, 0, // centerPositionY..centerPositionZ
+        -1, // length
+        NULL, // enterEvent
+        -1, // caseType
+        NULL, // exitEvent
+        "moo_07", // nextMapName
+        "e_bero", // nextBeroName
+        1, // enterAnimeType
+        1, // exitAnimeType
+        0, 0, // enterAnimeArg..exitAnimeArg
+    },
+    {
+        "e_bero", // hitName
+        0, 0, // type..sfxId
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
+        0, 0, // centerPositionY..centerPositionZ
+        -1, // length
+        NULL, // enterEvent
+        -1, // caseType
+        NULL, // exitEvent
+        "moo_01", // nextMapName
+        "w_bero", // nextBeroName
+        1, // enterAnimeType
+        1, // exitAnimeType
+        0, 0, // enterAnimeArg..exitAnimeArg
+    },
+    {0},
+};
+
+/**
+ * Three control points (x, y, z) of the path Mario and his partner tumble along in the crash landing: from
+ * high above the landing site down to the ground.
+ */
+static f32 spline_dt[] = {
+    -320.0f, 200.0f, -170.0f, -220.0f, 100.0f, -170.0f, -120.0f, 0.0f,
+    -170.0f,
+};
+
+/**
+ * Event script: puts the active partner (by party id: Goombella, Koops, Flurrie, Yoshi, Vivian, Bobbery,
+ * Ms. Mowz) into its first "hurt" pose, used while they lie on the ground after the crash landing.
+ */
+static EVT_BEGIN(party_damage_pose)
+    CALL(evt_mario_get_party, LW(0))
+    SWITCH(LW(0))
+        CASE_EQUAL(0)
+        CASE_EQUAL(1)
+        CALL(evt_party_set_pose, 0, STRING("PKR_D_1"))
+        CASE_EQUAL(2)
+        CALL(evt_party_set_pose, 0, STRING("PNK_D_1"))
+        CASE_EQUAL(3)
+        CALL(evt_party_set_pose, 0, STRING("D_1"))
+        CASE_EQUAL(4)
+        CALL(evt_party_set_pose, 0, STRING("PYS_D_1"))
+        CASE_EQUAL(5)
+        CALL(evt_party_set_pose, 0, STRING("PWD_D_1"))
+        CASE_EQUAL(6)
+        CALL(evt_party_set_pose, 0, STRING("PTR_D_1"))
+        CASE_EQUAL(7)
+        CALL(evt_party_set_pose, 0, STRING("PCH_D_1"))
+    END_SWITCH
+    RETURN
+EVT_END()
+
+/** Event script: puts the active partner into its second "hurt" pose (getting up), used after the crash landing. */
+EVT_BEGIN(party_damage_pose2)
+    CALL(evt_mario_get_party, LW(0))
+    SWITCH(LW(0))
+        CASE_EQUAL(0)
+        CASE_EQUAL(1)
+        CALL(evt_party_set_pose, 0, STRING("PKR_D_5"))
+        CASE_EQUAL(2)
+        CALL(evt_party_set_pose, 0, STRING("PNK_D_5"))
+        CASE_EQUAL(3)
+        CALL(evt_party_set_pose, 0, STRING("D_4"))
+        CASE_EQUAL(4)
+        CALL(evt_party_set_pose, 0, STRING("PYS_D_5"))
+        CASE_EQUAL(5)
+        CALL(evt_party_set_pose, 0, STRING("PWD_D_5"))
+        CASE_EQUAL(6)
+        CALL(evt_party_set_pose, 0, STRING("PTR_D_4"))
+        CASE_EQUAL(7)
+        CALL(evt_party_set_pose, 0, STRING("PCH_D_4"))
+    END_SWITCH
+    RETURN
+EVT_END()
+
+/**
+ * Event script: the crash landing on the Moon, run on the first visit (story progress below
+ * STORY_STG7_06_TO_THE_MOON).
+ * Mario and the partner tumble down along a spline and hit the ground with a thud, dust and a camera shake.
+ * After lying there they get up, the partner speaks (stg7_moo_03, stg7_moo_04), Mario nods, control returns,
+ * the story progress is set to STORY_STG7_06_TO_THE_MOON and the area banner for the Moon is shown (telop 14).
+ */
+static EVT_BEGIN(evt_first)
+    // Controls off; the partner is put into its hurt pose.
+    CALL(evt_mario_key_onoff, 0)
+    CALL(evt_party_stop, 0)
+    WAIT_FRAMES(1)
+    CALL(evt_mario_dispflag_onoff, 1, 2)
+    CALL(evt_mario_set_pose, STRING("M_F_1"))
+    CALL_CHILD(party_damage_pose)
+    WAIT_FRAMES(1)
+    CALL(evt_mario_cont_onoff, 0)
+    CALL(evt_party_cont_onoff, 0, 0)
+    CALL(evt_mario_set_dir, 90, 0, 0)
+    CALL(evt_party_set_dir, 0, 90, 0)
+    BEGIN_INLINE_EVENT
+        WAIT_MS(500)
+        CALL(evt_sub_intpl_msec_init, 0, 0, 5540, 1000)
+        LABEL(30)
+        CALL(evt_sub_intpl_msec_get_value)
+        CALL(party_kirimomi, LW(0))
+        WAIT_FRAMES(1)
+        IF_INT_EQUAL(LW(1), 1)
+            GOTO(30)
+        END_IF
+    END_INLINE_EVENT
+    BEGIN_INLINE_EVENT
+        WAIT_MS(500)
+        // Mario and the partner tumble down the spline toward the Moon's surface.
+        CALL(evt_sub_spline_init, 1, 1, PTR(spline_dt), 3, 0, 1000)
+        LABEL(10)
+        CALL(evt_sub_spline_get_value, LW(0), LW(1), LW(2), LW(3))
+        ADD(LW(0), -50)
+        CALL(evt_party_set_pos, 0, LW(0), LW(1), LW(2))
+        WAIT_FRAMES(1)
+        IF_INT_EQUAL(LW(3), 1)
+            GOTO(10)
+        END_IF
+        CALL(evt_party_get_pos, 0, LW(0), LW(1), LW(2))
+        ADD(LW(1), 20)
+        ADD(LW(2), 5)
+        CALL(evt_eff, 0, STRING("kemuri_test"), 14, LW(0), LW(1), LW(2), FLOAT(1.0f), 0, 0, 0, 0, 0, 0, 0)
+        CALL(evt_snd_sfxon_3d, STRING("SFX_STG7_MARIO_MOON_FALL1"), LW(0), LW(1), LW(2), 0)
+        CALL(evt_cam_shake, CAMERA_3D, FLOAT(0.009765625f), FLOAT(0.0f), 300)
+        CALL_CHILD(party_damage_pose2)
+    END_INLINE_EVENT
+    BEGIN_INLINE_EVENT
+        CALL(evt_sub_intpl_msec_init, 0, 0, 5620, 1000)
+        LABEL(20)
+        CALL(evt_sub_intpl_msec_get_value)
+        CALL(mario_kirimomi, LW(0))
+        WAIT_FRAMES(1)
+        IF_INT_EQUAL(LW(1), 1)
+            GOTO(20)
+        END_IF
+    END_INLINE_EVENT
+    CALL(evt_sub_spline_init, 1, 1, PTR(spline_dt), 3, 0, 1000)
+    LABEL(0)
+    CALL(evt_sub_spline_get_value, LW(0), LW(1), LW(2), LW(3))
+    CALL(evt_mario_set_pos, LW(0), LW(1), LW(2))
+    WAIT_FRAMES(1)
+    IF_INT_EQUAL(LW(3), 1)
+        GOTO(0)
+    END_IF
+    CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
+    // They hit the ground with a thud and lie there.
+    CALL(evt_snd_sfxon_3d, STRING("SFX_VOICE_MARIO_LAND_DAMAGE2"), LW(0), LW(1), LW(2), 0)
+    CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
+    ADD(LW(1), 20)
+    ADD(LW(2), 5)
+    CALL(evt_snd_sfxon_3d, STRING("SFX_STG7_MARIO_MOON_FALL1"), LW(0), LW(1), LW(2), 0)
+    CALL(evt_eff, 0, STRING("kemuri_test"), 14, LW(0), LW(1), LW(2), FLOAT(1.0f), 0, 0, 0, 0, 0, 0, 0)
+    CALL(evt_cam_shake, CAMERA_3D, FLOAT(0.009765625f), FLOAT(0.0f), 300)
+    CALL(evt_mario_set_pose, STRING("M_N_H"))
+    WAIT_MS(2000)
+    BEGIN_INLINE_EVENT
+        LOOP(3)
+            CALL(evt_party_get_pos, 0, LW(0), LW(1), LW(2))
+            ADD(LW(0), 3)
+            CALL(evt_party_set_pos, 0, LW(0), LW(1), LW(2))
+            WAIT_FRAMES(6)
+            CALL(evt_party_get_pos, 0, LW(0), LW(1), LW(2))
+            SUBTRACT(LW(0), 3)
+            CALL(evt_party_set_pos, 0, LW(0), LW(1), LW(2))
+            WAIT_FRAMES(8)
+        END_LOOP
+        CALL(evt_party_cont_onoff, 0, 1)
+        CALL(evt_party_get_pos, 0, LW(0), LW(1), LW(2))
+        CALL(party_reset)
+        CALL(evt_party_jump_pos, 0, LW(0), 0, LW(2), 500, 0, -1000)
+#if VERSION >= VERSION_JP
+        DEBUG_PUT_MSG(STRING("ビビアンしっぽ有効"))
+        CALL(L_evt_party_vivian_tail, 0, 1)
+#endif
+    END_INLINE_EVENT
+    WAIT_MS(500)
+    LOOP(3)
+        CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
+        ADD(LW(0), 3)
+        CALL(evt_mario_set_pos, LW(0), LW(1), LW(2))
+        WAIT_FRAMES(6)
+        CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
+        SUBTRACT(LW(0), 3)
+        CALL(evt_mario_set_pos, LW(0), LW(1), LW(2))
+        WAIT_FRAMES(8)
+    END_LOOP
+    CALL(evt_mario_cont_onoff, 1)
+    CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
+    CALL(mario_reset)
+    // Mario gets up; the partner speaks (stg7_moo_03, stg7_moo_04) and Mario nods.
+    CALL(evt_snd_sfxon_3d, STRING("SFX_VOICE_MARIO_FLD_JUMP5"), LW(0), LW(1), LW(2), 0)
+    CALL(evt_mario_jump_pos, LW(0), 0, LW(2), 500, 0, -1000)
+    CALL(evt_mario_adjust_dir)
+    CALL(evt_mario_set_pose, STRING("M_S_1"))
+    CALL(evt_cam3d_evt_set, -145, 40, 105, -145, 40, -170, 1000, 11)
+    WAIT_MS(1000)
+    CALL(evt_party_set_dir, 0, 90, 300)
+    CALL(evt_mario_set_dir, 270, 300, 0)
+    CALL(evt_msg_print_party, STRING("stg7_moo_03"))
+    WAIT_MS(300)
+    BEGIN_INLINE_EVENT
+        CALL(evt_mario_set_pose, STRING("M_W_4B"))
+        CALL(evt_mario_set_dir, 90, 300, 0)
+        WAIT_MS(500)
+        CALL(evt_mario_set_dir, 270, 300, 0)
+        WAIT_MS(500)
+        CALL(evt_mario_set_dir, 90, 300, 0)
+        WAIT_MS(500)
+        CALL(evt_mario_set_dir, 270, 300, 0)
+        WAIT_MS(500)
+        CALL(evt_mario_set_pose, STRING("M_S_1"))
+    END_INLINE_EVENT
+    WAIT_MS(500)
+    CALL(evt_party_set_dir, 0, 90, 300)
+    WAIT_MS(500)
+    CALL(evt_party_set_dir, 0, 270, 300)
+    WAIT_MS(500)
+    CALL(evt_party_set_dir, 0, 90, 300)
+    WAIT_MS(500)
+    CALL(evt_party_set_dir, 0, 90, 300)
+    CALL(evt_msg_print_party, STRING("stg7_moo_04"))
+    CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
+    CALL(evt_snd_sfxon_3d, STRING("SFX_VOICE_MARIO_NOD1_4"), LW(0), LW(1), LW(2), 0)
+    CALL(evt_mario_set_pose, STRING("M_N_2"))
+    WAIT_MS(500)
+    CALL(evt_mario_set_pose, STRING("M_S_1"))
+    CALL(evt_mario_dispflag_onoff, 0, 2)
+#if VERSION >= VERSION_JP
+    CALL(N_evt_bero_set_mario_bottomless_respawn_pos_to_current_mario_pos)
+#endif
+    // Control returns, the story advances and the Moon banner appears.
+    CALL(evt_mario_key_onoff, 1)
+    CALL(evt_party_run, 0)
+    CALL(evt_cam3d_evt_off, 500, 11)
+    SET_VALUE(GSW(GSW_STORY_PROGRESS), STORY_STG7_06_TO_THE_MOON)
+    CALL(evt_telop_entry, 14)
+    RETURN
+EVT_END()
+
+#if VERSION >= VERSION_US
+/**
+ * Rock-blasting script (US and later versions; the JP version has a static copy below).
+ * Bobbery's explosion breaks a rock: a sound plays,
+ * the rock is captured into an offscreen image and played as the paper-craft crumble animation OFF_d_bom_ver2
+ * (A_1), then the rock model and collision are removed.
+ * LW(10) is the map object and LW(11) the collision object of the rock;
+ * the moo_01 to moo_07 rocks use this one too.
+ */
+EVT_BEGIN(rock_main)
+#else
+/**
+ * Rock-blasting script (JP version): Bobbery's explosion breaks a rock into an offscreen crumble animation,
+ * then its model and collision are removed.
+ * LW(10) is the map object and LW(11) the collision object of the rock.
+ */
+static EVT_BEGIN(rock_main)
+#endif
+    BEGIN_INLINE_EVENT
+        WAIT_MS(200)
+        CALL(evt_mapobj_get_position, LW(10), LW(0), LW(1), LW(2))
+        CALL(evt_snd_sfxon_3d, STRING("SFX_OFF_WALL_BREAK1"), LW(0), LW(1), LW(2), 0)
+    END_INLINE_EVENT
+    CALL(evt_offscreen_entry, STRING("offscreen"))
+    CALL(evt_mapobj_set_offscreen, 0, LW(10), STRING("offscreen"))
+#if VERSION >= VERSION_US
+    CALL(evt_offscreen_get_boundingbox2, STRING("offscreen"), LW(0), LW(1), LW(2), LW(3))
+    IF_INT_GREATER(LW(2), 0)
+        IF_INT_GREATER(LW(3), 0)
+#else
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_SINGLE, 1, LW(10), MAPOBJ_FLAG_HIDE)
+#endif
+    CALL(evt_img_entry, STRING("img"))
+    CALL(evt_img_set_paper, STRING("img"), STRING("OFF_d_bom_ver2"))
+#if VERSION >= VERSION_US
+            CALL(evt_img_alloc_capture, STRING("img"), 0, STRING("offscreen"), 1, 0, 0, 0, 0)
+#else
+    CALL(evt_img_alloc_capture, STRING("img"), 0, STRING("offscreen"), 0, 0, 0, 0, 0)
+#endif
+    CALL(evt_img_clear_virtual_point, STRING("img"))
+    CALL(evt_img_set_shadow, STRING("img"), 2)
+    CALL(evt_img_set_paper_anim, STRING("img"), STRING("A_1"))
+#if VERSION >= VERSION_US
+            CALL(evt_mapobj_flag_onoff, MAPOBJ_SINGLE, 1, LW(10), MAPOBJ_FLAG_HIDE)
+            CALL(evt_hitobj_onoff, LW(11), 1, 0)
+#endif
+    CALL(evt_img_wait_animend, STRING("img"))
+    CALL(evt_img_release, STRING("img"))
+#if VERSION >= VERSION_US
+        END_IF
+    END_IF
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_SINGLE, 1, LW(10), MAPOBJ_FLAG_HIDE)
+    CALL(evt_hitobj_onoff, LW(11), 1, 0)
+#endif
+    CALL(evt_offscreen_delete, STRING("offscreen"))
+    CALL(evt_mapobj_clear_offscreen, 0, LW(10))
+#if VERSION <= VERSION_JP
+    CALL(evt_hitobj_onoff, LW(11), 1, 0)
+#endif
+    RETURN
+EVT_END()
+
+/** Event script: Bobbery blows up the first rock (S_iwa_01) of moo_00; sets GSWF_MOO00_ROCK_A_BOMBED. */
+static EVT_BEGIN(rock_evt0)
+#if VERSION >= VERSION_US
+    SET_VALUE(GSWF(GSWF_MOO00_ROCK_A_BOMBED), 1)
+#else
+    CALL(evt_mario_key_onoff, 0)
+#endif
+    SET_VALUE(LW(10), STRING("S_iwa_01"))
+    SET_VALUE(LW(11), STRING("A_iwa_01"))
+    CALL_CHILD(rock_main)
+#if VERSION <= VERSION_JP
+    SET_VALUE(GSWF(GSWF_MOO00_ROCK_A_BOMBED), 1)
+    CALL(evt_mario_key_onoff, 1)
+#endif
+    CALL(evt_exit_case_evt)
+    RETURN
+EVT_END()
+
+/** Event script: Bobbery blows up the second rock (S_iwa_08) of moo_00; sets GSWF_MOO00_ROCK_B_BOMBED. */
+static EVT_BEGIN(rock_evt1)
+#if VERSION >= VERSION_US
+    SET_VALUE(GSWF(GSWF_MOO00_ROCK_B_BOMBED), 1)
+#else
+    CALL(evt_mario_key_onoff, 0)
+#endif
+    SET_VALUE(LW(10), STRING("S_iwa_08"))
+    SET_VALUE(LW(11), STRING("A_iwa_08"))
+    CALL_CHILD(rock_main)
+#if VERSION <= VERSION_JP
+    SET_VALUE(GSWF(GSWF_MOO00_ROCK_B_BOMBED), 1)
+    CALL(evt_mario_key_onoff, 1)
+#endif
+    CALL(evt_exit_case_evt)
+    RETURN
+EVT_END()
+
+/**
+ * Map init script for moo_00, the Moon landing site:
+ * places Mario at the entrance (or runs the entry bero), plays the Moon music (BGM_STG7_MON1) and ambience,
+ * animates the stars, puts a save block at (245, 49, -205),
+ * plays the crash landing cutscene before the Moon story starts,
+ * sets up the two Bobbery rocks (or removes them once they have been blown up)
+ * and places a Stopwatch at (-250, 0, -445).
+ */
+EVT_BEGIN(moo_00_init_evt)
+    SWITCH(GSW(GSW_STORY_PROGRESS))
+        CASE_LESS(STORY_STG7_06_TO_THE_MOON)
+        SET_VALUE(LW(0), PTR(bero_entry_data))
+        CALL(evt_bero_get_info)
+        CALL_CHILD(bero_case_entry)
+        CASE_DEFAULT
+        SET_VALUE(LW(0), PTR(bero_entry_data))
+        CALL(evt_bero_get_info)
+        CALL_CHILD(evt_bero_info_run)
+    END_SWITCH
+    CALL(evt_snd_bgmon, PSND_FADE_OUT, STRING("BGM_STG7_MON1"))
+    CALL(evt_snd_envon, PSND_FADE_RESTART | PSND_FADE_IN, STRING("ENV_STG7_MOO1"))
+    CALL(evt_map_playanim, STRING("hosi_01"), 1, 0)
+    CALL(evt_map_playanim, STRING("hosi_02"), 1, 0)
+    CALL(evt_map_playanim, STRING("hosi_03"), 1, 0)
+    CALL(evt_mobj_save_blk, STRING("mobj_save"), 245, 49, -205, 0, 0)
+    SWITCH(GSW(GSW_STORY_PROGRESS))
+        CASE_LESS(STORY_STG7_06_TO_THE_MOON)
+        CALL(evt_cam3d_evt_set, -150, 55, 330, -145, 55, -170, 0, 11)
+        SPAWN_EVENT(evt_first)
+        WAIT_FRAMES(1)
+    END_SWITCH
+    CALL(evt_paper_entry, STRING("OFF_d_bom_ver2"))
+    IF_INT_EQUAL(GSWF(GSWF_MOO00_ROCK_A_BOMBED), 0)
+        CALL(evt_run_case_evt, CASE_COND_BOBBERY, 1, STRING("A_iwa_01"), 0, PTR(rock_evt0), 0)
+    ELSE
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("S_iwa_01"), MAPOBJ_FLAG_HIDE)
+        CALL(evt_hitobj_onoff, STRING("A_iwa_01"), 1, 0)
+    END_IF
+    IF_INT_EQUAL(GSWF(GSWF_MOO00_ROCK_B_BOMBED), 0)
+        CALL(evt_run_case_evt, CASE_COND_BOBBERY, 1, STRING("A_iwa_08"), 0, PTR(rock_evt1), 0)
+    ELSE
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("S_iwa_08"), MAPOBJ_FLAG_HIDE)
+        CALL(evt_hitobj_onoff, STRING("A_iwa_08"), 1, 0)
+    END_IF
+    CALL(evt_item_entry, STRING("item_01"), ITEM_STOPWATCH, -250, 0, -445, ITEM_ENTRY_FIXED, GSWF(GSWF_MOO00_STOPWATCH), 0)
+    RETURN
+EVT_END()
+
+/**
+ * Script helper: resets the partner's scale, rotation offset and rotation to their normal values
+ * after the tumbling in the crash scene.
+ */
+static USER_FUNC(party_reset) {
+    PartyEntry* party = partyGetPtr(0);
+
+    party->scale.x = party->scale.y = party->scale.z = 1.0f;
+    party->rotOfsY = 0.0f;
+    party->rotation = 0.0f;
+    return EVT_RETURN_DONE;
+}
+
+/**
+ * Script helper: resets Mario's scale, rotation offset and Z rotation to their normal values
+ * after the tumbling in the crash scene.
+ */
+static USER_FUNC(mario_reset) {
+    MarioWork* mario = marioGetPtr();
+
+    mario->scale.x = mario->scale.y = mario->scale.z = 1.0f;
+    mario->rotOfs.y = 0.0f;
+    mario->rot.z = 0.0f;
+    return EVT_RETURN_DONE;
+}
+
+/**
+ * Script helper: makes the partner tumble head over heels.
+ * args[0] is the angle in degrees; the partner is rotated about its centre to that angle.
+ */
+static USER_FUNC(party_kirimomi) {
+    f32 angle = evtGetFloat(event, event->args[0]);
+    PartyEntry* party = partyGetPtr(0);
+
+    party->scale.x = party->scale.y = party->scale.z = 1.0f;
+    party->rotOfsY = party->height / 2 * party->scale.y;
+    party->rotation = angle;
+    party->rotation = fmod(party->rotation, 360.0);
+    return EVT_RETURN_DONE;
+}
+
+/**
+ * Script helper: makes Mario tumble head over heels.
+ * args[0] is the angle in degrees; Mario is rotated about his centre to that angle.
+ */
+static USER_FUNC(mario_kirimomi) {
+    f32 angle = evtGetFloat(event, event->args[0]);
+    MarioWork* mario = marioGetPtr();
+
+    mario->scale.x = mario->scale.y = mario->scale.z = 1.0f;
+    mario->rotOfs.y = mario->wPlayerCollisionBox.y / 2 * mario->scale.y;
+    mario->rot.z = angle;
+    mario->rot.z = fmod(mario->rot.z, 360.0);
+    return EVT_RETURN_DONE;
+}

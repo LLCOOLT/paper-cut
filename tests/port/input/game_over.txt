@@ -1,0 +1,36 @@
+# A real Game Over (TTYD_MAP=hei_01): Mario at 1 HP, a battle, then rounds of
+# Mario and Goombella attacking until the enemies land a hit on Mario.
+hp 1
+wait 30
+battle
+wait 300
+press a          # round 1: Mario Jump
+wait 30
+press a          # target
+wait 300
+press a          # Goombella: first ability
+wait 30
+press a          # target
+wait 500         # the enemies' turn
+shot over_1
+press a
+wait 30
+press a          # round 2
+wait 300
+press a
+wait 30
+press a
+wait 500
+shot over_2
+press a
+wait 30
+press a          # round 3
+wait 300
+press a
+wait 30
+press a
+wait 500
+shot over_3
+wait 600
+shot over_4
+end

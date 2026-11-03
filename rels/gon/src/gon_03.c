@@ -1,0 +1,1172 @@
+// gon_03 (ゴンババ, Hooktail Castle): hall between gon_02 and gon_04 with a bone-enemy leader fight and the Richard NPC (story 38, 39, 46).
+// Castle Key (0x0C) item and a spinning floor.
+#include "battle/battle_unit.h"
+#include "evt/evt_cmd.h"
+
+#include "party.h"
+#include "manager/evtmgr_cmd.h"
+#include "driver/npcdrv.h"
+#include "mario/mario.h"
+#include "mario/mariost.h"
+#include "string.h"
+#include "memory.h"
+#include "dolphin/mtx.h"
+#include "pmario_sound.h"
+#include "driver/dispdrv.h"
+#include "driver/camdrv.h"
+#include "evt/evt_bero.h"
+#include "evt/evt_npc.h"
+#include "data_tables.h"
+#include "driver/extdrv.h"
+#include "map/senkaron.h"
+#include "evt/evt_bg.h"
+#include "evt/evt_cam.h"
+#include "evt/evt_eff.h"
+#include "evt/evt_ext.h"
+#include "evt/evt_fade.h"
+#include "evt/evt_item.h"
+#include "evt/evt_map.h"
+#include "evt/evt_mario.h"
+#include "evt/evt_mobj.h"
+#include "evt/evt_msg.h"
+#include "evt/evt_party.h"
+#include "evt/evt_snd.h"
+#include "gon.h"
+#include "version.h"
+#include "evt/evt_story.h"
+#include "evt/evt_sub.h"
+#include "libc_decls.h"
+#include "mario/mario_sbr.h"
+
+Senkaron* senkaron;
+s32 senkaronAttackStartFlag;
+s32 senkaronEscapeFlag;
+s32 senkaronMesPushingFlag;
+s32 marioPushedFlag;
+s32 marioHammerFrame;
+static f32 randf(f32 min, f32 max);
+#ifndef TARGET_PC /* PC port: the host libc declares these */
+#endif
+static void senkaron_ext_disp(CameraId camera, void* param);
+static void senkaron_ext_shadow_disp(CameraId camera, void* param);
+
+static USER_FUNC(senkaronAttackStart);
+static USER_FUNC(senkaronFlagOffMesPushing);
+static USER_FUNC(senkaronFlagOnMesPushing);
+static USER_FUNC(senkaronGetMarioPushedFlag);
+static USER_FUNC(senkaronToEscape);
+#if VERSION >= VERSION_JP
+// Declaration of leader_touch_check (see the definition below).
+USER_FUNC(leader_touch_check);
+#endif
+static void nokotaro_callback(s32 type);
+static void senkaron_ext_init(void);
+static void senkaron_ext_main(void);
+static void senkaron_ext_dispent(void);
+
+static NpcSetupInfo npcEnt[4];
+static BeroEntry bero_entry_data[3];
+const char* nokotaro_pose[2];
+extern EvtWord tegami_event[];
+extern EvtWord richard_init_event[];
+extern EvtWord richard_regl_event[];
+extern EvtWord richard_talk_event[];
+extern EvtWord leaderkaron_init_event[];
+extern EvtWord leaderkaron_talk_event[];
+static ExtTexInfo senkaron_ext_entry_data[26];
+extern EvtWord senkarondummy_init_event[];
+extern EvtWord senkarondummy_regl_event[];
+extern EvtWord senkarondummy_talk_event[];
+extern EvtWord senkaron_entry_event[];
+extern EvtWord senkaron_escape_event[];
+
+/** NPC setup of gon_03: the Dry Bones dummy, Richard and the leader of the bone enemies. */
+static NpcSetupInfo npcEnt[] = {
+    {
+        "カロン1", // name
+        0, 0, // flags..reactionFlags
+        senkarondummy_init_event, // initEvent
+        senkarondummy_regl_event, // regularEvent
+        senkarondummy_talk_event, // talkEvent
+        NULL, NULL, NULL, NULL, NULL, 0, // deadEvent..territoryType
+        {0}, // territoryBase
+        {0}, // territoryLoiter
+        0.0f, 0.0f, 0.0f, 0.0f, 0, // searchRange..battleInfoId
+    },
+    {
+        "リチャード", // name
+        0, 0, // flags..reactionFlags
+        richard_init_event, // initEvent
+        richard_regl_event, // regularEvent
+        richard_talk_event, // talkEvent
+        NULL, NULL, NULL, NULL, NULL, 0, // deadEvent..territoryType
+        {0}, // territoryBase
+        {0}, // territoryLoiter
+        0.0f, 0.0f, 0.0f, 0.0f, 0, // searchRange..battleInfoId
+    },
+    {
+        "リーダー", // name
+        0, 0, // flags..reactionFlags
+        leaderkaron_init_event, // initEvent
+        NULL, // regularEvent
+        leaderkaron_talk_event, // talkEvent
+        NULL, NULL, NULL, NULL, NULL, 0, // deadEvent..territoryType
+        {0}, // territoryBase
+        {0}, // territoryLoiter
+        0.0f, 0.0f, 0.0f, 0.0f, 0, // searchRange..battleInfoId
+    },
+    {0},
+};
+
+/**
+ * Door animation callback, closing for the w_bero exit to gon_02:
+ * rotates map object "door01" about Y by 0.444 times the value in LW(0).
+ */
+static EVT_BEGIN(door01_close)
+    MULTIPLY_FLOAT(LW(0), FLOAT(0.44433594f))
+    CALL(evt_mapobj_rotate, 1, STRING("door01"), 0, LW(0), 0)
+    RETURN
+EVT_END()
+
+#ifndef TARGET_PC /* PC port: the host libc declares these */
+int rand(void);
+
+/**
+ * Door animation callback, opening for the w_bero exit to gon_02:
+ * rotates map object "door01" about Y by -0.444 times the value in LW(0).
+ */
+#endif
+static EVT_BEGIN(door01_open)
+    MULTIPLY_FLOAT(LW(0), FLOAT(-0.44433594f))
+    CALL(evt_mapobj_rotate, 1, STRING("door01"), 0, LW(0), 0)
+    RETURN
+EVT_END()
+
+/**
+ * Door animation callback, closing for the e_bero exit to gon_04:
+ * rotates map object "door02" about Y by -0.444 times the value in LW(0).
+ */
+static EVT_BEGIN(door02_close)
+    MULTIPLY_FLOAT(LW(0), FLOAT(-0.44433594f))
+    CALL(evt_mapobj_rotate, 1, STRING("door02"), 0, LW(0), 0)
+    RETURN
+EVT_END()
+
+/**
+ * Door animation callback, opening for the e_bero exit to gon_04:
+ * rotates map object "door02" about Y by 0.444 times the value in LW(0).
+ */
+static EVT_BEGIN(door02_open)
+    MULTIPLY_FLOAT(LW(0), FLOAT(0.44433594f))
+    CALL(evt_mapobj_rotate, 1, STRING("door02"), 0, LW(0), 0)
+    RETURN
+EVT_END()
+
+/** Exits (beros) of this room: w_bero to gon_02 and e_bero to gon_04. */
+static BeroEntry bero_entry_data[] = {
+    {
+        "w_bero", // hitName
+        1, // type
+        12, // sfxId
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
+        0, 0, // centerPositionY..centerPositionZ
+        -1, // length
+        NULL, // enterEvent
+        -1, // caseType
+        NULL, // exitEvent
+        "gon_02", // nextMapName
+        "e_bero", // nextBeroName
+        5, // enterAnimeType
+        5, // exitAnimeType
+        door01_close, // enterAnimeArg
+        door01_open, // exitAnimeArg
+    },
+    {
+        "e_bero", // hitName
+        1, // type
+        12, // sfxId
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
+        0, 0, // centerPositionY..centerPositionZ
+        -1, // length
+        NULL, // enterEvent
+        -1, // caseType
+        NULL, // exitEvent
+        "gon_04", // nextMapName
+        "w_bero_1", // nextBeroName
+        5, // enterAnimeType
+        5, // exitAnimeType
+        door02_close, // enterAnimeArg
+        door02_open, // exitAnimeArg
+    },
+    {0},
+};
+
+/** Poses Koops (Nokotaro, the partner) switches between during the hall scene. */
+const char* nokotaro_pose[] = {
+    "PNK_L_1",
+    "PNK_L_2",
+};
+
+/**
+ * Cutscene run when Mario walks into the hall for the first time (before STORY_STG1_10_FATHERS_LETTER):
+ * the partner is switched to Koops, who takes a skeleton for his father and finds a letter in its hand,
+ * reads it out (stg1_gon_02 to stg1_gon_08: Hooktail cannot stand crickets, an item tied to that weakness is
+ * hidden in the castle, and it will try tricks when beaten), then realizes it is not his father after all
+ * (stg1_gon_09), and the story advances to STORY_STG1_10_FATHERS_LETTER.
+ */
+EVT_BEGIN(tegami_event)
+    // Wait until Mario walks far enough into the hall.
+    LOOP(0)
+        WAIT_FRAMES(1)
+        CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
+        IF_INT_GREATER_OR_EQUAL(LW(0), -130)
+            BREAK_LOOP
+        END_IF
+    END_LOOP
+    // Story set to the father's letter step; Koops joins as the partner if someone else was with Mario.
+    SET_VALUE(GSW(GSW_STORY_PROGRESS), STORY_STG1_10_FATHERS_LETTER)
+    CALL(evt_mario_key_onoff, 0)
+    CALL(evt_mario_get_party, LW(0))
+    IF_INT_NOT_EQUAL(LW(0), 2)
+        CALL(evt_mario_goodbye_party, 0)
+        CALL(evt_mario_hello_party, 0, 2)
+    END_IF
+    // The music dips and Koops is startled by a skeleton, crying out.
+    CALL(evt_snd_bgmoff, PSND_FADE_DIP_TO(50))
+    CALL(evt_party_stop, 0)
+    CALL(evt_eff_fukidashi, 3, STRING("fukidashi"), 0, 0, 0, 0, 0, 0, 0, 0, 0)
+    WAIT_MS(1300)
+    CALL(evt_msg_print, 0, STRING("stg1_gon_02"), 0, STRING("party"))
+    // Koops walks over to the skeleton while Mario follows and the camera moves in.
+    LOOP(0)
+        WAIT_FRAMES(1)
+        CALL(evt_party_get_pos, 0, LW(0), LW(1), LW(2))
+        IF_INT_LESS_OR_EQUAL(LW(1), 0)
+            BREAK_LOOP
+        END_IF
+    END_LOOP
+    CALL(evt_cam3d_evt_set, -30, 75, 150, -30, 25, -250, 3000, 11)
+    CALL(evt_party_set_dir, 0, 270, -1)
+    CALL(evt_party_move_pos, 0, -40, -110, 1500)
+    BEGIN_SIBLING_EVENT
+        CALL(evt_mario_mov_pos2, -80, -112, FLOAT(120.0f))
+        CALL(evt_mario_wait_move_end)
+        CALL(evt_mario_mov_pos2, -75, -100, FLOAT(300.0f))
+        CALL(evt_mario_wait_move_end)
+        CALL(evt_mario_set_dir, 90, 0, 0)
+        CALL(evt_mario_set_pose, STRING("M_S_1"))
+    END_SIBLING_EVENT
+    // Koops says it reminds him of his father and breaks down.
+    WAIT_MS(1500)
+    CALL(evt_msg_print, 0, STRING("stg1_gon_03"), 0, STRING("party"))
+    CALL(evt_party_set_pose, 0, STRING("PNK_T_2"))
+    CALL(evt_msg_npc, STRING("(^x^)party"))
+    CALL(evt_msg_continue)
+    WAIT_MS(1000)
+    // Koops notices a letter in the skeleton's hand and asks whether to read it.
+    CALL(evt_eff_fukidashi, 3, STRING("fukidashi"), 0, 0, 0, 0, 0, 0, 0, 0, 0)
+    CALL(evt_party_set_pose, 0, STRING("PNK_S_1"))
+    WAIT_MS(1300)
+    CALL(evt_msg_print, 0, STRING("stg1_gon_04"), 0, STRING("party"))
+    CALL(evt_party_set_dir, 0, 270, 200)
+    WAIT_MS(500)
+    CALL(evt_msg_print, 0, STRING("stg1_gon_04_1"), 0, STRING("party"))
+    CALL(evt_msg_select, 0, STRING("stg1_gon_05_yesno"))
+    CALL(evt_msg_continue)
+    // Mario says yes: Koops reads the letter aloud (the Hooktail warning), thinks it over and realizes it is
+    // not his father after all.
+    IF_INT_EQUAL(LW(0), 0)
+        SET_VALUE(GSWF(GSWF_GON03_KOOPS_READ_LETTER), 1)
+        CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
+        CALL(evt_snd_sfxon_3d, STRING("SFX_VOICE_MARIO_NOD1_5"), LW(0), LW(1), LW(2), 0)
+        CALL(evt_mario_set_pose, STRING("M_N_2"))
+        WAIT_MS(1000)
+        CALL(evt_mario_set_pose, STRING("M_S_1"))
+        CALL(evt_msg_print, 0, STRING("stg1_gon_07"), 0, STRING("party"))
+        CALL(evt_party_set_dir, 0, 90, 200)
+        WAIT_MS(500)
+        CALL(evt_msg_print, 0, STRING("stg1_gon_08"), PTR(nokotaro_callback), STRING("(^x^)party"))
+        WAIT_MS(1000)
+        CALL(evt_party_set_dir, 0, 270, 200)
+        CALL(evt_party_set_pose, 0, STRING("PNK_T_3"))
+        CALL(evt_msg_print, 0, STRING("stg1_gon_09"), 0, STRING("(^x^)party"))
+        CALL(evt_party_set_pose, 0, STRING("PNK_S_1"))
+        CALL(evt_party_set_dir, 0, 90, 200)
+        WAIT_MS(500)
+        CALL(evt_msg_print, 0, STRING("stg1_gon_09_00_01"), 0, STRING("party"))
+        // Mario says no: Koops agrees it is wrong to read someone else's letter and they leave it.
+    ELSE
+        CALL(evt_mario_set_pose, STRING("M_N_B"))
+        WAIT_MS(1000)
+        CALL(evt_mario_set_pose, STRING("M_S_1"))
+        CALL(evt_msg_print, 0, STRING("stg1_gon_06"), 0, STRING("party"))
+    END_IF
+    // The music returns and control goes back to the player.
+    CALL(evt_snd_bgmon, PSND_FADE_RESUME | PSND_FADE_UNDIP, 0)
+    CALL(evt_cam3d_evt_off, 1000, 11)
+    WAIT_MS(1000)
+    CALL(evt_party_cont_onoff, 0, 1)
+    CALL(evt_party_run, 0)
+    CALL(evt_mario_key_onoff, 1)
+    RETURN
+EVT_END()
+
+/**
+ * Cutscene of the Dry Bones swarm in the hall (runs from leaderkaron_talk_event while the story is at
+ * STORY_STG1_11_1000_DRY_BONES or earlier): Mario freezes,
+ * the leader collapses and rebuilds himself (KRN_D_3/D_4), the danger BGM starts,
+ * and the swarm of 1000 Dry Bones (senkaron, 千カロン = "thousand Dry Bones", the ext objects registered by
+ * senkaron_entry_event) pushes Mario back.
+ * Depending on the GSWF_GON03_PUSHED_OUT flags Mario is shoved out to gon_01 (e_bero) the first two times;
+ * after that the leader fights him (evt_npc_battle_start),
+ * then escapes (SFX_STG1_HONE_ESCAPE1) and the west and east doors are unlocked.
+ */
+static EVT_BEGIN(senkaron_event)
+    // Only before the Dry Bones leader fight has happened: the swarm is set up and the music stops.
+    IF_INT_LESS_OR_EQUAL(GSW(GSW_STORY_PROGRESS), STORY_STG1_11_1000_DRY_BONES)
+        CALL(senkaronFlagOffMesPushing)
+        SET_VALUE(GW(14), 0)
+        SET_VALUE(GW(15), 1)
+        CALL(evt_npc_change_interrupt, STRING("リチャード"), 6, 0)
+        CALL_CHILD(senkaron_entry_event)
+        CALL(evt_snd_bgmoff, PSND_FADE_OUT)
+        CALL(evt_snd_envoff, PSND_FADE_OUT)
+        // Mario freezes while the Dry Bones leader collapses and rebuilds himself, then threatens the
+        // intruders.
+        CALL(evt_mario_key_onoff, 0)
+        CALL(evt_mario_dispflag_onoff, 1, 2)
+        CALL(evt_mario_set_pose, STRING("M_S_1"))
+        CALL(evt_eff_fukidashi, 0, STRING("fukidashi"), 0, 0, 0, 0, 0, 0, 0, 0, 0)
+        CALL(evt_npc_set_anim, STRING("リーダー"), STRING("KRN_D_3"))
+        WAIT_MS(1000)
+        CALL(evt_cam3d_evt_set, 350, 80, 310, 350, 30, -90, 300, 0)
+        WAIT_MS(300)
+        CALL(evt_msg_print, 0, STRING("stg1_gon_10"), 0, 0)
+        WAIT_MS(300)
+        // The danger music starts as the leader gets up and the camera shakes.
+        BEGIN_INLINE_EVENT
+            CALL(evt_snd_bgmon, PSND_FADE_OUT, STRING("BGM_EVT_DANGER4"))
+        END_INLINE_EVENT
+        BEGIN_SIBLING_EVENT
+            CALL(evt_mario_set_pose, STRING("M_N_5B"))
+            WAIT_MS(500)
+            CALL(evt_mario_set_pose, STRING("M_I_Y"))
+        END_SIBLING_EVENT
+        SET_VALUE(LW(0), 0)
+        CALL(evt_npc_set_anim, STRING("リーダー"), STRING("KRN_D_4"))
+        LOOP(0)
+            SET_FLOAT_VALUE(LW(10), FLOAT(0.0f))
+            SET_FLOAT_VALUE(LW(11), FLOAT(10.0f))
+            SET_FLOAT_VALUE(LW(12), FLOAT(-1.0f))
+            LOOP(0)
+                WAIT_FRAMES(1)
+                CALL(evt_npc_get_position, STRING("リーダー"), LW(13), LW(10), LW(14))
+                ADD_FLOAT(LW(10), LW(11))
+                ADD_FLOAT(LW(11), LW(12))
+                IF_INT_LESS_OR_EQUAL(LW(10), FLOAT(0.0f))
+                    SET_FLOAT_VALUE(LW(10), FLOAT(0.0f))
+                    CALL(evt_npc_set_position, STRING("リーダー"), LW(13), LW(10), LW(14))
+                    BREAK_LOOP
+                END_IF
+                CALL(evt_npc_set_position, STRING("リーダー"), LW(13), LW(10), LW(14))
+            END_LOOP
+            ADD(LW(0), 1)
+            IF_INT_GREATER_OR_EQUAL(LW(0), 1)
+                BREAK_LOOP
+            END_IF
+        END_LOOP
+        // The thousand Dry Bones rush in and sweep Mario along the floor, spinning him.
+        CALL(evt_npc_set_anim, STRING("リーダー"), STRING("KRN_R_1"))
+        CALL(evt_cam3d_evt_off, 300, 0)
+        WAIT_MS(700)
+        CALL(evt_snd_sfxon, STRING("SFX_STG1_HONE_DOWN1_2"), 0)
+        CALL(senkaronAttackStart)
+        BEGIN_INLINE_EVENT
+            WAIT_MS(400)
+            CALL(evt_cam_shake, 4, FLOAT(0.0f), FLOAT(0.001953125f), 1500)
+        END_INLINE_EVENT
+        SET_FLOAT_VALUE(LW(3), FLOAT(-1.0996094f))
+        SET_FLOAT_VALUE(LW(4), FLOAT(0.009765625f))
+        SET_VALUE(LW(5), 90)
+        WAIT_MS(1300)
+        CALL(evt_snd_sfxon_3d, STRING("SFX_STG1_HONE__MOVE1"), 0, 0, 0, GW(13))
+        CALL(evt_mario_set_pose, STRING("M_I_O"))
+        WAIT_FRAMES(1)
+        CALL(evt_mario_cont_onoff, 0)
+        CALL(evt_mario_dispflag_onoff, 1, MARIO_DISP_FLAG_DIR_LOCK)
+        LOOP(0)
+            WAIT_FRAMES(1)
+            CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
+            IF_INT_LESS_OR_EQUAL(LW(0), 100)
+                BREAK_LOOP
+            END_IF
+            ADD_FLOAT(LW(0), LW(3))
+            ADD_FLOAT(LW(3), LW(4))
+            IF_INT_GREATER_OR_EQUAL(LW(3), FLOAT(-0.009765625f))
+                SET_FLOAT_VALUE(LW(3), FLOAT(-0.009765625f))
+            END_IF
+            CALL(evt_mario_set_pos, LW(0), LW(1), LW(2))
+            ADD(LW(5), 10)
+            IF_INT_GREATER_OR_EQUAL(LW(5), 360)
+                SUBTRACT(LW(5), 360)
+            END_IF
+            CALL(evt_mario_set_dispdir, LW(5))
+        END_LOOP
+        // Mario recovers; once only, the partner complains about being pushed around.
+        CALL(evt_mario_dispflag_onoff, 0, MARIO_DISP_FLAG_DIR_LOCK)
+        CALL(evt_mario_cont_onoff, 1)
+        CALL(evt_cam_letter_box_disable, 1)
+        CALL(evt_mario_dispflag_onoff, 0, 2)
+        CALL(evt_mario_key_onoff, 1)
+        SET_VALUE(LW(0), STRING("w_bero"))
+        CALL_CHILD(bero_case_switch_off)
+        IF_INT_EQUAL(GSWF(GSWF_GON03_PUSHING_COMMENT), 0)
+            CALL(evt_mario_cont_onoff, 0)
+            CALL(senkaronFlagOnMesPushing)
+            CALL(evt_mario_get_party, LW(3))
+            SWITCH(LW(3))
+                CASE_EQUAL(1)
+                CALL(evt_msg_print, 0, STRING("stg1_gon_11"), 0, STRING("party"))
+                CASE_EQUAL(2)
+                CALL(evt_msg_print, 0, STRING("stg1_gon_12"), 0, STRING("party"))
+            END_SWITCH
+            SET_VALUE(GSWF(GSWF_GON03_PUSHING_COMMENT), 1)
+            CALL(senkaronFlagOffMesPushing)
+            CALL(evt_mario_cont_onoff, 1)
+        END_IF
+        // Mario can now move, but the bones keep shoving him back and spinning him.
+        CALL(evt_cam_letter_box_disable, 0)
+        BEGIN_SIBLING_EVENT
+            LOOP(0)
+                CALL(senkaronGetMarioPushedFlag, LW(6))
+                IF_INT_NOT_EQUAL(LW(6), 0)
+                    SET_VALUE(LW(7), 18)
+                END_IF
+                IF_INT_GREATER(LW(7), 0)
+                    CALL(evt_mario_get_motion, LW(8))
+                    IF_INT_EQUAL(LW(8), 0)
+                        CALL(evt_mario_get_pose, LW(9))
+                        IF_STR_NOT_EQUAL(LW(9), STRING("M_I_O"))
+                            CALL(evt_mario_set_pose, STRING("M_I_O"))
+                        END_IF
+                        CALL(evt_mario_get_dispdir, LW(5))
+                        ADD(LW(5), 10)
+                        IF_INT_GREATER_OR_EQUAL(LW(5), 360)
+                            SUBTRACT(LW(5), 360)
+                        END_IF
+                        CALL(evt_mario_set_dispdir, LW(5))
+                        SUBTRACT(LW(7), 1)
+                        IF_INT_EQUAL(LW(7), 0)
+                            CALL(evt_mario_set_pose, STRING("M_S_1"))
+                        END_IF
+                    ELSE
+                        SET_VALUE(LW(7), 0)
+                    END_IF
+                END_IF
+                WAIT_FRAMES(1)
+            END_LOOP
+        END_SIBLING_EVENT
+        // Loop until Mario reaches the leader (battle) or the west door: the door opens as he gets close, and
+        // reaching it shoves him back to gon_01.
+        LOOP(0)
+            WAIT_FRAMES(1)
+#if VERSION <= VERSION_DEMO_JP
+            CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
+            IF_INT_GREATER_OR_EQUAL(LW(0), 350)
+#else
+            CALL(leader_touch_check)
+            IF_INT_GREATER_OR_EQUAL(LW(0), 1)
+#endif
+                BREAK_LOOP
+            END_IF
+            CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
+            CALL(evt_sub_area_check, 0, -390, 0, 50, LW(0), LW(2), LW(10))
+            IF_INT_EQUAL(LW(10), 1)
+                IF_INT_EQUAL(GW(14), 0)
+                    SET_VALUE(GW(14), 1)
+                    CALL(evt_map_playanim, STRING("m_door01_b"), 0, 0)
+                END_IF
+            END_IF
+            // Mario reached the west door: he is flung out to gon_01 and the pushed-out counters are updated.
+            CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
+            CALL(evt_sub_area_check, 0, -390, 0, 20, LW(0), LW(2), LW(10))
+            IF_INT_EQUAL(LW(10), 1)
+                SET_VALUE(GW(15), 0)
+                CALL(evt_npc_change_interrupt, STRING("リチャード"), 6, PTR(richard_talk_event))
+                CALL(evt_mario_key_onoff, 0)
+                BEGIN_INLINE_EVENT
+                    LOOP(0)
+                        CALL(evt_mario_get_dispdir, LW(5))
+                        ADD(LW(5), 10)
+                        CALL(evt_mario_set_dispdir, LW(5))
+                        WAIT_FRAMES(1)
+                    END_LOOP
+                END_INLINE_EVENT
+                SET_VALUE(GSWF(GSWF_GON03_PUSHED_OUT), 1)
+                IF_INT_EQUAL(GSWF(GSWF_GON03_PUSHED_OUT_ONCE), 0)
+                    SET_VALUE(GSWF(GSWF_GON03_PUSHED_OUT_ONCE), 1)
+                ELSE
+                    SET_VALUE(GSWF(GSWF_GON03_PUSHED_OUT_TWICE), 1)
+                END_IF
+                CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
+                ADD(LW(1), 50)
+                CALL(evt_fade_set_spot_pos, LW(0), LW(1), LW(2))
+                CALL(evt_fade_set_mapchange_type, 0, FADE_OUT_SPOT, 500, FADE_IN_BLACK, 300)
+                CALL(evt_bero_mapchange, STRING("gon_01"), STRING("e_bero"))
+            END_IF
+        END_LOOP
+        // Mario touched the leader: the leader fight begins.
+        CALL(senkaronFlagOnMesPushing)
+        CALL(evt_npc_set_battle_info, STRING("リーダー"), 6)
+        CALL(evt_npc_battle_start, STRING("リーダー"))
+        CALL(evt_npc_wait_battle_end)
+        // After the fight the leader runs off, the story advances, and the hall's two doors unlock.
+        CALL(evt_snd_bgmon, PSND_FADE_OUT, STRING("BGM_STG1_GON1"))
+        CALL(evt_snd_envon, PSND_FADE_RESTART | PSND_FADE_IN, STRING("ENV_STG1_GON1"))
+        CALL(evt_snd_sfxoff, GW(13))
+        SET_VALUE(GW(15), 0)
+        CALL(evt_npc_change_interrupt, STRING("リチャード"), 6, PTR(richard_talk_event))
+        CALL(evt_npc_set_position, STRING("リーダー"), 0, -1000, 0)
+        CALL(evt_snd_sfxon, STRING("SFX_STG1_HONE_ESCAPE1"), 0)
+        SPAWN_EVENT(senkaron_escape_event)
+        SET_VALUE(GSW(GSW_STORY_PROGRESS), STORY_STG1_11_1000_DRY_BONES)
+        CALL(evt_map_playanim, STRING("m_door01_a"), 0, 0)
+        SET_VALUE(LW(0), STRING("w_bero"))
+        CALL_CHILD(bero_case_switch_on)
+        SET_VALUE(LW(0), STRING("e_bero"))
+        CALL_CHILD(bero_case_switch_on)
+    END_IF
+    RETURN
+EVT_END()
+
+/** Runs when Mario picks up the second Hooktail Castle key in this hall: sets the story to STORY_STG1_13_02_KEY_2. */
+static EVT_BEGIN(key_get)
+    SET_VALUE(GSW(GSW_STORY_PROGRESS), STORY_STG1_13_02_KEY_2)
+    RETURN
+EVT_END()
+
+/**
+ * Map init for gon_03 (Dry Bones hall): sets up the doors, music,
+ * the Dry Bones NPCs (the leader, Richard and the lying bones),
+ * the Koops' father letter scene and the Castle Key until it is picked up, and the spinning floor panel.
+ * Locks the east door until the swarm has been dealt with.
+ */
+EVT_BEGIN(gon_03_init_evt)
+    CALL(evt_bg_disp_onoff, 0)
+    SET_VALUE(LW(0), PTR(bero_entry_data))
+    CALL(evt_bero_get_info)
+    CALL_CHILD(evt_bero_info_run)
+    SET_VALUE(LW(0), STRING("e_bero"))
+    CALL_CHILD(bero_case_switch_off)
+    CALL(evt_snd_bgmon, PSND_FADE_OUT, STRING("BGM_STG1_GON1"))
+    CALL(evt_snd_envon, PSND_FADE_RESTART | PSND_FADE_IN, STRING("ENV_STG1_GON1"))
+    CALL(evt_snd_set_rev_mode, 2)
+    SET_VALUE(GW(15), 0)
+    IF_INT_GREATER_OR_EQUAL(GSW(GSW_STORY_PROGRESS), STORY_STG1_11_1000_DRY_BONES)
+        SET_VALUE(LW(0), STRING("e_bero"))
+        CALL_CHILD(bero_case_switch_on)
+    END_IF
+    CALL(evt_npc_setup, PTR(npcEnt))
+    CALL(evt_npc_change_fbat_mode, 1)
+    IF_INT_LESS(GSW(GSW_STORY_PROGRESS), STORY_STG1_10_FATHERS_LETTER)
+        SPAWN_EVENT(tegami_event)
+    END_IF
+    IF_INT_LESS(GSW(GSW_STORY_PROGRESS), STORY_STG1_13_02_KEY_2)
+        CALL(evt_item_entry, STRING("key00"), ITEM_CASTLE_KEY_0x0C, 200, 0, -200, ITEM_ENTRY_FIXED, -1, PTR(key_get))
+    END_IF
+    CALL(evt_npc_entry, STRING("\"カロン2\""), STRING("c_karon_g"))
+    CALL(evt_npc_set_position, STRING("\"カロン2\""), -150, 0, 130)
+    CALL(evt_npc_set_rotate, STRING("\"カロン2\""), 0, 0, 0)
+    CALL(evt_npc_set_anim, STRING("\"カロン2\""), STRING("KRN_Z_2"))
+    CALL(evt_npc_pera_onoff, STRING("\"カロン2\""), 0)
+    CALL(evt_npc_flag_onoff, 0, STRING("\"カロン2\""), NPC_FLAG_NO_AUTO_UPDATE)
+    CALL(evt_npc_flag_onoff, 1, STRING("\"カロン2\""), NPC_FLAG_NO_BILLBOARD)
+    CALL(evt_npc_set_width, STRING("\"カロン2\""), 30)
+    CALL(evt_npc_set_height, STRING("\"カロン2\""), 7)
+    CALL(evt_npc_entry, STRING("\"カロン3\""), STRING("c_karon_g"))
+    CALL(evt_npc_set_position, STRING("\"カロン3\""), 270, 0, -100)
+    CALL(evt_npc_set_rotate, STRING("\"カロン3\""), 0, 180, 0)
+    CALL(evt_npc_set_anim, STRING("\"カロン3\""), STRING("KRN_Z_2"))
+    CALL(evt_npc_pera_onoff, STRING("\"カロン3\""), 0)
+    CALL(evt_npc_flag_onoff, 0, STRING("\"カロン3\""), NPC_FLAG_NO_AUTO_UPDATE)
+    CALL(evt_npc_flag_onoff, 1, STRING("\"カロン3\""), NPC_FLAG_NO_BILLBOARD)
+    CALL(evt_npc_set_width, STRING("\"カロン3\""), 30)
+    CALL(evt_npc_set_height, STRING("\"カロン3\""), 7)
+    CALL(evt_npc_entry, STRING("\"カロン4\""), STRING("c_karon_g"))
+    CALL(evt_npc_set_position, STRING("\"カロン4\""), 290, 0, 80)
+    CALL(evt_npc_set_rotate, STRING("\"カロン4\""), 0, 0, 0)
+    CALL(evt_npc_set_anim, STRING("\"カロン4\""), STRING("KRN_Z_2"))
+    CALL(evt_npc_pera_onoff, STRING("\"カロン4\""), 0)
+    CALL(evt_npc_flag_onoff, 0, STRING("\"カロン4\""), NPC_FLAG_NO_AUTO_UPDATE)
+    CALL(evt_npc_flag_onoff, 1, STRING("\"カロン4\""), NPC_FLAG_NO_BILLBOARD)
+    CALL(evt_npc_set_width, STRING("\"カロン4\""), 30)
+    CALL(evt_npc_set_height, STRING("\"カロン4\""), 7)
+    CALL(evt_npc_entry, STRING("\"カロン5\""), STRING("c_karon_g"))
+    CALL(evt_npc_set_position, STRING("\"カロン5\""), -300, 0, -40)
+    CALL(evt_npc_set_rotate, STRING("\"カロン5\""), 0, 180, 0)
+    CALL(evt_npc_set_anim, STRING("\"カロン5\""), STRING("KRN_Z_2"))
+    CALL(evt_npc_pera_onoff, STRING("\"カロン5\""), 0)
+    CALL(evt_npc_flag_onoff, 0, STRING("\"カロン5\""), NPC_FLAG_NO_AUTO_UPDATE)
+    CALL(evt_npc_flag_onoff, 1, STRING("\"カロン5\""), NPC_FLAG_NO_BILLBOARD)
+    CALL(evt_npc_set_width, STRING("\"カロン5\""), 30)
+    CALL(evt_npc_set_height, STRING("\"カロン5\""), 7)
+    CALL(evt_map_playanim, STRING("hokori"), 1, 0)
+    CALL(evt_npc_set_balloontype, STRING("リーダー"), 0)
+    CALL(evt_npc_set_balloontype, STRING("リチャード"), 0)
+    CALL(evt_mobj_kururing_floor, STRING("kururin1"), -298, 0, -197, STRING("s_heya"), 125, GSWF(GSWF_GON03_STAR_PIECE_PANEL))
+    RETURN
+EVT_END()
+
+/**
+ * NPC init for Richard, a Dry Bones in the hall:
+ * places him at the middle of the room, plays his idle animation and stops him from turning toward Mario.
+ */
+EVT_BEGIN(richard_init_event)
+    CALL(evt_npc_set_position, STRING("リチャード"), 0, 0, -100)
+    CALL(evt_npc_set_width, STRING("リチャード"), FLOAT(30.0f))
+    CALL(evt_npc_set_anim, STRING("リチャード"), STRING("KRN_Z_2"))
+    CALL(evt_npc_flag_onoff, 1, STRING("リチャード"), NPC_FLAG_NO_BILLBOARD | NPC_FLAG_NO_TURN_TO_MARIO)
+    CALL(evt_npc_set_ry, STRING("リチャード"), 0)
+    CALL(evt_npc_pera_onoff, STRING("リチャード"), 0)
+    RETURN
+EVT_END()
+
+/** NPC regular event for Richard; does nothing. */
+EVT_BEGIN(richard_regl_event)
+    RETURN
+EVT_END()
+
+/**
+ * Talk event for Richard: when Mario talks to him he asks a yes/no question (stg1_gon_09_01_yn) and,
+ * on the yes answer, replies with stg1_gon_09_02. Does nothing while the swarm scene is running (GW(15) is 1).
+ */
+EVT_BEGIN(richard_talk_event)
+    IF_INT_EQUAL(GW(15), 1)
+        RETURN
+    END_IF
+    CALL(evt_mario_key_onoff, 0)
+    CALL(evt_msg_toge, 1, 0, 0, 0)
+    CALL(evt_msg_print, 0, STRING("stg1_gon_09_01"), 0, 0)
+    CALL(evt_msg_select, 0, STRING("stg1_gon_09_01_yn"))
+    CALL(evt_msg_continue)
+    IF_INT_EQUAL(LW(0), 0)
+        CALL(evt_mario_set_pose, STRING("M_L_2"))
+        CALL(evt_msg_toge, 1, 0, 0, 0)
+        CALL(evt_msg_print, 0, STRING("stg1_gon_09_02"), 0, 0)
+        CALL(evt_mario_set_pose, STRING("M_S_1"))
+    END_IF
+    CALL(evt_mario_key_onoff, 1)
+    RETURN
+EVT_END()
+
+/**
+ * NPC init for the Dry Bones leader (リーダー): places him at the east end of the room
+ * until the swarm scene has been done, afterwards he is moved off the map.
+ */
+EVT_BEGIN(leaderkaron_init_event)
+    CALL(evt_npc_flag_onoff, 0, STRING("me"), NPC_FLAG_TALK_ANIM)
+    IF_INT_LESS(GSW(GSW_STORY_PROGRESS), STORY_STG1_11_1000_DRY_BONES)
+        CALL(evt_npc_set_position, STRING("リーダー"), 380, 0, 10)
+        CALL(evt_npc_set_width, STRING("リーダー"), FLOAT(48.0f))
+        CALL(evt_npc_set_anim, STRING("リーダー"), STRING("KRN_Z_2"))
+        CALL(evt_npc_set_ry, STRING("リーダー"), 270)
+        CALL(evt_npc_flag_onoff, 1, STRING("リーダー"), NPC_FLAG_NO_BILLBOARD | NPC_FLAG_NO_TURN_TO_MARIO)
+    ELSE
+        CALL(evt_npc_set_position, STRING("リーダー"), 0, -1000, 0)
+    END_IF
+    SET_VALUE(GW(0), 0)
+    RETURN
+EVT_END()
+
+/**
+ * Talk event for the Dry Bones leader: plays the bone-rattling sound and, the first time, starts senkaron_event,
+ * the swarm of Dry Bones that rain from the ceiling and push Mario back toward the entrance.
+ */
+EVT_BEGIN(leaderkaron_talk_event)
+    BEGIN_INLINE_EVENT
+        LOOP(10)
+            CALL(evt_npc_get_position, STRING("me"), LW(0), LW(1), LW(2))
+            CALL(evt_snd_sfxon_3d, STRING("SFX_STG1_HONE_ACCESS1"), LW(0), LW(1), LW(2), 0)
+            WAIT_MS(200)
+        END_LOOP
+    END_INLINE_EVENT
+    CALL(evt_npc_flag_onoff, 1, STRING("me"), -2147483648)
+    IF_INT_EQUAL(GW(0), 0)
+        CALL(evt_npc_set_width, STRING("リーダー"), FLOAT(20.0f))
+        SPAWN_EVENT(senkaron_event)
+        SET_VALUE(GW(0), 1)
+    END_IF
+    RETURN
+EVT_END()
+
+/**
+ * Sprite entries for the crowd of Dry Bones in the hall: the c_karon_g_h model with its KRN_R_1 animation,
+ * one entry per animation phase offset.
+ */
+static ExtTexInfo senkaron_ext_entry_data[] = {
+    {"c_karon_g_h", "KRN_R_1", 0.0f},
+    {"c_karon_g_h", "KRN_R_1", 1.0f},
+    {"c_karon_g_h", "KRN_R_1", 2.0f},
+    {"c_karon_g_h", "KRN_R_1", 3.0f},
+    {"c_karon_g_h", "KRN_R_1", 4.0f},
+    {"c_karon_g_h", "KRN_R_1", 5.0f},
+    {"c_karon_g_h", "KRN_R_1", 6.0f},
+    {"c_karon_g_h", "KRN_R_1", 7.0f},
+    {"c_karon_g_h", "KRN_R_1", 8.0f},
+    {"c_karon_g_h", "KRN_R_1", 9.0f},
+    {"c_karon_g_h", "KRN_R_1", 10.0f},
+    {"c_karon_g_h", "KRN_R_1", 11.0f},
+    {"c_karon_g_h", "KRN_R_1", 12.0f},
+    {"c_karon_g_h", "KRN_R_1", 13.0f},
+    {"c_karon_g_h", "KRN_R_1", 14.0f},
+    {"c_karon_g_h", "KRN_R_1", 15.0f},
+    {"c_karon_g_h", "KRN_R_1", 16.0f},
+    {"c_karon_g_h", "KRN_R_1", 17.0f},
+    {"c_karon_g_h", "KRN_R_1", 18.0f},
+    {"c_karon_g_h", "KRN_R_1", 19.0f},
+    {"c_karon_g_h", "KRN_R_1", 20.0f},
+    {"c_karon_g_h", "KRN_R_1", 21.0f},
+    {"c_karon_g_h", "KRN_R_1", 22.0f},
+    {"c_karon_g_h", "KRN_R_1", 23.0f},
+    {"c_karon_g_h", "KRN_D_1", 0.0f},
+    {0},
+};
+
+/** NPC init for the placeholder Dry Bones (カロン1): moves it far below the map. */
+EVT_BEGIN(senkarondummy_init_event)
+    CALL(evt_npc_set_position, STRING("カロン1"), 0, -1000, 0)
+    RETURN
+EVT_END()
+
+/** NPC regular event for the placeholder Dry Bones; does nothing. */
+EVT_BEGIN(senkarondummy_regl_event)
+    RETURN
+EVT_END()
+
+/** Talk event for the placeholder Dry Bones; does nothing. */
+EVT_BEGIN(senkarondummy_talk_event)
+    RETURN
+EVT_END()
+
+/**
+ * Registers the Dry Bones swarm: an ext-pose object of 1000 Dry Bones (senkaron) with its init,
+ * per-frame and draw callbacks.
+ */
+EVT_BEGIN(senkaron_entry_event)
+    CALL(evt_ext_entry, 1000, PTR(senkaron_ext_entry_data), PTR(senkaron_ext_init), PTR(senkaron_ext_main), PTR(senkaron_ext_dispent))
+    RETURN
+EVT_END()
+
+/** Tells the swarm to run away (sets senkaronEscapeFlag) after the leader has been beaten. */
+EVT_BEGIN(senkaron_escape_event)
+    CALL(senkaronToEscape)
+    RETURN
+EVT_END()
+
+/**
+ * Message callback for Koops' lines in the letter scene (stg1_gon_08):
+ * switches his pose between talking and standing as the text reaches the marked points.
+ */
+static void nokotaro_callback(s32 type) {
+    PartyEntry* party = partyGetPtr(partyCtrlNo);
+
+    switch (type) {
+        case 0:
+            partyChgPose(party, nokotaro_pose[1]);
+            break;
+        case 2:
+            partyChgPose(party, nokotaro_pose[0]);
+            break;
+        case 3:
+            partyChgPose(party, nokotaro_pose[1]);
+            break;
+        case 1:
+            partyChgPose(party, nokotaro_pose[0]);
+            break;
+    }
+}
+
+#if VERSION >= VERSION_JP
+/**
+ * Script helper (US and later): writes 1 into LW(0)
+ * when Mario is touching the Dry Bones leader (the NPC marioGetTouchNpcPtr finds) while he has control,
+ * otherwise 0.
+ * The swarm scene polls it to start the fight; earlier versions started the fight
+ * when Mario simply reached x = 350.
+ */
+USER_FUNC(leader_touch_check) {
+    NpcEntry* npc = marioGetTouchNpcPtr();
+    BOOL off = FALSE;
+
+    if (marioKeyOffChk() || marioCtrlOffChk()) {
+        off = TRUE;
+    }
+    if (marioStGetSystemLevel() != 0U) {
+        off = TRUE;
+    }
+    if (npc != NULL && strcmp(npc->description, "リーダー") == 0 && !off) {
+        evtSetValue(event, LW(0), 1);
+    } else {
+        evtSetValue(event, LW(0), 0);
+    }
+    return EVT_RETURN_DONE;
+}
+#endif
+
+// FAKE: kept out of line (removal tested: inlined into senkaron_ext_main, the code differs).
+#pragma dont_inline on
+/** Random float in [min, max] from rand(). */
+static f32 randf(f32 min, f32 max) {
+    f32 r = rand() / 32767.0f;
+
+    return r * (max - min) + min;
+}
+#pragma dont_inline reset
+
+/**
+ * Ext-pose init for the Dry Bones swarm: allocates the swarm work array
+ * and puts each of the 1000 Dry Bones at a random spot above the room (y 200) with a random start delay,
+ * ready to fall.
+ */
+static void senkaron_ext_init(void) {
+    s32 i;
+    ExtdrvPose* pose = extGetPosePtr();
+
+    senkaron = _mapAlloc(sizeof(Senkaron) * 1000);
+    for (i = extGetPoseNum() - 1; i >= 0; i--, pose++) {
+        pose->flags = 3;
+        pose->dir = randf(0.0f, 360.0f);
+        PSMTXIdentity(*pose->mtx);
+        (*pose->mtx)[0][3] = randf(-385.0f, 375.0f);
+        (*pose->mtx)[1][3] = 200.0f;
+        (*pose->mtx)[2][3] = randf(-125.0f, 140.0f);
+        pose->dir = 90.0f;
+        senkaron[i].state = 0;
+        senkaron[i].timer = randf(1.0f, 50.0f);
+        senkaron[i].vy = -5.0f;
+    }
+    senkaronAttackStartFlag = 0;
+    senkaronEscapeFlag = 0;
+    marioHammerFrame = 0;
+}
+
+/**
+ * Per-frame update of the Dry Bones swarm: each bone falls from the ceiling and lands,
+ * then once the attack starts shuffles toward Mario and shoves him west (marioPushedFlag);
+ * hits from Mario's hammer or jumps knock bones into the air,
+ * and when the swarm escapes the bones run off toward the room's edge
+ * and drop away (the knock-back and escape states 0x61 and 0x62 are read from the code only).
+ */
+static void senkaron_ext_main(void) {
+    MarioWork* mario;
+    const char* sfxLand;
+    const char* sfxFly;
+    const char* sfxFly2;
+    s32 n;
+    s32 i;
+    ExtdrvPose* pose;
+    s32 r;
+    f32 range;
+    f32 near;
+    f32 scale;
+    f32 dist;
+
+    pose = extGetPosePtr();
+    mario = marioGetPtr();
+    scale = mario->wPlayerCollisionBox.x / 2;
+    marioPushedFlag = 0;
+    if (mario->currMotionId == MARIO_MOTION_HAMMER) {
+        if (++marioHammerFrame == 15) {
+            marioHammerFrame = 0;
+        }
+    } else {
+        marioHammerFrame = 0;
+    }
+    n = extGetPoseNum();
+    // FAKE: the (0, ...) comma expressions are needed for a match (plain assignments change the code); same values
+    sfxLand = (0, "SFX_STG1_HONE_LANDING1");
+    range = 1.5f * (6.0f * scale);
+    sfxFly = (0, "SFX_STG1_HONE_FLY1");
+    near = 3.0f * scale;
+    sfxFly2 = (0, "SFX_STG1_HONE_FLY1");
+    for (i = n - 1; i >= 0; i--, pose++) {
+        switch (senkaron[i].state) {
+            case 0:
+                pose->texId = (gp->retraceCount + i * i) % 24;
+                if (senkaron[i].timer > 0) {
+                    if (senkaronEscapeFlag == 1) {
+                        senkaron[i].state = 0x62;
+                    } else if (senkaronAttackStartFlag == 1) {
+                        senkaron[i].timer--;
+                    }
+                    break;
+                }
+                (*pose->mtx)[1][3] += senkaron[i].vy;
+                senkaron[i].vy -= 0.3f;
+                if ((*pose->mtx)[1][3] < 0.0f) {
+                    (*pose->mtx)[1][3] = 0.0f;
+                    senkaron[i].state = 1;
+                    senkaron[i].timer = 0;
+                    senkaron[i].flags &= 0xFFFE;
+                    if (i % 8 == 0) {
+                        Vec pos = {0.0f, 0.0f, 0.0f};
+                        pos.x = (*pose->mtx)[0][3];
+                        pos.y = (*pose->mtx)[1][3];
+                        pos.z = (*pose->mtx)[2][3];
+                        psndSFXOn_3D(sfxLand, &pos);
+                    }
+                }
+                break;
+            case 1:
+                pose->texId = (gp->retraceCount + i * i) % 24;
+                if (senkaronEscapeFlag == 1) {
+                    if ((*pose->mtx)[0][3] == 0.0f && (*pose->mtx)[2][3] == 0.0f) {
+                        senkaron[i].vx = 1.0f;
+                        senkaron[i].vz = 1.0f;
+                    } else {
+                        dist = sqrt((*pose->mtx)[0][3] * (*pose->mtx)[0][3] + (*pose->mtx)[2][3] * (*pose->mtx)[2][3]);
+                        senkaron[i].vx = 4.0f * (*pose->mtx)[0][3] / dist;
+                        senkaron[i].vz = 4.0f * (*pose->mtx)[2][3] / dist;
+                    }
+                    if (senkaron[i].vx < 0.0f) {
+                        pose->dir = 90.0f;
+                    } else {
+                        pose->dir = 270.0f;
+                    }
+                    senkaron[i].state = 0x62;
+                    senkaron[i].timer = 300;
+                    break;
+                }
+                if (senkaronMesPushingFlag == 1) {
+                    break;
+                }
+                if (mario->currMotionId == MARIO_MOTION_HAMMER && marioHammerFrame == 10 &&
+                    (*pose->mtx)[2][3] > mario->position.z - 80.0f && (*pose->mtx)[2][3] < 80.0f + mario->position.z) {
+                    if (mario->directionView > 0.0f && mario->directionView < 180.0f) {
+                        if ((*pose->mtx)[0][3] > mario->position.x && (*pose->mtx)[0][3] < mario->position.x + range) {
+                            f32 awayX;
+                            f32 awayZ;
+
+                            awayZ = (*pose->mtx)[2][3] - mario->position.z;
+                            awayX = (*pose->mtx)[0][3] - mario->position.x;
+                            dist = sqrt(awayX * awayX + awayZ * awayZ);
+                            senkaron[i].vx = 3.0f * awayX / dist - 1.0f;
+                            senkaron[i].vy = randf(5.0f, 10.0f);
+                            senkaron[i].vz = randf(-5.0f, 10.0f);
+                            senkaron[i].state = 0x61;
+                            {
+                                Vec pos = {0.0f, 0.0f, 0.0f};
+                                pos.x = (*pose->mtx)[0][3];
+                                pos.y = (*pose->mtx)[1][3];
+                                pos.z = (*pose->mtx)[2][3];
+                                psndSFXOn_3D(sfxFly, &pos);
+                            }
+                        }
+                    } else {
+                        if ((*pose->mtx)[0][3] < mario->position.x && (*pose->mtx)[0][3] > mario->position.x - range) {
+                            f32 awayX;
+                            f32 awayZ;
+
+                            awayZ = (*pose->mtx)[2][3] - mario->position.z;
+                            awayX = (*pose->mtx)[0][3] - mario->position.x;
+                            dist = sqrt(awayX * awayX + awayZ * awayZ);
+                            senkaron[i].vx = 1.0f + 3.0f * awayX / dist;
+                            senkaron[i].vy = randf(5.0f, 10.0f);
+                            senkaron[i].vz = randf(-5.0f, 10.0f);
+                            senkaron[i].state = 0x61;
+                            {
+                                Vec pos = {0.0f, 0.0f, 0.0f};
+                                pos.x = (*pose->mtx)[0][3];
+                                pos.y = (*pose->mtx)[1][3];
+                                pos.z = (*pose->mtx)[2][3];
+                                psndSFXOn_3D(sfxFly2, &pos);
+                            }
+                        }
+                    }
+                }
+                if ((*pose->mtx)[0][3] > mario->position.x + scale - 10.0f && (*pose->mtx)[0][3] < mario->position.x + near &&
+                    (*pose->mtx)[2][3] > mario->position.z - 20.0f && (*pose->mtx)[2][3] < 20.0f + mario->position.z) {
+                    marioPushedFlag = 1;
+                }
+                if ((*pose->mtx)[0][3] >= mario->position.x) {
+                    if (senkaron[i].flags & 1) {
+                        pose->dir = 270.0f;
+                    } else {
+                        pose->dir = 90.0f;
+                    }
+                } else {
+                    if (senkaron[i].flags & 1) {
+                        pose->dir = 90.0f;
+                    } else {
+                        pose->dir = 270.0f;
+                    }
+                }
+                if (senkaron[i].timer == 0) {
+                    f32 awayX;
+                    f32 awayZ;
+                    f32 awayDist;
+
+                    awayX = (*pose->mtx)[0][3] - mario->position.x;
+                    awayZ = (*pose->mtx)[2][3] - mario->position.z;
+                    awayDist = 10.0f * (f32)sqrt(awayX * awayX + awayZ * awayZ);
+                    r = randf(0.0f, 50.0f);
+                    senkaron[i].vx = randf(-0.5f, 0.5f);
+                    senkaron[i].vz = randf(-0.5f, 0.5f);
+                    senkaron[i].vx -= awayX / awayDist;
+                    senkaron[i].vz -= awayZ / awayDist;
+                    if (r == 1) {
+                        senkaron[i].flags |= 1;
+                    } else {
+                        senkaron[i].flags &= 0xFFFE;
+                    }
+                    senkaron[i].timer = 60;
+                }
+                senkaron[i].timer--;
+                (*pose->mtx)[0][3] += senkaron[i].vx;
+                (*pose->mtx)[2][3] += senkaron[i].vz;
+                if ((*pose->mtx)[0][3] > 375.0f) {
+                    (*pose->mtx)[0][3] = 375.0f;
+                }
+                if ((*pose->mtx)[0][3] < -385.0f) {
+                    (*pose->mtx)[0][3] = -385.0f;
+                }
+                if ((*pose->mtx)[2][3] > 140.0f) {
+                    (*pose->mtx)[2][3] = 140.0f;
+                }
+                if ((*pose->mtx)[2][3] < -125.0f) {
+                    (*pose->mtx)[2][3] = -125.0f;
+                }
+                break;
+            case 0x61:
+                pose->flags |= 4;
+                if ((*pose->mtx)[1][3] > -100.0f) {
+                    (*pose->mtx)[0][3] += senkaron[i].vx;
+                    (*pose->mtx)[1][3] += senkaron[i].vy;
+                    (*pose->mtx)[2][3] += senkaron[i].vz;
+                    if ((*pose->mtx)[2][3] <= -125.0f) {
+                        (*pose->mtx)[2][3] = -125.0f;
+                    }
+                    senkaron[i].vy -= 0.3f;
+                    pose->texId = 24;
+                } else {
+                    marioGetPtr();
+                    (*pose->mtx)[0][3] = randf(-385.0f, 375.0f);
+                    (*pose->mtx)[1][3] = 200.0f;
+                    (*pose->mtx)[2][3] = randf(-125.0f, 140.0f);
+                    pose->dir = randf(0.0f, 360.0f);
+                    pose->flags &= ~4;
+                    senkaron[i].state = 0;
+                    senkaron[i].timer = randf(1.0f, 1000.0f);
+                    senkaron[i].vy = 0.0f;
+                }
+                break;
+            case 0x62:
+                if (senkaron[i].timer > 0) {
+                    (*pose->mtx)[0][3] += senkaron[i].vx;
+                    (*pose->mtx)[2][3] += senkaron[i].vz;
+                    senkaron[i].timer--;
+                } else {
+                    senkaron[i].state = 0x63;
+                }
+                pose->texId = (gp->retraceCount + i * i) % 24;
+                break;
+            case 0x63:
+                break;
+        }
+    }
+    if (marioPushedFlag == 1) {
+        f32 pushX;
+        f32 pushZ;
+        f32 pushDist;
+        f32 pushSpeed;
+
+        pushX = -390.0f - mario->position.x;
+        pushZ = -mario->position.z;
+        pushDist = sqrt(pushX * pushX + pushZ * pushZ);
+        switch (mario->currMotionId) {
+            case 0x12:
+                pushSpeed = 0.0f;
+                break;
+            case 1:
+                pushSpeed = randf(2.0f, 2.5f);
+                break;
+            case 2:
+                pushSpeed = randf(2.8f, 3.3f);
+                break;
+            case 3:
+                pushSpeed = randf(2.3f, 2.8f);
+                break;
+            default:
+                pushSpeed = randf(0.7f, 1.2f);
+                break;
+        }
+        mario->position.x += pushSpeed * (pushX / pushDist);
+        mario->position.z += pushSpeed * (pushZ / pushDist);
+    }
+}
+
+/** Queues the swarm's draw and shadow callbacks into the 3D camera every frame. */
+static void senkaron_ext_dispent(void) {
+    dispEntry(CAMERA_3D, 0.0f, 1, senkaron_ext_disp, NULL);
+    dispEntry(CAMERA_3D, 0.0f, 2, senkaron_ext_shadow_disp, NULL);
+}
+
+/** Draw callback for the swarm: loads the ext-pose render state, vertices, textures and TEV and draws all the bones. */
+static void senkaron_ext_disp(CameraId camera, void* param) {
+    extLoadRenderMode();
+    extLoadVertex();
+    extLoadTexture();
+    extLoadTev();
+    extDraw();
+    extLoadTextureExit();
+}
+
+/** Draw callback for the swarm's shadows: draws every bone flattened with a fixed shadow matrix. */
+static void senkaron_ext_shadow_disp(CameraId camera, void* param) {
+    static Mtx mt = {
+        {10.0f, 0.0f, 0.0f, 0.0f},
+        {0.0f, 10.0f, 0.0f, 0.1f},
+        {0.0f, 0.0f, 10.0f, 0.0f},
+    };
+
+    extLoadShadowMtx(mt);
+    extLoadShadowRenderMode();
+    extLoadShadowVertex();
+    extLoadShadowTev();
+    extDrawShadow();
+}
+
+/** Script helper: sets senkaronEscapeFlag so the swarm runs away. */
+static USER_FUNC(senkaronToEscape) {
+    senkaronEscapeFlag = 1;
+    return EVT_RETURN_DONE;
+}
+
+/**
+ * Script helper: sets senkaronMesPushingFlag; the swarm only pushes Mario while it is clear,
+ * so the partner's comment about the pushing can be shown without being interrupted.
+ */
+static USER_FUNC(senkaronFlagOnMesPushing) {
+    senkaronMesPushingFlag = 1;
+    return EVT_RETURN_DONE;
+}
+
+/** Script helper: clears senkaronMesPushingFlag (see senkaronFlagOnMesPushing). */
+static USER_FUNC(senkaronFlagOffMesPushing) {
+    senkaronMesPushingFlag = 0;
+    return EVT_RETURN_DONE;
+}
+
+/** Script helper: sets senkaronAttackStartFlag so the Dry Bones start moving in on Mario. */
+static USER_FUNC(senkaronAttackStart) {
+    senkaronAttackStartFlag = 1;
+    return EVT_RETURN_DONE;
+}
+
+/** Script helper: writes marioPushedFlag (1 while the swarm is pressing against Mario this frame) into args[0]. */
+static USER_FUNC(senkaronGetMarioPushedFlag) {
+    evtSetValue(event, event->args[0], marioPushedFlag);
+    return EVT_RETURN_DONE;
+}

@@ -1,0 +1,95 @@
+#include "port_hook.h"
+// Sequence driver: switches between the top-level game states (logo, title, game, map change,
+// battle, game over, load, e3 demo) and runs the current one.
+#include "driver/seqdrv.h"
+#include "system.h"
+#include <string.h> //memset prototype
+
+#ifdef PORT_MODS
+#include "port/hooks/src_driver_seqdrv.h"
+#endif
+extern SequenceCallback seq_data[8][3];
+
+//.sdata
+SequenceType now_seq = SEQ_UNDEFINED;
+SequenceType next_seq = SEQ_UNDEFINED;
+SequenceType prev_seq = SEQ_UNDEFINED;
+
+//.sbss
+SequenceWork seqWork;
+const char* next_p1;
+const char* next_p0;
+
+/**
+ * Clears the sequence work and marks the current, next and previous sequences undefined;
+ * called once at boot from mariost.c before the first seqMain.
+ */
+void PORT_HOOKABLE(seqInit_MARIOSTORY)(void) {
+    memset(&seqWork, 0, sizeof(SequenceWork));
+    now_seq = SEQ_UNDEFINED;
+    next_seq = SEQ_UNDEFINED;
+    prev_seq = SEQ_UNDEFINED;
+}
+
+/**
+ * Runs once per frame from the main loop: when a new sequence was requested it waits for drawing to finish,
+ * calls the old sequence's exit callback, resets seqWork with the requested map and entrance (bero) names
+ * and calls the new one's init; then runs the current sequence's main callback.
+ */
+void PORT_HOOKABLE(seqMain)(void) {
+    if (next_seq != now_seq) {
+        if (now_seq != SEQ_UNDEFINED) {
+            sysWaitDrawSync();
+            seq_data[now_seq][2](&seqWork); // call Exit function
+        }
+        prev_seq = now_seq; // store previous
+        memset(&seqWork, 0, sizeof(SequenceWork));
+        now_seq = next_seq;
+        seqWork.sequence = next_seq;
+        seqWork.state = 0;
+        seqWork.mapName = next_p0;
+        seqWork.beroName = next_p1;
+        seq_data[next_seq][0](&seqWork); // call Init function
+    }
+    seq_data[now_seq][1](&seqWork); // call Main function
+}
+
+/**
+ * Requests a switch to sequence seq (game, battle, game over, ...) with a map name
+ * and entrance (bero) name for the new sequence; the switch happens at the next seqMain.
+ */
+void PORT_HOOKABLE(seqSetSeq)(SequenceType seq, const char* map, const char* bero) {
+    next_seq = seq;
+    next_p0 = map;
+    next_p1 = bero;
+}
+
+/** Returns the sequence running now (e.g. SEQ_GAME while Mario walks around a map, SEQ_BATTLE in a fight). */
+SequenceType seqGetSeq(void) {
+    return now_seq;
+}
+
+/**
+ * Returns the sequence that ran before the current one;
+ * the title and map-change sequences use it to tell a fresh load from a return.
+ */
+SequenceType PORT_HOOKABLE(seqGetPrevSeq)(void) {
+    return prev_seq;
+}
+
+/**
+ * Returns the requested next sequence (equal to the current one when no switch is pending);
+ * seq_battle checks it for a pending game over.
+ */
+SequenceType PORT_HOOKABLE(seqGetNextSeq)(void) {
+    return next_seq;
+}
+
+/** Returns TRUE while a sequence switch is pending (requested by seqSetSeq but not yet applied). */
+BOOL PORT_HOOKABLE(seqCheckSeq)(void) {
+    return now_seq != next_seq;
+}
+
+#ifdef PORT_MODS
+#include "port/hooks/src_driver_seqdrv.inc"
+#endif

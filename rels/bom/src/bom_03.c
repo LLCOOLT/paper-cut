@@ -1,0 +1,84 @@
+// bom_03 (ボム村, Fahr Outpost): the snowfield between bom_00 and bom_04.
+
+#include "battle/battle_unit.h"
+#include "evt/evt_cmd.h"
+#include "evt/evt_bero.h"
+#include "evt/evt_sub.h"
+#include "evt/evt_item.h"
+#include "evt/evt_mobj.h"
+#include "evt/evt_snd.h"
+#include "bom.h"
+#include "data_tables.h"
+#include "evt/evt_story.h"
+
+static TreeAccess tree_tbl[4];
+static BeroEntry bero_entry_data[3];
+
+/** Trees of this map that can be shaken: 3 trees, each with its hit area, trunk and leaf models. */
+static TreeAccess tree_tbl[] = {
+    {3, "A_ki1", "S_ki_1", "S_ha_1", 0, NULL},
+    {3, "A_ki2", "S_ki_2", "S_ha_2", 0, NULL},
+    {3, "A_ki3", "S_ki_3", "S_ha_3", 0, NULL},
+    {7, NULL, NULL, NULL, 0, NULL},
+};
+
+/** Registers the map's tree access table (tree_tbl) with evt_sub_tree_access_entry so the trees can be shaken. */
+static EVT_BEGIN(evt_tree)
+    SET_VALUE(LW(0), PTR(tree_tbl))
+    CALL_CHILD(evt_sub_tree_access_entry)
+    RETURN
+EVT_END()
+
+/** Exits (beros) of this room: w_bero to bom_00 and e_bero to bom_04. */
+static BeroEntry bero_entry_data[] = {
+    {
+        "w_bero", // hitName
+        0, 0, // type..sfxId
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
+        0, 0, // centerPositionY..centerPositionZ
+        -1, // length
+        NULL, // enterEvent
+        -1, // caseType
+        NULL, // exitEvent
+        "bom_00", // nextMapName
+        "e_bero", // nextBeroName
+        1, // enterAnimeType
+        1, // exitAnimeType
+        0, 0, // enterAnimeArg..exitAnimeArg
+    },
+    {
+        "e_bero", // hitName
+        0, 0, // type..sfxId
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
+        0, 0, // centerPositionY..centerPositionZ
+        -1, // length
+        NULL, // enterEvent
+        -1, // caseType
+        NULL, // exitEvent
+        "bom_04", // nextMapName
+        "w_bero4", // nextBeroName
+        1, // enterAnimeType
+        1, // exitAnimeType
+        0, 0, // enterAnimeArg..exitAnimeArg
+    },
+    {0},
+};
+
+/**
+ * Init script of bom_03, the middle snowfield between bom_00 and bom_04:
+ * sets the exits, snow, trees, music, a Shine Sprite block and a Star Piece.
+ */
+EVT_BEGIN(bom_03_init_evt)
+    SET_VALUE(LW(0), PTR(bero_entry_data))
+    CALL(evt_bero_get_info)
+    CALL_CHILD(evt_bero_info_run)
+    CALL_CHILD(evt_bom_snowfall)
+    CALL_CHILD(evt_tree)
+    CALL(evt_snd_bgmon, PSND_FADE_OUT, STRING("BGM_STG7_BOM1"))
+    CALL(evt_snd_envon, PSND_FADE_RESTART | PSND_FADE_IN, STRING("ENV_STG7_BOM1"))
+    CALL(evt_mobj_powerupblk, STRING("pblk00"), -405, 60, 25, 0, GSWF(GSWF_BOM03_SHINE_SPRITE), 0)
+    CALL(evt_item_entry, STRING("item00"), ITEM_STAR_PIECE, 45, 5, 120, ITEM_ENTRY_FIXED, GSWF(GSWF_BOM03_STAR_PIECE), 0)
+    RETURN
+EVT_END()

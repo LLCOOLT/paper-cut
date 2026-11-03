@@ -1,0 +1,14 @@
+# map_sweep --input: on every map, start a battle with the nearest enemy (maps
+# without one just log it), let it play a while, and capture it.
+wait 60
+battle
+wait 300
+shot a
+press a
+wait 30
+press a
+wait 45
+press a
+wait 200
+shot b
+end

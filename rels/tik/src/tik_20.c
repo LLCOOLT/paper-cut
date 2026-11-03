@@ -1,0 +1,83 @@
+// tik_20 (埋没した都市, Rogueport Sewers): a side room off tik_15 with blocks and an item.
+#include "battle/battle_unit.h"
+#include "evt/evt_cmd.h"
+#include "evt/evt_bero.h"
+#include "evt/evt_damage.h"
+#include "evt/evt_movefloor.h"
+#include "driver/hitdrv.h"
+#include "evt/evt_hit.h"
+#include "evt/evt_item.h"
+#include "evt/evt_map.h"
+#include "evt/evt_mobj.h"
+#include "evt/evt_snd.h"
+#include "tik.h"
+#include "evt/evt_story.h"
+
+static BeroEntry bero_entry_data[2];
+static HitDamageReturn hitDmgRetPoints[7];
+
+/** Doors of this room: the west exit back to tik_15. */
+static BeroEntry bero_entry_data[] = {
+    {
+        "w_bero", // hitName
+        0, 0, // type..sfxId
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
+        0, 0, // centerPositionY..centerPositionZ
+        -1, // length
+        NULL, // enterEvent
+        -1, // caseType
+        NULL, // exitEvent
+        "tik_15", // nextMapName
+        "e_bero", // nextBeroName
+        1, // enterAnimeType
+        1, // exitAnimeType
+        0, 0, // enterAnimeArg..exitAnimeArg
+    },
+    {0},
+};
+
+/** Spots Mario is put back on after falling into one of this room's hazards (each object's own position). */
+static HitDamageReturn hitDmgRetPoints[] = {
+    {"mod_1", {0.0f, -1000.0f, 0.0f}},
+    {"mod_2", {0.0f, -1000.0f, 0.0f}},
+    {"mod_3", {0.0f, -1000.0f, 0.0f}},
+    {"mod_4", {0.0f, -1000.0f, 0.0f}},
+    {"mod_5", {0.0f, -1000.0f, 0.0f}},
+    {"ue", {0.0f, -1000.0f, 0.0f}},
+    {0},
+};
+
+/**
+ * Map init script of tik_20, a side room off tik_15.
+ * Sets up fall recovery, the water animation, a moving floor,
+ * the Defend Plus badge and three Shine Sprite power blocks.
+ */
+EVT_BEGIN(tik_20_init_evt)
+    CALL(evt_snd_bgmon, PSND_FADE_OUT, STRING("BGM_STG0_TIK1"))
+    CALL(evt_snd_envon, PSND_FADE_RESTART | PSND_FADE_IN, STRING("ENV_STG0_TIK7"))
+    CALL(evt_snd_set_rev_mode, 2)
+    SET_VALUE(LW(0), PTR(bero_entry_data))
+    CALL(evt_bero_get_info)
+    CALL_CHILD(evt_bero_info_run)
+    CALL(evt_hit_damage_return_set, PTR(hitDmgRetPoints))
+    CALL_CHILD(evt_gazigazi_entry)
+    CALL(evt_map_playanim, STRING("anm_mizu"), 1, 0)
+    CALL(evt_map_entry_airport_harbor, 1, STRING("S_Ship_Change_01"), STRING("ue"))
+    SET_VALUE(LW(0), STRING("dai_3"))
+    SET_VALUE(LW(1), STRING("a_dai_3"))
+    SET_VALUE(LW(2), -10)
+    SET_VALUE(LW(3), 30)
+    SET_VALUE(LW(4), 900)
+    SET_VALUE(LW(5), 500)
+    SET_VALUE(LW(6), 0)
+    SET_VALUE(LW(7), 0)
+    SET_VALUE(LW(11), 0)
+    SET_VALUE(LW(12), 0)
+    SPAWN_EVENT(moving_floor)
+    CALL(evt_item_entry, STRING("item_01"), ITEM_DEFEND_PLUS, 180, 100, -125, ITEM_ENTRY_FIXED, GSWF(GSWF_TIK20_DEFEND_PLUS_TAKEN), 0)
+    CALL(evt_mobj_powerupblk, STRING("pblk01"), -50, 60, -75, 0, GSWF(GSWF_TIK20_SHINE_SPRITE_1), 0)
+    CALL(evt_mobj_powerupblk, STRING("pblk02"), 0, 100, -25, 0, GSWF(GSWF_TIK20_SHINE_SPRITE_2), 0)
+    CALL(evt_mobj_powerupblk, STRING("pblk03"), 50, 60, -75, 0, GSWF(GSWF_TIK20_SHINE_SPRITE_3), 0)
+    RETURN
+EVT_END()

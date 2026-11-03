@@ -1,0 +1,173 @@
+// mri_19 (巨木の中, The Great Tree): a pipe room with planters, a wind event (cloud_wind_event) and a plane
+// panel (hikou).
+#include "battle/battle_unit.h"
+#include "evt/evt_cmd.h"
+#include "evt/evt_bero.h"
+#include "evt/evt_sub.h"
+#include "evt/evt_cloud.h"
+#include "evt/evt_hit.h"
+#include "evt/evt_map.h"
+#include "evt/evt_mobj.h"
+#include "evt/evt_snd.h"
+#include "mri_puni.h"
+#include "mri.h"
+#include "data_tables.h"
+#include "evt/evt_story.h"
+#include "driver/mapdrv.h"
+
+static BeroEntry bero_entry_data[5];
+static KusaAccess ueki_access_data[7];
+
+/**
+ * Exits of mri_19: pipe dokan1 to mri_05 (dokan4); pipe dokan2 to mri_06 (dokan1); dokan3 (scripted pipe);
+ * dokan4 (scripted pipe).
+ */
+static BeroEntry bero_entry_data[] = {
+    {
+        "dokan1", // hitName
+        2, // type
+        0, // sfxId
+        BERO_DIR_E, // directionId
+        BERO_POS_AUTO, // centerPosition
+        0, 0, // centerPositionY..centerPositionZ
+        -1, // length
+        NULL, // enterEvent
+        10, // caseType
+        NULL, // exitEvent
+        "mri_05", // nextMapName
+        "dokan4", // nextBeroName
+        1, // enterAnimeType
+        1, // exitAnimeType
+        0, 0, // enterAnimeArg..exitAnimeArg
+    },
+    {
+        "dokan2", // hitName
+        2, // type
+        0, // sfxId
+        BERO_DIR_DOWN, // directionId
+        BERO_POS_AUTO, // centerPosition
+        0, 0, // centerPositionY..centerPositionZ
+        -1, // length
+        NULL, // enterEvent
+        6, // caseType
+        NULL, // exitEvent
+        "mri_06", // nextMapName
+        "dokan1", // nextBeroName
+        1, // enterAnimeType
+        1, // exitAnimeType
+        0, 0, // enterAnimeArg..exitAnimeArg
+    },
+    {
+        "dokan3", // hitName
+        2, // type
+        0, // sfxId
+        BERO_DIR_DOWN, // directionId
+        BERO_POS_AUTO, // centerPosition
+        0, 0, // centerPositionY..centerPositionZ
+        -1, // length
+        NULL, // enterEvent
+        6, // caseType
+        NULL, 0, // exitEvent..nextMapName
+        "dokan4", // nextBeroName
+        1, // enterAnimeType
+        1, // exitAnimeType
+        0, 0, // enterAnimeArg..exitAnimeArg
+    },
+    {
+        "dokan4", // hitName
+        2, // type
+        0, // sfxId
+        BERO_DIR_W, // directionId
+        BERO_POS_AUTO, // centerPosition
+        0, 0, // centerPositionY..centerPositionZ
+        -1, // length
+        NULL, // enterEvent
+        10, // caseType
+        NULL, 0, // exitEvent..nextMapName
+        "dokan3", // nextBeroName
+        1, // enterAnimeType
+        1, // exitAnimeType
+        0, 0, // enterAnimeArg..exitAnimeArg
+    },
+    {0},
+};
+
+/** Plants Mario can search in mri_19: A_ueki01, A_ueki02, A_ueki03, A_ueki04, A_ueki05, A_ueki08. */
+static KusaAccess ueki_access_data[] = {
+    {1, "A_ueki01", "S_ueki01", NULL},
+    {1, "A_ueki02", "S_ueki02", NULL},
+    {1, "A_ueki03", "S_ueki03", NULL},
+    {1, "A_ueki04", "S_ueki04", NULL},
+    {1, "A_ueki05", "S_ueki05", NULL},
+    {1, "A_ueki08", "S_ueki08", NULL},
+    {4, NULL, NULL, NULL},
+};
+
+/**
+ * Wind event when Flurrie blows the cloud away:
+ * plays the success jingle for 2 seconds, then registers the hidden airport panel (hikou and hikou1) as
+ * plane-mode harbors, switches the panel's collision attribute on and sets GSWF_MRI19_GUST_REVEALED_PANEL.
+ */
+static EVT_BEGIN(cloud_wind_event)
+    BEGIN_INLINE_EVENT
+        CALL(evt_snd_bgmoff, PSND_FADE_HOLD)
+        CALL(evt_snd_bgmon, PSND_CH(1), STRING("BGM_FF_ENV_SUCCESS1"))
+        WAIT_MS(2000)
+        CALL(evt_snd_bgmoff, PSND_FADE_OUT | PSND_CH(1))
+        CALL(evt_snd_bgmon, PSND_FADE_RESUME | PSND_FADE_IN, 0)
+    END_INLINE_EVENT
+    CALL(evt_map_entry_airport_harbor, 0, STRING("hikou"), STRING("a_hi"))
+    CALL(evt_map_entry_airport_harbor, 0, STRING("hikou1"), STRING("a_hi1"))
+    CALL(evt_hitobj_attr_onoff, 1, 1, STRING("a_hi"), 16)
+    SET_VALUE(GSWF(GSWF_MRI19_GUST_REVEALED_PANEL), 1)
+    RETURN
+EVT_END()
+
+/**
+ * Map init script of mri_19, a pipe room with planters and a Shine Sprite block:
+ * sets up the Puni, the planters and the water animations;
+ * until Flurrie's wind has blown away the cloud (GSWF_MRI19_GUST_REVEALED_PANEL) it hides the plane panel
+ * (hikou) behind a cloud, afterwards the panel is open for the paper-plane ride.
+ */
+EVT_BEGIN(mri_19_init_evt)
+    CALL(evt_puni_mem_init)
+    CALL(evt_puni_set_yuka, 19, 110, -319, -1000, -1000, 0, 0)
+    CALL(evt_puni_set_hamari, 25, -319, 113, 112, 108, -317, -321)
+    SET_VALUE(LW(6), 0)
+    SET_VALUE(LW(7), 0)
+    SET_VALUE(LW(8), 0)
+    SET_VALUE(LW(9), 0)
+    CALL_CHILD(mri_puni_init)
+    SPAWN_EVENT(puni_disp_info)
+    SPAWN_EVENT(mri_countdown)
+    SWITCH(GSW(GSW_STORY_PROGRESS))
+        CASE_BETWEEN(STORY_STG2_23_TIME_BOMB_ACTIVATED, STORY_STG2_23_01_X_NAUT_BATTLE)
+        CALL(evt_snd_bgmon, PSND_FADE_OUT, STRING("BGM_EVT_DANGER4"))
+        CALL(evt_snd_envon, PSND_FADE_RESTART | PSND_FADE_IN, STRING("ENV_STG2_MRI9"))
+        CASE_DEFAULT
+        CALL(evt_snd_bgmon, PSND_FADE_OUT, STRING("BGM_STG2_MRI1"))
+        CALL(evt_snd_envon, PSND_FADE_RESTART | PSND_FADE_IN, STRING("ENV_STG2_MRI1"))
+    END_SWITCH
+    SET_VALUE(LW(0), PTR(bero_entry_data))
+    CALL(evt_bero_get_info)
+    CALL_CHILD(evt_bero_info_run)
+    CALL(evt_mobj_powerupblk, STRING("pblk00"), -360, -175, 25, 0, GSWF(GSWF_MRI19_SHINE_SPRITE), 0)
+    SET_VALUE(LW(0), PTR(ueki_access_data))
+    CALL_CHILD(evt_sub_kusa_access_entry)
+    CALL(evt_map_playanim, STRING("mizu_01"), 1, 0)
+    CALL(evt_map_playanim, STRING("mizu_02"), 1, 0)
+    CALL(evt_map_playanim, STRING("awa_01"), 1, 0)
+    CALL(evt_map_playanim, STRING("awa_02"), 1, 0)
+    IF_INT_EQUAL(GSWF(GSWF_MRI19_GUST_REVEALED_PANEL), 0)
+        CALL(evt_cloud_init)
+        CALL(evt_cloud_ent, 0, STRING("S_f2_isk"), STRING("A_f2_isk"), PTR(cloud_wind_event))
+        CALL(evt_hitobj_attr_onoff, 1, 0, STRING("a_hi"), 16)
+    ELSE
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("S_f2_isk"), MAPOBJ_FLAG_HIDE)
+        CALL(evt_hitobj_onoff, STRING("A_f2_isk"), 1, 0)
+        CALL(evt_map_entry_airport_harbor, 0, STRING("hikou"), STRING("a_hi"))
+        CALL(evt_map_entry_airport_harbor, 0, STRING("hikou1"), STRING("a_hi1"))
+    END_IF
+    SPAWN_EVENT(puni_piders_check)
+    RETURN
+EVT_END()

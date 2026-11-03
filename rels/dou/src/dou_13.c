@@ -1,0 +1,70 @@
+// dou_13 (洞窟, Pirate's Grotto): side passage between dou_08 and dou_09.
+// Has Bill Blaster (killer_cannon) enemies.
+#include "battle/battle_unit.h"
+#include "evt/evt_cmd.h"
+#include "evt/evt_bero.h"
+#include "evt/evt_npc.h"
+#include "evt/evt_snd.h"
+#include "dou.h"
+
+static BeroEntry bero_entry_data[3];
+
+/** Exits (beros) of this room: w_bero to dou_08 and e_bero_1 to dou_09. */
+static BeroEntry bero_entry_data[] = {
+    {
+        "w_bero", // hitName
+        0, 0, // type..sfxId
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
+        0, 0, // centerPositionY..centerPositionZ
+        -1, // length
+        NULL, // enterEvent
+        -1, // caseType
+        NULL, // exitEvent
+        "dou_08", // nextMapName
+        "e_bero", // nextBeroName
+        1, // enterAnimeType
+        1, // exitAnimeType
+        0, 0, // enterAnimeArg..exitAnimeArg
+    },
+    {
+        "e_bero_1", // hitName
+        0, 0, // type..sfxId
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
+        0, 0, // centerPositionY..centerPositionZ
+        -1, // length
+        NULL, // enterEvent
+        -1, // caseType
+        NULL, // exitEvent
+        "dou_09", // nextMapName
+        "w_bero", // nextBeroName
+        1, // enterAnimeType
+        1, // exitAnimeType
+        0, 0, // enterAnimeArg..exitAnimeArg
+    },
+    {0},
+};
+
+/**
+ * Init script of dou_13, the side passage between dou_08 and dou_09:
+ * music and ambience, exits, and links its Bill Blaster pairs (cannon 1 with 2, cannon 3 with 4)
+ * so they fire in turn when they exist.
+ */
+EVT_BEGIN(dou_13_init_evt)
+    CALL(evt_snd_bgmon, PSND_FADE_OUT, STRING("BGM_STG5_DOU1"))
+    CALL(evt_snd_envon, PSND_FADE_RESTART | PSND_FADE_IN, STRING("ENV_STG5_DOU9"))
+    CALL(evt_snd_set_rev_mode, 2)
+    SET_VALUE(LW(0), PTR(bero_entry_data))
+    CALL(evt_bero_get_info)
+    CALL_CHILD(evt_bero_info_run)
+    CALL(evt_npc_check, STRING("キラー大砲１"), LW(0))
+    IF_INT_EQUAL(LW(0), 1)
+        CALL(evt_npc_set_link, STRING("キラー大砲１"), STRING("キラー大砲２"))
+    END_IF
+    CALL(evt_npc_check, STRING("キラー大砲３"), LW(0))
+    IF_INT_EQUAL(LW(0), 1)
+        CALL(evt_npc_set_link, STRING("キラー大砲３"), STRING("キラー大砲４"))
+    END_IF
+    RETURN
+EVT_END()

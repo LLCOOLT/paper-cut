@@ -1,0 +1,542 @@
+From 4848de94428fc042ba7b4c5a7d01297483040ec0 Mon Sep 17 00:00:00 2001
+From: LLCOOLT <114613597+LLCOOLT@users.noreply.github.com>
+Date: Sun, 1 Nov 2026 12:18:32 -0500
+Subject: [PATCH] display: HUD transform, anisotropy and LOD bias,
+ supersampling, post filters, VRR
+
+GXSetProjectionTransform (GX_AURORA_SET_PROJECTION_TRANSFORM): clip-space x
+and y of following draws to the main framebuffer scaled and offset, their
+scissor boxes too: a HUD larger or smaller about a point.
+AuroraSetTextureAnisotropy / AuroraSetTextureLodBias: a floor on every
+mipmapped texture's anisotropy, a bias added to every texture's LOD.
+aurora_set_supersample: the framebuffer a whole multiple larger, area-
+downsampled at present. aurora_set_post_filter: CRT, paper grain or sharpen
+in the present resample pass. aurora_set_vrr: Immediate present whatever
+vsync says. All in include/aurora/display.h.
+---
+ include/aurora/display.h     | 56 +++++++++++++++++++++++
+ lib/aurora.cpp               | 16 +++++++
+ lib/dolphin/gx/GXAurora.cpp  | 19 ++++++++
+ lib/gfx/texture.cpp          | 10 ++++
+ lib/gfx/texture.hpp          |  2 +
+ lib/gx/command_processor.cpp | 11 +++++
+ lib/gx/gx.cpp                | 31 +++++++++++--
+ lib/gx/gx.hpp                |  2 +
+ lib/gx/shader_info.cpp       | 11 ++++-
+ lib/webgpu/gpu.cpp           | 89 +++++++++++++++++++++++++++++++++++-
+ lib/webgpu/gpu.hpp           |  2 +
+ lib/window.cpp               | 18 ++++++++
+ lib/window.hpp               |  2 +
+ 13 files changed, 262 insertions(+), 7 deletions(-)
+ create mode 100644 include/aurora/display.h
+
+diff --git a/include/aurora/display.h b/include/aurora/display.h
+new file mode 100644
+index 0000000..bf1c44b
+--- /dev/null
++++ b/include/aurora/display.h
+@@ -0,0 +1,56 @@
++#ifndef AURORA_DISPLAY_H
++#define AURORA_DISPLAY_H
++
++/* Display options of the application's own (Paper Cut's port/patches/aurora): a HUD transform, texture
++ * filtering, supersampling, a filter over the presented picture and variable refresh rate. */
++
++#include <dolphin/types.h>
++
++#ifdef __cplusplus
++#include <cstdbool>
++extern "C" {
++#else
++#include <stdbool.h>
++#endif
++
++/**
++ * Scales and offsets clip-space x and y of every following draw to the main framebuffer (not offscreen
++ * targets), before GX_AURORA_SET_PROJECTION_SCALE_X, and its scissor boxes with them: a HUD drawn larger or
++ * smaller about a point. Must be followed by four f32s (scale x, scale y, offset x, offset y).
++ */
++#define GX_AURORA_SET_PROJECTION_TRANSFORM 0x0005
++
++/**
++ * x' = x * scaleX + offsetX, y' = y * scaleY + offsetY in clip space (offsets in NDC units) for the following
++ * draws to the main framebuffer, and their scissor boxes alike. (1, 1, 0, 0) = off.
++ */
++void GXSetProjectionTransform(f32 scaleX, f32 scaleY, f32 offsetX, f32 offsetY);
++
++/**
++ * Anisotropic filtering of every mipmapped texture the game samples: at least maxAniso (1, 2, 4, 8 or 16;
++ * 1 = the game's own). Not with sharp textures (AuroraSetSharpTextures). Applies from the next draw.
++ */
++void AuroraSetTextureAnisotropy(u8 maxAniso);
++
++/**
++ * Added to every texture's LOD bias (negative: sharper, from finer mip levels). 0 = the game's own.
++ */
++void AuroraSetTextureLodBias(f32 bias);
++
++/** Supersampling: the framebuffer factor (1-4) times its size, area-downsampled to the window. Default 1. */
++void aurora_set_supersample(int factor);
++
++/** A filter over the presented picture (not ImGui): 0 none, 1 CRT, 2 paper grain, 3 sharpen. Default 0. */
++void aurora_set_post_filter(int mode);
++
++/**
++ * Variable refresh rate: present without waiting for vblank (Immediate) whatever vsync says, so a VRR display
++ * shows each frame when it comes; the application paces. Default false.
++ */
++void aurora_set_vrr(bool enabled);
++
++#ifdef __cplusplus
++}
++#endif
++
++#endif
+diff --git a/lib/aurora.cpp b/lib/aurora.cpp
+index f70e532..0b6bf5b 100644
+--- a/lib/aurora.cpp
++++ b/lib/aurora.cpp
+@@ -1,4 +1,5 @@
+ #include <aurora/aurora.h>
++#include <aurora/display.h>
+ #include <aurora/time.hpp>
+ 
+ #ifdef AURORA_ENABLE_GX
+@@ -487,5 +488,20 @@ void aurora_set_resampler(AuroraSampler sampler) {
+   (void)sampler;
+ #endif
+ }
++void aurora_set_supersample(int factor) { aurora::window::set_super_sample(factor); }
++void aurora_set_post_filter(int mode) {
++#ifdef AURORA_ENABLE_GX
++  aurora::webgpu::set_post_filter(mode);
++#else
++  (void)mode;
++#endif
++}
++void aurora_set_vrr(bool enabled) {
++#ifdef AURORA_ENABLE_GX
++  aurora::webgpu::set_vrr(enabled);
++#else
++  (void)enabled;
++#endif
++}
+ void aurora_set_timescale(float scale) { aurora::time::set_scale(scale); }
+ float aurora_get_timescale() { return aurora::time::scale(); }
+diff --git a/lib/dolphin/gx/GXAurora.cpp b/lib/dolphin/gx/GXAurora.cpp
+index 2723751..cf2dbd0 100644
+--- a/lib/dolphin/gx/GXAurora.cpp
++++ b/lib/dolphin/gx/GXAurora.cpp
+@@ -1,4 +1,5 @@
+ #include "dolphin/gx/GXAurora.h"
++#include "aurora/display.h"
+ 
+ #include <limits>
+ 
+@@ -100,6 +101,24 @@ void GX2SetPolygonOffset(f32 mFrontOffset, f32 mFrontScale, f32 mBackOffset, f32
+   GX_WRITE_F32(mClamp);
+ }
+ 
++// aurora/display.h
++namespace aurora::gfx {
++void set_texture_anisotropy(u8 maxAniso) noexcept; // gfx/texture.cpp
++void set_texture_lod_bias(float bias) noexcept;
++} // namespace aurora::gfx
++
++void GXSetProjectionTransform(f32 scaleX, f32 scaleY, f32 offsetX, f32 offsetY) {
++  GX_WRITE_AURORA(GX_AURORA_SET_PROJECTION_TRANSFORM);
++  GX_WRITE_F32(scaleX);
++  GX_WRITE_F32(scaleY);
++  GX_WRITE_F32(offsetX);
++  GX_WRITE_F32(offsetY);
++}
++
++void AuroraSetTextureAnisotropy(u8 maxAniso) { aurora::gfx::set_texture_anisotropy(maxAniso); }
++
++void AuroraSetTextureLodBias(f32 bias) { aurora::gfx::set_texture_lod_bias(bias); }
++
+ void GXCreateFrameBuffer(u32 width, u32 height) {
+   GX_WRITE_AURORA(GX_AURORA_BEGIN_OFFSCREEN);
+   GX_WRITE_U32(width);
+diff --git a/lib/gfx/texture.cpp b/lib/gfx/texture.cpp
+index 7c43f9d..ef30e55 100644
+--- a/lib/gfx/texture.cpp
++++ b/lib/gfx/texture.cpp
+@@ -21,6 +21,13 @@ namespace aurora::gfx {
+ using webgpu::g_device;
+ using webgpu::g_queue;
+ 
++static u16 s_forcedAnisotropy = 1; // AuroraSetTextureAnisotropy
++static float s_lodBias = 0.f;      // AuroraSetTextureLodBias
++
++void set_texture_anisotropy(u8 maxAniso) noexcept { s_forcedAnisotropy = std::clamp<u16>(maxAniso, 1, 16); }
++void set_texture_lod_bias(float bias) noexcept { s_lodBias = bias; }
++float texture_lod_bias() noexcept { return s_lodBias; }
++
+ namespace {
+ constexpr Module Log{"aurora::gfx"};
+ 
+@@ -329,6 +336,9 @@ wgpu::SamplerDescriptor TextureBind::get_descriptor() const noexcept {
+     minLod = 0.f;
+     maxLod = 0.f;
+   }
++  if (!s_sharpTextures && s_forcedAnisotropy > maxAnisotropy) {
++    maxAnisotropy = s_forcedAnisotropy;
++  }
+   if ((ref && ref->hasArbitraryMips) || !mipsEnabled) {
+     maxAnisotropy = 1;
+   } else if (maxAnisotropy > 1) {
+diff --git a/lib/gfx/texture.hpp b/lib/gfx/texture.hpp
+index 600a430..6a00d11 100644
+--- a/lib/gfx/texture.hpp
++++ b/lib/gfx/texture.hpp
+@@ -143,4 +143,6 @@ struct TextureBind {
+   [[nodiscard]] wgpu::SamplerDescriptor get_descriptor() const noexcept;
+   operator bool() const noexcept { return ref.operator bool(); }
+ };
++// AuroraSetTextureLodBias: added to every texture's own
++float texture_lod_bias() noexcept;
+ } // namespace aurora::gfx
+diff --git a/lib/gx/command_processor.cpp b/lib/gx/command_processor.cpp
+index 69e3b64..93d4001 100644
+--- a/lib/gx/command_processor.cpp
++++ b/lib/gx/command_processor.cpp
+@@ -2,6 +2,7 @@
+ 
+ #include "../gfx/recording.hpp"
+ #include "../internal.hpp"
++#include "aurora/display.h"
+ #include "dolphin/gd/GDGeometry.h"
+ #include "dolphin/gx/GXAurora.h"
+ #include "gx.hpp"
+@@ -906,6 +907,16 @@ void handle_aurora(ByteReader& reader) noexcept {
+     if (indexCount != 0) {
+       push_gx_draw(prim, fmt, vtxCount, vertRange, idxRange, indexCount);
+     }
++  } else if (subCmd == GX_AURORA_SET_PROJECTION_TRANSFORM) {
++    std::array<float, 4> transform;
++    for (auto& v : transform) {
++      v = reader.read<f32>();
++    }
++    if (g_gxState.projTransform != transform) {
++      g_gxState.projTransform = transform;
++      g_gxState.dirty |= DirtyUniform;
++      set_logical_scissor(g_gxState.logicalScissor); // the scissor box moves with the draws
++    }
+   } else if (subCmd == GX_AURORA_DEBUG_GROUP_PUSH) {
+     auto label = reader.read_string();
+     gfx::push_debug_group(std::move(label));
+diff --git a/lib/gx/gx.cpp b/lib/gx/gx.cpp
+index 490de4c..a619fa1 100644
+--- a/lib/gx/gx.cpp
++++ b/lib/gx/gx.cpp
+@@ -272,10 +272,33 @@ gfx::ClipRect map_logical_scissor(const gfx::ClipRect& logicalScissor) noexcept
+   const float scaleX = static_cast<float>(targetWidth) / static_cast<float>(logicalFbWidth);
+   const float scaleY = static_cast<float>(targetHeight) / static_cast<float>(logicalFbHeight);
+ 
+-  const float left = static_cast<float>(logicalScissor.x) * scaleX;
+-  const float top = static_cast<float>(logicalScissor.y) * scaleY;
+-  const float right = static_cast<float>(logicalScissor.x + logicalScissor.width) * scaleX;
+-  const float bottom = static_cast<float>(logicalScissor.y + logicalScissor.height) * scaleY;
++  float left = static_cast<float>(logicalScissor.x) * scaleX;
++  float top = static_cast<float>(logicalScissor.y) * scaleY;
++  float right = static_cast<float>(logicalScissor.x + logicalScissor.width) * scaleX;
++  float bottom = static_cast<float>(logicalScissor.y + logicalScissor.height) * scaleY;
++  if (const auto& t = g_gxState.projTransform;
++      (t[0] != 1.f || t[1] != 1.f || t[2] != 0.f || t[3] != 0.f) && !gfx::is_offscreen()) {
++    // GXSetProjectionTransform: the box moved as the draws are, in the viewport's NDC (the x offset after
++    // GXSetProjectionScaleX, as in fill_uniform), and kept at least as large as it was: smaller draws stay
++    // inside it, larger ones are not cut (a full-screen box stays full-screen)
++    const auto& vp = g_gxState.renderViewport;
++    if (vp.width > 0.f && vp.height > 0.f) {
++      const float ox = t[2] * g_gxState.projScaleX;
++      const auto mapX = [&](float x) {
++        const float ndc = (x - vp.left) / vp.width * 2.f - 1.f;
++        return vp.left + (ndc * t[0] + ox + 1.f) * 0.5f * vp.width;
++      };
++      const auto mapY = [&](float y) {
++        const float ndc = 1.f - (y - vp.top) / vp.height * 2.f;
++        return vp.top + (1.f - (ndc * t[1] + t[3])) * 0.5f * vp.height;
++      };
++      const float l = mapX(left), r = mapX(right), tp = mapY(top), b = mapY(bottom);
++      left = std::min({left, l, r});
++      right = std::max({right, l, r});
++      top = std::min({top, tp, b});
++      bottom = std::max({bottom, tp, b});
++    }
++  }
+ 
+   const auto mappedLeft = std::clamp(static_cast<int32_t>(std::floor(left)), 0, static_cast<int32_t>(targetWidth));
+   const auto mappedTop = std::clamp(static_cast<int32_t>(std::floor(top)), 0, static_cast<int32_t>(targetHeight));
+diff --git a/lib/gx/gx.hpp b/lib/gx/gx.hpp
+index 2547bc2..eee3031 100644
+--- a/lib/gx/gx.hpp
++++ b/lib/gx/gx.hpp
+@@ -431,6 +431,8 @@ struct GXState {
+   std::bitset<0x100> cpRegValid;
+   std::array<u32, XfRegCount> xfRegCache{};
+   std::bitset<XfRegCount> xfRegValid;
++  // GXSetProjectionTransform: scale x, scale y, offset x, offset y (main framebuffer only)
++  std::array<float, 4> projTransform{1.f, 1.f, 0.f, 0.f};
+ 
+   void clearVtxSizeCache() { lastVtxFmt = GX_MAX_VTXFMT; }
+ };
+diff --git a/lib/gx/shader_info.cpp b/lib/gx/shader_info.cpp
+index b3cea57..829e53b 100644
+--- a/lib/gx/shader_info.cpp
++++ b/lib/gx/shader_info.cpp
+@@ -24,7 +24,7 @@ Vec4<float> texture_size_bias(const gfx::TextureBind& tex) {
+     const float replacementScale = static_cast<float>(tex.ref->size.width) / std::max(width, 1.f);
+     vpBias = std::log2(viewportScale / std::max(replacementScale, 0.001f));
+   }
+-  return {width, height, tex.texObj.lod_bias() + vpBias, 0.0f};
++  return {width, height, tex.texObj.lod_bias() + vpBias + gfx::texture_lod_bias(), 0.0f};
+ }
+ 
+ void color_arg_reg_info(GXTevColorArg arg, const TevStage& stage, ShaderInfo& info) {
+@@ -400,6 +400,15 @@ static void fill_uniform(ByteBuffer& buf, const ShaderInfo& info) noexcept {
+   } else {
+     proj.m2 = proj.m2 + proj.m3;
+   }
++
++  if (const auto& t = g_gxState.projTransform;
++      (t[0] != 1.f || t[1] != 1.f || t[2] != 0.f || t[3] != 0.f) && !gfx::is_offscreen()) {
++    // GXSetProjectionTransform, x' = x * sx + ox * w: the offset in NDC units whatever the projection, and in
++    // the game's own (before GXSetProjectionScaleX, already in m0)
++    const float ox = t[2] * g_gxState.projScaleX;
++    proj.m0 = proj.m0 * Vec4{t[0], t[0], t[0], t[0]} + proj.m3 * Vec4{ox, ox, ox, ox};
++    proj.m1 = proj.m1 * Vec4{t[1], t[1], t[1], t[1]} + proj.m3 * Vec4{t[3], t[3], t[3], t[3]};
++  }
+   buf.append(proj);
+ 
+   for (int i = 0; i < MaxPnMtx; i++) {
+diff --git a/lib/webgpu/gpu.cpp b/lib/webgpu/gpu.cpp
+index 46132c4..1144e76 100644
+--- a/lib/webgpu/gpu.cpp
++++ b/lib/webgpu/gpu.cpp
+@@ -3,6 +3,7 @@
+ #include <algorithm>
+ #include <atomic>
+ #include <array>
++#include <chrono>
+ #include <cmath>
+ #include <cstdint>
+ #include <span>
+@@ -67,6 +68,8 @@ bool g_astcTexturesSupported = false;
+ bool g_textureComponentSwizzleSupported = false;
+ static std::atomic_bool g_initialized = false;
+ static std::atomic_bool g_vsyncEnabled = true;
++static std::atomic_bool g_vrrEnabled = false; // aurora_set_vrr
++static std::atomic_int g_postFilter = 0;      // aurora_set_post_filter
+ 
+ namespace {
+ 
+@@ -93,6 +96,8 @@ struct ResampleUniformBlock {
+   uint32_t samplerMode = 0;
+   float frameWidth = 0.f;
+   float frameHeight = 0.f;
++  uint32_t postMode = 0; // aurora_set_post_filter
++  float time = 0.f;      // seconds, for the filters that move
+ };
+ 
+ constexpr std::string_view resampleShaderSource = R"(
+@@ -100,6 +105,8 @@ struct Uniforms {
+     sampler_mode: u32,
+     frame_width: f32,
+     frame_height: f32,
++    post_mode: u32,
++    time: f32,
+ };
+ 
+ struct VertexOutput {
+@@ -179,13 +186,70 @@ fn sample_area(frag_position: vec4<f32>) -> vec4<f32> {
+ 
+ // END AREA SAMPLER REGION
+ 
++// Post filters (aurora_set_post_filter), in the presented picture's pixels
++
++fn hash12(p: vec2<f32>) -> f32 {
++    var p3 = fract(vec3<f32>(p.xyx) * 0.1031);
++    p3 += dot(p3, p3.yzx + 33.33);
++    return fract((p3.x + p3.y) * p3.z);
++}
++
++fn value_noise(p: vec2<f32>) -> f32 {
++    let i = floor(p);
++    let f = fract(p);
++    let u = f * f * (3.0 - 2.0 * f);
++    return mix(mix(hash12(i), hash12(i + vec2(1.0, 0.0)), u.x),
++               mix(hash12(i + vec2(0.0, 1.0)), hash12(i + vec2(1.0, 1.0)), u.x), u.y);
++}
++
++// CRT: the game's 480 lines as scanlines, an aperture-grille mask, a soft vignette
++fn post_crt(color: vec3<f32>, uv: vec2<f32>, frag: vec2<f32>) -> vec3<f32> {
++    let line = uv.y * 480.0;
++    let scan = 0.72 + 0.28 * pow(abs(cos(line * 3.14159265)), 1.6);
++    let lineScale = uniforms.frame_height / 480.0;
++    var mask = vec3<f32>(1.0);
++    if (lineScale >= 2.0) {
++        let m = u32(frag.x) % 3u;
++        mask = select(select(vec3(0.9, 0.9, 1.08), vec3(0.9, 1.08, 0.9), m == 1u), vec3(1.08, 0.9, 0.9), m == 0u);
++    }
++    let d = uv - vec2(0.5);
++    let vignette = clamp(1.0 - dot(d, d) * 0.9, 0.0, 1.0);
++    return color * select(1.0, scan, lineScale >= 1.5) * mask * vignette * 1.12;
++}
++
++// Paper grain: still fibres and speckle over the picture, a little warmer
++fn post_paper(color: vec3<f32>, frag: vec2<f32>) -> vec3<f32> {
++    let scale = max(uniforms.frame_height / 480.0, 1.0);
++    let p = frag / scale;
++    let fibres = value_noise(p * vec2(0.08, 0.5)) * 0.5 + value_noise(p * vec2(0.5, 0.06)) * 0.5;
++    let speckle = hash12(floor(p * 1.5));
++    let grain = 0.93 + 0.05 * fibres + 0.03 * speckle;
++    return color * grain * vec3(1.02, 1.0, 0.95);
++}
++
++// Sharpen: an unsharp mask from the four neighbours
++fn post_sharpen(color: vec3<f32>, uv: vec2<f32>) -> vec3<f32> {
++    let px = vec2(1.0 / max(uniforms.frame_width, 1.0), 1.0 / max(uniforms.frame_height, 1.0));
++    let n = textureSample(t, s, uv + vec2(0.0, -px.y)).rgb + textureSample(t, s, uv + vec2(0.0, px.y)).rgb +
++            textureSample(t, s, uv + vec2(-px.x, 0.0)).rgb + textureSample(t, s, uv + vec2(px.x, 0.0)).rgb;
++    return clamp(color + (color - n * 0.25) * 0.6, vec3(0.0), vec3(1.0));
++}
++
+ @fragment
+ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
+     var color = textureSample(t, s, in.uv);
+     if (uniforms.sampler_mode == 1u) {
+         color = sample_area(in.position);
+     }
+-    return vec4(color.rgb, 1.0);
++    var rgb = color.rgb;
++    if (uniforms.post_mode == 1u) {
++        rgb = post_crt(rgb, in.uv, in.position.xy);
++    } else if (uniforms.post_mode == 2u) {
++        rgb = post_paper(rgb, in.position.xy);
++    } else if (uniforms.post_mode == 3u) {
++        rgb = post_sharpen(rgb, in.uv);
++    }
++    return vec4(rgb, 1.0);
+ }
+ )"sv;
+ 
+@@ -239,6 +303,10 @@ wgpu::PresentMode select_present_mode(const wgpu::SurfaceCapabilities& capabilit
+     }
+     return false;
+   };
++  // VRR: a frame shown when it comes (the display follows it); the application paces
++  if (g_vrrEnabled.load(std::memory_order_acquire) && supports(wgpu::PresentMode::Immediate)) {
++    return wgpu::PresentMode::Immediate;
++  }
+   if (vsync_enabled()) {
+     if (supports(wgpu::PresentMode::FifoRelaxed)) {
+       return wgpu::PresentMode::FifoRelaxed;
+@@ -255,6 +323,18 @@ wgpu::PresentMode select_present_mode(const wgpu::SurfaceCapabilities& capabilit
+   return wgpu::PresentMode::Fifo;
+ }
+ 
++void set_post_filter(int mode) noexcept { g_postFilter.store(std::clamp(mode, 0, 3), std::memory_order_relaxed); }
++
++void set_vrr(bool enabled) noexcept {
++  if (g_vrrEnabled.exchange(enabled, std::memory_order_acq_rel) == enabled) {
++    return;
++  }
++  g_graphicsConfig.surfaceConfiguration.presentMode = select_present_mode(g_surfaceCapabilities);
++  Log.info("VRR {}: present mode {}", enabled ? "on" : "off",
++           magic_enum::enum_name(g_graphicsConfig.surfaceConfiguration.presentMode));
++  window::push_custom_event(window::CustomEvent::RefreshSurface);
++}
++
+ TextureWithSampler create_render_texture(uint32_t width, uint32_t height, bool multisampled) {
+   const wgpu::Extent3D size{
+       .width = width,
+@@ -709,10 +789,15 @@ const TextureWithSampler& resample_present_source(const wgpu::CommandEncoder& en
+     g_resampledFrameBuffer = create_render_texture(width, height, false);
+   }
+ 
++  // supersampled: the area filter averages every source pixel, not four
++  const bool larger = source.size.width >= width * 2 || source.size.height >= height * 2;
+   const ResampleUniformBlock uniform{
+-      .samplerMode = sampler_mode(g_Resampler),
++      .samplerMode = larger && window::super_sample() > 1 ? 1u : sampler_mode(g_Resampler),
+       .frameWidth = static_cast<float>(width),
+       .frameHeight = static_cast<float>(height),
++      .postMode = static_cast<uint32_t>(g_postFilter.load(std::memory_order_relaxed)),
++      .time = std::fmod(std::chrono::duration<float>(std::chrono::steady_clock::now().time_since_epoch()).count(),
++                        3600.f),
+   };
+   AURORA_ASSERT(gfx::render_worker::is_worker_thread(), "Present resample queue write must run on the render worker");
+   g_queue.WriteBuffer(g_ResampleUniformBuffer, 0, &uniform, sizeof(uniform));
+diff --git a/lib/webgpu/gpu.hpp b/lib/webgpu/gpu.hpp
+index f479191..2792b0a 100644
+--- a/lib/webgpu/gpu.hpp
++++ b/lib/webgpu/gpu.hpp
+@@ -65,6 +65,8 @@ extern bool g_textureComponentSwizzleSupported;
+ extern bool g_dualSourceBlendingSupported;
+ 
+ bool initialize(AuroraBackend backend, bool allowCpu);
++void set_post_filter(int mode) noexcept; // aurora_set_post_filter
++void set_vrr(bool enabled) noexcept;     // aurora_set_vrr
+ void shutdown();
+ void release_surface() noexcept;
+ bool refresh_surface(bool recreate = true);
+diff --git a/lib/window.cpp b/lib/window.cpp
+index 3bb7f9e..920067a 100644
+--- a/lib/window.cpp
++++ b/lib/window.cpp
+@@ -57,6 +57,7 @@ std::atomic_bool g_surfaceReady = false;
+ #else
+ std::atomic_bool g_surfaceReady = true;
+ #endif
++int g_superSample = 1; // aurora_set_supersample: the framebuffer this many times larger
+ bool g_lastPaused = false;
+ bool g_gotFocus = false;
+ 
+@@ -501,6 +502,12 @@ AuroraWindowSize get_window_size() {
+       fb_h = fitH;
+     }
+   }
++  if (g_superSample > 1 && fb_w > 0 && fb_h > 0) {
++    // aurora_set_supersample, within WebGPU's default 8192 texture limit
++    const int factor = std::max(1, std::min(g_superSample, 8192 / std::max(fb_w, fb_h)));
++    fb_w *= factor;
++    fb_h *= factor;
++  }
+ 
+   const float scale = SDL_GetWindowDisplayScale(g_window);
+   return {
+@@ -627,6 +634,17 @@ void set_frame_buffer_aspect_fit(bool fit) {
+ 
+ void set_background_input(bool value) { SDL_SetHint(SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS, value ? "1" : "0"); }
+ 
++void set_super_sample(int factor) {
++  factor = std::clamp(factor, 1, 4);
++  if (g_superSample == factor) {
++    return;
++  }
++  g_superSample = factor;
++  request_frame_buffer_resize();
++}
++
++int super_sample() { return g_superSample; }
++
+ } // namespace aurora::window
+ 
+ #if defined(SDL_PLATFORM_ANDROID)
+diff --git a/lib/window.hpp b/lib/window.hpp
+index ce558ce..7028c94 100644
+--- a/lib/window.hpp
++++ b/lib/window.hpp
+@@ -27,6 +27,8 @@ public:
+ };
+ 
+ bool initialize();
++void set_super_sample(int factor); // aurora_set_supersample
++int super_sample();
+ bool initialize_event_watch();
+ bool push_custom_event(CustomEvent eventType);
+ void shutdown();
+-- 
+2.53.0.windows.1
+

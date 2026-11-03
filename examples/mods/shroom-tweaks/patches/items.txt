@@ -1,0 +1,6 @@
+# An example of a patches file: "target = value" on each line.
+# Targets are the game's own tables by name; docs/MOD_DATA.md lists them.
+
+itemDataTable[ITEM_MUSHROOM].hp_restored = 10   # 5 in the original
+itemDataTable[ITEM_MUSHROOM].buy_price = 3      # 5 in the original
+itemDataTable[ITEM_MUSHROOM].discount_price = 2

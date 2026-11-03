@@ -1,0 +1,435 @@
+// dou_07 (洞窟, Pirate's Grotto): room where the Black Key (0x24) opens a chest and the paper genie (peramajin) gives the Boat Curse (story 246, 247).
+// Elmos (erumosu) appears here; P-Down D-Up badge; the door leads to dou_08.
+#include "battle/battle_unit.h"
+#include "evt/evt_cmd.h"
+
+#include "driver/mobjdrv.h"
+#include "driver/animdrv.h"
+#include "evt/evt_bero.h"
+#include "npc_event.h"
+#include "dou.h"
+#include "evt/evt_npc.h"
+#include "mario/mario_pouch.h"
+#include "evt/evt_cam.h"
+#include "evt/evt_img.h"
+#include "evt/evt_item.h"
+#include "evt/evt_lecture.h"
+#include "evt/evt_map.h"
+#include "evt/evt_mario.h"
+#include "evt/evt_mobj.h"
+#include "evt/evt_msg.h"
+#include "evt/evt_paper.h"
+#include "evt/evt_party.h"
+#include "evt/evt_pouch.h"
+#include "evt/evt_snd.h"
+#include "evt/evt_sub.h"
+#include "evt/evt_window.h"
+#include "pmario_sound.h"
+#include "version.h"
+#include "evt/evt_story.h"
+
+static USER_FUNC(bgm_start_wait);
+static void majin_callback(s32 type);
+
+extern EvtWord erumosu_dead[];
+static NpcSetupInfo npcEnt[2];
+static BeroEntry bero_entry_data[2];
+static s32 key_tbl[2];
+extern EvtWord apper_elmos[];
+extern EvtWord peramajin_before[];
+extern EvtWord peramajin_after[];
+
+/** Registration script of the Ember (エルモス, erumosu) enemy: does nothing. */
+static EVT_BEGIN(erumosu_regl)
+    RETURN
+EVT_END()
+
+/**
+ * Death event of the Ember in dou_07: sets GSWF_DOU07_EMBER_DEFEATED,
+ * plays the normal enemy death effect and drops the Black Key (0x24) at its position (it falls in the US and PAL
+ * releases, is launched upwards in the JP and demo versions).
+ */
+EVT_BEGIN(erumosu_dead)
+    CALL(evt_npc_get_position, STRING("me"), LW(0), LW(1), LW(2))
+    SET_VALUE(GSWF(GSWF_DOU07_EMBER_DEFEATED), 1)
+    SPAWN_EVENT(enemy_event_dead_event)
+#if VERSION >= VERSION_US
+    WAIT_MS(1000)
+    ADD(LW(1), 150)
+    CALL(evt_item_entry, STRING("item_key"), ITEM_BLACK_KEY_0x24, LW(0), LW(1), LW(2), ITEM_ENTRY_FALL, GSWF(GSWF_DOU07_BLACK_KEY_TAKEN), 0)
+#else
+    WAIT_MS(500)
+    CALL(evt_item_entry, STRING("item_key"), ITEM_BLACK_KEY_0x24, LW(0), LW(1), LW(2), ITEM_ENTRY_LAUNCH, GSWF(GSWF_DOU07_BLACK_KEY_TAKEN), 0)
+#endif
+    RETURN
+EVT_END()
+
+/** NPC setup of dou_07: the Ember (Elmos) that appears in the room. */
+static NpcSetupInfo npcEnt[] = {
+    {
+        "エルモス", // name
+        NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM | NPC_FLAG_ENEMY, // flags
+        0, // reactionFlags
+        bubble_init_event, // initEvent
+        bubble_move_event, // regularEvent
+        NULL, // talkEvent
+        erumosu_dead, // deadEvent
+        bubble_find_event, // findEvent
+        bubble_lost_event, // lostEvent
+        bubble_return_event, // returnEvent
+        NULL, 0, // blowEvent..territoryType
+        {100.0f, -6.0f, -37.0f}, // territoryBase
+        {50.0f, 50.0f, 50.0f}, // territoryLoiter
+        200.0f, // searchRange
+        300.0f, // searchAngle
+        1000.0f, // homingRange
+        360.0f, // homingAngle
+        15, // battleInfoId
+    },
+    {0},
+};
+
+/** Exits (beros) of this room: s_bero to dou_08. */
+static BeroEntry bero_entry_data[] = {
+    {
+        "s_bero", // hitName
+        0, 0, // type..sfxId
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
+        0, 0, // centerPositionY..centerPositionZ
+        -1, // length
+        NULL, // enterEvent
+        -1, // caseType
+        NULL, // exitEvent
+        "dou_08", // nextMapName
+        "n_bero", // nextBeroName
+        1, // enterAnimeType
+        1, // exitAnimeType
+        0, 0, // enterAnimeArg..exitAnimeArg
+    },
+    {0},
+};
+
+/** Items offered in the item menu at the Black Key chest: only the Black Key. */
+static s32 key_tbl[] = {
+    ITEM_BLACK_KEY_0x24, -1,
+};
+
+/** The Ember appears: sets GSWF_DOU07_EMBER_APPEARED and fades its NPC in over one second. */
+EVT_BEGIN(apper_elmos)
+    SET_VALUE(GSWF(GSWF_DOU07_EMBER_APPEARED), 1)
+    CALL(evt_npc_set_position, STRING("エルモス"), 100, -6, -37)
+    CALL(evt_npc_set_color, STRING("エルモス"), 255, 255, 255, 0)
+    CALL(evt_sub_intpl_msec_init, 11, 0, 255, 1000)
+    LOOP(0)
+        CALL(evt_sub_intpl_msec_get_value)
+        CALL(evt_npc_set_color, STRING("エルモス"), 255, 255, 255, LW(0))
+        IF_INT_EQUAL(LW(1), 0)
+            BREAK_LOOP
+        END_IF
+        WAIT_FRAMES(1)
+    END_LOOP
+    RETURN
+EVT_END()
+
+/**
+ * Interact event of the black chest (mobj_box00), run before it opens.
+ * The first time the chest speaks to Mario and the partner (messages stg1_gon_majin4_01 to 07,
+ * with its lid wobbling), the Ember appears and the story moves to STORY_STG5_21_GROTTO_KEY.
+ * After that it asks for the Black Key (0x24) from the item menu: no key or a cancel closes the chest again;
+ * choosing the key removes it from the pouch so the chest can open.
+ */
+EVT_BEGIN(peramajin_before)
+    // The Ember has already appeared (Black Key stage): the chest now wants the key.
+    IF_INT_EQUAL(GSW(GSW_STORY_PROGRESS), STORY_STG5_21_GROTTO_KEY)
+        CALL(evt_mario_key_onoff, 0)
+        CALL(evt_mario_normalize)
+        CALL(evt_party_stop, 0)
+        CALL(evt_mario_adjust_dir)
+        CALL(evt_mobj_get_position, STRING("mobj_box00"), LW(0), LW(1), LW(2))
+        ADD(LW(1), 30)
+        BEGIN_INLINE_EVENT
+            CALL(evt_mario_get_pos, 0, LW(3), LW(4), LW(5))
+            IF_INT_LESS_OR_EQUAL(LW(3), LW(0))
+                CALL(evt_mario_set_dir, 90, 200, 0)
+            ELSE
+                CALL(evt_mario_set_dir, 270, 200, 0)
+            END_IF
+        END_INLINE_EVENT
+        // Mario has no Black Key: the chest tells him to beat the ghost and get it, then stays shut.
+        CALL(evt_pouch_check_item, ITEM_BLACK_KEY_0x24, LW(10))
+        IF_INT_LESS_OR_EQUAL(LW(10), 0)
+            CALL(evt_msg_toge, 2, LW(0), LW(1), LW(2))
+            CALL(evt_msg_print, 0, STRING("stg1_gon_majin4_08"), PTR(majin_callback), 0)
+            CALL(evt_mobj_exec_cancel, STRING("mobj_box00"))
+            CALL(evt_party_run, 0)
+            CALL(evt_mario_key_onoff, 1)
+            RETURN
+        END_IF
+        // Mario has the key: the chest asks him to pick it from the item menu.
+        CALL(evt_msg_toge, 2, LW(0), LW(1), LW(2))
+        CALL(evt_msg_print, 0, STRING("stg1_gon_majin4_09"), PTR(majin_callback), 0)
+#if VERSION <= VERSION_DEMO_JP
+        CALL(evt_win_item_select, PTR(key_tbl), LW(10))
+#else
+        CALL(evt_win_item_select, 0, PTR(key_tbl), LW(10), 0)
+#endif
+        // Mario cancels the menu: the chest sulks and stays shut.
+        IF_INT_EQUAL(LW(10), -1)
+            CALL(evt_msg_toge, 2, LW(0), LW(1), LW(2))
+            CALL(evt_msg_print, 0, STRING("stg1_gon_majin4_10"), PTR(majin_callback), 0)
+            CALL(evt_mobj_exec_cancel, STRING("mobj_box00"))
+            CALL(evt_party_run, 0)
+            CALL(evt_mario_key_onoff, 1)
+            RETURN
+        END_IF
+        // Mario picks the key: the partner steps aside and the chest says it will start its curse; the key is
+        // used up.
+        BEGIN_INLINE_EVENT
+            CALL(evt_mario_get_pos, 0, LW(3), LW(4), LW(5))
+            ADD(LW(3), 35)
+            ADD(LW(5), 15)
+            CALL(evt_party_move_pos2, 0, LW(3), LW(5), FLOAT(80.0f))
+            IF_INT_LESS_OR_EQUAL(LW(3), LW(0))
+                CALL(evt_party_set_dir, 0, 90, -1)
+            ELSE
+                CALL(evt_party_set_dir, 0, 270, -1)
+            END_IF
+        END_INLINE_EVENT
+        CALL(evt_msg_toge, 2, LW(0), LW(1), LW(2))
+        CALL(evt_msg_print, 0, STRING("stg1_gon_majin4_11"), PTR(majin_callback), 0)
+#if VERSION >= VERSION_JP
+        CALL(evt_mario_set_pose, STRING("M_I_N"))
+#endif
+        CALL(evt_cam3d_evt_set, -33, 92, 412, -33, 36, 92, 500, 11)
+        CALL(evt_pouch_remove_item, ITEM_BLACK_KEY_0x24, LW(10))
+        CALL(evt_party_run, 0)
+        CALL(evt_mario_key_onoff, 1)
+        RETURN
+    END_IF
+    // First visit (before the Ember has appeared): Mario faces the chest, which shouts and wobbles.
+    CALL(evt_mario_key_onoff, 0)
+    CALL(evt_mario_normalize)
+    CALL(evt_party_stop, 0)
+    CALL(evt_mario_adjust_dir)
+    CALL(evt_mobj_get_position, STRING("mobj_box00"), LW(0), LW(1), LW(2))
+    ADD(LW(1), 30)
+    BEGIN_INLINE_EVENT
+        CALL(evt_mario_get_pos, 0, LW(3), LW(4), LW(5))
+        IF_INT_LESS_OR_EQUAL(LW(3), LW(0))
+            CALL(evt_mario_set_dir, 90, 200, 0)
+        ELSE
+            CALL(evt_mario_set_dir, 270, 200, 0)
+        END_IF
+    END_INLINE_EVENT
+    CALL(evt_msg_toge, 2, LW(0), LW(1), LW(2))
+    CALL(evt_msg_print, 0, STRING("stg1_gon_majin4_01"), 0, 0)
+    CALL(evt_snd_sfxon_3d, STRING("SFX_MOBJ_BLACKBOX_SWING1"), LW(0), LW(1), LW(2), LW(15))
+    CALL(evt_mobj_set_anim, STRING("mobj_box00"), STRING("A_3"))
+    CALL(evt_mobj_wait_animation_end, STRING("mobj_box00"))
+    CALL(evt_snd_sfxoff, LW(15))
+    WAIT_MS(300)
+    // The chest rejoices that someone finally came, then asks to be left to its spiel as Mario reacts.
+    CALL(evt_msg_toge, 2, LW(0), LW(1), LW(2))
+    CALL(evt_msg_print, 0, STRING("stg1_gon_majin4_02"), PTR(majin_callback), 0)
+    CALL(evt_mario_set_pose, STRING("M_I_2"))
+    WAIT_MS(800)
+    CALL(evt_mario_set_pose, STRING("M_S_1"))
+    CALL(evt_msg_toge, 2, LW(0), LW(1), LW(2))
+    CALL(evt_msg_print, 0, STRING("stg1_gon_majin4_03"), PTR(majin_callback), 0)
+    CALL(evt_mario_set_pose, STRING("M_N_2"))
+    WAIT_MS(800)
+    CALL(evt_mario_set_pose, STRING("M_S_1"))
+    CALL(evt_msg_toge, 2, LW(0), LW(1), LW(2))
+    CALL(evt_msg_print, 0, STRING("stg1_gon_majin4_04"), PTR(majin_callback), 0)
+    CALL(evt_mario_set_pose, STRING("M_I_2"))
+    WAIT_MS(800)
+    CALL(evt_mario_set_pose, STRING("M_S_1"))
+    CALL(evt_msg_toge, 2, LW(0), LW(1), LW(2))
+    CALL(evt_msg_print, 0, STRING("stg1_gon_majin4_05"), PTR(majin_callback), 0)
+    CALL(evt_mario_set_pose, STRING("M_I_2"))
+    WAIT_MS(800)
+    CALL(evt_mario_set_pose, STRING("M_S_1"))
+    // It grumbles that this is the fourth cursing chest Mario has met and gives in.
+    CALL(evt_msg_toge, 2, LW(0), LW(1), LW(2))
+    CALL(evt_msg_print, 0, STRING("stg1_gon_majin4_06"), PTR(majin_callback), 0)
+    CALL(evt_mario_set_pose, STRING("M_N_2"))
+    WAIT_MS(800)
+    CALL(evt_mario_set_pose, STRING("M_S_1"))
+    CALL(evt_msg_toge, 2, LW(0), LW(1), LW(2))
+    CALL(evt_msg_print, 0, STRING("stg1_gon_majin4_07"), PTR(majin_callback), 0)
+    // The Ember ghost appears from the chest and the story advances to the Grotto key stage.
+    CALL(evt_snd_sfxon, STRING("SFX_STG5_ELMOS_APPEAR1"), 0)
+    CALL_CHILD(apper_elmos)
+    CALL(evt_mobj_exec_cancel, STRING("mobj_box00"))
+    SET_VALUE(GSW(GSW_STORY_PROGRESS), STORY_STG5_21_GROTTO_KEY)
+    CALL(evt_party_run, 0)
+    CALL(evt_mario_key_onoff, 1)
+    RETURN
+EVT_END()
+
+/**
+ * Runs after the black chest opens: gives the Boat Curse, plays the paper genie's (peramajin) music,
+ * makes the genie unfold from the chest and runs the boat-mode lecture (ship_majin_lecture, evt_lect_dou.c) with
+ * Mario flickering in and out, then the genie folds away and the partner comments (stg1_gon_majin4_19).
+ * Sets STORY_STG5_21_01_BOAT_MOD_OBTAINED.
+ */
+EVT_BEGIN(peramajin_after)
+    // The chest has opened: Mario receives the Boat Curse and the music changes.
+    CALL(evt_mario_key_onoff, 0)
+#if VERSION <= VERSION_DEMO_JP
+    CALL(evt_mario_normalize)
+#endif
+    CALL(evt_party_stop, 0)
+    CALL(evt_mobj_wait_animation_end, STRING("mobj_box00"))
+    CALL(evt_pouch_add_item, ITEM_BOAT_CURSE, LW(0))
+    CALL(evt_snd_bgmoff, PSND_FADE_HOLD)
+    CALL(evt_snd_bgmon, PSND_CH(1), STRING("BGM_EVT_PERAMAJIN1"))
+    CALL(evt_snd_envoff, PSND_FADE_HOLD)
+    CALL(bgm_start_wait)
+    // The wooden room fades and the paper genie unfolds from the chest.
+    SET_VALUE(LW(1), 60)
+    LOOP(LW(1))
+        SET_VALUE(LW(0), 255)
+        MULTIPLY(LW(0), LW(1))
+        DIVIDE(LW(0), 60)
+        CALL(evt_mapobj_color, 1, STRING("s02_moku"), 255, 255, 255, LW(0))
+        WAIT_FRAMES(1)
+    END_LOOP
+    CALL(evt_mapobj_color, 1, STRING("s02_moku"), 255, 255, 255, 0)
+    CALL(evt_paper_entry, STRING("OFF_d_kusya"))
+    CALL(evt_img_entry, STRING("img"))
+    CALL(evt_img_set_paper, STRING("img"), STRING("OFF_d_kusya"))
+    CALL(evt_img_alloc_capture, STRING("img"), 0, 0, 1, 0, 0, 608, 480)
+    CALL(evt_img_set_virtual_point, STRING("img"), -33, 0, 0)
+    BEGIN_INLINE_EVENT
+        WAIT_MS(1000)
+        CALL(evt_img_clear_virtual_point, STRING("img"))
+    END_INLINE_EVENT
+    CALL(evt_img_onoff, STRING("img"), 1)
+    BEGIN_INLINE_EVENT
+        CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
+        CALL(evt_snd_sfxon_3d, STRING("SFX_OFF_PERAMAJIN_APPEAR1"), LW(0), LW(1), LW(2), 0)
+        WAIT_MS(1000)
+        CALL(evt_snd_sfxon_3d, STRING("SFX_OFF_PERAMAJIN_COME1"), LW(0), LW(1), LW(2), 0)
+    END_INLINE_EVENT
+    // The genie floats in and the boat-mode lecture runs.
+    CALL(evt_img_set_paper_anim, STRING("img"), STRING("A_1"))
+    CALL(evt_mario_set_camid, 7)
+    CALL(evt_img_wait_animend, STRING("img"))
+    CALL(evt_mapobj_color, 1, STRING("s02_moku"), 255, 255, 255, 255)
+    CALL(lect_cam_save)
+    CALL(evt_mario_get_pos, 0, LW(10), LW(11), LW(12))
+    WAIT_FRAMES(1)
+    CALL_CHILD(ship_majin_lecture_init)
+#if VERSION >= VERSION_JP
+    CALL(evt_party_run, 0)
+#endif
+    CALL_CHILD(ship_majin_lecture)
+#if VERSION >= VERSION_JP
+    CALL(evt_party_stop, 0)
+#endif
+    // Mario flickers while the lecture ends and he returns to his spot.
+    LOOP(6)
+        CALL(evt_mario_dispflag_onoff, 1, 1)
+        WAIT_MS(100)
+        CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
+        CALL(evt_snd_sfxon_3d, STRING("SFX_EVT_PERAMAJIN_BLINKING1"), LW(0), LW(1), LW(2), 0)
+        CALL(evt_mario_dispflag_onoff, 0, 1)
+        WAIT_MS(100)
+    END_LOOP
+    CALL(evt_mario_dispflag_onoff, 1, 1)
+    CALL(evt_mario_set_pos, LW(10), LW(11), LW(12))
+    CALL(evt_mario_dispflag_onoff, 0, 1)
+    CALL(evt_mario_init_camid)
+    CALL(lect_cam_load, 0)
+    CALL(evt_cam3d_evt_off, 500, 11)
+    BEGIN_INLINE_EVENT
+        CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
+        CALL(evt_snd_sfxon_3d, STRING("SFX_OFF_PERAMAJIN_GOOUT1"), LW(0), LW(1), LW(2), 0)
+    END_INLINE_EVENT
+    // The genie leaves and the music fades.
+    CALL(evt_snd_bgmoff_f, PSND_FADE_OUT | PSND_CH(1), 2000)
+    CALL(evt_img_set_paper_anim, STRING("img"), STRING("A_2"))
+    CALL(evt_img_wait_animend, STRING("img"))
+    BEGIN_INLINE_EVENT
+        CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
+        CALL(evt_snd_sfxon_3d, STRING("SFX_OFF_PERAMAJIN_GOOUT2"), LW(0), LW(1), LW(2), 0)
+    END_INLINE_EVENT
+    CALL(evt_img_release, STRING("img"))
+    CALL(evt_paper_delete, STRING("OFF_d_kusya"))
+    // The partner comments, the story flag for the Boat Curse is set and the normal music returns.
+#if VERSION >= VERSION_JP
+    CALL(evt_party_get_pos, 0, LW(0), LW(1), LW(2))
+    ADD(LW(1), 20)
+    CALL(evt_msg_toge, 2, LW(0), LW(1), LW(2))
+#endif
+    CALL(evt_msg_print_party, STRING("stg1_gon_majin4_19"))
+    SET_VALUE(GSW(GSW_STORY_PROGRESS), STORY_STG5_21_01_BOAT_MOD_OBTAINED)
+    CALL(evt_party_run, 0)
+    CALL(evt_mario_key_onoff, 1)
+    CALL(evt_snd_bgmoff, PSND_FADE_OUT | PSND_CH(1))
+    CALL(evt_snd_bgmon, PSND_FADE_RESUME | PSND_FADE_IN, 0)
+    CALL(evt_snd_envoff, PSND_FADE_OUT | PSND_CH(1))
+    CALL(evt_snd_envon, PSND_FADE_RESUME | PSND_FADE_IN, 0)
+    RETURN
+EVT_END()
+
+/**
+ * Init script of dou_07, the black chest room: music and ambience, exit, a ship-change platform, waves,
+ * the black chest, the P-Down D-Up item, the Ember (once it has appeared and not been defeated)
+ * and the Black Key item once the Ember is beaten.
+ */
+EVT_BEGIN(dou_07_init_evt)
+    CALL(evt_snd_bgmon, PSND_FADE_OUT, STRING("BGM_STG5_DOU1"))
+    CALL(evt_snd_envon, PSND_FADE_RESTART | PSND_FADE_IN, STRING("ENV_STG5_DOU7"))
+    CALL(evt_snd_set_rev_mode, 2)
+    SET_VALUE(LW(0), PTR(bero_entry_data))
+    CALL(evt_bero_get_info)
+    CALL_CHILD(evt_bero_info_run)
+    IF_INT_EQUAL(GSWF(GSWF_DOU07_EMBER_DEFEATED), 0)
+        CALL(evt_npc_setup, PTR(npcEnt))
+    END_IF
+    CALL(evt_map_entry_airport_harbor, 1, STRING("S_Ship_Change_01"), STRING("Ship_Change_01"))
+    CALL(evt_map_playanim, STRING("moku"), 1, 0)
+    CALL(evt_map_playanim, STRING("nami"), 1, 0)
+    SET_VALUE(GF(0), 0)
+    CALL(evt_mobj_itembox, STRING("mobj_box00"), -33, -18, 56, 3, PTR(peramajin_before), PTR(peramajin_after), GSWF(GSWF_DOU07_BLACK_CHEST_OPENED))
+    CALL(evt_item_entry, STRING("item_00"), ITEM_P_DOWN_D_UP, -75, -30, -15, ITEM_ENTRY_FIXED, GSWF(GSWF_DOU07_PDOWN_DUP_TAKEN), 0)
+    IF_INT_EQUAL(GSWF(GSWF_DOU07_EMBER_APPEARED), 1)
+        IF_INT_EQUAL(GSWF(GSWF_DOU07_EMBER_DEFEATED), 0)
+            SPAWN_EVENT(apper_elmos)
+        END_IF
+    END_IF
+    IF_INT_EQUAL(GSWF(GSWF_DOU07_EMBER_DEFEATED), 1)
+        CALL(evt_item_entry, STRING("item_key"), ITEM_BLACK_KEY_0x24, 100, -6, -37, ITEM_ENTRY_FALL_THROWN, GSWF(GSWF_DOU07_BLACK_KEY_TAKEN), 0)
+    END_IF
+    RETURN
+EVT_END()
+
+/**
+ * Message callback for the black chest's speech:
+ * type 0 (text starts) plays the chest's talking animation A_2,
+ * type 5 (while text runs) restarts it once it has looped, type 2 (text ends) returns it to the idle S_1.
+ */
+static void majin_callback(s32 type) {
+    MapObjectEntry* mobj = mobjNameToPtr("mobj_box00");
+
+    if (type == 0) {
+        animPoseSetAnim(mobj->poseId, "A_2", TRUE);
+    } else if (type == 5) {
+        if (animPoseGetLoopTimes(mobj->poseId) >= 1.0f) {
+            animPoseSetAnim(mobj->poseId, "A_2", TRUE);
+        }
+    } else if (type == 2) {
+        animPoseSetAnim(mobj->poseId, "S_1", TRUE);
+    }
+}
+
+/**
+ * Script helper: blocks until music channel 1 has started playing,
+ * so the genie's music is audible before the scene continues.
+ */
+static USER_FUNC(bgm_start_wait) {
+    return psndBGMStartCheck(1) ? EVT_RETURN_DONE : EVT_RETURN_BLOCK;
+}

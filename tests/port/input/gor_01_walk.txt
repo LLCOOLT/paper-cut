@@ -1,0 +1,20 @@
+# Rogueport plaza (TTYD_MAP=gor_01): walk, jump, hammer, pause menu.
+wait 60
+shot walk_0_start
+hold right 90
+shot walk_1_right
+hold up 45
+press a
+wait 10
+shot walk_2_jump
+wait 30
+press b
+wait 6
+shot walk_3_hammer
+wait 40
+press start
+wait 40
+shot walk_4_menu
+press b
+wait 30
+end

@@ -1,0 +1,31 @@
+# No warp: skip the demo, create the card file, start a new game on file 1
+# (TTYD saves it right after name entry) and reach the prologue map.
+# Message boxes type out slowly: each menu step waits generously.
+press_until_seq a 1 4800       # the title: A skips the logos, the US health notice and the demo
+press_until_seq start 6 1200  # the title takes input once its intro is done
+wait 420
+shot s1_create                # "no file on the card: create one?"
+press a                       # yes
+wait 600
+shot s2_created               # "file created"
+press a                       # close it
+wait 300                      # the file select fades in before it takes input
+shot s2_files                 # file select
+press a                       # file 1: new game
+wait 300
+shot s3_name                  # name entry
+press a                       # type a character: Start refuses an empty name (nameent.c)
+wait 30
+press start                   # done
+wait 120
+shot s4_confirm               # "this name?" with the cursor on "no"
+press up                      # "yes"
+wait 10
+press a                       # confirm: the new file is saved
+wait 600
+shot s5_saved                 # "save complete"
+press a                       # close it
+wait_map aaa_00 3000
+wait 200
+shot s5_prologue
+end

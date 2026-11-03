@@ -1,0 +1,71 @@
+# IDE folders
+.idea/
+.vs/
+
+# Caches
+__pycache__
+.mypy_cache
+.cache/
+.gradle/
+
+# Original files
+orig/*/*
+!orig/*/.gitkeep
+*.dol
+*.rel
+*.elf
+*.o
+*.map
+*.MAP
+
+# Build files
+build/
+.ninja_*
+build.ninja
+
+# decompctx output
+ctx.*
+*.ctx
+
+# Generated configs
+objdiff.json
+compile_commands.json
+
+# Miscellaneous
+/*.txt
+!/CMakeLists.txt
+*.exe
+*.log
+.DS_Store
+.env
+
+# Files for in-development testing
+data/*
+mwcc_debugger.py
+retrowin32
+/ttydasm*
+
+# Cargo output (tools/ttydasm)
+target/
+
+# Local tool state
+/.claude/
+
+# Compiler dependency files written to the repo root by tools that replay ninja compile commands
+/*.d
+
+# Scratch space and temporaries
+/scratch/
+*.tmp
+*.bak
+*~
+
+# PC port build directories
+build-pc*/
+/build-*/
+
+# Release packages (tools/port/release.py)
+/dist/
+/dist-linux/
+*.apk
+*.ipa

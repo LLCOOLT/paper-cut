@@ -1,0 +1,6 @@
+The message the map's script shows (evt/gor_99.evt), for every language.
+
+[hello_room]
+This room is gor_99, a map a mod
+added: Rogueport's west side, with a
+script of its own.

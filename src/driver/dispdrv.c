@@ -1,0 +1,207 @@
+// Display driver: queues draw callbacks per camera with a render mode and depth each frame, sorts
+// them and calls them in order.
+
+#include "driver/dispdrv.h"
+#include "memory.h"
+#include "system.h"
+#include <dolphin/mtx.h>
+#include <string.h>
+#include "driver/fadedrv.h"
+#include "version.h"
+#ifdef TARGET_PC
+#include "port/hud.h"
+#endif
+
+#define DISP_MAX_ENTRIES 1024
+
+//.sdata
+f32 offset_tbl[] = {
+    400000.0f, 400000.0f, 600000.0f, 100000.0f, 100000.0f,
+    300000.0f, 900000.0f, 1100000.0f, 1000000.0f, 500000.0f,
+#if VERSION >= VERSION_JP
+    700000.0f //700K new in retail
+#endif
+};
+
+//.sbss
+DispEntry* currentWorkPtr;
+s32 entry_n;
+DispEntry** pSortWork;
+DispEntry* pDispWork;
+
+// local prototypes
+static s32 _sort(const void* sortA, const void* sortB);
+
+/** Allocates the display list of 1024 draw requests and its sort table at boot. */
+void dispInit(void) {
+    pDispWork = __memAlloc(HEAP_DEFAULT, sizeof(DispEntry) * DISP_MAX_ENTRIES);
+    pSortWork = __memAlloc(HEAP_DEFAULT, sizeof(DispEntry*) * DISP_MAX_ENTRIES);
+    memset(pDispWork, 0, sizeof(DispEntry) * DISP_MAX_ENTRIES);
+    memset(pSortWork, 0, sizeof(DispEntry*) * DISP_MAX_ENTRIES);
+    entry_n = 0;
+}
+
+/** Empties the display list at the start of each frame. */
+void dispReInit(void) {
+    entry_n = 0;
+}
+
+/**
+ * Queues a draw callback for camera camId this frame.
+ * renderMode picks the blend, alpha test and depth setup (0 opaque, 1 alpha-tested, 2/5 translucent,
+ * 3/4 no depth) and a base depth from offset_tbl;
+ * order shifts it within that band (translucent modes draw far to near, the rest near to far).
+ * NaN orders are dropped. The JP and later releases add translucent modes 9 and 10.
+ */
+void dispEntry(CameraId camId, f32 order, s32 renderMode, DispCallback callback, void* param) {
+    DispEntry* entry = &pDispWork[entry_n];
+
+    if (order != order)
+        return;
+    entry->cameraId = camId;
+    entry->renderMode = (u8)renderMode;
+    entry->callback = callback;
+    entry->param = param;
+
+    switch (renderMode) {
+        case 2:
+        case 5:
+#if VERSION >= VERSION_JP
+        case 9:
+        case 10:
+#endif
+            entry->order = offset_tbl[renderMode] + order;
+            break;
+        default:
+            entry->order = offset_tbl[renderMode] - order;
+            break;
+    }
+
+    pSortWork[entry_n] = entry;
+    entry_n++;
+}
+
+/** qsort comparator for draw requests: ascending by their combined order. */
+static s32 _sort(const void* sortA, const void* sortB) {
+    f32 orderB;
+    f32 orderA;
+
+    orderA = (*(DispEntry* const*)sortA)->order;
+    orderB = (*(DispEntry* const*)sortB)->order;
+    if (orderA > orderB) {
+        return 1;
+    }
+    if (orderA < orderB) {
+        return -1;
+    }
+    return 0;
+}
+
+/** Sorts this frame's draw requests by order before the cameras are drawn. */
+void dispSort(void) {
+	qqsort(pSortWork, entry_n, sizeof(DispEntry*), _sort);
+}
+
+/**
+ * Calls every queued draw callback for camera camId in sorted order, first setting the GX blend,
+ * alpha compare and depth state its render mode asks for.
+ * Colour updates are always on; alpha updates are off for cameras 4, 5 and 7.
+ */
+void dispDraw(CameraId camId) {
+    s32 i;
+
+    for (i = 0; i < entry_n; i++) {
+        DispEntry* entry = pSortWork[i];
+        if (entry->cameraId == camId) {
+            GXSetColorUpdate(GX_TRUE);
+            switch (camId) {
+                case 4:
+                case 5:
+                case 7:
+                    GXSetAlphaUpdate(GX_FALSE);
+                    break;
+                default:
+                case 6:
+                    GXSetAlphaUpdate(GX_TRUE);
+                    break;
+            }
+#if VERSION >= VERSION_US
+            GXSetZScaleOffset(fadeConstOne, 0.0f); // US reads the 1.0f constant defined in fadedrv.c
+#else
+            GXSetZScaleOffset(1.0f, 0.0f);
+#endif
+            switch (entry->renderMode) {
+                case 0:
+                    GXSetBlendMode(GX_BM_NONE, GX_BL_ONE, GX_BL_ZERO, GX_LO_OR);
+                    GXSetZCompLoc(GX_TRUE);
+                    GXSetAlphaCompare(GX_ALWAYS, 0, GX_AOP_AND, GX_ALWAYS, 0);
+                    GXSetZMode(GX_TRUE, GX_LEQUAL, GX_TRUE);
+                    break;
+                case 3:
+                    GXSetBlendMode(GX_BM_NONE, GX_BL_ONE, GX_BL_ZERO, GX_LO_CLEAR);
+                    GXSetZCompLoc(GX_TRUE);
+                    GXSetAlphaCompare(GX_ALWAYS, 0, GX_AOP_AND, GX_ALWAYS, 0);
+                    GXSetZMode(GX_FALSE, GX_LEQUAL, GX_FALSE);
+                    break;
+                case 1:
+                    GXSetBlendMode(GX_BM_NONE, GX_BL_ONE, GX_BL_ZERO, GX_LO_CLEAR);
+                    GXSetZCompLoc(GX_FALSE);
+                    GXSetAlphaCompare(GX_GEQUAL, 0x80, GX_AOP_OR, GX_NEVER, 0);
+                    GXSetZMode(GX_TRUE, GX_LEQUAL, GX_TRUE);
+                    break;
+                case 4:
+                    GXSetBlendMode(GX_BM_NONE, GX_BL_ONE, GX_BL_ZERO, GX_LO_CLEAR);
+                    GXSetZCompLoc(GX_FALSE);
+                    GXSetAlphaCompare(GX_GEQUAL, 0x80, GX_AOP_OR, GX_NEVER, 0);
+                    GXSetZMode(GX_FALSE, GX_LEQUAL, GX_FALSE);
+                    break;
+                case 2:
+                case 5:
+#if VERSION >= VERSION_JP
+                case 9:
+                case 10:
+#endif
+                    GXSetBlendMode(GX_BM_BLEND, GX_BL_SRCALPHA, GX_BL_INVSRCALPHA, GX_LO_CLEAR);
+                    GXSetZCompLoc(GX_TRUE);
+                    GXSetAlphaCompare(GX_ALWAYS, 0, GX_AOP_AND, GX_ALWAYS, 0);
+                    GXSetZMode(GX_TRUE, GX_LEQUAL, GX_FALSE);
+                    break;
+            }
+            currentWorkPtr = entry;
+#if defined(TARGET_PC) && defined(TTYD_BACKEND_AURORA)
+            portHudDraw(camId, entry->callback, entry->param); /* PC port: HUD scale (port/hud.h) */
+#endif
+            entry->callback(camId, entry->param);
+        }
+    }
+#if defined(TARGET_PC) && defined(TTYD_BACKEND_AURORA)
+    portHudDraw(camId, NULL, NULL);
+#endif
+}
+
+/**
+ * Turns a world position into a dispEntry order from its projected depth under the 3D camera,
+ * scaled to 0..10000 (clamped) and negated, so callers can sort objects by distance.
+ */
+f32 dispCalcZ(Vec* input) {
+    CameraEntry* camera;
+    Vec output;
+    f32 calc;
+
+    camera = camGetPtr(CAMERA_3D);
+    MTXMultVec(camera->view, input, &output);
+    MTX44MultVec(camera->projection, &output, &output);
+    calc = (5000.0f * output.z) + 5000.0f;
+    if (calc < 0.0f) {
+        calc = 0.0f;
+    } else if (calc > 10000.0f) {
+        calc = 10000.0f;
+    }
+    calc *= -1.0f;
+    return calc;
+}
+
+/** Returns the draw request whose callback is running now, so a callback can read its own render mode. */
+DispEntry* dispGetCurWork(void) {
+    return currentWorkPtr;
+}

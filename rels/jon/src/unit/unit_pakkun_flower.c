@@ -1,0 +1,626 @@
+// Pit of 100 Trials battle unit: the Piranha Plant (`pakkun_flower`): parts, stats, poses and AI scripts.
+
+#include "battle/battle_unit.h"
+#include "evt/evt_cmd.h"
+
+#include "battle/battle.h"
+#include "battle/battle_sub.h"
+#include "battle/battle_event_default.h"
+#include "battle/battle_event_cmd.h"
+#include "battle/battle_camera.h"
+#include "battle/battle_event_subset.h"
+#include "battle/battle_weapon_power.h"
+#include "evt/evt_sub.h"
+#include "battle/battle_database_common.h"
+#include "manager/evtmgr_cmd.h"
+#include "evt/evt_eff.h"
+#include "system.h"
+
+static USER_FUNC(shadow_scale_memory);
+static USER_FUNC(shadow_scale_return);
+static USER_FUNC(shadow_scale_small);
+static USER_FUNC(pakkun_ceil_exist);
+
+BattleUnitKind unit_pakkun_flower;
+static BattleUnitDefense defence;
+static BattleUnitDefenseAttr defence_attr;
+static StatusVulnerability regist;
+static BattleUnitKindPart parts[1];
+static BattleWeapon weapon_pakkun_flower_attack;
+static PoseTableEntry pose_table[18];
+static PoseTableEntry pose_table_ceil[18];
+static BattleDataEntry data_table[15];
+static EvtWord init_event[31];
+static EvtWord dmg_avoid_counter_thorn_head_event[71];
+static EvtWord damage_event[10];
+static EvtWord counter_damage_event[30];
+static EvtWord return_event[256];
+static EvtWord normal_attack_event[311];
+static EvtWord wait_event[6];
+
+/** Unit data of the Piranha Plant: stats, sounds, attributes, parts, init script and data table. */
+BattleUnitKind unit_pakkun_flower = {
+    UNIT_PIRANHA_PLANT,
+    "btl_un_pakkun_flower",
+    15,
+    0,
+    1,
+    1,
+    33,
+    1,
+    3,
+    70,
+    1,
+    50,
+    9999,
+    40,
+    48,
+    4,
+    48,
+    0.0f,
+    24.0f,
+    0.0f,
+    0,
+    0,
+    0.0f,
+    0.0f,
+    0.0f,
+    20.0f,
+    0.0f,
+    -10.0f,
+    0.0f,
+    0.0f,
+    0.0f,
+    0.0f,
+    0.0f,
+    20.0f,
+    0.0f,
+    0.0f,
+    16.0f,
+    32.0f,
+    0.0f,
+    0.0f,
+    24.0f,
+    0.0f,
+    40.0f,
+    48.0f,
+    0,
+    0,
+    0,
+    2,
+    100,
+    20,
+    0.0f,
+    0.0f,
+    0.0f,
+    "SFX_ENM_PAKKUN_DAMAGED1",
+    "SFX_BTL_DAMAGE_FIRE1",
+    "SFX_BTL_DAMAGE_ICE1",
+    "SFX_BTL_DAMAGE_BIRIBIRI1",
+    0,
+    &regist,
+    1,
+    parts,
+    init_event,
+    data_table,
+};
+
+/** Damage reduction of the Piranha Plant: none, every attack type does full damage. */
+static BattleUnitDefense defence = {{0, 0, 0, 0, 0}};
+
+/** Element response of the Piranha Plant: none, every attack type is treated normally. */
+static BattleUnitDefenseAttr defence_attr = {{0, 0, 0, 0, 0}};
+
+#if VERSION <= VERSION_DEMO_JP
+/**
+ * Status vulnerability of the Piranha Plant (percent, 0 is immune): every status effect can land. Demo
+ * values.
+ */
+static StatusVulnerability regist = {80, 80, 60, 100, 75, 100, 100, 80, 100, 70, 100, 70, 100, 70, 70, 20, 30, 100, 70, 100, 100, 30};
+#else
+/**
+ * Status vulnerability of the Piranha Plant (percent, 0 is immune): every status effect can land. Released
+ * game values.
+ */
+static StatusVulnerability regist = {100, 70, 40, 100, 80, 100, 100, 60, 100, 85, 100, 85, 100, 85, 70, 10, 30, 100, 70, 100, 100, 30};
+#endif
+
+/** Body part of the Piranha Plant: hit position, size, defence tables and attributes. */
+static BattleUnitKindPart parts[] = {
+    {1, "btl_un_pakkun_flower", "c_pakflwr", 0.0f, 0.0f, 0.0f, 0.0f, 40.0f, 0.0f, 0.0f, 0.0f, 0.0f, 20, 30, 255, &defence, &defence_attr, PART_ATTR_MAIN | PART_ATTR_GUARD_COVER, COUNTER_ATTR_TOP_SPIKY, pose_table},
+};
+
+/** Attack data for the Piranha Plant's bite: 9 damage. */
+static BattleWeapon weapon_pakkun_flower_attack = {
+    NULL, 0, // name..icon
+    {0}, // pad_06
+    0, NULL, // itemId..description
+    100, // baseAccuracy
+    0, 0, // baseFpCost..baseSpCost
+    1, // superguardsAllowed
+    1.0f, // reserved_14
+    1, // stylishCommandMultiplier
+    1, // reserved_19
+    1, // bingoSlotChance
+    1, // reserved_1B
+    weaponGetPowerDefault, // hpDamageFn
+    {9, 0, 0, 0, 0, 0, 0, 0}, // hpDamageWork
+    NULL, // fpDamageFn
+    {0}, // fpDamageWork
+    TARGET_CLASS_NO_TREE_OR_SWITCH | TARGET_CLASS_NO_SYSTEM_UNIT | TARGET_CLASS_NO_OWN_ALLIANCE | TARGET_CLASS_NO_SELF | TARGET_CLASS_MAIN_PARTS | TARGET_CLASS_SINGLE, // targetClassFlags
+    TARGET_PROP_HAMMERLIKE | TARGET_PROP_FRONTMOST | TARGET_PROP_START_OPPOSING_SIDE, // targetPropertyFlags
+    ELEMENT_NORMAL, 0, // element..damagePattern
+    3, // acLevel
+    2, // reserved_6F
+    NULL, // acHelpMsg
+    SPECIAL_BADGE_BUFFABLE | SPECIAL_STATUS_BUFFABLE | SPECIAL_CHARGE_BUFFABLE | SPECIAL_SHATTERS_FREEZE, // special
+    COUNTER_RESIST_TOP_SPIKY, // counterResistFlags
+    TARGET_WEIGHT_PREFER_FRONT | TARGET_WEIGHT_UNUSED_2000, // targetWeightFlags
+    0, 0, 0, 0, 0, 0, 0, 0, // sleepChance..poisonTime
+    0, 0, 0, 0, 0, 0, 0, 0, // poisonStrength..burnChance
+    0, 0, 0, 0, 0, 0, 0, 0, // burnTime..atkChangeTime
+    0, 0, 0, 0, 0, 0, 0, 0, // atkChangeStrength..chargeStrength
+    0, 0, 0, 0, 0, 0, 0, 0, // fastChance..holdFastTime
+    0, 0, 0, 0, 0, 0, // invisibleChance..fpRegenStrength
+    {0}, // pad_AE
+    NULL, // attackEvtScript
+    {0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0}, // stageEffectRates
+};
+
+/**
+ * Attack script of the Piranha Plant: its normal attack on a first strike,
+ * otherwise an item check and then the normal attack.
+ */
+static EVT_BEGIN(attack_event)
+    CALL(btlevtcmd_check_battleflag, LW(0), 2)
+    IF_INT_NOT_EQUAL(LW(0), 0)
+        SET_VALUE(LW(9), PTR(&weapon_pakkun_flower_attack))
+        CALL_CHILD(normal_attack_event)
+        CALL(btlevtcmd_StartWaitEvent, BTL_UNIT_SELF)
+        RETURN
+    END_IF
+    CALL(btlevtcmd_EnemyItemUseCheck, BTL_UNIT_SELF, LW(0))
+    IF_INT_NOT_EQUAL(LW(0), 0)
+        CALL_CHILD(LW(0))
+        CALL(btlevtcmd_StartWaitEvent, BTL_UNIT_SELF)
+        RETURN
+    END_IF
+    SET_VALUE(LW(9), PTR(&weapon_pakkun_flower_attack))
+    CALL_CHILD(normal_attack_event)
+    CALL(btlevtcmd_StartWaitEvent, BTL_UNIT_SELF)
+    RETURN
+EVT_END()
+
+/** Pose table of the Piranha Plant: battle pose types mapped to animation names. */
+static PoseTableEntry pose_table[] = {
+    {STATUS_SLEEP, "PKF_N_1"},
+    {STATUS_STOP, "PKF_Y_1"},
+    {STATUS_FREEZE, "PKF_Y_1"},
+    {STATUS_CONFUSE, "PKF_K_1"},
+    {STATUS_POISON, "PKF_X_1"},
+    {STATUS_DIZZY, "PKF_X_1"},
+    {BTL_POSE_NORMAL, "PKF_S_1"},
+    {29, "PKF_Q_1"},
+    {30, "PKF_Q_1"},
+    {31, "PKF_S_2"},
+    {BTL_POSE_DAMAGE, "PKF_D_1"},
+    {50, "PKF_A_1B"},
+    {BTL_POSE_WALK, "PKF_S_1"},
+    {BTL_POSE_RUN, "PKF_S_1"},
+    {BTL_POSE_DANGER, "PKF_X_1"},
+    {BTL_POSE_PERIL, "PKF_X_1"},
+    {BTL_POSE_TALK, "PKF_T_1"},
+    {BTL_POSE_STAY_DEFAULT, "PKF_S_1"},
+};
+
+/** Pose table of the Piranha Plant, on the ceiling: battle pose types mapped to animation names. */
+static PoseTableEntry pose_table_ceil[] = {
+    {STATUS_SLEEP, "PKF_N_2"},
+    {STATUS_STOP, "PKF_Y_2"},
+    {STATUS_FREEZE, "PKF_Y_2"},
+    {STATUS_CONFUSE, "PKF_K_2"},
+    {STATUS_POISON, "PKF_X_2"},
+    {STATUS_DIZZY, "PKF_X_2"},
+    {BTL_POSE_NORMAL, "PKF_S_3"},
+    {29, "PKF_Q_2"},
+    {30, "PKF_Q_2"},
+    {31, "PKF_S_4"},
+    {BTL_POSE_DAMAGE, "PKF_D_2"},
+    {50, "PKF_A_5"},
+    {BTL_POSE_WALK, "PKF_S_3"},
+    {BTL_POSE_RUN, "PKF_S_3"},
+    {BTL_POSE_DANGER, "PKF_X_2"},
+    {BTL_POSE_PERIL, "PKF_X_2"},
+    {BTL_POSE_TALK, "PKF_S_3"},
+    {BTL_POSE_STAY_DEFAULT, "PKF_S_3"},
+};
+
+/**
+ * Data table of the Piranha Plant: event handlers keyed by tag (dmg_avoid_counter_thorn_head_event,
+ * counter_damage_event).
+ */
+static BattleDataEntry data_table[] = {
+    {37, dmg_avoid_counter_thorn_head_event},
+    {26, counter_damage_event},
+    {25, counter_damage_event},
+    {27, counter_damage_event},
+    {28, counter_damage_event},
+    {29, counter_damage_event},
+    {30, counter_damage_event},
+    {31, counter_damage_event},
+    {32, counter_damage_event},
+    {33, counter_damage_event},
+    {34, counter_damage_event},
+    {35, counter_damage_event},
+    {36, counter_damage_event},
+    {48, btldefaultevt_Dummy},
+    {0, NULL},
+};
+
+/**
+ * Init script of the Piranha Plant: registers its wait, attack, damage and confusion handlers,
+ * sets its hit cursor offset to 50 and records its shadow scale (shadow_scale_memory) so it can be restored
+ * after it burrows.
+ */
+static EVT_BEGIN(init_event)
+    CALL(btlevtcmd_SetEventWait, BTL_UNIT_SELF, PTR(wait_event))
+    CALL(btlevtcmd_SetEventAttack, BTL_UNIT_SELF, PTR(attack_event))
+    CALL(btlevtcmd_SetEventDamage, BTL_UNIT_SELF, PTR(damage_event))
+    CALL(btlevtcmd_SetEventConfusion, BTL_UNIT_SELF, PTR(attack_event))
+    CALL(btlevtcmd_SetHitCursorOffset, BTL_UNIT_SELF, 1, 0, 50, 0)
+    CALL(shadow_scale_memory, BTL_UNIT_SELF)
+    CALL(btlevtcmd_StartWaitEvent, BTL_UNIT_SELF)
+    RETURN
+EVT_END()
+
+/**
+ * Data-table event 37, run by the default damage event when an attacker is hurt by the Piranha Plant's spiky head
+ * (damage code 31): it flinches (pose type 31, 250 ms), returns to its idle pose PKF_S_1 and flashes the
+ * "toge_flush" spike effect above its head, 50 units up (63 when Huge, 37 when Tiny).
+ */
+static EVT_BEGIN(dmg_avoid_counter_thorn_head_event)
+    CALL(btlevtcmd_AnimeChangePoseType, BTL_UNIT_SELF, 1, 31)
+    WAIT_MS(250)
+    CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("PKF_S_1"))
+    CALL(btlevtcmd_GetPos, BTL_UNIT_SELF, LW(0), LW(1), LW(2))
+    CALL(btlevtcmd_CheckStatus, BTL_UNIT_SELF, STATUS_HUGE, LW(3))
+    IF_INT_NOT_EQUAL(LW(3), 0)
+        ADD(LW(1), 63)
+        GOTO(90)
+    END_IF
+    CALL(btlevtcmd_CheckStatus, BTL_UNIT_SELF, STATUS_TINY, LW(3))
+    IF_INT_NOT_EQUAL(LW(3), 0)
+        ADD(LW(1), 37)
+        GOTO(90)
+    END_IF
+    ADD(LW(1), 50)
+    GOTO(90)
+    LABEL(90)
+    CALL(evt_eff, STRING(""), STRING("toge_flush"), 0, LW(0), LW(1), LW(2), 60, 0, 0, 0, 0, 0, 0, 0)
+    RETURN
+EVT_END()
+
+/** Damage script of the Piranha Plant: runs the default damage handling on itself. */
+static EVT_BEGIN(damage_event)
+    SET_VALUE(LW(10), -2)
+    SET_VALUE(LW(11), 1)
+    CALL_CHILD(btldefaultevt_Damage)
+    RETURN
+EVT_END()
+
+/**
+ * Counter-damage script of the Piranha Plant: plays the hurt pose (PKF_D_1) for a second and,
+ * unless the damage code is 512 without 2048, burrows and comes back up (return_event).
+ */
+static EVT_BEGIN(counter_damage_event)
+    CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("PKF_D_1"))
+    WAIT_MS(1000)
+    CALL(btlevtcmd_CheckDamageCode, BTL_UNIT_SELF, DAMAGE_FLAG_KO, LW(0))
+    IF_INT_NOT_EQUAL(LW(0), 0)
+        CALL(btlevtcmd_CheckDamageCode, BTL_UNIT_SELF, DAMAGE_FLAG_LIFE_SHROOM, LW(0))
+        IF_INT_EQUAL(LW(0), 0)
+            RETURN
+        END_IF
+    END_IF
+    CALL_CHILD(return_event)
+    RETURN
+EVT_END()
+
+/**
+ * Script for when the ceiling the Piranha Plant hangs from falls:
+ * it burrows (shadow shrinks, SFX_ENM_PAKKUN_MOVE1, pose PKF_E_4),
+ * resurfaces on the floor at its home x with the ceiling attributes, hit offsets and pose table removed,
+ * and returns to its idle pose.
+ */
+static EVT_BEGIN(ceil_fall_ready_event)
+    CALL(btlevtcmd_SetEventCeilFall, BTL_UNIT_SELF, 0)
+    CALL(btlevtcmd_snd_se, BTL_UNIT_SELF, STRING("SFX_ENM_PAKKUN_MOVE1"), EVT_NULLPTR, 0, EVT_NULLPTR)
+    BEGIN_SIBLING_EVENT
+        CALL(shadow_scale_small, BTL_UNIT_SELF)
+    END_SIBLING_EVENT
+    CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("PKF_E_4"))
+    WAIT_MS(300)
+    CALL(btlevtcmd_OnAttribute, BTL_UNIT_SELF, UNIT_ATTR_HIDDEN)
+    CALL(btlevtcmd_OnPartsAttribute, BTL_UNIT_SELF, 1, PART_ATTR_NO_SHADOW)
+    CALL(btlevtcmd_GetHomePos, BTL_UNIT_SELF, LW(0), LW(1), LW(2))
+    CALL(btlevtcmd_SetPos, BTL_UNIT_SELF, LW(0), 0, LW(2))
+    CALL(btlevtcmd_SetHomePos, BTL_UNIT_SELF, LW(0), 0, LW(2))
+    WAIT_MS(500)
+    CALL(btlevtcmd_snd_se, BTL_UNIT_SELF, STRING("SFX_ENM_PAKKUN_MOVE2"), EVT_NULLPTR, 0, EVT_NULLPTR)
+    BEGIN_SIBLING_EVENT
+        CALL(shadow_scale_return, BTL_UNIT_SELF)
+    END_SIBLING_EVENT
+    CALL(btlevtcmd_OffAttribute, BTL_UNIT_SELF, UNIT_ATTR_HIDDEN)
+    CALL(btlevtcmd_OffPartsAttribute, BTL_UNIT_SELF, 1, PART_ATTR_NO_SHADOW)
+    CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("PKF_E_1"))
+    CALL(btlevtcmd_SetHitOffset, BTL_UNIT_SELF, 1, 0, 0, 0)
+    CALL(btlevtcmd_SetHitCursorOffset, BTL_UNIT_SELF, 1, 0, 50, 0)
+    CALL(btlevtcmd_SetStatusIconOffset, BTL_UNIT_SELF, 4, 48)
+    CALL(btlevtcmd_SetKissHitOffset, BTL_UNIT_SELF, 16, 32, 0)
+    CALL(btlevtcmd_OffAttribute, BTL_UNIT_SELF, UNIT_ATTR_CEILING)
+    CALL(btlevtcmd_OffPartsAttribute, BTL_UNIT_SELF, 1, PART_ATTR_SHELL_TOSSLIKE_CANNOT_TARGET)
+    CALL(btlevtcmd_OffPartsAttribute, BTL_UNIT_SELF, 1, PART_ATTR_HAMMERLIKE_CANNOT_TARGET)
+    CALL(btlevtcmd_AnimeSetPoseTable, BTL_UNIT_SELF, 1, PTR(pose_table))
+    WAIT_MS(500)
+    CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("PKF_S_1"))
+    RETURN
+EVT_END()
+
+/**
+ * The Piranha Plant burrows into the ground and comes back at its home position.
+ * If a ceiling-hanging plant exists (pakkun_ceil_exist) a random roll decides between the floor and the ceiling;
+ * on the ceiling (height 130) it gets the ceiling-fall handler, upside-down hit offsets,
+ * attributes and pose table.
+ */
+static EVT_BEGIN(return_event)
+    CALL(evt_btl_camera_set_mode, 0, 0)
+    CALL(pakkun_ceil_exist, LW(0))
+    IF_INT_EQUAL(LW(0), 1)
+        CALL(evt_sub_random, 1, LW(15))
+    ELSE
+        SET_VALUE(LW(15), 0)
+    END_IF
+    CALL(btlevtcmd_snd_se, BTL_UNIT_SELF, STRING("SFX_ENM_PAKKUN_MOVE1"), EVT_NULLPTR, 0, EVT_NULLPTR)
+    BEGIN_SIBLING_EVENT
+        CALL(shadow_scale_small, BTL_UNIT_SELF)
+    END_SIBLING_EVENT
+    CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("PKF_E_2"))
+    WAIT_MS(300)
+    CALL(btlevtcmd_OnAttribute, BTL_UNIT_SELF, UNIT_ATTR_HIDDEN)
+    CALL(btlevtcmd_OnPartsAttribute, BTL_UNIT_SELF, 1, PART_ATTR_NO_SHADOW)
+    IF_INT_EQUAL(LW(15), 0)
+        CALL(btlevtcmd_SetEventCeilFall, BTL_UNIT_SELF, 0)
+        CALL(btlevtcmd_GetHomePos, BTL_UNIT_SELF, LW(0), LW(1), LW(2))
+        CALL(btlevtcmd_SetPos, BTL_UNIT_SELF, LW(0), 0, LW(2))
+        CALL(btlevtcmd_SetHomePos, BTL_UNIT_SELF, LW(0), 0, LW(2))
+        WAIT_MS(500)
+        CALL(btlevtcmd_snd_se, BTL_UNIT_SELF, STRING("SFX_ENM_PAKKUN_MOVE2"), EVT_NULLPTR, 0, EVT_NULLPTR)
+        BEGIN_SIBLING_EVENT
+            CALL(shadow_scale_return, BTL_UNIT_SELF)
+        END_SIBLING_EVENT
+        CALL(btlevtcmd_OffAttribute, BTL_UNIT_SELF, UNIT_ATTR_HIDDEN)
+        CALL(btlevtcmd_OffPartsAttribute, BTL_UNIT_SELF, 1, PART_ATTR_NO_SHADOW)
+        CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("PKF_E_1"))
+        CALL(btlevtcmd_SetHitOffset, BTL_UNIT_SELF, 1, 0, 0, 0)
+        CALL(btlevtcmd_SetHitCursorOffset, BTL_UNIT_SELF, 1, 0, 50, 0)
+        CALL(btlevtcmd_SetStatusIconOffset, BTL_UNIT_SELF, 4, 48)
+        CALL(btlevtcmd_SetKissHitOffset, BTL_UNIT_SELF, 16, 32, 0)
+        CALL(btlevtcmd_OffAttribute, BTL_UNIT_SELF, UNIT_ATTR_CEILING)
+        CALL(btlevtcmd_OffPartsAttribute, BTL_UNIT_SELF, 1, PART_ATTR_SHELL_TOSSLIKE_CANNOT_TARGET)
+        CALL(btlevtcmd_OffPartsAttribute, BTL_UNIT_SELF, 1, PART_ATTR_HAMMERLIKE_CANNOT_TARGET)
+        CALL(btlevtcmd_AnimeSetPoseTable, BTL_UNIT_SELF, 1, PTR(pose_table))
+        WAIT_MS(500)
+        CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("PKF_S_1"))
+    ELSE
+        CALL(btlevtcmd_SetEventCeilFall, BTL_UNIT_SELF, PTR(ceil_fall_ready_event))
+        CALL(btlevtcmd_GetHomePos, BTL_UNIT_SELF, LW(0), LW(1), LW(2))
+        CALL(btlevtcmd_SetPos, BTL_UNIT_SELF, LW(0), 130, LW(2))
+        CALL(btlevtcmd_SetHomePos, BTL_UNIT_SELF, LW(0), 130, LW(2))
+        WAIT_MS(500)
+        CALL(btlevtcmd_snd_se, BTL_UNIT_SELF, STRING("SFX_ENM_PAKKUN_MOVE2"), EVT_NULLPTR, 0, EVT_NULLPTR)
+        BEGIN_SIBLING_EVENT
+            CALL(shadow_scale_return, BTL_UNIT_SELF)
+        END_SIBLING_EVENT
+        CALL(btlevtcmd_OffAttribute, BTL_UNIT_SELF, UNIT_ATTR_HIDDEN)
+        CALL(btlevtcmd_OffPartsAttribute, BTL_UNIT_SELF, 1, PART_ATTR_NO_SHADOW)
+        CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("PKF_E_3"))
+        CALL(btlevtcmd_SetHitOffset, BTL_UNIT_SELF, 1, 0, -80, 0)
+        CALL(btlevtcmd_SetHitCursorOffset, BTL_UNIT_SELF, 1, 0, -50, 0)
+        CALL(btlevtcmd_SetStatusIconOffset, BTL_UNIT_SELF, 4, 10)
+        CALL(btlevtcmd_SetKissHitOffset, BTL_UNIT_SELF, 16, -32, 0)
+        CALL(btlevtcmd_OnAttribute, BTL_UNIT_SELF, UNIT_ATTR_CEILING)
+        CALL(btlevtcmd_OnPartsAttribute, BTL_UNIT_SELF, 1, PART_ATTR_SHELL_TOSSLIKE_CANNOT_TARGET)
+        CALL(btlevtcmd_OnPartsAttribute, BTL_UNIT_SELF, 1, PART_ATTR_HAMMERLIKE_CANNOT_TARGET)
+        CALL(btlevtcmd_AnimeSetPoseTable, BTL_UNIT_SELF, 1, PTR(pose_table_ceil))
+        WAIT_MS(500)
+        CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("PKF_S_3"))
+    END_IF
+    RETURN
+EVT_END()
+
+/**
+ * The Piranha Plant's bite: it burrows (the shadow shrinks, pose PKF_E_2 or E_4 when hanging from the ceiling),
+ * pops up in front of the target, winds up (PKF_A_1A and A_1B, SFX_ENM_PAKKUN_ATTACK1),
+ * bites (A_1C) and the target takes the damage. It then burrows back home (return_event).
+ * After a first strike it pauses 750 ms first.
+ */
+static EVT_BEGIN(normal_attack_event)
+    // After a First Strike it pauses a moment; otherwise it picks a target (a confused Piranha Plant with
+    // nobody to bite gets flustered).
+    CALL(btlevtcmd_check_battleflag, LW(0), 2)
+    IF_INT_NOT_EQUAL(LW(0), 0)
+        WAIT_MS(750)
+        CALL(btlevtcmd_GetFirstAttackTarget, LW(3), LW(4))
+    ELSE
+        CALL(btlevtcmd_GetEnemyBelong, BTL_UNIT_SELF, LW(0))
+        CALL(btlevtcmd_SamplingEnemy, BTL_UNIT_SELF, LW(0), LW(9))
+        CALL(btlevtcmd_ChoiceSamplingEnemy, LW(9), LW(3), LW(4))
+    END_IF
+    IF_INT_EQUAL(LW(3), -1)
+        CALL(btlevtcmd_CheckToken, BTL_UNIT_SELF, TOKEN_FLAG_CONFUSED_ACTION, LW(0))
+        IF_INT_NOT_EQUAL(LW(0), 0)
+            CALL_CHILD(subsetevt_confuse_flustered)
+            RETURN
+        END_IF
+        GOTO(99)
+    END_IF
+    CALL(btlevtcmd_WeaponAftereffect, LW(9))
+    // Declare the attack.
+    CALL(btlevtcmd_AttackDeclare, BTL_UNIT_SELF, LW(3), LW(4))
+    CALL(btlevtcmd_WaitGuardMove)
+    CALL(btlevtcmd_PayWeaponCost, BTL_UNIT_SELF, LW(9))
+    // The Piranha Plant burrows into the ground, its shadow shrinking away.
+    CALL(btlevtcmd_snd_se, BTL_UNIT_SELF, STRING("SFX_ENM_PAKKUN_MOVE1"), EVT_NULLPTR, 0, EVT_NULLPTR)
+    BEGIN_SIBLING_EVENT
+        CALL(shadow_scale_small, BTL_UNIT_SELF)
+    END_SIBLING_EVENT
+    CALL(btlevtcmd_CheckAttribute, BTL_UNIT_SELF, UNIT_ATTR_CEILING, LW(15))
+    IF_INT_EQUAL(LW(15), 0)
+        CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("PKF_E_2"))
+    ELSE
+        CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("PKF_E_4"))
+    END_IF
+    WAIT_MS(300)
+    CALL(btlevtcmd_OnAttribute, BTL_UNIT_SELF, UNIT_ATTR_HIDDEN)
+    CALL(btlevtcmd_OnPartsAttribute, BTL_UNIT_SELF, 1, PART_ATTR_NO_SHADOW)
+    CALL(btlevtcmd_GetPos, LW(3), LW(0), LW(1), LW(2))
+    CALL(btlevtcmd_FaceDirectionAdd, LW(3), LW(0), 45)
+    CALL(btlevtcmd_SetPos, BTL_UNIT_SELF, LW(0), 0, LW(2))
+    CALL(btlevtcmd_CalculateFaceDirection, BTL_UNIT_SELF, -1, LW(3), LW(4), 16, LW(15))
+    CALL(btlevtcmd_ChangeFaceDirection, BTL_UNIT_SELF, LW(15))
+    WAIT_MS(500)
+    CALL(evt_btl_camera_set_mode, 0, 8)
+    CALL(evt_btl_camera_set_homing_unit, 0, BTL_UNIT_SELF, LW(3))
+    CALL(evt_btl_camera_set_moveSpeedLv, 0, 1)
+    CALL(evt_btl_camera_set_zoom, 0, 250)
+    CALL(btlevtcmd_SetHitOffset, BTL_UNIT_SELF, 1, 0, 0, 0)
+    // It pops up in front of the target.
+    CALL(btlevtcmd_snd_se, BTL_UNIT_SELF, STRING("SFX_ENM_PAKKUN_MOVE2"), EVT_NULLPTR, 0, EVT_NULLPTR)
+    BEGIN_SIBLING_EVENT
+        CALL(shadow_scale_return, BTL_UNIT_SELF)
+    END_SIBLING_EVENT
+    CALL(btlevtcmd_OffAttribute, BTL_UNIT_SELF, UNIT_ATTR_HIDDEN)
+    CALL(btlevtcmd_OffPartsAttribute, BTL_UNIT_SELF, 1, PART_ATTR_NO_SHADOW)
+    CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("PKF_E_1"))
+    WAIT_MS(150)
+    CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("PKF_A_1A"))
+    WAIT_MS(200)
+    // It rears back and winds up for the bite.
+    CALL(btlevtcmd_snd_se, BTL_UNIT_SELF, STRING("SFX_ENM_PAKKUN_ATTACK1"), EVT_NULLPTR, 0, EVT_NULLPTR)
+    CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("PKF_A_1B"))
+    WAIT_MS(200)
+    CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("PKF_A_1C"))
+    // The bite snaps shut; find out whether it connects.
+    CALL(btlevtcmd_PreCheckDamage, BTL_UNIT_SELF, LW(3), LW(4), LW(9), DAMAGE_FLAG_LAST_HIT, LW(5))
+    SWITCH(LW(5))
+        CASE_OR_EQUAL(4)
+        GOTO(90)
+        CASE_END
+        CASE_EQUAL(3)
+        CALL(btlevtcmd_StartAvoid, LW(3), 38)
+        GOTO(90)
+        CASE_END
+        CASE_EQUAL(6)
+        CALL(btlevtcmd_StartAvoid, LW(3), 39)
+        GOTO(90)
+        CASE_EQUAL(2)
+        CALL(btlevtcmd_StartAvoid, LW(3), 40)
+        GOTO(90)
+        CASE_EQUAL(1)
+        GOTO(91)
+        CASE_END
+        CASE_DEFAULT
+        GOTO(98)
+        CASE_END
+    END_SWITCH
+    LABEL(90)
+    GOTO(98)
+    // Hit: the damage is dealt.
+    LABEL(91)
+    CALL(evt_btl_camera_shake_h, 0, 1, 1, 8, 0)
+    CALL(evt_btl_camera_set_moveSpeedLv, 0, 2)
+    CALL(evt_btl_camera_add_zoom, 0, -50)
+    CALL(btlevtcmd_ResultACDefence, LW(3), LW(9))
+    CALL(btlevtcmd_CheckDamage, BTL_UNIT_SELF, LW(3), LW(4), LW(9), DAMAGE_FLAG_LAST_HIT, LW(5))
+    GOTO(98)
+    // It burrows back into the ground and resurfaces at home.
+    LABEL(98)
+    WAIT_MS(500)
+    CALL_CHILD(return_event)
+    LABEL(99)
+    CALL(btlevtcmd_ResetFaceDirection, BTL_UNIT_SELF)
+    RETURN
+EVT_END()
+
+/** Wait script: plays the Piranha Plant's idle pose from its current pose table. */
+static EVT_BEGIN(wait_event)
+    CALL(btlevtcmd_AnimeChangePoseFromTable, BTL_UNIT_SELF, 1)
+    RETURN
+EVT_END()
+
+/**
+ * Script helper: args[0] = unit.
+ * Over 15 frames grows part 1's shadow from nothing back to the size remembered by shadow_scale_memory;
+ * blocks until done.
+ */
+static USER_FUNC(shadow_scale_return) {
+    s32 id = BattleTransID(event, evtGetValue(event, event->args[0]));
+    BattleUnit* unit = BattleGetUnitPtr(_battleWorkPointer, id);
+    BattleUnitPart* part = BtlUnit_GetPartsPtr(unit, 1);
+
+    if (isFirstCall) {
+        unit->work[1] = 0;
+    }
+    part->shadowScale = intplGetValue(0, 0.0f, unit->work[0], unit->work[1], 15);
+    if (unit->work[1] >= 15) {
+        return EVT_RETURN_DONE;
+    }
+    unit->work[1]++;
+    return EVT_RETURN_BLOCK;
+}
+
+/**
+ * Script helper: args[0] = unit.
+ * Over 15 frames shrinks part 1's shadow from the size remembered by shadow_scale_memory to nothing,
+ * as the plant dives; blocks until done.
+ */
+static USER_FUNC(shadow_scale_small) {
+    s32 id = BattleTransID(event, evtGetValue(event, event->args[0]));
+    BattleUnit* unit = BattleGetUnitPtr(_battleWorkPointer, id);
+    BattleUnitPart* part = BtlUnit_GetPartsPtr(unit, 1);
+
+    if (isFirstCall) {
+        unit->work[1] = 0;
+    }
+    part->shadowScale = intplGetValue(0, unit->work[0], 0.0f, unit->work[1], 15);
+    if (unit->work[1] >= 15) {
+        return EVT_RETURN_DONE;
+    }
+    unit->work[1]++;
+    return EVT_RETURN_BLOCK;
+}
+
+/** Script helper: args[0] = unit. Remembers the current shadow scale of part 1 in work[0]. */
+static USER_FUNC(shadow_scale_memory) {
+    s32 id = BattleTransID(event, evtGetValue(event, event->args[0]));
+    BattleUnit* unit = BattleGetUnitPtr(_battleWorkPointer, id);
+    BattleUnitPart* part = BtlUnit_GetPartsPtr(unit, 1);
+
+    unit->work[0] = part->shadowScale;
+    return EVT_RETURN_DONE;
+}
+
+/**
+ * Script helper: returns in args[0] 1 if the stage's iron frame is still in place
+ * and 0 once it has been knocked away.
+ */
+static USER_FUNC(pakkun_ceil_exist) {
+    EvtWord* args = event->args;
+
+    if (_battleWorkPointer->stageObjectWork.flags & STAGE_OBJ_FLAG_IRON_FRAME_GONE) {
+        evtSetValue(event, args[0], 0);
+    } else {
+        evtSetValue(event, args[0], 1);
+    }
+    return EVT_RETURN_DONE;
+}

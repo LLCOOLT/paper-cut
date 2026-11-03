@@ -1,0 +1,131 @@
+// eki_04 (駅, Riverside Station): room with a red jump stand and two doors; Dried Shroom and P-Up, D-Down items; doors to eki_03 and eki_05.
+#include "battle/battle_unit.h"
+#include "evt/evt_cmd.h"
+#include "evt/evt_bero.h"
+#include "evt/evt_cam.h"
+#include "evt/evt_item.h"
+#include "evt/evt_map.h"
+#include "evt/evt_mario.h"
+#include "evt/evt_mobj.h"
+#include "evt/evt_snd.h"
+#include "eki.h"
+#include "evt/evt_story.h"
+#include "driver/mapdrv.h"
+
+static BeroEntry bero_data[3];
+extern EvtWord evt_jump[];
+
+/**
+ * Door animation callback, closing for the e_bero exit to eki_03:
+ * rotates map object "e_door" about Y by -0.444 times the value in LW(0).
+ */
+static EVT_BEGIN(e_close)
+    MULTIPLY_FLOAT(LW(0), FLOAT(-0.44433594f))
+    CALL(evt_mapobj_rotate, 0, STRING("e_door"), 0, LW(0), 0)
+    RETURN
+EVT_END()
+
+/**
+ * Door animation callback, opening for the e_bero exit to eki_03:
+ * rotates map object "e_door" about Y by 0.444 times the value in LW(0).
+ */
+static EVT_BEGIN(e_open)
+    MULTIPLY_FLOAT(LW(0), FLOAT(0.44433594f))
+    CALL(evt_mapobj_rotate, 0, STRING("e_door"), 0, LW(0), 0)
+    RETURN
+EVT_END()
+
+/**
+ * Door animation callback, closing for the s_bero exit to eki_05:
+ * rotates map object "s_door" about Y by -0.444 times the value in LW(0).
+ */
+static EVT_BEGIN(s_close)
+    MULTIPLY_FLOAT(LW(0), FLOAT(-0.44433594f))
+    CALL(evt_mapobj_rotate, 0, STRING("s_door"), 0, LW(0), 0)
+    RETURN
+EVT_END()
+
+/**
+ * Door animation callback, opening for the s_bero exit to eki_05:
+ * rotates map object "s_door" about Y by 0.444 times the value in LW(0).
+ */
+static EVT_BEGIN(s_open)
+    MULTIPLY_FLOAT(LW(0), FLOAT(0.44433594f))
+    CALL(evt_mapobj_rotate, 0, STRING("s_door"), 0, LW(0), 0)
+    RETURN
+EVT_END()
+
+/** Exits (beros) of this room: e_bero to eki_03 and s_bero to eki_05. */
+static BeroEntry bero_data[] = {
+    {
+        "e_bero", // hitName
+        1, // type
+        3, // sfxId
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
+        0, 0, // centerPositionY..centerPositionZ
+        -1, // length
+        NULL, // enterEvent
+        -1, // caseType
+        NULL, // exitEvent
+        "eki_03", // nextMapName
+        "w_bero_2", // nextBeroName
+        5, // enterAnimeType
+        5, // exitAnimeType
+        e_close, // enterAnimeArg
+        e_open, // exitAnimeArg
+    },
+    {
+        "s_bero", // hitName
+        1, // type
+        3, // sfxId
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
+        0, 0, // centerPositionY..centerPositionZ
+        -1, // length
+        NULL, // enterEvent
+        -1, // caseType
+        NULL, // exitEvent
+        "eki_05", // nextMapName
+        "n_bero", // nextBeroName
+        5, // enterAnimeType
+        5, // exitAnimeType
+        s_close, // enterAnimeArg
+        s_open, // exitAnimeArg
+    },
+    {0},
+};
+
+/**
+ * Runs when Mario uses the red jump stand: freezes him,
+ * launches him with a high jump (evt_mario_jump_jumpstand) from the stand at (360, -900) up to the ledge near
+ * (310, -900), and then gives control back.
+ */
+EVT_BEGIN(evt_jump)
+    CALL(evt_mario_key_onoff, 0)
+    CALL(evt_mario_jump_jumpstand, 360, -900, 70, 300, 700, 75, 310, -900, 65, 6000, 1)
+    CALL(evt_mario_key_onoff, 1)
+    RETURN
+EVT_END()
+
+/**
+ * Map init for eki_04: sets up the doors to eki_03 and eki_05, the red jump stand, the Dried Shroom and P-Up,
+ * D-Down items and makes sure the story is at least STORY_STG6_33_BLOW_THE_POSTER.
+ */
+EVT_BEGIN(eki_04_init_evt)
+    SET_VALUE(LW(0), PTR(bero_data))
+    CALL(evt_bero_get_info)
+    CALL_CHILD(evt_bero_info_run)
+    CALL(evt_cam_road_reset)
+    CALL(evt_snd_bgmoff, PSND_FADE_OUT)
+    CALL(evt_snd_envon, PSND_FADE_RESTART | PSND_FADE_IN, STRING("ENV_STG6_EKI2"))
+    CALL(evt_mobj_jumpstand_red, 0, STRING("mobj_jump"), 360, -900, 70, PTR(evt_jump), 0)
+    CALL(evt_item_entry, STRING("item01"), ITEM_DRIED_SHROOM, -250, -815, 70, ITEM_ENTRY_FIXED, GSWF(GSWF_EKI04_DRIED_SHROOM), 0)
+    CALL(evt_item_entry, STRING("item02"), ITEM_P_UP_D_DOWN, -250, 230, 40, ITEM_ENTRY_FIXED, GSWF(GSWF_EKI04_P_UP_D_DOWN), 0)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("futi_"), MAPOBJ_FLAG_BBOX_CULL)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("hasira"), MAPOBJ_FLAG_BBOX_CULL)
+    IF_INT_LESS(GSW(GSW_STORY_PROGRESS), STORY_STG6_33_BLOW_THE_POSTER)
+        SET_VALUE(GSW(GSW_STORY_PROGRESS), STORY_STG6_33_BLOW_THE_POSTER)
+    END_IF
+    RETURN
+EVT_END()

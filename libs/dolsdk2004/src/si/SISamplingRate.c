@@ -1,0 +1,145 @@
+#include <dolphin.h>
+#include <dolphin/si.h>
+
+#include "__os.h"
+
+#define LATENCY 8
+
+/** Controller sampling interval in milliseconds set with SISetSamplingRate. */
+static u32 SamplingRate = 0;
+
+typedef struct XY {
+    u16 line;
+    u8 count;
+} XY;
+
+/**
+ * Poll line interval and polls per frame for each sampling interval 0-11 ms on 60 Hz (NTSC, MPAL, EURGB60)
+ * video.
+ */
+static XY XYNTSC[12] = {
+    {0x00F6, 0x02},
+    {0x000E, 0x13},
+    {0x001E, 0x09},
+    {0x002C, 0x06},
+    {0x0034, 0x05},
+    {0x0041, 0x04},
+    {0x0057, 0x03},
+    {0x0057, 0x03},
+    {0x0057, 0x03},
+    {0x0083, 0x02},
+    {0x0083, 0x02},
+    {0x0083, 0x02},
+};
+
+/** Poll line interval and polls per frame for each sampling interval 0-11 ms on 50 Hz PAL video. */
+static XY XYPAL[12] = {
+    {0x0128, 0x02},
+    {0x000F, 0x15},
+    {0x001D, 0x0B},
+    {0x002D, 0x07},
+    {0x0034, 0x06},
+    {0x003F, 0x05},
+    {0x004E, 0x04},
+    {0x0068, 0x03},
+    {0x0068, 0x03},
+    {0x0068, 0x03},
+    {0x0068, 0x03},
+    {0x009C, 0x02},
+};
+
+/**
+ * Sets how many times per frame the SI polls the controllers, from a millisecond interval (clamped to 11).
+ * The table gives the line spacing and poll count for the current TV format (NTSC/MPAL/EuRGB60 or PAL),
+ * doubled in progressive mode, and passes them to SISetXY.
+ */
+void SISetSamplingRate(u32 msec) {
+    XY* xy;
+    BOOL progressive;
+    BOOL enabled;
+
+    ASSERTMSGLINE(377, 0 <= msec && msec <= 11, "SISetSamplingRate(): out of rage (0 <= msec <= 11)");
+    if (msec > 11) {
+        msec = 11;
+    }
+    enabled = OSDisableInterrupts();
+    SamplingRate = msec;
+
+    switch (VIGetTvFormat()) {
+    case VI_NTSC:
+    case VI_MPAL:
+    case VI_EURGB60:
+        xy = XYNTSC;
+        break;
+    case VI_PAL:
+        xy = XYPAL;
+        break;
+    default:
+#ifdef VERSION_G8ME01
+        OSReport("SISetSamplingRate: unknown TV format. Use default.");
+#else
+        OSReport("SISetSamplingRate: unknown TV format. Use default.");
+#endif
+        msec = 0;
+        xy = XYNTSC;
+        break;
+    }
+
+    progressive = __VIRegs[VI_CLOCK_SEL] & 1;
+    SISetXY((progressive ? 2 : 1) * xy[msec].line, xy[msec].count);
+    OSRestoreInterrupts(enabled);
+}
+
+/** Re-applies the last sampling rate, for example after the TV format changes. */
+void SIRefreshSamplingRate(void) {
+    SISetSamplingRate(SamplingRate);
+}
+
+#if DEBUG
+/**
+ * Debug-build test hook that prints the poll timing table (count, line spacing, last poll line) of a TV format
+ * through OSReport.
+ */
+void __SITestSamplingRate(u32 tvmode) {
+    u32 msec;
+    u32 line;
+    u32 count;
+    XY* xy;
+
+    switch (tvmode) {
+    case VI_NTSC:
+    case VI_MPAL:
+        xy = XYNTSC;
+        for (msec = 0; msec <= 11; msec++) {
+            line = xy[msec].line;
+            count = xy[msec].count;
+            OSReport("%2d[msec]: count %3d, line %3d, last %3d, diff0 %2d.%03d, diff1 %2d.%03d\n",
+                msec, count, line, line * (count - 1) + LATENCY, (line * 636) / 10000, (line * 636) % 10000,
+                ((263 - line * (count - 1)) * 636) / 10000, ((263 - line * (count - 1)) * 636) % 10000);
+            ASSERTLINE(446, line * (count - 1) + LATENCY < 263);
+            
+            if (msec != 0) {
+                ASSERTLINE(449, 636 * line < msec * 10000);
+                ASSERTLINE(450, 636 * (263 - line * (count - 1)) < msec * 10000);
+            }
+        }
+    break;
+    case VI_PAL:
+        xy = XYPAL;
+        for (msec = 0; msec <= 11; msec++) {
+            line = xy[msec].line;
+            count = xy[msec].count;
+            OSReport("%2d[msec]: count %3d, line %3d, last %3d, diff0 %2d.%03d, diff1 %2d.%03d\n",
+                msec, count, line, line * (count - 1) + LATENCY, (line * 640) / 10000, (line * 640) % 10000,
+                ((313 - line * (count - 1)) * 640) / 10000, ((313 - line * (count - 1)) * 640) % 10000);
+            ASSERTLINE(470, line * (count - 1) + LATENCY < 313);
+            
+            if (msec != 0) {
+                ASSERTLINE(473, 640 * line < msec * 10000);
+                ASSERTLINE(474, 640 * (313 - line * (count - 1)) < msec * 10000);
+            }
+        }
+        break;
+    }
+}
+#endif

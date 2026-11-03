@@ -1,0 +1,457 @@
+// tik_04 (埋没した都市, Rogueport Sewers): the plane panel (plane_tobashi_check), the paper stairs (kaidan_pera), the switch
+// and the black key, and a meeting with the guide Puni.
+#include "battle/battle_unit.h"
+#include "evt/evt_cmd.h"
+#include "evt/evt_bero.h"
+#include "evt/evt_cam.h"
+#include "evt/evt_cloud.h"
+#include "evt/evt_eff.h"
+#include "evt/evt_hit.h"
+#include "evt/evt_img.h"
+#include "evt/evt_item.h"
+#include "driver/itemdrv.h"
+#include "evt/evt_map.h"
+#include "evt/evt_mario.h"
+#include "evt/evt_mobj.h"
+#include "evt/evt_msg.h"
+#include "evt/evt_npc.h"
+#include "evt/evt_offscreen.h"
+#include "evt/evt_paper.h"
+#include "evt/evt_party.h"
+#include "evt/evt_snd.h"
+#include "tik.h"
+#include "evt/evt_story.h"
+#include "driver/mapdrv.h"
+
+#if VERSION <= VERSION_DEMO_JP
+static BeroEntry bero_entry_data[8];
+#else
+static BeroEntry bero_entry_data[5];
+#endif
+extern EvtWord puni_soguu_1[];
+extern EvtWord puni_soguu_2[];
+extern EvtWord plane_tobashi_check[];
+extern EvtWord tik04_wall_blow_evt[];
+extern EvtWord kaidan_pera[];
+extern EvtWord tik_04_switch_evt[];
+
+/**
+ * Doors of this room: the west exit to the Thousand-Year Door room (tik_05), the exits down to tik_03 (four of
+ * them in the demo builds, one in the later releases), the exit to the black chest room (tik_19) and the pipe
+ * to tik_15.
+ */
+static BeroEntry bero_entry_data[] = {
+    {
+        "w_bero", // hitName
+        0, 0, // type..sfxId
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
+        0, 0, // centerPositionY..centerPositionZ
+        -1, // length
+        NULL, // enterEvent
+        -1, // caseType
+        NULL, // exitEvent
+        "tik_05", // nextMapName
+        "e_bero", // nextBeroName
+        1, // enterAnimeType
+        1, // exitAnimeType
+        0, 0, // enterAnimeArg..exitAnimeArg
+    },
+    {
+        "n_bero_1", // hitName
+        0, 0, // type..sfxId
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
+        0, 0, // centerPositionY..centerPositionZ
+        -1, // length
+        NULL, // enterEvent
+        -1, // caseType
+        NULL, // exitEvent
+        "tik_03", // nextMapName
+        "s_bero_1", // nextBeroName
+        1, // enterAnimeType
+        1, // exitAnimeType
+        0, 0, // enterAnimeArg..exitAnimeArg
+    },
+#if VERSION <= VERSION_DEMO_JP
+    {
+        "n_bero_2", // hitName
+        0, 0, // type..sfxId
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
+        0, 0, // centerPositionY..centerPositionZ
+        -1, // length
+        NULL, // enterEvent
+        -1, // caseType
+        NULL, // exitEvent
+        "tik_03", // nextMapName
+        "s_bero_2", // nextBeroName
+        1, // enterAnimeType
+        1, // exitAnimeType
+        0, 0, // enterAnimeArg..exitAnimeArg
+    },
+    {
+        "n_bero_3", // hitName
+        0, 0, // type..sfxId
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
+        0, 0, // centerPositionY..centerPositionZ
+        -1, // length
+        NULL, // enterEvent
+        -1, // caseType
+        NULL, // exitEvent
+        "tik_03", // nextMapName
+        "s_bero_3", // nextBeroName
+        1, // enterAnimeType
+        1, // exitAnimeType
+        0, 0, // enterAnimeArg..exitAnimeArg
+    },
+    {
+        "n_bero_4", // hitName
+        0, 0, // type..sfxId
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
+        0, 0, // centerPositionY..centerPositionZ
+        -1, // length
+        NULL, // enterEvent
+        -1, // caseType
+        NULL, // exitEvent
+        "tik_03", // nextMapName
+        "s_bero_4", // nextBeroName
+        1, // enterAnimeType
+        1, // exitAnimeType
+        0, 0, // enterAnimeArg..exitAnimeArg
+    },
+#endif
+    {
+        "n_bero_5", // hitName
+        0, 0, // type..sfxId
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
+        0, 0, // centerPositionY..centerPositionZ
+        -1, // length
+        NULL, // enterEvent
+        -1, // caseType
+        NULL, // exitEvent
+        "tik_19", // nextMapName
+        "s_bero", // nextBeroName
+        1, // enterAnimeType
+        1, // exitAnimeType
+        0, 0, // enterAnimeArg..exitAnimeArg
+    },
+    {
+        "dokan", // hitName
+        2, // type
+        0, // sfxId
+        BERO_DIR_W, // directionId
+        BERO_POS_AUTO, // centerPosition
+        0, 0, // centerPositionY..centerPositionZ
+        -1, // length
+        NULL, // enterEvent
+        10, // caseType
+        NULL, // exitEvent
+        "tik_15", // nextMapName
+        "dokan_1", // nextBeroName
+        1, // enterAnimeType
+        1, // exitAnimeType
+        0, 0, // enterAnimeArg..exitAnimeArg
+    },
+    {0},
+};
+
+/**
+ * Footstep sound loop for the guide Puni: plays SFX_STG2_PUNI_MOVE2_1 at his position repeatedly while he walks.
+ * Started and stopped by the scenes.
+ */
+static EVT_BEGIN(puni_walk_se)
+    LOOP(0)
+        CALL(evt_npc_get_position, STRING("ガイド"), LW(0), LW(1), LW(2))
+        CALL(evt_snd_sfxon_3d, STRING("SFX_STG2_PUNI_MOVE2_1"), LW(0), LW(1), LW(2), 0)
+        WAIT_FRAMES(5)
+    END_LOOP
+    RETURN
+EVT_END()
+
+/**
+ * First glimpse of the guide Puni (ガイド), while story progress is at or below STORY_STG0_11_3_GOOMBA_GOONS.
+ * When Mario walks past X = -275 a speech-bubble appears over the Puni,
+ * he runs away off screen and story progress is set to STORY_STG0_12_PUNI_ENCOUNTER.
+ */
+EVT_BEGIN(puni_soguu_1)
+    CALL(evt_npc_set_position, STRING("ガイド"), -155, 25, -80)
+    CALL(evt_npc_set_ry, STRING("ガイド"), 90)
+    CALL(evt_npc_flag_onoff, 1, STRING("ガイド"), NPC_FLAG_NO_WALL_HIT | NPC_FLAG_INTANGIBLE)
+    LOOP(0)
+        CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
+        IF_INT_GREATER_OR_EQUAL(LW(0), -275)
+            BREAK_LOOP
+        END_IF
+        WAIT_FRAMES(1)
+    END_LOOP
+    CALL(evt_mario_key_onoff, 0)
+    CALL(evt_mario_normalize)
+    CALL(evt_party_stop, 0)
+    CALL(evt_npc_set_ry, STRING("ガイド"), 270)
+    WAIT_MS(200)
+    CALL(evt_eff_fukidashi, 1, STRING(""), STRING("ガイド"), 0, 0, 0, 0, 0, 0, 0, 30)
+    WAIT_MS(500)
+    BEGIN_INLINE_EVENT
+        CALL(evt_npc_set_anim, STRING("ガイド"), STRING("R_1"))
+        CALL(evt_npc_set_ry, STRING("ガイド"), 90)
+        SPAWN_EVENT_GET_ID(PTR(puni_walk_se), LW(10))
+        CALL(evt_npc_move_position, STRING("ガイド"), -150, -220, 0, FLOAT(180.0f), 0)
+        DELETE_EVENT(LW(10))
+        CALL(evt_npc_set_position, STRING("ガイド"), 0, -1000, 0)
+    END_INLINE_EVENT
+    WAIT_MS(500)
+    CALL(evt_party_run, 0)
+    CALL(evt_mario_key_onoff, 1)
+    SET_VALUE(GSW(GSW_STORY_PROGRESS), STORY_STG0_12_PUNI_ENCOUNTER)
+    RETURN
+EVT_END()
+
+/**
+ * Second glimpse of the Puni, at STORY_STG1_31_FRANKLYS_HOUSE.
+ * The same chase-off as puni_soguu_1; afterwards the partner remarks (mac_1_011)
+ * and story progress is set to STORY_STG1_32_PUNI_ENCOUNTER_2.
+ */
+EVT_BEGIN(puni_soguu_2)
+    CALL(evt_npc_set_position, STRING("ガイド"), -155, 25, -80)
+    CALL(evt_npc_set_ry, STRING("ガイド"), 90)
+    CALL(evt_npc_flag_onoff, 1, STRING("ガイド"), NPC_FLAG_NO_WALL_HIT | NPC_FLAG_INTANGIBLE)
+    LOOP(0)
+        CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
+        IF_INT_GREATER_OR_EQUAL(LW(0), -275)
+            BREAK_LOOP
+        END_IF
+        WAIT_FRAMES(1)
+    END_LOOP
+    CALL(evt_mario_key_onoff, 0)
+    CALL(evt_mario_normalize)
+    CALL(evt_party_stop, 0)
+    CALL(evt_npc_set_ry, STRING("ガイド"), 270)
+    WAIT_MS(200)
+    CALL(evt_eff_fukidashi, 1, STRING(""), STRING("ガイド"), 0, 0, 0, 0, 0, 0, 0, 30)
+    WAIT_MS(500)
+    BEGIN_INLINE_EVENT
+        CALL(evt_npc_set_anim, STRING("ガイド"), STRING("R_1"))
+        CALL(evt_npc_set_ry, STRING("ガイド"), 90)
+        SPAWN_EVENT_GET_ID(PTR(puni_walk_se), LW(10))
+        CALL(evt_npc_move_position, STRING("ガイド"), -150, -220, 0, FLOAT(180.0f), 0)
+        DELETE_EVENT(LW(10))
+        CALL(evt_npc_set_position, STRING("ガイド"), 0, -1000, 0)
+    END_INLINE_EVENT
+    WAIT_MS(500)
+    CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
+    ADD(LW(0), 35)
+    IF_INT_LESS_OR_EQUAL(LW(2), -110)
+        ADD(LW(2), 10)
+    ELSE
+        ADD(LW(2), -10)
+    END_IF
+    CALL(evt_party_stop, 0)
+    CALL(evt_party_move_pos2, 0, LW(0), LW(2), FLOAT(120.0f))
+    CALL(evt_party_set_dir, 0, 270, 500)
+    WAIT_MS(500)
+    CALL(evt_msg_print_party, STRING("mac_1_011"))
+    CALL(evt_mario_set_pose, STRING("M_N_2"))
+    WAIT_MS(200)
+    CALL(evt_mario_key_onoff, 1)
+    CALL(evt_party_run, 0)
+    SET_VALUE(GSW(GSW_STORY_PROGRESS), STORY_STG1_32_PUNI_ENCOUNTER_2)
+    RETURN
+EVT_END()
+
+/**
+ * Tutorial watcher for the paper airplane mode. Waits until Mario starts flying (motion 24) and lands.
+ * If he lands on the intended platform (a_dai_1 or the block), sets GSWF_TIK04_FIRST_FLIGHT_DONE and stops;
+ * otherwise the partner gives a hint (mac_0_094_01, first time only; then mac_0_094_01_1)
+ * and the check runs again.
+ */
+EVT_BEGIN(plane_tobashi_check)
+    LOOP(0)
+        CALL(evt_mario_get_motion, LW(0))
+        IF_INT_EQUAL(LW(0), 24)
+            BREAK_LOOP
+        END_IF
+        WAIT_FRAMES(1)
+    END_LOOP
+    DEBUG_PUT_MSG(STRING("飛行機でとんだ"))
+    CALL(evt_mario_wait_landon)
+    DEBUG_PUT_MSG(STRING("飛行機で着地した"))
+    CALL(evt_mario_get_name_hitobj_ride, LW(0))
+    DEBUG_PUT_REG(LW(0))
+    SET_VALUE(LF(0), 0)
+    IF_STR_EQUAL(LW(0), STRING("a_dai_1"))
+        SET_VALUE(LF(0), 1)
+    END_IF
+    IF_STR_EQUAL(LW(0), STRING("MOBJ_block"))
+        SET_VALUE(LF(0), 1)
+    END_IF
+    IF_INT_EQUAL(LF(0), 1)
+        SET_VALUE(GSWF(GSWF_TIK04_FIRST_FLIGHT_DONE), 1)
+        RETURN
+    END_IF
+    CALL(evt_mario_key_onoff, 0)
+    CALL(evt_party_stop, 1)
+    WAIT_MS(750)
+    IF_INT_EQUAL(GSWF(GSWF_TIK04_PLANE_TIP_GIVEN), 0)
+        CALL(evt_msg_print, 0, STRING("mac_0_094_01"), 0, STRING("extparty"))
+        SET_VALUE(GSWF(GSWF_TIK04_PLANE_TIP_GIVEN), 1)
+    ELSE
+        CALL(evt_msg_print, 0, STRING("mac_0_094_01_1"), 0, STRING("extparty"))
+    END_IF
+    CALL(evt_party_run, 1)
+    CALL(evt_mario_key_onoff, 1)
+    SPAWN_EVENT(plane_tobashi_check)
+    RETURN
+EVT_END()
+
+/** Runs when the wind blows the cloud away from the wall; sets GSWF_TIK04_CLOUD_BLOWN. */
+EVT_BEGIN(tik04_wall_blow_evt)
+    SET_VALUE(GSWF(GSWF_TIK04_CLOUD_BLOWN), 1)
+    RETURN
+EVT_END()
+
+/**
+ * The paper stairs unfold: the page-turn animation (OFF_d_meku) is captured and played over the fake stairs
+ * and the real stairs (dai_6) are shown, with a step-appear sound.
+ */
+EVT_BEGIN(kaidan_pera)
+    CALL(evt_paper_entry, STRING("OFF_d_meku"))
+    CALL(evt_img_entry, STRING("capture_img"))
+    CALL(evt_img_set_paper, STRING("capture_img"), STRING("OFF_d_meku"))
+    CALL(evt_img_set_paper_anim, STRING("capture_img"), STRING("Z_1"))
+    CALL(evt_offscreen_entry, STRING("offscreen"))
+    CALL(evt_mapobj_set_offscreen, 1, STRING("s_dai_nise"), STRING("offscreen"))
+    CALL(evt_mapobj_set_offscreen, 1, STRING("win_1"), STRING("offscreen"))
+    CALL(evt_mapobj_set_offscreen, 1, STRING("ana"), STRING("offscreen"))
+    CALL(evt_offscreen_get_boundingbox, STRING("offscreen"), LW(10), LW(11), LW(12), LW(13))
+    CALL(evt_img_alloc_capture, STRING("capture_img"), 0, STRING("offscreen"), 1, LW(10), LW(11), LW(12), LW(13))
+    WAIT_FRAMES(1)
+    BEGIN_INLINE_EVENT
+        WAIT_MS(250)
+        CALL(evt_mapobj_get_position, STRING("OFF_d_meku"), LW(0), LW(1), LW(2))
+        CALL(evt_snd_sfxon_3d, STRING("SFX_OFF0_STEP_APPEAR1_2"), LW(0), LW(1), LW(2), 0)
+    END_INLINE_EVENT
+    CALL(evt_img_clear_virtual_point, STRING("capture_img"))
+    CALL(evt_img_set_paper_anim, STRING("capture_img"), STRING("A_1"))
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("s_dai_nise"), MAPOBJ_FLAG_HIDE)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("dai_6"), MAPOBJ_FLAG_HIDE)
+    CALL(evt_img_wait_animend, STRING("capture_img"))
+    CALL(evt_mapobj_clear_offscreen, 1, STRING("s_dai_nise"))
+    CALL(evt_mapobj_clear_offscreen, 1, STRING("win_1"))
+    CALL(evt_mapobj_clear_offscreen, 1, STRING("ana"))
+    CALL(evt_img_free_capture, STRING("capture_img"), 0)
+    CALL(evt_img_free_capture, STRING("capture_img"), 1)
+    CALL(evt_img_onoff, STRING("capture_img"), 0)
+    CALL(evt_img_release, STRING("capture_img"))
+    CALL(evt_offscreen_delete, STRING("offscreen"))
+    RETURN
+EVT_END()
+
+/**
+ * Blue switch handler.
+ * Takes control, pans the camera to the stairs (450, 255, 628), runs kaidan_pera,
+ * enables the stairs' hit area and sets story progress STORY_STG0_12_01_PAPER_STAIR_SWITCH.
+ */
+EVT_BEGIN(tik_04_switch_evt)
+    CALL(evt_mario_key_onoff, 0)
+    CALL(evt_cam3d_evt_set, 450, 255, 628, 450, 150, 37, 500, 11)
+    WAIT_MS(1500)
+    CALL_CHILD(kaidan_pera)
+    WAIT_MS(1000)
+    CALL(evt_cam3d_evt_off, 500, 11)
+    CALL(evt_hitobj_onoff, STRING("a_dai_nise"), 1, 0)
+    CALL(evt_hitobj_onoff, STRING("a_dai_6"), 1, 1)
+    SET_VALUE(GSW(GSW_STORY_PROGRESS), STORY_STG0_12_01_PAPER_STAIR_SWITCH)
+    CALL(evt_mario_key_onoff, 1)
+    RETURN
+EVT_END()
+
+/**
+ * Item-box callback for the Happy Heart P chest:
+ * takes control, puts the badge at the chest, waits for the chest animation and hands it to Mario.
+ */
+static EVT_BEGIN(mobj_box00)
+    CALL(evt_mario_key_onoff, 0)
+    CALL(evt_mobj_get_position, STRING("mobj_box00"), LW(0), LW(1), LW(2))
+    CALL(evt_item_entry, STRING("item00"), ITEM_HAPPY_HEART_P, LW(0), LW(1), LW(2), ITEM_ENTRY_FIXED, -1, 0)
+#if VERSION <= VERSION_DEMO_JP
+    CALL(evt_item_flag_on, STRING("item00"), ITEM_FLAG_NO_TOUCH)
+#else
+    CALL(evt_item_flag_on, STRING("item00"), ITEM_FLAG_BADGE_RETURN | ITEM_FLAG_NO_TOUCH)
+#endif
+    CALL(evt_mobj_wait_animation_end, STRING("mobj_box00"))
+    CALL(evt_item_get_item, STRING("item00"))
+    CALL(evt_mario_key_onoff, 1)
+    RETURN
+EVT_END()
+
+/**
+ * Map init script of tik_04.
+ * Starts the sewer music, sets up exits, runs the two Puni glimpses at their story steps,
+ * the airplane tutorial watcher, the cloud, the blue switch for the paper stairs, the black key, the big block,
+ * the Happy Heart P chest, two Pretty Lucky blocks and a Star Piece.
+ */
+EVT_BEGIN(tik_04_init_evt)
+    CALL(evt_snd_bgmon, PSND_FADE_OUT, STRING("BGM_STG0_TIK1"))
+    CALL(evt_snd_envon, PSND_FADE_RESTART | PSND_FADE_IN, STRING("ENV_STG0_TIK1"))
+    CALL(evt_snd_set_rev_mode, 2)
+    SET_VALUE(LW(0), PTR(bero_entry_data))
+    CALL(evt_bero_get_info)
+    CALL_CHILD(evt_bero_info_run)
+    IF_INT_LESS_OR_EQUAL(GSW(GSW_STORY_PROGRESS), STORY_STG0_11_3_GOOMBA_GOONS)
+        SPAWN_EVENT(puni_soguu_1)
+    END_IF
+    IF_INT_EQUAL(GSW(GSW_STORY_PROGRESS), STORY_STG1_31_FRANKLYS_HOUSE)
+        SPAWN_EVENT(puni_soguu_2)
+    END_IF
+    CALL(evt_map_entry_airport_harbor, 0, STRING("hikou"), STRING("a_hikou"))
+    IF_INT_LESS_OR_EQUAL(GSW(GSW_STORY_PROGRESS), STORY_STG0_12_02_PAPER_MAGE_1)
+        IF_INT_EQUAL(GSWF(GSWF_TIK04_FIRST_FLIGHT_DONE), 0)
+            SPAWN_EVENT(plane_tobashi_check)
+        END_IF
+    END_IF
+    IF_INT_EQUAL(GSWF(GSWF_TIK04_CLOUD_BLOWN), 0)
+        CALL(evt_cloud_init)
+        CALL(evt_cloud_ent, 0, STRING("win_1"), STRING("a_win_1"), PTR(tik04_wall_blow_evt))
+    ELSE
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("win_1"), MAPOBJ_FLAG_HIDE)
+        CALL(evt_hitobj_onoff, STRING("a_win_1"), 1, 0)
+    END_IF
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("s_dai_nise"), MAPOBJ_FLAG_HIDE)
+    CALL(evt_hitobj_onoff, STRING("a_dai_nise"), 1, 0)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("dai_toreru"), MAPOBJ_FLAG_HIDE)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("dai_6"), MAPOBJ_FLAG_HIDE)
+    CALL(evt_hitobj_onoff, STRING("a_dai_6"), 1, 0)
+    IF_INT_EQUAL(GSWF(GSWF_TIK04_SWITCH_PRESSED), 0)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("s_dai_nise"), MAPOBJ_FLAG_HIDE)
+        CALL(evt_hitobj_onoff, STRING("a_dai_nise"), 1, 1)
+        CALL(evt_mobj_switch_blue, 0, STRING("mobj_switch00"), 275, 0, 100, PTR(tik_04_switch_evt), GSWF(GSWF_TIK04_SWITCH_PRESSED))
+    ELSE
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("dai_6"), MAPOBJ_FLAG_HIDE)
+        CALL(evt_hitobj_onoff, STRING("a_dai_6"), 1, 1)
+    END_IF
+    CALL(evt_item_entry, STRING("blackkey"), ITEM_BLACK_KEY_0x21, 175, 125, -100, ITEM_ENTRY_FIXED, GSWF(GSWF_TIK04_BLACK_KEY_TAKEN), 0)
+    CALL(evt_mobj_jumpstand_blue, 0, STRING("mobj_jump00"), 150, -450, 0, 0, 0, 0)
+    CALL(evt_mobj_lv_blk, STRING("block"), -425, 0, 0, 0, GSWF(GSWF_TIK04_BIG_BLOCK_BROKEN), STRING("MOBJ_Lv1BigBigBlock"))
+    IF_INT_EQUAL(GSWF(GSWF_TIK04_BIG_BLOCK_BROKEN), 0)
+        CALL(evt_mobj_flag_onoff, 1, STRING("block"), MOBJ_FLAG_NO_CULL)
+    END_IF
+    CALL(evt_mobj_itembox, STRING("mobj_box00"), 310, 0, -25, 0, 0, PTR(mobj_box00), GSWF(GSWF_TIK04_HAPPY_HEART_P_CHEST_OPENED))
+#if VERSION <= VERSION_DEMO_JP
+    CALL(evt_mobj_brick, STRING("mobj_box01"), -345, 60, 130, ITEM_PRETTY_LUCKY, 12, 0, GSWF(GSWF_TIK04_PRETTY_LUCKY_BLOCK_HIT))
+#else
+    CALL(evt_mobj_brick, STRING("mobj_box01"), -150, 60, 130, ITEM_PRETTY_LUCKY, 12, 0, GSWF(GSWF_TIK04_PRETTY_LUCKY_BLOCK_HIT))
+#endif
+    CALL(evt_item_entry, STRING("item_02"), ITEM_STAR_PIECE, -460, 25, -100, ITEM_ENTRY_FIXED, GSWF(GSWF_TIK04_STAR_PIECE), 0)
+    IF_INT_LESS(GSW(GSW_STORY_PROGRESS), STORY_STG5_43_X_NAUTS_RETREAT)
+        CALL(evt_npc_check_delete, STRING("カメック"))
+        CALL(evt_npc_check_delete, STRING("トゲノコ"))
+    ELSE
+        CALL(evt_npc_check_delete, STRING("ヒンニャー１"))
+        CALL(evt_npc_check_delete, STRING("ヒンニャー２"))
+    END_IF
+    RETURN
+EVT_END()

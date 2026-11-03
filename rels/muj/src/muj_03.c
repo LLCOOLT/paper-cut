@@ -1,0 +1,233 @@
+// muj_03 (無人島, Keelhaul Key): the jungle path where the nervous sailor runs off
+// (nigeru_suifu01), with the bespectacled sailor and hidden blocks.
+#include "battle/battle_unit.h"
+#include "evt/evt_cmd.h"
+#include "evt/evt_bero.h"
+#include "evt/evt_cam.h"
+#include "evt/evt_mario.h"
+#include "evt/evt_msg.h"
+#include "evt/evt_npc.h"
+#include "evt/evt_party.h"
+#include "evt/evt_sub.h"
+#include "evt/evt_eff.h"
+#include "evt/evt_item.h"
+#include "evt/evt_mobj.h"
+#include "evt/evt_snd.h"
+#include "muj.h"
+#include "data_tables.h"
+#include "version.h"
+#include "evt/evt_story.h"
+
+extern EvtWord muj_03_event_01[];
+static BeroEntry bero_entry_data[3];
+extern EvtWord nigeru_suifu01[];
+static TreeAccess tree_tbl[5];
+static KusaAccess kusa_tbl[9];
+
+/**
+ * Trigger event (case event) of the jungle path:
+ * the first time Mario passes after STORY_STG5_13_BOBBERY_AND_THE_BRIDGE it starts nigeru_suifu01
+ * and sets GSWF_MUJ03_RUNAWAY_SAILOR_SEEN.
+ */
+EVT_BEGIN(muj_03_event_01)
+    IF_INT_GREATER_OR_EQUAL(GSW(GSW_STORY_PROGRESS), STORY_STG5_13_BOBBERY_AND_THE_BRIDGE)
+        IF_INT_EQUAL(GSWF(GSWF_MUJ03_RUNAWAY_SAILOR_SEEN), 0)
+            SPAWN_EVENT(nigeru_suifu01)
+            SET_VALUE(GSWF(GSWF_MUJ03_RUNAWAY_SAILOR_SEEN), 1)
+            SET_VALUE(LW(0), 1)
+            RETURN
+        END_IF
+    END_IF
+    SET_VALUE(LW(0), 0)
+    RETURN
+EVT_END()
+
+/** Doors and exits of muj_03: w_bero to muj_02; e_bero to muj_04. */
+static BeroEntry bero_entry_data[] = {
+    {
+        "w_bero", // hitName
+        0, 0, // type..sfxId
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
+        0, 0, // centerPositionY..centerPositionZ
+        -1, // length
+        NULL, // enterEvent
+        -1, // caseType
+        NULL, // exitEvent
+        "muj_02", // nextMapName
+        "e_bero", // nextBeroName
+        1, // enterAnimeType
+        1, // exitAnimeType
+        0, 0, // enterAnimeArg..exitAnimeArg
+    },
+    {
+        "e_bero", // hitName
+        0, 0, // type..sfxId
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
+        0, 0, // centerPositionY..centerPositionZ
+        -1, // length
+        (s32*)muj_03_event_01, // enterEvent
+        -1, // caseType
+        NULL, // exitEvent
+        "muj_04", // nextMapName
+        "w_bero", // nextBeroName
+        1, // enterAnimeType
+        1, // exitAnimeType
+        0, 0, // enterAnimeArg..exitAnimeArg
+    },
+    {0},
+};
+
+/**
+ * The two sailors Odoodo and the bespectacled one meet Mario on the path (stg5_muj_90_22 to 24 and on)
+ * and run away from him; they move with no wall collision
+ * and with special footstep sounds for the glasses sailor.
+ */
+EVT_BEGIN(nigeru_suifu01)
+    CALL(evt_npc_set_position, STRING("オドオド水夫"), 570, 150, -50)
+    CALL(evt_npc_set_ry, STRING("オドオド水夫"), 90)
+    CALL(evt_npc_flag_onoff, 1, STRING("オドオド水夫"), NPC_FLAG_NO_WALL_HIT | NPC_FLAG_INSTANT_TURN | NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM | NPC_FLAG_INTANGIBLE)
+    CALL(evt_npc_set_position, STRING("めがね水夫"), 530, 150, -50)
+    CALL(evt_npc_set_ry, STRING("めがね水夫"), 90)
+    CALL(evt_npc_flag_onoff, 1, STRING("めがね水夫"), NPC_FLAG_NO_WALL_HIT | NPC_FLAG_INSTANT_TURN | NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM | NPC_FLAG_INTANGIBLE)
+    CALL(evt_npc_sound_data_set, STRING("めがね水夫"), STRING("SFX_STG5_KANBU_GLASSES_MOVE1L"), STRING("SFX_STG5_KANBU_GLASSES_MOVE1R"), EVT_NULLPTR, EVT_NULLPTR, EVT_NULLPTR)
+    CALL(evt_mario_key_onoff, 0)
+    CALL(evt_mario_normalize)
+    CALL(evt_party_stop, 0)
+    CALL(evt_mario_set_pos, 610, 150, 0)
+    CALL(evt_mario_set_dir, 270, 0, 0)
+    CALL(evt_party_set_pos, 0, 630, 150, 25)
+    CALL(evt_party_set_dir, 0, 270, 0)
+    WAIT_MS(500)
+    CALL(evt_npc_flag_onoff, 0, STRING("オドオド水夫"), NPC_FLAG_INSTANT_TURN)
+    CALL(evt_npc_flag_onoff, 0, STRING("めがね水夫"), NPC_FLAG_INSTANT_TURN)
+    CALL(evt_msg_print, 0, STRING("stg5_muj_90_22"), 0, STRING("オドオド水夫"))
+    SET_VALUE(GF(0), 1)
+    BEGIN_INLINE_EVENT
+        CALL(evt_npc_set_ry, STRING("オドオド水夫"), 270)
+        WAIT_MS(200)
+        CALL(evt_npc_jump_position_nohit, STRING("オドオド水夫"), 464, 180, -50, 500, 50)
+        WAIT_MS(300)
+        CALL(evt_npc_jump_position_nohit, STRING("オドオド水夫"), 382, 180, -50, 500, 50)
+        CALL(evt_npc_set_position, STRING("オドオド水夫"), 0, -1000, 0)
+        SET_VALUE(GF(0), 0)
+    END_INLINE_EVENT
+    WAIT_WHILE(GF(0))
+    CALL(evt_npc_set_ry, STRING("めがね水夫"), 270)
+    WAIT_MS(500)
+    CALL(evt_msg_print, 0, STRING("stg5_muj_90_23"), 0, STRING("めがね水夫"))
+    WAIT_MS(200)
+    CALL(evt_npc_jump_position_nohit, STRING("めがね水夫"), 464, 180, -50, 500, 50)
+    WAIT_MS(300)
+    CALL(evt_npc_jump_position_nohit, STRING("めがね水夫"), 382, 180, -50, 500, 50)
+    WAIT_MS(800)
+    CALL(evt_npc_set_ry, STRING("めがね水夫"), 90)
+    WAIT_MS(200)
+    CALL(evt_npc_jump_position_nohit, STRING("めがね水夫"), 465, 180, -50, 500, 50)
+    CALL(evt_npc_set_ry, STRING("めがね水夫"), 90)
+    WAIT_MS(200)
+    CALL(evt_cam3d_evt_set, 465, 288, 263, 465, 240, -8, 500, 11)
+    WAIT_MS(500)
+    CALL(evt_npc_set_ry, STRING("めがね水夫"), 270)
+    WAIT_MS(1000)
+    CALL(evt_msg_print, 0, STRING("stg5_muj_90_24"), 0, STRING("めがね水夫"))
+    CALL(evt_cam3d_evt_off, 500, 11)
+    WAIT_MS(500)
+    BEGIN_INLINE_EVENT
+        WAIT_MS(300)
+        CALL(evt_npc_jump_position_nohit, STRING("めがね水夫"), 382, 180, -50, 500, 50)
+        CALL(evt_npc_set_position, STRING("めがね水夫"), 0, -1000, 0)
+    END_INLINE_EVENT
+    CALL(evt_party_set_dir, 0, 270, 200)
+    WAIT_MS(300)
+    CALL(evt_party_set_dir, 0, 90, 200)
+    WAIT_MS(300)
+    CALL(evt_party_set_dir, 0, 270, 200)
+    WAIT_MS(300)
+    CALL(evt_party_set_dir, 0, 90, 200)
+    WAIT_MS(300)
+    CALL(evt_party_set_dir, 0, 270, 200)
+    CALL(evt_msg_print_party, STRING("stg5_muj_90_25"))
+    CALL(evt_party_run, 0)
+    CALL(evt_mario_key_onoff, 1)
+    RETURN
+EVT_END()
+
+/**
+ * Case event for grass patch 5: when the grass is hit,
+ * launches a Mini Mr. Mini out of it unless it has been taken (item_kusa_5).
+ */
+static EVT_BEGIN(evt_kusa_5)
+    CALL(evt_item_delete_check, STRING("item_kusa_5"), LW(0))
+    IF_INT_EQUAL(LW(0), 1)
+        CALL(evt_item_entry, STRING("item_kusa_5"), ITEM_MINI_MR_MINI, -250, 10, 95, ITEM_ENTRY_LAUNCH, GSWF(GSWF_MUJ03_BUSH_MINI_MR_MINI_TAKEN), 0)
+    END_IF
+    RETURN
+EVT_END()
+
+/**
+ * Case event for grass patch 7: when the grass is hit,
+ * launches a coin out of it unless it has been taken (item_kusa_7).
+ */
+static EVT_BEGIN(evt_kusa_7)
+    CALL(evt_item_delete_check, STRING("item_kusa_7"), LW(0))
+    IF_INT_EQUAL(LW(0), 1)
+        CALL(evt_item_entry, STRING("item_kusa_7"), ITEM_COIN, 175, 210, -50, ITEM_ENTRY_LAUNCH, GSWF(GSWF_MUJ03_BUSH_COIN_TAKEN), 0)
+    END_IF
+    RETURN
+EVT_END()
+
+/** Trees of muj_03 that Mario can shake with his hammer (4 in all). */
+static TreeAccess tree_tbl[] = {
+    {5, "A_treeA_01", "treeA_01_m", "treeA_01_ha", 0, NULL},
+    {5, "A_treeA_02", "treeA_02_m", "treeA_02_ha", 0, NULL},
+    {5, "A_treeA_03", "treeA_03_m", "treeA_03_ha", 0, NULL},
+    {5, "A_treeA_04", "treeA_04_m", "treeA_04_ha", 0, NULL},
+    {7, NULL, NULL, NULL, 0, NULL},
+};
+
+/**
+ * Bushes of muj_03 that Mario can check for hidden things (8 in all); A_kuwa_move_05 runs evt_kusa_5,
+ * A_kuwa_move_07 runs evt_kusa_7.
+ */
+static KusaAccess kusa_tbl[] = {
+    {1, "A_kuwa_move_01", "S_kuwa_move_01", NULL},
+    {1, "A_kuwa_move_02", "S_kuwa_move_02", NULL},
+    {1, "A_kuwa_move_03", "S_kuwa_move_03", NULL},
+    {1, "A_kuwa_move_04", "S_kuwa_move_04", NULL},
+    {1, "A_kuwa_move_05", "S_kuwa_move_05", evt_kusa_5},
+    {1, "A_kuwa_move_06", "S_kuwa_move_06", NULL},
+    {1, "A_kuwa_move_07", "S_kuwa_move_07", evt_kusa_7},
+    {1, "A_kuwa_move_08", "S_kuwa_move_08", NULL},
+    {4, NULL, NULL, NULL},
+};
+
+/**
+ * Map init for muj_03 (the jungle path): starts the jungle music and ambience, registers the exits,
+ * the coin and badge blocks (Thunder Rage), a hidden brick, a Shine Sprite block and the NPCs.
+ */
+EVT_BEGIN(muj_03_init_evt)
+    CALL(evt_snd_bgmon, PSND_FADE_OUT, STRING("BGM_STG5_MUJ1"))
+    CALL(evt_snd_envon, PSND_FADE_RESTART | PSND_FADE_IN, STRING("ENV_STG5_MUJ5"))
+    SET_VALUE(LW(0), PTR(bero_entry_data))
+    CALL(evt_bero_get_info)
+    CALL_CHILD(evt_bero_info_run)
+    CALL(evt_mobj_badgeblk, STRING("mobj01"), -50, 9, 0, ITEM_COIN, 0, GSWF(GSWF_MUJ03_COIN_BLOCK_HIT), 0)
+    CALL(evt_mobj_brick, STRING("mobj02"), -50, 94, 0, 0, 13, 0, GSWF(GSWF_MUJ03_HIDDEN_COIN_BLOCK_EMPTIED))
+#if VERSION >= VERSION_US
+    CALL(evt_mobj_brick, STRING("bblk00"), -470, 155, -50, 0, 0, 0, LSWF(3))
+#else
+    CALL(evt_mobj_brick, STRING("bblk00"), -470, 155, -50, 0, 0, 0, GSWF(GSWF_MUJ03_BRICK_BROKEN))
+#endif
+    CALL(evt_mobj_powerupblk, STRING("pblk01"), -470, 240, -50, 0, GSWF(GSWF_MUJ03_SHINE_SPRITE), 0)
+    CALL(evt_mobj_badgeblk, STRING("mobj03"), -50, 270, -100, ITEM_THUNDER_RAGE, 0, GSWF(GSWF_MUJ03_THUNDER_RAGE_BLOCK_HIT), 0)
+    CALL(evt_mobj_brick, STRING("mobj_hidden2"), -50, 209, 0, ITEM_JAMMIN_JELLY, 11, 0, GSWF(GSWF_MUJ03_HIDDEN_JAMMIN_JELLY_BLOCK_HIT))
+    CALL(evt_item_entry, STRING("item_00"), ITEM_STAR_PIECE, 275, 10, 100, ITEM_ENTRY_FIXED, GSWF(GSWF_MUJ03_STAR_PIECE), 0)
+    CALL(evt_eff64, STRING("sunlight"), STRING("sunlight_n64"), 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+    SET_VALUE(LW(0), PTR(tree_tbl))
+    CALL_CHILD(evt_sub_tree_access_entry)
+    SET_VALUE(LW(0), PTR(kusa_tbl))
+    CALL_CHILD(evt_sub_kusa_access_entry)
+    RETURN
+EVT_END()

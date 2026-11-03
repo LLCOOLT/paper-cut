@@ -1,0 +1,296 @@
+// las_25 (ラストダンジョン, Palace of Shadow): a junction room.
+
+#include "battle/battle_unit.h"
+#include "evt/evt_cmd.h"
+#include "evt/evt_bero.h"
+#include "las.h"
+#include "mario/mario_pouch.h"
+#include "evt/evt_hit.h"
+#include "evt/evt_item.h"
+#include "evt/evt_map.h"
+#include "evt/evt_mobj.h"
+#include "evt/evt_npc.h"
+#include "evt/evt_pouch.h"
+#include "evt/evt_snd.h"
+#include "evt/evt_window.h"
+#include "evt/evt_story.h"
+#include "driver/mapdrv.h"
+
+static BeroEntry bero_entry_data[5];
+static BeroEntry w_bero_mapchg[1];
+static s32 key_tbl[2];
+
+/**
+ * Door animation script (closing) for the west door, used as the enter/exit animation of this room's bero entry.
+ * LW(0) holds the angle step of the swing, and the script turns the door panels S_doa_l_01 and S_doa_l_02 by it,
+ * the second one the opposite way.
+ */
+static EVT_BEGIN(w_door_close)
+    MULTIPLY_FLOAT(LW(0), FLOAT(-0.38867188f))
+    CALL(evt_mapobj_rotate, 0, STRING("S_doa_l_01"), 0, LW(0), 0)
+    MULTIPLY_FLOAT(LW(0), FLOAT(-1.0f))
+    CALL(evt_mapobj_rotate, 0, STRING("S_doa_l_02"), 0, LW(0), 0)
+    RETURN
+EVT_END()
+
+/**
+ * Door animation script (opening) for the west door, used as the enter/exit animation of this room's bero entry.
+ * LW(0) holds the angle step of the swing, and the script turns the door panels S_doa_l_01 and S_doa_l_02 by it,
+ * the second one the opposite way.
+ */
+static EVT_BEGIN(w_door_open)
+    MULTIPLY_FLOAT(LW(0), FLOAT(0.38867188f))
+    CALL(evt_mapobj_rotate, 0, STRING("S_doa_l_01"), 0, LW(0), 0)
+    MULTIPLY_FLOAT(LW(0), FLOAT(-1.0f))
+    CALL(evt_mapobj_rotate, 0, STRING("S_doa_l_02"), 0, LW(0), 0)
+    RETURN
+EVT_END()
+
+/**
+ * Door animation script (closing) for the east (door 1) door,
+ * used as the enter/exit animation of this room's bero entry.
+ * LW(0) holds the angle step of the swing, and the script turns the door panels S_doa_r_01 and S_doa_r_02 by it,
+ * the second one the opposite way.
+ */
+static EVT_BEGIN(e1_door_close)
+    MULTIPLY_FLOAT(LW(0), FLOAT(0.38867188f))
+    CALL(evt_mapobj_rotate, 0, STRING("S_doa_r_01"), 0, LW(0), 0)
+    MULTIPLY_FLOAT(LW(0), FLOAT(-1.0f))
+    CALL(evt_mapobj_rotate, 0, STRING("S_doa_r_02"), 0, LW(0), 0)
+    RETURN
+EVT_END()
+
+/**
+ * Door animation script (opening) for the east (door 1) door,
+ * used as the enter/exit animation of this room's bero entry.
+ * LW(0) holds the angle step of the swing, and the script turns the door panels S_doa_r_01 and S_doa_r_02 by it,
+ * the second one the opposite way.
+ */
+static EVT_BEGIN(e1_door_open)
+    MULTIPLY_FLOAT(LW(0), FLOAT(-0.38867188f))
+    CALL(evt_mapobj_rotate, 0, STRING("S_doa_r_01"), 0, LW(0), 0)
+    MULTIPLY_FLOAT(LW(0), FLOAT(-1.0f))
+    CALL(evt_mapobj_rotate, 0, STRING("S_doa_r_02"), 0, LW(0), 0)
+    RETURN
+EVT_END()
+
+/**
+ * Door animation script (closing) for the east (door 2) door,
+ * used as the enter/exit animation of this room's bero entry.
+ * LW(0) holds the angle step of the swing, and the script turns the door panels S_doa_r2_01
+ * and S_doa_r2_02 by it, the second one the opposite way.
+ */
+static EVT_BEGIN(e2_door_close)
+    MULTIPLY_FLOAT(LW(0), FLOAT(0.38867188f))
+    CALL(evt_mapobj_rotate, 0, STRING("S_doa_r2_01"), 0, LW(0), 0)
+    MULTIPLY_FLOAT(LW(0), FLOAT(-1.0f))
+    CALL(evt_mapobj_rotate, 0, STRING("S_doa_r2_02"), 0, LW(0), 0)
+    RETURN
+EVT_END()
+
+/**
+ * Door animation script (opening) for the east (door 2) door,
+ * used as the enter/exit animation of this room's bero entry.
+ * LW(0) holds the angle step of the swing, and the script turns the door panels S_doa_r2_01
+ * and S_doa_r2_02 by it, the second one the opposite way.
+ */
+static EVT_BEGIN(e2_door_open)
+    MULTIPLY_FLOAT(LW(0), FLOAT(-0.38867188f))
+    CALL(evt_mapobj_rotate, 0, STRING("S_doa_r2_01"), 0, LW(0), 0)
+    MULTIPLY_FLOAT(LW(0), FLOAT(-1.0f))
+    CALL(evt_mapobj_rotate, 0, STRING("S_doa_r2_02"), 0, LW(0), 0)
+    RETURN
+EVT_END()
+
+/**
+ * Exits of las_25: west door w_bero to las_23 (e_bero_1); east door e_bero_1 to las_26 (w_bero); east door
+ * e_bero_2 to las_27 (w_bero); north road n_bero_1 to las_24 (s_bero_2).
+ */
+static BeroEntry bero_entry_data[] = {
+    {
+        "w_bero", // hitName
+        1, // type
+        6, // sfxId
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
+        0, 0, // centerPositionY..centerPositionZ
+        -1, // length
+        NULL, // enterEvent
+        -1, // caseType
+        NULL, // exitEvent
+        "las_23", // nextMapName
+        "e_bero_1", // nextBeroName
+        5, // enterAnimeType
+        5, // exitAnimeType
+        w_door_close, // enterAnimeArg
+        w_door_open, // exitAnimeArg
+    },
+    {
+        "e_bero_1", // hitName
+        1, // type
+        6, // sfxId
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
+        0, 0, // centerPositionY..centerPositionZ
+        -1, // length
+        NULL, // enterEvent
+        -1, // caseType
+        NULL, // exitEvent
+        "las_26", // nextMapName
+        "w_bero", // nextBeroName
+        5, // enterAnimeType
+        5, // exitAnimeType
+        e1_door_close, // enterAnimeArg
+        e1_door_open, // exitAnimeArg
+    },
+    {
+        "e_bero_2", // hitName
+        1, // type
+        6, // sfxId
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
+        0, 0, // centerPositionY..centerPositionZ
+        -1, // length
+        NULL, // enterEvent
+        -1, // caseType
+        NULL, // exitEvent
+        "las_27", // nextMapName
+        "w_bero", // nextBeroName
+        5, // enterAnimeType
+        5, // exitAnimeType
+        e2_door_close, // enterAnimeArg
+        e2_door_open, // exitAnimeArg
+    },
+    {
+        "n_bero_1", // hitName
+        0, 0, // type..sfxId
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
+        0, 0, // centerPositionY..centerPositionZ
+        -1, // length
+        NULL, // enterEvent
+        -1, // caseType
+        NULL, // exitEvent
+        "las_24", // nextMapName
+        "s_bero_2", // nextBeroName
+        1, // enterAnimeType
+        1, // exitAnimeType
+        0, 0, // enterAnimeArg..exitAnimeArg
+    },
+    {0},
+};
+
+/** Exit of las_25: west door w_bero to las_23 (e_bero_2). */
+static BeroEntry w_bero_mapchg[] = {
+    {
+        "w_bero", // hitName
+        1, // type
+        6, // sfxId
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
+        0, 0, // centerPositionY..centerPositionZ
+        -1, // length
+        NULL, // enterEvent
+        -1, // caseType
+        NULL, // exitEvent
+        "las_23", // nextMapName
+        "e_bero_2", // nextBeroName
+        5, // enterAnimeType
+        5, // exitAnimeType
+        w_door_close, // enterAnimeArg
+        w_door_open, // exitAnimeArg
+    },
+};
+
+/** Item list for the key window: only Palace Key 0x30 (-1 ends the list). */
+static s32 key_tbl[] = {
+    ITEM_PALACE_KEY_0x30, -1,
+};
+
+/**
+ * Event script: the lock check of the door.
+ * If Mario carries Palace Key 0x30 it opens the item selection window (key_tbl) and cancels the use
+ * if the player backs out.
+ */
+static EVT_BEGIN(key_check_evt)
+    CALL(evt_pouch_check_item, ITEM_PALACE_KEY_0x30, LW(0))
+    IF_INT_GREATER(LW(0), 0)
+#if VERSION <= VERSION_DEMO_JP
+        CALL(evt_win_item_select, PTR(key_tbl), LW(0))
+#else
+        CALL(evt_win_item_select, 0, PTR(key_tbl), LW(0), 0)
+#endif
+        IF_INT_EQUAL(LW(0), -1)
+            CALL(evt_mobj_exec_cancel, STRING("me"))
+        END_IF
+    END_IF
+    RETURN
+EVT_END()
+
+/**
+ * Event script: the door is unlocked.
+ * Sets the story progress to STORY_STG8_14_LOCK and switches the e_bero_2 door on.
+ */
+static EVT_BEGIN(unlock_evt)
+    SET_VALUE(GSW(GSW_STORY_PROGRESS), STORY_STG8_14_LOCK)
+    SET_VALUE(LW(0), STRING("e_bero_2"))
+    CALL_CHILD(bero_case_switch_on)
+    RETURN
+EVT_END()
+
+/**
+ * Map init script for las_25, a junction room: music (by story), the doors to las_26 and las_27,
+ * the Phantoms (before and after the planets scene), the lock of door e_bero_2 that needs Palace Key 0x30,
+ * a blue jump stand, a Life Shroom, a Shooting Star and a save block.
+ * After STORY_STG8_06_MOVING_PLANETS it uses the moved layout with an airport harbour exit.
+ */
+EVT_BEGIN(las_25_init_evt)
+    IF_INT_LESS(GSW(GSW_STORY_PROGRESS), STORY_STG8_06_MOVING_PLANETS)
+        CALL(evt_snd_bgmon, PSND_FADE_OUT, STRING("BGM_STG8_LST1"))
+    ELSE
+        CALL(evt_snd_bgmon, PSND_FADE_OUT, STRING("BGM_STG8_LST3"))
+    END_IF
+    CALL(evt_snd_envon, PSND_FADE_RESTART | PSND_FADE_IN, STRING("ENV_STG8_LAS1"))
+#if VERSION >= VERSION_JP
+    CALL(evt_snd_set_rev_mode, 2)
+#endif
+    SET_VALUE(LW(0), PTR(bero_entry_data))
+    CALL(evt_bero_get_info)
+    CALL_CHILD(evt_bero_info_run)
+    IF_INT_LESS(GSW(GSW_STORY_PROGRESS), STORY_STG8_06_MOVING_PLANETS)
+        CALL(evt_npc_check_delete, STRING("ファントム３"))
+        CALL(evt_npc_check_delete, STRING("ファントム４"))
+        CALL(evt_npc_check_delete, STRING("ファントム５"))
+        CALL(evt_npc_check_delete, STRING("ファントム６"))
+    ELSE
+        CALL(evt_npc_check_delete, STRING("ファントム１"))
+        CALL(evt_npc_check_delete, STRING("ファントム２"))
+    END_IF
+    IF_INT_LESS(GSW(GSW_STORY_PROGRESS), STORY_STG8_06_MOVING_PLANETS)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("S_under"), MAPOBJ_FLAG_HIDE)
+        CALL(evt_hitobj_onoff, STRING("A_under"), 1, 0)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("hikou"), MAPOBJ_FLAG_HIDE)
+        CALL(evt_hitobj_onoff, STRING("a_hi"), 1, 0)
+    ELSE
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("S_yuka"), MAPOBJ_FLAG_HIDE)
+        CALL(evt_hitobj_onoff, STRING("A_be"), 1, 0)
+        CALL(evt_map_entry_airport_harbor, 0, STRING("hikou"), STRING("a_hi"))
+        SET_VALUE(LW(0), STRING("w_bero"))
+        CALL_CHILD(bero_case_switch_off)
+        CALL(evt_bero_overwrite, STRING("w_bero"), PTR(w_bero_mapchg))
+        SET_VALUE(LW(0), STRING("w_bero"))
+        CALL_CHILD(bero_case_switch_on)
+        SPAWN_EVENT(hikari_evt)
+    END_IF
+    CALL(evt_mobj_lock, STRING("lock"), ITEM_PALACE_KEY_0x30, 690, -380, 0, -90, PTR(key_check_evt), PTR(unlock_evt), GSWF(GSWF_LAS25_DOOR_UNLOCKED))
+    IF_INT_EQUAL(GSWF(GSWF_LAS25_DOOR_UNLOCKED), 0)
+        SET_VALUE(LW(0), STRING("e_bero_2"))
+        CALL_CHILD(bero_case_switch_off)
+    END_IF
+    CALL(evt_mobj_jumpstand_blue, 0, STRING("jump"), 720, -675, -600, 75, 0, 0)
+    CALL(evt_mobj_flag_onoff, 0, STRING("jump"), MOBJ_FLAG_FALL)
+    CALL(evt_item_entry, STRING("item02"), ITEM_LIFE_SHROOM, 225, -350, 0, ITEM_ENTRY_FIXED, GSWF(GSWF_LAS25_LIFE_SHROOM_ITEM02), 0)
+    CALL(evt_item_entry, STRING("item03"), ITEM_SHOOTING_STAR, 375, -450, 0, ITEM_ENTRY_FIXED, GSWF(GSWF_LAS25_SHOOTING_STAR_ITEM03), 0)
+    CALL(evt_mobj_save_blk, STRING("mobj_save"), 600, 60, -75, 0, 0)
+    RETURN
+EVT_END()

@@ -1,0 +1,566 @@
+// las_26 (ラストダンジョン, Palace of Shadow): Gloomtail (ボンババ) and the bomb wall.
+
+#include "battle/battle_unit.h"
+#include "evt/evt_cmd.h"
+
+#include "driver/npcdrv.h"
+#include "evt/evt_bero.h"
+#include "evt/evt_npc.h"
+#include "evt/evt_cam.h"
+#include "evt/evt_case.h"
+#include "evt/evt_eff.h"
+#include "evt/evt_fade.h"
+#include "evt/evt_hit.h"
+#include "evt/evt_img.h"
+#include "evt/evt_item.h"
+#include "evt/evt_map.h"
+#include "evt/evt_mario.h"
+#include "evt/evt_mobj.h"
+#include "evt/evt_msg.h"
+#include "evt/evt_offscreen.h"
+#include "evt/evt_paper.h"
+#include "evt/evt_party.h"
+#include "evt/evt_seq.h"
+#include "evt/evt_snd.h"
+#include "evt/evt_sub.h"
+#include "las.h"
+#include "evt/evt_story.h"
+#include "driver/casedrv.h"
+#include "driver/mapdrv.h"
+#include "driver/camdrv.h"
+
+// Declaration of the script helper that waits until Gloomtail has landed.
+static USER_FUNC(bonbaba_wait_landon);
+
+static BeroEntry bero_entry_data[3];
+static NpcSetupInfo npcEnt[2];
+
+/**
+ * Door animation script (closing) for the west door, used as the enter/exit animation of this room's bero entry.
+ * LW(0) holds the angle step of the swing, and the script turns the door panels S_door1_1 and S_door1_2 by it,
+ * the second one the opposite way.
+ */
+static EVT_BEGIN(w_door_close)
+    MULTIPLY_FLOAT(LW(0), FLOAT(-0.38867188f))
+    CALL(evt_mapobj_rotate, 0, STRING("S_door1_1"), 0, LW(0), 0)
+    MULTIPLY_FLOAT(LW(0), FLOAT(-1.0f))
+    CALL(evt_mapobj_rotate, 0, STRING("S_door1_2"), 0, LW(0), 0)
+    RETURN
+EVT_END()
+
+/**
+ * Door animation script (opening) for the west door, used as the enter/exit animation of this room's bero entry.
+ * LW(0) holds the angle step of the swing, and the script turns the door panels S_door1_1 and S_door1_2 by it,
+ * the second one the opposite way.
+ */
+static EVT_BEGIN(w_door_open)
+    MULTIPLY_FLOAT(LW(0), FLOAT(0.38867188f))
+    CALL(evt_mapobj_rotate, 0, STRING("S_door1_1"), 0, LW(0), 0)
+    MULTIPLY_FLOAT(LW(0), FLOAT(-1.0f))
+    CALL(evt_mapobj_rotate, 0, STRING("S_door1_2"), 0, LW(0), 0)
+    RETURN
+EVT_END()
+
+/** Exits of las_26: west door w_bero to las_25 (e_bero_1); south entrance s_bero to las_28 (from26). */
+static BeroEntry bero_entry_data[] = {
+    {
+        "w_bero", // hitName
+        1, // type
+        6, // sfxId
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
+        0, 0, // centerPositionY..centerPositionZ
+        -1, // length
+        NULL, // enterEvent
+        -1, // caseType
+        NULL, // exitEvent
+        "las_25", // nextMapName
+        "e_bero_1", // nextBeroName
+        5, // enterAnimeType
+        5, // exitAnimeType
+        w_door_close, // enterAnimeArg
+        w_door_open, // exitAnimeArg
+    },
+    {
+        "s_bero", // hitName
+        3840, // type
+        0, // sfxId
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
+        0, 0, // centerPositionY..centerPositionZ
+        -1, // length
+        NULL, 0, NULL, // enterEvent..exitEvent
+        "las_28", // nextMapName
+        "from26", // nextBeroName
+        0, 0, 0, 0, // enterAnimeType..exitAnimeArg
+    },
+    {0},
+};
+
+/** Event script: the chest of las_26 opens and Mario receives the Star Key. */
+static EVT_BEGIN(box_evt)
+    CALL(evt_mario_key_onoff, 0)
+    CALL(evt_mobj_get_position, STRING("box"), LW(0), LW(1), LW(2))
+    CALL(evt_item_entry, STRING("key"), ITEM_STAR_KEY, LW(0), LW(1), LW(2), ITEM_ENTRY_FIXED_NO_TOUCH, -1, 0)
+    CALL(evt_mobj_wait_animation_end, STRING("box"))
+    CALL(evt_item_get_item, STRING("key"))
+    CALL(evt_mario_key_onoff, 1)
+    RETURN
+EVT_END()
+
+/**
+ * Event script: the Gloomtail fight scene (battle info 14),
+ * played when Mario first enters the Palace garden (STORY_STG8_03_THE_PALACE_GARDEN).
+ * Mario and the partner enter, the door closes behind them, Gloomtail roars and steps forward,
+ * delivers his threats, the battle runs, and afterwards he collapses in the middle of the room,
+ * throws up the Star Key chest, and the story moves to STORY_STG8_04_GLOOMTAIL.
+ */
+EVT_BEGIN(bonbaba_evt)
+    // Mario and his partner walk into the garden and the door shuts behind them.
+    CALL(evt_mario_key_onoff, 0)
+    CALL(evt_mario_get_party, LW(0))
+    IF_INT_EQUAL(LW(0), 0)
+        CALL(evt_mario_set_party, 0, 1)
+    END_IF
+    CALL(evt_cam3d_evt_set, -435, 150, 459, -435, 67, -13, 0, 11)
+    CALL(evt_seq_wait, 2)
+    CALL(evt_mario_set_pos, -600, 0, 0)
+    CALL(evt_party_set_pos, 0, -600, 0, 0)
+    CALL(evt_mapobj_rotate, 0, STRING("S_door1_1"), 0, FLOAT(-70.0f), 0)
+    CALL(evt_mapobj_rotate, 0, STRING("S_door1_2"), 0, FLOAT(70.0f), 0)
+    CALL(evt_party_set_homing_dist, 0, FLOAT(20.0f))
+    CALL(evt_mario_mov_pos2, -420, 0, FLOAT(150.0f))
+    CALL(evt_party_run, 0)
+    CALL(evt_party_set_homing_dist, 0, FLOAT(50.0f))
+    SET_VALUE(LW(1), 0)
+    SPAWN_EVENT(bero_close_door_play_se)
+    CALL(evt_sub_intpl_msec_init, 11, 180, 0, 500)
+    LOOP(0)
+        CALL(evt_sub_intpl_msec_get_value_para, LW(0), LW(10))
+        IF_INT_EQUAL(LW(10), 0)
+            SET_FLOAT_VALUE(LW(0), FLOAT(0.0f))
+            CALL_CHILD(w_door_close)
+            BREAK_LOOP
+        ELSE
+            CALL_CHILD(w_door_close)
+        END_IF
+    END_LOOP
+    WAIT_MS(500)
+    // A voice from the dark calls to them; Mario and his partner are startled and the danger music starts.
+    CALL(evt_msg_print, 0, STRING("stg8_las_44"), 0, STRING("ボンババ"))
+    CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
+    CALL(evt_snd_sfxon_3d, STRING("SFX_VOICE_MARIO_FIND1_3"), LW(0), LW(1), LW(2), 0)
+#if VERSION <= VERSION_DEMO_JP
+    CALL(evt_eff_fukidashi, 0, STRING(""), 0, 0, 0, 0, 0, 0, 0, 0, 60)
+    CALL(evt_eff_fukidashi, 3, STRING(""), 0, 0, 0, 0, 0, 0, 0, 0, 60)
+#else
+    CALL(evt_eff_fukidashi, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 60)
+    CALL(evt_eff_fukidashi, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 60)
+#endif
+    WAIT_MS(1000)
+    CALL(evt_snd_bgmon, PSND_FADE_OUT, STRING("BGM_EVT_DANGER2"))
+    BEGIN_INLINE_EVENT
+        // Gloomtail roars and steps into view, shaking the ground with each step.
+        CALL(evt_snd_sfxon_3d_ex, STRING("SFX_STG8_GNB_ROAR1"), -400, 30, 0, 255, 255, 4300, 16, 0)
+        CALL(evt_npc_set_anim, STRING("ボンババ"), STRING("GNB_U_1"))
+        CALL(evt_npc_wait_anim, STRING("ボンババ"), FLOAT(1.0f))
+        CALL(evt_npc_set_anim, STRING("ボンババ"), STRING("GNB_S_1"))
+    END_INLINE_EVENT
+    BEGIN_INLINE_EVENT
+        WAIT_MS(4000)
+        CALL(evt_npc_get_position, STRING("ボンババ"), LW(0), LW(1), LW(2))
+        CALL(evt_snd_sfxon_3d, STRING("SFX_STG8_GNB_STEP1"), LW(0), LW(1), LW(2), 0)
+        CALL(evt_cam_shake, CAMERA_3D, FLOAT(0.009765625f), FLOAT(0.0f), 800)
+    END_INLINE_EVENT
+    BEGIN_INLINE_EVENT
+        WAIT_MS(1500)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("S_kesu"), MAPOBJ_FLAG_HIDE)
+    END_INLINE_EVENT
+    CALL(evt_cam3d_evt_set, -900, 31, 490, -205, 175, 20, 5000, 11)
+    WAIT_MS(8000)
+    CALL(evt_npc_get_position, STRING("ボンババ"), LW(0), LW(1), LW(2))
+    ADD(LW(0), -200)
+    ADD(LW(1), 100)
+    CALL(evt_msg_toge, 2, LW(0), LW(1), LW(2))
+    // He threatens Mario and his partner answers (stg8_las_45 to stg8_las_48).
+    CALL(evt_msg_print, 0, STRING("stg8_las_45"), 0, STRING("ボンババ"))
+    CALL(evt_party_stop, 0)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("S_kesu"), MAPOBJ_FLAG_HIDE)
+    CALL(evt_cam3d_evt_set, -435, 109, 353, -435, 45, -13, 0, 11)
+    WAIT_FRAMES(1)
+    CALL(evt_msg_print_party, STRING("stg8_las_46"))
+    CALL(evt_cam3d_evt_set, -545, -14, 417, -225, 227, 12, 0, 11)
+    WAIT_FRAMES(1)
+    CALL(evt_npc_get_position, STRING("ボンババ"), LW(0), LW(1), LW(2))
+    ADD(LW(0), -200)
+    ADD(LW(1), 100)
+    CALL(evt_msg_toge, 2, LW(0), LW(1), LW(2))
+    CALL(evt_msg_print, 0, STRING("stg8_las_47"), 0, STRING("ボンババ"))
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("S_archi1"), MAPOBJ_FLAG_HIDE)
+    CALL(evt_cam3d_evt_set, 77, 455, 380, -147, 293, 183, 0, 11)
+    WAIT_FRAMES(1)
+    CALL(evt_npc_get_position, STRING("ボンババ"), LW(0), LW(1), LW(2))
+    ADD(LW(0), -200)
+    ADD(LW(1), 100)
+    CALL(evt_msg_toge, 2, LW(0), LW(1), LW(2))
+    CALL(evt_msg_print, 0, STRING("stg8_las_48"), 0, STRING("ボンババ"))
+    CALL(evt_cam3d_evt_set, -299, 25, 748, -328, 134, -34, 3000, 11)
+    WAIT_MS(2500)
+#if VERSION >= VERSION_JP
+    CALL(evt_snd_bgmoff, PSND_FADE_OUT)
+#endif
+    // The battle with Gloomtail starts and the script waits for it to end.
+    CALL(evt_npc_set_battle_info, STRING("ボンババ"), 14)
+    CALL(evt_npc_battle_start, STRING("ボンババ"))
+    CALL(evt_npc_wait_battle_end)
+#if VERSION <= VERSION_DEMO_JP
+    CALL(evt_snd_bgmon, PSND_FADE_OUT, STRING("BGM_STG8_LST3"))
+#endif
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("S_archi1"), MAPOBJ_FLAG_HIDE)
+    CALL(evt_cam3d_evt_set, 0, 25, 845, 0, 100, 150, 0, 11)
+    WAIT_FRAMES(1)
+    CALL(evt_npc_set_position, STRING("ボンババ"), 0, 70, -100)
+    // Beaten, Gloomtail collapses in the middle of the room with a heavy thud.
+    CALL(evt_snd_sfxon, STRING("SFX_STG8_GNB_DOWN1"), 0)
+    CALL(evt_npc_set_anim, STRING("ボンババ"), STRING("GNB_H_1"))
+    CALL(evt_mario_set_pos, 25, 10, 150)
+    CALL(evt_party_set_pos, 0, -25, 10, 150)
+    CALL(evt_mario_set_dir, 270, 0, 0)
+    CALL(evt_party_set_dir, 0, 90, -1)
+    BEGIN_INLINE_EVENT
+        WAIT_MS(300)
+        CALL(evt_npc_flag_onoff, 1, STRING("ボンババ"), NPC_FLAG_JUMPING | NPC_FLAG_LAND_ON_FLOOR)
+        CALL(bonbaba_wait_landon)
+        CALL(evt_npc_set_anim, STRING("ボンババ"), STRING("GNB_H_2"))
+    END_INLINE_EVENT
+    CALL(evt_npc_get_position, STRING("ボンババ"), LW(0), LW(1), LW(2))
+    BEGIN_INLINE_EVENT
+        CALL(evt_snd_sfxon_3d, STRING("SFX_STG8_GNB_DOWN2"), LW(0), LW(1), LW(2), LW(3))
+        CALL(evt_cam_shake, CAMERA_3D, FLOAT(0.049804688f), FLOAT(0.0f), 500)
+        CALL(evt_sub_intpl_init, 11, 50, 5, 50)
+        LOOP(0)
+            CALL(evt_sub_intpl_get_value)
+            DIVIDE_FLOAT(LW(0), FLOAT(1000.0f))
+            CALL(evt_cam_shake, CAMERA_3D, LW(0), FLOAT(0.0f), 50)
+            IF_INT_EQUAL(LW(1), 0)
+                BREAK_LOOP
+            END_IF
+        END_LOOP
+        CALL(evt_cam_shake, CAMERA_3D, FLOAT(0.0048828125f), FLOAT(0.0f), 2000)
+        CALL(evt_snd_sfxoff, LW(3))
+    END_INLINE_EVENT
+    WAIT_MS(1000)
+    WAIT_MS(5000)
+    CALL(evt_npc_set_anim, STRING("ボンババ"), STRING("GNB_H_3"))
+    CALL(evt_npc_get_position, STRING("ボンババ"), LW(0), LW(1), LW(2))
+    CALL(evt_snd_sfxon_3d, STRING("SFX_STG8_GNB_DOWN3"), LW(0), LW(1), LW(2), 0)
+    WAIT_MS(600)
+    CALL(evt_cam3d_evt_set, 255, 220, 648, 255, 170, 150, 1000, 11)
+    WAIT_MS(1000)
+    // His mouth opens and he spits out the chest holding the Star Key.
+    CALL(evt_mobj_itembox, STRING("box"), 270, 60, 0, 0, 0, PTR(box_evt), GSWF(GSWF_LAS26_STAR_KEY_CHEST_OPENED))
+    CALL(evt_mobj_flag_onoff, 0, STRING("box"), MOBJ_FLAG_FALL)
+    BEGIN_INLINE_EVENT
+        CALL(evt_npc_get_position, STRING("ボンババ"), LW(0), LW(1), LW(2))
+        CALL(evt_snd_sfxon_3d, STRING("SFX_STG8_GNB_THROAT_MOVE1"), LW(0), LW(1), LW(2), 0)
+        WAIT_MS(1000)
+        CALL(evt_snd_sfxon_3d, STRING("SFX_STG8_GMB_MOUTH_MOVE1"), LW(0), LW(1), LW(2), 0)
+        WAIT_MS(200)
+        CALL(evt_snd_sfxon_3d, STRING("SFX_STG8_GMB_MOUTH_MOVE1"), LW(0), LW(1), LW(2), 0)
+        WAIT_MS(200)
+        CALL(evt_snd_sfxon_3d, STRING("SFX_STG8_GMB_MOUTH_MOVE1"), LW(0), LW(1), LW(2), 0)
+        WAIT_MS(1100)
+        CALL(evt_snd_sfxon_3d, STRING("SFX_STG8_GMB_MOUTH_OPEN1"), LW(0), LW(1), LW(2), 0)
+    END_INLINE_EVENT
+    CALL(evt_npc_set_anim, STRING("ボンババ"), STRING("GNB_H_4"))
+    CALL(evt_npc_wait_anim, STRING("ボンババ"), FLOAT(0.7792969f))
+    BEGIN_INLINE_EVENT
+        WAIT_MS(100)
+        CALL(evt_mobj_get_position, STRING("box"), LW(0), LW(1), LW(2))
+        CALL(evt_snd_sfxon_3d, STRING("SFX_STG8_TBOX_JUMP1"), LW(0), LW(1), LW(2), GW(0))
+    END_INLINE_EVENT
+    SET_VALUE(GF(0), 1)
+    BEGIN_INLINE_EVENT
+        SET_FLOAT_VALUE(LW(0), FLOAT(60.0f))
+        SET_FLOAT_VALUE(LW(1), FLOAT(25.0f))
+        SET_FLOAT_VALUE(LW(2), FLOAT(-0.5996094f))
+        SET_FLOAT_VALUE(LW(3), FLOAT(0.0f))
+        SET_FLOAT_VALUE(LW(4), FLOAT(1.2998047f))
+        SET_VALUE(LF(0), 0)
+        LOOP(0)
+            ADD_FLOAT(LW(0), LW(1))
+            ADD_FLOAT(LW(3), LW(4))
+            CALL(evt_mobj_set_y_position, STRING("box"), LW(0))
+            CALL(evt_mobj_set_z_position, STRING("box"), LW(3))
+            ADD_FLOAT(LW(1), LW(2))
+            IF_INT_LESS(LW(1), -14)
+                SET_FLOAT_VALUE(LW(1), FLOAT(-14.0f))
+            END_IF
+            IF_INT_LESS_OR_EQUAL(LW(0), 0)
+                IF_INT_EQUAL(LF(0), 0)
+                    CALL(evt_snd_sfxoff, GW(0))
+                    SET_VALUE(LF(0), 1)
+                END_IF
+                SET_FLOAT_VALUE(LW(0), FLOAT(0.0f))
+                MULTIPLY_FLOAT(LW(1), FLOAT(-0.5f))
+                CALL(evt_mobj_get_position, STRING("box"), LW(5), LW(6), LW(7))
+                CALL(evt_snd_sfxon_3d, STRING("SFX_STG8_TBOX_LANDING1"), LW(5), LW(6), LW(7), 0)
+                IF_INT_LESS_OR_EQUAL(LW(1), 2)
+                    BREAK_LOOP
+                END_IF
+            END_IF
+            WAIT_FRAMES(1)
+        END_LOOP
+        CALL(evt_mobj_set_y_position, STRING("box"), 0)
+        SET_VALUE(GF(0), 0)
+    END_INLINE_EVENT
+    WAIT_MS(1000)
+    CALL(evt_npc_set_anim, STRING("ボンババ"), STRING("GNB_H_3"))
+    WAIT_MS(200)
+    CALL(evt_cam3d_evt_set, 255, 105, 648, 255, 55, 150, 500, 11)
+    WAIT_MS(1800)
+    WAIT_WHILE(GF(0))
+    CALL(evt_cam3d_evt_off, 0, 11)
+    WAIT_FRAMES(1)
+    CALL(evt_mario_set_dir, 90, 300, 0)
+    WAIT_MS(300)
+    CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
+    CALL(evt_snd_sfxon_3d, STRING("SFX_VOICE_MARIO_FIND1"), LW(0), LW(1), LW(2), 0)
+#if VERSION <= VERSION_DEMO_JP
+    CALL(evt_eff_fukidashi, 0, STRING(""), 0, 0, 0, 0, 0, 0, 0, 0, 60)
+    CALL(evt_eff_fukidashi, 3, STRING(""), 0, 0, 0, 0, 0, 0, 0, 0, 60)
+#else
+    CALL(evt_eff_fukidashi, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 60)
+    CALL(evt_eff_fukidashi, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 60)
+#endif
+    WAIT_MS(1000)
+    // Mario notices the chest; the story advances and he regains control.
+    SET_VALUE(GSW(GSW_STORY_PROGRESS), STORY_STG8_04_GLOOMTAIL)
+    CALL(evt_hitobj_onoff, STRING("baba"), 1, 1)
+    CALL(evt_npc_flag_onoff, 1, STRING("ボンババ"), NPC_FLAG_INTANGIBLE)
+    CALL_CHILD(bero_case_entry)
+#if VERSION >= VERSION_JP
+    CALL(N_evt_bero_set_mario_bottomless_respawn_pos_to_current_mario_pos)
+#endif
+    CALL(evt_party_run, 0)
+    CALL(evt_mario_key_onoff, 1)
+    RETURN
+EVT_END()
+
+/**
+ * Init event of Gloomtail: before the fight he is placed at the back of the garden at 1.3 times scale;
+ * after the fight, until the body is cleared, he lies collapsed in the middle of the room, intangible,
+ * in his defeated pose.
+ */
+EVT_BEGIN(bonbaba_init)
+    SWITCH(GSW(GSW_STORY_PROGRESS))
+        CASE_EQUAL(STORY_STG8_03_THE_PALACE_GARDEN)
+        CALL(evt_npc_set_position, STRING("me"), 100, 10, 45)
+        CALL(evt_npc_set_ry, STRING("me"), 0)
+        CALL(evt_npc_pera_onoff, STRING("me"), 0)
+        CALL(evt_npc_set_scale, STRING("me"), FLOAT(1.2998047f), FLOAT(1.2998047f), FLOAT(1.2998047f))
+        CASE_GREATER_OR_EQUAL(STORY_STG8_04_GLOOMTAIL)
+        IF_INT_EQUAL(GSWF(GSWF_LAS26_GLOOMTAIL_BODY_CLEARED), 0)
+            CALL(evt_npc_set_position, STRING("me"), 0, 0, -100)
+            CALL(evt_npc_set_ry, STRING("me"), 0)
+            CALL(evt_npc_pera_onoff, STRING("me"), 0)
+            CALL(evt_npc_set_scale, STRING("me"), FLOAT(1.2998047f), FLOAT(1.2998047f), FLOAT(1.2998047f))
+            CALL(evt_npc_set_anim, STRING("me"), STRING("GNB_H_3"))
+            CALL(evt_npc_flag_onoff, 1, STRING("me"), NPC_FLAG_INTANGIBLE)
+        END_IF
+    END_SWITCH
+    RETURN
+EVT_END()
+
+/** Script helper: blocks until the Gloomtail NPC is standing on the ground (groundHit), then finishes. */
+static USER_FUNC(bonbaba_wait_landon) {
+    // ボンババ
+    return npcNameToPtr("\x83\x7B\x83\x93\x83\x6F\x83\x6F")->groundHit ? EVT_RETURN_DONE : EVT_RETURN_BLOCK;
+}
+
+/** The single NPC of the room, Gloomtail (ボンババ), who always stays visible and never turns to face Mario. */
+static NpcSetupInfo npcEnt[] = {
+    {
+        "ボンババ", // name
+        NPC_FLAG_NO_BILLBOARD | NPC_FLAG_TALK_ANIM | NPC_FLAG_ALWAYS_VISIBLE, // flags
+        0, // reactionFlags
+        bonbaba_init, // initEvent
+        NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, // regularEvent..territoryType
+        {0}, // territoryBase
+        {0}, // territoryLoiter
+        0.0f, 0.0f, 0.0f, 0.0f, 0, // searchRange..battleInfoId
+    },
+    {0},
+};
+
+/**
+ * Event script: the "dark world" scene.
+ * Mario and the partner are taken out of control, Professor Frankly (the Goomba professor, クリハカセ) appears,
+ * the ceiling falls with a dust effect and he speaks (stg8_dark_09).
+ * The screen fades black, then the map changes to las_29 (sekai_yami2) and fades in from white.
+ */
+static EVT_BEGIN(sekai_yami_evt)
+    CALL(evt_mario_key_onoff, 0)
+    CALL(evt_mario_cont_onoff, 0)
+    CALL(evt_party_cont_onoff, 0, 0)
+    CALL(evt_mario_set_pos, 0, -1000, 0)
+    CALL(evt_party_set_pos, 0, 0, -1000, 0)
+    CALL(evt_cam3d_evt_set, 100, 5, 77, 0, 35, -150, 0, 11)
+    CALL(evt_npc_entry, STRING("クリハカセ"), STRING("c_kuri_h"))
+    CALL(evt_npc_set_tribe, STRING("クリハカセ"), STRING("クリハカセ"))
+    CALL(evt_npc_set_position, STRING("クリハカセ"), -58, 0, -280)
+    CALL(evt_npc_set_ry, STRING("クリハカセ"), 270)
+#if VERSION >= VERSION_JP
+    CALL(evt_npc_flag_onoff, 1, STRING("クリハカセ"), NPC_FLAG_TALK_ANIM)
+#endif
+    CALL(evt_seq_wait, 2)
+    WAIT_MS(1000)
+    CALL(evt_snd_sfxon, STRING("SFX_STG8_CEILING_BREAK1"), LW(10))
+#if VERSION <= VERSION_DEMO_JP
+    CALL(evt_eff64, STRING(""), STRING("hokori_n64"), 0, -58, 200, -280, 60, 0, 0, 0, 0, 0, 0, 0)
+#else
+    CALL(evt_eff64, 0, STRING("hokori_n64"), 0, -58, 200, -280, 60, 0, 0, 0, 0, 0, 0, 0)
+#endif
+    WAIT_MS(1000)
+    CALL(evt_snd_sfxoff, LW(10))
+    WAIT_MS(1000)
+    LOOP(3)
+        CALL(evt_npc_reverse_ry, STRING("クリハカセ"))
+        WAIT_FRAMES(1)
+        CALL(evt_npc_wait_pera, STRING("クリハカセ"))
+    END_LOOP
+    WAIT_MS(1000)
+    CALL(evt_msg_print, 0, STRING("stg8_dark_09"), 0, STRING("クリハカセ"))
+    CALL(evt_fade_set_mapchange_type, 1, FADE_OUT_BLACK, 300, FADE_IN_WHITE, 300)
+    CALL(evt_bero_mapchange, STRING("las_29"), STRING("sekai_yami2"))
+    RETURN
+EVT_END()
+
+/**
+ * Event script: Bobbery blows up the cracked wall (S_ana_before1) with the paper explosion effect,
+ * swapping the wall for the opening (S_ana_after) and setting GSWF_LAS26_WALL_BOMBED.
+ */
+EVT_BEGIN(bomb_wall)
+    CALL(evt_mario_key_onoff, 0)
+    BEGIN_INLINE_EVENT
+        WAIT_MS(200)
+        CALL(evt_mapobj_get_position, STRING("S_ana_before1"), LW(0), LW(1), LW(2))
+        CALL(evt_snd_sfxon_3d, STRING("SFX_OFF_WALL_BREAK1"), LW(0), LW(1), LW(2), 0)
+    END_INLINE_EVENT
+    CALL(evt_paper_entry, STRING("OFF_d_bom_ver2"))
+    CALL(evt_offscreen_entry, STRING("ofs"))
+    CALL(evt_img_entry, STRING("img"))
+    CALL(evt_img_onoff, STRING("img"), 0)
+    CALL(evt_img_set_paper, STRING("img"), STRING("OFF_d_bom_ver2"))
+    CALL(evt_mapobj_set_offscreen, 1, STRING("S_ana_before1"), STRING("ofs"))
+    CALL(evt_offscreen_get_boundingbox2, STRING("ofs"), LW(0), LW(1), LW(2), LW(3))
+    SET_VALUE(LF(0), 0)
+    IF_INT_EQUAL(LW(2), 0)
+        IF_INT_EQUAL(LW(3), 0)
+            SET_VALUE(LF(0), 1)
+        END_IF
+    END_IF
+    IF_INT_EQUAL(LF(0), 0)
+        CALL(evt_img_alloc_capture, STRING("img"), 0, STRING("ofs"), 1, LW(0), LW(1), LW(2), LW(3))
+        WAIT_FRAMES(1)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("S_ana_before"), MAPOBJ_FLAG_HIDE)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("S_ana_after"), MAPOBJ_FLAG_HIDE)
+        CALL(evt_img_clear_virtual_point, STRING("img"))
+        CALL(evt_img_onoff, STRING("img"), 1)
+        CALL(evt_img_set_paper_anim, STRING("img"), STRING("A_1"))
+        CALL(evt_img_wait_animend, STRING("img"))
+    ELSE
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("S_ana_before"), MAPOBJ_FLAG_HIDE)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("S_ana_after"), MAPOBJ_FLAG_HIDE)
+    END_IF
+    CALL(evt_img_onoff, STRING("img"), 0)
+    CALL(evt_img_release, STRING("img"))
+    CALL(evt_mapobj_clear_offscreen, 1, STRING("S_ana_before1"))
+    CALL(evt_paper_delete, STRING("OFF_d_bom_ver2"))
+    CALL(evt_offscreen_delete, STRING("ofs"))
+    CALL(evt_hitobj_onoff, STRING("A_ana_after"), 1, 1)
+    CALL(evt_hitobj_onoff, STRING("A_ana_before1"), 1, 0)
+    SET_VALUE(GSWF(GSWF_LAS26_WALL_BOMBED), 1)
+    CALL(evt_mario_key_onoff, 1)
+    CALL(evt_exit_case_evt)
+    RETURN
+EVT_END()
+
+/**
+ * Map init script for las_26, the Gloomtail room:
+ * music and ambience by story, the doors to las_25 and las_28, Gloomtail, the wall Bobbery can bomb,
+ * the collapsed body hit area, the Star Key chest after the fight,
+ * the cutscene with the dark world (sekai_yami_evt) at STORY_STG8_15_GRODUS,
+ * and blocks with an Ultra Shroom and Jammin' Jelly.
+ */
+EVT_BEGIN(las_26_init_evt)
+    IF_INT_EQUAL(GSW(GSW_STORY_PROGRESS), STORY_STG8_03_THE_PALACE_GARDEN)
+        CALL(evt_snd_bgmoff, PSND_FADE_OUT)
+        CALL(evt_snd_envon, PSND_FADE_RESTART | PSND_FADE_IN, STRING("ENV_STG8_LAS1"))
+#if VERSION >= VERSION_JP
+        CALL(evt_snd_set_rev_mode, 2)
+#endif
+    ELSE
+        IF_INT_EQUAL(GSW(GSW_STORY_PROGRESS), STORY_STG8_15_GRODUS)
+            CALL(evt_snd_bgmoff, PSND_FADE_OUT)
+            CALL(evt_snd_envon, PSND_FADE_RESTART | PSND_FADE_IN, STRING("ENV_STG8_LAS8"))
+#if VERSION >= VERSION_JP
+            CALL(evt_snd_set_rev_mode, 2)
+#endif
+        ELSE
+#if VERSION <= VERSION_DEMO_JP
+            CALL(evt_snd_bgmon, PSND_FADE_OUT, STRING("BGM_STG8_LST3"))
+#else
+            CALL(evt_snd_bgmoff, PSND_FADE_OUT)
+#endif
+            CALL(evt_snd_envon, PSND_FADE_RESTART | PSND_FADE_IN, STRING("ENV_STG8_LAS1"))
+#if VERSION >= VERSION_JP
+            CALL(evt_snd_set_rev_mode, 2)
+#endif
+        END_IF
+    END_IF
+    SET_VALUE(LW(0), PTR(bero_entry_data))
+    CALL(evt_bero_get_info)
+    CALL(evt_npc_setup, PTR(npcEnt))
+    IF_INT_EQUAL(GSWF(GSWF_LAS26_WALL_BOMBED), 0)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("S_ana_after"), MAPOBJ_FLAG_HIDE)
+        CALL(evt_hitobj_onoff, STRING("A_ana_after"), 1, 0)
+        CALL(evt_run_case_evt, CASE_COND_BOBBERY, 1, STRING("A_ana_before1"), 0, PTR(bomb_wall), 0)
+    ELSE
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("S_ana_before"), MAPOBJ_FLAG_HIDE)
+        CALL(evt_hitobj_onoff, STRING("A_ana_before1"), 1, 0)
+    END_IF
+    IF_INT_LESS(GSW(GSW_STORY_PROGRESS), STORY_STG8_15_GRODUS)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("S_yukaato"), MAPOBJ_FLAG_HIDE)
+        CALL(evt_hitobj_onoff, STRING("A_yukaato"), 1, 0)
+    ELSE
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("S_yukamae"), MAPOBJ_FLAG_HIDE)
+        CALL(evt_hitobj_onoff, STRING("A_yukamae"), 1, 0)
+    END_IF
+    IF_INT_EQUAL(GSW(GSW_STORY_PROGRESS), STORY_STG8_03_THE_PALACE_GARDEN)
+        SPAWN_EVENT(bonbaba_evt)
+    ELSE
+        CALL_CHILD(evt_bero_info_run)
+    END_IF
+    SWITCH(GSW(GSW_STORY_PROGRESS))
+        CASE_EQUAL(STORY_STG8_03_THE_PALACE_GARDEN)
+        CALL(evt_hitobj_onoff, STRING("baba"), 1, 0)
+        CASE_GREATER_OR_EQUAL(STORY_STG8_04_GLOOMTAIL)
+        IF_INT_EQUAL(GSWF(GSWF_LAS26_GLOOMTAIL_BODY_CLEARED), 0)
+            CALL(evt_hitobj_onoff, STRING("baba"), 1, 1)
+        ELSE
+            CALL(evt_hitobj_onoff, STRING("baba"), 1, 0)
+        END_IF
+        CASE_DEFAULT
+        CALL(evt_hitobj_onoff, STRING("baba"), 1, 0)
+    END_SWITCH
+    IF_INT_GREATER_OR_EQUAL(GSW(GSW_STORY_PROGRESS), STORY_STG8_04_GLOOMTAIL)
+        CALL(evt_mobj_itembox, STRING("box"), 270, 0, 178, 0, 0, PTR(box_evt), GSWF(GSWF_LAS26_STAR_KEY_CHEST_OPENED))
+    END_IF
+    IF_INT_EQUAL(GSW(GSW_STORY_PROGRESS), STORY_STG8_15_GRODUS)
+        SPAWN_EVENT(sekai_yami_evt)
+    END_IF
+    CALL(evt_mobj_badgeblk, STRING("mobj_01"), 1000, 60, -150, ITEM_ULTRA_SHROOM, 0, GSWF(GSWF_LAS26_ULTRA_SHROOM_BLOCK_HIT), 0)
+    CALL(evt_mobj_badgeblk, STRING("mobj_02"), 1365, 60, -150, ITEM_JAMMIN_JELLY, 0, GSWF(GSWF_LAS26_JAMMIN_JELLY_BLOCK_HIT), 0)
+    RETURN
+EVT_END()

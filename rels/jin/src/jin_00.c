@@ -1,0 +1,2495 @@
+// jin_00 (ダイム寺院, Creepy Steeple): main hall: six Boo (teresa) NPCs, the Atomic Boo boss fight (drops Lucky Start),
+// a key and lock, save block; doors to jin_01-06, Twilight Trail (gra_06) and Twilight Town (usu_00).
+#include "battle/battle_unit.h"
+#include "evt/evt_cmd.h"
+
+#include "manager/evtmgr_cmd.h"
+#include "driver/npcdrv.h"
+#include "mario/mario.h"
+#include "system.h"
+#include "dolphin/mtx.h"
+#include "memory.h"
+#include "mario/mariost.h"
+#include "party.h"
+#include "evt/evt_bero.h"
+#include "pmario_sound.h"
+#include "driver/dispdrv.h"
+#include "dolphin/gx.h"
+#include "driver/camdrv.h"
+#include "driver/extdrv.h"
+#include "driver/itemdrv.h"
+#include "eff/eff_teresa.h"
+#include "evt/evt_cam.h"
+#include "evt/evt_ext.h"
+#include "evt/evt_item.h"
+#include "evt/evt_mario.h"
+#include "evt/evt_msg.h"
+#include "evt/evt_npc.h"
+#include "evt/evt_party.h"
+#include "jin.h"
+#include "data_tables.h"
+#include "mario/mario_pouch.h"
+#include "evt/evt_case.h"
+#include "evt/evt_eff.h"
+#include "evt/evt_hit.h"
+#include "evt/evt_map.h"
+#include "evt/evt_mobj.h"
+#include "evt/evt_pouch.h"
+#include "evt/evt_seq.h"
+#include "evt/evt_snd.h"
+#include "evt/evt_sub.h"
+#include "evt/evt_window.h"
+#include "mot/mot_hammer.h"
+#include "evt/evt_story.h"
+#include "libc_decls.h"
+#include "driver/casedrv.h"
+#include "driver/mapdrv.h"
+
+typedef struct SenTeresa {
+    Vec vel;
+    f32 angle;
+    Vec ofs;
+    f32 bobPhase;
+    f32 angleSpeed;
+    Vec from;
+    Vec to;
+    s32 wait;
+    u8 alpha;
+    u8 seq;
+} SenTeresa;
+static SenTeresa* pTeresa;
+Vec g_vecRotCenter;
+s32 g_bMove;
+s32 g_nMarioMoveCnt;
+s32 g_nNumHuttobasu[1];
+s32 g_nNumHarituku[1];
+static s32 g_nNumEndProc[1];
+f32 g_fSpeed;
+static f32 randf(f32 min, f32 max);
+/**
+ * Float wrappers of sin() and cos(), the inline sinf/cosf of the original C library headers (renamed: the math.h
+ * used here declares sinf and cosf as external functions).
+ */
+static inline f32 sinf_inline(f32 x) {
+    return sin(x);
+}
+static void computePos(SenTeresa* ter, Vec* out);
+static s32 computeAlpha(SenTeresa* ter, MarioWork* mp, f32 angle);
+static void computeMtx(ExtdrvPose* pose, f32 angle);
+static f32 computeAngle(ExtdrvPose* pose, MarioWork* mp);
+static void senteresa_ext_disp(CameraId camera, void* param);
+static void senteresa_loadTev(void);
+static void senteresa_loadRenderMode(void);
+/**
+ * Float wrapper around cos(), as the original library headers did (the math.h here only declares cosf as an
+ * external function).
+ */
+static inline f32 cosf_inline(f32 x) {
+    return cos(x);
+}
+
+static USER_FUNC(teresa_eff);
+static USER_FUNC(senteresa_mario_spd);
+static USER_FUNC(senteresa_get_rot_center);
+static USER_FUNC(senteresa_wait_end_seq);
+static USER_FUNC(senteresa_end);
+static USER_FUNC(senteresa_turiageru);
+static void senteresa_ext_shadow_disp(void);
+static void senteresa_ext_dispent(void);
+static void senteresa_ext_main(void);
+static void senteresa_ext_init(void);
+static s32 randn(s32 min, s32 max);
+
+extern EvtWord n3_open[];
+extern EvtWord n3_close[];
+extern EvtWord e3_open[];
+extern EvtWord e3_close[];
+extern EvtWord e1_open[];
+extern EvtWord e1_close[];
+extern EvtWord e2_open[];
+extern EvtWord e2_close[];
+extern EvtWord jin_00_dai[];
+extern EvtWord jin_00_dai_in_sub[];
+extern EvtWord jin_00_dai_in[];
+extern EvtWord teresa_n_fadein[];
+extern EvtWord teresa_n_fadeout[];
+extern EvtWord door_teresa_n[];
+extern EvtWord teresa_s_fadein[];
+extern EvtWord teresa_s_fadeout[];
+extern EvtWord door_teresa_s[];
+BeroEntry bero_stg4majo3nin[1];
+static BeroEntry bero_entry_data[10];
+extern EvtWord first_jin00[];
+extern EvtWord nopush_evt[];
+static s32 lock_tbl[2];
+extern EvtWord tyuou_teresa_kusukusu[];
+extern EvtWord tyuou_teresa_look_mario[];
+extern EvtWord tyuou_teresa_init[];
+extern EvtWord tyuou_teresa_talk[];
+extern EvtWord oku_teresa_init[];
+extern EvtWord temae_teresa_init[];
+extern EvtWord atomic_teresa_init[];
+static NpcSetupInfo npcEnt[12];
+static ExtTexInfo senteresa_ext_entry_data[47];
+extern EvtWord senteresa_evt[];
+
+/**
+ * Script helper: reads the colour of the NPC named args[0] into args[1..4] (red, green, blue, alpha);
+ * used to start the Boo fade-ins from the current alpha.
+ */
+static USER_FUNC(get_npc_color) {
+    EvtWord* args = event->args;
+    NpcEntry* npc = npcNameToPtr((const char*)evtGetValue(event, args[0]));
+
+    evtSetValue(event, args[1], npc->color.r);
+    evtSetValue(event, args[2], npc->color.g);
+    evtSetValue(event, args[3], npc->color.b);
+    evtSetValue(event, args[4], npc->color.a);
+    return EVT_RETURN_DONE;
+}
+
+/** Returns a random integer in min..max-1. */
+static s32 randn(s32 min, s32 max) {
+    return min + rand() % (max - min);
+}
+
+/** Returns a random float between min and max. */
+static f32 randf(f32 min, f32 max) {
+    f32 r = rand() / 32767.0f;
+
+    return r * (max - min) + min;
+}
+
+/**
+ * Returns the angle (0..360, in the 3D rotation convention) from Mario to the Boo in the swarm,
+ * used to turn the Boo sprite toward him.
+ */
+static f32 computeAngle(ExtdrvPose* pose, MarioWork* mp) {
+    f32 a = angleABf(mp->position.x, mp->position.z, (*pose->mtx)[0][3], (*pose->mtx)[2][3]);
+
+    if (0.0f <= a && a < 90.0f) {
+        return 90.0f - a;
+    }
+    if (90.0f <= a && a < 180.0f) {
+        return 360.0f - (a - 90.0f);
+    }
+    if (180.0f <= a && a < 270.0f) {
+        return 180.0f + (270.0f - a);
+    }
+    return 90.0f + (360.0f - a);
+}
+
+/**
+ * Builds the Y-rotation matrix for the given angle in degrees
+ * and stores it in the rotation part of the Boo's pose matrix.
+ */
+static void computeMtx(ExtdrvPose* pose, f32 angle) {
+    Mtx m;
+
+    PSMTXRotRad(m, 'Y', 0.017453292f * angle);
+    (*pose->mtx)[0][0] = m[0][0];
+    (*pose->mtx)[0][1] = m[0][1];
+    (*pose->mtx)[0][2] = m[0][2];
+    (*pose->mtx)[1][0] = m[1][0];
+    (*pose->mtx)[1][1] = m[1][1];
+    (*pose->mtx)[1][2] = m[1][2];
+    (*pose->mtx)[2][0] = m[2][0];
+    (*pose->mtx)[2][1] = m[2][1];
+    (*pose->mtx)[2][2] = m[2][2];
+}
+
+/**
+ * Fades a Boo of the swarm in or out depending on its angle to the camera
+ * and Mario's facing direction (alpha 128..255); returns 1 when it is fully visible, else 0.
+ */
+static s32 computeAlpha(SenTeresa* ter, MarioWork* mp, f32 angle) {
+    f32 dir;
+
+    if (angle > 180.0f) {
+        angle = 360.0f - angle;
+    }
+    dir = mp->displayDirectionTarget - 180.0f;
+    if (dir < 0.0f) {
+        dir += 360.0f;
+    }
+    if (dir < 90.0f) {
+        if (angle < 90.0f) {
+            ter->alpha = 128.0f * (angle / 90.0f) + 128.0f;
+            return 0;
+        }
+        ter->alpha = 255;
+        return 1;
+    } else {
+        if (angle > 90.0f) {
+            ter->alpha = 128.0f * ((180.0f - angle) / 90.0f) + 128.0f;
+            return 0;
+        }
+        ter->alpha = 255;
+        return 1;
+    }
+}
+
+/**
+ * Rotates the Boo's offset from the swarm centre by its current angle around the vertical axis
+ * and stores the result in out.
+ */
+static void computePos(SenTeresa* ter, Vec* out) {
+    Vec v;
+    Mtx m;
+
+    v.x = ter->ofs.x;
+    v.y = 0.0f;
+    v.z = ter->ofs.z;
+
+    PSMTXRotRad(m, 'Y', 0.017453292f * ter->angle);
+    PSMTXMultVec(m, &v, out);
+}
+
+/**
+ * Setup callback of the Boo swarm (ext pose effect):
+ * allocates the state of the 200 Boos, scatters them at random offsets around Mario
+ * and resets the swarm counters (Boos finished, clinging, blown away) and the swarm centre.
+ */
+static void senteresa_ext_init(void) {
+    ExtdrvPose* pose = extGetPosePtr();
+    MarioWork* mp = marioGetPtr();
+    s32 n = extGetPoseNum();
+    s32 i;
+
+    pTeresa = _mapAlloc(sizeof(SenTeresa) * 200);
+    for (i = 0; i < n; i++, pose++) {
+        pose->flags = 3;
+        PSMTXIdentity(*pose->mtx);
+        pTeresa[i].angle = 0.0f;
+        pTeresa[i].wait = (i % 100 + 1) * 3;
+        pTeresa[i].alpha = 0;
+        pTeresa[i].seq = 0;
+        pTeresa[i].angleSpeed = randf(0.0f, 0.1f);
+        pTeresa[i].ofs.x = randf(-300.0f, 300.0f);
+        pTeresa[i].ofs.y = 0.0f;
+        pTeresa[i].ofs.z = randf(-235.0f, 235.0f);
+        (*pose->mtx)[0][3] = mp->position.x + pTeresa[i].ofs.x;
+        (*pose->mtx)[1][3] = randf(10.0f, 400.0f);
+        (*pose->mtx)[2][3] = mp->position.z + pTeresa[i].ofs.z;
+        if (mp->position.x < (*pose->mtx)[0][3]) {
+            pose->dir = 90.0f;
+        } else {
+            pose->dir = 270.0f;
+        }
+    }
+    g_nNumEndProc[0] = 0;
+    g_nNumHarituku[0] = 0;
+    g_nNumHuttobasu[0] = 0;
+    g_nMarioMoveCnt = 0;
+    g_fSpeed = 0.0f;
+    g_bMove = 0;
+    g_vecRotCenter.x = mp->position.x;
+    g_vecRotCenter.y = 0.0f;
+    g_vecRotCenter.z = mp->position.z;
+}
+
+/**
+ * Door animation callback: opens door01L and door01R as Mario leaves through w_bero (to gra_06 and usu_00);
+ * LW(0) is the door angle and the two leaves turn around Y by 0.39 times it in opposite directions.
+ */
+static EVT_BEGIN(w_open)
+    MULTIPLY_FLOAT(LW(0), FLOAT(0.38867188f))
+    CALL(evt_mapobj_rotate, 0, STRING("door01L"), 0, LW(0), 0)
+    MULTIPLY_FLOAT(LW(0), FLOAT(-1.0f))
+    CALL(evt_mapobj_rotate, 0, STRING("door01R"), 0, LW(0), 0)
+    RETURN
+EVT_END()
+
+/**
+ * Door animation callback: closes door01L and door01R as Mario arrives through w_bero (from gra_06 and usu_00);
+ * LW(0) is the door angle and the two leaves turn around Y by 0.39 times it in opposite directions.
+ */
+static EVT_BEGIN(w_close)
+    MULTIPLY_FLOAT(LW(0), FLOAT(-0.38867188f))
+    CALL(evt_mapobj_rotate, 0, STRING("door01L"), 0, LW(0), 0)
+    MULTIPLY_FLOAT(LW(0), FLOAT(-1.0f))
+    CALL(evt_mapobj_rotate, 0, STRING("door01R"), 0, LW(0), 0)
+    RETURN
+EVT_END()
+
+/**
+ * Door animation callback for the door03 door opening (exit to jin_01):
+ * rotates it by 0.444 times the value in LW(0).
+ */
+EVT_BEGIN(n3_open)
+    MULTIPLY_FLOAT(LW(0), FLOAT(0.44433594f))
+    CALL(evt_mapobj_rotate, 0, STRING("door03"), 0, LW(0), 0)
+    RETURN
+EVT_END()
+
+/** Door animation callback for the door03 door closing (exit to jin_01). */
+EVT_BEGIN(n3_close)
+    MULTIPLY_FLOAT(LW(0), FLOAT(-0.44433594f))
+    CALL(evt_mapobj_rotate, 0, STRING("door03"), 0, LW(0), 0)
+    RETURN
+EVT_END()
+
+/**
+ * Door animation callback: opens door07 as Mario leaves through s_bero (to jin_02);
+ * LW(0) is the door angle and the door turns around Y by 0.44 times it, negated.
+ */
+static EVT_BEGIN(s_open)
+    MULTIPLY_FLOAT(LW(0), FLOAT(-0.44433594f))
+    CALL(evt_mapobj_rotate, 0, STRING("door07"), 0, LW(0), 0)
+    RETURN
+EVT_END()
+
+/**
+ * Door animation callback: closes door07 as Mario arrives through s_bero (from jin_02);
+ * LW(0) is the door angle and the door turns around Y by 0.44 times it.
+ */
+static EVT_BEGIN(s_close)
+    MULTIPLY_FLOAT(LW(0), FLOAT(0.44433594f))
+    CALL(evt_mapobj_rotate, 0, STRING("door07"), 0, LW(0), 0)
+    RETURN
+EVT_END()
+
+/**
+ * Door animation callback: opens door02 as Mario leaves through n_bero_2 (to jin_04);
+ * LW(0) is the door angle and the door turns around Y by 0.44 times it.
+ */
+static EVT_BEGIN(n2_open)
+    MULTIPLY_FLOAT(LW(0), FLOAT(0.44433594f))
+    CALL(evt_mapobj_rotate, 0, STRING("door02"), 0, LW(0), 0)
+    RETURN
+EVT_END()
+
+/**
+ * Door animation callback: closes door02 as Mario arrives through n_bero_2 (from jin_04);
+ * LW(0) is the door angle and the door turns around Y by 0.44 times it, negated.
+ */
+static EVT_BEGIN(n2_close)
+    MULTIPLY_FLOAT(LW(0), FLOAT(-0.44433594f))
+    CALL(evt_mapobj_rotate, 0, STRING("door02"), 0, LW(0), 0)
+    RETURN
+EVT_END()
+
+/** Door animation callback for the door06 door opening (exit to jin_03, e_bero_3). */
+EVT_BEGIN(e3_open)
+    MULTIPLY_FLOAT(LW(0), FLOAT(0.44433594f))
+    CALL(evt_mapobj_rotate, 0, STRING("door06"), 0, LW(0), 0)
+    RETURN
+EVT_END()
+
+/** Door animation callback for the door06 door closing. */
+EVT_BEGIN(e3_close)
+    MULTIPLY_FLOAT(LW(0), FLOAT(-0.44433594f))
+    CALL(evt_mapobj_rotate, 0, STRING("door06"), 0, LW(0), 0)
+    RETURN
+EVT_END()
+
+/** Door animation callback for the door04 door opening (exit to jin_03, e_bero_1). */
+EVT_BEGIN(e1_open)
+    MULTIPLY_FLOAT(LW(0), FLOAT(0.44433594f))
+    CALL(evt_mapobj_rotate, 0, STRING("door04"), 0, LW(0), 0)
+    RETURN
+EVT_END()
+
+/** Door animation callback for the door04 door closing. */
+EVT_BEGIN(e1_close)
+    MULTIPLY_FLOAT(LW(0), FLOAT(-0.44433594f))
+    CALL(evt_mapobj_rotate, 0, STRING("door04"), 0, LW(0), 0)
+    RETURN
+EVT_END()
+
+/** Door animation callback for the door05 door opening (exit to jin_03, e_bero_2). */
+EVT_BEGIN(e2_open)
+    MULTIPLY_FLOAT(LW(0), FLOAT(0.44433594f))
+    CALL(evt_mapobj_rotate, 0, STRING("door05"), 0, LW(0), 0)
+    RETURN
+EVT_END()
+
+/** Door animation callback for the door05 door closing. */
+EVT_BEGIN(e2_close)
+    MULTIPLY_FLOAT(LW(0), FLOAT(-0.44433594f))
+    CALL(evt_mapobj_rotate, 0, STRING("door05"), 0, LW(0), 0)
+    RETURN
+EVT_END()
+
+/** Exit event of the hole in the floor ("ana"): Mario drops through to jin_06 and GSWF_STG4_DROP_IN_ENTRANCE is set. */
+EVT_BEGIN(jin_00_dai)
+    DEBUG_PUT_MSG(STRING("出る"))
+    CALL(evt_mario_normalize)
+    SET_VALUE(GSWF(GSWF_STG4_DROP_IN_ENTRANCE), 1)
+    CALL(evt_bero_mapchange, STRING("jin_06"), 0)
+    SET_VALUE(LW(0), 1)
+    RETURN
+EVT_END()
+
+/**
+ * Script run when Mario drops back into the main hall from jin_06:
+ * places Mario and his partners at (390, -60) and has them jump to (365, 40) on the floor.
+ */
+EVT_BEGIN(jin_00_dai_in_sub)
+    CALL(evt_seq_wait, 2)
+    CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
+    CALL(evt_mario_set_pos, 390, -60, 0)
+    CALL(evt_party_set_pos, 0, 390, -60, -10)
+    CALL(evt_party_set_pos, 1, 390, -60, -20)
+    CALL(evt_mario_set_dir, 270, 0, 0)
+    CALL(evt_party_set_dir, 0, 270, -1)
+    CALL(evt_party_set_dir, 1, 270, -1)
+    BEGIN_INLINE_EVENT
+        CALL(evt_mario_jump_pos, 365, 40, 0, 700, 0, -1000)
+#if VERSION >= VERSION_JP
+        CALL(N_evt_bero_set_mario_bottomless_respawn_pos_to_current_mario_pos)
+#endif
+    END_INLINE_EVENT
+    BEGIN_INLINE_EVENT
+        WAIT_MS(400)
+        CALL(evt_party_jump_pos, 0, 365, 40, -10, 700, 0, -1000)
+    END_INLINE_EVENT
+    BEGIN_INLINE_EVENT
+        WAIT_MS(800)
+        CALL(evt_party_jump_pos, 1, 365, 40, -20, 700, 0, -1000)
+    END_INLINE_EVENT
+    WAIT_MS(1500)
+    RETURN
+EVT_END()
+
+/** Enter event of the hole in the floor: starts jin_00_dai_in_sub and returns 0. */
+EVT_BEGIN(jin_00_dai_in)
+    DEBUG_PUT_MSG(STRING("入る"))
+    SPAWN_EVENT(jin_00_dai_in_sub)
+    SET_VALUE(LW(0), 0)
+    RETURN
+EVT_END()
+
+/**
+ * Exit event of the roll-through doorways: returns 0 in LW(0), which blocks the exit,
+ * while Mario is in motion 22 (MARIO_MOTION_ROLL, the paper-roll form), and 1 otherwise.
+ */
+static EVT_BEGIN(check_roll)
+    CALL(evt_mario_get_motion, LW(0))
+    IF_INT_EQUAL(LW(0), 22)
+        SET_VALUE(LW(0), 0)
+    ELSE
+        SET_VALUE(LW(0), 1)
+    END_IF
+    RETURN
+EVT_END()
+
+/**
+ * Fades in the Boo that blocks the north door; stops its fade-out if it is still running,
+ * then raises its alpha by 4 per frame.
+ */
+EVT_BEGIN(teresa_n_fadein)
+    IS_EVENT_RUNNING(GW(0), LW(0))
+    IF_INT_EQUAL(LW(0), 1)
+        DELETE_EVENT(GW(0))
+    END_IF
+    CALL(get_npc_color, STRING("奥扉テレサ"), LW(0), LW(1), LW(2), LW(3))
+    LOOP(0)
+        ADD(LW(3), 4)
+        IF_INT_GREATER_OR_EQUAL(LW(3), 255)
+            SET_VALUE(LW(3), 255)
+            BREAK_LOOP
+        END_IF
+        CALL(evt_npc_set_color, STRING("奥扉テレサ"), 255, 255, 255, LW(3))
+        WAIT_FRAMES(1)
+    END_LOOP
+    CALL(evt_npc_set_color, STRING("奥扉テレサ"), 255, 255, 255, 255)
+    RETURN
+EVT_END()
+
+/** Fades out the north-door Boo, lowering its alpha by 4 per frame to 0. */
+EVT_BEGIN(teresa_n_fadeout)
+    SET_VALUE(LW(0), 255)
+    LOOP(0)
+        SUBTRACT(LW(0), 4)
+        IF_INT_LESS_OR_EQUAL(LW(0), 0)
+            SET_VALUE(LW(0), 0)
+            BREAK_LOOP
+        END_IF
+        CALL(evt_npc_set_color, STRING("奥扉テレサ"), 255, 255, 255, LW(0))
+        WAIT_FRAMES(1)
+    END_LOOP
+    CALL(evt_npc_set_color, STRING("奥扉テレサ"), 255, 255, 255, 0)
+    RETURN
+EVT_END()
+
+/**
+ * Exit event of the north door (to jin_01) while the Boos have not been unleashed yet:
+ * a Boo appears in front of the door and speaks (stg4_jin_49 or, after the Boo box, stg4_jin_51)
+ * and the door stays shut for now; once the "1000 Boos" story step is reached it lets Mario through.
+ * Returns 1 in LW(0) when it blocked him.
+ */
+EVT_BEGIN(door_teresa_n)
+    IF_INT_GREATER_OR_EQUAL(GSW(GSW_STORY_PROGRESS), STORY_STG4_09_03_1000_BOOS)
+        SET_VALUE(LW(0), 0)
+        RETURN
+    END_IF
+    CALL(evt_mario_key_onoff, 0)
+    CALL(evt_npc_start_for_event)
+    CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
+    CALL(evt_npc_get_position, STRING("奥扉テレサ"), LW(3), LW(4), LW(5))
+    IF_INT_LESS(LW(0), LW(3))
+        CALL(evt_npc_set_ry, STRING("奥扉テレサ"), 270)
+        CALL(evt_mario_set_dir, 90, 0, 0)
+        SET_VALUE(LW(6), -20)
+        SET_VALUE(LW(7), 90)
+    ELSE
+        CALL(evt_npc_set_ry, STRING("奥扉テレサ"), 90)
+        CALL(evt_mario_set_dir, 270, 0, 0)
+        SET_VALUE(LW(6), 20)
+        SET_VALUE(LW(7), 270)
+    END_IF
+    CALL_CHILD(teresa_n_fadein)
+    IF_INT_LESS(GSW(GSW_STORY_PROGRESS), STORY_STG4_09_02_BOO_BOX)
+        CALL(evt_msg_print, 0, STRING("stg4_jin_49"), 0, STRING("奥扉テレサ"))
+    ELSE
+        CALL(evt_msg_print, 0, STRING("stg4_jin_51"), 0, STRING("奥扉テレサ"))
+    END_IF
+    SPAWN_EVENT_GET_ID(PTR(teresa_n_fadeout), GW(0))
+    CALL(evt_mario_key_onoff, 1)
+    SET_VALUE(LW(0), 1)
+    RETURN
+EVT_END()
+
+/**
+ * Fades in the Boo that blocks the south door; stops its fade-out if it is still running,
+ * then raises its alpha by 4 per frame.
+ */
+EVT_BEGIN(teresa_s_fadein)
+    IS_EVENT_RUNNING(GW(1), LW(0))
+    IF_INT_EQUAL(LW(0), 1)
+        DELETE_EVENT(GW(1))
+    END_IF
+    CALL(get_npc_color, STRING("手前扉テレサ"), LW(0), LW(1), LW(2), LW(3))
+    LOOP(0)
+        ADD(LW(3), 4)
+        IF_INT_GREATER_OR_EQUAL(LW(3), 255)
+            SET_VALUE(LW(3), 255)
+            BREAK_LOOP
+        END_IF
+        CALL(evt_npc_set_color, STRING("手前扉テレサ"), 255, 255, 255, LW(3))
+        WAIT_FRAMES(1)
+    END_LOOP
+    CALL(evt_npc_set_color, STRING("手前扉テレサ"), 255, 255, 255, 255)
+    RETURN
+EVT_END()
+
+/** Fades out the south-door Boo, lowering its alpha by 4 per frame to 0. */
+EVT_BEGIN(teresa_s_fadeout)
+    SET_VALUE(LW(0), 255)
+    LOOP(0)
+        SUBTRACT(LW(0), 4)
+        IF_INT_LESS_OR_EQUAL(LW(0), 0)
+            SET_VALUE(LW(0), 0)
+            BREAK_LOOP
+        END_IF
+        CALL(evt_npc_set_color, STRING("手前扉テレサ"), 255, 255, 255, LW(0))
+        WAIT_FRAMES(1)
+    END_LOOP
+    CALL(evt_npc_set_color, STRING("手前扉テレサ"), 255, 255, 255, 0)
+    RETURN
+EVT_END()
+
+/**
+ * Exit event of the south door (to jin_02) while the Boos have not been unleashed yet:
+ * same as door_teresa_n for the south door's Boo.
+ */
+EVT_BEGIN(door_teresa_s)
+    IF_INT_GREATER_OR_EQUAL(GSW(GSW_STORY_PROGRESS), STORY_STG4_09_03_1000_BOOS)
+        SET_VALUE(LW(0), 0)
+        RETURN
+    END_IF
+    CALL(evt_mario_key_onoff, 0)
+    CALL(evt_npc_start_for_event)
+    CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
+    CALL(evt_npc_get_position, STRING("手前扉テレサ"), LW(3), LW(4), LW(5))
+    IF_INT_LESS(LW(0), LW(3))
+        CALL(evt_npc_set_ry, STRING("手前扉テレサ"), 270)
+        CALL(evt_mario_set_dir, 90, 0, 0)
+        SET_VALUE(LW(6), -30)
+        SET_VALUE(LW(7), 90)
+    ELSE
+        CALL(evt_npc_set_ry, STRING("手前扉テレサ"), 90)
+        CALL(evt_mario_set_dir, 270, 0, 0)
+        SET_VALUE(LW(6), 20)
+        SET_VALUE(LW(7), 270)
+    END_IF
+    CALL_CHILD(teresa_s_fadein)
+    IF_INT_LESS(GSW(GSW_STORY_PROGRESS), STORY_STG4_09_02_BOO_BOX)
+        CALL(evt_msg_print, 0, STRING("stg4_jin_50"), 0, STRING("手前扉テレサ"))
+    ELSE
+        CALL(evt_msg_print, 0, STRING("stg4_jin_52"), 0, STRING("手前扉テレサ"))
+    END_IF
+    SPAWN_EVENT_GET_ID(PTR(teresa_s_fadeout), GW(1))
+    CALL(evt_mario_key_onoff, 1)
+    SET_VALUE(LW(0), 1)
+    RETURN
+EVT_END()
+
+/** Doors of this room: the west exit (w_bero) to usu_00 (Twilight Town). */
+BeroEntry bero_stg4majo3nin[] = {
+    {
+        "w_bero", // hitName
+        1, // type
+        6, // sfxId
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
+        0, 0, // centerPositionY..centerPositionZ
+        -1, // length
+        NULL, // enterEvent
+        -1, // caseType
+        NULL, // exitEvent
+        "usu_00", // nextMapName
+        "evt_majo3", // nextBeroName
+        5, // enterAnimeType
+        5, // exitAnimeType
+        w_close, // enterAnimeArg
+        w_open, // exitAnimeArg
+    },
+};
+
+/**
+ * Doors of this room: the north exit (n_bero_1) to jin_05, the hole (ana) to jin_06, the west exit (w_bero)
+ * to gra_06 (Twilight Trail), the north exit (n_bero_3) to jin_01, the south exit (s_bero) to jin_02, the
+ * north exit (n_bero_2) to jin_04, the east exit (e_bero_3) to jin_03, the east exit (e_bero_1) to jin_03
+ * and the east exit (e_bero_2) to jin_03.
+ */
+static BeroEntry bero_entry_data[] = {
+    {
+        "n_bero_1", // hitName
+        0, 0, // type..sfxId
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
+        0, 0, // centerPositionY..centerPositionZ
+        -1, // length
+        NULL, // enterEvent
+        -1, // caseType
+        (s32*)check_roll, // exitEvent
+        "jin_05", // nextMapName
+        "s_bero", // nextBeroName
+        1, // enterAnimeType
+        1, // exitAnimeType
+        0, 0, // enterAnimeArg..exitAnimeArg
+    },
+    {
+        "ana", // hitName
+        3840, // type
+        0, // sfxId
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
+        0, 0, // centerPositionY..centerPositionZ
+        -1, // length
+        (s32*)jin_00_dai_in, // enterEvent
+        0, // caseType
+        (s32*)jin_00_dai, // exitEvent
+        "jin_06", // nextMapName
+        NULL, // nextBeroName
+        4, // enterAnimeType
+        4, // exitAnimeType
+        0, 0, // enterAnimeArg..exitAnimeArg
+    },
+    {
+        "w_bero", // hitName
+        1, // type
+        6, // sfxId
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
+        0, 0, // centerPositionY..centerPositionZ
+        120, // length
+        NULL, // enterEvent
+        -1, // caseType
+        NULL, // exitEvent
+        "gra_06", // nextMapName
+        "n_bero", // nextBeroName
+        5, // enterAnimeType
+        5, // exitAnimeType
+        w_close, // enterAnimeArg
+        w_open, // exitAnimeArg
+    },
+    {
+        "n_bero_3", // hitName
+        1, // type
+        2, // sfxId
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
+        0, 0, // centerPositionY..centerPositionZ
+        -1, // length
+        NULL, // enterEvent
+        -1, // caseType
+        (s32*)door_teresa_n, // exitEvent
+        "jin_01", // nextMapName
+        "s_bero_1", // nextBeroName
+        5, // enterAnimeType
+        5, // exitAnimeType
+        n3_close, // enterAnimeArg
+        n3_open, // exitAnimeArg
+    },
+    {
+        "s_bero", // hitName
+        1, // type
+        2, // sfxId
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
+        0, 0, // centerPositionY..centerPositionZ
+        -1, // length
+        NULL, // enterEvent
+        -1, // caseType
+        (s32*)door_teresa_s, // exitEvent
+        "jin_02", // nextMapName
+        "n_bero_1", // nextBeroName
+        5, // enterAnimeType
+        5, // exitAnimeType
+        s_close, // enterAnimeArg
+        s_open, // exitAnimeArg
+    },
+    {
+        "n_bero_2", // hitName
+        1, // type
+        2, // sfxId
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
+        0, 0, // centerPositionY..centerPositionZ
+        -1, // length
+        NULL, // enterEvent
+        -1, // caseType
+        NULL, // exitEvent
+        "jin_04", // nextMapName
+        "s_bero", // nextBeroName
+        5, // enterAnimeType
+        5, // exitAnimeType
+        n2_close, // enterAnimeArg
+        n2_open, // exitAnimeArg
+    },
+    {
+        "e_bero_3", // hitName
+        1, // type
+        2, // sfxId
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
+        0, 0, // centerPositionY..centerPositionZ
+        -1, // length
+        NULL, // enterEvent
+        -1, // caseType
+        NULL, // exitEvent
+        "jin_03", // nextMapName
+        "w_bero3", // nextBeroName
+        5, // enterAnimeType
+        5, // exitAnimeType
+        e3_close, // enterAnimeArg
+        e3_open, // exitAnimeArg
+    },
+    {
+        "e_bero_1", // hitName
+        1, // type
+        2, // sfxId
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
+        0, 0, // centerPositionY..centerPositionZ
+        -1, // length
+        NULL, // enterEvent
+        -1, // caseType
+        NULL, // exitEvent
+        "jin_03", // nextMapName
+        "w_bero1", // nextBeroName
+        5, // enterAnimeType
+        5, // exitAnimeType
+        e1_close, // enterAnimeArg
+        e1_open, // exitAnimeArg
+    },
+    {
+        "e_bero_2", // hitName
+        1, // type
+        2, // sfxId
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
+        0, 0, // centerPositionY..centerPositionZ
+        -1, // length
+        NULL, // enterEvent
+        -1, // caseType
+        NULL, // exitEvent
+        "jin_03", // nextMapName
+        "w_bero2", // nextBeroName
+        5, // enterAnimeType
+        5, // exitAnimeType
+        e2_close, // enterAnimeArg
+        e2_open, // exitAnimeArg
+    },
+    {0},
+};
+
+/**
+ * Opening scene of the steeple: Mario and Goombella (the partner) appear at the west door (x=-640),
+ * the door animation plays, the story becomes "Steeple demo" and control returns.
+ */
+EVT_BEGIN(first_jin00)
+    CALL(evt_mario_set_pos, -640, 0, 0)
+    CALL(evt_party_set_pos, 0, -640, 0, 0)
+    CALL(evt_mario_key_onoff, 0)
+    CALL(evt_cam3d_evt_set, 227, 365, 1120, 227, 128, -223, 0, 11)
+    CALL(evt_snd_bgm_scope, 0, 1)
+    CALL(evt_seq_wait, 2)
+    WAIT_FRAMES(1)
+    CALL(evt_cam3d_evt_set, -328, 365, 1120, -328, 128, -223, 5000, 0)
+    BEGIN_INLINE_EVENT
+        WAIT_MS(4000)
+        CALL_CHILD(evt_bero_info_run)
+    END_INLINE_EVENT
+    WAIT_MS(5000)
+    CALL(evt_cam3d_evt_off, 1000, 11)
+    WAIT_MS(1000)
+    SET_VALUE(GSW(GSW_STORY_PROGRESS), STORY_STG4_09_STEEPLE_DEMO_INT)
+    CALL(evt_mario_key_onoff, 1)
+    CALL(evt_snd_bgm_scope, 0, 0)
+    RETURN
+EVT_END()
+
+/**
+ * Case script run every frame while Mario pushes the statue base (A_dai):
+ * he keeps the pushing pose and the base (oki01) slides sideways a little each frame,
+ * with dust now and then once pushed 40 frames.
+ * After 80 frames of pushing it finishes by itself:
+ * the music switches to the success jingle, the camera shakes,
+ * dust puffs and the pedestal sounds play while the base slides 50 units and carries Mario along
+ * until it reaches x = 396, where he looks surprised.
+ * Afterwards the statue-top collision (a_futa) turns off,
+ * story progress becomes STORY_STG4_09_01_PUSH_THE_STATUE and the case event ends.
+ */
+static EVT_BEGIN(push_evt)
+    CALL(evt_mario_set_dir, 90, 0, 0)
+    CALL(evt_mario_get_pose, LW(0))
+    IF_STR_NOT_EQUAL(LW(0), STRING("M_O_1"))
+        CALL(evt_mario_set_pose, STRING("M_O_1"))
+    END_IF
+    SET_VALUE(LW(0), GW(10))
+    MODULO(LW(0), 4)
+    DIVIDE(LW(0), 2)
+    IF_INT_LESS(GW(10), 40)
+        MULTIPLY(LW(0), 1)
+    ELSE
+        MULTIPLY(LW(0), 2)
+        BEGIN_INLINE_EVENT
+            CALL(evt_sub_random, 100, LW(0))
+            IF_INT_LESS(LW(0), 10)
+                CALL(evt_mapobj_get_position, STRING("oki01"), LW(0), LW(1), LW(2))
+                CALL(evt_eff, 0, STRING("kemuri"), 2, LW(0), 35, 40, 0, 0, 0, 0, 0, 0, 0, 0)
+                ADD(LW(0), 20)
+                CALL(evt_eff, 0, STRING("kemuri"), 2, LW(0), 35, 40, 0, 0, 0, 0, 0, 0, 0, 0)
+            END_IF
+        END_INLINE_EVENT
+    END_IF
+    CALL(evt_mapobj_trans, 1, STRING("oki01"), LW(0), 0, 0)
+    ADD(GW(10), 1)
+    IF_INT_GREATER_OR_EQUAL(GW(10), 80)
+        CALL(evt_mario_key_onoff, 0)
+        CALL(evt_mario_dispflag_onoff, 1, 2)
+        CALL(evt_mario_set_pose, STRING("M_O_1"))
+        CALL(evt_snd_bgmoff, PSND_FADE_HOLD)
+        CALL(evt_snd_bgmon, PSND_CH(1), STRING("BGM_FF_ENV_SUCCESS1"))
+        BEGIN_INLINE_EVENT
+            CALL(evt_cam_shake, CAMERA_3D, FLOAT(0.0048828125f), FLOAT(0.0f), 1600)
+        END_INLINE_EVENT
+        CALL(evt_mario_get_pos, 0, LW(2), LW(3), LW(4))
+        CALL(evt_snd_sfxon_3d, STRING("SFX_STG4_MOVE_PEDESTAL1"), LW(2), LW(3), LW(4), LW(8))
+        CALL(evt_snd_sfxon_3d, STRING("SFX_STG4_MOVE_PEDESTAL2"), LW(2), LW(3), LW(4), LW(9))
+        BEGIN_INLINE_EVENT
+            LOOP(8)
+                CALL(evt_mapobj_get_position, STRING("oki01"), LW(0), LW(1), LW(2))
+                CALL(evt_eff, 0, STRING("kemuri"), 2, LW(0), 35, 40, 0, 0, 0, 0, 0, 0, 0, 0)
+                ADD(LW(0), 20)
+                CALL(evt_eff, 0, STRING("kemuri"), 2, LW(0), 35, 40, 0, 0, 0, 0, 0, 0, 0, 0)
+                WAIT_MS(200)
+            END_LOOP
+        END_INLINE_EVENT
+        CALL(evt_sub_intpl_msec_init, 11, 0, 500, 1600)
+        LABEL(0)
+        CALL(evt_sub_intpl_msec_get_value)
+        DIVIDE_FLOAT(LW(0), FLOAT(10.0f))
+        CALL(evt_mapobj_trans, 1, STRING("oki01"), LW(0), 0, 0)
+        CALL(evt_hit_bind_update, STRING("a_oki01"))
+        ADD(LW(0), LW(2))
+        IF_INT_GREATER_OR_EQUAL(LW(0), 396)
+            CALL(evt_mario_get_pose, LW(5))
+            IF_STR_NOT_EQUAL(LW(5), STRING("M_N_7"))
+                BEGIN_INLINE_EVENT
+                    CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
+                    CALL(evt_snd_sfxon_3d, STRING("SFX_VOICE_MARIO_SURPRISED1"), LW(0), LW(1), LW(2), 0)
+                END_INLINE_EVENT
+                CALL(evt_mario_set_pose, STRING("M_N_7"))
+            END_IF
+        ELSE
+            CALL(evt_mario_set_pos, LW(0), LW(3), LW(4))
+        END_IF
+        WAIT_FRAMES(1)
+        IF_INT_EQUAL(LW(1), 1)
+            GOTO(0)
+        END_IF
+        CALL(evt_snd_sfxoff, LW(8))
+        CALL(evt_snd_sfxoff, LW(9))
+        CALL(evt_snd_bgmoff, PSND_FADE_OUT | PSND_CH(1))
+        CALL(evt_snd_bgmon, PSND_FADE_RESUME | PSND_FADE_IN, 0)
+        CALL(evt_mario_dispflag_onoff, 0, 2)
+        CALL(evt_mario_key_onoff, 1)
+        CALL(evt_mario_set_pose, STRING("M_S_1"))
+        CALL(evt_hitobj_onoff, STRING("a_futa"), 0, 0)
+        SET_VALUE(GSW(GSW_STORY_PROGRESS), STORY_STG4_09_01_PUSH_THE_STATUE)
+        CALL(evt_exit_case_evt)
+    END_IF
+    RETURN
+EVT_END()
+
+/** Case script for the statue base (A_dai) when Mario stops pushing; resets the push counter to 0. */
+EVT_BEGIN(nopush_evt)
+    SET_VALUE(GW(10), 0)
+    RETURN
+EVT_END()
+
+/**
+ * Pickup event of the Steeple Key lying in the main hall (item key00, ITEM_STEEPLE_KEY_0x16):
+ * sets story progress to STORY_STG4_09_04_KEY when Mario takes it.
+ */
+static EVT_BEGIN(evt_key)
+    SET_VALUE(GSW(GSW_STORY_PROGRESS), STORY_STG4_09_04_KEY)
+    RETURN
+EVT_END()
+
+/** Item list of the lock's key picker: only the Steeple Key (-1 ends the list). */
+static s32 lock_tbl[] = {
+    ITEM_STEEPLE_KEY_0x16, -1,
+};
+
+/**
+ * Check script of the locked door: if Mario has a Steeple Key (ITEM_STEEPLE_KEY_0x16) it opens the key picker
+ * (lock_tbl) and cancels the unlock (evt_mobj_exec_cancel) if he backs out of it.
+ */
+static EVT_BEGIN(lock_item_check)
+    CALL(evt_pouch_check_item, ITEM_STEEPLE_KEY_0x16, LW(0))
+    IF_INT_GREATER(LW(0), 0)
+#if VERSION <= VERSION_DEMO_JP
+        CALL(evt_win_item_select, PTR(lock_tbl), LW(0))
+#else
+        CALL(evt_win_item_select, 0, PTR(lock_tbl), LW(0), 0)
+#endif
+        IF_INT_EQUAL(LW(0), -1)
+            CALL(evt_mobj_exec_cancel, STRING("me"))
+        END_IF
+    END_IF
+    RETURN
+EVT_END()
+
+/**
+ * Runs when the Steeple Key is used on the lock:
+ * sets story progress to STORY_STG4_09_05_LOCK and switches the n_bero_2 door entry on.
+ */
+static EVT_BEGIN(evt_unlock)
+    SET_VALUE(GSW(GSW_STORY_PROGRESS), STORY_STG4_09_05_LOCK)
+    SET_VALUE(LW(0), STRING("n_bero_2"))
+    CALL_CHILD(bero_case_switch_on)
+    RETURN
+EVT_END()
+
+/** Waits until Mario is within 125 units of the central Boo and then plays its whispering message (stg4_jin_53). */
+EVT_BEGIN(tyuou_teresa_kusukusu)
+    CALL(evt_seq_wait, 2)
+    WAIT_MS(1000)
+    LOOP(0)
+        CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
+        CALL(evt_npc_get_position, STRING("中央テレサ"), LW(3), LW(4), LW(5))
+        CALL(evt_sub_get_dist, LW(0), LW(2), LW(3), LW(5), LW(6))
+        IF_INT_LESS(LW(6), 125)
+            CALL(evt_msg_print, 0, STRING("stg4_jin_53"), 0, STRING("中央テレサ"))
+            BREAK_LOOP
+        END_IF
+        WAIT_FRAMES(1)
+    END_LOOP
+    RETURN
+EVT_END()
+
+/** Keeps the central Boo turned toward Mario every frame. */
+EVT_BEGIN(tyuou_teresa_look_mario)
+    CALL(evt_seq_wait, 2)
+    LOOP(0)
+        CALL(evt_set_dir_to_target, STRING("中央テレサ"), STRING("mario"))
+        WAIT_FRAMES(1)
+    END_LOOP
+    RETURN
+EVT_END()
+
+/**
+ * Init script of the central Boo: starts the common Boo setup;
+ * at the "Boo box" story step moves it to (70, 0, 0),
+ * and at the "1000 Boos" step makes it invisible and intangible.
+ */
+EVT_BEGIN(tyuou_teresa_init)
+    SPAWN_EVENT(npc_init_evt)
+    IF_INT_EQUAL(GSW(GSW_STORY_PROGRESS), STORY_STG4_09_02_BOO_BOX)
+        CALL(evt_npc_set_position, STRING("me"), 70, 0, 0)
+    END_IF
+    IF_INT_EQUAL(GSW(GSW_STORY_PROGRESS), STORY_STG4_09_03_1000_BOOS)
+        CALL(evt_npc_flag_onoff, 1, STRING("me"), NPC_FLAG_INTANGIBLE)
+        CALL(evt_npc_set_color, STRING("me"), 255, 255, 255, 0)
+        CALL(evt_npc_change_interrupt, STRING("me"), 6, 0)
+    END_IF
+    RETURN
+EVT_END()
+
+/**
+ * Talk script of the central Boo: asks whether to carry on (stg4_jin_54),
+ * then the Boo is startled and swells to four times its size (stg4_jin_56..57),
+ * vanishes and starts the 1000-Boos swarm (senteresa_evt); when it ends the story becomes "1000 Boos".
+ */
+EVT_BEGIN(tyuou_teresa_talk)
+    // The central Boo asks Mario whether he means to be mean to it; a no sends him away.
+    CALL(evt_msg_print, 0, STRING("stg4_jin_54"), 0, STRING("中央テレサ"))
+    CALL(evt_msg_select, 0, STRING("stg4_jin_54_yn"))
+    IF_INT_EQUAL(LW(0), 0)
+        CALL(evt_msg_print_add, 0, STRING("stg4_jin_55"))
+        RETURN
+    ELSE
+        CALL(evt_msg_continue)
+    END_IF
+    // The Boo is startled; Mario and his partner jump back as the camera swings.
+    CALL(evt_cam3d_evt_set, 70, 165, 472, 70, 72, -45, 1000, 11)
+    CALL(evt_npc_set_anim, STRING("中央テレサ"), STRING("A_1"))
+    WAIT_MS(1000)
+    BEGIN_INLINE_EVENT
+        CALL(evt_mario_set_pose, STRING("M_I_O"))
+        CALL(evt_mario_dispflag_onoff, 1, 2)
+        CALL(evt_mario_dispflag_onoff, 1, MARIO_DISP_FLAG_DIR_LOCK)
+        CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
+        CALL(evt_snd_sfxon_3d, STRING("SFX_VOICE_MARIO_SURPRISED1"), LW(0), LW(1), LW(2), 0)
+        CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
+        CALL(evt_npc_get_position, STRING("中央テレサ"), LW(3), LW(4), LW(5))
+        IF_INT_LESS(LW(0), LW(3))
+            CALL(evt_npc_set_ry, STRING("中央テレサ"), 270)
+            SUBTRACT(LW(0), 40)
+        ELSE
+            CALL(evt_npc_set_ry, STRING("中央テレサ"), 90)
+            ADD(LW(0), 40)
+        END_IF
+        CALL(evt_mario_jump_pos, LW(0), LW(1), LW(2), 300, 0, -1000)
+        WAIT_MS(300)
+        CALL(evt_mario_dispflag_onoff, 0, MARIO_DISP_FLAG_DIR_LOCK)
+        CALL(evt_mario_dispflag_onoff, 0, 2)
+    END_INLINE_EVENT
+    CALL(evt_party_stop, 0)
+    BEGIN_INLINE_EVENT
+        CALL(evt_party_dispflg_onoff, 0, PARTY_DISP_FLAG_DIR_LOCK, 1)
+        CALL(evt_party_get_pos, 0, LW(0), LW(1), LW(2))
+        CALL(evt_npc_get_position, STRING("中央テレサ"), LW(3), LW(4), LW(5))
+        IF_INT_LESS(LW(0), LW(3))
+            SUBTRACT(LW(0), 40)
+        ELSE
+            ADD(LW(0), 40)
+        END_IF
+        CALL(evt_party_jump_pos, 0, LW(0), LW(1), LW(2), 300, 0, -1000)
+        WAIT_MS(300)
+        CALL(evt_party_dispflg_onoff, 0, PARTY_DISP_FLAG_DIR_LOCK, 0)
+    END_INLINE_EVENT
+    SET_VALUE(GF(0), 0)
+    BEGIN_INLINE_EVENT
+        LOOP(0)
+            CALL(evt_cam3d_evt_set, 70, 193, 689, 70, 72, 0, 60, 11)
+            WAIT_MS(60)
+            IF_INT_EQUAL(GF(0), 1)
+                BREAK_LOOP
+            END_IF
+            CALL(evt_cam3d_evt_set, 70, 165, 472, 70, 72, -45, 60, 11)
+            WAIT_MS(60)
+        END_LOOP
+    END_INLINE_EVENT
+    // The Boo swells to four times its size and shouts for the others to come out.
+    BEGIN_INLINE_EVENT
+        CALL(evt_sub_intpl_msec_init, 11, 100, 400, 100)
+        LABEL(1)
+        CALL(evt_sub_intpl_msec_get_value)
+        DIVIDE_FLOAT(LW(0), FLOAT(100.0f))
+        CALL(evt_npc_set_scale, STRING("中央テレサ"), LW(0), LW(0), LW(0))
+        WAIT_FRAMES(1)
+        IF_INT_EQUAL(LW(1), 1)
+            GOTO(1)
+        END_IF
+    END_INLINE_EVENT
+    CALL(evt_npc_get_position, STRING("中央テレサ"), LW(0), LW(1), LW(2))
+    CALL(evt_snd_sfxon_3d, STRING("SFX_STG4_TELESA_SURPRISED1"), LW(0), LW(1), LW(2), 0)
+    CALL(evt_npc_set_anim, STRING("中央テレサ"), STRING("S_1"))
+    CALL(evt_msg_toge, 1, 0, 0, 0)
+    CALL(evt_msg_print, 0, STRING("stg4_jin_56"), 0, STRING("中央テレサ"))
+    CALL(evt_mario_set_pose, STRING("M_S_1"))
+    SET_VALUE(GF(0), 1)
+    WAIT_FRAMES(1)
+    CALL(evt_cam3d_evt_set, 70, 165, 472, 70, 72, -45, 500, 11)
+    CALL(evt_sub_intpl_msec_init, 11, 400, 100, 500)
+    LABEL(2)
+    CALL(evt_sub_intpl_msec_get_value)
+    DIVIDE_FLOAT(LW(0), FLOAT(100.0f))
+    CALL(evt_npc_set_scale, STRING("中央テレサ"), LW(0), LW(0), LW(0))
+    WAIT_FRAMES(1)
+    IF_INT_EQUAL(LW(1), 1)
+        GOTO(2)
+    END_IF
+    WAIT_MS(300)
+    CALL(evt_msg_print, 0, STRING("stg4_jin_57"), 0, STRING("中央テレサ"))
+    // The Boo fades out and the swarm of Boos starts; the story advances once it ends.
+    CALL(evt_cam3d_evt_set, 70, 400, 1125, 70, 200, -13, 1000, 11)
+    WAIT_MS(1000)
+    BEGIN_INLINE_EVENT
+        WAIT_MS(1000)
+        CALL(evt_sub_intpl_msec_init, 11, 255, 0, 500)
+        LABEL(3)
+        CALL(evt_sub_intpl_msec_get_value)
+        CALL(evt_npc_set_color, STRING("中央テレサ"), 255, 255, 255, LW(0))
+        WAIT_FRAMES(1)
+        IF_INT_EQUAL(LW(1), 1)
+            GOTO(3)
+        END_IF
+        CALL(evt_npc_set_color, STRING("中央テレサ"), 255, 255, 255, 0)
+    END_INLINE_EVENT
+    CALL(evt_npc_flag_onoff, 1, STRING("中央テレサ"), NPC_FLAG_INTANGIBLE)
+    CALL(evt_npc_flag_onoff, 1, STRING("中央テレサ"), -2147483648)
+    CALL(evt_npc_change_interrupt, STRING("中央テレサ"), 6, 0)
+    SPAWN_EVENT(senteresa_evt)
+    CALL(senteresa_wait_end_seq)
+    WAIT_MS(3500)
+    CALL(evt_cam3d_evt_off, 500, 11)
+    CALL(evt_party_run, 0)
+    SET_VALUE(GSW(GSW_STORY_PROGRESS), STORY_STG4_09_03_1000_BOOS)
+    RETURN
+EVT_END()
+
+/**
+ * Init script of the Boo in front of the north door:
+ * starts the common Boo setup and, before the "1000 Boos" step,
+ * moves it to (-60, 45, -238) and makes it transparent.
+ */
+EVT_BEGIN(oku_teresa_init)
+    SPAWN_EVENT(npc_init_evt)
+    IF_INT_LESS(GSW(GSW_STORY_PROGRESS), STORY_STG4_09_03_1000_BOOS)
+        CALL(evt_npc_set_position, STRING("me"), -60, 45, -238)
+        CALL(evt_npc_set_color, STRING("me"), 255, 255, 255, 0)
+    END_IF
+    RETURN
+EVT_END()
+
+/**
+ * Init script of the Boo in front of the south door:
+ * starts the common Boo setup and, before the "1000 Boos" step,
+ * moves it to (-60, 45, 238) and makes it transparent.
+ */
+EVT_BEGIN(temae_teresa_init)
+    SPAWN_EVENT(npc_init_evt)
+    IF_INT_LESS(GSW(GSW_STORY_PROGRESS), STORY_STG4_09_03_1000_BOOS)
+        CALL(evt_npc_set_position, STRING("me"), -60, 45, 238)
+        CALL(evt_npc_set_color, STRING("me"), 255, 255, 255, 0)
+    END_IF
+    RETURN
+EVT_END()
+
+/** Init script of the Atomic Boo NPC; empty (its sequences are driven by senteresa_evt). */
+EVT_BEGIN(atomic_teresa_init)
+    RETURN
+EVT_END()
+
+/**
+ * NPCs of the main hall: the Boos (the central one, those at the far and near doors, the Atomic Boo boss and
+ * the numbered 1001 to 1006 Boos).
+ */
+static NpcSetupInfo npcEnt[] = {
+    {
+        "テレサ", // name
+        NPC_FLAG_NO_WALL_HIT | NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM, // flags
+        0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, // reactionFlags..returnEvent
+        NULL, 0, // blowEvent..territoryType
+        {0}, // territoryBase
+        {0}, // territoryLoiter
+        0.0f, 0.0f, 0.0f, 0.0f, 0, // searchRange..battleInfoId
+    },
+    {
+        "中央テレサ", // name
+        NPC_FLAG_NO_WALL_HIT | NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM, // flags
+        0, // reactionFlags
+        tyuou_teresa_init, // initEvent
+        NULL, // regularEvent
+        tyuou_teresa_talk, // talkEvent
+        NULL, NULL, NULL, NULL, NULL, 0, // deadEvent..territoryType
+        {0}, // territoryBase
+        {0}, // territoryLoiter
+        0.0f, 0.0f, 0.0f, 0.0f, 0, // searchRange..battleInfoId
+    },
+    {
+        "奥扉テレサ", // name
+        NPC_FLAG_NO_WALL_HIT | NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM | NPC_FLAG_INTANGIBLE, // flags
+        0, // reactionFlags
+        oku_teresa_init, // initEvent
+        NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, // regularEvent..territoryType
+        {0}, // territoryBase
+        {0}, // territoryLoiter
+        0.0f, 0.0f, 0.0f, 0.0f, 0, // searchRange..battleInfoId
+    },
+    {
+        "手前扉テレサ", // name
+        NPC_FLAG_NO_WALL_HIT | NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM | NPC_FLAG_INTANGIBLE, // flags
+        0, // reactionFlags
+        temae_teresa_init, // initEvent
+        NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, // regularEvent..territoryType
+        {0}, // territoryBase
+        {0}, // territoryLoiter
+        0.0f, 0.0f, 0.0f, 0.0f, 0, // searchRange..battleInfoId
+    },
+    {
+        "アトミックテレサ", // name
+        NPC_FLAG_NO_SHADOW | NPC_FLAG_HIDDEN | NPC_FLAG_INTANGIBLE, // flags
+        0, // reactionFlags
+        atomic_teresa_init, // initEvent
+        NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, // regularEvent..territoryType
+        {0}, // territoryBase
+        {0}, // territoryLoiter
+        0.0f, 0.0f, 0.0f, 0.0f, 0, // searchRange..battleInfoId
+    },
+    {
+        "1001テレサ", // name
+        NPC_FLAG_NO_SHADOW | NPC_FLAG_HIDDEN | NPC_FLAG_INTANGIBLE, // flags
+        0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, // reactionFlags..returnEvent
+        NULL, 0, // blowEvent..territoryType
+        {0}, // territoryBase
+        {0}, // territoryLoiter
+        0.0f, 0.0f, 0.0f, 0.0f, 0, // searchRange..battleInfoId
+    },
+    {
+        "1002テレサ", // name
+        NPC_FLAG_NO_SHADOW | NPC_FLAG_HIDDEN | NPC_FLAG_INTANGIBLE, // flags
+        0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, // reactionFlags..returnEvent
+        NULL, 0, // blowEvent..territoryType
+        {0}, // territoryBase
+        {0}, // territoryLoiter
+        0.0f, 0.0f, 0.0f, 0.0f, 0, // searchRange..battleInfoId
+    },
+    {
+        "1003テレサ", // name
+        NPC_FLAG_NO_SHADOW | NPC_FLAG_HIDDEN | NPC_FLAG_INTANGIBLE, // flags
+        0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, // reactionFlags..returnEvent
+        NULL, 0, // blowEvent..territoryType
+        {0}, // territoryBase
+        {0}, // territoryLoiter
+        0.0f, 0.0f, 0.0f, 0.0f, 0, // searchRange..battleInfoId
+    },
+    {
+        "1004テレサ", // name
+        NPC_FLAG_NO_SHADOW | NPC_FLAG_HIDDEN | NPC_FLAG_INTANGIBLE, // flags
+        0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, // reactionFlags..returnEvent
+        NULL, 0, // blowEvent..territoryType
+        {0}, // territoryBase
+        {0}, // territoryLoiter
+        0.0f, 0.0f, 0.0f, 0.0f, 0, // searchRange..battleInfoId
+    },
+    {
+        "1005テレサ", // name
+        NPC_FLAG_NO_SHADOW | NPC_FLAG_HIDDEN | NPC_FLAG_INTANGIBLE, // flags
+        0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, // reactionFlags..returnEvent
+        NULL, 0, // blowEvent..territoryType
+        {0}, // territoryBase
+        {0}, // territoryLoiter
+        0.0f, 0.0f, 0.0f, 0.0f, 0, // searchRange..battleInfoId
+    },
+    {
+        "1006テレサ", // name
+        NPC_FLAG_NO_SHADOW | NPC_FLAG_HIDDEN | NPC_FLAG_INTANGIBLE, // flags
+        0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, // reactionFlags..returnEvent
+        NULL, 0, // blowEvent..territoryType
+        {0}, // territoryBase
+        {0}, // territoryLoiter
+        0.0f, 0.0f, 0.0f, 0.0f, 0, // searchRange..battleInfoId
+    },
+    {0},
+};
+
+/**
+ * Boo models of the swarm effect (c_teresa): one per Boo, each with an animation (S_1, W_1, D_1 or A_2) and
+ * its start frame.
+ */
+static ExtTexInfo senteresa_ext_entry_data[] = {
+    {"c_teresa", "S_1", 0.0f},
+    {"c_teresa", "S_1", 5.0f},
+    {"c_teresa", "S_1", 10.0f},
+    {"c_teresa", "S_1", 15.0f},
+    {"c_teresa", "S_1", 20.0f},
+    {"c_teresa", "S_1", 25.0f},
+    {"c_teresa", "S_1", 30.0f},
+    {"c_teresa", "S_1", 35.0f},
+    {"c_teresa", "S_1", 40.0f},
+    {"c_teresa", "S_1", 45.0f},
+    {"c_teresa", "S_1", 50.0f},
+    {"c_teresa", "S_1", 55.0f},
+    {"c_teresa", "S_1", 60.0f},
+    {"c_teresa", "S_1", 65.0f},
+    {"c_teresa", "S_1", 70.0f},
+    {"c_teresa", "S_1", 75.0f},
+    {"c_teresa", "W_1", 0.0f},
+    {"c_teresa", "W_1", 1.0f},
+    {"c_teresa", "W_1", 2.0f},
+    {"c_teresa", "W_1", 3.0f},
+    {"c_teresa", "W_1", 4.0f},
+    {"c_teresa", "W_1", 5.0f},
+    {"c_teresa", "W_1", 6.0f},
+    {"c_teresa", "W_1", 7.0f},
+    {"c_teresa", "W_1", 8.0f},
+    {"c_teresa", "W_1", 9.0f},
+    {"c_teresa", "D_1", 0.0f},
+    {"c_teresa", "D_1", 1.0f},
+    {"c_teresa", "D_1", 2.0f},
+    {"c_teresa", "D_1", 3.0f},
+    {"c_teresa", "D_1", 4.0f},
+    {"c_teresa", "D_1", 5.0f},
+    {"c_teresa", "D_1", 6.0f},
+    {"c_teresa", "D_1", 7.0f},
+    {"c_teresa", "A_2", 0.0f},
+    {"c_teresa", "A_2", 1.0f},
+    {"c_teresa", "A_2", 2.0f},
+    {"c_teresa", "A_2", 3.0f},
+    {"c_teresa", "A_2", 4.0f},
+    {"c_teresa", "A_2", 5.0f},
+    {"c_teresa", "A_2", 6.0f},
+    {"c_teresa", "A_2", 7.0f},
+    {"c_teresa", "A_2", 8.0f},
+    {"c_teresa", "A_2", 9.0f},
+    {"c_teresa", "A_2", 10.0f},
+    {"c_teresa", "A_2", 11.0f},
+    {0},
+};
+
+/**
+ * Per-frame update of the 200-Boo swarm (the "1000 Boos" scene): a lagging swarm centre follows Mario's
+ * walking, and each Boo runs its sequence: 0 start delay, 1 fade in around Mario, 2 wait until all 200 are in,
+ * 3 staggered start, 4 circle Mario ever faster (now and then a short A_2 turn in 9), 5 fly at Mario (not while
+ * a partner ability is in use), 6 cling to him until the spin hammer knocks it off (10, falling away; once 20
+ * are knocked off the circling Boos stop attacking), 20-22 gather at the central Boo and shake there
+ * (senteresa_syugo, the Atomic Boo forming), 30 blown away (senteresa_huttobu), 80 lifting Mario
+ * (senteresa_turiageru).
+ */
+static void senteresa_ext_main(void) {
+    ExtdrvPose* pose = extGetPosePtr();
+    MarioWork* mp = marioGetPtr();
+    s32 n = extGetPoseNum();
+    s32 i;
+    s32 hammer = 0;
+    s32 bero;
+    s32 party;
+    s32 res;
+    u8 alpha;
+    f32 angle;
+    f32 spd;
+    Vec v;
+    Vec d;
+
+#if VERSION <= VERSION_DEMO_JP
+    // the demo tells the spinning hammer by Mario's paper pose
+    if (!(mp->dispFlags & MARIO_DISP_FLAG_POSE_LOCK) && mp->paperAnimName != NULL && strcmp(mp->paperAnimName, "P_H_1C") == 0) {
+        hammer = 1;
+    }
+#else
+    if (marioGetAngleKaitenHammer() > 0.0f) {
+        hammer = 1;
+    }
+#endif
+    PSVECSubtract(&mp->position, &g_vecRotCenter, &d);
+    if (mp->baseSpeed > 0.0f) {
+        g_bMove = 1;
+    }
+    if (g_bMove) {
+        g_nMarioMoveCnt++;
+    }
+    if (g_nMarioMoveCnt > 12) {
+        g_fSpeed += 0.01f;
+        if (g_fSpeed > 2.6f) {
+            g_fSpeed = 2.6f;
+        }
+        if (d.x == 0.0f && d.y == 0.0f && d.z == 0.0f) {
+            g_vecRotCenter = mp->position;
+            if (mp->baseSpeed == 0.0f) {
+                g_fSpeed = 0.0f;
+                g_bMove = 0;
+                g_nMarioMoveCnt = 0;
+            }
+        } else {
+            f32 mag = PSVECMag(&d);
+            if (mag > 50.0f) {
+                spd = 2.6f;
+            } else {
+                spd = 2.6f * mag / 50.0f;
+            }
+            if (g_fSpeed > spd) {
+                g_fSpeed = spd;
+            }
+            PSVECNormalize(&d, &d);
+            PSVECScale(&d, &d, g_fSpeed);
+            PSVECAdd(&g_vecRotCenter, &d, &g_vecRotCenter);
+            PSVECSubtract(&g_vecRotCenter, &mp->position, &v);
+            if (PSVECMag(&v) < 0.3f) {
+                g_vecRotCenter = mp->position;
+                if (mp->baseSpeed == 0.0f) {
+                    g_fSpeed = 0.0f;
+                    g_bMove = 0;
+                    g_nMarioMoveCnt = 0;
+                }
+            }
+        }
+    }
+    bero = (bero_get_BeroEXEC() & 3) != 0;
+    party = 0;
+    if (partyGetPtr(0) != NULL && (partyGetPtr(0)->flags & PARTY_FLAG_IS_BEING_USED)) {
+        party = 1;
+    }
+    for (i = 0; i < n; i++, pose++) {
+        switch (pTeresa[i].seq) {
+            case 0:
+                pose->texId = 0;
+                pTeresa[i].wait--;
+                if (pTeresa[i].wait == 0) {
+                    if (i == 0) {
+                        Vec pos = {0.0f, 200.0f, 0.0f};
+                        psndSFXOn_3D((const char*)0x5D3, &pos);
+                    }
+                    pTeresa[i].seq++;
+                }
+                break;
+            case 1:
+                pose->texId = (gp->retraceCount / 5 + i * i) % 16;
+                if (mp->position.x < (*pose->mtx)[0][3]) {
+                    pose->dir = 90.0f;
+                } else {
+                    pose->dir = 270.0f;
+                }
+                computePos(&pTeresa[i], &v);
+                (*pose->mtx)[0][3] = g_vecRotCenter.x + v.x;
+                (*pose->mtx)[2][3] = g_vecRotCenter.z + v.z;
+                v.y = (*pose->mtx)[1][3];
+                (*pose->mtx)[1][3] = 0.4f * sinf_inline(1.2f * pTeresa[i].bobPhase) + v.y;
+                pTeresa[i].bobPhase += 0.08f;
+                if (pTeresa[i].bobPhase > 3.1415927f) {
+                    pTeresa[i].bobPhase -= 3.1415927f;
+                }
+                angle = computeAngle(pose, mp);
+                pTeresa[i].alpha += 3;
+                alpha = pTeresa[i].alpha;
+                computeAlpha(&pTeresa[i], mp, angle);
+                if (pTeresa[i].alpha < alpha) {
+                    pTeresa[i].seq++;
+                    g_nNumEndProc[0]++;
+                    if (i == 0) {
+                        Vec pos = {0.0f, 200.0f, 0.0f};
+                        psndSFXOn_3D((const char*)0x5D3, &pos);
+                    }
+                } else {
+                    pTeresa[i].alpha = alpha;
+                    if (pTeresa[i].alpha >= 250) {
+                        pTeresa[i].alpha = 255;
+                        pTeresa[i].seq++;
+                        g_nNumEndProc[0]++;
+                        if (i == 0) {
+                            Vec pos = {0.0f, 200.0f, 0.0f};
+                            psndSFXOn_3D((const char*)0x5D3, &pos);
+                        }
+                    }
+                }
+                break;
+            case 2:
+                pose->texId = (gp->retraceCount / 5 + i * i) % 16;
+                if (mp->position.x < (*pose->mtx)[0][3]) {
+                    pose->dir = 90.0f;
+                } else {
+                    pose->dir = 270.0f;
+                }
+                computePos(&pTeresa[i], &v);
+                (*pose->mtx)[0][3] = g_vecRotCenter.x + v.x;
+                (*pose->mtx)[2][3] = g_vecRotCenter.z + v.z;
+                v.y = (*pose->mtx)[1][3];
+                (*pose->mtx)[1][3] = 0.4f * sinf_inline(1.2f * pTeresa[i].bobPhase) + v.y;
+                pTeresa[i].bobPhase += 0.08f;
+                if (pTeresa[i].bobPhase > 3.1415927f) {
+                    pTeresa[i].bobPhase -= 3.1415927f;
+                }
+                angle = computeAngle(pose, mp);
+                computeAlpha(&pTeresa[i], mp, angle);
+                if (g_nNumEndProc[0] == 200) {
+                    pTeresa[i].wait = i + 1;
+                    pTeresa[i].seq++;
+                }
+                break;
+            case 3:
+                pose->texId = (gp->retraceCount / 5 + i * i) % 16;
+                if (mp->position.x < (*pose->mtx)[0][3]) {
+                    pose->dir = 90.0f;
+                } else {
+                    pose->dir = 270.0f;
+                }
+                computePos(&pTeresa[i], &v);
+                (*pose->mtx)[0][3] = g_vecRotCenter.x + v.x;
+                (*pose->mtx)[2][3] = g_vecRotCenter.z + v.z;
+                v.y = (*pose->mtx)[1][3];
+                (*pose->mtx)[1][3] = 0.4f * sinf_inline(1.2f * pTeresa[i].bobPhase) + v.y;
+                pTeresa[i].bobPhase += 0.08f;
+                pTeresa[i].wait--;
+                if (pTeresa[i].wait == 0) {
+                    pose->flags &= ~2;
+                    pTeresa[i].wait = i * 30 + rand() % 10 + 295;
+                    pTeresa[i].seq++;
+                }
+                break;
+            case 4:
+                pose->texId = (gp->retraceCount + i * i) % 10 + 16;
+                computePos(&pTeresa[i], &v);
+                v.y = (*pose->mtx)[1][3];
+                (*pose->mtx)[0][3] = g_vecRotCenter.x + v.x;
+#if VERSION <= VERSION_DEMO_JP
+                (*pose->mtx)[1][3] = 0.4f * sinf_inline(1.2f * pTeresa[i].bobPhase) + v.y;
+#else
+                (*pose->mtx)[1][3] = v.y;
+#endif
+                (*pose->mtx)[2][3] = g_vecRotCenter.z + v.z;
+                pTeresa[i].bobPhase += 0.08f;
+                if (pTeresa[i].bobPhase > 3.1415927f) {
+                    pTeresa[i].bobPhase -= 3.1415927f;
+                }
+                pTeresa[i].angleSpeed += 0.01f;
+                if (pTeresa[i].angleSpeed > 1.2f) {
+                    pTeresa[i].angleSpeed = 1.2f;
+                }
+                pTeresa[i].angle += pTeresa[i].angleSpeed;
+                if (pTeresa[i].angle > 360.0f) {
+                    pTeresa[i].angle -= 360.0f;
+                }
+                angle = computeAngle(pose, mp);
+                computeMtx(pose, angle);
+                res = computeAlpha(&pTeresa[i], mp, angle);
+                if (g_nNumHuttobasu[0] >= 20) {
+                    break;
+                }
+                if (res && rand() % 1000 == 312) {
+                    pTeresa[i].wait = 100;
+                    pTeresa[i].seq = 9;
+                }
+                if (!party && g_nNumHuttobasu[0] < 20) {
+                    pTeresa[i].wait--;
+                    if (pTeresa[i].wait == 0) {
+                        pTeresa[i].bobPhase = 0.0f;
+                        pTeresa[i].seq++;
+                    }
+                }
+                break;
+            case 5:
+                pose->texId = (gp->retraceCount + i * i) % 10 + 16;
+                v.x = (*pose->mtx)[0][3];
+                v.y = (*pose->mtx)[1][3];
+                v.z = (*pose->mtx)[2][3];
+                PSVECSubtract(&mp->position, &v, &d);
+                PSVECNormalize(&d, &d);
+                PSVECScale(&d, &d, 1.8f);
+                PSVECAdd(&v, &d, &v);
+                (*pose->mtx)[0][3] = v.x;
+                (*pose->mtx)[1][3] = 0.4f * sinf_inline(1.2f * pTeresa[i].bobPhase) + v.y;
+                (*pose->mtx)[2][3] = v.z;
+                pTeresa[i].bobPhase += 0.08f;
+                if (pTeresa[i].bobPhase > 3.1415927f) {
+                    pTeresa[i].bobPhase -= 3.1415927f;
+                }
+                if (!party) {
+                    PSVECSubtract(&v, &mp->position, &v);
+                    if (PSVECMag(&v) <= 25.0f) {
+                        f32 dy = (*pose->mtx)[1][3] - mp->position.y;
+                        if (dy > -2.0f && dy < 10.0f) {
+                            pTeresa[i].ofs.x = (*pose->mtx)[0][3] - mp->position.x;
+                            pTeresa[i].ofs.y = (*pose->mtx)[1][3] - mp->position.y;
+                            pTeresa[i].ofs.z = (*pose->mtx)[2][3] - mp->position.z;
+                            pTeresa[i].seq++;
+                            if (!bero) {
+                                g_nNumHarituku[0]++;
+                            }
+                        }
+                    }
+                }
+                angle = computeAngle(pose, mp);
+                computeMtx(pose, angle);
+                computeAlpha(&pTeresa[i], mp, angle);
+                break;
+            case 6:
+                pose->texId = (gp->retraceCount + i * i) % 10 + 16;
+                (*pose->mtx)[0][3] = mp->position.x + pTeresa[i].ofs.x;
+                (*pose->mtx)[1][3] = mp->position.y + pTeresa[i].ofs.y;
+                (*pose->mtx)[2][3] = mp->position.z + pTeresa[i].ofs.z;
+                angle = computeAngle(pose, mp);
+                computeAlpha(&pTeresa[i], mp, angle);
+                if (hammer) {
+                    v.x = (*pose->mtx)[0][3];
+                    v.y = (*pose->mtx)[1][3];
+                    v.z = (*pose->mtx)[2][3];
+                    PSVECSubtract(&v, &mp->position, &d);
+                    PSVECNormalize(&d, &d);
+                    pTeresa[i].vel.x = 4.2f * d.x;
+                    if (d.z > 0.0f) {
+                        spd = d.z * randf(5.2f, 12.7f);
+                    } else {
+                        spd = d.z * randf(-5.0f, -2.0f);
+                    }
+                    pTeresa[i].vel.z = spd;
+                    pTeresa[i].vel.y = randf(6.0f, 10.0f);
+                    pTeresa[i].seq = 10;
+                    computeMtx(pose, 0.0f);
+                    g_nNumHarituku[0]--;
+                    g_nNumHuttobasu[0]++;
+                    {
+                        Vec pos = {0.0f, 0.0f, 0.0f};
+                        pos.x = (*pose->mtx)[0][3];
+                        pos.y = (*pose->mtx)[1][3];
+                        pos.z = (*pose->mtx)[2][3];
+                        psndSFXOn_3D((const char*)0x5D7, &pos);
+                    }
+                }
+                break;
+            case 9:
+                pose->texId = (s32)(12.0f * ((100.0f - pTeresa[i].wait) / 100.0f)) + 34;
+                computePos(&pTeresa[i], &v);
+                v.y = (*pose->mtx)[1][3];
+                (*pose->mtx)[0][3] = g_vecRotCenter.x + v.x;
+                (*pose->mtx)[1][3] = 0.4f * sinf_inline(1.2f * pTeresa[i].bobPhase) + v.y;
+                (*pose->mtx)[2][3] = g_vecRotCenter.z + v.z;
+                pTeresa[i].bobPhase += 0.08f;
+                if (pTeresa[i].bobPhase > 3.1415927f) {
+                    pTeresa[i].bobPhase -= 3.1415927f;
+                }
+                pTeresa[i].angle += 1.2f;
+                if (pTeresa[i].angle > 360.0f) {
+                    pTeresa[i].angle -= 360.0f;
+                }
+                angle = computeAngle(pose, mp);
+                computeMtx(pose, angle);
+                res = computeAlpha(&pTeresa[i], mp, angle);
+                pTeresa[i].wait--;
+                if (!res || pTeresa[i].wait == 0) {
+                    pTeresa[i].wait = rand() % 300 + 200;
+                    pTeresa[i].seq = 4;
+                }
+                break;
+            case 10:
+                pose->texId = (gp->retraceCount + i * i) % 8 + 26;
+                (*pose->mtx)[0][3] += pTeresa[i].vel.x;
+                (*pose->mtx)[1][3] += pTeresa[i].vel.y;
+                (*pose->mtx)[2][3] += pTeresa[i].vel.z;
+                pTeresa[i].vel.y -= 0.3f;
+                if ((*pose->mtx)[1][3] < -20.0f) {
+                    pose->flags = 0;
+                    pTeresa[i].seq = 99;
+                }
+                break;
+            case 20:
+                pose->texId = (gp->retraceCount + i * i) % 10 + 16;
+                computePos(&pTeresa[i], &v);
+                v.y = (*pose->mtx)[1][3];
+                (*pose->mtx)[0][3] = g_vecRotCenter.x + v.x;
+                (*pose->mtx)[1][3] = 0.4f * sinf_inline(1.2f * pTeresa[i].bobPhase) + v.y;
+                (*pose->mtx)[2][3] = g_vecRotCenter.z + v.z;
+                pTeresa[i].bobPhase += 0.08f;
+                if (pTeresa[i].bobPhase > 3.1415927f) {
+                    pTeresa[i].bobPhase -= 3.1415927f;
+                }
+                pTeresa[i].angle += 1.2f;
+                if (pTeresa[i].angle > 360.0f) {
+                    pTeresa[i].angle -= 360.0f;
+                }
+                angle = computeAngle(pose, mp);
+                computeMtx(pose, angle);
+                computeAlpha(&pTeresa[i], mp, angle);
+                pTeresa[i].wait--;
+                if (pTeresa[i].wait == 0) {
+                    pose->flags = 3;
+                    pTeresa[i].from.x = (*pose->mtx)[0][3];
+                    pTeresa[i].from.y = (*pose->mtx)[1][3];
+                    pTeresa[i].from.z = (*pose->mtx)[2][3];
+                    pTeresa[i].bobPhase = 0.0f;
+                    pTeresa[i].seq++;
+                }
+                break;
+            case 21: {
+                f32 t;
+
+                pose->texId = (gp->retraceCount + i * i) % 10 + 16;
+                t = pTeresa[i].bobPhase;
+                if (t >= 1.0f) {
+                    pTeresa[i].seq = 22;
+                    {
+                        Vec pos = {0.0f, 0.0f, 0.0f};
+                        pos.x = (*pose->mtx)[0][3];
+                        pos.y = (*pose->mtx)[1][3];
+                        pos.z = (*pose->mtx)[2][3];
+                        psndSFXOn_3D((const char*)0x5D4, &pos);
+                    }
+                    g_nNumEndProc[0]++;
+                } else {
+                    v.x = (1.0f - t) * pTeresa[i].from.x + t * pTeresa[i].to.x;
+                    v.y = (1.0f - t) * pTeresa[i].from.y + t * pTeresa[i].to.y;
+                    v.z = (1.0f - t) * pTeresa[i].from.z + t * pTeresa[i].to.z;
+                    (*pose->mtx)[0][3] = v.x;
+                    (*pose->mtx)[1][3] = 20.0f * (f32)sin(6.28f * pTeresa[i].bobPhase) + v.y;
+                    (*pose->mtx)[2][3] = v.z;
+                    pTeresa[i].bobPhase += 0.01f;
+                }
+                break;
+            }
+            case 22:
+                pose->texId = (gp->retraceCount + i * i) % 10 + 16;
+                if ((pTeresa[i].wait & 7) == 0) {
+                    (*pose->mtx)[0][3] += 2.0f;
+                } else if ((pTeresa[i].wait & 7) == 3) {
+                    (*pose->mtx)[0][3] -= 2.0f;
+                }
+                pTeresa[i].wait++;
+                break;
+            case 30:
+                pose->texId = (gp->retraceCount + i * i) % 8 + 26;
+                (*pose->mtx)[0][3] += pTeresa[i].vel.x;
+                (*pose->mtx)[1][3] += pTeresa[i].vel.y;
+                (*pose->mtx)[2][3] += pTeresa[i].vel.z;
+                pTeresa[i].vel.y -= 0.3f;
+                if ((*pose->mtx)[1][3] < -10.0f) {
+                    pose->flags = 0;
+                    pTeresa[i].seq = 99;
+                    g_nNumEndProc[0]++;
+                }
+                break;
+            case 80:
+                pose->texId = (gp->retraceCount + i * i) % 10 + 16;
+                (*pose->mtx)[1][3] = mp->position.y + pTeresa[i].ofs.y;
+                break;
+            case 99:
+                break;
+        }
+    }
+}
+
+/** Registers the swarm's draw callback with the 3D camera. */
+static void senteresa_ext_dispent(void) {
+    dispEntry(CAMERA_3D, 0.0f, 1, senteresa_ext_disp, NULL);
+}
+
+/** Sets the GX blend and alpha-compare mode for drawing the Boos (alpha-blended, with alpha-tested edges). */
+static void senteresa_loadRenderMode(void) {
+    GXSetBlendMode(GX_BM_BLEND, GX_BL_SRCALPHA, GX_BL_INVSRCALPHA, GX_LO_CLEAR);
+    GXSetZCompLoc(GX_FALSE);
+    GXSetAlphaCompare(GX_GEQUAL, 0x80, GX_AOP_OR, GX_NEVER, 0);
+    GXSetZMode(GX_TRUE, GX_LEQUAL, GX_TRUE);
+}
+
+/** Sets the TEV for the Boo sprites: texture colour with the per-Boo alpha from register 0. */
+static void senteresa_loadTev(void) {
+    GXColor fogColor = {0xFF, 0xFF, 0xFF, 0xFF};
+
+    GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP0, GX_COLOR0A0);
+    GXSetTevColorOp(GX_TEVSTAGE0, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
+    GXSetTevColorIn(GX_TEVSTAGE0, GX_CC_ZERO, GX_CC_ZERO, GX_CC_ZERO, GX_CC_TEXC);
+    GXSetTevAlphaOp(GX_TEVSTAGE0, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
+    GXSetTevAlphaIn(GX_TEVSTAGE0, GX_CA_ZERO, GX_CA_TEXA, GX_CA_A0, GX_CA_ZERO);
+    GXSetNumChans(0);
+    GXSetChanCtrl(GX_COLOR0A0, GX_FALSE, GX_SRC_REG, GX_SRC_REG, GX_LIGHT_NULL, GX_DF_NONE, GX_AF_NONE);
+    GXSetFog(GX_FOG_NONE, 0.0f, 0.0f, 0.0f, 0.0f, fogColor);
+    GXSetNumTexGens(1);
+    GXSetNumTevStages(1);
+}
+
+/** Draw callback of the Boo swarm: sets the render mode and TEV, then draws each Boo with its own alpha. */
+static void senteresa_ext_disp(CameraId camera, void* param) {
+    GXColor color = {0xFF, 0xFF, 0xFF, 0xFF};
+    s32 n = extGetPoseNum();
+    s32 i;
+
+    senteresa_loadRenderMode();
+    extLoadVertex();
+    extLoadTexture();
+    senteresa_loadTev();
+    for (i = 0; i < n; i++) {
+        color.a = pTeresa[i].alpha;
+        GXSetTevColor(GX_TEVREG0, color);
+        extPoseDraw(i);
+    }
+    extLoadTextureExit();
+}
+
+/** Draw callback for the swarm's shadows. */
+static void senteresa_ext_shadow_disp(void) {
+    static Mtx mt = {
+        {10.0f, 0.0f, 0.0f, 0.0f},
+        {0.0f, 10.0f, 0.0f, 0.1f},
+        {0.0f, 0.0f, 10.0f, 0.0f},
+    };
+
+    extLoadShadowMtx(mt);
+    extLoadShadowRenderMode();
+    extLoadShadowVertex();
+    extLoadShadowTev();
+    extDrawShadow();
+}
+
+/** Script helper: returns in args[1] the sequence number of Boo args[0] in the swarm. */
+static USER_FUNC(senteresa_get_seq) {
+    EvtWord* args = event->args;
+    s32 i = evtGetValue(event, args[0]);
+
+    evtSetValue(event, args[1], pTeresa[i].seq);
+    return EVT_RETURN_DONE;
+}
+
+/** Script helper: returns the position of a randomly chosen Boo of the swarm in args[0..2]. */
+static USER_FUNC(senteresa_get_random_position) {
+    EvtWord* args = event->args;
+    ExtdrvPose* pose = extGetPosePtr();
+    s32 n = extGetPoseNum();
+
+    pose += rand() % n;
+    evtSetFloat(event, args[0], (*pose->mtx)[0][3]);
+    evtSetFloat(event, args[1], (*pose->mtx)[1][3]);
+    evtSetFloat(event, args[2], (*pose->mtx)[2][3]);
+    return EVT_RETURN_DONE;
+}
+
+/**
+ * Script helper: stops the Boos from closing in (all but those clinging to Mario go to sequence 4 with an
+ * endless wait).
+ */
+static USER_FUNC(senteresa_tikaduku_stop) {
+    s32 n = extGetPoseNum();
+    s32 i;
+
+    for (i = 0; i < n; i++) {
+        if (pTeresa[i].seq != 10) {
+            pTeresa[i].seq = 4;
+            pTeresa[i].wait = 99999;
+        }
+    }
+    return EVT_RETURN_DONE;
+}
+
+/**
+ * Script helper: starts the Boos gathering (syugo) into one point at the central Boo's position,
+ * each at a random spot within 25 units and with a staggered delay;
+ * they fly there and the counter g_nNumEndProc counts them in.
+ */
+static USER_FUNC(senteresa_syugo) {
+    ExtdrvPose* pose = extGetPosePtr();
+    NpcEntry* npc = npcNameToPtr("中央テレサ");
+    s32 n = extGetPoseNum();
+    s32 i;
+    f32 a;
+    f32 r;
+
+    g_nNumEndProc[0] = 0;
+    for (i = 0; i < n; i++, pose++) {
+        pTeresa[i].from.x = (*pose->mtx)[0][3];
+        pTeresa[i].from.y = (*pose->mtx)[1][3];
+        pTeresa[i].from.z = (*pose->mtx)[2][3];
+        a = randf(0.0f, 6.2831f);
+        r = randf(0.0f, 25.0f);
+        pTeresa[i].to.x = r * cosf_inline(a) + npc->position.x;
+        pTeresa[i].to.y = r * sinf_inline(a) + npc->position.y;
+        pTeresa[i].to.z = npc->position.z;
+        pTeresa[i].bobPhase = 0.0f;
+        pTeresa[i].wait = (i & 15) + rand() % 10 * 30 + 1;
+        pTeresa[i].alpha = 255;
+        pTeresa[i].seq = 20;
+        if (pTeresa[i].from.x < pTeresa[i].to.x) {
+            pose->dir = 270.0f;
+        } else {
+            pose->dir = 90.0f;
+        }
+    }
+    return EVT_RETURN_DONE;
+}
+
+/** Script helper: turns off the display of all 200 Boo sprites. */
+static USER_FUNC(senteresa_dispoff) {
+    ExtdrvPose* pose = extGetPosePtr();
+    s32 n = extGetPoseNum();
+    s32 i;
+
+    for (i = 0; i < n; i++, pose++) {
+        pose->flags = 0;
+    }
+    return EVT_RETURN_DONE;
+}
+
+/**
+ * Script helper: sets every Boo to fly out of the Atomic Boo's position with random upward
+ * and sideways speeds (blown away after the fight), with a random sound for every second one.
+ */
+static USER_FUNC(senteresa_huttobu) {
+    ExtdrvPose* pose = extGetPosePtr();
+    NpcEntry* npc = npcNameToPtr("アトミックテレサ");
+    s32 n = extGetPoseNum();
+    s32 i;
+    f32 scale;
+
+    g_nNumEndProc[0] = 0;
+    for (i = 0; i < n; i++, pose++) {
+        pose->flags = 3;
+        (*pose->mtx)[0][3] = npc->position.x;
+        (*pose->mtx)[1][3] = npc->position.y;
+        (*pose->mtx)[2][3] = npc->position.z;
+        pTeresa[i].vel.x = 4.0f * (f32)sin(pTeresa[i].angle);
+        pTeresa[i].vel.y = randf(6.0f, 12.0f);
+        pTeresa[i].vel.z = cos(pTeresa[i].angle);
+        if (pTeresa[i].vel.z > 0.0f) {
+            scale = randf(5.0f, 12.5f);
+        } else {
+            scale = randf(-5.0f, -2.0f);
+        }
+        pTeresa[i].vel.z *= scale;
+        pTeresa[i].alpha = 255;
+        pTeresa[i].seq = 30;
+        if (i & 1) {
+            Vec pos = {0.0f, 0.0f, 0.0f};
+            pos.x = (*pose->mtx)[0][3];
+            pos.y = (*pose->mtx)[1][3];
+            pos.z = (*pose->mtx)[2][3];
+            psndSFXOn_3D((const char*)0x5D7, &pos);
+        }
+    }
+    return EVT_RETURN_DONE;
+}
+
+/**
+ * The "1000 Boos" scene: the swarm of Boos fades in around Mario and the Boos jeer at him in speech bubbles;
+ * if 20 of them cling to Mario they lift him up and carry him out to Twilight Town
+ * or Twilight Trail (GSWF_JIN00_BOOS_CARRIED_MARIO_OUT);
+ * if he knocks 20 away the central Boo reappears, all the Boos gather into the Atomic Boo,
+ * who speaks and fights Mario.
+ * After the fight a Lucky Start badge drops, the Boos are blown away and GSWF_JIN00_ATOMIC_BOO_DEFEATED is set.
+ */
+EVT_BEGIN(senteresa_evt)
+    // The swarm of 200 Boos is created and Mario waits until the Boos have appeared.
+    CALL(evt_ext_entry, 200, PTR(senteresa_ext_entry_data), PTR(senteresa_ext_init), PTR(senteresa_ext_main), PTR(senteresa_ext_dispent))
+    LOOP(0)
+        CALL(senteresa_get_seq, 199, LW(0))
+        IF_INT_GREATER_OR_EQUAL(LW(0), 4)
+            BREAK_LOOP
+        END_IF
+        WAIT_FRAMES(1)
+    END_LOOP
+    // Boo chatter pops up around Mario while the swarm closes in.
+    SET_VALUE(GW(0), 0)
+    BEGIN_INLINE_EVENT
+        WAIT_MS(600)
+        LOOP(0)
+            CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
+            CALL(evt_cam3d_get_shift, LW(0), LW(1), LW(2), LW(8))
+            CALL(senteresa_get_rot_center, LW(0), LW(1), LW(2))
+            SET_VALUE(LW(3), LW(0))
+            ADD(LW(3), LW(8))
+            ADD(LW(3), 65)
+            CALL(evt_sub_random, 65, LW(4))
+            ADD(LW(3), LW(4))
+            SET_VALUE(LW(5), LW(1))
+            ADD(LW(5), 5)
+            CALL(evt_sub_random, 40, LW(6))
+            ADD(LW(5), LW(6))
+            SET_VALUE(LW(7), LW(2))
+            SUBTRACT(LW(7), 90)
+            CALL(evt_msg_toge, 3, LW(3), LW(5), LW(7))
+            CALL(evt_msg_print, 0, STRING("stg4_jin_58"), 0, 0)
+            CALL(evt_sub_random, 200, LW(0))
+            ADD(LW(0), 100)
+            WAIT_MS(LW(0))
+            IF_INT_EQUAL(GW(0), 1)
+                BREAK_LOOP
+            END_IF
+        END_LOOP
+    END_INLINE_EVENT
+    BEGIN_INLINE_EVENT
+        WAIT_MS(600)
+        LOOP(0)
+            CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
+            CALL(evt_cam3d_get_shift, LW(0), LW(1), LW(2), LW(8))
+            CALL(senteresa_get_rot_center, LW(0), LW(1), LW(2))
+            SET_VALUE(LW(3), LW(0))
+            ADD(LW(3), LW(8))
+            SUBTRACT(LW(3), 32)
+            CALL(evt_sub_random, 65, LW(4))
+            ADD(LW(3), LW(4))
+            SET_VALUE(LW(5), LW(1))
+            ADD(LW(5), 5)
+            CALL(evt_sub_random, 70, LW(6))
+            ADD(LW(5), LW(6))
+            SET_VALUE(LW(7), LW(2))
+            SUBTRACT(LW(7), 90)
+            CALL(evt_msg_toge, 3, LW(3), LW(5), LW(7))
+            CALL(evt_msg_print, 0, STRING("stg4_jin_59"), 0, 0)
+            CALL(evt_sub_random, 200, LW(0))
+            ADD(LW(0), 100)
+            WAIT_MS(LW(0))
+            IF_INT_EQUAL(GW(0), 1)
+                BREAK_LOOP
+            END_IF
+        END_LOOP
+    END_INLINE_EVENT
+    BEGIN_INLINE_EVENT
+        WAIT_MS(900)
+        LOOP(0)
+            CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
+            CALL(evt_cam3d_get_shift, LW(0), LW(1), LW(2), LW(8))
+            CALL(senteresa_get_rot_center, LW(0), LW(1), LW(2))
+            SET_VALUE(LW(3), LW(0))
+            ADD(LW(3), LW(8))
+            SUBTRACT(LW(3), 110)
+            CALL(evt_sub_random, 45, LW(4))
+            ADD(LW(3), LW(4))
+            SET_VALUE(LW(5), LW(1))
+            ADD(LW(5), 45)
+            CALL(evt_sub_random, 30, LW(6))
+            ADD(LW(5), LW(6))
+            SET_VALUE(LW(7), LW(2))
+            SUBTRACT(LW(7), 90)
+            CALL(evt_msg_toge, 3, LW(3), LW(5), LW(7))
+            CALL(evt_msg_print, 0, STRING("stg4_jin_60"), 0, 0)
+            CALL(evt_sub_random, 300, LW(0))
+            ADD(LW(0), 100)
+            WAIT_MS(LW(0))
+            IF_INT_EQUAL(GW(0), 1)
+                BREAK_LOOP
+            END_IF
+        END_LOOP
+    END_INLINE_EVENT
+    BEGIN_INLINE_EVENT
+        WAIT_MS(750)
+        LOOP(0)
+            CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
+            CALL(evt_cam3d_get_shift, LW(0), LW(1), LW(2), LW(8))
+            CALL(senteresa_get_rot_center, LW(0), LW(1), LW(2))
+            SET_VALUE(LW(3), LW(0))
+            ADD(LW(3), LW(8))
+            ADD(LW(3), 55)
+            CALL(evt_sub_random, 75, LW(4))
+            ADD(LW(3), LW(4))
+            SET_VALUE(LW(5), LW(1))
+            SUBTRACT(LW(5), 80)
+            CALL(evt_sub_random, 30, LW(6))
+            SUBTRACT(LW(5), LW(6))
+            SET_VALUE(LW(7), LW(2))
+            SUBTRACT(LW(7), 90)
+            CALL(evt_msg_toge, 3, LW(3), LW(5), LW(7))
+            CALL(evt_msg_print, 0, STRING("stg4_jin_59"), 0, 0)
+            CALL(evt_sub_random, 200, LW(0))
+            ADD(LW(0), 100)
+            WAIT_MS(LW(0))
+            IF_INT_EQUAL(GW(0), 1)
+                BREAK_LOOP
+            END_IF
+        END_LOOP
+    END_INLINE_EVENT
+    BEGIN_INLINE_EVENT
+        WAIT_MS(900)
+        LOOP(0)
+            CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
+            CALL(evt_cam3d_get_shift, LW(0), LW(1), LW(2), LW(8))
+            CALL(senteresa_get_rot_center, LW(0), LW(1), LW(2))
+            SET_VALUE(LW(3), LW(0))
+            ADD(LW(3), LW(8))
+            SUBTRACT(LW(3), 110)
+            CALL(evt_sub_random, 75, LW(4))
+            ADD(LW(3), LW(4))
+            SET_VALUE(LW(5), LW(1))
+            SUBTRACT(LW(5), 80)
+            CALL(evt_sub_random, 30, LW(6))
+            SUBTRACT(LW(5), LW(6))
+            SET_VALUE(LW(7), LW(2))
+            SUBTRACT(LW(7), 90)
+            CALL(evt_msg_toge, 3, LW(3), LW(5), LW(7))
+            CALL(evt_msg_print, 0, STRING("stg4_jin_58"), 0, 0)
+            CALL(evt_sub_random, 300, LW(0))
+            ADD(LW(0), 100)
+            WAIT_MS(LW(0))
+            IF_INT_EQUAL(GW(0), 1)
+                BREAK_LOOP
+            END_IF
+        END_LOOP
+    END_INLINE_EVENT
+    // Main loop: the swarm follows Mario; once 20 Boos have been blown away it gives up, and if 20 cling to
+    // him they carry him out of the Steeple.
+    LOOP(0)
+        PEEK_INT(LW(0), PTR(g_nNumHuttobasu))
+        IF_INT_GREATER_OR_EQUAL(LW(0), 20)
+            SET_VALUE(GW(0), 1)
+            BREAK_LOOP
+        END_IF
+        CALL(senteresa_mario_spd)
+        WAIT_FRAMES(1)
+        PEEK_INT(LW(0), PTR(g_nNumHarituku))
+        IF_INT_GREATER_OR_EQUAL(LW(0), 20)
+            CALL(evt_mario_key_onoff, 0)
+            CALL(evt_mario_normalize)
+            CALL(evt_mario_cont_onoff, 0)
+            CALL(evt_party_cont_onoff, 0, 0)
+            CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
+            CALL(evt_cam3d_get_shift, LW(0), LW(1), LW(2), LW(3))
+            CALL(evt_cam3d_event_from_road, LW(0), LW(1), LW(2), LW(3), LW(4), LW(5), LW(6), LW(7), LW(8), LW(9))
+            CALL(evt_cam3d_evt_set, LW(4), LW(5), LW(6), LW(7), LW(8), LW(9), 0, 11)
+            CALL(evt_mario_set_pose, STRING("M_I_O"))
+            CALL(evt_mario_cam_y_off)
+            CALL(senteresa_turiageru)
+            CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
+            CALL(evt_party_set_pos, 0, LW(0), LW(1), LW(2))
+            LOOP(150)
+                ADD_FLOAT(LW(1), FLOAT(1.0f))
+                CALL(evt_mario_set_pos, LW(0), LW(1), LW(2))
+                CALL(evt_party_set_pos, 0, LW(0), LW(1), LW(2))
+                WAIT_FRAMES(1)
+            END_LOOP
+            SET_VALUE(GSWF(GSWF_JIN00_BOOS_CARRIED_MARIO_OUT), 1)
+            CALL(evt_mario_normalize)
+            IF_INT_EQUAL(GSW(GSW_STORY_PROGRESS), STORY_STG4_10_02_TRADING_PLACES)
+                CALL(evt_bero_mapchange, STRING("usu_00"), STRING("evt_majo3"))
+            ELSE
+                CALL(evt_bero_mapchange, STRING("gra_06"), STRING("n_bero"))
+            END_IF
+        END_IF
+        WAIT_FRAMES(1)
+    END_LOOP
+    // The swarm stops closing in and the central Boo reappears, fading back in.
+    CALL(senteresa_tikaduku_stop)
+    CALL(evt_mario_key_onoff, 0)
+    WAIT_MS(2500)
+    CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
+    ADD(LW(1), 60)
+    CALL(evt_npc_set_position, STRING("中央テレサ"), LW(0), LW(1), LW(2))
+    CALL(evt_npc_set_scale, STRING("中央テレサ"), 1, 1, 1)
+    CALL(evt_npc_flag_onoff, 1, STRING("中央テレサ"), -2147483648)
+    BEGIN_INLINE_EVENT
+        WAIT_MS(300)
+        CALL(evt_npc_get_position, STRING("中央テレサ"), LW(0), LW(1), LW(2))
+        SUBTRACT(LW(1), 20)
+        CALL(evt_cam3d_event_from_road, LW(0), LW(1), LW(2), 0, LW(4), LW(5), LW(6), LW(7), LW(8), LW(9))
+        CALL(evt_cam3d_evt_set, LW(4), LW(5), LW(6), LW(7), LW(8), LW(9), 1000, 11)
+    END_INLINE_EVENT
+    SET_VALUE(LW(0), 0)
+    LOOP(25)
+        ADD(LW(0), 10)
+        CALL(evt_npc_set_color, STRING("中央テレサ"), 255, 255, 255, LW(0))
+        WAIT_FRAMES(1)
+    END_LOOP
+    CALL(evt_npc_set_color, STRING("中央テレサ"), 255, 255, 255, 255)
+    WAIT_MS(800)
+    CALL(evt_msg_print, 0, STRING("stg4_jin_61"), 0, STRING("中央テレサ"))
+    WAIT_MS(500)
+    CALL(evt_npc_get_position, STRING("中央テレサ"), LW(0), LW(1), LW(2))
+    SUBTRACT(LW(1), 20)
+    CALL(evt_cam3d_event_from_road, LW(0), LW(1), LW(2), 0, LW(4), LW(5), LW(6), LW(7), LW(8), LW(9))
+    ADD(LW(5), 160)
+    ADD(LW(8), 160)
+    BEGIN_INLINE_EVENT
+        CALL(evt_cam3d_evt_set, LW(4), LW(5), LW(6), LW(7), LW(8), LW(9), 2000, 11)
+        WAIT_MS(1000)
+    END_INLINE_EVENT
+    CALL(evt_npc_get_position, STRING("中央テレサ"), LW(2), LW(3), LW(4))
+    SET_VALUE(LW(5), LW(3))
+    ADD(LW(5), 200)
+    CALL(evt_sub_intpl_msec_init, 11, LW(3), LW(5), 2000)
+    LABEL(0)
+    CALL(evt_sub_intpl_msec_get_value)
+    CALL(evt_npc_set_position, STRING("中央テレサ"), LW(2), LW(0), LW(4))
+    WAIT_FRAMES(1)
+    IF_INT_EQUAL(LW(1), 1)
+        GOTO(0)
+    END_IF
+    // The Boos gather together into the Atomic Boo.
+    CALL(evt_npc_get_position, STRING("中央テレサ"), LW(0), LW(1), LW(2))
+    CALL(evt_npc_get_dir, STRING("中央テレサ"), LW(3))
+    CALL(evt_npc_set_position, STRING("アトミックテレサ"), LW(0), LW(1), LW(2))
+    CALL(evt_npc_set_ry, STRING("アトミックテレサ"), LW(3))
+    CALL(senteresa_syugo)
+    LOOP(0)
+        PEEK_INT(LW(0), PTR(g_nNumEndProc))
+        IF_INT_EQUAL(LW(0), 200)
+            BREAK_LOOP
+        END_IF
+        WAIT_FRAMES(1)
+    END_LOOP
+    CALL(evt_npc_get_position, STRING("中央テレサ"), LW(0), LW(1), LW(2))
+    CALL(teresa_eff, LW(0), LW(1), LW(2))
+    WAIT_MS(500)
+    CALL(senteresa_dispoff)
+    CALL(evt_npc_get_position, STRING("中央テレサ"), LW(0), LW(1), LW(2))
+    SUBTRACT(LW(1), 25)
+    CALL(evt_npc_set_position, STRING("アトミックテレサ"), LW(0), LW(1), LW(2))
+    CALL(evt_npc_flag_onoff, 1, STRING("中央テレサ"), NPC_FLAG_HIDDEN)
+    CALL(evt_npc_flag_onoff, 0, STRING("アトミックテレサ"), NPC_FLAG_HIDDEN)
+    // The Atomic Boo speaks, startling Mario, then floats toward him shaking the camera.
+    CALL(evt_msg_toge, 1, 0, 0, 0)
+    CALL(evt_msg_print, 0, STRING("stg4_jin_62"), 0, STRING("アトミックテレサ"))
+    CALL(evt_cam3d_evt_off, 400, 11)
+    CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
+    CALL(evt_snd_sfxon_3d, STRING("SFX_VOICE_MARIO_SURPRISED1_2"), LW(0), LW(1), LW(2), 0)
+    CALL(evt_mario_set_pose, STRING("M_I_O"))
+    CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
+    ADD(LW(1), 30)
+    ADD(LW(2), 3)
+    CALL(evt_npc_glide_position, STRING("アトミックテレサ"), LW(0), LW(1), LW(2), 0, FLOAT(450.0f), 1, 11, 0)
+    CALL(evt_cam_shake, CAMERA_3D, FLOAT(0.009765625f), FLOAT(0.0f), 1000)
+    CALL(evt_mario_set_pose, STRING("M_S_1"))
+    BEGIN_INLINE_EVENT
+        LOOP(100)
+            CALL(evt_npc_get_position, STRING("アトミックテレサ"), LW(0), LW(1), LW(2))
+            SUBTRACT(LW(1), 4)
+            CALL(evt_npc_set_position, STRING("アトミックテレサ"), LW(0), LW(1), LW(2))
+            WAIT_MS(10)
+            CALL(evt_npc_get_position, STRING("アトミックテレサ"), LW(0), LW(1), LW(2))
+            ADD(LW(1), 4)
+            CALL(evt_npc_set_position, STRING("アトミックテレサ"), LW(0), LW(1), LW(2))
+            WAIT_MS(10)
+        END_LOOP
+    END_INLINE_EVENT
+    BEGIN_INLINE_EVENT
+        LOOP(50)
+            CALL(evt_npc_get_position, STRING("アトミックテレサ"), LW(0), LW(1), LW(2))
+            SUBTRACT(LW(0), 4)
+            CALL(evt_npc_set_position, STRING("アトミックテレサ"), LW(0), LW(1), LW(2))
+            WAIT_MS(20)
+            CALL(evt_npc_get_position, STRING("アトミックテレサ"), LW(0), LW(1), LW(2))
+            ADD(LW(0), 4)
+            CALL(evt_npc_set_position, STRING("アトミックテレサ"), LW(0), LW(1), LW(2))
+            WAIT_MS(20)
+        END_LOOP
+    END_INLINE_EVENT
+    WAIT_MS(300)
+    // The Boos jeer at Mario from all sides.
+    SET_VALUE(GW(0), 0)
+    BEGIN_INLINE_EVENT
+        WAIT_MS(100)
+        CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
+        ADD(LW(0), 110)
+        ADD(LW(1), 70)
+        SUBTRACT(LW(2), 90)
+        CALL(evt_msg_toge, 3, LW(0), LW(1), LW(2))
+        CALL(evt_msg_print, 0, STRING("stg4_jin_63"), 0, 0)
+        WAIT_MS(750)
+    END_INLINE_EVENT
+    BEGIN_INLINE_EVENT
+        WAIT_MS(100)
+        CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
+        ADD(LW(0), 70)
+        SUBTRACT(LW(1), 90)
+        SUBTRACT(LW(2), 90)
+        CALL(evt_msg_toge, 3, LW(0), LW(1), LW(2))
+        CALL(evt_msg_print, 0, STRING("stg4_jin_64"), 0, 0)
+        WAIT_MS(750)
+    END_INLINE_EVENT
+    BEGIN_INLINE_EVENT
+        WAIT_MS(250)
+        CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
+        ADD(LW(0), 30)
+        ADD(LW(1), 30)
+        SUBTRACT(LW(2), 90)
+        CALL(evt_msg_toge, 3, LW(0), LW(1), LW(2))
+        CALL(evt_msg_print, 0, STRING("stg4_jin_65"), 0, 0)
+        WAIT_MS(750)
+    END_INLINE_EVENT
+    BEGIN_INLINE_EVENT
+        WAIT_MS(200)
+        CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
+        SUBTRACT(LW(0), 40)
+        SUBTRACT(LW(1), 20)
+        SUBTRACT(LW(2), 90)
+        CALL(evt_msg_toge, 3, LW(0), LW(1), LW(2))
+        CALL(evt_msg_print, 0, STRING("stg4_jin_64"), 0, 0)
+        WAIT_MS(750)
+    END_INLINE_EVENT
+    BEGIN_INLINE_EVENT
+        WAIT_MS(300)
+        CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
+        SUBTRACT(LW(0), 80)
+        SUBTRACT(LW(1), 100)
+        SUBTRACT(LW(2), 90)
+        CALL(evt_msg_toge, 3, LW(0), LW(1), LW(2))
+        CALL(evt_msg_print, 0, STRING("stg4_jin_65"), 0, 0)
+        WAIT_MS(750)
+    END_INLINE_EVENT
+    BEGIN_INLINE_EVENT
+        WAIT_MS(150)
+        CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
+        SUBTRACT(LW(0), 105)
+        ADD(LW(1), 75)
+        SUBTRACT(LW(2), 90)
+        CALL(evt_msg_toge, 3, LW(0), LW(1), LW(2))
+        CALL(evt_msg_print, 0, STRING("stg4_jin_63"), 0, 0)
+        WAIT_MS(750)
+    END_INLINE_EVENT
+    // The Atomic Boo fight starts.
+    CALL(evt_npc_get_position, STRING("アトミックテレサ"), LW(0), LW(1), LW(2))
+    CALL(evt_npc_set_battle_info, STRING("アトミックテレサ"), 7)
+    CALL(evt_npc_battle_start, STRING("アトミックテレサ"))
+    CALL(evt_npc_wait_battle_end)
+    ADD(LW(1), 50)
+    // After the fight the Lucky Start pops out, the remaining Boos are blown away and the Atomic Boo is
+    // marked as defeated.
+    CALL(evt_item_entry, STRING("item_99"), ITEM_LUCKY_START, LW(0), LW(1), LW(2), ITEM_ENTRY_LAUNCH, GSWF(GSWF_JIN00_ATOMIC_BOO_LUCKY_START_TAKEN), 0)
+#if VERSION >= VERSION_JP
+    CALL(evt_item_flag_on, STRING("item_99"), ITEM_FLAG_BADGE_RETURN)
+    SET_VALUE(GSWF(GSWF_JIN00_ATOMIC_BOO_LUCKY_START_TAKEN), 1)
+#endif
+    CALL(senteresa_huttobu)
+    CALL(evt_npc_flag_onoff, 1, STRING("アトミックテレサ"), NPC_FLAG_HIDDEN)
+    LOOP(0)
+        PEEK_INT(LW(0), PTR(g_nNumEndProc))
+        IF_INT_EQUAL(LW(0), 200)
+            SET_VALUE(GW(0), 1)
+            BREAK_LOOP
+        END_IF
+        WAIT_FRAMES(1)
+    END_LOOP
+    WAIT_MS(300)
+    CALL(senteresa_end)
+    CALL(evt_mario_key_onoff, 1)
+    SET_VALUE(GSWF(GSWF_JIN00_ATOMIC_BOO_DEFEATED), 1)
+    RETURN
+EVT_END()
+
+/**
+ * Creepy Steeple main hall (jin_00) map init: sets the steeple music and reverb, the shadow-Mario tint,
+ * save block, exits and the Boo NPCs; places the Steeple Key and its lock (north door), the statue-push puzzle,
+ * resumes or starts the 1000-Boos scene by the story step and removes the other Boos
+ * when the Atomic Boo is not yet defeated.
+ */
+EVT_BEGIN(jin_00_init_evt)
+    CALL(evt_snd_bgmon, PSND_FADE_OUT, STRING("BGM_STG4_JIN1"))
+    CALL(evt_snd_envon, PSND_FADE_RESTART | PSND_FADE_IN, STRING("ENV_STG4_JIN1"))
+    CALL(evt_snd_set_rev_mode, 2)
+    CALL(evt_kagemario_init)
+    CALL(evt_mobj_save_blk, STRING("mobj_save"), -500, 260, -200, 0, 0)
+    IF_INT_LESS(GSW(GSW_STORY_PROGRESS), STORY_STG4_09_STEEPLE_DEMO_INT)
+        SET_VALUE(LW(0), PTR(bero_entry_data))
+        CALL(evt_bero_get_info)
+        SPAWN_EVENT(first_jin00)
+    ELSE
+        SET_VALUE(LW(0), PTR(bero_entry_data))
+        CALL(evt_bero_get_info)
+        CALL_CHILD(evt_bero_info_run)
+    END_IF
+    CALL_CHILD(evt_usu_kagemario_party_kill)
+    CALL(evt_npc_setup, PTR(npcEnt))
+    IF_INT_LESS(GSW(GSW_STORY_PROGRESS), STORY_STG4_09_04_KEY)
+        CALL(evt_item_entry, STRING("key00"), ITEM_STEEPLE_KEY_0x16, -555, 200, 190, ITEM_ENTRY_STAY, -1, PTR(evt_key))
+    END_IF
+    IF_INT_LESS(GSW(GSW_STORY_PROGRESS), STORY_STG4_09_05_LOCK)
+        CALL(evt_mobj_lock, STRING("mobj_lock00"), ITEM_STEEPLE_KEY_0x16, -435, 210, -245, 0, PTR(lock_item_check), PTR(evt_unlock), GSWF(GSWF_JIN00_NORTH_DOOR_UNLOCKED))
+        SET_VALUE(LW(0), STRING("n_bero_2"))
+        CALL_CHILD(bero_case_switch_off)
+    END_IF
+    SET_VALUE(GW(0), -1)
+    SET_VALUE(GW(1), -1)
+    IF_INT_EQUAL(GSW(GSW_STORY_PROGRESS), STORY_STG4_09_02_BOO_BOX)
+        SPAWN_EVENT(tyuou_teresa_kusukusu)
+        SPAWN_EVENT(tyuou_teresa_look_mario)
+    END_IF
+    IF_INT_GREATER_OR_EQUAL(GSW(GSW_STORY_PROGRESS), STORY_STG4_09_03_1000_BOOS)
+        IF_INT_EQUAL(GSWF(GSWF_JIN00_ATOMIC_BOO_DEFEATED), 0)
+            BEGIN_INLINE_EVENT
+                CALL(evt_seq_wait, 2)
+                WAIT_MS(1000)
+                SPAWN_EVENT(senteresa_evt)
+            END_INLINE_EVENT
+        END_IF
+    END_IF
+    IF_INT_EQUAL(GSWF(GSWF_JIN00_ATOMIC_BOO_DEFEATED), 0)
+        CALL(evt_npc_check_delete, STRING("テレサ１"))
+        CALL(evt_npc_check_delete, STRING("テレサ２"))
+        CALL(evt_npc_check_delete, STRING("テレサ３"))
+        CALL(evt_npc_check_delete, STRING("テレサ４"))
+        CALL(evt_npc_check_delete, STRING("テレサ５"))
+        CALL(evt_npc_check_delete, STRING("テレサ８"))
+    END_IF
+    CALL(evt_hit_bind_mapobj, STRING("a_oki01"), STRING("oki01"))
+    IF_INT_LESS(GSW(GSW_STORY_PROGRESS), STORY_STG4_09_01_PUSH_THE_STATUE)
+        SET_VALUE(GW(10), 0)
+        CALL(evt_run_case_evt, CASE_COND_PUSH, 1, STRING("A_dai"), 0, PTR(push_evt), 0)
+        CALL(evt_run_case_evt, CASE_COND_NOT_PUSH, 1, STRING("A_dai"), 0, PTR(nopush_evt), 0)
+    ELSE
+        CALL(evt_mapobj_trans, 1, STRING("oki01"), FLOAT(50.0f), 0, 0)
+        CALL(evt_hit_bind_update, STRING("a_oki01"))
+        CALL(evt_hitobj_onoff, STRING("a_futa"), 0, 0)
+    END_IF
+    CALL(evt_map_playanim, STRING("hikari"), 1, 0)
+    IF_INT_EQUAL(GSW(GSW_STORY_PROGRESS), STORY_STG4_10_02_TRADING_PLACES)
+        SET_VALUE(LW(0), STRING("w_bero"))
+        CALL_CHILD(bero_case_switch_off)
+        CALL(evt_bero_overwrite, STRING("w_bero"), PTR(bero_stg4majo3nin))
+        SET_VALUE(LW(0), STRING("w_bero"))
+        CALL_CHILD(bero_case_switch_on)
+    END_IF
+    CALL(evt_bero_get_entername, LW(0))
+    IF_STR_EQUAL(LW(0), STRING("e_bero_2"))
+        CALL(evt_cam_road_reset)
+    END_IF
+    CALL(evt_hitobj_attr_onoff, 0, 0, STRING("a_futa"), 4)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("hahen"), MAPOBJ_FLAG_BBOX_CULL)
+    RETURN
+EVT_END()
+
+/**
+ * Script helper: Boos that are clinging to Mario (sequence 6) switch to the lifting sequence (80), which keeps
+ * them at their height offset from Mario as he is lifted; all others (but sequence 9) wait indefinitely.
+ */
+static USER_FUNC(senteresa_turiageru) {
+    s32 n = extGetPoseNum();
+    s32 i;
+
+    g_nNumEndProc[0] = 0;
+    for (i = 0; i < n; i++) {
+        if (pTeresa[i].seq == 6) {
+            pTeresa[i].seq = 80;
+        } else if (pTeresa[i].seq != 9) {
+            pTeresa[i].wait = 99999;
+        }
+    }
+    return EVT_RETURN_DONE;
+}
+
+/** Script helper: resets the ext pose effect, ending the swarm. */
+static USER_FUNC(senteresa_end) {
+    extReset();
+    return EVT_RETURN_DONE;
+}
+
+/** Script helper: blocks until all 200 Boos have reached their final state (g_nNumEndProc is 200). */
+static USER_FUNC(senteresa_wait_end_seq) {
+    return g_nNumEndProc[0] == 200 ? EVT_RETURN_DONE : EVT_RETURN_BLOCK;
+}
+
+/** Script helper: returns the swarm centre (the point the Boos circle around) in args[0..2]. */
+static USER_FUNC(senteresa_get_rot_center) {
+    EvtWord* args = event->args;
+
+    evtSetValue(event, args[0], g_vecRotCenter.x);
+    evtSetValue(event, args[1], g_vecRotCenter.y);
+    evtSetValue(event, args[2], g_vecRotCenter.z);
+    return EVT_RETURN_DONE;
+}
+
+/**
+ * Script helper: slows Mario's walking and dashing speed down in proportion to the number of Boos clinging to
+ * him (zero at 20).
+ */
+static USER_FUNC(senteresa_mario_spd) {
+    MarioWork* mp = marioGetPtr();
+    f32 scale = (20 - g_nNumHarituku[0]) / 20.0f;
+
+    if (mp->currMotionId == 1) {
+        mp->baseSpeed = mp->baseWalkSpeed * scale;
+    } else if (mp->currMotionId == 2) {
+        mp->baseSpeed = mp->baseDashSpeed * scale;
+    }
+    return EVT_RETURN_DONE;
+}
+
+/** Script helper: spawns the Boo-puff effect at (args[0], args[1] + 20, args[2] + 20). */
+static USER_FUNC(teresa_eff) {
+    EvtWord* args = event->args;
+    f32 x = evtGetFloat(event, args[0]);
+    f32 y = evtGetFloat(event, args[1]);
+    f32 z = evtGetFloat(event, args[2]);
+
+    effTeresaEntry(0, x, y + 20.0f, z + 20.0f);
+    return EVT_RETURN_DONE;
+}

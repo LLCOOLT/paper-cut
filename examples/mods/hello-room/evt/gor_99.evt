@@ -1,0 +1,22 @@
+// A new map, gor_99: Rogueport's west side under another name (mod.json gives
+// it gor_01's files). Scripts are written in the game's own script macros, as
+// the decomp's sources write them (see docs/MODDING.md, "Scripts"): this one
+// sets the map up with gor_01's own script, by its name in the game, then
+// adds a line of its own.
+
+EVT_BEGIN(gor_99_init)
+    CALL(evt_mod_log, STRING("hello-room: entered gor_99"))
+    CALL_CHILD(gor_01_init_evt)
+    SPAWN_EVENT(gor_99_hello)
+    RETURN
+EVT_END()
+
+// A message once Mario is in: the mod's own (messages/hello_room.txt)
+EVT_BEGIN(gor_99_hello)
+    WAIT_MS(800)
+    CALL(evt_mario_key_onoff, 0)
+    CALL(evt_msg_print, 0, STRING("hello_room"), 0, 0)
+    CALL(evt_mario_key_onoff, 1)
+    CALL(evt_mod_log, STRING("hello-room: said hello"))
+    RETURN
+EVT_END()

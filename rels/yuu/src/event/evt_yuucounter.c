@@ -1,0 +1,394 @@
+// evt_yuucounter: Pianta Parlor score/counter display: flag and data store plus on-screen counter.
+
+#ifdef TARGET_PC
+#include "port/platform.h"
+#endif
+#include "battle/battle_unit.h"
+#include "evt/evt_cmd.h"
+
+#include "dolphin/os.h"
+#include "memory.h"
+#include "manager/evtmgr_cmd.h"
+#include "string.h"
+#include "mario/mariost.h"
+#include "driver/dispdrv.h"
+#include "dolphin/mtx.h"
+#include "mario/mario.h"
+#include "driver/camdrv.h"
+#include "driver/icondrv.h"
+#include "yuu.h"
+#include "icon_ids.h"
+#include "evt/evt_yuugijou.h"
+
+typedef struct YuuCounterWork {
+    EventEntry* event;
+    u16 flags;
+    u32 dispFlags;
+    s32 type;
+    f32 x;
+    f32 y;
+    s32 data;
+    s32 pad_1C;
+    s64 elapsed;
+    OSTime lastTime;
+    s32 limit;
+    s32 startCount;
+} YuuCounterWork;
+static void* yuunpc_wp;
+static YuuCounterWork* _wp;
+
+static void evt_yuucounter_disp_func(CameraId camera, void* param);
+/**
+ * Colours of the minigame counter: plain white for the digits and unit icon,
+ * and translucent white for the backdrop drawn behind them.
+ */
+static const GXColor white = {0xFF, 0xFF, 0xFF, 0xFF};
+static const GXColor bgColor = {0xFF, 0xFF, 0xFF, 0x99};
+
+static EvtWord main_evt[4];
+
+#if VERSION >= VERSION_JP
+extern EvtWord yuucounter_window_disp_evt[];
+extern EvtWord yuucounter_window_null_evt[];
+#endif
+
+/**
+ * Returns the bits of the counter's display flags selected by mask (1 hide, 2 freeze the value,
+ * 4 restart the timer baseline), or 0 if no counter exists.
+ */
+u32 yuucounter_flag(u32 mask) {
+    if (_wp == NULL) {
+        return 0;
+    }
+    return _wp->dispFlags & mask;
+}
+
+/** Clears the masked display flag bits of the counter; does nothing if no counter exists. */
+void yuucounter_flag_off(u32 mask) {
+    if (_wp == NULL) {
+        return;
+    }
+    _wp->dispFlags &= ~mask;
+}
+
+/**
+ * Sets the masked display flag bits of the counter (the minigames use 2 to freeze the value when a round ends);
+ * does nothing if no counter exists.
+ */
+void yuucounter_flag_on(u32 mask) {
+    if (_wp == NULL) {
+        return;
+    }
+    _wp->dispFlags |= mask;
+}
+
+/** Overwrites the counter's current value; does nothing if no counter exists. */
+void yuucounter_set_data(s32 data) {
+    if (_wp == NULL) {
+        return;
+    }
+    _wp->data = data;
+}
+
+/**
+ * Returns the counter's current value (distance, remaining milliseconds or rank, depending on its type),
+ * or 0 if no counter exists.
+ */
+s32 yuucounter_get_data(void) {
+    if (_wp == NULL) {
+        return 0;
+    }
+    return _wp->data;
+}
+
+/** Script call that asks the counter's event to stop, blocks until it has, then frees the counter work area. */
+USER_FUNC(evt_yuucounter_free) {
+    YuuCounterWork* wp = _wp;
+
+    if (wp == NULL) {
+        return EVT_RETURN_DONE;
+    }
+    if (isFirstCall) {
+        wp->flags |= 1;
+    }
+    if (!(wp->flags & 2)) {
+        return EVT_RETURN_BLOCK;
+    }
+    _mapFree(_wp);
+    _wp = NULL;
+    return EVT_RETURN_DONE;
+}
+
+/**
+ * args: [0] = x, [1] = y of the on-screen counter,
+ * [2] = type (0 distance in Plane Mode, 1 countdown timer, 2 rank),
+ * [3] = limit in seconds for type 1 or start count for type 2.
+ * Allocates the counter and starts its draw event;
+ * on JP and later also tells the Pianta Parlor window event whether to show the timer.
+ */
+USER_FUNC(evt_yuucounter_alloc) {
+    EvtWord* args = event->args;
+    YuuCounterWork* wp = _mapAlloc(sizeof(YuuCounterWork));
+    s32 value;
+
+    memset(wp, 0, sizeof(YuuCounterWork));
+    _wp = wp;
+    wp->x = evtGetFloat(event, args[0]);
+    wp->y = evtGetFloat(event, args[1]);
+    wp->type = evtGetValue(event, args[2]);
+    value = evtGetValue(event, args[3]);
+    switch (wp->type) {
+        case 1:
+            wp->limit = value * 1000;
+            wp->lastTime = gp->renderTime;
+            wp->elapsed = 0;
+            wp->data = wp->limit;
+            break;
+        case 2:
+            wp->startCount = value;
+            break;
+    }
+    wp->event = evtEntry(main_evt, 0, 0);
+    wp->event->lwData[0] = (EvtWord)wp;
+#if VERSION >= VERSION_JP
+    if (wp->type == 1) {
+        evtYuuSetWindowEvt(yuucounter_window_disp_evt);
+    } else {
+        evtYuuSetWindowEvt(yuucounter_window_null_evt);
+    }
+#endif
+    return EVT_RETURN_DONE;
+}
+
+/**
+ * Body of the counter event: queues the 2D draw callback each frame until the free request flag is set,
+ * then marks itself stopped.
+ */
+static USER_FUNC(evt_yuucounter_main_func) {
+    YuuCounterWork* wp = (YuuCounterWork*)event->lwData[0];
+
+    if (wp->flags & 1) {
+        wp->flags |= 2;
+        return EVT_RETURN_DONE;
+    }
+    dispEntry(CAMERA_2D, 1000.0f, 0, evt_yuucounter_disp_func, wp);
+    return EVT_RETURN_BLOCK;
+}
+
+/**
+ * Updates and draws the counter.
+ * Type 0 derives the value from Mario's x position,
+ * type 1 counts the remaining time down from the limit using render time,
+ * type 2 asks yuunpc_juni for Mario's current rank;
+ * then draws the translucent backdrop, the digits and the unit icon with icon sprites.
+ */
+static void evt_yuucounter_disp_func(CameraId camera, void* param) {
+    YuuCounterWork* wp = param;
+    GXColor color = white;
+    GXColor numColor;
+    GXColor iconColor;
+    f32 scale;
+    f32 xOfs;
+    s32 value;
+    s32 digit;
+    BOOL skip;
+    BOOL skip2;
+    s32 k;
+    s32 i;
+    s32 msecs;
+    s32 iconId;
+    s32 j;
+    s32 secs;
+    s32 digits[4];
+    Mtx mtx;
+    Mtx scaleMtx;
+    Mtx base;
+    Vec pos;
+    MarioWork* mario;
+
+    iconColor = white;
+    numColor = white;
+#ifdef TARGET_PC
+    portInterpKeep(wp, sizeof(*wp)); /* the timer steps (and starts) in this draw */
+#endif
+    switch (wp->type) {
+        case 0:
+            if (!(wp->dispFlags & 2)) {
+                mario = marioGetPtr();
+                wp->data = (s32)(200.0f * (1300.0f + mario->position.x));
+            }
+            scale = 2.5f;
+            xOfs = -50.0f;
+            iconId = ICON_202;
+            if (wp->data < 0) {
+                return;
+            }
+            break;
+        case 1:
+            if (!(wp->dispFlags & 2)) {
+                if (wp->data >= 0) {
+#if VERSION >= VERSION_JP
+                    if (wp->dispFlags & 4) {
+                        wp->dispFlags &= ~4;
+                        wp->lastTime = gp->renderTime;
+                    }
+#endif
+                    wp->elapsed += (s32)gp->renderTime - (s32)wp->lastTime;
+                    wp->lastTime = gp->renderTime;
+                    wp->data = wp->limit - OSTicksToMilliseconds(wp->elapsed);
+                } else {
+                    wp->data = -1;
+                }
+            }
+            scale = 3.0f;
+            iconId = ICON_201;
+            xOfs = -42.0f;
+            break;
+        case 2:
+            if (!(wp->dispFlags & 2)) {
+                mario = marioGetPtr();
+                pos = mario->position;
+                wp->data = yuunpc_juni(&pos);
+            }
+            scale = 2.5f;
+            iconId = -1;
+            xOfs = -46.0f;
+            break;
+    }
+
+    if (wp->dispFlags & 1) {
+        return;
+    }
+    value = wp->data;
+    if (value < 0) {
+        value = 0;
+    }
+    secs = value / 1000;
+    msecs = value % 1000;
+    PSMTXTrans(base, wp->x, wp->y, 0.0f);
+    PSMTXScale(scaleMtx, scale, 1.0f, 1.0f);
+    PSMTXConcat(base, scaleMtx, mtx);
+    iconDispGxCol(mtx, ICON_FLAG_2D, ICON_1F6, bgColor);
+
+    switch (wp->type) {
+        case 0: {
+            BOOL skip;
+            skip = TRUE;
+            digits[0] = secs / 100;
+            secs %= 100;
+            digits[1] = secs / 10;
+            digits[2] = secs % 10;
+            for (j = 0; j < 3; j++) {
+                digit = digits[j];
+                if (digit != 0 || j == 2) {
+                    skip = FALSE;
+                }
+                if (!skip) {
+                    PSMTXTrans(mtx, xOfs + (f32)(j * 30), 8.0f, 0.0f);
+                    PSMTXConcat(base, mtx, mtx);
+                    iconDispGxCol(mtx, ICON_FLAG_2D, digit + ICON_1F7, numColor);
+                }
+            }
+            break;
+        }
+        case 1:
+            digits[0] = secs / 60;
+            secs %= 60;
+            digits[1] = secs / 10;
+            digits[2] = secs % 10;
+            for (i = 0; i < 3; i++) {
+                PSMTXTrans(mtx, xOfs + (f32)(i * 30) - (f32)((i == 0) * 16), 8.0f, 0.0f);
+                PSMTXConcat(base, mtx, mtx);
+                iconDispGxCol(mtx, ICON_FLAG_2D, digits[i] + ICON_1F7, numColor);
+            }
+            PSMTXTrans(mtx, 8.0f + xOfs, 12.0f, 0.0f);
+            PSMTXScale(scaleMtx, 2.0f, 2.0f, 2.0f);
+            PSMTXConcat(mtx, scaleMtx, mtx);
+            PSMTXConcat(base, mtx, mtx);
+            iconDispGxCol(mtx, ICON_FLAG_2D, iconId, iconColor);
+            break;
+        case 2:
+            skip2 = TRUE;
+            value = (value + 1) % 100000;
+            digits[0] = value / 1000;
+            value %= 1000;
+            digits[1] = value / 100;
+            value %= 100;
+            digits[2] = value / 10;
+            digits[3] = value % 10;
+            for (k = 0; k < 4; k++) {
+                digit = digits[k];
+                if (digit != 0 || k == 3) {
+                    skip2 = FALSE;
+                }
+                if (!skip2) {
+                    PSMTXTrans(mtx, xOfs + (f32)(k * 30), 8.0f, 0.0f);
+                    PSMTXConcat(base, mtx, mtx);
+                    iconDispGxCol(mtx, ICON_FLAG_2D, digit + ICON_1F7, numColor);
+                }
+            }
+            break;
+    }
+
+    if (iconId != -1) {
+        PSMTXTrans(mtx, 90.0f + xOfs - 12.0f, 10.0f, 0.0f);
+        PSMTXConcat(base, mtx, mtx);
+        iconDispGxCol(mtx, ICON_FLAG_2D, iconId, iconColor);
+    }
+
+    switch (wp->type) {
+        case 0:
+        case 1:
+            digits[0] = msecs / 100;
+            digits[1] = (msecs % 100) / 10;
+            for (i = 0; i < 2; i++) {
+                PSMTXTrans(mtx, 90.0f + xOfs + (f32)(i * 15), 8.0f, 0.0f);
+                PSMTXScale(scaleMtx, 0.5f, 0.5f, 0.5f);
+                PSMTXConcat(mtx, scaleMtx, mtx);
+                PSMTXConcat(base, mtx, mtx);
+                iconDispGxCol(mtx, ICON_FLAG_2D, digits[i] + ICON_1F7, numColor);
+            }
+            break;
+        case 2:
+            break;
+    }
+}
+
+#if VERSION >= VERSION_JP
+/** args[0] = on/off, args[1] = flag mask. Sets or clears those display flag bits of the counter (JP and later). */
+USER_FUNC(yuucounter_disp_flag_onoff) {
+    EvtWord* args = event->args;
+    BOOL on = evtGetValue(event, args[0]);
+    u32 mask = evtGetValue(event, args[1]);
+    YuuCounterWork* wp = _wp;
+
+    if (on) {
+        wp->dispFlags |= mask;
+    } else {
+        wp->dispFlags &= ~mask;
+    }
+    return EVT_RETURN_DONE;
+}
+#endif
+
+/** The counter's per-frame event, started by evt_yuucounter_alloc; runs evt_yuucounter_main_func. */
+static EVT_BEGIN(main_evt)
+    CALL(evt_yuucounter_main_func)
+    RETURN
+EVT_END()
+
+#if VERSION >= VERSION_JP
+/**
+ * Script run for timer counters: sets display flag 4 so the timer restarts its baseline
+ * when the window opens (JP and later).
+ */
+EVT_BEGIN(yuucounter_window_disp_evt)
+    CALL(yuucounter_disp_flag_onoff, 1, 4)
+    RETURN
+EVT_END()
+
+/** Empty script used for counters that are not timers (JP and later). */
+EVT_BEGIN(yuucounter_window_null_evt)
+    RETURN
+EVT_END()
+#endif

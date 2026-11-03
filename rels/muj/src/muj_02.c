@@ -1,0 +1,752 @@
+// muj_02 (無人島, Keelhaul Key): the jungle with the pipe to the sewers (tik_17) and the couple's
+// lost wedding ring (lost_wedding_ring); Fuzzies.
+#include "battle/battle_unit.h"
+#include "evt/evt_cmd.h"
+
+#include "driver/dispdrv.h"
+#include "driver/camdrv.h"
+#include "manager/fontmgr.h"
+#include "driver/camdrv.h"
+#include "stdio.h"
+#include "evt/evt_bero.h"
+#include "evt/evt_damage.h"
+#include "evt/evt_sub.h"
+#include "muj.h"
+#include "evt/evt_npc.h"
+#include "data_tables.h"
+#include "mario/mario_pouch.h"
+#include "manager/evtmgr_cmd.h"
+#include "evt/evt_cam.h"
+#include "evt/evt_eff.h"
+#include "evt/evt_hit.h"
+#include "evt/evt_item.h"
+#include "evt/evt_map.h"
+#include "evt/evt_mario.h"
+#include "evt/evt_mobj.h"
+#include "evt/evt_msg.h"
+#include "evt/evt_party.h"
+#include "evt/evt_pouch.h"
+#include "evt/evt_snd.h"
+#include "evt/evt_window.h"
+#include "version.h"
+#include "evt/evt_story.h"
+#include "driver/mapdrv.h"
+#if VERSION >= VERSION_US
+#include "mario/mariost.h"
+#include "evt/evt_npc.h"
+#include "driver/hitdrv.h"
+#endif
+
+static void printCount(CameraId camera, void* param);
+
+static USER_FUNC(countDisp);
+static void printCount(CameraId camera, void* param);
+
+static BeroEntry bero_entry_data[4];
+extern EvtWord mony_peton_setup[];
+extern EvtWord lost_wedding_ring_sub[];
+extern EvtWord lost_wedding_ring[];
+static s32 itemsel_table00[2];
+extern EvtWord wedding_ring_consign[];
+extern EvtWord find_wedding_ring[];
+extern EvtWord mony_peton_regl[];
+extern EvtWord mony_regl[];
+extern EvtWord peton_regl[];
+static NpcSetupInfo npcEnt[3];
+static HitDamageReturn hitDmgRetPoints[2];
+extern EvtWord evt_treeb_01[];
+static TreeAccess tree_tbl[7];
+static KusaAccess kusa_tbl[7];
+
+/** Doors and exits of muj_02: w_bero to muj_01; e_bero to muj_03; dokan_1 to tik_17 (Rogueport Sewers). */
+static BeroEntry bero_entry_data[] = {
+    {
+        "w_bero", // hitName
+        0, 0, // type..sfxId
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
+        0, 0, // centerPositionY..centerPositionZ
+        -1, // length
+        NULL, // enterEvent
+        -1, // caseType
+        NULL, // exitEvent
+        "muj_01", // nextMapName
+        "e_bero1", // nextBeroName
+        1, // enterAnimeType
+        1, // exitAnimeType
+        0, 0, // enterAnimeArg..exitAnimeArg
+    },
+    {
+        "e_bero", // hitName
+        0, 0, // type..sfxId
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
+        0, 0, // centerPositionY..centerPositionZ
+        -1, // length
+        NULL, // enterEvent
+        -1, // caseType
+        NULL, // exitEvent
+        "muj_03", // nextMapName
+        "w_bero", // nextBeroName
+        1, // enterAnimeType
+        1, // exitAnimeType
+        0, 0, // enterAnimeArg..exitAnimeArg
+    },
+    {
+        "dokan_1", // hitName
+        2, // type
+        0, // sfxId
+        BERO_DIR_DOWN, // directionId
+        BERO_POS_AUTO, // centerPosition
+        0, 0, // centerPositionY..centerPositionZ
+        -1, // length
+        NULL, // enterEvent
+        6, // caseType
+        NULL, // exitEvent
+        "tik_17", // nextMapName
+        "dokan_2", // nextBeroName
+        1, // enterAnimeType
+        1, // exitAnimeType
+        0, 0, // enterAnimeArg..exitAnimeArg
+    },
+    {0},
+};
+
+/**
+ * Positions Mario, his partner, Mony and Peton for a conversation with the couple:
+ * walks Mario and the partner to a spot beside whichever side of the path they are on (decided by LW(10))
+ * and hides Mario's shadow flag while moving.
+ */
+EVT_BEGIN(mony_peton_setup)
+    IF_INT_EQUAL(LW(10), 0)
+        CALL(evt_npc_get_position, STRING("モニー"), LW(0), LW(1), LW(2))
+        BEGIN_INLINE_EVENT
+            ADD(LW(0), 40)
+            ADD(LW(2), 30)
+            CALL(evt_mario_mov_pos2, LW(0), LW(2), FLOAT(120.0f))
+            WAIT_FRAMES(1)
+            CALL(evt_mario_set_dir, 270, 200, 0)
+            CALL(evt_mario_dispflag_onoff, 1, 2)
+        END_INLINE_EVENT
+        BEGIN_INLINE_EVENT
+            ADD(LW(0), 75)
+            ADD(LW(2), 30)
+            CALL(evt_party_move_pos2, 0, LW(0), LW(2), FLOAT(120.0f))
+            WAIT_FRAMES(1)
+            CALL(evt_party_set_dir, 0, 270, -1)
+        END_INLINE_EVENT
+        SUBTRACT(LW(0), 55)
+        CALL(evt_npc_set_ry, STRING("ピートン"), 90)
+        CALL(evt_npc_move_position, STRING("ピートン"), LW(0), LW(2), 0, FLOAT(120.0f), 0)
+    ELSE
+        CALL(evt_npc_get_position, STRING("ピートン"), LW(0), LW(1), LW(2))
+        BEGIN_INLINE_EVENT
+            ADD(LW(0), -40)
+            ADD(LW(2), 30)
+            CALL(evt_mario_mov_pos2, LW(0), LW(2), FLOAT(120.0f))
+            WAIT_FRAMES(1)
+            CALL(evt_mario_set_dir, 90, 200, 0)
+            CALL(evt_mario_dispflag_onoff, 1, 2)
+        END_INLINE_EVENT
+        BEGIN_INLINE_EVENT
+            ADD(LW(0), -75)
+            ADD(LW(2), 30)
+            CALL(evt_party_move_pos2, 0, LW(0), LW(2), FLOAT(120.0f))
+            WAIT_FRAMES(1)
+            CALL(evt_party_set_dir, 0, 90, -1)
+        END_INLINE_EVENT
+        ADD(LW(0), 55)
+        CALL(evt_npc_set_ry, STRING("モニー"), 270)
+        CALL(evt_npc_move_position, STRING("モニー"), LW(0), LW(2), 0, FLOAT(120.0f), 0)
+    END_IF
+    RETURN
+EVT_END()
+
+/**
+ * Display event for the ring-search counter: runs countDisp so the number of rings
+ * or tries is drawn on screen each frame.
+ */
+EVT_BEGIN(lost_wedding_ring_sub)
+    CALL(countDisp)
+    RETURN
+EVT_END()
+
+/**
+ * The lost wedding ring request (STORY_STG5_64_LOST_WEDDING_RING):
+ * Peton and Mony ask Mario to find the ring they lost in the jungle (stg5_muj_171 onwards),
+ * then they head off the left edge of the screen so Mario can search. Control returns when both have left.
+ */
+EVT_BEGIN(lost_wedding_ring)
+    CALL(evt_party_stop, 0)
+    CALL(evt_npc_flag_onoff, 1, STRING("ピートン"), NPC_FLAG_INTANGIBLE)
+    CALL(evt_npc_flag_onoff, 1, STRING("モニー"), NPC_FLAG_INTANGIBLE)
+    CALL(evt_npc_get_reglid, STRING("モニー"), LW(0))
+    DELETE_EVENT(LW(0))
+    CALL(evt_npc_get_reglid, STRING("ピートン"), LW(0))
+    DELETE_EVENT(LW(0))
+    // Mony and Peeton are placed; Mario and his partner approach them.
+    CALL_CHILD(mony_peton_setup)
+    BEGIN_INLINE_EVENT
+        CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
+        CALL(evt_snd_sfxon_3d, STRING("SFX_VOICE_MARIO_HAND_UP1_4"), LW(0), LW(1), LW(2), 0)
+    END_INLINE_EVENT
+    WAIT_MS(500)
+    CALL(evt_mario_set_pose, STRING("M_I_2"))
+    CALL(evt_set_dir_to_target, STRING("ピートン"), STRING("mario"))
+    WAIT_MS(500)
+    CALL(evt_mario_set_pose, STRING("M_S_1"))
+    // Peeton and Mony learn that the boss is sick.
+    CALL(evt_msg_print, 0, STRING("stg5_muj_171"), 0, STRING("ピートン"))
+    CALL(evt_msg_print, 0, STRING("stg5_muj_172"), 0, STRING("モニー"))
+    CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
+    CALL(evt_snd_sfxon_3d, STRING("SFX_VOICE_MARIO_QUESTION1"), LW(0), LW(1), LW(2), 0)
+    CALL(evt_eff_fukidashi, 0, STRING(""), 0, 1, 0, 0, 0, 0, 0, 0, 60)
+    WAIT_MS(1000)
+    CALL(evt_npc_get_position, STRING("モニー"), LW(0), LW(1), LW(2))
+    CALL(evt_npc_get_position, STRING("ピートン"), LW(10), LW(11), LW(12))
+    ADD(LW(0), LW(10))
+    DIVIDE(LW(0), 2)
+    CALL(evt_cam3d_evt_set, LW(0), 118, 343, LW(0), 54, -18, 500, 11)
+    WAIT_MS(500)
+    // Mony explains that she dropped the wedding ring and Peeton tries to calm her.
+    CALL(evt_msg_print, 0, STRING("stg5_muj_173"), 0, STRING("モニー"))
+    CALL(evt_set_dir_to_target, STRING("ピートン"), STRING("モニー"))
+    WAIT_MS(500)
+    CALL(evt_msg_print, 0, STRING("stg5_muj_174"), 0, STRING("ピートン"))
+    CALL(evt_set_dir_to_target, STRING("モニー"), STRING("ピートン"))
+    WAIT_MS(500)
+    CALL(evt_msg_print, 0, STRING("stg5_muj_175"), 0, STRING("モニー"))
+    CALL(evt_msg_print, 0, STRING("stg5_muj_176"), 0, STRING("ピートン"))
+    // Mony makes Peeton promise to say he loves her 100 times.
+    CALL(evt_msg_print, 0, STRING("stg5_muj_177"), 0, STRING("モニー"))
+    CALL(evt_npc_get_position, STRING("ピートン"), LW(0), LW(1), LW(2))
+    CALL(evt_npc_jump_position_nohit, STRING("ピートン"), LW(0), LW(1), LW(2), 225, 30)
+    CALL(evt_msg_print, 0, STRING("stg5_muj_178"), 0, STRING("ピートン"))
+    CALL(evt_msg_print, 0, STRING("stg5_muj_179"), 0, STRING("モニー"))
+    CALL(evt_msg_print, 0, STRING("stg5_muj_180"), 0, STRING("ピートン"))
+    CALL(evt_get_target_dir, STRING("モニー"), STRING("ピートン"), LW(0))
+    ADD(LW(0), 180)
+    CALL(evt_npc_set_ry, STRING("モニー"), LW(0))
+    CALL(evt_msg_print, 0, STRING("stg5_muj_181"), 0, STRING("モニー"))
+    CALL(evt_msg_print, 0, STRING("stg5_muj_182"), 0, STRING("ピートン"))
+    CALL(evt_set_dir_to_target, STRING("モニー"), STRING("ピートン"))
+    WAIT_MS(500)
+    SET_VALUE(GW(0), 10)
+    SPAWN_EVENT_GET_ID(PTR(lost_wedding_ring_sub), LW(0))
+    LOOP(90)
+        // Peeton says it again and again, tiring himself out.
+        CALL(evt_msg_print_add, 0, STRING("stg5_muj_182_01"))
+        ADD(GW(0), 1)
+    END_LOOP
+    CALL(evt_msg_print_add, 0, STRING("stg5_muj_182_02"))
+    DELETE_EVENT(LW(0))
+    CALL(evt_msg_print_add, 0, STRING("stg5_muj_182_03"))
+    CALL(evt_set_dir_to_target, STRING("モニー"), STRING("ピートン"))
+    WAIT_MS(500)
+    // Mony forgives him.
+    CALL(evt_msg_print, 0, STRING("stg5_muj_183"), 0, STRING("モニー"))
+    CALL(evt_msg_print, 0, STRING("stg5_muj_184"), 0, STRING("ピートン"))
+    CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
+    CALL(evt_party_get_pos, 0, LW(10), LW(11), LW(12))
+    ADD(LW(0), LW(10))
+    DIVIDE(LW(0), 2)
+    CALL(evt_cam3d_evt_set, LW(0), 118, 343, LW(0), 54, -18, 500, 11)
+    WAIT_MS(500)
+    // Mario's partner comments on the ring and the scene wraps up.
+    CALL(evt_pouch_check_item, ITEM_WEDDING_RING, LW(10))
+    IF_INT_EQUAL(LW(10), 0)
+        CALL(evt_msg_print_party, STRING("stg5_muj_185"))
+    ELSE
+        CALL(evt_msg_print_party, STRING("stg5_muj_185_01"))
+    END_IF
+    BEGIN_INLINE_EVENT
+        CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
+        CALL(evt_snd_sfxon_3d, STRING("SFX_VOICE_MARIO_NOD1_4"), LW(0), LW(1), LW(2), 0)
+    END_INLINE_EVENT
+    CALL(evt_mario_set_pose, STRING("M_N_2"))
+    CALL(evt_cam3d_evt_off, 500, 11)
+    IF_INT_EQUAL(LW(10), 0)
+        CALL(evt_npc_set_ry, STRING("ピートン"), 270)
+        CALL(evt_npc_move_position, STRING("ピートン"), 400, -40, 0, FLOAT(120.0f), 0)
+    ELSE
+        CALL(evt_npc_set_ry, STRING("モニー"), 90)
+        CALL(evt_npc_move_position, STRING("モニー"), 500, -40, 0, FLOAT(120.0f), 0)
+    END_IF
+    CALL(evt_npc_flag_onoff, 0, STRING("ピートン"), NPC_FLAG_INTANGIBLE)
+    CALL(evt_npc_flag_onoff, 0, STRING("モニー"), NPC_FLAG_INTANGIBLE)
+    CALL(evt_npc_restart_regular_event, STRING("モニー"))
+    CALL(evt_npc_restart_regular_event, STRING("ピートン"))
+    CALL(evt_mario_dispflag_onoff, 0, 2)
+    CALL(evt_party_run, 0)
+    RETURN
+EVT_END()
+
+/** Items the player may hand over in the wedding-ring scene: the Wedding Ring only, ended by -1. */
+static s32 itemsel_table00[] = {
+    ITEM_WEDDING_RING, -1,
+};
+
+/**
+ * Lets the player hand over the Wedding Ring: if Mario carries ITEM_WEDDING_RING it opens the item window
+ * listing it, and when it is chosen removes the ring from the pouch and returns 1 in LW(0) (0 otherwise).
+ */
+EVT_BEGIN(wedding_ring_consign)
+    SET_VALUE(LW(0), 0)
+    CALL(evt_pouch_check_item, ITEM_WEDDING_RING, LW(10))
+    IF_INT_NOT_EQUAL(LW(10), 0)
+#if VERSION <= VERSION_DEMO_JP
+        CALL(evt_win_item_select, PTR(itemsel_table00), LW(10))
+#else
+        CALL(evt_win_item_select, 0, PTR(itemsel_table00), LW(10), 0)
+#endif
+        IF_INT_NOT_EQUAL(LW(10), -1)
+            CALL(evt_pouch_remove_item, ITEM_WEDDING_RING, LW(10))
+            SET_VALUE(LW(0), 1)
+        END_IF
+    END_IF
+    RETURN
+EVT_END()
+
+/**
+ * Mony and Peton's reunion after the ring has been handed over:
+ * they are placed beside Mario, talk (stg5_muj_196 to 198), then walk off the left edge of the screen.
+ */
+EVT_BEGIN(find_wedding_ring)
+    CALL(evt_party_stop, 0)
+    CALL(evt_npc_flag_onoff, 1, STRING("ピートン"), NPC_FLAG_NO_WALL_HIT | NPC_FLAG_INTANGIBLE)
+    CALL(evt_npc_flag_onoff, 1, STRING("モニー"), NPC_FLAG_NO_WALL_HIT | NPC_FLAG_INTANGIBLE)
+    CALL(evt_npc_get_reglid, STRING("モニー"), LW(0))
+    DELETE_EVENT(LW(0))
+    CALL(evt_npc_get_reglid, STRING("ピートン"), LW(0))
+    DELETE_EVENT(LW(0))
+    CALL_CHILD(mony_peton_setup)
+    CALL(evt_set_dir_to_target, STRING("モニー"), STRING("ピートン"))
+    CALL(evt_set_dir_to_target, STRING("ピートン"), STRING("モニー"))
+    WAIT_MS(500)
+    CALL(evt_msg_print, 0, STRING("stg5_muj_196"), 0, STRING("モニー"))
+    WAIT_MS(500)
+    CALL(evt_msg_print, 0, STRING("stg5_muj_197"), 0, STRING("ピートン"))
+    CALL(evt_set_dir_to_target, STRING("モニー"), STRING("mario"))
+    CALL(evt_set_dir_to_target, STRING("ピートン"), STRING("mario"))
+    WAIT_MS(1000)
+    CALL(evt_msg_print, 0, STRING("stg5_muj_198"), 0, STRING("モニー"))
+    SET_VALUE(GF(0), 1)
+    SET_VALUE(GF(1), 1)
+    BEGIN_INLINE_EVENT
+        WAIT_MS(200)
+        CALL(evt_npc_get_position, STRING("モニー"), LW(0), LW(1), LW(2))
+        ADD(LW(0), -10)
+        ADD(LW(2), 110)
+        CALL(evt_npc_set_ry, STRING("モニー"), 270)
+        CALL(evt_npc_move_position, STRING("モニー"), LW(0), LW(2), 0, FLOAT(120.0f), 0)
+#if VERSION >= VERSION_DEMO_EU
+        ADD(LW(0), -350)
+#else
+        ADD(LW(0), -200)
+#endif
+        CALL(evt_npc_move_position, STRING("モニー"), LW(0), LW(2), 0, FLOAT(120.0f), 0)
+        CALL(evt_npc_set_position, STRING("モニー"), 0, -1000, 0)
+        SET_VALUE(GF(0), 0)
+    END_INLINE_EVENT
+    BEGIN_INLINE_EVENT
+        CALL(evt_npc_get_position, STRING("ピートン"), LW(0), LW(1), LW(2))
+        ADD(LW(0), -10)
+        ADD(LW(2), 110)
+        CALL(evt_npc_set_ry, STRING("ピートン"), 270)
+        CALL(evt_npc_move_position, STRING("ピートン"), LW(0), LW(2), 0, FLOAT(120.0f), 0)
+#if VERSION >= VERSION_DEMO_EU
+        ADD(LW(0), -350)
+#else
+        ADD(LW(0), -200)
+#endif
+        CALL(evt_npc_move_position, STRING("ピートン"), LW(0), LW(2), 0, FLOAT(120.0f), 0)
+        CALL(evt_npc_set_position, STRING("ピートン"), 0, -1000, 0)
+        SET_VALUE(GF(1), 0)
+    END_INLINE_EVENT
+    WAIT_WHILE(GF(0))
+    WAIT_WHILE(GF(1))
+    CALL(evt_party_run, 0)
+    CALL(evt_mario_dispflag_onoff, 0, 2)
+    RETURN
+EVT_END()
+
+/**
+ * Init event of Mony in the jungle: sets status bit 2 (she turns to face the way she moves)
+ * and between STORY_STG5_63_KEELHAUL_ANYTIME and STORY_STG5_64_LOST_WEDDING_RING she is placed at (500, 0, -40).
+ */
+static EVT_BEGIN(mony_init)
+    CALL(evt_npc_status_onoff, 1, STRING("me"), 2)
+    SWITCH(GSW(GSW_STORY_PROGRESS))
+        CASE_BETWEEN(STORY_STG5_63_KEELHAUL_ANYTIME, STORY_STG5_64_LOST_WEDDING_RING)
+        CALL(evt_npc_set_position, STRING("me"), 500, 0, -40)
+    END_SWITCH
+    RETURN
+EVT_END()
+
+/**
+ * Regular loop shared by Mony and Peton: they pace left and right around their spawn point,
+ * turning to face the way they walk and pausing 1 to 1.5 seconds between steps.
+ */
+EVT_BEGIN(mony_peton_regl)
+    LOOP(0)
+        SET_VALUE(LW(3), LW(0))
+        CALL(evt_sub_random, 15, LW(10))
+        ADD(LW(10), 10)
+        SUBTRACT(LW(3), LW(10))
+        SET_VALUE(LW(4), LW(0))
+        CALL(evt_sub_random, 15, LW(10))
+        ADD(LW(10), 10)
+        ADD(LW(4), LW(10))
+        CALL(evt_sub_random, 500, LW(5))
+        ADD(LW(5), 1000)
+        CALL(evt_sub_random, 500, LW(6))
+        ADD(LW(6), 1000)
+        CALL(evt_npc_set_ry, STRING("me"), 270)
+        WAIT_MS(600)
+        CALL(evt_npc_set_ry, STRING("me"), 90)
+        WAIT_MS(600)
+        CALL(evt_npc_set_ry, STRING("me"), 270)
+        CALL(evt_npc_move_position, STRING("me"), LW(3), LW(2), 0, FLOAT(45.0f), 0)
+        WAIT_MS(LW(5))
+        CALL(evt_npc_set_ry, STRING("me"), 90)
+        WAIT_MS(600)
+        CALL(evt_npc_set_ry, STRING("me"), 270)
+        WAIT_MS(600)
+        CALL(evt_npc_set_ry, STRING("me"), 90)
+        CALL(evt_npc_move_position, STRING("me"), LW(4), LW(2), 0, FLOAT(45.0f), 0)
+        WAIT_MS(LW(6))
+    END_LOOP
+    RETURN
+EVT_END()
+
+/** Regular event of Mony: runs the shared pacing loop mony_peton_regl while the couple stands in the jungle. */
+EVT_BEGIN(mony_regl)
+    SET_VALUE(LW(0), 500)
+    SET_VALUE(LW(1), 0)
+    SET_VALUE(LW(2), -40)
+    CALL_CHILD(mony_peton_regl)
+    RETURN
+EVT_END()
+
+/**
+ * Talk event of Mony: says stg5_muj_169 at STORY_STG5_63_KEELHAUL_ANYTIME and
+ * then starts the lost wedding ring request (lost_wedding_ring).
+ */
+static EVT_BEGIN(mony_talk)
+    SWITCH(GSW(GSW_STORY_PROGRESS))
+        CASE_EQUAL(STORY_STG5_63_KEELHAUL_ANYTIME)
+        CALL(evt_msg_print, 0, STRING("stg5_muj_169"), 0, STRING("me"))
+        SET_VALUE(LW(10), 0)
+        CALL_CHILD(lost_wedding_ring)
+        SET_VALUE(GSW(GSW_STORY_PROGRESS), STORY_STG5_64_LOST_WEDDING_RING)
+        CASE_EQUAL(STORY_STG5_64_LOST_WEDDING_RING)
+        CALL_CHILD(wedding_ring_consign)
+        IF_INT_EQUAL(LW(0), 0)
+            CALL(evt_msg_print, 0, STRING("stg5_muj_192"), 0, STRING("me"))
+        ELSE
+            CALL(evt_msg_print, 0, STRING("stg5_muj_194"), 0, STRING("me"))
+            SET_VALUE(LW(10), 0)
+            CALL_CHILD(find_wedding_ring)
+            SET_VALUE(GSW(GSW_STORY_PROGRESS), STORY_STG5_64_01_WEDDING_RING_DELIVERY)
+        END_IF
+    END_SWITCH
+    RETURN
+EVT_END()
+
+/**
+ * Init event of Peton in the jungle: NPC_STATUS_FACE_MOVE_DIR set (he turns to face the way he moves),
+ * and between STORY_STG5_63_KEELHAUL_ANYTIME and STORY_STG5_64_LOST_WEDDING_RING he is placed beside Mony.
+ */
+static EVT_BEGIN(peton_init)
+    CALL(evt_npc_status_onoff, 1, STRING("me"), 2)
+    SWITCH(GSW(GSW_STORY_PROGRESS))
+        CASE_BETWEEN(STORY_STG5_63_KEELHAUL_ANYTIME, STORY_STG5_64_LOST_WEDDING_RING)
+        CALL(evt_npc_set_position, STRING("me"), 400, 0, -40)
+    END_SWITCH
+    RETURN
+EVT_END()
+
+/** Regular event of Peton: runs the shared pacing loop mony_peton_regl while the couple stands in the jungle. */
+EVT_BEGIN(peton_regl)
+    SET_VALUE(LW(0), 400)
+    SET_VALUE(LW(1), 0)
+    SET_VALUE(LW(2), -40)
+    CALL_CHILD(mony_peton_regl)
+    RETURN
+EVT_END()
+
+/**
+ * Talk event of Peton: says stg5_muj_170 at STORY_STG5_63_KEELHAUL_ANYTIME and
+ * then starts the lost wedding ring request (lost_wedding_ring).
+ */
+static EVT_BEGIN(peton_talk)
+    SWITCH(GSW(GSW_STORY_PROGRESS))
+        CASE_EQUAL(STORY_STG5_63_KEELHAUL_ANYTIME)
+        CALL(evt_msg_print, 0, STRING("stg5_muj_170"), 0, STRING("me"))
+        SET_VALUE(LW(10), 1)
+        CALL_CHILD(lost_wedding_ring)
+        SET_VALUE(GSW(GSW_STORY_PROGRESS), STORY_STG5_64_LOST_WEDDING_RING)
+        CASE_EQUAL(STORY_STG5_64_LOST_WEDDING_RING)
+        CALL_CHILD(wedding_ring_consign)
+        IF_INT_EQUAL(LW(0), 0)
+            CALL(evt_msg_print, 0, STRING("stg5_muj_193"), 0, STRING("me"))
+        ELSE
+            CALL(evt_msg_print, 0, STRING("stg5_muj_195"), 0, STRING("me"))
+            SET_VALUE(LW(10), 1)
+            CALL_CHILD(find_wedding_ring)
+            SET_VALUE(GSW(GSW_STORY_PROGRESS), STORY_STG5_64_01_WEDDING_RING_DELIVERY)
+        END_IF
+    END_SWITCH
+    RETURN
+EVT_END()
+
+/** NPCs of the jungle clearing: Mony and Peeton, the couple looking for their lost wedding ring. */
+static NpcSetupInfo npcEnt[] = {
+    {
+        "モニー", // name
+        NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM, // flags
+        0, // reactionFlags
+        mony_init, // initEvent
+        mony_regl, // regularEvent
+        mony_talk, // talkEvent
+        NULL, NULL, NULL, NULL, NULL, 0, // deadEvent..territoryType
+        {0}, // territoryBase
+        {0}, // territoryLoiter
+        0.0f, 0.0f, 0.0f, 0.0f, 0, // searchRange..battleInfoId
+    },
+    {
+        "ピートン", // name
+        NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM, // flags
+        0, // reactionFlags
+        peton_init, // initEvent
+        peton_regl, // regularEvent
+        peton_talk, // talkEvent
+        NULL, NULL, NULL, NULL, NULL, 0, // deadEvent..territoryType
+        {0}, // territoryBase
+        {0}, // territoryLoiter
+        0.0f, 0.0f, 0.0f, 0.0f, 0, // searchRange..battleInfoId
+    },
+    {0},
+};
+
+/** Return point of the hazard-water floor A_yuka_01 of this room. */
+static HitDamageReturn hitDmgRetPoints[] = {
+    {"A_yuka_01", {0}},
+    {0},
+};
+
+/**
+ * Until GSWF_TIK17_PIPE_MUJ_OPEN is set (by the tornado switch in the Rogueport sewers room tik_17),
+ * hides the warp pipe's model group S_dakan and turns off its hit A_dokan.
+ */
+static EVT_BEGIN(evt_switch_init)
+    IF_INT_EQUAL(GSWF(GSWF_TIK17_PIPE_MUJ_OPEN), 0)
+        CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("S_dakan"), MAPOBJ_FLAG_HIDE)
+        CALL(evt_hitobj_onoff, STRING("A_dokan"), 1, 0)
+    END_IF
+    RETURN
+EVT_END()
+
+/**
+ * Hitting the banana tree (treeb_01): if the Keel Mango has not been dropped yet,
+ * it falls from the tree (ITEM_KEEL_MANGO, GSWF_MUJ02_KEEL_MANGO_TAKEN).
+ */
+EVT_BEGIN(evt_treeb_01)
+    CALL(evt_item_delete_check, STRING("item_treeb_01"), LW(0))
+    IF_INT_EQUAL(LW(0), 1)
+        CALL(evt_item_entry, STRING("item_treeb_01"), ITEM_KEEL_MANGO, -350, 90, -70, ITEM_ENTRY_FALL_THROWN, GSWF(GSWF_MUJ02_KEEL_MANGO_TAKEN), 0)
+    END_IF
+    RETURN
+EVT_END()
+
+/**
+ * Case event for grass patch 2: when the grass is hit,
+ * launches a coin out of it unless it has been taken (item_kusa_2).
+ */
+static EVT_BEGIN(evt_kusa_2)
+    CALL(evt_item_delete_check, STRING("item_kusa_2"), LW(0))
+    IF_INT_EQUAL(LW(0), 1)
+        CALL(evt_item_entry, STRING("item_kusa_2"), ITEM_COIN, 323, 0, 50, ITEM_ENTRY_LAUNCH, GSWF(GSWF_MUJ02_BUSH_COIN_TAKEN), 0)
+    END_IF
+    RETURN
+EVT_END()
+
+/**
+ * Case event for grass patch 6: when the grass is hit,
+ * launches a Star Piece out of it unless it has been taken (item_kusa_6).
+ */
+static EVT_BEGIN(evt_kusa_6)
+    CALL(evt_item_delete_check, STRING("item_kusa_6"), LW(0))
+    IF_INT_EQUAL(LW(0), 1)
+        CALL(evt_item_entry, STRING("item_kusa_6"), ITEM_STAR_PIECE, -500, 0, 110, ITEM_ENTRY_LAUNCH, GSWF(GSWF_MUJ02_STAR_PIECE_BUSH), 0)
+    END_IF
+    RETURN
+EVT_END()
+
+#if VERSION >= VERSION_US
+/** Trees of muj_02 that Mario can shake with his hammer (6 in all). */
+static TreeAccess tree_tbl[] = {
+    {5, "A_treeA_01", "treeA_01_m", "treeA_01_ha", 0, NULL},
+    {5, "A_treeA_02", "treeA_02_m", "treeA_02_ha", 0, NULL},
+    {5, "A_treeB_01", "treeB_01_m", "treeB_01_ha", 0, NULL},
+    {5, "A_treeB_02", "treeB_02_m", "treeB_02_ha", 0, NULL},
+    {5, "A_treeB_03", "treeB_03_m", "treeB_03_ha", 0, NULL},
+    {5, "A_treeB_04", "treeB_04_m", "treeB_04_ha", 0, NULL},
+    {7, NULL, NULL, NULL, 0, NULL},
+};
+
+/** Trees of muj_02 that Mario can shake with his hammer (6 in all); A_treeB_01 runs evt_treeb_01. */
+TreeAccess tree_tbl_treeb_evt[] = {
+    {5, "A_treeA_01", "treeA_01_m", "treeA_01_ha", 0, NULL},
+    {5, "A_treeA_02", "treeA_02_m", "treeA_02_ha", 0, NULL},
+    {5, "A_treeB_01", "treeB_01_m", "treeB_01_ha", 0, evt_treeb_01},
+    {5, "A_treeB_02", "treeB_02_m", "treeB_02_ha", 0, NULL},
+    {5, "A_treeB_03", "treeB_03_m", "treeB_03_ha", 0, NULL},
+    {5, "A_treeB_04", "treeB_04_m", "treeB_04_ha", 0, NULL},
+    {7, NULL, NULL, NULL, 0, NULL},
+};
+#else
+/** Trees of muj_02 that Mario can shake with his hammer (6 in all); A_treeB_01 runs evt_treeb_01. */
+static TreeAccess tree_tbl[] = {
+    {5, "A_treeA_01", "treeA_01_m", "treeA_01_ha", 0, NULL},
+    {5, "A_treeA_02", "treeA_02_m", "treeA_02_ha", 0, NULL},
+    {5, "A_treeB_01", "treeB_01_m", "treeB_01_ha", 0, evt_treeb_01},
+    {5, "A_treeB_02", "treeB_02_m", "treeB_02_ha", 0, NULL},
+    {5, "A_treeB_03", "treeB_03_m", "treeB_03_ha", 0, NULL},
+    {5, "A_treeB_04", "treeB_04_m", "treeB_04_ha", 0, NULL},
+    {7, NULL, NULL, NULL, 0, NULL},
+};
+#endif
+
+/**
+ * Bushes of muj_02 that Mario can check for hidden things (6 in all); A_kuwa_move_02 runs evt_kusa_2,
+ * A_kuwa_move_06 runs evt_kusa_6.
+ */
+static KusaAccess kusa_tbl[] = {
+    {1, "A_kuwa_move_01", "S_kuwa_move_01", NULL},
+    {1, "A_kuwa_move_02", "S_kuwa_move_02", evt_kusa_2},
+    {1, "A_kuwa_move_03", "S_kuwa_move_03", NULL},
+    {1, "A_kuwa_move_04", "S_kuwa_move_04", NULL},
+    {1, "A_kuwa_move_05", "S_kuwa_move_05", NULL},
+    {1, "A_kuwa_move_06", "S_kuwa_move_06", evt_kusa_6},
+    {4, NULL, NULL, NULL},
+};
+
+/**
+ * Map init for muj_02 (the jungle): starts the jungle music and ambience, registers the exits, NPCs,
+ * hidden badge blocks (Head Rattle, Courage Shell), the Keel Mango tree and grass patches,
+ * and removes the Chorobon enemy NPCs once the story is past STORY_STG5_59_ROGUEPORT_DOCK.
+ */
+EVT_BEGIN(muj_02_init_evt)
+    CALL(evt_snd_bgmon, PSND_FADE_OUT, STRING("BGM_STG5_MUJ1"))
+    CALL(evt_snd_envon, PSND_FADE_RESTART | PSND_FADE_IN, STRING("ENV_STG5_MUJ4"))
+    SET_VALUE(GSWF(GSWF_MUJ02_KEEL_MANGO_TAKEN), 0)
+    CALL_CHILD(evt_switch_init)
+    SET_VALUE(LW(0), PTR(bero_entry_data))
+    CALL(evt_bero_get_info)
+    CALL_CHILD(evt_bero_info_run)
+    CALL(evt_npc_setup, PTR(npcEnt))
+    CALL(evt_npc_set_tribe, STRING("ピートン"), STRING("ピートン（指輪）"))
+#if VERSION >= VERSION_US
+    CALL(evt_npc_check_delete, STRING("チョロボン２"))
+#endif
+    IF_INT_GREATER_OR_EQUAL(GSW(GSW_STORY_PROGRESS), STORY_STG5_59_ROGUEPORT_DOCK)
+        CALL(evt_npc_check_delete, STRING("チョロボン１"))
+#if VERSION <= VERSION_JP
+        CALL(evt_npc_check_delete, STRING("チョロボン２"))
+#endif
+        CALL(evt_npc_check_delete, STRING("チョロボン７"))
+    END_IF
+    CALL(evt_map_playanim, STRING("mizu"), 1, 0)
+    CALL(evt_hit_damage_return_set, PTR(hitDmgRetPoints))
+    CALL_CHILD(evt_gazigazi_entry)
+    CALL(evt_eff64, STRING("sunlight"), STRING("sunlight_n64"), 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+    CALL(evt_mobj_badgeblk, STRING("mobj_badge_gat"), -200, 60, -90, ITEM_HEAD_RATTLE, 0, GSWF(GSWF_MUJ02_HEAD_RATTLE_BLOCK_HIT), 1)
+    CALL(evt_mobj_badgeblk, STRING("mobj_hatena"), -135, 0, 135, ITEM_COURAGE_SHELL, 0, GSWF(GSWF_MUJ02_COURAGE_SHELL_BLOCK_HIT), 0)
+#if VERSION >= VERSION_US
+    IF_INT_GREATER_OR_EQUAL(GSW(GSW_STORY_PROGRESS), STORY_STG5_43_X_NAUTS_RETREAT)
+        SET_VALUE(LW(0), PTR(tree_tbl_treeb_evt))
+    ELSE
+#endif
+        SET_VALUE(LW(0), PTR(tree_tbl))
+#if VERSION >= VERSION_US
+        SET_VALUE(GSWF(GSWF_MUJ02_KEEL_MANGO_TAKEN), 1)
+    END_IF
+#endif
+    CALL_CHILD(evt_sub_tree_access_entry)
+    SET_VALUE(LW(0), PTR(kusa_tbl))
+    CALL_CHILD(evt_sub_kusa_access_entry)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("S"), MAPOBJ_FLAG_BBOX_CULL)
+    RETURN
+EVT_END()
+
+/**
+ * (body lives in countDisp.c to keep the original definition order) printCount comes first
+ * so the deferred compile emits both functions in the original order
+ */
+static void printCount(CameraId camera, void* param) {
+#if VERSION >= VERSION_US
+    char buf[32];
+#else
+    char buf[36];
+#endif
+    s32 n;
+
+#if VERSION >= VERSION_US
+    n = evtGetValue(NULL, GW(0));
+    FontDrawStart();
+    switch ((u32)gp->language) {
+        case 0:
+            // %3d回
+            sprintf(buf, "%3d\x89\xF1", n);
+            FontDrawStringPitch(90.0f, 120.0f, 20.0f, buf);
+            // かい
+            n = evtGetValue(NULL, GW(0));
+            sprintf(buf, "\x82\xA9\x82\xA2", n);
+            FontDrawScale(0.55f);
+            FontDrawStringPitch(148.0f, 131.0f, 20.0f, buf);
+            break;
+        case 1:
+        case 6:
+            sprintf(buf, "%3d", n);
+            FontDrawStringPitch(68.0f, 120.0f, 16.0f, buf);
+            FontDrawString(125.0f, 120.0f, "times");
+            break;
+        case 2:
+            sprintf(buf, "%3d", n);
+            FontDrawStringPitch(73.0f, 120.0f, 16.0f, buf);
+            FontDrawString(125.0f, 120.0f, "-mal");
+            break;
+        case 4:
+            sprintf(buf, "%3d", n);
+            FontDrawStringPitch(68.0f, 120.0f, 16.0f, buf);
+            FontDrawString(125.0f, 120.0f, "veces");
+            break;
+        case 3:
+        case 5:
+            sprintf(buf, "%3d", n);
+            FontDrawString(110.0f, 120.0f, buf);
+            break;
+    }
+#else
+    // %3d回
+    n = evtGetValue(NULL, GW(0));
+    sprintf(buf, "%3d\x89\xF1", n);
+    FontDrawStart();
+    FontDrawStringPitch(90.0f, 120.0f, 20.0f, buf);
+    // かい
+    n = evtGetValue(NULL, GW(0));
+    sprintf(buf, "\x82\xA9\x82\xA2", n);
+    FontDrawScale(0.55f);
+    FontDrawStringPitch(148.0f, 131.0f, 20.0f, buf);
+#endif
+}
+
+/**
+ * Debug display callback: queues a draw of the 2D print counter each frame (always blocks, so it runs until
+ * killed).
+ */
+static USER_FUNC(countDisp) {
+    dispEntry(CAMERA_2D, 399.0f, 0, printCount, NULL);
+    return EVT_RETURN_BLOCK;
+}

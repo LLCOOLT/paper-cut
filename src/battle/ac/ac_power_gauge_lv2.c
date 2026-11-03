@@ -1,0 +1,348 @@
+// Action command: power gauge with levels (ac_power_gauge_lv2), second variant.
+#include "icon_ids.h"
+#include "battle/battle.h"
+#include "battle/battle_ac.h"
+#include "battle/battle_pad.h"
+#include "battle/battle_unit.h"
+#include "driver/camdrv.h"
+#include "driver/icondrv.h"
+#include "system.h"
+#include <string.h>
+#include "version.h"
+// FAKE: ac_power_gauge_lv2.c calls BattleACGetButtonIcon through this prototype (the types it was compiled with) instead of the one in battle/battle_ac.h; same registers, behaviour-identical.
+typedef s32 (*BattleACGetButtonIconRetS32Fn)(s32, s32);
+
+// this unit is size-optimised, as in the original (the object differs without it)
+#pragma optimize_for_size on
+
+typedef struct PGLv2Work {
+    s32 timer;     // 0x0
+    s32 maxFrames; // 0x4
+    f32 gauge;     // 0x8
+    s32 button;    // 0xC
+    f32 rate;      // 0x10
+    f32 dec;       // 0x14
+    s32 full;      // 0x18
+    s32 inZone;    // 0x1C
+    s16 zones[3];  // 0x20
+    s32 endTimer;  // 0x28
+} PGLv2Work;
+
+#define AC_DISP(ac) (&(ac)->disp)
+#define AC_WORK(ac) ((PGLv2Work*)(ac)->work)
+
+/**
+ * Lip Lock gauge speed by difficulty: how fast holding A fills the gauge (300 at the easiest down to 40),
+ * and how fast holding during a wrong window drains it (100 rising to 130).
+ */
+static s32 _power_table[] = {300, 200, 150, 100, 80, 60, 40};
+s32 _power_table2[] = {100, 100, 100, 100, 110, 120, 130};
+
+static void actionCommandDisp(f32 x, f32 y);
+
+/**
+ * Per-frame driver of action command 17, used by Flurrie's Lip Lock.
+ * For 7 seconds holding A fills the gauge (rate params[1], faster at easy difficulty) except during three random
+ * 0.75-second windows near 1, 3 and 5 seconds, where holding drains it;
+ * it also leaks params[2]/100 a frame and locks once full.
+ * outputParams[0] is the level (gauge x params[3] / 100,
+ * one more when full in the releases unless acFlags bit 0); success needs params[4] or more.
+ */
+s32 battleAcMain_PowerGaugeLv2(BattleWork* work) {
+    BattleActions* ac = &work->actionCommands;
+    PGLv2Work* g = AC_WORK(ac);
+    BattleACDispParams* disp = AC_DISP(ac);
+    s32 diff = BattleActionCommandGetDifficulty(work);
+    s32 flag = 0;
+    s32 pressed;
+    s32 i;
+    if (ac->acUnit->badgesEquipped.AutoCommand) {
+        flag = 1;
+    }
+    switch (ac->acState) {
+        case 0:
+            memset(disp, 0, 0x2C);
+            disp->iconX = -300.0f;
+            disp->iconY = 0.0f;
+            disp->slideTimer = 20;
+            disp->gaugeRatio = 0.0f;
+            disp->color = (GXColor){255, 255, 255, 255};
+            disp->colorStep[0] = 0;
+            disp->colorStep[1] = -16;
+            disp->colorStep[2] = -16;
+            disp->colorStep[3] = 0;
+            g->timer = 0;
+            ac->outputParams[0] = 0;
+            ac->acState = 99;
+            ac->result = 1;
+            g->maxFrames = sysMsec2Frame(7000);
+            g->gauge = 0.0f;
+            g->rate = 0.01f * ac->params[1];
+            g->dec = 0.01f * ac->params[2];
+            g->full = 0;
+            g->inZone = 0;
+            g->button = 0x100;
+            sysMsec2Frame(1000);
+            for (i = 0; i < 3; i++) {
+                g->zones[i] = irand(sysMsec2Frame(250)) + (i * 2 + 1) * sysMsec2Frame(1000);
+            }
+            break;
+        case 99:
+            break;
+        case 100:
+            if ((ac->setupFlags & AC_SETUP_FLAG_CONFUSED_AUTO) && ((u32)ac->acUnit->tokenFlags & TOKEN_FLAG_CONFUSED_ACTION)) {
+                if (irand(100) >= 0) {
+                    ac->setupParam = 30;
+                    ac->outputParams[0] = 0;
+                } else {
+                    ac->outputParams[0] = irand(ac->params[3] - 1) + 1;
+                    ac->setupParam = 30;
+                }
+                ac->acState = 1001;
+                break;
+            }
+            BattleAcGaugeSeInit();
+            ac->acState = 1000;
+        case 1000:
+            g->timer++;
+            if (g->timer > g->maxFrames) {
+                if ((s32)ac->outputParams[0] < ac->params[4]) {
+                    ac->result = 0;
+                    ac->result &= ~2;
+                } else {
+                    ac->result = 2;
+                    ac->resultCount++;
+                }
+                ac->acState = 1002;
+                break;
+            }
+            pressed = BattlePadCheckNow(g->button) != 0;
+            {
+                s32 w = sysMsec2Frame(750);
+                g->inZone = 1;
+                for (i = 0; i < 3; i++) {
+                    s32 z = g->zones[i];
+                    if (g->timer >= z && g->timer < z + w) {
+                        g->inZone = 0;
+                        break;
+                    }
+                }
+            }
+            if (flag) {
+                if (g->inZone) {
+                    pressed = TRUE;
+                } else {
+                    pressed = FALSE;
+                }
+            }
+            if (!g->full) {
+                if (pressed) {
+                    if (g->inZone) {
+                        g->gauge += 0.01f * (g->rate * (f32)_power_table[diff]);
+                    } else {
+                        g->gauge -= 0.01f * (g->rate * (f32)_power_table2[diff]);
+                    }
+                }
+                if (g->gauge >= 100.0f) {
+                    g->gauge = 100.0f;
+                    g->full = 1;
+                } else {
+                    g->gauge -= g->dec;
+                }
+                if (g->gauge <= 0.0f) {
+                    g->gauge = 0.0f;
+                }
+            }
+            BattleAcGaugeSeUpdate(g->gauge);
+            ac->outputParams[0] = (s32)(g->gauge * (f32)ac->params[3] / 100.0f);
+            if ((s32)ac->outputParams[0] >= ac->params[3]) {
+                ac->outputParams[0] = ac->params[3] - 1;
+            }
+#if VERSION >= VERSION_JP
+            if (!((s32)ac->acFlags & 1)) {
+                if (g->gauge >= 100.0f) {
+                    ac->outputParams[0]++;
+                }
+            }
+#endif
+            break;
+        case 1001:
+            ac->setupParam--;
+            if (ac->setupParam < 0) {
+                if ((s32)ac->outputParams[0] >= ac->params[4]) {
+                    ac->result = 2;
+                    ac->resultCount++;
+                } else {
+                    ac->result = 0;
+                }
+                return 0;
+            }
+            break;
+        case 1002:
+            ac->acState = 1003;
+        case 1003:
+            ac->doneFlags |= AC_DONE_FLAG_FINISHED;
+            BattleAcGaugeSeDelete();
+            g->endTimer = 60;
+            ac->acState = 1004;
+        case 1004:
+            g->endTimer--;
+            if (g->endTimer <= 0) {
+                ac->acState = 1005;
+            }
+            break;
+        case 1005:
+            ac->maincb = NULL;
+            ac->dispcb = NULL;
+            ac->resultcb = NULL;
+            ac->deletecb = NULL;
+            return 0;
+    }
+    return 1;
+}
+
+/** Returns the result word: 1 while running, 2 on success, 0 on failure. */
+s32 battleAcResult_PowerGaugeLv2(BattleWork* work) {
+    return work->actionCommands.result;
+}
+
+/**
+ * Display callback: slides the gauge in from the left over 20 frames,
+ * and once the command ends keeps it up for 40 frames before sliding it back out.
+ */
+void battleAcDisp_PowerGaugeLv2(CameraId cameraId, void* param) {
+    BattleWork* work = (BattleWork*)param;
+    BattleActions* ac = &work->actionCommands;
+    BattleACDispParams* disp = AC_DISP(ac);
+    switch (ac->acState) {
+        case 99:
+            disp->iconX = intplGetValue(4, -300.0f, 30.0f, 20 - disp->slideTimer, 20);
+        case 100:
+        case 1000:
+        case 1002:
+            actionCommandDisp(disp->iconX, disp->iconY);
+            if (disp->slideTimer > 0) {
+                disp->slideTimer--;
+            }
+            break;
+        case 1003:
+        case 1004:
+            if (disp->slideTimer >= 40) {
+                disp->iconX = intplGetValue(4, 30.0f, -300.0f, disp->slideTimer - 40, 20);
+            } else {
+                disp->iconX = 30.0f;
+            }
+            actionCommandDisp(disp->iconX, disp->iconY);
+            if (disp->slideTimer < 60) {
+                disp->slideTimer++;
+            }
+            break;
+    }
+}
+
+/** Called by btlevtcmd_StopAC: unless the command already finished, stops the gauge sound and starts the end wait. */
+void battleAcDelete_PowerGaugeLv2(BattleWork* work) {
+    if (!(work->actionCommands.doneFlags & AC_DONE_FLAG_FINISHED)) {
+        work->actionCommands.acState = 1003;
+    }
+}
+
+#define ICON ((void (*)(Vec*, s32, s32, f32))iconDispGx)
+/**
+ * Draws the gauge with level marks from gaugeParams (pulsing red once full), the A icon and a star,
+ * both lit while holding A is safe.
+ */
+static void actionCommandDisp(f32 x, f32 y) {
+    BattleWork* work = _battleWorkPointer;
+    BattleActions* ac = &work->actionCommands;
+    f32 ratio;
+    s32 full;
+    s32 tmp[4];
+    s32 cnt;
+    s32 i;
+    s32 pressedIcon;
+    s32 icon;
+    f32 px;
+    f32 py;
+    camGetPtr(CAMERA_2D);
+    px = -200.0f + x;
+    py = 25.0f + y;
+    {
+        Vec pos = {0.0f, 0.0f, 0.0f};
+        pos.x = px;
+        pos.y = py;
+        ICON(&pos, ICON_DISP_2D, ICON_08C, 1.0f);
+    }
+    full = 0;
+    ratio = AC_WORK(ac)->gauge / 100.0f;
+    if (ratio > 1.0f) {
+        ratio = 1.0f;
+    }
+    ac->disp.gaugeRatio = ratio;
+    if (AC_WORK(ac)->full) {
+        ac->disp.color.g += ac->disp.colorStep[1];
+        ac->disp.color.b += ac->disp.colorStep[2];
+        if (ac->disp.gaugeRatio >= 1.0f) {
+            full |= 1;
+        }
+        if (ac->disp.color.g <= 0x80 && ac->disp.colorStep[1] < 0) {
+            ac->disp.colorStep[1] = ac->disp.colorStep[2] = 0x10;
+        }
+        if (ac->disp.color.g >= 0xF5 && ac->disp.colorStep[1] > 0) {
+            ac->disp.colorStep[1] = ac->disp.colorStep[2] = -0x10;
+        }
+    }
+    cnt = 0;
+    for (i = 0; i < 4; i++) {
+        tmp[i] = 100;
+    }
+    for (i = 0; i < 4; i++, cnt++) {
+        tmp[i] = ac->gaugeParams[i];
+        if (i != 0 && !(tmp[i] - tmp[i - 1] > 0)) {
+            break;
+        }
+    }
+    BattleAcDrawGauge((s32)x, (s32)y, 0xB2, ac->disp.gaugeRatio, cnt, tmp[0], tmp[1], tmp[2], full);
+    pressedIcon = ((BattleACGetButtonIconRetS32Fn)BattleACGetButtonIcon)(AC_WORK(ac)->button, 1);
+    icon = ((BattleACGetButtonIconRetS32Fn)BattleACGetButtonIcon)(AC_WORK(ac)->button, 0);
+    switch (ac->acState) {
+        case 99:
+        case 100:
+        case 1002:
+        case 1003:
+        case 1004: {
+            Vec pos = {0.0f, 0.0f, 0.0f};
+            pos.x = px;
+            pos.y = 70.0f + y;
+            ICON(&pos, ICON_DISP_2D, icon, 1.0f);
+            break;
+        }
+        case 1000:
+            if (AC_WORK(ac)->inZone) {
+                Vec pos = {0.0f, 0.0f, 0.0f};
+                pos.x = px;
+                pos.y = 70.0f + y;
+                ICON(&pos, ICON_DISP_2D, pressedIcon, 1.0f);
+            } else {
+                Vec pos = {0.0f, 0.0f, 0.0f};
+                pos.x = px;
+                pos.y = 70.0f + y;
+                ICON(&pos, ICON_DISP_2D, icon, 1.0f);
+            }
+            break;
+    }
+    {
+        s32 id = ICON_091;
+        Vec pos;
+        if (AC_WORK(ac)->inZone) {
+            id = ICON_095;
+        }
+        {
+            Vec zero = {0.0f, 0.0f, 0.0f};
+            pos = zero;
+        }
+        pos.x = 120.0f + px;
+        pos.y = py;
+        ICON(&pos, ICON_DISP_2D, id, 1.0f);
+    }
+}

@@ -1,0 +1,454 @@
+// Mario's pipe (dokan) motion: going down or up a pipe with the partners.
+#include "port_hook.h"
+#include "dolphin/types.h"
+#include "mario/mario.h"
+#include "mario/mario_cam.h"
+#include "mario/mario_motion.h"
+#include "mario/mario_party.h"
+#include "mario/mario_sbr.h"
+#include "mot/mot_slit.h"
+#include "party.h"
+#include "system.h"
+#include "version.h"
+#ifdef PORT_MODS
+#include "port/hooks/src_motion_mot_dokan.h"
+#endif
+
+/**
+ * Brings the partners back out with Mario when he comes out of a pipe:
+ * re-enters any partner that was sent away (partyEntryPos / partyEntry2Pos) at his position,
+ * puts both in run mode 10 facing away from him, and zero-scales them so they grow in when flag is 0.
+ * Skipped in background mode. From JP on, two partners fan out at +/-120 degrees instead of both turning 180.
+ */
+static void _partyEntry(s32 flag) {
+    MarioWork* mario;
+    s32 i;
+    s32 count;
+    PartyEntry* party;
+    s32 id;
+    f32 off;
+    s32 prev;
+    f32 x, y, z;
+
+    mario = marioGetPtr();
+    if (mario->flags & MARIO_FLAG_BG_MODE) {
+        return;
+    }
+#if VERSION >= VERSION_JP
+    count = 0;
+    if (partyGetPtr(mario->currPartySlotId[0]) != NULL) {
+        count = 1;
+    }
+    if (partyGetPtr(mario->currPartySlotId[1]) != NULL) {
+        count++;
+    }
+#endif
+    for (i = 0; i < 2; i++) {
+        if (mario->currPartySlotId[i] < 0) {
+            prev = mario->prevPartyMemberId[i];
+            x = mario->position.x;
+            y = mario->position.y;
+            z = mario->position.z;
+            if (prev == 0) {
+                continue;
+            }
+            if (i == 0) {
+                id = partyEntryPos(prev, x, y, z);
+            } else {
+                id = partyEntry2Pos(prev, x, y, z);
+            }
+            if (id < 0) {
+                continue;
+            }
+            mario->currPartySlotId[i] = id;
+            party = partyGetPtr(id);
+            partyChgRunMode(party, 10);
+            if (flag == 0) {
+                Vec zero = {0.0f, 0.0f, 0.0f};
+                party->scale = zero;
+            }
+            party->flags |= PARTY_FLAG_DISABLE_FLOORS;
+            party->flags |= PARTY_FLAG_FORCE_FALL;
+#if VERSION <= VERSION_DEMO_JP
+            party->flags2 &= ~PARTY_DISP_FLAG_HIDDEN;
+            party->displayDirectionTarget = revise360(180.0f + mario->displayDirection);
+#else
+            if (count == 1) {
+                off = 180.0f;
+            } else {
+                off = 120.0f;
+            }
+            party->flags2 &= ~PARTY_DISP_FLAG_HIDDEN;
+            party->displayDirectionTarget = revise360(mario->displayDirection + off);
+#endif
+            party->displayDirection = mario->displayDirection;
+            party->moveDir = mario->moveDirection;
+        } else {
+            party = partyGetPtr(mario->currPartySlotId[i]);
+            partyChgRunMode(party, 10);
+            if (flag == 0) {
+                Vec zero = {0.0f, 0.0f, 0.0f};
+                party->scale = zero;
+            }
+            party->flags |= PARTY_FLAG_DISABLE_FLOORS;
+            party->flags |= PARTY_FLAG_FORCE_FALL;
+#if VERSION <= VERSION_DEMO_JP
+            party->flags2 &= ~PARTY_DISP_FLAG_HIDDEN;
+            party->displayDirectionTarget = revise360(180.0f + mario->displayDirection);
+#else
+            if (count == 1) {
+                off = 180.0f;
+            } else {
+                off = -120.0f;
+            }
+            party->flags2 &= ~PARTY_DISP_FLAG_HIDDEN;
+            party->displayDirectionTarget = revise360(mario->displayDirection + off);
+#endif
+            party->displayDirection = mario->displayDirection;
+            party->moveDir = mario->moveDirection;
+        }
+    }
+}
+
+/**
+ * Pipe motion, chosen by mario->dokanType (set by evt_mario before the switch):
+ * 2/3 spin and shrink into a vertical pipe, 1 spins and grows back out of one, 0 just spins in place,
+ * 5 tumbles and shrinks into a sideways pipe, 4 tumbles and grows out of a sideways pipe.
+ * Ends in the stay motion once Mario is out.
+ * The US and later releases flip the sideways exit tumble to match the facing.
+ */
+void PORT_HOOKABLE(mot_dokan)(void) {
+    MarioWork* mario = marioGetPtr();
+    PartyEntry* party;
+
+    if (mario->trigFlags & MARIO_TRIG_FLAG_IS_STARTING_NEW_MOTION) {
+        mario->trigFlags &= ~MARIO_TRIG_FLAG_IS_STARTING_NEW_MOTION;
+        mario->dispFlags |= MARIO_DISP_FLAG_NO_SHADOW;
+        mario->dispFlags |= MARIO_DISP_FLAG_NO_MIRROR;
+        mario->dispFlags |= MARIO_DISP_FLAG_DIR_LOCK;
+        mario->mot.dokan.reserved_4 = 0.0f;
+        mario->mot.dokan.startZ = mario->position.z;
+        mario->multiTimer = 0;
+        mario->airTimer = 0;
+        mario->baseSpeed = 0.0f;
+        if (mario->dokanType == 2) {
+            mario->currSubMotionId = 10;
+        } else if (mario->dokanType == 3) {
+            mario->currSubMotionId = 10;
+        } else if (mario->dokanType == 1) {
+            marioPaperOn("p_dokan_y");
+            marioChgPaper("PM_D_1A");
+            marioChgPose("M_Z_1");
+            marioPaperLightOff();
+            mario->dispFlags |= MARIO_DISP_FLAG_NO_MIRROR;
+            mario->dispFlags |= MARIO_DISP_FLAG_DIR_LOCK;
+            mario->displayDirection = mario->displayDirectionTarget;
+            mario->currSubMotionId = 20;
+            mario->mot.dokan.rotSpeed = 0.0f;
+            mario->mot.dokan.rotSpeed = 30.0f;
+            {
+                Vec v = {0.0f, 0.0f, 0.0f};
+                mario->scale = v;
+            }
+            _partyEntry(1);
+        } else if (mario->dokanType == 0) {
+            _partyEntry(0);
+            mario->currSubMotionId = 30;
+        } else if (mario->dokanType == 5) {
+            mario->dispFlags |= MARIO_DISP_FLAG_NO_SHADOW;
+            party = partyGetPtr(0);
+            if (party != NULL) {
+                partyShadowOff(party);
+            }
+            party = partyGetPtr(1);
+            if (party != NULL) {
+                partyShadowOff(party);
+            }
+            {
+                Vec v0 = {0.0f, 0.0f, 0.0f};
+                mario->dispOfs = v0;
+            }
+            {
+                Vec v1 = {0.0f, 0.0f, 0.0f};
+                mario->dispOfs2 = v1;
+            }
+            {
+                Vec v2 = {0.0f, 0.0f, 0.0f};
+                mario->rot = v2;
+            }
+            {
+                Vec v3 = {0.0f, 16.0f, 0.0f};
+                mario->rotOfs = v3;
+            }
+            marioSlitForceCancel();
+            marioPaperOn("p_dokan_x");
+            marioPaperLightOff();
+            marioChgPaper("PM_D_1A");
+            marioChgPose("M_Z_1");
+            mario->displayDirection = mario->displayDirectionTarget;
+            mario->mot.dokan.rotSpeed = 30.0f;
+            mario->multiTimer = 20;
+            mario->currSubMotionId = 0;
+        } else if (mario->dokanType == 4) {
+            {
+                Vec v0 = {0.0f, 0.0f, 0.0f};
+                mario->scale = v0;
+            }
+            {
+                Vec v1 = {0.0f, 0.0f, 0.0f};
+                mario->dispOfs = v1;
+            }
+            {
+                Vec v2 = {0.0f, 0.0f, 0.0f};
+                mario->dispOfs2 = v2;
+            }
+            {
+                Vec v3 = {0.0f, 0.0f, 0.0f};
+                mario->rot = v3;
+            }
+            {
+                Vec v4 = {0.0f, 16.0f, 0.0f};
+                mario->rotOfs = v4;
+            }
+            mario->directionView = toMovedir(mario->displayDirection);
+            mario->moveDirection = mario->directionView;
+            marioPaperOn("p_dokan_x");
+            marioPaperLightOff();
+            marioChgPaper("PM_D_1A");
+            marioChgPose("M_Z_1");
+#if VERSION >= VERSION_US
+            if (mario->displayDirectionTarget >= 90.0f && mario->displayDirectionTarget <= 270.0f) {
+                mario->mot.dokan.rotSpeed = 30.0f;
+            } else {
+                mario->dispFlags |= MARIO_DISP_FLAG_NO_MIRROR;
+                mario->mot.dokan.rotSpeed = -30.0f;
+            }
+            mario->dispFlags |= MARIO_DISP_FLAG_DIR_LOCK;
+            marioPaperLightOff();
+            mario->displayDirection = mario->displayDirectionTarget;
+            mario->currSubMotionId = 40;
+            _partyEntry(1);
+#else
+            mario->displayDirection = mario->displayDirectionTarget;
+            mario->mot.dokan.rotSpeed = 30.0f;
+            mario->currSubMotionId = 40;
+            _partyEntry(1);
+#endif
+            mario->dispFlags |= MARIO_DISP_FLAG_NO_SHADOW;
+            partyShadowOff(partyGetPtr(marioGetPartyId()));
+            partyShadowOff(partyGetPtr(marioGetExtraPartyId()));
+        }
+    }
+
+    switch (mario->currSubMotionId) {
+        case 10:
+            mario->displayDirection = revise360(mario->displayDirection + mario->mot.dokan.rotSpeed);
+            mario->scale.x += -0.005f;
+            if (mario->scale.x < 0.0f) {
+                mario->scale.x = 0.0f;
+            }
+            mario->scale.y = mario->scale.x;
+            mario->scale.z = mario->scale.x;
+            break;
+        case 20: {
+            Vec v = {0.0f, 0.0f, 0.0f};
+            mario->scale = v;
+            mario->currSubMotionId = 21;
+            if (mario->flags & MARIO_FLAG_BG_MODE) {
+                mario->dispOfs2.y = -2.0f;
+            }
+        }
+        case 21:
+            mario->displayDirection = revise360(mario->displayDirection + mario->mot.dokan.rotSpeed);
+            if (mario->flags & MARIO_FLAG_BG_MODE) {
+                mario->scale.x += 0.03f;
+                if (mario->scale.x >= 1.0f) {
+                    mario->scale.x = 1.0f;
+                }
+                mario->scale.y = mario->scale.x;
+                mario->scale.z = mario->scale.x;
+            } else {
+                mario->scale.x += 0.05f;
+                if (mario->scale.x >= 1.0f) {
+                    mario->scale.x = 1.0f;
+                }
+                mario->scale.y = mario->scale.x;
+                mario->scale.z = mario->scale.x;
+            }
+            break;
+        case 30:
+            mario->displayDirection = revise360(mario->displayDirection + mario->mot.dokan.rotSpeed);
+            break;
+        case 0:
+            if (--mario->multiTimer <= 0) {
+                mario->rot.x += mario->mot.dokan.rotSpeed;
+                mario->scale.x += -0.02f;
+                if (mario->scale.x < 0.0f) {
+                    mario->scale.x = 0.0f;
+                }
+                mario->scale.y = mario->scale.x;
+                mario->scale.z = mario->scale.x;
+                mario->rotOfs.y = 16.0f * mario->scale.x;
+                mario->dispOfs.y = 16.0f - mario->rotOfs.y;
+                mario->dispOfs.z = -3.0f;
+            }
+            break;
+        case 40:
+            mario->rot.x += mario->mot.dokan.rotSpeed;
+            mario->scale.x += 0.03f;
+            if (mario->scale.x >= 1.0f) {
+                mario->scale.x = 1.0f;
+            }
+            mario->scale.y = mario->scale.x;
+            mario->scale.z = mario->scale.x;
+            mario->rotOfs.y = 16.0f * mario->scale.x;
+            mario->dispOfs.y = 16.0f - mario->rotOfs.y;
+            mario->dispOfs.z = -3.0f;
+            party = partyGetPtr(marioGetPartyId());
+            if (party != NULL) {
+                party->position = mario->position;
+                party->scale.x = mario->scale.x;
+                party->scale.y = mario->scale.y;
+                party->scale.z = mario->scale.z;
+                party->rotOfsY = mario->rotOfs.y;
+                party->dispOfs.y = mario->dispOfs.y;
+                party->dispOfs.z = mario->dispOfs.z;
+            }
+            party = partyGetPtr(marioGetExtraPartyId());
+            if (party != NULL) {
+                party->position = mario->position;
+                party->scale.x = mario->scale.x;
+                party->scale.y = mario->scale.y;
+                party->scale.z = mario->scale.z;
+                party->rotOfsY = mario->rotOfs.y;
+                party->dispOfs.y = mario->dispOfs.y;
+                party->dispOfs.z = mario->dispOfs.z;
+            }
+            mario->camTarget.y = mario->position.y;
+            break;
+        case 100:
+            if (mario->dokanType == 1) {
+                mario->currSubMotionId = 110;
+            } else if (mario->dokanType == 4) {
+                marioUpdateCamPos();
+                mario->rot.x = 0.0f;
+                marioChgPaper("PM_D_1B");
+                mario->multiTimer = 20;
+                mario->currSubMotionId = 102;
+                partyDokanEnd(marioGetPartyId(), mario->dokanType);
+                partyDokanEnd(marioGetExtraPartyId(), mario->dokanType);
+            } else if (mario->dokanType == 1) {
+                mario->currSubMotionId = 101;
+            } else if (mario->dokanType == 0) {
+                marioUpdateCamPos();
+                mario->currSubMotionId = 101;
+            } else {
+                mario->currSubMotionId = 102;
+            }
+            break;
+        case 101:
+            mario->displayDirection += mario->mot.dokan.rotSpeed;
+            if (mario->displayDirection >= 540.0f) {
+                marioChgPaper("PM_D_1B");
+                mario->multiTimer = 20;
+                mario->currSubMotionId = 102;
+                mario->rot.x = 0.0f;
+#if VERSION <= VERSION_JP
+                mario->displayDirectionTarget = revise360(180.0f + mario->displayDirectionTarget);
+                mario->displayDirection = mario->displayDirectionTarget;
+                mario->directionView = toMovedirSimple(mario->displayDirection);
+                mario->moveDirection = mario->directionView;
+#endif
+                partyDokanEnd(marioGetPartyId(), mario->dokanType);
+                partyDokanEnd(marioGetExtraPartyId(), mario->dokanType);
+            }
+            break;
+        case 102:
+            if (--mario->multiTimer <= 0) {
+                mario->currSubMotionId = 103;
+            }
+            break;
+        case 103: {
+            mario->returnPos = mario->position;
+            {
+                Vec v = {1.0f, 1.0f, 1.0f};
+                mario->scale = v;
+            }
+            marioOfsRotReset();
+            mario->dispFlags &= ~MARIO_DISP_FLAG_NO_MIRROR;
+            mario->dispFlags &= ~MARIO_DISP_FLAG_DIR_LOCK;
+            mario->dispFlags &= ~MARIO_DISP_FLAG_NO_SHADOW;
+            marioPaperOff();
+            marioChgMot(MARIO_MOTION_STAY);
+            mario->displayDirection = revise360(mario->displayDirection);
+            mario->displayDirectionTarget = mario->displayDirection;
+            mario->directionView = toMovedirSimple(mario->displayDirection);
+            mario->moveDirection = mario->directionView;
+            if ((s32)(u8)mario->dokanType == 4) {
+                camFollowYOn();
+                mario->camTarget.y = mario->position.y;
+            }
+            mario->flags &= ~MARIO_FLAG_FLOORS_DISABLED;
+            break;
+        }
+    }
+
+    switch (mario->currSubMotionId) {
+        case 110:
+            if (!(mario->flags & MARIO_FLAG_BG_MODE)) {
+                mario->camTarget.y = mario->position.y;
+            }
+            marioUpdateCamPos();
+            camFollowYOff();
+            mario->currSubMotionId = 111;
+        case 111:
+            mario->displayDirection += mario->mot.dokan.rotSpeed;
+            if (mario->displayDirection >= 540.0f) {
+                if (!(mario->flags & MARIO_FLAG_BG_MODE)) {
+                    camFollowYOn();
+                }
+                marioChgPaper("PM_D_1B");
+                mario->multiTimer = 20;
+                mario->currSubMotionId = 112;
+                mario->rot.x = 0.0f;
+                mario->displayDirectionTarget = revise360(mario->displayDirection);
+                mario->displayDirection = mario->displayDirectionTarget;
+                mario->directionView = toMovedirSimple(mario->displayDirection);
+                mario->moveDirection = mario->directionView;
+                partyDokanEnd(marioGetPartyId(), mario->dokanType);
+                partyDokanEnd(marioGetExtraPartyId(), mario->dokanType);
+            }
+            break;
+        case 112:
+            if (--mario->multiTimer <= 0) {
+                mario->currSubMotionId = 113;
+            }
+            break;
+        case 113: {
+            mario->returnPos = mario->position;
+            {
+                Vec v = {1.0f, 1.0f, 1.0f};
+                mario->scale = v;
+            }
+            marioOfsRotReset();
+            mario->dispFlags &= ~MARIO_DISP_FLAG_NO_MIRROR;
+            mario->dispFlags &= ~MARIO_DISP_FLAG_DIR_LOCK;
+            mario->dispFlags &= ~MARIO_DISP_FLAG_NO_SHADOW;
+            marioPaperOff();
+            marioChgMot(MARIO_MOTION_STAY);
+            mario->displayDirection = revise360(mario->displayDirection);
+            mario->displayDirectionTarget = mario->displayDirection;
+            mario->directionView = toMovedirSimple(mario->displayDirection);
+            mario->moveDirection = mario->directionView;
+            if (!(mario->flags & MARIO_FLAG_BG_MODE)) {
+                camFollowYOn();
+            }
+            mario->flags &= ~MARIO_FLAG_FLOORS_DISABLED;
+            break;
+        }
+    }
+}
+
+#ifdef PORT_MODS
+#include "port/hooks/src_motion_mot_dokan.inc"
+#endif

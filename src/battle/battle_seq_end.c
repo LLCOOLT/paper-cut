@@ -1,0 +1,3182 @@
+// Battle end sequence: victory results, level-up (rank-up) selection and returning to the field.
+#pragma optimize_for_size on
+#include "port_hook.h"
+#include <dolphin/pad.h>
+#include "icon_ids.h"
+#include "version.h"
+#include "battle/battle_seq_end.h"
+#ifdef TARGET_PC
+#include "port/gameplus.h"
+// Gameplay+ (port/include/port/gameplus.h): the level-up screen takes the D-pad as well as the stick
+#define LVUP_DIR(stick, dpad) (portGameplus("levelup_dpad") ? (stick) | (dpad) : (stick))
+#else
+#define LVUP_DIR(stick, dpad) (stick)
+#endif
+#include "pc_call.h"
+#include "battle/battle.h"
+#include "battle/battle_unit.h"
+#include "battle/battle_sub.h"
+#include "battle/battle_audience.h"
+#include "battle/battle_stage_object.h"
+#include "driver/camdrv.h"
+#include "driver/icondrv.h"
+#include "driver/npcdrv.h"
+#include "driver/windowdrv.h"
+#include "evt/evt_cmd.h"
+#include "manager/evtmgr.h"
+#include "manager/evtmgr_cmd.h"
+#include "mario/mario_pouch.h"
+#include "system.h"
+#include "battle/battle_stage.h"
+#include "driver/dispdrv.h"
+#include "driver/seqdrv.h"
+#include "mario/mario.h"
+#include "mario/mario_party.h"
+#include "party.h"
+#include "battle/battle_pad.h"
+#include "battle/battle_information.h"
+#include "battle/battle_break_slot.h"
+#include "driver/fadedrv.h"
+#include "driver/effdrv.h"
+#include "pmario_sound.h"
+#include "driver/msgdrv.h"
+#include "manager/fontmgr.h"
+#if VERSION >= VERSION_US
+#include "mario/mariost.h"
+#endif
+#include <stdio.h>
+#include <string.h>
+#include "battle/battle_mario.h"
+#include "eff/eff_recovery.h"
+#include "battle/battle_actrecord.h"
+#include "battle/battle_camera.h"
+#include "battle/battle_seq.h"
+#include "battle/battle_disp.h"
+#include "battle/battle_event_cmd.h"
+#include "battle/battle_message.h"
+#include "eff/n64/eff_pokopi_pcharge_n64.h"
+#include "evt/evt_audience.h"
+#include "evt/evt_batstage.h"
+#include "evt/evt_eff.h"
+#include "evt/evt_fade.h"
+#include "evt/evt_msg.h"
+#include "evt/evt_snd.h"
+#include "evt/evt_sub.h"
+
+// The demo stops gaining levels at 98.
+#if VERSION <= VERSION_DEMO_JP
+#define LEVEL_MAX 98
+#else
+#define LEVEL_MAX 99
+#endif
+
+#include "eff/eff_pointget.h"
+#include "unit/party/unit_party_nokotarou.h"
+#ifdef PORT_MODS
+#include "port/hooks/src_battle_battle_seq_end.h"
+#endif
+// FAKE: battle_seq_end.c calls windowDispGX_Waku_col through this prototype (the types it was compiled with) instead of the one in driver/windowdrv.h; same registers, behaviour-identical.
+typedef void (*WindowDispWakuColFloatsFirstFn)(f32, f32, f32, f32, f32, u16, GXColor);
+
+typedef struct SeqEndObj {
+    Vec pos;       // 0x0
+    Vec scale;     // 0xC
+    Vec rot;       // 0x18
+    u16 value;     // 0x24
+    u16 nextValue; // 0x26
+    u8 paramDisp;  // 0x28
+    u8 blinkTimer; // 0x29, level-up object blink countdown (8 frames)
+    s32 blinkOn;   // 0x2C, drawn while nonzero
+    GXColor color; // 0x30
+} SeqEndObj;
+
+// SeqEndWork.flags: which result screens _seq_end_disp draws.
+enum SeqEndDispFlags {
+    SEQ_END_DISP_EXP_ICONS = 0x2,     // the Star Points flying to Mario (_GetExpIcon_Disp)
+    SEQ_END_DISP_MARIO_EXP = 0x4,     // Mario's Star Point counter
+    SEQ_END_DISP_LVUP_OBJECTS = 0x8,  // the HP/FP/BP level-up choices
+    SEQ_END_DISP_LVUP_CONFIRM = 0x10, // the level-up confirmation
+    SEQ_END_DISP_LVUP_HELP = 0x20,    // the level-up help message (no demo draws it)
+};
+
+typedef struct SeqEndWork {
+    s32 state;                   // 0x0, set to 0 and never changed (_audience_Whistle_control tests it)
+    s32 timer;                   // 0x4
+    s16 exp;                     // 0x8, star points won (doubled by the badge)
+    s16 expDisp;                 // 0xA, counts down while exp is added to the pouch
+    s32 levelUp;                 // 0xC, set when the pouch exp reaches 100
+    s32 selected;                // 0x10
+    s32 selectState;             // 0x14, cleared when the level-up menu opens, never read
+    s32 objCount;                // 0x18
+    u8 reserved_1C[0x24 - 0x1C]; // 0x1C, never accessed
+    s32 cursor;                  // 0x24
+    s32 prevCursor;              // 0x28, cleared with cursor, never read
+    s32 cursorCount;             // 0x2C, number of level-up choices
+    u32 flags;                   // 0x30, SeqEndDispFlags (also set by scripts through a mask)
+    IconEntry* icons[19];        // 0x34
+    s32 alpha[19];               // 0x80
+    s32 counter[19];             // 0xCC
+    Vec iconPos[19];             // 0x118
+    s32 evtId;                   // 0x1FC, running _jump_event / level-up event
+    SeqEndObj objs[3];           // 0x200
+    EffectEntry* expEffect;      // 0x29C, star point counter effect
+    s32 whistleTimer;            // 0x2A0
+    s32 confettiEvtId;           // 0x2A4
+    s32 rankUpEvtId;             // 0x2A8
+} SeqEndWork;
+static void _GetExpIcon_Init(SeqEndWork* work);
+
+typedef struct SeqEndUnitSetup {
+    u8* kind;                 // 0x0
+    u8 setupRest[0x30 - 0x4]; // 0x4, rest of the BattleUnitSetup, not read here
+} SeqEndUnitSetup;
+
+typedef struct SeqEndGroup {
+    s32 count;              // 0x0
+    SeqEndUnitSetup* units; // 0x4
+} SeqEndGroup;
+
+typedef struct SeqEndSpot {
+    u16 flags;     // 0x0
+    Vec pos;       // 0x4
+    Vec rot;       // 0x10
+    Vec scale;     // 0x1C
+    GXColor color; // 0x28
+} SeqEndSpot;
+
+static void _GetExpIcon_Main(BattleWork* wp);
+static void _LvupParamConfirmDisp(CameraId camId, void* param);
+void L__LvupParamHelpMsgDisp(CameraId camId, void* param);
+static void _MarioExpDisp(CameraId camId, void* param);
+static void _GetExpIcon_Disp(CameraId camId, void* param);
+static void _lvup_select_object_disp(CameraId camId, void* param);
+
+#define SEW(wp) ((SeqEndWork*)(wp)->seqEndWork)
+
+//.data
+static USER_FUNC(_check_guard_koura);
+static USER_FUNC(_disable_enemy_unit_disp);
+static USER_FUNC(_get_rank_up_msg);
+static USER_FUNC(_lvup_ap_recover_full);
+static USER_FUNC(_lvup_disp_flag_onoff);
+static USER_FUNC(_lvup_obj_set_color);
+static USER_FUNC(_lvup_object_decide_bound);
+static USER_FUNC(_lvup_object_noselect_delete);
+static USER_FUNC(_lvup_object_select_move);
+static USER_FUNC(_lvup_select_obj_disp_on);
+static USER_FUNC(_lvup_select_obj_lvup_param_disp);
+static USER_FUNC(_lvup_select_object_init);
+static USER_FUNC(_lvup_spot_move);
+static USER_FUNC(_lvup_spot_off);
+static USER_FUNC(_lvup_spot_on);
+static USER_FUNC(_nozzle_set_offset);
+static USER_FUNC(_set_confetti_control_evtid);
+
+/**
+ * Mario's rank titles: Rising Star from level 1, B-list Star at 10, A-list Star at 20 and Superstar at 30,
+ * each with the message shown when he reaches it (the level-1 entry reuses butai_01 and is never shown);
+ * a 0xFFFF entry ends the list. Read by _get_rank_data for the level-up show and by BattleGetRankNameLabel
+ * for the pause menu's Mario page.
+ */
+RankUpData _rank_up_data[] = {
+    {1, 0, "msg_menu_mario_name_0", "butai_01"},
+    {10, 1, "msg_menu_mario_name_1", "butai_01"},
+    {20, 2, "msg_menu_mario_name_2", "butai_02"},
+    {30, 3, "msg_menu_mario_name_3", "butai_03"},
+    {0xFFFF, 0, NULL, NULL},
+};
+/**
+ * Run on Mario by btlseqEnd after a win when BATTLE_FLAG_MAJINAI_END is set
+ * (BattleMajinaiEndCheck: Merlee has no charm uses left):
+ * shows the btl_msg_mj_last announcement, that the curse's effect has run out, for 60 frames.
+ */
+EVT_BEGIN(_event_MajinaiEnd)
+    CALL(btlevtcmd_AnnounceMessage, 0, 0, -36, STRING("btl_msg_mj_last"), 60)
+    WAIT_FRAMES(60)
+    RETURN
+EVT_END()
+
+#if VERSION >= VERSION_US
+/**
+ * Label textures of the HP, FP and BP level-up blocks, one per text language (gp->language),
+ * drawn by _lvup_select_object_disp.
+ */
+s32 hp_tex_tbl[6] = {52, 52, 53, 54, 54, 55};
+s32 fp_tex_tbl[6] = {56, 56, 57, 58, 58, 58};
+s32 bp_tex_tbl[6] = {59, 59, 60, 61, 62, 63};
+#endif
+
+/**
+ * Returns the _rank_up_data entry whose start level is exactly level (the rank-up levels 1, 10, 20 and 30),
+ * or NULL for any other level.
+ */
+static RankUpData* _get_rank_data(s32 level) {
+    RankUpData* rank;
+
+    for (rank = _rank_up_data; level != rank->startLevel; rank++) {
+        if (!rank->rankUpMessage) {
+            return NULL;
+        }
+    }
+    return rank;
+}
+
+/**
+ * Returns the message label of Mario's rank title for a level (the last _rank_up_data entry it has reached),
+ * for the Mario page of the pause menu (win_mario.c); NULL below level 1.
+ */
+const char* PORT_HOOKABLE(BattleGetRankNameLabel)(s32 level) {
+    RankUpData* found = NULL;
+    RankUpData* rank = _rank_up_data;
+
+    while (level >= rank->startLevel) {
+        if (rank->startLevel < 0) {
+            break;
+        }
+        found = rank;
+        rank++;
+    }
+    if (!found) {
+        return NULL;
+    }
+    return found->rankUpName;
+}
+
+static void _ExecAllUnitBattleEndEvent(void);
+static void _check_audience_battle_end_exec(void);
+static void _BattleMarioKouraDelete(void);
+void _audience_Whistle_control(void);
+static void btlseqEnd_DispInit(BattleWork* wp);
+static void btlseqEnd_DispMain(CameraId camId, void* param);
+
+#define SS(v) BattleSetSeq(wp, SEQ_END, (v))
+static void _GetExpIcon_End(SeqEndWork* work);
+
+/**
+ * Battle end sequence, run every frame by the battle sequencer during SEQ_END:
+ * decides the result (win, loss, fled or interrupted),
+ * runs the field's post-battle event and Merlee's Star Point charm, counts the Star Points into the pouch,
+ * then plays the level-up show with the HP/FP/BP choice and the rank-up message,
+ * fades out and hands Mario's and the partner's state back to the field. A loss goes to the game over sequence.
+ */
+void PORT_HOOKABLE(btlseqEnd)(BattleWork* wp) {
+    SeqEndWork* work = (SeqEndWork*)wp->seqEndWork;
+    FieldBattleInfo* info = wp->fbatInfo;
+    PouchData* pouch = pouchGetPtr();
+
+    _audience_Whistle_control();
+    switch (BattleGetSeq(wp, (BattleSequence)7)) {
+        case 0x7000000: {
+            s32 marioBelong;
+            s32 enemyBelong;
+            u32 flags;
+            BattleUnit* mu;
+            SeqEndWork* nw;
+            btlsubResetMoveColorLvAll(wp);
+            mu = BattleGetMarioPtr(wp);
+            marioBelong = mu->alliance;
+            enemyBelong = BtlUnit_GetEnemyBelong(mu);
+            flags = wp->flags;
+            if (flags & BATTLE_FLAG_RESET_ABORT) {
+                BattleInformationSetResult(info, 4);
+            } else if (flags & BATTLE_FLAG_INTERRUPTED) {
+                BattleInformationSetResult(info, 5);
+            } else if (wp->alliances[marioBelong].clearConditionMet) {
+                BattleInformationSetResult(info, 3);
+            } else if (wp->alliances[enemyBelong].clearConditionMet) {
+                BattleInformationSetResult(info, 1);
+            } else if (flags & BATTLE_FLAG_ESCAPED) {
+                BattleInformationSetResult(info, 4);
+            }
+            switch (BattleInformationGetResult(info)) {
+                case 1:
+                    if (fbatGetPointer()->postBattleEvent != NULL) {
+                        SS(0x7000003);
+                        return;
+                    }
+                    _check_audience_battle_end_exec();
+                    SS(0x7000005);
+                    _BattleMarioKouraDelete();
+                    break;
+                case 3:
+                    SS(0x7000001);
+                    break;
+                case 4:
+                default:
+                    _ExecAllUnitBattleEndEvent();
+                    SS(0x700001D);
+                    BattleAudienceSoundSetVolAll(0, 30);
+                    break;
+            }
+#ifdef TARGET_PC
+            nw = BattleAlloc(sizeof(SeqEndWork)); /* PC port: larger than 0x2AC (pointer fields) */
+#else
+            nw = BattleAlloc(0x2AC);
+#endif
+            wp->seqEndWork = (BattleSeqEndWork*)nw;
+            btlseqEnd_DispInit(wp);
+            nw->state = 0;
+            nw->expEffect = NULL;
+            nw->whistleTimer = irand(120) + 60;
+            nw->confettiEvtId = 0;
+            break;
+        }
+        case 0x7000003: {
+            FieldBattleData* fb = fbatGetPointer();
+            EventEntry* e = evtEntry(fb->postBattleEvent, 10, 0);
+            fb->postBattleEventId = e->eventId;
+            SS(0x7000004);
+            return;
+        }
+        case 0x7000004: {
+            FieldBattleData* fb = fbatGetPointer();
+            SeqEndWork* nw;
+            if (evtCheckID(fb->postBattleEventId))
+                break;
+            if (!BattleWaitAllActiveEvtEnd(wp))
+                break;
+            if (fb->postBattleMode) {
+                BattleSetSeq(wp, SEQ_TURN, 0x3000001);
+                BattleSetSeq(wp, (BattleSequence)0, 2);
+                return;
+            }
+            SS(0x7000005);
+            _BattleMarioKouraDelete();
+#ifdef TARGET_PC
+            nw = BattleAlloc(sizeof(SeqEndWork)); /* PC port: larger than 0x2AC (pointer fields) */
+#else
+            nw = BattleAlloc(0x2AC);
+#endif
+            wp->seqEndWork = (BattleSeqEndWork*)nw;
+            btlseqEnd_DispInit(wp);
+            nw->state = 0;
+            return;
+        }
+        case 0x7000001: {
+            _ExecAllUnitBattleEndEvent();
+            btl_camera_set_moveSpeedLv(0, 2);
+            btl_camera_set_mode(0, 0x13);
+            btl_camera_set_posoffset(0, 0.0f, 0.0f, 0.0f);
+            fadeEntry(FADE_OUT_BLACK, 200, (GXColor){0, 0, 0, 255});
+            psndBGMOff(PSND_FADE_OUT | PSND_CH(1));
+            SS(0x7000002);
+            break;
+        }
+        case 0x7000002:
+            if (!fadeIsFinish())
+                break;
+            if (!((u32)wp->fbatInfo->setup->battleFlags & NPC_BATTLE_LOSS_OK)) {
+                seqSetSeq(SEQ_GAME_OVER, (const char*)1, NULL);
+                break;
+            }
+            SS(0x700001F);
+            break;
+        case 0x7000005: {
+            BattleUnit* mario = BattleGetMarioPtr(wp);
+            BattleUnit* party = BattleGetPartyPtr(wp);
+            s32 i;
+            if (party && BtlUnit_CheckStatusFlag(party, STATUS_FLAG_FLIPPED)) {
+                party->flippedTurns = 0;
+                BtlUnit_OffStatusFlag(party, STATUS_FLAG_FLIPPED);
+                BtlUnit_GetPartsPtr(party, BtlUnit_GetBodyPartsId(party))->poseTable = pose_table_nokotarou_stay;
+            }
+            BattleConsumeReserveItem();
+            for (i = 0; (s8)i < STATUS_INVALID; i++) {
+                if ((s8)i >= STATUS_INVALID || (s8)i < STATUS_FRIGHT) {
+                    if (party)
+                        BtlUnit_SetStatus(party, i, 0, 0);
+                    BtlUnit_SetStatus(mario, i, 0, 0);
+                }
+            }
+            if ((u32)mario->attributeFlags & UNIT_ATTR_VEILED) {
+                BattleUnit* p2 = BattleGetPartyPtr(wp);
+                EventEntry* e;
+                if (!p2)
+                    break;
+                e = evtEntry(BtlUnit_GetData(p2, 3), 10, 0);
+                e->unitId = p2->unitId;
+                p2->attackEventId = e->eventId;
+                break;
+            }
+            SS(0x7000006);
+        }
+        case 0x7000006: {
+            BattleUnit* mario;
+            PouchData* pp;
+            if (!BattleWaitAllActiveEvtEnd(wp))
+                break;
+            BattleAudienceSoundClap(-1, 0);
+            _ExecAllUnitBattleEndEvent();
+            BattleInformationSetDropMaterial(info);
+            pp = pouchGetPtr();
+            mario = BattleGetMarioPtr(wp);
+            if (pp->merleeNextCurseType == 3) {
+                EventEntry* e;
+                wp->majinaiState = 3;
+                BattleMajinaiDone();
+                BattleMajinaiEndCheck();
+                e = evtEntry(marioAttackEvent_MajinaiExpUp, 10, 0);
+                e->unitId = mario->unitId;
+                mario->attackEventId = e->eventId;
+                SS(0x7000007);
+                break;
+            }
+            SS(0x7000008);
+            break;
+        }
+        case 0x7000007:
+            if (!BattleWaitAllActiveEvtEnd(wp))
+                break;
+            SS(0x7000008);
+            break;
+        case 0x7000008: {
+            s32 flag;
+            BattleFogForceStop();
+            work->levelUp = 0;
+            work->exp = BattleGetStockExp(wp);
+            if (wp->majinaiState == 3) {
+                work->exp = work->exp * 2;
+            }
+#ifdef TARGET_PC
+            work->exp = portBattleExp(work->exp); /* Gameplay+: the EXP multiplier */
+#endif
+            if (pouch->level >= LEVEL_MAX) {
+                work->exp = 0;
+            }
+            if (work->exp > 100) {
+                work->exp = 100;
+            }
+            work->expDisp = work->exp;
+            wp->dispFlags &= ~BATTLE_DISP_FLAG_STAR_POINTS;
+            if (work->exp > 0) {
+                _GetExpIcon_Init(work);
+            }
+            work->timer = 0x78;
+            btl_camera_set_moveSpeedLv(0, 2);
+            if (!(wp->flags & BATTLE_FLAG_WIDE_STAGE)) {
+                btl_camera_set_mode(0, 0x11);
+            } else {
+                btl_camera_set_mode(0, 0x12);
+            }
+            btl_camera_set_posoffset(0, 0.0f, 0.0f, 0.0f);
+            SS(0x7000009);
+            BattleAudienceSoundCheer(0x3C, 0x3C);
+            BattleAudienceSoundClap(-1, 0);
+            BattleAudienceSoundWhistle();
+            flag = 0;
+            {
+                BattleUnit* party = BattleGetPartyPtr(wp);
+                if (party && BtlUnit_CheckStatus(party, STATUS_INSTANT_KILL)) {
+                    flag = 1;
+                }
+            }
+            if (!flag) {
+                psndBGMOff(PSND_FADE_HOLD);
+                psndBGMOn(PSND_CH(1), "BGM_BATTLE_WIN1");
+            } else {
+                psndBGMOff(PSND_FADE_HOLD);
+                psndBGMOn(PSND_CH(1), "BGM_BATTLE_WIN2");
+            }
+        }
+        case 0x7000009:
+            work->timer = work->timer - 1;
+            if (work->timer > 0)
+                break;
+            SS(0x700000A);
+            break;
+        case 0x700000A:
+            if (work->exp > 0) {
+                BattleUnit* mario = BattleGetMarioPtr(wp);
+                BattleUnit* party = BattleGetPartyPtr(wp);
+                EventEntry* e = evtEntry(BtlUnit_GetData(mario, 0x40), 10, 0);
+                if (e) {
+                    e->unitId = mario->unitId;
+                    mario->attackEventId = e->eventId;
+                }
+                if (party) {
+                    e = evtEntry(BtlUnit_GetData(party, 0x40), 10, 0);
+                    if (e) {
+                        e->unitId = party->unitId;
+                        party->attackEventId = e->eventId;
+                    }
+                }
+                if (!work->expEffect) {
+                    work->expEffect = effPointGetEntry(0, 0.0f, 90.0f, 0.0f, work->exp, 0);
+                }
+                SS(0x700000B);
+                break;
+            }
+            if (!(wp->flags & BATTLE_FLAG_MAJINAI_END)) {
+                SS(0x7000019);
+                break;
+            }
+            SS(0x700000E);
+            break;
+        case 0x700000B:
+            if (work->expDisp > 0) {
+                work->timer = work->timer + 1;
+                if ((s32)(s32)BattlePadCheckNow((PAD_BUTTON_A | PAD_BUTTON_B)) != 0) {
+                    if (work->timer < 1000) {
+                        work->timer = work->timer + 1000;
+                    }
+                }
+                if ((work->timer & 3) == 0 || work->timer >= 1000) {
+                    work->expDisp = work->expDisp - 1;
+                    pouch->starPoints = pouch->starPoints + 1;
+                    if ((work->timer & 7) == 0) {
+                        psndSFXOn("SFX_STAR_POINT_GET1");
+                    }
+                }
+                if (pouch->starPoints < 100)
+                    break;
+                pouch->starPoints = 0;
+                work->levelUp = 1;
+                if (pouch->level + 1 < LEVEL_MAX)
+                    break;
+                work->expDisp = 0;
+                break;
+            }
+            if (work->timer >= 1000) {
+                work->timer = 10;
+            } else if (work->timer < 0x78) {
+                work->timer = 0x8C - work->timer;
+            } else {
+                work->timer = 0x14;
+            }
+            SS(0x700000C);
+            break;
+        case 0x700000C:
+            work->timer = work->timer - 1;
+            if (work->timer > 0)
+                break;
+            work->timer = 0x3C;
+            _GetExpIcon_End(work);
+            SS(0x700000D);
+            effSoftDelete(work->expEffect);
+            if (work->levelUp) {
+                work->timer = 0x3C;
+                break;
+            }
+            work->timer = 5;
+            break;
+        case 0x700000D:
+            work->timer = work->timer - 1;
+            if (work->timer > 0)
+                break;
+            work->expEffect = NULL;
+            SS(0x700000E);
+            break;
+        case 0x700000E:
+            if (wp->flags & BATTLE_FLAG_MAJINAI_END) {
+                BattleUnit* mario = BattleGetMarioPtr(wp);
+                EventEntry* e = evtEntry(_event_MajinaiEnd, 10, 0);
+                e->unitId = mario->unitId;
+                mario->attackEventId = e->eventId;
+                SS(0x700000F);
+                break;
+            }
+            SS(0x7000010);
+            break;
+        case 0x700000F:
+            if (!BattleWaitAllActiveEvtEnd(wp))
+                break;
+            if (work->exp > 0) {
+                SS(0x7000010);
+                break;
+            }
+            SS(0x7000019);
+            break;
+        case 0x7000010:
+            work->flags &= ~1;
+            if (work->levelUp) {
+                work->selected = 1;
+                work->selectState = 0;
+                work->objCount = 3;
+                work->timer = 0;
+                BattleAudience_WinSetActive(0);
+                BattleBreakSlot_HideReel();
+                SS(0x7000011);
+                break;
+            }
+            SS(0x7000019);
+            break;
+        case 0x7000011:
+            if (work->timer == 0) {
+                EventEntry* e = evtEntry(_curtain_close_event, 10, 0);
+                work->evtId = e->eventId;
+                BattleStatusWindowSystemOff();
+                psndBGMOff(PSND_FADE_HOLD);
+                psndBGMOn(PSND_CH(1), "BGM_BATTLE_WIN3");
+            }
+            work->timer = work->timer + 1;
+            if (evtCheckID(work->evtId))
+                break;
+            work->evtId = 0;
+            BattleStatusWindowSystemOn();
+            BattleStatusWindowEventOn();
+            SS(0x7000012);
+            break;
+        case 0x7000012: {
+            s32 sel = work->selected;
+            EventEntry* e;
+            if (work->evtId) {
+                if (evtCheckID(work->evtId))
+                    break;
+                work->evtId = 0;
+            }
+            if (BattlePadCheckTrigger(LVUP_DIR(BTL_PAD_STICK_RIGHT, PAD_BUTTON_RIGHT))) {
+                if (work->selected < work->objCount - 1) {
+                    work->selected = work->selected + 1;
+                }
+            }
+            if (BattlePadCheckTrigger(LVUP_DIR(BTL_PAD_STICK_LEFT, PAD_BUTTON_LEFT))) {
+                if (work->selected > 0) {
+                    work->selected = work->selected - 1;
+                }
+            }
+            if (work->selected != sel) {
+                e = NULL;
+                switch (work->selected) {
+                    case 0:
+                        e = evtEntry(_move_to_heart_event, 10, 0);
+                        break;
+                    case 1:
+                        e = evtEntry(_move_to_flower_event, 10, 0);
+                        break;
+                    case 2:
+                        e = evtEntry(_move_to_badge_point_event, 10, 0);
+                        break;
+                }
+#if VERSION >= VERSION_US
+                work->flags &= ~SEQ_END_DISP_LVUP_HELP;
+#endif
+                if (e) {
+                    work->evtId = e->eventId;
+                    break;
+                }
+            }
+            if (BattlePadCheckTrigger(PAD_BUTTON_A)) {
+                s32 ok = 0;
+                switch (work->selected) {
+                    case 0:
+                        if (pouch->baseMaxHP < 200)
+                            ok = 1;
+                        break;
+                    case 1:
+                        if (pouch->baseMaxFP < 200)
+                            ok = 1;
+                        break;
+                    case 2:
+                        if (pouch->maximumBP < 99)
+                            ok = 1;
+                        break;
+                }
+                if (ok) {
+                    work->cursor = 0;
+                    work->prevCursor = 0;
+                    work->cursorCount = 2;
+                    work->flags &= ~SEQ_END_DISP_LVUP_HELP;
+                    SS(0x7000014);
+                    e = evtEntry(_jump_event, 10, 0);
+                    work->evtId = e->eventId;
+                }
+            }
+            break;
+        }
+        case 0x7000013:
+            if (BattlePadCheckTrigger(LVUP_DIR(BTL_PAD_STICK_DOWN, PAD_BUTTON_DOWN))) {
+                work->cursor = work->cursor + 1;
+                if (work->cursor >= work->cursorCount) {
+                    work->cursor = 0;
+                }
+            }
+            if (BattlePadCheckTrigger(LVUP_DIR(BTL_PAD_STICK_UP, PAD_BUTTON_UP))) {
+                work->cursor = work->cursor - 1;
+                if (work->cursor < 0) {
+                    work->cursor = work->cursorCount - 1;
+                }
+            }
+            if (BattlePadCheckTrigger(PAD_BUTTON_B)) {
+                work->flags &= ~SEQ_END_DISP_LVUP_CONFIRM;
+                SS(0x7000012);
+            }
+            if (BattlePadCheckTrigger(PAD_BUTTON_A)) {
+                if (work->cursor == 0) {
+                    work->flags &= ~(SEQ_END_DISP_LVUP_OBJECTS | SEQ_END_DISP_LVUP_CONFIRM);
+                    SS(0x7000015);
+                    break;
+                }
+                work->flags &= ~SEQ_END_DISP_LVUP_CONFIRM;
+                SS(0x7000012);
+            }
+            break;
+        case 0x7000014:
+            if (evtCheckID(work->evtId))
+                break;
+            work->evtId = 0;
+            SS(0x7000015);
+            break;
+        case 0x7000015: {
+            BattleUnit* party;
+            BattleUnit* party2;
+            s32 ok;
+            NpcBattleInfo* fd;
+            BattleUnit* mario;
+            pouch->level = pouch->level + 1;
+            switch (work->selected) {
+                case 0:
+                    pouch->baseMaxHP = pouch->baseMaxHP + 5;
+                    break;
+                case 1:
+                    pouch->baseMaxFP = pouch->baseMaxFP + 5;
+                    break;
+                case 2:
+                    pouch->maximumBP = pouch->maximumBP + 3;
+                    break;
+            }
+            pouchReviseMarioParam();
+            pouch->currentHP = pouch->maximumHP;
+            pouch->currentFP = pouch->maximumFP;
+            BtlUnit_SetParamFromPouch(BattleGetMarioPtr(wp));
+            party = BattleGetPartyPtr(wp);
+            if (party) {
+                s32 id = BattleTransPartyId((s32)party->currentKind);
+                if (id != 0 && id < 8) {
+                    PouchPartyData* pe = &pouch->partyData[id];
+                    pe->currentHP = pe->maximumHP;
+                    party->currentHp = party->maxHp;
+                }
+            }
+            fd = wp->fbatInfo->setup;
+            ok = 1;
+            mario = BattleGetMarioPtr(wp);
+            party2 = BattleGetPartyPtr(wp);
+            if (((u32)mario->statusFlags & STATUS_FLAG_DANGER) || ((u32)mario->statusFlags & STATUS_FLAG_PERIL)) {
+                ok = 0;
+            } else if (party2) {
+                if (((u32)mario->statusFlags & STATUS_FLAG_DANGER) || ((u32)mario->statusFlags & STATUS_FLAG_PERIL) ||
+                    BtlUnit_CheckStatus(party2, STATUS_INSTANT_KILL)) {
+                    ok = 0;
+                }
+            }
+            if (ok) {
+                if ((u32)fd->battleFlags & NPC_BATTLE_MARIO_PAUSE3_VOICE) {
+                    BtlUnit_snd_se(mario, "SFX_VOICE_MARIO_PAUSE3", -250000000, 0);
+                } else {
+                    BtlUnit_snd_se(mario, "SFX_VOICE_MARIO_PAUSE1", -250000000, 0);
+                }
+            }
+            BtlUnit_SetBodyAnim(BattleGetMarioPtr(wp), "M_V_2");
+            BattleAudienceSoundCheer(0xB4, 0x28);
+            work->timer = 0xB4;
+            SS(0x7000016);
+            mario = BattleGetMarioPtr(wp);
+            party = BattleGetPartyPtr(wp);
+            if (mario) {
+                effRecoveryEntry(4, 0, mario->position.x, 40.0f + mario->position.y, mario->position.z);
+            }
+            if (party) {
+                effRecoveryEntry(4, 0, party->position.x, 40.0f + party->position.y, party->position.z);
+            }
+            break;
+        }
+        case 0x7000016:
+            work->timer = work->timer - 1;
+            if (work->timer == 0x78) {
+                BattleUnit* mario = BattleGetMarioPtr(wp);
+                if (mario) {
+                    effRecoveryEntry(5, 0, mario->position.x, 40.0f + mario->position.y, mario->position.z);
+                }
+            }
+            if (work->timer > 0)
+                break;
+            if (work->confettiEvtId)
+                evtDeleteID(work->confettiEvtId);
+            SS(0x7000017);
+            break;
+        case 0x7000017: {
+            EventEntry* e;
+            if (!_get_rank_data(pouch->level)) {
+                SS(0x700001C);
+                break;
+            }
+            pouch->rank = _get_rank_data(pouch->level)->rankId;
+            e = evtEntry(_rank_up_event, 10, 0);
+            work->rankUpEvtId = e->eventId;
+            SS(0x7000018);
+        }
+        case 0x7000018:
+            if (evtCheckID(work->rankUpEvtId))
+                break;
+            SS(0x700001C);
+            break;
+        case 0x7000019: {
+            s32 ok = 1;
+            NpcBattleInfo* fd = wp->fbatInfo->setup;
+            BattleUnit* mario = BattleGetMarioPtr(wp);
+            BattleUnit* party = BattleGetPartyPtr(wp);
+            if (((u32)mario->statusFlags & STATUS_FLAG_DANGER) || ((u32)mario->statusFlags & STATUS_FLAG_PERIL)) {
+                ok = 0;
+            } else if (party) {
+                if (((u32)mario->statusFlags & STATUS_FLAG_DANGER) || ((u32)mario->statusFlags & STATUS_FLAG_PERIL) ||
+                    BtlUnit_CheckStatus(party, STATUS_INSTANT_KILL)) {
+                    ok = 0;
+                }
+            }
+            if (!ok) {
+                if ((u32)fd->battleFlags & NPC_BATTLE_MARIO_PAUSE3_VOICE) {
+                    BtlUnit_snd_se(mario, "SFX_VOICE_MARIO_RELIEF1", -250000000, 0);
+                } else {
+                    BtlUnit_snd_se(mario, "SFX_VOICE_MARIO_RELIEF2", -250000000, 0);
+                }
+            }
+            BtlUnit_SetBodyAnim(BattleGetMarioPtr(wp), "M_V_1");
+            work->timer = 0x3C;
+            SS(0x700001A);
+            break;
+        }
+        case 0x700001A:
+            if (--work->timer > 0)
+                break;
+            BtlUnit_SetBodyAnimType(BattleGetMarioPtr(wp), 0x2A);
+            if (BattleGetPartyPtr(wp)) {
+                BattleUnit* party = BattleGetPartyPtr(wp);
+                if ((s32)party->currentKind != UNIT_KOOPS || party->flippedTurns < 1) {
+                    BtlUnit_SetBodyAnimType(BattleGetPartyPtr(wp), 0x2A);
+                }
+            }
+            SS(0x700001B);
+            break;
+        case 0x700001B:
+            SS(0x700001C);
+            break;
+        case 0x700001C: {
+            FieldBattleData* fb;
+            NpcEntry* p;
+            SS(0x700001D);
+            BattleAudienceSoundSetVolAll(0, 30);
+#if VERSION >= VERSION_JP
+            fb = fbatGetPointer();
+            p = fb->target;
+            if (p)
+                p->interruptFlags |= NPC_INTERRUPT_NO_FIND;
+#endif
+            break;
+        }
+        case 0x700001D: {
+            fadeEntry(FADE_OUT_BLACK, 200, (GXColor){0, 0, 0, 255});
+            SS(0x700001E);
+            psndBGMOff(PSND_FADE_OUT | PSND_CH(1));
+        }
+        case 0x700001E:
+            if (!fadeIsFinish())
+                break;
+            SS(0x700001F);
+            break;
+        case 0x700001F: {
+            BattleUnit* party = BattleGetPartyPtr(wp);
+            s32 kind;
+            s32 id;
+            NpcBattleInfo* fd;
+            BattleUnit* mario;
+            MarioWork* mw;
+            void* pe;
+            if (party)
+                kind = (s32)party->currentKind;
+            else
+                kind = 0;
+            id = BattleTransPartyId(kind);
+            fd = wp->fbatInfo->setup;
+            mario = BattleGetMarioPtr(wp);
+            if ((u32)fd->battleFlags & NPC_BATTLE_LOSS_OK) {
+                if (mario->currentHp <= 0)
+                    mario->currentHp = 1;
+            }
+            BattleSetMarioParamToFieldBattle(wp);
+#ifdef TARGET_PC
+            portPartyReviveAfterBattle(); // Gameplay+: no partner left at 0 HP in the field
+#endif
+            BattleFree(wp->seqEndWork);
+            wp->seqEndWork = NULL;
+            BattleSetSeq(wp, (BattleSequence)0, 4);
+            mw = marioGetPtr();
+            mw->dispFlags &= ~MARIO_DISP_FLAG_HIDDEN;
+            if (kind)
+                marioPartyEntry((PartyId)id);
+            else
+                marioPartyKill();
+            pe = partyGetPtr(marioGetPartyId());
+            if (pe)
+                ((PartyEntry*)pe)->flags2 &= ~PARTY_DISP_FLAG_HIDDEN;
+            BtlActRec_JudgeRuleKeep();
+            BattleAudienceSoundStop(1);
+            break;
+        }
+    }
+    btlseqEnd_DispMain((CameraId)8, wp);
+}
+
+// FAKE: inlining off from here to the end of the file (FAKES.md); without it 3 functions change length, e.g. btlseqEnd 1305 -> 1660 instructions
+#pragma dont_inline on
+/**
+ * Starts every unit's battle-end event (unit data entry 0x3F) bound to that unit;
+ * run on a win once all events have finished, and when the battle is fled or aborted.
+ */
+static void _ExecAllUnitBattleEndEvent(void) {
+    BattleUnit* unit;
+    BattleWork* wp = _battleWorkPointer;
+    s32 i;
+    void* data;
+
+    EventEntry* evt;
+
+    for (i = 0; i < BATTLE_UNIT_MAX; i++) {
+        unit = BattleGetUnitPtr(wp, i);
+        if (unit) {
+            data = BtlUnit_GetData(unit, 0x3F);
+            if (data) {
+                evt = evtEntry(data, 10, 0);
+                evt->unitId = unit->unitId;
+            }
+        }
+    }
+}
+
+/** Clears the result display flags when the end-of-battle work is allocated. */
+static void btlseqEnd_DispInit(BattleWork* wp) {
+    SEW(wp)->flags = 0;
+}
+
+/**
+ * Called at the end of every btlseqEnd frame: steps the Star Point icons
+ * and queues each result display whose SeqEndDispFlags bit is set.
+ */
+static void btlseqEnd_DispMain(CameraId camId, void* param) {
+    BattleWork* wp = (BattleWork*)param;
+    SeqEndWork* work = SEW(wp);
+
+    if (work) {
+        if (work->flags & SEQ_END_DISP_EXP_ICONS) {
+            _GetExpIcon_Main(wp);
+            dispEntry(camId, 900.0f, 1, _GetExpIcon_Disp, wp);
+        }
+        if (work->flags & SEQ_END_DISP_MARIO_EXP) {
+            dispEntry(camId, 900.0f, 1, _MarioExpDisp, wp);
+        }
+        if (work->flags & SEQ_END_DISP_LVUP_OBJECTS) {
+            Vec pos = {0.0f, 0.0f, 0.0f};
+            dispEntry(CAMERA_3D, dispCalcZ(&pos), 2, _lvup_select_object_disp, wp);
+        }
+        if (work->flags & SEQ_END_DISP_LVUP_CONFIRM) {
+            dispEntry(camId, 900.0f, 1, _LvupParamConfirmDisp, wp);
+        }
+#if VERSION == VERSION_JP || VERSION == VERSION_US || VERSION == VERSION_EU
+        // Only the three releases draw the level-up help; no demo has it.
+        if (work->flags & SEQ_END_DISP_LVUP_HELP) {
+            dispEntry(camId, 900.0f, 1, L__LvupParamHelpMsgDisp, wp);
+        }
+#endif
+    }
+}
+
+/**
+ * Draws a window with the Star Point icon and the remaining expDisp count.
+ * Nothing sets SEQ_END_DISP_MARIO_EXP, so it never shows.
+ */
+static void _MarioExpDisp(CameraId camId, void* param) {
+    SeqEndWork* work = SEW((BattleWork*)param);
+    char buf[0x10];
+    Vec pos;
+    f32 width;
+
+    pouchGetPtr();
+    pos.x = 200.0f;
+    pos.y = -200.0f;
+    pos.z = 0.0f;
+    if (work) {
+        sprintf(buf, "%2d", work->expDisp);
+        {
+            u32 len = strlen(buf);
+            width = 12.5f * len + 65.0f;
+        }
+        PCCALL(((WindowDispWakuColFloatsFirstFn)windowDispGX_Waku_col)(180.0f, -160.0f, width, 32.0f, 10.0f, 0, (GXColor){0xFF, 0xFF, 0xFF, 0xFF}), windowDispGX_Waku_col(0, (GXColor){0xFF, 0xFF, 0xFF, 0xFF}, 180.0f, -160.0f, width, 32.0f, 10.0f));
+
+        iconDispGx(&pos, ICON_DISP_2D, ICON_18C, 1.0f);
+        FontDrawStart();
+        FontDrawString(225.0f, -163.0f, buf);
+    }
+}
+
+/**
+ * Draws a level-up confirmation box (btl_msg_lvup_ok with yes and no, cursor at work->cursor).
+ * Nothing sets SEQ_END_DISP_LVUP_CONFIRM and the matching confirm state 0x7000013 is never entered,
+ * so it never shows.
+ */
+static void _LvupParamConfirmDisp(CameraId camId, void* param) {
+    Vec pos;
+    f32 zero = 0.0f;
+    u32 len;
+    s32* cursorPtr;
+    f32 w;
+    char buf[0x14];
+    SeqEndWork* work = SEW((BattleWork*)param);
+    cursorPtr = &work->cursor; // FAKE: pointer to the field; direct work->cursor differs
+    pouchGetPtr();
+    sprintf(buf, msgSearch("btl_msg_lvup_ok"));
+    len = strlen(buf);
+    PCCALL(((WindowDispWakuColFloatsFirstFn)windowDispGX_Waku_col)(-30.0f - (w = 6.25f * len), 30.0f, 12.5f * len + 65.0f, 32.0f, 10.0f, 0, (GXColor){0xFF, 0xFF, 0xFF, 0xFF}), windowDispGX_Waku_col(0, (GXColor){0xFF, 0xFF, 0xFF, 0xFF}, -30.0f - (w = 6.25f * len), 30.0f, 12.5f * len + 65.0f, 32.0f, 10.0f));
+    windowDispGX_Waku_col(0, (GXColor){0xFF, 0xFF, 0xFF, 0xFF}, -70.0f, -10.0f, 130.0f, 60.0f, 10.0f);
+    FontDrawStart();
+    FontDrawString(zero - w, 27.0f, buf);
+    FontDrawString(-20.0f, -13.0f, msgSearch("btl_msg_lvup_yes"));
+    FontDrawString(-20.0f, -38.0f, msgSearch("btl_msg_lvup_no"));
+    pos.x = -40.0f;
+    pos.y = -50 - (*cursorPtr) * 25;
+    pos.z = 0.0f;
+    iconDispGx(&pos, ICON_DISP_2D, ICON_18C, 1.0f);
+}
+
+/** Every demo has this function but never calls it (the linker strips it; its strings stay). */
+void L__LvupParamHelpMsgDisp(CameraId camId, void* param) {
+    SeqEndWork* work = SEW((BattleWork*)param);
+    PouchData* pouch;
+    const char* msg;
+    u16 lines;
+    s32 width;
+
+    f32 y;
+    f32 zero = 0.0f;
+
+    pouch = pouchGetPtr();
+    switch (work->selected) {
+        case 0:
+            msg = msgSearch("help_btl_levelup_hp");
+            if (pouch->baseMaxHP >= 200) {
+                msg = msgSearch("helperr_btl_levelup_hp");
+            }
+            break;
+        case 1:
+            msg = msgSearch("help_btl_levelup_fp");
+            if (pouch->baseMaxFP >= 200) {
+                msg = msgSearch("helperr_btl_levelup_fp");
+            }
+            break;
+        case 2:
+            msg = msgSearch("help_btl_levelup_bp");
+            if (pouch->maximumBP >= 99) {
+                msg = msgSearch("helperr_btl_levelup_bp");
+            }
+            break;
+    }
+    width = FontGetMessageWidthLine(msg, &lines);
+    lines++;
+    windowDispGX_Waku_col(0, (GXColor){0xFF, 0xFF, 0xFF, 0xFF}, (zero - width / 2) - 20.0f, -145.0f + (lines - 1) * 29, width + 40, lines * 29 + 1, 10.0f);
+    FontDrawStart_alpha(0xFF);
+    y = -148.0f;
+    FontDrawMessage(zero - width / 2, (s32)y + (lines - 1) * 29, msg);
+}
+
+/**
+ * Creates the 19 Star Point icons of the result screen,
+ * ten large ones (one per 10 points, centred on the count) and nine small ones (single points),
+ * and turns on their display.
+ */
+static void _GetExpIcon_Init(SeqEndWork* work) {
+    s32 i;
+    char name[16];
+
+    for (i = 0; i < 10; i++) {
+        sprintf(name, "_Bgsp%d", i);
+        iconEntry2D(name, ICON_18C);
+        work->icons[i] = iconNameToPtr(name);
+        iconSetScale(name, 0.9f);
+        iconFlagOn(name, ICON_FLAG_HIDDEN);
+        work->counter[i] = 0;
+        work->iconPos[i].x = 24.0f - 18.0f * (work->expDisp / 10) + 36.0f * i;
+        work->iconPos[i].y = 25.0f;
+        work->iconPos[i].z = 0.0f;
+        iconSetPos(name, work->iconPos[i].x, work->iconPos[i].y, work->iconPos[i].z);
+    }
+    for (i = 10; i < 19; i++) {
+        sprintf(name, "_Bgsp%d", i);
+        iconEntry2D(name, ICON_18C);
+        work->icons[i] = iconNameToPtr(name);
+        iconSetScale(name, 0.45f);
+        iconFlagOn(name, ICON_FLAG_HIDDEN);
+        work->counter[i] = 0;
+        work->iconPos[i].x = 86.899994f - 16.199999f * (i - 9);
+        work->iconPos[i].y = 0.0f;
+        work->iconPos[i].z = 0.0f;
+        iconSetPos(name, work->iconPos[i].x, work->iconPos[i].y, work->iconPos[i].z);
+    }
+    work->flags |= SEQ_END_DISP_EXP_ICONS;
+}
+
+/**
+ * Per frame: shows expDisp / 10 large and expDisp % 10 small Star Point icons, fading them in by 0x40 a frame,
+ * hides the rest and re-centres the large row as the count drops.
+ */
+static void _GetExpIcon_Main(BattleWork* wp) {
+    SeqEndWork* work = SEW(wp);
+    s32 exp = work->expDisp;
+    s32 i;
+    f32 ofs;
+
+    for (i = 0; i < exp / 10; i++) {
+        iconFlagOff(work->icons[i]->name, ICON_FLAG_HIDDEN);
+        if (work->alpha[i] <= 0) {
+            work->alpha[i] = 0x40;
+        } else {
+            work->alpha[i] += 0x40;
+            if (work->alpha[i] > 0xFF) {
+                work->alpha[i] = 0xFF;
+            }
+        }
+        if (work->counter[i] < 16) {
+            work->counter[i]++;
+        }
+        work->iconPos[i].x = 24.0f - 18.0f * (work->expDisp / 10) + 36.0f * i;
+    }
+    for (; i < 10; i++) {
+        iconFlagOn(work->icons[i]->name, ICON_FLAG_HIDDEN);
+        work->alpha[i] = 0;
+        work->counter[i] = 0;
+    }
+    for (i = 10; i - 10 < exp % 10; i++) {
+        iconFlagOff(work->icons[i]->name, ICON_FLAG_HIDDEN);
+        if (work->alpha[i] <= 0) {
+            work->alpha[i] = 0x40;
+        } else {
+            work->alpha[i] += 0x40;
+            if (work->alpha[i] > 0xFF) {
+                work->alpha[i] = 0xFF;
+            }
+        }
+    }
+    for (; i < 19; i++) {
+        iconFlagOn(work->icons[i]->name, ICON_FLAG_HIDDEN);
+        work->alpha[i] = 0;
+    }
+    ofs = 0.0f;
+    for (i = 0; i < 19; i++) {
+        iconSetAlpha(work->icons[i]->name, work->alpha[i]);
+        iconSetPos(work->icons[i]->name, work->iconPos[i].x, work->iconPos[i].y + ofs, work->iconPos[i].z);
+    }
+}
+
+/** Draws the translucent white window behind the Star Point icons. */
+static void _GetExpIcon_Disp(CameraId camId, void* param) {
+    windowDispGX_Waku_col(0, (GXColor){0xFF, 0xFF, 0xFF, 0x80}, -76.899994f, 21.0f, 165.79999f, 24.199999f, 10.0f);
+}
+
+/** Turns the Star Point icon display off and deletes the 19 icons. */
+static void _GetExpIcon_End(SeqEndWork* work) {
+    s32 i;
+
+    work->flags &= ~SEQ_END_DISP_EXP_ICONS;
+    for (i = 0; i < 19; i++) {
+        iconDelete(work->icons[i]->name);
+    }
+}
+
+// Two copies: the US release adds the upgrade-select prompt and cursor loop and reorders the closing events.
+#if VERSION >= VERSION_US
+USER_FUNC(N__display_select_one_to_upgrade_text);
+// Picks the first level-up choice from the first stick press; defined further down.
+USER_FUNC(N__set_initial_upgrade_cursor_position);
+
+/**
+ * US and later level-up show, started by btlseqEnd when the Star Points reach 100.
+ * The stage darkens and the curtains close (on a wide stage Mario and the partner walk off first and the
+ * wide-stage flag is cleared), the nozzle objects lower,
+ * confetti and the level-up effect play and Star Power refills,
+ * a spotlight cone follows Mario while the enemies are hidden, Mario and the partner walk back on,
+ * the HP/FP/BP blocks appear and the curtains open.
+ * The select_HPFPBP prompt then stays up until the stick is pushed:
+ * left picks BP, right picks HP, and the spotlight swings there.
+ */
+EVT_BEGIN(_curtain_close_event)
+    // The stage darkens and the side curtains close.
+    BEGIN_SIBLING_EVENT
+        CALL(evt_batstage_set_stg_dark, 80, 30, 0)
+        CALL(evt_batstage_set_stg_dark_base, 80, 30, 0)
+    END_SIBLING_EVENT
+    BEGIN_SIBLING_EVENT
+        CALL(evt_fade_entry, FADE_CURTAIN_SIDES_A1_3D, 1000, 0, 0, 0)
+        CALL(evt_fade_set_anim_ofs_pos, 0, 130)
+        CALL(evt_fade_set_anim_virtual_pos, 0, 0, 80)
+        CALL(evt_fade_end_wait)
+    END_SIBLING_EVENT
+    // On a wide stage, Mario and the partner walk off to the left while the curtains close.
+    CALL(btlevtcmd_check_battleflag, LW(0), 256)
+    IF_INT_NOT_EQUAL(LW(0), 0)
+        BEGIN_SIBLING_EVENT
+            CALL(btlevtcmd_AnimeChangePoseType, BTL_UNIT_MARIO, 1, BTL_POSE_RUN)
+            CALL(btlevtcmd_GetPos, BTL_UNIT_MARIO, LW(0), LW(1), LW(2))
+            CALL(btlevtcmd_MovePosition, BTL_UNIT_MARIO, -300, LW(1), LW(2), 120, -1, 0)
+        END_SIBLING_EVENT
+        CALL(btlevtcmd_GetUnitId, BTL_UNIT_PARTNER, LW(3))
+        IF_INT_NOT_EQUAL(LW(3), -1)
+            BEGIN_SIBLING_EVENT
+                CALL(btlevtcmd_GetBodyId, LW(3), LW(4))
+                CALL(btlevtcmd_AnimeChangePoseType, LW(3), LW(4), BTL_POSE_RUN)
+                CALL(btlevtcmd_GetPos, LW(3), LW(0), LW(1), LW(2))
+                CALL(btlevtcmd_MovePosition, LW(3), -330, LW(1), LW(2), 120, -1, 0)
+            END_SIBLING_EVENT
+        END_IF
+    END_IF
+    // The three nozzles above the stage lower together.
+    BEGIN_SIBLING_EVENT
+        CALL(evt_sub_intpl_init_float, 0, 0, FLOAT(-40.0f), 29)
+        LOOP(30)
+            CALL(evt_sub_intpl_get_float, LW(0), EVT_NULLPTR)
+            CALL(_nozzle_set_offset, STRING("nozzle_l"), LW(0))
+            WAIT_FRAMES(1)
+        END_LOOP
+    END_SIBLING_EVENT
+    BEGIN_SIBLING_EVENT
+        CALL(evt_sub_intpl_init_float, 0, 0, FLOAT(-40.0f), 29)
+        LOOP(30)
+            CALL(evt_sub_intpl_get_float, LW(0), EVT_NULLPTR)
+            CALL(_nozzle_set_offset, STRING("nozzle_c"), LW(0))
+            WAIT_FRAMES(1)
+        END_LOOP
+    END_SIBLING_EVENT
+    BEGIN_SIBLING_EVENT
+        CALL(evt_sub_intpl_init_float, 0, 0, FLOAT(-40.0f), 29)
+        LOOP(30)
+            CALL(evt_sub_intpl_get_float, LW(0), EVT_NULLPTR)
+            CALL(_nozzle_set_offset, STRING("nozzle_r"), LW(0))
+            WAIT_FRAMES(1)
+        END_LOOP
+    END_SIBLING_EVENT
+    // The wide-stage flag is cleared and the camera returns to its normal view.
+    CALL(btlevtcmd_onoff_battleflag, 0, 256)
+    CALL(evt_btl_camera_set_mode, 0, 0)
+    CALL(evt_btl_camera_set_moveSpeedLv, 0, 1)
+    WAIT_MS(1500)
+    // Confetti falls, the level-up effect plays and Star Power refills to full.
+    BEGIN_SIBLING_EVENT
+        LOOP(6)
+            CALL(evt_eff, STRING(""), STRING("confetti"), 13, 0, 300, 95, 180, 0, 0, 0, 0, 0, 0, 0)
+            WAIT_FRAMES(20)
+        END_LOOP
+    END_SIBLING_EVENT
+    SPAWN_EVENT_GET_ID(PTR(_confetti_control_event), LW(0))
+    CALL(_set_confetti_control_evtid, LW(0))
+    CALL(evt_eff, STRING(""), STRING("levelup"), 0, 0, 50, 100, 60, 0, 0, 0, 0, 0, 0, 0)
+    WAIT_FRAMES(48)
+    CALL(_lvup_ap_recover_full)
+    WAIT_MS(1000)
+    // A spotlight comes on and follows Mario, and the enemies are hidden.
+    BEGIN_SIBLING_EVENT_GET_ID(LW(15))
+        WAIT_FRAMES(2)
+        CALL(_lvup_spot_on, 0)
+        CALL(_lvup_spot_move, 0)
+    END_SIBLING_EVENT
+    CALL(_disable_enemy_unit_disp)
+    // The partner reappears off to the left and walks back on with its own footstep sounds.
+    BEGIN_SIBLING_EVENT
+        CALL(btlevtcmd_GetUnitId, BTL_UNIT_PARTNER, LW(3))
+        IF_INT_NOT_EQUAL(LW(3), -1)
+            CALL(btlevtcmd_SetPos, LW(3), -230, 0, 90)
+            CALL(btlevtcmd_ClearAllStatus, LW(3))
+            CALL(btlevtcmd_GetBodyId, LW(3), LW(4))
+            CALL(btlevtcmd_AnimeChangePoseType, LW(3), LW(4), BTL_POSE_WALK)
+            SET_VALUE(LW(0), -155)
+            SET_VALUE(LW(1), 0)
+            SET_VALUE(LW(2), 90)
+            SET_VALUE(LW(6), 28)
+            CALL(btlevtcmd_GetUnitKind, LW(3), LW(5))
+            SWITCH(LW(5))
+                CASE_OR_EQUAL(UNIT_GOOMBELLA)
+                CASE_OR_EQUAL(UNIT_KOOPS)
+                CALL(btlevtcmd_SetMoveSoundDataWork, LW(3), STRING("SFX_PARTY_BATTLE_SUBMOVE1L"), STRING("SFX_PARTY_BATTLE_SUBMOVE1R"), 6, 12, 16, 0, 0)
+                CALL(btlevtcmd_MovePosition, LW(3), LW(0), LW(1), LW(2), LW(6), -2, 1)
+                CASE_END
+                CASE_EQUAL(UNIT_YOSHI)
+                CALL(btlevtcmd_SetMoveSoundDataWork, LW(3), STRING("SFX_PARTY_BATTLE_SUBMOVE1L"), STRING("SFX_PARTY_BATTLE_SUBMOVE1R"), 0, 6, 6, 0, 0)
+                CALL(btlevtcmd_MovePosition, LW(3), LW(0), LW(1), LW(2), LW(6), -2, 1)
+                CASE_EQUAL(UNIT_FLURRIE)
+                CALL(btlevtcmd_SetMoveSoundDataWork, LW(3), STRING("SFX_PARTY_BATTLE_SUBHANG1"), STRING("SFX_PARTY_BATTLE_SUBHANG1"), 6, 12, 16, 0, 0)
+                CALL(btlevtcmd_MovePosition, LW(3), LW(0), LW(1), LW(2), LW(6), -2, 1)
+                CASE_EQUAL(UNIT_VIVIAN)
+                CALL(btlevtcmd_SetMoveSoundDataWork, LW(3), STRING("SFX_PARTY_BATTLE_SUBHANG1"), STRING("SFX_PARTY_BATTLE_SUBHANG1"), 0, 15, 13, 0, 0)
+                CALL(btlevtcmd_MovePosition, LW(3), LW(0), LW(1), LW(2), LW(6), -2, 1)
+                CASE_EQUAL(UNIT_BOBBERY)
+                CALL(btlevtcmd_SetMoveSoundDataWork, LW(3), STRING("SFX_PARTY_BATTLE_SUBMOVE1L"), STRING("SFX_PARTY_BATTLE_SUBMOVE1R"), 0, 18, 18, 0, 0)
+                CALL(btlevtcmd_MovePosition, LW(3), LW(0), LW(1), LW(2), LW(6), -2, 1)
+                CASE_EQUAL(UNIT_MS_MOWZ)
+                CALL(btlevtcmd_SetMoveSoundDataWork, LW(3), STRING("SFX_PARTY_BATTLE_SUBMOVE1L"), STRING("SFX_PARTY_BATTLE_SUBMOVE1R"), 0, 15, 13, 0, 0)
+                CALL(btlevtcmd_MovePosition, LW(3), LW(0), LW(1), LW(2), LW(6), -2, 1)
+            END_SWITCH
+            CALL(btlevtcmd_AnimeChangePoseType, LW(3), LW(4), BTL_POSE_STAY)
+        END_IF
+    END_SIBLING_EVENT
+    // Mario walks back to centre stage, strikes a victory pose and the audience cheers.
+    CALL(btlevtcmd_SetPos, BTL_UNIT_MARIO, -200, 0, 90)
+    CALL(btlevtcmd_ClearAllStatus, BTL_UNIT_MARIO)
+    CALL(btlevtcmd_AnimeChangePoseType, BTL_UNIT_MARIO, 1, BTL_POSE_WALK)
+    CALL(btlevtcmd_MovePosition, BTL_UNIT_MARIO, 0, 0, 90, 75, -1, 0)
+    CALL(btlevtcmd_snd_se, BTL_UNIT_MARIO, STRING("SFX_VOICE_MARIO_PAUSE2"), EVT_NULLPTR, 0, EVT_NULLPTR)
+    CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_MARIO, 1, STRING("M_V_2"))
+    CALL(evt_audience_sound_cheer, 180, 40)
+    WAIT_MS(1000)
+    // The HP, FP and BP blocks appear dimmed and the spotlight fades.
+    CALL(_lvup_select_object_init)
+    BEGIN_SIBLING_EVENT
+        CALL(_lvup_spot_off, 30)
+    END_SIBLING_EVENT
+    // The stage lights come back and the curtains open.
+    BEGIN_INLINE_EVENT_GET_ID(LW(10))
+        CALL(evt_batstage_set_stg_dark, 0, 30, 0)
+        CALL(evt_batstage_set_stg_dark_base, 0, 30, 0)
+        CALL(_lvup_obj_set_color, 0, 100, 128, 128, 255)
+        CALL(_lvup_obj_set_color, 1, 100, 128, 128, 255)
+        CALL(_lvup_obj_set_color, 2, 100, 128, 128, 255)
+        CALL(evt_batstage_set_aud_dark, 0, 60, 0)
+        CALL(evt_fade_entry, FADE_CURTAIN_SIDES_A2_3D, 1000, 0, 0, 0)
+        CALL(evt_fade_set_anim_ofs_pos, 0, 130)
+        CALL(evt_fade_set_anim_virtual_pos, 0, 0, 80)
+        CALL(evt_fade_end_wait)
+    END_INLINE_EVENT
+    CALL(btlevtcmd_WaitEventEnd, LW(10))
+    // The "select one to upgrade" prompt stays on screen until the stick is pushed.
+    BEGIN_SIBLING_EVENT_GET_ID(LW(10))
+        SET_VALUE(LW(5), 5)
+        LOOP(LW(5))
+            CALL(N__display_select_one_to_upgrade_text)
+            WAIT_FRAMES(1)
+            SET_VALUE(LW(5), 5)
+        END_LOOP
+    END_SIBLING_EVENT
+    // Pushing left puts the cursor on BP: the spotlight swings left and the BP block lights up.
+    LABEL(60)
+    CALL(btlevtcmd_PadCheckTrigger, 0, BTL_PAD_STICK_LEFT, LW(0))
+    IF_INT_NOT_EQUAL(LW(0), 0)
+        BEGIN_SIBLING_EVENT_GET_ID(LW(0))
+            CALL(N__set_initial_upgrade_cursor_position, 2)
+            CALL(btlevtcmd_BtlStageObjSetRotate, STRING("spotlight"), 0, 0, 70)
+            CALL(btlevtcmd_BtlStageObjFlagOnOff, STRING("spotlight"), 1, 0)
+            CALL(evt_sub_intpl_init, 5, 70, 30, 10)
+            LOOP(11)
+                CALL(evt_sub_intpl_get_value)
+                CALL(btlevtcmd_BtlStageObjSetRotate, STRING("spotlight"), 0, 0, LW(0))
+                WAIT_FRAMES(1)
+            END_LOOP
+            CALL(_lvup_obj_set_color, 2, 255, 255, 255, 255)
+            CALL(_lvup_disp_flag_onoff, 2, 32)
+            CALL(_lvup_select_obj_disp_on)
+        END_SIBLING_EVENT
+        CALL(btlevtcmd_WaitEventEnd, LW(0))
+        GOTO(69)
+    END_IF
+    // Pushing right puts the cursor on HP: the spotlight swings right and the HP block lights up.
+    LABEL(61)
+    CALL(btlevtcmd_PadCheckTrigger, 0, BTL_PAD_STICK_RIGHT, LW(0))
+    IF_INT_NOT_EQUAL(LW(0), 0)
+        BEGIN_SIBLING_EVENT_GET_ID(LW(0))
+            CALL(N__set_initial_upgrade_cursor_position, 0)
+            CALL(btlevtcmd_BtlStageObjSetRotate, STRING("spotlight"), 0, 0, -70)
+            CALL(btlevtcmd_BtlStageObjFlagOnOff, STRING("spotlight"), 1, 0)
+            CALL(evt_sub_intpl_init, 5, -70, -30, 10)
+            LOOP(11)
+                CALL(evt_sub_intpl_get_value)
+                CALL(btlevtcmd_BtlStageObjSetRotate, STRING("spotlight"), 0, 0, LW(0))
+                WAIT_FRAMES(1)
+            END_LOOP
+            CALL(_lvup_obj_set_color, 0, 255, 255, 255, 255)
+            CALL(_lvup_disp_flag_onoff, 0, 32)
+            CALL(_lvup_select_obj_disp_on)
+        END_SIBLING_EVENT
+        CALL(btlevtcmd_WaitEventEnd, LW(0))
+        GOTO(69)
+    END_IF
+    // No push yet: check the stick again next frame.
+    WAIT_FRAMES(1)
+    GOTO(60)
+    // The prompt goes away and every block shows its current and next value.
+    LABEL(69)
+    DELETE_EVENT(LW(10))
+    CALL(btlevtcmd_BtlStageObjFlagOnOff, STRING("spotlight"), 1, 0)
+    CALL(_lvup_select_obj_lvup_param_disp)
+    CALL(_lvup_disp_flag_onoff, 1, 32)
+    RETURN
+EVT_END()
+#else
+/**
+ * Demo and Japanese level-up show: the same as the US version up to the curtains opening (the demos also leave
+ * the audience dark), then it lights the FP block, with no prompt.
+ */
+EVT_BEGIN(_curtain_close_event)
+    // The stage darkens and the side curtains close.
+    BEGIN_SIBLING_EVENT
+        CALL(evt_batstage_set_stg_dark, 80, 30, 0)
+        CALL(evt_batstage_set_stg_dark_base, 80, 30, 0)
+    END_SIBLING_EVENT
+    BEGIN_SIBLING_EVENT
+        CALL(evt_fade_entry, FADE_CURTAIN_SIDES_A1_3D, 1000, 0, 0, 0)
+        CALL(evt_fade_set_anim_ofs_pos, 0, 130)
+        CALL(evt_fade_set_anim_virtual_pos, 0, 0, 80)
+        CALL(evt_fade_end_wait)
+    END_SIBLING_EVENT
+    // On a wide stage, Mario and the partner walk off to the left while the curtains close.
+    CALL(btlevtcmd_check_battleflag, LW(0), 256)
+    IF_INT_NOT_EQUAL(LW(0), 0)
+        BEGIN_SIBLING_EVENT
+            CALL(btlevtcmd_AnimeChangePoseType, BTL_UNIT_MARIO, 1, BTL_POSE_RUN)
+            CALL(btlevtcmd_GetPos, BTL_UNIT_MARIO, LW(0), LW(1), LW(2))
+            CALL(btlevtcmd_MovePosition, BTL_UNIT_MARIO, -300, LW(1), LW(2), 120, -1, 0)
+        END_SIBLING_EVENT
+        CALL(btlevtcmd_GetUnitId, BTL_UNIT_PARTNER, LW(3))
+        IF_INT_NOT_EQUAL(LW(3), -1)
+            BEGIN_SIBLING_EVENT
+                CALL(btlevtcmd_GetBodyId, LW(3), LW(4))
+                CALL(btlevtcmd_AnimeChangePoseType, LW(3), LW(4), BTL_POSE_RUN)
+                CALL(btlevtcmd_GetPos, LW(3), LW(0), LW(1), LW(2))
+                CALL(btlevtcmd_MovePosition, LW(3), -330, LW(1), LW(2), 120, -1, 0)
+            END_SIBLING_EVENT
+        END_IF
+    END_IF
+    // The three nozzles above the stage lower together.
+    BEGIN_SIBLING_EVENT
+        CALL(evt_sub_intpl_init_float, 0, 0, FLOAT(-40.0f), 29)
+        LOOP(30)
+            CALL(evt_sub_intpl_get_float, LW(0), EVT_NULLPTR)
+            CALL(_nozzle_set_offset, STRING("nozzle_l"), LW(0))
+            WAIT_FRAMES(1)
+        END_LOOP
+    END_SIBLING_EVENT
+    BEGIN_SIBLING_EVENT
+        CALL(evt_sub_intpl_init_float, 0, 0, FLOAT(-40.0f), 29)
+        LOOP(30)
+            CALL(evt_sub_intpl_get_float, LW(0), EVT_NULLPTR)
+            CALL(_nozzle_set_offset, STRING("nozzle_c"), LW(0))
+            WAIT_FRAMES(1)
+        END_LOOP
+    END_SIBLING_EVENT
+    BEGIN_SIBLING_EVENT
+        CALL(evt_sub_intpl_init_float, 0, 0, FLOAT(-40.0f), 29)
+        LOOP(30)
+            CALL(evt_sub_intpl_get_float, LW(0), EVT_NULLPTR)
+            CALL(_nozzle_set_offset, STRING("nozzle_r"), LW(0))
+            WAIT_FRAMES(1)
+        END_LOOP
+    END_SIBLING_EVENT
+    // The wide-stage flag is cleared and the camera returns to its normal view.
+    CALL(btlevtcmd_onoff_battleflag, 0, 256)
+    CALL(evt_btl_camera_set_mode, 0, 0)
+    CALL(evt_btl_camera_set_moveSpeedLv, 0, 1)
+    WAIT_MS(1500)
+    // Confetti falls, the level-up effect plays and Star Power refills to full.
+    BEGIN_SIBLING_EVENT
+        LOOP(6)
+            CALL(evt_eff, STRING(""), STRING("confetti"), 13, 0, 300, 95, 180, 0, 0, 0, 0, 0, 0, 0)
+            WAIT_FRAMES(20)
+        END_LOOP
+    END_SIBLING_EVENT
+    SPAWN_EVENT_GET_ID(PTR(_confetti_control_event), LW(0))
+    CALL(_set_confetti_control_evtid, LW(0))
+    CALL(evt_eff, STRING(""), STRING("levelup"), 0, 0, 50, 100, 60, 0, 0, 0, 0, 0, 0, 0)
+    WAIT_FRAMES(48)
+    CALL(_lvup_ap_recover_full)
+    WAIT_MS(1000)
+    // A spotlight comes on and follows Mario, and the enemies are hidden.
+    BEGIN_SIBLING_EVENT_GET_ID(LW(15))
+        WAIT_FRAMES(2)
+        CALL(_lvup_spot_on, 0)
+        CALL(_lvup_spot_move, 0)
+    END_SIBLING_EVENT
+    CALL(_disable_enemy_unit_disp)
+    // The partner reappears off to the left and walks back on with its own footstep sounds.
+    BEGIN_SIBLING_EVENT
+        CALL(btlevtcmd_GetUnitId, BTL_UNIT_PARTNER, LW(3))
+        IF_INT_NOT_EQUAL(LW(3), -1)
+            CALL(btlevtcmd_SetPos, LW(3), -230, 0, 90)
+            CALL(btlevtcmd_ClearAllStatus, LW(3))
+            CALL(btlevtcmd_GetBodyId, LW(3), LW(4))
+            CALL(btlevtcmd_AnimeChangePoseType, LW(3), LW(4), BTL_POSE_WALK)
+            SET_VALUE(LW(0), -155)
+            SET_VALUE(LW(1), 0)
+            SET_VALUE(LW(2), 90)
+            SET_VALUE(LW(6), 28)
+            CALL(btlevtcmd_GetUnitKind, LW(3), LW(5))
+            SWITCH(LW(5))
+                CASE_OR_EQUAL(UNIT_GOOMBELLA)
+                CASE_OR_EQUAL(UNIT_KOOPS)
+                CALL(btlevtcmd_SetMoveSoundDataWork, LW(3), STRING("SFX_PARTY_BATTLE_SUBMOVE1L"), STRING("SFX_PARTY_BATTLE_SUBMOVE1R"), 6, 12, 16, 0, 0)
+                CALL(btlevtcmd_MovePosition, LW(3), LW(0), LW(1), LW(2), LW(6), -2, 1)
+                CASE_END
+                CASE_EQUAL(UNIT_YOSHI)
+                CALL(btlevtcmd_SetMoveSoundDataWork, LW(3), STRING("SFX_PARTY_BATTLE_SUBMOVE1L"), STRING("SFX_PARTY_BATTLE_SUBMOVE1R"), 0, 6, 6, 0, 0)
+                CALL(btlevtcmd_MovePosition, LW(3), LW(0), LW(1), LW(2), LW(6), -2, 1)
+                CASE_EQUAL(UNIT_FLURRIE)
+                CALL(btlevtcmd_SetMoveSoundDataWork, LW(3), STRING("SFX_PARTY_BATTLE_SUBHANG1"), STRING("SFX_PARTY_BATTLE_SUBHANG1"), 6, 12, 16, 0, 0)
+                CALL(btlevtcmd_MovePosition, LW(3), LW(0), LW(1), LW(2), LW(6), -2, 1)
+                CASE_EQUAL(UNIT_VIVIAN)
+                CALL(btlevtcmd_SetMoveSoundDataWork, LW(3), STRING("SFX_PARTY_BATTLE_SUBHANG1"), STRING("SFX_PARTY_BATTLE_SUBHANG1"), 0, 15, 13, 0, 0)
+                CALL(btlevtcmd_MovePosition, LW(3), LW(0), LW(1), LW(2), LW(6), -2, 1)
+                CASE_EQUAL(UNIT_BOBBERY)
+                CALL(btlevtcmd_SetMoveSoundDataWork, LW(3), STRING("SFX_PARTY_BATTLE_SUBMOVE1L"), STRING("SFX_PARTY_BATTLE_SUBMOVE1R"), 0, 18, 18, 0, 0)
+                CALL(btlevtcmd_MovePosition, LW(3), LW(0), LW(1), LW(2), LW(6), -2, 1)
+                CASE_EQUAL(UNIT_MS_MOWZ)
+                CALL(btlevtcmd_SetMoveSoundDataWork, LW(3), STRING("SFX_PARTY_BATTLE_SUBMOVE1L"), STRING("SFX_PARTY_BATTLE_SUBMOVE1R"), 0, 15, 13, 0, 0)
+                CALL(btlevtcmd_MovePosition, LW(3), LW(0), LW(1), LW(2), LW(6), -2, 1)
+            END_SWITCH
+            CALL(btlevtcmd_AnimeChangePoseType, LW(3), LW(4), BTL_POSE_STAY)
+        END_IF
+    END_SIBLING_EVENT
+    // Mario walks back to centre stage, strikes a victory pose and the audience cheers.
+    CALL(btlevtcmd_SetPos, BTL_UNIT_MARIO, -200, 0, 90)
+    CALL(btlevtcmd_ClearAllStatus, BTL_UNIT_MARIO)
+    CALL(btlevtcmd_AnimeChangePoseType, BTL_UNIT_MARIO, 1, BTL_POSE_WALK)
+    CALL(btlevtcmd_MovePosition, BTL_UNIT_MARIO, 0, 0, 90, 75, -1, 0)
+    CALL(btlevtcmd_snd_se, BTL_UNIT_MARIO, STRING("SFX_VOICE_MARIO_PAUSE2"), EVT_NULLPTR, 0, EVT_NULLPTR)
+    CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_MARIO, 1, STRING("M_V_2"))
+    CALL(evt_audience_sound_cheer, 180, 40)
+    WAIT_MS(1000)
+    // The HP, FP and BP blocks appear and the spotlight fades.
+    CALL(_lvup_select_object_init)
+    BEGIN_SIBLING_EVENT
+        CALL(_lvup_spot_off, 30)
+    END_SIBLING_EVENT
+    // The stage lights come back, the blocks dim and the curtains open (the demos leave the audience dark).
+    BEGIN_SIBLING_EVENT
+        CALL(evt_batstage_set_stg_dark, 0, 30, 0)
+        CALL(evt_batstage_set_stg_dark_base, 0, 30, 0)
+        CALL(btlevtcmd_BtlStageObjFlagOnOff, STRING("spotlight"), 1, 0)
+        CALL(_lvup_obj_set_color, 0, 100, 128, 128, 255)
+        CALL(_lvup_obj_set_color, 1, 100, 128, 128, 255)
+        CALL(_lvup_obj_set_color, 2, 100, 128, 128, 255)
+#if VERSION <= VERSION_DEMO_JP
+        CALL(evt_fade_entry, FADE_CURTAIN_SIDES_A2_3D, 1000, 0, 0, 0)
+        CALL(evt_fade_set_anim_ofs_pos, 0, 130)
+        CALL(evt_fade_set_anim_virtual_pos, 0, 0, LW(0))
+#else
+        CALL(evt_batstage_set_aud_dark, 0, 60, 0)
+        CALL(evt_fade_entry, FADE_CURTAIN_SIDES_A2_3D, 1000, 0, 0, 0)
+        CALL(evt_fade_set_anim_ofs_pos, 0, 130)
+        CALL(evt_fade_set_anim_virtual_pos, 0, 0, 80)
+#endif
+        CALL(evt_fade_end_wait)
+    END_SIBLING_EVENT
+    // A second later the FP block lights up and shows its current and next value; there is no choice.
+    WAIT_MS(1000)
+    BEGIN_SIBLING_EVENT_GET_ID(LW(0))
+        CALL(_lvup_obj_set_color, 1, 255, 255, 255, 255)
+        CALL(_lvup_disp_flag_onoff, 1, 32)
+        CALL(_lvup_select_obj_disp_on)
+    END_SIBLING_EVENT
+    CALL(btlevtcmd_WaitEventEnd, LW(0))
+    CALL(_lvup_select_obj_lvup_param_disp)
+    RETURN
+EVT_END()
+#endif
+
+/**
+ * Started by the level-up show (its id kept through _set_confetti_control_evtid):
+ * drops a confetti effect every 20 frames until btlseqEnd deletes it after the stat increase.
+ */
+EVT_BEGIN(_confetti_control_event)
+    SET_VALUE(LW(0), 1)
+    SET_VALUE(LW(5), 5)
+    LOOP(LW(5))
+        SUBTRACT(LW(0), 1)
+        IF_INT_LESS_OR_EQUAL(LW(0), 0)
+            SET_VALUE(LW(0), 20)
+            CALL(evt_eff, STRING(""), STRING("confetti"), 3, 0, 300, 5, 180, 0, 0, 0, 0, 0, 0, 0)
+        END_IF
+        WAIT_FRAMES(1)
+        SET_VALUE(LW(5), 5)
+    END_LOOP
+    RETURN
+EVT_END()
+
+/**
+ * Started by btlseqEnd when A confirms a level-up choice:
+ * the other blocks fade out, the chosen block spins over to Mario,
+ * he jumps and hits it from below (camera shake, the block bounces and shows its new value),
+ * then poses as the crowd cheers.
+ */
+EVT_BEGIN(_jump_event)
+    BEGIN_SIBLING_EVENT
+        CALL(_lvup_object_noselect_delete)
+    END_SIBLING_EVENT
+    CALL(evt_snd_sfxon_3d, STRING("SFX_BTL_LVUP_BLOCK_MOVE1"), 0, 125, 0, 0)
+    CALL(_lvup_object_select_move)
+    CALL(btlevtcmd_GetPos, BTL_UNIT_MARIO, LW(0), LW(1), LW(2))
+    CALL(btlevtcmd_AnimeChangePoseType, BTL_UNIT_MARIO, 1, 44)
+    BEGIN_INLINE_EVENT
+        WAIT_FRAMES(10)
+        CALL(evt_snd_sfxon_3d, STRING("SFX_BTL_LVUP_BLOCK_HIT1"), 0, 125, 0, 0)
+        CALL(evt_btl_camera_shake_h, 0, 6, 0, 20, 13)
+        CALL(_lvup_object_decide_bound)
+    END_INLINE_EVENT
+    CALL(btlevtcmd_SetFallAccel, BTL_UNIT_MARIO, FLOAT(0.39941406f))
+    CALL(btlevtcmd_JumpPosition, BTL_UNIT_MARIO, LW(0), LW(1), LW(2), 30, -1)
+    CALL(btlevtcmd_snd_se, BTL_UNIT_MARIO, STRING("SFX_VOICE_MARIO_PAUSE2"), EVT_NULLPTR, 0, EVT_NULLPTR)
+    CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_MARIO, 1, STRING("M_V_2"))
+    CALL(evt_audience_sound_cheer, 180, 40)
+    RETURN
+EVT_END()
+
+/**
+ * Started by btlseqEnd when the stick moves the level-up choice to HP:
+ * dims all three blocks, hides the help message,
+ * swings the spotlight stage object to -30 degrees over 10 frames, then lights the HP block and shows its help.
+ */
+EVT_BEGIN(_move_to_heart_event)
+    CALL(evt_snd_sfxon_3d, STRING("SFX_BTL_LVUP_CURSOR1"), 0, 125, 0, 0)
+    CALL(_lvup_obj_set_color, 0, 100, 128, 128, 255)
+    CALL(_lvup_obj_set_color, 1, 100, 128, 128, 255)
+    CALL(_lvup_obj_set_color, 2, 100, 128, 128, 255)
+    CALL(_lvup_disp_flag_onoff, 0, 32)
+    CALL(evt_sub_intpl_init, 5, 0, -30, 10)
+    LOOP(11)
+        CALL(evt_sub_intpl_get_value)
+        CALL(btlevtcmd_BtlStageObjSetRotate, STRING("spotlight"), 0, 0, LW(0))
+        WAIT_FRAMES(1)
+    END_LOOP
+    CALL(btlevtcmd_BtlStageObjSetRotate, STRING("spotlight"), 0, 0, -30)
+    CALL(_lvup_obj_set_color, 0, 255, 255, 255, 255)
+    CALL(_lvup_disp_flag_onoff, 1, 32)
+    RETURN
+EVT_END()
+
+/**
+ * Started by btlseqEnd when the stick moves the level-up choice to FP:
+ * dims the blocks, swings the spotlight from where it is back to 0 degrees,
+ * then lights the FP block and shows its help.
+ */
+EVT_BEGIN(_move_to_flower_event)
+    CALL(evt_snd_sfxon_3d, STRING("SFX_BTL_LVUP_CURSOR1"), 0, 125, 0, 0)
+    CALL(_lvup_obj_set_color, 0, 100, 128, 128, 255)
+    CALL(_lvup_obj_set_color, 1, 100, 128, 128, 255)
+    CALL(_lvup_obj_set_color, 2, 100, 128, 128, 255)
+    CALL(_lvup_disp_flag_onoff, 0, 32)
+    CALL(btlevtcmd_BtlStageObjGetRotate, STRING("spotlight"), EVT_NULLPTR, EVT_NULLPTR, LW(5))
+    CALL(evt_sub_intpl_init, 5, LW(5), 0, 10)
+    LOOP(11)
+        CALL(evt_sub_intpl_get_value)
+        CALL(btlevtcmd_BtlStageObjSetRotate, STRING("spotlight"), 0, 0, LW(0))
+        WAIT_FRAMES(1)
+    END_LOOP
+    CALL(btlevtcmd_BtlStageObjSetRotate, STRING("spotlight"), 0, 0, 0)
+    CALL(_lvup_obj_set_color, 1, 255, 255, 255, 255)
+    CALL(_lvup_disp_flag_onoff, 1, 32)
+    RETURN
+EVT_END()
+
+/**
+ * Started by btlseqEnd when the stick moves the level-up choice to BP:
+ * dims the blocks, swings the spotlight to 30 degrees, then lights the BP block and shows its help.
+ */
+EVT_BEGIN(_move_to_badge_point_event)
+    CALL(evt_snd_sfxon_3d, STRING("SFX_BTL_LVUP_CURSOR1"), 0, 125, 0, 0)
+    CALL(_lvup_obj_set_color, 0, 100, 128, 128, 255)
+    CALL(_lvup_obj_set_color, 1, 100, 128, 128, 255)
+    CALL(_lvup_obj_set_color, 2, 100, 128, 128, 255)
+    CALL(_lvup_disp_flag_onoff, 0, 32)
+    CALL(evt_sub_intpl_init, 5, 0, 30, 10)
+    LOOP(11)
+        CALL(evt_sub_intpl_get_value)
+        CALL(btlevtcmd_BtlStageObjSetRotate, STRING("spotlight"), 0, 0, LW(0))
+        WAIT_FRAMES(1)
+    END_LOOP
+    CALL(btlevtcmd_BtlStageObjSetRotate, STRING("spotlight"), 0, 0, 30)
+    CALL(_lvup_obj_set_color, 2, 255, 255, 255, 255)
+    CALL(_lvup_disp_flag_onoff, 1, 32)
+    RETURN
+EVT_END()
+
+/**
+ * Started on Mario by _BattleMarioKouraDelete after a win:
+ * if a Shell Shield still guards him, runs the shell's data event 62 (unit_koura destroy_event),
+ * which removes it in a puff of smoke.
+ */
+EVT_BEGIN(_koura_delete_event)
+    CALL(_check_guard_koura, BTL_UNIT_MARIO, LW(10))
+    IF_INT_NOT_EQUAL(LW(10), -1)
+        CALL(btlevtcmd_RunDataEventChild, LW(10), 62)
+    END_IF
+    RETURN
+EVT_END()
+
+/** Defined after _koura_delete_event, where the demo's .data places it (retail keeps it in .sdata). */
+EVT_BEGIN(_rank_up_event)
+    CALL(_get_rank_up_msg, LW(0))
+    CALL(evt_msg_print, 0, LW(0), 0, 0)
+    RETURN
+EVT_END()
+
+#if VERSION >= VERSION_US
+/**
+ * US and later script helper: sets the selected level-up choice to args[0] (0 HP, 1 FP, 2 BP);
+ * used for the first stick press of the level-up show.
+ */
+USER_FUNC(N__set_initial_upgrade_cursor_position) {
+    SEW(_battleWorkPointer)->selected = evtGetValue(event, event->args[0]);
+    return 2;
+}
+
+/** US and later: draws the select_HPFPBP prompt (choose one to upgrade) in a window near the bottom of the screen. */
+void N__draw_select_one_to_upgrade_text(CameraId camId, void* param) {
+    const char* msg;
+    u16 lines;
+    s32 width;
+    f32 y;
+    f32 zero = 0.0f;
+
+    msg = msgSearch("select_HPFPBP");
+    width = FontGetMessageWidthLine(msg, &lines);
+    lines++;
+    windowDispGX_Waku_col(0, (GXColor){0xFF, 0xFF, 0xFF, 0xFF}, (zero - width / 2) - 20.0f, -145.0f + (lines - 1) * 29, width + 40, lines * 29 + 1, 10.0f);
+    FontDrawStart_alpha(0xFF);
+    y = -148.0f;
+    FontDrawMessage(zero - width / 2, (s32)y + (lines - 1) * 29, msg);
+}
+
+/**
+ * US and later script helper: queues N__draw_select_one_to_upgrade_text for one frame;
+ * the level-up show calls it every frame until the first stick press.
+ */
+USER_FUNC(N__display_select_one_to_upgrade_text) {
+    dispEntry(CAMERA_2D, 900.0f, 1, N__draw_select_one_to_upgrade_text, _battleWorkPointer);
+    return 2;
+}
+#endif
+
+/**
+ * Script helper: args[0] a stage object name, args[1] a float; sets that object's Y position offset.
+ * The level-up show lowers nozzle_l, nozzle_c and nozzle_r by 40 with it.
+ */
+static USER_FUNC(_nozzle_set_offset) {
+    EvtWord* args = event->args;
+    const char* name;
+    f32 ofs;
+    BattleStageObject* obj;
+
+    name = (const char*)evtGetValue(event, args[0]);
+    ofs = evtGetFloat(event, args[1]);
+    obj = BattleSearchObjectPtr(name);
+    if (obj) {
+        obj->positionOffset.y = ofs;
+    }
+    return 2;
+}
+
+/** Script helper for the level-up show: refills Star Power (AP) to its maximum and marks the audience excited. */
+static USER_FUNC(_lvup_ap_recover_full) {
+    BattleAudience* aud = BattleAudienceBaseGetPtr();
+
+    aud->excited = TRUE;
+    pouchSetAP(pouchGetMaxAP());
+    return 2;
+}
+
+/**
+ * Script helper for the level-up show: starts each other unit's level-up event (data entry 0x42),
+ * or hides it and its shadow when it has none, skipping the system unit,
+ * Mario and the partner (retail runs Bobbery's event but never hides him).
+ * A stage iron frame (if_body, if_wire) is hidden and marked gone.
+ */
+static USER_FUNC(_disable_enemy_unit_disp) {
+    BattleWork* wp = _battleWorkPointer;
+    s32 i;
+    BattleUnit* unit;
+    BattleStageObject* obj;
+    void* data;
+    EventEntry* evt;
+    s32 kind;
+
+    for (i = 0; i < BATTLE_UNIT_MAX; i++) {
+        unit = BattleGetUnitPtr(wp, i);
+        if (!unit)
+            continue;
+        if (unit->flags & UNIT_FLAG_DELETE_PENDING)
+            continue;
+        kind = unit->currentKind;
+        if (kind == UNIT_SYSTEM)
+            continue;
+        if (kind == UNIT_MARIO)
+            continue;
+#if VERSION <= VERSION_DEMO_JP
+        if (kind >= UNIT_GOOMBELLA && kind < UNIT_MAX && unit->alliance == 0)
+            continue;
+#else
+        if (kind >= UNIT_GOOMBELLA && kind < UNIT_MAX && unit->alliance == 0 && kind != UNIT_BOBBERY)
+            continue;
+#endif
+        data = BtlUnit_GetData(unit, 0x42);
+        if (data) {
+            evt = evtEntry(data, 10, 0);
+            evt->unitId = unit->unitId;
+        } else {
+#if VERSION >= VERSION_JP
+            if (unit->currentKind != UNIT_BOBBERY)
+#endif
+            {
+                unit->attributeFlags |= (UNIT_ATTR_HIDDEN | UNIT_ATTR_NO_SHADOW);
+            }
+        }
+    }
+    obj = BattleSearchObjectPtr("if_body");
+    if (obj) {
+        wp->stageObjectWork.flags |= STAGE_OBJ_FLAG_IRON_FRAME_GONE;
+        obj->flags |= 1;
+        mapGrpFlagOn("if_body", MAPOBJ_FLAG_HIDE);
+        mapGrpFlagOn("if_wire", MAPOBJ_FLAG_HIDE);
+    }
+    return 2;
+}
+
+/**
+ * Script helper: stores args[0], the _confetti_control_event id, so btlseqEnd can delete it after the level-up.
+ * The empty triple check does nothing.
+ */
+static USER_FUNC(_set_confetti_control_evtid) {
+    EvtWord* args = event->args;
+    SeqEndWork* work = SEW(_battleWorkPointer);
+    if (!_battleWorkPointer->seqEndWork && !_battleWorkPointer->seqEndWork && !_battleWorkPointer->seqEndWork) {
+    }
+    work->confettiEvtId = evtGetValue(event, args[0]);
+
+    return 2;
+}
+
+/** Script helper: turns on drawing of the HP/FP/BP level-up blocks. */
+static USER_FUNC(_lvup_select_obj_disp_on) {
+    SeqEndWork* work = SEW(_battleWorkPointer);
+
+    work->flags |= SEQ_END_DISP_LVUP_OBJECTS;
+    return 2;
+}
+
+/**
+ * Script helper: makes all three level-up blocks show their current value,
+ * an arrow and the next value (paramDisp 1).
+ */
+static USER_FUNC(_lvup_select_obj_lvup_param_disp) {
+    SeqEndWork* work = SEW(_battleWorkPointer);
+    s32 i;
+
+    for (i = 0; i < 3; i++) {
+        work->objs[i].paramDisp = 1;
+    }
+    return 2;
+}
+
+/**
+ * Script helper: args[0] a level-up block (0 HP, 1 FP, 2 BP), args[1] to args[4] the r, g,
+ * b and a it is drawn with; the scripts dim unselected blocks and light the selected one.
+ */
+static USER_FUNC(_lvup_obj_set_color) {
+    EvtWord* args = event->args;
+    SeqEndWork* work = SEW(_battleWorkPointer);
+    SeqEndObj* obj;
+
+    obj = &work->objs[evtGetValue(event, args[0])];
+    obj->color.r = evtGetValue(event, args[1]);
+    obj->color.g = evtGetValue(event, args[2]);
+    obj->color.b = evtGetValue(event, args[3]);
+    obj->color.a = evtGetValue(event, args[4]);
+    return 2;
+}
+
+/**
+ * Script helper: args[0] on or off, args[1] a raw SeqEndDispFlags mask to set
+ * or clear (the scripts only pass 0x20, the level-up help message).
+ */
+static USER_FUNC(_lvup_disp_flag_onoff) {
+    EvtWord* args = event->args;
+    SeqEndWork* work = SEW(_battleWorkPointer);
+    s32 on = evtGetValue(event, args[0]);
+    u32 mask = args[1];
+
+    if (on) {
+        work->flags |= mask;
+    } else {
+        work->flags &= ~mask;
+    }
+    return 2;
+}
+
+/**
+ * Script helper: args[0] a cone index (0-4); places that spotlight cone at x = 25n - 50 (y 25 or -10
+ * alternately), 15 x 15 x 150 and white, shows it and turns spotlight cone drawing on.
+ */
+static USER_FUNC(_lvup_spot_on) {
+    BattleSpotWork* spot = BatSpotGetPtr();
+    EvtWord* args = event->args;
+    s32 n;
+    SeqEndSpot* e;
+
+    spot->skipRender = 1;
+    n = evtGetValue(event, args[0]);
+    e = (SeqEndSpot*)spot->entries + n;
+    switch (n) {
+        case 0: {
+            Vec v = {0.0f, 25.0f, -50.0f};
+            v.x = 25.0f * n + -50.0f;
+            e->pos = v;
+            break;
+        }
+        case 1: {
+            Vec v = {0.0f, -10.0f, -50.0f};
+            v.x = 25.0f * n + -50.0f;
+            e->pos = v;
+            break;
+        }
+        case 2: {
+            Vec v = {0.0f, 25.0f, -50.0f};
+            v.x = 25.0f * n + -50.0f;
+            e->pos = v;
+            break;
+        }
+        case 3: {
+            Vec v = {0.0f, -10.0f, -50.0f};
+            v.x = 25.0f * n + -50.0f;
+            e->pos = v;
+            break;
+        }
+        case 4: {
+            Vec v = {0.0f, 25.0f, -50.0f};
+            v.x = 25.0f * n + -50.0f;
+            e->pos = v;
+            break;
+        }
+    }
+    e->rot = (Vec){0.0f, 0.0f, 0.0f};
+    e->scale = (Vec){15.0f, 15.0f, 150.0f};
+    e->color = (GXColor){0xFF, 0xFF, 0xFF, 0xFF};
+    e->flags |= 2;
+    return 2;
+}
+
+/**
+ * Script helper: args[0] a cone index; moves that spotlight cone every frame,
+ * cone 0 following half of Mario's X and cones 1-4 on looping sine paths.
+ * Nothing advances it past state 1, so it never finishes and its fade-out branch (states 2 and 3) never runs.
+ */
+static USER_FUNC(_lvup_spot_move) {
+    BattleSpotWork* spot = BatSpotGetPtr();
+    s32 n = evtGetValue(event, event->args[0]);
+    SeqEndSpot* e = (SeqEndSpot*)spot->entries + n;
+
+    if (isFirstCall) {
+        event->userWork[0] = 0;
+        event->userWork[1] = 0;
+        event->userWork[2] = e->pos.x;
+        event->userWork[3] = e->pos.y;
+        event->userWork[4] = 0;
+    }
+    event->userWork[0]++;
+    switch (event->userWork[1]) {
+        case 0:
+            event->userWork[0] = 1;
+            event->userWork[1]++;
+        case 1:
+            switch (n) {
+                case 0:
+                    e->pos.x = 0.5f * BattleGetMarioPtr(_battleWorkPointer)->position.x;
+                    e->pos.y = -20.0f;
+                    break;
+                case 1:
+                    e->pos.x = 50.0f * sinfd(reviseAngle(1.1f * (3.0f * event->userWork[0]))) + event->userWork[2];
+                    e->pos.y = -(25.0f * sinfd(reviseAngle(1.1f * (2.5f * event->userWork[0]) + 90.0f)) - (event->userWork[3] + 25));
+                    break;
+                case 2:
+                    e->pos.x = 65.0f * sinfd(reviseAngle(1.1f * (2.5f * event->userWork[0]) + 180.0f)) + event->userWork[2];
+                    e->pos.y = 25.0f * sinfd(reviseAngle(1.1f * (7.5f * event->userWork[0]) + 90.0f)) + (event->userWork[3] - 25);
+                    break;
+                case 3:
+                    e->pos.x = -(50.0f * sinfd(reviseAngle(1.1f * (4.0f * event->userWork[0]))) - event->userWork[2]);
+                    e->pos.y = -(25.0f * sinfd(reviseAngle(1.1f * (2.5f * event->userWork[0]) + 90.0f)) - (event->userWork[3] + 25));
+                    break;
+                case 4:
+                    e->pos.x = -(50.0f * sinfd(reviseAngle(1.1f * (3.0f * event->userWork[0]) + 270.0f)) - (event->userWork[2] - 50));
+                    e->pos.y = 25.0f * sinfd(reviseAngle(1.1f * (4.5f * event->userWork[0]) + 90.0f)) + (event->userWork[3] - 25);
+                    break;
+            }
+            break;
+        case 2:
+            event->userWork[4] = 20;
+            event->userWork[2] = e->pos.x;
+            event->userWork[3] = e->pos.y;
+            event->userWork[1]++;
+        case 3:
+            event->userWork[4]--;
+            e->pos.x = intplGetValue(2, 0.0f, event->userWork[2], event->userWork[4], 21);
+            e->pos.y = intplGetValue(2, -25.0f, event->userWork[3], event->userWork[4], 21);
+            {
+                GXColor c = {0xFF, 0xFF, 0xFF, 0x00};
+                c.a = intplGetValue(0, 255.0f, 128.0f, event->userWork[4], 21);
+                e->color = c;
+            }
+            if (event->userWork[4] <= 0) {
+                event->userWork[1]++;
+            }
+            break;
+    }
+    return event->userWork[1] < 4 ? 0 : 2;
+}
+
+/**
+ * Script helper: args[0] a frame count; fades all five spotlight cones from cone 0's alpha to 0 over that time,
+ * hiding each as it reaches 0, and yields until done.
+ */
+static USER_FUNC(_lvup_spot_off) {
+    BattleSpotWork* spot = BatSpotGetPtr();
+    EvtWord* args = event->args;
+    SeqEndSpot* e;
+    s32 i;
+
+    if (isFirstCall) {
+        event->userdata[0] = evtGetValue(event, args[0]);
+        event->userdata[1] = event->userdata[0];
+        event->userdata[2] = ((SeqEndSpot*)spot->entries)->color.a;
+    }
+    event->userdata[1]--;
+    for (i = 0; i < 5; i++) {
+        GXColor c = {0xFF, 0xFF, 0xFF, 0x00};
+        e = (SeqEndSpot*)spot->entries + i;
+        c.a = intplGetValue(2, 0.0f, event->userdata[2], event->userdata[1], event->userdata[0]);
+
+        e->color = c;
+        if (e->color.a == 0) {
+            e->flags &= ~2;
+        }
+    }
+    return event->userdata[1] > 0 ? 0 : 2;
+}
+
+/**
+ * Script helper from _jump_event: fades the unchosen level-up blocks out over 30 frames
+ * and hides their numbers (paramDisp 3).
+ */
+static USER_FUNC(_lvup_object_noselect_delete) {
+    SeqEndWork* work = SEW(_battleWorkPointer);
+    s32 sel = work->selected;
+    s32 i;
+
+    if (isFirstCall) {
+        event->userdata[0] = 0;
+        event->userdata[2] = 30;
+        for (i = 0; i < work->objCount; i++) {
+            if (i != sel) {
+                work->objs[i].paramDisp = 3;
+            }
+        }
+    }
+    event->userdata[0]++;
+    if (event->userdata[0] < event->userdata[2]) {
+        for (i = 0; i < work->objCount; i++) {
+            if (i != sel) {
+                work->objs[i].color.a = intplGetValue(5, 255.0f, 0.0f, event->userdata[0], event->userdata[2]);
+            }
+        }
+        return 0;
+    }
+    for (i = 0; i < work->objCount; i++) {
+        if (i != sel) {
+            work->objs[i].color.a = 0;
+        }
+    }
+    return 2;
+}
+
+/**
+ * Script helper from _jump_event: carries the chosen level-up block over Mario's X and Z in 60 frames
+ * while spinning it six full turns.
+ */
+static USER_FUNC(_lvup_object_select_move) {
+    SeqEndWork* work = SEW(_battleWorkPointer);
+    s32 sel = work->selected;
+    BattleUnit* mario = BattleGetMarioPtr(_battleWorkPointer);
+    SeqEndObj* obj = &work->objs[sel];
+
+    if (isFirstCall) {
+        event->userWork[0] = 0;
+        event->userWork[1] = 60;
+        event->userWork[2] = obj->pos.x;
+        event->userWork[3] = obj->pos.z;
+        event->userWork[4] = mario->position.x;
+        event->userWork[5] = mario->position.z;
+    }
+    event->userWork[0]++;
+    if (event->userWork[0] < event->userWork[1]) {
+        obj->pos.x = intplGetValue(5, event->userWork[2], event->userWork[4], event->userWork[0], event->userWork[1]);
+        obj->pos.z = intplGetValue(5, event->userWork[3], event->userWork[5], event->userWork[0], event->userWork[1]);
+        obj->rot.y = reviseAngle(intplGetValue(5, 0.0f, 2160.0f, event->userWork[0], event->userWork[1]));
+        return 0;
+    }
+    obj->pos.x = event->userWork[4];
+    obj->pos.z = event->userWork[5];
+    return 2;
+}
+
+/**
+ * Script helper from _jump_event, when Mario's jump hits the chosen block:
+ * bounces it 30 units up and back over 16 frames,
+ * then sets it blinking with its new value (paramDisp 4) and spawns a sparkle effect.
+ */
+static USER_FUNC(_lvup_object_decide_bound) {
+    SeqEndWork* work = SEW(_battleWorkPointer);
+    SeqEndObj* obj = &work->objs[work->selected];
+    s32 half;
+
+    if (isFirstCall) {
+        event->userWork[0] = 0;
+        event->userWork[1] = obj->pos.y;
+        event->userWork[2] = 16;
+        event->userWork[3] = 30;
+        obj->paramDisp = 2;
+    }
+    event->userWork[0]++;
+    if (event->userWork[0] < event->userWork[2]) {
+        half = event->userWork[2] / 2;
+        if (event->userWork[0] < half) {
+            obj->pos.y = event->userWork[1] + intplGetValue(5, 0.0f, event->userWork[3], event->userWork[0], half);
+        } else {
+            obj->pos.y = event->userWork[1] + intplGetValue(5, event->userWork[3], 0.0f, event->userWork[0] - half, half);
+        }
+        return 0;
+    }
+    obj->pos.y = event->userWork[1];
+    obj->paramDisp = 4;
+    effPokopiPchargeN64Entry(3, 120, obj->pos.x, obj->pos.y, obj->pos.z, 1.5f);
+    return 2;
+}
+
+/**
+ * Script helper: sets up the three level-up blocks at x -80, 0 and 80,
+ * HP and FP from Mario's base maximums (next +5, none past 200)
+ * and BP from his maximum BP (next +3, none past 99), and turns their display on.
+ */
+static USER_FUNC(_lvup_select_object_init) {
+    SeqEndWork* work = SEW(_battleWorkPointer);
+    PouchData* pouch = pouchGetPtr();
+
+    work->objs[0].pos = (Vec){-80.0f, 105.0f, 0.0f};
+    work->objs[0].scale = (Vec){0.5f, 0.5f, 1.0f};
+    work->objs[1].pos = (Vec){0.0f, 105.0f, 0.0f};
+    work->objs[1].scale = (Vec){0.5f, 0.5f, 1.0f};
+    work->objs[2].pos = (Vec){80.0f, 105.0f, 0.0f};
+    work->objs[2].scale = (Vec){0.5f, 0.5f, 1.0f};
+
+    work->objs[0].paramDisp = 0;
+    work->objs[0].color = (GXColor){0xC8, 0xFF, 0xFF, 0xFF};
+    work->objs[0].value = pouch->baseMaxHP;
+    work->objs[0].rot = (Vec){0.0f, 0.0f, 0.0f};
+    if (work->objs[0].value >= 200) {
+        work->objs[0].nextValue = work->objs[0].value;
+    } else {
+        work->objs[0].nextValue = work->objs[0].value + 5;
+    }
+
+    work->objs[1].paramDisp = 0;
+    work->objs[1].color = (GXColor){0xC8, 0xFF, 0xFF, 0xFF};
+    work->objs[1].value = pouch->baseMaxFP;
+    work->objs[1].rot = (Vec){0.0f, 0.0f, 0.0f};
+    if (work->objs[1].value >= 200) {
+        work->objs[1].nextValue = work->objs[1].value;
+    } else {
+        work->objs[1].nextValue = work->objs[1].value + 5;
+    }
+
+    work->objs[2].paramDisp = 0;
+    work->objs[2].color = (GXColor){0xC8, 0xFF, 0xFF, 0xFF};
+    work->objs[2].value = pouch->maximumBP;
+    work->objs[2].rot = (Vec){0.0f, 0.0f, 0.0f};
+    if (work->objs[2].value >= 99) {
+        work->objs[2].nextValue = work->objs[2].value;
+    } else {
+        work->objs[2].nextValue = work->objs[2].value + 3;
+    }
+
+    work->flags |= SEQ_END_DISP_LVUP_OBJECTS;
+    return 2;
+}
+
+/**
+ * Returns the number of decimal digits in n (1 for 0, sign ignored); keta is Japanese for digit.
+ * Used to place the level-up numbers.
+ */
+static s32 _keta_get(s32 n) {
+
+    s32 k = 0;
+
+    if (n < 0) {
+        n *= -1;
+    }
+    if (n == 0) {
+        return 1;
+    }
+    while (n > 0) {
+        n /= 10;
+        k++;
+    }
+    return k;
+}
+
+#if VERSION >= VERSION_US
+// FAKE: same registers as (id, color, 0, x, y, z, sx, sy); listing the float arguments
+// first makes MWCC evaluate the texture-table load last, as in the US build.
+// PC port: Win64 assigns registers by position, so the PC calls the real prototype.
+#define LVOBJ_TEXPLANE(o, n, tbl)                                                       \
+    PCCALL(((void (*)(f32, f32, f32, f32, f32, u32, GXColor, s32))btlDispTexPlane)(     \
+        (o)->pos.x - 16.0f, 20.0f + (o)->pos.y, 2.0f + (o)->pos.z,                      \
+        (o)->scale.x, (o)->scale.y, tbl[gp->language], (o)->color, 0), btlDispTexPlane( \
+        tbl[gp->language], (o)->color, 0, (o)->pos.x - 16.0f, 20.0f + (o)->pos.y,       \
+        2.0f + (o)->pos.z, (o)->scale.x, (o)->scale.y))
+#else
+#define LVOBJ_TEXPLANE(o, n, tbl)                                        \
+    btlDispTexPlane(                                                     \
+        0x27 + n, (o)->color, 0, (o)->pos.x - 16.0f, 20.0f + (o)->pos.y, \
+        2.0f + (o)->pos.z, (o)->scale.x, (o)->scale.y)
+#endif
+#define LVOBJ_PLANE(o, n, tbl)                                            \
+    if ((o)->blinkOn) {                                                   \
+        PSMTXIdentity(m);                                                 \
+        PSMTXTrans(trans, (o)->pos.x, (o)->pos.y, (o)->pos.z);            \
+        PSMTXScale(scale, (o)->scale.x, (o)->scale.y, (o)->scale.z);      \
+        PSMTXRotRad(rotX, 'x', 0.017453292f * (o)->rot.x);                \
+        PSMTXRotRad(rotY, 'y', 0.017453292f * (o)->rot.y);                \
+        PSMTXRotRad(rotZ, 'z', 0.017453292f * (o)->rot.z);                \
+        PSMTXConcat(rotZ, scale, m);                                      \
+        PSMTXConcat(rotZ, m, m);                                          \
+        PSMTXConcat(rotX, m, m);                                          \
+        PSMTXConcat(rotY, m, m);                                          \
+        PSMTXConcat(trans, m, m);                                         \
+        btlDispTexPlane2(m, VERSION_PICK(0x24, 0x31) + n, (o)->color, 0); \
+        LVOBJ_TEXPLANE(o, n, tbl);                                        \
+    }
+
+/**
+ * 3D display callback for the level-up blocks: steps the 8-frame blink of the chosen block,
+ * draws each block and its label (per-language label textures in the US and later), and below it the old value,
+ * an arrow and the new value (paramDisp 1) or the new value alone (2 and 5).
+ */
+static void _lvup_select_object_disp(CameraId camId, void* param) {
+    SeqEndWork* work = SEW(_battleWorkPointer);
+    SeqEndObj* obj;
+    s32 i;
+    Vec pos3;
+    Vec pos;
+    Vec pos2;
+    Mtx m, trans, scale, rotX, rotY, rotZ;
+    Mtx m1, m2, m3, ms;
+
+    for (i = 0; i < 3; i++) {
+        obj = &work->objs[i];
+        switch (obj->paramDisp) {
+            case 4:
+                obj->paramDisp = 5;
+                obj->blinkTimer = 1;
+            case 5:
+                obj->blinkTimer--;
+                if (obj->blinkTimer == 0) {
+                    obj->blinkTimer = 8;
+                    if (obj->blinkOn) {
+                        obj->blinkOn = 0;
+                    } else {
+                        obj->blinkOn = 1;
+                    }
+                }
+                break;
+            default:
+                obj->blinkOn = 1;
+                break;
+        }
+    }
+    LVOBJ_PLANE(&work->objs[0], 0, hp_tex_tbl)
+    LVOBJ_PLANE(&work->objs[1], 1, fp_tex_tbl)
+    LVOBJ_PLANE(&work->objs[2], 2, bp_tex_tbl)
+
+    for (i = 0; i < 3; i++) {
+        obj = &work->objs[i];
+        if (obj->blinkOn) {
+            if (obj->paramDisp == 1) {
+                if (obj->value != obj->nextValue) {
+                    pos = obj->pos;
+                    pos.x = pos.x - 8.0f - 6.0f;
+                    pos.y = pos.y - (96.0f * obj->scale.y + 2.0f);
+                    pos.z += 5.0f;
+                    PSMTXScale(ms, 0.8f, 0.8f, 1.0f);
+                    PSMTXTrans(m1, pos.x, pos.y, pos.z);
+                    PSMTXConcat(m1, ms, m1);
+                    iconNumberDispGx3D(m1, obj->value, 0, obj->color);
+
+                    pos2 = obj->pos;
+                    pos2.x = 1.2f * (_keta_get(obj->nextValue) * 8 + 6) + pos2.x;
+                    pos2.y = pos2.y - (96.0f * obj->scale.y + 3.0f);
+                    pos2.z += 5.0f;
+                    PSMTXTrans(m2, pos2.x, pos2.y, pos2.z);
+                    PSMTXScale(ms, 1.2f, 1.2f, 1.0f);
+                    PSMTXConcat(m2, ms, m2);
+                    iconNumberDispGx3D(m2, obj->nextValue, 0, obj->color);
+
+                    pos3 = obj->pos;
+                    pos3.y = pos3.y - 96.0f * obj->scale.y;
+                    pos3.z += 5.0f;
+                    PSMTXTrans(m3, pos3.x, pos3.y, pos3.z);
+                    PSMTXScale(ms, -0.6f, 0.6f, 1.0f);
+                    PSMTXConcat(m3, ms, m3);
+                    iconDispGxCol(m3, 0, ICON_163, obj->color);
+                }
+            } else if (obj->paramDisp == 2 || obj->paramDisp == 5) {
+                pos2 = obj->pos;
+                pos2.x = pos2.x + ((_keta_get(obj->nextValue) * 8) / 2 - 4.0f);
+                pos2.y = pos2.y - (96.0f * obj->scale.y + 2.0f);
+                pos2.z += 5.0f;
+                PSMTXTrans(m2, pos2.x, pos2.y, pos2.z);
+                iconNumberDispGx3D(m2, obj->nextValue, 0, obj->color);
+            }
+        }
+    }
+}
+#pragma auto_inline reset
+/**
+ * On a win, raises the audience: GreatVictory when the first enemy's level is above Mario's level + 1,
+ * and FastVictory (scaled by the turns saved) when the battle took fewer turns than two thirds of the summed
+ * enemy levels divided by Mario's level + 1.
+ */
+static void _check_audience_battle_end_exec(void) {
+    BattleWork* wp = _battleWorkPointer;
+#ifdef TARGET_PC
+    /* PC port: the real setup types (a unit kind's level is at 0xE only with
+     * 4-byte pointers) */
+    BattleGroupSetup* group = wp->fbatInfo->setup->groupSetup;
+    s32 level = group->enemyData[0].unitKindParams->level;
+#else
+    SeqEndGroup* group = (SeqEndGroup*)wp->fbatInfo->setup->groupSetup;
+    s32 level = group->units[0].kind[0xE];
+#endif
+    s32 turn;
+    s32 sum;
+    s32 i;
+    s32 lv;
+    s32 limit;
+#ifdef TARGET_PC
+    BattleUnitSetup* unit;
+#else
+    SeqEndUnitSetup* unit;
+#endif
+
+    if (level > pouchGetPtr()->level + 1) {
+        BattleAudience_Case_GreatVictory();
+    }
+    turn = wp->turnCount;
+    lv = pouchGetPtr()->level + 1;
+    sum = 0;
+#ifdef TARGET_PC
+    unit = group->enemyData;
+    for (i = 0; i < group->numEnemies; i++, unit++) {
+        sum += unit->unitKindParams->level;
+    }
+#else
+    unit = group->units;
+    for (i = 0; i < group->count; i++, unit++) {
+        sum += unit->kind[0xE];
+    }
+#endif
+    limit = sum * 2 / lv / 3;
+    if (turn < limit) {
+        BattleAudience_Case_FastVictory(limit - turn);
+    }
+}
+
+/**
+ * Called at the top of every btlseqEnd frame to play an audience whistle every 60-179 frames during the victory
+ * and level-up states. It tests work->state, which stays 0, so it never whistles (see the BUG note).
+ */
+void _audience_Whistle_control(void) {
+    SeqEndWork* work = SEW(_battleWorkPointer);
+
+    if (work) {
+        // BUG: switches on work->state, which is set to 0 and never changed, instead of the end sequence step,
+        // so the whistle never plays. Fix: switch (BattleGetSeq(_battleWorkPointer, SEQ_END)).
+        switch (work->state) {
+            case 0x7000007:
+            case 0x7000008:
+            case 0x7000009:
+            case 0x700000A:
+            case 0x700000B:
+            case 0x700000C:
+            case 0x700000D:
+            case 0x700000E:
+            case 0x700000F:
+            case 0x7000010:
+            case 0x7000011:
+            case 0x7000012:
+            case 0x7000013:
+            case 0x7000014:
+            case 0x7000015:
+            case 0x7000016:
+            case 0x7000017:
+            case 0x7000018:
+            case 0x7000019:
+            case 0x700001A:
+            case 0x700001B:
+                if (--work->whistleTimer < 0) {
+                    work->whistleTimer = irand(120) + 60;
+                    BattleAudienceSoundWhistle();
+                }
+                break;
+        }
+    }
+}
+
+/**
+ * After a win (and after a field post-battle event),
+ * starts _koura_delete_event on Mario to clear a Shell Shield still guarding him.
+ */
+static void _BattleMarioKouraDelete(void) {
+    BattleUnit* mario = BattleGetMarioPtr(_battleWorkPointer);
+    EventEntry* evt = evtEntry(_koura_delete_event, 10, 0);
+
+    evt->unitId = mario->unitId;
+}
+
+/**
+ * Script helper: args[0] a unit; sets args[1] to the unit id of the Shell Shield guarding it,
+ * or -1 when it has none.
+ */
+static USER_FUNC(_check_guard_koura) {
+    BattleWork* wp = _battleWorkPointer;
+    EvtWord* args = event->args;
+    BattleUnit* unit;
+    BattleUnit* koura;
+    s32 out;
+    s32 id;
+
+    id = evtGetValue(event, args[0]);
+    out = args[1];
+    unit = BattleGetUnitPtr(wp, BattleTransID(event, id));
+    if (!(unit->attributeFlags & UNIT_ATTR_SHELL_SHIELDED)) {
+        evtSetValue(event, out, -1);
+        return 2;
+    }
+    koura = BtlUnit_GetGuardKouraPtr(unit);
+    if (!koura) {
+        evtSetValue(event, out, -1);
+        return 2;
+    }
+    evtSetValue(event, out, koura->unitId);
+    return 2;
+}
+
+/**
+ * Script helper for _rank_up_event: sets args[0] to the rank-up message for Mario's current level;
+ * btlseqEnd only starts that event at a rank-up level, as there is no NULL check.
+ */
+static USER_FUNC(_get_rank_up_msg) {
+    s32 index = event->args[0];
+
+    evtSetValue(event, index, (EvtWord)_get_rank_data(pouchGetPtr()->level)->rankUpMessage);
+    return 2;
+}
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+
+#ifdef PORT_MODS
+#include "port/hooks/src_battle_battle_seq_end.inc"
+#endif

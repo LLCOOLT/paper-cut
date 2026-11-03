@@ -1,0 +1,48 @@
+// hei.rel (平原, Petal Meadows): _prolog registers each map's init script (hei_00 to hei_13, hei_bt00) and the area's battle tables.
+#include "battle/battle_unit.h"
+#include "evt/evt_cmd.h"
+
+#include "data/mapdata.h"
+#include "hei.h"
+#include "rel_module.h"
+
+/**
+ * Module entry point of hei.rel: runs the static constructors,
+ * registers the init script of every Petal Meadows map (hei_00..hei_13, hei_bt00)
+ * and the area's battle setup tables.
+ */
+void _prolog(void) {
+    voidfunctionptr* ctor;
+
+    for (ctor = _ctors; *ctor != NULL; ctor++) {
+        (*ctor)();
+    }
+    relSetEvtAddr("hei_00", hei_00_init_evt);
+    relSetEvtAddr("hei_01", hei_01_init_evt);
+    relSetEvtAddr("hei_02", hei_02_init_evt);
+    relSetEvtAddr("hei_03", hei_03_init_evt);
+    relSetEvtAddr("hei_04", hei_04_init_evt);
+    relSetEvtAddr("hei_05", hei_05_init_evt);
+    relSetEvtAddr("hei_06", hei_06_init_evt);
+    relSetEvtAddr("hei_07", hei_07_init_evt);
+    relSetEvtAddr("hei_08", hei_08_init_evt);
+    relSetEvtAddr("hei_09", hei_09_init_evt);
+    relSetEvtAddr("hei_10", hei_10_init_evt);
+    relSetEvtAddr("hei_11", hei_11_init_evt);
+    relSetEvtAddr("hei_12", hei_12_init_evt);
+    relSetEvtAddr("hei_13", hei_13_init_evt);
+    relSetEvtAddr("hei_bt00", hei_bt00_init_evt);
+    relSetBtlAddr("hei", btlsetup_hei_tbl, btl_hei_setup_no_tbl);
+}
+
+/** Module exit point of hei.rel: runs the static destructors. */
+void _epilog(void) {
+    voidfunctionptr* dtor;
+
+    for (dtor = _dtors; *dtor != NULL; dtor++) {
+        (*dtor)();
+    }
+}
+/** Linker stub for unresolved symbols; does nothing. */
+void _unresolved(void) {
+}

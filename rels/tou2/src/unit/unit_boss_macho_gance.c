@@ -1,0 +1,1918 @@
+// unit_boss_macho_gance: Macho Grubba, boss, battle unit.
+
+#include "battle/battle_unit.h"
+#include "evt/evt_cmd.h"
+
+#include "manager/evtmgr_cmd.h"
+#include "battle/battle_event_default.h"
+#include "battle/battle_event_cmd.h"
+#include "battle/battle_camera.h"
+#include "battle/battle_event_subset.h"
+#include "battle/battle_weapon_power.h"
+#include "evt/evt_cam.h"
+#include "evt/evt_eff.h"
+#include "evt/evt_msg.h"
+#include "evt/evt_snd.h"
+#include "battle/battle_database_common.h"
+#include "battle/battle_sub.h"
+#include "evt/evt_env.h"
+#include "system.h"
+#include "driver/camdrv.h"
+
+// Unit work slots (btlevtcmd_SetUnitWork / GetUnitWork)
+enum {
+    UW_BOSS_MACHO_GANCE_ATTACKS = 0,   // attacks made this turn; cleared in his phase script
+    UW_BOSS_MACHO_GANCE_HP_STAGE = 1,  // story stage by HP, 0 to 3; stage 3 uses the wobbly poses
+    UW_BOSS_MACHO_GANCE_SELF_BUFF = 2, // self-buff move just used (1 to 4), for the damage event's camera
+    UW_BOSS_MACHO_GANCE_BASE_SIZE = 3, // float: his current base scale (1.0 at the start)
+};
+
+static s32 x_flag_data[2];
+
+static USER_FUNC(x_flag_wait);
+static USER_FUNC(x_flag_get);
+static USER_FUNC(x_flag_add);
+static USER_FUNC(x_flag_set);
+static USER_FUNC(wariai_enzan_0f);
+static USER_FUNC(wariai_enzan_0);
+static USER_FUNC(wariai_enzan_1f_intpl);
+static USER_FUNC(wariai_enzan_1f);
+static USER_FUNC(wariai_enzan_1);
+
+BattleUnitKind unit_boss_macho_gance;
+static BattleUnitDefense defence;
+static BattleUnitDefenseAttr defence_attr;
+static StatusVulnerability regist;
+#if VERSION <= VERSION_DEMO_JP
+static BattleDataEntry data_table[2];
+#else
+static BattleDataEntry data_table[15];
+#endif
+static BattleUnitKindPart parts[1];
+BattleWeapon weapon_gance_macho_speed;
+BattleWeapon weapon_gance_build_up;
+BattleWeapon weapon_gance_body;
+BattleWeapon weapon_gance_footwork;
+BattleWeapon weapon_gance_attack;
+BattleWeapon weapon_gance_posing;
+BattleWeapon weapon_gance_rariat_attack;
+BattleWeapon weapon_gance_body_attack;
+static EvtWord init_event[79];
+static EvtWord entry_event[62];
+static EvtWord damage_event[97];
+static EvtWord phase_event[482];
+static EvtWord dead_event[64];
+#if VERSION >= VERSION_JP
+extern EvtWord macho_gance_damage_event[];
+#endif
+static EvtWord attack_event[151];
+extern EvtWord gance_macho_speed_attack_event[];
+extern EvtWord gance_build_up_attack_event[];
+extern EvtWord gance_body_attack_event[];
+extern EvtWord gance_footwork_attack_event[];
+extern EvtWord gance_attack_attack_event[];
+extern EvtWord gance_posing_attack_event[];
+extern EvtWord gance_rariat_attack_attack_event[];
+extern EvtWord gance_body_attack_attack_event[];
+static EvtWord wait_event[6];
+
+/**
+ * Unit kind of the Macho Grubba (HP 60, level 70):
+ * its size, offsets, damage sounds, status vulnerability, parts and init event.
+ */
+BattleUnitKind unit_boss_macho_gance = {
+    65,
+    "btl_un_macho_gance",
+    60,
+    0,
+    1,
+    1,
+#if VERSION <= VERSION_DEMO_JP
+    70,
+#else
+    71,
+#endif
+    0,
+    0,
+    100,
+    0,
+    50,
+    6,
+    116,
+    124,
+    30,
+    100,
+    0.0f,
+    62.0f,
+    0.0f,
+    0,
+    -3,
+    40.0f,
+    80.0f,
+    0.0f,
+    58.0f,
+    0.0f,
+    -10.0f,
+    0.0f,
+    0.0f,
+    0.0f,
+    0.0f,
+    0.0f,
+    58.0f,
+    0.0f,
+    0.0f,
+    42.0f,
+    80.0f,
+    0.0f,
+    0.0f,
+    62.0f,
+    0.0f,
+    116.0f,
+    124.0f,
+    0,
+    0,
+    0,
+    2,
+    100,
+    20,
+    0.0f,
+    0.0f,
+    0.0f,
+    "SFX_BOSS_GANSU_DAMAGED1",
+    "SFX_BTL_DAMAGE_FIRE1",
+    "SFX_BTL_DAMAGE_ICE1",
+    "SFX_BTL_DAMAGE_BIRIBIRI1",
+    0,
+    &regist,
+    1,
+    parts,
+    init_event,
+    data_table,
+};
+
+/** Defence of the Macho Grubba: no damage reduction. */
+static BattleUnitDefense defence = {{0, 0, 0, 0, 0}};
+
+/** Element reactions of the Macho Grubba: no special reaction to any element. */
+static BattleUnitDefenseAttr defence_attr = {{0, 0, 0, 0, 0}};
+
+#if VERSION <= VERSION_DEMO_JP
+/**
+ * Status vulnerability of the Macho Grubba (percent chance to take each status):
+ * immune to growing huge, fright, gale force and instant kill; resists most other statuses.
+ */
+static StatusVulnerability regist = {50, 40, 50, 60, 50, 60, 100, 40, 0, 60, 100, 60, 100, 60, 60, 0, 0, 100, 60, 100, 100, 0};
+#else
+/**
+ * Status vulnerability of the Macho Grubba (percent chance to take each status):
+ * immune to growing huge, fright, gale force and instant kill; resists most other statuses.
+ */
+static StatusVulnerability regist = {50, 40, 50, 100, 50, 100, 100, 30, 0, 75, 100, 75, 100, 90, 60, 0, 0, 100, 60, 100, 100, 0};
+#endif
+
+/** Pose table of the Macho Grubba: maps each battle pose to the animation it plays (N_* animations). */
+static PoseTableEntry pose_table[] = {
+    {1, "N_1"},
+    {2, "Y_1"},
+    {9, "Y_1"},
+    {5, "K_1"},
+    {4, "X_1"},
+    {3, "K_1"},
+    {BTL_POSE_NORMAL, "S_1"},
+    {29, "Q_1"},
+    {30, "Q_1"},
+    {31, "D_1"},
+    {BTL_POSE_DAMAGE, "D_1"},
+    {50, "E_1A"},
+    {BTL_POSE_RUN, "R_1"},
+    {BTL_POSE_WALK, "W_1"},
+    {BTL_POSE_DANGER, "X_1"},
+    {BTL_POSE_PERIL, "X_1"},
+    {BTL_POSE_TALK, "T_1"},
+    {BTL_POSE_STAY_DEFAULT, "S_1"},
+};
+
+/**
+ * Pose table (furafura) of the Macho Grubba: maps each battle pose to the animation it plays (N_* animations).
+ */
+static PoseTableEntry pose_table_furafura[] = {
+    {1, "N_1"},
+    {2, "Y_1"},
+    {9, "Y_1"},
+    {5, "K_1"},
+    {4, "X_1"},
+    {3, "K_1"},
+    {BTL_POSE_NORMAL, "X_1"},
+    {29, "Q_1"},
+    {30, "Q_1"},
+    {31, "D_1"},
+    {BTL_POSE_DAMAGE, "D_1"},
+    {50, "E_1A"},
+    {BTL_POSE_RUN, "R_1"},
+    {BTL_POSE_WALK, "W_1"},
+    {BTL_POSE_DANGER, "X_1"},
+    {BTL_POSE_PERIL, "X_1"},
+    {BTL_POSE_TALK, "T_1"},
+    {BTL_POSE_STAY_DEFAULT, "X_1"},
+};
+
+/**
+ * Data table of the Macho Grubba: event handlers for the counter-hit reactions (tags 25-36),
+ * its damage reaction and being defeated.
+ */
+static BattleDataEntry data_table[] = {
+    {49, dead_event},
+#if VERSION >= VERSION_JP
+    {36, macho_gance_damage_event},
+    {24, macho_gance_damage_event},
+    {25, macho_gance_damage_event},
+    {26, macho_gance_damage_event},
+    {27, macho_gance_damage_event},
+    {28, macho_gance_damage_event},
+    {29, macho_gance_damage_event},
+    {30, macho_gance_damage_event},
+    {31, macho_gance_damage_event},
+    {32, macho_gance_damage_event},
+    {33, macho_gance_damage_event},
+    {34, macho_gance_damage_event},
+    {35, macho_gance_damage_event},
+#endif
+    {0, NULL},
+};
+
+/** Body part of the Macho Grubba (model c_m_gansu): hit position, defences, attributes and pose table. */
+static BattleUnitKindPart parts[] = {
+    {1, "btl_un_macho_gance", "c_m_gansu", 0.0f, 0.0f, 0.0f, 26.0f, 77.0f, 0.0f, 25.0f, 81.0f, 0.0f, 20, 30, 255, &defence, &defence_attr, PART_ATTR_MAIN | PART_ATTR_GUARD_COVER, 0, pose_table},
+};
+
+/** Weapon of Macho Grubba's Macho Speed (shout stg3_tou_471_01): no HP damage; Fast for 4 turns on himself. */
+BattleWeapon weapon_gance_macho_speed = {
+    NULL, 0, // name..icon
+    {0}, // pad_06
+    0, NULL, // itemId..description
+    100, // baseAccuracy
+    0, 0, 0, // baseFpCost..superguardsAllowed
+    1.0f, // reserved_14
+    1, // stylishCommandMultiplier
+    1, // reserved_19
+    1, // bingoSlotChance
+    1, // reserved_1B
+    NULL, // hpDamageFn
+    {0}, // hpDamageWork
+    NULL, // fpDamageFn
+    {0}, // fpDamageWork
+    TARGET_CLASS_NO_TREE_OR_SWITCH | TARGET_CLASS_ONLY_SELF | TARGET_CLASS_SINGLE, // targetClassFlags
+    TARGET_PROP_START_OWN_SIDE, // targetPropertyFlags
+    ELEMENT_NORMAL, 0, // element..damagePattern
+    3, // acLevel
+    2, // reserved_6F
+    NULL, // acHelpMsg
+    SPECIAL_BADGE_BUFFABLE | SPECIAL_STATUS_BUFFABLE | SPECIAL_CHARGE_BUFFABLE | SPECIAL_SHATTERS_FREEZE, // special
+    0, // counterResistFlags
+    TARGET_WEIGHT_PREFER_FRONT | TARGET_WEIGHT_UNUSED_2000 | TARGET_WEIGHT_RANDOM, // targetWeightFlags
+    0, 0, 0, 0, 0, 0, 0, 0, // sleepChance..poisonTime
+    0, 0, 0, 0, 0, 0, 0, 0, // poisonStrength..burnChance
+    0, 0, 0, 0, 0, 0, 0, 0, // burnTime..atkChangeTime
+    0, 0, 0, 0, 0, 0, 0, 0, // atkChangeStrength..chargeStrength
+    100, // fastChance
+    4, // fastTime
+    0, 0, 0, 0, 0, 0, 0, 0, // slowChance..invisibleTime
+    0, 0, 0, 0, // hpRegenTime..fpRegenStrength
+    {0}, // pad_AE
+    NULL, // attackEvtScript
+    {0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0}, // stageEffectRates
+};
+
+/** Weapon of Macho Grubba's Macho build-up (shout stg3_tou_471_03): no HP damage; attack +3 for 1 turn. */
+BattleWeapon weapon_gance_build_up = {
+    NULL, 0, // name..icon
+    {0}, // pad_06
+    0, NULL, // itemId..description
+    100, // baseAccuracy
+    0, 0, 0, // baseFpCost..superguardsAllowed
+    1.0f, // reserved_14
+    1, // stylishCommandMultiplier
+    1, // reserved_19
+    1, // bingoSlotChance
+    1, // reserved_1B
+    NULL, // hpDamageFn
+    {0}, // hpDamageWork
+    NULL, // fpDamageFn
+    {0}, // fpDamageWork
+    TARGET_CLASS_NO_TREE_OR_SWITCH | TARGET_CLASS_ONLY_SELF | TARGET_CLASS_SINGLE, // targetClassFlags
+    TARGET_PROP_START_OWN_SIDE, // targetPropertyFlags
+    ELEMENT_NORMAL, 0, // element..damagePattern
+    3, // acLevel
+    2, // reserved_6F
+    NULL, // acHelpMsg
+    SPECIAL_BADGE_BUFFABLE | SPECIAL_STATUS_BUFFABLE | SPECIAL_CHARGE_BUFFABLE | SPECIAL_SHATTERS_FREEZE, // special
+    0, // counterResistFlags
+    TARGET_WEIGHT_PREFER_FRONT | TARGET_WEIGHT_UNUSED_2000 | TARGET_WEIGHT_RANDOM, // targetWeightFlags
+    0, 0, 0, 0, 0, 0, 0, 0, // sleepChance..poisonTime
+    0, 0, 0, 0, 0, 0, 0, 0, // poisonStrength..burnChance
+    0, 0, 0, 0, 0, 0, // burnTime..sizeChangeStrength
+    100, // atkChangeChance
+    1, // atkChangeTime
+    3, // atkChangeStrength
+    0, 0, 0, 0, 0, 0, 0, 0, // defChangeChance..fastChance
+    0, 0, 0, 0, 0, 0, 0, 0, // fastTime..invisibleChance
+    0, 0, 0, 0, 0, // invisibleTime..fpRegenStrength
+    {0}, // pad_AE
+    NULL, // attackEvtScript
+    {0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0}, // stageEffectRates
+};
+
+/** Weapon of Macho Grubba's Macho Body (shout stg3_tou_471_05): no HP damage; defence +3 for 2 turns. */
+BattleWeapon weapon_gance_body = {
+    NULL, 0, // name..icon
+    {0}, // pad_06
+    0, NULL, // itemId..description
+    100, // baseAccuracy
+    0, 0, 0, // baseFpCost..superguardsAllowed
+    1.0f, // reserved_14
+    1, // stylishCommandMultiplier
+    1, // reserved_19
+    1, // bingoSlotChance
+    1, // reserved_1B
+    NULL, // hpDamageFn
+    {0}, // hpDamageWork
+    NULL, // fpDamageFn
+    {0}, // fpDamageWork
+    TARGET_CLASS_NO_TREE_OR_SWITCH | TARGET_CLASS_ONLY_SELF | TARGET_CLASS_SINGLE, // targetClassFlags
+    TARGET_PROP_START_OWN_SIDE, // targetPropertyFlags
+    ELEMENT_NORMAL, 0, // element..damagePattern
+    3, // acLevel
+    2, // reserved_6F
+    NULL, // acHelpMsg
+    SPECIAL_BADGE_BUFFABLE | SPECIAL_STATUS_BUFFABLE | SPECIAL_CHARGE_BUFFABLE | SPECIAL_SHATTERS_FREEZE, // special
+    0, // counterResistFlags
+    TARGET_WEIGHT_PREFER_FRONT | TARGET_WEIGHT_UNUSED_2000 | TARGET_WEIGHT_RANDOM, // targetWeightFlags
+    0, 0, 0, 0, 0, 0, 0, 0, // sleepChance..poisonTime
+    0, 0, 0, 0, 0, 0, 0, 0, // poisonStrength..burnChance
+    0, 0, 0, 0, 0, 0, 0, 0, // burnTime..atkChangeTime
+    0, // atkChangeStrength
+    100, // defChangeChance
+    2, // defChangeTime
+    3, // defChangeStrength
+    0, 0, 0, 0, 0, 0, 0, 0, // allergicChance..slowTime
+    0, 0, 0, 0, 0, 0, 0, 0, // frightChance..hpRegenStrength
+    0, 0, // fpRegenTime..fpRegenStrength
+    {0}, // pad_AE
+    NULL, // attackEvtScript
+    {0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0}, // stageEffectRates
+};
+
+/** Weapon of Macho Grubba's Macho Footwork (shout stg3_tou_471_07): no HP damage; Dodgy for 2 turns. */
+BattleWeapon weapon_gance_footwork = {
+    NULL, 0, // name..icon
+    {0}, // pad_06
+    0, NULL, // itemId..description
+    100, // baseAccuracy
+    0, 0, 0, // baseFpCost..superguardsAllowed
+    1.0f, // reserved_14
+    1, // stylishCommandMultiplier
+    1, // reserved_19
+    1, // bingoSlotChance
+    1, // reserved_1B
+    NULL, // hpDamageFn
+    {0}, // hpDamageWork
+    NULL, // fpDamageFn
+    {0}, // fpDamageWork
+    TARGET_CLASS_NO_TREE_OR_SWITCH | TARGET_CLASS_ONLY_SELF | TARGET_CLASS_SINGLE, // targetClassFlags
+    TARGET_PROP_START_OWN_SIDE, // targetPropertyFlags
+    ELEMENT_NORMAL, 0, // element..damagePattern
+    3, // acLevel
+    2, // reserved_6F
+    NULL, // acHelpMsg
+    SPECIAL_BADGE_BUFFABLE | SPECIAL_STATUS_BUFFABLE | SPECIAL_CHARGE_BUFFABLE | SPECIAL_SHATTERS_FREEZE, // special
+    0, // counterResistFlags
+    TARGET_WEIGHT_PREFER_FRONT | TARGET_WEIGHT_UNUSED_2000 | TARGET_WEIGHT_RANDOM, // targetWeightFlags
+    0, 0, 0, 0, 0, 0, 0, 0, // sleepChance..poisonTime
+    0, 0, 0, 0, 0, // poisonStrength..electricTime
+    100, // dodgyChance
+    2, // dodgyTime
+    0, 0, 0, 0, 0, 0, 0, 0, // burnChance..atkChangeChance
+    0, 0, 0, 0, 0, 0, 0, 0, // atkChangeTime..ohkoChance
+    0, 0, 0, 0, 0, 0, 0, 0, // chargeStrength..paybackTime
+    0, 0, 0, 0, 0, 0, 0, // holdFastTime..fpRegenStrength
+    {0}, // pad_AE
+    NULL, // attackEvtScript
+    {0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0}, // stageEffectRates
+};
+
+/** Weapon of Macho Grubba's hip drop: 4 damage, jump-type contact attack. */
+BattleWeapon weapon_gance_attack = {
+    NULL, 0, // name..icon
+    {0}, // pad_06
+    0, NULL, // itemId..description
+    100, // baseAccuracy
+    0, 0, // baseFpCost..baseSpCost
+    1, // superguardsAllowed
+    1.0f, // reserved_14
+    1, // stylishCommandMultiplier
+    1, // reserved_19
+    1, // bingoSlotChance
+    1, // reserved_1B
+    weaponGetPowerDefault, // hpDamageFn
+    {4, 0, 0, 0, 0, 0, 0, 0}, // hpDamageWork
+    NULL, // fpDamageFn
+    {0}, // fpDamageWork
+    TARGET_CLASS_NO_TREE_OR_SWITCH | TARGET_CLASS_NO_SYSTEM_UNIT | TARGET_CLASS_NO_OWN_ALLIANCE | TARGET_CLASS_NO_SELF | TARGET_CLASS_MAIN_PARTS | TARGET_CLASS_SINGLE, // targetClassFlags
+    TARGET_PROP_JUMPLIKE | TARGET_PROP_START_OPPOSING_SIDE, // targetPropertyFlags
+    ELEMENT_NORMAL, 0, // element..damagePattern
+    3, // acLevel
+    2, // reserved_6F
+    NULL, // acHelpMsg
+    SPECIAL_BADGE_BUFFABLE | SPECIAL_STATUS_BUFFABLE | SPECIAL_CHARGE_BUFFABLE | SPECIAL_SHATTERS_FREEZE | SPECIAL_FLIPS_SHELLED, // special
+    0, // counterResistFlags
+    TARGET_WEIGHT_PREFER_FRONT | TARGET_WEIGHT_UNUSED_2000 | TARGET_WEIGHT_RANDOM, // targetWeightFlags
+    0, 0, 0, 0, 0, 0, 0, 0, // sleepChance..poisonTime
+    0, 0, 0, 0, 0, 0, 0, 0, // poisonStrength..burnChance
+    0, 0, 0, 0, 0, 0, 0, 0, // burnTime..atkChangeTime
+    0, 0, 0, 0, 0, 0, 0, 0, // atkChangeStrength..chargeStrength
+    0, 0, 0, 0, 0, 0, 0, 0, // fastChance..holdFastTime
+    0, 0, 0, 0, 0, 0, // invisibleChance..fpRegenStrength
+    {0}, // pad_AE
+    NULL, // attackEvtScript
+    {0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0}, // stageEffectRates
+};
+
+/** Weapon of Macho Grubba's Macho charge (named posing in the code; shout stg3_tou_471_09): charge +4. */
+BattleWeapon weapon_gance_posing = {
+    NULL, 0, // name..icon
+    {0}, // pad_06
+    0, NULL, // itemId..description
+    100, // baseAccuracy
+    0, 0, 0, // baseFpCost..superguardsAllowed
+    1.0f, // reserved_14
+    1, // stylishCommandMultiplier
+    1, // reserved_19
+    1, // bingoSlotChance
+    1, // reserved_1B
+    NULL, // hpDamageFn
+    {0}, // hpDamageWork
+    NULL, // fpDamageFn
+    {0}, // fpDamageWork
+    TARGET_CLASS_NO_TREE_OR_SWITCH | TARGET_CLASS_ONLY_SELF | TARGET_CLASS_SINGLE, // targetClassFlags
+    TARGET_PROP_START_OWN_SIDE, // targetPropertyFlags
+    ELEMENT_NORMAL, 0, // element..damagePattern
+    3, // acLevel
+    2, // reserved_6F
+    NULL, // acHelpMsg
+    SPECIAL_ALWAYS_HITS | SPECIAL_SHATTERS_FREEZE, // special
+    0, // counterResistFlags
+    TARGET_WEIGHT_PREFER_FRONT | TARGET_WEIGHT_UNUSED_2000 | TARGET_WEIGHT_RANDOM, // targetWeightFlags
+    0, 0, 0, 0, 0, 0, 0, 0, // sleepChance..poisonTime
+    0, 0, 0, 0, 0, 0, 0, 0, // poisonStrength..burnChance
+    0, 0, 0, 0, 0, 0, 0, 0, // burnTime..atkChangeTime
+    0, 0, 0, 0, 0, 0, 0, // atkChangeStrength..ohkoChance
+    4, // chargeStrength
+    0, 0, 0, 0, 0, 0, 0, 0, // fastChance..holdFastTime
+    0, 0, 0, 0, 0, 0, // invisibleChance..fpRegenStrength
+    {0}, // pad_AE
+    NULL, // attackEvtScript
+    {0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0}, // stageEffectRates
+};
+
+/** Weapon of Macho Grubba's lariat: 4 damage. */
+BattleWeapon weapon_gance_rariat_attack = {
+    NULL, 0, // name..icon
+    {0}, // pad_06
+    0, NULL, // itemId..description
+    100, // baseAccuracy
+    0, 0, // baseFpCost..baseSpCost
+    1, // superguardsAllowed
+    1.0f, // reserved_14
+    1, // stylishCommandMultiplier
+    1, // reserved_19
+    1, // bingoSlotChance
+    1, // reserved_1B
+    weaponGetPowerDefault, // hpDamageFn
+    {4, 0, 0, 0, 0, 0, 0, 0}, // hpDamageWork
+    NULL, // fpDamageFn
+    {0}, // fpDamageWork
+    TARGET_CLASS_NO_TREE_OR_SWITCH | TARGET_CLASS_NO_SYSTEM_UNIT | TARGET_CLASS_NO_OWN_ALLIANCE | TARGET_CLASS_NO_SELF | TARGET_CLASS_MAIN_PARTS | TARGET_CLASS_MULTIPLE, // targetClassFlags
+    TARGET_PROP_START_OPPOSING_SIDE, // targetPropertyFlags
+    ELEMENT_NORMAL, 0, // element..damagePattern
+    3, // acLevel
+    2, // reserved_6F
+    NULL, // acHelpMsg
+    SPECIAL_BADGE_BUFFABLE | SPECIAL_STATUS_BUFFABLE | SPECIAL_CHARGE_BUFFABLE | SPECIAL_SHATTERS_FREEZE | SPECIAL_FLIPS_SHELLED, // special
+    0, // counterResistFlags
+    TARGET_WEIGHT_PREFER_FRONT | TARGET_WEIGHT_UNUSED_2000 | TARGET_WEIGHT_RANDOM, // targetWeightFlags
+    0, 0, 0, 0, 0, 0, 0, 0, // sleepChance..poisonTime
+    0, 0, 0, 0, 0, 0, 0, 0, // poisonStrength..burnChance
+    0, 0, 0, 0, 0, 0, 0, 0, // burnTime..atkChangeTime
+    0, 0, 0, 0, 0, 0, 0, 0, // atkChangeStrength..chargeStrength
+    0, 0, 0, 0, 0, 0, 0, 0, // fastChance..holdFastTime
+    0, 0, 0, 0, 0, 0, // invisibleChance..fpRegenStrength
+    {0}, // pad_AE
+    NULL, // attackEvtScript
+    {0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0}, // stageEffectRates
+};
+
+/** Weapon of Macho Grubba's Macho Body Press (shout stg3_tou_471_13): 4 damage, jump-type contact attack. */
+BattleWeapon weapon_gance_body_attack = {
+    NULL, 0, // name..icon
+    {0}, // pad_06
+    0, NULL, // itemId..description
+    100, // baseAccuracy
+    0, 0, // baseFpCost..baseSpCost
+    1, // superguardsAllowed
+    1.0f, // reserved_14
+    1, // stylishCommandMultiplier
+    1, // reserved_19
+    1, // bingoSlotChance
+    1, // reserved_1B
+    weaponGetPowerDefault, // hpDamageFn
+    {4, 0, 0, 0, 0, 0, 0, 0}, // hpDamageWork
+    NULL, // fpDamageFn
+    {0}, // fpDamageWork
+    TARGET_CLASS_NO_TREE_OR_SWITCH | TARGET_CLASS_NO_SYSTEM_UNIT | TARGET_CLASS_NO_OWN_ALLIANCE | TARGET_CLASS_NO_SELF | TARGET_CLASS_MAIN_PARTS | TARGET_CLASS_SINGLE, // targetClassFlags
+    TARGET_PROP_JUMPLIKE | TARGET_PROP_START_OPPOSING_SIDE, // targetPropertyFlags
+    ELEMENT_NORMAL, // element
+    10, // damagePattern
+    3, // acLevel
+    2, // reserved_6F
+    NULL, // acHelpMsg
+    SPECIAL_BADGE_BUFFABLE | SPECIAL_STATUS_BUFFABLE | SPECIAL_CHARGE_BUFFABLE | SPECIAL_SHATTERS_FREEZE | SPECIAL_FLIPS_SHELLED, // special
+    0, // counterResistFlags
+    TARGET_WEIGHT_PREFER_FRONT | TARGET_WEIGHT_UNUSED_2000 | TARGET_WEIGHT_RANDOM, // targetWeightFlags
+    0, 0, 0, 0, 0, 0, 0, 0, // sleepChance..poisonTime
+    0, 0, 0, 0, 0, 0, 0, 0, // poisonStrength..burnChance
+    0, 0, 0, 0, 0, 0, 0, 0, // burnTime..atkChangeTime
+    0, 0, 0, 0, 0, 0, 0, 0, // atkChangeStrength..chargeStrength
+    0, 0, 0, 0, 0, 0, 0, 0, // fastChance..holdFastTime
+    0, 0, 0, 0, 0, 0, // invisibleChance..fpRegenStrength
+    {0}, // pad_AE
+    NULL, // attackEvtScript
+    {0, 25, 25, 100, 0, 0, 0, 0, 0, 0, 0, 0}, // stageEffectRates
+};
+
+/**
+ * Battle camera move to frame Macho Grubba: LW(0) = 2 snaps instantly, anything else moves in over 30 frames;
+ * the framing depends on how big he currently is. LW(0) = 1 also waits 600 ms for the camera to settle.
+ */
+EVT_BEGIN(macho_gance_zoom)
+    CALL(btlevtcmd_GetStatusMg, BTL_UNIT_SELF, LW(2))
+    MULTIPLY_FLOAT(LW(2), FLOAT(10.0f))
+    CALL(btlevtcmd_GetUnitWorkFloat, BTL_UNIT_SELF, UW_BOSS_MACHO_GANCE_BASE_SIZE, LW(1))
+    MULTIPLY_FLOAT(LW(2), LW(1))
+    CALL(evt_btl_camera_set_mode, 0, 3)
+    IF_INT_NOT_EQUAL(LW(0), 2)
+        SET_VALUE(LW(1), 30)
+    ELSE
+        SET_VALUE(LW(1), 1)
+    END_IF
+    IF_INT_LESS_OR_EQUAL(LW(2), FLOAT(10.0f))
+        CALL(evt_btl_camera_set_moveto, 0, 83, 124, 512, 83, 89, 0, LW(1), 11)
+    ELSE
+        CALL(evt_btl_camera_set_moveto, 0, 71, 159, 609, 71, 118, 0, LW(1), 11)
+    END_IF
+    IF_INT_EQUAL(LW(0), 1)
+        WAIT_MS(600)
+    END_IF
+    RETURN
+EVT_END()
+
+/**
+ * Same idea as macho_gance_zoom but with a screen blur:
+ * moves the camera close to Macho Grubba and starts a radial blur; LW(0) = 1 waits 900 ms.
+ */
+EVT_BEGIN(macho_gance_blur_zoom)
+    CALL(evt_btl_camera_set_mode, 0, 3)
+    IF_INT_NOT_EQUAL(LW(0), 2)
+        SET_VALUE(LW(1), 48)
+        SET_VALUE(LW(2), 800)
+    ELSE
+        SET_VALUE(LW(1), 1)
+        SET_VALUE(LW(2), 16)
+    END_IF
+    CALL(evt_btl_camera_set_moveto, 0, 83, 137, 701, 83, 89, 0, LW(1), 11)
+    BEGIN_INLINE_EVENT
+        CALL(evt_env_blur_on, 0, LW(2))
+    END_INLINE_EVENT
+    IF_INT_EQUAL(LW(0), 1)
+        WAIT_MS(900)
+    END_IF
+    RETURN
+EVT_END()
+
+/**
+ * Camera helper: frames Mario and the partner from the left side.
+ * LW(0) = 2 snaps there in 1 frame, anything else takes 30 frames; LW(0) = 1 also waits 600 ms.
+ */
+static EVT_BEGIN(mario_party_zoom)
+    CALL(evt_btl_camera_set_mode, 0, 3)
+    IF_INT_NOT_EQUAL(LW(0), 2)
+        SET_VALUE(LW(1), 30)
+    ELSE
+        SET_VALUE(LW(1), 1)
+    END_IF
+    CALL(evt_btl_camera_set_moveto, 0, -111, 67, 275, -111, 49, 0, LW(1), 11)
+    IF_INT_EQUAL(LW(0), 1)
+        WAIT_MS(600)
+    END_IF
+    RETURN
+EVT_END()
+
+/**
+ * Init event of Macho Grubba: sets his run and walk sounds, registers his wait, phase, attack,
+ * damage and entry events (confusion uses the default confuse event), clears unit work 0 to 2,
+ * sets work 3 (his size factor) to 1.0, zeroes the hit and cursor offsets and starts the wait event.
+ * Unit work 0 counts his actions this turn, 1 is his HP phase (0 to
+ * 3) and 2 the pose move he is in.
+ */
+static EVT_BEGIN(init_event)
+    CALL(btlevtcmd_SetRunSound, BTL_UNIT_SELF, STRING("SFX_BOSS_GANSU_MOVE1L"), STRING("SFX_BOSS_GANSU_MOVE1R"), 0, 10, 10)
+    CALL(btlevtcmd_SetWalkSound, BTL_UNIT_SELF, STRING("SFX_BOSS_GANSU_MOVE1L"), STRING("SFX_BOSS_GANSU_MOVE1R"), 0, 20, 20)
+    CALL(btlevtcmd_SetEventWait, BTL_UNIT_SELF, PTR(wait_event))
+    CALL(btlevtcmd_SetEventPhase, BTL_UNIT_SELF, PTR(phase_event))
+    CALL(btlevtcmd_SetEventAttack, BTL_UNIT_SELF, PTR(attack_event))
+    CALL(btlevtcmd_SetEventDamage, BTL_UNIT_SELF, PTR(damage_event))
+    CALL(btlevtcmd_SetEventConfusion, BTL_UNIT_SELF, PTR(btldefaultevt_Confuse))
+    CALL(btlevtcmd_SetEventEntry, BTL_UNIT_SELF, PTR(entry_event))
+    CALL(btlevtcmd_SetUnitWork, BTL_UNIT_SELF, UW_BOSS_MACHO_GANCE_ATTACKS, 0)
+    CALL(btlevtcmd_SetUnitWork, BTL_UNIT_SELF, UW_BOSS_MACHO_GANCE_HP_STAGE, 0)
+    CALL(btlevtcmd_SetUnitWork, BTL_UNIT_SELF, UW_BOSS_MACHO_GANCE_SELF_BUFF, 0)
+    CALL(btlevtcmd_SetUnitWorkFloat, BTL_UNIT_SELF, UW_BOSS_MACHO_GANCE_BASE_SIZE, FLOAT(1.0f))
+    CALL(btlevtcmd_SetHitOffset, BTL_UNIT_SELF, 1, 0, 0, 0)
+    CALL(btlevtcmd_SetHitCursorOffset, BTL_UNIT_SELF, 1, 0, 0, 0)
+    CALL(btlevtcmd_StartWaitEvent, BTL_UNIT_SELF)
+    RETURN
+EVT_END()
+
+/**
+ * Macho Grubba's entrance: the camera zooms in on him while he stands in his entry pose ("E_1A") for 1.5 s,
+ * he says stg3_tou_469 and the party partner answers with stg3_tou_470.
+ */
+static EVT_BEGIN(entry_event)
+    CALL(btlevtcmd_StatusWindowOnOff, 0)
+    SET_VALUE(LW(0), 2)
+    CALL_CHILD(macho_gance_zoom)
+    WAIT_MS(1000)
+    CALL(btlevtcmd_snd_se, BTL_UNIT_SELF, STRING("SFX_BOSS_GANSU_PAUSING1"), EVT_NULLPTR, 0, LW(15))
+    CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("E_1A"))
+    WAIT_MS(1500)
+    CALL(evt_snd_sfxoff, LW(15))
+    CALL(evt_msg_print, 2, STRING("stg3_tou_469"), 0, BTL_UNIT_SELF)
+    WAIT_MS(300)
+    SET_VALUE(LW(0), 2)
+    CALL_CHILD(mario_party_zoom)
+    CALL(evt_msg_print_battle_party, STRING("stg3_tou_470"))
+    WAIT_MS(300)
+    CALL(btlevtcmd_GetBodyId, BTL_UNIT_PARTNER, LW(0))
+    CALL(btlevtcmd_AnimeChangePoseFromTable, BTL_UNIT_PARTNER, LW(0))
+    CALL(btlevtcmd_StatusWindowOnOff, 1)
+    CALL(evt_btl_camera_set_mode, 0, 0)
+    RETURN
+EVT_END()
+
+/**
+ * Damage event of Macho Grubba: default damage reaction, then,
+ * if he was hit in the middle of one of his pose moves (unit work 2 is 1, 2, 3, 4 or 6) a short pause is added,
+ * and unit work 2 is cleared.
+ */
+static EVT_BEGIN(damage_event)
+    SET_VALUE(LW(10), -2)
+    SET_VALUE(LW(11), 1)
+    CALL_CHILD(btldefaultevt_Damage)
+    CALL(btlevtcmd_GetUnitWork, BTL_UNIT_SELF, UW_BOSS_MACHO_GANCE_SELF_BUFF, LW(0))
+    IF_INT_NOT_EQUAL(LW(0), 0)
+        SWITCH(LW(0))
+            CASE_EQUAL(1)
+            WAIT_MS(250)
+            CALL(evt_btl_camera_set_mode, 0, 0)
+            CALL(evt_btl_camera_set_moveSpeedLv, 0, 2)
+            WAIT_MS(300)
+            CASE_EQUAL(2)
+            WAIT_MS(250)
+            CALL(evt_btl_camera_set_mode, 0, 0)
+            CALL(evt_btl_camera_set_moveSpeedLv, 0, 2)
+            WAIT_MS(300)
+            CASE_EQUAL(3)
+            WAIT_MS(250)
+            CALL(evt_btl_camera_set_mode, 0, 0)
+            CALL(evt_btl_camera_set_moveSpeedLv, 0, 2)
+            WAIT_MS(300)
+            CASE_EQUAL(4)
+            WAIT_MS(250)
+            CALL(evt_btl_camera_set_mode, 0, 0)
+            CALL(evt_btl_camera_set_moveSpeedLv, 0, 2)
+            WAIT_MS(300)
+            CASE_EQUAL(6)
+            WAIT_MS(250)
+            CALL(evt_btl_camera_set_mode, 0, 0)
+            CALL(evt_btl_camera_set_moveSpeedLv, 0, 2)
+            WAIT_MS(300)
+        END_SWITCH
+        CALL(btlevtcmd_SetUnitWork, BTL_UNIT_SELF, UW_BOSS_MACHO_GANCE_SELF_BUFF, 0)
+    END_IF
+    RETURN
+EVT_END()
+
+/**
+ * Sets Macho Grubba's size factor to LW(0), kept as a float in unit work 3,
+ * and rescales the size-dependent offsets by the ratio new / old:
+ * the hit offset becomes (26, 77, 0) times (ratio - 1), the hit cursor offset (25, 81, 0) times (ratio - 1),
+ * and the HP gauge offset is multiplied by the ratio. phase_event uses it when he swells to 1.3 times his size.
+ */
+EVT_BEGIN(base_size_change)
+    CALL(btlevtcmd_GetUnitWorkFloat, BTL_UNIT_SELF, UW_BOSS_MACHO_GANCE_BASE_SIZE, LW(1))
+    CALL(btlevtcmd_SetUnitWorkFloat, BTL_UNIT_SELF, UW_BOSS_MACHO_GANCE_BASE_SIZE, LW(0))
+    DIVIDE_FLOAT(LW(0), LW(1))
+    SET_FLOAT_VALUE(LW(5), LW(0))
+    MULTIPLY_FLOAT(LW(5), FLOAT(26.0f))
+    SUBTRACT_FLOAT(LW(5), FLOAT(26.0f))
+    SET_FLOAT_VALUE(LW(6), LW(0))
+    MULTIPLY_FLOAT(LW(6), FLOAT(77.0f))
+    SUBTRACT_FLOAT(LW(6), FLOAT(77.0f))
+    SET_FLOAT_VALUE(LW(7), LW(0))
+    MULTIPLY_FLOAT(LW(7), FLOAT(0.0f))
+    SUBTRACT_FLOAT(LW(7), FLOAT(0.0f))
+    CALL(btlevtcmd_SetHitOffset, BTL_UNIT_SELF, 1, LW(5), LW(6), LW(7))
+    SET_FLOAT_VALUE(LW(5), LW(0))
+    MULTIPLY_FLOAT(LW(5), FLOAT(25.0f))
+    SUBTRACT_FLOAT(LW(5), FLOAT(25.0f))
+    SET_FLOAT_VALUE(LW(6), LW(0))
+    MULTIPLY_FLOAT(LW(6), FLOAT(81.0f))
+    SUBTRACT_FLOAT(LW(6), FLOAT(81.0f))
+    SET_FLOAT_VALUE(LW(7), LW(0))
+    MULTIPLY_FLOAT(LW(7), FLOAT(0.0f))
+    SUBTRACT_FLOAT(LW(7), FLOAT(0.0f))
+    CALL(btlevtcmd_SetHitCursorOffset, BTL_UNIT_SELF, 1, LW(5), LW(6), LW(7))
+    CALL(btlevtcmd_GetHpGaugeOffset, BTL_UNIT_SELF, LW(5), LW(6))
+    MULTIPLY_FLOAT(LW(5), LW(0))
+    MULTIPLY_FLOAT(LW(6), LW(0))
+    CALL(btlevtcmd_SetHpGaugeOffset, BTL_UNIT_SELF, LW(5), LW(6))
+    RETURN
+EVT_END()
+
+/**
+ * Macho Grubba's HP phases, checked after the player's phase while he can act (unit work 1 is the phase,
+ * unit work 0 is reset to 0).
+ * At 75% HP or below (phase 0 to 1) he strikes his entry pose and says stg3_tou_471_17.
+ * At 50% or below (1 to 2) he says stg3_tou_471_18,
+ * then swells in two spinning steps to 1.3 times his size (with the blur camera and the growth sounds)
+ * and jumps twice, shaking the camera with each landing.
+ * At 25% or below (2 to 3) he switches to the wobbly pose table (pose_table_furafura) and says stg3_tou_471_19.
+ */
+static EVT_BEGIN(phase_event)
+    // Only runs after the player's phase, and while Macho Grubba is able to act.
+    CALL(btlevtcmd_CheckPhase, LW(0), BATTLE_PHASE_AFTER_PLAYER)
+    IF_INT_EQUAL(LW(0), 0)
+        GOTO(0)
+    END_IF
+    CALL(btlevtcmd_SetUnitWork, BTL_UNIT_SELF, UW_BOSS_MACHO_GANCE_ATTACKS, 0)
+    CALL(btlevtcmd_CheckActStatus, BTL_UNIT_SELF, LW(0))
+    IF_INT_EQUAL(LW(0), 0)
+        GOTO(0)
+    END_IF
+    CALL(btlevtcmd_GetUnitWork, BTL_UNIT_SELF, UW_BOSS_MACHO_GANCE_HP_STAGE, LW(0))
+    SWITCH(LW(0))
+        CASE_EQUAL(0)
+        // Phase 0: at three quarters of his HP the camera zooms in and Grubba strikes his entry pose
+        // with a flex sound, then speaks.
+        CALL(btlevtcmd_GetMaxHp, BTL_UNIT_SELF, LW(0))
+        MULTIPLY(LW(0), 75)
+        DIVIDE(LW(0), 100)
+        CALL(btlevtcmd_GetHp, BTL_UNIT_SELF, LW(1))
+        IF_INT_LESS_OR_EQUAL(LW(1), LW(0))
+            CALL(btlevtcmd_SetUnitWork, BTL_UNIT_SELF, UW_BOSS_MACHO_GANCE_HP_STAGE, 1)
+            CALL(btlevtcmd_StopWaitEvent, BTL_UNIT_SELF)
+            CALL(btlevtcmd_StatusWindowOnOff, 0)
+            SET_VALUE(LW(0), 0)
+            CALL_CHILD(macho_gance_zoom)
+            CALL(btlevtcmd_snd_se, BTL_UNIT_SELF, STRING("SFX_BOSS_GANSU_PAUSING1"), EVT_NULLPTR, 0, LW(15))
+            CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("E_1A"))
+            WAIT_MS(1500)
+            CALL(evt_snd_sfxoff, LW(15))
+            SET_VALUE(LW(0), -900)
+            IF_INT_GREATER(LW(0), 0)
+                WAIT_MS(LW(0))
+            END_IF
+            CALL(evt_msg_print, 2, STRING("stg3_tou_471_17"), 0, BTL_UNIT_SELF)
+            WAIT_MS(300)
+            CALL(btlevtcmd_StatusWindowOnOff, 1)
+            CALL(evt_btl_camera_set_mode, 0, 0)
+            WAIT_MS(1000)
+        END_IF
+        CASE_EQUAL(1)
+        // Phase 1: at half his HP the camera zooms in, he speaks, and then he blurs and swells.
+        CALL(btlevtcmd_GetMaxHp, BTL_UNIT_SELF, LW(0))
+        MULTIPLY(LW(0), 50)
+        DIVIDE(LW(0), 100)
+        CALL(btlevtcmd_GetHp, BTL_UNIT_SELF, LW(1))
+        IF_INT_LESS_OR_EQUAL(LW(1), LW(0))
+            CALL(btlevtcmd_SetUnitWork, BTL_UNIT_SELF, UW_BOSS_MACHO_GANCE_HP_STAGE, 2)
+            CALL(btlevtcmd_StopWaitEvent, BTL_UNIT_SELF)
+            CALL(btlevtcmd_StatusWindowOnOff, 0)
+            SET_VALUE(LW(0), 1)
+            CALL_CHILD(macho_gance_zoom)
+            CALL(evt_msg_print, 2, STRING("stg3_tou_471_18"), 0, BTL_UNIT_SELF)
+            WAIT_MS(300)
+            SET_VALUE(LW(0), 0)
+            CALL_CHILD(macho_gance_blur_zoom)
+            // He swells in two spinning steps, growing to 1.3 times his size with growth sounds.
+            CALL(btlevtcmd_snd_se, BTL_UNIT_SELF, STRING("SFX_BOSS_GANSU_BIG3"), EVT_NULLPTR, 0, LW(15))
+            CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("M_1"))
+            WAIT_MS(800)
+            CALL(btlevtcmd_snd_se, BTL_UNIT_SELF, STRING("SFX_BOSS_GANSU_BIG1"), EVT_NULLPTR, 0, EVT_NULLPTR)
+            CALL(btlevtcmd_GetRotate, BTL_UNIT_SELF, LW(0), LW(1), LW(2))
+            SET_VALUE(LW(5), 36)
+            LOOP(LW(5))
+                CALL(wariai_enzan_1f, LW(5), 36, FLOAT(0.0f), FLOAT(180.0f), LW(6))
+                CALL(wariai_enzan_1f, LW(5), 36, FLOAT(1.0f), FLOAT(1.1494141f), LW(7))
+#if VERSION <= VERSION_DEMO_JP
+                CALL(btlevtcmd_SetBaseScale, BTL_UNIT_SELF, LW(7), LW(7), LW(7))
+#else
+                CALL(btlevtcmd_SetBaseScale, BTL_UNIT_SELF, LW(7), LW(7), 1)
+#endif
+                ADD(LW(6), LW(1))
+                CALL(btlevtcmd_SetRotate, BTL_UNIT_SELF, 0, LW(6), 0)
+                WAIT_FRAMES(1)
+            END_LOOP
+            CALL(btlevtcmd_ChangeFaceDirection, BTL_UNIT_SELF, 1)
+            CALL(btlevtcmd_SetRotate, BTL_UNIT_SELF, 0, 0, 0)
+            WAIT_MS(400)
+            CALL(btlevtcmd_snd_se, BTL_UNIT_SELF, STRING("SFX_BOSS_GANSU_BIG2"), EVT_NULLPTR, 0, EVT_NULLPTR)
+            CALL(btlevtcmd_GetRotate, BTL_UNIT_SELF, LW(0), LW(1), LW(2))
+            SET_VALUE(LW(5), 36)
+            LOOP(LW(5))
+                CALL(wariai_enzan_1f, LW(5), 36, FLOAT(0.0f), FLOAT(-180.0f), LW(6))
+                CALL(wariai_enzan_1f, LW(5), 36, FLOAT(1.1494141f), FLOAT(1.2998047f), LW(7))
+#if VERSION <= VERSION_DEMO_JP
+                CALL(btlevtcmd_SetBaseScale, BTL_UNIT_SELF, LW(7), LW(7), LW(7))
+#else
+                CALL(btlevtcmd_SetBaseScale, BTL_UNIT_SELF, LW(7), LW(7), 1)
+#endif
+                ADD(LW(6), LW(1))
+                CALL(btlevtcmd_SetRotate, BTL_UNIT_SELF, 0, LW(6), 0)
+                WAIT_FRAMES(1)
+            END_LOOP
+            CALL(btlevtcmd_ResetFaceDirection, BTL_UNIT_SELF)
+            CALL(btlevtcmd_SetRotate, BTL_UNIT_SELF, 0, 0, 0)
+            SET_FLOAT_VALUE(LW(0), FLOAT(1.2998047f))
+            CALL_CHILD(base_size_change)
+            WAIT_MS(400)
+            CALL(evt_snd_sfxoff, LW(15))
+            // He jumps twice, shaking the camera with each landing.
+            CALL(btlevtcmd_JumpSetting, BTL_UNIT_SELF, 20, FLOAT(0.0f), FLOAT(0.5996094f))
+            SET_VALUE(LW(8), 2)
+            LOOP(LW(8))
+                BEGIN_SIBLING_EVENT
+                    CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("J_1A"))
+                    CALL(btlevtcmd_GetPosFloat, BTL_UNIT_SELF, LW(5), LW(6), LW(7))
+                    LOOP(0)
+                        CALL(btlevtcmd_GetPosFloat, BTL_UNIT_SELF, LW(9), LW(10), LW(11))
+                        SUBTRACT_FLOAT(LW(6), LW(10))
+                        IF_INT_GREATER(LW(6), FLOAT(0.0f))
+                            CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("J_1B"))
+                            BREAK_LOOP
+                        END_IF
+                        SET_FLOAT_VALUE(LW(6), LW(10))
+                        WAIT_FRAMES(1)
+                    END_LOOP
+                END_SIBLING_EVENT
+                CALL(btlevtcmd_GetHomePos, BTL_UNIT_SELF, LW(0), LW(1), LW(2))
+                CALL(btlevtcmd_snd_se, BTL_UNIT_SELF, STRING("SFX_BOSS_GANSU_JUMP1"), EVT_NULLPTR, 0, EVT_NULLPTR)
+                CALL(btlevtcmd_JumpPosition, BTL_UNIT_SELF, LW(0), LW(1), LW(2), 36, -1)
+                BEGIN_SIBLING_EVENT
+                    CALL(btlevtcmd_snd_se, BTL_UNIT_SELF, STRING("SFX_BOSS_GANSU_HIPDROP1"), EVT_NULLPTR, 0, EVT_NULLPTR)
+                    CALL(evt_cam_shake, CAMERA_3D, FLOAT(0.0f), FLOAT(0.01953125f), 800)
+                END_SIBLING_EVENT
+                WAIT_MS(200)
+            END_LOOP
+            // He settles back to his stance.
+            CALL(btlevtcmd_AnimeChangePoseType, BTL_UNIT_SELF, 1, BTL_POSE_STAY_DEFAULT)
+            WAIT_MS(400)
+            CALL(btlevtcmd_StatusWindowOnOff, 1)
+            CALL(evt_btl_camera_set_mode, 0, 0)
+            WAIT_MS(1000)
+        END_IF
+        CASE_EQUAL(2)
+        // Phase 2: at a quarter of his HP he becomes wobbly (his tired poses) and says his last line.
+        CALL(btlevtcmd_GetMaxHp, BTL_UNIT_SELF, LW(0))
+        MULTIPLY(LW(0), 25)
+        DIVIDE(LW(0), 100)
+        CALL(btlevtcmd_GetHp, BTL_UNIT_SELF, LW(1))
+        IF_INT_LESS_OR_EQUAL(LW(1), LW(0))
+            CALL(btlevtcmd_SetUnitWork, BTL_UNIT_SELF, UW_BOSS_MACHO_GANCE_HP_STAGE, 3)
+            CALL(btlevtcmd_StopWaitEvent, BTL_UNIT_SELF)
+            CALL(btlevtcmd_AnimeSetPoseTable, BTL_UNIT_SELF, 1, PTR(pose_table_furafura))
+            CALL(btlevtcmd_StatusWindowOnOff, 0)
+            SET_VALUE(LW(0), 1)
+            CALL_CHILD(macho_gance_zoom)
+            CALL(btlevtcmd_SetTalkPoseType, BTL_UNIT_SELF, BTL_POSE_TALK)
+            CALL(btlevtcmd_SetStayPoseType, BTL_UNIT_SELF, BTL_POSE_STAY)
+            CALL(evt_msg_print, 2, STRING("stg3_tou_471_19"), 0, BTL_UNIT_SELF)
+            WAIT_MS(300)
+            CALL(btlevtcmd_StatusWindowOnOff, 1)
+            CALL(evt_btl_camera_set_mode, 0, 0)
+            WAIT_MS(1000)
+        END_IF
+    END_SWITCH
+    LABEL(0)
+    RETURN
+EVT_END()
+
+/**
+ * Macho Grubba's defeat: waits for the current attack to end, zooms the camera onto him,
+ * plays his fall ("D_2") with the down sound and a camera shake,
+ * and has him say stg3_tou_471_20 before the common no-spin death.
+ */
+static EVT_BEGIN(dead_event)
+    CALL(btlevtcmd_WaitAttackEnd)
+    CALL(btlevtcmd_StatusWindowOnOff, 0)
+    SET_VALUE(LW(0), 1)
+    CALL_CHILD(macho_gance_zoom)
+    CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("D_2"))
+    WAIT_MS(170)
+    CALL(btlevtcmd_snd_se, BTL_UNIT_SELF, STRING("SFX_BOSS_GANSU_DOWN1"), EVT_NULLPTR, 0, EVT_NULLPTR)
+    CALL(evt_cam_shake, CAMERA_3D, FLOAT(0.01953125f), FLOAT(0.0f), 500)
+    WAIT_MS(200)
+    CALL(btlevtcmd_SetTalkPose, BTL_UNIT_SELF, STRING("T_2"))
+    CALL(btlevtcmd_SetStayPose, BTL_UNIT_SELF, STRING("S_2"))
+    CALL(evt_msg_print, 2, STRING("stg3_tou_471_20"), 0, BTL_UNIT_SELF)
+    WAIT_MS(300)
+    CALL(btlevtcmd_StatusWindowOnOff, 1)
+    CALL(evt_btl_camera_set_mode, 0, 0)
+    WAIT_MS(500)
+    SET_VALUE(LW(10), -2)
+    CALL_CHILD(subsetevt_dead_core_nospin_norotate)
+    RETURN
+EVT_END()
+
+#if VERSION >= VERSION_JP
+/**
+ * Data events 24 to 36 (JP and later), which the standard damage reaction runs for the counter-damage codes 43
+ * to 55, with the damage code in LW(0) and the unit in LW(10):
+ * picks the hurt pose type (36 with a miss sound for code 43, 29 for 46, 49, 50 and 54, otherwise 39;
+ * codes 43 to 46 also play Mario's hurt voice if the unit is Mario) and runs data event 10 alongside.
+ * He is knocked 25 units back and up, waits half a second
+ * and comes back toward his home position in three shrinking hops, each landing shaking the camera.
+ */
+EVT_BEGIN(macho_gance_damage_event)
+    CALL(btlevtcmd_ResetFaceDirection, LW(10))
+    CALL(btlevtcmd_OnUnitFlag, LW(10), UNIT_FLAG_SHOW_HP_GAUGE)
+    BEGIN_SIBLING_EVENT
+        SWITCH(LW(0))
+            CASE_OR_EQUAL(43)
+            CASE_OR_EQUAL(44)
+            CASE_OR_EQUAL(45)
+            CALL(btlevtcmd_GetUnitKind, LW(10), LW(2))
+            IF_INT_EQUAL(LW(2), UNIT_MARIO)
+                CALL(btlevtcmd_GetPos, LW(10), LW(2), LW(3), LW(4))
+                CALL(evt_snd_sfxon_3d, STRING("SFX_VOICE_MARIO_DAMAGED1"), LW(2), LW(3), LW(4), 0)
+            END_IF
+            CASE_END
+        END_SWITCH
+    END_SIBLING_EVENT
+    SWITCH(LW(0))
+        CASE_EQUAL(43)
+        CALL(evt_snd_sfxon, STRING("SFX_BTL_ATTACK_MISS3"), 0)
+        SET_VALUE(LW(14), 36)
+        CASE_EQUAL(46)
+        CALL(btlevtcmd_GetUnitKind, LW(10), LW(2))
+        IF_INT_EQUAL(LW(2), UNIT_MARIO)
+            CALL(btlevtcmd_snd_se, LW(10), STRING("SFX_VOICE_MARIO_DAMAGED1"), EVT_NULLPTR, 0, EVT_NULLPTR)
+        END_IF
+        SET_VALUE(LW(14), 29)
+        CASE_OR_EQUAL(49)
+        CASE_OR_EQUAL(50)
+        CASE_OR_EQUAL(54)
+        SET_VALUE(LW(14), 29)
+        CASE_END
+        CASE_DEFAULT
+        SET_VALUE(LW(14), 39)
+    END_SWITCH
+    CALL(btlevtcmd_AnimeChangePoseType, LW(10), LW(11), LW(14))
+    BEGIN_SIBLING_EVENT
+        CALL(btlevtcmd_RunDataEventChild, LW(10), 10)
+    END_SIBLING_EVENT
+    CALL(btlevtcmd_SetFallAccel, LW(10), FLOAT(1.0f))
+    CALL(btlevtcmd_GetPos, LW(10), LW(2), LW(3), LW(4))
+    CALL(btlevtcmd_FaceDirectionSub, LW(10), LW(2), 25)
+    ADD(LW(3), 25)
+    CALL(btlevtcmd_DivePosition, LW(10), LW(2), LW(3), LW(4), 10, 0, 0, 0, -1)
+    WAIT_MS(500)
+    CALL(btlevtcmd_SetFallAccel, LW(10), FLOAT(1.0f))
+    CALL(btlevtcmd_GetPos, LW(10), LW(2), LW(3), LW(4))
+    CALL(btlevtcmd_GetHomePos, LW(10), LW(5), LW(6), LW(7))
+    MULTIPLY(LW(2), 3)
+    MULTIPLY(LW(5), 4)
+    ADD(LW(2), LW(5))
+    DIVIDE(LW(2), 7)
+    CALL(btlevtcmd_TransStageFloorPosition, LW(2), LW(3), LW(4))
+    CALL(btlevtcmd_JumpPosition, LW(10), LW(2), LW(3), LW(4), 40, -1)
+    BEGIN_SIBLING_EVENT
+        CALL(evt_cam_shake, CAMERA_3D, FLOAT(0.0f), FLOAT(0.01953125f), 250)
+    END_SIBLING_EVENT
+    CALL(btlevtcmd_GetHomePos, LW(10), LW(5), LW(6), LW(7))
+    MULTIPLY(LW(5), 2)
+    ADD(LW(2), LW(5))
+    DIVIDE(LW(2), 3)
+    CALL(btlevtcmd_JumpPosition, LW(10), LW(2), LW(3), LW(4), 20, -1)
+    BEGIN_SIBLING_EVENT
+        CALL(evt_cam_shake, CAMERA_3D, FLOAT(0.0f), FLOAT(0.01953125f), 166)
+    END_SIBLING_EVENT
+    CALL(btlevtcmd_GetHomePos, LW(10), LW(2), LW(3), LW(4))
+    CALL(btlevtcmd_JumpPosition, LW(10), LW(2), LW(3), LW(4), 10, -1)
+    BEGIN_SIBLING_EVENT
+        CALL(evt_cam_shake, CAMERA_3D, FLOAT(0.0f), FLOAT(0.01953125f), 116)
+    END_SIBLING_EVENT
+    WAIT_FRAMES(30)
+    CALL(evt_btl_camera_set_mode, 0, 0)
+    RETURN
+EVT_END()
+#endif
+
+/**
+ * Macho Grubba's move choice, run once per action.
+ * Unit work 0 counts the actions this turn (reset by phase_event) and unit work 1 is the HP phase.
+ * While he is not Fast (status 19) he uses Macho Speed.
+ * Otherwise his first action of the turn is a pose move drawn at random (Build Up, Body, Footwork,
+ * and in phase 2 or later also Posing, the code's names) and his second is a real attack:
+ * Attack in phases 0 and 1, and in phases 2 and 3 a draw between Lariat and Body Attack.
+ * LW(9) receives the weapon each sub-event uses.
+ */
+static EVT_BEGIN(attack_event)
+    CALL(btlevtcmd_GetUnitWork, BTL_UNIT_SELF, UW_BOSS_MACHO_GANCE_ATTACKS, LW(1))
+    ADD(LW(1), 1)
+    CALL(btlevtcmd_SetUnitWork, BTL_UNIT_SELF, UW_BOSS_MACHO_GANCE_ATTACKS, LW(1))
+    CALL(btlevtcmd_CheckStatus, BTL_UNIT_SELF, STATUS_FAST, LW(0))
+    IF_INT_EQUAL(LW(0), 0)
+        SET_VALUE(LW(9), PTR(&weapon_gance_macho_speed))
+        CALL_CHILD(gance_macho_speed_attack_event)
+    ELSE
+        CALL(btlevtcmd_GetUnitWork, BTL_UNIT_SELF, UW_BOSS_MACHO_GANCE_HP_STAGE, LW(2))
+        IF_INT_LESS(LW(2), 2)
+            IF_INT_LESS_OR_EQUAL(LW(1), 1)
+                CALL(btlevtcmd_DrawLots, LW(0), 3, 30, 20, 10)
+                SWITCH(LW(0))
+                    CASE_EQUAL(0)
+                    SET_VALUE(LW(9), PTR(&weapon_gance_build_up))
+                    CALL_CHILD(gance_build_up_attack_event)
+                    CASE_EQUAL(1)
+                    SET_VALUE(LW(9), PTR(&weapon_gance_body))
+                    CALL_CHILD(gance_body_attack_event)
+                    CASE_EQUAL(2)
+                    SET_VALUE(LW(9), PTR(&weapon_gance_footwork))
+                    CALL_CHILD(gance_footwork_attack_event)
+                END_SWITCH
+            ELSE
+                SET_VALUE(LW(9), PTR(&weapon_gance_attack))
+                CALL_CHILD(gance_attack_attack_event)
+            END_IF
+        ELSE
+            IF_INT_LESS_OR_EQUAL(LW(1), 1)
+                CALL(btlevtcmd_DrawLots, LW(0), 4, 25, 20, 10, 10)
+                SWITCH(LW(0))
+                    CASE_EQUAL(0)
+                    SET_VALUE(LW(9), PTR(&weapon_gance_build_up))
+                    CALL_CHILD(gance_build_up_attack_event)
+                    CASE_EQUAL(1)
+                    SET_VALUE(LW(9), PTR(&weapon_gance_body))
+                    CALL_CHILD(gance_body_attack_event)
+                    CASE_EQUAL(2)
+                    SET_VALUE(LW(9), PTR(&weapon_gance_footwork))
+                    CALL_CHILD(gance_footwork_attack_event)
+                    CASE_EQUAL(3)
+                    SET_VALUE(LW(9), PTR(&weapon_gance_posing))
+                    CALL_CHILD(gance_posing_attack_event)
+                END_SWITCH
+            ELSE
+                CALL(btlevtcmd_DrawLots, LW(0), 2, 10, 10)
+                SWITCH(LW(0))
+                    CASE_EQUAL(0)
+                    SET_VALUE(LW(9), PTR(&weapon_gance_rariat_attack))
+                    CALL_CHILD(gance_rariat_attack_attack_event)
+                    CASE_EQUAL(1)
+                    SET_VALUE(LW(9), PTR(&weapon_gance_body_attack))
+                    CALL_CHILD(gance_body_attack_attack_event)
+                END_SWITCH
+            END_IF
+        END_IF
+    END_IF
+    CALL(btlevtcmd_StartWaitEvent, BTL_UNIT_SELF)
+    RETURN
+EVT_END()
+
+/**
+ * Macho Grubba's speed-up pose (weapon_gance_macho_speed: Fast for 4 turns on himself),
+ * used whenever he is not Fast: he flexes, poses in a flare of light, pays the cost,
+ * sets unit work 2 to 1 (so damage_event restores the camera afterwards) and applies the weapon to himself.
+ */
+EVT_BEGIN(gance_macho_speed_attack_event)
+    CALL(evt_btl_camera_set_mode, 0, 7)
+    CALL(evt_btl_camera_set_homing_unit, 0, BTL_UNIT_SELF, BTL_UNIT_NONE)
+    CALL(evt_btl_camera_set_moveSpeedLv, 0, 2)
+    CALL(evt_btl_camera_set_zoom, 0, 300)
+    CALL(btlevtcmd_snd_se, BTL_UNIT_SELF, STRING("SFX_BOSS_GANSU_PAUSING1"), EVT_NULLPTR, 0, LW(15))
+    CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("E_1A"))
+    WAIT_MS(1500)
+    CALL(evt_snd_sfxoff, LW(15))
+    CALL(btlevtcmd_GetPosFloat, BTL_UNIT_SELF, LW(0), LW(1), LW(2))
+    CALL(btlevtcmd_GetStatusMg, BTL_UNIT_SELF, LW(5))
+    CALL(btlevtcmd_GetUnitWorkFloat, BTL_UNIT_SELF, UW_BOSS_MACHO_GANCE_BASE_SIZE, LW(6))
+    MULTIPLY_FLOAT(LW(5), LW(6))
+    SET_FLOAT_VALUE(LW(6), FLOAT(60.0f))
+    MULTIPLY_FLOAT(LW(6), LW(5))
+    ADD_FLOAT(LW(1), LW(6))
+    SUBTRACT_FLOAT(LW(2), FLOAT(40.0f))
+    CALL(evt_eff64, STRING("hikari"), STRING("radiation_n64"), 2, LW(0), LW(1), LW(2), FLOAT(1.0f), 0, 0, 0, 0, 0, 0, 0)
+    CALL(btlevtcmd_snd_se, BTL_UNIT_SELF, STRING("SFX_BOSS_GANSU_PAUSING2"), EVT_NULLPTR, 0, LW(15))
+    CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("M_3"))
+    WAIT_MS(1000)
+    CALL(evt_snd_sfxoff, LW(15))
+    CALL(evt_eff_delete, STRING("hikari"))
+    CALL(btlevtcmd_PayWeaponCost, BTL_UNIT_SELF, LW(9))
+    CALL(btlevtcmd_SetUnitWork, BTL_UNIT_SELF, UW_BOSS_MACHO_GANCE_SELF_BUFF, 1)
+    CALL(btlevtcmd_CheckDamage, BTL_UNIT_SELF, BTL_UNIT_SELF, 1, LW(9), DAMAGE_FLAG_LAST_HIT, LW(5))
+    RETURN
+EVT_END()
+
+/**
+ * Macho Grubba's attack-up pose (weapon_gance_build_up: attack +3 for 1 turn on himself):
+ * he flexes and poses in a flare of light, sets unit work 2 to 2 (so damage_event restores the camera
+ * afterwards) and applies the weapon to himself.
+ */
+EVT_BEGIN(gance_build_up_attack_event)
+    CALL(evt_btl_camera_set_mode, 0, 7)
+    CALL(evt_btl_camera_set_homing_unit, 0, BTL_UNIT_SELF, BTL_UNIT_NONE)
+    CALL(evt_btl_camera_set_moveSpeedLv, 0, 2)
+    CALL(evt_btl_camera_set_zoom, 0, 300)
+    CALL(btlevtcmd_snd_se, BTL_UNIT_SELF, STRING("SFX_BOSS_GANSU_PAUSING1"), EVT_NULLPTR, 0, LW(15))
+    CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("E_1A"))
+    WAIT_MS(1500)
+    CALL(evt_snd_sfxoff, LW(15))
+    CALL(btlevtcmd_GetPosFloat, BTL_UNIT_SELF, LW(0), LW(1), LW(2))
+    CALL(btlevtcmd_GetStatusMg, BTL_UNIT_SELF, LW(5))
+    CALL(btlevtcmd_GetUnitWorkFloat, BTL_UNIT_SELF, UW_BOSS_MACHO_GANCE_BASE_SIZE, LW(6))
+    MULTIPLY_FLOAT(LW(5), LW(6))
+    SET_FLOAT_VALUE(LW(6), FLOAT(50.0f))
+    MULTIPLY_FLOAT(LW(6), LW(5))
+    ADD_FLOAT(LW(1), LW(6))
+    SUBTRACT_FLOAT(LW(2), FLOAT(40.0f))
+    CALL(evt_eff64, STRING("hikari"), STRING("radiation_n64"), 2, LW(0), LW(1), LW(2), FLOAT(1.0f), 0, 0, 0, 0, 0, 0, 0)
+    CALL(btlevtcmd_snd_se, BTL_UNIT_SELF, STRING("SFX_BOSS_GANSU_PAUSING3"), EVT_NULLPTR, 0, LW(15))
+    CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("M_5"))
+    WAIT_MS(1000)
+    CALL(evt_snd_sfxoff, LW(15))
+    CALL(evt_eff_delete, STRING("hikari"))
+    CALL(btlevtcmd_PayWeaponCost, BTL_UNIT_SELF, LW(9))
+    CALL(btlevtcmd_SetUnitWork, BTL_UNIT_SELF, UW_BOSS_MACHO_GANCE_SELF_BUFF, 2)
+    CALL(btlevtcmd_CheckDamage, BTL_UNIT_SELF, BTL_UNIT_SELF, 1, LW(9), DAMAGE_FLAG_LAST_HIT, LW(5))
+    RETURN
+EVT_END()
+
+/**
+ * Macho Grubba's defense-up pose (weapon_gance_body: defense +3 for 2 turns on himself):
+ * he flexes and poses twice in a flare of light,
+ * sets unit work 2 to 3 (so damage_event restores the camera afterwards) and applies the weapon to himself.
+ */
+EVT_BEGIN(gance_body_attack_event)
+    CALL(evt_btl_camera_set_mode, 0, 7)
+    CALL(evt_btl_camera_set_homing_unit, 0, BTL_UNIT_SELF, BTL_UNIT_NONE)
+    CALL(evt_btl_camera_set_moveSpeedLv, 0, 2)
+    CALL(evt_btl_camera_set_zoom, 0, 300)
+    CALL(btlevtcmd_snd_se, BTL_UNIT_SELF, STRING("SFX_BOSS_GANSU_PAUSING1"), EVT_NULLPTR, 0, LW(15))
+    CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("E_1A"))
+    WAIT_MS(1500)
+    CALL(evt_snd_sfxoff, LW(15))
+    CALL(btlevtcmd_GetPosFloat, BTL_UNIT_SELF, LW(0), LW(1), LW(2))
+    CALL(btlevtcmd_GetStatusMg, BTL_UNIT_SELF, LW(5))
+    CALL(btlevtcmd_GetUnitWorkFloat, BTL_UNIT_SELF, UW_BOSS_MACHO_GANCE_BASE_SIZE, LW(6))
+    MULTIPLY_FLOAT(LW(5), LW(6))
+    SET_FLOAT_VALUE(LW(6), FLOAT(50.0f))
+    MULTIPLY_FLOAT(LW(6), LW(5))
+    ADD_FLOAT(LW(1), LW(6))
+    SUBTRACT_FLOAT(LW(2), FLOAT(40.0f))
+    CALL(evt_eff64, STRING("hikari"), STRING("radiation_n64"), 2, LW(0), LW(1), LW(2), FLOAT(1.0f), 0, 0, 0, 0, 0, 0, 0)
+    CALL(btlevtcmd_snd_se, BTL_UNIT_SELF, STRING("SFX_BOSS_GANSU_PAUSING4"), EVT_NULLPTR, 0, LW(15))
+    CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("M_4"))
+    WAIT_MS(500)
+    CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("M_7"))
+    WAIT_MS(500)
+    CALL(evt_snd_sfxoff, LW(15))
+    CALL(evt_eff_delete, STRING("hikari"))
+    CALL(btlevtcmd_PayWeaponCost, BTL_UNIT_SELF, LW(9))
+    CALL(btlevtcmd_SetUnitWork, BTL_UNIT_SELF, UW_BOSS_MACHO_GANCE_SELF_BUFF, 3)
+    CALL(btlevtcmd_CheckDamage, BTL_UNIT_SELF, BTL_UNIT_SELF, 1, LW(9), DAMAGE_FLAG_LAST_HIT, LW(5))
+    RETURN
+EVT_END()
+
+/**
+ * Macho Grubba's evasion pose (weapon_gance_footwork: Dodgy for 2 turns on himself):
+ * he flexes and poses in a flare of light, sets unit work 2 to 4 (so damage_event restores the camera
+ * afterwards) and applies the weapon to himself.
+ */
+EVT_BEGIN(gance_footwork_attack_event)
+    CALL(evt_btl_camera_set_mode, 0, 7)
+    CALL(evt_btl_camera_set_homing_unit, 0, BTL_UNIT_SELF, BTL_UNIT_NONE)
+    CALL(evt_btl_camera_set_moveSpeedLv, 0, 2)
+    CALL(evt_btl_camera_set_zoom, 0, 300)
+    CALL(btlevtcmd_snd_se, BTL_UNIT_SELF, STRING("SFX_BOSS_GANSU_PAUSING1"), EVT_NULLPTR, 0, LW(15))
+    CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("E_1A"))
+    WAIT_MS(1500)
+    CALL(evt_snd_sfxoff, LW(15))
+    CALL(btlevtcmd_GetPosFloat, BTL_UNIT_SELF, LW(0), LW(1), LW(2))
+    CALL(btlevtcmd_GetStatusMg, BTL_UNIT_SELF, LW(5))
+    CALL(btlevtcmd_GetUnitWorkFloat, BTL_UNIT_SELF, UW_BOSS_MACHO_GANCE_BASE_SIZE, LW(6))
+    MULTIPLY_FLOAT(LW(5), LW(6))
+    SET_FLOAT_VALUE(LW(6), FLOAT(50.0f))
+    MULTIPLY_FLOAT(LW(6), LW(5))
+    ADD_FLOAT(LW(1), LW(6))
+    SUBTRACT_FLOAT(LW(2), FLOAT(40.0f))
+    CALL(evt_eff64, STRING("hikari"), STRING("radiation_n64"), 2, LW(0), LW(1), LW(2), FLOAT(1.0f), 0, 0, 0, 0, 0, 0, 0)
+    CALL(btlevtcmd_snd_se, BTL_UNIT_SELF, STRING("SFX_BOSS_GANSU_PAUSING5"), EVT_NULLPTR, 0, LW(15))
+    CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("M_6"))
+    WAIT_MS(1000)
+    CALL(evt_snd_sfxoff, LW(15))
+    CALL(evt_eff_delete, STRING("hikari"))
+    CALL(btlevtcmd_PayWeaponCost, BTL_UNIT_SELF, LW(9))
+    CALL(btlevtcmd_SetUnitWork, BTL_UNIT_SELF, UW_BOSS_MACHO_GANCE_SELF_BUFF, 4)
+    CALL(btlevtcmd_CheckDamage, BTL_UNIT_SELF, BTL_UNIT_SELF, 1, LW(9), DAMAGE_FLAG_LAST_HIT, LW(5))
+    RETURN
+EVT_END()
+
+/**
+ * Macho Grubba's hip drop (weapon_gance_attack: 4 damage to one target), his second action in phases 0 and 1:
+ * he poses in a flare of light, runs at the chosen target,
+ * jumps onto it and lands with a hip drop that hits once, bounces off, and walks back home.
+ */
+EVT_BEGIN(gance_attack_attack_event)
+    // Macho Grubba strikes a pose in a flare of light, flexing with a long sound.
+    CALL(btlevtcmd_snd_se, BTL_UNIT_SELF, STRING("SFX_BOSS_GANSU_PAUSING1"), EVT_NULLPTR, 0, LW(15))
+    CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("E_1A"))
+    WAIT_MS(1500)
+    CALL(evt_snd_sfxoff, LW(15))
+    CALL(btlevtcmd_GetPosFloat, BTL_UNIT_SELF, LW(0), LW(1), LW(2))
+    CALL(btlevtcmd_GetStatusMg, BTL_UNIT_SELF, LW(5))
+    CALL(btlevtcmd_GetUnitWorkFloat, BTL_UNIT_SELF, UW_BOSS_MACHO_GANCE_BASE_SIZE, LW(6))
+    MULTIPLY_FLOAT(LW(5), LW(6))
+    SET_FLOAT_VALUE(LW(6), FLOAT(50.0f))
+    MULTIPLY_FLOAT(LW(6), LW(5))
+    ADD_FLOAT(LW(1), LW(6))
+    SUBTRACT_FLOAT(LW(2), FLOAT(40.0f))
+    CALL(evt_eff64, STRING("hikari"), STRING("radiation_n64"), 2, LW(0), LW(1), LW(2), FLOAT(1.0f), 0, 0, 0, 0, 0, 0, 0)
+    CALL(btlevtcmd_snd_se, BTL_UNIT_SELF, STRING("SFX_BOSS_GANSU_PAUSING7"), EVT_NULLPTR, 0, LW(15))
+    CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("E_1B"))
+    WAIT_MS(1000)
+    CALL(evt_snd_sfxoff, LW(15))
+    CALL(evt_eff_delete, STRING("hikari"))
+    CALL(btlevtcmd_JumpSetting, BTL_UNIT_SELF, 20, FLOAT(0.0f), FLOAT(0.5996094f))
+    // Choose a target; a confused Grubba with none is flustered.
+    CALL(btlevtcmd_GetEnemyBelong, BTL_UNIT_SELF, LW(0))
+    CALL(btlevtcmd_SamplingEnemy, BTL_UNIT_SELF, LW(0), LW(9))
+    CALL(btlevtcmd_ChoiceSamplingEnemy, LW(9), LW(3), LW(4))
+    IF_INT_EQUAL(LW(3), -1)
+        CALL(btlevtcmd_CheckToken, BTL_UNIT_SELF, TOKEN_FLAG_CONFUSED_ACTION, LW(0))
+        IF_INT_NOT_EQUAL(LW(0), 0)
+            CALL_CHILD(subsetevt_confuse_flustered)
+        END_IF
+        RETURN
+    END_IF
+    // The attack is announced.
+    CALL(btlevtcmd_WeaponAftereffect, LW(9))
+    CALL(btlevtcmd_AttackDeclare, BTL_UNIT_SELF, LW(3), LW(4))
+    CALL(btlevtcmd_WaitGuardMove)
+    CALL(btlevtcmd_PayWeaponCost, BTL_UNIT_SELF, LW(9))
+    // He turns his back on the target and stomps off to the far side of the stage,
+    // the camera trembling at each step.
+    CALL(btlevtcmd_GetHomePos, BTL_UNIT_SELF, LW(0), LW(1), LW(2))
+    CALL(btlevtcmd_PartsFaceDirectionSub, BTL_UNIT_SELF, 1, LW(0), 250)
+    CALL(btlevtcmd_AnimeChangePoseType, BTL_UNIT_SELF, 1, BTL_POSE_WALK)
+    CALL(x_flag_set, 0, 1)
+    BEGIN_SIBLING_EVENT
+        CALL(evt_cam_shake, CAMERA_3D, FLOAT(0.00390625f), FLOAT(0.0f), 1166)
+        CALL(x_flag_set, 0, 0)
+    END_SIBLING_EVENT
+    CALL(btlevtcmd_MovePosition, BTL_UNIT_SELF, LW(0), LW(1), LW(2), 70, -1, 1)
+    CALL(x_flag_wait, 0, 0)
+    WAIT_MS(500)
+    // Then he stomps back toward the party.
+    CALL(btlevtcmd_GetHomePos, BTL_UNIT_SELF, LW(0), LW(1), LW(2))
+    CALL(btlevtcmd_AnimeChangePoseType, BTL_UNIT_SELF, 1, BTL_POSE_RUN)
+    BEGIN_SIBLING_EVENT
+        CALL(evt_cam_shake, CAMERA_3D, FLOAT(0.00390625f), FLOAT(0.0f), 500)
+    END_SIBLING_EVENT
+    CALL(btlevtcmd_MovePosition, BTL_UNIT_SELF, LW(0), LW(1), LW(2), 30, -1, 0)
+    // He jumps high at the target.
+    BEGIN_SIBLING_EVENT
+        CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("J_1A"))
+        CALL(btlevtcmd_GetPosFloat, BTL_UNIT_SELF, LW(5), LW(6), LW(7))
+        LOOP(0)
+            CALL(btlevtcmd_GetPosFloat, BTL_UNIT_SELF, LW(9), LW(10), LW(11))
+            SUBTRACT_FLOAT(LW(6), LW(10))
+            IF_INT_GREATER(LW(6), FLOAT(0.0f))
+                CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("J_1B"))
+                BREAK_LOOP
+            END_IF
+            SET_FLOAT_VALUE(LW(6), LW(10))
+            WAIT_FRAMES(1)
+        END_LOOP
+    END_SIBLING_EVENT
+    CALL(btlevtcmd_GetHitPos, LW(3), LW(4), LW(0), LW(1), LW(2))
+    CALL(btlevtcmd_snd_se, BTL_UNIT_SELF, STRING("SFX_BOSS_GANSU_JUMP1"), EVT_NULLPTR, 0, EVT_NULLPTR)
+    CALL(btlevtcmd_JumpPosition, BTL_UNIT_SELF, LW(0), LW(1), LW(2), 36, -1)
+    CALL(x_flag_set, 0, 0)
+    // Check how the target defends against the hip drop.
+    CALL(btlevtcmd_PreCheckDamage, BTL_UNIT_SELF, LW(3), LW(4), LW(9), DAMAGE_FLAG_LAST_HIT, LW(5))
+    SWITCH(LW(5))
+        CASE_OR_EQUAL(4)
+        GOTO(90)
+        CASE_END
+        CASE_EQUAL(3)
+        CALL(btlevtcmd_StartAvoid, LW(3), 38)
+        GOTO(90)
+        CASE_END
+        CASE_EQUAL(6)
+        CALL(btlevtcmd_StartAvoid, LW(3), 39)
+        GOTO(90)
+        CASE_EQUAL(2)
+        CALL(btlevtcmd_StartAvoid, LW(3), 40)
+        GOTO(90)
+        CASE_EQUAL(1)
+        GOTO(91)
+        CASE_END
+        CASE_DEFAULT
+        GOTO(98)
+        CASE_END
+    END_SWITCH
+    // The target dodged: he lands beside it in a heavy hip drop that shakes the camera, then bounces away.
+    LABEL(90)
+    CALL(btlevtcmd_JumpContinue, BTL_UNIT_SELF)
+    CALL(x_flag_set, 0, 1)
+    BEGIN_SIBLING_EVENT
+        CALL(btlevtcmd_snd_se, BTL_UNIT_SELF, STRING("SFX_BOSS_GANSU_HIPDROP1"), EVT_NULLPTR, 0, EVT_NULLPTR)
+        CALL(evt_cam_shake, CAMERA_3D, FLOAT(0.0f), FLOAT(0.01953125f), 800)
+        CALL(x_flag_set, 0, 0)
+    END_SIBLING_EVENT
+    CALL(btlevtcmd_GetPos, BTL_UNIT_SELF, LW(0), LW(1), LW(2))
+    CALL(btlevtcmd_MoveDirectionAdd, BTL_UNIT_SELF, LW(0), 30)
+    CALL(btlevtcmd_JumpPosition, BTL_UNIT_SELF, LW(0), LW(1), LW(2), 18, -1)
+    CALL(btlevtcmd_MoveDirectionAdd, BTL_UNIT_SELF, LW(0), 18)
+    CALL(btlevtcmd_JumpPosition, BTL_UNIT_SELF, LW(0), LW(1), LW(2), 9, -1)
+    CALL(btlevtcmd_AnimeChangePoseType, BTL_UNIT_SELF, 1, BTL_POSE_STAY_DEFAULT)
+    WAIT_MS(300)
+    GOTO(98)
+    // The hip drop hits: the damage is dealt, the camera shakes and he bounces off the target in three hops.
+    LABEL(91)
+    CALL(btlevtcmd_ResultACDefence, LW(3), LW(9))
+    CALL(x_flag_set, 0, 1)
+    BEGIN_SIBLING_EVENT
+        CALL(btlevtcmd_snd_se, BTL_UNIT_SELF, STRING("SFX_BOSS_GANSU_HIPDROP1"), EVT_NULLPTR, 0, EVT_NULLPTR)
+        CALL(evt_cam_shake, CAMERA_3D, FLOAT(0.0f), FLOAT(0.01953125f), 800)
+        CALL(x_flag_set, 0, 0)
+    END_SIBLING_EVENT
+    CALL(btlevtcmd_CheckDamage, BTL_UNIT_SELF, LW(3), LW(4), LW(9), DAMAGE_FLAG_LAST_HIT, LW(5))
+    CALL(btlevtcmd_GetPos, BTL_UNIT_SELF, LW(0), LW(1), LW(2))
+    SET_VALUE(LW(1), 0)
+    CALL(btlevtcmd_FaceDirectionSub, BTL_UNIT_SELF, LW(0), 48)
+    CALL(btlevtcmd_JumpPosition, BTL_UNIT_SELF, LW(0), LW(1), LW(2), 30, -1)
+    CALL(btlevtcmd_FaceDirectionSub, BTL_UNIT_SELF, LW(0), 24)
+    CALL(btlevtcmd_JumpPosition, BTL_UNIT_SELF, LW(0), LW(1), LW(2), 12, -1)
+    CALL(btlevtcmd_FaceDirectionSub, BTL_UNIT_SELF, LW(0), 12)
+    CALL(btlevtcmd_JumpPosition, BTL_UNIT_SELF, LW(0), LW(1), LW(2), 6, -1)
+    // He stands up and stomps back home, the camera shaking.
+    LABEL(98)
+    CALL(x_flag_wait, 0, 0)
+    CALL(btlevtcmd_SetMoveSpeed, BTL_UNIT_SELF, FLOAT(4.0f))
+    CALL(btlevtcmd_GetHomePos, BTL_UNIT_SELF, LW(0), LW(1), LW(2))
+    CALL(btlevtcmd_AnimeChangePoseType, BTL_UNIT_SELF, 1, BTL_POSE_STAY_DEFAULT)
+    WAIT_MS(500)
+    CALL(btlevtcmd_AnimeChangePoseType, BTL_UNIT_SELF, 1, BTL_POSE_RUN)
+    CALL(x_flag_set, 0, 1)
+    BEGIN_SIBLING_EVENT
+        CALL(evt_cam_shake, CAMERA_3D, FLOAT(0.00390625f), FLOAT(0.0f), 666)
+        CALL(x_flag_set, 0, 0)
+    END_SIBLING_EVENT
+    CALL(btlevtcmd_MovePosition, BTL_UNIT_SELF, LW(0), LW(1), LW(2), 40, -1, 0)
+    CALL(btlevtcmd_ResetFaceDirection, BTL_UNIT_SELF)
+    CALL(x_flag_wait, 0, 0)
+    RETURN
+EVT_END()
+
+/**
+ * Macho Grubba's charging pose (weapon_gance_posing: charge +4 on himself), drawn from phase 2 on:
+ * he flexes and pumps his fists in a flare of light,
+ * sets unit work 2 to 6 (so damage_event restores the camera afterwards) and applies the weapon to himself.
+ */
+EVT_BEGIN(gance_posing_attack_event)
+    CALL(evt_btl_camera_set_mode, 0, 7)
+    CALL(evt_btl_camera_set_homing_unit, 0, BTL_UNIT_SELF, BTL_UNIT_NONE)
+    CALL(evt_btl_camera_set_moveSpeedLv, 0, 1)
+    CALL(evt_btl_camera_set_zoom, 0, 300)
+    CALL(btlevtcmd_snd_se, BTL_UNIT_SELF, STRING("SFX_BOSS_GANSU_PAUSING1"), EVT_NULLPTR, 0, LW(15))
+    CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("E_1A"))
+    WAIT_MS(1500)
+    CALL(evt_snd_sfxoff, LW(15))
+    CALL(btlevtcmd_GetPosFloat, BTL_UNIT_SELF, LW(0), LW(1), LW(2))
+    CALL(btlevtcmd_GetStatusMg, BTL_UNIT_SELF, LW(5))
+    CALL(btlevtcmd_GetUnitWorkFloat, BTL_UNIT_SELF, UW_BOSS_MACHO_GANCE_BASE_SIZE, LW(6))
+    MULTIPLY_FLOAT(LW(5), LW(6))
+    SET_FLOAT_VALUE(LW(6), FLOAT(50.0f))
+    MULTIPLY_FLOAT(LW(6), LW(5))
+    ADD_FLOAT(LW(1), LW(6))
+    SUBTRACT_FLOAT(LW(2), FLOAT(40.0f))
+    CALL(evt_eff64, STRING("hikari"), STRING("radiation_n64"), 2, LW(0), LW(1), LW(2), FLOAT(1.0f), 0, 0, 0, 0, 0, 0, 0)
+    BEGIN_SIBLING_EVENT
+        WAIT_MS(50)
+        CALL(btlevtcmd_snd_se, BTL_UNIT_SELF, STRING("SFX_BOSS_GANSU_FIST1"), EVT_NULLPTR, 0, EVT_NULLPTR)
+        WAIT_MS(180)
+        CALL(btlevtcmd_snd_se, BTL_UNIT_SELF, STRING("SFX_BOSS_GANSU_FIST1"), EVT_NULLPTR, 0, EVT_NULLPTR)
+    END_SIBLING_EVENT
+    CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("M_8"))
+    WAIT_MS(1000)
+    CALL(evt_eff_delete, STRING("hikari"))
+    CALL(btlevtcmd_PayWeaponCost, BTL_UNIT_SELF, LW(9))
+    CALL(btlevtcmd_SetUnitWork, BTL_UNIT_SELF, UW_BOSS_MACHO_GANCE_SELF_BUFF, 6)
+    CALL(btlevtcmd_CheckDamage, BTL_UNIT_SELF, BTL_UNIT_SELF, 1, LW(9), DAMAGE_FLAG_LAST_HIT, LW(5))
+    RETURN
+EVT_END()
+
+/**
+ * Macho Grubba's lariat (weapon_gance_rariat_attack: 4 damage to every target), drawn in phases 2 and 3:
+ * he poses in a flare of light, then charges across the party with his arm out,
+ * hitting each selected target once as he reaches it, and walks back home.
+ */
+EVT_BEGIN(gance_rariat_attack_attack_event)
+    // Macho Grubba strikes a pose in a flare of light, flexing with a long sound.
+    CALL(btlevtcmd_snd_se, BTL_UNIT_SELF, STRING("SFX_BOSS_GANSU_PAUSING1"), EVT_NULLPTR, 0, LW(15))
+    CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("E_1A"))
+    WAIT_MS(1500)
+    CALL(evt_snd_sfxoff, LW(15))
+    CALL(btlevtcmd_GetPosFloat, BTL_UNIT_SELF, LW(0), LW(1), LW(2))
+    CALL(btlevtcmd_GetStatusMg, BTL_UNIT_SELF, LW(5))
+    CALL(btlevtcmd_GetUnitWorkFloat, BTL_UNIT_SELF, UW_BOSS_MACHO_GANCE_BASE_SIZE, LW(6))
+    MULTIPLY_FLOAT(LW(5), LW(6))
+    SET_FLOAT_VALUE(LW(6), FLOAT(90.0f))
+    MULTIPLY_FLOAT(LW(6), LW(5))
+    ADD_FLOAT(LW(1), LW(6))
+    SET_FLOAT_VALUE(LW(6), FLOAT(20.0f))
+    MULTIPLY_FLOAT(LW(6), LW(5))
+    ADD_FLOAT(LW(0), LW(6))
+    SUBTRACT_FLOAT(LW(2), FLOAT(40.0f))
+    CALL(evt_eff64, STRING("hikari"), STRING("radiation_n64"), 2, LW(0), LW(1), LW(2), FLOAT(1.0f), 0, 0, 0, 0, 0, 0, 0)
+    CALL(btlevtcmd_snd_se, BTL_UNIT_SELF, STRING("SFX_BOSS_GANSU_PAUSING8"), EVT_NULLPTR, 0, EVT_NULLPTR)
+    CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("M_2"))
+    WAIT_MS(1000)
+    CALL(evt_eff_delete, STRING("hikari"))
+    CALL(btlevtcmd_JumpSetting, BTL_UNIT_SELF, 20, FLOAT(0.0f), FLOAT(0.5996094f))
+    // Choose the targets; a confused Grubba with none is flustered.
+    CALL(btlevtcmd_GetEnemyBelong, BTL_UNIT_SELF, LW(0))
+    CALL(btlevtcmd_SamplingEnemy, BTL_UNIT_SELF, LW(0), LW(9))
+    IF_INT_EQUAL(LW(3), -1)
+        CALL(btlevtcmd_CheckToken, BTL_UNIT_SELF, TOKEN_FLAG_CONFUSED_ACTION, LW(0))
+        IF_INT_NOT_EQUAL(LW(0), 0)
+            CALL_CHILD(subsetevt_confuse_flustered)
+        END_IF
+        RETURN
+    END_IF
+    // The attack is announced.
+    CALL(btlevtcmd_WeaponAftereffect, LW(9))
+    CALL(btlevtcmd_AttackDeclareAll, BTL_UNIT_SELF)
+    CALL(btlevtcmd_WaitGuardMove)
+    CALL(btlevtcmd_PayWeaponCost, BTL_UNIT_SELF, LW(9))
+    // He winds up, arm out, and charges across the stage, the camera shaking.
+    CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("A_2A"))
+    CALL(btlevtcmd_SetMoveSpeed, BTL_UNIT_SELF, FLOAT(8.0f))
+    BEGIN_SIBLING_EVENT
+        CALL(evt_cam_shake, CAMERA_3D, FLOAT(0.00390625f), FLOAT(0.0f), 200)
+    END_SIBLING_EVENT
+    CALL(btlevtcmd_GetSelectEnemy, LW(3), LW(4))
+    SET_VALUE(LW(10), 0)
+    SET_VALUE(LW(11), 0)
+    CALL(x_flag_set, 0, 0)
+    CALL(x_flag_set, 1, 0)
+    // He barrels from one target to the next: each target is checked as he reaches it,
+    // and those who dodge are missed.
+    LOOP(0)
+        CALL(btlevtcmd_GetPos, LW(3), LW(0), LW(1), LW(2))
+        CALL(btlevtcmd_GetStatusMg, BTL_UNIT_SELF, LW(7))
+        MULTIPLY_FLOAT(LW(7), 35)
+        CALL(btlevtcmd_GetUnitWorkFloat, BTL_UNIT_SELF, UW_BOSS_MACHO_GANCE_BASE_SIZE, LW(6))
+        MULTIPLY_FLOAT(LW(7), LW(6))
+        ADD_FLOAT(LW(7), 15)
+        ADD(LW(0), LW(7))
+        ADD(LW(2), 6)
+        IF_INT_EQUAL(LW(11), 0)
+            CALL(btlevtcmd_MovePosition, BTL_UNIT_SELF, LW(0), LW(1), LW(2), 0, -1, 0)
+            CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("A_2B"))
+            CALL(btlevtcmd_SetMoveSpeed, BTL_UNIT_SELF, FLOAT(4.0f))
+        ELSE
+            CALL(x_flag_set, 1, 1)
+            BEGIN_SIBLING_EVENT
+                CALL(btlevtcmd_MovePosition, BTL_UNIT_SELF, LW(0), LW(1), LW(2), 0, -1, 0)
+                CALL(x_flag_set, 1, 0)
+            END_SIBLING_EVENT
+        END_IF
+        CALL(btlevtcmd_PreCheckDamage, BTL_UNIT_SELF, LW(3), LW(4), LW(9), DAMAGE_FLAG_LAST_HIT, LW(5))
+        SWITCH(LW(5))
+            CASE_OR_EQUAL(4)
+            SET_VALUE(LW(6), 90)
+            CASE_END
+            CASE_EQUAL(3)
+            CALL(btlevtcmd_StartAvoid, LW(3), 38)
+            SET_VALUE(LW(6), 90)
+            CASE_END
+            CASE_EQUAL(6)
+            CALL(btlevtcmd_StartAvoid, LW(3), 39)
+            SET_VALUE(LW(6), 90)
+            CASE_EQUAL(2)
+            CALL(btlevtcmd_StartAvoid, LW(3), 40)
+            SET_VALUE(LW(6), 90)
+            CASE_EQUAL(1)
+            SET_VALUE(LW(6), 91)
+            CASE_END
+            CASE_DEFAULT
+            SET_VALUE(LW(6), 97)
+            CASE_END
+        END_SWITCH
+        GOTO(LW(6))
+        LABEL(90)
+        GOTO(97)
+        // Each lariat that lands deals its damage, and the first one shakes the camera.
+        LABEL(91)
+        IF_INT_EQUAL(LW(11), 0)
+            CALL(btlevtcmd_ResultACDefence, LW(3), LW(9))
+        END_IF
+        IF_INT_EQUAL(LW(10), 0)
+            SET_VALUE(LW(10), 1)
+            CALL(x_flag_set, 0, 1)
+            BEGIN_SIBLING_EVENT
+                CALL(evt_cam_shake, CAMERA_3D, FLOAT(0.01953125f), FLOAT(0.0f), 800)
+                CALL(x_flag_set, 0, 0)
+            END_SIBLING_EVENT
+        END_IF
+        CALL(btlevtcmd_CheckDamage, BTL_UNIT_SELF, LW(3), LW(4), LW(9), DAMAGE_FLAG_LAST_HIT, LW(5))
+        LABEL(97)
+        CALL(btlevtcmd_GetPos, LW(3), LW(0), LW(1), LW(2))
+        ADD(LW(11), 1)
+        CALL(btlevtcmd_GetSelectNextEnemy, LW(3), LW(4))
+        IF_INT_EQUAL(LW(3), -1)
+            BREAK_LOOP
+        END_IF
+    END_LOOP
+    // After the last target he skids to a stop, then stomps back home while the camera shakes.
+    CALL(x_flag_wait, 1, 0)
+    SUBTRACT(LW(0), LW(7))
+    ADD(LW(2), 6)
+    CALL(btlevtcmd_MovePosition, BTL_UNIT_SELF, LW(0), LW(1), LW(2), 0, -1, 0)
+    WAIT_MS(500)
+    CALL(x_flag_wait, 0, 0)
+    CALL(btlevtcmd_SetMoveSpeed, BTL_UNIT_SELF, FLOAT(4.0f))
+    CALL(btlevtcmd_GetHomePos, BTL_UNIT_SELF, LW(0), LW(1), LW(2))
+    CALL(btlevtcmd_AnimeChangePoseType, BTL_UNIT_SELF, 1, BTL_POSE_STAY_DEFAULT)
+    WAIT_MS(500)
+    CALL(btlevtcmd_AnimeChangePoseType, BTL_UNIT_SELF, 1, BTL_POSE_RUN)
+    CALL(x_flag_set, 0, 1)
+    BEGIN_SIBLING_EVENT
+        CALL(evt_cam_shake, CAMERA_3D, FLOAT(0.00390625f), FLOAT(0.0f), 666)
+        CALL(x_flag_set, 0, 0)
+    END_SIBLING_EVENT
+    CALL(btlevtcmd_MovePosition, BTL_UNIT_SELF, LW(0), LW(1), LW(2), 40, -1, 0)
+    CALL(btlevtcmd_ResetFaceDirection, BTL_UNIT_SELF)
+    CALL(x_flag_wait, 0, 0)
+    RETURN
+EVT_END()
+
+/**
+ * Macho Grubba's body attack (weapon_gance_body_attack: 4 damage to one target), drawn in phases 2 and 3:
+ * he poses, spins around, leaps at the target rolling forward in the air
+ * and lands on it with a hip drop that hits once, bounces off, and walks back home.
+ */
+EVT_BEGIN(gance_body_attack_attack_event)
+    // Macho Grubba strikes a pose in a flare of light, flexing with a long sound.
+    CALL(btlevtcmd_snd_se, BTL_UNIT_SELF, STRING("SFX_BOSS_GANSU_PAUSING1"), EVT_NULLPTR, 0, LW(15))
+    CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("E_1A"))
+    WAIT_MS(1500)
+    CALL(evt_snd_sfxoff, LW(15))
+    CALL(btlevtcmd_GetPosFloat, BTL_UNIT_SELF, LW(0), LW(1), LW(2))
+    CALL(btlevtcmd_GetStatusMg, BTL_UNIT_SELF, LW(5))
+    CALL(btlevtcmd_GetUnitWorkFloat, BTL_UNIT_SELF, UW_BOSS_MACHO_GANCE_BASE_SIZE, LW(6))
+    MULTIPLY_FLOAT(LW(5), LW(6))
+    SET_FLOAT_VALUE(LW(6), FLOAT(50.0f))
+    MULTIPLY_FLOAT(LW(6), LW(5))
+    ADD_FLOAT(LW(1), LW(6))
+    SUBTRACT_FLOAT(LW(2), FLOAT(40.0f))
+    CALL(evt_eff64, STRING("hikari"), STRING("radiation_n64"), 2, LW(0), LW(1), LW(2), FLOAT(1.0f), 0, 0, 0, 0, 0, 0, 0)
+    CALL(btlevtcmd_snd_se, BTL_UNIT_SELF, STRING("SFX_BOSS_GANSU_PAUSING9"), EVT_NULLPTR, 0, EVT_NULLPTR)
+    CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("M_1"))
+    WAIT_MS(1000)
+    CALL(evt_eff_delete, STRING("hikari"))
+    // He spins around once on the spot.
+    CALL(btlevtcmd_AnimeChangePoseType, BTL_UNIT_SELF, 1, BTL_POSE_STAY_DEFAULT)
+    CALL(btlevtcmd_snd_se, BTL_UNIT_SELF, STRING("SFX_BOSS_GANSU_ATTACK1"), EVT_NULLPTR, 0, EVT_NULLPTR)
+    CALL(btlevtcmd_GetRotate, BTL_UNIT_SELF, LW(0), LW(1), LW(2))
+    SET_VALUE(LW(5), 12)
+    LOOP(LW(5))
+        CALL(wariai_enzan_1f, LW(5), 12, FLOAT(0.0f), FLOAT(180.0f), LW(6))
+        ADD(LW(6), LW(1))
+        CALL(btlevtcmd_SetRotate, BTL_UNIT_SELF, 0, LW(6), 0)
+        WAIT_FRAMES(1)
+    END_LOOP
+    CALL(btlevtcmd_ChangeFaceDirection, BTL_UNIT_SELF, 1)
+    CALL(btlevtcmd_SetRotate, BTL_UNIT_SELF, 0, 0, 0)
+    WAIT_MS(500)
+    CALL(btlevtcmd_JumpSetting, BTL_UNIT_SELF, 20, FLOAT(0.0f), FLOAT(0.5996094f))
+    // Choose a target; a confused Grubba with none is flustered.
+    CALL(btlevtcmd_GetEnemyBelong, BTL_UNIT_SELF, LW(0))
+    CALL(btlevtcmd_SamplingEnemy, BTL_UNIT_SELF, LW(0), LW(9))
+    CALL(btlevtcmd_ChoiceSamplingEnemy, LW(9), LW(3), LW(4))
+    IF_INT_EQUAL(LW(3), -1)
+        CALL(btlevtcmd_CheckToken, BTL_UNIT_SELF, TOKEN_FLAG_CONFUSED_ACTION, LW(0))
+        IF_INT_NOT_EQUAL(LW(0), 0)
+            CALL_CHILD(subsetevt_confuse_flustered)
+        END_IF
+        RETURN
+    END_IF
+    // The attack is announced.
+    CALL(btlevtcmd_WeaponAftereffect, LW(9))
+    CALL(btlevtcmd_AttackDeclare, BTL_UNIT_SELF, LW(3), LW(4))
+    CALL(btlevtcmd_WaitGuardMove)
+    CALL(btlevtcmd_PayWeaponCost, BTL_UNIT_SELF, LW(9))
+    // He crouches, then leaps at the target, rolling forward in the air.
+    CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("A_1A"))
+    WAIT_MS(300)
+    BEGIN_SIBLING_EVENT
+        CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("A_1B"))
+        CALL(btlevtcmd_GetStatusMg, BTL_UNIT_SELF, LW(0))
+        MULTIPLY_FLOAT(LW(0), FLOAT(70.0f))
+        CALL(btlevtcmd_GetUnitWorkFloat, BTL_UNIT_SELF, UW_BOSS_MACHO_GANCE_BASE_SIZE, LW(1))
+        MULTIPLY_FLOAT(LW(0), LW(1))
+        CALL(btlevtcmd_SetRotateOffset, BTL_UNIT_SELF, FLOAT(0.0f), LW(0), FLOAT(0.0f))
+        SET_VALUE(LW(5), FLOAT(28.799805f))
+        LOOP(LW(5))
+            CALL(wariai_enzan_1f_intpl, LW(5), FLOAT(28.799805f), FLOAT(0.0f), FLOAT(320.0f), LW(6), 5)
+            CALL(btlevtcmd_SetRotate, BTL_UNIT_SELF, 0, 0, LW(6))
+            WAIT_FRAMES(1)
+        END_LOOP
+        CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("A_1C"))
+        WAIT_FRAMES(1)
+        CALL(btlevtcmd_SetRotate, BTL_UNIT_SELF, 0, 0, 0)
+        CALL(btlevtcmd_SetRotateOffset, BTL_UNIT_SELF, FLOAT(0.0f), FLOAT(0.0f), FLOAT(0.0f))
+    END_SIBLING_EVENT
+    CALL(btlevtcmd_GetHitPos, LW(3), LW(4), LW(0), LW(1), LW(2))
+    CALL(btlevtcmd_snd_se, BTL_UNIT_SELF, STRING("SFX_BOSS_GANSU_JUMP1"), EVT_NULLPTR, 0, EVT_NULLPTR)
+    CALL(btlevtcmd_JumpPosition, BTL_UNIT_SELF, LW(0), LW(1), LW(2), 36, -1)
+    CALL(x_flag_set, 0, 0)
+    // Check how the target defends against the body slam.
+    CALL(btlevtcmd_PreCheckDamage, BTL_UNIT_SELF, LW(3), LW(4), LW(9), DAMAGE_FLAG_LAST_HIT, LW(5))
+    SWITCH(LW(5))
+        CASE_OR_EQUAL(4)
+        GOTO(90)
+        CASE_END
+        CASE_EQUAL(3)
+        CALL(btlevtcmd_StartAvoid, LW(3), 38)
+        GOTO(90)
+        CASE_END
+        CASE_EQUAL(6)
+        CALL(btlevtcmd_StartAvoid, LW(3), 39)
+        GOTO(90)
+        CASE_EQUAL(2)
+        CALL(btlevtcmd_StartAvoid, LW(3), 40)
+        GOTO(90)
+        CASE_EQUAL(1)
+        GOTO(91)
+        CASE_END
+        CASE_DEFAULT
+        GOTO(98)
+        CASE_END
+    END_SWITCH
+    // The target dodged: he lands beside it in a hip drop that shakes the camera.
+    LABEL(90)
+    CALL(btlevtcmd_JumpContinue, BTL_UNIT_SELF)
+    CALL(x_flag_set, 0, 1)
+    BEGIN_SIBLING_EVENT
+        CALL(btlevtcmd_snd_se, BTL_UNIT_SELF, STRING("SFX_BOSS_GANSU_HIPDROP1"), EVT_NULLPTR, 0, EVT_NULLPTR)
+        CALL(evt_cam_shake, CAMERA_3D, FLOAT(0.0f), FLOAT(0.01953125f), 800)
+        CALL(x_flag_set, 0, 0)
+    END_SIBLING_EVENT
+    CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("A_1D"))
+    WAIT_MS(300)
+    GOTO(98)
+    // The body slam hits: the damage is dealt and the camera shakes.
+    LABEL(91)
+    CALL(btlevtcmd_ResultACDefence, LW(3), LW(9))
+    CALL(x_flag_set, 0, 1)
+    BEGIN_SIBLING_EVENT
+        CALL(btlevtcmd_snd_se, BTL_UNIT_SELF, STRING("SFX_BOSS_GANSU_HIPDROP1"), EVT_NULLPTR, 0, EVT_NULLPTR)
+        CALL(evt_cam_shake, CAMERA_3D, FLOAT(0.0f), FLOAT(0.01953125f), 800)
+        CALL(x_flag_set, 0, 0)
+    END_SIBLING_EVENT
+    CALL(btlevtcmd_CheckDamage, BTL_UNIT_SELF, LW(3), LW(4), LW(9), DAMAGE_FLAG_LAST_HIT, LW(5))
+    CALL(btlevtcmd_AnimeChangePose, BTL_UNIT_SELF, 1, STRING("A_1D"))
+    CALL(btlevtcmd_JumpContinue, BTL_UNIT_SELF)
+    // He bounces off in two hops and stomps back home, the camera shaking.
+    LABEL(98)
+    CALL(btlevtcmd_GetPos, BTL_UNIT_SELF, LW(0), LW(1), LW(2))
+    CALL(btlevtcmd_MoveDirectionAdd, BTL_UNIT_SELF, LW(0), 30)
+    CALL(btlevtcmd_JumpPosition, BTL_UNIT_SELF, LW(0), LW(1), LW(2), 18, -1)
+    CALL(btlevtcmd_MoveDirectionAdd, BTL_UNIT_SELF, LW(0), 18)
+    CALL(btlevtcmd_JumpPosition, BTL_UNIT_SELF, LW(0), LW(1), LW(2), 9, -1)
+    CALL(x_flag_wait, 0, 0)
+    CALL(btlevtcmd_SetMoveSpeed, BTL_UNIT_SELF, FLOAT(4.0f))
+    CALL(btlevtcmd_GetHomePos, BTL_UNIT_SELF, LW(0), LW(1), LW(2))
+    CALL(btlevtcmd_ResetFaceDirection, BTL_UNIT_SELF)
+    CALL(btlevtcmd_AnimeChangePoseType, BTL_UNIT_SELF, 1, BTL_POSE_STAY_DEFAULT)
+    WAIT_MS(500)
+    CALL(btlevtcmd_AnimeChangePoseType, BTL_UNIT_SELF, 1, BTL_POSE_RUN)
+    CALL(x_flag_set, 0, 1)
+    BEGIN_SIBLING_EVENT
+        CALL(evt_cam_shake, CAMERA_3D, FLOAT(0.00390625f), FLOAT(0.0f), 666)
+        CALL(x_flag_set, 0, 0)
+    END_SIBLING_EVENT
+    CALL(btlevtcmd_MovePosition, BTL_UNIT_SELF, LW(0), LW(1), LW(2), 40, -1, 0)
+    CALL(btlevtcmd_ResetFaceDirection, BTL_UNIT_SELF)
+    CALL(x_flag_wait, 0, 0)
+    RETURN
+EVT_END()
+
+/** Wait event: sets the idle animation from the unit's pose table. */
+static EVT_BEGIN(wait_event)
+    CALL(btlevtcmd_AnimeChangePoseFromTable, BTL_UNIT_SELF, 1)
+    RETURN
+EVT_END()
+
+/**
+ * Script helper: blocks until x_flag_data[arg0] equals arg1 (a small array of flags the Macho Grubba scripts use
+ * to synchronise their sibling events).
+ */
+static USER_FUNC(x_flag_wait) {
+    EvtWord* args = event->args;
+    s32 index = evtGetValue(event, args[0]);
+    s32 value = evtGetValue(event, args[1]);
+
+    if (value == x_flag_data[index]) {
+        return EVT_RETURN_DONE;
+    }
+    return EVT_RETURN_BLOCK;
+}
+
+/** Script helper: arg1 receives x_flag_data[arg0]. */
+static USER_FUNC(x_flag_get) {
+    EvtWord* args = event->args;
+    s32 index = evtGetValue(event, args[0]);
+
+    evtSetValue(event, args[1], x_flag_data[index]);
+    return EVT_RETURN_DONE;
+}
+
+/** Script helper: adds arg1 to x_flag_data[arg0]. */
+static USER_FUNC(x_flag_add) {
+    EvtWord* args = event->args;
+    s32 index = evtGetValue(event, args[0]);
+
+    x_flag_data[index] += evtGetValue(event, args[1]);
+    return EVT_RETURN_DONE;
+}
+
+/** Script helper: sets x_flag_data[arg0] to arg1. */
+static USER_FUNC(x_flag_set) {
+    EvtWord* args = event->args;
+    s32 index = evtGetValue(event, args[0]);
+
+    x_flag_data[index] = evtGetValue(event, args[1]);
+    return EVT_RETURN_DONE;
+}
+
+/**
+ * Proportion helper (wariai enzan, ratio calculation): a linear blend over steps 1 to args[1] inclusive.
+ * With a = args[0] - 1 and b = args[1] - 1, args[4] receives (a * args[2] + (b - a) * args[3]) / b as a float,
+ * so step 1 gives args[3] and step args[1] gives args[2]. Not called in this unit.
+ */
+static USER_FUNC(wariai_enzan_0f) {
+    EvtWord* args = event->args;
+    f32 a = evtGetFloat(event, args[0]) - 1.0f;
+    f32 b = evtGetFloat(event, args[1]) - 1.0f;
+    f32 c = evtGetFloat(event, args[2]);
+    f32 d = evtGetFloat(event, args[3]);
+
+    evtSetFloat(event, args[4], (a * c + d * (b - a)) / b);
+    return EVT_RETURN_DONE;
+}
+
+/**
+ * Integer-result version of wariai_enzan_0f: args[4] receives (a * args[2] + (b - a) * args[3]) / b with a =
+ * args[0] - 1 and b = args[1] - 1. Not called in this unit.
+ */
+static USER_FUNC(wariai_enzan_0) {
+    EvtWord* args = event->args;
+    f32 a = evtGetFloat(event, args[0]) - 1.0f;
+    f32 b = evtGetFloat(event, args[1]) - 1.0f;
+    f32 c = evtGetFloat(event, args[2]);
+    f32 d = evtGetFloat(event, args[3]);
+
+    evtSetValue(event, args[4], (a * c + d * (b - a)) / b);
+    return EVT_RETURN_DONE;
+}
+
+/**
+ * Curve blend of args[2] and args[3] at step args[0] of args[1],
+ * weighted by the product of two interpolation curves:
+ * args[5] and args[6] are intplGetValue modes, where 14 to 27 run mode minus 14 mirrored and 28
+ * or more give args[2] outright. The float result goes to args[4].
+ * The mirrored branch of the second curve takes its mode from args[5] rather than args[6].
+ * Not called in this unit.
+ */
+static USER_FUNC(wariai_enzan_1f_intpl_w) {
+    EvtWord* args = event->args;
+    f32 a = evtGetFloat(event, args[0]) - 1.0f;
+    f32 b = evtGetFloat(event, args[1]);
+    f32 c = evtGetFloat(event, args[2]);
+    f32 d = evtGetFloat(event, args[3]);
+    s32 out = args[4];
+    f32 t1 = evtGetFloat(event, args[5]);
+    f32 t2 = evtGetFloat(event, args[6]);
+    f32 r1;
+    f32 r2;
+    f32 w;
+
+    if (t1 >= 14.0f) {
+        t1 -= 14.0f;
+        if (t1 >= 14.0f) {
+            evtSetFloat(event, out, c);
+            return EVT_RETURN_DONE;
+        }
+        r1 = 1.0f - intplGetValue(t1, 1.0f, 0.0f, b - a, b);
+    } else {
+        r1 = intplGetValue(t1, 0.0f, 1.0f, b - a, b);
+    }
+    if (t2 >= 14.0f) {
+        t2 = t1 - 14.0f;
+        if (t2 >= 14.0f) {
+            evtSetFloat(event, out, c);
+            return EVT_RETURN_DONE;
+        }
+        r2 = 1.0f - intplGetValue(t2, 1.0f, 0.0f, b - a, b);
+    } else {
+        r2 = intplGetValue(t2, 0.0f, 1.0f, b - a, b);
+    }
+    w = r1 * r2;
+    evtSetFloat(event, out, c * (1.0f - w) + d * w);
+    return EVT_RETURN_DONE;
+}
+
+/**
+ * Curve blend of args[2] and args[3] at step args[0] of args[1]:
+ * args[5] is an intplGetValue mode (0 to 13; 14 to 27 run mode minus 14 mirrored;
+ * 28 or more give args[2] outright), and args[4] receives (1 - r) * args[2] + r * args[3] as a float,
+ * r running from 1 at step 1 toward 0. gance_body_attack_attack_event uses it with mode 5 for its roll.
+ */
+static USER_FUNC(wariai_enzan_1f_intpl) {
+    EvtWord* args = event->args;
+    f32 a = evtGetFloat(event, args[0]) - 1.0f;
+    f32 b = evtGetFloat(event, args[1]);
+    f32 c = evtGetFloat(event, args[2]);
+    f32 d = evtGetFloat(event, args[3]);
+    s32 out = args[4];
+    f32 t = evtGetFloat(event, args[5]);
+    f32 r;
+
+    if (t >= 14.0f) {
+        t -= 14.0f;
+        if (t >= 14.0f) {
+            evtSetFloat(event, out, c);
+            return EVT_RETURN_DONE;
+        }
+        r = 1.0f - intplGetValue(t, 1.0f, 0.0f, b - a, b);
+    } else {
+        r = intplGetValue(t, 0.0f, 1.0f, b - a, b);
+    }
+    evtSetFloat(event, out, (1.0f - r) * c + r * d);
+    return EVT_RETURN_DONE;
+}
+
+/**
+ * Linear blend helper: with a = args[0] - 1 and b = args[1],
+ * args[4] receives (a * args[2] + (b - a) * args[3]) / b as a float,
+ * so step 1 gives args[3] and the value reaches args[2] one step after args[1].
+ * Used for the turns and growth in phase_event and gance_body_attack_attack_event.
+ */
+static USER_FUNC(wariai_enzan_1f) {
+    EvtWord* args = event->args;
+    f32 a = evtGetFloat(event, args[0]) - 1.0f;
+    f32 b = evtGetFloat(event, args[1]);
+    f32 c = evtGetFloat(event, args[2]);
+    f32 d = evtGetFloat(event, args[3]);
+
+    evtSetFloat(event, args[4], (a * c + d * (b - a)) / b);
+    return EVT_RETURN_DONE;
+}
+
+/**
+ * Integer-result version of wariai_enzan_1f: args[4] receives (a * args[2] + (b - a) * args[3]) / b with a =
+ * args[0] - 1 and b = args[1]. Not called in this unit.
+ */
+static USER_FUNC(wariai_enzan_1) {
+    EvtWord* args = event->args;
+    f32 a = evtGetFloat(event, args[0]) - 1.0f;
+    f32 b = evtGetFloat(event, args[1]);
+    f32 c = evtGetFloat(event, args[2]);
+    f32 d = evtGetFloat(event, args[3]);
+
+    evtSetValue(event, args[4], (a * c + d * (b - a)) / b);
+    return EVT_RETURN_DONE;
+}

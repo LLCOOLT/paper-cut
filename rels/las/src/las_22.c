@@ -1,0 +1,483 @@
+// las_22 (ラストダンジョン, Palace of Shadow): the room with the turntable (kaitendai).
+
+#include "battle/battle_unit.h"
+#include "evt/evt_cmd.h"
+#include "evt/evt_bero.h"
+#include "las.h"
+#include "mario/mario_pouch.h"
+#include "evt/evt_hit.h"
+#include "evt/evt_item.h"
+#include "driver/itemdrv.h"
+#include "evt/evt_map.h"
+#include "evt/evt_mario.h"
+#include "evt/evt_mobj.h"
+#include "evt/evt_npc.h"
+#include "evt/evt_party.h"
+#include "evt/evt_pouch.h"
+#include "evt/evt_snd.h"
+#include "evt/evt_sub.h"
+#include "evt/evt_window.h"
+#include "evt/evt_story.h"
+#include "driver/mapdrv.h"
+
+static BeroEntry bero_entry_data[4];
+static const char* haguruma_hontai[13];
+static const char* haguruma_hontai2[7];
+static const char* haguruma_kage[11];
+static const char* haguruma_kage2[6];
+static s32 key_tbl[2];
+
+/**
+ * Door animation script (closing) for the west door, used as the enter/exit animation of this room's bero entry.
+ * LW(0) holds the angle step of the swing, and the script turns the door panels S_doa_l_01 and S_doa_l_02 by it,
+ * the second one the opposite way.
+ */
+static EVT_BEGIN(w_door_close)
+    MULTIPLY_FLOAT(LW(0), FLOAT(-0.38867188f))
+    CALL(evt_mapobj_rotate, 0, STRING("S_doa_l_01"), 0, LW(0), 0)
+    MULTIPLY_FLOAT(LW(0), FLOAT(-1.0f))
+    CALL(evt_mapobj_rotate, 0, STRING("S_doa_l_02"), 0, LW(0), 0)
+    RETURN
+EVT_END()
+
+/**
+ * Door animation script (opening) for the west door, used as the enter/exit animation of this room's bero entry.
+ * LW(0) holds the angle step of the swing, and the script turns the door panels S_doa_l_01 and S_doa_l_02 by it,
+ * the second one the opposite way.
+ */
+static EVT_BEGIN(w_door_open)
+    MULTIPLY_FLOAT(LW(0), FLOAT(0.38867188f))
+    CALL(evt_mapobj_rotate, 0, STRING("S_doa_l_01"), 0, LW(0), 0)
+    MULTIPLY_FLOAT(LW(0), FLOAT(-1.0f))
+    CALL(evt_mapobj_rotate, 0, STRING("S_doa_l_02"), 0, LW(0), 0)
+    RETURN
+EVT_END()
+
+/**
+ * Door animation script (closing) for the east door, used as the enter/exit animation of this room's bero entry.
+ * LW(0) holds the angle step of the swing, and the script turns the door panels S_doa_r_01 and S_doa_r_02 by it,
+ * the second one the opposite way.
+ */
+static EVT_BEGIN(e_door_close)
+    MULTIPLY_FLOAT(LW(0), FLOAT(0.38867188f))
+    CALL(evt_mapobj_rotate, 0, STRING("S_doa_r_01"), 0, LW(0), 0)
+    MULTIPLY_FLOAT(LW(0), FLOAT(-1.0f))
+    CALL(evt_mapobj_rotate, 0, STRING("S_doa_r_02"), 0, LW(0), 0)
+    RETURN
+EVT_END()
+
+/**
+ * Door animation script (opening) for the east door, used as the enter/exit animation of this room's bero entry.
+ * LW(0) holds the angle step of the swing, and the script turns the door panels S_doa_r_01 and S_doa_r_02 by it,
+ * the second one the opposite way.
+ */
+static EVT_BEGIN(e_door_open)
+    MULTIPLY_FLOAT(LW(0), FLOAT(-0.38867188f))
+    CALL(evt_mapobj_rotate, 0, STRING("S_doa_r_01"), 0, LW(0), 0)
+    MULTIPLY_FLOAT(LW(0), FLOAT(-1.0f))
+    CALL(evt_mapobj_rotate, 0, STRING("S_doa_r_02"), 0, LW(0), 0)
+    RETURN
+EVT_END()
+
+/** Door animation script that does nothing; the west door of this room is animated by the lock event instead. */
+EVT_BEGIN(door_dummy)
+    RETURN
+EVT_END()
+
+/**
+ * Exits of las_22: west door w_bero to las_20 (e_bero); east door e_bero to las_24 (w_bero); south road
+ * s_bero to las_23 (n_bero_1).
+ */
+static BeroEntry bero_entry_data[] = {
+    {
+        "w_bero", // hitName
+        1, // type
+        6, // sfxId
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
+        0, 0, // centerPositionY..centerPositionZ
+        -1, // length
+        NULL, // enterEvent
+        -1, // caseType
+        NULL, // exitEvent
+        "las_20", // nextMapName
+        "e_bero", // nextBeroName
+        5, // enterAnimeType
+        5, // exitAnimeType
+        w_door_close, // enterAnimeArg
+        w_door_open, // exitAnimeArg
+    },
+    {
+        "e_bero", // hitName
+        1, // type
+        6, // sfxId
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
+        0, 0, // centerPositionY..centerPositionZ
+        -1, // length
+        NULL, // enterEvent
+        -1, // caseType
+        NULL, // exitEvent
+        "las_24", // nextMapName
+        "w_bero", // nextBeroName
+        5, // enterAnimeType
+        5, // exitAnimeType
+        e_door_close, // enterAnimeArg
+        e_door_open, // exitAnimeArg
+    },
+    {
+        "s_bero", // hitName
+        0, 0, // type..sfxId
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
+        0, 0, // centerPositionY..centerPositionZ
+        -1, // length
+        NULL, // enterEvent
+        -1, // caseType
+        NULL, // exitEvent
+        "las_23", // nextMapName
+        "n_bero_1", // nextBeroName
+        1, // enterAnimeType
+        1, // exitAnimeType
+        0, 0, // enterAnimeArg..exitAnimeArg
+    },
+    {0},
+};
+
+/** Front faces of the first group of gears of the turntable room, turned together by haguruma_evt. */
+static const char* haguruma_hontai[] = {
+    "S_hgm_01a",
+    "S_hgm_02a",
+    "S_hgm_03a",
+    "S_hgm_04a",
+    "S_hgm_06a",
+    "S_hgm_07a",
+    "S_hgm_08a",
+    "S_hgm_10a",
+    "S_hgm_12a",
+    "S_hgm_14a",
+    "S_hgm_16a",
+    "S_hgm_19a",
+    "S_hgm_20a",
+};
+
+/** Front faces of the second group of gears, turned the other way. */
+static const char* haguruma_hontai2[] = {
+    "S_hgm_05a",
+    "S_hgm_09a",
+    "S_hgm_11a",
+    "S_hgm_13a",
+    "S_hgm_15a",
+    "S_hgm_17a",
+    "S_hgm_18a",
+};
+
+/** Shadow faces of the first group of gears, turned with haguruma_hontai. */
+static const char* haguruma_kage[] = {
+    "S_hgm_01b",
+    "S_hgm_02b",
+    "S_hgm_03b",
+    "S_hgm_04b",
+    "S_hgm_06b",
+    "S_hgm_07b",
+    "S_hgm_08b",
+    "S_hgm_10b",
+    "S_hgm_12b",
+    "S_hgm_14b",
+    "S_hgm_16b",
+};
+
+/** Shadow faces of the second group of gears, turned with haguruma_hontai2. */
+static const char* haguruma_kage2[] = {
+    "S_hgm_05b",
+    "S_hgm_09b",
+    "S_hgm_11b",
+    "S_hgm_13b",
+    "S_hgm_15b",
+    "S_hgm_17b",
+};
+
+/**
+ * Event script: runs for the whole time the room is loaded and spins the gears of the turntable room.
+ * Four groups of gear map objects (haguruma_hontai/kage and the second pair,
+ * plus their shadow copies) turn at 20 degrees to start, one pair clockwise and one anticlockwise,
+ * and three more gear pairs (S_hgm_21..23) rock on a sine wave at different speeds.
+ */
+static EVT_BEGIN(haguruma_evt)
+    SET_FLOAT_VALUE(LW(0), FLOAT(20.0f))
+    SET_FLOAT_VALUE(LW(1), FLOAT(0.0f))
+    SET_FLOAT_VALUE(LW(2), FLOAT(0.0f))
+    SET_FLOAT_VALUE(LW(3), FLOAT(0.0f))
+    SET_FLOAT_VALUE(LW(4), FLOAT(0.0f))
+    LOOP(0)
+        SET_INT_READ_ADDR(PTR(&haguruma_hontai))
+        LOOP(13)
+            READ_INT(LW(5))
+            CALL(evt_mapobj_rotate, 0, LW(5), 0, 0, LW(0))
+        END_LOOP
+        SET_INT_READ_ADDR(PTR(&haguruma_kage))
+        LOOP(11)
+            READ_INT(LW(5))
+            CALL(evt_mapobj_rotate, 0, LW(5), 0, 0, LW(0))
+        END_LOOP
+        SET_INT_READ_ADDR(PTR(&haguruma_hontai2))
+        LOOP(7)
+            READ_INT(LW(5))
+            CALL(evt_mapobj_rotate, 0, LW(5), 0, 0, LW(1))
+        END_LOOP
+        SET_INT_READ_ADDR(PTR(&haguruma_kage2))
+        LOOP(6)
+            READ_INT(LW(5))
+            CALL(evt_mapobj_rotate, 0, LW(5), 0, 0, LW(1))
+        END_LOOP
+        CALL(evt_sub_get_sincos, LW(2), LW(5), LW(6))
+        MULTIPLY_FLOAT(LW(5), FLOAT(41.0f))
+        CALL(evt_mapobj_rotate, 0, STRING("S_hgm_21a"), 0, 0, LW(5))
+        CALL(evt_mapobj_rotate, 0, STRING("S_hgm_21b"), 0, 0, LW(5))
+        CALL(evt_sub_get_sincos, LW(3), LW(5), LW(6))
+        MULTIPLY_FLOAT(LW(5), FLOAT(22.0f))
+        CALL(evt_mapobj_rotate, 0, STRING("S_hgm_22a"), 0, 0, LW(5))
+        CALL(evt_mapobj_rotate, 0, STRING("S_hgm_22b"), 0, 0, LW(5))
+        CALL(evt_sub_get_sincos, LW(4), LW(5), LW(6))
+        MULTIPLY_FLOAT(LW(5), FLOAT(110.0f))
+        CALL(evt_mapobj_rotate, 0, STRING("S_hgm_23a"), 0, 0, LW(5))
+        CALL(evt_mapobj_rotate, 0, STRING("S_hgm_23b"), 0, 0, LW(5))
+        ADD_FLOAT(LW(0), FLOAT(1.0f))
+        IF_INT_GREATER_OR_EQUAL(LW(0), 360)
+            SUBTRACT_FLOAT(LW(0), FLOAT(360.0f))
+        END_IF
+        ADD_FLOAT(LW(1), FLOAT(-1.0f))
+        IF_INT_LESS_OR_EQUAL(LW(1), -360)
+            ADD_FLOAT(LW(1), FLOAT(360.0f))
+        END_IF
+        ADD_FLOAT(LW(2), FLOAT(0.89941406f))
+        IF_INT_GREATER_OR_EQUAL(LW(2), 360)
+            SUBTRACT_FLOAT(LW(2), FLOAT(360.0f))
+        END_IF
+        ADD_FLOAT(LW(3), FLOAT(0.89941406f))
+        IF_INT_GREATER_OR_EQUAL(LW(3), 360)
+            SUBTRACT_FLOAT(LW(3), FLOAT(360.0f))
+        END_IF
+        ADD_FLOAT(LW(4), FLOAT(1.0f))
+        IF_INT_GREATER_OR_EQUAL(LW(4), 360)
+            SUBTRACT_FLOAT(LW(4), FLOAT(360.0f))
+        END_IF
+        WAIT_FRAMES(1)
+    END_LOOP
+    RETURN
+EVT_END()
+
+/**
+ * Event script: the turntable (kaitendai) of the gear room.
+ * Spins the big centre platform and four smaller platforms in opposite directions at half a degree per frame,
+ * and carries Mario and the partner with whichever platform they stand on by adding the platform's movement each
+ * frame.
+ */
+EVT_BEGIN(kaitendai_evt)
+    SET_FLOAT_VALUE(LW(0), FLOAT(0.0f))
+    SET_FLOAT_VALUE(LW(1), FLOAT(0.009765625f))
+    CALL(evt_hit_bind_mapobj, STRING("A_hgm_dai"), STRING("S_hgm_dai"))
+    CALL(evt_hit_bind_mapobj, STRING("A_hgm_dai_02"), STRING("S_hgm_dai_02"))
+    CALL(evt_hit_bind_mapobj, STRING("A_hgm_dai_03"), STRING("S_hgm_dai_03"))
+    CALL(evt_hit_bind_mapobj, STRING("A_hgm_dai_04"), STRING("S_hgm_dai_04"))
+    CALL(evt_hit_bind_mapobj, STRING("A_hgm_dai_05"), STRING("S_hgm_dai_05"))
+    CALL(evt_mapobj_get_position, STRING("A_hgm_dai_01"), LW(13), LW(14), LW(15))
+    // The turntable starts to spin with its starting sound.
+    CALL(evt_snd_sfxon_3d, STRING("SFX_STG8_FLOOR_ROUND_START1"), LW(13), LW(14), LW(15), 0)
+    LOOP(0)
+        SET_VALUE(LF(0), 0)
+        SET_VALUE(LF(1), 0)
+        CALL(evt_mario_get_name_hitobj_ride, LW(2))
+        // Each frame, work out which of the four small platforms Mario stands on.
+        IF_STR_EQUAL(LW(2), STRING("A_hgm_dai_02"))
+            CALL(evt_hit_get_position, STRING("A_hgm_dai_02"), LW(3), LW(4), LW(5))
+            SET_VALUE(LF(0), 1)
+        END_IF
+        IF_STR_EQUAL(LW(2), STRING("A_hgm_dai_03"))
+            CALL(evt_hit_get_position, STRING("A_hgm_dai_03"), LW(3), LW(4), LW(5))
+            SET_VALUE(LF(0), 1)
+        END_IF
+        IF_STR_EQUAL(LW(2), STRING("A_hgm_dai_04"))
+            CALL(evt_hit_get_position, STRING("A_hgm_dai_04"), LW(3), LW(4), LW(5))
+            SET_VALUE(LF(0), 1)
+        END_IF
+        IF_STR_EQUAL(LW(2), STRING("A_hgm_dai_05"))
+            CALL(evt_hit_get_position, STRING("A_hgm_dai_05"), LW(3), LW(4), LW(5))
+            SET_VALUE(LF(0), 1)
+        END_IF
+        // And which one the partner stands on.
+        CALL(evt_party_get_name_hitobj_ride, 0, LW(6))
+        IF_STR_EQUAL(LW(6), STRING("A_hgm_dai_02"))
+            CALL(evt_hit_get_position, STRING("A_hgm_dai_02"), LW(7), LW(8), LW(9))
+            SET_VALUE(LF(1), 1)
+        END_IF
+        IF_STR_EQUAL(LW(6), STRING("A_hgm_dai_03"))
+            CALL(evt_hit_get_position, STRING("A_hgm_dai_03"), LW(7), LW(8), LW(9))
+            SET_VALUE(LF(1), 1)
+        END_IF
+        IF_STR_EQUAL(LW(6), STRING("A_hgm_dai_04"))
+            CALL(evt_hit_get_position, STRING("A_hgm_dai_04"), LW(7), LW(8), LW(9))
+            SET_VALUE(LF(1), 1)
+        END_IF
+        IF_STR_EQUAL(LW(6), STRING("A_hgm_dai_05"))
+            CALL(evt_hit_get_position, STRING("A_hgm_dai_05"), LW(7), LW(8), LW(9))
+            SET_VALUE(LF(1), 1)
+        END_IF
+        CALL(evt_mapobj_rotate, 1, STRING("S_hgm_dai"), 0, 0, LW(0))
+        CALL(evt_mapobj_rotate, 0, STRING("S_hgm_dai_02"), 0, 0, LW(1))
+        CALL(evt_mapobj_rotate, 0, STRING("S_hgm_dai_03"), 0, 0, LW(1))
+        CALL(evt_mapobj_rotate, 0, STRING("S_hgm_dai_04"), 0, 0, LW(1))
+        CALL(evt_mapobj_rotate, 0, STRING("S_hgm_dai_05"), 0, 0, LW(1))
+        CALL(evt_hit_bind_update, STRING("A_hgm_dai"))
+        CALL(evt_hit_bind_update, STRING("A_hgm_dai_02"))
+        CALL(evt_hit_bind_update, STRING("A_hgm_dai_03"))
+        CALL(evt_hit_bind_update, STRING("A_hgm_dai_04"))
+        CALL(evt_hit_bind_update, STRING("A_hgm_dai_05"))
+        // Turn the centre platform and the small ones in opposite directions and move whoever is standing on
+        // them along.
+        IF_INT_EQUAL(LF(0), 1)
+            CALL(evt_hit_get_position, LW(2), LW(10), LW(11), LW(12))
+            SUBTRACT_FLOAT(LW(10), LW(3))
+            SUBTRACT_FLOAT(LW(11), LW(4))
+            SUBTRACT_FLOAT(LW(12), LW(5))
+            CALL(evt_mario_get_pos, 0, LW(3), LW(4), LW(5))
+            ADD_FLOAT(LW(3), LW(10))
+            ADD_FLOAT(LW(4), LW(11))
+            ADD_FLOAT(LW(5), LW(12))
+            CALL(evt_mario_set_pos, LW(3), LW(4), LW(5))
+        END_IF
+        IF_INT_EQUAL(LF(1), 1)
+            CALL(evt_hit_get_position, LW(6), LW(10), LW(11), LW(12))
+            SUBTRACT_FLOAT(LW(10), LW(7))
+            SUBTRACT_FLOAT(LW(11), LW(8))
+            SUBTRACT_FLOAT(LW(12), LW(9))
+            CALL(evt_party_get_pos, 0, LW(3), LW(4), LW(5))
+            ADD_FLOAT(LW(3), LW(10))
+            ADD_FLOAT(LW(4), LW(11))
+            ADD_FLOAT(LW(5), LW(12))
+            CALL(evt_party_set_pos, 0, LW(3), LW(4), LW(5))
+        END_IF
+        ADD_FLOAT(LW(0), FLOAT(0.5f))
+        IF_INT_GREATER(LW(0), 360)
+            SUBTRACT_FLOAT(LW(0), FLOAT(360.0f))
+        END_IF
+        ADD_FLOAT(LW(1), FLOAT(-0.5f))
+        IF_INT_LESS(LW(1), -360)
+            ADD_FLOAT(LW(1), FLOAT(360.0f))
+        END_IF
+        WAIT_FRAMES(1)
+    END_LOOP
+    RETURN
+EVT_END()
+
+/**
+ * Event script: starts the moving platform S_move_dai (hit object A_move_dai) of the room via move_dai,
+ * with a movement time of 2200.
+ */
+static EVT_BEGIN(dai_evt)
+    SET_VALUE(LW(0), STRING("S_move_dai"))
+    SET_VALUE(LW(1), STRING("A_move_dai"))
+    SET_VALUE(LW(2), 2200)
+    CALL_CHILD(move_dai)
+    RETURN
+EVT_END()
+
+/** Item list for the key window: only Palace Key 0x2F (-1 ends the list). */
+static s32 key_tbl[] = {
+    ITEM_PALACE_KEY_0x2F, -1,
+};
+
+/** Event script: run when the key is used in the lock of the door; sets the story progress to STORY_STG8_09_KEY. */
+static EVT_BEGIN(key_evt)
+    SET_VALUE(GSW(GSW_STORY_PROGRESS), STORY_STG8_09_KEY)
+    RETURN
+EVT_END()
+
+/**
+ * Event script: the lock check of the door.
+ * If Mario carries Palace Key 0x2F it opens the item selection window (key_tbl) and cancels the use
+ * if the player backs out.
+ */
+static EVT_BEGIN(key_check_evt)
+    CALL(evt_pouch_check_item, ITEM_PALACE_KEY_0x2F, LW(0))
+    IF_INT_GREATER(LW(0), 0)
+#if VERSION <= VERSION_DEMO_JP
+        CALL(evt_win_item_select, PTR(key_tbl), LW(0))
+#else
+        CALL(evt_win_item_select, 0, PTR(key_tbl), LW(0), 0)
+#endif
+        IF_INT_EQUAL(LW(0), -1)
+            CALL(evt_mobj_exec_cancel, STRING("me"))
+        END_IF
+    END_IF
+    RETURN
+EVT_END()
+
+/**
+ * Event script: the door is unlocked.
+ * Sets the story progress to STORY_STG8_10_LOCK and switches the w_bero door on.
+ */
+static EVT_BEGIN(unlock_evt)
+    SET_VALUE(GSW(GSW_STORY_PROGRESS), STORY_STG8_10_LOCK)
+    SET_VALUE(LW(0), STRING("w_bero"))
+    CALL_CHILD(bero_case_switch_on)
+    RETURN
+EVT_END()
+
+/** Event script: the treasure chest of las_22 opens and Mario receives a Shooting Star. */
+static EVT_BEGIN(mobj_box00)
+    CALL(evt_mario_key_onoff, 0)
+    CALL(evt_mobj_get_position, STRING("mobj_box00"), LW(0), LW(1), LW(2))
+    CALL(evt_item_entry, STRING("item00"), ITEM_SHOOTING_STAR, LW(0), LW(1), LW(2), ITEM_ENTRY_FIXED, -1, 0)
+    CALL(evt_item_flag_on, STRING("item00"), ITEM_FLAG_NO_TOUCH)
+    CALL(evt_mobj_wait_animation_end, STRING("mobj_box00"))
+    CALL(evt_item_get_item, STRING("item00"))
+    CALL(evt_mario_key_onoff, 1)
+    RETURN
+EVT_END()
+
+/**
+ * Map init script for las_22, the gear room: music and ambience,
+ * removes the Elite Wizzerd (Super Mahorn) before the planets scene,
+ * starts the turntable once the star puzzle is solved, the gear animation,
+ * a moving platform with its red switch, an item chest with a Shooting Star, a Life Shroom block, a save block,
+ * the Palace Key 0x2F lying on the floor and the locked west door.
+ */
+EVT_BEGIN(las_22_init_evt)
+    CALL(evt_snd_bgmon, PSND_FADE_OUT, STRING("BGM_STG8_LST3"))
+    CALL(evt_snd_envon, PSND_FADE_RESTART | PSND_FADE_IN, STRING("ENV_STG8_LAS6"))
+#if VERSION >= VERSION_JP
+    CALL(evt_snd_set_rev_mode, 2)
+#endif
+    SET_VALUE(LW(0), PTR(bero_entry_data))
+    CALL(evt_bero_get_info)
+    CALL_CHILD(evt_bero_info_run)
+    IF_INT_LESS(GSW(GSW_STORY_PROGRESS), STORY_STG8_06_MOVING_PLANETS)
+        CALL(evt_npc_check_delete, STRING("スーパーマホーン"))
+    END_IF
+    IF_INT_GREATER_OR_EQUAL(GSW(GSW_STORY_PROGRESS), STORY_STG8_11_STAR_PUZZLE)
+        SPAWN_EVENT(kaitendai_evt)
+    END_IF
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_SINGLE, 0, STRING("S_hgm_01a"), MAPOBJ_FLAG_BBOX_CULL)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_SINGLE, 0, STRING("S_hgm_05a"), MAPOBJ_FLAG_BBOX_CULL)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_SINGLE, 0, STRING("S_hgm_08a"), MAPOBJ_FLAG_BBOX_CULL)
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_SINGLE, 0, STRING("S_hgm_19a"), MAPOBJ_FLAG_BBOX_CULL)
+    SPAWN_EVENT(haguruma_evt)
+    CALL(evt_map_playanim, STRING("kusari"), 1, 0)
+    CALL(evt_hit_bind_mapobj, STRING("A_move_dai"), STRING("S_move_dai"))
+    CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 1, STRING("S_move_dai"), MAPOBJ_FLAG_HIDE)
+    CALL(evt_hitobj_onoff, STRING("A_move_dai"), 0, 0)
+    CALL(evt_mobj_switch_red, 0, STRING("dai_switch"), 100, -409, -10, PTR(dai_evt), 0)
+    CALL(evt_mobj_itembox, STRING("mobj_box00"), -660, -500, 100, 0, 0, PTR(mobj_box00), GSWF(GSWF_LAS22_ITEMBOX_00))
+    CALL(evt_mobj_badgeblk, STRING("mobj_hatena_gat"), -150, 220, -100, ITEM_LIFE_SHROOM, 0, GSWF(GSWF_LAS22_LIFE_SHROOM_BLOCK_HIT), 0)
+    CALL(evt_mobj_save_blk, STRING("mobj_save"), -650, 100, -100, 0, 0)
+    IF_INT_LESS(GSW(GSW_STORY_PROGRESS), STORY_STG8_09_KEY)
+        CALL(evt_item_entry, STRING("key"), ITEM_PALACE_KEY_0x2F, -25, -80, -100, ITEM_ENTRY_FIXED, -1, PTR(key_evt))
+    END_IF
+    IF_INT_LESS(GSW(GSW_STORY_PROGRESS), STORY_STG8_10_LOCK)
+        CALL(evt_mobj_lock, STRING("lock"), ITEM_PALACE_KEY_0x2F, -695, 50, 0, 90, PTR(key_check_evt), PTR(unlock_evt), GSWF(GSWF_LAS22_DOOR_UNLOCKED))
+        SET_VALUE(LW(0), STRING("w_bero"))
+        CALL_CHILD(bero_case_switch_off)
+    END_IF
+    RETURN
+EVT_END()

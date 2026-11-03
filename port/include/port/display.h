@@ -1,0 +1,55 @@
+#ifndef PORT_DISPLAY_H
+#define PORT_DISPLAY_H
+
+/* Display options (Aurora backend, port/src/aurora/display_aurora.c), each a
+ * setting of its own, off by default (port/settings/features/display.cpp):
+ * aniso (anisotropic filtering), lod_bias (texture detail), supersample
+ * (rendering 2-4x the window's size, area-downsampled), post_filter (CRT,
+ * paper grain, sharpen over the picture), vrr (present without waiting for
+ * vblank, for variable refresh displays), perf_overlay (a frame-time graph).
+ * The aspect ratio and HUD scale: port/widescreen.h, port/hud.h.
+ *
+ * $TTYD_PACING_LOG=<file>: each presented frame's interval and work time
+ * (ms, CSV), to measure the pacing. */
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+enum {
+    PORT_LOD_GAME,  /* the game's own */
+    PORT_LOD_SHARP, /* -0.5 */
+    PORT_LOD_SHARPER,
+    PORT_LOD_SHARPEST,
+    PORT_LOD_SOFT, /* +0.5 */
+    PORT_LOD_COUNT,
+};
+
+#define PORT_PERF_SAMPLES 240
+
+void portDisplayInit(void);
+/* The frame loop (vi_aurora.c): once a game or in-between frame is begun
+ * (aurora_begin_frame returned), when its work is done (before the pacing
+ * wait), and when it is about to be presented. */
+void portDisplayFrameStart(void);
+void portDisplayWorkDone(void);
+void portDisplayFrame(void);
+/* The performance overlay's setting, and the last max frames' timing, oldest
+ * first: the time between presents and the part spent computing and drawing,
+ * in ms. Returns how many. */
+int portPerfOverlay(void);
+int portPerfSamples(float* interval, float* work, int max);
+/* port/settings/features/perf_overlay.cpp: drawn with the settings page's
+ * overlays (ImGui), when on. */
+void portPerfOverlayDraw(void);
+/* Sharp text (setting sharp_text, port/settings/features/sharp_text.cpp):
+ * fontmgr.c's glyph sheet once loaded, and once a frame to follow the
+ * setting. */
+void portFontSheet(const void* texels, int width, int height, int format);
+void portSharpTextFrame(void);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif

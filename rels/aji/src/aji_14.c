@@ -1,0 +1,503 @@
+// aji_14 (敵のアジト, X-Naut Fortress): the Magnus von Grapple 2.0 boss room (evt_boss2), leading on to the
+// Moon (moo_04).
+#include "battle/battle_unit.h"
+#include "evt/evt_cmd.h"
+
+#include "driver/npcdrv.h"
+#include "driver/animdrv.h"
+#include "evt/evt_bero.h"
+#include "evt/evt_sub.h"
+#include "aji.h"
+#include "evt/evt_npc.h"
+#include "evt/evt_cam.h"
+#include "evt/evt_eff.h"
+#include "evt/evt_fade.h"
+#include "evt/evt_item.h"
+#include "evt/evt_map.h"
+#include "evt/evt_mario.h"
+#include "evt/evt_msg.h"
+#include "evt/evt_party.h"
+#include "evt/evt_seq.h"
+#include "evt/evt_snd.h"
+#include "evt/evt_story.h"
+
+static BeroEntry bero_entry_data[2];
+extern EvtWord evt_robot_waku[];
+extern EvtWord evt_boss2[];
+static NpcSetupInfo npcEnt[3];
+
+/**
+ * Door close animation step: moves the two door leaves S_door1_1
+ * and S_door1_2 in opposite directions along Z by the animation value in LW(0) times 0.25;
+ * the open and close scripts apply the same transform. The demo builds use 0.2217.
+ */
+static EVT_BEGIN(w_door_close)
+#if VERSION <= VERSION_DEMO_JP
+    MULTIPLY_FLOAT(LW(0), FLOAT(0.22167969f))
+#else
+    MULTIPLY_FLOAT(LW(0), FLOAT(0.25f))
+#endif
+    CALL(evt_mapobj_trans, 0, STRING("S_door1_1"), 0, 0, LW(0))
+    MULTIPLY_FLOAT(LW(0), FLOAT(-1.0f))
+    CALL(evt_mapobj_trans, 0, STRING("S_door1_2"), 0, 0, LW(0))
+    RETURN
+EVT_END()
+
+/**
+ * Door open animation step: moves the two door leaves S_door1_1
+ * and S_door1_2 in opposite directions along Z by the animation value in LW(0) times 0.25;
+ * the open and close scripts apply the same transform. The demo builds use 0.2217.
+ */
+static EVT_BEGIN(w_door_open)
+#if VERSION <= VERSION_DEMO_JP
+    MULTIPLY_FLOAT(LW(0), FLOAT(0.22167969f))
+#else
+    MULTIPLY_FLOAT(LW(0), FLOAT(0.25f))
+#endif
+    CALL(evt_mapobj_trans, 0, STRING("S_door1_1"), 0, 0, LW(0))
+    MULTIPLY_FLOAT(LW(0), FLOAT(-1.0f))
+    CALL(evt_mapobj_trans, 0, STRING("S_door1_2"), 0, 0, LW(0))
+    RETURN
+EVT_END()
+
+/** Exit of this room: the west door to aji_10. */
+static BeroEntry bero_entry_data[] = {
+    {
+        "w_bero", // hitName
+        1, // type
+        10, // sfxId
+        BERO_DIR_AUTO, // directionId
+        BERO_POS_AUTO, // centerPosition
+        0, 0, // centerPositionY..centerPositionZ
+        -1, // length
+        NULL, // enterEvent
+        -1, // caseType
+        NULL, // exitEvent
+        "aji_13", // nextMapName
+        "e_bero", // nextBeroName
+        5, // enterAnimeType
+        5, // exitAnimeType
+        w_door_close, // enterAnimeArg
+        w_door_open, // exitAnimeArg
+    },
+    {0},
+};
+
+/**
+ * Script function that attaches the two frame NPCs (枠 and 枠２) of the Magnus von Grapple 2.0 robots to the
+ * robots' locator17 bone each frame, or hides them below the floor while the robot is below ground level,
+ * and then moves all the robot's bone world positions out of sight (y = -1000). Blocks forever.
+ */
+static USER_FUNC(waku) {
+    NpcEntry* npc;
+    AnimationPose* pose;
+    s32 i;
+
+    // ロボット
+    npc = npcNameToPtr_NoAssert("\x83\x8D\x83\x7B\x83\x62\x83\x67");
+    if (npc != NULL) {
+        pose = animPoseGetAnimPosePtr(npc->poseId);
+        animPoseWorldPositionEvalOn(npc->poseId);
+        if (pose->worldPositions != NULL) {
+            Vec* positions = *pose->worldPositions;
+            s32 idx = animPoseGetGroupIdx(npc->poseId, "locator17");
+
+            if (npc->position.y >= 0.0f) {
+                // 枠
+                npcNameToPtr("\x98\x67")->position = positions[idx];
+            } else {
+                Vec hidden = {0.0f, -1000.0f, 0.0f};
+                // 枠
+                npcNameToPtr("\x98\x67")->position = hidden;
+            }
+            positions = *pose->worldPositions;
+            for (i = 0; i < pose->numWorldPositions; i++) {
+                positions[i] = (Vec){0.0f, -1000.0f, 0.0f};
+            }
+        }
+    }
+
+    // ロボット2
+    npc = npcNameToPtr_NoAssert("\x83\x8D\x83\x7B\x83\x62\x83\x67\x82\x51");
+    if (npc != NULL) {
+        pose = animPoseGetAnimPosePtr(npc->poseId);
+        animPoseWorldPositionEvalOn(npc->poseId);
+        if (pose->worldPositions != NULL) {
+            Vec* positions = *pose->worldPositions;
+            s32 idx = animPoseGetGroupIdx(npc->poseId, "locator17");
+
+            if (npc->position.y >= 0.0f) {
+                // 枠２
+                npcNameToPtr("\x98\x67\x82\x51")->position = positions[idx];
+            } else {
+                Vec hidden = {0.0f, -1000.0f, 0.0f};
+                // 枠２
+                npcNameToPtr("\x98\x67\x82\x51")->position = hidden;
+            }
+            positions = *pose->worldPositions;
+            for (i = 0; i < pose->numWorldPositions; i++) {
+                positions[i] = (Vec){0.0f, -1000.0f, 0.0f};
+            }
+        }
+    }
+    return EVT_RETURN_BLOCK;
+}
+
+/**
+ * Creates the two frame NPCs 枠 and 枠２ (model c_mb_robo_2a, no shadow, animation L_1)
+ * and starts waku, which keeps them on the locator17 bone of the robots ロボット and ロボット２.
+ * Guess: c_mb_robo_2a is a part of the Magnus von Grapple 2.0 model that is drawn as its own NPC.
+ */
+EVT_BEGIN(evt_robot_waku)
+    CALL(evt_npc_entry, STRING("枠"), STRING("c_mb_robo_2a"))
+    CALL(evt_npc_flag_onoff, 1, STRING("枠"), NPC_FLAG_SHADOW_NO_COLLISION | NPC_FLAG_NO_SHADOW)
+    CALL(evt_npc_set_anim, STRING("枠"), STRING("L_1"))
+    CALL(evt_npc_entry, STRING("枠２"), STRING("c_mb_robo_2a"))
+    CALL(evt_npc_flag_onoff, 1, STRING("枠２"), NPC_FLAG_SHADOW_NO_COLLISION | NPC_FLAG_NO_SHADOW)
+    CALL(evt_npc_set_anim, STRING("枠２"), STRING("L_1"))
+    BEGIN_INLINE_EVENT
+        SET_TYPE(0)
+        CALL(waku)
+    END_INLINE_EVENT
+    RETURN
+EVT_END()
+
+/**
+ * Cutscene before the Magnus von Grapple 2.0 fight:
+ * Lord Crump (幹部, "executive", with his "Buh huh huh" laugh;
+ * the story after this fight is STORY_STG7_20_LORD_CRUMP_DEFEATED)
+ * and the robot (ロボット) are placed, BGM_EVT_MAGNUM_APP1 plays,
+ * dialogue stg7_aji_36 to 41 plays with the partner, then the robot's battle (battle info 5) starts.
+ * After the fight the partner talks (stg7_aji_42)
+ * and the map changes to moo_04 at the evt_aji_14 entrance with a white fade.
+ */
+static EVT_BEGIN(evt_boss)
+    CALL(evt_mario_key_onoff, 0)
+    CALL(evt_npc_set_position, STRING("幹部"), 150, 60, 0)
+    CALL(evt_npc_set_position, STRING("ロボット"), 260, 60, 0)
+    CALL(evt_npc_set_ry, STRING("幹部"), 270)
+    CALL(evt_npc_set_ry, STRING("ロボット"), 0)
+    CALL(evt_npc_flag_onoff, 1, STRING("ロボット"), NPC_FLAG_NO_BILLBOARD)
+    CALL(evt_npc_flag_onoff, 0, STRING("ロボット"), NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM)
+    CALL(evt_npc_pera_onoff, STRING("ロボット"), 0)
+    CALL(evt_npc_set_anim, STRING("ロボット"), STRING("Z_1"))
+    CALL(evt_cam3d_evt_set, 375, 420, 935, -225, -30, 0, 0, 11)
+    CALL(evt_seq_wait, 2)
+    CALL(evt_cam3d_evt_set, 375, 500, 935, -225, 50, 0, 4000, 11)
+    CALL(evt_bero_exec_wait, 65536)
+    CALL(evt_mario_mov_pos2, -420, 0, FLOAT(80.0f))
+    WAIT_MS(1000)
+    // Lord Crump waits in the boss room, laughing, as the boss music starts.
+    CALL(evt_snd_bgmon, PSND_FADE_OUT, STRING("BGM_EVT_MAGNUM_APP1"))
+    CALL(evt_msg_print, 0, STRING("stg7_aji_36"), 0, STRING("幹部"))
+    WAIT_MS(300)
+    CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
+    CALL(evt_snd_sfxon_3d, STRING("SFX_VOICE_MARIO_FIND1_3"), LW(0), LW(1), LW(2), 0)
+    CALL(evt_eff_fukidashi, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+    CALL(evt_eff_fukidashi, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+    WAIT_MS(1300)
+    CALL(evt_cam3d_evt_set, 10, 190, 275, 175, 60, -142, 1000, 11)
+    WAIT_MS(1000)
+    CALL(evt_npc_flag_onoff, 1, STRING("幹部"), NPC_FLAG_INSTANT_TURN)
+    CALL(evt_npc_flag_onoff, 1, STRING("ロボット"), NPC_FLAG_INSTANT_TURN)
+    // He says he has been waiting for Mario and lured him here with the Crystal Star (stg7_aji_37 to 39).
+    CALL(evt_msg_print, 0, STRING("stg7_aji_37"), 0, STRING("幹部"))
+    WAIT_MS(300)
+#if VERSION >= VERSION_JP
+    CALL(evt_party_stop, 0)
+    CALL(evt_party_set_pos, 0, -460, 0, 15)
+#endif
+    CALL(evt_cam3d_evt_set, -435, 40, 287, -435, 40, -13, 0, 11)
+    WAIT_FRAMES(1)
+#if VERSION <= VERSION_DEMO_JP
+    CALL(evt_party_stop, 0)
+#endif
+    WAIT_MS(300)
+    CALL(evt_msg_print_party, STRING("stg7_aji_37_01"))
+    WAIT_MS(300)
+    CALL(evt_cam3d_evt_set, -211, 169, 250, 275, 80, -90, 0, 11)
+    WAIT_FRAMES(1)
+    CALL(evt_msg_print, 0, STRING("stg7_aji_37_02"), 0, STRING("幹部"))
+    WAIT_MS(300)
+    WAIT_MS(500)
+    CALL(evt_cam3d_evt_set, -435, 40, 287, -435, 40, -13, 0, 11)
+    WAIT_FRAMES(1)
+    CALL(evt_msg_print_party, STRING("stg7_aji_38"))
+    WAIT_MS(300)
+    WAIT_MS(500)
+    CALL(evt_cam3d_evt_set, 140, 100, 295, 140, 110, -105, 0, 11)
+    WAIT_FRAMES(1)
+    // He laughs off Mario's questions and refuses to explain the plan.
+    CALL(evt_msg_print, 0, STRING("stg7_aji_39"), 0, STRING("幹部"))
+    WAIT_MS(300)
+    WAIT_MS(500)
+    CALL(evt_npc_flag_onoff, 0, STRING("幹部"), NPC_FLAG_INSTANT_TURN)
+    CALL(evt_npc_flag_onoff, 0, STRING("ロボット"), NPC_FLAG_INSTANT_TURN)
+    CALL(evt_cam3d_evt_set, 250, 124, 545, 250, 140, -105, 500, 11)
+    WAIT_MS(500)
+    CALL(evt_set_dir_to_target, STRING("幹部"), STRING("ロボット"))
+    WAIT_MS(500)
+    CALL(evt_npc_move_position, STRING("幹部"), 260, -50, 0, FLOAT(80.0f), 1)
+    CALL(evt_npc_get_position, STRING("ロボット"), LW(0), LW(1), LW(2))
+    CALL(evt_npc_set_ry, STRING("幹部"), 270)
+    WAIT_MS(200)
+    ADD(LW(1), 50)
+    SUBTRACT(LW(2), 5)
+    CALL(evt_npc_jump_position_nohit, STRING("幹部"), LW(0), LW(1), LW(2), 300, FLOAT(50.0f))
+    CALL(evt_npc_set_position, STRING("幹部"), 0, -1000, 0)
+    BEGIN_INLINE_EVENT
+        WAIT_MS(966)
+        CALL(evt_npc_get_position, STRING("ロボット"), LW(0), LW(1), LW(2))
+        CALL(evt_snd_sfxon_3d, STRING("SFX_STG7_BOSS_ACTIVE1"), LW(0), LW(1), LW(2), LW(9))
+        WAIT_MS(2533)
+        CALL(evt_snd_sfxoff, LW(9))
+    END_INLINE_EVENT
+    CALL(evt_npc_set_anim, STRING("ロボット"), STRING("R_1"))
+    CALL(evt_npc_wait_anim, STRING("ロボット"), FLOAT(1.0f))
+    CALL(evt_npc_set_anim, STRING("ロボット"), STRING("S_1"))
+    WAIT_MS(500)
+    BEGIN_INLINE_EVENT
+        SET_FLOAT_VALUE(LW(0), FLOAT(0.0f))
+        LOOP(20)
+            ADD_FLOAT(LW(0), FLOAT(-2.25f))
+            CALL(evt_npc_set_rotate, STRING("ロボット"), 0, LW(0), 0)
+            WAIT_FRAMES(1)
+        END_LOOP
+    END_INLINE_EVENT
+    CALL(evt_cam3d_evt_set, 165, 183, 285, 281, 193, -98, 1000, 11)
+    WAIT_MS(1000)
+#if VERSION >= VERSION_JP
+    CALL(evt_npc_flag_onoff, 1, STRING("ロボット"), NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM)
+#endif
+    // Crump brags that his machine is raw horsepower; the robot walks in, jumps and lands with a shake of the
+    // camera.
+    CALL(evt_msg_print, 0, STRING("stg7_aji_41"), 0, STRING("ロボット"))
+#if VERSION >= VERSION_JP
+    CALL(evt_npc_flag_onoff, 0, STRING("ロボット"), NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM)
+#endif
+    CALL(evt_cam3d_evt_set, 250, 124, 545, 250, 140, -105, 300, 11)
+    WAIT_MS(300)
+    WAIT_MS(2000)
+    BEGIN_INLINE_EVENT
+        CALL(evt_npc_set_anim, STRING("ロボット"), STRING("W_1"))
+        CALL(evt_npc_move_position, STRING("ロボット"), 130, 0, 0, FLOAT(80.0f), 1)
+        CALL(evt_npc_set_anim, STRING("ロボット"), STRING("S_1"))
+    END_INLINE_EVENT
+    BEGIN_INLINE_EVENT
+        WAIT_MS(200)
+        CALL(evt_npc_get_position, STRING("ロボット"), LW(0), LW(1), LW(2))
+        CALL(evt_snd_sfxon_3d, STRING("SFX_STG7_BOSS_MOVE1L"), LW(0), LW(1), LW(2), 0)
+    END_INLINE_EVENT
+    WAIT_MS(500)
+    CALL(evt_cam3d_evt_set, -475, 12, 300, 140, 90, -123, 0, 11)
+    WAIT_FRAMES(1)
+    BEGIN_INLINE_EVENT
+        CALL(evt_mario_mov_pos2, -100, 0, FLOAT(100.0f))
+    END_INLINE_EVENT
+    BEGIN_INLINE_EVENT
+        CALL(evt_party_move_pos2, 0, -140, 15, FLOAT(100.0f))
+    END_INLINE_EVENT
+    CALL(evt_npc_set_anim, STRING("ロボット"), STRING("J_1"))
+    BEGIN_INLINE_EVENT
+        WAIT_MS(200)
+        CALL(evt_npc_set_anim, STRING("ロボット"), STRING("J_2"))
+    END_INLINE_EVENT
+    CALL(evt_npc_jump_position_nohit, STRING("ロボット"), 0, 0, 0, 500, FLOAT(80.0f))
+    BEGIN_INLINE_EVENT
+        CALL(evt_cam_shake, 4, FLOAT(0.009765625f), FLOAT(0.0f), 50)
+    END_INLINE_EVENT
+    CALL(evt_npc_set_anim, STRING("ロボット"), STRING("J_3"))
+    WAIT_MS(200)
+    CALL(evt_npc_set_anim, STRING("ロボット"), STRING("S_1"))
+    WAIT_MS(500)
+    WAIT_MS(2000)
+    CALL(evt_cam3d_evt_set, -50, 475, 1104, -50, 35, -13, 1000, 11)
+    WAIT_MS(300)
+    CALL(evt_snd_bgmoff, PSND_FADE_OUT)
+#if VERSION >= VERSION_JP
+    CALL(evt_snd_envoff, PSND_FADE_OUT)
+#endif
+    // The fight against Magnus von Grapple 2.0 begins.
+    CALL(evt_npc_set_battle_info, STRING("ロボット"), 5)
+    CALL(evt_npc_battle_start, STRING("ロボット"))
+    CALL(evt_npc_wait_battle_end)
+    CALL(evt_party_stop, 0)
+    CALL(evt_mario_set_pos, -100, 0, 0)
+    CALL(evt_party_set_pos, 0, -140, 0, 15)
+    CALL(evt_npc_set_position, STRING("ロボット"), 0, -1000, 0)
+    CALL(evt_npc_set_position, STRING("ロボット２"), 0, 0, 0)
+    CALL(evt_cam3d_evt_set, 0, 200, 675, 0, 75, -13, 0, 11)
+    WAIT_FRAMES(1)
+    CALL(evt_npc_get_position, STRING("ロボット２"), LW(0), LW(1), LW(2))
+    CALL(evt_snd_sfxon_3d, STRING("SFX_STG7_3RD_EXPLSION1"), LW(0), LW(1), LW(2), 0)
+    ADD(LW(1), 80)
+    CALL(evt_eff64, STRING("eff1"), STRING("akari_charge_n64"), 1, LW(0), LW(1), LW(2), FLOAT(3.0f), 0, 0, 0, 0, 0, 0, 0)
+    WAIT_MS(1000)
+    CALL(evt_snd_sfxon_3d, STRING("SFX_STG7_3RD_EXPLSION2"), LW(0), LW(1), LW(2), LW(10))
+    CALL(evt_eff64, STRING("eff2"), STRING("radiation_n64"), 2, LW(0), LW(1), LW(2), FLOAT(1.0f), 0, 0, 0, 0, 0, 0, 0)
+    WAIT_MS(1000)
+    CALL(evt_eff_softdelete, STRING("eff1"))
+    ADD(LW(2), 100)
+    CALL(evt_eff, 0, STRING("kemuri_test"), 8, LW(0), LW(1), LW(2), FLOAT(1.75f), 0, 0, 0, 0, 0, 0, 0)
+    BEGIN_INLINE_EVENT
+        LOOP(0)
+            CALL(evt_sub_random, 300, LW(0))
+            CALL(evt_sub_random, 200, LW(1))
+            CALL(evt_sub_random, 200, LW(2))
+            SUBTRACT(LW(0), 150)
+            CALL(evt_npc_get_position, STRING("ロボット２"), LW(10), LW(11), LW(12))
+            ADD(LW(0), LW(10))
+            ADD(LW(1), LW(11))
+            ADD(LW(2), LW(12))
+            CALL(evt_eff, 0, STRING("kemuri_test"), 8, LW(0), LW(1), LW(2), FLOAT(1.75f), 0, 0, 0, 0, 0, 0, 0)
+            WAIT_MS(300)
+        END_LOOP
+    END_INLINE_EVENT
+    BEGIN_INLINE_EVENT
+        LOOP(0)
+            CALL(evt_npc_get_position, STRING("ロボット２"), LW(0), LW(1), LW(2))
+            CALL(evt_snd_sfxon_3d, STRING("SFX_STG7_3RD_EXPLSION3"), LW(0), LW(1), LW(2), 0)
+            WAIT_MS(1000)
+        END_LOOP
+    END_INLINE_EVENT
+    WAIT_MS(3000)
+    BEGIN_INLINE_EVENT
+        CALL(evt_npc_flag_onoff, 0, STRING("幹部"), NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM)
+        CALL(evt_npc_set_anim, STRING("幹部"), STRING("D_1"))
+        CALL(evt_npc_set_position, STRING("幹部"), 0, 70, 0)
+        CALL(evt_npc_jump_position_nohit, STRING("幹部"), -200, 200, 100, 1000, FLOAT(80.0f))
+    END_INLINE_EVENT
+    CALL(evt_msg_toge, 1, 0, 0, 0)
+    // After the fight a cry of "Grodus!" is heard and the scene whites out to the Moon.
+    CALL(evt_msg_print, 0, STRING("stg7_aji_42"), 0, STRING("ロボット"))
+    CALL(evt_fade_set_mapchange_type, 1, FADE_OUT_WHITE, 900, FADE_IN_WHITE, 900)
+    BEGIN_INLINE_EVENT
+        WAIT_MS(1000)
+        CALL(evt_snd_sfxoff, LW(10))
+    END_INLINE_EVENT
+    CALL(evt_bero_mapchange, STRING("moo_04"), STRING("evt_aji_14"))
+    RETURN
+EVT_END()
+
+/**
+ * Aftermath of the Magnus von Grapple 2.0 fight (aji_14 entered as "tuzuki" = continued):
+ * the Crystal Star appears above, floats down and bobs (an item named "dummy"),
+ * Mario and his partner react (stg7_aji_42_01),
+ * the story becomes STORY_STG7_20_LORD_CRUMP_DEFEATED
+ * and evt_sub_starstone gives Mario the Crystal Star (chapter 7).
+ */
+EVT_BEGIN(evt_boss2)
+    CALL(evt_mario_key_onoff, 0)
+    CALL(evt_party_stop, 0)
+    CALL(evt_mario_set_pos, -100, 0, 0)
+    CALL(evt_party_set_pos, 0, -140, 0, 15)
+    CALL(evt_seq_wait, 2)
+    WAIT_MS(1000)
+    CALL(evt_item_entry, STRING("dummy"), ITEM_CRYSTAL_STAR, 0, 1000, 0, ITEM_ENTRY_FIXED_NO_TOUCH, -1, 0)
+    CALL(evt_sub_intpl_msec_init, 11, 1000, 25, 2000)
+    LOOP(0)
+        CALL(evt_sub_intpl_msec_get_value)
+        CALL(evt_item_set_position, STRING("dummy"), 0, LW(0), 0)
+        WAIT_FRAMES(1)
+        IF_INT_EQUAL(LW(1), 0)
+            BREAK_LOOP
+        END_IF
+    END_LOOP
+    BEGIN_INLINE_EVENT_GET_ID(LW(10))
+        SET_VALUE(LW(10), 0)
+        CALL(evt_item_get_position, STRING("dummy"), LW(0), LW(1), LW(2))
+        LOOP(0)
+            CALL(evt_sub_get_sincos, LW(10), LW(11), LW(12))
+            MULTIPLY_FLOAT(LW(11), FLOAT(10.0f))
+            SET_FLOAT_VALUE(LW(12), LW(1))
+            ADD_FLOAT(LW(12), LW(11))
+            ADD(LW(10), 5)
+            MODULO(LW(10), 360)
+            CALL(evt_item_set_position, STRING("dummy"), LW(0), LW(12), LW(2))
+            WAIT_FRAMES(1)
+        END_LOOP
+    END_INLINE_EVENT
+    WAIT_MS(1000)
+    CALL(evt_msg_print_party, STRING("stg7_aji_42_01"))
+    CALL(evt_mario_set_dir, 270, 200, 0)
+    WAIT_MS(200)
+    CALL(evt_mario_set_pose, STRING("M_N_2"))
+    WAIT_MS(500)
+    CALL(evt_mario_set_pose, STRING("M_S_1"))
+    BEGIN_INLINE_EVENT
+        CALL(evt_party_move_pos2, 0, -40, 15, FLOAT(80.0f))
+    END_INLINE_EVENT
+    CALL(evt_mario_mov_pos2, 0, 0, FLOAT(80.0f))
+    SET_VALUE(GSW(GSW_STORY_PROGRESS), STORY_STG7_20_LORD_CRUMP_DEFEATED)
+    DELETE_EVENT(LW(10))
+    SET_VALUE(LW(0), 7)
+    SET_VALUE(LW(1), STRING("dummy"))
+    CALL_CHILD(evt_sub_starstone)
+    RETURN
+EVT_END()
+
+/** The two actors of the boss room: Lord Crump (kanbu) and the Magnus von Grapple 2.0 robot. */
+static NpcSetupInfo npcEnt[] = {
+    {
+        "幹部", // name
+        NPC_FLAG_NO_WALL_HIT | NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM, // flags
+        0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, // reactionFlags..returnEvent
+        NULL, 0, // blowEvent..territoryType
+        {0}, // territoryBase
+        {0}, // territoryLoiter
+        0.0f, 0.0f, 0.0f, 0.0f, 0, // searchRange..battleInfoId
+    },
+    {
+        "ロボット", // name
+        NPC_FLAG_NO_WALL_HIT | NPC_FLAG_MOVE_ANIM | NPC_FLAG_TALK_ANIM, // flags
+        0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, // reactionFlags..returnEvent
+        NULL, 0, // blowEvent..territoryType
+        {0}, // territoryBase
+        {0}, // territoryLoiter
+        0.0f, 0.0f, 0.0f, 0.0f, 0, // searchRange..battleInfoId
+    },
+    {0},
+};
+
+/**
+ * Init script of aji_14, Lord Crump's boss room:
+ * plays BGM_STG7_DUN2 unless entered as "tuzuki" (silent in that case, JP and later),
+ * sets up the exits and the officer and robot NPCs;
+ * entering as "tuzuki" runs evt_boss2 (the post-battle Crystal Star scene),
+ * and before STORY_STG7_20_LORD_CRUMP_DEFEATED the second robot is placed and evt_boss starts the fight.
+ */
+EVT_BEGIN(aji_14_init_evt)
+#if VERSION >= VERSION_JP
+    CALL(evt_bero_get_entername, LW(0))
+    IF_STR_NOT_EQUAL(LW(0), STRING("tuzuki"))
+#endif
+        CALL(evt_snd_bgmon, PSND_FADE_OUT, STRING("BGM_STG7_DUN2"))
+        CALL(evt_snd_envon, PSND_FADE_RESTART | PSND_FADE_IN, STRING("ENV_STG7_AJI2"))
+#if VERSION >= VERSION_JP
+    ELSE
+        CALL(evt_snd_bgmoff, PSND_FADE_OUT)
+        CALL(evt_snd_envoff, PSND_FADE_OUT)
+    END_IF
+#endif
+#if VERSION >= VERSION_JP
+    CALL(evt_snd_set_rev_mode, 1)
+#endif
+    SET_VALUE(LW(0), PTR(bero_entry_data))
+    CALL(evt_bero_get_info)
+    CALL_CHILD(evt_bero_info_run)
+    CALL(evt_npc_setup, PTR(npcEnt))
+    CALL(evt_bero_get_entername, LW(0))
+    IF_STR_EQUAL(LW(0), STRING("tuzuki"))
+        SPAWN_EVENT(evt_boss2)
+        RETURN
+    END_IF
+    IF_INT_LESS(GSW(GSW_STORY_PROGRESS), STORY_STG7_20_LORD_CRUMP_DEFEATED)
+        CALL(evt_npc_entry, STRING("ロボット２"), STRING("c_mb_robo_2b"))
+        CALL(evt_npc_set_anim, STRING("ロボット２"), STRING("MGN_Q_1"))
+        CALL(evt_npc_set_position, STRING("ロボット２"), 0, -1000, 0)
+        CALL_CHILD(evt_robot_waku)
+        SPAWN_EVENT(evt_boss)
+    END_IF
+    SPAWN_EVENT(evt_emergency)
+    RETURN
+EVT_END()
