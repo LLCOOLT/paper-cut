@@ -8,10 +8,12 @@ jobs use no GitHub Actions minutes. The GitHub-hosted workflow
 
 | Workflow | When | What |
 |---|---|---|
-| [`ci.yml`](../.github/workflows/ci.yml) | a push to `main`, `modding` or a `v*` branch, a pull request, or by hand | `tools/port/local_ci.py` on Windows (every stage on `main` and by hand, `--quick` otherwise), and its headless stages on Linux in a container on the Mac; the logs as artifacts |
+| [`ci.yml`](../.github/workflows/ci.yml) | a push to `main`, `modding` or a `v*` branch, or by hand | `tools/port/local_ci.py` on Windows (every stage on `main` and by hand, `--quick` otherwise), and its headless stages on Linux in a container on the Mac; the logs as artifacts |
 | [`release.yml`](../.github/workflows/release.yml) | a tag `v<version>`, or by hand (the Mac alone) | every local CI stage, then `tools/port/release.py` on the Windows runner and then the Mac runner: release builds and a **draft** GitHub release |
 
 Steps that download (configuring and building, which fetch dependencies; Gradle; the container's packages; GitHub's API) are retried after 30 seconds and 2 minutes, so a passing outage of a server doesn't fail a run.
+
+**Pull requests don't run on the runners.** The repository is public, and a pull request's workflows run the pull request's own files, so one from a fork could run anything on these machines as you. None of the workflows on `main` has a `pull_request` trigger. A fork could add a workflow of its own, so the repository's Actions settings must require approval for fork pull requests from all outside contributors (Settings > Actions > General). Approve one only after reading every file it changes.
 
 ## The Windows runner
 

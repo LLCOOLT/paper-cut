@@ -2,11 +2,12 @@ name: CI
 
 # The port's local CI (tools/port/local_ci.py) on the self-hosted runner with
 # the "ttyd-port" label: this machine, with the disc images (docs/RELEASING.md).
-# Self-hosted jobs use no GitHub Actions minutes.
+# Self-hosted jobs use no GitHub Actions minutes. No pull_request trigger: in a
+# public repository, a pull request from a fork would run its own code on these
+# machines.
 on:
   push:
     branches: [main, modding, "v*"]
-  pull_request:
   workflow_dispatch:
     inputs:
       full:
