@@ -1,0 +1,190 @@
+# Bindings: every key and controller button on one page (日本語)
+
+Bindings
+キー割り当て
+
+Every key and controller button: the game's, and Paper Cut's own shortcuts.
+すべてのキーとコントローラーのボタン：ゲームのものと、Paper Cut独自のショートカット。
+
+Settings (open, close)
+設定（開く・閉じる）
+
+Fast-forward
+早送り
+
+Fast-forward on and off
+早送りのオン・オフ
+
+Rewind (held)
+巻き戻し（押している間）
+
+Screenshot
+スクリーンショット
+
+Save state
+ステートセーブ
+
+Load state
+ステートロード
+
+Frame advance (on, off)
+コマ送り（オン・オフ）
+
+Frame advance: one frame
+コマ送り：1コマ進む
+
+Window or full screen
+ウィンドウまたは全画面
+
+Volume down
+音量を下げる
+
+Volume up
+音量を上げる
+
+Stick up
+スティック上
+
+Stick down
+スティック下
+
+Stick left
+スティック左
+
+Stick right
+スティック右
+
+C-stick up
+Cスティック上
+
+C-stick down
+Cスティック下
+
+C-stick left
+Cスティック左
+
+C-stick right
+Cスティック右
+
+Left stick left
+左スティック左
+
+Left stick right
+左スティック右
+
+Left stick up
+左スティック上
+
+Left stick down
+左スティック下
+
+Right stick left
+右スティック左
+
+Right stick right
+右スティック右
+
+Right stick up
+右スティック上
+
+Right stick down
+右スティック下
+
+Press a button (or two)...
+ボタンを押してください（2つでも可）...
+
+(none)
+（なし）
+
+Choose, then press the key or button. Right-click, X or Delete: none.
+選んでから、キーかボタンを押します。右クリック、X、Delete：なし。
+
+%s is already %s.
+%sはすでに%sです。
+
+Kept for both, the game's button wins and the action does nothing.
+両方に残すと、ゲームのボタンが優先され、アクションは何もしません。
+
+Swap
+入れ替える
+
+%s gets %s.
+%sが%sになります。
+
+Keep both
+両方に残す
+
+Sticks and triggers
+スティックとトリガー
+
+Swap the sticks
+スティックを入れ替える
+
+Invert the stick's X
+スティックのXを反転
+
+Invert the stick's Y
+スティックのYを反転
+
+Invert the C-stick's X
+CスティックのXを反転
+
+Invert the C-stick's Y
+CスティックのYを反転
+
+Analog, clicking at a point (as the GameCube's)
+アナログ、途中でカチッと（ゲームキューブと同じ）
+
+Analog only
+アナログのみ
+
+Digital (past the point: all the way)
+デジタル（その点を越えると最後まで）
+
+Triggers
+トリガー
+
+The game's buttons
+ゲームのボタン
+
+Second key
+2つ目のキー
+
+Action
+アクション
+
+The keyboard plays as player 1.
+キーボードはプレイヤー1として遊びます。
+
+Paper Cut's actions
+Paper Cutのアクション
+
+Choose a cell, then press the key or button (Escape: leave it). An action's controller binding can be two buttons: hold the first, press the second. Any controller does the actions; a key or button that is also one of the game's does only the game's. Changed bindings are in a warmer ink.
+マスを選んでから、キーかボタンを押します（Esc：そのまま）。アクションのコントローラー割り当ては2つのボタンにもできます：1つ目を押したまま2つ目を押します。アクションはどのコントローラーでも使えます。ゲームのボタンでもあるキーやボタンは、ゲームのほうだけになります。変えた割り当ては暖かい色で表示されます。
+
+No controller
+コントローラーなし
+
+Change them under Controls > Bindings.
+操作 > キー割り当てで変更できます。
+
+A: every key and button back as they first were.
+A：すべてのキーとボタンを最初の状態に戻します。
+
+Press a key. B: leave it as it is.
+キーを押してください。B：そのまま。
+
+Press a button.
+ボタンを押してください。
+
+Also %s.
+%sにもなっています。
+
+A: change. X: reset the row.
+A：変更　X：この行を元に戻す
+
+A: change. X: reset the row. B: back.
+A：変更　X：この行を元に戻す　B：戻る
+
+Bindings...
+キー割り当て...

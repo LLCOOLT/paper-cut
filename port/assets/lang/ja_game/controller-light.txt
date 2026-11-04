@@ -1,0 +1,19 @@
+# controller-light, the Start menu's Settings tab in the JP release's font: see tools/port/gen_lang.py
+
+Controller light
+コントローラーの　ライト
+
+A controller's coloured light (DualSense, DualShock 4 and others with one): each player's colour, Mario's HP (green to red, pulsing when he's nearly out), or a colour of your own.
+ライトの　ある　コントローラーの　色：プレイヤーごとの　色　マリオの　ＨＰ　または　すきな　色
+
+The controller's own
+コントローラーの　まま
+
+Each player's colour
+プレイヤーごとの　色
+
+Mario's HP
+マリオの　ＨＰ
+
+Custom colour
+すきな　色

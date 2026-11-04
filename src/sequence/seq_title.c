@@ -19,6 +19,9 @@
 #include <string.h>
 #include "libc_decls.h"
 #include <dolphin/pad.h>
+#ifdef TARGET_PC
+#include "wide_x.h"
+#endif
 
 TitleWork work2;
 /**
@@ -391,6 +394,69 @@ static void PORT_HOOKABLE(titleMain)(SequenceWork* work) {
     }
 }
 
+#ifdef TARGET_PC
+/* widescreen: the title picture is 4:3 art with nothing past its sides, so
+ * the widened frame's sides (behind the curtains) continue its outer columns
+ * outward (the texture clamped), dimming toward the frame's edges: a soft
+ * extension of its sky, hills and grass rather than black (include/wide_x.h) */
+static void titleWideSides(u32 id) {
+    GXTexObj obj;
+    f32 hw, hh, e;
+    s32 side;
+
+    TEXGetGXTexObjFromPalette(*wp2->texture->data, &obj, id);
+    hw = GXGetTexObjWidth(&obj) / 2.0f;
+    hh = GXGetTexObjHeight(&obj) / 2.0f;
+    e = WIDE_X(304.0f) + 1.0f;
+    if (e <= hw) {
+        return;
+    }
+    GXInitTexObjWrapMode(&obj, GX_CLAMP, GX_CLAMP);
+    GXInitTexObjLOD(&obj, GX_LINEAR, GX_LINEAR, 0.0f, 0.0f, 0.0f, GX_FALSE, GX_FALSE, GX_ANISO_1);
+    GXLoadTexObj(&obj, GX_TEXMAP0);
+    GXSetCullMode(GX_CULL_NONE);
+    GXSetFog(GX_FOG_NONE, 0.0f, 0.0f, 0.0f, 0.0f, (GXColor){0xFF, 0xFF, 0xFF, 0xFF});
+    GXSetBlendMode(GX_BM_NONE, GX_BL_ONE, GX_BL_ZERO, GX_LO_CLEAR);
+    GXSetZCompLoc(GX_TRUE);
+    GXSetAlphaCompare(GX_ALWAYS, 0, GX_AOP_AND, GX_ALWAYS, 0);
+    GXSetZMode(GX_FALSE, GX_ALWAYS, GX_FALSE);
+    GXSetNumChans(1);
+    GXSetChanCtrl(GX_COLOR0A0, GX_FALSE, GX_SRC_VTX, GX_SRC_VTX, GX_LIGHT_NULL, GX_DF_NONE, GX_AF_NONE);
+    GXSetNumTevStages(1);
+    GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP0, GX_COLOR0A0);
+    GXSetTevOp(GX_TEVSTAGE0, GX_MODULATE);
+    GXSetNumTexGens(1);
+    GXSetTexCoordGen(GX_TEXCOORD0, GX_TG_MTX2x4, GX_TG_TEX0, GX_IDENTITY);
+    GXClearVtxDesc();
+    GXSetVtxDesc(GX_VA_POS, GX_DIRECT);
+    GXSetVtxDesc(GX_VA_CLR0, GX_DIRECT);
+    GXSetVtxDesc(GX_VA_TEX0, GX_DIRECT);
+    GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XYZ, GX_F32, 0);
+    GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_CLR0, GX_CLR_RGBA, GX_RGBA8, 0);
+    GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_TEX0, GX_TEX_ST, GX_F32, 0);
+    GXLoadPosMtxImm(camGetPtr(CAMERA_2D)->view, 0);
+    GXSetCurrentMtx(0);
+    for (side = -1; side <= 1; side += 2) {
+        /* u at the picture's edge column, clamped past it */
+        const f32 u = side < 0 ? 0.0f : 1.0f;
+        const f32 ux = side < 0 ? -0.5f : 1.5f;
+        GXBegin(GX_QUADS, GX_VTXFMT0, 4);
+        GXPosition3f32(side * hw, hh, 0.0f);
+        GXColor4u8(0xFF, 0xFF, 0xFF, 0xFF);
+        GXTexCoord2f32(u, 0.0f);
+        GXPosition3f32(side * e, hh, 0.0f);
+        GXColor4u8(0x50, 0x50, 0x50, 0xFF);
+        GXTexCoord2f32(ux, 0.0f);
+        GXPosition3f32(side * e, -hh, 0.0f);
+        GXColor4u8(0x50, 0x50, 0x50, 0xFF);
+        GXTexCoord2f32(ux, 1.0f);
+        GXPosition3f32(side * hw, -hh, 0.0f);
+        GXColor4u8(0xFF, 0xFF, 0xFF, 0xFF);
+        GXTexCoord2f32(u, 1.0f);
+    }
+}
+#endif
+
 /** 3D-camera draw callback: draws the title background image from mariost.tpl through the 2D camera. */
 static void disp1(CameraId cameraId, void* param) {
     CameraEntry* cam = camGetPtr(CAMERA_2D);
@@ -405,6 +471,13 @@ static void disp1(CameraId cameraId, void* param) {
     GXSetProjection(cam->projection, cam->projType);
     GXSetViewport(cam->viewport[0], cam->viewport[1], cam->viewport[2],
                   cam->viewport[3], cam->viewport[4], cam->viewport[5]);
+#ifdef TARGET_PC
+#if VERSION >= VERSION_US
+    titleWideSides(5);
+#else
+    titleWideSides(7);
+#endif
+#endif
     winTexInit(*wp2->texture->data);
 #if VERSION >= VERSION_US
     winTexSet(5, (Vec){0.0f, 0.0f, 0.0f}, (Vec){1.0f, 1.0f, 1.0f}, (GXColor){0xFF, 0xFF, 0xFF, 0xFF});

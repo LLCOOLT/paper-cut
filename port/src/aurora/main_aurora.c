@@ -12,6 +12,8 @@
 #include <dolphin/dvd.h>
 #include <dolphin/pad.h>
 #include <dolphin/gx/GXAurora.h>
+#include "port/replay.h"
+#include "port/tr.h"
 #include "port/widescreen.h"
 #include <stdbool.h>
 #include "port/aurora_pc.h"
@@ -20,6 +22,11 @@
 #include "port/platform.h"
 #include "port/mods.h"
 #include "port/luigi.h"
+#include "port/update_install.h"
+#include "port/art_recipe.h"
+
+void portOnlineInviteArgs(int* argc, char** argv); /* invite.cpp */
+void portControllersInit(const char* userPath); /* port/settings/features/controllers.cpp */
 #ifdef __APPLE__
 #include <TargetConditionals.h>
 #endif
@@ -61,6 +68,14 @@ int aurora_main(int argc, char* argv[]) {
         /* ARAM (16 MiB, as on the GameCube): MusyX sample memory, see ar_aurora.c. */
         .mem2Size = 16 * 1024 * 1024,
     };
+    /* an invite link among the arguments (papercut://join/<CODE>): taken out, for
+     * the launcher's Online tab; on Windows, those links pointed at this exe
+     * (port/settings/features/invite.cpp) */
+    portOnlineInviteArgs(&argc, argv);
+
+    /* an update downloaded last time (port/include/port/update_install.h): in
+     * place before anything else, then the new program started instead */
+    portUpdateApplyStaged(argc, argv);
 
 #ifdef __ANDROID__
     /* logcat, env.txt (Android has no environment to set the switches below) */
@@ -99,9 +114,19 @@ int aurora_main(int argc, char* argv[]) {
         config.cachePath = portIosCacheDir();
     }
 #endif
+    /* the window's saved size and place, and full screen from the start
+     * (port/settings/features/window.cpp). -1: anywhere, as Aurora takes it
+     * (0, 0 put the window in the screen's corner). */
+    config.windowPosX = config.windowPosY = -1;
     if (pos != NULL && strchr(pos, ',') != NULL) {
         config.windowPosX = atoi(pos);
         config.windowPosY = atoi(strchr(pos, ',') + 1);
+    }
+    {
+        int full = 0;
+        portWindowConfig(config.userPath, &config.windowPosX, &config.windowPosY, &config.windowWidth,
+                         &config.windowHeight, &full);
+        config.startFullscreen = full != 0;
     }
     /* Texture dumps for pack makers ($TTYD_DUMP_TEXTURES, the settings' Mods
      * tab): Aurora takes the option only at its start. */
@@ -139,6 +164,8 @@ int aurora_main(int argc, char* argv[]) {
             SDL_DestroySurface(icon);
         }
     }
+    portControllersInit(info.userPath); /* every kind of controller: the mappings (controllers.cpp) */
+    portTrInit(info.userPath); /* the language packs, for the fonts (port/include/port/tr.h) */
     portUiInit();
     portKeyboardDefaults(); /* before PADInit: the default keys (settings_ui.cpp) */
     /* the controllers and keyboard up now, so the launcher's Settings tab
@@ -162,6 +189,7 @@ int aurora_main(int argc, char* argv[]) {
     }
 
     portSettingsLoad(info.userPath); /* settings.txt (port/include/port/settings.h); the launcher shows them */
+    portWindowRestore(pos != NULL); /* inside a screen, maximized as it was (window.cpp) */
     /* The user's own disc image (disc_aurora.c): the argument, or the launcher. */
     if (!portAuroraOpenDisc(argc, argv, info.userPath)) {
         aurora_shutdown();
@@ -169,8 +197,12 @@ int aurora_main(int argc, char* argv[]) {
     }
 
     portLuigiModelInit(); /* Luigi's model with our animations, from the disc (docs/LUIGI_ANIMS.md) */
+    portArtPrepare(info.userPath); /* "Preparing graphics": the art recipes run on the disc (art/RECIPES.md) */
+    portLuigiFacesInit(); /* Play as Luigi's faces the recipes made; before the mods apply */
     portModsInit(info.userPath, info.cachePath); /* the mods folder, loose textures (port/mods/mods.cpp) */
     portPipelineWarmupWait(); /* "Preparing graphics": every known pipeline built first */
+    portOnlineTestStart(); /* tests: $TTYD_ONLINE_HOST / _JOIN, online co-op's lobby without its page */
+    portReplayStartup();   /* a replay's recording or playback, asked for by the restart (replay.cpp) */
     portAuroraBeginFrame();
     return ttyd_main();
 }

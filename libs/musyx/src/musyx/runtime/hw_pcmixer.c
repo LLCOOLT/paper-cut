@@ -61,6 +61,18 @@ enum PORT_ENUM_BASE(int) {
   BUS_L, BUS_R, BUS_S, BUS_AL, BUS_AR, BUS_AS, BUS_BL, BUS_BR, BUS_BS, NUM_BUS
 };
 
+/* 5.1 and 7.1 (salPcSetDiscreteRear): the surround (SET_OPPOSITE_LR's) and
+ * Pro Logic II's rear pair (MIX_AUXB_LR's), gathered over a frame instead of
+ * folded into L/R, then handed over at OUTPUT */
+static int sDiscreteRear;
+static s32 sRear[3][160], sRearOut[3][160];
+
+void salPcSetDiscreteRear(int on) { sDiscreteRear = on; }
+
+const s32* salPcRear(int which) {
+  return sDiscreteRear && which >= 0 && which < 3 ? sRearOut[which] : NULL;
+}
+
 /* ------------------------------------------------------------------------- */
 /* Pointer handles                                                            */
 
@@ -371,7 +383,7 @@ u8 salPcVoiceCat[SYNTH_MAX_VOICES];
 u8 salPcSeqCat[256];
 u8 salPcStreamCat[64];
 static int sCategory = SAL_PC_SFX;
-static s32 sCatGain[SAL_PC_CATEGORIES] = {32768, 32768, 32768}; /* 1.15 */
+static s32 sCatGain[SAL_PC_CATEGORIES] = {32768, 32768, 32768, 0}; /* 1.15; SAL_PC_SILENT stays 0 */
 
 int salPcCategory(int cat) {
   int prev = sCategory;
@@ -382,7 +394,7 @@ int salPcCategory(int cat) {
 }
 
 void salPcSetCategoryGain(int cat, float gain) {
-  if (cat >= 0 && cat < SAL_PC_CATEGORIES) {
+  if (cat >= 0 && cat < SAL_PC_SILENT) {
     gain = gain < 0.f ? 0.f : (gain > 1.f ? 1.f : gain);
     sCatGain[cat] = (s32)(gain * 32768.f + 0.5f);
   }
@@ -606,6 +618,10 @@ void salPcRunCommandList(const u16* cmd) {
       if (surround != NULL) {
         memcpy(surround, sBus[BUS_S], FRAME_LEN * sizeof(s32));
       }
+      if (sDiscreteRear) { /* this frame's rear, for the speakers (hw_pc.c) */
+        memcpy(sRearOut, sRear, sizeof(sRearOut));
+        memset(sRear, 0, sizeof(sRear));
+      }
       if (dest != NULL) {
         for (i = 0; i < FRAME_LEN; i++) {
           dest[2 * i] = clamp16(sBus[BUS_L][i]);
@@ -625,7 +641,12 @@ void salPcRunCommandList(const u16* cmd) {
       if (write != NULL) {
         memcpy(write, sBus[BUS_BL], 2 * FRAME_LEN * sizeof(s32));
       }
-      if (read != NULL) {
+      if (read != NULL && sDiscreteRear) { /* the rear speakers have them */
+        for (i = 0; i < FRAME_LEN; i++) {
+          sRear[1][i] += read[i];
+          sRear[2][i] += read[FRAME_LEN + i];
+        }
+      } else if (read != NULL) {
         addBuses(BUS_L, read, 2);
       }
       cmd += 5;
@@ -636,6 +657,10 @@ void salPcRunCommandList(const u16* cmd) {
       const s32* s = resolve2(cmd[1], cmd[2]);
       for (i = 0; i < FRAME_LEN; i++) {
         s32 v = s != NULL ? s[i] : 0;
+        if (sDiscreteRear) { /* the surround to its own speakers, not matrixed into L/R */
+          sRear[0][i] += v;
+          v = 0;
+        }
         sBus[BUS_L][i] = -v;
         sBus[BUS_R][i] = v;
         sBus[BUS_S][i] = 0;

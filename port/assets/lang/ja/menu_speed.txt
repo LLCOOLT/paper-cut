@@ -1,0 +1,11 @@
+# Menu speed (port/settings/features/menu_speed.cpp): see tools/port/gen_lang.py
+
+Menu speed
+メニューの速さ
+
+How fast the Start menu's pages slide in and from tab to tab. Original is the game's own; Fast takes half the time; Instant leaves only a flicker of it.
+スタートメニューのページが入ってくる速さと、タブを切り替える速さ。オリジナルはゲーム本来の速さ、速いは半分の時間、一瞬はほとんど待ちません。
+
+Fast
+速い
+

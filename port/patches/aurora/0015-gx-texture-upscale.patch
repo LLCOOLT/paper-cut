@@ -1,0 +1,151 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Tue, 3 Nov 2026 18:00:00 +0000
+Subject: [PATCH] gx: texture upscaling by the application's filter
+
+---
+diff --git a/include/aurora/upscale.h b/include/aurora/upscale.h
+new file mode 100644
+index 0000000..054995a
+--- /dev/null
++++ b/include/aurora/upscale.h
+@@ -0,0 +1,25 @@
++#ifndef AURORA_UPSCALE_H
++#define AURORA_UPSCALE_H
++
++/* Texture upscaling by the application's own filter (Paper Cut's port/patches/aurora). */
++
++#ifdef __cplusplus
++extern "C" {
++#endif
++
++/**
++ * Each texture the game loads from its data (not a copy of the framebuffer, not a replacement, not one
++ * uploaded as it is, such as a block-compressed one), up to 512 texels on a side, is uploaded factor (2 or 4)
++ * times larger: its first level decoded to RGBA8 and given to upscaler (out: factor*width x factor*height
++ * RGBA8), the smaller levels averaged down from the result. factor 1 or upscaler NULL: off. Applies to
++ * textures loaded after the call.
++ */
++typedef void (*AuroraTextureUpscaler)(const unsigned char* rgba, unsigned width, unsigned height, unsigned factor,
++                                      unsigned char* out);
++void AuroraSetTextureUpscale(unsigned factor, AuroraTextureUpscaler upscaler);
++
++#ifdef __cplusplus
++}
++#endif
++
++#endif
+diff --git a/lib/gx/texture.cpp b/lib/gx/texture.cpp
+index 7b785b7..406392b 100644
+--- a/lib/gx/texture.cpp
++++ b/lib/gx/texture.cpp
+@@ -20,11 +20,61 @@
+ #include <cstring>
+ #include <optional>
+ #include <utility>
++#include <vector>
++
++#include <aurora/upscale.h>
+ 
+ namespace aurora::gx {
+ namespace {
+ constexpr Module Log{"aurora::gx::texture"};
+ 
++// AuroraSetTextureUpscale: the application's filter and its factor (1: off)
++unsigned s_upscaleFactor = 1;
++AuroraTextureUpscaler s_upscaler = nullptr;
++
++// A texture's first level (RGBA8, w x h) uploaded factor times larger by the application's filter, with as
++// many smaller levels as the game's had (and the ones the factor adds), each averaged down from the one above;
++// an empty handle when upscaling is off or doesn't apply.
++gfx::TextureHandle upscaled_texture(const uint8_t* rgba, uint32_t w, uint32_t h, uint32_t mips, const char* name) {
++  const uint32_t f = s_upscaleFactor;
++  if (f < 2 || s_upscaler == nullptr || rgba == nullptr || w == 0 || h == 0 || w > 512 || h > 512) {
++    return {};
++  }
++  const uint32_t W = w * f, H = h * f;
++  uint32_t levels = mips + (f >= 4 ? 2 : 1);
++  uint32_t maxLevels = 1;
++  for (uint32_t s = std::max(W, H); s > 1; s >>= 1) {
++    ++maxLevels;
++  }
++  levels = std::min(levels, maxLevels);
++  size_t total = 0;
++  for (uint32_t i = 0; i < levels; ++i) {
++    total += static_cast<size_t>(std::max(1u, W >> i)) * std::max(1u, H >> i) * 4;
++  }
++  std::vector<uint8_t> out(total);
++  s_upscaler(rgba, w, h, f, out.data());
++  size_t at = 0;
++  for (uint32_t i = 1; i < levels; ++i) {
++    const uint32_t pw = std::max(1u, W >> (i - 1)), ph = std::max(1u, H >> (i - 1));
++    const uint32_t cw = std::max(1u, W >> i), ch = std::max(1u, H >> i);
++    const uint8_t* prev = out.data() + at;
++    uint8_t* cur = out.data() + at + static_cast<size_t>(pw) * ph * 4;
++    for (uint32_t y = 0; y < ch; ++y) {
++      for (uint32_t x = 0; x < cw; ++x) {
++        const uint32_t x0 = std::min(x * 2, pw - 1), x1 = std::min(x * 2 + 1, pw - 1);
++        const uint32_t y0 = std::min(y * 2, ph - 1), y1 = std::min(y * 2 + 1, ph - 1);
++        for (int c = 0; c < 4; ++c) {
++          const uint32_t sum = prev[(y0 * pw + x0) * 4 + c] + prev[(y0 * pw + x1) * 4 + c] +
++                               prev[(y1 * pw + x0) * 4 + c] + prev[(y1 * pw + x1) * 4 + c];
++          cur[(y * cw + x) * 4 + c] = static_cast<uint8_t>((sum + 2) / 4);
++        }
++      }
++    }
++    at += static_cast<size_t>(pw) * ph * 4;
++  }
++  return gfx::new_static_texture_2d(W, H, levels, GX_TF_RGBA8_PC, {out.data(), out.size()}, false, name);
++}
++
+ struct DynamicPaletteKey {
+   const void* sourceIdentity = nullptr;
+   u32 width = 0;
+@@ -647,8 +697,17 @@ gfx::TextureHandle resolve_static_texture(const GXTexObj_& obj) {
+       const auto nameStr = "GX Static Texture";
+ #endif
+       const size_t sourceBytes = texture_source_size(obj.format(), obj.width(), obj.height(), obj.mip_count());
+-      handle = gfx::new_static_texture_2d(obj.width(), obj.height(), obj.mip_count(), obj.format(),
+-                                          {static_cast<const uint8_t*>(obj.data), sourceBytes}, false, nameStr);
++      if (s_upscaleFactor > 1) {
++        const auto converted = gfx::convert_texture(obj.format(), obj.width(), obj.height(), 1,
++                                                    {static_cast<const uint8_t*>(obj.data), sourceBytes});
++        if (!converted.data.empty() && converted.format == wgpu::TextureFormat::RGBA8Unorm) {
++          handle = upscaled_texture(converted.data.data(), obj.width(), obj.height(), obj.mip_count(), nameStr);
++        }
++      }
++      if (!handle) {
++        handle = gfx::new_static_texture_2d(obj.width(), obj.height(), obj.mip_count(), obj.format(),
++                                            {static_cast<const uint8_t*>(obj.data), sourceBytes}, false, nameStr);
++      }
+       ++s_stats.misses;
+       s_stats.uploadBytes += texture_handle_size(handle);
+       cache_content_texture(std::move(keys->contentKey), handle);
+@@ -701,10 +760,14 @@ gfx::TextureHandle resolve_static_palette_texture(const GXTexObj_& obj, const GX
+       if (converted.data.empty()) {
+         return {};
+       }
+-      handle = gfx::new_static_texture_2d(obj.width(), obj.height(), obj.mip_count(), GX_TF_RGBA8_PC,
+-                                          {converted.data.data(), converted.data.size()}, false,
+-                                          "GX Static Palette Texture");
+-      handle->hasArbitraryMips = converted.hasArbitraryMips;
++      handle = upscaled_texture(converted.data.data(), obj.width(), obj.height(), obj.mip_count(),
++                                "GX Static Palette Texture");
++      if (!handle) {
++        handle = gfx::new_static_texture_2d(obj.width(), obj.height(), obj.mip_count(), GX_TF_RGBA8_PC,
++                                            {converted.data.data(), converted.data.size()}, false,
++                                            "GX Static Palette Texture");
++        handle->hasArbitraryMips = converted.hasArbitraryMips;
++      }
+       ++s_stats.misses;
+       s_stats.uploadBytes += texture_handle_size(handle);
+       cache_content_texture(std::move(keys->contentKey), handle);
+@@ -893,3 +956,8 @@ void resolve_sampled_textures(const ShaderInfo& info) noexcept {
+   }
+ }
+ } // namespace aurora::gx
++
++extern "C" void AuroraSetTextureUpscale(unsigned factor, AuroraTextureUpscaler upscaler) {
++  aurora::gx::s_upscaleFactor = (factor == 2 || factor == 4) && upscaler != nullptr ? factor : 1;
++  aurora::gx::s_upscaler = upscaler;
++}

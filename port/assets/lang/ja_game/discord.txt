@@ -1,0 +1,4 @@
+# discord: see tools/port/gen_lang.py
+
+While Discord runs on this computer, your profile shows that you're playing Paper Cut: the area you're in, and whether you're in battle, exploring or playing co-op.
+このコンピューターで　Discordが　うごいている　あいだ　プロフィールに　Paper Cutで　あそんでいる　ことと　いる　ばしょが　でます

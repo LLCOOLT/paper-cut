@@ -1,0 +1,7 @@
+# Controller haptics (port/settings/features/haptics.cpp): an English line, then its translation, then a blank line.
+
+Controller haptics
+Controller-Haptik
+
+A short pulse as an action command's or a guard's timing window opens; on a DualSense the triggers also resist while a command holds R. Follows Rumble and Rumble strength.
+Ein kurzer Impuls, wenn sich das Zeitfenster eines Aktionsbefehls oder einer Abwehr öffnet; bei einem DualSense geben die Trigger außerdem Widerstand, während ein Befehl R gedrückt hält. Richtet sich nach Vibration und Vibrationsstärke.

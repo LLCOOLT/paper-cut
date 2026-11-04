@@ -17,11 +17,12 @@ OSTick OSGetTick(void);
 
 static int sFast = -1;
 static OSTime sBase, sVirtual;
-/* The game clock runs at sSpeed times the real one (fast-forward,
- * speed_aurora.c): sGame was the game time at real time sReal. portPause
- * stops it, and the real time spent paused is left out afterwards. */
+/* The game clock runs at sSpeed percent of the real one (fast-forward and
+ * faster battles, speed_aurora.c), and at sPercent % of that (slow speed):
+ * sGame was the game time at real time sReal. portPause stops it, and the
+ * real time spent paused is left out afterwards. */
 static OSTime sGame, sReal;
-static int sSpeed = 1;
+static int sSpeed = 100, sPercent = 100; /* percent, both */
 static BOOL sClockPaused, sClockStarted;
 
 static BOOL fast(void) {
@@ -30,6 +31,26 @@ static BOOL fast(void) {
         sBase = OSGetTime();
     }
     return sFast;
+}
+
+/* Online co-op (port/include/port/online.h): the game clock virtual from
+ * here, as with $TTYD_FAST, from the host's start (base), so both games
+ * read the same times; the frames still keep to the wall clock (vi_aurora.c
+ * paces them). Called before the game's first frame. */
+void portLockstepBegin(s64 base) {
+    sFast = 1;
+    sBase = base;
+    sVirtual = 0;
+}
+
+/* the game runs the same from the same input: $TTYD_FAST, or online */
+int portLockstep(void) {
+    return fast();
+}
+
+/* the real clock now (the host's start for online co-op) */
+s64 portRealTime(void) {
+    return OSGetTime();
 }
 
 void portFastClockFrame(void) {
@@ -55,7 +76,7 @@ OSTime portOSGetTime(void) {
         sClockStarted = TRUE;
         sGame = sReal = OSGetTime();
     }
-    return sClockPaused ? sGame : sGame + (OSGetTime() - sReal) * sSpeed;
+    return sClockPaused ? sGame : sGame + (OSGetTime() - sReal) * sSpeed * sPercent / 10000;
 }
 
 /* the game time now becomes the base of what follows */
@@ -81,17 +102,30 @@ void portClockSetGame(OSTime t) {
     }
 }
 
-void portClockSetSpeed(int speed) {
-    if (speed != sSpeed) {
+void portClockSetSpeedPct(int percent) {
+    if (percent != sSpeed) {
         if (!sClockPaused) {
             rebase();
         }
-        sSpeed = speed;
+        sSpeed = percent;
     }
 }
 
-int portClockSpeed(void) {
+int portClockSpeedPct(void) {
     return sSpeed;
+}
+
+int portClockSpeed(void) {
+    return (sSpeed + 99) / 100;
+}
+
+void portClockSetPercent(int percent) {
+    if (percent != sPercent) {
+        if (!sClockPaused) {
+            rebase();
+        }
+        sPercent = percent;
+    }
 }
 
 OSTick portOSGetTick(void) {

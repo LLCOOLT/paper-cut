@@ -1,0 +1,5 @@
+In the field, the right stick turns the camera a little around Mario and moves it in or out. Let go and it eases back.
+フィールドで　右スティックを　うごかすと　マリオの　まわりで　カメラが　すこし　まわり　ちかづいたり　はなれたり　します　はなすと　もどります
+
+The world flipped left to right, with the stick and D-pad turned around to match while Mario walks. Menus and messages stay readable.
+せかいが　左右　はんてんし　スティックと　じゅうじボタンも　それに　あわせて　ぎゃくに　なります　メニューと　メッセージは　そのままです

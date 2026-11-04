@@ -1,7 +1,7 @@
 #ifndef PORT_LUIGI_H
 #define PORT_LUIGI_H
 
-/* Play as Luigi (Gameplay+ "playable_luigi", off by default;
+/* Play as Luigi (Enhancements "playable_luigi", off by default;
  * port/src/common/luigi_pc.c, docs/PLAYABLE_LUIGI.md): Luigi's field model
  * (c_luigi, with our animations) is drawn in place of Mario's pose while
  * Mario's current animation has a Luigi version; otherwise Mario's model
@@ -49,6 +49,17 @@ const char* portLuigiText(const char* msg);
  * NPC steps, jump and landing for Mario's plain-floor ones while the option
  * is on. */
 int portLuigiSfx(int id);
+
+/* Luigi's faces (port/src/aurora/luigi_faces_aurora.c), made at the start
+ * from Luigi's own head on the player's disc (port/assets/luigi/art):
+ * icondrv.c's icon iconId drawn from our own texture (a GXTexObj*): while the
+ * option is on, the game's three icons of Mario's head are Luigi's: 1, or 0
+ * for the game's own. */
+int portIconTexOverride(unsigned int iconId, void* texObj);
+/* At startup, after portArtPrepare, before the mods apply: level-up's BP
+ * panel as Luigi's, in the "*#luigi" texture set (mod_game_aurora.c flags
+ * every map so while the option is on). */
+void portLuigiFacesInit(void);
 
 /* npcdrv's draws, after the game stepped an NPC's pose poseId: while the
  * option is on, an NPC drawn with c_luigi (NPC_FLAG_LUIGI) gets a stand-in

@@ -1,0 +1,542 @@
+From 74470910fd4f063c446a4fe6e1136aa5d7d0ec2d Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Tue, 3 Nov 2026 13:09:32 +0000
+Subject: [PATCH] display: HDR output
+
+aurora_set_hdr(enabled, paperWhiteNits, highlightBoost): when the window is
+on a display with HDR on (SDL_PROP_WINDOW_HDR_ENABLED_BOOLEAN) and the
+backend can show it (D3D12/D3D11: a float16 swapchain is scRGB; Metal: the
+CAMetalLayer made EDR in extended linear sRGB), the surface is configured
+RGBA16Float. Everything else keeps the internal SDR format: the present
+blit and ImGui draw into a surface-sized SDR target, and a last pass
+linearises it, scales its white to the paper white (scRGB 1.0 = 80 nits;
+EDR 1.0 taken as 100 nits), raises what is near white by up to the boost
+and clamps to the display's headroom. Off, or unsupported: SDR as before.
+aurora_hdr_supported / aurora_hdr_active for the application, all in
+include/aurora/hdr.h (not display.h, so 0013 keeps reverse-applying);
+SDL_EVENT_WINDOW_HDR_STATE_CHANGED reconfigures the surface.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01LCrnrpyxCzFfKcsiso9KdP
+---
+ include/aurora/hdr.h        |  36 +++++
+ lib/aurora.cpp              |  35 +++++
+ lib/dawn/BackendBinding.hpp |   6 +
+ lib/dawn/MetalBinding.mm    |  37 ++++++
+ lib/webgpu/gpu.cpp          | 256 ++++++++++++++++++++++++++++++++++++
+ lib/webgpu/gpu.hpp          |   9 ++
+ lib/window.cpp              |   9 ++
+ 7 files changed, 388 insertions(+)
+ create mode 100644 include/aurora/hdr.h
+
+diff --git a/include/aurora/hdr.h b/include/aurora/hdr.h
+new file mode 100644
+index 0000000..2f5631e
+--- /dev/null
++++ b/include/aurora/hdr.h
+@@ -0,0 +1,36 @@
++#ifndef AURORA_HDR_H
++#define AURORA_HDR_H
++
++/* HDR output (Paper Cut's port/patches/aurora): the SDR picture presented through a float16 extended-sRGB
++ * swapchain at a chosen paper-white brightness, where the display and backend can show it. */
++
++#ifdef __cplusplus
++#include <cstdbool>
++extern "C" {
++#else
++#include <stdbool.h>
++#endif
++
++/**
++ * HDR output can be used now: the window is on a display with HDR on (SDL_PROP_WINDOW_HDR_ENABLED_BOOLEAN) and the
++ * backend presents a float16 swapchain in extended sRGB (D3D12/D3D11: scRGB; Metal: an EDR layer). Vulkan and
++ * OpenGL swapchains are SDR only. Changes with the display the window is on (SDL_EVENT_WINDOW_HDR_STATE_CHANGED).
++ */
++bool aurora_hdr_supported(void);
++
++/**
++ * HDR output: when supported, the swapchain becomes float16 extended sRGB and the SDR picture (game and UI) is
++ * linearised and scaled so its white is paperWhiteNits (80-1000; scRGB 1.0 = 80 nits; on Metal the system's white
++ * is taken as 100 nits), then what is near white is raised by up to highlightBoost (0-1, a fraction of paper
++ * white), never past the display's headroom. Otherwise, or when disabled, SDR output as before. Default off.
++ */
++void aurora_set_hdr(bool enabled, float paperWhiteNits, float highlightBoost);
++
++/** The swapchain is presenting in HDR now (aurora_set_hdr on and supported). */
++bool aurora_hdr_active(void);
++
++#ifdef __cplusplus
++}
++#endif
++
++#endif
+diff --git a/lib/aurora.cpp b/lib/aurora.cpp
+index 0b6bf5b..635e2bb 100644
+--- a/lib/aurora.cpp
++++ b/lib/aurora.cpp
+@@ -24,6 +24,7 @@
+ #include "gamepad.hpp"
+ #include "internal.hpp"
+ #include "thread.hpp"
++#include <aurora/hdr.h>
+ #include "window.hpp"
+ 
+ #include <SDL3/SDL_filesystem.h>
+@@ -307,6 +308,14 @@ void end_frame() noexcept {
+     }
+ 
+     const bool canPresent = currentTexture && currentView;
++    // aurora_set_hdr: the passes below draw SDR into the HDR target, converted into the float16 surface after
++    const auto* hdrTarget = canPresent && currentTexture.GetFormat() == wgpu::TextureFormat::RGBA16Float
++                                ? webgpu::hdr_target()
++                                : nullptr;
++    const wgpu::TextureView surfaceView = currentView;
++    if (hdrTarget != nullptr) {
++      currentView = hdrTarget->view;
++    }
+     if (canPresent) {
+       wgpu::BindGroup presentBindGroup;
+       if (rmlBindGroup && !rmlOverlay) {
+@@ -374,6 +383,9 @@ void end_frame() noexcept {
+         imgui::render(pass, imguiDrawData);
+         pass.End();
+       }
++      if (hdrTarget != nullptr) {
++        webgpu::encode_hdr_present(encoder, surfaceView);
++      }
+     } else {
+       Log.info("Skipping present; window not presentable");
+     }
+@@ -481,6 +493,29 @@ void aurora_set_background_input(bool value) {
+   aurora::g_config.allowJoystickBackgroundEvents = value;
+   aurora::window::set_background_input(value);
+ }
++bool aurora_hdr_supported() {
++#ifdef AURORA_ENABLE_GX
++  return aurora::webgpu::hdr_supported();
++#else
++  return false;
++#endif
++}
++void aurora_set_hdr(bool enabled, float paperWhiteNits, float highlightBoost) {
++#ifdef AURORA_ENABLE_GX
++  aurora::webgpu::set_hdr(enabled, paperWhiteNits, highlightBoost);
++#else
++  (void)enabled;
++  (void)paperWhiteNits;
++  (void)highlightBoost;
++#endif
++}
++bool aurora_hdr_active() {
++#ifdef AURORA_ENABLE_GX
++  return aurora::webgpu::hdr_active();
++#else
++  return false;
++#endif
++}
+ void aurora_set_resampler(AuroraSampler sampler) {
+ #ifdef AURORA_ENABLE_GX
+   aurora::webgpu::set_resampler(sampler);
+diff --git a/lib/dawn/BackendBinding.hpp b/lib/dawn/BackendBinding.hpp
+index ac49d5c..accb813 100644
+--- a/lib/dawn/BackendBinding.hpp
++++ b/lib/dawn/BackendBinding.hpp
+@@ -9,4 +9,10 @@ namespace aurora::webgpu::utils {
+ 
+ std::shared_ptr<wgpu::ChainedStruct> SetupWindowAndGetSurfaceDescriptor(SDL_Window* window);
+ 
++#if defined(__APPLE__)
++// aurora_set_hdr: the window's CAMetalLayer as an EDR layer in extended linear sRGB (or back to its defaults)
++bool metal_layer_hdr_available();
++void set_metal_layer_hdr(SDL_Window* window, bool enabled);
++#endif
++
+ } // namespace aurora::webgpu::utils
+diff --git a/lib/dawn/MetalBinding.mm b/lib/dawn/MetalBinding.mm
+index df01ed3..f5cb50d 100644
+--- a/lib/dawn/MetalBinding.mm
++++ b/lib/dawn/MetalBinding.mm
+@@ -1,6 +1,8 @@
+ #include "BackendBinding.hpp"
+ 
+ #import <Foundation/Foundation.h>
++#import <QuartzCore/CAMetalLayer.h>
++#include <CoreGraphics/CoreGraphics.h>
+ #include <SDL3/SDL_metal.h>
+ #include <SDL3/SDL_properties.h>
+ 
+@@ -35,4 +37,39 @@ std::shared_ptr<wgpu::ChainedStruct> SetupWindowAndGetSurfaceDescriptorCocoa(SDL
+   }
+   return std::move(desc);
+ }
++
++bool metal_layer_hdr_available() {
++  if (@available(macOS 10.12, iOS 16.0, tvOS 16.0, *)) {
++    return true;
++  }
++  return false;
++}
++
++void set_metal_layer_hdr(SDL_Window* window, bool enabled) {
++  // on: set after every configure (whatever Dawn did to the layer); off: only put back a layer that was changed
++  static bool s_edr = false;
++  if (window == nullptr || (!enabled && !s_edr)) {
++    return;
++  }
++  const auto view =
++      static_cast<SDL_MetalView>(SDL_GetPointerProperty(SDL_GetWindowProperties(window), MetalViewProperty, nullptr));
++  if (view == nullptr) {
++    return;
++  }
++  CAMetalLayer* layer = (__bridge CAMetalLayer*)SDL_Metal_GetLayer(view);
++  if (layer == nil) {
++    return;
++  }
++  if (@available(macOS 10.12, iOS 16.0, tvOS 16.0, *)) {
++    layer.wantsExtendedDynamicRangeContent = enabled ? YES : NO;
++    if (enabled) {
++      CGColorSpaceRef colorSpace = CGColorSpaceCreateWithName(kCGColorSpaceExtendedLinearSRGB);
++      layer.colorspace = colorSpace;
++      CGColorSpaceRelease(colorSpace);
++    } else {
++      layer.colorspace = nullptr;
++    }
++    s_edr = enabled;
++  }
++}
+ } // namespace aurora::webgpu::utils
+diff --git a/lib/webgpu/gpu.cpp b/lib/webgpu/gpu.cpp
+index 1144e76..e5202d0 100644
+--- a/lib/webgpu/gpu.cpp
++++ b/lib/webgpu/gpu.cpp
+@@ -28,8 +28,10 @@
+ 
+ #ifdef WEBGPU_DAWN
+ #include "../dawn/TracyPlatform.hpp"
++#include "../dawn/BackendBinding.hpp"
+ #include <dawn/native/DawnNative.h>
+ #endif
++#include <SDL3/SDL_video.h>
+ 
+ namespace aurora::webgpu {
+ static Module Log("aurora::gpu");
+@@ -847,6 +849,246 @@ const TextureWithSampler& resample_present_source(const wgpu::CommandEncoder& en
+   return g_resampledFrameBuffer;
+ }
+ 
++// HDR output (aurora_set_hdr). The game, its copies and ImGui keep the internal SDR format; only the surface is
++// float16, and one last pass converts into it.
++constexpr wgpu::TextureFormat HdrSurfaceFormat = wgpu::TextureFormat::RGBA16Float;
++static std::atomic_bool g_hdrRequested = false;
++static std::atomic<float> g_hdrPaperWhite = 200.f; // nits
++static std::atomic<float> g_hdrBoost = 0.f;        // fraction of paper white added near white
++static std::atomic<float> g_hdrPeak = 125.f;       // the display's peak in surface values (scRGB / EDR)
++static std::atomic_bool g_hdrActive = false;
++static TextureWithSampler g_hdrTarget;
++static wgpu::RenderPipeline g_HdrPipeline;
++static wgpu::Buffer g_HdrUniformBuffer;
++
++namespace {
++struct HdrUniformBlock {
++  float scale = 1.f; // SDR white in surface values
++  float boost = 0.f; // aurora_set_hdr highlightBoost
++  float peak = 1.f;  // never past this
++  float pad = 0.f;
++};
++
++// SDR (sRGB-encoded, internal format, surface sized) -> float16 extended linear sRGB
++constexpr std::string_view hdrShaderSource = R"(
++struct Uniforms {
++    scale: f32,
++    boost: f32,
++    peak: f32,
++    pad: f32,
++};
++
++@group(0) @binding(0) var<uniform> uniforms: Uniforms;
++@group(0) @binding(2) var t: texture_2d<f32>;
++
++var<private> pos: array<vec2<f32>, 3> = array<vec2<f32>, 3>(
++    vec2(-1.0, 1.0),
++    vec2(-1.0, -3.0),
++    vec2(3.0, 1.0),
++);
++
++@vertex
++fn vs_main(@builtin(vertex_index) vtxIdx: u32) -> @builtin(position) vec4<f32> {
++    return vec4<f32>(pos[vtxIdx], 0.0, 1.0);
++}
++
++fn srgb_to_linear(c: vec3<f32>) -> vec3<f32> {
++    let lo = c / 12.92;
++    let hi = pow((c + vec3(0.055)) / 1.055, vec3(2.4));
++    return select(hi, lo, c <= vec3(0.04045));
++}
++
++@fragment
++fn fs_main(@builtin(position) frag: vec4<f32>) -> @location(0) vec4<f32> {
++    let dims = vec2<i32>(textureDimensions(t)) - vec2<i32>(1, 1);
++    let coord = clamp(vec2<i32>(frag.xy), vec2<i32>(0, 0), dims);
++    var rgb = srgb_to_linear(clamp(textureLoad(t, coord, 0).rgb, vec3(0.0), vec3(1.0)));
++    // highlights: what is near white (by luminance) raised by up to boost
++    let luma = dot(rgb, vec3(0.2126, 0.7152, 0.0722));
++    rgb = rgb * (1.0 + uniforms.boost * smoothstep(0.6, 1.0, luma));
++    return vec4(min(rgb * uniforms.scale, vec3(uniforms.peak)), 1.0);
++}
++)"sv;
++} // namespace
++
++static bool surface_supports(wgpu::TextureFormat format) noexcept {
++  for (size_t i = 0; i < g_surfaceCapabilities.formatCount; ++i) {
++    if (g_surfaceCapabilities.formats[i] == format) {
++      return true;
++    }
++  }
++  return false;
++}
++
++bool hdr_supported() noexcept {
++  // Vulkan (and GL) swapchains in Dawn are sRGB-nonlinear only; D3D's float16 swapchain is scRGB, and Metal's
++  // layer is made EDR (MetalBinding.mm)
++#ifdef DAWN_ENABLE_BACKEND_METAL
++  const bool metal = g_backendType == wgpu::BackendType::Metal && utils::metal_layer_hdr_available();
++#else
++  const bool metal = false;
++#endif
++  if (g_backendType != wgpu::BackendType::D3D12 && g_backendType != wgpu::BackendType::D3D11 && !metal) {
++    return false;
++  }
++  SDL_Window* window = window::get_sdl_window();
++  if (window == nullptr || !surface_supports(HdrSurfaceFormat)) {
++    return false;
++  }
++  return SDL_GetBooleanProperty(SDL_GetWindowProperties(window), SDL_PROP_WINDOW_HDR_ENABLED_BOOLEAN, false);
++}
++
++bool hdr_active() noexcept { return g_hdrActive.load(std::memory_order_acquire); }
++
++void set_hdr(bool enabled, float paperWhiteNits, float highlightBoost) noexcept {
++  g_hdrPaperWhite.store(std::clamp(paperWhiteNits, 80.f, 1000.f), std::memory_order_relaxed);
++  g_hdrBoost.store(std::clamp(highlightBoost, 0.f, 1.f), std::memory_order_relaxed);
++  if (g_hdrRequested.exchange(enabled, std::memory_order_acq_rel) == enabled) {
++    return;
++  }
++  Log.info("HDR output {}", enabled ? "requested" : "off");
++  window::push_custom_event(window::CustomEvent::RefreshSurface);
++}
++
++const TextureWithSampler* hdr_target() noexcept {
++  return g_hdrActive.load(std::memory_order_acquire) && g_hdrTarget.view ? &g_hdrTarget : nullptr;
++}
++
++static void create_hdr_pipeline() {
++  if (g_HdrPipeline) {
++    return;
++  }
++  wgpu::ShaderSourceWGSL sourceDescriptor{};
++  sourceDescriptor.code = hdrShaderSource;
++  const wgpu::ShaderModuleDescriptor moduleDescriptor{
++      .nextInChain = &sourceDescriptor,
++      .label = "Present HDR Module",
++  };
++  auto module = g_device.CreateShaderModule(&moduleDescriptor);
++  const std::array colorTargets{wgpu::ColorTargetState{
++      .format = HdrSurfaceFormat,
++      .writeMask = wgpu::ColorWriteMask::All,
++  }};
++  const wgpu::FragmentState fragmentState{
++      .module = module,
++      .entryPoint = "fs_main",
++      .targetCount = colorTargets.size(),
++      .targets = colorTargets.data(),
++  };
++  // the resample pass's layout (uniform, sampler, texture); the sampler goes unused
++  const wgpu::PipelineLayoutDescriptor layoutDescriptor{
++      .bindGroupLayoutCount = 1,
++      .bindGroupLayouts = &g_ResampleBindGroupLayout,
++  };
++  auto pipelineLayout = g_device.CreatePipelineLayout(&layoutDescriptor);
++  const wgpu::RenderPipelineDescriptor pipelineDescriptor{
++      .label = "Present HDR Pipeline",
++      .layout = pipelineLayout,
++      .vertex =
++          wgpu::VertexState{
++              .module = module,
++              .entryPoint = "vs_main",
++          },
++      .primitive =
++          wgpu::PrimitiveState{
++              .topology = wgpu::PrimitiveTopology::TriangleList,
++          },
++      .multisample =
++          wgpu::MultisampleState{
++              .count = 1,
++              .mask = UINT32_MAX,
++          },
++      .fragment = &fragmentState,
++  };
++  g_HdrPipeline = g_device.CreateRenderPipeline(&pipelineDescriptor);
++  const wgpu::BufferDescriptor uniformBufferDescriptor{
++      .label = "Present HDR Uniform Buffer",
++      .usage = wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::Uniform,
++      .size = AURORA_ALIGN(sizeof(HdrUniformBlock), 16),
++  };
++  g_HdrUniformBuffer = g_device.CreateBuffer(&uniformBufferDescriptor);
++}
++
++// Called with the surface about to be configured: whether it is float16 HDR this time
++static bool update_hdr_state(uint32_t width, uint32_t height) {
++  const bool hdr = g_hdrRequested.load(std::memory_order_acquire) && hdr_supported();
++  if (hdr) {
++    create_hdr_pipeline();
++    if (!g_hdrTarget.view || g_hdrTarget.size.width != width || g_hdrTarget.size.height != height) {
++      g_hdrTarget = create_render_texture(width, height, false);
++    }
++    const auto props = SDL_GetWindowProperties(window::get_sdl_window());
++    const float sdrWhite = SDL_GetFloatProperty(props, SDL_PROP_WINDOW_SDR_WHITE_LEVEL_FLOAT, 1.f);
++    const float headroom = SDL_GetFloatProperty(props, SDL_PROP_WINDOW_HDR_HEADROOM_FLOAT, 0.f);
++    // unknown headroom: 10000 nits in scRGB
++    g_hdrPeak.store(headroom > 1.f ? std::max(sdrWhite, 1.f) * headroom : 125.f, std::memory_order_relaxed);
++    Log.info("HDR output on: {}x{} {}, SDR white {}, headroom {}", width, height,
++             magic_enum::enum_name(HdrSurfaceFormat), sdrWhite, headroom);
++  } else {
++    if (g_hdrActive.load(std::memory_order_acquire)) {
++      Log.info("HDR output off");
++    }
++    g_hdrTarget = {};
++  }
++  g_hdrActive.store(hdr, std::memory_order_release);
++  return hdr;
++}
++
++void encode_hdr_present(const wgpu::CommandEncoder& encoder, const wgpu::TextureView& surfaceView) {
++  if (!g_hdrTarget.view || !g_HdrPipeline) {
++    return;
++  }
++  // scRGB (D3D): 1.0 = 80 nits. EDR (Metal): 1.0 = the system's white, taken as 100 nits.
++  const float unitNits = g_backendType == wgpu::BackendType::Metal ? 100.f : 80.f;
++  const HdrUniformBlock uniform{
++      .scale = g_hdrPaperWhite.load(std::memory_order_relaxed) / unitNits,
++      .boost = g_hdrBoost.load(std::memory_order_relaxed),
++      .peak = g_hdrPeak.load(std::memory_order_relaxed),
++  };
++  g_queue.WriteBuffer(g_HdrUniformBuffer, 0, &uniform, sizeof(uniform));
++  const std::array bindGroupEntries{
++      wgpu::BindGroupEntry{
++          .binding = 0,
++          .buffer = g_HdrUniformBuffer,
++          .size = AURORA_ALIGN(sizeof(HdrUniformBlock), 16),
++      },
++      wgpu::BindGroupEntry{
++          .binding = 1,
++          .sampler = g_hdrTarget.sampler,
++      },
++      wgpu::BindGroupEntry{
++          .binding = 2,
++          .textureView = g_hdrTarget.view,
++      },
++  };
++  const wgpu::BindGroupDescriptor bindGroupDescriptor{
++      .layout = g_ResampleBindGroupLayout,
++      .entryCount = bindGroupEntries.size(),
++      .entries = bindGroupEntries.data(),
++  };
++  const auto bindGroup = g_device.CreateBindGroup(&bindGroupDescriptor);
++  const std::array attachments{
++      wgpu::RenderPassColorAttachment{
++          .view = surfaceView,
++          .loadOp = wgpu::LoadOp::Clear,
++          .storeOp = wgpu::StoreOp::Store,
++      },
++  };
++  const wgpu::RenderPassDescriptor renderPassDescriptor{
++      .label = "Present HDR render pass",
++      .colorAttachmentCount = attachments.size(),
++      .colorAttachments = attachments.data(),
++      .timestampWrites = gpu_prof::pass_writes("Present HDR"),
++  };
++  const auto pass = encoder.BeginRenderPass(&renderPassDescriptor);
++  pass.SetPipeline(g_HdrPipeline);
++  pass.SetBindGroup(0, bindGroup, 0, nullptr);
++  pass.SetViewport(0.f, 0.f, static_cast<float>(g_hdrTarget.size.width),
++                   static_cast<float>(g_hdrTarget.size.height), 0.f, 1.f);
++  pass.Draw(3);
++  pass.End();
++}
++
+ static wgpu::BackendType to_wgpu_backend(AuroraBackend backend) {
+   switch (backend) {
+   case BACKEND_WEBGPU:
+@@ -1220,6 +1462,10 @@ void shutdown() {
+   g_ResamplePipeline = {};
+   g_ResampleUniformBuffer = {};
+   g_resampledFrameBuffer = {};
++  g_HdrPipeline = {};
++  g_HdrUniformBuffer = {};
++  g_hdrTarget = {};
++  g_hdrActive = false;
+   g_frameBuffer = {};
+   g_frameBufferResolved = {};
+   g_depthBuffer = {};
+@@ -1256,9 +1502,19 @@ static void resize_swapchain_internal(uint32_t width, uint32_t height, uint32_t
+   g_graphicsConfig.surfaceConfiguration.height = nativeHeight;
+   auto surfaceConfiguration = g_graphicsConfig.surfaceConfiguration;
+   surfaceConfiguration.device = g_device;
++  // aurora_set_hdr: only the surface is float16; everything else keeps the internal format
++  const bool hdr = update_hdr_state(nativeWidth, nativeHeight);
++  if (hdr) {
++    surfaceConfiguration.format = HdrSurfaceFormat;
++  }
+   {
+     window::SurfaceLock surfaceLock;
+     g_surface.Configure(&surfaceConfiguration);
++#ifdef DAWN_ENABLE_BACKEND_METAL
++    if (g_backendType == wgpu::BackendType::Metal) {
++      utils::set_metal_layer_hdr(window::get_sdl_window(), hdr);
++    }
++#endif
+   }
+   g_frameBuffer = create_render_texture(width, height, true);
+   g_frameBufferResolved = create_render_texture(width, height, false);
+diff --git a/lib/webgpu/gpu.hpp b/lib/webgpu/gpu.hpp
+index 2792b0a..8e018e3 100644
+--- a/lib/webgpu/gpu.hpp
++++ b/lib/webgpu/gpu.hpp
+@@ -89,4 +89,13 @@ void store_to_cache(void const* key, size_t keySize, void const* value, size_t v
+ void cache_prune();
+ void cache_shutdown();
+ 
++// aurora_set_hdr: HDR output through a float16 extended-sRGB swapchain
++bool hdr_supported() noexcept;
++bool hdr_active() noexcept;
++void set_hdr(bool enabled, float paperWhiteNits, float highlightBoost) noexcept;
++// While HDR is active: the SDR target the present and ImGui passes draw to (surface sized, the internal
++// format), then encode_hdr_present converts it into the surface texture. Null when HDR is not active.
++const TextureWithSampler* hdr_target() noexcept;
++void encode_hdr_present(const wgpu::CommandEncoder& encoder, const wgpu::TextureView& surfaceView);
++
+ } // namespace aurora::webgpu
+diff --git a/lib/window.cpp b/lib/window.cpp
+index 920067a..2a99fc2 100644
+--- a/lib/window.cpp
++++ b/lib/window.cpp
+@@ -226,6 +226,15 @@ void process_event(SDL_Event& event) {
+     });
+     break;
+   }
++  case SDL_EVENT_WINDOW_HDR_STATE_CHANGED: {
++#ifdef AURORA_ENABLE_GX
++    // aurora_set_hdr: HDR turned on or off for the display, or the window moved to another one
++    if (primaryWindow && (webgpu::hdr_active() || webgpu::hdr_supported())) {
++      webgpu::refresh_surface(false);
++    }
++#endif
++    break;
++  }
+   case SDL_EVENT_GAMEPAD_ADDED: {
+     auto instance = gamepad::add_controller(event.gdevice.which);
+     if (instance != 0 && instance != static_cast<SDL_JoystickID>(-1)) {
+-- 
+2.43.0
+

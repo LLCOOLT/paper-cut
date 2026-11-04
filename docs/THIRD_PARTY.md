@@ -11,6 +11,8 @@ The game links libraries that Nintendo, Metrowerks and others wrote, and one REL
 | `libs/msl/` | Metrowerks Standard Library (C library and math) | Decompiled in this project (2026) | This repository's MIT licence |
 | `libs/runtime/` | Metrowerks PowerPC EABI runtime (`__mem`, `__va_arg`, `runtime.c`, ...) | Decompiled in this project (2026) | This repository's MIT licence |
 | `libs/trk/` | Metrowerks Target Resident Kernel, the debugger stub linked into the game | Decompiled in this project (2026) | This repository's MIT licence |
+| `libs/audio_decoders/` | The players' own music files' decoders (`port/src/common/music_pc.c`): `stb_vorbis.c` (Ogg Vorbis, v1.22), `dr_mp3.h` (v0.7.4), `dr_flac.h` (v0.13.4) | Sean Barrett's [stb](https://github.com/nothings/stb) (commit 1ee679c) and David Reid's [dr_libs](https://github.com/mackron/dr_libs) (commits 51e61d3 and dfe8377), unchanged | Public domain, or MIT No Attribution (each file's end) |
+| `libs/qrcodegen/` | The QR code the Saves tab shows to send saves to another device (`port/settings/features/save_transfer.cpp`): `qrcodegen.c`, `qrcodegen.h` (v1.8.0) | Project Nayuki's [QR Code generator library](https://github.com/nayuki/QR-Code-generator) (tag v1.8.0), unchanged | MIT, `libs/qrcodegen/LICENSE` |
 
 The assembly in these folders is code that the original libraries shipped as assembly (for example paired-single math, cache and context routines, the TRK exception vectors). It is reproduced as assembly on purpose.
 
@@ -56,6 +58,10 @@ Silicon Graphics, Inc.
 
 The launcher's typeface is [Fredoka](https://github.com/hafontia/Fredoka-One) by The Fredoka Project Authors, under the SIL Open Font License 1.1 (`port/assets/fonts/OFL.txt`). The files are static Bold (700) and Medium (500) instances made with fontTools' `varLib.instancer` from the variable `Fredoka[wdth,wght].ttf` in [google/fonts](https://github.com/google/fonts/tree/main/ofl/fredoka) (November 2026), embedded in the PC builds.
 
+## Controller mappings in `port/assets/controllers/`
+
+`gamecontrollerdb.txt` is the community [SDL_GameControllerDB](https://github.com/mdqinc/SDL_GameControllerDB) (commit 07af1d5, 2026-11-02). It holds SDL mappings for about 2,300 controller models, so that controllers SDL doesn't know itself work as gamepads. It's under the zlib licence (`port/assets/controllers/LICENSE`) and embedded in the PC builds.
+
 ## Libraries in the PC builds
 
 Paper Cut's builds embed or link these (Aurora's dependencies, fetched when the build is configured). Every desktop package carries their notices and licence texts in `THIRD_PARTY.txt` (written by `tools/port/third_party.py` from the build's own copies) and the font's in `OFL.txt`; the phone apps name them on the launcher's About tab.
@@ -70,7 +76,12 @@ Paper Cut's builds embed or link these (Aurora's dependencies, fetched when the 
 | [Dear ImGui](https://github.com/ocornut/imgui), [FreeType](https://freetype.org) | the settings page and launcher; font rendering | MIT; FreeType License |
 | libpng, zlib, Zstandard, xxHash | images, compression, hashing | libpng License; zlib; BSD 3-Clause; BSD 2-Clause |
 | {fmt}, Abseil, Tracy, SQLite | Aurora's support code (formatting, containers, the profiler client, the pipeline cache) | MIT; Apache 2.0; BSD 3-Clause; public domain |
-| MusyX (`libs/musyx/`), the SGI tessellator (`rels/tst/`), Fredoka (`port/assets/fonts/`) | above | MIT; SGI Free Software License B; SIL OFL 1.1 |
+| MusyX (`libs/musyx/`), the SGI tessellator (`rels/tst/`), Fredoka (`port/assets/fonts/`), SDL_GameControllerDB (`port/assets/controllers/`) | above | MIT; SGI Free Software License B; SIL OFL 1.1; zlib |
+| stb_vorbis, dr_mp3, dr_flac (`libs/audio_decoders/`) | the players' own music (OGG, MP3, FLAC) | public domain, or MIT No Attribution |
+| [QR Code generator](https://github.com/nayuki/QR-Code-generator) v1.8.0 (`libs/qrcodegen/`, unchanged) | the QR code for sending saves to another device | MIT |
+| [Mbed TLS](https://github.com/Mbed-TLS/mbedtls) 3.6.7 (fetched by CMake, pinned by hash) | online co-op's TLS to its relay (`port/src/common/online_ws_pc.c`) | Apache 2.0 |
+| [libjuice](https://github.com/paullouisageneau/libjuice) 1.7.4 (fetched by CMake, pinned by hash, unchanged) | online co-op's direct UDP path, ICE (`port/src/common/online_ice_pc.c`) | MPL 2.0 |
+| The relay's root certificates (`port/src/common/online_roots.inc`, from curl's copy of Mozilla's list, `tools/port/gen_online_roots.py`) | checking the relay is Cloudflare's | MPL 2.0 (Mozilla's list) |
 
 On Windows the desktop package also carries Microsoft's Visual C++ runtime DLLs, redistributed under the Visual Studio licence terms.
 

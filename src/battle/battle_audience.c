@@ -2201,8 +2201,7 @@ static void BattleAudienceItemCtrlProcess(void) {
                 it->timer = 0;
                 it->state = 0;
                 if (it->audienceId != -1) {
-                    u8* ap = (u8*)BattleAudienceGetPtr(it->audienceId);
-                    *(s16*)(ap + 0x1c) = -1;
+                    BattleAudienceGetPtr(it->audienceId)->itemId = -1;
                 }
                 break;
         }
@@ -3741,7 +3740,7 @@ void PORT_HOOKABLE(BattleAudience_ApRecoveryBuild)(StarPowerInfo* info) {
     f32 sum, root, a, b, cnt, mm, pm, scale = 1.0f;
     s32 i;
 #ifdef TARGET_PC
-    scale = portStarPowerScale(); // Gameplay+ remake balance
+    scale = portStarPowerScale(); // Enhancements remake balance
 #endif
 
     if (audience->impendingBonuses == NULL) {

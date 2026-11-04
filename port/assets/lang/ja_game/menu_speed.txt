@@ -1,0 +1,11 @@
+# Menu speed in Japanese for the JP release's own font: kana, words apart.
+
+Menu speed
+メニューの　はやさ
+
+How fast the Start menu's pages slide in and from tab to tab. Original is the game's own; Fast takes half the time; Instant leaves only a flicker of it.
+スタートメニューの　ページが　うごく　はやさ　オリジナルは　ゲームの　まま　はやいは　はんぶんの　じかん　いっしゅんは　ほとんど　まちません
+
+Fast
+はやい
+

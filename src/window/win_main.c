@@ -1,4 +1,9 @@
 // Pause menu: opening and closing the menu, item use from the menu, and the shared text and texture helpers.
+#ifdef TARGET_PC
+/* the Start menu's statics in a block of their own, the second screen's menu's while it runs (port/companion_section.h) */
+#define PORT_SECTION_MENU
+#include "port/companion_section.h"
+#endif
 #include "port_hook.h"
 #include "win/win_main.h"
 #include "pc_call.h"
@@ -101,6 +106,7 @@ static WindowWork* wp;
 #ifdef TARGET_PC /* PC port: the header's prototypes are skipped on PC (these are static here) */
 static USER_FUNC(itemUseFunc);
 #include "port/gameplus.h"
+#include "port/companion.h"
 #endif
 static void winLectureKeyMask(void);
 // FAKE: the prototype this file was compiled with (u16 icon id; icondrv.h has s16/s32), so callers zero-extend the id
@@ -112,6 +118,14 @@ static void winDispKoopa(CameraId camId, void* param);
 WindowWork* PORT_HOOKABLE(winGetPtr)(void) {
     return wp;
 }
+
+#ifdef TARGET_PC
+/* The second screen's Start menu (port/companion_menu.h): its own work, as
+ * winGetPtr's answer during its frames (wp is in its copy of the statics). */
+void portWinSetPtr(WindowWork* w) {
+    wp = w;
+}
+#endif
 
 /** Allocates and clears the pause menu work at game start (from mariost.c). */
 void PORT_HOOKABLE(winInit)(void) {
@@ -185,7 +199,7 @@ void PORT_HOOKABLE(winMain)(void) {
     WindowPartyDt* list[7];
 #endif
 #ifdef TARGET_PC
-    s32 quickSwap = -1; // Gameplay+ partner quick-swap: the partner to switch to
+    s32 quickSwap = -1; // Enhancements partner quick-swap: the partner to switch to
 #endif
 
     mario = marioGetPtr();
@@ -239,6 +253,10 @@ void PORT_HOOKABLE(winMain)(void) {
                         break;
                     }
 #ifdef TARGET_PC
+                    // the second screen's item, used as the item list would (companion_pc.c)
+                    if (mario->characterId == 0 && portCompanionFieldItem()) {
+                        break;
+                    }
                     if (mario->characterId == 0 &&
                         (quickSwap = portQuickSwapPoll(!marioBgmodeChk() ? marioGetParty() : mario->prevPartyMemberId[0])) >= 0) {
                         wp->menuSel = 1;
@@ -975,7 +993,7 @@ static USER_FUNC(itemUseFunc) {
             } else {
                 pouchSetPartyHP(event->lwData[11], pouchGetPartyHP(event->lwData[11]) + item->hp_restored);
 #ifdef TARGET_PC
-                portHealOtherPartners(event->lwData[11], item->hp_restored); // Gameplay+
+                portHealOtherPartners(event->lwData[11], item->hp_restored); // Enhancements
 #endif
                 PCCALL(((PouchSetFPS32Fn)pouchSetFP)(pouchGetFP() + item->fp_restored), pouchSetFP(pouchGetFP() + item->fp_restored));
                 PCCALL(((PouchSetAPS32Fn)pouchSetAP)(pouchGetAP() + item->sp_restored), pouchSetAP(pouchGetAP() + item->sp_restored));

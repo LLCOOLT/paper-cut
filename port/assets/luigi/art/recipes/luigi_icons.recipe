@@ -1,0 +1,215 @@
+# Luigi's faces, made from Luigi's own head on the player's disc (RECIPES.md, "The icons").
+# Shown in place of Mario's while Luigi is the player (Play as Luigi): the three icons through
+# portIconTexOverride and level-up's BP panel in the "*#luigi" texture set (luigi_faces_aurora.c).
+#
+# Every face is c_luigi's head as it stands in the field (pose Z_1): his face card, eyes, nose,
+# moustache, ear, hair, cap and its L, each pasted where the model puts it, at the disc's own 8
+# texels a unit. Each image then makes that head its icon's: Mario's canvas, size and place, and
+# Mario's line, sticker border, heart, coin or panel round it. The HUD's and the menu's are in his
+# own colours; the coins and the panel take the head into their gold tones, line for line.
+
+mask solid alpha
+
+# ---------------------------------------------------------------------------------------------------
+# c_luigi's head cards (a/c_luigi- images), as pieces c4 ... c14; `line` is his line's brown
+steps luigi_cards
+  piece c4 model c_luigi 4      # the dark under the cap's brim
+  piece c7 model c_luigi 7      # the hair at the nape
+  piece c14 model c_luigi 14    # the face and its long chin
+  piece c9 model c_luigi 9      # the eyes
+  piece c10 model c_luigi 10
+  piece c12 model c_luigi 12    # the moustache
+  piece c13 model c_luigi 13    # the nose
+  piece c6 model c_luigi 6      # the cap
+  piece c5 model c_luigi 5      # its L
+  piece c11 model c_luigi 11    # the ear
+  @c14 colours line sample 4 40
+end
+
+# The cards put together as piece `head` (96x104, facing left): where pose Z_1 has them, back to
+# front, the neck the shirt covers cut off under the chin
+steps luigi_head
+  piece head canvas 96 116
+  @head paste c4 4 27
+  @head paste c7 53 73
+  @head paste c14 18 28
+  @head paste c9 21 36
+  @head paste c10 36 38
+  @head paste c12 9 66
+  @head paste c13 1 47
+  @head paste c6 0 0
+  @head paste c5 31 13
+  @head paste c11 64 54
+  mask neck poly 0,116 0,97 30,97 36,98 42,100 50,101 56,99 60,96 62,92 96,92 96,116
+  @head alpha set 0 in neck
+  @head crop 0 0 96 104
+end
+
+# The gold faces' head: first the cards (`use luigi_gold_cards` after `use luigi_cards`, and after
+# `@c5 flip x` for a face looking right): the L in the line's colour, the moustache's fill marked
+# #ff00ff (it is the line's own brown). Then `use luigi_gold_head`: the head, each part in the face's
+# tones by its own colour, and its line 2 texels heavier. Before it, gradients `gskin` (the skin and
+# the L's disc, by lightness against his skin) and `gdark` (the cap and the hair), and colours
+# `gmoustache` and `gline`
+steps luigi_gold_cards
+  @c5 fill where h=70..200 s>=0.15 line
+  @c12 fill where v>=0.19 #ff00ff
+end
+
+steps luigi_gold_head
+  use luigi_head
+  @head ramp in solid where h=15..50 v>=0.6 base #ffd384 to gskin
+  @head ramp in solid where s<0.15 v>=0.3 base #f0f0f0 to gskin
+  @head ramp in solid where h=15..45 s>=0.4 v>=0.3 v<0.7 base #603000 to gdark
+  @head ramp in solid where h=70..200 s>=0.1 v>=0.3 base #309030 to gdark
+  @head fill in solid where h=290..320 s>0.8 gmoustache
+  @head fill in solid where v<0.3 gline
+  @head crop -2 -2 100 108
+  @head grow 2 gline
+end
+
+# ---------------------------------------------------------------------------------------------------
+# ICON_1A3, 52x52: the status bar's face beside the HP (field and battle; Sweet Treat's targets).
+# As Mario's: facing right, tilted forward, the HP heart (ICON_19F) behind at the top right, the pair
+# one sticker: a white border, a grey rim, a dark grey shadow down and right
+gradient hudline 0 #1e0c04 1.5 #2a1408 3 #3a2210
+
+image art/icons/luigi/luigi_hud.png
+  fallback art/icons/luigi/drawn/luigi_hud.png
+  canvas 52 52
+  piece heart icon ICON_19F
+  @heart crop 2 3 36 33
+  @heart scale 22 20 texel
+  paste heart 23 6
+  use luigi_cards
+  @c5 flip x
+  use luigi_head
+  @head grow 2 line
+  @head crop -14 -12 124 128
+  @head flip x
+  @head rotate 15
+  @head scale 36 37 texel
+  # Mario's line: the soft edge darkened to his dark brown, and one texel more of it all round
+  @head ramp in solid where v<0.45 base #312410 to hudline
+  @head grow 1 #2a1408
+  paste head 0 5
+  grow 2 #e7e7e7
+  grow 1 #a5a5a5
+  piece sticker copy
+  piece shadow copy
+  @shadow fill in solid #424242
+  canvas 52 52
+  paste shadow 2 2
+  paste shadow 1 1
+  paste sticker 0 0
+  alpha cut 128
+end
+
+# ---------------------------------------------------------------------------------------------------
+# ICON_19E, 40x40: the pause menu's Mario page and the item menu's "use on" list. As Mario's: the
+# head facing right, filling the square, a heavy line, no border
+image art/icons/luigi/luigi_head.png
+  fallback art/icons/luigi/drawn/luigi_head.png
+  canvas 40 40
+  use luigi_cards
+  @c5 flip x
+  use luigi_head
+  @head crop -3 -3 102 110
+  @head grow 3 line
+  @head flip x
+  @head scale 36 39 texel
+  paste head 2 0
+  alpha cut 128
+end
+
+# ---------------------------------------------------------------------------------------------------
+# ICON_1A1, 40x40: the Mario page's level row and the status tables, a gold coin with the head on it
+# in its line. Mario's coin with his head taken off: the plate filled flat, his lines where they
+# cross the bevel replaced from the coin mirrored about its lit diagonal (top left to bottom right,
+# the light's axis); then the head, flat gold in a dark line, put in the coin's four tones
+gradient coin 0.0 #421000 0.66 #421000 0.7 #b07c00 0.84 #b07c00 0.86 #e7b200 2.0 #e7b200
+
+image art/icons/luigi/luigi_emblem.png
+  fallback art/icons/luigi/drawn/luigi_emblem.png
+  load icon ICON_1A1
+  colours plate sample 17 21
+  mask plate circle 20 20 14.2
+  mask ring circle 20 20 18.4
+  mask ring - mask plate
+  fill in plate plate
+  piece mirror copy
+  @mirror flip x
+  @mirror rotate 270
+  alpha set 0 in ring where v<0.55
+  piece top copy
+  canvas 40 40
+  paste mirror 0 0
+  paste top 0 0
+  # what the mirror can't clear (his lines on both sides of the diagonal), on the lit half
+  mask lit circle 20 20 16.6
+  mask lit - mask plate
+  mask lit & poly 0,0 38,0 0,38
+  colours bevel sample 3 20
+  fill in lit where v<0.55 bevel
+  gradient gskin 0 #e7b200 2 #e7b200
+  gradient gdark 0 #e7b200 2 #e7b200
+  colours gmoustache #e7b200 gline #421000
+  use luigi_cards
+  @c5 flip x
+  use luigi_gold_cards
+  use luigi_gold_head
+  @head flip x
+  @head scale 31 33 texel
+  @head ramp in solid base #e7b200 to coin
+  paste head 4 4
+  alpha cut 128
+end
+
+# ---------------------------------------------------------------------------------------------------
+# Level-up's BP panel (battle_common.tpl image 51, JP 38), 128x128: a gold tile, on it a coin with
+# the head in one brown and its line, a darker gold shadow under it. Mario's head taken off the coin:
+# its middle filled flat, round the edge only his colours (and, on the lit left, his darker blends),
+# so the coin's own highlight and shading stay. The JP disc's image is under ui_jp/ (one image a path)
+gradient panel 0.0 #521800 0.55 #521800 0.6 #8c4c00 0.78 #8c4c00 0.82 #b26a00 2.0 #b26a00
+
+steps levelup
+  colours gold sample 46 100
+  mask face circle 63.5 64.3 40
+  mask near circle 63.5 64.3 45.5
+  mask near - mask face
+  mask edge circle 63.5 64.3 47.6
+  mask edge - mask face
+  fill in face gold
+  fill in edge where h<40 s>0.5 gold
+  fill in near where v<0.82 gold
+  gradient gskin 0 #b26a00 2 #b26a00
+  gradient gdark 0 #b26a00 2 #b26a00
+  colours gmoustache #b26a00 gline #521800
+  use luigi_cards
+  @c5 flip x
+  use luigi_gold_cards
+  use luigi_gold_head
+  @head flip x
+  @head scale 70 76 texel
+  @head ramp in solid base #b26a00 to panel
+  piece shadow canvas 128 128
+  @shadow paste head 32 29
+  @shadow fill in solid #8c6900
+  paste shadow 0 0
+  paste head 29 26
+  alpha cut 128
+end
+
+image art/icons/luigi/ui/tex1_128x128_4d465d3c205b172e_14.png
+  fallback art/icons/luigi/drawn/ui/levelup.png
+  discs G8ME01 G8MP01
+  load tpl battle/common/battle_common.tpl 51
+  use levelup
+end
+
+image art/icons/luigi/ui_jp/tex1_128x128_4d465d3c205b172e_14.png
+  fallback art/icons/luigi/drawn/ui/levelup.png
+  discs G8MJ01
+  load tpl battle/common/battle_common.tpl 38
+  use levelup
+end

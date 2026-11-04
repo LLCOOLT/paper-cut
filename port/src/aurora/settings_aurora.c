@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "port/settings.h"
+#include "port/tr.h"
 #include "port/widescreen.h"
 #include "port/ac_cue.h"
 #include "port/cloud.h"
@@ -18,6 +19,7 @@
 #include "port/speed.h"
 #include "port/layout.h"
 #include "port/platform.h"
+#include "port/audio_mix.h"
 #if defined(__APPLE__)
 #include <TargetConditionals.h>
 #endif
@@ -90,7 +92,7 @@ typedef struct {
 static const Field kFields[] = {
     {"framerate", NULL, 0, 0},
     {"vsync", &sSettings.vsync, 0, 1},
-    {"fullscreen", &sSettings.fullscreen, 0, 1},
+    {"fullscreen", &sSettings.fullscreen, 0, 2}, /* 0 a window, 1 borderless, 2 full screen (window.cpp) */
     {"widescreen", &sSettings.widescreen, 0, 1},
     {"resolution", &sSettings.resolution, 0, 8},
     {"fps", &sSettings.fps, 0, 4},
@@ -214,32 +216,105 @@ void portCrashReportDismiss(void) {
     sCrashPending = 0;
 }
 
+/* key=value lines (settings.txt's), each set: a fixed field or a feature's own */
+static void readLines(char* text) {
+    char* line = text;
+    while (*line != '\0') {
+        char* end = line + strcspn(line, "\r\n");
+        char* eq = strchr(line, '=');
+        char saved = *end;
+        *end = '\0';
+        if (eq != NULL && eq < end) {
+            const Field* f;
+            *eq = '\0';
+            if ((f = field(line)) != NULL) {
+                set(f, eq + 1);
+            } else {
+                portSettingsExtraSet(line, eq + 1); /* a feature's own (settings_extra.c) */
+            }
+        }
+        *end = saved;
+        line = end + strspn(end, "\r\n");
+    }
+}
+
+int portSteamDeck(void) {
+    const char* test = getenv("TTYD_STEAM_DECK");
+    if (test != NULL) {
+        return atoi(test) != 0;
+    }
+#if defined(__linux__) && !defined(__ANDROID__)
+    {
+        /* Steam sets SteamDeck=1 for what it starts on one; started otherwise
+         * (desktop mode), the board says: Valve's Jupiter (LCD) or Galileo (OLED) */
+        const char* steam = getenv("SteamDeck");
+        char* vendor;
+        char* product;
+        int deck;
+        if (steam != NULL && atoi(steam) != 0) {
+            return 1;
+        }
+        vendor = SDL_LoadFile("/sys/devices/virtual/dmi/id/board_vendor", NULL);
+        product = SDL_LoadFile("/sys/devices/virtual/dmi/id/product_name", NULL);
+        deck = vendor != NULL && product != NULL && strncmp(vendor, "Valve", 5) == 0 &&
+               (strncmp(product, "Jupiter", 7) == 0 || strncmp(product, "Galileo", 7) == 0);
+        SDL_free(vendor);
+        SDL_free(product);
+        return deck;
+    }
+#else
+    return 0;
+#endif
+}
+
+/* the fixed fields' values before settings.txt: their defaults (settings presets) */
+static PortSettings sDefaults;
+static int sDefaultsTaken;
+
+int portSettingsDefault(const char* key, int* value) {
+    const Field* f = field(key);
+    if (f == NULL) {
+        return portSettingsExtraDefault(key, value);
+    }
+    if (f->value == NULL || !sDefaultsTaken) {
+        return 0;
+    }
+    *value = *(const int*)((const char*)&sDefaults + ((const char*)f->value - (const char*)&sSettings));
+    return 1;
+}
+
+/* a setting changed by key, kept (settings presets): a field's or a declared one's */
+int portSettingsSetKey(const char* key, const char* value) {
+    const Field* f = field(key);
+    if (f != NULL) {
+        set(f, value);
+        sOverridden[f - kFields] = 0;
+        return 1;
+    }
+    return portSettingsExtraSet(key, value);
+}
+
 void portSettingsLoad(const char* userPath) {
     char* text;
+    if (!sDefaultsTaken) {
+        sDefaults = sSettings;
+        sDefaultsTaken = 1;
+    }
     snprintf(sUserPath, sizeof(sUserPath), "%s", userPath != NULL ? userPath : ".");
     snprintf(sPath, sizeof(sPath), "%s/settings.txt", sUserPath);
     crashReportInit();
     text = SDL_LoadFile(sPath, NULL);
     if (text != NULL) {
-        char* line = text;
-        while (*line != '\0') {
-            char* end = line + strcspn(line, "\r\n");
-            char* eq = strchr(line, '=');
-            char saved = *end;
-            *end = '\0';
-            if (eq != NULL && eq < end) {
-                const Field* f;
-                *eq = '\0';
-                if ((f = field(line)) != NULL) {
-                    set(f, eq + 1);
-                } else {
-                    portSettingsExtraSet(line, eq + 1); /* a feature's own (settings_extra.c) */
-                }
-            }
-            *end = saved;
-            line = end + strspn(end, "\r\n");
-        }
+        readLines(text);
         SDL_free(text);
+    } else if (portSteamDeck()) {
+        /* the first start on a Steam Deck (no settings.txt yet): its screen's
+         * settings, which the page changes like any other. Fullscreen, the
+         * 16:10 picture with the HUD at its edges, the message windows a
+         * little larger for the 7-inch screen. */
+        char profile[] = "fullscreen=1\nwidescreen=1\naspect_ratio=3\nwide_hud=1\ntext_scale=115\n";
+        readLines(profile);
+        SDL_Log("settings: the Steam Deck's first-start settings");
     }
 #ifdef SETTINGS_APP_PREFS
     syncFromPreferences();
@@ -378,13 +453,44 @@ int portSettingsPeek(const char* userPath, const char* key, int def) {
         CFRelease(k);
     }
 #endif
+    {
+        /* the run's override, as portSettingsLoad takes it */
+        char env[80];
+        const char* over;
+        snprintf(env, sizeof(env), "TTYD_SET_%s", key);
+        if ((over = getenv(env)) != NULL) {
+            value = atoi(over);
+        }
+    }
     return value;
+}
+
+/* online co-op's guest plays on the host's settings: nothing written while
+ * that lasts (online_lobby.cpp) */
+static int sHoldSaves;
+
+void portSettingsHoldSaves(int hold) {
+    sHoldSaves = hold;
+}
+
+/* a setting's value for this run, never saved (online co-op's guest) */
+void portSettingsSetForRun(const char* key, const char* value) {
+    const Field* f = field(key);
+    if (f != NULL) {
+        set(f, value);
+    } else {
+        portSettingsExtraForce(key, value);
+    }
 }
 
 void portSettingsSave(void) {
     SDL_IOStream* io;
     size_t i;
     portSettingsApply();
+    portTrSettingsSync(); /* the menu language's pack, by its code */
+    if (sHoldSaves) {
+        return;
+    }
     io = SDL_IOFromFile(sPath, "w");
     if (io == NULL) {
         return;
@@ -407,6 +513,21 @@ void portSettingsSave(void) {
 #endif
 }
 
+/* The master volume's gain: the slider's 0-100 on an audio taper (portVolumeGain,
+ * so half way sounds about half as loud), silent while muted (the mute
+ * setting: the speaker button on the Audio tab, or the mute key) or, with
+ * "mute while in the background", while another window has the focus. */
+static float masterGain(void) {
+    static int* sMute;
+    if (sMute == NULL) {
+        sMute = portSettingsDeclare("mute", 0, 0, 1);
+    }
+    if (*sMute || (!sFocused && sSettings.muteUnfocused)) {
+        return 0.0f;
+    }
+    return portVolumeGain(sSettings.volume);
+}
+
 void portSettingsApply(void) {
     static int sFullscreen = -1, sResolution = -1;
     portInterpSetRate(sSettings.framerate);
@@ -414,7 +535,7 @@ void portSettingsApply(void) {
     if (sFullscreen != sSettings.fullscreen) {
         /* only on a change: the window's own toggles (F11) stay in charge */
         if (sFullscreen >= 0 || sSettings.fullscreen) {
-            VISetWindowFullscreen(sSettings.fullscreen != 0);
+            portWindowSetDisplayMode(sSettings.fullscreen);
         }
         sFullscreen = sSettings.fullscreen;
     }
@@ -438,7 +559,7 @@ void portSettingsApply(void) {
     }
     aurora_set_pause_on_focus_lost(sSettings.pauseUnfocused != 0);
     aurora_set_background_input(sSettings.backgroundInput != 0);
-    salPcSetVolume(sFocused || !sSettings.muteUnfocused ? sSettings.volume / 100.0f : 0.0f);
+    salPcSetVolume(masterGain());
     {
         u32 port;
         const u16 level = (u16)(0xFFFFu * (u32)sSettings.rumbleStrength / 100u);
@@ -470,7 +591,7 @@ void portSettingsFocus(int focused) {
 #endif
     if (sFocused != focused) {
         sFocused = focused;
-        salPcSetVolume(sFocused || !sSettings.muteUnfocused ? sSettings.volume / 100.0f : 0.0f);
+        salPcSetVolume(masterGain());
     }
 }
 

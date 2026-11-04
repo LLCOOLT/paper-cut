@@ -9,6 +9,9 @@
 #include "driver/icondrv.h"
 #include "system.h"
 #include <string.h>
+#ifdef TARGET_PC
+#include "port/assist.h"
+#endif
 
 // FAKE: ac_repeatedly_lv.c calls BattleAcDrawGauge through this prototype (the types it was compiled with) instead of the one in battle/battle_ac.h; same registers, behaviour-identical.
 typedef void (*BattleAcDrawGaugeArgOrderFn)(f32, s32, s32, u8, s32, s32, s32, s32, s32);
@@ -224,6 +227,11 @@ s32 battleAcMain_RepeatedlyLv(BattleWork* work) {
                     }
                     break;
             }
+#ifdef TARGET_PC
+            if (!(p->u27 && (ac->acFlags & REPEATEDLY_LV_HOLD))) {
+                portMashWanted(p->mask & ~p->maxMask); /* hold instead of mashing (port/include/port/assist.h) */
+            }
+#endif
             if (p->u27) {
                 if (ac->acFlags & REPEATEDLY_LV_HOLD) {
                     if (BattlePadCheckNow(p->mask)) {

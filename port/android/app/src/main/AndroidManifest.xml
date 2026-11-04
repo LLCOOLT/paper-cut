@@ -34,6 +34,8 @@
 
     <!-- Rumble on the device itself when no controller is connected (Aurora). -->
     <uses-permission android:name="android.permission.VIBRATE" />
+    <!-- HTTPS: the update check (port/settings/http.cpp). -->
+    <uses-permission android:name="android.permission.INTERNET" />
 
     <application
         android:icon="@mipmap/ic_launcher"
@@ -58,6 +60,14 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
                 <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
+            </intent-filter>
+            <!-- Invite links, papercut://join/<CODE> (TtydActivity passes them to the game,
+                 port/settings/features/invite.cpp) -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="papercut" android:host="join" />
             </intent-filter>
             <!-- Controllers plugged in over USB (SDL's HIDAPI) -->
             <intent-filter>

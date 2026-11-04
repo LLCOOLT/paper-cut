@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "driver/seqdrv.h"
+#include "port/online.h"
 #include "driver/swdrv.h"
 #include "evt/evt_story.h"
 #include "mario/mariost.h"
@@ -380,8 +381,8 @@ void portFrameAdvanceStep(void) {
 }
 
 int portFrameAdvanceWait(void) {
-    if (!sHold) {
-        return 0;
+    if (!sHold || portOnlineActive()) {
+        return 0; /* online co-op: the other game can't hold (port/include/port/online.h) */
     }
     if (sSteps > 0) {
         sSteps--;

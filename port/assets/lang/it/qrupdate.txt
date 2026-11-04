@@ -1,0 +1,121 @@
+# qrupdate: see tools/port/gen_lang.py
+
+Send saves to another device
+Invia i salvataggi a un altro dispositivo
+
+Receive saves
+Ricevi salvataggi
+
+Shows an address and its QR code for another device on the same network: its Paper Cut takes the saves with Receive saves. For 5 minutes, once.
+Mostra un indirizzo e il suo codice QR per un altro dispositivo nella stessa rete: il suo Paper Cut prende i salvataggi con Ricevi salvataggi. Per 5 minuti, una volta.
+
+On the other device: Settings, Saves, Receive saves, and type this address.
+Sull'altro dispositivo: Impostazioni, Salvataggi, Ricevi salvataggi, e scrivi questo indirizzo.
+
+Copy the address
+Copia l'indirizzo
+
+Stops in %d:%02d, or once the other device has the saves.
+Si ferma tra %d:%02d, o appena l'altro dispositivo ha i salvataggi.
+
+Sent: the other device has the saves.
+Inviato: l'altro dispositivo ha i salvataggi.
+
+Stopped.
+Fermato.
+
+No other device took the saves in 5 minutes: stopped.
+Nessun altro dispositivo ha preso i salvataggi in 5 minuti: fermato.
+
+This device has no saves of the game yet.
+Questo dispositivo non ha ancora salvataggi del gioco.
+
+This device has no random numbers for the address.
+Questo dispositivo non ha numeri casuali per l'indirizzo.
+
+This device isn't on a network.
+Questo dispositivo non è in nessuna rete.
+
+Could not start sending (no network?).
+Non è stato possibile iniziare l'invio (nessuna rete?).
+
+The address the other device shows under Send saves to another device.
+L'indirizzo che l'altro dispositivo mostra sotto Invia i salvataggi a un altro dispositivo.
+
+Paste
+Incolla
+
+Receiving...
+Ricezione...
+
+Which game files to replace? The save here is kept as a backup first.
+Quali file di gioco sostituire? Il salvataggio di qui viene prima copiato.
+
+Japan (JP)
+Giappone (JP)
+
+North America (US)
+Nord America (US)
+
+Europe (EU)
+Europa (EU)
+
+a save
+un salvataggio
+
+empty
+vuoto
+
+File %d: the other device's (%s) over this one's (%s)
+File %d: quello dell'altro dispositivo (%s) al posto di questo (%s)
+
+Replace them and restart
+Sostituiscili e riavvia
+
+Replace them
+Sostituiscili
+
+Receive this card's saves from the launcher, before the game starts.
+Ricevi i salvataggi di questa scheda dal launcher, prima che il gioco parta.
+
+Could not receive the saves:
+Non è stato possibile ricevere i salvataggi:
+
+Received: the saves as they were are kept as backups.
+Ricevuto: i salvataggi di prima sono conservati come copie.
+
+Updated to Paper Cut %s.
+Aggiornato a Paper Cut %s.
+
+Flathub updates this copy: your software centre, or flatpak update.
+Flathub aggiorna questa copia: il tuo gestore software, o flatpak update.
+
+Update the AppImage with AppImageUpdate, or download the new one.
+Aggiorna l'AppImage con AppImageUpdate, o scarica quella nuova.
+
+Download and install
+Scarica e installa
+
+Checking the download...
+Controllo del download...
+
+Can't write beside the install: download it from the release page.
+Impossibile scrivere accanto all'installazione: scaricala dalla pagina della versione.
+
+The download failed:
+Il download non è riuscito:
+
+The release lists no checksum for it, so it wasn't installed.
+La versione non indica alcun checksum per esso, quindi non è stato installato.
+
+The download doesn't match the release's checksum, so it wasn't installed.
+Il download non corrisponde al checksum della versione, quindi non è stato installato.
+
+It couldn't be unpacked:
+Non è stato possibile estrarlo:
+
+The new version is installed at the next start.
+La nuova versione si installa al prossimo avvio.
+
+Restart to update
+Riavvia per aggiornare

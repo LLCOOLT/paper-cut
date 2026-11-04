@@ -21,6 +21,8 @@ int portAuroraOpenDiscPath(const char* path, char* why, size_t size);
 struct PortVersionInfo;
 const struct PortVersionInfo* portAuroraProbeDisc(const char* path);
 int portAuroraPickDisc(char* out, size_t size);
+/* The disc image opened for the game ("" before one is): Restart now's. */
+const char* portAuroraDiscPath(void);
 /* The launcher (port/settings/launcher_ui.cpp): shown before the game when no
  * disc was given. Returns TRUE with a disc of this build's version in path to
  * play; starts another version's executable itself (and doesn't return);
@@ -36,6 +38,9 @@ void portKeyboardActivate(void);
 /* Before the game starts: waits, on a "Preparing graphics" screen, until Aurora
  * has built every pipeline it knows of (port/settings/features/warmup.cpp). */
 void portPipelineWarmupWait(void);
+/* Tests: online co-op's lobby run without its page ($TTYD_ONLINE_HOST /
+ * $TTYD_ONLINE_JOIN, port/settings/features/online.cpp), before the game starts. */
+void portOnlineTestStart(void);
 
 /* Frames drawn between the game's 60 Hz frames (interp_aurora.c): the
  * display rate's multiple of 60 from $TTYD_FRAMERATE, 1 when off. */

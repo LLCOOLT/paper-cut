@@ -1,0 +1,23 @@
+# The display mode (port/settings/features/window.cpp, settings_ui.cpp): see tools/port/gen_lang.py
+
+Display mode (F11 or Alt+Enter)
+Modalità schermo (F11 o Alt+Invio)
+
+Borderless: the whole screen, switching away at once. Full screen: the screen is the game's alone, at its own resolution and refresh rate.
+Senza bordi: tutto lo schermo, da cui si esce subito. Schermo intero: lo schermo è solo del gioco, alla sua risoluzione e frequenza.
+
+Display mode
+Modalità schermo
+
+A window, the whole screen borderless, or full screen (F11 or Alt+Enter).
+Una finestra, tutto lo schermo senza bordi o lo schermo intero (F11 o Alt+Invio).
+
+Windowed
+Finestra
+
+Borderless
+Senza bordi
+
+Full screen
+Schermo intero
+

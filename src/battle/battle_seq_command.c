@@ -262,6 +262,12 @@ static void _btlcmd_MakeActClassTable(BattleWork* wp) {
             cmd->act[num].enabled = 0;
             cmd->act[num].disableReason = 3;
         }
+#ifdef TARGET_PC
+        if (portChallenge("challenge_no_battle_items")) { // challenge: no items in battle
+            cmd->act[num].enabled = 0;
+            cmd->act[num].disableReason = 3;
+        }
+#endif
         cmd->act[num].name = msgSearch("btl_cmd_act_item");
         cmd->act[num].icon = ICON_14C;
         num++;
@@ -732,7 +738,7 @@ BattleCheckPartyEntry _checkPartyTable[8] = {
  */
 EVT_BEGIN(_btl_cmd_error_msg_event)
 #ifdef TARGET_PC
-    // Gameplay+ free Tattle: the tattles of the enemies already tattled, one after another, then back to the menu
+    // Enhancements free Tattle: the tattles of the enemies already tattled, one after another, then back to the menu
     CALL(portEvtTattleFree, LW(1))
     IF_INT_EQUAL(LW(1), 1)
         LOOP(0)
@@ -940,7 +946,7 @@ static void _btlcmd_MakeOperationTable(BattleWork* wp) {
         num++;
     }
 #ifdef TARGET_PC
-    // Gameplay+ free Tattle: read the tattles of the enemies here that were tattled before, at no cost
+    // Enhancements free Tattle: read the tattles of the enemies here that were tattled before, at no cost
     if (portTattleFreeAvailable()) {
         cmd->operation[num].type = PORT_OPERATION_TATTLE;
         cmd->operation[num].enabled = 1;

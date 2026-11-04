@@ -1,0 +1,73 @@
+# Restart now, controller names, the saves' tools while playing, the first start's notice (Italiano)
+
+Restart now
+Riavvia ora
+
+Close and reopen the app to apply it.
+Chiudi e riapri l'app per applicarlo.
+
+Restarting when the game has finished saving...
+Riavvio appena il gioco ha finito di salvare...
+
+Starts the game again with this disc; quick resume brings you back here.
+Riavvia il gioco con questo disco; la ripresa rapida ti riporta qui.
+
+Press A twice to restart the game for these settings; quick resume brings you back here.
+Premi A due volte per riavviare il gioco per queste impostazioni; la ripresa rapida ti riporta qui.
+
+Press A again to restart.
+Premi di nuovo A per riavviare.
+
+Applies after Restart now.
+Vale dopo Riavvia ora.
+
+Applies when the app reopens.
+Vale alla riapertura dell'app.
+
+Paper Cut's settings: the Start menu's last tab, or F1 (Back on a controller).
+Le impostazioni di Paper Cut: l'ultima scheda del menu Start, o F1 (Back su un controller).
+
+Paper Cut's settings: the Start menu's last tab, or the three-bar button.
+Le impostazioni di Paper Cut: l'ultima scheda del menu Start, o il pulsante a tre righe.
+
+As on a PAL TV: the game's 50 Hz mode, a little slower.
+Come su un televisore PAL: la modalità a 50 Hz del gioco, un po' più lenta.
+
+Xbox controller
+Controller Xbox
+
+Xbox 360 controller
+Controller Xbox 360
+
+Switch Pro Controller
+Controller Pro per Switch
+
+GameCube controller
+Controller GameCube
+
+through an adapter
+tramite un adattatore
+
+Restore and restart
+Ripristina e riavvia
+
+Replace the save with this one and restart
+Sostituisci il salvataggio con questo e riavvia
+
+The game starts again to load it; the save as it is now is kept as a backup.
+Il gioco si riavvia per caricarlo; il salvataggio com'è ora resta come copia.
+
+Copy
+Copia
+
+Copy and restart
+Copia e riavvia
+
+Replace its save (a backup is kept)
+Sostituisci il suo salvataggio (resta una copia)
+
+Replace its save and restart (a backup is kept)
+Sostituisci il suo salvataggio e riavvia (resta una copia)
+
+This is the running game's card: the game starts again to load it.
+È la scheda del gioco in corso: il gioco si riavvia per caricarlo.

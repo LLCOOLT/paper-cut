@@ -1,4 +1,7 @@
 /* Anim model decoding on PC; see port/include/port/anim_pc.h. */
+/* what the decoders know, kept by the second screen's menu's frames (port/companion_section.h) */
+#define PORT_SECTION_KEEP
+#include "port/companion_section.h"
 #include "port/anim_pc.h"
 #include "port/bedecode.h"
 #include "driver/animdrv.h"

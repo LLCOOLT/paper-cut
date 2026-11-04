@@ -103,7 +103,7 @@ static int init(void) {
         return 1;
     }
 #if defined(_WIN32)
-    sBase = (uint8_t*)VirtualAlloc(NULL, REGION_SIZE, MEM_RESERVE, PAGE_NOACCESS);
+    sBase = (uint8_t*)VirtualAlloc(NULL, REGION_SIZE, MEM_RESERVE | MEM_WRITE_WATCH, PAGE_NOACCESS); /* rewind asks what was written */
     if (sBase != NULL && !commitTo(FIRST_BLOCK)) {
         sBase = NULL;
     }

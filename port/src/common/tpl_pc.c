@@ -1,4 +1,7 @@
 /* TPL header decoding on PC; see port/include/port/tpl_pc.h. */
+/* what the decoders know, kept by the second screen's menu's frames (port/companion_section.h) */
+#define PORT_SECTION_KEEP
+#include "port/companion_section.h"
 #include "port/tpl_pc.h"
 #include "port/bedecode.h"
 #include "sdk/texPalette.h"

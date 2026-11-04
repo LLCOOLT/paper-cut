@@ -28,8 +28,15 @@
  *   audience N, coins N, sp N, fp N   those set (sp: star power, in 1/100 units)
  *   maxsp N, maxhp N    the maximums set (maxhp also fills HP)
  *   stars MASK          the special moves obtained (bit 0: Sweet Treat ...)
- *   swap                the Gameplay+ partner quick-swap control pressed
- *   travel N            Gameplay+ fast travel to hub N (0 Rogueport, 1 Petalburg ...)
+ *   swap                the Enhancements partner quick-swap control pressed
+ *   companion item N [T] / companion partner N
+ *                       a tap on the second screen (port/include/port/companion.h):
+ *                       the bag's item N used on Mario (T 1: the partner), or
+ *                       a switch to partner N
+ *   companion tap NX NY / companion button a|b|x|y|up|down|left|right|l|r / companion shot NAME
+ *                       a tap at NX, NY (0-1) on the second screen's Start menu,
+ *                       or one of its buttons (port/include/port/companion_menu.h)
+ *   travel N            Enhancements fast travel to hub N (0 Rogueport, 1 Petalburg ...)
  *   mobj_event NAME     run map object NAME's event, as hitting it would (a
  *                       switch's, a block's)
  *   talk_all [MAX]      talk to every NPC of the map in turn (not those parked
@@ -54,6 +61,8 @@
  *   end                 exit (0) once any capture is written
  * Each command is logged as "[input] frame F: <line>". */
 #include "port/ac_cue.h"
+#include "port/companion.h"
+#include "port/companion_menu.h"
 #include "port/gameplus.h"
 #include "port/menu_tap.h"
 #include <ctype.h>
@@ -200,6 +209,11 @@ __attribute__((weak)) void portSaveStateRequest(int slot, int load) {
     (void)load;
 }
 
+/* port/src/aurora/rewind_aurora.c: the Rewind control held for frames (tests) */
+__attribute__((weak)) void portRewindTest(int frames) {
+    (void)frames;
+}
+
 static void load(const char* path) {
     FILE* f = fopen(path, "r");
     char line[128];
@@ -295,6 +309,11 @@ static void load(const char* path) {
             s->frames = -13;
             snprintf(s->name, sizeof(s->name), "%s", cmd);
             s->waitMax = (s32)strtol(a1, NULL, 0);
+        } else if (strcmp(cmd, "companion") == 0) {
+            s->frames = -13;
+            snprintf(s->name, sizeof(s->name), "companion_%s %s %s", a1, a2, a3);
+            s->waitMax = (s32)strtol(a2, NULL, 0);
+            s->seed = (u32)strtoul(a3, NULL, 0);
         } else if (strcmp(cmd, "random") == 0) {
             s->frames = atoi(a1);
             s->seed = a2[0] ? (u32)strtoul(a2, NULL, 0) : 1u;
@@ -318,6 +337,10 @@ static void load(const char* path) {
         } else if (strcmp(cmd, "select") == 0) {
             s->frames = -14;
             s->waitMax = strcmp(a1, "list") == 0 ? -1 : atoi(a1);
+        } else if (strcmp(cmd, "rewind") == 0) {
+            /* rewind N: the Rewind control held for the next N frames */
+            s->frames = -22;
+            s->waitMax = atoi(a1);
         } else if (strcmp(cmd, "state") == 0) {
             s->frames = -12;
             s->waitMax = atoi(a2) - 1;
@@ -682,6 +705,27 @@ static void applyScript(PADStatus* pad) {
                 pouchGetPtr()->starPowersObtained = (u16)v;
             } else if (strcmp(s->name, "swap") == 0) {
                 portQuickSwapPress();
+            } else if (strncmp(s->name, "companion_", 10) == 0) {
+                const char* what = s->name + 10;
+                float x = 0.0f, y = 0.0f;
+                if (strncmp(what, "tap ", 4) == 0 && sscanf(what + 4, "%f %f", &x, &y) == 2) {
+                    portCompanionMenuTap(x, y); /* the second screen's Start menu (companion_menu.h) */
+                } else if (strncmp(what, "shot ", 5) == 0) {
+                    char name[48];
+                    if (sscanf(what + 5, "%47s", name) == 1) {
+                        portCompanionMenuShot(name);
+                    }
+                } else if (strncmp(what, "button ", 7) == 0) {
+                    static const char* const kNames[] = {"", "a", "b", "up", "down", "left", "right", "l", "r", "x", "y"};
+                    int k;
+                    for (k = 1; k < 11; k++) {
+                        if (strncmp(what + 7, kNames[k], strlen(kNames[k])) == 0 && (what[7 + strlen(kNames[k])] == ' ' || what[7 + strlen(kNames[k])] == 0)) {
+                            portCompanionMenuButton(k);
+                        }
+                    }
+                } else {
+                    portCompanionTap(what[0] == 'i' ? PORT_COMPANION_TAP_ITEM : PORT_COMPANION_TAP_PARTNER, v, (int)s->seed);
+                }
             } else if (strcmp(s->name, "travel") == 0) {
                 portFastTravelRequest(v);
             }
@@ -711,6 +755,10 @@ static void applyScript(PADStatus* pad) {
         }
         if (s->frames == -20) {
             portMenuBack(); /* as a right click */
+            continue;
+        }
+        if (s->frames == -22) {
+            portRewindTest(s->waitMax); /* held from now; the next steps go on meanwhile (wait, shot) */
             continue;
         }
         if (s->frames == -21) {
@@ -764,15 +812,101 @@ static void applyScript(PADStatus* pad) {
     sLeft--;
 }
 
+/* $TTYD_P2_PRESS=KEYS@F[+N][,...] (tests of the second player,
+ * second_player_pc.c): KEYS (a b x y z l r, and left right up down for the
+ * main stick at full tilt, joined with '+') held on controller 2 for N frames
+ * (default 2) from frame F of the script (counted from its first step, as its
+ * waits are: past a $TTYD_MAP warp) */
+static void applyP2(PADStatus* pad) {
+    static const char* sList;
+    static int sRead;
+    static u32 sClock;
+    const char* p;
+    if (!sRead) {
+        sRead = 1;
+        sList = getenv("TTYD_P2_PRESS");
+    }
+    if (sList == NULL || sState != 2) {
+        return;
+    }
+    sClock++;
+    for (p = sList; p != NULL && *p != '\0';) {
+        char keys[64], key[16];
+        unsigned at = 0, len = 2;
+        u16 bits = 0;
+        int sx = 0, sy = 0, n = 0;
+        const char* k;
+        if (sscanf(p, "%63[^@]@%u%n", keys, &at, &n) != 2) {
+            break;
+        }
+        if (p[n] == '+') {
+            len = (unsigned)atoi(p + n + 1);
+        }
+        for (k = keys; *k != '\0';) {
+            int kn = 0;
+            if (sscanf(k, "%15[^+]%n", key, &kn) != 1) {
+                break;
+            }
+            bits |= !strcmp(key, "a") ? PAD_BUTTON_A : !strcmp(key, "b") ? PAD_BUTTON_B : !strcmp(key, "x") ? PAD_BUTTON_X
+                    : !strcmp(key, "y") ? PAD_BUTTON_Y : !strcmp(key, "z") ? PAD_TRIGGER_Z : !strcmp(key, "l") ? PAD_TRIGGER_L
+                    : !strcmp(key, "r") ? PAD_TRIGGER_R : 0;
+            sx += !strcmp(key, "right") ? 70 : !strcmp(key, "left") ? -70 : 0;
+            sy += !strcmp(key, "up") ? 70 : !strcmp(key, "down") ? -70 : 0;
+            k += kn;
+            k += *k == '+';
+        }
+        if (sClock >= at && sClock < at + len) {
+            pad[1].err = PAD_ERR_NONE;
+            pad[1].button |= bits;
+            pad[1].stickX = (s8)sx;
+            pad[1].stickY = (s8)sy;
+            if (sClock == at) {
+                printf("[input] frame %u: controller 2 %s for %u\n", (unsigned)sFrame, keys, len);
+                fflush(stdout);
+            }
+        }
+        p = strchr(p, ',');
+        p = p != NULL ? p + 1 : NULL;
+    }
+}
+
 /* $TTYD_AC_CUE_PRESS=1 (tests of the Action Command cue): A pressed for two
  * frames each time the cue comes on (port/src/common/ac_cue_pc.c) */
 void portInputApply(PADStatus* pad) {
     static int sPrevCue, sHold;
     static int sCuePress = -1;
+    static int sHapticsPress;
     applyScript(pad);
+    applyP2(pad);
     portMenuApplyPad(pad); /* the mouse's B and wheel in menus */
+    portCompanionApplyPad(pad); /* a tap on the second screen (companion_pc.c) */
     if (sCuePress < 0) {
+        const char* h = getenv("TTYD_HAPTICS_PRESS");
         sCuePress = getenv("TTYD_AC_CUE_PRESS") != NULL;
+        sHapticsPress = h == NULL ? -1000 : strcmp(h, "last") == 0 ? 1000 : atoi(h);
+    }
+    if (sHapticsPress > -1000) {
+        /* $TTYD_HAPTICS_PRESS=K (tests of controller haptics, ac_cue_pc.c):
+         * A pressed for one frame, K frames into the window the haptic cue
+         * announces (0 its first frame, "last" its last; -1 the frame before
+         * it). The last update counted toJudge frames from its frame to the
+         * judgement; this frame's press is judged in toJudge - 1. */
+        static int sPressed, sPrevToJudge = -1;
+        const int toJudge = gPortAcCueToJudge;
+        const int k = sHapticsPress == 1000 ? gPortAcCueWindow - 1 : sHapticsPress;
+        if (toJudge < 0 || toJudge > sPrevToJudge) {
+            sPressed = 0; /* none, or the next judgement */
+        }
+        sPrevToJudge = toJudge;
+        if (toJudge >= 0 && !sPressed && toJudge - 1 == gPortAcCueWindow - 1 - k) {
+            printf("[haptics] frame %u: pressing A, %d frames into the %d-frame window (judged in %d)\n",
+                   (unsigned)sFrame, k, gPortAcCueWindow, toJudge - 1);
+            fflush(stdout);
+            sPressed = 1;
+            pad[0].err = PAD_ERR_NONE;
+            pad[0].button |= PAD_BUTTON_A;
+            pad[0].analogA = 255;
+        }
     }
     if (!sCuePress) {
         return;

@@ -40,6 +40,9 @@
 #include "eff/eff_mobj_broken.h"
 #include "libc_decls.h"
 #include "pmario_sound.h"
+#ifdef TARGET_PC
+#include "port/captions.h"
+#endif
 #include "driver/hitdrv.h"
 #include "version.h"
 #include "evt/evt_story.h"
@@ -2698,7 +2701,7 @@ USER_FUNC(evt_mobj_recovery_blk) {
 #include "evt/evt_window.h"
 #include "port/gameplus.h"
 /*
- * Gameplay+: storage at every Save Block (port/include/port/gameplus.h). Asks
+ * Enhancements: storage at every Save Block (port/include/port/gameplus.h). Asks
  * what to do first; storing and taking out pick items one at a time as at the
  * Rogueport shop's counter, until the list is closed. LW(13) is 0 when Mario
  * goes on to save, 1 when he leaves.
@@ -2773,7 +2776,7 @@ EVT_BEGIN(mobj_save_blk_sysevt)
         SET_VALUE(GSWF(GSWF_SAVE_BLOCK_USED_AFTER_GOOMBELLA), 1)
     END_IF
 #ifdef TARGET_PC
-    // Gameplay+: storage at every Save Block (not after the first hit's tutorial, whose window stays open)
+    // Enhancements: storage at every Save Block (not after the first hit's tutorial, whose window stays open)
     CALL(portEvtStorageOn)
     IF_INT_EQUAL(LW(0), 1)
         IF_INT_EQUAL(LF(10), 0)
@@ -2999,6 +3002,9 @@ static s32 mobj_badgeblk(MapObjectEntry* mobj) {
                     psndSFXOn_3D((const char*)0x1ba, &mobj->position);
                 }
                 if (mobj->flags & MOBJ_FLAG_HIDDEN) {
+#ifdef TARGET_PC
+                    portCaptionSfx("PORT_HIDDEN_BLOCK", &mobj->position.x); /* port/include/port/captions.h */
+#endif
                     mobj->flags &= ~MOBJ_FLAG_HIDDEN;
                 }
                 animPoseSetAnim(mobj->poseId, "A_1", 1);
@@ -3319,6 +3325,9 @@ static s32 mobj_10countblk(MapObjectEntry* mobj) {
         case 0:
             if (mobj->flags & MOBJ_FLAG_HIT) {
                 if (mobj->flags & MOBJ_FLAG_HIDDEN) {
+#ifdef TARGET_PC
+                    portCaptionSfx("PORT_HIDDEN_BLOCK", &mobj->position.x); /* port/include/port/captions.h */
+#endif
                     mobj->flags &= ~MOBJ_FLAG_HIDDEN;
 #if VERSION >= VERSION_JP
                     strcpy(mobj->animName, "MOBJ_Block");

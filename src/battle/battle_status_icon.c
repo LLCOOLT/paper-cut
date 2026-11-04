@@ -198,7 +198,7 @@ void PORT_HOOKABLE(BattleStatusIconMain)(BattleUnit* unit) {
 
     icon->numStatusIcons = 0;
 #ifdef TARGET_PC
-    // Gameplay+ battle pop-ups: the status icons stay up while targets are picked and moves play
+    // Enhancements battle pop-ups: the status icons stay up while targets are picked and moves play
     if (work->flags & BATTLE_FLAG_SHOW_ALL_STATUS_ICONS || work->dispFlags & 1 || portGameplus("battle_popups")) {
 #else
     if (work->flags & BATTLE_FLAG_SHOW_ALL_STATUS_ICONS || work->dispFlags & 1) {
@@ -259,7 +259,7 @@ void PORT_HOOKABLE(BattleStatusIconMain)(BattleUnit* unit) {
 }
 
 #ifdef TARGET_PC
-/** Gameplay+ battle pop-ups: the icon texture the status bar shows for statusType, or -1. */
+/** Enhancements battle pop-ups: the icon texture the status bar shows for statusType, or -1. */
 s32 portStatusIconId(s32 statusType) {
     s32 i;
     for (i = 0; _disp_table[i].statusType != -1; i++) {

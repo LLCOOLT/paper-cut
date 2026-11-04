@@ -4,15 +4,18 @@
 #include "driver/msgdrv.h"
 #ifdef TARGET_PC
 #include "port/platform.h"
+#include "port/speech.h"
 #include "port/gameplay.h"
 #include "port/gameplus.h"
 #include "port/luigi.h"
 #ifdef PORT_MODS
 #include "port/mods.h"
+#include "port/pause_settings.h"
+#include "port/journal_hint.h"
 #endif
 #endif
 #ifdef TARGET_PC
-/* Gameplay+: faster text outside battle, the message windows' 200 ms fades too */
+/* Enhancements: faster text outside battle, the message windows' 200 ms fades too */
 #define MSG_FADE_MS(ticks) (OSTicksToMilliseconds(ticks) * portFieldTextScale())
 #else
 #define MSG_FADE_MS(ticks) OSTicksToMilliseconds(ticks)
@@ -445,7 +448,7 @@ static s32 msgMain(smartEntry* smart) {
     if (data->scrollTarget > data->scrollPos) {
         data->scrollPos += 0.36f * OSTicksToMilliseconds(gp->renderTime - data->lastUpdateTime);
 #ifdef TARGET_PC
-        /* Gameplay+: faster text outside battle, the page turn too */
+        /* Enhancements: faster text outside battle, the page turn too */
         data->scrollPos += 0.36f * OSTicksToMilliseconds(gp->renderTime - data->lastUpdateTime) * (portFieldTextScale() - 1);
 #endif
         msgCheckSkip(smart, data);
@@ -475,7 +478,7 @@ static s32 msgMain(smartEntry* smart) {
             ms = OSTicksToMilliseconds(gp->renderTime - data->lastUpdateTime);
 #ifdef TARGET_PC
             ms = portTextMs(ms); /* PC port: the text speed setting */
-            ms *= portFieldTextScale(); /* Gameplay+: faster text outside battle */
+            ms *= portFieldTextScale(); /* Enhancements: faster text outside battle */
 #endif
             msgCheckSkip(smart, data);
             if (!(data->flags & MSG_WIN_FLAG_SMALL) && (data->flags & MSG_WIN_FLAG_FAST)) {
@@ -1642,6 +1645,17 @@ const char* PORT_HOOKABLE(msgSearch)(const char* tag) {
         }
     }
 #endif
+#ifdef TTYD_BACKEND_AURORA /* the pause menu's Settings tab's own messages (port/src/aurora/pause_settings_aurora.c) */
+    {
+        const char* pc = portPauseSettingsMsg(tag);
+        if (pc == NULL) {
+            pc = portJournalHintMsg(tag); /* the Journal's hint (port/src/aurora/journal_hint_aurora.c) */
+        }
+        if (pc != NULL) {
+            return pc;
+        }
+    }
+#endif
     for (i = 0; i < 2; i++) { // check both entries
         entry = &msgw->entries[i];
         smart = entry->lookup;
@@ -1787,6 +1801,9 @@ s32 PORT_HOOKABLE(msgWindow_Entry)(const char* msg, EvtWord callback, u16 priori
     data->parseSpeed = 25;
     data->pageCount = 0;
     msgAnalize(smart, copy);
+#ifdef TARGET_PC
+    portSpeechMessage(window, copy); /* read aloud, page by page (port/include/port/speech.h) */
+#endif
     if (window->type == 1) {
         data->flags |= MSG_WIN_FLAG_NO_PAGES;
     }
@@ -1842,6 +1859,9 @@ static void msgWindow_Delete(WindowEntry* window) {
     MsgWinData* data;
     s32 i;
 
+#ifdef TARGET_PC
+    portSpeechClosed(window);
+#endif
     if (window->userdata) {
         data = window->userdata->address;
         for (i = 0; i < data->charCount; i++) {
@@ -1868,6 +1888,9 @@ void PORT_HOOKABLE(msgWindow_Add)(const char* msg, s32 id) {
 #endif
     ((MsgWinData*)smart->address)->lastUpdateTime = gp->renderTime;
     msgAnalize(smart, msg);
+#ifdef TARGET_PC
+    portSpeechAppend(window, msg);
+#endif
     WIN_STATE(window) = 1;
     window->flags |= WINDOW_FLAG_PRINTING;
 }
@@ -1967,6 +1990,10 @@ static void msgWindow_Main(WindowEntry* window) {
     s32 target;
     u32 trg;
 
+#ifdef TARGET_PC
+    /* the page shown now, read once and logged; who says it (an NPC's name, not a battle unit's) */
+    portSpeechPage(window, data->page, (data->flags & MSG_WIN_FLAG_BATTLE_UNIT) ? NULL : data->speakerName);
+#endif
     if (data->talkTimer) {
         if (!data->talkPoseSet) {
             if (data->flags & MSG_WIN_FLAG_BATTLE_UNIT) {

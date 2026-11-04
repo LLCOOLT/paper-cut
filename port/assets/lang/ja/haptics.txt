@@ -1,0 +1,7 @@
+# Controller haptics (port/settings/features/haptics.cpp): an English line, then its translation, then a blank line.
+
+Controller haptics
+コントローラーの触覚フィードバック
+
+A short pulse as an action command's or a guard's timing window opens; on a DualSense the triggers also resist while a command holds R. Follows Rumble and Rumble strength.
+アクションコマンドやガードのタイミングの受付が始まる瞬間に短く振動します。DualSenseでは、Rを押し続けるコマンドの間トリガーにも抵抗が加わります。「振動」と「振動の強さ」に従います。

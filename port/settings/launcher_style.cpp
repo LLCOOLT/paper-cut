@@ -18,6 +18,8 @@ extern const unsigned int portFontBold_size;
 extern const unsigned char portFontMedium[];
 extern const unsigned int portFontMedium_size;
 }
+// tr.cpp: the system's Japanese and the language packs' letters merged into the font just added
+void portTrMergeFonts(const unsigned char* data, unsigned int size, float px);
 
 LauncherFonts gLauncherFonts;
 
@@ -122,9 +124,13 @@ extern "C" void portUiInit(void) {
   if (ImGui::GetIO().Fonts->Fonts.empty()) {
     ImGui::GetIO().Fonts->AddFontDefault();
   }
+  // each with the system's Japanese and the language packs' letters merged in (port/settings/tr.cpp)
   gLauncherFonts.title = addFont(portFontBold, portFontBold_size, 42.f * load);
+  portTrMergeFonts(portFontBold, portFontBold_size, 42.f * load);
   gLauncherFonts.heading = addFont(portFontBold, portFontBold_size, 23.f * load);
+  portTrMergeFonts(portFontBold, portFontBold_size, 23.f * load);
   gLauncherFonts.body = addFont(portFontMedium, portFontMedium_size, 18.f * load);
+  portTrMergeFonts(portFontMedium, portFontMedium_size, 18.f * load);
 }
 
 void launcherStyleInit(float scale) {
@@ -135,8 +141,11 @@ void launcherStyleInit(float scale) {
   portUiInit();
   sSavedFontScale = ImGui::GetIO().FontGlobalScale;
   ImGui::GetIO().FontGlobalScale = scale / (kFontLoadScale * launcherFontsScale());
-  ImGuiStyle& s = ImGui::GetStyle();
-  sSaved = s;
+  sSaved = ImGui::GetStyle();
+  launcherPaperStyle(ImGui::GetStyle(), scale);
+}
+
+void launcherPaperStyle(ImGuiStyle& s, float scale) {
   s.WindowRounding = 14.f * scale;
   s.ChildRounding = 14.f * scale;
   s.FrameRounding = 10.f * scale;
@@ -179,6 +188,13 @@ void launcherStyleInit(float scale) {
   c[ImGuiCol_ScrollbarBg] = rgba(kPaper, 0.f);
   c[ImGuiCol_ScrollbarGrab] = rgba(IM_COL32(214, 186, 146, 255));
   c[ImGuiCol_NavCursor] = rgba(kInk); // the controller's focus: dark, to show on the cream cards and the red buttons
+  // tables (Bindings, the mixer, practice's lists...): a light tan header and lines on the cream card,
+  // not Dear ImGui's dark defaults under brown text
+  c[ImGuiCol_TableHeaderBg] = rgba(IM_COL32(232, 210, 172, 255));
+  c[ImGuiCol_TableBorderStrong] = rgba(IM_COL32(190, 156, 116, 255));
+  c[ImGuiCol_TableBorderLight] = rgba(IM_COL32(222, 196, 160, 255));
+  c[ImGuiCol_TableRowBg] = rgba(kPaper, 0.f);
+  c[ImGuiCol_TableRowBgAlt] = rgba(IM_COL32(236, 214, 176, 255), 0.35f);
 }
 
 bool launcherRedButton(const char* label, ImVec2 size) {

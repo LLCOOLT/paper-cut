@@ -25,5 +25,10 @@ void portRelInit(const char* exePath);
 BOOL portRelLink(const char* areaName);
 /* Stand-in for calling _epilog and OSUnlink. */
 void portRelUnlink(void);
+/* The linked REL's _epilog now, still linked (its code and data stay until the
+ * next map change unlinks it, which then doesn't run it again): a save loaded
+ * in the field (portContinueGame) puts another game in gp, and the area's
+ * _epilog must run in the game it belongs to, not write into that one. */
+void portRelEpilogNow(void);
 
 #endif

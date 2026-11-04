@@ -1,0 +1,22 @@
+# controller-light: see tools/port/gen_lang.py
+
+Controller light
+Lumière de la manette
+
+A controller's coloured light (DualSense, DualShock 4 and others with one): each player's colour, Mario's HP (green to red, pulsing when he's nearly out), or a colour of your own.
+La lumière colorée d'une manette (DualSense, DualShock 4 et les autres qui en ont une) : la couleur de chaque joueur, les PC de Mario (du vert au rouge, qui clignote quand il n'en a presque plus) ou une couleur de votre choix.
+
+The controller's own
+Celle de la manette
+
+Each player's colour
+Couleur de chaque joueur
+
+Mario's HP
+PC de Mario
+
+Custom colour
+Couleur personnalisée
+
+The light's colour
+Couleur de la lumière

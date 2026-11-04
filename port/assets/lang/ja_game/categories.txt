@@ -1,0 +1,19 @@
+# The settings' categories (port/settings/settings_ui.cpp's kTabs, the Start menu's Settings tab) in Japanese for the JP release's own font: an English line, then its translation, then a blank line.
+
+Enhancements
+パワーアップ
+
+Graphics
+グラフィック
+
+Interface
+がめんひょうじ
+
+Language
+ことば
+
+General
+ぜんぱん
+
+Multiplayer
+ふたりであそぶ

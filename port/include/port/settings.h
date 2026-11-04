@@ -33,7 +33,7 @@ typedef struct PortSettings {
     /* Audio */
     int volume;         /* 0-100 */
     int muteUnfocused;  /* silent while another window has the focus */
-    /* System */
+    /* General (and Controls, Saves) */
     int pauseUnfocused; /* the game waits while another window has the focus
                            ($TTYD_PAUSE_UNFOCUSED) */
     int backgroundInput; /* controllers still work while unfocused */
@@ -75,6 +75,9 @@ void portPADControlMotor(unsigned int chan, unsigned int cmd);
 PortSettings* portSettings(void);
 /* Reads settings.txt (main_aurora.c, once Aurora is up) and applies it. */
 void portSettingsLoad(const char* userPath);
+/* A Steam Deck (Linux; $TTYD_STEAM_DECK=0/1 for tests): its first start, with
+ * no settings.txt yet, takes settings for its screen (settings_aurora.c). */
+int portSteamDeck(void);
 /* One setting's value before the settings are loaded (Aurora's start-up options,
  * e.g. msaa): settings.txt in userPath (NULL: Aurora's default folder), then on
  * iOS the Settings app; def when neither has it. */
@@ -86,6 +89,18 @@ void portSettingsApply(void);
  * the app goes to the background or quits (wait: until done). */
 void portSettingsCloudTick(void);
 void portSettingsCloudPush(int wait);
+/* The desktop window (port/settings/features/window.cpp): before
+ * aurora_initialize, its saved size and place and full screen into Aurora's
+ * config (left as they are when there are none); after the settings are
+ * loaded, checked against the screens and maximized as it was (keepPlace:
+ * $TTYD_WINDOW_POS placed it). */
+void portWindowConfig(const char* userPath, int* x, int* y, unsigned* w, unsigned* h, int* fullscreen);
+void portWindowRestore(int keepPlace);
+/* The display mode (the fullscreen setting: 0 a window, 1 borderless, 2 full
+ * screen, exclusive) put in place; F11 and Alt+Enter: the window, or the
+ * full-screen kind last chosen. */
+void portWindowSetDisplayMode(int mode);
+void portWindowToggleFullscreen(void);
 /* The window gained or lost the focus. */
 void portSettingsFocus(int focused);
 /* Aurora's user folder (the memory cards, settings.txt). */
@@ -107,6 +122,18 @@ int* portSettingsFind(const char* key);
 /* For settings.txt (settings_aurora.c): a key=value line that isn't a fixed
  * field, and the declared and read ones to write back. */
 int portSettingsExtraSet(const char* key, const char* value);
+void portSettingsExtraForce(const char* key, const char* value);
+/* Settings presets (port/settings/features/presets.cpp): a setting's default
+ * (a field's before settings.txt, a declared one's def), 0 when unknown; and a
+ * setting changed by key, kept (saved with the next portSettingsSave). */
+int portSettingsExtraDefault(const char* key, int* value);
+int portSettingsDefault(const char* key, int* value);
+int portSettingsSetKey(const char* key, const char* value);
+/* Online co-op's guest (port/settings/online_lobby.cpp): a setting's value for
+ * this run (a field or a declared one), and settings.txt left alone while
+ * hold is set. */
+void portSettingsSetForRun(const char* key, const char* value);
+void portSettingsHoldSaves(int hold);
 int portSettingsExtraCount(void);
 const char* portSettingsExtraAt(int i, int* value);
 
@@ -127,16 +154,44 @@ void portSettingsAddChoice(const char* tab, const char* label, const char* note,
                            const char* const* choices, int count, const char* keywords);
 void portSettingsAddSlider(const char* tab, const char* label, const char* note, unsigned flags, const char* key,
                            int min, int max, const char* format, const char* keywords);
+/* A feature's control (by its key) shown only while shown() says so (a
+ * device's second display, say); call after adding it. */
+void portSettingsSetShown(const char* key, int (*shown)(void));
+/* A choice's names changed (by its key): the menu language's, as language
+ * packs are read (port/settings/tr.cpp). names stays valid; the value is kept
+ * below count by the caller. */
+void portSettingsSetChoices(const char* key, const char* const* names, int count);
 /* A section the feature draws itself with Dear ImGui (buttons, lists): draw is
  * called where the item goes (inGame: the page is open over a running game,
  * not the launcher's); search finds it by label, note and keywords. */
 void portSettingsAddSection(const char* tab, const char* label, const char* note, unsigned flags,
                             void (*draw)(int inGame), const char* keywords);
+/* The sections added (their tabs and labels, in order), for the Start menu's
+ * Settings tab (port/include/port/pause_forms.h); returns how many, up to max. */
+int portSettingsSections(const char** tabs, const char** labels, int max);
 /* A feature's drawing over the game (a timer, a toast) each presented frame,
  * with Dear ImGui's foreground draw list (pageOpen: the settings page is
  * open), and its SDL events (a key of its own) before the page's: event
  * returns nonzero for one it used. Either may be NULL. Call as AddSection. */
 void portSettingsAddOverlay(void (*draw)(int pageOpen), int (*event)(const void* sdlEvent));
+
+/* The page's plain controls (an on/off, a choice of names or a range of
+ * numbers), for the pause menu's Settings tab (port/src/common/
+ * pause_settings_aurora.c): the built-in ones and every feature's, those shown
+ * now, in the page's order of tabs. value: its int (a field or a declared
+ * setting); step: a slider's step. Fills up to max, returns how many. */
+typedef struct PortSettingsControl {
+    const char* tab;
+    const char* label;
+    const char* note;
+    unsigned flags;
+    int kind; /* 0 on/off, 1 a choice of choices[count], 2 a slider min..max */
+    int* value;
+    const char* const* choices;
+    int count, min, max, step;
+    const char* format; /* a slider's printf format, e.g. "%d%%" */
+} PortSettingsControl;
+int portSettingsControls(PortSettingsControl* out, int max);
 
 #ifdef __cplusplus
 }

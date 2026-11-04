@@ -1,8 +1,10 @@
-// Gameplay+ and accessibility (port/include/port/gameplus.h): the settings
+// Enhancements and accessibility (port/include/port/gameplus.h): the settings
 // page's controls for the options, all off by default, and the quick-swap
 // control's keyboard key and controller button.
+#include "port/bindings.h"
 #include "port/gameplus.h"
 #include "port/settings.h"
+#include "port/tr.h"
 #include <SDL3/SDL.h>
 #include <imgui.h>
 
@@ -10,29 +12,15 @@ namespace {
 
 constexpr unsigned kPlay = PORT_SETTING_CHANGES_PLAY;
 constexpr unsigned kSaves = PORT_SETTING_CHANGES_PLAY | PORT_SETTING_CHANGES_SAVES;
-constexpr const char* kTab = "Gameplay+";
+constexpr const char* kTab = "Enhancements";
 
-// Q on the keyboard, or a controller's left stick pressed in
-int quickSwapHeld() {
-  const bool* keys = SDL_GetKeyboardState(nullptr);
-  if (keys != nullptr && keys[SDL_SCANCODE_Q]) {
-    return 1;
-  }
-  int count = 0;
-  SDL_JoystickID* ids = SDL_GetGamepads(&count);
-  int held = 0;
-  for (int i = 0; i < count && !held; i++) {
-    SDL_Gamepad* pad = SDL_GetGamepadFromID(ids[i]);
-    held = pad != nullptr && SDL_GetGamepadButton(pad, SDL_GAMEPAD_BUTTON_LEFT_STICK);
-  }
-  SDL_free(ids);
-  return held;
-}
+// Q on the keyboard, or a controller's left stick pressed in (Controls > Bindings)
+int quickSwapHeld() { return portBindingsHeld(PORT_BIND_QUICK_SWAP); }
 
 // Fast travel: a button per hub, those not reached yet greyed out
 void fastTravel(int) {
   if (!portGameplus("fast_travel")) {
-    ImGui::TextDisabled("Turn on Fast travel above to use it.");
+    ImGui::TextDisabled("%s", portTr("Turn on Fast travel above to use it."));
     return;
   }
   for (int i = 0; i < portFastTravelCount(); i++) {
@@ -46,25 +34,25 @@ void fastTravel(int) {
       ImGui::SameLine();
     }
   }
-  ImGui::TextDisabled("In the field only; the trip starts once this page is closed.");
+  ImGui::TextDisabled("%s", portTr("In the field only; the trip starts once this page is closed."));
 }
 
 // Journal: the file's progress, from its flags
 void journal(int) {
   PortJournal j;
   if (!portJournal(&j)) {
-    ImGui::TextDisabled("Shown while a game is in the field or a battle.");
+    ImGui::TextDisabled("%s", portTr("Shown while a game is in the field or a battle."));
     return;
   }
-  ImGui::Text("Crystal Stars: %d of 7", j.crystalStars);
-  ImGui::Text("Trouble Center: %d of %d solved", j.troubles, j.troublesTotal);
+  ImGui::Text(portTr("Crystal Stars: %d of 7"), j.crystalStars);
+  ImGui::Text(portTr("Trouble Center: %d of %d solved"), j.troubles, j.troublesTotal);
   if (j.troublesOpen[0] != '\0') {
-    ImGui::TextWrapped("Not solved yet: #%s", j.troublesOpen);
+    ImGui::TextWrapped(portTr("Not solved yet: #%s"), j.troublesOpen);
   }
-  ImGui::Text("Badges found: %d of %d", j.badges, j.badgesTotal);
-  ImGui::Text("Recipes cooked: %d of %d", j.recipes, j.recipesTotal);
-  ImGui::Text("Tattle Log: %d of %d", j.tattles, j.tattlesTotal);
-  ImGui::Text("Star Pieces held: %d    Shine Sprites held: %d", j.starPieces, j.shineSprites);
+  ImGui::Text(portTr("Badges found: %d of %d"), j.badges, j.badgesTotal);
+  ImGui::Text(portTr("Recipes cooked: %d of %d"), j.recipes, j.recipesTotal);
+  ImGui::Text(portTr("Tattle Log: %d of %d"), j.tattles, j.tattlesTotal);
+  ImGui::Text(portTr("Star Pieces held: %d    Shine Sprites held: %d"), j.starPieces, j.shineSprites);
 }
 
 struct Register {
@@ -93,11 +81,12 @@ struct Register {
                           "heal_all_partners", "heal item partner mushroom hp");
     portSettingsAddToggle(kTab, "Skip repeated scenes",
                           "Scenes already seen on this file go faster or straight to their end: the Crystal Star "
-                          "fanfare and the pedestal's map reveal after the first star, Zess T.'s cooking, the Glitz "
-                          "Pit's match openings and victory scenes, and the train and blimp ticket hand-overs.",
+                          "fanfare and map reveal, Zess T.'s cooking, the Glitz Pit's match scenes, the train and "
+                          "blimp tickets.",
                           0, "skip_scenes", "skip cutscene scene crystal star cooking zess");
     portSettingsAddToggle(kTab, "Fast travel",
-                          "Travel to a hub from this page: Rogueport, then one more per Crystal Star.", kPlay,
+                          "Travel to a hub from the settings page (All settings, Travel to): Rogueport, then one "
+                          "more per Crystal Star.", kPlay,
                           "fast_travel", "fast travel warp hub teleport");
     portSettingsAddToggle(kTab, "Faster battle menus", "The battle command wheel opens and turns twice as fast.",
                           0, "fast_battle_menus", "battle menu speed wheel fast");
@@ -125,15 +114,14 @@ struct Register {
                           "A lost match costs no rank, and a match's bonus condition stays at the top of the screen.",
                           kPlay, "glitz_pit_kind", "glitz pit rank lose condition rule");
     portSettingsAddToggle(kTab, "Play as Luigi",
-                          "Luigi in Mario's place, with Mario's moves: in the field, in battle, in the menus and "
-                          "the credits, with his own footsteps, and the text calls him Luigi. The other Luigi, in "
-                          "Rogueport's inn and his scenes, stays out of sight. Saves are not changed.",
+                          "Luigi in Mario's place, with Mario's moves, in the field, battles, menus and credits; "
+                          "the text calls him Luigi and the other Luigi stays out of sight. Saves are not changed.",
                           0, "playable_luigi", "luigi play as character mario green brother");
     static const char* const kNewGamePlus[] = {"Off", "Level and stats", "Level, stats and badges",
                                                "Level, stats, badges and Tattle Log"};
     portSettingsAddChoice(kTab, "New Game+",
-                          "A new file starts with what you choose here, taken from the file below. Choose before "
-                          "starting the new file.",
+                          "A new file starts with what you choose here, taken from the file New Game+ from file "
+                          "names. Choose before starting the new file.",
                           kPlay, "new_game_plus", kNewGamePlus, 4, "new game plus ng+ carry level badges tattle");
     portSettingsAddSlider(kTab, "New Game+ from file", nullptr, kPlay, "new_game_plus_from", 1, 4, "File %d",
                           "new game plus file");
@@ -143,12 +131,13 @@ struct Register {
 
     static const char* const kDifficulty[] = {"Original", "Easy (enemy HP 75 %, attacks 50 %)",
                                               "Hard (enemy HP 150 %, attacks 150 %)", "Custom"};
-    portSettingsAddChoice("Accessibility", "Difficulty",
-                          "Enemies' HP and the damage their attacks do. Custom uses the two sliders below.", kPlay,
+    portSettingsAddChoice("Gameplay", "Difficulty",
+                          "Enemies' HP and the damage their attacks do. Custom uses Enemy HP (custom) and Enemy "
+                          "attack (custom).", kPlay,
                           "difficulty", kDifficulty, 4, "difficulty easy hard enemy hp attack damage");
-    portSettingsAddSlider("Accessibility", "Enemy HP (custom)", nullptr, kPlay, "difficulty_enemy_hp", 25, 300,
+    portSettingsAddSlider("Gameplay", "Enemy HP (custom)", nullptr, kPlay, "difficulty_enemy_hp", 25, 300,
                           "%d %%", "difficulty enemy hp custom");
-    portSettingsAddSlider("Accessibility", "Enemy attack (custom)", nullptr, kPlay, "difficulty_enemy_attack", 25,
+    portSettingsAddSlider("Gameplay", "Enemy attack (custom)", nullptr, kPlay, "difficulty_enemy_attack", 25,
                           300, "%d %%", "difficulty enemy attack damage custom");
     static const char* const kAssist[] = {"Off", "Wider windows", "Automatic"};
     portSettingsAddChoice("Accessibility", "Action commands: attacks",

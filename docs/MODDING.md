@@ -15,6 +15,8 @@ The settings page (F1) has a **Mods** tab: each mod with a switch, arrows to cha
 
 This covers files, textures, messages, game data, code (including porting GameCube mods), scripts and [Archipelago](#archipelago).
 
+Translations of Paper Cut's own menus are [language packs](LANGUAGE_PACKS.md): a `lang/` folder in a folder of the mods folder.
+
 ## A mod
 
 A mod is a folder, or a `.ttydmod` (or `.zip`) file, holding:
@@ -56,9 +58,11 @@ A zip may hold everything in one top-level folder (zipping the mod's folder does
 
 ### overlay/: disc files
 
-A file at `overlay/<path>` replaces the disc's file at `/<path>`, or adds it if the disc has none. Paths are the disc's, case doesn't matter: `overlay/msg/US/global.txt` replaces the US English messages, `overlay/a/...` models, `overlay/rel/...` an area's data, `overlay/sound/...` sounds and music.
+A file at `overlay/<path>` replaces the disc's file at `/<path>`, or adds it if the disc has none. Paths are the disc's, case doesn't matter: `overlay/msg/US/global.txt` replaces the US English messages, `overlay/a/...` models, `overlay/rel/...` an area's data, `overlay/sound/...` sounds and music. For music there is also a simpler way that needs no mod: a WAV file (or OGG, MP3, FLAC where the build has their decoders) in the `music` folder in the user folder, named after the track it replaces (`music/tracks.txt` lists the names; Settings > Audio > Your music). It wins over an overlay's stream for that track.
 
 The files are in the disc's own formats, as the game reads them. A file the game has already loaded stays until it loads it again: a map's files on the next room, a battle's on the next battle, `global.txt` at the next start.
+
+**Characters** (a model and its animations, `a/<name>`, and its drawings, `a/<texture>-`) have their own tools: the Mods tab's **Export characters** and `tools/port/character_tool.py` take one out of the game into PNGs, JSON and a Blender scene, and build the edited files back into such a mod. See [CHARACTERS.md](CHARACTERS.md).
 
 ### textures/: texture packs
 
@@ -285,6 +289,8 @@ The Practice Codes as ported locally: the menu, its pages and the displays work;
 - **The seed** (the `.apttyd` file the apworld generates for a slot) is applied at the game's start, as the patcher applies it to a disc: each location's item goes into the script, table or shop that gives it (721 places; local CI checks the 629 in RELs against the disc), shop prices and sell prices, the seed's options in the low memory the mod reads, and its files (`enemies.bin`, `bosses.bin`, `tracker.bin`, `msg/US/desc.txt`) over the disc's. The mod's own messages (`msg/US/mod.txt`) come from the installed `ttyd.apworld`: `$TTYD_APWORLD_FILE`, beside the seed, or Archipelago's `custom_worlds` folder.
 - **The server.** A built-in client (WebSocket: `ws://` everywhere, `wss://` on Windows) connects to a room: items the slot receives go to the game, a location's check goes out when its flag is set, the goal and DeathLink both ways, and the current room for trackers.
 - **The game side** is the TTYD AP mod, ported as a code mod ([above](#porting-a-gamecube-mod)): it gives the received items, shows who sent them and runs the seed's options. It's GPL, so it isn't part of this repository; build it from its source with the porting tools and add it to the mods folder.
+
+For a single-player game without a server, the built-in randomizer makes a seed itself and applies it through the same machinery ([RANDOMIZER.md](RANDOMIZER.md)).
 
 The settings page's **Archipelago** tab chooses the seed (it applies at the next start) and holds the server's address, the slot (the seed's player by default) and the password, with Connect and Disconnect; they're kept in `archipelago.json` in the user folder, and the game connects at start once there's a server. `$TTYD_AP_SEED` and `$TTYD_AP_SERVER` override them for a run.
 

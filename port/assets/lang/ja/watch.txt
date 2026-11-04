@@ -1,0 +1,64 @@
+# watch: see tools/port/gen_lang.py (watching an online game, one-click join, reconnecting)
+
+Watch
+観戦
+
+Watch: see the two players' game as it goes, a few seconds behind, without playing.
+観戦：プレイせずに、二人のプレイヤーのゲームを数秒遅れで見られます。
+
+Join room %s?
+ルーム %s に参加しますか？
+
+Join room %s from the clipboard?
+クリップボードのルーム %s に参加しますか？
+
+Not now
+今はしない
+
+Copy invite link
+招待リンクをコピー
+
+Connected: waiting for the players to start.
+接続しました。プレイヤーの開始を待っています。
+
+You'll watch from the start of their game.
+二人のゲームを最初から観戦します。
+
+%d watching
+%d 人が観戦中
+
+Reconnecting...
+再接続しています...
+
+Waiting for the players...
+プレイヤーを待っています...
+
+Reconnected: the online game goes on.
+再接続しました。オンラインゲームを続けます。
+
+Watching: this game drifted from the players' (it plays on).
+観戦：このゲームがプレイヤーのゲームとずれました（そのまま続きます）。
+
+Watching ended: the players' game is over.
+観戦終了：プレイヤーのゲームが終わりました。
+
+Watching ended: the players started again.
+観戦終了：プレイヤーが始め直しました。
+
+The connection was lost and couldn't be made again.
+接続が切れ、再接続できませんでした。
+
+The connection to the host was lost.
+ホストとの接続が切れました。
+
+The players' game stopped coming.
+プレイヤーのゲームが届かなくなりました。
+
+That game already has two players.
+そのゲームにはもう二人のプレイヤーがいます。
+
+As many are watching that game as can.
+そのゲームはもう観戦できる人数がいっぱいです。
+
+The connection was lost for too long.
+接続が長く切れすぎました。

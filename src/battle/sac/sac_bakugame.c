@@ -1,5 +1,8 @@
 // Star-power special move Clock Out (sac_bakugame): the button game that stops the enemies' turns.
 #include <dolphin/pad.h>
+#ifdef TARGET_PC
+#include "port/assist.h"
+#endif
 #include "eff/eff_starstone.h"
 #include "pc_call.h"
 #include "icon_ids.h"
@@ -633,6 +636,9 @@ state_end:
     }
 
     if (w->s7c >= 10 && w->s7c <= 30) {
+#ifdef TARGET_PC
+        portMashWanted(PAD_BUTTON_A | PAD_BUTTON_B | PAD_BUTTON_X); /* hold instead of mashing (port/include/port/assist.h) */
+#endif
         if (keyGetButtonTrg(0) & (PAD_BUTTON_A | PAD_BUTTON_B | PAD_BUTTON_X)) {
             w->vel = 1.5f;
         }

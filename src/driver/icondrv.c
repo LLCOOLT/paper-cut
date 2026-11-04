@@ -19,6 +19,7 @@
 
 #include <stdio.h>
 #ifdef TARGET_PC
+#include "port/luigi.h" // portIconTexOverride: Luigi's own faces in Mario's icons
 #include "port/bedecode.h"
 #endif
 #include "icon_ids.h"
@@ -160,6 +161,76 @@ inline IconEntry* iconGetEntry(const char* name) {
     }
     return NULL;
 }
+
+#ifdef TARGET_PC
+/* Button prompts (port/settings/features/button_prompts.cpp): the textures
+ * of a GameCube button's icon (0 A, 1 B, 2 X, 3 Y, 4 Z, 5 L, 6 R, 7 Start),
+ * released or pressed, as battle_ac.c's BattleACGetButtonIcon pairs them and
+ * the message text's <icon PAD_A> & co. show them: up to max frames' texel
+ * pointers and sizes; 0 until icon.tpl and icon.bin are in. An animated icon
+ * (ANM_PAD_A) shows these same textures, so it follows. */
+int portButtonIconTextures(int button, int pressed, const void** data, int* width, int* height, int max) {
+    static const u16 kIcons[8][2] = {
+        {ICON_064, ICON_065}, {ICON_066, ICON_067}, {ICON_068, ICON_069}, {ICON_06A, ICON_06B},
+        {ICON_082, ICON_083}, {ICON_07E, ICON_07F}, {ICON_080, ICON_081}, {ICON_084, ICON_085},
+    };
+    IconBinData* bin;
+    int i, n;
+    if (button < 0 || button >= 8 || icon_tpl == NULL || !icon_tpl_ok || !icon_bin_ok) {
+        return 0;
+    }
+    bin = iconGetBinData(kIcons[button][pressed ? 1 : 0]);
+    if (bin == NULL) {
+        return 0;
+    }
+    n = bin->numIcons > 0 ? bin->numIcons : 1;
+    n = n < max ? n : max;
+    for (i = 0; i < n; i++) {
+        TEXDescriptor* d = TEXGet(icon_tpl, bin->frames[i].tplId);
+        if (d == NULL || d->textureHeader == NULL) {
+            return i;
+        }
+        data[i] = d->textureHeader->data;
+        width[i] = d->textureHeader->width;
+        height[i] = d->textureHeader->height;
+    }
+    return n;
+}
+
+#include "port/cosmetics.h"
+/* Cosmetics (port/include/port/cosmetics.h): the status bar's icons'
+ * textures (statuswindow.c's alwaysDt and partysDt: 0 the red HP banner,
+ * also the partner's, 1 the orange FP one, 2 the blue Star Power one, 3
+ * Mario's face, 4 Goombella's) */
+int portHudIconTextures(int part, PortTexInfo* out, int max) {
+    static const u16 kIcons[5] = {ICON_1D0, ICON_1D1, ICON_1D2, ICON_1A3, ICON_1A4};
+    IconBinData* bin;
+    int i, n;
+    if (part < 0 || part >= 5 || icon_tpl == NULL || !icon_tpl_ok || !icon_bin_ok) {
+        return 0;
+    }
+    bin = iconGetBinData(kIcons[part]);
+    if (bin == NULL) {
+        return 0;
+    }
+    n = bin->numIcons > 0 ? bin->numIcons : 1;
+    n = n < max ? n : max;
+    for (i = 0; i < n; i++) {
+        TEXDescriptor* d = TEXGet(icon_tpl, bin->frames[i].tplId);
+        if (d == NULL || d->textureHeader == NULL) {
+            return i;
+        }
+        out[i].data = d->textureHeader->data;
+        out[i].width = d->textureHeader->width;
+        out[i].height = d->textureHeader->height;
+        out[i].format = (int)d->textureHeader->format;
+        out[i].tlut = d->CLUTHeader != NULL ? d->CLUTHeader->data : NULL;
+        out[i].tlutFormat = d->CLUTHeader != NULL ? (int)d->CLUTHeader->format : 0;
+        out[i].tlutCount = d->CLUTHeader != NULL ? d->CLUTHeader->numEntries : 0;
+    }
+    return n;
+}
+#endif
 
 /** DVD read callback for icon.tpl: unpacks the texture palette, closes the file and marks the textures ready. */
 static void _callback_tpl(s32 error, DVDFileInfo* info) {
@@ -612,6 +683,9 @@ void iconGetTexObj(GXTexObj* texObj, s16 iconId) {
     ICON_ANIM_TPL_S(data, tplId);
     TEXGetGXTexObjFromPalette(icon_tpl, texObj, tplId);
     GXInitTexObjLOD(texObj, GX_LINEAR, GX_LINEAR, 0.0f, 0.0f, 0.0f, GX_FALSE, GX_FALSE, GX_ANISO_1);
+#ifdef TARGET_PC
+    portIconTexOverride((u16)iconId, texObj); // Play as Luigi: his own face in Mario's (port/include/port/luigi.h)
+#endif
 }
 
 /**
@@ -669,6 +743,9 @@ static void iconGX(Mtx mtx, IconEntry* entry) {
         } else {
             TEXGetGXTexObjFromPalette(icon_tpl, &texObj, tplId);
             GXInitTexObjLOD(&texObj, GX_LINEAR, GX_LINEAR, 0.0f, 0.0f, 0.0f, GX_FALSE, GX_FALSE, GX_ANISO_1);
+#ifdef TARGET_PC
+            portIconTexOverride(entry->iconId, &texObj); // Play as Luigi: his own face in Mario's (port/include/port/luigi.h)
+#endif
         }
     }
     GXLoadTexObj(&texObj, GX_TEXMAP0);

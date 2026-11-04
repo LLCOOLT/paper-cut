@@ -1,8 +1,11 @@
-/* Gameplay+ and accessibility options (port/include/port/gameplus.h): every
+/* Enhancements and accessibility options (port/include/port/gameplus.h): every
  * one off by default, so the game plays as the original until a setting says
  * otherwise; any build takes $TTYD_SET_<key> for a run. */
 #include <stdio.h>
 #include "port/gameplus.h"
+#include "port/online.h"
+#include "port/replay.h"
+#include "port/companion.h"
 #include "port/settings.h"
 #include "mario/mario_pouch.h"
 #include "battle/battle_mario.h"
@@ -24,7 +27,7 @@
 #include "evt/evt_cmd.h"
 #include <dolphin/pad.h>
 
-/* every Gameplay+ setting: key, default, range */
+/* every Enhancements setting: key, default, range */
 static const struct {
     const char* key;
     int def, min, max;
@@ -79,10 +82,15 @@ int portGameplus(const char* key) {
 
 int (*gPortQuickSwapHeld)(void);
 int gPortQuickSwapTouch;
-static int sSwapPressed, sSwapHeld;
+static int sSwapPressed, sSwapHeld, sSwapCoop;
 
 void portQuickSwapPress(void) {
     sSwapPressed = 1;
+}
+
+void portQuickSwapPressCoop(void) {
+    sSwapPressed = 1;
+    sSwapCoop = 1;
 }
 
 int portQuickSwapPoll(int current) {
@@ -91,19 +99,32 @@ int portQuickSwapPoll(int current) {
     static const int kOrder[] = {1, 2, 5, 4, 6, 3, 7};
     const int held = (gPortQuickSwapHeld != NULL && gPortQuickSwapHeld()) || gPortQuickSwapTouch;
     PouchData* pouch;
-    int i, at = -1;
+    int i, at = -1, coop;
     if (held && !sSwapHeld) {
         sSwapPressed = 1;
     }
     sSwapHeld = held;
+    pouch = pouchGetPtr();
+    /* a partner tapped on the second screen (companion_pc.c): that one */
+    at = portCompanionPartner();
+    if (at > 0 && at <= 7) {
+        const u16 flags = pouch->partyData[at].flags;
+        if (at != current && (flags & POUCH_PARTY_FLAG_JOINED) && !(flags & POUCH_PARTY_FLAG_AWAY)) {
+            printf("[companion] partner %d to %d\n", current, at);
+            fflush(stdout);
+            return at;
+        }
+    }
+    at = -1;
     if (!sSwapPressed) {
         return -1;
     }
     sSwapPressed = 0;
-    if (!portGameplus("quick_swap")) {
+    coop = sSwapCoop; /* the second player's: whether the Enhancements tab's quick-swap is on or not */
+    sSwapCoop = 0;
+    if (!portGameplus("quick_swap") && !coop) {
         return -1;
     }
-    pouch = pouchGetPtr();
     for (i = 0; i < 7; i++) {
         if (kOrder[i] == current) {
             at = i;
@@ -394,7 +415,7 @@ int portFastTravelUnlocked(int i) {
 }
 
 void portFastTravelRequest(int i) {
-    if (portFastTravelUnlocked(i)) {
+    if (portFastTravelUnlocked(i) && !portOnlineActive() && !portReplayActive()) { /* online, replays: one game alone can't travel */
         sTravelTo = i;
     }
 }

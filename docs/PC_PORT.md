@@ -167,14 +167,31 @@ The disc ID is checked against the build's version.
 
 The settings page (Aurora; `port/settings/settings_ui.cpp`): F1, a
 controller's Back/Select or a three-finger tap opens it; Escape or B closes
-it; F11 toggles fullscreen. Video: frame rate (60, 120, 144, 240, the
+it; F11 or Alt+Enter toggles fullscreen. The desktop window
+(`port/settings/features/window.cpp`) opens where it was left, at its size,
+maximized or full screen as it was, and never larger than the screen or off
+every screen; the first time, it fills about 80% of the screen at the
+picture's shape. Display > Window sizes it to 1x-4x the 640x480 picture or
+to the picture's shape, centres it, and can keep it above other windows.
+Video: frame rate (60, 120, 144, 240, the
 display's; docs/FRAME_INTERPOLATION.md), VSync, fullscreen, widescreen 16:9,
-internal resolution, a frame rate counter. Audio: volume, mute in the
-background. Gameplay (`port/include/port/gameplay.h`): fast-forward speed
+internal resolution, a frame rate counter. Audio
+(`port/settings/features/volume.cpp`): a mixer of master, music, sound
+effects and ambience, each with a mute button and an audio taper (50% sounds
+about half as loud), mute in the background, and the volume keys (F9
+quieter, F10 louder, Shift for steps of 1, F3 mute) with a bar on the
+screen. Gameplay (`port/include/port/gameplay.h`): fast-forward speed
 (2-8x) and hold or toggle, text speed, Mario's run speed, skip the intro (the
 logos at 16x, then the title without the story demo). Controls: rumble and
 its strength, and the on-screen controls' haptics, opacity, size and
-auto-run. System: pause and controllers in the background, the save folder.
+auto-run, and controllers in the background. General: pause in the background.
+Saves: the save folder.
+
+Controllers (Controls tab; `port/settings/features/controllers.cpp`):
+- **Mappings:** the community SDL_GameControllerDB is loaded at start (`port/assets/controllers`, about 2,300 models), then the player's own `<user>/gamecontrollerdb.txt`. Most controllers SDL doesn't know work as gamepads.
+- **The list:** each connected controller with its kind and battery. Each can be made player 1-4 (Aurora's ports), tested live (buttons, sticks, triggers), and given dead zones and trigger click points per player, saved with Aurora's mappings.
+- **Remapping:** Bindings (Controls tab; `port/settings/features/bindings.cpp`) remaps any player, not only the first.
+- **Set up a controller:** a controller SDL can't map (an old USB pad, an arcade stick) is set up by pressing each button when asked. The mapping takes effect at once and is added to `<user>/gamecontrollerdb.txt`.
 
 Save states (`port/src/aurora/savestate_aurora.c`; every Aurora build with
 static RELs: Windows, macOS, iOS, Linux, Android): F5 saves slot 1, F8 loads it, the settings page's
@@ -202,7 +219,7 @@ linked; not yet run on a device.
 
 Fast-forward (`port/src/aurora/speed_aurora.c`): Tab, a controller's right
 stick click or the on-screen `>>`. The game clock runs at the chosen multiple
-of real time (`portClockSetSpeed`, `os_time_aurora.c`) and frame pacing,
+of real time (`portClockSetSpeedPct`, `os_time_aurora.c`) and frame pacing,
 which waits on that clock, follows; vsync is off meanwhile and no in-between
 frames are drawn. `TTYD_FF_TEST` holds it from the start (tests).
 Changes apply at once and are written to `settings.txt` in the user folder
@@ -245,6 +262,44 @@ Environment switches (all optional):
 | `TTYD_GXARRAY_TRACE=1/2` | Aurora: vertex-array uploads without a size / every changed array |
 | `TTYD_NO_MODS` | Aurora: no mods and no loose textures ([MODDING.md](MODDING.md)) |
 | `TTYD_DUMP_TEXTURES` | Aurora: save every texture without a replacement, under its texture-pack name |
+| `TTYD_FINGERPRINT=<file>`, `TTYD_FINGERPRINT_PARTS` | Aurora: each frame's game-state fingerprint in the file (same input, same file); with PARTS, each part's hash too ([ONLINE_RELAY.md](ONLINE_RELAY.md)) |
+| `TTYD_TR_DUMP=<file>` | Aurora: every English text the menus ask to translate, once each, added to the file ([LANGUAGE_PACKS.md](LANGUAGE_PACKS.md)) |
+| `TTYD_PAUSE_ROW=<label>` | Aurora: the Start menu's Settings tab opens with that row chosen |
+| `TTYD_SETTINGS_HINT=1/0` | Aurora: show or skip the first room's settings hint (skipped by default with `TTYD_MAP`) |
+| `TTYD_STEAM_DECK=1/0` | Aurora: take this computer for a Steam Deck or not (its first-start settings) |
+| `TTYD_ART=off/lazy` | Aurora: the art recipes not run (the drawn art stands in), or each image made when first asked for |
+| `TTYD_P2_PRESS=<keys>@<frame>[+N][,...]` | scripted controller 2: those keys held from that frame for N frames (`port/src/common/input_pc.c`) |
+| `TTYD_HAPTICS_PRESS=<k>/last`, `TTYD_HAPTICS_LOG` | Aurora: A pressed k frames into each window a haptic cue announces; log each cue, pulse and judgement |
+| `TTYD_BATTLE_SPEED_LOG` | log Faster battles' speed changes and guard windows |
+| `TTYD_CAPTION_LOG` | Aurora: log each caption for a sound as it comes |
+| `TTYD_SPEECH_LOG=<file>` | Aurora: what Read text aloud would say, a line each in the file, no voice |
+| `TTYD_DALTON_LOG` | Aurora: log the colour-blind filter's matrix when it changes |
+| `TTYD_REWIND_LOG`, `TTYD_REWIND_NO_WATCH` | Aurora: log Rewind's states and steps; compare every memory page, not only the written ones |
+| `TTYD_BINDINGS_TEST=1` | Aurora: a virtual controller pressed through the Bindings checks, each step's input printed (`bindings.cpp`) |
+| `TTYD_ONE_HANDED_TEST=left/right` | Aurora: a virtual controller with that one-handed preset, each button's result printed |
+| `TTYD_MESSAGE_LOG_TEST=<pages>`, `TTYD_MESSAGE_LOG_PRINT` | Aurora: the message log opened once it holds that many pages; each page printed as it is logged |
+| `TTYD_PHOTO_TEST=<frame>:<yaw>:<pitch>:<zoom>`, `TTYD_PHOTO_MENU_SHOT` | Aurora: photo mode at that frame and view, two pictures; a picture once it is opened from the Start menu |
+| `TTYD_PRESET_TEST=<file>`, `TTYD_PRESET_APPLY=<code>` | Aurora: this setup's preset code written to the file; a code put in place at start |
+| `TTYD_COMPANION_WINDOW=1`, `TTYD_COMPANION_MENU=0`, `TTYD_COMPANION_TAB=<n>` | Aurora: the second screen in a desktop window; its Start menu picture off; the tab it opens at ([SECOND_SCREEN_MENU.md](SECOND_SCREEN_MENU.md)) |
+| `TTYD_COMPANION_DUMP`, `TTYD_COMPANION_AUDIT` | Aurora: the second screen's snapshot and input in the log; its menu frames checked as `TTYD_INTERP_AUDIT` checks in-between frames |
+| `TTYD_DISCORD_IPC=<pipe>` | Aurora: Discord status talks to that pipe or socket instead of Discord's ([DISCORD_STATUS.md](DISCORD_STATUS.md)) |
+| `TTYD_ONLINE_HOST=<port>`, `TTYD_ONLINE_JOIN=<host>:<port>`, `TTYD_ONLINE_LAN` | Aurora: host or join an online game by address at start; LAN: the host listens on the network, not only this computer ([ONLINE_RELAY.md](ONLINE_RELAY.md)) |
+| `TTYD_ONLINE_HOST_ROOM=<code>`, `TTYD_ONLINE_JOIN_ROOM=<code>`, `TTYD_ONLINE_RELAY=<url>` | Aurora: host or join a room on the relay at start; another relay than the built-in one |
+| `TTYD_ONLINE_WATCH=<host>:<port>`, `TTYD_ONLINE_WATCH_ROOM=<code>` | Aurora: watch an online game at start |
+| `TTYD_ONLINE_CONTINUE`, `TTYD_ONLINE_RECOVERIES=<n>` | Aurora: host from the last save ("Continue where you left off"); the out-of-step recoveries so far (set by the game as it starts again) |
+| `TTYD_ONLINE_NO_ICE`, `TTYD_ONLINE_NO_RECONNECT` | Aurora: online games only through the relay (no direct path); no reconnecting after a drop |
+| `TTYD_ONLINE_DROP_AT=<frame>`, `TTYD_ONLINE_DESYNC_AT=<frame>` | Aurora: the connection dropped at that frame, once; the guest's random numbers nudged at that frame, once |
+| `TTYD_ONLINE_INVITE=<link>` | Aurora: an invite link handed from the launcher to another release's build (set by the game) |
+| `TTYD_REPLAY_RECORD`, `TTYD_REPLAY_NAME=<name>`, `TTYD_REPLAY_PLAY=<file>` | Aurora: record a replay from the start, its name; play one (set by the game as it restarts; [REPLAYS.md](REPLAYS.md)) |
+| `TTYD_REPLAY_OUT=<dir>`, `TTYD_REPLAY_FRAMES=<n>`, `TTYD_REPLAY_EXIT` | Aurora: recordings saved there; a recording saved after n frames; exit once it is saved or the playback is over |
+| `TTYD_SAVE_SEND`, `TTYD_SAVE_SEND_QR=<file>`, `TTYD_SAVE_SEND_BIND=<address>` | Aurora: send saves from the first frame; the QR code saved as a picture; listen on that address ([SAVE_TRANSFER.md](SAVE_TRANSFER.md)) |
+| `TTYD_SAVE_RECEIVE=<url>`, `TTYD_SAVE_RECEIVE_FILES=<1234>` | Aurora: receive saves from that address at start, taking those files |
+| `TTYD_UPDATE_API=<url>`, `TTYD_UPDATE_INSTALL` | Aurora: a test release on this computer instead of GitHub's; press Install without the page ([UPDATES.md](UPDATES.md)) |
+| `TTYD_UPDATE_APPLIED=<version>` | Aurora: the version just installed, shown on the General tab (set by the update as it starts the new version) |
+| `TTYD_URL_SCHEME_TEST` | Aurora on Windows: register `papercut-test://` links instead of `papercut://` (the registration's own test) |
+| `TTYD_LOAD_SAVE_SLOT=0-3` | with `TTYD_LOAD_SAVE`: that save as this file slot (the launcher's Continue) |
+| `TTYD_LAUNCHER_TAB=<tab>` | Aurora: the launcher opens on that tab (Online, for an invite link) |
+| `TTYD_UPDATE_REPO=<owner>/<repo>` | Aurora: check another repository's releases for updates |
 
 Crashes and `abort()` print a symbolized backtrace.
 
@@ -273,6 +328,60 @@ full width instead (full-screen layers). Full-screen quads drawn at the
 backdrop) use `WIDE_X(x)` (`include/wide_x.h`) to reach the widened edges.
 Offscreen render targets are not scaled. Interior rooms show black past their
 walls at the sides (the room ends there), as in other widescreen hacks.
+
+### Display options
+
+The Display tab (`port/settings/features/display.cpp`, applied once a frame
+by `port/src/aurora/display_aurora.c` through Aurora's display patches) holds
+the aspect ratio and widest picture, HUD size, anisotropic filtering, texture
+detail, supersampling, the picture filter, variable refresh rate, the
+performance overlay and HDR output. All are off, or the game's own, by
+default.
+
+HDR output (settings `hdr`, `hdr_paper_white`, `hdr_boost`; Aurora patch
+0014, `include/aurora/hdr.h`) presents the picture on an HDR display. The
+game draws in SDR as before, and so do its screen copies, the settings page
+and the other overlays. Only the window's swapchain changes: it becomes a 16-bit
+float surface in extended linear sRGB, and one last pass converts the
+finished SDR frame into it. That pass undoes the sRGB curve, scales white to
+the chosen paper white (80 to 400 nits, 200 by default), optionally raises
+whatever is close to white by up to 50% more (Highlight boost, 0 by default,
+judged by luminance so saturated colours are left alone), and never goes past
+the peak the display reports. On Windows the float surface is scRGB, where
+1.0 is 80 nits, so 200 nits is 2.5. On Macs and iPads the window's Metal
+layer is switched to extended dynamic range (EDR) in extended linear sRGB.
+EDR brightness is relative to the system's own white, which Aurora takes to
+be 100 nits, so there the paper white is a multiple of the system's white
+rather than an exact brightness. HDR10 (PQ, Rec. 2020) is not used: the
+only way to ask the bundled Dawn for a colour space (`SurfaceColorManagement`,
+given when the surface is made) is unsupported in some of its backends, and a
+surface that fails to be made would break SDR too.
+
+The option is greyed out, with a note saying why, unless SDL reports HDR on
+for the window's display (`SDL_PROP_WINDOW_HDR_ENABLED_BOOLEAN`) and the
+graphics backend can present it. That means Direct3D 12 or 11 on Windows, or
+Metal on macOS 10.12+ and iOS 16+, and the surface must offer an
+RGBA16Float format. Dawn's Vulkan and OpenGL swapchains only accept
+sRGB-nonlinear surfaces, so Linux, Android, and Windows when forced onto
+Vulkan stay SDR. If the window moves to a display without HDR, or HDR is
+turned off in the system, SDL sends `SDL_EVENT_WINDOW_HDR_STATE_CHANGED`
+and Aurora reconfigures the swapchain back to SDR. A switch left on from an
+HDR session can still be turned off while greyed out. With the option off,
+nothing changes: the swapchain, its format and the present passes are
+exactly as before, and no HDR pipeline or texture is created.
+
+Untested: the HDR path has not been run on any machine yet. It was written
+without a full build, so it has only been syntax-checked against the bundled
+Dawn and SDL3 headers, and its WGSL shader has not been compiled. Still to be
+checked on hardware: that Dawn's Direct3D 12 and 11 swapchains list
+RGBA16Float and that Windows shows them as scRGB; that Dawn leaves the
+CAMetalLayer's EDR settings alone after configuring it (Aurora sets them
+again after every configure to be safe); the brightness on a real HDR10
+monitor, a MacBook Pro XDR screen and an HDR iPad; and how the reported
+peak (`SDL_PROP_WINDOW_HDR_HEADROOM_FLOAT` times the SDR white level) is
+used on each system. Android HDR (an scRGB dataspace on the native window)
+would need Dawn's Vulkan swapchain to accept that colour space, so it is
+not done.
 
 ## iOS
 
@@ -356,7 +465,7 @@ can be copied to and from Dolphin; Aurora's pipeline caches are in
   writes `crash_report.txt` in the user folder: the build (version, image
   UUID and load address, for symbolizing the offsets), the sequence and map,
   and the stack. At the next start it becomes `last_crash.txt` and the game
-  offers to copy it (also Settings > System).
+  offers to copy it (also Settings > General).
 - **RELs are linked in** (`TTYD_RELS_STATIC` is forced: an app may only run
   code signed into its bundle). Mach-O has no grouped sections, so each REL's
   data and bss go to `__DATA,__rd_<area>`/`__rb_<area>`, bounded by the
@@ -1000,6 +1109,9 @@ layout equals the disc layout), `portSwap16/32/64Run`.
   invalid either way stays invalid. Metadata has the same layout (u16 options and checksums swap).
 - Unknown pads in `GlobalWork`/`PouchData` are copied as bytes: a multi-byte value hidden in a pad
   would keep GameCube byte order on PC (none is read through a cast today except LotteryWork).
+- GSW bytes are copied as bytes too, so the 8-byte play-time stamps scripts keep in them
+  (`evt_sub_save_playtime`/`evt_sub_load_progresstime`, the Trouble Center mail check, the Yoshi
+  egg in `stg3_12_init__4`/tou_10) are written and read big-endian on PC, as on the GameCube.
 
 ### Audio: MusyX PC hardware layer
 - `libs/musyx` is built with `MUSY_TARGET_PC` (object library `musyx_pc`, linked into `ttyd`).

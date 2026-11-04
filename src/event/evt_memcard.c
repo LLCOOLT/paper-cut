@@ -18,7 +18,7 @@
  */
 #ifdef TARGET_PC
 #include "port/gameplus.h"
-/* Gameplay+ (port/include/port/gameplus.h): args[0] = 1 when a Save Block saves without asking */
+/* Enhancements (port/include/port/gameplus.h): args[0] = 1 when a Save Block saves without asking */
 static USER_FUNC(port_save_no_prompt) {
     evtSetValue(event, event->args[0], portGameplus("save_no_prompt"));
     return EVT_RETURN_DONE;
@@ -810,7 +810,7 @@ EVT_BEGIN(evt_memcard_save)
         GOTO(1)
     END_IF
 #ifdef TARGET_PC
-    // Gameplay+: a Save Block saves to the file played without the question
+    // Enhancements: a Save Block saves to the file played without the question
     IF_INT_EQUAL(LW(10), 0)
         CALL(port_save_no_prompt, LW(12))
         IF_INT_EQUAL(LW(12), 1)

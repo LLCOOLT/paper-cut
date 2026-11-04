@@ -28,6 +28,9 @@
 #include "musyx/seq.h"
 #include "musyx/stream.h"
 #include "musyx/synth.h"
+#if MUSY_TARGET == MUSY_TARGET_PC
+#include "musyx/hw_pcmixer.h"
+#endif
 
 #include <stdarg.h>
 
@@ -477,6 +480,13 @@ void sndOutputMode(SND_OUTPUTMODE output) {
   u32 oldFlags;
   MUSY_ASSERT_MSG(sndActive != FALSE, "Sound system is not initialized.");
   oldFlags = synthFlags;
+#if MUSY_TARGET == MUSY_TARGET_PC
+  /* 5.1 and 7.1 speakers (hw_pc.c): the game's stereo is MusyX's surround, its
+     rear part sent to the rear speakers (hw_pcmixer.c), not matrixed */
+  if (output == SND_OUTPUTMODE_STEREO && salPcSpeakers() > 2) {
+    output = SND_OUTPUTMODE_SURROUND;
+  }
+#endif
 
   switch (output) {
   case SND_OUTPUTMODE_MONO:

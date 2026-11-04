@@ -84,6 +84,13 @@ void portFastClockFrame(void);
  * draws between the game's (interp_aurora.c), whose clock reads would move it */
 s64 portFastClockGet(void);
 void portFastClockSet(s64 t);
+/* Aurora: the game runs the same from the same input ($TTYD_FAST, or online
+ * co-op's lockstep: the virtual clock, disc reads within their frame, audio
+ * rendered per frame); portLockstepBegin starts it with the host's clock
+ * (os_time_aurora.c) */
+int portLockstep(void);
+void portLockstepBegin(s64 base);
+s64 portRealTime(void);
 /* Stop the game (the caller holds the main thread), its clock and audio, e.g.
  * while the window is minimized or the app is in the background; nests
  * (port/src/common/pause_pc.c). Game time does not advance while paused. */
@@ -93,9 +100,13 @@ BOOL portIsPaused(void);
 /* the backend's game clock (os_pc.c / os_time_aurora.c) and audio (hw_pc.c) */
 void portClockPause(void);
 void portClockResume(void);
-/* Aurora: the game clock at speed times real time (fast-forward); 1 normally. */
-void portClockSetSpeed(int speed);
+/* Aurora: the game clock at speed times real time (fast-forward); 1 normally,
+ * rounded up. The Pct pair: in percent (faster battles' 1.5x is 150). */
 int portClockSpeed(void);
+void portClockSetSpeedPct(int percent);
+int portClockSpeedPct(void);
+/* Aurora: and at percent % of that (slow speed, 50-100); 100 normally. */
+void portClockSetPercent(int percent);
 void salPcSetPaused(BOOL paused);
 /* hw_pc.c: no audio callback runs while locked (save states). */
 void salPcLock(void);

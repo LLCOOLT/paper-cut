@@ -14,6 +14,23 @@ extern int gPortAcCueLead;  /* game frames until the ideal press (<= 0: now) */
 /* a battle unit's jump starts (btlevtcmd_JumpPosition, MarioJumpPosition) */
 void portAcCueJump(void* unit);
 
+/* Controller haptics (Controls > Controller haptics, port/settings/features/
+ * haptics.cpp): a pulse on the player's controller as a timed press's window
+ * opens, read from the same prediction as the cue. Output only: nothing the
+ * game reads changes. */
+enum { PORT_HAPTICS_ATTACK = 1, PORT_HAPTICS_GUARD = 2 };
+/* the pulse (Aurora sets it; NULL headless): local controller port, kind */
+extern void (*gPortHapticsCue)(int port, int kind);
+/* the triggers the running action command holds, per local port: bit 0 L, bit 1 R */
+extern int gPortHapticsTriggers[4];
+extern unsigned gPortHapticsTriggersAt; /* the retrace they were last set (stale: out of battle) */
+/* tests: frames from this frame to the judgement (-1 none), and its window */
+extern int gPortAcCueToJudge;
+extern int gPortAcCueWindow;
+/* second_player_pc.c: the player (0 or 1) who presses for unit's attack
+ * (guard 0) or its guard (guard 1) */
+int portSecondPlayerPlayerFor(void* unit, int guard);
+
 #ifdef __cplusplus
 }
 #endif

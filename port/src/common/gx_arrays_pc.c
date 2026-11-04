@@ -1,4 +1,7 @@
 /* Vertex-array registry; see port/include/port/gx_arrays.h. */
+/* what the decoders know, kept by the second screen's menu's frames (port/companion_section.h) */
+#define PORT_SECTION_KEEP
+#include "port/companion_section.h"
 #include "port/gx_arrays.h"
 
 #include <stddef.h>

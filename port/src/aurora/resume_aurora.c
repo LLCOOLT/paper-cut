@@ -1,4 +1,4 @@
-/* Quick resume (System > Quick resume, on by default): the game as it is,
+/* Quick resume (General > Quick resume, on by default): the game as it is,
  * kept as a save of its own that the launcher's Continue loads, so a phone
  * app closed in the background (iOS ends them as it likes) or a window shut
  * without saving loses nothing.
@@ -20,6 +20,8 @@
 #include "mario/mariost.h"
 #include "port/cardsave_pc.h"
 #include "port/platform.h"
+#include "port/online.h"
+#include "port/replay.h"
 #include "port/resume.h"
 #include "port/settings.h"
 
@@ -56,8 +58,8 @@ void portResumeFlush(void) {
     FILE* f;
     static uint8_t header[GCI_HEADER];
     static uint8_t meta[PORT_CARD_META_SIZE];
-    if (!sHave || !sDirty) {
-        return;
+    if (!sHave || !sDirty || portReplayPlaying()) {
+        return; /* (a replay's playback: someone else's game, not the player's to come back to) */
     }
     /* a GCI as the save warps read one (warp_pc.c): the game ID first, then
      * the card's file header (unused there), then the slot */
@@ -82,15 +84,44 @@ void portResumeFlush(void) {
     sLastWrite = sFrame;
 }
 
-/* once a retrace (vi_aurora.c) */
+int portResumeHave(void) {
+    return on() && sHave && !portReplayPlaying();
+}
+
+/* online co-op's recovery (online.cpp): the last clean save written out now,
+ * with the setting off too (the session starts again from it); 0 when none */
+int portResumeWriteNow(void) {
+    if (!sHave) {
+        return 0;
+    }
+    sDirty = 1;
+    portResumeFlush();
+    return 1;
+}
+
+/* online co-op's recovery (online_pc.c): the last clean save in memory, its
+ * card slot, or NULL */
+const void* portResumeImage(int* slot, size_t* size) {
+    if (!sHave) {
+        return NULL;
+    }
+    *slot = sSlot;
+    *size = sizeof(sImage);
+    return sImage;
+}
+
+/* once a retrace (vi_aurora.c); online, in memory even with the setting off
+ * (the host's is the games' way back when they go out of step) */
 void portResumeFrame(void) {
     sFrame++;
-    if (sFrame % SNAP_EVERY != 0 || !on()) {
+    if (sFrame % SNAP_EVERY != 0 || (!on() && !portOnlineActive() && !portReplayActive())) {
+        /* (online and in replays, made with the setting off too: the snapshot reads the
+           clock, so both games, or the recording and its playback, make the same ones) */
         return;
     }
     if (safe() && portCardSnapshot(sImage)) {
         sHave = 1;
-        sDirty = 1;
+        sDirty = on() && !portReplayPlaying();
         sSlot = gp->saveSlot;
     }
     if (sDirty && sFrame - sLastWrite >= WRITE_EVERY) {

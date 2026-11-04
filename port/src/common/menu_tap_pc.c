@@ -11,6 +11,8 @@
  * shown from 34 below its top to 16 above its bottom (its scissor box). */
 #include "manager/winmgr.h"
 #include "port/menu_tap.h"
+#include "port/replay.h"
+#include "port/companion_menu.h"
 #include "wide_x.h"
 #include <dolphin/pad.h>
 #include <dolphin/vi.h>
@@ -25,6 +27,9 @@ static volatile u32 sOpenFrame; /* last retrace a list was up */
 static u32 sTapFrame;
 
 void portMenuTap(float nx, float ny) {
+    if (portReplayActive()) {
+        return; /* replays: a row chosen outside the pad's input wouldn't be in the recording */
+    }
     sTapX = nx;
     sTapY = ny;
     sTapFrame = VIGetRetraceCount();
@@ -32,7 +37,7 @@ void portMenuTap(float nx, float ny) {
 }
 
 void portMenuHover(float nx, float ny) {
-    if (sTapPending == 1) {
+    if (sTapPending == 1 || portReplayActive()) {
         return; /* a click waiting comes first */
     }
     sTapX = nx;
@@ -50,6 +55,9 @@ int portMenuPoint(float* gx, float* gy) {
     static int sKind;
     static float sX, sY;
     const u32 now = VIGetRetraceCount();
+    if (gPortCompanionMenu) { /* the second screen's menu: its own taps, the game's left alone */
+        return portCompanionMenuPoint(gx, gy);
+    }
     sOpenFrame = now;
     if (sPointFrame != now) {
         sPointFrame = now;

@@ -5327,8 +5327,15 @@ USER_FUNC(btlevtcmd_AudienceDeclareAcrobatResult) {
     BtlUnit_GetPos(unit, &pos.x, &pos.y, &pos.z);
     if (good) {
         EffectEntry* eff;
+#ifdef TARGET_PC
+        /* PC port: the weapon's fields by name (GameCube bytes 0x18 and 0x1B, which on PC are its
+         * baseAccuracy and superguardsAllowed: a Stylish counted 100 times over) */
+        aud[0] = (u8)((BattleWeapon*)res)->stylishCommandMultiplier;
+        aud[3] = (u8)((BattleWeapon*)res)->reserved_1B;
+#else
         aud[0] = res[0x18];
         aud[3] = res[0x1B];
+#endif
         BattleAudience_Case_AcrobatGood();
         pos.y += BtlUnit_GetHeight(unit);
         pos.x += BtlUnit_GetWidth(unit) / 2;
@@ -6429,6 +6436,21 @@ USER_FUNC(btlevtcmd_GetItemRecoverParam) {
     b = args[2];
     c = args[3];
     item = (u8*)&itemDataTable[id];
+#ifdef TARGET_PC
+    /* PC port: the fields by name. The GameCube bytes 0x1D-0x1F are hp_restored, fp_restored and sp_restored
+     * only with 4-byte pointers; on PC they fell inside menu_description: on Windows every item
+     * healed 127 HP (a byte of the string's address) and gave no FP or Star Power */
+    (void)item;
+    if (a != EVTDAT_POINTER_MAX) {
+        evtSetValue(event, a, itemDataTable[id].hp_restored);
+    }
+    if (b != EVTDAT_POINTER_MAX) {
+        evtSetValue(event, b, itemDataTable[id].fp_restored);
+    }
+    if (c != EVTDAT_POINTER_MAX) {
+        evtSetValue(event, c, itemDataTable[id].sp_restored);
+    }
+#else
     if (a != EVTDAT_POINTER_MAX) {
         evtSetValue(event, a, item[0x1D]);
     }
@@ -6438,6 +6460,7 @@ USER_FUNC(btlevtcmd_GetItemRecoverParam) {
     if (c != EVTDAT_POINTER_MAX) {
         evtSetValue(event, c, item[0x1F]);
     }
+#endif
     return EVT_RETURN_DONE;
 }
 

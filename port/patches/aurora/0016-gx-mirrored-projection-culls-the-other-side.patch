@@ -1,0 +1,33 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Wed, 4 Nov 2026 12:00:00 +0000
+Subject: [PATCH] gx: a mirrored projection (scale x below 0) culls the other
+ side
+
+---
+diff --git a/lib/gx/gx.cpp b/lib/gx/gx.cpp
+index a619fa1..dcb85d9 100644
+--- a/lib/gx/gx.cpp
++++ b/lib/gx/gx.cpp
+@@ -482,8 +482,17 @@ void populate_pipeline_config(PipelineConfig& config, GXPrimitive primitive, GXV
+   if (g_gxState.alphaCompare) {
+     config.shaderConfig.alphaCompare = g_gxState.alphaCompare;
+   }
+-  const auto cullMode = config.shaderConfig.lineMode == 0 ? g_gxState.cullMode : GX_CULL_NONE;
++  auto cullMode = config.shaderConfig.lineMode == 0 ? g_gxState.cullMode : GX_CULL_NONE;
+   const auto [polygonOffset, polygonOffsetScale] = polygon_offset_for_cull_mode(cullMode);
++  if (g_gxState.projScaleX < 0.f && !gfx::is_offscreen()) {
++    // GXSetProjectionScaleX below 0 mirrors the picture, which turns every triangle's winding around: the
++    // side the game culls is the other one
++    if (cullMode == GX_CULL_FRONT) {
++      cullMode = GX_CULL_BACK;
++    } else if (cullMode == GX_CULL_BACK) {
++      cullMode = GX_CULL_FRONT;
++    }
++  }
+   const bool hasAlpha = efb_has_alpha(g_gxState.pixelFmt);
+   const bool alphaUpdate = hasAlpha && g_gxState.alphaUpdate;
+   const auto blendFactor = [hasAlpha](GXBlendFactor factor) {
+-- 
+2.47.0
+

@@ -1,0 +1,13 @@
+# watch: see tools/port/gen_lang.py (the game's font: kana and a few kanji)
+
+Reconnected: the online game goes on.
+さいせつぞく　しました：オンラインを　つづけます
+
+Watching: this game drifted from the players' (it plays on).
+かんせん：プレイヤーの　ゲームと　ずれました（つづきます）
+
+Watching ended: the players' game is over.
+かんせん　しゅうりょう：プレイヤーの　ゲームが　おわりました
+
+Watching ended: the players started again.
+かんせん　しゅうりょう：プレイヤーが　はじめなおしました

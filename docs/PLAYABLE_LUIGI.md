@@ -1,6 +1,6 @@
 # Playable Luigi (Paper Cut 0.2, M6)
 
-A Gameplay+ option, "Play as Luigi" (setting key `playable_luigi`, off by
+An Enhancements option, "Play as Luigi" (setting key `playable_luigi`, off by
 default), that shows Luigi in Mario's place. It changes how Mario looks, sounds
 and is called, not what he can do: Luigi uses Mario's moves, stats and
 collision. Saves are not changed.
@@ -105,6 +105,46 @@ state in CMakeLists.txt), and it checks each frame that its pose is still the
 `c_luigi` it loaded (a battle's end frees battle poses; a map change, a save
 state or a reset can free or replace the field one), loading it again if not.
 
+## His faces
+
+The game has no icons of Luigi, so while the option is on its icons of
+Mario's head show Luigi's, made at the start ("Preparing graphics") from
+Luigi's own head on the player's disc: `c_luigi`'s head cards (the face with
+its long chin, eyes, nose, moustache, ear, hair, cap and its L) put together
+as his field pose stands them, then framed as Mario's face is in each icon.
+Nothing from the disc is in the repo: the recipe
+(`port/assets/luigi/art/recipes/luigi_icons.recipe`; the format is
+`port/assets/luigi/art/RECIPES.md`) is run by the art recipe runner
+(`port/src/common/art_recipe.c`, its game side
+`port/src/aurora/art_recipes_aurora.c`), and the images are kept in the user
+folder (`art_cache/<game id>/`), so later starts read them back. Where one
+can't be made, a drawn stand-in (`port/assets/luigi/art/icons/luigi/drawn/`,
+drawn by `port/assets/luigi/art/tools/luigi_icons.py`) shows instead.
+
+- `ICON_1A3`, the face by the HP on the status bar (field and battle, and
+  Sweet Treat's targets), with Mario's HP heart and sticker border;
+- `ICON_19E`, the head on the pause menu's Mario page and the item menu's
+  "use on" list;
+- `ICON_1A1`, the gold coin on the Mario page's level row and the status
+  tables;
+- level-up's BP panel (`battle_common.tpl` image 51, 38 on the JP disc, the
+  same data): Mario's panel with Luigi's head on its coin;
+- the pause menu's first tab (`win.tpl` image 1): "Luigi" (ルイージ on the JP
+  disc and in the EU disc's Japanese) in place of "Mario", the tab's own board
+  with each letter cut from the game's lettering on its other tabs and bars
+  (`port/assets/luigi/art/recipes/luigi_tabs.recipe`; its drawn stand-ins by
+  `luigi_icons.py` and `luigi_tab_jp.py` in `port/assets/luigi/art/tools/`).
+
+The three icons go through `portIconTexOverride`
+(`port/src/aurora/luigi_faces_aurora.c`, called from `iconGetTexObj` and
+`iconGX` in `src/driver/icondrv.c`). The panel and the tab are texture
+replacements in a map-scoped texture set (`portModsAddMapTexture`,
+`port/mods/mods.cpp`): while the option is on, every map is named with a
+`#luigi` flag to the sets (`mod_game_aurora.c`, each frame), and the set
+`*#luigi` (any map, with the flag) holds them. With the option off nothing
+changes: Mario's own icons, panel and tab. The C runner and the Python tool (`port/assets/luigi/art/tools/recipes.py`)
+make the same texels (`tests/port/art_recipe_check.py`, on all three discs).
+
 ## Text, menus, the brothers swapped, sounds
 
 All of it only while the option is on; `port/src/common/luigi_pc.c` again.
@@ -188,7 +228,7 @@ All of it only while the option is on; `port/src/common/luigi_pc.c` again.
 
 - Every Mario animation has a Luigi version (docs/LUIGI_ANIMS.md) but
   `M_H_12`, the thrown hammer, which looks the same on Mario's model.
-- Known issue (not re-checked with this work): in battle Luigi draws grey
+- Known issue: in battle Luigi draws grey
   (darker than in the field). His model's vertex colours are white like
   Mario's, so it is in how battle draws him: the light or material state
   copied from Mario's battle part, or the battle pool (type 1) he is loaded
@@ -213,8 +253,6 @@ All of it only while the option is on; `port/src/common/luigi_pc.c` again.
   itself switches at once. The swapped NPCs, the text and the sounds switch
   at once too; a message already open keeps its text.
 - Peach, Bowser and 8-bit Mario are unchanged.
-- The menu tabs' titles ("Mario" on the pause menu's first tab) are textures,
-  not text, and still say Mario.
 - Seen in game (US): the Mario page draws Luigi with "Luigi" by the level and
   "Luigi's Abilities" in its help, and the Gear page's help says "Luigi's
   items". The prologue in Mario's house (`TTYD_MAP=aaa_00,prologue`): Mario

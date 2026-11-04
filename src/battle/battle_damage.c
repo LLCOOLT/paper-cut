@@ -2,6 +2,7 @@
 #include "port_hook.h"
 #ifdef TARGET_PC
 #include "port/gameplus.h"
+#include "port/captions.h"
 #endif
 #include "eff/eff_nice.h"
 #include "pc_call.h"
@@ -656,9 +657,10 @@ skip:
         }
     }
 #ifdef TARGET_PC
-    // Gameplay+ difficulty: an enemy's attack on Mario or a partner
+    // the Gameplay tab's difficulty: an enemy's attack on Mario or a partner
     if (attacker != NULL && attacker->alliance == 1 && target->alliance == 0) {
         damage = portEnemyDamage(damage);
+        damage = portChallengeDamage(damage, target->currentHp); // challenge: one-hit KO
     }
 #endif
     return damage;
@@ -1200,7 +1202,7 @@ static s32 BattleSetStatusDamage(u32* result, BattleUnit* unit, BattleUnitPart* 
     }
     if (irand(100) >= chance) {
 #ifdef TARGET_PC
-        portPopupResisted(unit, type); // Gameplay+ battle pop-ups
+        portPopupResisted(unit, type); // Enhancements battle pop-ups
 #endif
         return 0;
     }
@@ -1758,10 +1760,13 @@ s32 PORT_HOOKABLE(BattleCheckDamage)(BattleUnit* attacker, BattleUnit* target, B
         eff = effNiceEntry(2, hit.x - 60.0f, 45.0f + hit.y, hit.z - 10.0f);
         ((NiceEffectWork*)eff->userdata)->overallScale = 0.75f;
 #ifdef TARGET_PC
-        portPopupGuard(target, part, 1); // Gameplay+ battle pop-ups
+        portPopupGuard(target, part, 1); // Enhancements battle pop-ups
 #endif
         flags |= DAMAGE_FLAG_SUPERGUARDED;
         psndSFXOn("SFX_SYSTEM_GREAT1");
+#ifdef TARGET_PC
+        portCaptionSfx("PORT_SUPERGUARD", NULL); /* the sound is the action commands' Great: port/include/port/captions.h */
+#endif
         BattleAudience_Case_GuardGood();
         attacker->superguardedCount++;
         target->superguardCountTaken = attacker->superguardedCount;
@@ -1816,10 +1821,13 @@ s32 PORT_HOOKABLE(BattleCheckDamage)(BattleUnit* attacker, BattleUnit* target, B
                 eff = effNiceEntry(0, hit2.x - 60.0f, 45.0f + hit2.y, hit2.z - 10.0f);
                 ((NiceEffectWork*)eff->userdata)->overallScale = 0.75f;
 #ifdef TARGET_PC
-                portPopupGuard(target, part, 0); // Gameplay+ battle pop-ups
+                portPopupGuard(target, part, 0); // Enhancements battle pop-ups
 #endif
                 flags |= DAMAGE_FLAG_GUARDED;
                 psndSFXOn("SFX_SYSTEM_NICE1");
+#ifdef TARGET_PC
+                portCaptionSfx("PORT_GUARD", NULL); /* the sound is the action commands' Nice */
+#endif
                 BattleAudience_Case_GuardGood();
             } else {
                 BattleAudience_Case_GuardBad();

@@ -1,12 +1,15 @@
 /* Widescreen: port/include/port/widescreen.h. */
 #include <stdlib.h>
+#include <string.h>
 #include <math.h>
 #include <aurora/aurora.h>
 #include <dolphin/gx.h>
 #include <dolphin/gx/GXAurora.h>
 #include <dolphin/vi.h>
 #include "driver/camdrv.h"
+#include "mario/mariost.h"
 #include "port/settings.h"
+#include "port/view.h"
 #include "port/widescreen.h"
 #if defined(__APPLE__)
 #include <TargetConditionals.h>
@@ -29,6 +32,7 @@
 static int sEnabled = -1;
 static int* sAspectChoice; /* settings: aspect_ratio (PORT_ASPECT_*) */
 static int* sAspectMax;    /* settings: aspect_max, 0 none or the widest (16:9, 21:9) */
+static int* sSceneLimits;  /* settings: aspect_scene_limits, bars where a scene's set ends */
 static float sAspect;      /* the frame's now; 0: the game's 4:3 */
 extern float gPortWidescreenEdgeScale; /* include/wide_x.h */
 
@@ -58,7 +62,49 @@ static void declare(void) {
     if (sAspectChoice == NULL) {
         sAspectChoice = portSettingsDeclare("aspect_ratio", PORT_ASPECT_SWITCH, 0, PORT_ASPECT_WINDOW);
         sAspectMax = portSettingsDeclare("aspect_max", 0, 0, 2);
+        sSceneLimits = portSettingsDeclare("aspect_scene_limits", 1, 0, 1);
     }
+}
+
+/* The scenes whose sets end before the widened frame's edges (the
+ * widescreen survey of 0.3.0): the widest aspect each shows
+ * before black void past its walls or the set's own ends comes into view,
+ * measured at its entrances. Wider than that, the frame stops there and the
+ * rest is bars (side_bars blurs them). Rooms not listed are not limited. */
+static const struct {
+    const char* map;
+    float widest;
+} kRoomLimits[] = {
+    {"eki_01", 4.0f / 3.0f}, /* Riverside Station: the wall at the right ends at 4:3 */
+    {"aji_01", 4.0f / 3.0f}, /* X-Naut Fortress: void past the left wall */
+    {"las_00", 4.0f / 3.0f}, /* Palace of Shadow: void past the left wall */
+    {"gon_00", 1.40f},       /* Hooktail Castle: void past the left wall */
+    {"kpa_00", 1.40f},       /* Bowser's castle set: its backdrop and rocks end */
+    {"dou_00", 1.47f},       /* Pirate's Grotto: void past the left wall */
+    {"rsh_00_a", 1.60f},     /* Excess Express: void past the right wall */
+    {"mri_01", 1.87f},       /* the Great Tree: void past the left at 21:9 */
+    {"nok_00", 1.90f},       /* Petalburg: the path and the hills end at 21:9 */
+    {"gor_01", 1.90f},       /* Rogueport: the sky past the last building at 21:9 */
+    {"rsh_02_a", 2.00f},     /* Excess Express: void past the right at 21:9 */
+};
+/* battles: the theatre's stage fills 16:9; past it its side walls show */
+#define BATTLE_LIMIT (16.0f / 9.0f)
+
+/* The widest aspect the scene now shows (0: no limit). */
+static float sceneLimit(void) {
+    size_t i;
+    if (gp == NULL) {
+        return 0.0f;
+    }
+    if (gp->inBattle) {
+        return BATTLE_LIMIT;
+    }
+    for (i = 0; i < sizeof(kRoomLimits) / sizeof(kRoomLimits[0]); i++) {
+        if (strcmp(gp->currentMapName, kRoomLimits[i].map) == 0) {
+            return kRoomLimits[i].widest;
+        }
+    }
+    return 0.0f;
 }
 
 /* The aspect the settings ask for now: 0 for the game's own 4:3. */
@@ -94,6 +140,12 @@ static float wanted(void) {
     }
     if (*sAspectMax > 0 && aspect > kMax[*sAspectMax]) {
         aspect = kMax[*sAspectMax]; /* the rest: bars (blurred with side_bars) */
+    }
+    if (*sSceneLimits) {
+        const float limit = sceneLimit();
+        if (limit > 0.0f && aspect > limit) {
+            aspect = limit; /* the scene ends there: bars past it, as aspect_max's */
+        }
     }
     /* a window no wider than 4:3 shows the game's own frame */
     return aspect > 4.0f / 3.0f + 0.01f ? aspect : 0.0f;
@@ -141,26 +193,56 @@ void portWidescreenSet(int on) {
     }
 }
 
-void portWidescreenCamera(int cameraId) {
-    static BOOL sScaled;
-    f32 scale;
-    if (sAspect <= 0.0f) {
-        if (sScaled) { /* switched back to 4:3 */
-            GXSetProjectionScaleX(1.0f);
-            sScaled = FALSE;
-        }
-        return;
-    }
-    sScaled = TRUE;
+/* The cameras mirror mode flips (port/include/port/view.h): the world's
+ * (the background pictures, the 3D and its effects and images, the fades,
+ * whose wipes close on Mario where he is seen), not the offscreen and shadow
+ * passes or the 2D one (the HUD, menus and message windows). */
+static int mirrored(int cameraId) {
     switch (cameraId) {
-    case CAMERA_BACKGROUND: /* full-screen background pictures */
-    case CAMERA_FADE:       /* full-screen fades */
+    case CAMERA_BACKGROUND:
+    case CAMERA_3D:
+    case CAMERA_3D_EFFECTA:
+    case CAMERA_3D_IMAGE:
+    case CAMERA_3D_EFFECTB:
+    case CAMERA_FADE:
     case CAMERA_FADE2:
-        scale = 1.0f;
-        break;
+        return portViewMirrored();
     default:
-        scale = GAME_ASPECT / sAspect;
-        break;
+        return 0;
     }
-    GXSetProjectionScaleX(scale);
+}
+
+static f32 sScaleX = 1.0f; /* GXSetProjectionScaleX's now */
+
+void portWidescreenCamera(int cameraId) {
+    f32 scale = 1.0f;
+    if (sAspect > 0.0f) {
+        switch (cameraId) {
+        case CAMERA_BACKGROUND: /* full-screen background pictures */
+        case CAMERA_FADE:       /* full-screen fades */
+        case CAMERA_FADE2:
+            break;
+        default:
+            scale = GAME_ASPECT / sAspect;
+            break;
+        }
+    }
+    if (mirrored(cameraId)) {
+        scale = -scale;
+    }
+    if (scale != 1.0f || sScaleX != 1.0f) {
+        GXSetProjectionScaleX(scale);
+        sScaleX = scale;
+    }
+}
+
+float portWidescreenScaleX(void) {
+    return sScaleX;
+}
+
+void portWidescreenCameraDone(void) {
+    if (sScaleX < 0.0f) { /* what draws after the cameras is not mirrored */
+        GXSetProjectionScaleX(-sScaleX);
+        sScaleX = -sScaleX;
+    }
 }

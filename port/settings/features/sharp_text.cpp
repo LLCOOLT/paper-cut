@@ -135,7 +135,7 @@ void apply() {
 
 const bool sAdded = [] {
   portSettingsDeclare("sharp_text", 0, 0, 1); // at start, for the launcher's Settings tab
-  portSettingsAddToggle("Display", "Sharp text",
+  portSettingsAddToggle("Graphics", "Sharp text",
                         "The game's font redrawn with crisp edges at high resolutions (the same letters).", 0,
                         "sharp_text", "font text letters crisp hd resolution");
   return true;

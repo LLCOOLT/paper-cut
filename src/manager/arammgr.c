@@ -106,11 +106,11 @@ static void aramMgrGarbage(void) {
                 wp->busy = 1;
                 ARQPostRequest(&wp->request, ARAM_OWNER, ARQ_TYPE_ARAM_TO_MRAM, ARQ_PRIORITY_LOW,
                                curr->aramAddr + offset, (AddrWord)wp->buffer, wp->bufferSize, aramCallbackGarbage);
-                while (wp->busy) {}
+                while (wp->busy) { PORT_SPIN(); }
                 wp->busy = 1;
                 ARQPostRequest(&wp->request, ARAM_OWNER, ARQ_TYPE_MRAM_TO_ARAM, ARQ_PRIORITY_LOW,
                                (AddrWord)wp->buffer, addr + offset, wp->bufferSize, aramCallbackGarbage);
-                while (wp->busy) {}
+                while (wp->busy) { PORT_SPIN(); }
             }
             __memFree(HEAP_DEFAULT, wp->buffer);
             wp->buffer = NULL;

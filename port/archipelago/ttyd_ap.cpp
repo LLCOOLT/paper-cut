@@ -11,6 +11,8 @@
 #include "ttyd_ap.h"
 #include "ttyd_ap_data.h"
 #include "ap_client.h"
+#include "rando_gen.h"
+#include "ttyd_rando.h"
 
 #include "port/json.h"
 #include "port/mods.h"
@@ -82,6 +84,7 @@ std::string sSettingsPath;
 // --- the seed ---
 struct Seed {
   bool loaded = false;
+  bool builtIn = false; // the built-in randomizer's (ttyd_rando.h), not an .apttyd
   std::string file, error;
   Json options;
   std::string seedName, playerName;
@@ -368,6 +371,49 @@ bool loadSeed(const std::string& file) {
   return true;
 }
 
+// The built-in randomizer's seed (ttyd_rando.h), when no .apttyd is chosen:
+// its placements applied as a seed's are. In the open world it is a solo
+// seed for the TTYD AP mod (every item this player's own, given where it
+// lies, so no server is needed): the options block the apworld's defaults,
+// with the shuffle's settings.
+void startBuiltIn() {
+  PortRandoRun run;
+  if (!portRandoStartRun(sUserPath.c_str(), run)) return;
+  sSeed = Seed{};
+  sSeed.loaded = true;
+  sSeed.builtIn = true;
+  sSeed.seedName = run.seed;
+  sSeed.playerName = "Mario";
+  sSeed.player = 1;
+  for (const auto& [loc, item] : run.placements) {
+    sSeed.placements[kTtydApLocations[loc].name] = {item, sSeed.player, 0};
+  }
+  if (run.openWorld) {
+    using port_json::number;
+    std::vector<port_json::JsonField> o = {
+        {"seed_name", port_json::string(run.seed)},
+        {"player_name", port_json::string(sSeed.playerName)},
+        {"player", number(sSeed.player)},
+        {"seed", number(double(ttyd_rando::seedHash(run.seed) & 0x7FFFFFFF))},
+        {"generation_time", number(double(std::time(nullptr)))},
+        {"required_chapters", port_json::array({number(1), number(2), number(3), number(4), number(5), number(6), number(7)})},
+    };
+    static const std::pair<const char*, int> kValues[] = {
+        {"palace_stars", 7}, {"goal_stars", 7}, {"goal", 1}, {"starting_partner", 1}, {"star_shuffle", 1},
+        {"dazzle_rewards", 1}, {"palace_skip", 0}, {"westside", 0}, {"intermissions", 1}, {"cutscene_skip", 1},
+        {"fast_travel", 1}, {"in_game_tracker", 0}, {"tattlesanity", 0}, {"cooksanity", 0}, {"troubles", 0},
+        {"remote_items", 0}, {"shop_purchase_limit", 1}, {"blue_pipe_toggle", 1}, {"block_visibility", 1},
+        {"experience_multiplier", 100}, {"starting_hp", 10}, {"starting_fp", 5}, {"starting_bp", 3},
+        {"starting_level", 1}, {"enemy_randomizer", 0}, {"boss_randomizer", 0}, {"rta_timer", 0},
+    };
+    for (const auto& [key, value] : kValues) o.push_back({key, number(value)});
+    sSeed.options = port_json::object(std::move(o));
+    writeOptions();
+    loadApworldFiles(sUserPath + "/");
+  }
+  place(nullptr);
+}
+
 // --- the connection ---
 struct Session {
   std::unique_ptr<port_ap::Client> client;
@@ -595,7 +641,10 @@ void portApInit(const char* userPath) {
   sSlot = settings.str("slot");
   sPassword = settings.str("password");
   if (const char* env = getenv("TTYD_AP_SEED")) seed = env;
-  if (seed.empty()) return;
+  if (seed.empty()) {
+    startBuiltIn();
+    return;
+  }
   if (!loadSeed(seed)) {
     SDL_Log("archipelago: %s", sSeed.error.c_str());
     return;
@@ -663,7 +712,7 @@ void portApSetSeed(const char* path) {
 
 const char* portApSeedPath(void) { return sNextSeed.c_str(); }
 
-const char* portApSlotName(void) { return sSeed.loaded ? sSeed.playerName.c_str() : ""; }
+const char* portApSlotName(void) { return sSeed.loaded && !sSeed.builtIn ? sSeed.playerName.c_str() : ""; }
 
 void portApDisconnect(void) {
   if (sSession.client) sSession.client->stop();
@@ -671,7 +720,9 @@ void portApDisconnect(void) {
 
 const char* portApStatus(void) {
   static std::string text;
-  if (!sSeed.loaded) {
+  if (sSeed.builtIn) {
+    text = std::string("the built-in randomizer's ") + portRandoActive() + " (no server)";
+  } else if (!sSeed.loaded) {
     text = sSeed.error.empty() ? "no seed" : sSeed.error;
   } else if (!sSession.client) {
     text = "seed " + sSeed.seedName + " (" + sSeed.playerName + "), not connected";

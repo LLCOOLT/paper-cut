@@ -132,7 +132,7 @@ BattleUnit* PORT_HOOKABLE(BtlUnit_Entry)(BattleUnitSetup* setup) {
     unit->baseMaxHp = setup->unitKindParams->maxHp;
 #ifdef TARGET_PC
     if (unit->alliance == 1) {
-        unit->baseMaxHp = portEnemyHp(unit->baseMaxHp); // Gameplay+ difficulty
+        unit->baseMaxHp = portEnemyHp(unit->baseMaxHp); // the Gameplay tab's difficulty
     }
 #endif
     unit->maxHp = unit->baseMaxHp;

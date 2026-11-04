@@ -1,0 +1,16 @@
+# speakers, the Start menu's Settings tab in the JP release's font: see tools/port/gen_lang.py
+
+Speakers
+スピーカー
+
+Surround: the game's own surround sound to the rear speakers (it was made for Dolby Pro Logic II) instead of folded into the front two. Your device's output must be set to 5.1 or 7.1 too.
+サラウンド：ゲームの　サラウンドを　うしろの　スピーカーから　ならします　デバイスも　5.1か　7.1に　してください
+
+Stereo
+ステレオ
+
+5.1 surround
+5.1サラウンド
+
+7.1 surround
+7.1サラウンド

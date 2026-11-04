@@ -164,7 +164,18 @@ if(TTYD_BACKEND STREQUAL "aurora")
         list(APPEND CMAKE_IGNORE_PREFIX_PATH /opt/homebrew /usr/local /opt/local)
         set(CMAKE_DISABLE_FIND_PACKAGE_PkgConfig ON)
     endif()
+    # Aurora's arithmetic (its matrices, GX's projections...) without fused
+    # multiply-add, as the game's (TTYD_CFLAGS): arm64 would otherwise round a
+    # partner's steps a bit apart from x86-64, and an online game between a
+    # Mac and a PC go out of step. (MSVC: Windows is x86-64 only, unfused.)
+    if(NOT MSVC)
+        add_compile_options(-ffp-contract=off)
+    endif()
     add_subdirectory(extern/aurora EXCLUDE_FROM_ALL)
+    # The matrix functions' trigonometry the game's (MSL's fdlibm,
+    # port/include/port/fdlibm_pc.h), the same on every computer for online
+    # co-op (port/patches/aurora/0019).
+    target_compile_definitions(aurora_mtx PRIVATE AURORA_MTX_GAME_TRIG=1)
     # nod built by Cargo (Android) on a Windows machine whose Rust is the
     # windows-gnu toolchain: Cargo builds the build scripts and proc macros for
     # that host, and rustc makes their raw-dylib import libraries (getrandom)
@@ -598,6 +609,18 @@ endif()
 
 # --- Platform layer replacing the Dolphin SDK ---
 file(GLOB TTYD_PORT_SOURCES CONFIGURE_DEPENDS ${CMAKE_SOURCE_DIR}/port/src/common/*.c)
+# The GameCube's maths library (MSL's fdlibm), the same results on every host
+# (online co-op's lockstep): its sources with port/include/port/fdlibm_pc.h
+# forced in front, for their fdlibm.h (port_prefix.h routes the game to it).
+file(GLOB TTYD_FDLIBM_SOURCES CONFIGURE_DEPENDS
+    "${CMAKE_SOURCE_DIR}/libs/msl/src/MSL_C.PPCEABI.bare.H.a/[eksw]_*.c")
+if(MSVC)
+    set(_fdlibm_include /FI${CMAKE_SOURCE_DIR}/port/include/port/fdlibm_pc.h)
+else()
+    set(_fdlibm_include -include ${CMAKE_SOURCE_DIR}/port/include/port/fdlibm_pc.h)
+endif()
+set_source_files_properties(${TTYD_FDLIBM_SOURCES} PROPERTIES COMPILE_OPTIONS "${_fdlibm_include}")
+list(APPEND TTYD_PORT_SOURCES ${TTYD_FDLIBM_SOURCES})
 if(TTYD_BACKEND STREQUAL "headless")
     file(GLOB_RECURSE headless_sources CONFIGURE_DEPENDS ${CMAKE_SOURCE_DIR}/port/src/headless/*.c)
     # Hardware-independent SDK sources that build unchanged on PC.
@@ -732,6 +755,10 @@ endif()
 target_include_directories(ttyd PRIVATE ${TTYD_INCLUDES} ${CMAKE_BINARY_DIR}/generated)
 target_compile_options(ttyd PRIVATE ${TTYD_CFLAGS})
 target_link_libraries(ttyd PRIVATE ${TTYD_LIBM} ${CMAKE_DL_LIBS})
+if(APPLE)
+    # the JP release's Shift-JIS text as UTF-8 for the second screen (port/src/common/companion_pc.c)
+    target_link_libraries(ttyd PRIVATE iconv)
+endif()
 if(TTYD_WEB)
     # Memory: sound names are told from ids by address (include/sfx_name_word.h),
     # so everything the game uses lies at 2 GiB and up, as on GameCube (data
@@ -756,6 +783,47 @@ if(TTYD_BACKEND STREQUAL "aurora")
         aurora::thp aurora::main)
     # SDL3 directly: the disc picker's file dialog and message box (disc_aurora.c).
     target_link_libraries(ttyd PRIVATE ${AURORA_SDL3_TARGET})
+    # Mbed TLS (Apache-2.0, a fixed release): online co-op's relay over wss://
+    # (port/src/common/online_ws_pc.c), the same TLS on every platform
+    if(NOT EMSCRIPTEN)
+        include(FetchContent)
+        set(ENABLE_TESTING OFF CACHE BOOL "" FORCE)
+        set(ENABLE_PROGRAMS OFF CACHE BOOL "" FORCE)
+        set(MBEDTLS_FATAL_WARNINGS OFF CACHE BOOL "" FORCE)
+        set(USE_SHARED_MBEDTLS_LIBRARY OFF CACHE BOOL "" FORCE)
+        set(USE_STATIC_MBEDTLS_LIBRARY ON CACHE BOOL "" FORCE)
+        FetchContent_Declare(mbedtls
+            URL https://github.com/Mbed-TLS/mbedtls/releases/download/mbedtls-3.6.7/mbedtls-3.6.7.tar.bz2
+            URL_HASH SHA256=a7e8bcbec0e6f761b4af24f25677626b35f762f68eef79c08677a363212d11f6
+            DOWNLOAD_EXTRACT_TIMESTAMP TRUE)
+        # (Windows: clang with MSVC's ABI "simulates" MSVC, and Mbed TLS would add
+        # cl's /W3 /utf-8, which the clang driver takes for files: clang's flags)
+        set(_ttyd_simulate ${CMAKE_C_SIMULATE_ID})
+        set(CMAKE_C_SIMULATE_ID "")
+        FetchContent_MakeAvailable(mbedtls)
+        set(CMAKE_C_SIMULATE_ID ${_ttyd_simulate})
+        target_link_libraries(ttyd PRIVATE mbedtls mbedx509 mbedcrypto)
+        # libjuice (MPL-2.0, a fixed release; sm64coopdx's too): the direct UDP
+        # path (ICE: STUN, hole punching, IPv6), port/src/common/online_ice_pc.c
+        # (its BUILD_SHARED_LIBS option defaults to ON, and would reach every
+        # library after it: off, as the build always was)
+        set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
+        set(NO_SERVER ON CACHE BOOL "" FORCE)
+        set(NO_TESTS ON CACHE BOOL "" FORCE)
+        FetchContent_Declare(libjuice
+            URL https://github.com/paullouisageneau/libjuice/archive/refs/tags/v1.7.4.tar.gz
+            URL_HASH SHA256=95c088862aa1b88b73d62aa99577135010eb768fcafb252d13aa85a8515ef798
+            DOWNLOAD_EXTRACT_TIMESTAMP TRUE EXCLUDE_FROM_ALL)
+        FetchContent_MakeAvailable(libjuice)
+        target_link_libraries(ttyd PRIVATE LibJuice::LibJuiceStatic)
+        # the relays' addresses, in order (port/relay, docs/ONLINE_RELAY.md); empty:
+        # rooms off, connecting by address only ($TTYD_ONLINE_RELAY overrides it, for tests)
+        set(TTYD_ONLINE_RELAY "wss://papercut-relay.llcoolt.workers.dev" CACHE STRING
+            "Online co-op's relays, wss://<name>.<subdomain>.workers.dev, separated by spaces")
+        if(TTYD_ONLINE_RELAY)
+            target_compile_definitions(ttyd PRIVATE PORT_ONLINE_RELAY_URL="${TTYD_ONLINE_RELAY}")
+        endif()
+    endif()
     # Windows: SDL3, Dawn (+ the DXC DLLs it loads), nod, libpng, zlib next to the exe.
     include(${CMAKE_SOURCE_DIR}/extern/aurora/cmake/AuroraCopyRuntimeDLLs.cmake)
     aurora_copy_runtime_dlls(ttyd)
@@ -788,18 +856,63 @@ if(TTYD_BACKEND STREQUAL "aurora")
     # Luigi's animation pack, our own work (port/src/aurora/luigi_model_aurora.c, docs/LUIGI_ANIMS.md)
     ttyd_embed_file(${CMAKE_SOURCE_DIR}/port/assets/luigi/luigi_anims.bin portLuigiPack
         ${CMAKE_BINARY_DIR}/generated/luigi_pack.c)
+    # the community controller mappings (port/settings/features/controllers.cpp, docs/THIRD_PARTY.md)
+    ttyd_embed_file(${CMAKE_SOURCE_DIR}/port/assets/controllers/gamecontrollerdb.txt portControllerDb
+        ${CMAKE_BINARY_DIR}/generated/controller_db.c)
     add_library(ttyd_settings OBJECT ${CMAKE_SOURCE_DIR}/port/settings/settings_ui.cpp
         ${CMAKE_SOURCE_DIR}/port/settings/launcher_ui.cpp ${CMAKE_SOURCE_DIR}/port/settings/launcher_style.cpp
+        ${CMAKE_SOURCE_DIR}/port/settings/button_glyphs.cpp
+        ${CMAKE_SOURCE_DIR}/port/settings/http.cpp ${CMAKE_SOURCE_DIR}/port/settings/tr.cpp
+        # plain HTTP on the local network (save transfer); the QR code (libs/qrcodegen, docs/THIRD_PARTY.md)
+        ${CMAKE_SOURCE_DIR}/port/settings/lan_http.cpp ${CMAKE_SOURCE_DIR}/libs/qrcodegen/qrcodegen.c
         ${CMAKE_BINARY_DIR}/generated/font_bold.c ${CMAKE_BINARY_DIR}/generated/font_medium.c
-        ${CMAKE_BINARY_DIR}/generated/icon64.c ${CMAKE_BINARY_DIR}/generated/luigi_pack.c ${TTYD_SETTINGS_FEATURES})
+        ${CMAKE_BINARY_DIR}/generated/icon64.c ${CMAKE_BINARY_DIR}/generated/luigi_pack.c
+        ${CMAKE_BINARY_DIR}/generated/controller_db.c ${TTYD_SETTINGS_FEATURES})
     target_include_directories(ttyd_settings PRIVATE ${CMAKE_SOURCE_DIR}/port/include)
     target_compile_features(ttyd_settings PRIVATE cxx_std_20)
     # The port's version, shown on the settings page (tools/port/release.py sets it).
     set(TTYD_PORT_VERSION "dev" CACHE STRING "The port's version (releases: e.g. 0.1.0)")
     target_compile_definitions(ttyd_settings PRIVATE _CRT_SECURE_NO_WARNINGS=1 PORT_VERSION="${TTYD_PORT_VERSION}"
         PORT_GAME_ID="${TTYD_VERSION}")
-    target_link_libraries(ttyd_settings PRIVATE aurora::core aurora::pad ${AURORA_SDL3_TARGET})
+    # Discord status (port/settings/features/discord.cpp, docs/DISCORD_STATUS.md): the
+    # Discord application's ID; empty: the feature is built in but does nothing, its setting hidden
+    set(TTYD_DISCORD_APP_ID "1567620424886657085" CACHE STRING "Discord status's Discord application ID (Paper Cut's; empty: off)")
+    target_compile_definitions(ttyd_settings PRIVATE PORT_DISCORD_APP_ID="${TTYD_DISCORD_APP_ID}")
+    # zlib: unpacking an update's zip (port/settings/features/update_install.cpp)
+    target_link_libraries(ttyd_settings PRIVATE aurora::core aurora::pad ZLIB::ZLIB ${AURORA_SDL3_TARGET})
+    # Luigi's faces for Play as Luigi: the art recipes, run on the player's disc at the start
+    # (port/src/aurora/art_recipes_aurora.c, port/assets/luigi/art/RECIPES.md), and the drawn PNGs that
+    # stand in where they can't be made, our own work, by their path under port/assets/luigi
+    # (port/src/aurora/luigi_faces_aurora.c)
+    set(_la_root ${CMAKE_SOURCE_DIR}/port/assets/luigi)
+    file(GLOB_RECURSE _la_assets CONFIGURE_DEPENDS RELATIVE ${_la_root} ${_la_root}/art/icons/*.png)
+    file(GLOB _la_recipes CONFIGURE_DEPENDS RELATIVE ${_la_root} ${_la_root}/art/recipes/*.recipe)
+    list(APPEND _la_assets ${_la_recipes})
+    list(SORT _la_assets)
+    set(_la_c "/* GENERATED from port/assets/luigi/art by CMakeLists.txt. Do not edit. */\n")
+    set(_la_index "")
+    set(_la_n 0)
+    foreach(_rel ${_la_assets})
+        file(READ ${_la_root}/${_rel} _hex HEX)
+        set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${_la_root}/${_rel})
+        string(LENGTH "${_hex}" _len)
+        math(EXPR _len "${_len} / 2")
+        string(REGEX REPLACE "([0-9a-f][0-9a-f])" "0x\\1," _hex "${_hex}")
+        string(APPEND _la_c "static const unsigned char a${_la_n}[] = {${_hex}};\n")
+        string(APPEND _la_index "    {\"${_rel}\", a${_la_n}, ${_len}},\n")
+        math(EXPR _la_n "${_la_n} + 1")
+    endforeach()
+    string(APPEND _la_c "const struct { const char* path; const unsigned char* data; unsigned int size; } "
+        "portLuigiArtTable[] = {\n${_la_index}    {0, 0, 0},\n};\n")
+    file(WRITE ${CMAKE_BINARY_DIR}/generated/luigi_art.c.tmp "${_la_c}")
+    file(COPY_FILE ${CMAKE_BINARY_DIR}/generated/luigi_art.c.tmp ${CMAKE_BINARY_DIR}/generated/luigi_art.c
+        ONLY_IF_DIFFERENT)
+    target_sources(ttyd_settings PRIVATE ${CMAKE_BINARY_DIR}/generated/luigi_art.c)
     target_link_libraries(ttyd PRIVATE ttyd_settings)
+    if(WIN32)
+        # HTTPS for the update check (port/settings/http.cpp)
+        target_link_libraries(ttyd_settings PRIVATE winhttp ws2_32 bcrypt) # (+ the save transfer's sockets, its token)
+    endif()
     # Mods (port/include/port/mods.h): C++, built without the game's prefix header.
     # A code mod's library for this build is in its lib/<platform>/.
     if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(aarch64|arm64|ARM64)$" OR CMAKE_OSX_ARCHITECTURES STREQUAL "arm64")
@@ -821,7 +934,8 @@ if(TTYD_BACKEND STREQUAL "aurora")
     add_library(ttyd_mods STATIC ${CMAKE_SOURCE_DIR}/port/mods/mods.cpp ${CMAKE_SOURCE_DIR}/port/mods/mod_api.cpp
         ${CMAKE_SOURCE_DIR}/port/mods/evt_asm.cpp ${CMAKE_BINARY_DIR}/generated/statics_index.c
         ${CMAKE_SOURCE_DIR}/port/archipelago/ap_client.cpp ${CMAKE_SOURCE_DIR}/port/archipelago/websocket.cpp
-        ${CMAKE_SOURCE_DIR}/port/archipelago/ttyd_ap.cpp)
+        ${CMAKE_SOURCE_DIR}/port/archipelago/ttyd_ap.cpp ${CMAKE_SOURCE_DIR}/port/archipelago/ttyd_rando.cpp
+        ${CMAKE_SOURCE_DIR}/port/archipelago/rando_gen.cpp)
     target_include_directories(ttyd_mods PRIVATE ${CMAKE_SOURCE_DIR}/port/include)
     target_compile_features(ttyd_mods PRIVATE cxx_std_20)
     target_compile_definitions(ttyd_mods PRIVATE _CRT_SECURE_NO_WARNINGS=1 PORT_GAME_ID="${TTYD_VERSION}"
@@ -944,14 +1058,22 @@ const int portBuiltinModCount = @_builtin_count@;
         include(${CMAKE_SOURCE_DIR}/port/ios/ios.cmake)
     endif()
     if(APPLE)
-        # Save sync through iCloud Drive (port/apple/cloud_apple.m). Its own
+        # Save sync through iCloud Drive (port/apple/cloud_apple.m), and iOS's
+        # HTTPS (port/apple/http_apple.m, for port/settings/http.cpp). Its own
         # library: the game's prefix header must not reach Objective-C.
         enable_language(OBJC)
-        add_library(ttyd_cloud STATIC ${CMAKE_SOURCE_DIR}/port/apple/cloud_apple.m)
+        # And text to speech (port/apple/speech_apple.m, AVSpeechSynthesizer).
+        add_library(ttyd_cloud STATIC ${CMAKE_SOURCE_DIR}/port/apple/cloud_apple.m
+            ${CMAKE_SOURCE_DIR}/port/apple/http_apple.m ${CMAKE_SOURCE_DIR}/port/apple/speech_apple.m)
         target_include_directories(ttyd_cloud PRIVATE ${CMAKE_SOURCE_DIR}/port/include)
         target_compile_options(ttyd_cloud PRIVATE -fobjc-arc)
-        target_link_libraries(ttyd PRIVATE ttyd_cloud "-framework Foundation")
+        target_link_libraries(ttyd PRIVATE ttyd_cloud "-framework Foundation" "-framework AVFoundation")
+    endif()
+    if(NOT ANDROID)
+        # Save sync: iCloud Drive on Apple devices (above), any folder on Windows and Linux
+        # (port/src/aurora/folder_sync_aurora.c). The settings page has its section too.
         target_compile_definitions(ttyd PRIVATE PORT_CLOUD_SYNC=1)
+        target_compile_definitions(ttyd_settings PRIVATE PORT_CLOUD_SYNC=1)
     endif()
     # Aurora's pipeline seed (tools/port/pipeline_cache.py): every GX pipeline
     # the game uses, built at launch so no draw waits for one (on a slow GPU a
@@ -1079,6 +1201,14 @@ target_compile_definitions(loaders_test PRIVATE ${TTYD_DEFINES} PORT_BEDECODE_ST
 target_include_directories(loaders_test PRIVATE ${TTYD_INCLUDES})
 target_compile_options(loaders_test PRIVATE ${TTYD_CFLAGS})
 add_test(NAME loaders_test COMMAND loaders_test)
+# art_recipe_test: the art recipe runner on an extracted disc (tests/port/art_recipe_check.py
+# compares it with the authoring tool, port/assets/luigi/art/tools/recipes.py).
+add_executable(art_recipe_test EXCLUDE_FROM_ALL
+    ${CMAKE_SOURCE_DIR}/tests/port/art_recipe_test.c
+    ${CMAKE_SOURCE_DIR}/port/src/common/art_recipe.c)
+target_compile_definitions(art_recipe_test PRIVATE ${TTYD_DEFINES})
+target_include_directories(art_recipe_test PRIVATE ${TTYD_INCLUDES})
+target_compile_options(art_recipe_test PRIVATE ${TTYD_CFLAGS})
 # Generated descriptor tables must match their specs and the headers.
 add_test(NAME bedecode_generated_fresh
     COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tools/port/gen_bedecode.py --check)
@@ -1157,6 +1287,13 @@ target_compile_definitions(musyx_swap_test PRIVATE ${TTYD_DEFINES})
 target_include_directories(musyx_swap_test PRIVATE ${TTYD_INCLUDES})
 target_compile_options(musyx_swap_test PRIVATE ${TTYD_CFLAGS})
 add_test(NAME musyx_swap_test COMMAND musyx_swap_test)
+# rando_test: the built-in randomizer's seed generator (port/archipelago/rando_gen.cpp):
+# deterministic, every item kept, the vanilla story's moves safe, the open world beatable.
+add_executable(rando_test EXCLUDE_FROM_ALL
+    ${CMAKE_SOURCE_DIR}/tests/port/rando_test.cpp
+    ${CMAKE_SOURCE_DIR}/port/archipelago/rando_gen.cpp)
+target_compile_features(rando_test PRIVATE cxx_std_20)
+add_test(NAME rando_test COMMAND rando_test)
 # musyx_mixer_test: MusyX PC layer (ADPCM decode, software DSP mixer, end to end
 # through sndInit/sndFXStart). Headless only: on Aurora, hw_pc.c drives an SDL device.
 if(TTYD_BACKEND STREQUAL "headless")

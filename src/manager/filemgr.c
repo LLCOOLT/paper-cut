@@ -17,6 +17,7 @@
 #include "port/bedecode.h"
 #include "port/gx_arrays.h"
 #include "port/tpl_pc.h"
+#include "port/companion_menu.h"
 #endif
 
 //.bss
@@ -533,6 +534,11 @@ static void portFileDataAdrSet(void* data, s32 type, u32 size, const char* name)
             break;
     }
 }
+
+/* the second screen's menu's own files (port/src/common/companion_menu_pc.c) */
+void portFileDecode(void* data, s32 type, u32 size, const char* name) {
+    portFileDataAdrSet(data, type, size, name);
+}
 #endif
 
 /**
@@ -683,6 +689,11 @@ static FileEntry* _fileAlloc(const char* filename, s32 type, void (*callback)(Fi
     FileEntry *newentry, *temp;
     u32 size, test;
 
+#ifdef TARGET_PC
+    if (gPortCompanionMenu) { /* the second screen's menu: its own files (port/companion_menu.h) */
+        return portCompanionFileAlloc(filename, type);
+    }
+#endif
     for (search = afp->firstused; search; search = search->next) {
         if (search->state && !strcmp(search->filename, filename)) {
 #if VERSION >= VERSION_US
@@ -807,6 +818,12 @@ static FileEntry* _fileAlloc(const char* filename, s32 type, void (*callback)(Fi
  * until _fileGarbage frees it.
  */
 void fileFree(FileEntry* handle) {
+#ifdef TARGET_PC
+    if (gPortCompanionMenu) {
+        portCompanionFileFree(handle);
+        return;
+    }
+#endif
     if (handle) {
         if (handle->data) {
             if (handle->state == 1) {
@@ -875,6 +892,12 @@ FileEntry* fileAsync(const char* filename, s32 type, FileCallback callback) {
     void* handle;
     u32 size, test;
 
+#ifdef TARGET_PC
+    if (gPortCompanionMenu) { /* loaded at once */
+        FileEntry* f = portCompanionFileAlloc(filename, type);
+        return f != NULL ? f : FILE_ASYNC_MISSING;
+    }
+#endif
     for (search = afp->firstused; search; search = search->next) {
         if (search->state && !strcmp(search->filename, filename)) {
             if (search->entry)

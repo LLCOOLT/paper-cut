@@ -1,4 +1,4 @@
-/* Gameplay+ battle feedback pop-ups ("battle_popups", port/include/port/gameplus.h):
+/* Enhancements battle feedback pop-ups ("battle_popups", port/include/port/gameplus.h):
  * "GUARD!" / "SUPERGUARD!" over Mario or the partner, and a resisted status's
  * icon bouncing off the unit with "Resisted", drawn with the game's own font
  * and status-icon textures for about a second. */
@@ -8,6 +8,7 @@
 #include "battle/battle_unit.h"
 #include "driver/dispdrv.h"
 #include "manager/fontmgr.h"
+#include "port/platform.h"
 #include <string.h>
 
 #define POPUP_MAX 8
@@ -65,7 +66,10 @@ void portPopupResisted(BattleUnit* unit, int statusType) {
     add("Resisted", portStatusIconId(statusType), &at, (GXColor){0xFF, 0xFF, 0xFF, 0xFF});
 }
 
+/* the game's font takes two of its random numbers a letter (fontmgr.c): kept as they
+ * were, so popups (a setting of each player's own) don't put an online game out of step */
 static void disp(CameraId camId, void* param) {
+    const u32 seed = portRandState();
     s32 i;
     (void)camId;
     (void)param;
@@ -100,6 +104,7 @@ static void disp(CameraId camId, void* param) {
         w = FontGetMessageWidth(p->text) * 0.8f;
         FontDrawString(screen.x - w * 0.5f, screen.y + rise + 12.0f, p->text);
     }
+    portRandSetState(seed);
 }
 
 void portPopupFrame(void) {

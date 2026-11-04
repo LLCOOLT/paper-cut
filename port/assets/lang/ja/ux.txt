@@ -1,0 +1,70 @@
+# Restart now, controller names, the saves' tools while playing, the first start's notice (日本語)
+
+Restart now
+今すぐ再起動
+
+Close and reopen the app to apply it.
+アプリを閉じて開き直すと反映されます。
+
+Restarting when the game has finished saving...
+ゲームのセーブが終わりしだい再起動します...
+
+Starts the game again with this disc; quick resume brings you back here.
+このディスクでゲームを再起動します。クイックレジュームでここに戻れます。
+
+Press A twice to restart the game for these settings; quick resume brings you back here.
+Aを2回押すと、これらの設定のためにゲームを再起動します。クイックレジュームでここに戻れます。
+
+Press A again to restart.
+もう一度Aで再起動します。
+
+Applies after Restart now.
+「今すぐ再起動」で反映されます。
+
+Applies when the app reopens.
+アプリを開き直すと反映されます。
+
+Paper Cut's settings: the Start menu's last tab, or F1 (Back on a controller).
+Paper Cutの設定：スタートメニューの最後のタブ、またはF1（コントローラーはBack）。
+
+Paper Cut's settings: the Start menu's last tab, or the three-bar button.
+Paper Cutの設定：スタートメニューの最後のタブ、または三本線ボタン。
+
+Xbox controller
+Xboxコントローラー
+
+Xbox 360 controller
+Xbox 360コントローラー
+
+Switch Pro Controller
+Proコントローラー
+
+GameCube controller
+ゲームキューブコントローラー
+
+through an adapter
+アダプター経由
+
+Restore and restart
+戻して再起動
+
+Replace the save with this one and restart
+このセーブに置き換えて再起動
+
+The game starts again to load it; the save as it is now is kept as a backup.
+読み込むためにゲームを再起動します。今のセーブはバックアップとして残ります。
+
+Copy
+コピー
+
+Copy and restart
+コピーして再起動
+
+Replace its save (a backup is kept)
+セーブを置き換える（バックアップを残します）
+
+Replace its save and restart (a backup is kept)
+セーブを置き換えて再起動（バックアップを残します）
+
+This is the running game's card: the game starts again to load it.
+起動中のゲームのカードです。読み込むためにゲームを再起動します。

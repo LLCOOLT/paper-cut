@@ -16,6 +16,7 @@
 #ifdef PORT_RELS_STATIC
 
 static const PortRelStatic* sCurrent;
+static int sEpilogDone; /* portRelEpilogNow ran sCurrent's _epilog already */
 
 /* Save states: the linked REL is part of the state. */
 const void* portRelCurrent(void) {
@@ -24,6 +25,7 @@ const void* portRelCurrent(void) {
 
 void portRelSetCurrent(const void* rel) {
     sCurrent = (const PortRelStatic*)rel;
+    sEpilogDone = 0;
 }
 static char** sSnapshots; /* initial data of each REL, by table index */
 
@@ -71,8 +73,18 @@ void portRelUnlink(void) {
 #ifdef PORT_MODS
     portModsAreaEvent(sCurrent->name, 0);
 #endif
-    sCurrent->epilog();
+    if (!sEpilogDone) {
+        sCurrent->epilog();
+    }
+    sEpilogDone = 0;
     sCurrent = NULL;
+}
+
+void portRelEpilogNow(void) {
+    if (sCurrent != NULL && !sEpilogDone) {
+        sCurrent->epilog();
+        sEpilogDone = 1; /* done: the unlink only unlinks it */
+    }
 }
 
 #else
@@ -202,6 +214,13 @@ void portRelUnlink(void) {
     closeModule(sHandle);
     sHandle = NULL;
     sEpilog = NULL;
+}
+
+void portRelEpilogNow(void) {
+    if (sHandle != NULL && sEpilog != NULL) {
+        sEpilog();
+        sEpilog = NULL; /* done: the unlink only unloads it */
+    }
 }
 
 #endif

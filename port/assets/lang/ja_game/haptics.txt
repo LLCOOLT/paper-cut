@@ -1,0 +1,7 @@
+# Controller haptics (port/settings/features/haptics.cpp): an English line, then its translation, then a blank line.
+
+Controller haptics
+タイミングの　しんどう
+
+A short pulse as an action command's or a guard's timing window opens; on a DualSense the triggers also resist while a command holds R. Follows Rumble and Rumble strength.
+アクションコマンドや　ガードの　タイミングが　はじまる　しゅんかんに　みじかく　ふるえます　DualSenseでは　Rを　おしつづける　コマンドの　あいだ　トリガーが　かたく　なります

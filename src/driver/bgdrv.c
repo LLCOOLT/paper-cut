@@ -12,6 +12,7 @@
 #include "texPalette.h"
 #ifdef TARGET_PC
 #include "port/tpl_pc.h"
+#include "wide_x.h"
 #endif
 #include "driver/mapdrv.h"
 #include <string.h>
@@ -251,6 +252,30 @@ static void bgDisp(CameraId camId, void* param) {
         GXSetVtxDesc(GX_VA_TEX0, GX_DIRECT);
         GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XYZ, GX_S16, 0);
         GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_TEX0, GX_TEX_ST, GX_F32, 0);
+#ifdef TARGET_PC
+        {
+            /* widescreen: the background camera stays full width (unscaled);
+             * a picture that repeats sideways (it scrolls with the camera's
+             * yaw) shows more of itself at the sides instead of stretching:
+             * u widened by the edge scale around the middle (include/wide_x.h) */
+            f32 u0 = 0.0f;
+            f32 u1 = 1.0f;
+            if (!(bgwork->flags & BG_FLAT_COLOR) && GXGetTexObjWrapS(&texobj) == GX_REPEAT) {
+                const f32 e = WIDE_X(1.0f);
+                u0 = 0.5f - e / 2.0f;
+                u1 = 0.5f + e / 2.0f;
+            }
+            GXBegin(GX_QUADS, GX_VTXFMT0, 4);
+            GXPosition3s16(0, 0, 0);
+            GXTexCoord2f32(u0, 0.0f);
+            GXPosition3s16(608, 0, 0);
+            GXTexCoord2f32(u1, 0.0f);
+            GXPosition3s16(608, 480, 0);
+            GXTexCoord2f32(u1, 1.0f);
+            GXPosition3s16(0, 480, 0);
+            GXTexCoord2f32(u0, 1.0f);
+        }
+#else
         GXBegin(GX_QUADS, GX_VTXFMT0, 4);
         GXPosition3s16(0, 0, 0);
         GXTexCoord2f32(0.0f, 0.0f);
@@ -260,6 +285,7 @@ static void bgDisp(CameraId camId, void* param) {
         GXTexCoord2f32(1.0f, 1.0f);
         GXPosition3s16(0, 480, 0);
         GXTexCoord2f32(0.0f, 1.0f);
+#endif
     }
 }
 

@@ -12,6 +12,9 @@
 #include <string.h>
 #include "icon_ids.h"
 #include <dolphin/si.h>
+#ifdef TARGET_PC
+#include "port/assist.h"
+#endif
 // FAKE: ac_repeatedly.c calls BattleAcDrawGauge through this prototype (the types it was compiled with) instead of the one in battle/battle_ac.h; same registers, behaviour-identical.
 typedef void (*BattleAcDrawGaugeNoProtoFn)();
 
@@ -187,6 +190,12 @@ s32 battleAcMain_Repeatedly(BattleWork* work) {
             work->actionCommands.acState = 1000;
             work->actionCommands.outputParams[0] = 1;
         case 1000:
+#ifdef TARGET_PC
+            /* hold instead of mashing: the buttons counted (not the reset button or unplugging; not one held throughout) */
+            if (work->actionCommands.params[0] != 9 && work->actionCommands.params[0] != 10) {
+                portMashWanted((r->btn0 | r->btn1 | r->btn2) & ~r->holdMask);
+            }
+#endif
             switch (work->actionCommands.params[0]) {
                 case 10:
                     if (r->resetFlag) {

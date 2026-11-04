@@ -1,0 +1,1868 @@
+# Paper Cut's own menus in Español (port/include/port/tr.h): an English line, then its
+# translation, then a blank line. tools/port/gen_lang.py makes port/settings/lang_tables.inc.
+
+Settings
+Ajustes
+
+Close
+Cerrar
+
+The Start menu's Settings tab, F1, Back/Select, the touch controls' three-bar button or a three-finger tap opens this page.
+Esta página se abre con la pestaña Ajustes del menú Start, F1, Back/Select, el botón de tres rayas de los controles táctiles o un toque con tres dedos.
+
+Search settings
+Buscar ajustes
+
+Display
+Pantalla
+
+Audio
+Sonido
+
+Controls
+Controles
+
+Gameplay
+Juego
+
+Accessibility
+Accesibilidad
+
+Practice
+Práctica
+
+System
+Sistema
+
+Achievements
+Logros
+
+Challenges
+Desafíos
+
+Modes
+Modos
+
+Randomizer
+Aleatorio
+
+Saves
+Partidas
+
+Frame rate
+Fotogramas por segundo
+
+The game runs at 60 frames a second; higher rates draw frames in between (smooth camera and characters).
+El juego funciona a 60 fotogramas por segundo; las frecuencias más altas dibujan fotogramas intermedios (cámara y personajes más suaves).
+
+Widescreen (16:9)
+Panorámico (16:9)
+
+Much of the game was built for 4:3: some rooms and scenes end at the 4:3 edges.
+Gran parte del juego se hizo para 4:3: algunas salas y escenas terminan en los bordes del 4:3.
+
+Blurred side bars
+Franjas laterales difuminadas
+
+Where the picture doesn't fill the screen, a blurred copy of it instead of black bars.
+Donde la imagen no llena la pantalla, una copia difuminada de ella en lugar de franjas negras.
+
+Auto (the window's size)
+Auto (el tamaño de la ventana)
+
+Internal resolution
+Resolución interna
+
+Original (smooth)
+Original (suave)
+
+Texture filtering
+Filtrado de texturas
+
+Anti-aliasing (4x MSAA)
+Antialiasing (MSAA 4x)
+
+next start
+al próximo inicio
+
+Smooths jagged edges.
+Suaviza los bordes dentados.
+
+Off
+No
+
+Overlay corner
+Esquina del indicador
+
+Frame rate, clock and battery in a corner of the screen.
+Fotogramas por segundo, hora y batería en una esquina de la pantalla.
+
+Never skip graphics that are still loading
+No saltar nunca gráficos que aún cargan
+
+Something drawn for the first time waits for its graphics to be ready (a short pause, once) instead of appearing a moment later.
+Lo que se dibuja por primera vez espera a que sus gráficos estén listos (una pausa corta, una vez) en lugar de aparecer un momento después.
+
+Widescreen switch
+Según el panorámico
+
+Aspect ratio
+Relación de aspecto
+
+Wider shows more of the sides of each scene; much of the game was built for 4:3, so rooms and scenes can end before the screen's edges.
+Más ancho muestra más de los lados de cada escena; gran parte del juego se hizo para 4:3, así que las salas y escenas pueden terminar antes de los bordes de la pantalla.
+
+No limit
+Sin límite
+
+Widest picture
+Imagen más ancha
+
+Past this the rest of the screen is bars (blurred with Blurred side bars).
+Más allá, el resto de la pantalla son franjas (difuminadas con Franjas laterales difuminadas).
+
+The status bar, message windows and battle menus, larger or smaller than the game's.
+La barra de estado, las ventanas de mensajes y los menús de combate, más grandes o más pequeños que en el juego.
+
+Off (the game's)
+No (como el juego)
+
+Anisotropic filtering
+Filtrado anisotrópico
+
+Textures seen at an angle (floors, paths) stay sharp.
+Las texturas vistas en ángulo (suelos, caminos) siguen nítidas.
+
+The game's
+Como el juego
+
+Texture detail
+Detalle de texturas
+
+Which of a texture's detail levels is used at a distance.
+Qué nivel de detalle de una textura se usa a distancia.
+
+Supersampling
+Supermuestreo
+
+Draws the picture several times larger than the window and shrinks it: smoother edges, much more work for the graphics card.
+Dibuja la imagen varias veces más grande que la ventana y la reduce: bordes más suaves, mucho más trabajo para la tarjeta gráfica.
+
+Picture filter
+Filtro de imagen
+
+Variable refresh rate (G-Sync, FreeSync)
+Frecuencia de actualización variable (G-Sync, FreeSync)
+
+Each frame shown as soon as it is ready, without waiting for the screen. For VRR displays (others may tear); goes well with Frame rate: the display's.
+Cada fotograma se muestra en cuanto está listo, sin esperar a la pantalla. Para pantallas VRR (en otras puede haber cortes); va bien con Fotogramas por segundo: los de la pantalla.
+
+HDR output
+Salida HDR
+
+On an HDR display, the picture at the brightness you choose for white (paper white), with the brightest highlights optionally a little brighter. The game itself is SDR; this does not add detail it does not have.
+En una pantalla HDR, la imagen con el brillo que elijas para el blanco (blanco papel), y si quieres las luces más intensas un poco más brillantes. El juego en sí es SDR; esto no añade detalle que no tenga.
+
+Performance overlay
+Indicador de rendimiento
+
+How long each frame takes: the time between frames, and the part spent working.
+Cuánto tarda cada fotograma: el tiempo entre fotogramas y la parte dedicada a trabajar.
+
+Sharp text
+Texto nítido
+
+The game's font redrawn with crisp edges at high resolutions (the same letters).
+La fuente del juego redibujada con bordes nítidos a altas resoluciones (las mismas letras).
+
+Window
+Ventana
+
+Volume
+Volumen
+
+Rumble
+Vibración
+
+Rumble strength
+Fuerza de la vibración
+
+The game's own Rumble option (on the file select) still applies.
+La opción de vibración del propio juego (en la selección de archivo) sigue aplicándose.
+
+Auto (the controller used last)
+Auto (el último mando usado)
+
+Button prompts
+Iconos de botones
+
+The buttons the game shows (in its text, menus and action commands) drawn as the ones that do those things on your controller or keyboard, where you've mapped them.
+Los botones que muestra el juego (en sus textos, menús y comandos de acción) se dibujan como los que hacen esas cosas en tu mando o teclado, según los hayas asignado.
+
+Controllers
+Mandos
+
+Set up a controller
+Configurar un mando
+
+Mouse in menus
+Ratón en los menús
+
+Lists, battle commands, the file select and the pause menu: the pointer picks, a click chooses, a right click goes back, the wheel scrolls.
+Listas, comandos de combate, selección de archivo y menú de pausa: el puntero señala, un clic elige, un clic derecho vuelve atrás, la rueda desplaza.
+
+Second player
+Segundo jugador
+
+Action Command cue
+Aviso de comandos de acción
+
+In battle, a ring closes on an A button when to press A for a Jump (and partners' stomps) and to guard an enemy jumping at you. Other commands show their own timing.
+En combate, un aro se cierra sobre un botón A para indicar cuándo pulsar A en un Salto (y en los pisotones de los compañeros) y para defenderte de un enemigo que salta sobre ti. Los demás comandos muestran su propio ritmo.
+
+Fast-forward speed
+Velocidad de avance rápido
+
+Fast-forward: Tab, a controller's right stick click, or the on-screen >> button.
+Avance rápido: Tab, pulsar el stick derecho de un mando o el botón >> de la pantalla.
+
+Fast-forward toggles (instead of held)
+El avance rápido se activa con una pulsación (en vez de mantener)
+
+Text speed
+Velocidad del texto
+
+Run speed
+Velocidad de carrera
+
+changes play
+cambia el juego
+
+Faster running can make some jumps longer than intended.
+Correr más rápido puede hacer algunos saltos más largos de lo previsto.
+
+Skip the intro
+Saltar la introducción
+
+The logos go by quickly and the story opening is skipped (it still plays from the title screen if left alone).
+Los logotipos pasan rápido y se salta el comienzo de la historia (sigue apareciendo en la pantalla de título si no se toca nada).
+
+Autosave
+Guardado automático
+
+changes saves
+cambia las partidas
+
+Saves into the file you're playing as you enter each room, as a Save Block would: a crash costs no more than the room. Not in the boss rush or endless Glitz Pit, or once the practice tools changed the game.
+Guarda en el archivo que juegas al entrar en cada sala, como lo haría un Bloque de Guardado: un cierre inesperado no cuesta más que la sala. No durante la serie de jefes ni el Coliseo sin fin, ni después de que las herramientas de práctica hayan cambiado el juego.
+
+Text language
+Idioma del texto
+
+The European release's text, read from its disc image in the launcher's library.
+El texto de la versión europea, leído de su imagen de disco en la biblioteca del lanzador.
+
+Difficulty
+Dificultad
+
+Enemies' HP and the damage their attacks do. Custom uses Enemy HP (custom) and Enemy attack (custom).
+Los PC de los enemigos y el daño de sus ataques. Personalizada usa PC de los enemigos (personalizado) y Ataque de los enemigos (personalizado).
+
+Enemy HP (custom)
+PC de los enemigos (personalizado)
+
+Enemy attack (custom)
+Ataque de los enemigos (personalizado)
+
+Action commands: attacks
+Comandos de acción: ataques
+
+Wider timing for attack commands, or every attack command done for you.
+Un margen más amplio para los comandos de ataque, o cada comando de ataque hecho por ti.
+
+Action commands: guards
+Comandos de acción: defensa
+
+Wider Guard and Superguard windows, or every attack guarded for you (a Superguard is still up to you).
+Márgenes más amplios para la defensa y la superdefensa, o cada ataque defendido por ti (la superdefensa sigue dependiendo de ti).
+
+A save state keeps the whole game as it is this moment, in the field or a battle. They last until the game is closed: use the game's own save blocks to keep your progress.
+Un estado guardado conserva todo el juego tal como está en este momento, en el mapa o en combate. Dura hasta que se cierra el juego: usa los Bloques de Guardado del juego para conservar tu progreso.
+
+Keyboard: F5 saves to slot 1, F8 loads it.
+Teclado: F5 guarda en la ranura 1, F8 la carga.
+
+Continue from any save file (.gci) in the warps folder; folders in it group them. A save made after a warp goes to file 4.
+Continúa desde cualquier archivo de partida (.gci) de la carpeta de saltos; las carpetas que contiene los agrupan. Una partida guardada tras un salto va al archivo 4.
+
+No saves yet: put .gci files in the warps folder (in the save folder).
+Aún no hay partidas: pon archivos .gci en la carpeta de saltos (en la carpeta de partidas).
+
+Speedrun timer
+Cronómetro de speedrun
+
+Game time in a corner, counted in the game's own frames, with real time under it.
+El tiempo de juego en una esquina, contado en los fotogramas del propio juego, con el tiempo real debajo.
+
+Load removal
+Sin tiempos de carga
+
+Game time stops while a map or a battle loads (the timer's and LiveSplit's).
+El tiempo de juego se detiene mientras carga un mapa o un combate (el del cronómetro y el de LiveSplit).
+
+Start with a new file
+Empezar con un archivo nuevo
+
+The timer starts when a new file begins, and resets at the title screen.
+El cronómetro empieza cuando comienza un archivo nuevo y se reinicia en la pantalla de título.
+
+When to split: Any% at the end of each chapter; every step of the story; or the user folder's splits.txt.
+Cuándo hacer split: Any% al final de cada capítulo; en cada paso de la historia; o el splits.txt de la carpeta del usuario.
+
+Run
+Partida
+
+Sends the timer's start, splits, resets and game time to LiveSplit Server on this computer.
+Envía el inicio, los splits, los reinicios y el tiempo de juego del cronómetro a LiveSplit Server en este ordenador.
+
+LiveSplit connection
+Conexión con LiveSplit
+
+Frame advance keys
+Teclas de fotograma a fotograma
+
+F6 holds the game (and lets it go on), F7 moves one frame.
+F6 detiene el juego (y lo deja seguir), F7 avanza un fotograma.
+
+Frame advance
+Fotograma a fotograma
+
+Fixed RNG
+Azar fijo
+
+The game's random numbers start from a fixed seed (All settings, RNG) at each room and battle, so a room plays out the same way each try.
+Los números aleatorios del juego empiezan por una semilla fija (Todos los ajustes, Azar) en cada sala y combate, para que una sala transcurra igual en cada intento.
+
+Stats
+Atributos
+
+Changes count as practice: no achievements until a file is loaded.
+Los cambios cuentan como práctica: no hay logros hasta que se carga un archivo.
+
+Items
+Objetos
+
+Story and flags
+Historia y banderas
+
+Memory watch corner
+Esquina de la vigilancia de memoria
+
+The fields ticked in Memory watch (All settings), kept on screen.
+Los campos marcados en Vigilancia de memoria (Todos los ajustes), mantenidos en pantalla.
+
+Memory watch
+Vigilancia de memoria
+
+Texture packs
+Paquetes de texturas
+
+Export characters
+Exportar personajes
+
+A multiworld randomizer: the TTYD apworld's seed (an .apttyd file) and a server. The seed applies at the game's start; its randomizer mod, the TTYD AP mod, comes as a code mod.
+Un aleatorio multimundo: la semilla del apworld de TTYD (un archivo .apttyd) y un servidor. La semilla se aplica al iniciar el juego; su mod, el mod TTYD AP, viene como mod de código.
+
+A new seed applies at the next start.
+Una semilla nueva se aplica al próximo inicio.
+
+Skip the launcher (start with the last disc played)
+Saltar el lanzador (empezar con el último disco jugado)
+
+Saved to the Screenshots folder by the saves. Keyboard: F12.
+Guardadas en la carpeta Screenshots, junto a las partidas. Teclado: F12.
+
+Pause while in the background
+Pausa en segundo plano
+
+Controllers work in the background
+Los mandos funcionan en segundo plano
+
+Memory cards (by region) and settings.txt.
+Tarjetas de memoria (por región) y settings.txt.
+
+No crash reports.
+No hay informes de errores.
+
+Menu language
+Idioma de los menús
+
+Paper Cut's own menus. Auto: the Japanese release's Japanese, the European release's text language, otherwise the computer's. The game's own text follows the disc.
+Los menús propios de Paper Cut. Auto: japonés en la versión japonesa, el idioma del texto en la europea, si no el del ordenador. El texto del propio juego sigue al disco.
+
+Quick resume
+Reanudación rápida
+
+While you play, the game keeps a save of where you are, written when the app closes or goes to the background: the launcher's Continue picks up there. Your own saves are untouched until you save.
+Mientras juegas, el juego guarda dónde estás, y lo escribe cuando la aplicación se cierra o pasa a segundo plano: Continuar en el lanzador sigue desde ahí. Tus propias partidas no se tocan hasta que guardas.
+
+Check for updates at start
+Buscar actualizaciones al iniciar
+
+Asks GitHub for the latest release of Paper Cut.
+Pregunta a GitHub por la última versión de Paper Cut.
+
+New version
+Nueva versión
+
+Earned from what each save file has done (its flags), kept beside the memory cards (not in the save), with a small notice when one is earned.
+Se consiguen por lo que ha hecho cada archivo de partida (sus banderas), se guardan junto a las tarjetas de memoria (no en la partida), con un pequeño aviso al conseguir uno.
+
+This file
+Este archivo
+
+Presets
+Preajustes
+
+One-hit KO
+K.O. de un golpe
+
+Any enemy hit that does damage knocks Mario or the partner out.
+Cualquier golpe enemigo que haga daño deja K.O. a Mario o al compañero.
+
+Allowed
+Permitida
+
+Guarding
+Defensa
+
+Attack commands
+Comandos de ataque
+
+Narrower timing for Mario's and the partners' attack commands.
+Un margen más estrecho para los comandos de ataque de Mario y de los compañeros.
+
+No items in battle
+Sin objetos en combate
+
+The Items command can't be chosen in battle.
+El comando Objetos no se puede elegir en combate.
+
+Twitch chat drives the audience
+El chat de Twitch dirige al público
+
+Viewers' commands in your channel's chat make the crowd throw items, give or take a little Star Power, fill the Bingo cards, cheer, leave or come.
+Los comandos de los espectadores en el chat de tu canal hacen que el público lance objetos, dé o quite un poco de Poder Estelar, llene los cartones de Bingo, aplauda, se vaya o venga.
+
+Cooldown
+Espera
+
+One command each this many seconds; a viewer, one each three times it.
+Un comando cada tantos segundos; un espectador, uno cada el triple.
+
+Allow the harmful ones
+Permitir los dañinos
+
+Partner quick-swap
+Cambio rápido de compañero
+
+Switches to the next partner in the field without the pause menu: Q, a controller's left stick pressed in, or the on-screen swap button.
+Cambia al siguiente compañero en el mapa sin el menú de pausa: Q, pulsar el stick izquierdo de un mando o el botón de cambio de la pantalla.
+
+Save Blocks save at once
+Los Bloques de Guardado guardan al momento
+
+A Save Block saves to the file being played without asking first.
+Un Bloque de Guardado guarda en el archivo que juegas sin preguntar antes.
+
+Bigger bag
+Bolsa más grande
+
+20 items without the Strange Sack. A save holding more than 10 items without it may not load right on a GameCube.
+20 objetos sin la Bolsa Mágica. Una partida con más de 10 objetos sin ella puede no cargar bien en una GameCube.
+
+Partners never at 0 HP
+Compañeros nunca a 0 PC
+
+After a battle, a partner who fell is back at 1 HP.
+Tras un combate, un compañero caído vuelve con 1 PC.
+
+Level up with the D-pad
+Subir de nivel con la cruceta
+
+The level-up screen (HP, FP or BP) also takes the D-pad, not only the stick.
+La pantalla de subida de nivel (PC, PF o PM) también acepta la cruceta, no solo el stick.
+
+Healing items heal every partner
+Los objetos curativos curan a todos los compañeros
+
+In the field, an item used on a partner heals the other partners too.
+En el mapa, un objeto usado en un compañero cura también a los demás compañeros.
+
+Skip repeated scenes
+Saltar escenas repetidas
+
+Scenes already seen on this file go faster or straight to their end: the Crystal Star fanfare and map reveal, Zess T.'s cooking, the Glitz Pit's match scenes, the train and blimp tickets.
+Las escenas ya vistas en este archivo van más rápido o directamente al final: la fanfarria de la Estrella de Cuarzo y el mapa revelado, la cocina de T. Nancy, las escenas de los combates del Coliseo, los billetes del tren y del dirigible.
+
+Fast travel
+Viaje rápido
+
+Travel to a hub from the settings page (All settings, Travel to): Rogueport, then one more per Crystal Star.
+Viaja a una ciudad desde la página de ajustes (Todos los ajustes, Viajar a): Villa Viciosa, y una más por cada Estrella de Cuarzo.
+
+Faster battle menus
+Menús de combate más rápidos
+
+The battle command wheel opens and turns twice as fast.
+La rueda de comandos de combate se abre y gira el doble de rápido.
+
+Tattle without a turn
+Descripción sin gastar el turno
+
+Tactics has a Tattle entry when an enemy on the field was tattled before: it reads their tattles again, and the turn is still yours.
+Acciones tiene una entrada Descripción cuando un enemigo presente ya fue descrito: vuelve a leer su descripción, y el turno sigue siendo tuyo.
+
+Battle pop-ups
+Avisos de combate
+
+GUARD! and SUPERGUARD! over Mario or the partner, a resisted status's icon bouncing off, and status icons kept on screen while you pick a target.
+GUARD! y SUPERGUARD! sobre Mario o el compañero, el icono de un estado resistido que rebota y los iconos de estado visibles mientras eliges un objetivo.
+
+Retry on Game Over
+Reintentar tras Game Over
+
+Keeps a save state of each room and battle as you enter it; on the Game Over screen, Y goes back to it. A short pause at each room's start.
+Guarda un estado de cada sala y combate al entrar; en la pantalla de Game Over, Y vuelve a él. Una pausa corta al empezar cada sala.
+
+Remake balance
+Equilibrio del remake
+
+Star Power gain x1.5, Power Bounce's timing narrowing half as fast, First Attack at 0 BP, Hammer Throw piercing defense.
+Ganancia de Poder Estelar x1,5, el ritmo del Rebote Potente se estrecha la mitad de rápido, Primer Ataque a 0 PM, Lanzamiento Martillo atraviesa la defensa.
+
+Pit of 100 Trials extras
+Extras de las Cien Mazmorras
+
+Coins for each floor cleared (1 more per 10 floors down), and the Mover on every floor once floor 50 has been cleared.
+Monedas por cada piso superado (1 más cada 10 pisos), y el guía en cada piso una vez superado el piso 50.
+
+Glitz Pit kindness
+Coliseo indulgente
+
+A lost match costs no rank, and a match's bonus condition stays at the top of the screen.
+Un combate perdido no cuesta rango, y la condición extra de un combate se queda en la parte de arriba de la pantalla.
+
+Play as Luigi
+Jugar como Luigi
+
+Luigi in Mario's place, with Mario's moves, in the field, battles, menus and credits; the text calls him Luigi and the other Luigi stays out of sight. Saves are not changed.
+Luigi en lugar de Mario, con las habilidades de Mario, en el mapa, en combate, en los menús y en los créditos; el texto lo llama Luigi y el otro Luigi no se ve. Las partidas no cambian.
+
+A new file starts with what you choose here, taken from the file New Game+ from file names. Choose before starting the new file.
+Un archivo nuevo empieza con lo que elijas aquí, tomado del archivo que indica New Game+ desde el archivo. Elígelo antes de empezar el archivo nuevo.
+
+New Game+ from file
+New Game+ desde el archivo
+
+Travel to
+Viajar a
+
+Journal
+Diario
+
+This file's progress.
+El progreso de este archivo.
+
+Badge loadouts
+Juegos de medallas
+
+Store the badges worn as one of four named sets and wear a set again from the settings page (All settings, Loadouts), in the field (only when Mario's BP covers it). Kept beside the save, not in it.
+Guarda las medallas puestas como uno de cuatro juegos con nombre y vuelve a ponerte un juego desde la página de ajustes (Todos los ajustes, Juegos), en el mapa (solo si los PM de Mario alcanzan). Se guarda junto a la partida, no dentro.
+
+Loadouts
+Juegos
+
+Storage at every Save Block
+Almacén en cada Bloque de Guardado
+
+A Save Block also offers to store items and take them out, as the Rogueport shop's counter does, before saving.
+Un Bloque de Guardado también ofrece guardar y sacar objetos, como el mostrador de la tienda de Villa Viciosa, antes de guardar.
+
+Walk-speed boost
+Impulso de velocidad
+
+Mario walks and runs faster while the Boost key or Boost button is held.
+Mario camina y corre más rápido mientras se mantiene la Tecla de impulso o el Botón de impulso.
+
+Boost speed
+Velocidad del impulso
+
+Left Shift
+Mayús izquierda
+
+Boost key
+Tecla de impulso
+
+Boost button
+Botón de impulso
+
+Coins from battles
+Monedas de los combates
+
+The coins a won battle drops, after Merlee, Money Money and a First Strike.
+Las monedas que deja un combate ganado, después de Merlí, Doble Dinero y un Primer Golpe.
+
+Star Points from battles
+Puntos Estrella de los combates
+
+A battle's Star Points (still at most 100, a level).
+Los Puntos Estrella de un combate (como mucho 100, un nivel).
+
+Star Piece and Shine Sprite tracker
+Contador de Piezas Estrella y Soles
+
+How many of the current map's Star Pieces and Shine Sprites are found, in a corner.
+Cuántas Piezas Estrella y Soles del mapa actual se han encontrado, en una esquina.
+
+On this map
+En este mapa
+
+Star Pieces and Shine Sprites found here.
+Piezas Estrella y Soles encontrados aquí.
+
+Faster text outside battle
+Texto más rápido fuera del combate
+
+Messages in the field print three times as fast, and their windows open, turn pages and close faster (on top of Text speed).
+Los mensajes en el mapa se escriben tres veces más rápido, y sus ventanas se abren, pasan página y se cierran más rápido (además de la Velocidad del texto).
+
+Jukebox
+Gramola
+
+Lists the music heard on this file on the settings page (All settings, Tracks); pick a track to play it.
+Muestra la música oída en este archivo en la página de ajustes (Todos los ajustes, Pistas); elige una pista para escucharla.
+
+Tracks
+Pistas
+
+Junk-item helper in shops
+Ayuda para objetos repetidos en tiendas
+
+Selling, an item or badge Mario has more than one of shows how many (a worn badge is never marked).
+Al vender, un objeto o medalla que Mario tiene repetido muestra cuántos tiene (una medalla puesta nunca se marca).
+
+Boss rush
+Serie de jefes
+
+Boss refights
+Revanchas contra jefes
+
+Endless Glitz Pit
+Coliseo sin fin
+
+Built-in randomizer
+Aleatorio integrado
+
+Backups kept
+Copias que se guardan
+
+Dated copies of each save file, made when the game saves. 0: none.
+Copias con fecha de cada archivo de partida, hechas cuando el juego guarda. 0: ninguna.
+
+Restore a backup
+Restaurar una copia
+
+Copy a save to another release
+Copiar una partida a otra versión
+
+Change Paper Cut's settings here.
+Cambia aquí los ajustes de Paper Cut.
+
+On
+Sí
+
+Widescreen
+Panorámico
+
+Never skip loading graphics
+No saltar nunca gráficos en carga
+
+Extra frames between the game's own 60: smoother motion.
+Fotogramas extra entre los 60 del juego: movimiento más suave.
+
+Present at the display's refresh: no tearing.
+Mostrar al ritmo de la pantalla: sin cortes.
+
+16:9 instead of the game's own 4:3. Some rooms and scenes end at the 4:3 edges.
+16:9 en lugar del 4:3 del juego. Algunas salas y escenas terminan en los bordes del 4:3.
+
+A blurred copy of the picture instead of black bars beside it.
+Una copia difuminada de la imagen en lugar de franjas negras a los lados.
+
+Auto: the window's size; or a multiple of 640x480.
+Auto: el tamaño de la ventana; o un múltiplo de 640x480.
+
+Smooth as the game draws them, or sharp pixels.
+Suaves como las dibuja el juego, o píxeles nítidos.
+
+Something drawn for the first time waits for its graphics.
+Lo que se dibuja por primera vez espera a sus gráficos.
+
+Everything's volume.
+El volumen de todo.
+
+The music's volume.
+El volumen de la música.
+
+Music
+Música
+
+Everything that isn't music or ambience.
+Todo lo que no es música ni ambiente.
+
+Sound effects
+Efectos de sonido
+
+Wind, water, crowds and other sounds of a place.
+El viento, el agua, el público y otros sonidos de un lugar.
+
+Ambience
+Ambiente
+
+Silent while another window has the focus.
+Silencio mientras otra ventana está activa.
+
+Mute in the background
+Silencio en segundo plano
+
+The controller's rumble.
+La vibración del mando.
+
+The game's own Rumble option still applies.
+La opción de vibración del propio juego sigue aplicándose.
+
+How fast the game's text appears.
+La velocidad con la que aparece el texto del juego.
+
+A ring shows when to press A in battle.
+Un aro indica cuándo pulsar A en combate.
+
+Fast-forward: Tab, the right stick's click, or >> on screen.
+Avance rápido: Tab, pulsar el stick derecho o >> en la pantalla.
+
+On: a press turns it on and off. Off: held.
+Sí: una pulsación lo activa y lo desactiva. No: mantener.
+
+Fast-forward toggles
+Avance rápido con una pulsación
+
+The game waits while another window has the focus.
+El juego espera mientras otra ventana está activa.
+
+Pause in the background
+Pausa en segundo plano
+
+Controllers still work while another window has the focus.
+Los mandos siguen funcionando mientras otra ventana está activa.
+
+Controllers in the background
+Mandos en segundo plano
+
+The display's rate
+Los de la pantalla
+
+Top left
+Arriba a la izquierda
+
+Top right
+Arriba a la derecha
+
+Bottom left
+Abajo a la izquierda
+
+Bottom right
+Abajo a la derecha
+
+Sharp (pixels)
+Nítido (píxeles)
+
+Fast (2x)
+Rápido (2x)
+
+Faster (4x)
+Más rápido (4x)
+
+Instant
+Instantáneo
+
+On screen
+En pantalla
+
+Every room
+En cada sala
+
+At a room change, every 2 minutes
+Al cambiar de sala, cada 2 minutos
+
+At a room change, every 5 minutes
+Al cambiar de sala, cada 5 minutos
+
+At a room change, every 10 minutes
+Al cambiar de sala, cada 10 minutos
+
+GameCube (the game's own)
+GameCube (los del juego)
+
+Keyboard
+Teclado
+
+Superguards only
+Solo superdefensa
+
+No guarding at all
+Ninguna defensa
+
+Harder (as 2 Unsimplifiers)
+Más difícil (como 2 Complicadificadores)
+
+Hardest (as 3)
+Lo más difícil (como 3)
+
+21:9 (ultrawide)
+21:9 (ultrapanorámico)
+
+32:9 (super ultrawide)
+32:9 (súper ultrapanorámico)
+
+The window's
+El de la ventana
+
+Sharper (-0.5)
+Más nítido (-0,5)
+
+Sharper still (-1)
+Aún más nítido (-1)
+
+Sharpest (-1.5)
+Lo más nítido (-1,5)
+
+Softer (+0.5)
+Más suave (+0,5)
+
+Paper grain
+Grano de papel
+
+Sharpen
+Enfocar
+
+Frame-time graph
+Gráfico de tiempos de fotograma
+
+Graph and timings
+Gráfico y tiempos
+
+Level and stats
+Nivel y atributos
+
+Level, stats and badges
+Nivel, atributos y medallas
+
+Level, stats, badges and Tattle Log
+Nivel, atributos, medallas y Descripciones
+
+Easy (enemy HP 75 %, attacks 50 %)
+Fácil (PC enemigos 75 %, ataques 50 %)
+
+Hard (enemy HP 150 %, attacks 150 %)
+Difícil (PC enemigos 150 %, ataques 150 %)
+
+Custom
+Personalizada
+
+Wider windows
+Márgenes más amplios
+
+Automatic
+Automático
+
+Left Ctrl
+Ctrl izquierdo
+
+Left Alt
+Alt izquierdo
+
+Right Shift
+Mayús derecha
+
+Every story step
+Cada paso de la historia
+
+Custom (splits.txt)
+Personalizado (splits.txt)
+
+German (from the European disc)
+Alemán (del disco europeo)
+
+French (from the European disc)
+Francés (del disco europeo)
+
+Spanish (from the European disc)
+Español (del disco europeo)
+
+Italian (from the European disc)
+Italiano (del disco europeo)
+
+HUD size
+Tamaño de la interfaz
+
+Message size
+Tamaño de los mensajes
+
+The message and choice windows larger, on top of HUD size. A window grows only while it fits the screen: a little in 4:3, up to about 145% in widescreen.
+Las ventanas de mensajes y de elección más grandes, además del tamaño de la interfaz. Una ventana crece solo mientras cabe en la pantalla: un poco en 4:3, hasta un 145 % en panorámico.
+
+Y: a hint for where to go next.
+Y: una pista de adónde ir ahora.
+
+Where next:
+Ahora:
+
+The story is over: go wherever you like.
+La historia ha terminado: ve adonde quieras.
+
+Second player (co-op)
+Segundo jugador (cooperativo)
+
+Player 2 plays the partner: A on another controller joins. In battle: its moves, action commands and guards. In the field: the stick walks it, A hops, B talks or hits, X is its ability, L or R the next partner; Mario's Y calls it back. On a phone or tablet, pair two controllers.
+El jugador 2 lleva al compañero: A en otro mando se une. En combate: sus movimientos, comandos de acción y defensas. En el mapa: el stick lo mueve, A salta, B habla o golpea, X es su habilidad, L o R el siguiente compañero; la Y de Mario lo llama de vuelta. En un móvil o tableta, empareja dos mandos.
+
+connected
+conectado
+
+Sync saves through a folder
+Sincronizar partidas con una carpeta
+
+Saves are brought from the folder when the game starts: restart it to get another computer's progress.
+Las partidas se traen de la carpeta al iniciar el juego: reinícialo para tener el progreso de otro ordenador.
+
+Choose a folder
+Elegir una carpeta
+
+Choose another folder
+Elegir otra carpeta
+
+Stop using it
+Dejar de usarla
+
+Texture upscaling
+Escalado de texturas
+
+The game's textures made larger by an edge-following filter as they load: smoother lines on paper and signs. More video memory. From the next start.
+Las texturas del juego se amplían al cargarse con un filtro que sigue los bordes: líneas más suaves en el papel y los carteles. Más memoria de vídeo. Desde el próximo inicio.
+
+# 0.3.0: the sections' own text, the controller's button names
+
+None yet. Add the disc image of your copy of the game (.iso, .rvz, .gcm...).
+Aún ninguna. Añade la imagen de disco de tu copia del juego (.iso, .rvz, .gcm...).
+
+Remove from list
+Quitar de la lista
+
+Add the disc image of your copy of the game to play. The list remembers it, and each version (Japanese, US, European) plays with its own build of the port.
+Añade la imagen de disco de tu copia del juego para jugar. La lista la recuerda, y cada versión (japonesa, estadounidense, europea) funciona con su propia versión del port.
+
+Disc ID %s
+ID del disco %s
+
+Where you left off, %04d-%02d-%02d %02d:%02d
+Donde lo dejaste, %04d-%02d-%02d %02d:%02d
+
+Start from the title
+Empezar desde el título
+
+Skip to this disc next time
+Ir directamente a este disco la próxima vez
+
+To see this screen again: Settings > General in the game.
+Para volver a ver esta pantalla: Ajustes > General en el juego.
+
+Paper Cut plays Paper Mario: The Thousand-Year Door as a native program, built from the game's C decompilation, with no emulator. You need your own copy of the game: a disc image of the Japanese, US or European release.
+Paper Cut ejecuta Paper Mario: La Puerta Milenaria como un programa nativo, construido a partir de la descompilación en C del juego, sin emulador. Necesitas tu propia copia del juego: una imagen de disco de la versión japonesa, estadounidense o europea.
+
+Paper Cut %s
+Paper Cut %s
+
+This build: %s (%s)
+Esta versión: %s (%s)
+
+Paper Cut is under the MIT licence. It is built with: Aurora (MIT), SDL 3 (zlib), Dawn (BSD 3-Clause), nod (MIT), Dear ImGui (MIT), FreeType (FreeType License), libpng (libpng License), zlib (zlib), Zstandard (BSD 3-Clause), xxHash (BSD 2-Clause), {fmt} (MIT), Abseil (Apache 2.0), Tracy (BSD 3-Clause), SQLite (public domain), MusyX (MIT), SGI's GLU tessellator (SGI Free Software License B 2.0), and the Fredoka typeface (SIL Open Font License 1.1).
+Paper Cut está bajo la licencia MIT. Está construido con: Aurora (MIT), SDL 3 (zlib), Dawn (BSD 3-Clause), nod (MIT), Dear ImGui (MIT), FreeType (FreeType License), libpng (libpng License), zlib (zlib), Zstandard (BSD 3-Clause), xxHash (BSD 2-Clause), {fmt} (MIT), Abseil (Apache 2.0), Tracy (BSD 3-Clause), SQLite (dominio público), MusyX (MIT), el teselador GLU de SGI (SGI Free Software License B 2.0) y la tipografía Fredoka (SIL Open Font License 1.1).
+
+The licence texts are in THIRD_PARTY.txt of Paper Cut's desktop packages and in its source (docs/THIRD_PARTY.md).
+Los textos de las licencias están en THIRD_PARTY.txt de los paquetes de escritorio de Paper Cut y en su código fuente (docs/THIRD_PARTY.md).
+
+The licence texts are in THIRD_PARTY.txt and OFL.txt beside Paper Cut.
+Los textos de las licencias están en THIRD_PARTY.txt y OFL.txt junto a Paper Cut.
+
+Play
+Jugar
+
+About
+Acerca de
+
+Player 1
+Jugador 1
+
+Player 2
+Jugador 2
+
+Player 3
+Jugador 3
+
+Player 4
+Jugador 4
+
+No controller is this player: choose one under Controllers.
+Ningún mando es este jugador: elige uno en Mandos.
+
+Press a button...
+Pulsa un botón...
+
+Swap A and B
+Intercambiar A y B
+
+Copy the last crash report
+Copiar el último informe de error
+
+Copied
+Copiado
+
+last_crash.txt in the save folder; paste it to whoever is helping you.
+last_crash.txt en la carpeta de partidas; pégalo a quien te esté ayudando.
+
+The game crashed last time
+El juego se cerró por un error la última vez
+
+A report of where it crashed was saved. Copy it and paste it to whoever is helping you.
+Se guardó un informe de dónde falló. Cópialo y pégalo a quien te esté ayudando.
+
+Copy report
+Copiar el informe
+
+Your saves are kept the same as in a folder in iCloud Drive (pick the TTYD folder the Mac version uses to share them). The newer copy of each save wins; replaced saves are kept in Backups.
+Tus partidas se mantienen iguales que en una carpeta de iCloud Drive (elige la carpeta TTYD que usa la versión de Mac para compartirlas). Gana la copia más reciente de cada partida; las partidas sustituidas se guardan en Backups.
+
+Choose another iCloud Drive folder
+Elegir otra carpeta de iCloud Drive
+
+Choose an iCloud Drive folder
+Elegir una carpeta de iCloud Drive
+
+Your saves are kept the same as in iCloud Drive's TTYD folder (choose that folder on an iPhone or iPad to share them). The newer copy of each save wins; replaced saves are kept in Backups.
+Tus partidas se mantienen iguales que en la carpeta TTYD de iCloud Drive (elige esa carpeta en un iPhone o iPad para compartirlas). Gana la copia más reciente de cada partida; las partidas sustituidas se guardan en Backups.
+
+Your saves are kept the same as in a folder a sync service keeps the same across computers: OneDrive, Dropbox, Google Drive, Syncthing, or iCloud for Windows' iCloud Drive (its TTYD folder, to share them with a Mac or an iPhone). The newer copy of each save wins; replaced saves are kept in Backups.
+Tus partidas se mantienen iguales que en una carpeta que un servicio de sincronización mantiene igual en todos tus ordenadores: OneDrive, Dropbox, Google Drive, Syncthing o el iCloud Drive de iCloud para Windows (su carpeta TTYD, para compartirlas con un Mac o un iPhone). Gana la copia más reciente de cada partida; las partidas sustituidas se guardan en Backups.
+
+Save states are not available in this build yet.
+Los estados guardados aún no están disponibles en esta versión.
+
+Slot %d
+Ranura %d
+
+Save
+Guardar
+
+Load
+Cargar
+
+Refresh
+Actualizar
+
+Open the warps folder
+Abrir la carpeta de warps
+
+Status: %s
+Estado: %s
+
+Seed: %s
+Semilla: %s
+
+Choose a seed...
+Elegir una semilla...
+
+Server
+Servidor
+
+Slot
+Slot
+
+Password
+Contraseña
+
+Connect
+Conectar
+
+Disconnect
+Desconectar
+
+Clear
+Borrar
+
+No setting matches.
+Ningún ajuste coincide.
+
+%s: %d of %d earned
+%s: %d de %d conseguidos
+
+Load a save file to keep its achievements.
+Carga una partida para conservar sus logros.
+
+The Practice tab changed this game: none are given until a file is loaded again.
+La pestaña Práctica cambió esta partida: no se dan logros hasta que se cargue un archivo de nuevo.
+
+Now: %s
+Ahora: %s
+
+A preset sets the Accessibility tab's difficulty and assists, Retry on Game Over and the rules below. Change any of them after: the preset shows as Custom. They apply from the next battle.
+Un preajuste fija la dificultad y las ayudas de la pestaña Accesibilidad, Reintentar tras Game Over y las reglas de abajo. Cambia cualquiera después: el preajuste aparece entonces como Personalizado. Se aplican desde el siguiente combate.
+
+A character's model and animations (the paper cut-out's model file) and its textures, as the game reads them, to exports/ in the user folder. tools/port/character_tool.py turns the export into PNGs and files Blender opens, and the edited files into a mod that replaces the character (docs/CHARACTERS.md).
+El modelo y las animaciones de un personaje (el archivo de modelo del recortable de papel) y sus texturas, tal como el juego los lee, a exports/ en la carpeta de usuario. tools/port/character_tool.py convierte la exportación en PNG y archivos que abre Blender, y los archivos editados en un mod que sustituye al personaje (docs/CHARACTERS.md).
+
+No models found on the disc.
+No se encontraron modelos en el disco.
+
+%zu of %zu
+%zu de %zu
+
+Export
+Exportar
+
+Open the exports folder
+Abrir la carpeta de exportaciones
+
+Mario is a_mario (field; _r his back), e_mario (story scenes) and b_mario (battle), with variants; a partner or NPC is usually c_<name>. Filter "mario" and export them all for the whole set.
+Mario es a_mario (mapa; _r su espalda), e_mario (escenas de la historia) y b_mario (combate), con variantes; un compañero o PNJ suele ser c_<nombre>. Filtra «mario» y expórtalos todos para el conjunto completo.
+
+battery %d%%
+batería %d%%
+
+charging
+cargando
+
+Held: %s
+Pulsados: %s
+
+nothing
+nada
+
+Dead zones
+Zonas muertas
+
+Triggers click at a point (as the GameCube's L and R)
+Los gatillos se activan en un punto (como los L y R de GameCube)
+
+No controller connected. Any Xbox, PlayStation, Switch, GameCube (through an adapter), MFi or other USB or Bluetooth controller works; one this page doesn't list can be set up below.
+No hay ningún mando conectado. Funciona cualquier mando de Xbox, PlayStation, Switch, GameCube (con un adaptador), MFi u otro mando USB o Bluetooth; uno que esta página no muestre se puede configurar abajo.
+
+Not playing
+No juega
+
+Controller
+Mando
+
+Hide test
+Ocultar la prueba
+
+Test
+Probar
+
+Make it a player to set its dead zones.
+Hazlo jugador para ajustar sus zonas muertas.
+
+Player 1 plays; player 2 can play the partner in battle and in the field (Second player, below). The buttons of each player are set under Bindings.
+El jugador 1 juega; el jugador 2 puede llevar al compañero en combate y en el mapa (Segundo jugador, abajo). Los botones de cada jugador se ajustan en Asignaciones.
+
+Couldn't open it: 
+No se pudo abrir:
+
+SDL didn't take the mapping: 
+SDL no aceptó la configuración:
+
+%s is set up. It's in the list above now, and next time.
+%s está configurado. Ya está en la lista de arriba, y también la próxima vez.
+
+%s is set up for now; it couldn't be saved for next time.
+%s está configurado por ahora; no se pudo guardar para la próxima vez.
+
+The controller went away.
+El mando ha desaparecido.
+
+Step %d of %d: press %s
+Paso %d de %d: pulsa %s
+
+Skip
+Saltar
+
+Cancel
+Cancelar
+
+Set it up
+Configurar
+
+Every connected controller is recognised.
+Todos los mandos conectados se reconocen.
+
+A controller listed here works once you press each of its buttons when asked. Mappings you make are kept in gamecontrollerdb.txt in the save folder.
+Un mando de esta lista funciona en cuanto pulsas cada uno de sus botones cuando se te pide. Tus configuraciones se guardan en gamecontrollerdb.txt en la carpeta de partidas.
+
+Twitch channel
+Canal de Twitch
+
+The channel's name, as in twitch.tv/<name>. Its chat is read as a guest: no account needed.
+El nombre del canal, como en twitch.tv/<nombre>. Su chat se lee como invitado: no hace falta cuenta.
+
+Viewers type: !gift !rock !star !drain !bingo !cheer !leave !join. In battles only.
+Los espectadores escriben: !gift !rock !star !drain !bingo !cheer !leave !join. Solo en combates.
+
+Lately:
+Últimamente:
+
+Paper white
+Blanco papel
+
+Highlight boost
+Refuerzo de luces
+
+Not available here.
+No disponible aquí.
+
+Needs a display with HDR turned on (on Windows: Settings, System, Display, Use HDR) and the Direct3D or Metal graphics backend. Vulkan and OpenGL, as on Linux and Android, show SDR only.
+Necesita una pantalla con HDR activado (en Windows: Configuración, Sistema, Pantalla, Usar HDR) y el motor gráfico Direct3D o Metal. Vulkan y OpenGL, como en Linux y Android, solo muestran SDR.
+
+Showing in HDR.
+Mostrando en HDR.
+
+Turn on Fast travel above to use it.
+Activa Viaje rápido arriba para usarlo.
+
+In the field only; the trip starts once this page is closed.
+Solo en el mapa; el viaje empieza al cerrar esta página.
+
+Shown while a game is in the field or a battle.
+Se muestra mientras una partida está en el mapa o en un combate.
+
+Crystal Stars: %d of 7
+Estrellas de Cuarzo: %d de 7
+
+Trouble Center: %d of %d solved
+Centro de problemas: %d de %d resueltos
+
+Not solved yet: #%s
+Aún sin resolver: #%s
+
+Badges found: %d of %d
+Medallas encontradas: %d de %d
+
+Recipes cooked: %d of %d
+Recetas cocinadas: %d de %d
+
+Tattle Log: %d of %d
+Descripciones: %d de %d
+
+Star Pieces held: %d    Shine Sprites held: %d
+Piezas Estrella: %d    Soles: %d
+
+Turn on Badge loadouts above to use them.
+Activa Juegos de medallas arriba para usarlos.
+
+Shown while a game is being played.
+Se muestra mientras se juega una partida.
+
+%2d badges
+%2d medallas
+
+  empty  
+  vacío
+
+Store worn
+Guardar las puestas
+
+Wear
+Ponerse
+
+None on this map (or no game in the field).
+Ninguna en este mapa (o ninguna partida en el mapa).
+
+Turn on Jukebox above: tracks are listed once heard on this file.
+Activa la Gramola arriba: las pistas aparecen una vez oídas en este archivo.
+
+%d track heard on this file
+%d pista oída en este archivo
+
+%d tracks heard on this file
+%d pistas oídas en este archivo
+
+Back to the map's music
+Volver a la música del mapa
+
+A track plays until the next room's music, or the button above.
+Una pista suena hasta la música de la siguiente sala, o hasta el botón de arriba.
+
+Every boss in story order, one fight after another, timed: from Lord Crump and Blooper to the Shadow Queen (16 fights). Fleeing a fight starts it again.
+Cada jefe en el orden de la historia, un combate tras otro, cronometrado: del primer jefe a la Reina de las Sombras (16 combates). Huir de un combate lo reinicia.
+
+Loadout
+Equipo
+
+Mario as he is in this file.
+Mario tal como está en este archivo.
+
+Level 15: 30 HP, 25 FP, 21 BP, Super Boots and Hammer, every partner, four Star Powers, eight items.
+Nivel 15: 30 PC, 25 PF, 21 PM, Superbotas y Supermartillo, todos los compañeros, cuatro Poderes Estelares, ocho objetos.
+
+Level 30: 60 HP, 50 FP, 51 BP, Ultra Boots and Hammer, every partner upgraded, all Star Powers, eight items.
+Nivel 30: 60 PC, 50 PF, 51 PM, Ultrabotas y Ultramartillo, todos los compañeros mejorados, todos los Poderes Estelares, ocho objetos.
+
+The loadout is lent for the run: Mario is as he was after it. Your badges stay as they are.
+El equipo se presta para la partida: después Mario vuelve a estar como antes. Tus medallas se quedan como están.
+
+Start the boss rush
+Empezar la serie de jefes
+
+Stop the boss rush
+Detener la serie de jefes
+
+Start it while a file is in play.
+Empiézala mientras se juega un archivo.
+
+Best (%s): %s
+Mejor (%s): %s
+
+The Glitz Pit's teams one after another, each match with a random condition (the Pit's own); keep it or the run ends. The enemies get stronger each round.
+Los equipos del Coliseo uno tras otro, cada combate con una condición al azar (las del propio Coliseo); cúmplela o la partida termina. Los enemigos son más fuertes en cada ronda.
+
+Start the endless Glitz Pit
+Empezar el Coliseo sin fin
+
+Stop
+Detener
+
+It opens once the story's Glitz Pit is done (chapter 3).
+Se abre una vez terminado el Coliseo de la historia (capítulo 3).
+
+Best: %d rounds
+Mejor: %d rondas
+
+Any boss you've beaten in this file's story, fought again: then back to the room you were in. Losing is a Game Over, as in the story (save first, or turn on Retry on Game Over).
+Cualquier jefe que hayas vencido en la historia de este archivo, otra vez: después, de vuelta a la sala donde estabas. Perder es un Game Over, como en la historia (guarda antes o activa Reintentar tras Game Over).
+
+Choose one while a file is in play.
+Elige uno mientras se juega un archivo.
+
+Fight
+Luchar
+
+Not yet
+Aún no
+
+No boss beaten yet on this file.
+Aún no has vencido a ningún jefe en este archivo.
+
+What it changes
+Lo que cambia
+
+Hooks (code that runs in place of or around the game's functions) show once its code runs.
+Los hooks (código que se ejecuta en lugar de las funciones del juego o a su alrededor) aparecen cuando su código se ejecuta.
+
+Its settings
+Sus ajustes
+
+Default
+Por defecto
+
+A mod is a folder or a .ttydmod/.zip file with a mod.json, in the mods folder. Where two mods change the same thing, the one higher in the list wins. Changes apply to what the game loads next (the next room or battle); textures change at once; a mod's code starts with the game.
+Un mod es una carpeta o un archivo .ttydmod/.zip con un mod.json, en la carpeta de mods. Cuando dos mods cambian lo mismo, gana el que está más arriba en la lista. Los cambios se aplican a lo que el juego carga después (la siguiente sala o combate); las texturas cambian al momento; el código de un mod arranca con el juego.
+
+Reload
+Recargar
+
+Open the mods folder
+Abrir la carpeta de mods
+
+No mods yet.
+Aún no hay mods.
+
+Code: running.
+Código: en marcha.
+
+Code: starts the next time the game starts.
+Código: arranca la próxima vez que se inicie el juego.
+
+Code: still running; it stops the next time the game starts.
+Código: aún en marcha; se detiene la próxima vez que se inicie el juego.
+
+A Dolphin texture pack works as it comes: put its folder in the textures folder, or in a mod's textures folder.
+Un paquete de texturas de Dolphin funciona tal cual: pon su carpeta en la carpeta de texturas o en la carpeta de texturas de un mod.
+
+Open the textures folder
+Abrir la carpeta de texturas
+
+Reload the packs
+Recargar los paquetes
+
+Reads the packs again while you play: edit a texture, reload, see it.
+Vuelve a leer los paquetes mientras juegas: edita una textura, recarga y mírala.
+
+Dump textures
+Extraer texturas
+
+Dump textures (when the game runs)
+Extraer texturas (cuando el juego está en marcha)
+
+Saves each texture the game draws that no pack replaces yet, under the name a pack uses, to make or extend a pack. Leave it off to play: it slows the game a little.
+Guarda cada textura que dibuja el juego y que ningún paquete sustituye todavía, con el nombre que usa un paquete, para hacer o ampliar uno. Déjalo desactivado para jugar: ralentiza un poco el juego.
+
+Open the dump folder
+Abrir la carpeta de extracción
+
+Count again
+Volver a contar
+
+Replaced: %d textures (%d files).
+Sustituidas: %d texturas (%d archivos).
+
+Seen in play: %d textures, %d of them replaced now (%d%%).
+Vistas en el juego: %d texturas, %d de ellas sustituidas ahora (%d%%).
+
+The coverage counts what the dump folder holds: each texture the game drew while dumping was on and no pack replaced it then. Play with dumping on to see more of the game.
+La cobertura cuenta lo que tiene la carpeta de extracción: cada textura que el juego dibujó mientras la extracción estaba activada y que ningún paquete sustituía entonces. Juega con la extracción activada para ver más del juego.
+
+Coverage: turn on dumping and play a while; the textures the game draws are then counted against the packs.
+Cobertura: activa la extracción y juega un rato; las texturas que dibuja el juego se comparan entonces con los paquetes.
+
+A pack names each texture by its size, format and a hash of its pixels and palette, as Dolphin does. Two files with one name replace the same texture, and only one is used: between mods, the one higher in the list; the mods before the textures folder; inside one folder, either, so keep one. Textures with the same pixels share a name, so one file replaces them all; a name with $ for a hash covers every texture it stands for.
+Un paquete nombra cada textura por su tamaño, su formato y un hash de sus píxeles y su paleta, como Dolphin. Dos archivos con un mismo nombre sustituyen la misma textura, y solo se usa uno: entre mods, el que está más arriba en la lista; los mods antes que la carpeta de texturas; dentro de una carpeta, cualquiera, así que guarda uno. Las texturas con los mismos píxeles comparten nombre, así que un archivo las sustituye todas; un nombre con $ en lugar de un hash cubre todas las texturas que representa.
+
+(the first 200)
+(las 200 primeras)
+
+Start
+Empezar
+
+Restart
+Reiniciar
+
+Split
+Split
+
+Reset
+Restablecer
+
+Game %s   Real %s
+Juego %s   Real %s
+
+Read splits.txt again
+Volver a leer splits.txt
+
+Port
+Puerto
+
+Hold the game
+Detener el juego
+
+One frame
+Un fotograma
+
+Ten frames
+Diez fotogramas
+
+Go on
+Seguir
+
+rand() state: %u (0x%08X)
+Estado de rand(): %u (0x%08X)
+
+Set now
+Fijar ahora
+
+Fixed seed
+Semilla fija
+
+Badges
+Medallas
+
+Key items
+Objetos clave
+
+Give
+Dar
+
+No room
+No hay sitio
+
+Held items (click to drop):
+Objetos llevados (haz clic para tirar):
+
+Flags (GSWF)
+Banderas (GSWF)
+
+Words (GSW)
+Palabras (GSW)
+
+Story (GSW 0)
+Historia (GSW 0)
+
+by number
+por número
+
+Now %d: %s
+Ahora %d: %s
+
+now
+ahora
+
+set
+fijar
+
+Shuffles the game's items among their places from a seed, with no Archipelago server: turn it on, pick the seed and what moves, then start the game and begin a new file. The same seed and choices always give the same game, so a seed can be shared.
+Baraja los objetos del juego entre sus lugares a partir de una semilla, sin servidor de Archipelago: actívalo, elige la semilla y lo que se mueve, luego inicia el juego y empieza un archivo nuevo. La misma semilla y las mismas opciones dan siempre la misma partida, así que una semilla se puede compartir.
+
+This run: %s
+Esta partida: %s
+
+This run: not randomized.
+Esta partida: sin barajar.
+
+Use the built-in randomizer instead
+Usar el modo Aleatorio integrado
+
+Randomize the game from the next start
+Barajar el juego desde el próximo inicio
+
+Every file played while it is on gets this seed's items, so start a new file for it, and turn it off again for your other files.
+Cada archivo que se juegue mientras está activado recibe los objetos de esta semilla: empieza un archivo nuevo para ello y desactívalo para tus otros archivos.
+
+Seed
+Semilla
+
+New seed
+Nueva semilla
+
+Any text. Empty: a random one is made at the start (and kept here).
+Cualquier texto. Vacío: se crea una al azar al inicio (y se guarda aquí).
+
+What is shuffled
+Lo que se baraja
+
+Key items, partners, the curses, hammer and boots move too, placed by the TTYD apworld's logic so the Shadow Queen can always be reached. That logic is the TTYD AP mod's open world (chapters open by items, not the story), so the mod must be installed as a code mod (Mods tab, docs/MODDING.md); without it the game can't be finished. Badges, items or Star Pieces must be shuffled too.
+Los objetos clave, los compañeros, las maldiciones, el martillo y las botas también se mueven, colocados por la lógica del apworld de TTYD para que siempre se pueda llegar a la Reina de las Sombras. Esa lógica es el mundo abierto del mod AP de TTYD (los capítulos se abren con objetos, no con la historia), así que el mod debe instalarse como mod de código (pestaña Mods, docs/MODDING.md); sin él, el juego no se puede terminar. También hay que barajar medallas, objetos o Piezas Estrella.
+
+Without key items the story is the game's own: only things the story never asks for move (badges, items nothing needs, Star Pieces, Shine Sprites, in the places the game hands them out itself), so every seed can be finished. No mod needed.
+Sin objetos clave la historia es la del juego: solo se mueven cosas que la historia nunca pide (medallas, objetos que nada necesita, Piezas Estrella, Soles, en los lugares donde el propio juego los entrega), así que toda semilla se puede terminar. No hace falta ningún mod.
+
+At the start, to the randomizer folder in the user folder (spoiler_<seed>.txt): where every item went and, for the open world, the order the logic expects key items to be found in.
+Al inicio, en la carpeta randomizer de la carpeta de usuario (spoiler_<semilla>.txt): adónde fue cada objeto y, para el mundo abierto, el orden en que la lógica espera encontrar los objetos clave.
+
+Check this seed
+Comprobar esta semilla
+
+Changes apply the next time the game starts.
+Los cambios se aplican la próxima vez que se inicie el juego.
+
+Card
+Tarjeta
+
+No backups yet: one is kept each time the game saves.
+Aún no hay copias de seguridad: se guarda una cada vez que el juego guarda.
+
+Replace the save with this one
+Sustituir la partida por esta
+
+Restore
+Restaurar
+
+Restore this card's saves from the launcher, before the game starts.
+Restaura las partidas de esta tarjeta desde el lanzador, antes de que empiece el juego.
+
+The Japanese release keeps its Pianta Parlor records differently; the copy is converted. Names typed in one release's letters may look different in another.
+La versión japonesa guarda de otra forma los récords de su salón de juegos; la copia se convierte. Los nombres escritos con las letras de una versión pueden verse distintos en otra.
+
+From
+De
+
+To
+A
+
+That card has no save of this game.
+Esa tarjeta no tiene ninguna partida de este juego.
+
+Copy to the card of the game that is running from the launcher, before it starts.
+Copia a la tarjeta del juego en marcha desde el lanzador, antes de que empiece.
+
+%s already has a save.
+%s ya tiene una partida.
+
+Open the release page
+Abrir la página de la versión
+
+%s (muted)
+%s (silenciado)
+
+Reset to 100%
+Volver al 100%
+
+Tap a speaker to mute or unmute. The device's own volume buttons still set its volume.
+Toca un altavoz para silenciar o activar el sonido. Los botones de volumen del dispositivo siguen ajustando su volumen.
+
+Click a speaker to mute or unmute. Keys anywhere: F9 quieter, F10 louder (with Shift, by 1), F3 mute.
+Haz clic en un altavoz para silenciar o activar el sonido. Teclas en cualquier momento: F9 más bajo, F10 más alto (con Mayús, de 1 en 1), F3 silencio.
+
+Mute while in the background
+Silenciar en segundo plano
+
+Window size
+Tamaño de la ventana
+
+Fit the picture
+Ajustar a la imagen
+
+The window's width to the picture's shape: no bars beside it.
+El ancho de la ventana según la forma de la imagen: sin barras a los lados.
+
+Centre
+Centrar
+
+Remember the window's size and place
+Recordar el tamaño y la posición de la ventana
+
+Keep the window above others
+Mantener la ventana sobre las demás
+
+Drag the window's edges to any size; the picture keeps its shape. F11 or Alt+Enter: full screen. The window opens where you left it next time.
+Arrastra los bordes de la ventana a cualquier tamaño; la imagen conserva su forma. F11 o Alt+Intro: pantalla completa. La ventana se abre la próxima vez donde la dejaste.
+
+!rock, !drain and !leave.
+!rock, !drain y !leave.
+
+Chat
+Chat
+
+New Game+
+New Game+
+
+Mods
+Mods
+
+Splits
+Splits
+
+LiveSplit
+LiveSplit
+
+RNG
+Azar
+
+GSW and GSWF: the story's progress and what has happened.
+GSW y GSWF: el progreso de la historia y lo que ha pasado.
+
+the bottom face button (A on the GameCube)
+el botón de abajo (A en GameCube)
+
+the right face button
+el botón de la derecha
+
+the left face button
+el botón de la izquierda
+
+the top face button
+el botón de arriba
+
+Select / Back (or skip)
+Select / Back (o saltar)
+
+the left shoulder button
+el botón superior izquierdo
+
+the right shoulder button (Z)
+el botón superior derecho (Z)
+
+the left trigger (L)
+el gatillo izquierdo (L)
+
+the right trigger (R)
+el gatillo derecho (R)
+
+the d-pad up
+la cruceta arriba
+
+the d-pad down
+la cruceta abajo
+
+the d-pad left
+la cruceta a la izquierda
+
+the d-pad right
+la cruceta a la derecha
+
+the left stick to the right
+el stick izquierdo a la derecha
+
+the left stick down
+el stick izquierdo abajo
+
+the right stick to the right (or skip)
+el stick derecho a la derecha (o saltar)
+
+the right stick down (or skip)
+el stick derecho abajo (o saltar)
+
+Joy-Con pair
+Pareja de Joy-Con
+
+None
+Ninguno
+
+Cross
+Equis
+
+Circle
+Círculo
+
+Square
+Cuadrado
+
+Triangle
+Triángulo
+
+Menu
+Menú
+
+View
+Vista
+
+Left stick press
+Pulsar el stick izquierdo
+
+Right stick press
+Pulsar el stick derecho
+
+D-pad up
+Cruceta arriba
+
+D-pad down
+Cruceta abajo
+
+D-pad left
+Cruceta izquierda
+
+D-pad right
+Cruceta derecha
+
+Mute
+Silencio
+
+Capture
+Captura
+
+Quick access
+Acceso rápido
+
+Share
+Compartir
+
+Paddle 1
+Palanca 1
+
+Paddle 3
+Palanca 3
+
+Paddle 2
+Palanca 2
+
+Paddle 4
+Palanca 4
+
+Touchpad
+Panel táctil
+
+Other button
+Otro botón
+
+Stick
+Stick
+
+C-stick
+Stick C
+
+L clicks at
+L se activa al
+
+R clicks at
+R se activa al
+
+# 0.3.0: the sections' own text, the controller's button names
+
+Player 2 joined: their stick walks the partner.
+El jugador 2 se une: su stick mueve al compañero.
+
+A second controller: turn on Second player (Controls) to play the partner.
+Un segundo mando: activa Segundo jugador (Controles) para llevar al compañero.
+
+Player 2 left: the partner follows Mario.
+El jugador 2 se fue: el compañero sigue a Mario.
+
+# 0.3.0: the sections' own text, the controller's button names
+
+Players
+Jugadores
+
+Player 1 (Mario): %s
+Jugador 1 (Mario): %s
+
+Player 1 (Mario): the keyboard
+Jugador 1 (Mario): el teclado
+
+Player 2 (the partner): %s
+Jugador 2 (el compañero): %s
+
+Player 2: nobody yet. Press A on another controller to join.
+Jugador 2: aún nadie. Pulsa A en otro mando para unirte.
+
+Player 2: nobody (co-op is off).
+Jugador 2: nadie (el cooperativo está desactivado).
+
+Press A on player 2's controller...
+Pulsa A en el mando del jugador 2...
+
+Stop co-op
+Detener el cooperativo
+
+Start co-op
+Empezar el cooperativo
+
+Choose player 2's controller
+Elegir el mando del jugador 2
+
+Let player 2 go
+Soltar al jugador 2
+
+Choosing player 1's controller moves it to player 2, and player 1 plays on the keyboard. Each player's buttons are set under Bindings.
+Elegir el mando del jugador 1 lo pasa al jugador 2, y el jugador 1 juega con el teclado. Los botones de cada jugador se ajustan en Asignaciones.
+
+Co-op is on: press A on another controller to join.
+El cooperativo está activado: pulsa A en otro mando para unirte.
+
+a controller
+un mando
+
+Bars where a scene ends
+Barras donde termina una escena
+
+In the rooms whose sets end before a wide screen's edges, and in battles past 16:9, bars beside the picture instead of the empty space past the set.
+En las salas cuyo decorado termina antes de los bordes de una pantalla ancha, y en los combates más allá de 16:9: barras junto a la imagen en lugar del vacío tras el decorado.
+
+File %d
+Archivo %d

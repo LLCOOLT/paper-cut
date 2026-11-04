@@ -1,0 +1,190 @@
+# Bindings: every key and controller button on one page (Italiano)
+
+Bindings
+Assegnazioni
+
+Every key and controller button: the game's, and Paper Cut's own shortcuts.
+Ogni tasto e ogni pulsante del controller: quelli del gioco e le scorciatoie di Paper Cut.
+
+Settings (open, close)
+Impostazioni (apri, chiudi)
+
+Fast-forward
+Avanti veloce
+
+Fast-forward on and off
+Avanti veloce sì e no
+
+Rewind (held)
+Riavvolgi (tenuto)
+
+Screenshot
+Istantanea
+
+Save state
+Salva stato
+
+Load state
+Carica stato
+
+Frame advance (on, off)
+Fotogramma per fotogramma (sì, no)
+
+Frame advance: one frame
+Fotogramma per fotogramma: uno
+
+Window or full screen
+Finestra o schermo intero
+
+Volume down
+Abbassa il volume
+
+Volume up
+Alza il volume
+
+Stick up
+Stick su
+
+Stick down
+Stick giù
+
+Stick left
+Stick a sinistra
+
+Stick right
+Stick a destra
+
+C-stick up
+Stick C su
+
+C-stick down
+Stick C giù
+
+C-stick left
+Stick C a sinistra
+
+C-stick right
+Stick C a destra
+
+Left stick left
+Stick sinistro a sinistra
+
+Left stick right
+Stick sinistro a destra
+
+Left stick up
+Stick sinistro su
+
+Left stick down
+Stick sinistro giù
+
+Right stick left
+Stick destro a sinistra
+
+Right stick right
+Stick destro a destra
+
+Right stick up
+Stick destro su
+
+Right stick down
+Stick destro giù
+
+Press a button (or two)...
+Premi un pulsante (o due)...
+
+(none)
+(nessuno)
+
+Choose, then press the key or button. Right-click, X or Delete: none.
+Scegli, poi premi il tasto o il pulsante. Clic destro, X o Canc: nessuno.
+
+%s is already %s.
+%s è già %s.
+
+Kept for both, the game's button wins and the action does nothing.
+Tenuto per entrambi, vince il pulsante del gioco e l'azione non fa nulla.
+
+Swap
+Scambia
+
+%s gets %s.
+%s riceve %s.
+
+Keep both
+Tieni entrambi
+
+Sticks and triggers
+Stick e grilletti
+
+Swap the sticks
+Scambia gli stick
+
+Invert the stick's X
+Inverti la X dello stick
+
+Invert the stick's Y
+Inverti la Y dello stick
+
+Invert the C-stick's X
+Inverti la X dello stick C
+
+Invert the C-stick's Y
+Inverti la Y dello stick C
+
+Analog, clicking at a point (as the GameCube's)
+Analogici, con un clic a un punto (come sul GameCube)
+
+Analog only
+Solo analogici
+
+Digital (past the point: all the way)
+Digitali (oltre il punto: fino in fondo)
+
+Triggers
+Grilletti
+
+The game's buttons
+I pulsanti del gioco
+
+Second key
+Secondo tasto
+
+Action
+Azione
+
+The keyboard plays as player 1.
+La tastiera gioca come giocatore 1.
+
+Paper Cut's actions
+Azioni di Paper Cut
+
+Choose a cell, then press the key or button (Escape: leave it). An action's controller binding can be two buttons: hold the first, press the second. Any controller does the actions; a key or button that is also one of the game's does only the game's. Changed bindings are in a warmer ink.
+Scegli una casella, poi premi il tasto o il pulsante (Esc: lascia com'è). Sul controller un'azione può avere due pulsanti: tieni il primo, premi il secondo. Ogni controller fa le azioni; un tasto o un pulsante che è anche del gioco fa solo quello del gioco. Le assegnazioni cambiate sono in un inchiostro più caldo.
+
+No controller
+Nessun controller
+
+Change them under Controls > Bindings.
+Si cambiano in Comandi > Assegnazioni.
+
+A: every key and button back as they first were.
+A: ogni tasto e pulsante come all'inizio.
+
+Press a key. B: leave it as it is.
+Premi un tasto. B: lascia com'è.
+
+Press a button.
+Premi un pulsante.
+
+Also %s.
+Anche %s.
+
+A: change. X: reset the row.
+A: cambia. X: ripristina la riga.
+
+A: change. X: reset the row. B: back.
+A: cambia. X: ripristina la riga. B: indietro.
+
+Bindings...
+Assegnazioni...

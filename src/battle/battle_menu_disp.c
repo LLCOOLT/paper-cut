@@ -1829,7 +1829,7 @@ void DrawMainMenu(BattleWork* wp_) {
         switch (menu->iconState[i]) {
             case 0:
                 #ifdef TARGET_PC
-                menu->iconTimer[i] -= portBattleMenuStep(); // Gameplay+ faster battle menus
+                menu->iconTimer[i] -= portBattleMenuStep(); // Enhancements faster battle menus
                 #else
                 menu->iconTimer[i]--;
                 #endif
@@ -1879,7 +1879,7 @@ void DrawMainMenu(BattleWork* wp_) {
                     menu->iconTimer[i] = -1;
                 }
                 #ifdef TARGET_PC
-                menu->iconTimer[i] += portBattleMenuStep(); // Gameplay+ faster battle menus
+                menu->iconTimer[i] += portBattleMenuStep(); // Enhancements faster battle menus
                 #else
                 menu->iconTimer[i]++;
                 #endif
@@ -1925,7 +1925,7 @@ void DrawMainMenu(BattleWork* wp_) {
                 z[i] = 0.0f;
                 menu->iconFlags[i] &= ~2;
                 #ifdef TARGET_PC
-                menu->iconTimer[i] += portBattleMenuStep(); // Gameplay+ faster battle menus
+                menu->iconTimer[i] += portBattleMenuStep(); // Enhancements faster battle menus
                 #else
                 menu->iconTimer[i]++;
                 #endif
@@ -1955,7 +1955,7 @@ void DrawMainMenu(BattleWork* wp_) {
                 z[i] = 0.0f;
                 menu->iconFlags[i] &= ~2;
                 #ifdef TARGET_PC
-                menu->iconTimer[i] += portBattleMenuStep(); // Gameplay+ faster battle menus
+                menu->iconTimer[i] += portBattleMenuStep(); // Enhancements faster battle menus
                 #else
                 menu->iconTimer[i]++;
                 #endif

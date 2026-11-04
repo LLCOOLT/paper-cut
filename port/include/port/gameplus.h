@@ -1,7 +1,7 @@
 #ifndef PORT_GAMEPLUS_H
 #define PORT_GAMEPLUS_H
 
-/* Gameplay+ and accessibility options (port/src/common/gameplus_pc.c), each a
+/* Enhancements and accessibility options (port/src/common/gameplus_pc.c), each a
  * declared setting (port/include/port/settings.h: portSettingsDeclare), off
  * by default: a stock playthrough is the original game. The game code calls
  * these from small TARGET_PC blocks; their controls are on the settings page
@@ -11,16 +11,19 @@
 extern "C" {
 #endif
 
-/* Declares every Gameplay+ setting (the settings page's file, at start; the
+/* Declares every Enhancements setting (the settings page's file, at start; the
  * game code's first call, otherwise). Safe to call again. */
 void portGameplusDeclare(void);
-/* A Gameplay+ setting's value by key (declared on first use). */
+/* A Enhancements setting's value by key (declared on first use). */
 int portGameplus(const char* key);
 
 /* --- Partner quick-swap ("quick_swap") --- */
 /* The quick-swap control was pressed (a key, a controller's button, the
  * on-screen button or a test script). */
 void portQuickSwapPress(void);
+/* The second player's L or R in the field (second_player_pc.c): the same,
+ * whether the Enhancements tab's quick-swap is on or not. */
+void portQuickSwapPressCoop(void);
 /* Aurora: whether the quick-swap control is held now (keyboard Q, a
  * controller's left stick press); NULL elsewhere. Polled by the field. */
 extern int (*gPortQuickSwapHeld)(void);
@@ -47,6 +50,19 @@ void portPartyReviveAfterBattle(void);
 /* win_main.c / win_item.c, after a field item healed partner target by hp:
  * the other partners who have joined get it too. */
 void portHealOtherPartners(int target, int hp);
+
+/* --- Challenge rules (port/src/common/challenge_pc.c; the Challenges tab) --- */
+void portChallengeDeclare(void);
+/* A challenge setting's value by key (0 when off). */
+int portChallenge(const char* key);
+/* battle_damage.c, an enemy's hit on Mario or a partner: with one-hit KO,
+ * the damage that knocks the target out. */
+int portChallengeDamage(int damage, int targetHp);
+/* battle_ac.c, a guard's result (2 none, 4 Guard, 5 Superguard): taken away
+ * as the guard challenge says. */
+int portChallengeGuard(int result);
+/* battle_ac.c, an attack command's difficulty (0-6) for Mario's side: harder. */
+int portChallengeCommandLevel(int level);
 
 /* Every frame (trace_pc.c portTraceFrame): the options that change the
  * game's data tables apply or undo their change. */
@@ -114,7 +130,7 @@ int portEvtPitMover(struct EventEntry* event, int isFirstCall);
 /* seq_load.c, a new file just set up: copies them from that file. */
 void portNewGamePlus(void);
 
-/* --- Journal (the settings page's Gameplay+ tab, while a game runs) --- */
+/* --- Journal (the settings page's Enhancements tab, while a game runs) --- */
 typedef struct PortJournal {
     int story;                    /* GSW 0, the story's progress */
     int troubles, troublesTotal;  /* Trouble Center jobs solved */
@@ -233,6 +249,8 @@ int portJukeboxKnown(int id);
 void portJukeboxPlay(int id);
 /* The track the jukebox plays now, or -1. */
 int portJukeboxPlaying(void);
+/* The jukebox's own psndBGMOn is running (Music shuffle leaves its pick alone). */
+int portJukeboxCalling(void);
 
 /* --- Junk-item helper in shops ("sell_helper"): winmgr.c's sell lists mark
  * the items and badges Mario has more than one of --- */

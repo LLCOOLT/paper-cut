@@ -3420,6 +3420,37 @@ void animPoseRefresh(void) {
     }
 }
 
+#ifdef TARGET_PC
+/* The second screen's Start menu (port/companion_menu.h): a work of its own
+ * (its files, textures and poses), made in its memory as animInit makes the
+ * game's, and swapped in for its frames. The work holds the game's ag2tg
+ * table (read only). */
+void portAnimWorkInit(AnimationWork* w) {
+    AnimationWork* game = wp;
+    memset(w, 0, sizeof(*w));
+    wp = w;
+    wp->totalFiles = 64;
+    wp->totalTextures = 64;
+    wp->totalPoses = 64;
+    wp->floatScratchRP = 1024;
+    wp->files = __memAlloc(HEAP_DEFAULT, sizeof(AnimationPoseFile) * wp->totalFiles);
+    wp->textures = __memAlloc(HEAP_DEFAULT, sizeof(AnimationTextureFile) * wp->totalTextures);
+    wp->poses = __memAlloc(HEAP_DEFAULT, sizeof(AnimationPose) * wp->totalPoses);
+    wp->floatScratch = __memAlloc(HEAP_DEFAULT, sizeof(Vec) * wp->floatScratchRP);
+    wp->paperTexMode0 = 1;
+    wp->paperTexMode1 = 1;
+    initTestHeap();
+    wp->mp_ag2tg = game->mp_ag2tg;
+    wp = game;
+}
+
+AnimationWork* portAnimSwapWork(AnimationWork* w) {
+    AnimationWork* old = wp;
+    wp = w;
+    return old;
+}
+#endif
+
 /** Switches the driver to battle mode and reallocates the vertex buffers of the battle and shared poses. */
 void animPoseBattleInit(void) {
     wp->inBattle = TRUE;
@@ -7301,6 +7332,44 @@ const char* animPoseGetGroupName(s32 poseId, s32 group) {
 f32 tanfTbl[0xB2];
 AnimationWork work;
 Mtx g_modeling_mtx_stack[32];
+#endif
+
+#ifdef TARGET_PC
+#include "port/cosmetics.h"
+/* Cosmetics (port/include/port/cosmetics.h): a loaded texture file's
+ * textures, as animSetMaterial_Texture reads them */
+int portAnimTextures(const char* file, PortTexInfo* out, int max) {
+    TEXPalette* pal;
+    s32 i, n;
+    if (wp->textures == NULL) {
+        return 0; /* (before animInit) */
+    }
+    for (i = 0; i < wp->totalTextures; i++) {
+        AnimationTextureFile* t = &wp->textures[i];
+        if (!t->active || t->handle == NULL || t->handle->data == NULL || strcmp(t->handle->filename, file) != 0) {
+            continue;
+        }
+        pal = *(TEXPalette**)t->handle->data;
+        if (pal == NULL) {
+            return 0;
+        }
+        for (n = 0; n < (s32)pal->numDescriptors && n < max; n++) {
+            TEXDescriptor* d = TEXGet(pal, n);
+            if (d == NULL || d->textureHeader == NULL) {
+                break;
+            }
+            out[n].data = d->textureHeader->data;
+            out[n].width = d->textureHeader->width;
+            out[n].height = d->textureHeader->height;
+            out[n].format = (int)d->textureHeader->format;
+            out[n].tlut = d->CLUTHeader != NULL ? d->CLUTHeader->data : NULL;
+            out[n].tlutFormat = d->CLUTHeader != NULL ? (int)d->CLUTHeader->format : 0;
+            out[n].tlutCount = d->CLUTHeader != NULL ? d->CLUTHeader->numEntries : 0;
+        }
+        return n;
+    }
+    return 0;
+}
 #endif
 
 #ifdef PORT_MODS

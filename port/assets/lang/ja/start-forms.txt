@@ -1,0 +1,80 @@
+# The Start menu's forms and colour picker (port/include/port/pause_forms.h): an English line, then its translation, then a blank line.
+
+Opens Paper Cut's full settings page on this category: this one isn't in the Start menu.
+Paper Cut の設定ページをこのカテゴリで開きます。これはスタートメニューにはありません。
+
+On the full page
+設定ページで
+
+Full settings page...
+すべての設定ページ...
+
+Paper Cut's full settings page, over the game: every setting, and remapping, mods and practice.
+ゲームの上に Paper Cut の設定ページを開きます。すべての設定、キー割り当て、Mod、練習。
+
+Press A again to confirm.
+もう一度Aで決定します。
+
+The window this many times the game's picture; left and right change it.
+ゲーム画面の何倍の大きさのウィンドウか。左右で変えます。
+
+That size is larger than this screen.
+その大きさはこの画面より大きいです。
+
+Your settings as a code, copied to paste wherever you share it.
+設定をコードにしてコピーします。共有したい所に貼り付けます。
+
+Put the copied code in place
+コピーしたコードを使う
+
+Someone's preset code, copied: the settings that change the game put in place.
+コピーしたプリセットのコードから、ゲームを変える設定を使います。
+
+Preset put in place. Some settings apply from the next start.
+プリセットを使いました。次の起動から変わる設定もあります。
+
+No backups yet
+バックアップはまだありません
+
+One is kept each time the game saves.
+ゲームがセーブするたびに1つ残ります。
+
+This game's save copied there, in place of the save it has; a backup of that one is kept.
+このゲームのセーブをそちらにコピーします。そこのセーブはバックアップに残ります。
+
+This game's save copied there.
+このゲームのセーブをそちらにコピーします。
+
+That file isn't a save of this game.
+このファイルはこのゲームのセーブではありません。
+
+Copied.
+コピーしました。
+
+The save couldn't be written there.
+そこにセーブを書き込めませんでした。
+
+No controller connected
+コントローラーがつながっていません
+
+Any Xbox, PlayStation, Switch or GameCube controller works.
+Xbox、PlayStation、Switch、ゲームキューブのコントローラーが使えます。
+
+Which player it plays as; left and right change it.
+何番のプレイヤーか。左右で変えます。
+
+Part
+パーツ
+
+Which part the colour is for: left and right change it.
+色をつけるパーツ。左右で変えます。
+
+A puts this colour on.
+Aでこの色にします。
+
+Left and right make it more or less; it's on as it changes.
+左右で増減します。すぐに変わります。
+
+Each part's own colour: a swatch, or red, green and blue.
+パーツごとの色。色見本か、赤・緑・青で。
+

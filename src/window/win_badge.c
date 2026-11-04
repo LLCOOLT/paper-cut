@@ -1,4 +1,10 @@
 // Pause menu: the badge window (equip and unequip badges).
+#ifdef TARGET_PC
+/* the Start menu's statics in a block of their own, the second screen's menu's while it runs (port/companion_section.h) */
+#define PORT_SECTION_MENU
+#include "port/companion_section.h"
+#include "port/companion_menu.h"
+#endif
 #include "port_hook.h"
 #include "version.h"
 #include "win/win_main.h"
@@ -214,6 +220,11 @@ s32 PORT_HOOKABLE(winBadgeMain)(WindowWork* w) {
             }
             pages = (cnt + 7) / 8;
             tab = w->badge.tab;
+#ifdef TARGET_PC
+            /* the second screen's menu only shows the badges (port/companion_menu.h) */
+            if (gPortCompanionMenu && (w->buttonTrg & PAD_BUTTON_A)) {
+            } else
+#endif
             if (w->buttonTrg & PAD_BUTTON_A) {
                 if (tab == 0) {
                     s32 idx = w->badge.sel[tab];

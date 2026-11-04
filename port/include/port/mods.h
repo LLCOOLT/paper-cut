@@ -154,6 +154,14 @@ const char* portModsPathAlias(const char* path);
 /* A disc file the host itself adds (an Archipelago seed's), below every mod's
  * overlay; in use from the next portModsReload. */
 void portModsSetHostFile(const char* discPath, const void* data, size_t size);
+/* A texture of a map-scoped set the host adds: it applies only while the
+ * map's name matches pattern ("muj_l1,muj_l2", "muj_l*": alternatives, with
+ * * and ? wildcards), above every mod's global textures (a mod's own
+ * textures/@<pattern>/ set still wins). path's last part is its pack name
+ * (tex1_...png); data stays the caller's. Sets swap as the map changes. */
+void portModsAddMapTexture(const char* pattern, const char* path, const void* data, size_t size);
+/* Each frame (mod_game_aurora.c): the map-scoped sets for the map now */
+void portModsMapTextures(const char* map);
 
 #ifdef __cplusplus
 }

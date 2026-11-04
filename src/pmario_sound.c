@@ -23,6 +23,9 @@
 #include "port/audio_mix.h"
 #include "port/gameplus.h"
 #include "port/luigi.h"
+#include "port/music.h"
+#include "port/companion_menu.h"
+#include "port/captions.h"
 #endif
 #include "evt/evt_story.h"
 
@@ -10265,6 +10268,11 @@ void PORT_HOOKABLE(psndSetPosDirListener)(Vec* position, f32 direction) {
  * and every sound effect over 45 frames (750 ms in US and PAL).
  */
 void PORT_HOOKABLE(psndStopAllFadeOut)(void) {
+#ifdef TARGET_PC
+    if (gPortCompanionMenu) { /* the second screen's menu is silent (port/companion_menu.h) */
+        return;
+    }
+#endif
     PaperSoundWork* wp = &psnd;
     PaperSoundEffect* sfx;
     int i;
@@ -10312,6 +10320,11 @@ void PORT_HOOKABLE(psndSetReverb)(s32 mode) {
 
 /** Sets psnd flags; PSND_FLAG_BGM_OFF also stops both BGM channels and PSND_FLAG_ENV_OFF both environment channels. */
 void PORT_HOOKABLE(psndSetFlag)(s32 flag) {
+#ifdef TARGET_PC
+    if (gPortCompanionMenu) { /* the second screen's menu is silent (port/companion_menu.h) */
+        return;
+    }
+#endif
     psnd.flags |= flag;
     if (psnd.flags & PSND_FLAG_BGM_OFF) {
         psndBGMOff_f_d(0, 1000, FALSE);
@@ -10325,6 +10338,11 @@ void PORT_HOOKABLE(psndSetFlag)(s32 flag) {
 
 /** Clears psnd flags. */
 void PORT_HOOKABLE(psndClearFlag)(s32 flag) {
+#ifdef TARGET_PC
+    if (gPortCompanionMenu) { /* the second screen's menu is silent (port/companion_menu.h) */
+        return;
+    }
+#endif
     psnd.flags &= ~flag;
 }
 
@@ -10371,6 +10389,11 @@ void PORT_HOOKABLE(psndMapChange)(void) {
 
 /** Fades out every playing effect except environment sounds and those marked to survive a map change. */
 void PORT_HOOKABLE(psndSFXAllOff)(void) {
+#ifdef TARGET_PC
+    if (gPortCompanionMenu) { /* the second screen's menu is silent (port/companion_menu.h) */
+        return;
+    }
+#endif
     PaperSoundWork* wp = &psnd;
     PaperSoundEffect* sfx;
     int i;
@@ -10670,6 +10693,11 @@ static inline void psndBGMSearchP(char* name, s32* pi) {
  */
 #if VERSION <= VERSION_DEMO_JP
 BOOL PORT_HOOKABLE(psndBGMOn_f_d)(u32 flags, char* bgm_name, u32 fadetime, s32 unused) {
+#ifdef TARGET_PC
+    if (gPortCompanionMenu) { /* the second screen's menu is silent (port/companion_menu.h) */
+        return FALSE;
+    }
+#endif
     PaperSoundBGM* bgm;
     PaperSoundFade* fade2;
     SoundBGMEntry* entry;
@@ -10891,6 +10919,11 @@ done:
 #else
 /** JP, US and PAL form of psndBGMOn_f_d above; fadeout is the fade-out time for the BGM being replaced. */
 BOOL PORT_HOOKABLE(psndBGMOn_f_d)(u32 flags, char* bgm_name, u32 fadetime, u32 fadeout, s32 unused) {
+#ifdef TARGET_PC
+    if (gPortCompanionMenu) { /* the second screen's menu is silent (port/companion_menu.h) */
+        return FALSE;
+    }
+#endif
     PaperSoundBGM* bgm;
     s32 idx;
     PaperSoundFade* fade2;
@@ -10904,6 +10937,9 @@ BOOL PORT_HOOKABLE(psndBGMOn_f_d)(u32 flags, char* bgm_name, u32 fadetime, u32 f
     s32 id;
     u32 ft;
     u32 fl;
+#ifdef TARGET_PC
+    SoundBGMEntry* heard;
+#endif
     // FAKE: fo/ft/fl copies of the params; flags is reused as a holder for the vol value and fadetime for the PSND_FADE_RESTART test
     // (blocks copy-propagation of ft); the dead guard after the early return (gz is always 0, no code) gives ft and fo a
     // second definition so they stay their own registers (target r31/r25)
@@ -10911,7 +10947,7 @@ BOOL PORT_HOOKABLE(psndBGMOn_f_d)(u32 flags, char* bgm_name, u32 fadetime, u32 f
     ft = fadetime;
     fl = flags;
 #ifdef TARGET_PC
-    if (bgm_name != NULL) { /* Gameplay+: the jukebox's list (port/include/port/gameplus.h) */
+    if (bgm_name != NULL) { /* Enhancements: the jukebox's list (port/include/port/gameplus.h) */
         psndBGMSearchP(bgm_name, &id);
         portJukeboxHeard(id, (s32)(flags & 0xF));
     }
@@ -11058,6 +11094,10 @@ BOOL PORT_HOOKABLE(psndBGMOn_f_d)(u32 flags, char* bgm_name, u32 fadetime, u32 f
     if (id == 0) {
         return FALSE;
     }
+#ifdef TARGET_PC
+    // Music shuffle (port/include/port/music.h): the disc track heard; psbgm keeps the one asked for
+    heard = &psbgmlist[portMusicPick(id, idx)];
+#endif
     flags = (bgm->volume = entry->volume);
     vol = flags;
     bgm->listId = id;
@@ -11079,8 +11119,11 @@ BOOL PORT_HOOKABLE(psndBGMOn_f_d)(u32 flags, char* bgm_name, u32 fadetime, u32 f
         }
 #ifdef TARGET_PC
         salPcCategory(PORT_MIX_MUSIC);
-#endif
+        portMusicNext(heard - psbgmlist); // the player's own file for it, if there is one
+        SoundSSPlayCh(bgm->streamId, (heard->flags & SFX_FLAG_STREAM) ? heard->path : entry->path);
+#else
         SoundSSPlayCh(bgm->streamId, entry->path);
+#endif
 #ifdef TARGET_PC
         salPcCategory(PORT_MIX_SFX);
 #endif
@@ -11148,6 +11191,11 @@ BOOL PORT_HOOKABLE(psndBGMOff)(u32 flags) {
  * Returns FALSE when the channel is empty or guarded.
  */
 BOOL PORT_HOOKABLE(psndBGMOff_f_d)(s32 flags, u32 fadetime, u32 someswitch) {
+#ifdef TARGET_PC
+    if (gPortCompanionMenu) { /* the second screen's menu is silent (port/companion_menu.h) */
+        return FALSE;
+    }
+#endif
     PaperSoundBGM* bgm = &psbgm[flags & 0xF];
     s32 silent = silent_tbl[(flags >> 12) & 0xF];
     SoundBGMEntry* entry;
@@ -11572,6 +11620,11 @@ static void psndSFXMain(void) {
  * and for one sound before the prologue reaches Mario's house. Returns the effect id (slot | serial << 8) or -1.
  */
 static s32 __psndSFXOn(const char* name, u8 vol, u8 pan, u16 pitch, Vec* pos, u32 posOnly, u16 dist, s32 ignoreSfxOff) {
+#ifdef TARGET_PC
+    if (gPortCompanionMenu) { /* the second screen's menu is silent (port/companion_menu.h) */
+        return -1;
+    }
+#endif
     s32 sid;
     s32 k;
     PaperSoundEffect* s;
@@ -11593,6 +11646,9 @@ static s32 __psndSFXOn(const char* name, u8 vol, u8 pan, u16 pitch, Vec* pos, u3
     if ((psnd.flags & PSND_FLAG_SFX_OFF) && (ignoreSfxOff == 0)) {
         return -1;
     }
+#ifdef TARGET_PC
+    portCaptionSfx(entry->name, pos != NULL ? &pos->x : NULL); /* Captions for sounds (port/include/port/captions.h): shown only */
+#endif
 #if VERSION >= VERSION_JP
     if ((((sid == 0x5B) || (sid == 0x8CA)) || (((u32)(sid - 0x1BE)) <= 1)) || (sid == 0x205)) {
         if (psnd.sfxCooldown) {
@@ -11794,6 +11850,11 @@ void PORT_HOOKABLE(psndSFX_dist)(s32 id, u16 dist) {
 
 /** Stops effect id (its stream, song or driver effect, whichever the list entry uses) and frees its slot. */
 void PORT_HOOKABLE(psndSFXOff)(s32 id) {
+#ifdef TARGET_PC
+    if (gPortCompanionMenu) { /* the second screen's menu is silent (port/companion_menu.h) */
+        return;
+    }
+#endif
     PaperSoundEffect* sfx;
     SoundEffectEntry* entry;
     u32 lid;
@@ -12235,6 +12296,11 @@ static inline PaperSoundEnv* psndENVGetFree(void) {
  * Returns FALSE when nothing changed.
  */
 BOOL PORT_HOOKABLE(psndENVOn_f_d)(u32 flags, const char* name, u32 fadetime, s32 unused) {
+#ifdef TARGET_PC
+    if (gPortCompanionMenu) { /* the second screen's menu is silent (port/companion_menu.h) */
+        return FALSE;
+    }
+#endif
     u16 cur;
     u16* env;
     PaperSoundFade* fade;
@@ -12370,6 +12436,11 @@ BOOL PORT_HOOKABLE(psndENVOff)(u32 flags) {
  * or stops it at once. Returns FALSE when the channel is empty.
  */
 BOOL PORT_HOOKABLE(psndENVOff_f_d)(u32 flags, u32 fadetime, s32 unused) {
+#ifdef TARGET_PC
+    if (gPortCompanionMenu) { /* the second screen's menu is silent (port/companion_menu.h) */
+        return FALSE;
+    }
+#endif
     s32 silent = silent_tbl[(flags >> 12) & 0xF];
     PaperSoundFade* fade;
 
@@ -12441,7 +12512,7 @@ void psndStrippedPool(f32* f, s32 i) {
 }
 
 #ifdef TARGET_PC
-/* Gameplay+'s jukebox (port/include/port/gameplus.h): the BGM table */
+/* The Enhancements tab's jukebox (port/include/port/gameplus.h): the BGM table */
 int portBgmCount(void) {
     return 0x106;
 }

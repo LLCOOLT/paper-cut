@@ -15,16 +15,22 @@
 #include "port/speed.h"
 #include "port/layout.h"
 #include "port/savestate.h"
+#include "port/rewind.h"
 #include "port/mod_host.h"
 #include "port/menu_tap.h"
 #include "port/practice.h"
 #include "port/display.h"
+#include "port/online.h"
+#include "port/replay.h"
+#include "port/companion_menu.h"
+#include "port/companion.h"
 #ifdef PORT_TOUCH_OVERLAY
 #include "port/touch_overlay.h"
 #endif
 
 void salPcAuroraPump(double seconds); /* hw_pc.c: MusyX null sink without a device */
 void portShotInbetween(u32 frame, int k); /* shot_aurora.c */
+void portShotHeld(void);                  /* shot_aurora.c */
 
 static u32 sRetraceCount;
 static VIRetraceCallback sPreCallback;
@@ -44,13 +50,62 @@ static void waitUntil(OSTime when) {
     if (sFast < 0) {
         sFast = getenv("TTYD_FAST") != NULL;
     }
-    if (!sFast && now < when) {
+    if (!sFast && now < when && !portOnlineCatchingUp()) { /* (a watcher well behind: unpaced) */
         SDL_DelayPrecise((Uint64)OSTicksToMicroseconds(when - now) * 1000);
     }
 }
 
-/* Waits for this field's start; the next one is FIELD_TICKS later. */
+/* Lockstep without $TTYD_FAST (online co-op, replays): the game clock is
+ * virtual, a field per frame, so waiting on it never waits; the frames keep
+ * to the real clock instead (portRealTime), a replay's playback faster with
+ * fast-forward (portReplaySpeed). */
+static void paceReal(void) {
+    static int sFast = -1;
+    static OSTime sNext;
+    OSTime now, field;
+    if (sFast < 0) {
+        sFast = getenv("TTYD_FAST") != NULL;
+    }
+    if (sFast || !portLockstep()) {
+        return;
+    }
+    field = FIELD_TICKS / portReplaySpeed();
+    now = portRealTime();
+    if (sNext == 0 || now - sNext > field * 4) {
+        sNext = now; /* the start, or after a stall */
+    }
+    if (now < sNext) {
+        SDL_DelayPrecise((Uint64)OSTicksToMicroseconds(sNext - now) * 1000);
+    }
+    sNext += field;
+}
+
+/* Slow speed with $TTYD_FAST's virtual clock (tests; speed_aurora.c): the
+ * game time stays one field a frame, the frames kept to the wall clock at
+ * that pace instead. */
+static void paceSlowFast(void) {
+    static Uint64 sNextWall;
+    const int percent = portSpeedPercent();
+    Uint64 now = SDL_GetTicksNS();
+    if (percent >= 100 || !portLockstep()) {
+        sNextWall = 0;
+        return;
+    }
+    if (sNextWall != 0 && now < sNextWall) {
+        SDL_DelayPrecise(sNextWall - now);
+        now = SDL_GetTicksNS();
+    }
+    if (sNextWall == 0 || (now > sNextWall && now - sNextWall > 100000000ull)) {
+        sNextWall = now; /* the first frame, or after a stall: from now */
+    }
+    sNextWall += 1000000000ull * 100 / ((Uint64)portFieldRate() * (Uint64)percent);
+}
+
+/* Waits for this field's start; the next one is FIELD_TICKS later (in game
+ * time: slow speed's slower clock makes it later). */
 static void paceFrame(void) {
+    paceReal();
+    paceSlowFast();
     if (sNextRetrace == 0) {
         sNextRetrace = OSGetTime();
     }
@@ -71,7 +126,38 @@ static void endFrame(void) {
 #endif
     portSettingsDraw(); /* the settings page, when open */
     portPerfOverlayDraw(); /* the frame-time graph, when on */
+    portCompanionDraw();   /* the second screen's window, when on (its own renderer) */
     aurora_end_frame();
+}
+
+#include <SDL3/SDL_video.h>
+#include <stdio.h>
+#include "port/tr.h"
+void portOnlineInviteEvent(const void* sdlEvent); /* invite.cpp */
+
+/* Online co-op's wait (online_net_pc.c: reconnecting, a watcher waiting for the
+ * players), from inside the game's frame: the window's title says it, events go
+ * on. No frames are drawn here: ending and beginning frames inside the game's
+ * own let its disc reads and threads move on outside lockstep, and two games
+ * went out of step after a reconnect. The game says "Reconnected" once it goes
+ * on (online_pc.c). NULL: the wait is over (each frame, online_pc.c). */
+void portOnlineHoldFrame(const char* english) {
+    static int sHeld;
+    SDL_Window* w = aurora_get_window();
+    if (english == NULL) {
+        if (sHeld && w != NULL) {
+            SDL_SetWindowTitle(w, "Paper Cut");
+        }
+        sHeld = 0;
+        return;
+    }
+    if (!sHeld && w != NULL) {
+        char title[200];
+        snprintf(title, sizeof(title), "Paper Cut: %s", portTr(english));
+        SDL_SetWindowTitle(w, title);
+    }
+    sHeld = 1;
+    SDL_PumpEvents();
 }
 
 /* Aurora reports a change of its paused state (window minimized or hidden,
@@ -84,10 +170,15 @@ void portAuroraBeginFrame(void) {
         for (; event != NULL && event->type != AURORA_NONE; event++) {
             if (event->type == AURORA_EXIT) {
                 portResumeFlush(); /* quick resume: where the player was */
+                portCompanionShutdown();
                 aurora_shutdown();
                 exit(0);
             }
+            if (event->type == AURORA_SDL_EVENT && portCompanionEvent(&event->sdl)) {
+                continue; /* the second screen's window's (its clicks are not the game's) */
+            }
             if (event->type == AURORA_SDL_EVENT) {
+                portOnlineInviteEvent(&event->sdl); /* an invite link given to the running game */
                 portSettingsEvent(&event->sdl);
                 portMenuMouseEvent(&event->sdl); /* the mouse in the game's lists */
 #ifdef PORT_TOUCH_OVERLAY
@@ -113,15 +204,12 @@ void portAuroraBeginFrame(void) {
 }
 
 void VIWaitForRetrace(void) {
-    static int sFast = -1;
     int frames, k;
-    if (sFast < 0) {
-        sFast = getenv("TTYD_FAST") != NULL;
-    }
-    /* $TTYD_FAST: the disc reads queued this frame complete before the next
-     * one (Aurora runs them on a worker thread, in wall time), so a run takes
-     * the same frames however busy the machine is, as headless. */
-    if (sFast) {
+    /* $TTYD_FAST and online co-op: the disc reads queued this frame complete
+     * before the next one (Aurora runs them on a worker thread, in wall time),
+     * so a run takes the same frames however busy the machine is, as headless,
+     * and two computers' games stay in step. */
+    if (portLockstep()) {
         aurora_dvd_wait_idle();
     }
     portDisplayWorkDone();
@@ -142,6 +230,9 @@ void VIWaitForRetrace(void) {
     portTraceFrame(sRetraceCount); /* $TTYD_TRACE / $TTYD_WARP, as headless */
     portWarpFrame();               /* the settings page's save warps */
     portResumeFrame();             /* quick resume's save, made while playing */
+    portAutosaveFrame();           /* autosave at room changes (autosave_aurora.c) */
+    portOnlineFrame();             /* online co-op: the fingerprint (online_pc.c) */
+    portCompanionFrame();          /* the second screen's snapshot (companion_pc.c) */
     if (sPostCallback != NULL) {
         sPostCallback(sRetraceCount);
     }
@@ -170,6 +261,7 @@ void VIWaitForRetrace(void) {
         portFastClockSet(fastClock);
     }
     portSaveStateFrame(); /* between frames: a save state asked for */
+    portRewindFrame();    /* rewind's state, or a step back (rewind_aurora.c) */
     if (portFrameAdvanceWait()) {
         /* frame advance: the game held here, its last frame drawn again (and
          * the settings page over it) until a step or the end of the hold */
@@ -177,12 +269,15 @@ void VIWaitForRetrace(void) {
         do {
             portAuroraBeginFrame();
             portInterpRedraw();
+            portShotHeld(); /* a picture taken now (F12, photo mode) is of this one */
             endFrame();
+            portShotFrame(); /* and written when its readback comes */
             portSaveStateFrame();
         } while (portFrameAdvanceWait());
         portResume();
     }
     portAuroraBeginFrame();
+    portCompanionMenuFrame(); /* the second screen's Start menu, drawn before the game's frame (companion_menu_aurora.c) */
 }
 
 void VISetNextFrameBuffer(void* fb) {}

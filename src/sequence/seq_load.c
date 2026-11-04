@@ -40,6 +40,8 @@
 #include "sdk/texPalette.h"
 #ifdef TARGET_PC
 #include "port/menu_tap.h"
+#include "wide_x.h"
+#include <math.h>
 #endif
 #include "evt/evt_story.h"
 #include <dolphin/pad.h>
@@ -311,7 +313,7 @@ static inline void loadNewGameSetup(void) {
     swInit();
     swByteSet(GSW_STORY_PROGRESS, STORY_STG0_00_PROLOGUE);
 #ifdef TARGET_PC
-    portNewGamePlus(); // Gameplay+: what the new file keeps from another (port/include/port/gameplus.h)
+    portNewGamePlus(); // Enhancements: what the new file keeps from another (port/include/port/gameplus.h)
 #endif
 }
 
@@ -1033,6 +1035,42 @@ static inline void loadDrawBg(u32 id, f32 x0, f32 y0, f32 x1, f32 y1) {
     GXTexCoord2f32(1.0f, 0.0f);
 }
 
+#ifdef TARGET_PC
+/* loadDrawBg for a texture that repeats sideways, drawn wider than at 4:3:
+ * its u starts where it would at x = xu, so the repeats stay where they were */
+static void loadDrawBgWide(u32 id, f32 x0, f32 y0, f32 x1, f32 y1, f32 xu) {
+    GXTexObj obj;
+    Mtx m;
+    Mtx t;
+    f32 w;
+    f32 h;
+    f32 tw;
+
+    TEXGetGXTexObjFromPalette(*wp->file->data, &obj, id);
+    GXInitTexObjLOD(&obj, GX_LINEAR, GX_LINEAR, 0.0f, 0.0f, 0.0f, GX_FALSE, GX_FALSE, GX_ANISO_1);
+    GXInitTexObjWrapMode(&obj, GX_REPEAT, GXGetTexObjWrapT(&obj));
+    GXLoadTexObj(&obj, GX_TEXMAP0);
+    GXSetNumTexGens(1);
+    GXSetTexCoordGen2(GX_TEXCOORD0, GX_TG_MTX2x4, GX_TG_TEX0, GX_TEXMTX0, GX_FALSE, GX_PTIDENTITY);
+    h = fabsf(y0 - y1);
+    w = fabsf(x1 - x0);
+    tw = (f32)GXGetTexObjWidth(&obj);
+    PSMTXScale(m, w / tw, h / (f32)GXGetTexObjHeight(&obj), 1.0f);
+    PSMTXTrans(t, (x0 - xu) / tw, 0.0f, 0.0f);
+    PSMTXConcat(t, m, m);
+    GXLoadTexMtxImm(m, GX_TEXMTX0, GX_MTX2x4);
+    GXBegin(GX_QUADS, GX_VTXFMT0, 4);
+    GXPosition3f32(x0, y0, 0.0f);
+    GXTexCoord2f32(0.0f, 0.0f);
+    GXPosition3f32(x0, y1, 0.0f);
+    GXTexCoord2f32(0.0f, 1.0f);
+    GXPosition3f32(x1, y1, 0.0f);
+    GXTexCoord2f32(1.0f, 1.0f);
+    GXPosition3f32(x1, y0, 0.0f);
+    GXTexCoord2f32(1.0f, 0.0f);
+}
+#endif
+
 /**
  * Draws the file menu: the four save slot windows (name, level, play time, crystal star icons;
  * new or corrupted file messages), the copy/delete/back buttons, the sound and rumble options,
@@ -1096,9 +1134,22 @@ static void loadDraw(CameraId camera, void* param) {
     win1 = (WinDt*)cam;
     GXLoadPosMtxImm(((CameraEntry*)win1)->view, GX_PNMTX0);
     GXSetCurrentMtx(GX_PNMTX0);
-    loadDrawBg(0x35, -304.0f, 240.0f, -272.0f, -240.0f);
-    loadDrawBg(0x34, -272.0f, 240.0f, 272.0f, -240.0f);
-    loadDrawBg(0x36, 272.0f, 240.0f, 304.0f, -240.0f);
+#ifdef TARGET_PC
+    /* widescreen: the curtain's pleats repeat sideways, so the backdrop spans
+     * the widened frame (include/wide_x.h): its edge strips at the frame's
+     * edges, the pleats between, in step with the 4:3 ones */
+    if (WIDE_X(304.0f) > 305.0f) {
+        const f32 e = WIDE_X(304.0f);
+        loadDrawBg(0x35, -e, 240.0f, 32.0f - e, -240.0f);
+        loadDrawBgWide(0x34, 32.0f - e, 240.0f, e - 32.0f, -240.0f, -272.0f);
+        loadDrawBg(0x36, e - 32.0f, 240.0f, e, -240.0f);
+    } else
+#endif
+    {
+        loadDrawBg(0x35, -304.0f, 240.0f, -272.0f, -240.0f);
+        loadDrawBg(0x34, -272.0f, 240.0f, 272.0f, -240.0f);
+        loadDrawBg(0x36, 272.0f, 240.0f, 304.0f, -240.0f);
+    }
 
     win1 = win_dt;
     for (i = 0; i < 9; i++) {
@@ -1653,6 +1704,7 @@ static void continueGame(void) {
  * the warp came from go first (the intro's white fade-out, which the title
  * clears only once it has loaded; a map's own): a continue's FADE_NONE never
  * clears them, and the field stayed white under them. */
+void portRelEpilogNow(void); /* port/rel_pc.h */
 void portContinueGame(s32 slot) {
     s32 i;
     wp->slot = slot;
@@ -1660,6 +1712,11 @@ void portContinueGame(s32 slot) {
         fadeReset(i);
     }
     fadeEntry(FADE_CURTAIN_SIDES_A1, 0, (GXColor){0, 0, 0, 255});
+    /* From the field, the room's area REL is still linked, and the map change after the continue
+     * would run its _epilog in the loaded game: the Glitz Pit's wrote its fighter ranking over the
+     * loaded file's (a save loaded on the tou_ rooms: GSW 520 went from 250 to 0). It runs now, in the game it was run for, as the file select's continue (no area up)
+     * never needed. */
+    portRelEpilogNow();
     continueGame();
 }
 #endif

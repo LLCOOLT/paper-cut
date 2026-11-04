@@ -1,10 +1,12 @@
-// Gameplay+, the second batch (port/include/port/gameplus.h): the settings
+// Enhancements, the second batch (port/include/port/gameplus.h): the settings
 // page's controls for badge loadouts, storage at Save Blocks, the walk-speed
 // boost and its controls, the coin and EXP multipliers, the Star Piece and
 // Shine Sprite tracker (in a corner over the game), faster field text, the
 // jukebox and the shops' junk-item helper. All off by default.
+#include "port/bindings.h"
 #include "port/gameplus.h"
 #include "port/settings.h"
+#include "port/tr.h"
 #include <SDL3/SDL.h>
 #include <imgui.h>
 #include <cstdio>
@@ -13,26 +15,19 @@
 namespace {
 
 constexpr unsigned kPlay = PORT_SETTING_CHANGES_PLAY;
-constexpr const char* kTab = "Gameplay+";
+constexpr const char* kTab = "Enhancements";
 
-// the walk-speed boost's keyboard key and controller button, by the settings' choices
-int walkBoostHeld() {
-  static const SDL_Scancode kKeys[] = {SDL_SCANCODE_LSHIFT, SDL_SCANCODE_LCTRL, SDL_SCANCODE_LALT, SDL_SCANCODE_RSHIFT};
-  static const SDL_GamepadButton kPad[] = {SDL_GAMEPAD_BUTTON_RIGHT_STICK, SDL_GAMEPAD_BUTTON_LEFT_STICK,
-                                           SDL_GAMEPAD_BUTTON_LEFT_PADDLE1, SDL_GAMEPAD_BUTTON_MISC1};
-  const bool* keys = SDL_GetKeyboardState(nullptr);
-  if (keys != nullptr && keys[kKeys[portGameplus("walk_boost_key") & 3]]) {
-    return 1;
-  }
-  int count = 0;
-  SDL_JoystickID* ids = SDL_GetGamepads(&count);
-  int held = 0;
-  for (int i = 0; i < count && !held; i++) {
-    SDL_Gamepad* pad = SDL_GetGamepadFromID(ids[i]);
-    held = pad != nullptr && SDL_GetGamepadButton(pad, kPad[portGameplus("walk_boost_pad") & 3]);
-  }
-  SDL_free(ids);
-  return held;
+// the walk-speed boost's key and controller button (Controls > Bindings; at
+// first the old Boost key and Boost button choices)
+int walkBoostHeld() { return portBindingsHeld(PORT_BIND_WALK_BOOST); }
+
+// what they are now
+void boostKeys(int) {
+  const char* key = portBindingsKeyName(PORT_BIND_WALK_BOOST);
+  const char* pad = portBindingsPadName(PORT_BIND_WALK_BOOST);
+  ImGui::Text("%s  /  %s", key[0] != 0 ? key : portTr("(none)"), pad[0] != 0 ? pad : portTr("(none)"));
+  ImGui::SameLine();
+  ImGui::TextDisabled("%s", portTr("Change them under Controls > Bindings."));
 }
 
 // Badge loadouts: a row per loadout, its name editable
@@ -40,11 +35,11 @@ void loadouts(int) {
   static char sNames[PORT_LOADOUT_COUNT][PORT_LOADOUT_NAME];
   static char sMessage[128];
   if (!portGameplus("badge_loadouts")) {
-    ImGui::TextDisabled("Turn on Badge loadouts above to use them.");
+    ImGui::TextDisabled("%s", portTr("Turn on Badge loadouts above to use them."));
     return;
   }
   if (portLoadoutGet(0, nullptr, 0) < 0) {
-    ImGui::TextDisabled("Shown while a game is being played.");
+    ImGui::TextDisabled("%s", portTr("Shown while a game is being played."));
     return;
   }
   for (int i = 0; i < PORT_LOADOUT_COUNT; i++) {
@@ -62,18 +57,18 @@ void loadouts(int) {
     sEditing[i] = ImGui::IsItemActive();
     ImGui::SameLine();
     if (count > 0) {
-      ImGui::Text("%2d badges", count);
+      ImGui::Text(portTr("%2d badges"), count);
     } else {
-      ImGui::TextDisabled("  empty  ");
+      ImGui::TextDisabled("%s", portTr("  empty  "));
     }
     ImGui::SameLine();
-    if (ImGui::Button("Store worn")) {
+    if (ImGui::Button(portTrLabel("Store worn"))) {
       const int n = portLoadoutStore(i);
       std::snprintf(sMessage, sizeof(sMessage), "Loadout %d: the %d badges worn now.", i + 1, n);
     }
     ImGui::SameLine();
     ImGui::BeginDisabled(count <= 0);
-    if (ImGui::Button("Wear")) {
+    if (ImGui::Button(portTrLabel("Wear"))) {
       portLoadoutWear(i, sMessage, sizeof(sMessage));
     }
     ImGui::EndDisabled();
@@ -105,24 +100,24 @@ void collectibles(int) {
   if (collectiblesText(text, sizeof(text))) {
     ImGui::TextUnformatted(text);
   } else {
-    ImGui::TextDisabled("None on this map (or no game in the field).");
+    ImGui::TextDisabled("%s", portTr("None on this map (or no game in the field)."));
   }
 }
 
 // Jukebox: the tracks heard on this file
 void jukebox(int) {
   if (!portGameplus("jukebox")) {
-    ImGui::TextDisabled("Turn on Jukebox above: tracks are listed once heard on this file.");
+    ImGui::TextDisabled("%s", portTr("Turn on Jukebox above: tracks are listed once heard on this file."));
     return;
   }
   int heard = 0;
   for (int i = 1; i < portBgmCount(); i++) {
     heard += portJukeboxKnown(i);
   }
-  ImGui::Text("%d %s heard on this file", heard, heard == 1 ? "track" : "tracks");
+  ImGui::Text(portTr(heard == 1 ? "%d track heard on this file" : "%d tracks heard on this file"), heard);
   ImGui::SameLine();
   ImGui::BeginDisabled(portJukeboxPlaying() < 0);
-  if (ImGui::Button("Back to the map's music")) {
+  if (ImGui::Button(portTrLabel("Back to the map's music"))) {
     portJukeboxPlay(-1);
   }
   ImGui::EndDisabled();
@@ -137,7 +132,7 @@ void jukebox(int) {
     }
   }
   ImGui::EndChild();
-  ImGui::TextDisabled("A track plays until the next room's music, or the button above.");
+  ImGui::TextDisabled("%s", portTr("A track plays until the next room's music, or the button above."));
 }
 
 // over the game: the tracker in its corner
@@ -163,24 +158,21 @@ struct Register {
     portGameplusDeclare();
     gPortWalkBoostHeld = walkBoostHeld;
     portSettingsAddToggle(kTab, "Badge loadouts",
-                          "Store the badges worn as one of four named sets and wear a set again from this page, in "
-                          "the field (only when Mario's BP covers it). Kept beside the save, not in it.",
+                          "Store the badges worn as one of four named sets and wear a set again from the settings "
+                          "page (All settings, Loadouts), in the field (only when Mario's BP covers it). Kept "
+                          "beside the save, not in it.",
                           kPlay, "badge_loadouts", "badge loadout set preset swap bp equip");
     portSettingsAddSection(kTab, "Loadouts", nullptr, PORT_SETTING_IN_GAME, loadouts, "badge loadout set preset");
     portSettingsAddToggle(kTab, "Storage at every Save Block",
                           "A Save Block also offers to store items and take them out, as the Rogueport shop's "
                           "counter does, before saving.",
                           kPlay, "storage_anywhere", "item storage save block keep stored items");
-    portSettingsAddToggle(kTab, "Walk-speed boost", "Mario walks and runs faster while the control below is held.",
+    portSettingsAddToggle(kTab, "Walk-speed boost", "Mario walks and runs faster while the Boost key or Boost "
+                                                    "button is held.",
                           kPlay, "walk_boost", "walk run speed boost sprint hold");
     portSettingsAddSlider(kTab, "Boost speed", nullptr, kPlay, "walk_boost_speed", 110, 200, "%d %%",
                           "walk run speed boost sprint");
-    static const char* const kKeys[] = {"Left Shift", "Left Ctrl", "Left Alt", "Right Shift"};
-    portSettingsAddChoice(kTab, "Boost key", nullptr, 0, "walk_boost_key", kKeys, 4, "walk boost key keyboard");
-    static const char* const kPad[] = {"Right stick pressed in", "Left stick pressed in", "Back paddle",
-                                       "Share / capture button"};
-    portSettingsAddChoice(kTab, "Boost button", nullptr, 0, "walk_boost_pad", kPad, 4,
-                          "walk boost button controller gamepad");
+    portSettingsAddSection(kTab, "Boost key", nullptr, 0, boostKeys, "walk boost key keyboard button controller gamepad");
     static const char* const kTimes[] = {"x1", "x1.5", "x2", "x2.5", "x3"};
     portSettingsAddChoice(kTab, "Coins from battles",
                           "The coins a won battle drops, after Merlee, Money Money and a First Strike.", kPlay,
@@ -197,7 +189,8 @@ struct Register {
                           "Messages in the field print three times as fast, and their windows open, turn pages and "
                           "close faster (on top of Text speed).",
                           0, "fast_field_text", "text speed fast field dialogue message");
-    portSettingsAddToggle(kTab, "Jukebox", "Lists the music heard on this file below; pick a track to play it.", 0,
+    portSettingsAddToggle(kTab, "Jukebox", "Lists the music heard on this file on the settings page (All settings, "
+                                           "Tracks); pick a track to play it.", 0,
                           "jukebox", "jukebox sound test music bgm track");
     portSettingsAddSection(kTab, "Tracks", nullptr, PORT_SETTING_IN_GAME, jukebox, "jukebox sound test music bgm");
     portSettingsAddToggle(kTab, "Junk-item helper in shops",

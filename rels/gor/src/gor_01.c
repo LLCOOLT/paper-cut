@@ -7651,7 +7651,7 @@ static USER_FUNC(cook_effect) {
  */
 EVT_BEGIN(cooking_evt_sub)
 #ifdef TARGET_PC
-    // Gameplay+: once Zess T. has cooked on this file, the dish without the scene
+    // Enhancements: once Zess T. has cooked on this file, the dish without the scene
     CALL(portEvtSceneMs, PORT_SCENE_COOKING, 1, LW(0))
     IF_INT_EQUAL(LW(0), 0)
         RETURN
