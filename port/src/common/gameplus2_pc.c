@@ -1,4 +1,4 @@
-/* Gameplay+, the second batch (port/include/port/gameplus.h): badge
+/* Enhancements, the second batch (port/include/port/gameplus.h): badge
  * loadouts, storage at every Save Block, the walk-speed boost, coin and EXP
  * multipliers, the Star Piece and Shine Sprite tracker, faster text outside
  * battle, the jukebox and the shops' junk-item helper. Every one off by

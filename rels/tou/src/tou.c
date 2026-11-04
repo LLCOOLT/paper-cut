@@ -711,7 +711,7 @@ static USER_FUNC(evt_tou_set_ranking_win_lose) {
         for (i = 0; i < rank_wp->count; i++) {
 #ifdef TARGET_PC
             if (portGameplus("glitz_pit_kind")) {
-                break; // Gameplay+: a lost match costs no rank
+                break; // Enhancements: a lost match costs no rank
             }
 #endif
             if (id == rank_wp->entries[i].id) {

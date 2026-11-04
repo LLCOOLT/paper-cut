@@ -1,4 +1,4 @@
-/* Quick resume (System > Quick resume, on by default): the game as it is,
+/* Quick resume (General > Quick resume, on by default): the game as it is,
  * kept as a save of its own that the launcher's Continue loads, so a phone
  * app closed in the background (iOS ends them as it likes) or a window shut
  * without saving loses nothing.

@@ -29,7 +29,7 @@ BattleWorkPad* portSecondPlayerGuardPad(BattleUnit* unit); /* port/src/common/se
 static BattleWorkPad* sGuardPad; /* the pad record this guard is judged from (NULL: actionCommands.pad) */
 #include "port/gameplus.h"
 #include "port/battle_speed.h"
-/* Gameplay+ action-command assist (port/include/port/gameplus.h): an automatic
+/* Accessibility action-command assist (port/include/port/gameplus.h): an automatic
  * attack command runs as with an Auto Command badge on Mario or the partner */
 static u8 portAutoAttackOn(BattleWork* wp) {
     BattleUnit* unit = wp->actionCommands.acUnit;
@@ -221,7 +221,7 @@ s32 PORT_HOOKABLE(BattleActionCommandCheckDefence)(BattleUnit* unit, BattleWeapo
     superguard = super_frames[diff];
     normal = normal_frames[diff];
 #ifdef TARGET_PC
-    if (portGameplus("ac_guard_assist") == 1) { // Gameplay+: wider guard windows
+    if (portGameplus("ac_guard_assist") == 1) { // Accessibility: wider guard windows
         normal *= 2;
         superguard += 2;
     }
@@ -303,7 +303,7 @@ s32 PORT_HOOKABLE(BattleActionCommandCheckDefence)(BattleUnit* unit, BattleWeapo
     }
 #ifdef TARGET_PC
     if (portGameplus("ac_guard_assist") == 2 && wp->actionCommands.defenseResult < 4) {
-        wp->actionCommands.defenseResult = 4; // Gameplay+: automatic guards (a Superguard is still the player's)
+        wp->actionCommands.defenseResult = 4; // Accessibility: automatic guards (a Superguard is still the player's)
     }
     wp->actionCommands.defenseResult = portChallengeGuard(wp->actionCommands.defenseResult); // challenge: no guarding
 #endif
@@ -367,7 +367,7 @@ void PORT_HOOKABLE(BattleActionCommandSetDifficulty)(BattleWork* work, BattleUni
     }
 #ifdef TARGET_PC
     if (unit->alliance == 0 && portGameplus("ac_attack_assist") == 1) {
-        adjusted = adjusted > 3 ? adjusted - 3 : 0; // Gameplay+: wider attack windows
+        adjusted = adjusted > 3 ? adjusted - 3 : 0; // Accessibility: wider attack windows
     }
     if (unit->alliance == 0) {
         adjusted = portChallengeCommandLevel(adjusted); // challenge: harder attack commands

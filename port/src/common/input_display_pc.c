@@ -1,4 +1,4 @@
-/* The input display (Display > Input display; port/settings/features/
+/* The input display (Interface > Input display; port/settings/features/
  * input_display.cpp): a controller as the game last read it, DEMOPadRead's
  * (src/sdk/DEMOPad.c) after the script, the keyboard and the clamp, the
  * state makeKey turns into the game's input. Only read, never changed. */

@@ -184,12 +184,13 @@ screen. Gameplay (`port/include/port/gameplay.h`): fast-forward speed
 (2-8x) and hold or toggle, text speed, Mario's run speed, skip the intro (the
 logos at 16x, then the title without the story demo). Controls: rumble and
 its strength, and the on-screen controls' haptics, opacity, size and
-auto-run. System: pause and controllers in the background, the save folder.
+auto-run, and controllers in the background. General: pause in the background.
+Saves: the save folder.
 
 Controllers (Controls tab; `port/settings/features/controllers.cpp`):
 - **Mappings:** the community SDL_GameControllerDB is loaded at start (`port/assets/controllers`, about 2,300 models), then the player's own `<user>/gamecontrollerdb.txt`. Most controllers SDL doesn't know work as gamepads.
 - **The list:** each connected controller with its kind and battery. Each can be made player 1-4 (Aurora's ports), tested live (buttons, sticks, triggers), and given dead zones and trigger click points per player, saved with Aurora's mappings.
-- **Remapping:** Controller buttons remaps any player, not only the first.
+- **Remapping:** Bindings (Controls tab; `port/settings/features/bindings.cpp`) remaps any player, not only the first.
 - **Set up a controller:** a controller SDL can't map (an old USB pad, an arcade stick) is set up by pressing each button when asked. The mapping takes effect at once and is added to `<user>/gamecontrollerdb.txt`.
 
 Save states (`port/src/aurora/savestate_aurora.c`; every Aurora build with
@@ -218,7 +219,7 @@ linked; not yet run on a device.
 
 Fast-forward (`port/src/aurora/speed_aurora.c`): Tab, a controller's right
 stick click or the on-screen `>>`. The game clock runs at the chosen multiple
-of real time (`portClockSetSpeed`, `os_time_aurora.c`) and frame pacing,
+of real time (`portClockSetSpeedPct`, `os_time_aurora.c`) and frame pacing,
 which waits on that clock, follows; vsync is off meanwhile and no in-between
 frames are drawn. `TTYD_FF_TEST` holds it from the start (tests).
 Changes apply at once and are written to `settings.txt` in the user folder
@@ -261,6 +262,44 @@ Environment switches (all optional):
 | `TTYD_GXARRAY_TRACE=1/2` | Aurora: vertex-array uploads without a size / every changed array |
 | `TTYD_NO_MODS` | Aurora: no mods and no loose textures ([MODDING.md](MODDING.md)) |
 | `TTYD_DUMP_TEXTURES` | Aurora: save every texture without a replacement, under its texture-pack name |
+| `TTYD_FINGERPRINT=<file>`, `TTYD_FINGERPRINT_PARTS` | Aurora: each frame's game-state fingerprint in the file (same input, same file); with PARTS, each part's hash too ([ONLINE_RELAY.md](ONLINE_RELAY.md)) |
+| `TTYD_TR_DUMP=<file>` | Aurora: every English text the menus ask to translate, once each, added to the file ([LANGUAGE_PACKS.md](LANGUAGE_PACKS.md)) |
+| `TTYD_PAUSE_ROW=<label>` | Aurora: the Start menu's Settings tab opens with that row chosen |
+| `TTYD_SETTINGS_HINT=1/0` | Aurora: show or skip the first room's settings hint (skipped by default with `TTYD_MAP`) |
+| `TTYD_STEAM_DECK=1/0` | Aurora: take this computer for a Steam Deck or not (its first-start settings) |
+| `TTYD_ART=off/lazy` | Aurora: the art recipes not run (the drawn art stands in), or each image made when first asked for |
+| `TTYD_P2_PRESS=<keys>@<frame>[+N][,...]` | scripted controller 2: those keys held from that frame for N frames (`port/src/common/input_pc.c`) |
+| `TTYD_HAPTICS_PRESS=<k>/last`, `TTYD_HAPTICS_LOG` | Aurora: A pressed k frames into each window a haptic cue announces; log each cue, pulse and judgement |
+| `TTYD_BATTLE_SPEED_LOG` | log Faster battles' speed changes and guard windows |
+| `TTYD_CAPTION_LOG` | Aurora: log each caption for a sound as it comes |
+| `TTYD_SPEECH_LOG=<file>` | Aurora: what Read text aloud would say, a line each in the file, no voice |
+| `TTYD_DALTON_LOG` | Aurora: log the colour-blind filter's matrix when it changes |
+| `TTYD_REWIND_LOG`, `TTYD_REWIND_NO_WATCH` | Aurora: log Rewind's states and steps; compare every memory page, not only the written ones |
+| `TTYD_BINDINGS_TEST=1` | Aurora: a virtual controller pressed through the Bindings checks, each step's input printed (`bindings.cpp`) |
+| `TTYD_ONE_HANDED_TEST=left/right` | Aurora: a virtual controller with that one-handed preset, each button's result printed |
+| `TTYD_MESSAGE_LOG_TEST=<pages>`, `TTYD_MESSAGE_LOG_PRINT` | Aurora: the message log opened once it holds that many pages; each page printed as it is logged |
+| `TTYD_PHOTO_TEST=<frame>:<yaw>:<pitch>:<zoom>`, `TTYD_PHOTO_MENU_SHOT` | Aurora: photo mode at that frame and view, two pictures; a picture once it is opened from the Start menu |
+| `TTYD_PRESET_TEST=<file>`, `TTYD_PRESET_APPLY=<code>` | Aurora: this setup's preset code written to the file; a code put in place at start |
+| `TTYD_COMPANION_WINDOW=1`, `TTYD_COMPANION_MENU=0`, `TTYD_COMPANION_TAB=<n>` | Aurora: the second screen in a desktop window; its Start menu picture off; the tab it opens at ([SECOND_SCREEN_MENU.md](SECOND_SCREEN_MENU.md)) |
+| `TTYD_COMPANION_DUMP`, `TTYD_COMPANION_AUDIT` | Aurora: the second screen's snapshot and input in the log; its menu frames checked as `TTYD_INTERP_AUDIT` checks in-between frames |
+| `TTYD_DISCORD_IPC=<pipe>` | Aurora: Discord status talks to that pipe or socket instead of Discord's ([DISCORD_STATUS.md](DISCORD_STATUS.md)) |
+| `TTYD_ONLINE_HOST=<port>`, `TTYD_ONLINE_JOIN=<host>:<port>`, `TTYD_ONLINE_LAN` | Aurora: host or join an online game by address at start; LAN: the host listens on the network, not only this computer ([ONLINE_RELAY.md](ONLINE_RELAY.md)) |
+| `TTYD_ONLINE_HOST_ROOM=<code>`, `TTYD_ONLINE_JOIN_ROOM=<code>`, `TTYD_ONLINE_RELAY=<url>` | Aurora: host or join a room on the relay at start; another relay than the built-in one |
+| `TTYD_ONLINE_WATCH=<host>:<port>`, `TTYD_ONLINE_WATCH_ROOM=<code>` | Aurora: watch an online game at start |
+| `TTYD_ONLINE_CONTINUE`, `TTYD_ONLINE_RECOVERIES=<n>` | Aurora: host from the last save ("Continue where you left off"); the out-of-step recoveries so far (set by the game as it starts again) |
+| `TTYD_ONLINE_NO_ICE`, `TTYD_ONLINE_NO_RECONNECT` | Aurora: online games only through the relay (no direct path); no reconnecting after a drop |
+| `TTYD_ONLINE_DROP_AT=<frame>`, `TTYD_ONLINE_DESYNC_AT=<frame>` | Aurora: the connection dropped at that frame, once; the guest's random numbers nudged at that frame, once |
+| `TTYD_ONLINE_INVITE=<link>` | Aurora: an invite link handed from the launcher to another release's build (set by the game) |
+| `TTYD_REPLAY_RECORD`, `TTYD_REPLAY_NAME=<name>`, `TTYD_REPLAY_PLAY=<file>` | Aurora: record a replay from the start, its name; play one (set by the game as it restarts; [REPLAYS.md](REPLAYS.md)) |
+| `TTYD_REPLAY_OUT=<dir>`, `TTYD_REPLAY_FRAMES=<n>`, `TTYD_REPLAY_EXIT` | Aurora: recordings saved there; a recording saved after n frames; exit once it is saved or the playback is over |
+| `TTYD_SAVE_SEND`, `TTYD_SAVE_SEND_QR=<file>`, `TTYD_SAVE_SEND_BIND=<address>` | Aurora: send saves from the first frame; the QR code saved as a picture; listen on that address ([SAVE_TRANSFER.md](SAVE_TRANSFER.md)) |
+| `TTYD_SAVE_RECEIVE=<url>`, `TTYD_SAVE_RECEIVE_FILES=<1234>` | Aurora: receive saves from that address at start, taking those files |
+| `TTYD_UPDATE_API=<url>`, `TTYD_UPDATE_INSTALL` | Aurora: a test release on this computer instead of GitHub's; press Install without the page ([UPDATES.md](UPDATES.md)) |
+| `TTYD_UPDATE_APPLIED=<version>` | Aurora: the version just installed, shown on the General tab (set by the update as it starts the new version) |
+| `TTYD_URL_SCHEME_TEST` | Aurora on Windows: register `papercut-test://` links instead of `papercut://` (the registration's own test) |
+| `TTYD_LOAD_SAVE_SLOT=0-3` | with `TTYD_LOAD_SAVE`: that save as this file slot (the launcher's Continue) |
+| `TTYD_LAUNCHER_TAB=<tab>` | Aurora: the launcher opens on that tab (Online, for an invite link) |
+| `TTYD_UPDATE_REPO=<owner>/<repo>` | Aurora: check another repository's releases for updates |
 
 Crashes and `abort()` print a symbolized backtrace.
 
@@ -426,7 +465,7 @@ can be copied to and from Dolphin; Aurora's pipeline caches are in
   writes `crash_report.txt` in the user folder: the build (version, image
   UUID and load address, for symbolizing the offsets), the sequence and map,
   and the stack. At the next start it becomes `last_crash.txt` and the game
-  offers to copy it (also Settings > System).
+  offers to copy it (also Settings > General).
 - **RELs are linked in** (`TTYD_RELS_STATIC` is forced: an app may only run
   code signed into its bundle). Mach-O has no grouped sections, so each REL's
   data and bss go to `__DATA,__rd_<area>`/`__rb_<area>`, bounded by the

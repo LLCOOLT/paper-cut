@@ -1,6 +1,6 @@
 #pragma once
 /* The port's own menus in the player's language (port/settings/tr.cpp):
- * English, Deutsch, Français, Español, Italiano or Japanese, from System >
+ * English, Deutsch, Français, Español, Italiano or Japanese, from Language >
  * Menu language (Auto: the JP release's Japanese, the EU release's text
  * language, otherwise the computer's). The translations are kept by their
  * English text (port/assets/lang/<code>.txt, tools/port/gen_lang.py), so a

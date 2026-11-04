@@ -3051,7 +3051,7 @@ EVT_END()
 
 #ifdef TARGET_PC
 /**
- * Gameplay+ (skip repeated scenes): one fighter put where evt_teki_nyuujyou_default walks it to, at once;
+ * Enhancements (skip repeated scenes): one fighter put where evt_teki_nyuujyou_default walks it to, at once;
  * the same LW(0) name, LW(1) index and LW(2) team size.
  */
 static EVT_BEGIN(port_teki_place)
@@ -3144,7 +3144,7 @@ EVT_BEGIN(evt_default_opening)
         END_IF
     END_IF
 #ifdef TARGET_PC
-    // Gameplay+: once a match was fought on this file, everyone straight to their places in the ring
+    // Enhancements: once a match was fought on this file, everyone straight to their places in the ring
     CALL(portEvtSceneMs, PORT_SCENE_GLITZ_OPENING, 1, LW(9))
     IF_INT_EQUAL(LW(9), 0)
         CALL(evt_seq_wait, 2)
@@ -3423,7 +3423,7 @@ EVT_BEGIN(evt_default_win)
         ADD(LW(1), 1)
     END_LOOP
 #ifdef TARGET_PC
-    // Gameplay+: once a match was won on this file, the win without the confetti, poses and lines
+    // Enhancements: once a match was won on this file, the win without the confetti, poses and lines
     CALL(portEvtSceneMs, PORT_SCENE_GLITZ_WIN, 1, LW(9))
     IF_INT_EQUAL(LW(9), 0)
         CALL(evt_mario_set_pose, STRING("M_S_1"))

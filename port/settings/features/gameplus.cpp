@@ -1,4 +1,4 @@
-// Gameplay+ and accessibility (port/include/port/gameplus.h): the settings
+// Enhancements and accessibility (port/include/port/gameplus.h): the settings
 // page's controls for the options, all off by default, and the quick-swap
 // control's keyboard key and controller button.
 #include "port/bindings.h"
@@ -81,8 +81,8 @@ struct Register {
                           "heal_all_partners", "heal item partner mushroom hp");
     portSettingsAddToggle(kTab, "Skip repeated scenes",
                           "Scenes already seen on this file go faster or straight to their end: the Crystal Star "
-                          "fanfare and the pedestal's map reveal after the first star, Zess T.'s cooking, the Glitz "
-                          "Pit's match openings and victory scenes, and the train and blimp ticket hand-overs.",
+                          "fanfare and map reveal, Zess T.'s cooking, the Glitz Pit's match scenes, the train and "
+                          "blimp tickets.",
                           0, "skip_scenes", "skip cutscene scene crystal star cooking zess");
     portSettingsAddToggle(kTab, "Fast travel",
                           "Travel to a hub from the settings page (All settings, Travel to): Rogueport, then one "
@@ -114,9 +114,8 @@ struct Register {
                           "A lost match costs no rank, and a match's bonus condition stays at the top of the screen.",
                           kPlay, "glitz_pit_kind", "glitz pit rank lose condition rule");
     portSettingsAddToggle(kTab, "Play as Luigi",
-                          "Luigi in Mario's place, with Mario's moves: in the field, in battle, in the menus and "
-                          "the credits, with his own footsteps, and the text calls him Luigi. The other Luigi, in "
-                          "Rogueport's inn and his scenes, stays out of sight. Saves are not changed.",
+                          "Luigi in Mario's place, with Mario's moves, in the field, battles, menus and credits; "
+                          "the text calls him Luigi and the other Luigi stays out of sight. Saves are not changed.",
                           0, "playable_luigi", "luigi play as character mario green brother");
     static const char* const kNewGamePlus[] = {"Off", "Level and stats", "Level, stats and badges",
                                                "Level, stats, badges and Tattle Log"};

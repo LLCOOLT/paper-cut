@@ -53,3 +53,6 @@ Ein Schalter klickt
 
 A lock opens
 Ein Schloss geht auf
+
+How far the filter moves the colours.
+Wie stark der Filter die Farben verschiebt.

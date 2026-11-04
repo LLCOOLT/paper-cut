@@ -1,7 +1,7 @@
 #ifndef PORT_LUIGI_H
 #define PORT_LUIGI_H
 
-/* Play as Luigi (Gameplay+ "playable_luigi", off by default;
+/* Play as Luigi (Enhancements "playable_luigi", off by default;
  * port/src/common/luigi_pc.c, docs/PLAYABLE_LUIGI.md): Luigi's field model
  * (c_luigi, with our animations) is drawn in place of Mario's pose while
  * Mario's current animation has a Luigi version; otherwise Mario's model

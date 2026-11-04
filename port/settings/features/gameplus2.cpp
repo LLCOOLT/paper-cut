@@ -1,4 +1,4 @@
-// Gameplay+, the second batch (port/include/port/gameplus.h): the settings
+// Enhancements, the second batch (port/include/port/gameplus.h): the settings
 // page's controls for badge loadouts, storage at Save Blocks, the walk-speed
 // boost and its controls, the coin and EXP multipliers, the Star Piece and
 // Shine Sprite tracker (in a corner over the game), faster field text, the

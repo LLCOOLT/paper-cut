@@ -2567,7 +2567,7 @@ void fbatBattleMode(void) {
                 apply:
                     cur->btlCoinDropCount *= mult;
 #ifdef TARGET_PC
-                    cur->btlCoinDropCount = portBattleCoins(cur->btlCoinDropCount); /* Gameplay+: the coin multiplier */
+                    cur->btlCoinDropCount = portBattleCoins(cur->btlCoinDropCount); /* Enhancements: the coin multiplier */
 #endif
                     if (!stolen) {
                         npcGroupDead(cur, 0);

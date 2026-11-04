@@ -7,7 +7,7 @@
 #include "battle/battle_seq_end.h"
 #ifdef TARGET_PC
 #include "port/gameplus.h"
-// Gameplay+ (port/include/port/gameplus.h): the level-up screen takes the D-pad as well as the stick
+// Enhancements (port/include/port/gameplus.h): the level-up screen takes the D-pad as well as the stick
 #define LVUP_DIR(stick, dpad) (portGameplus("levelup_dpad") ? (stick) | (dpad) : (stick))
 #else
 #define LVUP_DIR(stick, dpad) (stick)
@@ -438,7 +438,7 @@ void PORT_HOOKABLE(btlseqEnd)(BattleWork* wp) {
                 work->exp = work->exp * 2;
             }
 #ifdef TARGET_PC
-            work->exp = portBattleExp(work->exp); /* Gameplay+: the EXP multiplier */
+            work->exp = portBattleExp(work->exp); /* Enhancements: the EXP multiplier */
 #endif
             if (pouch->level >= LEVEL_MAX) {
                 work->exp = 0;
@@ -894,7 +894,7 @@ void PORT_HOOKABLE(btlseqEnd)(BattleWork* wp) {
             }
             BattleSetMarioParamToFieldBattle(wp);
 #ifdef TARGET_PC
-            portPartyReviveAfterBattle(); // Gameplay+: no partner left at 0 HP in the field
+            portPartyReviveAfterBattle(); // Enhancements: no partner left at 0 HP in the field
 #endif
             BattleFree(wp->seqEndWork);
             wp->seqEndWork = NULL;

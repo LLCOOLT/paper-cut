@@ -15,7 +15,7 @@
 #endif
 #endif
 #ifdef TARGET_PC
-/* Gameplay+: faster text outside battle, the message windows' 200 ms fades too */
+/* Enhancements: faster text outside battle, the message windows' 200 ms fades too */
 #define MSG_FADE_MS(ticks) (OSTicksToMilliseconds(ticks) * portFieldTextScale())
 #else
 #define MSG_FADE_MS(ticks) OSTicksToMilliseconds(ticks)
@@ -448,7 +448,7 @@ static s32 msgMain(smartEntry* smart) {
     if (data->scrollTarget > data->scrollPos) {
         data->scrollPos += 0.36f * OSTicksToMilliseconds(gp->renderTime - data->lastUpdateTime);
 #ifdef TARGET_PC
-        /* Gameplay+: faster text outside battle, the page turn too */
+        /* Enhancements: faster text outside battle, the page turn too */
         data->scrollPos += 0.36f * OSTicksToMilliseconds(gp->renderTime - data->lastUpdateTime) * (portFieldTextScale() - 1);
 #endif
         msgCheckSkip(smart, data);
@@ -478,7 +478,7 @@ static s32 msgMain(smartEntry* smart) {
             ms = OSTicksToMilliseconds(gp->renderTime - data->lastUpdateTime);
 #ifdef TARGET_PC
             ms = portTextMs(ms); /* PC port: the text speed setting */
-            ms *= portFieldTextScale(); /* Gameplay+: faster text outside battle */
+            ms *= portFieldTextScale(); /* Enhancements: faster text outside battle */
 #endif
             msgCheckSkip(smart, data);
             if (!(data->flags & MSG_WIN_FLAG_SMALL) && (data->flags & MSG_WIN_FLAG_FAST)) {

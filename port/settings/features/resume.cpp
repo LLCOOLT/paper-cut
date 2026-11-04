@@ -1,4 +1,4 @@
-// Quick resume's switch (System tab): port/src/aurora/resume_aurora.c keeps
+// Quick resume's switch (General tab): port/src/aurora/resume_aurora.c keeps
 // the game as a save of its own while playing, for the launcher's Continue.
 #include "port/settings.h"
 

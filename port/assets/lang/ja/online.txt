@@ -96,9 +96,6 @@ Couldn't reach the host: check the address and that they are waiting.
 The other player left.
 相手が抜けました。
 
-The other player stopped answering.
-相手から応答がなくなりました。
-
 The connection sent something that isn't Paper Cut's.
 接続先からPaper Cutのものではないデータが来ました。
 

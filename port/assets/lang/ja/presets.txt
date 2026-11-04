@@ -41,3 +41,6 @@ That isn't a settings preset.
 
 Preset put in place: %d settings changed. Some apply from the next start.
 プリセットを適用しました：%d個の設定を変更しました。一部は次回起動時から反映されます。
+
+Paper Cut settings preset
+Paper Cut設定プリセット

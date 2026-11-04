@@ -2701,7 +2701,7 @@ USER_FUNC(evt_mobj_recovery_blk) {
 #include "evt/evt_window.h"
 #include "port/gameplus.h"
 /*
- * Gameplay+: storage at every Save Block (port/include/port/gameplus.h). Asks
+ * Enhancements: storage at every Save Block (port/include/port/gameplus.h). Asks
  * what to do first; storing and taking out pick items one at a time as at the
  * Rogueport shop's counter, until the list is closed. LW(13) is 0 when Mario
  * goes on to save, 1 when he leaves.
@@ -2776,7 +2776,7 @@ EVT_BEGIN(mobj_save_blk_sysevt)
         SET_VALUE(GSWF(GSWF_SAVE_BLOCK_USED_AFTER_GOOMBELLA), 1)
     END_IF
 #ifdef TARGET_PC
-    // Gameplay+: storage at every Save Block (not after the first hit's tutorial, whose window stays open)
+    // Enhancements: storage at every Save Block (not after the first hit's tutorial, whose window stays open)
     CALL(portEvtStorageOn)
     IF_INT_EQUAL(LW(0), 1)
         IF_INT_EQUAL(LF(10), 0)

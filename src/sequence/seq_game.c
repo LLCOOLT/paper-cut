@@ -61,7 +61,7 @@ void PORT_HOOKABLE(seq_gameMain)(SequenceWork* wp) {
             gp->areaFadeOutDuration = 300;
             wp->state++;
 #ifdef TARGET_PC
-            portRetryPoint(); // Gameplay+: a room's entry, for a retry on Game Over
+            portRetryPoint(); // Enhancements: a room's entry, for a retry on Game Over
 #endif
             break;
 

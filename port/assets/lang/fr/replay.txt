@@ -83,3 +83,6 @@ Désynchronisé depuis l'image %ld
 
 Made with Paper Cut %s
 Fait avec Paper Cut %s
+
+Paper Cut replay
+Replay de Paper Cut

@@ -536,7 +536,7 @@ EVT_BEGIN(evt_sub_starstone)
     // The fanfare lasts at least 9.7 seconds; the screen flashes white with a chime.
     CALL(set_stop, 0)
 #ifdef TARGET_PC
-    // Gameplay+: the fanfare cut short once a Crystal Star was seen on this file
+    // Enhancements: the fanfare cut short once a Crystal Star was seen on this file
     CALL(portEvtSceneMs, PORT_SCENE_CRYSTAL_STAR, 9700, LW(15))
     BEGIN_INLINE_EVENT
         WAIT_MS(LW(15))

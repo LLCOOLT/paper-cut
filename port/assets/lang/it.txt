@@ -58,9 +58,6 @@ Fotogrammi al secondo
 The game runs at 60 frames a second; higher rates draw frames in between (smooth camera and characters).
 Il gioco gira a 60 fotogrammi al secondo; frequenze più alte disegnano fotogrammi intermedi (telecamera e personaggi più fluidi).
 
-Fullscreen (F11 or Alt+Enter)
-Schermo intero (F11 o Alt+Invio)
-
 Widescreen (16:9)
 Panoramico (16:9)
 
@@ -190,12 +187,6 @@ Intensità della vibrazione
 The game's own Rumble option (on the file select) still applies.
 L'opzione Vibrazione del gioco (nella selezione dei file) vale ancora.
 
-Choose a button on the left, then press the controller button that should do it.
-Scegli un tasto a sinistra, poi premi il tasto del controller che deve farlo.
-
-Choose a row, then press the key that should do it (Escape: leave it as it is).
-Scegli una riga, poi premi il tasto che deve farlo (Esc: lasciarlo com'è).
-
 Auto (the controller used last)
 Auto (l'ultimo controller usato)
 
@@ -262,8 +253,8 @@ Salvataggio automatico
 changes saves
 cambia i salvataggi
 
-Saves into the file you're playing when you go into another room, once you have the controls there, as a Save Block would: a crash or a closed window costs no more than the room. Not during the boss rush or endless Glitz Pit, or after the practice tools changed the game.
-Salva nel file che stai giocando quando entri in un'altra stanza, una volta che hai i comandi lì, come farebbe un Blocco Salvataggio: un crash o una finestra chiusa non costano più della stanza. Non durante la serie di boss o lo Stadio infinito, né dopo che gli strumenti di allenamento hanno cambiato il gioco.
+Saves into the file you're playing as you enter each room, as a Save Block would: a crash costs no more than the room. Not in the boss rush or endless Glitz Pit, or once the practice tools changed the game.
+Salva nel file che stai giocando quando entri in ogni stanza, come farebbe un Blocco Salvataggio: un crash non costa più della stanza. Non durante la serie di boss o lo Stadio infinito, né dopo che gli strumenti di allenamento hanno cambiato il gioco.
 
 Text language
 Lingua del testo
@@ -409,8 +400,8 @@ Nessun rapporto di crash.
 Menu language
 Lingua dei menu
 
-Paper Cut's own menus: the settings page, the launcher's and the Start menu's Settings tab. Auto: the Japanese release's Japanese, the European release's text language, otherwise the computer's. The game's own text follows the disc.
-I menu di Paper Cut: la pagina delle impostazioni, quella del launcher e la scheda Impostazioni del menu Start. Auto: il giapponese per la versione giapponese, la lingua del testo per quella europea, altrimenti quella del computer. Il testo del gioco segue il disco.
+Paper Cut's own menus. Auto: the Japanese release's Japanese, the European release's text language, otherwise the computer's. The game's own text follows the disc.
+I menu di Paper Cut. Auto: il giapponese per la versione giapponese, la lingua del testo per quella europea, altrimenti quella del computer. Il testo del gioco segue il disco.
 
 Quick resume
 Ripresa rapida
@@ -514,8 +505,8 @@ Sul campo, un oggetto usato su un compagno cura anche gli altri compagni.
 Skip repeated scenes
 Salta le scene già viste
 
-Scenes already seen on this file go faster or straight to their end: the Crystal Star fanfare and the pedestal's map reveal after the first star, Zess T.'s cooking, the Glitz Pit's match openings and victory scenes, and the train and blimp ticket hand-overs.
-Le scene già viste in questo file vanno più veloci o direttamente alla fine: la fanfara della Stella cristallo e la mappa rivelata sul piedistallo dopo la prima, la cucina di Chef Champignon, le aperture e le scene di vittoria degli incontri dello Stadio, e la consegna dei biglietti del treno e del dirigibile.
+Scenes already seen on this file go faster or straight to their end: the Crystal Star fanfare and map reveal, Zess T.'s cooking, the Glitz Pit's match scenes, the train and blimp tickets.
+Le scene già viste in questo file vanno più veloci o direttamente alla fine: la fanfara della Stella cristallo e la mappa rivelata, la cucina di Chef Champignon, le scene degli incontri dello Stadio, i biglietti del treno e del dirigibile.
 
 Fast travel
 Viaggio rapido
@@ -568,8 +559,8 @@ Un incontro perso non costa il rango, e la condizione bonus di un incontro resta
 Play as Luigi
 Gioca come Luigi
 
-Luigi in Mario's place, with Mario's moves: in the field, in battle, in the menus and the credits, with his own footsteps, and the text calls him Luigi. The other Luigi, in Rogueport's inn and his scenes, stays out of sight. Saves are not changed.
-Luigi al posto di Mario, con le mosse di Mario: sul campo, in battaglia, nei menu e nei titoli di coda, con i suoi passi, e il testo lo chiama Luigi. L'altro Luigi, alla locanda di Fannullopoli e nelle sue scene, resta nascosto. I salvataggi non cambiano.
+Luigi in Mario's place, with Mario's moves, in the field, battles, menus and credits; the text calls him Luigi and the other Luigi stays out of sight. Saves are not changed.
+Luigi al posto di Mario, con le mosse di Mario, sul campo, in battaglia, nei menu e nei titoli di coda; il testo lo chiama Luigi e l'altro Luigi resta nascosto. I salvataggi non cambiano.
 
 A new file starts with what you choose here, taken from the file New Game+ from file names. Choose before starting the new file.
 Un nuovo file parte con ciò che scegli qui, preso dal file indicato da New Game+ dal file. Scegli prima di iniziare il nuovo file.
@@ -615,9 +606,6 @@ Maiusc sinistro
 
 Boost key
 Tasto della spinta
-
-Right stick pressed in
-Stick destro premuto
 
 Boost button
 Pulsante della spinta
@@ -694,9 +682,6 @@ Cambia qui le impostazioni di Paper Cut.
 On
 Sì
 
-Fullscreen
-Schermo intero
-
 Widescreen
 Panoramico
 
@@ -708,9 +693,6 @@ Fotogrammi in più tra i 60 del gioco: movimento più fluido.
 
 Present at the display's refresh: no tearing.
 Mostra al ritmo dello schermo: niente immagini spezzate.
-
-The whole screen, or a window (F11 or Alt+Enter).
-Tutto lo schermo, o una finestra (F11 o Alt+Invio).
 
 16:9 instead of the game's own 4:3. Some rooms and scenes end at the 4:3 edges.
 16:9 invece del 4:3 del gioco. Alcune stanze e scene finiscono ai bordi del 4:3.
@@ -786,12 +768,6 @@ I controller funzionano anche mentre un'altra finestra è attiva.
 
 Controllers in the background
 Controller in secondo piano
-
-Every setting: also remapping, mods, saves' tools and practice.
-Tutte le impostazioni: anche l'assegnazione dei tasti, le mod, gli strumenti per i salvataggi e l'allenamento.
-
-All settings...
-Tutte le impostazioni...
 
 The display's rate
 Quella dello schermo
@@ -913,15 +889,6 @@ Alt sinistro
 Right Shift
 Maiusc destro
 
-Left stick pressed in
-Stick sinistro premuto
-
-Back paddle
-Levetta posteriore
-
-Share / capture button
-Pulsante Condividi / cattura
-
 Every story step
 Ogni passo della storia
 
@@ -961,20 +928,11 @@ La storia è finita: vai dove vuoi.
 Second player (co-op)
 Secondo giocatore (cooperativa)
 
-Player 2 plays the partner: once it's on, A on another controller joins. In battle: its moves, its action commands and its guards. In the field: the stick walks it anywhere, A hops, B talks to or hits what it's next to, X is its ability, L or R the next partner. Mario's Y calls it back, and it comes back by itself when it gets far away. On a phone or tablet, pair two controllers.
-Il giocatore 2 controlla il compagno: una volta attivo, A su un altro controller lo fa entrare. In battaglia: le sue mosse, i suoi comandi azione e le sue difese. Sul campo: la levetta lo fa camminare ovunque, A salta, B parla con ciò che ha accanto o lo colpisce, X è la sua abilità, L o R il compagno successivo. La Y di Mario lo richiama, e torna da solo quando si allontana troppo. Su un telefono o tablet, abbina due controller.
-
-Controller 2
-Controller 2
-
-Controller 2:
-Controller 2:
+Player 2 plays the partner: A on another controller joins. In battle: its moves, action commands and guards. In the field: the stick walks it, A hops, B talks or hits, X is its ability, L or R the next partner; Mario's Y calls it back. On a phone or tablet, pair two controllers.
+Il giocatore 2 controlla il compagno: A su un altro controller lo fa entrare. In battaglia: le sue mosse, i comandi azione e le difese. Sul campo: la levetta lo fa camminare, A salta, B parla o colpisce, X è la sua abilità, L o R il compagno successivo; la Y di Mario lo richiama. Su un telefono o tablet, abbina due controller.
 
 connected
 collegato
-
-Controller 2: none connected (the first plays the partner too).
-Controller 2: nessuno collegato (il primo controlla anche il compagno).
 
 Sync saves through a folder
 Sincronizza i salvataggi con una cartella
@@ -1020,8 +978,8 @@ Inizia dalla schermata del titolo
 Skip to this disc next time
 Vai direttamente a questo disco la prossima volta
 
-To see this screen again: Settings > System in the game.
-Per rivedere questa schermata: Impostazioni > Sistema nel gioco.
+To see this screen again: Settings > General in the game.
+Per rivedere questa schermata: Impostazioni > Generale nel gioco.
 
 Paper Cut plays Paper Mario: The Thousand-Year Door as a native program, built from the game's C decompilation, with no emulator. You need your own copy of the game: a disc image of the Japanese, US or European release.
 Paper Cut fa girare Paper Mario: Il portale millenario come programma nativo, costruito dalla decompilazione in C del gioco, senza emulatore. Ti serve una tua copia del gioco: un'immagine disco della versione giapponese, americana o europea.
@@ -1047,9 +1005,6 @@ Gioca
 About
 Informazioni
 
-Controller buttons
-Pulsanti del controller
-
 Player 1
 Giocatore 1
 
@@ -1062,29 +1017,14 @@ Giocatore 3
 Player 4
 Giocatore 4
 
-Connect a controller to change which of its buttons does what.
-Collega un controller per cambiare cosa fa ciascuno dei suoi pulsanti.
-
 No controller is this player: choose one under Controllers.
 Nessun controller è questo giocatore: scegline uno in Controller.
 
 Press a button...
 Premi un pulsante...
 
-GameCube %s
-GameCube %s
-
 Swap A and B
 Scambia A e B
-
-Restore defaults
-Ripristina predefiniti
-
-Keyboard keys
-Tasti della tastiera
-
-Restore default keys
-Ripristina i tasti predefiniti
 
 Copy the last crash report
 Copia l'ultimo rapporto di crash
@@ -1227,9 +1167,6 @@ Non gioca
 Controller
 Controller
 
-, through an adapter
-, con un adattatore
-
 Hide test
 Nascondi il test
 
@@ -1239,8 +1176,8 @@ Prova
 Make it a player to set its dead zones.
 Rendilo un giocatore per impostarne le zone morte.
 
-Player 1 plays; player 2 can play the partner in battle and in the field (Second player, below). The buttons of each player are set under Controller buttons.
-Il giocatore 1 gioca; il giocatore 2 può controllare il compagno in battaglia e sul campo (Secondo giocatore, qui sotto). I pulsanti di ogni giocatore si impostano in Pulsanti del controller.
+Player 1 plays; player 2 can play the partner in battle and in the field (Second player, below). The buttons of each player are set under Bindings.
+Il giocatore 1 gioca; il giocatore 2 può controllare il compagno in battaglia e sul campo (Secondo giocatore, qui sotto). I pulsanti di ogni giocatore si impostano in Assegnazioni.
 
 Couldn't open it: 
 Impossibile aprirlo:
@@ -1776,9 +1713,6 @@ la levetta destra in basso (o salta)
 Joy-Con pair
 Coppia di Joy-Con
 
-Gamepad
-Controller
-
 None
 Nessuno
 
@@ -1906,11 +1840,20 @@ Scegli il controller del giocatore 2
 Let player 2 go
 Lascia andare il giocatore 2
 
-Choosing player 1's controller moves it to player 2, and player 1 plays on the keyboard. Each player's buttons are set under Controller buttons.
-Scegliere il controller del giocatore 1 lo passa al giocatore 2, e il giocatore 1 gioca con la tastiera. I pulsanti di ogni giocatore si impostano in Pulsanti del controller.
+Choosing player 1's controller moves it to player 2, and player 1 plays on the keyboard. Each player's buttons are set under Bindings.
+Scegliere il controller del giocatore 1 lo passa al giocatore 2, e il giocatore 1 gioca con la tastiera. I pulsanti di ogni giocatore si impostano in Assegnazioni.
 
 Co-op is on: press A on another controller to join.
 La cooperativa è attiva: premi A su un altro controller per entrare.
 
 a controller
 un controller
+
+Bars where a scene ends
+Bande dove finisce una scena
+
+In the rooms whose sets end before a wide screen's edges, and in battles past 16:9, bars beside the picture instead of the empty space past the set.
+Nelle stanze la cui scenografia finisce prima dei bordi di uno schermo largo, e nelle battaglie oltre il 16:9: bande accanto all'immagine invece dello spazio vuoto oltre la scenografia.
+
+File %d
+File %d

@@ -96,9 +96,6 @@ Impossible de joindre l'hôte : vérifiez l'adresse et qu'il attend.
 The other player left.
 L'autre joueur est parti.
 
-The other player stopped answering.
-L'autre joueur ne répond plus.
-
 The connection sent something that isn't Paper Cut's.
 La connexion a envoyé quelque chose qui ne vient pas de Paper Cut.
 

@@ -40,7 +40,7 @@ int portArtMake(const char* text, const char* path, PortArtDisc* disc, PortArtIm
 #define PORT_ART_RUNNER_VERSION 1
 
 /* ---- the game's side (port/src/aurora/art_recipes_aurora.c) ----
- * The recipes are port/assets/luigi/art/recipes/*.recipe, built in with the
+ * The recipes are port/assets/luigi/art/recipes/<name>.recipe, built in with the
  * drawn art (port/src/aurora/luigi_faces_aurora.c); each image they make is
  * an asset at its path, as a PNG, which portArtAssetData hands out like a
  * built-in one. */

@@ -29,6 +29,9 @@ void portPauseSettingsDisp(s32 camId, WindowWork* wp, s32 idx);
 /* text in the game's encoding wrapped for the menu's help box (about 30
  * columns; between words, Japanese ones too), its '<' and '>' made ( ) */
 void portPauseWrap(const char* text, char* out, size_t size);
+/* each frame on the port's tabs (win_root.c): a help text longer than the
+ * box's two lines turns its page by itself now and then */
+void portPauseHelpTurn(WindowWork* wp);
 /* msgSearch: the tab's own messages ("pc_menu_..."), or NULL */
 const char* portPauseSettingsMsg(const char* tag);
 

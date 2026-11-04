@@ -194,7 +194,7 @@ const bool sAdded = [] {
                         "(a daltonization correction, not a simulation).",
                         0, "colorblind", kFilters, 4,
                         "color colour blind blindness daltonize protanopia deuteranopia tritanopia filter");
-  portSettingsAddSlider("Accessibility", "Filter strength", nullptr, 0, "colorblind_strength", 0, 100, "%d%%",
+  portSettingsAddSlider("Accessibility", "Filter strength", "How far the filter moves the colours.", 0, "colorblind_strength", 0, 100, "%d%%",
                         "color colour blind filter strength daltonize");
   portSettingsAddToggle("Accessibility", "Captions for sounds",
                         "Short captions low on the screen for the sounds that tell you something: an enemy noticing "

@@ -23,3 +23,6 @@ Input display
 
 The controller as the game reads it, in a corner: sticks, buttons, d-pad and triggers (with Second player on, the second controller beside it).
 コントローラーの　スティックと　ボタンを　すみに　だします
+
+Music folder
+おんがくの　フォルダ

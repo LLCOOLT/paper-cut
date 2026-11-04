@@ -9,18 +9,6 @@ Hold the Rewind key (Backspace) or button and the game steps back through its la
 Rewind length
 巻き戻しの長さ
 
-Rewind button
-巻き戻しボタン
-
-A controller button that rewinds while held.
-押している間、巻き戻すコントローラーのボタン。
-
-Left back paddle
-左の背面パドル
-
-Right back paddle
-右の背面パドル
-
 Rewind key
 巻き戻しキー
 
@@ -41,3 +29,6 @@ Faster battles
 
 Battles play faster, but never while you act: action commands, Stylish moves, the menus and Star Specials stay at normal speed, and guards and Superguards keep their timing. Not in online co-op.
 バトルが速く進みます。ただし自分が操作する間はふつうの速さです：アクションコマンド、スタイリッシュ、メニュー、スペシャル技はそのままで、ガードとスーパーガードのタイミングも変わりません。オンライン協力プレイでは使えません。
+
+How far back Rewind can go.
+巻き戻しでどこまで戻れるか。

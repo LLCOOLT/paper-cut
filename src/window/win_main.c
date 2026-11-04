@@ -199,7 +199,7 @@ void PORT_HOOKABLE(winMain)(void) {
     WindowPartyDt* list[7];
 #endif
 #ifdef TARGET_PC
-    s32 quickSwap = -1; // Gameplay+ partner quick-swap: the partner to switch to
+    s32 quickSwap = -1; // Enhancements partner quick-swap: the partner to switch to
 #endif
 
     mario = marioGetPtr();
@@ -993,7 +993,7 @@ static USER_FUNC(itemUseFunc) {
             } else {
                 pouchSetPartyHP(event->lwData[11], pouchGetPartyHP(event->lwData[11]) + item->hp_restored);
 #ifdef TARGET_PC
-                portHealOtherPartners(event->lwData[11], item->hp_restored); // Gameplay+
+                portHealOtherPartners(event->lwData[11], item->hp_restored); // Enhancements
 #endif
                 PCCALL(((PouchSetFPS32Fn)pouchSetFP)(pouchGetFP() + item->fp_restored), pouchSetFP(pouchGetFP() + item->fp_restored));
                 PCCALL(((PouchSetAPS32Fn)pouchSetAP)(pouchGetAP() + item->sp_restored), pouchSetAP(pouchGetAP() + item->sp_restored));

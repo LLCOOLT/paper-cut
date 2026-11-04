@@ -14,3 +14,6 @@ Nachrichten und Menüs
 
 Reading speed
 Lesetempo
+
+How fast the voice reads.
+Wie schnell die Stimme liest.

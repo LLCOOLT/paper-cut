@@ -1,4 +1,4 @@
-/* Gameplay+ battle feedback pop-ups ("battle_popups", port/include/port/gameplus.h):
+/* Enhancements battle feedback pop-ups ("battle_popups", port/include/port/gameplus.h):
  * "GUARD!" / "SUPERGUARD!" over Mario or the partner, and a resisted status's
  * icon bouncing off the unit with "Resisted", drawn with the game's own font
  * and status-icon textures for about a second. */

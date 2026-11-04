@@ -60,8 +60,6 @@ int portReplayFinished(void);
 int portReplayStopAsked(void);
 /* the first frame whose fingerprint differed, or -1: in step so far */
 long portReplayOutOfStep(void);
-/* the checks compared so far */
-unsigned portReplayChecked(void);
 
 /* Recording or playing: what would change this game alone (save states,
  * warps, the Practice tab's edits, fast travel, menu taps) is off. */

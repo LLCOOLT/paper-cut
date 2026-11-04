@@ -222,8 +222,8 @@ void PORT_HOOKABLE(BattleSequenceManager)(void) { // 1:1
     if (BattleGetSeq(wp, SEQ_UNKNOWN) == 0) {
         portPopupClear();
     }
-    portPopupFrame(); // Gameplay+ battle pop-ups
-    // Gameplay+: a Glitz Pit match's condition stays at the top of the screen once its banner is gone
+    portPopupFrame(); // Enhancements battle pop-ups
+    // Enhancements: a Glitz Pit match's condition stays at the top of the screen once its banner is gone
     if (BattleGetSeq(wp, SEQ_UNKNOWN) == 2 && wp->fbatInfo != NULL && wp->fbatInfo->ruleType != 0 &&
         wp->ruleDispTimer <= 0 && portGameplus("glitz_pit_kind")) {
         dispEntry(CAMERA_2D, 900.0f, 1, _rule_disp, (void*)1);
@@ -2038,7 +2038,7 @@ static void _rule_disp(CameraId cameraId, void* param) {
     x = 0.0f;
     y = 120.0f;
 #ifdef TARGET_PC
-    if (param != NULL) { // Gameplay+: kept on screen during the match, higher up
+    if (param != NULL) { // Enhancements: kept on screen during the match, higher up
         y = 210.0f;
     }
     windowDispGX_Waku_col(0, color, (x - (u16)width / 2) - 10.0f, y - 26.0f, width + 20, lines * 29 + 3, 10.0f);

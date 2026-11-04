@@ -790,6 +790,15 @@ void getScreenPoint(Vec* model, Vec* screen) {
     screen->y = 240.0f - screen->y;
 }
 
+#ifdef TARGET_PC
+/* PC port: the bars an in-between frame draws (portCamLetterBoxInBetween), between two game frames' */
+static struct {
+    BOOL active;
+    f32 top, bottom;
+    s16 alpha;
+} sLetterBoxBlend;
+#endif
+
 /**
  * Draws the black letterbox bars across the top and bottom of the screen at the 2D camera's current bar heights
  * and alpha, unless globally disabled.
@@ -799,8 +808,19 @@ static void camLetterBoxDraw(CameraId cameraId, void* param) {
     f32 viewport[GX_VIEWPORT_SZ];
     f32 projection[GX_PROJECTION_SZ];
     u32 left, top, width, height;
+#ifdef TARGET_PC
+    /* PC port: an in-between frame's bars at their blend (in fractions of a pixel); the game's own frames at
+     * the camera's, drawn the same in floats */
+    const f32 barTop = sLetterBoxBlend.active ? sLetterBoxBlend.top : camera->letterBoxTop;
+    const f32 barBottom = sLetterBoxBlend.active ? sLetterBoxBlend.bottom : camera->letterBoxBottom;
+    const s16 barAlpha = sLetterBoxBlend.active ? sLetterBoxBlend.alpha : camera->letterBoxAlpha;
+#endif
 
+#ifdef TARGET_PC
+    if (!(gp->flags & GLOBAL_FLAG_NO_LETTER_BOX) && barAlpha != 0) {
+#else
     if (!(gp->flags & GLOBAL_FLAG_NO_LETTER_BOX) && camera->letterBoxAlpha != 0) {
+#endif
         GXGetViewportv(viewport);
         GXGetProjectionv(projection);
         GXGetScissor(&left, &top, &width, &height);
@@ -810,7 +830,11 @@ static void camLetterBoxDraw(CameraId cameraId, void* param) {
         GXSetAlphaCompare(GX_ALWAYS, 0, GX_AOP_AND, GX_ALWAYS, 0);
         GXSetZMode(GX_DISABLE, GX_LEQUAL, GX_DISABLE);
         GXSetNumChans(1);
+#ifdef TARGET_PC
+        GXSetChanMatColor(GX_COLOR0A0, (GXColor){0, 0, 0, (u8)barAlpha});
+#else
         GXSetChanMatColor(GX_COLOR0A0, (GXColor){0, 0, 0, camera->letterBoxAlpha});
+#endif
         GXSetChanCtrl(GX_COLOR0A0, GX_FALSE, GX_SRC_REG, GX_SRC_REG, 0, GX_DF_NONE, GX_AF_NONE);
         GXSetFog(GX_FOG_NONE, 0.0f, 0.0f, 0.0f, 0.0f, (GXColor){255, 255, 255, 255});
         GXSetNumTexGens(0);
@@ -820,6 +844,20 @@ static void camLetterBoxDraw(CameraId cameraId, void* param) {
         GXSetCullMode(GX_CULL_NONE);
         GXClearVtxDesc();
         GXSetVtxDesc(GX_VA_POS, GX_DIRECT);
+#ifdef TARGET_PC
+        GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XYZ, GX_F32, 0);
+        GXLoadPosMtxImm(camera->view, 0);
+        GXSetCurrentMtx(0);
+        GXBegin(GX_QUADS, GX_VTXFMT0, 8);
+        GXPosition3f32(WIDE_X(-304.0f), 240.0f, 0.0f);
+        GXPosition3f32(WIDE_X(304.0f), 240.0f, 0.0f);
+        GXPosition3f32(WIDE_X(304.0f), 240.0f - barTop, 0.0f);
+        GXPosition3f32(WIDE_X(-304.0f), 240.0f - barTop, 0.0f);
+        GXPosition3f32(WIDE_X(-304.0f), barBottom - 240.0f, 0.0f);
+        GXPosition3f32(WIDE_X(304.0f), barBottom - 240.0f, 0.0f);
+        GXPosition3f32(WIDE_X(304.0f), -240.0f, 0.0f);
+        GXPosition3f32(WIDE_X(-304.0f), -240.0f, 0.0f);
+#else
         GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XYZ, GX_S16, 0);
         GXLoadPosMtxImm(camera->view, 0);
         GXSetCurrentMtx(0);
@@ -832,6 +870,7 @@ static void camLetterBoxDraw(CameraId cameraId, void* param) {
         GXPosition3s16(WIDE_X(304), camera->letterBoxBottom - 240, 0);
         GXPosition3s16(WIDE_X(304), -240, 0);
         GXPosition3s16(WIDE_X(-304), -240, 0);
+#endif
         GXSetViewport(viewport[0], viewport[1], viewport[2], viewport[3], viewport[4], viewport[5]);
         GXSetProjectionv(projection);
         GXSetScissor(left, top, width, height);
@@ -890,6 +929,70 @@ static void camLetterBox(void) {
     }
     dispEntry(camera->letterBoxCamId, 0.0f, 3, &camLetterBoxDraw, NULL);
 }
+
+#ifdef TARGET_PC
+/*
+ * PC port: the cutscene bars on an in-between frame (port/src/aurora/interp_aurora.c), t of the way from the
+ * game frame just shown to the next. camLetterBox queues the bars from camDraw itself, so the draw list an
+ * in-between frame repeats (the next frame's, queued by the logic) never had them: they showed only on the
+ * game's own frames and flashed at every rate above 60. The next frame's bars are camLetterBox's test and
+ * step worked out from what the logic left (the same reads, nothing changed), so sliding in and fading out
+ * move between the two frames' bars. Queued into the draw list, which the in-between frame puts back after.
+ */
+void portCamLetterBoxInBetween(f32 t) {
+    extern s32 entry_n; /* dispdrv.c */
+    CameraEntry* camera = camPtrTbl[CAMERA_2D];
+    PartyEntry* party = partyGetPtr(0);
+    BOOL on = (camera->flags & CAM_FLAG_LETTER_BOX) != 0;
+    f32 top0 = camera->letterBoxTop, bottom0 = camera->letterBoxBottom, alpha0 = camera->letterBoxAlpha;
+    s32 top1 = camera->letterBoxTop, bottom1 = camera->letterBoxBottom, alpha1 = camera->letterBoxAlpha;
+
+    if (entry_n >= 1024) { /* DISP_MAX_ENTRIES: no room */
+        return;
+    }
+    /* camLetterBox's test */
+    if (!(camera->flags & CAM_FLAG_LETTER_BOX_DISABLE) && !(bero_get_BeroEXEC() & 1)) {
+        if ((seqGetSeq() == SEQ_GAME) && (!marioChkKey() || !marioChkCtrl()) &&
+            (!party || (party && !(party->flags & PARTY_FLAG_IS_BEING_USED)))) {
+            if (!on) {
+                /* the bars start over: from none, opaque */
+                on = TRUE;
+                top0 = 0.0f;
+                bottom0 = 0.0f;
+                alpha0 = 255.0f;
+                top1 = bottom1 = 0;
+            }
+        } else if (seqGetSeq() != SEQ_MAP_CHANGE) {
+            on = FALSE;
+        }
+    }
+    /* and its step */
+    if (on) {
+        alpha1 = 0xFF;
+        top1 = top1 + 3 > 0x31 ? 0x31 : top1 + 3;
+        bottom1 = bottom1 + 3 > 0x2C ? 0x2C : bottom1 + 3;
+        if (camera->flags & CAM_FLAG_LETTER_BOX_SNAP) {
+            top1 = 0x31;
+            bottom1 = 0x2C;
+        }
+    } else {
+        alpha1 -= (0xFF / gp->framerate) * 2;
+        if (alpha1 < 0 || (camera->flags & CAM_FLAG_LETTER_BOX_SNAP)) {
+            alpha1 = 0;
+        }
+    }
+    sLetterBoxBlend.active = TRUE;
+    sLetterBoxBlend.top = top0 + ((f32)top1 - top0) * t;
+    sLetterBoxBlend.bottom = bottom0 + ((f32)bottom1 - bottom0) * t;
+    sLetterBoxBlend.alpha = (s16)(alpha0 + ((f32)alpha1 - alpha0) * t + 0.5f);
+    dispEntry(camera->letterBoxCamId, 0.0f, 3, &camLetterBoxDraw, NULL);
+}
+
+/* the in-between frame drawn: the game's own frames draw the camera's bars */
+void portCamLetterBoxInBetweenDone(void) {
+    sLetterBoxBlend.active = FALSE;
+}
+#endif
 
 /** A zero vector; unused leftover helper. */
 inline Vec unknownVec0(void) {

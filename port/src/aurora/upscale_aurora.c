@@ -1,4 +1,4 @@
-/* Texture upscaling (Display > Texture upscaling): the filter Aurora gives each
+/* Texture upscaling (Graphics > Texture upscaling): the filter Aurora gives each
  * game texture to (AuroraSetTextureUpscale, port/patches/aurora/0015), the
  * port's own.
  *

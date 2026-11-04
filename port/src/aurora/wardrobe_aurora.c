@@ -31,6 +31,9 @@
  * (before Settings), its label (pause_settings_aurora.c paints it from the
  * Journal's), its page (menu id 6, active 17) and its help text, which
  * msgSearch takes from portPauseWardrobeMsg. */
+/* the Start menu's statics in a block of their own, the second screen's menu's while it runs (port/companion_section.h) */
+#define PORT_SECTION_MENU
+#include "port/companion_section.h"
 #include "port/cosmetics.h"
 #include "port/luigi.h"
 #include "port/menu_tap.h"

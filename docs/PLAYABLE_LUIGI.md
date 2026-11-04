@@ -228,7 +228,7 @@ All of it only while the option is on; `port/src/common/luigi_pc.c` again.
 
 - Every Mario animation has a Luigi version (docs/LUIGI_ANIMS.md) but
   `M_H_12`, the thrown hammer, which looks the same on Mario's model.
-- Known issue (not re-checked with this work): in battle Luigi draws grey
+- Known issue: in battle Luigi draws grey
   (darker than in the field). His model's vertex colours are white like
   Mario's, so it is in how battle draws him: the light or material state
   copied from Mario's battle part, or the battle pool (type 1) he is loaded

@@ -53,3 +53,6 @@ A switch clicks
 
 A lock opens
 カギが開いた
+
+How far the filter moves the colours.
+フィルターが色をどれだけ変えるか。

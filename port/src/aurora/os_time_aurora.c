@@ -115,10 +115,6 @@ int portClockSpeedPct(void) {
     return sSpeed;
 }
 
-void portClockSetSpeed(int speed) {
-    portClockSetSpeedPct(speed * 100);
-}
-
 int portClockSpeed(void) {
     return (sSpeed + 99) / 100;
 }

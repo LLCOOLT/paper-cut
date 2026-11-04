@@ -10,7 +10,7 @@ extern "C" {
 #endif
 
 #define PORT_SAVE_STATE_SLOTS 10
-/* A slot of the port's own, past the player's: Gameplay+'s retry on Game Over
+/* A slot of the port's own, past the player's: the Enhancements tab's retry on Game Over
  * (port/include/port/gameplus.h), saved quietly at each room and battle, and
  * loadable on the Game Over screen as well. */
 #define PORT_SAVE_STATE_RETRY PORT_SAVE_STATE_SLOTS

@@ -10947,7 +10947,7 @@ BOOL PORT_HOOKABLE(psndBGMOn_f_d)(u32 flags, char* bgm_name, u32 fadetime, u32 f
     ft = fadetime;
     fl = flags;
 #ifdef TARGET_PC
-    if (bgm_name != NULL) { /* Gameplay+: the jukebox's list (port/include/port/gameplus.h) */
+    if (bgm_name != NULL) { /* Enhancements: the jukebox's list (port/include/port/gameplus.h) */
         psndBGMSearchP(bgm_name, &id);
         portJukeboxHeard(id, (s32)(flags & 0xF));
     }
@@ -12512,7 +12512,7 @@ void psndStrippedPool(f32* f, s32 i) {
 }
 
 #ifdef TARGET_PC
-/* Gameplay+'s jukebox (port/include/port/gameplus.h): the BGM table */
+/* The Enhancements tab's jukebox (port/include/port/gameplus.h): the BGM table */
 int portBgmCount(void) {
     return 0x106;
 }

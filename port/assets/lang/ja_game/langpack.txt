@@ -1,0 +1,4 @@
+# language packs: see tools/port/gen_lang.py
+
+Language packs
+ことばの　パック

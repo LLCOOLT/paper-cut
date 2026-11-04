@@ -83,3 +83,6 @@ Desincronizada desde el fotograma %ld
 
 Made with Paper Cut %s
 Hecha con Paper Cut %s
+
+Paper Cut replay
+Repetición de Paper Cut

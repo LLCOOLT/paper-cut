@@ -28,7 +28,7 @@
  *   audience N, coins N, sp N, fp N   those set (sp: star power, in 1/100 units)
  *   maxsp N, maxhp N    the maximums set (maxhp also fills HP)
  *   stars MASK          the special moves obtained (bit 0: Sweet Treat ...)
- *   swap                the Gameplay+ partner quick-swap control pressed
+ *   swap                the Enhancements partner quick-swap control pressed
  *   companion item N [T] / companion partner N
  *                       a tap on the second screen (port/include/port/companion.h):
  *                       the bag's item N used on Mario (T 1: the partner), or
@@ -36,7 +36,7 @@
  *   companion tap NX NY / companion button a|b|x|y|up|down|left|right|l|r / companion shot NAME
  *                       a tap at NX, NY (0-1) on the second screen's Start menu,
  *                       or one of its buttons (port/include/port/companion_menu.h)
- *   travel N            Gameplay+ fast travel to hub N (0 Rogueport, 1 Petalburg ...)
+ *   travel N            Enhancements fast travel to hub N (0 Rogueport, 1 Petalburg ...)
  *   mobj_event NAME     run map object NAME's event, as hitting it would (a
  *                       switch's, a block's)
  *   talk_all [MAX]      talk to every NPC of the map in turn (not those parked

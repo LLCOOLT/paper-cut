@@ -532,7 +532,7 @@ void drawDetails(Launcher& l, float scale, ImVec2 size = ImVec2(0, 0)) {
     portSettingsSave();
   }
   ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
-  ImGui::TextWrapped("%s", portTr("To see this screen again: Settings > System in the game."));
+  ImGui::TextWrapped("%s", portTr("To see this screen again: Settings > General in the game."));
   ImGui::PopStyleColor();
   ImGui::EndChild();
 }

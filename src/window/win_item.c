@@ -724,7 +724,7 @@ s32 PORT_HOOKABLE(winItemMain)(WindowWork* w) {
                     party = list[w->item.useTarget - 1]->partyId;
                     pouchSetPartyHP(party, pouchGetPartyHP(party) + itemDataTable[w->item.useItem].hp_restored);
 #ifdef TARGET_PC
-                    portHealOtherPartners(party, itemDataTable[w->item.useItem].hp_restored); // Gameplay+
+                    portHealOtherPartners(party, itemDataTable[w->item.useItem].hp_restored); // Enhancements
 #endif
 #if VERSION >= VERSION_JP
                     PCCALL(((PouchSetFPS32Fn)pouchSetFP)(pouchGetFP() + itemDataTable[w->item.useItem].fp_restored), pouchSetFP(pouchGetFP() + itemDataTable[w->item.useItem].fp_restored));

@@ -64,9 +64,6 @@ Frame rate
 The game runs at 60 frames a second; higher rates draw frames in between (smooth camera and characters).
 ゲームは毎秒60フレームで動きます。高いフレームレートでは間のフレームを描きます（カメラとキャラクターがなめらかに）。
 
-Fullscreen (F11 or Alt+Enter)
-フルスクリーン（F11 または Alt+Enter）
-
 Widescreen (16:9)
 ワイド画面（16:9）
 
@@ -202,12 +199,6 @@ Rumble strength
 The game's own Rumble option (on the file select) still applies.
 ゲーム自体の振動の設定（ファイル選択画面）もそのまま有効です。
 
-Choose a button on the left, then press the controller button that should do it.
-左のボタンを選んでから、その役割をさせるコントローラーのボタンを押してください。
-
-Choose a row, then press the key that should do it (Escape: leave it as it is).
-行を選んでから、その役割をさせるキーを押してください（Escape：そのまま）。
-
 Auto (the controller used last)
 自動（最後に使ったコントローラー）
 
@@ -274,8 +265,8 @@ Autosave
 changes saves
 セーブが変わる
 
-Saves into the file you're playing when you go into another room, once you have the controls there, as a Save Block would: a crash or a closed window costs no more than the room. Not during the boss rush or endless Glitz Pit, or after the practice tools changed the game.
-別の部屋に入って操作できるようになると、セーブブロックと同じように遊んでいるファイルにセーブします。ゲームが落ちたりウィンドウを閉じたりしても、失うのはその部屋だけです。ボスラッシュやエンドレスとうぎ場の間と、練習ツールでゲームを変えた後は行いません。
+Saves into the file you're playing as you enter each room, as a Save Block would: a crash costs no more than the room. Not in the boss rush or endless Glitz Pit, or once the practice tools changed the game.
+部屋に入るたびに、セーブブロックと同じように遊んでいるファイルにセーブします。ゲームが落ちても、失うのはその部屋だけです。ボスラッシュやエンドレスとうぎ場の間と、練習ツールでゲームを変えた後は行いません。
 
 Text language
 テキストの言語
@@ -421,8 +412,8 @@ No crash reports.
 Menu language
 メニューの言語
 
-Paper Cut's own menus: the settings page, the launcher's and the Start menu's Settings tab. Auto: the Japanese release's Japanese, the European release's text language, otherwise the computer's. The game's own text follows the disc.
-Paper Cut独自のメニュー：設定ページ、ランチャーのページ、スタートメニューの「設定」タブ。自動：日本版は日本語、ヨーロッパ版はテキストの言語、それ以外はコンピューターの言語。ゲーム自体のテキストはディスクのままです。
+Paper Cut's own menus. Auto: the Japanese release's Japanese, the European release's text language, otherwise the computer's. The game's own text follows the disc.
+Paper Cut独自のメニュー。自動：日本版は日本語、ヨーロッパ版はテキストの言語、それ以外はコンピューターの言語。ゲーム自体のテキストはディスクのままです。
 
 Quick resume
 クイックレジューム
@@ -529,8 +520,8 @@ In the field, an item used on a partner heals the other partners too.
 Skip repeated scenes
 見たシーンを飛ばす
 
-Scenes already seen on this file go faster or straight to their end: the Crystal Star fanfare and the pedestal's map reveal after the first star, Zess T.'s cooking, the Glitz Pit's match openings and victory scenes, and the train and blimp ticket hand-overs.
-このファイルで見たシーンが速く進むか、すぐ終わります：クリスタルスターのファンファーレと最初の後の台座の地図、ナンシーの料理、とうぎ場の試合の始まりと勝利のシーン、汽車と飛行船のきっぷの受け渡し。
+Scenes already seen on this file go faster or straight to their end: the Crystal Star fanfare and map reveal, Zess T.'s cooking, the Glitz Pit's match scenes, the train and blimp tickets.
+このファイルで見たシーンが速く進むか、すぐ終わります：クリスタルスターのファンファーレと地図、ナンシーの料理、とうぎ場の試合のシーン、汽車と飛行船のきっぷ。
 
 Fast travel
 ファストトラベル
@@ -583,8 +574,8 @@ A lost match costs no rank, and a match's bonus condition stays at the top of th
 Play as Luigi
 ルイージで遊ぶ
 
-Luigi in Mario's place, with Mario's moves: in the field, in battle, in the menus and the credits, with his own footsteps, and the text calls him Luigi. The other Luigi, in Rogueport's inn and his scenes, stays out of sight. Saves are not changed.
-マリオの代わりにルイージが、マリオの技で登場します：フィールド、バトル、メニュー、スタッフロールで、ルイージ自身の足音で、テキストもルイージと呼びます。ゴロツキタウンの宿屋や彼のシーンにいるもう1人のルイージは見えなくなります。セーブは変わりません。
+Luigi in Mario's place, with Mario's moves, in the field, battles, menus and credits; the text calls him Luigi and the other Luigi stays out of sight. Saves are not changed.
+マリオの代わりにルイージが、マリオの技で、フィールド、バトル、メニュー、スタッフロールに登場します。テキストもルイージと呼び、もう1人のルイージは見えなくなります。セーブは変わりません。
 
 A new file starts with what you choose here, taken from the file New Game+ from file names. Choose before starting the new file.
 新しいファイルを、ここで選んだものを「引き継ぐファイル」のファイルから引き継いで始めます。新しいファイルを始める前に選んでください。
@@ -630,9 +621,6 @@ Left Shift
 
 Boost key
 ブーストのキー
-
-Right stick pressed in
-右スティック押し込み
 
 Boost button
 ブーストのボタン
@@ -712,9 +700,6 @@ Paper Cutの設定をここで変えられます。
 On
 オン
 
-Fullscreen
-フルスクリーン
-
 Widescreen
 ワイド画面
 
@@ -726,9 +711,6 @@ Extra frames between the game's own 60: smoother motion.
 
 Present at the display's refresh: no tearing.
 画面の更新に合わせて表示：ちらつきなし。
-
-The whole screen, or a window (F11 or Alt+Enter).
-画面全体、またはウィンドウ（F11 または Alt+Enter）。
 
 16:9 instead of the game's own 4:3. Some rooms and scenes end at the 4:3 edges.
 ゲームの4:3ではなく16:9。部屋やシーンによっては4:3の端で終わります。
@@ -804,12 +786,6 @@ Controllers still work while another window has the focus.
 
 Controllers in the background
 バックグラウンドでコントローラー
-
-Every setting: also remapping, mods, saves' tools and practice.
-すべての設定：ボタンの割り当て、MOD、セーブのツール、練習も。
-
-All settings...
-すべての設定...
 
 The display's rate
 画面に合わせる
@@ -943,15 +919,6 @@ Left Alt
 Right Shift
 右Shift
 
-Left stick pressed in
-左スティック押し込み
-
-Back paddle
-背面パドル
-
-Share / capture button
-シェア／キャプチャーボタン
-
 Every story step
 物語の各段階
 
@@ -991,20 +958,11 @@ The story is over: go wherever you like.
 Second player (co-op)
 2人目のプレイヤー（協力プレイ）
 
-Player 2 plays the partner: once it's on, A on another controller joins. In battle: its moves, its action commands and its guards. In the field: the stick walks it anywhere, A hops, B talks to or hits what it's next to, X is its ability, L or R the next partner. Mario's Y calls it back, and it comes back by itself when it gets far away. On a phone or tablet, pair two controllers.
-プレイヤー2が仲間を操作します：オンにすると、別のコントローラーのAで参加できます。バトルでは技、アクションコマンド、ガードを。フィールドでは、スティックで好きな所へ歩き、Aでジャンプ、Bで隣の相手と話すか叩き、Xで仲間の能力、LかRで次の仲間。マリオのYで呼び戻せ、遠く離れると自分で戻ってきます。スマホやタブレットでは、コントローラーを2つペアリングしてください。
-
-Controller 2
-コントローラー2
-
-Controller 2:
-コントローラー2：
+Player 2 plays the partner: A on another controller joins. In battle: its moves, action commands and guards. In the field: the stick walks it, A hops, B talks or hits, X is its ability, L or R the next partner; Mario's Y calls it back. On a phone or tablet, pair two controllers.
+プレイヤー2が仲間を操作します：別のコントローラーのAで参加。バトルでは技、アクションコマンド、ガードを。フィールドでは、スティックで歩き、Aでジャンプ、Bで話すか叩き、Xで仲間の能力、LかRで次の仲間。マリオのYで呼び戻せます。スマホやタブレットでは、コントローラーを2つペアリングしてください。
 
 connected
 接続中
-
-Controller 2: none connected (the first plays the partner too).
-コントローラー2：未接続（1つ目がなかまも操作します）
 
 Sync saves through a folder
 フォルダーでセーブを同期
@@ -1050,8 +1008,8 @@ Start from the title
 Skip to this disc next time
 次回はこのディスクから直接始める
 
-To see this screen again: Settings > System in the game.
-この画面をもう一度見るには：ゲーム内の 設定 > システム。
+To see this screen again: Settings > General in the game.
+この画面をもう一度見るには：ゲーム内の 設定 > 一般。
 
 Paper Cut plays Paper Mario: The Thousand-Year Door as a native program, built from the game's C decompilation, with no emulator. You need your own copy of the game: a disc image of the Japanese, US or European release.
 Paper Cutは、ゲームのCの逆コンパイルから作った、エミュレーターなしのネイティブなプログラムとして「ペーパーマリオRPG」を動かします。あなた自身のゲーム、つまり日本版・北米版・欧州版のディスクイメージが必要です。
@@ -1077,9 +1035,6 @@ Play
 About
 情報
 
-Controller buttons
-コントローラーのボタン
-
 Player 1
 プレイヤー1
 
@@ -1092,29 +1047,14 @@ Player 3
 Player 4
 プレイヤー4
 
-Connect a controller to change which of its buttons does what.
-コントローラーをつなぐと、どのボタンで何をするか変えられます。
-
 No controller is this player: choose one under Controllers.
 このプレイヤーのコントローラーがありません：「コントローラー」で選んでください。
 
 Press a button...
 ボタンを押してください...
 
-GameCube %s
-ゲームキューブの%s
-
 Swap A and B
 AとBを入れかえる
-
-Restore defaults
-初期設定に戻す
-
-Keyboard keys
-キーボードのキー
-
-Restore default keys
-キーを初期設定に戻す
 
 Copy the last crash report
 前回のクラッシュレポートをコピー
@@ -1257,9 +1197,6 @@ Not playing
 Controller
 コントローラー
 
-, through an adapter
-、アダプター経由
-
 Hide test
 テストを隠す
 
@@ -1269,8 +1206,8 @@ Test
 Make it a player to set its dead zones.
 デッドゾーンを設定するには、プレイヤーにしてください。
 
-Player 1 plays; player 2 can play the partner in battle and in the field (Second player, below). The buttons of each player are set under Controller buttons.
-プレイヤー1が遊び、プレイヤー2はバトルとフィールドで仲間を動かせます（下の「2人目のプレイヤー」）。各プレイヤーのボタンは「コントローラーのボタン」で設定します。
+Player 1 plays; player 2 can play the partner in battle and in the field (Second player, below). The buttons of each player are set under Bindings.
+プレイヤー1が遊び、プレイヤー2はバトルとフィールドで仲間を動かせます（下の「2人目のプレイヤー」）。各プレイヤーのボタンは「キー割り当て」で設定します。
 
 Couldn't open it: 
 開けませんでした：
@@ -1803,9 +1740,6 @@ Joy-Conペア
 GameCube
 ゲームキューブ
 
-Gamepad
-ゲームパッド
-
 None
 なし
 
@@ -1939,11 +1873,23 @@ Choose player 2's controller
 Let player 2 go
 プレイヤー2を外す
 
-Choosing player 1's controller moves it to player 2, and player 1 plays on the keyboard. Each player's buttons are set under Controller buttons.
-プレイヤー1のコントローラーを選ぶとプレイヤー2のものになり、プレイヤー1はキーボードで遊びます。各プレイヤーのボタンは「コントローラーのボタン」で設定します。
+Choosing player 1's controller moves it to player 2, and player 1 plays on the keyboard. Each player's buttons are set under Bindings.
+プレイヤー1のコントローラーを選ぶとプレイヤー2のものになり、プレイヤー1はキーボードで遊びます。各プレイヤーのボタンは「キー割り当て」で設定します。
 
 Co-op is on: press A on another controller to join.
 協力プレイがオン：別のコントローラーのAで参加します。
 
 a controller
 コントローラー
+
+Bars where a scene ends
+シーンの端に帯
+
+In the rooms whose sets end before a wide screen's edges, and in battles past 16:9, bars beside the picture instead of the empty space past the set.
+ワイド画面の端まで届かない部屋や、16:9より広いバトルで、セットの外の何もない所の代わりに、画面の横に帯を表示します。
+
+File %d
+ファイル%d
+
+Auto
+自動

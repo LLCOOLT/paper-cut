@@ -1776,7 +1776,7 @@ EVT_BEGIN(idouya_setup)
     END_IF
     CALL(evt_sub_random, 1000, LW(0))
 #ifdef TARGET_PC
-    CALL(portEvtPitMover, LW(0)) // Gameplay+: the Mover always comes once floor 50 is cleared
+    CALL(portEvtPitMover, LW(0)) // Enhancements: the Mover always comes once floor 50 is cleared
 #endif
     IF_INT_GREATER(LW(0), 50)
         RETURN
@@ -2119,7 +2119,7 @@ EVT_END()
 EVT_BEGIN(floor_inc)
     SPAWN_EVENT(iri_12_dokan_in)
 #ifdef TARGET_PC
-    CALL(portEvtPitFloorCoins) // Gameplay+: coins for the floor cleared
+    CALL(portEvtPitFloorCoins) // Enhancements: coins for the floor cleared
 #endif
     ADD(GSW(GSW_JON_FLOOR), 1)
     SET_VALUE(LW(0), 0)

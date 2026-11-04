@@ -162,8 +162,6 @@ void portModsSetHostFile(const char* discPath, const void* data, size_t size);
 void portModsAddMapTexture(const char* pattern, const char* path, const void* data, size_t size);
 /* Each frame (mod_game_aurora.c): the map-scoped sets for the map now */
 void portModsMapTextures(const char* map);
-/* A file the host added (portModsSetHostFile), or NULL: its bytes, valid until it's set again. */
-const void* portModsGetHostFile(const char* discPath, size_t* size);
 
 #ifdef __cplusplus
 }

@@ -632,7 +632,7 @@ static int companionItemOn(int idx, int partyId) {
     }
     psndSFXOn(SFX_NAME_WORD(0x20012));
     pouchSetPartyHP(partyId, pouchGetPartyHP((PartyId)partyId) + itemDataTable[id].hp_restored);
-    portHealOtherPartners(partyId, itemDataTable[id].hp_restored); /* Gameplay+ */
+    portHealOtherPartners(partyId, itemDataTable[id].hp_restored); /* Enhancements */
     pouchSetFP((s16)(pouchGetFP() + itemDataTable[id].fp_restored));
     pouchSetAP((s16)(pouchGetAP() + itemDataTable[id].sp_restored));
     pouchRemoveItemIndex((ItemType)id, idx);
@@ -675,7 +675,7 @@ int portCompanionFieldItem(void) {
         pouchSetHP((s16)(pouchGetHP() + itemDataTable[id].hp_restored));
     } else {
         pouchSetPartyHP(party, pouchGetPartyHP((PartyId)party) + itemDataTable[id].hp_restored);
-        portHealOtherPartners(party, itemDataTable[id].hp_restored); /* Gameplay+ */
+        portHealOtherPartners(party, itemDataTable[id].hp_restored); /* Enhancements */
     }
     pouchSetFP((s16)(pouchGetFP() + itemDataTable[id].fp_restored));
     pouchSetAP((s16)(pouchGetAP() + itemDataTable[id].sp_restored));

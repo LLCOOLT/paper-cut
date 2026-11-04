@@ -239,7 +239,8 @@ void copySection(int inGame) {
   }
   ImGui::TextWrapped("%s", portTr("The Japanese release keeps its Pianta Parlor records differently; the copy is converted. "
                      "Names typed in one release's letters may look different in another."));
-  if (ImGui::Combo(portTrLabel("From"), &sFrom, kReleaseNames, 3) | ImGui::Combo(portTrLabel("To"), &sTo, kReleaseNames, 3)) {
+  const bool fromChanged = ImGui::Combo(portTrLabel("From"), &sFrom, kReleaseNames, 3);
+  if (ImGui::Combo(portTrLabel("To"), &sTo, kReleaseNames, 3) || fromChanged) { // (both drawn)
     sConfirm = false;
   }
   const char from = kReleases[sFrom], to = kReleases[sTo];

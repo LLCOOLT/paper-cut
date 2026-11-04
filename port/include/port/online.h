@@ -162,8 +162,6 @@ void portOnlinePump(void);
 void portOnlineBegin(int inputDelay);
 /* A session runs (the game plays in lockstep). */
 int portOnlineActive(void);
-/* Ended by now (the reason shown in the game), or NULL. */
-const char* portOnlineEnded(void);
 /* The pad read (src/sdk/DEMOPad.c): this frame's two players' input. */
 struct PADStatus;
 void portOnlineApplyPad(struct PADStatus* pads);

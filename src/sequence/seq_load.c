@@ -313,7 +313,7 @@ static inline void loadNewGameSetup(void) {
     swInit();
     swByteSet(GSW_STORY_PROGRESS, STORY_STG0_00_PROLOGUE);
 #ifdef TARGET_PC
-    portNewGamePlus(); // Gameplay+: what the new file keeps from another (port/include/port/gameplus.h)
+    portNewGamePlus(); // Enhancements: what the new file keeps from another (port/include/port/gameplus.h)
 #endif
 }
 

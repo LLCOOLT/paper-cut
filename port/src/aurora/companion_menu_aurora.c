@@ -71,8 +71,8 @@ extern s32 entry_n; /* dispdrv.c: the draw list */
 extern DispEntry** pSortWork;
 extern DispEntry* pDispWork;
 
-#define W PORT_COMPANION_MENU_W
-#define H PORT_COMPANION_MENU_H
+#define W PORT_COMPANION_MENU_WIDTH
+#define H PORT_COMPANION_MENU_HEIGHT
 #define PICTURE_BYTES (W * H * 4)
 #define DISP_ENTRIES 256
 
@@ -180,7 +180,6 @@ static int sOpenedOnce;
 
 /* the input this frame */
 static unsigned sKeys[8];
-static unsigned sHeld;   /* a direction or button pressed a few frames ago, held for the key's repeat */
 
 static int blockSetUp(Block* b, int which, int menu) {
     b->size = menu ? portCompanionBlock(which, &b->at) : portSnapSection(which, &b->at);

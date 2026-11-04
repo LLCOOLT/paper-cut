@@ -113,7 +113,7 @@ f32 PORT_HOOKABLE(marioGetWalkSpd)(void) {
 
     walkSpeed *= mario->playerGravity;
 #ifdef TARGET_PC
-    walkSpeed *= portWalkBoost(); /* Gameplay+: the walk-speed boost, while held */
+    walkSpeed *= portWalkBoost(); /* Enhancements: the walk-speed boost, while held */
 #endif
     return walkSpeed;
 }
@@ -145,7 +145,7 @@ f32 PORT_HOOKABLE(marioGetDashSpd)(void) {
     dashSpeed *= mario->playerGravity;
 #ifdef TARGET_PC
     dashSpeed *= gPortRunSpeed; /* PC port: the run speed setting */
-    dashSpeed *= portWalkBoost(); /* Gameplay+: the walk-speed boost, while held */
+    dashSpeed *= portWalkBoost(); /* Enhancements: the walk-speed boost, while held */
 #endif
     return dashSpeed;
 }

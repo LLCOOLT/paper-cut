@@ -56,23 +56,23 @@ JNIEXPORT jboolean JNICALL Java_dev_ttyd_port_TtydCompanion_menuReady(JNIEnv* en
     return portCompanionMenuReady() != 0;
 }
 
-/* The picture into out (ARGB, PORT_COMPANION_MENU_W x _H) when newer than
+/* The picture into out (ARGB, PORT_COMPANION_MENU_WIDTH x _HEIGHT) when newer than
  * seen; returns its serial (0: none yet). */
 JNIEXPORT jint JNICALL Java_dev_ttyd_port_TtydCompanion_menuPicture(JNIEnv* env, jclass cls, jintArray out, jint seen) {
-    static unsigned char sRgba[PORT_COMPANION_MENU_W * PORT_COMPANION_MENU_H * 4];
-    static jint sArgb[PORT_COMPANION_MENU_W * PORT_COMPANION_MENU_H];
+    static unsigned char sRgba[PORT_COMPANION_MENU_WIDTH * PORT_COMPANION_MENU_HEIGHT * 4];
+    static jint sArgb[PORT_COMPANION_MENU_WIDTH * PORT_COMPANION_MENU_HEIGHT];
     unsigned now = (unsigned)seen;
     unsigned serial;
     int i;
     (void)cls;
     serial = portCompanionMenuPicture(sRgba, &now);
     if (serial != 0 && now != (unsigned)seen && out != NULL &&
-        (*env)->GetArrayLength(env, out) >= PORT_COMPANION_MENU_W * PORT_COMPANION_MENU_H) {
-        for (i = 0; i < PORT_COMPANION_MENU_W * PORT_COMPANION_MENU_H; i++) {
+        (*env)->GetArrayLength(env, out) >= PORT_COMPANION_MENU_WIDTH * PORT_COMPANION_MENU_HEIGHT) {
+        for (i = 0; i < PORT_COMPANION_MENU_WIDTH * PORT_COMPANION_MENU_HEIGHT; i++) {
             const unsigned char* p = sRgba + i * 4;
             sArgb[i] = (jint)(0xFF000000u | ((unsigned)p[0] << 16) | ((unsigned)p[1] << 8) | p[2]);
         }
-        (*env)->SetIntArrayRegion(env, out, 0, PORT_COMPANION_MENU_W * PORT_COMPANION_MENU_H, sArgb);
+        (*env)->SetIntArrayRegion(env, out, 0, PORT_COMPANION_MENU_WIDTH * PORT_COMPANION_MENU_HEIGHT, sArgb);
     }
     return (jint)serial;
 }

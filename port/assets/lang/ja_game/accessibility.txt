@@ -23,3 +23,6 @@ Captions for sounds
 
 Short captions low on the screen for the sounds that tell you something: an enemy noticing you, a hidden block, a Star Piece, a guard, a door or switch out of sight.
 だいじな　こうかおんを　画面の　下に　みじかく　ひょうじします
+
+How far the filter moves the colours.
+フィルターで　色を　かえる　つよさ

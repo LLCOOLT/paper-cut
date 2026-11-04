@@ -183,7 +183,7 @@ static BattleUnit* landsOnPlayer(BattleWork* wp, BattleUnit* jumper) {
 }
 
 /* the guard's window, as BattleActionCommandCheckDefence judges it: the
- * guarding unit's Simplifiers and Unsimplifiers, Gameplay+'s wider windows */
+ * guarding unit's Simplifiers and Unsimplifiers, Accessibility's wider windows */
 static int guardWindow(BattleUnit* guarder) {
     static const u8 normal[7] = {10, 9, 8, 8, 7, 6, 5};
     int diff = 3, w;

@@ -1,4 +1,4 @@
-// System > Language packs (port/include/port/tr.h, docs/LANGUAGE_PACKS.md):
+// Language > Language packs (port/include/port/tr.h, docs/LANGUAGE_PACKS.md):
 // the packs read from the mods folder, what each does and what is wrong with
 // it, Reload, and the template a translator starts from.
 #include "port/restart.h"

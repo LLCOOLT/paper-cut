@@ -1,4 +1,4 @@
-// Rewind (System > Rewind; port/include/port/rewind.h): hold Backspace or a
+// Rewind (Gameplay > Rewind; port/include/port/rewind.h): hold Backspace or a
 // controller button (Controls > Bindings, port/include/port/bindings.h), and
 // the game steps back through its last seconds; let go and it plays on from
 // there. Off by default; the length 5 to 60 seconds. Save states have no
@@ -83,7 +83,7 @@ const bool sAdded = [] {
                         "seconds; let go to play on from there. Uses some memory and a little time every few "
                         "frames. Not in online co-op.",
                         0, "rewind", "rewind back undo time reverse backspace");
-  portSettingsAddSlider("Gameplay", "Rewind length", nullptr, 0, "rewind_seconds", 5, 60, "%d s",
+  portSettingsAddSlider("Gameplay", "Rewind length", "How far back Rewind can go.", 0, "rewind_seconds", 5, 60, "%d s",
                         "rewind length seconds memory");
   portSettingsAddSection("Gameplay", "Rewind key", nullptr, 0, section, "rewind key keyboard backspace");
   portSettingsAddOverlay(tick, nullptr);

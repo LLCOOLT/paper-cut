@@ -14,6 +14,9 @@
  * page's Bindings section asks Swap / Keep both; here it is kept, and the
  * help says which other row has it). While a key or button is being asked
  * for, and until everything is let go after, the menu takes no input. */
+/* the Start menu's statics in a block of their own, the second screen's menu's while it runs (port/companion_section.h) */
+#define PORT_SECTION_MENU
+#include "port/companion_section.h"
 #include "port/pause_bindings.h"
 #include "port/bindings.h"
 #include "port/pause_settings.h"

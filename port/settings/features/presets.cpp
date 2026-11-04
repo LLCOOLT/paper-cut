@@ -1,4 +1,4 @@
-// Settings presets (System > Settings presets): this player's setup as a code
+// Settings presets (General > Settings presets): this player's setup as a code
 // to share (copied, pasted) or a file (saved, opened), and someone else's put
 // in place. A preset holds the settings that differ from the defaults among
 // those that change the game: gameplay, challenges, accessibility, cosmetics,
@@ -36,7 +36,7 @@ constexpr const char* kDevice[] = {
     "menu_language", "speedrun_timer", "timer_", "split_category", "livesplit", "memory_watch", "achievements",
     "button_prompts", "perf_overlay", "update_check", "window_", "quick_resume", "save_backups", "second_screen",
     "companion", "custom_music", "settings_hint", "online", "crowd_", "skip_intro", "pal_50hz", "jukebox",
-    "game_sound_mode", "speakers",
+    "game_sound_mode", "speakers", "discord_status", "rewind_key", "rewind_pad",
 };
 
 bool device(const std::string& key) {
@@ -228,7 +228,7 @@ void fileWork() {
     sPending = false;
   }
   if (!save.empty()) {
-    const std::string text = "# Paper Cut settings preset: System > Settings presets > Open a preset file\n" + makeCode() +
+    const std::string text = "# Paper Cut settings preset: General > Settings presets > Open a preset file\n" + makeCode() +
                              "\n";
     sMessage = SDL_SaveFile(save.c_str(), text.data(), text.size()) ? portTr("Preset saved.")
                                                                     : portTr("The preset couldn't be saved there.");
@@ -255,12 +255,14 @@ void section(int inGame) {
 #if !defined(__ANDROID__) && !(defined(__APPLE__) && TARGET_OS_IPHONE)
   ImGui::SameLine();
   if (ImGui::Button(portTrLabel("Save as a file..."))) {
-    static const SDL_DialogFileFilter kFilter[] = {{"Paper Cut settings preset", "txt"}};
+    static SDL_DialogFileFilter kFilter[] = {{nullptr, "txt"}};
+    kFilter[0].name = portTr("Paper Cut settings preset"); // (kept until the dialog answers)
     SDL_ShowSaveFileDialog(saveChosen, nullptr, SDL_GetKeyboardFocus(), kFilter, 1, "paper-cut-preset.txt");
   }
   ImGui::SameLine();
   if (ImGui::Button(portTrLabel("Open a preset file..."))) {
-    static const SDL_DialogFileFilter kFilter[] = {{"Paper Cut settings preset", "txt"}};
+    static SDL_DialogFileFilter kFilter[] = {{nullptr, "txt"}};
+    kFilter[0].name = portTr("Paper Cut settings preset");
     SDL_ShowOpenFileDialog(openChosen, nullptr, SDL_GetKeyboardFocus(), kFilter, 1, nullptr, false);
   }
 #endif

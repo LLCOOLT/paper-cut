@@ -1,7 +1,7 @@
 #ifndef PORT_GAMEPLUS_H
 #define PORT_GAMEPLUS_H
 
-/* Gameplay+ and accessibility options (port/src/common/gameplus_pc.c), each a
+/* Enhancements and accessibility options (port/src/common/gameplus_pc.c), each a
  * declared setting (port/include/port/settings.h: portSettingsDeclare), off
  * by default: a stock playthrough is the original game. The game code calls
  * these from small TARGET_PC blocks; their controls are on the settings page
@@ -11,10 +11,10 @@
 extern "C" {
 #endif
 
-/* Declares every Gameplay+ setting (the settings page's file, at start; the
+/* Declares every Enhancements setting (the settings page's file, at start; the
  * game code's first call, otherwise). Safe to call again. */
 void portGameplusDeclare(void);
-/* A Gameplay+ setting's value by key (declared on first use). */
+/* A Enhancements setting's value by key (declared on first use). */
 int portGameplus(const char* key);
 
 /* --- Partner quick-swap ("quick_swap") --- */
@@ -22,7 +22,7 @@ int portGameplus(const char* key);
  * on-screen button or a test script). */
 void portQuickSwapPress(void);
 /* The second player's L or R in the field (second_player_pc.c): the same,
- * whether Gameplay+'s quick-swap is on or not. */
+ * whether the Enhancements tab's quick-swap is on or not. */
 void portQuickSwapPressCoop(void);
 /* Aurora: whether the quick-swap control is held now (keyboard Q, a
  * controller's left stick press); NULL elsewhere. Polled by the field. */
@@ -130,7 +130,7 @@ int portEvtPitMover(struct EventEntry* event, int isFirstCall);
 /* seq_load.c, a new file just set up: copies them from that file. */
 void portNewGamePlus(void);
 
-/* --- Journal (the settings page's Gameplay+ tab, while a game runs) --- */
+/* --- Journal (the settings page's Enhancements tab, while a game runs) --- */
 typedef struct PortJournal {
     int story;                    /* GSW 0, the story's progress */
     int troubles, troublesTotal;  /* Trouble Center jobs solved */

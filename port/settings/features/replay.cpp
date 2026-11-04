@@ -721,7 +721,8 @@ void section(int inGame) {
 #if !defined(__ANDROID__) && !(defined(__APPLE__) && TARGET_OS_IPHONE)
   ImGui::SameLine();
   if (ImGui::Button(portTrLabel("Open a replay file...##replays"))) {
-    static const SDL_DialogFileFilter kFilter[] = {{"Paper Cut replay", "pcreplay"}};
+    static SDL_DialogFileFilter kFilter[] = {{nullptr, "pcreplay"}};
+    kFilter[0].name = portTr("Paper Cut replay"); // (kept until the dialog answers)
     SDL_ShowOpenFileDialog(openChosen, nullptr, SDL_GetKeyboardFocus(), kFilter, 1, nullptr, false);
   }
 #endif

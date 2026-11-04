@@ -1,0 +1,7 @@
+# qrupdate: see tools/port/gen_lang.py
+
+Receive saves
+セーブを　うけとる
+
+Send saves to another device
+セーブを　べつの　きかいに　おくる

@@ -10,23 +10,17 @@ Hold the Rewind key (Backspace) or button and the game steps back through its la
 Rewind length
 まきもどしの　ながさ
 
-Rewind button
-まきもどしボタン
-
-A controller button that rewinds while held.
-おしている　あいだ　まきもどす　コントローラーの　ボタン
-
 None
 なし
-
-Left back paddle
-ひだりの　うらパドル
-
-Right back paddle
-みぎの　うらパドル
 
 Faster battles
 バトルを　はやく
 
 Battles play faster, but never while you act: action commands, Stylish moves, the menus and Star Specials stay at normal speed, and guards and Superguards keep their timing. Not in online co-op.
 バトルが　はやく　すすみます　でも　じぶんが　うごかす　あいだは　ふつうの　はやさです　アクションコマンド　スタイリッシュ　メニュー　スペシャルわざ　ガードと　スーパーガードの　タイミングは　かわりません　オンラインでは　つかえません
+
+Rewind key
+まきもどしの　キー
+
+How far back Rewind can go.
+まきもどしで　もどれる　ながさ

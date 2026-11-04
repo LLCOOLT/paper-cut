@@ -46,13 +46,12 @@
 void portCoopNotice(const char* english); /* second_player_pc.c */
 
 #define RING 512
-#define WAIT_MS 8000 /* the other player's input not there for this long: the connection made again */
+#define INPUT_WAIT_MS 8000 /* the other player's input not there for this long: the connection made again */
 
 static int sActive, sDelay;
 static unsigned sEpoch; /* recoveries done this session (portOnlineFrame's, below) */
 static int sAsked;      /* guest: asked the host for this epoch's */
 static unsigned sFrame;     /* pad reads since the session began */
-static const char* sEnded;  /* why it ended, English */
 static unsigned char sOwn[RING][PORT_ONLINE_PAD_BYTES]; /* this player's input, by the frame it's for */
 static struct {
     unsigned frame;
@@ -205,7 +204,6 @@ static void end(const char* why) {
         return;
     }
     sActive = 0;
-    sEnded = why;
     portOnlineCancel(why);
     portCoopNotice(why);
     printf("[online] ended at frame %u: %s\n", sFrame, why);
@@ -225,7 +223,6 @@ void portOnlineBegin(int inputDelay) {
 
     sAsked = 0;
     sDrifted = 0;
-    sEnded = NULL;
     memset(sMine, 0, sizeof(sMine));
     for (i = 0; i < RING; i++) {
         neutral(sOwn[i]);
@@ -237,10 +234,6 @@ void portOnlineBegin(int inputDelay) {
 
 int portOnlineActive(void) {
     return sActive;
-}
-
-const char* portOnlineEnded(void) {
-    return sEnded;
 }
 
 void portOnlineApplyPad(PADStatus* pads) {
@@ -298,7 +291,7 @@ void portOnlineApplyPad(PADStatus* pads) {
     } else {
         int got;
         memcpy(own, sOwn[f % RING], sizeof(own));
-        got = portOnlineWaitInput(f, theirs, WAIT_MS);
+        got = portOnlineWaitInput(f, theirs, INPUT_WAIT_MS);
         if (got == 2) {
             /* a recovery came (or was asked for): this frame nothing pressed; it's
                put in place once the frame is over (portOnlineFrame) */

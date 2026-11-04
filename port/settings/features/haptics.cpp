@@ -142,9 +142,8 @@ const bool sAdded = [] {
   sOn = portSettingsDeclare("controller_haptics", 1, 0, 1);
   gPortHapticsCue = cue;
   portSettingsAddToggle("Controls", "Controller haptics",
-                        "A short pulse as an action command's or a guard's timing window opens, so you can feel "
-                        "when to press, and on a DualSense the triggers resist while a command holds R. Other "
-                        "controllers get the pulses as normal rumble. Follows Rumble and Rumble strength.",
+                        "A short pulse as an action command's or a guard's timing window opens; on a DualSense "
+                        "the triggers also resist while a command holds R. Follows Rumble and Rumble strength.",
                         0, "controller_haptics",
                         "haptics rumble vibration dualsense adaptive triggers action command guard superguard timing");
   portSettingsAddOverlay(tick, nullptr);

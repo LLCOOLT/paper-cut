@@ -83,3 +83,6 @@ Fuori sincronia dal fotogramma %ld
 
 Made with Paper Cut %s
 Fatto con Paper Cut %s
+
+Paper Cut replay
+Replay di Paper Cut

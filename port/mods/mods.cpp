@@ -2155,15 +2155,6 @@ void portModsSetHostFile(const char* discPath, const void* data, size_t size) {
   sHostFiles[discPath[0] == '/' ? discPath : std::string("/") + discPath] = std::vector<uint8_t>(p, p + size);
 }
 
-const void* portModsGetHostFile(const char* discPath, size_t* size) {
-  auto it = sHostFiles.find(discPath[0] == '/' ? discPath : std::string("/") + discPath);
-  if (it == sHostFiles.end()) {
-    return nullptr;
-  }
-  *size = it->second.size();
-  return it->second.data();
-}
-
 } // extern "C"
 
 void* portModsGameAddress(const std::string& name, std::string& why) {

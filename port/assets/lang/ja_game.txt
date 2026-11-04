@@ -64,9 +64,6 @@ Frame rate
 The game runs at 60 frames a second; higher rates draw frames in between (smooth camera and characters).
 ゲームは　1びょうに　60フレームで　うごきます　たかくすると　あいだのフレームを　かいて　なめらかに　なります
 
-Fullscreen (F11 or Alt+Enter)
-フルスクリーン（F11　Alt+Enter）
-
 Widescreen (16:9)
 ワイド画面（16:9）
 
@@ -202,12 +199,6 @@ Rumble strength
 The game's own Rumble option (on the file select) still applies.
 ゲームの　しんどうの　せっていも　そのまま　ききます
 
-Choose a button on the left, then press the controller button that should do it.
-左の　ボタンを　えらんでから　コントローラーの　ボタンを　おしてください
-
-Choose a row, then press the key that should do it (Escape: leave it as it is).
-ぎょうを　えらんでから　キーを　おしてください（Escape：そのまま）
-
 Auto (the controller used last)
 自動（さいごに　使った　コントローラー）
 
@@ -274,7 +265,7 @@ Autosave
 changes saves
 セーブが　かわる
 
-Saves into the file you're playing when you go into another room, once you have the controls there, as a Save Block would: a crash or a closed window costs no more than the room. Not during the boss rush or endless Glitz Pit, or after the practice tools changed the game.
+Saves into the file you're playing as you enter each room, as a Save Block would: a crash costs no more than the room. Not in the boss rush or endless Glitz Pit, or once the practice tools changed the game.
 べつの部屋に　入って　うごけるように　なると　いま　あそんでいる　ファイルに　セーブします　ゲームが　とまっても　うしなうのは　その部屋だけです
 
 Text language
@@ -421,7 +412,7 @@ No crash reports.
 Menu language
 メニューの　ことば
 
-Paper Cut's own menus: the settings page, the launcher's and the Start menu's Settings tab. Auto: the Japanese release's Japanese, the European release's text language, otherwise the computer's. The game's own text follows the disc.
+Paper Cut's own menus. Auto: the Japanese release's Japanese, the European release's text language, otherwise the computer's. The game's own text follows the disc.
 Paper Cutの　メニューの　ことば　自動：日本ばんは　日本ご　それいがいは　コンピューターの　ことば　ゲームの　テキストは　ディスクのままです
 
 Quick resume
@@ -529,7 +520,7 @@ In the field, an item used on a partner heals the other partners too.
 Skip repeated scenes
 見た　シーンを　とばす
 
-Scenes already seen on this file go faster or straight to their end: the Crystal Star fanfare and the pedestal's map reveal after the first star, Zess T.'s cooking, the Glitz Pit's match openings and victory scenes, and the train and blimp ticket hand-overs.
+Scenes already seen on this file go faster or straight to their end: the Crystal Star fanfare and map reveal, Zess T.'s cooking, the Glitz Pit's match scenes, the train and blimp tickets.
 このファイルで　見た　シーンが　はやく　すすむか　すぐ　おわります
 
 Fast travel
@@ -583,7 +574,7 @@ A lost match costs no rank, and a match's bonus condition stays at the top of th
 Play as Luigi
 ルイージで　あそぶ
 
-Luigi in Mario's place, with Mario's moves: in the field, in battle, in the menus and the credits, with his own footsteps, and the text calls him Luigi. The other Luigi, in Rogueport's inn and his scenes, stays out of sight. Saves are not changed.
+Luigi in Mario's place, with Mario's moves, in the field, battles, menus and credits; the text calls him Luigi and the other Luigi stays out of sight. Saves are not changed.
 マリオの　かわりに　ルイージが　マリオの　技で　とうじょうします　セーブは　かわりません
 
 A new file starts with what you choose here, taken from the file New Game+ from file names. Choose before starting the new file.
@@ -630,9 +621,6 @@ Left Shift
 
 Boost key
 ブーストの　キー
-
-Right stick pressed in
-右スティックの　おしこみ
 
 Boost button
 ブーストの　ボタン
@@ -712,9 +700,6 @@ Paper Cutの　せっていを　ここで　かえられます
 On
 オン
 
-Fullscreen
-フルスクリーン
-
 Widescreen
 ワイド画面
 
@@ -726,9 +711,6 @@ Extra frames between the game's own 60: smoother motion.
 
 Present at the display's refresh: no tearing.
 画面の　こうしんに　あわせて　だします
-
-The whole screen, or a window (F11 or Alt+Enter).
-画面全体　または　ウィンドウ（F11　Alt+Enter）
 
 16:9 instead of the game's own 4:3. Some rooms and scenes end at the 4:3 edges.
 ゲームの　4:3では　なく　16:9
@@ -804,12 +786,6 @@ Controllers still work while another window has the focus.
 
 Controllers in the background
 バックグラウンドで　コントローラー
-
-Every setting: also remapping, mods, saves' tools and practice.
-すべての　せってい：ボタンの　わりあて　MOD　セーブの　ツール　れんしゅう
-
-All settings...
-すべての　せってい...
 
 The display's rate
 画面に　あわせる
@@ -943,15 +919,6 @@ Left Alt
 Right Shift
 右Shift
 
-Left stick pressed in
-左スティックの　おしこみ
-
-Back paddle
-はいめんの　パドル
-
-Share / capture button
-シェア／キャプチャーボタン
-
 Every story step
 ものがたりの　かくだんかい
 
@@ -991,7 +958,7 @@ The story is over: go wherever you like.
 Second player (co-op)
 ふたりで　あそぶ（きょうりょく）
 
-Player 2 plays the partner: once it's on, A on another controller joins. In battle: its moves, its action commands and its guards. In the field: the stick walks it anywhere, A hops, B talks to or hits what it's next to, X is its ability, L or R the next partner. Mario's Y calls it back, and it comes back by itself when it gets far away. On a phone or tablet, pair two controllers.
+Player 2 plays the partner: A on another controller joins. In battle: its moves, action commands and guards. In the field: the stick walks it, A hops, B talks or hits, X is its ability, L or R the next partner; Mario's Y calls it back. On a phone or tablet, pair two controllers.
 プレイヤー2が　なかまを　うごかします　オンにして　べつの　コントローラーの　Aで　さんか　フィールドでは　スティックで　あるき　Aで　ジャンプ　Bで　はなす　Xで　なかまの　わざ
 
 Sync saves through a folder
@@ -1018,3 +985,15 @@ Player 2 left: the partner follows Mario.
 
 Co-op is on: press A on another controller to join.
 きょうりょく　プレイ：べつの　コントローラーの　Aで　さんか
+
+Bars where a scene ends
+シーンの　はしに　おび
+
+In the rooms whose sets end before a wide screen's edges, and in battles past 16:9, bars beside the picture instead of the empty space past the set.
+ワイドがめんの　はしまで　とどかない　部屋や　バトルで　セットの　そとに　おびを　だします
+
+File %d
+ファイル%d
+
+Auto
+じどう

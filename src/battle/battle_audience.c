@@ -3740,7 +3740,7 @@ void PORT_HOOKABLE(BattleAudience_ApRecoveryBuild)(StarPowerInfo* info) {
     f32 sum, root, a, b, cnt, mm, pm, scale = 1.0f;
     s32 i;
 #ifdef TARGET_PC
-    scale = portStarPowerScale(); // Gameplay+ remake balance
+    scale = portStarPowerScale(); // Enhancements remake balance
 #endif
 
     if (audience->impendingBonuses == NULL) {

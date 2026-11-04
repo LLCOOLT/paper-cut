@@ -128,10 +128,6 @@ long portReplayOutOfStep(void) {
     return sOutOfStep;
 }
 
-unsigned portReplayChecked(void) {
-    return sChecked;
-}
-
 int portReplayActive(void) {
     return sMode != IDLE;
 }

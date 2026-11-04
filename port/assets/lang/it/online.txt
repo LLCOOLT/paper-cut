@@ -96,9 +96,6 @@ Impossibile raggiungere chi ospita: controlla l'indirizzo e che stia aspettando.
 The other player left.
 L'altro giocatore se n'è andato.
 
-The other player stopped answering.
-L'altro giocatore non risponde più.
-
 The connection sent something that isn't Paper Cut's.
 La connessione ha inviato qualcosa che non è di Paper Cut.
 

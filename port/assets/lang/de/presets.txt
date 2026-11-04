@@ -41,3 +41,6 @@ Das ist keine Einstellungs-Vorlage.
 
 Preset put in place: %d settings changed. Some apply from the next start.
 Vorlage übernommen: %d Einstellungen geändert. Manche gelten ab dem nächsten Start.
+
+Paper Cut settings preset
+Paper-Cut-Einstellungs-Vorlage

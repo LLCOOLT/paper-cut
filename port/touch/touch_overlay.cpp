@@ -92,7 +92,7 @@ enum Control {
   kR,
   kStart,
   kFast, // fast-forward: not a controller button
-  kSwap, // Gameplay+ partner quick-swap (port/include/port/gameplus.h), shown when it is on
+  kSwap, // Enhancements partner quick-swap (port/include/port/gameplus.h), shown when it is on
   kMenu, // the settings page (port/settings/settings_ui.cpp): not a controller button
   kControlCount,
 };

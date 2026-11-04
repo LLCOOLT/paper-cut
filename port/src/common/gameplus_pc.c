@@ -1,4 +1,4 @@
-/* Gameplay+ and accessibility options (port/include/port/gameplus.h): every
+/* Enhancements and accessibility options (port/include/port/gameplus.h): every
  * one off by default, so the game plays as the original until a setting says
  * otherwise; any build takes $TTYD_SET_<key> for a run. */
 #include <stdio.h>
@@ -27,7 +27,7 @@
 #include "evt/evt_cmd.h"
 #include <dolphin/pad.h>
 
-/* every Gameplay+ setting: key, default, range */
+/* every Enhancements setting: key, default, range */
 static const struct {
     const char* key;
     int def, min, max;
@@ -120,7 +120,7 @@ int portQuickSwapPoll(int current) {
         return -1;
     }
     sSwapPressed = 0;
-    coop = sSwapCoop; /* the second player's: whether Gameplay+'s quick-swap is on or not */
+    coop = sSwapCoop; /* the second player's: whether the Enhancements tab's quick-swap is on or not */
     sSwapCoop = 0;
     if (!portGameplus("quick_swap") && !coop) {
         return -1;

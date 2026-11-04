@@ -61,11 +61,11 @@ void portCompanionMenuSetKeys(const unsigned* keys); /* its frame: this frame's,
 /* After the game's frame is out (vi_aurora.c, the next one begun): the
  * second screen's menu's frame, when it shows and the game lets it. */
 void portCompanionMenuFrame(void);
-/* The picture as last drawn (any thread): RGBA, PORT_COMPANION_MENU_W x
- * PORT_COMPANION_MENU_H; returns its serial (0: none yet), the pixels copied
+/* The picture as last drawn (any thread): RGBA, PORT_COMPANION_MENU_WIDTH x
+ * PORT_COMPANION_MENU_HEIGHT; returns its serial (0: none yet), the pixels copied
  * only when it differs from *seen (then *seen updated). */
-#define PORT_COMPANION_MENU_W 640
-#define PORT_COMPANION_MENU_H 480
+#define PORT_COMPANION_MENU_WIDTH 640
+#define PORT_COMPANION_MENU_HEIGHT 480
 unsigned portCompanionMenuPicture(unsigned char* rgba, unsigned* seen);
 /* The menu can be shown (a game runs, readback works); 0: the presenter shows
  * its own panels instead. */

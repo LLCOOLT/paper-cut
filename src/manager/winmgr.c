@@ -1372,7 +1372,7 @@ static void select_main(WinMgrEntry* entry) {
  * From US on, worn badges in the sell list get a mark.
  */
 #ifdef TARGET_PC
-/* Gameplay+'s junk-item helper (port/include/port/gameplus.h): in a sell list
+/* The Enhancements tab's junk-item helper (port/include/port/gameplus.h): in a sell list
  * (3 items, 12 badges), how many of entry i's item the list holds when that
  * is more than one and entry i is a spare (not a badge worn); 0 otherwise. */
 static s32 portSellSpares(WinMgrSelect* sel, s32 i) {
@@ -1454,7 +1454,7 @@ static void select_disp(WinMgrEntry* entry) {
             winFontSetWidth((Vec){entry->x + 60, sel->scrollY + (ofs + (entry->y - 32 - i * 24)), 0.0f}, (Vec){1.0f, 1.0f, 1.0f},
 #ifdef TARGET_PC
                             *((sel->items[i].flags & WINMGR_ITEM_GRAY) ? &gray : &black), spare ? 150.0f : 185.0f,
-                            msgSearch(item->name)); /* Gameplay+: room for the spares mark */
+                            msgSearch(item->name)); /* Enhancements: room for the spares mark */
 #else
                             *((sel->items[i].flags & WINMGR_ITEM_GRAY) ? &gray : &black), 185.0f, msgSearch(item->name));
 #endif
@@ -1464,7 +1464,7 @@ static void select_disp(WinMgrEntry* entry) {
 #else
 #ifdef TARGET_PC
             {
-                /* Gameplay+: room for the spares mark, a long name narrowed to 140 (JP has no winFontSetWidth) */
+                /* Enhancements: room for the spares mark, a long name narrowed to 140 (JP has no winFontSetWidth) */
                 const f32 nameW = spare ? (f32)FontGetMessageWidth(msgSearch(item->name)) : 0.0f;
                 winFontSet((Vec){entry->x + 60, sel->scrollY + (ofs + (entry->y - 32 - i * 24)), 0.0f},
                            (Vec){nameW > 140.0f ? 140.0f / nameW : 1.0f, 1.0f, 1.0f},
@@ -1527,7 +1527,7 @@ static void select_disp(WinMgrEntry* entry) {
                                    *((sel->items[i].flags & WINMGR_ITEM_GRAY) ? &gray : &black), buf);
 #endif
 #ifdef TARGET_PC
-            if (spare) { /* Gameplay+'s junk-item helper: "x2" left of the price */
+            if (spare) { /* the Enhancements tab's junk-item helper: "x2" left of the price */
                 sprintf(buf, "x%d", spare);
                 winFontInit();
                 winFontSet((Vec){entry->x + entry->width - 50 - FontGetMessageWidth(buf) * 0.8f,

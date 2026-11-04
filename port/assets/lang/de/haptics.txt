@@ -3,5 +3,5 @@
 Controller haptics
 Controller-Haptik
 
-A short pulse as an action command's or a guard's timing window opens, so you can feel when to press, and on a DualSense the triggers resist while a command holds R. Other controllers get the pulses as normal rumble. Follows Rumble and Rumble strength.
-Ein kurzer Impuls, wenn sich das Zeitfenster eines Aktionsbefehls oder einer Abwehr öffnet, damit du spürst, wann du drücken musst; bei einem DualSense geben die Trigger Widerstand, während ein Befehl R gedrückt hält. Andere Controller bekommen die Impulse als normale Vibration. Richtet sich nach Vibration und Vibrationsstärke.
+A short pulse as an action command's or a guard's timing window opens; on a DualSense the triggers also resist while a command holds R. Follows Rumble and Rumble strength.
+Ein kurzer Impuls, wenn sich das Zeitfenster eines Aktionsbefehls oder einer Abwehr öffnet; bei einem DualSense geben die Trigger außerdem Widerstand, während ein Befehl R gedrückt hält. Richtet sich nach Vibration und Vibrationsstärke.

@@ -53,3 +53,6 @@ Un interrupteur s'enclenche
 
 A lock opens
 Une serrure s'ouvre
+
+How far the filter moves the colours.
+À quel point le filtre décale les couleurs.

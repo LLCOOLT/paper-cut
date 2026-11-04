@@ -2279,7 +2279,7 @@ EVT_BEGIN(mahojin_event1)
     CALL_CHILD(evt_mahojin_move2)
     SPAWN_EVENT(evt_fogset)
 #ifdef TARGET_PC
-    // Gameplay+: the map's reveal cut short once a pedestal scene was seen on this file
+    // Enhancements: the map's reveal cut short once a pedestal scene was seen on this file
     CALL(portEvtSceneMs, PORT_SCENE_PEDESTAL, 6000, LW(15))
     WAIT_MS(LW(15))
 #else
@@ -2324,7 +2324,7 @@ EVT_BEGIN(mahojin_event2)
     CALL_CHILD(evt_mahojin_move2)
     SPAWN_EVENT(evt_fogset)
 #ifdef TARGET_PC
-    // Gameplay+: the map's reveal cut short once a pedestal scene was seen on this file
+    // Enhancements: the map's reveal cut short once a pedestal scene was seen on this file
     CALL(portEvtSceneMs, PORT_SCENE_PEDESTAL, 6000, LW(15))
     WAIT_MS(LW(15))
 #else
@@ -2365,7 +2365,7 @@ EVT_BEGIN(mahojin_event3)
     CALL_CHILD(evt_mahojin_move2)
     SPAWN_EVENT(evt_fogset)
 #ifdef TARGET_PC
-    // Gameplay+: the map's reveal cut short once a pedestal scene was seen on this file
+    // Enhancements: the map's reveal cut short once a pedestal scene was seen on this file
     CALL(portEvtSceneMs, PORT_SCENE_PEDESTAL, 6000, LW(15))
     WAIT_MS(LW(15))
 #else
@@ -2406,7 +2406,7 @@ EVT_BEGIN(mahojin_event4)
     CALL_CHILD(evt_mahojin_move2)
     SPAWN_EVENT(evt_fogset)
 #ifdef TARGET_PC
-    // Gameplay+: the map's reveal cut short once a pedestal scene was seen on this file
+    // Enhancements: the map's reveal cut short once a pedestal scene was seen on this file
     CALL(portEvtSceneMs, PORT_SCENE_PEDESTAL, 6000, LW(15))
     WAIT_MS(LW(15))
 #else
@@ -2447,7 +2447,7 @@ EVT_BEGIN(mahojin_event5)
     CALL_CHILD(evt_mahojin_move2)
     SPAWN_EVENT(evt_fogset)
 #ifdef TARGET_PC
-    // Gameplay+: the map's reveal cut short once a pedestal scene was seen on this file
+    // Enhancements: the map's reveal cut short once a pedestal scene was seen on this file
     CALL(portEvtSceneMs, PORT_SCENE_PEDESTAL, 6000, LW(15))
     WAIT_MS(LW(15))
 #else
@@ -2489,7 +2489,7 @@ EVT_BEGIN(mahojin_event6)
     CALL_CHILD(evt_mahojin_move2)
     SPAWN_EVENT(evt_fogset)
 #ifdef TARGET_PC
-    // Gameplay+: the map's reveal cut short once a pedestal scene was seen on this file
+    // Enhancements: the map's reveal cut short once a pedestal scene was seen on this file
     CALL(portEvtSceneMs, PORT_SCENE_PEDESTAL, 6000, LW(15))
     WAIT_MS(LW(15))
 #else

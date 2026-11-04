@@ -39,9 +39,6 @@ Waluigi
 Mario as his brother or his rivals, in one press.
 ボタンひとつで　マリオを　弟や　ライバルの　すがたに
 
-Custom colours, Random and Reset all.
-カスタムの色　ランダム　すべてリセット
-
 Left and right: the game's own, 13 colours, or Custom.
 左右で　ゲームの色　１３の色　カスタム
 

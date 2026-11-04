@@ -39,9 +39,6 @@ Waluigi
 Mario as his brother or his rivals, in one press.
 Mario come suo fratello o i suoi rivali, con un tasto.
 
-Custom colours, Random and Reset all.
-Colori personali, A caso e Ripristina tutto.
-
 Left and right: the game's own, 13 colours, or Custom.
 Sinistra e destra: il colore del gioco, altri 13 o Personale.
 

@@ -259,7 +259,7 @@ const bool sAdded = [] {
                         "Start menu's help and the Settings tab as you move through them. In the game's language when "
                         "the system has a voice for it.",
                         0, "tts", kChoices, 3, "text to speech tts read aloud voice narrator screen reader blind");
-  portSettingsAddSlider("Accessibility", "Reading speed", nullptr, 0, "tts_rate", -5, 5, "%+d",
+  portSettingsAddSlider("Accessibility", "Reading speed", "How fast the voice reads.", 0, "tts_rate", -5, 5, "%+d",
                         "text to speech tts rate speed voice");
   // the message windows' pages as they show (message_text.cpp); a closed window cuts off its reading
   msgtext::listen([](const void*, const std::string& words, const char*, bool) {

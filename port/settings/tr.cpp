@@ -1,7 +1,7 @@
 // The port's own menus in the player's language (port/include/port/tr.h): the
 // tables from port/assets/lang (tools/port/gen_lang.py), the language packs
 // from the mods folder (<user>/mods/<pack>/lang/, docs/LANGUAGE_PACKS.md), the
-// menu language (System > Menu language), and the lookups.
+// menu language (Language > Menu language), and the lookups.
 #include "port/tr.h"
 #include "port/settings.h"
 
@@ -658,9 +658,8 @@ struct Register {
   Register() {
     choice();
     portSettingsAddChoice("Language", "Menu language",
-                          "Paper Cut's own menus: the settings page, the launcher's and the Start menu's Settings "
-                          "tab. Auto: the Japanese release's Japanese, the European release's text language, "
-                          "otherwise the computer's. The game's own text follows the disc.",
+                          "Paper Cut's own menus. Auto: the Japanese release's Japanese, the European release's "
+                          "text language, otherwise the computer's. The game's own text follows the disc.",
                           0, "menu_language", kChoices, 7, "language translate english deutsch french spanish italian japanese");
   }
 } sRegister;

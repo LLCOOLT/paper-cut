@@ -83,3 +83,6 @@ Out of step since frame %ld
 
 Made with Paper Cut %s
 Paper Cut %s で作成
+
+Paper Cut replay
+Paper Cutリプレイ

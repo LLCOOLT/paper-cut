@@ -1,4 +1,4 @@
-/* A second player for the partner (Controls > Second player;
+/* A second player for the partner (Multiplayer > Second player;
  * port/settings/features/second_player.cpp). Off by default, and nothing
  * changes without a second controller.
  *
@@ -247,7 +247,7 @@ static void talkFrame(void) {
 /* makeKey, in the field: the second player's input for the partner's walk,
  * X (the partner's ability: the game's X, held as long as it is held, as for
  * Yoshi's ride or Flurrie's gust) and L or R (the next partner, in the
- * quick-swap's order, with or without Gameplay+'s setting); Mario's Y */
+ * quick-swap's order, with or without the Enhancements tab's setting); Mario's Y */
 static void fieldRoute(void) {
     static u32 sShoulders;
     const u32 shoulders = gp->button[1] & (PAD_TRIGGER_L | PAD_TRIGGER_R);

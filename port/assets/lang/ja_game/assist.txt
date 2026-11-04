@@ -1,0 +1,22 @@
+# assist: see tools/port/gen_lang.py
+
+Game speed
+ゲームの　スピード
+
+Hold instead of mashing
+れんだの　かわりに　おしっぱなし
+
+In the action commands that ask you to press a button again and again, holding it counts: it presses about 12 times a second for you.
+れんだする　アクションコマンドで　ボタンを　おしっぱなしに　すると　1びょうに　12かいほど　おしたことに　なります
+
+One-handed controls
+かたてで　そうさ
+
+Slower only in battle
+バトルだけ　ゆっくり
+
+Slower, for more time for the action commands: the game plays the same, only slower. Not while playing online (both games must keep the same pace) or fast-forwarding.
+ゆっくりに　なり　アクションコマンドの　時間が　ふえます　ゲームの　なかみは　おなじです　オンラインや　はやおくりの　あいだは　かわりません
+
+The field at full speed, the battles at the speed above.
+フィールドは　ふつうの　スピード　バトルは　うえの　スピードです

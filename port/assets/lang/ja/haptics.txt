@@ -3,5 +3,5 @@
 Controller haptics
 コントローラーの触覚フィードバック
 
-A short pulse as an action command's or a guard's timing window opens, so you can feel when to press, and on a DualSense the triggers resist while a command holds R. Other controllers get the pulses as normal rumble. Follows Rumble and Rumble strength.
-アクションコマンドやガードのタイミングの受付が始まる瞬間に短く振動し、押すタイミングを手で感じられます。DualSenseでは、Rを押し続けるコマンドの間トリガーに抵抗が加わります。ほかのコントローラーには通常の振動で伝わります。「振動」と「振動の強さ」に従います。
+A short pulse as an action command's or a guard's timing window opens; on a DualSense the triggers also resist while a command holds R. Follows Rumble and Rumble strength.
+アクションコマンドやガードのタイミングの受付が始まる瞬間に短く振動します。DualSenseでは、Rを押し続けるコマンドの間トリガーにも抵抗が加わります。「振動」と「振動の強さ」に従います。

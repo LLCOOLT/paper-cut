@@ -33,7 +33,7 @@ typedef struct PortSettings {
     /* Audio */
     int volume;         /* 0-100 */
     int muteUnfocused;  /* silent while another window has the focus */
-    /* System */
+    /* General (and Controls, Saves) */
     int pauseUnfocused; /* the game waits while another window has the focus
                            ($TTYD_PAUSE_UNFOCUSED) */
     int backgroundInput; /* controllers still work while unfocused */

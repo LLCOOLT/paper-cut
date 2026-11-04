@@ -53,10 +53,9 @@ struct AutosaveSettings {
   AutosaveSettings() {
     portSettingsDeclare("autosave", 0, 0, 4);
     portSettingsAddChoice("Gameplay", "Autosave",
-                          "Saves into the file you're playing when you go into another room, once you have the "
-                          "controls there, as a Save Block would: a crash or a closed window costs no more than "
-                          "the room. Not during the boss rush or endless Glitz Pit, or after the practice tools "
-                          "changed the game.",
+                          "Saves into the file you're playing as you enter each room, as a Save Block would: a "
+                          "crash costs no more than the room. Not in the boss rush or endless Glitz Pit, or once "
+                          "the practice tools changed the game.",
                           PORT_SETTING_CHANGES_SAVES, "autosave", kChoices, 5,
                           "auto save room door map memory card save block");
     portSettingsAddOverlay(drawMark, nullptr);

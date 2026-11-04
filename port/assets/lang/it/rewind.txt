@@ -9,18 +9,6 @@ Tieni premuto il tasto Riavvolgi (Backspace) o il pulsante e il gioco torna indi
 Rewind length
 Durata del riavvolgimento
 
-Rewind button
-Pulsante Riavvolgi
-
-A controller button that rewinds while held.
-Un pulsante del controller che riavvolge finché è premuto.
-
-Left back paddle
-Levetta posteriore sinistra
-
-Right back paddle
-Levetta posteriore destra
-
 Rewind key
 Tasto Riavvolgi
 
@@ -41,3 +29,6 @@ Battaglie più veloci
 
 Battles play faster, but never while you act: action commands, Stylish moves, the menus and Star Specials stay at normal speed, and guards and Superguards keep their timing. Not in online co-op.
 Le battaglie vanno più veloci, ma mai mentre agisci: i comandi, le mosse stilose, i menu e le mosse speciali restano a velocità normale, e la Guardia e la Superguardia mantengono il loro tempo. Non nella cooperativa online.
+
+How far back Rewind can go.
+Fin dove può tornare indietro il riavvolgimento.

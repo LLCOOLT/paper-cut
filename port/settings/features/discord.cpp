@@ -1,4 +1,4 @@
-// Discord status (System > Discord status; docs/DISCORD_STATUS.md): what the
+// Discord status (General > Discord status; docs/DISCORD_STATUS.md): what the
 // player is doing (the area, in battle or exploring, co-op or online) on their
 // Discord profile, through the Discord app's own local IPC: no SDK, no library.
 //

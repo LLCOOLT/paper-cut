@@ -41,3 +41,6 @@ Eso no es un preajuste.
 
 Preset put in place: %d settings changed. Some apply from the next start.
 Preajuste aplicado: %d ajustes cambiados. Algunos se aplican desde el próximo inicio.
+
+Paper Cut settings preset
+Preajuste de Paper Cut

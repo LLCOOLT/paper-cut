@@ -96,9 +96,6 @@ Der Host war nicht erreichbar: prüfe die Adresse und ob er wartet.
 The other player left.
 Der andere Spieler ist gegangen.
 
-The other player stopped answering.
-Der andere Spieler antwortet nicht mehr.
-
 The connection sent something that isn't Paper Cut's.
 Die Verbindung hat etwas gesendet, das nicht von Paper Cut ist.
 

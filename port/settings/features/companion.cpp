@@ -664,7 +664,7 @@ bool menuPicture() {
     return false;
   }
   if (sMenuPixels.empty()) {
-    sMenuPixels.resize(PORT_COMPANION_MENU_W * PORT_COMPANION_MENU_H * 4);
+    sMenuPixels.resize(PORT_COMPANION_MENU_WIDTH * PORT_COMPANION_MENU_HEIGHT * 4);
   }
   const unsigned before = sMenuSeen;
   if (portCompanionMenuPicture(sMenuPixels.data(), &sMenuSeen) == 0) {
@@ -672,7 +672,7 @@ bool menuPicture() {
   }
   if (sMenuTex == nullptr) {
     sMenuTex = SDL_CreateTexture(sRenderer, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STREAMING,
-                                 PORT_COMPANION_MENU_W, PORT_COMPANION_MENU_H);
+                                 PORT_COMPANION_MENU_WIDTH, PORT_COMPANION_MENU_HEIGHT);
     if (sMenuTex == nullptr) {
       return false;
     }
@@ -680,7 +680,7 @@ bool menuPicture() {
     sMenuSeen = 0;
   }
   if (sMenuSeen != before || before == 0) {
-    SDL_UpdateTexture(sMenuTex, nullptr, sMenuPixels.data(), PORT_COMPANION_MENU_W * 4);
+    SDL_UpdateTexture(sMenuTex, nullptr, sMenuPixels.data(), PORT_COMPANION_MENU_WIDTH * 4);
   }
   return true;
 }

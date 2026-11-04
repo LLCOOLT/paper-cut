@@ -83,3 +83,6 @@ Aus dem Takt seit Frame %ld
 
 Made with Paper Cut %s
 Mit Paper Cut %s aufgenommen
+
+Paper Cut replay
+Paper-Cut-Replay

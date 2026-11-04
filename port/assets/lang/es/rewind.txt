@@ -9,18 +9,6 @@ Mantén pulsada la tecla de rebobinar (Retroceso) o el botón y el juego retroce
 Rewind length
 Duración del rebobinado
 
-Rewind button
-Botón de rebobinar
-
-A controller button that rewinds while held.
-Un botón del mando que rebobina mientras se mantiene pulsado.
-
-Left back paddle
-Palanca trasera izquierda
-
-Right back paddle
-Palanca trasera derecha
-
 Rewind key
 Tecla de rebobinar
 
@@ -41,3 +29,6 @@ Combates más rápidos
 
 Battles play faster, but never while you act: action commands, Stylish moves, the menus and Star Specials stay at normal speed, and guards and Superguards keep their timing. Not in online co-op.
 Los combates van más rápido, pero nunca mientras actúas: los comandos de acción, los movimientos con estilo, los menús y los ataques especiales siguen a velocidad normal, y la defensa y la superdefensa mantienen su ritmo. No en el cooperativo en línea.
+
+How far back Rewind can go.
+Hasta dónde puede retroceder el rebobinado.

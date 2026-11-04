@@ -245,10 +245,6 @@ void portPhotoSet(int active, float yaw, float pitch, float zoom, int hideHud) {
     sPhoto.hideHud = active && hideHud;
 }
 
-int portPhotoActive(void) {
-    return sPhoto.active;
-}
-
 /* the Start menu's Photo mode row: it closes the menu (the menu draws over a
  * picture of the field, not the field), photo mode once Mario has the controls */
 static int sPhotoAsked;

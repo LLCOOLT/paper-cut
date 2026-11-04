@@ -14,3 +14,6 @@ Messages et menus
 
 Reading speed
 Vitesse de lecture
+
+How fast the voice reads.
+La vitesse de lecture de la voix.

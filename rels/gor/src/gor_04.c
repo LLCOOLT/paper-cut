@@ -1193,7 +1193,7 @@ EVT_BEGIN(hikosenkakari_talk)
     CALL(evt_msg_select, 0, STRING("hikou_01"))
     IF_INT_EQUAL(LW(0), 0)
 #ifdef TARGET_PC
-        // Gameplay+: once the blimp was taken on this file, aboard without the ticket hand-over
+        // Enhancements: once the blimp was taken on this file, aboard without the ticket hand-over
         CALL(portEvtSceneMs, PORT_SCENE_BLIMP_TICKET, 1, LW(9))
         CALL(evt_pouch_check_item, ITEM_BLIMP_TICKET, LW(8))
         IF_INT_EQUAL(LW(9), 0)
@@ -1310,7 +1310,7 @@ EVT_BEGIN(ekiin_talk)
     CALL(evt_msg_select, 0, STRING("train_01"))
     IF_INT_EQUAL(LW(0), 0)
 #ifdef TARGET_PC
-        // Gameplay+: once the Excess Express was taken on this file, aboard without the ticket hand-over
+        // Enhancements: once the Excess Express was taken on this file, aboard without the ticket hand-over
         CALL(portEvtSceneMs, PORT_SCENE_TRAIN_TICKET, 1, LW(9))
         CALL(evt_pouch_check_item, ITEM_TRAIN_TICKET, LW(8))
         IF_INT_EQUAL(LW(9), 0)

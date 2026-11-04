@@ -210,7 +210,7 @@ void listSection(int) {
   }
   ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
   ImGui::TextWrapped("%s", portTr("Player 1 plays; player 2 can play the partner in battle and in the field (Second "
-                                  "player, below). The buttons of each player are set under Controller buttons."));
+                                  "player, below). The buttons of each player are set under Bindings."));
   ImGui::PopStyleColor();
 }
 

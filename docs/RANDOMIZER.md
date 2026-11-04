@@ -88,7 +88,7 @@ It also pins one seed's placements, so a change to the generator or its data sho
 ## Limits and what is not verified yet
 
 - **US only**, as above.
-- **The open world has not been played with the TTYD AP mod.** The mod isn't in this repository and couldn't be built here. Its options and placements are written the way an `.apttyd` seed's are, through code that a seed and a server session already exercise. Whether the mod plays a solo, serverless seed through to the end is untested.
+- **The open world has not been played with the TTYD AP mod.** The mod isn't part of this repository. Its options and placements are written the way an `.apttyd` seed's are, through code that a seed and a server session already exercise. Whether the mod plays a solo, serverless seed through to the end is untested.
 - **The vanilla story's places** are the apworld's places whose item sits in a script word of a REL. The patcher writes ordinary item numbers there for Archipelago too, and `TTYD_AP_VERIFY=1` checks that those words hold the disc's items before a seed changes them. No full game has been played through on a vanilla-story seed yet.
 - A seed applies to every file played in that run. Nothing in the save says which seed it was made with.
 - Shops, troubles, cooking, tattles, Dazzle's and the Pit's rewards aren't shuffled. Neither are the Crystal Stars, or Goombella's place.

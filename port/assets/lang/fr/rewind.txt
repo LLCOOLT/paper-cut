@@ -9,18 +9,6 @@ Maintenez la touche de rembobinage (Retour arrière) ou le bouton, et le jeu rem
 Rewind length
 Durée du rembobinage
 
-Rewind button
-Bouton de rembobinage
-
-A controller button that rewinds while held.
-Un bouton de manette qui rembobine tant qu'il est maintenu.
-
-Left back paddle
-Palette arrière gauche
-
-Right back paddle
-Palette arrière droite
-
 Rewind key
 Touche de rembobinage
 
@@ -41,3 +29,6 @@ Combats plus rapides
 
 Battles play faster, but never while you act: action commands, Stylish moves, the menus and Star Specials stay at normal speed, and guards and Superguards keep their timing. Not in online co-op.
 Les combats vont plus vite, mais jamais pendant que vous agissez : les commandes action, les mouvements stylés, les menus et les coups spéciaux gardent la vitesse normale, et la Garde et la Super Garde gardent leur timing. Pas en coop en ligne.
+
+How far back Rewind can go.
+Jusqu'où le retour en arrière peut remonter.

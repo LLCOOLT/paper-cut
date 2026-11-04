@@ -1,4 +1,4 @@
-// Faster battles (Gameplay+ > Faster battles; port/include/port/battle_speed.h):
+// Faster battles (Enhancements > Faster battles; port/include/port/battle_speed.h):
 // a battle's animations at 1.5x or 2x, back to 1x whenever the player acts
 // (an action command, a Stylish move, the command menu, a Star Special), and
 // the guard and Superguard windows as long in time as at 1x.

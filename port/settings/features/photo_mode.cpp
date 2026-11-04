@@ -1,4 +1,4 @@
-// Photo mode (P, or both sticks pressed in; System > Photo mode; the Start
+// Photo mode (P, or both sticks pressed in; General > Photo mode; the Start
 // menu's Settings tab): the game held where it is (frame advance's hold),
 // the camera turned all the way round Mario, up and down, in and out, the HUD
 // hidden or not, and a picture taken (as F12). Only in the field and not
@@ -246,7 +246,3 @@ const bool sAdded = [] {
 
 } // namespace
 
-// The Start menu's Settings tab and tests: photo mode on or off
-extern "C" void portPhotoToggle(void) {
-  sPhoto.on ? stop() : start();
-}

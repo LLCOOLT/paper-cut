@@ -2,7 +2,7 @@
 // release" of kRepository, asked once at start on a thread of its own
 // (port/include/port/http.h; phones get their updates from their stores, so
 // none there). A release newer than this build's PORT_VERSION shows "Paper
-// Cut X is out" on the System tab and the launcher's About tab. No answer,
+// Cut X is out" on the General tab and the launcher's About tab. No answer,
 // an error or a "dev" build: no notice.
 //
 // Download and install (docs/UPDATES.md): the release's zip for this
@@ -354,7 +354,7 @@ void systemSection(int) {
   }
 }
 
-// $TTYD_UPDATE_INSTALL: the System tab's button pressed without the page (tests)
+// $TTYD_UPDATE_INSTALL: the General tab's button pressed without the page (tests)
 void testOverlay(int) {
   static bool sStarted;
   if (!sStarted && sFound) {

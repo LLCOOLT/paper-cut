@@ -851,7 +851,7 @@ const Item kItems[] = {
     {"Archipelago", "Archipelago", nullptr, 0, [](PortSettings*, const Item&) { archipelagoTab(); },
      "randomizer multiworld seed server", nullptr},
 
-    // System
+    // General and Saves
     {"General", "Skip the launcher (start with the last disc played)", nullptr, 0, TOGGLE(launcherSkip),
      "launcher startup disc", nullptr},
     {"General", "Take a screenshot",
@@ -933,7 +933,7 @@ void drawExtra(PortSettings*, const Item& it) {
   } else if (e.kind == 1) {
     edited = combo(it.label, v, e.choices, e.count);
   } else {
-    ImGui::SliderInt(trl(it.label), v, e.min, e.max, e.format != nullptr ? e.format : "%d");
+    ImGui::SliderInt(trl(it.label), v, e.min, e.max, e.format != nullptr ? portTr(e.format) : "%d");
     edited = ImGui::IsItemDeactivatedAfterEdit();
   }
   if (edited) {
@@ -1341,7 +1341,6 @@ void touchToMouse(const SDL_Event* e) {
 
 extern "C" void portSettingsEvent(const void* sdlEvent) {
   const SDL_Event* e = static_cast<const SDL_Event*>(sdlEvent);
-  PortSettings* s = portSettings();
   if (e->type == SDL_EVENT_FINGER_DOWN || e->type == SDL_EVENT_FINGER_MOTION || e->type == SDL_EVENT_FINGER_UP ||
       e->type == SDL_EVENT_FINGER_CANCELED) {
     touchToMouse(e);

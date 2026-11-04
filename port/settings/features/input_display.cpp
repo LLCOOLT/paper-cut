@@ -1,4 +1,4 @@
-// The input display (Display > Input display; port/include/port/display.h):
+// The input display (Interface > Input display; port/include/port/display.h):
 // the GameCube controller as the game reads it, in a corner over the game, for
 // streams and practice. The stick and C-stick in their octagonal gates (a dot
 // where each points, its trail kept short), A B X Y in their GameCube places,

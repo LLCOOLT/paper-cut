@@ -1,6 +1,6 @@
 /* Art recipes, the game's side (port/include/port/art_recipe.h; the format is
  * port/assets/luigi/art/RECIPES.md): the recipes built in with the drawn art
- * (art/recipes/*.recipe) run on the player's own disc when the game
+ * (art/recipes/<name>.recipe) run on the player's own disc when the game
  * starts, and their images are kept in the user folder
  * (<user>/art_cache/<game id>/<asset path>, a PNG and its .key), so later
  * starts read them back. The game then gets them as assets at those paths

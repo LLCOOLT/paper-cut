@@ -1,7 +1,7 @@
 // One-handed controls (Controls tab): everything on one half of a controller,
 // as a ready-made button mapping (Aurora's, saved per controller model; the
-// Controller buttons list changes it afterwards, its Restore defaults undoes
-// it), and hold instead of mashing (port/src/common/assist_pc.c).
+// Bindings section changes it afterwards, its Reset all undoes it), and hold
+// instead of mashing (port/src/common/assist_pc.c).
 //
 //   Left hand    the stick moves; the d-pad is A, B, X and Y where the face
 //                buttons are (down A on most controllers), the left bumper Z,
@@ -252,7 +252,7 @@ const bool sAdded = [] {
       "Everything on one half of the controller. Left hand: the stick moves, the d-pad is A, B, X and Y, the left "
       "bumper Z, the left trigger R, the stick pressed in L, Back Start. Right hand: the right stick moves, the face "
       "buttons, right bumper and trigger as they are, the right stick pressed in L. Change any button afterwards under "
-      "Controller buttons; Restore defaults there undoes it. Back and the stick presses then play instead of opening "
+      "Bindings; Reset all there undoes it. Back and the stick presses then play instead of opening "
       "Settings or fast-forwarding (the Start menu's Settings tab, F1 and Tab still do).",
       0, section, "one handed one-handed single hand left right accessibility disability layout preset remap");
   portSettingsAddToggle("Controls", "Hold instead of mashing",

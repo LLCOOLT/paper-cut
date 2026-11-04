@@ -14,3 +14,6 @@ Messages and menus
 
 Reading speed
 読み上げの速さ
+
+How fast the voice reads.
+読み上げの速さ。

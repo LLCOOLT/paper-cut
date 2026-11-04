@@ -1,4 +1,4 @@
-// The free camera (Gameplay tab) and mirror mode (Display tab): port/include/port/view.h,
+// The free camera and mirror mode (both on the Gameplay tab): port/include/port/view.h,
 // port/src/common/view_pc.c. Both change only how the game is seen, not what it plays out.
 #include "port/settings.h"
 

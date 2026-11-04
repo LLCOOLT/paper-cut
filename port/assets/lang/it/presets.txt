@@ -41,3 +41,6 @@ Questa non è una preimpostazione.
 
 Preset put in place: %d settings changed. Some apply from the next start.
 Preimpostazione applicata: %d impostazioni cambiate. Alcune valgono dal prossimo avvio.
+
+Paper Cut settings preset
+Preimpostazione di Paper Cut

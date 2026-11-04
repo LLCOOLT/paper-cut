@@ -44,7 +44,6 @@ int portViewMirrored(void);
  * camera) hidden or not. Only in the field and not online. */
 int portPhotoAvailable(void);
 void portPhotoSet(int active, float yaw, float pitch, float zoom, int hideHud);
-int portPhotoActive(void);
 int portPhotoHideHud(void);
 /* The Start menu's row: photo mode asked for, then taken (once) when Mario
  * has the controls again, the menu closed. */

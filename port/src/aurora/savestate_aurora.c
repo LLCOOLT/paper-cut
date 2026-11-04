@@ -105,9 +105,10 @@ static int sRequestSlot = -1;
 static int sRequestLoad;
 static char sStatus[128];
 static Uint64 sStatusTime;
-static uint8_t* sScratch; /* the compressor's work buffer */
 
 #if defined(__APPLE__)
+static uint8_t* sScratch; /* the compressor's work buffer */
+
 /* Apple's LZ4: 0 if the chunk does not get smaller */
 static size_t packChunk(uint8_t* dst, size_t cap, const uint8_t* src, size_t n) {
     if (sScratch == NULL) {

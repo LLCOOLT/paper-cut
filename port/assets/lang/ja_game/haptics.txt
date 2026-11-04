@@ -3,5 +3,5 @@
 Controller haptics
 タイミングの　しんどう
 
-A short pulse as an action command's or a guard's timing window opens, so you can feel when to press, and on a DualSense the triggers resist while a command holds R. Other controllers get the pulses as normal rumble. Follows Rumble and Rumble strength.
-アクションコマンドや　ガードの　タイミングが　はじまる　しゅんかんに　みじかく　ふるえます　DualSenseでは　Rを　おしつづける　コマンドの　あいだ　トリガーが　かたく　なります　ほかの　コントローラーは　ふつうの　しんどうです
+A short pulse as an action command's or a guard's timing window opens; on a DualSense the triggers also resist while a command holds R. Follows Rumble and Rumble strength.
+アクションコマンドや　ガードの　タイミングが　はじまる　しゅんかんに　みじかく　ふるえます　DualSenseでは　Rを　おしつづける　コマンドの　あいだ　トリガーが　かたく　なります

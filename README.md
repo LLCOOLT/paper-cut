@@ -32,10 +32,12 @@ Turn it on in Enhancements and Luigi takes Mario's place for the whole story, wi
   <img src="docs/images/shot-luigi-hooktail-castle.jpg" alt="Luigi and Koops on a balcony of Hooktail Castle, under the night sky" width="70%">
 </p>
 
-### Cosmetics and mirror mode
-Recolour Mario's cap and overalls, Goombella's hair, Vivian and the HUD's bars, or pick a preset: Luigi, Wario, Waluigi or Fire Mario. Mirror mode flips the world left to right and turns the controls to match.
+### The Wardrobe and mirror mode
+The Wardrobe is a tab of the Start menu. Mario and every partner stand on its page, and each colour shows on them as you pick it. Mario can wear one of four looks (Luigi, Wario, Waluigi, Fire Mario) or your own cap and overalls. Each partner has its own rows, such as Koops's shell and hoodie, and the HUD's bars have theirs. Mirror mode flips the world left to right and turns the controls to match.
 
 <p align="center">
+  <img src="docs/images/shot-wardrobe-mario-boggly-woods.jpg" alt="The Wardrobe tab in Boggly Woods: Mario in a teal cap and navy overalls on the page, the cap's row chosen" width="49%">
+  <img src="docs/images/shot-wardrobe-koops-boggly-woods.jpg" alt="The Wardrobe tab in Boggly Woods: Koops with an orange shell and a sky blue hoodie, the shell's row chosen" width="49%">
   <img src="docs/images/shot-cosmetics-twilight-town.jpg" alt="Mario as Fire Mario, white cap and red overalls, in Twilight Town" width="49%">
   <img src="docs/images/shot-mirror-keelhaul-key.jpg" alt="Keelhaul Key's camp in mirror mode, with Mario, Koops and the pirates" width="49%">
 </p>
@@ -57,10 +59,24 @@ Texture upscaling makes the game's textures 2x or 4x larger with an edge-followi
 </p>
 
 ### Settings inside the game
-The Start menu gets a Settings tab after the Journal, in the game's own windows and font. Every switch and slider is there, with a search on the full settings page for the rest. Settings that need a restart put you back where you were.
+The Start menu's Settings tab works like the Journal. Its front page has a button with a picture for each category, and each one opens a book page of settings. You change them there, in the game's own menu and font. The full settings page, with its search, is one button away. Menu speed (Interface) makes the Start menu's pages slide in at the game's speed, twice as fast, or at once. Settings that need a restart put you back where you were.
 
 <p align="center">
-  <img src="docs/images/shot-start-settings.jpg" alt="The Settings tab in the game's Start menu in Petalburg, showing the Display options" width="70%">
+  <img src="docs/images/shot-settings-journal-rogueport.jpg" alt="The Settings tab's front page in Rogueport: two columns of category buttons with pictures, from Gameplay to Full settings page" width="49%">
+  <img src="docs/images/shot-settings-accessibility-rogueport.jpg" alt="The Accessibility book page of the Settings tab in Rogueport, with Action Command cue, colour-blind filter, captions and message size" width="49%">
+</p>
+
+The Bindings page (Controls) sets every key and controller button, for the game's buttons and for Paper Cut's own shortcuts.
+
+<p align="center">
+  <img src="docs/images/shot-bindings-page.jpg" alt="The full settings page's Controls tab: the Bindings table, with a keyboard key, a second key and a controller button for each of the game's buttons" width="70%">
+</p>
+
+### A second screen
+On a dual-screen handheld like the AYN Thor (Android), the lower screen shows the game's own Start menu, live, while the game plays on the main screen. You use it by touch or with its buttons: check the party, use an item, change partners. The picture below comes from a desktop test build, with its two windows stacked as a Thor's screens are.
+
+<p align="center">
+  <img src="docs/images/shot-second-screen-rogueport.jpg" alt="The two screens stacked: Mario and Koops in Rogueport's harbour on the main screen, and the Start menu's Party tab with Koops on the second screen below" width="60%">
 </p>
 
 ### Accessibility
@@ -87,7 +103,7 @@ Start **Paper Cut** and add your disc image (.iso, .rvz, .gcm...) to the launche
 | 1 / 3 | L / R |
 | Enter | Start |
 
-Change any of them under Settings > Controls > Keyboard keys. The port's own keys:
+Change any of them on the Bindings page (Settings > Controls), in the Start menu or on the full settings page. Paper Cut's own keys:
 - F1: settings.
 - F5 / F8: save / load state.
 - F6 / F7: frame advance.
@@ -115,7 +131,7 @@ The games connect directly when they can and through Paper Cut's relay when they
 
 **Display**
 - **Any screen shape:** 4:3, 16:9, 16:10, 21:9 and 32:9, with the HUD at 50% to 150%. The widescreen fixes stretch the Start menu's backdrop, the page-flip between rooms, the title and the file screens to the full width, and put bars where a room's set or a battle's stage ends (Display > Bars where a scene ends).
-- **120 Hz and up:** in-between frames for the camera, characters and animation; the game's logic stays at 60 Hz. Variable refresh rate is supported.
+- **120 Hz and up:** in-between frames for the camera, characters and animation; the game's logic stays at 60 Hz. The bars of the story's scenes are drawn in the in-between frames too, so they no longer flash at high refresh rates. Variable refresh rate is supported.
 - **Picture:** internal resolution 1-8x with supersampling, MSAA, anisotropic filtering, texture detail, sharp text, blurred side bars, HDR on displays that have it, and 50 or 60 Hz for the European version.
 - **Texture upscaling:** the game's textures 2x or 4x larger through Paper Cut's own edge-following filter.
 - **Filters:** CRT, paper grain and sharpen.
@@ -124,9 +140,9 @@ The games connect directly when they can and through Paper Cut's relay when they
 - **The window:** opens where you left it, sizes to 1-4x the picture, can stay on top, and goes full screen with F11 or Alt+Enter.
 - **Performance overlay:** frame times, 1% lows and jitter.
 
-**Wardrobe:** a Start menu tab of its own, where Mario (or the partner, or the status bar) stands on the page in the game's own model and takes each colour as you pick it: his cap and overalls, Goombella's hair, Vivian and the HUD's bars in 13 colours or any from a picker, with Luigi, Wario, Waluigi and Fire Mario looks. The recolour keeps the shading.
+**Wardrobe:** a Start menu tab of its own. Mario, the partner whose row you are on, or the status bar stands on the page in the game's own model and takes each colour as you pick it. There are rows for Mario's cap and overalls, every partner (Goombella's hair, Koops's shell and hoodie, Flurrie's hair, Yoshi's colour, Vivian, Bobbery, Ms. Mowz's mask and cape) and the HUD's bars. Each takes one of 13 colours or any from the colour picker, and Mario has Luigi, Wario, Waluigi and Fire Mario looks. The recolour keeps the shading.
 
-**Settings:** the Start menu's Settings tab (after the Wardrobe) holds every on/off, choice and number in categories (Gameplay, Enhancements, Display, Graphics, Interface, Audio, Controls, Multiplayer, Accessibility, Language, General), with All settings for the rest. The full page also opens with F1, a controller's Back/Select, the touch controls' three-bar button or a three-finger tap: tabs, a search box, and a mark on every setting that changes how the game plays or what it saves. Settings that apply from the next start have Restart now beside them, which puts you back where you were. **Presets** (General) turn your gameplay settings into a code or a file to share.
+**Settings:** the Start menu's Settings tab (after the Wardrobe) works like the Journal. Its front page has a button with a picture for each category: Gameplay, Enhancements, Display, Graphics, Interface, Audio, Controls, Multiplayer, Accessibility, Language, General and Saves, plus Photo mode and Full settings page. Each category opens a book page, where every on/off, choice and number changes in the game's own menu; the forms and the Wardrobe's colour picker open there too. **Menu speed** (Interface) sets how fast the Start menu's pages slide: Original, Fast (the default, half the time) or Instant. The full page also opens with F1, a controller's Back/Select, the touch controls' three-bar button or a three-finger tap: tabs, a search box, and a mark on every setting that changes how the game plays or what it saves. Settings that apply from the next start have Restart now beside them, which puts you back where you were. **Presets** (General) turn your gameplay settings into a code or a file to share.
 
 **Enhancements**
 - **Play as Luigi:** Luigi in Mario's place, with 156 animations of his own made for Paper Cut. Mario takes Luigi's part in the story's scenes, and the text, menus and credits follow.
@@ -137,7 +153,7 @@ The games connect directly when they can and through Paper Cut's relay when they
 
 **Accessibility**
 - A difficulty slider (enemy HP and attack) and action-command assist (wider timing, or automatic).
-- **Action Command cue** (Gameplay): a ring closes on an A button when to press A for a Jump or a partner's stomp, and to guard an enemy's jump.
+- **Action Command cue** (Accessibility): a ring closes on an A button when to press A for a Jump or a partner's stomp, and to guard an enemy's jump.
 - Larger message windows (up to 150%).
 - **Read text aloud:** the system's voice reads the message windows page by page, and if you like the Start menu's help and the Settings tab, in the game's language when the system has a voice for it.
 - **Game speed:** the whole game, or only battles, at 50% to 90%, for more time for the action commands.
@@ -170,7 +186,8 @@ The games connect directly when they can and through Paper Cut's relay when they
 - **Music shuffle,** or your own OGG, MP3, FLAC or WAV files in the `music` folder, named after the track they replace (`tracks.txt` there lists them), looping at their loop tags.
 
 **Controls**
-- Xbox, PlayStation, Switch (Pro and Joy-Con), Steam Deck, GameCube through an adapter, MFi, and about 2,300 other models from the community mapping list, named as you know them. Players 1-4, a live test, dead zones and trigger points, and remapping for keys and every player's buttons. A controller nothing recognises is set up by pressing its buttons when asked.
+- Xbox, PlayStation, Switch (Pro and Joy-Con), Steam Deck, GameCube through an adapter, MFi, and about 2,300 other models from the community mapping list, named as you know them. Players 1-4, a live test, and dead zones and trigger points. A controller nothing recognises is set up by pressing its buttons when asked.
+- **Bindings** (Controls, also in the Start menu): one page for every key and controller button. Each of the game's buttons and stick directions has a key, a second key and a controller button, per player. Paper Cut's shortcuts (settings, fast-forward, photo mode, save states, volume and more) take a key or a controller button, or two buttons held together, such as Back + R. A key already in use says where, with Swap, Keep both and Cancel. The page also swaps the sticks, inverts each stick's X and Y, and sets the triggers: analog with a click point as on the GameCube, analog only, or digital.
 - **Button prompts** that match your Xbox, PlayStation, Switch or Steam Deck controller, or your keys.
 - **Controller haptics** (on by default): a short pulse as an action command's or a guard's window opens, and on a DualSense the triggers resist while a command holds R.
 - **The controller's light:** each player's colour, Mario's HP (green to red, pulsing when he's nearly out) or a colour of your own.

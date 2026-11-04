@@ -3,5 +3,5 @@
 Controller haptics
 Respuesta háptica del mando
 
-A short pulse as an action command's or a guard's timing window opens, so you can feel when to press, and on a DualSense the triggers resist while a command holds R. Other controllers get the pulses as normal rumble. Follows Rumble and Rumble strength.
-Un pulso corto cuando se abre la ventana de un comando de acción o de una defensa, para sentir cuándo pulsar; en un DualSense, los gatillos ofrecen resistencia mientras un comando mantiene R. Los demás mandos reciben los pulsos como vibración normal. Sigue a Vibración y Fuerza de la vibración.
+A short pulse as an action command's or a guard's timing window opens; on a DualSense the triggers also resist while a command holds R. Follows Rumble and Rumble strength.
+Un pulso corto cuando se abre la ventana de un comando de acción o de una defensa; en un DualSense, los gatillos también ofrecen resistencia mientras un comando mantiene R. Sigue a Vibración y Fuerza de la vibración.

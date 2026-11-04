@@ -14,7 +14,9 @@
  * then puts everything back. Anything that jumped (a camera cut, a teleport,
  * a map change) is drawn as it is now. It repeats camDraw without its
  * letterbox step (which advances the cutscene bars) and without dispReInit
- * (the next real frame draws the same list). The logic never runs for these
+ * (the next real frame draws the same list); the bars, which that step
+ * queues, it queues itself, between the two frames' (camdrv.c:
+ * portCamLetterBoxInBetween). The logic never runs for these
  * frames, and the next real frame recomputes every pose from the real clocks:
  * runs, sweeps and audio are the same with the setting on. */
 #include <dolphin/gx.h>
@@ -43,6 +45,8 @@
 #undef bool
 
 void portCamEvalNearFar(CameraEntry* camera); /* camdrv.c (camEvalNearFar is static) */
+void portCamLetterBoxInBetween(f32 t);       /* camdrv.c: the cutscene bars, t between two frames' */
+void portCamLetterBoxInBetweenDone(void);
 extern s32 entry_n;           /* dispdrv.c: the draw list */
 extern DispEntry** pSortWork;
 extern DispCallback portExtMakeTexture; /* extdrv.c: its static extMakeTexture */
@@ -256,8 +260,9 @@ static void lerpPos(Vec* b, const Vec* a, f32 t, f32 jump) {
 }
 
 /* The live scene, drawn as camDraw does, minus the letterbox step and the
- * draw list's reset, between DEMOBeforeRender's and DEMODoneRender's state. */
-static void drawScene(void) {
+ * draw list's reset, between DEMOBeforeRender's and DEMODoneRender's state;
+ * t of the way from the frame shown to the next. */
+static void drawScene(f32 t) {
     GXRenderModeObj* rmode = DEMOGetRenderModeObj();
     s32 count = entry_n;
     int id;
@@ -266,6 +271,9 @@ static void drawScene(void) {
     GXSetViewport(0.0f, 0.0f, (f32)rmode->fbWidth, (f32)rmode->efbHeight, 0.0f, 1.0f);
     GXInvalidateVtxCache();
     GXInvalidateTexAll();
+    /* the cutscene bars: camDraw queues them itself (its letterbox step), so
+     * the list the logic left doesn't have them */
+    portCamLetterBoxInBetween(t);
     dispSort();
     portViewBegin(); /* as camDraw */
     for (id = 0; id < CAMERA_MAX; id++) {
@@ -288,6 +296,7 @@ static void drawScene(void) {
     }
     portViewEnd();
     portWidescreenCameraDone();
+    portCamLetterBoxInBetweenDone();
     GXSetZMode(GX_TRUE, GX_LEQUAL, GX_TRUE);
     GXSetColorUpdate(GX_TRUE);
     GXSetAlphaCompare(GX_ALWAYS, 0, GX_AOP_OR, GX_ALWAYS, 0);
@@ -391,7 +400,7 @@ int portInterpDraw(float t) {
     sScratchCount = 0;
     animPoseInterpBegin();
     portInterpAuditBegin();
-    drawScene();
+    drawScene(t);
     portInterpAuditEnd();
     animPoseInterpEnd(); /* the poses as the game left them */
     portRandSetState(seed);

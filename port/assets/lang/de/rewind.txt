@@ -9,18 +9,6 @@ Halte die Zurückspulen-Taste (Rücktaste) oder den Knopf gedrückt, und das Spi
 Rewind length
 Länge des Zurückspulens
 
-Rewind button
-Zurückspulen-Knopf
-
-A controller button that rewinds while held.
-Ein Controller-Knopf, der zurückspult, solange er gedrückt ist.
-
-Left back paddle
-Linkes hinteres Paddle
-
-Right back paddle
-Rechtes hinteres Paddle
-
 Rewind key
 Zurückspulen-Taste
 
@@ -41,3 +29,6 @@ Schnellere Kämpfe
 
 Battles play faster, but never while you act: action commands, Stylish moves, the menus and Star Specials stay at normal speed, and guards and Superguards keep their timing. Not in online co-op.
 Kämpfe laufen schneller, aber nie, während du handelst: Action-Kommandos, Stylish-Moves, die Menüs und Spezialattacken bleiben beim normalen Tempo, und Abwehr und Superabwehr behalten ihr Timing. Nicht im Online-Koop.
+
+How far back Rewind can go.
+Wie weit Zurückspulen zurückgehen kann.

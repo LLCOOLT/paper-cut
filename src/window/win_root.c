@@ -265,13 +265,12 @@ s32 PORT_HOOKABLE(winRootMain)(WindowWork* w) {
             }
             WIN_ROOT_ADD_TAB(4);
 #ifdef TTYD_BACKEND_AURORA
-            /* the second screen's menu has no Wardrobe or Settings (they are the player's, not its own) */
-            if (!gPortCompanionMenu) {
-                WIN_ROOT_ADD_TAB(PORT_PAUSE_WARDROBE_TAB);
-                portPauseWardrobeInit(w);
-                WIN_ROOT_ADD_TAB(PORT_PAUSE_SETTINGS_TAB);
-                portPauseSettingsInit(w);
-            }
+            /* Paper Cut's Wardrobe and Settings, on the second screen's menu too: the same code, with its
+               state in the second screen's own block (port/companion_section.h) */
+            WIN_ROOT_ADD_TAB(PORT_PAUSE_WARDROBE_TAB);
+            portPauseWardrobeInit(w);
+            WIN_ROOT_ADD_TAB(PORT_PAUSE_SETTINGS_TAB);
+            portPauseSettingsInit(w);
 #endif
 #if VERSION <= VERSION_DEMO_JP
             {
@@ -932,6 +931,12 @@ static void winMsgMain(WindowWork* wp) {
                     psndSFXOn(SFX_NAME_WORD(0x20006));
                 }
             }
+#ifdef TTYD_BACKEND_AURORA
+            /* the port's tabs: a long note turns its page by itself too */
+            if (wp->active == PORT_PAUSE_SETTINGS_TAB + 11 || wp->active == PORT_PAUSE_WARDROBE_TAB + 11) {
+                portPauseHelpTurn(wp);
+            }
+#endif
             break;
         case 3:
         case 4:

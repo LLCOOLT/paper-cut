@@ -440,7 +440,7 @@ void PORT_HOOKABLE(seq_gameOverMain)(SequenceWork* work) {
             break;
         case 5:
 #ifdef TARGET_PC
-            if (portRetryOffer()) { // Gameplay+: Y loads the last room's or battle's state
+            if (portRetryOffer()) { // Enhancements: Y loads the last room's or battle's state
                 break;
             }
 #endif

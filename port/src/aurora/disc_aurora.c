@@ -250,6 +250,8 @@ int portAuroraPickDisc(char* out, size_t size) {
     return TRUE;
 }
 
+void portOnlineInviteEvent(const void* sdlEvent); /* invite.cpp */
+
 #if defined(__APPLE__) && TARGET_OS_OSX
 /* macOS: a disc image opened with the app in Finder (a double click, Open
  * With, dropped on its icon; Info.plist declares the types) is not an
@@ -276,8 +278,6 @@ static BOOL openedInFinder(void) {
     return FALSE;
 }
 #endif
-
-void portOnlineInviteEvent(const void* sdlEvent); /* invite.cpp */
 
 /* a file:// URL's path, decoded (the Linux desktop file passes %u: a disc may come
  * as one), in place */

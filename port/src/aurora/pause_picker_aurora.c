@@ -4,6 +4,9 @@
  * and right. Each change is the part's own colour (its _rgb key) and puts it
  * on (Custom, port/include/port/cosmetics.h), so the Wardrobe's stage beside
  * it shows the result as it changes. B goes back to the Wardrobe's rows. */
+/* the Start menu's statics in a block of their own, the second screen's menu's while it runs (port/companion_section.h) */
+#define PORT_SECTION_MENU
+#include "port/companion_section.h"
 #include "port/cosmetics.h"
 #include "port/menu_tap.h"
 #include "port/pause_forms.h"

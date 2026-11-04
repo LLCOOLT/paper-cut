@@ -15,17 +15,21 @@
  * "Full settings page", which opens the full page over the menu (closing it
  * comes back here). A setting that applies from the next start, once changed,
  * brings a "Restart now" row (port/include/port/restart.h), which restarts
- * after a second A. The help box shows a note's first sentence (its first
- * clause when that is still longer than the box's two lines); the page has
- * the whole note.
+ * after a second A. The help box shows the whole note, two lines at a time
+ * as the game's own help: the C-stick turns its page, and a longer one turns
+ * by itself now and then (portPauseHelpTurn).
  *
  * src/window/win_root.c adds the tab (TARGET_PC blocks): its place in the
  * row, its label, its page (menu id 5, active 16) and its help text, which
  * msgSearch takes from portPauseSettingsMsg. */
+/* the Start menu's statics in a block of their own, the second screen's menu's while it runs (port/companion_section.h) */
+#define PORT_SECTION_MENU
+#include "port/companion_section.h"
 #include "port/pause_settings.h"
 #include "port/pause_bindings.h"
 #include "port/menu_speed.h"
 #include "port/menu_tap.h"
+#include "port/companion_menu.h"
 #include "port/pause_forms.h"
 #include "port/restart.h"
 #include "port/settings.h"
@@ -126,7 +130,7 @@ static const char* rowLabel(const Row* r) {
 static Row sRows[MAX_ROWS];
 static int sCount;
 static s32 sRow, sTop;
-static char sHelp[512];
+static char sHelp[1024];
 static char sPageHelp[512]; /* a form's page's help (portPausePageMain) */
 static int sConfirm; /* the Restart now row's first A was pressed */
 #define MAX_CATS 32
@@ -394,7 +398,7 @@ static void valueText(const Row* r, char* out, size_t size) {
         const int v = *c->value;
         snprintf(out, size, "%s", v >= 0 && v < c->count && c->choices != NULL ? portTrGame(c->choices[v]) : "?");
     } else if (r->kind == 2) {
-        snprintf(out, size, c->format != NULL ? c->format : "%d", *c->value);
+        snprintf(out, size, c->format != NULL ? portTrGame(c->format) : "%d", *c->value);
     }
     /* '<' starts a tag in the game's text: shown as a look-alike */
     for (; *out != '\0'; out++) {
@@ -500,39 +504,27 @@ void portPauseWrap(const char* text, char* out, size_t size) {
     out[n] = '\0';
 }
 
-/* text's first sentence (the game's encoding): up to its first ". " or, in
- * the Japanese text, its first full stop (a full-width one), kept; all of it
- * when it has one sentence */
-static void firstSentence(const char* text, char* out, size_t size) {
-    const char* p = text;
-    size_t n;
-    while (*p != '\0') {
-        if (sjisLead((unsigned char)p[0]) && p[1] != '\0') {
-            /* Shift-JIS 0x8142 and 0x8144: the full stops */
-            const int stop = (unsigned char)p[0] == 0x81 && ((unsigned char)p[1] == 0x42 || (unsigned char)p[1] == 0x44);
-            p += 2;
-            if (stop && *p != '\0') {
-                break;
-            }
-            continue;
-        }
-        if (p[0] == '.' && p[1] == ' ') {
-            p++;
-            break;
-        }
-        p++;
+/* each frame of the help box (win_root.c's winMsgMain) on the port's tabs: a
+ * note longer than the box's two lines turns its page by itself every few
+ * seconds, back to the first after the last (the C-stick still turns it at
+ * once, and the wait starts again); each menu its own (the second screen's) */
+void portPauseHelpTurn(WindowWork* wp) {
+    static const char* sMsg[2];
+    static s32 sLine[2];
+    static int sWait[2];
+    const int k = gPortCompanionMenu != 0;
+    if (wp->msg != sMsg[k] || wp->msgLine != sLine[k]) { /* another note, or the C-stick */
+        sMsg[k] = wp->msg;
+        sLine[k] = wp->msgLine;
+        sWait[k] = 0;
+        return;
     }
-    n = (size_t)(p - text) < size - 1 ? (size_t)(p - text) : size - 1;
-    memcpy(out, text, n);
-    out[n] = '\0';
-    /* still more than the box's two lines: up to its first "; ", made a full stop */
-    if (n > 2 * HELP_COLS && !sjisLead((unsigned char)0x81)) {
-        char* semi = strstr(out, "; ");
-        if (semi != NULL && semi - out >= 12) {
-            semi[0] = '.';
-            semi[1] = '\0';
-        }
+    if (wp->msgLines <= 2 || ++sWait[k] < FPS_FRAMES(210)) {
+        return;
     }
+    wp->msgLine = wp->msgLine / 2 < (wp->msgLines + 1) / 2 - 1 ? wp->msgLine + 2 : 0;
+    sLine[k] = wp->msgLine;
+    sWait[k] = 0;
 }
 
 /* the help box shows the row's note (winMsgEntry keeps the text while the tag
@@ -543,7 +535,7 @@ static void pointAt(WindowWork* wp) {
     static char tags[MAX_CATS + 1][TAG_ROWS][28];
     const Row* r = &sRows[sRow];
     char* tag = tags[sCat + 1][sRow % TAG_ROWS];
-    char text[512];
+    char text[1024];
     if (tag[0] == '\0') {
         snprintf(tag, sizeof(tags[0][0]), "pc_menu_settings_%d_%d", sCat + 1, (int)(sRow % TAG_ROWS));
     }
@@ -580,7 +572,7 @@ static void pointAt(WindowWork* wp) {
         winMsgEntry(wp, 0, tag, 0);
         return;
     }
-    firstSentence(portTrGame(r->c.note != NULL ? r->c.note : r->label), text, sizeof(text));
+    snprintf(text, sizeof(text), "%s", portTrGame(r->c.note != NULL ? r->c.note : r->label));
     if (r->kind >= 0 && r->kind <= 2 && (r->c.flags & PORT_SETTING_NEXT_START)) {
         /* applies from the next start: how to get there now */
         const char* how = portTrGame(portRestartSupported() ? "Applies after Restart now."

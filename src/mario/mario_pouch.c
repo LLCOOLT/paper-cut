@@ -19,7 +19,7 @@
 #include "port/hooks/src_mario_mario_pouch.h"
 #endif
 #ifdef TARGET_PC
-// Gameplay+'s bigger bag (port/include/port/gameplus.h): 20 items without the Strange Sack
+// The Enhancements tab's bigger bag (port/include/port/gameplus.h): 20 items without the Strange Sack
 int portHeldItemBase(void);
 #undef HELD_ITEM_COUNT_BASE
 #define HELD_ITEM_COUNT_BASE portHeldItemBase()

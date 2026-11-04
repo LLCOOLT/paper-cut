@@ -239,7 +239,7 @@ void PORT_HOOKABLE(seq_battleMain)(SequenceWork* work) {
             }
             work->state++;
 #ifdef TARGET_PC
-            portRetryPoint(); // Gameplay+: a battle's start, for a retry on Game Over
+            portRetryPoint(); // Enhancements: a battle's start, for a retry on Game Over
 #endif
         case 5: {
 #endif
