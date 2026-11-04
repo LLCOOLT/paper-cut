@@ -3,8 +3,7 @@
 The second screen (Android with a second built-in display, such as the AYN
 Thor; on the desktop only for tests) shows the game's own pause menu, drawn by
 the game's own code, live and navigable while the game plays on the main
-screen. Branch `second-screen-menu` (from `feature/0.3.0`), worktree
-`ttyd-port-menu2`.
+screen.
 
 ## How it works
 
@@ -117,20 +116,6 @@ refreshed every 33 ms while it shows) with the same buttons as the desktop;
 taps on the picture go to `menuTap`, buttons to `menuButton`. Until the
 first picture, the old panels.
 
-## Tests run (US, Windows)
-
-- Navigation of every tab, sub-lists, the Journal's Crystal Stars, X (a
-  partner's moves), taps on tabs: `companion shot` pictures checked.
-- An item from Gear (Honey Syrup on Mario: `[companion] item 154 (slot 1)
-  used on Mario`), a partner switch (`[companion] partner 1 to 2`).
-- `$TTYD_COMPANION_AUDIT`: only the kept heap writers and the expected
-  globals.
-- Fingerprint: a navigation script (all tabs, A/B/X/Y, taps, Mario walking),
-  with and without the window: 4094 frames, files identical; main-screen
-  captures (`shot`) at 7 frames pixel-identical.
-- Online, on this PC: host without, guest with the second screen (the same
-  script): no "out of step", fingerprint files identical (4094 frames).
-
 ## Left out, and why
 
 - Battles, Bowser and Peach: the menu is the field's and Mario's; the
@@ -140,14 +125,3 @@ first picture, the old panels.
   screen's menu only shows them.
 - The background is a plain gradient (the game's capture of the field isn't
   taken for the second screen).
-
-## Status / next steps
-
-- Committed: ac09c10a6 (the feature). After it: translations
-  (`port/assets/lang/*/second-screen-menu.txt`, the old desktop and Android
-  notes removed from `dual-screen.txt`), the Android presenter, X/Y buttons,
-  the pouch signature reopen.
-- Next: JP build and a JP run (Japanese text, the JP win.tpl path), EU and
-  headless builds, the APK (`gradle assembleUsDebug -PnoDiscAssets`), the
-  Thor-style mock-up of Party and Gear (`dual/thor.py`). C: ran out of space
-  (0 MB) at this point; builds wait for room.

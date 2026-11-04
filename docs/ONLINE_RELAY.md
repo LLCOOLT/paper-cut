@@ -151,7 +151,7 @@ first relay answered "full" opened its room on the second; a closed game
 ended the other's session at once ("the other player left"); a guest with
 another second half was told to check it while the host kept its room, the
 right guest then played; five wrong tries closed the room. Through the
-deployed relay (the same day, this PC, both games here): through it, 4,048
+deployed relay (the same day, both games on one computer): through it, 4,048
 frames identical at 7 frames of input delay (1,356 messages); direct, 4,048
 frames identical at 3 (10 relay messages).
 
@@ -232,7 +232,7 @@ of `PORT_ONLINE_CODE_CHARS`, a dash allowed, nothing else), it offers "Join
 room K7P2-QX9M from the clipboard?". The clipboard is read only then, never
 sent anywhere, and a code this player copied isn't offered back.
 
-Tried (2026-11-04, Windows, US, three games on this PC, `wrangler dev` with
+Tried (2026-11-04, Windows, US, three games on one computer, `wrangler dev` with
 this relay; `TTYD_ONLINE_WATCH_ROOM=<code>` / `TTYD_ONLINE_WATCH=<host>:<port>`
 start a watcher in tests): through a room, host, guest and a watcher that
 joined in the lobby: host and guest 8,367 frames identical, the watcher's

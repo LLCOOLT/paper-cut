@@ -1,6 +1,6 @@
 <p align="center"><img src="docs/images/banner@2x.png" alt="Paper Cut" width="640"></p>
 
-**A native port of Paper Mario: The Thousand-Year Door.** Paper Cut plays the Japanese (G8MJ01), US (G8ME01) and European (G8MP01) releases on Windows, macOS, Linux, iOS and Android, 64-bit, with no emulator.
+**Paper Cut is a native port of Paper Mario: The Thousand-Year Door** for Windows, macOS, Linux, iOS and Android. It is the game's own code, rebuilt from its decompilation, so there is no emulator. It plays the Japanese (G8MJ01), US (G8ME01) and European (G8MP01) releases at any screen shape and frame rate, and adds co-op at home or online, Luigi as a playable hero, and a long list of options you can change from the game's own Start menu.
 
 The game code is C, from the decompilation in [LLCOOLT/ttyd](https://github.com/LLCOOLT/ttyd). The GameCube platform under it (graphics, audio, input, disc, memory card) is replaced, through [Aurora](https://github.com/encounter/aurora) (WebGPU/Dawn and SDL3).
 
@@ -8,21 +8,66 @@ The game code is C, from the decompilation in [LLCOOLT/ttyd](https://github.com/
 
 **Download:** packages are on the [Releases](https://github.com/LLCOOLT/paper-cut/releases) page. One download per platform plays every version: `papercut-<version>-<platform>.zip` (iPhone and Android: `papercut-<version>-<us|jp|eu>-...`, since a phone app can only run its own code). To build it yourself, see [Building and running](#building-and-running).
 
-<p align="center">
-  <img src="docs/images/shot-rogueport.jpg" alt="Rogueport in widescreen" width="49%">
-  <img src="docs/images/shot-luigi.jpg" alt="Play as Luigi in Petal Meadows" width="49%">
-  <img src="docs/images/shot-launcher.png" alt="The launcher's disc library" width="49%">
-  <img src="docs/images/shot-settings.png" alt="The settings page" width="49%">
-</p>
+## Highlights
+
+### Co-op, at home or online
+A second player plays the partner. In battle they choose its moves and do its action commands and guards; in the field they walk it around, hop, talk and use its ability. Online, one player opens a room and sends its code, and the other joins with it, with nothing to set up on the router.
 
 <p align="center">
-  <img src="docs/images/gif-coop.gif" alt="Co-op: the second player walks the partner" width="49%">
-  <img src="docs/images/shot-online.jpg" alt="Online co-op: the host's game and the guest's, in step" width="49%">
-  <img src="docs/images/shot-cosmetics.jpg" alt="Cosmetics: Mario in Luigi green, Goombella in pink" width="49%">
-  <img src="docs/images/gif-free-camera.gif" alt="The free camera" width="49%">
-  <img src="docs/images/shot-mirror.jpg" alt="Mirror mode" width="49%">
-  <img src="docs/images/shot-start-settings.jpg" alt="The settings in the game's own Start menu" width="49%">
-  <img src="docs/images/shot-second-screen.jpg" alt="A dual-screen handheld: the game on the upper screen, its own Start menu's Party tab live on the lower one" width="45%">
+  <img src="docs/images/gif-coop-petal-meadows.gif" alt="Co-op in Petal Meadows: player 2 walks Goombella on their own while Mario walks, with 1P and 2P over them" width="49%">
+  <img src="docs/images/shot-online.jpg" alt="Online co-op in Petalburg: the host's game and the guest's side by side, on the same frame" width="49%">
+</p>
+
+### Any screen, any refresh rate
+4:3, 16:9, 16:10, 21:9 or 32:9, with the HUD placed for the shape you pick. The widescreen fixes carry the Start menu, the page-flip between rooms and the title screen out to the edges. At 120 Hz and up, Paper Cut draws frames between the game's own 60, so the camera and characters move smoothly while the game plays as it always did.
+
+<p align="center">
+  <img src="docs/images/shot-ultrawide-glitzville.jpg" alt="Glitzville's plaza at 21:9, the hot dog stand and the Glitz Pit's red carpet across the full width" width="98%">
+</p>
+
+### Play as Luigi
+Turn it on in Gameplay+ and Luigi takes Mario's place for the whole story, with 156 animations made for him. Mario steps into Luigi's part in the story's scenes, and the text, menus and credits follow.
+
+<p align="center">
+  <img src="docs/images/shot-luigi-hooktail-castle.jpg" alt="Luigi and Koops on a balcony of Hooktail Castle, under the night sky" width="70%">
+</p>
+
+### Cosmetics and mirror mode
+Recolour Mario's cap and overalls, Goombella's hair, Vivian and the HUD's bars, or pick a preset: Luigi, Wario, Waluigi or Fire Mario. Mirror mode flips the world left to right and turns the controls to match.
+
+<p align="center">
+  <img src="docs/images/shot-cosmetics-twilight-town.jpg" alt="Mario as Fire Mario, white cap and red overalls, in Twilight Town" width="49%">
+  <img src="docs/images/shot-mirror-keelhaul-key.jpg" alt="Keelhaul Key's camp in mirror mode, with Mario, Koops and the pirates" width="49%">
+</p>
+
+### Free camera and photo mode
+The right stick turns the camera a little around Mario and eases back when you let go. Photo mode stops the game and lets you take the camera all the way round, hide the HUD and save the picture.
+
+<p align="center">
+  <img src="docs/images/gif-free-camera-poshley-heights.gif" alt="The free camera turning around Mario and Yoshi in Poshley Heights" width="49%">
+  <img src="docs/images/shot-photo-poshley-heights.jpg" alt="Photo mode in Poshley Heights: the camera high behind Mario, the HUD hidden" width="49%">
+</p>
+
+### Sharper textures and display filters
+Texture upscaling makes the game's textures 2x or 4x larger with an edge-following filter, so lines on paper, bark and stone stay smooth at high resolutions. CRT, paper-grain and sharpen filters go on top.
+
+<p align="center">
+  <img src="docs/images/shot-upscale-great-tree.jpg" alt="Mario and Flurrie by the waterfall outside the Great Tree in Boggly Woods, with 4x texture upscaling" width="49%">
+  <img src="docs/images/shot-crt-fahr-outpost.jpg" alt="Fahr Outpost in the snow with the CRT filter" width="49%">
+</p>
+
+### Settings inside the game
+The Start menu gets a Settings tab after the Journal, in the game's own windows and font. Every switch and slider is there, with a search on the full settings page for the rest. Settings that need a restart put you back where you were.
+
+<p align="center">
+  <img src="docs/images/shot-start-settings.jpg" alt="The Settings tab in the game's Start menu in Petalburg, showing the Display options" width="70%">
+</p>
+
+### Accessibility
+A difficulty slider, action-command assist, and a ring that closes on the A button when it is time to press it. Message windows up to 150%, text read aloud by the system's voice, colour-blind filters, and captions for sound cues.
+
+<p align="center">
+  <img src="docs/images/shot-battle-cue-keelhaul-key.jpg" alt="A battle on Keelhaul Key: Mario jumps at an Ember while the action-command cue, a ring, closes on the A button" width="70%">
 </p>
 
 ## Getting started
@@ -52,10 +97,13 @@ Change any of them under Settings > Controls > Keyboard keys. The port's own key
 
 ## Features
 
-**Co-op, at home and online**
-- **A second player plays the partner:** in battle its moves, action commands and guards; in the field it walks anywhere with its own stick, hops, talks to people, hits blocks, uses its ability and switches partners. Mario calls it back with Y. "1P" and "2P" over the characters show who's who.
-- **Joining:** with co-op on, A on another controller joins as player 2. The Players section (Controls) shows who is who, and picks player 2's controller by a press; a keyboard and one pad are enough.
-- **Online co-op:** the launcher's Online tab. The host opens a room and gives its code; the other player joins with it, with nothing to set up on a router. Both need Paper Cut and their own disc of the same release, and any platform plays with any other (Windows, Mac, Linux, iPhone, Android). Both games run in lockstep: only the controllers' input crosses the network, each frame, and the games check every second that they're still the same. The guest plays on the host's save and settings for the session, with their own display, sound and controls; their own saves aren't touched.
+Everything Paper Cut adds, by area. Each option is off unless it says otherwise, and the settings page's search finds any of them.
+
+**Co-op**
+- **Second player:** A on another controller joins as player 2, who plays the partner: its moves, action commands and guards in battle; in the field its own stick, a hop, talking, hitting blocks, its ability and switching partners. Mario calls it back with Y. "1P" and "2P" show over the characters, and Controls > Players picks player 2's controller with a press.
+- **Online co-op:** the launcher's Online tab. Both players need Paper Cut and a disc of the same release, on any platform. Only the controllers' input crosses the network; the games check every second that they still match. The guest plays on the host's save and settings, with their own display, sound and controls.
+- **Invites and watching:** an invite link (`papercut://join/<code>`) or a room code copied to the clipboard joins with a click. Others can join a room to watch, up to four.
+- **Staying connected:** after a network blip the two games reconnect and carry on. If they ever fall out of step, both start again together from the host's last save.
 
 **Playing online, step by step**
 1. Both players: the same Paper Cut version, and a disc of the same release (both US, both JP or both EU) in the launcher's library.
@@ -63,68 +111,81 @@ Change any of them under Settings > Controls > Keyboard keys. The port's own key
 3. The other player: **Join a game**, the code, then **Join**.
 4. The host: **Start from the title** or **Continue where you left off**, then **Start**. Both games start together.
 
-Paper Cut connects the two games directly whenever it can (as most home connections allow), and through its relay when it can't. Everything between the two games is encrypted with a key that only the code's second half makes, so the relay can't see or change the game, the save or anyone's address ([how it works](docs/ONLINE_RELAY.md)). To connect without the relay, **By address instead**: the host forwards a port (TCP 47700) on their router, or both join the same [Tailscale](https://tailscale.com) or [ZeroTier](https://www.zerotier.com) network and use its address. Save states, fast-forward, frame advance, warps and the Practice tab's editors are off while playing online, so both games stay the same.
-
-**A second screen** on dual-screen handhelds like the AYN Thor (Android): the game's own Start menu, live on the lower screen while you play on the upper one, navigated by touch. Using an item or switching partners from it works as in the menu. It's only there on devices with a second built-in screen.
-
-**Saves and languages**
-- **Saves:** memory card saves are Dolphin's `.gci` files. They're backed up automatically and can be converted between versions.
-- **Quick resume:** Continue in the launcher picks up where you left off, even if the app was closed without saving.
-- **Languages:** the European version plays in English, German, French, Spanish or Italian, and any version can show the text of another disc you own.
-
-**Settings:** the Start menu's Settings tab, after the Journal: every on/off, choice and number, changed where it is, and All settings for the rest. The full page also opens with F1, a controller's Back/Select, the three-bar button on the touch controls, or a three-finger tap. Tabs down the side, a search box, and a mark on every setting that changes how the game plays or what it saves. A setting that applies from the next start has Restart now beside it: the game starts again and puts you back where you were. **Settings presets** (System) turn your setup into a code or a file to share, and put someone else's in place: the settings that change the game, not the device's own (window, graphics, keys, controllers).
+The games connect directly when they can and through Paper Cut's relay when they can't. Everything between them is encrypted with a key that only the code's second half makes, so the relay can't read or change anything ([how it works](docs/ONLINE_RELAY.md)). **By address instead** skips the relay: the host forwards TCP port 47700, or both join one [Tailscale](https://tailscale.com) or [ZeroTier](https://www.zerotier.com) network. Save states, fast-forward, frame advance, warps and the Practice tab's editors are off while playing online.
 
 **Display**
-- **120 Hz and up:** extra frames are drawn between the game's 60 Hz ones, with interpolated camera, characters and animation. The game's logic is untouched.
-- **Any shape of screen:** 4:3, 16:9, 16:10, 21:9 and 32:9, with the HUD sized from 50% to 150%.
-- Internal resolution of 1–8× with supersampling, anisotropic filtering, sharp text, and CRT, paper-grain and sharpen filters.
-- **Texture upscaling:** the game's textures made 2× or 4× larger by Paper Cut's own edge-following filter, for smoother lines on paper, signs and walls.
-- MSAA, texture detail, blurred letterbox bars on wide screens, and 50 or 60 Hz for the European version.
-- Variable refresh rate, and a performance overlay with frame times, 1% lows and jitter.
-- **The window:** it opens where you left it, at its size, and never off the screen or larger than it. It sizes to 1x-4x the picture or to the picture's shape, can stay above other windows, and goes full screen with F11 or Alt+Enter.
-- **Free camera:** the right stick turns the camera a little around Mario and moves it in or out, easing back when let go.
-- **Mirror mode:** the world flipped left to right, with the controls turned to match; menus and text stay readable.
-- **Photo mode:** P, both sticks pressed in, or its row in the Start menu's Settings tab. The game holds where it is, the camera turns all the way round Mario, up and down, in and out, the HUD hides or stays, and A takes the picture. In the field, not online.
-- **Cosmetics:** Mario's cap and overalls, Goombella's hair, Vivian and the HUD's bars in 13 colours or any from a picker, with Luigi, Wario, Waluigi and Fire Mario presets, recoloured with their shading kept.
+- **Any screen shape:** 4:3, 16:9, 16:10, 21:9 and 32:9, with the HUD at 50% to 150%. The widescreen fixes stretch the Start menu's backdrop, the page-flip between rooms, the title and the file screens to the full width, and put bars where a room's set or a battle's stage ends (Display > Bars where a scene ends).
+- **120 Hz and up:** in-between frames for the camera, characters and animation; the game's logic stays at 60 Hz. Variable refresh rate is supported.
+- **Picture:** internal resolution 1-8x with supersampling, MSAA, anisotropic filtering, texture detail, sharp text, blurred side bars, HDR on displays that have it, and 50 or 60 Hz for the European version.
+- **Texture upscaling:** the game's textures 2x or 4x larger through Paper Cut's own edge-following filter.
+- **Filters:** CRT, paper grain and sharpen.
+- **Camera:** the free camera (the right stick turns it a little around Mario) and photo mode (P, both sticks pressed in, or the Start menu's Settings tab: the camera all the way round, the HUD hidden, A takes the picture; in the field, not online).
+- **Mirror mode:** the world flipped left to right, with the controls to match.
+- **The window:** opens where you left it, sizes to 1-4x the picture, can stay on top, and goes full screen with F11 or Alt+Enter.
+- **Performance overlay:** frame times, 1% lows and jitter.
 
-**Gameplay+** (each option off by default):
+**Cosmetics:** Mario's cap and overalls, Goombella's hair, Vivian and the HUD's bars in 13 colours or any from a picker, with Luigi, Wario, Waluigi and Fire Mario presets. The recolour keeps the shading.
+
+**Settings:** the Start menu's Settings tab (after the Journal) holds every on/off, choice and number, with All settings for the rest. The full page also opens with F1, a controller's Back/Select, the touch controls' three-bar button or a three-finger tap: tabs, a search box, and a mark on every setting that changes how the game plays or what it saves. Settings that apply from the next start have Restart now beside them, which puts you back where you were. **Presets** (System) turn your gameplay settings into a code or a file to share.
+
+**Gameplay+**
+- **Play as Luigi:** Luigi in Mario's place, with 156 animations of his own made for Paper Cut. Mario takes Luigi's part in the story's scenes, and the text, menus and credits follow.
 - Partner quick-swap, faster menus and text, skipped repeated scenes, Save Blocks without the question, and item storage at any Save Block.
 - A bigger bag, badge loadouts, a walk-speed boost, and coin and Star Point multipliers.
-- Retry on Game Over, fast travel, a journal of collectibles, a Star Piece and Shine Sprite tracker, a jukebox, and Tattle without spending a turn.
+- Retry on Game Over, fast travel, a collectibles journal, a Star Piece and Shine Sprite tracker, a jukebox, and Tattle without spending a turn.
 - Battle pop-ups, Pit of 100 Trials and Glitz Pit tweaks, a remake-style balance, and New Game+.
-- **Play as Luigi:** Luigi in Mario's place, with 156 animations of his own made for Paper Cut. The brothers swap everywhere: Mario stands in Luigi's place in the story's scenes, and the text, menus and credits follow.
 
-**Accessibility:** a difficulty slider (enemy HP and attack), action-command assist (wider timing, or automatic), larger message windows (up to 150%), and "Where next?" hints: Y on the Journal tab names where the story goes next, and nothing is shown until you ask. **Read text aloud:** the system's voice reads the message windows page by page, and if you like the Start menu's help and the Settings tab as you move through them, in the game's language when the system has a voice for it (Windows, Mac, iPhone, Android, and Linux through Speech Dispatcher).
+**Accessibility**
+- A difficulty slider (enemy HP and attack) and action-command assist (wider timing, or automatic).
+- **Action Command cue** (Gameplay): a ring closes on an A button when to press A for a Jump or a partner's stomp, and to guard an enemy's jump.
+- Larger message windows (up to 150%).
+- **Read text aloud:** the system's voice reads the message windows page by page, and if you like the Start menu's help and the Settings tab, in the game's language when the system has a voice for it.
+- **Game speed:** the whole game, or only battles, at 50% to 90%, for more time for the action commands.
+- **One-handed controls:** left- or right-hand layouts for a player's controller, and holding a button instead of mashing it.
+- **Message log** (L): the last 200 pages of the message windows to scroll back through.
+- **Colour-blind filters:** protanopia, deuteranopia and tritanopia, with a strength.
+- **Sound captions:** a line at the bottom for sound cues, such as a door opening, a switch, a hidden block or a guard.
+- **"Where next?":** Y on the Journal tab names where the story goes next. Nothing shows until you ask.
 
-**Challenges:** presets in one click (Hard, Expert, Glass cannon, Superguards only, One hit), and rules to mix: one-hit KO, no guarding, harder attack commands, no items in battle.
-
-**Practice:** a speedrun timer with load removal and [LiveSplit](https://livesplit.org) support, frame advance, RNG control, stat, item and story-flag editors, a memory watch, an input display (sticks, buttons and triggers in a corner), and ten labelled save-state slots (F5 saves, F8 loads). Plus 25 achievements read from your save, which don't count while the practice tools are on.
-
-**Everyday:** autosave when you go into another room (off by default), fast-forward (Tab), adjustable text speed, screenshots (F12), controller rumble, and a check for new releases on start. Saves are backed up automatically and kept in step across devices: in iCloud on Apple devices, and on Windows and Linux through any folder a sync service keeps (OneDrive, Dropbox, Google Drive, Syncthing, or iCloud for Windows). If the game crashes, a report is written for you to send.
-
-**Audio and controls:**
-- **Audio:** one mixer for the master, music, effects and ambience volumes, each with a mute button, and volume keys anywhere (F9 quieter, F10 louder, F3 mute). The game plays in stereo, or in 5.1 or 7.1 surround from its own surround mix (made for Dolby Pro Logic II), with the rear speakers carrying it.
-- **Music shuffle and your own music:** each room's music another of the game's tracks, field for field and battle for battle; or your own OGG, MP3, FLAC or WAV files in the `music` folder, named after the track they replace (`tracks.txt` there lists them), looping at their loop tags.
-- **Controls:** the mouse works in the game's menus, lists and battle commands. Keys and every player's controller buttons can be remapped.
-- **Controllers:** Xbox, PlayStation, Switch (Pro and Joy-Con), Steam Deck, GameCube through an adapter, MFi, and about 2,300 other models from the community mapping list, named as you know them. Choose which is player 1-4, test them, and set dead zones and trigger points. A controller nothing recognises is set up by pressing its buttons when asked.
-- **The controller's light:** on a DualSense, DualShock 4 or another controller with a coloured light, each player's colour, Mario's HP (green to red, pulsing when he's nearly out) or a colour of your own.
-- **Button prompts:** the game's button pictures, and the remapping list's names, match your Xbox, PlayStation, Switch or Steam Deck controller, or your keys.
-- **Menus in six languages:** the settings page and the Start menu's Settings tab in English, Deutsch, Français, Español, Italiano or Japanese (System > Menu language; Auto follows the disc or the computer).
-
-**Mods:** a mod manager on the settings page. Mods replace or add disc files, textures and text (Dolphin texture packs work as they are), change game data, run scripts and code through hooks generated from the decompilation, and GameCube code mods can be ported from their source. Also in this area:
+**Challenges and modes**
+- Challenge presets in one click (Hard, Expert, Glass cannon, Superguards only, One hit), or rules to mix: one-hit KO, no guarding, harder attack commands, no items in battle.
+- Boss refights, a boss rush and an endless Glitz Pit ([docs/MODES.md](docs/MODES.md)).
+- A built-in item randomizer (US): a seed and what to shuffle, no server, with a spoiler log ([docs/RANDOMIZER.md](docs/RANDOMIZER.md)).
 - [Archipelago](https://archipelago.gg) multiworld seeds (US).
-- A built-in item randomizer: a seed and what to shuffle on the settings page, no server needed, with a spoiler log (US).
-- Audience effects from chat.
-- A boss rush, boss refights and an endless Glitz Pit.
-- Characters exported from the game (model, animations, textures), edited in Blender and put back as a mod.
+- Audience effects from Twitch chat.
 
-See [docs/MODDING.md](docs/MODDING.md), [docs/MODES.md](docs/MODES.md) and [docs/RANDOMIZER.md](docs/RANDOMIZER.md).
+**Practice:** a speedrun timer with load removal and [LiveSplit](https://livesplit.org) support, frame advance, RNG control, stat, item and story-flag editors, a memory watch, an input display, and ten labelled save-state slots (F5 saves, F8 loads). **Replays** record a run's input to a small file and play it back exactly, checked as it goes ([docs/REPLAYS.md](docs/REPLAYS.md)). 25 achievements are read from your save; they don't count while the practice tools are on.
 
-**Phones and tablets**
-- On-screen controls: movable, sized, with haptics.
-- Portrait or landscape, safe areas, and pause and resume with the app.
+**Saves and languages**
+- Memory card saves are Dolphin's `.gci` files, backed up automatically and convertible between versions. They sync through iCloud on Apple devices, and on Windows and Linux through any folder a sync service keeps (OneDrive, Dropbox, Google Drive, Syncthing).
+- **Quick resume:** Continue in the launcher picks up where you left off, even if the app was closed without saving.
+- **Save transfer:** saves sent between devices on the same network by a QR code or an address, with a backup made first ([docs/SAVE_TRANSFER.md](docs/SAVE_TRANSFER.md)).
+- Autosave when you change rooms.
+- The European version plays in English, German, French, Spanish or Italian, and any version can show the text of another disc you own.
+- Paper Cut's own menus are in English, Deutsch, Français, Español, Italiano or Japanese. **Language packs** in the mods folder add a language or change these texts, with a template to start from ([docs/LANGUAGE_PACKS.md](docs/LANGUAGE_PACKS.md)).
 
-**Faithful by construction:** GameCube behaviours the game relies on are reproduced on 64-bit hosts, namely big-endian disc data, integer division by zero, paired-single quantization, the C library's `rand` sequence, and the GameCube's own maths library (MSL's fdlibm), so every platform computes the same results to the last bit.
+**Audio**
+- One mixer (master, music, effects, ambience) with mute buttons, and F9, F10 and F3 for volume anywhere.
+- Stereo, or 5.1 or 7.1 surround from the game's own surround mix (made for Dolby Pro Logic II).
+- **Music shuffle,** or your own OGG, MP3, FLAC or WAV files in the `music` folder, named after the track they replace (`tracks.txt` there lists them), looping at their loop tags.
+
+**Controls**
+- Xbox, PlayStation, Switch (Pro and Joy-Con), Steam Deck, GameCube through an adapter, MFi, and about 2,300 other models from the community mapping list, named as you know them. Players 1-4, a live test, dead zones and trigger points, and remapping for keys and every player's buttons. A controller nothing recognises is set up by pressing its buttons when asked.
+- **Button prompts** that match your Xbox, PlayStation, Switch or Steam Deck controller, or your keys.
+- **Controller haptics** (on by default): a short pulse as an action command's or a guard's window opens, and on a DualSense the triggers resist while a command holds R.
+- **The controller's light:** each player's colour, Mario's HP (green to red, pulsing when he's nearly out) or a colour of your own.
+- The mouse works in the game's menus, lists and battle commands.
+- Phones and tablets: movable, sized on-screen controls with haptics, portrait or landscape, safe areas.
+
+**A second screen** on dual-screen handhelds like the AYN Thor (Android): the game's own Start menu, live on the lower screen and used by touch.
+
+**Discord status** (System, on by default): your profile shows the area you're in and whether you're exploring, in battle, or playing co-op or online, once the release has its Discord app ID ([docs/DISCORD_STATUS.md](docs/DISCORD_STATUS.md)).
+
+**Mods:** a mod manager on the settings page. Mods replace or add disc files, textures and text (Dolphin texture packs work as they are), change game data, and run scripts and code through hooks generated from the decompilation. GameCube code mods can be ported from their source, and characters exported from the game can be edited in Blender and put back. See [docs/MODDING.md](docs/MODDING.md) and [docs/CHARACTERS.md](docs/CHARACTERS.md).
+
+**Everyday:** fast-forward (Tab), adjustable text speed, screenshots (F12), controller rumble, and a crash report to send if the game crashes. **Updates** on Windows, macOS and Linux (the zip): a new release is offered on start, downloaded from Paper Cut's GitHub releases, checked against its published checksum, and put in place at the next start ([docs/UPDATES.md](docs/UPDATES.md)).
+
+**Faithful by construction:** GameCube behaviours the game relies on are reproduced on 64-bit hosts: big-endian disc data, integer division by zero, paired-single quantization, the C library's `rand` sequence and the GameCube's own maths library (MSL's fdlibm). Every platform computes the same results to the last bit.
 
 ## Status
 
@@ -259,6 +320,8 @@ The sweeps are driven by:
 | [docs/CHARACTERS.md](docs/CHARACTERS.md) | Exporting a character, editing it (Blender, PNGs, JSON) and making it a mod |
 | [docs/RANDOMIZER.md](docs/RANDOMIZER.md) | The built-in item randomizer: seeds, what it shuffles, its logic, the spoiler log |
 | [docs/MOD_DATA.md](docs/MOD_DATA.md) | The game data mods can change |
+| [docs/LANGUAGE_PACKS.md](docs/LANGUAGE_PACKS.md) | Translating Paper Cut's menus with a language pack |
+| [docs/DISCORD_STATUS.md](docs/DISCORD_STATUS.md) | What the Discord status shows, and how it talks to Discord |
 | [docs/RELEASING.md](docs/RELEASING.md) | CI, the self-hosted runners, and cutting a release |
 | [docs/THIRD_PARTY.md](docs/THIRD_PARTY.md) | Third-party code and assets, and their licences |
 

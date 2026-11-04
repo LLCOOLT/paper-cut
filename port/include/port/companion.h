@@ -1,7 +1,7 @@
 #ifndef PORT_COMPANION_H
 #define PORT_COMPANION_H
 
-/* The second-screen companion (docs/DUAL_SCREEN_IDEAS.md): the Start menu's
+/* The second-screen companion (docs/SECOND_SCREEN_MENU.md): the Start menu's
  * information live, the map and the battle, on a second screen.
  *
  * Two layers. The game side (port/src/common/companion_pc.c) fills a plain

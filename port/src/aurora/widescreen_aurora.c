@@ -67,7 +67,7 @@ static void declare(void) {
 }
 
 /* The scenes whose sets end before the widened frame's edges (the
- * widescreen survey, docs/WIDESCREEN_SURVEY.md): the widest aspect each shows
+ * widescreen survey of 0.3.0): the widest aspect each shows
  * before black void past its walls or the set's own ends comes into view,
  * measured at its entrances. Wider than that, the frame stops there and the
  * rest is bars (side_bars blurs them). Rooms not listed are not limited. */
