@@ -1,0 +1,158 @@
+# Every step, shape and source of the recipe format, for tests/port/art_recipe_check.py: the C runner
+# and the authoring tool must make the same pixels. Not art.
+
+gradient warm 0.0 #100800 0.5 #804020 1.0 #f0a060 2.0 #fff0d0
+colours line #202020 paper #f0e8d8ff
+
+# sources of every texture format on the disc: I4, I8, IA4, IA8, RGB565, RGB5A3, RGBA8, CMPR
+image parity/i4.png
+  load tpl env.tpl 9
+end
+image parity/drawn_jp.png
+  drawn G8MJ01
+  load tpl env.tpl 9
+end
+image parity/i8.png
+  load tpl fade.tpl 3
+  scale 32 32 nearest
+end
+image parity/ia4.png
+  load tpl a/EFF_bakuhatu- 0
+end
+image parity/ia8_rgb5a3_rgba8.png
+  canvas 64 12 #00000000
+  piece a tpl env.tpl 8
+  piece b tpl env.tpl 7
+  piece c tpl mariost.tpl 6
+  paste a 0 0 copy
+  paste b 0 4
+  paste c 0 8
+end
+image parity/rgb565.png
+  load tpl a/OFF_TEXTURE0- 8
+  scale 40 40 texel
+end
+image parity/smooth_up.png
+  load tpl a/EFF_bakuhatu- 0
+  scale 150 97 smooth
+end
+image parity/smooth_down.png
+  load tpl a/OFF_TEXTURE0- 8
+  scale 23 41 smooth
+end
+image parity/frame.png
+  load icon ICON_000 frame 0
+end
+
+# recolours: ramp, map, hsv (each change), fill, alpha set; masks of every shape
+image parity/recolour.png
+  load model c_kuribo 8
+  mask body poly 10,10 120,4 150,60 20,70
+  mask body + rect 150 0 223 20
+  mask body - spans 30-40:0-71 60:5-30
+  mask eyes rows 150 30
+  | xxxx..xxxx
+  | x.xx..xx.x
+  | xxxxxxxxxx
+  mask solid alpha
+  mask solid & mask body
+  ramp in solid where h=15..45 s>=0.4 or l<60 base #b07838 to warm
+  map in eyes where a>0 #000000 -> #3040a0 #ffffff -> #f0f0ff #b07838 -> #a03020
+  hsv where h=40..70 s>0.5 : hue +120 sat =0.8 val *1.1
+  hsv where v<0.3 : hue -30 val +0.1
+  hsv where r>200 g>200 : val -0.2 sat *2
+  hsv where b>=100 b<=200 : val =0.5 hue =200
+  fill in eyes where a=0 line
+  alpha set 128 in eyes
+  alpha cut 100
+end
+
+# geometry: crop, flip, scale, slide each way, paste over a half-clear piece, sampled colours, paint
+image parity/geometry.png
+  load model c_kinopio 8
+  crop -4 -4 128 120
+  flip y
+  slide down 60 0-10:3 20:7
+  slide up 50 30-40:2
+  slide right 40 0-20:5
+  slide left 80 90-110:4
+  colours s sample 60 40 t #40ff2080
+  paint 2 2
+  | sss.t_t
+  | s_s.tts
+  mask band rect 0 50 127 60
+  stamp band edge line top #ffffff bottom #808080 fill t
+  piece x copy
+  @x scale 50 30 texel
+  @x flip x
+  @x hsv where s>0.2 : hue +45
+  @x colours u sample 10 10
+  paste x 20 30
+  piece ghost canvas 30 20 #ff000080
+  paste ghost 50 70 over
+  piece big copy
+  @big scale 300 260 texel
+  @big scale 37 41 texel
+  paste big 80 2
+  fill in band where h=100..150 u
+end
+
+# grow: a border round a shape with holes and a clear edge, two rings, then a shadow under it
+image parity/grow.png
+  canvas 64 56
+  piece fig model c_lp_bom 2
+  @fig scale 37 31 texel
+  @fig grow 1 #081c18
+  paste fig 3 5
+  grow 2 #e7e7e7
+  grow 1 #a5a5a580
+  piece top copy
+  piece shade copy
+  mask solid alpha
+  @shade fill in solid #424242
+  canvas 64 56
+  paste shade 1 1
+  paste top 0 0
+  piece edge model c_kinopio 8
+  @edge crop 100 0 28 20
+  @edge grow 3 #ff00ff
+  paste edge 36 36
+end
+
+# rotate: both ways, a right angle and a slant
+image parity/rotate.png
+  load model c_kinopio 8
+  rotate 25
+  piece b model c_kinopio 8
+  @b rotate -90
+  @b scale 40 40 texel
+  paste b 0 0
+end
+
+# circle masks; steps blocks used from an image, one inside another, with rows, on the canvas and on
+# a piece
+steps spots
+  mask spot circle 20.5 18 9.3
+  mask spot + circle 0 0 6
+  fill in spot #20a0ff
+end
+
+steps card
+  piece k model c_kinopio 8
+  @k crop 0 0 48 40
+  use spots
+  @k fill in spot #ff8000
+  paint 2 2
+  | xx.x
+  | .xx.
+end
+
+image parity/steps.png
+  colours x #102030
+  load model c_kinopio 8
+  use card
+  paste k 60 50
+  mask ring circle 64 56 30
+  mask ring - circle 64 56 22.5
+  hsv in ring : hue +90
+end

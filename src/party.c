@@ -1485,7 +1485,12 @@ s32 partyHelloMain(PartyEntry* party) {
             ret = 1;
             party->runMode = 1;
 #if VERSION >= VERSION_JP
+#ifdef TARGET_PC
+            /* PC port: Mario's position by name (GameCube byte 0x8C; MarioWork's pointers before it are 8 bytes on PC) */
+            psndSFXOn_3D((const char*)0x20920, &((MarioWork*)mario)->position);
+#else
             psndSFXOn_3D((const char*)0x20920, (Vec*)(mario + 0x8C));
+#endif
 #endif
             break;
         }
@@ -2419,7 +2424,12 @@ void partyRideMain(PartyEntry* party) {
         }
 
         case 10:
+#ifdef TARGET_PC
+            /* PC port: Mario's position by name (GameCube byte 0x8C; MarioWork's pointers before it are 8 bytes on PC) */
+            party->position = ((MarioWork*)mario)->position;
+#else
             party->position = *((Vec*)(mario + 0x8C));
+#endif
             party->displayDirectionTarget = ((MarioWork*)mario)->displayDirectionTarget;
             party->moveDir = toMovedir(party->displayDirectionTarget);
             break;

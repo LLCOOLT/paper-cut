@@ -50,6 +50,17 @@ const char* portLuigiText(const char* msg);
  * is on. */
 int portLuigiSfx(int id);
 
+/* Luigi's faces (port/src/aurora/luigi_faces_aurora.c), made at the start
+ * from Luigi's own head on the player's disc (port/assets/luigi/art):
+ * icondrv.c's icon iconId drawn from our own texture (a GXTexObj*): while the
+ * option is on, the game's three icons of Mario's head are Luigi's: 1, or 0
+ * for the game's own. */
+int portIconTexOverride(unsigned int iconId, void* texObj);
+/* At startup, after portArtPrepare, before the mods apply: level-up's BP
+ * panel as Luigi's, in the "*#luigi" texture set (mod_game_aurora.c flags
+ * every map so while the option is on). */
+void portLuigiFacesInit(void);
+
 /* npcdrv's draws, after the game stepped an NPC's pose poseId: while the
  * option is on, an NPC drawn with c_luigi (NPC_FLAG_LUIGI) gets a stand-in
  * of Mario (a_mario, a_mario_r, e_mario) and one drawn with a_mario a

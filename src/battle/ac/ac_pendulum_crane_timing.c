@@ -63,6 +63,20 @@ typedef struct PendulumWork {
 
 #define PC_PARAMS(work) ((PendulumParams*)&(work)->actionCommands)
 
+/* The analog L and R that damp the swing (acFlags bit 0): padWork[0]'s current triggerLeft and
+ * triggerRight, BattleWork bytes 0xF32 and 0xF33 on GameCube. On PC (8-byte pointers) BattleWork's
+ * layout differs, so the stick points at the triggers themselves */
+#ifdef TARGET_PC
+#define PEND_STICK(work) (&(work)->padWork[0].padData[0].triggerLeft)
+#define PEND_TRIG_L 0
+#define PEND_TRIG_R 1
+_Static_assert(offsetof(PADStatus, triggerRight) == offsetof(PADStatus, triggerLeft) + 1, "PADStatus: R after L");
+#else
+#define PEND_STICK(work) ((u8*)(work))
+#define PEND_TRIG_L 0xF32
+#define PEND_TRIG_R 0xF33
+#endif
+
 // FAKE: inlining off for the whole file (FAKES.md); without it 2 functions change length, e.g. battleAcDisp_PendulumCraneTiming 64 -> 341 instructions
 #pragma dont_inline on
 /**
@@ -146,22 +160,22 @@ s32 battleAcMain_PendulumCraneTiming(BattleWork* work) {
             cw->ang360 = (f32)(((cw->cur + cw->vel) % (PC_PARAMS(work)->period * 2)) * 360 /
                                (PC_PARAMS(work)->period * 2));
             cw->angle = reviseAngle(45.0f * sinfd(cw->ang360));
-            stick = (u8*)_battleWorkPointer;
+            stick = PEND_STICK(_battleWorkPointer);
             accel = 0.0f;
             CALC_DIR(dir)
             if (ac->acFlags & 1) {
-                if (stick[0xF33] > 10 && stick[0xF32] < 10) {
+                if (stick[PEND_TRIG_R] > 10 && stick[PEND_TRIG_L] < 10) {
                     if (dir < 0.0f) {
-                        mag = stick[0xF33] / 128.0f;
+                        mag = stick[PEND_TRIG_R] / 128.0f;
                         if (mag > 1.0f) {
                             mag = 1.0f;
                         }
                         accel = 0.95f * -cw->force * mag;
                     }
-                } else if (stick[0xF33] < 10) {
-                    if (stick[0xF32] > 10) {
+                } else if (stick[PEND_TRIG_R] < 10) {
+                    if (stick[PEND_TRIG_L] > 10) {
                         if (dir > 0.0f) {
-                            mag = stick[0xF32] / 128.0f;
+                            mag = stick[PEND_TRIG_L] / 128.0f;
                             if (mag > 1.0f) {
                                 mag = 1.0f;
                             }

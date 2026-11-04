@@ -2201,8 +2201,7 @@ static void BattleAudienceItemCtrlProcess(void) {
                 it->timer = 0;
                 it->state = 0;
                 if (it->audienceId != -1) {
-                    u8* ap = (u8*)BattleAudienceGetPtr(it->audienceId);
-                    *(s16*)(ap + 0x1c) = -1;
+                    BattleAudienceGetPtr(it->audienceId)->itemId = -1;
                 }
                 break;
         }

@@ -105,6 +105,41 @@ state in CMakeLists.txt), and it checks each frame that its pose is still the
 `c_luigi` it loaded (a battle's end frees battle poses; a map change, a save
 state or a reset can free or replace the field one), loading it again if not.
 
+## His faces
+
+The game has no icons of Luigi, so while the option is on its icons of
+Mario's head show Luigi's, made at the start ("Preparing graphics") from
+Luigi's own head on the player's disc: `c_luigi`'s head cards (the face with
+its long chin, eyes, nose, moustache, ear, hair, cap and its L) put together
+as his field pose stands them, then framed as Mario's face is in each icon.
+Nothing from the disc is in the repo: the recipe
+(`port/assets/luigi/art/recipes/luigi_icons.recipe`; the format is
+`port/assets/luigi/art/RECIPES.md`) is run by the art recipe runner
+(`port/src/common/art_recipe.c`, its game side
+`port/src/aurora/art_recipes_aurora.c`), and the images are kept in the user
+folder (`art_cache/<game id>/`), so later starts read them back. Where one
+can't be made, a drawn stand-in (`port/assets/luigi/art/icons/luigi/drawn/`,
+drawn by `port/assets/luigi/art/tools/luigi_icons.py`) shows instead.
+
+- `ICON_1A3`, the face by the HP on the status bar (field and battle, and
+  Sweet Treat's targets), with Mario's HP heart and sticker border;
+- `ICON_19E`, the head on the pause menu's Mario page and the item menu's
+  "use on" list;
+- `ICON_1A1`, the gold coin on the Mario page's level row and the status
+  tables;
+- level-up's BP panel (`battle_common.tpl` image 51, 38 on the JP disc, the
+  same data): Mario's panel with Luigi's head on its coin.
+
+The three icons go through `portIconTexOverride`
+(`port/src/aurora/luigi_faces_aurora.c`, called from `iconGetTexObj` and
+`iconGX` in `src/driver/icondrv.c`). The panel is a texture replacement in a
+map-scoped texture set (`portModsAddMapTexture`, `port/mods/mods.cpp`): while
+the option is on, every map is named with a `#luigi` flag to the sets
+(`mod_game_aurora.c`, each frame), and the set `*#luigi` (any map, with the
+flag) holds it. With the option off nothing changes: Mario's own icons and
+panel. The C runner and the Python tool (`port/assets/luigi/art/tools/recipes.py`)
+make the same texels (`tests/port/art_recipe_check.py`, on all three discs).
+
 ## Text, menus, the brothers swapped, sounds
 
 All of it only while the option is on; `port/src/common/luigi_pc.c` again.

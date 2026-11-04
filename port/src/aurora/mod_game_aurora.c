@@ -12,6 +12,7 @@
 #include "manager/evtmgr.h"
 #include "manager/evtmgr_cmd.h"
 #include "mario/mariost.h"
+#include "port/luigi.h"
 
 #include <SDL3/SDL_log.h>
 #include <stdio.h>
@@ -78,7 +79,21 @@ static void mapDataPost(MapData** result, const char* name) {
     *result = &sModMaps[i];
 }
 
+/* seqMain, each frame: the map-scoped texture sets for the map now (mods.cpp) */
+static void seqMainPost(void) {
+    if (gp != NULL && gp->currentMapName[0] != 0) {
+        /* with Luigi as the player (Play as Luigi): every map flagged "#luigi",
+         * for the sets of Luigi's faces in the game's own textures
+         * (luigi_faces_aurora.c, mods.cpp's mapMatches) */
+        char map[48];
+        const int luigi = portLuigiOn();
+        snprintf(map, sizeof(map), "%s%s", gp->currentMapName, luigi ? "#luigi" : "");
+        portModsMapTextures(map);
+    }
+}
+
 void portModGameInit(void) {
+    portModHostAddHook(1, kSlot_seqMain, (void*)seqMainPost);
     portModHostAddHook(0, kSlot_evt_shop_setup, (void*)shopPre);
     portModHostAddHook(0, kSlot_Btl_UnitSetup, (void*)battlePre);
     portModHostAddHook(1, kSlot_mapDataPtr, (void*)mapDataPost);

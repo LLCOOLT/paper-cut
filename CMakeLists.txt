@@ -880,6 +880,34 @@ if(TTYD_BACKEND STREQUAL "aurora")
     target_compile_definitions(ttyd_settings PRIVATE PORT_DISCORD_APP_ID="${TTYD_DISCORD_APP_ID}")
     # zlib: unpacking an update's zip (port/settings/features/update_install.cpp)
     target_link_libraries(ttyd_settings PRIVATE aurora::core aurora::pad ZLIB::ZLIB ${AURORA_SDL3_TARGET})
+    # Luigi's faces for Play as Luigi: the art recipes, run on the player's disc at the start
+    # (port/src/aurora/art_recipes_aurora.c, port/assets/luigi/art/RECIPES.md), and the drawn PNGs that
+    # stand in where they can't be made, our own work, by their path under port/assets/luigi
+    # (port/src/aurora/luigi_faces_aurora.c)
+    set(_la_root ${CMAKE_SOURCE_DIR}/port/assets/luigi)
+    file(GLOB_RECURSE _la_assets CONFIGURE_DEPENDS RELATIVE ${_la_root} ${_la_root}/art/icons/*.png)
+    file(GLOB _la_recipes CONFIGURE_DEPENDS RELATIVE ${_la_root} ${_la_root}/art/recipes/*.recipe)
+    list(APPEND _la_assets ${_la_recipes})
+    list(SORT _la_assets)
+    set(_la_c "/* GENERATED from port/assets/luigi/art by CMakeLists.txt. Do not edit. */\n")
+    set(_la_index "")
+    set(_la_n 0)
+    foreach(_rel ${_la_assets})
+        file(READ ${_la_root}/${_rel} _hex HEX)
+        set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${_la_root}/${_rel})
+        string(LENGTH "${_hex}" _len)
+        math(EXPR _len "${_len} / 2")
+        string(REGEX REPLACE "([0-9a-f][0-9a-f])" "0x\\1," _hex "${_hex}")
+        string(APPEND _la_c "static const unsigned char a${_la_n}[] = {${_hex}};\n")
+        string(APPEND _la_index "    {\"${_rel}\", a${_la_n}, ${_len}},\n")
+        math(EXPR _la_n "${_la_n} + 1")
+    endforeach()
+    string(APPEND _la_c "const struct { const char* path; const unsigned char* data; unsigned int size; } "
+        "portLuigiArtTable[] = {\n${_la_index}    {0, 0, 0},\n};\n")
+    file(WRITE ${CMAKE_BINARY_DIR}/generated/luigi_art.c.tmp "${_la_c}")
+    file(COPY_FILE ${CMAKE_BINARY_DIR}/generated/luigi_art.c.tmp ${CMAKE_BINARY_DIR}/generated/luigi_art.c
+        ONLY_IF_DIFFERENT)
+    target_sources(ttyd_settings PRIVATE ${CMAKE_BINARY_DIR}/generated/luigi_art.c)
     target_link_libraries(ttyd PRIVATE ttyd_settings)
     if(WIN32)
         # HTTPS for the update check (port/settings/http.cpp)
@@ -1173,6 +1201,14 @@ target_compile_definitions(loaders_test PRIVATE ${TTYD_DEFINES} PORT_BEDECODE_ST
 target_include_directories(loaders_test PRIVATE ${TTYD_INCLUDES})
 target_compile_options(loaders_test PRIVATE ${TTYD_CFLAGS})
 add_test(NAME loaders_test COMMAND loaders_test)
+# art_recipe_test: the art recipe runner on an extracted disc (tests/port/art_recipe_check.py
+# compares it with the authoring tool, port/assets/luigi/art/tools/recipes.py).
+add_executable(art_recipe_test EXCLUDE_FROM_ALL
+    ${CMAKE_SOURCE_DIR}/tests/port/art_recipe_test.c
+    ${CMAKE_SOURCE_DIR}/port/src/common/art_recipe.c)
+target_compile_definitions(art_recipe_test PRIVATE ${TTYD_DEFINES})
+target_include_directories(art_recipe_test PRIVATE ${TTYD_INCLUDES})
+target_compile_options(art_recipe_test PRIVATE ${TTYD_CFLAGS})
 # Generated descriptor tables must match their specs and the headers.
 add_test(NAME bedecode_generated_fresh
     COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tools/port/gen_bedecode.py --check)

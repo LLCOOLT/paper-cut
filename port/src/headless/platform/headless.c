@@ -66,3 +66,10 @@ void portInterpKeep(void* p, unsigned int n) {
     (void)p;
     (void)n;
 }
+
+/* Play as Luigi's faces (port/src/aurora/luigi_faces_aurora.c): none headless, the game's own icons */
+int portIconTexOverride(unsigned int iconId, void* texObj) {
+    (void)iconId;
+    (void)texObj;
+    return 0;
+}

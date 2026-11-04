@@ -23,6 +23,7 @@
 #include "port/mods.h"
 #include "port/luigi.h"
 #include "port/update_install.h"
+#include "port/art_recipe.h"
 
 void portOnlineInviteArgs(int* argc, char** argv); /* invite.cpp */
 void portControllersInit(const char* userPath); /* port/settings/features/controllers.cpp */
@@ -196,6 +197,8 @@ int aurora_main(int argc, char* argv[]) {
     }
 
     portLuigiModelInit(); /* Luigi's model with our animations, from the disc (docs/LUIGI_ANIMS.md) */
+    portArtPrepare(info.userPath); /* "Preparing graphics": the art recipes run on the disc (art/RECIPES.md) */
+    portLuigiFacesInit(); /* Play as Luigi's faces the recipes made; before the mods apply */
     portModsInit(info.userPath, info.cachePath); /* the mods folder, loose textures (port/mods/mods.cpp) */
     portPipelineWarmupWait(); /* "Preparing graphics": every known pipeline built first */
     portOnlineTestStart(); /* tests: $TTYD_ONLINE_HOST / _JOIN, online co-op's lobby without its page */

@@ -19,6 +19,7 @@
 
 #include <stdio.h>
 #ifdef TARGET_PC
+#include "port/luigi.h" // portIconTexOverride: Luigi's own faces in Mario's icons
 #include "port/bedecode.h"
 #endif
 #include "icon_ids.h"
@@ -682,6 +683,9 @@ void iconGetTexObj(GXTexObj* texObj, s16 iconId) {
     ICON_ANIM_TPL_S(data, tplId);
     TEXGetGXTexObjFromPalette(icon_tpl, texObj, tplId);
     GXInitTexObjLOD(texObj, GX_LINEAR, GX_LINEAR, 0.0f, 0.0f, 0.0f, GX_FALSE, GX_FALSE, GX_ANISO_1);
+#ifdef TARGET_PC
+    portIconTexOverride((u16)iconId, texObj); // Play as Luigi: his own face in Mario's (port/include/port/luigi.h)
+#endif
 }
 
 /**
@@ -739,6 +743,9 @@ static void iconGX(Mtx mtx, IconEntry* entry) {
         } else {
             TEXGetGXTexObjFromPalette(icon_tpl, &texObj, tplId);
             GXInitTexObjLOD(&texObj, GX_LINEAR, GX_LINEAR, 0.0f, 0.0f, 0.0f, GX_FALSE, GX_FALSE, GX_ANISO_1);
+#ifdef TARGET_PC
+            portIconTexOverride(entry->iconId, &texObj); // Play as Luigi: his own face in Mario's (port/include/port/luigi.h)
+#endif
         }
     }
     GXLoadTexObj(&texObj, GX_TEXMAP0);
