@@ -1,0 +1,189 @@
+{
+ "model": "sl_ch3_props",
+ "texels_per_unit": 8,
+ "faces": "-x",
+ "pivot_note": "pivot: pixels from the PNG's top-left; model_xy: where the pivot sits at rest (model units, feet at y 0)",
+ "cards": {
+  "crown": {
+   "size": [
+    64,
+    48
+   ],
+   "pivot": [
+    32.0,
+    40.0
+   ],
+   "model_xy": [
+    0.0,
+    0.0
+   ],
+   "desc": "the King's crown: five gold points with pearl tips, a ruby and two sapphires, a checkered band; pivot at the middle of its base (sit it on the head or cap)"
+  },
+  "microphone": {
+   "size": [
+    32,
+    64
+   ],
+   "pivot": [
+    16.0,
+    36.8
+   ],
+   "model_xy": [
+    0.0,
+    -1.6
+   ],
+   "desc": "Lakky's microphone: a round metal grille on a black handle; pivot at the grip"
+  },
+  "lights_0": {
+   "size": [
+    80,
+    40
+   ],
+   "pivot": [
+    40.0,
+    7.2
+   ],
+   "model_xy": [
+    0.0,
+    2.1
+   ],
+   "desc": "the start lights, all off; pivot between the hooks, where the rod's line ties on"
+  },
+  "lights_1": {
+   "size": [
+    80,
+    40
+   ],
+   "pivot": [
+    40.0,
+    7.2
+   ],
+   "model_xy": [
+    0.0,
+    2.1
+   ],
+   "desc": "the start lights, one red; pivot between the hooks, where the rod's line ties on"
+  },
+  "lights_2": {
+   "size": [
+    80,
+    40
+   ],
+   "pivot": [
+    40.0,
+    7.2
+   ],
+   "model_xy": [
+    0.0,
+    2.1
+   ],
+   "desc": "the start lights, two red; pivot between the hooks, where the rod's line ties on"
+  },
+  "lights_3": {
+   "size": [
+    80,
+    40
+   ],
+   "pivot": [
+    40.0,
+    7.2
+   ],
+   "model_xy": [
+    0.0,
+    2.1
+   ],
+   "desc": "the start lights, three red; pivot between the hooks, where the rod's line ties on"
+  },
+  "lights_go": {
+   "size": [
+    80,
+    40
+   ],
+   "pivot": [
+    40.0,
+    7.2
+   ],
+   "model_xy": [
+    0.0,
+    2.1
+   ],
+   "desc": "the start lights, all green: GO; pivot between the hooks, where the rod's line ties on"
+  },
+  "trophy": {
+   "size": [
+    80,
+    128
+   ],
+   "pivot": [
+    40.0,
+    120.0
+   ],
+   "model_xy": [
+    0.0,
+    0.0
+   ],
+   "desc": "the Grand Prix's trophy: a gold cup with a star on a black checkered plinth, its lid flat at y 13.6; pivot on the ground at its middle"
+  },
+  "trophy_piece": {
+   "size": [
+    32,
+    32
+   ],
+   "pivot": [
+    16.0,
+    24.0
+   ],
+   "model_xy": [
+    0.0,
+    0.0
+   ],
+   "desc": "the compass piece standing on the trophy's lid (pivot at its foot: at (0, 13.6) on the trophy)"
+  },
+  "wheel": {
+   "size": [
+    208,
+    200
+   ],
+   "pivot": [
+    104.84,
+    98.98
+   ],
+   "model_xy": [
+    0.0,
+    0.0
+   ],
+   "desc": "Big Green 01's steering wheel, stolen: black rim, steel spokes, a green boss; pivot at its middle",
+   "texels_per_unit": 32
+  },
+  "tarp": {
+   "size": [
+    304,
+    96
+   ],
+   "pivot": [
+    152.0,
+    112.0
+   ],
+   "model_xy": [
+    0.0,
+    0.0
+   ],
+   "desc": "the tarp over Big Green 01 (34 long, faces -x like the kart): its hem at y 3.2 to 4.4, so the kart's wheels show under it; pivot on the ground at its middle"
+  },
+  "shutter": {
+   "size": [
+    288,
+    256
+   ],
+   "pivot": [
+    144.0,
+    8.0
+   ],
+   "model_xy": [
+    0.0,
+    30.0
+   ],
+   "desc": "the Parts Depot's roll-up shutter, jammed crooked (its foot 1.6 to 4.0 above the floor); pivot at the middle of its top edge, so it rolls up (sy) toward it"
+  }
+ }
+}

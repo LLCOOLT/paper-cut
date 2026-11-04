@@ -1,0 +1,110 @@
+# The pause menu's first tab, "Mario" (w/<language>/win.tpl image 1), as Luigi's while he's the player:
+# the game's own tab with its lettering taken off, and "Luigi" / "ルイージ" put on it letter by
+# letter from the game's own lettering on its other tabs and bars, recoloured to the "Mario" tab's
+# pale pink with its dark red line. Loaded under Dolphin's name for the tab it replaces, in the
+# "*#luigi" texture set (superluigi_aurora.c, portSlMapTextures).
+#
+# Each letter is a piece: a crop round it on its own tab, its board made clear (`alpha set 0` on the
+# board's colours: what's left is the letter, its blend and its line), its colours mapped to the
+# Mario tab's (lettering, line and board blend), then pasted onto the clean board.
+
+# ---------------------------------------------------------------------------------------------------
+# "Luigi" (US, and the EU disc, whose five languages share this tab)
+image art/icons/luigi/ui/tex1_96x40_b3df1434fe52ff08_14.png
+  discs G8ME01 G8MP01
+  fallback art/icons/luigi/drawn/ui/tab_us.png
+  load tpl w/us/win.tpl 1
+  # the clean board: the inner panel and the frame round it, flat in their own colours (the
+  # panel's own texels vary only by its compression), its left and right edges kept
+  mask frame rect 5 4 13 32
+  mask frame + rect 87 4 91 32
+  fill in frame #aa1900
+  mask panel rect 15 5 85 31
+  fill in panel #ce5542
+  mask ledge rect 14 6 14 31
+  fill in ledge #c0422c
+  mask redge rect 86 6 86 31
+  fill in redge #c0402c
+  # L: the "L" of "Tattle Log" (image 35, a blue bar)
+  piece L tpl w/us/win.tpl 35
+  @L crop 134 2 20 25
+  @L alpha set 0 where h=200..250 s>=0.45 v>=0.5
+  @L map #c6d3e7 -> #e6ccd3 #001144 -> #420c00 #3955a4 -> #d05741
+  # u: "Journal"'s (image 5, the blue tab)
+  piece u tpl w/us/win.tpl 5
+  @u crop 31 12 15 16
+  @u alpha set 0 where h=190..225 s>=0.45 v>=0.5
+  @u map #ced3de -> #e6ccd3 #428fcd -> #d05741 #0057a0 -> #a91a00 #002a5a -> #420c00
+  # i: "Mario"'s own, twice
+  piece i tpl w/us/win.tpl 1
+  @i crop 64 10 11 22
+  @i alpha set 0 where h=0..20 s>=0.45 v>=0.5
+  @i alpha set 0 where h=350..360 s>=0.45 v>=0.5
+  # g: "Badges"'s (image 4, the green tab)
+  piece g tpl w/us/win.tpl 4
+  @g crop 49 11 13 23
+  @g alpha set 0 where h=70..110 s>=0.45 v>=0.5
+  @g map #d6e3ce -> #e6ccd3 #99cd52 -> #d05741 #6ba818 -> #a91a00 #426110 -> #420c00
+  # on the baseline of "Mario" (row 29), centred where it was
+  paste L 10 8
+  paste u 29 17
+  paste i 45 10
+  paste g 58 13
+  paste i 71 10
+end
+
+# ---------------------------------------------------------------------------------------------------
+# "ルイージ" (the JP disc, and the EU disc's Japanese)
+image art/icons/luigi/ui_jp/tex1_96x40_7971872074128e2f_14.png
+  discs G8MJ01 G8MP01
+  fallback art/icons/luigi/drawn/ui/tab_jp.png
+  load tpl w/jp/win.tpl 1
+  mask frame rect 5 4 13 32
+  mask frame + rect 87 4 91 32
+  fill in frame #aa1900
+  mask panel rect 15 5 85 31
+  fill in panel #ce5542
+  mask ledge rect 14 6 14 31
+  fill in ledge #c0422c
+  mask redge rect 86 6 86 31
+  fill in redge #c0402c
+  # ル is two strokes the game has elsewhere: リ's long stroke (this tab's own, its short one left
+  # out) and し ("ばしょ", image 174, a purple button), a little larger
+  piece ri tpl w/jp/win.tpl 1
+  mask long rect 50 7 59 34
+  mask long + rect 40 22 49 34
+  mask notlong all
+  mask notlong - mask long
+  @ri alpha set 0 in notlong
+  @ri alpha set 0 where h=0..20 s>=0.45 v>=0.5
+  @ri alpha set 0 where h=350..360 s>=0.45 v>=0.5
+  @ri crop 40 7 20 28
+  piece shi tpl w/jp/win.tpl 174
+  @shi crop 34 3 18 25
+  @shi alpha set 0 where h=230..265 s>=0.3 v>=0.45
+  @shi map #dedbe7 -> #e7c8c8 #5a4e99 -> #d05741 #1c1838 -> #420c00
+  @shi scale 18 26 texel
+  # イ: "アイテム"'s (image 24, the orange tab), larger
+  piece i tpl w/jp/win.tpl 24
+  @i crop 26 8 17 21
+  @i alpha set 0 where h=30..55 s>=0.45 v>=0.5
+  @i map #ded3bd -> #e7c8c8 #b98804 -> #d05741 #3a2a00 -> #420c00
+  @i scale 18 22 texel
+  # ー: "ナンバー"'s (image 173, a purple button)
+  piece bar tpl w/jp/win.tpl 173
+  @bar crop 61 12 16 10
+  @bar alpha set 0 where h=230..265 s>=0.3 v>=0.45
+  @bar map #dedbe7 -> #e7c8c8 #5a4e99 -> #d05741 #1c1838 -> #420c00
+  @bar scale 14 9 texel
+  # ジ: "バッジ"'s (image 4, the green tab), smaller
+  piece ji tpl w/jp/win.tpl 4
+  @ji crop 58 5 29 29
+  @ji alpha set 0 where h=70..110 s>=0.45 v>=0.5
+  @ji map #d6e7c6 -> #e7c8c8 #99cd52 -> #d05741 #6ba818 -> #a91a00 #426110 -> #420c00
+  @ji scale 20 20 texel
+  paste ri 4 6
+  paste shi 21 8
+  paste i 39 10
+  paste bar 56 19
+  paste ji 68 10
+end

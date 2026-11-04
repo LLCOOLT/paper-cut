@@ -1,0 +1,98 @@
+{
+ "for": "c_luigi",
+ "texels_per_unit": 8,
+ "faces": "-x",
+ "pivot_note": "pixels from the PNG's top-left; attach_model_xy in c_luigi bind-pose units",
+ "cards": {
+  "veil_side": {
+   "size": [
+    112,
+    152
+   ],
+   "pivot": [
+    24,
+    14
+   ],
+   "attach_model_xy": [
+    1.0,
+    24.3
+   ],
+   "desc": "tulle drape, drawn BEHIND the cap and head; pivot = where it pins under the crown"
+  },
+  "veil_side_flutter": {
+   "size": [
+    112,
+    152
+   ],
+   "pivot": [
+    24,
+    14
+   ],
+   "attach_model_xy": [
+    1.0,
+    24.3
+   ],
+   "desc": "tulle drape, drawn BEHIND the cap and head; pivot = where it pins under the crown (blown back: run/fall)"
+  },
+  "veil_band": {
+   "size": [
+    80,
+    40
+   ],
+   "pivot": [
+    40,
+    34
+   ],
+   "attach_model_xy": [
+    0.6,
+    22.2
+   ],
+   "desc": "pearl band and flowers, drawn IN FRONT of the cap; pivot = bottom centre on the crown"
+  },
+  "veil_back": {
+   "size": [
+    120,
+    152
+   ],
+   "pivot": [
+    60,
+    14
+   ],
+   "attach_model_xy": [
+    0.0,
+    24.3
+   ],
+   "desc": "the veil from behind (back-facing poses): covers the back of cap and head; pivot = crown"
+  },
+  "gown_side": {
+   "size": [
+    160,
+    80
+   ],
+   "pivot": [
+    76,
+    13
+   ],
+   "attach_model_xy": [
+    0.5,
+    10.0
+   ],
+   "desc": "the skirt, standing: pinned at c_luigi's waist (0.5, 10), in front of the body and legs, behind the front glove; hem at y 1.5, the shoes show below it"
+  },
+  "gown_side_swish": {
+   "size": [
+    160,
+    80
+   ],
+   "pivot": [
+    76,
+    13
+   ],
+   "attach_model_xy": [
+    0.5,
+    10.0
+   ],
+   "desc": "the skirt with the hem swung back, for walking and running: pinned at c_luigi's waist (0.5, 10), in front of the body and legs, behind the front glove; hem at y 1.5, the shoes show below it"
+  }
+ }
+}

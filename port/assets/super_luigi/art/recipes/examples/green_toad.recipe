@@ -1,0 +1,20 @@
+# Worked example (RECIPES.md, "Recolouring a whole texture sheet"): Toad's textures (c_kinopio) as a
+# Toad in Luigi's colours: his cap's red spots green, band for band, and his blue vest purple.
+# An example: the game doesn't load it (only art/recipes/*.recipe run in the game).
+
+# Luigi's greens by lightness against the red they replace (the same ramp as luigi_icons.recipe)
+gradient greens 0.0 #0a1206 0.3 #182810 0.45 #1e4a1c 0.7 #287126 0.86 #298a29 1.0 #39a639 1.2 #52b639 1.4 #63c339 1.9 #addf9c
+
+# the cap, 120x112: white with red spots, his face below
+image examples/green_toad/cap.png
+  load model c_kinopio 8
+  # every red on the sheet (the spots, their shading, the pink blends at their edges); the face's
+  # skin is an orange (about 25 degrees), past the hues taken
+  ramp where h=335..12 s>=0.25 v>=0.2 base #d82820 to greens
+end
+
+# the vest, 64x48: a blue vest over the shoulders. A hue turn keeps its shading as it is
+image examples/green_toad/vest.png
+  load model c_kinopio 10
+  hsv where h=180..250 s>=0.3 : hue +70 sat *0.9
+end

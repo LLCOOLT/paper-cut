@@ -1,0 +1,59 @@
+{
+ "model": "sl_scoreboard",
+ "texels_per_unit": 8,
+ "faces": "-x",
+ "pivot_note": "pivot: pixels from the PNG's top-left; model_xy: where the pivot sits at rest (model units, feet at y 0)",
+ "cards": {
+  "board_face": {
+   "size": [
+    480,
+    272
+   ],
+   "pivot": [
+    240.0,
+    264.0
+   ],
+   "model_xy": [
+    0.0,
+    22.0
+   ],
+   "desc": "the board's face: CIRCUIT BREAK and the starting grid (Revvo first, Luigi last), a red frame with bulbs; pivot at the middle of the bottom edge (it falls about it)"
+  },
+  "board_back": {
+   "size": [
+    480,
+    272
+   ],
+   "pivot": [
+    240.0,
+    264.0
+   ],
+   "model_xy": [
+    0.0,
+    22.0
+   ],
+   "desc": "the board's back: planks and struts, for when it lies face down; same size and pivot"
+  },
+  "legs": {
+   "size": [
+    480,
+    192
+   ],
+   "pivot": [
+    240.0,
+    184.0
+   ],
+   "model_xy": [
+    0.0,
+    0.0
+   ],
+   "desc": "two steel legs with an X brace; the board's bottom edge sits on their tops (y 22)"
+  }
+ },
+ "draw_order": [
+  "legs",
+  "board_back (when face down)",
+  "board_face"
+ ],
+ "rest_note": "model_xy is where each pivot sits standing; the board falls about its pivot"
+}

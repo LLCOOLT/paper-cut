@@ -788,12 +788,51 @@ if(TTYD_BACKEND STREQUAL "aurora")
     # Luigi's animation pack, our own work (port/src/aurora/luigi_model_aurora.c, docs/LUIGI_ANIMS.md)
     ttyd_embed_file(${CMAKE_SOURCE_DIR}/port/assets/luigi/luigi_anims.bin portLuigiPack
         ${CMAKE_BINARY_DIR}/generated/luigi_pack.c)
+    # Luigi's friends' animations, our own work (the same file, docs/LUIGI_ANIMS.md)
+    ttyd_embed_file(${CMAKE_SOURCE_DIR}/port/assets/luigi/friend_anims.bin portFriendsPack
+        ${CMAKE_BINARY_DIR}/generated/friends_pack.c)
     add_library(ttyd_settings OBJECT ${CMAKE_SOURCE_DIR}/port/settings/settings_ui.cpp
         ${CMAKE_SOURCE_DIR}/port/settings/launcher_ui.cpp ${CMAKE_SOURCE_DIR}/port/settings/launcher_style.cpp
         ${CMAKE_BINARY_DIR}/generated/font_bold.c ${CMAKE_BINARY_DIR}/generated/font_medium.c
-        ${CMAKE_BINARY_DIR}/generated/icon64.c ${CMAKE_BINARY_DIR}/generated/luigi_pack.c ${TTYD_SETTINGS_FEATURES})
+        ${CMAKE_BINARY_DIR}/generated/icon64.c ${CMAKE_BINARY_DIR}/generated/luigi_pack.c
+        ${CMAKE_BINARY_DIR}/generated/friends_pack.c ${TTYD_SETTINGS_FEATURES})
     target_include_directories(ttyd_settings PRIVATE ${CMAKE_SOURCE_DIR}/port/include)
     target_compile_features(ttyd_settings PRIVATE cxx_std_20)
+    # Super Luigi's new models, our own work (port/src/aurora/sl_models_aurora.c, docs/LUIGI_ANIMS.md)
+    ttyd_embed_file(${CMAKE_SOURCE_DIR}/port/assets/super_luigi/sl_models.bin portSuperLuigiModels
+        ${CMAKE_BINARY_DIR}/generated/sl_models.c)
+    target_sources(ttyd_settings PRIVATE ${CMAKE_BINARY_DIR}/generated/sl_models.c)
+    # Super Luigi's textures, title cut-outs and friends' icons (PNG), our own work, by their path under
+    # port/assets/super_luigi (port/src/aurora/sl_assets_aurora.c)
+    set(_sl_root ${CMAKE_SOURCE_DIR}/port/assets/super_luigi)
+    file(GLOB_RECURSE _sl_assets CONFIGURE_DEPENDS RELATIVE ${_sl_root} ${_sl_root}/textures/*.png
+        ${_sl_root}/art/titles/*.png ${_sl_root}/art/icons/*.png
+        # chapter 6: Future Sight's overlay
+        ${_sl_root}/art/future_sight/*.png)
+    # and the art recipes, run on the player's disc at the start (port/src/aurora/art_recipes_aurora.c,
+    # art/RECIPES.md); not their examples
+    file(GLOB _sl_recipes CONFIGURE_DEPENDS RELATIVE ${_sl_root} ${_sl_root}/art/recipes/*.recipe)
+    list(APPEND _sl_assets ${_sl_recipes})
+    list(SORT _sl_assets)
+    set(_sl_c "/* GENERATED from port/assets/super_luigi by CMakeLists.txt. Do not edit. */\n")
+    set(_sl_index "")
+    set(_sl_n 0)
+    foreach(_rel ${_sl_assets})
+        file(READ ${_sl_root}/${_rel} _hex HEX)
+        set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${_sl_root}/${_rel})
+        string(LENGTH "${_hex}" _len)
+        math(EXPR _len "${_len} / 2")
+        string(REGEX REPLACE "([0-9a-f][0-9a-f])" "0x\\1," _hex "${_hex}")
+        string(APPEND _sl_c "static const unsigned char a${_sl_n}[] = {${_hex}};\n")
+        string(APPEND _sl_index "    {\"${_rel}\", a${_sl_n}, ${_len}},\n")
+        math(EXPR _sl_n "${_sl_n} + 1")
+    endforeach()
+    string(APPEND _sl_c "const struct { const char* path; const unsigned char* data; unsigned int size; } "
+        "portSlAssetTable[] = {\n${_sl_index}    {0, 0, 0},\n};\n")
+    file(WRITE ${CMAKE_BINARY_DIR}/generated/sl_assets.c.tmp "${_sl_c}")
+    file(COPY_FILE ${CMAKE_BINARY_DIR}/generated/sl_assets.c.tmp ${CMAKE_BINARY_DIR}/generated/sl_assets.c
+        ONLY_IF_DIFFERENT)
+    target_sources(ttyd_settings PRIVATE ${CMAKE_BINARY_DIR}/generated/sl_assets.c)
     # The port's version, shown on the settings page (tools/port/release.py sets it).
     set(TTYD_PORT_VERSION "dev" CACHE STRING "The port's version (releases: e.g. 0.1.0)")
     target_compile_definitions(ttyd_settings PRIVATE _CRT_SECURE_NO_WARNINGS=1 PORT_VERSION="${TTYD_PORT_VERSION}"
@@ -1079,6 +1118,14 @@ target_compile_definitions(loaders_test PRIVATE ${TTYD_DEFINES} PORT_BEDECODE_ST
 target_include_directories(loaders_test PRIVATE ${TTYD_INCLUDES})
 target_compile_options(loaders_test PRIVATE ${TTYD_CFLAGS})
 add_test(NAME loaders_test COMMAND loaders_test)
+# art_recipe_test: the art recipe runner on an extracted disc (tests/port/art_recipe_check.py
+# compares it with the authoring tool, port/assets/super_luigi/art/tools/recipes.py).
+add_executable(art_recipe_test EXCLUDE_FROM_ALL
+    ${CMAKE_SOURCE_DIR}/tests/port/art_recipe_test.c
+    ${CMAKE_SOURCE_DIR}/port/src/common/art_recipe.c)
+target_compile_definitions(art_recipe_test PRIVATE ${TTYD_DEFINES})
+target_include_directories(art_recipe_test PRIVATE ${TTYD_INCLUDES})
+target_compile_options(art_recipe_test PRIVATE ${TTYD_CFLAGS})
 # Generated descriptor tables must match their specs and the headers.
 add_test(NAME bedecode_generated_fresh
     COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tools/port/gen_bedecode.py --check)

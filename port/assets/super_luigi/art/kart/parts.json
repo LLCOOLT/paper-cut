@@ -1,0 +1,1478 @@
+{
+ "model": "c_lp_kart",
+ "texels_per_unit": 8,
+ "faces": "-x",
+ "origin": "on the ground, midway between the axles",
+ "pivot_note": "pivot: pixels from the PNG's top-left; model_xy: where the pivot sits (model units)",
+ "cards": {
+  "kart_body": {
+   "size": [
+    672,
+    296
+   ],
+   "pivot": [
+    161.14,
+    364.57
+   ],
+   "model_xy": [
+    0.0,
+    0.0
+   ],
+   "texels_per_unit": 32,
+   "desc": "the side pod and the tail, in front of Luigi's hips. Pivot = the kart's origin"
+  },
+  "kart_nose": {
+   "size": [
+    480,
+    440
+   ],
+   "pivot": [
+    243.43,
+    369.14
+   ],
+   "model_xy": [
+    -11.107,
+    4.321
+   ],
+   "texels_per_unit": 32,
+   "desc": "the front fender and the rail; in front of Luigi's legs"
+  },
+  "kart_seat": {
+   "size": [
+    336,
+    304
+   ],
+   "pivot": [
+    170.86,
+    284.57
+   ],
+   "model_xy": [
+    1.393,
+    7.179
+   ],
+   "texels_per_unit": 32,
+   "desc": "the seat, behind Luigi"
+  },
+  "kart_body_red": {
+   "size": [
+    672,
+    296
+   ],
+   "pivot": [
+    161.14,
+    364.57
+   ],
+   "model_xy": [
+    0.0,
+    0.0
+   ],
+   "texels_per_unit": 32,
+   "desc": "the side pod and the tail, in front of Luigi's hips. Pivot = the kart's origin (kart_body_red)"
+  },
+  "kart_nose_red": {
+   "size": [
+    480,
+    440
+   ],
+   "pivot": [
+    243.43,
+    369.14
+   ],
+   "model_xy": [
+    -11.107,
+    4.321
+   ],
+   "texels_per_unit": 32,
+   "desc": "the front fender and the rail; in front of Luigi's legs (kart_nose_red)"
+  },
+  "kart_seat_red": {
+   "size": [
+    336,
+    304
+   ],
+   "pivot": [
+    170.86,
+    284.57
+   ],
+   "model_xy": [
+    1.393,
+    7.179
+   ],
+   "texels_per_unit": 32,
+   "desc": "the seat, behind Luigi (kart_seat_red)"
+  },
+  "kart_body_blue": {
+   "size": [
+    672,
+    296
+   ],
+   "pivot": [
+    161.14,
+    364.57
+   ],
+   "model_xy": [
+    0.0,
+    0.0
+   ],
+   "texels_per_unit": 32,
+   "desc": "the side pod and the tail, in front of Luigi's hips. Pivot = the kart's origin (kart_body_blue)"
+  },
+  "kart_nose_blue": {
+   "size": [
+    480,
+    440
+   ],
+   "pivot": [
+    243.43,
+    369.14
+   ],
+   "model_xy": [
+    -11.107,
+    4.321
+   ],
+   "texels_per_unit": 32,
+   "desc": "the front fender and the rail; in front of Luigi's legs (kart_nose_blue)"
+  },
+  "kart_seat_blue": {
+   "size": [
+    336,
+    304
+   ],
+   "pivot": [
+    170.86,
+    284.57
+   ],
+   "model_xy": [
+    1.393,
+    7.179
+   ],
+   "texels_per_unit": 32,
+   "desc": "the seat, behind Luigi (kart_seat_blue)"
+  },
+  "kart_body_yellow": {
+   "size": [
+    672,
+    296
+   ],
+   "pivot": [
+    161.14,
+    364.57
+   ],
+   "model_xy": [
+    0.0,
+    0.0
+   ],
+   "texels_per_unit": 32,
+   "desc": "the side pod and the tail, in front of Luigi's hips. Pivot = the kart's origin (kart_body_yellow)"
+  },
+  "kart_nose_yellow": {
+   "size": [
+    480,
+    440
+   ],
+   "pivot": [
+    243.43,
+    369.14
+   ],
+   "model_xy": [
+    -11.107,
+    4.321
+   ],
+   "texels_per_unit": 32,
+   "desc": "the front fender and the rail; in front of Luigi's legs (kart_nose_yellow)"
+  },
+  "kart_seat_yellow": {
+   "size": [
+    336,
+    304
+   ],
+   "pivot": [
+    170.86,
+    284.57
+   ],
+   "model_xy": [
+    1.393,
+    7.179
+   ],
+   "texels_per_unit": 32,
+   "desc": "the seat, behind Luigi (kart_seat_yellow)"
+  },
+  "kart_body_purple": {
+   "size": [
+    672,
+    296
+   ],
+   "pivot": [
+    161.14,
+    364.57
+   ],
+   "model_xy": [
+    0.0,
+    0.0
+   ],
+   "texels_per_unit": 32,
+   "desc": "the side pod and the tail, in front of Luigi's hips. Pivot = the kart's origin (kart_body_purple)"
+  },
+  "kart_nose_purple": {
+   "size": [
+    480,
+    440
+   ],
+   "pivot": [
+    243.43,
+    369.14
+   ],
+   "model_xy": [
+    -11.107,
+    4.321
+   ],
+   "texels_per_unit": 32,
+   "desc": "the front fender and the rail; in front of Luigi's legs (kart_nose_purple)"
+  },
+  "kart_seat_purple": {
+   "size": [
+    336,
+    304
+   ],
+   "pivot": [
+    170.86,
+    284.57
+   ],
+   "model_xy": [
+    1.393,
+    7.179
+   ],
+   "texels_per_unit": 32,
+   "desc": "the seat, behind Luigi (kart_seat_purple)"
+  },
+  "kart_body_orange": {
+   "size": [
+    672,
+    296
+   ],
+   "pivot": [
+    161.14,
+    364.57
+   ],
+   "model_xy": [
+    0.0,
+    0.0
+   ],
+   "texels_per_unit": 32,
+   "desc": "the side pod and the tail, in front of Luigi's hips. Pivot = the kart's origin (kart_body_orange)"
+  },
+  "kart_nose_orange": {
+   "size": [
+    480,
+    440
+   ],
+   "pivot": [
+    243.43,
+    369.14
+   ],
+   "model_xy": [
+    -11.107,
+    4.321
+   ],
+   "texels_per_unit": 32,
+   "desc": "the front fender and the rail; in front of Luigi's legs (kart_nose_orange)"
+  },
+  "kart_seat_orange": {
+   "size": [
+    336,
+    304
+   ],
+   "pivot": [
+    170.86,
+    284.57
+   ],
+   "model_xy": [
+    1.393,
+    7.179
+   ],
+   "texels_per_unit": 32,
+   "desc": "the seat, behind Luigi (kart_seat_orange)"
+  },
+  "kart_body_white": {
+   "size": [
+    672,
+    296
+   ],
+   "pivot": [
+    161.14,
+    364.57
+   ],
+   "model_xy": [
+    0.0,
+    0.0
+   ],
+   "texels_per_unit": 32,
+   "desc": "the side pod and the tail, in front of Luigi's hips. Pivot = the kart's origin (kart_body_white)"
+  },
+  "kart_nose_white": {
+   "size": [
+    480,
+    440
+   ],
+   "pivot": [
+    243.43,
+    369.14
+   ],
+   "model_xy": [
+    -11.107,
+    4.321
+   ],
+   "texels_per_unit": 32,
+   "desc": "the front fender and the rail; in front of Luigi's legs (kart_nose_white)"
+  },
+  "kart_seat_white": {
+   "size": [
+    336,
+    304
+   ],
+   "pivot": [
+    170.86,
+    284.57
+   ],
+   "model_xy": [
+    1.393,
+    7.179
+   ],
+   "texels_per_unit": 32,
+   "desc": "the seat, behind Luigi (kart_seat_white)"
+  },
+  "kart_body_black": {
+   "size": [
+    672,
+    296
+   ],
+   "pivot": [
+    161.14,
+    364.57
+   ],
+   "model_xy": [
+    0.0,
+    0.0
+   ],
+   "texels_per_unit": 32,
+   "desc": "the side pod and the tail, in front of Luigi's hips. Pivot = the kart's origin (kart_body_black)"
+  },
+  "kart_nose_black": {
+   "size": [
+    480,
+    440
+   ],
+   "pivot": [
+    243.43,
+    369.14
+   ],
+   "model_xy": [
+    -11.107,
+    4.321
+   ],
+   "texels_per_unit": 32,
+   "desc": "the front fender and the rail; in front of Luigi's legs (kart_nose_black)"
+  },
+  "kart_seat_black": {
+   "size": [
+    336,
+    304
+   ],
+   "pivot": [
+    170.86,
+    284.57
+   ],
+   "model_xy": [
+    1.393,
+    7.179
+   ],
+   "texels_per_unit": 32,
+   "desc": "the seat, behind Luigi (kart_seat_black)"
+  },
+  "kart_body_wrecked": {
+   "size": [
+    672,
+    296
+   ],
+   "pivot": [
+    161.14,
+    364.57
+   ],
+   "model_xy": [
+    0.0,
+    0.0
+   ],
+   "texels_per_unit": 32,
+   "desc": "the side pod and the tail, in front of Luigi's hips. Pivot = the kart's origin; wrecked: dented, scorched, cracked"
+  },
+  "kart_nose_wrecked": {
+   "size": [
+    480,
+    440
+   ],
+   "pivot": [
+    243.43,
+    369.14
+   ],
+   "model_xy": [
+    -11.107,
+    4.321
+   ],
+   "texels_per_unit": 32,
+   "desc": "the front fender and the rail; in front of Luigi's legs; wrecked: dented, scorched, cracked, the fender bent"
+  },
+  "kart_body_wrecked_red": {
+   "size": [
+    672,
+    296
+   ],
+   "pivot": [
+    161.14,
+    364.57
+   ],
+   "model_xy": [
+    0.0,
+    0.0
+   ],
+   "texels_per_unit": 32,
+   "desc": "the side pod and the tail, in front of Luigi's hips. Pivot = the kart's origin (kart_body_wrecked_red)"
+  },
+  "kart_nose_wrecked_red": {
+   "size": [
+    480,
+    440
+   ],
+   "pivot": [
+    243.43,
+    369.14
+   ],
+   "model_xy": [
+    -11.107,
+    4.321
+   ],
+   "texels_per_unit": 32,
+   "desc": "the front fender and the rail; in front of Luigi's legs (kart_nose_wrecked_red)"
+  },
+  "kart_body_wrecked_blue": {
+   "size": [
+    672,
+    296
+   ],
+   "pivot": [
+    161.14,
+    364.57
+   ],
+   "model_xy": [
+    0.0,
+    0.0
+   ],
+   "texels_per_unit": 32,
+   "desc": "the side pod and the tail, in front of Luigi's hips. Pivot = the kart's origin (kart_body_wrecked_blue)"
+  },
+  "kart_nose_wrecked_blue": {
+   "size": [
+    480,
+    440
+   ],
+   "pivot": [
+    243.43,
+    369.14
+   ],
+   "model_xy": [
+    -11.107,
+    4.321
+   ],
+   "texels_per_unit": 32,
+   "desc": "the front fender and the rail; in front of Luigi's legs (kart_nose_wrecked_blue)"
+  },
+  "kart_body_wrecked_yellow": {
+   "size": [
+    672,
+    296
+   ],
+   "pivot": [
+    161.14,
+    364.57
+   ],
+   "model_xy": [
+    0.0,
+    0.0
+   ],
+   "texels_per_unit": 32,
+   "desc": "the side pod and the tail, in front of Luigi's hips. Pivot = the kart's origin (kart_body_wrecked_yellow)"
+  },
+  "kart_nose_wrecked_yellow": {
+   "size": [
+    480,
+    440
+   ],
+   "pivot": [
+    243.43,
+    369.14
+   ],
+   "model_xy": [
+    -11.107,
+    4.321
+   ],
+   "texels_per_unit": 32,
+   "desc": "the front fender and the rail; in front of Luigi's legs (kart_nose_wrecked_yellow)"
+  },
+  "kart_body_wrecked_purple": {
+   "size": [
+    672,
+    296
+   ],
+   "pivot": [
+    161.14,
+    364.57
+   ],
+   "model_xy": [
+    0.0,
+    0.0
+   ],
+   "texels_per_unit": 32,
+   "desc": "the side pod and the tail, in front of Luigi's hips. Pivot = the kart's origin (kart_body_wrecked_purple)"
+  },
+  "kart_nose_wrecked_purple": {
+   "size": [
+    480,
+    440
+   ],
+   "pivot": [
+    243.43,
+    369.14
+   ],
+   "model_xy": [
+    -11.107,
+    4.321
+   ],
+   "texels_per_unit": 32,
+   "desc": "the front fender and the rail; in front of Luigi's legs (kart_nose_wrecked_purple)"
+  },
+  "kart_body_wrecked_orange": {
+   "size": [
+    672,
+    296
+   ],
+   "pivot": [
+    161.14,
+    364.57
+   ],
+   "model_xy": [
+    0.0,
+    0.0
+   ],
+   "texels_per_unit": 32,
+   "desc": "the side pod and the tail, in front of Luigi's hips. Pivot = the kart's origin (kart_body_wrecked_orange)"
+  },
+  "kart_nose_wrecked_orange": {
+   "size": [
+    480,
+    440
+   ],
+   "pivot": [
+    243.43,
+    369.14
+   ],
+   "model_xy": [
+    -11.107,
+    4.321
+   ],
+   "texels_per_unit": 32,
+   "desc": "the front fender and the rail; in front of Luigi's legs (kart_nose_wrecked_orange)"
+  },
+  "kart_body_wrecked_white": {
+   "size": [
+    672,
+    296
+   ],
+   "pivot": [
+    161.14,
+    364.57
+   ],
+   "model_xy": [
+    0.0,
+    0.0
+   ],
+   "texels_per_unit": 32,
+   "desc": "the side pod and the tail, in front of Luigi's hips. Pivot = the kart's origin (kart_body_wrecked_white)"
+  },
+  "kart_nose_wrecked_white": {
+   "size": [
+    480,
+    440
+   ],
+   "pivot": [
+    243.43,
+    369.14
+   ],
+   "model_xy": [
+    -11.107,
+    4.321
+   ],
+   "texels_per_unit": 32,
+   "desc": "the front fender and the rail; in front of Luigi's legs (kart_nose_wrecked_white)"
+  },
+  "kart_body_wrecked_black": {
+   "size": [
+    672,
+    296
+   ],
+   "pivot": [
+    161.14,
+    364.57
+   ],
+   "model_xy": [
+    0.0,
+    0.0
+   ],
+   "texels_per_unit": 32,
+   "desc": "the side pod and the tail, in front of Luigi's hips. Pivot = the kart's origin (kart_body_wrecked_black)"
+  },
+  "kart_nose_wrecked_black": {
+   "size": [
+    480,
+    440
+   ],
+   "pivot": [
+    243.43,
+    369.14
+   ],
+   "model_xy": [
+    -11.107,
+    4.321
+   ],
+   "texels_per_unit": 32,
+   "desc": "the front fender and the rail; in front of Luigi's legs (kart_nose_wrecked_black)"
+  },
+  "kart_engine": {
+   "size": [
+    640,
+    288
+   ],
+   "pivot": [
+    346.86,
+    139.43
+   ],
+   "model_xy": [
+    5.321,
+    9.321
+   ],
+   "texels_per_unit": 32,
+   "desc": "the rear cowl, the pipe and the orange silencer"
+  },
+  "wheel_near_front": {
+   "size": [
+    248,
+    240
+   ],
+   "pivot": [
+    124.0,
+    124.0
+   ],
+   "model_xy": [
+    -9.946,
+    3.893
+   ],
+   "texels_per_unit": 32,
+   "desc": "the near front wheel; rz rolls it"
+  },
+  "wheel_near_back": {
+   "size": [
+    264,
+    264
+   ],
+   "pivot": [
+    131.77,
+    135.2
+   ],
+   "model_xy": [
+    9.975,
+    3.864
+   ],
+   "texels_per_unit": 32,
+   "desc": "the near back wheel; rz rolls it"
+  },
+  "wheel_far": {
+   "size": [
+    248,
+    240
+   ],
+   "pivot": [
+    124.0,
+    124.0
+   ],
+   "model_xy": [
+    -9.946,
+    3.893
+   ],
+   "texels_per_unit": 32,
+   "desc": "the far wheels: the near front wheel in shade"
+  },
+  "steering_wheel": {
+   "size": [
+    280,
+    328
+   ],
+   "pivot": [
+    31.43,
+    306.29
+   ],
+   "model_xy": [
+    -10.964,
+    7.607
+   ],
+   "texels_per_unit": 32,
+   "desc": "the steering wheel on its column; pivot at the column's foot"
+  },
+  "plate_01": {
+   "size": [
+    64,
+    40
+   ],
+   "pivot": [
+    32,
+    20
+   ],
+   "model_xy": [
+    -4.0,
+    3.2
+   ],
+   "desc": "the L-shaped \"01\" plate on the side pod, in front of kart_body (and its recolours: they don't redraw it)"
+  },
+  "exhaust_puff": {
+   "size": [
+    48,
+    40
+   ],
+   "pivot": [
+    24,
+    20
+   ],
+   "model_xy": [
+    17.0,
+    11.5
+   ],
+   "desc": "a white puff from the pipe tip (15.6, 10.8)"
+  },
+  "smoke_puff": {
+   "size": [
+    80,
+    72
+   ],
+   "pivot": [
+    40,
+    36
+   ],
+   "model_xy": [
+    2.0,
+    8.0
+   ],
+   "desc": "dark smoke over the wreck; scale up, drift and fade"
+  },
+  "flame": {
+   "size": [
+    72,
+    56
+   ],
+   "pivot": [
+    6,
+    28
+   ],
+   "model_xy": [
+    15.6,
+    10.8
+   ],
+   "desc": "a backfire out of the exhaust; pivot at the pipe tip"
+  },
+  "wheel_near_front_lo": {
+   "size": [
+    128,
+    120
+   ],
+   "pivot": [
+    64.0,
+    62.0
+   ],
+   "model_xy": [
+    -9.946,
+    3.893
+   ],
+   "texels_per_unit": 16,
+   "desc": "the near front wheel; rz rolls it (wheel_near_front_lo)"
+  },
+  "wheel_far_lo": {
+   "size": [
+    128,
+    120
+   ],
+   "pivot": [
+    64.0,
+    62.0
+   ],
+   "model_xy": [
+    -9.946,
+    3.893
+   ],
+   "texels_per_unit": 16,
+   "desc": "the far wheels: the near front wheel in shade"
+  },
+  "wheel_near_back_lo": {
+   "size": [
+    136,
+    136
+   ],
+   "pivot": [
+    67.89,
+    69.6
+   ],
+   "model_xy": [
+    9.975,
+    3.864
+   ],
+   "texels_per_unit": 16,
+   "desc": "the near back wheel; rz rolls it (wheel_near_back_lo)"
+  },
+  "steering_wheel_lo": {
+   "size": [
+    144,
+    168
+   ],
+   "pivot": [
+    17.71,
+    155.14
+   ],
+   "model_xy": [
+    -10.964,
+    7.607
+   ],
+   "texels_per_unit": 16,
+   "desc": "the steering wheel on its column; pivot at the column's foot (steering_wheel_lo)"
+  },
+  "kart_engine_lo": {
+   "size": [
+    320,
+    144
+   ],
+   "pivot": [
+    173.43,
+    69.71
+   ],
+   "model_xy": [
+    5.321,
+    9.321
+   ],
+   "texels_per_unit": 16,
+   "desc": "the rear cowl, the pipe and the orange silencer (kart_engine_lo)"
+  },
+  "kart_body_red_lo": {
+   "size": [
+    336,
+    152
+   ],
+   "pivot": [
+    80.57,
+    184.29
+   ],
+   "model_xy": [
+    0.0,
+    0.0
+   ],
+   "texels_per_unit": 16,
+   "desc": "the side pod and the tail, in front of Luigi's hips. Pivot = the kart's origin (kart_body_red_lo)"
+  },
+  "kart_body_blue_lo": {
+   "size": [
+    336,
+    152
+   ],
+   "pivot": [
+    80.57,
+    184.29
+   ],
+   "model_xy": [
+    0.0,
+    0.0
+   ],
+   "texels_per_unit": 16,
+   "desc": "the side pod and the tail, in front of Luigi's hips. Pivot = the kart's origin (kart_body_blue_lo)"
+  },
+  "kart_body_yellow_lo": {
+   "size": [
+    336,
+    152
+   ],
+   "pivot": [
+    80.57,
+    184.29
+   ],
+   "model_xy": [
+    0.0,
+    0.0
+   ],
+   "texels_per_unit": 16,
+   "desc": "the side pod and the tail, in front of Luigi's hips. Pivot = the kart's origin (kart_body_yellow_lo)"
+  },
+  "kart_body_purple_lo": {
+   "size": [
+    336,
+    152
+   ],
+   "pivot": [
+    80.57,
+    184.29
+   ],
+   "model_xy": [
+    0.0,
+    0.0
+   ],
+   "texels_per_unit": 16,
+   "desc": "the side pod and the tail, in front of Luigi's hips. Pivot = the kart's origin (kart_body_purple_lo)"
+  },
+  "kart_body_orange_lo": {
+   "size": [
+    336,
+    152
+   ],
+   "pivot": [
+    80.57,
+    184.29
+   ],
+   "model_xy": [
+    0.0,
+    0.0
+   ],
+   "texels_per_unit": 16,
+   "desc": "the side pod and the tail, in front of Luigi's hips. Pivot = the kart's origin (kart_body_orange_lo)"
+  },
+  "kart_body_white_lo": {
+   "size": [
+    336,
+    152
+   ],
+   "pivot": [
+    80.57,
+    184.29
+   ],
+   "model_xy": [
+    0.0,
+    0.0
+   ],
+   "texels_per_unit": 16,
+   "desc": "the side pod and the tail, in front of Luigi's hips. Pivot = the kart's origin (kart_body_white_lo)"
+  },
+  "kart_body_black_lo": {
+   "size": [
+    336,
+    152
+   ],
+   "pivot": [
+    80.57,
+    184.29
+   ],
+   "model_xy": [
+    0.0,
+    0.0
+   ],
+   "texels_per_unit": 16,
+   "desc": "the side pod and the tail, in front of Luigi's hips. Pivot = the kart's origin (kart_body_black_lo)"
+  },
+  "kart_body_wrecked_lo": {
+   "size": [
+    336,
+    152
+   ],
+   "pivot": [
+    80.57,
+    184.29
+   ],
+   "model_xy": [
+    0.0,
+    0.0
+   ],
+   "texels_per_unit": 16,
+   "desc": "the side pod and the tail, in front of Luigi's hips. Pivot = the kart's origin; wrecked: dented, scorched, cracked"
+  },
+  "kart_body_wrecked_red_lo": {
+   "size": [
+    336,
+    152
+   ],
+   "pivot": [
+    80.57,
+    184.29
+   ],
+   "model_xy": [
+    0.0,
+    0.0
+   ],
+   "texels_per_unit": 16,
+   "desc": "the side pod and the tail, in front of Luigi's hips. Pivot = the kart's origin (kart_body_wrecked_red_lo)"
+  },
+  "kart_body_wrecked_blue_lo": {
+   "size": [
+    336,
+    152
+   ],
+   "pivot": [
+    80.57,
+    184.29
+   ],
+   "model_xy": [
+    0.0,
+    0.0
+   ],
+   "texels_per_unit": 16,
+   "desc": "the side pod and the tail, in front of Luigi's hips. Pivot = the kart's origin (kart_body_wrecked_blue_lo)"
+  },
+  "kart_body_wrecked_yellow_lo": {
+   "size": [
+    336,
+    152
+   ],
+   "pivot": [
+    80.57,
+    184.29
+   ],
+   "model_xy": [
+    0.0,
+    0.0
+   ],
+   "texels_per_unit": 16,
+   "desc": "the side pod and the tail, in front of Luigi's hips. Pivot = the kart's origin (kart_body_wrecked_yellow_lo)"
+  },
+  "kart_body_wrecked_purple_lo": {
+   "size": [
+    336,
+    152
+   ],
+   "pivot": [
+    80.57,
+    184.29
+   ],
+   "model_xy": [
+    0.0,
+    0.0
+   ],
+   "texels_per_unit": 16,
+   "desc": "the side pod and the tail, in front of Luigi's hips. Pivot = the kart's origin (kart_body_wrecked_purple_lo)"
+  },
+  "kart_body_wrecked_orange_lo": {
+   "size": [
+    336,
+    152
+   ],
+   "pivot": [
+    80.57,
+    184.29
+   ],
+   "model_xy": [
+    0.0,
+    0.0
+   ],
+   "texels_per_unit": 16,
+   "desc": "the side pod and the tail, in front of Luigi's hips. Pivot = the kart's origin (kart_body_wrecked_orange_lo)"
+  },
+  "kart_body_wrecked_white_lo": {
+   "size": [
+    336,
+    152
+   ],
+   "pivot": [
+    80.57,
+    184.29
+   ],
+   "model_xy": [
+    0.0,
+    0.0
+   ],
+   "texels_per_unit": 16,
+   "desc": "the side pod and the tail, in front of Luigi's hips. Pivot = the kart's origin (kart_body_wrecked_white_lo)"
+  },
+  "kart_body_wrecked_black_lo": {
+   "size": [
+    336,
+    152
+   ],
+   "pivot": [
+    80.57,
+    184.29
+   ],
+   "model_xy": [
+    0.0,
+    0.0
+   ],
+   "texels_per_unit": 16,
+   "desc": "the side pod and the tail, in front of Luigi's hips. Pivot = the kart's origin (kart_body_wrecked_black_lo)"
+  },
+  "kart_nose_red_lo": {
+   "size": [
+    240,
+    224
+   ],
+   "pivot": [
+    121.71,
+    186.57
+   ],
+   "model_xy": [
+    -11.107,
+    4.321
+   ],
+   "texels_per_unit": 16,
+   "desc": "the front fender and the rail; in front of Luigi's legs (kart_nose_red_lo)"
+  },
+  "kart_nose_blue_lo": {
+   "size": [
+    240,
+    224
+   ],
+   "pivot": [
+    121.71,
+    186.57
+   ],
+   "model_xy": [
+    -11.107,
+    4.321
+   ],
+   "texels_per_unit": 16,
+   "desc": "the front fender and the rail; in front of Luigi's legs (kart_nose_blue_lo)"
+  },
+  "kart_nose_yellow_lo": {
+   "size": [
+    240,
+    224
+   ],
+   "pivot": [
+    121.71,
+    186.57
+   ],
+   "model_xy": [
+    -11.107,
+    4.321
+   ],
+   "texels_per_unit": 16,
+   "desc": "the front fender and the rail; in front of Luigi's legs (kart_nose_yellow_lo)"
+  },
+  "kart_nose_purple_lo": {
+   "size": [
+    240,
+    224
+   ],
+   "pivot": [
+    121.71,
+    186.57
+   ],
+   "model_xy": [
+    -11.107,
+    4.321
+   ],
+   "texels_per_unit": 16,
+   "desc": "the front fender and the rail; in front of Luigi's legs (kart_nose_purple_lo)"
+  },
+  "kart_nose_orange_lo": {
+   "size": [
+    240,
+    224
+   ],
+   "pivot": [
+    121.71,
+    186.57
+   ],
+   "model_xy": [
+    -11.107,
+    4.321
+   ],
+   "texels_per_unit": 16,
+   "desc": "the front fender and the rail; in front of Luigi's legs (kart_nose_orange_lo)"
+  },
+  "kart_nose_white_lo": {
+   "size": [
+    240,
+    224
+   ],
+   "pivot": [
+    121.71,
+    186.57
+   ],
+   "model_xy": [
+    -11.107,
+    4.321
+   ],
+   "texels_per_unit": 16,
+   "desc": "the front fender and the rail; in front of Luigi's legs (kart_nose_white_lo)"
+  },
+  "kart_nose_black_lo": {
+   "size": [
+    240,
+    224
+   ],
+   "pivot": [
+    121.71,
+    186.57
+   ],
+   "model_xy": [
+    -11.107,
+    4.321
+   ],
+   "texels_per_unit": 16,
+   "desc": "the front fender and the rail; in front of Luigi's legs (kart_nose_black_lo)"
+  },
+  "kart_nose_wrecked_lo": {
+   "size": [
+    240,
+    224
+   ],
+   "pivot": [
+    121.71,
+    186.57
+   ],
+   "model_xy": [
+    -11.107,
+    4.321
+   ],
+   "texels_per_unit": 16,
+   "desc": "the front fender and the rail; in front of Luigi's legs; wrecked: dented, scorched, cracked, the fender bent"
+  },
+  "kart_nose_wrecked_red_lo": {
+   "size": [
+    240,
+    224
+   ],
+   "pivot": [
+    121.71,
+    186.57
+   ],
+   "model_xy": [
+    -11.107,
+    4.321
+   ],
+   "texels_per_unit": 16,
+   "desc": "the front fender and the rail; in front of Luigi's legs (kart_nose_wrecked_red_lo)"
+  },
+  "kart_nose_wrecked_blue_lo": {
+   "size": [
+    240,
+    224
+   ],
+   "pivot": [
+    121.71,
+    186.57
+   ],
+   "model_xy": [
+    -11.107,
+    4.321
+   ],
+   "texels_per_unit": 16,
+   "desc": "the front fender and the rail; in front of Luigi's legs (kart_nose_wrecked_blue_lo)"
+  },
+  "kart_nose_wrecked_yellow_lo": {
+   "size": [
+    240,
+    224
+   ],
+   "pivot": [
+    121.71,
+    186.57
+   ],
+   "model_xy": [
+    -11.107,
+    4.321
+   ],
+   "texels_per_unit": 16,
+   "desc": "the front fender and the rail; in front of Luigi's legs (kart_nose_wrecked_yellow_lo)"
+  },
+  "kart_nose_wrecked_purple_lo": {
+   "size": [
+    240,
+    224
+   ],
+   "pivot": [
+    121.71,
+    186.57
+   ],
+   "model_xy": [
+    -11.107,
+    4.321
+   ],
+   "texels_per_unit": 16,
+   "desc": "the front fender and the rail; in front of Luigi's legs (kart_nose_wrecked_purple_lo)"
+  },
+  "kart_nose_wrecked_orange_lo": {
+   "size": [
+    240,
+    224
+   ],
+   "pivot": [
+    121.71,
+    186.57
+   ],
+   "model_xy": [
+    -11.107,
+    4.321
+   ],
+   "texels_per_unit": 16,
+   "desc": "the front fender and the rail; in front of Luigi's legs (kart_nose_wrecked_orange_lo)"
+  },
+  "kart_nose_wrecked_white_lo": {
+   "size": [
+    240,
+    224
+   ],
+   "pivot": [
+    121.71,
+    186.57
+   ],
+   "model_xy": [
+    -11.107,
+    4.321
+   ],
+   "texels_per_unit": 16,
+   "desc": "the front fender and the rail; in front of Luigi's legs (kart_nose_wrecked_white_lo)"
+  },
+  "kart_nose_wrecked_black_lo": {
+   "size": [
+    240,
+    224
+   ],
+   "pivot": [
+    121.71,
+    186.57
+   ],
+   "model_xy": [
+    -11.107,
+    4.321
+   ],
+   "texels_per_unit": 16,
+   "desc": "the front fender and the rail; in front of Luigi's legs (kart_nose_wrecked_black_lo)"
+  },
+  "kart_seat_lo": {
+   "size": [
+    168,
+    152
+   ],
+   "pivot": [
+    85.43,
+    142.29
+   ],
+   "model_xy": [
+    1.393,
+    7.179
+   ],
+   "texels_per_unit": 16,
+   "desc": "the seat, behind Luigi (kart_seat_lo)"
+  },
+  "kart_seat_red_lo": {
+   "size": [
+    168,
+    152
+   ],
+   "pivot": [
+    85.43,
+    142.29
+   ],
+   "model_xy": [
+    1.393,
+    7.179
+   ],
+   "texels_per_unit": 16,
+   "desc": "the seat, behind Luigi (kart_seat_red_lo)"
+  },
+  "kart_seat_blue_lo": {
+   "size": [
+    168,
+    152
+   ],
+   "pivot": [
+    85.43,
+    142.29
+   ],
+   "model_xy": [
+    1.393,
+    7.179
+   ],
+   "texels_per_unit": 16,
+   "desc": "the seat, behind Luigi (kart_seat_blue_lo)"
+  },
+  "kart_seat_yellow_lo": {
+   "size": [
+    168,
+    152
+   ],
+   "pivot": [
+    85.43,
+    142.29
+   ],
+   "model_xy": [
+    1.393,
+    7.179
+   ],
+   "texels_per_unit": 16,
+   "desc": "the seat, behind Luigi (kart_seat_yellow_lo)"
+  },
+  "kart_seat_purple_lo": {
+   "size": [
+    168,
+    152
+   ],
+   "pivot": [
+    85.43,
+    142.29
+   ],
+   "model_xy": [
+    1.393,
+    7.179
+   ],
+   "texels_per_unit": 16,
+   "desc": "the seat, behind Luigi (kart_seat_purple_lo)"
+  },
+  "kart_seat_orange_lo": {
+   "size": [
+    168,
+    152
+   ],
+   "pivot": [
+    85.43,
+    142.29
+   ],
+   "model_xy": [
+    1.393,
+    7.179
+   ],
+   "texels_per_unit": 16,
+   "desc": "the seat, behind Luigi (kart_seat_orange_lo)"
+  },
+  "kart_seat_white_lo": {
+   "size": [
+    168,
+    152
+   ],
+   "pivot": [
+    85.43,
+    142.29
+   ],
+   "model_xy": [
+    1.393,
+    7.179
+   ],
+   "texels_per_unit": 16,
+   "desc": "the seat, behind Luigi (kart_seat_white_lo)"
+  },
+  "kart_seat_black_lo": {
+   "size": [
+    168,
+    152
+   ],
+   "pivot": [
+    85.43,
+    142.29
+   ],
+   "model_xy": [
+    1.393,
+    7.179
+   ],
+   "texels_per_unit": 16,
+   "desc": "the seat, behind Luigi (kart_seat_black_lo)"
+  }
+ },
+ "source": "kart.py (plates, flame, puff, smoke); cut_kart.py and kart_cards.py (the rest)"
+}

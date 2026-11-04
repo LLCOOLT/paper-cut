@@ -11,6 +11,10 @@ extern "C" {
 extern int gPortAcCue;      /* the setting: 0 off, 1 on screen, 2 also a tap (phones) */
 extern int gPortAcCueState; /* now: 0 nothing, 1 attack, 2 guard */
 extern int gPortAcCueLead;  /* game frames until the ideal press (<= 0: now) */
+/* a script's own guard moment, known ahead (chapter 6's Future Sight ring): while Hold is on, the
+ * cue is a guard cue at HoldLead */
+extern int gPortAcCueHold;
+extern int gPortAcCueHoldLead;
 /* a battle unit's jump starts (btlevtcmd_JumpPosition, MarioJumpPosition) */
 void portAcCueJump(void* unit);
 

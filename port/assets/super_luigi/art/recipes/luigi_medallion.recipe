@@ -1,0 +1,183 @@
+# The chapter card's coin (effect_sys.tpl image 0) as Luigi's: Mario's own coin, its rim, plate and
+# bevels kept, in its own tones. Luigi changes: the cap's M an L, and the moustache, swept back and
+# curled up, with a longer chin. The same image on every disc and language, so this is one edit from
+# each disc's own folder (JP's under medallion_jp/: one image per path). The drawn coin at the same path stands in if the disc can't make it.
+#
+# Loaded in the "sys_01@sl" texture set (superluigi_aurora.c): on Super Luigi's cards only.
+
+image art/titles/medallion/tex1_160x160_93898cc57cbf557a_14.png
+  fallback art/titles/medallion_drawn/tex1_160x160_93898cc57cbf557a_14.png
+  discs G8ME01 G8MP01
+  load tpl e/us/effect_sys.tpl 0
+  # the badge: the M gone, the oval's cream left, an L in the line's colour
+  mask oval poly 57,41 60,39 63,41 66,46 67,51 66,55 62,55 58,53 56,49 56,44
+  fill in oval #fff1bd
+  mask ell rect 59 42 61 53
+  mask ell + rect 59 51 65 53
+  stamp ell #634d00
+  # Mario's moustache cleared to skin, down to the jaw's line
+  mask clear poly 53,103 57,100 66,97 76,93 79,96 82,102 82,108 78,113 72,115 52,115
+  fill in clear #fff1bd
+  # the longer jaw, in the line's colour, the chin rounding up to the moustache
+  mask jaw poly 50,107 52,108 55,112 59,114 66,115 73,114 79,113 79,116 72,117 60,117 53,116 50,112
+  stamp jaw #634d00
+  # his moustache: under the nose, sweeping back and curling up before the sideburn
+  piece tache canvas 160 160
+  mask tachefill poly 54,104 60,101 68,99 73,97 76,93 78,91 80,93 81,98 79,103 75,106 71,107 69,110 64,111 60,113 55,112 52,109
+  @tache stamp tachefill #967300
+  @tache grow 2 #634d00
+  paste tache 0 0
+  alpha cut 128
+end
+
+image art/titles/medallion_jp/tex1_160x160_93898cc57cbf557a_14.png
+  fallback art/titles/medallion_drawn/tex1_160x160_93898cc57cbf557a_14.png
+  discs G8MJ01
+  load tpl e/jp/effect_sys.tpl 0
+  # the badge: the M gone, the oval's cream left, an L in the line's colour
+  mask oval poly 57,41 60,39 63,41 66,46 67,51 66,55 62,55 58,53 56,49 56,44
+  fill in oval #fff1bd
+  mask ell rect 59 42 61 53
+  mask ell + rect 59 51 65 53
+  stamp ell #634d00
+  # Mario's moustache cleared to skin, down to the jaw's line
+  mask clear poly 53,103 57,100 66,97 76,93 79,96 82,102 82,108 78,113 72,115 52,115
+  fill in clear #fff1bd
+  # the longer jaw, in the line's colour, the chin rounding up to the moustache
+  mask jaw poly 50,107 52,108 55,112 59,114 66,115 73,114 79,113 79,116 72,117 60,117 53,116 50,112
+  stamp jaw #634d00
+  # his moustache: under the nose, sweeping back and curling up before the sideburn
+  piece tache canvas 160 160
+  mask tachefill poly 54,104 60,101 68,99 73,97 76,93 78,91 80,93 81,98 79,103 75,106 71,107 69,110 64,111 60,113 55,112 52,109
+  @tache stamp tachefill #967300
+  @tache grow 2 #634d00
+  paste tache 0 0
+  alpha cut 128
+end
+
+# ---- coin_faces: the coin's other three faces. On Mario's cards they are Peach, Bowser and the Crystal Star emblem; Luigi's are
+# his first two friends and the Marvelous Compass, each the friend's own card reduced to the coin's three tones under the same
+# cream-and-line sticker edge as Mario's face.
+gradient coin_blooey 0.0 #634d00 0.42 #634d00 0.46 #967300 0.74 #967300 0.8 #fff1bd 3.0 #fff1bd
+gradient coin_jerry 0.0 #634d00 0.34 #634d00 0.4 #967300 1.75 #967300 1.9 #fff1bd 3.0 #fff1bd
+gradient coin_metal 0.0 #634d00 0.4 #634d00 0.5 #967300 1.0 #967300 1.2 #fff1bd 3.0 #fff1bd
+
+image art/titles/medallion/tex1_160x160_2ebf0330d36d5fd0_14.png   # Blooey, in Peach's place
+  discs G8ME01 G8MP01
+  load tpl e/us/effect_sys.tpl 1
+  mask clear poly 146,80 145,93 141,105 135,117 127,127 117,135 105,141 93,145 80,146 67,145 55,141 43,135 33,127 25,117 19,105 15,93 14,80 15,67 19,55 25,43 33,33 43,25 55,19 67,15 80,14 93,15 105,19 117,25 127,33 135,43 141,55 145,67
+  fill in clear #99831e
+  piece f model c_lp_gesso 0
+  @f ramp base #e0a040 to coin_blooey
+  @f scale 88 100 texel
+  @f grow 3 #fff1bd
+  @f grow 2 #634d00
+  paste f 36 30
+  alpha cut 128
+end
+
+image art/titles/medallion/tex1_160x160_d8cc96a0f8ca4cc7_14.png   # Jerry, in Bowser's place
+  discs G8ME01 G8MP01
+  load tpl e/us/effect_sys.tpl 2
+  mask clear poly 146,80 145,93 141,105 135,117 127,127 117,135 105,141 93,145 80,146 67,145 55,141 43,135 33,127 25,117 19,105 15,93 14,80 15,67 19,55 25,43 33,33 43,25 55,19 67,15 80,14 93,15 105,19 117,25 127,33 135,43 141,55 145,67
+  fill in clear #99831e
+  piece art canvas 160 160
+  piece b model c_lp_bom 3
+  @b ramp base #808080 to coin_jerry
+  @b scale 80 80 texel
+  piece k model c_lp_bom 1
+  @k ramp base #808080 to coin_metal
+  @k scale 48 56 texel
+  piece w model c_lp_bom 2
+  @w ramp base #a06020 to coin_metal
+  @w crop 0 0 32 32
+  @w scale 24 24 texel
+  @art paste k 92 54
+  @art paste b 26 50
+  @art paste w 58 34
+  mask spark poly 66,16 69,27 79,26 71,33 75,43 66,37 58,43 61,33 53,26 63,27
+  @art stamp spark #fff1bd
+  @art grow 3 #fff1bd
+  @art grow 2 #634d00
+  paste art 0 0
+  alpha cut 128
+end
+
+image art/titles/medallion/tex1_160x160_1bb8bdf198183fcd_14.png   # the Marvelous Compass, in the emblem's place: its rings kept
+  discs G8ME01 G8MP01
+  load tpl e/us/effect_sys.tpl 3
+  mask dial poly 128,80 126,92 122,104 114,114 104,122 92,126 80,128 68,126 56,122 46,114 38,104 34,92 32,80 34,68 38,56 46,46 56,38 68,34 80,32 92,34 104,38 114,46 122,56 126,68
+  stamp dial #967300
+  mask ticks poly 79,33 81,33 82,44 78,44
+  mask ticks + poly 79,127 81,127 82,116 78,116
+  mask ticks + poly 33,79 33,81 44,82 44,78
+  mask ticks + poly 127,79 127,81 116,82 116,78
+  stamp ticks #fff1bd
+  mask needle_n poly 80,76 97,44 88,84
+  stamp needle_n #fff1bd
+  mask needle_s poly 72,76 63,116 88,84 80,76
+  stamp needle_s #634d00
+  mask pin poly 76,78 80,74 85,76 87,81 83,85 78,84
+  stamp pin #634d00
+  alpha cut 128
+end
+
+image art/titles/medallion_jp/tex1_160x160_2ebf0330d36d5fd0_14.png   # Blooey, in Peach's place
+  discs G8MJ01
+  load tpl e/jp/effect_sys.tpl 1
+  mask clear poly 146,80 145,93 141,105 135,117 127,127 117,135 105,141 93,145 80,146 67,145 55,141 43,135 33,127 25,117 19,105 15,93 14,80 15,67 19,55 25,43 33,33 43,25 55,19 67,15 80,14 93,15 105,19 117,25 127,33 135,43 141,55 145,67
+  fill in clear #99831e
+  piece f model c_lp_gesso 0
+  @f ramp base #e0a040 to coin_blooey
+  @f scale 88 100 texel
+  @f grow 3 #fff1bd
+  @f grow 2 #634d00
+  paste f 36 30
+  alpha cut 128
+end
+
+image art/titles/medallion_jp/tex1_160x160_d8cc96a0f8ca4cc7_14.png   # Jerry, in Bowser's place
+  discs G8MJ01
+  load tpl e/jp/effect_sys.tpl 2
+  mask clear poly 146,80 145,93 141,105 135,117 127,127 117,135 105,141 93,145 80,146 67,145 55,141 43,135 33,127 25,117 19,105 15,93 14,80 15,67 19,55 25,43 33,33 43,25 55,19 67,15 80,14 93,15 105,19 117,25 127,33 135,43 141,55 145,67
+  fill in clear #99831e
+  piece art canvas 160 160
+  piece b model c_lp_bom 3
+  @b ramp base #808080 to coin_jerry
+  @b scale 80 80 texel
+  piece k model c_lp_bom 1
+  @k ramp base #808080 to coin_metal
+  @k scale 48 56 texel
+  piece w model c_lp_bom 2
+  @w ramp base #a06020 to coin_metal
+  @w crop 0 0 32 32
+  @w scale 24 24 texel
+  @art paste k 92 54
+  @art paste b 26 50
+  @art paste w 58 34
+  mask spark poly 66,16 69,27 79,26 71,33 75,43 66,37 58,43 61,33 53,26 63,27
+  @art stamp spark #fff1bd
+  @art grow 3 #fff1bd
+  @art grow 2 #634d00
+  paste art 0 0
+  alpha cut 128
+end
+
+image art/titles/medallion_jp/tex1_160x160_1bb8bdf198183fcd_14.png   # the Marvelous Compass, in the emblem's place: its rings kept
+  discs G8MJ01
+  load tpl e/jp/effect_sys.tpl 3
+  mask dial poly 128,80 126,92 122,104 114,114 104,122 92,126 80,128 68,126 56,122 46,114 38,104 34,92 32,80 34,68 38,56 46,46 56,38 68,34 80,32 92,34 104,38 114,46 122,56 126,68
+  stamp dial #967300
+  mask ticks poly 79,33 81,33 82,44 78,44
+  mask ticks + poly 79,127 81,127 82,116 78,116
+  mask ticks + poly 33,79 33,81 44,82 44,78
+  mask ticks + poly 127,79 127,81 116,82 116,78
+  stamp ticks #fff1bd
+  mask needle_n poly 80,76 97,44 88,84
+  stamp needle_n #fff1bd
+  mask needle_s poly 72,76 63,116 88,84 80,76
+  stamp needle_s #634d00
+  mask pin poly 76,78 80,74 85,76 87,81 83,85 78,84
+  stamp pin #634d00
+  alpha cut 128
+end

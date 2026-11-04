@@ -1,0 +1,247 @@
+# Luigi as the Grass (c_luigi_grass on c_luigi_pc, ART_PLAN row 6): no blade is drawn. Each clump is the game's own
+# leaves (the Petal Meadows flower's c_flower 21 to 24, the Piranha's c_pakflwr) turned about their stems and
+# overlapped, as a bush would be cut from them. Every leaf keeps its own line. Numbers: sl_models.py cards c_luigi_grass.
+
+# the far clump, behind him
+image art/models/c_luigi_grass/39.png
+  canvas 184 264
+  piece l0 model c_pakflwr 0
+  @l0 crop 8 28 92 60
+  @l0 scale 110 62 texel
+  @l0 crop -4 -28 118 118
+  @l0 rotate -152
+  paste l0 -10 174
+  piece l1 model c_pakflwr 0
+  @l1 crop 8 28 92 60
+  @l1 scale 110 62 texel
+  @l1 crop -4 -28 118 118
+  @l1 rotate -28
+  paste l1 76 174
+  piece l2 model c_flower 23
+  @l2 scale 170 62 texel
+  @l2 crop -4 -58 178 178
+  @l2 rotate -136
+  paste l2 -62 114
+  piece l3 model c_flower 23
+  @l3 scale 170 62 texel
+  @l3 crop -4 -58 178 178
+  @l3 rotate -44
+  paste l3 68 114
+  piece l4 model c_flower 24
+  @l4 scale 220 66 texel
+  @l4 crop -4 -81 228 228
+  @l4 rotate -118
+  paste l4 -77 54
+  piece l5 model c_flower 24
+  @l5 scale 220 66 texel
+  @l5 crop -4 -81 228 228
+  @l5 rotate -60
+  paste l5 36 56
+  piece l6 model c_flower 21
+  @l6 scale 248 66 texel
+  @l6 crop -4 -95 256 256
+  @l6 rotate -102
+  paste l6 -65 19
+  piece l7 model c_flower 21
+  @l7 scale 248 66 texel
+  @l7 crop -4 -95 256 256
+  @l7 rotate -76
+  paste l7 -3 20
+  piece l8 model c_flower 23
+  @l8 scale 150 56 texel
+  @l8 crop -4 -51 158 158
+  @l8 rotate -128
+  paste l8 -51 127
+  piece l9 model c_flower 23
+  @l9 scale 150 56 texel
+  @l9 crop -4 -51 158 158
+  @l9 rotate -52
+  paste l9 75 127
+  piece l10 model c_flower 24
+  @l10 scale 200 60 texel
+  @l10 crop -4 -74 208 208
+  @l10 rotate -90
+  paste l10 -12 64
+  alpha cut 128
+end
+
+# the near clump, over his body: still
+image art/models/c_luigi_grass/40.png
+  canvas 184 144
+  piece l0 model c_pakflwr 0
+  @l0 crop 8 28 92 60
+  @l0 scale 92 52 texel
+  @l0 crop -4 -24 100 100
+  @l0 rotate -158
+  paste l0 -27 75
+  piece l1 model c_flower 23
+  @l1 scale 110 50 texel
+  @l1 crop -4 -34 118 118
+  @l1 rotate -138
+  paste l1 -33 50
+  piece l2 model c_flower 24
+  @l2 scale 124 54 texel
+  @l2 crop -4 -39 132 132
+  @l2 rotate -116
+  paste l2 -15 26
+  piece l3 model c_flower 21
+  @l3 scale 128 54 texel
+  @l3 crop -4 -41 136 136
+  @l3 rotate -98
+  paste l3 16 17
+  piece l4 model c_flower 23
+  @l4 scale 124 52 texel
+  @l4 crop -4 -40 132 132
+  @l4 rotate -78
+  paste l4 54 21
+  piece l5 model c_flower 24
+  @l5 scale 124 50 texel
+  @l5 crop -4 -41 132 132
+  @l5 rotate -60
+  paste l5 84 28
+  piece l6 model c_pakflwr 0
+  @l6 crop 8 28 92 60
+  @l6 scale 100 50 texel
+  @l6 crop -4 -29 108 108
+  @l6 rotate -44
+  paste l6 110 57
+  alpha cut 128
+end
+
+# the near clump: swept back
+image art/models/c_luigi_grass/41.png
+  canvas 184 144
+  piece l0 model c_pakflwr 0
+  @l0 crop 8 28 92 60
+  @l0 scale 92 52 texel
+  @l0 crop -4 -24 100 100
+  @l0 rotate -144
+  paste l0 -22 66
+  piece l1 model c_flower 23
+  @l1 scale 110 50 texel
+  @l1 crop -4 -34 118 118
+  @l1 rotate -124
+  paste l1 -24 42
+  piece l2 model c_flower 24
+  @l2 scale 124 54 texel
+  @l2 crop -4 -39 132 132
+  @l2 rotate -102
+  paste l2 -2 21
+  piece l3 model c_flower 21
+  @l3 scale 128 54 texel
+  @l3 crop -4 -41 136 136
+  @l3 rotate -84
+  paste l3 30 16
+  piece l4 model c_flower 23
+  @l4 scale 124 52 texel
+  @l4 crop -4 -40 132 132
+  @l4 rotate -64
+  paste l4 67 26
+  piece l5 model c_flower 24
+  @l5 scale 124 50 texel
+  @l5 crop -4 -41 132 132
+  @l5 rotate -46
+  paste l5 95 36
+  piece l6 model c_pakflwr 0
+  @l6 crop 8 28 92 60
+  @l6 scale 100 50 texel
+  @l6 crop -4 -29 108 108
+  @l6 rotate -30
+  paste l6 116 66
+  alpha cut 128
+end
+
+# the mound on his cap and down his back: still
+image art/models/c_luigi_grass/42.png
+  canvas 168 184
+  piece l0 model c_flower 21
+  @l0 scale 88 46 texel
+  @l0 crop -4 -25 96 96
+  @l0 rotate -128
+  paste l0 13 4
+  piece l1 model c_flower 23
+  @l1 scale 86 44 texel
+  @l1 crop -4 -25 94 94
+  @l1 rotate -96
+  paste l1 37 -2
+  piece l2 model c_flower 24
+  @l2 scale 88 46 texel
+  @l2 crop -4 -25 96 96
+  @l2 rotate -64
+  paste l2 63 0
+  piece l3 model c_flower 21
+  @l3 scale 88 46 texel
+  @l3 crop -4 -25 96 96
+  @l3 rotate -30
+  paste l3 83 19
+  piece l4 model c_flower 23
+  @l4 scale 88 44 texel
+  @l4 crop -4 -26 96 96
+  @l4 rotate 6
+  paste l4 90 48
+  piece l5 model c_flower 24
+  @l5 scale 92 44 texel
+  @l5 crop -4 -28 100 100
+  @l5 rotate 44
+  paste l5 75 72
+  piece l6 model c_flower 21
+  @l6 scale 88 42 texel
+  @l6 crop -4 -27 96 96
+  @l6 rotate 75
+  paste l6 54 85
+  piece l7 model c_pakflwr 0
+  @l7 crop 8 28 92 60
+  @l7 scale 92 54 texel
+  @l7 crop -4 -23 100 100
+  @l7 rotate -180
+  paste l7 34 24
+  alpha cut 128
+end
+
+# the mound: swept back
+image art/models/c_luigi_grass/43.png
+  canvas 168 184
+  piece l0 model c_flower 21
+  @l0 scale 88 46 texel
+  @l0 crop -4 -25 96 96
+  @l0 rotate -118
+  paste l0 18 0
+  piece l1 model c_flower 23
+  @l1 scale 86 44 texel
+  @l1 crop -4 -25 94 94
+  @l1 rotate -86
+  paste l1 44 -2
+  piece l2 model c_flower 24
+  @l2 scale 88 46 texel
+  @l2 crop -4 -25 96 96
+  @l2 rotate -54
+  paste l2 68 3
+  piece l3 model c_flower 21
+  @l3 scale 88 46 texel
+  @l3 crop -4 -25 96 96
+  @l3 rotate -20
+  paste l3 86 25
+  piece l4 model c_flower 23
+  @l4 scale 88 44 texel
+  @l4 crop -4 -26 96 96
+  @l4 rotate 16
+  paste l4 89 54
+  piece l5 model c_flower 24
+  @l5 scale 92 44 texel
+  @l5 crop -4 -28 100 100
+  @l5 rotate 54
+  paste l5 70 76
+  piece l6 model c_flower 21
+  @l6 scale 88 42 texel
+  @l6 crop -4 -27 96 96
+  @l6 rotate 85
+  paste l6 47 86
+  piece l7 model c_pakflwr 0
+  @l7 crop 8 28 92 60
+  @l7 scale 92 54 texel
+  @l7 crop -4 -23 100 100
+  @l7 rotate -180
+  paste l7 34 24
+  alpha cut 128
+end
+

@@ -1,0 +1,83 @@
+{
+ "model": "sl_ch4_fans",
+ "texels_per_unit": 8,
+ "faces": "-x",
+ "pivot_note": "pivot: pixels from the PNG's top-left; model_xy: where the pivot sits at rest (model units, feet at y 0)",
+ "cards": {
+  "paper_leaf": {
+   "size": [
+    40,
+    64
+   ],
+   "pivot": [
+    20.0,
+    56.0
+   ],
+   "model_xy": [
+    0.0,
+    1.0
+   ],
+   "desc": "a fan's paper leaf on a stick, held up and waved; pivot at the grip (0, 1)"
+  },
+  "paper_grass": {
+   "size": [
+    40,
+    64
+   ],
+   "pivot": [
+    20.0,
+    56.0
+   ],
+   "model_xy": [
+    0.0,
+    1.0
+   ],
+   "desc": "a fan's paper grass, three blades on a stick (the Grass's own fans); pivot at the grip"
+  },
+  "banner_grass": {
+   "size": [
+    288,
+    72
+   ],
+   "pivot": [
+    144.0,
+    5.6
+   ],
+   "model_xy": [
+    0.0,
+    3.8
+   ],
+   "desc": "the fans' banner, \"WE \u2665 THE GRASS\" painted on a strip of paper, taped at the top corners; pivot at the middle of its top edge (held up by two fans, or hung)"
+  },
+  "dazzlina_tiara": {
+   "size": [
+    48,
+    32
+   ],
+   "pivot": [
+    24.0,
+    27.2
+   ],
+   "model_xy": [
+    0.0,
+    0.6
+   ],
+   "desc": "Dazzlina's tiara of sequins for the Amazy Dayzee (scale it 1.2x with her); pivot at its foot, on her head between the petals"
+  },
+  "baron_hat": {
+   "size": [
+    40,
+    40
+   ],
+   "pivot": [
+    20.0,
+    35.2
+   ],
+   "model_xy": [
+    0.0,
+    0.6
+   ],
+   "desc": "the Baron's tiny top hat (Hayzee in the play), black with a purple band; pivot at the brim's middle, set on top of his head card, tipped a little"
+  }
+ }
+}

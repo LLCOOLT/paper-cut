@@ -3,6 +3,7 @@
  * otherwise; any build takes $TTYD_SET_<key> for a run. */
 #include <stdio.h>
 #include "port/gameplus.h"
+#include "port/superluigi.h"
 #include "port/settings.h"
 #include "mario/mario_pouch.h"
 #include "battle/battle_mario.h"
@@ -242,17 +243,81 @@ __attribute__((weak)) void portSaveStateNotice(const char* text) {
     (void)text;
 }
 
+/* Super Luigi (port/src/aurora/superluigi_aurora.c); the headless build has none */
+__attribute__((weak)) int portSuperLuigiMode(void) {
+    return 0;
+}
+__attribute__((weak)) int portSuperLuigiActive(void) {
+    return 0;
+}
+__attribute__((weak)) int portSuperLuigiCardWrite(int slot) {
+    (void)slot;
+    return 0;
+}
+__attribute__((weak)) int portSuperLuigiNoSetup(const char* map) {
+    (void)map;
+    return 0;
+}
+__attribute__((weak)) int portSuperLuigiOwnText(const char* tag) {
+    (void)tag;
+    return 0;
+}
+
+__attribute__((weak)) const char* portSlPoseAlias(const char* file, const char* name) {
+    (void)file;
+    return name;
+}
+
+__attribute__((weak)) const char* portAnimAlias(const char* file, const char* name) {
+    (void)file;
+    return name;
+}
+
+/* gor.c's "Show me" (rels/gor/src/gor.c): never offered without Super Luigi */
+__attribute__((weak)) s32 evt_sl_tale_chapter(EventEntry* event, BOOL isFirstCall) {
+    (void)isFirstCall;
+    evtSetValue(event, event->args[1], -1);
+    return EVT_RETURN_DONE;
+}
+__attribute__((weak)) s32 evt_sl_enter(EventEntry* event, BOOL isFirstCall) {
+    (void)event;
+    (void)isFirstCall;
+    return EVT_RETURN_DONE;
+}
+/* the game's hooks into Super Luigi (port/include/port/superluigi.h): the game's own behaviour without it */
+__attribute__((weak)) s32 evt_sl_title_next(EventEntry* event, BOOL isFirstCall) {
+    (void)isFirstCall;
+    evtSetValue(event, event->args[0], 0);
+    return EVT_RETURN_DONE;
+}
+__attribute__((weak)) int portIconTexOverride(unsigned int iconId, void* texObj) {
+    (void)iconId;
+    (void)texObj;
+    return 0;
+}
+__attribute__((weak)) int portBtlTargetFilter(struct BattleWorkWeaponTargets* d, int n) {
+    (void)d;
+    return n;
+}
+__attribute__((weak)) void portBtlActFilter(struct BattleWork* wp) {
+    (void)wp;
+}
+__attribute__((weak)) void portBtlWeaponFilter(struct BattleWork* wp, int type) {
+    (void)wp;
+    (void)type;
+}
+
 static int sRetryLoading; /* frames left for the requested load to happen */
 
 void portRetryPoint(void) {
     sRetryLoading = 0;
-    if (portGameplus("gameover_retry")) {
+    if (portGameplus("gameover_retry") && !portSuperLuigiActive()) { /* paused in Super Luigi's chapters */
         portSaveStateRequest(PORT_SAVE_STATE_RETRY, 0);
     }
 }
 
 int portRetryOffer(void) {
-    if (!portGameplus("gameover_retry") || !portSaveStateHas(PORT_SAVE_STATE_RETRY)) {
+    if (!portGameplus("gameover_retry") || !portSaveStateHas(PORT_SAVE_STATE_RETRY) || portSuperLuigiActive()) {
         return 0;
     }
     if (sRetryLoading > 0) {

@@ -1,0 +1,347 @@
+{
+ "model": "c_sl_crepe",
+ "texels_per_unit": 32,
+ "source": "designs/crepe/parts_qwen_e1.png",
+ "cards": {
+  "hat": {
+   "pivot": [
+    165.33,
+    242.0
+   ],
+   "model_xy": [
+    -0.542,
+    29.208
+   ],
+   "desc": "the top hat; pivot at the band",
+   "size": [
+    336,
+    264
+   ]
+  },
+  "head": {
+   "pivot": [
+    167.33,
+    142.67
+   ],
+   "model_xy": [
+    -0.542,
+    25.25
+   ],
+   "desc": "the head and face, the moustache and the white curl; neck pivot",
+   "size": [
+    312,
+    168
+   ]
+  },
+  "roll": {
+   "pivot": [
+    189.33,
+    142.67
+   ],
+   "model_xy": [
+    -0.333,
+    22.708
+   ],
+   "desc": "the crepe, rolled round his neck, its spiral end hanging in front; the collar",
+   "size": [
+    360,
+    304
+   ]
+  },
+  "robe": {
+   "pivot": [
+    264.0,
+    635.33
+   ],
+   "model_xy": [
+    -0.333,
+    3.208
+   ],
+   "desc": "the coat; pivot at the hem",
+   "size": [
+    504,
+    656
+   ]
+  },
+  "arm_back": {
+   "pivot": [
+    104.0,
+    36.67
+   ],
+   "model_xy": [
+    -6.583,
+    21.958
+   ],
+   "desc": "the far sleeve; shoulder pivot",
+   "size": [
+    168,
+    288
+   ]
+  },
+  "arm_front": {
+   "pivot": [
+    86.67,
+    36.67
+   ],
+   "model_xy": [
+    5.083,
+    21.667
+   ],
+   "desc": "the near sleeve; shoulder pivot",
+   "size": [
+    184,
+    288
+   ]
+  },
+  "hand_back": {
+   "pivot": [
+    76.0,
+    14.0
+   ],
+   "model_xy": [
+    -7.812,
+    14.754
+   ],
+   "desc": "the far hand",
+   "size": [
+    160,
+    208
+   ]
+  },
+  "hand_open": {
+   "pivot": [
+    111.33,
+    17.33
+   ],
+   "model_xy": [
+    6.131,
+    14.345
+   ],
+   "desc": "the near hand, open",
+   "size": [
+    232,
+    320
+   ]
+  },
+  "hand_point": {
+   "pivot": [
+    111.89,
+    17.45
+   ],
+   "model_xy": [
+    6.131,
+    14.345
+   ],
+   "desc": "a finger raised",
+   "size": [
+    232,
+    320
+   ]
+  },
+  "hand_fist": {
+   "pivot": [
+    111.63,
+    17.08
+   ],
+   "model_xy": [
+    6.131,
+    14.345
+   ],
+   "desc": "a fist",
+   "size": [
+    232,
+    320
+   ]
+  },
+  "hand_palm": {
+   "pivot": [
+    111.63,
+    17.64
+   ],
+   "model_xy": [
+    6.131,
+    14.345
+   ],
+   "desc": "palm up, offering",
+   "size": [
+    232,
+    320
+   ]
+  },
+  "foot_back": {
+   "pivot": [
+    61.33,
+    9.33
+   ],
+   "model_xy": [
+    2.5,
+    9.708
+   ],
+   "desc": "the far boot; hip pivot",
+   "size": [
+    152,
+    336
+   ]
+  },
+  "foot_front": {
+   "pivot": [
+    86.67,
+    9.33
+   ],
+   "model_xy": [
+    -2.333,
+    9.708
+   ],
+   "desc": "the near boot, toe forward; hip pivot",
+   "size": [
+    152,
+    336
+   ]
+  },
+  "eyes": {
+   "pivot": [
+    162.0,
+    148.67
+   ],
+   "model_xy": [
+    -0.542,
+    25.25
+   ],
+   "desc": "a face overlay",
+   "size": [
+    312,
+    96
+   ]
+  },
+  "eyes_shut": {
+   "pivot": [
+    162.0,
+    148.67
+   ],
+   "model_xy": [
+    -0.542,
+    25.25
+   ],
+   "desc": "a face overlay",
+   "size": [
+    312,
+    96
+   ]
+  },
+  "eyes_gold": {
+   "pivot": [
+    162.0,
+    148.67
+   ],
+   "model_xy": [
+    -0.542,
+    25.25
+   ],
+   "desc": "a face overlay",
+   "size": [
+    312,
+    96
+   ]
+  },
+  "mouth_shut": {
+   "pivot": [
+    170.0,
+    81.33
+   ],
+   "model_xy": [
+    -0.542,
+    25.25
+   ],
+   "desc": "a face overlay",
+   "size": [
+    296,
+    120
+   ]
+  },
+  "mouth": {
+   "pivot": [
+    169.67,
+    81.33
+   ],
+   "model_xy": [
+    -0.542,
+    25.25
+   ],
+   "desc": "a face overlay",
+   "size": [
+    296,
+    120
+   ]
+  },
+  "scroll": {
+   "pivot": [
+    86.0,
+    78.0
+   ],
+   "model_xy": [
+    6.131,
+    14.345
+   ],
+   "desc": "the letter, sealed",
+   "size": [
+    176,
+    152
+   ]
+  },
+  "compass": {
+   "pivot": [
+    71.33,
+    150.67
+   ],
+   "model_xy": [
+    6.131,
+    14.345
+   ],
+   "desc": "the compass's base, its lid open on the empty socket",
+   "size": [
+    168,
+    200
+   ]
+  },
+  "nose": {
+   "size": [
+    32,
+    32
+   ],
+   "pivot": [
+    16,
+    16
+   ],
+   "model_xy": [
+    -1.583,
+    27.125
+   ],
+   "desc": "blank: his nose and moustache are the head card's own"
+  },
+  "tache": {
+   "size": [
+    32,
+    32
+   ],
+   "pivot": [
+    16,
+    16
+   ],
+   "model_xy": [
+    -1.583,
+    27.125
+   ],
+   "desc": "blank: his nose and moustache are the head card's own"
+  }
+ },
+ "anchors": {
+  "top": [
+   -0.333,
+   3.208
+  ],
+  "neck": [
+   -0.542,
+   25.25
+  ]
+ }
+}

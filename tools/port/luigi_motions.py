@@ -46,8 +46,8 @@ CHANNELS = {
 GLOVE_CHAIN = ["locator2", "locator3", "pPlane17", "pPlane16", "pPlane3"]
 
 
-def _obj(name):
-    return bpy.data.objects["%s:%s" % (PREFIX, name)]
+def _obj(name, prefix=PREFIX):
+    return bpy.data.objects["%s:%s" % (prefix, name)]
 
 
 def _rest(ob, path, index):
@@ -65,13 +65,15 @@ def _tex_slot(ob):
 
 
 def build(name, motion, root=None):
-    """the motion as this model's Action `<prefix>:<name>` (replacing one of that name)"""
+    """the motion as this model's Action `<prefix>:<name>` (replacing one of that name);
+    any model built by ttyd_blender.build_model (the root's prefix), Luigi's by default"""
     root = root or bpy.data.objects[PREFIX]
+    prefix = root["ttyd_prefix"]
     keys = motion.get("keys", [])
     # a motion of tracks: {group: {channel: [(frame, value[, ease]), ...]}}, each
     # channel keyed on its own (head nods, blinks, mouth flaps to Mario's times)
     tracks = motion.get("tracks", {})
-    act_name = "%s:%s" % (PREFIX, name)
+    act_name = "%s:%s" % (prefix, name)
     old = bpy.data.actions.get(act_name)
     if old is not None:
         bpy.data.actions.remove(old)
@@ -92,8 +94,10 @@ def build(name, motion, root=None):
             for c in chans:
                 used.setdefault(g, set()).add(c)
     for g, chans in list(used.items()) + [(g, set(t)) for g, t in tracks.items()]:
-        ob = _obj(g)
+        ob = _obj(g, prefix)
         for c in sorted(chans):
+            if c == "v":
+                continue  # vertex offsets: shape keys below
             if c == "hw":
                 continue  # turned into the hammer's rz below
             pts = []
@@ -127,14 +131,125 @@ def build(name, motion, root=None):
             hw = pose.get("Hammer_pc", {}).get("hw", 0.0)
             chain = sum(pose.get(g, {}).get("rz", 0.0) for g in GLOVE_CHAIN)
             pts.append((f, (hw - chain) * DEG, ease))
-        _keys(bag(_obj("Hammer_pc")), "rotation_euler", 2, pts)
+        _keys(bag(_obj("Hammer_pc", prefix)), "rotation_euler", 2, pts)
+    _vertex_preview(name, keys, root, prefix)
     act.use_frame_range = True
     act.frame_start = 0
     act.frame_end = motion["end"]
     act["ttyd_loop"] = 1 if motion.get("loop") else 0
     act["ttyd_anim"] = name
-    act["ttyd_model"] = PREFIX
+    act["ttyd_model"] = prefix
     return act
+
+
+def vertex_tracks(motion):
+    """{group: [(frame, [(dx, dy), ...] per vertex of its shape)]}: the motion's
+    "v" channel, offsets of a plane's corners from rest in its own units (the
+    game's vertex animation, linear between keys); a key leaving it out is at rest"""
+    out = {}
+    for _f, pose, *_ in motion.get("keys", []):
+        for g, chans in pose.items():
+            if "v" in chans:
+                out.setdefault(g, [])
+    for g in out:
+        for f, pose, *_ in motion["keys"]:
+            out[g].append((f, pose.get(g, {}).get("v")))
+    for g, pts in out.items():
+        n = max(len(v) for _f, v in pts if v)
+        out[g] = [(f, list(v) if v else [(0.0, 0.0)] * n) for f, v in pts]
+    return out
+
+
+def _vertex_preview(name, keys, root, prefix):
+    """the "v" channel in Blender: a shape key per key pose, weighted 1 at its key
+    and 0 at its neighbours (so the mix is linear between keys, as the game's);
+    their curves are an Action `<prefix>:<name>:v` on the meshes' shape keys"""
+    act_name = "%s:%s:v" % (prefix, name)
+    old = bpy.data.actions.get(act_name)
+    if old is not None:
+        bpy.data.actions.remove(old)
+    tracks = vertex_tracks({"keys": keys})
+    if not tracks:
+        return None
+    act = bpy.data.actions.new(act_name)
+    act.use_fake_user = True
+    strip = act.layers.new("Layer").strips.new(type="KEYFRAME")
+    for g, pts in tracks.items():
+        ob = _obj(g, prefix)
+        me = ob.data
+        if me.shape_keys is None:
+            ob.shape_key_add(name="Basis", from_mix=False)
+        basis = me.shape_keys.key_blocks["Basis"]
+        bag = strip.channelbag(act.slots.new("KEY", me.shape_keys.name), ensure=True)
+        frames = [f for f, _v in pts]
+        for j, (f, offs) in enumerate(pts):
+            kname = "%s@%d" % (name, j)
+            kb = me.shape_keys.key_blocks.get(kname) or ob.shape_key_add(name=kname, from_mix=False)
+            for vi, (dx, dy) in enumerate(offs):
+                b = basis.data[vi].co
+                kb.data[vi].co = (b[0] + dx, b[1] + dy, b[2])
+            kb.value = 0.0
+            w = [(frames[j], 1.0, "linear")]
+            if j > 0:
+                w.insert(0, (frames[j - 1], 0.0, "linear"))
+            if j + 1 < len(frames):
+                w.append((frames[j + 1], 0.0, "linear"))
+            _keys(bag, 'key_blocks["%s"].value' % kname, 0, w)
+    return act
+
+
+def show(root, name):
+    """ttyd_blender.set_anim, and the motion's vertex offsets on the shape keys"""
+    act = TB.set_anim(root, name)
+    vact = bpy.data.actions.get("%s:%s:v" % (root["ttyd_prefix"], name))
+    for ob in TB.model_objects(root).values():
+        sk = ob.data.shape_keys if ob.type == "MESH" else None
+        if sk is None:
+            continue
+        for kb in sk.key_blocks[1:]:
+            kb.value = 0.0
+        slot = None
+        if vact is not None:
+            slot = next((s for s in vact.slots if s.name_display == sk.name), None)
+        if slot is None:
+            if sk.animation_data is not None:
+                sk.animation_data.action = None
+            continue
+        ad = sk.animation_data_create()
+        ad.action = vact
+        ad.action_slot = slot
+    return act
+
+
+def apply_vertex_tracks(anim, motion, pose):
+    """the "v" channel into a game animation read back from an Action: each key's
+    vertex deltas (1/16), the offsets linear between the motion's keys"""
+    import ttyd_anim as T
+    tracks = vertex_tracks(motion)
+    if not tracks:
+        return anim
+    geo = T.Geometry(pose)
+    groups = {g.name.lstrip("|"): g for g in pose.groups()}
+    for g, pts in tracks.items():
+        first, count = geo.shapes[groups[g].shape]["pos"]
+
+        def at(t, pts=pts):
+            if t <= pts[0][0]:
+                return pts[0][1]
+            for (f0, v0), (f1, v1) in zip(pts, pts[1:]):
+                if f0 <= t <= f1:
+                    u = 0.0 if f1 == f0 else (t - f0) / (f1 - f0)
+                    return [(a[0] + (b[0] - a[0]) * u, a[1] + (b[1] - a[1]) * u) for a, b in zip(v0, v1)]
+            return pts[-1][1]
+        prev = [(0, 0)] * count
+        for key in anim.keys:
+            cur = [(round(dx * 16), round(dy * 16)) for dx, dy in at(key.time)]
+            for vi in range(count):
+                d = (cur[vi][0] - prev[vi][0], cur[vi][1] - prev[vi][1], 0)
+                if d != (0, 0, 0):
+                    key.pos[first + vi] = d
+            prev = cur
+    return anim
 
 
 def _snap16(v, rest):
@@ -159,12 +274,12 @@ def _keys(bag, path, index, pts):
     fc.update()
 
 
-def build_all(motions, names=None):
+def build_all(motions, names=None, root=None):
     out = []
     for name, m in motions.items():
         if names and name not in names:
             continue
-        out.append(build(name, m))
+        out.append(build(name, m, root))
     return out
 
 
@@ -178,8 +293,9 @@ def anims(motions, names=None, root=None):
     for name in motions:
         if names and name not in names:
             continue
-        act = bpy.data.actions["%s:%s" % (PREFIX, name)]
+        act = bpy.data.actions["%s:%s" % (root["ttyd_prefix"], name)]
         a, rep = TB.read_action(root, act, pose)
+        apply_vertex_tracks(a, motions[name], pose)
         a.bbox = anim_bbox(pose, a)
         out.append((a, rep))
     return out
@@ -1013,3 +1129,67 @@ MOTIONS["M_F_2"] = {"end": 2, "keys": [(0, _STRIDE), (2, _STRIDE)]}
 MOTIONS["M_W_5"] = {"end": 40, "loop": True,
                     "tracks": dict(_walk_tracks(40, 10), pPlane16={"rz": [(0, -70.0), (40, -70.0)]},
                                    pPlane15={"rz": [(0, -80.0), (40, -80.0)]})}
+
+# Super Luigi's story poses (docs/LUIGI_ANIMS.md, "Story poses"), named SL_*:
+# none of Mario's stands for them, so the story scripts ask for them by name.
+# hanging from both hands (Screamy's Float carries him): arms straight up,
+# legs dangling and swinging a little (SL_HANG, a 48-frame loop)
+_HANG = dict(_UP, locator3={"ty": -0.4, "sy": 1.0625}, pPlane14={"rz": 8})
+MOTIONS["SL_HANG"] = {"end": 48, "loop": True, "keys": [
+    (0, dict(_HANG, locator4={"rz": -10, "ty": -0.4}, locator5={"rz": 6, "ty": -0.4}, locator2={"rz": 2})),
+    (24, dict(_HANG, locator4={"rz": 8, "ty": -0.4}, locator5={"rz": -10, "ty": -0.4}, locator2={"rz": -2},
+              pPlane14={"rz": 4})),
+    (48, dict(_HANG, locator4={"rz": -10, "ty": -0.4}, locator5={"rz": 6, "ty": -0.4}, locator2={"rz": 2})),
+]}
+# the sneeze: "ah... ahh..." (SL_SNEEZE_A, 60, held at the top): head going
+# back, nose twitching, eyes screwing shut, mouth opening; then "CHOO"
+# (SL_SNEEZE_B, 40): thrown forward from the hips, arms flung back, and up
+# again, sheepish
+_AH = {"locator3": {"rz": -10, "ty": 0.3, "sy": 1.0625}, "pPlane14": {"rz": -20}, "group1": {"sy": 0.18},
+       "pPlane12": {"vis": 1}, "pPlane6": {"sx": 1.125, "sy": 1.0625}, "pPlane16": {"rz": 24}, "pPlane15": {"rz": 30},
+       "locator4": {"tx": 0.4}}
+MOTIONS["SL_SNEEZE_A"] = {"end": 60, "keys": [
+    (0, {}),
+    (14, {"locator3": {"rz": -3}, "pPlane14": {"rz": -8}, "group1": {"sy": 0.6}, "pPlane6": {"sx": 1.0625}}),
+    (20, {"locator3": {"rz": -3}, "pPlane14": {"rz": -7}, "group1": {"sy": 0.6}, "pPlane6": {"sx": 0.9375}}),
+    (24, {"locator3": {"rz": -3}, "pPlane14": {"rz": -8}, "group1": {"sy": 0.6}, "pPlane6": {"sx": 1.0625}}),
+    (34, {"locator3": {"rz": -6, "ty": 0.2}, "pPlane14": {"rz": -14}, "group1": {"sy": 0.4}, "pPlane12": {"vis": 1},
+          "pPlane6": {"sx": 1.125}, "pPlane16": {"rz": 12}, "pPlane15": {"rz": 16}}),
+    (40, {"locator3": {"rz": -5, "ty": 0.2}, "pPlane14": {"rz": -12}, "group1": {"sy": 0.4}, "pPlane12": {"vis": 1},
+          "pPlane6": {"sx": 0.9375}, "pPlane16": {"rz": 12}, "pPlane15": {"rz": 16}}),
+    (50, _AH),
+    (54, dict(_AH, pPlane6={"sx": 1.0, "sy": 1.0}, pPlane14={"rz": -19})),
+    (60, _AH),
+]}
+MOTIONS["SL_SNEEZE_B"] = {"end": 40, "keys": [
+    (0, _AH),
+    (3, {"locator2": {"tx": -1.6}, "locator3": {"rz": 30, "ty": -0.4, "sy": 0.9375}, "pPlane14": {"rz": 22},
+         "group1": {"sy": 0.18}, "pPlane12": {"vis": 1}, "pPlane10": {"sy": 1.25, "sx": 1.125},
+         "pPlane16": {"rz": 70}, "pPlane15": {"rz": 80}, "locator4": {"tx": -0.8}, "locator5": {"ty": 0.6, "rz": -10}},
+     {"ease": "vector"}),
+    (8, {"locator2": {"tx": -1.8}, "locator3": {"rz": 22, "ty": -0.3}, "pPlane14": {"rz": 16}, "group1": {"sy": 0.18},
+         "pPlane12": {"vis": 1}, "pPlane16": {"rz": 50}, "pPlane15": {"rz": 60}, "locator4": {"tx": -0.8}}),
+    (20, {"locator2": {"tx": -1.8}, "locator3": {"rz": 4}, "pPlane14": {"rz": 6}, "group1": {"sy": 0.6},
+          "pPlane16": {"rz": -30}, "pPlane3": {"rz": -20}, "locator4": {"tx": -0.8}}),
+    (40, {"locator2": {"tx": -1.8}, "pPlane14": {"rz": 3}, "pPlane16": {"rz": -20}, "locator4": {"tx": -0.8}}),
+]}
+# woozy (SL_WOBBLE, a 40-frame loop): swaying on the spot, head lolling, eyes
+# half shut; and fainting from it (SL_FAINT, 24, held flat on his back)
+MOTIONS["SL_WOBBLE"] = {"end": 40, "loop": True, "keys": [
+    (0, {"locator3": {"rz": 8}, "pPlane14": {"rz": 14}, "group1": {"sy": 0.4}, "pPlane16": {"rz": 20},
+         "pPlane15": {"rz": -10}, "locator4": {"rz": 6}}),
+    (10, {"locator3": {"rz": 0, "ty": -0.2}, "pPlane14": {"rz": 6}, "group1": {"sy": 0.4}, "pPlane12": {"vis": 1}}),
+    (20, {"locator3": {"rz": -8}, "pPlane14": {"rz": -12}, "group1": {"sy": 0.4}, "pPlane16": {"rz": -12},
+          "pPlane15": {"rz": 18}, "locator5": {"rz": -6}}),
+    (30, {"locator3": {"rz": 0, "ty": -0.2}, "pPlane14": {"rz": -4}, "group1": {"sy": 0.4}}),
+    (40, {"locator3": {"rz": 8}, "pPlane14": {"rz": 14}, "group1": {"sy": 0.4}, "pPlane16": {"rz": 20},
+          "pPlane15": {"rz": -10}, "locator4": {"rz": 6}}),
+]}
+MOTIONS["SL_FAINT"] = {"end": 24, "keys": [
+    (0, {"locator3": {"rz": 8}, "pPlane14": {"rz": 14}, "group1": {"sy": 0.4}}),
+    (6, {"locator2": {"rz": -6}, "locator3": {"rz": 10, "ty": -0.4}, "pPlane14": {"rz": 18}, "group1": {"sy": 0.18},
+         "pPlane16": {"rz": 30}, "pPlane15": {"rz": 40}}),
+    (14, _FLAT, {"ease": "vector"}),
+    (18, dict(_FLAT, locator2={"rz": 86, "tx": 11.3, "ty": 4.9})),
+    (24, _FLAT),
+]}

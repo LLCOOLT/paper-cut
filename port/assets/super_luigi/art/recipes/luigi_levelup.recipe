@@ -1,0 +1,40 @@
+# Level-up's BP panel (battle_common.tpl image 51, JP 38) as Luigi's: Mario's own panel, in its own
+# tones. Luigi changes: the cap's M an L, and the moustache, filled in the line's brown and curled up
+# at the back as on his head icon (luigi_icons.recipe), with the chin below it. The JP disc's image
+# is under ui_jp/ (one image per path). Loaded in the "*#luigi" texture set (superluigi_aurora.c).
+
+image art/icons/luigi/ui/tex1_128x128_4d465d3c205b172e_14.png
+  fallback art/icons/luigi/drawn/ui/levelup.png
+  discs G8ME01 G8MP01
+  load tpl battle/common/battle_common.tpl 51
+  mask badge poly 71,37 75,35 80,38 81,45 79,50 72,50 70,45
+  fill in badge #b26a00
+  mask ell rect 73 39 75 48
+  mask ell + rect 73 46 79 48
+  stamp ell #521800
+  mask clear poly 58,84 62,79 66,76 76,80 87,85 85,88 80,91 72,92 64,92
+  fill in clear #b26a00
+  mask chin poly 58,85 61,90 64,92 72,93 80,91 86,87 87,89 81,93 72,95 62,95 57,90
+  stamp chin #521800
+  mask tache poly 84,85 76,83 69,81 64,79 61,74 59,72 57,75 58,81 61,85 65,87 69,86 73,88 79,88 84,87
+  stamp tache #521800
+  alpha cut 128
+end
+
+image art/icons/luigi/ui_jp/tex1_128x128_4d465d3c205b172e_14.png
+  fallback art/icons/luigi/drawn/ui/levelup.png
+  discs G8MJ01
+  load tpl battle/common/battle_common.tpl 38
+  mask badge poly 71,37 75,35 80,38 81,45 79,50 72,50 70,45
+  fill in badge #b26a00
+  mask ell rect 73 39 75 48
+  mask ell + rect 73 46 79 48
+  stamp ell #521800
+  mask clear poly 58,84 62,79 66,76 76,80 87,85 85,88 80,91 72,92 64,92
+  fill in clear #b26a00
+  mask chin poly 58,85 61,90 64,92 72,93 80,91 86,87 87,89 81,93 72,95 62,95 57,90
+  stamp chin #521800
+  mask tache poly 84,85 76,83 69,81 64,79 61,74 59,72 57,75 58,81 61,85 65,87 69,86 73,88 79,88 84,87
+  stamp tache #521800
+  alpha cut 128
+end

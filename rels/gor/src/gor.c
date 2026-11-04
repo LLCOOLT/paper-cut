@@ -25,6 +25,11 @@
 #include "gor.h"
 #include "evt/evt_story.h"
 #include "rel_module.h"
+#ifdef TARGET_PC
+// Super Luigi's "Show me" (port/src/aurora/superluigi_aurora.c; a stand-in where it isn't built)
+USER_FUNC(evt_sl_tale_chapter);
+USER_FUNC(evt_sl_enter);
+#endif
 
 #if VERSION >= VERSION_JP
 static s32 gor_inemuri_snd_id;
@@ -443,6 +448,22 @@ EVT_BEGIN(luigi_gor_first_talk)
     SET_VALUE(GF(0), 1)
     WAIT_WHILE(GF(0))
     CALL(johoya_luigi_newjoho_setreadflag)
+#ifdef TARGET_PC
+    // Super Luigi (port/include/port/superluigi.h): "Show me", the tale played, Mario's game kept as it is
+    CALL(evt_sl_tale_chapter, LW(1), LW(3))
+    IF_INT_GREATER_OR_EQUAL(LW(3), 0)
+        CALL(evt_msg_print, 0, STRING("sl_inn_offer"), 0, STRING("me"))
+        CALL(evt_msg_select, 0, STRING("sl_inn_showme"))
+        IF_INT_EQUAL(LW(0), 0)
+            CALL(evt_msg_print_add, 0, STRING("sl_inn_go"))
+            CALL(johoya_data_free)
+            CALL(evt_sl_enter, LW(3))
+            WAIT_FRAMES(600)
+            RETURN
+        END_IF
+        CALL(evt_msg_print_add, 0, STRING("sl_inn_later"))
+    END_IF
+#endif
     GOTO(0)
     LABEL(1)
     IF_INT_EQUAL(LW(10), 1)

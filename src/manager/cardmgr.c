@@ -33,6 +33,7 @@ s32 CARDFormatAsync(s32 chan, CARDCallback callback);
 #include "port/cardsave_pc.h"
 #include "driver/swdrv.h"   /* portCardSnapshot: the resume kind */
 #include "evt/evt_story.h"
+#include "port/superluigi.h"
 #endif
 /** Name of the game's save file on the memory card, used to find, create and delete it. */
 const char card_file_name[0x14] = "mariost_save_file";
@@ -491,6 +492,16 @@ BOOL portCardLoadSlotImage(s32 slot, const void* image) {
     }
     return portCardSlotFromImage(image, &wp->data->saves[slot]) && !(wp->data->saves[slot].data.flags & 1);
 }
+
+/* The loaded card's copy of a slot, and its size (Super Luigi keeps it
+ * around a continue from its own save, superluigi_aurora.c), or NULL. */
+void* portCardSlotPtr(s32 slot, u32* size) {
+    if (wp == NULL || wp->data == NULL || slot < 0 || slot >= 4) {
+        return NULL;
+    }
+    *size = sizeof(CardSaveSlot);
+    return &wp->data->saves[slot];
+}
 #endif
 
 #ifdef TARGET_PC
@@ -583,6 +594,16 @@ void PORT_HOOKABLE(cardWrite)(s32 slot) {
     PartyEntry* party;
     s8 partyId;
 
+#ifdef TARGET_PC
+    /* Super Luigi: a save in its chapters goes to the campaign's own file, or nowhere from the inn, never to
+     * the player's card (port/include/port/superluigi.h) */
+    if (!(wp->flags & CARD_FLAG_OP_BUSY) && portSuperLuigiCardWrite(slot)) {
+        wp->result = 0;
+        wp->flags &= ~(CARD_FLAG_OP_FAILED | CARD_FLAG_WRITE_STAGED);
+        wp->flags |= CARD_FLAG_OP_DONE;
+        return;
+    }
+#endif
     if (!(wp->flags & CARD_FLAG_OP_BUSY)) {
         wp->op = 1;
         wp->currSlot = slot;

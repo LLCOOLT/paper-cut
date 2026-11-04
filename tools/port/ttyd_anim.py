@@ -31,6 +31,9 @@ import sys
 NODE_FIELDS = ("tx ty tz sx sy sz r1x r1y r1z r2x r2y r2z rcx rcy rcz scx scy scz "
                "rtx rty rtz stx sty stz").split()
 NODE_SIZE = 24  # floats a node
+# parse() checks every file writes back byte for byte; False reads the few that
+# don't (other models' rarer encodings) for reference only
+STRICT = True
 
 # model tables in file order: (name, record size, header count field index)
 # count fields: header words from 0xE8 (see AnimationPoseData)
@@ -160,7 +163,7 @@ class PoseFile:
         data = bytes(data)
         if len(data) > len(rebuilt) and not data[len(rebuilt):].strip(bytes(1)):
             data = data[:len(rebuilt)]  # read in 32-byte units: zeros after the end
-        if rebuilt != data:
+        if rebuilt != data and STRICT:
             raise ValueError("model %s: rewriting it does not give the same bytes" % self.file_name)
 
     def build(self):
@@ -438,7 +441,7 @@ class Anim:
             a.keys.append(key)
         if a.build(True) != bytes(d):
             # ours (tools/port/ttyd_blender.py) round the angles; the disc's truncate
-            if a.build(False) != bytes(d):
+            if a.build(False) != bytes(d) and STRICT:
                 raise ValueError(f"animation {name}: rewriting it does not give the same bytes")
             a.exact = False
         return a

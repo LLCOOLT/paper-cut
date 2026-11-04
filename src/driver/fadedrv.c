@@ -1461,7 +1461,17 @@ static void disp_maku(CameraId camId, void* param) {
     PSMTXTrans(mtx2, -32.0f, 24.0f, 0.0f);
     PSMTXConcat(mtx, mtx2, mtx);
     sx = 608.0f / gp->fbWidth;
+#if defined(TARGET_PC) && defined(TTYD_BACKEND_AURORA)
+    {
+        /* PC port: the 3D curtains (a Crystal Star's ending) are drawn under a camera narrowed to keep the
+         * game's shape on a wide picture, which left the sides open: stretched to the picture's edges,
+         * as the full-screen curtains already are (CAMERA_FADE isn't narrowed) */
+        extern float gPortWidescreenEdgeScale;
+        PSMTXScale(mtx2, camId == CAMERA_3D_IMAGE ? sx * gPortWidescreenEdgeScale : sx, 480.0f / gp->efbHeight, sx);
+    }
+#else
     PSMTXScale(mtx2, sx, 480.0f / gp->efbHeight, sx);
+#endif
     PSMTXConcat(mtx, mtx2, mtx);
     PSMTXTrans(mtx2, 32.0f, -24.0f, 0.0f);
     PSMTXConcat(mtx, mtx2, mtx);

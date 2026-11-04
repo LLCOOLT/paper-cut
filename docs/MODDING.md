@@ -70,6 +70,8 @@ The Texture packs section also shows a pack's **coverage**: how many textures th
 
 **Name collisions.** A name is the texture's size, format and a hash of its pixels (and palette), as Dolphin makes it, so two files with the same name replace the same texture and only one is used: between mods the one higher in the list, a mod's before the textures folder's, and inside one folder either of them (keep one). The section lists the names given by more than one file and the packs giving them. Textures with the same pixels share a name, so one file replaces every use of them; a name with `$` for a hash covers every texture it stands for.
 
+**Textures for some maps only.** A folder `textures/@<maps>/` in a mod holds a set that applies only while the map's name matches `<maps>`: names separated by commas, with `~` for any run of letters (a folder name can't hold `*`) and `?` for one, so `textures/@muj_0~,dou_00/` re-skins Keelhaul Key's jungle and the grotto's mouth and leaves the same textures alone everywhere else. The set is swapped in as the map changes to one it matches and out as it leaves. A mod's map sets come above every mod's global textures and above the game's own map sets (Super Luigi's volcano), the higher mod first. (The loose `textures/` folder in the user folder has no map sets: a folder there named `@...` is a plain pack.)
+
 Not every image can be replaced this way: pictures the game draws into itself (paper effects, captures) have no fixed texture.
 
 ### messages/: text

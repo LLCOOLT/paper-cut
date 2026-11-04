@@ -28,6 +28,15 @@
 #endif
 #include "manager/evtmgr_cmd.h"
 #include "version.h"
+#ifdef TARGET_PC
+#include "port/map_look.h"
+// a mobj's look (portMapLookSetMobj): the mobj being drawn, for mapSetMaterialTev
+#define MOBJ_LOOK_BEGIN(e) (portMapLookMobj = (e))
+#define MOBJ_LOOK_END() (portMapLookMobj = NULL)
+#else
+#define MOBJ_LOOK_BEGIN(e)
+#define MOBJ_LOOK_END()
+#endif
 #include <dolphin/pad.h>
 #include "mot/mot_hip.h"
 #include "koopa_hit.h"
@@ -367,12 +376,14 @@ static void mobjDispXLU(CameraId camId, void* param) {
         animSetPaperTexMtx(entry->paperTexMtx, NULL, NULL);
         animSetPaperTexObj(&entry->paperTexObj, NULL, NULL, entry->paperTexData, NULL, NULL, 1, 1);
     }
+    MOBJ_LOOK_BEGIN(entry);
     animPoseDraw(entry->poseId, entry->position.x, entry->position.y, entry->position.z, entry->rotation.y,
                  10.0f * entry->scale.x, 1);
     animPoseDraw(entry->poseId, entry->position.x, entry->position.y, entry->position.z, entry->rotation.y,
                  10.0f * entry->scale.x, 2);
     animPoseDraw(entry->poseId, entry->position.x, entry->position.y, entry->position.z, entry->rotation.y,
                  10.0f * entry->scale.x, 3);
+    MOBJ_LOOK_END();
     if (entry->flags & MOBJ_FLAG_PAPER_TEX) {
         animSetPaperTexMtx(NULL, NULL, NULL);
         animSetPaperTexObj(NULL, NULL, NULL, NULL, NULL, NULL, 1, 1);
@@ -392,6 +403,7 @@ static void mobjDisp(CameraId camId, void* param) {
         animSetPaperTexObj(&entry->paperTexObj, NULL, NULL, entry->paperTexData, NULL, NULL, 1, 1);
     }
     disp = dispGetCurWork();
+    MOBJ_LOOK_BEGIN(entry);
     switch (disp->renderMode) {
         case 0:
             animPoseDraw(entry->poseId, entry->position.x, entry->position.y, entry->position.z, entry->rotation.y,
@@ -407,6 +419,7 @@ static void mobjDisp(CameraId camId, void* param) {
                          10.0f * entry->scale.x, 3);
             break;
     }
+    MOBJ_LOOK_END();
     if (entry->flags & MOBJ_FLAG_PAPER_TEX) {
         animSetPaperTexMtx(NULL, NULL, NULL);
         animSetPaperTexObj(NULL, NULL, NULL, NULL, NULL, NULL, 1, 1);
@@ -427,12 +440,14 @@ static void mobjDisp_OffscreenXLU(CameraId camId, void* param) {
         animSetPaperTexMtx(entry->paperTexMtx, NULL, NULL);
         animSetPaperTexObj(&entry->paperTexObj, NULL, NULL, entry->paperTexData, NULL, NULL, 1, 1);
     }
+    MOBJ_LOOK_BEGIN(entry);
     animPoseDraw(entry->poseId, entry->position.x, entry->position.y, entry->position.z, entry->rotation.y,
                  10.0f * entry->scale.x, 1);
     animPoseDraw(entry->poseId, entry->position.x, entry->position.y, entry->position.z, entry->rotation.y,
                  10.0f * entry->scale.x, 2);
     animPoseDraw(entry->poseId, entry->position.x, entry->position.y, entry->position.z, entry->rotation.y,
                  10.0f * entry->scale.x, 3);
+    MOBJ_LOOK_END();
     if (entry->flags & MOBJ_FLAG_PAPER_TEX) {
         animSetPaperTexMtx(NULL, NULL, NULL);
         animSetPaperTexObj(NULL, NULL, NULL, NULL, NULL, NULL, 1, 1);

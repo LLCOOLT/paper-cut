@@ -4,6 +4,7 @@
 #include "port/layout.h"
 #include "port/mod_host.h"
 #include "port/modes.h"
+#include "port/superluigi.h"
 #include "port/settings.h"
 #include <SDL3/SDL.h>
 #include <imgui.h>
@@ -218,8 +219,76 @@ void pitSection(int inGame) {
   }
 }
 
+// Super Luigi (port/include/port/superluigi.h, docs/SUPER_LUIGI.md): the
+// campaign, a chapter on its own, and leaving one.
+void superLuigiSection(int inGame) {
+  static std::string sSlMessage;
+  ImGui::TextWrapped("Luigi's own adventure in the Waffle Kingdom, played: the story he tells at Rogueport's inn. "
+                     "The campaign is a game of its own, saved apart from Mario's (superluigi_%s.gci in the user "
+                     "folder). A chapter played from here or from the inn (\"Show me\") leaves your game as it "
+                     "was.",
+                     PORT_GAME_ID);
+  const char* why = nullptr;
+  if (portSuperLuigiActive()) {
+    const int ch = portSuperLuigiChapter();
+    ImGui::Text("Playing: %s%s", ch == 0 ? "Prologue: " : ("Chapter " + std::to_string(ch) + ": ").c_str(),
+                portSuperLuigiChapterTitle(ch));
+    if (ImGui::Button(portSuperLuigiMode() == PORT_SL_INN ? "Back to Mario's game" : "Quit to the title")) {
+      portSuperLuigiQuit();
+    }
+    return;
+  }
+  if (ImGui::Button("New campaign")) {
+    sSlMessage = portSuperLuigiStartCampaign(1, &why) ? "" : why;
+  }
+  ImGui::SameLine();
+  ImGui::BeginDisabled(!portSuperLuigiCampaignSaved());
+  if (ImGui::Button("Continue the campaign")) {
+    sSlMessage = portSuperLuigiStartCampaign(0, &why) ? "" : why;
+  }
+  ImGui::EndDisabled();
+  ImGui::Spacing();
+  ImGui::TextDisabled("A new campaign from a later chapter, with that chapter's own levels and items:");
+  for (int i = 1; i < PORT_SL_CHAPTERS; i++) {
+    if (!portSuperLuigiChapterBuilt(i)) {
+      continue;
+    }
+    ImGui::PushID(100 + i);
+    if (ImGui::Button(("Chapter " + std::to_string(i)).c_str())) {
+      sSlMessage = portSuperLuigiStartCampaignAt(i, &why) ? "" : why;
+    }
+    ImGui::PopID();
+    ImGui::SameLine();
+  }
+  ImGui::NewLine();
+  ImGui::Spacing();
+  ImGui::TextDisabled("A chapter on its own, from your game (once Luigi has told it):");
+  for (int i = 0; i < PORT_SL_CHAPTERS; i++) {
+    if (!portSuperLuigiChapterBuilt(i)) {
+      continue;
+    }
+    ImGui::PushID(i);
+    const bool open = inGame && portSuperLuigiChapterTold(i);
+    ImGui::BeginDisabled(!open);
+    if (ImGui::Button("Play")) {
+      sSlMessage = portSuperLuigiPlayChapter(i, &why) ? "" : why;
+    }
+    ImGui::EndDisabled();
+    ImGui::SameLine();
+    ImGui::Text("%s%s", i == 0 ? "Prologue: " : ("Chapter " + std::to_string(i) + ": ").c_str(),
+                portSuperLuigiChapterTitle(i));
+    ImGui::PopID();
+  }
+  if (!sSlMessage.empty()) {
+    ImGui::TextWrapped("%s", sSlMessage.c_str());
+  }
+}
+
 struct Register {
   Register() {
+    portSettingsAddSection(kTab, "Super Luigi: The Marvelous Compass", nullptr, PORT_SETTING_CHANGES_PLAY,
+                           superLuigiSection,
+                           "super luigi marvelous compass story chapters campaign blooey waffle kingdom modes");
     portSettingsAddSection(kTab, "Boss rush", nullptr, PORT_SETTING_CHANGES_PLAY, bossRushSection,
                            "boss rush bosses timer speedrun loadout modes");
     portSettingsAddSection(kTab, "Endless Glitz Pit", nullptr, PORT_SETTING_CHANGES_PLAY, pitSection,

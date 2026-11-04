@@ -1,0 +1,336 @@
+{
+ "model": "c_sl_crepe",
+ "texels_per_unit": 8,
+ "cards": {
+  "cape": {
+   "size": [
+    56,
+    128
+   ],
+   "pivot": [
+    28,
+    6
+   ],
+   "model_xy": [
+    3.6,
+    20.4
+   ],
+   "desc": "the crepe's long end, hanging down his back; pivot at the shoulder"
+  },
+  "arm_back": {
+   "size": [
+    40,
+    64
+   ],
+   "pivot": [
+    20,
+    6
+   ],
+   "model_xy": [
+    2.0,
+    19.6
+   ],
+   "desc": "the far sleeve; shoulder pivot"
+  },
+  "foot_back": {
+   "size": [
+    48,
+    80
+   ],
+   "pivot": [
+    25,
+    4
+   ],
+   "model_xy": [
+    1.4,
+    9.5
+   ],
+   "desc": "the far leg and shoe; hip pivot"
+  },
+  "foot_front": {
+   "size": [
+    48,
+    80
+   ],
+   "pivot": [
+    25,
+    4
+   ],
+   "model_xy": [
+    -1.6,
+    9.5
+   ],
+   "desc": "the near leg and shoe; hip pivot"
+  },
+  "robe": {
+   "size": [
+    112,
+    136
+   ],
+   "pivot": [
+    56,
+    131
+   ],
+   "model_xy": [
+    0.0,
+    4.0
+   ],
+   "desc": "the long coat; pivot at the hem"
+  },
+  "roll": {
+   "size": [
+    128,
+    56
+   ],
+   "pivot": [
+    64,
+    28
+   ],
+   "model_xy": [
+    -0.6,
+    20.6
+   ],
+   "desc": "the rolled crepe on his shoulders, its spiral under his chin"
+  },
+  "head": {
+   "size": [
+    64,
+    72
+   ],
+   "pivot": [
+    34,
+    68
+   ],
+   "model_xy": [
+    -1.5,
+    21.4
+   ],
+   "desc": "the head and ear; pivot at the neck"
+  },
+  "hat": {
+   "size": [
+    72,
+    80
+   ],
+   "pivot": [
+    36,
+    76
+   ],
+   "model_xy": [
+    -1.2,
+    28.6
+   ],
+   "desc": "the tall soft hat, its crown bent back; pivot at the band"
+  },
+  "arm_front": {
+   "size": [
+    40,
+    64
+   ],
+   "pivot": [
+    20,
+    6
+   ],
+   "model_xy": [
+    -1.0,
+    19.6
+   ],
+   "desc": "the near sleeve; shoulder pivot"
+  },
+  "hand_open": {
+   "size": [
+    64,
+    64
+   ],
+   "pivot": [
+    36,
+    8
+   ],
+   "model_xy": [
+    0.0,
+    0.0
+   ],
+   "desc": "the near hand"
+  },
+  "hand_point": {
+   "size": [
+    64,
+    64
+   ],
+   "pivot": [
+    36,
+    8
+   ],
+   "model_xy": [
+    0.0,
+    0.0
+   ],
+   "desc": "a finger raised"
+  },
+  "hand_fist": {
+   "size": [
+    64,
+    64
+   ],
+   "pivot": [
+    36,
+    8
+   ],
+   "model_xy": [
+    0.0,
+    0.0
+   ],
+   "desc": "a fist"
+  },
+  "hand_palm": {
+   "size": [
+    64,
+    64
+   ],
+   "pivot": [
+    36,
+    8
+   ],
+   "model_xy": [
+    0.0,
+    0.0
+   ],
+   "desc": "palm up, offering"
+  },
+  "eyes": {
+   "size": [
+    48,
+    40
+   ],
+   "pivot": [
+    24,
+    20
+   ],
+   "model_xy": [
+    0.0,
+    0.0
+   ],
+   "desc": "fallback: the recipe's eyes replace it"
+  },
+  "eyes_shut": {
+   "size": [
+    48,
+    40
+   ],
+   "pivot": [
+    24,
+    20
+   ],
+   "model_xy": [
+    0.0,
+    0.0
+   ],
+   "desc": "fallback"
+  },
+  "eyes_gold": {
+   "size": [
+    48,
+    40
+   ],
+   "pivot": [
+    24,
+    20
+   ],
+   "model_xy": [
+    0.0,
+    0.0
+   ],
+   "desc": "fallback"
+  },
+  "nose": {
+   "size": [
+    40,
+    24
+   ],
+   "pivot": [
+    36,
+    12
+   ],
+   "model_xy": [
+    0.0,
+    0.0
+   ],
+   "desc": "his long pointed nose (drawn: no game face has it)"
+  },
+  "tache": {
+   "size": [
+    56,
+    24
+   ],
+   "pivot": [
+    28,
+    12
+   ],
+   "model_xy": [
+    0.0,
+    0.0
+   ],
+   "desc": "fallback"
+  },
+  "mouth_shut": {
+   "size": [
+    8,
+    8
+   ],
+   "pivot": [
+    4,
+    4
+   ],
+   "model_xy": [
+    0.0,
+    0.0
+   ],
+   "desc": "fallback, blank"
+  },
+  "mouth": {
+   "size": [
+    24,
+    32
+   ],
+   "pivot": [
+    12,
+    12
+   ],
+   "model_xy": [
+    0.0,
+    0.0
+   ],
+   "desc": "fallback"
+  },
+  "scroll": {
+   "size": [
+    48,
+    72
+   ],
+   "pivot": [
+    24,
+    60
+   ],
+   "model_xy": [
+    0.0,
+    0.0
+   ],
+   "desc": "the letter"
+  },
+  "compass": {
+   "size": [
+    56,
+    56
+   ],
+   "pivot": [
+    28,
+    44
+   ],
+   "model_xy": [
+    0.0,
+    0.0
+   ],
+   "desc": "the compass's base"
+  }
+ }
+}

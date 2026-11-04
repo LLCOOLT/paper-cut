@@ -1,0 +1,167 @@
+{
+ "model": "c_sl_marron",
+ "texels_per_unit": 8,
+ "faces": "-x",
+ "pivot_note": "pivot: pixels from the PNG's top-left; model_xy: where the pivot sits at rest (model units, feet at y 0)",
+ "cards": {
+  "head": {
+   "size": [
+    80,
+    72
+   ],
+   "pivot": [
+    48.0,
+    64.0
+   ],
+   "model_xy": [
+    0.0,
+    20.0
+   ],
+   "desc": "the head: a kind brown eye under a soft brow, a neat chestnut moustache, chestnut hair swept over the forehead; pivot at the neck (0, 20)"
+  },
+  "head_blink": {
+   "size": [
+    80,
+    72
+   ],
+   "pivot": [
+    48.0,
+    64.0
+   ],
+   "model_xy": [
+    0.0,
+    20.0
+   ],
+   "desc": "eye shut; pivot at the neck (0, 20)"
+  },
+  "head_talk": {
+   "size": [
+    80,
+    72
+   ],
+   "pivot": [
+    48.0,
+    64.0
+   ],
+   "model_xy": [
+    0.0,
+    20.0
+   ],
+   "desc": "mouth open; pivot at the neck (0, 20)"
+  },
+  "head_happy": {
+   "size": [
+    80,
+    72
+   ],
+   "pivot": [
+    48.0,
+    64.0
+   ],
+   "model_xy": [
+    0.0,
+    20.0
+   ],
+   "desc": "eye squeezed up in a smile (the embrace); pivot at the neck (0, 20)"
+  },
+  "crown": {
+   "size": [
+    72,
+    48
+   ],
+   "pivot": [
+    36.0,
+    41.6
+   ],
+   "model_xy": [
+    -0.5,
+    25.8
+   ],
+   "desc": "the crown of chestnut leaves: five serrated leaves fanned up from a gold band, a chestnut at the front; pivot at its foot on the head"
+  },
+  "cape": {
+   "size": [
+    104,
+    152
+   ],
+   "pivot": [
+    36.8,
+    11.2
+   ],
+   "model_xy": [
+    0.6,
+    20.6
+   ],
+   "desc": "the chestnut-brown cape, behind everything, its cream lining turned at the front edge and rolled as a collar; pivot at the shoulders"
+  },
+  "coat": {
+   "size": [
+    96,
+    144
+   ],
+   "pivot": [
+    48.0,
+    120.0
+   ],
+   "model_xy": [
+    0.0,
+    6.0
+   ],
+   "desc": "the coat: chestnut-leaf green with a gold placket and hem, three chestnut buttons, a brown belt with a gold buckle; root card, pivot (0, 6)"
+  },
+  "arm_front": {
+   "size": [
+    56,
+    96
+   ],
+   "pivot": [
+    40.0,
+    14.4
+   ],
+   "model_xy": [
+    -1.0,
+    19.2
+   ],
+   "desc": "the front arm: a green sleeve with a gold cuff and a bare hand; pivot at the shoulder"
+  },
+  "arm_back": {
+   "size": [
+    56,
+    96
+   ],
+   "pivot": [
+    40.0,
+    14.4
+   ],
+   "model_xy": [
+    2.4,
+    19.2
+   ],
+   "desc": "the back arm, a tone darker: a green sleeve with a gold cuff and a bare hand; pivot at the shoulder"
+  },
+  "boots": {
+   "size": [
+    80,
+    56
+   ],
+   "pivot": [
+    48.0,
+    56.0
+   ],
+   "model_xy": [
+    0.0,
+    0.0
+   ],
+   "desc": "two brown riding boots, the far one a tone darker, under the coat's hem; pivot on the ground between them"
+  }
+ },
+ "draw_order": [
+  "cape",
+  "arm_back",
+  "boots",
+  "coat",
+  "arm_front",
+  "head",
+  "crown"
+ ]
+}

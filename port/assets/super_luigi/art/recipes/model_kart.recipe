@@ -1,0 +1,345 @@
+# Big Green 01 and the other teams' karts (c_lp_kart*, c_luigi_kart; ART_PLAN wave 3 row 1). The kart itself is the style
+# model's (art/tools/cut_kart.py, kart_cards.py: the shell, seat, wheels, wheel and engine cut from its design and Qwen's
+# pieces, in every team's paint, and wrecked); only the game's effects are made here: the backfire (the Lava Bubble's
+# flame), the exhaust puff and the wreck's smoke (effect.tpl's cloud). Numbers: sl_models.py cards c_lp_kart
+
+# ---- c_lp_kart
+image art/models/c_lp_kart/3.png   # flame 0
+  canvas 72 56
+  piece f model c_bubble 17
+  @f rotate 90
+  @f scale 64 48 texel
+  paste f 4 4
+  alpha cut 128
+end
+
+image art/models/c_lp_kart/13.png   # puff 0
+  load tpl e/us/effect.tpl 12
+  alpha set 0 where l<60
+  fill where a>=128 #d8d4cc
+  scale 48 40 texel
+  alpha cut 128
+end
+
+image art/models/c_lp_kart/14.png   # smoke_1 0
+  load tpl e/us/effect.tpl 12
+  alpha set 0 where l<60
+  fill where a>=128 #a8a098
+  scale 80 72 texel
+  alpha cut 128
+end
+
+image art/models/c_lp_kart/15.png   # smoke_2 0
+  load tpl e/us/effect.tpl 12
+  alpha set 0 where l<60
+  fill where a>=128 #a8a098
+  scale 80 72 texel
+  alpha cut 128
+end
+
+# ---- c_lp_kart_wreck
+image art/models/c_lp_kart_wreck/3.png   # flame 0
+  canvas 72 56
+  piece f model c_bubble 17
+  @f rotate 90
+  @f scale 64 48 texel
+  paste f 4 4
+  alpha cut 128
+end
+
+image art/models/c_lp_kart_wreck/13.png   # puff 0
+  load tpl e/us/effect.tpl 12
+  alpha set 0 where l<60
+  fill where a>=128 #d8d4cc
+  scale 48 40 texel
+  alpha cut 128
+end
+
+image art/models/c_lp_kart_wreck/14.png   # smoke_1 0
+  load tpl e/us/effect.tpl 12
+  alpha set 0 where l<60
+  fill where a>=128 #a8a098
+  scale 80 72 texel
+  alpha cut 128
+end
+
+image art/models/c_lp_kart_wreck/15.png   # smoke_2 0
+  load tpl e/us/effect.tpl 12
+  alpha set 0 where l<60
+  fill where a>=128 #a8a098
+  scale 80 72 texel
+  alpha cut 128
+end
+
+# ---- c_luigi_kart
+image art/models/c_luigi_kart/42.png   # flame 0
+  canvas 72 56
+  piece f model c_bubble 17
+  @f rotate 90
+  @f scale 64 48 texel
+  paste f 4 4
+  alpha cut 128
+end
+
+image art/models/c_luigi_kart/52.png   # puff 0
+  load tpl e/us/effect.tpl 12
+  alpha set 0 where l<60
+  fill where a>=128 #d8d4cc
+  scale 48 40 texel
+  alpha cut 128
+end
+
+image art/models/c_luigi_kart/53.png   # smoke_1 0
+  load tpl e/us/effect.tpl 12
+  alpha set 0 where l<60
+  fill where a>=128 #a8a098
+  scale 80 72 texel
+  alpha cut 128
+end
+
+image art/models/c_luigi_kart/54.png   # smoke_2 0
+  load tpl e/us/effect.tpl 12
+  alpha set 0 where l<60
+  fill where a>=128 #a8a098
+  scale 80 72 texel
+  alpha cut 128
+end
+
+# ---- c_lp_kart_red
+image art/models/c_lp_kart_red/3.png   # flame 0
+  canvas 72 56
+  piece f model c_bubble 17
+  @f rotate 90
+  @f scale 64 48 texel
+  paste f 4 4
+  alpha cut 128
+end
+
+image art/models/c_lp_kart_red/13.png   # puff 0
+  load tpl e/us/effect.tpl 12
+  alpha set 0 where l<60
+  fill where a>=128 #d8d4cc
+  scale 48 40 texel
+  alpha cut 128
+end
+
+image art/models/c_lp_kart_red/14.png   # smoke_1 0
+  load tpl e/us/effect.tpl 12
+  alpha set 0 where l<60
+  fill where a>=128 #a8a098
+  scale 80 72 texel
+  alpha cut 128
+end
+
+image art/models/c_lp_kart_red/15.png   # smoke_2 0
+  load tpl e/us/effect.tpl 12
+  alpha set 0 where l<60
+  fill where a>=128 #a8a098
+  scale 80 72 texel
+  alpha cut 128
+end
+
+# ---- c_lp_kart_blue
+image art/models/c_lp_kart_blue/3.png   # flame 0
+  canvas 72 56
+  piece f model c_bubble 17
+  @f rotate 90
+  @f scale 64 48 texel
+  paste f 4 4
+  alpha cut 128
+end
+
+image art/models/c_lp_kart_blue/13.png   # puff 0
+  load tpl e/us/effect.tpl 12
+  alpha set 0 where l<60
+  fill where a>=128 #d8d4cc
+  scale 48 40 texel
+  alpha cut 128
+end
+
+image art/models/c_lp_kart_blue/14.png   # smoke_1 0
+  load tpl e/us/effect.tpl 12
+  alpha set 0 where l<60
+  fill where a>=128 #a8a098
+  scale 80 72 texel
+  alpha cut 128
+end
+
+image art/models/c_lp_kart_blue/15.png   # smoke_2 0
+  load tpl e/us/effect.tpl 12
+  alpha set 0 where l<60
+  fill where a>=128 #a8a098
+  scale 80 72 texel
+  alpha cut 128
+end
+
+# ---- c_lp_kart_yellow
+image art/models/c_lp_kart_yellow/3.png   # flame 0
+  canvas 72 56
+  piece f model c_bubble 17
+  @f rotate 90
+  @f scale 64 48 texel
+  paste f 4 4
+  alpha cut 128
+end
+
+image art/models/c_lp_kart_yellow/13.png   # puff 0
+  load tpl e/us/effect.tpl 12
+  alpha set 0 where l<60
+  fill where a>=128 #d8d4cc
+  scale 48 40 texel
+  alpha cut 128
+end
+
+image art/models/c_lp_kart_yellow/14.png   # smoke_1 0
+  load tpl e/us/effect.tpl 12
+  alpha set 0 where l<60
+  fill where a>=128 #a8a098
+  scale 80 72 texel
+  alpha cut 128
+end
+
+image art/models/c_lp_kart_yellow/15.png   # smoke_2 0
+  load tpl e/us/effect.tpl 12
+  alpha set 0 where l<60
+  fill where a>=128 #a8a098
+  scale 80 72 texel
+  alpha cut 128
+end
+
+# ---- c_lp_kart_purple
+image art/models/c_lp_kart_purple/3.png   # flame 0
+  canvas 72 56
+  piece f model c_bubble 17
+  @f rotate 90
+  @f scale 64 48 texel
+  paste f 4 4
+  alpha cut 128
+end
+
+image art/models/c_lp_kart_purple/13.png   # puff 0
+  load tpl e/us/effect.tpl 12
+  alpha set 0 where l<60
+  fill where a>=128 #d8d4cc
+  scale 48 40 texel
+  alpha cut 128
+end
+
+image art/models/c_lp_kart_purple/14.png   # smoke_1 0
+  load tpl e/us/effect.tpl 12
+  alpha set 0 where l<60
+  fill where a>=128 #a8a098
+  scale 80 72 texel
+  alpha cut 128
+end
+
+image art/models/c_lp_kart_purple/15.png   # smoke_2 0
+  load tpl e/us/effect.tpl 12
+  alpha set 0 where l<60
+  fill where a>=128 #a8a098
+  scale 80 72 texel
+  alpha cut 128
+end
+
+# ---- c_lp_kart_orange
+image art/models/c_lp_kart_orange/3.png   # flame 0
+  canvas 72 56
+  piece f model c_bubble 17
+  @f rotate 90
+  @f scale 64 48 texel
+  paste f 4 4
+  alpha cut 128
+end
+
+image art/models/c_lp_kart_orange/13.png   # puff 0
+  load tpl e/us/effect.tpl 12
+  alpha set 0 where l<60
+  fill where a>=128 #d8d4cc
+  scale 48 40 texel
+  alpha cut 128
+end
+
+image art/models/c_lp_kart_orange/14.png   # smoke_1 0
+  load tpl e/us/effect.tpl 12
+  alpha set 0 where l<60
+  fill where a>=128 #a8a098
+  scale 80 72 texel
+  alpha cut 128
+end
+
+image art/models/c_lp_kart_orange/15.png   # smoke_2 0
+  load tpl e/us/effect.tpl 12
+  alpha set 0 where l<60
+  fill where a>=128 #a8a098
+  scale 80 72 texel
+  alpha cut 128
+end
+
+# ---- c_lp_kart_white
+image art/models/c_lp_kart_white/3.png   # flame 0
+  canvas 72 56
+  piece f model c_bubble 17
+  @f rotate 90
+  @f scale 64 48 texel
+  paste f 4 4
+  alpha cut 128
+end
+
+image art/models/c_lp_kart_white/13.png   # puff 0
+  load tpl e/us/effect.tpl 12
+  alpha set 0 where l<60
+  fill where a>=128 #d8d4cc
+  scale 48 40 texel
+  alpha cut 128
+end
+
+image art/models/c_lp_kart_white/14.png   # smoke_1 0
+  load tpl e/us/effect.tpl 12
+  alpha set 0 where l<60
+  fill where a>=128 #a8a098
+  scale 80 72 texel
+  alpha cut 128
+end
+
+image art/models/c_lp_kart_white/15.png   # smoke_2 0
+  load tpl e/us/effect.tpl 12
+  alpha set 0 where l<60
+  fill where a>=128 #a8a098
+  scale 80 72 texel
+  alpha cut 128
+end
+
+# ---- c_lp_kart_black
+image art/models/c_lp_kart_black/3.png   # flame 0
+  canvas 72 56
+  piece f model c_bubble 17
+  @f rotate 90
+  @f scale 64 48 texel
+  paste f 4 4
+  alpha cut 128
+end
+
+image art/models/c_lp_kart_black/13.png   # puff 0
+  load tpl e/us/effect.tpl 12
+  alpha set 0 where l<60
+  fill where a>=128 #d8d4cc
+  scale 48 40 texel
+  alpha cut 128
+end
+
+image art/models/c_lp_kart_black/14.png   # smoke_1 0
+  load tpl e/us/effect.tpl 12
+  alpha set 0 where l<60
+  fill where a>=128 #a8a098
+  scale 80 72 texel
+  alpha cut 128
+end
+
+image art/models/c_lp_kart_black/15.png   # smoke_2 0
+  load tpl e/us/effect.tpl 12
+  alpha set 0 where l<60
+  fill where a>=128 #a8a098
+  scale 80 72 texel
+  alpha cut 128
+end
+

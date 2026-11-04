@@ -1,0 +1,229 @@
+{
+ "model": "c_sl_crepe",
+ "texels_per_unit": 8,
+ "faces": "-x",
+ "pivot_note": "pivot: pixels from the PNG's top-left; model_xy: where the pivot sits at rest (model units, feet at y 0)",
+ "cards": {
+  "head": {
+   "size": [
+    72,
+    72
+   ],
+   "pivot": [
+    48.0,
+    64.0
+   ],
+   "model_xy": [
+    0.0,
+    13.0
+   ],
+   "desc": "the head: sly lidded eye, arched brow, big round nose; pivot at the neck (0, 13), the collar covers it"
+  },
+  "head_blink": {
+   "size": [
+    72,
+    72
+   ],
+   "pivot": [
+    48.0,
+    64.0
+   ],
+   "model_xy": [
+    0.0,
+    13.0
+   ],
+   "desc": "eye shut; pivot at the neck (0, 13), the collar covers it"
+  },
+  "head_talk": {
+   "size": [
+    72,
+    72
+   ],
+   "pivot": [
+    48.0,
+    64.0
+   ],
+   "model_xy": [
+    0.0,
+    13.0
+   ],
+   "desc": "mouth open (under the moustache); pivot at the neck (0, 13), the collar covers it"
+  },
+  "head_gold": {
+   "size": [
+    72,
+    72
+   ],
+   "pivot": [
+    48.0,
+    64.0
+   ],
+   "model_xy": [
+    0.0,
+    13.0
+   ],
+   "desc": "eyes gone gold (ch6: looking into the compass); pivot at the neck (0, 13), the collar covers it"
+  },
+  "mustache": {
+   "size": [
+    48,
+    24
+   ],
+   "pivot": [
+    28.8,
+    8.8
+   ],
+   "model_xy": [
+    -4.4,
+    14.9
+   ],
+   "desc": "the curled moustache, its curl swept forward and up; pivot under the nose, for the talk wiggle"
+  },
+  "hat": {
+   "size": [
+    64,
+    80
+   ],
+   "pivot": [
+    32.0,
+    73.6
+   ],
+   "model_xy": [
+    -0.5,
+    19.8
+   ],
+   "desc": "the tall minister's hat, crepe band and strawberry jewel; pivot at the brow"
+  },
+  "robe": {
+   "size": [
+    112,
+    112
+   ],
+   "pivot": [
+    64.0,
+    108.0
+   ],
+   "model_xy": [
+    0.0,
+    1.5
+   ],
+   "desc": "the portly robe: cream, strawberry trim, gold sash and buttons, a crepe ruff; the root card, pivot at the hips' base (0, 1.5)"
+  },
+  "cape": {
+   "size": [
+    88,
+    120
+   ],
+   "pivot": [
+    24.0,
+    12.0
+   ],
+   "model_xy": [
+    1.0,
+    14.5
+   ],
+   "desc": "the cape, behind the robe: golden crepe with browned spots and a scalloped, folded edge; pivot at the neck (1, 14.5)"
+  },
+  "arm_front": {
+   "size": [
+    48,
+    80
+   ],
+   "pivot": [
+    35.2,
+    8.0
+   ],
+   "model_xy": [
+    -2.6,
+    11.8
+   ],
+   "desc": "the front arm: wide cream sleeve, red cuff, white glove; pivot at the shoulder"
+  },
+  "arm_back": {
+   "size": [
+    48,
+    80
+   ],
+   "pivot": [
+    30.4,
+    8.0
+   ],
+   "model_xy": [
+    3.8,
+    11.8
+   ],
+   "desc": "the back arm, a tone darker: wide cream sleeve, red cuff, white glove; pivot at the shoulder"
+  },
+  "foot_front": {
+   "size": [
+    40,
+    24
+   ],
+   "pivot": [
+    30.4,
+    9.6
+   ],
+   "model_xy": [
+    -2.2,
+    1.8
+   ],
+   "desc": "a plum court shoe with a curled toe; pivot at the ankle"
+  },
+  "foot_back": {
+   "size": [
+    40,
+    24
+   ],
+   "pivot": [
+    27.2,
+    9.6
+   ],
+   "model_xy": [
+    2.4,
+    1.8
+   ],
+   "desc": "a plum court shoe with a curled toe, a tone darker; pivot at the ankle"
+  },
+  "scroll": {
+   "size": [
+    40,
+    56
+   ],
+   "pivot": [
+    20.0,
+    28.8
+   ],
+   "model_xy": [
+    1.5,
+    2.4
+   ],
+   "desc": "the letter (ch0): a scroll with a red wax seal; pivot at its middle, held in the front glove"
+  },
+  "compass_base": {
+   "size": [
+    56,
+    56
+   ],
+   "pivot": [
+    28.0,
+    28.0
+   ],
+   "model_xy": [
+    0.0,
+    0.0
+   ],
+   "desc": "the Marvelous Compass's base (ch0): a gold ring of seven sockets, one section intact; pivot at its centre, held in the front glove"
+  }
+ },
+ "draw_order": [
+  "cape",
+  "arm_back",
+  "foot_back",
+  "robe",
+  "foot_front",
+  "arm_front",
+  "head",
+  "mustache",
+  "hat"
+ ]
+}

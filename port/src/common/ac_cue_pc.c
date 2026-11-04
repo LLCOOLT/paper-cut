@@ -28,6 +28,8 @@
 int gPortAcCue = 0;
 int gPortAcCueState = 0;
 int gPortAcCueLead = 0;
+int gPortAcCueHold = 0;
+int gPortAcCueHoldLead = 0;
 
 s32 battleAcTimingA_GetSuccessFrame(BattleWork* work);
 s32 battleAcResult_TimingA(BattleWork* work);
@@ -45,7 +47,7 @@ static u32 sDoneUntil;
 
 static int testing(void) {
     if (sTest < 0) {
-        sTest = getenv("TTYD_AC_CUE_PRESS") != NULL; /* tests: on, and logged */
+        sTest = getenv("TTYD_AC_CUE_PRESS") != NULL || getenv("TTYD_AC_PLAY") != NULL; /* tests: on, and logged */
     }
     return sTest;
 }
@@ -130,6 +132,11 @@ void portAcCueUpdate(BattleWork* wp) {
             gPortAcCueLead = atoi(show);
             return;
         }
+    }
+    if (gPortAcCueHold && (gPortAcCue || testing())) {
+        gPortAcCueState = 2;
+        gPortAcCueLead = gPortAcCueHoldLead;
+        return;
     }
     if ((!gPortAcCue && !testing()) || j == NULL) {
         gPortAcCueState = 0;

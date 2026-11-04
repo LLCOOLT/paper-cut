@@ -11,10 +11,12 @@
 #include "evt/evt_cmd.h"
 #include "driver/swdrv.h"
 #include "mario/mario_party.h"
+#include "data/party_data.h"
 #include "event.h"
 #include "port/platform.h"
 #include "port/gameplus.h"
 #include "port/practice.h"
+#include "port/checkpoint.h"
 
 /* $TTYD_TRACE=2: every running script, where it is and what it calls. */
 static void traceEvents(u32 frame) {
@@ -93,7 +95,7 @@ static void warpFrame(u32 frame) {
         const char* v = getenv("TTYD_MAP");
         const char* comma;
         state = 0;
-        if (v && *v) {
+        if (v && *v && portCheckpointPending(NULL) == NULL) { /* (a checkpoint run starts from its own room) */
             comma = strchr(v, ',');
             snprintf(map, sizeof(map), "%.*s", comma ? (int)(comma - v) : (int)strlen(v), v);
             snprintf(bero, sizeof(bero), "%s", comma ? comma + 1 : "");
@@ -129,6 +131,30 @@ static void warpFrame(u32 frame) {
             if (party > 0 && party < 8) {
                 partyJoin(party);
                 marioPartyEntry(party);
+            }
+        }
+        {
+            /* $TTYD_FOLLOWER=<id>[,<model>[,<prefix>]]: a follower too (8-19, e.g. 9,
+             * Flavio's), drawn with another model (checking a model's
+             * poses in the follower's code: Luigi's friends, docs/LUIGI_ANIMS.md) */
+            const char* v = getenv("TTYD_FOLLOWER");
+            if (v != NULL && atoi(v) >= 8 && atoi(v) < 20) {
+                s32 id = atoi(v);
+                const char* model = strchr(v, ',');
+                if (model != NULL) {
+                    /* ,<model>[,<prefix>]: and its poses' names prefixed
+                     * (Blooey's SOOT_ and BURN_ sets) */
+                    static char name[32], poses[15][24];
+                    const char* prefix = strchr(model + 1, ',');
+                    int k;
+                    snprintf(name, sizeof(name), "%.*s", prefix != NULL ? (int)(prefix - model - 1) : 31, model + 1);
+                    partyDataTbl[id].name = name;
+                    for (k = 0; prefix != NULL && k < 15; k++) {
+                        snprintf(poses[k], sizeof(poses[k]), "%s%s", prefix + 1, partyPoseTbl[id][k]);
+                        partyPoseTbl[id][k] = poses[k];
+                    }
+                }
+                marioPartyEntry(id);
             }
         }
         printf("[warp] frame %u: to %s%s%s\n", (unsigned)frame, map, bero[0] ? " " : "", bero);

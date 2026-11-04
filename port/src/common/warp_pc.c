@@ -12,6 +12,7 @@
 #include "port/cardsave_pc.h"
 #include "port/platform.h"
 #include "port/practice.h"
+#include "port/checkpoint.h"
 
 BOOL portCardLoadSlotImage(s32 slot, const void* image); /* cardmgr.c */
 void portContinueGame(s32 slot);                         /* seq_load.c */
@@ -98,7 +99,7 @@ void portWarpFrame(void) {
         /* $TTYD_LOAD_SAVE=<file.gci>: a warp requested at start (tests) */
         const char* v = getenv("TTYD_LOAD_SAVE");
         sEnvRead = 1;
-        if (v != NULL && v[0] != 0) {
+        if (v != NULL && v[0] != 0 && portCheckpointPending(NULL) == NULL) { /* (not in a checkpoint run) */
             portWarpRequestSave(v);
             /* $TTYD_LOAD_SAVE_SLOT=0-3: as that save file (the launcher's
              * Continue: quick resume's save, as the player's own file) */

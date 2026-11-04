@@ -102,6 +102,13 @@ WinMgrDesc itemdrv_window_desc[4] = {
 // A macro: the symbol map has no itemGetWork function.
 #define itemGetWork() (gp->inBattle ? &work[1] : &work[0])
 
+#ifdef TARGET_PC
+/* the items lying about (port/src/common/input_pc.c's approach item, for tests) */
+ItemWork* portItemGetWork(void) {
+    return itemGetWork();
+}
+#endif
+
 #if VERSION <= VERSION_DEMO_JP
 /**
  * The demo puts a removed badge item on sale at the badge shop (pouchArriveBadge, the bargain table)

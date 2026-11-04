@@ -1,0 +1,78 @@
+{
+ "for": "the Drama Slam's battle stage props",
+ "pivot_note": "pixels from the PNG's top-left",
+ "cards": {
+  "set_road": {
+   "size": [
+    512,
+    256
+   ],
+   "pivot": [
+    256,
+    256
+   ],
+   "texels_per_unit": 8,
+   "desc": "act 1: a country road between green hills, under a blue sky; pivot at the bottom middle, on the stage floor at the back"
+  },
+  "set_ballroom": {
+   "size": [
+    2048,
+    1024
+   ],
+   "pivot": [
+    1024,
+    1024
+   ],
+   "texels_per_unit": 32,
+   "desc": "act 2: a painted ballroom, gold walls, red drapes across starry windows, a checkered floor, from the style model; pivot at the bottom middle"
+  },
+  "set_volcano": {
+   "size": [
+    2048,
+    1024
+   ],
+   "pivot": [
+    1024,
+    1024
+   ],
+   "texels_per_unit": 32,
+   "desc": "act 3: a painted volcano on a sunset sky over lava, from the style model; the flame card rises out of its crater at 238, 75"
+  },
+  "cardboard_sun": {
+   "size": [
+    512,
+    768
+   ],
+   "pivot": [
+    256,
+    752
+   ],
+   "texels_per_unit": 32,
+   "desc": "act 1's cardboard sun on a stick, smiling, from the style model; a stagehand raises it behind the hills; pivot at the stick's foot"
+  },
+  "volcano_flame_0": {
+   "size": [
+    128,
+    192
+   ],
+   "pivot": [
+    64,
+    188
+   ],
+   "texels_per_unit": 8,
+   "desc": "the eruption's flame card, frame 0: it rises out of the crater (slide it up from behind the cone) and flickers between the two frames"
+  },
+  "volcano_flame_1": {
+   "size": [
+    128,
+    192
+   ],
+   "pivot": [
+    64,
+    188
+   ],
+   "texels_per_unit": 8,
+   "desc": "the eruption's flame card, frame 1: it rises out of the crater (slide it up from behind the cone) and flickers between the two frames"
+  }
+ }
+}

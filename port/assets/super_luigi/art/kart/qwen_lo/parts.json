@@ -1,0 +1,130 @@
+{
+ "model": "c_lp_kart",
+ "texels_per_unit": 16,
+ "source": "designs/kart/side_restyled_d40_s2.png",
+ "cards": {
+  "kart_nose": {
+   "pivot": [
+    121.71,
+    186.57
+   ],
+   "model_xy": [
+    -11.107,
+    4.321
+   ],
+   "desc": "the front fender and the rail; in front of Luigi's legs",
+   "size": [
+    240,
+    224
+   ]
+  },
+  "kart_body": {
+   "pivot": [
+    80.57,
+    184.29
+   ],
+   "model_xy": [
+    0.0,
+    0.0
+   ],
+   "desc": "the side pod and the tail, in front of Luigi's hips. Pivot = the kart's origin",
+   "size": [
+    336,
+    152
+   ]
+  },
+  "kart_engine": {
+   "pivot": [
+    173.43,
+    69.71
+   ],
+   "model_xy": [
+    5.321,
+    9.321
+   ],
+   "desc": "the rear cowl, the pipe and the orange silencer",
+   "size": [
+    320,
+    144
+   ]
+  },
+  "kart_seat": {
+   "pivot": [
+    85.43,
+    142.29
+   ],
+   "model_xy": [
+    1.393,
+    7.179
+   ],
+   "desc": "the seat, behind Luigi",
+   "size": [
+    168,
+    152
+   ]
+  },
+  "steering_wheel": {
+   "pivot": [
+    17.71,
+    155.14
+   ],
+   "model_xy": [
+    -10.964,
+    7.607
+   ],
+   "desc": "the steering wheel on its column; pivot at the column's foot",
+   "size": [
+    144,
+    168
+   ]
+  },
+  "wheel_near_front": {
+   "pivot": [
+    64.0,
+    62.0
+   ],
+   "model_xy": [
+    -9.946,
+    3.893
+   ],
+   "desc": "the near front wheel; rz rolls it",
+   "size": [
+    128,
+    120
+   ]
+  },
+  "wheel_near_back": {
+   "pivot": [
+    67.89,
+    69.6
+   ],
+   "model_xy": [
+    9.975,
+    3.864
+   ],
+   "desc": "the near back wheel; rz rolls it",
+   "size": [
+    136,
+    136
+   ]
+  }
+ },
+ "anchors": {
+  "hips": [
+   0.321,
+   9.143
+  ],
+  "pipe": [
+   14.321,
+   11.75
+  ],
+  "front_axle": [
+   -9.946,
+   3.893
+  ],
+  "back_axle": [
+   9.975,
+   3.864
+  ]
+ }
+}

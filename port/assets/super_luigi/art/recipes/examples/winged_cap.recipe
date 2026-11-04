@@ -1,0 +1,23 @@
+# Worked example (RECIPES.md, "A new prop from two disc textures"): a winged Toad head, a shop sign
+# made of Toad's head (c_kinopio, image 8) and a Paragoomba's wing (c_kuribo, image 5, its first
+# wing), the wing twice, once flipped. An example: the game doesn't load it.
+
+image examples/winged_cap.png
+  canvas 112 64
+  # Toad's head (120x112) at half size, keeping the game's texel look
+  piece head model c_kinopio 8
+  @head scale 60 56 texel
+  # the wing: the sheet's first wing (32 texels wide) at three quarters; the other side is the same
+  # wing flipped
+  piece left model c_kuribo 5
+  @left crop 0 0 32 64
+  @left scale 24 48 texel
+  piece right model c_kuribo 5
+  @right crop 0 0 32 64
+  @right scale 24 48 texel
+  @right flip x
+  # the wings first, tipped up behind the cap; the head over their roots
+  paste left 6 0
+  paste right 82 0
+  paste head 26 6
+end

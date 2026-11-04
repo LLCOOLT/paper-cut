@@ -1,0 +1,224 @@
+{
+ "model": "c_sl_eclair",
+ "texels_per_unit": 32,
+ "source": "designs/eclair/parts_qwen_fix.png",
+ "cards": {
+  "gown": {
+   "pivot": [
+    300.41,
+    547.9
+   ],
+   "model_xy": [
+    0.0,
+    0.064
+   ],
+   "desc": "the gown, its puffed sleeves and cuffs; pivot at the hem",
+   "size": [
+    608,
+    584
+   ]
+  },
+  "arm_l": {
+   "pivot": [
+    65.23,
+    19.49
+   ],
+   "model_xy": [
+    -5.385,
+    14.038
+   ],
+   "desc": "the arm on the side she faces, a long glove; pivot at the cuff",
+   "size": [
+    112,
+    160
+   ]
+  },
+  "arm_r": {
+   "pivot": [
+    45.74,
+    19.49
+   ],
+   "model_xy": [
+    3.91,
+    14.103
+   ],
+   "desc": "the other arm; pivot at the cuff",
+   "size": [
+    112,
+    160
+   ]
+  },
+  "hair": {
+   "pivot": [
+    222.97,
+    270.36
+   ],
+   "model_xy": [
+    2.244,
+    16.987
+   ],
+   "desc": "the back hair, falling down her back (the gold band Qwen left on it painted out)",
+   "size": [
+    448,
+    552
+   ]
+  },
+  "head": {
+   "pivot": [
+    211.79,
+    339.38
+   ],
+   "model_xy": [
+    -0.769,
+    16.314
+   ],
+   "desc": "the head and hair (the tiara is its own card); pivot at the chin",
+   "size": [
+    440,
+    368
+   ]
+  },
+  "eyes": {
+   "pivot": [
+    114.56,
+    156.92
+   ],
+   "model_xy": [
+    -0.769,
+    16.314
+   ],
+   "desc": "a face overlay",
+   "size": [
+    232,
+    128
+   ]
+  },
+  "eyes_shut": {
+   "pivot": [
+    114.56,
+    156.92
+   ],
+   "model_xy": [
+    -0.769,
+    16.314
+   ],
+   "desc": "a face overlay",
+   "size": [
+    232,
+    128
+   ]
+  },
+  "eyes_happy": {
+   "pivot": [
+    114.56,
+    156.92
+   ],
+   "model_xy": [
+    -0.769,
+    16.314
+   ],
+   "desc": "a face overlay",
+   "size": [
+    232,
+    128
+   ]
+  },
+  "mouth_shut": {
+   "pivot": [
+    89.85,
+    56.1
+   ],
+   "model_xy": [
+    -0.769,
+    16.314
+   ],
+   "desc": "a face overlay",
+   "size": [
+    160,
+    72
+   ]
+  },
+  "mouth": {
+   "pivot": [
+    89.85,
+    56.1
+   ],
+   "model_xy": [
+    -0.769,
+    16.314
+   ],
+   "desc": "a face overlay",
+   "size": [
+    160,
+    72
+   ]
+  },
+  "mouth_smile": {
+   "pivot": [
+    89.85,
+    56.1
+   ],
+   "model_xy": [
+    -0.769,
+    16.314
+   ],
+   "desc": "a face overlay",
+   "size": [
+    160,
+    72
+   ]
+  },
+  "tiara": {
+   "pivot": [
+    124.56,
+    111.59
+   ],
+   "model_xy": [
+    -0.897,
+    25.192
+   ],
+   "desc": "the one-plate tiara, the seventh piece set in it",
+   "size": [
+    272,
+    144
+   ]
+  },
+  "tiara_glow": {
+   "pivot": [
+    124.56,
+    111.59
+   ],
+   "model_xy": [
+    -0.897,
+    25.192
+   ],
+   "desc": "the tiara, its piece blazing",
+   "size": [
+    272,
+    144
+   ]
+  }
+ },
+ "anchors": {
+  "waist": [
+   -0.577,
+   12.019
+  ],
+  "neck": [
+   -0.769,
+   16.314
+  ],
+  "hand_l": [
+   -6.154,
+   10.449
+  ],
+  "hand_r": [
+   4.679,
+   10.513
+  ],
+  "tiara_on": [
+   -0.897,
+   25.192
+  ]
+ }
+}

@@ -1,0 +1,318 @@
+{
+ "model": "c_sl_chestnut_king",
+ "texels_per_unit": 8,
+ "faces": "-x",
+ "pivot_note": "pivot: pixels from the PNG's top-left; model_xy: where the pivot sits at rest (model units, feet at y 0)",
+ "cards": {
+  "husk_left": {
+   "size": [
+    152,
+    288
+   ],
+   "pivot": [
+    132.0,
+    260.0
+   ],
+   "model_xy": [
+    -2.0,
+    5.5
+   ],
+   "desc": "the burr's left half (front); the halves meet at x 0. Split open: swing them apart about their pivots near the bottom of the seam"
+  },
+  "husk_right": {
+   "size": [
+    152,
+    288
+   ],
+   "pivot": [
+    20.0,
+    260.0
+   ],
+   "model_xy": [
+    2.0,
+    5.5
+   ],
+   "desc": "the burr's right half (front); the halves meet at x 0. Split open: swing them apart about their pivots near the bottom of the seam"
+  },
+  "nut": {
+   "size": [
+    200,
+    232
+   ],
+   "pivot": [
+    100.0,
+    224.0
+   ],
+   "model_xy": [
+    0.0,
+    6.0
+   ],
+   "desc": "the chestnut body inside the husk, glossy red-brown with its pale base; seen when the husk splits, and left when it falls away"
+  },
+  "head": {
+   "size": [
+    160,
+    128
+   ],
+   "pivot": [
+    88.0,
+    116.0
+   ],
+   "model_xy": [
+    0.0,
+    31.5
+   ],
+   "desc": "the head: a glossy chestnut, small sad eyes, a mouth of fangs, goo at the jaw; pivot at the neck (0, 31.5)"
+  },
+  "head_roar": {
+   "size": [
+    160,
+    128
+   ],
+   "pivot": [
+    88.0,
+    116.0
+   ],
+   "model_xy": [
+    0.0,
+    31.5
+   ],
+   "desc": "roaring, the mouth wide; pivot at the neck (0, 31.5)"
+  },
+  "head_hurt": {
+   "size": [
+    160,
+    128
+   ],
+   "pivot": [
+    88.0,
+    116.0
+   ],
+   "model_xy": [
+    0.0,
+    31.5
+   ],
+   "desc": "eyes squeezed shut; pivot at the neck (0, 31.5)"
+  },
+  "head_sad": {
+   "size": [
+    160,
+    128
+   ],
+   "pivot": [
+    88.0,
+    116.0
+   ],
+   "model_xy": [
+    0.0,
+    31.5
+   ],
+   "desc": "a tear (hesitate, kneel); pivot at the neck (0, 31.5)"
+  },
+  "head_calm": {
+   "size": [
+    160,
+    128
+   ],
+   "pivot": [
+    88.0,
+    116.0
+   ],
+   "model_xy": [
+    0.0,
+    31.5
+   ],
+   "desc": "calm, no fangs or drool (the fallback for King Marron restored); pivot at the neck (0, 31.5)"
+  },
+  "crown": {
+   "size": [
+    96,
+    56
+   ],
+   "pivot": [
+    48.0,
+    49.6
+   ],
+   "model_xy": [
+    0.0,
+    42.8
+   ],
+   "desc": "a small gold crown, tipped with pearls, three rubies; worn askew on the head; pivot at its base"
+  },
+  "cape": {
+   "size": [
+    224,
+    288
+   ],
+   "pivot": [
+    56.0,
+    32.0
+   ],
+   "model_xy": [
+    1.0,
+    35.0
+   ],
+   "desc": "the royal cape behind the husk, crimson with an ermine collar and hem; pivot at the shoulders"
+  },
+  "leg_front": {
+   "size": [
+    64,
+    64
+   ],
+   "pivot": [
+    33.6,
+    9.6
+   ],
+   "model_xy": [
+    -4.8,
+    6.8
+   ],
+   "desc": "a short, thick leg and broad foot; pivot at the hip, under the husk"
+  },
+  "leg_back": {
+   "size": [
+    64,
+    64
+   ],
+   "pivot": [
+    25.6,
+    9.6
+   ],
+   "model_xy": [
+    4.2,
+    6.8
+   ],
+   "desc": "a short, thick leg and broad foot, a tone darker; pivot at the hip, under the husk"
+  },
+  "goo_drip_1": {
+   "size": [
+    32,
+    56
+   ],
+   "pivot": [
+    16.0,
+    8.0
+   ],
+   "model_xy": [
+    0.0,
+    0.0
+   ],
+   "desc": "goo drip loop, frame 1 of 3; pivot at the jaw's corner (head x -9.8, y 34.4)"
+  },
+  "goo_drip_2": {
+   "size": [
+    32,
+    56
+   ],
+   "pivot": [
+    16.0,
+    8.0
+   ],
+   "model_xy": [
+    0.0,
+    0.0
+   ],
+   "desc": "goo drip loop, frame 2 of 3; pivot at the jaw's corner (head x -9.8, y 34.4)"
+  },
+  "goo_drip_3": {
+   "size": [
+    32,
+    56
+   ],
+   "pivot": [
+    16.0,
+    8.0
+   ],
+   "model_xy": [
+    0.0,
+    0.0
+   ],
+   "desc": "goo drip loop, frame 3 of 3; pivot at the jaw's corner (head x -9.8, y 34.4)"
+  },
+  "husk_shard_1": {
+   "size": [
+    96,
+    96
+   ],
+   "pivot": [
+    48.0,
+    48.0
+   ],
+   "model_xy": [
+    0.0,
+    0.0
+   ],
+   "desc": "a piece of the husk falling away as the curse breaks (1 of 4); pivot at its middle"
+  },
+  "husk_shard_2": {
+   "size": [
+    96,
+    96
+   ],
+   "pivot": [
+    48.0,
+    48.0
+   ],
+   "model_xy": [
+    0.0,
+    0.0
+   ],
+   "desc": "a piece of the husk falling away as the curse breaks (2 of 4); pivot at its middle"
+  },
+  "husk_shard_3": {
+   "size": [
+    96,
+    96
+   ],
+   "pivot": [
+    48.0,
+    48.0
+   ],
+   "model_xy": [
+    0.0,
+    0.0
+   ],
+   "desc": "a piece of the husk falling away as the curse breaks (3 of 4); pivot at its middle"
+  },
+  "husk_shard_4": {
+   "size": [
+    96,
+    96
+   ],
+   "pivot": [
+    48.0,
+    48.0
+   ],
+   "model_xy": [
+    0.0,
+    0.0
+   ],
+   "desc": "a piece of the husk falling away as the curse breaks (4 of 4); pivot at its middle"
+  },
+  "chestnut": {
+   "size": [
+    40,
+    40
+   ],
+   "pivot": [
+    20.0,
+    20.0
+   ],
+   "model_xy": [
+    0.0,
+    0.0
+   ],
+   "desc": "a falling chestnut (Chestnut Rain); pivot at its middle"
+  }
+ },
+ "draw_order": [
+  "cape",
+  "leg_back",
+  "nut",
+  "husk_right",
+  "husk_left",
+  "leg_front",
+  "head",
+  "crown"
+ ]
+}

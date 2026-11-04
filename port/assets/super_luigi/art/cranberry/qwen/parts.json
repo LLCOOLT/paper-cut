@@ -1,0 +1,186 @@
+{
+ "model": "c_sl_cranberry",
+ "texels_per_unit": 32,
+ "source": "designs/cranberry/parts_qwen.png",
+ "cards": {
+  "body_seated": {
+   "pivot": [
+    156.0,
+    324.0
+   ],
+   "model_xy": [
+    0.0,
+    5.938
+   ],
+   "desc": "the robe, the sleeves cut away at their seams; pivot at the hips",
+   "size": [
+    328,
+    344
+   ]
+  },
+  "legs": {
+   "pivot": [
+    240.5,
+    65.5
+   ],
+   "model_xy": [
+    0.0,
+    5.156
+   ],
+   "desc": "the folded legs, bare feet crossed",
+   "size": [
+    464,
+    248
+   ]
+  },
+  "arm_front": {
+   "pivot": [
+    70.5,
+    32.0
+   ],
+   "model_xy": [
+    -2.344,
+    14.688
+   ],
+   "desc": "the near sleeve, hung down, the hand on his knee; shoulder pivot",
+   "size": [
+    168,
+    360
+   ]
+  },
+  "arm_back": {
+   "pivot": [
+    69.0,
+    36.5
+   ],
+   "model_xy": [
+    2.5,
+    14.688
+   ],
+   "desc": "the far sleeve, hung down; shoulder pivot",
+   "size": [
+    224,
+    336
+   ]
+  },
+  "arm_reach": {
+   "pivot": [
+    287.5,
+    30.0
+   ],
+   "model_xy": [
+    -2.344,
+    14.688
+   ],
+   "desc": "the near sleeve held out, the hand open, offering the piece",
+   "size": [
+    312,
+    264
+   ]
+  },
+  "head_sleep": {
+   "pivot": [
+    130.5,
+    314.5
+   ],
+   "model_xy": [
+    0.0,
+    15.469
+   ],
+   "desc": "the head, asleep",
+   "size": [
+    344,
+    344
+   ]
+  },
+  "head_wake": {
+   "pivot": [
+    130.5,
+    315.0
+   ],
+   "model_xy": [
+    0.0,
+    15.469
+   ],
+   "desc": "the head, waking, eyes wide",
+   "size": [
+    344,
+    344
+   ]
+  },
+  "head": {
+   "pivot": [
+    130.5,
+    314.5
+   ],
+   "model_xy": [
+    0.0,
+    15.469
+   ],
+   "desc": "the head, awake, calm",
+   "size": [
+    344,
+    344
+   ]
+  },
+  "head_smile": {
+   "pivot": [
+    130.5,
+    315.0
+   ],
+   "model_xy": [
+    0.0,
+    15.469
+   ],
+   "desc": "the head, smiling",
+   "size": [
+    344,
+    344
+   ]
+  },
+  "head_talk": {
+   "pivot": [
+    130.5,
+    315.0
+   ],
+   "model_xy": [
+    0.0,
+    15.469
+   ],
+   "desc": "the head, talking",
+   "size": [
+    344,
+    344
+   ]
+  },
+  "compass_piece": {
+   "size": [
+    160,
+    160
+   ],
+   "pivot": [
+    80.0,
+    80.0
+   ],
+   "model_xy": [
+    -10.719,
+    11.625
+   ],
+   "desc": "the compass piece he guarded, on his palm"
+  }
+ },
+ "anchors": {
+  "neck": [
+   0.0,
+   15.469
+  ],
+  "hips": [
+   0.0,
+   5.938
+  ],
+  "hand_reach": [
+   -11.406,
+   10.312
+  ]
+ }
+}

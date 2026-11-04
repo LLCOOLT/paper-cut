@@ -1,0 +1,175 @@
+{
+ "model": "c_sl_marron",
+ "texels_per_unit": 32,
+ "source": "designs/king_marron/parts_qwen.png",
+ "cards": {
+  "head": {
+   "pivot": [
+    234.46,
+    625.08
+   ],
+   "model_xy": [
+    -0.721,
+    18.654
+   ],
+   "desc": "the head, beard and crown; pivot at the chin",
+   "size": [
+    520,
+    656
+   ]
+  },
+  "robe_l": {
+   "pivot": [
+    135.85,
+    426.62
+   ],
+   "model_xy": [
+    -5.0,
+    10.0
+   ],
+   "desc": "the robe's half on the side he faces, the arm cut away at the sleeve's seam",
+   "size": [
+    264,
+    544
+   ]
+  },
+  "robe_r": {
+   "pivot": [
+    198.62,
+    421.85
+   ],
+   "model_xy": [
+    3.606,
+    10.0
+   ],
+   "desc": "the robe's other half, its gold clasp over the gap",
+   "size": [
+    448,
+    536
+   ]
+  },
+  "arm_l": {
+   "pivot": [
+    228.31,
+    55.23
+   ],
+   "model_xy": [
+    -8.558,
+    18.173
+   ],
+   "desc": "the arm on the side he faces, sleeve, cuff and hand; pivot at the shoulder",
+   "size": [
+    272,
+    352
+   ]
+  },
+  "arm_r": {
+   "pivot": [
+    64.31,
+    32.31
+   ],
+   "model_xy": [
+    7.692,
+    17.933
+   ],
+   "desc": "the other arm; pivot at the shoulder",
+   "size": [
+    304,
+    360
+   ]
+  },
+  "foot_front": {
+   "pivot": [
+    185.69,
+    21.54
+   ],
+   "model_xy": [
+    -4.327,
+    7.596
+   ],
+   "desc": "the near boot; pivot at its top",
+   "size": [
+    296,
+    280
+   ]
+  },
+  "foot_back": {
+   "pivot": [
+    185.69,
+    21.54
+   ],
+   "model_xy": [
+    3.846,
+    7.596
+   ],
+   "desc": "the far boot, the same, a step behind",
+   "size": [
+    296,
+    280
+   ]
+  },
+  "head_blink": {
+   "pivot": [
+    234.46,
+    625.85
+   ],
+   "model_xy": [
+    -0.721,
+    18.654
+   ],
+   "desc": "the head, eyes shut",
+   "size": [
+    520,
+    656
+   ]
+  },
+  "head_talk": {
+   "pivot": [
+    234.46,
+    625.54
+   ],
+   "model_xy": [
+    -0.721,
+    18.654
+   ],
+   "desc": "the head, talking",
+   "size": [
+    520,
+    656
+   ]
+  },
+  "head_smile": {
+   "pivot": [
+    234.46,
+    625.08
+   ],
+   "model_xy": [
+    -0.721,
+    18.654
+   ],
+   "desc": "the head, eyes happy-shut, a broad smile",
+   "size": [
+    520,
+    656
+   ]
+  }
+ },
+ "anchors": {
+  "waist": [
+   -0.144,
+   10.481
+  ],
+  "neck": [
+   -0.721,
+   18.654
+  ],
+  "hand_l": [
+   -13.462,
+   10.962
+  ],
+  "hand_r": [
+   12.5,
+   10.0
+  ]
+ }
+}

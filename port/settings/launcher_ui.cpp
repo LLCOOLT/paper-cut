@@ -826,6 +826,21 @@ void draw(Launcher& l, float time) {
   }
   ImGui::PopFont();
   ImGui::End();
+#if !defined(__ANDROID__) && !(defined(__APPLE__) && TARGET_OS_IPHONE)
+  // Quit, in the stage's corner: as closing the window does (phones leave an app their own way)
+  ImGui::SetNextWindowPos(ImVec2(stageMax.x - 14.f * scale, stageMin.y + 14.f * scale), ImGuiCond_Always, ImVec2(1.f, 0.f));
+  ImGui::Begin("launcher_quit", nullptr,
+               ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings |
+                   ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoBackground);
+  ImGui::PushFont(gLauncherFonts.body);
+  if (ImGui::Button("Quit")) {
+    SDL_Event quit{};
+    quit.type = SDL_EVENT_QUIT;
+    SDL_PushEvent(&quit);
+  }
+  ImGui::PopFont();
+  ImGui::End();
+#endif
 }
 
 } // namespace

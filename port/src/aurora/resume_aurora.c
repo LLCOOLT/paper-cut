@@ -21,6 +21,7 @@
 #include "port/cardsave_pc.h"
 #include "port/platform.h"
 #include "port/resume.h"
+#include "port/superluigi.h"
 #include "port/settings.h"
 
 BOOL portCardSnapshot(void* image); /* cardmgr.c */
@@ -48,7 +49,7 @@ void portResumePath(char* out, size_t size, const char* gameId, int sidecar) {
 /* the player has the controls in the field: a save now is a clean one */
 static int safe(void) {
     return gp != NULL && seqGetSeq() == SEQ_GAME && !gp->inBattle && marioChkKey() && marioChkCtrl() &&
-           gp->saveSlot >= 0 && gp->saveSlot < 4;
+           gp->saveSlot >= 0 && gp->saveSlot < 4 && !portSuperLuigiActive(); /* paused in Super Luigi's chapters */
 }
 
 void portResumeFlush(void) {

@@ -20,6 +20,8 @@
 #include "port/platform.h"
 #include "port/mods.h"
 #include "port/luigi.h"
+#include "port/sl_models.h"
+#include "port/art_recipe.h"
 #ifdef __APPLE__
 #include <TargetConditionals.h>
 #endif
@@ -169,6 +171,9 @@ int aurora_main(int argc, char* argv[]) {
     }
 
     portLuigiModelInit(); /* Luigi's model with our animations, from the disc (docs/LUIGI_ANIMS.md) */
+    portSuperLuigiModelsInit(); /* Super Luigi's new models and Luigi's variants (docs/LUIGI_ANIMS.md) */
+    portArtPrepare(info.userPath); /* "Preparing graphics": the art recipes run on the disc (art/RECIPES.md) */
+    portSuperLuigiModelArt(); /* the models' cards the recipes made; before the mods take the host files */
     portModsInit(info.userPath, info.cachePath); /* the mods folder, loose textures (port/mods/mods.cpp) */
     portPipelineWarmupWait(); /* "Preparing graphics": every known pipeline built first */
     portAuroraBeginFrame();

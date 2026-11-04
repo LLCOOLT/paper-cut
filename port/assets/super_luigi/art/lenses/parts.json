@@ -1,0 +1,135 @@
+{
+ "model": "sl_lenses",
+ "texels_per_unit": 8,
+ "faces": "-x",
+ "pivot_note": "pivot: pixels from the PNG's top-left; model_xy: where the pivot sits at rest (model units, feet at y 0)",
+ "cards": {
+  "lens_moon": {
+   "size": [
+    56,
+    72
+   ],
+   "pivot": [
+    28.0,
+    68.0
+   ],
+   "model_xy": [
+    0.0,
+    -3.0
+   ],
+   "desc": "the Moon Lens: a crescent of glass in a silver rim; pivot at its foot, set in the socket"
+  },
+  "socket_moon": {
+   "size": [
+    88,
+    112
+   ],
+   "pivot": [
+    44.0,
+    104.0
+   ],
+   "model_xy": [
+    0.0,
+    0.0
+   ],
+   "desc": "the moon socket: a stone stand whose cap holds an empty crescent; the lens's pivot goes at (0, 6.6), its shape over the recess; pivot at the base's middle"
+  },
+  "beam_moon": {
+   "size": [
+    64,
+    256
+   ],
+   "pivot": [
+    32,
+    256
+   ],
+   "model_xy": null,
+   "desc": "the moon beam: an effect texture (soft alpha, like the game's IA4 effects); map it round a tall cylinder from the lens to the ceiling, additive or alpha-blended; its bottom is the bright end"
+  },
+  "lens_sun": {
+   "size": [
+    56,
+    72
+   ],
+   "pivot": [
+    28.0,
+    68.0
+   ],
+   "model_xy": [
+    0.0,
+    -3.0
+   ],
+   "desc": "the Sun Lens: a round of glass in a gold rim; pivot at its foot, set in the socket"
+  },
+  "socket_sun": {
+   "size": [
+    88,
+    112
+   ],
+   "pivot": [
+    44.0,
+    104.0
+   ],
+   "model_xy": [
+    0.0,
+    0.0
+   ],
+   "desc": "the sun socket: a stone stand whose cap holds an empty circle; the lens's pivot goes at (0, 6.6), its shape over the recess; pivot at the base's middle"
+  },
+  "beam_sun": {
+   "size": [
+    64,
+    256
+   ],
+   "pivot": [
+    32,
+    256
+   ],
+   "model_xy": null,
+   "desc": "the sun beam: an effect texture (soft alpha, like the game's IA4 effects); map it round a tall cylinder from the lens to the ceiling, additive or alpha-blended; its bottom is the bright end"
+  },
+  "lens_tear": {
+   "size": [
+    56,
+    72
+   ],
+   "pivot": [
+    28.0,
+    68.0
+   ],
+   "model_xy": [
+    0.0,
+    -3.0
+   ],
+   "desc": "the Tear Lens: a teardrop of glass in a blue rim; pivot at its foot, set in the socket"
+  },
+  "socket_tear": {
+   "size": [
+    88,
+    112
+   ],
+   "pivot": [
+    44.0,
+    104.0
+   ],
+   "model_xy": [
+    0.0,
+    0.0
+   ],
+   "desc": "the tear socket: a stone stand whose cap holds an empty teardrop; the lens's pivot goes at (0, 6.6), its shape over the recess; pivot at the base's middle"
+  },
+  "beam_tear": {
+   "size": [
+    64,
+    256
+   ],
+   "pivot": [
+    32,
+    256
+   ],
+   "model_xy": null,
+   "desc": "the tear beam: an effect texture (soft alpha, like the game's IA4 effects); map it round a tall cylinder from the lens to the ceiling, additive or alpha-blended; its bottom is the bright end"
+  }
+ },
+ "lens_in_socket": "the lens's pivot sits at the socket's (0, 6.6)"
+}

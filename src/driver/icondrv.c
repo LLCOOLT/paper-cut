@@ -20,6 +20,7 @@
 #include <stdio.h>
 #ifdef TARGET_PC
 #include "port/bedecode.h"
+#include "port/superluigi.h"
 #endif
 #include "icon_ids.h"
 #include "version.h"
@@ -612,6 +613,9 @@ void iconGetTexObj(GXTexObj* texObj, s16 iconId) {
     ICON_ANIM_TPL_S(data, tplId);
     TEXGetGXTexObjFromPalette(icon_tpl, texObj, tplId);
     GXInitTexObjLOD(texObj, GX_LINEAR, GX_LINEAR, 0.0f, 0.0f, 0.0f, GX_FALSE, GX_FALSE, GX_ANISO_1);
+#ifdef TARGET_PC
+    portIconTexOverride((u16)iconId, texObj); // a friend of Luigi's face in a partner's place
+#endif
 }
 
 /**
@@ -669,6 +673,9 @@ static void iconGX(Mtx mtx, IconEntry* entry) {
         } else {
             TEXGetGXTexObjFromPalette(icon_tpl, &texObj, tplId);
             GXInitTexObjLOD(&texObj, GX_LINEAR, GX_LINEAR, 0.0f, 0.0f, 0.0f, GX_FALSE, GX_FALSE, GX_ANISO_1);
+#ifdef TARGET_PC
+            portIconTexOverride(entry->iconId, &texObj); // a friend of Luigi's face in a partner's place
+#endif
         }
     }
     GXLoadTexObj(&texObj, GX_TEXMAP0);

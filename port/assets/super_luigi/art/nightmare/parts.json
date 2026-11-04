@@ -1,0 +1,196 @@
+{
+ "model": "c_sl_nightmare",
+ "texels_per_unit": 4,
+ "faces": "-x",
+ "pivot_note": "pivot: pixels from the PNG's top-left; model_xy: where the pivot sits at rest (model units, feet at y 0)",
+ "cards": {
+  "body": {
+   "size": [
+    128,
+    192
+   ],
+   "pivot": [
+    64.0,
+    188.0
+   ],
+   "model_xy": [
+    0.0,
+    0.0
+   ],
+   "desc": "the tall shadow: violet-black paper with a gilt edge, creased folds, a torn hem; root card, pivot at the hem's middle (0, 0)"
+  },
+  "body_cracked": {
+   "size": [
+    128,
+    192
+   ],
+   "pivot": [
+    64.0,
+    188.0
+   ],
+   "model_xy": [
+    0.0,
+    0.0
+   ],
+   "desc": "cracked: lines of light breaking through (the shatter, stage 1); root card, pivot at the hem's middle (0, 0)"
+  },
+  "face": {
+   "size": [
+    80,
+    80
+   ],
+   "pivot": [
+    40.0,
+    40.0
+   ],
+   "model_xy": [
+    0.0,
+    47.0
+   ],
+   "desc": "the face: a round compass in a gold rim, its dial ticked; the needle is its own card; pivot at the dial's centre"
+  },
+  "face_open": {
+   "size": [
+    80,
+    80
+   ],
+   "pivot": [
+    40.0,
+    40.0
+   ],
+   "model_xy": [
+    0.0,
+    47.0
+   ],
+   "desc": "Hatesong: the dial split open, a dark howling mouth with gold teeth; pivot at the dial's centre"
+  },
+  "face_cracked": {
+   "size": [
+    80,
+    80
+   ],
+   "pivot": [
+    40.0,
+    40.0
+   ],
+   "model_xy": [
+    0.0,
+    47.0
+   ],
+   "desc": "the face cracking with light (the shatter); pivot at the dial's centre"
+  },
+  "needle": {
+   "size": [
+    16,
+    56
+   ],
+   "pivot": [
+    8.0,
+    28.0
+   ],
+   "model_xy": [
+    0.0,
+    47.0
+   ],
+   "desc": "the compass needle (red north); spin it about its pivot, the dial's centre; stop it pointing at the target for Doom Foretold"
+  },
+  "arm_front": {
+   "size": [
+    128,
+    128
+   ],
+   "pivot": [
+    120.0,
+    16.0
+   ],
+   "model_xy": [
+    -3.0,
+    37.0
+   ],
+   "desc": "the front arm: an accordion of folded pages ending in a flat page-hand with writing on it; pivot at the shoulder (0, 38)"
+  },
+  "arm_back": {
+   "size": [
+    128,
+    128
+   ],
+   "pivot": [
+    120.0,
+    16.0
+   ],
+   "model_xy": [
+    3.0,
+    38.0
+   ],
+   "desc": "the back arm, a tone darker: an accordion of folded pages ending in a flat page-hand with writing on it; pivot at the shoulder (0, 38)"
+  },
+  "arm_stub": {
+   "size": [
+    40,
+    40
+   ],
+   "pivot": [
+    32.0,
+    16.0
+   ],
+   "model_xy": [
+    -3.0,
+    37.0
+   ],
+   "desc": "arm lost: a torn stump of pages at the shoulder; swap for the arm until it regrows"
+  },
+  "light_shard_0": {
+   "size": [
+    24,
+    24
+   ],
+   "pivot": [
+    12.0,
+    12.0
+   ],
+   "model_xy": [
+    0.0,
+    0.0
+   ],
+   "desc": "a shard of the shattered Nightmare, glowing; throw them out and fade them"
+  },
+  "light_shard_1": {
+   "size": [
+    24,
+    24
+   ],
+   "pivot": [
+    12.0,
+    12.0
+   ],
+   "model_xy": [
+    0.0,
+    0.0
+   ],
+   "desc": "a shard of the shattered Nightmare, glowing; throw them out and fade them"
+  },
+  "light_shard_2": {
+   "size": [
+    24,
+    24
+   ],
+   "pivot": [
+    12.0,
+    12.0
+   ],
+   "model_xy": [
+    0.0,
+    0.0
+   ],
+   "desc": "a shard of the shattered Nightmare, glowing; throw them out and fade them"
+  }
+ },
+ "draw_order": [
+  "arm_back",
+  "body",
+  "arm_front",
+  "face",
+  "needle"
+ ],
+ "rest_note": "model_xy is each card's pivot at rest"
+}

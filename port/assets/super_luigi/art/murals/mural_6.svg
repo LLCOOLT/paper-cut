@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="128" viewBox="0 0 256 128" shape-rendering="geometricPrecision">
+<!-- Paper Cut / Super Luigi art: mural_6 (256x128); see STYLE.md -->
+<defs></defs>
+<rect width="256" height="128" fill="#8e8a84"/>
+<rect x="4" y="4" width="248" height="120" fill="#625e58"/>
+<rect x="3" y="3" width="247" height="119" fill="#a8a49c"/>
+<rect x="10" y="10" width="236" height="108" fill="#c8c0ac"/>
+<rect x="10" y="10" width="234" height="106" fill="#e2dccc"/>
+<path d="M7.60 6.00C7.60 6.46 7.20 7.15 6.80 7.39C6.40 7.62 5.60 7.62 5.20 7.39C4.80 7.15 4.40 6.46 4.40 6.00C4.40 5.54 4.80 4.85 5.20 4.61C5.60 4.38 6.40 4.38 6.80 4.61C7.20 4.85 7.60 5.54 7.60 6.00Z" fill="none" stroke="#625e58" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M7.60 122.00C7.60 122.46 7.20 123.15 6.80 123.39C6.40 123.62 5.60 123.62 5.20 123.39C4.80 123.15 4.40 122.46 4.40 122.00C4.40 121.54 4.80 120.85 5.20 120.61C5.60 120.38 6.40 120.38 6.80 120.61C7.20 120.85 7.60 121.54 7.60 122.00Z" fill="none" stroke="#625e58" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M251.60 6.00C251.60 6.46 251.20 7.15 250.80 7.39C250.40 7.62 249.60 7.62 249.20 7.39C248.80 7.15 248.40 6.46 248.40 6.00C248.40 5.54 248.80 4.85 249.20 4.61C249.60 4.38 250.40 4.38 250.80 4.61C251.20 4.85 251.60 5.54 251.60 6.00Z" fill="none" stroke="#625e58" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M251.60 122.00C251.60 122.46 251.20 123.15 250.80 123.39C250.40 123.62 249.60 123.62 249.20 123.39C248.80 123.15 248.40 122.46 248.40 122.00C248.40 121.54 248.80 120.85 249.20 120.61C249.60 120.38 250.40 120.38 250.80 120.61C251.20 120.85 251.60 121.54 251.60 122.00Z" fill="none" stroke="#625e58" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M189.60 104.00L193.60 91.20L198.40 91.20L202.40 104.00Z" fill="#9a9282" transform="translate(0.8 1.8)"/>
+<path d="M189.60 104.00L193.60 91.20L198.40 91.20L202.40 104.00Z" fill="#f4f0e6" fill-rule="nonzero"/>
+<path d="M193.6 94.4 L187.2 93.6" fill="none" stroke="#c8c2b2" stroke-width="2.4000000000000004" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M199.94 87.87C199.92 88.23 199.27 90.26 199.07 90.56C198.87 90.86 197.60 91.81 197.28 91.90C196.95 91.99 195.12 91.86 194.79 91.75C194.46 91.63 193.08 90.66 192.88 90.39C192.68 90.11 192.14 88.44 192.14 88.08C192.14 87.72 192.75 85.92 192.93 85.62C193.12 85.31 194.26 84.14 194.59 84.02C194.92 83.90 196.99 83.90 197.35 84.03C197.70 84.16 199.12 85.42 199.31 85.71C199.51 86.00 199.96 87.50 199.94 87.87Z" fill="#9a9282" transform="translate(0.8 1.8)"/>
+<path d="M199.94 87.87C199.92 88.23 199.27 90.26 199.07 90.56C198.87 90.86 197.60 91.81 197.28 91.90C196.95 91.99 195.12 91.86 194.79 91.75C194.46 91.63 193.08 90.66 192.88 90.39C192.68 90.11 192.14 88.44 192.14 88.08C192.14 87.72 192.75 85.92 192.93 85.62C193.12 85.31 194.26 84.14 194.59 84.02C194.92 83.90 196.99 83.90 197.35 84.03C197.70 84.16 199.12 85.42 199.31 85.71C199.51 86.00 199.96 87.50 199.94 87.87Z" fill="#ecc8a4" fill-rule="nonzero"/>
+<path d="M191.67 87.76C191.43 87.60 192.23 84.23 192.69 83.86C193.14 83.50 197.13 82.71 197.72 82.89C198.31 83.06 200.49 85.86 200.60 86.19C200.70 86.53 199.52 87.38 199.16 87.36C198.81 87.35 196.42 85.97 195.86 86.00C195.30 86.03 191.91 87.92 191.67 87.76Z" fill="#c4583a" fill-rule="nonzero"/>
+<path d="M221.44 88.69L229.44 88.69L226.43 94.95Z" fill="#d8a83a" fill-rule="nonzero"/>
+<path d="M220.36 89.56L225.34 95.81L218.58 97.36Z" fill="#d8a83a" fill-rule="nonzero"/>
+<path d="M219.00 89.25L217.22 97.05L211.79 92.72Z" fill="#d8a83a" fill-rule="nonzero"/>
+<path d="M218.40 88.00L211.19 91.47L211.19 84.53Z" fill="#d8a83a" fill-rule="nonzero"/>
+<path d="M219.00 86.75L211.79 83.28L217.22 78.95Z" fill="#d8a83a" fill-rule="nonzero"/>
+<path d="M220.36 86.44L218.58 78.64L225.34 80.19Z" fill="#d8a83a" fill-rule="nonzero"/>
+<path d="M221.44 87.31L226.43 81.05L229.44 87.31Z" fill="#d8a83a" fill-rule="nonzero"/>
+<path d="M40 12 L62 40 L54 58 L84 78 L76 96 L98 116" fill="none" stroke="#f6f2e8" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M40 12 L62 40 L54 58 L84 78 L76 96 L98 116" fill="none" stroke="#4a443a" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M62 40 L84 34 M84 78 L104 72" fill="none" stroke="#4a443a" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

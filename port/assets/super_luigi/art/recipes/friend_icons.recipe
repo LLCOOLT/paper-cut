@@ -1,0 +1,318 @@
+# The friends' partner icons, made from each friend's own textures on the player's disc (RECIPES.md).
+# Shown in the partner's place while a friend is in the party (sl_assets_aurora.c, portIconTexOverride).
+#
+# Each friend is put together at the disc's own size from his model's cards (as the model stands:
+# the body, then what's on it), cut to its outline, scaled into the icon with the texel look kept,
+# and given a 1-texel line in his own line colour. The forms are the game's partner icons':
+#   _hud   48x48, as ICON_1A4 (Goombella's; Koops ICON_1A5 ...): the figure low on the left, the HP
+#          heart (ICON_19F, the game's own, scaled to the HUD's) behind it at the top right, the pair cut
+#          out as one sticker: a white border, a grey rim and a dark grey shadow one texel down and right,
+#          as the game's
+#   _menu  40x40, as ICON_155 (Goombella's standing): the whole friend, no border
+# The drawn icons at the same paths stand in where the disc can't make them (`fallback`).
+
+mask solid alpha
+
+# ---------------------------------------------------------------------------------------------------
+# Blooey: his one card (c_lp_gesso 0); the HUD
+image art/icons/blooey/blooey_hud.png
+  fallback art/icons/blooey/blooey_hud.png
+  canvas 48 48
+  piece heart icon ICON_19F
+  @heart crop 2 3 36 33
+  @heart scale 22 20 texel
+  paste heart 22 4
+  piece fig canvas 128 144
+  piece body model c_lp_gesso 0
+  @fig paste body 0 0
+  @fig crop 3 4 121 136
+  @fig scale 29 33 texel
+  @fig grow 1 #392821
+  paste fig 4 9
+  grow 1 #e7e7e7
+  grow 1 #a5a5a5
+  piece sticker copy
+  piece shadow copy
+  @shadow fill in solid #424242
+  canvas 48 48
+  paste shadow 1 1
+  paste sticker 0 0
+  alpha cut 128
+end
+
+# ---------------------------------------------------------------------------------------------------
+# Blooey: his one card (c_lp_gesso 0); the menus
+image art/icons/blooey/blooey_menu.png
+  fallback art/icons/blooey/blooey_menu.png
+  canvas 40 40
+  piece fig canvas 128 144
+  piece body model c_lp_gesso 0
+  @fig paste body 0 0
+  @fig crop 3 4 121 136
+  @fig scale 32 36 texel
+  @fig grow 1 #392821
+  paste fig 3 1
+  alpha cut 128
+end
+
+# ---------------------------------------------------------------------------------------------------
+# Blooey burnt (chapter 6, from jin_70 on): the model's own sooty card (c_lp_gesso 1); the HUD
+image art/icons/blooey/blooey_soot_hud.png
+  fallback art/icons/blooey/blooey_soot_hud.png
+  canvas 48 48
+  piece heart icon ICON_19F
+  @heart crop 2 3 36 33
+  @heart scale 22 20 texel
+  paste heart 22 4
+  piece fig canvas 128 144
+  piece body model c_lp_gesso 1
+  @fig paste body 0 0
+  @fig crop 3 4 121 136
+  @fig scale 29 33 texel
+  @fig grow 1 #352821
+  paste fig 4 9
+  grow 1 #e7e7e7
+  grow 1 #a5a5a5
+  piece sticker copy
+  piece shadow copy
+  @shadow fill in solid #424242
+  canvas 48 48
+  paste shadow 1 1
+  paste sticker 0 0
+  alpha cut 128
+end
+
+# ---------------------------------------------------------------------------------------------------
+# Blooey burnt (chapter 6, from jin_70 on): the model's own sooty card (c_lp_gesso 1); the menus
+image art/icons/blooey/blooey_soot_menu.png
+  fallback art/icons/blooey/blooey_soot_menu.png
+  canvas 40 40
+  piece fig canvas 128 144
+  piece body model c_lp_gesso 1
+  @fig paste body 0 0
+  @fig crop 3 4 121 136
+  @fig scale 32 36 texel
+  @fig grow 1 #352821
+  paste fig 3 1
+  alpha cut 128
+end
+
+# ---------------------------------------------------------------------------------------------------
+# Jerry: the bomb (c_lp_bom 3), its fuse (2), the wind-up key at his back (1) and his feet (0); the HUD
+image art/icons/jerry/jerry_hud.png
+  fallback art/icons/jerry/jerry_hud.png
+  canvas 48 48
+  piece heart icon ICON_19F
+  @heart crop 2 3 36 33
+  @heart scale 22 20 texel
+  paste heart 22 4
+  piece fig canvas 130 124
+  piece fuse model c_lp_bom 2
+  @fig paste fuse 44 0
+  piece body model c_lp_bom 3
+  @fig paste body 8 24
+  @fig crop 11 2 84 113
+  @fig scale 25 33 texel
+  @fig grow 1 #081c18
+  paste fig 6 9
+  grow 1 #e7e7e7
+  grow 1 #a5a5a5
+  piece sticker copy
+  piece shadow copy
+  @shadow fill in solid #424242
+  canvas 48 48
+  paste shadow 1 1
+  paste sticker 0 0
+  alpha cut 128
+end
+
+# ---------------------------------------------------------------------------------------------------
+# Jerry: the bomb (c_lp_bom 3), its fuse (2), the wind-up key at his back (1) and his feet (0); the menus
+image art/icons/jerry/jerry_menu.png
+  fallback art/icons/jerry/jerry_menu.png
+  canvas 40 40
+  piece fig canvas 130 124
+  piece fuse model c_lp_bom 2
+  @fig paste fuse 44 0
+  piece key model c_lp_bom 1
+  @fig paste key 72 38
+  piece body model c_lp_bom 3
+  @fig paste body 8 24
+  piece foot model c_lp_bom 0
+  @fig paste foot 12 94
+  @fig paste foot 50 96
+  @fig crop 11 2 114 122
+  @fig scale 34 36 texel
+  @fig grow 1 #081c18
+  paste fig 2 1
+  alpha cut 128
+end
+
+# ---------------------------------------------------------------------------------------------------
+# Torque: the shell (c_lp_met 4), the wrench standing out of it (3), his head (2), its eye (1) and claws (0); the HUD
+image art/icons/torque/torque_hud.png
+  fallback art/icons/torque/torque_hud.png
+  canvas 48 48
+  piece heart icon ICON_19F
+  @heart crop 2 3 36 33
+  @heart scale 22 20 texel
+  paste heart 22 4
+  piece fig canvas 130 130
+  piece wrench model c_lp_met 3
+  @fig paste wrench 54 8
+  piece shell model c_lp_met 4
+  @fig paste shell 30 58
+  piece head model c_lp_met 2
+  @fig paste head 4 74
+  piece eye model c_lp_met 1
+  @fig paste eye 14 82
+  piece claw model c_lp_met 0
+  @fig paste claw 20 100
+  @fig paste claw 70 100
+  @fig crop 5 10 108 116
+  @fig scale 31 33 texel
+  @fig grow 1 #292429
+  paste fig 3 9
+  grow 1 #e7e7e7
+  grow 1 #a5a5a5
+  piece sticker copy
+  piece shadow copy
+  @shadow fill in solid #424242
+  canvas 48 48
+  paste shadow 1 1
+  paste sticker 0 0
+  alpha cut 128
+end
+
+# ---------------------------------------------------------------------------------------------------
+# Torque: the shell (c_lp_met 4), the wrench standing out of it (3), his head (2), its eye (1) and claws (0); the menus
+image art/icons/torque/torque_menu.png
+  fallback art/icons/torque/torque_menu.png
+  canvas 40 40
+  piece fig canvas 130 130
+  piece wrench model c_lp_met 3
+  @fig paste wrench 54 8
+  piece shell model c_lp_met 4
+  @fig paste shell 30 58
+  piece head model c_lp_met 2
+  @fig paste head 4 74
+  piece eye model c_lp_met 1
+  @fig paste eye 14 82
+  piece claw model c_lp_met 0
+  @fig paste claw 20 100
+  @fig paste claw 70 100
+  @fig crop 5 10 108 116
+  @fig scale 34 36 texel
+  @fig grow 1 #292429
+  paste fig 2 1
+  alpha cut 128
+end
+
+# ---------------------------------------------------------------------------------------------------
+# Hayzee: the flower and its face (c_lp_pansy 3), gloves (4, 5) and shoes (0); the HUD
+image art/icons/hayzee/hayzee_hud.png
+  fallback art/icons/hayzee/hayzee_hud.png
+  canvas 48 48
+  piece heart icon ICON_19F
+  @heart crop 2 3 36 33
+  @heart scale 22 20 texel
+  paste heart 22 4
+  piece fig canvas 110 140
+  piece body model c_lp_pansy 3
+  @fig paste body 3 0
+  @fig crop 5 1 101 118
+  @fig scale 28 33 texel
+  @fig grow 1 #184131
+  paste fig 4 9
+  grow 1 #e7e7e7
+  grow 1 #a5a5a5
+  piece sticker copy
+  piece shadow copy
+  @shadow fill in solid #424242
+  canvas 48 48
+  paste shadow 1 1
+  paste sticker 0 0
+  alpha cut 128
+end
+
+# ---------------------------------------------------------------------------------------------------
+# Hayzee: the flower and its face (c_lp_pansy 3), gloves (4, 5) and shoes (0); the menus
+image art/icons/hayzee/hayzee_menu.png
+  fallback art/icons/hayzee/hayzee_menu.png
+  canvas 40 40
+  piece fig canvas 110 140
+  piece shoe model c_lp_pansy 0
+  @fig paste shoe 22 114
+  @fig paste shoe 52 114
+  piece gl model c_lp_pansy 4
+  @fig paste gl 0 70
+  piece gr model c_lp_pansy 5
+  @fig paste gr 72 70
+  piece body model c_lp_pansy 3
+  @fig paste body 3 0
+  @fig crop 4 1 103 136
+  @fig scale 27 36 texel
+  @fig grow 1 #184131
+  paste fig 5 1
+  alpha cut 128
+end
+
+# ---------------------------------------------------------------------------------------------------
+# Screamy: the puff (c_lp_moa 5), its sleepy eyes (3, 4), mouth (2) and feet (0, 1); the HUD
+image art/icons/screamy/screamy_hud.png
+  fallback art/icons/screamy/screamy_hud.png
+  canvas 48 48
+  piece heart icon ICON_19F
+  @heart crop 2 3 36 33
+  @heart scale 22 20 texel
+  paste heart 22 4
+  piece fig canvas 100 124
+  piece body model c_lp_moa 5
+  @fig paste body 2 0
+  piece e1 model c_lp_moa 3
+  @fig paste e1 24 52
+  piece e2 model c_lp_moa 4
+  @fig paste e2 48 50
+  piece m model c_lp_moa 2
+  @fig paste m 36 74
+  @fig crop 7 4 86 95
+  @fig flip x
+  @fig scale 30 33 texel
+  @fig grow 1 #212021
+  paste fig 3 9
+  grow 1 #e7e7e7
+  grow 1 #a5a5a5
+  piece sticker copy
+  piece shadow copy
+  @shadow fill in solid #424242
+  canvas 48 48
+  paste shadow 1 1
+  paste sticker 0 0
+  alpha cut 128
+end
+
+# ---------------------------------------------------------------------------------------------------
+# Screamy: the puff (c_lp_moa 5), its sleepy eyes (3, 4), mouth (2) and feet (0, 1); the menus
+image art/icons/screamy/screamy_menu.png
+  fallback art/icons/screamy/screamy_menu.png
+  canvas 40 40
+  piece fig canvas 100 124
+  piece body model c_lp_moa 5
+  @fig paste body 2 0
+  piece e1 model c_lp_moa 3
+  @fig paste e1 24 52
+  piece e2 model c_lp_moa 4
+  @fig paste e2 48 50
+  piece m model c_lp_moa 2
+  @fig paste m 36 74
+  piece f1 model c_lp_moa 0
+  @fig paste f1 10 98
+  piece f2 model c_lp_moa 1
+  @fig paste f2 50 98
+  @fig crop 7 4 86 116
+  @fig flip x
+  @fig scale 27 36 texel
+  @fig grow 1 #212021
+  paste fig 5 1
+  alpha cut 128
+end

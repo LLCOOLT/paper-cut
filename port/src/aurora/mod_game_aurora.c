@@ -5,6 +5,9 @@
 #include "port/mod_host.h"
 #include "port/mods.h"
 #include "port/hook_list.h"
+#include "port/map_look.h"
+#include "port/superluigi.h"
+#include "port/luigi.h"
 #include "battle/battle.h"
 #include "data/mapdata.h"
 #include "evt/evt_cmd.h"
@@ -78,7 +81,32 @@ static void mapDataPost(MapData** result, const char* name) {
     *result = &sModMaps[i];
 }
 
+static EVT_BEGIN(mod_empty_map_init)
+    RETURN
+EVT_END()
+
+void* portModEmptyMapScript(void) {
+    return mod_empty_map_init;
+}
+
+/* seqMain, each frame: the map-scoped texture sets for the map now (mods.cpp) */
+static void seqMainPost(void) {
+    if (gp != NULL && gp->currentMapName[0] != 0) {
+        /* with Luigi as the player (Super Luigi, Play as Luigi): the chapter card as
+         * "sys_01@sl", its own texture set (Luigi's medallion), not Mario's cards';
+         * and every map flagged "#luigi", for the sets of Luigi's faces in the
+         * game's own textures (superluigi_aurora.c, mods.cpp's mapMatches) */
+        char map[48];
+        const int luigi = portLuigiOn();
+        const int card = luigi && strcmp(gp->currentMapName, "sys_01") == 0;
+        snprintf(map, sizeof(map), "%s%s", card ? "sys_01@sl" : gp->currentMapName, luigi ? "#luigi" : "");
+        portModsMapTextures(map);
+        portMapLookDump();
+    }
+}
+
 void portModGameInit(void) {
+    portModHostAddHook(1, kSlot_seqMain, (void*)seqMainPost);
     portModHostAddHook(0, kSlot_evt_shop_setup, (void*)shopPre);
     portModHostAddHook(0, kSlot_Btl_UnitSetup, (void*)battlePre);
     portModHostAddHook(1, kSlot_mapDataPtr, (void*)mapDataPost);

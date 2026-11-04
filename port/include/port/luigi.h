@@ -11,6 +11,8 @@
  * wherever Luigi appears (his NPCs drawn as Mario, the credits). */
 
 #include <dolphin/mtx.h>
+#include <stddef.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -61,13 +63,29 @@ void portLuigiNpcUpdate(int poseId);
  * and Mario's in Luigi's, while the option is on. */
 void portLuigiCreditActor(const char** model, const char** anim);
 
+/* Luigi's story poses (SL_* in c_luigi_pc, docs/LUIGI_ANIMS.md "Story
+ * poses"): while name is set (NULL or "" clears it), Luigi in the field plays
+ * that animation of his own whatever Mario's is. Scripts:
+ * evt_luigi_story_pose(name) / evt_luigi_story_pose(0). Setting Mario's own
+ * pose to an SL_* name is harmless but shows nothing of it: his model has no
+ * such animation, so he plays his first (animPoseGetAnimIdx's fallback). */
+void portLuigiSetStoryAnim(const char* name);
+
 /* At startup, before the mods apply (port/src/aurora/luigi_model_aurora.c):
  * a/c_luigi_pc and a/c_luigi_pc-, Luigi's model with our animations and his
  * hammer (docs/LUIGI_ANIMS.md), made from the user's disc. */
 void portLuigiModelInit(void);
+/* a model file plus a pack of luigi_pack's (records, group fields, animations),
+ * named `name`: 1 and the new file in *out (malloc'd), or 0 */
+int portLuigiMergePack(const uint8_t* base, uint32_t baseSize, const uint8_t* pack, const char* name, uint8_t** out,
+                       size_t* outSize);
 /* those files were made (else Luigi is the disc's c_luigi) */
 int portLuigiModelReady(void);
 void portLuigiSetModelReady(int ready);
+/* Super Luigi: Luigi in a costume, a variant of his made model ("c_luigi_bride": chapter 2,
+ * "c_luigi_grass": chapter 4), for the stand-in (field and battle), or NULL for his own; it
+ * takes on the next frame, once the made models are there. Scripts: evt_luigi_costume(model or 0) */
+void portLuigiSetCostume(const char* model);
 
 #ifdef __cplusplus
 }

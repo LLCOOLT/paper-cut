@@ -7,10 +7,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include "port/luigi.h"
+#include "port/superluigi.h"
 #include "port/gameplus.h"
 #include "driver/animdrv.h"
 #include "driver/msgdrv.h"
 #include "driver/npcdrv.h"
+#include "evt/evt_cmd.h"
+#include "manager/evtmgr_cmd.h"
 #include "pmario_sound.h"
 #ifdef TTYD_SAVE_STATES
 /* the game keeps pointers to the texts made here: on the save-state heap */
@@ -30,9 +33,12 @@ static const char* const kMap[][2] = {
 
 /* the disc's model, or ours made from it at startup with our animations and
  * his hammer (port/src/aurora/luigi_model_aurora.c, docs/LUIGI_ANIMS.md) */
-#define LUIGI_MODEL (sModelReady ? "c_luigi_pc" : "c_luigi")
+#define LUIGI_MODEL (sModelReady ? (sCostume[0] ? sCostume : "c_luigi_pc") : "c_luigi")
 
 static int sModelReady;
+/* a costume: a variant of c_luigi_pc (Super Luigi's c_luigi_bride, c_luigi_grass, ...) in place
+ * of his model, or ""; it needs the made models, as c_luigi_pc does */
+static char sCostume[32];
 
 /* per place (field, battle, the menus' two figures): the Mario pose stood in
  * for (-1: none), Luigi's pose (-1: not loaded) and the animation it plays */
@@ -44,7 +50,19 @@ static struct {
 } sStandIn[SLOTS] = {{-1, -1, ""}, {-1, -1, ""}, {-1, -1, ""}, {-1, -1, ""}};
 
 int portLuigiOn(void) {
-    return portGameplus("playable_luigi");
+    return portGameplus("playable_luigi") || portSuperLuigiActive(); /* Super Luigi: always Luigi */
+}
+
+/* Super Luigi: Luigi plays in a costume (a variant of c_luigi_pc, docs/LUIGI_ANIMS.md), NULL for his own */
+void portLuigiSetCostume(const char* model) {
+    snprintf(sCostume, sizeof(sCostume), "%s", model != NULL ? model : "");
+}
+
+/* evt_luigi_costume(model or 0) */
+USER_FUNC(evt_luigi_costume) {
+    (void)isFirstCall;
+    portLuigiSetCostume((const char*)evtGetValue(event, event->args[0]));
+    return EVT_RETURN_DONE;
 }
 
 void portLuigiSetModelReady(int ready) {
@@ -127,6 +145,38 @@ static int poseValid(int where, int pose) {
            !strcmp(animPoseGetAnimBaseDataPtr(pose)->fileName, LUIGI_MODEL);
 }
 
+/* Luigi's story pose (portLuigiSetStoryAnim, evt_luigi_story_pose), or "";
+ * $TTYD_LUIGI_STORY_POSE starts with one (tests) */
+static char sStoryAnim[64];
+static int sStoryAnimRead;
+
+static const char* storyAnim(void) {
+    if (!sStoryAnimRead) {
+        const char* v = getenv("TTYD_LUIGI_STORY_POSE");
+        sStoryAnimRead = 1;
+        if (v != NULL && sStoryAnim[0] == '\0') {
+            snprintf(sStoryAnim, sizeof(sStoryAnim), "%s", v);
+        }
+    }
+    return sStoryAnim;
+}
+
+void portLuigiSetStoryAnim(const char* name) {
+    sStoryAnimRead = 1;
+    snprintf(sStoryAnim, sizeof(sStoryAnim), "%s", name != NULL ? name : "");
+}
+
+/* evt_luigi_story_pose(name): Luigi (in the field, as Mario's stand-in)
+ * plays his own animation `name` (an SL_* pose of c_luigi_pc) whatever
+ * Mario's is, until evt_luigi_story_pose(0) gives Mario's back. A name
+ * Luigi's model hasn't is ignored. */
+USER_FUNC(evt_luigi_story_pose) {
+    const char* name = (const char*)evtGetValue(event, event->args[0]);
+    (void)isFirstCall;
+    portLuigiSetStoryAnim(name);
+    return EVT_RETURN_DONE;
+}
+
 void portLuigiUpdate(int where, int poseId, int allowed) {
     AnimationPose* src;
     AnimationPose* dst;
@@ -155,6 +205,15 @@ void portLuigiUpdate(int where, int poseId, int allowed) {
             }
         }
         anim = luigiAnim(where, sStandIn[where].pose, animPoseGetCurrentAnim(poseId)->name);
+        if (where == PORT_LUIGI_FIELD && storyAnim()[0] != '\0' && sStandIn[where].pose >= 0) {
+            /* a story pose of Luigi's own (SL_*): Mario's model has none of
+             * that name, so Mario plays his first (the game's fallback for
+             * an unknown name: animPoseGetAnimIdx gives 0); Luigi plays it */
+            const char* story = findAnim(animPoseGetAnimBaseDataPtr(sStandIn[where].pose), storyAnim());
+            if (story != NULL) {
+                anim = story;
+            }
+        }
         if (getenv("TTYD_LUIGI_TRACE") != NULL) {
             static const char* const kWhere[SLOTS] = {"field", "battle", "menu", "journal"};
             static char last[SLOTS][64];

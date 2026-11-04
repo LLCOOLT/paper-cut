@@ -1334,6 +1334,20 @@ USER_FUNC(evt_bero_mario_go_wait) {
     return BeroMarioGO == 0 ? 0 : EVT_RETURN_DONE;
 }
 
+#ifdef TARGET_PC
+/**
+ * Paper Cut: args[0] = 0 when the entrance loaded in LW(1)-LW(15) leads nowhere (no map, LW(13), and
+ * no exit script of its own, LW(11)): Super Luigi's rooms keep a borrowed room's spare doors as
+ * entrances only, and taking one changed map to NULL (evt_bero_1stcheck's strcmp).
+ * Only in Super Luigi: Mario's rooms arm their entrances as the game does.
+ */
+int portSuperLuigiActive(void); /* port/include/port/superluigi.h */
+static USER_FUNC(evt_bero_pc_leads) {
+    evtSetValue(event, event->args[0], !portSuperLuigiActive() || event->lwData[13] != 0 || event->lwData[14] != 0 || event->lwData[11] != (EvtWord)(AddrWord)default_outevt);
+    return EVT_RETURN_DONE;
+}
+#endif
+
 /**
  * args[0] = 1 when the destination map (LW(13)) is sys_01, else 0; the exits then wait a second.
  * sys_01 is the chapter title card ("Prologue", "Chapter 1" ...),
@@ -1796,6 +1810,15 @@ EVT_BEGIN(bero_case_entry)
     SET_VALUE(LW(1), 0)
     LOOP(0)
         CALL(evt_bero_get_info_num, LW(1))
+#ifdef TARGET_PC
+        /* an entrance that leads nowhere arms no exit (evt_bero_pc_leads) */
+        IF_INT_EQUAL(LW(9), -1)
+            CALL(evt_bero_pc_leads, LW(0))
+            IF_INT_EQUAL(LW(0), 0)
+                SET_VALUE(LW(9), 0)
+            END_IF
+        END_IF
+#endif
         IF_INT_EQUAL(LW(9), -1)
             SET_VALUE(LW(0), LW(4))
             AND_RAW(LW(0), BERO_TYPE_MASK)

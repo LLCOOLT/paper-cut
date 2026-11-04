@@ -1,0 +1,167 @@
+{
+ "model": "c_sl_eclair",
+ "texels_per_unit": 8,
+ "faces": "-x",
+ "pivot_note": "pivot: pixels from the PNG's top-left; model_xy: where the pivot sits at rest (model units, feet at y 0)",
+ "cards": {
+  "head": {
+   "size": [
+    64,
+    64
+   ],
+   "pivot": [
+    36.0,
+    56.0
+   ],
+   "model_xy": [
+    0.0,
+    16.0
+   ],
+   "desc": "the head: big blue eye with lashes, rosy cheek, golden fringe; pivot at the neck (0, 16)"
+  },
+  "head_blink": {
+   "size": [
+    64,
+    64
+   ],
+   "pivot": [
+    36.0,
+    56.0
+   ],
+   "model_xy": [
+    0.0,
+    16.0
+   ],
+   "desc": "eye shut; pivot at the neck (0, 16)"
+  },
+  "head_talk": {
+   "size": [
+    64,
+    64
+   ],
+   "pivot": [
+    36.0,
+    56.0
+   ],
+   "model_xy": [
+    0.0,
+    16.0
+   ],
+   "desc": "mouth open; pivot at the neck (0, 16)"
+  },
+  "hair": {
+   "size": [
+    72,
+    128
+   ],
+   "pivot": [
+    28.0,
+    16.0
+   ],
+   "model_xy": [
+    0.5,
+    21.0
+   ],
+   "desc": "long golden hair down the back, behind the head and dress; pivot at the crown"
+  },
+  "tiara": {
+   "size": [
+    56,
+    40
+   ],
+   "pivot": [
+    28.0,
+    30.4
+   ],
+   "model_xy": [
+    -0.5,
+    22.2
+   ],
+   "desc": "the tiara: a gold band with the seventh piece, a curved golden plate; pivot at its foot on the head"
+  },
+  "tiara_glow": {
+   "size": [
+    56,
+    40
+   ],
+   "pivot": [
+    28.0,
+    30.4
+   ],
+   "model_xy": [
+    -0.5,
+    22.2
+   ],
+   "desc": "the tiara blazing (raise the tiara); pivot at its foot on the head"
+  },
+  "dress": {
+   "size": [
+    120,
+    128
+   ],
+   "pivot": [
+    60.0,
+    124.0
+   ],
+   "model_xy": [
+    0.0,
+    1.0
+   ],
+   "desc": "the gown: cream bell skirt with a waffle-grid panel, gold trim, a whipped-cream ruffle hem; bodice with a gold neckline and a chocolate-glaze sash, bow at the back; root card, pivot (0, 1)"
+  },
+  "arm_front": {
+   "size": [
+    48,
+    72
+   ],
+   "pivot": [
+    34.4,
+    9.6
+   ],
+   "model_xy": [
+    -1.2,
+    14.8
+   ],
+   "desc": "the front arm: a cream puff sleeve with gold trim and a long white glove; pivot at the shoulder"
+  },
+  "arm_back": {
+   "size": [
+    48,
+    72
+   ],
+   "pivot": [
+    33.6,
+    9.6
+   ],
+   "model_xy": [
+    2.2,
+    14.8
+   ],
+   "desc": "the back arm, a tone darker: a cream puff sleeve with gold trim and a long white glove; pivot at the shoulder"
+  },
+  "feet": {
+   "size": [
+    56,
+    16
+   ],
+   "pivot": [
+    28.0,
+    9.6
+   ],
+   "model_xy": [
+    -0.5,
+    0.8
+   ],
+   "desc": "two gold slippers peeking from under the hem; pivot between them"
+  }
+ },
+ "draw_order": [
+  "hair",
+  "arm_back",
+  "feet",
+  "dress",
+  "arm_front",
+  "head",
+  "tiara"
+ ]
+}

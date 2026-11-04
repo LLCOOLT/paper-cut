@@ -26,6 +26,7 @@
 #include "port/mods.h"
 #include "port/mod_host.h"
 #include "port/modes.h"
+#include "port/superluigi.h"
 #include "port/reflect.h"
 #include "port/json.h"
 #include "evt_asm.h"
@@ -583,6 +584,36 @@ std::string toGameText(const std::string& text) {
   return out;
 }
 
+// A mod's message as the game may use it: some messages are printf formats
+// (the battle's announcements: sprintf(text, message, item name)), so of its
+// conversions only the first %s or %d stays and any other % is escaped (a
+// stray one would read a missing argument); and a '<' whose control tag never
+// closes (cut short) becomes '[' so the game's parser doesn't run past the end.
+std::string safeMessage(const std::string& s) {
+  std::string out;
+  bool conversion = false;
+  for (size_t i = 0; i < s.size(); i++) {
+    const char c = s[i];
+    const char next = i + 1 < s.size() ? s[i + 1] : 0;
+    if (c == '%') {
+      if (next == '%') {
+        out += "%%";
+        i++;
+      } else if ((next == 's' || next == 'd') && !conversion) {
+        conversion = true;
+        out += c;
+        out += next;
+        i++;
+      } else {
+        out += "%%";
+      }
+      continue;
+    }
+    out += c == '<' && s.find('>', i) == std::string::npos ? '[' : c;
+  }
+  return out;
+}
+
 // A messages file: "[tag]" lines, each followed by its text up to the next
 // one (the line break before the next tag isn't part of it). Lines before
 // the first tag are comments.
@@ -600,7 +631,7 @@ int parseMessages(const std::vector<uint8_t>& bytes, std::unordered_map<std::str
       if (!body.empty() && body.back() == '\n') {
         body.pop_back();
       }
-      out[tag] = toGameText(body);
+      out[tag] = safeMessage(toGameText(body));
       count++;
     }
   };
@@ -1277,12 +1308,140 @@ int optionValue(const Mod& mod, const Option& opt) {
   return std::clamp(v, opt.min, opt.max);
 }
 
+// Map-scoped texture sets: a set applies only while the map's name matches
+// its pattern ("muj_l1,muj_l2", "muj_l*": alternatives, with * and ?), and
+// is registered as the map changes to one it matches and dropped as it
+// leaves (Aurora keeps what it decoded until then). The host's own
+// (portModsAddMapTexture: Super Luigi's lava) sit above every mod's global
+// textures; a mod's textures/@<pattern>/ folders (~ for *, as folder names
+// can't hold one) above the host's, so a mod can re-skin those too.
+struct MapTexFile {
+  std::string path;              // its virtual path; the last part is the pack name
+  const void* data = nullptr;    // the host's bytes
+  size_t size = 0;
+  const Source* source = nullptr; // or a mod's file
+};
+struct MapTexSet {
+  std::string pattern;
+  int priority = 0;
+  bool host = false;
+  std::vector<std::unique_ptr<MapTexFile>> files;
+  bool on = false;
+  aurora::texture::ReplacementGroup group;
+};
+std::vector<std::unique_ptr<MapTexSet>> sMapTexSets;
+std::string sMapTexMap; // the map the sets were last matched to
+
+bool mapTexRead(void* userData, const char* path, std::vector<uint8_t>& out) {
+  const auto* f = static_cast<const MapTexFile*>(userData);
+  if (f->source != nullptr) {
+    return f->source->read(f->path, out);
+  }
+  (void)path;
+  const auto* p = static_cast<const uint8_t*>(f->data);
+  out.assign(p, p + f->size);
+  return true;
+}
+
+bool wildMatch(const char* p, const char* s) {
+  for (; *p != '\0' && *p != ','; p++, s++) {
+    if (*p == '*') {
+      for (;; s++) {
+        if (wildMatch(p + 1, s)) {
+          return true;
+        }
+        if (*s == '\0') {
+          return false;
+        }
+      }
+    }
+    if (*s == '\0' || (*p != '?' && *p != *s)) {
+      return false;
+    }
+  }
+  return *s == '\0';
+}
+
+// map: the map's name, then "#luigi" while Luigi is the player (mod_game_aurora.c).
+// An alternative with a '#' is matched against all of it ("*#luigi": any map,
+// with Luigi), any other against the name alone.
+bool mapMatches(const std::string& pattern, const std::string& map) {
+  const std::string name = map.substr(0, map.find('#'));
+  for (size_t at = 0; at <= pattern.size();) {
+    const size_t end = pattern.find(',', at);
+    const bool flagged = pattern.substr(at, end == std::string::npos ? std::string::npos : end - at).find('#') !=
+                         std::string::npos;
+    if (wildMatch(pattern.c_str() + at, flagged ? map.c_str() : name.c_str())) {
+      return true;
+    }
+    const size_t comma = pattern.find(',', at);
+    if (comma == std::string::npos) {
+      break;
+    }
+    at = comma + 1;
+  }
+  return false;
+}
+
+void mapTexOff(MapTexSet& set) {
+  if (set.on) {
+    aurora::texture::unregister_replacements(set.group);
+    set.group.registrations.clear();
+    set.on = false;
+  }
+}
+
+void mapTexUpdate(const std::string& map) {
+  sMapTexMap = map;
+  for (auto& set : sMapTexSets) {
+    const bool want = !map.empty() && !sDisabledAll && mapMatches(set->pattern, map);
+    if (want && !set->on) {
+      const aurora::texture::ReplacementOptions options{.priority = set->priority};
+      for (auto& f : set->files) {
+        const auto reg = aurora::texture::register_virtual_replacement(f->path, {mapTexRead, f.get()}, options);
+        if (reg.id != 0) {
+          set->group.registrations.push_back(reg);
+        }
+      }
+      set->on = true;
+      SDL_Log("mods: map %s: texture set %s on (%d textures)", map.c_str(), set->pattern.c_str(),
+              int(set->group.registrations.size()));
+    } else if (!want && set->on) {
+      mapTexOff(*set);
+    }
+  }
+}
+
+bool isTextureFile(const std::string& rel) {
+  const std::string name = lower(rel);
+  return (endsWith(name, ".png") || endsWith(name, ".dds")) && name.find("_mip") == std::string::npos;
+}
+
+// "textures/@muj_l~/tex1_..." -> "muj_l*" (else "")
+std::string mapTexPattern(const std::string& rel) {
+  if (rel.compare(0, 10, "textures/@") != 0) {
+    return {};
+  }
+  const size_t slash = rel.find('/', 10);
+  if (slash == std::string::npos) {
+    return {};
+  }
+  std::string pattern = rel.substr(10, slash - 10);
+  std::replace(pattern.begin(), pattern.end(), '~', '*');
+  return pattern;
+}
+
 // Textures: priority by order; the loose folder below every mod.
 void applyTextures() {
   for (auto& group : sTextureGroups) {
     aurora::texture::unregister_replacements(group);
   }
   sTextureGroups.clear();
+  // the mods' map-scoped sets are made again; the host's stay, off until the next match
+  for (auto& set : sMapTexSets) {
+    mapTexOff(*set);
+  }
+  std::erase_if(sMapTexSets, [](const std::unique_ptr<MapTexSet>& set) { return !set->host; });
   if (!sDisabledAll) {
     sTextureGroups.push_back(aurora::texture::load_replacement_directory(sUserPath + "/textures", {.priority = 0}));
   }
@@ -1293,27 +1452,55 @@ void applyTextures() {
     }
     const aurora::texture::ReplacementOptions options{.priority = int32_t(1000 - i)};
     aurora::texture::ReplacementGroup group;
+    mod.textures = 0;
+    const auto list = mod.source->list("textures/");
+    bool scoped = false;
+    for (const auto& [rel, size] : list) {
+      scoped = scoped || !mapTexPattern(rel).empty();
+    }
     const std::string host = mod.source->hostPath("textures");
-    if (!host.empty()) {
+    if (!host.empty() && !scoped) {
       SDL_PathInfo info;
       if (SDL_GetPathInfo(host.c_str(), &info) && info.type == SDL_PATHTYPE_DIRECTORY) {
         group = aurora::texture::load_replacement_directory(host, options);
       }
     } else {
-      for (const auto& [rel, size] : mod.source->list("textures/")) {
-        const std::string name = lower(rel);
-        if ((endsWith(name, ".png") || endsWith(name, ".dds")) && name.find("_mip") == std::string::npos) {
-          const auto reg = aurora::texture::register_virtual_replacement(
-              rel, {texturesVirtualRead, const_cast<Source*>(mod.source.get())}, options);
-          if (reg.id != 0) {
-            group.registrations.push_back(reg);
+      for (const auto& [rel, size] : list) {
+        if (!isTextureFile(rel)) {
+          continue;
+        }
+        const std::string pattern = mapTexPattern(rel);
+        if (!pattern.empty()) {
+          MapTexSet* set = nullptr;
+          for (auto& s : sMapTexSets) {
+            if (!s->host && s->pattern == pattern && s->priority == int(2000 - i)) {
+              set = s.get();
+            }
           }
+          if (set == nullptr) {
+            sMapTexSets.push_back(std::make_unique<MapTexSet>());
+            set = sMapTexSets.back().get();
+            set->pattern = pattern;
+            set->priority = int(2000 - i);
+          }
+          auto f = std::make_unique<MapTexFile>();
+          f->path = rel;
+          f->source = mod.source.get();
+          set->files.push_back(std::move(f));
+          mod.textures++;
+          continue;
+        }
+        const auto reg = aurora::texture::register_virtual_replacement(
+            rel, {texturesVirtualRead, const_cast<Source*>(mod.source.get())}, options);
+        if (reg.id != 0) {
+          group.registrations.push_back(reg);
         }
       }
     }
-    mod.textures = int(group.registrations.size());
+    mod.textures += int(group.registrations.size());
     sTextureGroups.push_back(std::move(group));
   }
+  mapTexUpdate(sMapTexMap);
 }
 
 void analyze();
@@ -1448,8 +1635,13 @@ void apply() {
     for (const Mod::MapSpec& m : mod->maps) {
       void* script = m.init.empty() ? nullptr : program->find(m.init);
       if (!m.init.empty() && script == nullptr) {
-        SDL_Log("mods: %s: map %s: no script %s", mod->id.c_str(), m.name.c_str(), m.init.c_str());
-        continue;
+        // not assembled or not linked (the log says where): the map still loads, with an init that does nothing
+        SDL_Log("mods: %s: map %s: no script %s (it loads without one)", mod->id.c_str(), m.name.c_str(),
+                m.init.c_str());
+        if (mod->warning.empty()) {
+          mod->warning = "map " + m.name + ": its script " + m.init + " didn't assemble";
+        }
+        script = portModEmptyMapScript();
       }
       maps.emplace(m.name, ModMap{script, m.files});
     }
@@ -1690,6 +1882,7 @@ void portModsInit(const char* userPath, const char* cachePath) {
   SDL_CreateDirectory((sUserPath + "/textures").c_str());
   portModHostInit();
   portModesRegisterMaps(); // the modes' maps (port/include/port/modes.h)
+  portSuperLuigiRegister(); // Super Luigi's maps and text (port/include/port/superluigi.h)
   portApInit(userPath); // an Archipelago seed: its options and files, before the mods (and their code)
   scan();
   readOptions();
@@ -1735,7 +1928,7 @@ void portModsSetMessage(const char* tag, const char* text) {
   if (text == nullptr) {
     sCodeMessages.erase(tag);
   } else {
-    sCodeMessageText.push_back(toGameText(text)); // kept: the game may still show the old one
+    sCodeMessageText.push_back(safeMessage(toGameText(text))); // kept: the game may still show the old one
     sCodeMessages[tag] = sCodeMessageText.back().c_str();
   }
 }
@@ -1893,6 +2086,39 @@ const char* portModsTextureCollision(int i, const char** packs) {
   return sTextureCollisions[size_t(i)].name.c_str();
 }
 
+void portModsAddMapTexture(const char* pattern, const char* path, const void* data, size_t size) {
+  MapTexSet* set = nullptr;
+  if (pattern == nullptr || path == nullptr || data == nullptr) {
+    return;
+  }
+  for (auto& s : sMapTexSets) {
+    if (s->host && s->pattern == pattern) {
+      set = s.get();
+    }
+  }
+  if (set == nullptr) {
+    sMapTexSets.push_back(std::make_unique<MapTexSet>());
+    set = sMapTexSets.back().get();
+    set->pattern = pattern;
+    set->priority = 1500;
+    set->host = true;
+  }
+  mapTexOff(*set); // made again at the next match, with this one
+  auto f = std::make_unique<MapTexFile>();
+  f->path = path;
+  f->data = data;
+  f->size = size;
+  set->files.push_back(std::move(f));
+  sMapTexMap.clear();
+}
+
+void portModsMapTextures(const char* map) {
+  if (!sLive || map == nullptr || sMapTexMap == map) {
+    return;
+  }
+  mapTexUpdate(map);
+}
+
 void portModsReloadTextures(void) {
   if (!sLive) {
     return;
@@ -1934,6 +2160,15 @@ static const char* traced(const char* tag, const char* text) {
 void portModsSetHostFile(const char* discPath, const void* data, size_t size) {
   const uint8_t* p = static_cast<const uint8_t*>(data);
   sHostFiles[discPath[0] == '/' ? discPath : std::string("/") + discPath] = std::vector<uint8_t>(p, p + size);
+}
+
+const void* portModsGetHostFile(const char* discPath, size_t* size) {
+  auto it = sHostFiles.find(discPath[0] == '/' ? discPath : std::string("/") + discPath);
+  if (it == sHostFiles.end()) {
+    return nullptr;
+  }
+  *size = it->second.size();
+  return it->second.data();
 }
 
 } // extern "C"

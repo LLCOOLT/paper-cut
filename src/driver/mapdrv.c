@@ -28,6 +28,7 @@
 #include "port/gx_arrays.h"
 #include "port/map_pc.h"
 #include "port/tpl_pc.h"
+#include "port/map_look.h"
 #include "driver/mapfile.h"
 #endif
 // FAKE: mapdrv.c calls lightEntry through this prototype (the types it was compiled with) instead of the one in driver/lightdrv.h; same registers, behaviour-identical.
@@ -3431,6 +3432,11 @@ void mapSetMaterialTev(s32 texCount, s32 drawMode, s32 flags, Mtx mtx) {
         coord = info.texMap;
         indStages = info.indStage;
     }
+#ifdef TARGET_PC
+    // a room's look (port/include/port/map_look.h): tint, glow or wash after the material; map objects
+    // only (animdrv's models and imgdrv's images share this function: they pass no map object)
+    tevStage = portMapLookTev(portMapLookObj, tevStage);
+#endif
 
     GXSetNumTexGens((u8)coord);
     GXSetNumTevStages((u8)tevStage);
@@ -3690,7 +3696,13 @@ static void mapSetMaterial(MapObject* obj, void* material) {
         GXLoadTexObj(&texObj, (GXTexMapID)texIdx);
         texIdx++;
     }
+#ifdef TARGET_PC
+    portMapLookObj = obj; // the map object whose material this is, for its look
+#endif
     mapSetMaterialTev(mat->samplerCount, mat->tevMode ? *mat->tevMode : 0, obj->flags, obj->modelWorldMtx);
+#ifdef TARGET_PC
+    portMapLookObj = NULL;
+#endif
 }
 
 /**

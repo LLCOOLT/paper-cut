@@ -1,0 +1,310 @@
+{
+ "model": "c_sl_hizza",
+ "texels_per_unit": 16,
+ "source": "designs/hizza/parts_qwen.png",
+ "cards": {
+  "coil_back": {
+   "pivot": [
+    197.5,
+    378.5
+   ],
+   "model_xy": [
+    8.0,
+    0.0
+   ],
+   "desc": "the coil's far half (the ring's top), behind the necks",
+   "size": [
+    392,
+    232
+   ]
+  },
+  "coil_front": {
+   "pivot": [
+    196.5,
+    184.0
+   ],
+   "model_xy": [
+    8.0,
+    0.0
+   ],
+   "desc": "the coil's near half (the ring's bottom), in front",
+   "size": [
+    392,
+    192
+   ]
+  },
+  "neck_a1": {
+   "pivot": [
+    150.2,
+    276.8
+   ],
+   "model_xy": [
+    -8.75,
+    10.0
+   ],
+   "desc": "the front neck's foot, its curl into the coil",
+   "size": [
+    256,
+    360
+   ]
+  },
+  "neck_a2": {
+   "pivot": [
+    109.4,
+    238.7
+   ],
+   "model_xy": [
+    -11.362,
+    20.819
+   ],
+   "desc": "the front neck's middle",
+   "size": [
+    304,
+    296
+   ]
+  },
+  "neck_a3": {
+   "pivot": [
+    86.7,
+    258.0
+   ],
+   "model_xy": [
+    -5.844,
+    29.8
+   ],
+   "desc": "the front neck's top, under the head",
+   "size": [
+    216,
+    344
+   ]
+  },
+  "head_a": {
+   "pivot": [
+    217.5,
+    370.5
+   ],
+   "model_xy": [
+    -3.637,
+    39.112
+   ],
+   "desc": "Hiss, the front head: wide eyes, fangs bared, mouth open",
+   "size": [
+    304,
+    416
+   ]
+  },
+  "head_a_blink": {
+   "pivot": [
+    217.5,
+    370.5
+   ],
+   "model_xy": [
+    -3.637,
+    39.112
+   ],
+   "desc": "the same, eyes shut (a blink)",
+   "size": [
+    304,
+    416
+   ]
+  },
+  "head_a_hurt": {
+   "pivot": [
+    218.0,
+    370.5
+   ],
+   "model_xy": [
+    -3.637,
+    39.112
+   ],
+   "desc": "the same, eyes squeezed shut",
+   "size": [
+    304,
+    416
+   ]
+  },
+  "head_b": {
+   "pivot": [
+    140.0,
+    382.0
+   ],
+   "model_xy": [
+    10.794,
+    46.656
+   ],
+   "desc": "Zah, the tail's head: the same head, sly slits for eyes",
+   "size": [
+    288,
+    400
+   ]
+  },
+  "head_b_blink": {
+   "pivot": [
+    140.0,
+    382.0
+   ],
+   "model_xy": [
+    10.794,
+    46.656
+   ],
+   "desc": "eyes shut",
+   "size": [
+    288,
+    400
+   ]
+  },
+  "head_b_hurt": {
+   "pivot": [
+    140.0,
+    382.0
+   ],
+   "model_xy": [
+    10.794,
+    46.656
+   ],
+   "desc": "eyes squeezed shut",
+   "size": [
+    288,
+    400
+   ]
+  },
+  "tail_b1": {
+   "pivot": [
+    200.1,
+    217.1
+   ],
+   "model_xy": [
+    8.931,
+    19.669
+   ],
+   "desc": "the tail's foot",
+   "size": [
+    344,
+    400
+   ]
+  },
+  "tail_b2": {
+   "pivot": [
+    105.2,
+    226.1
+   ],
+   "model_xy": [
+    13.012,
+    28.8
+   ],
+   "desc": "the tail's middle",
+   "size": [
+    184,
+    288
+   ]
+  },
+  "tail_b3": {
+   "pivot": [
+    90.2,
+    219.6
+   ],
+   "model_xy": [
+    11.762,
+    38.106
+   ],
+   "desc": "the tail's top, under its head",
+   "size": [
+    176,
+    280
+   ]
+  },
+  "tail_base": {
+   "pivot": [
+    180.1,
+    346.1
+   ],
+   "model_xy": [
+    7.681,
+    11.769
+   ],
+   "desc": "Zah's model's tail foot (in place of tail_b1), cut level where it comes out of the floor",
+   "size": [
+    344,
+    352
+   ]
+  }
+ },
+ "anchors": {
+  "ja1": [
+   -8.75,
+   10.0
+  ],
+  "ja2": [
+   -11.362,
+   20.819
+  ],
+  "ja3": [
+   -5.844,
+   29.8
+  ],
+  "head_a": [
+   -3.637,
+   39.112
+  ],
+  "jb1": [
+   8.931,
+   19.669
+  ],
+  "jb2": [
+   13.012,
+   28.8
+  ],
+  "jb3": [
+   11.762,
+   38.106
+  ],
+  "head_b": [
+   10.794,
+   46.656
+  ],
+  "mouth_a": [
+   -8.95,
+   43.8
+  ],
+  "jaw_a": [
+   -8.637,
+   46.612
+  ],
+  "tongue_a": [
+   -8.637,
+   43.8
+  ],
+  "stars_a": [
+   -8.95,
+   62.862
+  ],
+  "target_a": [
+   -8.95,
+   52.862
+  ],
+  "mouth_b": [
+   10.169,
+   52.094
+  ],
+  "jaw_b": [
+   10.481,
+   54.906
+  ],
+  "tongue_b": [
+   10.481,
+   52.094
+  ],
+  "stars_b": [
+   10.169,
+   71.156
+  ],
+  "target_b": [
+   10.169,
+   61.156
+  ],
+  "collar_a": [
+   -5.075,
+   32.862
+  ]
+ }
+}

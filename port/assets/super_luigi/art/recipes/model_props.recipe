@@ -1,0 +1,1715 @@
+# The props (ART_PLAN rows 14, 19, 22 to 25, 27, 33, 34, 36 to 39, 41, 43 to 48): each a real card recoloured, or real
+# cards cut and joined. The drawn cards stay in the models as the fallbacks. Numbers: sl_models.py cards MODEL.
+
+gradient red 0.0 #200808 0.35 #3a0c0c 0.6 #801414 1.0 #c02020 2.2 #e05a50 4.5 #f0a8a0
+gradient pale 0.0 #2a80d0 0.5 #5aa4dc 1.0 #9ac8e8 1.5 #d8ecf8
+gradient goo 0.0 #16300a 0.7 #2a5a10 1.0 #3a7a1a 1.25 #5aa02a 1.5 #7ac040
+gradient stone 0.0 #2a2620 0.45 #6a6458 0.7 #9c9688 1.0 #c8c2b4 1.3 #e4dfd2
+
+image art/models/c_sl_dazzlina_tiara/0.png   # Dazzlina's tiara
+  load model c_peach 87
+  hsv where s>=0.5 h=280..360 : hue =330
+  hsv where h=180..260 s>=0.3 : hue =160
+  scale 48 32 texel
+  alpha cut 128
+end
+
+image art/models/c_sl_crown/0.png   # the crown
+  load model c_peach 87
+  hsv where h=180..260 s>=0.3 : hue =140
+  scale 64 48 texel
+  alpha cut 128
+end
+
+image art/models/c_luigi_crown/39.png   # on Luigi
+  canvas 64 64
+  piece c model c_peach 87
+  @c hsv where h=180..260 s>=0.3 : hue =140
+  @c scale 64 48 texel
+  paste c 0 8
+  alpha cut 128
+end
+
+image art/models/c_sl_petunia/22.png   # her petals (swap of c_pansy's 8)
+  load model c_pansy 8
+  hsv where h=270..330 s>=0.05 : hue =335 sat *1.1
+  alpha cut 128
+end
+
+image art/models/c_sl_mic/0.png   # the reporter's microphone
+  canvas 32 64
+  piece m model c_report 4
+  @m scale 32 56 texel
+  paste m 0 4
+  alpha cut 128
+end
+
+image art/models/c_sl_baron_hat/0.png   # the Baron
+  canvas 40 40
+  piece h model c_papab 4
+  @h scale 40 32 texel
+  paste h 0 4
+  alpha cut 128
+end
+
+image art/models/c_sl_leaf/0.png   # a paper leaf
+  canvas 40 64
+  piece s model MOBJ_Signboard 0
+  @s crop 108 170 32 86
+  @s scale 8 28 texel
+  paste s 16 36
+  piece l model c_flower 23
+  @l crop 0 -12 72 72
+  @l rotate 90
+  @l scale 40 40 texel
+  paste l 0 2
+  alpha cut 128
+end
+
+image art/models/c_sl_leaf/1.png   # paper grass
+  canvas 40 64
+  piece s model MOBJ_Signboard 0
+  @s crop 108 170 32 86
+  @s scale 8 28 texel
+  paste s 16 36
+  piece l tpl m/jin_05/t 6
+  @l crop 32 0 32 24
+  @l scale 40 36 texel
+  paste l 0 4
+  alpha cut 128
+end
+
+image art/models/c_sl_look_edge_25/0.png   # its strip
+  load tpl e/us/effect.tpl 92
+  scale 16 16 texel
+  rotate 90
+  scale 128 16 texel
+  alpha set 255 where l>=190
+  alpha set 170 where l<190
+  alpha set 110 where l<130
+  alpha set 56 where l<80
+  alpha set 0 where l<28
+  fill where a>0 #c8dcff
+end
+
+image art/models/c_sl_look_edge_25/1.png   # dimmed
+  load tpl e/us/effect.tpl 92
+  scale 16 16 texel
+  rotate 90
+  hsv val *0.75
+  scale 128 16 texel
+  alpha set 255 where l>=190
+  alpha set 170 where l<190
+  alpha set 110 where l<130
+  alpha set 56 where l<80
+  alpha set 0 where l<28
+  fill where a>0 #c8dcff
+end
+
+image art/models/c_sl_look_edge_25/2.png   # a cap
+  load tpl e/us/effect.tpl 44
+  alpha set 255 where l>=190
+  alpha set 170 where l<190
+  alpha set 110 where l<130
+  alpha set 56 where l<80
+  alpha set 0 where l<28
+  fill where a>0 #c8dcff
+end
+
+image art/models/c_sl_look_edge_25/3.png   # a cap
+  load tpl e/us/effect.tpl 44
+  alpha set 255 where l>=190
+  alpha set 170 where l<190
+  alpha set 110 where l<130
+  alpha set 56 where l<80
+  alpha set 0 where l<28
+  fill where a>0 #c8dcff
+end
+
+image art/models/c_sl_look_edge_50/0.png   # its strip
+  load tpl e/us/effect.tpl 92
+  scale 16 16 texel
+  rotate 90
+  scale 128 16 texel
+  alpha set 255 where l>=190
+  alpha set 170 where l<190
+  alpha set 110 where l<130
+  alpha set 56 where l<80
+  alpha set 0 where l<28
+  fill where a>0 #c8dcff
+end
+
+image art/models/c_sl_look_edge_50/1.png   # dimmed
+  load tpl e/us/effect.tpl 92
+  scale 16 16 texel
+  rotate 90
+  hsv val *0.75
+  scale 128 16 texel
+  alpha set 255 where l>=190
+  alpha set 170 where l<190
+  alpha set 110 where l<130
+  alpha set 56 where l<80
+  alpha set 0 where l<28
+  fill where a>0 #c8dcff
+end
+
+image art/models/c_sl_look_edge_50/2.png   # a cap
+  load tpl e/us/effect.tpl 44
+  alpha set 255 where l>=190
+  alpha set 170 where l<190
+  alpha set 110 where l<130
+  alpha set 56 where l<80
+  alpha set 0 where l<28
+  fill where a>0 #c8dcff
+end
+
+image art/models/c_sl_look_edge_50/3.png   # a cap
+  load tpl e/us/effect.tpl 44
+  alpha set 255 where l>=190
+  alpha set 170 where l<190
+  alpha set 110 where l<130
+  alpha set 56 where l<80
+  alpha set 0 where l<28
+  fill where a>0 #c8dcff
+end
+
+image art/models/c_sl_look_edge_100/0.png   # its strip
+  load tpl e/us/effect.tpl 92
+  scale 16 16 texel
+  rotate 90
+  scale 128 16 texel
+  alpha set 255 where l>=190
+  alpha set 170 where l<190
+  alpha set 110 where l<130
+  alpha set 56 where l<80
+  alpha set 0 where l<28
+  fill where a>0 #c8dcff
+end
+
+image art/models/c_sl_look_edge_100/1.png   # dimmed
+  load tpl e/us/effect.tpl 92
+  scale 16 16 texel
+  rotate 90
+  hsv val *0.75
+  scale 128 16 texel
+  alpha set 255 where l>=190
+  alpha set 170 where l<190
+  alpha set 110 where l<130
+  alpha set 56 where l<80
+  alpha set 0 where l<28
+  fill where a>0 #c8dcff
+end
+
+image art/models/c_sl_look_edge_100/2.png   # a cap
+  load tpl e/us/effect.tpl 44
+  alpha set 255 where l>=190
+  alpha set 170 where l<190
+  alpha set 110 where l<130
+  alpha set 56 where l<80
+  alpha set 0 where l<28
+  fill where a>0 #c8dcff
+end
+
+image art/models/c_sl_look_edge_100/3.png   # a cap
+  load tpl e/us/effect.tpl 44
+  alpha set 255 where l>=190
+  alpha set 170 where l<190
+  alpha set 110 where l<130
+  alpha set 56 where l<80
+  alpha set 0 where l<28
+  fill where a>0 #c8dcff
+end
+
+image art/models/c_sl_look_edge_200/0.png   # its strip
+  load tpl e/us/effect.tpl 92
+  scale 16 16 texel
+  rotate 90
+  scale 128 16 texel
+  alpha set 255 where l>=190
+  alpha set 170 where l<190
+  alpha set 110 where l<130
+  alpha set 56 where l<80
+  alpha set 0 where l<28
+  fill where a>0 #c8dcff
+end
+
+image art/models/c_sl_look_edge_200/1.png   # dimmed
+  load tpl e/us/effect.tpl 92
+  scale 16 16 texel
+  rotate 90
+  hsv val *0.75
+  scale 128 16 texel
+  alpha set 255 where l>=190
+  alpha set 170 where l<190
+  alpha set 110 where l<130
+  alpha set 56 where l<80
+  alpha set 0 where l<28
+  fill where a>0 #c8dcff
+end
+
+image art/models/c_sl_look_edge_200/2.png   # a cap
+  load tpl e/us/effect.tpl 44
+  alpha set 255 where l>=190
+  alpha set 170 where l<190
+  alpha set 110 where l<130
+  alpha set 56 where l<80
+  alpha set 0 where l<28
+  fill where a>0 #c8dcff
+end
+
+image art/models/c_sl_look_edge_200/3.png   # a cap
+  load tpl e/us/effect.tpl 44
+  alpha set 255 where l>=190
+  alpha set 170 where l<190
+  alpha set 110 where l<130
+  alpha set 56 where l<80
+  alpha set 0 where l<28
+  fill where a>0 #c8dcff
+end
+
+image art/models/c_sl_look_edge_25_v/0.png   # its strip
+  load tpl e/us/effect.tpl 92
+  scale 16 16 texel
+  rotate 90
+  scale 128 16 texel
+  alpha set 255 where l>=190
+  alpha set 170 where l<190
+  alpha set 110 where l<130
+  alpha set 56 where l<80
+  alpha set 0 where l<28
+  fill where a>0 #c8dcff
+end
+
+image art/models/c_sl_look_edge_25_v/1.png   # dimmed
+  load tpl e/us/effect.tpl 92
+  scale 16 16 texel
+  rotate 90
+  hsv val *0.75
+  scale 128 16 texel
+  alpha set 255 where l>=190
+  alpha set 170 where l<190
+  alpha set 110 where l<130
+  alpha set 56 where l<80
+  alpha set 0 where l<28
+  fill where a>0 #c8dcff
+end
+
+image art/models/c_sl_look_edge_25_v/2.png   # a cap
+  load tpl e/us/effect.tpl 44
+  alpha set 255 where l>=190
+  alpha set 170 where l<190
+  alpha set 110 where l<130
+  alpha set 56 where l<80
+  alpha set 0 where l<28
+  fill where a>0 #c8dcff
+end
+
+image art/models/c_sl_look_edge_25_v/3.png   # a cap
+  load tpl e/us/effect.tpl 44
+  alpha set 255 where l>=190
+  alpha set 170 where l<190
+  alpha set 110 where l<130
+  alpha set 56 where l<80
+  alpha set 0 where l<28
+  fill where a>0 #c8dcff
+end
+
+image art/models/c_sl_look_edge_50_v/0.png   # its strip
+  load tpl e/us/effect.tpl 92
+  scale 16 16 texel
+  rotate 90
+  scale 128 16 texel
+  alpha set 255 where l>=190
+  alpha set 170 where l<190
+  alpha set 110 where l<130
+  alpha set 56 where l<80
+  alpha set 0 where l<28
+  fill where a>0 #c8dcff
+end
+
+image art/models/c_sl_look_edge_50_v/1.png   # dimmed
+  load tpl e/us/effect.tpl 92
+  scale 16 16 texel
+  rotate 90
+  hsv val *0.75
+  scale 128 16 texel
+  alpha set 255 where l>=190
+  alpha set 170 where l<190
+  alpha set 110 where l<130
+  alpha set 56 where l<80
+  alpha set 0 where l<28
+  fill where a>0 #c8dcff
+end
+
+image art/models/c_sl_look_edge_50_v/2.png   # a cap
+  load tpl e/us/effect.tpl 44
+  alpha set 255 where l>=190
+  alpha set 170 where l<190
+  alpha set 110 where l<130
+  alpha set 56 where l<80
+  alpha set 0 where l<28
+  fill where a>0 #c8dcff
+end
+
+image art/models/c_sl_look_edge_50_v/3.png   # a cap
+  load tpl e/us/effect.tpl 44
+  alpha set 255 where l>=190
+  alpha set 170 where l<190
+  alpha set 110 where l<130
+  alpha set 56 where l<80
+  alpha set 0 where l<28
+  fill where a>0 #c8dcff
+end
+
+image art/models/c_sl_look_edge_100_v/0.png   # its strip
+  load tpl e/us/effect.tpl 92
+  scale 16 16 texel
+  rotate 90
+  scale 128 16 texel
+  alpha set 255 where l>=190
+  alpha set 170 where l<190
+  alpha set 110 where l<130
+  alpha set 56 where l<80
+  alpha set 0 where l<28
+  fill where a>0 #c8dcff
+end
+
+image art/models/c_sl_look_edge_100_v/1.png   # dimmed
+  load tpl e/us/effect.tpl 92
+  scale 16 16 texel
+  rotate 90
+  hsv val *0.75
+  scale 128 16 texel
+  alpha set 255 where l>=190
+  alpha set 170 where l<190
+  alpha set 110 where l<130
+  alpha set 56 where l<80
+  alpha set 0 where l<28
+  fill where a>0 #c8dcff
+end
+
+image art/models/c_sl_look_edge_100_v/2.png   # a cap
+  load tpl e/us/effect.tpl 44
+  alpha set 255 where l>=190
+  alpha set 170 where l<190
+  alpha set 110 where l<130
+  alpha set 56 where l<80
+  alpha set 0 where l<28
+  fill where a>0 #c8dcff
+end
+
+image art/models/c_sl_look_edge_100_v/3.png   # a cap
+  load tpl e/us/effect.tpl 44
+  alpha set 255 where l>=190
+  alpha set 170 where l<190
+  alpha set 110 where l<130
+  alpha set 56 where l<80
+  alpha set 0 where l<28
+  fill where a>0 #c8dcff
+end
+
+image art/models/c_sl_look_edge_200_v/0.png   # its strip
+  load tpl e/us/effect.tpl 92
+  scale 16 16 texel
+  rotate 90
+  scale 128 16 texel
+  alpha set 255 where l>=190
+  alpha set 170 where l<190
+  alpha set 110 where l<130
+  alpha set 56 where l<80
+  alpha set 0 where l<28
+  fill where a>0 #c8dcff
+end
+
+image art/models/c_sl_look_edge_200_v/1.png   # dimmed
+  load tpl e/us/effect.tpl 92
+  scale 16 16 texel
+  rotate 90
+  hsv val *0.75
+  scale 128 16 texel
+  alpha set 255 where l>=190
+  alpha set 170 where l<190
+  alpha set 110 where l<130
+  alpha set 56 where l<80
+  alpha set 0 where l<28
+  fill where a>0 #c8dcff
+end
+
+image art/models/c_sl_look_edge_200_v/2.png   # a cap
+  load tpl e/us/effect.tpl 44
+  alpha set 255 where l>=190
+  alpha set 170 where l<190
+  alpha set 110 where l<130
+  alpha set 56 where l<80
+  alpha set 0 where l<28
+  fill where a>0 #c8dcff
+end
+
+image art/models/c_sl_look_edge_200_v/3.png   # a cap
+  load tpl e/us/effect.tpl 44
+  alpha set 255 where l>=190
+  alpha set 170 where l<190
+  alpha set 110 where l<130
+  alpha set 56 where l<80
+  alpha set 0 where l<28
+  fill where a>0 #c8dcff
+end
+
+# c_sl_set_road/1 (the cardboard sun) is the style model's, ch4_sets/cardboard_sun.png (ch4_sets.py sun(); wave 3)
+
+image art/models/c_sl_set_volcano/1.png   # a flame
+  canvas 128 192
+  piece f model c_bubble 17
+  @f scale 124 188 texel
+  paste f 2 2
+  alpha cut 128
+end
+
+image art/models/c_sl_set_volcano/2.png   # a flame
+  canvas 128 192
+  piece f model c_bubble 19
+  @f scale 124 188 texel
+  paste f 2 2
+  alpha cut 128
+end
+
+image art/models/c_sl_fiery_hat/0.png   # its flames
+  canvas 88 72
+  piece f model c_bubble 17
+  @f scale 56 68 texel
+  paste f 16 2
+  alpha cut 128
+end
+
+image art/models/c_sl_fiery_hat/1.png   # its flames
+  canvas 88 72
+  piece f model c_bubble 18
+  @f scale 56 68 texel
+  paste f 16 2
+  alpha cut 128
+end
+
+image art/models/c_sl_fiery_hat/2.png   # the hat: red, its band gold
+  canvas 96 128
+  piece h model c_papab 4
+  @h map where h=340..20 s>0.5 : #e03030 -> #d8ac38
+  @h ramp where s<0.25 l>26 base #38383e to red
+  @h scale 96 80 texel
+  paste h 0 44
+  alpha cut 128
+end
+
+image art/models/c_sl_chandelier/4.png   # the arms, flames and drops
+  canvas 320 224
+  piece t tpl m/pik_02/t 12
+  @t scale 256 128 texel
+  paste t 32 16
+  piece c0 model c_bubble 17
+  @c0 scale 24 32 texel
+  paste c0 48 0
+  piece c1 model c_bubble 17
+  @c1 scale 24 32 texel
+  paste c1 96 0
+  piece c2 model c_bubble 17
+  @c2 scale 24 32 texel
+  paste c2 148 0
+  piece c3 model c_bubble 17
+  @c3 scale 24 32 texel
+  paste c3 200 0
+  piece c4 model c_bubble 17
+  @c4 scale 24 32 texel
+  paste c4 248 0
+  piece d0 tpl e/us/effect.tpl 31
+  @d0 scale 24 24 texel
+  paste d0 44 144
+  piece d1 tpl e/us/effect.tpl 31
+  @d1 scale 24 24 texel
+  paste d1 92 152
+  piece d2 tpl e/us/effect.tpl 31
+  @d2 scale 24 24 texel
+  paste d2 148 156
+  piece d3 tpl e/us/effect.tpl 31
+  @d3 scale 24 24 texel
+  paste d3 204 152
+  piece d4 tpl e/us/effect.tpl 31
+  @d4 scale 24 24 texel
+  paste d4 252 144
+  piece d5 tpl e/us/effect.tpl 31
+  @d5 scale 24 24 texel
+  paste d5 120 180
+  piece d6 tpl e/us/effect.tpl 31
+  @d6 scale 24 24 texel
+  paste d6 176 180
+  alpha cut 128
+end
+
+image art/models/c_sl_chandelier/0.png   # its chain
+  load tpl m/pik_02/t 12
+  crop 60 30 24 64
+  hsv val *0.7
+  alpha cut 128
+end
+
+image art/models/c_sl_chandelier/1.png   # its chain
+  load tpl m/pik_02/t 12
+  crop 60 30 24 64
+  hsv val *0.7
+  alpha cut 128
+end
+
+image art/models/c_sl_chandelier/2.png   # its chain
+  load tpl m/pik_02/t 12
+  crop 60 30 24 64
+  hsv val *0.7
+  alpha cut 128
+end
+
+image art/models/c_sl_chandelier/3.png   # its chain
+  load tpl m/pik_02/t 12
+  crop 60 30 24 64
+  hsv val *0.7
+  alpha cut 128
+end
+
+image art/models/c_sl_chandelier/5.png   # a shard
+  canvas 24 24
+  piece d tpl e/us/effect.tpl 31
+  @d rotate 200
+  @d scale 24 24 texel
+  paste d 0 0
+  alpha cut 128
+end
+
+image art/models/c_sl_chandelier/6.png   # a shard
+  canvas 24 24
+  piece d tpl e/us/effect.tpl 31
+  @d rotate 240
+  @d scale 24 24 texel
+  paste d 0 0
+  alpha cut 128
+end
+
+image art/models/c_sl_chandelier/7.png   # a shard
+  canvas 24 24
+  piece d tpl e/us/effect.tpl 31
+  @d rotate 280
+  @d scale 24 24 texel
+  paste d 0 0
+  alpha cut 128
+end
+
+image art/models/c_sl_chandelier/8.png   # a shard
+  canvas 24 24
+  piece d tpl e/us/effect.tpl 31
+  @d rotate 320
+  @d scale 24 24 texel
+  paste d 0 0
+  alpha cut 128
+end
+
+image art/models/c_sl_chandelier/9.png   # a shard
+  canvas 24 24
+  piece d tpl e/us/effect.tpl 31
+  @d rotate 360
+  @d scale 24 24 texel
+  paste d 0 0
+  alpha cut 128
+end
+
+image art/models/c_sl_chandelier/10.png   # a shard
+  canvas 24 24
+  piece d tpl e/us/effect.tpl 31
+  @d rotate 400
+  @d scale 24 24 texel
+  paste d 0 0
+  alpha cut 128
+end
+
+image art/models/c_sl_ice_wall/0.png   # the ice block, paler, tiled
+  canvas 176 208
+  piece b00 model MOBJ_IceBlock 0
+  @b00 ramp base #2a80d0 to pale
+  @b00 scale 56 50 texel
+  paste b00 4 4
+  piece b10 model MOBJ_IceBlock 0
+  @b10 ramp base #2a80d0 to pale
+  @b10 scale 56 50 texel
+  paste b10 60 4
+  piece b20 model MOBJ_IceBlock 0
+  @b20 ramp base #2a80d0 to pale
+  @b20 scale 56 50 texel
+  paste b20 116 4
+  piece b01 model MOBJ_IceBlock 0
+  @b01 ramp base #2a80d0 to pale
+  @b01 scale 56 50 texel
+  paste b01 4 54
+  piece b11 model MOBJ_IceBlock 0
+  @b11 ramp base #2a80d0 to pale
+  @b11 scale 56 50 texel
+  paste b11 60 54
+  piece b21 model MOBJ_IceBlock 0
+  @b21 ramp base #2a80d0 to pale
+  @b21 scale 56 50 texel
+  paste b21 116 54
+  piece b02 model MOBJ_IceBlock 0
+  @b02 ramp base #2a80d0 to pale
+  @b02 scale 56 50 texel
+  paste b02 4 104
+  piece b12 model MOBJ_IceBlock 0
+  @b12 ramp base #2a80d0 to pale
+  @b12 scale 56 50 texel
+  paste b12 60 104
+  piece b22 model MOBJ_IceBlock 0
+  @b22 ramp base #2a80d0 to pale
+  @b22 scale 56 50 texel
+  paste b22 116 104
+  piece b03 model MOBJ_IceBlock 0
+  @b03 ramp base #2a80d0 to pale
+  @b03 scale 56 50 texel
+  paste b03 4 154
+  piece b13 model MOBJ_IceBlock 0
+  @b13 ramp base #2a80d0 to pale
+  @b13 scale 56 50 texel
+  paste b13 60 154
+  piece b23 model MOBJ_IceBlock 0
+  @b23 ramp base #2a80d0 to pale
+  @b23 scale 56 50 texel
+  paste b23 116 154
+  alpha cut 128
+end
+
+image art/models/c_sl_ice_wall/1.png   # a chunk
+  canvas 48 48
+  piece d tpl e/us/effect.tpl 31
+  @d rotate 50
+  @d scale 48 48 texel
+  paste d 0 0
+  alpha cut 128
+end
+
+image art/models/c_sl_ice_wall/2.png   # a chunk
+  canvas 48 48
+  piece d tpl e/us/effect.tpl 31
+  @d rotate 100
+  @d scale 48 48 texel
+  paste d 0 0
+  alpha cut 128
+end
+
+image art/models/c_sl_ice_wall/3.png   # a chunk
+  canvas 48 48
+  piece d tpl e/us/effect.tpl 31
+  @d rotate 150
+  @d scale 48 48 texel
+  paste d 0 0
+  alpha cut 128
+end
+
+image art/models/c_sl_ice_wall/4.png   # a chunk
+  canvas 48 48
+  piece d tpl e/us/effect.tpl 31
+  @d rotate 200
+  @d scale 48 48 texel
+  paste d 0 0
+  alpha cut 128
+end
+
+image art/models/c_sl_ice_wall/5.png   # a chunk
+  canvas 48 48
+  piece d tpl e/us/effect.tpl 31
+  @d rotate 250
+  @d scale 48 48 texel
+  paste d 0 0
+  alpha cut 128
+end
+
+image art/models/c_sl_ice_wall/6.png   # a chunk
+  canvas 48 48
+  piece d tpl e/us/effect.tpl 31
+  @d rotate 300
+  @d scale 48 48 texel
+  paste d 0 0
+  alpha cut 128
+end
+
+image art/models/c_sl_ice_wall_large/0.png   # the ice block, paler, tiled
+  canvas 336 272
+  piece b00 model MOBJ_IceBlock 0
+  @b00 ramp base #2a80d0 to pale
+  @b00 scale 65 66 texel
+  paste b00 4 4
+  piece b10 model MOBJ_IceBlock 0
+  @b10 ramp base #2a80d0 to pale
+  @b10 scale 65 66 texel
+  paste b10 69 4
+  piece b20 model MOBJ_IceBlock 0
+  @b20 ramp base #2a80d0 to pale
+  @b20 scale 65 66 texel
+  paste b20 134 4
+  piece b30 model MOBJ_IceBlock 0
+  @b30 ramp base #2a80d0 to pale
+  @b30 scale 65 66 texel
+  paste b30 199 4
+  piece b40 model MOBJ_IceBlock 0
+  @b40 ramp base #2a80d0 to pale
+  @b40 scale 65 66 texel
+  paste b40 264 4
+  piece b01 model MOBJ_IceBlock 0
+  @b01 ramp base #2a80d0 to pale
+  @b01 scale 65 66 texel
+  paste b01 4 70
+  piece b11 model MOBJ_IceBlock 0
+  @b11 ramp base #2a80d0 to pale
+  @b11 scale 65 66 texel
+  paste b11 69 70
+  piece b21 model MOBJ_IceBlock 0
+  @b21 ramp base #2a80d0 to pale
+  @b21 scale 65 66 texel
+  paste b21 134 70
+  piece b31 model MOBJ_IceBlock 0
+  @b31 ramp base #2a80d0 to pale
+  @b31 scale 65 66 texel
+  paste b31 199 70
+  piece b41 model MOBJ_IceBlock 0
+  @b41 ramp base #2a80d0 to pale
+  @b41 scale 65 66 texel
+  paste b41 264 70
+  piece b02 model MOBJ_IceBlock 0
+  @b02 ramp base #2a80d0 to pale
+  @b02 scale 65 66 texel
+  paste b02 4 136
+  piece b12 model MOBJ_IceBlock 0
+  @b12 ramp base #2a80d0 to pale
+  @b12 scale 65 66 texel
+  paste b12 69 136
+  piece b22 model MOBJ_IceBlock 0
+  @b22 ramp base #2a80d0 to pale
+  @b22 scale 65 66 texel
+  paste b22 134 136
+  piece b32 model MOBJ_IceBlock 0
+  @b32 ramp base #2a80d0 to pale
+  @b32 scale 65 66 texel
+  paste b32 199 136
+  piece b42 model MOBJ_IceBlock 0
+  @b42 ramp base #2a80d0 to pale
+  @b42 scale 65 66 texel
+  paste b42 264 136
+  piece b03 model MOBJ_IceBlock 0
+  @b03 ramp base #2a80d0 to pale
+  @b03 scale 65 66 texel
+  paste b03 4 202
+  piece b13 model MOBJ_IceBlock 0
+  @b13 ramp base #2a80d0 to pale
+  @b13 scale 65 66 texel
+  paste b13 69 202
+  piece b23 model MOBJ_IceBlock 0
+  @b23 ramp base #2a80d0 to pale
+  @b23 scale 65 66 texel
+  paste b23 134 202
+  piece b33 model MOBJ_IceBlock 0
+  @b33 ramp base #2a80d0 to pale
+  @b33 scale 65 66 texel
+  paste b33 199 202
+  piece b43 model MOBJ_IceBlock 0
+  @b43 ramp base #2a80d0 to pale
+  @b43 scale 65 66 texel
+  paste b43 264 202
+  alpha cut 128
+end
+
+image art/models/c_sl_ice_wall_large/1.png   # a chunk
+  canvas 48 48
+  piece d tpl e/us/effect.tpl 31
+  @d rotate 50
+  @d scale 48 48 texel
+  paste d 0 0
+  alpha cut 128
+end
+
+image art/models/c_sl_ice_wall_large/2.png   # a chunk
+  canvas 48 48
+  piece d tpl e/us/effect.tpl 31
+  @d rotate 100
+  @d scale 48 48 texel
+  paste d 0 0
+  alpha cut 128
+end
+
+image art/models/c_sl_ice_wall_large/3.png   # a chunk
+  canvas 48 48
+  piece d tpl e/us/effect.tpl 31
+  @d rotate 150
+  @d scale 48 48 texel
+  paste d 0 0
+  alpha cut 128
+end
+
+image art/models/c_sl_ice_wall_large/4.png   # a chunk
+  canvas 48 48
+  piece d tpl e/us/effect.tpl 31
+  @d rotate 200
+  @d scale 48 48 texel
+  paste d 0 0
+  alpha cut 128
+end
+
+image art/models/c_sl_ice_wall_large/5.png   # a chunk
+  canvas 48 48
+  piece d tpl e/us/effect.tpl 31
+  @d rotate 250
+  @d scale 48 48 texel
+  paste d 0 0
+  alpha cut 128
+end
+
+image art/models/c_sl_ice_wall_large/6.png   # a chunk
+  canvas 48 48
+  piece d tpl e/us/effect.tpl 31
+  @d rotate 300
+  @d scale 48 48 texel
+  paste d 0 0
+  alpha cut 128
+end
+
+image art/models/c_sl_cage/0.png   # the bars
+  canvas 192 232
+  piece b0 model c_hone 0
+  @b0 crop 0 0 64 192
+  @b0 scale 48 224 texel
+  paste b0 0 8
+  piece b1 model c_hone 0
+  @b1 crop 0 0 64 192
+  @b1 scale 48 224 texel
+  paste b1 48 8
+  piece b2 model c_hone 0
+  @b2 crop 0 0 64 192
+  @b2 scale 48 224 texel
+  paste b2 96 8
+  piece b3 model c_hone 0
+  @b3 crop 0 0 64 192
+  @b3 scale 48 224 texel
+  paste b3 144 8
+  piece r model c_honezuka 3
+  @r crop 8 196 216 36
+  @r scale 192 32 texel
+  paste r 0 0
+  hsv val *0.65
+  alpha cut 128
+end
+
+image art/models/c_sl_cage/1.png   # the bars
+  canvas 192 232
+  piece b0 model c_hone 0
+  @b0 crop 0 0 64 192
+  @b0 scale 48 224 texel
+  paste b0 0 8
+  piece b1 model c_hone 0
+  @b1 crop 0 0 64 192
+  @b1 scale 48 224 texel
+  paste b1 48 8
+  piece b2 model c_hone 0
+  @b2 crop 0 0 64 192
+  @b2 scale 48 224 texel
+  paste b2 96 8
+  piece b3 model c_hone 0
+  @b3 crop 0 0 64 192
+  @b3 scale 48 224 texel
+  paste b3 144 8
+  piece r model c_honezuka 3
+  @r crop 8 196 216 36
+  @r scale 192 32 texel
+  paste r 0 0
+  piece sk model c_honezuka 3
+  @sk crop 0 0 224 170
+  @sk scale 72 56 texel
+  paste sk 60 0
+  alpha cut 128
+end
+
+image art/models/c_sl_lights/0.png   # the housing and bulbs
+  canvas 80 40
+  piece h model c_killtai 1
+  @h crop 100 40 120 80
+  @h scale 76 36 texel
+  paste h 2 2
+  piece o0 icon ICON_1BD
+  @o0 scale 16 16 texel
+  paste o0 6 12
+  piece o1 icon ICON_1BD
+  @o1 scale 16 16 texel
+  paste o1 30 12
+  piece o2 icon ICON_1BD
+  @o2 scale 16 16 texel
+  paste o2 54 12
+  alpha cut 128
+end
+
+image art/models/c_sl_lights/1.png   # the housing and bulbs
+  canvas 80 40
+  piece h model c_killtai 1
+  @h crop 100 40 120 80
+  @h scale 76 36 texel
+  paste h 2 2
+  piece o0 icon ICON_1B7
+  @o0 scale 16 16 texel
+  paste o0 6 12
+  piece o1 icon ICON_1BD
+  @o1 scale 16 16 texel
+  paste o1 30 12
+  piece o2 icon ICON_1BD
+  @o2 scale 16 16 texel
+  paste o2 54 12
+  alpha cut 128
+end
+
+image art/models/c_sl_lights/2.png   # the housing and bulbs
+  canvas 80 40
+  piece h model c_killtai 1
+  @h crop 100 40 120 80
+  @h scale 76 36 texel
+  paste h 2 2
+  piece o0 icon ICON_1B7
+  @o0 scale 16 16 texel
+  paste o0 6 12
+  piece o1 icon ICON_1B7
+  @o1 scale 16 16 texel
+  paste o1 30 12
+  piece o2 icon ICON_1BD
+  @o2 scale 16 16 texel
+  paste o2 54 12
+  alpha cut 128
+end
+
+image art/models/c_sl_lights/3.png   # the housing and bulbs
+  canvas 80 40
+  piece h model c_killtai 1
+  @h crop 100 40 120 80
+  @h scale 76 36 texel
+  paste h 2 2
+  piece o0 icon ICON_1B7
+  @o0 scale 16 16 texel
+  paste o0 6 12
+  piece o1 icon ICON_1B7
+  @o1 scale 16 16 texel
+  paste o1 30 12
+  piece o2 icon ICON_1B7
+  @o2 scale 16 16 texel
+  paste o2 54 12
+  alpha cut 128
+end
+
+image art/models/c_sl_lights/4.png   # the housing and bulbs
+  canvas 80 40
+  piece h model c_killtai 1
+  @h crop 100 40 120 80
+  @h scale 76 36 texel
+  paste h 2 2
+  piece o0 icon ICON_1BB
+  @o0 scale 16 16 texel
+  paste o0 6 12
+  piece o1 icon ICON_1BB
+  @o1 scale 16 16 texel
+  paste o1 30 12
+  piece o2 icon ICON_1BB
+  @o2 scale 16 16 texel
+  paste o2 54 12
+  alpha cut 128
+end
+
+# c_sl_wheel/0 is the style model's steering wheel, ch3_props/wheel.png (tools/ch3_wheel.py; wave 3)
+
+image art/models/c_sl_tarp/0.png   # the tarp
+  canvas 304 96
+  piece r0 model c_kamek_g 23
+  @r0 scale 80 92 texel
+  paste r0 -2 2
+  piece r1 model c_kamek_g 24
+  @r1 scale 80 92 texel
+  paste r1 74 2
+  piece r2 model c_kamek_g 25
+  @r2 scale 80 92 texel
+  paste r2 150 2
+  piece r3 model c_kamek_g 26
+  @r3 scale 80 92 texel
+  paste r3 226 2
+  alpha cut 128
+end
+
+# c_sl_gear_gate at four times the game's texels (cutout.py's DENSITY, wave 3): every size, place and mask below is the
+# 8-texel cut's times 4, the disc's textures taken up by `scale ... smooth` so the outlines stay smooth in game
+image art/models/c_sl_gear_gate/1.png   # the white brick frame
+  canvas 576 640
+  piece w tpl m/hei_10/t 0
+  @w crop 0 0 128 128
+  @w ramp base #a8a8a0 to stone
+  @w scale 544 608 smooth
+  paste w 16 16
+  mask hole rect 128 176 447 639
+  alpha set 0 in hole
+  grow 12 #4a4438
+  alpha cut 128
+end
+
+image art/models/c_sl_gear_gate/0.png   # the teeth: tik_05's spikes in stone
+  canvas 384 544
+  piece t tpl m/tik_05/t 1
+  @t hsv sat *0.2 val *0.75
+  @t scale 384 544 smooth
+  paste t 0 0
+  alpha cut 128
+end
+
+image art/models/c_sl_gear_gate/3.png   # the gear clean, after the Tune-up (gear[1], S_2 and the pushes)
+  canvas 288 288
+  piece o tpl m/pik_02/t 21
+  @o scale 288 288 smooth
+  paste o 0 0
+  mask out poly 144,0 248,40 288,144 248,248 144,288 40,248 0,144 40,40
+  mask no rect 0 0 287 287
+  mask no - mask out
+  alpha set 0 in no
+  alpha set 0 in no
+  alpha cut 128
+end
+
+image art/models/c_sl_gear_gate/2.png   # the gear jammed with grit (gear[0], S_1 and J_1): the same gold gear, dulled, with grit caked on in clumps
+  canvas 288 288
+  piece o tpl m/pik_02/t 21
+  @o scale 288 288 smooth
+  paste o 0 0
+  mask out poly 144,0 248,40 288,144 248,248 144,288 40,248 0,144 40,40
+  mask no rect 0 0 287 287
+  mask no - mask out
+  alpha set 0 in no
+  hsv sat *0.7 val *0.8
+  mask smear poly 56,80 120,56 160,88 136,136 72,128
+  mask smear + poly 160,160 232,144 248,200 200,240 152,216
+  mask smear + poly 32,176 72,160 96,208 56,240
+  mask smear + poly 176,32 232,40 240,88 200,96
+  hsv in smear hue =32 sat *0.75 val *0.55
+  mask grit poly 72,80 112,68 132,96 108,120 76,112
+  mask grit + poly 176,168 216,160 228,192 196,220 168,200
+  mask grit + poly 44,184 68,176 80,208 52,220
+  mask grit + poly 192,48 220,52 224,76 196,80
+  mask grit + poly 120,176 140,168 148,188 128,196
+  mask grit + poly 152,104 168,100 172,116 156,120
+  mask grit + rect 92 224 107 239
+  mask grit + rect 232 112 243 127
+  mask grit + rect 32 120 43 131
+  mask grit + rect 120 32 131 43
+  mask nogrit rect 0 0 287 287
+  mask nogrit - mask grit
+  piece g tpl m/hei_10/t 4
+  @g scale 288 288 smooth
+  @g hsv hue =30 sat =0.35 val *0.55
+  @g alpha set 0 in nogrit
+  paste g 0 0
+  alpha set 0 in no
+  alpha cut 128
+end
+
+image art/models/c_sl_signpost/0.png   # the post
+  load model MOBJ_Signboard 0
+  crop 104 170 40 86
+  ramp where a>=128 base #a86820 to stone
+  scale 32 104 texel
+  alpha cut 128
+end
+
+image art/models/c_sl_signpost/1.png   # the pointer
+  load model MOBJ_Signboard 0
+  crop 0 16 256 144
+  ramp where a>=128 h=15..45 s>=0.5 base #a86820 to stone
+  scale 80 24 texel
+  alpha cut 128
+end
+
+image art/models/c_sl_signpost/2.png   # the crank
+  load icon ICON_1B4
+  ramp where a>=128 base #d8b020 to stone
+  scale 32 32 texel
+  alpha cut 128
+end
+
+image art/models/c_sl_goo_pit/0.png   # the surface
+  load tpl m/muj_10/t 6
+  ramp base #ce8e18 to goo
+  crop 0 0 128 128
+end
+
+image art/models/c_sl_goo_pit/1.png   # the surface
+  load tpl m/muj_10/t 6
+  ramp base #ce8e18 to goo
+  crop 0 0 128 128
+  hsv val *1.08 sat *0.95
+end
+
+image art/models/c_sl_goo_pit/2.png   # the surface
+  load tpl m/muj_10/t 6
+  ramp base #ce8e18 to goo
+  crop 0 128 128 128
+end
+
+image art/models/c_sl_goo_pit/3.png   # the surface
+  load tpl m/muj_10/t 6
+  ramp base #ce8e18 to goo
+  crop 0 128 128 128
+  hsv val *1.08 sat *0.95
+end
+
+image art/models/c_sl_goo_pit/4.png   # the surface
+  load tpl m/muj_10/t 6
+  ramp base #ce8e18 to goo
+  crop 128 0 128 128
+end
+
+image art/models/c_sl_goo_pit/5.png   # the surface
+  load tpl m/muj_10/t 6
+  ramp base #ce8e18 to goo
+  crop 128 0 128 128
+  hsv val *1.08 sat *0.95
+end
+
+image art/models/c_sl_goo_pit/6.png   # the surface
+  load tpl m/muj_10/t 6
+  ramp base #ce8e18 to goo
+  crop 128 128 128 128
+end
+
+image art/models/c_sl_goo_pit/7.png   # the surface
+  load tpl m/muj_10/t 6
+  ramp base #ce8e18 to goo
+  crop 128 128 128 128
+  hsv val *1.08 sat *0.95
+end
+
+image art/models/c_sl_goo_pit/8.png   # a bubble
+  canvas 32 32
+  piece b tpl e/us/effect.tpl 63
+  @b map where a>0 : #ffffff -> #a0d060
+  @b scale 20 20 texel
+  paste b 2 2
+end
+
+image art/models/c_sl_goo_pit/9.png   # a bubble
+  canvas 32 32
+  piece b tpl e/us/effect.tpl 63
+  @b map where a>0 : #ffffff -> #a0d060
+  @b scale 26 26 texel
+  paste b 2 2
+end
+
+image art/models/c_sl_goo_pit/10.png   # a bubble
+  canvas 32 32
+  piece b tpl e/us/effect.tpl 63
+  @b map where a>0 : #ffffff -> #a0d060
+  @b scale 32 32 texel
+  paste b 2 2
+end
+
+image art/models/c_sl_goo_pit/11.png   # a bubble
+  canvas 32 32
+  piece b tpl e/us/effect.tpl 63
+  @b map where a>0 : #ffffff -> #a0d060
+  @b scale 20 20 texel
+  paste b 2 2
+end
+
+image art/models/c_sl_goo_pit/12.png   # a bubble
+  canvas 32 32
+  piece b tpl e/us/effect.tpl 63
+  @b map where a>0 : #ffffff -> #a0d060
+  @b scale 26 26 texel
+  paste b 2 2
+end
+
+image art/models/c_sl_goo_pit/13.png   # a bubble
+  canvas 32 32
+  piece b tpl e/us/effect.tpl 63
+  @b map where a>0 : #ffffff -> #a0d060
+  @b scale 32 32 texel
+  paste b 2 2
+end
+
+image art/models/c_sl_goo_pit/14.png   # a bubble
+  canvas 32 32
+  piece b tpl e/us/effect.tpl 63
+  @b map where a>0 : #ffffff -> #a0d060
+  @b scale 20 20 texel
+  paste b 2 2
+end
+
+image art/models/c_sl_goo_pit/15.png   # a bubble
+  canvas 32 32
+  piece b tpl e/us/effect.tpl 63
+  @b map where a>0 : #ffffff -> #a0d060
+  @b scale 26 26 texel
+  paste b 2 2
+end
+
+image art/models/c_sl_goo_pit/16.png   # a bubble
+  canvas 32 32
+  piece b tpl e/us/effect.tpl 63
+  @b map where a>0 : #ffffff -> #a0d060
+  @b scale 32 32 texel
+  paste b 2 2
+end
+
+image art/models/c_sl_goo_pit/17.png   # smoke
+  load tpl e/us/effect.tpl 12
+  alpha set 0 where l<60
+  fill where a>=128 #5a7a3a
+  alpha cut 128
+end
+
+image art/models/c_sl_goo_pit/18.png   # smoke
+  load tpl e/us/effect.tpl 12
+  alpha set 0 where l<60
+  fill where a>=128 #5a7a3a
+  alpha cut 128
+end
+
+image art/models/c_sl_goo_moat/0.png   # the surface
+  load tpl m/muj_10/t 6
+  ramp base #ce8e18 to goo
+  crop 0 0 128 128
+end
+
+image art/models/c_sl_goo_moat/1.png   # the surface
+  load tpl m/muj_10/t 6
+  ramp base #ce8e18 to goo
+  crop 0 0 128 128
+  hsv val *1.08 sat *0.95
+end
+
+image art/models/c_sl_goo_moat/2.png   # the surface
+  load tpl m/muj_10/t 6
+  ramp base #ce8e18 to goo
+  crop 0 128 128 128
+end
+
+image art/models/c_sl_goo_moat/3.png   # the surface
+  load tpl m/muj_10/t 6
+  ramp base #ce8e18 to goo
+  crop 0 128 128 128
+  hsv val *1.08 sat *0.95
+end
+
+image art/models/c_sl_goo_moat/4.png   # the surface
+  load tpl m/muj_10/t 6
+  ramp base #ce8e18 to goo
+  crop 128 0 128 128
+end
+
+image art/models/c_sl_goo_moat/5.png   # the surface
+  load tpl m/muj_10/t 6
+  ramp base #ce8e18 to goo
+  crop 128 0 128 128
+  hsv val *1.08 sat *0.95
+end
+
+image art/models/c_sl_goo_moat/6.png   # the surface
+  load tpl m/muj_10/t 6
+  ramp base #ce8e18 to goo
+  crop 128 128 128 128
+end
+
+image art/models/c_sl_goo_moat/7.png   # the surface
+  load tpl m/muj_10/t 6
+  ramp base #ce8e18 to goo
+  crop 128 128 128 128
+  hsv val *1.08 sat *0.95
+end
+
+image art/models/c_sl_goo_moat/8.png   # the surface
+  load tpl m/muj_10/t 6
+  ramp base #ce8e18 to goo
+  crop 0 0 128 128
+end
+
+image art/models/c_sl_goo_moat/9.png   # the surface
+  load tpl m/muj_10/t 6
+  ramp base #ce8e18 to goo
+  crop 0 0 128 128
+  hsv val *1.08 sat *0.95
+end
+
+image art/models/c_sl_goo_moat/10.png   # the surface
+  load tpl m/muj_10/t 6
+  ramp base #ce8e18 to goo
+  crop 0 128 128 128
+end
+
+image art/models/c_sl_goo_moat/11.png   # the surface
+  load tpl m/muj_10/t 6
+  ramp base #ce8e18 to goo
+  crop 0 128 128 128
+  hsv val *1.08 sat *0.95
+end
+
+image art/models/c_sl_goo_moat/12.png   # the surface
+  load tpl m/muj_10/t 6
+  ramp base #ce8e18 to goo
+  crop 128 0 128 128
+end
+
+image art/models/c_sl_goo_moat/13.png   # the surface
+  load tpl m/muj_10/t 6
+  ramp base #ce8e18 to goo
+  crop 128 0 128 128
+  hsv val *1.08 sat *0.95
+end
+
+image art/models/c_sl_goo_moat/14.png   # the surface
+  load tpl m/muj_10/t 6
+  ramp base #ce8e18 to goo
+  crop 128 128 128 128
+end
+
+image art/models/c_sl_goo_moat/15.png   # the surface
+  load tpl m/muj_10/t 6
+  ramp base #ce8e18 to goo
+  crop 128 128 128 128
+  hsv val *1.08 sat *0.95
+end
+
+image art/models/c_sl_goo_moat/16.png   # the surface
+  load tpl m/muj_10/t 6
+  ramp base #ce8e18 to goo
+  crop 0 0 128 128
+end
+
+image art/models/c_sl_goo_moat/17.png   # the surface
+  load tpl m/muj_10/t 6
+  ramp base #ce8e18 to goo
+  crop 0 0 128 128
+  hsv val *1.08 sat *0.95
+end
+
+image art/models/c_sl_goo_moat/18.png   # the surface
+  load tpl m/muj_10/t 6
+  ramp base #ce8e18 to goo
+  crop 0 128 128 128
+end
+
+image art/models/c_sl_goo_moat/19.png   # the surface
+  load tpl m/muj_10/t 6
+  ramp base #ce8e18 to goo
+  crop 0 128 128 128
+  hsv val *1.08 sat *0.95
+end
+
+image art/models/c_sl_goo_moat/20.png   # the surface
+  load tpl m/muj_10/t 6
+  ramp base #ce8e18 to goo
+  crop 128 0 128 128
+end
+
+image art/models/c_sl_goo_moat/21.png   # the surface
+  load tpl m/muj_10/t 6
+  ramp base #ce8e18 to goo
+  crop 128 0 128 128
+  hsv val *1.08 sat *0.95
+end
+
+image art/models/c_sl_goo_moat/22.png   # the surface
+  load tpl m/muj_10/t 6
+  ramp base #ce8e18 to goo
+  crop 128 128 128 128
+end
+
+image art/models/c_sl_goo_moat/23.png   # the surface
+  load tpl m/muj_10/t 6
+  ramp base #ce8e18 to goo
+  crop 128 128 128 128
+  hsv val *1.08 sat *0.95
+end
+
+image art/models/c_sl_goo_moat/24.png   # the surface
+  load tpl m/muj_10/t 6
+  ramp base #ce8e18 to goo
+  crop 0 0 128 128
+end
+
+image art/models/c_sl_goo_moat/25.png   # the surface
+  load tpl m/muj_10/t 6
+  ramp base #ce8e18 to goo
+  crop 0 0 128 128
+  hsv val *1.08 sat *0.95
+end
+
+image art/models/c_sl_goo_moat/26.png   # the surface
+  load tpl m/muj_10/t 6
+  ramp base #ce8e18 to goo
+  crop 0 128 128 128
+end
+
+image art/models/c_sl_goo_moat/27.png   # the surface
+  load tpl m/muj_10/t 6
+  ramp base #ce8e18 to goo
+  crop 0 128 128 128
+  hsv val *1.08 sat *0.95
+end
+
+image art/models/c_sl_goo_moat/28.png   # the surface
+  load tpl m/muj_10/t 6
+  ramp base #ce8e18 to goo
+  crop 128 0 128 128
+end
+
+image art/models/c_sl_goo_moat/29.png   # the surface
+  load tpl m/muj_10/t 6
+  ramp base #ce8e18 to goo
+  crop 128 0 128 128
+  hsv val *1.08 sat *0.95
+end
+
+image art/models/c_sl_goo_moat/30.png   # the surface
+  load tpl m/muj_10/t 6
+  ramp base #ce8e18 to goo
+  crop 128 128 128 128
+end
+
+image art/models/c_sl_goo_moat/31.png   # the surface
+  load tpl m/muj_10/t 6
+  ramp base #ce8e18 to goo
+  crop 128 128 128 128
+  hsv val *1.08 sat *0.95
+end
+
+image art/models/c_sl_goo_moat/32.png   # a bubble
+  canvas 32 32
+  piece b tpl e/us/effect.tpl 63
+  @b map where a>0 : #ffffff -> #a0d060
+  @b scale 20 20 texel
+  paste b 2 2
+end
+
+image art/models/c_sl_goo_moat/33.png   # a bubble
+  canvas 32 32
+  piece b tpl e/us/effect.tpl 63
+  @b map where a>0 : #ffffff -> #a0d060
+  @b scale 26 26 texel
+  paste b 2 2
+end
+
+image art/models/c_sl_goo_moat/34.png   # a bubble
+  canvas 32 32
+  piece b tpl e/us/effect.tpl 63
+  @b map where a>0 : #ffffff -> #a0d060
+  @b scale 32 32 texel
+  paste b 2 2
+end
+
+image art/models/c_sl_goo_moat/35.png   # a bubble
+  canvas 32 32
+  piece b tpl e/us/effect.tpl 63
+  @b map where a>0 : #ffffff -> #a0d060
+  @b scale 20 20 texel
+  paste b 2 2
+end
+
+image art/models/c_sl_goo_moat/36.png   # a bubble
+  canvas 32 32
+  piece b tpl e/us/effect.tpl 63
+  @b map where a>0 : #ffffff -> #a0d060
+  @b scale 26 26 texel
+  paste b 2 2
+end
+
+image art/models/c_sl_goo_moat/37.png   # a bubble
+  canvas 32 32
+  piece b tpl e/us/effect.tpl 63
+  @b map where a>0 : #ffffff -> #a0d060
+  @b scale 32 32 texel
+  paste b 2 2
+end
+
+image art/models/c_sl_goo_moat/38.png   # a bubble
+  canvas 32 32
+  piece b tpl e/us/effect.tpl 63
+  @b map where a>0 : #ffffff -> #a0d060
+  @b scale 20 20 texel
+  paste b 2 2
+end
+
+image art/models/c_sl_goo_moat/39.png   # a bubble
+  canvas 32 32
+  piece b tpl e/us/effect.tpl 63
+  @b map where a>0 : #ffffff -> #a0d060
+  @b scale 26 26 texel
+  paste b 2 2
+end
+
+image art/models/c_sl_goo_moat/40.png   # a bubble
+  canvas 32 32
+  piece b tpl e/us/effect.tpl 63
+  @b map where a>0 : #ffffff -> #a0d060
+  @b scale 32 32 texel
+  paste b 2 2
+end
+
+image art/models/c_sl_goo_moat/41.png   # smoke
+  load tpl e/us/effect.tpl 12
+  alpha set 0 where l<60
+  fill where a>=128 #5a7a3a
+  alpha cut 128
+end
+
+image art/models/c_sl_goo_moat/42.png   # smoke
+  load tpl e/us/effect.tpl 12
+  alpha set 0 where l<60
+  fill where a>=128 #5a7a3a
+  alpha cut 128
+end
+
+image art/models/c_sl_socket_moon/0.png   # the socket: the white stone cut to a stand
+  canvas 88 112
+  piece s tpl m/hei_10/t 0
+  @s crop 0 0 88 112
+  @s ramp base #a8a8a0 to stone
+  paste s 0 0
+  mask ped poly 6,6 82,6 82,40 62,44 58,88 78,100 84,108 4,108 10,100 30,88 26,44 6,40
+  mask no rect 0 0 87 111
+  mask no - mask ped
+  alpha set 0 in no
+  mask nich poly 44,10 54,14 58,24 54,34 44,38 34,34 30,24 34,14
+  stamp nich #6a6458
+  mask sh poly 44,10 54,14 58,24 44,20 30,24 34,14
+  stamp sh #4a4438
+  grow 2 #3a342a
+  alpha cut 128
+end
+
+image art/models/c_sl_socket_moon/1.png   # the lens
+  canvas 56 72
+  piece l tpl e/us/effect.tpl 31
+  @l scale 56 72 texel
+  @l hsv sat *0.2 val *1.1
+  paste l 0 0
+  mask m poly 18,4 44,12 50,36 44,60 18,68 34,52 38,36 34,20
+  mask no rect 0 0 55 71
+  mask no - mask m
+  alpha set 0 in no
+  alpha cut 128
+end
+
+image art/models/c_sl_socket_moon/2.png   # the beam
+  canvas 64 256
+  piece a tpl e/us/effect.tpl 92
+  @a scale 32 256 texel
+  @a alpha set 180 where l>=120
+  @a alpha set 90 where l<120
+  @a alpha set 0 where l<40
+  @a fill where a>0 #e8f0ff
+  piece b tpl e/us/effect.tpl 92
+  @b scale 32 256 texel
+  @b alpha set 180 where l>=120
+  @b alpha set 90 where l<120
+  @b alpha set 0 where l<40
+  @b fill where a>0 #e8f0ff
+  @b flip x
+  paste a 32 0
+  paste b 0 0
+end
+
+image art/models/c_sl_socket_sun/0.png   # the socket: the white stone cut to a stand
+  canvas 88 112
+  piece s tpl m/hei_10/t 0
+  @s crop 0 0 88 112
+  @s ramp base #a8a8a0 to stone
+  paste s 0 0
+  mask ped poly 6,6 82,6 82,40 62,44 58,88 78,100 84,108 4,108 10,100 30,88 26,44 6,40
+  mask no rect 0 0 87 111
+  mask no - mask ped
+  alpha set 0 in no
+  mask nich poly 44,10 54,14 58,24 54,34 44,38 34,34 30,24 34,14
+  stamp nich #6a6458
+  mask sh poly 44,10 54,14 58,24 44,20 30,24 34,14
+  stamp sh #4a4438
+  grow 2 #3a342a
+  alpha cut 128
+end
+
+image art/models/c_sl_socket_sun/1.png   # the lens
+  canvas 56 72
+  piece l tpl e/us/effect.tpl 31
+  @l scale 56 72 texel
+  @l hsv hue =44 sat *1.2
+  paste l 0 0
+  mask m poly 28,4 48,12 54,36 48,60 28,68 8,60 2,36 8,12
+  mask no rect 0 0 55 71
+  mask no - mask m
+  alpha set 0 in no
+  alpha cut 128
+end
+
+image art/models/c_sl_socket_sun/2.png   # the beam
+  canvas 64 256
+  piece a tpl e/us/effect.tpl 92
+  @a scale 32 256 texel
+  @a alpha set 180 where l>=120
+  @a alpha set 90 where l<120
+  @a alpha set 0 where l<40
+  @a fill where a>0 #ffe080
+  piece b tpl e/us/effect.tpl 92
+  @b scale 32 256 texel
+  @b alpha set 180 where l>=120
+  @b alpha set 90 where l<120
+  @b alpha set 0 where l<40
+  @b fill where a>0 #ffe080
+  @b flip x
+  paste a 32 0
+  paste b 0 0
+end
+
+image art/models/c_sl_socket_tear/0.png   # the socket: the white stone cut to a stand
+  canvas 88 112
+  piece s tpl m/hei_10/t 0
+  @s crop 0 0 88 112
+  @s ramp base #a8a8a0 to stone
+  paste s 0 0
+  mask ped poly 6,6 82,6 82,40 62,44 58,88 78,100 84,108 4,108 10,100 30,88 26,44 6,40
+  mask no rect 0 0 87 111
+  mask no - mask ped
+  alpha set 0 in no
+  mask nich poly 44,10 54,14 58,24 54,34 44,38 34,34 30,24 34,14
+  stamp nich #6a6458
+  mask sh poly 44,10 54,14 58,24 44,20 30,24 34,14
+  stamp sh #4a4438
+  grow 2 #3a342a
+  alpha cut 128
+end
+
+image art/models/c_sl_socket_tear/1.png   # the lens
+  canvas 56 72
+  piece l tpl e/us/effect.tpl 31
+  @l scale 56 72 texel
+  @l hsv hue =210 sat *1.2
+  paste l 0 0
+  mask m poly 28,2 44,30 50,48 42,62 28,68 14,62 6,48 12,30
+  mask no rect 0 0 55 71
+  mask no - mask m
+  alpha set 0 in no
+  alpha cut 128
+end
+
+image art/models/c_sl_socket_tear/2.png   # the beam
+  canvas 64 256
+  piece a tpl e/us/effect.tpl 92
+  @a scale 32 256 texel
+  @a alpha set 180 where l>=120
+  @a alpha set 90 where l<120
+  @a alpha set 0 where l<40
+  @a fill where a>0 #a0d0ff
+  piece b tpl e/us/effect.tpl 92
+  @b scale 32 256 texel
+  @b alpha set 180 where l>=120
+  @b alpha set 90 where l<120
+  @b alpha set 0 where l<40
+  @b fill where a>0 #a0d0ff
+  @b flip x
+  paste a 32 0
+  paste b 0 0
+end
+

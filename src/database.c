@@ -14,6 +14,9 @@
 #include "manager/evtmgr_cmd.h"
 #include "driver/animdrv.h"
 #include "version.h"
+#ifdef TARGET_PC
+#include "port/superluigi.h"
+#endif
 
 //.sbss
 void* ptr; // but why
@@ -35,6 +38,11 @@ void setupDataLoad(const char* mapName) {
     sprintf(path, "%s/setup/%s/setup.xml", getMarioStDvdRoot(), mapName);
 #else
     sprintf(path, "%s/m/%s/s", getMarioStDvdRoot(), mapName);
+#endif
+#ifdef TARGET_PC
+    if (portSuperLuigiNoSetup(mapName)) {
+        return; /* Super Luigi's map on borrowed geometry, without its enemies */
+    }
 #endif
     if (strcmp(mapName, "muj_20") || evtGetValue(NULL, (s32)0xF5DE0180) != 2) {
         arcOpen(path, &ptr, &size);

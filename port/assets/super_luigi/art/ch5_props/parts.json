@@ -1,0 +1,123 @@
+{
+ "model": "sl_ch5_props",
+ "texels_per_unit": 8,
+ "faces": "-x",
+ "pivot_note": "pivot: pixels from the PNG's top-left; model_xy: where the pivot sits at rest (model units, feet at y 0)",
+ "cards": {
+  "gate_frame": {
+   "size": [
+    144,
+    160
+   ],
+   "pivot": [
+    72.0,
+    160.0
+   ],
+   "model_xy": [
+    0.0,
+    0.0
+   ],
+   "desc": "the gate's stone arch, an opening 10.8 wide and 16 tall at the crown; in front of the teeth; pivot on the ground at its middle"
+  },
+  "gate_teeth": {
+   "size": [
+    96,
+    136
+   ],
+   "pivot": [
+    48.0,
+    136.0
+   ],
+   "model_xy": [
+    0.0,
+    0.0
+   ],
+   "desc": "the gate of stone teeth, behind the arch: down (shut) at rest; it rises a notch (about 3 units) per push of the gear and falls back if the pushing stops; pivot at its bottom middle"
+  },
+  "gear": {
+   "size": [
+    72,
+    72
+   ],
+   "pivot": [
+    36.0,
+    36.0
+   ],
+   "model_xy": [
+    0.0,
+    0.0
+   ],
+   "desc": "the wall gear, clean: turn it about its hub; pivot at the hub"
+  },
+  "gear_jammed": {
+   "size": [
+    72,
+    72
+   ],
+   "pivot": [
+    36.0,
+    36.0
+   ],
+   "model_xy": [
+    0.0,
+    0.0
+   ],
+   "desc": "the wall gear jammed with grit, before the Tune-up; pivot at the hub"
+  },
+  "signpost": {
+   "size": [
+    32,
+    104
+   ],
+   "pivot": [
+    16.0,
+    104.0
+   ],
+   "model_xy": [
+    0.0,
+    0.0
+   ],
+   "desc": "the Luff signpost's stone post; the pointer turns on its axle at (0, 10.4); pivot on the ground"
+  },
+  "signpost_pointer": {
+   "size": [
+    80,
+    24
+   ],
+   "pivot": [
+    8.0,
+    12.0
+   ],
+   "model_xy": [
+    0.0,
+    0.0
+   ],
+   "desc": "the pointer, a stone arrow with Luff glyphs: hang it drooping (rotate -100\u00b0) while broken; once fixed it swings round to point at the stump; pivot at its axle"
+  },
+  "signpost_crank": {
+   "size": [
+    32,
+    32
+   ],
+   "pivot": [
+    8.0,
+    24.0
+   ],
+   "model_xy": [
+    0.0,
+    0.0
+   ],
+   "desc": "the crank, a wooden handle on the post's side (in front of it at the axle); turn it about its hub as Torque fixes the post; pivot at the hub"
+  }
+ },
+ "draw_order_gate": [
+  "gate_teeth",
+  "gate_frame",
+  "gear / gear_jammed (on the wall beside it)"
+ ],
+ "draw_order_post": [
+  "signpost",
+  "signpost_pointer",
+  "signpost_crank"
+ ]
+}

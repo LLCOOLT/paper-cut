@@ -1,0 +1,245 @@
+{
+ "model": "c_sl_nightmare",
+ "texels_per_unit": 32,
+ "source": "designs/nightmare/parts_qwen.png",
+ "cards": {
+  "body": {
+   "pivot": [
+    288.0,
+    537.0
+   ],
+   "model_xy": [
+    0.0,
+    8.125
+   ],
+   "desc": "the robe, the brooch and the ribbon, the feet; the sleeves cut away",
+   "texels_per_unit": 16,
+   "size": [
+    592,
+    680
+   ]
+  },
+  "body_cracked": {
+   "pivot": [
+    288.0,
+    537.0
+   ],
+   "model_xy": [
+    0.0,
+    8.125
+   ],
+   "desc": "the robe cracking with light",
+   "texels_per_unit": 16,
+   "size": [
+    592,
+    680
+   ]
+  },
+  "face": {
+   "pivot": [
+    274.5,
+    366.0
+   ],
+   "model_xy": [
+    -1.062,
+    36.25
+   ],
+   "desc": "the head: the gold ring and spikes, the glowing eyes, the grin",
+   "texels_per_unit": 16,
+   "size": [
+    584,
+    408
+   ]
+  },
+  "face_open": {
+   "pivot": [
+    274.5,
+    366.0
+   ],
+   "model_xy": [
+    -1.062,
+    36.25
+   ],
+   "desc": "the head laughing, the mouth wide (Hatesong)",
+   "texels_per_unit": 16,
+   "size": [
+    584,
+    408
+   ]
+  },
+  "face_cracked": {
+   "pivot": [
+    274.5,
+    366.0
+   ],
+   "model_xy": [
+    -1.062,
+    36.25
+   ],
+   "desc": "the head cracking with light",
+   "texels_per_unit": 16,
+   "size": [
+    584,
+    408
+   ]
+  },
+  "face_narrow": {
+   "pivot": [
+    274.5,
+    366.0
+   ],
+   "model_xy": [
+    -1.062,
+    36.25
+   ],
+   "desc": "the head, the eyes narrowed to slits",
+   "texels_per_unit": 16,
+   "size": [
+    584,
+    408
+   ]
+  },
+  "arm_front": {
+   "pivot": [
+    323.0,
+    84.0
+   ],
+   "model_xy": [
+    -14.562,
+    38.75
+   ],
+   "desc": "the near sleeve and its gold hand; shoulder pivot",
+   "size": [
+    416,
+    720
+   ]
+  },
+  "arm_back": {
+   "pivot": [
+    76.0,
+    77.0
+   ],
+   "model_xy": [
+    15.0,
+    39.25
+   ],
+   "desc": "the far sleeve and its gold hand; shoulder pivot",
+   "size": [
+    488,
+    720
+   ]
+  },
+  "stub_front": {
+   "pivot": [
+    206.0,
+    84.0
+   ],
+   "model_xy": [
+    -14.562,
+    38.75
+   ],
+   "desc": "the near sleeve torn off at the shoulder",
+   "size": [
+    296,
+    320
+   ]
+  },
+  "stub_back": {
+   "pivot": [
+    77.0,
+    79.0
+   ],
+   "model_xy": [
+    15.0,
+    39.25
+   ],
+   "desc": "the far sleeve torn off at the shoulder",
+   "size": [
+    296,
+    328
+   ]
+  },
+  "needle": {
+   "pivot": [
+    32.0,
+    133.2
+   ],
+   "model_xy": [
+    -1.438,
+    33.75
+   ],
+   "desc": "the compass needle on the brooch, its gold head to the north",
+   "size": [
+    72,
+    272
+   ]
+  },
+  "shard_0": {
+   "pivot": [
+    101.33,
+    101.67
+   ],
+   "model_xy": [
+    -9.333,
+    51.042
+   ],
+   "desc": "a shard of the cracked head",
+   "size": [
+    192,
+    232
+   ]
+  },
+  "shard_1": {
+   "pivot": [
+    100.33,
+    106.33
+   ],
+   "model_xy": [
+    6.854,
+    50.833
+   ],
+   "desc": "a shard of the cracked head",
+   "size": [
+    208,
+    248
+   ]
+  },
+  "shard_2": {
+   "pivot": [
+    110.33,
+    68.33
+   ],
+   "model_xy": [
+    -1.521,
+    41.333
+   ],
+   "desc": "a shard of the cracked head",
+   "size": [
+    224,
+    176
+   ]
+  }
+ },
+ "anchors": {
+  "neck": [
+   -1.062,
+   36.25
+  ],
+  "brooch": [
+   -1.438,
+   33.75
+  ],
+  "hand_front": [
+   -22.812,
+   21.25
+  ],
+  "hand_back": [
+   25.625,
+   21.875
+  ],
+  "face": [
+   -1.062,
+   45.625
+  ]
+ }
+}

@@ -1,0 +1,295 @@
+{
+ "model": "c_sl_chestnut_king",
+ "texels_per_unit": 32,
+ "source": "designs/chestnut_king/parts_qwen.png",
+ "cards": {
+  "husk_left": {
+   "pivot": [
+    301.96,
+    560.62
+   ],
+   "model_xy": [
+    0.0,
+    8.894
+   ],
+   "desc": "the husk's left half (the face's side, -x); rz > 0 opens it",
+   "texels_per_unit": 16,
+   "size": [
+    320,
+    616
+   ]
+  },
+  "husk_right": {
+   "pivot": [
+    13.38,
+    587.31
+   ],
+   "model_xy": [
+    0.962,
+    8.894
+   ],
+   "desc": "the husk's right half; rz < 0 opens it",
+   "texels_per_unit": 16,
+   "size": [
+    320,
+    648
+   ]
+  },
+  "husk_left_open": {
+   "pivot": [
+    301.85,
+    560.62
+   ],
+   "model_xy": [
+    0.0,
+    8.894
+   ],
+   "desc": "the left half, open",
+   "texels_per_unit": 16,
+   "size": [
+    320,
+    616
+   ]
+  },
+  "husk_right_open": {
+   "pivot": [
+    13.38,
+    587.31
+   ],
+   "model_xy": [
+    0.962,
+    8.894
+   ],
+   "desc": "the right half, open",
+   "texels_per_unit": 16,
+   "size": [
+    320,
+    648
+   ]
+  },
+  "head": {
+   "pivot": [
+    396.62,
+    795.54
+   ],
+   "model_xy": [
+    -1.202,
+    12.5
+   ],
+   "desc": "his face: wide eyes, a row of fangs",
+   "size": [
+    792,
+    816
+   ]
+  },
+  "head_roar": {
+   "pivot": [
+    396.62,
+    795.54
+   ],
+   "model_xy": [
+    -1.202,
+    12.5
+   ],
+   "desc": "roaring, jaws wide",
+   "size": [
+    792,
+    816
+   ]
+  },
+  "head_hurt": {
+   "pivot": [
+    396.62,
+    795.54
+   ],
+   "model_xy": [
+    -1.202,
+    12.5
+   ],
+   "desc": "eyes shut tight",
+   "size": [
+    792,
+    816
+   ]
+  },
+  "head_sad": {
+   "pivot": [
+    396.62,
+    795.54
+   ],
+   "model_xy": [
+    -1.202,
+    12.5
+   ],
+   "desc": "sad, in tears",
+   "size": [
+    792,
+    816
+   ]
+  },
+  "head_calm": {
+   "pivot": [
+    396.62,
+    795.54
+   ],
+   "model_xy": [
+    -1.202,
+    12.5
+   ],
+   "desc": "calm, eyes closed, smiling",
+   "size": [
+    792,
+    816
+   ]
+  },
+  "nut": {
+   "pivot": [
+    358.0,
+    663.08
+   ],
+   "model_xy": [
+    0.481,
+    12.26
+   ],
+   "desc": "the chestnut inside the husk",
+   "size": [
+    696,
+    680
+   ]
+  },
+  "chestnut": {
+   "pivot": [
+    127.08,
+    120.0
+   ],
+   "model_xy": [
+    -3.846,
+    27.404
+   ],
+   "desc": "a chestnut of Chestnut Rain",
+   "size": [
+    248,
+    240
+   ]
+  },
+  "crown": {
+   "pivot": [
+    174.92,
+    218.77
+   ],
+   "model_xy": [
+    0.481,
+    38.942
+   ],
+   "desc": "his gold crown",
+   "size": [
+    344,
+    256
+   ]
+  },
+  "leg_front": {
+   "pivot": [
+    177.69,
+    44.15
+   ],
+   "model_xy": [
+    -6.25,
+    6.01
+   ],
+   "desc": "the near foot",
+   "size": [
+    360,
+    256
+   ]
+  },
+  "leg_back": {
+   "pivot": [
+    177.69,
+    44.0
+   ],
+   "model_xy": [
+    6.25,
+    6.01
+   ],
+   "desc": "the far foot",
+   "size": [
+    360,
+    248
+   ]
+  },
+  "husk_shard_1": {
+   "pivot": [
+    133.0,
+    225.23
+   ],
+   "model_xy": [
+    -14.603,
+    25.721
+   ],
+   "desc": "a piece of the husk falling away",
+   "size": [
+    296,
+    432
+   ]
+  },
+  "husk_shard_2": {
+   "pivot": [
+    139.54,
+    170.62
+   ],
+   "model_xy": [
+    12.5,
+    33.293
+   ],
+   "desc": "a piece of the husk falling away",
+   "size": [
+    336,
+    392
+   ]
+  },
+  "husk_shard_3": {
+   "pivot": [
+    128.46,
+    124.62
+   ],
+   "model_xy": [
+    -12.74,
+    14.062
+   ],
+   "desc": "a piece of the husk falling away",
+   "size": [
+    280,
+    280
+   ]
+  },
+  "husk_shard_4": {
+   "pivot": [
+    159.08,
+    186.92
+   ],
+   "model_xy": [
+    12.139,
+    14.423
+   ],
+   "desc": "a piece of the husk falling away",
+   "size": [
+    312,
+    360
+   ]
+  }
+ },
+ "anchors": {
+  "husk": [
+   0.481,
+   24.519
+  ],
+  "skull": [
+   -1.202,
+   27.644
+  ],
+  "base": [
+   0.481,
+   8.894
+  ]
+ }
+}

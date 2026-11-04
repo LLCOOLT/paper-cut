@@ -261,6 +261,9 @@ def editable_problems(pose):
     return sorted(set(probs))
 
 
+ALLOW_PIVOT_TRANSLATIONS = False  # a variant's own motions leave such a group alone (c_bom_n's key): they're deltas
+
+
 def build_model(pose_path, tpl_path, cache_dir, prefix=None, collection=None, location=(0, 0, 0),
                 actions=True):
     """the model as an editable object tree, its animations as Actions;
@@ -268,7 +271,7 @@ def build_model(pose_path, tpl_path, cache_dir, prefix=None, collection=None, lo
     data = open(pose_path, "rb").read()
     pose = T.PoseFile.parse(data)
     prefix = prefix or pose.file_name
-    probs = editable_problems(pose)
+    probs = [p for p in editable_problems(pose) if not (ALLOW_PIVOT_TRANSLATIONS and p.endswith("pivot translations"))]
     if probs:
         raise ValueError("%s can't be edited as objects: %s" % (prefix, "; ".join(probs[:5])))
     coll = bpy.data.collections.new(collection or prefix)

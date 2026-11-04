@@ -6,6 +6,7 @@
 #include "port/platform.h"
 #include "port/gameplay.h"
 #include "port/gameplus.h"
+#include "port/superluigi.h"
 #include "port/luigi.h"
 #ifdef PORT_MODS
 #include "port/mods.h"
@@ -1638,7 +1639,8 @@ const char* PORT_HOOKABLE(msgSearch)(const char* tag) {
     {
         const char* modded = portModMsgSearch(tag, language_dir[gp->language]);
         if (modded != NULL) {
-            return portLuigiText(modded); /* Play as Luigi: his name for Mario's */
+            /* Play as Luigi: his name for Mario's; not in Super Luigi's own text, where Luigi is Luigi */
+            return portSuperLuigiOwnText(tag) ? modded : portLuigiText(modded);
         }
     }
 #endif

@@ -25,6 +25,10 @@
 #include "sdk/texPalette.h"
 
 #ifdef TARGET_PC
+const char* portAnimAlias(const char* file, const char* name); /* port/include/port/superluigi.h */
+const char* portSlPoseAlias(const char* file, const char* name); /* port/src/aurora/sl_models_aurora.c */
+#endif
+#ifdef TARGET_PC
 #include "port/anim_pc.h"
 #include "port/bedecode.h"
 #include "port/luigi.h"
@@ -3772,7 +3776,34 @@ void animPoseSetAnim(s32 poseId, const char* animName, BOOL reset) {
     s32 animId;
 
     pose = &wp->poses[poseId];
+#ifdef TARGET_PC
+    /* Super Luigi: a borrowed move script's pose names, as the friend's own (superluigi_blooey_aurora.c) */
+    animName = portSlPoseAlias(animPoseGetBaseData(pose)->fileName,
+                               portAnimAlias(animPoseGetBaseData(pose)->fileName, animName));
+#endif
     animId = animPoseGetAnimIdx(animPoseGetBaseData(pose), animName);
+#ifdef TARGET_PC
+    /* a name the model lacks plays its first anim (an idle, a borrowed pose) without a word: said once per
+     * model and name, so a move script asking for a pose that isn't there shows in the log */
+    if (animId == 0 && ANIM_NAME_INDEX(animName) < 0 && animPoseGetBaseData(pose)->animCount > 0 &&
+        strcmp(animPoseGetBaseData(pose)->anims[0].name, animName) != 0) {
+        static char sMissing[64][48] PORT_HOST_DATA;
+        static s32 sMissingCount PORT_HOST_DATA = 0;
+        char key[48];
+        s32 k;
+        snprintf(key, sizeof(key), "%.23s/%.23s", animPoseGetBaseData(pose)->fileName, animName);
+        for (k = 0; k < sMissingCount && strcmp(sMissing[k], key) != 0; k++) {
+        }
+        if (k == sMissingCount) {
+            if (sMissingCount < 64) {
+                strcpy(sMissing[sMissingCount++], key);
+            }
+            printf("[anim] %s has no '%s': its first, '%s', plays\n", animPoseGetBaseData(pose)->fileName, animName,
+                   animPoseGetBaseData(pose)->anims[0].name);
+            fflush(stdout);
+        }
+    }
+#endif
     if (reset || animId != pose->animId) {
         pose->animId = animId;
         if (pose->paperId != -1 && pose->flags & ANIM_POSE_FLAG_PAPER_RECT_CACHE) {

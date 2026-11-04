@@ -1,0 +1,272 @@
+{
+ "model": "c_sl_hizza",
+ "texels_per_unit": 8,
+ "faces": "-x",
+ "pivot_note": "pixels from the top-left of each PNG",
+ "cards": {
+  "head_a": {
+   "size": [
+    168,
+    128
+   ],
+   "pivot": [
+    132,
+    110
+   ],
+   "desc": "skull and upper jaw, eyes open"
+  },
+  "head_a_blink": {
+   "size": [
+    168,
+    128
+   ],
+   "pivot": [
+    132,
+    110
+   ],
+   "desc": "eyes shut"
+  },
+  "head_a_hurt": {
+   "size": [
+    168,
+    128
+   ],
+   "pivot": [
+    132,
+    110
+   ],
+   "desc": "eyes squeezed shut (><)"
+  },
+  "jaw_a": {
+   "size": [
+    144,
+    128
+   ],
+   "pivot": [
+    130,
+    70
+   ],
+   "desc": "lower jaw at the hinge; its mouth fan hides behind the head when shut and fills the gap up to ~20 deg open (wider: show mouth_x too)"
+  },
+  "tongue_a": {
+   "size": [
+    104,
+    40
+   ],
+   "pivot": [
+    98,
+    20
+   ],
+   "desc": "forked tongue, root at the pivot; lies inside the mouth"
+  },
+  "mouth_a": {
+   "size": [
+    144,
+    112
+   ],
+   "pivot": [
+    134,
+    8
+   ],
+   "desc": "inside of the open mouth (bite), pinned to the head at the jaw hinge; behind jaw_x; show when the jaw opens past ~20 deg (covers up to ~45 deg)"
+  },
+  "head_b": {
+   "size": [
+    168,
+    128
+   ],
+   "pivot": [
+    132,
+    110
+   ],
+   "desc": "skull and upper jaw, eyes open; tail head: dark crest, scar, heavy lids"
+  },
+  "head_b_blink": {
+   "size": [
+    168,
+    128
+   ],
+   "pivot": [
+    132,
+    110
+   ],
+   "desc": "eyes shut; tail head: dark crest, scar, heavy lids"
+  },
+  "head_b_hurt": {
+   "size": [
+    168,
+    128
+   ],
+   "pivot": [
+    132,
+    110
+   ],
+   "desc": "eyes squeezed shut (><); tail head: dark crest, scar, heavy lids"
+  },
+  "jaw_b": {
+   "size": [
+    144,
+    128
+   ],
+   "pivot": [
+    130,
+    70
+   ],
+   "desc": "lower jaw at the hinge; its mouth fan hides behind the head when shut and fills the gap up to ~20 deg open (wider: show mouth_x too)"
+  },
+  "tongue_b": {
+   "size": [
+    104,
+    40
+   ],
+   "pivot": [
+    98,
+    20
+   ],
+   "desc": "forked tongue, root at the pivot; lies inside the mouth"
+  },
+  "mouth_b": {
+   "size": [
+    144,
+    112
+   ],
+   "pivot": [
+    134,
+    8
+   ],
+   "desc": "inside of the open mouth (bite), pinned to the head at the jaw hinge; behind jaw_x; show when the jaw opens past ~20 deg (covers up to ~45 deg)"
+  },
+  "neck_a1": {
+   "size": [
+    120,
+    136
+   ],
+   "pivot": [
+    60,
+    126
+   ],
+   "desc": "front neck, lowest"
+  },
+  "neck_a2": {
+   "size": [
+    112,
+    128
+   ],
+   "pivot": [
+    56,
+    118
+   ],
+   "desc": "front neck, middle"
+  },
+  "neck_a3": {
+   "size": [
+    104,
+    120
+   ],
+   "pivot": [
+    52,
+    110
+   ],
+   "desc": "front neck, top"
+  },
+  "tail_b1": {
+   "size": [
+    104,
+    128
+   ],
+   "pivot": [
+    52,
+    118
+   ],
+   "desc": "tail, lowest"
+  },
+  "tail_b2": {
+   "size": [
+    96,
+    120
+   ],
+   "pivot": [
+    48,
+    110
+   ],
+   "desc": "tail, middle"
+  },
+  "tail_b3": {
+   "size": [
+    88,
+    112
+   ],
+   "pivot": [
+    44,
+    102
+   ],
+   "desc": "tail, top"
+  },
+  "coil_back": {
+   "size": [
+    288,
+    144
+   ],
+   "pivot": [
+    144,
+    136
+   ],
+   "desc": "back loop of the coil (behind the necks)"
+  },
+  "coil_front": {
+   "size": [
+    304,
+    128
+   ],
+   "pivot": [
+    152,
+    120
+   ],
+   "desc": "front loop of the coil (drawn over the necks' bases)"
+  },
+  "collar": {
+   "size": [
+    128,
+    80
+   ],
+   "pivot": [
+    64,
+    46
+   ],
+   "desc": "the collar with the compass piece, round neck_a1's middle (in front of it); the band's ends tuck behind the segment's edges"
+  },
+  "tail_base": {
+   "size": [
+    144,
+    80
+   ],
+   "pivot": [
+    72,
+    72
+   ],
+   "desc": "c_sl_hizza_tail: the tail coming out of churned dirt; pivot on the ground line under the tail's middle; tail_b1 stacks on the stub's top (about (72, 8))"
+  },
+  "dizzy_stars": {
+   "size": [
+    104,
+    48
+   ],
+   "pivot": [
+    52,
+    44
+   ],
+   "desc": "three stars to circle above a dazed head"
+  },
+  "smoke_puff": {
+   "size": [
+    96,
+    80
+   ],
+   "pivot": [
+    48,
+    46
+   ],
+   "desc": "defeat smoke; scale up and fade"
+  }
+ }
+}

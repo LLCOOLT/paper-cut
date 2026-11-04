@@ -1,0 +1,98 @@
+{
+ "model": "c_luigi_bride",
+ "texels_per_unit": 32,
+ "source": "designs/bride/design_bride_3.png",
+ "cards": {
+  "veil_side": {
+   "pivot": [
+    102.0,
+    35.5
+   ],
+   "model_xy": [
+    -11.5,
+    25.25
+   ],
+   "desc": "the lace veil, hanging from his cap",
+   "size": [
+    392,
+    632
+   ]
+  },
+  "veil_side_flutter": {
+   "pivot": [
+    101.5,
+    36.0
+   ],
+   "model_xy": [
+    -11.5,
+    25.25
+   ],
+   "desc": "the veil blown back",
+   "size": [
+    392,
+    632
+   ]
+  },
+  "veil_back": {
+   "pivot": [
+    109.0,
+    35.5
+   ],
+   "model_xy": [
+    -11.5,
+    25.25
+   ],
+   "desc": "the veil seen from behind",
+   "size": [
+    208,
+    624
+   ]
+  },
+  "veil_band": {
+   "pivot": [
+    172.1,
+    144.6
+   ],
+   "model_xy": [
+    -1.856,
+    24.856
+   ],
+   "desc": "the band of pink roses before his cap",
+   "size": [
+    336,
+    168
+   ]
+  },
+  "gown_side": {
+   "pivot": [
+    210.06,
+    32.0
+   ],
+   "model_xy": [
+    3.58,
+    15.438
+   ],
+   "desc": "the skirt pinned at his waist, the lace at its hem",
+   "size": [
+    376,
+    344
+   ]
+  },
+  "gown_side_swish": {
+   "pivot": [
+    210.06,
+    32.0
+   ],
+   "model_xy": [
+    3.58,
+    15.438
+   ],
+   "desc": "the skirt swung back",
+   "size": [
+    376,
+    344
+   ]
+  }
+ },
+ "anchors": {}
+}

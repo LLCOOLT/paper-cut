@@ -1,0 +1,122 @@
+{
+ "model": "c_sl_fuselle",
+ "texels_per_unit": 48,
+ "source": "designs/fuselle/parts_qwen.png",
+ "cards": {
+  "body": {
+   "pivot": [
+    262.5,
+    509.0
+   ],
+   "model_xy": [
+    0.0,
+    1.25
+   ],
+   "desc": "her round pink body, her face and cap",
+   "size": [
+    552,
+    544
+   ]
+  },
+  "body_blink": {
+   "pivot": [
+    262.5,
+    509.0
+   ],
+   "model_xy": [
+    0.0,
+    1.25
+   ],
+   "desc": "the same, her eyes happily shut",
+   "size": [
+    552,
+    544
+   ]
+  },
+  "body_talk": {
+   "pivot": [
+    262.5,
+    509.0
+   ],
+   "model_xy": [
+    0.0,
+    1.25
+   ],
+   "desc": "the same, her mouth open, talking",
+   "size": [
+    552,
+    544
+   ]
+  },
+  "shoe_front": {
+   "pivot": [
+    108.0,
+    129.5
+   ],
+   "model_xy": [
+    -1.354,
+    0.0
+   ],
+   "desc": "the near shoe, toe forward (-x)",
+   "size": [
+    216,
+    168
+   ]
+  },
+  "shoe_back": {
+   "pivot": [
+    103.5,
+    154.0
+   ],
+   "model_xy": [
+    1.458,
+    0.104
+   ],
+   "desc": "the far shoe",
+   "size": [
+    208,
+    192
+   ]
+  },
+  "key": {
+   "pivot": [
+    39.5,
+    106.5
+   ],
+   "model_xy": [
+    4.896,
+    6.875
+   ],
+   "desc": "the wind-up key, its shaft in her back",
+   "size": [
+    320,
+    200
+   ]
+  },
+  "bow": {
+   "pivot": [
+    135.5,
+    117.0
+   ],
+   "model_xy": [
+    0.938,
+    11.208
+   ],
+   "desc": "the red bow on her crown",
+   "size": [
+    352,
+    280
+   ]
+  }
+ },
+ "anchors": {
+  "body": [
+   0.0,
+   1.25
+  ],
+  "crown": [
+   0.0,
+   11.771
+  ]
+ }
+}

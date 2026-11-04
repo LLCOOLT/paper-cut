@@ -109,6 +109,31 @@ state or a reset can free or replace the field one), loading it again if not.
 
 All of it only while the option is on; `port/src/common/luigi_pc.c` again.
 
+- Faces (`portIconTexOverride`, `port/src/aurora/sl_assets_aurora.c`, from
+  `icondrv.c`): the game's three icons of Mario's head are Luigi's, made at
+  the start from Mario's own on the player's disc
+  (`port/assets/super_luigi/art/recipes/luigi_icons.recipe`, art recipes:
+  `port/assets/super_luigi/art/RECIPES.md`; drawn ones stand in if they can't
+  be made):
+  `ICON_1A3`, the face by the HP on the status bar (field and battle, and
+  Sweet Treat's targets); `ICON_19E`, the head on the pause menu's Mario page
+  and the item menu's "use on" list; `ICON_1A1`, the gold coin on the Mario
+  page's level row. Also in Super Luigi, where the option is always on.
+- Pictures of Mario in the game's own textures, as Luigi, by texture
+  replacement: while Luigi is the player every map is named with a `#luigi`
+  flag to the map-scoped texture sets (`mod_game_aurora.c`; `mods.cpp`'s
+  `mapMatches` matches a pattern with a `#` against the flagged name, any
+  other against the name alone), and the set `*#luigi`
+  (`art/icons/luigi/ui/` and `ui_jp/`) holds: the pause menu's first tab,
+  "Luigi" (`win.tpl` image 1: the US and EU discs' five languages share it;
+  the Japanese マリオ is ルイージ), made at the start from the disc's own tab
+  and the lettering of its other tabs (`art/recipes/luigi_tabs.recipe`), and
+  level-up's BP panel (a gold tile with Luigi's coin, drawn by
+  `art/tools/luigi_icons.py`; `battle_common.tpl` image 51, 38 on the JP
+  disc, the same data). The run-away gauge's runner (`menuwin.tpl` 28 to 31)
+  is the game's: the game never shows it. The chapter cards' coin (Super Luigi's medallion, `sys_01@sl`)
+  shows for Play as Luigi too.
+
 - Text (`portLuigiText`, from `msgSearch` in `src/driver/msgdrv.c`, a mod's
   message too): every message the game looks up, with the brothers' names
   swapped both ways, as on screen: `Mario` <-> `Luigi` and `MARIO` <->

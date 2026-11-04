@@ -1,0 +1,167 @@
+{
+ "model": "c_sl_fuselle",
+ "texels_per_unit": 8,
+ "faces": "-x",
+ "pivot_note": "pivot: pixels from the PNG's top-left; model_xy: where the pivot sits at rest (model units, feet at y 0)",
+ "cards": {
+  "body": {
+   "size": [
+    144,
+    144
+   ],
+   "pivot": [
+    72.0,
+    136.0
+   ],
+   "model_xy": [
+    0.0,
+    2.0
+   ],
+   "desc": "the round pink bomb body; root card, pivot at its foot (0, 2)"
+  },
+  "face": {
+   "size": [
+    64,
+    80
+   ],
+   "pivot": [
+    64.0,
+    80.0
+   ],
+   "model_xy": [
+    0.0,
+    6.0
+   ],
+   "desc": "the eyes: white ovals with low dark pupils and lashes; a face layer over the body, pivot at (0, 6) like the body's centre line"
+  },
+  "face_blink": {
+   "size": [
+    64,
+    80
+   ],
+   "pivot": [
+    64.0,
+    80.0
+   ],
+   "model_xy": [
+    0.0,
+    6.0
+   ],
+   "desc": "eyes shut, lashes down; a face layer over the body, pivot at (0, 6) like the body's centre line"
+  },
+  "face_hurt": {
+   "size": [
+    64,
+    80
+   ],
+   "pivot": [
+    64.0,
+    80.0
+   ],
+   "model_xy": [
+    0.0,
+    6.0
+   ],
+   "desc": "eyes squeezed shut (> <); a face layer over the body, pivot at (0, 6) like the body's centre line"
+  },
+  "face_talk": {
+   "size": [
+    64,
+    80
+   ],
+   "pivot": [
+    64.0,
+    80.0
+   ],
+   "model_xy": [
+    0.0,
+    6.0
+   ],
+   "desc": "eyes open with a blush under them (the shy lines); a face layer over the body, pivot at (0, 6) like the body's centre line"
+  },
+  "fuse": {
+   "size": [
+    64,
+    72
+   ],
+   "pivot": [
+    32.0,
+    64.0
+   ],
+   "model_xy": [
+    0.0,
+    16.0
+   ],
+   "desc": "the metal fuse cap with the wick and a red bow tied round it; pivot at the cap's foot, sunk into the body's top (0, 16)"
+  },
+  "spark": {
+   "size": [
+    32,
+    32
+   ],
+   "pivot": [
+    16.0,
+    16.0
+   ],
+   "model_xy": [
+    0.75,
+    22.5
+   ],
+   "desc": "the lit fuse's spark; sits on the wick's tip (0.75, 22.5) and flickers (scale, spin)"
+  },
+  "key": {
+   "size": [
+    56,
+    72
+   ],
+   "pivot": [
+    4.8,
+    35.2
+   ],
+   "model_xy": [
+    6.6,
+    10.6
+   ],
+   "desc": "the wind-up key: spins round its shaft; pivot at the shaft's root, in the body's back"
+  },
+  "foot_front": {
+   "size": [
+    48,
+    24
+   ],
+   "pivot": [
+    24.0,
+    9.6
+   ],
+   "model_xy": [
+    -1.8,
+    1.4
+   ],
+   "desc": "the front foot: a round orange shoe; pivot at its top, under the body"
+  },
+  "foot_back": {
+   "size": [
+    48,
+    24
+   ],
+   "pivot": [
+    24.0,
+    9.6
+   ],
+   "model_xy": [
+    1.8,
+    1.4
+   ],
+   "desc": "the back foot, a tone darker: a round orange shoe; pivot at its top, under the body"
+  }
+ },
+ "draw_order": [
+  "foot_back",
+  "key",
+  "fuse",
+  "body",
+  "face",
+  "foot_front"
+ ],
+ "rest_note": "model_xy is each card's pivot at rest"
+}

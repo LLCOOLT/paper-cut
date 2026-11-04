@@ -1,0 +1,115 @@
+{
+ "model": "c_luigi (Grass costume)",
+ "texels_per_unit": 8,
+ "faces": "-x",
+ "pivot_note": "pivot: pixels from the PNG's top-left; model_xy: where the pivot sits at rest (model units, feet at y 0)",
+ "cards": {
+  "grass_back": {
+   "size": [
+    184,
+    264
+   ],
+   "pivot": [
+    92.0,
+    208.0
+   ],
+   "model_xy": [
+    0.5,
+    8.0
+   ],
+   "desc": "tall far blades behind Luigi's body and head, reaching above the cap; pinned to the body card, drawn behind everything of his",
+   "pins_to": "body card pPlaneShape17",
+   "pin_on_part": [
+    33.6,
+    36.8
+   ]
+  },
+  "grass_front": {
+   "size": [
+    184,
+    144
+   ],
+   "pivot": [
+    84.0,
+    80.0
+   ],
+   "model_xy": [
+    0.5,
+    8.0
+   ],
+   "desc": "the near blades over his body and legs, up to the moustache on the face side; his shoes show below y 1; pinned to the body card, in front of the body",
+   "pins_to": "body card pPlaneShape17",
+   "pin_on_part": [
+    33.6,
+    36.8
+   ]
+  },
+  "grass_front_sway": {
+   "size": [
+    184,
+    144
+   ],
+   "pivot": [
+    84.0,
+    80.0
+   ],
+   "model_xy": [
+    0.5,
+    8.0
+   ],
+   "desc": "the near blades, swaying back (walk, rustle); pinned to the body card, in front of the body",
+   "pins_to": "body card pPlaneShape17",
+   "pin_on_part": [
+    33.6,
+    36.8
+   ]
+  },
+  "grass_hood": {
+   "size": [
+    168,
+    184
+   ],
+   "pivot": [
+    76.0,
+    80.0
+   ],
+   "model_xy": [
+    0.5,
+    22.0
+   ],
+   "desc": "a mop of blades over the cap, framing his face; pinned to the head card, in front of the cap",
+   "pins_to": "head card pPlaneShape14",
+   "pin_on_part": [
+    33.6,
+    -9.6
+   ]
+  },
+  "grass_hood_sway": {
+   "size": [
+    168,
+    184
+   ],
+   "pivot": [
+    76.0,
+    80.0
+   ],
+   "model_xy": [
+    0.5,
+    22.0
+   ],
+   "desc": "the crown of blades, swaying back; pinned to the head card, in front of the cap",
+   "pins_to": "head card pPlaneShape14",
+   "pin_on_part": [
+    33.6,
+    -9.6
+   ]
+  }
+ },
+ "draw_order": [
+  "grass_back",
+  "(Luigi's own cards)",
+  "grass_front / grass_front_sway",
+  "grass_hood / grass_hood_sway"
+ ],
+ "pin_note": "model_xy: the pin in c_luigi's bind pose; pin_on_part: the same point in the texels of the part it pins to"
+}

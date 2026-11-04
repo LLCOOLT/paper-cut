@@ -232,13 +232,22 @@ static DWORD WINAPI watchdog(void* arg) {
             CONTEXT ctx;
             STACKFRAME64 frame = {0};
             int i;
-            SuspendThread(sMainThread);
+            if (IsDebuggerPresent()) {
+                DebugBreak(); /* under cdb: every thread's stack there (~*k) */
+            }
+            DWORD suspended = SuspendThread(sMainThread), why = 0;
             memset(&ctx, 0, sizeof(ctx));
             ctx.ContextFlags = CONTEXT_FULL;
-            GetThreadContext(sMainThread, &ctx);
+            if (!GetThreadContext(sMainThread, &ctx)) {
+                why = GetLastError();
+            }
             fflush(stdout);
             reportBegin("stall");
             out("\n*** stall: no frame for %d s; main thread:\n", secs);
+            if (suspended == (DWORD)-1 || why != 0) {
+                /* (a chapter 6 stall came back with an empty context and nothing to say why) */
+                out("  (suspend %ld, context error %lu)\n", (long)suspended, (unsigned long)why);
+            }
             SymSetOptions(SYMOPT_LOAD_LINES | SYMOPT_UNDNAME | SYMOPT_DEFERRED_LOADS);
             SymInitialize(proc, NULL, TRUE);
             printFrame(proc, ctx.Rip); /* even if the walk below cannot start (a thread in a system wait) */

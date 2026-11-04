@@ -7,6 +7,7 @@
 #include "unit/party/unit_party_christine.h"
 #include "evt/evt_msg.h"
 #include "port/menu_tap.h"
+#include "port/superluigi.h"
 /* A, or the mouse on the ring (0) or a list (1): moves the cursor to the pointer, a click on the cursor's
  * choice is A (battle_menu_disp.c) */
 #define BTL_MENU_A(list) (BattlePadCheckTrigger(PAD_BUTTON_A) | portBattleMenuMouse(list))
@@ -310,6 +311,9 @@ static void _btlcmd_MakeActClassTable(BattleWork* wp) {
     if (cursor->absPos >= cursor->count) {
         cursor->absPos = cursor->count - 1;
     }
+#ifdef TARGET_PC
+    portBtlActFilter(wp); // Super Luigi's finishing blows: one command offered
+#endif
 }
 
 /**
@@ -798,6 +802,9 @@ static void _btlcmd_UpdateSelectWeaponTable(BattleWork* wp, s32 type) {
             }
         }
     }
+#ifdef TARGET_PC
+    portBtlWeaponFilter(wp, type); // Super Luigi's finishing blows: one move offered
+#endif
 }
 
 /**

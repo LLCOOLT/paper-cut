@@ -472,9 +472,17 @@ Program::~Program() = default;
 
 bool Program::add(const std::string& text, const std::string& file, std::string& error) {
   Parser p(text, mStrings);
+  // A file that doesn't assemble adds nothing: its scripts so far (a half-built
+  // one would run whatever its words hold) are taken out again.
+  const size_t scriptsBefore = mScripts.size(), slotsBefore = mSlots.size();
   auto fail = [&](const std::string& why) {
     p.fail(why);
     error = file + ":" + p.error;
+    for (size_t i = scriptsBefore; i < mScripts.size(); i++) {
+      mByName.erase(mScripts[i].name);
+    }
+    mScripts.resize(scriptsBefore);
+    mSlots.resize(slotsBefore);
     return false;
   };
   while (p.tok.type != Tok::End) {
@@ -582,6 +590,7 @@ bool Program::link(const Lookup& lookup, std::vector<std::string>& errors) {
     if (!ev.word(*s.expr, w)) {
       errors.push_back(s.where + ": " + ev.error);
       w = 0;
+      mBroken.insert(s.script); // a name not found: the script never runs
     }
     mScripts[s.script].code[s.index] = w;
   }
@@ -590,7 +599,7 @@ bool Program::link(const Lookup& lookup, std::vector<std::string>& errors) {
 
 Word* Program::find(const std::string& name) {
   const auto it = mByName.find(name);
-  return it == mByName.end() ? nullptr : mScripts[it->second].code.data();
+  return it == mByName.end() || mBroken.count(it->second) ? nullptr : mScripts[it->second].code.data();
 }
 
 } // namespace port_evt

@@ -1,0 +1,128 @@
+{
+ "model": "sl_ch4_props",
+ "texels_per_unit": 8,
+ "faces": "-x",
+ "pivot_note": "pivot: pixels from the PNG's top-left; model_xy: where the pivot sits at rest (model units, feet at y 0)",
+ "cards": {
+  "fiery_hat": {
+   "size": [
+    96,
+    128
+   ],
+   "pivot": [
+    48.0,
+    120.0
+   ],
+   "model_xy": [
+    0.0,
+    0.0
+   ],
+   "desc": "the Fiery Hat: a tall red top hat with a black band; pivot at the brim's middle, set on Jerry's top in front of his fuse cap"
+  },
+  "fiery_hat_flames_0": {
+   "size": [
+    88,
+    72
+   ],
+   "pivot": [
+    40.0,
+    64.0
+   ],
+   "model_xy": [
+    0.0,
+    13.0
+   ],
+   "desc": "the hat's paper flames, frame 0: alternate the two every 4 to 6 frames; pivot at their foot, on the crown's top (0, 13)"
+  },
+  "fiery_hat_flames_1": {
+   "size": [
+    88,
+    72
+   ],
+   "pivot": [
+    40.0,
+    64.0
+   ],
+   "model_xy": [
+    0.0,
+    13.0
+   ],
+   "desc": "the hat's paper flames, frame 1: alternate the two every 4 to 6 frames; pivot at their foot, on the crown's top (0, 13)"
+  },
+  "chandelier": {
+   "size": [
+    320,
+    224
+   ],
+   "pivot": [
+    160.0,
+    3.2
+   ],
+   "model_xy": [
+    0.0,
+    21.6
+   ],
+   "desc": "the chandelier: a gold frame of two tiers of curved arms, eight candles, crystal drops; pivot at the top ring, where the chain hooks on (it falls from there)"
+  },
+  "chain": {
+   "size": [
+    24,
+    64
+   ],
+   "pivot": [
+    12.0,
+    64.0
+   ],
+   "model_xy": [
+    0.0,
+    0.0
+   ],
+   "desc": "four chain links, 8 units; stack copies up to the ceiling, pivot at the bottom link"
+  },
+  "crystal_shard_0": {
+   "size": [
+    24,
+    24
+   ],
+   "pivot": [
+    12.0,
+    12.0
+   ],
+   "model_xy": [
+    0.0,
+    0.0
+   ],
+   "desc": "a crystal shard for the crash: throw them out spinning; pivot at its middle"
+  },
+  "crystal_shard_1": {
+   "size": [
+    24,
+    24
+   ],
+   "pivot": [
+    12.0,
+    12.0
+   ],
+   "model_xy": [
+    0.0,
+    0.0
+   ],
+   "desc": "a crystal shard for the crash: throw them out spinning; pivot at its middle"
+  },
+  "crystal_shard_2": {
+   "size": [
+    24,
+    24
+   ],
+   "pivot": [
+    12.0,
+    12.0
+   ],
+   "model_xy": [
+    0.0,
+    0.0
+   ],
+   "desc": "a crystal shard for the crash: throw them out spinning; pivot at its middle"
+  }
+ }
+}

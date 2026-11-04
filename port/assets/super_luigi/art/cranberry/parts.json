@@ -1,0 +1,164 @@
+{
+ "model": "c_sl_cranberry",
+ "texels_per_unit": 8,
+ "faces": "-x",
+ "pivot_note": "pivot: pixels from the PNG's top-left; model_xy: where the pivot sits at rest (model units, feet at y 0)",
+ "cards": {
+  "head_sleep": {
+   "size": [
+    64,
+    64
+   ],
+   "pivot": [
+    36.0,
+    55.2
+   ],
+   "model_xy": [
+    0.0,
+    8.6
+   ],
+   "desc": "asleep: eyes closed, peaceful; pivot at the neck (0, 8.6)"
+  },
+  "head_wake": {
+   "size": [
+    64,
+    64
+   ],
+   "pivot": [
+    36.0,
+    55.2
+   ],
+   "model_xy": [
+    0.0,
+    8.6
+   ],
+   "desc": "waking: heavy, half-open eyes; pivot at the neck (0, 8.6)"
+  },
+  "head": {
+   "size": [
+    64,
+    64
+   ],
+   "pivot": [
+    36.0,
+    55.2
+   ],
+   "model_xy": [
+    0.0,
+    8.6
+   ],
+   "desc": "awake: a gentle look (reddish-brown eyes); pivot at the neck (0, 8.6)"
+  },
+  "head_smile": {
+   "size": [
+    64,
+    64
+   ],
+   "pivot": [
+    36.0,
+    55.2
+   ],
+   "model_xy": [
+    0.0,
+    8.6
+   ],
+   "desc": "smiling, eyes closed happily; pivot at the neck (0, 8.6)"
+  },
+  "head_talk": {
+   "size": [
+    64,
+    64
+   ],
+   "pivot": [
+    36.0,
+    55.2
+   ],
+   "model_xy": [
+    0.0,
+    8.6
+   ],
+   "desc": "talking; pivot at the neck (0, 8.6)"
+  },
+  "body_seated": {
+   "size": [
+    104,
+    72
+   ],
+   "pivot": [
+    56.0,
+    68.0
+   ],
+   "model_xy": [
+    0.0,
+    0.5
+   ],
+   "desc": "seated cross-legged: white robe with gold Luff-glyph trim, bare feet, the red-berry clasp at the collar; the root card, pivot (0, 0.5) on the dais"
+  },
+  "arm_front": {
+   "size": [
+    48,
+    64
+   ],
+   "pivot": [
+    30.4,
+    11.2
+   ],
+   "model_xy": [
+    -1.2,
+    7.6
+   ],
+   "desc": "the front arm resting on the lap; pivot at the shoulder"
+  },
+  "arm_back": {
+   "size": [
+    48,
+    64
+   ],
+   "pivot": [
+    30.4,
+    11.2
+   ],
+   "model_xy": [
+    1.8,
+    7.6
+   ],
+   "desc": "the back arm, a tone darker; pivot at the shoulder"
+  },
+  "arm_reach": {
+   "size": [
+    72,
+    40
+   ],
+   "pivot": [
+    62.4,
+    11.2
+   ],
+   "model_xy": [
+    -1.2,
+    7.6
+   ],
+   "desc": "the hand-over: the front arm held out, palm up (the piece sits on it); pivot at the shoulder"
+  },
+  "compass_piece": {
+   "size": [
+    40,
+    40
+   ],
+   "pivot": [
+    20.0,
+    20.0
+   ],
+   "model_xy": [
+    0.0,
+    0.0
+   ],
+   "desc": "the compass piece he guarded: a curved golden plate with a pale-blue jewel; held on arm_reach's palm, at about (-7.6, 7.2)"
+  }
+ },
+ "draw_order": [
+  "arm_back",
+  "body_seated",
+  "arm_front",
+  "head"
+ ]
+}

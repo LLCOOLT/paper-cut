@@ -21,6 +21,7 @@
 #include <deque>
 #include <functional>
 #include <map>
+#include <set>
 #include <memory>
 #include <string>
 #include <vector>
@@ -58,6 +59,7 @@ private:
   std::vector<Script> mScripts;
   std::map<std::string, size_t> mByName;
   std::vector<Slot> mSlots;          // words waiting for a value (names)
+  std::set<size_t> mBroken;          // scripts with a name that wasn't found: find() won't give them
   std::deque<std::string> mStrings;  // the mod's strings, at fixed addresses
 };
 

@@ -2,6 +2,7 @@
 // that plays between chapters: the title's letters fly in over a rainbow light, followed by the chapter subtitle.
 #ifdef TARGET_PC
 #include "port/platform.h"
+#include "port/superluigi.h"
 #endif
 #include "battle/battle_unit.h"
 #include "eff/eff_itemget.h"
@@ -70,6 +71,9 @@ typedef struct SysWork {
 
 SysWork* g_wp;
 
+#ifdef TARGET_PC
+USER_FUNC(evt_sl_title_next); // port/src/aurora/superluigi_aurora.c
+#endif
 static USER_FUNC(bg);
 static USER_FUNC(display);
 static USER_FUNC(init);
@@ -1341,6 +1345,14 @@ EVT_BEGIN(evt_start)
     IF_STR_EQUAL(LW(1), STRING("stg_8"))
         SET_VALUE(LW(0), 8)
     END_IF
+#ifdef TARGET_PC
+    // a chapter of Luigi's (port/include/port/superluigi.h) goes on to its own first room
+    CALL(evt_sl_title_next, LW(2), LW(3))
+    IF_INT_NOT_EQUAL(LW(2), 0)
+        CALL(evt_bero_mapchange, LW(2), LW(3))
+        RETURN
+    END_IF
+#endif
     SWITCH(LW(0))
         CASE_EQUAL(0)
         CALL(evt_bero_mapchange, STRING("gor_10"), 0)

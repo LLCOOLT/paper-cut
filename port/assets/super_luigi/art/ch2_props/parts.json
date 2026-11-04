@@ -1,0 +1,103 @@
+{
+ "model": "sl_ch2_props",
+ "texels_per_unit": 8,
+ "faces": "-x",
+ "pivot_note": "pivot: pixels from the PNG's top-left; model_xy: where the pivot sits at rest (model units, feet at y 0)",
+ "cards": {
+  "banner_fus": {
+   "size": [
+    512,
+    88
+   ],
+   "pivot": [
+    256.0,
+    12.8
+   ],
+   "model_xy": [
+    0.0,
+    3.4
+   ],
+   "desc": "the banner: \"CONGRATULATIONS FUSELLE\" (half-painted); pivot at the middle of its top edge, under the door's lintel"
+  },
+  "banner_luigi": {
+   "size": [
+    512,
+    88
+   ],
+   "pivot": [
+    256.0,
+    12.8
+   ],
+   "model_xy": [
+    0.0,
+    3.4
+   ],
+   "desc": "the banner: \"CONGRATULATIONS LUIGI\"; pivot at the middle of its top edge, under the door's lintel"
+  },
+  "banner_luigi_fus": {
+   "size": [
+    512,
+    88
+   ],
+   "pivot": [
+    256.0,
+    12.8
+   ],
+   "model_xy": [
+    0.0,
+    3.4
+   ],
+   "desc": "the banner: \"CONGRATULATIONS LUIGI & FUS\"; pivot at the middle of its top edge, under the door's lintel"
+  },
+  "cage_back": {
+   "size": [
+    192,
+    232
+   ],
+   "pivot": [
+    96.0,
+    224.0
+   ],
+   "model_xy": [
+    0.0,
+    0.0
+   ],
+   "desc": "the far bars, a tone darker, behind the bride; pivot at the base's middle (0, 0)"
+  },
+  "cage_front": {
+   "size": [
+    192,
+    232
+   ],
+   "pivot": [
+    96.0,
+    224.0
+   ],
+   "model_xy": [
+    0.0,
+    0.0
+   ],
+   "desc": "the cage's near bars: ribs, a hoop, the base ring and a skull on the crown; pivot at the base's middle (0, 0)"
+  },
+  "sergeant_stripe": {
+   "size": [
+    48,
+    56
+   ],
+   "pivot": [
+    24.0,
+    28.0
+   ],
+   "model_xy": [
+    0.0,
+    0.0
+   ],
+   "desc": "Sergeant Bulkhead's stripe: a blue badge with three gold chevrons; pin it on the Bulky Bob-omb's body (front, upper left of its centre) at the 1.4x model's scale"
+  }
+ },
+ "cage_draw_order": [
+  "cage_back",
+  "(the bride)",
+  "cage_front"
+ ]
+}

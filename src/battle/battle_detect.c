@@ -9,6 +9,9 @@
 #include "data/item_data.h"
 #include "battle/battle_sub.h"
 #include "system.h"
+#ifdef TARGET_PC
+#include "port/superluigi.h"
+#endif
 #ifdef PORT_MODS
 #include "port/hooks/src_battle_battle_detect.h"
 #endif
@@ -460,6 +463,9 @@ static void _btlSamplingEnemy(BattleWorkWeaponTargets* d) {
         }
     }
 
+#ifdef TARGET_PC
+    n = portBtlTargetFilter(d, n); // Super Luigi's target gates (the statue's gem)
+#endif
     d->numTargets = n;
     {
         s8* idx = d->targetIndices;

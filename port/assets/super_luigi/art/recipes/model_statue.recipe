@@ -1,0 +1,275 @@
+# The walking statue (c_lp_statue, ART_PLAN row 8): the game's own stone golem (c_oko-ru's one sheet,
+# 232x208), its blue camouflage turned to sandstone, cut into the rig's cards. The cards are at the
+# game's giant-boss density (4 texels a unit, as Hooktail's): half the drawn ones' texels on the same
+# quads, so no motion changes. The drawn cards stay in the model as the fallbacks.
+# Card numbers: python tools/port/sl_models.py cards c_lp_statue
+
+colours LINE #1a1410 PIT #33291f GLOW #ffa030 CORE #ffe08a
+
+# ---- the head (8): the golem's block from crown to mouth, its dials made a niche for the gem
+image art/models/c_lp_statue/8.png
+  load model c_oko-ru 0
+  hsv hue =35 sat *0.5
+  colours FACE sample 64 130
+  # the dials: a dark carved niche (the gem's own card sits in it)
+  mask niche poly 67,36 80,28 103,25 127,28 140,36 132,66 106,62 79,65
+  fill in niche where v>0.14 PIT
+  # its eyes filled in: the eyes are their own card, lit or dark
+  mask eyes poly 49,95 92,95 90,108 76,127 66,127 56,112
+  mask eyes + poly 95,95 139,95 134,110 120,127 110,127 98,110
+  fill in eyes FACE
+  # the block alone, cut along the middle of its line; the fist and the chest gone
+  mask block poly 55,22 75,12 104,8 138,10 166,21 169,40 163,66 170,84 171,106 164,112 164,156 46,156 48,128 49,104 52,82 60,66 58,48
+  mask out rect 0 0 231 207
+  mask out - mask block
+  alpha set 0 in out
+  crop 38 4 130 156
+  scale 200 176 texel
+  crop -4 -4 208 184
+  grow 4 LINE
+  alpha cut 128
+end
+
+# ---- the eyes (3 lit, 4 dark): the golem's own eye shapes, in the eyes' band of the head
+image art/models/c_lp_statue/3.png
+  canvas 144 48
+  piece l model c_oko-ru 0
+  @l crop 50 95 42 31
+  @l alpha set 0 where l>=70
+  @l scale 56 40 texel
+  piece r model c_oko-ru 0
+  @r crop 96 95 42 31
+  @r alpha set 0 where l>=70
+  @r scale 56 40 texel
+  @l fill where a>=128 GLOW
+  @r fill where a>=128 GLOW
+  paste l 8 4
+  paste r 80 4
+  mask core poly 22,12 50,12 38,28 34,28
+  mask core + poly 94,12 122,12 110,28 106,28
+  stamp core CORE
+  alpha cut 128
+end
+
+image art/models/c_lp_statue/4.png
+  canvas 144 48
+  piece l model c_oko-ru 0
+  @l crop 50 95 42 31
+  @l alpha set 0 where l>=70
+  @l scale 56 40 texel
+  piece r model c_oko-ru 0
+  @r crop 96 95 42 31
+  @r alpha set 0 where l>=70
+  @r scale 56 40 texel
+  @l fill where a>=128 PIT
+  @r fill where a>=128 PIT
+  paste l 8 4
+  paste r 80 4
+  alpha cut 128
+end
+
+# ---- the body (2): plain mottle from the block, above the eyes and under the mouth, one course over the other
+image art/models/c_lp_statue/2.png
+  canvas 216 104
+  piece top model c_oko-ru 0
+  @top hsv hue =35 sat *0.5
+  @top crop 56 66 110 30
+  @top scale 216 56 texel
+  piece bot model c_oko-ru 0
+  @bot hsv hue =35 sat *0.5
+  @bot crop 52 150 118 26
+  @bot scale 216 50 texel
+  paste bot 0 54
+  paste top 0 0
+  mask torso poly 8,8 208,8 200,30 170,96 46,96 16,30
+  mask out rect 0 0 215 103
+  mask out - mask torso
+  alpha set 0 in out
+  grow 4 LINE
+  alpha cut 128
+end
+
+# ---- the arms (9 front, 1 back): the golem's ribbed arm and fist as they are
+image art/models/c_lp_statue/9.png
+  load model c_oko-ru 0
+  hsv hue =35 sat *0.5
+  mask arm poly 163,110 172,106 192,114 210,134 216,150 224,176 222,196 200,204 176,198 168,176 170,160 178,146 172,132 164,124
+  mask out rect 0 0 231 207
+  mask out - mask arm
+  alpha set 0 in out
+  crop 156 102 72 112
+  alpha cut 128
+end
+
+image art/models/c_lp_statue/1.png
+  load model c_oko-ru 0
+  hsv hue =35 sat *0.5 val *0.85
+  mask arm poly 163,110 172,106 192,114 210,134 216,150 224,176 222,196 200,204 176,198 168,176 170,160 178,146 172,132 164,124
+  mask out rect 0 0 231 207
+  mask out - mask arm
+  alpha set 0 in out
+  crop 156 102 72 112
+  alpha cut 128
+end
+
+# ---- the feet (10 front, 0 back): its left foot
+image art/models/c_lp_statue/10.png
+  load model c_oko-ru 0
+  hsv hue =35 sat *0.5
+  mask foot poly 31,178 44,172 62,184 92,184 92,195 34,198
+  mask out rect 0 0 231 207
+  mask out - mask foot
+  alpha set 0 in out
+  crop 26 168 70 32
+  scale 80 36 texel
+  crop -4 -2 88 40
+  grow 3 LINE
+  alpha cut 128
+end
+
+image art/models/c_lp_statue/0.png
+  load model c_oko-ru 0
+  hsv hue =35 sat *0.5 val *0.85
+  mask foot poly 31,178 44,172 62,184 92,184 92,195 34,198
+  mask out rect 0 0 231 207
+  mask out - mask foot
+  alpha set 0 in out
+  crop 26 168 70 32
+  scale 80 36 texel
+  crop -4 -2 88 40
+  grow 3 LINE
+  alpha cut 128
+end
+
+# ---- the gem (5 whole, 6 glowing, 7 cracked; on the loose one 17 cracked, 18 glinting): the game's
+# star (hoshi_2's), ruby
+colours CRACK #2a0605 PALE #ffc8a0 HOT #ffe8c8
+
+image art/models/c_lp_statue/5.png
+  canvas 72 72
+  piece gem model hoshi_2 2
+  @gem hsv where a>=128 s>0.4 : hue -48 sat *0.95
+  paste gem 4 4
+  alpha cut 128
+end
+
+image art/models/c_lp_statue/6.png
+  canvas 72 72
+  piece gem model hoshi_2 2
+  @gem hsv where a>=128 s>0.4 : hue -38 sat *0.75 val *1.1
+  paste gem 4 4
+  grow 3 PALE
+  alpha cut 128
+end
+
+image art/models/c_lp_statue/7.png
+  canvas 72 72
+  piece gem model hoshi_2 2
+  @gem hsv where a>=128 s>0.4 : hue -48 sat *0.95 val *0.9
+  paste gem 4 4
+  mask crack poly 33,10 37,10 40,26 33,34 42,44 36,62 33,62 37,45 29,34 36,26
+  mask crack + poly 39,34 56,28 57,30 40,38
+  stamp crack CRACK
+  alpha cut 128
+end
+
+image art/models/c_lp_statue/17.png
+  canvas 72 72
+  piece gem model hoshi_2 2
+  @gem hsv where a>=128 s>0.4 : hue -48 sat *0.95 val *0.9
+  paste gem 4 4
+  mask crack poly 33,10 37,10 40,26 33,34 42,44 36,62 33,62 37,45 29,34 36,26
+  mask crack + poly 39,34 56,28 57,30 40,38
+  stamp crack CRACK
+  alpha cut 128
+end
+
+image art/models/c_lp_statue/18.png
+  canvas 72 72
+  piece gem model hoshi_2 2
+  @gem hsv where a>=128 s>0.4 : hue -48 sat *0.95
+  paste gem 4 4
+  mask crack poly 33,10 37,10 40,26 33,34 42,44 36,62 33,62 37,45 29,34 36,26
+  stamp crack CRACK
+  grow 2 HOT
+  alpha cut 128
+end
+
+# ---- the rubble (11 to 16): tiles of the same stone under the same line
+image art/models/c_lp_statue/11.png
+  load model c_oko-ru 0
+  hsv hue =35 sat *0.5
+  crop 60 66 104 30
+  scale 104 88 texel
+  mask chunk poly 10,14 86,8 96,42 58,78 12,62
+  mask out rect 0 0 103 87
+  mask out - mask chunk
+  alpha set 0 in out
+  grow 4 LINE
+  alpha cut 128
+end
+
+image art/models/c_lp_statue/12.png
+  load model c_oko-ru 0
+  hsv hue =35 sat *0.5
+  crop 52 150 52 26
+  scale 104 88 texel
+  mask chunk poly 16,12 88,16 94,62 42,78 10,44
+  mask out rect 0 0 103 87
+  mask out - mask chunk
+  alpha set 0 in out
+  grow 4 LINE
+  alpha cut 128
+end
+
+image art/models/c_lp_statue/13.png
+  load model c_oko-ru 0
+  hsv hue =35 sat *0.5 val *0.9
+  crop 110 150 52 26
+  scale 104 88 texel
+  mask chunk poly 18,20 92,24 84,70 22,74
+  mask out rect 0 0 103 87
+  mask out - mask chunk
+  alpha set 0 in out
+  grow 4 LINE
+  alpha cut 128
+end
+
+image art/models/c_lp_statue/14.png
+  load model c_oko-ru 0
+  hsv hue =35 sat *0.5
+  crop 120 70 40 24
+  scale 104 88 texel
+  mask chunk poly 24,22 80,26 84,66 28,70
+  mask out rect 0 0 103 87
+  mask out - mask chunk
+  alpha set 0 in out
+  grow 4 LINE
+  alpha cut 128
+end
+
+image art/models/c_lp_statue/15.png
+  load model c_oko-ru 0
+  hsv hue =35 sat *0.5 val *0.9
+  crop 56 70 44 24
+  scale 104 88 texel
+  mask chunk poly 18,24 82,14 88,66 24,72
+  mask out rect 0 0 103 87
+  mask out - mask chunk
+  alpha set 0 in out
+  grow 4 LINE
+  alpha cut 128
+end
+
+image art/models/c_lp_statue/16.png
+  load model c_oko-ru 0
+  hsv hue =35 sat *0.5
+  crop 80 152 60 22
+  scale 104 88 texel
+  mask chunk poly 12,28 90,20 86,62 40,70 12,54
+  mask out rect 0 0 103 87
+  mask out - mask chunk
+  alpha set 0 in out
+  grow 4 LINE
+  alpha cut 128
+end

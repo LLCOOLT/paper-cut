@@ -1,0 +1,88 @@
+{
+ "model": "sl_ch6_torch",
+ "texels_per_unit": 8,
+ "faces": "-x",
+ "pivot_note": "pivot: pixels from the PNG's top-left; model_xy: where the pivot sits at rest (model units, feet at y 0)",
+ "cards": {
+  "torch_post": {
+   "size": [
+    80,
+    448
+   ],
+   "pivot": [
+    40.0,
+    448.0
+   ],
+   "model_xy": [
+    0.0,
+    0.0
+   ],
+   "desc": "the torch's iron post on its foot, 52.6 tall to the cup's bracket; pivot on the floor at its middle"
+  },
+  "torch_cup": {
+   "size": [
+    64,
+    40
+   ],
+   "pivot": [
+    32.0,
+    36.0
+   ],
+   "model_xy": [
+    0.0,
+    0.0
+   ],
+   "desc": "the cup on the post's top, its coals glowing blue; pivot at its bottom middle"
+  },
+  "torch_cup_dark": {
+   "size": [
+    64,
+    40
+   ],
+   "pivot": [
+    32.0,
+    36.0
+   ],
+   "model_xy": [
+    0.0,
+    0.0
+   ],
+   "desc": "the cup on the post's top, its coals cold; pivot at its bottom middle"
+  },
+  "torch_flame_0": {
+   "size": [
+    64,
+    112
+   ],
+   "pivot": [
+    32.0,
+    112.0
+   ],
+   "model_xy": [
+    0.0,
+    0.0
+   ],
+   "desc": "the pale blue flame, frame 0 (it leans left): over the cup; pivot at its foot"
+  },
+  "torch_flame_1": {
+   "size": [
+    64,
+    112
+   ],
+   "pivot": [
+    32.0,
+    112.0
+   ],
+   "model_xy": [
+    0.0,
+    0.0
+   ],
+   "desc": "the pale blue flame, frame 1 (it leans right): over the cup; pivot at its foot"
+  }
+ },
+ "draw_order": [
+  "torch_post",
+  "torch_cup / torch_cup_dark (at 0, 52.4)",
+  "torch_flame_0/1 (at 0, 55.6)"
+ ]
+}

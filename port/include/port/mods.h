@@ -138,6 +138,9 @@ const char* portModMsgSearch(const char* tag, const char* langDir);
 /* A map's init script from an enabled mod's evt/ (mod.json "maps"), or NULL:
  * the game's MapData for it (port/src/aurora/mod_game_aurora.c). */
 void* portModsMapScript(const char* map);
+/* An init script that does nothing: a mod map whose own script didn't
+ * assemble still loads (port/src/aurora/mod_game_aurora.c). */
+void* portModEmptyMapScript(void);
 
 /* A map the host itself adds (the modes', port/include/port/modes.h), below
  * every mod's: its init script and the map whose files it reads. Before
@@ -154,6 +157,16 @@ const char* portModsPathAlias(const char* path);
 /* A disc file the host itself adds (an Archipelago seed's), below every mod's
  * overlay; in use from the next portModsReload. */
 void portModsSetHostFile(const char* discPath, const void* data, size_t size);
+/* A texture of a map-scoped set the host adds: it applies only while the
+ * map's name matches pattern ("muj_l1,muj_l2", "muj_l*": alternatives, with
+ * * and ? wildcards), above every mod's global textures (a mod's own
+ * textures/@<pattern>/ set still wins). path's last part is its pack name
+ * (tex1_...png); data stays the caller's. Sets swap as the map changes. */
+void portModsAddMapTexture(const char* pattern, const char* path, const void* data, size_t size);
+/* Each frame (mod_game_aurora.c): the map-scoped sets for the map now */
+void portModsMapTextures(const char* map);
+/* A file the host added (portModsSetHostFile), or NULL: its bytes, valid until it's set again. */
+const void* portModsGetHostFile(const char* discPath, size_t* size);
 
 #ifdef __cplusplus
 }

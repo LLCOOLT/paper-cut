@@ -1,0 +1,233 @@
+# The murals (row 26: the game's storybook pictures), the Slam's sets (row 21). Cranberry and the Nightmare are cut from the
+# style model's pieces (art/tools/cut_cranberry.py, cut_nightmare.py).
+
+gradient sepia 0.0 #2a2010 0.4 #6a5430 0.8 #b4a070 1.0 #d4c498 1.3 #e8e0c0
+
+image art/models/c_sl_mural/0.png   # the white city was happy
+  load tpl demo.tpl 8
+  crop 0 110 608 304
+  scale 256 128 texel
+  hsv hue =38 sat *0.95
+  piece f0 model c_kamek_w 23
+  @f0 hsv hue =38 sat *1.0 val *0.98
+  @f0 scale 26 24 texel
+  piece g0 model c_luigi 14
+  @g0 hsv hue =38 sat *0.6 val *0.95
+  @g0 scale 12 16 texel
+  paste f0 60 88
+  paste g0 67 77
+  piece f1 model c_kamek_w 23
+  @f1 hsv hue =38 sat *1.0 val *0.98
+  @f1 scale 26 24 texel
+  piece g1 model c_luigi 14
+  @g1 hsv hue =38 sat *0.6 val *0.95
+  @g1 scale 12 16 texel
+  paste f1 100 88
+  paste g1 107 77
+  piece f2 model c_kamek_w 23
+  @f2 hsv hue =38 sat *1.0 val *0.98
+  @f2 scale 26 24 texel
+  piece g2 model c_luigi 14
+  @g2 hsv hue =38 sat *0.6 val *0.95
+  @g2 scale 12 16 texel
+  paste f2 150 88
+  paste g2 157 77
+  piece f3 model c_kamek_w 23
+  @f3 hsv hue =38 sat *1.0 val *0.98
+  @f3 scale 26 24 texel
+  piece g3 model c_luigi 14
+  @g3 hsv hue =38 sat *0.6 val *0.95
+  @g3 scale 12 16 texel
+  paste f3 190 88
+  paste g3 197 77
+  mask fr rect 0 0 255 2
+  mask fr + rect 0 125 255 127
+  mask fr + rect 0 0 2 127
+  mask fr + rect 253 0 255 127
+  stamp fr #3a2e18
+end
+
+image art/models/c_sl_mural/1.png   # the compass
+  load tpl demo.tpl 10
+  crop 0 0 608 304
+  scale 256 128 texel
+  hsv hue =38 sat *0.95
+  piece cp icon ICON_1A2
+  @cp hsv hue =38 sat *0.4
+  @cp scale 40 40 texel
+  paste cp 150 20
+  piece f0 model c_kamek_w 23
+  @f0 hsv hue =38 sat *1.0 val *0.98
+  @f0 scale 26 24 texel
+  piece g0 model c_luigi 14
+  @g0 hsv hue =38 sat *0.6 val *0.95
+  @g0 scale 12 16 texel
+  paste f0 110 80
+  paste g0 117 69
+  mask fr rect 0 0 255 2
+  mask fr + rect 0 125 255 127
+  mask fr + rect 0 0 2 127
+  mask fr + rect 253 0 255 127
+  stamp fr #3a2e18
+end
+
+image art/models/c_sl_mural/2.png   # they knew every storm
+  load tpl demo.tpl 9
+  crop 0 40 608 304
+  scale 256 128 texel
+  hsv hue =38 sat *0.95
+  piece cp icon ICON_1A2
+  @cp hsv hue =38 sat *0.4
+  @cp scale 40 40 texel
+  paste cp 108 8
+  piece f0 model c_kamek_w 23
+  @f0 hsv hue =38 sat *1.0 val *0.98
+  @f0 scale 26 24 texel
+  piece g0 model c_luigi 14
+  @g0 hsv hue =38 sat *0.6 val *0.95
+  @g0 scale 12 16 texel
+  paste f0 114 84
+  paste g0 121 73
+  mask fr rect 0 0 255 2
+  mask fr + rect 0 125 255 127
+  mask fr + rect 0 0 2 127
+  mask fr + rect 253 0 255 127
+  stamp fr #3a2e18
+end
+
+image art/models/c_sl_mural/3.png   # they looked further
+  load tpl demo.tpl 10
+  crop 0 150 608 304
+  scale 256 128 texel
+  hsv hue =38 sat *0.95
+  piece f0 model c_kamek_w 23
+  @f0 hsv hue =38 sat *1.0 val *0.98
+  @f0 scale 26 24 texel
+  piece g0 model c_luigi 14
+  @g0 hsv hue =38 sat *0.6 val *0.95
+  @g0 scale 12 16 texel
+  paste f0 70 84
+  paste g0 77 73
+  piece f1 model c_kamek_w 23
+  @f1 hsv hue =38 sat *1.0 val *0.98
+  @f1 scale 26 24 texel
+  piece g1 model c_luigi 14
+  @g1 hsv hue =38 sat *0.6 val *0.95
+  @g1 scale 12 16 texel
+  paste f1 150 84
+  paste g1 157 73
+  mask fr rect 0 0 255 2
+  mask fr + rect 0 125 255 127
+  mask fr + rect 0 0 2 127
+  mask fr + rect 253 0 255 127
+  stamp fr #3a2e18
+end
+
+image art/models/c_sl_mural/4.png   # everyone went to sleep
+  load tpl demo.tpl 9
+  crop 0 150 608 304
+  scale 256 128 texel
+  hsv hue =38 sat *0.95
+  hsv val *0.7
+  piece cp icon ICON_1A2
+  @cp hsv hue =38 sat *0.4
+  @cp scale 40 40 texel
+  mask cr poly 118,18 122,18 120,34 126,44 118,58 116,58 122,44 116,34
+  paste cp 100 12
+  stamp cr #2a2010
+  piece f0 model c_kamek_w 23
+  @f0 hsv hue =38 sat *1.0 val *0.98
+  @f0 scale 40 28 texel
+  piece g0 model c_luigi 14
+  @g0 hsv hue =38 sat *0.6 val *0.95
+  @g0 scale 12 16 texel
+  @f0 crop 0 6 40 40
+  @f0 rotate 90
+  paste f0 50 96
+  piece f1 model c_kamek_w 23
+  @f1 hsv hue =38 sat *1.0 val *0.98
+  @f1 scale 40 28 texel
+  piece g1 model c_luigi 14
+  @g1 hsv hue =38 sat *0.6 val *0.95
+  @g1 scale 12 16 texel
+  @f1 crop 0 6 40 40
+  @f1 rotate 90
+  paste f1 120 96
+  piece f2 model c_kamek_w 23
+  @f2 hsv hue =38 sat *1.0 val *0.98
+  @f2 scale 40 28 texel
+  piece g2 model c_luigi 14
+  @g2 hsv hue =38 sat *0.6 val *0.95
+  @g2 scale 12 16 texel
+  @f2 crop 0 6 40 40
+  @f2 rotate 90
+  paste f2 190 96
+  mask fr rect 0 0 255 2
+  mask fr + rect 0 125 255 127
+  mask fr + rect 0 0 2 127
+  mask fr + rect 253 0 255 127
+  stamp fr #3a2e18
+end
+
+image art/models/c_sl_mural/5.png   # blank, but for a boy
+  load tpl demo.tpl 4
+  crop 60 60 360 180
+  scale 256 128 texel
+  piece f0 model c_kamek_w 23
+  @f0 hsv hue =38 sat *1.0 val *0.98
+  @f0 scale 20 18 texel
+  piece g0 model c_luigi 14
+  @g0 hsv hue =38 sat *0.6 val *0.95
+  @g0 scale 12 16 texel
+  paste f0 200 92
+  paste g0 207 81
+  mask fr rect 0 0 255 2
+  mask fr + rect 0 125 255 127
+  mask fr + rect 0 0 2 127
+  mask fr + rect 253 0 255 127
+  stamp fr #3a2e18
+end
+
+image art/models/c_sl_mural/6.png   # cracked
+  load tpl demo.tpl 4
+  crop 60 60 360 180
+  scale 256 128 texel
+  piece f0 model c_kamek_w 23
+  @f0 hsv hue =38 sat *1.0 val *0.98
+  @f0 scale 20 18 texel
+  piece g0 model c_luigi 14
+  @g0 hsv hue =38 sat *0.6 val *0.95
+  @g0 scale 12 16 texel
+  paste f0 200 92
+  paste g0 207 81
+  mask cr poly 0,70 60,56 110,76 170,48 255,62 255,70 172,56 112,86 58,66 0,80
+  stamp cr #2a2010
+  mask fr rect 0 0 255 2
+  mask fr + rect 0 125 255 127
+  mask fr + rect 0 0 2 127
+  mask fr + rect 253 0 255 127
+  stamp fr #3a2e18
+end
+
+image art/models/c_sl_set_road/0.png   # Petal Meadows' painted sky and hills, its own leafy path
+  load tpl b/hei_00.tpl 0
+  scale 512 256 texel
+  piece r0 tpl m/hei_00/t 3
+  @r0 rotate 90
+  @r0 scale 180 72 texel
+  paste r0 -6 184
+  piece r1 tpl m/hei_00/t 3
+  @r1 rotate 90
+  @r1 scale 180 72 texel
+  paste r1 166 184
+  piece r2 tpl m/hei_00/t 3
+  @r2 rotate 90
+  @r2 scale 180 72 texel
+  paste r2 338 184
+  alpha cut 128
+end
+
+# c_sl_set_ballroom/0 (the backdrop) is the style model's painted ballroom, ch4_sets/set_ballroom.png (wave 3)
+
+# c_sl_set_volcano/0 (the backdrop) is the style model's painted volcano, ch4_sets/set_volcano.png (wave 3)
+

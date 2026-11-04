@@ -15,6 +15,13 @@
 #include <string.h>
 #include "mario/mariost.h"
 #endif
+#ifdef TARGET_PC
+#include <string.h>
+// PC port: the announcement is a message a mod can replace, so it is written bounded to its buffer
+// (and port/mods/mods.cpp escapes a mod message's stray printf conversions)
+#define sprintf(buf, ...) snprintf(buf, sizeof(buf), __VA_ARGS__)
+#define strcpy(dst, src) snprintf(dst, sizeof(dst), "%s", src)
+#endif
 // FAKE: battle_message.c calls windowDispGX_Waku_col through this prototype (the types it was compiled with) instead of the one in driver/windowdrv.h; same registers, behaviour-identical.
 typedef void (*WindowDispWakuColPtrFn)(u16, GXColor*, f32, f32, f32, f32, f32);
 

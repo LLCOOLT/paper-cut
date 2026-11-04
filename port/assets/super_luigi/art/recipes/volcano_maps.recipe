@@ -1,0 +1,115 @@
+# Chapter 1's volcano (ART_PLAN row 4): Keelhaul Key's own map textures, recoloured where they lie. Same sizes and
+# tiling, so the maps keep their density. Ochre rock becomes basalt tone for tone, with its stippled grout left to glow;
+# the sea's own blue with its bubbles becomes lava. Named as Dolphin names them, in the folder the chapter
+# registers (portSlMapTextures); the drawn set is in textures/ch1_lava_drawn/, the fallback for each.
+#
+# Tones by lightness against the source's fill: the band structure stays.
+
+gradient basalt 0.0 #1a0e0a 0.45 #2e1a14 0.7 #3a2420 1.0 #5a3a30 1.25 #6a4438 1.5 #7a5040
+gradient embers 0.0 #1a0e0a 0.3 #4a1c0c 0.5 #a03c10 0.7 #d04010 0.9 #ff7a18 1.2 #ffb030
+gradient ash 0.0 #16100e 0.5 #2e2422 0.8 #4a3c38 1.0 #5e4e48 1.4 #7a6860 2.0 #9a8880
+gradient lava 0.0 #5a1408 0.5 #a82810 0.9 #d04010 1.0 #e8541c 1.6 #ff7a18 2.4 #ffb030 3.2 #ffe080 5.0 #fff4c0
+gradient light 0.0 #d04010 0.5 #ff7a18 1.0 #ffb030
+
+image textures/ch1_lava/tex1_256x256_c193138b2e0f1d18_14.png
+  fallback textures/ch1_lava_drawn/tex1_256x256_c193138b2e0f1d18_14.png
+  load tpl m/muj_10/t 6
+  ramp where h=25..60 s>=0.4 base #ce8e18 to basalt
+  ramp where h=15..30 s>=0.5 v<0.5 base #7a4a08 to embers
+end
+
+image textures/ch1_lava/tex1_256x256_bcdcfd65604e746b_14.png
+  fallback textures/ch1_lava_drawn/tex1_256x256_bcdcfd65604e746b_14.png
+  load tpl m/muj_00/t 11
+  ramp where h=25..60 s>=0.4 base #ce8e18 to basalt
+  ramp where h=15..30 s>=0.5 v<0.5 base #7a4a08 to embers
+end
+
+image textures/ch1_lava/tex1_256x256_3436b9e79c6c123c_14.png
+  fallback textures/ch1_lava_drawn/tex1_256x256_3436b9e79c6c123c_14.png
+  load tpl m/muj_00/t 13
+  ramp where h=25..60 s>=0.4 base #ce8e18 to basalt
+  ramp where h=15..30 s>=0.5 v<0.5 base #7a4a08 to embers
+  ramp where h=130..190 s>=0.3 base #0a5a40 to ash
+end
+
+image textures/ch1_lava/tex1_256x256_e2874ba2237fc18d_14.png
+  fallback textures/ch1_lava_drawn/tex1_256x256_e2874ba2237fc18d_14.png
+  load tpl m/muj_10/t 21
+  ramp where v>=0.08 base #b07028 to basalt
+  ramp where h=20..50 v<0.42 v>=0.2 base #5a3808 to embers
+end
+
+image textures/ch1_lava/tex1_16x256_c5995b073f1f671d_14.png
+  fallback textures/ch1_lava_drawn/tex1_16x256_c5995b073f1f671d_14.png
+  load tpl m/muj_01/t 14
+  ramp base #b07028 to basalt
+end
+
+image textures/ch1_lava/tex1_128x128_5b3c34d42ce8242e_14.png
+  fallback textures/ch1_lava_drawn/tex1_128x128_5b3c34d42ce8242e_14.png
+  load tpl m/muj_10/t 12
+  ramp base #8c6c70 to ash
+end
+
+image textures/ch1_lava/tex1_64x64_6ede679aa57dd8a3_14.png
+  fallback textures/ch1_lava_drawn/tex1_64x64_6ede679aa57dd8a3_14.png
+  load tpl m/muj_00/t 16
+  ramp base #105838 to ash
+end
+
+image textures/ch1_lava/tex1_128x128_343f0bb84725788e_14.png
+  fallback textures/ch1_lava_drawn/tex1_128x128_343f0bb84725788e_14.png
+  load tpl m/muj_10/t 14
+  ramp base #807848 to ash
+end
+
+image textures/ch1_lava/tex1_64x64_37b7ec66fe27686f_14.png
+  fallback textures/ch1_lava_drawn/tex1_64x64_37b7ec66fe27686f_14.png
+  load tpl m/muj_01/t 18
+  ramp base #989898 to ash
+end
+
+image textures/ch1_lava/tex1_64x64_19ddb822a721f84d_14.png
+  fallback textures/ch1_lava_drawn/tex1_64x64_19ddb822a721f84d_14.png
+  load tpl m/muj_01/t 17
+  ramp base #b8a868 to ash
+end
+
+image textures/ch1_lava/tex1_256x256_a4ad7da2b1f042a1_14.png
+  fallback textures/ch1_lava_drawn/tex1_256x256_a4ad7da2b1f042a1_14.png
+  load tpl m/muj_00/t 4
+  ramp base #0028c8 to lava
+end
+
+image textures/ch1_lava/tex1_128x128_cdfc80efab9f37f0_14.png
+  fallback textures/ch1_lava_drawn/tex1_128x128_cdfc80efab9f37f0_14.png
+  load tpl m/muj_02/t 2
+  ramp base #ffffff to lava
+end
+
+image textures/ch1_lava/tex1_128x128_e44b6fe0f0c01df3_4.png
+  fallback textures/ch1_lava_drawn/tex1_128x128_e44b6fe0f0c01df3_4.png
+  load tpl m/muj_05/t 3
+  ramp base #0028c8 to lava
+end
+
+image textures/ch1_lava/tex1_256x256_a5055043c65d336a_2.png
+  fallback textures/ch1_lava_drawn/tex1_256x256_a5055043c65d336a_2.png
+  load tpl m/muj_00/t 23
+  ramp base #ffffff to light
+end
+
+image textures/ch1_lava/tex1_32x32_409f58a8bff298b5_5.png
+  fallback textures/ch1_lava_drawn/tex1_32x32_409f58a8bff298b5_5.png
+  load tpl m/muj_04/t 12
+  hsv hue =30 sat *0.9
+end
+
+image textures/ch1_lava/tex1_512x480_5a716df3deffa6bc_14.png
+  fallback textures/ch1_lava_drawn/tex1_512x480_5a716df3deffa6bc_14.png
+  load tpl b/kpa_03.tpl 0
+  hsv where h=170..280 : hue =12 sat *0.85 val *0.8
+  hsv where h=80..170 : hue =8 sat *0.8 val *0.55
+end
+

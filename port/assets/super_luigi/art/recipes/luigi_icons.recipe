@@ -1,0 +1,136 @@
+# Luigi's faces, made from Mario's own icons on the player's disc (RECIPES.md, "The icons").
+# Shown in place of Mario's while Luigi is the player (sl_assets_aurora.c, portIconTexOverride).
+# Each keeps Mario's canvas, pose, line, sticker border, heart and shading bands; only what makes him
+# Luigi changes: the cap's reds become his greens band for band, the emblem's M an L, the moustache
+# his (wider, two lobes, square swept-up ends) over a longer jaw.
+
+# Luigi's cap (c_luigi's cap texture), by lightness against Mario's cap fill: each of Mario's bands
+# lands on the matching green
+gradient greens 0.0 #0a1206 0.3 #182810 0.45 #1e4a1c 0.7 #287126 0.86 #298a29 1.0 #39a639 1.2 #52b639 1.4 #63c339 1.9 #addf9c
+
+# ---------------------------------------------------------------------------------------------------
+# ICON_1A3, 52x52 RGB5A3: the status bar's face beside the HP (field and battle; Sweet Treat's targets)
+image art/icons/luigi/luigi_hud.png
+  fallback art/icons/luigi/drawn/luigi_hud.png
+  load icon ICON_1A3
+  # the jaw 2 texels longer, tapering to the cheek and the nose
+  slide down 38 15-31:2 13-14:1 32-33:1
+  # the cap: everything above row 31 but the HP heart behind it, top right
+  mask cap rect 0 0 51 31
+  mask cap - rect 22 0 51 12
+  mask cap - rect 29 0 51 14
+  mask cap - rect 31 0 51 19
+  mask cap - rect 37 0 51 22
+  mask disc mask cap
+  mask disc & rect 22 13 30 20
+  mask lit mask cap
+  mask lit & rect 0 0 51 20
+  # the emblem disc's red-tinted whites, as the same whites in green light
+  hsv in disc where h=330..16 s<0.55 v>0.35 : hue =105 sat *0.6
+  # the cap's reds (crimson to orange-red; near-black only if red, not the eye's or the line's brown)
+  ramp in cap where h<=10 s>=0.45 v>=0.12 or h>=340 s>=0.45 v>=0.12 or h<=16 s>=0.45 v>=0.3 base #f73110 to greens
+  # and the orange of its lit top (lower down, that orange is the hair's)
+  ramp in lit where h<=30 s>=0.6 v>0.3 base #f73110 to greens
+  # the emblem: a green L on the white disc (6x5 texels, tilted back)
+  colours W #f2f6f0 w #c6d6ce G #39a639 g #287927 s #a8b8ac
+  paint 24 16
+  | wGwWw
+  | WGWWw
+  | WGGGs
+  | wsgss
+  # his moustache: wider than Mario's (back onto the cheek, forward under the nose). Below it the
+  # longer chin in Mario's skin tones, its soft brown jaw line and the sticker's grey just under it
+  colours L #ffd694 l #ffc684 s #f7b56b S #d6a563 x #845a31 e #634229 k #210800 g #8c8c8c
+  paint 12 32
+  | .........ll.............
+  | ......LLLLLL............
+  | ......LLLLLLLL..........
+  | ......LLLLLLLL..........
+  | ......LLLLLLLL..........
+  | ......llllllllllllllll..
+  | ......llllllllllllllll..
+  | kkxSLLllllllllllllllle..
+  | .kkxSLllllllllllllllse..
+  | ...kxssssssssssssssse...
+  | .....keeeeeeeeeeeeek....
+  | .....gggggggggggggg.....
+  # the moustache itself, in Mario's browns: the near lobe swept up and back onto the cheek, the
+  # notch under the nose, the far lobe under the nose's tip, its end turned up
+  mask tache spans 18:33-35 19:33-36 20:34-37 21:34-38 22-24:34-39 25:35-38 26:35-37 27:36-38 28:36-39 29-31:37-39 32:37-38 33:36-38
+  stamp tache edge #311000 top #632910 bottom #4a2108 fill #5a2910
+  alpha cut 128
+end
+
+# ---------------------------------------------------------------------------------------------------
+# ICON_19E, 40x40 CMPR: the pause menu's Mario page and the item menu's "use on" list (in profile)
+image art/icons/luigi/luigi_head.png
+  fallback art/icons/luigi/drawn/luigi_head.png
+  load icon ICON_19E
+  mask cap rect 0 0 39 24
+  mask disc mask cap
+  mask disc & rect 19 4 30 13
+  hsv in disc where h=330..16 s<0.55 v>0.35 : hue =105 sat *0.6
+  ramp in cap where h<=10 s>=0.45 v>=0.12 or h>=340 s>=0.45 v>=0.12 or h<=16 s>=0.45 v>=0.3 base #b52021 to greens
+  # the emblem: Mario's dark M on the white disc as a dark green L, as bold
+  colours W #e7e3e7 w #acbda6 s #739468 D #1d431a
+  paint 20 5
+  | sswWWWWwss.
+  | sWDDWWWWws.
+  | WWDDWWWWWws
+  | WWDDWWWWWWs
+  | WWDDWWWWWss
+  | WWDDWWWWWss
+  | WWDDDDDDwss
+  | wWDDDDDDs..
+  # Mario's moustache cleared to skin, the nose's underside kept, and the chin a texel longer inside
+  # Mario's outline (his bottom line 3 texels thick there, now 2)
+  colours S #c69663 o #521800 b #946842 a #9f6c42 h #784221
+  paint 10 26
+  | hooohSSSSSbSSSSSSSSSSSSSSSSaoo
+  | SaooaSSSSSSSSSSSSSSSSSSSSSShoo
+  | SSSSSSSSSSSSSSSSSSSSSSSSSSaooo
+  | SSSSSSSSSSSSSSSSSSSSSSSSSSooo_
+  | SSSSSSSSSSSSSSSSbbbbbbbbbSoo__
+  | SSSSSSSSSSSSSSSSSSSSSSSSSSo___
+  | SSSSSSSSSSSSSSSSSSSSSSSSoo____
+  | bSSSSSSSSSSSSSSSSSSSSSSoo_____
+  | ooaSSSSSSSSSSSSSSSSSSSoo______
+  | ooohaSSSSSSSSSSSSSSSSao_______
+  | _ooooobSSSSSSSSSSSaoo_________
+  | _____oooooohSSSSSShoooo_______
+  # his moustache in Mario's flat near-black brown
+  mask tache spans 17:25-28 18:25-29 19:26-30 20:27-31 21:27-32 22-23:28-33 24:29-34 25:29-33 26:30-32 27:30-33 28:31-34 29-30:31-35 31:31-34 32:31-33 33:30-33 34:30-32
+  stamp tache #310c00
+  alpha cut 128
+end
+
+# ---------------------------------------------------------------------------------------------------
+# ICON_1A1, 40x40 CMPR: the Mario page's level row and the status tables (a gold coin, his head in it)
+image art/icons/luigi/luigi_emblem.png
+  fallback art/icons/luigi/drawn/luigi_emblem.png
+  load icon ICON_1A1
+  colours o #421000 O #521800 q #794600 Q #6b3800 d #947100 D #b07c00 g #d6a200 G #e7b200
+  # the cap's badge: the M in its frame as an L
+  paint 21 10
+  | GoGGG
+  | GoGGG
+  | GoGGG
+  | GoooG
+  | GGGGG
+  # Mario's moustache and mouth cleared to gold, the nose's shading and the rim kept, the jaw line a
+  # texel lower
+  paint 12 26
+  | GGGGGGGGGGGGGGGGGGGDoo
+  | GGGGGGGGGGGGDgGGGDDOoQ
+  | GGGGGGGGGGGGGGGGGGGGOq
+  | qGGGGGGGGGGGGGGGGGOqqQ
+  | ooDGGGGGGGGGGGGGGGOdqQ
+  | qooodgGGGGGGGGGGGoqqQO
+  | gdQoogGGGGGGGGGGoqQQOO
+  | gggddoGGGGGGGGGoQQQOOO
+  | ggggDDoooooooooQQQOOOO
+  # his moustache, filled in the line's brown
+  mask tache spans 17:25-26 18:25-27 19:26-28 20:26-29 21-22:27-30 23-24:28-31 25:28-30 26-28:28-31 29:28-30 30:27-29 31:26-28
+  stamp tache #421000
+  alpha cut 128
+end

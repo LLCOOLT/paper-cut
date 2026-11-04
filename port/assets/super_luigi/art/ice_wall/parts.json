@@ -1,0 +1,84 @@
+{
+ "model": "sl_ice_wall",
+ "texels_per_unit": 8,
+ "faces": "-x",
+ "pivot_note": "pivot: pixels from the PNG's top-left; model_xy: where the pivot sits at rest (model units, feet at y 0)",
+ "cards": {
+  "ice_wall_small": {
+   "size": [
+    176,
+    208
+   ],
+   "pivot": [
+    88.0,
+    200.0
+   ],
+   "model_xy": [
+    0.0,
+    0.0
+   ],
+   "desc": "the packed-snow wall, 20x22 units; pivot at its foot's middle (0, 0)"
+  },
+  "ice_wall_large": {
+   "size": [
+    336,
+    272
+   ],
+   "pivot": [
+    168.0,
+    264.0
+   ],
+   "model_xy": [
+    0.0,
+    0.0
+   ],
+   "desc": "the packed-snow wall, 40x30 units; pivot at its foot's middle (0, 0)"
+  },
+  "chunk_a": {
+   "size": [
+    48,
+    48
+   ],
+   "pivot": [
+    24.0,
+    24.0
+   ],
+   "model_xy": [
+    0.0,
+    0.0
+   ],
+   "desc": "a chunk of packed snow for the burst; spin it and throw it out, pivot at its middle"
+  },
+  "chunk_b": {
+   "size": [
+    48,
+    48
+   ],
+   "pivot": [
+    24.0,
+    24.0
+   ],
+   "model_xy": [
+    0.0,
+    0.0
+   ],
+   "desc": "a chunk of packed snow for the burst; spin it and throw it out, pivot at its middle"
+  },
+  "chunk_c": {
+   "size": [
+    48,
+    48
+   ],
+   "pivot": [
+    24.0,
+    24.0
+   ],
+   "model_xy": [
+    0.0,
+    0.0
+   ],
+   "desc": "a chunk of packed snow for the burst; spin it and throw it out, pivot at its middle"
+  }
+ },
+ "note": "the two walls are alternatives (two sizes); chunk_* fly when it bursts"
+}

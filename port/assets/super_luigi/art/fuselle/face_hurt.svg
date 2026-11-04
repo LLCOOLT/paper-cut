@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="80" viewBox="0 0 64 80" shape-rendering="geometricPrecision">
+<!-- Paper Cut / Super Luigi art: face_hurt (64x80); see STYLE.md -->
+<defs></defs>
+<path d="M16.8 28.8 L27.2 35.2 L16.8 41.6" fill="none" stroke="#2a0a1c" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M50.4 26.4 L40.0 32.8 L50.4 39.2" fill="none" stroke="#2a0a1c" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

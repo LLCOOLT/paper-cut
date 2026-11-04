@@ -1,0 +1,3301 @@
+# Lettering from the game's own signs (ART_PLAN rows 30, 31, 32, 35; STYLE S12). Every capital is cut from yuu_02's casino
+# signs (PARLOR, PIANTEONE, CASINO), turned where the words ask for it: U is an O opened, B a P with a second bowl, K an I
+# with R's leg, V an A turned over, W two Vs, G a C with a bar, H two Is with a bar, F an E without its foot.
+# The drawn versions are the fallbacks (the models' cards; textures/ch3_posters*_drawn/). Generated: a recipe has no functions.
+
+image textures/ch3_posters/tex1_320x192_3973193af700956a_14.png
+  drawn G8MJ01   # its letters are the English signs of m/yuu_02/t (US and EU only): the drawn one on JP
+  fallback textures/ch3_posters_drawn/tex1_320x192_3973193af700956a_14.png
+  load tpl m/yuu_02/t 18
+  mask keep poly 266,128 262,100 251,75 234,53 213,36 187,25 160,22 132,25 107,36 85,53 68,75 57,100 54,127 54,134 266,134
+  mask drop rect 0 0 319 191
+  mask drop - mask keep
+  alpha set 0 in drop
+  piece g1 tpl m/yuu_02/t 17
+  mask no rect 0 0 343 204
+  mask no - poly 60,138 84,138 92,150 80,160 72,152 64,158 66,170 72,178 80,172 92,182 84,192 60,192 46,178 46,152
+  @g1 alpha set 0 in no
+  @g1 crop 46 138 46 54
+  @g1 scale 44 50 texel
+  @g1 crop -7 -4 58 58
+  @g1 rotate -63
+  paste g1 22 56
+  piece g2 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 64,142 84,144 84,186 66,186
+  @g2 alpha set 0 in no
+  @g2 crop 64 142 20 44
+  @g2 scale 28 50 texel
+  @g2 crop -15 -4 58 58
+  @g2 rotate -42
+  paste g2 49 26
+  piece g3 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 116,136 148,133 155,145 148,158 156,178 155,182 138,182 132,170 130,182 114,182
+  @g3 alpha set 0 in no
+  @g3 crop 114 133 42 49
+  @g3 scale 44 50 texel
+  @g3 crop -7 -4 58 58
+  @g3 rotate -21
+  paste g3 87 6
+  piece g4 tpl m/yuu_02/t 17
+  mask no rect 0 0 343 204
+  mask no - poly 60,138 84,138 92,150 80,160 72,152 64,158 66,170 72,178 80,172 92,182 84,192 60,192 46,178 46,152
+  @g4 alpha set 0 in no
+  @g4 crop 46 138 46 54
+  @g4 scale 44 50 texel
+  paste g4 138 3
+  piece g5 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 200,136 240,136 240,182 200,182
+  @g5 alpha set 0 in no
+  @g5 crop 200 136 40 46
+  mask cu poly 13,0 27,0 24,26 16,26
+  @g5 alpha set 0 in cu
+  @g5 scale 44 50 texel
+  @g5 crop -7 -4 58 58
+  @g5 rotate 21
+  paste g5 174 6
+  piece g6 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 64,142 84,144 84,186 66,186
+  @g6 alpha set 0 in no
+  @g6 crop 64 142 20 44
+  @g6 scale 28 50 texel
+  @g6 crop -15 -4 58 58
+  @g6 rotate 42
+  paste g6 212 26
+  piece g7 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 146,146 180,146 180,160 170,160 170,186 156,186 156,160 146,160
+  @g7 alpha set 0 in no
+  @g7 crop 146 146 34 40
+  @g7 scale 44 50 texel
+  @g7 crop -7 -4 58 58
+  @g7 rotate 63
+  paste g7 239 56
+  piece g8 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 40,134 72,132 78,150 70,166 60,166 60,182 42,182
+  @g8 alpha set 0 in no
+  @g8 crop 40 132 38 50
+  piece g8b tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 40,134 72,132 78,150 70,166 42,166
+  @g8b alpha set 0 in no
+  @g8b crop 40 132 38 34
+  @g8 paste g8b 0 18
+  @g8 scale 46 50 texel
+  paste g8 34 134
+  piece g9 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 116,136 148,133 155,145 148,158 156,178 155,182 138,182 132,170 130,182 114,182
+  @g9 alpha set 0 in no
+  @g9 crop 114 133 42 49
+  @g9 scale 46 50 texel
+  paste g9 84 134
+  piece g10 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 258,147 288,147 288,186 258,186
+  @g10 alpha set 0 in no
+  @g10 crop 258 147 30 39
+  @g10 scale 46 50 texel
+  paste g10 134 134
+  piece g11 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 84,136 98,134 114,182 94,182 92,176 84,176 82,182 64,182
+  @g11 alpha set 0 in no
+  @g11 crop 64 134 50 48
+  @g11 scale 46 50 texel
+  paste g11 184 134
+  piece g12 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 64,142 84,144 84,186 66,186
+  @g12 alpha set 0 in no
+  @g12 crop 64 142 20 44
+  @g12 crop 0 0 44 44
+  piece g12b tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 132,158 148,158 156,178 155,182 138,182
+  @g12b alpha set 0 in no
+  @g12b crop 130 158 28 26
+  @g12 paste g12b 16 20
+  piece g12c tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 132,158 148,158 156,178 155,182 138,182
+  @g12c alpha set 0 in no
+  @g12c crop 130 158 28 26
+  @g12c flip y
+  @g12 paste g12c 16 0
+  @g12 scale 46 50 texel
+  paste g12 234 134
+  alpha cut 128
+end
+
+image art/models/c_sl_banner/0.png
+  drawn G8MJ01   # its letters are the English signs of m/yuu_02/t (US and EU only): the drawn one on JP
+  canvas 512 88
+  piece sc tpl e/us/effect.tpl 101
+  @sc hsv hue =42 sat *0.5 val *1.2
+  @sc scale 512 88 texel
+  paste sc 0 0
+  piece g13 tpl m/yuu_02/t 17
+  mask no rect 0 0 343 204
+  mask no - poly 60,138 84,138 92,150 80,160 72,152 64,158 66,170 72,178 80,172 92,182 84,192 60,192 46,178 46,152
+  @g13 alpha set 0 in no
+  @g13 crop 46 138 46 54
+  @g13 hsv where s>=0.35 : hue =356
+  @g13 scale 18 34 texel
+  paste g13 48 26
+  piece g14 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 200,136 240,136 240,182 200,182
+  @g14 alpha set 0 in no
+  @g14 crop 200 136 40 46
+  @g14 hsv where s>=0.35 : hue =356
+  @g14 scale 18 34 texel
+  paste g14 67 26
+  piece g15 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 112,148 145,148 145,186 112,186
+  @g15 alpha set 0 in no
+  @g15 crop 112 148 33 38
+  @g15 hsv where s>=0.35 : hue =356
+  @g15 scale 18 34 texel
+  paste g15 86 26
+  piece g16 tpl m/yuu_02/t 17
+  mask no rect 0 0 343 204
+  mask no - poly 60,138 84,138 92,150 80,160 72,152 64,158 66,170 72,178 80,172 92,182 84,192 60,192 46,178 46,152
+  @g16 alpha set 0 in no
+  @g16 crop 46 138 46 54
+  mask ba rect 26 28 42 34
+  @g16 stamp ba #ff7a18
+  @g16 hsv where s>=0.35 : hue =356
+  @g16 scale 18 34 texel
+  paste g16 105 26
+  piece g17 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 116,136 148,133 155,145 148,158 156,178 155,182 138,182 132,170 130,182 114,182
+  @g17 alpha set 0 in no
+  @g17 crop 114 133 42 49
+  @g17 hsv where s>=0.35 : hue =356
+  @g17 scale 18 34 texel
+  paste g17 124 26
+  piece g18 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 84,136 98,134 114,182 94,182 92,176 84,176 82,182 64,182
+  @g18 alpha set 0 in no
+  @g18 crop 64 134 50 48
+  @g18 hsv where s>=0.35 : hue =356
+  @g18 scale 18 34 texel
+  paste g18 143 26
+  piece g19 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 146,146 180,146 180,160 170,160 170,186 156,186 156,160 146,160
+  @g19 alpha set 0 in no
+  @g19 crop 146 146 34 40
+  @g19 hsv where s>=0.35 : hue =356
+  @g19 scale 18 34 texel
+  paste g19 162 26
+  piece g20 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 200,136 240,136 240,182 200,182
+  @g20 alpha set 0 in no
+  @g20 crop 200 136 40 46
+  mask cu poly 13,0 27,0 24,26 16,26
+  @g20 alpha set 0 in cu
+  @g20 hsv where s>=0.35 : hue =356
+  @g20 scale 18 34 texel
+  paste g20 181 26
+  piece g21 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 160,134 176,132 176,166 200,170 198,182 156,182
+  @g21 alpha set 0 in no
+  @g21 crop 156 132 44 50
+  @g21 hsv where s>=0.35 : hue =356
+  @g21 scale 18 34 texel
+  paste g21 200 26
+  piece g22 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 84,136 98,134 114,182 94,182 92,176 84,176 82,182 64,182
+  @g22 alpha set 0 in no
+  @g22 crop 64 134 50 48
+  @g22 hsv where s>=0.35 : hue =356
+  @g22 scale 18 34 texel
+  paste g22 219 26
+  piece g23 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 146,146 180,146 180,160 170,160 170,186 156,186 156,160 146,160
+  @g23 alpha set 0 in no
+  @g23 crop 146 146 34 40
+  @g23 hsv where s>=0.35 : hue =356
+  @g23 scale 18 34 texel
+  paste g23 238 26
+  piece g24 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 64,142 84,144 84,186 66,186
+  @g24 alpha set 0 in no
+  @g24 crop 64 142 20 44
+  @g24 hsv where s>=0.35 : hue =356
+  @g24 scale 10 34 texel
+  paste g24 257 26
+  piece g25 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 200,136 240,136 240,182 200,182
+  @g25 alpha set 0 in no
+  @g25 crop 200 136 40 46
+  @g25 hsv where s>=0.35 : hue =356
+  @g25 scale 18 34 texel
+  paste g25 268 26
+  piece g26 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 112,148 145,148 145,186 112,186
+  @g26 alpha set 0 in no
+  @g26 crop 112 148 33 38
+  @g26 hsv where s>=0.35 : hue =356
+  @g26 scale 18 34 texel
+  paste g26 287 26
+  piece g27 tpl m/yuu_02/t 17
+  mask no rect 0 0 343 204
+  mask no - poly 140,140 170,140 170,192 140,192
+  @g27 alpha set 0 in no
+  @g27 crop 140 140 30 52
+  @g27 hsv where s>=0.35 : hue =356
+  @g27 scale 18 34 texel
+  paste g27 306 26
+  piece g28 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 258,147 288,147 288,186 258,186
+  @g28 alpha set 0 in no
+  @g28 crop 258 147 30 39
+  mask cu rect 14 26 30 39
+  @g28 alpha set 0 in cu
+  @g28 hsv where s>=0.35 : hue =356
+  @g28 scale 18 34 texel
+  paste g28 335 26
+  piece g29 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 200,136 240,136 240,182 200,182
+  @g29 alpha set 0 in no
+  @g29 crop 200 136 40 46
+  mask cu poly 13,0 27,0 24,26 16,26
+  @g29 alpha set 0 in cu
+  @g29 hsv where s>=0.35 : hue =356
+  @g29 scale 18 34 texel
+  paste g29 354 26
+  piece g30 tpl m/yuu_02/t 17
+  mask no rect 0 0 343 204
+  mask no - poly 140,140 170,140 170,192 140,192
+  @g30 alpha set 0 in no
+  @g30 crop 140 140 30 52
+  @g30 hsv where s>=0.35 : hue =356
+  @g30 scale 18 34 texel
+  paste g30 373 26
+  piece g31 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 258,147 288,147 288,186 258,186
+  @g31 alpha set 0 in no
+  @g31 crop 258 147 30 39
+  @g31 hsv sat *0.08 val *0.7
+  @g31 scale 18 34 texel
+  paste g31 392 26
+  piece g32 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 160,134 176,132 176,166 200,170 198,182 156,182
+  @g32 alpha set 0 in no
+  @g32 crop 156 132 44 50
+  @g32 hsv sat *0.08 val *0.7
+  @g32 scale 18 34 texel
+  paste g32 411 26
+  piece g33 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 160,134 176,132 176,166 200,170 198,182 156,182
+  @g33 alpha set 0 in no
+  @g33 crop 156 132 44 50
+  @g33 hsv sat *0.08 val *0.7
+  @g33 scale 18 34 texel
+  paste g33 430 26
+  piece g34 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 258,147 288,147 288,186 258,186
+  @g34 alpha set 0 in no
+  @g34 crop 258 147 30 39
+  @g34 hsv sat *0.08 val *0.7
+  @g34 scale 18 34 texel
+  paste g34 449 26
+  # (the pencilled letters)
+  alpha cut 128
+end
+
+image art/models/c_sl_banner/1.png
+  drawn G8MJ01   # its letters are the English signs of m/yuu_02/t (US and EU only): the drawn one on JP
+  canvas 512 88
+  piece sc tpl e/us/effect.tpl 101
+  @sc hsv hue =42 sat *0.5 val *1.2
+  @sc scale 512 88 texel
+  paste sc 0 0
+  piece g35 tpl m/yuu_02/t 17
+  mask no rect 0 0 343 204
+  mask no - poly 60,138 84,138 92,150 80,160 72,152 64,158 66,170 72,178 80,172 92,182 84,192 60,192 46,178 46,152
+  @g35 alpha set 0 in no
+  @g35 crop 46 138 46 54
+  @g35 hsv where s>=0.35 : hue =356
+  @g35 scale 18 34 texel
+  paste g35 73 26
+  piece g36 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 200,136 240,136 240,182 200,182
+  @g36 alpha set 0 in no
+  @g36 crop 200 136 40 46
+  @g36 hsv where s>=0.35 : hue =356
+  @g36 scale 18 34 texel
+  paste g36 92 26
+  piece g37 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 112,148 145,148 145,186 112,186
+  @g37 alpha set 0 in no
+  @g37 crop 112 148 33 38
+  @g37 hsv where s>=0.35 : hue =356
+  @g37 scale 18 34 texel
+  paste g37 111 26
+  piece g38 tpl m/yuu_02/t 17
+  mask no rect 0 0 343 204
+  mask no - poly 60,138 84,138 92,150 80,160 72,152 64,158 66,170 72,178 80,172 92,182 84,192 60,192 46,178 46,152
+  @g38 alpha set 0 in no
+  @g38 crop 46 138 46 54
+  mask ba rect 26 28 42 34
+  @g38 stamp ba #ff7a18
+  @g38 hsv where s>=0.35 : hue =356
+  @g38 scale 18 34 texel
+  paste g38 130 26
+  piece g39 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 116,136 148,133 155,145 148,158 156,178 155,182 138,182 132,170 130,182 114,182
+  @g39 alpha set 0 in no
+  @g39 crop 114 133 42 49
+  @g39 hsv where s>=0.35 : hue =356
+  @g39 scale 18 34 texel
+  paste g39 149 26
+  piece g40 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 84,136 98,134 114,182 94,182 92,176 84,176 82,182 64,182
+  @g40 alpha set 0 in no
+  @g40 crop 64 134 50 48
+  @g40 hsv where s>=0.35 : hue =356
+  @g40 scale 18 34 texel
+  paste g40 168 26
+  piece g41 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 146,146 180,146 180,160 170,160 170,186 156,186 156,160 146,160
+  @g41 alpha set 0 in no
+  @g41 crop 146 146 34 40
+  @g41 hsv where s>=0.35 : hue =356
+  @g41 scale 18 34 texel
+  paste g41 187 26
+  piece g42 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 200,136 240,136 240,182 200,182
+  @g42 alpha set 0 in no
+  @g42 crop 200 136 40 46
+  mask cu poly 13,0 27,0 24,26 16,26
+  @g42 alpha set 0 in cu
+  @g42 hsv where s>=0.35 : hue =356
+  @g42 scale 18 34 texel
+  paste g42 206 26
+  piece g43 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 160,134 176,132 176,166 200,170 198,182 156,182
+  @g43 alpha set 0 in no
+  @g43 crop 156 132 44 50
+  @g43 hsv where s>=0.35 : hue =356
+  @g43 scale 18 34 texel
+  paste g43 225 26
+  piece g44 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 84,136 98,134 114,182 94,182 92,176 84,176 82,182 64,182
+  @g44 alpha set 0 in no
+  @g44 crop 64 134 50 48
+  @g44 hsv where s>=0.35 : hue =356
+  @g44 scale 18 34 texel
+  paste g44 244 26
+  piece g45 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 146,146 180,146 180,160 170,160 170,186 156,186 156,160 146,160
+  @g45 alpha set 0 in no
+  @g45 crop 146 146 34 40
+  @g45 hsv where s>=0.35 : hue =356
+  @g45 scale 18 34 texel
+  paste g45 263 26
+  piece g46 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 64,142 84,144 84,186 66,186
+  @g46 alpha set 0 in no
+  @g46 crop 64 142 20 44
+  @g46 hsv where s>=0.35 : hue =356
+  @g46 scale 10 34 texel
+  paste g46 282 26
+  piece g47 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 200,136 240,136 240,182 200,182
+  @g47 alpha set 0 in no
+  @g47 crop 200 136 40 46
+  @g47 hsv where s>=0.35 : hue =356
+  @g47 scale 18 34 texel
+  paste g47 293 26
+  piece g48 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 112,148 145,148 145,186 112,186
+  @g48 alpha set 0 in no
+  @g48 crop 112 148 33 38
+  @g48 hsv where s>=0.35 : hue =356
+  @g48 scale 18 34 texel
+  paste g48 312 26
+  piece g49 tpl m/yuu_02/t 17
+  mask no rect 0 0 343 204
+  mask no - poly 140,140 170,140 170,192 140,192
+  @g49 alpha set 0 in no
+  @g49 crop 140 140 30 52
+  @g49 hsv where s>=0.35 : hue =356
+  @g49 scale 18 34 texel
+  paste g49 331 26
+  piece g50 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 160,134 176,132 176,166 200,170 198,182 156,182
+  @g50 alpha set 0 in no
+  @g50 crop 156 132 44 50
+  @g50 hsv where s>=0.35 : hue =356
+  @g50 scale 18 34 texel
+  paste g50 360 26
+  piece g51 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 200,136 240,136 240,182 200,182
+  @g51 alpha set 0 in no
+  @g51 crop 200 136 40 46
+  mask cu poly 13,0 27,0 24,26 16,26
+  @g51 alpha set 0 in cu
+  @g51 hsv where s>=0.35 : hue =356
+  @g51 scale 18 34 texel
+  paste g51 379 26
+  piece g52 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 64,142 84,144 84,186 66,186
+  @g52 alpha set 0 in no
+  @g52 crop 64 142 20 44
+  @g52 hsv where s>=0.35 : hue =356
+  @g52 scale 10 34 texel
+  paste g52 398 26
+  piece g53 tpl m/yuu_02/t 17
+  mask no rect 0 0 343 204
+  mask no - poly 60,138 84,138 92,150 80,160 72,152 64,158 66,170 72,178 80,172 92,182 84,192 60,192 46,178 46,152
+  @g53 alpha set 0 in no
+  @g53 crop 46 138 46 54
+  mask ba rect 26 28 42 34
+  @g53 stamp ba #ff7a18
+  @g53 hsv where s>=0.35 : hue =356
+  @g53 scale 18 34 texel
+  paste g53 409 26
+  piece g54 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 64,142 84,144 84,186 66,186
+  @g54 alpha set 0 in no
+  @g54 crop 64 142 20 44
+  @g54 hsv where s>=0.35 : hue =356
+  @g54 scale 10 34 texel
+  paste g54 428 26
+  alpha cut 128
+end
+
+image art/models/c_sl_banner/2.png
+  drawn G8MJ01   # its letters are the English signs of m/yuu_02/t (US and EU only): the drawn one on JP
+  canvas 512 88
+  piece sc tpl e/us/effect.tpl 101
+  @sc hsv hue =42 sat *0.5 val *1.2
+  @sc scale 512 88 texel
+  paste sc 0 0
+  piece g55 tpl m/yuu_02/t 17
+  mask no rect 0 0 343 204
+  mask no - poly 60,138 84,138 92,150 80,160 72,152 64,158 66,170 72,178 80,172 92,182 84,192 60,192 46,178 46,152
+  @g55 alpha set 0 in no
+  @g55 crop 46 138 46 54
+  @g55 hsv where s>=0.35 : hue =356
+  @g55 scale 15 34 texel
+  paste g55 61 26
+  piece g56 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 200,136 240,136 240,182 200,182
+  @g56 alpha set 0 in no
+  @g56 crop 200 136 40 46
+  @g56 hsv where s>=0.35 : hue =356
+  @g56 scale 15 34 texel
+  paste g56 77 26
+  piece g57 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 112,148 145,148 145,186 112,186
+  @g57 alpha set 0 in no
+  @g57 crop 112 148 33 38
+  @g57 hsv where s>=0.35 : hue =356
+  @g57 scale 15 34 texel
+  paste g57 93 26
+  piece g58 tpl m/yuu_02/t 17
+  mask no rect 0 0 343 204
+  mask no - poly 60,138 84,138 92,150 80,160 72,152 64,158 66,170 72,178 80,172 92,182 84,192 60,192 46,178 46,152
+  @g58 alpha set 0 in no
+  @g58 crop 46 138 46 54
+  mask ba rect 26 28 42 34
+  @g58 stamp ba #ff7a18
+  @g58 hsv where s>=0.35 : hue =356
+  @g58 scale 15 34 texel
+  paste g58 109 26
+  piece g59 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 116,136 148,133 155,145 148,158 156,178 155,182 138,182 132,170 130,182 114,182
+  @g59 alpha set 0 in no
+  @g59 crop 114 133 42 49
+  @g59 hsv where s>=0.35 : hue =356
+  @g59 scale 15 34 texel
+  paste g59 125 26
+  piece g60 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 84,136 98,134 114,182 94,182 92,176 84,176 82,182 64,182
+  @g60 alpha set 0 in no
+  @g60 crop 64 134 50 48
+  @g60 hsv where s>=0.35 : hue =356
+  @g60 scale 15 34 texel
+  paste g60 141 26
+  piece g61 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 146,146 180,146 180,160 170,160 170,186 156,186 156,160 146,160
+  @g61 alpha set 0 in no
+  @g61 crop 146 146 34 40
+  @g61 hsv where s>=0.35 : hue =356
+  @g61 scale 15 34 texel
+  paste g61 157 26
+  piece g62 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 200,136 240,136 240,182 200,182
+  @g62 alpha set 0 in no
+  @g62 crop 200 136 40 46
+  mask cu poly 13,0 27,0 24,26 16,26
+  @g62 alpha set 0 in cu
+  @g62 hsv where s>=0.35 : hue =356
+  @g62 scale 15 34 texel
+  paste g62 173 26
+  piece g63 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 160,134 176,132 176,166 200,170 198,182 156,182
+  @g63 alpha set 0 in no
+  @g63 crop 156 132 44 50
+  @g63 hsv where s>=0.35 : hue =356
+  @g63 scale 15 34 texel
+  paste g63 189 26
+  piece g64 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 84,136 98,134 114,182 94,182 92,176 84,176 82,182 64,182
+  @g64 alpha set 0 in no
+  @g64 crop 64 134 50 48
+  @g64 hsv where s>=0.35 : hue =356
+  @g64 scale 15 34 texel
+  paste g64 205 26
+  piece g65 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 146,146 180,146 180,160 170,160 170,186 156,186 156,160 146,160
+  @g65 alpha set 0 in no
+  @g65 crop 146 146 34 40
+  @g65 hsv where s>=0.35 : hue =356
+  @g65 scale 15 34 texel
+  paste g65 221 26
+  piece g66 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 64,142 84,144 84,186 66,186
+  @g66 alpha set 0 in no
+  @g66 crop 64 142 20 44
+  @g66 hsv where s>=0.35 : hue =356
+  @g66 scale 9 34 texel
+  paste g66 237 26
+  piece g67 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 200,136 240,136 240,182 200,182
+  @g67 alpha set 0 in no
+  @g67 crop 200 136 40 46
+  @g67 hsv where s>=0.35 : hue =356
+  @g67 scale 15 34 texel
+  paste g67 247 26
+  piece g68 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 112,148 145,148 145,186 112,186
+  @g68 alpha set 0 in no
+  @g68 crop 112 148 33 38
+  @g68 hsv where s>=0.35 : hue =356
+  @g68 scale 15 34 texel
+  paste g68 263 26
+  piece g69 tpl m/yuu_02/t 17
+  mask no rect 0 0 343 204
+  mask no - poly 140,140 170,140 170,192 140,192
+  @g69 alpha set 0 in no
+  @g69 crop 140 140 30 52
+  @g69 hsv where s>=0.35 : hue =356
+  @g69 scale 15 34 texel
+  paste g69 279 26
+  piece g70 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 160,134 176,132 176,166 200,170 198,182 156,182
+  @g70 alpha set 0 in no
+  @g70 crop 156 132 44 50
+  @g70 hsv where s>=0.35 : hue =356
+  @g70 scale 15 34 texel
+  paste g70 303 26
+  piece g71 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 200,136 240,136 240,182 200,182
+  @g71 alpha set 0 in no
+  @g71 crop 200 136 40 46
+  mask cu poly 13,0 27,0 24,26 16,26
+  @g71 alpha set 0 in cu
+  @g71 hsv where s>=0.35 : hue =356
+  @g71 scale 15 34 texel
+  paste g71 319 26
+  piece g72 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 64,142 84,144 84,186 66,186
+  @g72 alpha set 0 in no
+  @g72 crop 64 142 20 44
+  @g72 hsv where s>=0.35 : hue =356
+  @g72 scale 9 34 texel
+  paste g72 335 26
+  piece g73 tpl m/yuu_02/t 17
+  mask no rect 0 0 343 204
+  mask no - poly 60,138 84,138 92,150 80,160 72,152 64,158 66,170 72,178 80,172 92,182 84,192 60,192 46,178 46,152
+  @g73 alpha set 0 in no
+  @g73 crop 46 138 46 54
+  mask ba rect 26 28 42 34
+  @g73 stamp ba #ff7a18
+  @g73 hsv where s>=0.35 : hue =356
+  @g73 scale 15 34 texel
+  paste g73 345 26
+  piece g74 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 64,142 84,144 84,186 66,186
+  @g74 alpha set 0 in no
+  @g74 crop 64 142 20 44
+  @g74 hsv where s>=0.35 : hue =356
+  @g74 scale 9 34 texel
+  paste g74 361 26
+  piece h75 tpl e/us/effect.tpl 18
+  @h75 scale 34 34 texel
+  paste h75 379 26
+  piece g76 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 258,147 288,147 288,186 258,186
+  @g76 alpha set 0 in no
+  @g76 crop 258 147 30 39
+  mask cu rect 14 26 30 39
+  @g76 alpha set 0 in cu
+  @g76 hsv where s>=0.35 : hue =356
+  @g76 scale 15 34 texel
+  paste g76 422 26
+  piece g77 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 200,136 240,136 240,182 200,182
+  @g77 alpha set 0 in no
+  @g77 crop 200 136 40 46
+  mask cu poly 13,0 27,0 24,26 16,26
+  @g77 alpha set 0 in cu
+  @g77 hsv where s>=0.35 : hue =356
+  @g77 scale 15 34 texel
+  paste g77 438 26
+  piece g78 tpl m/yuu_02/t 17
+  mask no rect 0 0 343 204
+  mask no - poly 140,140 170,140 170,192 140,192
+  @g78 alpha set 0 in no
+  @g78 crop 140 140 30 52
+  @g78 hsv where s>=0.35 : hue =356
+  @g78 scale 15 34 texel
+  paste g78 454 26
+  alpha cut 128
+end
+
+image art/models/c_sl_grass_banner/0.png
+  drawn G8MJ01   # its letters are the English signs of m/yuu_02/t (US and EU only): the drawn one on JP
+  canvas 288 72
+  piece sc tpl e/us/effect.tpl 101
+  @sc hsv hue =42 sat *0.5 val *1.2
+  @sc scale 288 72 texel
+  paste sc 0 0
+  piece g79 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 84,136 98,134 114,182 94,182 92,176 84,176 82,182 64,182
+  @g79 alpha set 0 in no
+  @g79 crop 64 134 50 48
+  @g79 flip y
+  @g79 crop 0 0 96 48
+  piece g79b tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 84,136 98,134 114,182 94,182 92,176 84,176 82,182 64,182
+  @g79b alpha set 0 in no
+  @g79b crop 64 134 50 48
+  @g79b flip y
+  @g79 paste g79b 44 0
+  @g79 hsv where s>=0.35 : hue =110
+  @g79 scale 26 30 texel
+  paste g79 34 20
+  piece g80 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 258,147 288,147 288,186 258,186
+  @g80 alpha set 0 in no
+  @g80 crop 258 147 30 39
+  @g80 hsv where s>=0.35 : hue =110
+  @g80 scale 16 30 texel
+  paste g80 61 20
+  piece h81 tpl e/us/effect.tpl 18
+  @h81 scale 30 30 texel
+  paste h81 87 20
+  piece g82 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 146,146 180,146 180,160 170,160 170,186 156,186 156,160 146,160
+  @g82 alpha set 0 in no
+  @g82 crop 146 146 34 40
+  @g82 hsv where s>=0.35 : hue =110
+  @g82 scale 16 30 texel
+  paste g82 127 20
+  piece g83 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 64,142 84,144 84,186 66,186
+  @g83 alpha set 0 in no
+  @g83 crop 64 142 20 44
+  @g83 crop 0 0 44 44
+  piece g83b tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 64,142 84,144 84,186 66,186
+  @g83b alpha set 0 in no
+  @g83b crop 64 142 20 44
+  @g83 paste g83b 24 0
+  mask ba rect 16 18 28 26
+  @g83 stamp ba #ff7a18
+  @g83 hsv where s>=0.35 : hue =110
+  @g83 scale 16 30 texel
+  paste g83 144 20
+  piece g84 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 258,147 288,147 288,186 258,186
+  @g84 alpha set 0 in no
+  @g84 crop 258 147 30 39
+  @g84 hsv where s>=0.35 : hue =110
+  @g84 scale 16 30 texel
+  paste g84 161 20
+  piece g85 tpl m/yuu_02/t 17
+  mask no rect 0 0 343 204
+  mask no - poly 60,138 84,138 92,150 80,160 72,152 64,158 66,170 72,178 80,172 92,182 84,192 60,192 46,178 46,152
+  @g85 alpha set 0 in no
+  @g85 crop 46 138 46 54
+  mask ba rect 26 28 42 34
+  @g85 stamp ba #ff7a18
+  @g85 hsv where s>=0.35 : hue =110
+  @g85 scale 16 30 texel
+  paste g85 187 20
+  piece g86 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 116,136 148,133 155,145 148,158 156,178 155,182 138,182 132,170 130,182 114,182
+  @g86 alpha set 0 in no
+  @g86 crop 114 133 42 49
+  @g86 hsv where s>=0.35 : hue =110
+  @g86 scale 16 30 texel
+  paste g86 204 20
+  piece g87 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 84,136 98,134 114,182 94,182 92,176 84,176 82,182 64,182
+  @g87 alpha set 0 in no
+  @g87 crop 64 134 50 48
+  @g87 hsv where s>=0.35 : hue =110
+  @g87 scale 16 30 texel
+  paste g87 221 20
+  piece g88 tpl m/yuu_02/t 17
+  mask no rect 0 0 343 204
+  mask no - poly 140,140 170,140 170,192 140,192
+  @g88 alpha set 0 in no
+  @g88 crop 140 140 30 52
+  @g88 hsv where s>=0.35 : hue =110
+  @g88 scale 16 30 texel
+  paste g88 238 20
+  piece g89 tpl m/yuu_02/t 17
+  mask no rect 0 0 343 204
+  mask no - poly 140,140 170,140 170,192 140,192
+  @g89 alpha set 0 in no
+  @g89 crop 140 140 30 52
+  @g89 hsv where s>=0.35 : hue =110
+  @g89 scale 16 30 texel
+  paste g89 255 20
+  alpha cut 128
+end
+
+image art/models/c_sl_scoreboard/2.png
+  drawn G8MJ01   # its letters are the English signs of m/yuu_02/t (US and EU only): the drawn one on JP
+  canvas 480 272
+  piece l00 tpl m/yuu_02/t 6
+  @l00 crop 0 0 256 128
+  @l00 hsv where h=170..220 : hue =215 sat *0.7 val *0.55
+  @l00 map where s<0.2 v>=0.5 : #ffffff -> #2a4a80
+  paste l00 0 0
+  piece l2560 tpl m/yuu_02/t 6
+  @l2560 crop 0 0 256 128
+  @l2560 hsv where h=170..220 : hue =215 sat *0.7 val *0.55
+  @l2560 map where s<0.2 v>=0.5 : #ffffff -> #2a4a80
+  paste l2560 256 0
+  piece l0128 tpl m/yuu_02/t 6
+  @l0128 crop 0 0 256 128
+  @l0128 hsv where h=170..220 : hue =215 sat *0.7 val *0.55
+  @l0128 map where s<0.2 v>=0.5 : #ffffff -> #2a4a80
+  paste l0128 0 128
+  piece l256128 tpl m/yuu_02/t 6
+  @l256128 crop 0 0 256 128
+  @l256128 hsv where h=170..220 : hue =215 sat *0.7 val *0.55
+  @l256128 map where s<0.2 v>=0.5 : #ffffff -> #2a4a80
+  paste l256128 256 128
+  piece l0256 tpl m/yuu_02/t 6
+  @l0256 crop 0 0 256 128
+  @l0256 hsv where h=170..220 : hue =215 sat *0.7 val *0.55
+  @l0256 map where s<0.2 v>=0.5 : #ffffff -> #2a4a80
+  paste l0256 0 256
+  piece l256256 tpl m/yuu_02/t 6
+  @l256256 crop 0 0 256 128
+  @l256256 hsv where h=170..220 : hue =215 sat *0.7 val *0.55
+  @l256256 map where s<0.2 v>=0.5 : #ffffff -> #2a4a80
+  paste l256256 256 256
+  mask fr rect 0 0 479 7
+  mask fr + rect 0 264 479 271
+  mask fr + rect 0 0 7 271
+  mask fr + rect 472 0 479 271
+  stamp fr #802020
+  piece g90 tpl m/yuu_02/t 17
+  mask no rect 0 0 343 204
+  mask no - poly 60,138 84,138 92,150 80,160 72,152 64,158 66,170 72,178 80,172 92,182 84,192 60,192 46,178 46,152
+  @g90 alpha set 0 in no
+  @g90 crop 46 138 46 54
+  @g90 scale 18 28 texel
+  paste g90 128 14
+  piece g91 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 64,142 84,144 84,186 66,186
+  @g91 alpha set 0 in no
+  @g91 crop 64 142 20 44
+  @g91 scale 10 28 texel
+  paste g91 147 14
+  piece g92 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 116,136 148,133 155,145 148,158 156,178 155,182 138,182 132,170 130,182 114,182
+  @g92 alpha set 0 in no
+  @g92 crop 114 133 42 49
+  @g92 scale 18 28 texel
+  paste g92 158 14
+  piece g93 tpl m/yuu_02/t 17
+  mask no rect 0 0 343 204
+  mask no - poly 60,138 84,138 92,150 80,160 72,152 64,158 66,170 72,178 80,172 92,182 84,192 60,192 46,178 46,152
+  @g93 alpha set 0 in no
+  @g93 crop 46 138 46 54
+  @g93 scale 18 28 texel
+  paste g93 177 14
+  piece g94 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 200,136 240,136 240,182 200,182
+  @g94 alpha set 0 in no
+  @g94 crop 200 136 40 46
+  mask cu poly 13,0 27,0 24,26 16,26
+  @g94 alpha set 0 in cu
+  @g94 scale 18 28 texel
+  paste g94 196 14
+  piece g95 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 64,142 84,144 84,186 66,186
+  @g95 alpha set 0 in no
+  @g95 crop 64 142 20 44
+  @g95 scale 10 28 texel
+  paste g95 215 14
+  piece g96 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 146,146 180,146 180,160 170,160 170,186 156,186 156,160 146,160
+  @g96 alpha set 0 in no
+  @g96 crop 146 146 34 40
+  @g96 scale 18 28 texel
+  paste g96 226 14
+  piece g97 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 40,134 72,132 78,150 70,166 60,166 60,182 42,182
+  @g97 alpha set 0 in no
+  @g97 crop 40 132 38 50
+  piece g97b tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 40,134 72,132 78,150 70,166 42,166
+  @g97b alpha set 0 in no
+  @g97b crop 40 132 38 34
+  @g97 paste g97b 0 18
+  @g97 scale 18 28 texel
+  paste g97 255 14
+  piece g98 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 116,136 148,133 155,145 148,158 156,178 155,182 138,182 132,170 130,182 114,182
+  @g98 alpha set 0 in no
+  @g98 crop 114 133 42 49
+  @g98 scale 18 28 texel
+  paste g98 274 14
+  piece g99 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 258,147 288,147 288,186 258,186
+  @g99 alpha set 0 in no
+  @g99 crop 258 147 30 39
+  @g99 scale 18 28 texel
+  paste g99 293 14
+  piece g100 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 84,136 98,134 114,182 94,182 92,176 84,176 82,182 64,182
+  @g100 alpha set 0 in no
+  @g100 crop 64 134 50 48
+  @g100 scale 18 28 texel
+  paste g100 312 14
+  piece g101 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 64,142 84,144 84,186 66,186
+  @g101 alpha set 0 in no
+  @g101 crop 64 142 20 44
+  @g101 crop 0 0 44 44
+  piece g101b tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 132,158 148,158 156,178 155,182 138,182
+  @g101b alpha set 0 in no
+  @g101b crop 130 158 28 26
+  @g101 paste g101b 16 20
+  piece g101c tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 132,158 148,158 156,178 155,182 138,182
+  @g101c alpha set 0 in no
+  @g101c crop 130 158 28 26
+  @g101c flip y
+  @g101 paste g101c 16 0
+  @g101 scale 18 28 texel
+  paste g101 331 14
+  piece g102 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 116,136 148,133 155,145 148,158 156,178 155,182 138,182 132,170 130,182 114,182
+  @g102 alpha set 0 in no
+  @g102 crop 114 133 42 49
+  @g102 scale 20 40 texel
+  paste g102 118 50
+  piece g103 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 258,147 288,147 288,186 258,186
+  @g103 alpha set 0 in no
+  @g103 crop 258 147 30 39
+  @g103 scale 20 40 texel
+  paste g103 139 50
+  piece g104 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 84,136 98,134 114,182 94,182 92,176 84,176 82,182 64,182
+  @g104 alpha set 0 in no
+  @g104 crop 64 134 50 48
+  @g104 flip y
+  @g104 scale 20 40 texel
+  paste g104 160 50
+  piece g105 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 84,136 98,134 114,182 94,182 92,176 84,176 82,182 64,182
+  @g105 alpha set 0 in no
+  @g105 crop 64 134 50 48
+  @g105 flip y
+  @g105 scale 20 40 texel
+  paste g105 181 50
+  piece g106 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 200,136 240,136 240,182 200,182
+  @g106 alpha set 0 in no
+  @g106 crop 200 136 40 46
+  @g106 scale 20 40 texel
+  paste g106 202 50
+  mask pl0 rect 76 54 112 86
+  stamp pl0 #c82020
+  piece n00 tpl e/us/effect.tpl 108
+  @n00 crop 48 0 48 48
+  @n00 scale 18 24 texel
+  paste n00 76 58
+  piece n01 tpl e/us/effect.tpl 108
+  @n01 crop 144 0 48 48
+  @n01 scale 18 24 texel
+  paste n01 94 58
+  piece g107 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 64,142 84,144 84,186 66,186
+  @g107 alpha set 0 in no
+  @g107 crop 64 142 20 44
+  @g107 crop 0 0 44 44
+  piece g107b tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 132,158 148,158 156,178 155,182 138,182
+  @g107b alpha set 0 in no
+  @g107b crop 130 158 28 26
+  @g107 paste g107b 16 20
+  piece g107c tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 132,158 148,158 156,178 155,182 138,182
+  @g107c alpha set 0 in no
+  @g107c crop 130 158 28 26
+  @g107c flip y
+  @g107 paste g107c 16 0
+  @g107 scale 20 40 texel
+  paste g107 118 102
+  piece g108 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 84,136 98,134 114,182 94,182 92,176 84,176 82,182 64,182
+  @g108 alpha set 0 in no
+  @g108 crop 64 134 50 48
+  @g108 scale 20 40 texel
+  paste g108 139 102
+  piece g109 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 116,136 148,133 155,145 148,158 156,178 155,182 138,182 132,170 130,182 114,182
+  @g109 alpha set 0 in no
+  @g109 crop 114 133 42 49
+  @g109 scale 20 40 texel
+  paste g109 160 102
+  piece g110 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 146,146 180,146 180,160 170,160 170,186 156,186 156,160 146,160
+  @g110 alpha set 0 in no
+  @g110 crop 146 146 34 40
+  @g110 scale 20 40 texel
+  paste g110 181 102
+  mask pl1 rect 76 106 112 138
+  stamp pl1 #2050c0
+  piece n10 tpl e/us/effect.tpl 108
+  @n10 crop 0 0 48 48
+  @n10 scale 18 24 texel
+  paste n10 76 110
+  piece n11 tpl e/us/effect.tpl 108
+  @n11 crop 336 0 48 48
+  @n11 scale 18 24 texel
+  paste n11 94 110
+  piece g111 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 64,142 84,144 84,186 66,186
+  @g111 alpha set 0 in no
+  @g111 crop 64 142 20 44
+  @g111 crop 0 0 44 44
+  piece g111b tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 132,158 148,158 156,178 155,182 138,182
+  @g111b alpha set 0 in no
+  @g111b crop 130 158 28 26
+  @g111 paste g111b 16 20
+  piece g111c tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 132,158 148,158 156,178 155,182 138,182
+  @g111c alpha set 0 in no
+  @g111c crop 130 158 28 26
+  @g111c flip y
+  @g111 paste g111c 16 0
+  @g111 scale 20 40 texel
+  paste g111 118 154
+  piece g112 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 84,136 98,134 114,182 94,182 92,176 84,176 82,182 64,182
+  @g112 alpha set 0 in no
+  @g112 crop 64 134 50 48
+  @g112 scale 20 40 texel
+  paste g112 139 154
+  piece g113 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 116,136 148,133 155,145 148,158 156,178 155,182 138,182 132,170 130,182 114,182
+  @g113 alpha set 0 in no
+  @g113 crop 114 133 42 49
+  @g113 scale 20 40 texel
+  paste g113 160 154
+  piece g114 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 146,146 180,146 180,160 170,160 170,186 156,186 156,160 146,160
+  @g114 alpha set 0 in no
+  @g114 crop 146 146 34 40
+  @g114 scale 20 40 texel
+  paste g114 181 154
+  mask pl2 rect 76 158 112 190
+  stamp pl2 #e0b020
+  piece n20 tpl e/us/effect.tpl 108
+  @n20 crop 96 0 48 48
+  @n20 scale 18 24 texel
+  paste n20 76 162
+  piece n21 tpl e/us/effect.tpl 108
+  @n21 crop 96 0 48 48
+  @n21 scale 18 24 texel
+  paste n21 94 162
+  piece g115 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 64,142 84,144 84,186 66,186
+  @g115 alpha set 0 in no
+  @g115 crop 64 142 20 44
+  @g115 crop 0 0 44 44
+  piece g115b tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 132,158 148,158 156,178 155,182 138,182
+  @g115b alpha set 0 in no
+  @g115b crop 130 158 28 26
+  @g115 paste g115b 16 20
+  piece g115c tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 132,158 148,158 156,178 155,182 138,182
+  @g115c alpha set 0 in no
+  @g115c crop 130 158 28 26
+  @g115c flip y
+  @g115 paste g115c 16 0
+  @g115 scale 20 40 texel
+  paste g115 118 206
+  piece g116 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 84,136 98,134 114,182 94,182 92,176 84,176 82,182 64,182
+  @g116 alpha set 0 in no
+  @g116 crop 64 134 50 48
+  @g116 scale 20 40 texel
+  paste g116 139 206
+  piece g117 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 116,136 148,133 155,145 148,158 156,178 155,182 138,182 132,170 130,182 114,182
+  @g117 alpha set 0 in no
+  @g117 crop 114 133 42 49
+  @g117 scale 20 40 texel
+  paste g117 160 206
+  piece g118 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 146,146 180,146 180,160 170,160 170,186 156,186 156,160 146,160
+  @g118 alpha set 0 in no
+  @g118 crop 146 146 34 40
+  @g118 scale 20 40 texel
+  paste g118 181 206
+  mask pl3 rect 76 210 112 242
+  stamp pl3 #8030b0
+  piece n30 tpl e/us/effect.tpl 108
+  @n30 crop 192 0 48 48
+  @n30 scale 18 24 texel
+  paste n30 76 214
+  piece n31 tpl e/us/effect.tpl 108
+  @n31 crop 240 0 48 48
+  @n31 scale 18 24 texel
+  paste n31 94 214
+  piece g119 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 64,142 84,144 84,186 66,186
+  @g119 alpha set 0 in no
+  @g119 crop 64 142 20 44
+  @g119 crop 0 0 44 44
+  piece g119b tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 132,158 148,158 156,178 155,182 138,182
+  @g119b alpha set 0 in no
+  @g119b crop 130 158 28 26
+  @g119 paste g119b 16 20
+  piece g119c tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 132,158 148,158 156,178 155,182 138,182
+  @g119c alpha set 0 in no
+  @g119c crop 130 158 28 26
+  @g119c flip y
+  @g119 paste g119c 16 0
+  @g119 scale 20 40 texel
+  paste g119 344 50
+  piece g120 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 84,136 98,134 114,182 94,182 92,176 84,176 82,182 64,182
+  @g120 alpha set 0 in no
+  @g120 crop 64 134 50 48
+  @g120 scale 20 40 texel
+  paste g120 365 50
+  piece g121 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 116,136 148,133 155,145 148,158 156,178 155,182 138,182 132,170 130,182 114,182
+  @g121 alpha set 0 in no
+  @g121 crop 114 133 42 49
+  @g121 scale 20 40 texel
+  paste g121 386 50
+  piece g122 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 146,146 180,146 180,160 170,160 170,186 156,186 156,160 146,160
+  @g122 alpha set 0 in no
+  @g122 crop 146 146 34 40
+  @g122 scale 20 40 texel
+  paste g122 407 50
+  mask pl4 rect 302 54 338 86
+  stamp pl4 #e07818
+  piece n40 tpl e/us/effect.tpl 108
+  @n40 crop 384 0 48 48
+  @n40 scale 18 24 texel
+  paste n40 302 58
+  piece n41 tpl e/us/effect.tpl 108
+  @n41 crop 384 0 48 48
+  @n41 scale 18 24 texel
+  paste n41 320 58
+  piece g123 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 64,142 84,144 84,186 66,186
+  @g123 alpha set 0 in no
+  @g123 crop 64 142 20 44
+  @g123 crop 0 0 44 44
+  piece g123b tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 132,158 148,158 156,178 155,182 138,182
+  @g123b alpha set 0 in no
+  @g123b crop 130 158 28 26
+  @g123 paste g123b 16 20
+  piece g123c tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 132,158 148,158 156,178 155,182 138,182
+  @g123c alpha set 0 in no
+  @g123c crop 130 158 28 26
+  @g123c flip y
+  @g123 paste g123c 16 0
+  @g123 scale 20 40 texel
+  paste g123 344 102
+  piece g124 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 84,136 98,134 114,182 94,182 92,176 84,176 82,182 64,182
+  @g124 alpha set 0 in no
+  @g124 crop 64 134 50 48
+  @g124 scale 20 40 texel
+  paste g124 365 102
+  piece g125 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 116,136 148,133 155,145 148,158 156,178 155,182 138,182 132,170 130,182 114,182
+  @g125 alpha set 0 in no
+  @g125 crop 114 133 42 49
+  @g125 scale 20 40 texel
+  paste g125 386 102
+  piece g126 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 146,146 180,146 180,160 170,160 170,186 156,186 156,160 146,160
+  @g126 alpha set 0 in no
+  @g126 crop 146 146 34 40
+  @g126 scale 20 40 texel
+  paste g126 407 102
+  mask pl5 rect 302 106 338 138
+  stamp pl5 #d8d8d8
+  piece n50 tpl e/us/effect.tpl 108
+  @n50 crop 288 0 48 48
+  @n50 scale 18 24 texel
+  paste n50 302 110
+  piece n51 tpl e/us/effect.tpl 108
+  @n51 crop 192 0 48 48
+  @n51 scale 18 24 texel
+  paste n51 320 110
+  piece g127 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 64,142 84,144 84,186 66,186
+  @g127 alpha set 0 in no
+  @g127 crop 64 142 20 44
+  @g127 crop 0 0 44 44
+  piece g127b tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 132,158 148,158 156,178 155,182 138,182
+  @g127b alpha set 0 in no
+  @g127b crop 130 158 28 26
+  @g127 paste g127b 16 20
+  piece g127c tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 132,158 148,158 156,178 155,182 138,182
+  @g127c alpha set 0 in no
+  @g127c crop 130 158 28 26
+  @g127c flip y
+  @g127 paste g127c 16 0
+  @g127 scale 20 40 texel
+  paste g127 344 154
+  piece g128 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 84,136 98,134 114,182 94,182 92,176 84,176 82,182 64,182
+  @g128 alpha set 0 in no
+  @g128 crop 64 134 50 48
+  @g128 scale 20 40 texel
+  paste g128 365 154
+  piece g129 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 116,136 148,133 155,145 148,158 156,178 155,182 138,182 132,170 130,182 114,182
+  @g129 alpha set 0 in no
+  @g129 crop 114 133 42 49
+  @g129 scale 20 40 texel
+  paste g129 386 154
+  piece g130 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 146,146 180,146 180,160 170,160 170,186 156,186 156,160 146,160
+  @g130 alpha set 0 in no
+  @g130 crop 146 146 34 40
+  @g130 scale 20 40 texel
+  paste g130 407 154
+  mask pl6 rect 302 158 338 190
+  stamp pl6 #303038
+  piece n60 tpl e/us/effect.tpl 108
+  @n60 crop 432 0 48 48
+  @n60 scale 18 24 texel
+  paste n60 302 162
+  piece n61 tpl e/us/effect.tpl 108
+  @n61 crop 432 0 48 48
+  @n61 scale 18 24 texel
+  paste n61 320 162
+  piece g131 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 160,134 176,132 176,166 200,170 198,182 156,182
+  @g131 alpha set 0 in no
+  @g131 crop 156 132 44 50
+  @g131 scale 20 40 texel
+  paste g131 344 206
+  piece g132 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 200,136 240,136 240,182 200,182
+  @g132 alpha set 0 in no
+  @g132 crop 200 136 40 46
+  mask cu poly 13,0 27,0 24,26 16,26
+  @g132 alpha set 0 in cu
+  @g132 scale 20 40 texel
+  paste g132 365 206
+  piece g133 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 64,142 84,144 84,186 66,186
+  @g133 alpha set 0 in no
+  @g133 crop 64 142 20 44
+  @g133 scale 12 40 texel
+  paste g133 386 206
+  piece g134 tpl m/yuu_02/t 17
+  mask no rect 0 0 343 204
+  mask no - poly 60,138 84,138 92,150 80,160 72,152 64,158 66,170 72,178 80,172 92,182 84,192 60,192 46,178 46,152
+  @g134 alpha set 0 in no
+  @g134 crop 46 138 46 54
+  mask ba rect 26 28 42 34
+  @g134 stamp ba #ff7a18
+  @g134 scale 20 40 texel
+  paste g134 399 206
+  piece g135 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 64,142 84,144 84,186 66,186
+  @g135 alpha set 0 in no
+  @g135 crop 64 142 20 44
+  @g135 scale 12 40 texel
+  paste g135 420 206
+  mask pl7 rect 302 210 338 242
+  stamp pl7 #30a030
+  piece n70 tpl e/us/effect.tpl 108
+  @n70 crop 0 0 48 48
+  @n70 scale 18 24 texel
+  paste n70 302 214
+  piece n71 tpl e/us/effect.tpl 108
+  @n71 crop 48 0 48 48
+  @n71 scale 18 24 texel
+  paste n71 320 214
+  piece cr model c_peach 87
+  @cr scale 36 28 texel
+  paste cr 224 54
+  piece d0 tpl e/us/effect.tpl 108
+  @d0 crop 48 0 48 48
+  @d0 scale 36 36 texel
+  paste d0 40 52
+  piece d1 tpl e/us/effect.tpl 108
+  @d1 crop 96 0 48 48
+  @d1 scale 36 36 texel
+  paste d1 40 104
+  piece d2 tpl e/us/effect.tpl 108
+  @d2 crop 144 0 48 48
+  @d2 scale 36 36 texel
+  paste d2 40 156
+  piece d3 tpl e/us/effect.tpl 108
+  @d3 crop 192 0 48 48
+  @d3 scale 36 36 texel
+  paste d3 40 208
+  piece d4 tpl e/us/effect.tpl 108
+  @d4 crop 240 0 48 48
+  @d4 scale 36 36 texel
+  paste d4 268 52
+  piece d5 tpl e/us/effect.tpl 108
+  @d5 crop 288 0 48 48
+  @d5 scale 36 36 texel
+  paste d5 268 104
+  piece d6 tpl e/us/effect.tpl 108
+  @d6 crop 336 0 48 48
+  @d6 scale 36 36 texel
+  paste d6 268 156
+  piece d7 tpl e/us/effect.tpl 108
+  @d7 crop 384 0 48 48
+  @d7 scale 36 36 texel
+  paste d7 268 208
+  alpha cut 128
+end
+
+image art/models/c_sl_scoreboard/1.png
+  canvas 480 272
+  piece w0 tpl m/tou_02/t 25
+  @w0 scale 60 272 texel
+  paste w0 0 0
+  piece w60 tpl m/tou_02/t 25
+  @w60 scale 60 272 texel
+  paste w60 60 0
+  piece w120 tpl m/tou_02/t 25
+  @w120 scale 60 272 texel
+  paste w120 120 0
+  piece w180 tpl m/tou_02/t 25
+  @w180 scale 60 272 texel
+  paste w180 180 0
+  piece w240 tpl m/tou_02/t 25
+  @w240 scale 60 272 texel
+  paste w240 240 0
+  piece w300 tpl m/tou_02/t 25
+  @w300 scale 60 272 texel
+  paste w300 300 0
+  piece w360 tpl m/tou_02/t 25
+  @w360 scale 60 272 texel
+  paste w360 360 0
+  piece w420 tpl m/tou_02/t 25
+  @w420 scale 60 272 texel
+  paste w420 420 0
+  alpha cut 128
+end
+
+image art/models/c_sl_scoreboard/0.png
+  canvas 480 192
+  piece p0 model c_killtai 1
+  @p0 crop 100 40 120 80
+  @p0 hsv sat *0.2 val *1.6
+  @p0 crop 0 -20 120 120
+  @p0 rotate 90
+  @p0 scale 32 192 texel
+  paste p0 56 0
+  piece p1 model c_killtai 1
+  @p1 crop 100 40 120 80
+  @p1 hsv sat *0.2 val *1.6
+  @p1 crop 0 -20 120 120
+  @p1 rotate 90
+  @p1 scale 32 192 texel
+  paste p1 400 0
+  alpha cut 128
+end
+
+image textures/ch3_posters_revvo/tex1_128x128_e607934f6c2114a8_14.png
+  drawn G8MJ01   # its letters are the English signs of m/yuu_02/t (US and EU only): the drawn one on JP
+  fallback textures/ch3_posters_revvo_drawn/tex1_128x128_e607934f6c2114a8_14.png
+  load tpl m/tou_02/t 3
+  piece b0 tpl e/us/effect.tpl 102
+  @b0 map where s<0.2 v>=0.5 : #ffffff -> #d82020
+  @b0 map where v<0.5 : #000000 -> #301020
+  @b0 scale 62 50 texel
+  paste b0 1 13
+  piece c00 model c_togenoko_b 0
+  @c00 scale 46 46 texel
+  paste c00 8 16
+  piece c01 model c_peach 87
+  @c01 scale 28 22 texel
+  paste c01 18 10
+  mask st0 rect 1 1 62 11
+  stamp st0 #18181c
+  piece g136 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 64,142 84,144 84,186 66,186
+  @g136 alpha set 0 in no
+  @g136 crop 64 142 20 44
+  @g136 crop 0 0 44 44
+  piece g136b tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 132,158 148,158 156,178 155,182 138,182
+  @g136b alpha set 0 in no
+  @g136b crop 130 158 28 26
+  @g136 paste g136b 16 20
+  piece g136c tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 132,158 148,158 156,178 155,182 138,182
+  @g136c alpha set 0 in no
+  @g136c crop 130 158 28 26
+  @g136c flip y
+  @g136 paste g136c 16 0
+  @g136 scale 4 10 texel
+  paste g136 9 1
+  piece g137 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 64,142 84,144 84,186 66,186
+  @g137 alpha set 0 in no
+  @g137 crop 64 142 20 44
+  @g137 scale 2 10 texel
+  paste g137 14 1
+  piece g138 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 112,148 145,148 145,186 112,186
+  @g138 alpha set 0 in no
+  @g138 crop 112 148 33 38
+  @g138 scale 4 10 texel
+  paste g138 17 1
+  piece g139 tpl m/yuu_02/t 17
+  mask no rect 0 0 343 204
+  mask no - poly 60,138 84,138 92,150 80,160 72,152 64,158 66,170 72,178 80,172 92,182 84,192 60,192 46,178 46,152
+  @g139 alpha set 0 in no
+  @g139 crop 46 138 46 54
+  mask ba rect 26 28 42 34
+  @g139 stamp ba #ff7a18
+  @g139 scale 4 10 texel
+  paste g139 22 1
+  piece g140 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 116,136 148,133 155,145 148,158 156,178 155,182 138,182 132,170 130,182 114,182
+  @g140 alpha set 0 in no
+  @g140 crop 114 133 42 49
+  @g140 scale 4 10 texel
+  paste g140 30 1
+  piece g141 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 258,147 288,147 288,186 258,186
+  @g141 alpha set 0 in no
+  @g141 crop 258 147 30 39
+  @g141 scale 4 10 texel
+  paste g141 35 1
+  piece g142 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 84,136 98,134 114,182 94,182 92,176 84,176 82,182 64,182
+  @g142 alpha set 0 in no
+  @g142 crop 64 134 50 48
+  @g142 flip y
+  @g142 scale 4 10 texel
+  paste g142 40 1
+  piece g143 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 84,136 98,134 114,182 94,182 92,176 84,176 82,182 64,182
+  @g143 alpha set 0 in no
+  @g143 crop 64 134 50 48
+  @g143 flip y
+  @g143 scale 4 10 texel
+  paste g143 45 1
+  piece g144 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 200,136 240,136 240,182 200,182
+  @g144 alpha set 0 in no
+  @g144 crop 200 136 40 46
+  @g144 scale 4 10 texel
+  paste g144 50 1
+  piece b1 tpl e/us/effect.tpl 102
+  @b1 map where s<0.2 v>=0.5 : #ffffff -> #2040c0
+  @b1 map where v<0.5 : #000000 -> #301020
+  @b1 scale 62 50 texel
+  paste b1 65 13
+  # Big Green 01's cards (art/tools/poster_karts.py): the red kart
+  piece c10 canvas 52 28
+  colours a #eeebec b #ece8d5 c #b9aa98 d #ca904e e #628961 f #637362 g #e64325 h #ad493a i #5f655e j #5b504e k #344b36 l #3a4142 m #303d37 n #d23526 o #b72f25 p #971c0d q #672117 r #49281e s #3e0a06 t #262b1f u #000000
+  @c10 paint 0 0
+  | ____________________________________________________
+  | ____________________________________________________
+  | _________________s__________________________________
+  | _________________ss_________________________________
+  | ______________ss_sls______________sss_______________
+  | _____________sos__sls____________sfrs_______________
+  | ____________snns__smms___________sris_______________
+  | ___________snnos_smsms__________sfrfs_______ssss____
+  | _________ssnooss_ss_sls________sjjjis_____ssdddhs___
+  | ________sonops__ss___s____sssssrfrfjkss_sskddddds___
+  | _______sonoss__ss_______ssaaaaffrifrbabsrbchdddds___
+  | ______snnos___ss_______sbaaaablirefrciqqppqrdddhs___
+  | _____sonos___ss_______sbbcccclirffjssqppongoqqqs____
+  | _____snos___sfs_______sctljjifjfccbbbbbcciqpnnqs____
+  | ____snops__sfs_______sarifffifaaaaaaaaaaaaacjpnps___
+  | ____snoqossttsssssssscbrrsbdbfaaaaaaaaaaaaaaacqnos__
+  | ___snooqnnnprqqonnnnpicrrcbdbiccccccbaabelmmlfqngs__
+  | __snnopsqortmlmtqooooqjqbcbaaacebicccabmmlllltqngns_
+  | _snnpqonprmllmlltpooopqcacaaaacfafccrikmllmmlltpgns_
+  | _sqpogggrtlmiiimltooopscfjbaaabfbfccoqtlmifflmltnos_
+  | _snnggggtmliicilltqooqoonojjjiijijjjormljicffmltqos_
+  | _ssonnnntmmiccffltrssqnnnnoooooooooontmlficcijltrs__
+  | ___sssoortliiffklts__sssssssssssssssstmljicefmlts___
+  | ______sssslmjiklmus__________________stlmjfflmls____
+  | __________slllllts____________________smllmmlls_____
+  | ___________ssssss______________________ssllllss_____
+  | _________________________________________ssss_______
+  | ____________________________________________________
+  paste c10 70 30
+  piece c11 model c_togenoko_b 0
+  @c11 scale 46 46 texel
+  paste c11 72 16
+  mask st1 rect 65 1 126 11
+  stamp st1 #18181c
+  piece g145 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 116,136 148,133 155,145 148,158 156,178 155,182 138,182 132,170 130,182 114,182
+  @g145 alpha set 0 in no
+  @g145 crop 114 133 42 49
+  @g145 scale 8 10 texel
+  paste g145 73 1
+  piece g146 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 258,147 288,147 288,186 258,186
+  @g146 alpha set 0 in no
+  @g146 crop 258 147 30 39
+  @g146 scale 8 10 texel
+  paste g146 82 1
+  piece g147 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 84,136 98,134 114,182 94,182 92,176 84,176 82,182 64,182
+  @g147 alpha set 0 in no
+  @g147 crop 64 134 50 48
+  @g147 flip y
+  @g147 scale 8 10 texel
+  paste g147 91 1
+  piece g148 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 84,136 98,134 114,182 94,182 92,176 84,176 82,182 64,182
+  @g148 alpha set 0 in no
+  @g148 crop 64 134 50 48
+  @g148 flip y
+  @g148 scale 8 10 texel
+  paste g148 100 1
+  piece g149 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 200,136 240,136 240,182 200,182
+  @g149 alpha set 0 in no
+  @g149 crop 200 136 40 46
+  @g149 scale 8 10 texel
+  paste g149 109 1
+  piece b2 tpl e/us/effect.tpl 102
+  @b2 map where s<0.2 v>=0.5 : #ffffff -> #8020a0
+  @b2 map where v<0.5 : #000000 -> #301020
+  @b2 scale 62 50 texel
+  paste b2 1 77
+  piece c20 icon ICON_1B4
+  @c20 scale 34 34 texel
+  paste c20 15 84
+  mask st2 rect 1 65 62 75
+  stamp st2 #18181c
+  piece g150 tpl m/yuu_02/t 17
+  mask no rect 0 0 343 204
+  mask no - poly 60,138 84,138 92,150 80,160 72,152 64,158 66,170 72,178 80,172 92,182 84,192 60,192 46,178 46,152
+  @g150 alpha set 0 in no
+  @g150 crop 46 138 46 54
+  @g150 scale 8 10 texel
+  paste g150 2 65
+  piece g151 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 116,136 148,133 155,145 148,158 156,178 155,182 138,182 132,170 130,182 114,182
+  @g151 alpha set 0 in no
+  @g151 crop 114 133 42 49
+  @g151 scale 8 10 texel
+  paste g151 11 65
+  piece g152 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 200,136 240,136 240,182 200,182
+  @g152 alpha set 0 in no
+  @g152 crop 200 136 40 46
+  @g152 scale 8 10 texel
+  paste g152 20 65
+  piece g153 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 84,136 98,134 114,182 94,182 92,176 84,176 82,182 64,182
+  @g153 alpha set 0 in no
+  @g153 crop 64 134 50 48
+  @g153 flip y
+  @g153 crop 0 0 96 48
+  piece g153b tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 84,136 98,134 114,182 94,182 92,176 84,176 82,182 64,182
+  @g153b alpha set 0 in no
+  @g153b crop 64 134 50 48
+  @g153b flip y
+  @g153 paste g153b 44 0
+  @g153 scale 10 10 texel
+  paste g153 29 65
+  piece g154 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 112,148 145,148 145,186 112,186
+  @g154 alpha set 0 in no
+  @g154 crop 112 148 33 38
+  @g154 scale 8 10 texel
+  paste g154 40 65
+  piece g155 tpl m/yuu_02/t 17
+  mask no rect 0 0 343 204
+  mask no - poly 140,140 170,140 170,192 140,192
+  @g155 alpha set 0 in no
+  @g155 crop 140 140 30 52
+  @g155 scale 8 10 texel
+  paste g155 49 65
+  piece b3 tpl e/us/effect.tpl 102
+  @b3 map where s<0.2 v>=0.5 : #ffffff -> #e8b020
+  @b3 map where v<0.5 : #000000 -> #301020
+  @b3 scale 62 50 texel
+  paste b3 65 77
+  piece c30 model c_togenoko_b 0
+  @c30 scale 46 46 texel
+  paste c30 72 80
+  mask st3 rect 65 65 126 75
+  stamp st3 #18181c
+  piece g156 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 84,136 98,134 114,182 94,182 92,176 84,176 82,182 64,182
+  @g156 alpha set 0 in no
+  @g156 crop 64 134 50 48
+  @g156 scale 6 10 texel
+  paste g156 71 65
+  piece g157 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 160,134 176,132 176,166 200,170 198,182 156,182
+  @g157 alpha set 0 in no
+  @g157 crop 156 132 44 50
+  @g157 scale 6 10 texel
+  paste g157 78 65
+  piece g158 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 160,134 176,132 176,166 200,170 198,182 156,182
+  @g158 alpha set 0 in no
+  @g158 crop 156 132 44 50
+  @g158 scale 6 10 texel
+  paste g158 85 65
+  piece g159 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 64,142 84,144 84,186 66,186
+  @g159 alpha set 0 in no
+  @g159 crop 64 142 20 44
+  @g159 crop 0 0 44 44
+  piece g159b tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 64,142 84,144 84,186 66,186
+  @g159b alpha set 0 in no
+  @g159b crop 64 142 20 44
+  @g159 paste g159b 24 0
+  mask ba rect 16 18 28 26
+  @g159 stamp ba #ff7a18
+  @g159 scale 6 10 texel
+  paste g159 96 65
+  piece g160 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 84,136 98,134 114,182 94,182 92,176 84,176 82,182 64,182
+  @g160 alpha set 0 in no
+  @g160 crop 64 134 50 48
+  @g160 scale 6 10 texel
+  paste g160 103 65
+  piece g161 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 64,142 84,144 84,186 66,186
+  @g161 alpha set 0 in no
+  @g161 crop 64 142 20 44
+  @g161 scale 3 10 texel
+  paste g161 110 65
+  piece g162 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 160,134 176,132 176,166 200,170 198,182 156,182
+  @g162 alpha set 0 in no
+  @g162 crop 156 132 44 50
+  @g162 scale 6 10 texel
+  paste g162 114 65
+end
+
+image textures/ch3_posters_revvo/tex1_128x128_3caed24c58f64d58_14.png
+  drawn G8MJ01   # its letters are the English signs of m/yuu_02/t (US and EU only): the drawn one on JP
+  fallback textures/ch3_posters_revvo_drawn/tex1_128x128_3caed24c58f64d58_14.png
+  load tpl m/tou_02/t 18
+  piece b0 tpl e/us/effect.tpl 102
+  @b0 map where s<0.2 v>=0.5 : #ffffff -> #d82020
+  @b0 map where v<0.5 : #000000 -> #301020
+  @b0 scale 62 50 texel
+  paste b0 1 13
+  piece c00 model c_togenoko_b 0
+  @c00 scale 46 46 texel
+  paste c00 8 16
+  piece c01 model c_peach 87
+  @c01 scale 28 22 texel
+  paste c01 18 10
+  mask st0 rect 1 1 62 11
+  stamp st0 #18181c
+  piece g163 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 64,142 84,144 84,186 66,186
+  @g163 alpha set 0 in no
+  @g163 crop 64 142 20 44
+  @g163 crop 0 0 44 44
+  piece g163b tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 132,158 148,158 156,178 155,182 138,182
+  @g163b alpha set 0 in no
+  @g163b crop 130 158 28 26
+  @g163 paste g163b 16 20
+  piece g163c tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 132,158 148,158 156,178 155,182 138,182
+  @g163c alpha set 0 in no
+  @g163c crop 130 158 28 26
+  @g163c flip y
+  @g163 paste g163c 16 0
+  @g163 scale 4 10 texel
+  paste g163 9 1
+  piece g164 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 64,142 84,144 84,186 66,186
+  @g164 alpha set 0 in no
+  @g164 crop 64 142 20 44
+  @g164 scale 2 10 texel
+  paste g164 14 1
+  piece g165 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 112,148 145,148 145,186 112,186
+  @g165 alpha set 0 in no
+  @g165 crop 112 148 33 38
+  @g165 scale 4 10 texel
+  paste g165 17 1
+  piece g166 tpl m/yuu_02/t 17
+  mask no rect 0 0 343 204
+  mask no - poly 60,138 84,138 92,150 80,160 72,152 64,158 66,170 72,178 80,172 92,182 84,192 60,192 46,178 46,152
+  @g166 alpha set 0 in no
+  @g166 crop 46 138 46 54
+  mask ba rect 26 28 42 34
+  @g166 stamp ba #ff7a18
+  @g166 scale 4 10 texel
+  paste g166 22 1
+  piece g167 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 116,136 148,133 155,145 148,158 156,178 155,182 138,182 132,170 130,182 114,182
+  @g167 alpha set 0 in no
+  @g167 crop 114 133 42 49
+  @g167 scale 4 10 texel
+  paste g167 30 1
+  piece g168 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 258,147 288,147 288,186 258,186
+  @g168 alpha set 0 in no
+  @g168 crop 258 147 30 39
+  @g168 scale 4 10 texel
+  paste g168 35 1
+  piece g169 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 84,136 98,134 114,182 94,182 92,176 84,176 82,182 64,182
+  @g169 alpha set 0 in no
+  @g169 crop 64 134 50 48
+  @g169 flip y
+  @g169 scale 4 10 texel
+  paste g169 40 1
+  piece g170 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 84,136 98,134 114,182 94,182 92,176 84,176 82,182 64,182
+  @g170 alpha set 0 in no
+  @g170 crop 64 134 50 48
+  @g170 flip y
+  @g170 scale 4 10 texel
+  paste g170 45 1
+  piece g171 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 200,136 240,136 240,182 200,182
+  @g171 alpha set 0 in no
+  @g171 crop 200 136 40 46
+  @g171 scale 4 10 texel
+  paste g171 50 1
+  piece b1 tpl e/us/effect.tpl 102
+  @b1 map where s<0.2 v>=0.5 : #ffffff -> #2040c0
+  @b1 map where v<0.5 : #000000 -> #301020
+  @b1 scale 62 50 texel
+  paste b1 65 13
+  # Big Green 01's cards (art/tools/poster_karts.py): the red kart
+  piece c10 canvas 52 28
+  colours a #eeebec b #ece8d5 c #b9aa98 d #ca904e e #628961 f #637362 g #e64325 h #ad493a i #5f655e j #5b504e k #344b36 l #3a4142 m #303d37 n #d23526 o #b72f25 p #971c0d q #672117 r #49281e s #3e0a06 t #262b1f u #000000
+  @c10 paint 0 0
+  | ____________________________________________________
+  | ____________________________________________________
+  | _________________s__________________________________
+  | _________________ss_________________________________
+  | ______________ss_sls______________sss_______________
+  | _____________sos__sls____________sfrs_______________
+  | ____________snns__smms___________sris_______________
+  | ___________snnos_smsms__________sfrfs_______ssss____
+  | _________ssnooss_ss_sls________sjjjis_____ssdddhs___
+  | ________sonops__ss___s____sssssrfrfjkss_sskddddds___
+  | _______sonoss__ss_______ssaaaaffrifrbabsrbchdddds___
+  | ______snnos___ss_______sbaaaablirefrciqqppqrdddhs___
+  | _____sonos___ss_______sbbcccclirffjssqppongoqqqs____
+  | _____snos___sfs_______sctljjifjfccbbbbbcciqpnnqs____
+  | ____snops__sfs_______sarifffifaaaaaaaaaaaaacjpnps___
+  | ____snoqossttsssssssscbrrsbdbfaaaaaaaaaaaaaaacqnos__
+  | ___snooqnnnprqqonnnnpicrrcbdbiccccccbaabelmmlfqngs__
+  | __snnopsqortmlmtqooooqjqbcbaaacebicccabmmlllltqngns_
+  | _snnpqonprmllmlltpooopqcacaaaacfafccrikmllmmlltpgns_
+  | _sqpogggrtlmiiimltooopscfjbaaabfbfccoqtlmifflmltnos_
+  | _snnggggtmliicilltqooqoonojjjiijijjjormljicffmltqos_
+  | _ssonnnntmmiccffltrssqnnnnoooooooooontmlficcijltrs__
+  | ___sssoortliiffklts__sssssssssssssssstmljicefmlts___
+  | ______sssslmjiklmus__________________stlmjfflmls____
+  | __________slllllts____________________smllmmlls_____
+  | ___________ssssss______________________ssllllss_____
+  | _________________________________________ssss_______
+  | ____________________________________________________
+  paste c10 70 30
+  piece c11 model c_togenoko_b 0
+  @c11 scale 46 46 texel
+  paste c11 72 16
+  mask st1 rect 65 1 126 11
+  stamp st1 #18181c
+  piece g172 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 116,136 148,133 155,145 148,158 156,178 155,182 138,182 132,170 130,182 114,182
+  @g172 alpha set 0 in no
+  @g172 crop 114 133 42 49
+  @g172 scale 8 10 texel
+  paste g172 73 1
+  piece g173 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 258,147 288,147 288,186 258,186
+  @g173 alpha set 0 in no
+  @g173 crop 258 147 30 39
+  @g173 scale 8 10 texel
+  paste g173 82 1
+  piece g174 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 84,136 98,134 114,182 94,182 92,176 84,176 82,182 64,182
+  @g174 alpha set 0 in no
+  @g174 crop 64 134 50 48
+  @g174 flip y
+  @g174 scale 8 10 texel
+  paste g174 91 1
+  piece g175 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 84,136 98,134 114,182 94,182 92,176 84,176 82,182 64,182
+  @g175 alpha set 0 in no
+  @g175 crop 64 134 50 48
+  @g175 flip y
+  @g175 scale 8 10 texel
+  paste g175 100 1
+  piece g176 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 200,136 240,136 240,182 200,182
+  @g176 alpha set 0 in no
+  @g176 crop 200 136 40 46
+  @g176 scale 8 10 texel
+  paste g176 109 1
+  piece b2 tpl e/us/effect.tpl 102
+  @b2 map where s<0.2 v>=0.5 : #ffffff -> #8020a0
+  @b2 map where v<0.5 : #000000 -> #301020
+  @b2 scale 62 50 texel
+  paste b2 1 77
+  piece c20 icon ICON_1B4
+  @c20 scale 34 34 texel
+  paste c20 15 84
+  mask st2 rect 1 65 62 75
+  stamp st2 #18181c
+  piece g177 tpl m/yuu_02/t 17
+  mask no rect 0 0 343 204
+  mask no - poly 60,138 84,138 92,150 80,160 72,152 64,158 66,170 72,178 80,172 92,182 84,192 60,192 46,178 46,152
+  @g177 alpha set 0 in no
+  @g177 crop 46 138 46 54
+  @g177 scale 8 10 texel
+  paste g177 2 65
+  piece g178 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 116,136 148,133 155,145 148,158 156,178 155,182 138,182 132,170 130,182 114,182
+  @g178 alpha set 0 in no
+  @g178 crop 114 133 42 49
+  @g178 scale 8 10 texel
+  paste g178 11 65
+  piece g179 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 200,136 240,136 240,182 200,182
+  @g179 alpha set 0 in no
+  @g179 crop 200 136 40 46
+  @g179 scale 8 10 texel
+  paste g179 20 65
+  piece g180 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 84,136 98,134 114,182 94,182 92,176 84,176 82,182 64,182
+  @g180 alpha set 0 in no
+  @g180 crop 64 134 50 48
+  @g180 flip y
+  @g180 crop 0 0 96 48
+  piece g180b tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 84,136 98,134 114,182 94,182 92,176 84,176 82,182 64,182
+  @g180b alpha set 0 in no
+  @g180b crop 64 134 50 48
+  @g180b flip y
+  @g180 paste g180b 44 0
+  @g180 scale 10 10 texel
+  paste g180 29 65
+  piece g181 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 112,148 145,148 145,186 112,186
+  @g181 alpha set 0 in no
+  @g181 crop 112 148 33 38
+  @g181 scale 8 10 texel
+  paste g181 40 65
+  piece g182 tpl m/yuu_02/t 17
+  mask no rect 0 0 343 204
+  mask no - poly 140,140 170,140 170,192 140,192
+  @g182 alpha set 0 in no
+  @g182 crop 140 140 30 52
+  @g182 scale 8 10 texel
+  paste g182 49 65
+  piece b3 tpl e/us/effect.tpl 102
+  @b3 map where s<0.2 v>=0.5 : #ffffff -> #e8b020
+  @b3 map where v<0.5 : #000000 -> #301020
+  @b3 scale 62 50 texel
+  paste b3 65 77
+  piece c30 model c_togenoko_b 0
+  @c30 scale 46 46 texel
+  paste c30 72 80
+  mask st3 rect 65 65 126 75
+  stamp st3 #18181c
+  piece g183 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 84,136 98,134 114,182 94,182 92,176 84,176 82,182 64,182
+  @g183 alpha set 0 in no
+  @g183 crop 64 134 50 48
+  @g183 scale 6 10 texel
+  paste g183 71 65
+  piece g184 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 160,134 176,132 176,166 200,170 198,182 156,182
+  @g184 alpha set 0 in no
+  @g184 crop 156 132 44 50
+  @g184 scale 6 10 texel
+  paste g184 78 65
+  piece g185 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 160,134 176,132 176,166 200,170 198,182 156,182
+  @g185 alpha set 0 in no
+  @g185 crop 156 132 44 50
+  @g185 scale 6 10 texel
+  paste g185 85 65
+  piece g186 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 64,142 84,144 84,186 66,186
+  @g186 alpha set 0 in no
+  @g186 crop 64 142 20 44
+  @g186 crop 0 0 44 44
+  piece g186b tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 64,142 84,144 84,186 66,186
+  @g186b alpha set 0 in no
+  @g186b crop 64 142 20 44
+  @g186 paste g186b 24 0
+  mask ba rect 16 18 28 26
+  @g186 stamp ba #ff7a18
+  @g186 scale 6 10 texel
+  paste g186 96 65
+  piece g187 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 84,136 98,134 114,182 94,182 92,176 84,176 82,182 64,182
+  @g187 alpha set 0 in no
+  @g187 crop 64 134 50 48
+  @g187 scale 6 10 texel
+  paste g187 103 65
+  piece g188 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 64,142 84,144 84,186 66,186
+  @g188 alpha set 0 in no
+  @g188 crop 64 142 20 44
+  @g188 scale 3 10 texel
+  paste g188 110 65
+  piece g189 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 160,134 176,132 176,166 200,170 198,182 156,182
+  @g189 alpha set 0 in no
+  @g189 crop 156 132 44 50
+  @g189 scale 6 10 texel
+  paste g189 114 65
+end
+
+image textures/ch3_posters_revvo_after/tex1_128x128_e607934f6c2114a8_14.png
+  drawn G8MJ01   # its letters are the English signs of m/yuu_02/t (US and EU only): the drawn one on JP
+  fallback textures/ch3_posters_revvo_after_drawn/tex1_128x128_e607934f6c2114a8_14.png
+  load tpl m/tou_02/t 3
+  piece b0 tpl e/us/effect.tpl 102
+  @b0 map where s<0.2 v>=0.5 : #ffffff -> #d82020
+  @b0 map where v<0.5 : #000000 -> #301020
+  @b0 scale 62 50 texel
+  paste b0 1 13
+  piece c00 model c_togenoko_b 0
+  @c00 scale 46 46 texel
+  paste c00 8 16
+  piece c01 model c_peach 87
+  @c01 scale 28 22 texel
+  paste c01 18 10
+  mask st0 rect 1 1 62 11
+  stamp st0 #18181c
+  piece g190 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 64,142 84,144 84,186 66,186
+  @g190 alpha set 0 in no
+  @g190 crop 64 142 20 44
+  @g190 crop 0 0 44 44
+  piece g190b tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 132,158 148,158 156,178 155,182 138,182
+  @g190b alpha set 0 in no
+  @g190b crop 130 158 28 26
+  @g190 paste g190b 16 20
+  piece g190c tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 132,158 148,158 156,178 155,182 138,182
+  @g190c alpha set 0 in no
+  @g190c crop 130 158 28 26
+  @g190c flip y
+  @g190 paste g190c 16 0
+  @g190 scale 4 10 texel
+  paste g190 9 1
+  piece g191 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 64,142 84,144 84,186 66,186
+  @g191 alpha set 0 in no
+  @g191 crop 64 142 20 44
+  @g191 scale 2 10 texel
+  paste g191 14 1
+  piece g192 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 112,148 145,148 145,186 112,186
+  @g192 alpha set 0 in no
+  @g192 crop 112 148 33 38
+  @g192 scale 4 10 texel
+  paste g192 17 1
+  piece g193 tpl m/yuu_02/t 17
+  mask no rect 0 0 343 204
+  mask no - poly 60,138 84,138 92,150 80,160 72,152 64,158 66,170 72,178 80,172 92,182 84,192 60,192 46,178 46,152
+  @g193 alpha set 0 in no
+  @g193 crop 46 138 46 54
+  mask ba rect 26 28 42 34
+  @g193 stamp ba #ff7a18
+  @g193 scale 4 10 texel
+  paste g193 22 1
+  piece g194 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 116,136 148,133 155,145 148,158 156,178 155,182 138,182 132,170 130,182 114,182
+  @g194 alpha set 0 in no
+  @g194 crop 114 133 42 49
+  @g194 scale 4 10 texel
+  paste g194 30 1
+  piece g195 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 258,147 288,147 288,186 258,186
+  @g195 alpha set 0 in no
+  @g195 crop 258 147 30 39
+  @g195 scale 4 10 texel
+  paste g195 35 1
+  piece g196 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 84,136 98,134 114,182 94,182 92,176 84,176 82,182 64,182
+  @g196 alpha set 0 in no
+  @g196 crop 64 134 50 48
+  @g196 flip y
+  @g196 scale 4 10 texel
+  paste g196 40 1
+  piece g197 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 84,136 98,134 114,182 94,182 92,176 84,176 82,182 64,182
+  @g197 alpha set 0 in no
+  @g197 crop 64 134 50 48
+  @g197 flip y
+  @g197 scale 4 10 texel
+  paste g197 45 1
+  piece g198 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 200,136 240,136 240,182 200,182
+  @g198 alpha set 0 in no
+  @g198 crop 200 136 40 46
+  @g198 scale 4 10 texel
+  paste g198 50 1
+  piece b1 tpl e/us/effect.tpl 102
+  @b1 map where s<0.2 v>=0.5 : #ffffff -> #2040c0
+  @b1 map where v<0.5 : #000000 -> #301020
+  @b1 scale 62 50 texel
+  paste b1 65 13
+  # Big Green 01's cards (art/tools/poster_karts.py): the red kart
+  piece c10 canvas 52 28
+  colours a #eeebec b #ece8d5 c #b9aa98 d #ca904e e #628961 f #637362 g #e64325 h #ad493a i #5f655e j #5b504e k #344b36 l #3a4142 m #303d37 n #d23526 o #b72f25 p #971c0d q #672117 r #49281e s #3e0a06 t #262b1f u #000000
+  @c10 paint 0 0
+  | ____________________________________________________
+  | ____________________________________________________
+  | _________________s__________________________________
+  | _________________ss_________________________________
+  | ______________ss_sls______________sss_______________
+  | _____________sos__sls____________sfrs_______________
+  | ____________snns__smms___________sris_______________
+  | ___________snnos_smsms__________sfrfs_______ssss____
+  | _________ssnooss_ss_sls________sjjjis_____ssdddhs___
+  | ________sonops__ss___s____sssssrfrfjkss_sskddddds___
+  | _______sonoss__ss_______ssaaaaffrifrbabsrbchdddds___
+  | ______snnos___ss_______sbaaaablirefrciqqppqrdddhs___
+  | _____sonos___ss_______sbbcccclirffjssqppongoqqqs____
+  | _____snos___sfs_______sctljjifjfccbbbbbcciqpnnqs____
+  | ____snops__sfs_______sarifffifaaaaaaaaaaaaacjpnps___
+  | ____snoqossttsssssssscbrrsbdbfaaaaaaaaaaaaaaacqnos__
+  | ___snooqnnnprqqonnnnpicrrcbdbiccccccbaabelmmlfqngs__
+  | __snnopsqortmlmtqooooqjqbcbaaacebicccabmmlllltqngns_
+  | _snnpqonprmllmlltpooopqcacaaaacfafccrikmllmmlltpgns_
+  | _sqpogggrtlmiiimltooopscfjbaaabfbfccoqtlmifflmltnos_
+  | _snnggggtmliicilltqooqoonojjjiijijjjormljicffmltqos_
+  | _ssonnnntmmiccffltrssqnnnnoooooooooontmlficcijltrs__
+  | ___sssoortliiffklts__sssssssssssssssstmljicefmlts___
+  | ______sssslmjiklmus__________________stlmjfflmls____
+  | __________slllllts____________________smllmmlls_____
+  | ___________ssssss______________________ssllllss_____
+  | _________________________________________ssss_______
+  | ____________________________________________________
+  paste c10 70 30
+  piece c11 model c_togenoko_b 0
+  @c11 scale 46 46 texel
+  paste c11 72 16
+  mask st1 rect 65 1 126 11
+  stamp st1 #18181c
+  piece g199 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 116,136 148,133 155,145 148,158 156,178 155,182 138,182 132,170 130,182 114,182
+  @g199 alpha set 0 in no
+  @g199 crop 114 133 42 49
+  @g199 scale 8 10 texel
+  paste g199 73 1
+  piece g200 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 258,147 288,147 288,186 258,186
+  @g200 alpha set 0 in no
+  @g200 crop 258 147 30 39
+  @g200 scale 8 10 texel
+  paste g200 82 1
+  piece g201 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 84,136 98,134 114,182 94,182 92,176 84,176 82,182 64,182
+  @g201 alpha set 0 in no
+  @g201 crop 64 134 50 48
+  @g201 flip y
+  @g201 scale 8 10 texel
+  paste g201 91 1
+  piece g202 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 84,136 98,134 114,182 94,182 92,176 84,176 82,182 64,182
+  @g202 alpha set 0 in no
+  @g202 crop 64 134 50 48
+  @g202 flip y
+  @g202 scale 8 10 texel
+  paste g202 100 1
+  piece g203 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 200,136 240,136 240,182 200,182
+  @g203 alpha set 0 in no
+  @g203 crop 200 136 40 46
+  @g203 scale 8 10 texel
+  paste g203 109 1
+  piece b2 tpl e/us/effect.tpl 102
+  @b2 map where s<0.2 v>=0.5 : #ffffff -> #8020a0
+  @b2 map where v<0.5 : #000000 -> #301020
+  @b2 scale 62 50 texel
+  paste b2 1 77
+  piece c20 icon ICON_1B4
+  @c20 scale 34 34 texel
+  paste c20 15 84
+  mask st2 rect 1 65 62 75
+  stamp st2 #18181c
+  piece g204 tpl m/yuu_02/t 17
+  mask no rect 0 0 343 204
+  mask no - poly 60,138 84,138 92,150 80,160 72,152 64,158 66,170 72,178 80,172 92,182 84,192 60,192 46,178 46,152
+  @g204 alpha set 0 in no
+  @g204 crop 46 138 46 54
+  @g204 scale 8 10 texel
+  paste g204 2 65
+  piece g205 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 116,136 148,133 155,145 148,158 156,178 155,182 138,182 132,170 130,182 114,182
+  @g205 alpha set 0 in no
+  @g205 crop 114 133 42 49
+  @g205 scale 8 10 texel
+  paste g205 11 65
+  piece g206 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 200,136 240,136 240,182 200,182
+  @g206 alpha set 0 in no
+  @g206 crop 200 136 40 46
+  @g206 scale 8 10 texel
+  paste g206 20 65
+  piece g207 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 84,136 98,134 114,182 94,182 92,176 84,176 82,182 64,182
+  @g207 alpha set 0 in no
+  @g207 crop 64 134 50 48
+  @g207 flip y
+  @g207 crop 0 0 96 48
+  piece g207b tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 84,136 98,134 114,182 94,182 92,176 84,176 82,182 64,182
+  @g207b alpha set 0 in no
+  @g207b crop 64 134 50 48
+  @g207b flip y
+  @g207 paste g207b 44 0
+  @g207 scale 10 10 texel
+  paste g207 29 65
+  piece g208 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 112,148 145,148 145,186 112,186
+  @g208 alpha set 0 in no
+  @g208 crop 112 148 33 38
+  @g208 scale 8 10 texel
+  paste g208 40 65
+  piece g209 tpl m/yuu_02/t 17
+  mask no rect 0 0 343 204
+  mask no - poly 140,140 170,140 170,192 140,192
+  @g209 alpha set 0 in no
+  @g209 crop 140 140 30 52
+  @g209 scale 8 10 texel
+  paste g209 49 65
+  piece b3 tpl e/us/effect.tpl 102
+  @b3 map where s<0.2 v>=0.5 : #ffffff -> #20a020
+  @b3 map where v<0.5 : #000000 -> #301020
+  @b3 scale 62 50 texel
+  paste b3 65 77
+  # Big Green 01's cards (art/tools/poster_karts.py): the green kart
+  piece c30 canvas 52 28
+  colours a #efeded b #d2d4cf c #7cde75 d #37a436 e #cd9549 f #838986 g #429241 h #69766c i #329631 j #2a942a k #278120 l #646659 m #525e50 n #3d4d40 o #3a4142 p #275827 q #323d3a r #164916 s #12380f t #1e3121
+  @c30 paint 0 0
+  | ____________________________________________________
+  | ____________________________________________________
+  | _________________s__________________________________
+  | _________________ss_________________________________
+  | ______________ss_sos______________sss_______________
+  | _____________sis__sos____________shps_______________
+  | ____________sdds__stqs___________snls_______________
+  | ___________sdijs_sqsqs__________shphs_______ssss____
+  | _________ssdijss_ss_sqs________smmmhs_____sseeees___
+  | ________sjdiks__ss___s____sssssqfnfmnss_ssneeeees___
+  | _______sidjss__ss_______ssaaaahhnhfqbabsqbbleeees___
+  | ______sidjs___ss_______sbaaaabnhnffpflppkkppeeees___
+  | _____sidjs___ss_______sbbbfffnlpffmsrpkkiddippns____
+  | _____sdis___shs_______sftnmmhhmhfbbbbbbbfhpkddps____
+  | ____sdiks__shs_______saphhhhlhaaaaaaaaaaaaafmkdks___
+  | ____sdirkssstssssssssfbqqsbcbhaaaaaaaaaaaaaaafpdis__
+  | ___sdiirdddkrpkiddddphbppfbcblffffffbaaafnqqnfpdds__
+  | __sddikrrkrtqoqtpiiijpmnbbbaaahmahffbabqtooootrddds_
+  | _sddkrjdkrqooqootkiiikrfabbaabfffbffnhqqooqqootkdds_
+  | _sppidddrtoqlmmqosiiikrfhmbaablhbbffiptoqmlhnqotdis_
+  | _sddddddsqollflnotpijrkidgmllloolmoogrqommfhhqotpjs_
+  | _ssiddddsqqmfbhlotrssrddddiiiiiiiiiidsqohlbblmotrs__
+  | ___sssjistomlhhoots__sssssssssssssssssqonlffhqots___
+  | ______ssssoqnloqqss__________________stoqmhhnqos____
+  | __________sooooots____________________sqooqqoos_____
+  | ___________ssssss______________________ssooooss_____
+  | _________________________________________ssss_______
+  | ____________________________________________________
+  paste c30 70 94
+  piece c31 model c_peach 87
+  @c31 scale 28 22 texel
+  paste c31 82 74
+  mask st3 rect 65 65 126 75
+  stamp st3 #18181c
+  piece g210 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 112,148 145,148 145,186 112,186
+  @g210 alpha set 0 in no
+  @g210 crop 112 148 33 38
+  @g210 scale 6 10 texel
+  paste g210 69 65
+  piece g211 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 258,147 288,147 288,186 258,186
+  @g211 alpha set 0 in no
+  @g211 crop 258 147 30 39
+  @g211 scale 6 10 texel
+  paste g211 76 65
+  piece g212 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 84,136 98,134 114,182 94,182 92,176 84,176 82,182 64,182
+  @g212 alpha set 0 in no
+  @g212 crop 64 134 50 48
+  @g212 flip y
+  @g212 crop 0 0 96 48
+  piece g212b tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 84,136 98,134 114,182 94,182 92,176 84,176 82,182 64,182
+  @g212b alpha set 0 in no
+  @g212b crop 64 134 50 48
+  @g212b flip y
+  @g212 paste g212b 44 0
+  @g212 scale 6 10 texel
+  paste g212 83 65
+  piece g213 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 64,142 84,144 84,186 66,186
+  @g213 alpha set 0 in no
+  @g213 crop 64 142 20 44
+  @g213 crop 0 0 44 44
+  piece g213b tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 132,158 148,158 156,178 155,182 138,182
+  @g213b alpha set 0 in no
+  @g213b crop 130 158 28 26
+  @g213 paste g213b 16 20
+  piece g213c tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 132,158 148,158 156,178 155,182 138,182
+  @g213c alpha set 0 in no
+  @g213c crop 130 158 28 26
+  @g213c flip y
+  @g213 paste g213c 16 0
+  @g213 scale 6 10 texel
+  paste g213 94 65
+  piece g214 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 64,142 84,144 84,186 66,186
+  @g214 alpha set 0 in no
+  @g214 crop 64 142 20 44
+  @g214 scale 3 10 texel
+  paste g214 101 65
+  piece g215 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 112,148 145,148 145,186 112,186
+  @g215 alpha set 0 in no
+  @g215 crop 112 148 33 38
+  @g215 scale 6 10 texel
+  paste g215 105 65
+  piece g216 tpl m/yuu_02/t 17
+  mask no rect 0 0 343 204
+  mask no - poly 60,138 84,138 92,150 80,160 72,152 64,158 66,170 72,178 80,172 92,182 84,192 60,192 46,178 46,152
+  @g216 alpha set 0 in no
+  @g216 crop 46 138 46 54
+  mask ba rect 26 28 42 34
+  @g216 stamp ba #ff7a18
+  @g216 scale 6 10 texel
+  paste g216 112 65
+end
+
+image textures/ch3_posters_revvo_after/tex1_128x128_3caed24c58f64d58_14.png
+  drawn G8MJ01   # its letters are the English signs of m/yuu_02/t (US and EU only): the drawn one on JP
+  fallback textures/ch3_posters_revvo_after_drawn/tex1_128x128_3caed24c58f64d58_14.png
+  load tpl m/tou_02/t 18
+  piece b0 tpl e/us/effect.tpl 102
+  @b0 map where s<0.2 v>=0.5 : #ffffff -> #d82020
+  @b0 map where v<0.5 : #000000 -> #301020
+  @b0 scale 62 50 texel
+  paste b0 1 13
+  piece c00 model c_togenoko_b 0
+  @c00 scale 46 46 texel
+  paste c00 8 16
+  piece c01 model c_peach 87
+  @c01 scale 28 22 texel
+  paste c01 18 10
+  mask st0 rect 1 1 62 11
+  stamp st0 #18181c
+  piece g217 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 64,142 84,144 84,186 66,186
+  @g217 alpha set 0 in no
+  @g217 crop 64 142 20 44
+  @g217 crop 0 0 44 44
+  piece g217b tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 132,158 148,158 156,178 155,182 138,182
+  @g217b alpha set 0 in no
+  @g217b crop 130 158 28 26
+  @g217 paste g217b 16 20
+  piece g217c tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 132,158 148,158 156,178 155,182 138,182
+  @g217c alpha set 0 in no
+  @g217c crop 130 158 28 26
+  @g217c flip y
+  @g217 paste g217c 16 0
+  @g217 scale 4 10 texel
+  paste g217 9 1
+  piece g218 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 64,142 84,144 84,186 66,186
+  @g218 alpha set 0 in no
+  @g218 crop 64 142 20 44
+  @g218 scale 2 10 texel
+  paste g218 14 1
+  piece g219 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 112,148 145,148 145,186 112,186
+  @g219 alpha set 0 in no
+  @g219 crop 112 148 33 38
+  @g219 scale 4 10 texel
+  paste g219 17 1
+  piece g220 tpl m/yuu_02/t 17
+  mask no rect 0 0 343 204
+  mask no - poly 60,138 84,138 92,150 80,160 72,152 64,158 66,170 72,178 80,172 92,182 84,192 60,192 46,178 46,152
+  @g220 alpha set 0 in no
+  @g220 crop 46 138 46 54
+  mask ba rect 26 28 42 34
+  @g220 stamp ba #ff7a18
+  @g220 scale 4 10 texel
+  paste g220 22 1
+  piece g221 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 116,136 148,133 155,145 148,158 156,178 155,182 138,182 132,170 130,182 114,182
+  @g221 alpha set 0 in no
+  @g221 crop 114 133 42 49
+  @g221 scale 4 10 texel
+  paste g221 30 1
+  piece g222 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 258,147 288,147 288,186 258,186
+  @g222 alpha set 0 in no
+  @g222 crop 258 147 30 39
+  @g222 scale 4 10 texel
+  paste g222 35 1
+  piece g223 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 84,136 98,134 114,182 94,182 92,176 84,176 82,182 64,182
+  @g223 alpha set 0 in no
+  @g223 crop 64 134 50 48
+  @g223 flip y
+  @g223 scale 4 10 texel
+  paste g223 40 1
+  piece g224 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 84,136 98,134 114,182 94,182 92,176 84,176 82,182 64,182
+  @g224 alpha set 0 in no
+  @g224 crop 64 134 50 48
+  @g224 flip y
+  @g224 scale 4 10 texel
+  paste g224 45 1
+  piece g225 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 200,136 240,136 240,182 200,182
+  @g225 alpha set 0 in no
+  @g225 crop 200 136 40 46
+  @g225 scale 4 10 texel
+  paste g225 50 1
+  piece b1 tpl e/us/effect.tpl 102
+  @b1 map where s<0.2 v>=0.5 : #ffffff -> #2040c0
+  @b1 map where v<0.5 : #000000 -> #301020
+  @b1 scale 62 50 texel
+  paste b1 65 13
+  # Big Green 01's cards (art/tools/poster_karts.py): the red kart
+  piece c10 canvas 52 28
+  colours a #eeebec b #ece8d5 c #b9aa98 d #ca904e e #628961 f #637362 g #e64325 h #ad493a i #5f655e j #5b504e k #344b36 l #3a4142 m #303d37 n #d23526 o #b72f25 p #971c0d q #672117 r #49281e s #3e0a06 t #262b1f u #000000
+  @c10 paint 0 0
+  | ____________________________________________________
+  | ____________________________________________________
+  | _________________s__________________________________
+  | _________________ss_________________________________
+  | ______________ss_sls______________sss_______________
+  | _____________sos__sls____________sfrs_______________
+  | ____________snns__smms___________sris_______________
+  | ___________snnos_smsms__________sfrfs_______ssss____
+  | _________ssnooss_ss_sls________sjjjis_____ssdddhs___
+  | ________sonops__ss___s____sssssrfrfjkss_sskddddds___
+  | _______sonoss__ss_______ssaaaaffrifrbabsrbchdddds___
+  | ______snnos___ss_______sbaaaablirefrciqqppqrdddhs___
+  | _____sonos___ss_______sbbcccclirffjssqppongoqqqs____
+  | _____snos___sfs_______sctljjifjfccbbbbbcciqpnnqs____
+  | ____snops__sfs_______sarifffifaaaaaaaaaaaaacjpnps___
+  | ____snoqossttsssssssscbrrsbdbfaaaaaaaaaaaaaaacqnos__
+  | ___snooqnnnprqqonnnnpicrrcbdbiccccccbaabelmmlfqngs__
+  | __snnopsqortmlmtqooooqjqbcbaaacebicccabmmlllltqngns_
+  | _snnpqonprmllmlltpooopqcacaaaacfafccrikmllmmlltpgns_
+  | _sqpogggrtlmiiimltooopscfjbaaabfbfccoqtlmifflmltnos_
+  | _snnggggtmliicilltqooqoonojjjiijijjjormljicffmltqos_
+  | _ssonnnntmmiccffltrssqnnnnoooooooooontmlficcijltrs__
+  | ___sssoortliiffklts__sssssssssssssssstmljicefmlts___
+  | ______sssslmjiklmus__________________stlmjfflmls____
+  | __________slllllts____________________smllmmlls_____
+  | ___________ssssss______________________ssllllss_____
+  | _________________________________________ssss_______
+  | ____________________________________________________
+  paste c10 70 30
+  piece c11 model c_togenoko_b 0
+  @c11 scale 46 46 texel
+  paste c11 72 16
+  mask st1 rect 65 1 126 11
+  stamp st1 #18181c
+  piece g226 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 116,136 148,133 155,145 148,158 156,178 155,182 138,182 132,170 130,182 114,182
+  @g226 alpha set 0 in no
+  @g226 crop 114 133 42 49
+  @g226 scale 8 10 texel
+  paste g226 73 1
+  piece g227 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 258,147 288,147 288,186 258,186
+  @g227 alpha set 0 in no
+  @g227 crop 258 147 30 39
+  @g227 scale 8 10 texel
+  paste g227 82 1
+  piece g228 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 84,136 98,134 114,182 94,182 92,176 84,176 82,182 64,182
+  @g228 alpha set 0 in no
+  @g228 crop 64 134 50 48
+  @g228 flip y
+  @g228 scale 8 10 texel
+  paste g228 91 1
+  piece g229 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 84,136 98,134 114,182 94,182 92,176 84,176 82,182 64,182
+  @g229 alpha set 0 in no
+  @g229 crop 64 134 50 48
+  @g229 flip y
+  @g229 scale 8 10 texel
+  paste g229 100 1
+  piece g230 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 200,136 240,136 240,182 200,182
+  @g230 alpha set 0 in no
+  @g230 crop 200 136 40 46
+  @g230 scale 8 10 texel
+  paste g230 109 1
+  piece b2 tpl e/us/effect.tpl 102
+  @b2 map where s<0.2 v>=0.5 : #ffffff -> #8020a0
+  @b2 map where v<0.5 : #000000 -> #301020
+  @b2 scale 62 50 texel
+  paste b2 1 77
+  piece c20 icon ICON_1B4
+  @c20 scale 34 34 texel
+  paste c20 15 84
+  mask st2 rect 1 65 62 75
+  stamp st2 #18181c
+  piece g231 tpl m/yuu_02/t 17
+  mask no rect 0 0 343 204
+  mask no - poly 60,138 84,138 92,150 80,160 72,152 64,158 66,170 72,178 80,172 92,182 84,192 60,192 46,178 46,152
+  @g231 alpha set 0 in no
+  @g231 crop 46 138 46 54
+  @g231 scale 8 10 texel
+  paste g231 2 65
+  piece g232 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 116,136 148,133 155,145 148,158 156,178 155,182 138,182 132,170 130,182 114,182
+  @g232 alpha set 0 in no
+  @g232 crop 114 133 42 49
+  @g232 scale 8 10 texel
+  paste g232 11 65
+  piece g233 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 200,136 240,136 240,182 200,182
+  @g233 alpha set 0 in no
+  @g233 crop 200 136 40 46
+  @g233 scale 8 10 texel
+  paste g233 20 65
+  piece g234 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 84,136 98,134 114,182 94,182 92,176 84,176 82,182 64,182
+  @g234 alpha set 0 in no
+  @g234 crop 64 134 50 48
+  @g234 flip y
+  @g234 crop 0 0 96 48
+  piece g234b tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 84,136 98,134 114,182 94,182 92,176 84,176 82,182 64,182
+  @g234b alpha set 0 in no
+  @g234b crop 64 134 50 48
+  @g234b flip y
+  @g234 paste g234b 44 0
+  @g234 scale 10 10 texel
+  paste g234 29 65
+  piece g235 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 112,148 145,148 145,186 112,186
+  @g235 alpha set 0 in no
+  @g235 crop 112 148 33 38
+  @g235 scale 8 10 texel
+  paste g235 40 65
+  piece g236 tpl m/yuu_02/t 17
+  mask no rect 0 0 343 204
+  mask no - poly 140,140 170,140 170,192 140,192
+  @g236 alpha set 0 in no
+  @g236 crop 140 140 30 52
+  @g236 scale 8 10 texel
+  paste g236 49 65
+  piece b3 tpl e/us/effect.tpl 102
+  @b3 map where s<0.2 v>=0.5 : #ffffff -> #20a020
+  @b3 map where v<0.5 : #000000 -> #301020
+  @b3 scale 62 50 texel
+  paste b3 65 77
+  # Big Green 01's cards (art/tools/poster_karts.py): the green kart
+  piece c30 canvas 52 28
+  colours a #efeded b #d2d4cf c #7cde75 d #37a436 e #cd9549 f #838986 g #429241 h #69766c i #329631 j #2a942a k #278120 l #646659 m #525e50 n #3d4d40 o #3a4142 p #275827 q #323d3a r #164916 s #12380f t #1e3121
+  @c30 paint 0 0
+  | ____________________________________________________
+  | ____________________________________________________
+  | _________________s__________________________________
+  | _________________ss_________________________________
+  | ______________ss_sos______________sss_______________
+  | _____________sis__sos____________shps_______________
+  | ____________sdds__stqs___________snls_______________
+  | ___________sdijs_sqsqs__________shphs_______ssss____
+  | _________ssdijss_ss_sqs________smmmhs_____sseeees___
+  | ________sjdiks__ss___s____sssssqfnfmnss_ssneeeees___
+  | _______sidjss__ss_______ssaaaahhnhfqbabsqbbleeees___
+  | ______sidjs___ss_______sbaaaabnhnffpflppkkppeeees___
+  | _____sidjs___ss_______sbbbfffnlpffmsrpkkiddippns____
+  | _____sdis___shs_______sftnmmhhmhfbbbbbbbfhpkddps____
+  | ____sdiks__shs_______saphhhhlhaaaaaaaaaaaaafmkdks___
+  | ____sdirkssstssssssssfbqqsbcbhaaaaaaaaaaaaaaafpdis__
+  | ___sdiirdddkrpkiddddphbppfbcblffffffbaaafnqqnfpdds__
+  | __sddikrrkrtqoqtpiiijpmnbbbaaahmahffbabqtooootrddds_
+  | _sddkrjdkrqooqootkiiikrfabbaabfffbffnhqqooqqootkdds_
+  | _sppidddrtoqlmmqosiiikrfhmbaablhbbffiptoqmlhnqotdis_
+  | _sddddddsqollflnotpijrkidgmllloolmoogrqommfhhqotpjs_
+  | _ssiddddsqqmfbhlotrssrddddiiiiiiiiiidsqohlbblmotrs__
+  | ___sssjistomlhhoots__sssssssssssssssssqonlffhqots___
+  | ______ssssoqnloqqss__________________stoqmhhnqos____
+  | __________sooooots____________________sqooqqoos_____
+  | ___________ssssss______________________ssooooss_____
+  | _________________________________________ssss_______
+  | ____________________________________________________
+  paste c30 70 94
+  piece c31 model c_peach 87
+  @c31 scale 28 22 texel
+  paste c31 82 74
+  mask st3 rect 65 65 126 75
+  stamp st3 #18181c
+  piece g237 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 112,148 145,148 145,186 112,186
+  @g237 alpha set 0 in no
+  @g237 crop 112 148 33 38
+  @g237 scale 6 10 texel
+  paste g237 69 65
+  piece g238 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 258,147 288,147 288,186 258,186
+  @g238 alpha set 0 in no
+  @g238 crop 258 147 30 39
+  @g238 scale 6 10 texel
+  paste g238 76 65
+  piece g239 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 84,136 98,134 114,182 94,182 92,176 84,176 82,182 64,182
+  @g239 alpha set 0 in no
+  @g239 crop 64 134 50 48
+  @g239 flip y
+  @g239 crop 0 0 96 48
+  piece g239b tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 84,136 98,134 114,182 94,182 92,176 84,176 82,182 64,182
+  @g239b alpha set 0 in no
+  @g239b crop 64 134 50 48
+  @g239b flip y
+  @g239 paste g239b 44 0
+  @g239 scale 6 10 texel
+  paste g239 83 65
+  piece g240 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 64,142 84,144 84,186 66,186
+  @g240 alpha set 0 in no
+  @g240 crop 64 142 20 44
+  @g240 crop 0 0 44 44
+  piece g240b tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 132,158 148,158 156,178 155,182 138,182
+  @g240b alpha set 0 in no
+  @g240b crop 130 158 28 26
+  @g240 paste g240b 16 20
+  piece g240c tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 132,158 148,158 156,178 155,182 138,182
+  @g240c alpha set 0 in no
+  @g240c crop 130 158 28 26
+  @g240c flip y
+  @g240 paste g240c 16 0
+  @g240 scale 6 10 texel
+  paste g240 94 65
+  piece g241 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 64,142 84,144 84,186 66,186
+  @g241 alpha set 0 in no
+  @g241 crop 64 142 20 44
+  @g241 scale 3 10 texel
+  paste g241 101 65
+  piece g242 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 112,148 145,148 145,186 112,186
+  @g242 alpha set 0 in no
+  @g242 crop 112 148 33 38
+  @g242 scale 6 10 texel
+  paste g242 105 65
+  piece g243 tpl m/yuu_02/t 17
+  mask no rect 0 0 343 204
+  mask no - poly 60,138 84,138 92,150 80,160 72,152 64,158 66,170 72,178 80,172 92,182 84,192 60,192 46,178 46,152
+  @g243 alpha set 0 in no
+  @g243 crop 46 138 46 54
+  mask ba rect 26 28 42 34
+  @g243 stamp ba #ff7a18
+  @g243 scale 6 10 texel
+  paste g243 112 65
+end
+
+image textures/ch3_posters/tex1_128x128_eb72945d6523abbd_14.png
+  drawn G8MJ01   # its letters are the English signs of m/yuu_02/t (US and EU only): the drawn one on JP
+  fallback textures/ch3_posters_drawn/tex1_128x128_eb72945d6523abbd_14.png
+  load tpl m/tou_02/t 4
+  piece b0 tpl e/us/effect.tpl 102
+  @b0 map where s<0.2 v>=0.5 : #ffffff -> #2040c0
+  @b0 map where v<0.5 : #000000 -> #301020
+  @b0 scale 62 50 texel
+  paste b0 1 13
+  piece c00 model MOBJ_goal_hata 0
+  @c00 scale 44 44 texel
+  paste c00 10 16
+  mask st0 rect 1 1 62 11
+  stamp st0 #18181c
+  piece g244 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 116,136 148,133 155,145 148,158 156,178 155,182 138,182 132,170 130,182 114,182
+  @g244 alpha set 0 in no
+  @g244 crop 114 133 42 49
+  @g244 scale 8 10 texel
+  paste g244 14 1
+  piece g245 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 84,136 98,134 114,182 94,182 92,176 84,176 82,182 64,182
+  @g245 alpha set 0 in no
+  @g245 crop 64 134 50 48
+  @g245 scale 8 10 texel
+  paste g245 23 1
+  piece g246 tpl m/yuu_02/t 17
+  mask no rect 0 0 343 204
+  mask no - poly 60,138 84,138 92,150 80,160 72,152 64,158 66,170 72,178 80,172 92,182 84,192 60,192 46,178 46,152
+  @g246 alpha set 0 in no
+  @g246 crop 46 138 46 54
+  @g246 scale 8 10 texel
+  paste g246 32 1
+  piece g247 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 258,147 288,147 288,186 258,186
+  @g247 alpha set 0 in no
+  @g247 crop 258 147 30 39
+  @g247 scale 8 10 texel
+  paste g247 41 1
+  piece b1 tpl e/us/effect.tpl 102
+  @b1 map where s<0.2 v>=0.5 : #ffffff -> #d82020
+  @b1 map where v<0.5 : #000000 -> #301020
+  @b1 scale 62 50 texel
+  paste b1 65 13
+  # Big Green 01's cards (art/tools/poster_karts.py): the red kart
+  piece c10 canvas 52 28
+  colours a #eeebec b #ece8d5 c #b9aa98 d #ca904e e #628961 f #637362 g #e64325 h #ad493a i #5f655e j #5b504e k #344b36 l #3a4142 m #303d37 n #d23526 o #b72f25 p #971c0d q #672117 r #49281e s #3e0a06 t #262b1f u #000000
+  @c10 paint 0 0
+  | ____________________________________________________
+  | ____________________________________________________
+  | _________________s__________________________________
+  | _________________ss_________________________________
+  | ______________ss_sls______________sss_______________
+  | _____________sos__sls____________sfrs_______________
+  | ____________snns__smms___________sris_______________
+  | ___________snnos_smsms__________sfrfs_______ssss____
+  | _________ssnooss_ss_sls________sjjjis_____ssdddhs___
+  | ________sonops__ss___s____sssssrfrfjkss_sskddddds___
+  | _______sonoss__ss_______ssaaaaffrifrbabsrbchdddds___
+  | ______snnos___ss_______sbaaaablirefrciqqppqrdddhs___
+  | _____sonos___ss_______sbbcccclirffjssqppongoqqqs____
+  | _____snos___sfs_______sctljjifjfccbbbbbcciqpnnqs____
+  | ____snops__sfs_______sarifffifaaaaaaaaaaaaacjpnps___
+  | ____snoqossttsssssssscbrrsbdbfaaaaaaaaaaaaaaacqnos__
+  | ___snooqnnnprqqonnnnpicrrcbdbiccccccbaabelmmlfqngs__
+  | __snnopsqortmlmtqooooqjqbcbaaacebicccabmmlllltqngns_
+  | _snnpqonprmllmlltpooopqcacaaaacfafccrikmllmmlltpgns_
+  | _sqpogggrtlmiiimltooopscfjbaaabfbfccoqtlmifflmltnos_
+  | _snnggggtmliicilltqooqoonojjjiijijjjormljicffmltqos_
+  | _ssonnnntmmiccffltrssqnnnnoooooooooontmlficcijltrs__
+  | ___sssoortliiffklts__sssssssssssssssstmljicefmlts___
+  | ______sssslmjiklmus__________________stlmjfflmls____
+  | __________slllllts____________________smllmmlls_____
+  | ___________ssssss______________________ssllllss_____
+  | _________________________________________ssss_______
+  | ____________________________________________________
+  paste c10 70 30
+  mask st1 rect 65 1 126 11
+  stamp st1 #18181c
+  piece g248 tpl m/yuu_02/t 17
+  mask no rect 0 0 343 204
+  mask no - poly 60,138 84,138 92,150 80,160 72,152 64,158 66,170 72,178 80,172 92,182 84,192 60,192 46,178 46,152
+  @g248 alpha set 0 in no
+  @g248 crop 46 138 46 54
+  @g248 scale 7 10 texel
+  paste g248 71 1
+  piece g249 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 64,142 84,144 84,186 66,186
+  @g249 alpha set 0 in no
+  @g249 crop 64 142 20 44
+  @g249 scale 4 10 texel
+  paste g249 79 1
+  piece g250 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 116,136 148,133 155,145 148,158 156,178 155,182 138,182 132,170 130,182 114,182
+  @g250 alpha set 0 in no
+  @g250 crop 114 133 42 49
+  @g250 scale 7 10 texel
+  paste g250 84 1
+  piece g251 tpl m/yuu_02/t 17
+  mask no rect 0 0 343 204
+  mask no - poly 60,138 84,138 92,150 80,160 72,152 64,158 66,170 72,178 80,172 92,182 84,192 60,192 46,178 46,152
+  @g251 alpha set 0 in no
+  @g251 crop 46 138 46 54
+  @g251 scale 7 10 texel
+  paste g251 92 1
+  piece g252 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 200,136 240,136 240,182 200,182
+  @g252 alpha set 0 in no
+  @g252 crop 200 136 40 46
+  mask cu poly 13,0 27,0 24,26 16,26
+  @g252 alpha set 0 in cu
+  @g252 scale 7 10 texel
+  paste g252 100 1
+  piece g253 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 64,142 84,144 84,186 66,186
+  @g253 alpha set 0 in no
+  @g253 crop 64 142 20 44
+  @g253 scale 4 10 texel
+  paste g253 108 1
+  piece g254 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 146,146 180,146 180,160 170,160 170,186 156,186 156,160 146,160
+  @g254 alpha set 0 in no
+  @g254 crop 146 146 34 40
+  @g254 scale 7 10 texel
+  paste g254 113 1
+  piece b2 tpl e/us/effect.tpl 102
+  @b2 map where s<0.2 v>=0.5 : #ffffff -> #8020a0
+  @b2 map where v<0.5 : #000000 -> #301020
+  @b2 scale 62 50 texel
+  paste b2 1 77
+  piece c20 model c_peach 87
+  @c20 scale 28 22 texel
+  paste c20 18 74
+  mask st2 rect 1 65 62 75
+  stamp st2 #18181c
+  piece g255 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 200,136 240,136 240,182 200,182
+  @g255 alpha set 0 in no
+  @g255 crop 200 136 40 46
+  @g255 scale 5 10 texel
+  paste g255 5 65
+  piece g256 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 112,148 145,148 145,186 112,186
+  @g256 alpha set 0 in no
+  @g256 crop 112 148 33 38
+  @g256 scale 5 10 texel
+  paste g256 11 65
+  piece g257 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 258,147 288,147 288,186 258,186
+  @g257 alpha set 0 in no
+  @g257 crop 258 147 30 39
+  @g257 scale 5 10 texel
+  paste g257 17 65
+  piece g258 tpl m/yuu_02/t 17
+  mask no rect 0 0 343 204
+  mask no - poly 60,138 84,138 92,150 80,160 72,152 64,158 66,170 72,178 80,172 92,182 84,192 60,192 46,178 46,152
+  @g258 alpha set 0 in no
+  @g258 crop 46 138 46 54
+  @g258 scale 5 10 texel
+  paste g258 26 65
+  piece g259 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 116,136 148,133 155,145 148,158 156,178 155,182 138,182 132,170 130,182 114,182
+  @g259 alpha set 0 in no
+  @g259 crop 114 133 42 49
+  @g259 scale 5 10 texel
+  paste g259 32 65
+  piece g260 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 200,136 240,136 240,182 200,182
+  @g260 alpha set 0 in no
+  @g260 crop 200 136 40 46
+  @g260 scale 5 10 texel
+  paste g260 38 65
+  piece g261 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 84,136 98,134 114,182 94,182 92,176 84,176 82,182 64,182
+  @g261 alpha set 0 in no
+  @g261 crop 64 134 50 48
+  @g261 flip y
+  @g261 crop 0 0 96 48
+  piece g261b tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 84,136 98,134 114,182 94,182 92,176 84,176 82,182 64,182
+  @g261b alpha set 0 in no
+  @g261b crop 64 134 50 48
+  @g261b flip y
+  @g261 paste g261b 44 0
+  @g261 scale 4 10 texel
+  paste g261 44 65
+  piece g262 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 112,148 145,148 145,186 112,186
+  @g262 alpha set 0 in no
+  @g262 crop 112 148 33 38
+  @g262 scale 5 10 texel
+  paste g262 49 65
+  piece b3 tpl e/us/effect.tpl 102
+  @b3 map where s<0.2 v>=0.5 : #ffffff -> #e8b020
+  @b3 map where v<0.5 : #000000 -> #301020
+  @b3 scale 62 50 texel
+  paste b3 65 77
+  piece c30 model c_flower 18
+  @c30 scale 34 34 texel
+  paste c30 79 84
+  mask st3 rect 65 65 126 75
+  stamp st3 #18181c
+  piece g263 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 258,147 288,147 288,186 258,186
+  @g263 alpha set 0 in no
+  @g263 crop 258 147 30 39
+  mask cu rect 14 26 30 39
+  @g263 alpha set 0 in cu
+  @g263 scale 8 10 texel
+  paste g263 78 65
+  piece g264 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 84,136 98,134 114,182 94,182 92,176 84,176 82,182 64,182
+  @g264 alpha set 0 in no
+  @g264 crop 64 134 50 48
+  @g264 scale 8 10 texel
+  paste g264 87 65
+  piece g265 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 112,148 145,148 145,186 112,186
+  @g265 alpha set 0 in no
+  @g265 crop 112 148 33 38
+  @g265 scale 8 10 texel
+  paste g265 96 65
+  piece g266 tpl m/yuu_02/t 17
+  mask no rect 0 0 343 204
+  mask no - poly 140,140 170,140 170,192 140,192
+  @g266 alpha set 0 in no
+  @g266 crop 140 140 30 52
+  @g266 scale 8 10 texel
+  paste g266 105 65
+end
+
+image textures/ch3_posters/tex1_128x128_91c6bc1d969a6b84_14.png
+  drawn G8MJ01   # its letters are the English signs of m/yuu_02/t (US and EU only): the drawn one on JP
+  fallback textures/ch3_posters_drawn/tex1_128x128_91c6bc1d969a6b84_14.png
+  load tpl m/tou_02/t 21
+  piece b0 tpl e/us/effect.tpl 102
+  @b0 map where s<0.2 v>=0.5 : #ffffff -> #2040c0
+  @b0 map where v<0.5 : #000000 -> #301020
+  @b0 scale 62 50 texel
+  paste b0 1 13
+  piece c00 model MOBJ_goal_hata 0
+  @c00 scale 44 44 texel
+  paste c00 10 16
+  mask st0 rect 1 1 62 11
+  stamp st0 #18181c
+  piece g267 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 116,136 148,133 155,145 148,158 156,178 155,182 138,182 132,170 130,182 114,182
+  @g267 alpha set 0 in no
+  @g267 crop 114 133 42 49
+  @g267 scale 8 10 texel
+  paste g267 14 1
+  piece g268 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 84,136 98,134 114,182 94,182 92,176 84,176 82,182 64,182
+  @g268 alpha set 0 in no
+  @g268 crop 64 134 50 48
+  @g268 scale 8 10 texel
+  paste g268 23 1
+  piece g269 tpl m/yuu_02/t 17
+  mask no rect 0 0 343 204
+  mask no - poly 60,138 84,138 92,150 80,160 72,152 64,158 66,170 72,178 80,172 92,182 84,192 60,192 46,178 46,152
+  @g269 alpha set 0 in no
+  @g269 crop 46 138 46 54
+  @g269 scale 8 10 texel
+  paste g269 32 1
+  piece g270 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 258,147 288,147 288,186 258,186
+  @g270 alpha set 0 in no
+  @g270 crop 258 147 30 39
+  @g270 scale 8 10 texel
+  paste g270 41 1
+  piece b1 tpl e/us/effect.tpl 102
+  @b1 map where s<0.2 v>=0.5 : #ffffff -> #d82020
+  @b1 map where v<0.5 : #000000 -> #301020
+  @b1 scale 62 50 texel
+  paste b1 65 13
+  # Big Green 01's cards (art/tools/poster_karts.py): the red kart
+  piece c10 canvas 52 28
+  colours a #eeebec b #ece8d5 c #b9aa98 d #ca904e e #628961 f #637362 g #e64325 h #ad493a i #5f655e j #5b504e k #344b36 l #3a4142 m #303d37 n #d23526 o #b72f25 p #971c0d q #672117 r #49281e s #3e0a06 t #262b1f u #000000
+  @c10 paint 0 0
+  | ____________________________________________________
+  | ____________________________________________________
+  | _________________s__________________________________
+  | _________________ss_________________________________
+  | ______________ss_sls______________sss_______________
+  | _____________sos__sls____________sfrs_______________
+  | ____________snns__smms___________sris_______________
+  | ___________snnos_smsms__________sfrfs_______ssss____
+  | _________ssnooss_ss_sls________sjjjis_____ssdddhs___
+  | ________sonops__ss___s____sssssrfrfjkss_sskddddds___
+  | _______sonoss__ss_______ssaaaaffrifrbabsrbchdddds___
+  | ______snnos___ss_______sbaaaablirefrciqqppqrdddhs___
+  | _____sonos___ss_______sbbcccclirffjssqppongoqqqs____
+  | _____snos___sfs_______sctljjifjfccbbbbbcciqpnnqs____
+  | ____snops__sfs_______sarifffifaaaaaaaaaaaaacjpnps___
+  | ____snoqossttsssssssscbrrsbdbfaaaaaaaaaaaaaaacqnos__
+  | ___snooqnnnprqqonnnnpicrrcbdbiccccccbaabelmmlfqngs__
+  | __snnopsqortmlmtqooooqjqbcbaaacebicccabmmlllltqngns_
+  | _snnpqonprmllmlltpooopqcacaaaacfafccrikmllmmlltpgns_
+  | _sqpogggrtlmiiimltooopscfjbaaabfbfccoqtlmifflmltnos_
+  | _snnggggtmliicilltqooqoonojjjiijijjjormljicffmltqos_
+  | _ssonnnntmmiccffltrssqnnnnoooooooooontmlficcijltrs__
+  | ___sssoortliiffklts__sssssssssssssssstmljicefmlts___
+  | ______sssslmjiklmus__________________stlmjfflmls____
+  | __________slllllts____________________smllmmlls_____
+  | ___________ssssss______________________ssllllss_____
+  | _________________________________________ssss_______
+  | ____________________________________________________
+  paste c10 70 30
+  mask st1 rect 65 1 126 11
+  stamp st1 #18181c
+  piece g271 tpl m/yuu_02/t 17
+  mask no rect 0 0 343 204
+  mask no - poly 60,138 84,138 92,150 80,160 72,152 64,158 66,170 72,178 80,172 92,182 84,192 60,192 46,178 46,152
+  @g271 alpha set 0 in no
+  @g271 crop 46 138 46 54
+  @g271 scale 7 10 texel
+  paste g271 71 1
+  piece g272 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 64,142 84,144 84,186 66,186
+  @g272 alpha set 0 in no
+  @g272 crop 64 142 20 44
+  @g272 scale 4 10 texel
+  paste g272 79 1
+  piece g273 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 116,136 148,133 155,145 148,158 156,178 155,182 138,182 132,170 130,182 114,182
+  @g273 alpha set 0 in no
+  @g273 crop 114 133 42 49
+  @g273 scale 7 10 texel
+  paste g273 84 1
+  piece g274 tpl m/yuu_02/t 17
+  mask no rect 0 0 343 204
+  mask no - poly 60,138 84,138 92,150 80,160 72,152 64,158 66,170 72,178 80,172 92,182 84,192 60,192 46,178 46,152
+  @g274 alpha set 0 in no
+  @g274 crop 46 138 46 54
+  @g274 scale 7 10 texel
+  paste g274 92 1
+  piece g275 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 200,136 240,136 240,182 200,182
+  @g275 alpha set 0 in no
+  @g275 crop 200 136 40 46
+  mask cu poly 13,0 27,0 24,26 16,26
+  @g275 alpha set 0 in cu
+  @g275 scale 7 10 texel
+  paste g275 100 1
+  piece g276 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 64,142 84,144 84,186 66,186
+  @g276 alpha set 0 in no
+  @g276 crop 64 142 20 44
+  @g276 scale 4 10 texel
+  paste g276 108 1
+  piece g277 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 146,146 180,146 180,160 170,160 170,186 156,186 156,160 146,160
+  @g277 alpha set 0 in no
+  @g277 crop 146 146 34 40
+  @g277 scale 7 10 texel
+  paste g277 113 1
+  piece b2 tpl e/us/effect.tpl 102
+  @b2 map where s<0.2 v>=0.5 : #ffffff -> #8020a0
+  @b2 map where v<0.5 : #000000 -> #301020
+  @b2 scale 62 50 texel
+  paste b2 1 77
+  piece c20 model c_peach 87
+  @c20 scale 28 22 texel
+  paste c20 18 74
+  mask st2 rect 1 65 62 75
+  stamp st2 #18181c
+  piece g278 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 200,136 240,136 240,182 200,182
+  @g278 alpha set 0 in no
+  @g278 crop 200 136 40 46
+  @g278 scale 5 10 texel
+  paste g278 5 65
+  piece g279 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 112,148 145,148 145,186 112,186
+  @g279 alpha set 0 in no
+  @g279 crop 112 148 33 38
+  @g279 scale 5 10 texel
+  paste g279 11 65
+  piece g280 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 258,147 288,147 288,186 258,186
+  @g280 alpha set 0 in no
+  @g280 crop 258 147 30 39
+  @g280 scale 5 10 texel
+  paste g280 17 65
+  piece g281 tpl m/yuu_02/t 17
+  mask no rect 0 0 343 204
+  mask no - poly 60,138 84,138 92,150 80,160 72,152 64,158 66,170 72,178 80,172 92,182 84,192 60,192 46,178 46,152
+  @g281 alpha set 0 in no
+  @g281 crop 46 138 46 54
+  @g281 scale 5 10 texel
+  paste g281 26 65
+  piece g282 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 116,136 148,133 155,145 148,158 156,178 155,182 138,182 132,170 130,182 114,182
+  @g282 alpha set 0 in no
+  @g282 crop 114 133 42 49
+  @g282 scale 5 10 texel
+  paste g282 32 65
+  piece g283 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 200,136 240,136 240,182 200,182
+  @g283 alpha set 0 in no
+  @g283 crop 200 136 40 46
+  @g283 scale 5 10 texel
+  paste g283 38 65
+  piece g284 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 84,136 98,134 114,182 94,182 92,176 84,176 82,182 64,182
+  @g284 alpha set 0 in no
+  @g284 crop 64 134 50 48
+  @g284 flip y
+  @g284 crop 0 0 96 48
+  piece g284b tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 84,136 98,134 114,182 94,182 92,176 84,176 82,182 64,182
+  @g284b alpha set 0 in no
+  @g284b crop 64 134 50 48
+  @g284b flip y
+  @g284 paste g284b 44 0
+  @g284 scale 4 10 texel
+  paste g284 44 65
+  piece g285 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 112,148 145,148 145,186 112,186
+  @g285 alpha set 0 in no
+  @g285 crop 112 148 33 38
+  @g285 scale 5 10 texel
+  paste g285 49 65
+  piece b3 tpl e/us/effect.tpl 102
+  @b3 map where s<0.2 v>=0.5 : #ffffff -> #e8b020
+  @b3 map where v<0.5 : #000000 -> #301020
+  @b3 scale 62 50 texel
+  paste b3 65 77
+  piece c30 model c_flower 18
+  @c30 scale 34 34 texel
+  paste c30 79 84
+  mask st3 rect 65 65 126 75
+  stamp st3 #18181c
+  piece g286 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 258,147 288,147 288,186 258,186
+  @g286 alpha set 0 in no
+  @g286 crop 258 147 30 39
+  mask cu rect 14 26 30 39
+  @g286 alpha set 0 in cu
+  @g286 scale 8 10 texel
+  paste g286 78 65
+  piece g287 tpl m/yuu_02/t 18
+  mask no rect 0 0 343 204
+  mask no - poly 84,136 98,134 114,182 94,182 92,176 84,176 82,182 64,182
+  @g287 alpha set 0 in no
+  @g287 crop 64 134 50 48
+  @g287 scale 8 10 texel
+  paste g287 87 65
+  piece g288 tpl m/yuu_02/t 20
+  mask no rect 0 0 343 204
+  mask no - poly 112,148 145,148 145,186 112,186
+  @g288 alpha set 0 in no
+  @g288 crop 112 148 33 38
+  @g288 scale 8 10 texel
+  paste g288 96 65
+  piece g289 tpl m/yuu_02/t 17
+  mask no rect 0 0 343 204
+  mask no - poly 140,140 170,140 170,192 140,192
+  @g289 alpha set 0 in no
+  @g289 crop 140 140 30 52
+  @g289 scale 8 10 texel
+  paste g289 105 65
+end
+
