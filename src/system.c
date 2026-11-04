@@ -16,6 +16,10 @@
 #include "libc_decls.h"
 #ifdef TARGET_PC
 void portSecondPlayerRoute(void);
+void portCompanionRoute(void); /* port/include/port/companion.h */
+#endif
+#ifdef TTYD_BACKEND_AURORA
+void portSettingsHintFrame(void);
 #endif
 
 #define HALF_PI 1.570796f
@@ -660,6 +664,10 @@ void makeKey(void) {
 #endif
 #ifdef TARGET_PC
     portSecondPlayerRoute(); /* a second player for the partner in battle (second_player_pc.c) */
+    portCompanionRoute();    /* a tap on the second screen, read as input (companion_pc.c) */
+#endif
+#ifdef TTYD_BACKEND_AURORA
+    portSettingsHintFrame(); /* the first start's notice: where the settings are (settings_hint_aurora.c) */
 #endif
     gp->keyDataValid = 1;
 }

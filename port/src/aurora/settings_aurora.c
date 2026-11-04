@@ -433,10 +433,31 @@ int portSettingsPeek(const char* userPath, const char* key, int def) {
     return value;
 }
 
+/* online co-op's guest plays on the host's settings: nothing written while
+ * that lasts (online_lobby.cpp) */
+static int sHoldSaves;
+
+void portSettingsHoldSaves(int hold) {
+    sHoldSaves = hold;
+}
+
+/* a setting's value for this run, never saved (online co-op's guest) */
+void portSettingsSetForRun(const char* key, const char* value) {
+    const Field* f = field(key);
+    if (f != NULL) {
+        set(f, value);
+    } else {
+        portSettingsExtraForce(key, value);
+    }
+}
+
 void portSettingsSave(void) {
     SDL_IOStream* io;
     size_t i;
     portSettingsApply();
+    if (sHoldSaves) {
+        return;
+    }
     io = SDL_IOFromFile(sPath, "w");
     if (io == NULL) {
         return;

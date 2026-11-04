@@ -82,6 +82,10 @@ void portResumeFlush(void) {
     sLastWrite = sFrame;
 }
 
+int portResumeHave(void) {
+    return on() && sHave;
+}
+
 /* once a retrace (vi_aurora.c) */
 void portResumeFrame(void) {
     sFrame++;

@@ -23,6 +23,7 @@
 #include "port/audio_mix.h"
 #include "port/gameplus.h"
 #include "port/luigi.h"
+#include "port/music.h"
 #endif
 #include "evt/evt_story.h"
 
@@ -10904,6 +10905,9 @@ BOOL PORT_HOOKABLE(psndBGMOn_f_d)(u32 flags, char* bgm_name, u32 fadetime, u32 f
     s32 id;
     u32 ft;
     u32 fl;
+#ifdef TARGET_PC
+    SoundBGMEntry* heard;
+#endif
     // FAKE: fo/ft/fl copies of the params; flags is reused as a holder for the vol value and fadetime for the PSND_FADE_RESTART test
     // (blocks copy-propagation of ft); the dead guard after the early return (gz is always 0, no code) gives ft and fo a
     // second definition so they stay their own registers (target r31/r25)
@@ -11058,6 +11062,10 @@ BOOL PORT_HOOKABLE(psndBGMOn_f_d)(u32 flags, char* bgm_name, u32 fadetime, u32 f
     if (id == 0) {
         return FALSE;
     }
+#ifdef TARGET_PC
+    // Music shuffle (port/include/port/music.h): the disc track heard; psbgm keeps the one asked for
+    heard = &psbgmlist[portMusicPick(id, idx)];
+#endif
     flags = (bgm->volume = entry->volume);
     vol = flags;
     bgm->listId = id;
@@ -11079,8 +11087,11 @@ BOOL PORT_HOOKABLE(psndBGMOn_f_d)(u32 flags, char* bgm_name, u32 fadetime, u32 f
         }
 #ifdef TARGET_PC
         salPcCategory(PORT_MIX_MUSIC);
-#endif
+        portMusicNext(heard - psbgmlist); // the player's own file for it, if there is one
+        SoundSSPlayCh(bgm->streamId, (heard->flags & SFX_FLAG_STREAM) ? heard->path : entry->path);
+#else
         SoundSSPlayCh(bgm->streamId, entry->path);
+#endif
 #ifdef TARGET_PC
         salPcCategory(PORT_MIX_SFX);
 #endif

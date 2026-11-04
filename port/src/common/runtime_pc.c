@@ -20,6 +20,10 @@ void ttyd_srand(unsigned int seed) {
     sRandNext = seed;
 }
 
+/* MSL's fdlibm sets errno on a domain error (port/include/port/fdlibm_pc.h):
+ * its own, nothing reads it */
+int ttyd_fdlibm_errno;
+
 u32 portRandState(void) {
     return sRandNext;
 }

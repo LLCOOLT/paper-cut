@@ -56,6 +56,12 @@ static void mutexUnlock(void) { pthread_mutex_unlock(&globalMutex); }
  * 4-byte bool typedef that sal.h's prototypes were declared with. */
 #undef bool
 static SDL_AudioStream* sStream;
+/* online co-op's lockstep (port/include/port/platform.h): the device's stream
+ * fed by salPcAuroraPump, rendered per frame on the game's thread, so the
+ * sequencer keeps to the game's frames on both computers (the game waits on
+ * sounds), instead of the device pulling it in wall time */
+static int sPush;
+int portLockstep(void);
 #endif
 
 #define QUANTUM_FRAMES 160
@@ -142,9 +148,19 @@ static void SDLCALL audioCallback(void* user, SDL_AudioStream* stream, int addit
  * game's waits on sound still advance. */
 void salPcAuroraPump(double seconds) {
   static double due;
+  static int sPrimed;
   s16 buf[QUANTUM_FRAMES * 2];
-  if (sStream != NULL || !sStarted) {
+  if ((sStream != NULL && !sPush) || !sStarted) {
     return;
+  }
+  if (sPush && !sPrimed) {
+    /* a little silence first (about 60 ms), so the device has some in hand
+     * while the frames' audio follows at the game's pace */
+    memset(buf, 0, sizeof(buf));
+    for (sPrimed = 0; sPrimed < OUTPUT_RATE * 6 / 100 / QUANTUM_FRAMES; sPrimed++) {
+      SDL_PutAudioStreamData(sStream, buf, sizeof(buf));
+    }
+    sPrimed = 1;
   }
   due += seconds * OUTPUT_RATE;
   if (due > OUTPUT_RATE / 4) {
@@ -153,6 +169,11 @@ void salPcAuroraPump(double seconds) {
   while (due >= QUANTUM_FRAMES) {
     salPcRender(buf, QUANTUM_FRAMES);
     due -= QUANTUM_FRAMES;
+    /* to the device unless it already has plenty (the game ran ahead of
+     * the wall clock): the rendering is the game's either way */
+    if (sPush && SDL_GetAudioStreamQueued(sStream) < (int)(OUTPUT_RATE * 4 / 5 * sizeof(s16) * 2 / 4)) {
+      SDL_PutAudioStreamData(sStream, buf, sizeof(buf));
+    }
   }
 }
 #else
@@ -287,8 +308,9 @@ bool salInitAi(SND_SOME_CALLBACK callback, u32 unk, u32* outFreq) {
     if (!SDL_WasInit(SDL_INIT_AUDIO) && !SDL_InitSubSystem(SDL_INIT_AUDIO)) {
       fprintf(stderr, "MusyX: SDL audio init failed: %s\n", SDL_GetError());
     } else {
-      sStream = SDL_OpenAudioDeviceStream(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &spec, audioCallback,
-                                          NULL);
+      sPush = portLockstep(); /* online: fed per frame, no callback */
+      sStream = SDL_OpenAudioDeviceStream(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &spec,
+                                          sPush ? NULL : audioCallback, NULL);
       if (sStream == NULL) {
         fprintf(stderr, "MusyX: no audio device: %s\n", SDL_GetError());
       } else {

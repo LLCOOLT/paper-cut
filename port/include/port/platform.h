@@ -84,6 +84,13 @@ void portFastClockFrame(void);
  * draws between the game's (interp_aurora.c), whose clock reads would move it */
 s64 portFastClockGet(void);
 void portFastClockSet(s64 t);
+/* Aurora: the game runs the same from the same input ($TTYD_FAST, or online
+ * co-op's lockstep: the virtual clock, disc reads within their frame, audio
+ * rendered per frame); portLockstepBegin starts it with the host's clock
+ * (os_time_aurora.c) */
+int portLockstep(void);
+void portLockstepBegin(s64 base);
+s64 portRealTime(void);
 /* Stop the game (the caller holds the main thread), its clock and audio, e.g.
  * while the window is minimized or the app is in the background; nests
  * (port/src/common/pause_pc.c). Game time does not advance while paused. */

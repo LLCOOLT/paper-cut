@@ -3,7 +3,9 @@
  * named by $TTYD_AUDIO_WAV); the DVD stream is mixed on top like on Aurora. */
 #include <dolphin/types.h>
 #include "port/dtk_pc.h"
+#include "port/music.h"
 
 void portAudioMixExtra(s16* out, u32 frames) {
     portDTKMix(out, frames, 32000);
+    portMusicMix(out, frames); /* the player's own music (port/include/port/music.h) */
 }

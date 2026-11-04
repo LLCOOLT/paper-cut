@@ -7,6 +7,7 @@
 // game and the launcher: F9 quieter, F10 louder (Shift: a step of 1), F3 mute,
 // with a bar shown on the screen for a moment.
 #include "port/settings.h"
+#include "port/tr.h"
 
 #include <SDL3/SDL.h>
 #include <imgui.h>
@@ -100,7 +101,7 @@ void channelRow(const Channel& c) {
   ImGui::TableNextColumn();
   ImGui::AlignTextToFramePadding();
   if (*mute) {
-    ImGui::TextDisabled("%s (muted)", c.name);
+    ImGui::TextDisabled(portTr("%s (muted)"), c.name);
   } else {
     ImGui::TextUnformatted(c.name);
   }
@@ -154,7 +155,7 @@ void mixerSection(int) {
     }
     ImGui::EndTable();
   }
-  if (ImGui::Button("Reset to 100%")) {
+  if (ImGui::Button(portTrLabel("Reset to 100%"))) {
     for (const Channel& c : kChannels) {
       *volumeOf(c) = 100;
       *portSettingsDeclare(c.muteKey, 0, 0, 1) = 0;
@@ -163,15 +164,15 @@ void mixerSection(int) {
   }
   ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
 #if defined(__ANDROID__) || (defined(__APPLE__) && TARGET_OS_IPHONE)
-  ImGui::TextWrapped("Tap a speaker to mute or unmute. The device's own volume buttons still set its volume.");
+  ImGui::TextWrapped("%s", portTr("Tap a speaker to mute or unmute. The device's own volume buttons still set its volume."));
 #else
-  ImGui::TextWrapped("Click a speaker to mute or unmute. Keys anywhere: F9 quieter, F10 louder (with Shift, by 1), "
-                     "F3 mute.");
+  ImGui::TextWrapped("%s", portTr("Click a speaker to mute or unmute. Keys anywhere: F9 quieter, F10 louder (with Shift, by 1), "
+                     "F3 mute."));
 #endif
   ImGui::PopStyleColor();
 #if !defined(__ANDROID__) && !(defined(__APPLE__) && TARGET_OS_IPHONE)
   bool bg = s->muteUnfocused != 0;
-  if (ImGui::Checkbox("Mute while in the background", &bg)) {
+  if (ImGui::Checkbox(portTrLabel("Mute while in the background"), &bg)) {
     s->muteUnfocused = bg ? 1 : 0;
     changed(true);
   }

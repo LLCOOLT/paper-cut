@@ -3,6 +3,8 @@
 
 #ifdef TARGET_PC
 #include "port/platform.h"
+#include "port/online.h"
+#include "port/view.h"
 #ifdef TTYD_BACKEND_AURORA
 void portKeyboardActivate(void);              /* port/settings/settings_ui.cpp */
 void portKeyboardApplyPad(PADStatus* pad); /* port/settings/settings_ui.cpp */
@@ -83,6 +85,8 @@ void DEMOPadRead(void) {
 #ifdef TTYD_BACKEND_AURORA
     portKeyboardApplyPad(Pad); /* the stick's second keys, the arrows by default */
 #endif
+    portViewPad(Pad); /* the free camera's C-stick, mirror mode's controls (this player's own) */
+    portOnlineApplyPad(Pad); /* online co-op: both players' input, the same in both games (online_pc.c) */
 #endif
     PADClamp(Pad);
     DemoNumValidPads = 0;

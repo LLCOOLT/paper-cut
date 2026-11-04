@@ -37,6 +37,7 @@
 #include "system.h"
 #include "port/aurora_pc.h"
 #include "port/platform.h"
+#include "port/view.h"
 #include "port/widescreen.h"
 
 #undef bool
@@ -266,6 +267,7 @@ static void drawScene(void) {
     GXInvalidateVtxCache();
     GXInvalidateTexAll();
     dispSort();
+    portViewBegin(); /* as camDraw */
     for (id = 0; id < CAMERA_MAX; id++) {
         CameraEntry* camera = camGetPtr((CameraId)id);
         if (camera->flags & 1) {
@@ -284,6 +286,8 @@ static void drawScene(void) {
         dispDraw((CameraId)id);
         sysDummyDraw(camera->view);
     }
+    portViewEnd();
+    portWidescreenCameraDone();
     GXSetZMode(GX_TRUE, GX_LEQUAL, GX_TRUE);
     GXSetColorUpdate(GX_TRUE);
     GXSetAlphaCompare(GX_ALWAYS, 0, GX_AOP_OR, GX_ALWAYS, 0);

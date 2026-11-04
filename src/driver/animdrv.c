@@ -7303,6 +7303,44 @@ AnimationWork work;
 Mtx g_modeling_mtx_stack[32];
 #endif
 
+#ifdef TARGET_PC
+#include "port/cosmetics.h"
+/* Cosmetics (port/include/port/cosmetics.h): a loaded texture file's
+ * textures, as animSetMaterial_Texture reads them */
+int portAnimTextures(const char* file, PortTexInfo* out, int max) {
+    TEXPalette* pal;
+    s32 i, n;
+    if (wp->textures == NULL) {
+        return 0; /* (before animInit) */
+    }
+    for (i = 0; i < wp->totalTextures; i++) {
+        AnimationTextureFile* t = &wp->textures[i];
+        if (!t->active || t->handle == NULL || t->handle->data == NULL || strcmp(t->handle->filename, file) != 0) {
+            continue;
+        }
+        pal = *(TEXPalette**)t->handle->data;
+        if (pal == NULL) {
+            return 0;
+        }
+        for (n = 0; n < (s32)pal->numDescriptors && n < max; n++) {
+            TEXDescriptor* d = TEXGet(pal, n);
+            if (d == NULL || d->textureHeader == NULL) {
+                break;
+            }
+            out[n].data = d->textureHeader->data;
+            out[n].width = d->textureHeader->width;
+            out[n].height = d->textureHeader->height;
+            out[n].format = (int)d->textureHeader->format;
+            out[n].tlut = d->CLUTHeader != NULL ? d->CLUTHeader->data : NULL;
+            out[n].tlutFormat = d->CLUTHeader != NULL ? (int)d->CLUTHeader->format : 0;
+            out[n].tlutCount = d->CLUTHeader != NULL ? d->CLUTHeader->numEntries : 0;
+        }
+        return n;
+    }
+    return 0;
+}
+#endif
+
 #ifdef PORT_MODS
 #include "port/hooks/src_driver_animdrv.inc"
 #endif

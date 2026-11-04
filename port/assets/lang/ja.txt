@@ -286,8 +286,8 @@ The European release's text, read from its disc image in the launcher's library.
 Difficulty
 むずかしさ
 
-Enemies' HP and the damage their attacks do. Custom uses the two sliders below.
-敵のＨＰと、敵の攻撃のダメージ。「カスタム」は下の2つのスライダーを使います。
+Enemies' HP and the damage their attacks do. Custom uses Enemy HP (custom) and Enemy attack (custom).
+敵のＨＰと、敵の攻撃のダメージ。「カスタム」は「敵のＨＰ（カスタム）」と「敵の攻撃（カスタム）」を使います。
 
 Enemy HP (custom)
 敵のＨＰ（カスタム）
@@ -364,8 +364,8 @@ Frame advance
 Fixed RNG
 乱数の固定
 
-The game's random numbers start from the seed below at each room and battle, so a room plays out the same way each try.
-各部屋と各バトルで、ゲームの乱数が下のシードから始まります。部屋が毎回同じように進みます。
+The game's random numbers start from a fixed seed (All settings, RNG) at each room and battle, so a room plays out the same way each try.
+各部屋と各バトルで、ゲームの乱数が決まったシード（すべての設定の「乱数」）から始まります。部屋が毎回同じように進みます。
 
 Stats
 ステータス
@@ -382,8 +382,8 @@ Story and flags
 Memory watch corner
 メモリ監視の位置
 
-The fields ticked below, kept on screen.
-下でチェックした項目を画面に表示し続けます。
+The fields ticked in Memory watch (All settings), kept on screen.
+「メモリ監視」（すべての設定）でチェックした項目を画面に表示し続けます。
 
 Memory watch
 メモリ監視
@@ -421,8 +421,8 @@ No crash reports.
 Menu language
 メニューの言語
 
-Paper Cut's own menus: this page, the launcher's and the Start menu's Settings tab. Auto: the Japanese release's Japanese, the European release's text language, otherwise the computer's. The game's own text follows the disc.
-Paper Cut独自のメニュー：このページ、ランチャーのページ、スタートメニューの「設定」タブ。自動：日本版は日本語、ヨーロッパ版はテキストの言語、それ以外はコンピューターの言語。ゲーム自体のテキストはディスクのままです。
+Paper Cut's own menus: the settings page, the launcher's and the Start menu's Settings tab. Auto: the Japanese release's Japanese, the European release's text language, otherwise the computer's. The game's own text follows the disc.
+Paper Cut独自のメニュー：設定ページ、ランチャーのページ、スタートメニューの「設定」タブ。自動：日本版は日本語、ヨーロッパ版はテキストの言語、それ以外はコンピューターの言語。ゲーム自体のテキストはディスクのままです。
 
 Quick resume
 クイックレジューム
@@ -535,8 +535,8 @@ Scenes already seen on this file go faster or straight to their end: the Crystal
 Fast travel
 ファストトラベル
 
-Travel to a hub from this page: Rogueport, then one more per Crystal Star.
-このページから町へ移動：ゴロツキタウン、そしてクリスタルスター1つごとに1か所ずつ増えます。
+Travel to a hub from the settings page (All settings, Travel to): Rogueport, then one more per Crystal Star.
+設定ページ（すべての設定の「行き先」）から町へ移動：ゴロツキタウン、そしてクリスタルスター1つごとに1か所ずつ増えます。
 
 Faster battle menus
 バトルメニューを速く
@@ -586,8 +586,8 @@ Play as Luigi
 Luigi in Mario's place, with Mario's moves: in the field, in battle, in the menus and the credits, with his own footsteps, and the text calls him Luigi. The other Luigi, in Rogueport's inn and his scenes, stays out of sight. Saves are not changed.
 マリオの代わりにルイージが、マリオの技で登場します：フィールド、バトル、メニュー、スタッフロールで、ルイージ自身の足音で、テキストもルイージと呼びます。ゴロツキタウンの宿屋や彼のシーンにいるもう1人のルイージは見えなくなります。セーブは変わりません。
 
-A new file starts with what you choose here, taken from the file below. Choose before starting the new file.
-新しいファイルを、ここで選んだものを下のファイルから引き継いで始めます。新しいファイルを始める前に選んでください。
+A new file starts with what you choose here, taken from the file New Game+ from file names. Choose before starting the new file.
+新しいファイルを、ここで選んだものを「引き継ぐファイル」のファイルから引き継いで始めます。新しいファイルを始める前に選んでください。
 
 New Game+ from file
 引き継ぐファイル
@@ -604,8 +604,8 @@ This file's progress.
 Badge loadouts
 バッジのセット
 
-Store the badges worn as one of four named sets and wear a set again from this page, in the field (only when Mario's BP covers it). Kept beside the save, not in it.
-つけているバッジを名前つきの4つのセットのどれかに保存し、このページからフィールドでまたつけられます（マリオのＢＰが足りる時だけ）。セーブの中ではなく隣に保存されます。
+Store the badges worn as one of four named sets and wear a set again from the settings page (All settings, Loadouts), in the field (only when Mario's BP covers it). Kept beside the save, not in it.
+つけているバッジを名前つきの4つのセットのどれかに保存し、設定ページ（すべての設定の「セット」）からフィールドでまたつけられます（マリオのＢＰが足りる時だけ）。セーブの中ではなく隣に保存されます。
 
 Loadouts
 セット
@@ -619,8 +619,8 @@ A Save Block also offers to store items and take them out, as the Rogueport shop
 Walk-speed boost
 歩く速さのブースト
 
-Mario walks and runs faster while the control below is held.
-下の操作を押している間、マリオが速く歩いて走ります。
+Mario walks and runs faster while the Boost key or Boost button is held.
+「ブーストのキー」か「ブーストのボタン」を押している間、マリオが速く歩いて走ります。
 
 Boost speed
 ブーストの速さ
@@ -670,8 +670,8 @@ Messages in the field print three times as fast, and their windows open, turn pa
 Jukebox
 ジュークボックス
 
-Lists the music heard on this file below; pick a track to play it.
-このファイルで聞いた音楽を下に並べます。曲を選ぶと流れます。
+Lists the music heard on this file on the settings page (All settings, Tracks); pick a track to play it.
+このファイルで聞いた音楽を設定ページ（すべての設定の「曲」）に並べます。曲を選ぶと流れます。
 
 Tracks
 曲
@@ -991,8 +991,8 @@ The story is over: go wherever you like.
 Second player (co-op)
 2人目のプレイヤー（協力プレイ）
 
-Controller 2 plays the partner. In battle: its moves, its action commands and its guards. In the field: the stick walks it anywhere, A hops, B talks to or hits what it's next to, X is its ability, L or R the next partner. Mario's Y calls it back, and it comes back by itself when it gets far away. On a phone or tablet, pair two controllers.
-コントローラー2がなかまを操作します。バトルでは技、アクションコマンド、ガードを。フィールドでは、スティックで好きな所へ歩き、Aでジャンプ、Bで隣のものに話しかけたりたたいたり、Xでなかまの能力、LかRで次のなかま。マリオのYで呼び戻せて、遠く離れると自動で戻ります。スマホやタブレットでは、コントローラーを2つ接続してください。
+Player 2 plays the partner: once it's on, A on another controller joins. In battle: its moves, its action commands and its guards. In the field: the stick walks it anywhere, A hops, B talks to or hits what it's next to, X is its ability, L or R the next partner. Mario's Y calls it back, and it comes back by itself when it gets far away. On a phone or tablet, pair two controllers.
+プレイヤー2が仲間を操作します：オンにすると、別のコントローラーのAで参加できます。バトルでは技、アクションコマンド、ガードを。フィールドでは、スティックで好きな所へ歩き、Aでジャンプ、Bで隣の相手と話すか叩き、Xで仲間の能力、LかRで次の仲間。マリオのYで呼び戻せ、遠く離れると自分で戻ってきます。スマホやタブレットでは、コントローラーを2つペアリングしてください。
 
 Controller 2
 コントローラー2
@@ -1026,3 +1026,924 @@ Texture upscaling
 
 The game's textures made larger by an edge-following filter as they load: smoother lines on paper and signs. More video memory. From the next start.
 ゲームのテクスチャを読み込むときに、輪郭に沿うフィルターで拡大します。紙や看板の線がなめらかになります。ビデオメモリを多く使います。次回の起動から。
+
+# 0.4.0: the sections' own text, the controller's button names
+
+None yet. Add the disc image of your copy of the game (.iso, .rvz, .gcm...).
+まだありません。あなたのゲームのディスクイメージ（.iso、.rvz、.gcm...）を追加してください。
+
+Remove from list
+リストから外す
+
+Add the disc image of your copy of the game to play. The list remembers it, and each version (Japanese, US, European) plays with its own build of the port.
+遊ぶには、あなたのゲームのディスクイメージを追加してください。リストが覚えておき、各版（日本版、北米版、欧州版）はそれぞれ専用のビルドで動きます。
+
+Disc ID %s
+ディスクID %s
+
+Where you left off, %04d-%02d-%02d %02d:%02d
+前回の続き、%04d-%02d-%02d %02d:%02d
+
+Start from the title
+タイトルから始める
+
+Skip to this disc next time
+次回はこのディスクから直接始める
+
+To see this screen again: Settings > System in the game.
+この画面をもう一度見るには：ゲーム内の 設定 > システム。
+
+Paper Cut plays Paper Mario: The Thousand-Year Door as a native program, built from the game's C decompilation, with no emulator. You need your own copy of the game: a disc image of the Japanese, US or European release.
+Paper Cutは、ゲームのCの逆コンパイルから作った、エミュレーターなしのネイティブなプログラムとして「ペーパーマリオRPG」を動かします。あなた自身のゲーム、つまり日本版・北米版・欧州版のディスクイメージが必要です。
+
+Paper Cut %s
+Paper Cut %s
+
+This build: %s (%s)
+このビルド：%s（%s）
+
+Paper Cut is under the MIT licence. It is built with: Aurora (MIT), SDL 3 (zlib), Dawn (BSD 3-Clause), nod (MIT), Dear ImGui (MIT), FreeType (FreeType License), libpng (libpng License), zlib (zlib), Zstandard (BSD 3-Clause), xxHash (BSD 2-Clause), {fmt} (MIT), Abseil (Apache 2.0), Tracy (BSD 3-Clause), SQLite (public domain), MusyX (MIT), SGI's GLU tessellator (SGI Free Software License B 2.0), and the Fredoka typeface (SIL Open Font License 1.1).
+Paper CutはMITライセンスです。使っているもの：Aurora (MIT)、SDL 3 (zlib)、Dawn (BSD 3-Clause)、nod (MIT)、Dear ImGui (MIT)、FreeType (FreeType License)、libpng (libpng License)、zlib (zlib)、Zstandard (BSD 3-Clause)、xxHash (BSD 2-Clause)、{fmt} (MIT)、Abseil (Apache 2.0)、Tracy (BSD 3-Clause)、SQLite（パブリックドメイン）、MusyX (MIT)、SGIのGLUテッセレーター (SGI Free Software License B 2.0)、フォントFredoka (SIL Open Font License 1.1)。
+
+The licence texts are in THIRD_PARTY.txt of Paper Cut's desktop packages and in its source (docs/THIRD_PARTY.md).
+ライセンスの文は、Paper Cutのデスクトップ版パッケージのTHIRD_PARTY.txtと、ソース（docs/THIRD_PARTY.md）にあります。
+
+The licence texts are in THIRD_PARTY.txt and OFL.txt beside Paper Cut.
+ライセンスの文は、Paper Cutの隣のTHIRD_PARTY.txtとOFL.txtにあります。
+
+Play
+遊ぶ
+
+About
+情報
+
+Controller buttons
+コントローラーのボタン
+
+Player 1
+プレイヤー1
+
+Player 2
+プレイヤー2
+
+Player 3
+プレイヤー3
+
+Player 4
+プレイヤー4
+
+Connect a controller to change which of its buttons does what.
+コントローラーをつなぐと、どのボタンで何をするか変えられます。
+
+No controller is this player: choose one under Controllers.
+このプレイヤーのコントローラーがありません：「コントローラー」で選んでください。
+
+Press a button...
+ボタンを押してください...
+
+GameCube %s
+ゲームキューブの%s
+
+Swap A and B
+AとBを入れかえる
+
+Restore defaults
+初期設定に戻す
+
+Keyboard keys
+キーボードのキー
+
+Restore default keys
+キーを初期設定に戻す
+
+Copy the last crash report
+前回のクラッシュレポートをコピー
+
+Copied
+コピーしました
+
+last_crash.txt in the save folder; paste it to whoever is helping you.
+セーブフォルダーのlast_crash.txt。手伝ってくれる人に貼りつけてください。
+
+The game crashed last time
+前回ゲームがクラッシュしました
+
+A report of where it crashed was saved. Copy it and paste it to whoever is helping you.
+どこでクラッシュしたかのレポートを保存しました。コピーして、手伝ってくれる人に貼りつけてください。
+
+Copy report
+レポートをコピー
+
+Your saves are kept the same as in a folder in iCloud Drive (pick the TTYD folder the Mac version uses to share them). The newer copy of each save wins; replaced saves are kept in Backups.
+セーブをiCloud Driveのフォルダーと同じに保ちます（共有するには、Mac版が使うTTYDフォルダーを選んでください）。各セーブは新しい方が残り、置きかえたセーブはBackupsに残ります。
+
+Choose another iCloud Drive folder
+別のiCloud Driveフォルダーを選ぶ
+
+Choose an iCloud Drive folder
+iCloud Driveフォルダーを選ぶ
+
+Your saves are kept the same as in iCloud Drive's TTYD folder (choose that folder on an iPhone or iPad to share them). The newer copy of each save wins; replaced saves are kept in Backups.
+セーブをiCloud DriveのTTYDフォルダーと同じに保ちます（共有するには、iPhoneかiPadでそのフォルダーを選んでください）。各セーブは新しい方が残り、置きかえたセーブはBackupsに残ります。
+
+Your saves are kept the same as in a folder a sync service keeps the same across computers: OneDrive, Dropbox, Google Drive, Syncthing, or iCloud for Windows' iCloud Drive (its TTYD folder, to share them with a Mac or an iPhone). The newer copy of each save wins; replaced saves are kept in Backups.
+セーブを、同期サービスがコンピューター間で同じに保つフォルダーと同じに保ちます：OneDrive、Dropbox、Google Drive、Syncthing、またはWindows用iCloudのiCloud Drive（MacやiPhoneと共有するにはそのTTYDフォルダー）。各セーブは新しい方が残り、置きかえたセーブはBackupsに残ります。
+
+Save states are not available in this build yet.
+ステートセーブは、このビルドではまだ使えません。
+
+Slot %d
+スロット%d
+
+Save
+セーブ
+
+Load
+ロード
+
+Refresh
+更新
+
+Open the warps folder
+ワープのフォルダーを開く
+
+Status: %s
+状態：%s
+
+Seed: %s
+シード：%s
+
+Choose a seed...
+シードを選ぶ...
+
+Server
+サーバー
+
+Slot
+スロット
+
+Password
+パスワード
+
+Connect
+接続
+
+Disconnect
+切断
+
+Clear
+消す
+
+No setting matches.
+一致する設定がありません。
+
+%s: %d of %d earned
+%s：%d／%d達成
+
+Load a save file to keep its achievements.
+実績を記録するにはセーブファイルをロードしてください。
+
+The Practice tab changed this game: none are given until a file is loaded again.
+練習タブがこのゲームを変えました：ファイルをもう一度ロードするまで実績はもらえません。
+
+Now: %s
+現在：%s
+
+A preset sets the Accessibility tab's difficulty and assists, Retry on Game Over and the rules below. Change any of them after: the preset shows as Custom. They apply from the next battle.
+プリセットは、アクセシビリティタブのむずかしさと補助、「ゲームオーバーからやり直す」、下のルールを設定します。あとでどれを変えてもかまいません：プリセットは「カスタム」になります。次のバトルから反映されます。
+
+A character's model and animations (the paper cut-out's model file) and its textures, as the game reads them, to exports/ in the user folder. tools/port/character_tool.py turns the export into PNGs and files Blender opens, and the edited files into a mod that replaces the character (docs/CHARACTERS.md).
+キャラクターのモデルとアニメーション（紙の切り抜きのモデルファイル）とテクスチャを、ゲームが読むままの形で、ユーザーフォルダーのexports/に書き出します。tools/port/character_tool.pyが書き出したものをPNGとBlenderで開けるファイルに、編集したファイルをキャラクターを置きかえるMODにします（docs/CHARACTERS.md）。
+
+No models found on the disc.
+ディスクにモデルが見つかりません。
+
+%zu of %zu
+%zu／%zu
+
+Export
+書き出す
+
+Open the exports folder
+書き出しフォルダーを開く
+
+Mario is a_mario (field; _r his back), e_mario (story scenes) and b_mario (battle), with variants; a partner or NPC is usually c_<name>. Filter "mario" and export them all for the whole set.
+マリオはa_mario（フィールド。_rは後ろ姿）、e_mario（ストーリーのシーン）、b_mario（バトル）とその派生です。仲間やNPCはたいていc_<名前>です。「mario」で絞りこんで、全部まとめて書き出してください。
+
+battery %d%%
+バッテリー %d%%
+
+charging
+充電中
+
+Held: %s
+押している：%s
+
+nothing
+なし
+
+Dead zones
+デッドゾーン
+
+Triggers click at a point (as the GameCube's L and R)
+トリガーが一点で入る（ゲームキューブのLとRのように）
+
+No controller connected. Any Xbox, PlayStation, Switch, GameCube (through an adapter), MFi or other USB or Bluetooth controller works; one this page doesn't list can be set up below.
+コントローラーがつながっていません。Xbox、PlayStation、Switch、ゲームキューブ（アダプター経由）、MFi、そのほかのUSBやBluetoothのコントローラーが使えます。このページにないものは下で設定できます。
+
+Not playing
+遊ばない
+
+Controller
+コントローラー
+
+, through an adapter
+、アダプター経由
+
+Hide test
+テストを隠す
+
+Test
+テスト
+
+Make it a player to set its dead zones.
+デッドゾーンを設定するには、プレイヤーにしてください。
+
+Player 1 plays; player 2 can play the partner in battle and in the field (Second player, below). The buttons of each player are set under Controller buttons.
+プレイヤー1が遊び、プレイヤー2はバトルとフィールドで仲間を動かせます（下の「2人目のプレイヤー」）。各プレイヤーのボタンは「コントローラーのボタン」で設定します。
+
+Couldn't open it: 
+開けませんでした：
+
+SDL didn't take the mapping: 
+SDLがマッピングを受けつけませんでした：
+
+%s is set up. It's in the list above now, and next time.
+%sの設定ができました。上のリストに入り、次回からも使えます。
+
+%s is set up for now; it couldn't be saved for next time.
+%sは今回だけ設定できました。次回のために保存できませんでした。
+
+The controller went away.
+コントローラーが外れました。
+
+Step %d of %d: press %s
+ステップ %d／%d：%sを押してください
+
+Skip
+飛ばす
+
+Cancel
+キャンセル
+
+Set it up
+設定する
+
+Every connected controller is recognised.
+つながっているコントローラーはすべて認識されています。
+
+A controller listed here works once you press each of its buttons when asked. Mappings you make are kept in gamecontrollerdb.txt in the save folder.
+ここにあるコントローラーは、聞かれたとおりに各ボタンを押せば使えるようになります。作ったマッピングはセーブフォルダーのgamecontrollerdb.txtに保存されます。
+
+Twitch channel
+Twitchチャンネル
+
+The channel's name, as in twitch.tv/<name>. Its chat is read as a guest: no account needed.
+チャンネルの名前（twitch.tv/<名前>のように）。チャットはゲストとして読むので、アカウントはいりません。
+
+Viewers type: !gift !rock !star !drain !bingo !cheer !leave !join. In battles only.
+視聴者が入力：!gift !rock !star !drain !bingo !cheer !leave !join。バトル中だけ。
+
+Lately:
+最近：
+
+Paper white
+紙の白
+
+Highlight boost
+ハイライトの強さ
+
+Not available here.
+ここでは使えません。
+
+Needs a display with HDR turned on (on Windows: Settings, System, Display, Use HDR) and the Direct3D or Metal graphics backend. Vulkan and OpenGL, as on Linux and Android, show SDR only.
+HDRがオンのディスプレイ（Windows：設定、システム、ディスプレイ、HDRを使用する）と、Direct3DかMetalのグラフィックスが必要です。LinuxやAndroidのようにVulkanやOpenGLではSDRだけです。
+
+Showing in HDR.
+HDRで表示中。
+
+Turn on Fast travel above to use it.
+使うには上の「ファストトラベル」をオンにしてください。
+
+In the field only; the trip starts once this page is closed.
+フィールドでだけ。このページを閉じると移動します。
+
+Shown while a game is in the field or a battle.
+ゲームがフィールドかバトルの間に表示されます。
+
+Crystal Stars: %d of 7
+クリスタルスター：%d／7
+
+Trouble Center: %d of %d solved
+トラブルセンター：%d／%d解決
+
+Not solved yet: #%s
+まだ解決していない：#%s
+
+Badges found: %d of %d
+見つけたバッジ：%d／%d
+
+Recipes cooked: %d of %d
+作った料理：%d／%d
+
+Tattle Log: %d of %d
+ものしりの記録：%d／%d
+
+Star Pieces held: %d    Shine Sprites held: %d
+ほしのかけら：%d    シャイン：%d
+
+Turn on Badge loadouts above to use them.
+使うには上の「バッジのセット」をオンにしてください。
+
+Shown while a game is being played.
+ゲームを遊んでいる間に表示されます。
+
+%2d badges
+バッジ%2d個
+
+  empty  
+  空き
+
+Store worn
+つけているものを保存
+
+Wear
+つける
+
+None on this map (or no game in the field).
+このマップにはありません（またはフィールドにいません）。
+
+Turn on Jukebox above: tracks are listed once heard on this file.
+上の「ジュークボックス」をオンにしてください：このファイルで聞いた曲が並びます。
+
+%d track heard on this file
+このファイルで聞いた曲：%d曲
+
+%d tracks heard on this file
+このファイルで聞いた曲：%d曲
+
+Back to the map's music
+マップの音楽に戻す
+
+A track plays until the next room's music, or the button above.
+次の部屋の音楽か、上のボタンまで曲が流れます。
+
+Every boss in story order, one fight after another, timed: from Lord Crump and Blooper to the Shadow Queen (16 fights). Fleeing a fight starts it again.
+ストーリーの順に全部のボス、1戦ずつ、タイムつき：最初のボスからカゲの女王まで（16戦）。バトルから逃げると、そのバトルをやり直します。
+
+Loadout
+装備
+
+Mario as he is in this file.
+このファイルのままのマリオ。
+
+Level 15: 30 HP, 25 FP, 21 BP, Super Boots and Hammer, every partner, four Star Powers, eight items.
+レベル15：ＨＰ30、ＦＰ25、ＢＰ21、スーパーブーツとスーパーハンマー、仲間全員、スターパワー4つ、アイテム8個。
+
+Level 30: 60 HP, 50 FP, 51 BP, Ultra Boots and Hammer, every partner upgraded, all Star Powers, eight items.
+レベル30：ＨＰ60、ＦＰ50、ＢＰ51、ウルトラブーツとウルトラハンマー、仲間全員パワーアップ、スターパワー全部、アイテム8個。
+
+The loadout is lent for the run: Mario is as he was after it. Your badges stay as they are.
+装備はこの挑戦の間だけ借りるもので、終わるとマリオは元どおりです。バッジもそのままです。
+
+Start the boss rush
+ボスラッシュを始める
+
+Stop the boss rush
+ボスラッシュをやめる
+
+Start it while a file is in play.
+ファイルを遊んでいる間に始めてください。
+
+Best (%s): %s
+最高（%s）：%s
+
+The Glitz Pit's teams one after another, each match with a random condition (the Pit's own); keep it or the run ends. The enemies get stronger each round.
+とうぎ場のチームを次々と、毎試合ランダムな条件つきで（とうぎ場のもの）。守れないと終わりです。ラウンドごとに敵が強くなります。
+
+Start the endless Glitz Pit
+エンドレスとうぎ場を始める
+
+Stop
+やめる
+
+It opens once the story's Glitz Pit is done (chapter 3).
+ストーリーのとうぎ場（3章）が終わると開きます。
+
+Best: %d rounds
+最高：%dラウンド
+
+Any boss you've beaten in this file's story, fought again: then back to the room you were in. Losing is a Game Over, as in the story (save first, or turn on Retry on Game Over).
+このファイルのストーリーで倒したボスと、もう一度バトル：そのあとは元いた部屋に戻ります。負けるとストーリーと同じくゲームオーバーです（先にセーブするか、「ゲームオーバーからやり直す」をオンに）。
+
+Choose one while a file is in play.
+ファイルを遊んでいる間に選んでください。
+
+Fight
+戦う
+
+Not yet
+まだ
+
+No boss beaten yet on this file.
+このファイルではまだボスを倒していません。
+
+What it changes
+変えるもの
+
+Hooks (code that runs in place of or around the game's functions) show once its code runs.
+フック（ゲームの関数の代わりやその前後に動くコード）は、そのコードが動くと表示されます。
+
+Its settings
+このMODの設定
+
+Default
+初期値
+
+A mod is a folder or a .ttydmod/.zip file with a mod.json, in the mods folder. Where two mods change the same thing, the one higher in the list wins. Changes apply to what the game loads next (the next room or battle); textures change at once; a mod's code starts with the game.
+MODは、modsフォルダーの中の、mod.jsonの入ったフォルダーか.ttydmod/.zipファイルです。2つのMODが同じものを変えるときは、リストで上にある方が勝ちます。変更はゲームが次に読みこむもの（次の部屋やバトル）から反映され、テクスチャはすぐに変わり、MODのコードはゲームと一緒に始まります。
+
+Reload
+読みこみ直す
+
+Open the mods folder
+modsフォルダーを開く
+
+No mods yet.
+まだMODがありません。
+
+Code: running.
+コード：動いています。
+
+Code: starts the next time the game starts.
+コード：次にゲームを始めたときに動きます。
+
+Code: still running; it stops the next time the game starts.
+コード：まだ動いています。次にゲームを始めたときに止まります。
+
+A Dolphin texture pack works as it comes: put its folder in the textures folder, or in a mod's textures folder.
+DolphinのテクスチャパックはそのままでOKです：そのフォルダーをtexturesフォルダーか、MODのtexturesフォルダーに入れてください。
+
+Open the textures folder
+texturesフォルダーを開く
+
+Reload the packs
+パックを読みこみ直す
+
+Reads the packs again while you play: edit a texture, reload, see it.
+遊びながらパックを読み直します：テクスチャを編集して、読みこみ直して、確かめられます。
+
+Dump textures
+テクスチャを書き出す
+
+Dump textures (when the game runs)
+テクスチャを書き出す（ゲームの起動中）
+
+Saves each texture the game draws that no pack replaces yet, under the name a pack uses, to make or extend a pack. Leave it off to play: it slows the game a little.
+ゲームが描くテクスチャのうち、まだどのパックも置きかえていないものを、パックが使う名前で保存します。パックを作ったり広げたりするためのものです。遊ぶときはオフに：少しゲームが重くなります。
+
+Open the dump folder
+書き出しフォルダーを開く
+
+Count again
+数え直す
+
+Replaced: %d textures (%d files).
+置きかえ済み：テクスチャ%d枚（ファイル%d個）。
+
+Seen in play: %d textures, %d of them replaced now (%d%%).
+プレイ中に見たもの：テクスチャ%d枚、うち%d枚を置きかえ中（%d%%）。
+
+The coverage counts what the dump folder holds: each texture the game drew while dumping was on and no pack replaced it then. Play with dumping on to see more of the game.
+カバー率は書き出しフォルダーの中身を数えます：書き出しがオンの間にゲームが描き、そのときどのパックも置きかえていなかったテクスチャです。書き出しをオンにして遊ぶほど、ゲームの多くが見えます。
+
+Coverage: turn on dumping and play a while; the textures the game draws are then counted against the packs.
+カバー率：書き出しをオンにしてしばらく遊ぶと、ゲームが描いたテクスチャがパックと照らし合わされます。
+
+A pack names each texture by its size, format and a hash of its pixels and palette, as Dolphin does. Two files with one name replace the same texture, and only one is used: between mods, the one higher in the list; the mods before the textures folder; inside one folder, either, so keep one. Textures with the same pixels share a name, so one file replaces them all; a name with $ for a hash covers every texture it stands for.
+パックはDolphinと同じく、サイズ、形式、ピクセルとパレットのハッシュで各テクスチャに名前をつけます。同じ名前の2つのファイルは同じテクスチャを置きかえ、使われるのは1つだけです：MOD同士ならリストで上にある方、texturesフォルダーよりMOD、1つのフォルダーの中ならどちらか（なので1つだけ残してください）。ピクセルが同じテクスチャは名前も同じなので、1つのファイルで全部置きかわります。ハッシュの代わりに$を使った名前は、それが表すすべてのテクスチャに使われます。
+
+(the first 200)
+（最初の200）
+
+Start
+スタート
+
+Restart
+やり直す
+
+Split
+スプリット
+
+Reset
+リセット
+
+Game %s   Real %s
+ゲーム %s   実時間 %s
+
+Read splits.txt again
+splits.txtを読み直す
+
+Port
+ポート
+
+Hold the game
+ゲームを止める
+
+One frame
+1フレーム
+
+Ten frames
+10フレーム
+
+Go on
+続ける
+
+rand() state: %u (0x%08X)
+rand()の状態：%u（0x%08X）
+
+Set now
+今設定する
+
+Fixed seed
+固定シード
+
+Badges
+バッジ
+
+Key items
+だいじなもの
+
+Give
+あげる
+
+No room
+空きがありません
+
+Held items (click to drop):
+持っているアイテム（クリックで捨てる）：
+
+Flags (GSWF)
+フラグ（GSWF）
+
+Words (GSW)
+ワード（GSW）
+
+Story (GSW 0)
+ストーリー（GSW 0）
+
+by number
+番号で
+
+Now %d: %s
+現在 %d：%s
+
+now
+現在
+
+set
+設定
+
+Shuffles the game's items among their places from a seed, with no Archipelago server: turn it on, pick the seed and what moves, then start the game and begin a new file. The same seed and choices always give the same game, so a seed can be shared.
+シードをもとに、Archipelagoのサーバーなしで、ゲームのアイテムを置き場所の間で入れかえます：オンにして、シードと動かすものを選び、ゲームを始めて新しいファイルを始めてください。同じシードと同じ選択なら必ず同じゲームになるので、シードを共有できます。
+
+This run: %s
+このプレイ：%s
+
+This run: not randomized.
+このプレイ：ランダムではありません。
+
+Use the built-in randomizer instead
+代わりに内蔵のランダマイザーを使う
+
+Randomize the game from the next start
+次の起動からゲームをランダムにする
+
+Every file played while it is on gets this seed's items, so start a new file for it, and turn it off again for your other files.
+オンの間に遊んだファイルはすべてこのシードのアイテムになります。このために新しいファイルを始め、ほかのファイルではオフに戻してください。
+
+Seed
+シード
+
+New seed
+新しいシード
+
+Any text. Empty: a random one is made at the start (and kept here).
+どんな文字でも。空なら起動時にランダムに作られます（ここに残ります）。
+
+What is shuffled
+入れかえるもの
+
+Key items, partners, the curses, hammer and boots move too, placed by the TTYD apworld's logic so the Shadow Queen can always be reached. That logic is the TTYD AP mod's open world (chapters open by items, not the story), so the mod must be installed as a code mod (Mods tab, docs/MODDING.md); without it the game can't be finished. Badges, items or Star Pieces must be shuffled too.
+だいじなもの、仲間、のろい、ハンマー、ブーツも動き、カゲの女王に必ずたどり着けるようにTTYDのapworldのロジックで置かれます。そのロジックはTTYD APモッドのオープンワールド（章がストーリーではなくアイテムで開く）なので、そのMODをコードMODとして入れる必要があります（MODタブ、docs/MODDING.md）。ないとゲームをクリアできません。バッジ、アイテム、ほしのかけらのどれかも入れかえる必要があります。
+
+Without key items the story is the game's own: only things the story never asks for move (badges, items nothing needs, Star Pieces, Shine Sprites, in the places the game hands them out itself), so every seed can be finished. No mod needed.
+だいじなものなしなら、ストーリーはゲームのままです：ストーリーが求めないものだけが動く（バッジ、何にも使わないアイテム、ほしのかけら、シャイン。ゲーム自身が渡す場所で）ので、どのシードでもクリアできます。MODはいりません。
+
+At the start, to the randomizer folder in the user folder (spoiler_<seed>.txt): where every item went and, for the open world, the order the logic expects key items to be found in.
+起動時に、ユーザーフォルダーのrandomizerフォルダーへ（spoiler_<シード>.txt）：各アイテムの行き先と、オープンワールドなら、ロジックがだいじなものを見つける順番。
+
+Check this seed
+このシードを確かめる
+
+Changes apply the next time the game starts.
+変更は次にゲームを始めたときに反映されます。
+
+Card
+カード
+
+No backups yet: one is kept each time the game saves.
+まだバックアップがありません：ゲームがセーブするたびに1つ残ります。
+
+Replace the save with this one
+このセーブで置きかえる
+
+Restore
+戻す
+
+Restore this card's saves from the launcher, before the game starts.
+このカードのセーブは、ゲームを始める前にランチャーから戻してください。
+
+The Japanese release keeps its Pianta Parlor records differently; the copy is converted. Names typed in one release's letters may look different in another.
+日本版はピアンタパーラーの記録の持ち方がちがうので、コピーは変換されます。ある版の文字で入力した名前は、別の版ではちがって見えることがあります。
+
+From
+コピー元
+
+To
+コピー先
+
+That card has no save of this game.
+そのカードにはこのゲームのセーブがありません。
+
+Copy to the card of the game that is running from the launcher, before it starts.
+動いているゲームのカードへは、始まる前にランチャーからコピーしてください。
+
+%s already has a save.
+%sにはもうセーブがあります。
+
+Open the release page
+リリースページを開く
+
+%s (muted)
+%s（ミュート）
+
+Reset to 100%
+100%に戻す
+
+Tap a speaker to mute or unmute. The device's own volume buttons still set its volume.
+スピーカーをタップでミュートと解除。本体の音量ボタンでも音量を変えられます。
+
+Click a speaker to mute or unmute. Keys anywhere: F9 quieter, F10 louder (with Shift, by 1), F3 mute.
+スピーカーをクリックでミュートと解除。どこでもキー：F9で小さく、F10で大きく（Shiftと一緒で1ずつ）、F3でミュート。
+
+Mute while in the background
+バックグラウンドではミュート
+
+Window size
+ウィンドウの大きさ
+
+Fit the picture
+画面に合わせる
+
+The window's width to the picture's shape: no bars beside it.
+ウィンドウの幅を画面の形に合わせます：横に帯が出ません。
+
+Centre
+中央へ
+
+Remember the window's size and place
+ウィンドウの大きさと場所を覚える
+
+Keep the window above others
+ウィンドウをほかより前に
+
+Drag the window's edges to any size; the picture keeps its shape. F11 or Alt+Enter: full screen. The window opens where you left it next time.
+ウィンドウのふちをどんな大きさにもドラッグできます。画面は形を保ちます。F11かAlt+Enter：全画面。次回は前に置いた場所で開きます。
+
+!rock, !drain and !leave.
+!rock、!drain、!leave。
+
+New Game+
+New Game+
+
+LiveSplit
+LiveSplit
+
+RNG
+乱数
+
+GSW and GSWF: the story's progress and what has happened.
+GSWとGSWF：ストーリーの進み具合と、起きたこと。
+
+the bottom face button (A on the GameCube)
+下のボタン（ゲームキューブのA）
+
+the right face button
+右のボタン
+
+the left face button
+左のボタン
+
+the top face button
+上のボタン
+
+Select / Back (or skip)
+Select / Back（または飛ばす）
+
+the left shoulder button
+左のショルダーボタン
+
+the right shoulder button (Z)
+右のショルダーボタン（Z）
+
+the left trigger (L)
+左のトリガー（L）
+
+the right trigger (R)
+右のトリガー（R）
+
+the d-pad up
+十字キーの上
+
+the d-pad down
+十字キーの下
+
+the d-pad left
+十字キーの左
+
+the d-pad right
+十字キーの右
+
+the left stick to the right
+左スティックを右へ
+
+the left stick down
+左スティックを下へ
+
+the right stick to the right (or skip)
+右スティックを右へ（または飛ばす）
+
+the right stick down (or skip)
+右スティックを下へ（または飛ばす）
+
+Joy-Con pair
+Joy-Conペア
+
+GameCube
+ゲームキューブ
+
+Gamepad
+ゲームパッド
+
+None
+なし
+
+Cross
+バツ
+
+Circle
+マル
+
+Square
+シカク
+
+Triangle
+サンカク
+
+Menu
+メニュー
+
+View
+ビュー
+
+Home
+ホーム
+
+Guide
+ガイド
+
+Left stick press
+左スティック押しこみ
+
+Right stick press
+右スティック押しこみ
+
+D-pad up
+十字キー上
+
+D-pad down
+十字キー下
+
+D-pad left
+十字キー左
+
+D-pad right
+十字キー右
+
+Mute
+ミュート
+
+Capture
+キャプチャー
+
+Quick access
+クイックアクセス
+
+Share
+シェア
+
+Paddle 1
+パドル1
+
+Paddle 3
+パドル3
+
+Paddle 2
+パドル2
+
+Paddle 4
+パドル4
+
+Touchpad
+タッチパッド
+
+Other button
+ほかのボタン
+
+Stick
+スティック
+
+C-stick
+Cスティック
+
+L clicks at
+Lが入る位置
+
+R clicks at
+Rが入る位置
+
+# 0.4.0: the sections' own text, the controller's button names
+
+Player 2 joined: their stick walks the partner.
+プレイヤー2が参加：スティックで仲間を動かせます。
+
+A second controller: turn on Second player (Controls) to play the partner.
+2つ目のコントローラー：仲間を動かすには「2人目のプレイヤー」（操作）をオンに。
+
+Player 2 left: the partner follows Mario.
+プレイヤー2が抜けました：仲間はマリオについていきます。
+
+# 0.4.0: the sections' own text, the controller's button names
+
+Players
+プレイヤー
+
+Player 1 (Mario): %s
+プレイヤー1（マリオ）：%s
+
+Player 1 (Mario): the keyboard
+プレイヤー1（マリオ）：キーボード
+
+Player 2 (the partner): %s
+プレイヤー2（仲間）：%s
+
+Player 2: nobody yet. Press A on another controller to join.
+プレイヤー2：まだいません。別のコントローラーのAで参加します。
+
+Player 2: nobody (co-op is off).
+プレイヤー2：いません（協力プレイはオフ）。
+
+Press A on player 2's controller...
+プレイヤー2のコントローラーのAを押してください...
+
+Stop co-op
+協力プレイをやめる
+
+Start co-op
+協力プレイを始める
+
+Choose player 2's controller
+プレイヤー2のコントローラーを選ぶ
+
+Let player 2 go
+プレイヤー2を外す
+
+Choosing player 1's controller moves it to player 2, and player 1 plays on the keyboard. Each player's buttons are set under Controller buttons.
+プレイヤー1のコントローラーを選ぶとプレイヤー2のものになり、プレイヤー1はキーボードで遊びます。各プレイヤーのボタンは「コントローラーのボタン」で設定します。
+
+Co-op is on: press A on another controller to join.
+協力プレイがオン：別のコントローラーのAで参加します。
+
+a controller
+コントローラー

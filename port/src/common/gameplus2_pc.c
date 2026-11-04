@@ -456,6 +456,10 @@ void portJukeboxPlay(int id) {
     sJukebox = id < 0 ? -1 : id;
 }
 
+int portJukeboxCalling(void) {
+    return sJukeboxCall;
+}
+
 int portJukeboxPlaying(void) {
     return sJukebox;
 }

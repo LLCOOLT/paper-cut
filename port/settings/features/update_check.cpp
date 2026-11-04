@@ -7,6 +7,7 @@
 #include "port/http.h"
 #include "port/json.h"
 #include "port/settings.h"
+#include "port/tr.h"
 #include "port/update_check.h"
 #include <SDL3/SDL.h>
 #include <imgui.h>
@@ -132,7 +133,7 @@ extern "C" void portUpdateDrawNotice(void) {
   }
   ImGui::TextColored(ImVec4(0.81f, 0.44f, 0.09f, 1.f), "Paper Cut %s is out", sVersion.c_str());
   ImGui::SameLine();
-  if (ImGui::SmallButton("Open the release page")) {
+  if (ImGui::SmallButton(portTrLabel("Open the release page"))) {
     SDL_OpenURL(sUrl.c_str());
   }
 }

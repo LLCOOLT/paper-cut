@@ -42,7 +42,7 @@ void portAudioMixExtra(s16* out, u32 frames);
  * volumes): each voice takes the category current when its sound started
  * (a sequence's voices, the sequence's), and is scaled by its category's
  * gain before it is mixed. */
-enum { SAL_PC_MUSIC, SAL_PC_SFX, SAL_PC_AMBIENCE, SAL_PC_CATEGORIES };
+enum { SAL_PC_MUSIC, SAL_PC_SFX, SAL_PC_AMBIENCE, SAL_PC_SILENT, SAL_PC_CATEGORIES };
 /* Sets the current category (cat >= 0) and returns the one before. */
 int salPcCategory(int cat);
 void salPcSetCategoryGain(int cat, float gain);

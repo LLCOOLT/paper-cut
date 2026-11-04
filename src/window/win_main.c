@@ -101,6 +101,7 @@ static WindowWork* wp;
 #ifdef TARGET_PC /* PC port: the header's prototypes are skipped on PC (these are static here) */
 static USER_FUNC(itemUseFunc);
 #include "port/gameplus.h"
+#include "port/companion.h"
 #endif
 static void winLectureKeyMask(void);
 // FAKE: the prototype this file was compiled with (u16 icon id; icondrv.h has s16/s32), so callers zero-extend the id
@@ -239,6 +240,10 @@ void PORT_HOOKABLE(winMain)(void) {
                         break;
                     }
 #ifdef TARGET_PC
+                    // the second screen's item, used as the item list would (companion_pc.c)
+                    if (mario->characterId == 0 && portCompanionFieldItem()) {
+                        break;
+                    }
                     if (mario->characterId == 0 &&
                         (quickSwap = portQuickSwapPoll(!marioBgmodeChk() ? marioGetParty() : mario->prevPartyMemberId[0])) >= 0) {
                         wp->menuSel = 1;

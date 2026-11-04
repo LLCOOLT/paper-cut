@@ -1,0 +1,115 @@
+# The second screen (port/include/port/companion.h, port/settings/features/companion.cpp, TtydCompanion.java)
+
+Second screen
+Segunda pantalla
+
+A window of its own with the Start menu's information live, the map and the battle; on another monitor when there is one. A tap there uses an item or switches partners.
+Una ventana propia con la información del menú Start en directo, el mapa y el combate; en otro monitor si lo hay. Un toque allí usa un objeto o cambia de compañero.
+
+On a device with a second display (a dual-screen handheld, a connected screen): the Start menu's information live, the map and the battle there.
+En un dispositivo con una segunda pantalla (una portátil de doble pantalla, una pantalla conectada): la información del menú Start en directo, el mapa y el combate allí.
+
+Paper Cut companion
+Compañero de Paper Cut
+
+The Start menu's information, the map and the battle show here while a game runs.
+La información del menú Start, el mapa y el combate aparecen aquí mientras se juega.
+
+Party
+Equipo
+
+Map
+Mapa
+
+Battle
+Combate
+
+Level
+Nivel
+
+Star Points
+Puntos estrella
+
+
+
+
+FP
+PF
+
+HP
+PS
+
+BP
+PM
+
+BP left
+PM libres
+
+Star Power
+Poder estelar
+
+Crystal Stars
+Estrellas de cristal
+
+With Mario
+Con Mario
+
+Away
+Fuera
+
+Tap a partner to switch.
+Toca un compañero para cambiar.
+
+The bag is empty.
+La bolsa está vacía.
+
+Use on
+Usar en
+
+Tap an item to use it.
+Toca un objeto para usarlo.
+
+Tap an item to use it; hold it for the partner.
+Toca un objeto para usarlo; mantenlo pulsado para el compañero.
+
+Items can be used in the field.
+Los objetos se usan fuera de los combates.
+
+Badges worn
+Medallas puestas
+
+No badges worn.
+Ninguna medalla puesta.
+
+Where next
+Adónde ir
+
+This room
+Esta sala
+
+No Star Pieces or Shine Sprites here.
+Aquí no hay fragmentos de estrella ni solecitos.
+
+Partner
+Compañero
+
+People
+Gente
+
+Enemies
+Enemigos
+
+No battle now.
+Ahora no hay combate.
+
+Turn
+Turno
+
+Turn order
+Orden de turnos
+
+Defense
+Defensa
+
+Not tattled yet.
+Aún sin analizar.

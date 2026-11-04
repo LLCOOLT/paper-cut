@@ -1,0 +1,25 @@
+# Music shuffle, your own music and the input display: the Start menu's Settings tab (the JP font's characters only)
+
+Music shuffle
+音がく　シャッフル
+
+Each room's music is another of the game's: field music for field music, battle music for battle music. Scenes, jingles and fanfares stay as they are. Only you hear it.
+へやの　音がくが　ゲームの　ほかの　きょくに　なります（イベントと　ファンファーレは　そのまま）
+
+Your music
+じぶんの　音がく
+
+Your files in the music folder play in place of the game's tracks they are named after.
+musicフォルダの　ファイルが　おなじ　名前の　きょくの　かわりに　ながれます
+
+Shuffle includes your music
+シャッフルに　じぶんの　音がくも
+
+Music shuffle also picks the music folder's files.
+シャッフルが　musicフォルダの　ファイルも　えらびます
+
+Input display
+コントローラー　ひょうじ
+
+The controller as the game reads it, in a corner: sticks, buttons, d-pad and triggers (with Second player on, the second controller beside it).
+コントローラーの　スティックと　ボタンを　すみに　だします

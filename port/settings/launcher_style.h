@@ -30,6 +30,9 @@ extern "C" void portUiInit(void);
 // scale (text included), and ImGui's own put back after it (the overlays).
 void launcherStyleInit(float scale);
 void launcherStyleEnd();
+// The paper style's sizes and colours alone, into s (another Dear ImGui
+// context's: the second screen, port/settings/features/companion.cpp).
+void launcherPaperStyle(ImGuiStyle& s, float scale);
 
 // The stage behind everything: backdrop, stars, spotlight, curtains,
 // valance. time in seconds (the stars twinkle). Returns the open stage's

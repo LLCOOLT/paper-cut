@@ -17,6 +17,11 @@
  * changes. Until the second player moves, the partner follows Mario as
  * always. Moving Mario, menus and Mario's guards stay controller 1's.
  *
+ * In the field "1P" over Mario and "2P" over the partner show whose is whose (2P bright while
+ * the second player moves it, faint while it follows Mario), and a notice at
+ * the bottom of the screen says when a second controller joins or leaves;
+ * with Second player off, one joining says where to turn it on (once a run).
+ *
  * makeKey (system.c) fills the game's per-controller input each frame, then
  * calls portSecondPlayerRoute, which copies controller 2's state over
  * controller 1's for the partner's turn, or takes the second player's field
@@ -38,6 +43,11 @@
 #include "system.h"
 #include "wide_x.h"
 #include "driver/camdrv.h"
+#include "driver/dispdrv.h"
+#include "manager/fontmgr.h"
+#include "port/tr.h"
+#include "port/online.h"
+#include "port/view.h"
 #include <dolphin/pad.h>
 #include <math.h>
 #include <stdio.h>
@@ -50,8 +60,17 @@ MapObjectWork* portMobjGetWork(void);                      /* mobjdrv.c */
 
 static int* sOn;
 
-/* a second controller (or $TTYD_P2_PRESS's, tests: input_pc.c) */
+/* co-op is on: the setting, or an online session (player 2 is the guest) */
+static int coopOn(void) {
+    return (sOn != NULL && *sOn) || portOnlineActive();
+}
+
+/* a second controller (or $TTYD_P2_PRESS's, tests: input_pc.c; online, the
+ * guest's) */
 static int secondPad(void) {
+    if (portOnlineActive()) {
+        return 1;
+    }
 #ifdef TTYD_BACKEND_AURORA
     static int sTest = -1;
     if (sTest < 0) {
@@ -78,7 +97,7 @@ static int partnerHasTurn(void) {
  * 2 (its record, kept every frame by BattlePadManager), so the second player
  * defends the partner they play. Mario's guards stay controller 1's. */
 BattleWorkPad* portSecondPlayerGuardPad(BattleUnit* unit) {
-    if (sOn == NULL || !*sOn || unit == NULL || _battleWorkPointer == NULL || unit->alliance != 0 ||
+    if (!coopOn() || unit == NULL || _battleWorkPointer == NULL || unit->alliance != 0 ||
         unit->currentKind < TYPE_PARTNER_MIN || unit->currentKind == UNIT_MARIO) {
         return NULL;
     }
@@ -110,6 +129,9 @@ static struct {
 static int onScreen(PartyEntry* party) {
     Vec pos = party->position, screen;
     const float edge = 304.0f * portWidescreenEdgeScale() - 12.0f;
+    if (portOnlineActive()) {
+        return 1; /* each player's picture may be a different shape: the leash alone, the same in both games */
+    }
     getScreenPoint(&pos, &screen);
     return screen.x > -edge && screen.x < edge && screen.y > -228.0f && screen.y < 236.0f;
 }
@@ -251,7 +273,7 @@ static void fieldRoute(void) {
 int portCoopPartnerWalk(PartyEntry* party) {
     MarioWork* mario;
     float mag, dx, dz;
-    if (sOn == NULL || !*sOn || !secondPad() || party == NULL || party != partyGetPtr(marioGetPartyId())) {
+    if (!coopOn() || !secondPad() || party == NULL || party != partyGetPtr(marioGetPartyId())) {
         return 0;
     }
     mario = marioGetPtr();
@@ -328,11 +350,153 @@ int portCoopPartnerWalk(PartyEntry* party) {
     return 1;
 }
 
+/* --- What the players see: the partner's tag, the join and leave notices --- */
+
+#define NOTICE_FRAMES 210
+
+static struct {
+    const char* text; /* English (portTrGame at drawing) */
+    int age;
+} sNotice;
+
+/* a player's tag over whom they play: "1P" (red) over Mario, "2P" (blue)
+ * over the partner, faint while it follows Mario */
+static void tag(const Vec* top, const char* text, GXColor color) {
+    Vec screen;
+    float w;
+    getScreenPoint((Vec*)top, &screen);
+    if (portViewMirrored()) {
+        screen.x = -screen.x; /* mirror mode: the picture, not the 2D layer, is flipped */
+    }
+    FontDrawStart_alpha(color.a);
+    FontDrawEdge();
+    FontDrawColor(color);
+    FontDrawScale(0.7f);
+    w = FontGetMessageWidth(text) * 0.7f;
+    FontDrawString(screen.x - w * 0.5f, screen.y + 18.0f, text);
+}
+
+static void tagDisp(CameraId camId, void* param) {
+    PartyEntry* party = (PartyEntry*)param;
+    MarioWork* mario = marioGetPtr();
+    Vec top;
+    (void)camId;
+    top = mario->position;
+    top.y += 52.0f; /* above his cap */
+    tag(&top, "1P", (GXColor){0xFF, 0x70, 0x60, 0xFF});
+    top.x = party->position.x + party->dispOfs.x;
+    top.y = party->position.y + party->dispOfs.y + party->height + 8.0f;
+    top.z = party->position.z + party->dispOfs.z;
+    tag(&top, "2P", (GXColor){0x6C, 0xC8, 0xFF, sCoop.free ? 0xFF : 0x70});
+}
+
+static void noticeDisp(CameraId camId, void* param) {
+#ifdef TTYD_BACKEND_AURORA
+    const char* text = portTrGame(sNotice.text);
+#else
+    const char* text = sNotice.text; /* the headless build has no translations */
+#endif
+    const int left = NOTICE_FRAMES - sNotice.age;
+    const u8 alpha = left < 30 ? (u8)(0xFF * left / 30) : 0xFF;
+    const float maxW = 560.0f; /* inside the 4:3 picture, a little in from its edges */
+    char lines[2][160];
+    int count = 1, i;
+    (void)camId;
+    (void)param;
+    snprintf(lines[0], sizeof(lines[0]), "%s", text);
+    lines[1][0] = '\0';
+    if (FontGetMessageWidth(text) * 0.75f > maxW) {
+        /* two lines, broken at the space nearest the middle (a translation runs longer) */
+        const int len = (int)strlen(lines[0]);
+        int at = -1, k;
+        for (k = 0; k < len; k++) {
+            if (lines[0][k] == ' ' && (at < 0 || abs(k - len / 2) < abs(at - len / 2))) {
+                at = k;
+            }
+        }
+        if (at > 0) {
+            snprintf(lines[1], sizeof(lines[1]), "%s", lines[0] + at + 1);
+            lines[0][at] = '\0';
+            count = 2;
+        }
+    }
+    FontDrawStart_alpha(alpha);
+    FontDrawEdge();
+    FontDrawColor((GXColor){0xFF, 0xFF, 0xFF, alpha});
+    for (i = 0; i < count; i++) {
+        float scale = 0.75f, w = FontGetMessageWidth(lines[i]) * scale;
+        if (w > maxW) {
+            scale *= maxW / w; /* still too wide (no space to break at): smaller */
+            w = maxW;
+        }
+        FontDrawScale(scale);
+        FontDrawString(-w * 0.5f, (count == 2 ? -138.0f : -150.0f) - i * 22.0f, lines[i]);
+    }
+}
+
+static void notice(const char* english) {
+    sNotice.text = english;
+    sNotice.age = 0;
+    printf("[coop] %s\n", english);
+    fflush(stdout);
+}
+
+/* the same notice for online co-op's news (online_pc.c) */
+void portCoopNotice(const char* english) {
+    notice(english);
+}
+
+/* each frame, before the partner's own: the notices, a joining or leaving
+ * second controller (seen in the field while Mario has the controls, so one
+ * joining in a scene is told once it's over, and one there from the start is
+ * told at the first room), and the tag */
+static void seenFrame(void) {
+    static int sHad = 0, sHinted, sWasOn;
+    const int has = secondPad();
+    if (portOnlineActive()) {
+        sHad = sWasOn = 1; /* online: player 2 is the guest, its notices online_pc.c's */
+    }
+    if (fieldControl() && *sOn && !sWasOn && !has) {
+        notice("Co-op is on: press A on another controller to join.");
+    }
+    if (fieldControl()) {
+        sWasOn = *sOn;
+    }
+    if (fieldControl() && has != sHad) {
+        if (has && *sOn) {
+            notice("Player 2 joined: their stick walks the partner.");
+        } else if (has && !sHinted) {
+            sHinted = 1;
+            notice("A second controller: turn on Second player (Controls) to play the partner.");
+        } else if (!has && *sOn) {
+            notice("Player 2 left: the partner follows Mario.");
+        }
+        sHad = has;
+    }
+    if (sNotice.text != NULL) {
+        if (++sNotice.age >= NOTICE_FRAMES) {
+            sNotice.text = NULL;
+        } else if (!gp->inBattle) {
+            dispEntry(CAMERA_2D, 903.0f, 1, noticeDisp, NULL);
+        }
+    }
+    if (coopOn() && has && fieldControl()) {
+        PartyEntry* party = partyGetPtr(marioGetPartyId());
+        if (party != NULL) {
+            dispEntry(CAMERA_2D, 902.0f, 1, tagDisp, party);
+        }
+    }
+}
+
 void portSecondPlayerRoute(void) {
     if (sOn == NULL) {
         sOn = portSettingsDeclare("second_player", 0, 0, 1);
     }
-    if (!*sOn || gp == NULL) {
+    if (gp == NULL) {
+        return;
+    }
+    seenFrame();
+    if (!coopOn()) {
         return;
     }
     if (!secondPad()) {

@@ -3,6 +3,7 @@
 // is earned is drawn by practice.cpp's overlay.
 #include "port/practice.h"
 #include "port/settings.h"
+#include "port/tr.h"
 #include <imgui.h>
 #include <algorithm>
 #include <cstdio>
@@ -18,13 +19,13 @@ void list(int) {
     earned += portAchievementEarned(i) != nullptr ? 1 : 0;
   }
   if (file[0] != '\0') {
-    ImGui::Text("%s: %d of %d earned", file, earned, portAchievementCount());
+    ImGui::Text(portTr("%s: %d of %d earned"), file, earned, portAchievementCount());
   } else {
-    ImGui::TextDisabled("Load a save file to keep its achievements.");
+    ImGui::TextDisabled("%s", portTr("Load a save file to keep its achievements."));
   }
   if (portPracticeTainted()) {
     ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
-    ImGui::TextWrapped("The Practice tab changed this game: none are given until a file is loaded again.");
+    ImGui::TextWrapped("%s", portTr("The Practice tab changed this game: none are given until a file is loaded again."));
     ImGui::PopStyleColor();
   }
   if (!ImGui::BeginTable("achievements", 3, ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingStretchProp)) {

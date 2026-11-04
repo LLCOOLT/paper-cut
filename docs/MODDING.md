@@ -56,7 +56,7 @@ A zip may hold everything in one top-level folder (zipping the mod's folder does
 
 ### overlay/: disc files
 
-A file at `overlay/<path>` replaces the disc's file at `/<path>`, or adds it if the disc has none. Paths are the disc's, case doesn't matter: `overlay/msg/US/global.txt` replaces the US English messages, `overlay/a/...` models, `overlay/rel/...` an area's data, `overlay/sound/...` sounds and music.
+A file at `overlay/<path>` replaces the disc's file at `/<path>`, or adds it if the disc has none. Paths are the disc's, case doesn't matter: `overlay/msg/US/global.txt` replaces the US English messages, `overlay/a/...` models, `overlay/rel/...` an area's data, `overlay/sound/...` sounds and music. For music there is also a simpler way that needs no mod: a WAV file (or OGG, MP3, FLAC where the build has their decoders) in the `music` folder in the user folder, named after the track it replaces (`music/tracks.txt` lists the names; Settings > Audio > Your music). It wins over an overlay's stream for that track.
 
 The files are in the disc's own formats, as the game reads them. A file the game has already loaded stays until it loads it again: a map's files on the next room, a battle's on the next battle, `global.txt` at the next start.
 

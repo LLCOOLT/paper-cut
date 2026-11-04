@@ -24,11 +24,29 @@ import org.libsdl.app.SDLSurface;
  */
 public class TtydActivity extends SDLActivity {
     private static final String TAG = "ttyd";
+    private TtydCompanion companion; // the second screen (TtydCompanion.java)
 
     @Override
     protected String[] getLibraries() {
         // SDL3 is inside libmain.so (AURORA_SDL3_LINKAGE=static).
         return new String[] {"main"};
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (companion == null) {
+            companion = new TtydCompanion(this);
+        }
+        companion.start();
+    }
+
+    @Override
+    protected void onPause() {
+        if (companion != null) {
+            companion.stop();
+        }
+        super.onPause();
     }
 
     @Override

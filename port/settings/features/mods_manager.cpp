@@ -4,14 +4,18 @@
 // coverage against the textures seen in play, name collisions, dumping and
 // reloading while the game runs.
 #include "port/mods.h"
+#include "port/restart.h"
 #include "port/settings.h"
+#include "port/tr.h"
 #include <SDL3/SDL.h>
 #include <imgui.h>
 #ifdef __APPLE__
 #include <TargetConditionals.h>
 #endif
 #include <cstdio>
+#include <set>
 #include <string>
+#include <utility>
 
 namespace {
 
@@ -62,7 +66,7 @@ std::string summary(int index) {
 
 // Everything it changes, by kind, each list folded.
 void changes(int index) {
-  if (!ImGui::TreeNode("What it changes")) {
+  if (!ImGui::TreeNode(portTrLabel("What it changes"))) {
     return;
   }
   for (int k = 0; k < PORT_MOD_CHANGE_COUNT; k++) {
@@ -108,12 +112,18 @@ void conflicts(int index) {
 }
 
 // The mod's own settings (mod.json "options"), read by its code.
+// the mods' options that apply from the next start, changed this run (Restart now beside them)
+std::set<std::pair<int, int>>& changedNextStart() {
+  static std::set<std::pair<int, int>> sChanged;
+  return sChanged;
+}
+
 void options(int index, const PortModInfo* mod) {
   if (mod->optionCount == 0) {
     return;
   }
   ImGui::Indent();
-  ImGui::TextUnformatted("Its settings");
+  ImGui::TextUnformatted(portTr("Its settings"));
   for (int o = 0; o < mod->optionCount; o++) {
     const PortModOption* opt = portModsGetOption(index, o);
     int value = opt->value;
@@ -138,13 +148,19 @@ void options(int index, const PortModInfo* mod) {
     }
     if (value != opt->fallback) {
       ImGui::SameLine();
-      if (ImGui::SmallButton("Default")) {
+      if (ImGui::SmallButton(portTrLabel("Default"))) {
         value = opt->fallback;
         edited = true;
       }
     }
     if (edited) {
       portModsSetOption(index, o, value);
+      if (opt->nextStart) {
+        changedNextStart().insert(std::make_pair(index, o));
+      }
+    }
+    if (opt->nextStart && changedNextStart().count(std::make_pair(index, o)) != 0) {
+      portRestartButton(); // (port/include/port/restart.h)
     }
     std::string text = opt->note != nullptr ? opt->note : "";
     if (opt->nextStart) {
@@ -165,12 +181,12 @@ void modsSection(int inGame) {
   note("A mod is a folder or a .ttydmod/.zip file with a mod.json, in the mods folder. Where two mods change "
        "the same thing, the one higher in the list wins. Changes apply to what the game loads next (the next "
        "room or battle); textures change at once; a mod's code starts with the game.");
-  if (ImGui::Button("Reload")) {
+  if (ImGui::Button(portTrLabel("Reload"))) {
     portModsReload();
   }
 #ifdef MODS_OPEN_FOLDERS
   ImGui::SameLine();
-  if (ImGui::Button("Open the mods folder")) {
+  if (ImGui::Button(portTrLabel("Open the mods folder"))) {
     openFolder(portModsDir());
   }
 #endif
@@ -244,13 +260,13 @@ void texturesSection(int inGame) {
   note("A Dolphin texture pack works as it comes: put its folder in the textures folder, or in a mod's "
        "textures folder.");
 #ifdef MODS_OPEN_FOLDERS
-  if (ImGui::Button("Open the textures folder")) {
+  if (ImGui::Button(portTrLabel("Open the textures folder"))) {
     openFolder(std::string(portSettingsUserPath()) + "/textures");
   }
   ImGui::SameLine();
 #endif
   ImGui::BeginDisabled(!inGame);
-  if (ImGui::Button("Reload the packs")) {
+  if (ImGui::Button(portTrLabel("Reload the packs"))) {
     portModsReloadTextures();
     sCounted = false;
   }
@@ -260,7 +276,7 @@ void texturesSection(int inGame) {
   }
 
   bool dump = inGame ? sStats.dumping != 0 || s->dumpTextures != 0 : s->dumpTextures != 0;
-  if (ImGui::Checkbox(inGame ? "Dump textures" : "Dump textures (when the game runs)", &dump)) {
+  if (ImGui::Checkbox(portTrLabel(inGame ? "Dump textures##dump" : "Dump textures (when the game runs)##dump"), &dump)) {
     s->dumpTextures = dump ? 1 : 0;
     portSettingsSave();
     if (inGame) {
@@ -271,21 +287,21 @@ void texturesSection(int inGame) {
   note("Saves each texture the game draws that no pack replaces yet, under the name a pack uses, to make or "
        "extend a pack. Leave it off to play: it slows the game a little.");
 #ifdef MODS_OPEN_FOLDERS
-  if (inGame && portModsDumpDir()[0] != '\0' && ImGui::Button("Open the dump folder")) {
+  if (inGame && portModsDumpDir()[0] != '\0' && ImGui::Button(portTrLabel("Open the dump folder"))) {
     openFolder(portModsDumpDir());
   }
 #endif
 
   // counted again on demand, and every 10 s while dumping adds files
   static Uint64 sCountedAt;
-  if (!sCounted || ImGui::Button("Count again") || (sStats.dumping && SDL_GetTicks() - sCountedAt > 10000)) {
+  if (!sCounted || ImGui::Button(portTrLabel("Count again")) || (sStats.dumping && SDL_GetTicks() - sCountedAt > 10000)) {
     portModsTextureStats(&sStats);
     sCounted = true;
     sCountedAt = SDL_GetTicks();
   }
-  ImGui::Text("Replaced: %d textures (%d files).", sStats.replacements, sStats.files);
+  ImGui::Text(portTr("Replaced: %d textures (%d files)."), sStats.replacements, sStats.files);
   if (sStats.dumped > 0) {
-    ImGui::Text("Seen in play: %d textures, %d of them replaced now (%d%%).", sStats.dumped, sStats.dumpedCovered,
+    ImGui::Text(portTr("Seen in play: %d textures, %d of them replaced now (%d%%)."), sStats.dumped, sStats.dumpedCovered,
                 sStats.dumpedCovered * 100 / sStats.dumped);
     note("The coverage counts what the dump folder holds: each texture the game drew while dumping was on and "
          "no pack replaced it then. Play with dumping on to see more of the game.");

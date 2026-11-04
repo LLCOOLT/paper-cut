@@ -4,9 +4,15 @@
 //   <user>/<JAP|USA|EUR>/Card A/<name>.gci          the cards (Aurora's)
 //   <user>/Backups/<JAP|USA|EUR>/<name> <date>.gci  the backups, <date> the
 //                                                   saved state's own time
+// Both work while a game runs, on its own card too: the file is written once
+// the game isn't writing the card, the save there backed up first, and the
+// game starts again to read it (port/include/port/restart.h); a phone or
+// tablet app, which can't restart itself, does that from the launcher.
 #include "port/cardsave_pc.h"
+#include "port/restart.h"
 #include "port/save_convert.h"
 #include "port/settings.h"
+#include "port/tr.h"
 #include <SDL3/SDL.h>
 #include <imgui.h>
 #include <algorithm>
@@ -128,44 +134,97 @@ std::string dateOf(const std::string& backup) {
 
 std::string sStatus;
 
+// Restores backup b (in release's backups) over its save file, the save as it
+// is now backed up first, so this can be undone
+bool restore(char release, const std::string& b) {
+  const std::string name = b.substr(0, b.size() - 24) + ".gci"; // "<stem>.gci"
+  SDL_CreateDirectory(cardDir(release).c_str());
+  backUp(release, name);
+  const bool ok = SDL_CopyFile((backupDir(release) + "/" + b).c_str(), (cardDir(release) + "/" + name).c_str());
+  sStatus = ok ? "Restored the save of " + dateOf(b) + "." : std::string("Could not restore it: ") + SDL_GetError();
+  return ok;
+}
+
+// Writes a converted save over dst (to's), the save there backed up first
+bool writeSave(char to, const std::string& toName, const std::string& dst, const std::vector<uint8_t>& out, int slots,
+               const char* toLabel) {
+  SDL_CreateDirectory(cardDir(to).c_str());
+  backUp(to, toName);
+  SDL_IOStream* f = SDL_IOFromFile((dst + ".tmp").c_str(), "wb");
+  const bool ok = f != nullptr && SDL_WriteIO(f, out.data(), out.size()) == out.size();
+  if (f != nullptr) {
+    SDL_CloseIO(f);
+  }
+  if (ok && SDL_RenamePath((dst + ".tmp").c_str(), dst.c_str())) {
+    char text[160];
+    std::snprintf(text, sizeof(text), "Copied to %s (%d of its files and their backups).", toLabel, slots);
+    sStatus = text;
+    return true;
+  }
+  SDL_RemovePath((dst + ".tmp").c_str());
+  sStatus = std::string("Could not write it: ") + SDL_GetError();
+  return false;
+}
+
+// The running game's own card, changed from here: written once the game isn't
+// writing the card (it has the card's files in memory and would write them
+// back), then the game started again so it reads them (Restart now, with no
+// quick resume: the save is the one to load). What waits for the card:
+struct CardChange {
+  char release;
+  std::string backup;                 // a backup to restore, or
+  std::string toName, dst, label;     // a converted save to write
+  std::vector<uint8_t> bytes;
+  int slots;
+} sChange;
+
 void backupsSection(int inGame) {
   static int sRelease = -1;
   static std::string sConfirm; // the backup whose Restore was pressed once
   if (sRelease < 0) {
     sRelease = releaseIndex(PORT_GAME_ID[3]);
   }
-  ImGui::Combo("Card", &sRelease, kReleaseNames, 3);
+  ImGui::Combo(portTrLabel("Card"), &sRelease, kReleaseNames, 3);
   const char release = kReleases[sRelease];
   const std::vector<std::string> backups = glob(backupDir(release), "*.gci");
   if (backups.empty()) {
-    ImGui::TextDisabled("No backups yet: one is kept each time the game saves.");
+    ImGui::TextDisabled("%s", portTr("No backups yet: one is kept each time the game saves."));
   }
+  // the running game's card: restored, then the game restarted to load it
+  // (a phone or tablet app can't restart itself: from the launcher there)
   const bool running = inGame && release == PORT_GAME_ID[3];
+  const bool locked = running && !portRestartSupported();
   for (size_t i = backups.size(); i-- > 0;) { // newest first
     const std::string& b = backups[i];
     ImGui::PushID(b.c_str());
     ImGui::AlignTextToFramePadding();
     ImGui::TextUnformatted(dateOf(b).c_str());
     ImGui::SameLine();
-    ImGui::BeginDisabled(running);
-    if (ImGui::SmallButton(sConfirm == b ? "Replace the save with this one" : "Restore")) {
+    ImGui::BeginDisabled(locked || portRestartWaiting());
+    const char* label = sConfirm != b    ? (running ? "Restore and restart##restore" : "Restore##restore")
+                        : running        ? "Replace the save with this one and restart##restore"
+                                         : "Replace the save with this one##restore";
+    if (ImGui::SmallButton(portTrLabel(label))) {
       if (sConfirm != b) {
         sConfirm = b;
+      } else if (running) {
+        sChange = CardChange{release, b, {}, {}, {}, {}, 0};
+        portRestartRequestWith(0, [] { return restore(sChange.release, sChange.backup) ? 1 : 0; });
+        sConfirm.clear();
       } else {
-        const std::string name = b.substr(0, b.size() - 24) + ".gci"; // "<stem>.gci"
-        SDL_CreateDirectory(cardDir(release).c_str());
-        backUp(release, name); // the save as it is now, so this can be undone
-        sStatus = SDL_CopyFile((backupDir(release) + "/" + b).c_str(), (cardDir(release) + "/" + name).c_str())
-                      ? "Restored the save of " + dateOf(b) + "."
-                      : std::string("Could not restore it: ") + SDL_GetError();
+        restore(release, b);
         sConfirm.clear();
       }
     }
     ImGui::EndDisabled();
     ImGui::PopID();
   }
-  if (running && !backups.empty()) {
-    ImGui::TextDisabled("Restore this card's saves from the launcher, before the game starts.");
+  if (locked && !backups.empty()) {
+    ImGui::TextDisabled("%s", portTr("Restore this card's saves from the launcher, before the game starts."));
+  } else if (running && !backups.empty()) {
+    ImGui::TextDisabled("%s", portTr(portRestartWaiting() ? "Restarting when the game has finished saving..."
+                                                          : "The game starts again to load it; the save as it is "
+                                                            "now is kept as a backup."));
   }
 }
 
@@ -176,9 +235,9 @@ void copySection(int inGame) {
     sFrom = releaseIndex(PORT_GAME_ID[3]);
     sTo = sFrom == 0 ? 1 : 0;
   }
-  ImGui::TextWrapped("The Japanese release keeps its Pianta Parlor records differently; the copy is converted. "
-                     "Names typed in one release's letters may look different in another.");
-  if (ImGui::Combo("From", &sFrom, kReleaseNames, 3) | ImGui::Combo("To", &sTo, kReleaseNames, 3)) {
+  ImGui::TextWrapped("%s", portTr("The Japanese release keeps its Pianta Parlor records differently; the copy is converted. "
+                     "Names typed in one release's letters may look different in another."));
+  if (ImGui::Combo(portTrLabel("From"), &sFrom, kReleaseNames, 3) | ImGui::Combo(portTrLabel("To"), &sTo, kReleaseNames, 3)) {
     sConfirm = false;
   }
   const char from = kReleases[sFrom], to = kReleases[sTo];
@@ -187,13 +246,18 @@ void copySection(int inGame) {
   portSaveFileName(to, toName, sizeof(toName));
   const std::string src = cardDir(from) + "/" + fromName, dst = cardDir(to) + "/" + toName;
   const bool have = isFile(src), replaces = isFile(dst);
+  // to the running game's card: written, then the game restarted to load it
+  // (from the launcher on a phone or tablet, which can't restart the app)
   const bool running = inGame && to == PORT_GAME_ID[3];
+  const bool locked = running && !portRestartSupported();
   if (!have) {
-    ImGui::TextDisabled("That card has no save of this game.");
+    ImGui::TextDisabled("%s", portTr("That card has no save of this game."));
   }
-  ImGui::BeginDisabled(!have || from == to || running);
-  const char* label = sConfirm ? "Replace its save (a backup is kept)" : "Copy";
-  if (ImGui::Button(label)) {
+  ImGui::BeginDisabled(!have || from == to || locked || portRestartWaiting());
+  const char* label = sConfirm ? (running ? "Replace its save and restart (a backup is kept)"
+                                          : "Replace its save (a backup is kept)")
+                               : (running ? "Copy and restart" : "Copy");
+  if (ImGui::Button(portTrLabel(label))) {
     if (replaces && !sConfirm) {
       sConfirm = true;
     } else {
@@ -202,31 +266,28 @@ void copySection(int inGame) {
       const int slots = in.empty() ? -1 : portSaveConvert(in.data(), in.size(), to, out.data());
       if (slots < 0) {
         sStatus = "That file isn't a save of this game.";
+      } else if (running) {
+        sChange = CardChange{to, {}, toName, dst, kReleaseNames[sTo], std::move(out), slots};
+        portRestartRequestWith(0, [] {
+          return writeSave(sChange.release, sChange.toName, sChange.dst, sChange.bytes, sChange.slots,
+                           sChange.label.c_str())
+                     ? 1
+                     : 0;
+        });
       } else {
-        SDL_CreateDirectory(cardDir(to).c_str());
-        backUp(to, toName);
-        SDL_IOStream* f = SDL_IOFromFile((dst + ".tmp").c_str(), "wb");
-        const bool ok = f != nullptr && SDL_WriteIO(f, out.data(), out.size()) == out.size();
-        if (f != nullptr) {
-          SDL_CloseIO(f);
-        }
-        if (ok && SDL_RenamePath((dst + ".tmp").c_str(), dst.c_str())) {
-          char text[160];
-          std::snprintf(text, sizeof(text), "Copied to %s (%d of its files and their backups).",
-                        kReleaseNames[sTo], slots);
-          sStatus = text;
-        } else {
-          SDL_RemovePath((dst + ".tmp").c_str());
-          sStatus = std::string("Could not write it: ") + SDL_GetError();
-        }
+        writeSave(to, toName, dst, out, slots, kReleaseNames[sTo]);
       }
     }
   }
   ImGui::EndDisabled();
-  if (running) {
-    ImGui::TextDisabled("Copy to the card of the game that is running from the launcher, before it starts.");
+  if (locked) {
+    ImGui::TextDisabled("%s", portTr("Copy to the card of the game that is running from the launcher, before it starts."));
+  } else if (running && portRestartWaiting()) {
+    ImGui::TextDisabled("%s", portTr("Restarting when the game has finished saving..."));
+  } else if (running && !sConfirm) {
+    ImGui::TextDisabled("%s", portTr("This is the running game's card: the game starts again to load it."));
   } else if (sConfirm) {
-    ImGui::TextDisabled("%s already has a save.", kReleaseNames[sTo]);
+    ImGui::TextDisabled(portTr("%s already has a save."), kReleaseNames[sTo]);
   }
   if (!sStatus.empty()) {
     ImGui::TextUnformatted(sStatus.c_str());

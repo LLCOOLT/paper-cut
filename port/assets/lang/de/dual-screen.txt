@@ -1,0 +1,115 @@
+# The second screen (port/include/port/companion.h, port/settings/features/companion.cpp, TtydCompanion.java)
+
+Second screen
+Zweiter Bildschirm
+
+A window of its own with the Start menu's information live, the map and the battle; on another monitor when there is one. A tap there uses an item or switches partners.
+Ein eigenes Fenster mit den Infos des Startmenüs in Echtzeit, der Karte und dem Kampf; auf einem anderen Monitor, wenn es einen gibt. Ein Tippen dort benutzt ein Item oder wechselt den Partner.
+
+On a device with a second display (a dual-screen handheld, a connected screen): the Start menu's information live, the map and the battle there.
+Auf Geräten mit zweitem Display (ein Handheld mit zwei Bildschirmen, ein angeschlossener Bildschirm): die Infos des Startmenüs in Echtzeit, die Karte und der Kampf dort.
+
+Paper Cut companion
+Paper Cut Begleiter
+
+The Start menu's information, the map and the battle show here while a game runs.
+Die Infos des Startmenüs, die Karte und der Kampf erscheinen hier, während ein Spiel läuft.
+
+Party
+Team
+
+Map
+Karte
+
+Battle
+Kampf
+
+Level
+Level
+
+Star Points
+Sternpunkte
+
+
+
+
+FP
+BP
+
+HP
+KP
+
+BP
+OP
+
+BP left
+OP frei
+
+Star Power
+Sternenkraft
+
+Crystal Stars
+Kristallsterne
+
+With Mario
+Bei Mario
+
+Away
+Unterwegs
+
+Tap a partner to switch.
+Tippe auf einen Partner, um zu wechseln.
+
+The bag is empty.
+Die Tasche ist leer.
+
+Use on
+Benutzen für
+
+Tap an item to use it.
+Tippe auf ein Item, um es zu benutzen.
+
+Tap an item to use it; hold it for the partner.
+Tippe auf ein Item, um es zu benutzen; halte es gedrückt für den Partner.
+
+Items can be used in the field.
+Items lassen sich außerhalb von Kämpfen benutzen.
+
+Badges worn
+Angelegte Orden
+
+No badges worn.
+Keine Orden angelegt.
+
+Where next
+Wohin als Nächstes
+
+This room
+Dieser Raum
+
+No Star Pieces or Shine Sprites here.
+Hier gibt es keine Sternenstücke oder Glanzsterne.
+
+Partner
+Partner
+
+People
+Leute
+
+Enemies
+Gegner
+
+No battle now.
+Gerade kein Kampf.
+
+Turn
+Runde
+
+Turn order
+Reihenfolge
+
+Defense
+Abwehr
+
+Not tattled yet.
+Noch nicht analysiert.

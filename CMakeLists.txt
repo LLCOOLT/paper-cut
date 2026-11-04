@@ -165,6 +165,10 @@ if(TTYD_BACKEND STREQUAL "aurora")
         set(CMAKE_DISABLE_FIND_PACKAGE_PkgConfig ON)
     endif()
     add_subdirectory(extern/aurora EXCLUDE_FROM_ALL)
+    # The matrix functions' trigonometry the game's (MSL's fdlibm,
+    # port/include/port/fdlibm_pc.h), the same on every computer for online
+    # co-op (port/patches/aurora/0019).
+    target_compile_definitions(aurora_mtx PRIVATE AURORA_MTX_GAME_TRIG=1)
     # nod built by Cargo (Android) on a Windows machine whose Rust is the
     # windows-gnu toolchain: Cargo builds the build scripts and proc macros for
     # that host, and rustc makes their raw-dylib import libraries (getrandom)
@@ -598,6 +602,18 @@ endif()
 
 # --- Platform layer replacing the Dolphin SDK ---
 file(GLOB TTYD_PORT_SOURCES CONFIGURE_DEPENDS ${CMAKE_SOURCE_DIR}/port/src/common/*.c)
+# The GameCube's maths library (MSL's fdlibm), the same results on every host
+# (online co-op's lockstep): its sources with port/include/port/fdlibm_pc.h
+# forced in front, for their fdlibm.h (port_prefix.h routes the game to it).
+file(GLOB TTYD_FDLIBM_SOURCES CONFIGURE_DEPENDS
+    "${CMAKE_SOURCE_DIR}/libs/msl/src/MSL_C.PPCEABI.bare.H.a/[eksw]_*.c")
+if(MSVC)
+    set(_fdlibm_include /FI${CMAKE_SOURCE_DIR}/port/include/port/fdlibm_pc.h)
+else()
+    set(_fdlibm_include -include ${CMAKE_SOURCE_DIR}/port/include/port/fdlibm_pc.h)
+endif()
+set_source_files_properties(${TTYD_FDLIBM_SOURCES} PROPERTIES COMPILE_OPTIONS "${_fdlibm_include}")
+list(APPEND TTYD_PORT_SOURCES ${TTYD_FDLIBM_SOURCES})
 if(TTYD_BACKEND STREQUAL "headless")
     file(GLOB_RECURSE headless_sources CONFIGURE_DEPENDS ${CMAKE_SOURCE_DIR}/port/src/headless/*.c)
     # Hardware-independent SDK sources that build unchanged on PC.
@@ -732,6 +748,10 @@ endif()
 target_include_directories(ttyd PRIVATE ${TTYD_INCLUDES} ${CMAKE_BINARY_DIR}/generated)
 target_compile_options(ttyd PRIVATE ${TTYD_CFLAGS})
 target_link_libraries(ttyd PRIVATE ${TTYD_LIBM} ${CMAKE_DL_LIBS})
+if(APPLE)
+    # the JP release's Shift-JIS text as UTF-8 for the second screen (port/src/common/companion_pc.c)
+    target_link_libraries(ttyd PRIVATE iconv)
+endif()
 if(TTYD_WEB)
     # Memory: sound names are told from ids by address (include/sfx_name_word.h),
     # so everything the game uses lies at 2 GiB and up, as on GameCube (data

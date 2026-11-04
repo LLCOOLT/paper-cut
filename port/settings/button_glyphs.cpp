@@ -2,6 +2,10 @@
 // are smooth at any size; labels are the launcher's Fredoka Bold through
 // stb_truetype (Dear ImGui's copy, compiled static here).
 #include "button_glyphs.h"
+#include "port/settings.h"
+
+#include <SDL3/SDL.h>
+#include <dolphin/pad.h>
 
 #include <algorithm>
 #include <cmath>
@@ -199,6 +203,7 @@ const char* shoulderText(GlyphStyle st, GlyphFace f) {
   case GlyphStyle::Xbox: return trig ? (left ? "LT" : "RT") : (left ? "LB" : "RB");
   case GlyphStyle::PlayStation: return trig ? (left ? "L2" : "R2") : (left ? "L1" : "R1");
   case GlyphStyle::Switch: return trig ? (left ? "ZL" : "ZR") : (left ? "L" : "R");
+  case GlyphStyle::SteamDeck: return trig ? (left ? "L2" : "R2") : (left ? "L1" : "R1");
   default: return trig ? (left ? "LT" : "RT") : (left ? "L" : "R");
   }
 }
@@ -255,6 +260,10 @@ std::vector<uint8_t> drawButtonGlyph(const GlyphSpec& g, int w, int h) {
     case GlyphStyle::Switch:
       fillc = hex(0x34333B);
       break;
+    case GlyphStyle::SteamDeck: // the Deck's: dark grey buttons, light letters
+      fillc = hex(0x3C3D44);
+      mark = hex(0xD9DADF);
+      break;
     default:
       break;
     }
@@ -292,6 +301,13 @@ std::vector<uint8_t> drawButtonGlyph(const GlyphSpec& g, int w, int h) {
         const float hz = segment(x, y, cx - s, cy, cx + s, cy, t);
         return plus ? std::min(hz, segment(x, y, cx, cy - s, cx, cy + s, t)) : hz;
       });
+    } else if (g.face == GlyphFace::Back && (g.style == GlyphStyle::Xbox || g.style == GlyphStyle::SteamDeck)) {
+      // View: two overlapping windows
+      const float s = hh * 0.36f, t = m * 0.02f;
+      cv.fill(c, [&](float x, float y) {
+        return std::min(std::fabs(roundBox(x, y, cx - s * 0.35f, cy - s * 0.3f, s * 0.75f, s * 0.6f, t)) - t,
+                        std::fabs(roundBox(x, y, cx + s * 0.35f, cy + s * 0.3f, s * 0.75f, s * 0.6f, t)) - t);
+      });
     } else {
       menuLines(cv, cx, cy, hh * 0.55f, m * 0.022f, c);
     }
@@ -301,4 +317,70 @@ std::vector<uint8_t> drawButtonGlyph(const GlyphSpec& g, int w, int h) {
     text(cv, shoulderText(g.style, g.face), cx, cy, hh * 0.9f, c);
   }
   return cv.rgba8();
+}
+
+GlyphStyle glyphStyleOf(int sdlGamepadType, unsigned vendor, unsigned product) {
+  // Valve's: the Deck's own controller (0x1205), or Steam Input's virtual pad
+  // (0x11FF), which on a Deck is the Deck's buttons
+  if (vendor == 0x28DE && (product == 0x1205 || (product == 0x11FF && portSteamDeck()))) {
+    return GlyphStyle::SteamDeck;
+  }
+  switch (static_cast<SDL_GamepadType>(sdlGamepadType)) {
+  case SDL_GAMEPAD_TYPE_PS3:
+  case SDL_GAMEPAD_TYPE_PS4:
+  case SDL_GAMEPAD_TYPE_PS5:
+    return GlyphStyle::PlayStation;
+  case SDL_GAMEPAD_TYPE_NINTENDO_SWITCH_PRO:
+  case SDL_GAMEPAD_TYPE_NINTENDO_SWITCH_JOYCON_LEFT:
+  case SDL_GAMEPAD_TYPE_NINTENDO_SWITCH_JOYCON_RIGHT:
+  case SDL_GAMEPAD_TYPE_NINTENDO_SWITCH_JOYCON_PAIR:
+    return GlyphStyle::Switch;
+  default:
+    return GlyphStyle::Xbox;
+  }
+}
+
+GlyphStyle glyphStyleOfPort(unsigned port) {
+  const s32 idx = PADGetIndexForPort(port);
+  SDL_Gamepad* pad = idx >= 0 ? PADGetSDLGamepadForIndex(static_cast<u32>(idx)) : nullptr;
+  if (pad == nullptr) {
+    return GlyphStyle::Xbox;
+  }
+  return glyphStyleOf(SDL_GetGamepadType(pad), SDL_GetGamepadVendor(pad), SDL_GetGamepadProduct(pad));
+}
+
+const char* nativeButtonLabel(GlyphStyle st, uint32_t native, uint16_t padButton) {
+  const bool ps = st == GlyphStyle::PlayStation, sw = st == GlyphStyle::Switch, deck = st == GlyphStyle::SteamDeck;
+  if (native == PAD_NATIVE_BUTTON_INVALID) {
+    // the GameCube's L and R read the triggers (an axis, not a button)
+    if (padButton == PAD_TRIGGER_L || padButton == PAD_TRIGGER_R) {
+      const GlyphFace f = padButton == PAD_TRIGGER_L ? GlyphFace::LeftTrigger : GlyphFace::RightTrigger;
+      return shoulderText(st, f);
+    }
+    return "None";
+  }
+  switch (static_cast<SDL_GamepadButton>(native)) {
+  case SDL_GAMEPAD_BUTTON_SOUTH: return ps ? "Cross" : faceLetter(st, GlyphFace::South);
+  case SDL_GAMEPAD_BUTTON_EAST: return ps ? "Circle" : faceLetter(st, GlyphFace::East);
+  case SDL_GAMEPAD_BUTTON_WEST: return ps ? "Square" : faceLetter(st, GlyphFace::West);
+  case SDL_GAMEPAD_BUTTON_NORTH: return ps ? "Triangle" : faceLetter(st, GlyphFace::North);
+  case SDL_GAMEPAD_BUTTON_LEFT_SHOULDER: return shoulderText(st, GlyphFace::LeftShoulder);
+  case SDL_GAMEPAD_BUTTON_RIGHT_SHOULDER: return shoulderText(st, GlyphFace::RightShoulder);
+  case SDL_GAMEPAD_BUTTON_START: return ps ? "Options" : sw ? "+" : "Menu";
+  case SDL_GAMEPAD_BUTTON_BACK: return ps ? "Create" : sw ? "-" : "View";
+  case SDL_GAMEPAD_BUTTON_GUIDE: return ps ? "PS" : deck ? "Steam" : sw ? "Home" : "Guide";
+  case SDL_GAMEPAD_BUTTON_LEFT_STICK: return ps ? "L3" : deck ? "L3" : sw ? "Left stick press" : "LS";
+  case SDL_GAMEPAD_BUTTON_RIGHT_STICK: return ps ? "R3" : deck ? "R3" : sw ? "Right stick press" : "RS";
+  case SDL_GAMEPAD_BUTTON_DPAD_UP: return "D-pad up";
+  case SDL_GAMEPAD_BUTTON_DPAD_DOWN: return "D-pad down";
+  case SDL_GAMEPAD_BUTTON_DPAD_LEFT: return "D-pad left";
+  case SDL_GAMEPAD_BUTTON_DPAD_RIGHT: return "D-pad right";
+  case SDL_GAMEPAD_BUTTON_MISC1: return ps ? "Mute" : sw ? "Capture" : deck ? "Quick access" : "Share";
+  case SDL_GAMEPAD_BUTTON_RIGHT_PADDLE1: return deck ? "R4" : "Paddle 1";
+  case SDL_GAMEPAD_BUTTON_LEFT_PADDLE1: return deck ? "L4" : "Paddle 3";
+  case SDL_GAMEPAD_BUTTON_RIGHT_PADDLE2: return deck ? "R5" : "Paddle 2";
+  case SDL_GAMEPAD_BUTTON_LEFT_PADDLE2: return deck ? "L5" : "Paddle 4";
+  case SDL_GAMEPAD_BUTTON_TOUCHPAD: return "Touchpad";
+  default: return "Other button";
+  }
 }

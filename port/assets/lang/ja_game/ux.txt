@@ -1,0 +1,23 @@
+# The Start menu's Settings tab and the first start's notice in the JP release's font (kana and its
+# few kanji: tools/port/gen_lang.py checks), written as the game's own text is: words apart.
+
+Restart now
+いますぐ　さいきどう
+
+Press A twice to restart the game for these settings; quick resume brings you back here.
+Aを　２かい　おすと　ゲームを　さいきどうします　クイックレジュームで　ここに　もどれます
+
+Press A again to restart.
+もういちど　Aで　さいきどう
+
+Applies after Restart now.
+『いますぐ　さいきどう』で　てきよう
+
+Applies when the app reopens.
+アプリを　ひらきなおすと　てきよう
+
+Paper Cut's settings: the Start menu's last tab, or F1 (Back on a controller).
+Paper Cutの　せってい：スタートメニューの　さいごの　タブ　または　F1（コントローラーは　Back）
+
+Paper Cut's settings: the Start menu's last tab, or the three-bar button.
+Paper Cutの　せってい：スタートメニューの　さいごの　タブ　または　３ぼんせんの　ボタン

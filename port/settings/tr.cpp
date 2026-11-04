@@ -158,9 +158,9 @@ struct Register {
   Register() {
     choice();
     portSettingsAddChoice("System", "Menu language",
-                          "Paper Cut's own menus: this page, the launcher's and the Start menu's Settings tab. Auto: "
-                          "the Japanese release's Japanese, the European release's text language, otherwise the "
-                          "computer's. The game's own text follows the disc.",
+                          "Paper Cut's own menus: the settings page, the launcher's and the Start menu's Settings "
+                          "tab. Auto: the Japanese release's Japanese, the European release's text language, "
+                          "otherwise the computer's. The game's own text follows the disc.",
                           0, "menu_language", kChoices, 7, "language translate english deutsch french spanish italian japanese");
   }
 } sRegister;
@@ -174,7 +174,14 @@ bool sJapaneseFont; // a system font with Japanese was merged into the page's fo
 // The page's fonts (launcher_style.cpp): Japanese from the system's font, for
 // the Japanese translations' characters only (kTrJaGlyphs); without one, the
 // page stays English in Japanese (the game's own font has its own glyphs).
+ImFont* portTrMergeJapaneseRanges(float px, const ImWchar* ranges);
 ImFont* portTrMergeJapanese(float px) {
+  return portTrMergeJapaneseRanges(px, kTrJaGlyphs);
+}
+
+// The same with ranges of its own (the second screen's: every Japanese
+// character, for the JP release's own names, port/settings/features/companion.cpp)
+ImFont* portTrMergeJapaneseRanges(float px, const ImWchar* ranges) {
   static const char* sPath;
   static bool sLooked;
   if (!sLooked) {
@@ -208,8 +215,8 @@ ImFont* portTrMergeJapanese(float px) {
   cfg.OversampleH = 1;
   cfg.OversampleV = 1;
   cfg.PixelSnapH = true;
-  ImFont* f = ImGui::GetIO().Fonts->AddFontFromFileTTF(sPath, px, &cfg, kTrJaGlyphs);
-  sJapaneseFont = sJapaneseFont || f != nullptr;
+  ImFont* f = ImGui::GetIO().Fonts->AddFontFromFileTTF(sPath, px, &cfg, ranges);
+  sJapaneseFont = sJapaneseFont || (f != nullptr && ranges == kTrJaGlyphs);
   return f;
 }
 
@@ -229,6 +236,23 @@ extern "C" const char* portTr(const char* english) {
   }
   const TrEntry* e = find(lang, english);
   return e != nullptr ? e->tr : english;
+}
+
+extern "C" const char* portTrLabel(const char* label) {
+  static thread_local std::string sRing[16];
+  static thread_local int sAt;
+  if (label == nullptr) {
+    return nullptr;
+  }
+  const char* id = std::strstr(label, "##");
+  const std::string shown = id != nullptr ? std::string(label, id - label) : std::string(label);
+  const char* t = shown.empty() ? "" : portTr(shown.c_str());
+  if (!shown.empty() && t == shown.c_str()) {
+    return label; // no translation: as it is
+  }
+  std::string& out = sRing[sAt++ % 16];
+  out = std::string(t) + "###" + (id != nullptr ? std::string(id + 2) : shown);
+  return out.c_str();
 }
 
 extern "C" const char* portTrGame(const char* english) {

@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Generate port/settings/lang_tables.inc: the port's own menus in other
 languages (port/settings/tr.cpp, port/include/port/tr.h), from
-port/assets/lang/<code>.txt.
+port/assets/lang/<code>.txt and the feature files in port/assets/lang/<code>/
+(one per feature, so work on two features doesn't touch the same file).
 
 Each file is UTF-8: an English line, then its translation on the next line,
 then a blank line; lines starting with '#' are comments. A line break inside
@@ -43,24 +44,30 @@ JA_FONT |= set(chr(c) for c in range(0xFF10, 0xFF18)) | set(chr(c) for c in rang
 
 
 def read(code):
-    path = os.path.join(SRC, code + ".txt")
+    """<code>.txt, then each feature's own file in <code>/ (port/assets/lang/de/<feature>.txt), by name"""
     pairs = {}
-    if not os.path.exists(path):
-        return pairs
-    lines = [l.rstrip("\r\n") for l in open(path, encoding="utf-8-sig")]
-    lines = [l for l in lines if not l.startswith("#")]
-    i = 0
-    while i < len(lines):
-        if lines[i] == "":
-            i += 1
+    paths = [os.path.join(SRC, code + ".txt")]
+    extra = os.path.join(SRC, code)
+    if os.path.isdir(extra):
+        paths += [os.path.join(extra, f) for f in sorted(os.listdir(extra)) if f.endswith(".txt")]
+    for path in paths:
+        if not os.path.exists(path):
             continue
-        if i + 1 >= len(lines) or lines[i + 1] == "":
-            sys.exit(f"gen_lang: {code}.txt: no translation for {lines[i]!r}")
-        en, tr = lines[i].replace("\\n", "\n"), lines[i + 1].replace("\\n", "\n")
-        if en in pairs and pairs[en] != tr:
-            sys.exit(f"gen_lang: {code}.txt: {en!r} translated twice")
-        pairs[en] = tr
-        i += 2
+        name = os.path.relpath(path, SRC)
+        lines = [l.rstrip("\r\n") for l in open(path, encoding="utf-8-sig")]
+        lines = [l for l in lines if not l.startswith("#")]
+        i = 0
+        while i < len(lines):
+            if lines[i] == "":
+                i += 1
+                continue
+            if i + 1 >= len(lines) or lines[i + 1] == "":
+                sys.exit(f"gen_lang: {name}: no translation for {lines[i]!r}")
+            en, tr = lines[i].replace("\\n", "\n"), lines[i + 1].replace("\\n", "\n")
+            if en in pairs and pairs[en] != tr:
+                sys.exit(f"gen_lang: {name}: {en!r} translated twice")
+            pairs[en] = tr
+            i += 2
     return pairs
 
 

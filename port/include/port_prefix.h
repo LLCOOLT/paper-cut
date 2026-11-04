@@ -91,6 +91,58 @@ static inline double __frsqrte(double x) { return 1.0 / sqrt(x); }
 int ttyd_rand(void);
 void ttyd_srand(unsigned int seed);
 #define __fpclassifyf ttyd___fpclassifyf
+#ifndef __cplusplus
+/* The maths functions whose results differ between C libraries: the
+ * GameCube's own (MSL's fdlibm, port/include/port/fdlibm_pc.h), the same on
+ * every computer for online co-op's lockstep. Exact ones (sqrt, floor, fabs)
+ * stay the system's. C only: C++ (the port's settings) keeps <cmath>. */
+double ttyd_sin(double);
+double ttyd_cos(double);
+double ttyd_tan(double);
+double ttyd_atan(double);
+double ttyd_atan2(double, double);
+double ttyd_asin(double);
+double ttyd_acos(double);
+double ttyd_pow(double, double);
+double ttyd_log(double);
+double ttyd_hypot(double, double);
+#define sin ttyd_sin
+#define cos ttyd_cos
+#define tan ttyd_tan
+#define atan ttyd_atan
+#define atan2 ttyd_atan2
+#define asin ttyd_asin
+#define acos ttyd_acos
+#define pow ttyd_pow
+#define log ttyd_log
+#define hypot ttyd_hypot
+/* the float ones as MSL has them: the double function, rounded (atan2f is
+ * the Glitz Pit's own, rels/tou2, on atan2) */
+static inline float ttyd_sinf(float x) { return (float)ttyd_sin(x); }
+static inline float ttyd_cosf(float x) { return (float)ttyd_cos(x); }
+static inline float ttyd_tanf(float x) { return (float)ttyd_tan(x); }
+static inline float ttyd_atanf(float x) { return (float)ttyd_atan(x); }
+static inline float ttyd_asinf(float x) { return (float)ttyd_asin(x); }
+static inline float ttyd_acosf(float x) { return (float)ttyd_acos(x); }
+static inline float ttyd_powf(float x, float y) { return (float)ttyd_pow(x, y); }
+static inline float ttyd_logf(float x) { return (float)ttyd_log(x); }
+#undef sinf
+#undef cosf
+#undef tanf
+#undef atanf
+#undef asinf
+#undef acosf
+#undef powf
+#undef logf
+#define sinf ttyd_sinf
+#define cosf ttyd_cosf
+#define tanf ttyd_tanf
+#define atanf ttyd_atanf
+#define asinf ttyd_asinf
+#define acosf ttyd_acosf
+#define powf ttyd_powf
+#define logf ttyd_logf
+#endif
 static inline unsigned int __cntlzw(unsigned int x) {
     return x == 0 ? 32 : (unsigned int)__builtin_clz(x);
 }

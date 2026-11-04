@@ -1,0 +1,75 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Wed, 4 Nov 2026 07:00:00 +0000
+Subject: [PATCH] mtx: the application's trigonometry, for lockstep
+
+---
+diff --git a/lib/dolphin/mtx/mtx.c b/lib/dolphin/mtx/mtx.c
+index ba2796d..c7e3911 100644
+--- a/lib/dolphin/mtx/mtx.c
++++ b/lib/dolphin/mtx/mtx.c
+@@ -2,6 +2,7 @@
+ 
+ #include <assert.h>
+ #include <math.h>
++#include "mtx_trig.h"
+ 
+ void C_MTXIdentity(Mtx m) {
+   assert(m && "MtxIdentity():  NULL Mtx 'm' ");
+diff --git a/lib/dolphin/mtx/mtx44.c b/lib/dolphin/mtx/mtx44.c
+index 1ca47cf..786eeaf 100644
+--- a/lib/dolphin/mtx/mtx44.c
++++ b/lib/dolphin/mtx/mtx44.c
+@@ -1,5 +1,6 @@
+ #include <assert.h>
+ #include <math.h>
++#include "mtx_trig.h"
+ #include <dolphin/mtx/mtx44ext.h>
+ 
+ void C_MTXPerspective(Mtx44 m, f32 fovY, f32 aspect, f32 n, f32 f) {
+diff --git a/lib/dolphin/mtx/mtx_trig.h b/lib/dolphin/mtx/mtx_trig.h
+new file mode 100644
+index 0000000..ac16dc0
+--- /dev/null
++++ b/lib/dolphin/mtx/mtx_trig.h
+@@ -0,0 +1,29 @@
++#ifndef AURORA_MTX_TRIG_H
++#define AURORA_MTX_TRIG_H
++
++/* With AURORA_MTX_GAME_TRIG, the matrix and quaternion functions' sine,
++ * cosine and the rest come from the application (ttyd_sin & co., double
++ * precision, rounded to float as the GameCube's MSL does), so their results
++ * are the same on every computer: an application running two copies in
++ * lockstep (Paper Cut's online co-op) needs that, and the C libraries' sinf
++ * and friends differ in their last bits. Without it, the C library's. */
++#ifdef AURORA_MTX_GAME_TRIG
++#include <math.h>
++double ttyd_sin(double);
++double ttyd_cos(double);
++double ttyd_tan(double);
++double ttyd_atan2(double, double);
++double ttyd_acos(double);
++#undef sinf
++#undef cosf
++#undef tanf
++#undef atan2f
++#undef acosf
++#define sinf(x) ((float)ttyd_sin((double)(x)))
++#define cosf(x) ((float)ttyd_cos((double)(x)))
++#define tanf(x) ((float)ttyd_tan((double)(x)))
++#define atan2f(y, x) ((float)ttyd_atan2((double)(y), (double)(x)))
++#define acosf(x) ((float)ttyd_acos((double)(x)))
++#endif
++
++#endif
+diff --git a/lib/dolphin/mtx/quat.c b/lib/dolphin/mtx/quat.c
+index 80966d6..b661d7e 100644
+--- a/lib/dolphin/mtx/quat.c
++++ b/lib/dolphin/mtx/quat.c
+@@ -1,5 +1,6 @@
+ #include <assert.h>
+ #include <math.h>
++#include "mtx_trig.h"
+ #include <dolphin/mtx.h>
+ 
+ void C_QUATAdd(const Quaternion* p, const Quaternion* q, Quaternion* r) {

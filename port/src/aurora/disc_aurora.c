@@ -50,6 +50,13 @@ static void discId(char gid[6]) {
     memcpy(gid + 4, id->company, 2);
 }
 
+/* the disc image open now (Restart now starts with it again) */
+static char sOpenPath[4096];
+
+const char* portAuroraDiscPath(void) {
+    return sOpenPath;
+}
+
 /* Opens path; FALSE with the reason in why if it isn't this build's disc. */
 static BOOL openDisc(const char* path, char* why, size_t size) {
     char gid[6];
@@ -63,6 +70,7 @@ static BOOL openDisc(const char* path, char* why, size_t size) {
         return FALSE;
     }
     portTextLanguageLoad(path); /* the text of another release's disc, if chosen */
+    snprintf(sOpenPath, sizeof(sOpenPath), "%s", path);
     return TRUE;
 }
 

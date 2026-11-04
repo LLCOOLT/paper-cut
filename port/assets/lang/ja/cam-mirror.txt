@@ -1,0 +1,11 @@
+Free camera
+フリーカメラ
+
+In the field, the right stick turns the camera a little around Mario and moves it in or out. Let go and it eases back.
+フィールドで、右スティックでカメラをマリオのまわりに少し回し、近づけたり遠ざけたりします。離すとゆっくり元に戻ります。
+
+Mirror mode
+ミラーモード
+
+The world flipped left to right, with the stick and D-pad turned around to match while Mario walks. Menus and messages stay readable.
+世界を左右反転し、マリオが歩くあいだはスティックと十字ボタンも合わせて反転します。メニューとメッセージはそのまま読めます。

@@ -117,6 +117,12 @@ int* portSettingsFind(const char* key);
 /* For settings.txt (settings_aurora.c): a key=value line that isn't a fixed
  * field, and the declared and read ones to write back. */
 int portSettingsExtraSet(const char* key, const char* value);
+void portSettingsExtraForce(const char* key, const char* value);
+/* Online co-op's guest (port/settings/online_lobby.cpp): a setting's value for
+ * this run (a field or a declared one), and settings.txt left alone while
+ * hold is set. */
+void portSettingsSetForRun(const char* key, const char* value);
+void portSettingsHoldSaves(int hold);
 int portSettingsExtraCount(void);
 const char* portSettingsExtraAt(int i, int* value);
 

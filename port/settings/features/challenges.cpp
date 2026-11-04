@@ -3,6 +3,7 @@
 // (port/src/common/challenge_pc.c) together with one click, then the rules
 // one by one. The tab shows which preset the settings match now, or Custom.
 #include "port/settings.h"
+#include "port/tr.h"
 
 #include <imgui.h>
 
@@ -137,7 +138,7 @@ void presetsSection(int) {
       break;
     }
   }
-  ImGui::Text("Now: %s", current != nullptr ? current->name : "Custom");
+  ImGui::Text(portTr("Now: %s"), current != nullptr ? current->name : "Custom");
   ImGui::Spacing();
   const float width = ImGui::GetFontSize() * 9.f;
   for (const Preset& p : kPresets) {
@@ -160,9 +161,9 @@ void presetsSection(int) {
   }
   ImGui::Spacing();
   ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
-  ImGui::TextWrapped("A preset sets the Accessibility tab's difficulty and assists, Retry on Game Over and the rules "
+  ImGui::TextWrapped("%s", portTr("A preset sets the Accessibility tab's difficulty and assists, Retry on Game Over and the rules "
                      "below. Change any of them after: the preset shows as Custom. They apply from the next "
-                     "battle.");
+                     "battle."));
   ImGui::PopStyleColor();
 }
 

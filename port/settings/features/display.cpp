@@ -2,6 +2,7 @@
 // declared where they apply (port/src/aurora/widescreen_aurora.c, hud_aurora.c,
 // display_aurora.c; port/include/port/display.h). Off or as before by default.
 #include "port/settings.h"
+#include "port/tr.h"
 #include "port/display.h"
 #include "port/widescreen.h"
 #include <imgui.h>
@@ -32,27 +33,27 @@ void hdrSection(int) {
   bool edited = false;
   ImGui::BeginDisabled(!supported && *on == 0);
   bool v = *on != 0;
-  if (ImGui::Checkbox("HDR output", &v)) {
+  if (ImGui::Checkbox(portTrLabel("HDR output"), &v)) {
     *on = v ? 1 : 0;
     edited = true;
   }
   ImGui::EndDisabled();
   ImGui::BeginDisabled(!supported || *on == 0);
   // the value follows the slider as it moves (portDisplayFrame gives it to Aurora); saved when let go
-  ImGui::SliderInt("Paper white", white, 80, 400, "%d nits");
+  ImGui::SliderInt(portTrLabel("Paper white"), white, 80, 400, "%d nits");
   edited |= ImGui::IsItemDeactivatedAfterEdit();
-  ImGui::SliderInt("Highlight boost", boost, 0, 50, "+%d%%");
+  ImGui::SliderInt(portTrLabel("Highlight boost"), boost, 0, 50, "+%d%%");
   edited |= ImGui::IsItemDeactivatedAfterEdit();
   ImGui::EndDisabled();
   if (!supported) {
-    ImGui::TextDisabled("Not available here.");
+    ImGui::TextDisabled("%s", portTr("Not available here."));
     ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
-    ImGui::TextWrapped("Needs a display with HDR turned on (on Windows: Settings, System, Display, Use HDR) and "
+    ImGui::TextWrapped("%s", portTr("Needs a display with HDR turned on (on Windows: Settings, System, Display, Use HDR) and "
                        "the Direct3D or Metal graphics backend. Vulkan and OpenGL, as on Linux and Android, show "
-                       "SDR only.");
+                       "SDR only."));
     ImGui::PopStyleColor();
   } else if (portHdrActive()) {
-    ImGui::TextDisabled("Showing in HDR.");
+    ImGui::TextDisabled("%s", portTr("Showing in HDR."));
   }
   if (edited) {
     portSettingsSave();
@@ -100,7 +101,8 @@ const bool sAdded = [] {
   portSettingsAddChoice("Display", "Texture upscaling",
                         "The game's textures made larger by an edge-following filter as they load: smoother lines "
                         "on paper and signs. More video memory. From the next start.",
-                        0, "texture_upscale", kUpscale, 3, "upscale texture hd enhance resolution filter smooth");
+                        PORT_SETTING_NEXT_START, "texture_upscale", kUpscale, 3,
+                        "upscale texture hd enhance resolution filter smooth");
   portSettingsAddChoice("Display", "Supersampling",
                         "Draws the picture several times larger than the window and shrinks it: smoother edges, "
                         "much more work for the graphics card.",

@@ -371,7 +371,7 @@ u8 salPcVoiceCat[SYNTH_MAX_VOICES];
 u8 salPcSeqCat[256];
 u8 salPcStreamCat[64];
 static int sCategory = SAL_PC_SFX;
-static s32 sCatGain[SAL_PC_CATEGORIES] = {32768, 32768, 32768}; /* 1.15 */
+static s32 sCatGain[SAL_PC_CATEGORIES] = {32768, 32768, 32768, 0}; /* 1.15; SAL_PC_SILENT stays 0 */
 
 int salPcCategory(int cat) {
   int prev = sCategory;
@@ -382,7 +382,7 @@ int salPcCategory(int cat) {
 }
 
 void salPcSetCategoryGain(int cat, float gain) {
-  if (cat >= 0 && cat < SAL_PC_CATEGORIES) {
+  if (cat >= 0 && cat < SAL_PC_SILENT) {
     gain = gain < 0.f ? 0.f : (gain > 1.f ? 1.f : gain);
     sCatGain[cat] = (s32)(gain * 32768.f + 0.5f);
   }

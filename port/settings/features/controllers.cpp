@@ -11,6 +11,8 @@
 //    press each button when asked; the mapping is added at once and saved to
 //    <user>/gamecontrollerdb.txt for next time.
 #include "port/settings.h"
+#include "port/tr.h"
+#include "../button_glyphs.h"
 
 #include <SDL3/SDL.h>
 #include <dolphin/pad.h>
@@ -32,22 +34,6 @@ namespace {
 
 std::string userDbPath() { return std::string(portSettingsUserPath()) + "/gamecontrollerdb.txt"; }
 
-const char* kindName(SDL_GamepadType t) {
-  switch (t) {
-  case SDL_GAMEPAD_TYPE_XBOX360: return "Xbox 360";
-  case SDL_GAMEPAD_TYPE_XBOXONE: return "Xbox";
-  case SDL_GAMEPAD_TYPE_PS3: return "PlayStation 3";
-  case SDL_GAMEPAD_TYPE_PS4: return "PlayStation 4";
-  case SDL_GAMEPAD_TYPE_PS5: return "PlayStation 5";
-  case SDL_GAMEPAD_TYPE_NINTENDO_SWITCH_PRO: return "Switch Pro";
-  case SDL_GAMEPAD_TYPE_NINTENDO_SWITCH_JOYCON_LEFT: return "Joy-Con (L)";
-  case SDL_GAMEPAD_TYPE_NINTENDO_SWITCH_JOYCON_RIGHT: return "Joy-Con (R)";
-  case SDL_GAMEPAD_TYPE_NINTENDO_SWITCH_JOYCON_PAIR: return "Joy-Con pair";
-  case SDL_GAMEPAD_TYPE_GAMECUBE: return "GameCube";
-  default: return "Gamepad";
-  }
-}
-
 // the controller at Aurora's index i as an SDL gamepad, and the player it is (-1 none)
 SDL_Gamepad* padAt(u32 i) { return PADGetSDLGamepadForIndex(i); }
 
@@ -65,10 +51,10 @@ void battery(SDL_Gamepad* pad) {
   const SDL_PowerState st = SDL_GetGamepadPowerInfo(pad, &percent);
   if (st == SDL_POWERSTATE_ON_BATTERY && percent >= 0) {
     ImGui::SameLine();
-    ImGui::TextDisabled("battery %d%%", percent);
+    ImGui::TextDisabled(portTr("battery %d%%"), percent);
   } else if (st == SDL_POWERSTATE_CHARGING) {
     ImGui::SameLine();
-    ImGui::TextDisabled("charging");
+    ImGui::TextDisabled("%s", portTr("charging"));
   }
 }
 
@@ -85,7 +71,7 @@ void stickView(const char* label, float x, float y, float dead) {
   }
   dl->AddCircleFilled(ImVec2(c.x + x * r, c.y + y * r), r * 0.15f, ImGui::GetColorU32(ImGuiCol_CheckMark));
   ImGui::Dummy(ImVec2(r * 2, r * 2));
-  ImGui::TextDisabled("%s", label);
+  ImGui::TextDisabled("%s", portTr(label));
   ImGui::EndGroup();
 }
 
@@ -99,16 +85,19 @@ void testView(SDL_Gamepad* pad, const PADDeadZones* dz) {
   ImGui::SameLine();
   ImGui::BeginGroup();
   const float w = ImGui::GetFontSize() * 6.f;
-  ImGui::ProgressBar(std::max(0.f, axis(SDL_GAMEPAD_AXIS_LEFT_TRIGGER)), ImVec2(w, 0), "L trigger");
-  ImGui::ProgressBar(std::max(0.f, axis(SDL_GAMEPAD_AXIS_RIGHT_TRIGGER)), ImVec2(w, 0), "R trigger");
+  const GlyphStyle style = glyphStyleOf(SDL_GetGamepadType(pad), SDL_GetGamepadVendor(pad), SDL_GetGamepadProduct(pad));
+  ImGui::ProgressBar(std::max(0.f, axis(SDL_GAMEPAD_AXIS_LEFT_TRIGGER)), ImVec2(w, 0),
+                     portTr(nativeButtonLabel(style, PAD_NATIVE_BUTTON_INVALID, PAD_TRIGGER_L)));
+  ImGui::ProgressBar(std::max(0.f, axis(SDL_GAMEPAD_AXIS_RIGHT_TRIGGER)), ImVec2(w, 0),
+                     portTr(nativeButtonLabel(style, PAD_NATIVE_BUTTON_INVALID, PAD_TRIGGER_R)));
+  // the held buttons as printed on this controller
   std::string held;
   for (int b = 0; b < SDL_GAMEPAD_BUTTON_COUNT; b++) {
     if (SDL_GetGamepadButton(pad, static_cast<SDL_GamepadButton>(b))) {
-      const char* n = SDL_GetGamepadStringForButton(static_cast<SDL_GamepadButton>(b));
-      held += (held.empty() ? "" : " ") + std::string(n != nullptr ? n : "?");
+      held += (held.empty() ? "" : ", ") + std::string(portTr(nativeButtonLabel(style, static_cast<u32>(b), 0)));
     }
   }
-  ImGui::TextWrapped("Held: %s", held.empty() ? "nothing" : held.c_str());
+  ImGui::TextWrapped(portTr("Held: %s"), held.empty() ? portTr("nothing") : held.c_str());
   ImGui::EndGroup();
 }
 
@@ -119,7 +108,7 @@ void deadZones(u32 player) {
   }
   bool changed = false;
   bool use = dz->useDeadzones;
-  if (ImGui::Checkbox("Dead zones", &use)) {
+  if (ImGui::Checkbox(portTrLabel("Dead zones"), &use)) {
     dz->useDeadzones = use;
     changed = true;
   }
@@ -127,7 +116,7 @@ void deadZones(u32 player) {
   auto pct = [&](const char* label, u16* v) {
     int p = static_cast<int>(std::lround(*v * 100.0 / 32767.0));
     ImGui::SetNextItemWidth(ImGui::GetFontSize() * 10.f);
-    if (ImGui::SliderInt(label, &p, 0, 50, "%d%%")) {
+    if (ImGui::SliderInt(portTrLabel(label), &p, 0, 50, "%d%%")) {
       *v = static_cast<u16>(p * 32767 / 100);
     }
     changed |= ImGui::IsItemDeactivatedAfterEdit();
@@ -137,7 +126,7 @@ void deadZones(u32 player) {
   pct("C-stick", &dz->substickDeadZone);
   ImGui::EndDisabled();
   bool emulate = dz->emulateTriggers;
-  if (ImGui::Checkbox("Triggers click at a point (as the GameCube's L and R)", &emulate)) {
+  if (ImGui::Checkbox(portTrLabel("Triggers click at a point (as the GameCube's L and R)"), &emulate)) {
     dz->emulateTriggers = emulate;
     changed = true;
   }
@@ -145,7 +134,7 @@ void deadZones(u32 player) {
     auto trig = [&](const char* label, u16* v) {
       int p = static_cast<int>(std::lround(*v * 100.0 / 32767.0));
       ImGui::SetNextItemWidth(ImGui::GetFontSize() * 10.f);
-      if (ImGui::SliderInt(label, &p, 5, 100, "%d%%")) {
+      if (ImGui::SliderInt(portTrLabel(label), &p, 5, 100, "%d%%")) {
         *v = static_cast<u16>(p * 32767 / 100);
       }
       changed |= ImGui::IsItemDeactivatedAfterEdit();
@@ -162,13 +151,14 @@ void deadZones(u32 player) {
 void listSection(int) {
   const u32 count = PADCount();
   if (count == 0) {
-    ImGui::TextDisabled("No controller connected. Any Xbox, PlayStation, Switch, GameCube (through an adapter), MFi "
+    ImGui::TextDisabled("%s", portTr("No controller connected. Any Xbox, PlayStation, Switch, GameCube (through an adapter), MFi "
                         "or other USB or Bluetooth controller works; one this page doesn't list can be set up "
-                        "below.");
+                        "below."));
     return;
   }
   static int sTest = -1;
-  static const char* kPlayers[] = {"Not playing", "Player 1", "Player 2", "Player 3", "Player 4"};
+  const char* kPlayers[] = {portTr("Not playing"), portTr("Player 1"), portTr("Player 2"), portTr("Player 3"),
+                            portTr("Player 4")};
   for (u32 i = 0; i < count; i++) {
     SDL_Gamepad* pad = padAt(i);
     if (pad == nullptr) {
@@ -189,15 +179,20 @@ void listSection(int) {
       PADSerializeMappings();
     }
     ImGui::SameLine();
-    const char* name = PADGetNameForControllerIndex(i);
+    // its name as players know it (button_glyphs.h), the driver's as the tooltip
+    const std::string name = controllerName(i), driver = controllerDriverName(i);
     ImGui::AlignTextToFramePadding();
-    ImGui::Text("%s", name != nullptr ? name : "Controller");
-    ImGui::SameLine();
-    const bool adapter = player >= 0 && PADIsGCAdapter(static_cast<u32>(player));
-    ImGui::TextDisabled("(%s%s)", kindName(SDL_GetGamepadType(pad)), adapter ? ", through an adapter" : "");
+    ImGui::TextUnformatted(name.c_str());
+    if (!driver.empty() && driver != name && ImGui::IsItemHovered()) {
+      ImGui::SetTooltip("%s", driver.c_str());
+    }
+    if (player >= 0 && PADIsGCAdapter(static_cast<u32>(player))) {
+      ImGui::SameLine();
+      ImGui::TextDisabled("(%s)", portTr("through an adapter"));
+    }
     battery(pad);
     ImGui::SameLine();
-    if (ImGui::SmallButton(sTest == static_cast<int>(i) ? "Hide test" : "Test")) {
+    if (ImGui::SmallButton(portTrLabel(sTest == static_cast<int>(i) ? "Hide test##test" : "Test##test"))) {
       sTest = sTest == static_cast<int>(i) ? -1 : static_cast<int>(i);
     }
     if (sTest == static_cast<int>(i)) {
@@ -206,15 +201,15 @@ void listSection(int) {
       if (player >= 0) {
         deadZones(static_cast<u32>(player));
       } else {
-        ImGui::TextDisabled("Make it a player to set its dead zones.");
+        ImGui::TextDisabled("%s", portTr("Make it a player to set its dead zones."));
       }
       ImGui::Unindent();
     }
     ImGui::PopID();
   }
   ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
-  ImGui::TextWrapped("Player 1 plays; player 2 can play the partner in battle (Second player, below). The "
-                     "buttons of each player are set under Controller buttons.");
+  ImGui::TextWrapped("%s", portTr("Player 1 plays; player 2 can play the partner in battle and in the field (Second "
+                                  "player, below). The buttons of each player are set under Controller buttons."));
   ImGui::PopStyleColor();
 }
 
@@ -265,7 +260,7 @@ void wizardBegin(SDL_JoystickID id) {
   sWiz.id = id;
   sWiz.joy = SDL_OpenJoystick(id);
   if (sWiz.joy == nullptr) {
-    sWiz.done = std::string("Couldn't open it: ") + SDL_GetError();
+    sWiz.done = std::string(portTr("Couldn't open it: ")) + SDL_GetError();
     return;
   }
   sWiz.step = 0;
@@ -319,6 +314,13 @@ std::string detect(const Step& s) {
   return "";
 }
 
+// a translated message with the controller's name in its %s
+std::string withName(const char* message, const std::string& name) {
+  std::string out = message;
+  const size_t at = out.find("%s");
+  return at == std::string::npos ? out : out.replace(at, 2, name);
+}
+
 void wizardSave() {
   SDL_GUID guid = SDL_GetJoystickGUID(sWiz.joy);
   char g[64];
@@ -335,13 +337,13 @@ void wizardSave() {
   SDL_CloseJoystick(sWiz.joy);
   sWiz.joy = nullptr;
   if (SDL_AddGamepadMapping(mapping.c_str()) < 0) {
-    sWiz.done = std::string("SDL didn't take the mapping: ") + SDL_GetError();
+    sWiz.done = std::string(portTr("SDL didn't take the mapping: ")) + SDL_GetError();
   } else if (FILE* f = std::fopen(userDbPath().c_str(), "a")) {
     std::fprintf(f, "%s\n", mapping.c_str());
     std::fclose(f);
-    sWiz.done = name + " is set up. It's in the list above now, and next time.";
+    sWiz.done = withName(portTr("%s is set up. It's in the list above now, and next time."), name);
   } else {
-    sWiz.done = name + " is set up for now; it couldn't be saved for next time.";
+    sWiz.done = withName(portTr("%s is set up for now; it couldn't be saved for next time."), name);
   }
   sWiz.step = -1;
 }
@@ -350,23 +352,23 @@ void setupSection(int) {
   if (sWiz.step >= 0) {
     if (sWiz.joy == nullptr || !SDL_JoystickConnected(sWiz.joy)) {
       sWiz.step = -1;
-      sWiz.done = "The controller went away.";
+      sWiz.done = portTr("The controller went away.");
       return;
     }
     const Step& s = kSteps[sWiz.step];
-    ImGui::Text("Step %d of %d: press %s", sWiz.step + 1, kStepCount, s.ask);
+    ImGui::Text(portTr("Step %d of %d: press %s"), sWiz.step + 1, kStepCount, portTr(s.ask));
     ImGui::ProgressBar(static_cast<float>(sWiz.step) / kStepCount, ImVec2(ImGui::GetFontSize() * 14.f, 0), "");
     if (sWiz.armedAt == 0) {
       arm();
     }
     std::string got = detect(s);
     bool next = !got.empty();
-    if (ImGui::Button("Skip")) {
+    if (ImGui::Button(portTrLabel("Skip"))) {
       next = true;
       got.clear();
     }
     ImGui::SameLine();
-    if (ImGui::Button("Cancel")) {
+    if (ImGui::Button(portTrLabel("Cancel"))) {
       SDL_CloseJoystick(sWiz.joy);
       sWiz = Wizard{};
       return;
@@ -393,21 +395,21 @@ void setupSection(int) {
     ImGui::AlignTextToFramePadding();
     ImGui::Text("%s", n != nullptr ? n : "A controller");
     ImGui::SameLine();
-    if (ImGui::Button("Set it up")) {
+    if (ImGui::Button(portTrLabel("Set it up"))) {
       wizardBegin(ids[i]);
     }
     ImGui::PopID();
   }
   SDL_free(ids);
   if (unknown == 0) {
-    ImGui::TextDisabled("Every connected controller is recognised.");
+    ImGui::TextDisabled("%s", portTr("Every connected controller is recognised."));
   }
   if (!sWiz.done.empty()) {
     ImGui::TextWrapped("%s", sWiz.done.c_str());
   }
   ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
-  ImGui::TextWrapped("A controller listed here works once you press each of its buttons when asked. Mappings "
-                     "you make are kept in gamecontrollerdb.txt in the save folder.");
+  ImGui::TextWrapped("%s", portTr("A controller listed here works once you press each of its buttons when asked. Mappings "
+                     "you make are kept in gamecontrollerdb.txt in the save folder."));
   ImGui::PopStyleColor();
 }
 

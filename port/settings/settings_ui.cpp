@@ -10,8 +10,10 @@
 #include "port/settings.h"
 #include "port/tr.h"
 #include "port/resume.h"
+#include "port/restart.h"
 #include "settings_ui.h"
 #include "launcher_style.h"
+#include "button_glyphs.h"
 #include "port/speed.h"
 #include "port/touch_overlay.h"
 #include "port/savestate.h"
@@ -99,25 +101,8 @@ constexpr const char* kRates[] = {"60", "120", "144", "240", "display"};
 constexpr const char* kRateNames[] = {"60 Hz (original)", "120 Hz", "144 Hz", "240 Hz", "The display's rate"};
 constexpr const char* kCorners[] = {"Off", "Top left", "Top right", "Bottom left", "Bottom right"};
 
-// a label in the menu language (port/include/port/tr.h), its English kept as
-// Dear ImGui's ID ("###"), so a control is the same control in any language
-const char* trl(const char* label) {
-  static thread_local std::string sRing[16];
-  static thread_local int sAt;
-  if (label == nullptr) {
-    return nullptr;
-  }
-  const char* id = std::strstr(label, "##");
-  const std::string shown = id != nullptr ? std::string(label, id - label) : std::string(label);
-  const char* t = shown.empty() ? "" : portTr(shown.c_str());
-  if (!shown.empty() && t == shown.c_str()) {
-    t = label; // no translation: as it is
-    return t;
-  }
-  std::string& out = sRing[sAt++ % 16];
-  out = std::string(t) + "###" + (id != nullptr ? std::string(id + 2) : shown);
-  return out.c_str();
-}
+// a label in the menu language (port/include/port/tr.h)
+const char* trl(const char* label) { return portTrLabel(label); }
 
 bool combo(const char* label, int* value, const char* const* names, int count) {
   bool change = false;
@@ -167,15 +152,16 @@ void remapSection() {
   static int sPort;
   u32 count = 0;
   ImGui::Separator();
-  ImGui::TextUnformatted("Controller buttons");
+  ImGui::TextUnformatted(portTr("Controller buttons"));
   {
-    static const char* kPorts[] = {"Player 1", "Player 2", "Player 3", "Player 4"};
+    const char* kPorts[] = {portTr("Player 1"), portTr("Player 2"), portTr("Player 3"), portTr("Player 4")};
     ImGui::SetNextItemWidth(ImGui::GetFontSize() * 7.f);
     if (ImGui::Combo("##remap_player", &sPort, kPorts, 4)) {
       sRebind = -1;
     }
   }
   const u32 port = static_cast<u32>(sPort);
+  const GlyphStyle style = glyphStyleOfPort(port);
   PADButtonMapping* maps = PADGetButtonMappings(port, &count);
   if (maps == nullptr || count == 0) {
     sRebind = -1;
@@ -196,16 +182,19 @@ void remapSection() {
   }
   for (u32 i = 0; i < count; i++) {
     ImGui::PushID(static_cast<int>(i));
-    const char* native = sRebind == static_cast<int>(i) ? "Press a button..." : PADGetNativeButtonName(maps[i].nativeButton);
-    if (ImGui::Button(native != nullptr ? native : "?", ImVec2(ImGui::GetFontSize() * 9.f, 0.f))) {
+    // the button as printed on this player's controller (the triggers' names for L and R)
+    const char* native = sRebind == static_cast<int>(i)
+                             ? portTr("Press a button...")
+                             : portTr(nativeButtonLabel(style, maps[i].nativeButton, maps[i].padButton));
+    if (ImGui::Button(native, ImVec2(ImGui::GetFontSize() * 9.f, 0.f))) {
       sRebind = static_cast<int>(i);
       sRebindArmed = false;
     }
     ImGui::SameLine();
-    ImGui::Text("GameCube %s", PADGetButtonName(maps[i].padButton));
+    ImGui::Text(portTr("GameCube %s"), PADGetButtonName(maps[i].padButton));
     ImGui::PopID();
   }
-  if (ImGui::Button("Swap A and B")) {
+  if (ImGui::Button(portTrLabel("Swap A and B"))) {
     PADButtonMapping* a = nullptr;
     PADButtonMapping* b = nullptr;
     for (u32 i = 0; i < count; i++) {
@@ -223,7 +212,7 @@ void remapSection() {
     }
   }
   ImGui::SameLine();
-  if (ImGui::Button("Restore defaults")) {
+  if (ImGui::Button(portTrLabel("Restore defaults"))) {
     PADRestoreDefaultMapping(port);
     PADSerializeMappings();
     sRebind = -1;
@@ -319,7 +308,7 @@ void bindKey(const KeyRow& row, s32 scancode) {
 
 void keyboardSection() {
   ImGui::Separator();
-  ImGui::TextUnformatted("Keyboard keys");
+  ImGui::TextUnformatted(portTr("Keyboard keys"));
   for (size_t i = 0; i < sizeof(kKeyRows) / sizeof(kKeyRows[0]); i++) {
     const KeyRow& row = kKeyRows[i];
     ImGui::PushID(static_cast<int>(i) + 1000);
@@ -331,10 +320,10 @@ void keyboardSection() {
       sKeyRebind = static_cast<int>(i);
     }
     ImGui::SameLine();
-    ImGui::Text("GameCube %s", row.name);
+    ImGui::Text(portTr("GameCube %s"), row.name);
     ImGui::PopID();
   }
-  if (ImGui::Button("Restore default keys")) {
+  if (ImGui::Button(portTrLabel("Restore default keys"))) {
     PADRestoreDefaultKeyBindings(0);
     PADSetKeyboardActive(0, TRUE);
     PADSerializeMappings();
@@ -378,12 +367,12 @@ void crashSection() {
     note("No crash reports.");
     return;
   }
-  if (ImGui::Button("Copy the last crash report")) {
+  if (ImGui::Button(portTrLabel("Copy the last crash report"))) {
     sCopied = copyCrashReport();
   }
   if (sCopied) {
     ImGui::SameLine();
-    ImGui::TextUnformatted("Copied");
+    ImGui::TextUnformatted(portTr("Copied"));
   }
   note("last_crash.txt in the save folder; paste it to whoever is helping you.");
 }
@@ -394,16 +383,16 @@ void drawCrashNotice(float scale) {
   static bool sCopied;
   ImGui::SetNextWindowPos(ImVec2(display.x * 0.5f, display.y * 0.5f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
   ImGui::SetNextWindowSize(ImVec2(std::min(display.x - 32.f, 460.f * scale), 0.f), ImGuiCond_Always);
-  if (ImGui::Begin("The game crashed last time", nullptr,
+  if (ImGui::Begin(portTrLabel("The game crashed last time##crash"), nullptr,
                    ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove)) {
     ImGui::SetWindowFontScale(scale);
     noteWindow();
-    ImGui::TextWrapped("A report of where it crashed was saved. Copy it and paste it to whoever is helping you.");
-    if (ImGui::Button(sCopied ? "Copied" : "Copy report")) {
+    ImGui::TextWrapped("%s", portTr("A report of where it crashed was saved. Copy it and paste it to whoever is helping you."));
+    if (ImGui::Button(portTrLabel(sCopied ? "Copied##report" : "Copy report##report"))) {
       sCopied = copyCrashReport();
     }
     ImGui::SameLine();
-    if (ImGui::Button("Close")) {
+    if (ImGui::Button(portTrLabel("Close"))) {
       portCrashReportDismiss();
     }
   }
@@ -429,7 +418,7 @@ void cloudSection(PortSettings* s) {
 #if TARGET_OS_IPHONE
   note("Your saves are kept the same as in a folder in iCloud Drive (pick the TTYD folder the Mac version "
        "uses to share them). The newer copy of each save wins; replaced saves are kept in Backups.");
-  if (ImGui::Button(portCloudAvailable() ? "Choose another iCloud Drive folder" : "Choose an iCloud Drive folder")) {
+  if (ImGui::Button(trl(portCloudAvailable() ? "Choose another iCloud Drive folder" : "Choose an iCloud Drive folder"))) {
     portCloudPickFolder();
   }
   if (portCloudAvailable()) {
@@ -484,7 +473,7 @@ void statesTab() {
     ImGui::PushID(i);
     const char* info = portSaveStateInfo(i);
     ImGui::AlignTextToFramePadding();
-    ImGui::Text("Slot %d", i + 1);
+    ImGui::Text(portTr("Slot %d"), i + 1);
     ImGui::SameLine(ImGui::GetFontSize() * 4.f);
     char label[32];
     std::snprintf(label, sizeof(label), "%s", portSaveStateLabel(i));
@@ -493,13 +482,13 @@ void statesTab() {
       portSaveStateSetLabel(i, label);
     }
     ImGui::SameLine();
-    if (ImGui::Button("Save")) {
+    if (ImGui::Button(portTrLabel("Save"))) {
       portSaveStateRequest(i, 0);
       setOpen(false);
     }
     ImGui::SameLine();
     ImGui::BeginDisabled(info == nullptr);
-    if (ImGui::Button("Load")) {
+    if (ImGui::Button(portTrLabel("Load"))) {
       portSaveStateRequest(i, 1);
       setOpen(false);
     }
@@ -643,12 +632,12 @@ void warpTab() {
   if (status != nullptr && status[0] != '\0') {
     ImGui::TextUnformatted(status);
   }
-  if (ImGui::Button("Refresh")) {
+  if (ImGui::Button(portTrLabel("Refresh"))) {
     readWarps();
   }
 #if !defined(__ANDROID__) && !(defined(__APPLE__) && TARGET_OS_IPHONE)
   ImGui::SameLine();
-  if (ImGui::Button("Open the warps folder")) {
+  if (ImGui::Button(portTrLabel("Open the warps folder"))) {
     const std::string url = "file:///" + warpDir();
     SDL_OpenURL(url.c_str());
   }
@@ -791,25 +780,25 @@ void archipelagoTab() {
   }
   note("A multiworld randomizer: the TTYD apworld's seed (an .apttyd file) and a server. The seed applies at the "
        "game's start; its randomizer mod, the TTYD AP mod, comes as a code mod.");
-  ImGui::TextWrapped("Status: %s", portApStatus());
+  ImGui::TextWrapped(portTr("Status: %s"), portApStatus());
   ImGui::Separator();
-  ImGui::TextWrapped("Seed: %s", portApSeedPath()[0] != '\0' ? portApSeedPath() : "(none)");
+  ImGui::TextWrapped(portTr("Seed: %s"), portApSeedPath()[0] != '\0' ? portApSeedPath() : "(none)");
 #if !defined(__ANDROID__) && !(defined(__APPLE__) && TARGET_OS_IPHONE)
-  if (ImGui::Button("Choose a seed...")) {
+  if (ImGui::Button(portTrLabel("Choose a seed..."))) {
     static const SDL_DialogFileFilter kFilter[] = {{"Archipelago seed", "apttyd"}};
     SDL_ShowOpenFileDialog(seedChosen, nullptr, SDL_GetKeyboardFocus(), kFilter, 1, nullptr, false);
   }
   ImGui::SameLine();
 #endif
   note("A new seed applies at the next start.");
-  ImGui::InputText("Server", server, sizeof(server));
-  ImGui::InputText("Slot", slot, sizeof(slot));
-  ImGui::InputText("Password", password, sizeof(password), ImGuiInputTextFlags_Password);
-  if (ImGui::Button("Connect")) {
+  ImGui::InputText(portTrLabel("Server"), server, sizeof(server));
+  ImGui::InputText(portTrLabel("Slot"), slot, sizeof(slot));
+  ImGui::InputText(portTrLabel("Password"), password, sizeof(password), ImGuiInputTextFlags_Password);
+  if (ImGui::Button(portTrLabel("Connect"))) {
     portApConnect(server, slot, password);
   }
   ImGui::SameLine();
-  if (ImGui::Button("Disconnect")) {
+  if (ImGui::Button(portTrLabel("Disconnect"))) {
     portApDisconnect();
   }
 }
@@ -837,6 +826,7 @@ struct Item {
   const char* keywords; // more words search finds it by, or nullptr
   bool (*shown)(const PortSettings* s); // nullptr: always
   const void* data = nullptr;           // a feature's control: its Extra (below)
+  int PortSettings::*field = nullptr;   // a next-start setting's value (Restart now)
 };
 
 // The tabs in order; a feature's own tab (portSettingsAdd*) comes after these.
@@ -950,7 +940,7 @@ const Item kItems[] = {
     {"Display", "Internal resolution", nullptr, 0, resolution, "resolution scale sharp 4k", nullptr},
     {"Display", "Texture filtering", nullptr, 0, CHOICE(texFilter, kFilters, 2), "pixels smooth sharp", nullptr},
     {"Display", "Anti-aliasing (4x MSAA)", "Smooths jagged edges.", kNextStart, TOGGLE(msaa), "msaa jaggies edges",
-     nullptr},
+     nullptr, nullptr, &PortSettings::msaa},
     {"Display", "Overlay corner", "Frame rate, clock and battery in a corner of the screen.", 0, overlay,
      "fps counter clock battery", nullptr},
     {"Display", "Never skip graphics that are still loading",
@@ -1032,9 +1022,10 @@ const Item kItems[] = {
      "alone).",
      0, TOGGLE(skipIntro), "logos opening", nullptr},
     {"Gameplay", "Language", "The game's text.", kNextStart, CHOICE(language, kLanguages, 6),
-     "english deutsch francais espanol italiano text", isEurope},
+     "english deutsch francais espanol italiano text", isEurope, nullptr, &PortSettings::language},
     {"Gameplay", "Run at 50 Hz (PAL)", "As on a PAL TV: the game's 50 Hz mode, a little slower. 60 Hz otherwise.",
-     kNextStart | kChangesPlay, TOGGLE(pal50Hz), "pal 60 hz eurgb60 refresh", isEurope},
+     kNextStart | kChangesPlay, TOGGLE(pal50Hz), "pal 60 hz eurgb60 refresh", isEurope, nullptr,
+     &PortSettings::pal50Hz},
 
     // Practice
     {"Practice", "Save states", nullptr, kInGame, [](PortSettings*, const Item&) { statesTab(); },
@@ -1182,6 +1173,21 @@ void marker(const char* text, ImU32 bg) {
   ImGui::Dummy(ImVec2(size.x + padX * 2, ImGui::GetFrameHeight()));
 }
 
+char sSearch[64];
+bool sTabsInGame; // for the features' sections (portSettingsAddSection)
+
+// a next-start setting changed this run: Restart now beside it (a section,
+// whose value isn't known here: whenever a game runs)
+bool restartWanted(PortSettings* s, const Item& it) {
+  if (it.field != nullptr) {
+    return portRestartPendingFor(&(s->*it.field)) != 0;
+  }
+  if (it.draw == drawExtra && it.data != nullptr) {
+    return portRestartPendingFor(portSettingsFind(static_cast<const Extra*>(it.data)->key)) != 0;
+  }
+  return sTabsInGame;
+}
+
 void drawItem(PortSettings* s, const Item& it) {
   ImGui::PushID(it.label);
   if (it.draw != nullptr) {
@@ -1192,6 +1198,9 @@ void drawItem(PortSettings* s, const Item& it) {
   // markers after a one-line control (sections draw their own lines)
   if (it.flags & kNextStart) {
     marker(portTr("next start"), IM_COL32(52, 104, 178, 255));
+    if (restartWanted(s, it)) {
+      portRestartButton();
+    }
   }
   if (it.flags & kChangesPlay) {
     marker(portTr("changes play"), IM_COL32(206, 112, 22, 255));
@@ -1232,14 +1241,12 @@ bool matches(const Item& it, const char* query) {
   return true;
 }
 
-char sSearch[64];
-bool sTabsInGame; // for the features' sections (portSettingsAddSection)
-
 } // namespace
 
 void portSettingsTabs(bool inGame) {
   PortSettings* s = portSettings();
   sTabsInGame = inGame;
+  portRestartPending(); // (the values this run began with, before any is changed here)
   static bool sSearchSet;
   if (!sSearchSet) {
     sSearchSet = true;
@@ -1700,7 +1707,7 @@ extern "C" void portSettingsDraw(void) {
     ImGui::TextUnformatted(portTr("Settings"));
     ImGui::PopFont();
     ImGui::SameLine();
-    ImGui::TextDisabled("Paper Cut %s", PORT_VERSION);
+    ImGui::TextDisabled(portTr("Paper Cut %s"), PORT_VERSION);
     const float closeWidth = ImGui::CalcTextSize(portTr("Close")).x + ImGui::GetStyle().FramePadding.x * 2;
     ImGui::SameLine(ImGui::GetWindowContentRegionMax().x - closeWidth);
     if (ImGui::Button(trl("Close"))) {
@@ -1762,6 +1769,7 @@ const PauseField kPauseFields[] = {
      nullptr, kCorners, 5},
     {"Display", "Never skip loading graphics", "Something drawn for the first time waits for its graphics.", 0, 0,
      &PortSettings::noPopIn},
+    {"Display", "Anti-aliasing (4x MSAA)", "Smooths jagged edges.", kNextStart, 0, &PortSettings::msaa},
 #if defined(__ANDROID__) || (defined(__APPLE__) && TARGET_OS_IPHONE)
     {"Display", "Keep clear of the notch", nullptr, 0, 0, &PortSettings::safeArea},
 #endif
@@ -1796,6 +1804,10 @@ const PauseField kPauseFields[] = {
     {"Gameplay", "Fast-forward toggles", "On: a press turns it on and off. Off: held.", 0, 0, &PortSettings::ffToggle},
     {"Gameplay", "Run speed", "Faster running can make some jumps longer than intended.", kChangesPlay, 2,
      &PortSettings::runSpeed, nullptr, nullptr, 0, 100, 150, 25, "%d%%"},
+    {"Gameplay", "Language", "The game's text.", kNextStart, 1, &PortSettings::language, nullptr, kLanguages, 6, 0, 0,
+     0, nullptr, isEurope},
+    {"Gameplay", "Run at 50 Hz (PAL)", "As on a PAL TV: the game's 50 Hz mode, a little slower.",
+     kNextStart | kChangesPlay, 0, &PortSettings::pal50Hz, nullptr, nullptr, 0, 0, 0, 0, nullptr, isEurope},
     {"System", "Pause in the background", "The game waits while another window has the focus.", 0, 0,
      &PortSettings::pauseUnfocused},
     {"System", "Controllers in the background", "Controllers still work while another window has the focus.", 0, 0,

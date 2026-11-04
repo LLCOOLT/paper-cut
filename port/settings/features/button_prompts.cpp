@@ -1,7 +1,7 @@
 // Button prompts that match the controller (Controls tab): the game's
 // pictures of the GameCube's A, B, X, Y, Z, L, R and Start, in its text
 // (<icon PAD_A>), menus and action commands, drawn instead as the buttons
-// that do those things now: an Xbox, PlayStation or Switch controller's (by
+// that do those things now: an Xbox, PlayStation, Switch or Steam Deck controller's (by
 // where the button is, so a remapped button shows its new place), or the
 // keyboard's keys. Auto follows whatever was used last; a GameCube
 // controller through an adapter keeps the game's own pictures.
@@ -37,17 +37,18 @@ extern const unsigned int portFontBold_size;
 
 namespace {
 
-enum Choice { kAuto, kOriginal, kXbox, kPlayStation, kSwitch, kKeyboard };
+enum Choice { kAuto, kOriginal, kXbox, kPlayStation, kSwitch, kKeyboard, kSteamDeck };
 constexpr const char* kChoices[] = {"Auto (the controller used last)", "GameCube (the game's own)", "Xbox",
-                                    "PlayStation", "Switch", "Keyboard"};
+                                    "PlayStation", "Switch", "Keyboard", "Steam Deck"};
 
 constexpr u16 kPadButtons[8] = {PAD_BUTTON_A,  PAD_BUTTON_B,  PAD_BUTTON_X,  PAD_BUTTON_Y,
                                 PAD_TRIGGER_Z, PAD_TRIGGER_L, PAD_TRIGGER_R, PAD_BUTTON_START};
 
 int* sChoice;
-// the last input: 0 none yet, 1 the keyboard, 2 a controller (sPadType)
+// the last input: 0 none yet, 1 the keyboard, 2 a controller (sPadStyle, once one is used)
 int sLastInput;
-SDL_GamepadType sPadType = SDL_GAMEPAD_TYPE_UNKNOWN;
+bool sPadSeen;
+GlyphStyle sPadStyle = GlyphStyle::Xbox;
 
 struct Image {
   std::vector<uint8_t> pixels;
@@ -66,31 +67,6 @@ void clear() {
   sApplied.clear();
 }
 
-GlyphStyle styleOf(SDL_GamepadType t) {
-  switch (t) {
-  case SDL_GAMEPAD_TYPE_PS3:
-  case SDL_GAMEPAD_TYPE_PS4:
-  case SDL_GAMEPAD_TYPE_PS5:
-    return GlyphStyle::PlayStation;
-  case SDL_GAMEPAD_TYPE_NINTENDO_SWITCH_PRO:
-  case SDL_GAMEPAD_TYPE_NINTENDO_SWITCH_JOYCON_LEFT:
-  case SDL_GAMEPAD_TYPE_NINTENDO_SWITCH_JOYCON_RIGHT:
-  case SDL_GAMEPAD_TYPE_NINTENDO_SWITCH_JOYCON_PAIR:
-    return GlyphStyle::Switch;
-  default:
-    return GlyphStyle::Xbox;
-  }
-}
-
-SDL_GamepadType portOneType() {
-  const s32 idx = PADGetIndexForPort(0);
-  if (idx < 0) {
-    return SDL_GAMEPAD_TYPE_UNKNOWN;
-  }
-  SDL_Gamepad* pad = PADGetSDLGamepadForIndex(static_cast<u32>(idx));
-  return pad != nullptr ? SDL_GetGamepadType(pad) : SDL_GAMEPAD_TYPE_UNKNOWN;
-}
-
 bool havePad() { return PADGetIndexForPort(0) >= 0; }
 
 // the style to draw now, or false: the game's own pictures
@@ -101,8 +77,7 @@ bool wantedStyle(GlyphStyle* out) {
       return false; // a real GameCube controller: its own buttons
     }
     if (sLastInput == 2 || (sLastInput == 0 && havePad())) {
-      const SDL_GamepadType t = sPadType != SDL_GAMEPAD_TYPE_UNKNOWN ? sPadType : portOneType();
-      *out = styleOf(t);
+      *out = sPadSeen ? sPadStyle : glyphStyleOfPort(0);
       return true;
     }
 #if defined(__ANDROID__) || (defined(__APPLE__) && TARGET_OS_IPHONE)
@@ -118,6 +93,7 @@ bool wantedStyle(GlyphStyle* out) {
   case kPlayStation: *out = GlyphStyle::PlayStation; return true;
   case kSwitch: *out = GlyphStyle::Switch; return true;
   case kKeyboard: *out = GlyphStyle::Keyboard; return true;
+  case kSteamDeck: *out = GlyphStyle::SteamDeck; return true;
   default: return false;
   }
 }
@@ -201,8 +177,14 @@ std::string plan(GlyphStyle style, GlyphSpec specs[8], std::string labels[8]) {
       }
       specs[b].face = faceOf(native, b);
       if (specs[b].face == GlyphFace::Other) {
-        const char* n = PADGetNativeButtonName(native);
-        labels[b] = n != nullptr ? std::string(n).substr(0, 3) : "?";
+        // a short name on the pill: L3, R4, DU (the d-pad's up), Sha(re)
+        std::string n = nativeButtonLabel(style, native, kPadButtons[b]);
+        if (n.rfind("D-pad ", 0) == 0) {
+          n = std::string("D") + static_cast<char>(std::toupper(static_cast<unsigned char>(n[6])));
+        } else if (n.rfind("Paddle ", 0) == 0) {
+          n = "P" + n.substr(7);
+        }
+        labels[b] = n.substr(0, 3);
       }
       key += "|" + std::to_string(native);
     }
@@ -296,7 +278,8 @@ int inputEvent(const void* ev) {
     sLastInput = 2;
     if (SDL_Gamepad* pad = SDL_GetGamepadFromID(e->type == SDL_EVENT_GAMEPAD_BUTTON_DOWN ? e->gbutton.which
                                                                                          : e->gaxis.which)) {
-      sPadType = SDL_GetGamepadType(pad);
+      sPadStyle = glyphStyleOf(SDL_GetGamepadType(pad), SDL_GetGamepadVendor(pad), SDL_GetGamepadProduct(pad));
+      sPadSeen = true;
     }
     break;
   default:
@@ -307,12 +290,12 @@ int inputEvent(const void* ev) {
 
 struct ButtonPromptSettings {
   ButtonPromptSettings() {
-    sChoice = portSettingsDeclare("button_prompts", kAuto, kAuto, kKeyboard);
+    sChoice = portSettingsDeclare("button_prompts", kAuto, kAuto, kSteamDeck);
     portSettingsAddChoice("Controls", "Button prompts",
                           "The buttons the game shows (in its text, menus and action commands) drawn as the ones "
                           "that do those things on your controller or keyboard, where you've mapped them.",
-                          0, "button_prompts", kChoices, 6,
-                          "button prompts icons glyphs xbox playstation ps4 ps5 switch keyboard controller");
+                          0, "button_prompts", kChoices, 7,
+                          "button prompts icons glyphs xbox playstation ps4 ps5 switch steam deck keyboard controller");
     portSettingsAddOverlay(tick, inputEvent);
   }
 } sButtonPrompts;

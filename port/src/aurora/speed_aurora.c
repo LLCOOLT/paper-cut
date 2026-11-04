@@ -44,8 +44,8 @@ void portSpeedFrame(void) {
     if (sFast < 0) {
         sFast = getenv("TTYD_FAST") != NULL; /* tests: a virtual clock already */
     }
-    if (sFast) {
-        return;
+    if (sFast || portLockstep()) {
+        return; /* online co-op too: the other game can't run faster */
     }
     if (sTest < 0) {
         /* $TTYD_FF_TEST (tests): fast-forward held from the start */

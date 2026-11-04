@@ -184,6 +184,7 @@ int aurora_main(int argc, char* argv[]) {
     portLuigiModelInit(); /* Luigi's model with our animations, from the disc (docs/LUIGI_ANIMS.md) */
     portModsInit(info.userPath, info.cachePath); /* the mods folder, loose textures (port/mods/mods.cpp) */
     portPipelineWarmupWait(); /* "Preparing graphics": every known pipeline built first */
+    portOnlineTestStart(); /* tests: $TTYD_ONLINE_HOST / _JOIN, online co-op's lobby without its page */
     portAuroraBeginFrame();
     return ttyd_main();
 }

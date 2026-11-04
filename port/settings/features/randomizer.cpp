@@ -2,6 +2,7 @@
 // the built-in item randomizer's seed and what it shuffles, for the next
 // start's game; what this run's game was given.
 #include "port/settings.h"
+#include "port/tr.h"
 #include "../../archipelago/ttyd_ap.h"
 #include "../../archipelago/ttyd_rando.h"
 #include <imgui.h>
@@ -40,20 +41,20 @@ void section(int inGame) {
 
   const char* active = portRandoActive();
   if (active[0] != '\0') {
-    ImGui::TextWrapped("This run: %s", active);
+    ImGui::TextWrapped(portTr("This run: %s"), active);
   } else if (inGame) {
-    ImGui::TextWrapped("This run: not randomized.");
+    ImGui::TextWrapped("%s", portTr("This run: not randomized."));
   }
   if (portApSeedPath()[0] != '\0') {
     warn("An Archipelago seed is chosen on the Archipelago tab; it is used instead of this one.");
-    if (ImGui::Button("Use the built-in randomizer instead")) {
+    if (ImGui::Button(portTrLabel("Use the built-in randomizer instead"))) {
       portApSetSeed("");
     }
   }
   ImGui::Separator();
 
   bool enabled = s->enabled != 0;
-  if (ImGui::Checkbox("Randomize the game from the next start", &enabled)) {
+  if (ImGui::Checkbox(portTrLabel("Randomize the game from the next start"), &enabled)) {
     s->enabled = enabled;
     changed = true;
   }
@@ -61,11 +62,11 @@ void section(int inGame) {
        "again for your other files.");
 
   ImGui::SetNextItemWidth(ImGui::GetFontSize() * 14.0f);
-  if (ImGui::InputText("Seed", s->seed, sizeof(s->seed))) {
+  if (ImGui::InputText(portTrLabel("Seed"), s->seed, sizeof(s->seed))) {
     changed = true;
   }
   ImGui::SameLine();
-  if (ImGui::Button("New seed")) {
+  if (ImGui::Button(portTrLabel("New seed"))) {
     portRandoNewSeed();
     sCheck.clear();
   }
@@ -73,7 +74,7 @@ void section(int inGame) {
     note("Any text. Empty: a random one is made at the start (and kept here).");
   }
 
-  ImGui::TextUnformatted("What is shuffled");
+  ImGui::TextUnformatted(portTr("What is shuffled"));
   auto box = [&](const char* label, int& v) {
     bool b = v != 0;
     if (ImGui::Checkbox(label, &b)) {
@@ -103,7 +104,7 @@ void section(int inGame) {
   note("At the start, to the randomizer folder in the user folder (spoiler_<seed>.txt): where every item went "
        "and, for the open world, the order the logic expects key items to be found in.");
 
-  if (ImGui::Button("Check this seed")) {
+  if (ImGui::Button(portTrLabel("Check this seed"))) {
     sCheck = portRandoCheck();
   }
   if (!sCheck.empty()) {

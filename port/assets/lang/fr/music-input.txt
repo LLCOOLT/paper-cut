@@ -1,0 +1,58 @@
+# Music shuffle, your own music and the input display (port/settings/features/music.cpp, input_display.cpp)
+
+Music shuffle
+Musique aléatoire
+
+Each room's music is another of the game's: field music for field music, battle music for battle music. Scenes, jingles and fanfares stay as they are. Only you hear it.
+La musique de chaque salle est une autre du jeu : musique d'exploration pour musique d'exploration, musique de combat pour musique de combat. Les scènes, jingles et fanfares restent tels quels. Vous seul l'entendez.
+
+Your music
+Votre musique
+
+Your files in the music folder play in place of the game's tracks they are named after.
+Vos fichiers du dossier music sont joués à la place des morceaux du jeu dont ils portent le nom.
+
+Shuffle includes your music
+L'aléatoire inclut votre musique
+
+Music shuffle also picks the music folder's files.
+La musique aléatoire choisit aussi les fichiers du dossier music.
+
+Music folder
+Dossier de musique
+
+Open the music folder
+Ouvrir le dossier de musique
+
+Look for files again
+Chercher à nouveau les fichiers
+
+%d file found
+%d fichier trouvé
+
+%d files found
+%d fichiers trouvés
+
+Playing: %s
+En cours : %s
+
+Reads WAV, OGG, MP3 and FLAC files.
+Lit les fichiers WAV, OGG, MP3 et FLAC.
+
+Reads WAV files.
+Lit les fichiers WAV.
+
+Reads WAV files and some others.
+Lit les fichiers WAV et quelques autres.
+
+Name a file after the game's track, as tracks.txt in the folder lists them: BGM_STG1_NOK1.wav, for example. A file loops at its LOOPSTART and LOOPLENGTH tags, or as a whole.
+Nommez un fichier d'après le morceau du jeu, comme tracks.txt dans le dossier les liste : BGM_STG1_NOK1.wav, par exemple. Un fichier boucle à ses balises LOOPSTART et LOOPLENGTH, ou en entier.
+
+Input display
+Affichage des commandes
+
+The controller as the game reads it, in a corner: sticks, buttons, d-pad and triggers (with Second player on, the second controller beside it).
+La manette telle que le jeu la lit, dans un coin : sticks, boutons, croix et gâchettes (avec Deuxième joueur, la deuxième manette à côté).
+
+Your music is read with stb_vorbis (public domain), dr_mp3 and dr_flac (public domain or MIT No Attribution).
+Votre musique est lue avec stb_vorbis (domaine public), dr_mp3 et dr_flac (domaine public ou MIT No Attribution).

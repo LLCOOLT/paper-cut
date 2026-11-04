@@ -9,6 +9,7 @@
 // settings' tabs (settings_ui.cpp) are here too, for what applies at start.
 #include "port/aurora_pc.h"
 #include "port/settings.h"
+#include "port/tr.h"
 #include "port/versions.h"
 #include "settings_ui.h"
 #include "port/update_check.h"
@@ -38,6 +39,8 @@
 extern "C" const char* portIosDocumentsDir(void);
 #endif
 
+bool portOnlineLobbyDraw(float scale); // online co-op's lobby (port/settings/features/online.cpp)
+
 namespace {
 
 struct Disc {
@@ -55,11 +58,11 @@ struct Launcher {
   std::string result;  // set when a disc of this version is chosen
   bool pad = false;        // a controller in use: its buttons shown, the focus outline kept up
   bool focusList = true;   // put the focus on the selected disc (or the Add button) this frame
-  int tab = 0;             // the tab shown (Play, Settings, About)
+  int tab = 0;             // the tab shown (Play, Online, Settings, About)
   int wantTab = -1;        // a tab asked for with the shoulder buttons
 };
 
-constexpr int kTabCount = 3;
+constexpr int kTabCount = 4;
 
 // The controller in use, for its buttons' names and the confirm button:
 // Nintendo controllers confirm with A on the right (east), the others with the
@@ -397,7 +400,7 @@ void drawLibrary(Launcher& l, float scale, bool stacked) {
   heading("Your discs");
   ImGui::Spacing();
   if (l.discs.empty()) {
-    ImGui::TextWrapped("None yet. Add the disc image of your copy of the game (.iso, .rvz, .gcm...).");
+    ImGui::TextWrapped("%s", portTr("None yet. Add the disc image of your copy of the game (.iso, .rvz, .gcm...)."));
   }
   for (size_t i = 0; i < l.discs.size(); i++) {
     const Disc& d = l.discs[i];
@@ -450,7 +453,7 @@ void drawLibrary(Launcher& l, float scale, bool stacked) {
   }
   if (l.selected >= 0) {
     ImGui::SameLine();
-    if (ImGui::Button("Remove from list")) {
+    if (ImGui::Button(portTrLabel("Remove from list"))) {
       l.discs.erase(l.discs.begin() + l.selected);
       l.selected = std::min(l.selected, static_cast<int>(l.discs.size()) - 1);
       save(l);
@@ -465,8 +468,8 @@ void drawDetails(Launcher& l, float scale, ImVec2 size = ImVec2(0, 0)) {
   if (l.selected < 0 || l.selected >= static_cast<int>(l.discs.size())) {
     heading("Welcome!");
     ImGui::Spacing();
-    ImGui::TextWrapped("Add the disc image of your copy of the game to play. The list remembers it, and each "
-                       "version (Japanese, US, European) plays with its own build of the port.");
+    ImGui::TextWrapped("%s", portTr("Add the disc image of your copy of the game to play. The list remembers it, and each "
+                       "version (Japanese, US, European) plays with its own build of the port."));
     ImGui::EndChild();
     return;
   }
@@ -475,7 +478,7 @@ void drawDetails(Launcher& l, float scale, ImVec2 size = ImVec2(0, 0)) {
     std::string name = d.version->name;
     name[0] = static_cast<char>(std::toupper(static_cast<unsigned char>(name[0])));
     heading(name.c_str());
-    ImGui::TextDisabled("Disc ID %s", d.version->id);
+    ImGui::TextDisabled(portTr("Disc ID %s"), d.version->id);
   } else {
     heading(d.exists ? "Unknown disc image" : "Missing file");
   }
@@ -498,10 +501,10 @@ void drawDetails(Launcher& l, float scale, ImVec2 size = ImVec2(0, 0)) {
     }
     SDL_DateTime t;
     if (SDL_TimeToDateTime(resumed, &t, true)) {
-      ImGui::TextDisabled("Where you left off, %04d-%02d-%02d %02d:%02d", t.year, t.month, t.day, t.hour, t.minute);
+      ImGui::TextDisabled(portTr("Where you left off, %04d-%02d-%02d %02d:%02d"), t.year, t.month, t.day, t.hour, t.minute);
     }
     ImGui::Spacing();
-    if (ImGui::Button("Start from the title", ImVec2(buttonWidth, 0))) {
+    if (ImGui::Button(portTrLabel("Start from the title"), ImVec2(buttonWidth, 0))) {
       play(l, l.selected);
     }
   } else {
@@ -523,13 +526,45 @@ void drawDetails(Launcher& l, float scale, ImVec2 size = ImVec2(0, 0)) {
   ImGui::Spacing();
   PortSettings* s = portSettings();
   bool skip = s->launcherSkip != 0;
-  if (ImGui::Checkbox("Skip to this disc next time", &skip)) {
+  if (ImGui::Checkbox(portTrLabel("Skip to this disc next time"), &skip)) {
     s->launcherSkip = skip ? 1 : 0;
     portSettingsSave();
   }
   ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
-  ImGui::TextWrapped("To see this screen again: Settings > System in the game.");
+  ImGui::TextWrapped("%s", portTr("To see this screen again: Settings > System in the game."));
   ImGui::PopStyleColor();
+  ImGui::EndChild();
+}
+
+// Online co-op (port/include/port/online.h): the lobby for the disc chosen in
+// Play, in its version's build; both games start from here.
+void drawOnline(Launcher& l, float scale) {
+  beginCard("online", ImVec2(0, 0), scale);
+  const Disc* d = l.selected >= 0 && l.selected < static_cast<int>(l.discs.size()) ? &l.discs[l.selected] : nullptr;
+  if (d == nullptr || d->version == nullptr || !playProblem(*d).empty()) {
+    ImGui::TextWrapped("%s", portTr("Choose your disc in Play first: online play uses it."));
+  } else if (d->version != portVersionSelf()) {
+    ImGui::TextWrapped(portTr("This is %s: online play runs in its own build."), d->version->name);
+#ifndef LAUNCHER_ONE_VERSION
+    if (ImGui::Button(portTrLabel("Open its build"))) {
+      // its launcher, on this tab (SDL_CreateProcess passes SDL's environment)
+      const std::string exe = executableOf(d->version);
+      SDL_SetEnvironmentVariable(SDL_GetEnvironment(), "TTYD_LAUNCHER_TAB", "Online", true);
+      const char* args[] = {exe.c_str(), nullptr};
+      if (SDL_Process* process = SDL_CreateProcess(args, false)) {
+        SDL_DestroyProcess(process);
+        if (SDL_Window* w = aurora_get_window()) {
+          SDL_HideWindow(w);
+        }
+        std::_Exit(0);
+      }
+      l.status = "Could not start " + fileName(exe) + ": " + SDL_GetError();
+    }
+#endif
+  } else if (portOnlineLobbyDraw(scale)) {
+    writeFile(l.lastFile, d->path);
+    l.result = d->path; // both games start
+  }
   ImGui::EndChild();
 }
 
@@ -539,27 +574,29 @@ void drawAbout(Launcher& l, float scale) {
   beginCard("about", ImVec2(0, 0), scale);
   heading("About");
   ImGui::Spacing();
-  ImGui::TextWrapped("Paper Cut plays Paper Mario: The Thousand-Year Door as a native program, built from the "
+  ImGui::TextWrapped("%s", portTr("Paper Cut plays Paper Mario: The Thousand-Year Door as a native program, built from the "
                      "game's C decompilation, with no emulator. You need your own copy of the game: a disc image "
-                     "of the Japanese, US or European release.");
+                     "of the Japanese, US or European release."));
   ImGui::Spacing();
-  ImGui::Text("Paper Cut %s", PORT_VERSION);
-  ImGui::Text("This build: %s (%s)", self->name, self->version);
+  ImGui::Text(portTr("Paper Cut %s"), PORT_VERSION);
+  ImGui::Text(portTr("This build: %s (%s)"), self->name, self->version);
   portUpdateDrawNotice(); // a newer release, when the update check found one
   ImGui::Spacing();
   heading("Licences");
   ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
-  ImGui::TextWrapped("Paper Cut is under the MIT licence. It is built with: Aurora (MIT), SDL 3 (zlib), Dawn "
+  ImGui::TextWrapped("%s", portTr("Paper Cut is under the MIT licence. It is built with: Aurora (MIT), SDL 3 (zlib), Dawn "
                      "(BSD 3-Clause), nod (MIT), Dear ImGui (MIT), FreeType (FreeType License), libpng (libpng "
                      "License), zlib (zlib), Zstandard (BSD 3-Clause), xxHash (BSD 2-Clause), {fmt} (MIT), Abseil "
                      "(Apache 2.0), Tracy (BSD 3-Clause), SQLite (public domain), MusyX (MIT), SGI's GLU "
                      "tessellator (SGI Free Software License B 2.0), and the Fredoka typeface (SIL Open Font "
-                     "License 1.1).");
+                     "License 1.1)."));
+  ImGui::TextWrapped("%s", portTr("Your music is read with stb_vorbis (public domain), dr_mp3 and dr_flac (public "
+                                  "domain or MIT No Attribution)."));
 #if defined(__ANDROID__) || (defined(__APPLE__) && TARGET_OS_IPHONE)
-  ImGui::TextWrapped("The licence texts are in THIRD_PARTY.txt of Paper Cut's desktop packages and in its "
-                     "source (docs/THIRD_PARTY.md).");
+  ImGui::TextWrapped("%s", portTr("The licence texts are in THIRD_PARTY.txt of Paper Cut's desktop packages and in its "
+                     "source (docs/THIRD_PARTY.md)."));
 #else
-  ImGui::TextWrapped("The licence texts are in THIRD_PARTY.txt and OFL.txt beside Paper Cut.");
+  ImGui::TextWrapped("%s", portTr("The licence texts are in THIRD_PARTY.txt and OFL.txt beside Paper Cut."));
 #endif
   ImGui::PopStyleColor();
   ImGui::EndChild();
@@ -665,7 +702,7 @@ void drawPrompts(const Launcher& l, ImVec2 stageMin, ImVec2 stageMax, float scal
     prompts.push_back({kConfirm, "Choose"});
     prompts.push_back({kBack, "Back"});
   }
-  if (l.tab == 1) {
+  if (l.tab == 2) { // Settings
     prompts.push_back({kTriggers, "Sections"});
   }
   prompts.push_back({kShoulders, "Tabs"});
@@ -795,7 +832,7 @@ void draw(Launcher& l, float time) {
   const bool tabs = ImGui::BeginTabBar("launcher");
   ImGui::PopStyleColor();
   if (tabs) {
-    if (ImGui::BeginTabItem("Play", nullptr, tabFlags(0, "Play"))) {
+    if (ImGui::BeginTabItem(portTrLabel("Play"), nullptr, tabFlags(0, "Play"))) {
       l.tab = 0;
       if (stacked) {
         // a narrow stage (a phone held upright): Play first, the discs (set
@@ -810,15 +847,20 @@ void draw(Launcher& l, float time) {
       }
       ImGui::EndTabItem();
     }
-    if (ImGui::BeginTabItem("Settings", nullptr, tabFlags(1, "Settings"))) {
+    if (ImGui::BeginTabItem(portTrLabel("Online"), nullptr, tabFlags(1, "Online"))) {
       l.tab = 1;
+      drawOnline(l, scale);
+      ImGui::EndTabItem();
+    }
+    if (ImGui::BeginTabItem(portTrLabel("Settings"), nullptr, tabFlags(2, "Settings"))) {
+      l.tab = 2;
       beginCard("settings", ImVec2(0, 0), scale);
       portSettingsTabs(false);
       ImGui::EndChild();
       ImGui::EndTabItem();
     }
-    if (ImGui::BeginTabItem("About", nullptr, tabFlags(2, "About"))) {
-      l.tab = 2;
+    if (ImGui::BeginTabItem(portTrLabel("About"), nullptr, tabFlags(3, "About"))) {
+      l.tab = 3;
       drawAbout(l, scale);
       ImGui::EndTabItem();
     }
@@ -837,7 +879,8 @@ extern "C" int portLauncherRun(const char* userPath, const char* finder, char* p
     // macOS: a disc image opened with the app in Finder plays straight away
     l.selected = add(l, finder);
     play(l, l.selected);
-  } else if (portSettings()->launcherSkip && l.selected >= 0 && l.discs[l.selected].path == readFile(l.lastFile)) {
+  } else if (portSettings()->launcherSkip && SDL_getenv("TTYD_LAUNCHER_TAB") == nullptr && l.selected >= 0 &&
+             l.discs[l.selected].path == readFile(l.lastFile)) {
     play(l, l.selected);
   }
   gPortLauncherShown = true; // touches drive the launcher (settings_ui.cpp)

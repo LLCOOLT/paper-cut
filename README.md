@@ -15,6 +15,16 @@ The game code is C, from the decompilation in [LLCOOLT/ttyd](https://github.com/
   <img src="docs/images/shot-settings.png" alt="The settings page" width="49%">
 </p>
 
+<p align="center">
+  <img src="docs/images/gif-coop.gif" alt="Co-op: the second player walks the partner" width="49%">
+  <img src="docs/images/shot-online.jpg" alt="Online co-op: the host's game and the guest's, in step" width="49%">
+  <img src="docs/images/shot-cosmetics.jpg" alt="Cosmetics: Mario in Luigi green, Goombella in pink" width="49%">
+  <img src="docs/images/gif-free-camera.gif" alt="The free camera" width="49%">
+  <img src="docs/images/shot-mirror.jpg" alt="Mirror mode" width="49%">
+  <img src="docs/images/shot-start-settings.jpg" alt="The settings in the game's own Start menu" width="49%">
+  <img src="docs/images/shot-second-screen.jpg" alt="The second screen on a dual-screen handheld: party, map and battle" width="98%">
+</p>
+
 ## Getting started
 
 Start **Paper Cut** and add your disc image (.iso, .rvz, .gcm...) to the launcher's library. Paper Cut recognises which release it is and plays it. The launcher works with a mouse, a keyboard, a controller or touch. It also holds the settings, so you can set things up before the game starts. With "Skip to this disc next time" turned on, the next start goes straight to the game.
@@ -42,12 +52,19 @@ Change any of them under Settings > Controls > Keyboard keys. The port's own key
 
 ## Features
 
+**Co-op, at home and online**
+- **A second player plays the partner:** in battle its moves, action commands and guards; in the field it walks anywhere with its own stick, hops, talks to people, hits blocks, uses its ability and switches partners. Mario calls it back with Y. "1P" and "2P" over the characters show who's who.
+- **Joining:** with co-op on, A on another controller joins as player 2. The Players section (Controls) shows who is who, and picks player 2's controller by a press; a keyboard and one pad are enough.
+- **Online co-op:** the launcher's Online tab. The host waits and shares their address; the other player joins with it. Both need Paper Cut and their own disc of the same release, and any platform plays with any other (Windows, Mac, Linux, iPhone, Android). Both games run in lockstep: only the controllers' input crosses the network, each frame, and the games check every second that they're still the same. The guest plays on the host's save and settings for the session, with their own display, sound and controls; their own saves aren't touched.
+
+**A second screen** on dual-screen handhelds like the AYN Thor (Android): the game's own Start menu, live on the lower screen while you play on the upper one, navigated by touch. Using an item or switching partners from it works as in the menu. It's only there on devices with a second built-in screen.
+
 **Saves and languages**
 - **Saves:** memory card saves are Dolphin's `.gci` files. They're backed up automatically and can be converted between versions.
 - **Quick resume:** Continue in the launcher picks up where you left off, even if the app was closed without saving.
 - **Languages:** the European version plays in English, German, French, Spanish or Italian, and any version can show the text of another disc you own.
 
-**Settings:** the Start menu's Settings tab, after the Journal: every on/off, choice and number, changed where it is, and All settings for the rest. The full page also opens with F1, a controller's Back/Select, the three-bar button on the touch controls, or a three-finger tap. Tabs down the side, a search box, and a mark on every setting that changes how the game plays or what it saves.
+**Settings:** the Start menu's Settings tab, after the Journal: every on/off, choice and number, changed where it is, and All settings for the rest. The full page also opens with F1, a controller's Back/Select, the three-bar button on the touch controls, or a three-finger tap. Tabs down the side, a search box, and a mark on every setting that changes how the game plays or what it saves. A setting that applies from the next start has Restart now beside it: the game starts again and puts you back where you were.
 
 **Display**
 - **120 Hz and up:** extra frames are drawn between the game's 60 Hz ones, with interpolated camera, characters and animation. The game's logic is untouched.
@@ -57,6 +74,9 @@ Change any of them under Settings > Controls > Keyboard keys. The port's own key
 - MSAA, texture detail, blurred letterbox bars on wide screens, and 50 or 60 Hz for the European version.
 - Variable refresh rate, and a performance overlay with frame times, 1% lows and jitter.
 - **The window:** it opens where you left it, at its size, and never off the screen or larger than it. It sizes to 1x-4x the picture or to the picture's shape, can stay above other windows, and goes full screen with F11 or Alt+Enter.
+- **Free camera:** the right stick turns the camera a little around Mario and moves it in or out, easing back when let go.
+- **Mirror mode:** the world flipped left to right, with the controls turned to match; menus and text stay readable.
+- **Cosmetics:** Mario's cap and overalls, Goombella's hair, Vivian and the HUD's bars in 13 colours or any from a picker, with Luigi, Wario, Waluigi and Fire Mario presets, recoloured with their shading kept.
 
 **Gameplay+** (each option off by default):
 - Partner quick-swap, faster menus and text, skipped repeated scenes, Save Blocks without the question, and item storage at any Save Block.
@@ -69,16 +89,16 @@ Change any of them under Settings > Controls > Keyboard keys. The port's own key
 
 **Challenges:** presets in one click (Hard, Expert, Glass cannon, Superguards only, One hit), and rules to mix: one-hit KO, no guarding, harder attack commands, no items in battle.
 
-**Practice:** a speedrun timer with load removal and [LiveSplit](https://livesplit.org) support, frame advance, RNG control, stat, item and story-flag editors, a memory watch, and ten labelled save-state slots (F5 saves, F8 loads). Plus 25 achievements read from your save, which don't count while the practice tools are on.
+**Practice:** a speedrun timer with load removal and [LiveSplit](https://livesplit.org) support, frame advance, RNG control, stat, item and story-flag editors, a memory watch, an input display (sticks, buttons and triggers in a corner), and ten labelled save-state slots (F5 saves, F8 loads). Plus 25 achievements read from your save, which don't count while the practice tools are on.
 
 **Everyday:** autosave when you go into another room (off by default), fast-forward (Tab), adjustable text speed, screenshots (F12), controller rumble, and a check for new releases on start. Saves are backed up automatically and kept in step across devices: in iCloud on Apple devices, and on Windows and Linux through any folder a sync service keeps (OneDrive, Dropbox, Google Drive, Syncthing, or iCloud for Windows). If the game crashes, a report is written for you to send.
 
 **Audio and controls:**
 - **Audio:** one mixer for the master, music, effects and ambience volumes, each with a mute button, and volume keys anywhere (F9 quieter, F10 louder, F3 mute).
+- **Music shuffle and your own music:** each room's music another of the game's tracks, field for field and battle for battle; or your own OGG, MP3, FLAC or WAV files in the `music` folder, named after the track they replace (`tracks.txt` there lists them), looping at their loop tags.
 - **Controls:** the mouse works in the game's menus, lists and battle commands. Keys and every player's controller buttons can be remapped.
-- **Controllers:** Xbox, PlayStation, Switch (Pro and Joy-Con), GameCube through an adapter, MFi, and about 2,300 other models from the community mapping list. Choose which is player 1-4, test them, and set dead zones and trigger points. A controller nothing recognises is set up by pressing its buttons when asked.
-- **Button prompts:** the game's button pictures match your Xbox, PlayStation or Switch controller, or your keys.
-- **Co-op:** a second controller plays the partner. In battle: its moves, its action commands and its guards. In the field: it walks anywhere with its own stick, hops, talks to people and hits blocks, uses its ability and switches partners; Mario calls it back with Y, and it comes back by itself when it leaves the screen.
+- **Controllers:** Xbox, PlayStation, Switch (Pro and Joy-Con), Steam Deck, GameCube through an adapter, MFi, and about 2,300 other models from the community mapping list, named as you know them. Choose which is player 1-4, test them, and set dead zones and trigger points. A controller nothing recognises is set up by pressing its buttons when asked.
+- **Button prompts:** the game's button pictures, and the remapping list's names, match your Xbox, PlayStation, Switch or Steam Deck controller, or your keys.
 - **Menus in six languages:** the settings page and the Start menu's Settings tab in English, Deutsch, Français, Español, Italiano or Japanese (System > Menu language; Auto follows the disc or the computer).
 
 **Mods:** a mod manager on the settings page. Mods replace or add disc files, textures and text (Dolphin texture packs work as they are), change game data, run scripts and code through hooks generated from the decompilation, and GameCube code mods can be ported from their source. Also in this area:
@@ -94,7 +114,7 @@ See [docs/MODDING.md](docs/MODDING.md), [docs/MODES.md](docs/MODES.md) and [docs
 - On-screen controls: movable, sized, with haptics.
 - Portrait or landscape, safe areas, and pause and resume with the app.
 
-**Faithful by construction:** GameCube behaviours the game relies on are reproduced on 64-bit hosts, namely big-endian disc data, integer division by zero, paired-single quantization, and the C library's `rand` sequence.
+**Faithful by construction:** GameCube behaviours the game relies on are reproduced on 64-bit hosts, namely big-endian disc data, integer division by zero, paired-single quantization, the C library's `rand` sequence, and the GameCube's own maths library (MSL's fdlibm), so every platform computes the same results to the last bit.
 
 ## Status
 

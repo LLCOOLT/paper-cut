@@ -286,7 +286,7 @@ The European release's text, read from its disc image in the launcher's library.
 Difficulty
 むずかしさ
 
-Enemies' HP and the damage their attacks do. Custom uses the two sliders below.
+Enemies' HP and the damage their attacks do. Custom uses Enemy HP (custom) and Enemy attack (custom).
 てきの　ＨＰと　てきの　こうげきの　ダメージ
 
 Enemy HP (custom)
@@ -364,8 +364,8 @@ Frame advance
 Fixed RNG
 らんすうの　こてい
 
-The game's random numbers start from the seed below at each room and battle, so a room plays out the same way each try.
-部屋と　バトルごとに　ゲームの　らんすうが　下の　シードから　はじまります　部屋が　まいかい　おなじように　すすみます
+The game's random numbers start from a fixed seed (All settings, RNG) at each room and battle, so a room plays out the same way each try.
+部屋と　バトルごとに　ゲームの　らんすうが　きまった　シードから　はじまります　部屋が　まいかい　おなじように　すすみます
 
 Stats
 ステータス
@@ -382,8 +382,8 @@ Story and flags
 Memory watch corner
 メモリかんしの　ばしょ
 
-The fields ticked below, kept on screen.
-下で　チェックした　こうもくを　画面に　だしつづけます
+The fields ticked in Memory watch (All settings), kept on screen.
+メモリかんしで　チェックした　こうもくを　画面に　だしつづけます
 
 Memory watch
 メモリかんし
@@ -421,7 +421,7 @@ No crash reports.
 Menu language
 メニューの　ことば
 
-Paper Cut's own menus: this page, the launcher's and the Start menu's Settings tab. Auto: the Japanese release's Japanese, the European release's text language, otherwise the computer's. The game's own text follows the disc.
+Paper Cut's own menus: the settings page, the launcher's and the Start menu's Settings tab. Auto: the Japanese release's Japanese, the European release's text language, otherwise the computer's. The game's own text follows the disc.
 Paper Cutの　メニューの　ことば　自動：日本ばんは　日本ご　それいがいは　コンピューターの　ことば　ゲームの　テキストは　ディスクのままです
 
 Quick resume
@@ -535,8 +535,8 @@ Scenes already seen on this file go faster or straight to their end: the Crystal
 Fast travel
 ファストトラベル
 
-Travel to a hub from this page: Rogueport, then one more per Crystal Star.
-このページから　町へ　いどう：ゴロツキタウン　そして　クリスタルスター1つごとに　1か所
+Travel to a hub from the settings page (All settings, Travel to): Rogueport, then one more per Crystal Star.
+すべての　せっていから　町へ　いどう：ゴロツキタウン　そして　クリスタルスター1つごとに　1か所
 
 Faster battle menus
 バトルメニューを　はやく
@@ -586,7 +586,7 @@ Play as Luigi
 Luigi in Mario's place, with Mario's moves: in the field, in battle, in the menus and the credits, with his own footsteps, and the text calls him Luigi. The other Luigi, in Rogueport's inn and his scenes, stays out of sight. Saves are not changed.
 マリオの　かわりに　ルイージが　マリオの　技で　とうじょうします　セーブは　かわりません
 
-A new file starts with what you choose here, taken from the file below. Choose before starting the new file.
+A new file starts with what you choose here, taken from the file New Game+ from file names. Choose before starting the new file.
 あたらしい　ファイルを　ここで　えらんだものを　ひきついで　はじめます
 
 New Game+ from file
@@ -604,8 +604,8 @@ This file's progress.
 Badge loadouts
 バッジの　セット
 
-Store the badges worn as one of four named sets and wear a set again from this page, in the field (only when Mario's BP covers it). Kept beside the save, not in it.
-つけている　バッジを　4つの　セットに　ほぞんして　このページから　また　つけられます
+Store the badges worn as one of four named sets and wear a set again from the settings page (All settings, Loadouts), in the field (only when Mario's BP covers it). Kept beside the save, not in it.
+つけている　バッジを　4つの　セットに　ほぞんして　すべての　せっていから　また　つけられます
 
 Loadouts
 セット
@@ -619,8 +619,8 @@ A Save Block also offers to store items and take them out, as the Rogueport shop
 Walk-speed boost
 あるく　はやさの　ブースト
 
-Mario walks and runs faster while the control below is held.
-下の　そうさを　おしている間　マリオが　はやく　あるいて　はしります
+Mario walks and runs faster while the Boost key or Boost button is held.
+ブーストの　キーか　ボタンを　おしている間　マリオが　はやく　あるいて　はしります
 
 Boost speed
 ブーストの　はやさ
@@ -670,8 +670,8 @@ Messages in the field print three times as fast, and their windows open, turn pa
 Jukebox
 ジュークボックス
 
-Lists the music heard on this file below; pick a track to play it.
-このファイルで　きいた　音がくを　下に　ならべます　えらぶと　ながれます
+Lists the music heard on this file on the settings page (All settings, Tracks); pick a track to play it.
+このファイルで　きいた　音がくを　すべての　せっていに　ならべます　えらぶと　ながれます
 
 Tracks
 きょく
@@ -991,8 +991,8 @@ The story is over: go wherever you like.
 Second player (co-op)
 ふたりで　あそぶ（きょうりょく）
 
-Controller 2 plays the partner. In battle: its moves, its action commands and its guards. In the field: the stick walks it anywhere, A hops, B talks to or hits what it's next to, X is its ability, L or R the next partner. Mario's Y calls it back, and it comes back by itself when it gets far away. On a phone or tablet, pair two controllers.
-コントローラー2が　なかまを　うごかします　フィールドでは　スティックで　あるき　Aで　ジャンプ　Bで　はなす　Xで　なかまの　わざ　マリオの　Yで　よびもどせます
+Player 2 plays the partner: once it's on, A on another controller joins. In battle: its moves, its action commands and its guards. In the field: the stick walks it anywhere, A hops, B talks to or hits what it's next to, X is its ability, L or R the next partner. Mario's Y calls it back, and it comes back by itself when it gets far away. On a phone or tablet, pair two controllers.
+プレイヤー2が　なかまを　うごかします　オンにして　べつの　コントローラーの　Aで　さんか　フィールドでは　スティックで　あるき　Aで　ジャンプ　Bで　はなす　Xで　なかまの　わざ
 
 Sync saves through a folder
 フォルダーで　セーブを　どうき
@@ -1002,3 +1002,19 @@ Texture upscaling
 
 The game's textures made larger by an edge-following filter as they load: smoother lines on paper and signs. More video memory. From the next start.
 よみこむ　ときに　テクスチャを　りんかくに　そって　大きく　します　せんが　なめらかに　なります　つぎの　きどうから
+
+# 0.4.0: the sections' own text, the controller's button names
+
+Player 2 joined: their stick walks the partner.
+プレイヤー2が　さんか：スティックで　なかまを　うごかせます
+
+A second controller: turn on Second player (Controls) to play the partner.
+2つめの　コントローラー：そうさの　ふたりめの　プレイヤーを　オンに
+
+Player 2 left: the partner follows Mario.
+プレイヤー2が　ぬけました：なかまは　マリオに　ついていきます
+
+# 0.4.0: the sections' own text, the controller's button names
+
+Co-op is on: press A on another controller to join.
+きょうりょく　プレイ：べつの　コントローラーの　Aで　さんか

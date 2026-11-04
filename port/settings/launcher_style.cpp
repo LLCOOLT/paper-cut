@@ -141,8 +141,11 @@ void launcherStyleInit(float scale) {
   portUiInit();
   sSavedFontScale = ImGui::GetIO().FontGlobalScale;
   ImGui::GetIO().FontGlobalScale = scale / (kFontLoadScale * launcherFontsScale());
-  ImGuiStyle& s = ImGui::GetStyle();
-  sSaved = s;
+  sSaved = ImGui::GetStyle();
+  launcherPaperStyle(ImGui::GetStyle(), scale);
+}
+
+void launcherPaperStyle(ImGuiStyle& s, float scale) {
   s.WindowRounding = 14.f * scale;
   s.ChildRounding = 14.f * scale;
   s.FrameRounding = 10.f * scale;

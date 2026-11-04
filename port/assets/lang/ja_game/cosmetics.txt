@@ -1,0 +1,73 @@
+# Cosmetics (port/settings/features/cosmetics.cpp) in Japanese for the JP release's own font (the Start menu's Settings tab): an English line, then its translation, then a blank line.
+
+Cosmetics
+みため
+
+Original
+オリジナル
+
+Red
+赤
+
+Luigi green
+ルイージのみどり
+
+Wario yellow
+ワリオの黄色
+
+Waluigi purple
+ワルイージのむらさき
+
+White
+しろ
+
+Blue
+青
+
+Navy
+こん
+
+Sky blue
+水色
+
+Pink
+ピンク
+
+Orange
+オレンジ
+
+Black
+黒
+
+Gold
+きん
+
+Brown
+ちゃいろ
+
+Custom (the colour picker)
+カスタム（カラーピッカー）
+
+Mario's cap and shirt
+マリオのぼうしとシャツ
+
+Mario's overalls
+マリオのオーバーオール
+
+Partner's colour
+なかまの色
+
+Goombella's hair and Vivian's body: the partners whose colour comes away cleanly.
+クリスチーヌのかみと　ビビアンのからだ：色をきれいに　かえられる　なかま
+
+HP banner
+ＨＰのおび
+
+Mario's and the partner's.
+マリオのと　なかまの
+
+FP banner
+ＦＰのおび
+
+Star Power banner
+スターパワーのおび

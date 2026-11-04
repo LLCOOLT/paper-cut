@@ -6,8 +6,9 @@
  * sound.c for streams, which start later); each of the sound's voices is
  * scaled by that category's volume in the software mixer
  * (libs/musyx/src/musyx/runtime/hw_pcmixer.c). Anything else is a sound
- * effect. */
-enum { PORT_MIX_MUSIC, PORT_MIX_SFX, PORT_MIX_AMBIENCE };
+ * effect. PORT_MIX_SILENT: a music stream the player's own file plays in
+ * place of (port/include/port/music.h), always at 0. */
+enum { PORT_MIX_MUSIC, PORT_MIX_SFX, PORT_MIX_AMBIENCE, PORT_MIX_SILENT };
 
 /* Sets the current category (cat >= 0; -1 only reads it) and returns the one before. */
 int salPcCategory(int cat);

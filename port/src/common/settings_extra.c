@@ -89,6 +89,19 @@ int portSettingsExtraSet(const char* key, const char* value) {
     return 1;
 }
 
+/* a value for this run, over the run's own override too (online co-op's
+ * guest: the host's settings, port/settings/online_lobby.cpp) */
+void portSettingsExtraForce(const char* key, const char* value) {
+    Extra* e = find(key);
+    if (e == NULL) {
+        e = add(key);
+    }
+    e->value = atoi(value);
+    if (e->declared) {
+        e->value = clamp(e, e->value);
+    }
+}
+
 int portSettingsExtraCount(void) {
     return sCount;
 }

@@ -15,11 +15,15 @@
 #include "mario/mario_pouch.h"
 #include "mario/mariost.h"
 #include "party.h"
+#include "port/online.h"
 #include "port/practice.h"
 #include "port/practice_tools.h"
 
 int portPracticeInGame(void) {
     const SequenceType seq = seqGetSeq();
+    if (portOnlineActive()) {
+        return 0; /* online co-op: an edit would change one game alone (port/include/port/online.h) */
+    }
     return gp != NULL && pouchGetPtr() != NULL && marioGetPtr() != NULL &&
            (seq == SEQ_GAME || seq == SEQ_BATTLE || seq == SEQ_MAP_CHANGE || seq == SEQ_GAME_OVER);
 }

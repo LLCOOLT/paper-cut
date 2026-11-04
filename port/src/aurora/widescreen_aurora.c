@@ -7,6 +7,7 @@
 #include <dolphin/vi.h>
 #include "driver/camdrv.h"
 #include "port/settings.h"
+#include "port/view.h"
 #include "port/widescreen.h"
 #if defined(__APPLE__)
 #include <TargetConditionals.h>
@@ -141,26 +142,52 @@ void portWidescreenSet(int on) {
     }
 }
 
-void portWidescreenCamera(int cameraId) {
-    static BOOL sScaled;
-    f32 scale;
-    if (sAspect <= 0.0f) {
-        if (sScaled) { /* switched back to 4:3 */
-            GXSetProjectionScaleX(1.0f);
-            sScaled = FALSE;
-        }
-        return;
-    }
-    sScaled = TRUE;
+/* The cameras mirror mode flips (port/include/port/view.h): the world's
+ * (the background pictures, the 3D and its effects and images, the fades,
+ * whose wipes close on Mario where he is seen), not the offscreen and shadow
+ * passes or the 2D one (the HUD, menus and message windows). */
+static int mirrored(int cameraId) {
     switch (cameraId) {
-    case CAMERA_BACKGROUND: /* full-screen background pictures */
-    case CAMERA_FADE:       /* full-screen fades */
+    case CAMERA_BACKGROUND:
+    case CAMERA_3D:
+    case CAMERA_3D_EFFECTA:
+    case CAMERA_3D_IMAGE:
+    case CAMERA_3D_EFFECTB:
+    case CAMERA_FADE:
     case CAMERA_FADE2:
-        scale = 1.0f;
-        break;
+        return portViewMirrored();
     default:
-        scale = GAME_ASPECT / sAspect;
-        break;
+        return 0;
     }
-    GXSetProjectionScaleX(scale);
+}
+
+static f32 sScaleX = 1.0f; /* GXSetProjectionScaleX's now */
+
+void portWidescreenCamera(int cameraId) {
+    f32 scale = 1.0f;
+    if (sAspect > 0.0f) {
+        switch (cameraId) {
+        case CAMERA_BACKGROUND: /* full-screen background pictures */
+        case CAMERA_FADE:       /* full-screen fades */
+        case CAMERA_FADE2:
+            break;
+        default:
+            scale = GAME_ASPECT / sAspect;
+            break;
+        }
+    }
+    if (mirrored(cameraId)) {
+        scale = -scale;
+    }
+    if (scale != 1.0f || sScaleX != 1.0f) {
+        GXSetProjectionScaleX(scale);
+        sScaleX = scale;
+    }
+}
+
+void portWidescreenCameraDone(void) {
+    if (sScaleX < 0.0f) { /* what draws after the cameras is not mirrored */
+        GXSetProjectionScaleX(-sScaleX);
+        sScaleX = -sScaleX;
+    }
 }

@@ -1,0 +1,11 @@
+Free camera
+Cámara libre
+
+In the field, the right stick turns the camera a little around Mario and moves it in or out. Let go and it eases back.
+En el mapa, el stick derecho gira un poco la cámara alrededor de Mario y la acerca o la aleja. Al soltarlo, vuelve suavemente.
+
+Mirror mode
+Modo espejo
+
+The world flipped left to right, with the stick and D-pad turned around to match while Mario walks. Menus and messages stay readable.
+El mundo invertido de izquierda a derecha, con el stick y la cruceta invertidos a juego mientras Mario camina. Los menús y los mensajes siguen legibles.

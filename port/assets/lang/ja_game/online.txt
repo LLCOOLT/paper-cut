@@ -1,0 +1,10 @@
+# online: see tools/port/gen_lang.py
+
+The online game ended: the other player left.
+オンライン　しゅうりょう：あいてが　ぬけました
+
+The online game ended: the other player stopped answering.
+オンライン　しゅうりょう：あいての　おうとうが　ありません
+
+The online game ended: the two games went out of step.
+オンライン　しゅうりょう：ふたつの　ゲームが　ずれました

@@ -1,0 +1,88 @@
+# Cosmetics (port/settings/features/cosmetics.cpp), en français : an English line, then its translation, then a blank line.
+
+Cosmetics
+Apparence
+
+Original
+D'origine
+
+Red
+Rouge
+
+Luigi green
+Vert Luigi
+
+Wario yellow
+Jaune Wario
+
+Waluigi purple
+Violet Waluigi
+
+White
+Blanc
+
+Blue
+Bleu
+
+Navy
+Bleu marine
+
+Sky blue
+Bleu ciel
+
+Pink
+Rose
+
+Orange
+Orange
+
+Black
+Noir
+
+Gold
+Or
+
+Brown
+Marron
+
+Custom (the colour picker)
+Personnalisée (le sélecteur de couleur)
+
+Mario's cap and shirt
+Casquette et chemise de Mario
+
+Mario's overalls
+Salopette de Mario
+
+Partner's colour
+Couleur du partenaire
+
+Goombella's hair and Vivian's body: the partners whose colour comes away cleanly.
+Les cheveux de Goomélie et le corps de Viviane : les partenaires dont la couleur change proprement.
+
+HP banner
+Bandeau PC
+
+Mario's and the partner's.
+Celui de Mario et celui du partenaire.
+
+FP banner
+Bandeau PF
+
+Star Power banner
+Bandeau Energie Etoile
+
+Looks and colour picker
+Tenues et sélecteur de couleur
+
+Mario as his brother or his rivals in one press, every colour at random or back to the game's own, and each part's Custom colour. Only how things look: each player sees their own.
+Mario en son frère ou en ses rivaux d'une pression, toutes les couleurs au hasard ou celles du jeu, et la couleur personnalisée de chaque partie. Seulement l'apparence : chaque joueur voit les siennes.
+
+Fire Mario
+Mario de feu
+
+Random
+Au hasard
+
+Reset all
+Tout réinitialiser

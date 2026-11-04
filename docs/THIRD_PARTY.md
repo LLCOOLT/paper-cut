@@ -11,6 +11,7 @@ The game links libraries that Nintendo, Metrowerks and others wrote, and one REL
 | `libs/msl/` | Metrowerks Standard Library (C library and math) | Decompiled in this project (2026) | This repository's MIT licence |
 | `libs/runtime/` | Metrowerks PowerPC EABI runtime (`__mem`, `__va_arg`, `runtime.c`, ...) | Decompiled in this project (2026) | This repository's MIT licence |
 | `libs/trk/` | Metrowerks Target Resident Kernel, the debugger stub linked into the game | Decompiled in this project (2026) | This repository's MIT licence |
+| `libs/audio_decoders/` | The players' own music files' decoders (`port/src/common/music_pc.c`): `stb_vorbis.c` (Ogg Vorbis, v1.22), `dr_mp3.h` (v0.7.4), `dr_flac.h` (v0.13.4) | Sean Barrett's [stb](https://github.com/nothings/stb) (commit 1ee679c) and David Reid's [dr_libs](https://github.com/mackron/dr_libs) (commits 51e61d3 and dfe8377), unchanged | Public domain, or MIT No Attribution (each file's end) |
 
 The assembly in these folders is code that the original libraries shipped as assembly (for example paired-single math, cache and context routines, the TRK exception vectors). It is reproduced as assembly on purpose.
 
@@ -75,6 +76,7 @@ Paper Cut's builds embed or link these (Aurora's dependencies, fetched when the 
 | libpng, zlib, Zstandard, xxHash | images, compression, hashing | libpng License; zlib; BSD 3-Clause; BSD 2-Clause |
 | {fmt}, Abseil, Tracy, SQLite | Aurora's support code (formatting, containers, the profiler client, the pipeline cache) | MIT; Apache 2.0; BSD 3-Clause; public domain |
 | MusyX (`libs/musyx/`), the SGI tessellator (`rels/tst/`), Fredoka (`port/assets/fonts/`), SDL_GameControllerDB (`port/assets/controllers/`) | above | MIT; SGI Free Software License B; SIL OFL 1.1; zlib |
+| stb_vorbis, dr_mp3, dr_flac (`libs/audio_decoders/`) | the players' own music (OGG, MP3, FLAC) | public domain, or MIT No Attribution |
 
 On Windows the desktop package also carries Microsoft's Visual C++ runtime DLLs, redistributed under the Visual Studio licence terms.
 

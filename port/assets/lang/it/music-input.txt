@@ -1,0 +1,58 @@
+# Music shuffle, your own music and the input display (port/settings/features/music.cpp, input_display.cpp)
+
+Music shuffle
+Musica casuale
+
+Each room's music is another of the game's: field music for field music, battle music for battle music. Scenes, jingles and fanfares stay as they are. Only you hear it.
+La musica di ogni stanza è un'altra del gioco: musica d'esplorazione per musica d'esplorazione, musica di battaglia per musica di battaglia. Scene, jingle e fanfare restano come sono. La senti solo tu.
+
+Your music
+La tua musica
+
+Your files in the music folder play in place of the game's tracks they are named after.
+I tuoi file nella cartella music suonano al posto dei brani del gioco di cui portano il nome.
+
+Shuffle includes your music
+Casuale con la tua musica
+
+Music shuffle also picks the music folder's files.
+La musica casuale sceglie anche i file della cartella music.
+
+Music folder
+Cartella della musica
+
+Open the music folder
+Apri la cartella della musica
+
+Look for files again
+Cerca di nuovo i file
+
+%d file found
+%d file trovato
+
+%d files found
+%d file trovati
+
+Playing: %s
+In riproduzione: %s
+
+Reads WAV, OGG, MP3 and FLAC files.
+Legge file WAV, OGG, MP3 e FLAC.
+
+Reads WAV files.
+Legge file WAV.
+
+Reads WAV files and some others.
+Legge file WAV e alcuni altri.
+
+Name a file after the game's track, as tracks.txt in the folder lists them: BGM_STG1_NOK1.wav, for example. A file loops at its LOOPSTART and LOOPLENGTH tags, or as a whole.
+Dai a un file il nome del brano del gioco, come li elenca tracks.txt nella cartella: BGM_STG1_NOK1.wav, per esempio. Un file si ripete ai suoi tag LOOPSTART e LOOPLENGTH, o per intero.
+
+Input display
+Visualizzatore comandi
+
+The controller as the game reads it, in a corner: sticks, buttons, d-pad and triggers (with Second player on, the second controller beside it).
+Il controller come lo legge il gioco, in un angolo: levette, pulsanti, croce direzionale e grilletti (con Secondo giocatore, il secondo controller accanto).
+
+Your music is read with stb_vorbis (public domain), dr_mp3 and dr_flac (public domain or MIT No Attribution).
+La tua musica è letta con stb_vorbis (pubblico dominio), dr_mp3 e dr_flac (pubblico dominio o MIT No Attribution).

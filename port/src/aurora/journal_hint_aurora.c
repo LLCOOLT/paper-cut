@@ -36,6 +36,16 @@ static const StoryStep* nextStep(int value) {
     return NULL;
 }
 
+int portJournalNextStep(const char** area, const char** name) {
+    const StoryStep* s = gp != NULL ? nextStep(swByteGet(GSW_STORY_PROGRESS)) : NULL;
+    if (s == NULL) {
+        return 0;
+    }
+    *area = s->area;
+    *name = s->name;
+    return 1;
+}
+
 const char* portJournalHintMsg(const char* tag) {
     static char sText[512];
     char raw[512];

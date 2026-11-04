@@ -46,6 +46,11 @@ int portPerfSamples(float* interval, float* work, int max);
 /* port/settings/features/perf_overlay.cpp: drawn with the settings page's
  * overlays (ImGui), when on. */
 void portPerfOverlayDraw(void);
+/* The input display (setting input_display: 0 off, 1-4 a corner TL TR BL BR;
+ * port/src/common/input_display_pc.c): controller chan as the game last read
+ * it, its buttons (PAD_BUTTON_*), the stick and C-stick (x, y, x, y) and the
+ * analog L and R; 0 when no controller is there. */
+int portInputDisplayPad(int chan, unsigned short* buttons, signed char* sticks, unsigned char* triggers);
 /* Sharp text (setting sharp_text, port/settings/features/sharp_text.cpp):
  * fontmgr.c's glyph sheet once loaded, and once a frame to follow the
  * setting. */

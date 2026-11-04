@@ -1,0 +1,216 @@
+/* The free camera and mirror mode: port/include/port/view.h. */
+#include "port/view.h"
+#include "port/settings.h"
+#include "driver/camdrv.h"
+#include "driver/seqdrv.h"
+#include "mario/mario.h"
+#include "mario/mariost.h"
+#include <dolphin/mtx.h>
+#include <dolphin/os.h>
+#include <math.h>
+
+#define DEG(d) ((d) * 0.017453292f)
+
+/* The free camera's reach: to either side, and with the stick up (in) and
+ * down (out and higher). */
+#define FREE_YAW DEG(35.0f)
+#define FREE_PITCH_IN DEG(-6.0f)
+#define FREE_PITCH_OUT DEG(12.0f)
+#define FREE_ZOOM_IN 0.6f
+#define FREE_ZOOM_OUT 1.45f
+/* how fast it follows the stick and eases back (per second) */
+#define FREE_EASE 7.0f
+/* the C-stick's dead zone and full tilt */
+#define STICK_DEAD 12
+#define STICK_FULL 72
+
+static int* sFreeCam;
+static int* sMirror;
+
+/* the local controller's C-stick, as read */
+static s8 sStickX, sStickY;
+
+/* the free camera now: yaw and pitch (radians), zoom (the eye's distance
+ * from Mario, times) */
+static float sYaw, sPitch, sZoom = 1.0f;
+static OSTime sLast;
+
+/* the cameras it turns: the 3D one and the two effect cameras that follow it */
+static const CameraId kCams[] = {CAMERA_3D, CAMERA_3D_EFFECTA, CAMERA_3D_EFFECTB};
+#define CAM_COUNT (int)(sizeof(kCams) / sizeof(kCams[0]))
+static struct {
+    int active;
+    Mtx view[CAM_COUNT];
+    Vec pos[CAM_COUNT], at[CAM_COUNT];
+} sSaved;
+
+static void declare(void) {
+    if (sFreeCam == NULL) {
+        sFreeCam = portSettingsDeclare("free_camera", 0, 0, 1);
+        sMirror = portSettingsDeclare("mirror_mode", 0, 0, 1);
+    }
+}
+
+int portViewMirrored(void) {
+    declare();
+    return *sMirror != 0;
+}
+
+/* A map in the field, not a battle. */
+static int inField(void) {
+    return gp != NULL && !gp->inBattle && seqGetSeq() == SEQ_GAME;
+}
+
+/* Mario walks where the stick says: no menu, scene or message holds him. */
+static int fieldControl(void) {
+    return inField() && marioStGetSystemLevel() == 0 && marioChkKey() && marioChkCtrl();
+}
+
+/* A stick's axis as -1..1, past its dead zone. */
+static float axis(s8 v) {
+    float f;
+    if (v > -STICK_DEAD && v < STICK_DEAD) {
+        return 0.0f;
+    }
+    f = (float)(v > 0 ? v - STICK_DEAD : v + STICK_DEAD) / (float)(STICK_FULL - STICK_DEAD);
+    return f > 1.0f ? 1.0f : f < -1.0f ? -1.0f : f;
+}
+
+static void mirrorPad(PADStatus* pad) {
+    const u16 lr = pad->button & (PAD_BUTTON_LEFT | PAD_BUTTON_RIGHT);
+    pad->stickX = pad->stickX == -128 ? 127 : (s8)-pad->stickX;
+    pad->button &= ~(PAD_BUTTON_LEFT | PAD_BUTTON_RIGHT);
+    if (lr & PAD_BUTTON_LEFT) {
+        pad->button |= PAD_BUTTON_RIGHT;
+    }
+    if (lr & PAD_BUTTON_RIGHT) {
+        pad->button |= PAD_BUTTON_LEFT;
+    }
+}
+
+void portViewPad(PADStatus* pad) {
+    int i;
+    declare();
+    sStickX = pad[0].err == PAD_ERR_NONE ? pad[0].substickX : 0;
+    sStickY = pad[0].err == PAD_ERR_NONE ? pad[0].substickY : 0;
+    /* the game's own state decides (the same on both sides of an online
+     * game); the controls are turned around before the game sees them */
+    if (*sMirror && fieldControl()) {
+        for (i = 0; i < PAD_MAX_CONTROLLERS; i++) {
+            if (pad[i].err == PAD_ERR_NONE) {
+                mirrorPad(&pad[i]);
+            }
+        }
+    }
+}
+
+/* v toward to, by k (0..1) */
+static float ease(float v, float to, float k) {
+    return v + (to - v) * k;
+}
+
+/* p moved around the pivot by rot, its distance from it times zoom */
+static Vec around(const Vec* p, const Vec* pivot, Mtx rot, float zoom) {
+    Vec d = {p->x - pivot->x, p->y - pivot->y, p->z - pivot->z};
+    MTXMultVecSR(rot, &d, &d);
+    d.x = pivot->x + d.x * zoom;
+    d.y = pivot->y + d.y * zoom;
+    d.z = pivot->z + d.z * zoom;
+    return d;
+}
+
+void portViewBegin(void) {
+    const OSTime now = OSGetTime();
+    float dt, k, x, y;
+    float toYaw = 0.0f, toPitch = 0.0f, toZoom = 1.0f;
+    CameraEntry* cam3d;
+    Vec pivot, d, right;
+    Mtx yaw, pitch, rot;
+    int i;
+    declare();
+    sSaved.active = FALSE;
+    dt = sLast != 0 ? (float)OSTicksToMicroseconds(now - sLast) / 1000000.0f : 0.0f;
+    sLast = now;
+    if (dt < 0.0f || dt > 0.1f) {
+        dt = 0.1f;
+    }
+    if (!*sFreeCam || !inField()) {
+        sYaw = sPitch = 0.0f; /* battles, scenes between maps: the game's own at once */
+        sZoom = 1.0f;
+        return;
+    }
+    if (fieldControl()) {
+        x = axis(sStickX);
+        y = axis(sStickY);
+        if (*sMirror) {
+            x = -x; /* the picture's right */
+        }
+        toYaw = x * FREE_YAW;
+        toPitch = y > 0.0f ? y * FREE_PITCH_IN : -y * FREE_PITCH_OUT;
+        toZoom = y > 0.0f ? 1.0f + y * (FREE_ZOOM_IN - 1.0f) : 1.0f - y * (FREE_ZOOM_OUT - 1.0f);
+    }
+    k = 1.0f - expf(-dt * FREE_EASE);
+    sYaw = ease(sYaw, toYaw, k);
+    sPitch = ease(sPitch, toPitch, k);
+    sZoom = ease(sZoom, toZoom, k);
+    if (fabsf(sYaw) < 0.0005f && fabsf(sPitch) < 0.0005f && fabsf(sZoom - 1.0f) < 0.0005f) {
+        return;
+    }
+    cam3d = camGetPtr(CAMERA_3D);
+    if (cam3d->flags & CAM_FLAG_HIDDEN || cam3d->projType != GX_PERSPECTIVE) {
+        return;
+    }
+
+    /* around Mario's middle: the yaw about the world's up, the pitch about
+     * the camera's right */
+    pivot = marioGetPtr()->position;
+    pivot.y += 25.0f;
+    d.x = cam3d->cameraPos.x - pivot.x;
+    d.z = cam3d->cameraPos.z - pivot.z;
+    right.x = d.z;
+    right.y = 0.0f;
+    right.z = -d.x;
+    MTXRotRad(yaw, 'y', sYaw);
+    if (right.x * right.x + right.z * right.z > 1.0f) {
+        PSMTXRotAxisRad(pitch, &right, -sPitch); /* positive: the eye higher */
+        MTXConcat(yaw, pitch, rot);
+    } else {
+        MTXCopy(yaw, rot); /* looking straight down: no pitch to give */
+    }
+
+    for (i = 0; i < CAM_COUNT; i++) {
+        CameraEntry* cam = camGetPtr(kCams[i]);
+        Mtx look, inv, moved;
+        Vec pos = around(&cam->cameraPos, &pivot, rot, sZoom);
+        Vec at = around(&cam->cameraAt, &pivot, rot, 1.0f);
+        MTXCopy(cam->view, sSaved.view[i]);
+        sSaved.pos[i] = cam->cameraPos;
+        sSaved.at[i] = cam->cameraAt;
+        /* the game's view (its roll, offset and zoom on Mario kept) looking
+         * from the moved eye: view * lookAt^-1 * lookAt' */
+        MTXLookAt(look, &cam->cameraPos, &cam->cameraUp, &cam->cameraAt);
+        if (!MTXInverse(look, inv)) {
+            continue;
+        }
+        MTXLookAt(moved, &pos, &cam->cameraUp, &at);
+        MTXConcat(cam->view, inv, cam->view);
+        MTXConcat(cam->view, moved, cam->view);
+        cam->cameraPos = pos;
+        cam->cameraAt = at;
+    }
+    sSaved.active = TRUE;
+}
+
+void portViewEnd(void) {
+    int i;
+    if (!sSaved.active) {
+        return;
+    }
+    for (i = 0; i < CAM_COUNT; i++) {
+        CameraEntry* cam = camGetPtr(kCams[i]);
+        MTXCopy(sSaved.view[i], cam->view);
+        cam->cameraPos = sSaved.pos[i];
+        cam->cameraAt = sSaved.at[i];
+    }
+    sSaved.active = FALSE;
+}

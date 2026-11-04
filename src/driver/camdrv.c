@@ -14,6 +14,9 @@
 #if defined(TARGET_PC) && defined(TTYD_BACKEND_AURORA)
 #include "port/widescreen.h"
 #endif
+#ifdef TARGET_PC
+#include "port/view.h"
+#endif
 #include "pmario_sound.h"
 #include "system.h"
 #include "libc_decls.h"
@@ -378,6 +381,9 @@ void camDraw(void) {
 
     camLetterBox();
     dispSort();
+#ifdef TARGET_PC
+    portViewBegin(); /* the free camera's view, for the draw only */
+#endif
     for (cameraId = 0; cameraId < CAMERA_MAX; cameraId++) {
         CameraEntry* camera = camPtrTbl[cameraId];
         if (!(camera->flags & CAM_FLAG_HIDDEN)) {
@@ -397,6 +403,12 @@ void camDraw(void) {
             sysDummyDraw(camera->view);
         }
     }
+#ifdef TARGET_PC
+    portViewEnd(); /* the game's own camera again */
+#endif
+#if defined(TARGET_PC) && defined(TTYD_BACKEND_AURORA)
+    portWidescreenCameraDone();
+#endif
     dispReInit();
 }
 

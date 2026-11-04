@@ -13,6 +13,7 @@
 // before the window is made (portWindowConfig), then portWindowRestore checks
 // them against the screens once SDL is up.
 #include "port/settings.h"
+#include "port/tr.h"
 
 #include <SDL3/SDL.h>
 #include <aurora/aurora.h>
@@ -165,7 +166,7 @@ void windowSection(int) {
   SDL_Window* w = window();
   const SDL_Rect area = usableBounds(w);
   const float aspect = pictureAspect();
-  ImGui::TextUnformatted("Window size");
+  ImGui::TextUnformatted(portTr("Window size"));
   static const float kScales[] = {1.f, 1.5f, 2.f, 3.f, 4.f};
   static const char* kNames[] = {"1x", "1.5x", "2x", "3x", "4x"};
   for (int i = 0; i < 5; i++) {
@@ -185,14 +186,14 @@ void windowSection(int) {
     }
   }
   ImGui::SameLine();
-  if (ImGui::Button("Fit the picture")) {
+  if (ImGui::Button(portTrLabel("Fit the picture"))) {
     sizeTo(0.f);
   }
   if (ImGui::IsItemHovered()) {
-    ImGui::SetTooltip("The window's width to the picture's shape: no bars beside it.");
+    ImGui::SetTooltip("%s", portTr("The window's width to the picture's shape: no bars beside it."));
   }
   ImGui::SameLine();
-  if (ImGui::Button("Centre")) {
+  if (ImGui::Button(portTrLabel("Centre"))) {
     if (w != nullptr && !isFullscreen(w)) {
       int width, height;
       SDL_GetWindowSize(w, &width, &height);
@@ -201,19 +202,19 @@ void windowSection(int) {
     }
   }
   bool remember = *s.remember != 0;
-  if (ImGui::Checkbox("Remember the window's size and place", &remember)) {
+  if (ImGui::Checkbox(portTrLabel("Remember the window's size and place"), &remember)) {
     *s.remember = remember ? 1 : 0;
     portSettingsSave();
   }
   bool top = *s.onTop != 0;
-  if (ImGui::Checkbox("Keep the window above others", &top)) {
+  if (ImGui::Checkbox(portTrLabel("Keep the window above others"), &top)) {
     *s.onTop = top ? 1 : 0;
     applyOnTop();
     portSettingsSave();
   }
   ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
-  ImGui::TextWrapped("Drag the window's edges to any size; the picture keeps its shape. F11 or Alt+Enter: full "
-                     "screen. The window opens where you left it next time.");
+  ImGui::TextWrapped("%s", portTr("Drag the window's edges to any size; the picture keeps its shape. F11 or Alt+Enter: full "
+                     "screen. The window opens where you left it next time."));
   ImGui::PopStyleColor();
 }
 

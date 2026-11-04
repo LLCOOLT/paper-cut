@@ -19,6 +19,8 @@
 #include "port/menu_tap.h"
 #include "port/practice.h"
 #include "port/display.h"
+#include "port/online.h"
+#include "port/companion.h"
 #ifdef PORT_TOUCH_OVERLAY
 #include "port/touch_overlay.h"
 #endif
@@ -71,6 +73,7 @@ static void endFrame(void) {
 #endif
     portSettingsDraw(); /* the settings page, when open */
     portPerfOverlayDraw(); /* the frame-time graph, when on */
+    portCompanionDraw();   /* the second screen's window, when on (its own renderer) */
     aurora_end_frame();
 }
 
@@ -84,8 +87,12 @@ void portAuroraBeginFrame(void) {
         for (; event != NULL && event->type != AURORA_NONE; event++) {
             if (event->type == AURORA_EXIT) {
                 portResumeFlush(); /* quick resume: where the player was */
+                portCompanionShutdown();
                 aurora_shutdown();
                 exit(0);
+            }
+            if (event->type == AURORA_SDL_EVENT && portCompanionEvent(&event->sdl)) {
+                continue; /* the second screen's window's (its clicks are not the game's) */
             }
             if (event->type == AURORA_SDL_EVENT) {
                 portSettingsEvent(&event->sdl);
@@ -113,15 +120,12 @@ void portAuroraBeginFrame(void) {
 }
 
 void VIWaitForRetrace(void) {
-    static int sFast = -1;
     int frames, k;
-    if (sFast < 0) {
-        sFast = getenv("TTYD_FAST") != NULL;
-    }
-    /* $TTYD_FAST: the disc reads queued this frame complete before the next
-     * one (Aurora runs them on a worker thread, in wall time), so a run takes
-     * the same frames however busy the machine is, as headless. */
-    if (sFast) {
+    /* $TTYD_FAST and online co-op: the disc reads queued this frame complete
+     * before the next one (Aurora runs them on a worker thread, in wall time),
+     * so a run takes the same frames however busy the machine is, as headless,
+     * and two computers' games stay in step. */
+    if (portLockstep()) {
         aurora_dvd_wait_idle();
     }
     portDisplayWorkDone();
@@ -143,6 +147,8 @@ void VIWaitForRetrace(void) {
     portWarpFrame();               /* the settings page's save warps */
     portResumeFrame();             /* quick resume's save, made while playing */
     portAutosaveFrame();           /* autosave at room changes (autosave_aurora.c) */
+    portOnlineFrame();             /* online co-op: the fingerprint (online_pc.c) */
+    portCompanionFrame();          /* the second screen's snapshot (companion_pc.c) */
     if (sPostCallback != NULL) {
         sPostCallback(sRetraceCount);
     }

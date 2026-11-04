@@ -29,6 +29,8 @@ enum {
 void portWidescreenInit(void);
 /* camdrv's camera loop, before each camera's projection is loaded. */
 void portWidescreenCamera(int cameraId);
+/* camdrv's camera loop, after the last camera: mirror mode's flip undone. */
+void portWidescreenCameraDone(void);
 /* The widescreen switch (or its preference / $TTYD_WIDESCREEN). */
 int portWidescreenEnabled(void);
 /* The frame is wider than 4:3 now, and its aspect (4:3 when not). */

@@ -1,0 +1,115 @@
+# The second screen (port/include/port/companion.h, port/settings/features/companion.cpp, TtydCompanion.java)
+
+Second screen
+セカンドスクリーン
+
+A window of its own with the Start menu's information live, the map and the battle; on another monitor when there is one. A tap there uses an item or switches partners.
+スタートメニューの情報、マップ、バトルをリアルタイムで表示する専用ウィンドウ。別のモニターがあればそちらに開きます。タップでアイテムを使ったり、仲間を入れ替えたりできます。
+
+On a device with a second display (a dual-screen handheld, a connected screen): the Start menu's information live, the map and the battle there.
+2つ目の画面がある端末（2画面の携帯機、接続した画面）で、スタートメニューの情報、マップ、バトルをそちらに表示します。
+
+Paper Cut companion
+Paper Cut コンパニオン
+
+The Start menu's information, the map and the battle show here while a game runs.
+ゲーム中は、スタートメニューの情報、マップ、バトルがここに表示されます。
+
+Party
+なかま
+
+Map
+マップ
+
+Battle
+バトル
+
+Level
+レベル
+
+Star Points
+スターポイント
+
+
+
+
+FP
+FP
+
+HP
+HP
+
+BP
+BP
+
+BP left
+BPのこり
+
+Star Power
+スターパワー
+
+Crystal Stars
+クリスタルスター
+
+With Mario
+マリオといっしょ
+
+Away
+別行動中
+
+Tap a partner to switch.
+タップで仲間を入れ替えます。
+
+The bag is empty.
+アイテムはありません。
+
+Use on
+だれに使う？
+
+Tap an item to use it.
+タップでアイテムを使います。
+
+Tap an item to use it; hold it for the partner.
+タップでアイテムを使います。長押しで仲間に使います。
+
+Items can be used in the field.
+アイテムはフィールドで使えます。
+
+Badges worn
+つけているバッジ
+
+No badges worn.
+バッジをつけていません。
+
+Where next
+次の行き先
+
+This room
+この部屋
+
+No Star Pieces or Shine Sprites here.
+ここにはスターのかけらもシャインスプライトもありません。
+
+Partner
+仲間
+
+People
+住人
+
+Enemies
+敵
+
+No battle now.
+いまはバトル中ではありません。
+
+Turn
+ターン
+
+Turn order
+行動の順番
+
+Defense
+防御力
+
+Not tattled yet.
+まだ調べていません。

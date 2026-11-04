@@ -195,6 +195,40 @@ int portButtonIconTextures(int button, int pressed, const void** data, int* widt
     }
     return n;
 }
+
+#include "port/cosmetics.h"
+/* Cosmetics (port/include/port/cosmetics.h): the status bar's icons'
+ * textures (statuswindow.c's alwaysDt and partysDt: 0 the red HP banner,
+ * also the partner's, 1 the orange FP one, 2 the blue Star Power one, 3
+ * Mario's face, 4 Goombella's) */
+int portHudIconTextures(int part, PortTexInfo* out, int max) {
+    static const u16 kIcons[5] = {ICON_1D0, ICON_1D1, ICON_1D2, ICON_1A3, ICON_1A4};
+    IconBinData* bin;
+    int i, n;
+    if (part < 0 || part >= 5 || icon_tpl == NULL || !icon_tpl_ok || !icon_bin_ok) {
+        return 0;
+    }
+    bin = iconGetBinData(kIcons[part]);
+    if (bin == NULL) {
+        return 0;
+    }
+    n = bin->numIcons > 0 ? bin->numIcons : 1;
+    n = n < max ? n : max;
+    for (i = 0; i < n; i++) {
+        TEXDescriptor* d = TEXGet(icon_tpl, bin->frames[i].tplId);
+        if (d == NULL || d->textureHeader == NULL) {
+            return i;
+        }
+        out[i].data = d->textureHeader->data;
+        out[i].width = d->textureHeader->width;
+        out[i].height = d->textureHeader->height;
+        out[i].format = (int)d->textureHeader->format;
+        out[i].tlut = d->CLUTHeader != NULL ? d->CLUTHeader->data : NULL;
+        out[i].tlutFormat = d->CLUTHeader != NULL ? (int)d->CLUTHeader->format : 0;
+        out[i].tlutCount = d->CLUTHeader != NULL ? d->CLUTHeader->numEntries : 0;
+    }
+    return n;
+}
 #endif
 
 /** DVD read callback for icon.tpl: unpacks the texture palette, closes the file and marks the textures ready. */

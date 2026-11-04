@@ -5,6 +5,7 @@
 #include "port/mod_host.h"
 #include "port/modes.h"
 #include "port/settings.h"
+#include "port/tr.h"
 #include <SDL3/SDL.h>
 #include <imgui.h>
 #include <cfloat>
@@ -173,33 +174,33 @@ void frame(void*) {
 void bossRushSection(int inGame) {
   static int sLoadout = PORT_LOADOUT_MID;
   readBests();
-  ImGui::TextWrapped("Every boss in story order, one fight after another, timed: from Lord Crump and Blooper to "
-                     "the Shadow Queen (16 fights). Fleeing a fight starts it again.");
+  ImGui::TextWrapped("%s", portTr("Every boss in story order, one fight after another, timed: from Lord Crump and Blooper to "
+                     "the Shadow Queen (16 fights). Fleeing a fight starts it again."));
   ImGui::SetNextItemWidth(ImGui::GetFontSize() * 12.0f);
-  ImGui::Combo("Loadout", &sLoadout, kLoadouts, PORT_LOADOUT_COUNT);
-  ImGui::TextDisabled(sLoadout == PORT_LOADOUT_OWN  ? "Mario as he is in this file."
-                      : sLoadout == PORT_LOADOUT_MID ? "Level 15: 30 HP, 25 FP, 21 BP, Super Boots and Hammer, every "
-                                                       "partner, four Star Powers, eight items."
-                                                     : "Level 30: 60 HP, 50 FP, 51 BP, Ultra Boots and Hammer, "
-                                                       "every partner upgraded, all Star Powers, eight items.");
-  ImGui::TextDisabled("The loadout is lent for the run: Mario is as he was after it. Your badges stay as they are.");
+  ImGui::Combo(portTrLabel("Loadout"), &sLoadout, kLoadouts, PORT_LOADOUT_COUNT);
+  ImGui::TextDisabled("%s", portTr(sLoadout == PORT_LOADOUT_OWN  ? "Mario as he is in this file."
+                                   : sLoadout == PORT_LOADOUT_MID ? "Level 15: 30 HP, 25 FP, 21 BP, Super Boots and Hammer, every "
+                                                                    "partner, four Star Powers, eight items."
+                                                                  : "Level 30: 60 HP, 50 FP, 51 BP, Ultra Boots and Hammer, "
+                                                                    "every partner upgraded, all Star Powers, eight items."));
+  ImGui::TextDisabled("%s", portTr("The loadout is lent for the run: Mario is as he was after it. Your badges stay as they are."));
   const PortModeStatus* s = portModeStatus();
   ImGui::BeginDisabled(!inGame);
   if (s->mode != PORT_MODE_BOSS_RUSH || s->finished) {
-    if (ImGui::Button("Start the boss rush")) {
+    if (ImGui::Button(portTrLabel("Start the boss rush"))) {
       const char* why = nullptr;
       sMessage = portModeStart(PORT_MODE_BOSS_RUSH, sLoadout, &why) ? "" : why;
     }
-  } else if (ImGui::Button("Stop the boss rush")) {
+  } else if (ImGui::Button(portTrLabel("Stop the boss rush"))) {
     portModeStop();
   }
   ImGui::EndDisabled();
   if (!inGame) {
-    ImGui::TextDisabled("Start it while a file is in play.");
+    ImGui::TextDisabled("%s", portTr("Start it while a file is in play."));
   }
   for (int i = 0; i < PORT_LOADOUT_COUNT; i++) {
     if (sBestRush[i] != 0) {
-      ImGui::Text("Best (%s): %s", kLoadouts[i], clock(sBestRush[i]).c_str());
+      ImGui::Text(portTr("Best (%s): %s"), kLoadouts[i], clock(sBestRush[i]).c_str());
     }
   }
   if (!sMessage.empty() && s->mode == PORT_MODE_BOSS_RUSH) {
@@ -209,25 +210,25 @@ void bossRushSection(int inGame) {
 
 void pitSection(int inGame) {
   readBests();
-  ImGui::TextWrapped("The Glitz Pit's teams one after another, each match with a random condition (the "
-                     "Pit's own); keep it or the run ends. The enemies get stronger each round.");
+  ImGui::TextWrapped("%s", portTr("The Glitz Pit's teams one after another, each match with a random condition (the "
+                     "Pit's own); keep it or the run ends. The enemies get stronger each round."));
   const PortModeStatus* s = portModeStatus();
   const bool open = inGame && portModePitUnlocked();
   ImGui::BeginDisabled(!open);
   if (s->mode != PORT_MODE_ENDLESS_PIT || s->finished) {
-    if (ImGui::Button("Start the endless Glitz Pit")) {
+    if (ImGui::Button(portTrLabel("Start the endless Glitz Pit"))) {
       const char* why = nullptr;
       sMessage = portModeStart(PORT_MODE_ENDLESS_PIT, PORT_LOADOUT_OWN, &why) ? "" : why;
     }
-  } else if (ImGui::Button("Stop")) {
+  } else if (ImGui::Button(portTrLabel("Stop"))) {
     portModeStop();
   }
   ImGui::EndDisabled();
   if (inGame && !portModePitUnlocked()) {
-    ImGui::TextDisabled("It opens once the story's Glitz Pit is done (chapter 3).");
+    ImGui::TextDisabled("%s", portTr("It opens once the story's Glitz Pit is done (chapter 3)."));
   }
   if (sBestRound > 0) {
-    ImGui::Text("Best: %d rounds", sBestRound);
+    ImGui::Text(portTr("Best: %d rounds"), sBestRound);
   }
   if (!sMessage.empty() && s->mode == PORT_MODE_ENDLESS_PIT) {
     ImGui::TextWrapped("%s", sMessage.c_str());
@@ -236,14 +237,14 @@ void pitSection(int inGame) {
 
 void refightSection(int inGame) {
   static int sLoadout = PORT_LOADOUT_OWN;
-  ImGui::TextWrapped("Any boss you've beaten in this file's story, fought again: then back to the room you were "
-                     "in. Losing is a Game Over, as in the story (save first, or turn on Retry on Game Over).");
+  ImGui::TextWrapped("%s", portTr("Any boss you've beaten in this file's story, fought again: then back to the room you were "
+                     "in. Losing is a Game Over, as in the story (save first, or turn on Retry on Game Over)."));
   if (!inGame) {
-    ImGui::TextDisabled("Choose one while a file is in play.");
+    ImGui::TextDisabled("%s", portTr("Choose one while a file is in play."));
     return;
   }
   ImGui::SetNextItemWidth(ImGui::GetFontSize() * 12.0f);
-  ImGui::Combo("Loadout##refight", &sLoadout, kLoadouts, PORT_LOADOUT_COUNT);
+  ImGui::Combo(portTrLabel("Loadout##refight"), &sLoadout, kLoadouts, PORT_LOADOUT_COUNT);
   const PortModeStatus* s = portModeStatus();
   const bool running = s->mode != PORT_MODE_NONE && !s->finished;
   int beaten = 0;
@@ -253,7 +254,7 @@ void refightSection(int inGame) {
     beaten += open ? 1 : 0;
     ImGui::PushID(i);
     ImGui::BeginDisabled(!open);
-    if (ImGui::Button(open ? "Fight" : "Not yet", ImVec2(ImGui::GetFontSize() * 5.0f, 0.0f))) {
+    if (ImGui::Button(portTrLabel(open ? "Fight##fight" : "Not yet##fight"), ImVec2(ImGui::GetFontSize() * 5.0f, 0.0f))) {
       const char* why = nullptr;
       sMessage = portModeRefight(i, sLoadout, &why) ? "" : why;
     }
@@ -268,7 +269,7 @@ void refightSection(int inGame) {
   }
   ImGui::EndDisabled();
   if (beaten == 0) {
-    ImGui::TextDisabled("No boss beaten yet on this file.");
+    ImGui::TextDisabled("%s", portTr("No boss beaten yet on this file."));
   }
   if (s->mode == PORT_MODE_REFIGHT && !sMessage.empty()) {
     ImGui::TextWrapped("%s", sMessage.c_str());

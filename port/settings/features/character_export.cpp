@@ -8,6 +8,7 @@
 // is open then).
 #include "port/mods.h"
 #include "port/settings.h"
+#include "port/tr.h"
 #include <SDL3/SDL.h>
 #include <dolphin/dvd.h>
 #include <imgui.h>
@@ -271,7 +272,7 @@ void portCharacterExportSection(int inGame) {
     }
   }
   ImGui::SameLine();
-  ImGui::TextDisabled("%zu of %zu", shown.size(), sModels.size());
+  ImGui::TextDisabled(portTr("%zu of %zu"), shown.size(), sModels.size());
   if (ImGui::BeginListBox("##models", ImVec2(-1, ImGui::GetTextLineHeightWithSpacing() * 8))) {
     ImGuiListClipper clipper;
     clipper.Begin(int(shown.size()));
@@ -289,7 +290,8 @@ void portCharacterExportSection(int inGame) {
   const bool typed = shown.empty() && plainName(sFilter);
   const std::string pick = typed ? std::string(sFilter) : sSelected;
   ImGui::BeginDisabled(pick.empty());
-  if (ImGui::Button(pick.empty() ? "Export" : ("Export " + pick).c_str())) {
+  if (ImGui::Button(pick.empty() ? portTrLabel("Export##export")
+                                 : (std::string(portTr("Export")) + " " + pick + "###export").c_str())) {
     sStatus = {exportModel(pick)};
   }
   ImGui::EndDisabled();
@@ -306,7 +308,7 @@ void portCharacterExportSection(int inGame) {
   ImGui::EndDisabled();
 #ifdef CHARACTERS_OPEN_FOLDER
   ImGui::SameLine();
-  if (ImGui::Button("Open the exports folder")) {
+  if (ImGui::Button(portTrLabel("Open the exports folder"))) {
     SDL_CreateDirectory(exportsDir().c_str());
     SDL_OpenURL(("file:///" + exportsDir()).c_str());
   }

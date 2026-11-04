@@ -10,6 +10,7 @@
 #include "driver/seqdrv.h"
 #include "mario/mariost.h"
 #include "port/cardsave_pc.h"
+#include "port/online.h"
 #include "port/platform.h"
 #include "port/practice.h"
 
@@ -24,6 +25,12 @@ static char sStatus[160];
 static s32 sSlot = WARP_SLOT; /* the card slot it loads as (quick resume: the player's own file) */
 
 void portWarpRequestSave(const char* path) {
+    if (portOnlineActive()) {
+        /* online co-op: one game alone can't jump (the session's start is
+         * asked for before it begins, online_lobby.cpp) */
+        snprintf(sStatus, sizeof(sStatus), "Not during online co-op.");
+        return;
+    }
     snprintf(sPending, sizeof(sPending), "%s", path);
     sSlot = WARP_SLOT;
     snprintf(sStatus, sizeof(sStatus), "Loading...");

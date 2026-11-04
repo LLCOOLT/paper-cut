@@ -249,6 +249,8 @@ int portJukeboxKnown(int id);
 void portJukeboxPlay(int id);
 /* The track the jukebox plays now, or -1. */
 int portJukeboxPlaying(void);
+/* The jukebox's own psndBGMOn is running (Music shuffle leaves its pick alone). */
+int portJukeboxCalling(void);
 
 /* --- Junk-item helper in shops ("sell_helper"): winmgr.c's sell lists mark
  * the items and badges Mario has more than one of --- */

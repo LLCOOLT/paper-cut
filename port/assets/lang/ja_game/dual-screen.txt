@@ -1,0 +1,10 @@
+# The second screen's setting in the Start menu's Settings tab, for the JP release's own font
+
+Second screen
+２つめの　画面
+
+A window of its own with the Start menu's information live, the map and the battle; on another monitor when there is one. A tap there uses an item or switches partners.
+スタートメニューや　マップ　バトルを　べつの　ウインドウに　ひょうじ
+
+On a device with a second display (a dual-screen handheld, a connected screen): the Start menu's information live, the map and the battle there.
+スタートメニューや　マップ　バトルを　２つめの　画面に　ひょうじ

@@ -29,6 +29,10 @@
  *   maxsp N, maxhp N    the maximums set (maxhp also fills HP)
  *   stars MASK          the special moves obtained (bit 0: Sweet Treat ...)
  *   swap                the Gameplay+ partner quick-swap control pressed
+ *   companion item N [T] / companion partner N
+ *                       a tap on the second screen (port/include/port/companion.h):
+ *                       the bag's item N used on Mario (T 1: the partner), or
+ *                       a switch to partner N
  *   travel N            Gameplay+ fast travel to hub N (0 Rogueport, 1 Petalburg ...)
  *   mobj_event NAME     run map object NAME's event, as hitting it would (a
  *                       switch's, a block's)
@@ -54,6 +58,7 @@
  *   end                 exit (0) once any capture is written
  * Each command is logged as "[input] frame F: <line>". */
 #include "port/ac_cue.h"
+#include "port/companion.h"
 #include "port/gameplus.h"
 #include "port/menu_tap.h"
 #include <ctype.h>
@@ -295,6 +300,11 @@ static void load(const char* path) {
             s->frames = -13;
             snprintf(s->name, sizeof(s->name), "%s", cmd);
             s->waitMax = (s32)strtol(a1, NULL, 0);
+        } else if (strcmp(cmd, "companion") == 0) {
+            s->frames = -13;
+            snprintf(s->name, sizeof(s->name), "companion_%s", a1);
+            s->waitMax = (s32)strtol(a2, NULL, 0);
+            s->seed = (u32)strtoul(a3, NULL, 0);
         } else if (strcmp(cmd, "random") == 0) {
             s->frames = atoi(a1);
             s->seed = a2[0] ? (u32)strtoul(a2, NULL, 0) : 1u;
@@ -682,6 +692,8 @@ static void applyScript(PADStatus* pad) {
                 pouchGetPtr()->starPowersObtained = (u16)v;
             } else if (strcmp(s->name, "swap") == 0) {
                 portQuickSwapPress();
+            } else if (strncmp(s->name, "companion_", 10) == 0) {
+                portCompanionTap(s->name[10] == 'i' ? PORT_COMPANION_TAP_ITEM : PORT_COMPANION_TAP_PARTNER, v, (int)s->seed);
             } else if (strcmp(s->name, "travel") == 0) {
                 portFastTravelRequest(v);
             }
@@ -830,6 +842,7 @@ void portInputApply(PADStatus* pad) {
     applyScript(pad);
     applyP2(pad);
     portMenuApplyPad(pad); /* the mouse's B and wheel in menus */
+    portCompanionApplyPad(pad); /* a tap on the second screen (companion_pc.c) */
     if (sCuePress < 0) {
         sCuePress = getenv("TTYD_AC_CUE_PRESS") != NULL;
     }

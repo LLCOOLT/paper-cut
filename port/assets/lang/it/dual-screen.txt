@@ -1,0 +1,115 @@
+# The second screen (port/include/port/companion.h, port/settings/features/companion.cpp, TtydCompanion.java)
+
+Second screen
+Secondo schermo
+
+A window of its own with the Start menu's information live, the map and the battle; on another monitor when there is one. A tap there uses an item or switches partners.
+Una finestra a parte con le informazioni del menu Start in diretta, la mappa e la battaglia; su un altro monitor se c'è. Un tocco lì usa uno strumento o cambia compagno.
+
+On a device with a second display (a dual-screen handheld, a connected screen): the Start menu's information live, the map and the battle there.
+Su un dispositivo con un secondo schermo (una console portatile a doppio schermo, uno schermo collegato): le informazioni del menu Start in diretta, la mappa e la battaglia lì.
+
+Paper Cut companion
+Compagno di Paper Cut
+
+The Start menu's information, the map and the battle show here while a game runs.
+Le informazioni del menu Start, la mappa e la battaglia appaiono qui mentre si gioca.
+
+Party
+Squadra
+
+Map
+Mappa
+
+Battle
+Battaglia
+
+Level
+Livello
+
+Star Points
+Punti stella
+
+
+
+
+FP
+PF
+
+HP
+PV
+
+BP
+PM
+
+BP left
+PM liberi
+
+Star Power
+Potere stellare
+
+Crystal Stars
+Stelle di cristallo
+
+With Mario
+Con Mario
+
+Away
+Assente
+
+Tap a partner to switch.
+Tocca un compagno per cambiare.
+
+The bag is empty.
+La borsa è vuota.
+
+Use on
+Usa su
+
+Tap an item to use it.
+Tocca uno strumento per usarlo.
+
+Tap an item to use it; hold it for the partner.
+Tocca uno strumento per usarlo; tienilo premuto per il compagno.
+
+Items can be used in the field.
+Gli strumenti si usano fuori dalle battaglie.
+
+Badges worn
+Medaglie indossate
+
+No badges worn.
+Nessuna medaglia indossata.
+
+Where next
+Dove andare
+
+This room
+Questa stanza
+
+No Star Pieces or Shine Sprites here.
+Qui non ci sono pezzi di stella né soli.
+
+Partner
+Compagno
+
+People
+Persone
+
+Enemies
+Nemici
+
+No battle now.
+Nessuna battaglia in corso.
+
+Turn
+Turno
+
+Turn order
+Ordine dei turni
+
+Defense
+Difesa
+
+Not tattled yet.
+Non ancora analizzato.

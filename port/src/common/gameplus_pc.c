@@ -3,6 +3,8 @@
  * otherwise; any build takes $TTYD_SET_<key> for a run. */
 #include <stdio.h>
 #include "port/gameplus.h"
+#include "port/online.h"
+#include "port/companion.h"
 #include "port/settings.h"
 #include "mario/mario_pouch.h"
 #include "battle/battle_mario.h"
@@ -101,6 +103,18 @@ int portQuickSwapPoll(int current) {
         sSwapPressed = 1;
     }
     sSwapHeld = held;
+    pouch = pouchGetPtr();
+    /* a partner tapped on the second screen (companion_pc.c): that one */
+    at = portCompanionPartner();
+    if (at > 0 && at <= 7) {
+        const u16 flags = pouch->partyData[at].flags;
+        if (at != current && (flags & POUCH_PARTY_FLAG_JOINED) && !(flags & POUCH_PARTY_FLAG_AWAY)) {
+            printf("[companion] partner %d to %d\n", current, at);
+            fflush(stdout);
+            return at;
+        }
+    }
+    at = -1;
     if (!sSwapPressed) {
         return -1;
     }
@@ -110,7 +124,6 @@ int portQuickSwapPoll(int current) {
     if (!portGameplus("quick_swap") && !coop) {
         return -1;
     }
-    pouch = pouchGetPtr();
     for (i = 0; i < 7; i++) {
         if (kOrder[i] == current) {
             at = i;
@@ -401,7 +414,7 @@ int portFastTravelUnlocked(int i) {
 }
 
 void portFastTravelRequest(int i) {
-    if (portFastTravelUnlocked(i)) {
+    if (portFastTravelUnlocked(i) && !portOnlineActive()) { /* online: one game alone can't travel */
         sTravelTo = i;
     }
 }

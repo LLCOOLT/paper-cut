@@ -2,6 +2,7 @@
  * through the audience's own functions, as the crowd does on its own. The
  * chat thread leaves one command at a time; the battle frame takes it. */
 #include "port/crowd.h"
+#include "port/online.h"
 #include "battle/battle.h"
 #include "battle/battle_audience.h"
 #include "battle/battle_break_slot.h"
@@ -14,7 +15,7 @@ static unsigned sBattleFrames;
 
 void portCrowdPush(int command) {
     int none = -1;
-    if (command >= 0 && command < PORT_CROWD_COUNT) {
+    if (command >= 0 && command < PORT_CROWD_COUNT && !portOnlineActive()) { /* online: one game's chat alone */
         __atomic_compare_exchange_n(&sWaiting, &none, command, 0, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST);
     }
 }

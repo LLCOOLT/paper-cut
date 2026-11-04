@@ -19,6 +19,7 @@
  * States hold host addresses (the image, the heaps), so they are good only
  * for the run that made them. */
 #include "port/savestate.h"
+#include "port/online.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -435,8 +436,8 @@ static void load(Slot* s) {
 }
 
 void portSaveStateRequest(int slot, int load) {
-    if (slot < 0 || slot > PORT_SAVE_STATE_RETRY) {
-        return;
+    if (slot < 0 || slot > PORT_SAVE_STATE_RETRY || portOnlineActive()) {
+        return; /* online co-op: one game alone can't jump (port/include/port/online.h) */
     }
     if (load && !sSlots[slot].used) {
         status("That slot is empty");
@@ -500,7 +501,7 @@ void portSaveStateNotice(const char* text) {
 }
 
 int portSaveStateSupported(void) {
-    return 1;
+    return !portOnlineActive();
 }
 
 const char* portSaveStateInfo(int slot) {

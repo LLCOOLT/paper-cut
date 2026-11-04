@@ -23,6 +23,7 @@
 #include "port/ai_pc.h"
 #include "port/audio_mix.h"
 #include "port/bedecode.h"
+#include "port/music.h"
 #include "port/musyx_swap_pc.h"
 #endif
 #ifdef TARGET_PC
@@ -2129,7 +2130,8 @@ void SoundSSPlayChEx(s32 chan, const char* name, s32 aram) {
     }
     sound.streamChannel = chan;
 #ifdef TARGET_PC
-    ssCategory[chan] = salPcCategory(-1); // its voices start when the header is read
+    // its voices start when the header is read; silent when the player's own file plays in its place
+    ssCategory[chan] = portMusicStreamStart(chan, salPcCategory(-1));
 #endif
     _ssResetEntries(stream);
     stream->pan = 0x40;
@@ -2346,6 +2348,9 @@ void SoundSSStopCh(s32 chan) {
             sound.slotUsed[stream->slot] = 0;
         }
         stream->flags = 0;
+#ifdef TARGET_PC
+        portMusicStreamStop(chan);
+#endif
 #if VERSION <= VERSION_DEMO_JP
         SoundIntOff();
 #endif
@@ -2503,6 +2508,16 @@ static void SoundSSMain(void) {
 
     for (i = 0; (int)i < 3; i++) {
         stream = &sound.streams[i];
+#ifdef TARGET_PC
+        // the player's own file in its place (port/include/port/music.h) follows its volume and pauses
+        if (stream->flags) {
+            portMusicStreamVolume(i, !(stream->flags & SOUND_SS_FLAG_ACTIVE) || (stream->flags & SOUND_SS_FLAG_PAUSED)
+                                         ? -1.0f
+                                         : (stream->flags & SOUND_SS_FLAG_SILENT) ? 0.0f : stream->curVol / 127.0f);
+        } else {
+            portMusicStreamStop(i); // stopped without SoundSSStopCh (SoundExit and the like)
+        }
+#endif
         if ((stream->flags & SOUND_SS_FLAG_ACTIVE) && !(stream->flags & SOUND_SS_FLAG_PAUSED)) {
             if (stream->flags & SOUND_SS_FLAG_STOP_REQ) {
                 stream->flags &= ~SOUND_SS_FLAG_STOP_REQ;

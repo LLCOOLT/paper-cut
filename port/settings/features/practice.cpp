@@ -6,6 +6,7 @@
 #include "port/practice.h"
 #include "port/practice_tools.h"
 #include "port/settings.h"
+#include "port/tr.h"
 #include <SDL3/SDL.h>
 #include <aurora/aurora.h>
 #include <imgui.h>
@@ -212,18 +213,18 @@ int event(const void* sdlEvent) {
 
 void runSection(int) {
   const int state = portTimerState();
-  if (ImGui::Button(state == PORT_TIMER_IDLE ? "Start" : "Restart")) {
+  if (ImGui::Button(portTrLabel(state == PORT_TIMER_IDLE ? "Start##timer" : "Restart##timer"))) {
     portTimerStart();
   }
   ImGui::SameLine();
   ImGui::BeginDisabled(state != PORT_TIMER_RUNNING);
-  if (ImGui::Button("Split")) {
+  if (ImGui::Button(portTrLabel("Split"))) {
     portTimerSplit();
   }
   ImGui::EndDisabled();
   ImGui::SameLine();
   ImGui::BeginDisabled(state == PORT_TIMER_IDLE);
-  if (ImGui::Button("Reset")) {
+  if (ImGui::Button(portTrLabel("Reset"))) {
     portTimerReset();
   }
   ImGui::EndDisabled();
@@ -231,7 +232,7 @@ void runSection(int) {
   char game[32], real[32];
   portTimerFormat(portTimerGameSeconds(), game, sizeof(game));
   portTimerFormat(portTimerRealSeconds(), real, sizeof(real));
-  ImGui::Text("Game %s   Real %s", game, real);
+  ImGui::Text(portTr("Game %s   Real %s"), game, real);
   // a scrolled list past 10 splits
   const bool scroll = portSplitCount() > 10;
   if (ImGui::BeginTable("splits", 2, ImGuiTableFlags_RowBg | (scroll ? ImGuiTableFlags_ScrollY : 0),
@@ -261,7 +262,7 @@ void runSection(int) {
                               "then the split's name)."
                             : "Splits are added as the story moves.");
   }
-  if (setting("split_category") == 2 && ImGui::Button("Read splits.txt again")) {
+  if (setting("split_category") == 2 && ImGui::Button(portTrLabel("Read splits.txt again"))) {
     portSplitsReload();
   }
 }
@@ -269,7 +270,7 @@ void runSection(int) {
 void liveSplitSection(int) {
   ImGui::TextUnformatted(portLiveSplitStatus());
   ImGui::SetNextItemWidth(ImGui::GetFontSize() * 7.f);
-  if (ImGui::InputInt("Port", sLiveSplitPort, 0, 0)) {
+  if (ImGui::InputInt(portTrLabel("Port"), sLiveSplitPort, 0, 0)) {
     *sLiveSplitPort = std::clamp(*sLiveSplitPort, 1, 65535);
     portSettingsSave();
   }
@@ -279,37 +280,37 @@ void liveSplitSection(int) {
 
 void frameSection(int) {
   if (!portFrameAdvanceHeld()) {
-    if (ImGui::Button("Hold the game")) {
+    if (ImGui::Button(portTrLabel("Hold the game"))) {
       portFrameAdvanceHold(1);
     }
   } else {
-    if (ImGui::Button("One frame")) {
+    if (ImGui::Button(portTrLabel("One frame"))) {
       portFrameAdvanceStep();
     }
     ImGui::SameLine();
-    if (ImGui::Button("Ten frames")) {
+    if (ImGui::Button(portTrLabel("Ten frames"))) {
       for (int i = 0; i < 10; i++) {
         portFrameAdvanceStep();
       }
     }
     ImGui::SameLine();
-    if (ImGui::Button("Go on")) {
+    if (ImGui::Button(portTrLabel("Go on"))) {
       portFrameAdvanceHold(0);
     }
   }
 }
 
 void rngSection(int) {
-  ImGui::Text("rand() state: %u (0x%08X)", portPracticeRand(), portPracticeRand());
+  ImGui::Text(portTr("rand() state: %u (0x%08X)"), portPracticeRand(), portPracticeRand());
   static int sSet = 1;
   ImGui::SetNextItemWidth(ImGui::GetFontSize() * 9.f);
   ImGui::InputInt("##seed", &sSet, 0, 0);
   ImGui::SameLine();
-  if (ImGui::Button("Set now")) {
+  if (ImGui::Button(portTrLabel("Set now"))) {
     portPracticeSetRand(static_cast<unsigned>(sSet));
   }
   ImGui::SetNextItemWidth(ImGui::GetFontSize() * 9.f);
-  if (ImGui::InputInt("Fixed seed", sRngSeed, 0, 0)) {
+  if (ImGui::InputInt(portTrLabel("Fixed seed"), sRngSeed, 0, 0)) {
     *sRngSeed = std::max(*sRngSeed, 0);
     portSettingsSave();
   }
@@ -337,7 +338,7 @@ void statsSection(int) {
 void itemsSection(int) {
   static int sKind;
   static int sItem = -1;
-  static const char* const kKinds[] = {"Items", "Badges", "Key items"};
+  const char* const kKinds[] = {portTr("Items"), portTr("Badges"), portTr("Key items")};
   char name[96];
   ImGui::SetNextItemWidth(ImGui::GetFontSize() * 7.f);
   if (ImGui::Combo("##kind", &sKind, kKinds, 3)) {
@@ -361,14 +362,14 @@ void itemsSection(int) {
   }
   ImGui::SameLine();
   static bool sFull;
-  if (ImGui::Button("Give")) {
+  if (ImGui::Button(portTrLabel("Give"))) {
     sFull = !portPracticeGiveItem(sItem);
   }
   if (sFull) {
     ImGui::SameLine();
-    ImGui::TextDisabled("No room");
+    ImGui::TextDisabled("%s", portTr("No room"));
   }
-  ImGui::TextDisabled("Held items (click to drop):");
+  ImGui::TextDisabled("%s", portTr("Held items (click to drop):"));
   for (int i = 0; i < 20; i++) {
     const int id = portPracticeHeldItem(i);
     if (id == 0) {
@@ -390,11 +391,11 @@ void itemsSection(int) {
 void flagsSection(int) {
   static char sFilter[64];
   static int sWhich; // 0 GSWF, 1 GSW, 2 story
-  ImGui::RadioButton("Flags (GSWF)", &sWhich, 0);
+  ImGui::RadioButton(portTrLabel("Flags (GSWF)"), &sWhich, 0);
   ImGui::SameLine();
-  ImGui::RadioButton("Words (GSW)", &sWhich, 1);
+  ImGui::RadioButton(portTrLabel("Words (GSW)"), &sWhich, 1);
   ImGui::SameLine();
-  ImGui::RadioButton("Story (GSW 0)", &sWhich, 2);
+  ImGui::RadioButton(portTrLabel("Story (GSW 0)"), &sWhich, 2);
   ImGui::SetNextItemWidth(ImGui::GetFontSize() * 14.f);
   ImGui::InputTextWithHint("##filter", "name, comment or number", sFilter, sizeof(sFilter));
   static int sIndex;
@@ -405,13 +406,13 @@ void flagsSection(int) {
   // any index, named or not
   if (sWhich == 0) {
     bool on = portPracticeGswf(sIndex) != 0;
-    if (ImGui::Checkbox("by number", &on)) {
+    if (ImGui::Checkbox(portTrLabel("by number"), &on)) {
       portPracticeSetGswf(sIndex, on);
     }
   } else {
     int v = sWhich == 2 ? portPracticeGsw(0) : portPracticeGsw(sIndex);
     ImGui::SetNextItemWidth(ImGui::GetFontSize() * 6.f);
-    if (ImGui::InputInt("by number", &v, 0, 0, ImGuiInputTextFlags_EnterReturnsTrue)) {
+    if (ImGui::InputInt(portTrLabel("by number"), &v, 0, 0, ImGuiInputTextFlags_EnterReturnsTrue)) {
       portPracticeSetGsw(sWhich == 2 ? 0 : sIndex, v);
     }
   }
@@ -429,7 +430,7 @@ void flagsSection(int) {
   const int story = portPracticeGsw(0);
   if (sWhich == 2) {
     const PortNamedValue* now = portStoryName(story);
-    ImGui::Text("Now %d: %s", story, now != nullptr ? now->name : "");
+    ImGui::Text(portTr("Now %d: %s"), story, now != nullptr ? now->name : "");
   }
   if (ImGui::BeginTable("flags", 3, ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollY | ImGuiTableFlags_SizingFixedFit,
                         ImVec2(0.f, ImGui::GetTextLineHeightWithSpacing() * 14))) {
@@ -452,7 +453,7 @@ void flagsSection(int) {
           if (ImGui::InputInt("##v", &v, 0, 0, ImGuiInputTextFlags_EnterReturnsTrue)) {
             portPracticeSetGsw(r.value, v);
           }
-        } else if (ImGui::SmallButton(r.value == story ? "now" : "set")) {
+        } else if (ImGui::SmallButton(portTrLabel(r.value == story ? "now##set" : "set##set"))) {
           portPracticeSetGsw(0, r.value);
         }
         ImGui::TableNextColumn();
@@ -539,8 +540,9 @@ struct Register {
     portSettingsAddToggle(kTab, "Frame advance keys", "F6 holds the game (and lets it go on), F7 moves one frame.",
                           kInGame, "frame_advance", "frame advance step pause tas");
     portSettingsAddSection(kTab, "Frame advance", nullptr, kInGame, frameSection, "frame advance step pause");
-    portSettingsAddToggle(kTab, "Fixed RNG", "The game's random numbers start from the seed below at each room "
-                          "and battle, so a room plays out the same way each try.",
+    portSettingsAddToggle(kTab, "Fixed RNG", "The game's random numbers start from a fixed seed (All settings, "
+                                             "RNG) at each room and battle, so a room plays out the same way each "
+                                             "try.",
                           PORT_SETTING_CHANGES_PLAY | kInGame, "rng_fixed", "rng random seed luck");
     portSettingsAddSection(kTab, "RNG", nullptr, kInGame, rngSection, "rng random seed rand luck");
     portSettingsAddSection(kTab, "Stats", "Changes count as practice: no achievements until a file is loaded.",
@@ -548,7 +550,8 @@ struct Register {
     portSettingsAddSection(kTab, "Items", nullptr, kInGame, itemsSection, "items badges key items give edit cheat");
     portSettingsAddSection(kTab, "Story and flags", "GSW and GSWF: the story's progress and what has happened.",
                            kInGame, flagsSection, "gsw gswf flags story progress edit sequence");
-    portSettingsAddChoice(kTab, "Memory watch corner", "The fields ticked below, kept on screen.", kInGame,
+    portSettingsAddChoice(kTab, "Memory watch corner", "The fields ticked in Memory watch (All settings), kept on "
+                                                       "screen.", kInGame,
                           "memory_watch", kCorners, 5, "memory watch ram display position speed");
     portSettingsAddSection(kTab, "Memory watch", nullptr, kInGame, watchSection,
                            "memory watch ram mario party pouch position speed");

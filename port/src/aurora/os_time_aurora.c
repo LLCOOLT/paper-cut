@@ -32,6 +32,26 @@ static BOOL fast(void) {
     return sFast;
 }
 
+/* Online co-op (port/include/port/online.h): the game clock virtual from
+ * here, as with $TTYD_FAST, from the host's start (base), so both games
+ * read the same times; the frames still keep to the wall clock (vi_aurora.c
+ * paces them). Called before the game's first frame. */
+void portLockstepBegin(s64 base) {
+    sFast = 1;
+    sBase = base;
+    sVirtual = 0;
+}
+
+/* the game runs the same from the same input: $TTYD_FAST, or online */
+int portLockstep(void) {
+    return fast();
+}
+
+/* the real clock now (the host's start for online co-op) */
+s64 portRealTime(void) {
+    return OSGetTime();
+}
+
 void portFastClockFrame(void) {
     if (fast()) {
         sVirtual += OS_TIMER_CLOCK / portFieldRate();

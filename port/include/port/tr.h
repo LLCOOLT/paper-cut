@@ -16,6 +16,10 @@ extern "C" {
 int portTrLanguage(void);
 /* english in the menu language (UTF-8); english itself without a translation */
 const char* portTr(const char* english);
+/* a Dear ImGui label ("Text" or "Text##id") in the menu language, its English
+ * kept as the ID ("###"), so a control is the same control in any language
+ * (valid until 16 more calls) */
+const char* portTrLabel(const char* label);
 /* the same in the game's encoding, for the game's font (the Start menu's
  * Settings tab): Latin-1 on the US and EU releases, Shift-JIS on the JP one;
  * english where the font can't show the translation */

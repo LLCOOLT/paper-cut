@@ -1,0 +1,97 @@
+# Cosmetics (port/settings/features/cosmetics.cpp), 日本語: an English line, then its translation, then a blank line.
+
+Cosmetics
+みため
+
+Original
+オリジナル
+
+Red
+赤
+
+Luigi green
+ルイージの緑
+
+Wario yellow
+ワリオの黄色
+
+Waluigi purple
+ワルイージの紫
+
+White
+白
+
+Blue
+青
+
+Navy
+紺
+
+Sky blue
+水色
+
+Pink
+ピンク
+
+Orange
+オレンジ
+
+Black
+黒
+
+Gold
+金
+
+Brown
+茶色
+
+Custom (the colour picker)
+カスタム（カラーピッカー）
+
+Mario's cap and shirt
+マリオのぼうしとシャツ
+
+Mario's overalls
+マリオのオーバーオール
+
+Partner's colour
+なかまの色
+
+Goombella's hair and Vivian's body: the partners whose colour comes away cleanly.
+クリスチーヌのかみと　ビビアンの体：色をきれいに変えられるなかま。
+
+HP banner
+ＨＰの帯
+
+Mario's and the partner's.
+マリオのと　なかまの。
+
+FP banner
+ＦＰの帯
+
+Star Power banner
+スターパワーの帯
+
+Looks and colour picker
+みためとカラーピッカー
+
+Mario as his brother or his rivals in one press, every colour at random or back to the game's own, and each part's Custom colour. Only how things look: each player sees their own.
+ワンタッチでマリオを弟やライバルの姿に、すべての色をランダムに、またはゲームの色にもどせます。各パーツのカスタム色もここで。みためだけです：プレイヤーごとに自分の色が見えます。
+
+Luigi
+ルイージ
+
+Wario
+ワリオ
+
+Waluigi
+ワルイージ
+
+Fire Mario
+ファイアマリオ
+
+Random
+ランダム
+
+Reset all
+すべてリセット

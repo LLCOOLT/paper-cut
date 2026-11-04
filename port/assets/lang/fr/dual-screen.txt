@@ -1,0 +1,115 @@
+# The second screen (port/include/port/companion.h, port/settings/features/companion.cpp, TtydCompanion.java)
+
+Second screen
+Second écran
+
+A window of its own with the Start menu's information live, the map and the battle; on another monitor when there is one. A tap there uses an item or switches partners.
+Une fenêtre à part avec les infos du menu Start en direct, la carte et le combat ; sur un autre écran s'il y en a un. Un toucher y utilise un objet ou change de partenaire.
+
+On a device with a second display (a dual-screen handheld, a connected screen): the Start menu's information live, the map and the battle there.
+Sur un appareil à deux écrans (une console portable à double écran, un écran branché) : les infos du menu Start en direct, la carte et le combat sur le second.
+
+Paper Cut companion
+Compagnon Paper Cut
+
+The Start menu's information, the map and the battle show here while a game runs.
+Les infos du menu Start, la carte et le combat s'affichent ici pendant une partie.
+
+Party
+Équipe
+
+Map
+Carte
+
+Battle
+Combat
+
+Level
+Niveau
+
+Star Points
+Points étoile
+
+
+
+
+FP
+PF
+
+HP
+PV
+
+BP
+PB
+
+BP left
+PB libres
+
+Star Power
+Pouvoir étoile
+
+Crystal Stars
+Étoiles de cristal
+
+With Mario
+Avec Mario
+
+Away
+Absent
+
+Tap a partner to switch.
+Touchez un partenaire pour changer.
+
+The bag is empty.
+Le sac est vide.
+
+Use on
+Utiliser sur
+
+Tap an item to use it.
+Touchez un objet pour l'utiliser.
+
+Tap an item to use it; hold it for the partner.
+Touchez un objet pour l'utiliser ; maintenez-le pour le partenaire.
+
+Items can be used in the field.
+Les objets s'utilisent hors combat.
+
+Badges worn
+Badges équipés
+
+No badges worn.
+Aucun badge équipé.
+
+Where next
+Où aller
+
+This room
+Cette salle
+
+No Star Pieces or Shine Sprites here.
+Pas de fragments d'étoile ni de soleils ici.
+
+Partner
+Partenaire
+
+People
+Habitants
+
+Enemies
+Ennemis
+
+No battle now.
+Pas de combat en cours.
+
+Turn
+Tour
+
+Turn order
+Ordre des tours
+
+Defense
+Défense
+
+Not tattled yet.
+Pas encore analysé.

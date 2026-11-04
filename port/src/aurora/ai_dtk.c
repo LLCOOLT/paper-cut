@@ -13,6 +13,7 @@
 #include <dolphin/ai.h>
 #include "port/ai_pc.h"
 #include "port/dtk_pc.h"
+#include "port/music.h"
 
 /* The mixer's output rate (MusyX runs at 32 kHz). */
 #define PORT_AUDIO_RATE 32000
@@ -48,9 +49,11 @@ BOOL portDTKPrepareFile(const char* path, u32 length, u32 offset) {
 }
 
 /* Called by the MusyX PC mixer (hw_pc) after it has produced `frames`
- * interleaved stereo frames at 32 kHz: add the disc stream on top. */
+ * interleaved stereo frames at 32 kHz: add the disc stream on top, and the
+ * player's own music (port/include/port/music.h). */
 void portAudioMixExtra(s16* out, u32 frames) {
     portDTKMix(out, frames, PORT_AUDIO_RATE);
+    portMusicMix(out, frames);
 }
 
 /* ---- AI DMA registers ----

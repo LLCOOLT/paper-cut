@@ -1,0 +1,58 @@
+# Music shuffle, your own music and the input display (port/settings/features/music.cpp, input_display.cpp)
+
+Music shuffle
+Música aleatoria
+
+Each room's music is another of the game's: field music for field music, battle music for battle music. Scenes, jingles and fanfares stay as they are. Only you hear it.
+La música de cada sala es otra del juego: música de exploración por música de exploración, música de combate por música de combate. Las escenas, sintonías y fanfarrias quedan como están. Solo tú la oyes.
+
+Your music
+Tu música
+
+Your files in the music folder play in place of the game's tracks they are named after.
+Tus archivos de la carpeta music suenan en lugar de las pistas del juego cuyo nombre llevan.
+
+Shuffle includes your music
+El aleatorio incluye tu música
+
+Music shuffle also picks the music folder's files.
+La música aleatoria también elige los archivos de la carpeta music.
+
+Music folder
+Carpeta de música
+
+Open the music folder
+Abrir la carpeta de música
+
+Look for files again
+Buscar archivos de nuevo
+
+%d file found
+%d archivo encontrado
+
+%d files found
+%d archivos encontrados
+
+Playing: %s
+Sonando: %s
+
+Reads WAV, OGG, MP3 and FLAC files.
+Lee archivos WAV, OGG, MP3 y FLAC.
+
+Reads WAV files.
+Lee archivos WAV.
+
+Reads WAV files and some others.
+Lee archivos WAV y algunos otros.
+
+Name a file after the game's track, as tracks.txt in the folder lists them: BGM_STG1_NOK1.wav, for example. A file loops at its LOOPSTART and LOOPLENGTH tags, or as a whole.
+Nombra un archivo como la pista del juego, tal como las lista tracks.txt en la carpeta: BGM_STG1_NOK1.wav, por ejemplo. Un archivo se repite en sus etiquetas LOOPSTART y LOOPLENGTH, o entero.
+
+Input display
+Visor de controles
+
+The controller as the game reads it, in a corner: sticks, buttons, d-pad and triggers (with Second player on, the second controller beside it).
+El mando tal como lo lee el juego, en una esquina: palancas, botones, cruceta y gatillos (con Segundo jugador, el segundo mando al lado).
+
+Your music is read with stb_vorbis (public domain), dr_mp3 and dr_flac (public domain or MIT No Attribution).
+Tu música se lee con stb_vorbis (dominio público), dr_mp3 y dr_flac (dominio público o MIT No Attribution).

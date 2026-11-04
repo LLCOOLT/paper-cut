@@ -1,0 +1,58 @@
+# Music shuffle, your own music and the input display (port/settings/features/music.cpp, input_display.cpp)
+
+Music shuffle
+音楽シャッフル
+
+Each room's music is another of the game's: field music for field music, battle music for battle music. Scenes, jingles and fanfares stay as they are. Only you hear it.
+部屋ごとの音楽がゲームの別の曲になります（フィールドの曲はフィールドの曲に、バトルの曲はバトルの曲に）。イベントシーン、ジングル、ファンファーレはそのままです。聞こえるのは自分だけです。
+
+Your music
+自分の音楽
+
+Your files in the music folder play in place of the game's tracks they are named after.
+musicフォルダのファイルが、その名前のゲームの曲の代わりに流れます。
+
+Shuffle includes your music
+シャッフルに自分の音楽も
+
+Music shuffle also picks the music folder's files.
+音楽シャッフルがmusicフォルダのファイルも選びます。
+
+Music folder
+音楽フォルダ
+
+Open the music folder
+音楽フォルダを開く
+
+Look for files again
+ファイルをもう一度探す
+
+%d file found
+%d個のファイル
+
+%d files found
+%d個のファイル
+
+Playing: %s
+再生中：%s
+
+Reads WAV, OGG, MP3 and FLAC files.
+WAV、OGG、MP3、FLACファイルを読めます。
+
+Reads WAV files.
+WAVファイルを読めます。
+
+Reads WAV files and some others.
+WAVファイルといくつかの形式を読めます。
+
+Name a file after the game's track, as tracks.txt in the folder lists them: BGM_STG1_NOK1.wav, for example. A file loops at its LOOPSTART and LOOPLENGTH tags, or as a whole.
+ファイル名はフォルダのtracks.txtにあるゲームの曲名にします（例：BGM_STG1_NOK1.wav）。ファイルはLOOPSTARTとLOOPLENGTHのタグで、なければ全体でループします。
+
+Input display
+入力表示
+
+The controller as the game reads it, in a corner: sticks, buttons, d-pad and triggers (with Second player on, the second controller beside it).
+ゲームが読み取るコントローラーを画面の隅に表示します：スティック、ボタン、十字キー、トリガー（2人目のプレイヤーがオンなら2つ目のコントローラーも横に）。
+
+Your music is read with stb_vorbis (public domain), dr_mp3 and dr_flac (public domain or MIT No Attribution).
+あなたの音楽は stb_vorbis（パブリックドメイン）、dr_mp3 と dr_flac（パブリックドメインまたは MIT No Attribution）で読みこみます。

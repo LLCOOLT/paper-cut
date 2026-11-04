@@ -1,0 +1,121 @@
+# online: see tools/port/gen_lang.py
+
+Choose your disc in Play first: online play uses it.
+Wähle zuerst unter Spielen deine Disc: das Online-Spiel nutzt sie.
+
+This is %s: online play runs in its own build.
+Das ist %s: das Online-Spiel läuft in ihrem eigenen Build.
+
+Open its build
+Ihren Build öffnen
+
+Online
+Online
+
+The other player
+Der andere Spieler
+
+Play online
+Online spielen
+
+Each player needs Paper Cut and their own disc of the same release. You play the same game together: the host is Mario, the one who joins plays the partner. Any computer, phone or tablet can play with any other.
+Jeder Spieler braucht Paper Cut und eine eigene Disc derselben Version. Ihr spielt dasselbe Spiel zusammen: wer hostet, ist Mario, wer beitritt, spielt den Partner. Jeder Computer, jedes Handy und Tablet kann mit jedem anderen spielen.
+
+Your name
+Dein Name
+
+Host a game
+Ein Spiel hosten
+
+Host
+Hosten
+
+Join a game
+Einem Spiel beitreten
+
+Address
+Adresse
+
+Join
+Beitreten
+
+Waiting for the other player to join...
+Warte darauf, dass der andere Spieler beitritt...
+
+Your address: %s (port %d)
+Deine Adresse: %s (Port %d)
+
+On the same network, that address is enough. Over the internet, forward that port on your router to this computer and give your public address, or both join a VPN such as Tailscale or ZeroTier and use its address.
+Im selben Netzwerk genügt diese Adresse. Über das Internet leite diesen Port an deinem Router an diesen Computer weiter und gib deine öffentliche Adresse an, oder tretet beide einem VPN wie Tailscale oder ZeroTier bei und nutzt dessen Adresse.
+
+Connecting...
+Verbinde...
+
+%s joined.
+%s ist beigetreten.
+
+(round trip %d ms)
+(Hin und zurück %d ms)
+
+Continue where you left off
+Dort weitermachen, wo du aufgehört hast
+
+Connected to %s: waiting for them to start.
+Verbunden mit %s: warte, bis sie starten.
+
+Starting...
+Starte...
+
+That isn't Paper Cut on the other side.
+Auf der anderen Seite ist nicht Paper Cut.
+
+The other player's Paper Cut is a different version.
+Paper Cut des anderen Spielers ist eine andere Version.
+
+The other player has a different release of the game (both need the same: Japanese, US or European).
+Der andere Spieler hat eine andere Version des Spiels (beide brauchen dieselbe: japanisch, US oder europäisch).
+
+The other player has different mods on (both need the same).
+Der andere Spieler hat andere Mods an (beide brauchen dieselben).
+
+No network.
+Kein Netzwerk.
+
+That port is in use on this computer: choose another.
+Dieser Port wird auf diesem Computer schon genutzt: wähle einen anderen.
+
+That address wasn't found.
+Diese Adresse wurde nicht gefunden.
+
+Couldn't reach that address.
+Diese Adresse war nicht erreichbar.
+
+Couldn't reach the host: check the address and that they are waiting.
+Der Host war nicht erreichbar: prüfe die Adresse und ob er wartet.
+
+The other player left.
+Der andere Spieler ist gegangen.
+
+The other player stopped answering.
+Der andere Spieler antwortet nicht mehr.
+
+The connection sent something that isn't Paper Cut's.
+Die Verbindung hat etwas gesendet, das nicht von Paper Cut ist.
+
+The host's game didn't arrive whole.
+Das Spiel des Hosts kam nicht vollständig an.
+
+The other player cancelled.
+Der andere Spieler hat abgebrochen.
+
+The online game ended: the other player left.
+Das Online-Spiel ist zu Ende: der andere Spieler ist gegangen.
+
+The online game ended: the other player stopped answering.
+Das Online-Spiel ist zu Ende: der andere Spieler antwortet nicht mehr.
+
+The online game ended: the two games went out of step.
+Das Online-Spiel ist zu Ende: die beiden Spiele liefen auseinander.
+
+Applies after the online game.
+Gilt nach dem Online-Spiel.

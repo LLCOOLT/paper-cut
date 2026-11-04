@@ -14,6 +14,7 @@
 #include "port/crowd.h"
 #include "port/mod_host.h"
 #include "port/settings.h"
+#include "port/tr.h"
 #include "../../archipelago/websocket.h"
 #include <SDL3/SDL.h>
 #include <imgui.h>
@@ -288,17 +289,17 @@ void channelSection(int inGame) {
     sLoaded = true;
   }
   ImGui::SetNextItemWidth(ImGui::GetFontSize() * 14.0f);
-  if (ImGui::InputText("Twitch channel", sEdit, sizeof(sEdit))) {
+  if (ImGui::InputText(portTrLabel("Twitch channel"), sEdit, sizeof(sEdit))) {
     SDL_SaveFile(channelFile().c_str(), sEdit, std::strlen(sEdit));
   }
-  ImGui::TextDisabled("The channel's name, as in twitch.tv/<name>. Its chat is read as a guest: no account needed.");
+  ImGui::TextDisabled("%s", portTr("The channel's name, as in twitch.tv/<name>. Its chat is read as a guest: no account needed."));
   std::lock_guard lock(sLock);
   if (*sOn) {
     ImGui::TextWrapped("%s", inGame ? sStatus.c_str() : "Connects when the game runs.");
   }
-  ImGui::TextDisabled("Viewers type: !gift !rock !star !drain !bingo !cheer !leave !join. In battles only.");
+  ImGui::TextDisabled("%s", portTr("Viewers type: !gift !rock !star !drain !bingo !cheer !leave !join. In battles only."));
   if (!sNotices.empty()) {
-    ImGui::TextUnformatted("Lately:");
+    ImGui::TextUnformatted(portTr("Lately:"));
     for (auto it = sNotices.rbegin(); it != sNotices.rend(); ++it) {
       ImGui::BulletText("%s", it->text.c_str());
     }
