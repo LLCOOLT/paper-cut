@@ -3,6 +3,7 @@
 #include "version.h"
 #ifdef TARGET_PC
 #include "port/gameplus.h"
+#include "port/bedecode.h"
 #endif
 #include "mario/mario_cam.h"
 #include "eff/eff_stageclear.h"
@@ -2627,6 +2628,10 @@ USER_FUNC(evt_sub_save_playtime) {
     s32 base = event->args[0];
     u8 buf[8];
     *(s64*)buf = gp->retraceLocalTime;
+#ifdef TARGET_PC
+    /* PC port: the GSW bytes go to the card as they are, so keep them in GameCube (big-endian) order */
+    portSwap64Run(buf, 1);
+#endif
     swByteSet(base + 0xA21FE80, buf[0]);
     swByteSet(base + 0xA21FE81, buf[1]);
     swByteSet(base + 0xA21FE82, buf[2]);
@@ -2655,7 +2660,10 @@ USER_FUNC(evt_sub_load_progresstime) {
     buf[5] = swByteGet(base + 0xA21FE85);
     buf[6] = swByteGet(base + 0xA21FE86);
     buf[7] = swByteGet(base + 0xA21FE87);
-    ms = (gp->retraceLocalTime - *(s64*)buf) / (OS_TIMER_CLOCK / 1000);
+#ifdef TARGET_PC
+    portSwap64Run(buf, 1); /* PC port: stored big-endian (evt_sub_save_playtime) */
+#endif
+    ms =(gp->retraceLocalTime - *(s64*)buf) / (OS_TIMER_CLOCK / 1000);
     if (ms > 86400000) {
         ms = 86400000;
     }
@@ -3082,12 +3090,19 @@ USER_FUNC(evt_sub_check_intersect) {
     return EVT_RETURN_DONE;
 }
 
+#ifdef TARGET_PC
+/* PC port: the time stamps are stored big-endian (evt_sub_save_playtime) */
+#define IRAI_TIME_ORDER(u) portSwap64Run((u).b, 1)
+#else
+#define IRAI_TIME_ORDER(u)
+#endif
 #define IRAI_CHECK(flag, done, base, mail)                         \
     if (swGet(flag) && !swGet(done)) {                             \
         for (i = 0; i < 8; i++) {                                  \
             u.b[i] = swByteGet(base + i);                          \
         }                                                          \
-        if (OSTicksToSeconds(gp->retraceLocalTime - u.t) > 7200) { \
+        IRAI_TIME_ORDER(u);                                        \
+        if(OSTicksToSeconds(gp->retraceLocalTime - u.t) > 7200) { \
             ret = 1;                                               \
             if (arg) {                                             \
                 swSet(done);                                       \

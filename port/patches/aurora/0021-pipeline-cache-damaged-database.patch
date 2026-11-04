@@ -1,0 +1,64 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: LLCOOLT <114613597+LLCOOLT@users.noreply.github.com>
+Date: Wed, 4 Nov 2026 15:45:00 -0500
+Subject: [PATCH] pipeline cache: a damaged database no longer crashes the start
+
+A failed read aborted the cache, then called sqlite3_clear_bindings on the
+finalized (null) load statement, which crashes. The read now returns after
+the abort, the upsert failure path checks its statement, and a database
+SQLite reports as corrupt is moved aside (.corrupt) so the next start
+builds a new one.
+---
+diff --git a/lib/gfx/pipeline_cache.cpp b/lib/gfx/pipeline_cache.cpp
+index 46a9903..c229b48 100644
+--- a/lib/gfx/pipeline_cache.cpp
++++ b/lib/gfx/pipeline_cache.cpp
+@@ -549,6 +549,9 @@ static PipelineRef resolve_pipeline(ShaderType type, const rmlui::PipelineConfig
+ 
+ static void pipeline_cache_abort() {
+   g_pipelineCacheBroken = true;
++  // A damaged file (SQLITE_CORRUPT, SQLITE_NOTADB) would fail the same way at every start: it is moved aside
++  // once closed, so the next start builds a new one.
++  const int code = g_pipelineCacheDb != nullptr ? sqlite3_extended_errcode(g_pipelineCacheDb) & 0xff : SQLITE_OK;
+   if (g_pipelineCacheLoadStmt != nullptr) {
+     sqlite3_finalize(g_pipelineCacheLoadStmt);
+     g_pipelineCacheLoadStmt = nullptr;
+@@ -561,6 +564,17 @@ static void pipeline_cache_abort() {
+     sqlite3_close(g_pipelineCacheDb);
+     g_pipelineCacheDb = nullptr;
+   }
++  if (code == SQLITE_CORRUPT || code == SQLITE_NOTADB) {
++    const auto dir = io::fs_path_from_string(g_config.cachePath);
++    for (const char* name : {"pipeline_cache.db", "pipeline_cache.db-wal", "pipeline_cache.db-shm"}) {
++      std::error_code ec;
++      const auto from = dir / name;
++      const auto to = dir / (std::string(name) + ".corrupt");
++      std::filesystem::remove(to, ec);
++      std::filesystem::rename(from, to, ec);
++    }
++    Log.warn("Pipeline cache database is damaged: moved aside, a new one is built at the next start");
++  }
+ }
+ 
+ static bool write_pipeline_cache_record(const PipelineCacheWrite& write);
+@@ -864,8 +878,10 @@ static void prune_old_pipeline_cache_versions() {
+ 
+ static bool write_pipeline_cache_record(const PipelineCacheWrite& write) {
+   const auto fail = [&]() {
+-    sqlite3_reset(g_pipelineCacheUpsertStmt);
+-    sqlite3_clear_bindings(g_pipelineCacheUpsertStmt);
++    if (g_pipelineCacheUpsertStmt != nullptr) { // (sqlite3_clear_bindings doesn't take a null statement)
++      sqlite3_reset(g_pipelineCacheUpsertStmt);
++      sqlite3_clear_bindings(g_pipelineCacheUpsertStmt);
++    }
+     return false;
+   };
+ 
+@@ -1037,6 +1053,7 @@ static size_t load_pipeline_cache_entries(ShaderType type, uint32_t configVersio
+   if (ret != SQLITE_DONE) {
+     Log.error("Failed to read pipeline cache rows: {}", sqlite3_errmsg(g_pipelineCacheDb));
+     pipeline_cache_abort();
++    return acceptedRows; // the statement is gone (sqlite3_clear_bindings doesn't take a null statement)
+   }
+ 
+   sqlite3_reset(g_pipelineCacheLoadStmt);

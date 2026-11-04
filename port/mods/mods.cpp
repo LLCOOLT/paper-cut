@@ -583,6 +583,36 @@ std::string toGameText(const std::string& text) {
   return out;
 }
 
+// A mod's message as the game may use it: some messages are printf formats
+// (the battle's announcements: sprintf(text, message, item name)), so of its
+// conversions only the first %s or %d stays and any other % is escaped (a
+// stray one would read a missing argument); and a '<' whose control tag never
+// closes (cut short) becomes '[' so the game's parser doesn't run past the end.
+std::string safeMessage(const std::string& s) {
+  std::string out;
+  bool conversion = false;
+  for (size_t i = 0; i < s.size(); i++) {
+    const char c = s[i];
+    const char next = i + 1 < s.size() ? s[i + 1] : 0;
+    if (c == '%') {
+      if (next == '%') {
+        out += "%%";
+        i++;
+      } else if ((next == 's' || next == 'd') && !conversion) {
+        conversion = true;
+        out += c;
+        out += next;
+        i++;
+      } else {
+        out += "%%";
+      }
+      continue;
+    }
+    out += c == '<' && s.find('>', i) == std::string::npos ? '[' : c;
+  }
+  return out;
+}
+
 // A messages file: "[tag]" lines, each followed by its text up to the next
 // one (the line break before the next tag isn't part of it). Lines before
 // the first tag are comments.
@@ -600,7 +630,7 @@ int parseMessages(const std::vector<uint8_t>& bytes, std::unordered_map<std::str
       if (!body.empty() && body.back() == '\n') {
         body.pop_back();
       }
-      out[tag] = toGameText(body);
+      out[tag] = safeMessage(toGameText(body));
       count++;
     }
   };
@@ -1735,7 +1765,7 @@ void portModsSetMessage(const char* tag, const char* text) {
   if (text == nullptr) {
     sCodeMessages.erase(tag);
   } else {
-    sCodeMessageText.push_back(toGameText(text)); // kept: the game may still show the old one
+    sCodeMessageText.push_back(safeMessage(toGameText(text))); // kept: the game may still show the old one
     sCodeMessages[tag] = sCodeMessageText.back().c_str();
   }
 }

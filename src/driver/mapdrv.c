@@ -2039,6 +2039,17 @@ void mapMain(void) {
             }
             if (!(anim->flags & MAP_ANIM_FLAG_PAUSED)) {
                 ms = OSTicksToMilliseconds(t);
+#ifdef TARGET_PC
+                /* The clock behind the anim went back: a save loaded in the field (a save warp, quick
+                 * resume, a backup restored while playing) puts the file's older clocks in gp while
+                 * this room is still up for a frame or two. ms - startTime then wrapped to about 1.8e19
+                 * ms, the anim's time with it, and the loop's wrap-around below never ended (a float
+                 * that large doesn't change by one length): the game hung here. The anim keeps its
+                 * place on the new clock instead. */
+                if (ms < anim->startTime) {
+                    anim->startTime = ms - (OSTime)(1000.0f * anim->time / mapAnimFps());
+                }
+#endif
                 // written out: mapAnimFps() here swaps the fmuls operands
 #if VERSION >= VERSION_DEMO_EU
                 cur = 60.0f * (f32)(u64)(ms - anim->startTime) / 1000.0f;
@@ -2061,6 +2072,11 @@ void mapMain(void) {
             if (anim->time >= anim->anim->length) {
                 if (anim->flags & MAP_ANIM_FLAG_LOOP) {
                     f32 t2 = anim->time;
+#ifdef TARGET_PC
+                    if (t2 > 1000.0f * anim->anim->length) {
+                        t2 = fmodf(t2, anim->anim->length); /* (never a loop of a million turns) */
+                    }
+#endif
                     while (t2 > anim->anim->length) {
                         t2 -= anim->anim->length;
                     }

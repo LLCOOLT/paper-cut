@@ -3,6 +3,9 @@
 #include "battle/battle_unit.h"
 #include "evt/evt_cmd.h"
 #include "manager/evtmgr_cmd.h"
+#ifdef TARGET_PC
+#include "port/bedecode.h"
+#endif
 
 #include "mario/mario.h"
 #include "mario/mario_pouch.h"
@@ -104,6 +107,9 @@ static USER_FUNC(setYoshiColor) {
     for (i = 0; i < 8; i++) {
         ((u8*)&start)[i] = swByteGet(i + GSW_TOU_EGG_TIME);
     }
+#ifdef TARGET_PC
+    portSwap64Run(&start, 1); /* PC port: stored big-endian (stg3_12_init__4, evt_sub_save_playtime) */
+#endif
     minutes = (s32)OSTicksToSeconds(gp->retraceLocalTime - start) / 60;
     minutes %= 20;
     if (minutes <= 5) {

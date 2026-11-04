@@ -1704,6 +1704,7 @@ static void continueGame(void) {
  * the warp came from go first (the intro's white fade-out, which the title
  * clears only once it has loaded; a map's own): a continue's FADE_NONE never
  * clears them, and the field stayed white under them. */
+void portRelEpilogNow(void); /* port/rel_pc.h */
 void portContinueGame(s32 slot) {
     s32 i;
     wp->slot = slot;
@@ -1711,6 +1712,11 @@ void portContinueGame(s32 slot) {
         fadeReset(i);
     }
     fadeEntry(FADE_CURTAIN_SIDES_A1, 0, (GXColor){0, 0, 0, 255});
+    /* From the field, the room's area REL is still linked, and the map change after the continue
+     * would run its _epilog in the loaded game: the Glitz Pit's wrote its fighter ranking over the
+     * loaded file's (a save loaded on the tou_ rooms: GSW 520 went from 250 to 0). It runs now, in the game it was run for, as the file select's continue (no area up)
+     * never needed. */
+    portRelEpilogNow();
     continueGame();
 }
 #endif

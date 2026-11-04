@@ -17,6 +17,9 @@
 #include "statuswindow.h"
 #include "version.h"
 #include "evt/evt_story.h"
+#ifdef TARGET_PC
+#include "port/bedecode.h"
+#endif
 #ifdef PORT_MODS
 #include "port/hooks/src_event.h"
 #endif
@@ -1383,6 +1386,10 @@ static void stg3_12_init__4(void) {
     swSet(GSWF_TOU_RANK14_SCENE);
     swSet(GSWF_TOU_EGG_STORY_SKIP);
     *(u64*)copytobyte = (u64)gp->retraceLocalTime;
+#ifdef TARGET_PC
+    /* PC port: the GSW bytes go to the card as they are, so keep them in GameCube (big-endian) order */
+    portSwap64Run(copytobyte, 1);
+#endif
     for (i = 0; i < 8; i++) {
         swByteSet(GSW_TOU_EGG_TIME + i, copytobyte[i]);
     }

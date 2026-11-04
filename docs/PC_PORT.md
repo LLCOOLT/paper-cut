@@ -1070,6 +1070,9 @@ layout equals the disc layout), `portSwap16/32/64Run`.
   invalid either way stays invalid. Metadata has the same layout (u16 options and checksums swap).
 - Unknown pads in `GlobalWork`/`PouchData` are copied as bytes: a multi-byte value hidden in a pad
   would keep GameCube byte order on PC (none is read through a cast today except LotteryWork).
+- GSW bytes are copied as bytes too, so the 8-byte play-time stamps scripts keep in them
+  (`evt_sub_save_playtime`/`evt_sub_load_progresstime`, the Trouble Center mail check, the Yoshi
+  egg in `stg3_12_init__4`/tou_10) are written and read big-endian on PC, as on the GameCube.
 
 ### Audio: MusyX PC hardware layer
 - `libs/musyx` is built with `MUSY_TARGET_PC` (object library `musyx_pc`, linked into `ttyd`).
