@@ -13,5 +13,9 @@ enum { PORT_MIX_MUSIC, PORT_MIX_SFX, PORT_MIX_AMBIENCE };
 int salPcCategory(int cat);
 /* gain: 0-1 */
 void salPcSetCategoryGain(int cat, float gain);
+/* A volume slider's 0-100 as a gain, on an audio taper (squared): 50% sounds
+ * about half as loud, where a straight line barely changes until the bottom
+ * of the slider (audio_mix_pc.c). 100% is 1, the game's own level. */
+float portVolumeGain(int percent);
 
 #endif

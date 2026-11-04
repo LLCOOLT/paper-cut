@@ -659,6 +659,7 @@ skip:
     // Gameplay+ difficulty: an enemy's attack on Mario or a partner
     if (attacker != NULL && attacker->alliance == 1 && target->alliance == 0) {
         damage = portEnemyDamage(damage);
+        damage = portChallengeDamage(damage, target->currentHp); // challenge: one-hit KO
     }
 #endif
     return damage;

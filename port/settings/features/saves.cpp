@@ -134,7 +134,6 @@ void backupsSection(int inGame) {
   if (sRelease < 0) {
     sRelease = releaseIndex(PORT_GAME_ID[3]);
   }
-  ImGui::SeparatorText("Backups");
   ImGui::Combo("Card", &sRelease, kReleaseNames, 3);
   const char release = kReleases[sRelease];
   const std::vector<std::string> backups = glob(backupDir(release), "*.gci");
@@ -177,7 +176,6 @@ void copySection(int inGame) {
     sFrom = releaseIndex(PORT_GAME_ID[3]);
     sTo = sFrom == 0 ? 1 : 0;
   }
-  ImGui::SeparatorText("Copy a save to another release");
   ImGui::TextWrapped("The Japanese release keeps its Pianta Parlor records differently; the copy is converted. "
                      "Names typed in one release's letters may look different in another.");
   if (ImGui::Combo("From", &sFrom, kReleaseNames, 3) | ImGui::Combo("To", &sTo, kReleaseNames, 3)) {

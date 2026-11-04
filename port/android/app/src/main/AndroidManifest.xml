@@ -34,6 +34,8 @@
 
     <!-- Rumble on the device itself when no controller is connected (Aurora). -->
     <uses-permission android:name="android.permission.VIBRATE" />
+    <!-- HTTPS: the update check (port/settings/http.cpp). -->
+    <uses-permission android:name="android.permission.INTERNET" />
 
     <application
         android:icon="@mipmap/ic_launcher"

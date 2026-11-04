@@ -41,6 +41,8 @@ compile_commands.json
 
 # Files for in-development testing
 data/*
+# character_tool.py export's default folder (made from the user's own disc)
+/exports/
 mwcc_debugger.py
 retrowin32
 /ttydasm*

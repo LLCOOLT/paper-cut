@@ -1,0 +1,13 @@
+[Desktop Entry]
+Type=Application
+Name=Paper Cut
+GenericName=Paper Mario: The Thousand-Year Door, native
+Comment=Play your own disc of Paper Mario: The Thousand-Year Door natively
+Exec=papercut %f
+Icon=io.github.llcoolt.PaperCut
+Terminal=false
+Categories=Game;
+Keywords=paper;mario;ttyd;thousand-year door;gamecube;
+MimeType=application/x-gamecube-rom;application/x-wii-rom;
+StartupWMClass=ttyd-us
+PrefersNonDefaultGPU=true

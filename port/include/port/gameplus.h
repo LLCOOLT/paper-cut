@@ -21,6 +21,9 @@ int portGameplus(const char* key);
 /* The quick-swap control was pressed (a key, a controller's button, the
  * on-screen button or a test script). */
 void portQuickSwapPress(void);
+/* The second player's L or R in the field (second_player_pc.c): the same,
+ * whether Gameplay+'s quick-swap is on or not. */
+void portQuickSwapPressCoop(void);
 /* Aurora: whether the quick-swap control is held now (keyboard Q, a
  * controller's left stick press); NULL elsewhere. Polled by the field. */
 extern int (*gPortQuickSwapHeld)(void);
@@ -47,6 +50,19 @@ void portPartyReviveAfterBattle(void);
 /* win_main.c / win_item.c, after a field item healed partner target by hp:
  * the other partners who have joined get it too. */
 void portHealOtherPartners(int target, int hp);
+
+/* --- Challenge rules (port/src/common/challenge_pc.c; the Challenges tab) --- */
+void portChallengeDeclare(void);
+/* A challenge setting's value by key (0 when off). */
+int portChallenge(const char* key);
+/* battle_damage.c, an enemy's hit on Mario or a partner: with one-hit KO,
+ * the damage that knocks the target out. */
+int portChallengeDamage(int damage, int targetHp);
+/* battle_ac.c, a guard's result (2 none, 4 Guard, 5 Superguard): taken away
+ * as the guard challenge says. */
+int portChallengeGuard(int result);
+/* battle_ac.c, an attack command's difficulty (0-6) for Mario's side: harder. */
+int portChallengeCommandLevel(int level);
 
 /* Every frame (trace_pc.c portTraceFrame): the options that change the
  * game's data tables apply or undo their change. */

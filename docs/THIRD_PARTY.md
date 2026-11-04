@@ -56,6 +56,10 @@ Silicon Graphics, Inc.
 
 The launcher's typeface is [Fredoka](https://github.com/hafontia/Fredoka-One) by The Fredoka Project Authors, under the SIL Open Font License 1.1 (`port/assets/fonts/OFL.txt`). The files are static Bold (700) and Medium (500) instances made with fontTools' `varLib.instancer` from the variable `Fredoka[wdth,wght].ttf` in [google/fonts](https://github.com/google/fonts/tree/main/ofl/fredoka) (November 2026), embedded in the PC builds.
 
+## Controller mappings in `port/assets/controllers/`
+
+`gamecontrollerdb.txt` is the community [SDL_GameControllerDB](https://github.com/mdqinc/SDL_GameControllerDB) (commit 07af1d5, 2026-11-02). It holds SDL mappings for about 2,300 controller models, so that controllers SDL doesn't know itself work as gamepads. It's under the zlib licence (`port/assets/controllers/LICENSE`) and embedded in the PC builds.
+
 ## Libraries in the PC builds
 
 Paper Cut's builds embed or link these (Aurora's dependencies, fetched when the build is configured). Every desktop package carries their notices and licence texts in `THIRD_PARTY.txt` (written by `tools/port/third_party.py` from the build's own copies) and the font's in `OFL.txt`; the phone apps name them on the launcher's About tab.
@@ -70,7 +74,7 @@ Paper Cut's builds embed or link these (Aurora's dependencies, fetched when the 
 | [Dear ImGui](https://github.com/ocornut/imgui), [FreeType](https://freetype.org) | the settings page and launcher; font rendering | MIT; FreeType License |
 | libpng, zlib, Zstandard, xxHash | images, compression, hashing | libpng License; zlib; BSD 3-Clause; BSD 2-Clause |
 | {fmt}, Abseil, Tracy, SQLite | Aurora's support code (formatting, containers, the profiler client, the pipeline cache) | MIT; Apache 2.0; BSD 3-Clause; public domain |
-| MusyX (`libs/musyx/`), the SGI tessellator (`rels/tst/`), Fredoka (`port/assets/fonts/`) | above | MIT; SGI Free Software License B; SIL OFL 1.1 |
+| MusyX (`libs/musyx/`), the SGI tessellator (`rels/tst/`), Fredoka (`port/assets/fonts/`), SDL_GameControllerDB (`port/assets/controllers/`) | above | MIT; SGI Free Software License B; SIL OFL 1.1; zlib |
 
 On Windows the desktop package also carries Microsoft's Visual C++ runtime DLLs, redistributed under the Visual Studio licence terms.
 

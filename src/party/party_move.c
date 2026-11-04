@@ -33,6 +33,9 @@
 #ifdef PORT_MODS
 #include "port/hooks/src_party_party_move.h"
 #endif
+#ifdef TARGET_PC
+int portCoopPartnerWalk(PartyEntry* party); /* port/src/common/second_player_pc.c */
+#endif
 
 static void walkMain(PartyEntry* party);
 // FAKE: party_move.c calls partySearchHead through this prototype (the types it was compiled with) instead of the one in party/party_hit.h; same registers, behaviour-identical.
@@ -2116,6 +2119,14 @@ static inline void party_move_mode_behind_mario_continue(PartyEntry* party) {
 
 /** Runs the current move mode for a walking partner. */
 static void walkMain(PartyEntry* party) {
+#ifdef TARGET_PC
+    /* co-op: the second player walking the partner, in any move mode, standing or walking
+     * (port/src/common/second_player_pc.c) */
+    if ((party->motionId == 0 || party->motionId == 1) && portCoopPartnerWalk(party)) {
+        partyModeTail(party);
+        return;
+    }
+#endif
     switch (party->moveMode) {
         case 0:
             party_move_mode_stay(party);
@@ -2137,6 +2148,13 @@ static void walkMain(PartyEntry* party) {
 
 /** Runs the current move mode for a flying partner (the same modes as walkMain). */
 static void flyMain(PartyEntry* party) {
+#ifdef TARGET_PC
+    /* co-op, as in walkMain */
+    if ((party->motionId == 0 || party->motionId == 1) && portCoopPartnerWalk(party)) {
+        partyModeTail(party);
+        return;
+    }
+#endif
     switch (party->moveMode) {
         case 0:
             party_move_mode_stay(party);

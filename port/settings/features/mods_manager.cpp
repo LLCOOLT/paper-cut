@@ -315,12 +315,21 @@ void texturesSection(int inGame) {
   }
 }
 
+} // namespace
+
+// character_export.cpp
+void portCharacterExportSection(int inGame);
+
+namespace {
+
 struct Register {
   Register() {
     portSettingsAddSection(kTab, "Mods", nullptr, 0, modsSection,
                            "mods manager conflicts hooks options order enable disable reload folder");
     portSettingsAddSection(kTab, "Texture packs", nullptr, 0, texturesSection,
                            "textures packs hd dump coverage collisions reload dolphin");
+    portSettingsAddSection(kTab, "Export characters", nullptr, PORT_SETTING_IN_GAME, portCharacterExportSection,
+                           "character model animation anim export blender modding mario luigi partner npc");
   }
 } sRegister;
 

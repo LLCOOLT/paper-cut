@@ -788,10 +788,16 @@ if(TTYD_BACKEND STREQUAL "aurora")
     # Luigi's animation pack, our own work (port/src/aurora/luigi_model_aurora.c, docs/LUIGI_ANIMS.md)
     ttyd_embed_file(${CMAKE_SOURCE_DIR}/port/assets/luigi/luigi_anims.bin portLuigiPack
         ${CMAKE_BINARY_DIR}/generated/luigi_pack.c)
+    # the community controller mappings (port/settings/features/controllers.cpp, docs/THIRD_PARTY.md)
+    ttyd_embed_file(${CMAKE_SOURCE_DIR}/port/assets/controllers/gamecontrollerdb.txt portControllerDb
+        ${CMAKE_BINARY_DIR}/generated/controller_db.c)
     add_library(ttyd_settings OBJECT ${CMAKE_SOURCE_DIR}/port/settings/settings_ui.cpp
         ${CMAKE_SOURCE_DIR}/port/settings/launcher_ui.cpp ${CMAKE_SOURCE_DIR}/port/settings/launcher_style.cpp
+        ${CMAKE_SOURCE_DIR}/port/settings/button_glyphs.cpp
+        ${CMAKE_SOURCE_DIR}/port/settings/http.cpp ${CMAKE_SOURCE_DIR}/port/settings/tr.cpp
         ${CMAKE_BINARY_DIR}/generated/font_bold.c ${CMAKE_BINARY_DIR}/generated/font_medium.c
-        ${CMAKE_BINARY_DIR}/generated/icon64.c ${CMAKE_BINARY_DIR}/generated/luigi_pack.c ${TTYD_SETTINGS_FEATURES})
+        ${CMAKE_BINARY_DIR}/generated/icon64.c ${CMAKE_BINARY_DIR}/generated/luigi_pack.c
+        ${CMAKE_BINARY_DIR}/generated/controller_db.c ${TTYD_SETTINGS_FEATURES})
     target_include_directories(ttyd_settings PRIVATE ${CMAKE_SOURCE_DIR}/port/include)
     target_compile_features(ttyd_settings PRIVATE cxx_std_20)
     # The port's version, shown on the settings page (tools/port/release.py sets it).
@@ -800,6 +806,10 @@ if(TTYD_BACKEND STREQUAL "aurora")
         PORT_GAME_ID="${TTYD_VERSION}")
     target_link_libraries(ttyd_settings PRIVATE aurora::core aurora::pad ${AURORA_SDL3_TARGET})
     target_link_libraries(ttyd PRIVATE ttyd_settings)
+    if(WIN32)
+        # HTTPS for the update check (port/settings/http.cpp)
+        target_link_libraries(ttyd_settings PRIVATE winhttp)
+    endif()
     # Mods (port/include/port/mods.h): C++, built without the game's prefix header.
     # A code mod's library for this build is in its lib/<platform>/.
     if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(aarch64|arm64|ARM64)$" OR CMAKE_OSX_ARCHITECTURES STREQUAL "arm64")
@@ -821,7 +831,8 @@ if(TTYD_BACKEND STREQUAL "aurora")
     add_library(ttyd_mods STATIC ${CMAKE_SOURCE_DIR}/port/mods/mods.cpp ${CMAKE_SOURCE_DIR}/port/mods/mod_api.cpp
         ${CMAKE_SOURCE_DIR}/port/mods/evt_asm.cpp ${CMAKE_BINARY_DIR}/generated/statics_index.c
         ${CMAKE_SOURCE_DIR}/port/archipelago/ap_client.cpp ${CMAKE_SOURCE_DIR}/port/archipelago/websocket.cpp
-        ${CMAKE_SOURCE_DIR}/port/archipelago/ttyd_ap.cpp)
+        ${CMAKE_SOURCE_DIR}/port/archipelago/ttyd_ap.cpp ${CMAKE_SOURCE_DIR}/port/archipelago/ttyd_rando.cpp
+        ${CMAKE_SOURCE_DIR}/port/archipelago/rando_gen.cpp)
     target_include_directories(ttyd_mods PRIVATE ${CMAKE_SOURCE_DIR}/port/include)
     target_compile_features(ttyd_mods PRIVATE cxx_std_20)
     target_compile_definitions(ttyd_mods PRIVATE _CRT_SECURE_NO_WARNINGS=1 PORT_GAME_ID="${TTYD_VERSION}"
@@ -944,14 +955,21 @@ const int portBuiltinModCount = @_builtin_count@;
         include(${CMAKE_SOURCE_DIR}/port/ios/ios.cmake)
     endif()
     if(APPLE)
-        # Save sync through iCloud Drive (port/apple/cloud_apple.m). Its own
+        # Save sync through iCloud Drive (port/apple/cloud_apple.m), and iOS's
+        # HTTPS (port/apple/http_apple.m, for port/settings/http.cpp). Its own
         # library: the game's prefix header must not reach Objective-C.
         enable_language(OBJC)
-        add_library(ttyd_cloud STATIC ${CMAKE_SOURCE_DIR}/port/apple/cloud_apple.m)
+        add_library(ttyd_cloud STATIC ${CMAKE_SOURCE_DIR}/port/apple/cloud_apple.m
+            ${CMAKE_SOURCE_DIR}/port/apple/http_apple.m)
         target_include_directories(ttyd_cloud PRIVATE ${CMAKE_SOURCE_DIR}/port/include)
         target_compile_options(ttyd_cloud PRIVATE -fobjc-arc)
         target_link_libraries(ttyd PRIVATE ttyd_cloud "-framework Foundation")
+    endif()
+    if(NOT ANDROID)
+        # Save sync: iCloud Drive on Apple devices (above), any folder on Windows and Linux
+        # (port/src/aurora/folder_sync_aurora.c). The settings page has its section too.
         target_compile_definitions(ttyd PRIVATE PORT_CLOUD_SYNC=1)
+        target_compile_definitions(ttyd_settings PRIVATE PORT_CLOUD_SYNC=1)
     endif()
     # Aurora's pipeline seed (tools/port/pipeline_cache.py): every GX pipeline
     # the game uses, built at launch so no draw waits for one (on a slow GPU a
@@ -1157,6 +1175,13 @@ target_compile_definitions(musyx_swap_test PRIVATE ${TTYD_DEFINES})
 target_include_directories(musyx_swap_test PRIVATE ${TTYD_INCLUDES})
 target_compile_options(musyx_swap_test PRIVATE ${TTYD_CFLAGS})
 add_test(NAME musyx_swap_test COMMAND musyx_swap_test)
+# rando_test: the built-in randomizer's seed generator (port/archipelago/rando_gen.cpp):
+# deterministic, every item kept, the vanilla story's moves safe, the open world beatable.
+add_executable(rando_test EXCLUDE_FROM_ALL
+    ${CMAKE_SOURCE_DIR}/tests/port/rando_test.cpp
+    ${CMAKE_SOURCE_DIR}/port/archipelago/rando_gen.cpp)
+target_compile_features(rando_test PRIVATE cxx_std_20)
+add_test(NAME rando_test COMMAND rando_test)
 # musyx_mixer_test: MusyX PC layer (ADPCM decode, software DSP mixer, end to end
 # through sndInit/sndFXStart). Headless only: on Aurora, hw_pc.c drives an SDL device.
 if(TTYD_BACKEND STREQUAL "headless")

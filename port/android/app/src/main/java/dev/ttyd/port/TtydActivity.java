@@ -6,6 +6,10 @@ import android.content.Intent;
 import android.net.Uri;
 import android.util.Log;
 
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+
 import dev.encounter.aurora.AuroraSurface;
 
 import org.libsdl.app.SDLActivity;
@@ -66,4 +70,59 @@ public class TtydActivity extends SDLActivity {
             Log.w(TAG, "no persistable access to " + uri + "; it must be picked again after a restart", e);
         }
     }
+
+    /**
+     * An https:// GET for port/settings/http.cpp (the update check, the mod
+     * browser), called on a thread of the game's own: the body goes to
+     * httpData in chunks as it arrives, for the transfer at handle. Returns
+     * null once it all arrived, else why not. Redirects are followed only
+     * to https:// (HttpURLConnection never follows a change of protocol).
+     */
+    public static String httpGet(String address, String accept, long handle) {
+        HttpURLConnection connection = null;
+        try {
+            URL url = new URL(address);
+            if (!"https".equals(url.getProtocol())) {
+                return "not an https:// address";
+            }
+            connection = (HttpURLConnection) url.openConnection();
+            connection.setConnectTimeout(15000);
+            connection.setReadTimeout(30000);
+            connection.setInstanceFollowRedirects(true);
+            connection.setUseCaches(false);
+            connection.setRequestProperty("User-Agent", "PaperCut");
+            if (accept != null) {
+                connection.setRequestProperty("Accept", accept);
+            }
+            int status = connection.getResponseCode();
+            if (status != HttpURLConnection.HTTP_OK) {
+                return "the server answered " + status;
+            }
+            if (!"https".equals(connection.getURL().getProtocol())) {
+                return "redirected away from https://";
+            }
+            long total = Math.max(connection.getContentLengthLong(), 0);
+            byte[] buffer = new byte[65536];
+            try (InputStream in = connection.getInputStream()) {
+                int n;
+                while ((n = in.read(buffer)) >= 0) {
+                    if (n > 0 && !httpData(handle, buffer, n, total)) {
+                        return "stopped";
+                    }
+                }
+            }
+            return null;
+        } catch (Exception e) {
+            Log.w(TAG, "download of " + address + " failed", e);
+            String message = e.getMessage();
+            return message != null ? message : e.toString();
+        } finally {
+            if (connection != null) {
+                connection.disconnect();
+            }
+        }
+    }
+
+    /** A chunk of httpGet's body (port/settings/http.cpp registers it); false stops the transfer. */
+    private static native boolean httpData(long handle, byte[] data, int length, long total);
 }

@@ -13,6 +13,12 @@ extern "C" {
 
 /* Once a retrace (vi_aurora.c). */
 void portResumeFrame(void);
+/* Autosave at room changes (port/src/aurora/autosave_aurora.c): once a
+ * retrace, after portResumeFrame. gPortAutosaveAt: when the last one finished
+ * writing (SDL ms, 0 none), gPortAutosaveFailed: it didn't. */
+void portAutosaveFrame(void);
+extern unsigned long long gPortAutosaveAt;
+extern int gPortAutosaveFailed;
 /* Writes the latest resume save out now (the app going to the background or
  * quitting); nothing when there's none or it's written already. */
 void portResumeFlush(void);

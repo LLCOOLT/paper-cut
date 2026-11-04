@@ -8,6 +8,7 @@
 // (port/src/aurora/settings_aurora.c).
 
 #include "port/settings.h"
+#include "port/tr.h"
 #include "port/resume.h"
 #include "settings_ui.h"
 #include "launcher_style.h"
@@ -98,11 +99,34 @@ constexpr const char* kRates[] = {"60", "120", "144", "240", "display"};
 constexpr const char* kRateNames[] = {"60 Hz (original)", "120 Hz", "144 Hz", "240 Hz", "The display's rate"};
 constexpr const char* kCorners[] = {"Off", "Top left", "Top right", "Bottom left", "Bottom right"};
 
+// a label in the menu language (port/include/port/tr.h), its English kept as
+// Dear ImGui's ID ("###"), so a control is the same control in any language
+const char* trl(const char* label) {
+  static thread_local std::string sRing[16];
+  static thread_local int sAt;
+  if (label == nullptr) {
+    return nullptr;
+  }
+  const char* id = std::strstr(label, "##");
+  const std::string shown = id != nullptr ? std::string(label, id - label) : std::string(label);
+  const char* t = shown.empty() ? "" : portTr(shown.c_str());
+  if (!shown.empty() && t == shown.c_str()) {
+    t = label; // no translation: as it is
+    return t;
+  }
+  std::string& out = sRing[sAt++ % 16];
+  out = std::string(t) + "###" + (id != nullptr ? std::string(id + 2) : shown);
+  return out.c_str();
+}
+
 bool combo(const char* label, int* value, const char* const* names, int count) {
   bool change = false;
-  if (ImGui::BeginCombo(label, names[*value])) {
+  if (ImGui::BeginCombo(trl(label), portTr(names[*value]))) {
     for (int i = 0; i < count; i++) {
-      if (ImGui::Selectable(names[i], i == *value)) {
+      ImGui::PushID(i);
+      const bool picked = ImGui::Selectable(portTr(names[i]), i == *value);
+      ImGui::PopID();
+      if (picked) {
         *value = i;
         change = true;
       }
@@ -117,7 +141,7 @@ bool combo(const char* label, int* value, const char* const* names, int count) {
 
 bool check(const char* label, int* value) {
   bool v = *value != 0;
-  if (ImGui::Checkbox(label, &v)) {
+  if (ImGui::Checkbox(trl(label), &v)) {
     *value = v ? 1 : 0;
     return true;
   }
@@ -126,35 +150,46 @@ bool check(const char* label, int* value) {
 
 void note(const char* text) {
   ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
-  ImGui::TextWrapped("%s", text);
+  ImGui::TextWrapped("%s", portTr(text));
   ImGui::PopStyleColor();
 }
 
 bool slider(const char* label, int* value, int lo, int hi) {
-  if (ImGui::SliderInt(label, value, lo, hi, "%d%%")) {
+  if (ImGui::SliderInt(trl(label), value, lo, hi, "%d%%")) {
     portSettingsApply();
   }
   return ImGui::IsItemDeactivatedAfterEdit();
 }
 
-// Controller 1's buttons (Aurora's mappings, saved by it per controller model).
+// A player's controller buttons (Aurora's mappings, saved by it per controller model): player 1's,
+// or another's chosen above them.
 void remapSection() {
+  static int sPort;
   u32 count = 0;
-  PADButtonMapping* maps = PADGetButtonMappings(0, &count);
   ImGui::Separator();
   ImGui::TextUnformatted("Controller buttons");
+  {
+    static const char* kPorts[] = {"Player 1", "Player 2", "Player 3", "Player 4"};
+    ImGui::SetNextItemWidth(ImGui::GetFontSize() * 7.f);
+    if (ImGui::Combo("##remap_player", &sPort, kPorts, 4)) {
+      sRebind = -1;
+    }
+  }
+  const u32 port = static_cast<u32>(sPort);
+  PADButtonMapping* maps = PADGetButtonMappings(port, &count);
   if (maps == nullptr || count == 0) {
     sRebind = -1;
-    note("Connect a controller to change which of its buttons does what.");
+    note(port == 0 ? "Connect a controller to change which of its buttons does what."
+                   : "No controller is this player: choose one under Controllers.");
     return;
   }
   if (sRebind >= 0 && sRebind < static_cast<int>(count)) {
-    const s32 pressed = PADGetNativeButtonPressed(0);
+    const s32 pressed = PADGetNativeButtonPressed(port);
     if (pressed < 0) {
       sRebindArmed = true;
     } else if (sRebindArmed) {
       maps[sRebind].nativeButton = static_cast<u32>(pressed);
-      PADSetButtonMapping(0, maps[sRebind]);
+      PADSetButtonMapping(port, maps[sRebind]);
       PADSerializeMappings();
       sRebind = -1;
     }
@@ -182,14 +217,14 @@ void remapSection() {
     }
     if (a != nullptr && b != nullptr) {
       std::swap(a->nativeButton, b->nativeButton);
-      PADSetButtonMapping(0, *a);
-      PADSetButtonMapping(0, *b);
+      PADSetButtonMapping(port, *a);
+      PADSetButtonMapping(port, *b);
       PADSerializeMappings();
     }
   }
   ImGui::SameLine();
   if (ImGui::Button("Restore defaults")) {
-    PADRestoreDefaultMapping(0);
+    PADRestoreDefaultMapping(port);
     PADSerializeMappings();
     sRebind = -1;
   }
@@ -376,9 +411,16 @@ void drawCrashNotice(float scale) {
 }
 
 #if defined(PORT_CLOUD_SYNC)
-// iCloud Drive (port/include/port/cloud.h)
+// iCloud Drive on Apple devices, any folder on Windows and Linux (port/include/port/cloud.h)
+#if defined(__APPLE__)
+#define CLOUD_LABEL "Sync saves with iCloud Drive"
+#define CLOUD_RESTART "Saves are brought from iCloud Drive when the game starts: restart it to get another device's progress."
+#else
+#define CLOUD_LABEL "Sync saves through a folder"
+#define CLOUD_RESTART "Saves are brought from the folder when the game starts: restart it to get another computer's progress."
+#endif
 void cloudSection(PortSettings* s) {
-  if (check("Sync saves with iCloud Drive", &s->cloudSync)) {
+  if (check(CLOUD_LABEL, &s->cloudSync)) {
     changed();
     if (s->cloudSync) {
       portSettingsCloudPush(0);
@@ -394,14 +436,32 @@ void cloudSection(PortSettings* s) {
     ImGui::SameLine();
     ImGui::TextDisabled("%s", portCloudFolderName());
   }
-#else
+#elif defined(__APPLE__)
   note("Your saves are kept the same as in iCloud Drive's TTYD folder (choose that folder on an iPhone or iPad "
        "to share them). The newer copy of each save wins; replaced saves are kept in Backups.");
+#else
+  // Windows and Linux: any folder a sync service keeps (port/src/aurora/folder_sync_aurora.c)
+  note("Your saves are kept the same as in a folder a sync service keeps the same across computers: OneDrive, "
+       "Dropbox, Google Drive, Syncthing, or iCloud for Windows' iCloud Drive (its TTYD folder, to share them "
+       "with a Mac or an iPhone). The newer copy of each save wins; replaced saves are kept in Backups.");
+  if (ImGui::Button(trl(portCloudAvailable() ? "Choose another folder" : "Choose a folder"))) {
+    portCloudPickFolder();
+  }
+  if (portCloudFolderName()[0] != '\0') {
+    ImGui::SameLine();
+    ImGui::TextDisabled("%s", portCloudFolderName());
+    ImGui::SameLine();
+    if (ImGui::SmallButton(trl("Stop using it"))) {
+      portCloudForget();
+      s->cloudSync = 0;
+      changed();
+    }
+  }
 #endif
   if (s->cloudSync && portCloudStatus()[0] != '\0') {
     note(portCloudStatus());
   }
-  note("Saves are brought from iCloud Drive when the game starts: restart it to get another device's progress.");
+  note(CLOUD_RESTART);
 }
 #endif
 
@@ -878,7 +938,7 @@ const Item kItems[] = {
      videoRate, "fps hz 120 144 240 smooth interpolation", nullptr},
     {"Display", "VSync", nullptr, 0, TOGGLE(vsync), "tearing", nullptr},
 #if !defined(__ANDROID__) && !(defined(__APPLE__) && TARGET_OS_IPHONE)
-    {"Display", "Fullscreen (F11)", nullptr, 0, TOGGLE(fullscreen), "window", nullptr},
+    {"Display", "Fullscreen (F11 or Alt+Enter)", nullptr, 0, TOGGLE(fullscreen), "window borderless", nullptr},
 #endif
     {"Display", "Widescreen (16:9)", "Much of the game was built for 4:3: some rooms and scenes end at the 4:3 edges.",
      0, TOGGLE(widescreen), "aspect ratio 16:9", nullptr},
@@ -903,20 +963,7 @@ const Item kItems[] = {
     {"Display", "Keep the picture clear of the notch", nullptr, 0, TOGGLE(safeArea), "safe area island", nullptr},
 #endif
 
-    // Audio
-    {"Audio", "Volume", nullptr, 0,
-     [](PortSettings* s, const Item& it) {
-       if (ImGui::SliderInt(it.label, &s->volume, 0, 100, "%d%%")) {
-         portSettingsApply();
-       }
-       if (ImGui::IsItemDeactivatedAfterEdit()) {
-         changed();
-       }
-     },
-     "sound music loud", nullptr},
-#if !defined(__ANDROID__) && !(defined(__APPLE__) && TARGET_OS_IPHONE)
-    {"Audio", "Mute while in the background", nullptr, 0, TOGGLE(muteUnfocused), "sound focus", nullptr},
-#endif
+    // Audio: port/settings/features/volume.cpp (the mixer, the volume keys)
 
     // Controls
     {"Controls", "Rumble", nullptr, 0, TOGGLE(rumble), "vibration", nullptr},
@@ -1037,8 +1084,8 @@ const Item kItems[] = {
      nullptr},
 #endif
 #if defined(PORT_CLOUD_SYNC)
-    {"System", "Sync saves with iCloud Drive", nullptr, 0, [](PortSettings* s, const Item&) { cloudSection(s); },
-     "icloud cloud sync", nullptr},
+    {"System", CLOUD_LABEL, nullptr, 0, [](PortSettings* s, const Item&) { cloudSection(s); },
+     "icloud cloud sync folder onedrive dropbox google drive syncthing", nullptr},
 #endif
     {"System", "Crash reports", nullptr, 0, [](PortSettings*, const Item&) { crashSection(); }, "crash report bug",
      nullptr},
@@ -1083,7 +1130,7 @@ void drawExtra(PortSettings*, const Item& it) {
   } else if (e.kind == 1) {
     edited = combo(it.label, v, e.choices, e.count);
   } else {
-    ImGui::SliderInt(it.label, v, e.min, e.max, e.format != nullptr ? e.format : "%d");
+    ImGui::SliderInt(trl(it.label), v, e.min, e.max, e.format != nullptr ? e.format : "%d");
     edited = ImGui::IsItemDeactivatedAfterEdit();
   }
   if (edited) {
@@ -1140,17 +1187,17 @@ void drawItem(PortSettings* s, const Item& it) {
   if (it.draw != nullptr) {
     it.draw(s, it);
   } else {
-    ImGui::TextUnformatted(it.label);
+    ImGui::TextUnformatted(portTr(it.label));
   }
   // markers after a one-line control (sections draw their own lines)
   if (it.flags & kNextStart) {
-    marker("next start", IM_COL32(52, 104, 178, 255));
+    marker(portTr("next start"), IM_COL32(52, 104, 178, 255));
   }
   if (it.flags & kChangesPlay) {
-    marker("changes play", IM_COL32(206, 112, 22, 255));
+    marker(portTr("changes play"), IM_COL32(206, 112, 22, 255));
   }
   if (it.flags & kChangesSaves) {
-    marker("changes saves", IM_COL32(196, 32, 42, 255));
+    marker(portTr("changes saves"), IM_COL32(196, 32, 42, 255));
   }
   if (it.note != nullptr) {
     note(it.note);
@@ -1166,7 +1213,8 @@ bool visible(const PortSettings* s, const Item& it, bool inGame) {
 // case-insensitive: every word of query is in the item's words
 bool matches(const Item& it, const char* query) {
   std::string hay = std::string(it.tab) + " " + it.label + " " + (it.note ? it.note : "") + " " +
-                    (it.keywords ? it.keywords : "");
+                    (it.keywords ? it.keywords : "") + " " + portTr(it.tab) + " " + portTr(it.label) + " " +
+                    (it.note ? portTr(it.note) : "");
   std::transform(hay.begin(), hay.end(), hay.begin(), [](unsigned char c) { return std::tolower(c); });
   std::string q = query;
   std::transform(q.begin(), q.end(), q.begin(), [](unsigned char c) { return std::tolower(c); });
@@ -1200,10 +1248,10 @@ void portSettingsTabs(bool inGame) {
     }
   }
   ImGui::SetNextItemWidth(std::min(ImGui::GetContentRegionAvail().x, ImGui::GetFontSize() * 18.f));
-  ImGui::InputTextWithHint("##search", "Search settings", sSearch, sizeof(sSearch));
+  ImGui::InputTextWithHint("##search", portTr("Search settings"), sSearch, sizeof(sSearch));
   if (sSearch[0] != '\0') {
     ImGui::SameLine();
-    if (ImGui::Button("Clear")) {
+    if (ImGui::Button(trl("Clear"))) {
       sSearch[0] = '\0';
     }
   }
@@ -1221,7 +1269,7 @@ void portSettingsTabs(bool inGame) {
           continue;
         }
         if (!header) {
-          ImGui::SeparatorText(tab.c_str());
+          ImGui::SeparatorText(portTr(tab.c_str()));
           header = true;
         }
         drawItem(s, *it);
@@ -1269,7 +1317,7 @@ void portSettingsTabs(bool inGame) {
   }
   ImGui::BeginChild("tabs", ImVec2(ImGui::GetFontSize() * 8.f, 0));
   for (const std::string& tab : tabs) {
-    if (ImGui::Selectable(tab.c_str(), tab == sTab)) {
+    if (ImGui::Selectable(trl(tab.c_str()), tab == sTab)) {
       sTab = tab;
     }
   }
@@ -1305,7 +1353,7 @@ extern "C" void portSettingsAddSection(const char* tab, const char* label, const
                                        void (*draw)(int inGame), const char* keywords) {
   Item it{tab, label, note, flags,
           [](PortSettings*, const Item& self) {
-            ImGui::SeparatorText(self.label); // the section's name over what it draws
+            ImGui::SeparatorText(portTr(self.label)); // the section's name over what it draws
             reinterpret_cast<void (*)(int)>(const_cast<void*>(self.data))(sTabsInGame ? 1 : 0);
           },
           keywords, nullptr};
@@ -1649,16 +1697,17 @@ extern "C" void portSettingsDraw(void) {
     ImGui::PushFont(gLauncherFonts.body);
     noteWindow();
     ImGui::PushFont(gLauncherFonts.heading);
-    ImGui::TextUnformatted("Settings");
+    ImGui::TextUnformatted(portTr("Settings"));
     ImGui::PopFont();
     ImGui::SameLine();
     ImGui::TextDisabled("Paper Cut %s", PORT_VERSION);
-    const float closeWidth = ImGui::CalcTextSize("Close").x + ImGui::GetStyle().FramePadding.x * 2;
+    const float closeWidth = ImGui::CalcTextSize(portTr("Close")).x + ImGui::GetStyle().FramePadding.x * 2;
     ImGui::SameLine(ImGui::GetWindowContentRegionMax().x - closeWidth);
-    if (ImGui::Button("Close")) {
+    if (ImGui::Button(trl("Close"))) {
       open = false;
     }
-    note("F1, Back/Select, the touch controls' three-bar button or a three-finger tap opens and closes this page.");
+    note("The Start menu's Settings tab, F1, Back/Select, the touch controls' three-bar button or a three-finger tap "
+         "opens this page.");
     portSettingsTabs(true);
     ImGui::PopFont();
   }
@@ -1667,4 +1716,140 @@ extern "C" void portSettingsDraw(void) {
   if (!open) {
     setOpen(false);
   }
+}
+
+// --- The pause menu's Settings tab (port/src/aurora/pause_settings_aurora.c): the
+// page's plain controls. The built-in ones kItems draws from a PortSettings
+// field (or one of the audio mixer's declared settings) are listed here, the
+// frame rate (a string) and the sections left out; features' come from their
+// portSettingsAdd* (extras). Each tab's in the page's order.
+namespace {
+
+constexpr const char* kHzNames[] = {"Auto", "1x", "2x", "3x", "4x", "5x", "6x", "7x", "8x"};
+constexpr const char* kFfNames[] = {"2x", "3x", "4x", "5x", "6x", "7x", "8x"};
+constexpr const char* kOnOff[] = {"Off", "On"};
+
+struct PauseField {
+  const char* tab;
+  const char* label;
+  const char* note;
+  unsigned flags;
+  int kind;
+  int PortSettings::*field; // or key
+  const char* key;
+  const char* const* choices;
+  int count, min, max, step;
+  const char* format;
+  bool (*shown)(const PortSettings*);
+};
+
+const PauseField kPauseFields[] = {
+    {"Display", "VSync", "Present at the display's refresh: no tearing.", 0, 0, &PortSettings::vsync},
+#if !defined(__ANDROID__) && !(defined(__APPLE__) && TARGET_OS_IPHONE)
+    {"Display", "Fullscreen", "The whole screen, or a window (F11 or Alt+Enter).", 0, 0, &PortSettings::fullscreen},
+#endif
+    {"Display", "Widescreen", "16:9 instead of the game's own 4:3. Some rooms and scenes end at the 4:3 edges.", 0, 0,
+     &PortSettings::widescreen},
+    {"Display", "Widescreen HUD", "HP and FP at the left edge, Star Points and coins at the right.", 0, 0,
+     &PortSettings::wideHud, nullptr, nullptr, 0, 0, 0, 0, nullptr, widescreenOn},
+    {"Display", "Blurred side bars", "A blurred copy of the picture instead of black bars beside it.", 0, 0,
+     &PortSettings::sideBars},
+    {"Display", "Internal resolution", "Auto: the window's size; or a multiple of 640x480.", 0, 1,
+     &PortSettings::resolution, nullptr, kHzNames, 9},
+    {"Display", "Texture filtering", "Smooth as the game draws them, or sharp pixels.", 0, 1,
+     &PortSettings::texFilter, nullptr, kFilters, 2},
+    {"Display", "Overlay corner", "Frame rate, clock and battery in a corner of the screen.", 0, 1, &PortSettings::fps,
+     nullptr, kCorners, 5},
+    {"Display", "Never skip loading graphics", "Something drawn for the first time waits for its graphics.", 0, 0,
+     &PortSettings::noPopIn},
+#if defined(__ANDROID__) || (defined(__APPLE__) && TARGET_OS_IPHONE)
+    {"Display", "Keep clear of the notch", nullptr, 0, 0, &PortSettings::safeArea},
+#endif
+    {"Audio", "Volume", "Everything's volume.", 0, 2, &PortSettings::volume, nullptr, nullptr, 0, 0, 100, 5, "%d%%"},
+    {"Audio", "Music", "The music's volume.", 0, 2, nullptr, "music_volume", nullptr, 0, 0, 100, 5, "%d%%"},
+    {"Audio", "Sound effects", "Everything that isn't music or ambience.", 0, 2, nullptr, "sfx_volume", nullptr, 0, 0,
+     100, 5, "%d%%"},
+    {"Audio", "Ambience", "Wind, water, crowds and other sounds of a place.", 0, 2, nullptr, "ambience_volume", nullptr,
+     0, 0, 100, 5, "%d%%"},
+    {"Audio", "Mute in the background", "Silent while another window has the focus.", 0, 0,
+     &PortSettings::muteUnfocused},
+    {"Controls", "Rumble", "The controller's rumble.", 0, 0, &PortSettings::rumble},
+    {"Controls", "Rumble strength", "The game's own Rumble option still applies.", 0, 2, &PortSettings::rumbleStrength,
+     nullptr, nullptr, 0, 0, 100, 10, "%d%%"},
+#if defined(__ANDROID__) || (defined(__APPLE__) && TARGET_OS_IPHONE)
+    {"Controls", "Vibrate without a controller", nullptr, 0, 0, &PortSettings::phoneRumble},
+    {"Controls", "Haptic tap on button press", nullptr, 0, 0, &PortSettings::touchHaptics},
+    {"Controls", "On-screen controls' opacity", nullptr, 0, 2, &PortSettings::touchOpacity, nullptr, nullptr, 0, 20,
+     100, 10, "%d%%"},
+    {"Controls", "On-screen controls' size", nullptr, 0, 2, &PortSettings::touchSize, nullptr, nullptr, 0, 70, 150, 10,
+     "%d%%"},
+    {"Controls", "Auto-run", "On-screen stick: past a small tilt, always a full one.", 0, 0, &PortSettings::autoRun},
+    {"Controls", "Fixed stick", "The on-screen stick stays in its place.", 0, 0, &PortSettings::stickFixed},
+    {"Controls", "Tap the picture to press A", nullptr, 0, 0, &PortSettings::tapA},
+#endif
+    {"Gameplay", "Text speed", "How fast the game's text appears.", 0, 1, &PortSettings::textSpeed, nullptr,
+     kTextSpeeds, 4},
+    {"Gameplay", "Action Command cue", "A ring shows when to press A in battle.", 0, 1, &PortSettings::acCue, nullptr,
+     kCues, kCueCount},
+    {"Gameplay", "Fast-forward speed", "Fast-forward: Tab, the right stick's click, or >> on screen.", 0, 2,
+     &PortSettings::ffSpeed, nullptr, nullptr, 0, 2, 8, 1, "%dx"},
+    {"Gameplay", "Fast-forward toggles", "On: a press turns it on and off. Off: held.", 0, 0, &PortSettings::ffToggle},
+    {"Gameplay", "Run speed", "Faster running can make some jumps longer than intended.", kChangesPlay, 2,
+     &PortSettings::runSpeed, nullptr, nullptr, 0, 100, 150, 25, "%d%%"},
+    {"System", "Pause in the background", "The game waits while another window has the focus.", 0, 0,
+     &PortSettings::pauseUnfocused},
+    {"System", "Controllers in the background", "Controllers still work while another window has the focus.", 0, 0,
+     &PortSettings::backgroundInput},
+};
+
+} // namespace
+
+extern "C" int portSettingsControls(PortSettingsControl* out, int max) {
+  PortSettings* s = portSettings();
+  int n = 0;
+  // $TTYD_TR_DUMP (the list to translate, port/include/port/tr.h): every
+  // choice's name once, the ones not on screen too
+  static bool sDumped;
+  if (!sDumped && SDL_getenv("TTYD_TR_DUMP") != nullptr) {
+    sDumped = true;
+    const auto names = [](const char* const* list, int count) {
+      for (int i = 0; list != nullptr && i < count; i++) {
+        portTr(list[i]);
+      }
+    };
+    names(kRateNames, 5), names(kCorners, 5), names(kFilters, 2), names(kTextSpeeds, 4), names(kRunSpeeds, 3);
+    names(kCues, kCueCount), names(kOnOff, 2);
+    for (const Extra& e : extras()) {
+      names(e.choices, e.kind == 1 ? e.count : 0);
+    }
+  }
+  for (const std::string& tab : allTabs()) {
+    for (const PauseField& f : kPauseFields) {
+      if (n >= max || tab != f.tab || (f.shown != nullptr && !f.shown(s))) {
+        continue;
+      }
+      int* v = f.field != nullptr ? &(s->*f.field) : portSettingsFind(f.key);
+      if (v == nullptr) {
+        continue;
+      }
+      out[n++] = {f.tab, f.label, f.note, f.flags, f.kind, v, f.kind == 0 ? kOnOff : f.choices,
+                  f.kind == 0 ? 2 : f.count, f.min, f.max, f.step > 0 ? f.step : 1, f.format};
+    }
+    for (const Item& it : extraItems()) {
+      // (a section's data is its draw function: only drawExtra's items hold an Extra)
+      if (n >= max || tab != it.tab || it.draw != drawExtra || it.data == nullptr) {
+        continue;
+      }
+      const Extra& e = *static_cast<const Extra*>(it.data);
+      int* v = portSettingsFind(e.key);
+      if (v == nullptr || e.kind < 0 || e.kind > 2) {
+        continue;
+      }
+      // a slider's step: a twentieth of its range (5 for a percentage), at least 1
+      const int step = e.kind == 2 ? std::max(1, (e.max - e.min) / 20) : 1;
+      out[n++] = {it.tab, it.label, it.note, it.flags, e.kind, v, e.kind == 0 ? kOnOff : e.choices,
+                  e.kind == 0 ? 2 : e.count, e.min, e.max, step, e.format};
+    }
+  }
+  return n;
 }

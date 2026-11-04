@@ -15,7 +15,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         libxi-dev libxss-dev libxtst-dev libxkbcommon-dev libdrm-dev libgbm-dev \
         libgl1-mesa-dev libgles2-mesa-dev libegl1-mesa-dev libdbus-1-dev libibus-1.0-dev \
         libudev-dev libthai-dev libpipewire-0.3-dev libwayland-dev libdecor-0-dev liburing-dev \
+        flatpak file \
     && rm -rf /var/lib/apt/lists/*
+# the AppImage's tool (tools/port/linux_packages.py), a fixed release; run
+# extracted (APPIMAGE_EXTRACT_AND_RUN), as a container has no FUSE
+RUN curl -fsSL -o /usr/local/bin/appimagetool \
+        https://github.com/AppImage/appimagetool/releases/download/1.9.0/appimagetool-x86_64.AppImage \
+    && chmod +x /usr/local/bin/appimagetool
 # the mounted checkout belongs to another user: git (CMake's version lookups,
 # gen_statics) must still read it
 RUN git config --system --add safe.directory '*'

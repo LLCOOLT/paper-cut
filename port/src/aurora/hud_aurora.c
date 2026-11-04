@@ -101,21 +101,47 @@ void portHudBattleHelpWin(int begin, float x, float y, float w, float h) {
     }
 }
 
+/* Message size (Accessibility; text_scale, 100-150 %): the message and
+ * choice windows larger again, on top of the HUD size. Their text can't flow
+ * into more lines (the game's messages break their own lines), so a window
+ * grows only while it fits the frame: in 4:3 a little (a message window is
+ * about 560 of the 608 units across), in widescreen up to about 145 %. */
+static int* sText;
+
+static float messageScale(float s, float x0, float x1, float y0, float y1) {
+    float m, fit;
+    if (sText == NULL) {
+        sText = portSettingsDeclare("text_scale", 100, 100, 150);
+    }
+    m = s * (float)*sText / 100.0f;
+    if (m > s) { /* grown for the text: never past the frame's edges */
+        fit = 2.0f * portWidescreenEdgeScale() / (x1 - x0);
+        fit = fit < 2.0f / (y1 - y0) ? fit : 2.0f / (y1 - y0);
+        m = m < fit ? m : (fit > s ? fit : s);
+    }
+    return m;
+}
+
 void portHudDraw(CameraId camId, DispCallback callback, void* param) {
     float s, tx, ty;
     s = scaleNow();
     gPortHudStatusScale = s;
     sBattleMenu = 0;
+    if (camId == CAMERA_2D && callback != NULL && portHudIsMessage(callback) && param != NULL) {
+        /* the window's middle (its x, y are the top left in the 2D
+         * camera's units, centred; its "height" is the width) */
+        const WindowEntry* w = param;
+        const float x0 = w->x / 304.0f, x1 = (w->x + w->height) / 304.0f;
+        const float y0 = (w->y - w->width) / 240.0f, y1 = w->y / 240.0f;
+        const float m = messageScale(s, x0, x1, y0, y1);
+        if (m != 1.0f) {
+            box(m, x0, x1, y0, y1);
+            return;
+        }
+    }
     if (camId == CAMERA_2D && callback != NULL && s != 1.0f) {
         if (portHudIsStatusBar(callback)) {
             about(s, 0.0f, 1.0f); /* the top of the screen */
-            return;
-        }
-        if (portHudIsMessage(callback) && param != NULL) {
-            /* the window's middle (its x, y are the top left in the 2D
-             * camera's units, centred; its "height" is the width) */
-            const WindowEntry* w = param;
-            box(s, w->x / 304.0f, (w->x + w->height) / 304.0f, (w->y - w->width) / 240.0f, w->y / 240.0f);
             return;
         }
         if (isBattleMenu(callback)) {

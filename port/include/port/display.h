@@ -6,7 +6,8 @@
  * aniso (anisotropic filtering), lod_bias (texture detail), supersample
  * (rendering 2-4x the window's size, area-downsampled), post_filter (CRT,
  * paper grain, sharpen over the picture), vrr (present without waiting for
- * vblank, for variable refresh displays), perf_overlay (a frame-time graph).
+ * vblank, for variable refresh displays), perf_overlay (a frame-time graph),
+ * hdr (HDR output at a paper-white brightness, where supported).
  * The aspect ratio and HUD scale: port/widescreen.h, port/hud.h.
  *
  * $TTYD_PACING_LOG=<file>: each presented frame's interval and work time
@@ -28,6 +29,9 @@ enum {
 #define PORT_PERF_SAMPLES 240
 
 void portDisplayInit(void);
+/* Texture upscaling from its setting (upscale_aurora.c), at start: it applies
+ * to textures loaded after it, so a change waits for the next start. */
+void portTextureUpscaleStart(void);
 /* The frame loop (vi_aurora.c): once a game or in-between frame is begun
  * (aurora_begin_frame returned), when its work is done (before the pacing
  * wait), and when it is about to be presented. */
@@ -47,6 +51,15 @@ void portPerfOverlayDraw(void);
  * setting. */
 void portFontSheet(const void* texels, int width, int height, int format);
 void portSharpTextFrame(void);
+/* HDR output (settings hdr, hdr_paper_white in nits, hdr_boost in percent;
+ * Aurora's aurora_set_hdr, port/patches/aurora/0014): given to Aurora once a
+ * frame (portDisplayFrame) and when the settings page changes them.
+ * portHdrSupported: the window's display has HDR on and the graphics backend
+ * can present it (Direct3D 12/11, Metal); portHdrActive: presenting in HDR
+ * now. Off by default; unsupported or off, output is SDR as before. */
+void portHdrApply(void);
+int portHdrSupported(void);
+int portHdrActive(void);
 
 #ifdef __cplusplus
 }

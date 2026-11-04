@@ -14,6 +14,9 @@
 #include "R_build.h"
 #include "driver/mapdrv.h"
 #include "libc_decls.h"
+#ifdef TARGET_PC
+void portSecondPlayerRoute(void);
+#endif
 
 #define HALF_PI 1.570796f
 #define PI 3.141592653589793f
@@ -654,6 +657,9 @@ void makeKey(void) {
             }
         }
     }
+#endif
+#ifdef TARGET_PC
+    portSecondPlayerRoute(); /* a second player for the partner in battle (second_player_pc.c) */
 #endif
     gp->keyDataValid = 1;
 }

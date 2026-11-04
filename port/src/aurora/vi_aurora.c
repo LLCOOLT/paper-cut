@@ -142,6 +142,7 @@ void VIWaitForRetrace(void) {
     portTraceFrame(sRetraceCount); /* $TTYD_TRACE / $TTYD_WARP, as headless */
     portWarpFrame();               /* the settings page's save warps */
     portResumeFrame();             /* quick resume's save, made while playing */
+    portAutosaveFrame();           /* autosave at room changes (autosave_aurora.c) */
     if (sPostCallback != NULL) {
         sPostCallback(sRetraceCount);
     }

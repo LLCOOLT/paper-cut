@@ -1,0 +1,1028 @@
+# Paper Cut's own menus in 日本語 (port/include/port/tr.h): an English line, then its
+# translation, then a blank line. tools/port/gen_lang.py makes port/settings/lang_tables.inc.
+
+Settings
+設定
+
+Close
+閉じる
+
+The Start menu's Settings tab, F1, Back/Select, the touch controls' three-bar button or a three-finger tap opens this page.
+このページは、スタートメニューの「設定」タブ、F1、Back/Select、タッチ操作の三本線ボタン、または三本指タップで開きます。
+
+Search settings
+設定を検索
+
+Display
+画面
+
+Audio
+サウンド
+
+Controls
+操作
+
+Gameplay
+ゲームプレイ
+
+Accessibility
+アクセシビリティ
+
+Practice
+練習
+
+Mods
+MOD
+
+System
+システム
+
+Achievements
+実績
+
+Challenges
+チャレンジ
+
+Streaming
+配信
+
+Modes
+モード
+
+Randomizer
+ランダマイザー
+
+Saves
+セーブ
+
+60 Hz (original)
+60 Hz（オリジナル）
+
+Frame rate
+フレームレート
+
+The game runs at 60 frames a second; higher rates draw frames in between (smooth camera and characters).
+ゲームは毎秒60フレームで動きます。高いフレームレートでは間のフレームを描きます（カメラとキャラクターがなめらかに）。
+
+Fullscreen (F11 or Alt+Enter)
+フルスクリーン（F11 または Alt+Enter）
+
+Widescreen (16:9)
+ワイド画面（16:9）
+
+Much of the game was built for 4:3: some rooms and scenes end at the 4:3 edges.
+ゲームの多くは4:3向けに作られています。部屋やシーンによっては4:3の端で終わります。
+
+Blurred side bars
+ぼかした両端の帯
+
+Where the picture doesn't fill the screen, a blurred copy of it instead of black bars.
+画面を埋めきれない部分に、黒い帯の代わりに画面をぼかしたものを表示します。
+
+Auto (the window's size)
+自動（ウィンドウの大きさ）
+
+Internal resolution
+内部解像度
+
+Original (smooth)
+オリジナル（なめらか）
+
+Texture filtering
+テクスチャフィルター
+
+Anti-aliasing (4x MSAA)
+アンチエイリアス（4x MSAA）
+
+next start
+次回起動時
+
+Smooths jagged edges.
+ギザギザの縁をなめらかにします。
+
+Off
+オフ
+
+Overlay corner
+情報表示の位置
+
+Frame rate, clock and battery in a corner of the screen.
+フレームレート、時計、バッテリーを画面の隅に表示します。
+
+Never skip graphics that are still loading
+読み込み中のグラフィックを飛ばさない
+
+Something drawn for the first time waits for its graphics to be ready (a short pause, once) instead of appearing a moment later.
+初めて描くものは、少し後に現れる代わりに、グラフィックの準備ができるまで待ちます（一度だけの短い停止）。
+
+Widescreen switch
+ワイド画面に合わせる
+
+Aspect ratio
+画面比率
+
+Wider shows more of the sides of each scene; much of the game was built for 4:3, so rooms and scenes can end before the screen's edges.
+横に広いほど各シーンの両側が多く見えます。ゲームの多くは4:3向けなので、部屋やシーンが画面の端より手前で終わることがあります。
+
+No limit
+制限なし
+
+Widest picture
+最大の横幅
+
+Past this the rest of the screen is bars (blurred with Blurred side bars).
+これを超えた分は帯になります（「ぼかした両端の帯」でぼかせます）。
+
+The status bar, message windows and battle menus, larger or smaller than the game's.
+ステータスバー、メッセージウィンドウ、バトルメニューを、ゲームより大きく、または小さくします。
+
+Off (the game's)
+オフ（ゲームのまま）
+
+Anisotropic filtering
+異方性フィルタリング
+
+Textures seen at an angle (floors, paths) stay sharp.
+斜めから見たテクスチャ（床や道）がくっきりしたままになります。
+
+The game's
+ゲームのまま
+
+Texture detail
+テクスチャの細かさ
+
+Which of a texture's detail levels is used at a distance.
+遠くでテクスチャのどの細かさを使うか。
+
+Supersampling
+スーパーサンプリング
+
+Draws the picture several times larger than the window and shrinks it: smoother edges, much more work for the graphics card.
+ウィンドウより何倍も大きく描いてから縮めます。縁がなめらかになりますが、グラフィックカードの負担がとても大きくなります。
+
+Picture filter
+画面フィルター
+
+Variable refresh rate (G-Sync, FreeSync)
+可変リフレッシュレート（G-Sync、FreeSync）
+
+Each frame shown as soon as it is ready, without waiting for the screen. For VRR displays (others may tear); goes well with Frame rate: the display's.
+画面を待たずに、できたフレームをすぐ表示します。VRR対応の画面向け（ほかの画面ではちらつくことがあります）。フレームレートを「画面に合わせる」にすると相性が良いです。
+
+HDR output
+HDR出力
+
+On an HDR display, the picture at the brightness you choose for white (paper white), with the brightest highlights optionally a little brighter. The game itself is SDR; this does not add detail it does not have.
+HDR対応の画面で、白を選んだ明るさ（ペーパーホワイト）で表示し、いちばん明るい部分を少し明るくすることもできます。ゲーム自体はSDRなので、もともとない細部は増えません。
+
+Performance overlay
+パフォーマンス表示
+
+How long each frame takes: the time between frames, and the part spent working.
+各フレームにかかる時間：フレームの間隔と、そのうち処理にかかった時間。
+
+Sharp text
+くっきりした文字
+
+The game's font redrawn with crisp edges at high resolutions (the same letters).
+高い解像度で、ゲームのフォントをくっきりした縁で描き直します（同じ文字のまま）。
+
+Window
+ウィンドウ
+
+Volume
+音量
+
+Rumble
+振動
+
+Rumble strength
+振動の強さ
+
+The game's own Rumble option (on the file select) still applies.
+ゲーム自体の振動の設定（ファイル選択画面）もそのまま有効です。
+
+Choose a button on the left, then press the controller button that should do it.
+左のボタンを選んでから、その役割をさせるコントローラーのボタンを押してください。
+
+Choose a row, then press the key that should do it (Escape: leave it as it is).
+行を選んでから、その役割をさせるキーを押してください（Escape：そのまま）。
+
+Auto (the controller used last)
+自動（最後に使ったコントローラー）
+
+Button prompts
+ボタン表示
+
+The buttons the game shows (in its text, menus and action commands) drawn as the ones that do those things on your controller or keyboard, where you've mapped them.
+ゲームが表示するボタン（テキスト、メニュー、アクションコマンド）を、割り当てに合わせて、あなたのコントローラーやキーボードのボタンの絵で表示します。
+
+Controllers
+コントローラー
+
+Set up a controller
+コントローラーを設定
+
+Mouse in menus
+メニューでマウスを使う
+
+Lists, battle commands, the file select and the pause menu: the pointer picks, a click chooses, a right click goes back, the wheel scrolls.
+リスト、バトルコマンド、ファイル選択、ポーズメニュー：ポインターで選び、クリックで決定、右クリックで戻り、ホイールでスクロールします。
+
+Second player
+2人目のプレイヤー
+
+Action Command cue
+アクションコマンドの目安
+
+In battle, a ring closes on an A button when to press A for a Jump (and partners' stomps) and to guard an enemy jumping at you. Other commands show their own timing.
+バトルで、ジャンプ（となかまのふみつけ）でAを押すタイミングと、飛びかかってくる敵をガードするタイミングを、Aボタンに縮んでいく輪で示します。ほかのコマンドはそれぞれのタイミングを表示します。
+
+Fast-forward speed
+早送りの速さ
+
+Fast-forward: Tab, a controller's right stick click, or the on-screen >> button.
+早送り：Tab、コントローラーの右スティック押し込み、または画面の >> ボタン。
+
+Fast-forward toggles (instead of held)
+早送りを押すたびに切り替え（押し続けない）
+
+Original
+オリジナル
+
+Text speed
+文字の速さ
+
+Run speed
+走る速さ
+
+changes play
+ゲームが変わる
+
+Faster running can make some jumps longer than intended.
+速く走ると、一部のジャンプが想定より長くなることがあります。
+
+Skip the intro
+オープニングを飛ばす
+
+The logos go by quickly and the story opening is skipped (it still plays from the title screen if left alone).
+ロゴがすぐに進み、物語のオープニングが飛ばされます（タイトル画面で放っておくと今までどおり流れます）。
+
+Autosave
+オートセーブ
+
+changes saves
+セーブが変わる
+
+Saves into the file you're playing when you go into another room, once you have the controls there, as a Save Block would: a crash or a closed window costs no more than the room. Not during the boss rush or endless Glitz Pit, or after the practice tools changed the game.
+別の部屋に入って操作できるようになると、セーブブロックと同じように遊んでいるファイルにセーブします。ゲームが落ちたりウィンドウを閉じたりしても、失うのはその部屋だけです。ボスラッシュやエンドレスとうぎ場の間と、練習ツールでゲームを変えた後は行いません。
+
+Text language
+テキストの言語
+
+The European release's text, read from its disc image in the launcher's library.
+ヨーロッパ版のテキストを、ランチャーのライブラリにあるそのディスクイメージから読み込みます。
+
+Difficulty
+むずかしさ
+
+Enemies' HP and the damage their attacks do. Custom uses the two sliders below.
+敵のＨＰと、敵の攻撃のダメージ。「カスタム」は下の2つのスライダーを使います。
+
+Enemy HP (custom)
+敵のＨＰ（カスタム）
+
+Enemy attack (custom)
+敵の攻撃（カスタム）
+
+Action commands: attacks
+アクションコマンド：攻撃
+
+Wider timing for attack commands, or every attack command done for you.
+攻撃のアクションコマンドのタイミングを広くするか、すべて自動で成功させます。
+
+Action commands: guards
+アクションコマンド：ガード
+
+Wider Guard and Superguard windows, or every attack guarded for you (a Superguard is still up to you).
+ガードとスーパーガードの受付時間を広くするか、すべての攻撃を自動でガードします（スーパーガードは自分で）。
+
+A save state keeps the whole game as it is this moment, in the field or a battle. They last until the game is closed: use the game's own save blocks to keep your progress.
+ステートセーブは、フィールドでもバトルでも、その瞬間のゲーム全体をそのまま残します。ゲームを閉じるまで有効です。進行を残すにはゲームのセーブブロックを使ってください。
+
+Keyboard: F5 saves to slot 1, F8 loads it.
+キーボード：F5でスロット1にセーブ、F8でロード。
+
+Continue from any save file (.gci) in the warps folder; folders in it group them. A save made after a warp goes to file 4.
+ワープフォルダーにある好きなセーブファイル（.gci）から続けます。中のフォルダーでまとめられます。ワープ後のセーブはファイル4に入ります。
+
+No saves yet: put .gci files in the warps folder (in the save folder).
+まだセーブがありません：ワープフォルダー（セーブフォルダーの中）に .gci ファイルを入れてください。
+
+Speedrun timer
+スピードランタイマー
+
+Game time in a corner, counted in the game's own frames, with real time under it.
+ゲーム時間を、ゲーム自身のフレームで数えて隅に表示し、その下に実時間を表示します。
+
+Load removal
+ロード時間を除く
+
+Game time stops while a map or a battle loads (the timer's and LiveSplit's).
+マップやバトルのロード中はゲーム時間が止まります（タイマーとLiveSplitの両方）。
+
+Start with a new file
+新しいファイルで開始
+
+The timer starts when a new file begins, and resets at the title screen.
+新しいファイルを始めるとタイマーが動き出し、タイトル画面でリセットされます。
+
+Splits
+スプリット
+
+When to split: Any% at the end of each chapter; every step of the story; or the user folder's splits.txt.
+スプリットのタイミング：Any%は各章の終わり、物語の各段階、またはユーザーフォルダーの splits.txt。
+
+Run
+ラン
+
+Sends the timer's start, splits, resets and game time to LiveSplit Server on this computer.
+タイマーの開始、スプリット、リセット、ゲーム時間を、このコンピューターのLiveSplit Serverに送ります。
+
+LiveSplit connection
+LiveSplitとの接続
+
+Frame advance keys
+コマ送りのキー
+
+F6 holds the game (and lets it go on), F7 moves one frame.
+F6でゲームを止め（また進め）、F7で1フレーム進めます。
+
+Frame advance
+コマ送り
+
+Fixed RNG
+乱数の固定
+
+The game's random numbers start from the seed below at each room and battle, so a room plays out the same way each try.
+各部屋と各バトルで、ゲームの乱数が下のシードから始まります。部屋が毎回同じように進みます。
+
+Stats
+ステータス
+
+Changes count as practice: no achievements until a file is loaded.
+変更は練習扱いになります：ファイルを読み込むまで実績はありません。
+
+Items
+アイテム
+
+Story and flags
+物語とフラグ
+
+Memory watch corner
+メモリ監視の位置
+
+The fields ticked below, kept on screen.
+下でチェックした項目を画面に表示し続けます。
+
+Memory watch
+メモリ監視
+
+Texture packs
+テクスチャパック
+
+Export characters
+キャラクターを書き出す
+
+A multiworld randomizer: the TTYD apworld's seed (an .apttyd file) and a server. The seed applies at the game's start; its randomizer mod, the TTYD AP mod, comes as a code mod.
+マルチワールドのランダマイザー：TTYD apworldのシード（.apttydファイル）とサーバー。シードはゲームの起動時に適用されます。そのMODであるTTYD AP MODは、コードMODとして入れます。
+
+A new seed applies at the next start.
+新しいシードは次回の起動時に適用されます。
+
+Skip the launcher (start with the last disc played)
+ランチャーを飛ばす（最後に遊んだディスクで起動）
+
+Saved to the Screenshots folder by the saves. Keyboard: F12.
+セーブの所の Screenshots フォルダーに保存されます。キーボード：F12。
+
+Pause while in the background
+バックグラウンドで一時停止
+
+Controllers work in the background
+バックグラウンドでもコントローラーを使う
+
+Memory cards (by region) and settings.txt.
+メモリーカード（地域ごと）と settings.txt。
+
+No crash reports.
+クラッシュレポートはありません。
+
+Menu language
+メニューの言語
+
+Paper Cut's own menus: this page, the launcher's and the Start menu's Settings tab. Auto: the Japanese release's Japanese, the European release's text language, otherwise the computer's. The game's own text follows the disc.
+Paper Cut独自のメニュー：このページ、ランチャーのページ、スタートメニューの「設定」タブ。自動：日本版は日本語、ヨーロッパ版はテキストの言語、それ以外はコンピューターの言語。ゲーム自体のテキストはディスクのままです。
+
+Quick resume
+クイックレジューム
+
+While you play, the game keeps a save of where you are, written when the app closes or goes to the background: the launcher's Continue picks up there. Your own saves are untouched until you save.
+遊んでいる間、ゲームは今いる場所のセーブを持ち、アプリを閉じたりバックグラウンドに移ったりした時に書き込みます。ランチャーの「つづきから」でそこから再開します。自分のセーブは、セーブするまで変わりません。
+
+Check for updates at start
+起動時にアップデートを確認
+
+Asks GitHub for the latest release of Paper Cut.
+GitHubにPaper Cutの最新版を問い合わせます。
+
+New version
+新しいバージョン
+
+Earned from what each save file has done (its flags), kept beside the memory cards (not in the save), with a small notice when one is earned.
+各セーブファイルがやったこと（フラグ）から得られます。セーブの中ではなくメモリーカードの隣に保存され、得た時には小さなお知らせが出ます。
+
+This file
+このファイル
+
+Presets
+プリセット
+
+One-hit KO
+一撃でＫＯ
+
+Any enemy hit that does damage knocks Mario or the partner out.
+ダメージのある敵の攻撃は、すべてマリオかなかまをＫＯします。
+
+Allowed
+あり
+
+Guarding
+ガード
+
+Attack commands
+攻撃のコマンド
+
+Narrower timing for Mario's and the partners' attack commands.
+マリオとなかまの攻撃のアクションコマンドのタイミングをせまくします。
+
+No items in battle
+バトルでアイテムなし
+
+The Items command can't be chosen in battle.
+バトルで「アイテム」のコマンドを選べません。
+
+Twitch chat drives the audience
+Twitchのチャットで観客を動かす
+
+Viewers' commands in your channel's chat make the crowd throw items, give or take a little Star Power, fill the Bingo cards, cheer, leave or come.
+あなたのチャンネルのチャットで視聴者のコマンドにより、観客が物を投げたり、スターパワーを少し増やしたり減らしたり、ビンゴのカードをそろえたり、歓声を上げたり、帰ったり来たりします。
+
+Cooldown
+間隔
+
+One command each this many seconds; a viewer, one each three times it.
+この秒数ごとにコマンド1つ。1人の視聴者はその3倍ごとに1つ。
+
+Allow the harmful ones
+害のあるものも許可
+
+Chat
+チャット
+
+Partner quick-swap
+なかまの早替え
+
+Switches to the next partner in the field without the pause menu: Q, a controller's left stick pressed in, or the on-screen swap button.
+ポーズメニューを使わずに、フィールドで次のなかまに替えます：Q、コントローラーの左スティック押し込み、または画面の切り替えボタン。
+
+Save Blocks save at once
+セーブブロックですぐセーブ
+
+A Save Block saves to the file being played without asking first.
+セーブブロックが、確認せずに遊んでいるファイルにセーブします。
+
+Bigger bag
+大きなふくろ
+
+20 items without the Strange Sack. A save holding more than 10 items without it may not load right on a GameCube.
+ふしぎなふくろなしでアイテム20個。ふしぎなふくろなしで10個より多く持ったセーブは、ゲームキューブでは正しく読み込めないことがあります。
+
+Partners never at 0 HP
+なかまのＨＰが0にならない
+
+After a battle, a partner who fell is back at 1 HP.
+バトルの後、倒れたなかまはＨＰ1で戻ります。
+
+Level up with the D-pad
+十字ボタンでレベルアップ
+
+The level-up screen (HP, FP or BP) also takes the D-pad, not only the stick.
+レベルアップの画面（ＨＰ、ＦＰ、ＢＰ）で、スティックだけでなく十字ボタンも使えます。
+
+Healing items heal every partner
+回復アイテムでなかま全員を回復
+
+In the field, an item used on a partner heals the other partners too.
+フィールドでなかまに使ったアイテムが、ほかのなかまも回復します。
+
+Skip repeated scenes
+見たシーンを飛ばす
+
+Scenes already seen on this file go faster or straight to their end: the Crystal Star fanfare and the pedestal's map reveal after the first star, Zess T.'s cooking, the Glitz Pit's match openings and victory scenes, and the train and blimp ticket hand-overs.
+このファイルで見たシーンが速く進むか、すぐ終わります：クリスタルスターのファンファーレと最初の後の台座の地図、ナンシーの料理、とうぎ場の試合の始まりと勝利のシーン、汽車と飛行船のきっぷの受け渡し。
+
+Fast travel
+ファストトラベル
+
+Travel to a hub from this page: Rogueport, then one more per Crystal Star.
+このページから町へ移動：ゴロツキタウン、そしてクリスタルスター1つごとに1か所ずつ増えます。
+
+Faster battle menus
+バトルメニューを速く
+
+The battle command wheel opens and turns twice as fast.
+バトルのコマンドの輪が2倍の速さで開き、回ります。
+
+Tattle without a turn
+ターンを使わずにものしり
+
+Tactics has a Tattle entry when an enemy on the field was tattled before: it reads their tattles again, and the turn is still yours.
+すでにものしりした敵がいる時、「さくせん」に「ものしり」が出ます：その情報をもう一度読めて、ターンはそのままです。
+
+Battle pop-ups
+バトルのポップアップ
+
+GUARD! and SUPERGUARD! over Mario or the partner, a resisted status's icon bouncing off, and status icons kept on screen while you pick a target.
+マリオやなかまの上に GUARD! と SUPERGUARD! を表示し、防いだ状態異常のアイコンがはね返り、目標を選ぶ間も状態異常のアイコンを表示し続けます。
+
+Retry on Game Over
+ゲームオーバーからやり直す
+
+Keeps a save state of each room and battle as you enter it; on the Game Over screen, Y goes back to it. A short pause at each room's start.
+部屋やバトルに入るたびにステートセーブを残し、ゲームオーバー画面でYを押すとそこに戻ります。各部屋の始めに短い停止があります。
+
+Remake balance
+リメイク版のバランス
+
+Star Power gain x1.5, Power Bounce's timing narrowing half as fast, First Attack at 0 BP, Hammer Throw piercing defense.
+スターパワーの増え方1.5倍、レンゾクジャンプのタイミングがせまくなる速さが半分、ヤッツケアタックがＢＰ0、ハンマーナゲールが防御力を貫通。
+
+Pit of 100 Trials extras
+１００階ダンジョンのおまけ
+
+Coins for each floor cleared (1 more per 10 floors down), and the Mover on every floor once floor 50 has been cleared.
+クリアした階ごとにコイン（10階ごとに1枚ずつ増加）、50階をクリアした後はすべての階にいどう屋。
+
+Glitz Pit kindness
+やさしいとうぎ場
+
+A lost match costs no rank, and a match's bonus condition stays at the top of the screen.
+負けた試合でランクが下がらず、試合のボーナス条件が画面の上に表示され続けます。
+
+Play as Luigi
+ルイージで遊ぶ
+
+Luigi in Mario's place, with Mario's moves: in the field, in battle, in the menus and the credits, with his own footsteps, and the text calls him Luigi. The other Luigi, in Rogueport's inn and his scenes, stays out of sight. Saves are not changed.
+マリオの代わりにルイージが、マリオの技で登場します：フィールド、バトル、メニュー、スタッフロールで、ルイージ自身の足音で、テキストもルイージと呼びます。ゴロツキタウンの宿屋や彼のシーンにいるもう1人のルイージは見えなくなります。セーブは変わりません。
+
+A new file starts with what you choose here, taken from the file below. Choose before starting the new file.
+新しいファイルを、ここで選んだものを下のファイルから引き継いで始めます。新しいファイルを始める前に選んでください。
+
+New Game+ from file
+引き継ぐファイル
+
+Travel to
+行き先
+
+Journal
+きろく
+
+This file's progress.
+このファイルの進み具合。
+
+Badge loadouts
+バッジのセット
+
+Store the badges worn as one of four named sets and wear a set again from this page, in the field (only when Mario's BP covers it). Kept beside the save, not in it.
+つけているバッジを名前つきの4つのセットのどれかに保存し、このページからフィールドでまたつけられます（マリオのＢＰが足りる時だけ）。セーブの中ではなく隣に保存されます。
+
+Loadouts
+セット
+
+Storage at every Save Block
+すべてのセーブブロックであずける
+
+A Save Block also offers to store items and take them out, as the Rogueport shop's counter does, before saving.
+セーブする前に、ゴロツキタウンのお店のカウンターのように、セーブブロックでアイテムをあずけたり引き出したりできます。
+
+Walk-speed boost
+歩く速さのブースト
+
+Mario walks and runs faster while the control below is held.
+下の操作を押している間、マリオが速く歩いて走ります。
+
+Boost speed
+ブーストの速さ
+
+Left Shift
+左Shift
+
+Boost key
+ブーストのキー
+
+Right stick pressed in
+右スティック押し込み
+
+Boost button
+ブーストのボタン
+
+Coins from battles
+バトルのコイン
+
+The coins a won battle drops, after Merlee, Money Money and a First Strike.
+勝ったバトルで出るコイン（サンデール、コインコイン、せんせいこうげきの後）。
+
+Star Points from battles
+バトルのスターポイント
+
+A battle's Star Points (still at most 100, a level).
+バトルのスターポイント（今までどおり最大100、1レベル分）。
+
+Star Piece and Shine Sprite tracker
+ほしのかけらとシャインの記録
+
+How many of the current map's Star Pieces and Shine Sprites are found, in a corner.
+今のマップのほしのかけらとシャインをいくつ見つけたかを、隅に表示します。
+
+On this map
+このマップ
+
+Star Pieces and Shine Sprites found here.
+ここで見つけたほしのかけらとシャイン。
+
+Faster text outside battle
+バトル以外で文字を速く
+
+Messages in the field print three times as fast, and their windows open, turn pages and close faster (on top of Text speed).
+フィールドのメッセージが3倍の速さで表示され、ウィンドウの開閉とページ送りも速くなります（「文字の速さ」に加えて）。
+
+Jukebox
+ジュークボックス
+
+Lists the music heard on this file below; pick a track to play it.
+このファイルで聞いた音楽を下に並べます。曲を選ぶと流れます。
+
+Tracks
+曲
+
+Junk-item helper in shops
+お店で余ったアイテムを教える
+
+Selling, an item or badge Mario has more than one of shows how many (a worn badge is never marked).
+売る時、マリオが2つ以上持っているアイテムやバッジに個数を表示します（つけているバッジには表示しません）。
+
+Boss rush
+ボスラッシュ
+
+Boss refights
+ボスと再戦
+
+Endless Glitz Pit
+エンドレスとうぎ場
+
+Built-in randomizer
+組み込みのランダマイザー
+
+Backups kept
+残すバックアップの数
+
+Dated copies of each save file, made when the game saves. 0: none.
+ゲームがセーブする時に作る、各セーブファイルの日付つきのコピー。0：なし。
+
+Restore a backup
+バックアップを戻す
+
+Copy a save to another release
+セーブを別のバージョンへコピー
+
+Change Paper Cut's settings here.
+Paper Cutの設定をここで変えられます。
+
+On
+オン
+
+Fullscreen
+フルスクリーン
+
+Widescreen
+ワイド画面
+
+Never skip loading graphics
+読み込み中のグラフィックを飛ばさない
+
+Extra frames between the game's own 60: smoother motion.
+ゲームの60フレームの間に追加のフレーム：動きがなめらかに。
+
+Present at the display's refresh: no tearing.
+画面の更新に合わせて表示：ちらつきなし。
+
+The whole screen, or a window (F11 or Alt+Enter).
+画面全体、またはウィンドウ（F11 または Alt+Enter）。
+
+16:9 instead of the game's own 4:3. Some rooms and scenes end at the 4:3 edges.
+ゲームの4:3ではなく16:9。部屋やシーンによっては4:3の端で終わります。
+
+A blurred copy of the picture instead of black bars beside it.
+横の黒い帯の代わりに、画面をぼかしたもの。
+
+Auto: the window's size; or a multiple of 640x480.
+自動：ウィンドウの大きさ、または640x480の倍数。
+
+Smooth as the game draws them, or sharp pixels.
+ゲームのとおりなめらかに、またはくっきりしたドットで。
+
+Something drawn for the first time waits for its graphics.
+初めて描くものはグラフィックを待ちます。
+
+Everything's volume.
+すべての音量。
+
+The music's volume.
+音楽の音量。
+
+Music
+音楽
+
+Everything that isn't music or ambience.
+音楽と環境音以外のすべて。
+
+Sound effects
+効果音
+
+Wind, water, crowds and other sounds of a place.
+風、水、人ごみなど、その場所の音。
+
+Ambience
+環境音
+
+Silent while another window has the focus.
+ほかのウィンドウを使っている間は音を消します。
+
+Mute in the background
+バックグラウンドで消音
+
+The controller's rumble.
+コントローラーの振動。
+
+The game's own Rumble option still applies.
+ゲーム自体の振動の設定もそのまま有効です。
+
+How fast the game's text appears.
+ゲームの文字が出る速さ。
+
+A ring shows when to press A in battle.
+バトルでAを押すタイミングを輪で示します。
+
+Fast-forward: Tab, the right stick's click, or >> on screen.
+早送り：Tab、右スティック押し込み、または画面の >>。
+
+On: a press turns it on and off. Off: held.
+オン：押すたびに切り替え。オフ：押し続ける。
+
+Fast-forward toggles
+早送りを押して切り替え
+
+The game waits while another window has the focus.
+ほかのウィンドウを使っている間、ゲームが止まります。
+
+Pause in the background
+バックグラウンドで一時停止
+
+Controllers still work while another window has the focus.
+ほかのウィンドウを使っている間もコントローラーが使えます。
+
+Controllers in the background
+バックグラウンドでコントローラー
+
+Every setting: also remapping, mods, saves' tools and practice.
+すべての設定：ボタンの割り当て、MOD、セーブのツール、練習も。
+
+All settings...
+すべての設定...
+
+The display's rate
+画面に合わせる
+
+Top left
+左上
+
+Top right
+右上
+
+Bottom left
+左下
+
+Bottom right
+右下
+
+Sharp (pixels)
+くっきり（ドット）
+
+Fast (2x)
+速い（2倍）
+
+Faster (4x)
+もっと速い（4倍）
+
+Instant
+一瞬
+
+On screen
+画面に表示
+
+Every room
+部屋ごと
+
+At a room change, every 2 minutes
+部屋を移る時、2分ごと
+
+At a room change, every 5 minutes
+部屋を移る時、5分ごと
+
+At a room change, every 10 minutes
+部屋を移る時、10分ごと
+
+GameCube (the game's own)
+ゲームキューブ（ゲームのまま）
+
+Keyboard
+キーボード
+
+Superguards only
+スーパーガードのみ
+
+No guarding at all
+ガードなし
+
+Harder (as 2 Unsimplifiers)
+むずかしい（ムズカシクナール2つ分）
+
+Hardest (as 3)
+いちばんむずかしい（3つ分）
+
+16:10 (Steam Deck)
+16:10（Steam Deck）
+
+21:9 (ultrawide)
+21:9（ウルトラワイド）
+
+32:9 (super ultrawide)
+32:9（スーパーウルトラワイド）
+
+The window's
+ウィンドウに合わせる
+
+Sharper (-0.5)
+くっきり（-0.5）
+
+Sharper still (-1)
+もっとくっきり（-1）
+
+Sharpest (-1.5)
+いちばんくっきり（-1.5）
+
+Softer (+0.5)
+やわらかく（+0.5）
+
+CRT
+ブラウン管
+
+Paper grain
+紙の質感
+
+Sharpen
+シャープ
+
+Frame-time graph
+フレーム時間のグラフ
+
+Graph and timings
+グラフと時間
+
+Level and stats
+レベルとステータス
+
+Level, stats and badges
+レベル、ステータス、バッジ
+
+Level, stats, badges and Tattle Log
+レベル、ステータス、バッジ、ものしりの記録
+
+Easy (enemy HP 75 %, attacks 50 %)
+かんたん（敵のＨＰ 75 %、攻撃 50 %）
+
+Hard (enemy HP 150 %, attacks 150 %)
+むずかしい（敵のＨＰ 150 %、攻撃 150 %）
+
+Custom
+カスタム
+
+Wider windows
+受付時間を広く
+
+Automatic
+自動
+
+Left Ctrl
+左Ctrl
+
+Left Alt
+左Alt
+
+Right Shift
+右Shift
+
+Left stick pressed in
+左スティック押し込み
+
+Back paddle
+背面パドル
+
+Share / capture button
+シェア／キャプチャーボタン
+
+Every story step
+物語の各段階
+
+Custom (splits.txt)
+カスタム（splits.txt）
+
+German (from the European disc)
+ドイツ語（ヨーロッパ版のディスクから）
+
+French (from the European disc)
+フランス語（ヨーロッパ版のディスクから）
+
+Spanish (from the European disc)
+スペイン語（ヨーロッパ版のディスクから）
+
+Italian (from the European disc)
+イタリア語（ヨーロッパ版のディスクから）
+
+HUD size
+HUDの大きさ
+
+Message size
+メッセージの大きさ
+
+The message and choice windows larger, on top of HUD size. A window grows only while it fits the screen: a little in 4:3, up to about 145% in widescreen.
+メッセージと選択肢のウィンドウを、HUDの大きさに加えて大きくします。画面に収まる間だけ大きくなります：4:3では少し、ワイド画面では約145%まで。
+
+Y: a hint for where to go next.
+Y：次に行く場所のヒント
+
+Where next:
+次は：
+
+The story is over: go wherever you like.
+物語は終わりました。好きな所へどうぞ。
+
+Second player (co-op)
+2人目のプレイヤー（協力プレイ）
+
+Controller 2 plays the partner. In battle: its moves, its action commands and its guards. In the field: the stick walks it anywhere, A hops, B talks to or hits what it's next to, X is its ability, L or R the next partner. Mario's Y calls it back, and it comes back by itself when it gets far away. On a phone or tablet, pair two controllers.
+コントローラー2がなかまを操作します。バトルでは技、アクションコマンド、ガードを。フィールドでは、スティックで好きな所へ歩き、Aでジャンプ、Bで隣のものに話しかけたりたたいたり、Xでなかまの能力、LかRで次のなかま。マリオのYで呼び戻せて、遠く離れると自動で戻ります。スマホやタブレットでは、コントローラーを2つ接続してください。
+
+Controller 2
+コントローラー2
+
+Controller 2:
+コントローラー2：
+
+connected
+接続中
+
+Controller 2: none connected (the first plays the partner too).
+コントローラー2：未接続（1つ目がなかまも操作します）
+
+Sync saves through a folder
+フォルダーでセーブを同期
+
+Saves are brought from the folder when the game starts: restart it to get another computer's progress.
+ゲーム起動時にフォルダーからセーブを取り込みます。別のコンピューターの進み具合を取り込むには再起動してください。
+
+Choose a folder
+フォルダーを選ぶ
+
+Choose another folder
+別のフォルダーを選ぶ
+
+Stop using it
+使うのをやめる
+
+Texture upscaling
+テクスチャのアップスケール
+
+The game's textures made larger by an edge-following filter as they load: smoother lines on paper and signs. More video memory. From the next start.
+ゲームのテクスチャを読み込むときに、輪郭に沿うフィルターで拡大します。紙や看板の線がなめらかになります。ビデオメモリを多く使います。次回の起動から。

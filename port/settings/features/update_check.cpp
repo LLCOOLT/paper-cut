@@ -1,9 +1,10 @@
 // The update check (port/include/port/update_check.h): GitHub's "latest
 // release" of kRepository, asked once at start on a thread of its own
-// (WinHTTP on Windows; curl on macOS and Linux; phones get their updates
-// from their stores, so none there). A release newer than this build's
-// PORT_VERSION shows "Paper Cut X is out" on the System tab and the
-// launcher's About tab. No answer, an error or a "dev" build: no notice.
+// (port/include/port/http.h; phones get their updates from their stores, so
+// none there). A release newer than this build's PORT_VERSION shows "Paper
+// Cut X is out" on the System tab and the launcher's About tab. No answer,
+// an error or a "dev" build: no notice.
+#include "port/http.h"
 #include "port/json.h"
 #include "port/settings.h"
 #include "port/update_check.h"
@@ -18,12 +19,6 @@
 #include <vector>
 #ifdef __APPLE__
 #include <TargetConditionals.h>
-#endif
-#ifdef _WIN32
-#define NOMINMAX
-#include <windows.h>
-#include <winhttp.h>
-#pragma comment(lib, "winhttp.lib")
 #endif
 
 namespace {
@@ -83,61 +78,6 @@ bool newer(const std::string& latest, const char* current) {
   return false;
 }
 
-#ifdef _WIN32
-bool fetch(const std::string& path, std::vector<uint8_t>& body) {
-  bool ok = false;
-  HINTERNET session = WinHttpOpen(L"PaperCut", WINHTTP_ACCESS_TYPE_AUTOMATIC_PROXY,
-                                  WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0);
-  HINTERNET connect = session ? WinHttpConnect(session, L"api.github.com", INTERNET_DEFAULT_HTTPS_PORT, 0) : nullptr;
-  const std::wstring wpath(path.begin(), path.end());
-  HINTERNET request = connect ? WinHttpOpenRequest(connect, L"GET", wpath.c_str(), nullptr, WINHTTP_NO_REFERER,
-                                                   WINHTTP_DEFAULT_ACCEPT_TYPES, WINHTTP_FLAG_SECURE)
-                              : nullptr;
-  if (request != nullptr) {
-    WinHttpSetTimeouts(request, 10000, 10000, 10000, 10000);
-    DWORD status = 0, size = sizeof(status);
-    if (WinHttpSendRequest(request, L"Accept: application/vnd.github+json\r\n", (DWORD)-1L, WINHTTP_NO_REQUEST_DATA,
-                           0, 0, 0) &&
-        WinHttpReceiveResponse(request, nullptr) &&
-        WinHttpQueryHeaders(request, WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER, WINHTTP_HEADER_NAME_BY_INDEX,
-                            &status, &size, WINHTTP_NO_HEADER_INDEX) &&
-        status == 200) {
-      DWORD got = 0;
-      uint8_t chunk[4096];
-      while (WinHttpReadData(request, chunk, sizeof(chunk), &got) && got > 0 && body.size() < (1u << 20)) {
-        body.insert(body.end(), chunk, chunk + got);
-      }
-      ok = !body.empty();
-    }
-  }
-  if (request != nullptr) {
-    WinHttpCloseHandle(request);
-  }
-  if (connect != nullptr) {
-    WinHttpCloseHandle(connect);
-  }
-  if (session != nullptr) {
-    WinHttpCloseHandle(session);
-  }
-  return ok;
-}
-#else
-bool fetch(const std::string& path, std::vector<uint8_t>& body) {
-  const std::string command = "curl -fsSL --max-time 10 -H 'Accept: application/vnd.github+json' "
-                              "'https://api.github.com" + path + "' 2>/dev/null";
-  FILE* pipe = popen(command.c_str(), "r");
-  if (pipe == nullptr) {
-    return false;
-  }
-  uint8_t chunk[4096];
-  size_t got;
-  while ((got = std::fread(chunk, 1, sizeof(chunk), pipe)) > 0 && body.size() < (1u << 20)) {
-    body.insert(body.end(), chunk, chunk + got);
-  }
-  return pclose(pipe) == 0 && !body.empty();
-}
-#endif
-
 void check() {
   // the settings are read from settings.txt once Aurora is up: wait for them
   for (int i = 0; i < 300 && portSettingsUserPath()[0] == '\0'; i++) {
@@ -149,7 +89,10 @@ void check() {
   }
   const char* repo = SDL_getenv("TTYD_UPDATE_REPO"); // tests: another repository's releases
   std::vector<uint8_t> body;
-  if (!fetch(std::string("/repos/") + (repo != nullptr ? repo : kRepository) + "/releases/latest", body)) {
+  std::string why;
+  if (!port_http::fetch(std::string("https://api.github.com/repos/") + (repo != nullptr ? repo : kRepository) +
+                            "/releases/latest",
+                        body, 1u << 20, why, "application/vnd.github+json")) {
     return;
   }
   port_json::Json release;

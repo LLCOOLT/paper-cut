@@ -47,14 +47,16 @@ Change any of them under Settings > Controls > Keyboard keys. The port's own key
 - **Quick resume:** Continue in the launcher picks up where you left off, even if the app was closed without saving.
 - **Languages:** the European version plays in English, German, French, Spanish or Italian, and any version can show the text of another disc you own.
 
-**Settings:** F1, a controller's Back/Select, the three-bar button on the touch controls, or a three-finger tap. Tabs down the side, a search box, and a mark on every setting that changes how the game plays or what it saves.
+**Settings:** the Start menu's Settings tab, after the Journal: every on/off, choice and number, changed where it is, and All settings for the rest. The full page also opens with F1, a controller's Back/Select, the three-bar button on the touch controls, or a three-finger tap. Tabs down the side, a search box, and a mark on every setting that changes how the game plays or what it saves.
 
 **Display**
 - **120 Hz and up:** extra frames are drawn between the game's 60 Hz ones, with interpolated camera, characters and animation. The game's logic is untouched.
 - **Any shape of screen:** 4:3, 16:9, 16:10, 21:9 and 32:9, with the HUD sized from 50% to 150%.
 - Internal resolution of 1–8× with supersampling, anisotropic filtering, sharp text, and CRT, paper-grain and sharpen filters.
+- **Texture upscaling:** the game's textures made 2× or 4× larger by Paper Cut's own edge-following filter, for smoother lines on paper, signs and walls.
 - MSAA, texture detail, blurred letterbox bars on wide screens, and 50 or 60 Hz for the European version.
 - Variable refresh rate, and a performance overlay with frame times, 1% lows and jitter.
+- **The window:** it opens where you left it, at its size, and never off the screen or larger than it. It sizes to 1x-4x the picture or to the picture's shape, can stay above other windows, and goes full screen with F11 or Alt+Enter.
 
 **Gameplay+** (each option off by default):
 - Partner quick-swap, faster menus and text, skipped repeated scenes, Save Blocks without the question, and item storage at any Save Block.
@@ -63,20 +65,30 @@ Change any of them under Settings > Controls > Keyboard keys. The port's own key
 - Battle pop-ups, Pit of 100 Trials and Glitz Pit tweaks, a remake-style balance, and New Game+.
 - **Play as Luigi:** Luigi in Mario's place, with 156 animations of his own made for Paper Cut. The brothers swap everywhere: Mario stands in Luigi's place in the story's scenes, and the text, menus and credits follow.
 
-**Accessibility:** a difficulty slider (enemy HP and attack) and action-command assist (wider timing, or automatic).
+**Accessibility:** a difficulty slider (enemy HP and attack), action-command assist (wider timing, or automatic), larger message windows (up to 150%), and "Where next?" hints: Y on the Journal tab names where the story goes next, and nothing is shown until you ask.
+
+**Challenges:** presets in one click (Hard, Expert, Glass cannon, Superguards only, One hit), and rules to mix: one-hit KO, no guarding, harder attack commands, no items in battle.
 
 **Practice:** a speedrun timer with load removal and [LiveSplit](https://livesplit.org) support, frame advance, RNG control, stat, item and story-flag editors, a memory watch, and ten labelled save-state slots (F5 saves, F8 loads). Plus 25 achievements read from your save, which don't count while the practice tools are on.
 
-**Everyday:** fast-forward (Tab), adjustable text speed, screenshots (F12), controller rumble, and a check for new releases on start. Saves are backed up automatically and, on Apple devices, kept in iCloud. If the game crashes, a report is written for you to send.
+**Everyday:** autosave when you go into another room (off by default), fast-forward (Tab), adjustable text speed, screenshots (F12), controller rumble, and a check for new releases on start. Saves are backed up automatically and kept in step across devices: in iCloud on Apple devices, and on Windows and Linux through any folder a sync service keeps (OneDrive, Dropbox, Google Drive, Syncthing, or iCloud for Windows). If the game crashes, a report is written for you to send.
 
-**Audio and controls:** separate music, effects and ambience volumes. The mouse works in the game's menus, lists and battle commands. Keys and controller buttons can be remapped, and any MFi, Xbox, PlayStation or Switch controller works.
+**Audio and controls:**
+- **Audio:** one mixer for the master, music, effects and ambience volumes, each with a mute button, and volume keys anywhere (F9 quieter, F10 louder, F3 mute).
+- **Controls:** the mouse works in the game's menus, lists and battle commands. Keys and every player's controller buttons can be remapped.
+- **Controllers:** Xbox, PlayStation, Switch (Pro and Joy-Con), GameCube through an adapter, MFi, and about 2,300 other models from the community mapping list. Choose which is player 1-4, test them, and set dead zones and trigger points. A controller nothing recognises is set up by pressing its buttons when asked.
+- **Button prompts:** the game's button pictures match your Xbox, PlayStation or Switch controller, or your keys.
+- **Co-op:** a second controller plays the partner. In battle: its moves, its action commands and its guards. In the field: it walks anywhere with its own stick, hops, talks to people and hits blocks, uses its ability and switches partners; Mario calls it back with Y, and it comes back by itself when it leaves the screen.
+- **Menus in six languages:** the settings page and the Start menu's Settings tab in English, Deutsch, Français, Español, Italiano or Japanese (System > Menu language; Auto follows the disc or the computer).
 
 **Mods:** a mod manager on the settings page. Mods replace or add disc files, textures and text (Dolphin texture packs work as they are), change game data, run scripts and code through hooks generated from the decompilation, and GameCube code mods can be ported from their source. Also in this area:
 - [Archipelago](https://archipelago.gg) multiworld seeds (US).
+- A built-in item randomizer: a seed and what to shuffle on the settings page, no server needed, with a spoiler log (US).
 - Audience effects from chat.
-- A boss rush and an endless Glitz Pit.
+- A boss rush, boss refights and an endless Glitz Pit.
+- Characters exported from the game (model, animations, textures), edited in Blender and put back as a mod.
 
-See [docs/MODDING.md](docs/MODDING.md) and [docs/MODES.md](docs/MODES.md).
+See [docs/MODDING.md](docs/MODDING.md), [docs/MODES.md](docs/MODES.md) and [docs/RANDOMIZER.md](docs/RANDOMIZER.md).
 
 **Phones and tablets**
 - On-screen controls: movable, sized, with haptics.
@@ -166,6 +178,8 @@ xcrun devicectl device install app --device <device id> build-ios-us/ttyd-us.app
 
 CI builds and tests x86-64 on Ubuntu 24.04 (headless: every map, saves), but nobody has played it on a Linux desktop yet. arm64 is so far cross-compiled and linked only.
 
+The release comes as a zip, an AppImage and a Flatpak (`flatpak install --user papercut-<version>-linux-x64.flatpak`, which takes its runtime from Flathub). On a Steam Deck, the first start sets itself up for the Deck's screen: full screen, 16:10, the HUD at the edges and larger messages.
+
 Needs clang (the RELs are linked in with clang-only section pragmas), CMake 3.25+, Ninja, Python 3 and LLVM's tools. On Debian/Ubuntu:
 
 ```bash
@@ -211,6 +225,8 @@ The sweeps are driven by:
 | [docs/FRAME_INTERPOLATION.md](docs/FRAME_INTERPOLATION.md) | How 120 Hz and up works, and how its purity is checked |
 | [docs/PLAYABLE_LUIGI.md](docs/PLAYABLE_LUIGI.md), [docs/LUIGI_ANIMS.md](docs/LUIGI_ANIMS.md) | Play as Luigi, and how his animations are made and shipped without any disc data |
 | [docs/MODDING.md](docs/MODDING.md), [docs/MODES.md](docs/MODES.md) | Making and installing mods; the boss rush, endless Glitz Pit and audience modes |
+| [docs/CHARACTERS.md](docs/CHARACTERS.md) | Exporting a character, editing it (Blender, PNGs, JSON) and making it a mod |
+| [docs/RANDOMIZER.md](docs/RANDOMIZER.md) | The built-in item randomizer: seeds, what it shuffles, its logic, the spoiler log |
 | [docs/MOD_DATA.md](docs/MOD_DATA.md) | The game data mods can change |
 | [docs/RELEASING.md](docs/RELEASING.md) | CI, the self-hosted runners, and cutting a release |
 | [docs/THIRD_PARTY.md](docs/THIRD_PARTY.md) | Third-party code and assets, and their licences |

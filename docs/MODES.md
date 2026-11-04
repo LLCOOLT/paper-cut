@@ -2,6 +2,8 @@
 
 Opt-in extras over the game's own battles. All are off until started or turned on, and none changes the game's logic otherwise.
 
+The built-in item randomizer, a mode of its own for a whole new file, is in [RANDOMIZER.md](RANDOMIZER.md).
+
 ## Boss rush (Modes tab)
 
 Every boss in story order, one fight after another, timed: Lord Crump, Blooper, Gold Fuzzy, Hooktail, the Shadow Sirens, Magnus von Grapple, Macho Grubba, Doopliss, Cortez, Lord Crump again, Smorg, Magnus 2.0, Gloomtail, Sir Grodus, Bowser and Kammy, and the Shadow Queen. Start it from the Modes tab while a file is in play, with a **loadout**:
@@ -13,6 +15,15 @@ Every boss in story order, one fight after another, timed: Lord Crump, Blooper, 
 | Late game | level 30, 60 HP, 50 FP, 51 BP, Ultra Boots and Hammer, every partner upgraded, all Star Powers, eight items |
 
 The loadout is lent: Mario's stats and items are put back when the run ends or is stopped (badges stay as they are). Fleeing a fight starts it again; a Game Over ends the run. The time and the boss show at the top right; the best time per loadout is kept in `modes.txt` in the user folder.
+
+## Boss refights (Modes tab)
+
+The Modes tab lists the bosses in story order. You can fight any boss again once this file has beaten it in the story. Story progress decides this (`kBeatenAt` in `port/src/aurora/modes_aurora.c`).
+
+- **The fight:** on the boss rush's map for that boss, with Mario as he is or one of the boss rush's loadouts. A loadout is lent and given back afterwards.
+- **Afterwards:** winning or fleeing takes Mario back to the room the refight started in. The time shows over the picture.
+- **Losing:** a Game Over, as in the story. Retry on Game Over applies.
+- **Autosave:** off while a refight runs.
 
 ## Endless Glitz Pit (Modes tab)
 

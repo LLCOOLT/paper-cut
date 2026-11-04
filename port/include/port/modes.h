@@ -7,6 +7,8 @@
  *   endless Glitz Pit  the Glitz Pit's teams one after another with a random
  *                      match condition each and stronger enemies each round,
  *                      once the story's Glitz Pit is done
+ *   boss refights      any one boss this file has beaten in the story, fought
+ *                      again; then back to the room the refight started in
  * Each fight is on a small map the mode adds in the boss's (or the Glitz
  * Pit's) area, so the area's battle table is the game's own. Nothing changes
  * until a mode is started from the Modes tab. */
@@ -15,7 +17,7 @@
 extern "C" {
 #endif
 
-enum { PORT_MODE_NONE, PORT_MODE_BOSS_RUSH, PORT_MODE_ENDLESS_PIT };
+enum { PORT_MODE_NONE, PORT_MODE_BOSS_RUSH, PORT_MODE_ENDLESS_PIT, PORT_MODE_REFIGHT };
 enum { PORT_LOADOUT_OWN, PORT_LOADOUT_MID, PORT_LOADOUT_LATE, PORT_LOADOUT_COUNT };
 
 typedef struct PortModeStatus {
@@ -36,6 +38,14 @@ void portModeStop(void);
 const PortModeStatus* portModeStatus(void);
 /* The endless Glitz Pit is there once the story's Glitz Pit is done. */
 int portModePitUnlocked(void);
+
+/* Boss refights: the bosses (in story order), their names, and whether this
+ * file has beaten them in the story. */
+int portModeBossCount(void);
+const char* portModeBossName(int boss);
+int portModeBossBeaten(int boss);
+/* Refights boss (0..count-1) with a loadout; 0 and why when it can't now. */
+int portModeRefight(int boss, int loadout, const char** why);
 
 /* The maps the modes add (mods.cpp's host maps): registered once. */
 void portModesRegisterMaps(void);

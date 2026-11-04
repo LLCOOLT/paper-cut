@@ -25,6 +25,8 @@ static s32 BattleACPadCheckRecordTrigger(s32 chan, s32 mask);
 #ifdef TARGET_PC
 void portAcCueUpdate(BattleWork* wp); /* port/src/common/ac_cue_pc.c */
 void portAcCueJudged(int kind, int result);
+BattleWorkPad* portSecondPlayerGuardPad(BattleUnit* unit); /* port/src/common/second_player_pc.c */
+static BattleWorkPad* sGuardPad; /* the pad record this guard is judged from (NULL: actionCommands.pad) */
 #include "port/gameplus.h"
 /* Gameplay+ action-command assist (port/include/port/gameplus.h): an automatic
  * attack command runs as with an Auto Command badge on Mario or the partner */
@@ -203,6 +205,9 @@ s32 PORT_HOOKABLE(BattleActionCommandCheckDefence)(BattleUnit* unit, BattleWeapo
     wp = _battleWorkPointer;
     pad = &wp->actionCommands.pad;
     wp->actionCommands.defenseResult = 0;
+#ifdef TARGET_PC
+    sGuardPad = portSecondPlayerGuardPad(unit); // co-op: the second player guards the partner
+#endif
     diff = unit->badgesEquipped.Unsimplifier + 3;
     diff -= unit->badgesEquipped.Simplifier;
     if (diff < 0) {
@@ -292,6 +297,7 @@ s32 PORT_HOOKABLE(BattleActionCommandCheckDefence)(BattleUnit* unit, BattleWeapo
     if (portGameplus("ac_guard_assist") == 2 && wp->actionCommands.defenseResult < 4) {
         wp->actionCommands.defenseResult = 4; // Gameplay+: automatic guards (a Superguard is still the player's)
     }
+    wp->actionCommands.defenseResult = portChallengeGuard(wp->actionCommands.defenseResult); // challenge: no guarding
 #endif
     BtlPad_WorkInit(pad);
 #ifdef TARGET_PC
@@ -301,6 +307,11 @@ s32 PORT_HOOKABLE(BattleActionCommandCheckDefence)(BattleUnit* unit, BattleWeapo
 }
 /** Returns the buttons in mask that were newly pressed chan frames ago in the action-command pad history. */
 static s32 BattleACPadCheckRecordTrigger(s32 chan, s32 mask) {
+#ifdef TARGET_PC
+    if (sGuardPad != NULL) {
+        return sGuardPad->buttonsPressedHistory[chan] & mask;
+    }
+#endif
     return _battleWorkPointer->actionCommands.pad.buttonsPressedHistory[chan] & mask;
 }
 #pragma dont_inline reset
@@ -346,6 +357,9 @@ void PORT_HOOKABLE(BattleActionCommandSetDifficulty)(BattleWork* work, BattleUni
 #ifdef TARGET_PC
     if (unit->alliance == 0 && portGameplus("ac_attack_assist") == 1) {
         adjusted = adjusted > 3 ? adjusted - 3 : 0; // Gameplay+: wider attack windows
+    }
+    if (unit->alliance == 0) {
+        adjusted = portChallengeCommandLevel(adjusted); // challenge: harder attack commands
     }
 #endif
     work->actionCommands.acDifficulty = adjusted;

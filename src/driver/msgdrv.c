@@ -9,6 +9,8 @@
 #include "port/luigi.h"
 #ifdef PORT_MODS
 #include "port/mods.h"
+#include "port/pause_settings.h"
+#include "port/journal_hint.h"
 #endif
 #endif
 #ifdef TARGET_PC
@@ -1639,6 +1641,17 @@ const char* PORT_HOOKABLE(msgSearch)(const char* tag) {
         const char* modded = portModMsgSearch(tag, language_dir[gp->language]);
         if (modded != NULL) {
             return portLuigiText(modded); /* Play as Luigi: his name for Mario's */
+        }
+    }
+#endif
+#ifdef TTYD_BACKEND_AURORA /* the pause menu's Settings tab's own messages (port/src/aurora/pause_settings_aurora.c) */
+    {
+        const char* pc = portPauseSettingsMsg(tag);
+        if (pc == NULL) {
+            pc = portJournalHintMsg(tag); /* the Journal's hint (port/src/aurora/journal_hint_aurora.c) */
+        }
+        if (pc != NULL) {
+            return pc;
         }
     }
 #endif

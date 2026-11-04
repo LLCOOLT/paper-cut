@@ -837,7 +837,11 @@ def tpl_images(data):
         th, ph = struct.unpack_from(">II", data, tab + 8 * i)
         h, w, fmt, off, ws, wt = struct.unpack_from(">HHIIII", data, th)
         if fmt != 14:
-            raise ValueError(f"texture {i}: format {fmt} isn't decoded here (only CMPR)")
+            # the other formats (and palettes): tpl2png's decoders
+            import ttyd_tpl
+            im = ttyd_tpl.TplFile.parse(data).images[i]
+            out.append((w, h, im.pixels(), ws, wt))
+            continue
         out.append((w, h, decode_cmpr(data[off:], w, h), ws, wt))
     return out
 

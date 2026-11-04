@@ -77,6 +77,21 @@ void winRootBgCaptureDisp(CameraId camId, void* param);
         w->tabNum++;                    \
     }
 
+#ifdef TTYD_BACKEND_AURORA
+#include "port/pause_settings.h"
+/* a sixth tab, Paper Cut's Settings: the row a little closer together */
+#define WIN_ROOT_TABS 6
+#define WIN_ROOT_TAB_LAST 5
+#define WIN_ROOT_TAB_X(w, i) portPauseTabX((w)->tabNum, (i))
+/* the help box's hand under the selected tab */
+#define WIN_ROOT_HELP_X(w) (WIN_ROOT_TAB_X(w, (w)->tabSel) - ((w)->tabNum >= 6 ? 60 : 65))
+#else
+#define WIN_ROOT_TABS 5
+#define WIN_ROOT_TAB_LAST 4
+#define WIN_ROOT_TAB_X(w, i) ((i) * 105 - 205)
+#define WIN_ROOT_HELP_X(w) ((w)->tabSel * 105 - 270)
+#endif
+
 static void winBgMain(WindowWork* wp);
 static void winMsgMain(WindowWork* wp);
 static void winSortMain(WindowWork* wp);
@@ -151,10 +166,10 @@ static void winRootMouse(WindowWork* w) {
 static inline void winRootTabMain(WindowWork* w) {
     s32 i;
 
-    for (i = 0; i < 5; i++) {
+    for (i = 0; i < WIN_ROOT_TABS; i++) {
         switch (w->tab[i].state) {
             case 0:
-                w->tab[i].x = i * 105 - 205;
+                w->tab[i].x = WIN_ROOT_TAB_X(w, i);
                 w->tab[i].y = 300.0f;
                 w->tab[i].timer = i << 2;
                 w->tab[i].state++;
@@ -173,7 +188,7 @@ static inline void winRootTabMain(WindowWork* w) {
                 }
                 break;
             case 10:
-                w->tab[i].timer = (4 - i) * 4;
+                w->tab[i].timer = (WIN_ROOT_TAB_LAST - i) * 4;
                 w->tab[i].state++;
                 break;
             case 12:
@@ -204,7 +219,12 @@ s32 PORT_HOOKABLE(winRootMain)(WindowWork* w) {
         "msg_menu_nakama",
         "msg_menu_mochimono",
         "msg_menu_badge",
+#ifdef TTYD_BACKEND_AURORA
+        "pc_menu_kiroku",   /* the Journal's, with Y for a hint (port/src/aurora/journal_hint_aurora.c) */
+        "pc_menu_settings", /* Paper Cut's Settings (port/src/aurora/pause_settings_aurora.c) */
+#else
         "msg_menu_kiroku",
+#endif
     };
     s32 x;
     s32 i;
@@ -226,6 +246,10 @@ s32 PORT_HOOKABLE(winRootMain)(WindowWork* w) {
                 WIN_ROOT_ADD_TAB(3);
             }
             WIN_ROOT_ADD_TAB(4);
+#ifdef TTYD_BACKEND_AURORA
+            WIN_ROOT_ADD_TAB(PORT_PAUSE_SETTINGS_TAB);
+            portPauseSettingsInit(w);
+#endif
 #if VERSION <= VERSION_DEMO_JP
             {
                 s32 j;
@@ -260,7 +284,7 @@ s32 PORT_HOOKABLE(winRootMain)(WindowWork* w) {
             winItemInit(w);
             winBadgeInit(w);
             winLogInit(w);
-            w->helpX = w->helpTgtX = w->tabSel * 105 - 270;
+            w->helpX = w->helpTgtX = WIN_ROOT_HELP_X(w);
             w->helpY = 300.0f;
             w->helpTgtY = 185.0f;
             w->sortPosX = w->sortTgtX = -1000.0f;
@@ -307,6 +331,12 @@ s32 PORT_HOOKABLE(winRootMain)(WindowWork* w) {
                 if (w->menu[0].state == 100) {
                     w->active = 20;
                 }
+#ifdef TTYD_BACKEND_AURORA
+            } else if ((w->buttonTrg & PAD_BUTTON_Y) && w->tab[w->tabSel].id == 4) {
+                /* the Journal: where the story goes next (port/src/aurora/journal_hint_aurora.c) */
+                psndSFXOn((const char*)0x20012);
+                winMsgEntry(w, 0, "pc_menu_hint", 0);
+#endif
             } else if (w->buttonTrg & PAD_BUTTON_A) {
                 if (w->tab[w->tabSel].id == 1 && !w->party.count) {
                     break;
@@ -329,6 +359,11 @@ s32 PORT_HOOKABLE(winRootMain)(WindowWork* w) {
                     case 4:
                         winLogInit2(w);
                         break;
+#ifdef TTYD_BACKEND_AURORA
+                    case PORT_PAUSE_SETTINGS_TAB:
+                        portPauseSettingsInit2(w);
+                        break;
+#endif
                 }
 #if VERSION >= VERSION_US
             } else if (w->dirRep & DEMO_STICK_LEFT && w->menu[0].state == 100) {
@@ -347,7 +382,7 @@ s32 PORT_HOOKABLE(winRootMain)(WindowWork* w) {
                 w->menu[0].x = w->menu[0].y = 1000.0f;
                 w->menu[0].state = 30;
                 w->menu[0].id = w->tab[w->tabSel].id;
-                w->helpTgtX = w->tabSel * 105 - 270;
+                w->helpTgtX = WIN_ROOT_HELP_X(w);
                 winMsgEntry(w, 0, w->tab[w->tabSel].msg, 0);
 #if VERSION >= VERSION_US
             } else if (w->dirRep & DEMO_STICK_RIGHT && w->menu[0].state == 100) {
@@ -366,7 +401,7 @@ s32 PORT_HOOKABLE(winRootMain)(WindowWork* w) {
                 w->menu[0].x = w->menu[0].y = 1000.0f;
                 w->menu[0].state = 20;
                 w->menu[0].id = w->tab[w->tabSel].id;
-                w->helpTgtX = w->tabSel * 105 - 270;
+                w->helpTgtX = WIN_ROOT_HELP_X(w);
                 winMsgEntry(w, 0, w->tab[w->tabSel].msg, 0);
             }
             break;
@@ -384,7 +419,15 @@ s32 PORT_HOOKABLE(winRootMain)(WindowWork* w) {
         case 13:
         case 14:
         case 15:
+#ifdef TTYD_BACKEND_AURORA
+        case PORT_PAUSE_SETTINGS_TAB + 11:
+#endif
             switch (w->active) {
+#ifdef TTYD_BACKEND_AURORA
+                case PORT_PAUSE_SETTINGS_TAB + 11:
+                    ret = portPauseSettingsMain(w);
+                    break;
+#endif
                 case 11:
                     ret = winMarioMain(w);
                     break;
@@ -405,7 +448,7 @@ s32 PORT_HOOKABLE(winRootMain)(WindowWork* w) {
                 ret = -2;
             }
             if (ret == -1) {
-                w->helpTgtX = w->tabSel * 105 - 270;
+                w->helpTgtX = WIN_ROOT_HELP_X(w);
                 w->helpTgtY = 185.0f;
                 w->active = 10;
                 winMsgEntry(w, 0, w->tab[w->tabSel].msg, 0);
@@ -547,6 +590,11 @@ void PORT_HOOKABLE(winRootDisp)(s32 camId, WindowWork* wp) {
                 case 4:
                     winLogDisp(camId, wp, i);
                     break;
+#ifdef TTYD_BACKEND_AURORA
+                case PORT_PAUSE_SETTINGS_TAB:
+                    portPauseSettingsDisp(camId, wp, i);
+                    break;
+#endif
             }
         }
         winTabDisp(wp);
@@ -575,8 +623,20 @@ static inline void winTabDisp(WindowWork* wp) {
         } else {
             c = (GXColor){0x80, 0x80, 0x80, 0xFE};
         }
+#ifdef TTYD_BACKEND_AURORA
+        {
+            const f32 s = portPauseTabScale(wp->tabNum);
+            if (wp->tab[i].id == PORT_PAUSE_SETTINGS_TAB) {
+                portPauseSettingsTabDisp(wp, wp->tab[i].x, wp->tab[i].y, s, c);
+                continue;
+            }
+            winTexInit_x2((TEXPalette*)*wp->res->data);
+            winTexSet_x2(wp->tab[i].id + 1, 0xB2, (Vec){wp->tab[i].x, wp->tab[i].y, 0.0f}, (Vec){s, s, 1.0f}, c);
+        }
+#else
         winTexInit_x2((TEXPalette*)*wp->res->data);
         winTexSet_x2(wp->tab[i].id + 1, 0xB2, (Vec){wp->tab[i].x, wp->tab[i].y, 0.0f}, (Vec){1.0f, 1.0f, 1.0f}, c);
+#endif
     }
 }
 
@@ -691,6 +751,13 @@ void PORT_HOOKABLE(winBgGX)(WindowWork* wp, s32 type, f32 x, f32 y) {
             GXSetTevColor(GX_TEVREG1, (GXColor){0x78, 0xB3, 0xD6, 0xFF});
             GXSetTevColor(GX_TEVREG2, (GXColor){0xAF, 0xD6, 0xEA, 0xFF});
             break;
+#ifdef TTYD_BACKEND_AURORA
+        case PORT_PAUSE_SETTINGS_TAB: /* Paper Cut's Settings: violet */
+            GXSetTevColor(GX_TEVREG0, (GXColor){0x6E, 0x5A, 0xB4, 0xFF});
+            GXSetTevColor(GX_TEVREG1, (GXColor){0xAC, 0xA0, 0xD8, 0xFF});
+            GXSetTevColor(GX_TEVREG2, (GXColor){0xD4, 0xCE, 0xEC, 0xFF});
+            break;
+#endif
     }
     GXSetBlendMode(GX_BM_NONE, GX_BL_ONE, GX_BL_ZERO, GX_LO_CLEAR);
     GXSetZCompLoc(GX_FALSE);

@@ -246,7 +246,11 @@ typedef struct WindowWork {
     EventEntry* currentEvent; // 0x3C
     s32 tabSel;               // 0x40
     s32 tabNum;               // 0x44
+#ifdef TARGET_PC
+    WinTab tab[6]; // a sixth: Paper Cut's Settings (port/src/aurora/pause_settings_aurora.c)
+#else
     WinTab tab[5];            // 0x48
+#endif
     WinMenu menu[5];          // 0xC0
     s32 savedState;           // 0x124, window state kept while the sort menu is up
     f32 msgOfsX;              // 0x128

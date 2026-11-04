@@ -4,6 +4,7 @@
 #include "port/settings.h"
 #include "port/display.h"
 #include "port/widescreen.h"
+#include <imgui.h>
 
 namespace {
 
@@ -13,9 +14,51 @@ constexpr const char* kAspectMax[] = {"No limit", "16:9", "21:9"};
 constexpr const char* kAniso[] = {"Off (the game's)", "2x", "4x", "8x", "16x"};
 constexpr const char* kLodBias[] = {"The game's", "Sharper (-0.5)", "Sharper still (-1)", "Sharpest (-1.5)",
                                     "Softer (+0.5)"};
+constexpr const char* kUpscale[] = {"Off", "2x", "4x"};
 constexpr const char* kSupersample[] = {"Off", "2x", "3x", "4x"};
 constexpr const char* kPost[] = {"Off", "CRT", "Paper grain", "Sharpen"};
 constexpr const char* kPerf[] = {"Off", "Frame-time graph", "Graph and timings"};
+
+// HDR output: the switch and its two sliders, greyed out (with why) where the display or the graphics
+// backend cannot show HDR; a switch left on from elsewhere can still be turned off
+void hdrSection(int) {
+  int* on = portSettingsFind("hdr");
+  int* white = portSettingsFind("hdr_paper_white");
+  int* boost = portSettingsFind("hdr_boost");
+  if (on == nullptr || white == nullptr || boost == nullptr) {
+    return;
+  }
+  const bool supported = portHdrSupported() != 0;
+  bool edited = false;
+  ImGui::BeginDisabled(!supported && *on == 0);
+  bool v = *on != 0;
+  if (ImGui::Checkbox("HDR output", &v)) {
+    *on = v ? 1 : 0;
+    edited = true;
+  }
+  ImGui::EndDisabled();
+  ImGui::BeginDisabled(!supported || *on == 0);
+  // the value follows the slider as it moves (portDisplayFrame gives it to Aurora); saved when let go
+  ImGui::SliderInt("Paper white", white, 80, 400, "%d nits");
+  edited |= ImGui::IsItemDeactivatedAfterEdit();
+  ImGui::SliderInt("Highlight boost", boost, 0, 50, "+%d%%");
+  edited |= ImGui::IsItemDeactivatedAfterEdit();
+  ImGui::EndDisabled();
+  if (!supported) {
+    ImGui::TextDisabled("Not available here.");
+    ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
+    ImGui::TextWrapped("Needs a display with HDR turned on (on Windows: Settings, System, Display, Use HDR) and "
+                       "the Direct3D or Metal graphics backend. Vulkan and OpenGL, as on Linux and Android, show "
+                       "SDR only.");
+    ImGui::PopStyleColor();
+  } else if (portHdrActive()) {
+    ImGui::TextDisabled("Showing in HDR.");
+  }
+  if (edited) {
+    portSettingsSave();
+    portHdrApply();
+  }
+}
 
 const bool sAdded = [] {
   // declared here too, at start, with their defaults, so the launcher's Settings tab has them before
@@ -23,12 +66,17 @@ const bool sAdded = [] {
   portSettingsDeclare("aspect_ratio", PORT_ASPECT_SWITCH, 0, PORT_ASPECT_WINDOW);
   portSettingsDeclare("aspect_max", 0, 0, 2);
   portSettingsDeclare("hud_scale", 100, 50, 150);
+  portSettingsDeclare("text_scale", 100, 100, 150);
   portSettingsDeclare("aniso", 0, 0, 4);
   portSettingsDeclare("lod_bias", PORT_LOD_GAME, 0, PORT_LOD_COUNT - 1);
+  portSettingsDeclare("texture_upscale", 0, 0, 2);
   portSettingsDeclare("supersample", 0, 0, 3);
   portSettingsDeclare("post_filter", 0, 0, 3);
   portSettingsDeclare("vrr", 0, 0, 1);
   portSettingsDeclare("perf_overlay", 0, 0, 2);
+  portSettingsDeclare("hdr", 0, 0, 1);
+  portSettingsDeclare("hdr_paper_white", 200, 80, 400);
+  portSettingsDeclare("hdr_boost", 0, 0, 50);
   portSettingsAddChoice("Display", "Aspect ratio",
                         "Wider shows more of the sides of each scene; much of the game was built for 4:3, so rooms "
                         "and scenes can end before the screen's edges.",
@@ -39,10 +87,20 @@ const bool sAdded = [] {
   portSettingsAddSlider("Display", "HUD size",
                         "The status bar, message windows and battle menus, larger or smaller than the game's.", 0,
                         "hud_scale", 50, 150, "%d%%", "hud scale ui interface status bar text size");
+  // port/src/aurora/hud_aurora.c
+  portSettingsAddSlider("Accessibility", "Message size",
+                        "The message and choice windows larger, on top of HUD size. A window grows only while it fits "
+                        "the screen: a little in 4:3, up to about 145% in widescreen.",
+                        0, "text_scale", 100, 150, "%d%%", "bigger text font message dialogue window large read");
   portSettingsAddChoice("Display", "Anisotropic filtering", "Textures seen at an angle (floors, paths) stay sharp.", 0,
                         "aniso", kAniso, 5, "aniso texture filtering af");
   portSettingsAddChoice("Display", "Texture detail", "Which of a texture's detail levels is used at a distance.", 0,
                         "lod_bias", kLodBias, 5, "lod bias mipmap texture sharp");
+  // port/src/aurora/upscale_aurora.c
+  portSettingsAddChoice("Display", "Texture upscaling",
+                        "The game's textures made larger by an edge-following filter as they load: smoother lines "
+                        "on paper and signs. More video memory. From the next start.",
+                        0, "texture_upscale", kUpscale, 3, "upscale texture hd enhance resolution filter smooth");
   portSettingsAddChoice("Display", "Supersampling",
                         "Draws the picture several times larger than the window and shrinks it: smoother edges, "
                         "much more work for the graphics card.",
@@ -53,6 +111,11 @@ const bool sAdded = [] {
                         "Each frame shown as soon as it is ready, without waiting for the screen. For VRR "
                         "displays (others may tear); goes well with Frame rate: the display's.",
                         0, "vrr", "vrr gsync freesync adaptive sync tearing pacing");
+  portSettingsAddSection("Display", "HDR output",
+                         "On an HDR display, the picture at the brightness you choose for white (paper white), "
+                         "with the brightest highlights optionally a little brighter. The game itself is SDR; this "
+                         "does not add detail it does not have.",
+                         0, hdrSection, "hdr high dynamic range nits brightness paper white edr scrgb hdr10");
   portSettingsAddChoice("Display", "Performance overlay",
                         "How long each frame takes: the time between frames, and the part spent working.", 0,
                         "perf_overlay", kPerf, 3, "frame time graph pacing stutter performance fps");

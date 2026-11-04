@@ -59,6 +59,31 @@ static const ModeFight kBosses[] = {
 };
 #define BOSS_COUNT ((s32)(sizeof(kBosses) / sizeof(kBosses[0])))
 
+/* Boss refights: the story's progress (GSW 0) from which each boss counts as
+ * beaten on this file, kBosses' order. The Shadow Queen: after the battle,
+ * as a file saved after the credits is. */
+static const s32 kBeatenAt[] = {
+    STORY_STG0_19_BLOOPER_BATTLE,      /* Lord Crump (the prologue's, before Blooper) */
+    STORY_STG0_19_BLOOPER_BATTLE + 1,  /* Blooper */
+    STORY_STG1_06_01_GOLD_FUZZY + 1,   /* Gold Fuzzy */
+    STORY_STG1_16_HOOKTAIL + 1,        /* Hooktail */
+    STORY_STG2_08_SHADOW_SIRENS_LOSE,  /* the Shadow Sirens */
+    STORY_STG2_22_LORD_CRUMP_APPEARS + 1, /* Magnus von Grapple */
+    STORY_STG3_33_03_PEACH_GRODUS,     /* Macho Grubba (chapter 3 done) */
+    STORY_STG4_15_DOOPLISS_BATTLE_2 + 1, /* Doopliss */
+    STORY_STG5_33_CORTEZ_AND_THE_TREASURE + 1, /* Cortez */
+    STORY_STG5_58_FAIR_WINDS,          /* Lord Crump (chapter 5's) */
+    STORY_STG6_48_SMORG_MIASMA + 1,    /* Smorg */
+    STORY_STG7_20_LORD_CRUMP_DEFEATED + 1, /* Magnus von Grapple 2.0 */
+    STORY_STG8_04_GLOOMTAIL + 1,       /* Gloomtail */
+    STORY_STG8_16_SHADOW_QUEEN,        /* Sir Grodus */
+    STORY_STG8_16_SHADOW_QUEEN,        /* Bowser and Kammy */
+    STORY_STG8_END_AFTER_THE_BATTLE,   /* the Shadow Queen */
+};
+_Static_assert(sizeof(kBeatenAt) / sizeof(kBeatenAt[0]) == sizeof(kBosses) / sizeof(kBosses[0]), "one per boss");
+static char sReturnMap[16]; /* a refight's: the room it started in */
+static s32 sRefightBoss;
+
 /* The Glitz Pit: tou_03's files and REL (seq_mapchange.c); the teams are
  * btlsetup_tou_tbl's 1-22, the ranking's 20th to the top (Grubba is 23) */
 static const ModeFight kPitMap = {"tou_m1", "tou_03", 0, NULL};
@@ -124,7 +149,8 @@ static EVT_BEGIN(mode_map_init)
 EVT_END()
 
 static const ModeFight* currentFight(void) {
-    if (sStatus.mode == PORT_MODE_BOSS_RUSH && sStatus.step >= 1 && sStatus.step <= BOSS_COUNT) {
+    if ((sStatus.mode == PORT_MODE_BOSS_RUSH || sStatus.mode == PORT_MODE_REFIGHT) && sStatus.step >= 1 &&
+        sStatus.step <= BOSS_COUNT) {
         return &kBosses[sStatus.step - 1];
     }
     if (sStatus.mode == PORT_MODE_ENDLESS_PIT) {
@@ -181,7 +207,8 @@ static void restoreDifficulty(void) {
 static void finish(int how) {
     sStatus.ms = SDL_GetTicks() - sStartedAt;
     sStatus.finished = how;
-    printf("[modes] %s %s at step %d, %llu ms\n", sStatus.mode == PORT_MODE_BOSS_RUSH ? "boss rush" : "endless pit",
+    printf("[modes] %s %s at step %d, %llu ms\n",
+           sStatus.mode == PORT_MODE_BOSS_RUSH ? "boss rush" : sStatus.mode == PORT_MODE_REFIGHT ? "refight" : "endless pit",
            how == 1 ? "won" : "lost", sStatus.step, sStatus.ms);
     fflush(stdout);
     restoreDifficulty();
@@ -221,6 +248,16 @@ USER_FUNC(evt_mode_battle_end) {
     s32 kept = evtGetValue(event, args[1]);
     (void)isFirstCall;
     if (sStatus.mode == PORT_MODE_NONE || sStatus.finished) {
+        return EVT_RETURN_DONE;
+    }
+    if (sStatus.mode == PORT_MODE_REFIGHT) {
+        /* won or fled: back where it started (a loss is the game's Game Over, as in the story) */
+        if (result == 1 || result == 4) {
+            finish(result == 1 ? 1 : 2);
+            seqSetSeq(SEQ_MAP_CHANGE, sReturnMap[0] != '\0' ? sReturnMap : "gor_01", NULL);
+        } else {
+            finish(2);
+        }
         return EVT_RETURN_DONE;
     }
     if (result == 4) {
@@ -304,7 +341,17 @@ static void startNow(int mode, int loadout) {
     sStatus.step = 1;
     sStatus.loadout = loadout;
     sStartedAt = SDL_GetTicks();
-    if (mode == PORT_MODE_BOSS_RUSH) {
+    if (mode == PORT_MODE_REFIGHT) {
+        snprintf(sReturnMap, sizeof(sReturnMap), "%s", gp->currentMapName);
+        sStatus.step = __atomic_load_n(&sRefightBoss, __ATOMIC_SEQ_CST) + 1;
+        sStatus.steps = 1;
+        sStatus.next = kBosses[sStatus.step - 1].name;
+        sCondition = -1;
+        if (loadout != PORT_LOADOUT_OWN) {
+            giveLoadout(loadout);
+        }
+        goTo(&kBosses[sStatus.step - 1]);
+    } else if (mode == PORT_MODE_BOSS_RUSH) {
         /* $TTYD_MODE_STEP=N: from the Nth boss (tests) */
         const char* step = getenv("TTYD_MODE_STEP");
         if (step != NULL && atoi(step) >= 1 && atoi(step) <= BOSS_COUNT) {
@@ -325,7 +372,8 @@ static void startNow(int mode, int loadout) {
         pitNextMatch();
         goTo(&kPitMap);
     }
-    printf("[modes] %s started\n", mode == PORT_MODE_BOSS_RUSH ? "boss rush" : "endless pit");
+    printf("[modes] %s started\n",
+           mode == PORT_MODE_BOSS_RUSH ? "boss rush" : mode == PORT_MODE_REFIGHT ? "refight" : "endless pit");
     fflush(stdout);
 }
 
@@ -369,6 +417,37 @@ int portModeStart(int mode, int loadout, const char** why) {
     }
     __atomic_store_n(&sStartLoadout, loadout, __ATOMIC_SEQ_CST);
     __atomic_store_n(&sStartMode, mode, __ATOMIC_SEQ_CST);
+    return 1;
+}
+
+int portModeBossCount(void) {
+    return BOSS_COUNT;
+}
+
+const char* portModeBossName(int boss) {
+    return boss >= 0 && boss < BOSS_COUNT ? kBosses[boss].name : "";
+}
+
+int portModeBossBeaten(int boss) {
+    return boss >= 0 && boss < BOSS_COUNT && gp != NULL && swByteGet(0) >= kBeatenAt[boss];
+}
+
+int portModeRefight(int boss, int loadout, const char** why) {
+    if (boss < 0 || boss >= BOSS_COUNT) {
+        *why = "No such boss.";
+        return 0;
+    }
+    if (seqGetSeq() != SEQ_GAME || gp->inBattle) {
+        *why = "Start it in the field, with a file loaded.";
+        return 0;
+    }
+    if (!portModeBossBeaten(boss)) {
+        *why = "Beat this boss in the story first.";
+        return 0;
+    }
+    __atomic_store_n(&sRefightBoss, boss, __ATOMIC_SEQ_CST);
+    __atomic_store_n(&sStartLoadout, loadout, __ATOMIC_SEQ_CST);
+    __atomic_store_n(&sStartMode, PORT_MODE_REFIGHT, __ATOMIC_SEQ_CST);
     return 1;
 }
 

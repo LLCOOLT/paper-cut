@@ -60,6 +60,8 @@ A file at `overlay/<path>` replaces the disc's file at `/<path>`, or adds it if 
 
 The files are in the disc's own formats, as the game reads them. A file the game has already loaded stays until it loads it again: a map's files on the next room, a battle's on the next battle, `global.txt` at the next start.
 
+**Characters** (a model and its animations, `a/<name>`, and its drawings, `a/<texture>-`) have their own tools: the Mods tab's **Export characters** and `tools/port/character_tool.py` take one out of the game into PNGs, JSON and a Blender scene, and build the edited files back into such a mod. See [CHARACTERS.md](CHARACTERS.md).
+
 ### textures/: texture packs
 
 Replacement textures named as **Dolphin** names them: `tex1_{w}x{h}[_m]_{hash}[_{tlut hash}]_{format}.png` or `.dds`, with `_mip1`, `_mip2`... files for mipmaps and `$` in place of a hash to match any. The hashes are Dolphin's (XXH64 of the GameCube texture data), so a **Dolphin texture pack for this game works as it is**: copy its files into a mod's `textures/` folder, or straight into the user folder's `textures/` folder (any folders inside are fine). Replacements can be larger than the original. DDS can be BC1–BC7 compressed.
@@ -285,6 +287,8 @@ The Practice Codes as ported locally: the menu, its pages and the displays work;
 - **The seed** (the `.apttyd` file the apworld generates for a slot) is applied at the game's start, as the patcher applies it to a disc: each location's item goes into the script, table or shop that gives it (721 places; local CI checks the 629 in RELs against the disc), shop prices and sell prices, the seed's options in the low memory the mod reads, and its files (`enemies.bin`, `bosses.bin`, `tracker.bin`, `msg/US/desc.txt`) over the disc's. The mod's own messages (`msg/US/mod.txt`) come from the installed `ttyd.apworld`: `$TTYD_APWORLD_FILE`, beside the seed, or Archipelago's `custom_worlds` folder.
 - **The server.** A built-in client (WebSocket: `ws://` everywhere, `wss://` on Windows) connects to a room: items the slot receives go to the game, a location's check goes out when its flag is set, the goal and DeathLink both ways, and the current room for trackers.
 - **The game side** is the TTYD AP mod, ported as a code mod ([above](#porting-a-gamecube-mod)): it gives the received items, shows who sent them and runs the seed's options. It's GPL, so it isn't part of this repository; build it from its source with the porting tools and add it to the mods folder.
+
+For a single-player game without a server, the built-in randomizer makes a seed itself and applies it through the same machinery ([RANDOMIZER.md](RANDOMIZER.md)).
 
 The settings page's **Archipelago** tab chooses the seed (it applies at the next start) and holds the server's address, the slot (the seed's player by default) and the password, with Connect and Disconnect; they're kept in `archipelago.json` in the user folder, and the game connects at start once there's a server. `$TTYD_AP_SEED` and `$TTYD_AP_SERVER` override them for a run.
 

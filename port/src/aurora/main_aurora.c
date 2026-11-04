@@ -20,6 +20,7 @@
 #include "port/platform.h"
 #include "port/mods.h"
 #include "port/luigi.h"
+void portControllersInit(const char* userPath); /* port/settings/features/controllers.cpp */
 #ifdef __APPLE__
 #include <TargetConditionals.h>
 #endif
@@ -99,9 +100,19 @@ int aurora_main(int argc, char* argv[]) {
         config.cachePath = portIosCacheDir();
     }
 #endif
+    /* the window's saved size and place, and full screen from the start
+     * (port/settings/features/window.cpp). -1: anywhere, as Aurora takes it
+     * (0, 0 put the window in the screen's corner). */
+    config.windowPosX = config.windowPosY = -1;
     if (pos != NULL && strchr(pos, ',') != NULL) {
         config.windowPosX = atoi(pos);
         config.windowPosY = atoi(strchr(pos, ',') + 1);
+    }
+    {
+        int full = 0;
+        portWindowConfig(config.userPath, &config.windowPosX, &config.windowPosY, &config.windowWidth,
+                         &config.windowHeight, &full);
+        config.startFullscreen = full != 0;
     }
     /* Texture dumps for pack makers ($TTYD_DUMP_TEXTURES, the settings' Mods
      * tab): Aurora takes the option only at its start. */
@@ -139,6 +150,7 @@ int aurora_main(int argc, char* argv[]) {
             SDL_DestroySurface(icon);
         }
     }
+    portControllersInit(info.userPath); /* every kind of controller: the mappings (controllers.cpp) */
     portUiInit();
     portKeyboardDefaults(); /* before PADInit: the default keys (settings_ui.cpp) */
     /* the controllers and keyboard up now, so the launcher's Settings tab
@@ -162,6 +174,7 @@ int aurora_main(int argc, char* argv[]) {
     }
 
     portSettingsLoad(info.userPath); /* settings.txt (port/include/port/settings.h); the launcher shows them */
+    portWindowRestore(pos != NULL); /* inside a screen, maximized as it was (window.cpp) */
     /* The user's own disc image (disc_aurora.c): the argument, or the launcher. */
     if (!portAuroraOpenDisc(argc, argv, info.userPath)) {
         aurora_shutdown();

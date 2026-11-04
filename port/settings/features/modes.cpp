@@ -1,5 +1,5 @@
-// The "Modes" tab (port/include/port/modes.h): the boss rush and the endless
-// Glitz Pit, started from here while a file is in play; the run's time or
+// The "Modes" tab (port/include/port/modes.h): the boss rush, boss refights and
+// the endless Glitz Pit, started from here while a file is in play; the run's time or
 // round over the picture; the best ones kept in <user>/modes.txt.
 #include "port/layout.h"
 #include "port/mod_host.h"
@@ -89,14 +89,24 @@ std::string plain(const char* text) {
 // Each frame of play: the run's end recorded; its state over the picture.
 void frame(void*) {
   static int sLastFinished;
-  // $TTYD_MODE_TEST=rush[:loadout] or pit: started in the field, 30 s into
-  // the run (past a $TTYD_MAP warp; tests)
+  // $TTYD_MODE_TEST=rush[:loadout], pit or refight:<boss>[:loadout]: started
+  // in the field, 30 s into the run (past a $TTYD_MAP warp; tests)
   static bool sTested;
   if (const char* test = std::getenv("TTYD_MODE_TEST"); test != nullptr && !sTested && SDL_GetTicks() > 30000) {
     const char* why = nullptr;
-    const bool rush = std::string(test).rfind("rush", 0) == 0;
-    const int loadout = rush && test[4] == ':' ? std::atoi(test + 5) : PORT_LOADOUT_MID;
-    sTested = portModeStart(rush ? PORT_MODE_BOSS_RUSH : PORT_MODE_ENDLESS_PIT, loadout, &why) != 0;
+    const std::string t(test);
+    if (t.rfind("refight:", 0) == 0) {
+      const size_t colon = t.find(':', 8);
+      const int loadout = colon != std::string::npos ? std::atoi(t.c_str() + colon + 1) : PORT_LOADOUT_OWN;
+      sTested = portModeRefight(std::atoi(t.c_str() + 8), loadout, &why) != 0;
+    } else {
+      const bool rush = t.rfind("rush", 0) == 0;
+      const int loadout = rush && test[4] == ':' ? std::atoi(test + 5) : PORT_LOADOUT_MID;
+      sTested = portModeStart(rush ? PORT_MODE_BOSS_RUSH : PORT_MODE_ENDLESS_PIT, loadout, &why) != 0;
+    }
+    if (!sTested && why != nullptr) {
+      std::printf("[modes] test not started: %s\n", why);
+    }
   }
   const PortModeStatus* s = portModeStatus();
   if (s->mode == PORT_MODE_NONE) {
@@ -106,7 +116,9 @@ void frame(void*) {
   readBests();
   if (s->finished && !sLastFinished) {
     sLastFinished = s->finished;
-    if (s->mode == PORT_MODE_BOSS_RUSH) {
+    if (s->mode == PORT_MODE_REFIGHT) {
+      sMessage = std::string(s->next) + (s->finished == 1 ? ": beaten again in " + clock(s->ms) + "." : ": left.");
+    } else if (s->mode == PORT_MODE_BOSS_RUSH) {
       if (s->finished == 1) {
         unsigned long long& best = sBestRush[s->loadout];
         const bool record = best == 0 || s->ms < best;
@@ -122,11 +134,15 @@ void frame(void*) {
       sBestRound = record ? rounds : sBestRound;
       sMessage = "Endless Glitz Pit: " + std::to_string(rounds) + " rounds won" + (record ? ", a new best!" : ".");
     }
-    writeBests();
+    if (s->mode != PORT_MODE_REFIGHT) {
+      writeBests();
+    }
   }
   std::string line;
   if (s->finished) {
     line = sMessage;
+  } else if (s->mode == PORT_MODE_REFIGHT) {
+    line = "Refight: " + std::string(s->next) + "   " + clock(s->ms);
   } else if (s->mode == PORT_MODE_BOSS_RUSH) {
     line = "Boss " + std::to_string(s->step) + "/" + std::to_string(s->steps) + ": " + s->next + "   " + clock(s->ms);
   } else {
@@ -186,7 +202,7 @@ void bossRushSection(int inGame) {
       ImGui::Text("Best (%s): %s", kLoadouts[i], clock(sBestRush[i]).c_str());
     }
   }
-  if (!sMessage.empty() && s->mode != PORT_MODE_ENDLESS_PIT) {
+  if (!sMessage.empty() && s->mode == PORT_MODE_BOSS_RUSH) {
     ImGui::TextWrapped("%s", sMessage.c_str());
   }
 }
@@ -218,10 +234,53 @@ void pitSection(int inGame) {
   }
 }
 
+void refightSection(int inGame) {
+  static int sLoadout = PORT_LOADOUT_OWN;
+  ImGui::TextWrapped("Any boss you've beaten in this file's story, fought again: then back to the room you were "
+                     "in. Losing is a Game Over, as in the story (save first, or turn on Retry on Game Over).");
+  if (!inGame) {
+    ImGui::TextDisabled("Choose one while a file is in play.");
+    return;
+  }
+  ImGui::SetNextItemWidth(ImGui::GetFontSize() * 12.0f);
+  ImGui::Combo("Loadout##refight", &sLoadout, kLoadouts, PORT_LOADOUT_COUNT);
+  const PortModeStatus* s = portModeStatus();
+  const bool running = s->mode != PORT_MODE_NONE && !s->finished;
+  int beaten = 0;
+  ImGui::BeginDisabled(running);
+  for (int i = 0; i < portModeBossCount(); i++) {
+    const bool open = portModeBossBeaten(i) != 0;
+    beaten += open ? 1 : 0;
+    ImGui::PushID(i);
+    ImGui::BeginDisabled(!open);
+    if (ImGui::Button(open ? "Fight" : "Not yet", ImVec2(ImGui::GetFontSize() * 5.0f, 0.0f))) {
+      const char* why = nullptr;
+      sMessage = portModeRefight(i, sLoadout, &why) ? "" : why;
+    }
+    ImGui::EndDisabled();
+    ImGui::SameLine();
+    if (open) {
+      ImGui::TextUnformatted(portModeBossName(i));
+    } else {
+      ImGui::TextDisabled("%s", portModeBossName(i));
+    }
+    ImGui::PopID();
+  }
+  ImGui::EndDisabled();
+  if (beaten == 0) {
+    ImGui::TextDisabled("No boss beaten yet on this file.");
+  }
+  if (s->mode == PORT_MODE_REFIGHT && !sMessage.empty()) {
+    ImGui::TextWrapped("%s", sMessage.c_str());
+  }
+}
+
 struct Register {
   Register() {
     portSettingsAddSection(kTab, "Boss rush", nullptr, PORT_SETTING_CHANGES_PLAY, bossRushSection,
                            "boss rush bosses timer speedrun loadout modes");
+    portSettingsAddSection(kTab, "Boss refights", nullptr, PORT_SETTING_CHANGES_PLAY, refightSection,
+                           "boss refight rematch replay fight again bosses modes");
     portSettingsAddSection(kTab, "Endless Glitz Pit", nullptr, PORT_SETTING_CHANGES_PLAY, pitSection,
                            "glitz pit endless arena rounds conditions modes");
     portModHostAddDraw(frame, nullptr);

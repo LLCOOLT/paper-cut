@@ -4,7 +4,8 @@
   release.py VERSION [--out DIR] [--targets LIST] [--no-android] [--publish TAG]
 
 Targets (--targets, comma-separated; by default this machine's):
-  desktop  this machine's own build: Windows, macOS or Linux
+  desktop  this machine's own build: Windows, macOS or Linux (Linux: the zip,
+           an AppImage and a Flatpak, tools/port/linux_packages.py)
   android  the three APKs (debug-signed), with an Android SDK
   ios      an unsigned .ipa per version, for sideloading (on a Mac)
   linux    the Linux x86-64 build, inside a Docker container (on a Mac or
@@ -300,17 +301,19 @@ def package_ios(short, out, version_string, dist):
 
 
 def package_linux_container(version_string, dist):
-    """Both Linux x86-64 packages, built by this script inside an Ubuntu
-    container over this checkout (Docker, OrbStack...; on Apple silicon the
-    x86-64 container runs emulated)."""
+    """The Linux x86-64 packages (the zip, the AppImage and the Flatpak),
+    built by this script inside an Ubuntu container over this checkout
+    (Docker, OrbStack...; on Apple silicon the x86-64 container runs
+    emulated)."""
     import linux_container
     if linux_container.run(["python3", "tools/port/release.py", version_string, "--targets", "desktop",
                             "--out", "/src/dist-linux"]) != 0:
         sys.exit("release: the Linux packages' build failed (in the container)")
     out = []
-    for z in sorted(glob.glob(os.path.join(ROOT, "dist-linux", "*.zip"))):
-        out.append(shutil.copy(z, dist))
-        print("wrote", out[-1])
+    for pattern in ("*.zip", "*.AppImage", "*.flatpak"):
+        for z in sorted(glob.glob(os.path.join(ROOT, "dist-linux", pattern))):
+            out.append(shutil.copy(z, dist))
+            print("wrote", out[-1])
     return out
 
 
@@ -392,6 +395,11 @@ def main():
     if "desktop" in targets:
         # one package: every version's build, behind the launcher
         files.append(package_desktop({short: build(short, a.version) for short in VERSIONS}, a.version, a.out))
+        if host() == "linux":
+            # the AppImage and the Flatpak, from the zip (tools/port/linux_packages.py)
+            run([sys.executable, os.path.join(ROOT, "tools", "port", "linux_packages.py"), files[-1], a.out],
+                retry=False)
+            files += sorted(glob.glob(os.path.join(a.out, "*.AppImage")) + glob.glob(os.path.join(a.out, "*.flatpak")))
     if "ios" in targets:
         # an app per version (an iOS app can't start another program)
         for short in VERSIONS:

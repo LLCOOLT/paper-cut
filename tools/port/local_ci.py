@@ -6,7 +6,7 @@ Stages (each logs to build-ci/<stage>.log; independent ones run at once):
   build      the PC builds: headless and Aurora, each version (configured if new)
   unit       unit tests (ctest -LE slow), each version
   audits     proto_audit, noproto_calls, proto_mismatch, gen_bedecode --check, gen_reflect --check,
-             gen_hooks --check, diag_census (fatal classes)
+             gen_hooks --check, character_tool selftest, diag_census (fatal classes)
   sweep      map_sweep with golden audio, each version
   cards      new file, Save Block save and load, headless and Aurora, each
              version; the headless card then loads on Aurora
@@ -176,7 +176,7 @@ def stage_build(s):
 
 
 UNIT_TARGETS = ["bedecode_test", "anim_test", "loaders_test", "map_test", "dtk_test", "musyx_swap_test",
-                "musyx_mixer_test", "disc_sweep", "musyx_seq_sweep"]
+                "rando_test", "musyx_mixer_test", "disc_sweep", "musyx_seq_sweep"]
 
 
 def stage_unit(s):
@@ -193,6 +193,7 @@ def stage_audits(s):
     s.run([sys.executable, "tools/port/gen_bedecode.py", "--check"])
     s.run([sys.executable, "tools/port/gen_reflect.py", "--check"])
     s.run([sys.executable, "tools/port/gen_hooks.py", "--check"])
+    s.run([sys.executable, "tools/port/character_tool.py", "selftest"])
     s.run([sys.executable, "tools/port/diag_census.py"] + [build_dir(short, "headless") for _, short in VERSIONS])
 
 
@@ -329,12 +330,13 @@ def stage_archipelago(s):
     stand-in server (tests/port/ap_mock_server.py): it connects, hands the
     slot's items to the game, places the seed's items and sends a location's
     check once its flag is set. With $TTYD_APWORLD (a checkout of the apworld),
-    port/archipelago/ttyd_ap_data.h is checked current too."""
+    port/archipelago/ttyd_ap_data.h and ttyd_rando_logic.h are checked current too."""
     iso = sorted(glob.glob(os.path.join(ROOT, "orig", "G8ME01", "*.iso")))
     if not iso:
         return s.skip("no US disc image")
     if os.environ.get("TTYD_APWORLD"):
         s.run([sys.executable, "tools/port/gen_ttyd_ap.py", "--apworld", os.environ["TTYD_APWORLD"], "--check"])
+        s.run([sys.executable, "tools/port/gen_ttyd_rando.py", "--apworld", os.environ["TTYD_APWORLD"], "--check"])
     work = os.path.join(LOGS, "archipelago")
     shutil.rmtree(work, ignore_errors=True)
     os.makedirs(os.path.join(work, "user"))

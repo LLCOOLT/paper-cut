@@ -18,6 +18,8 @@ extern const unsigned int portFontBold_size;
 extern const unsigned char portFontMedium[];
 extern const unsigned int portFontMedium_size;
 }
+// tr.cpp: the system's Japanese merged into the font just added (or nullptr)
+ImFont* portTrMergeJapanese(float px);
 
 LauncherFonts gLauncherFonts;
 
@@ -122,9 +124,13 @@ extern "C" void portUiInit(void) {
   if (ImGui::GetIO().Fonts->Fonts.empty()) {
     ImGui::GetIO().Fonts->AddFontDefault();
   }
+  // each with the system's Japanese merged in (the menus in Japanese, port/settings/tr.cpp)
   gLauncherFonts.title = addFont(portFontBold, portFontBold_size, 42.f * load);
+  portTrMergeJapanese(42.f * load);
   gLauncherFonts.heading = addFont(portFontBold, portFontBold_size, 23.f * load);
+  portTrMergeJapanese(23.f * load);
   gLauncherFonts.body = addFont(portFontMedium, portFontMedium_size, 18.f * load);
+  portTrMergeJapanese(18.f * load);
 }
 
 void launcherStyleInit(float scale) {

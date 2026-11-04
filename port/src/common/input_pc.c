@@ -764,12 +764,71 @@ static void applyScript(PADStatus* pad) {
     sLeft--;
 }
 
+/* $TTYD_P2_PRESS=KEYS@F[+N][,...] (tests of the second player,
+ * second_player_pc.c): KEYS (a b x y z l r, and left right up down for the
+ * main stick at full tilt, joined with '+') held on controller 2 for N frames
+ * (default 2) from frame F of the script (counted from its first step, as its
+ * waits are: past a $TTYD_MAP warp) */
+static void applyP2(PADStatus* pad) {
+    static const char* sList;
+    static int sRead;
+    static u32 sClock;
+    const char* p;
+    if (!sRead) {
+        sRead = 1;
+        sList = getenv("TTYD_P2_PRESS");
+    }
+    if (sList == NULL || sState != 2) {
+        return;
+    }
+    sClock++;
+    for (p = sList; p != NULL && *p != '\0';) {
+        char keys[64], key[16];
+        unsigned at = 0, len = 2;
+        u16 bits = 0;
+        int sx = 0, sy = 0, n = 0;
+        const char* k;
+        if (sscanf(p, "%63[^@]@%u%n", keys, &at, &n) != 2) {
+            break;
+        }
+        if (p[n] == '+') {
+            len = (unsigned)atoi(p + n + 1);
+        }
+        for (k = keys; *k != '\0';) {
+            int kn = 0;
+            if (sscanf(k, "%15[^+]%n", key, &kn) != 1) {
+                break;
+            }
+            bits |= !strcmp(key, "a") ? PAD_BUTTON_A : !strcmp(key, "b") ? PAD_BUTTON_B : !strcmp(key, "x") ? PAD_BUTTON_X
+                    : !strcmp(key, "y") ? PAD_BUTTON_Y : !strcmp(key, "z") ? PAD_TRIGGER_Z : !strcmp(key, "l") ? PAD_TRIGGER_L
+                    : !strcmp(key, "r") ? PAD_TRIGGER_R : 0;
+            sx += !strcmp(key, "right") ? 70 : !strcmp(key, "left") ? -70 : 0;
+            sy += !strcmp(key, "up") ? 70 : !strcmp(key, "down") ? -70 : 0;
+            k += kn;
+            k += *k == '+';
+        }
+        if (sClock >= at && sClock < at + len) {
+            pad[1].err = PAD_ERR_NONE;
+            pad[1].button |= bits;
+            pad[1].stickX = (s8)sx;
+            pad[1].stickY = (s8)sy;
+            if (sClock == at) {
+                printf("[input] frame %u: controller 2 %s for %u\n", (unsigned)sFrame, keys, len);
+                fflush(stdout);
+            }
+        }
+        p = strchr(p, ',');
+        p = p != NULL ? p + 1 : NULL;
+    }
+}
+
 /* $TTYD_AC_CUE_PRESS=1 (tests of the Action Command cue): A pressed for two
  * frames each time the cue comes on (port/src/common/ac_cue_pc.c) */
 void portInputApply(PADStatus* pad) {
     static int sPrevCue, sHold;
     static int sCuePress = -1;
     applyScript(pad);
+    applyP2(pad);
     portMenuApplyPad(pad); /* the mouse's B and wheel in menus */
     if (sCuePress < 0) {
         sCuePress = getenv("TTYD_AC_CUE_PRESS") != NULL;

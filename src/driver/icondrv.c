@@ -161,6 +161,42 @@ inline IconEntry* iconGetEntry(const char* name) {
     return NULL;
 }
 
+#ifdef TARGET_PC
+/* Button prompts (port/settings/features/button_prompts.cpp): the textures
+ * of a GameCube button's icon (0 A, 1 B, 2 X, 3 Y, 4 Z, 5 L, 6 R, 7 Start),
+ * released or pressed, as battle_ac.c's BattleACGetButtonIcon pairs them and
+ * the message text's <icon PAD_A> & co. show them: up to max frames' texel
+ * pointers and sizes; 0 until icon.tpl and icon.bin are in. An animated icon
+ * (ANM_PAD_A) shows these same textures, so it follows. */
+int portButtonIconTextures(int button, int pressed, const void** data, int* width, int* height, int max) {
+    static const u16 kIcons[8][2] = {
+        {ICON_064, ICON_065}, {ICON_066, ICON_067}, {ICON_068, ICON_069}, {ICON_06A, ICON_06B},
+        {ICON_082, ICON_083}, {ICON_07E, ICON_07F}, {ICON_080, ICON_081}, {ICON_084, ICON_085},
+    };
+    IconBinData* bin;
+    int i, n;
+    if (button < 0 || button >= 8 || icon_tpl == NULL || !icon_tpl_ok || !icon_bin_ok) {
+        return 0;
+    }
+    bin = iconGetBinData(kIcons[button][pressed ? 1 : 0]);
+    if (bin == NULL) {
+        return 0;
+    }
+    n = bin->numIcons > 0 ? bin->numIcons : 1;
+    n = n < max ? n : max;
+    for (i = 0; i < n; i++) {
+        TEXDescriptor* d = TEXGet(icon_tpl, bin->frames[i].tplId);
+        if (d == NULL || d->textureHeader == NULL) {
+            return i;
+        }
+        data[i] = d->textureHeader->data;
+        width[i] = d->textureHeader->width;
+        height[i] = d->textureHeader->height;
+    }
+    return n;
+}
+#endif
+
 /** DVD read callback for icon.tpl: unpacks the texture palette, closes the file and marks the textures ready. */
 static void _callback_tpl(s32 error, DVDFileInfo* info) {
     DVDEntry* entry = info->cb.userData;

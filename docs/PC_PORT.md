@@ -167,14 +167,30 @@ The disc ID is checked against the build's version.
 
 The settings page (Aurora; `port/settings/settings_ui.cpp`): F1, a
 controller's Back/Select or a three-finger tap opens it; Escape or B closes
-it; F11 toggles fullscreen. Video: frame rate (60, 120, 144, 240, the
+it; F11 or Alt+Enter toggles fullscreen. The desktop window
+(`port/settings/features/window.cpp`) opens where it was left, at its size,
+maximized or full screen as it was, and never larger than the screen or off
+every screen; the first time, it fills about 80% of the screen at the
+picture's shape. Display > Window sizes it to 1x-4x the 640x480 picture or
+to the picture's shape, centres it, and can keep it above other windows.
+Video: frame rate (60, 120, 144, 240, the
 display's; docs/FRAME_INTERPOLATION.md), VSync, fullscreen, widescreen 16:9,
-internal resolution, a frame rate counter. Audio: volume, mute in the
-background. Gameplay (`port/include/port/gameplay.h`): fast-forward speed
+internal resolution, a frame rate counter. Audio
+(`port/settings/features/volume.cpp`): a mixer of master, music, sound
+effects and ambience, each with a mute button and an audio taper (50% sounds
+about half as loud), mute in the background, and the volume keys (F9
+quieter, F10 louder, Shift for steps of 1, F3 mute) with a bar on the
+screen. Gameplay (`port/include/port/gameplay.h`): fast-forward speed
 (2-8x) and hold or toggle, text speed, Mario's run speed, skip the intro (the
 logos at 16x, then the title without the story demo). Controls: rumble and
 its strength, and the on-screen controls' haptics, opacity, size and
 auto-run. System: pause and controllers in the background, the save folder.
+
+Controllers (Controls tab; `port/settings/features/controllers.cpp`):
+- **Mappings:** the community SDL_GameControllerDB is loaded at start (`port/assets/controllers`, about 2,300 models), then the player's own `<user>/gamecontrollerdb.txt`. Most controllers SDL doesn't know work as gamepads.
+- **The list:** each connected controller with its kind and battery. Each can be made player 1-4 (Aurora's ports), tested live (buttons, sticks, triggers), and given dead zones and trigger click points per player, saved with Aurora's mappings.
+- **Remapping:** Controller buttons remaps any player, not only the first.
+- **Set up a controller:** a controller SDL can't map (an old USB pad, an arcade stick) is set up by pressing each button when asked. The mapping takes effect at once and is added to `<user>/gamecontrollerdb.txt`.
 
 Save states (`port/src/aurora/savestate_aurora.c`; every Aurora build with
 static RELs: Windows, macOS, iOS, Linux, Android): F5 saves slot 1, F8 loads it, the settings page's
@@ -273,6 +289,60 @@ full width instead (full-screen layers). Full-screen quads drawn at the
 backdrop) use `WIDE_X(x)` (`include/wide_x.h`) to reach the widened edges.
 Offscreen render targets are not scaled. Interior rooms show black past their
 walls at the sides (the room ends there), as in other widescreen hacks.
+
+### Display options
+
+The Display tab (`port/settings/features/display.cpp`, applied once a frame
+by `port/src/aurora/display_aurora.c` through Aurora's display patches) holds
+the aspect ratio and widest picture, HUD size, anisotropic filtering, texture
+detail, supersampling, the picture filter, variable refresh rate, the
+performance overlay and HDR output. All are off, or the game's own, by
+default.
+
+HDR output (settings `hdr`, `hdr_paper_white`, `hdr_boost`; Aurora patch
+0014, `include/aurora/hdr.h`) presents the picture on an HDR display. The
+game draws in SDR as before, and so do its screen copies, the settings page
+and the other overlays. Only the window's swapchain changes: it becomes a 16-bit
+float surface in extended linear sRGB, and one last pass converts the
+finished SDR frame into it. That pass undoes the sRGB curve, scales white to
+the chosen paper white (80 to 400 nits, 200 by default), optionally raises
+whatever is close to white by up to 50% more (Highlight boost, 0 by default,
+judged by luminance so saturated colours are left alone), and never goes past
+the peak the display reports. On Windows the float surface is scRGB, where
+1.0 is 80 nits, so 200 nits is 2.5. On Macs and iPads the window's Metal
+layer is switched to extended dynamic range (EDR) in extended linear sRGB.
+EDR brightness is relative to the system's own white, which Aurora takes to
+be 100 nits, so there the paper white is a multiple of the system's white
+rather than an exact brightness. HDR10 (PQ, Rec. 2020) is not used: the
+only way to ask the bundled Dawn for a colour space (`SurfaceColorManagement`,
+given when the surface is made) is unsupported in some of its backends, and a
+surface that fails to be made would break SDR too.
+
+The option is greyed out, with a note saying why, unless SDL reports HDR on
+for the window's display (`SDL_PROP_WINDOW_HDR_ENABLED_BOOLEAN`) and the
+graphics backend can present it. That means Direct3D 12 or 11 on Windows, or
+Metal on macOS 10.12+ and iOS 16+, and the surface must offer an
+RGBA16Float format. Dawn's Vulkan and OpenGL swapchains only accept
+sRGB-nonlinear surfaces, so Linux, Android, and Windows when forced onto
+Vulkan stay SDR. If the window moves to a display without HDR, or HDR is
+turned off in the system, SDL sends `SDL_EVENT_WINDOW_HDR_STATE_CHANGED`
+and Aurora reconfigures the swapchain back to SDR. A switch left on from an
+HDR session can still be turned off while greyed out. With the option off,
+nothing changes: the swapchain, its format and the present passes are
+exactly as before, and no HDR pipeline or texture is created.
+
+Untested: the HDR path has not been run on any machine yet. It was written
+without a full build, so it has only been syntax-checked against the bundled
+Dawn and SDL3 headers, and its WGSL shader has not been compiled. Still to be
+checked on hardware: that Dawn's Direct3D 12 and 11 swapchains list
+RGBA16Float and that Windows shows them as scRGB; that Dawn leaves the
+CAMetalLayer's EDR settings alone after configuring it (Aurora sets them
+again after every configure to be safe); the brightness on a real HDR10
+monitor, a MacBook Pro XDR screen and an HDR iPad; and how the reported
+peak (`SDL_PROP_WINDOW_HDR_HEADROOM_FLOAT` times the SDR white level) is
+used on each system. Android HDR (an scRGB dataspace on the native window)
+would need Dawn's Vulkan swapchain to accept that colour space, so it is
+not done.
 
 ## iOS
 

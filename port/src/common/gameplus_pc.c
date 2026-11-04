@@ -79,10 +79,15 @@ int portGameplus(const char* key) {
 
 int (*gPortQuickSwapHeld)(void);
 int gPortQuickSwapTouch;
-static int sSwapPressed, sSwapHeld;
+static int sSwapPressed, sSwapHeld, sSwapCoop;
 
 void portQuickSwapPress(void) {
     sSwapPressed = 1;
+}
+
+void portQuickSwapPressCoop(void) {
+    sSwapPressed = 1;
+    sSwapCoop = 1;
 }
 
 int portQuickSwapPoll(int current) {
@@ -91,7 +96,7 @@ int portQuickSwapPoll(int current) {
     static const int kOrder[] = {1, 2, 5, 4, 6, 3, 7};
     const int held = (gPortQuickSwapHeld != NULL && gPortQuickSwapHeld()) || gPortQuickSwapTouch;
     PouchData* pouch;
-    int i, at = -1;
+    int i, at = -1, coop;
     if (held && !sSwapHeld) {
         sSwapPressed = 1;
     }
@@ -100,7 +105,9 @@ int portQuickSwapPoll(int current) {
         return -1;
     }
     sSwapPressed = 0;
-    if (!portGameplus("quick_swap")) {
+    coop = sSwapCoop; /* the second player's: whether Gameplay+'s quick-swap is on or not */
+    sSwapCoop = 0;
+    if (!portGameplus("quick_swap") && !coop) {
         return -1;
     }
     pouch = pouchGetPtr();

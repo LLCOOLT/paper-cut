@@ -262,6 +262,12 @@ static void _btlcmd_MakeActClassTable(BattleWork* wp) {
             cmd->act[num].enabled = 0;
             cmd->act[num].disableReason = 3;
         }
+#ifdef TARGET_PC
+        if (portChallenge("challenge_no_battle_items")) { // challenge: no items in battle
+            cmd->act[num].enabled = 0;
+            cmd->act[num].disableReason = 3;
+        }
+#endif
         cmd->act[num].name = msgSearch("btl_cmd_act_item");
         cmd->act[num].icon = ICON_14C;
         num++;

@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <aurora/aurora.h>
 #include <aurora/display.h>
+#include <aurora/hdr.h>
 #include <SDL3/SDL_timer.h>
 #include "port/display.h"
 #include "port/settings.h"
@@ -16,9 +17,13 @@ static int* sSuper;     /* supersample: 0 off, 1-3 2x 3x 4x */
 static int* sPost;      /* post_filter: 0 off, 1 CRT, 2 paper grain, 3 sharpen */
 static int* sVrr;       /* vrr */
 static int* sPerf;      /* perf_overlay: 0 off, 1 the frame-time graph, 2 with numbers */
+static int* sHdr;       /* hdr: HDR output where supported */
+static int* sHdrWhite;  /* hdr_paper_white: the SDR picture's white, in nits */
+static int* sHdrBoost;  /* hdr_boost: highlights raised by up to this percent of paper white */
 
 /* what Aurora was last given (-1: nothing yet) */
 static int sAnisoSet = -1, sLodSet = -1, sSuperSet = -1, sPostSet = -1, sVrrSet = -1;
+static int sHdrSet = -1, sHdrWhiteSet = -1, sHdrBoostSet = -1;
 
 /* frame timing: the time between presents, and the part of it spent
  * computing and drawing (the rest waits: pacing, vsync) */
@@ -38,6 +43,10 @@ static void declare(void) {
     sPost = portSettingsDeclare("post_filter", 0, 0, 3);
     sVrr = portSettingsDeclare("vrr", 0, 0, 1);
     sPerf = portSettingsDeclare("perf_overlay", 0, 0, 2);
+    sHdr = portSettingsDeclare("hdr", 0, 0, 1);
+    sHdrWhite = portSettingsDeclare("hdr_paper_white", 200, 80, 400);
+    sHdrBoost = portSettingsDeclare("hdr_boost", 0, 0, 50);
+    portTextureUpscaleStart(); /* once, before the game's first textures load */
     {
         const char* path = getenv("TTYD_PACING_LOG");
         if (path != NULL && path[0] != '\0') {
@@ -56,6 +65,26 @@ static float lodBias(int choice) {
 
 void portDisplayInit(void) {
     declare();
+}
+
+void portHdrApply(void) {
+    declare();
+    if (*sHdr == sHdrSet && *sHdrWhite == sHdrWhiteSet && *sHdrBoost == sHdrBoostSet) {
+        return;
+    }
+    sHdrSet = *sHdr;
+    sHdrWhiteSet = *sHdrWhite;
+    sHdrBoostSet = *sHdrBoost;
+    /* off: Aurora is left as it is (SDR) unless HDR was on */
+    aurora_set_hdr(sHdrSet != 0, (float)sHdrWhiteSet, (float)sHdrBoostSet / 100.0f);
+}
+
+int portHdrSupported(void) {
+    return aurora_hdr_supported() ? 1 : 0;
+}
+
+int portHdrActive(void) {
+    return aurora_hdr_active() ? 1 : 0;
 }
 
 void portDisplayFrameStart(void) {
@@ -92,6 +121,7 @@ void portDisplayFrame(void) {
         sVrrSet = *sVrr;
         aurora_set_vrr(sVrrSet != 0);
     }
+    portHdrApply();
     if (sLastEnd != 0 && sStart != 0) {
         const float interval = (float)(now - sLastEnd) / 1e6f;
         const Uint64 from = sStart > sLastEnd ? sStart : sLastEnd;
