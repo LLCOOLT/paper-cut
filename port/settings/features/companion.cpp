@@ -6,6 +6,7 @@
 // Android's presenter is in Java (port/android, TtydCompanion.java); iOS has
 // none yet.
 #include "port/companion.h"
+#include "port/companion_menu.h"
 #include "port/settings.h"
 #include "port/tr.h"
 #include "../launcher_style.h"
@@ -28,6 +29,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <set>
+#include <vector>
 
 extern "C" {
 extern const unsigned char portFontBold[];
@@ -54,6 +56,9 @@ constexpr ImU32 kMuted = IM_COL32(128, 98, 74, 255);
 
 SDL_Window* sWindow;
 SDL_Renderer* sRenderer;
+SDL_Texture* sMenuTex; // the second screen's Start menu's picture (companion_menu.h)
+unsigned sMenuSeen;
+std::vector<unsigned char> sMenuPixels;
 ImGuiContext* sCtx;
 bool sFailed, sCloseAsked, sFontsDirty;
 Uint64 sLastDraw, sLastFonts;
@@ -156,12 +161,12 @@ void placeWindow(int* x, int* y, int* w, int* h) {
   SDL_Rect r{0, 0, 0, 0};
   if (d == 0 || !SDL_GetDisplayUsableBounds(d, &r) || r.w <= 0 || r.h <= 0) {
     *x = *y = SDL_WINDOWPOS_UNDEFINED;
-    *w = static_cast<int>(480 * scale);
-    *h = static_cast<int>(720 * scale);
+    *w = static_cast<int>(600 * scale);
+    *h = static_cast<int>(560 * scale);
     return;
   }
-  *w = std::min(static_cast<int>(480 * scale), r.w);
-  *h = std::min(static_cast<int>(760 * scale), r.h - static_cast<int>(40 * scale));
+  *w = std::min(static_cast<int>(600 * scale), r.w);
+  *h = std::min(static_cast<int>(560 * scale), r.h - static_cast<int>(40 * scale));
   if (other != 0) {
     *x = r.x + (r.w - *w) / 2;
     *y = r.y + (r.h - *h) / 2;
@@ -189,7 +194,7 @@ bool openWindow() {
   int x, y, w, h;
   placeWindow(&x, &y, &w, &h);
   SDL_PropertiesID props = SDL_CreateProperties();
-  SDL_SetStringProperty(props, SDL_PROP_WINDOW_CREATE_TITLE_STRING, portTr("Paper Cut companion"));
+  SDL_SetStringProperty(props, SDL_PROP_WINDOW_CREATE_TITLE_STRING, "Paper Cut second screen"); // tests and development only
   SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_X_NUMBER, x);
   SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_Y_NUMBER, y);
   SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_WIDTH_NUMBER, w);
@@ -244,6 +249,10 @@ void closeWindow() {
   ImGui::DestroyContext(sCtx);
   ImGui::SetCurrentContext(prev != sCtx ? prev : nullptr);
   sCtx = nullptr;
+  if (sMenuTex != nullptr) {
+    SDL_DestroyTexture(sMenuTex);
+    sMenuTex = nullptr;
+  }
   SDL_DestroyRenderer(sRenderer);
   SDL_DestroyWindow(sWindow);
   sRenderer = nullptr;
@@ -647,7 +656,123 @@ void battlePanel(const PortCompanionSnapshot& s) {
   }
 }
 
+// --- The Start menu: the game's own, its picture with buttons under it ---
+
+// the picture as last read back, in its texture; false: none yet
+bool menuPicture() {
+  if (!portCompanionMenuReady()) {
+    return false;
+  }
+  if (sMenuPixels.empty()) {
+    sMenuPixels.resize(PORT_COMPANION_MENU_W * PORT_COMPANION_MENU_H * 4);
+  }
+  const unsigned before = sMenuSeen;
+  if (portCompanionMenuPicture(sMenuPixels.data(), &sMenuSeen) == 0) {
+    return false;
+  }
+  if (sMenuTex == nullptr) {
+    sMenuTex = SDL_CreateTexture(sRenderer, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STREAMING,
+                                 PORT_COMPANION_MENU_W, PORT_COMPANION_MENU_H);
+    if (sMenuTex == nullptr) {
+      return false;
+    }
+    SDL_SetTextureScaleMode(sMenuTex, SDL_SCALEMODE_LINEAR);
+    sMenuSeen = 0;
+  }
+  if (sMenuSeen != before || before == 0) {
+    SDL_UpdateTexture(sMenuTex, nullptr, sMenuPixels.data(), PORT_COMPANION_MENU_W * 4);
+  }
+  return true;
+}
+
+// a round button with a letter or an arrow (dir 0-3: up, down, left, right); true when clicked
+bool menuButton(ImDrawList* dl, ImVec2 c, float r, const char* letter, int dir, ImU32 face) {
+  const ImVec2 m = ImGui::GetIO().MousePos;
+  const bool over = (m.x - c.x) * (m.x - c.x) + (m.y - c.y) * (m.y - c.y) <= r * r;
+  const bool down = over && ImGui::IsMouseDown(0);
+  dl->AddCircleFilled(ImVec2(c.x, c.y + px(2)), r, IM_COL32(0, 0, 0, 90));
+  dl->AddCircleFilled(ImVec2(c.x, c.y + (down ? px(1) : 0.f)), r, face);
+  dl->AddCircle(ImVec2(c.x, c.y + (down ? px(1) : 0.f)), r, kGold, 0, px(2));
+  const float y = c.y + (down ? px(1) : 0.f);
+  if (letter != nullptr) {
+    ImFont* f = sBig != nullptr ? sBig : ImGui::GetFont();
+    const float size = r * 1.1f;
+    const ImVec2 t = f->CalcTextSizeA(size, FLT_MAX, 0.f, letter);
+    dl->AddText(f, size, ImVec2(c.x - t.x / 2, y - t.y / 2), IM_COL32(255, 255, 255, 255), letter);
+  } else {
+    const float a = r * 0.45f;
+    ImVec2 p[3];
+    switch (dir) {
+    case 0: p[0] = {c.x, y - a}; p[1] = {c.x + a, y + a * 0.7f}; p[2] = {c.x - a, y + a * 0.7f}; break;
+    case 1: p[0] = {c.x, y + a}; p[1] = {c.x - a, y - a * 0.7f}; p[2] = {c.x + a, y - a * 0.7f}; break;
+    case 2: p[0] = {c.x - a, y}; p[1] = {c.x + a * 0.7f, y - a}; p[2] = {c.x + a * 0.7f, y + a}; break;
+    default: p[0] = {c.x + a, y}; p[1] = {c.x - a * 0.7f, y + a}; p[2] = {c.x - a * 0.7f, y - a}; break;
+    }
+    dl->AddTriangleFilled(p[0], p[1], p[2], IM_COL32(255, 255, 255, 255));
+  }
+  return over && ImGui::IsMouseClicked(0);
+}
+
+void drawMenu() {
+  const ImVec2 size = ImGui::GetIO().DisplaySize;
+  ImDrawList* dl = ImGui::GetBackgroundDrawList();
+  dl->AddRectFilledMultiColor(ImVec2(0, 0), size, kNight, kNight, kNight2, kNight2);
+  // the picture, 4:3, as wide as it fits above the buttons
+  const float barH = std::min(px(96), size.y * 0.3f);
+  float w = size.x, h = w * 0.75f;
+  if (h > size.y - barH) {
+    h = size.y - barH;
+    w = h / 0.75f;
+  }
+  const ImVec2 p0((size.x - w) / 2, std::max(0.f, (size.y - barH - h) / 2));
+  const ImVec2 p1(p0.x + w, p0.y + h);
+  dl->AddImage(reinterpret_cast<ImTextureID>(sMenuTex), p0, p1);
+  const ImVec2 m = ImGui::GetIO().MousePos;
+  if (ImGui::IsMouseClicked(0) && m.x >= p0.x && m.x < p1.x && m.y >= p0.y && m.y < p1.y) {
+    portCompanionMenuTap((m.x - p0.x) / w, (m.y - p0.y) / h);
+  }
+  // under it: L and the arrows on the left, B and A on the right, R between
+  const float r = std::min(barH * 0.3f, size.x / 30.f);
+  const float cy = std::min(size.y - barH / 2, p1.y + barH / 2);
+  const float step = r * 2.5f;
+  float x = r * 1.6f;
+  struct Btn {
+    const char* letter;
+    int dir, button;
+    ImU32 face;
+  };
+  const ImU32 grey = IM_COL32(110, 96, 140, 255);
+  const Btn left[] = {{"L", 0, PORT_COMPANION_BUTTON_L, grey},
+                      {nullptr, 2, PORT_COMPANION_BUTTON_LEFT, grey},
+                      {nullptr, 0, PORT_COMPANION_BUTTON_UP, grey},
+                      {nullptr, 1, PORT_COMPANION_BUTTON_DOWN, grey},
+                      {nullptr, 3, PORT_COMPANION_BUTTON_RIGHT, grey},
+                      {"R", 0, PORT_COMPANION_BUTTON_R, grey}};
+  for (const Btn& b : left) {
+    if (menuButton(dl, ImVec2(x, cy), r, b.letter, b.dir, b.face)) {
+      portCompanionMenuButton(b.button);
+    }
+    x += step;
+  }
+  if (menuButton(dl, ImVec2(size.x - r * 1.6f - step * 3, cy), r * 0.85f, "X", 0, grey)) {
+    portCompanionMenuButton(PORT_COMPANION_BUTTON_X);
+  }
+  if (menuButton(dl, ImVec2(size.x - r * 1.6f - step * 2, cy), r * 0.85f, "Y", 0, grey)) {
+    portCompanionMenuButton(PORT_COMPANION_BUTTON_Y);
+  }
+  if (menuButton(dl, ImVec2(size.x - r * 1.6f - step, cy), r, "B", 0, IM_COL32(220, 180, 40, 255))) {
+    portCompanionMenuButton(PORT_COMPANION_BUTTON_B);
+  }
+  if (menuButton(dl, ImVec2(size.x - r * 1.6f, cy), r * 1.15f, "A", 0, IM_COL32(40, 170, 120, 255))) {
+    portCompanionMenuButton(PORT_COMPANION_BUTTON_A);
+  }
+}
+
 void drawUi() {
+  if (menuPicture()) {
+    drawMenu();
+    return;
+  }
   const PortCompanionSnapshot& s = sSnap;
   const ImVec2 size = ImGui::GetIO().DisplaySize;
   ImDrawList* bg = ImGui::GetBackgroundDrawList();
@@ -728,25 +853,24 @@ void drawWindow() {
 
 #endif // COMPANION_WINDOW
 
+#ifdef __ANDROID__
+// the setting only on a dual-screen device (TtydCompanion.java tells)
+int dualScreen() {
+  return portCompanionDualScreen();
+}
+
 const bool sAdded = [] {
   portCompanionSetting(); // declared at start, so the launcher's Settings tab has it
-#ifdef COMPANION_WINDOW
-  static const char* const kChoices[] = {"Off", "Window"};
-  portSettingsAddChoice("Display", "Second screen",
-                        "A window of its own with the Start menu's information live, the map and the battle; on "
-                        "another monitor when there is one. A tap there uses an item or switches partners.",
-                        0, "second_screen", kChoices, 2,
-                        "companion dual screen monitor second window party items badges map battle tattle");
-#elif defined(__ANDROID__)
   static const char* const kChoices[] = {"Off", "On"};
   portSettingsAddChoice("Display", "Second screen",
-                        "On a device with a second display (a dual-screen handheld, a connected screen): the Start "
-                        "menu's information live, the map and the battle there.",
+                        "On a device with a second screen of its own (a dual-screen handheld): the Start menu "
+                        "there, live while you play.",
                         0, "second_screen", kChoices, 2,
-                        "companion dual screen display thor second party items badges map battle tattle");
-#endif
+                        "companion dual screen display thor second start menu party items badges");
+  portSettingsSetShown("second_screen", dualScreen);
   return true;
 }();
+#endif
 
 } // namespace
 
@@ -773,15 +897,13 @@ extern "C" int portCompanionEvent(const void* sdlEvent) {
 
 extern "C" void portCompanionDraw(void) {
 #ifdef COMPANION_WINDOW
+  static bool sClosed;
   if (sCloseAsked) {
-    // closed with its own button: the setting goes off
+    // closed with its own button: for the rest of the run
     sCloseAsked = false;
-    if (int* v = portSettingsFind("second_screen")) {
-      *v = 0;
-      portSettingsSave();
-    }
+    sClosed = true;
   }
-  if (portCompanionSetting() == 0 || aurora_get_window() == nullptr) {
+  if (sClosed || portCompanionSetting() == 0 || aurora_get_window() == nullptr) {
     closeWindow();
     sFailed = false;
     return;

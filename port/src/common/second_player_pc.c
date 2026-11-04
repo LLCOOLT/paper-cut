@@ -354,6 +354,8 @@ int portCoopPartnerWalk(PartyEntry* party) {
 
 #define NOTICE_FRAMES 210
 
+extern BinaryFontHeader* pfh; /* fontmgr.c: the font, NULL until the logos load it */
+
 static struct {
     const char* text; /* English (portTrGame at drawing) */
     int age;
@@ -473,7 +475,8 @@ static void seenFrame(void) {
         }
         sHad = has;
     }
-    if (sNotice.text != NULL) {
+    /* (an online game can end before the logos load the font: the notice waits for it) */
+    if (sNotice.text != NULL && pfh != NULL) {
         if (++sNotice.age >= NOTICE_FRAMES) {
             sNotice.text = NULL;
         } else if (!gp->inBattle) {

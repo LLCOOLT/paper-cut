@@ -20,6 +20,7 @@
 #include "port/practice.h"
 #include "port/display.h"
 #include "port/online.h"
+#include "port/companion_menu.h"
 #include "port/companion.h"
 #ifdef PORT_TOUCH_OVERLAY
 #include "port/touch_overlay.h"
@@ -190,6 +191,7 @@ void VIWaitForRetrace(void) {
         portResume();
     }
     portAuroraBeginFrame();
+    portCompanionMenuFrame(); /* the second screen's Start menu, drawn before the game's frame (companion_menu_aurora.c) */
 }
 
 void VISetNextFrameBuffer(void* fb) {}

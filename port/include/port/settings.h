@@ -143,6 +143,9 @@ void portSettingsAddChoice(const char* tab, const char* label, const char* note,
                            const char* const* choices, int count, const char* keywords);
 void portSettingsAddSlider(const char* tab, const char* label, const char* note, unsigned flags, const char* key,
                            int min, int max, const char* format, const char* keywords);
+/* A feature's control (by its key) shown only while shown() says so (a
+ * device's second display, say); call after adding it. */
+void portSettingsSetShown(const char* key, int (*shown)(void));
 /* A section the feature draws itself with Dear ImGui (buttons, lists): draw is
  * called where the item goes (inGame: the page is open over a running game,
  * not the launcher's); search finds it by label, note and keywords. */

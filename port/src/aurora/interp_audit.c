@@ -29,6 +29,9 @@ extern void* heapStart[];
 extern void* heapEnd[];
 
 static int sOn = -1;
+static int sCompanionOn = -1; /* $TTYD_COMPANION_AUDIT: the same for the second screen's menu's frames */
+static int sSetUpDone;
+static const char* sTag = "interp-audit";
 static u8* sHeapLo;
 static u8* sHeapHi;
 static volatile LONG sArmed;
@@ -169,13 +172,18 @@ static void report(void) {
         }
         if (j == sPrintedCount && sPrintedCount < MAX_SITES) {
             memcpy(sPrinted[sPrintedCount++], name, sizeof(name));
-            printf("[interp-audit] %s\n", name);
+            printf("[%s] %s\n", sTag, name);
         }
     }
     fflush(stdout);
 }
 
 static void setup(void) {
+    if (sSetUpDone) {
+        return;
+    }
+    sSetUpDone = 1;
+    {
     IMAGE_DOS_HEADER* dos = (IMAGE_DOS_HEADER*)GetModuleHandleA(NULL);
     IMAGE_NT_HEADERS* nt = (IMAGE_NT_HEADERS*)((u8*)dos + dos->e_lfanew);
     IMAGE_SECTION_HEADER* s = IMAGE_FIRST_SECTION(nt);
@@ -190,21 +198,12 @@ static void setup(void) {
     }
     AddVectoredExceptionHandler(1, onWrite);
     atexit(report);
+    }
 }
 
-/* Around the in-between frame's draw. */
-void portInterpAuditBegin(void) {
+static void auditBegin(void) {
     DWORD old;
     int i;
-    if (sOn < 0) {
-        sOn = getenv("TTYD_INTERP_AUDIT") != NULL;
-        if (sOn) {
-            setup();
-        }
-    }
-    if (!sOn) {
-        return;
-    }
     for (i = 0; i < sSectionCount; i++) {
         memcpy(sSections[i].copy, sSections[i].lo, sSections[i].size);
     }
@@ -218,13 +217,10 @@ void portInterpAuditBegin(void) {
     VirtualProtect(sHeapLo, sHeapHi - sHeapLo, PAGE_READONLY, &old);
 }
 
-void portInterpAuditEnd(void) {
+static void auditEnd(void) {
     static u32 sFrames;
     DWORD old;
     int i;
-    if (!sOn) {
-        return;
-    }
     sArmed = 0;
     VirtualProtect(sHeapLo, sHeapHi - sHeapLo, PAGE_READWRITE, &old);
     for (i = 0; i < sSectionCount; i++) {
@@ -248,7 +244,49 @@ void portInterpAuditEnd(void) {
         report();
     }
 }
+
+/* Around the in-between frame's draw. */
+void portInterpAuditBegin(void) {
+    if (sOn < 0) {
+        sOn = getenv("TTYD_INTERP_AUDIT") != NULL;
+        if (sOn) {
+            setup();
+        }
+    }
+    if (sOn) {
+        sTag = "interp-audit";
+        auditBegin();
+    }
+}
+
+void portInterpAuditEnd(void) {
+    if (sOn) {
+        auditEnd();
+    }
+}
+
+/* Around a frame of the second screen's menu (companion_menu_aurora.c). */
+void portCompanionAuditBegin(void) {
+    if (sCompanionOn < 0) {
+        sCompanionOn = getenv("TTYD_COMPANION_AUDIT") != NULL;
+        if (sCompanionOn) {
+            setup();
+        }
+    }
+    if (sCompanionOn) {
+        sTag = "companion-audit";
+        auditBegin();
+    }
+}
+
+void portCompanionAuditEnd(void) {
+    if (sCompanionOn) {
+        auditEnd();
+    }
+}
 #else
 void portInterpAuditBegin(void) {}
 void portInterpAuditEnd(void) {}
+void portCompanionAuditBegin(void) {}
+void portCompanionAuditEnd(void) {}
 #endif

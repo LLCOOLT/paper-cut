@@ -49,6 +49,10 @@ static struct {
 } sMine[16];
 
 static u64 sHash;
+/* the hash after each part (the clock and state, Mario, the partner, the
+ * events, the NPCs): the tests' file names the part that went out of step
+ * first ($TTYD_FINGERPRINT_PARTS) */
+static u64 sParts[5];
 
 static void mix(const void* data, size_t len) {
     const u8* p = (const u8*)data;
@@ -87,15 +91,19 @@ unsigned long long portOnlineFingerprint(void) {
     mixU32((u32)seqGetSeq());
     mix(gp->currentMapName, sizeof(gp->currentMapName));
     mixU32((u32)gp->inBattle);
+    memset(sParts, 0, sizeof(sParts));
+    sParts[0] = sHash;
     mario = marioGetPtr();
     if (mario == NULL) {
         return sHash; /* the game still starting (DEMOInit's frames): nothing else is there yet */
     }
     mixVec(&mario->position);
+    sParts[1] = sHash;
     party = partyGetPtr(marioGetPartyId());
     if (party != NULL) {
         mixVec(&party->position);
     }
+    sParts[2] = sHash;
     ew = evtGetWork();
     if (ew != NULL) {
         mix(ew->gfData, sizeof(ew->gfData));
@@ -108,12 +116,14 @@ unsigned long long portOnlineFingerprint(void) {
             }
         }
     }
+    sParts[3] = sHash;
     nw = npcGetWorkPtr();
     for (i = 0; nw != NULL && i < nw->count; i++) {
         if (nw->entries[i].flags & 1) {
             mixVec(&nw->entries[i].position);
         }
     }
+    sParts[4] = sHash;
     if (gp->inBattle && _battleWorkPointer != NULL) {
         for (i = 0; i < BATTLE_UNIT_MAX; i++) {
             BattleUnit* unit = _battleWorkPointer->units[i];
@@ -247,16 +257,33 @@ void portOnlineApplyPad(PADStatus* pads) {
  * tests' fingerprint file */
 void portOnlineFrame(void) {
     static FILE* sFile;
-    static int sOpened;
+    static int sOpened, sPartsWanted;
     unsigned i;
     if (!sOpened) {
         const char* path = getenv("TTYD_FINGERPRINT");
         sOpened = 1;
         sFile = path != NULL ? fopen(path, "w") : NULL;
+        sPartsWanted = getenv("TTYD_FINGERPRINT_PARTS") != NULL;
     }
     if (sFile != NULL && gp != NULL) {
-        fprintf(sFile, "%u %016llx %s\n", gp->retraceCount, (unsigned long long)portOnlineFingerprint(),
+        fprintf(sFile, "%u %016llx %s", gp->retraceCount, (unsigned long long)portOnlineFingerprint(),
                 gp->currentMapName);
+        if (sPartsWanted) {
+            const MarioWork* mario = marioGetPtr();
+            for (i = 0; i < 5; i++) {
+                fprintf(sFile, " %c%016llx", "smpen"[i], (unsigned long long)sParts[i]);
+            }
+            if (mario != NULL) {
+                const u32* p = (const u32*)&mario->position;
+                const PartyEntry* party = partyGetPtr(marioGetPartyId());
+                fprintf(sFile, " mario %08x %08x %08x", (unsigned)p[0], (unsigned)p[1], (unsigned)p[2]);
+                if (party != NULL) {
+                    const u32* q = (const u32*)&party->position;
+                    fprintf(sFile, " party %08x %08x %08x", (unsigned)q[0], (unsigned)q[1], (unsigned)q[2]);
+                }
+            }
+        }
+        fputc('\n', sFile);
         fflush(sFile);
     }
     if (!sActive) {

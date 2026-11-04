@@ -1,4 +1,10 @@
 // Pause menu: the item window (items, important items, mail and the Koopa book).
+#ifdef TARGET_PC
+/* the Start menu's statics in a block of their own, the second screen's menu's while it runs (port/companion_section.h) */
+#define PORT_SECTION_MENU
+#include "port/companion_section.h"
+#include "port/companion_menu.h"
+#endif
 #include "port_hook.h"
 #include "version.h"
 #include "pc_call.h"
@@ -218,6 +224,9 @@ void PORT_HOOKABLE(winItemInit)(WindowWork* w) {
     w->item.bookY = w->item.bookTgtY = -240.0f;
     w->item.mailX = w->item.mailTgtX = 320.0f;
     w->item.mailY = w->item.mailTgtY = -240.0f;
+#ifdef TARGET_PC
+    if (!gPortCompanionMenu) /* the second screen's menu leaves the pouch as it is */
+#endif
     if (!pouchCheckItem(ITEM_MAILBOX_SP)) {
         pouchGetItem(ITEM_MAILBOX_SP);
     }
@@ -501,10 +510,16 @@ s32 PORT_HOOKABLE(winItemMain)(WindowWork* w) {
             break;
         case 200:
             if (w->buttonTrg & PAD_BUTTON_A) {
-                if ((s32)pouchCheckMail(w->item.mail[w->item.mailSel].id) == 1) {
-                    pouchOpenMail(w->item.mail[w->item.mailSel].id);
+#ifdef TARGET_PC
+                /* the second screen's menu reads it, the game's mail stays as it was */
+                if (!gPortCompanionMenu)
+#endif
+                {
+                    if ((s32)pouchCheckMail(w->item.mail[w->item.mailSel].id) == 1) {
+                        pouchOpenMail(w->item.mail[w->item.mailSel].id);
+                    }
+                    swSet(GSWF_MAIL_OPENED_ONCE);
                 }
-                swSet(GSWF_MAIL_OPENED_ONCE);
                 psndSFXOn(SFX_NAME_WORD(0x20036));
                 w->item.state = 201;
                 mail = mailGetPtr(w->item.mail[w->item.mailSel].id);
@@ -669,6 +684,12 @@ s32 PORT_HOOKABLE(winItemMain)(WindowWork* w) {
                 if (w->item.useTarget > 1 && !marioBgmodeChk()) {
                     ok = 1;
                 }
+#ifdef TARGET_PC
+                /* the second screen's menu: any target as the menu closes (the game uses it, as a tap) */
+                if (gPortCompanionMenu) {
+                    ok = 0;
+                }
+#endif
                 if (!ok) {
                     winMgrClose(w->useWin[0]);
                     winMgrClose(w->useWin[1]);

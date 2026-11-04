@@ -299,6 +299,22 @@ void PORT_HOOKABLE(winMgrInit)(void) {
     memset(wp->entries, 0, wp->numEntries * sizeof(WinMgrEntry));
 }
 
+#ifdef TARGET_PC
+/* The second screen's Start menu (port/companion_menu.h): window slots of its
+ * own (made in its memory), swapped in for its frames. */
+void portWinMgrWorkInit(WinMgrWork* w) {
+    w->numEntries = 32;
+    w->entries = (WinMgrEntry*)__memAlloc(HEAP_DEFAULT, w->numEntries * sizeof(WinMgrEntry));
+    memset(w->entries, 0, w->numEntries * sizeof(WinMgrEntry));
+}
+
+WinMgrWork* portWinMgrSwapWork(WinMgrWork* w) {
+    WinMgrWork* old = wp;
+    wp = w;
+    return old;
+}
+#endif
+
 /** Clears every window slot; called on a map change so no window survives into the next map. */
 void PORT_HOOKABLE(winMgrReInit)(void) {
     memset(wp->entries, 0, wp->numEntries * sizeof(WinMgrEntry));

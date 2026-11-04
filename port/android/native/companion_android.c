@@ -4,6 +4,7 @@
 #include <jni.h>
 #include <stdlib.h>
 #include "port/companion.h"
+#include "port/companion_menu.h"
 #include "port/tr.h"
 
 JNIEXPORT jboolean JNICALL Java_dev_ttyd_port_TtydCompanion_enabled(JNIEnv* env, jclass cls) {
@@ -45,4 +46,52 @@ JNIEXPORT jstring JNICALL Java_dev_ttyd_port_TtydCompanion_tr(JNIEnv* env, jclas
     out = (*env)->NewStringUTF(env, portTr(en)); /* made before en is let go: it may be en itself */
     (*env)->ReleaseStringUTFChars(env, english, en);
     return out;
+}
+
+/* --- the second screen's Start menu (port/include/port/companion_menu.h) --- */
+
+JNIEXPORT jboolean JNICALL Java_dev_ttyd_port_TtydCompanion_menuReady(JNIEnv* env, jclass cls) {
+    (void)env;
+    (void)cls;
+    return portCompanionMenuReady() != 0;
+}
+
+/* The picture into out (ARGB, PORT_COMPANION_MENU_W x _H) when newer than
+ * seen; returns its serial (0: none yet). */
+JNIEXPORT jint JNICALL Java_dev_ttyd_port_TtydCompanion_menuPicture(JNIEnv* env, jclass cls, jintArray out, jint seen) {
+    static unsigned char sRgba[PORT_COMPANION_MENU_W * PORT_COMPANION_MENU_H * 4];
+    static jint sArgb[PORT_COMPANION_MENU_W * PORT_COMPANION_MENU_H];
+    unsigned now = (unsigned)seen;
+    unsigned serial;
+    int i;
+    (void)cls;
+    serial = portCompanionMenuPicture(sRgba, &now);
+    if (serial != 0 && now != (unsigned)seen && out != NULL &&
+        (*env)->GetArrayLength(env, out) >= PORT_COMPANION_MENU_W * PORT_COMPANION_MENU_H) {
+        for (i = 0; i < PORT_COMPANION_MENU_W * PORT_COMPANION_MENU_H; i++) {
+            const unsigned char* p = sRgba + i * 4;
+            sArgb[i] = (jint)(0xFF000000u | ((unsigned)p[0] << 16) | ((unsigned)p[1] << 8) | p[2]);
+        }
+        (*env)->SetIntArrayRegion(env, out, 0, PORT_COMPANION_MENU_W * PORT_COMPANION_MENU_H, sArgb);
+    }
+    return (jint)serial;
+}
+
+JNIEXPORT void JNICALL Java_dev_ttyd_port_TtydCompanion_menuTap(JNIEnv* env, jclass cls, jfloat x, jfloat y) {
+    (void)env;
+    (void)cls;
+    portCompanionMenuTap(x, y);
+}
+
+JNIEXPORT void JNICALL Java_dev_ttyd_port_TtydCompanion_menuButton(JNIEnv* env, jclass cls, jint button) {
+    (void)env;
+    (void)cls;
+    portCompanionMenuButton(button);
+}
+
+/* The device has a second display of its own: the setting shows. */
+JNIEXPORT void JNICALL Java_dev_ttyd_port_TtydCompanion_setDualScreen(JNIEnv* env, jclass cls, jboolean dual) {
+    (void)env;
+    (void)cls;
+    portCompanionSetDualScreen(dual ? 1 : 0);
 }

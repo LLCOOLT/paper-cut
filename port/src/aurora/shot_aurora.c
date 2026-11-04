@@ -182,6 +182,13 @@ static void writePng(const char* path, const u8* rgb, u32 w, u32 h) {
     free(png);
 }
 
+/* name.png in $TTYD_SHOT_DIR (the second screen's Start menu's picture, tests). */
+void portShotWriteNamed(const char* name, const u8* rgb, u32 w, u32 h) {
+    char path[300];
+    snprintf(path, sizeof(path), "%s/%s.png", dir(), name);
+    writePng(path, rgb, w, h);
+}
+
 /* GameCube RGBA8: 4x4 tiles of 64 bytes, 16 AR pairs then 16 GB pairs. */
 static void untile(const u8* tex, u8* rgb) {
     u32 tx, ty, i;

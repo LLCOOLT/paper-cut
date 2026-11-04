@@ -472,8 +472,10 @@ int portOnlineHost(int port, const PortOnlineHello* me) {
     memset(&addr, 0, sizeof(addr));
     addr.sin6_family = AF_INET6;
     addr.sin6_port = htons((unsigned short)port);
-    /* tests ($TTYD_ONLINE_HOST): this computer only, no firewall's question */
-    addr.sin6_addr = getenv("TTYD_ONLINE_HOST") != NULL ? in6addr_loopback : in6addr_any;
+    /* tests ($TTYD_ONLINE_HOST): this computer only, no firewall's question,
+       unless $TTYD_ONLINE_LAN (a test between two computers) */
+    addr.sin6_addr = getenv("TTYD_ONLINE_HOST") != NULL && getenv("TTYD_ONLINE_LAN") == NULL ? in6addr_loopback
+                                                                                             : in6addr_any;
     if (bind(sListen, (struct sockaddr*)&addr, sizeof(addr)) != 0 || listen(sListen, 1) != 0) {
         fail("That port is in use on this computer: choose another.");
         return 0;

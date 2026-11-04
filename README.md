@@ -22,7 +22,7 @@ The game code is C, from the decompilation in [LLCOOLT/ttyd](https://github.com/
   <img src="docs/images/gif-free-camera.gif" alt="The free camera" width="49%">
   <img src="docs/images/shot-mirror.jpg" alt="Mirror mode" width="49%">
   <img src="docs/images/shot-start-settings.jpg" alt="The settings in the game's own Start menu" width="49%">
-  <img src="docs/images/shot-second-screen.jpg" alt="The second screen on a dual-screen handheld: party, map and battle" width="98%">
+  <img src="docs/images/shot-second-screen.jpg" alt="A dual-screen handheld: the game on the upper screen, its own Start menu's Party tab live on the lower one" width="45%">
 </p>
 
 ## Getting started
@@ -56,6 +56,14 @@ Change any of them under Settings > Controls > Keyboard keys. The port's own key
 - **A second player plays the partner:** in battle its moves, action commands and guards; in the field it walks anywhere with its own stick, hops, talks to people, hits blocks, uses its ability and switches partners. Mario calls it back with Y. "1P" and "2P" over the characters show who's who.
 - **Joining:** with co-op on, A on another controller joins as player 2. The Players section (Controls) shows who is who, and picks player 2's controller by a press; a keyboard and one pad are enough.
 - **Online co-op:** the launcher's Online tab. The host waits and shares their address; the other player joins with it. Both need Paper Cut and their own disc of the same release, and any platform plays with any other (Windows, Mac, Linux, iPhone, Android). Both games run in lockstep: only the controllers' input crosses the network, each frame, and the games check every second that they're still the same. The guest plays on the host's save and settings for the session, with their own display, sound and controls; their own saves aren't touched.
+
+**Playing online, step by step**
+1. Both players: the same Paper Cut version, and a disc of the same release (both US, both JP or both EU) in the launcher's library.
+2. The host: the launcher's **Online** tab, **Host a game** (port 47700 unless you change it), then **Host**. The tab shows your address; send it to the other player.
+3. The other player: **Join a game**, the host's address, then **Join**.
+4. The host: **Start from the title** or **Continue where you left off**, then **Start**. Both games start together.
+
+On the same home network, the address shown works as it is. Over the internet, the host forwards the port (TCP 47700) on their router to their computer, or both players join the same [Tailscale](https://tailscale.com) or [ZeroTier](https://www.zerotier.com) network and use its address. Save states, fast-forward, frame advance, warps and the Practice tab's editors are off while playing online, so both games stay the same.
 
 **A second screen** on dual-screen handhelds like the AYN Thor (Android): the game's own Start menu, live on the lower screen while you play on the upper one, navigated by touch. Using an item or switching partners from it works as in the menu. It's only there on devices with a second built-in screen.
 
@@ -123,8 +131,9 @@ See [docs/MODDING.md](docs/MODDING.md), [docs/MODES.md](docs/MODES.md) and [docs
 | Windows (x86-64) | Plays. Every map boots and runs on JP, US and EU; the battle and story sweeps pass on JP and US. Built with clang. |
 | macOS (arm64, x86-64) | Plays (the Aurora `.app`). Every map boots. |
 | iOS | Plays on a device (iPhone) and in the Simulator. Disc image in the app's Documents. |
-| Linux (x86-64, aarch64) | x86-64 builds on Ubuntu 24.04 (CI, in a container): every map boots and saves work, headless. Not yet played on a Linux desktop. aarch64 is cross-compiled and linked only. |
-| Android (arm64) | The APKs build; not yet run on a device. |
+| Linux (x86-64, aarch64) | x86-64 builds on Ubuntu 24.04 (CI, in a container): every map boots and saves work, headless; the AppImage builds. Not yet played on a Linux desktop or a Steam Deck. aarch64 is cross-compiled and linked only. |
+| Android (arm64) | The APKs build; not yet run on a device (nor on a dual-screen one). |
+| Online co-op | Played between a Mac (Apple silicon) and a Windows PC on one home network, in step throughout. Not yet over the internet or with a phone. |
 
 ## Building and running
 

@@ -126,6 +126,8 @@ static inline float ttyd_asinf(float x) { return (float)ttyd_asin(x); }
 static inline float ttyd_acosf(float x) { return (float)ttyd_acos(x); }
 static inline float ttyd_powf(float x, float y) { return (float)ttyd_pow(x, y); }
 static inline float ttyd_logf(float x) { return (float)ttyd_log(x); }
+/* (not MSL's, but the port's C uses it: co-op's partner, second_player_pc.c) */
+static inline float ttyd_hypotf(float x, float y) { return (float)ttyd_hypot(x, y); }
 #undef sinf
 #undef cosf
 #undef tanf
@@ -134,6 +136,7 @@ static inline float ttyd_logf(float x) { return (float)ttyd_log(x); }
 #undef acosf
 #undef powf
 #undef logf
+#undef hypotf
 #define sinf ttyd_sinf
 #define cosf ttyd_cosf
 #define tanf ttyd_tanf
@@ -142,6 +145,7 @@ static inline float ttyd_logf(float x) { return (float)ttyd_log(x); }
 #define acosf ttyd_acosf
 #define powf ttyd_powf
 #define logf ttyd_logf
+#define hypotf ttyd_hypotf
 #endif
 static inline unsigned int __cntlzw(unsigned int x) {
     return x == 0 ? 32 : (unsigned int)__builtin_clz(x);

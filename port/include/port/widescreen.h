@@ -31,6 +31,10 @@ void portWidescreenInit(void);
 void portWidescreenCamera(int cameraId);
 /* camdrv's camera loop, after the last camera: mirror mode's flip undone. */
 void portWidescreenCameraDone(void);
+/* The projections' x scale the cameras left loaded (GXSetProjectionScaleX),
+ * for a draw of the game's 4:3 picture elsewhere to put back (the second
+ * screen's menu, companion_menu_aurora.c). */
+float portWidescreenScaleX(void);
 /* The widescreen switch (or its preference / $TTYD_WIDESCREEN). */
 int portWidescreenEnabled(void);
 /* The frame is wider than 4:3 now, and its aspect (4:3 when not). */

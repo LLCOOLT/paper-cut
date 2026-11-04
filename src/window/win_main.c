@@ -1,4 +1,9 @@
 // Pause menu: opening and closing the menu, item use from the menu, and the shared text and texture helpers.
+#ifdef TARGET_PC
+/* the Start menu's statics in a block of their own, the second screen's menu's while it runs (port/companion_section.h) */
+#define PORT_SECTION_MENU
+#include "port/companion_section.h"
+#endif
 #include "port_hook.h"
 #include "win/win_main.h"
 #include "pc_call.h"
@@ -113,6 +118,14 @@ static void winDispKoopa(CameraId camId, void* param);
 WindowWork* PORT_HOOKABLE(winGetPtr)(void) {
     return wp;
 }
+
+#ifdef TARGET_PC
+/* The second screen's Start menu (port/companion_menu.h): its own work, as
+ * winGetPtr's answer during its frames (wp is in its copy of the statics). */
+void portWinSetPtr(WindowWork* w) {
+    wp = w;
+}
+#endif
 
 /** Allocates and clears the pause menu work at game start (from mariost.c). */
 void PORT_HOOKABLE(winInit)(void) {

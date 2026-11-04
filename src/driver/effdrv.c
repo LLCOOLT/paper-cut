@@ -11,6 +11,9 @@
 #include <string.h>
 #include "libc_decls.h"
 #include "version.h"
+#ifdef TARGET_PC
+#include "port/companion_menu.h"
+#endif
 
 //.data
 #if VERSION <= VERSION_DEMO_JP
@@ -383,6 +386,13 @@ EffectEntry* effEntry(void) {
     EffectEntry* entry = wp->entries;
     int i;
 
+#ifdef TARGET_PC
+    if (gPortCompanionMenu) { /* the second screen's menu: entries of its own (port/companion_menu.h) */
+        entry = portCompanionEffEntry();
+        entry->inBattle = gp->inBattle != 0;
+        return entry;
+    }
+#endif
     for (i = 0; i < wp->count; i++, entry++) {
         if (!entry->flags) {
             break;
@@ -457,6 +467,12 @@ void effMain(void) {
 
 /** Frees an effect's data and releases its entry at once; safe on NULL. */
 void effDelete(EffectEntry* effect) {
+#ifdef TARGET_PC
+    if (gPortCompanionMenu) {
+        portCompanionEffDelete(effect);
+        return;
+    }
+#endif
     if (effect && effect->flags) {
         __memFree(HEAP_EFFECT, effect->userdata);
         effect->flags = 0;
@@ -468,6 +484,12 @@ void effDelete(EffectEntry* effect) {
  * request and free themselves later; others are deleted at once.
  */
 void effSoftDelete(EffectEntry* effect) {
+#ifdef TARGET_PC
+    if (gPortCompanionMenu) {
+        portCompanionEffDelete(effect);
+        return;
+    }
+#endif
     if (effect && effect->flags) {
         if (effect->flags & EFFECT_FLAG_SOFT_DELETE) {
             effect->flags |= EFFECT_FLAG_DELETE_REQUESTED;

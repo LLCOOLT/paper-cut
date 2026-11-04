@@ -3,6 +3,7 @@ package dev.ttyd.port;
 import android.app.Activity;
 import android.app.Presentation;
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Path;
@@ -26,10 +27,14 @@ import java.util.List;
 
 /**
  * The second screen on Android (port/include/port/companion.h): on a device
- * with a second display (a dual-screen handheld such as the AYN Thor, or a
- * connected screen), a Presentation there with the Start menu's
- * information live, the map and the battle, drawn from the game's snapshot
- * a few times a second. Display > Second screen turns it off.
+ * with a second display of its own (a dual-screen handheld such as the AYN
+ * Thor; not an external monitor or a cast screen), a Presentation there with
+ * the game's own Start menu, live while the game plays on
+ * (port/include/port/companion_menu.h): its picture with buttons under it, a
+ * tap on the picture the menu's own (a tab, a row; again on the selected one
+ * is A). Until the first picture (or without readback), panels drawn from
+ * the game's snapshot. Display > Second screen (shown only on such a device)
+ * turns it off.
  *
  * A tap only queues input (tap()): the game reads it with controller 1 and
  * acts on it there, so online co-op sees the same input. A tap on an item
@@ -45,6 +50,17 @@ final class TtydCompanion implements DisplayManager.DisplayListener {
     private static native String snapshot();
     private static native void tap(int kind, int arg, int target);
     private static native String tr(String english);
+    private static native boolean menuReady();
+    private static native int menuPicture(int[] argb, int seen);
+    private static native void menuTap(float x, float y);
+    private static native void menuButton(int button);
+    private static native void setDualScreen(boolean dual);
+
+    // port/include/port/companion_menu.h
+    private static final int MENU_W = 640, MENU_H = 480;
+    private static final int BUTTON_A = 1, BUTTON_B = 2, BUTTON_UP = 3, BUTTON_DOWN = 4, BUTTON_LEFT = 5,
+            BUTTON_RIGHT = 6, BUTTON_L = 7, BUTTON_R = 8, BUTTON_X = 9, BUTTON_Y = 10;
+    private static final long MENU_REFRESH_MS = 33;
 
     private static final int TAP_ITEM = 1;
     private static final int TAP_PARTNER = 2;
@@ -83,17 +99,41 @@ final class TtydCompanion implements DisplayManager.DisplayListener {
                 return;
             }
             update();
+            boolean menu = false;
             if (screen != null) {
-                screen.view.refresh();
+                menu = screen.view.refresh();
             }
-            handler.postDelayed(this, REFRESH_MS);
+            handler.postDelayed(this, menu ? MENU_REFRESH_MS : REFRESH_MS);
         }
     };
+
+    /**
+     * A second display of the device's own: built in (Display.getType(),
+     * TYPE_INTERNAL, read by reflection; it isn't public), not an external
+     * monitor (HDMI, USB-C), a wireless or cast screen, an overlay or a
+     * virtual display (another app's, a screen recorder's). Where the type
+     * can't be read: public, not a presentation-only virtual one, and not
+     * named as one of those.
+     */
+    private static boolean builtIn(Display d) {
+        try {
+            java.lang.reflect.Method type = Display.class.getMethod("getType");
+            return ((Integer) type.invoke(d)) == 1; // Display.TYPE_INTERNAL
+        } catch (Exception | LinkageError e) {
+            if ((d.getFlags() & Display.FLAG_PRIVATE) != 0) {
+                return false;
+            }
+            String name = d.getName() != null ? d.getName().toLowerCase(java.util.Locale.ROOT) : "";
+            return !(name.contains("hdmi") || name.contains("wifi") || name.contains("wireless")
+                    || name.contains("cast") || name.contains("overlay") || name.contains("virtual")
+                    || name.contains("usb"));
+        }
+    }
 
     private Display secondDisplay() {
         Display[] list = displays.getDisplays(DisplayManager.DISPLAY_CATEGORY_PRESENTATION);
         for (Display d : list) {
-            if (d.getDisplayId() != Display.DEFAULT_DISPLAY) {
+            if (d.getDisplayId() != Display.DEFAULT_DISPLAY && builtIn(d)) {
                 return d;
             }
         }
@@ -102,12 +142,14 @@ final class TtydCompanion implements DisplayManager.DisplayListener {
 
     private void update() {
         boolean on;
+        Display second = secondDisplay();
         try {
+            setDualScreen(second != null); // the setting shows only then
             on = enabled();
         } catch (UnsatisfiedLinkError e) {
             return; // the game's library isn't loaded yet
         }
-        Display d = on ? secondDisplay() : null;
+        Display d = on ? second : null;
         if (screen != null && (d == null || screen.getDisplay().getDisplayId() != d.getDisplayId())) {
             dismiss();
         }
@@ -358,6 +400,12 @@ final class TtydCompanion implements DisplayManager.DisplayListener {
         private final float dp;
         private Snap snap = new Snap();
         private int tab, lastScene = -1;
+        // the Start menu's picture (companion_menu.h)
+        private final int[] argb = new int[MENU_W * MENU_H];
+        private final Bitmap picture = Bitmap.createBitmap(MENU_W, MENU_H, Bitmap.Config.ARGB_8888);
+        private final Paint filtered = new Paint(Paint.FILTER_BITMAP_FLAG | Paint.ANTI_ALIAS_FLAG);
+        private int seen;
+        private boolean menuMode;
         private float scroll, contentHeight;
 
         Page(Context context) {
@@ -390,7 +438,25 @@ final class TtydCompanion implements DisplayManager.DisplayListener {
             });
         }
 
-        void refresh() {
+        /** True while it shows the Start menu's picture (refreshed often then). */
+        boolean refresh() {
+            try {
+                if (menuReady()) {
+                    int serial = menuPicture(argb, seen);
+                    if (serial != 0) {
+                        if (serial != seen) {
+                            picture.setPixels(argb, 0, MENU_W, 0, 0, MENU_W, MENU_H);
+                            seen = serial;
+                            invalidate();
+                        }
+                        menuMode = true;
+                        return true;
+                    }
+                }
+                menuMode = false;
+            } catch (UnsatisfiedLinkError e) {
+                return false; // the game's library isn't loaded yet
+            }
             try {
                 Snap s = Snap.parse(snapshot());
                 if (s.scene != lastScene) {
@@ -403,6 +469,7 @@ final class TtydCompanion implements DisplayManager.DisplayListener {
             } catch (UnsatisfiedLinkError e) {
                 // the game's library isn't loaded yet
             }
+            return false;
         }
 
         @Override
@@ -415,7 +482,11 @@ final class TtydCompanion implements DisplayManager.DisplayListener {
                 if (!h.r.contains(x, y)) {
                     continue;
                 }
-                if (h.kind == 0) {
+                if (h.kind == MENU_PICTURE) {
+                    menuTap((x - h.r.left) / h.r.width(), (y - h.r.top) / h.r.height());
+                } else if (h.kind == MENU_BUTTON) {
+                    menuButton(h.arg);
+                } else if (h.kind == 0) {
                     tab = h.arg;
                     scroll = 0;
                 } else if (h.kind == TAP_ITEM) {
@@ -503,9 +574,80 @@ final class TtydCompanion implements DisplayManager.DisplayListener {
             return end + 20 * dp;
         }
 
+        // --- the Start menu: its picture, 4:3, the buttons under it ---
+
+        private static final int MENU_PICTURE = 100, MENU_BUTTON = 101;
+
+        private void drawMenuButton(Canvas c, float cx, float cy, float r, String letter, int dir, int face, int button) {
+            paint.setColor(0x5A000000);
+            c.drawCircle(cx, cy + 2 * dp, r, paint);
+            paint.setColor(face);
+            c.drawCircle(cx, cy, r, paint);
+            paint.setStyle(Paint.Style.STROKE);
+            paint.setStrokeWidth(2 * dp);
+            paint.setColor(GOLD);
+            c.drawCircle(cx, cy, r, paint);
+            paint.setStyle(Paint.Style.FILL);
+            paint.setColor(0xFFFFFFFF);
+            if (letter != null) {
+                text.setTextSize(r * 1.1f);
+                text.setTypeface(Typeface.DEFAULT_BOLD);
+                text.setColor(0xFFFFFFFF);
+                float w = text.measureText(letter);
+                Paint.FontMetrics m = text.getFontMetrics();
+                c.drawText(letter, cx - w / 2, cy - (m.ascent + m.descent) / 2, text);
+            } else {
+                float a = r * 0.45f;
+                Path p = new Path();
+                switch (dir) {
+                    case 0: p.moveTo(cx, cy - a); p.lineTo(cx + a, cy + a * 0.7f); p.lineTo(cx - a, cy + a * 0.7f); break;
+                    case 1: p.moveTo(cx, cy + a); p.lineTo(cx - a, cy - a * 0.7f); p.lineTo(cx + a, cy - a * 0.7f); break;
+                    case 2: p.moveTo(cx - a, cy); p.lineTo(cx + a * 0.7f, cy - a); p.lineTo(cx + a * 0.7f, cy + a); break;
+                    default: p.moveTo(cx + a, cy); p.lineTo(cx - a * 0.7f, cy + a); p.lineTo(cx - a * 0.7f, cy - a); break;
+                }
+                p.close();
+                c.drawPath(p, paint);
+            }
+            hits.add(new Hit(new RectF(cx - r * 1.2f, cy - r * 1.2f, cx + r * 1.2f, cy + r * 1.2f), MENU_BUTTON, button));
+        }
+
+        private void drawMenu(Canvas c) {
+            final float W = getWidth(), H = getHeight();
+            c.drawColor(NIGHT);
+            float barH = Math.min(96 * dp, H * 0.3f);
+            float w = W, h = w * 0.75f;
+            if (h > H - barH) {
+                h = H - barH;
+                w = h / 0.75f;
+            }
+            RectF r = new RectF((W - w) / 2, Math.max(0, (H - barH - h) / 2), (W + w) / 2, 0);
+            r.bottom = r.top + h;
+            c.drawBitmap(picture, null, r, filtered);
+            hits.add(new Hit(r, MENU_PICTURE, 0));
+            float rad = Math.min(barH * 0.3f, W / 30f);
+            float cy = Math.min(H - barH / 2, r.bottom + barH / 2);
+            float step = rad * 2.5f, x = rad * 1.6f;
+            final int grey = 0xFF6E608C;
+            drawMenuButton(c, x, cy, rad, "L", 0, grey, BUTTON_L);
+            drawMenuButton(c, x += step, cy, rad, null, 2, grey, BUTTON_LEFT);
+            drawMenuButton(c, x += step, cy, rad, null, 0, grey, BUTTON_UP);
+            drawMenuButton(c, x += step, cy, rad, null, 1, grey, BUTTON_DOWN);
+            drawMenuButton(c, x += step, cy, rad, null, 3, grey, BUTTON_RIGHT);
+            drawMenuButton(c, x + step, cy, rad, "R", 0, grey, BUTTON_R);
+            float right = W - rad * 1.6f;
+            drawMenuButton(c, right - step * 3, cy, rad * 0.85f, "X", 0, grey, BUTTON_X);
+            drawMenuButton(c, right - step * 2, cy, rad * 0.85f, "Y", 0, grey, BUTTON_Y);
+            drawMenuButton(c, right - step, cy, rad, "B", 0, 0xFFDCB428, BUTTON_B);
+            drawMenuButton(c, right, cy, rad * 1.15f, "A", 0, 0xFF28AA78, BUTTON_A);
+        }
+
         @Override
         protected void onDraw(Canvas c) {
             hits.clear();
+            if (menuMode) {
+                drawMenu(c);
+                return;
+            }
             c.drawColor(NIGHT);
             paint.setColor(CURTAIN);
             c.drawRect(0, 0, getWidth(), 5 * dp, paint);

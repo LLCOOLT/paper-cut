@@ -1,4 +1,9 @@
 // Pause menu root: the tabs, help text, sort menu and shared window frames, and the sort functions for every list.
+#ifdef TARGET_PC
+/* the Start menu's statics in a block of their own, the second screen's menu's while it runs (port/companion_section.h) */
+#define PORT_SECTION_MENU
+#include "port/companion_section.h"
+#endif
 #include "version.h"
 #include "port_hook.h"
 #include "win/win_main.h"
@@ -98,6 +103,7 @@ static void winSortMain(WindowWork* wp);
 
 #ifdef TARGET_PC
 #include "port/menu_tap.h"
+#include "port/companion_menu.h"
 
 int portWinMouse(int* cur, int first, int n, float x, float y, float dx, float dy, int cols, float w, float h,
                  const char* sfx) {
@@ -247,8 +253,11 @@ s32 PORT_HOOKABLE(winRootMain)(WindowWork* w) {
             }
             WIN_ROOT_ADD_TAB(4);
 #ifdef TTYD_BACKEND_AURORA
-            WIN_ROOT_ADD_TAB(PORT_PAUSE_SETTINGS_TAB);
-            portPauseSettingsInit(w);
+            /* the second screen's menu has no Settings (they are the player's, not its own) */
+            if (!gPortCompanionMenu) {
+                WIN_ROOT_ADD_TAB(PORT_PAUSE_SETTINGS_TAB);
+                portPauseSettingsInit(w);
+            }
 #endif
 #if VERSION <= VERSION_DEMO_JP
             {
@@ -321,6 +330,14 @@ s32 PORT_HOOKABLE(winRootMain)(WindowWork* w) {
                 w->tabSel = 0;
             }
 #if VERSION >= VERSION_JP
+#ifdef TARGET_PC
+            /* the second screen's menu: its picture has a background of its own, the field stays on */
+            if (gPortCompanionMenu) {
+                w->texBuf = NULL;
+                w->texBufValid = 0;
+                break;
+            }
+#endif
             w->texBuf = smartAlloc(GXGetTexBufferSize(gp->fbWidth, gp->efbHeight, GX_TF_RGB565, GX_FALSE, 0), 1);
             w->texBufValid = 0;
             dispEntry(CAMERA_2D, 1000.0f, 0, winRootBgCaptureDisp, w);
@@ -468,8 +485,13 @@ s32 PORT_HOOKABLE(winRootMain)(WindowWork* w) {
             }
             w->msgState = 10;
 #if VERSION >= VERSION_JP
-            N_mapDispOn();
-            camDispOn(CAMERA_3D);
+#ifdef TARGET_PC
+            if (!gPortCompanionMenu)
+#endif
+            {
+                N_mapDispOn();
+                camDispOn(CAMERA_3D);
+            }
 #endif
             w->active++;
             break;
@@ -529,6 +551,9 @@ s32 PORT_HOOKABLE(winRootMain)(WindowWork* w) {
     w->sortPosX += (w->sortTgtX - w->sortPosX) / FPS_EASE(4.0f);
     w->sortPosY += (w->sortTgtY - w->sortPosY) / FPS_EASE(4.0f);
 #if VERSION >= VERSION_JP
+#ifdef TARGET_PC
+    if (!gPortCompanionMenu)
+#endif
     dispEntry(CAMERA_2D, 1000.0f, 0, winRootBgDrawDisp, w);
 #endif
     return 0;

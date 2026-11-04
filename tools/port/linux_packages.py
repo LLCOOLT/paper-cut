@@ -117,7 +117,9 @@ def flatpak(zpath, outdir, top, work):
         f.write(FLATPAK_METADATA)
     repo = os.path.join(work, "repo")
     out = os.path.join(outdir, f"{top}.flatpak")
-    for cmd in ([tool, "build-export", "--arch=x86_64", repo, build, "stable"],
+    # (--disable-sandbox: the icon's check runs without bwrap, which a
+    # container can't start)
+    for cmd in ([tool, "build-export", "--disable-sandbox", "--arch=x86_64", repo, build, "stable"],
                 [tool, "build-bundle", "--arch=x86_64", f"--runtime-repo={FLATHUB}", repo, out, APP_ID, "stable"]):
         if subprocess.run(cmd).returncode != 0:
             sys.exit(f"linux_packages: failed: {' '.join(cmd)}")

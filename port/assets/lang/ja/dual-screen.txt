@@ -3,12 +3,6 @@
 Second screen
 セカンドスクリーン
 
-A window of its own with the Start menu's information live, the map and the battle; on another monitor when there is one. A tap there uses an item or switches partners.
-スタートメニューの情報、マップ、バトルをリアルタイムで表示する専用ウィンドウ。別のモニターがあればそちらに開きます。タップでアイテムを使ったり、仲間を入れ替えたりできます。
-
-On a device with a second display (a dual-screen handheld, a connected screen): the Start menu's information live, the map and the battle there.
-2つ目の画面がある端末（2画面の携帯機、接続した画面）で、スタートメニューの情報、マップ、バトルをそちらに表示します。
-
 Paper Cut companion
 Paper Cut コンパニオン
 

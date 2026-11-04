@@ -11,6 +11,7 @@
  * shown from 34 below its top to 16 above its bottom (its scissor box). */
 #include "manager/winmgr.h"
 #include "port/menu_tap.h"
+#include "port/companion_menu.h"
 #include "wide_x.h"
 #include <dolphin/pad.h>
 #include <dolphin/vi.h>
@@ -50,6 +51,9 @@ int portMenuPoint(float* gx, float* gy) {
     static int sKind;
     static float sX, sY;
     const u32 now = VIGetRetraceCount();
+    if (gPortCompanionMenu) { /* the second screen's menu: its own taps, the game's left alone */
+        return portCompanionMenuPoint(gx, gy);
+    }
     sOpenFrame = now;
     if (sPointFrame != now) {
         sPointFrame = now;

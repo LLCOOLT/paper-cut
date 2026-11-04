@@ -98,11 +98,17 @@ typedef struct PortCompanionSnapshot {
     int orderActive;  /* the one acting (-1: none) */
 } PortCompanionSnapshot;
 
-/* Declares the companion's setting ("second_screen": 0 off, 1 on: a window on
- * the desktop, the second display on Android) and returns its value. */
+/* The companion is on: on Android its setting ("second_screen", on by
+ * default; shown only on a dual-screen device); elsewhere only for tests and
+ * development, $TTYD_COMPANION_WINDOW=1 (a window of its own, no setting). */
 int portCompanionSetting(void);
+/* Android (TtydCompanion.java): the device has a second display of its own
+ * (built in, not an external monitor or a cast screen); the setting shows. */
+void portCompanionSetDualScreen(int dual);
+int portCompanionDualScreen(void);
 /* A presenter is showing the companion (the snapshot is filled meanwhile). */
 void portCompanionSetActive(int active);
+int portCompanionShowing(void);
 /* Once per game frame (vi_aurora.c): the snapshot filled every few frames
  * while a presenter is showing it. */
 void portCompanionFrame(void);
@@ -116,6 +122,7 @@ int portCompanionText(char* out, int size);
 enum {
     PORT_COMPANION_TAP_ITEM = 1,    /* arg: the item's place in the bag; target 0 Mario, 1 the partner out */
     PORT_COMPANION_TAP_PARTNER = 2, /* arg: the partner to switch to (1-7) */
+    PORT_COMPANION_TAP_ITEM_ON = 3, /* arg: the item's place in the bag; target: 0 Mario, 1-7 that partner */
 };
 void portCompanionTap(int kind, int arg, int target);
 

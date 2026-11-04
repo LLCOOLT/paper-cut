@@ -3,12 +3,6 @@
 Second screen
 Segunda pantalla
 
-A window of its own with the Start menu's information live, the map and the battle; on another monitor when there is one. A tap there uses an item or switches partners.
-Una ventana propia con la información del menú Start en directo, el mapa y el combate; en otro monitor si lo hay. Un toque allí usa un objeto o cambia de compañero.
-
-On a device with a second display (a dual-screen handheld, a connected screen): the Start menu's information live, the map and the battle there.
-En un dispositivo con una segunda pantalla (una portátil de doble pantalla, una pantalla conectada): la información del menú Start en directo, el mapa y el combate allí.
-
 Paper Cut companion
 Compañero de Paper Cut
 

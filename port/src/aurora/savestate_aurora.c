@@ -79,6 +79,7 @@ extern char __stop_ttyd_snapb[] __attribute__((visibility("hidden")));
 #endif
 
 const void* portRelCurrent(void);      /* rel_pc.c */
+size_t portCompanionBlock(int which, char** start); /* snapshot_bounds_pc.c */
 void portRelSetCurrent(const void* rel);
 void portInterpInvalidate(void);       /* interp_aurora.c */
 OSTime portOSGetTime(void);            /* os_time_aurora.c */
@@ -261,6 +262,17 @@ static int regions(Region* out, int max, size_t heapSize) {
     size_t heapNow;
     out[n++] = (Region){&sSnapDataStart, (size_t)(&sSnapDataEnd - &sSnapDataStart)};
     out[n++] = (Region){&sSnapBssStart, (size_t)(&sSnapBssEnd - &sSnapBssStart)};
+#if !defined(_WIN32)
+    /* the second screen's menu's blocks, sections of their own here (on
+     * Windows inside the ones above): port/companion_section.h */
+    for (i = 0; i < 4; i++) {
+        char* lo;
+        const size_t size = portCompanionBlock(i, &lo);
+        if (size > 0) {
+            out[n++] = (Region){lo, size};
+        }
+    }
+#endif
     for (i = 0; i < portRelStaticCount && n + 2 <= max - 3; i++) {
         const PortRelStatic* r = &portRelStaticTable[i];
         out[n++] = (Region){r->dataStart, (size_t)(r->dataEnd - r->dataStart)};

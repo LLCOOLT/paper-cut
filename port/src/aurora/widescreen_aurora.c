@@ -185,6 +185,10 @@ void portWidescreenCamera(int cameraId) {
     }
 }
 
+float portWidescreenScaleX(void) {
+    return sScaleX;
+}
+
 void portWidescreenCameraDone(void) {
     if (sScaleX < 0.0f) { /* what draws after the cameras is not mirrored */
         GXSetProjectionScaleX(-sScaleX);

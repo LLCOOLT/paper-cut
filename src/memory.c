@@ -11,6 +11,9 @@
 #include <dolphin/os.h>
 #include <string.h>
 #include "manager/dvdmgr.h"
+#ifdef TARGET_PC
+#include "port/companion_menu.h"
+#endif
 
 // HEAP_MALLOC block is a series of these nodes
 typedef struct MapAllocEntry MapAllocEntry;
@@ -227,6 +230,11 @@ void memClear(HEAP_TYPE heap) {
 void* __memAlloc(HEAP_TYPE heap, u32 size) {
     void* ptr;
 
+#ifdef TARGET_PC
+    if (gPortCompanionMenu) { /* the second screen's menu: its own memory (port/companion_menu.h) */
+        return portCompanionAlloc(size);
+    }
+#endif
     ptr = OSAllocFromHeap(heapHandle[heap], size);
     if (ptr) {
         memset(ptr, 0, size);
@@ -237,6 +245,12 @@ void* __memAlloc(HEAP_TYPE heap, u32 size) {
 
 /** Returns a block from __memAlloc to its heap. */
 void __memFree(HEAP_TYPE heap, void* ptr) {
+#ifdef TARGET_PC
+    if (gPortCompanionMenu) {
+        portCompanionFree(ptr);
+        return;
+    }
+#endif
     OSFreeToHeap(heapHandle[heap], ptr);
 }
 
@@ -279,6 +293,11 @@ void*(_mapAlloc)(u32 size) {
     u32 usableSize;           // size minus the MapAllocEntry header
     u32 maxSize;              // used to update latest tail
     u32 fullSize;             // size including header
+#ifdef TARGET_PC
+    if (gPortCompanionMenu) {
+        return portCompanionAlloc(size);
+    }
+#endif
 
     usableSize = OSRoundUp32B(size);
     if (!usableSize) {
@@ -345,6 +364,11 @@ void*(_mapAllocTail)(u32 size) {
     u32 maxSize;    // used to update latest tail
     u32 fullSize;   // size including header
     u32 usableSize; // size minus the MapAllocEntry header
+#ifdef TARGET_PC
+    if (gPortCompanionMenu) {
+        return portCompanionAlloc(size);
+    }
+#endif
 
     usableSize = OSRoundUp32B(size);
     if (!usableSize) {
@@ -409,6 +433,12 @@ void(_mapFree)(void* alloc) {
     MapAllocEntry* nextEntry;
     u32 newSize;
     MapAllocEntry* entry;
+#ifdef TARGET_PC
+    if (gPortCompanionMenu) {
+        portCompanionFree(alloc);
+        return;
+    }
+#endif
 
     if (!alloc)
         return;
@@ -549,6 +579,12 @@ void smartAutoFree(s32 group) {
 void smartFree(smartEntry* entry) {
     u32 total;
 
+#ifdef TARGET_PC
+    if (gPortCompanionMenu) {
+        portCompanionSmartFree(entry);
+        return;
+    }
+#endif
     if (entry->type == 4) {
         entry->type = 3;
         return;
@@ -609,6 +645,9 @@ smartEntry* smartAlloc(u32 size, u8 type) {
 
 
 #ifdef TARGET_PC
+    if (gPortCompanionMenu) {
+        return portCompanionSmartAlloc(size, type);
+    }
 	/* a frame Aurora draws between the game's: its frame-temporary blocks come
 	 * from a scratch arena, leaving the heap (and its compaction, file
 	 * eviction and auto-free) as without these frames */

@@ -1,4 +1,9 @@
 // Pause menu: the Mario window (stats, special moves, equipped gear).
+#ifdef TARGET_PC
+/* the Start menu's statics in a block of their own, the second screen's menu's while it runs (port/companion_section.h) */
+#define PORT_SECTION_MENU
+#include "port/companion_section.h"
+#endif
 #include "port_hook.h"
 #include "win/win_main.h"
 #include "battle/battle_mario.h"

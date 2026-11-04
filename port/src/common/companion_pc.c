@@ -65,22 +65,41 @@ static int sActive;
 
 int portCompanionSetting(void) {
 #ifdef __ANDROID__
-    /* on with a second display there (the presenter looks for one) */
+    /* on by default; shown on the settings page only on a device with a
+     * second display of its own (TtydCompanion.java, portCompanionSetDualScreen) */
     static int* sValue;
     if (sValue == NULL) {
         sValue = portSettingsDeclare("second_screen", 1, 0, 1);
     }
-#else
-    static int* sValue;
-    if (sValue == NULL) {
-        sValue = portSettingsDeclare("second_screen", 0, 0, 1);
-    }
-#endif
     return *sValue;
+#else
+    /* elsewhere only for tests and development: $TTYD_COMPANION_WINDOW=1, a
+     * window of its own on the desktop (no setting) */
+    static int sValue = -1;
+    if (sValue < 0) {
+        const char* v = getenv("TTYD_COMPANION_WINDOW");
+        sValue = v != NULL && atoi(v) != 0;
+    }
+    return sValue;
+#endif
+}
+
+static volatile int sDualScreen;
+
+void portCompanionSetDualScreen(int dual) {
+    sDualScreen = dual;
+}
+
+int portCompanionDualScreen(void) {
+    return sDualScreen;
 }
 
 void portCompanionSetActive(int active) {
     sActive = active;
+}
+
+int portCompanionShowing(void) {
+    return sActive;
 }
 
 /* --- The game's text as UTF-8 --- */
@@ -559,7 +578,7 @@ void portCompanionTap(int kind, int arg, int target) {
         const int at = (sQueueHead + sQueueCount++) % QUEUE;
         sQueue[at].kind = (unsigned char)kind;
         sQueue[at].arg = (unsigned char)arg;
-        sQueue[at].target = (unsigned char)(target != 0);
+        sQueue[at].target = (unsigned char)(kind == PORT_COMPANION_TAP_ITEM_ON ? target & 7 : target != 0);
     }
     unlock();
 }
@@ -588,7 +607,7 @@ void portCompanionRoute(void) {
     if ((a & 0xF0) == PAD_MARK) {
         sTapKind = a & 0x0F;
         sTapArg = b & 0x1F;
-        sTapTarget = (b >> 5) & 1;
+        sTapTarget = (b >> 5) & 7;
         printf("[companion] tap %d %d %d\n", sTapKind, sTapArg, sTapTarget);
         fflush(stdout);
     }
@@ -602,14 +621,43 @@ int portCompanionPartner(void) {
     return sTapArg;
 }
 
+/* An item on a partner who isn't out, as the Start menu's item list uses one
+ * (win_item.c, states 300-301: at once, without the scene). */
+static int companionItemOn(int idx, int partyId) {
+    PouchData* p = pouchGetPtr();
+    int id;
+    if (idx >= MAX_HELD_ITEMS || (id = p->heldItems[idx]) == ITEM_NULL || !(itemDataTable[id].usable_locations & 4) ||
+        partyId < 1 || partyId > 7 || !(p->partyData[partyId].flags & POUCH_PARTY_FLAG_JOINED)) {
+        return 0;
+    }
+    psndSFXOn(SFX_NAME_WORD(0x20012));
+    pouchSetPartyHP(partyId, pouchGetPartyHP((PartyId)partyId) + itemDataTable[id].hp_restored);
+    portHealOtherPartners(partyId, itemDataTable[id].hp_restored); /* Gameplay+ */
+    pouchSetFP((s16)(pouchGetFP() + itemDataTable[id].fp_restored));
+    pouchSetAP((s16)(pouchGetAP() + itemDataTable[id].sp_restored));
+    pouchRemoveItemIndex((ItemType)id, idx);
+    printf("[companion] item %d (slot %d) used on partner %d\n", id, idx, partyId);
+    fflush(stdout);
+    return 1;
+}
+
 int portCompanionFieldItem(void) {
     MarioWork* mp = marioGetPtr();
     int idx, id, party;
-    if (sTapKind != PORT_COMPANION_TAP_ITEM) {
+    if (sTapKind != PORT_COMPANION_TAP_ITEM && sTapKind != PORT_COMPANION_TAP_ITEM_ON) {
         return 0;
     }
-    sTapKind = 0;
     idx = sTapArg;
+    if (sTapKind == PORT_COMPANION_TAP_ITEM_ON) {
+        /* a partner named (the second screen's Start menu): as the partner out when it's that one */
+        party = !marioBgmodeChk() ? marioGetParty() : mp->prevPartyMemberId[0];
+        sTapKind = 0;
+        if (sTapTarget != 0 && sTapTarget != party) {
+            return companionItemOn(idx, sTapTarget);
+        }
+        sTapTarget = sTapTarget != 0;
+    }
+    sTapKind = 0;
     if (idx >= MAX_HELD_ITEMS || (id = pouchGetPtr()->heldItems[idx]) == ITEM_NULL ||
         !(itemDataTable[id].usable_locations & 4)) {
         return 0;

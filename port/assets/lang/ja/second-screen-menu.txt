@@ -1,0 +1,4 @@
+# The second screen's Start menu (port/include/port/companion_menu.h, port/settings/features/companion.cpp)
+
+On a device with a second screen of its own (a dual-screen handheld): the Start menu there, live while you play.
+2つ目の画面を備えた端末（2画面の携帯機）で、スタートメニューをそちらに表示します。遊んでいる間もそのまま動きます。

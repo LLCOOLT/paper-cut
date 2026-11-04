@@ -827,6 +827,7 @@ struct Item {
   bool (*shown)(const PortSettings* s); // nullptr: always
   const void* data = nullptr;           // a feature's control: its Extra (below)
   int PortSettings::*field = nullptr;   // a next-start setting's value (Restart now)
+  int (*shownNow)(void) = nullptr;      // a feature's control: shown only while this says so (portSettingsSetShown)
 };
 
 // The tabs in order; a feature's own tab (portSettingsAdd*) comes after these.
@@ -1216,7 +1217,8 @@ void drawItem(PortSettings* s, const Item& it) {
 }
 
 bool visible(const PortSettings* s, const Item& it, bool inGame) {
-  return (inGame || !(it.flags & kInGame)) && (it.shown == nullptr || it.shown(s));
+  return (inGame || !(it.flags & kInGame)) && (it.shown == nullptr || it.shown(s)) &&
+         (it.shownNow == nullptr || it.shownNow() != 0);
 }
 
 // case-insensitive: every word of query is in the item's words
@@ -1354,6 +1356,14 @@ extern "C" void portSettingsAddChoice(const char* tab, const char* label, const 
 extern "C" void portSettingsAddSlider(const char* tab, const char* label, const char* note, unsigned flags,
                                       const char* key, int min, int max, const char* format, const char* keywords) {
   addExtra(tab, label, note, flags, keywords, Extra{key, 2, nullptr, 0, min, max, format});
+}
+
+extern "C" void portSettingsSetShown(const char* key, int (*shown)(void)) {
+  for (Item& it : extraItems()) {
+    if (it.draw == drawExtra && it.data != nullptr && std::strcmp(static_cast<const Extra*>(it.data)->key, key) == 0) {
+      it.shownNow = shown;
+    }
+  }
 }
 
 extern "C" void portSettingsAddSection(const char* tab, const char* label, const char* note, unsigned flags,
@@ -1849,7 +1859,8 @@ extern "C" int portSettingsControls(PortSettingsControl* out, int max) {
     }
     for (const Item& it : extraItems()) {
       // (a section's data is its draw function: only drawExtra's items hold an Extra)
-      if (n >= max || tab != it.tab || it.draw != drawExtra || it.data == nullptr) {
+      if (n >= max || tab != it.tab || it.draw != drawExtra || it.data == nullptr ||
+          (it.shownNow != nullptr && it.shownNow() == 0)) {
         continue;
       }
       const Extra& e = *static_cast<const Extra*>(it.data);

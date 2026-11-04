@@ -33,6 +33,9 @@
  *                       a tap on the second screen (port/include/port/companion.h):
  *                       the bag's item N used on Mario (T 1: the partner), or
  *                       a switch to partner N
+ *   companion tap NX NY / companion button a|b|x|y|up|down|left|right|l|r / companion shot NAME
+ *                       a tap at NX, NY (0-1) on the second screen's Start menu,
+ *                       or one of its buttons (port/include/port/companion_menu.h)
  *   travel N            Gameplay+ fast travel to hub N (0 Rogueport, 1 Petalburg ...)
  *   mobj_event NAME     run map object NAME's event, as hitting it would (a
  *                       switch's, a block's)
@@ -59,6 +62,7 @@
  * Each command is logged as "[input] frame F: <line>". */
 #include "port/ac_cue.h"
 #include "port/companion.h"
+#include "port/companion_menu.h"
 #include "port/gameplus.h"
 #include "port/menu_tap.h"
 #include <ctype.h>
@@ -302,7 +306,7 @@ static void load(const char* path) {
             s->waitMax = (s32)strtol(a1, NULL, 0);
         } else if (strcmp(cmd, "companion") == 0) {
             s->frames = -13;
-            snprintf(s->name, sizeof(s->name), "companion_%s", a1);
+            snprintf(s->name, sizeof(s->name), "companion_%s %s %s", a1, a2, a3);
             s->waitMax = (s32)strtol(a2, NULL, 0);
             s->seed = (u32)strtoul(a3, NULL, 0);
         } else if (strcmp(cmd, "random") == 0) {
@@ -693,7 +697,26 @@ static void applyScript(PADStatus* pad) {
             } else if (strcmp(s->name, "swap") == 0) {
                 portQuickSwapPress();
             } else if (strncmp(s->name, "companion_", 10) == 0) {
-                portCompanionTap(s->name[10] == 'i' ? PORT_COMPANION_TAP_ITEM : PORT_COMPANION_TAP_PARTNER, v, (int)s->seed);
+                const char* what = s->name + 10;
+                float x = 0.0f, y = 0.0f;
+                if (strncmp(what, "tap ", 4) == 0 && sscanf(what + 4, "%f %f", &x, &y) == 2) {
+                    portCompanionMenuTap(x, y); /* the second screen's Start menu (companion_menu.h) */
+                } else if (strncmp(what, "shot ", 5) == 0) {
+                    char name[48];
+                    if (sscanf(what + 5, "%47s", name) == 1) {
+                        portCompanionMenuShot(name);
+                    }
+                } else if (strncmp(what, "button ", 7) == 0) {
+                    static const char* const kNames[] = {"", "a", "b", "up", "down", "left", "right", "l", "r", "x", "y"};
+                    int k;
+                    for (k = 1; k < 11; k++) {
+                        if (strncmp(what + 7, kNames[k], strlen(kNames[k])) == 0 && (what[7 + strlen(kNames[k])] == ' ' || what[7 + strlen(kNames[k])] == 0)) {
+                            portCompanionMenuButton(k);
+                        }
+                    }
+                } else {
+                    portCompanionTap(what[0] == 'i' ? PORT_COMPANION_TAP_ITEM : PORT_COMPANION_TAP_PARTNER, v, (int)s->seed);
+                }
             } else if (strcmp(s->name, "travel") == 0) {
                 portFastTravelRequest(v);
             }

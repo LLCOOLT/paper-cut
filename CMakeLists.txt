@@ -164,6 +164,13 @@ if(TTYD_BACKEND STREQUAL "aurora")
         list(APPEND CMAKE_IGNORE_PREFIX_PATH /opt/homebrew /usr/local /opt/local)
         set(CMAKE_DISABLE_FIND_PACKAGE_PkgConfig ON)
     endif()
+    # Aurora's arithmetic (its matrices, GX's projections...) without fused
+    # multiply-add, as the game's (TTYD_CFLAGS): arm64 would otherwise round a
+    # partner's steps a bit apart from x86-64, and an online game between a
+    # Mac and a PC go out of step. (MSVC: Windows is x86-64 only, unfused.)
+    if(NOT MSVC)
+        add_compile_options(-ffp-contract=off)
+    endif()
     add_subdirectory(extern/aurora EXCLUDE_FROM_ALL)
     # The matrix functions' trigonometry the game's (MSL's fdlibm,
     # port/include/port/fdlibm_pc.h), the same on every computer for online

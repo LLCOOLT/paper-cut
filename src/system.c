@@ -15,6 +15,9 @@
 #include "driver/mapdrv.h"
 #include "libc_decls.h"
 #ifdef TARGET_PC
+#include "port/companion_menu.h"
+#endif
+#ifdef TARGET_PC
 void portSecondPlayerRoute(void);
 void portCompanionRoute(void); /* port/include/port/companion.h */
 #endif
@@ -674,51 +677,101 @@ void makeKey(void) {
 
 /** Returns the stick and d-pad directions held on controller chan. */
 u32 keyGetDir(u32 chan) {
+#ifdef TARGET_PC
+    if (gPortCompanionMenu) { /* the second screen's menu: its own input (port/companion_menu.h) */
+        return portCompanionMenuKey(3);
+    }
+#endif
     return gp->dirs[chan];
 }
 
 /** Returns the buttons held on controller chan. */
 u32 keyGetButton(u32 chan) {
+#ifdef TARGET_PC
+    if (gPortCompanionMenu) { /* the second screen's menu: its own input (port/companion_menu.h) */
+        return portCompanionMenuKey(0);
+    }
+#endif
     return gp->button[chan];
 }
 
 /** Returns the directions pressed this frame or auto-repeating on controller chan (for menu scrolling). */
 u32 keyGetDirRep(u32 chan) {
+#ifdef TARGET_PC
+    if (gPortCompanionMenu) { /* the second screen's menu: its own input (port/companion_menu.h) */
+        return portCompanionMenuKey(5);
+    }
+#endif
     return gp->dirsRepeat[chan];
 }
 
 /** Returns the buttons pressed this frame or auto-repeating on controller chan. */
 u32 keyGetButtonRep(u32 chan) {
+#ifdef TARGET_PC
+    if (gPortCompanionMenu) { /* the second screen's menu: its own input (port/companion_menu.h) */
+        return portCompanionMenuKey(2);
+    }
+#endif
     return gp->buttonRepeat[chan];
 }
 
 /** Returns the directions newly pressed this frame on controller chan. */
 u32 keyGetDirTrg(u32 chan) {
+#ifdef TARGET_PC
+    if (gPortCompanionMenu) { /* the second screen's menu: its own input (port/companion_menu.h) */
+        return portCompanionMenuKey(4);
+    }
+#endif
     return gp->dirsNew[chan];
 }
 
 /** Returns the buttons newly pressed this frame on controller chan. */
 u32 keyGetButtonTrg(u32 chan) {
+#ifdef TARGET_PC
+    if (gPortCompanionMenu) { /* the second screen's menu: its own input (port/companion_menu.h) */
+        return portCompanionMenuKey(1);
+    }
+#endif
     return gp->buttonNew[chan];
 }
 
 /** Returns the main stick's x position on controller chan (-128..127). */
 s8 keyGetStickX(u32 chan) {
+#ifdef TARGET_PC
+    if (gPortCompanionMenu) { /* the second screen's menu: its own input (port/companion_menu.h) */
+        return (s8)portCompanionMenuKey(6);
+    }
+#endif
     return gp->stickX[chan];
 }
 
 /** Returns the main stick's y position on controller chan (-128..127). */
 s8 keyGetStickY(u32 chan) {
+#ifdef TARGET_PC
+    if (gPortCompanionMenu) { /* the second screen's menu: its own input (port/companion_menu.h) */
+        return (s8)portCompanionMenuKey(7);
+    }
+#endif
     return gp->stickY[chan];
 }
 
 /** unused on retail */
 s8 keyGetSubStickX(u32 chan) {
+#ifdef TARGET_PC
+    if (gPortCompanionMenu) { /* the second screen's menu: its own input (port/companion_menu.h) */
+        return (s8)portCompanionMenuKey(8);
+    }
+#endif
     return gp->substickX[chan];
 }
 
 /** Returns the C stick's y position on controller chan. */
 s8 keyGetSubStickY(u32 chan) {
+#ifdef TARGET_PC
+    if (gPortCompanionMenu) { /* the second screen's menu: its own input (port/companion_menu.h) */
+        return (s8)portCompanionMenuKey(8);
+    }
+#endif
     return gp->substickY[chan];
 }
 

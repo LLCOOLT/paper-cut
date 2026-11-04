@@ -3420,6 +3420,37 @@ void animPoseRefresh(void) {
     }
 }
 
+#ifdef TARGET_PC
+/* The second screen's Start menu (port/companion_menu.h): a work of its own
+ * (its files, textures and poses), made in its memory as animInit makes the
+ * game's, and swapped in for its frames. The work holds the game's ag2tg
+ * table (read only). */
+void portAnimWorkInit(AnimationWork* w) {
+    AnimationWork* game = wp;
+    memset(w, 0, sizeof(*w));
+    wp = w;
+    wp->totalFiles = 64;
+    wp->totalTextures = 64;
+    wp->totalPoses = 64;
+    wp->floatScratchRP = 1024;
+    wp->files = __memAlloc(HEAP_DEFAULT, sizeof(AnimationPoseFile) * wp->totalFiles);
+    wp->textures = __memAlloc(HEAP_DEFAULT, sizeof(AnimationTextureFile) * wp->totalTextures);
+    wp->poses = __memAlloc(HEAP_DEFAULT, sizeof(AnimationPose) * wp->totalPoses);
+    wp->floatScratch = __memAlloc(HEAP_DEFAULT, sizeof(Vec) * wp->floatScratchRP);
+    wp->paperTexMode0 = 1;
+    wp->paperTexMode1 = 1;
+    initTestHeap();
+    wp->mp_ag2tg = game->mp_ag2tg;
+    wp = game;
+}
+
+AnimationWork* portAnimSwapWork(AnimationWork* w) {
+    AnimationWork* old = wp;
+    wp = w;
+    return old;
+}
+#endif
+
 /** Switches the driver to battle mode and reallocates the vertex buffers of the battle and shared poses. */
 void animPoseBattleInit(void) {
     wp->inBattle = TRUE;
