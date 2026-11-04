@@ -20,6 +20,7 @@
 #include "mario/mariost.h"
 #include "port/cardsave_pc.h"
 #include "port/platform.h"
+#include "port/online.h"
 #include "port/resume.h"
 #include "port/settings.h"
 
@@ -86,15 +87,38 @@ int portResumeHave(void) {
     return on() && sHave;
 }
 
-/* once a retrace (vi_aurora.c) */
+/* online co-op's recovery (online.cpp): the last clean save written out now,
+ * with the setting off too (the session starts again from it); 0 when none */
+int portResumeWriteNow(void) {
+    if (!sHave) {
+        return 0;
+    }
+    sDirty = 1;
+    portResumeFlush();
+    return 1;
+}
+
+/* online co-op's recovery (online_pc.c): the last clean save in memory, its
+ * card slot, or NULL */
+const void* portResumeImage(int* slot, size_t* size) {
+    if (!sHave) {
+        return NULL;
+    }
+    *slot = sSlot;
+    *size = sizeof(sImage);
+    return sImage;
+}
+
+/* once a retrace (vi_aurora.c); online, in memory even with the setting off
+ * (the host's is the games' way back when they go out of step) */
 void portResumeFrame(void) {
     sFrame++;
-    if (sFrame % SNAP_EVERY != 0 || !on()) {
+    if (sFrame % SNAP_EVERY != 0 || (!on() && !portOnlineActive())) {
         return;
     }
     if (safe() && portCardSnapshot(sImage)) {
         sHave = 1;
-        sDirty = 1;
+        sDirty = on();
         sSlot = gp->saveSlot;
     }
     if (sDirty && sFrame - sLastWrite >= WRITE_EVERY) {

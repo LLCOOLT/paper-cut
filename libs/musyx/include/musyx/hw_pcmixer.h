@@ -38,6 +38,16 @@ void salPcRender(s16* out, u32 frames);
 /* Port hook: extra stereo frames (e.g. the DVD stream) mixed after MusyX. */
 void portAudioMixExtra(s16* out, u32 frames);
 
+/* 5.1 and 7.1 (the Speakers setting, hw_pc.c): the surround bus and Pro Logic
+ * II's rear pair kept apart, not folded into the front pair, and the last
+ * frame's handed over: which 0 the surround, 1 and 2 the rear left and right
+ * (160 samples, NULL when off). */
+void salPcSetDiscreteRear(int on);
+const s32* salPcRear(int which);
+/* The speakers the output has: 2, 6 (5.1) or 8 (7.1); MusyX's stereo is its
+ * surround above 2 (snd_synthapi.c), so the rear speakers have something. */
+int salPcSpeakers(void);
+
 /* The mix categories (the settings page's music, effects and ambience
  * volumes): each voice takes the category current when its sound started
  * (a sequence's voices, the sequence's), and is scaled by its category's

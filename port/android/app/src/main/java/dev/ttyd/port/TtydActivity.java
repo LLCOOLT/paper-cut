@@ -4,11 +4,14 @@ import android.content.ClipData;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
+import android.speech.tts.TextToSpeech;
 import android.util.Log;
 
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.charset.Charset;
+import java.util.Locale;
 
 import dev.encounter.aurora.AuroraSurface;
 
@@ -25,6 +28,53 @@ import org.libsdl.app.SDLSurface;
 public class TtydActivity extends SDLActivity {
     private static final String TAG = "ttyd";
     private TtydCompanion companion; // the second screen (TtydCompanion.java)
+
+    /*
+     * Text to speech (port/settings/features/speech.cpp): the system's voice,
+     * made on the UI thread the first time a line comes, in the game's
+     * language; the game's text decoded from its own encoding (Shift-JIS on
+     * the Japanese release, Windows-1252 on the others). Each new line cuts
+     * off the last.
+     */
+    private static TextToSpeech sSpeech;
+    private static boolean sSpeechReady;
+
+    public static void speechSay(byte[] text, boolean japanese, String language, float rate) {
+        final String words = new String(text, Charset.forName(japanese ? "Shift_JIS" : "windows-1252"));
+        final Context context = SDLActivity.getContext();
+        if (context == null || words.isEmpty() || !(context instanceof TtydActivity)) {
+            return;
+        }
+        ((TtydActivity) context).runOnUiThread(() -> {
+            if (sSpeech == null) {
+                sSpeech = new TextToSpeech(context, status -> {
+                    sSpeechReady = status == TextToSpeech.SUCCESS;
+                    if (sSpeechReady) {
+                        sSpeech.setLanguage(Locale.forLanguageTag(language));
+                        sSpeech.setSpeechRate(rate);
+                        sSpeech.speak(words, TextToSpeech.QUEUE_FLUSH, null, "paper-cut");
+                    }
+                });
+                return; // (the first line once it's ready)
+            }
+            if (sSpeechReady) {
+                sSpeech.setLanguage(Locale.forLanguageTag(language));
+                sSpeech.setSpeechRate(rate);
+                sSpeech.speak(words, TextToSpeech.QUEUE_FLUSH, null, "paper-cut");
+            }
+        });
+    }
+
+    public static void speechStop() {
+        final Context context = SDLActivity.getContext();
+        if (context instanceof TtydActivity) {
+            ((TtydActivity) context).runOnUiThread(() -> {
+                if (sSpeech != null && sSpeechReady) {
+                    sSpeech.stop();
+                }
+            });
+        }
+    }
 
     @Override
     protected String[] getLibraries() {

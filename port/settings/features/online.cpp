@@ -21,6 +21,7 @@
 #include <imgui.h>
 
 #include <algorithm>
+#include <cctype>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -46,7 +47,7 @@ constexpr const char* kLocal[] = {
     "text_scale", "aniso", "lod_bias", "texture_upscale", "supersample", "post_filter", "vrr", "perf_overlay",
     "hdr", "collectible_tracker", "sell_helper", "menu_mouse", "quick_resume", "save_backups", "sharp_text",
     "update_check", "window_", "jukebox", "cosmetic", "mirror", "free_cam", "input_display", "second_screen",
-    "companion", "ac_cue", "crowd_", "custom_music", "settings_hint",
+    "companion", "ac_cue", "crowd_", "custom_music", "settings_hint", "game_sound_mode", "speakers",
 };
 
 bool local(const std::string& key) {
@@ -244,8 +245,8 @@ void sendSetup() {
   Writer w;
   sLobby.base = static_cast<unsigned long long>(portRealTime());
   const int rtt = portOnlineRoundTrip();
-  // the input's way across, in frames, and two to spare
-  sLobby.delay = std::clamp(2 + (rtt > 0 ? (rtt / 2 + 16) / 17 : 1), 2, 12);
+  // the input's way across, in frames, and two to spare (and the relay's batches)
+  sLobby.delay = std::clamp(2 + (rtt > 0 ? (rtt / 2 + 16) / 17 : 1) + portOnlineDelayExtra(), 2, 14);
   int slot = 3;
   const std::string resume = sLobby.startMode == 1 ? resumeSave(&slot) : std::string();
   portSettingsSave(); // the settings as they are now, in settings.txt
@@ -356,6 +357,102 @@ const char* peerName() {
 
 } // namespace
 
+namespace {
+
+// a room's code: PORT_ONLINE_CODE_LENGTH of the characters nothing reads wrong
+std::string newRoomCode() {
+  const char* chars = PORT_ONLINE_CODE_CHARS;
+  const int n = static_cast<int>(std::strlen(chars));
+  std::string code;
+  for (int i = 0; i < PORT_ONLINE_CODE_LENGTH; i++) {
+    code += chars[SDL_rand(n)];
+  }
+  return code;
+}
+
+// what was typed to join: a room's code (letters and digits only), upper-cased, or ""
+std::string asRoomCode(const char* typed) {
+  std::string code;
+  for (const char* p = typed; *p != '\0'; p++) {
+    if (*p == ' ' || *p == '-') {
+      continue;
+    }
+    if (!std::isalnum(static_cast<unsigned char>(*p))) {
+      return "";
+    }
+    code += static_cast<char>(std::toupper(static_cast<unsigned char>(*p)));
+  }
+  return code.size() == PORT_ONLINE_CODE_LENGTH ? code : "";
+}
+
+// what this guest joined, for a recovery's restart to join again
+// (portOnlineRestartRejoin): "room" and the code, or "address" and host:port
+std::string sRejoinKind, sRejoinTarget;
+
+void joinTyped() {
+  const PortOnlineHello me = hello();
+  const std::string code = asRoomCode(sLobby.address);
+  if (!code.empty() && portOnlineRelay()[0] != '\0') {
+    sRejoinKind = "room";
+    sRejoinTarget = code;
+    portOnlineJoinRoom(code.c_str(), &me);
+    return;
+  }
+  // "host" or "host:port" (an IPv6 address in brackets, [::1]:47700)
+  std::string host = sLobby.address;
+  int port = PORT_ONLINE_DEFAULT_PORT;
+  const size_t colon = host.rfind(':');
+  if (colon != std::string::npos && host.find(':') == colon) {
+    port = std::atoi(host.c_str() + colon + 1);
+    host.resize(colon);
+  } else if (!host.empty() && host[0] == '[') {
+    const size_t close = host.find(']');
+    if (close != std::string::npos) {
+      if (close + 1 < host.size() && host[close + 1] == ':') {
+        port = std::atoi(host.c_str() + close + 2);
+      }
+      host = host.substr(1, close - 1);
+    }
+  }
+  sRejoinKind = "address";
+  sRejoinTarget = (host.find(':') != std::string::npos ? "[" + host + "]" : host) + ":" + std::to_string(port);
+  portOnlineJoin(host.c_str(), port, &me);
+}
+
+} // namespace
+
+extern "C" void portRestartForOnline(void); // restart.cpp
+
+// Online co-op's recovery (online_pc.c): this game started again to rejoin the
+// session from the host's last save. The host writes that save and hosts the
+// same room (or port, open to the network) with "Continue where you left off";
+// the guest joins what it joined. The start-up path (portOnlineTestStart, below)
+// takes it from the environment; the recoveries so far go with it. Doesn't return.
+extern "C" void portOnlineRestartRejoin(int host, unsigned recoveries) {
+  SDL_Environment* env = SDL_GetEnvironment();
+  for (const char* name : {"TTYD_ONLINE_HOST", "TTYD_ONLINE_HOST_ROOM", "TTYD_ONLINE_JOIN", "TTYD_ONLINE_JOIN_ROOM",
+                           "TTYD_ONLINE_CONTINUE"}) {
+    SDL_UnsetEnvironmentVariable(env, name);
+  }
+  if (host) {
+    portResumeWriteNow();
+    const std::string room = portOnlineRoom();
+    if (!room.empty()) {
+      SDL_SetEnvironmentVariable(env, "TTYD_ONLINE_HOST_ROOM", room.c_str(), true);
+    } else {
+      SDL_SetEnvironmentVariable(env, "TTYD_ONLINE_HOST", std::to_string(sLobby.port).c_str(), true);
+      SDL_SetEnvironmentVariable(env, "TTYD_ONLINE_LAN", "1", true); // (the guest is on another computer)
+    }
+    SDL_SetEnvironmentVariable(env, "TTYD_ONLINE_CONTINUE", "1", true);
+  } else if (sRejoinKind == "room") {
+    SDL_SetEnvironmentVariable(env, "TTYD_ONLINE_JOIN_ROOM", sRejoinTarget.c_str(), true);
+  } else if (!sRejoinTarget.empty()) {
+    SDL_SetEnvironmentVariable(env, "TTYD_ONLINE_JOIN", sRejoinTarget.c_str(), true);
+  }
+  SDL_SetEnvironmentVariable(env, "TTYD_ONLINE_RECOVERIES", std::to_string(recoveries).c_str(), true);
+  portRestartForOnline();
+}
+
 // The launcher's Online tab (launcher_ui.cpp), for a disc of this build's
 // version: true once both games start (the launcher then plays the disc).
 bool portOnlineLobbyDraw(float scale) {
@@ -378,51 +475,69 @@ bool portOnlineLobbyDraw(float scale) {
     if (ImGui::InputText(portTrLabel("Your name"), sLobby.name, sizeof(sLobby.name))) {
       savePrefs();
     }
+    const bool relay = portOnlineRelay()[0] != '\0';
     ImGui::Dummy(ImVec2(0, 6.f * scale));
     ImGui::TextUnformatted(portTr("Host a game"));
-    ImGui::SetNextItemWidth(ImGui::GetFontSize() * 6.f);
-    if (ImGui::InputInt(portTrLabel("Port##online_port"), &sLobby.port, 0)) {
-      sLobby.port = std::clamp(sLobby.port, 1024, 65535);
-      savePrefs();
+    if (relay) {
+      if (ImGui::Button(portTrLabel("Host"))) {
+        const PortOnlineHello me = hello();
+        portOnlineHostRoom(newRoomCode().c_str(), &me);
+      }
+      ImGui::SameLine();
+      ImGui::TextDisabled("%s", portTr("a room code to give the other player"));
     }
-    ImGui::SameLine();
-    if (ImGui::Button(portTrLabel("Host"))) {
-      const PortOnlineHello me = hello();
-      portOnlineHost(sLobby.port, &me);
+    if (!relay || ImGui::TreeNode(portTrLabel("By address instead##online_by_address"))) {
+      ImGui::SetNextItemWidth(ImGui::GetFontSize() * 6.f);
+      if (ImGui::InputInt(portTrLabel("Port##online_port"), &sLobby.port, 0)) {
+        sLobby.port = std::clamp(sLobby.port, 1024, 65535);
+        savePrefs();
+      }
+      ImGui::SameLine();
+      if (ImGui::Button(portTrLabel(relay ? "Host by address" : "Host"))) {
+        const PortOnlineHello me = hello();
+        portOnlineHost(sLobby.port, &me);
+      }
+      if (relay) {
+        ImGui::TreePop();
+      }
     }
     ImGui::Dummy(ImVec2(0, 6.f * scale));
     ImGui::TextUnformatted(portTr("Join a game"));
     ImGui::SetNextItemWidth(field);
-    if (ImGui::InputText(portTrLabel("Address##online_address"), sLobby.address, sizeof(sLobby.address))) {
+    if (ImGui::InputText(portTrLabel(relay ? "Room code or address##online_address" : "Address##online_address"),
+                         sLobby.address, sizeof(sLobby.address))) {
       savePrefs();
     }
     ImGui::SameLine();
     ImGui::BeginDisabled(sLobby.address[0] == '\0');
     if (ImGui::Button(portTrLabel("Join"))) {
-      // "host" or "host:port" (an IPv6 address in brackets, [::1]:47700)
-      std::string host = sLobby.address;
-      int port = PORT_ONLINE_DEFAULT_PORT;
-      const size_t colon = host.rfind(':');
-      if (colon != std::string::npos && host.find(':') == colon) {
-        port = std::atoi(host.c_str() + colon + 1);
-        host.resize(colon);
-      } else if (!host.empty() && host[0] == '[') {
-        const size_t close = host.find(']');
-        if (close != std::string::npos) {
-          if (close + 1 < host.size() && host[close + 1] == ':') {
-            port = std::atoi(host.c_str() + close + 2);
-          }
-          host = host.substr(1, close - 1);
-        }
-      }
-      const PortOnlineHello me = hello();
-      portOnlineJoin(host.c_str(), port, &me);
+      joinTyped();
     }
     ImGui::EndDisabled();
     return false;
   }
 
-  if (state == PORT_ONLINE_LISTENING) {
+  if (state == PORT_ONLINE_LISTENING && std::strcmp(portOnlineLinkName(), "direct") != 0) {
+    // a room: its code once it's open (until then its relay, and so the code, may change)
+    ImGui::TextWrapped("%s", portTr(portOnlineRoom()[0] != '\0' ? "Waiting for the other player to join..."
+                                                                 : "Opening a room..."));
+  }
+  if (state == PORT_ONLINE_LISTENING && portOnlineRoom()[0] != '\0') {
+    ImGui::Text("%s", portTr("Room code:"));
+    ImGui::SameLine();
+    // ROOM-SECRET: the two halves (the relay sees only the first)
+    const std::string room = portOnlineRoom();
+    const std::string shown = room.substr(0, PORT_ONLINE_ROOM_HALF) + "-" + room.substr(PORT_ONLINE_ROOM_HALF);
+    ImGui::SetWindowFontScale(1.6f);
+    ImGui::TextUnformatted(shown.c_str());
+    ImGui::SetWindowFontScale(1.f);
+    ImGui::SameLine();
+    if (ImGui::SmallButton(portTrLabel("Copy##online_code"))) {
+      SDL_SetClipboardText(shown.c_str());
+    }
+    note("Give this code to the other player. Paper Cut connects you directly when it can, and through its relay "
+         "when it can't: nothing to set up on your router.");
+  } else if (state == PORT_ONLINE_LISTENING && std::strcmp(portOnlineLinkName(), "direct") == 0) {
     char address[64];
     ImGui::TextWrapped("%s", portTr("Waiting for the other player to join..."));
     if (portOnlineLocalAddress(address, sizeof(address))) {
@@ -439,6 +554,11 @@ bool portOnlineLobbyDraw(float scale) {
     if (rtt >= 0) {
       ImGui::SameLine();
       ImGui::TextDisabled(portTr("(round trip %d ms)"), rtt);
+    }
+    if (portOnlineRoom()[0] != '\0') {
+      ImGui::TextDisabled("%s", portTr(std::strcmp(portOnlineLinkName(), "relay") == 0
+                                           ? "Through the relay (no direct way between you found yet)."
+                                           : "Connected directly."));
     }
     int slot = 0;
     const bool canContinue = !resumeSave(&slot).empty();
@@ -477,22 +597,54 @@ bool portOnlineLobbyDraw(float scale) {
 // host starts as soon as the guest is there, from the title. Returns once
 // both games start (or gives up after a minute).
 extern "C" void portOnlineTestStart(void) {
-  const char* hostPort = SDL_getenv("TTYD_ONLINE_HOST");
-  const char* join = SDL_getenv("TTYD_ONLINE_JOIN");
+  // (a code as a player would type it: with or without its dash)
+  static std::string sHostRoom, sJoinRoom;
+  sHostRoom = SDL_getenv("TTYD_ONLINE_HOST_ROOM") != nullptr ? asRoomCode(SDL_getenv("TTYD_ONLINE_HOST_ROOM")) : "";
+  sJoinRoom = SDL_getenv("TTYD_ONLINE_JOIN_ROOM") != nullptr ? asRoomCode(SDL_getenv("TTYD_ONLINE_JOIN_ROOM")) : "";
+  const char* hostRoom = sHostRoom.empty() ? nullptr : sHostRoom.c_str();
+  const char* joinRoom = sJoinRoom.empty() ? nullptr : sJoinRoom.c_str();
+  const char* hostPort = hostRoom != nullptr ? hostRoom : SDL_getenv("TTYD_ONLINE_HOST");
+  const char* join = joinRoom != nullptr ? joinRoom : SDL_getenv("TTYD_ONLINE_JOIN");
   if (hostPort == nullptr && join == nullptr) {
     return;
   }
   loadPrefs();
-  std::snprintf(sLobby.name, sizeof(sLobby.name), "%s", hostPort != nullptr ? "Test host" : "Test guest");
+  if (SDL_getenv("TTYD_ONLINE_RECOVERIES") == nullptr) { // (a recovery's restart keeps the player's own name)
+    std::snprintf(sLobby.name, sizeof(sLobby.name), "%s", hostPort != nullptr ? "Test host" : "Test guest");
+  }
   const PortOnlineHello me = hello();
-  if (hostPort != nullptr) {
-    portOnlineHost(std::atoi(hostPort), &me);
+  if (hostRoom != nullptr) {
+    portOnlineHostRoom(hostRoom, &me);
+  } else if (joinRoom != nullptr) {
+    sRejoinKind = "room";
+    sRejoinTarget = joinRoom;
+    // the host may not be in the room yet: try again for a while
+    const Uint64 until = SDL_GetTicks() + 60000;
+    portOnlineJoinRoom(joinRoom, &me);
+    while (portOnlineLobbyState() != PORT_ONLINE_STARTED && SDL_GetTicks() < until) {
+      portOnlineLobbyPump();
+      if (portOnlineLobbyState() == PORT_ONLINE_FAILED) {
+        SDL_Delay(500);
+        portOnlineJoinRoom(joinRoom, &me);
+      } else if (portOnlineLobbyState() == PORT_ONLINE_GOT_SETUP) {
+        applySetup();
+      }
+      SDL_Delay(5);
+    }
+  } else if (hostPort != nullptr) {
+    sLobby.port = std::atoi(hostPort);
+    portOnlineHost(sLobby.port, &me);
   } else {
     std::string address = join;
     const size_t colon = address.rfind(':');
     const int port = colon != std::string::npos ? std::atoi(address.c_str() + colon + 1) : PORT_ONLINE_DEFAULT_PORT;
+    sRejoinKind = "address";
+    sRejoinTarget = join;
     if (colon != std::string::npos) {
       address.resize(colon);
+    }
+    if (address.size() > 2 && address.front() == '[' && address.back() == ']') {
+      address = address.substr(1, address.size() - 2); // an IPv6 address in brackets
     }
     // the host may not be listening yet: try again for a while
     const Uint64 until = SDL_GetTicks() + 60000;
@@ -509,11 +661,22 @@ extern "C" void portOnlineTestStart(void) {
     }
   }
   const Uint64 until = SDL_GetTicks() + 60000;
+  Uint64 peerAt = 0;
   while (hostPort != nullptr && portOnlineLobbyState() != PORT_ONLINE_STARTED && SDL_GetTicks() < until) {
     portOnlineLobbyPump();
     if (portOnlineLobbyState() == PORT_ONLINE_PEER_HERE && portOnlineRoundTrip() >= 0) {
-      sLobby.startMode = 0;
-      sendSetup();
+      // a room: the direct path's search given its time (as a player would, reading the page)
+      if (peerAt == 0) {
+        peerAt = SDL_GetTicks();
+      }
+      if (hostRoom == nullptr || std::strcmp(portOnlineLinkName(), "relay") != 0 ||
+          SDL_GetTicks() - peerAt > 9000) {
+        // from the title, or (a recovery's restart) from the host's last save
+        sLobby.startMode = SDL_getenv("TTYD_ONLINE_CONTINUE") != nullptr ? 1 : 0;
+        std::printf("[online] test: the session goes %s\n", portOnlineLinkName());
+        std::fflush(stdout);
+        sendSetup();
+      }
     }
     SDL_Delay(5);
   }

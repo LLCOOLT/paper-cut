@@ -13,7 +13,7 @@
 
 typedef struct Extra {
     char key[48];
-    int value, min, max;
+    int value, min, max, def;
     int declared;
 } Extra;
 
@@ -59,6 +59,7 @@ int* portSettingsDeclare(const char* key, int def, int min, int max) {
     }
     e->min = min;
     e->max = max;
+    e->def = def;
     e->declared = 1;
     snprintf(env, sizeof(env), "TTYD_SET_%s", key);
     if ((over = getenv(env)) != NULL) {
@@ -71,6 +72,16 @@ int* portSettingsDeclare(const char* key, int def, int min, int max) {
 int* portSettingsFind(const char* key) {
     Extra* e = find(key);
     return e != NULL && e->declared ? &e->value : NULL;
+}
+
+/* a declared setting's default (settings presets); 0 when it isn't declared */
+int portSettingsExtraDefault(const char* key, int* value) {
+    const Extra* e = find(key);
+    if (e == NULL || !e->declared) {
+        return 0;
+    }
+    *value = e->def;
+    return 1;
 }
 
 int portSettingsExtraSet(const char* key, const char* value) {

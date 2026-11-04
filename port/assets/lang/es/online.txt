@@ -119,3 +119,105 @@ La partida en línea ha terminado: las dos partidas se desincronizaron.
 
 Applies after the online game.
 Se aplica tras la partida en línea.
+
+a room code to give the other player
+un código de sala para el otro jugador
+
+By address instead
+Por dirección en su lugar
+
+Host by address
+Alojar por dirección
+
+Room code or address
+Código de sala o dirección
+
+Opening a room...
+Abriendo una sala...
+
+Room code:
+Código de sala:
+
+Copy
+Copiar
+
+Give this code to the other player. Paper Cut connects you directly when it can, and through its relay when it can't: nothing to set up on your router.
+Dale este código al otro jugador. Paper Cut os conecta directamente cuando puede y, si no, a través de su relé: no hay que configurar nada en el router.
+
+Through the relay (no direct way between you found yet).
+A través del relé (aún no se ha encontrado una vía directa entre vosotros).
+
+Connected directly.
+Conectados directamente.
+
+There's no relay in this build: connect by address.
+Esta versión no tiene relé: conéctate por dirección.
+
+That room code isn't from this version of Paper Cut: check it.
+Ese código de sala no es de esta versión de Paper Cut: compruébalo.
+
+Joining room %s...
+Entrando en la sala %s...
+
+The relay wasn't found (no internet?).
+No se encontró el relé (¿sin internet?).
+
+The relay couldn't be reached (no internet?).
+No se pudo llegar al relé (¿sin internet?).
+
+The relay couldn't be reached.
+No se pudo llegar al relé.
+
+A secure connection couldn't be set up.
+No se pudo establecer una conexión segura.
+
+The relay's certificate wasn't recognised: is the computer's clock right?
+No se reconoció el certificado del relé: ¿está bien la hora del equipo?
+
+A secure connection to the relay failed.
+Falló la conexión segura con el relé.
+
+The relay didn't answer.
+El relé no respondió.
+
+The relay is full for today: it opens again at midnight UTC. Connecting by address still works.
+El relé está lleno por hoy: vuelve a abrir a medianoche UTC. Conectar por dirección sigue funcionando.
+
+No one is hosting that room: check the code.
+Nadie aloja esa sala: comprueba el código.
+
+That room already has two players.
+Esa sala ya tiene dos jugadores.
+
+That room code is taken.
+Ese código de sala ya está en uso.
+
+The relay refused the connection.
+El relé rechazó la conexión.
+
+That isn't Paper Cut's relay.
+Ese no es el relé de Paper Cut.
+
+The relay sent something that isn't Paper Cut's.
+El relé envió algo que no es de Paper Cut.
+
+The relay closed the room.
+El relé cerró la sala.
+
+The connection to the relay was lost.
+Se perdió la conexión con el relé.
+
+The relay's address isn't right.
+La dirección del relé no es correcta.
+
+That code isn't right: check its second half.
+Ese código no es correcto: revisa su segunda mitad.
+
+Too many tries with the wrong code: host again for a new room code.
+Demasiados intentos con un código incorrecto: aloja de nuevo para un código nuevo.
+
+The connection was changed on its way: the session ended.
+La conexión se alteró por el camino: la sesión terminó.
+
+Out of step: both games started again from the host's last save.
+Desincronizados: los dos juegos se reiniciaron desde la última partida del anfitrión.

@@ -270,7 +270,7 @@ static void drawScene(void) {
     portViewBegin(); /* as camDraw */
     for (id = 0; id < CAMERA_MAX; id++) {
         CameraEntry* camera = camGetPtr((CameraId)id);
-        if (camera->flags & 1) {
+        if (camera->flags & 1 || (id == CAMERA_2D && portPhotoHideHud())) { /* (photo mode: no HUD) */
             continue;
         }
         camSetCurNo((CameraId)id);

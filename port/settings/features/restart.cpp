@@ -66,6 +66,7 @@ void snapshot() {
 
 bool sRequested;
 int sResume;
+constexpr int kOnlineRejoin = 2; // sResume: online co-op's recovery (neither loads nor clears quick resume)
 int (*sWhenIdle)(void);
 
 // this program's own executable
@@ -117,7 +118,10 @@ bool restartNow() {
   char path[1024], sidecar[1024];
   portResumePath(path, sizeof(path), PORT_GAME_ID, 0);
   portResumePath(sidecar, sizeof(sidecar), PORT_GAME_ID, 1);
-  if (!sResume) {
+  if (sResume == kOnlineRejoin) {
+    // online co-op's recovery (portRestartForOnline): the session starts from the
+    // host's save itself; this player's own quick resume is left as it is
+  } else if (!sResume) {
     // the card was changed under the game (a save restored or copied in): the
     // launcher's Continue must not bring back the game from before it, whose
     // next save would go over the new one (the old save is a backup already)
@@ -141,7 +145,8 @@ bool restartNow() {
     return false;
   }
   SDL_DestroyProcess(process); // it runs on; this one ends
-  std::printf("[restart] %s%s\n", exe.c_str(), sResume && portResumeHave() ? " (quick resume)" : "");
+  std::printf("[restart] %s%s\n", exe.c_str(),
+              sResume == kOnlineRejoin ? " (online: to rejoin)" : sResume && portResumeHave() ? " (quick resume)" : "");
   std::fflush(stdout);
   // at once, as the launcher's Play of another version: Aurora's shutdown (its
   // GPU and audio threads) can hang, and everything that matters is written
@@ -199,6 +204,17 @@ extern "C" void portRestartRequestWith(int resume, int (*whenIdle)(void)) {
 }
 
 extern "C" void portRestartRequest(int resume) { portRestartRequestWith(resume, nullptr); }
+
+// Online co-op's recovery (online.cpp's portOnlineRestartRejoin): this program
+// started again at once, online or not (both players' games do it together),
+// with what the environment says to rejoin; quick resume as it is.
+extern "C" void portRestartForOnline(void) {
+  if (!kCanRestart) {
+    return;
+  }
+  sResume = kOnlineRejoin;
+  restartNow();
+}
 
 extern "C" int portRestartWaiting(void) { return sRequested ? 1 : 0; }
 

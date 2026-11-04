@@ -4,6 +4,7 @@
 #include "driver/msgdrv.h"
 #ifdef TARGET_PC
 #include "port/platform.h"
+#include "port/speech.h"
 #include "port/gameplay.h"
 #include "port/gameplus.h"
 #include "port/luigi.h"
@@ -1800,6 +1801,9 @@ s32 PORT_HOOKABLE(msgWindow_Entry)(const char* msg, EvtWord callback, u16 priori
     data->parseSpeed = 25;
     data->pageCount = 0;
     msgAnalize(smart, copy);
+#ifdef TARGET_PC
+    portSpeechMessage(window, copy); /* read aloud, page by page (port/include/port/speech.h) */
+#endif
     if (window->type == 1) {
         data->flags |= MSG_WIN_FLAG_NO_PAGES;
     }
@@ -1855,6 +1859,9 @@ static void msgWindow_Delete(WindowEntry* window) {
     MsgWinData* data;
     s32 i;
 
+#ifdef TARGET_PC
+    portSpeechClosed(window);
+#endif
     if (window->userdata) {
         data = window->userdata->address;
         for (i = 0; i < data->charCount; i++) {
@@ -1881,6 +1888,9 @@ void PORT_HOOKABLE(msgWindow_Add)(const char* msg, s32 id) {
 #endif
     ((MsgWinData*)smart->address)->lastUpdateTime = gp->renderTime;
     msgAnalize(smart, msg);
+#ifdef TARGET_PC
+    portSpeechAppend(window, msg);
+#endif
     WIN_STATE(window) = 1;
     window->flags |= WINDOW_FLAG_PRINTING;
 }
@@ -1980,6 +1990,9 @@ static void msgWindow_Main(WindowEntry* window) {
     s32 target;
     u32 trg;
 
+#ifdef TARGET_PC
+    portSpeechPage(window, data->page); /* the page shown now, read once */
+#endif
     if (data->talkTimer) {
         if (!data->talkPoseSet) {
             if (data->flags & MSG_WIN_FLAG_BATTLE_UNIT) {

@@ -266,8 +266,39 @@ int portSteamDeck(void) {
 #endif
 }
 
+/* the fixed fields' values before settings.txt: their defaults (settings presets) */
+static PortSettings sDefaults;
+static int sDefaultsTaken;
+
+int portSettingsDefault(const char* key, int* value) {
+    const Field* f = field(key);
+    if (f == NULL) {
+        return portSettingsExtraDefault(key, value);
+    }
+    if (f->value == NULL || !sDefaultsTaken) {
+        return 0;
+    }
+    *value = *(const int*)((const char*)&sDefaults + ((const char*)f->value - (const char*)&sSettings));
+    return 1;
+}
+
+/* a setting changed by key, kept (settings presets): a field's or a declared one's */
+int portSettingsSetKey(const char* key, const char* value) {
+    const Field* f = field(key);
+    if (f != NULL) {
+        set(f, value);
+        sOverridden[f - kFields] = 0;
+        return 1;
+    }
+    return portSettingsExtraSet(key, value);
+}
+
 void portSettingsLoad(const char* userPath) {
     char* text;
+    if (!sDefaultsTaken) {
+        sDefaults = sSettings;
+        sDefaultsTaken = 1;
+    }
     snprintf(sUserPath, sizeof(sUserPath), "%s", userPath != NULL ? userPath : ".");
     snprintf(sPath, sizeof(sPath), "%s/settings.txt", sUserPath);
     crashReportInit();

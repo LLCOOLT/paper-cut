@@ -118,6 +118,12 @@ int* portSettingsFind(const char* key);
  * field, and the declared and read ones to write back. */
 int portSettingsExtraSet(const char* key, const char* value);
 void portSettingsExtraForce(const char* key, const char* value);
+/* Settings presets (port/settings/features/presets.cpp): a setting's default
+ * (a field's before settings.txt, a declared one's def), 0 when unknown; and a
+ * setting changed by key, kept (saved with the next portSettingsSave). */
+int portSettingsExtraDefault(const char* key, int* value);
+int portSettingsDefault(const char* key, int* value);
+int portSettingsSetKey(const char* key, const char* value);
 /* Online co-op's guest (port/settings/online_lobby.cpp): a setting's value for
  * this run (a field or a declared one), and settings.txt left alone while
  * hold is set. */

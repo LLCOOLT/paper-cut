@@ -1,5 +1,6 @@
 /* The free camera and mirror mode: port/include/port/view.h. */
 #include "port/view.h"
+#include "port/online.h"
 #include "port/settings.h"
 #include "driver/camdrv.h"
 #include "driver/seqdrv.h"
@@ -34,6 +35,12 @@ static s8 sStickX, sStickY;
  * from Mario, times) */
 static float sYaw, sPitch, sZoom = 1.0f;
 static OSTime sLast;
+
+/* photo mode's camera, when it's on (it sets the view outright: no easing) */
+static struct {
+    int active, hideHud;
+    float yaw, pitch, zoom;
+} sPhoto;
 
 /* the cameras it turns: the 3D one and the two effect cameras that follow it */
 static const CameraId kCams[] = {CAMERA_3D, CAMERA_3D_EFFECTA, CAMERA_3D_EFFECTB};
@@ -134,12 +141,18 @@ void portViewBegin(void) {
     if (dt < 0.0f || dt > 0.1f) {
         dt = 0.1f;
     }
-    if (!*sFreeCam || !inField()) {
+    if (sPhoto.active && inField()) {
+        sYaw = sPhoto.yaw;
+        sPitch = sPhoto.pitch;
+        sZoom = sPhoto.zoom;
+    } else if (!*sFreeCam || !inField()) {
         sYaw = sPitch = 0.0f; /* battles, scenes between maps: the game's own at once */
         sZoom = 1.0f;
         return;
     }
-    if (fieldControl()) {
+    if (sPhoto.active) {
+        /* (set outright above) */
+    } else if (fieldControl()) {
         x = axis(sStickX);
         y = axis(sStickY);
         if (*sMirror) {
@@ -149,10 +162,12 @@ void portViewBegin(void) {
         toPitch = y > 0.0f ? y * FREE_PITCH_IN : -y * FREE_PITCH_OUT;
         toZoom = y > 0.0f ? 1.0f + y * (FREE_ZOOM_IN - 1.0f) : 1.0f - y * (FREE_ZOOM_OUT - 1.0f);
     }
-    k = 1.0f - expf(-dt * FREE_EASE);
-    sYaw = ease(sYaw, toYaw, k);
-    sPitch = ease(sPitch, toPitch, k);
-    sZoom = ease(sZoom, toZoom, k);
+    if (!sPhoto.active) {
+        k = 1.0f - expf(-dt * FREE_EASE);
+        sYaw = ease(sYaw, toYaw, k);
+        sPitch = ease(sPitch, toPitch, k);
+        sZoom = ease(sZoom, toZoom, k);
+    }
     if (fabsf(sYaw) < 0.0005f && fabsf(sPitch) < 0.0005f && fabsf(sZoom - 1.0f) < 0.0005f) {
         return;
     }
@@ -213,4 +228,42 @@ void portViewEnd(void) {
         cam->cameraAt = sSaved.at[i];
     }
     sSaved.active = FALSE;
+}
+
+/* --- photo mode --- */
+
+int portPhotoAvailable(void) {
+    return inField() && !portOnlineActive() && marioGetPtr() != NULL;
+}
+
+void portPhotoSet(int active, float yaw, float pitch, float zoom, int hideHud) {
+    sPhoto.active = active;
+    sPhoto.yaw = yaw;
+    sPhoto.pitch = pitch;
+    sPhoto.zoom = zoom;
+    sPhoto.hideHud = active && hideHud;
+}
+
+int portPhotoActive(void) {
+    return sPhoto.active;
+}
+
+/* the Start menu's Photo mode row: it closes the menu (the menu draws over a
+ * picture of the field, not the field), photo mode once Mario has the controls */
+static int sPhotoAsked;
+
+void portPhotoRequest(void) {
+    sPhotoAsked = 1;
+}
+
+int portPhotoTakeRequest(void) {
+    if (sPhotoAsked && fieldControl()) {
+        sPhotoAsked = 0;
+        return 1;
+    }
+    return 0;
+}
+
+int portPhotoHideHud(void) {
+    return sPhoto.hideHud;
 }

@@ -8,3 +8,6 @@ The online game ended: the other player stopped answering.
 
 The online game ended: the two games went out of step.
 オンライン　しゅうりょう：ふたつの　ゲームが　ずれました
+
+Out of step: both games started again from the host's last save.
+ずれが出たので　ホストの　さいごの　セーブから　りょうほうの　ゲームを　はじめなおしました

@@ -24,6 +24,11 @@ extern int gPortAutosaveFailed;
 void portResumeFlush(void);
 /* Quick resume is on and has a save of this run (Restart now comes back to it). */
 int portResumeHave(void);
+/* Online co-op's recovery: the last clean save in memory (kept online even
+ * with the setting off), its card slot and size; NULL before the first. */
+const void* portResumeImage(int* slot, size_t* size);
+/* ...and written out now, with the setting off too; 0 when there's none yet */
+int portResumeWriteNow(void);
 /* <user>/resume_<gameId>.gci, or with sidecar its .txt (the save file it
  * came from, 0-3). */
 void portResumePath(char* out, size_t size, const char* gameId, int sidecar);

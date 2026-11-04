@@ -52,6 +52,7 @@ static void mutexUnlock(void) { pthread_mutex_unlock(&globalMutex); }
 #ifdef TTYD_BACKEND_AURORA
 #include <SDL3/SDL.h>
 #include "port/ai_pc.h"
+#include "port/settings.h"
 /* SDL pulls in <stdbool.h>, whose bool macro (_Bool) would shadow MusyX's
  * 4-byte bool typedef that sal.h's prototypes were declared with. */
 #undef bool
@@ -75,6 +76,50 @@ static SND_SOME_CALLBACK userCallback = NULL;
 static s16 sDest[QUANTUM_FRAMES * 2];  /* DSP OUTPUT target (salAiGetDest) */
 static s16 sQuantum[QUANTUM_FRAMES * 2]; /* last rendered quantum */
 static u32 sQuantumPos = QUANTUM_FRAMES; /* frames of sQuantum already consumed */
+
+/* The Speakers setting (port/settings/features/speakers.cpp): 2, 6 (5.1) or 8
+ * (7.1) channels to the device, in SDL's order (front left and right, centre,
+ * LFE, back left and right, then for 7.1 side left and right). The front pair
+ * is the stereo mix; the rear the surround bus and Pro Logic II's rear pair
+ * (hw_pcmixer.c), each to both back speakers (7.1: the back and side pairs);
+ * the centre is left silent (the game mixes for two speakers: its centre is
+ * the front pair's phantom one); the LFE a low pass (120 Hz) of the front. */
+static int sSpeakers = 2;
+static s16 sMulti[QUANTUM_FRAMES * 8];
+static float sLfe;
+
+int salPcSpeakers(void) { return sSpeakers; }
+
+static inline s16 clampS16(s32 v) { return v > 32767 ? 32767 : v < -32768 ? -32768 : (s16)v; }
+
+static void buildMulti(void) {
+  const s32* s = salPcRear(0);
+  const s32* rl = salPcRear(1);
+  const s32* rr = salPcRear(2);
+  const float a = 0.0235f; /* one-pole low pass: 1 - exp(-2 pi 120 / 32000) */
+  u32 i;
+  for (i = 0; i < QUANTUM_FRAMES; i++) {
+    const s32 l = sQuantum[2 * i], r = sQuantum[2 * i + 1];
+    const s32 sur = s != NULL ? s[i] : 0;
+    const s32 backL = sur + (rl != NULL ? rl[i] : 0), backR = sur + (rr != NULL ? rr[i] : 0);
+    s16* o = sMulti + i * sSpeakers;
+    sLfe += a * ((float)(l + r) * 0.5f - sLfe);
+    o[0] = (s16)l;
+    o[1] = (s16)r;
+    o[2] = 0;
+    o[3] = clampS16((s32)sLfe);
+    if (sSpeakers == 8) {
+      /* the rear spread over the back and side pairs, about -3 dB each */
+      o[4] = clampS16(backL * 7 / 10);
+      o[5] = clampS16(backR * 7 / 10);
+      o[6] = clampS16(backL * 7 / 10);
+      o[7] = clampS16(backR * 7 / 10);
+    } else {
+      o[4] = clampS16(backL);
+      o[5] = clampS16(backR);
+    }
+  }
+}
 /** PC build version of the frame callback runner (interrupt control compiled out). */
   // OSEnableInterrupts();
   // OSDisableInterrupts();
@@ -99,6 +144,9 @@ static void runQuantum(void) {
     memset(sQuantum, 0, sizeof(sQuantum));
   }
   portAudioMixExtra(sQuantum, QUANTUM_FRAMES);
+  if (sSpeakers > 2) {
+    buildMulti();
+  }
   sQuantumPos = 0;
 #ifdef TTYD_BACKEND_AURORA
   /* As the AI DMA interrupt: the game's DMA callback (sound.c) sees each block. */
@@ -125,19 +173,66 @@ void salPcRender(s16* out, u32 frames) {
   }
 }
 
+#ifdef TTYD_BACKEND_AURORA
+/* $TTYD_SURROUND_WAV (tests, with $TTYD_FAST: no device): the device's
+ * frames, 5.1 or 7.1, written to a WAV file as they're made */
+static FILE* sSurroundWav;
+static u32 sSurroundFrames;
+
+static void surroundWav(const s16* frames, u32 count) {
+  u8 h[44];
+  const u32 bytes = sSurroundFrames * (u32)sSpeakers * 2, rate = OUTPUT_RATE;
+  const u32 avg = rate * (u32)sSpeakers * 2;
+  if (sSurroundWav == NULL) {
+    return;
+  }
+  fseek(sSurroundWav, 0, SEEK_END);
+  fwrite(frames, sizeof(s16), count * (u32)sSpeakers, sSurroundWav); /* (little-endian hosts) */
+  sSurroundFrames += count;
+  memcpy(h, "RIFF\0\0\0\0WAVEfmt \x10\0\0\0\x01\0", 22);
+  h[22] = (u8)sSpeakers;
+  h[23] = 0;
+  memcpy(h + 24, &rate, 4);
+  memcpy(h + 28, &avg, 4);
+  h[32] = (u8)(sSpeakers * 2);
+  h[33] = 0;
+  h[34] = 16;
+  h[35] = 0;
+  memcpy(h + 36, "data", 4);
+  {
+    const u32 data = bytes + count * (u32)sSpeakers * 2, riff = data + 36;
+    memcpy(h + 40, &data, 4);
+    memcpy(h + 4, &riff, 4);
+  }
+  fseek(sSurroundWav, 0, SEEK_SET);
+  fwrite(h, 1, sizeof(h), sSurroundWav);
+}
+
+/* One quantum for the device: the stereo frames, or the 5.1 / 7.1 ones (buf
+ * holds QUANTUM_FRAMES * sSpeakers); its size in bytes. */
+static int renderDevice(s16* buf) {
+  salPcRender(buf, QUANTUM_FRAMES); /* (a whole quantum: sMulti is the one just made) */
+  if (sSpeakers > 2) {
+    memcpy(buf, sMulti, QUANTUM_FRAMES * sSpeakers * sizeof(s16));
+  }
+  surroundWav(buf, QUANTUM_FRAMES);
+  return (int)(QUANTUM_FRAMES * sSpeakers * sizeof(s16));
+}
+#endif
+
 /** PC build: allocates the four output buffers and reports 32000 Hz, without registering an AI DMA callback. */
     // DCFlushRange(salAIBufferBase, DMA_BUFFER_LEN * 4);
     // AIRegisterDMACallback(salCallback);
     // AIInitDMA(OSCachedToPhysical(salAIBufferBase) + (salAIBufferIndex * 0x280), 0x280);
 #ifdef TTYD_BACKEND_AURORA
 static void SDLCALL audioCallback(void* user, SDL_AudioStream* stream, int additional, int total) {
-  s16 buf[QUANTUM_FRAMES * 2];
+  s16 buf[QUANTUM_FRAMES * 8];
   (void)user;
   (void)total;
   while (additional > 0) {
-    salPcRender(buf, QUANTUM_FRAMES);
-    SDL_PutAudioStreamData(stream, buf, sizeof(buf));
-    additional -= (int)sizeof(buf);
+    const int bytes = renderDevice(buf);
+    SDL_PutAudioStreamData(stream, buf, bytes);
+    additional -= bytes;
   }
 
 }
@@ -149,7 +244,8 @@ static void SDLCALL audioCallback(void* user, SDL_AudioStream* stream, int addit
 void salPcAuroraPump(double seconds) {
   static double due;
   static int sPrimed;
-  s16 buf[QUANTUM_FRAMES * 2];
+  s16 buf[QUANTUM_FRAMES * 8];
+  const int quantumBytes = (int)(QUANTUM_FRAMES * sSpeakers * sizeof(s16));
   if ((sStream != NULL && !sPush) || !sStarted) {
     return;
   }
@@ -158,7 +254,7 @@ void salPcAuroraPump(double seconds) {
      * while the frames' audio follows at the game's pace */
     memset(buf, 0, sizeof(buf));
     for (sPrimed = 0; sPrimed < OUTPUT_RATE * 6 / 100 / QUANTUM_FRAMES; sPrimed++) {
-      SDL_PutAudioStreamData(sStream, buf, sizeof(buf));
+      SDL_PutAudioStreamData(sStream, buf, quantumBytes);
     }
     sPrimed = 1;
   }
@@ -167,12 +263,13 @@ void salPcAuroraPump(double seconds) {
     due = OUTPUT_RATE / 4; /* don't try to catch up after a stall */
   }
   while (due >= QUANTUM_FRAMES) {
-    salPcRender(buf, QUANTUM_FRAMES);
+    renderDevice(buf);
     due -= QUANTUM_FRAMES;
     /* to the device unless it already has plenty (the game ran ahead of
      * the wall clock): the rendering is the game's either way */
-    if (sPush && SDL_GetAudioStreamQueued(sStream) < (int)(OUTPUT_RATE * 4 / 5 * sizeof(s16) * 2 / 4)) {
-      SDL_PutAudioStreamData(sStream, buf, sizeof(buf));
+    if (sPush && SDL_GetAudioStreamQueued(sStream) <
+                     (int)(OUTPUT_RATE * 4 / 5 * sizeof(s16) * (size_t)sSpeakers / 4)) {
+      SDL_PutAudioStreamData(sStream, buf, quantumBytes);
     }
   }
 }
@@ -297,13 +394,27 @@ bool salInitAi(SND_SOME_CALLBACK callback, u32 unk, u32* outFreq) {
   *outFreq = OUTPUT_RATE;
   portAudioMixUpdate(); /* its settings declared here, before the audio thread reads them */
 #ifdef TTYD_BACKEND_AURORA
+  {
+    /* the speakers: stereo, 5.1 or 7.1 (from the next start: the device's stream opens once) */
+    const int speakers = *portSettingsDeclare("speakers", 0, 0, 2);
+    sSpeakers = speakers == 2 ? 8 : speakers == 1 ? 6 : 2;
+    salPcSetDiscreteRear(sSpeakers > 2);
+    if (sSurroundWav == NULL && getenv("TTYD_SURROUND_WAV") != NULL) {
+      static const u8 kRoom[44] = {0}; /* the header's room, filled in as frames come */
+      sSurroundWav = fopen(getenv("TTYD_SURROUND_WAV"), "wb");
+      sSurroundFrames = 0;
+      if (sSurroundWav != NULL) {
+        fwrite(kRoom, 1, sizeof(kRoom), sSurroundWav);
+      }
+    }
+  }
   /* $TTYD_FAST (test runs, frames back to back): no device; salPcAuroraPump
    * renders per frame, so the sequencer keeps to the game's frames, not the
    * wall clock, and runs repeat exactly. */
   if (sStream == NULL && getenv("TTYD_FAST") == NULL) {
     SDL_AudioSpec spec;
     spec.format = SDL_AUDIO_S16;
-    spec.channels = 2;
+    spec.channels = sSpeakers;
     spec.freq = OUTPUT_RATE;
     if (!SDL_WasInit(SDL_INIT_AUDIO) && !SDL_InitSubSystem(SDL_INIT_AUDIO)) {
       fprintf(stderr, "MusyX: SDL audio init failed: %s\n", SDL_GetError());

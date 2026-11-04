@@ -73,6 +73,42 @@ void portOnlineCancel(const char* why);
 /* this computer's address on its network (for the host to share), or 0 */
 int portOnlineLocalAddress(char* out, size_t size);
 
+/* Rooms on the relay (docs/ONLINE_RELAY.md): the host opens one by its code,
+ * the guest joins with the code, no address or router to set up. A direct
+ * UDP path is tried first (port/include/port/online_link.h); the relay
+ * carries the game only when there's none. */
+#define PORT_ONLINE_CODE_CHARS "23456789ABCDEFGHJKMNPQRSTUVWXYZ" /* nothing to read wrong (0/O, 1/I/L) */
+/* ROOM-SECRET, shown with a dash: the relay sees only the room's half (its
+ * first character names the relay); the secret half makes the session's key
+ * between the two games (port/include/port/online_link.h), never sent */
+#define PORT_ONLINE_CODE_LENGTH 8
+#define PORT_ONLINE_ROOM_HALF 4
+/* the relay's address (the build's TTYD_ONLINE_RELAY, or $TTYD_ONLINE_RELAY),
+ * "" when there's none */
+const char* portOnlineRelay(void);
+int portOnlineHostRoom(const char* code, const PortOnlineHello* me);
+int portOnlineJoinRoom(const char* code, const PortOnlineHello* me);
+/* the room's code ("" when not in one) */
+const char* portOnlineRoom(void);
+/* frames the input delay needs on top of the round trip's: the relay's
+ * batches (PORT_ONLINE_BATCH - 1), else none */
+int portOnlineDelayExtra(void);
+/* how the session goes: "direct", "direct (UDP)", "relay" (English) */
+const char* portOnlineLinkName(void);
+#define PORT_ONLINE_BATCH 3 /* frames of input in one relayed message */
+
+/* Recovery (online_pc.c): out of step, the host tells the guest and both
+ * games start again (as Restart now), the session beginning again from the
+ * host's last save (online.cpp, portOnlineRestartRejoin); the guest, out of
+ * step first, asks. Over the reliable stream (a room's relay, or the TCP
+ * connection), sealed in rooms. */
+void portOnlineSendResync(const void* payload, size_t len);
+void portOnlineAskResync(unsigned epoch);
+/* guest: the host's, once it's come (kept until the next one) */
+int portOnlineResyncArrived(const void** payload, size_t* len);
+/* host: the guest asked (for that epoch), -1 when not */
+int portOnlineResyncAsked(void);
+
 /* The session's connection */
 int portOnlineConnected(void);
 void portOnlineSendInput(unsigned frame, const unsigned char pad[PORT_ONLINE_PAD_BYTES]);

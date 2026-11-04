@@ -28,6 +28,7 @@
 #include "party.h"
 #include "port/online.h"
 #include "port/platform.h"
+#include "port/resume.h"
 #include <dolphin/pad.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -39,6 +40,8 @@ void portCoopNotice(const char* english); /* second_player_pc.c */
 #define WAIT_MS 15000 /* the other player's input not there for this long: the session ends */
 
 static int sActive, sDelay;
+static unsigned sEpoch; /* recoveries done this session (portOnlineFrame's, below) */
+static int sAsked;      /* guest: asked the host for this epoch's */
 static unsigned sFrame;     /* pad reads since the session began */
 static const char* sEnded;  /* why it ended, English */
 static unsigned char sOwn[RING][PORT_ONLINE_PAD_BYTES]; /* this player's input, by the frame it's for */
@@ -200,6 +203,13 @@ void portOnlineBegin(int inputDelay) {
     sActive = 1;
     sDelay = inputDelay < 1 ? 1 : inputDelay > 30 ? 30 : inputDelay;
     sFrame = 0;
+    /* recoveries this session: none, or as many as before the restart it began from */
+    sEpoch = getenv("TTYD_ONLINE_RECOVERIES") != NULL ? (unsigned)atoi(getenv("TTYD_ONLINE_RECOVERIES")) : 0;
+    if (sEpoch > 0) {
+        portCoopNotice("Out of step: both games started again from the host's last save.");
+    }
+
+    sAsked = 0;
     sEnded = NULL;
     memset(sMine, 0, sizeof(sMine));
     for (i = 0; i < RING; i++) {
@@ -239,9 +249,18 @@ void portOnlineApplyPad(PADStatus* pads) {
         neutral(own);
         neutral(theirs);
     } else {
+        int got;
         memcpy(own, sOwn[f % RING], sizeof(own));
-        if (!portOnlineWaitInput(f, theirs, WAIT_MS)) {
-            end("The online game ended: the other player stopped answering.");
+        got = portOnlineWaitInput(f, theirs, WAIT_MS);
+        if (got == 2) {
+            /* a recovery came (or was asked for): this frame nothing pressed; it's
+               put in place once the frame is over (portOnlineFrame) */
+            neutral(own);
+            neutral(theirs);
+        } else if (!got) {
+            /* left (closed, or said goodbye), or went quiet */
+            end(strstr(portOnlineStatus(), "left") != NULL ? "The online game ended: the other player left."
+                                                         : "The online game ended: the other player stopped answering.");
             return;
         }
     }
@@ -251,6 +270,122 @@ void portOnlineApplyPad(PADStatus* pads) {
         memset(&pads[i], 0, sizeof(pads[i]));
         pads[i].err = PAD_ERR_NO_CONTROLLER;
     }
+}
+
+/* --- recovery: out of step, both start again from the host's last save ---
+ *
+ * A save loaded into the running games isn't enough: what isn't in a save
+ * (scripts halfway, effects, the characters' AI and the random numbers they
+ * draw while the room loads) was already different, and the games drift
+ * apart again. A fresh start is what keeps two games the same (a session's
+ * own). So the host tells the guest ("RSYN" and the recovery's number), and
+ * both do what Restart now does: the host writes its last clean save (quick
+ * resume's, resume_aurora.c), each program starts again, the host hosting
+ * the same room (or port) and the guest joining it, and the session begins
+ * from the host's save as "Continue where you left off" (online.cpp,
+ * portOnlineRestartRejoin). A guest out of step first asks the host. Not on
+ * phones (their apps can't start themselves again: the session ends there),
+ * and not more than kMaxRecoveries times a session. */
+#define RESYNC_MAGIC 0x4E595352u /* "RSYN" */
+static const unsigned kMaxRecoveries = 3;
+
+#ifdef TTYD_BACKEND_AURORA
+int portRestartSupported(void);                       /* restart.cpp */
+void portOnlineRestartRejoin(int host, unsigned recoveries); /* online.cpp: doesn't return */
+#endif
+
+static void wr32(unsigned char* p, unsigned v) {
+    p[0] = (unsigned char)v;
+    p[1] = (unsigned char)(v >> 8);
+    p[2] = (unsigned char)(v >> 16);
+    p[3] = (unsigned char)(v >> 24);
+}
+static unsigned rd32(const unsigned char* p) {
+    return p[0] | (p[1] << 8) | (p[2] << 16) | ((unsigned)p[3] << 24);
+}
+
+static int canRecover(void) {
+#ifdef TTYD_BACKEND_AURORA
+    return portRestartSupported() && sEpoch < kMaxRecoveries;
+#else
+    return 0;
+#endif
+}
+
+/* host: the guest told, then both start again */
+static void hostRecovery(void) {
+#ifdef TTYD_BACKEND_AURORA
+    unsigned char m[8];
+    int slot;
+    size_t size;
+    if (!canRecover() || portResumeImage(&slot, &size) == NULL) {
+        end("The online game ended: the two games went out of step.");
+        return;
+    }
+    wr32(m, RESYNC_MAGIC);
+    wr32(m + 4, sEpoch + 1);
+    portOnlineSendResync(m, sizeof(m));
+    printf("[online] out of step: both games start again from the host's last save (%u of %u)\n", sEpoch + 1,
+           kMaxRecoveries);
+    fflush(stdout);
+    portOnlineRestartRejoin(1, sEpoch + 1);
+#endif
+    end("The online game ended: the two games went out of step.");
+}
+
+/* a mismatch: the host starts the recovery, the guest asks it to */
+static void outOfStep(void) {
+    if (!canRecover()) {
+        end("The online game ended: the two games went out of step.");
+    } else if (portOnlineIsHost()) {
+        hostRecovery();
+    } else if (!sAsked) {
+        sAsked = 1;
+        portOnlineAskResync(sEpoch);
+    }
+}
+
+/* each frame: the guest's ask (host), the host's word (guest); 1 when it was taken */
+static int recoveryFrame(void) {
+    if (portOnlineIsHost()) {
+        const int asked = portOnlineResyncAsked();
+        if (asked >= 0 && (unsigned)asked == sEpoch) { /* (an older ask: that one's done) */
+            hostRecovery();
+            return 1;
+        }
+    } else {
+        const void* p = NULL;
+        size_t len = 0;
+        if (portOnlineResyncArrived(&p, &len)) {
+            const unsigned char* m = (const unsigned char*)p;
+            const unsigned epoch = len >= 8 && rd32(m) == RESYNC_MAGIC ? rd32(m + 4) : 0;
+            if (epoch == 0 || !canRecover()) {
+                end("The online game ended: the two games went out of step.");
+                return 1;
+            }
+#ifdef TTYD_BACKEND_AURORA
+            printf("[online] out of step: starting again from the host's last save (%u of %u)\n", epoch,
+                   kMaxRecoveries);
+            fflush(stdout);
+            portOnlineRestartRejoin(0, epoch);
+#endif
+            end("The online game ended: the two games went out of step.");
+            return 1;
+        }
+    }
+    {
+        /* $TTYD_ONLINE_DESYNC_AT=<frame> (tests, the guest): its random numbers nudged once,
+           in its first session only (not the one it starts again into) */
+        static int sNudged;
+        const char* at = getenv("TTYD_ONLINE_DESYNC_AT");
+        if (!sNudged && at != NULL && sEpoch == 0 && !portOnlineIsHost() && sFrame == (unsigned)atoi(at)) {
+            sNudged = 1;
+            portRandSetState(portRandState() ^ 0x5A5A5A5Au);
+            printf("[online] test: out of step on purpose at frame %u\n", sFrame);
+            fflush(stdout);
+        }
+    }
+    return 0;
 }
 
 /* each frame, after the game's (vi_aurora.c): the fingerprints, and the
@@ -290,6 +425,9 @@ void portOnlineFrame(void) {
         return;
     }
     portOnlinePump();
+    if (recoveryFrame()) {
+        return; /* the games went back together: no fingerprint of the frame before */
+    }
     if (sFrame > 0 && sFrame % PORT_ONLINE_HASH_EVERY == 0) {
         const int slot = (sFrame / PORT_ONLINE_HASH_EVERY) % 16;
         if (!sMine[slot].have || sMine[slot].frame != sFrame) {
@@ -306,7 +444,8 @@ void portOnlineFrame(void) {
             if (theirs != sMine[i].hash) {
                 printf("[online] out of step at frame %u: %016llx here, %016llx there\n", sMine[i].frame,
                        sMine[i].hash, theirs);
-                end("The online game ended: the two games went out of step.");
+                fflush(stdout);
+                outOfStep();
                 return;
             }
         }

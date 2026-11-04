@@ -28,6 +28,7 @@
 
 void salPcAuroraPump(double seconds); /* hw_pc.c: MusyX null sink without a device */
 void portShotInbetween(u32 frame, int k); /* shot_aurora.c */
+void portShotHeld(void);                  /* shot_aurora.c */
 
 static u32 sRetraceCount;
 static VIRetraceCallback sPreCallback;
@@ -185,7 +186,9 @@ void VIWaitForRetrace(void) {
         do {
             portAuroraBeginFrame();
             portInterpRedraw();
+            portShotHeld(); /* a picture taken now (F12, photo mode) is of this one */
             endFrame();
+            portShotFrame(); /* and written when its readback comes */
             portSaveStateFrame();
         } while (portFrameAdvanceWait());
         portResume();

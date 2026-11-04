@@ -119,3 +119,105 @@ The online game ended: the two games went out of step.
 
 Applies after the online game.
 オンラインゲームのあとで反映されます。
+
+a room code to give the other player
+相手に伝えるルームコード
+
+By address instead
+代わりにアドレスで
+
+Host by address
+アドレスでホスト
+
+Room code or address
+ルームコードかアドレス
+
+Opening a room...
+ルームを開いています...
+
+Room code:
+ルームコード：
+
+Copy
+コピー
+
+Give this code to the other player. Paper Cut connects you directly when it can, and through its relay when it can't: nothing to set up on your router.
+このコードを相手に伝えてください。Paper Cutはできるときは直接、できないときは中継サーバーでつなぎます。ルーターの設定はいりません。
+
+Through the relay (no direct way between you found yet).
+中継サーバー経由（直接の経路はまだ見つかっていません）。
+
+Connected directly.
+直接つながりました。
+
+There's no relay in this build: connect by address.
+このビルドには中継サーバーがありません。アドレスで接続してください。
+
+That room code isn't from this version of Paper Cut: check it.
+このルームコードはこのバージョンのPaper Cutのものではありません。確認してください。
+
+Joining room %s...
+ルーム%sに参加しています...
+
+The relay wasn't found (no internet?).
+中継サーバーが見つかりません（インターネット未接続？）。
+
+The relay couldn't be reached (no internet?).
+中継サーバーに届きません（インターネット未接続？）。
+
+The relay couldn't be reached.
+中継サーバーに届きません。
+
+A secure connection couldn't be set up.
+安全な接続を準備できませんでした。
+
+The relay's certificate wasn't recognised: is the computer's clock right?
+中継サーバーの証明書を確認できません。端末の時刻は正しいですか？
+
+A secure connection to the relay failed.
+中継サーバーへの安全な接続に失敗しました。
+
+The relay didn't answer.
+中継サーバーが応答しません。
+
+The relay is full for today: it opens again at midnight UTC. Connecting by address still works.
+中継サーバーは今日はいっぱいです。UTCの午前0時に再開します。アドレスでの接続はそのまま使えます。
+
+No one is hosting that room: check the code.
+そのルームをホストしている人はいません。コードを確認してください。
+
+That room already has two players.
+そのルームにはもう2人います。
+
+That room code is taken.
+そのルームコードは使われています。
+
+The relay refused the connection.
+中継サーバーが接続を拒否しました。
+
+That isn't Paper Cut's relay.
+それはPaper Cutの中継サーバーではありません。
+
+The relay sent something that isn't Paper Cut's.
+中継サーバーからPaper Cutのものでないデータが届きました。
+
+The relay closed the room.
+中継サーバーがルームを閉じました。
+
+The connection to the relay was lost.
+中継サーバーとの接続が切れました。
+
+The relay's address isn't right.
+中継サーバーのアドレスが正しくありません。
+
+That code isn't right: check its second half.
+コードが違います。後半を確認してください。
+
+Too many tries with the wrong code: host again for a new room code.
+違うコードでの試行が多すぎます。もう一度ホストして新しいコードを作ってください。
+
+The connection was changed on its way: the session ended.
+通信が途中で書き換えられました。セッションを終了しました。
+
+Out of step: both games started again from the host's last save.
+ずれが出たので、ホストの最後のセーブから両方の ゲームを始め直しました。

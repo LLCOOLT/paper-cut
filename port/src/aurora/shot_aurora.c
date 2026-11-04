@@ -332,6 +332,15 @@ void portShotBeforeCopyDisp(u32 frame) {
     }
 }
 
+/* The game held (frame advance, photo mode: vi_aurora.c), its frame drawn
+ * again: a capture asked for now is of this picture (the game's own frame
+ * copy won't come until it goes on). */
+void portShotHeld(void) {
+    if (!sCapturing && sNext[0] != '\0') {
+        capture();
+    }
+}
+
 /* In-between frame k, drawn after the game's frame (vi_aurora.c). */
 void portShotInbetween(u32 frame, int k) {
     if (!sCapturing && sNext[0] == '\0' && k == inbetween() && listed(frame)) {

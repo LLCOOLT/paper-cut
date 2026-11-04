@@ -18,7 +18,9 @@
 #include "port/pause_settings.h"
 #include "port/restart.h"
 #include "port/settings.h"
+#include "port/speech.h"
 #include "port/tr.h"
+#include "port/view.h"
 #include "driver/camdrv.h"
 #include "manager/fontmgr.h"
 #include "mario/mariost.h"
@@ -32,7 +34,7 @@
 
 void portSettingsToggle(void); /* port/settings/settings_ui.cpp: the full page */
 
-enum { KIND_HEADING = -1, KIND_RATE = 3, KIND_ALL = 4, KIND_RESTART = 5 };
+enum { KIND_HEADING = -1, KIND_RATE = 3, KIND_ALL = 4, KIND_RESTART = 5, KIND_PHOTO = 6 };
 #define MAX_ROWS 256
 #define VISIBLE 10
 #define ROW_X (-250.0f)
@@ -111,6 +113,13 @@ static void build(void) {
                                  "back here.";
     } else {
         sConfirm = 0;
+    }
+    if (portPhotoAvailable()) { /* (port/settings/features/photo_mode.cpp) */
+        sRows[sCount].kind = KIND_PHOTO;
+        sRows[sCount].label = "Photo mode";
+        sRows[sCount].c.flags = 0;
+        sRows[sCount++].c.note = "Closes the menu and holds the game: the sticks move the camera, A takes a picture, "
+                                 "Y hides the HUD, B goes back.";
     }
     sRows[sCount].kind = KIND_ALL;
     sRows[sCount].label = "All settings...";
@@ -346,6 +355,10 @@ s32 portPauseSettingsMain(WindowWork* wp) {
         if (sRows[sRow].kind == KIND_ALL) {
             psndSFXOn((const char*)0x20012);
             portSettingsToggle();
+        } else if (sRows[sRow].kind == KIND_PHOTO) {
+            psndSFXOn((const char*)0x20012);
+            portPhotoRequest();
+            return -2; /* the whole menu closed: photo mode once Mario has the controls */
         } else if (sRows[sRow].kind == KIND_RESTART) {
             psndSFXOn((const char*)0x20012);
             if (sConfirm) {
@@ -367,6 +380,17 @@ s32 portPauseSettingsMain(WindowWork* wp) {
         }
     }
     pointAt(wp);
+    if (sRow < sCount) { /* read aloud: the row, its value and note, when either changes */
+        static char sSaid[600];
+        char text[600], value[64];
+        valueText(&sRows[sRow], value, sizeof(value));
+        snprintf(text, sizeof(text), "%s%s%s. %s", portTrGame(sRows[sRow].label), value[0] != '\0' ? ", " : "",
+                 value, sRows[sRow].c.note != NULL ? portTrGame(sRows[sRow].c.note) : "");
+        if (strcmp(text, sSaid) != 0) {
+            snprintf(sSaid, sizeof(sSaid), "%s", text);
+            portSpeechMenu(text);
+        }
+    }
     return 0;
 }
 

@@ -119,3 +119,105 @@ La partie en ligne est finie : les deux parties se sont désynchronisées.
 
 Applies after the online game.
 S'applique après la partie en ligne.
+
+a room code to give the other player
+un code de salon à donner à l'autre joueur
+
+By address instead
+Par adresse à la place
+
+Host by address
+Héberger par adresse
+
+Room code or address
+Code de salon ou adresse
+
+Opening a room...
+Ouverture d'un salon...
+
+Room code:
+Code du salon :
+
+Copy
+Copier
+
+Give this code to the other player. Paper Cut connects you directly when it can, and through its relay when it can't: nothing to set up on your router.
+Donne ce code à l'autre joueur. Paper Cut vous connecte directement quand il le peut, et par son relais sinon : rien à régler sur ta box.
+
+Through the relay (no direct way between you found yet).
+Par le relais (aucun chemin direct entre vous trouvé pour l'instant).
+
+Connected directly.
+Connectés directement.
+
+There's no relay in this build: connect by address.
+Cette version n'a pas de relais : connecte-toi par adresse.
+
+That room code isn't from this version of Paper Cut: check it.
+Ce code de salon ne vient pas de cette version de Paper Cut : vérifie-le.
+
+Joining room %s...
+Connexion au salon %s...
+
+The relay wasn't found (no internet?).
+Le relais est introuvable (pas d'internet ?).
+
+The relay couldn't be reached (no internet?).
+Le relais est injoignable (pas d'internet ?).
+
+The relay couldn't be reached.
+Le relais est injoignable.
+
+A secure connection couldn't be set up.
+Impossible d'établir une connexion sécurisée.
+
+The relay's certificate wasn't recognised: is the computer's clock right?
+Le certificat du relais n'a pas été reconnu : l'horloge de l'appareil est-elle à l'heure ?
+
+A secure connection to the relay failed.
+La connexion sécurisée au relais a échoué.
+
+The relay didn't answer.
+Le relais n'a pas répondu.
+
+The relay is full for today: it opens again at midnight UTC. Connecting by address still works.
+Le relais est plein pour aujourd'hui : il rouvre à minuit UTC. La connexion par adresse marche toujours.
+
+No one is hosting that room: check the code.
+Personne n'héberge ce salon : vérifie le code.
+
+That room already has two players.
+Ce salon a déjà deux joueurs.
+
+That room code is taken.
+Ce code de salon est déjà pris.
+
+The relay refused the connection.
+Le relais a refusé la connexion.
+
+That isn't Paper Cut's relay.
+Ce n'est pas le relais de Paper Cut.
+
+The relay sent something that isn't Paper Cut's.
+Le relais a envoyé quelque chose qui ne vient pas de Paper Cut.
+
+The relay closed the room.
+Le relais a fermé le salon.
+
+The connection to the relay was lost.
+La connexion au relais a été perdue.
+
+The relay's address isn't right.
+L'adresse du relais n'est pas correcte.
+
+That code isn't right: check its second half.
+Ce code n'est pas bon : vérifie sa seconde moitié.
+
+Too many tries with the wrong code: host again for a new room code.
+Trop d'essais avec un mauvais code : héberge à nouveau pour un nouveau code.
+
+The connection was changed on its way: the session ended.
+La connexion a été modifiée en route : la partie est terminée.
+
+Out of step: both games started again from the host's last save.
+Désynchronisés : les deux jeux redémarrent depuis la dernière sauvegarde de l'hôte.

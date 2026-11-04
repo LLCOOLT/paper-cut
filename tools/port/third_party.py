@@ -162,6 +162,15 @@ COMPONENTS = [
      "SGI Free Software License B 2.0", [], None, None),
     ("Fredoka", "the launcher's typeface, by The Fredoka Project Authors (also in OFL.txt)",
      "SIL Open Font License 1.1", ["@/port/assets/fonts/OFL.txt"], None, None),
+    ("Mbed TLS", "online co-op's secure connection to its relay", "Apache License 2.0",
+     ["_deps/mbedtls-src/LICENSE"], None, None),
+    ("libjuice", "online co-op's direct connection (ICE); its source: https://github.com/paullouisageneau/libjuice "
+     "(v1.7.4, unchanged)", "Mozilla Public License 2.0", ["_deps/libjuice-src/LICENSE"], None, None),
+    ("stb_vorbis, dr_mp3, dr_flac", "the players' own music files (OGG, MP3, FLAC), by Sean Barrett and David Reid",
+     "public domain, or MIT No Attribution", [],
+     "Public domain where that's recognised; elsewhere MIT No Attribution (each file's end, "
+     "libs/audio_decoders/): permission is granted to use, copy, modify and distribute them for any purpose, "
+     "with or without fee, without conditions.\n", None),
 ]
 
 

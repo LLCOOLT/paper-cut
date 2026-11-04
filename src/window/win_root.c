@@ -3,6 +3,8 @@
 /* the Start menu's statics in a block of their own, the second screen's menu's while it runs (port/companion_section.h) */
 #define PORT_SECTION_MENU
 #include "port/companion_section.h"
+#include "port/companion_menu.h"
+#include "port/speech.h"
 #endif
 #include "version.h"
 #include "port_hook.h"
@@ -1041,6 +1043,18 @@ void PORT_HOOKABLE(winMsgEntry)(WindowWork* wp, s32 item, const char* msg, const
             wp->msgLines = lines + 1;
             wp->lastMsg = msg;
             strncpy(_tmp, msg, 60);
+#ifdef TARGET_PC
+            /* read aloud (port/include/port/speech.h); not the second screen's copy of the
+               menu, nor the Settings tab's notes (it reads its rows whole) */
+#ifdef TTYD_BACKEND_AURORA
+            if (!gPortCompanionMenu && wp->active != PORT_PAUSE_SETTINGS_TAB + 11)
+#else
+            if (!gPortCompanionMenu)
+#endif
+            {
+                portSpeechMenu(msgSearch(wp->msg));
+            }
+#endif
         }
     }
 }

@@ -5,6 +5,7 @@
  * Behavior matches the headless backend (port/src/headless/sdk/os_pc.c,
  * gx_fifo_pc.c, stubs_generated.c) unless noted. */
 #include <dolphin/os.h>
+#include "port/settings.h"
 #include <dolphin/gx.h>
 #include <dolphin/exi.h>
 #include <stdarg.h>
@@ -87,11 +88,25 @@ void OSResetSystem(int reset, u32 resetCode, BOOL forceMenu) {
     STUB_ONCE(OSResetSystem);
 }
 
-/* SRAM settings: mono sound, interlaced video, as a fresh GameCube. */
-static u32 sSoundMode;
+/* SRAM settings: the sound mode kept as SRAM kept it (game_sound_mode, set
+ * by the game's own file-select option, stereo until then: a fresh
+ * GameCube's mono would make every run mono, its left and right the same);
+ * interlaced video, as a fresh GameCube. */
 static u32 sProgressiveMode;
-u32 OSGetSoundMode(void) { return sSoundMode; }
-void OSSetSoundMode(u32 mode) { sSoundMode = mode; }
+static int* soundMode(void) {
+    static int* sMode;
+    if (sMode == NULL) {
+        sMode = portSettingsDeclare("game_sound_mode", 1, 0, 1); /* OS_SOUND_MODE_MONO 0, _STEREO 1 */
+    }
+    return sMode;
+}
+u32 OSGetSoundMode(void) { return (u32)*soundMode(); }
+void OSSetSoundMode(u32 mode) {
+    if (*soundMode() != (int)(mode != 0)) {
+        *soundMode() = mode != 0;
+        portSettingsSave();
+    }
+}
 u32 OSGetProgressiveMode(void) { return sProgressiveMode; }
 void OSSetProgressiveMode(u32 on) { sProgressiveMode = on; }
 

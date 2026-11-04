@@ -37,6 +37,20 @@ void portViewEnd(void);
 /* Mirror mode is on. */
 int portViewMirrored(void);
 
+/* Photo mode (port/settings/features/photo_mode.cpp): the game held (frame
+ * advance's hold), its last frame drawn again from a camera turned all the way
+ * round Mario (yaw), up or down (pitch, radians: positive higher) and in or
+ * out (zoom: the eye's distance, times), the HUD and message windows (the 2D
+ * camera) hidden or not. Only in the field and not online. */
+int portPhotoAvailable(void);
+void portPhotoSet(int active, float yaw, float pitch, float zoom, int hideHud);
+int portPhotoActive(void);
+int portPhotoHideHud(void);
+/* The Start menu's row: photo mode asked for, then taken (once) when Mario
+ * has the controls again, the menu closed. */
+void portPhotoRequest(void);
+int portPhotoTakeRequest(void);
+
 #ifdef __cplusplus
 }
 #endif

@@ -77,6 +77,9 @@ Paper Cut's builds embed or link these (Aurora's dependencies, fetched when the 
 | {fmt}, Abseil, Tracy, SQLite | Aurora's support code (formatting, containers, the profiler client, the pipeline cache) | MIT; Apache 2.0; BSD 3-Clause; public domain |
 | MusyX (`libs/musyx/`), the SGI tessellator (`rels/tst/`), Fredoka (`port/assets/fonts/`), SDL_GameControllerDB (`port/assets/controllers/`) | above | MIT; SGI Free Software License B; SIL OFL 1.1; zlib |
 | stb_vorbis, dr_mp3, dr_flac (`libs/audio_decoders/`) | the players' own music (OGG, MP3, FLAC) | public domain, or MIT No Attribution |
+| [Mbed TLS](https://github.com/Mbed-TLS/mbedtls) 3.6.7 (fetched by CMake, pinned by hash) | online co-op's TLS to its relay (`port/src/common/online_ws_pc.c`) | Apache 2.0 |
+| [libjuice](https://github.com/paullouisageneau/libjuice) 1.7.4 (fetched by CMake, pinned by hash, unchanged) | online co-op's direct UDP path, ICE (`port/src/common/online_ice_pc.c`) | MPL 2.0 |
+| The relay's root certificates (`port/src/common/online_roots.inc`, from curl's copy of Mozilla's list, `tools/port/gen_online_roots.py`) | checking the relay is Cloudflare's | MPL 2.0 (Mozilla's list) |
 
 On Windows the desktop package also carries Microsoft's Visual C++ runtime DLLs, redistributed under the Visual Studio licence terms.
 

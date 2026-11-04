@@ -1,0 +1,3 @@
+# wrangler dev's local state and bundles
+.wrangler/
+node_modules/

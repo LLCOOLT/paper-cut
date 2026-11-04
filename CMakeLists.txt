@@ -783,6 +783,47 @@ if(TTYD_BACKEND STREQUAL "aurora")
         aurora::thp aurora::main)
     # SDL3 directly: the disc picker's file dialog and message box (disc_aurora.c).
     target_link_libraries(ttyd PRIVATE ${AURORA_SDL3_TARGET})
+    # Mbed TLS (Apache-2.0, a fixed release): online co-op's relay over wss://
+    # (port/src/common/online_ws_pc.c), the same TLS on every platform
+    if(NOT EMSCRIPTEN)
+        include(FetchContent)
+        set(ENABLE_TESTING OFF CACHE BOOL "" FORCE)
+        set(ENABLE_PROGRAMS OFF CACHE BOOL "" FORCE)
+        set(MBEDTLS_FATAL_WARNINGS OFF CACHE BOOL "" FORCE)
+        set(USE_SHARED_MBEDTLS_LIBRARY OFF CACHE BOOL "" FORCE)
+        set(USE_STATIC_MBEDTLS_LIBRARY ON CACHE BOOL "" FORCE)
+        FetchContent_Declare(mbedtls
+            URL https://github.com/Mbed-TLS/mbedtls/releases/download/mbedtls-3.6.7/mbedtls-3.6.7.tar.bz2
+            URL_HASH SHA256=a7e8bcbec0e6f761b4af24f25677626b35f762f68eef79c08677a363212d11f6
+            DOWNLOAD_EXTRACT_TIMESTAMP TRUE)
+        # (Windows: clang with MSVC's ABI "simulates" MSVC, and Mbed TLS would add
+        # cl's /W3 /utf-8, which the clang driver takes for files: clang's flags)
+        set(_ttyd_simulate ${CMAKE_C_SIMULATE_ID})
+        set(CMAKE_C_SIMULATE_ID "")
+        FetchContent_MakeAvailable(mbedtls)
+        set(CMAKE_C_SIMULATE_ID ${_ttyd_simulate})
+        target_link_libraries(ttyd PRIVATE mbedtls mbedx509 mbedcrypto)
+        # libjuice (MPL-2.0, a fixed release; sm64coopdx's too): the direct UDP
+        # path (ICE: STUN, hole punching, IPv6), port/src/common/online_ice_pc.c
+        # (its BUILD_SHARED_LIBS option defaults to ON, and would reach every
+        # library after it: off, as the build always was)
+        set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
+        set(NO_SERVER ON CACHE BOOL "" FORCE)
+        set(NO_TESTS ON CACHE BOOL "" FORCE)
+        FetchContent_Declare(libjuice
+            URL https://github.com/paullouisageneau/libjuice/archive/refs/tags/v1.7.4.tar.gz
+            URL_HASH SHA256=95c088862aa1b88b73d62aa99577135010eb768fcafb252d13aa85a8515ef798
+            DOWNLOAD_EXTRACT_TIMESTAMP TRUE EXCLUDE_FROM_ALL)
+        FetchContent_MakeAvailable(libjuice)
+        target_link_libraries(ttyd PRIVATE LibJuice::LibJuiceStatic)
+        # the relays' addresses, in order (port/relay, docs/ONLINE_RELAY.md); empty:
+        # rooms off, connecting by address only ($TTYD_ONLINE_RELAY overrides it, for tests)
+        set(TTYD_ONLINE_RELAY "wss://papercut-relay.llcoolt.workers.dev" CACHE STRING
+            "Online co-op's relays, wss://<name>.<subdomain>.workers.dev, separated by spaces")
+        if(TTYD_ONLINE_RELAY)
+            target_compile_definitions(ttyd PRIVATE PORT_ONLINE_RELAY_URL="${TTYD_ONLINE_RELAY}")
+        endif()
+    endif()
     # Windows: SDL3, Dawn (+ the DXC DLLs it loads), nod, libpng, zlib next to the exe.
     include(${CMAKE_SOURCE_DIR}/extern/aurora/cmake/AuroraCopyRuntimeDLLs.cmake)
     aurora_copy_runtime_dlls(ttyd)
@@ -986,11 +1027,12 @@ const int portBuiltinModCount = @_builtin_count@;
         # HTTPS (port/apple/http_apple.m, for port/settings/http.cpp). Its own
         # library: the game's prefix header must not reach Objective-C.
         enable_language(OBJC)
+        # And text to speech (port/apple/speech_apple.m, AVSpeechSynthesizer).
         add_library(ttyd_cloud STATIC ${CMAKE_SOURCE_DIR}/port/apple/cloud_apple.m
-            ${CMAKE_SOURCE_DIR}/port/apple/http_apple.m)
+            ${CMAKE_SOURCE_DIR}/port/apple/http_apple.m ${CMAKE_SOURCE_DIR}/port/apple/speech_apple.m)
         target_include_directories(ttyd_cloud PRIVATE ${CMAKE_SOURCE_DIR}/port/include)
         target_compile_options(ttyd_cloud PRIVATE -fobjc-arc)
-        target_link_libraries(ttyd PRIVATE ttyd_cloud "-framework Foundation")
+        target_link_libraries(ttyd PRIVATE ttyd_cloud "-framework Foundation" "-framework AVFoundation")
     endif()
     if(NOT ANDROID)
         # Save sync: iCloud Drive on Apple devices (above), any folder on Windows and Linux
