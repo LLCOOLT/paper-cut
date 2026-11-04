@@ -66,6 +66,7 @@ const bool sAdded = [] {
   // the game first draws (where they apply declares them again: one value)
   portSettingsDeclare("aspect_ratio", PORT_ASPECT_SWITCH, 0, PORT_ASPECT_WINDOW);
   portSettingsDeclare("aspect_max", 0, 0, 2);
+  portSettingsDeclare("aspect_scene_limits", 1, 0, 1);
   portSettingsDeclare("hud_scale", 100, 50, 150);
   portSettingsDeclare("text_scale", 100, 100, 150);
   portSettingsDeclare("aniso", 0, 0, 4);
@@ -85,6 +86,11 @@ const bool sAdded = [] {
   portSettingsAddChoice("Display", "Widest picture",
                         "Past this the rest of the screen is bars (blurred with Blurred side bars).", 0, "aspect_max",
                         kAspectMax, 3, "ultrawide limit clamp pillarbox");
+  // port/src/aurora/widescreen_aurora.c
+  portSettingsAddToggle("Display", "Bars where a scene ends",
+                        "In the rooms whose sets end before a wide screen's edges, and in battles past 16:9, bars "
+                        "beside the picture instead of the empty space past the set.",
+                        0, "aspect_scene_limits", "ultrawide room void black edges pillarbox battle");
   portSettingsAddSlider("Display", "HUD size",
                         "The status bar, message windows and battle menus, larger or smaller than the game's.", 0,
                         "hud_scale", 50, 150, "%d%%", "hud scale ui interface status bar text size");

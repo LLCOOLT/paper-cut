@@ -1000,7 +1000,7 @@ Agrandissement des textures
 The game's textures made larger by an edge-following filter as they load: smoother lines on paper and signs. More video memory. From the next start.
 Les textures du jeu sont agrandies au chargement par un filtre qui suit les contours : des lignes plus nettes sur le papier et les panneaux. Plus de mémoire vidéo. Au prochain démarrage.
 
-# 0.4.0: the sections' own text, the controller's button names
+# 0.3.0: the sections' own text, the controller's button names
 
 None yet. Add the disc image of your copy of the game (.iso, .rvz, .gcm...).
 Aucune pour l'instant. Ajoutez l'image disque de votre copie du jeu (.iso, .rvz, .gcm...).
@@ -1866,7 +1866,7 @@ L s'enclenche à
 R clicks at
 R s'enclenche à
 
-# 0.4.0: the sections' own text, the controller's button names
+# 0.3.0: the sections' own text, the controller's button names
 
 Player 2 joined: their stick walks the partner.
 Le joueur 2 arrive : son stick déplace le partenaire.
@@ -1877,7 +1877,7 @@ Une deuxième manette : activez Deuxième joueur (Commandes) pour jouer le parte
 Player 2 left: the partner follows Mario.
 Le joueur 2 est parti : le partenaire suit Mario.
 
-# 0.4.0: the sections' own text, the controller's button names
+# 0.3.0: the sections' own text, the controller's button names
 
 Players
 Joueurs

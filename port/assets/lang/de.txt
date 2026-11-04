@@ -994,7 +994,7 @@ Texturen hochskalieren
 The game's textures made larger by an edge-following filter as they load: smoother lines on paper and signs. More video memory. From the next start.
 Die Texturen des Spiels werden beim Laden von einem kantenfolgenden Filter vergrößert: glattere Linien auf Papier und Schildern. Mehr Grafikspeicher. Ab dem nächsten Start.
 
-# 0.4.0: the sections' own text, the controller's button names
+# 0.3.0: the sections' own text, the controller's button names
 
 None yet. Add the disc image of your copy of the game (.iso, .rvz, .gcm...).
 Noch keine. Füge das Disc-Image deiner Kopie des Spiels hinzu (.iso, .rvz, .gcm...).
@@ -1866,7 +1866,7 @@ L löst aus bei
 R clicks at
 R löst aus bei
 
-# 0.4.0: the sections' own text, the controller's button names
+# 0.3.0: the sections' own text, the controller's button names
 
 Player 2 joined: their stick walks the partner.
 Spieler 2 ist dabei: sein Stick bewegt den Partner.
@@ -1877,7 +1877,7 @@ Ein zweiter Controller: schalte Zweiter Spieler (Steuerung) ein, um den Partner 
 Player 2 left: the partner follows Mario.
 Spieler 2 ist weg: der Partner folgt Mario.
 
-# 0.4.0: the sections' own text, the controller's button names
+# 0.3.0: the sections' own text, the controller's button names
 
 Players
 Spieler

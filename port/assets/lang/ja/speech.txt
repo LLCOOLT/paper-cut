@@ -1,0 +1,16 @@
+# speech: see tools/port/gen_lang.py
+
+Read text aloud
+テキストの読み上げ
+
+The system's voice reads the message windows as each page shows, and with "and menus" the Start menu's help and the Settings tab as you move through them. In the game's language when the system has a voice for it.
+システムの音声が、メッセージウィンドウをページが出るたびに読み上げます。「メッセージとメニュー」では、スタートメニューの説明と「設定」タブも、カーソルを動かすたびに読み上げます。システムにその言語の音声があれば、ゲームの言語で読みます。
+
+Message windows
+メッセージウィンドウ
+
+Messages and menus
+メッセージとメニュー
+
+Reading speed
+読み上げの速さ

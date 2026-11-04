@@ -1,0 +1,25 @@
+# Colour-blind filters and captions for sounds (port/settings/features/accessibility.cpp) in Japanese for the JP release's own font (the Start menu's Settings tab): kana and its few kanji, words apart. The captions themselves are drawn by the overlay (ja/accessibility.txt).
+
+Colour-blind filter
+色の　みえかた　フィルター
+
+Shifts the colours your eyes confuse into ones they can tell apart, over the whole picture (a daltonization correction, not a simulation).
+みわけにくい　色を　みわけやすい　色に　ずらします　画面　ぜんたいに　かかります
+
+Protanopia (red-blind)
+１がた（赤）
+
+Deuteranopia (green-blind)
+２がた（みどり）
+
+Tritanopia (blue-blind)
+３がた（青）
+
+Filter strength
+フィルターの　つよさ
+
+Captions for sounds
+こうかおんの　じまく
+
+Short captions low on the screen for the sounds that tell you something: an enemy noticing you, a hidden block, a Star Piece, a guard, a door or switch out of sight.
+だいじな　こうかおんを　画面の　下に　みじかく　ひょうじします

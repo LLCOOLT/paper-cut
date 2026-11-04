@@ -1,0 +1,55 @@
+# Colour-blind filters and captions for sounds (port/settings/features/accessibility.cpp) (Français)
+
+Colour-blind filter
+Filtre daltonien
+
+Shifts the colours your eyes confuse into ones they can tell apart, over the whole picture (a daltonization correction, not a simulation).
+Déplace les couleurs que vos yeux confondent vers des couleurs qu'ils distinguent, sur toute l'image (une correction par daltonisation, pas une simulation).
+
+Protanopia (red-blind)
+Protanopie (rouge)
+
+Deuteranopia (green-blind)
+Deutéranopie (vert)
+
+Tritanopia (blue-blind)
+Tritanopie (bleu)
+
+Filter strength
+Intensité du filtre
+
+Captions for sounds
+Sous-titres des sons
+
+Short captions low on the screen for the sounds that tell you something: an enemy noticing you, a hidden block, a Star Piece, a guard, a door or switch out of sight.
+De courts sous-titres en bas de l'écran pour les sons qui vous apprennent quelque chose : un ennemi qui vous repère, un bloc caché, un Morceau d'étoile, une garde, une porte ou un interrupteur hors de vue.
+
+! Someone noticed you
+! Quelqu'un vous a repéré
+
+? Someone is puzzled
+? Quelqu'un est intrigué
+
+A hidden block appears
+Un bloc caché apparaît
+
+A Star Piece pops out
+Un Morceau d'étoile jaillit
+
+Guarded
+Paré
+
+Superguard!
+Super Garde !
+
+A door opens
+Une porte s'ouvre
+
+A door closes
+Une porte se ferme
+
+A switch clicks
+Un interrupteur s'enclenche
+
+A lock opens
+Une serrure s'ouvre

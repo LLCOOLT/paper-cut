@@ -1366,6 +1366,15 @@ extern "C" void portSettingsSetShown(const char* key, int (*shown)(void)) {
   }
 }
 
+extern "C" void portSettingsSetChoices(const char* key, const char* const* names, int count) {
+  for (Extra& e : extras()) {
+    if (e.kind == 1 && std::strcmp(e.key, key) == 0) {
+      e.choices = names;
+      e.count = count;
+    }
+  }
+}
+
 extern "C" void portSettingsAddSection(const char* tab, const char* label, const char* note, unsigned flags,
                                        void (*draw)(int inGame), const char* keywords) {
   Item it{tab, label, note, flags,

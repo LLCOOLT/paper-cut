@@ -1,0 +1,37 @@
+# language packs: see tools/port/gen_lang.py
+
+Language packs
+Packs de langue
+
+A language pack translates Paper Cut's own menus: a folder in the mods folder holding a lang folder of text files. It adds a language to Menu language, or changes the texts of one that is there.
+Un pack de langue traduit les menus de Paper Cut : un dossier dans le dossier des mods, avec un dossier lang de fichiers texte. Il ajoute une langue à Langue des menus, ou change les textes d'une langue déjà là.
+
+Reload language packs
+Recharger les packs de langue
+
+Make a language pack template
+Créer un modèle de pack de langue
+
+The template could not be written.
+Le modèle n'a pas pu être écrit.
+
+%s already has every text.
+%s a déjà tous les textes.
+
+Written: %s, with %d texts to translate.
+Écrit : %s, avec %d textes à traduire.
+
+Letters the menus' fonts didn't have yet show after a restart.
+Les lettres que les polices des menus n'avaient pas encore s'affichent après un redémarrage.
+
+No language packs yet.
+Aucun pack de langue pour l'instant.
+
+a language of its own
+une langue à part
+
+changes %s
+change %s
+
+mods/%s: %d texts translated, %d not translated yet.
+mods/%s : %d textes traduits, %d pas encore traduits.

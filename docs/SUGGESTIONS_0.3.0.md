@@ -32,7 +32,7 @@ Nobody else has: the whole settings list inside the game's own Start menu, two-p
 10. **Surround sound** 5.1/7.1 (Dusklight).
 11. **Settings presets to share** (Ship of Harkinian's preset manager): export the settings as a file or a code, and load someone else's.
 12. **Controller lights and rumble strength** (DualShock/DualSense light colour; rumble on/off and strength).
-13. **Mod browser** (Dusklight 2.0): left out of 0.4.0 until there are mods to list.
+13. **Mod browser** (Dusklight 2.0): left out of 0.3.0 until there are mods to list.
 
 ## Using it: where it's harder than it should be
 

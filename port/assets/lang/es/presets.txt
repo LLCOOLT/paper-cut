@@ -1,0 +1,43 @@
+# presets: see tools/port/gen_lang.py
+
+Settings presets
+Preajustes
+
+Your setup as a code or a file to share, or someone else's put in place: the settings that change the game (gameplay, challenges, accessibility, cosmetics, mirror mode...), not this device's own (window, graphics, keys, controllers).
+Tu configuración como código o archivo para compartir, o la de otra persona aplicada: los ajustes que cambian el juego (juego, desafíos, accesibilidad, aspecto, modo espejo...), no los de este dispositivo (ventana, gráficos, teclas, mandos).
+
+Copy this setup's code
+Copiar el código de esta configuración
+
+Save as a file...
+Guardar como archivo...
+
+Open a preset file...
+Abrir un archivo de preajuste...
+
+A preset's code
+Código de un preajuste
+
+Paste
+Pegar
+
+Put in place
+Aplicar
+
+Code copied: paste it wherever you share it.
+Código copiado: pégalo donde lo compartas.
+
+Preset saved.
+Preajuste guardado.
+
+The preset couldn't be saved there.
+No se pudo guardar el preajuste ahí.
+
+That file couldn't be read.
+No se pudo leer ese archivo.
+
+That isn't a settings preset.
+Eso no es un preajuste.
+
+Preset put in place: %d settings changed. Some apply from the next start.
+Preajuste aplicado: %d ajustes cambiados. Algunos se aplican desde el próximo inicio.

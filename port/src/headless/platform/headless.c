@@ -46,6 +46,11 @@ void portSpeechClosed(const void* window) {
 void portSpeechMenu(const char* text) {
     (void)text;
 }
+/* captions for sound cues (port/include/port/captions.h): the settings page's, not here */
+void portCaptionSfx(const char* name, const float* pos) {
+    (void)name;
+    (void)pos;
+}
 
 BOOL portInterpInBetween(void) {
     return FALSE;

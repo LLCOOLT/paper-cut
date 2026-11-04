@@ -1003,7 +1003,7 @@ Escalado de texturas
 The game's textures made larger by an edge-following filter as they load: smoother lines on paper and signs. More video memory. From the next start.
 Las texturas del juego se amplían al cargarse con un filtro que sigue los bordes: líneas más suaves en el papel y los carteles. Más memoria de vídeo. Desde el próximo inicio.
 
-# 0.4.0: the sections' own text, the controller's button names
+# 0.3.0: the sections' own text, the controller's button names
 
 None yet. Add the disc image of your copy of the game (.iso, .rvz, .gcm...).
 Aún ninguna. Añade la imagen de disco de tu copia del juego (.iso, .rvz, .gcm...).
@@ -1869,7 +1869,7 @@ L se activa al
 R clicks at
 R se activa al
 
-# 0.4.0: the sections' own text, the controller's button names
+# 0.3.0: the sections' own text, the controller's button names
 
 Player 2 joined: their stick walks the partner.
 El jugador 2 se une: su stick mueve al compañero.
@@ -1880,7 +1880,7 @@ Un segundo mando: activa Segundo jugador (Controles) para llevar al compañero.
 Player 2 left: the partner follows Mario.
 El jugador 2 se fue: el compañero sigue a Mario.
 
-# 0.4.0: the sections' own text, the controller's button names
+# 0.3.0: the sections' own text, the controller's button names
 
 Players
 Jugadores

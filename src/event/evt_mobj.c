@@ -40,6 +40,9 @@
 #include "eff/eff_mobj_broken.h"
 #include "libc_decls.h"
 #include "pmario_sound.h"
+#ifdef TARGET_PC
+#include "port/captions.h"
+#endif
 #include "driver/hitdrv.h"
 #include "version.h"
 #include "evt/evt_story.h"
@@ -2999,6 +3002,9 @@ static s32 mobj_badgeblk(MapObjectEntry* mobj) {
                     psndSFXOn_3D((const char*)0x1ba, &mobj->position);
                 }
                 if (mobj->flags & MOBJ_FLAG_HIDDEN) {
+#ifdef TARGET_PC
+                    portCaptionSfx("PORT_HIDDEN_BLOCK", &mobj->position.x); /* port/include/port/captions.h */
+#endif
                     mobj->flags &= ~MOBJ_FLAG_HIDDEN;
                 }
                 animPoseSetAnim(mobj->poseId, "A_1", 1);
@@ -3319,6 +3325,9 @@ static s32 mobj_10countblk(MapObjectEntry* mobj) {
         case 0:
             if (mobj->flags & MOBJ_FLAG_HIT) {
                 if (mobj->flags & MOBJ_FLAG_HIDDEN) {
+#ifdef TARGET_PC
+                    portCaptionSfx("PORT_HIDDEN_BLOCK", &mobj->position.x); /* port/include/port/captions.h */
+#endif
                     mobj->flags &= ~MOBJ_FLAG_HIDDEN;
 #if VERSION >= VERSION_JP
                     strcpy(mobj->animName, "MOBJ_Block");

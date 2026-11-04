@@ -20,6 +20,12 @@ For each language the table holds, sorted by the English:
 and the Japanese file's characters as Dear ImGui glyph ranges, so only those
 are merged into the page's fonts.
 
+The same format is read at run time from language packs (<user>/mods/<pack>/
+lang/, docs/LANGUAGE_PACKS.md) by port/settings/tr.cpp's parseLang, with the
+same rules; keep the two in step. The one difference: a pack's English line
+with no translation under it is kept as not translated yet (the template's
+empty lines), where this stops.
+
   gen_lang.py           write the table
   gen_lang.py --check   fail if it is out of date
 """
@@ -140,6 +146,14 @@ def generate():
     for a, b in rs:
         lines.append(f"    0x{a:04X}, 0x{b:04X},")
     lines.append("    0,")
+    lines.append("};")
+    lines.append("")
+    lines.append("// the JP release's font past ASCII (JA_FONT): {character, its Shift-JIS}, by character (language packs)")
+    lines.append("static const TrJaFontChar kTrJaFontMap[] = {")
+    for c in sorted(JA_FONT, key=ord):
+        if ord(c) >= 0x80:
+            b = c.encode("cp932")
+            lines.append(f"    {{0x{ord(c):04X}, 0x{int.from_bytes(b, 'big'):04X}}},")
     lines.append("};")
     return "\n".join(lines) + "\n"
 

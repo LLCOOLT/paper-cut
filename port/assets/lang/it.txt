@@ -997,7 +997,7 @@ Upscaling delle texture
 The game's textures made larger by an edge-following filter as they load: smoother lines on paper and signs. More video memory. From the next start.
 Le texture del gioco vengono ingrandite al caricamento da un filtro che segue i contorni: linee più morbide su carta e cartelli. Più memoria video. Dal prossimo avvio.
 
-# 0.4.0: the sections' own text, the controller's button names
+# 0.3.0: the sections' own text, the controller's button names
 
 None yet. Add the disc image of your copy of the game (.iso, .rvz, .gcm...).
 Ancora nessuna. Aggiungi l'immagine disco della tua copia del gioco (.iso, .rvz, .gcm...).
@@ -1860,7 +1860,7 @@ L scatta a
 R clicks at
 R scatta a
 
-# 0.4.0: the sections' own text, the controller's button names
+# 0.3.0: the sections' own text, the controller's button names
 
 Player 2 joined: their stick walks the partner.
 Il giocatore 2 è entrato: la sua levetta muove il compagno.
@@ -1871,7 +1871,7 @@ Un secondo controller: attiva Secondo giocatore (Comandi) per controllare il com
 Player 2 left: the partner follows Mario.
 Il giocatore 2 è uscito: il compagno segue Mario.
 
-# 0.4.0: the sections' own text, the controller's button names
+# 0.3.0: the sections' own text, the controller's button names
 
 Players
 Giocatori

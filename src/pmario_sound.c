@@ -25,6 +25,7 @@
 #include "port/luigi.h"
 #include "port/music.h"
 #include "port/companion_menu.h"
+#include "port/captions.h"
 #endif
 #include "evt/evt_story.h"
 
@@ -11645,6 +11646,9 @@ static s32 __psndSFXOn(const char* name, u8 vol, u8 pan, u16 pitch, Vec* pos, u3
     if ((psnd.flags & PSND_FLAG_SFX_OFF) && (ignoreSfxOff == 0)) {
         return -1;
     }
+#ifdef TARGET_PC
+    portCaptionSfx(entry->name, pos != NULL ? &pos->x : NULL); /* Captions for sounds (port/include/port/captions.h): shown only */
+#endif
 #if VERSION >= VERSION_JP
     if ((((sid == 0x5B) || (sid == 0x8CA)) || (((u32)(sid - 0x1BE)) <= 1)) || (sid == 0x205)) {
         if (psnd.sfxCooldown) {

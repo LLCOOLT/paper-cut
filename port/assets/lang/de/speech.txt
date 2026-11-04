@@ -1,0 +1,16 @@
+# speech: see tools/port/gen_lang.py
+
+Read text aloud
+Text vorlesen
+
+The system's voice reads the message windows as each page shows, and with "and menus" the Start menu's help and the Settings tab as you move through them. In the game's language when the system has a voice for it.
+Die Stimme des Systems liest die Nachrichtenfenster Seite für Seite vor, und mit »und Menüs« auch die Hilfe im Startmenü und den Einstellungen-Reiter, während du dich darin bewegst. In der Sprache des Spiels, wenn das System eine Stimme dafür hat.
+
+Message windows
+Nachrichtenfenster
+
+Messages and menus
+Nachrichten und Menüs
+
+Reading speed
+Lesetempo

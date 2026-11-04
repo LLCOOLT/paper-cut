@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "port/settings.h"
+#include "port/tr.h"
 #include "port/widescreen.h"
 #include "port/ac_cue.h"
 #include "port/cloud.h"
@@ -486,6 +487,7 @@ void portSettingsSave(void) {
     SDL_IOStream* io;
     size_t i;
     portSettingsApply();
+    portTrSettingsSync(); /* the menu language's pack, by its code */
     if (sHoldSaves) {
         return;
     }

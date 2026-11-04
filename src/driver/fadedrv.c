@@ -22,6 +22,9 @@
 #ifdef PORT_MODS
 #include "port/hooks/src_driver_fadedrv.h"
 #endif
+#ifdef TARGET_PC
+#include "wide_x.h"
+#endif
 
 #if VERSION >= VERSION_US
 // US-only named constant (dispdrv reads it by name), followed by a zero word
@@ -1272,6 +1275,35 @@ static void disp_texture(CameraId camId, void* param) {
     GXSetTevColor(GX_TEVREG0, work->entries[0].color);
     GXBegin(GX_QUADS, GX_VTXFMT0, 4);
     size = 304.0f;
+#ifdef TARGET_PC
+    {
+        /* widescreen: a flat colour fade reaches the widened frame's edges on
+         * the cameras whose x is scaled (the white flash before the title is
+         * a 3D one); the iris and spot ones keep their hole's shape */
+        f32 sx = size;
+        switch (work->entries[0].type) {
+            case FADE_IN_BLACK:
+            case FADE_OUT_BLACK:
+            case FADE_IN_BLACK_2D:
+            case FADE_OUT_BLACK_2D:
+            case FADE_IN_BLACK_3D:
+            case FADE_OUT_BLACK_3D:
+            case FADE_COVER_BLACK_2D:
+                sx = WIDE_X(size);
+                break;
+        }
+        GXPosition3f32(-sx, size, 0.0f);
+        GXTexCoord2f32(0.0f, 0.0f);
+        GXPosition3f32(sx, size, 0.0f);
+        GXTexCoord2f32(1.0f, 0.0f);
+        GXPosition3f32(sx, -size, 0.0f);
+        GXTexCoord2f32(1.0f, 1.0f);
+        GXPosition3f32(-sx, -size, 0.0f);
+        GXTexCoord2f32(0.0f, 1.0f);
+        GXSetProjectionv(proj);
+        return;
+    }
+#endif
     GXPosition3f32(-size, size, 0.0f);
     GXTexCoord2f32(0.0f, 0.0f);
     GXPosition3f32(size, size, 0.0f);
@@ -1465,6 +1497,18 @@ static void disp_maku(CameraId camId, void* param) {
     PSMTXConcat(mtx, mtx2, mtx);
     PSMTXTrans(mtx2, 32.0f, -24.0f, 0.0f);
     PSMTXConcat(mtx, mtx2, mtx);
+#ifdef TARGET_PC
+    /* widescreen: the 3D curtains (the closed curtain behind the memory card
+     * and file screens, the stage curtains) are drawn on the image camera,
+     * whose x is scaled: widened by the edge scale (include/wide_x.h), they
+     * span the widened frame as on the unscaled fade cameras, pleats a
+     * little wider, instead of a 4:3 curtain between black bars. Not the
+     * page flip, nor curtains placed in the world. */
+    if (camId == CAMERA_3D_IMAGE && entry->type != FADE_PAGE_FLIP_FOUR && !(entry->flags & FADE_ENTRY_VIRTUAL_POS)) {
+        PSMTXScale(mtx2, WIDE_X(1.0f), 1.0f, 1.0f);
+        PSMTXConcat(mtx2, mtx, mtx);
+    }
+#endif
     animPoseDrawMtx(entry->poseId, mtx, 1, 0.0f, scale);
     animPoseDrawMtx(entry->poseId, mtx, 2, 0.0f, scale);
     animPoseDrawMtx(entry->poseId, mtx, 3, 0.0f, scale);
@@ -1598,10 +1642,22 @@ static void disp_dummy_black(CameraId camId, void* param) {
     GXSetVtxDesc(GX_VA_POS, GX_DIRECT);
     GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XYZ, GX_S16, 0);
     GXBegin(GX_QUADS, GX_VTXFMT0, 4);
+#ifdef TARGET_PC
+    {
+        /* widescreen: the white-out is drawn on the 3D camera, whose x is
+         * scaled; it reaches the widened frame's edges (include/wide_x.h) */
+        const s16 x = (s16)(WIDE_X(32.0f) + 1.0f);
+        GXPosition3s16(-x, 24, 0);
+        GXPosition3s16(x, 24, 0);
+        GXPosition3s16(x, -24, 0);
+        GXPosition3s16(-x, -24, 0);
+    }
+#else
     GXPosition3s16(-32, 24, 0);
     GXPosition3s16(32, 24, 0);
     GXPosition3s16(32, -24, 0);
     GXPosition3s16(-32, -24, 0);
+#endif
     GXSetProjectionv(proj);
 }
 

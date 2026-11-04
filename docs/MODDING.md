@@ -15,6 +15,8 @@ The settings page (F1) has a **Mods** tab: each mod with a switch, arrows to cha
 
 This covers files, textures, messages, game data, code (including porting GameCube mods), scripts and [Archipelago](#archipelago).
 
+Translations of Paper Cut's own menus are [language packs](LANGUAGE_PACKS.md): a `lang/` folder in a folder of the mods folder.
+
 ## A mod
 
 A mod is a folder, or a `.ttydmod` (or `.zip`) file, holding:

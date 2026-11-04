@@ -2,6 +2,7 @@
 #include "port_hook.h"
 #ifdef TARGET_PC
 #include "port/gameplus.h"
+#include "port/captions.h"
 #endif
 #include "eff/eff_nice.h"
 #include "pc_call.h"
@@ -1763,6 +1764,9 @@ s32 PORT_HOOKABLE(BattleCheckDamage)(BattleUnit* attacker, BattleUnit* target, B
 #endif
         flags |= DAMAGE_FLAG_SUPERGUARDED;
         psndSFXOn("SFX_SYSTEM_GREAT1");
+#ifdef TARGET_PC
+        portCaptionSfx("PORT_SUPERGUARD", NULL); /* the sound is the action commands' Great: port/include/port/captions.h */
+#endif
         BattleAudience_Case_GuardGood();
         attacker->superguardedCount++;
         target->superguardCountTaken = attacker->superguardedCount;
@@ -1821,6 +1825,9 @@ s32 PORT_HOOKABLE(BattleCheckDamage)(BattleUnit* attacker, BattleUnit* target, B
 #endif
                 flags |= DAMAGE_FLAG_GUARDED;
                 psndSFXOn("SFX_SYSTEM_NICE1");
+#ifdef TARGET_PC
+                portCaptionSfx("PORT_GUARD", NULL); /* the sound is the action commands' Nice */
+#endif
                 BattleAudience_Case_GuardGood();
             } else {
                 BattleAudience_Case_GuardBad();

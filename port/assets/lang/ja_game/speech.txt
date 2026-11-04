@@ -1,0 +1,16 @@
+# speech, the Start menu's Settings tab in the JP release's font: see tools/port/gen_lang.py
+
+Read text aloud
+よみあげ
+
+The system's voice reads the message windows as each page shows, and with "and menus" the Start menu's help and the Settings tab as you move through them. In the game's language when the system has a voice for it.
+システムの　こえで　メッセージを　ページごとに　よみあげます
+
+Message windows
+メッセージ
+
+Messages and menus
+メッセージと　メニュー
+
+Reading speed
+よみあげの　はやさ

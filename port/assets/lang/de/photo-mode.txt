@@ -1,0 +1,19 @@
+# photo-mode: see tools/port/gen_lang.py
+
+Photo mode
+Fotomodus
+
+The game held where it is, the camera all the way round Mario, up and down, in and out, the HUD hidden or not, and a picture taken. P on the keyboard or both sticks pressed in; then the sticks move the camera, A takes the picture, Y hides the HUD, B goes back.
+Das Spiel bleibt stehen, wo es ist, die Kamera ganz um Mario herum, nach oben und unten, heran und weg, das HUD aus- oder eingeblendet, und ein Bild gemacht. P auf der Tastatur oder beide Sticks gedrückt; dann bewegen die Sticks die Kamera, A macht das Bild, Y blendet das HUD aus, B geht zurück.
+
+Back to the game
+Zurück zum Spiel
+
+(in the field, not online)
+(im Feld, nicht online)
+
+Photo mode   Stick: turn   Right stick: in and out   A: picture   Y: hide the HUD   B: back
+Fotomodus   Stick: drehen   Rechter Stick: heran und weg   A: Bild   Y: HUD ausblenden   B: zurück
+
+Closes the menu and holds the game: the sticks move the camera, A takes a picture, Y hides the HUD, B goes back.
+Schließt das Menü und hält das Spiel an: die Sticks bewegen die Kamera, A macht ein Bild, Y blendet das HUD aus, B geht zurück.

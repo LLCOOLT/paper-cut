@@ -107,6 +107,17 @@ BattleWorkPad* portSecondPlayerGuardPad(BattleUnit* unit) {
     return &_battleWorkPointer->padWork[1];
 }
 
+/* Controller haptics (ac_cue_pc.c): whose controller feels a timed press's
+ * cue: the second player's (1) for the partner's guards and, while the
+ * partner has the turn, its action commands (as portSecondPlayerRoute reads
+ * them); else the first's (0) */
+int portSecondPlayerPlayerFor(void* unit, int guard) {
+    if (guard) {
+        return portSecondPlayerGuardPad((BattleUnit*)unit) != NULL;
+    }
+    return coopOn() && secondPad() && partnerHasTurn();
+}
+
 /* --- The field --- */
 
 #define DEAD_ZONE 14.0f   /* of the stick's 70 */

@@ -1,0 +1,7 @@
+# Controller haptics (port/settings/features/haptics.cpp): an English line, then its translation, then a blank line.
+
+Controller haptics
+Retour haptique de la manette
+
+A short pulse as an action command's or a guard's timing window opens, so you can feel when to press, and on a DualSense the triggers resist while a command holds R. Other controllers get the pulses as normal rumble. Follows Rumble and Rumble strength.
+Une courte impulsion à l'ouverture de la fenêtre d'une commande d'action ou d'une garde, pour sentir quand appuyer ; sur une DualSense, les gâchettes résistent pendant qu'une commande maintient R. Les autres manettes reçoivent les impulsions en vibration normale. Suit Vibrations et Force des vibrations.

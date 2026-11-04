@@ -72,7 +72,7 @@ Paper Cut connects the two games directly whenever it can (as most home connecti
 - **Quick resume:** Continue in the launcher picks up where you left off, even if the app was closed without saving.
 - **Languages:** the European version plays in English, German, French, Spanish or Italian, and any version can show the text of another disc you own.
 
-**Settings:** the Start menu's Settings tab, after the Journal: every on/off, choice and number, changed where it is, and All settings for the rest. The full page also opens with F1, a controller's Back/Select, the three-bar button on the touch controls, or a three-finger tap. Tabs down the side, a search box, and a mark on every setting that changes how the game plays or what it saves. A setting that applies from the next start has Restart now beside it: the game starts again and puts you back where you were.
+**Settings:** the Start menu's Settings tab, after the Journal: every on/off, choice and number, changed where it is, and All settings for the rest. The full page also opens with F1, a controller's Back/Select, the three-bar button on the touch controls, or a three-finger tap. Tabs down the side, a search box, and a mark on every setting that changes how the game plays or what it saves. A setting that applies from the next start has Restart now beside it: the game starts again and puts you back where you were. **Settings presets** (System) turn your setup into a code or a file to share, and put someone else's in place: the settings that change the game, not the device's own (window, graphics, keys, controllers).
 
 **Display**
 - **120 Hz and up:** extra frames are drawn between the game's 60 Hz ones, with interpolated camera, characters and animation. The game's logic is untouched.
@@ -84,6 +84,7 @@ Paper Cut connects the two games directly whenever it can (as most home connecti
 - **The window:** it opens where you left it, at its size, and never off the screen or larger than it. It sizes to 1x-4x the picture or to the picture's shape, can stay above other windows, and goes full screen with F11 or Alt+Enter.
 - **Free camera:** the right stick turns the camera a little around Mario and moves it in or out, easing back when let go.
 - **Mirror mode:** the world flipped left to right, with the controls turned to match; menus and text stay readable.
+- **Photo mode:** P, both sticks pressed in, or its row in the Start menu's Settings tab. The game holds where it is, the camera turns all the way round Mario, up and down, in and out, the HUD hides or stays, and A takes the picture. In the field, not online.
 - **Cosmetics:** Mario's cap and overalls, Goombella's hair, Vivian and the HUD's bars in 13 colours or any from a picker, with Luigi, Wario, Waluigi and Fire Mario presets, recoloured with their shading kept.
 
 **Gameplay+** (each option off by default):
@@ -93,7 +94,7 @@ Paper Cut connects the two games directly whenever it can (as most home connecti
 - Battle pop-ups, Pit of 100 Trials and Glitz Pit tweaks, a remake-style balance, and New Game+.
 - **Play as Luigi:** Luigi in Mario's place, with 156 animations of his own made for Paper Cut. The brothers swap everywhere: Mario stands in Luigi's place in the story's scenes, and the text, menus and credits follow.
 
-**Accessibility:** a difficulty slider (enemy HP and attack), action-command assist (wider timing, or automatic), larger message windows (up to 150%), and "Where next?" hints: Y on the Journal tab names where the story goes next, and nothing is shown until you ask.
+**Accessibility:** a difficulty slider (enemy HP and attack), action-command assist (wider timing, or automatic), larger message windows (up to 150%), and "Where next?" hints: Y on the Journal tab names where the story goes next, and nothing is shown until you ask. **Read text aloud:** the system's voice reads the message windows page by page, and if you like the Start menu's help and the Settings tab as you move through them, in the game's language when the system has a voice for it (Windows, Mac, iPhone, Android, and Linux through Speech Dispatcher).
 
 **Challenges:** presets in one click (Hard, Expert, Glass cannon, Superguards only, One hit), and rules to mix: one-hit KO, no guarding, harder attack commands, no items in battle.
 
@@ -102,10 +103,11 @@ Paper Cut connects the two games directly whenever it can (as most home connecti
 **Everyday:** autosave when you go into another room (off by default), fast-forward (Tab), adjustable text speed, screenshots (F12), controller rumble, and a check for new releases on start. Saves are backed up automatically and kept in step across devices: in iCloud on Apple devices, and on Windows and Linux through any folder a sync service keeps (OneDrive, Dropbox, Google Drive, Syncthing, or iCloud for Windows). If the game crashes, a report is written for you to send.
 
 **Audio and controls:**
-- **Audio:** one mixer for the master, music, effects and ambience volumes, each with a mute button, and volume keys anywhere (F9 quieter, F10 louder, F3 mute).
+- **Audio:** one mixer for the master, music, effects and ambience volumes, each with a mute button, and volume keys anywhere (F9 quieter, F10 louder, F3 mute). The game plays in stereo, or in 5.1 or 7.1 surround from its own surround mix (made for Dolby Pro Logic II), with the rear speakers carrying it.
 - **Music shuffle and your own music:** each room's music another of the game's tracks, field for field and battle for battle; or your own OGG, MP3, FLAC or WAV files in the `music` folder, named after the track they replace (`tracks.txt` there lists them), looping at their loop tags.
 - **Controls:** the mouse works in the game's menus, lists and battle commands. Keys and every player's controller buttons can be remapped.
 - **Controllers:** Xbox, PlayStation, Switch (Pro and Joy-Con), Steam Deck, GameCube through an adapter, MFi, and about 2,300 other models from the community mapping list, named as you know them. Choose which is player 1-4, test them, and set dead zones and trigger points. A controller nothing recognises is set up by pressing its buttons when asked.
+- **The controller's light:** on a DualSense, DualShock 4 or another controller with a coloured light, each player's colour, Mario's HP (green to red, pulsing when he's nearly out) or a colour of your own.
 - **Button prompts:** the game's button pictures, and the remapping list's names, match your Xbox, PlayStation, Switch or Steam Deck controller, or your keys.
 - **Menus in six languages:** the settings page and the Start menu's Settings tab in English, Deutsch, Français, Español, Italiano or Japanese (System > Menu language; Auto follows the disc or the computer).
 

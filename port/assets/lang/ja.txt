@@ -1027,7 +1027,7 @@ Texture upscaling
 The game's textures made larger by an edge-following filter as they load: smoother lines on paper and signs. More video memory. From the next start.
 ゲームのテクスチャを読み込むときに、輪郭に沿うフィルターで拡大します。紙や看板の線がなめらかになります。ビデオメモリを多く使います。次回の起動から。
 
-# 0.4.0: the sections' own text, the controller's button names
+# 0.3.0: the sections' own text, the controller's button names
 
 None yet. Add the disc image of your copy of the game (.iso, .rvz, .gcm...).
 まだありません。あなたのゲームのディスクイメージ（.iso、.rvz、.gcm...）を追加してください。
@@ -1893,7 +1893,7 @@ Lが入る位置
 R clicks at
 Rが入る位置
 
-# 0.4.0: the sections' own text, the controller's button names
+# 0.3.0: the sections' own text, the controller's button names
 
 Player 2 joined: their stick walks the partner.
 プレイヤー2が参加：スティックで仲間を動かせます。
@@ -1904,7 +1904,7 @@ A second controller: turn on Second player (Controls) to play the partner.
 Player 2 left: the partner follows Mario.
 プレイヤー2が抜けました：仲間はマリオについていきます。
 
-# 0.4.0: the sections' own text, the controller's button names
+# 0.3.0: the sections' own text, the controller's button names
 
 Players
 プレイヤー

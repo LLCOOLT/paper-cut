@@ -3,7 +3,7 @@
 The second screen (Android with a second built-in display, such as the AYN
 Thor; on the desktop only for tests) shows the game's own pause menu, drawn by
 the game's own code, live and navigable while the game plays on the main
-screen. Branch `second-screen-menu` (from `feature/0.4.0`), worktree
+screen. Branch `second-screen-menu` (from `feature/0.3.0`), worktree
 `ttyd-port-menu2`.
 
 ## How it works

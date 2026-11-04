@@ -1,0 +1,28 @@
+# discord: see tools/port/gen_lang.py
+
+Discord status
+Discord-Status
+
+While Discord runs on this computer, your profile shows that you're playing Paper Cut: the area you're in, and whether you're in battle, exploring or playing co-op.
+Solange Discord auf diesem Computer läuft, zeigt dein Profil, dass du Paper Cut spielst: das Gebiet, in dem du bist, und ob du kämpfst, unterwegs bist oder im Koop spielst.
+
+In battle
+Im Kampf
+
+Exploring
+Unterwegs
+
+Playing co-op
+Spielt im Koop
+
+Playing online
+Spielt online
+
+On the title screen
+Im Titelbildschirm
+
+Watching the ending
+Sieht sich das Ende an
+
+In the menus
+In den Menüs

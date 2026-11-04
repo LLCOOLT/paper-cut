@@ -1,0 +1,43 @@
+# presets: see tools/port/gen_lang.py
+
+Settings presets
+Einstellungs-Vorlagen
+
+Your setup as a code or a file to share, or someone else's put in place: the settings that change the game (gameplay, challenges, accessibility, cosmetics, mirror mode...), not this device's own (window, graphics, keys, controllers).
+Deine Einstellungen als Code oder Datei zum Teilen, oder die von jemand anderem übernommen: die Einstellungen, die das Spiel verändern (Spielweise, Herausforderungen, Barrierefreiheit, Aussehen, Spiegelmodus...), nicht die dieses Geräts (Fenster, Grafik, Tasten, Controller).
+
+Copy this setup's code
+Code dieser Einstellungen kopieren
+
+Save as a file...
+Als Datei speichern...
+
+Open a preset file...
+Vorlagendatei öffnen...
+
+A preset's code
+Code einer Vorlage
+
+Paste
+Einfügen
+
+Put in place
+Übernehmen
+
+Code copied: paste it wherever you share it.
+Code kopiert: füge ihn dort ein, wo du ihn teilst.
+
+Preset saved.
+Vorlage gespeichert.
+
+The preset couldn't be saved there.
+Die Vorlage konnte dort nicht gespeichert werden.
+
+That file couldn't be read.
+Diese Datei konnte nicht gelesen werden.
+
+That isn't a settings preset.
+Das ist keine Einstellungs-Vorlage.
+
+Preset put in place: %d settings changed. Some apply from the next start.
+Vorlage übernommen: %d Einstellungen geändert. Manche gelten ab dem nächsten Start.

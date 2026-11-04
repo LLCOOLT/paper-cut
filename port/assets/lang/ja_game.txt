@@ -1003,7 +1003,7 @@ Texture upscaling
 The game's textures made larger by an edge-following filter as they load: smoother lines on paper and signs. More video memory. From the next start.
 よみこむ　ときに　テクスチャを　りんかくに　そって　大きく　します　せんが　なめらかに　なります　つぎの　きどうから
 
-# 0.4.0: the sections' own text, the controller's button names
+# 0.3.0: the sections' own text, the controller's button names
 
 Player 2 joined: their stick walks the partner.
 プレイヤー2が　さんか：スティックで　なかまを　うごかせます
@@ -1014,7 +1014,7 @@ A second controller: turn on Second player (Controls) to play the partner.
 Player 2 left: the partner follows Mario.
 プレイヤー2が　ぬけました：なかまは　マリオに　ついていきます
 
-# 0.4.0: the sections' own text, the controller's button names
+# 0.3.0: the sections' own text, the controller's button names
 
 Co-op is on: press A on another controller to join.
 きょうりょく　プレイ：べつの　コントローラーの　Aで　さんか

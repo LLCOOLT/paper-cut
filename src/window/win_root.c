@@ -5,6 +5,7 @@
 #include "port/companion_section.h"
 #include "port/companion_menu.h"
 #include "port/speech.h"
+#include "wide_x.h"
 #endif
 #include "version.h"
 #include "port_hook.h"
@@ -3306,6 +3307,18 @@ void winRootBgDrawDisp(CameraId camId, void* param) {
         GXBegin(GX_QUADS, GX_VTXFMT0, 4);
         w = gp->fbWidth;
         h = gp->efbHeight;
+#ifdef TARGET_PC
+        /* widescreen: the copy holds the widened frame, so the quad spans its
+         * edges (include/wide_x.h), not the 4:3 middle */
+        GXPosition3f32(WIDE_X(-w / 2.0f), -h / 2.0f, 0.0f);
+        GXTexCoord2f32(0.0f, 1.0f);
+        GXPosition3f32(WIDE_X(w / 2.0f), -h / 2.0f, 0.0f);
+        GXTexCoord2f32(1.0f, 1.0f);
+        GXPosition3f32(WIDE_X(w / 2.0f), h / 2.0f, 0.0f);
+        GXTexCoord2f32(1.0f, 0.0f);
+        GXPosition3f32(WIDE_X(-w / 2.0f), h / 2.0f, 0.0f);
+        GXTexCoord2f32(0.0f, 0.0f);
+#else
         GXPosition3f32(-w / 2.0f, -h / 2.0f, 0.0f);
         GXTexCoord2f32(0.0f, 1.0f);
         GXPosition3f32(w / 2.0f, -h / 2.0f, 0.0f);
@@ -3314,6 +3327,7 @@ void winRootBgDrawDisp(CameraId camId, void* param) {
         GXTexCoord2f32(1.0f, 0.0f);
         GXPosition3f32(-w / 2.0f, h / 2.0f, 0.0f);
         GXTexCoord2f32(0.0f, 0.0f);
+#endif
     }
 }
 #endif

@@ -12,6 +12,7 @@
 #include <dolphin/dvd.h>
 #include <dolphin/pad.h>
 #include <dolphin/gx/GXAurora.h>
+#include "port/tr.h"
 #include "port/widescreen.h"
 #include <stdbool.h>
 #include "port/aurora_pc.h"
@@ -151,6 +152,7 @@ int aurora_main(int argc, char* argv[]) {
         }
     }
     portControllersInit(info.userPath); /* every kind of controller: the mappings (controllers.cpp) */
+    portTrInit(info.userPath); /* the language packs, for the fonts (port/include/port/tr.h) */
     portUiInit();
     portKeyboardDefaults(); /* before PADInit: the default keys (settings_ui.cpp) */
     /* the controllers and keyboard up now, so the launcher's Settings tab

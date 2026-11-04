@@ -862,12 +862,38 @@ static void applyP2(PADStatus* pad) {
 void portInputApply(PADStatus* pad) {
     static int sPrevCue, sHold;
     static int sCuePress = -1;
+    static int sHapticsPress;
     applyScript(pad);
     applyP2(pad);
     portMenuApplyPad(pad); /* the mouse's B and wheel in menus */
     portCompanionApplyPad(pad); /* a tap on the second screen (companion_pc.c) */
     if (sCuePress < 0) {
+        const char* h = getenv("TTYD_HAPTICS_PRESS");
         sCuePress = getenv("TTYD_AC_CUE_PRESS") != NULL;
+        sHapticsPress = h == NULL ? -1000 : strcmp(h, "last") == 0 ? 1000 : atoi(h);
+    }
+    if (sHapticsPress > -1000) {
+        /* $TTYD_HAPTICS_PRESS=K (tests of controller haptics, ac_cue_pc.c):
+         * A pressed for one frame, K frames into the window the haptic cue
+         * announces (0 its first frame, "last" its last; -1 the frame before
+         * it). The last update counted toJudge frames from its frame to the
+         * judgement; this frame's press is judged in toJudge - 1. */
+        static int sPressed, sPrevToJudge = -1;
+        const int toJudge = gPortAcCueToJudge;
+        const int k = sHapticsPress == 1000 ? gPortAcCueWindow - 1 : sHapticsPress;
+        if (toJudge < 0 || toJudge > sPrevToJudge) {
+            sPressed = 0; /* none, or the next judgement */
+        }
+        sPrevToJudge = toJudge;
+        if (toJudge >= 0 && !sPressed && toJudge - 1 == gPortAcCueWindow - 1 - k) {
+            printf("[haptics] frame %u: pressing A, %d frames into the %d-frame window (judged in %d)\n",
+                   (unsigned)sFrame, k, gPortAcCueWindow, toJudge - 1);
+            fflush(stdout);
+            sPressed = 1;
+            pad[0].err = PAD_ERR_NONE;
+            pad[0].button |= PAD_BUTTON_A;
+            pad[0].analogA = 255;
+        }
     }
     if (!sCuePress) {
         return;

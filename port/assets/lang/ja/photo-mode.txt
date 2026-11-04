@@ -1,0 +1,19 @@
+# photo-mode: see tools/port/gen_lang.py
+
+Photo mode
+フォトモード
+
+The game held where it is, the camera all the way round Mario, up and down, in and out, the HUD hidden or not, and a picture taken. P on the keyboard or both sticks pressed in; then the sticks move the camera, A takes the picture, Y hides the HUD, B goes back.
+ゲームをその場で止め、カメラをマリオのまわりにぐるりと、上下に、寄ったり引いたりして動かし、HUDを隠すかどうか選んで写真を撮ります。キーボードのPか、両方のスティックの押し込みで始まります。スティックでカメラを動かし、Aで撮影、YでHUDを隠し、Bで戻ります。
+
+Back to the game
+ゲームに戻る
+
+(in the field, not online)
+（フィールドで、オンライン以外）
+
+Photo mode   Stick: turn   Right stick: in and out   A: picture   Y: hide the HUD   B: back
+フォトモード   スティック：回る   右スティック：寄る・引く   A：撮影   Y：HUDを隠す   B：戻る
+
+Closes the menu and holds the game: the sticks move the camera, A takes a picture, Y hides the HUD, B goes back.
+メニューを閉じてゲームを止めます：スティックでカメラを動かし、Aで撮影、YでHUDを隠し、Bで戻ります。

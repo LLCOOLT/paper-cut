@@ -872,6 +872,10 @@ if(TTYD_BACKEND STREQUAL "aurora")
     set(TTYD_PORT_VERSION "dev" CACHE STRING "The port's version (releases: e.g. 0.1.0)")
     target_compile_definitions(ttyd_settings PRIVATE _CRT_SECURE_NO_WARNINGS=1 PORT_VERSION="${TTYD_PORT_VERSION}"
         PORT_GAME_ID="${TTYD_VERSION}")
+    # Discord status (port/settings/features/discord.cpp, docs/DISCORD_STATUS.md): the
+    # Discord application's ID; empty: the feature is built in but does nothing, its setting hidden
+    set(TTYD_DISCORD_APP_ID "1567620424886657085" CACHE STRING "Discord status's Discord application ID (Paper Cut's; empty: off)")
+    target_compile_definitions(ttyd_settings PRIVATE PORT_DISCORD_APP_ID="${TTYD_DISCORD_APP_ID}")
     target_link_libraries(ttyd_settings PRIVATE aurora::core aurora::pad ${AURORA_SDL3_TARGET})
     target_link_libraries(ttyd PRIVATE ttyd_settings)
     if(WIN32)

@@ -47,7 +47,7 @@ constexpr const char* kLocal[] = {
     "text_scale", "aniso", "lod_bias", "texture_upscale", "supersample", "post_filter", "vrr", "perf_overlay",
     "hdr", "collectible_tracker", "sell_helper", "menu_mouse", "quick_resume", "save_backups", "sharp_text",
     "update_check", "window_", "jukebox", "cosmetic", "mirror", "free_cam", "input_display", "second_screen",
-    "companion", "ac_cue", "crowd_", "custom_music", "settings_hint", "game_sound_mode", "speakers",
+    "companion", "ac_cue", "controller_haptics", "crowd_", "custom_music", "settings_hint", "game_sound_mode", "speakers",
 };
 
 bool local(const std::string& key) {

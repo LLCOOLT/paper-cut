@@ -3,6 +3,7 @@
 #endif
 #ifdef TARGET_PC
 #include "port/platform.h"
+#include "wide_x.h"
 #endif
 // Image driver: draws a paper animation pose as a flat image (used by the pipe and page-flip fades) and
 // the captured drop shadows under it.
@@ -216,6 +217,19 @@ static void imgDisp(CameraId camId, void* param) {
     PSMTXTrans(m4, 32.0f, -24.0f, 0.0f);
     PSMTXConcat(m3, m4, m3);
     PSMTXConcat(entry->mtx, m3, m3);
+#ifdef TARGET_PC
+    /* widescreen: a copy of the whole frame on a flat page (the room-entry
+     * page flip, the paper clouds) holds the widened frame, so the page is
+     * widened by the edge scale too (include/wide_x.h): its picture keeps its
+     * shape and lands where it was, and the black around it reaches the
+     * frame's edges. Not on the unscaled fade cameras, already full width. */
+    if ((entry->flags & IMG_FLAG_NO_VIRTUAL_POINT) && !(entry->flags & IMG_FLAG_OFFSCREEN_RECT) && fl == 0.0f &&
+        ft == 0.0f && fr == (f32)DEMOGetRenderModeObj()->fbWidth && fb == (f32)DEMOGetRenderModeObj()->efbHeight &&
+        entry->camId != CAMERA_FADE && entry->camId != CAMERA_FADE2 && entry->camId != CAMERA_BACKGROUND) {
+        PSMTXScale(m4, WIDE_X(1.0f), 1.0f, 1.0f);
+        PSMTXConcat(m4, m3, m3);
+    }
+#endif
     animPoseDrawMtx(entry->poseId, m3, 1, 0.0f, scale);
     animPoseDrawMtx(entry->poseId, m3, 2, 0.0f, scale);
     animPoseDrawMtx(entry->poseId, m3, 3, 0.0f, scale);

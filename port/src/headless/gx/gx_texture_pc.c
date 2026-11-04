@@ -148,3 +148,17 @@ u16 GXGetTexObjHeight(const GXTexObj* to) {
 GXTexFmt GXGetTexObjFmt(const GXTexObj* to) {
     return (GXTexFmt)((const PortTexObj*)to)->format;
 }
+
+/* the widescreen draws read and set the wrap modes (bgdrv, seq_load, seq_title) */
+GXTexWrapMode GXGetTexObjWrapS(const GXTexObj* to) {
+    return (GXTexWrapMode)((const PortTexObj*)to)->wrapS;
+}
+
+GXTexWrapMode GXGetTexObjWrapT(const GXTexObj* to) {
+    return (GXTexWrapMode)((const PortTexObj*)to)->wrapT;
+}
+
+void GXInitTexObjWrapMode(GXTexObj* obj, GXTexWrapMode wrap_s, GXTexWrapMode wrap_t) {
+    ((PortTexObj*)obj)->wrapS = (u8)wrap_s;
+    ((PortTexObj*)obj)->wrapT = (u8)wrap_t;
+}

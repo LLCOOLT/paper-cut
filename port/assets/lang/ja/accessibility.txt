@@ -1,0 +1,55 @@
+# Colour-blind filters and captions for sounds (port/settings/features/accessibility.cpp) (日本語)
+
+Colour-blind filter
+色覚補正フィルター
+
+Shifts the colours your eyes confuse into ones they can tell apart, over the whole picture (a daltonization correction, not a simulation).
+見分けにくい色を見分けやすい色へずらします。画面全体にかかります（シミュレーションではなく、ダルトナイズによる補正）。
+
+Protanopia (red-blind)
+1型色覚（赤）
+
+Deuteranopia (green-blind)
+2型色覚（緑）
+
+Tritanopia (blue-blind)
+3型色覚（青）
+
+Filter strength
+フィルターの強さ
+
+Captions for sounds
+効果音の字幕
+
+Short captions low on the screen for the sounds that tell you something: an enemy noticing you, a hidden block, a Star Piece, a guard, a door or switch out of sight.
+大事な効果音を画面の下に短い字幕で表示します。敵に気づかれた、隠しブロック、ほしのかけら、ガード、見えない所のドアやスイッチなど。
+
+! Someone noticed you
+！ だれかに気づかれた
+
+? Someone is puzzled
+？ だれかが首をかしげている
+
+A hidden block appears
+隠しブロックが出た
+
+A Star Piece pops out
+ほしのかけらが飛び出した
+
+Guarded
+ガード
+
+Superguard!
+スーパーガード！
+
+A door opens
+ドアが開いた
+
+A door closes
+ドアが閉まった
+
+A switch clicks
+スイッチが入った
+
+A lock opens
+カギが開いた

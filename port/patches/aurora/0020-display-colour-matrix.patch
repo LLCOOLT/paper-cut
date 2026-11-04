@@ -1,0 +1,262 @@
+From 85aa72470b0a8ec49c256451b658586578c56f18 Mon Sep 17 00:00:00 2001
+From: LLCOOLT <114613597+LLCOOLT@users.noreply.github.com>
+Date: Wed, 4 Nov 2026 13:01:48 -0500
+Subject: [PATCH] display: colour matrix over the presented picture
+
+aurora_set_color_matrix (include/aurora/color.h): each presented pixel's
+gamma-encoded RGB through a row-major 3x3 matrix, clamped to 0-1, in a pass
+of its own after the present resample and its post filter; NULL for none.
+For colour-blind corrections (daltonization). Kept apart from the earlier
+patches' lines, so each of them still checks as applied.
+---
+ include/aurora/color.h |  22 ++++++
+ lib/aurora.cpp         |   3 +-
+ lib/webgpu/gpu.cpp     | 166 +++++++++++++++++++++++++++++++++++++++++
+ lib/webgpu/gpu.hpp     |   4 +
+ 4 files changed, 194 insertions(+), 1 deletion(-)
+ create mode 100644 include/aurora/color.h
+
+diff --git a/include/aurora/color.h b/include/aurora/color.h
+new file mode 100644
+index 0000000..deb6f57
+--- /dev/null
++++ b/include/aurora/color.h
+@@ -0,0 +1,22 @@
++#ifndef AURORA_COLOR_H
++#define AURORA_COLOR_H
++
++/* A colour matrix over the presented picture, the application's own (Paper Cut's port/patches/aurora): for
++ * colour-blind corrections (daltonization). */
++
++#ifdef __cplusplus
++extern "C" {
++#endif
++
++/**
++ * Each presented pixel's gamma-encoded r, g, b (0-1) multiplied by the row-major 3x3 matrix (out = matrix * in),
++ * clamped to 0-1, in a pass of its own after the present resample and its post filter (aurora_set_post_filter);
++ * not ImGui. NULL: none (the default). Applies from the next frame.
++ */
++void aurora_set_color_matrix(const float* matrix);
++
++#ifdef __cplusplus
++}
++#endif
++
++#endif
+diff --git a/lib/aurora.cpp b/lib/aurora.cpp
+index 635e2bb..c439b3f 100644
+--- a/lib/aurora.cpp
++++ b/lib/aurora.cpp
+@@ -321,7 +321,8 @@ void end_frame() noexcept {
+       if (rmlBindGroup && !rmlOverlay) {
+         presentBindGroup = rmlBindGroup;
+       } else {
+-        const auto& resampledSource = webgpu::resample_present_source(encoder, viewport);
++        const auto& resampledSource =
++            webgpu::color_matrix_pass(encoder, webgpu::resample_present_source(encoder, viewport));
+         presentBindGroup = webgpu::create_copy_bind_group(resampledSource);
+       }
+       {
+diff --git a/lib/webgpu/gpu.cpp b/lib/webgpu/gpu.cpp
+index e5202d0..0c1ebbb 100644
+--- a/lib/webgpu/gpu.cpp
++++ b/lib/webgpu/gpu.cpp
+@@ -679,6 +679,171 @@ fn fs_backdrop(in: VertexOutput) -> @location(0) vec4<f32> {
+       make_copy_pipeline("XFB Premultiplied Alpha Copy Pipeline", "fs_premultiplied_alpha", &premultipliedAlphaBlend);
+ }
+ 
++// aurora_set_color_matrix: a pass of its own after the present resample, the picture through a 3x3 matrix
++// (the resample's bind group layout: the matrix as its uniform, its source texture; the sampler unused)
++static std::atomic_bool g_colorMatrixOn = false;
++static std::array<std::atomic<float>, 9> g_colorMatrix{};
++static wgpu::RenderPipeline g_ColorMatrixPipeline;
++static wgpu::TextureFormat g_colorMatrixFormat = wgpu::TextureFormat::Undefined;
++static wgpu::Buffer g_ColorMatrixUniformBuffer;
++static TextureWithSampler g_colorMatrixFrameBuffer;
++
++constexpr std::string_view colorMatrixShaderSource = R"(
++struct ColorMatrix {
++    r: vec4<f32>,
++    g: vec4<f32>,
++    b: vec4<f32>,
++};
++
++@group(0) @binding(0) var<uniform> cm: ColorMatrix;
++@group(0) @binding(1) var s: sampler;
++@group(0) @binding(2) var t: texture_2d<f32>;
++
++@vertex
++fn vs_main(@builtin(vertex_index) vtxIdx: u32) -> @builtin(position) vec4<f32> {
++    var pos = array<vec2<f32>, 3>(vec2(-1.0, 1.0), vec2(-1.0, -3.0), vec2(3.0, 1.0));
++    return vec4<f32>(pos[vtxIdx], 0.0, 1.0);
++}
++
++@fragment
++fn fs_main(@builtin(position) position: vec4<f32>) -> @location(0) vec4<f32> {
++    let c = textureLoad(t, vec2<i32>(position.xy), 0).rgb;
++    return vec4(clamp(vec3(dot(cm.r.xyz, c), dot(cm.g.xyz, c), dot(cm.b.xyz, c)), vec3(0.0),
++                      vec3(1.0)), 1.0);
++}
++)"sv;
++
++static void create_color_matrix_pipeline(wgpu::TextureFormat format) {
++  wgpu::ShaderSourceWGSL sourceDescriptor{};
++  sourceDescriptor.code = colorMatrixShaderSource;
++  const wgpu::ShaderModuleDescriptor moduleDescriptor{
++      .nextInChain = &sourceDescriptor,
++      .label = "Present Colour Matrix Module",
++  };
++  auto module = g_device.CreateShaderModule(&moduleDescriptor);
++  const std::array colorTargets{wgpu::ColorTargetState{
++      .format = format,
++      .writeMask = wgpu::ColorWriteMask::All,
++  }};
++  const wgpu::FragmentState fragmentState{
++      .module = module,
++      .entryPoint = "fs_main",
++      .targetCount = colorTargets.size(),
++      .targets = colorTargets.data(),
++  };
++  const wgpu::PipelineLayoutDescriptor layoutDescriptor{
++      .bindGroupLayoutCount = 1,
++      .bindGroupLayouts = &g_ResampleBindGroupLayout,
++  };
++  auto pipelineLayout = g_device.CreatePipelineLayout(&layoutDescriptor);
++  const wgpu::RenderPipelineDescriptor pipelineDescriptor{
++      .label = "Present Colour Matrix Pipeline",
++      .layout = pipelineLayout,
++      .vertex =
++          wgpu::VertexState{
++              .module = module,
++              .entryPoint = "vs_main",
++          },
++      .primitive =
++          wgpu::PrimitiveState{
++              .topology = wgpu::PrimitiveTopology::TriangleList,
++          },
++      .multisample =
++          wgpu::MultisampleState{
++              .count = 1,
++              .mask = UINT32_MAX,
++          },
++      .fragment = &fragmentState,
++  };
++  g_ColorMatrixPipeline = g_device.CreateRenderPipeline(&pipelineDescriptor);
++  g_colorMatrixFormat = format;
++  if (!g_ColorMatrixUniformBuffer) {
++    const wgpu::BufferDescriptor uniformBufferDescriptor{
++        .label = "Present Colour Matrix Uniform Buffer",
++        .usage = wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::Uniform,
++        .size = sizeof(float) * 12,
++    };
++    g_ColorMatrixUniformBuffer = g_device.CreateBuffer(&uniformBufferDescriptor);
++  }
++}
++
++const TextureWithSampler& color_matrix_pass(const wgpu::CommandEncoder& encoder, const TextureWithSampler& source) {
++  if (!g_colorMatrixOn.load(std::memory_order_relaxed) || !g_ResampleBindGroupLayout) {
++    return source;
++  }
++  if (!g_ColorMatrixPipeline || g_colorMatrixFormat != source.format) {
++    create_color_matrix_pipeline(source.format);
++  }
++  if (!g_colorMatrixFrameBuffer.view || g_colorMatrixFrameBuffer.size.width != source.size.width ||
++      g_colorMatrixFrameBuffer.size.height != source.size.height || g_colorMatrixFrameBuffer.format != source.format) {
++    g_colorMatrixFrameBuffer = create_render_texture(source.size.width, source.size.height, false);
++  }
++  std::array<float, 12> rows{};
++  for (int row = 0; row < 3; row++) {
++    for (int col = 0; col < 3; col++) {
++      rows[row * 4 + col] = g_colorMatrix[row * 3 + col].load(std::memory_order_relaxed);
++    }
++  }
++  g_queue.WriteBuffer(g_ColorMatrixUniformBuffer, 0, rows.data(), sizeof(rows));
++  const std::array bindGroupEntries{
++      wgpu::BindGroupEntry{
++          .binding = 0,
++          .buffer = g_ColorMatrixUniformBuffer,
++          .size = sizeof(rows),
++      },
++      wgpu::BindGroupEntry{
++          .binding = 1,
++          .sampler = source.sampler,
++      },
++      wgpu::BindGroupEntry{
++          .binding = 2,
++          .textureView = source.view,
++      },
++  };
++  const wgpu::BindGroupDescriptor bindGroupDescriptor{
++      .layout = g_ResampleBindGroupLayout,
++      .entryCount = bindGroupEntries.size(),
++      .entries = bindGroupEntries.data(),
++  };
++  const auto bindGroup = g_device.CreateBindGroup(&bindGroupDescriptor);
++  const std::array attachments{
++      wgpu::RenderPassColorAttachment{
++          .view = g_colorMatrixFrameBuffer.view,
++          .loadOp = wgpu::LoadOp::Clear,
++          .storeOp = wgpu::StoreOp::Store,
++      },
++  };
++  const wgpu::RenderPassDescriptor renderPassDescriptor{
++      .label = "Present colour matrix render pass",
++      .colorAttachmentCount = attachments.size(),
++      .colorAttachments = attachments.data(),
++  };
++  const auto pass = encoder.BeginRenderPass(&renderPassDescriptor);
++  pass.SetPipeline(g_ColorMatrixPipeline);
++  pass.SetBindGroup(0, bindGroup, 0, nullptr);
++  pass.SetViewport(0.f, 0.f, static_cast<float>(source.size.width), static_cast<float>(source.size.height), 0.f,
++                   1.f);
++  pass.Draw(3);
++  pass.End();
++  return g_colorMatrixFrameBuffer;
++}
++
++void release_color_matrix() noexcept {
++  g_ColorMatrixPipeline = {};
++  g_colorMatrixFormat = wgpu::TextureFormat::Undefined;
++  g_ColorMatrixUniformBuffer = {};
++  g_colorMatrixFrameBuffer = {};
++}
++
++extern "C" void aurora_set_color_matrix(const float* matrix) {
++  if (matrix != nullptr) {
++    for (int i = 0; i < 9; i++) {
++      g_colorMatrix[i].store(matrix[i], std::memory_order_relaxed);
++    }
++  }
++  g_colorMatrixOn.store(matrix != nullptr, std::memory_order_release);
++}
++
+ void create_resample_pipeline() {
+   wgpu::ShaderSourceWGSL sourceDescriptor{};
+   sourceDescriptor.code = resampleShaderSource;
+@@ -1471,6 +1636,7 @@ void shutdown() {
+   g_depthBuffer = {};
+   g_normalBuffer = {};
+   g_graphicsConfig.normalBuffer = false;
++  release_color_matrix();
+   g_queue = {};
+   g_surface = {};
+   g_device = {};
+diff --git a/lib/webgpu/gpu.hpp b/lib/webgpu/gpu.hpp
+index 8e018e3..1cfbb14 100644
+--- a/lib/webgpu/gpu.hpp
++++ b/lib/webgpu/gpu.hpp
+@@ -42,6 +42,10 @@ struct Viewport {
+   bool operator!=(const Viewport& rhs) const { return !(*this == rhs); }
+ };
+ 
++// aurora_set_color_matrix (aurora/color.h): source through the matrix, or source itself while there is none
++const TextureWithSampler& color_matrix_pass(const wgpu::CommandEncoder& encoder, const TextureWithSampler& source);
++void release_color_matrix() noexcept;
++
+ extern wgpu::Device g_device;
+ extern wgpu::Queue g_queue;
+ extern wgpu::Surface g_surface;
+-- 
+2.53.0.windows.1
+

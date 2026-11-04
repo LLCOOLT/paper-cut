@@ -1,0 +1,28 @@
+# discord: see tools/port/gen_lang.py
+
+Discord status
+Discordのステータス
+
+While Discord runs on this computer, your profile shows that you're playing Paper Cut: the area you're in, and whether you're in battle, exploring or playing co-op.
+このコンピューターでDiscordが動いている間、プロフィールにPaper Cutをプレイ中であることが表示されます。いる場所と、バトル中・探索中・協力プレイ中かどうかも表示されます。
+
+In battle
+バトル中
+
+Exploring
+探索中
+
+Playing co-op
+協力プレイ中
+
+Playing online
+オンラインでプレイ中
+
+On the title screen
+タイトル画面
+
+Watching the ending
+エンディングを観賞中
+
+In the menus
+メニュー

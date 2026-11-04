@@ -1,0 +1,43 @@
+# presets: see tools/port/gen_lang.py
+
+Settings presets
+設定プリセット
+
+Your setup as a code or a file to share, or someone else's put in place: the settings that change the game (gameplay, challenges, accessibility, cosmetics, mirror mode...), not this device's own (window, graphics, keys, controllers).
+自分の設定をコードやファイルにして共有したり、ほかの人の設定を適用したりします：ゲームを変える設定（ゲームプレイ、チャレンジ、アクセシビリティ、みため、ミラーモード...）だけで、この端末の設定（ウィンドウ、グラフィック、キー、コントローラー）は含みません。
+
+Copy this setup's code
+この設定のコードをコピー
+
+Save as a file...
+ファイルに保存...
+
+Open a preset file...
+プリセットファイルを開く...
+
+A preset's code
+プリセットのコード
+
+Paste
+貼り付け
+
+Put in place
+適用
+
+Code copied: paste it wherever you share it.
+コードをコピーしました：共有したい所に貼り付けてください。
+
+Preset saved.
+プリセットを保存しました。
+
+The preset couldn't be saved there.
+そこにはプリセットを保存できませんでした。
+
+That file couldn't be read.
+そのファイルを読み込めませんでした。
+
+That isn't a settings preset.
+設定プリセットではありません。
+
+Preset put in place: %d settings changed. Some apply from the next start.
+プリセットを適用しました：%d個の設定を変更しました。一部は次回起動時から反映されます。
