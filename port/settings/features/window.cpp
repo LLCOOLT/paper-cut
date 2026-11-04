@@ -7,9 +7,16 @@
 // (no bars beside it), and can keep it above other windows. Alt+Enter toggles
 // full screen, as F11 does.
 //
+// The display mode is the fullscreen setting: 0 a window, 1 borderless (a
+// window the size of the screen, at the desktop's own mode: switching away is
+// instant), 2 full screen (exclusive, at the screen's own resolution and
+// refresh rate: the display is the game's alone while it has the focus). F11
+// and Alt+Enter switch between the window and the full-screen kind last chosen
+// (fullscreen_kind).
+//
 // Settings: window_x, window_y, window_w, window_h (the last windowed place
 // and size, in the desktop's points), window_max, window_remember,
-// window_on_top. main_aurora.c passes the saved size and place to Aurora
+// window_on_top, fullscreen_kind. main_aurora.c passes the saved size and place to Aurora
 // before the window is made (portWindowConfig), then portWindowRestore checks
 // them against the screens once SDL is up.
 #include "port/settings.h"
@@ -17,6 +24,7 @@
 
 #include <SDL3/SDL.h>
 #include <aurora/aurora.h>
+#include <dolphin/vi.h>
 #include <imgui.h>
 
 #include <algorithm>
@@ -39,7 +47,7 @@ namespace {
 constexpr int kNoValue = -100000;
 
 struct Saved {
-  int *x, *y, *w, *h, *max, *remember, *onTop;
+  int *x, *y, *w, *h, *max, *remember, *onTop, *fullKind;
 };
 
 Saved& saved() {
@@ -52,6 +60,7 @@ Saved& saved() {
     s.max = portSettingsDeclare("window_max", 0, 0, 1);
     s.remember = portSettingsDeclare("window_remember", 1, 0, 1);
     s.onTop = portSettingsDeclare("window_on_top", 0, 0, 1);
+    s.fullKind = portSettingsDeclare("fullscreen_kind", 1, 1, 2);
   }
   return s;
 }
@@ -229,8 +238,7 @@ int windowEvent(const void* ev) {
   switch (e->type) {
   case SDL_EVENT_KEY_DOWN:
     if ((e->key.key == SDLK_RETURN || e->key.key == SDLK_KP_ENTER) && (e->key.mod & SDL_KMOD_ALT) && !e->key.repeat) {
-      portSettings()->fullscreen = !isFullscreen(w);
-      portSettingsSave(); // applies it
+      portWindowToggleFullscreen();
       return 1;
     }
     return 0;
@@ -263,9 +271,9 @@ int windowEvent(const void* ev) {
   case SDL_EVENT_WINDOW_LEAVE_FULLSCREEN: {
     // full screen from the system (macOS's green button, a window manager's
     // key): the setting follows, so the page and the next start agree
-    const int full = e->type == SDL_EVENT_WINDOW_ENTER_FULLSCREEN ? 1 : 0;
-    if (portSettings()->fullscreen != full) {
-      portSettings()->fullscreen = full;
+    const bool full = e->type == SDL_EVENT_WINDOW_ENTER_FULLSCREEN;
+    if ((portSettings()->fullscreen != 0) != full) {
+      portSettings()->fullscreen = full ? *s.fullKind : 0;
       markDirty();
     }
     return 0;
@@ -296,6 +304,32 @@ struct WindowSettings {
 } sWindow;
 
 } // namespace
+
+// The display mode in place (portSettingsApply, on a change): mode 2's
+// exclusive mode is the screen's own (its desktop resolution and refresh
+// rate), 1's none (borderless); then full screen on or off.
+extern "C" void portWindowSetDisplayMode(int mode) {
+#if defined(PORT_DESKTOP_WINDOW)
+  SDL_Window* w = window();
+  if (w != nullptr && mode != 0) {
+    const SDL_DisplayMode* desktop = mode == 2 ? SDL_GetDesktopDisplayMode(SDL_GetDisplayForWindow(w)) : nullptr;
+    if (!SDL_SetWindowFullscreenMode(w, desktop)) {
+      std::fprintf(stderr, "window: the full-screen mode wasn't taken: %s\n", SDL_GetError());
+    }
+    *saved().fullKind = mode;
+  }
+#else
+  (void)mode;
+#endif
+  VISetWindowFullscreen(mode != 0);
+}
+
+// F11, Alt+Enter: the window, or the full-screen kind last chosen
+extern "C" void portWindowToggleFullscreen(void) {
+  PortSettings* s = portSettings();
+  s->fullscreen = s->fullscreen != 0 ? 0 : *saved().fullKind;
+  portSettingsSave(); // applies it
+}
 
 // Before aurora_initialize: the saved size and place for the window it makes
 // (0 / unchanged when there are none), and full screen from the start.

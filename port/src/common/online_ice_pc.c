@@ -64,6 +64,10 @@ const char* portIceBye(void) {
     return NULL;
 }
 void portIceStop(void) {}
+void portIceResume(unsigned peerNeeds, unsigned theirsNext) {
+    (void)peerNeeds;
+    (void)theirsNext;
+}
 
 #else
 
@@ -469,6 +473,18 @@ const char* portIceBye(void) {
     }
     SDL_UnlockMutex(sLock);
     return why;
+}
+
+void portIceResume(unsigned peerNeeds, unsigned theirsNext) {
+    if (sLock == NULL) {
+        return;
+    }
+    SDL_LockMutex(sLock);
+    sPeerNeeds = peerNeeds;
+    if (theirsNext > sTheirsNext) {
+        sTheirsNext = theirsNext;
+    }
+    SDL_UnlockMutex(sLock);
 }
 
 void portIceStop(void) {

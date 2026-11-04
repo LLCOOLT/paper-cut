@@ -910,6 +910,7 @@ void overlay(PortSettings* s, const Item& it) {
   }
 
 constexpr const char* kFilters[] = {"Original (smooth)", "Sharp (pixels)"};
+constexpr const char* kDisplayModes[] = {"Windowed", "Borderless", "Full screen"};
 constexpr const char* kOrientations[] = {"Turn with the device", "Landscape", "Portrait"};
 #if defined(__ANDROID__) || (defined(__APPLE__) && TARGET_OS_IPHONE)
 constexpr const char* kCues[] = {"Off", "On screen", "On screen and a tap"};
@@ -929,7 +930,10 @@ const Item kItems[] = {
      videoRate, "fps hz 120 144 240 smooth interpolation", nullptr},
     {"Display", "VSync", nullptr, 0, TOGGLE(vsync), "tearing", nullptr},
 #if !defined(__ANDROID__) && !(defined(__APPLE__) && TARGET_OS_IPHONE)
-    {"Display", "Fullscreen (F11 or Alt+Enter)", nullptr, 0, TOGGLE(fullscreen), "window borderless", nullptr},
+    {"Display", "Display mode (F11 or Alt+Enter)",
+     "Borderless: the whole screen, switching away at once. Full screen: the screen is the game's alone, at its own "
+     "resolution and refresh rate.",
+     0, CHOICE(fullscreen, kDisplayModes, 3), "fullscreen full screen window windowed borderless exclusive", nullptr},
 #endif
     {"Display", "Widescreen (16:9)", "Much of the game was built for 4:3: some rooms and scenes end at the 4:3 edges.",
      0, TOGGLE(widescreen), "aspect ratio 16:9", nullptr},
@@ -1560,6 +1564,27 @@ void touchToMouse(const SDL_Event* e) {
 
 } // namespace
 
+// A controller's button the player mapped to one of the game's (Controller
+// buttons, one-handed controls): the port's own use of it (Back: this page;
+// the right stick pressed in: fast-forward) gives way.
+static bool gameButton(SDL_JoystickID which, Uint8 button) {
+  SDL_Gamepad* pad = SDL_GetGamepadFromID(which);
+  for (u32 port = 0; pad != nullptr && port < 4; port++) {
+    const s32 index = PADGetIndexForPort(port);
+    if (index < 0 || PADGetSDLGamepadForIndex(static_cast<u32>(index)) != pad) {
+      continue;
+    }
+    u32 count = 0;
+    const PADButtonMapping* maps = PADGetButtonMappings(port, &count);
+    for (u32 i = 0; maps != nullptr && i < count; i++) {
+      if (maps[i].nativeButton == button) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
 extern "C" void portSettingsEvent(const void* sdlEvent) {
   const SDL_Event* e = static_cast<const SDL_Event*>(sdlEvent);
   PortSettings* s = portSettings();
@@ -1604,8 +1629,7 @@ extern "C" void portSettingsEvent(const void* sdlEvent) {
     } else if (e->key.key == SDLK_ESCAPE && sOpen) {
       setOpen(false);
     } else if (e->key.key == SDLK_F11) {
-      s->fullscreen = !s->fullscreen;
-      portSettingsSave();
+      portWindowToggleFullscreen();
     }
     break;
   case SDL_EVENT_KEY_UP:
@@ -1614,11 +1638,14 @@ extern "C" void portSettingsEvent(const void* sdlEvent) {
     }
     break;
   case SDL_EVENT_GAMEPAD_BUTTON_UP:
-    if (e->gbutton.button == SDL_GAMEPAD_BUTTON_RIGHT_STICK) {
+    if (e->gbutton.button == SDL_GAMEPAD_BUTTON_RIGHT_STICK && !gameButton(e->gbutton.which, e->gbutton.button)) {
       portSpeedControl(0);
     }
     break;
   case SDL_EVENT_GAMEPAD_BUTTON_DOWN:
+    if (gameButton(e->gbutton.which, e->gbutton.button) && !sOpen) {
+      break; // the player gave it a game button (one-handed controls): not the port's shortcut
+    }
     if (e->gbutton.button == SDL_GAMEPAD_BUTTON_RIGHT_STICK) {
       portSpeedControl(1);
     } else if (e->gbutton.button == SDL_GAMEPAD_BUTTON_BACK) {
@@ -1772,7 +1799,8 @@ struct PauseField {
 const PauseField kPauseFields[] = {
     {"Display", "VSync", "Present at the display's refresh: no tearing.", 0, 0, &PortSettings::vsync},
 #if !defined(__ANDROID__) && !(defined(__APPLE__) && TARGET_OS_IPHONE)
-    {"Display", "Fullscreen", "The whole screen, or a window (F11 or Alt+Enter).", 0, 0, &PortSettings::fullscreen},
+    {"Display", "Display mode", "A window, the whole screen borderless, or full screen (F11 or Alt+Enter).", 0, 1,
+     &PortSettings::fullscreen, nullptr, kDisplayModes, 3},
 #endif
     {"Display", "Widescreen", "16:9 instead of the game's own 4:3. Some rooms and scenes end at the 4:3 edges.", 0, 0,
      &PortSettings::widescreen},

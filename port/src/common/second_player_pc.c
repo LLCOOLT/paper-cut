@@ -47,6 +47,7 @@
 #include "manager/fontmgr.h"
 #include "port/tr.h"
 #include "port/online.h"
+#include "port/platform.h"
 #include "port/view.h"
 #include <dolphin/pad.h>
 #include <math.h>
@@ -389,9 +390,16 @@ static void tag(const Vec* top, const char* text, GXColor color) {
     FontDrawString(screen.x - w * 0.5f, screen.y + 18.0f, text);
 }
 
+/* The game's font draws each letter with two of the game's random numbers
+ * (fontmgr.c, _JUTFont_DrawPos: irand for its noise texture), and the frame's
+ * drawing comes before its logic. So the port's own words over the picture keep
+ * the game's random numbers as they were: else what one player sees and the
+ * other doesn't (a notice shown a frame apart, in another language, a setting
+ * of one's own) puts an online game out of step. */
 static void tagDisp(CameraId camId, void* param) {
     PartyEntry* party = (PartyEntry*)param;
     MarioWork* mario = marioGetPtr();
+    const u32 seed = portRandState();
     Vec top;
     (void)camId;
     top = mario->position;
@@ -401,9 +409,10 @@ static void tagDisp(CameraId camId, void* param) {
     top.y = party->position.y + party->dispOfs.y + party->height + 8.0f;
     top.z = party->position.z + party->dispOfs.z;
     tag(&top, "2P", (GXColor){0x6C, 0xC8, 0xFF, sCoop.free ? 0xFF : 0x70});
+    portRandSetState(seed);
 }
 
-static void noticeDisp(CameraId camId, void* param) {
+static void noticeDraw(void) {
 #ifdef TTYD_BACKEND_AURORA
     const char* text = portTrGame(sNotice.text);
 #else
@@ -414,8 +423,6 @@ static void noticeDisp(CameraId camId, void* param) {
     const float maxW = 560.0f; /* inside the 4:3 picture, a little in from its edges */
     char lines[2][160];
     int count = 1, i;
-    (void)camId;
-    (void)param;
     snprintf(lines[0], sizeof(lines[0]), "%s", text);
     lines[1][0] = '\0';
     if (FontGetMessageWidth(text) * 0.75f > maxW) {
@@ -445,6 +452,14 @@ static void noticeDisp(CameraId camId, void* param) {
         FontDrawScale(scale);
         FontDrawString(-w * 0.5f, (count == 2 ? -138.0f : -150.0f) - i * 22.0f, lines[i]);
     }
+}
+
+static void noticeDisp(CameraId camId, void* param) {
+    const u32 seed = portRandState(); /* (the game's random numbers: tagDisp's) */
+    (void)camId;
+    (void)param;
+    noticeDraw();
+    portRandSetState(seed);
 }
 
 static void notice(const char* english) {

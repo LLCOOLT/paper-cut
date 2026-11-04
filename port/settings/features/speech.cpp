@@ -8,16 +8,17 @@
 //   Android    TextToSpeech (TtydActivity.speechSay)
 //   Linux      speech-dispatcher's spd-say
 // The game's text is Shift-JIS on the Japanese release, Latin-1 (Windows-1252)
-// on the others: each backend decodes it so.
+// on the others: each backend decodes it so. The pages come from
+// message_text.cpp, which the message log shares.
 #include "port/settings.h"
 #include "port/speech.h"
+#include "../message_text.h"
 
 #include <SDL3/SDL.h>
 
 #include <algorithm>
 #include <cstdio>
 #include <cstring>
-#include <map>
 #include <string>
 #include <vector>
 
@@ -49,7 +50,7 @@ const char* kChoices[] = {"Off", "Message windows", "Messages and menus"};
 int* sMode;
 int* sRate; // -5..5: slower .. faster
 
-bool japanese() { return std::strncmp(PORT_GAME_ID, "G8MJ", 4) == 0; }
+using msgtext::japanese;
 
 // the game's language as a BCP 47 tag ("en", "ja"...)
 const char* language() {
@@ -233,50 +234,6 @@ void say(const std::string&) {}
 void stop() {}
 #endif
 
-// --- the game's text ---
-
-// a page's words: the tags out, the lines joined, the spaces single
-std::string plain(const std::string& raw) {
-  std::string out;
-  bool inTag = false;
-  for (char c : raw) {
-    if (c == '<') {
-      inTag = true;
-    } else if (c == '>' && inTag) {
-      inTag = false;
-      out += ' ';
-    } else if (!inTag) {
-      out += c == '\n' || c == '\r' || c == '\t' ? ' ' : c;
-    }
-  }
-  std::string tidy;
-  for (char c : out) {
-    if (c != ' ' || (!tidy.empty() && tidy.back() != ' ')) {
-      tidy += c;
-    }
-  }
-  while (!tidy.empty() && tidy.back() == ' ') {
-    tidy.pop_back();
-  }
-  return tidy;
-}
-
-// a message's pages, split at the game's <p>
-std::vector<std::string> pages(const char* text) {
-  std::vector<std::string> out;
-  std::string raw = text != nullptr ? text : "";
-  size_t at = 0;
-  for (;;) {
-    const size_t p = raw.find("<p>", at);
-    out.push_back(plain(raw.substr(at, p == std::string::npos ? std::string::npos : p - at)));
-    if (p == std::string::npos) {
-      break;
-    }
-    at = p + 3;
-  }
-  return out;
-}
-
 // what's said: to the voice, or ($TTYD_SPEECH_LOG=<file>, tests) a line each in the file, no voice
 void speak(const std::string& text) {
   static const char* log = SDL_getenv("TTYD_SPEECH_LOG");
@@ -290,11 +247,6 @@ void speak(const std::string& text) {
   say(text);
 }
 
-struct Window {
-  std::vector<std::string> pages;
-  int spoken = -1;
-};
-std::map<const void*, Window> sWindows;
 std::string sLastMenu;
 
 bool on(int atLeast) { return sMode != nullptr && *sMode >= atLeast; }
@@ -309,53 +261,27 @@ const bool sAdded = [] {
                         0, "tts", kChoices, 3, "text to speech tts read aloud voice narrator screen reader blind");
   portSettingsAddSlider("Accessibility", "Reading speed", nullptr, 0, "tts_rate", -5, 5, "%+d",
                         "text to speech tts rate speed voice");
+  // the message windows' pages as they show (message_text.cpp); a closed window cuts off its reading
+  msgtext::listen([](const void*, const std::string& words, const char*, bool) {
+                    if (on(kMessages)) {
+                      speak(words);
+                    }
+                  },
+                  [](const void*) {
+                    if (on(kMessages)) {
+                      stop();
+                    }
+                  });
   return true;
 }();
 
 } // namespace
 
-extern "C" void portSpeechMessage(const void* window, const char* text) {
-  if (!on(kMessages)) {
-    return;
-  }
-  sWindows[window] = Window{pages(text), -1};
-}
-
-extern "C" void portSpeechAppend(const void* window, const char* text) {
-  if (!on(kMessages)) {
-    return;
-  }
-  Window& w = sWindows[window];
-  for (std::string& p : pages(text)) {
-    w.pages.push_back(std::move(p));
-  }
-}
-
-extern "C" void portSpeechPage(const void* window, int page) {
-  if (!on(kMessages)) {
-    return;
-  }
-  auto it = sWindows.find(window);
-  if (it == sWindows.end() || page == it->second.spoken || page < 0 || page >= int(it->second.pages.size())) {
-    return;
-  }
-  it->second.spoken = page;
-  if (!it->second.pages[size_t(page)].empty()) {
-    speak(it->second.pages[size_t(page)]);
-  }
-}
-
-extern "C" void portSpeechClosed(const void* window) {
-  if (sWindows.erase(window) > 0 && on(kMessages)) {
-    stop();
-  }
-}
-
 extern "C" void portSpeechMenu(const char* text) {
   if (!on(kAll) || text == nullptr) {
     return;
   }
-  const std::string words = plain(text);
+  const std::string words = msgtext::plain(text);
   if (words.empty() || words == sLastMenu) {
     return;
   }

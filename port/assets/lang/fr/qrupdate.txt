@@ -1,0 +1,121 @@
+# qrupdate: see tools/port/gen_lang.py
+
+Send saves to another device
+Envoyer les sauvegardes à un autre appareil
+
+Receive saves
+Recevoir des sauvegardes
+
+Shows an address and its QR code for another device on the same network: its Paper Cut takes the saves with Receive saves. For 5 minutes, once.
+Affiche une adresse et son QR code pour un autre appareil du même réseau : son Paper Cut prend les sauvegardes avec Recevoir des sauvegardes. Pendant 5 minutes, une fois.
+
+On the other device: Settings, Saves, Receive saves, and type this address.
+Sur l'autre appareil : Paramètres, Sauvegardes, Recevoir des sauvegardes, puis tapez cette adresse.
+
+Copy the address
+Copier l'adresse
+
+Stops in %d:%02d, or once the other device has the saves.
+S'arrête dans %d:%02d, ou dès que l'autre appareil a les sauvegardes.
+
+Sent: the other device has the saves.
+Envoyé : l'autre appareil a les sauvegardes.
+
+Stopped.
+Arrêté.
+
+No other device took the saves in 5 minutes: stopped.
+Aucun autre appareil n'a pris les sauvegardes en 5 minutes : arrêté.
+
+This device has no saves of the game yet.
+Cet appareil n'a encore aucune sauvegarde du jeu.
+
+This device has no random numbers for the address.
+Cet appareil n'a pas de nombres aléatoires pour l'adresse.
+
+This device isn't on a network.
+Cet appareil n'est sur aucun réseau.
+
+Could not start sending (no network?).
+L'envoi n'a pas pu démarrer (pas de réseau ?).
+
+The address the other device shows under Send saves to another device.
+L'adresse que l'autre appareil affiche sous Envoyer les sauvegardes à un autre appareil.
+
+Paste
+Coller
+
+Receiving...
+Réception...
+
+Which game files to replace? The save here is kept as a backup first.
+Quels fichiers de jeu remplacer ? La sauvegarde d'ici est d'abord copiée.
+
+Japan (JP)
+Japon (JP)
+
+North America (US)
+Amérique du Nord (US)
+
+Europe (EU)
+Europe (EU)
+
+a save
+une sauvegarde
+
+empty
+vide
+
+File %d: the other device's (%s) over this one's (%s)
+Fichier %d : celui de l'autre appareil (%s) à la place de celui-ci (%s)
+
+Replace them and restart
+Les remplacer et redémarrer
+
+Replace them
+Les remplacer
+
+Receive this card's saves from the launcher, before the game starts.
+Recevez les sauvegardes de cette carte depuis le lanceur, avant que le jeu démarre.
+
+Could not receive the saves:
+Les sauvegardes n'ont pas pu être reçues :
+
+Received: the saves as they were are kept as backups.
+Reçu : les sauvegardes d'avant sont gardées en copie.
+
+Updated to Paper Cut %s.
+Mis à jour vers Paper Cut %s.
+
+Flathub updates this copy: your software centre, or flatpak update.
+Flathub met à jour cette copie : votre logithèque, ou flatpak update.
+
+Update the AppImage with AppImageUpdate, or download the new one.
+Mettez à jour l'AppImage avec AppImageUpdate, ou téléchargez la nouvelle.
+
+Download and install
+Télécharger et installer
+
+Checking the download...
+Vérification du téléchargement...
+
+Can't write beside the install: download it from the release page.
+Impossible d'écrire à côté de l'installation : téléchargez-la depuis la page de la version.
+
+The download failed:
+Le téléchargement a échoué :
+
+The release lists no checksum for it, so it wasn't installed.
+La version n'indique pas de somme de contrôle pour lui : il n'a pas été installé.
+
+The download doesn't match the release's checksum, so it wasn't installed.
+Le téléchargement ne correspond pas à la somme de contrôle de la version : il n'a pas été installé.
+
+It couldn't be unpacked:
+Il n'a pas pu être décompressé :
+
+The new version is installed at the next start.
+La nouvelle version s'installe au prochain démarrage.
+
+Restart to update
+Redémarrer pour mettre à jour

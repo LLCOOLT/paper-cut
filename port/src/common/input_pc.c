@@ -209,6 +209,11 @@ __attribute__((weak)) void portSaveStateRequest(int slot, int load) {
     (void)load;
 }
 
+/* port/src/aurora/rewind_aurora.c: the Rewind control held for frames (tests) */
+__attribute__((weak)) void portRewindTest(int frames) {
+    (void)frames;
+}
+
 static void load(const char* path) {
     FILE* f = fopen(path, "r");
     char line[128];
@@ -332,6 +337,10 @@ static void load(const char* path) {
         } else if (strcmp(cmd, "select") == 0) {
             s->frames = -14;
             s->waitMax = strcmp(a1, "list") == 0 ? -1 : atoi(a1);
+        } else if (strcmp(cmd, "rewind") == 0) {
+            /* rewind N: the Rewind control held for the next N frames */
+            s->frames = -22;
+            s->waitMax = atoi(a1);
         } else if (strcmp(cmd, "state") == 0) {
             s->frames = -12;
             s->waitMax = atoi(a2) - 1;
@@ -746,6 +755,10 @@ static void applyScript(PADStatus* pad) {
         }
         if (s->frames == -20) {
             portMenuBack(); /* as a right click */
+            continue;
+        }
+        if (s->frames == -22) {
+            portRewindTest(s->waitMax); /* held from now; the next steps go on meanwhile (wait, shot) */
             continue;
         }
         if (s->frames == -21) {

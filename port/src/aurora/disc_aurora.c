@@ -14,6 +14,7 @@
 #include <aurora/event.h>
 #include <aurora/dvd.h>
 #include <SDL3/SDL.h>
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -260,6 +261,11 @@ static BOOL openedInFinder(void) {
         const AuroraEvent* event = aurora_update();
         for (; event != NULL && event->type != AURORA_NONE; event++) {
             if (event->type == AURORA_SDL_EVENT && event->sdl.type == SDL_EVENT_DROP_FILE &&
+                event->sdl.drop.data != NULL && SDL_strncasecmp(event->sdl.drop.data, "papercut:", 9) == 0) {
+                portOnlineInviteEvent(&event->sdl); /* an invite link, not a disc (invite.cpp) */
+                continue;
+            }
+            if (event->type == AURORA_SDL_EVENT && event->sdl.type == SDL_EVENT_DROP_FILE &&
                 event->sdl.drop.data != NULL) {
                 snprintf(sPicked, sizeof(sPicked), "%s", event->sdl.drop.data);
                 return TRUE;
@@ -271,8 +277,39 @@ static BOOL openedInFinder(void) {
 }
 #endif
 
+void portOnlineInviteEvent(const void* sdlEvent); /* invite.cpp */
+
+/* a file:// URL's path, decoded (the Linux desktop file passes %u: a disc may come
+ * as one), in place */
+static void fromFileUrl(char* s) {
+    char* out = s;
+    const char* in = s + 7;
+    if (strncmp(s, "file://", 7) != 0) {
+        return;
+    }
+    if (strncmp(in, "localhost/", 10) == 0) {
+        in += 9;
+    }
+    for (; *in != '\0'; in++) {
+        if (in[0] == '%' && isxdigit((unsigned char)in[1]) && isxdigit((unsigned char)in[2])) {
+            char hex[3] = {in[1], in[2], '\0'};
+            *out++ = (char)strtol(hex, NULL, 16);
+            in += 2;
+        } else {
+            *out++ = *in;
+        }
+    }
+    *out = '\0';
+}
+
 BOOL portAuroraOpenDisc(int argc, char* argv[], const char* userPath) {
     const char* given = argc > 1 ? argv[1] : getenv("TTYD_DISC");
+    static char sGivenPath[4096];
+    if (given != NULL && strncmp(given, "file://", 7) == 0) {
+        snprintf(sGivenPath, sizeof(sGivenPath), "%s", given);
+        fromFileUrl(sGivenPath);
+        given = sGivenPath;
+    }
     char why[4600], title[64], saved[4096];
     char* last;
 #if defined(__APPLE__) && TARGET_OS_OSX

@@ -20,6 +20,7 @@
  * for the run that made them. */
 #include "port/savestate.h"
 #include "port/online.h"
+#include "port/replay.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -53,6 +54,7 @@ void portSaveStateSetLabel(int slot, const char* label) {
 #include "port/snapheap.h"
 #include "driver/seqdrv.h"
 #include "manager/cardmgr.h"
+#include "manager/dvdmgr.h"
 #include "mario/mariost.h"
 
 /* The game's data and bss (port_prefix.h, snapshot_bounds_pc.c) */
@@ -85,25 +87,15 @@ void portInterpInvalidate(void);       /* interp_aurora.c */
 OSTime portOSGetTime(void);            /* os_time_aurora.c */
 
 #define CHUNK (1u << 20)
-#define MAX_FILES 64
 
-typedef struct Region {
-    void* addr;
-    size_t size;
-} Region;
+typedef PortSnapRegion Region;
 
 typedef struct Slot {
     int used;
     uint8_t* blob; /* per chunk: u32 raw size, u32 stored size (0: stored raw), bytes */
     size_t blobSize;
     size_t rawSize;
-    size_t heapTop;
-    s64 gameTime;
-    s64 fastClock; /* $TTYD_FAST's virtual clock (os_time_aurora.c) */
-    u32 rand;      /* the game's rand() (runtime_pc.c) */
-    const void* rel;
-    AuroraDvdOpenFile files[MAX_FILES];
-    u32 fileCount;
+    PortSnapMeta meta;
     char info[96];
 } Slot;
 
@@ -285,6 +277,56 @@ static int regions(Region* out, int max, size_t heapSize) {
     return n;
 }
 
+extern DVDEntry* dvdq; /* dvdmgr.c: its queue */
+
+int portSnapDiscBusy(void) {
+    int i;
+    if (dvdq == NULL) {
+        return 0;
+    }
+    for (i = 0; i < DVDEntryCount; i++) {
+        if ((dvdq[i].status & DVDMGR_INUSE) && (dvdq[i].status & DVDMGR_READING) &&
+            !(dvdq[i].status & DVDMGR_UNK_ERROR2)) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+int portSnapRegions(PortSnapRegion* out, int max, size_t heapSize) {
+    return regions(out, max, heapSize);
+}
+
+size_t portSnapPack(uint8_t* dst, size_t cap, const uint8_t* src, size_t n) {
+    return packChunk(dst, cap, src, n);
+}
+
+void portSnapUnpack(uint8_t* dst, size_t n, const uint8_t* src, size_t packed) {
+    unpackChunk(dst, n, src, packed);
+}
+
+int portSnapMetaTake(PortSnapMeta* m) {
+    void* heap;
+    portSnapHeapExtent(&heap, &m->heapTop);
+    m->gameTime = portOSGetTime();
+    m->fastClock = portFastClockGet();
+    m->rand = portRandState();
+    m->rel = portRelCurrent();
+    m->fileCount = aurora_dvd_open_files(m->files, PORT_SNAP_MAX_FILES);
+    return m->fileCount <= PORT_SNAP_MAX_FILES;
+}
+
+void portSnapMetaPut(const PortSnapMeta* m) {
+    portSnapHeapRestored();
+    portClockSetGame(m->gameTime);
+    portFastClockSet(m->fastClock);
+    portRandSetState(m->rand);
+    portRelSetCurrent(m->rel);
+    aurora_dvd_reopen_files(m->files, m->fileCount);
+    AuroraFlushTextureCaches();
+    portInterpInvalidate();
+}
+
 static int allowed(const char** why, int retryLoad) {
     const s32 seq = (s32)seqGetSeq();
     if (!portThreadIsMain()) {
@@ -303,10 +345,14 @@ static int allowed(const char** why, int retryLoad) {
 }
 
 /* No other thread touches the game: paused, audio held, disc reads and
- * ARAM transfers (and their callbacks, which may queue more) finished. */
-static void quiesce(void) {
+ * ARAM transfers (and their callbacks, which may queue more) finished.
+ * Without pause (rewind's states, taken often): the clock and the audio
+ * device run on, only the audio callback held off while the memory is read. */
+void portSnapQuiesce(int pause) {
     int i;
-    portPause();
+    if (pause) {
+        portPause();
+    }
     salPcLock();
     for (i = 0; i < 1000; i++) {
         aurora_dvd_wait_idle();
@@ -317,12 +363,20 @@ static void quiesce(void) {
         }
         SDL_Delay(1);
     }
-    GXDrawDone();
+    if (pause) {
+        GXDrawDone(); /* the GPU done reading what a load writes over */
+    }
 }
 
-static void resume(void) {
+void portSnapResume(int pause) {
     salPcUnlock();
-    portResume();
+    if (pause) {
+        portResume();
+    }
+}
+
+int portSnapAllowed(int restore, const char** why) {
+    return allowed(why, restore);
 }
 
 static void save(Slot* s) {
@@ -372,13 +426,7 @@ static void save(Slot* s) {
     }
     s->blobSize = used;
     s->rawSize = raw;
-    s->heapTop = heapSize;
-    s->gameTime = portOSGetTime();
-    s->fastClock = portFastClockGet();
-    s->rand = portRandState();
-    s->rel = portRelCurrent();
-    s->fileCount = aurora_dvd_open_files(s->files, MAX_FILES);
-    if (s->fileCount > MAX_FILES) {
+    if (!portSnapMetaTake(&s->meta)) {
         s->used = 0;
         status("Too many open files for a save state");
         return;
@@ -410,11 +458,11 @@ static void load(Slot* s) {
     int n, i;
     const uint8_t* p = s->blob;
     const Uint64 t0 = SDL_GetTicks();
-    if (!portSnapHeapCommit(s->heapTop)) { /* before anything is written back */
+    if (!portSnapHeapCommit(s->meta.heapTop)) { /* before anything is written back */
         status("Not enough memory to load the state");
         return;
     }
-    n = regions(r, 512, s->heapTop);
+    n = regions(r, 512, s->meta.heapTop);
     for (i = 0; i < n; i++) {
         size_t off;
         for (off = 0; off < r[i].size;) {
@@ -431,14 +479,7 @@ static void load(Slot* s) {
             off += hdr[0];
         }
     }
-    portSnapHeapRestored();
-    portClockSetGame(s->gameTime);
-    portFastClockSet(s->fastClock);
-    portRandSetState(s->rand);
-    portRelSetCurrent(s->rel);
-    aurora_dvd_reopen_files(s->files, s->fileCount);
-    AuroraFlushTextureCaches();
-    portInterpInvalidate();
+    portSnapMetaPut(&s->meta);
     {
         char text[128];
         snprintf(text, sizeof(text), "Loaded state %d (%llu ms)", (int)(s - sSlots) + 1,
@@ -448,8 +489,8 @@ static void load(Slot* s) {
 }
 
 void portSaveStateRequest(int slot, int load) {
-    if (slot < 0 || slot > PORT_SAVE_STATE_RETRY || portOnlineActive()) {
-        return; /* online co-op: one game alone can't jump (port/include/port/online.h) */
+    if (slot < 0 || slot > PORT_SAVE_STATE_RETRY || portOnlineActive() || portReplayActive()) {
+        return; /* online co-op, replays: one game alone can't jump (port/include/port/online.h) */
     }
     if (load && !sSlots[slot].used) {
         status("That slot is empty");
@@ -485,6 +526,15 @@ void portSaveStateFrame(void) {
     if (slot < 0) {
         return;
     }
+    {
+        /* the game's disc thread mid-read (a room's files coming in): its
+         * place in the read isn't in memory, so wait for it, up to 5 s */
+        static int sWaited;
+        if (portSnapDiscBusy() && sWaited++ < 300) {
+            return;
+        }
+        sWaited = 0;
+    }
     sRequestSlot = -1;
     sQuiet = slot == PORT_SAVE_STATE_RETRY && !sRequestLoad;
     if (!allowed(&why, slot == PORT_SAVE_STATE_RETRY && sRequestLoad)) {
@@ -493,13 +543,13 @@ void portSaveStateFrame(void) {
         sQuiet = 0;
         return;
     }
-    quiesce();
+    portSnapQuiesce(1);
     if (sRequestLoad) {
         load(&sSlots[slot]);
     } else {
         save(&sSlots[slot]);
     }
-    resume();
+    portSnapResume(1);
     sQuiet = 0;
 }
 
@@ -513,7 +563,7 @@ void portSaveStateNotice(const char* text) {
 }
 
 int portSaveStateSupported(void) {
-    return !portOnlineActive();
+    return !portOnlineActive() && !portReplayActive();
 }
 
 const char* portSaveStateInfo(int slot) {

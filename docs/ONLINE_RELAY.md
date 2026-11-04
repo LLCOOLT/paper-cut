@@ -68,6 +68,13 @@ is charged on the free plan**: no payment method, no upgrade.
 |---|---|---|---|
 | through the relay, batched by 3 | 40 (20 each) | 7,200 | about 14 hours |
 | direct (UDP) | none after the lobby (about 10 in all) | none | unlimited |
+| watchers (1 to 4) of one game, on top | 2 (the host's batch every 30 frames) | 360 | about 277 hours |
+
+Watchers cost the same however many there are: the host sends each batch
+once and the relay copies it to each of them (messages out are free); they
+send nothing. Besides the batches: each watcher's connection (1 request),
+and for one who joins late, the game so far, one message per 8,192 frames
+(2.3 minutes of play). No watcher, no cost: the host sends nothing for them.
 
 A WebRTC call needs its relay about 10-20% of the time; if Paper Cut's
 players are alike, the relay's 14 hours carry the few that can't connect
@@ -92,6 +99,18 @@ list because they must be the same version.
 `wss://papercut-relay.llcoolt.workers.dev`, the build's default
 (`TTYD_ONLINE_RELAY`), on a Cloudflare account on the Workers Free plan.
 Deployed 2026-11-04.
+
+**To deploy (0.3.0): watching and reconnecting.** `port/relay/src/index.js`
+changed after that deploy: rooms take `role=watch` connections (up to 4), the
+host's messages that start with four 0xFF bytes go to the watchers, and each
+player's connection gets a ticket (`ticket <T>`) that lets it take its place
+again after a drop. It has been tried with `wrangler dev` only; deploy it the
+usual way (below). Until then, against the relay as deployed: watching through
+a room fails ("role: host or guest"), watching by address works, and a
+reconnect works only once the relay has noticed the old connection is gone
+(it refuses a second host or guest until then). A new build is fine with the
+old relay otherwise: the host only sends watchers anything once the relay
+says some are there (`watch <N>`), which the old one never does.
 
 ### Deploying one
 
@@ -135,6 +154,118 @@ right guest then played; five wrong tries closed the room. Through the
 deployed relay (the same day, this PC, both games here): through it, 4,048
 frames identical at 7 frames of input delay (1,356 messages); direct, 4,048
 frames identical at 3 (10 relay messages).
+
+## Watching
+
+A third (and fourth, up to 4 in a room) can join only to watch: the same
+room code (or the host's address), then **Watch**. A watcher's game starts
+from the host's setup as a guest's does (the run's settings, the host's
+memory card in `<user>/online`, or the host's save with Continue), then plays
+both players' input as the host played it, in lockstep, a little behind
+(`port/src/common/online_net_pc.c`, `online_pc.c`):
+
+- **The players never wait for it.** The host keeps each frame's two inputs
+  and sends the watchers a batch every 30 frames (runs of the same input
+  packed), with its fingerprints; nothing comes back. By address each
+  watcher has its own connection on the host's port (written without
+  waiting; one that falls 64 MB behind is let go); through a relay the
+  host sends each batch once.
+- **A watcher who comes late** gets the game so far first (in messages of
+  8,192 frames) and plays it unpaced until it's near ("catching up").
+- **Waiting for a batch**, its game is held (the title: "Waiting for the players...");
+  once it has had to wait, it waits for a second's input before going on, so
+  it doesn't stop at each batch.
+- **Fingerprints**: it compares its own with the host's; one that differs is
+  told once ("this game drifted from the players'") and it plays on. Nobody's
+  game ends for it.
+- When the players start again from the host's save (recovery), so does the
+  watcher; when the host leaves or ends the session, watching ends.
+
+Through a relay the watchers' messages are sealed too, but not with J-PAKE:
+one message has to open for every watcher, and they send nothing, so the key
+is the whole code through PBKDF2 (SHA-256, 200,000 rounds; the host makes it
+in the lobby, not during the game), ChaCha20-Poly1305 with a random 4 bytes
+per program and a count as the nonce. That is weaker than the players' own
+channel: a relay that keeps the watchers' messages could try the secret
+half's 31^4 values offline (slowly: each try costs the 200,000 rounds). What
+they carry is the input, the fingerprints, the players' names and the host's
+setup (its settings and memory card).
+
+## Reconnecting
+
+When a session's connection drops (closed, or nothing for 8 seconds), the
+game holds (its window's title says "Reconnecting..."; no frames are drawn
+meanwhile: drawing from inside the game's frame let the two games go out of
+step) and both sides make it again, for up to a
+minute; only then does the session end as before:
+
+- **In a room**: the WebSocket to the room again, in the same role, with its
+  ticket (the relay lets the new connection take the old one's place); the
+  key again (J-PAKE); the direct path tried again, the host choosing the way
+  as in the lobby.
+- **By address**: the guest connects again; the host takes it on its port
+  (it keeps listening through the session, for watchers too).
+- Then each says the first of the other's frames it still needs (`RESUME`,
+  with the session's token: a hash of the host's setup) and sends the other
+  what it's missing from the input it keeps (512 frames), so lockstep goes
+  on from the frame where they stopped. "Reconnected: the online game goes
+  on."
+
+`TTYD_ONLINE_DROP_AT=<frame>` (tests) drops one side's connection at that
+frame; `TTYD_ONLINE_NO_RECONNECT` turns reconnecting off.
+
+## Invite links and the clipboard
+
+`papercut://join/<CODE>` (`papercut://join/K7P2-QX9M`): the Online tab's
+**Copy invite link**, beside the room code. The game is the link's handler:
+on Windows it writes `HKCU\Software\Classes\papercut` when it starts,
+pointing at its own exe (the user's keys only; not from test runs with
+`TTYD_FAST`); macOS and iOS declare it in `CFBundleURLTypes`, Linux in the
+`.desktop` file (`x-scheme-handler/papercut`, `Exec=papercut %u`), Android
+in an intent filter (`TtydActivity` hands the whole link on). The link comes
+as an argument (Windows, Linux) or SDL's drop event (macOS, iOS, Android);
+the launcher opens on the Online tab with the code filled in and asks "Join
+room K7P2-QX9M?" (Join, Watch, Not now). It never joins by itself.
+
+When the Online tab opens and the clipboard holds a room code (8 characters
+of `PORT_ONLINE_CODE_CHARS`, a dash allowed, nothing else), it offers "Join
+room K7P2-QX9M from the clipboard?". The clipboard is read only then, never
+sent anywhere, and a code this player copied isn't offered back.
+
+Tried (2026-11-04, Windows, US, three games on this PC, `wrangler dev` with
+this relay; `TTYD_ONLINE_WATCH_ROOM=<code>` / `TTYD_ONLINE_WATCH=<host>:<port>`
+start a watcher in tests): through a room, host, guest and a watcher that
+joined in the lobby: host and guest 8,367 frames identical, the watcher's
+8,341 frames identical to the host's, its fingerprints in step with the
+host's batches. **Not yet tried**: watching by address (the run used
+127.0.0.1, but a test host listens on `::1` only: use `[::1]:<port>`), a
+watcher joining mid-session (the history), the invite link and the
+clipboard offer in the launcher, the Windows registry key
+(`TTYD_URL_SCHEME_TEST=1` writes `papercut-test` to try it), Android, Apple
+and Linux builds of the link handling.
+
+**Reconnecting keeps the games in step** (2026-11-04). With
+`TTYD_ONLINE_DROP_AT=2500` on the guest, through a room, the two games had
+gone out of step two frames after the reconnect (three runs out of three).
+The cause wasn't the stall: `TTYD_FINGERPRINT_PARTS` (which also writes each
+frame's controllers as played, the random numbers and the game clock) showed
+the same input and the same clock on both sides, and only the game's random
+numbers different, from the same frame on in every run. The cause was the
+"Reconnected" notice. The game's font takes two of the game's random numbers
+for each letter it draws (fontmgr.c, `_JUTFont_DrawPos`, for its noise
+texture), and a frame is drawn before its logic runs. The two sides
+reconnect a frame apart (the guest stalls on one frame, the host on the
+next), so one game drew a frame more of the notice than the other. The
+port's own words drawn with the game's font (the co-op notices, the 1P/2P
+tags, the settings hint, the battle popups) now put the random numbers back
+as they were. That also covers notices one side shows and the other doesn't,
+a different language on each side, a watcher's "drifted" notice (which used
+to drift it further), and the recovery's "started again" notice.
+
+After the fix, through a room: host and guest identical over every frame both
+wrote, 10,331 frames (7,800 of them after the reconnect), and the session
+went on to the end of the run. **Not
+yet tried**: by address, and with a watcher during the reconnect.
 
 ## Not done
 

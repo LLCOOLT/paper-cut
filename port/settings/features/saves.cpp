@@ -11,6 +11,7 @@
 #include "port/cardsave_pc.h"
 #include "port/restart.h"
 #include "port/save_convert.h"
+#include "port/save_transfer.h"
 #include "port/settings.h"
 #include "port/tr.h"
 #include <SDL3/SDL.h>
@@ -308,3 +309,22 @@ struct SavesSettings {
 } sSaves;
 
 } // namespace
+
+std::string portSavesCardDir(char release) { return cardDir(release); }
+
+bool portSavesWriteFile(char release, const std::string& name, const std::vector<uint8_t>& bytes, std::string& why) {
+  const std::string dst = cardDir(release) + "/" + name;
+  SDL_CreateDirectory(cardDir(release).c_str());
+  backUp(release, name);
+  SDL_IOStream* f = SDL_IOFromFile((dst + ".tmp").c_str(), "wb");
+  const bool ok = f != nullptr && SDL_WriteIO(f, bytes.data(), bytes.size()) == bytes.size();
+  if (f != nullptr) {
+    SDL_CloseIO(f);
+  }
+  if (ok && SDL_RenamePath((dst + ".tmp").c_str(), dst.c_str())) {
+    return true;
+  }
+  why = SDL_GetError();
+  SDL_RemovePath((dst + ".tmp").c_str());
+  return false;
+}

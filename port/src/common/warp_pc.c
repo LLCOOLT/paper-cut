@@ -11,6 +11,7 @@
 #include "mario/mariost.h"
 #include "port/cardsave_pc.h"
 #include "port/online.h"
+#include "port/replay.h"
 #include "port/platform.h"
 #include "port/practice.h"
 
@@ -24,6 +25,12 @@ static char sPending[1024];
 static char sStatus[160];
 static s32 sSlot = WARP_SLOT; /* the card slot it loads as (quick resume: the player's own file) */
 
+static void request(const char* path) {
+    snprintf(sPending, sizeof(sPending), "%s", path);
+    sSlot = WARP_SLOT;
+    snprintf(sStatus, sizeof(sStatus), "Loading...");
+}
+
 void portWarpRequestSave(const char* path) {
     if (portOnlineActive()) {
         /* online co-op: one game alone can't jump (the session's start is
@@ -31,9 +38,12 @@ void portWarpRequestSave(const char* path) {
         snprintf(sStatus, sizeof(sStatus), "Not during online co-op.");
         return;
     }
-    snprintf(sPending, sizeof(sPending), "%s", path);
-    sSlot = WARP_SLOT;
-    snprintf(sStatus, sizeof(sStatus), "Loading...");
+    if (portReplayActive()) {
+        /* a replay's start save is asked for before it begins (replay.cpp) */
+        snprintf(sStatus, sizeof(sStatus), "Not during a replay.");
+        return;
+    }
+    request(path);
 }
 
 /* A save loaded as card slot (0-3) at the next chance: the launcher's
@@ -106,7 +116,7 @@ void portWarpFrame(void) {
         const char* v = getenv("TTYD_LOAD_SAVE");
         sEnvRead = 1;
         if (v != NULL && v[0] != 0) {
-            portWarpRequestSave(v);
+            request(v); /* (a replay's recording starts from it too) */
             /* $TTYD_LOAD_SAVE_SLOT=0-3: as that save file (the launcher's
              * Continue: quick resume's save, as the player's own file) */
             v = getenv("TTYD_LOAD_SAVE_SLOT");

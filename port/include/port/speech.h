@@ -13,10 +13,13 @@ extern "C" {
 #endif
 
 /* msgdrv.c: a message window opened with its text (the game's own, tags and
- * all), more text added to it, the page it shows now, and its closing. */
+ * all), more text added to it, the page it shows now and who says it (the
+ * speaking NPC's name in the message data, or NULL), and its closing. The
+ * pages go to text to speech and the message log alike
+ * (port/settings/features/message_text.cpp). */
 void portSpeechMessage(const void* window, const char* text);
 void portSpeechAppend(const void* window, const char* text);
-void portSpeechPage(const void* window, int page);
+void portSpeechPage(const void* window, int page, const char* speaker);
 void portSpeechClosed(const void* window);
 /* win_root.c, pause_settings_aurora.c: a menu's help line (the game's text,
  * or the port's English), read when it changes */

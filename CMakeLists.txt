@@ -863,6 +863,8 @@ if(TTYD_BACKEND STREQUAL "aurora")
         ${CMAKE_SOURCE_DIR}/port/settings/launcher_ui.cpp ${CMAKE_SOURCE_DIR}/port/settings/launcher_style.cpp
         ${CMAKE_SOURCE_DIR}/port/settings/button_glyphs.cpp
         ${CMAKE_SOURCE_DIR}/port/settings/http.cpp ${CMAKE_SOURCE_DIR}/port/settings/tr.cpp
+        # plain HTTP on the local network (save transfer); the QR code (libs/qrcodegen, docs/THIRD_PARTY.md)
+        ${CMAKE_SOURCE_DIR}/port/settings/lan_http.cpp ${CMAKE_SOURCE_DIR}/libs/qrcodegen/qrcodegen.c
         ${CMAKE_BINARY_DIR}/generated/font_bold.c ${CMAKE_BINARY_DIR}/generated/font_medium.c
         ${CMAKE_BINARY_DIR}/generated/icon64.c ${CMAKE_BINARY_DIR}/generated/luigi_pack.c
         ${CMAKE_BINARY_DIR}/generated/controller_db.c ${TTYD_SETTINGS_FEATURES})
@@ -876,11 +878,12 @@ if(TTYD_BACKEND STREQUAL "aurora")
     # Discord application's ID; empty: the feature is built in but does nothing, its setting hidden
     set(TTYD_DISCORD_APP_ID "1567620424886657085" CACHE STRING "Discord status's Discord application ID (Paper Cut's; empty: off)")
     target_compile_definitions(ttyd_settings PRIVATE PORT_DISCORD_APP_ID="${TTYD_DISCORD_APP_ID}")
-    target_link_libraries(ttyd_settings PRIVATE aurora::core aurora::pad ${AURORA_SDL3_TARGET})
+    # zlib: unpacking an update's zip (port/settings/features/update_install.cpp)
+    target_link_libraries(ttyd_settings PRIVATE aurora::core aurora::pad ZLIB::ZLIB ${AURORA_SDL3_TARGET})
     target_link_libraries(ttyd PRIVATE ttyd_settings)
     if(WIN32)
         # HTTPS for the update check (port/settings/http.cpp)
-        target_link_libraries(ttyd_settings PRIVATE winhttp)
+        target_link_libraries(ttyd_settings PRIVATE winhttp ws2_32 bcrypt) # (+ the save transfer's sockets, its token)
     endif()
     # Mods (port/include/port/mods.h): C++, built without the game's prefix header.
     # A code mod's library for this build is in its lib/<platform>/.

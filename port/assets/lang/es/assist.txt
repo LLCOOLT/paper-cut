@@ -1,0 +1,65 @@
+# assist: see tools/port/gen_lang.py
+
+Message log
+Registro de mensajes
+
+The last 200 pages of the message windows, to read again at your own pace: newest at the bottom. L on the keyboard opens it too. The game waits while it is open (online it goes on).
+Las últimas 200 páginas de las ventanas de texto, para releer a tu ritmo: la más reciente abajo. La L del teclado también lo abre. El juego espera mientras está abierto (en línea sigue).
+
+The game waits while this is open. L, Esc or B: back to the game.
+El juego espera mientras esto está abierto. L, Esc o B: volver al juego.
+
+Online, the game goes on under it. L or Esc: back to the game.
+En línea, el juego sigue debajo. L o Esc: volver al juego.
+
+Nothing yet: what the message windows say shows here.
+Nada aún: aquí aparece lo que dicen las ventanas de texto.
+
+Open the message log
+Abrir el registro de mensajes
+
+%d pages kept
+%d páginas guardadas
+
+Game speed
+Velocidad del juego
+
+Slower, for more time for the action commands: the game plays the same, only slower. Not while playing online (both games must keep the same pace) or fast-forwarding.
+Más lento, para tener más tiempo en los comandos de acción: el juego es igual, solo más lento. No al jugar en línea (ambos juegos deben ir al mismo ritmo) ni al avanzar rápido.
+
+100% (off)
+100 % (desactivado)
+
+Slower only in battle
+Más lento solo en combate
+
+The field at full speed, the battles at the speed above.
+La exploración a velocidad normal, los combates a la velocidad de arriba.
+
+One-handed controls
+Controles a una mano
+
+Everything on one half of the controller. Left hand: the stick moves, the d-pad is A, B, X and Y, the left bumper Z, the left trigger R, the stick pressed in L, Back Start. Right hand: the right stick moves, the face buttons, right bumper and trigger as they are, the right stick pressed in L. Change any button afterwards under Controller buttons; Restore defaults there undoes it. Back and the stick presses then play instead of opening Settings or fast-forwarding (the Start menu's Settings tab, F1 and Tab still do).
+Todo en una mitad del mando. Mano izquierda: el stick mueve, la cruceta es A, B, X e Y, el botón superior izquierdo Z, el gatillo izquierdo R, el stick pulsado L, Atrás Start. Mano derecha: el stick derecho mueve, los botones frontales, el botón superior y el gatillo derechos como están, el stick derecho pulsado L. Cambia cualquier botón después en Botones del mando; Restaurar valores allí lo deshace. Atrás y pulsar los sticks sirven entonces para jugar en vez de abrir Ajustes o avanzar rápido (la pestaña Ajustes del menú Start, F1 y Tab siguen haciéndolo).
+
+Left hand
+Mano izquierda
+
+Right hand
+Mano derecha
+
+Set for the left hand.
+Ajustado para la mano izquierda.
+
+Set for the right hand.
+Ajustado para la mano derecha.
+
+No controller is this player.
+Ningún mando es este jugador.
+
+Hold instead of mashing
+Mantener en vez de machacar
+
+In the action commands that ask you to press a button again and again, holding it counts: it presses about 12 times a second for you.
+En los comandos de acción que piden pulsar un botón una y otra vez, mantenerlo cuenta: pulsa unas 12 veces por segundo por ti.
+

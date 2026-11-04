@@ -82,6 +82,32 @@ public class TtydActivity extends SDLActivity {
         return new String[] {"main"};
     }
 
+    /*
+     * Invite links (papercut://join/<CODE>, the manifest's intent filter):
+     * the whole link to the game as SDL's drop event
+     * (port/settings/features/invite.cpp), at the start and while running
+     * (singleInstance: a link to the running app comes as a new intent).
+     * SDL's own drop of the intent's data is only the link's path.
+     */
+    private static void passInvite(Intent intent) {
+        if (intent != null && intent.getData() != null && "papercut".equals(intent.getData().getScheme())) {
+            SDLActivity.onNativeDropFile(intent.getDataString());
+        }
+    }
+
+    @Override
+    protected void onCreate(android.os.Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        passInvite(getIntent());
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        passInvite(intent);
+    }
+
     @Override
     protected void onResume() {
         super.onResume();

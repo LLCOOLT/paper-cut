@@ -1,0 +1,121 @@
+# qrupdate: see tools/port/gen_lang.py
+
+Send saves to another device
+Enviar partidas a otro dispositivo
+
+Receive saves
+Recibir partidas
+
+Shows an address and its QR code for another device on the same network: its Paper Cut takes the saves with Receive saves. For 5 minutes, once.
+Muestra una dirección y su código QR para otro dispositivo de la misma red: su Paper Cut toma las partidas con Recibir partidas. Durante 5 minutos, una vez.
+
+On the other device: Settings, Saves, Receive saves, and type this address.
+En el otro dispositivo: Ajustes, Partidas, Recibir partidas, y escribe esta dirección.
+
+Copy the address
+Copiar la dirección
+
+Stops in %d:%02d, or once the other device has the saves.
+Se detiene en %d:%02d, o cuando el otro dispositivo tenga las partidas.
+
+Sent: the other device has the saves.
+Enviado: el otro dispositivo tiene las partidas.
+
+Stopped.
+Detenido.
+
+No other device took the saves in 5 minutes: stopped.
+Ningún otro dispositivo tomó las partidas en 5 minutos: detenido.
+
+This device has no saves of the game yet.
+Este dispositivo aún no tiene partidas del juego.
+
+This device has no random numbers for the address.
+Este dispositivo no tiene números aleatorios para la dirección.
+
+This device isn't on a network.
+Este dispositivo no está en ninguna red.
+
+Could not start sending (no network?).
+No se pudo empezar a enviar (¿sin red?).
+
+The address the other device shows under Send saves to another device.
+La dirección que el otro dispositivo muestra en Enviar partidas a otro dispositivo.
+
+Paste
+Pegar
+
+Receiving...
+Recibiendo...
+
+Which game files to replace? The save here is kept as a backup first.
+¿Qué archivos del juego reemplazar? La partida de aquí se copia antes.
+
+Japan (JP)
+Japón (JP)
+
+North America (US)
+Norteamérica (US)
+
+Europe (EU)
+Europa (EU)
+
+a save
+una partida
+
+empty
+vacío
+
+File %d: the other device's (%s) over this one's (%s)
+Archivo %d: el del otro dispositivo (%s) en lugar de este (%s)
+
+Replace them and restart
+Reemplazarlos y reiniciar
+
+Replace them
+Reemplazarlos
+
+Receive this card's saves from the launcher, before the game starts.
+Recibe las partidas de esta tarjeta desde el lanzador, antes de que empiece el juego.
+
+Could not receive the saves:
+No se pudieron recibir las partidas:
+
+Received: the saves as they were are kept as backups.
+Recibido: las partidas de antes se guardan como copias.
+
+Updated to Paper Cut %s.
+Actualizado a Paper Cut %s.
+
+Flathub updates this copy: your software centre, or flatpak update.
+Flathub actualiza esta copia: tu centro de software, o flatpak update.
+
+Update the AppImage with AppImageUpdate, or download the new one.
+Actualiza la AppImage con AppImageUpdate, o descarga la nueva.
+
+Download and install
+Descargar e instalar
+
+Checking the download...
+Comprobando la descarga...
+
+Can't write beside the install: download it from the release page.
+No se puede escribir junto a la instalación: descárgala desde la página de la versión.
+
+The download failed:
+La descarga falló:
+
+The release lists no checksum for it, so it wasn't installed.
+La versión no indica ninguna suma de comprobación para él, así que no se instaló.
+
+The download doesn't match the release's checksum, so it wasn't installed.
+La descarga no coincide con la suma de comprobación de la versión, así que no se instaló.
+
+It couldn't be unpacked:
+No se pudo descomprimir:
+
+The new version is installed at the next start.
+La nueva versión se instala en el próximo inicio.
+
+Restart to update
+Reiniciar para actualizar

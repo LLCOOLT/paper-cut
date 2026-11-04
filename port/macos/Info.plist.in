@@ -31,6 +31,19 @@
 	<true/>
 	<key>NSSupportsAutomaticGraphicsSwitching</key>
 	<true/>
+	<!-- Invite links, papercut://join/<CODE> (port/settings/features/invite.cpp):
+	     SDL passes the link as a drop event; the Online tab asks "Join?". -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>Paper Cut invite</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>papercut</string>
+			</array>
+		</dict>
+	</array>
 	<!-- Disc images Finder may open with the app (Open With, or dropped on its
 	     icon): they reach disc_aurora.c as an SDL drop-file event. Alternate:
 	     never the default handler for these types. -->

@@ -92,7 +92,7 @@ typedef struct {
 static const Field kFields[] = {
     {"framerate", NULL, 0, 0},
     {"vsync", &sSettings.vsync, 0, 1},
-    {"fullscreen", &sSettings.fullscreen, 0, 1},
+    {"fullscreen", &sSettings.fullscreen, 0, 2}, /* 0 a window, 1 borderless, 2 full screen (window.cpp) */
     {"widescreen", &sSettings.widescreen, 0, 1},
     {"resolution", &sSettings.resolution, 0, 8},
     {"fps", &sSettings.fps, 0, 4},
@@ -535,7 +535,7 @@ void portSettingsApply(void) {
     if (sFullscreen != sSettings.fullscreen) {
         /* only on a change: the window's own toggles (F11) stay in charge */
         if (sFullscreen >= 0 || sSettings.fullscreen) {
-            VISetWindowFullscreen(sSettings.fullscreen != 0);
+            portWindowSetDisplayMode(sSettings.fullscreen);
         }
         sFullscreen = sSettings.fullscreen;
     }

@@ -15,8 +15,17 @@
  * frames and compares the other's; if they ever differ the games have gone
  * out of step, and the session ends (each plays on alone).
  *
+ * A watcher (port/include/port/online.h) plays both players' input from the
+ * host's batches and compares its fingerprints with the host's, which come
+ * with them: one that differs is told (this game drifted), and it plays on.
+ *
  * $TTYD_FINGERPRINT=<file> (tests): each frame's fingerprint written to the
- * file, "frame hash map", to compare two runs of the same input. */
+ * file, "frame hash map", to compare two runs of the same input; with
+ * $TTYD_FINGERPRINT_PARTS, the hash after each part too, the session's frame
+ * and both controllers as played, the random numbers, the game clock and
+ * Mario's and the partner's positions.
+ * $TTYD_ONLINE_DROP_AT=<frame> (tests): this side's connection dropped then,
+ * once (the reconnect's test). */
 #include "battle/battle.h"
 #include "battle/battle_unit.h"
 #include "driver/npcdrv.h"
@@ -37,7 +46,7 @@
 void portCoopNotice(const char* english); /* second_player_pc.c */
 
 #define RING 512
-#define WAIT_MS 15000 /* the other player's input not there for this long: the session ends */
+#define WAIT_MS 8000 /* the other player's input not there for this long: the connection made again */
 
 static int sActive, sDelay;
 static unsigned sEpoch; /* recoveries done this session (portOnlineFrame's, below) */
@@ -50,6 +59,11 @@ static struct {
     unsigned long long hash;
     int have;
 } sMine[16];
+
+static int sDrifted; /* a watcher: told once that its game drifted */
+/* the last frame's controllers as played, and its frame: the tests' parts file */
+static unsigned char sPlayed[2][PORT_ONLINE_PAD_BYTES];
+static unsigned sPlayedFrame;
 
 static u64 sHash;
 /* the hash after each part (the clock and state, Mario, the partner, the
@@ -140,7 +154,7 @@ unsigned long long portOnlineFingerprint(void) {
 
 /* --- the controllers --- */
 
-static void pack(const PADStatus* s, unsigned char* p) {
+void portOnlinePackPad(const PADStatus* s, unsigned char* p) {
     memset(p, 0, PORT_ONLINE_PAD_BYTES);
     p[0] = (unsigned char)s->button;
     p[1] = (unsigned char)(s->button >> 8);
@@ -161,7 +175,7 @@ static void pack(const PADStatus* s, unsigned char* p) {
 #endif
 }
 
-static void unpack(const unsigned char* p, PADStatus* s) {
+void portOnlineUnpackPad(const unsigned char* p, PADStatus* s) {
     memset(s, 0, sizeof(*s));
     s->button = (u16)(p[0] | (p[1] << 8));
     s->stickX = (s8)p[2];
@@ -183,7 +197,7 @@ static void neutral(unsigned char* p) {
     PADStatus none;
     memset(&none, 0, sizeof(none));
     none.err = PAD_ERR_NONE;
-    pack(&none, p);
+    portOnlinePackPad(&none, p);
 }
 
 static void end(const char* why) {
@@ -210,13 +224,14 @@ void portOnlineBegin(int inputDelay) {
     }
 
     sAsked = 0;
+    sDrifted = 0;
     sEnded = NULL;
     memset(sMine, 0, sizeof(sMine));
     for (i = 0; i < RING; i++) {
         neutral(sOwn[i]);
     }
-    printf("[online] the session begins: %s, input delay %d frames\n", portOnlineIsHost() ? "host" : "guest",
-           sDelay);
+    printf("[online] the session begins: %s, input delay %d frames\n",
+           portOnlineWatching() ? "watcher" : portOnlineIsHost() ? "host" : "guest", sDelay);
     fflush(stdout);
 }
 
@@ -235,13 +250,45 @@ void portOnlineApplyPad(PADStatus* pads) {
     if (!sActive) {
         return;
     }
+    if (portOnlineWatching()) {
+        /* both players' input, from the host's batches */
+        int got;
+        f = sFrame++;
+        got = portOnlineWatchInput(f, own, theirs);
+        if (got == 0) {
+            end("Watching ended: the players' game is over.");
+            return;
+        }
+        if (got == 2) { /* the players start again: so does this game (portOnlineFrame) */
+            neutral(own);
+            neutral(theirs);
+        }
+        portOnlineUnpackPad(own, &pads[0]);
+        portOnlineUnpackPad(theirs, &pads[1]);
+        for (i = 2; i < PAD_MAX_CONTROLLERS; i++) {
+            memset(&pads[i], 0, sizeof(pads[i]));
+            pads[i].err = PAD_ERR_NO_CONTROLLER;
+        }
+        return;
+    }
     if (!portOnlineConnected()) {
         end("The online game ended: the other player left.");
         return;
     }
+    {
+        /* $TTYD_ONLINE_DROP_AT=<frame> (tests): the connection dropped there, once */
+        static int sDropped;
+        const char* at = getenv("TTYD_ONLINE_DROP_AT");
+        if (!sDropped && at != NULL && sEpoch == 0 && sFrame == (unsigned)atoi(at)) {
+            sDropped = 1;
+            printf("[online] test: the connection dropped on purpose at frame %u\n", sFrame);
+            fflush(stdout);
+            portOnlineTestDrop();
+        }
+    }
     f = sFrame++;
     /* this player's controller now, for the frame the delay ahead, kept and sent */
-    pack(&pads[0], mine);
+    portOnlinePackPad(&pads[0], mine);
     memcpy(sOwn[(f + sDelay) % RING], mine, sizeof(mine));
     portOnlineSendInput(f + sDelay, mine);
     /* this frame: both players' input for it */
@@ -264,8 +311,14 @@ void portOnlineApplyPad(PADStatus* pads) {
             return;
         }
     }
-    unpack(portOnlineIsHost() ? own : theirs, &pads[0]);
-    unpack(portOnlineIsHost() ? theirs : own, &pads[1]);
+    if (portOnlineIsHost()) {
+        portOnlineWatchRecord(f, own, theirs); /* the frame as played, for the watchers */
+    }
+    memcpy(sPlayed[0], portOnlineIsHost() ? own : theirs, PORT_ONLINE_PAD_BYTES);
+    memcpy(sPlayed[1], portOnlineIsHost() ? theirs : own, PORT_ONLINE_PAD_BYTES);
+    sPlayedFrame = f;
+    portOnlineUnpackPad(portOnlineIsHost() ? own : theirs, &pads[0]);
+    portOnlineUnpackPad(portOnlineIsHost() ? theirs : own, &pads[1]);
     for (i = 2; i < PAD_MAX_CONTROLLERS; i++) {
         memset(&pads[i], 0, sizeof(pads[i]));
         pads[i].err = PAD_ERR_NO_CONTROLLER;
@@ -291,6 +344,7 @@ static const unsigned kMaxRecoveries = 3;
 
 #ifdef TTYD_BACKEND_AURORA
 int portRestartSupported(void);                       /* restart.cpp */
+/* host 1, guest 0, a watcher 2 */
 void portOnlineRestartRejoin(int host, unsigned recoveries); /* online.cpp: doesn't return */
 #endif
 
@@ -345,8 +399,23 @@ static void outOfStep(void) {
     }
 }
 
-/* each frame: the guest's ask (host), the host's word (guest); 1 when it was taken */
+/* each frame: the guest's ask (host), the host's word (guest, a watcher); 1 when it was taken */
 static int recoveryFrame(void) {
+    if (portOnlineWatching()) {
+        const unsigned epoch = portOnlineWatchResync();
+        if (epoch != 0) {
+#ifdef TTYD_BACKEND_AURORA
+            if (portRestartSupported()) {
+                printf("[online] the players start again from the host's last save: so does this game\n");
+                fflush(stdout);
+                portOnlineRestartRejoin(2, epoch);
+            }
+#endif
+            end("Watching ended: the players started again.");
+            return 1;
+        }
+        return 0;
+    }
     if (portOnlineIsHost()) {
         const int asked = portOnlineResyncAsked();
         if (asked >= 0 && (unsigned)asked == sEpoch) { /* (an older ask: that one's done) */
@@ -405,6 +474,15 @@ void portOnlineFrame(void) {
                 gp->currentMapName);
         if (sPartsWanted) {
             const MarioWork* mario = marioGetPtr();
+            int k;
+            fprintf(sFile, " f%u r%08x", sPlayedFrame, (unsigned)portRandState());
+#ifdef TTYD_BACKEND_AURORA
+            fprintf(sFile, " c%llx", (unsigned long long)portFastClockGet());
+#endif
+            fputc(' ', sFile);
+            for (k = 0; k < 2 * PORT_ONLINE_PAD_BYTES; k++) {
+                fprintf(sFile, "%02x", sPlayed[k / PORT_ONLINE_PAD_BYTES][k % PORT_ONLINE_PAD_BYTES]);
+            }
             for (i = 0; i < 5; i++) {
                 fprintf(sFile, " %c%016llx", "smpen"[i], (unsigned long long)sParts[i]);
             }
@@ -424,9 +502,51 @@ void portOnlineFrame(void) {
     if (!sActive) {
         return;
     }
+#ifdef TTYD_BACKEND_AURORA
+    {
+        void portOnlineHoldFrame(const char* english); /* vi_aurora.c: the window's title back */
+        portOnlineHoldFrame(NULL);
+    }
+#endif
     portOnlinePump();
+    {
+        /* after a reconnect: said once the game goes on */
+        static int sReconnects;
+        if (portOnlineReconnected() != sReconnects && !portOnlineReconnecting() && sActive) {
+            sReconnects = portOnlineReconnected();
+            portCoopNotice("Reconnected: the online game goes on.");
+        }
+    }
     if (recoveryFrame()) {
         return; /* the games went back together: no fingerprint of the frame before */
+    }
+    if (portOnlineWatching()) {
+        /* the host's fingerprints, with its batches: this game's compared with them */
+        static unsigned long long sMineAt[64];
+        static unsigned sMineFrame[64];
+        if (sFrame > 0 && sFrame % PORT_ONLINE_HASH_EVERY == 0) {
+            const int slot = (sFrame / PORT_ONLINE_HASH_EVERY) % 64;
+            sMineFrame[slot] = sFrame;
+            sMineAt[slot] = portOnlineFingerprint();
+        }
+        for (i = 0; i < 64; i++) {
+            unsigned long long theirs;
+            if (sMineFrame[i] != 0 && portOnlineWatchHostHash(sMineFrame[i], &theirs)) {
+                if (theirs != sMineAt[i] && !sDrifted) {
+                    sDrifted = 1;
+                    printf("[online] watching: this game drifted from the players' at frame %u: %016llx here, %016llx "
+                           "the host's\n",
+                           sMineFrame[i], sMineAt[i], theirs);
+                    fflush(stdout);
+                    portCoopNotice("Watching: this game drifted from the players' (it plays on).");
+                } else if (theirs == sMineAt[i] && sMineFrame[i] % 3600 == 0) {
+                    printf("[online] watching: in step with the host at frame %u\n", sMineFrame[i]);
+                    fflush(stdout);
+                }
+                sMineFrame[i] = 0;
+            }
+        }
+        return;
     }
     if (sFrame > 0 && sFrame % PORT_ONLINE_HASH_EVERY == 0) {
         const int slot = (sFrame / PORT_ONLINE_HASH_EVERY) % 16;
@@ -435,6 +555,9 @@ void portOnlineFrame(void) {
             sMine[slot].hash = portOnlineFingerprint();
             sMine[slot].have = 1;
             portOnlineSendHash(sFrame, sMine[slot].hash);
+            if (portOnlineIsHost()) {
+                portOnlineWatchHash(sFrame, sMine[slot].hash); /* (the watchers compare theirs) */
+            }
         }
     }
     for (i = 0; i < 16; i++) {

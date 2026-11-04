@@ -1,0 +1,32 @@
+# Rewind and faster battles in the Start menu, in the JP release's font (kana and its few kanji:
+# tools/port/gen_lang.py checks), words apart as the game's own text is.
+
+Rewind
+まきもどし
+
+Hold the Rewind key (Backspace) or button and the game steps back through its last seconds; let go to play on from there. Uses some memory and a little time every few frames. Not in online co-op.
+まきもどしキー（Backspace）か　ボタンを　おしている　あいだ　ゲームが　さいごの　すうびょうを　もどります　はなすと　そこから　つづきます　メモリと　すこしの　じかんを　つかいます　オンラインでは　つかえません
+
+Rewind length
+まきもどしの　ながさ
+
+Rewind button
+まきもどしボタン
+
+A controller button that rewinds while held.
+おしている　あいだ　まきもどす　コントローラーの　ボタン
+
+None
+なし
+
+Left back paddle
+ひだりの　うらパドル
+
+Right back paddle
+みぎの　うらパドル
+
+Faster battles
+バトルを　はやく
+
+Battles play faster, but never while you act: action commands, Stylish moves, the menus and Star Specials stay at normal speed, and guards and Superguards keep their timing. Not in online co-op.
+バトルが　はやく　すすみます　でも　じぶんが　うごかす　あいだは　ふつうの　はやさです　アクションコマンド　スタイリッシュ　メニュー　スペシャルわざ　ガードと　スーパーガードの　タイミングは　かわりません　オンラインでは　つかえません

@@ -1,0 +1,85 @@
+# replay: see tools/port/gen_lang.py
+
+Replays
+リプレイ
+
+Record a run's input to a small file, and play it back exactly: from where you are or from the title.
+プレイの入力を小さなファイルに記録し、そのまま再生します：今いる場所から、またはタイトルから。
+
+The replay couldn't be saved.
+リプレイを保存できませんでした。
+
+Replay saved:
+リプレイを保存しました：
+
+This file isn't a replay, or isn't whole.
+このファイルはリプレイではないか、壊れています。
+
+Made with another release's disc (%s): it can't be played here.
+別の版のディスクで作られています（%s）：ここでは再生できません。
+
+Made with Paper Cut %s (this is %s): it may go out of step. You'll be told if it does.
+Paper Cut %s で作られています（これは %s）：ずれる可能性があります。ずれたらお知らせします。
+
+Recording: %s (%u frames).
+記録中：%s（%u フレーム）
+
+Name
+名前
+
+Stop and save
+止めて保存
+
+Playing '%s': %u of %u frames.
+「%s」を再生中：%u / %u フレーム
+
+Stop the replay
+リプレイを止める
+
+The game starts again as it was before the replay.
+リプレイの前の状態でゲームを始め直します。
+
+Record
+記録
+
+From where you are
+今いる場所から
+
+From the title
+タイトルから
+
+Restart and record
+再起動して記録
+
+Not during online co-op.
+オンライン協力プレイ中はできません。
+
+Recording starts the game again (as Restart now), from quick resume's save or the title, so that the replay plays out exactly. Save states, warps, fast-forward and the Practice tab's edits are off while recording.
+記録するとゲームを始め直します（今すぐ再起動と同じ）。クイック再開のセーブかタイトルから始めるので、リプレイはまったく同じに進みます。記録中はセーブステート、ワープ、早送り、練習タブの編集は使えません。
+
+Your replays
+あなたのリプレイ
+
+None yet: they're kept in the replays folder of the user folder.
+まだありません：ユーザーフォルダの replays フォルダに保存されます。
+
+Open a replay file...
+リプレイファイルを開く...
+
+The game starts again to play it; Esc or B stops it.
+再生するためにゲームを始め直します。Esc か B で止まります。
+
+Recording
+記録中
+
+Replay finished: Esc or B to leave
+リプレイ終了：Esc か B で戻る
+
+Replay
+リプレイ
+
+Out of step since frame %ld
+フレーム %ld からずれています
+
+Made with Paper Cut %s
+Paper Cut %s で作成

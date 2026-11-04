@@ -109,6 +109,44 @@ int portOnlineResyncArrived(const void** payload, size_t* len);
 /* host: the guest asked (for that epoch), -1 when not */
 int portOnlineResyncAsked(void);
 
+/* Watching (docs/ONLINE_RELAY.md): a third (and fourth...) joins only to
+ * watch, with the room's code or the host's address. It starts from the
+ * host's setup, as a guest does, then plays both players' input as the host
+ * sends it, in batches (every PORT_ONLINE_WATCH_BATCH frames, with the host's
+ * fingerprints), a little behind; it sends nothing, and the players never
+ * wait for it. Through a relay, one message reaches every watcher, sealed
+ * with a key from the whole code. */
+int portOnlineWatchRoom(const char* code, const PortOnlineHello* me);
+int portOnlineWatch(const char* address, int port, const PortOnlineHello* me);
+int portOnlineWatching(void);
+/* host: how many watch now */
+int portOnlineWatchers(void);
+/* a watcher's: the guest (portOnlinePeer is the host) */
+const PortOnlineHello* portOnlineWatchedGuest(void);
+/* host, each frame: the two players' input it played (player 1's, player 2's) */
+void portOnlineWatchRecord(unsigned frame, const unsigned char* host, const unsigned char* guest);
+/* host: its fingerprint after that many frames */
+void portOnlineWatchHash(unsigned frame, unsigned long long hash);
+/* watcher: the frame's two inputs (1), waiting for them, the game held; 0 no more
+ * come; 2 the players start again (a recovery: portOnlineWatchResync's epoch) */
+int portOnlineWatchInput(unsigned frame, unsigned char* host, unsigned char* guest);
+unsigned portOnlineWatchHave(void);
+int portOnlineWatchHostHash(unsigned frame, unsigned long long* hash);
+unsigned portOnlineWatchResync(void);
+/* a watcher well behind: its frames unpaced until it's near (vi_aurora.c) */
+int portOnlineCatchingUp(void);
+#define PORT_ONLINE_WATCH_BATCH 30
+
+/* Reconnecting: a session's connection lost (closed, or quiet), the game
+ * waits ("Reconnecting...") and both sides make it again, for up to a minute:
+ * a room's relay, its key and the direct path again; by address, the guest
+ * connects again. Each then sends the other the input it's missing (both
+ * keep theirs), and lockstep goes on from the same frame. */
+int portOnlineReconnecting(void);
+int portOnlineReconnected(void); /* reconnects so far this session */
+/* tests ($TTYD_ONLINE_DROP_AT): this side's connection dropped now */
+void portOnlineTestDrop(void);
+
 /* The session's connection */
 int portOnlineConnected(void);
 void portOnlineSendInput(unsigned frame, const unsigned char pad[PORT_ONLINE_PAD_BYTES]);
@@ -129,6 +167,9 @@ const char* portOnlineEnded(void);
 /* The pad read (src/sdk/DEMOPad.c): this frame's two players' input. */
 struct PADStatus;
 void portOnlineApplyPad(struct PADStatus* pads);
+/* one controller's state as PORT_ONLINE_PAD_BYTES, and back (replays too) */
+void portOnlinePackPad(const struct PADStatus* s, unsigned char* p);
+void portOnlineUnpackPad(const unsigned char* p, struct PADStatus* s);
 /* A hash of what the game plays out this frame, the same on both computers
  * while they are in step. */
 unsigned long long portOnlineFingerprint(void);

@@ -100,9 +100,14 @@ BOOL portIsPaused(void);
 /* the backend's game clock (os_pc.c / os_time_aurora.c) and audio (hw_pc.c) */
 void portClockPause(void);
 void portClockResume(void);
-/* Aurora: the game clock at speed times real time (fast-forward); 1 normally. */
+/* Aurora: the game clock at speed times real time (fast-forward); 1 normally.
+ * The Pct pair: in percent (faster battles' 1.5x is 150); portClockSpeed rounds up. */
 void portClockSetSpeed(int speed);
 int portClockSpeed(void);
+void portClockSetSpeedPct(int percent);
+int portClockSpeedPct(void);
+/* Aurora: and at percent % of that (slow speed, 50-100); 100 normally. */
+void portClockSetPercent(int percent);
 void salPcSetPaused(BOOL paused);
 /* hw_pc.c: no audio callback runs while locked (save states). */
 void salPcLock(void);

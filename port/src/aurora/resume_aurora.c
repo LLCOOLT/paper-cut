@@ -21,6 +21,7 @@
 #include "port/cardsave_pc.h"
 #include "port/platform.h"
 #include "port/online.h"
+#include "port/replay.h"
 #include "port/resume.h"
 #include "port/settings.h"
 
@@ -57,8 +58,8 @@ void portResumeFlush(void) {
     FILE* f;
     static uint8_t header[GCI_HEADER];
     static uint8_t meta[PORT_CARD_META_SIZE];
-    if (!sHave || !sDirty) {
-        return;
+    if (!sHave || !sDirty || portReplayPlaying()) {
+        return; /* (a replay's playback: someone else's game, not the player's to come back to) */
     }
     /* a GCI as the save warps read one (warp_pc.c): the game ID first, then
      * the card's file header (unused there), then the slot */
@@ -84,7 +85,7 @@ void portResumeFlush(void) {
 }
 
 int portResumeHave(void) {
-    return on() && sHave;
+    return on() && sHave && !portReplayPlaying();
 }
 
 /* online co-op's recovery (online.cpp): the last clean save written out now,
@@ -113,12 +114,14 @@ const void* portResumeImage(int* slot, size_t* size) {
  * (the host's is the games' way back when they go out of step) */
 void portResumeFrame(void) {
     sFrame++;
-    if (sFrame % SNAP_EVERY != 0 || (!on() && !portOnlineActive())) {
+    if (sFrame % SNAP_EVERY != 0 || (!on() && !portOnlineActive() && !portReplayActive())) {
+        /* (online and in replays, made with the setting off too: the snapshot reads the
+           clock, so both games, or the recording and its playback, make the same ones) */
         return;
     }
     if (safe() && portCardSnapshot(sImage)) {
         sHave = 1;
-        sDirty = on();
+        sDirty = on() && !portReplayPlaying();
         sSlot = gp->saveSlot;
     }
     if (sDirty && sFrame - sLastWrite >= WRITE_EVERY) {

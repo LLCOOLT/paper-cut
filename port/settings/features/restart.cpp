@@ -9,6 +9,7 @@
 // start themselves again: there the note says to close and reopen the app.
 #include "port/aurora_pc.h"
 #include "port/online.h"
+#include "port/replay.h"
 #include "port/restart.h"
 #include "port/resume.h"
 #include "port/settings.h"
@@ -67,6 +68,7 @@ void snapshot() {
 bool sRequested;
 int sResume;
 constexpr int kOnlineRejoin = 2; // sResume: online co-op's recovery (neither loads nor clears quick resume)
+constexpr int kReplay = 3;       // sResume: a replay's recording or playback (replay.cpp puts its environment in place)
 int (*sWhenIdle)(void);
 
 // this program's own executable
@@ -115,12 +117,20 @@ bool restartNow() {
                            "TTYD_SETTINGS_OPEN"}) {
     SDL_UnsetEnvironmentVariable(env, name);
   }
+  // a recording under way: saved first (replay.cpp); a replay's own start-up is for this run only
+  portReplaySaveIfRecording();
+  SDL_UnsetEnvironmentVariable(env, "TTYD_REPLAY_RECORD");
+  SDL_UnsetEnvironmentVariable(env, "TTYD_REPLAY_PLAY");
   char path[1024], sidecar[1024];
   portResumePath(path, sizeof(path), PORT_GAME_ID, 0);
   portResumePath(sidecar, sizeof(sidecar), PORT_GAME_ID, 1);
   if (sResume == kOnlineRejoin) {
     // online co-op's recovery (portRestartForOnline): the session starts from the
     // host's save itself; this player's own quick resume is left as it is
+  } else if (sResume == kReplay) {
+    // a replay's recording or playback: its start save and file (replay.cpp);
+    // quick resume left as it is
+    portReplayRestartEnv();
   } else if (!sResume) {
     // the card was changed under the game (a save restored or copied in): the
     // launcher's Continue must not bring back the game from before it, whose
@@ -146,7 +156,10 @@ bool restartNow() {
   }
   SDL_DestroyProcess(process); // it runs on; this one ends
   std::printf("[restart] %s%s\n", exe.c_str(),
-              sResume == kOnlineRejoin ? " (online: to rejoin)" : sResume && portResumeHave() ? " (quick resume)" : "");
+              sResume == kOnlineRejoin ? " (online: to rejoin)"
+              : sResume == kReplay     ? " (replay)"
+              : sResume && portResumeHave() ? " (quick resume)"
+                                            : "");
   std::fflush(stdout);
   // at once, as the launcher's Play of another version: Aurora's shutdown (its
   // GPU and audio threads) can hang, and everything that matters is written
@@ -215,6 +228,10 @@ extern "C" void portRestartForOnline(void) {
   sResume = kOnlineRejoin;
   restartNow();
 }
+
+// A replay's recording or playback (replay.cpp): as Restart now, once the card
+// is idle, with the replay's environment (portReplayRestartEnv)
+extern "C" void portRestartForReplay(void) { portRestartRequestWith(kReplay, nullptr); }
 
 extern "C" int portRestartWaiting(void) { return sRequested ? 1 : 0; }
 

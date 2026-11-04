@@ -1,0 +1,65 @@
+# assist: see tools/port/gen_lang.py
+
+Message log
+メッセージ履歴
+
+The last 200 pages of the message windows, to read again at your own pace: newest at the bottom. L on the keyboard opens it too. The game waits while it is open (online it goes on).
+メッセージウィンドウの最新200ページを、自分のペースで読み返せます。新しいものが下です。キーボードのLでも開きます。開いている間ゲームは止まります（オンラインでは進みます）。
+
+The game waits while this is open. L, Esc or B: back to the game.
+開いている間ゲームは止まります。L、EscかB：ゲームに戻る。
+
+Online, the game goes on under it. L or Esc: back to the game.
+オンラインでは下でゲームが進みます。LかEsc：ゲームに戻る。
+
+Nothing yet: what the message windows say shows here.
+まだありません。メッセージウィンドウの言葉がここに出ます。
+
+Open the message log
+メッセージ履歴を開く
+
+%d pages kept
+%dページ保存
+
+Game speed
+ゲームの速さ
+
+Slower, for more time for the action commands: the game plays the same, only slower. Not while playing online (both games must keep the same pace) or fast-forwarding.
+遅くして、アクションコマンドの時間を長くします。ゲームの中身は同じで、遅くなるだけです。オンライン中（両方のゲームが同じ速さでないといけません）と早送り中は使えません。
+
+100% (off)
+100%（オフ）
+
+Slower only in battle
+バトルだけ遅く
+
+The field at full speed, the battles at the speed above.
+フィールドは普通の速さ、バトルは上の速さ。
+
+One-handed controls
+片手操作
+
+Everything on one half of the controller. Left hand: the stick moves, the d-pad is A, B, X and Y, the left bumper Z, the left trigger R, the stick pressed in L, Back Start. Right hand: the right stick moves, the face buttons, right bumper and trigger as they are, the right stick pressed in L. Change any button afterwards under Controller buttons; Restore defaults there undoes it. Back and the stick presses then play instead of opening Settings or fast-forwarding (the Start menu's Settings tab, F1 and Tab still do).
+コントローラーの半分ですべてを操作します。左手：スティックで移動、十字キーがA・B・X・Y、左のバンパーがZ、左のトリガーがR、スティック押し込みがL、BackがStart。右手：右スティックで移動、ボタンと右のバンパー・トリガーはそのまま、右スティック押し込みがL。あとから「コントローラーのボタン」でどのボタンも変えられ、そこの「初期設定に戻す」で元に戻ります。Backとスティック押し込みは設定や早送りではなくゲームの操作になります（スタートメニューの設定タブ、F1とTabはそのまま使えます）。
+
+Left hand
+左手
+
+Right hand
+右手
+
+Set for the left hand.
+左手用にしました。
+
+Set for the right hand.
+右手用にしました。
+
+No controller is this player.
+このプレイヤーのコントローラーがありません。
+
+Hold instead of mashing
+連打の代わりに長押し
+
+In the action commands that ask you to press a button again and again, holding it counts: it presses about 12 times a second for you.
+ボタンの連打が必要なアクションコマンドで、長押しでも連打になります。1秒に約12回押してくれます。
+

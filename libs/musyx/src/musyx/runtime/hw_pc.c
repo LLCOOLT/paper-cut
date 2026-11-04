@@ -340,16 +340,26 @@ void salPcHeadlessPump(double seconds) {
  * same at any volume. */
 #ifdef TTYD_BACKEND_AURORA
 static float sGain = 1.0f;
+static int sMuted; /* rewind (port/src/aurora/rewind_aurora.c): silent while it steps back */
 
 void salPcSetVolume(float gain) {
   sGain = gain;
   if (sStream != NULL) {
-    SDL_SetAudioStreamGain(sStream, gain);
+    SDL_SetAudioStreamGain(sStream, sMuted ? 0.0f : gain);
   }
+}
+
+void salPcSetMuted(int muted) {
+  sMuted = muted;
+  salPcSetVolume(sGain);
 }
 #else
 void salPcSetVolume(float gain) {
   (void)gain;
+}
+
+void salPcSetMuted(int muted) {
+  (void)muted;
 }
 #endif
 
@@ -425,7 +435,7 @@ bool salInitAi(SND_SOME_CALLBACK callback, u32 unk, u32* outFreq) {
       if (sStream == NULL) {
         fprintf(stderr, "MusyX: no audio device: %s\n", SDL_GetError());
       } else {
-        SDL_SetAudioStreamGain(sStream, sGain);
+        SDL_SetAudioStreamGain(sStream, sMuted ? 0.0f : sGain);
       }
     }
   }

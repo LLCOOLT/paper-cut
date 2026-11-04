@@ -10,6 +10,12 @@
 // its menus); nothing is saved to its settings.txt meanwhile. Then both
 // start: the clock virtual from the host's start, the session's lockstep
 // from the first frame.
+//
+// A watcher (port/include/port/online.h) joins the same way with "Watch":
+// the host's setup put in place as a guest's, then both players' input from
+// the host. One-click join: an invite link (invite.cpp) or a room code on the
+// clipboard, read only as the Online tab opens and never sent anywhere,
+// offered with a question ("Join?"), never joined by itself.
 #include "port/online.h"
 #include "port/resume.h"
 #include "port/settings.h"
@@ -33,6 +39,7 @@ void CARDSetBasePath(const char* path, int chan); // Aurora (dolphin/card.h)
 void portLockstepBegin(long long base);             // os_time_aurora.c
 long long portRealTime(void);
 void portWarpRequestResume(const char* path, int slot); // warp_pc.c
+int portOnlineTakeInvite(char* out, size_t size);       // invite.cpp
 }
 
 namespace {
@@ -385,8 +392,45 @@ std::string asRoomCode(const char* typed) {
   return code.size() == PORT_ONLINE_CODE_LENGTH ? code : "";
 }
 
-// what this guest joined, for a recovery's restart to join again
-// (portOnlineRestartRejoin): "room" and the code, or "address" and host:port
+// a room's code exactly (PORT_ONLINE_CODE_LENGTH of PORT_ONLINE_CODE_CHARS, a dash
+// allowed, spaces around), upper-cased without the dash, or "": the clipboard's test
+std::string strictRoomCode(const char* text) {
+  std::string code;
+  const char* p = text;
+  while (*p == ' ' || *p == '\t' || *p == '\r' || *p == '\n') {
+    p++;
+  }
+  for (; *p != '\0'; p++) {
+    if (*p == ' ' || *p == '\t' || *p == '\r' || *p == '\n') {
+      break;
+    }
+    if (*p == '-') {
+      continue;
+    }
+    const char c = static_cast<char>(std::toupper(static_cast<unsigned char>(*p)));
+    if (std::strchr(PORT_ONLINE_CODE_CHARS, c) == nullptr || code.size() >= PORT_ONLINE_CODE_LENGTH) {
+      return "";
+    }
+    code += c;
+  }
+  for (; *p != '\0'; p++) {
+    if (*p != ' ' && *p != '\t' && *p != '\r' && *p != '\n') {
+      return "";
+    }
+  }
+  return code.size() == PORT_ONLINE_CODE_LENGTH ? code : "";
+}
+
+// ROOM-SECRET, as shown
+std::string shownCode(const std::string& code) {
+  return code.size() == PORT_ONLINE_CODE_LENGTH
+             ? code.substr(0, PORT_ONLINE_ROOM_HALF) + "-" + code.substr(PORT_ONLINE_ROOM_HALF)
+             : code;
+}
+
+// what this guest (or watcher) joined, for a recovery's restart to join again
+// (portOnlineRestartRejoin): "room" and the code, or "address" and host:port;
+// a watcher's "watch-room", "watch-address"
 std::string sRejoinKind, sRejoinTarget;
 
 void joinTyped() {
@@ -419,6 +463,75 @@ void joinTyped() {
   portOnlineJoin(host.c_str(), port, &me);
 }
 
+// "host" or "host:port" ([::1]:47700): its parts
+void splitAddress(std::string host, std::string* outHost, int* outPort) {
+  int port = PORT_ONLINE_DEFAULT_PORT;
+  const size_t colon = host.rfind(':');
+  if (colon != std::string::npos && host.find(':') == colon) {
+    port = std::atoi(host.c_str() + colon + 1);
+    host.resize(colon);
+  } else if (!host.empty() && host[0] == '[') {
+    const size_t close = host.find(']');
+    if (close != std::string::npos) {
+      if (close + 1 < host.size() && host[close + 1] == ':') {
+        port = std::atoi(host.c_str() + close + 2);
+      }
+      host = host.substr(1, close - 1);
+    }
+  }
+  *outHost = host;
+  *outPort = port;
+}
+
+// watching what was typed: a room's code, or the host's address
+void watchTyped() {
+  const PortOnlineHello me = hello();
+  const std::string code = asRoomCode(sLobby.address);
+  if (!code.empty() && portOnlineRelay()[0] != '\0') {
+    sRejoinKind = "watch-room";
+    sRejoinTarget = code;
+    portOnlineWatchRoom(code.c_str(), &me);
+    return;
+  }
+  std::string host;
+  int port = 0;
+  splitAddress(sLobby.address, &host, &port);
+  sRejoinKind = "watch-address";
+  sRejoinTarget = (host.find(':') != std::string::npos ? "[" + host + "]" : host) + ":" + std::to_string(port);
+  portOnlineWatch(host.c_str(), port, &me);
+}
+
+// One-click join's offer: a room from an invite link (1) or the clipboard (2)
+std::string sOffer;
+int sOfferFrom = 0;
+std::string sCopied; // the code this player copied (not offered back to them)
+int sLobbyFrame = -10;
+
+// each frame of the tab: an invite that came; the clipboard, as the tab opens
+void checkOffers(int state) {
+  char code[16];
+  if (portOnlineTakeInvite(code, sizeof(code))) {
+    sOffer = code;
+    sOfferFrom = 1;
+    std::snprintf(sLobby.address, sizeof(sLobby.address), "%s", shownCode(sOffer).c_str());
+  }
+  const int frame = ImGui::GetFrameCount();
+  const bool opened = frame - sLobbyFrame > 1;
+  sLobbyFrame = frame;
+  if (opened && sOfferFrom != 1 && (state == PORT_ONLINE_IDLE || state == PORT_ONLINE_FAILED) &&
+      portOnlineRelay()[0] != '\0' && SDL_HasClipboardText()) {
+    // (read here only, as the tab opens; never sent anywhere)
+    if (char* clip = SDL_GetClipboardText()) {
+      const std::string found = std::strlen(clip) < 64 ? strictRoomCode(clip) : std::string();
+      SDL_free(clip);
+      if (!found.empty() && found != sCopied && found != asRoomCode(sLobby.address)) {
+        sOffer = found;
+        sOfferFrom = 2;
+      }
+    }
+  }
+}
+
 } // namespace
 
 extern "C" void portRestartForOnline(void); // restart.cpp
@@ -431,10 +544,16 @@ extern "C" void portRestartForOnline(void); // restart.cpp
 extern "C" void portOnlineRestartRejoin(int host, unsigned recoveries) {
   SDL_Environment* env = SDL_GetEnvironment();
   for (const char* name : {"TTYD_ONLINE_HOST", "TTYD_ONLINE_HOST_ROOM", "TTYD_ONLINE_JOIN", "TTYD_ONLINE_JOIN_ROOM",
-                           "TTYD_ONLINE_CONTINUE"}) {
+                           "TTYD_ONLINE_CONTINUE", "TTYD_ONLINE_WATCH", "TTYD_ONLINE_WATCH_ROOM"}) {
     SDL_UnsetEnvironmentVariable(env, name);
   }
-  if (host) {
+  if (host == 2) { // a watcher: watches again what it watched (the players' new session)
+    if (sRejoinKind == "watch-room") {
+      SDL_SetEnvironmentVariable(env, "TTYD_ONLINE_WATCH_ROOM", sRejoinTarget.c_str(), true);
+    } else if (!sRejoinTarget.empty()) {
+      SDL_SetEnvironmentVariable(env, "TTYD_ONLINE_WATCH", sRejoinTarget.c_str(), true);
+    }
+  } else if (host) {
     portResumeWriteNow();
     const std::string room = portOnlineRoom();
     if (!room.empty()) {
@@ -459,6 +578,7 @@ bool portOnlineLobbyDraw(float scale) {
   loadPrefs();
   portOnlineLobbyPump();
   const int state = portOnlineLobbyState();
+  checkOffers(state);
   const float field = ImGui::GetFontSize() * 14.f;
   ImGui::TextUnformatted(portTr("Play online"));
   note("Each player needs Paper Cut and their own disc of the same release. You play the same game together: "
@@ -511,9 +631,37 @@ bool portOnlineLobbyDraw(float scale) {
     ImGui::SameLine();
     ImGui::BeginDisabled(sLobby.address[0] == '\0');
     if (ImGui::Button(portTrLabel("Join"))) {
+      sOffer.clear();
       joinTyped();
     }
+    ImGui::SameLine();
+    if (ImGui::Button(portTrLabel("Watch##online_watch"))) {
+      sOffer.clear();
+      watchTyped();
+    }
     ImGui::EndDisabled();
+    note("Watch: see the two players' game as it goes, a few seconds behind, without playing.");
+    if (!sOffer.empty() && relay) {
+      // one-click join: asked, never done by itself
+      ImGui::Dummy(ImVec2(0, 6.f * scale));
+      const std::string shown = shownCode(sOffer);
+      ImGui::Text(portTr(sOfferFrom == 1 ? "Join room %s?" : "Join room %s from the clipboard?"), shown.c_str());
+      if (ImGui::Button(portTrLabel("Join##online_offer"))) {
+        std::snprintf(sLobby.address, sizeof(sLobby.address), "%s", shown.c_str());
+        sOffer.clear();
+        joinTyped();
+      }
+      ImGui::SameLine();
+      if (ImGui::Button(portTrLabel("Watch##online_offer_watch"))) {
+        std::snprintf(sLobby.address, sizeof(sLobby.address), "%s", shown.c_str());
+        sOffer.clear();
+        watchTyped();
+      }
+      ImGui::SameLine();
+      if (ImGui::Button(portTrLabel("Not now##online_offer"))) {
+        sOffer.clear();
+      }
+    }
     return false;
   }
 
@@ -534,6 +682,13 @@ bool portOnlineLobbyDraw(float scale) {
     ImGui::SameLine();
     if (ImGui::SmallButton(portTrLabel("Copy##online_code"))) {
       SDL_SetClipboardText(shown.c_str());
+      sCopied = room;
+    }
+    ImGui::SameLine();
+    if (ImGui::SmallButton(portTrLabel("Copy invite link##online_link"))) {
+      // papercut://join/K7P2-QX9M: opens Paper Cut on the other player's Online tab, asking "Join?"
+      SDL_SetClipboardText((std::string("papercut://join/") + shown).c_str());
+      sCopied = room;
     }
     note("Give this code to the other player. Paper Cut connects you directly when it can, and through its relay "
          "when it can't: nothing to set up on your router.");
@@ -548,6 +703,9 @@ bool portOnlineLobbyDraw(float scale) {
          "its address.");
   } else if (state == PORT_ONLINE_CONNECTING || state == PORT_ONLINE_HANDSHAKE) {
     ImGui::TextWrapped("%s", portTr("Connecting..."));
+  } else if (state == PORT_ONLINE_WAITING_SETUP && portOnlineWatching()) {
+    ImGui::TextWrapped("%s", portTr("Connected: waiting for the players to start."));
+    note("You'll watch from the start of their game.");
   } else if (state == PORT_ONLINE_PEER_HERE) {
     const int rtt = portOnlineRoundTrip();
     ImGui::Text(portTr("%s joined."), peerName());
@@ -568,6 +726,9 @@ bool portOnlineLobbyDraw(float scale) {
     ImGui::EndDisabled();
     if (!canContinue) {
       sLobby.startMode = 0;
+    }
+    if (portOnlineWatchers() > 0) {
+      ImGui::TextDisabled(portTr("%d watching"), portOnlineWatchers());
     }
     if (ImGui::Button(portTrLabel("Start"))) {
       sendSetup();
@@ -596,7 +757,62 @@ bool portOnlineLobbyDraw(float scale) {
 // lobby's steps without its page, before the game starts (main_aurora.c): the
 // host starts as soon as the guest is there, from the title. Returns once
 // both games start (or gives up after a minute).
+// $TTYD_ONLINE_WATCH_ROOM=<code> or $TTYD_ONLINE_WATCH=<address>:<port>: a watcher
+// the same way (trying again for a while: the host may not be there yet).
+static bool testWatch(void) {
+  const char* room = SDL_getenv("TTYD_ONLINE_WATCH_ROOM");
+  const char* address = SDL_getenv("TTYD_ONLINE_WATCH");
+  if (room == nullptr && address == nullptr) {
+    return false;
+  }
+  loadPrefs();
+  if (SDL_getenv("TTYD_ONLINE_RECOVERIES") == nullptr) {
+    std::snprintf(sLobby.name, sizeof(sLobby.name), "%s", "Test watcher");
+  }
+  const PortOnlineHello me = hello();
+  const std::string code = room != nullptr ? asRoomCode(room) : "";
+  std::string host;
+  int port = 0;
+  if (address != nullptr) {
+    splitAddress(address, &host, &port);
+  }
+  sRejoinKind = room != nullptr ? "watch-room" : "watch-address";
+  sRejoinTarget = room != nullptr ? code : std::string(address);
+  auto start = [&]() {
+    if (room != nullptr) {
+      portOnlineWatchRoom(code.c_str(), &me);
+    } else {
+      portOnlineWatch(host.c_str(), port, &me);
+    }
+  };
+  const Uint64 until = SDL_GetTicks() + 120000;
+  start();
+  while (portOnlineLobbyState() != PORT_ONLINE_STARTED && SDL_GetTicks() < until) {
+    portOnlineLobbyPump();
+    if (portOnlineLobbyState() == PORT_ONLINE_FAILED) {
+      SDL_Delay(1000);
+      start();
+    } else if (portOnlineLobbyState() == PORT_ONLINE_GOT_SETUP) {
+      applySetup();
+    }
+    SDL_Delay(5);
+  }
+  if (portOnlineLobbyState() != PORT_ONLINE_STARTED) {
+    std::printf("[online] test: not watching (%s)\n", portOnlineStatus());
+    std::fflush(stdout);
+    return true;
+  }
+  std::printf("[online] test: watching\n");
+  std::fflush(stdout);
+  portLockstepBegin(static_cast<long long>(sLobby.base));
+  portOnlineBegin(sLobby.delay);
+  return true;
+}
+
 extern "C" void portOnlineTestStart(void) {
+  if (testWatch()) {
+    return;
+  }
   // (a code as a player would type it: with or without its dash)
   static std::string sHostRoom, sJoinRoom;
   sHostRoom = SDL_getenv("TTYD_ONLINE_HOST_ROOM") != nullptr ? asRoomCode(SDL_getenv("TTYD_ONLINE_HOST_ROOM")) : "";

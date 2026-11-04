@@ -96,6 +96,11 @@ void portSettingsCloudPush(int wait);
  * $TTYD_WINDOW_POS placed it). */
 void portWindowConfig(const char* userPath, int* x, int* y, unsigned* w, unsigned* h, int* fullscreen);
 void portWindowRestore(int keepPlace);
+/* The display mode (the fullscreen setting: 0 a window, 1 borderless, 2 full
+ * screen, exclusive) put in place; F11 and Alt+Enter: the window, or the
+ * full-screen kind last chosen. */
+void portWindowSetDisplayMode(int mode);
+void portWindowToggleFullscreen(void);
 /* The window gained or lost the focus. */
 void portSettingsFocus(int focused);
 /* Aurora's user folder (the memory cards, settings.txt). */

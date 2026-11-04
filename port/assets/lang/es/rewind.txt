@@ -1,0 +1,43 @@
+# Rewind and faster battles (Español)
+
+Rewind
+Rebobinar
+
+Hold the Rewind key (Backspace) or button and the game steps back through its last seconds; let go to play on from there. Uses some memory and a little time every few frames. Not in online co-op.
+Mantén pulsada la tecla de rebobinar (Retroceso) o el botón y el juego retrocede por sus últimos segundos; suelta para seguir jugando desde ahí. Usa algo de memoria y un poco de tiempo cada pocos fotogramas. No en el cooperativo en línea.
+
+Rewind length
+Duración del rebobinado
+
+Rewind button
+Botón de rebobinar
+
+A controller button that rewinds while held.
+Un botón del mando que rebobina mientras se mantiene pulsado.
+
+Left back paddle
+Palanca trasera izquierda
+
+Right back paddle
+Palanca trasera derecha
+
+Rewind key
+Tecla de rebobinar
+
+Press a key...
+Pulsa una tecla...
+
+Not in online co-op.
+No en el cooperativo en línea.
+
+Kept now: %.1f s, %.0f MiB (and %.0f MiB for the newest whole); %.1f ms a state, every 6 frames
+Guardado ahora: %.1f s, %.0f MiB (y %.0f MiB para el más reciente entero); %.1f ms por estado, cada 6 fotogramas
+
+<< Rewind  %.1f s
+<< Rebobinar  %.1f s
+
+Faster battles
+Combates más rápidos
+
+Battles play faster, but never while you act: action commands, Stylish moves, the menus and Star Specials stay at normal speed, and guards and Superguards keep their timing. Not in online co-op.
+Los combates van más rápido, pero nunca mientras actúas: los comandos de acción, los movimientos con estilo, los menús y los ataques especiales siguen a velocidad normal, y la defensa y la superdefensa mantienen su ritmo. No en el cooperativo en línea.

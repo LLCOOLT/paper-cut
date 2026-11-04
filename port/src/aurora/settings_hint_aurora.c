@@ -33,15 +33,13 @@
 
 static int sAge = -1; /* frames shown, -1 not yet */
 
-static void hintDisp(CameraId camId, void* param) {
+static void hintDraw(void) {
     const char* text = portTrGame(HINT_TEXT);
     const int left = HINT_FRAMES - sAge;
     const u8 alpha = left < 30 ? (u8)(0xFF * left / 30) : 0xFF;
     const float maxW = 560.0f; /* inside the 4:3 picture, a little in from its edges */
     char lines[2][200];
     int count = 1, i;
-    (void)camId;
-    (void)param;
     snprintf(lines[0], sizeof(lines[0]), "%s", text);
     lines[1][0] = '\0';
     if (FontGetMessageWidth(text) * 0.75f > maxW) {
@@ -97,6 +95,16 @@ static void hintDisp(CameraId camId, void* param) {
         /* low on the screen, below the co-op notices' place */
         FontDrawString(-w * 0.5f, (count == 2 ? -184.0f : -196.0f) - i * 22.0f, lines[i]);
     }
+}
+
+/* the game's font takes two of its random numbers a letter (fontmgr.c): kept as they
+ * were, so this player's own hint doesn't put an online game out of step */
+static void hintDisp(CameraId camId, void* param) {
+    const u32 seed = portRandState();
+    (void)camId;
+    (void)param;
+    hintDraw();
+    portRandSetState(seed);
 }
 
 /* each game frame (makeKey, src/system.c) */

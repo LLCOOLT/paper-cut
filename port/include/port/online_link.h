@@ -74,6 +74,19 @@ size_t portSeal(int channel, const unsigned char* in, size_t len, unsigned char*
 int portOpen(int channel, const unsigned char* in, size_t len, unsigned char* out, size_t* outLen);
 void portSealReset(void);
 
+/* the watchers' channel (host to watchers, through the relay): one message
+ * sealed for them all, the key from the whole code (PBKDF2), the nonce (its
+ * random 4 bytes and count) in front */
+#define PORT_WATCH_OVERHEAD (12 + PORT_SEAL_TAG)
+int portWatchKey(const char* code);
+size_t portWatchSeal(const unsigned char* in, size_t len, unsigned char* out);
+int portWatchOpen(const unsigned char* in, size_t len, unsigned char* out, size_t* outLen);
+void portWatchReset(void);
+
+/* the direct path after a reconnect: the first of this side's frames the other
+ * still needs, the first of the other's this side needs */
+void portIceResume(unsigned peerNeeds, unsigned theirsNext);
+
 #ifdef __cplusplus
 }
 #endif

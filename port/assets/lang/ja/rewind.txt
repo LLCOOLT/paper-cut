@@ -1,0 +1,43 @@
+# Rewind and faster battles (日本語)
+
+Rewind
+巻き戻し
+
+Hold the Rewind key (Backspace) or button and the game steps back through its last seconds; let go to play on from there. Uses some memory and a little time every few frames. Not in online co-op.
+巻き戻しキー（Backspace）かボタンを押している間、ゲームが最後の数秒をさかのぼります。離すとそこから続きます。メモリと、数フレームごとに少しの時間を使います。オンライン協力プレイでは使えません。
+
+Rewind length
+巻き戻しの長さ
+
+Rewind button
+巻き戻しボタン
+
+A controller button that rewinds while held.
+押している間、巻き戻すコントローラーのボタン。
+
+Left back paddle
+左の背面パドル
+
+Right back paddle
+右の背面パドル
+
+Rewind key
+巻き戻しキー
+
+Press a key...
+キーを押してください...
+
+Not in online co-op.
+オンライン協力プレイでは使えません。
+
+Kept now: %.1f s, %.0f MiB (and %.0f MiB for the newest whole); %.1f ms a state, every 6 frames
+今の記録：%.1f 秒、%.0f MiB（最新の全体に %.0f MiB）、1回 %.1f ms、6フレームごと
+
+<< Rewind  %.1f s
+<< 巻き戻し  %.1f 秒
+
+Faster battles
+バトルを速く
+
+Battles play faster, but never while you act: action commands, Stylish moves, the menus and Star Specials stay at normal speed, and guards and Superguards keep their timing. Not in online co-op.
+バトルが速く進みます。ただし自分が操作する間はふつうの速さです：アクションコマンド、スタイリッシュ、メニュー、スペシャル技はそのままで、ガードとスーパーガードのタイミングも変わりません。オンライン協力プレイでは使えません。

@@ -1,0 +1,65 @@
+# assist: see tools/port/gen_lang.py
+
+Message log
+Nachrichtenverlauf
+
+The last 200 pages of the message windows, to read again at your own pace: newest at the bottom. L on the keyboard opens it too. The game waits while it is open (online it goes on).
+Die letzten 200 Seiten der Textfenster, zum Nachlesen in deinem Tempo: die neueste unten. L auf der Tastatur öffnet ihn auch. Das Spiel wartet, solange er offen ist (online läuft es weiter).
+
+The game waits while this is open. L, Esc or B: back to the game.
+Das Spiel wartet, solange das offen ist. L, Esc oder B: zurück zum Spiel.
+
+Online, the game goes on under it. L or Esc: back to the game.
+Online läuft das Spiel darunter weiter. L oder Esc: zurück zum Spiel.
+
+Nothing yet: what the message windows say shows here.
+Noch nichts: hier steht, was die Textfenster sagen.
+
+Open the message log
+Nachrichtenverlauf öffnen
+
+%d pages kept
+%d Seiten gespeichert
+
+Game speed
+Spieltempo
+
+Slower, for more time for the action commands: the game plays the same, only slower. Not while playing online (both games must keep the same pace) or fast-forwarding.
+Langsamer, für mehr Zeit bei den Aktionsbefehlen: das Spiel läuft genauso, nur langsamer. Nicht beim Online-Spiel (beide Spiele müssen im gleichen Tempo bleiben) oder beim Vorspulen.
+
+100% (off)
+100% (aus)
+
+Slower only in battle
+Nur im Kampf langsamer
+
+The field at full speed, the battles at the speed above.
+Die Welt in vollem Tempo, die Kämpfe im Tempo oben.
+
+One-handed controls
+Einhändige Steuerung
+
+Everything on one half of the controller. Left hand: the stick moves, the d-pad is A, B, X and Y, the left bumper Z, the left trigger R, the stick pressed in L, Back Start. Right hand: the right stick moves, the face buttons, right bumper and trigger as they are, the right stick pressed in L. Change any button afterwards under Controller buttons; Restore defaults there undoes it. Back and the stick presses then play instead of opening Settings or fast-forwarding (the Start menu's Settings tab, F1 and Tab still do).
+Alles auf einer Hälfte des Controllers. Linke Hand: der Stick bewegt, das Steuerkreuz ist A, B, X und Y, die linke Schultertaste Z, der linke Trigger R, der gedrückte Stick L, Zurück Start. Rechte Hand: der rechte Stick bewegt, die Aktionstasten, rechte Schultertaste und Trigger wie gehabt, der gedrückte rechte Stick L. Jede Taste lässt sich danach unter Controller-Tasten ändern; Standard wiederherstellen dort macht es rückgängig. Zurück und das Drücken der Sticks spielen dann, statt die Einstellungen zu öffnen oder vorzuspulen (der Einstellungen-Tab im Start-Menü, F1 und Tab tun es weiter).
+
+Left hand
+Linke Hand
+
+Right hand
+Rechte Hand
+
+Set for the left hand.
+Für die linke Hand eingestellt.
+
+Set for the right hand.
+Für die rechte Hand eingestellt.
+
+No controller is this player.
+Kein Controller ist dieser Spieler.
+
+Hold instead of mashing
+Halten statt Hämmern
+
+In the action commands that ask you to press a button again and again, holding it counts: it presses about 12 times a second for you.
+Bei Aktionsbefehlen, die schnelles wiederholtes Drücken verlangen, zählt Halten: es drückt etwa 12-mal pro Sekunde für dich.
+

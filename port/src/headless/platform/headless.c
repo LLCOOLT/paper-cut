@@ -27,7 +27,7 @@ BOOL portShotPending(void) {
 void portShotFrame(void) {}
 
 void portInterpSceneDrawn(void) {}
-/* text to speech (port/include/port/speech.h): the settings page's, not here */
+/* text to speech and the message log (port/include/port/speech.h): the settings page's, not here */
 void portSpeechMessage(const void* window, const char* text) {
     (void)window;
     (void)text;
@@ -36,9 +36,10 @@ void portSpeechAppend(const void* window, const char* text) {
     (void)window;
     (void)text;
 }
-void portSpeechPage(const void* window, int page) {
+void portSpeechPage(const void* window, int page, const char* speaker) {
     (void)window;
     (void)page;
+    (void)speaker;
 }
 void portSpeechClosed(const void* window) {
     (void)window;

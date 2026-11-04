@@ -1,0 +1,121 @@
+# qrupdate: see tools/port/gen_lang.py
+
+Send saves to another device
+別の端末にセーブを送る
+
+Receive saves
+セーブを受け取る
+
+Shows an address and its QR code for another device on the same network: its Paper Cut takes the saves with Receive saves. For 5 minutes, once.
+同じネットワークの別の端末のために、アドレスとそのQRコードを表示します。その端末のPaper Cutが「セーブを受け取る」でセーブを受け取ります。5分間、1回だけ。
+
+On the other device: Settings, Saves, Receive saves, and type this address.
+別の端末で：設定、セーブ、「セーブを受け取る」を開き、このアドレスを入力します。
+
+Copy the address
+アドレスをコピー
+
+Stops in %d:%02d, or once the other device has the saves.
+%d:%02d後、または別の端末がセーブを受け取ったら止まります。
+
+Sent: the other device has the saves.
+送信しました：別の端末にセーブが届きました。
+
+Stopped.
+止めました。
+
+No other device took the saves in 5 minutes: stopped.
+5分間どの端末もセーブを受け取らなかったので止めました。
+
+This device has no saves of the game yet.
+この端末にはまだこのゲームのセーブがありません。
+
+This device has no random numbers for the address.
+この端末ではアドレス用の乱数を作れません。
+
+This device isn't on a network.
+この端末はネットワークにつながっていません。
+
+Could not start sending (no network?).
+送信を始められませんでした（ネットワークがない？）。
+
+The address the other device shows under Send saves to another device.
+別の端末の「別の端末にセーブを送る」に表示されるアドレス。
+
+Paste
+貼り付け
+
+Receiving...
+受信中...
+
+Which game files to replace? The save here is kept as a backup first.
+どのゲームファイルを置き換えますか？ここのセーブは先にバックアップされます。
+
+Japan (JP)
+日本 (JP)
+
+North America (US)
+北米 (US)
+
+Europe (EU)
+ヨーロッパ (EU)
+
+a save
+セーブあり
+
+empty
+空き
+
+File %d: the other device's (%s) over this one's (%s)
+ファイル%d：別の端末のもの（%s）でこの端末のもの（%s）を置き換え
+
+Replace them and restart
+置き換えて再起動
+
+Replace them
+置き換える
+
+Receive this card's saves from the launcher, before the game starts.
+このカードのセーブは、ゲームが始まる前にランチャーで受け取ってください。
+
+Could not receive the saves:
+セーブを受け取れませんでした：
+
+Received: the saves as they were are kept as backups.
+受け取りました：前のセーブはバックアップとして残っています。
+
+Updated to Paper Cut %s.
+Paper Cut %s に更新しました。
+
+Flathub updates this copy: your software centre, or flatpak update.
+このコピーはFlathubが更新します：ソフトウェアセンターか flatpak update で。
+
+Update the AppImage with AppImageUpdate, or download the new one.
+AppImageはAppImageUpdateで更新するか、新しいものをダウンロードしてください。
+
+Download and install
+ダウンロードしてインストール
+
+Checking the download...
+ダウンロードを確認中...
+
+Can't write beside the install: download it from the release page.
+インストール先の横に書き込めません：リリースページからダウンロードしてください。
+
+The download failed:
+ダウンロードに失敗しました：
+
+The release lists no checksum for it, so it wasn't installed.
+リリースにチェックサムがないため、インストールしませんでした。
+
+The download doesn't match the release's checksum, so it wasn't installed.
+ダウンロードがリリースのチェックサムと一致しないため、インストールしませんでした。
+
+It couldn't be unpacked:
+展開できませんでした：
+
+The new version is installed at the next start.
+新しいバージョンは次の起動時にインストールされます。
+
+Restart to update
+再起動して更新

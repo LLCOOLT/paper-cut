@@ -34,6 +34,51 @@ void portSaveStateNotice(const char* text);
 const char* portSaveStateLabel(int slot);
 void portSaveStateSetLabel(int slot, const char* label);
 
+/* For rewind (port/src/aurora/rewind_aurora.c), which keeps states of its
+ * own the same way (savestate_aurora.c; Aurora with save states only). */
+#if defined(TTYD_SAVE_STATES) && !defined(__cplusplus)
+#include <stddef.h>
+#include <stdint.h>
+#include <aurora/dvd.h>
+#include <dolphin/types.h>
+#define PORT_SNAP_MAX_FILES 64
+typedef struct PortSnapRegion {
+    void* addr;
+    size_t size;
+} PortSnapRegion;
+/* What a state holds besides memory: the save-state heap's used size, the
+ * clocks, rand()'s state, the REL linked, the disc files open. */
+typedef struct PortSnapMeta {
+    size_t heapTop;
+    s64 gameTime;
+    s64 fastClock; /* $TTYD_FAST's virtual clock (os_time_aurora.c) */
+    u32 rand;      /* the game's rand() (runtime_pc.c) */
+    const void* rel;
+    u32 fileCount;
+    AuroraDvdOpenFile files[PORT_SNAP_MAX_FILES];
+} PortSnapMeta;
+/* The game's memory, in a fixed order; the last one is the save-state heap
+ * (heapSize of it). Returns how many. */
+int portSnapRegions(PortSnapRegion* out, int max, size_t heapSize);
+/* The game can be saved now (restore: or put back, which Game Over allows too). */
+int portSnapAllowed(int restore, const char** why);
+/* The game's disc thread is in the middle of a read (DVDMgr: a read spans
+ * frames, and where the thread is in it lives on its stack, not in the
+ * state): no state is taken or put back until it's done. */
+int portSnapDiscBusy(void);
+/* The game held still (audio held, disc reads finished; pause: the clock and
+ * the audio device paused and the GPU idle too, for a load), and let go. */
+void portSnapQuiesce(int pause);
+void portSnapResume(int pause);
+/* The memory codec: packed size, 0 if it doesn't fit in cap. */
+size_t portSnapPack(uint8_t* dst, size_t cap, const uint8_t* src, size_t n);
+void portSnapUnpack(uint8_t* dst, size_t n, const uint8_t* src, size_t packed);
+/* The rest of the state now (0: too many open files), and put back after
+ * the memory is (the heap committed to heapTop first: portSnapHeapCommit). */
+int portSnapMetaTake(PortSnapMeta* m);
+void portSnapMetaPut(const PortSnapMeta* m);
+#endif
+
 #ifdef __cplusplus
 }
 #endif

@@ -1,0 +1,43 @@
+# Rewind and faster battles (Deutsch)
+
+Rewind
+Zurückspulen
+
+Hold the Rewind key (Backspace) or button and the game steps back through its last seconds; let go to play on from there. Uses some memory and a little time every few frames. Not in online co-op.
+Halte die Zurückspulen-Taste (Rücktaste) oder den Knopf gedrückt, und das Spiel geht durch seine letzten Sekunden zurück; lass los, um von dort weiterzuspielen. Braucht etwas Speicher und alle paar Bilder ein wenig Zeit. Nicht im Online-Koop.
+
+Rewind length
+Länge des Zurückspulens
+
+Rewind button
+Zurückspulen-Knopf
+
+A controller button that rewinds while held.
+Ein Controller-Knopf, der zurückspult, solange er gedrückt ist.
+
+Left back paddle
+Linkes hinteres Paddle
+
+Right back paddle
+Rechtes hinteres Paddle
+
+Rewind key
+Zurückspulen-Taste
+
+Press a key...
+Drücke eine Taste...
+
+Not in online co-op.
+Nicht im Online-Koop.
+
+Kept now: %.1f s, %.0f MiB (and %.0f MiB for the newest whole); %.1f ms a state, every 6 frames
+Jetzt behalten: %.1f s, %.0f MiB (und %.0f MiB für den neuesten ganz); %.1f ms pro Zustand, alle 6 Bilder
+
+<< Rewind  %.1f s
+<< Zurückspulen  %.1f s
+
+Faster battles
+Schnellere Kämpfe
+
+Battles play faster, but never while you act: action commands, Stylish moves, the menus and Star Specials stay at normal speed, and guards and Superguards keep their timing. Not in online co-op.
+Kämpfe laufen schneller, aber nie, während du handelst: Action-Kommandos, Stylish-Moves, die Menüs und Spezialattacken bleiben beim normalen Tempo, und Abwehr und Superabwehr behalten ihr Timing. Nicht im Online-Koop.

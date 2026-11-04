@@ -12,6 +12,7 @@
 #include <dolphin/dvd.h>
 #include <dolphin/pad.h>
 #include <dolphin/gx/GXAurora.h>
+#include "port/replay.h"
 #include "port/tr.h"
 #include "port/widescreen.h"
 #include <stdbool.h>
@@ -21,6 +22,9 @@
 #include "port/platform.h"
 #include "port/mods.h"
 #include "port/luigi.h"
+#include "port/update_install.h"
+
+void portOnlineInviteArgs(int* argc, char** argv); /* invite.cpp */
 void portControllersInit(const char* userPath); /* port/settings/features/controllers.cpp */
 #ifdef __APPLE__
 #include <TargetConditionals.h>
@@ -63,6 +67,14 @@ int aurora_main(int argc, char* argv[]) {
         /* ARAM (16 MiB, as on the GameCube): MusyX sample memory, see ar_aurora.c. */
         .mem2Size = 16 * 1024 * 1024,
     };
+    /* an invite link among the arguments (papercut://join/<CODE>): taken out, for
+     * the launcher's Online tab; on Windows, those links pointed at this exe
+     * (port/settings/features/invite.cpp) */
+    portOnlineInviteArgs(&argc, argv);
+
+    /* an update downloaded last time (port/include/port/update_install.h): in
+     * place before anything else, then the new program started instead */
+    portUpdateApplyStaged(argc, argv);
 
 #ifdef __ANDROID__
     /* logcat, env.txt (Android has no environment to set the switches below) */
@@ -187,6 +199,7 @@ int aurora_main(int argc, char* argv[]) {
     portModsInit(info.userPath, info.cachePath); /* the mods folder, loose textures (port/mods/mods.cpp) */
     portPipelineWarmupWait(); /* "Preparing graphics": every known pipeline built first */
     portOnlineTestStart(); /* tests: $TTYD_ONLINE_HOST / _JOIN, online co-op's lobby without its page */
+    portReplayStartup();   /* a replay's recording or playback, asked for by the restart (replay.cpp) */
     portAuroraBeginFrame();
     return ttyd_main();
 }

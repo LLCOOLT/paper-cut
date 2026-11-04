@@ -1,6 +1,7 @@
 /* The free camera and mirror mode: port/include/port/view.h. */
 #include "port/view.h"
 #include "port/online.h"
+#include "port/replay.h"
 #include "port/settings.h"
 #include "driver/camdrv.h"
 #include "driver/seqdrv.h"
@@ -233,7 +234,7 @@ void portViewEnd(void) {
 /* --- photo mode --- */
 
 int portPhotoAvailable(void) {
-    return inField() && !portOnlineActive() && marioGetPtr() != NULL;
+    return inField() && !portOnlineActive() && !portReplayActive() && marioGetPtr() != NULL;
 }
 
 void portPhotoSet(int active, float yaw, float pitch, float zoom, int hideHud) {

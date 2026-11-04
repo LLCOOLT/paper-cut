@@ -166,6 +166,8 @@ COMPONENTS = [
      ["_deps/mbedtls-src/LICENSE"], None, None),
     ("libjuice", "online co-op's direct connection (ICE); its source: https://github.com/paullouisageneau/libjuice "
      "(v1.7.4, unchanged)", "Mozilla Public License 2.0", ["_deps/libjuice-src/LICENSE"], None, None),
+    ("QR Code generator", "the QR code for sending saves to another device, by Project Nayuki; its source: "
+     "https://github.com/nayuki/QR-Code-generator (v1.8.0, unchanged)", "MIT", ["@/libs/qrcodegen/LICENSE"], None, None),
     ("stb_vorbis, dr_mp3, dr_flac", "the players' own music files (OGG, MP3, FLAC), by Sean Barrett and David Reid",
      "public domain, or MIT No Attribution", [],
      "Public domain where that's recognised; elsewhere MIT No Attribution (each file's end, "

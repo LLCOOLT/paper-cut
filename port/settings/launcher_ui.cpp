@@ -40,6 +40,7 @@ extern "C" const char* portIosDocumentsDir(void);
 #endif
 
 bool portOnlineLobbyDraw(float scale); // online co-op's lobby (port/settings/features/online.cpp)
+extern "C" int portOnlinePeekInvite(char* out, size_t size); // invite.cpp
 
 namespace {
 
@@ -550,6 +551,10 @@ void drawOnline(Launcher& l, float scale) {
       // its launcher, on this tab (SDL_CreateProcess passes SDL's environment)
       const std::string exe = executableOf(d->version);
       SDL_SetEnvironmentVariable(SDL_GetEnvironment(), "TTYD_LAUNCHER_TAB", "Online", true);
+      char invite[16];
+      if (portOnlinePeekInvite(invite, sizeof(invite))) { // an invite link's room, asked about there (invite.cpp)
+        SDL_SetEnvironmentVariable(SDL_GetEnvironment(), "TTYD_ONLINE_INVITE", invite, true);
+      }
       const char* args[] = {exe.c_str(), nullptr};
       if (SDL_Process* process = SDL_CreateProcess(args, false)) {
         SDL_DestroyProcess(process);

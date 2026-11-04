@@ -1,0 +1,17 @@
+# The display mode (port/settings/settings_ui.cpp's Start menu rows) in Japanese for the JP release's own font: kana, words apart.
+
+Display mode
+ひょうじ　モード
+
+A window, the whole screen borderless, or full screen (F11 or Alt+Enter).
+ウィンドウ　ボーダーレス　または　フルスクリーン（F11　Alt+Enter）
+
+Windowed
+ウィンドウ
+
+Borderless
+ボーダーレス
+
+Full screen
+フルスクリーン
+

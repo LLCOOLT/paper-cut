@@ -1,0 +1,43 @@
+# Rewind and faster battles (Italiano)
+
+Rewind
+Riavvolgi
+
+Hold the Rewind key (Backspace) or button and the game steps back through its last seconds; let go to play on from there. Uses some memory and a little time every few frames. Not in online co-op.
+Tieni premuto il tasto Riavvolgi (Backspace) o il pulsante e il gioco torna indietro negli ultimi secondi; lascia per continuare da lì. Usa un po' di memoria e un po' di tempo ogni pochi fotogrammi. Non nella cooperativa online.
+
+Rewind length
+Durata del riavvolgimento
+
+Rewind button
+Pulsante Riavvolgi
+
+A controller button that rewinds while held.
+Un pulsante del controller che riavvolge finché è premuto.
+
+Left back paddle
+Levetta posteriore sinistra
+
+Right back paddle
+Levetta posteriore destra
+
+Rewind key
+Tasto Riavvolgi
+
+Press a key...
+Premi un tasto...
+
+Not in online co-op.
+Non nella cooperativa online.
+
+Kept now: %.1f s, %.0f MiB (and %.0f MiB for the newest whole); %.1f ms a state, every 6 frames
+Tenuto ora: %.1f s, %.0f MiB (e %.0f MiB per il più recente intero); %.1f ms per stato, ogni 6 fotogrammi
+
+<< Rewind  %.1f s
+<< Riavvolgi  %.1f s
+
+Faster battles
+Battaglie più veloci
+
+Battles play faster, but never while you act: action commands, Stylish moves, the menus and Star Specials stay at normal speed, and guards and Superguards keep their timing. Not in online co-op.
+Le battaglie vanno più veloci, ma mai mentre agisci: i comandi, le mosse stilose, i menu e le mosse speciali restano a velocità normale, e la Guardia e la Superguardia mantengono il loro tempo. Non nella cooperativa online.

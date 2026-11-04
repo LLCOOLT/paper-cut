@@ -1,0 +1,85 @@
+# replay: see tools/port/gen_lang.py
+
+Replays
+Replays
+
+Record a run's input to a small file, and play it back exactly: from where you are or from the title.
+Nimm die Eingaben eines Laufs in einer kleinen Datei auf und spiele sie exakt wieder ab: ab deiner Stelle oder ab dem Titelbild.
+
+The replay couldn't be saved.
+Das Replay konnte nicht gespeichert werden.
+
+Replay saved:
+Replay gespeichert:
+
+This file isn't a replay, or isn't whole.
+Diese Datei ist kein Replay oder nicht vollständig.
+
+Made with another release's disc (%s): it can't be played here.
+Mit der Disc einer anderen Version aufgenommen (%s): hier nicht abspielbar.
+
+Made with Paper Cut %s (this is %s): it may go out of step. You'll be told if it does.
+Mit Paper Cut %s aufgenommen (dies ist %s): es kann aus dem Takt geraten. Du erfährst es, wenn es passiert.
+
+Recording: %s (%u frames).
+Aufnahme: %s (%u Frames).
+
+Name
+Name
+
+Stop and save
+Stoppen und speichern
+
+Playing '%s': %u of %u frames.
+Spielt „%s“: %u von %u Frames.
+
+Stop the replay
+Replay beenden
+
+The game starts again as it was before the replay.
+Das Spiel startet neu, wie es vor dem Replay war.
+
+Record
+Aufnehmen
+
+From where you are
+Ab deiner Stelle
+
+From the title
+Ab dem Titelbild
+
+Restart and record
+Neu starten und aufnehmen
+
+Not during online co-op.
+Nicht während des Online-Koop.
+
+Recording starts the game again (as Restart now), from quick resume's save or the title, so that the replay plays out exactly. Save states, warps, fast-forward and the Practice tab's edits are off while recording.
+Die Aufnahme startet das Spiel neu (wie Jetzt neu starten), ab dem Schnellfortsetzen-Spielstand oder dem Titelbild, damit das Replay exakt gleich abläuft. Save States, Warps, Vorspulen und die Änderungen im Training-Tab sind während der Aufnahme aus.
+
+Your replays
+Deine Replays
+
+None yet: they're kept in the replays folder of the user folder.
+Noch keine: sie liegen im Ordner replays des Benutzerordners.
+
+Open a replay file...
+Replay-Datei öffnen...
+
+The game starts again to play it; Esc or B stops it.
+Das Spiel startet neu, um es abzuspielen; Esc oder B beendet es.
+
+Recording
+Aufnahme
+
+Replay finished: Esc or B to leave
+Replay zu Ende: Esc oder B zum Verlassen
+
+Replay
+Replay
+
+Out of step since frame %ld
+Aus dem Takt seit Frame %ld
+
+Made with Paper Cut %s
+Mit Paper Cut %s aufgenommen

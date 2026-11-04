@@ -1,0 +1,43 @@
+# Rewind and faster battles (Français)
+
+Rewind
+Rembobiner
+
+Hold the Rewind key (Backspace) or button and the game steps back through its last seconds; let go to play on from there. Uses some memory and a little time every few frames. Not in online co-op.
+Maintenez la touche de rembobinage (Retour arrière) ou le bouton, et le jeu remonte ses dernières secondes ; relâchez pour reprendre de là. Utilise de la mémoire et un peu de temps toutes les quelques images. Pas en coop en ligne.
+
+Rewind length
+Durée du rembobinage
+
+Rewind button
+Bouton de rembobinage
+
+A controller button that rewinds while held.
+Un bouton de manette qui rembobine tant qu'il est maintenu.
+
+Left back paddle
+Palette arrière gauche
+
+Right back paddle
+Palette arrière droite
+
+Rewind key
+Touche de rembobinage
+
+Press a key...
+Appuyez sur une touche...
+
+Not in online co-op.
+Pas en coop en ligne.
+
+Kept now: %.1f s, %.0f MiB (and %.0f MiB for the newest whole); %.1f ms a state, every 6 frames
+Gardé : %.1f s, %.0f Mio (et %.0f Mio pour le plus récent en entier) ; %.1f ms par état, toutes les 6 images
+
+<< Rewind  %.1f s
+<< Rembobinage  %.1f s
+
+Faster battles
+Combats plus rapides
+
+Battles play faster, but never while you act: action commands, Stylish moves, the menus and Star Specials stay at normal speed, and guards and Superguards keep their timing. Not in online co-op.
+Les combats vont plus vite, mais jamais pendant que vous agissez : les commandes action, les mouvements stylés, les menus et les coups spéciaux gardent la vitesse normale, et la Garde et la Super Garde gardent leur timing. Pas en coop en ligne.

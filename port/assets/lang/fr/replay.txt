@@ -1,0 +1,85 @@
+# replay: see tools/port/gen_lang.py
+
+Replays
+Replays
+
+Record a run's input to a small file, and play it back exactly: from where you are or from the title.
+Enregistrez les commandes d'une partie dans un petit fichier, et rejouez-la à l'identique : depuis là où vous êtes ou depuis l'écran titre.
+
+The replay couldn't be saved.
+Le replay n'a pas pu être enregistré.
+
+Replay saved:
+Replay enregistré :
+
+This file isn't a replay, or isn't whole.
+Ce fichier n'est pas un replay, ou il est incomplet.
+
+Made with another release's disc (%s): it can't be played here.
+Fait avec le disque d'une autre version (%s) : il ne peut pas être lu ici.
+
+Made with Paper Cut %s (this is %s): it may go out of step. You'll be told if it does.
+Fait avec Paper Cut %s (celui-ci est %s) : il peut se désynchroniser. Vous serez prévenu si c'est le cas.
+
+Recording: %s (%u frames).
+Enregistrement : %s (%u images).
+
+Name
+Nom
+
+Stop and save
+Arrêter et enregistrer
+
+Playing '%s': %u of %u frames.
+Lecture de « %s » : %u images sur %u.
+
+Stop the replay
+Arrêter le replay
+
+The game starts again as it was before the replay.
+Le jeu redémarre tel qu'il était avant le replay.
+
+Record
+Enregistrer
+
+From where you are
+Depuis là où vous êtes
+
+From the title
+Depuis l'écran titre
+
+Restart and record
+Redémarrer et enregistrer
+
+Not during online co-op.
+Pas pendant le jeu en ligne.
+
+Recording starts the game again (as Restart now), from quick resume's save or the title, so that the replay plays out exactly. Save states, warps, fast-forward and the Practice tab's edits are off while recording.
+L'enregistrement redémarre le jeu (comme Redémarrer maintenant), depuis la sauvegarde de reprise rapide ou l'écran titre, pour que le replay se déroule à l'identique. Les sauvegardes d'état, les téléportations, l'avance rapide et les modifications de l'onglet Entraînement sont désactivées pendant l'enregistrement.
+
+Your replays
+Vos replays
+
+None yet: they're kept in the replays folder of the user folder.
+Aucun pour l'instant : ils sont rangés dans le dossier replays du dossier utilisateur.
+
+Open a replay file...
+Ouvrir un fichier de replay...
+
+The game starts again to play it; Esc or B stops it.
+Le jeu redémarre pour le lire ; Échap ou B l'arrête.
+
+Recording
+Enregistrement
+
+Replay finished: Esc or B to leave
+Replay terminé : Échap ou B pour quitter
+
+Replay
+Replay
+
+Out of step since frame %ld
+Désynchronisé depuis l'image %ld
+
+Made with Paper Cut %s
+Fait avec Paper Cut %s

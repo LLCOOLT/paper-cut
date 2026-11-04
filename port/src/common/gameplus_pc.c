@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include "port/gameplus.h"
 #include "port/online.h"
+#include "port/replay.h"
 #include "port/companion.h"
 #include "port/settings.h"
 #include "mario/mario_pouch.h"
@@ -414,7 +415,7 @@ int portFastTravelUnlocked(int i) {
 }
 
 void portFastTravelRequest(int i) {
-    if (portFastTravelUnlocked(i) && !portOnlineActive()) { /* online: one game alone can't travel */
+    if (portFastTravelUnlocked(i) && !portOnlineActive() && !portReplayActive()) { /* online, replays: one game alone can't travel */
         sTravelTo = i;
     }
 }

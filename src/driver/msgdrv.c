@@ -1991,7 +1991,8 @@ static void msgWindow_Main(WindowEntry* window) {
     u32 trg;
 
 #ifdef TARGET_PC
-    portSpeechPage(window, data->page); /* the page shown now, read once */
+    /* the page shown now, read once and logged; who says it (an NPC's name, not a battle unit's) */
+    portSpeechPage(window, data->page, (data->flags & MSG_WIN_FLAG_BATTLE_UNIT) ? NULL : data->speakerName);
 #endif
     if (data->talkTimer) {
         if (!data->talkPoseSet) {

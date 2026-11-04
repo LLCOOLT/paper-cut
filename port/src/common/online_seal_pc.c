@@ -48,8 +48,28 @@ int portOpen(int channel, const unsigned char* in, size_t len, unsigned char* ou
 }
 void portSealReset(void) {}
 
+int portWatchKey(const char* code) {
+    (void)code;
+    return 0;
+}
+size_t portWatchSeal(const unsigned char* in, size_t len, unsigned char* out) {
+    (void)in;
+    (void)len;
+    (void)out;
+    return 0;
+}
+int portWatchOpen(const unsigned char* in, size_t len, unsigned char* out, size_t* outLen) {
+    (void)in;
+    (void)len;
+    (void)out;
+    (void)outLen;
+    return 0;
+}
+void portWatchReset(void) {}
+
 #else
 
+#include <stdio.h>
 #include <string.h>
 #include <SDL3/SDL.h>
 #include <mbedtls/chachapoly.h>
@@ -58,6 +78,7 @@ void portSealReset(void) {}
 #include <mbedtls/entropy.h>
 #include <mbedtls/hkdf.h>
 #include <mbedtls/md.h>
+#include <mbedtls/pkcs5.h>
 #include <mbedtls/platform_util.h>
 #include <psa/crypto.h>
 
@@ -224,6 +245,97 @@ int portOpen(int channel, const unsigned char* in, size_t len, unsigned char* ou
     }
     SDL_UnlockMutex(sLock);
     return ok;
+}
+
+/* --- the watchers' channel: host to watchers only, its key from the whole code ---
+ * One message sealed once reaches every watcher (the relay copies it), so it
+ * can't have a key per watcher, and watchers send nothing (no J-PAKE). The key
+ * is PBKDF2 (SHA-256, many rounds) of the whole code: slow to guess, but a
+ * relay that keeps these messages could try the secret half's 31^4 values
+ * offline, which J-PAKE doesn't let it do with the players' own messages
+ * (docs/ONLINE_RELAY.md). The nonce: this program's random 4 bytes (a host
+ * started again keeps the code) and a count, both in front; a watcher takes a
+ * count only newer than the last under the same 4 bytes. */
+#define WATCH_ROUNDS 200000
+static mbedtls_chachapoly_context sWatchAead;
+static int sWatchReady;
+static unsigned char sWatchSalt[4], sWatchCode[16];
+static unsigned long long sWatchCount;
+static unsigned char sWatchLastSalt[4];
+static unsigned long long sWatchLast;
+static int sWatchHeard;
+
+void portWatchReset(void) {
+    if (sWatchReady) {
+        mbedtls_chachapoly_free(&sWatchAead);
+    }
+    sWatchReady = 0;
+    sWatchHeard = 0;
+    sWatchCode[0] = '\0';
+}
+
+int portWatchKey(const char* code) {
+    unsigned char key[32];
+    if (sWatchReady && strcmp((const char*)sWatchCode, code) == 0) {
+        return 1; /* (the same code: its key already) */
+    }
+    portWatchReset();
+    if (!rng() || strlen(code) >= sizeof(sWatchCode)) {
+        return 0;
+    }
+    if (mbedtls_pkcs5_pbkdf2_hmac_ext(MBEDTLS_MD_SHA256, (const unsigned char*)code, strlen(code),
+                                      (const unsigned char*)"Paper Cut online watching", 25, WATCH_ROUNDS,
+                                      sizeof(key), key) != 0) {
+        return 0;
+    }
+    mbedtls_chachapoly_init(&sWatchAead);
+    mbedtls_chachapoly_setkey(&sWatchAead, key);
+    mbedtls_platform_zeroize(key, sizeof(key));
+    mbedtls_ctr_drbg_random(&sDrbg, sWatchSalt, sizeof(sWatchSalt));
+    sWatchCount = 0;
+    snprintf((char*)sWatchCode, sizeof(sWatchCode), "%s", code);
+    sWatchReady = 1;
+    return 1;
+}
+
+size_t portWatchSeal(const unsigned char* in, size_t len, unsigned char* out) {
+    unsigned char iv[12];
+    int i;
+    if (!sWatchReady) {
+        return 0;
+    }
+    memcpy(iv, sWatchSalt, 4);
+    for (i = 0; i < 8; i++) {
+        iv[4 + i] = (unsigned char)(sWatchCount >> (8 * i));
+    }
+    sWatchCount++;
+    memcpy(out, iv, 12);
+    mbedtls_chachapoly_encrypt_and_tag(&sWatchAead, len, iv, NULL, 0, in, out + 12, out + 12 + len);
+    return len + PORT_WATCH_OVERHEAD;
+}
+
+int portWatchOpen(const unsigned char* in, size_t len, unsigned char* out, size_t* outLen) {
+    unsigned long long count = 0;
+    size_t body;
+    int i;
+    if (!sWatchReady || len < PORT_WATCH_OVERHEAD) {
+        return 0;
+    }
+    for (i = 0; i < 8; i++) {
+        count |= (unsigned long long)in[4 + i] << (8 * i);
+    }
+    if (sWatchHeard && memcmp(in, sWatchLastSalt, 4) == 0 && count <= sWatchLast) {
+        return 0; /* not newer than the last: a repeat */
+    }
+    body = len - PORT_WATCH_OVERHEAD;
+    if (mbedtls_chachapoly_auth_decrypt(&sWatchAead, body, in, NULL, 0, in + 12 + body, in + 12, out) != 0) {
+        return 0;
+    }
+    memcpy(sWatchLastSalt, in, 4);
+    sWatchLast = count;
+    sWatchHeard = 1;
+    *outLen = body;
+    return 1;
 }
 
 #endif

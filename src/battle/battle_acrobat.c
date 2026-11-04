@@ -8,6 +8,9 @@
 #include "driver/icondrv.h"
 #include "icon_ids.h"
 #include "version.h"
+#ifdef TARGET_PC
+#include "port/battle_speed.h"
+#endif
 #ifdef PORT_MODS
 #include "port/hooks/src_battle_battle_acrobat.h"
 #endif
@@ -49,6 +52,9 @@ s32 PORT_HOOKABLE(BattleAcrobatMain)(BattleWork* work) {
     manager = &work->actionCommands;
     unit = BattleGetUnitPtr(work, work->stylishUnitId);
     doSimplified = FALSE;
+#ifdef TARGET_PC
+    portBattleSpeedMark(); // faster battles: 1x while a Stylish move is checked
+#endif
     work->stylishCurFrame++;
     if (!unit) {
         work->stylishResult = 1;

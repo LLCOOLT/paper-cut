@@ -2,6 +2,9 @@
 #pragma optimize_for_size on
 #include "port_hook.h"
 #include <dolphin/pad.h>
+#ifdef TARGET_PC
+#include "port/assist.h"
+#endif
 #include "driver/fadedrv.h"
 #include "eff/eff_starstone.h"
 #include "pc_call.h"
@@ -486,6 +489,9 @@ static USER_FUNC(zubastar_main) {
                 psndSFXOff(w->sfx);
                 break;
             }
+#ifdef TARGET_PC
+            portMashWanted(PAD_BUTTON_A); /* hold instead of mashing (port/include/port/assist.h) */
+#endif
             if (keyGetButtonTrg(0) & PAD_BUTTON_A)
                 w->gaugeV = 2.8f;
             break;
