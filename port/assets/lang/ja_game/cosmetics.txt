@@ -54,12 +54,6 @@ Mario's cap and shirt
 Mario's overalls
 マリオのオーバーオール
 
-Partner's colour
-なかまの色
-
-Goombella's hair and Vivian's body: the partners whose colour comes away cleanly.
-クリスチーヌのかみと　ビビアンのからだ：色をきれいに　かえられる　なかま
-
 HP banner
 ＨＰのおび
 
@@ -71,3 +65,18 @@ FP banner
 
 Star Power banner
 スターパワーのおび
+
+Goombella's hair
+クリスチーヌのかみ
+
+Flurrie's hair
+クラウダのかみ
+
+Bobbery's body
+サンダースのからだ
+
+Ms. Mowz's mask and cape
+チュチュリーナのマスクとマント
+
+Vivian's body
+ビビアンのからだ

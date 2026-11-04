@@ -6,6 +6,7 @@
 // Ctrl+click (or a double-click) to type a value. The volume keys work in the
 // game and the launcher: F9 quieter, F10 louder (Shift: a step of 1), F3 mute,
 // with a bar shown on the screen for a moment.
+#include "port/bindings.h"
 #include "port/settings.h"
 #include "port/tr.h"
 
@@ -218,29 +219,24 @@ void drawBar(int pageOpen) {
   dl->AddText(font, fs, ImVec2(at.x + size.x - 12.f * u - ts.x, y - ts.y * 0.5f), fg, text);
 }
 
-int volumeKeys(const void* ev) {
-  const SDL_Event* e = static_cast<const SDL_Event*>(ev);
-  if (e->type != SDL_EVENT_KEY_DOWN) {
-    return 0;
-  }
-  if (ImGui::GetCurrentContext() != nullptr && ImGui::GetIO().WantTextInput) {
-    return 0; // typing in a box
-  }
+// the volume's bindings (Controls > Bindings; F9 down, F10 up, F3 mute): dir
+// -1, +1, or 0 for mute; with Shift held, steps of 1 instead of 5
+int volumeKey(int dir, int repeat) {
   PortSettings* s = portSettings();
   int* mute = portSettingsDeclare("mute", 0, 0, 1);
-  const int step = (e->key.mod & SDL_KMOD_SHIFT) ? 1 : 5;
-  if (e->key.key == SDLK_F9 || e->key.key == SDLK_F10) {
-    s->volume = std::clamp(s->volume + (e->key.key == SDLK_F10 ? step : -step), 0, 100);
-    if (e->key.key == SDLK_F10) {
+  const int step = (SDL_GetModState() & SDL_KMOD_SHIFT) ? 1 : 5;
+  if (dir != 0) {
+    s->volume = std::clamp(s->volume + dir * step, 0, 100);
+    if (dir > 0) {
       *mute = 0;
     }
-  } else if (e->key.key == SDLK_F3 && !e->key.repeat) {
+  } else if (!repeat) {
     *mute = !*mute;
   } else {
-    return 0;
+    return 1;
   }
   portSettingsApply();
-  if (!e->key.repeat) {
+  if (!repeat) {
     portSettingsSave();
   } else {
     // held: saved once it's let go would need the key-up; a save every few steps is enough
@@ -269,7 +265,10 @@ struct VolumeSettings {
     portSettingsAddSection("Audio", "Volume", nullptr, 0, mixerSection,
                            "sound loud quiet mute master music bgm songs sfx sound effects ambience environment "
                            "background focus f9 f10 f3 keys");
-    portSettingsAddOverlay(drawBar, volumeKeys);
+    portSettingsAddOverlay(drawBar, nullptr);
+    portBindingsSetHandler(PORT_BIND_VOLUME_DOWN, [](int, int repeat) { return volumeKey(-1, repeat); });
+    portBindingsSetHandler(PORT_BIND_VOLUME_UP, [](int, int repeat) { return volumeKey(1, repeat); });
+    portBindingsSetHandler(PORT_BIND_MUTE, [](int, int repeat) { return volumeKey(0, repeat); });
   }
 } sVolume;
 

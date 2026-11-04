@@ -1,0 +1,161 @@
+# The Start menu's bindings page, in the JP release's font (kana and its few kanji:
+# tools/port/gen_lang.py checks), words apart as the game's own text is.
+
+Bindings...
+キー　わりあて...
+
+Every key and controller button: the game's, and Paper Cut's own shortcuts.
+すべての　キーと　コントローラーの　ボタン　ゲームのものと　Paper Cutの　ショートカット
+
+The game's buttons
+ゲームの　ボタン
+
+Paper Cut's actions
+Paper Cutの　アクション
+
+Keyboard
+キーボード
+
+Controller
+コントローラー
+
+Reset all
+すべて　もとに　もどす
+
+A: every key and button back as they first were.
+A：すべての　キーと　ボタンを　さいしょの　とおりに　もどします
+
+Press a key. B: leave it as it is.
+キーを　おしてください　B：そのまま
+
+Press a button.
+ボタンを　おしてください
+
+Also %s.
+%sにも　なっています
+
+A: change. X: reset the row.
+A：かえる　X：この　ぎょうを　もとに　もどす
+
+A: change. X: reset the row. B: back.
+A：かえる　X：この　ぎょうを　もとに　もどす　B：もどる
+
+Press a key...
+キーを　おしてください...
+
+Press a button...
+ボタンを　おしてください...
+
+Press a button (or two)...
+ボタンを　おしてください（ふたつでも）...
+
+(none)
+（なし）
+
+No controller
+コントローラーなし
+
+Start
+スタート
+
+D-pad up
+じゅうじキー上
+
+D-pad down
+じゅうじキー下
+
+D-pad left
+じゅうじキー左
+
+D-pad right
+じゅうじキー右
+
+Stick up
+スティック上
+
+Stick down
+スティック下
+
+Stick left
+スティック左
+
+Stick right
+スティック右
+
+C-stick up
+Cスティック上
+
+C-stick down
+Cスティック下
+
+C-stick left
+Cスティック左
+
+C-stick right
+Cスティック右
+
+Left stick left
+左スティック左
+
+Left stick right
+左スティック右
+
+Left stick up
+左スティック上
+
+Left stick down
+左スティック下
+
+Right stick left
+右スティック左
+
+Right stick right
+右スティック右
+
+Right stick up
+右スティック上
+
+Right stick down
+右スティック下
+
+Settings (open, close)
+せってい（ひらく　とじる）
+
+Fast-forward
+はやおくり
+
+Fast-forward on and off
+はやおくりの　オン　オフ
+
+Rewind (held)
+まきもどし（おしている　あいだ）
+
+Screenshot
+スクリーンショット
+
+Save state
+ステートセーブ
+
+Load state
+ステートロード
+
+Frame advance (on, off)
+コマおくり（オン　オフ）
+
+Frame advance: one frame
+コマおくり：１コマ
+
+Message log
+メッセージの　きろく
+
+Window or full screen
+ウィンドウか　フルスクリーン
+
+Volume down
+おんりょうを　さげる
+
+Volume up
+おんりょうを　あげる
+
+Mute
+ミュート

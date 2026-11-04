@@ -20,6 +20,7 @@
 // before the window is made (portWindowConfig), then portWindowRestore checks
 // them against the screens once SDL is up.
 #include "port/settings.h"
+#include "port/pause_forms.h"
 #include "port/tr.h"
 
 #include <SDL3/SDL.h>
@@ -291,6 +292,61 @@ void windowTick(int) {
   }
 }
 
+// The Start menu's form (port/include/port/pause_forms.h): the size, kept on top, remembered
+constexpr float kFormScales[] = {1.f, 1.5f, 2.f, 3.f, 4.f};
+constexpr const char* kFormScaleNames[] = {"1x", "1.5x", "2x", "3x", "4x"};
+
+int formScale() { // the size nearest the window's now
+  int width = 0, height = 0;
+  if (SDL_Window* w = window()) {
+    SDL_GetWindowSize(w, &width, &height);
+  }
+  int best = 0;
+  for (int i = 1; i < 5; i++) {
+    if (std::fabs(480 * kFormScales[i] - height) < std::fabs(480 * kFormScales[best] - height)) {
+      best = i;
+    }
+  }
+  return best;
+}
+
+int formRows(PortPauseRow* out, int max) {
+  if (max < 3) {
+    return 0;
+  }
+  Saved& s = saved();
+  out[0] = PortPauseRow{"Window size", "The window this many times the game's picture; left and right change it.",
+                        {}, {}, kFormScaleNames[formScale()], 0, 0};
+  out[1] = PortPauseRow{"Keep the window above others", nullptr, {}, {}, *s.onTop ? "On" : "Off", 1, 0};
+  out[2] = PortPauseRow{"Remember the window's size and place", nullptr, {}, {}, *s.remember ? "On" : "Off", 2, 0};
+  return 3;
+}
+
+const char* formAct(int id, int dir) {
+  Saved& s = saved();
+  if (id == 0) {
+    SDL_Window* w = window();
+    const SDL_Rect area = usableBounds(w);
+    int to = formScale() + (dir == 0 ? 1 : dir);
+    to = (to + 5) % 5;
+    const int height = static_cast<int>(480 * kFormScales[to]);
+    if (height > area.h || static_cast<int>(std::lround(height * pictureAspect())) > area.w) {
+      return "That size is larger than this screen.";
+    }
+    sizeTo(kFormScales[to]);
+  } else if (id == 1) {
+    *s.onTop = !*s.onTop;
+    applyOnTop();
+    portSettingsSave();
+  } else if (id == 2) {
+    *s.remember = !*s.remember;
+    portSettingsSave();
+  }
+  return nullptr;
+}
+
+const PortPauseForm kForm = {"Display", "Window", formRows, formAct};
+
 struct WindowSettings {
   WindowSettings() {
     saved();
@@ -299,6 +355,7 @@ struct WindowSettings {
                            "windowed size scale 1x 2x 3x resize centre center fit bars maximize always on top "
                            "remember position alt enter");
     portSettingsAddOverlay(windowTick, windowEvent);
+    portPauseAddForm(&kForm);
 #endif
   }
 } sWindow;

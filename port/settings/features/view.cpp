@@ -11,7 +11,7 @@ const bool sAdded = [] {
                         "In the field, the right stick turns the camera a little around Mario and moves it in or "
                         "out. Let go and it eases back.",
                         0, "free_camera", "camera c-stick right stick orbit rotate zoom look around view angle");
-  portSettingsAddToggle("Display", "Mirror mode",
+  portSettingsAddToggle("Gameplay", "Mirror mode",
                         "The world flipped left to right, with the stick and D-pad turned around to match while "
                         "Mario walks. Menus and messages stay readable.",
                         0, "mirror_mode", "mirror flip flipped reverse left right horizontal");

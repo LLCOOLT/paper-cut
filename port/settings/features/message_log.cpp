@@ -8,6 +8,7 @@
 //   wheel, Up/Down, PageUp/PageDown, Home/End   scroll
 //   stick / d-pad (while held)                  scroll
 //   L, Esc / B                                  back to the game
+#include "port/bindings.h"
 #include "port/online.h"
 #include "port/practice.h"
 #include "port/settings.h"
@@ -110,18 +111,6 @@ void close() {
 }
 
 SDL_Gamepad* pad() { return SDL_GetGamepadFromPlayerIndex(0); }
-
-// L opens it, unless the player gave L to a game button
-bool lFree() {
-  u32 count = 0;
-  const PADKeyButtonBinding* keys = PADGetKeyButtonBindings(0, &count);
-  for (u32 i = 0; keys != nullptr && i < count; i++) {
-    if (keys[i].scancode == SDL_SCANCODE_L) {
-      return false;
-    }
-  }
-  return true;
-}
 
 // Tests: $TTYD_MESSAGE_LOG_TEST=<pages>: once that many pages are in the log,
 // the log open 30 presented frames later for 8 seconds (a window capture
@@ -246,14 +235,9 @@ int event(const void* e) {
   if (ev->type == SDL_EVENT_KEY_DOWN) {
     const SDL_Scancode k = ev->key.scancode;
     if (!sView.open) {
-      if (k == SDL_SCANCODE_L && !ev->key.repeat && lFree()) {
-        open();
-        return 1;
-      }
-      return 0;
+      return 0; // (L opens it: the Message log binding, below)
     }
     switch (k) {
-    case SDL_SCANCODE_L:
     case SDL_SCANCODE_ESCAPE:
       if (!ev->key.repeat) {
         close();
@@ -305,6 +289,13 @@ const bool sAdded = [] {
                          PORT_SETTING_IN_GAME, section,
                          "message log history backlog transcript conversation dialogue text read again scroll back");
   portSettingsAddOverlay(draw, event);
+  // the Message log binding (Controls > Bindings, L): open, and closed again
+  portBindingsSetHandler(PORT_BIND_MESSAGE_LOG, [](int, int repeat) {
+    if (!repeat) {
+      sView.open ? close() : open();
+    }
+    return 1;
+  });
   msgtext::listen(add, nullptr);
   return true;
 }();

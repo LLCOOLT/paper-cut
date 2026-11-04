@@ -247,7 +247,7 @@ typedef struct WindowWork {
     s32 tabSel;               // 0x40
     s32 tabNum;               // 0x44
 #ifdef TARGET_PC
-    WinTab tab[6]; // a sixth: Paper Cut's Settings (port/src/aurora/pause_settings_aurora.c)
+    WinTab tab[7]; // and two of Paper Cut's: the Wardrobe and Settings (port/include/port/pause_settings.h)
 #else
     WinTab tab[5];            // 0x48
 #endif

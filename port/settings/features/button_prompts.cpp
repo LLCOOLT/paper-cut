@@ -176,6 +176,21 @@ std::string plan(GlyphStyle style, GlyphSpec specs[8], std::string labels[8]) {
         }
       }
       specs[b].face = faceOf(native, b);
+      if (native == PAD_NATIVE_BUTTON_INVALID && maps != nullptr && (b == 5 || b == 6)) {
+        // L or R on an axis: the trigger it is now (Controls > Bindings can put L on the right one)
+        u32 na = 0;
+        const PADAxisMapping* axes = PADGetAxisMappings(0, &na);
+        const u16 want = b == 5 ? PAD_AXIS_TRIGGER_L : PAD_AXIS_TRIGGER_R;
+        for (u32 i = 0; axes != nullptr && i < na; i++) {
+          if (axes[i].padAxis == want) {
+            const int ax = axes[i].nativeAxis.nativeAxis;
+            if (ax == SDL_GAMEPAD_AXIS_LEFT_TRIGGER || ax == SDL_GAMEPAD_AXIS_RIGHT_TRIGGER) {
+              specs[b].face = ax == SDL_GAMEPAD_AXIS_LEFT_TRIGGER ? GlyphFace::LeftTrigger : GlyphFace::RightTrigger;
+            }
+            key += "|a" + std::to_string(ax);
+          }
+        }
+      }
       if (specs[b].face == GlyphFace::Other) {
         // a short name on the pill: L3, R4, DU (the d-pad's up), Sha(re)
         std::string n = nativeButtonLabel(style, native, kPadButtons[b]);

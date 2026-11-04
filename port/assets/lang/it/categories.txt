@@ -1,0 +1,19 @@
+# The settings' categories (port/settings/settings_ui.cpp's kTabs), in italiano: an English line, then its translation, then a blank line.
+
+Enhancements
+Miglioramenti
+
+Graphics
+Grafica
+
+Interface
+Interfaccia
+
+Language
+Lingua
+
+General
+Generale
+
+Multiplayer
+Multigiocatore

@@ -5,10 +5,18 @@
 #include "port/companion_section.h"
 #include "port/companion_menu.h"
 #include "port/speech.h"
+#include "port/menu_speed.h"
 #include "wide_x.h"
 #endif
 #include "version.h"
 #include "port_hook.h"
+
+#ifdef TARGET_PC
+/* a slide's length in frames, at the player's menu speed (port/include/port/menu_speed.h) */
+#define WIN_SLIDE(n) portMenuFrames(FPS_FRAMES(n))
+#else
+#define WIN_SLIDE(n) FPS_FRAMES(n)
+#endif
 #include "win/win_main.h"
 #include "battle/battle_monosiri.h"
 #include "data/item_data.h"
@@ -87,12 +95,12 @@ void winRootBgCaptureDisp(CameraId camId, void* param);
 
 #ifdef TTYD_BACKEND_AURORA
 #include "port/pause_settings.h"
-/* a sixth tab, Paper Cut's Settings: the row a little closer together */
-#define WIN_ROOT_TABS 6
-#define WIN_ROOT_TAB_LAST 5
+/* two more tabs, Paper Cut's Wardrobe and Settings: the row a little closer together */
+#define WIN_ROOT_TABS 7
+#define WIN_ROOT_TAB_LAST 6
 #define WIN_ROOT_TAB_X(w, i) portPauseTabX((w)->tabNum, (i))
 /* the help box's hand under the selected tab */
-#define WIN_ROOT_HELP_X(w) (WIN_ROOT_TAB_X(w, (w)->tabSel) - ((w)->tabNum >= 6 ? 60 : 65))
+#define WIN_ROOT_HELP_X(w) (WIN_ROOT_TAB_X(w, (w)->tabSel) - ((w)->tabNum >= 7 ? 52 : (w)->tabNum >= 6 ? 60 : 65))
 #else
 #define WIN_ROOT_TABS 5
 #define WIN_ROOT_TAB_LAST 4
@@ -180,7 +188,7 @@ static inline void winRootTabMain(WindowWork* w) {
             case 0:
                 w->tab[i].x = WIN_ROOT_TAB_X(w, i);
                 w->tab[i].y = 300.0f;
-                w->tab[i].timer = i << 2;
+                w->tab[i].timer = WIN_SLIDE(i << 2);
                 w->tab[i].state++;
                 break;
             case 1:
@@ -191,18 +199,18 @@ static inline void winRootTabMain(WindowWork* w) {
                 }
                 break;
             case 2:
-                w->tab[i].y = intplGetValue(11, 300.0f, 185.0f, w->tab[i].timer++, FPS_FRAMES(10));
-                if (w->tab[i].timer > FPS_FRAMES(10)) {
+                w->tab[i].y = intplGetValue(11, 300.0f, 185.0f, w->tab[i].timer++, WIN_SLIDE(10));
+                if (w->tab[i].timer > WIN_SLIDE(10)) {
                     w->tab[i].state++;
                 }
                 break;
             case 10:
-                w->tab[i].timer = (WIN_ROOT_TAB_LAST - i) * 4;
+                w->tab[i].timer = WIN_SLIDE((WIN_ROOT_TAB_LAST - i) * 4);
                 w->tab[i].state++;
                 break;
             case 12:
-                w->tab[i].y = intplGetValue(11, 180.0f, 300.0f, w->tab[i].timer++, FPS_FRAMES(10));
-                if (w->tab[i].timer > FPS_FRAMES(10)) {
+                w->tab[i].y = intplGetValue(11, 180.0f, 300.0f, w->tab[i].timer++, WIN_SLIDE(10));
+                if (w->tab[i].timer > WIN_SLIDE(10)) {
                     w->tab[i].state++;
                 }
                 break;
@@ -231,6 +239,7 @@ s32 PORT_HOOKABLE(winRootMain)(WindowWork* w) {
 #ifdef TTYD_BACKEND_AURORA
         "pc_menu_kiroku",   /* the Journal's, with Y for a hint (port/src/aurora/journal_hint_aurora.c) */
         "pc_menu_settings", /* Paper Cut's Settings (port/src/aurora/pause_settings_aurora.c) */
+        "pc_menu_wardrobe", /* Paper Cut's Wardrobe (port/src/aurora/wardrobe_aurora.c) */
 #else
         "msg_menu_kiroku",
 #endif
@@ -256,8 +265,10 @@ s32 PORT_HOOKABLE(winRootMain)(WindowWork* w) {
             }
             WIN_ROOT_ADD_TAB(4);
 #ifdef TTYD_BACKEND_AURORA
-            /* the second screen's menu has no Settings (they are the player's, not its own) */
+            /* the second screen's menu has no Wardrobe or Settings (they are the player's, not its own) */
             if (!gPortCompanionMenu) {
+                WIN_ROOT_ADD_TAB(PORT_PAUSE_WARDROBE_TAB);
+                portPauseWardrobeInit(w);
                 WIN_ROOT_ADD_TAB(PORT_PAUSE_SETTINGS_TAB);
                 portPauseSettingsInit(w);
             }
@@ -383,6 +394,9 @@ s32 PORT_HOOKABLE(winRootMain)(WindowWork* w) {
                     case PORT_PAUSE_SETTINGS_TAB:
                         portPauseSettingsInit2(w);
                         break;
+                    case PORT_PAUSE_WARDROBE_TAB:
+                        portPauseWardrobeInit2(w);
+                        break;
 #endif
                 }
 #if VERSION >= VERSION_US
@@ -441,11 +455,15 @@ s32 PORT_HOOKABLE(winRootMain)(WindowWork* w) {
         case 15:
 #ifdef TTYD_BACKEND_AURORA
         case PORT_PAUSE_SETTINGS_TAB + 11:
+        case PORT_PAUSE_WARDROBE_TAB + 11:
 #endif
             switch (w->active) {
 #ifdef TTYD_BACKEND_AURORA
                 case PORT_PAUSE_SETTINGS_TAB + 11:
                     ret = portPauseSettingsMain(w);
+                    break;
+                case PORT_PAUSE_WARDROBE_TAB + 11:
+                    ret = portPauseWardrobeMain(w);
                     break;
 #endif
                 case 11:
@@ -513,6 +531,9 @@ s32 PORT_HOOKABLE(winRootMain)(WindowWork* w) {
                 winItemExit(w);
                 winBadgeExit(w);
                 winLogExit(w);
+#ifdef TTYD_BACKEND_AURORA
+                portPauseWardrobeExit(w);
+#endif
                 if (w->party.switchRequested && w->party.cursor != w->party.openCursor) {
                     return -2;
                 }
@@ -622,6 +643,9 @@ void PORT_HOOKABLE(winRootDisp)(s32 camId, WindowWork* wp) {
                 case PORT_PAUSE_SETTINGS_TAB:
                     portPauseSettingsDisp(camId, wp, i);
                     break;
+                case PORT_PAUSE_WARDROBE_TAB:
+                    portPauseWardrobeDisp(camId, wp, i);
+                    break;
 #endif
             }
         }
@@ -658,6 +682,10 @@ static inline void winTabDisp(WindowWork* wp) {
                 portPauseSettingsTabDisp(wp, wp->tab[i].x, wp->tab[i].y, s, c);
                 continue;
             }
+            if (wp->tab[i].id == PORT_PAUSE_WARDROBE_TAB) {
+                portPauseWardrobeTabDisp(wp, wp->tab[i].x, wp->tab[i].y, s, c);
+                continue;
+            }
             winTexInit_x2((TEXPalette*)*wp->res->data);
             winTexSet_x2(wp->tab[i].id + 1, 0xB2, (Vec){wp->tab[i].x, wp->tab[i].y, 0.0f}, (Vec){s, s, 1.0f}, c);
         }
@@ -687,8 +715,8 @@ static void winBgMain(WindowWork* wp) {
                 wp->menu[i].state++;
                 break;
             case 1:
-                wp->menu[i].x = intplGetValue(11, 800.0f, 0.0f, wp->menu[i].timer++, FPS_FRAMES(16));
-                if (wp->menu[i].timer > FPS_FRAMES(16)) {
+                wp->menu[i].x = intplGetValue(11, 800.0f, 0.0f, wp->menu[i].timer++, WIN_SLIDE(16));
+                if (wp->menu[i].timer > WIN_SLIDE(16)) {
                     wp->menu[i].state = 100;
                 }
                 break;
@@ -698,8 +726,8 @@ static void winBgMain(WindowWork* wp) {
                 wp->menu[i].state++;
                 break;
             case 11:
-                wp->menu[i].x = intplGetValue(11, 0.0f, 800.0f, wp->menu[i].timer++, FPS_FRAMES(16));
-                if (wp->menu[i].timer > FPS_FRAMES(16)) {
+                wp->menu[i].x = intplGetValue(11, 0.0f, 800.0f, wp->menu[i].timer++, WIN_SLIDE(16));
+                if (wp->menu[i].timer > WIN_SLIDE(16)) {
                     wp->menu[i].state = -1;
                 }
                 break;
@@ -709,8 +737,8 @@ static void winBgMain(WindowWork* wp) {
                 wp->menu[i].state++;
                 break;
             case 21:
-                wp->menu[i].x = intplGetValue(11, 640.0f, 0.0f, wp->menu[i].timer++, FPS_FRAMES(24));
-                if (wp->menu[i].timer > FPS_FRAMES(24)) {
+                wp->menu[i].x = intplGetValue(11, 640.0f, 0.0f, wp->menu[i].timer++, WIN_SLIDE(24));
+                if (wp->menu[i].timer > WIN_SLIDE(24)) {
                     wp->menu[i].state = 100;
                 }
                 break;
@@ -720,8 +748,8 @@ static void winBgMain(WindowWork* wp) {
                 wp->menu[i].state++;
                 break;
             case 31:
-                wp->menu[i].x = intplGetValue(11, -640.0f, 0.0f, wp->menu[i].timer++, FPS_FRAMES(24));
-                if (wp->menu[i].timer > FPS_FRAMES(24)) {
+                wp->menu[i].x = intplGetValue(11, -640.0f, 0.0f, wp->menu[i].timer++, WIN_SLIDE(24));
+                if (wp->menu[i].timer > WIN_SLIDE(24)) {
                     wp->menu[i].state = 100;
                 }
                 break;
@@ -731,8 +759,8 @@ static void winBgMain(WindowWork* wp) {
                 wp->menu[i].state++;
                 break;
             case 41:
-                wp->menu[i].x = intplGetValue(11, 0.0f, -640.0f, wp->menu[i].timer++, FPS_FRAMES(24));
-                if (wp->menu[i].timer > FPS_FRAMES(24)) {
+                wp->menu[i].x = intplGetValue(11, 0.0f, -640.0f, wp->menu[i].timer++, WIN_SLIDE(24));
+                if (wp->menu[i].timer > WIN_SLIDE(24)) {
                     wp->menu[i].state = -1;
                 }
                 break;
@@ -784,6 +812,11 @@ void PORT_HOOKABLE(winBgGX)(WindowWork* wp, s32 type, f32 x, f32 y) {
             GXSetTevColor(GX_TEVREG0, (GXColor){0x6E, 0x5A, 0xB4, 0xFF});
             GXSetTevColor(GX_TEVREG1, (GXColor){0xAC, 0xA0, 0xD8, 0xFF});
             GXSetTevColor(GX_TEVREG2, (GXColor){0xD4, 0xCE, 0xEC, 0xFF});
+            break;
+        case PORT_PAUSE_WARDROBE_TAB: /* Paper Cut's Wardrobe: teal */
+            GXSetTevColor(GX_TEVREG0, (GXColor){0x2A, 0x9A, 0x8E, 0xFF});
+            GXSetTevColor(GX_TEVREG1, (GXColor){0x86, 0xCB, 0xC2, 0xFF});
+            GXSetTevColor(GX_TEVREG2, (GXColor){0xC2, 0xE6, 0xE0, 0xFF});
             break;
 #endif
     }
@@ -1046,9 +1079,10 @@ void PORT_HOOKABLE(winMsgEntry)(WindowWork* wp, s32 item, const char* msg, const
             strncpy(_tmp, msg, 60);
 #ifdef TARGET_PC
             /* read aloud (port/include/port/speech.h); not the second screen's copy of the
-               menu, nor the Settings tab's notes (it reads its rows whole) */
+               menu, nor the Settings or Wardrobe tab's notes (they read their rows whole) */
 #ifdef TTYD_BACKEND_AURORA
-            if (!gPortCompanionMenu && wp->active != PORT_PAUSE_SETTINGS_TAB + 11)
+            if (!gPortCompanionMenu && wp->active != PORT_PAUSE_SETTINGS_TAB + 11 &&
+                wp->active != PORT_PAUSE_WARDROBE_TAB + 11)
 #else
             if (!gPortCompanionMenu)
 #endif

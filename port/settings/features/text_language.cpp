@@ -132,7 +132,7 @@ struct TextLanguageSettings {
   TextLanguageSettings() {
     sLanguage = portSettingsDeclare("text_language", 0, 0, 4);
     if (std::strcmp(PORT_GAME_ID, "G8ME01") == 0) {
-      portSettingsAddChoice("Gameplay", "Text language",
+      portSettingsAddChoice("Language", "Text language",
                             "The European release's text, read from its disc image in the launcher's library.",
                             PORT_SETTING_NEXT_START, "text_language", kChoices, 5,
                             "language german deutsch french francais spanish espanol italian italiano text pal");

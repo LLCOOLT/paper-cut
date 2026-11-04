@@ -126,7 +126,7 @@ void playersSection(int) {
 struct SecondPlayerSettings {
   SecondPlayerSettings() {
     sOn = portSettingsDeclare("second_player", 0, 0, 1);
-    portSettingsAddToggle("Controls", "Second player (co-op)",
+    portSettingsAddToggle("Multiplayer", "Second player (co-op)",
                           "Player 2 plays the partner: once it's on, A on another controller joins. In battle: its "
                           "moves, its action commands and its guards. In the field: the stick walks it anywhere, A "
                           "hops, B talks to or hits what it's next to, X is its ability, L or R the next partner. "
@@ -134,7 +134,7 @@ struct SecondPlayerSettings {
                           "or tablet, pair two controllers.",
                           PORT_SETTING_CHANGES_PLAY, "second_player",
                           "second player two players co-op coop multiplayer partner controller 2 p2 join");
-    portSettingsAddSection("Controls", "Players", nullptr, 0, playersSection,
+    portSettingsAddSection("Multiplayer", "Players", nullptr, 0, playersSection,
                            "players controller 2 second p2 join co-op coop keyboard");
     portSettingsAddOverlay(nullptr, inputEvent);
   }

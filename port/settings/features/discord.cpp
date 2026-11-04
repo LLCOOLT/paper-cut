@@ -66,6 +66,7 @@
 #endif
 
 extern "C" int portDiscordGame(char* map, int size, int* inBattle); // discord_aurora.c
+extern "C" int portDiscordStory(int* chapter, int* level);            // discord_aurora.c
 
 namespace {
 
@@ -154,11 +155,36 @@ std::string currentActivity() {
                       : twoPlayers         ? "Playing co-op"
                       : area != nullptr    ? "Exploring"
                                            : nullptr; // nothing to explore on the title screen
+  // the second line: the chapter and Mario's level, then what he's doing
+  std::string line;
+  int chapter = 0, level = 0;
+  if (area != nullptr && portDiscordStory(&chapter, &level)) {
+    char buf[96];
+    if (chapter == 0) {
+      std::snprintf(buf, sizeof buf, "%s", portTr("Prologue"));
+    } else if (chapter <= 8) {
+      std::snprintf(buf, sizeof buf, portTr("Chapter %d"), chapter);
+    } else {
+      std::snprintf(buf, sizeof buf, "%s", portTr("Post-game"));
+    }
+    line = buf;
+    if (level > 0) {
+      std::snprintf(buf, sizeof buf, portTr("Lv %d"), level);
+      line += " Â· "; // " · "
+      line += buf;
+    }
+  }
+  if (state != nullptr) {
+    if (!line.empty()) {
+      line += " Â· ";
+    }
+    line += portTr(state);
+  }
   std::string a = "{\"details\":";
   appendJson(a, details.c_str());
-  if (state != nullptr) {
+  if (!line.empty()) {
     a += ",\"state\":";
-    appendJson(a, portTr(state));
+    appendJson(a, line.c_str());
   }
   a += ",\"timestamps\":{\"start\":" + std::to_string(sStart) + "}";
   a += ",\"assets\":{\"large_image\":\"logo\",\"large_text\":\"Paper Cut\"}";
@@ -492,7 +518,7 @@ int shown() { return kAppId[0] != '\0'; }
 
 const bool sAdded = [] {
   sOn = portSettingsDeclare("discord_status", 1, 0, 1);
-  portSettingsAddToggle("System", "Discord status",
+  portSettingsAddToggle("General", "Discord status",
                         "While Discord runs on this computer, your profile shows that you're playing Paper Cut: "
                         "the area you're in, and whether you're in battle, exploring or playing co-op.",
                         0, "discord_status", "discord status rich presence profile activity playing");

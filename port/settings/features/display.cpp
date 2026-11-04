@@ -91,7 +91,7 @@ const bool sAdded = [] {
                         "In the rooms whose sets end before a wide screen's edges, and in battles past 16:9, bars "
                         "beside the picture instead of the empty space past the set.",
                         0, "aspect_scene_limits", "ultrawide room void black edges pillarbox battle");
-  portSettingsAddSlider("Display", "HUD size",
+  portSettingsAddSlider("Interface", "HUD size",
                         "The status bar, message windows and battle menus, larger or smaller than the game's.", 0,
                         "hud_scale", 50, 150, "%d%%", "hud scale ui interface status bar text size");
   // port/src/aurora/hud_aurora.c
@@ -99,21 +99,21 @@ const bool sAdded = [] {
                         "The message and choice windows larger, on top of HUD size. A window grows only while it fits "
                         "the screen: a little in 4:3, up to about 145% in widescreen.",
                         0, "text_scale", 100, 150, "%d%%", "bigger text font message dialogue window large read");
-  portSettingsAddChoice("Display", "Anisotropic filtering", "Textures seen at an angle (floors, paths) stay sharp.", 0,
+  portSettingsAddChoice("Graphics", "Anisotropic filtering", "Textures seen at an angle (floors, paths) stay sharp.", 0,
                         "aniso", kAniso, 5, "aniso texture filtering af");
-  portSettingsAddChoice("Display", "Texture detail", "Which of a texture's detail levels is used at a distance.", 0,
+  portSettingsAddChoice("Graphics", "Texture detail", "Which of a texture's detail levels is used at a distance.", 0,
                         "lod_bias", kLodBias, 5, "lod bias mipmap texture sharp");
   // port/src/aurora/upscale_aurora.c
-  portSettingsAddChoice("Display", "Texture upscaling",
+  portSettingsAddChoice("Graphics", "Texture upscaling",
                         "The game's textures made larger by an edge-following filter as they load: smoother lines "
                         "on paper and signs. More video memory. From the next start.",
                         PORT_SETTING_NEXT_START, "texture_upscale", kUpscale, 3,
                         "upscale texture hd enhance resolution filter smooth");
-  portSettingsAddChoice("Display", "Supersampling",
+  portSettingsAddChoice("Graphics", "Supersampling",
                         "Draws the picture several times larger than the window and shrinks it: smoother edges, "
                         "much more work for the graphics card.",
                         0, "supersample", kSupersample, 4, "ssaa anti-aliasing downsample resolution");
-  portSettingsAddChoice("Display", "Picture filter", nullptr, 0, "post_filter", kPost, 4,
+  portSettingsAddChoice("Graphics", "Picture filter", nullptr, 0, "post_filter", kPost, 4,
                         "crt scanlines paper grain sharpen post-processing shader");
   portSettingsAddToggle("Display", "Variable refresh rate (G-Sync, FreeSync)",
                         "Each frame shown as soon as it is ready, without waiting for the screen. For VRR "
@@ -124,7 +124,7 @@ const bool sAdded = [] {
                          "with the brightest highlights optionally a little brighter. The game itself is SDR; this "
                          "does not add detail it does not have.",
                          0, hdrSection, "hdr high dynamic range nits brightness paper white edr scrgb hdr10");
-  portSettingsAddChoice("Display", "Performance overlay",
+  portSettingsAddChoice("Interface", "Performance overlay",
                         "How long each frame takes: the time between frames, and the part spent working.", 0,
                         "perf_overlay", kPerf, 3, "frame time graph pacing stutter performance fps");
   return true;

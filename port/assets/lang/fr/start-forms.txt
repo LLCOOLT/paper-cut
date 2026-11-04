@@ -1,0 +1,80 @@
+# The Start menu's forms and colour picker (port/include/port/pause_forms.h): an English line, then its translation, then a blank line.
+
+Opens Paper Cut's full settings page on this category: this one isn't in the Start menu.
+Ouvre la page complète des réglages de Paper Cut sur cette catégorie : ceci n'est pas dans le menu Start.
+
+On the full page
+Sur la page complète
+
+Full settings page...
+Page complète des réglages...
+
+Paper Cut's full settings page, over the game: every setting, and remapping, mods and practice.
+La page complète des réglages de Paper Cut, par-dessus le jeu : tous les réglages, les touches, les mods et l'entraînement.
+
+Press A again to confirm.
+Appuyez encore sur A pour confirmer.
+
+The window this many times the game's picture; left and right change it.
+La fenêtre, tant de fois l'image du jeu ; gauche et droite la changent.
+
+That size is larger than this screen.
+Cette taille dépasse cet écran.
+
+Your settings as a code, copied to paste wherever you share it.
+Vos réglages en code, copié pour le coller où vous le partagez.
+
+Put the copied code in place
+Appliquer le code copié
+
+Someone's preset code, copied: the settings that change the game put in place.
+Le code de préréglage copié de quelqu'un : les réglages qui changent le jeu sont appliqués.
+
+Preset put in place. Some settings apply from the next start.
+Préréglage appliqué. Certains réglages s'appliquent au prochain démarrage.
+
+No backups yet
+Pas encore de sauvegarde
+
+One is kept each time the game saves.
+Une est gardée à chaque sauvegarde du jeu.
+
+This game's save copied there, in place of the save it has; a backup of that one is kept.
+La sauvegarde de ce jeu copiée là-bas, à la place de la sienne ; une copie de celle-ci est gardée.
+
+This game's save copied there.
+La sauvegarde de ce jeu copiée là-bas.
+
+That file isn't a save of this game.
+Ce fichier n'est pas une sauvegarde de ce jeu.
+
+Copied.
+Copiée.
+
+The save couldn't be written there.
+La sauvegarde n'a pas pu être écrite là-bas.
+
+No controller connected
+Aucune manette connectée
+
+Any Xbox, PlayStation, Switch or GameCube controller works.
+Toute manette Xbox, PlayStation, Switch ou GameCube fonctionne.
+
+Which player it plays as; left and right change it.
+Le joueur qu'elle contrôle ; gauche et droite le changent.
+
+Part
+Partie
+
+Which part the colour is for: left and right change it.
+La partie à colorer : gauche et droite la changent.
+
+A puts this colour on.
+A met cette couleur.
+
+Left and right make it more or less; it's on as it changes.
+Gauche et droite : plus ou moins ; appliqué aussitôt.
+
+Each part's own colour: a swatch, or red, green and blue.
+La couleur de chaque partie : une pastille, ou rouge, vert et bleu.
+

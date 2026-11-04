@@ -3,6 +3,7 @@
 // boost and its controls, the coin and EXP multipliers, the Star Piece and
 // Shine Sprite tracker (in a corner over the game), faster field text, the
 // jukebox and the shops' junk-item helper. All off by default.
+#include "port/bindings.h"
 #include "port/gameplus.h"
 #include "port/settings.h"
 #include "port/tr.h"
@@ -14,26 +15,19 @@
 namespace {
 
 constexpr unsigned kPlay = PORT_SETTING_CHANGES_PLAY;
-constexpr const char* kTab = "Gameplay+";
+constexpr const char* kTab = "Enhancements";
 
-// the walk-speed boost's keyboard key and controller button, by the settings' choices
-int walkBoostHeld() {
-  static const SDL_Scancode kKeys[] = {SDL_SCANCODE_LSHIFT, SDL_SCANCODE_LCTRL, SDL_SCANCODE_LALT, SDL_SCANCODE_RSHIFT};
-  static const SDL_GamepadButton kPad[] = {SDL_GAMEPAD_BUTTON_RIGHT_STICK, SDL_GAMEPAD_BUTTON_LEFT_STICK,
-                                           SDL_GAMEPAD_BUTTON_LEFT_PADDLE1, SDL_GAMEPAD_BUTTON_MISC1};
-  const bool* keys = SDL_GetKeyboardState(nullptr);
-  if (keys != nullptr && keys[kKeys[portGameplus("walk_boost_key") & 3]]) {
-    return 1;
-  }
-  int count = 0;
-  SDL_JoystickID* ids = SDL_GetGamepads(&count);
-  int held = 0;
-  for (int i = 0; i < count && !held; i++) {
-    SDL_Gamepad* pad = SDL_GetGamepadFromID(ids[i]);
-    held = pad != nullptr && SDL_GetGamepadButton(pad, kPad[portGameplus("walk_boost_pad") & 3]);
-  }
-  SDL_free(ids);
-  return held;
+// the walk-speed boost's key and controller button (Controls > Bindings; at
+// first the old Boost key and Boost button choices)
+int walkBoostHeld() { return portBindingsHeld(PORT_BIND_WALK_BOOST); }
+
+// what they are now
+void boostKeys(int) {
+  const char* key = portBindingsKeyName(PORT_BIND_WALK_BOOST);
+  const char* pad = portBindingsPadName(PORT_BIND_WALK_BOOST);
+  ImGui::Text("%s  /  %s", key[0] != 0 ? key : portTr("(none)"), pad[0] != 0 ? pad : portTr("(none)"));
+  ImGui::SameLine();
+  ImGui::TextDisabled("%s", portTr("Change them under Controls > Bindings."));
 }
 
 // Badge loadouts: a row per loadout, its name editable
@@ -178,12 +172,7 @@ struct Register {
                           kPlay, "walk_boost", "walk run speed boost sprint hold");
     portSettingsAddSlider(kTab, "Boost speed", nullptr, kPlay, "walk_boost_speed", 110, 200, "%d %%",
                           "walk run speed boost sprint");
-    static const char* const kKeys[] = {"Left Shift", "Left Ctrl", "Left Alt", "Right Shift"};
-    portSettingsAddChoice(kTab, "Boost key", nullptr, 0, "walk_boost_key", kKeys, 4, "walk boost key keyboard");
-    static const char* const kPad[] = {"Right stick pressed in", "Left stick pressed in", "Back paddle",
-                                       "Share / capture button"};
-    portSettingsAddChoice(kTab, "Boost button", nullptr, 0, "walk_boost_pad", kPad, 4,
-                          "walk boost button controller gamepad");
+    portSettingsAddSection(kTab, "Boost key", nullptr, 0, boostKeys, "walk boost key keyboard button controller gamepad");
     static const char* const kTimes[] = {"x1", "x1.5", "x2", "x2.5", "x3"};
     portSettingsAddChoice(kTab, "Coins from battles",
                           "The coins a won battle drops, after Merlee, Money Money and a First Strike.", kPlay,

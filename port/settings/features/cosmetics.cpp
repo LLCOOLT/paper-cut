@@ -1,5 +1,5 @@
-// Cosmetics (a tab of its own): Mario's cap and shirt and his overalls, a
-// partner's colour and the status bar's banners in colours of the player's
+// Cosmetics (a tab of its own): Mario's cap and shirt and his overalls, the
+// partners' colours and the status bar's banners in colours of the player's
 // choosing. Each is the game's own texture recoloured as it is drawn: the
 // texels the game loaded (port/include/port/cosmetics.h) decoded, and where
 // a pixel has the part's colour (its hue, saturation and lightness near the
@@ -10,7 +10,11 @@
 //
 // Mario's emblem looks (the L and W emblems' own texture files) stay as they
 // are, and so do his gloves and shoes: their white and brown are the same as
-// his eyes' and his hair's, so no mask tells them apart.
+// his eyes' and his hair's, so no mask tells them apart. The partners: Koops's
+// shell and hoodie, Flurrie's hair (her dress is her body's own lavender, her
+// face's and hands' too), Bobbery's body (his fuse is a few grey texels, the
+// same as his cap's) and Ms. Mowz's mask and cape (one red); Yoshi's colour is
+// the game's own choice, changed in the Wardrobe (wardrobe_aurora.c).
 #include <dolphin/gx.h> // GXTexObj, for aurora/texture.hpp
 #include <aurora/texture.hpp>
 
@@ -61,7 +65,22 @@ const char* kChoiceNames[kColours];
 
 // ------------------------------------------------------------------ slots
 
-enum SlotId { kCap, kOveralls, kPartner, kHudHp, kHudFp, kHudSp, kSlots };
+// (the order is the settings' and the Wardrobe's, PORT_COSMETIC_*: new ones at the end)
+enum SlotId {
+  kCap,
+  kOveralls,
+  kPartner,
+  kHudHp,
+  kHudFp,
+  kHudSp,
+  kKoopsShell,
+  kKoopsHoodie,
+  kFlurrieHair,
+  kBobberyBody,
+  kMowzMask,
+  kVivian, // (Goombella's and hers were one slot, kPartner: hers starts as it was)
+  kSlots
+};
 
 struct Slot {
   const char* key;
@@ -78,19 +97,43 @@ Slot sSlots[kSlots] = {
      0xE62814},
     {"cosmetic_overalls", "cosmetic_overalls_rgb", "Mario's overalls", nullptr, "mario overalls colour color blue",
      0x2846E6},
-    {"cosmetic_partner", "cosmetic_partner_rgb", "Partner's colour",
-     "Goombella's hair and Vivian's body: the partners whose colour comes away cleanly.",
-     "partner goombella vivian hair colour color", 0xFAD21E},
+    {"cosmetic_partner", "cosmetic_partner_rgb", "Goombella's hair", nullptr, "partner goombella hair colour color",
+     0xFAD21E},
     {"cosmetic_hud_hp", "cosmetic_hud_hp_rgb", "HP banner", "Mario's and the partner's.",
      "hud status bar hp heart banner colour color", 0xFF8C96},
     {"cosmetic_hud_fp", "cosmetic_hud_fp_rgb", "FP banner", nullptr, "hud status bar fp flower banner colour color",
      0xE18C1E},
     {"cosmetic_hud_sp", "cosmetic_hud_sp_rgb", "Star Power banner", nullptr,
      "hud status bar star power sp banner colour color", 0x6EA5D2},
+    {"cosmetic_koops_shell", "cosmetic_koops_shell_rgb", "Koops's shell", nullptr,
+     "partner koops shell colour color green", 0x14A01E},
+    {"cosmetic_koops_hoodie", "cosmetic_koops_hoodie_rgb", "Koops's hoodie", nullptr,
+     "partner koops hoodie colour color blue", 0x94B2D1},
+    {"cosmetic_flurrie_hair", "cosmetic_flurrie_hair_rgb", "Flurrie's hair", nullptr,
+     "partner flurrie hair colour color purple", 0x8B76DA},
+    {"cosmetic_bobbery_body", "cosmetic_bobbery_body_rgb", "Bobbery's body", nullptr,
+     "partner bobbery body bomb colour color brown", 0x593F22},
+    {"cosmetic_mowz_mask", "cosmetic_mowz_mask_rgb", "Ms. Mowz's mask and cape", nullptr,
+     "partner ms mowz mask cape colour color red", 0xCC2200},
+    {"cosmetic_vivian", "cosmetic_vivian_rgb", "Vivian's body", nullptr, "partner vivian body colour color purple",
+     0x8C2D8C},
 };
+
+// Vivian's slot, until it has a value of its own (-1): the one she shared
+// with Goombella, so a colour picked before keeps showing
+void settle() {
+  Slot& v = sSlots[kVivian];
+  if (v.choice != nullptr && *v.choice < 0) {
+    *v.choice = *sSlots[kPartner].choice;
+  }
+  if (v.rgb != nullptr && *v.rgb < 0) {
+    *v.rgb = *sSlots[kPartner].rgb;
+  }
+}
 
 // the colour a slot asks for now, or -1: the game's own
 int64_t slotColour(int s) {
+  settle();
   const int c = *sSlots[s].choice;
   if (c <= 0 || c >= kColours) {
     return -1;
@@ -163,13 +206,18 @@ float hueDelta(float a, float b) {
 float ramp(float x, float from, float to) { return std::clamp((x - from) / (to - from), 0.f, 1.f); }
 
 // A part of a texture by its colour: the hues within half (fading out over
-// soft more), saturated and light enough; ref is its usual colour, the one a
-// new colour stands in for (the shading around it moves with it).
+// soft more), saturated and light enough, and no lighter than lMax (fading
+// out over 0.04: a lighter part of the same hue left alone); ref is its usual
+// colour, the one a new colour stands in for (the shading around it moves
+// with it). only: the textures it is in, by their index in the file (bit i),
+// where another part elsewhere in the file has its colour; 0 all of them.
 struct Region {
   int slot;
   float hue, half, soft;
   float satMin, lMin;
   Hsl ref;
+  float lMax = 1.f;
+  uint64_t only = 0;
 };
 
 float regionWeight(const Region& r, const Hsl& p) {
@@ -178,7 +226,8 @@ float regionWeight(const Region& r, const Hsl& p) {
   if (wh <= 0.f) {
     return 0.f;
   }
-  return wh * ramp(p.s, r.satMin - 0.1f, r.satMin) * ramp(p.l, r.lMin - 0.06f, r.lMin);
+  const float wl = r.lMax < 1.f ? 1.f - ramp(p.l, r.lMax, r.lMax + 0.04f) : 1.f;
+  return wh * wl * ramp(p.s, r.satMin - 0.1f, r.satMin) * ramp(p.l, r.lMin - 0.06f, r.lMin);
 }
 
 // p moved from r.ref to the colour to: the hue turned by the same amount,
@@ -366,6 +415,11 @@ constexpr Hsl kMarioRed{10.f, 0.87f, 0.50f};
 constexpr Hsl kMarioBlue{233.f, 1.0f, 0.56f};
 constexpr Hsl kGoombellaHair{40.f, 0.85f, 0.50f};
 constexpr Hsl kVivianPurple{290.f, 0.60f, 0.35f};
+constexpr Hsl kKoopsGreen{125.f, 1.0f, 0.30f};
+constexpr Hsl kKoopsBlue{212.f, 0.40f, 0.70f};
+constexpr Hsl kFlurriePurple{250.f, 0.58f, 0.66f};
+constexpr Hsl kBobberyBrown{33.f, 0.45f, 0.24f};
+constexpr Hsl kMowzRed{10.f, 1.0f, 0.40f};
 
 std::vector<Set> makeSets() {
   // Mario: the red of his cap and shirt (not the orange of his skin, the
@@ -377,12 +431,31 @@ std::vector<Set> makeSets() {
   const Region capLight{kCap, 19.5f, 5.5f, 3.f, 0.6f, 0.47f, kMarioRed};
   const Region overalls{kOveralls, 228.f, 22.f, 8.f, 0.35f, 0.12f, kMarioBlue};
   const Region hair{kPartner, 40.f, 9.f, 5.f, 0.55f, 0.25f, kGoombellaHair};
-  const Region vivian{kPartner, 290.f, 22.f, 8.f, 0.30f, 0.10f, kVivianPurple};
+  const Region vivian{kVivian, 290.f, 22.f, 8.f, 0.30f, 0.10f, kVivianPurple};
+  // The partners (each measured over all of its file's textures, the parts
+  // around it left as they are): Koops's green shell, and his hoodie's pale
+  // blue (not his shorts' deep blue or the sweat drop's cyan)
+  const Region koopsShell{kKoopsShell, 125.f, 20.f, 8.f, 0.4f, 0.08f, kKoopsGreen};
+  const Region koopsHoodie{kKoopsHoodie, 212.f, 7.f, 5.f, 0.2f, 0.5f, kKoopsBlue};
+  // Flurrie's hair: her lavender's hue, but deeper than her body (her face,
+  // arms and cloud are lighter and greyer); its highlights more violet
+  const Region flurrieHair{kFlurrieHair, 252.f, 6.f, 2.f, 0.42f, 0.45f, kFlurriePurple, 0.70f};
+  const Region flurrieShine{kFlurrieHair, 255.f, 6.f, 2.f, 0.58f, 0.66f, kFlurriePurple, 0.76f};
+  // Bobbery's body: the bomb's brown, in his face's texture and his body's
+  // (4 and 32; the others' wheel and shoe soles are browns of its hue)
+  const Region bobberyBody{kBobberyBody, 31.f, 7.f, 2.f, 0.3f, 0.06f, kBobberyBrown, 0.5f,
+                           uint64_t(1) << 4 | uint64_t(1) << 32};
+  // Ms. Mowz's mask, its eye holes and her cape: the red, not her ears' pink
+  const Region mowzMask{kMowzMask, 10.f, 6.f, 3.f, 0.8f, 0.24f, kMowzRed, 0.52f};
   std::vector<Set> sets;
   sets.push_back(Set{"a/a_mario-", -1, {cap, capLight, overalls}, {}, {}});
   sets.push_back(Set{"a/a_mario_r-", -1, {cap, capLight, overalls}, {}, {}});
   sets.push_back(Set{"a/c_pkr-", -1, {hair}, {}, {}});
   sets.push_back(Set{"a/c_vivian-", -1, {vivian}, {}, {}});
+  sets.push_back(Set{"a/c_pnk-", -1, {koopsShell, koopsHoodie}, {}, {}});
+  sets.push_back(Set{"a/c_windy-", -1, {flurrieHair, flurrieShine}, {}, {}});
+  sets.push_back(Set{"a/c_bomt_n-", -1, {bobberyBody}, {}, {}});
+  sets.push_back(Set{"a/c_tyutyu-", -1, {mowzMask}, {}, {}});
   // the banners: all of their colour (the outline is grey)
   sets.push_back(Set{nullptr, 0, {{kHudHp, 355.f, 40.f, 15.f, 0.2f, 0.f, Hsl{355.f, 1.0f, 0.78f}}}, {}, {}});
   sets.push_back(Set{nullptr, 1, {{kHudFp, 30.f, 40.f, 15.f, 0.2f, 0.f, Hsl{32.f, 0.9f, 0.50f}}}, {}, {}});
@@ -406,8 +479,12 @@ void clearSet(Set& s) {
 }
 
 // one texture recoloured by the set's regions, or false: nothing of it changes
-bool recolour(const Set& s, const PortTexInfo& t, const int64_t* colours, std::vector<uint8_t>& px) {
-  if (!decode(t, px)) {
+bool recolour(const Set& s, int index, const PortTexInfo& t, const int64_t* colours, std::vector<uint8_t>& px) {
+  bool in = false;
+  for (const Region& r : s.regions) {
+    in |= colours[r.slot] >= 0 && (r.only == 0 || (index < 64 && (r.only >> index & 1) != 0));
+  }
+  if (!in || !decode(t, px)) {
     return false;
   }
   Hsl to[kSlots];
@@ -426,7 +503,7 @@ bool recolour(const Set& s, const PortTexInfo& t, const int64_t* colours, std::v
     const float rgb[3] = {p[0] / 255.f, p[1] / 255.f, p[2] / 255.f};
     const Hsl c = toHsl(rgb[0], rgb[1], rgb[2]);
     for (const Region& r : s.regions) {
-      if (colours[r.slot] < 0) {
+      if (colours[r.slot] < 0 || (r.only != 0 && (index >= 64 || (r.only >> index & 1) == 0))) {
         continue;
       }
       const float w = regionWeight(r, c);
@@ -479,7 +556,7 @@ void updateSet(Set& s, const int64_t* colours) {
   s.applied.reserve(size_t(n)); // the pixels stay where Aurora was told they are
   for (int i = 0; i < n; i++) {
     Set::Tex tex;
-    if (!recolour(s, sInfo[i], colours, tex.pixels)) {
+    if (!recolour(s, i, sInfo[i], colours, tex.pixels)) {
       continue;
     }
     s.applied.push_back(std::move(tex));
@@ -543,19 +620,24 @@ int paletteIndex(const char* name) {
   return 0;
 }
 
+// the looks of the brothers and the others, in one press (the partner and the
+// banners as they are); the first, the game's own (the Start menu's Wardrobe)
+struct Preset {
+  const char* label;
+  const char* cap;
+  const char* overalls;
+};
+constexpr Preset kPresets[] = {{"Original", "Original", "Original"},
+                               {"Luigi", "Luigi green", "Navy"},
+                               {"Wario", "Wario yellow", "Waluigi purple"},
+                               {"Waluigi", "Waluigi purple", "Black"},
+                               {"Fire Mario", "White", "Red"}};
+constexpr int kPresetCount = int(sizeof(kPresets) / sizeof(kPresets[0]));
+
 void section(int) {
-  // the looks of the brothers and the others, in one press (the partner and the banners as they are)
-  struct Preset {
-    const char* label;
-    const char* cap;
-    const char* overalls;
-  };
-  static const Preset kPresets[] = {{"Luigi", "Luigi green", "Navy"},
-                                    {"Wario", "Wario yellow", "Waluigi purple"},
-                                    {"Waluigi", "Waluigi purple", "Black"},
-                                    {"Fire Mario", "White", "Red"}};
-  for (size_t i = 0; i < sizeof(kPresets) / sizeof(kPresets[0]); i++) {
-    if (i > 0) {
+  settle();
+  for (int i = 1; i < kPresetCount; i++) {
+    if (i > 1) {
       ImGui::SameLine();
     }
     if (ImGui::Button(portTrLabel(kPresets[i].label))) {
@@ -602,8 +684,9 @@ const bool sAdded = [] {
     kChoiceNames[i] = kPalette[i].name;
   }
   for (Slot& s : sSlots) {
-    s.choice = portSettingsDeclare(s.key, 0, 0, kColours - 1);
-    s.rgb = portSettingsDeclare(s.rgbKey, int(s.defaultCustom), 0, 0xFFFFFF);
+    const bool unset = &s == &sSlots[kVivian]; // (settle)
+    s.choice = portSettingsDeclare(s.key, unset ? -1 : 0, unset ? -1 : 0, kColours - 1);
+    s.rgb = portSettingsDeclare(s.rgbKey, unset ? -1 : int(s.defaultCustom), unset ? -1 : 0, 0xFFFFFF);
     portSettingsAddChoice("Cosmetics", s.label, s.note, 0, s.key, kChoiceNames, kColours, s.keywords);
   }
   portSettingsAddSection("Cosmetics", "Looks and colour picker",
@@ -615,3 +698,65 @@ const bool sAdded = [] {
 }();
 
 } // namespace
+
+// --- The Start menu's Wardrobe (port/include/port/cosmetics.h)
+
+extern "C" int portCosmeticsSlotCount(void) { return kSlots; }
+extern "C" const char* portCosmeticsSlotLabel(int s) { return s >= 0 && s < kSlots ? sSlots[s].label : ""; }
+extern "C" const char* portCosmeticsSlotNote(int s) { return s >= 0 && s < kSlots ? sSlots[s].note : nullptr; }
+extern "C" int portCosmeticsChoice(int s) {
+  settle();
+  return s >= 0 && s < kSlots && sSlots[s].choice ? *sSlots[s].choice : 0;
+}
+
+extern "C" void portCosmeticsStep(int s, int dir) {
+  if (s < 0 || s >= kSlots || sSlots[s].choice == nullptr) {
+    return;
+  }
+  settle();
+  *sSlots[s].choice = ((*sSlots[s].choice + dir) % kColours + kColours) % kColours;
+  portSettingsSave();
+}
+
+extern "C" const char* portCosmeticsColourName(int c) {
+  return c == kCustom ? "Custom" : c >= 0 && c < kColours ? kPalette[c].name : "?";
+}
+
+extern "C" unsigned portCosmeticsSlotRgb(int s) {
+  if (s < 0 || s >= kSlots) {
+    return 0;
+  }
+  const int64_t c = slotColour(s);
+  return c >= 0 ? unsigned(c) : sSlots[s].defaultCustom; // (the custom colour starts as the game's own)
+}
+
+extern "C" void portCosmeticsSetRgb(int s, unsigned rgb) {
+  if (s < 0 || s >= kSlots || sSlots[s].choice == nullptr || sSlots[s].rgb == nullptr) {
+    return;
+  }
+  *sSlots[s].rgb = int(rgb & 0xFFFFFF);
+  *sSlots[s].choice = kCustom;
+  portSettingsSave();
+}
+
+extern "C" int portCosmeticsLookCount(void) { return kPresetCount; }
+extern "C" const char* portCosmeticsLookName(int i) { return i >= 0 && i < kPresetCount ? kPresets[i].label : "?"; }
+
+extern "C" int portCosmeticsLook(void) {
+  for (int i = 0; i < kPresetCount; i++) {
+    if (portCosmeticsChoice(kCap) == paletteIndex(kPresets[i].cap) &&
+        portCosmeticsChoice(kOveralls) == paletteIndex(kPresets[i].overalls)) {
+      return i;
+    }
+  }
+  return -1;
+}
+
+extern "C" void portCosmeticsSetLook(int i) {
+  if (i < 0 || i >= kPresetCount || sSlots[kCap].choice == nullptr) {
+    return;
+  }
+  *sSlots[kCap].choice = paletteIndex(kPresets[i].cap);
+  *sSlots[kOveralls].choice = paletteIndex(kPresets[i].overalls);
+  portSettingsSave();
+}

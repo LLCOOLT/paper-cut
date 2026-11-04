@@ -21,6 +21,7 @@
 #include "port/mods.h"
 #include "port/romfont_pc.h"
 #include "port/layout.h"
+#include "port/bindings.h"
 #include "../archipelago/ttyd_ap.h"
 
 #include <SDL3/SDL.h>
@@ -73,8 +74,6 @@ void noteWindow() {
     sWinCount++;
   }
 }
-int sRebind = -1;     // the controller button mapping waiting for a press
-bool sRebindArmed;    // every button was up since (the press that chose it is not taken)
 bool sTouchDevice; // a touch seen: bigger text and controls
 
 // a three-finger tap: three fingers down within 180 ms, all up within 550 ms
@@ -82,6 +81,7 @@ int sFingers;
 Uint64 sFirstDown;
 Uint64 sThirdDown;
 bool sTap;
+std::string sOpenAt; // portSettingsOpenAt's tab, shown when the page next draws
 
 void setOpen(bool open) {
   if (open == sOpen) {
@@ -144,200 +144,6 @@ bool slider(const char* label, int* value, int lo, int hi) {
     portSettingsApply();
   }
   return ImGui::IsItemDeactivatedAfterEdit();
-}
-
-// A player's controller buttons (Aurora's mappings, saved by it per controller model): player 1's,
-// or another's chosen above them.
-void remapSection() {
-  static int sPort;
-  u32 count = 0;
-  ImGui::Separator();
-  ImGui::TextUnformatted(portTr("Controller buttons"));
-  {
-    const char* kPorts[] = {portTr("Player 1"), portTr("Player 2"), portTr("Player 3"), portTr("Player 4")};
-    ImGui::SetNextItemWidth(ImGui::GetFontSize() * 7.f);
-    if (ImGui::Combo("##remap_player", &sPort, kPorts, 4)) {
-      sRebind = -1;
-    }
-  }
-  const u32 port = static_cast<u32>(sPort);
-  const GlyphStyle style = glyphStyleOfPort(port);
-  PADButtonMapping* maps = PADGetButtonMappings(port, &count);
-  if (maps == nullptr || count == 0) {
-    sRebind = -1;
-    note(port == 0 ? "Connect a controller to change which of its buttons does what."
-                   : "No controller is this player: choose one under Controllers.");
-    return;
-  }
-  if (sRebind >= 0 && sRebind < static_cast<int>(count)) {
-    const s32 pressed = PADGetNativeButtonPressed(port);
-    if (pressed < 0) {
-      sRebindArmed = true;
-    } else if (sRebindArmed) {
-      maps[sRebind].nativeButton = static_cast<u32>(pressed);
-      PADSetButtonMapping(port, maps[sRebind]);
-      PADSerializeMappings();
-      sRebind = -1;
-    }
-  }
-  for (u32 i = 0; i < count; i++) {
-    ImGui::PushID(static_cast<int>(i));
-    // the button as printed on this player's controller (the triggers' names for L and R)
-    const char* native = sRebind == static_cast<int>(i)
-                             ? portTr("Press a button...")
-                             : portTr(nativeButtonLabel(style, maps[i].nativeButton, maps[i].padButton));
-    if (ImGui::Button(native, ImVec2(ImGui::GetFontSize() * 9.f, 0.f))) {
-      sRebind = static_cast<int>(i);
-      sRebindArmed = false;
-    }
-    ImGui::SameLine();
-    ImGui::Text(portTr("GameCube %s"), PADGetButtonName(maps[i].padButton));
-    ImGui::PopID();
-  }
-  if (ImGui::Button(portTrLabel("Swap A and B"))) {
-    PADButtonMapping* a = nullptr;
-    PADButtonMapping* b = nullptr;
-    for (u32 i = 0; i < count; i++) {
-      if (maps[i].padButton == PAD_BUTTON_A) {
-        a = &maps[i];
-      } else if (maps[i].padButton == PAD_BUTTON_B) {
-        b = &maps[i];
-      }
-    }
-    if (a != nullptr && b != nullptr) {
-      std::swap(a->nativeButton, b->nativeButton);
-      PADSetButtonMapping(port, *a);
-      PADSetButtonMapping(port, *b);
-      PADSerializeMappings();
-    }
-  }
-  ImGui::SameLine();
-  if (ImGui::Button(portTrLabel("Restore defaults"))) {
-    PADRestoreDefaultMapping(port);
-    PADSerializeMappings();
-    sRebind = -1;
-  }
-  note("Choose a button on the left, then press the controller button that should do it.");
-}
-
-// The keyboard's keys for controller 1 (Aurora's key bindings, saved by it in
-// keyboard_bindings.dat). Each row: a GameCube button, or a stick direction.
-struct KeyRow {
-  const char* name;
-  bool axis;      // a stick direction (PADKeyAxisBinding), else a button
-  u16 target;     // PAD_BUTTON_* / PAD_TRIGGER_*, or PAD_AXIS_*
-  SDL_Scancode key; // the default (UNKNOWN: none)
-  const char* second = nullptr; // a stick direction's second key: the port's setting, not Aurora's (one key each)
-};
-// WASD and the arrows move, Space is A; clear of the port's own keys (F1,
-// F5-F8, F11, F12, Tab; Shift, Ctrl and Alt for the walk boost). The D-pad,
-// which the game hardly uses, has no keys until the player gives it some.
-constexpr KeyRow kKeyRows[] = {
-    {"Stick up", true, PAD_AXIS_LEFT_Y_POS, SDL_SCANCODE_W},
-    {"Stick down", true, PAD_AXIS_LEFT_Y_NEG, SDL_SCANCODE_S},
-    {"Stick left", true, PAD_AXIS_LEFT_X_NEG, SDL_SCANCODE_A},
-    {"Stick right", true, PAD_AXIS_LEFT_X_POS, SDL_SCANCODE_D},
-    {"Stick up (second key)", true, PAD_AXIS_LEFT_Y_POS, SDL_SCANCODE_UP, "key2_stick_up"},
-    {"Stick down (second key)", true, PAD_AXIS_LEFT_Y_NEG, SDL_SCANCODE_DOWN, "key2_stick_down"},
-    {"Stick left (second key)", true, PAD_AXIS_LEFT_X_NEG, SDL_SCANCODE_LEFT, "key2_stick_left"},
-    {"Stick right (second key)", true, PAD_AXIS_LEFT_X_POS, SDL_SCANCODE_RIGHT, "key2_stick_right"},
-    {"A", false, PAD_BUTTON_A, SDL_SCANCODE_SPACE},
-    {"B", false, PAD_BUTTON_B, SDL_SCANCODE_E},
-    {"X", false, PAD_BUTTON_X, SDL_SCANCODE_R},
-    {"Y", false, PAD_BUTTON_Y, SDL_SCANCODE_F},
-    {"Z", false, PAD_TRIGGER_Z, SDL_SCANCODE_Q},
-    {"L", false, PAD_TRIGGER_L, SDL_SCANCODE_1},
-    {"R", false, PAD_TRIGGER_R, SDL_SCANCODE_3},
-    {"Start", false, PAD_BUTTON_START, SDL_SCANCODE_RETURN},
-    {"D-pad up", false, PAD_BUTTON_UP, SDL_SCANCODE_UNKNOWN},
-    {"D-pad down", false, PAD_BUTTON_DOWN, SDL_SCANCODE_UNKNOWN},
-    {"D-pad left", false, PAD_BUTTON_LEFT, SDL_SCANCODE_UNKNOWN},
-    {"D-pad right", false, PAD_BUTTON_RIGHT, SDL_SCANCODE_UNKNOWN},
-};
-int sKeyRebind = -1; // the kKeyRows row waiting for a key (portSettingsEvent takes it)
-
-// the second keys' settings, declared at start with their defaults
-const bool sSecondKeysDeclared = [] {
-  for (const KeyRow& row : kKeyRows) {
-    if (row.second != nullptr) {
-      portSettingsDeclare(row.second, row.key, PAD_KEY_INVALID, SDL_SCANCODE_COUNT - 1);
-    }
-  }
-  return true;
-}();
-
-s32 boundKey(const KeyRow& row) {
-  u32 count = 0;
-  if (row.second != nullptr) {
-    const int* v = portSettingsFind(row.second);
-    return v != nullptr ? *v : PAD_KEY_INVALID;
-  }
-  if (row.axis) {
-    const PADKeyAxisBinding* axes = PADGetKeyAxisBindings(0, &count);
-    for (u32 i = 0; axes != nullptr && i < count; i++) {
-      if (axes[i].padAxis == row.target) {
-        return axes[i].scancode;
-      }
-    }
-  } else {
-    const PADKeyButtonBinding* buttons = PADGetKeyButtonBindings(0, &count);
-    for (u32 i = 0; buttons != nullptr && i < count; i++) {
-      if (buttons[i].padButton == row.target) {
-        return buttons[i].scancode;
-      }
-    }
-  }
-  return PAD_KEY_INVALID;
-}
-
-void bindKey(const KeyRow& row, s32 scancode) {
-  if (row.second != nullptr) {
-    if (int* v = portSettingsFind(row.second)) {
-      *v = scancode;
-      portSettingsSave();
-    }
-    return;
-  }
-  if (row.axis) {
-    PADSetKeyAxisBinding(0, PADKeyAxisBinding{scancode, row.target, 100});
-  } else {
-    PADSetKeyButtonBinding(0, PADKeyButtonBinding{scancode, row.target});
-  }
-  PADSerializeMappings();
-}
-
-void keyboardSection() {
-  ImGui::Separator();
-  ImGui::TextUnformatted(portTr("Keyboard keys"));
-  for (size_t i = 0; i < sizeof(kKeyRows) / sizeof(kKeyRows[0]); i++) {
-    const KeyRow& row = kKeyRows[i];
-    ImGui::PushID(static_cast<int>(i) + 1000);
-    const s32 key = boundKey(row);
-    const char* label = sKeyRebind == static_cast<int>(i) ? "Press a key..."
-                        : key > PAD_KEY_INVALID         ? SDL_GetScancodeName(static_cast<SDL_Scancode>(key))
-                                                         : "(none)";
-    if (ImGui::Button(label[0] != '\0' ? label : "?", ImVec2(ImGui::GetFontSize() * 9.f, 0.f))) {
-      sKeyRebind = static_cast<int>(i);
-    }
-    ImGui::SameLine();
-    ImGui::Text(portTr("GameCube %s"), row.name);
-    ImGui::PopID();
-  }
-  if (ImGui::Button(portTrLabel("Restore default keys"))) {
-    PADRestoreDefaultKeyBindings(0);
-    PADSetKeyboardActive(0, TRUE);
-    PADSerializeMappings();
-    for (const KeyRow& row : kKeyRows) {
-      if (row.second != nullptr) {
-        if (int* v = portSettingsFind(row.second)) {
-          *v = row.key;
-        }
-      }
-    }
-    portSettingsSave();
-    sKeyRebind = -1;
-  }
-  note("Choose a row, then press the key that should do it (Escape: leave it as it is).");
 }
 
 constexpr const char* kFfSpeeds[] = {"2x", "3x", "4x", "5x", "6x", "7x", "8x"};
@@ -831,8 +637,12 @@ struct Item {
 };
 
 // The tabs in order; a feature's own tab (portSettingsAdd*) comes after these.
-constexpr const char* kTabs[] = {"Display", "Audio", "Controls", "Gameplay", "Accessibility", "Practice",
-                                 "Mods", "Archipelago", "System"};
+// the settings first, grouped and ordered as most games have theirs, then the
+// modes and tools (features add their own tabs after these, in this order when listed)
+constexpr const char* kTabs[] = {"Gameplay", "Enhancements", "Display",       "Graphics", "Interface", "Audio",
+                                 "Controls", "Multiplayer",  "Accessibility", "Language", "General",
+                                 "Saves",        "Cosmetics",    "Practice",   "Challenges",   "Modes",
+                                 "Achievements", "Mods",         "Randomizer", "Archipelago",  "Streaming"};
 
 bool isDesktop() {
 #if defined(__ANDROID__) || (defined(__APPLE__) && TARGET_OS_IPHONE)
@@ -937,18 +747,18 @@ const Item kItems[] = {
 #endif
     {"Display", "Widescreen (16:9)", "Much of the game was built for 4:3: some rooms and scenes end at the 4:3 edges.",
      0, TOGGLE(widescreen), "aspect ratio 16:9", nullptr},
-    {"Display", "Widescreen HUD",
+    {"Interface", "Widescreen HUD",
      "HP and FP at the left edge, Star Points and coins at the right, instead of the 4:3 middle.", 0,
      TOGGLE(wideHud), "status bar", widescreenOn},
     {"Display", "Blurred side bars", "Where the picture doesn't fill the screen, a blurred copy of it instead of black bars.",
      0, TOGGLE(sideBars), "pillarbox black bars", nullptr},
-    {"Display", "Internal resolution", nullptr, 0, resolution, "resolution scale sharp 4k", nullptr},
-    {"Display", "Texture filtering", nullptr, 0, CHOICE(texFilter, kFilters, 2), "pixels smooth sharp", nullptr},
-    {"Display", "Anti-aliasing (4x MSAA)", "Smooths jagged edges.", kNextStart, TOGGLE(msaa), "msaa jaggies edges",
+    {"Graphics", "Internal resolution", nullptr, 0, resolution, "resolution scale sharp 4k", nullptr},
+    {"Graphics", "Texture filtering", nullptr, 0, CHOICE(texFilter, kFilters, 2), "pixels smooth sharp", nullptr},
+    {"Graphics", "Anti-aliasing (4x MSAA)", "Smooths jagged edges.", kNextStart, TOGGLE(msaa), "msaa jaggies edges",
      nullptr, nullptr, &PortSettings::msaa},
-    {"Display", "Overlay corner", "Frame rate, clock and battery in a corner of the screen.", 0, overlay,
+    {"Interface", "Overlay corner", "Frame rate, clock and battery in a corner of the screen.", 0, overlay,
      "fps counter clock battery", nullptr},
-    {"Display", "Never skip graphics that are still loading",
+    {"Graphics", "Never skip graphics that are still loading",
      "Something drawn for the first time waits for its graphics to be ready (a short pause, once) instead of "
      "appearing a moment later.",
      0, TOGGLE(noPopIn), "pop-in stutter shaders", nullptr},
@@ -984,13 +794,10 @@ const Item kItems[] = {
      },
      "touch layout position", nullptr},
 #endif
-    {"Controls", "Controller buttons", nullptr, 0, [](PortSettings*, const Item&) { remapSection(); },
-     "remap rebind buttons swap a b mapping gamepad", nullptr},
-    {"Controls", "Keyboard keys", nullptr, 0, [](PortSettings*, const Item&) { keyboardSection(); },
-     "keyboard keys keybinds bindings remap wasd", nullptr},
+    // the keys and controller buttons: port/settings/features/bindings.cpp
 
     // Gameplay
-    {"Gameplay", "Action Command cue",
+    {"Accessibility", "Action Command cue",
      "In battle, a ring closes on an A button when to press A for a Jump (and partners' stomps) and to guard an "
      "enemy jumping at you. Other commands show their own timing.",
      0,
@@ -1026,9 +833,9 @@ const Item kItems[] = {
      "The logos go by quickly and the story opening is skipped (it still plays from the title screen if left "
      "alone).",
      0, TOGGLE(skipIntro), "logos opening", nullptr},
-    {"Gameplay", "Language", "The game's text.", kNextStart, CHOICE(language, kLanguages, 6),
+    {"Language", "Language", "The game's text.", kNextStart, CHOICE(language, kLanguages, 6),
      "english deutsch francais espanol italiano text", isEurope, nullptr, &PortSettings::language},
-    {"Gameplay", "Run at 50 Hz (PAL)", "As on a PAL TV: the game's 50 Hz mode, a little slower. 60 Hz otherwise.",
+    {"Display", "Run at 50 Hz (PAL)", "As on a PAL TV: the game's 50 Hz mode, a little slower. 60 Hz otherwise.",
      kNextStart | kChangesPlay, TOGGLE(pal50Hz), "pal 60 hz eurgb60 refresh", isEurope, nullptr,
      &PortSettings::pal50Hz},
 
@@ -1045,9 +852,9 @@ const Item kItems[] = {
      "randomizer multiworld seed server", nullptr},
 
     // System
-    {"System", "Skip the launcher (start with the last disc played)", nullptr, 0, TOGGLE(launcherSkip),
+    {"General", "Skip the launcher (start with the last disc played)", nullptr, 0, TOGGLE(launcherSkip),
      "launcher startup disc", nullptr},
-    {"System", "Take a screenshot",
+    {"General", "Take a screenshot",
 #if defined(__APPLE__) && TARGET_OS_IPHONE
      "Saved to Photos.",
 #elif defined(__APPLE__)
@@ -1064,9 +871,9 @@ const Item kItems[] = {
      },
      "screenshot picture f12 capture", nullptr},
 #if !defined(__ANDROID__) && !(defined(__APPLE__) && TARGET_OS_IPHONE)
-    {"System", "Pause while in the background", nullptr, 0, TOGGLE(pauseUnfocused), "focus", nullptr},
-    {"System", "Controllers work in the background", nullptr, 0, TOGGLE(backgroundInput), "focus gamepad", nullptr},
-    {"System", "Open the save folder", "Memory cards (by region) and settings.txt.", 0,
+    {"General", "Pause while in the background", nullptr, 0, TOGGLE(pauseUnfocused), "focus", nullptr},
+    {"Controls", "Controllers work in the background", nullptr, 0, TOGGLE(backgroundInput), "focus gamepad", nullptr},
+    {"Saves", "Open the save folder", "Memory cards (by region) and settings.txt.", 0,
      [](PortSettings*, const Item& it) {
        if (ImGui::Button(it.label)) {
          char url[1200];
@@ -1076,14 +883,14 @@ const Item kItems[] = {
      },
      "saves memory card gci folder", nullptr},
 #else
-    {"System", "Saves", "Saves are in the app's folder (Files app / storage).", 0, nullptr, "memory card gci",
+    {"Saves", "Saves", "Saves are in the app's folder (Files app / storage).", 0, nullptr, "memory card gci",
      nullptr},
 #endif
 #if defined(PORT_CLOUD_SYNC)
-    {"System", CLOUD_LABEL, nullptr, 0, [](PortSettings* s, const Item&) { cloudSection(s); },
+    {"Saves", CLOUD_LABEL, nullptr, 0, [](PortSettings* s, const Item&) { cloudSection(s); },
      "icloud cloud sync folder onedrive dropbox google drive syncthing", nullptr},
 #endif
-    {"System", "Crash reports", nullptr, 0, [](PortSettings*, const Item&) { crashSection(); }, "crash report bug",
+    {"General", "Crash reports", nullptr, 0, [](PortSettings*, const Item&) { crashSection(); }, "crash report bug",
      nullptr},
 };
 
@@ -1315,6 +1122,10 @@ void portSettingsTabs(bool inGame) {
   if (tabs.empty()) {
     return;
   }
+  if (!sOpenAt.empty()) {
+    sTab = sOpenAt;
+    sOpenAt.clear();
+  }
   if (std::find(tabs.begin(), tabs.end(), sTab) == tabs.end()) {
     sTab = tabs.front();
   }
@@ -1379,6 +1190,12 @@ extern "C" void portSettingsSetChoices(const char* key, const char* const* names
   }
 }
 
+// the sections' tabs and names, for the Start menu (portSettingsSections)
+static std::vector<std::pair<const char*, const char*>>& sectionNames() {
+  static std::vector<std::pair<const char*, const char*>> list;
+  return list;
+}
+
 extern "C" void portSettingsAddSection(const char* tab, const char* label, const char* note, unsigned flags,
                                        void (*draw)(int inGame), const char* keywords) {
   Item it{tab, label, note, flags,
@@ -1389,6 +1206,19 @@ extern "C" void portSettingsAddSection(const char* tab, const char* label, const
           keywords, nullptr};
   it.data = reinterpret_cast<const void*>(draw);
   extraItems().push_back(it);
+  sectionNames().push_back({tab, label});
+}
+
+extern "C" int portSettingsSections(const char** tabs, const char** labels, int max) {
+  int n = 0;
+  for (const auto& s : sectionNames()) {
+    if (n >= max) {
+      break;
+    }
+    tabs[n] = s.first;
+    labels[n++] = s.second;
+  }
+  return n;
 }
 
 namespace {
@@ -1407,69 +1237,8 @@ extern "C" void portSettingsAddOverlay(void (*draw)(int pageOpen), int (*event)(
 }
 
 // A touch at window point (x, y) is on the settings page or the crash notice.
-// Before PADInit (main_aurora.c): the default keys (kKeyRows; the C-stick and
-// the analog triggers unbound). Aurora has none, so the keyboard did nothing.
-extern "C" void portKeyboardDefaults(void) {
-  PADDefaultKeyBindings d;
-  const u16 buttons[PAD_BUTTON_COUNT] = {PAD_BUTTON_A,    PAD_BUTTON_B,    PAD_BUTTON_X,    PAD_BUTTON_Y,
-                                         PAD_BUTTON_START, PAD_TRIGGER_Z,   PAD_TRIGGER_L,   PAD_TRIGGER_R,
-                                         PAD_BUTTON_UP,   PAD_BUTTON_DOWN, PAD_BUTTON_LEFT, PAD_BUTTON_RIGHT};
-  for (int i = 0; i < PAD_BUTTON_COUNT; i++) {
-    d.buttons[i] = PADKeyButtonBinding{PAD_KEY_INVALID, buttons[i]};
-  }
-  for (int i = 0; i < PAD_AXIS_COUNT; i++) {
-    d.axes[i] = PADKeyAxisBinding{PAD_KEY_INVALID, static_cast<PADAxis>(i), 100};
-  }
-  for (const KeyRow& row : kKeyRows) {
-    const s32 key = row.key != SDL_SCANCODE_UNKNOWN ? row.key : PAD_KEY_INVALID;
-    if (row.second != nullptr) {
-      continue; // the port's own (portKeyboardApplyPad)
-    }
-    if (row.axis) {
-      d.axes[row.target].scancode = key;
-    } else {
-      for (PADKeyButtonBinding& b : d.buttons) {
-        if (b.padButton == row.target) {
-          b.scancode = key;
-        }
-      }
-    }
-  }
-  PADSetDefaultKeyBindings(0, &d);
-}
-
-// After each PADRead (DEMOPadRead): the stick's second keys (the arrows by
-// default) held move it as its first keys do, when the stick isn't already
-// pushed and nothing else has the keyboard (the settings page, ImGui)
-extern "C" void portKeyboardApplyPad(PADStatus* pad) {
-  if (sOpen || gPortLauncherShown || ImGui::GetCurrentContext() == nullptr || ImGui::GetIO().WantCaptureKeyboard) {
-    return;
-  }
-  int count = 0;
-  const bool* keys = SDL_GetKeyboardState(&count);
-  auto held = [&](const char* setting) {
-    const int* v = portSettingsFind(setting);
-    return v != nullptr && *v > 0 && *v < count && keys[*v];
-  };
-  int x = (held("key2_stick_right") ? 1 : 0) - (held("key2_stick_left") ? 1 : 0);
-  int y = (held("key2_stick_up") ? 1 : 0) - (held("key2_stick_down") ? 1 : 0);
-  if ((x == 0 && y == 0) || std::abs(pad[0].stickX) > 16 || std::abs(pad[0].stickY) > 16) {
-    return;
-  }
-  const float k = x != 0 && y != 0 ? 0.7071f : 1.f; // the same speed diagonally
-  pad[0].err = PAD_ERR_NONE;
-  pad[0].stickX = static_cast<s8>(x * 100 * k);
-  pad[0].stickY = static_cast<s8>(y * 100 * k);
-}
-
-// After PADInit (DEMOPadInit): the keyboard on with the defaults, unless the
-// player's own saved bindings already turned it on
-extern "C" void portKeyboardActivate(void) {
-  u32 count = 0;
-  if (PADGetKeyButtonBindings(0, &count) == nullptr) {
-    PADSetKeyboardActive(0, TRUE);
-  }
-}
+// The keyboard's defaults and second keys (portKeyboardDefaults, portKeyboardApplyPad,
+// portKeyboardActivate): port/settings/features/bindings.cpp
 
 void portUiReleaseInput() {
   if (ImGui::GetCurrentContext() == nullptr) {
@@ -1484,6 +1253,12 @@ void portUiReleaseInput() {
 // the touch controls' settings button (port/touch/touch_overlay.cpp)
 extern "C" void portSettingsToggle(void) {
   setOpen(!sOpen);
+}
+
+// the Start menu's Wardrobe (port/src/aurora/wardrobe_aurora.c): the page open on one of its tabs
+extern "C" void portSettingsOpenAt(const char* tab) {
+  sOpenAt = tab != nullptr ? tab : "";
+  setOpen(true);
 }
 
 extern "C" int portSettingsOwnsPoint(float x, float y) {
@@ -1564,33 +1339,15 @@ void touchToMouse(const SDL_Event* e) {
 
 } // namespace
 
-// A controller's button the player mapped to one of the game's (Controller
-// buttons, one-handed controls): the port's own use of it (Back: this page;
-// the right stick pressed in: fast-forward) gives way.
-static bool gameButton(SDL_JoystickID which, Uint8 button) {
-  SDL_Gamepad* pad = SDL_GetGamepadFromID(which);
-  for (u32 port = 0; pad != nullptr && port < 4; port++) {
-    const s32 index = PADGetIndexForPort(port);
-    if (index < 0 || PADGetSDLGamepadForIndex(static_cast<u32>(index)) != pad) {
-      continue;
-    }
-    u32 count = 0;
-    const PADButtonMapping* maps = PADGetButtonMappings(port, &count);
-    for (u32 i = 0; maps != nullptr && i < count; i++) {
-      if (maps[i].nativeButton == button) {
-        return true;
-      }
-    }
-  }
-  return false;
-}
-
 extern "C" void portSettingsEvent(const void* sdlEvent) {
   const SDL_Event* e = static_cast<const SDL_Event*>(sdlEvent);
   PortSettings* s = portSettings();
   if (e->type == SDL_EVENT_FINGER_DOWN || e->type == SDL_EVENT_FINGER_MOTION || e->type == SDL_EVENT_FINGER_UP ||
       e->type == SDL_EVENT_FINGER_CANCELED) {
     touchToMouse(e);
+  }
+  if (portBindingsEvent(sdlEvent)) {
+    return; // a key or button being chosen (Bindings), or one of Paper Cut's actions
   }
   for (const Overlay& o : overlays()) {
     if (o.event != nullptr && o.event(sdlEvent)) {
@@ -1608,50 +1365,15 @@ extern "C" void portSettingsEvent(const void* sdlEvent) {
     if (e->key.repeat) {
       break;
     }
-    if (sKeyRebind >= 0) {
-      // the key for the keyboard row chosen on the Controls tab (Escape: no change)
-      if (e->key.scancode != SDL_SCANCODE_ESCAPE && (sOpen || gPortLauncherShown)) {
-        bindKey(kKeyRows[sKeyRebind], e->key.scancode);
-      }
-      sKeyRebind = -1;
-      break;
-    }
-    if (e->key.key == SDLK_TAB) {
-      portSpeedControl(1);
-    } else if (e->key.key == SDLK_F5) {
-      portSaveStateRequest(0, 0);
-    } else if (e->key.key == SDLK_F8) {
-      portSaveStateRequest(0, 1);
-    } else if (e->key.key == SDLK_F12) {
-      portShotRequestUser();
-    } else if (e->key.key == SDLK_F1) {
-      setOpen(!sOpen);
-    } else if (e->key.key == SDLK_ESCAPE && sOpen) {
+    // F1, Tab, F5, F8, F12, F11 and the controller's Back and right stick:
+    // Paper Cut's actions, as bound (portBindingsEvent, above)
+    if (e->key.key == SDLK_ESCAPE && sOpen) {
       setOpen(false);
-    } else if (e->key.key == SDLK_F11) {
-      portWindowToggleFullscreen();
-    }
-    break;
-  case SDL_EVENT_KEY_UP:
-    if (e->key.key == SDLK_TAB) {
-      portSpeedControl(0);
-    }
-    break;
-  case SDL_EVENT_GAMEPAD_BUTTON_UP:
-    if (e->gbutton.button == SDL_GAMEPAD_BUTTON_RIGHT_STICK && !gameButton(e->gbutton.which, e->gbutton.button)) {
-      portSpeedControl(0);
     }
     break;
   case SDL_EVENT_GAMEPAD_BUTTON_DOWN:
-    if (gameButton(e->gbutton.which, e->gbutton.button) && !sOpen) {
-      break; // the player gave it a game button (one-handed controls): not the port's shortcut
-    }
-    if (e->gbutton.button == SDL_GAMEPAD_BUTTON_RIGHT_STICK) {
-      portSpeedControl(1);
-    } else if (e->gbutton.button == SDL_GAMEPAD_BUTTON_BACK) {
-      setOpen(!sOpen);
-    } else if (e->gbutton.button == SDL_GAMEPAD_BUTTON_EAST && sOpen && sRebind < 0 &&
-               !ImGui::IsPopupOpen("", ImGuiPopupFlags_AnyPopup)) {
+    if (e->gbutton.button == SDL_GAMEPAD_BUTTON_EAST && sOpen && !portBindingsCapturing() &&
+        !ImGui::IsPopupOpen("", ImGuiPopupFlags_AnyPopup)) {
       setOpen(false); // B: back out of the page (ImGui closes an open list itself)
     }
     break;
@@ -1804,19 +1526,19 @@ const PauseField kPauseFields[] = {
 #endif
     {"Display", "Widescreen", "16:9 instead of the game's own 4:3. Some rooms and scenes end at the 4:3 edges.", 0, 0,
      &PortSettings::widescreen},
-    {"Display", "Widescreen HUD", "HP and FP at the left edge, Star Points and coins at the right.", 0, 0,
+    {"Interface", "Widescreen HUD", "HP and FP at the left edge, Star Points and coins at the right.", 0, 0,
      &PortSettings::wideHud, nullptr, nullptr, 0, 0, 0, 0, nullptr, widescreenOn},
     {"Display", "Blurred side bars", "A blurred copy of the picture instead of black bars beside it.", 0, 0,
      &PortSettings::sideBars},
-    {"Display", "Internal resolution", "Auto: the window's size; or a multiple of 640x480.", 0, 1,
+    {"Graphics", "Internal resolution", "Auto: the window's size; or a multiple of 640x480.", 0, 1,
      &PortSettings::resolution, nullptr, kHzNames, 9},
-    {"Display", "Texture filtering", "Smooth as the game draws them, or sharp pixels.", 0, 1,
+    {"Graphics", "Texture filtering", "Smooth as the game draws them, or sharp pixels.", 0, 1,
      &PortSettings::texFilter, nullptr, kFilters, 2},
-    {"Display", "Overlay corner", "Frame rate, clock and battery in a corner of the screen.", 0, 1, &PortSettings::fps,
+    {"Interface", "Overlay corner", "Frame rate, clock and battery in a corner of the screen.", 0, 1, &PortSettings::fps,
      nullptr, kCorners, 5},
-    {"Display", "Never skip loading graphics", "Something drawn for the first time waits for its graphics.", 0, 0,
+    {"Graphics", "Never skip loading graphics", "Something drawn for the first time waits for its graphics.", 0, 0,
      &PortSettings::noPopIn},
-    {"Display", "Anti-aliasing (4x MSAA)", "Smooths jagged edges.", kNextStart, 0, &PortSettings::msaa},
+    {"Graphics", "Anti-aliasing (4x MSAA)", "Smooths jagged edges.", kNextStart, 0, &PortSettings::msaa},
 #if defined(__ANDROID__) || (defined(__APPLE__) && TARGET_OS_IPHONE)
     {"Display", "Keep clear of the notch", nullptr, 0, 0, &PortSettings::safeArea},
 #endif
@@ -1844,20 +1566,20 @@ const PauseField kPauseFields[] = {
 #endif
     {"Gameplay", "Text speed", "How fast the game's text appears.", 0, 1, &PortSettings::textSpeed, nullptr,
      kTextSpeeds, 4},
-    {"Gameplay", "Action Command cue", "A ring shows when to press A in battle.", 0, 1, &PortSettings::acCue, nullptr,
+    {"Accessibility", "Action Command cue", "A ring shows when to press A in battle.", 0, 1, &PortSettings::acCue, nullptr,
      kCues, kCueCount},
     {"Gameplay", "Fast-forward speed", "Fast-forward: Tab, the right stick's click, or >> on screen.", 0, 2,
      &PortSettings::ffSpeed, nullptr, nullptr, 0, 2, 8, 1, "%dx"},
     {"Gameplay", "Fast-forward toggles", "On: a press turns it on and off. Off: held.", 0, 0, &PortSettings::ffToggle},
     {"Gameplay", "Run speed", "Faster running can make some jumps longer than intended.", kChangesPlay, 2,
      &PortSettings::runSpeed, nullptr, nullptr, 0, 100, 150, 25, "%d%%"},
-    {"Gameplay", "Language", "The game's text.", kNextStart, 1, &PortSettings::language, nullptr, kLanguages, 6, 0, 0,
+    {"Language", "Language", "The game's text.", kNextStart, 1, &PortSettings::language, nullptr, kLanguages, 6, 0, 0,
      0, nullptr, isEurope},
-    {"Gameplay", "Run at 50 Hz (PAL)", "As on a PAL TV: the game's 50 Hz mode, a little slower.",
+    {"Display", "Run at 50 Hz (PAL)", "As on a PAL TV: the game's 50 Hz mode, a little slower.",
      kNextStart | kChangesPlay, 0, &PortSettings::pal50Hz, nullptr, nullptr, 0, 0, 0, 0, nullptr, isEurope},
-    {"System", "Pause in the background", "The game waits while another window has the focus.", 0, 0,
+    {"General", "Pause in the background", "The game waits while another window has the focus.", 0, 0,
      &PortSettings::pauseUnfocused},
-    {"System", "Controllers in the background", "Controllers still work while another window has the focus.", 0, 0,
+    {"Controls", "Controllers in the background", "Controllers still work while another window has the focus.", 0, 0,
      &PortSettings::backgroundInput},
 };
 

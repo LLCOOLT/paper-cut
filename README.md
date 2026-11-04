@@ -26,7 +26,7 @@ A second player plays the partner. In battle they choose its moves and do its ac
 </p>
 
 ### Play as Luigi
-Turn it on in Gameplay+ and Luigi takes Mario's place for the whole story, with 156 animations made for him. Mario steps into Luigi's part in the story's scenes, and the text, menus and credits follow.
+Turn it on in Enhancements and Luigi takes Mario's place for the whole story, with 156 animations made for him. Mario steps into Luigi's part in the story's scenes, and the text, menus and credits follow.
 
 <p align="center">
   <img src="docs/images/shot-luigi-hooktail-castle.jpg" alt="Luigi and Koops on a balcony of Hooktail Castle, under the night sky" width="70%">
@@ -100,7 +100,7 @@ Change any of them under Settings > Controls > Keyboard keys. The port's own key
 Everything Paper Cut adds, by area. Each option is off unless it says otherwise, and the settings page's search finds any of them.
 
 **Co-op**
-- **Second player:** A on another controller joins as player 2, who plays the partner: its moves, action commands and guards in battle; in the field its own stick, a hop, talking, hitting blocks, its ability and switching partners. Mario calls it back with Y. "1P" and "2P" show over the characters, and Controls > Players picks player 2's controller with a press.
+- **Second player:** A on another controller joins as player 2, who plays the partner: its moves, action commands and guards in battle; in the field its own stick, a hop, talking, hitting blocks, its ability and switching partners. Mario calls it back with Y. "1P" and "2P" show over the characters, and Multiplayer > Players picks player 2's controller with a press.
 - **Online co-op:** the launcher's Online tab. Both players need Paper Cut and a disc of the same release, on any platform. Only the controllers' input crosses the network; the games check every second that they still match. The guest plays on the host's save and settings, with their own display, sound and controls.
 - **Invites and watching:** an invite link (`papercut://join/<code>`) or a room code copied to the clipboard joins with a click. Others can join a room to watch, up to four.
 - **Staying connected:** after a network blip the two games reconnect and carry on. If they ever fall out of step, both start again together from the host's last save.
@@ -124,11 +124,11 @@ The games connect directly when they can and through Paper Cut's relay when they
 - **The window:** opens where you left it, sizes to 1-4x the picture, can stay on top, and goes full screen with F11 or Alt+Enter.
 - **Performance overlay:** frame times, 1% lows and jitter.
 
-**Cosmetics:** Mario's cap and overalls, Goombella's hair, Vivian and the HUD's bars in 13 colours or any from a picker, with Luigi, Wario, Waluigi and Fire Mario presets. The recolour keeps the shading.
+**Wardrobe:** a Start menu tab of its own, where Mario (or the partner, or the status bar) stands on the page in the game's own model and takes each colour as you pick it: his cap and overalls, Goombella's hair, Vivian and the HUD's bars in 13 colours or any from a picker, with Luigi, Wario, Waluigi and Fire Mario looks. The recolour keeps the shading.
 
-**Settings:** the Start menu's Settings tab (after the Journal) holds every on/off, choice and number, with All settings for the rest. The full page also opens with F1, a controller's Back/Select, the touch controls' three-bar button or a three-finger tap: tabs, a search box, and a mark on every setting that changes how the game plays or what it saves. Settings that apply from the next start have Restart now beside them, which puts you back where you were. **Presets** (System) turn your gameplay settings into a code or a file to share.
+**Settings:** the Start menu's Settings tab (after the Wardrobe) holds every on/off, choice and number in categories (Gameplay, Enhancements, Display, Graphics, Interface, Audio, Controls, Multiplayer, Accessibility, Language, General), with All settings for the rest. The full page also opens with F1, a controller's Back/Select, the touch controls' three-bar button or a three-finger tap: tabs, a search box, and a mark on every setting that changes how the game plays or what it saves. Settings that apply from the next start have Restart now beside them, which puts you back where you were. **Presets** (General) turn your gameplay settings into a code or a file to share.
 
-**Gameplay+**
+**Enhancements**
 - **Play as Luigi:** Luigi in Mario's place, with 156 animations of his own made for Paper Cut. Mario takes Luigi's part in the story's scenes, and the text, menus and credits follow.
 - Partner quick-swap, faster menus and text, skipped repeated scenes, Save Blocks without the question, and item storage at any Save Block.
 - A bigger bag, badge loadouts, a walk-speed boost, and coin and Star Point multipliers.
@@ -179,7 +179,7 @@ The games connect directly when they can and through Paper Cut's relay when they
 
 **A second screen** on dual-screen handhelds like the AYN Thor (Android): the game's own Start menu, live on the lower screen and used by touch.
 
-**Discord status** (System, on by default): your profile shows the area you're in and whether you're exploring, in battle, or playing co-op or online, once the release has its Discord app ID ([docs/DISCORD_STATUS.md](docs/DISCORD_STATUS.md)).
+**Discord status** (General, on by default): your profile shows the area you're in, the chapter and Mario's level, and whether you're exploring, in battle, or playing co-op or online ([docs/DISCORD_STATUS.md](docs/DISCORD_STATUS.md)).
 
 **Mods:** a mod manager on the settings page. Mods replace or add disc files, textures and text (Dolphin texture packs work as they are), change game data, and run scripts and code through hooks generated from the decompilation. GameCube code mods can be ported from their source, and characters exported from the game can be edited in Blender and put back. See [docs/MODDING.md](docs/MODDING.md) and [docs/CHARACTERS.md](docs/CHARACTERS.md).
 

@@ -1,0 +1,190 @@
+# Bindings: every key and controller button on one page (Español)
+
+Bindings
+Asignaciones
+
+Every key and controller button: the game's, and Paper Cut's own shortcuts.
+Cada tecla y cada botón del mando: los del juego y los atajos propios de Paper Cut.
+
+Settings (open, close)
+Ajustes (abrir, cerrar)
+
+Fast-forward
+Avance rápido
+
+Fast-forward on and off
+Avance rápido sí y no
+
+Rewind (held)
+Rebobinar (mantenido)
+
+Screenshot
+Captura de pantalla
+
+Save state
+Guardar estado
+
+Load state
+Cargar estado
+
+Frame advance (on, off)
+Fotograma a fotograma (sí, no)
+
+Frame advance: one frame
+Fotograma a fotograma: uno
+
+Window or full screen
+Ventana o pantalla completa
+
+Volume down
+Bajar el volumen
+
+Volume up
+Subir el volumen
+
+Stick up
+Stick arriba
+
+Stick down
+Stick abajo
+
+Stick left
+Stick izquierda
+
+Stick right
+Stick derecha
+
+C-stick up
+Stick C arriba
+
+C-stick down
+Stick C abajo
+
+C-stick left
+Stick C izquierda
+
+C-stick right
+Stick C derecha
+
+Left stick left
+Stick izquierdo a la izquierda
+
+Left stick right
+Stick izquierdo a la derecha
+
+Left stick up
+Stick izquierdo arriba
+
+Left stick down
+Stick izquierdo abajo
+
+Right stick left
+Stick derecho a la izquierda
+
+Right stick right
+Stick derecho a la derecha
+
+Right stick up
+Stick derecho arriba
+
+Right stick down
+Stick derecho abajo
+
+Press a button (or two)...
+Pulsa un botón (o dos)...
+
+(none)
+(ninguna)
+
+Choose, then press the key or button. Right-click, X or Delete: none.
+Elige y pulsa la tecla o el botón. Clic derecho, X o Supr: ninguna.
+
+%s is already %s.
+%s ya es %s.
+
+Kept for both, the game's button wins and the action does nothing.
+Si se queda en los dos, gana el botón del juego y la acción no hace nada.
+
+Swap
+Intercambiar
+
+%s gets %s.
+%s recibe %s.
+
+Keep both
+Mantener los dos
+
+Sticks and triggers
+Sticks y gatillos
+
+Swap the sticks
+Intercambiar los sticks
+
+Invert the stick's X
+Invertir la X del stick
+
+Invert the stick's Y
+Invertir la Y del stick
+
+Invert the C-stick's X
+Invertir la X del stick C
+
+Invert the C-stick's Y
+Invertir la Y del stick C
+
+Analog, clicking at a point (as the GameCube's)
+Analógicos, con clic en un punto (como en GameCube)
+
+Analog only
+Solo analógicos
+
+Digital (past the point: all the way)
+Digitales (pasado el punto: a fondo)
+
+Triggers
+Gatillos
+
+The game's buttons
+Los botones del juego
+
+Second key
+Segunda tecla
+
+Action
+Acción
+
+The keyboard plays as player 1.
+El teclado juega como jugador 1.
+
+Paper Cut's actions
+Acciones de Paper Cut
+
+Choose a cell, then press the key or button (Escape: leave it). An action's controller binding can be two buttons: hold the first, press the second. Any controller does the actions; a key or button that is also one of the game's does only the game's. Changed bindings are in a warmer ink.
+Elige una casilla y pulsa la tecla o el botón (Esc: dejarla como está). En el mando, una acción puede llevar dos botones: mantén el primero y pulsa el segundo. Cualquier mando hace las acciones; una tecla o un botón que también es del juego solo hace lo del juego. Las asignaciones cambiadas van en una tinta más cálida.
+
+No controller
+Sin mando
+
+Change them under Controls > Bindings.
+Se cambian en Controles > Asignaciones.
+
+A: every key and button back as they first were.
+A: cada tecla y cada botón como al principio.
+
+Press a key. B: leave it as it is.
+Pulsa una tecla. B: dejarla como está.
+
+Press a button.
+Pulsa un botón.
+
+Also %s.
+También %s.
+
+A: change. X: reset the row.
+A: cambiar. X: restablecer la fila.
+
+A: change. X: reset the row. B: back.
+A: cambiar. X: restablecer la fila. B: volver.
+
+Bindings...
+Asignaciones...

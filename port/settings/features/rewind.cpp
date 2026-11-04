@@ -1,8 +1,9 @@
-// Rewind (System > Rewind; port/include/port/rewind.h): hold Backspace (the
-// key changeable here) or the chosen controller button, and the game steps
-// back through its last seconds; let go and it plays on from there. Off by
-// default; the length 5 to 60 seconds. Save states have no controller
-// button, so neither has this until one is chosen.
+// Rewind (System > Rewind; port/include/port/rewind.h): hold Backspace or a
+// controller button (Controls > Bindings, port/include/port/bindings.h), and
+// the game steps back through its last seconds; let go and it plays on from
+// there. Off by default; the length 5 to 60 seconds. Save states have no
+// controller button, so neither has this until one is chosen.
+#include "port/bindings.h"
 #include "port/rewind.h"
 #include "port/settings.h"
 #include "port/tr.h"
@@ -16,26 +17,17 @@
 
 namespace {
 
-const char* kPadChoices[] = {"None", "Share / capture button", "Left back paddle", "Right back paddle"};
-constexpr SDL_GamepadButton kPadButtons[] = {SDL_GAMEPAD_BUTTON_INVALID, SDL_GAMEPAD_BUTTON_MISC1,
-                                             SDL_GAMEPAD_BUTTON_LEFT_PADDLE1, SDL_GAMEPAD_BUTTON_RIGHT_PADDLE1};
-
 int* sOn;
-int* sKey;
-int* sPad;
-bool sRebinding;
 bool sPageOpen;
-bool sKeyDown, sPadDown;
+bool sDown;
 
-void update() {
-  portRewindHold(sKeyDown || sPadDown);
-}
+void update() { portRewindHold(sDown); }
 
 // the "<< Rewind" badge while stepping back
 void tick(int pageOpen) {
   sPageOpen = pageOpen != 0;
-  if (sPageOpen && (sKeyDown || sPadDown)) {
-    sKeyDown = sPadDown = false; // the page took over
+  if (sPageOpen && sDown) {
+    sDown = false; // the page took over
     update();
   }
   if (!portRewindActive() || pageOpen) {
@@ -51,66 +43,25 @@ void tick(int pageOpen) {
   dl->AddText(at, kPaper, text);
 }
 
-int event(const void* e) {
-  const SDL_Event* ev = static_cast<const SDL_Event*>(e);
-  switch (ev->type) {
-  case SDL_EVENT_KEY_DOWN:
-    if (sRebinding) {
-      if (ev->key.scancode != SDL_SCANCODE_ESCAPE) {
-        *sKey = ev->key.scancode;
-        portSettingsSave();
-      }
-      sRebinding = false;
-      return 1;
-    }
-    if (!*sOn || sPageOpen || ev->key.scancode != *sKey || ImGui::GetIO().WantTextInput) {
-      return 0;
-    }
-    if (!ev->key.repeat) {
-      sKeyDown = true;
-      update();
-    }
-    return 1;
-  case SDL_EVENT_KEY_UP:
-    if (ev->key.scancode == *sKey && sKeyDown) {
-      sKeyDown = false;
-      update();
-      return 1;
-    }
+// the Rewind binding held (Bindings): down, then up
+int hold(int down, int) {
+  if (down && (!*sOn || sPageOpen)) {
     return 0;
-  case SDL_EVENT_GAMEPAD_BUTTON_DOWN:
-  case SDL_EVENT_GAMEPAD_BUTTON_UP: {
-    const int p = *sPad;
-    if (p <= 0 || p > 3 || ev->gbutton.button != kPadButtons[p]) {
-      return 0;
-    }
-    const bool down = ev->type == SDL_EVENT_GAMEPAD_BUTTON_DOWN && *sOn && !sPageOpen;
-    if (down == sPadDown) {
-      return 0;
-    }
-    sPadDown = down;
+  }
+  if ((down != 0) != sDown) {
+    sDown = down != 0;
     update();
-    return 1;
   }
-  case SDL_EVENT_WINDOW_FOCUS_LOST:
-    if (sKeyDown || sPadDown) {
-      sKeyDown = sPadDown = false;
-      update();
-    }
-    return 0;
-  default:
-    return 0;
-  }
+  return 1;
 }
 
-// the key, changeable, and what the states cost now
+// its key and button (changed under Controls > Bindings), and what the states cost now
 void section(int inGame) {
-  const char* name = sRebinding ? portTr("Press a key...") : SDL_GetScancodeName(static_cast<SDL_Scancode>(*sKey));
-  if (ImGui::Button(name[0] != '\0' ? name : "?", ImVec2(ImGui::GetFontSize() * 9.f, 0.f))) {
-    sRebinding = true;
-  }
+  const char* key = portBindingsKeyName(PORT_BIND_REWIND);
+  const char* pad = portBindingsPadName(PORT_BIND_REWIND);
+  ImGui::Text("%s%s%s", key[0] != '\0' ? key : portTr("(none)"), pad[0] != '\0' ? "  /  " : "", pad);
   ImGui::SameLine();
-  ImGui::TextUnformatted(portTr("Rewind key"));
+  ImGui::TextDisabled("%s", portTr("Change them under Controls > Bindings."));
   if (!portRewindSupported()) {
     ImGui::TextDisabled("%s", portTr("Not in online co-op."));
   } else if (inGame && *sOn) {
@@ -125,19 +76,18 @@ void section(int inGame) {
 const bool sAdded = [] {
   sOn = portSettingsDeclare("rewind", 0, 0, 1);
   portSettingsDeclare("rewind_seconds", 10, 5, 60);
-  sKey = portSettingsDeclare("rewind_key", SDL_SCANCODE_BACKSPACE, 0, SDL_SCANCODE_COUNT - 1);
-  sPad = portSettingsDeclare("rewind_pad", 0, 0, 3);
-  portSettingsAddToggle("System", "Rewind",
+  portSettingsDeclare("rewind_key", SDL_SCANCODE_BACKSPACE, 0, SDL_SCANCODE_COUNT - 1); // (Bindings' Rewind key)
+  portSettingsDeclare("rewind_pad", 0, 0, 3); // the old choice of button, until Bindings sets one
+  portSettingsAddToggle("Gameplay", "Rewind",
                         "Hold the Rewind key (Backspace) or button and the game steps back through its last "
                         "seconds; let go to play on from there. Uses some memory and a little time every few "
                         "frames. Not in online co-op.",
                         0, "rewind", "rewind back undo time reverse backspace");
-  portSettingsAddSlider("System", "Rewind length", nullptr, 0, "rewind_seconds", 5, 60, "%d s",
+  portSettingsAddSlider("Gameplay", "Rewind length", nullptr, 0, "rewind_seconds", 5, 60, "%d s",
                         "rewind length seconds memory");
-  portSettingsAddChoice("System", "Rewind button", "A controller button that rewinds while held.", 0, "rewind_pad",
-                        kPadChoices, 4, "rewind button controller gamepad paddle share");
-  portSettingsAddSection("System", "Rewind key", nullptr, 0, section, "rewind key keyboard backspace");
-  portSettingsAddOverlay(tick, event);
+  portSettingsAddSection("Gameplay", "Rewind key", nullptr, 0, section, "rewind key keyboard backspace");
+  portSettingsAddOverlay(tick, nullptr);
+  portBindingsSetHandler(PORT_BIND_REWIND, hold);
   return true;
 }();
 

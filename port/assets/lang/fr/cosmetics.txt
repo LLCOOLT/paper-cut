@@ -54,12 +54,6 @@ Casquette et chemise de Mario
 Mario's overalls
 Salopette de Mario
 
-Partner's colour
-Couleur du partenaire
-
-Goombella's hair and Vivian's body: the partners whose colour comes away cleanly.
-Les cheveux de Goomélie et le corps de Viviane : les partenaires dont la couleur change proprement.
-
 HP banner
 Bandeau PC
 
@@ -86,3 +80,24 @@ Au hasard
 
 Reset all
 Tout réinitialiser
+
+Goombella's hair
+Les cheveux de Goombella
+
+Koops's shell
+La carapace de Koops
+
+Koops's hoodie
+Le sweat de Koops
+
+Flurrie's hair
+Les cheveux de Flurrie
+
+Bobbery's body
+Le corps de Bobbery
+
+Ms. Mowz's mask and cape
+Le masque et la cape de Ms. Mowz
+
+Vivian's body
+Le corps de Vivian

@@ -166,6 +166,9 @@ void portSettingsSetChoices(const char* key, const char* const* names, int count
  * not the launcher's); search finds it by label, note and keywords. */
 void portSettingsAddSection(const char* tab, const char* label, const char* note, unsigned flags,
                             void (*draw)(int inGame), const char* keywords);
+/* The sections added (their tabs and labels, in order), for the Start menu's
+ * Settings tab (port/include/port/pause_forms.h); returns how many, up to max. */
+int portSettingsSections(const char** tabs, const char** labels, int max);
 /* A feature's drawing over the game (a timer, a toast) each presented frame,
  * with Dear ImGui's foreground draw list (pageOpen: the settings page is
  * open), and its SDL events (a key of its own) before the page's: event

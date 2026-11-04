@@ -54,12 +54,6 @@ Berretto e camicia di Mario
 Mario's overalls
 Salopette di Mario
 
-Partner's colour
-Colore del compagno
-
-Goombella's hair and Vivian's body: the partners whose colour comes away cleanly.
-I capelli di Goombella e il corpo di Ombretta: i compagni il cui colore cambia in modo pulito.
-
 HP banner
 Fascia PV
 
@@ -86,3 +80,24 @@ A caso
 
 Reset all
 Ripristina tutto
+
+Goombella's hair
+I capelli di Goombella
+
+Koops's shell
+Il guscio di Koops
+
+Koops's hoodie
+La felpa di Koops
+
+Flurrie's hair
+I capelli di Flurrie
+
+Bobbery's body
+Il corpo di Bobbery
+
+Ms. Mowz's mask and cape
+Maschera e mantello di Ms. Mowz
+
+Vivian's body
+Il corpo di Vivian

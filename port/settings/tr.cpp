@@ -657,7 +657,7 @@ void dump(const char* english) {
 struct Register {
   Register() {
     choice();
-    portSettingsAddChoice("System", "Menu language",
+    portSettingsAddChoice("Language", "Menu language",
                           "Paper Cut's own menus: the settings page, the launcher's and the Start menu's Settings "
                           "tab. Auto: the Japanese release's Japanese, the European release's text language, "
                           "otherwise the computer's. The game's own text follows the disc.",

@@ -102,7 +102,7 @@ void section(int) {
 
 struct Register {
   Register() {
-    portSettingsAddSection("System", "Language packs", nullptr, 0, section,
+    portSettingsAddSection("Language", "Language packs", nullptr, 0, section,
                            "language pack translate translation template mod font reload");
   }
 } sRegister;

@@ -3,6 +3,7 @@
 // frame advance; the RNG; stats, items and the saved flags; a memory watch.
 // The timer and the watch draw in a corner over the game, frame advance has
 // F6 (hold / go on) and F7 (one frame).
+#include "port/bindings.h"
 #include "port/practice.h"
 #include "port/practice_tools.h"
 #include "port/settings.h"
@@ -183,7 +184,9 @@ void overlay(int pageOpen) {
     drawWatch(dl);
   }
   if (portFrameAdvanceHeld() && !pageOpen) {
-    const char* text = "Frame advance: F7 one frame, F6 go on";
+    char text[96]; // the keys as bound (Controls > Bindings)
+    std::snprintf(text, sizeof(text), "Frame advance: %s one frame, %s go on", portBindingsKeyName(PORT_BIND_FRAME_STEP),
+                  portBindingsKeyName(PORT_BIND_FRAME_HOLD));
     const ImVec2 size = ImGui::CalcTextSize(text);
     const ImVec2 at(ImGui::GetIO().DisplaySize.x * 0.5f - size.x * 0.5f,
                     ImGui::GetIO().DisplaySize.y - size.y - 14.f);
@@ -193,20 +196,23 @@ void overlay(int pageOpen) {
   drawToast(dl);
 }
 
-int event(const void* sdlEvent) {
-  const SDL_Event* e = static_cast<const SDL_Event*>(sdlEvent);
-  if (e->type != SDL_EVENT_KEY_DOWN || !*sFrameKeys || !portPracticeInGame()) {
+// frame advance's bindings (Controls > Bindings; F6 and F7), with it on
+int frameHold(int, int repeat) {
+  if (sFrameKeys == nullptr || !*sFrameKeys || !portPracticeInGame()) {
     return 0;
   }
-  if (e->key.key == SDLK_F6 && !e->key.repeat) {
+  if (!repeat) {
     portFrameAdvanceHold(!portFrameAdvanceHeld());
-    return 1;
   }
-  if (e->key.key == SDLK_F7) { // held: a frame per key repeat
-    portFrameAdvanceStep();
-    return 1;
+  return 1;
+}
+
+int frameStep(int, int) { // held: a frame per key repeat
+  if (sFrameKeys == nullptr || !*sFrameKeys || !portPracticeInGame()) {
+    return 0;
   }
-  return 0;
+  portFrameAdvanceStep();
+  return 1;
 }
 
 // --- the page's sections --------------------------------------------------------
@@ -511,7 +517,9 @@ struct Register {
     sRngSeed = portSettingsFind("rng_seed");
     sWatchSet[0] = portSettingsDeclare("memory_watch_set", 0, 0, 0x7FFFFFFF);
     sWatchSet[1] = portSettingsDeclare("memory_watch_set2", 0, 0, 0x7FFFFFFF);
-    portSettingsAddOverlay(overlay, event);
+    portSettingsAddOverlay(overlay, nullptr);
+    portBindingsSetHandler(PORT_BIND_FRAME_HOLD, frameHold);
+    portBindingsSetHandler(PORT_BIND_FRAME_STEP, frameStep);
 
     static const char* const kCorners[] = {"Off", "Top left", "Top right", "Bottom left", "Bottom right"};
     portSettingsAddChoice(kTab, "Speedrun timer",

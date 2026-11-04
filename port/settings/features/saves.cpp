@@ -13,6 +13,7 @@
 #include "port/save_convert.h"
 #include "port/save_transfer.h"
 #include "port/settings.h"
+#include "port/pause_forms.h"
 #include "port/tr.h"
 #include <SDL3/SDL.h>
 #include <imgui.h>
@@ -295,6 +296,95 @@ void copySection(int inGame) {
   }
 }
 
+// The Start menu's forms (port/include/port/pause_forms.h): the running game's card's backups,
+// and its save copied to the other releases' cards
+std::vector<std::string>& formBackups() {
+  static std::vector<std::string> list;
+  return list;
+}
+
+int backupRows(PortPauseRow* out, int max) {
+  std::vector<std::string>& list = formBackups();
+  const char release = PORT_GAME_ID[3];
+  list = glob(backupDir(release), "*.gci");
+  std::reverse(list.begin(), list.end()); // newest first
+  int n = 0;
+  out[n++] = PortPauseRow{"Restore a backup", nullptr, {}, {}, nullptr, -1, PORT_PAUSE_ROW_HEADING};
+  if (list.empty()) {
+    out[n++] = PortPauseRow{"No backups yet", "One is kept each time the game saves.", {}, {}, nullptr, -1,
+                            PORT_PAUSE_ROW_DIM};
+    return n;
+  }
+  for (size_t i = 0; i < list.size() && n < max; i++) {
+    PortPauseRow r{nullptr, "The game starts again to load it; the save as it is now is kept as a backup.", {}, {},
+                   "Restore", static_cast<int>(i), PORT_PAUSE_ROW_CONFIRM};
+    std::snprintf(r.text, sizeof(r.text), "%s", dateOf(list[i]).c_str());
+    if (!portRestartSupported()) {
+      r.flags = PORT_PAUSE_ROW_DIM;
+    }
+    out[n++] = r;
+  }
+  return n;
+}
+
+const char* backupAct(int id, int dir) {
+  std::vector<std::string>& list = formBackups();
+  if (dir != 0 || id < 0 || id >= static_cast<int>(list.size())) {
+    return id < 0 ? "One is kept each time the game saves." : nullptr;
+  }
+  if (!portRestartSupported()) {
+    return "Restore this card's saves from the launcher, before the game starts.";
+  }
+  if (portRestartWaiting()) {
+    return "Restarting when the game has finished saving...";
+  }
+  sChange = CardChange{PORT_GAME_ID[3], list[id], {}, {}, {}, {}, 0};
+  portRestartRequestWith(0, [] { return restore(sChange.release, sChange.backup) ? 1 : 0; });
+  return "Restarting when the game has finished saving...";
+}
+
+int copyRows(PortPauseRow* out, int max) {
+  int n = 0;
+  out[n++] = PortPauseRow{"Copy a save to another release", nullptr, {}, {}, nullptr, -1, PORT_PAUSE_ROW_HEADING};
+  for (int i = 0; i < 3 && n < max; i++) {
+    if (kReleases[i] == PORT_GAME_ID[3]) {
+      continue;
+    }
+    char toName[64];
+    portSaveFileName(kReleases[i], toName, sizeof(toName));
+    const bool replaces = isFile(cardDir(kReleases[i]) + "/" + toName);
+    out[n++] = PortPauseRow{kReleaseNames[i],
+                            replaces ? "This game's save copied there, in place of the save it has; a backup of that "
+                                       "one is kept."
+                                     : "This game's save copied there.",
+                            {}, {}, "Copy", i, PORT_PAUSE_ROW_CONFIRM};
+  }
+  return n;
+}
+
+const char* copyAct(int id, int dir) {
+  if (dir != 0 || id < 0 || id >= 3) {
+    return nullptr;
+  }
+  const char from = PORT_GAME_ID[3], to = kReleases[id];
+  char fromName[64], toName[64];
+  portSaveFileName(from, fromName, sizeof(fromName));
+  portSaveFileName(to, toName, sizeof(toName));
+  const std::string src = cardDir(from) + "/" + fromName, dst = cardDir(to) + "/" + toName;
+  if (!isFile(src)) {
+    return "That card has no save of this game.";
+  }
+  std::vector<uint8_t> in = readAll(src), out(in.size());
+  const int slots = in.empty() ? -1 : portSaveConvert(in.data(), in.size(), to, out.data());
+  if (slots < 0) {
+    return "That file isn't a save of this game.";
+  }
+  return writeSave(to, toName, dst, out, slots, kReleaseNames[id]) ? "Copied." : "The save couldn't be written there.";
+}
+
+const PortPauseForm kBackupForm = {"Saves", "Restore a backup", backupRows, backupAct};
+const PortPauseForm kCopyForm = {"Saves", "Copy a save to another release", copyRows, copyAct};
+
 struct SavesSettings {
   SavesSettings() {
     sKeep = portSettingsDeclare("save_backups", 5, 0, 20);
@@ -305,6 +395,8 @@ struct SavesSettings {
                            "backup restore undo gci memory card");
     portSettingsAddSection("Saves", "Copy a save to another release", nullptr, 0, copySection,
                            "convert transfer japan jp us eu pal region gci memory card");
+    portPauseAddForm(&kBackupForm);
+    portPauseAddForm(&kCopyForm);
   }
 } sSaves;
 

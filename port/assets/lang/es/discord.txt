@@ -26,3 +26,16 @@ Viendo el final
 
 In the menus
 En los menús
+
+Prologue
+Prólogo
+
+Chapter %d
+Capítulo %d
+
+Post-game
+Tras el final
+
+Lv %d
+Nv. %d
+

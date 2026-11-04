@@ -10,6 +10,9 @@ extern "C" {
 
 /* the tab's id (WinTab.id; the game's are 0-4) */
 #define PORT_PAUSE_SETTINGS_TAB 5
+/* the Wardrobe's (port/src/aurora/wardrobe_aurora.c): Mario's, the partner's
+ * and the status bar's colours, shown on him (and them) as they're picked */
+#define PORT_PAUSE_WARDROBE_TAB 6
 
 /* a tab's x in a row of n (the game's five: 105 apart; six: closer) and
  * the labels' scale */
@@ -28,6 +31,16 @@ void portPauseSettingsDisp(s32 camId, WindowWork* wp, s32 idx);
 void portPauseWrap(const char* text, char* out, size_t size);
 /* msgSearch: the tab's own messages ("pc_menu_..."), or NULL */
 const char* portPauseSettingsMsg(const char* tag);
+
+/* the Wardrobe tab: as the Settings tab's above; Exit as the menu closes
+ * (its models freed), Msg its "pc_menu_wardrobe..." messages */
+void portPauseWardrobeTabDisp(WindowWork* wp, float x, float y, float scale, GXColor c);
+void portPauseWardrobeInit(WindowWork* wp);
+void portPauseWardrobeInit2(WindowWork* wp);
+s32 portPauseWardrobeMain(WindowWork* wp);
+void portPauseWardrobeDisp(s32 camId, WindowWork* wp, s32 idx);
+void portPauseWardrobeExit(WindowWork* wp);
+const char* portPauseWardrobeMsg(const char* tag);
 
 #ifdef __cplusplus
 }

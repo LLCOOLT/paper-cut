@@ -11,6 +11,7 @@
 //    press each button when asked; the mapping is added at once and saved to
 //    <user>/gamecontrollerdb.txt for next time.
 #include "port/settings.h"
+#include "port/pause_forms.h"
 #include "port/tr.h"
 #include "../button_glyphs.h"
 
@@ -413,6 +414,48 @@ void setupSection(int) {
   ImGui::PopStyleColor();
 }
 
+// The Start menu's form (port/include/port/pause_forms.h): each connected controller and its player
+constexpr const char* kFormPlayers[] = {"Not playing", "Player 1", "Player 2", "Player 3", "Player 4"};
+
+int formRows(PortPauseRow* out, int max) {
+  const u32 count = PADCount();
+  int n = 0;
+  if (count == 0) {
+    out[n++] = PortPauseRow{"No controller connected", "Any Xbox, PlayStation, Switch or GameCube controller works.",
+                            {}, {}, nullptr, -1, PORT_PAUSE_ROW_DIM};
+    return n;
+  }
+  for (u32 i = 0; i < count && n < max; i++) {
+    if (padAt(i) == nullptr) {
+      continue;
+    }
+    PortPauseRow r{nullptr, "Which player it plays as; left and right change it.", {}, {},
+                   kFormPlayers[playerOf(i) + 1], static_cast<int>(i), 0};
+    std::snprintf(r.text, sizeof(r.text), "%s", controllerName(i).c_str());
+    out[n++] = r;
+  }
+  return n;
+}
+
+const char* formAct(int id, int dir) {
+  if (id < 0 || static_cast<u32>(id) >= PADCount()) {
+    return nullptr;
+  }
+  const int player = playerOf(static_cast<u32>(id));
+  const int choice = ((player + 1 + (dir == 0 ? 1 : dir)) % 5 + 5) % 5;
+  if (choice == 0) {
+    if (player >= 0) {
+      PADClearPort(static_cast<u32>(player));
+    }
+  } else {
+    PADSetPortForIndex(static_cast<u32>(id), static_cast<u32>(choice - 1));
+  }
+  PADSerializeMappings();
+  return nullptr;
+}
+
+const PortPauseForm kForm = {"Controls", "Controllers", formRows, formAct};
+
 struct ControllerSettings {
   ControllerSettings() {
     portSettingsAddSection("Controls", "Controllers", nullptr, 0, listSection,
@@ -420,6 +463,7 @@ struct ControllerSettings {
                            "xbox playstation dualsense dualshock switch joy-con gamecube adapter 8bitdo");
     portSettingsAddSection("Controls", "Set up a controller", nullptr, 0, setupSection,
                            "unknown unrecognised controller joystick arcade stick usb mapping wizard");
+    portPauseAddForm(&kForm);
   }
 } sControllers;
 

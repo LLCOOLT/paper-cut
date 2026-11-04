@@ -1,0 +1,19 @@
+# The settings' categories (port/settings/settings_ui.cpp's kTabs), 日本語: an English line, then its translation, then a blank line.
+
+Enhancements
+拡張
+
+Graphics
+グラフィック
+
+Interface
+インターフェース
+
+Language
+言語
+
+General
+一般
+
+Multiplayer
+マルチプレイ

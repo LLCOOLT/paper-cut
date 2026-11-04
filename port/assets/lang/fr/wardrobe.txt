@@ -1,0 +1,76 @@
+# The Start menu's Wardrobe (port/src/aurora/wardrobe_aurora.c), en français : an English line, then its translation, then a blank line.
+
+Wardrobe
+Garde-robe
+
+Mario
+Mario
+
+Looks
+Look
+
+Cap and shirt
+Casquette et chemise
+
+Overalls
+Salopette
+
+Partners
+Partenaires
+
+Status bar
+Barre d'état
+
+Colour picker...
+Sélecteur de couleur...
+
+Your own
+Le vôtre
+
+Luigi
+Luigi
+
+Wario
+Wario
+
+Waluigi
+Waluigi
+
+Mario as his brother or his rivals, in one press.
+Mario en son frère ou ses rivaux, d'une pression.
+
+Custom colours, Random and Reset all.
+Couleurs perso, Au hasard et Tout réinitialiser.
+
+Left and right: the game's own, 13 colours, or Custom.
+Gauche et droite : la couleur du jeu, 13 autres ou Perso.
+
+Change how Mario, his partners and the status bar look.
+Changez l'allure de Mario, de ses partenaires et de la barre d'état.
+
+Koops
+Koops
+
+Shell
+Carapace
+
+Hoodie
+Sweat
+
+Yoshi's colour
+La couleur de Yoshi
+
+Green
+Vert
+
+The colour he hatched in. This changes the game itself.
+La couleur de son éclosion. Cela change le jeu lui-même.
+
+Not during online play or a replay.
+Pas en ligne ni pendant un replay.
+
+Ms. Mowz
+Ms. Mowz
+
+Mask and cape
+Masque et cape

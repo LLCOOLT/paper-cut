@@ -188,6 +188,13 @@ void launcherPaperStyle(ImGuiStyle& s, float scale) {
   c[ImGuiCol_ScrollbarBg] = rgba(kPaper, 0.f);
   c[ImGuiCol_ScrollbarGrab] = rgba(IM_COL32(214, 186, 146, 255));
   c[ImGuiCol_NavCursor] = rgba(kInk); // the controller's focus: dark, to show on the cream cards and the red buttons
+  // tables (Bindings, the mixer, practice's lists...): a light tan header and lines on the cream card,
+  // not Dear ImGui's dark defaults under brown text
+  c[ImGuiCol_TableHeaderBg] = rgba(IM_COL32(232, 210, 172, 255));
+  c[ImGuiCol_TableBorderStrong] = rgba(IM_COL32(190, 156, 116, 255));
+  c[ImGuiCol_TableBorderLight] = rgba(IM_COL32(222, 196, 160, 255));
+  c[ImGuiCol_TableRowBg] = rgba(kPaper, 0.f);
+  c[ImGuiCol_TableRowBgAlt] = rgba(IM_COL32(236, 214, 176, 255), 0.35f);
 }
 
 bool launcherRedButton(const char* label, ImVec2 size) {

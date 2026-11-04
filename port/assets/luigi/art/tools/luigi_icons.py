@@ -1,10 +1,12 @@
-"""Luigi's drawn faces: the stand-ins (fallbacks) for what the game makes from the disc.
+"""Luigi's drawn faces and tab: the stand-ins (fallbacks) for what the game makes from the disc.
 
-Luigi's faces in the game's Mario icons (ICON_1A3, 19E, 1A1) and level-up's BP panel are made on
-the player's machine from the disc's own images (../recipes/luigi_icons.recipe, RECIPES.md):
-nothing from the disc is in the repo. This script draws, in the paper style, without the disc:
+Luigi's faces in the game's Mario icons (ICON_1A3, 19E, 1A1), level-up's BP panel and the pause
+menu's first tab are made on the player's machine from the disc's own images
+(../recipes/luigi_icons.recipe and luigi_tabs.recipe, RECIPES.md): nothing from the disc is in the
+repo. This script draws, in the paper style, without the disc:
   drawn/luigi_hud, luigi_head, luigi_emblem   the three icons' fallbacks
   drawn/ui/levelup                           level-up's BP panel's
+  drawn/ui/tab_us                            the "Luigi" tab's (luigi_tab_jp.py draws drawn/ui/tab_jp)
 Each face is Luigi's head drawn in the shape of c_luigi's head as it stands in the field, laid out
 as the recipe lays out the disc's head: our own outlines and colours, nothing from the disc.
 
@@ -166,6 +168,45 @@ LEVELUP = "tex1_128x128_4d465d3c205b172e_14"   # battle_common.tpl image 51 (JP 
 TILE = dict(fill="#d4aa3c", light="#e8c45a", shadow="#a8822a", line="#4a3006")
 
 
+def tab(p):
+    """the pause menu's first tab, as Mario's (win.tpl image 1): a red board with a darker ragged
+    edge, "Luigi" in chunky pale-pink cut letters with a deeper pink drop below right"""
+    from papercut import smooth_path
+    board = smooth_path([(3, 4), (48, 2), (93, 4), (94, 20), (93, 36), (48, 38), (3, 36), (2, 20)], tension=0.3,
+                        jitter=0.6, seed=51)
+    p.shape(board, "#cc4a36", "#a01a04", "#d8604a", "#b03a26", (3, 3), (3, 3), soft=2.0, grow=1.6, inner=1.6,
+            bias=(0.6, 0.8))
+    # glyphs on a 12-unit grid (x-height from 4, the g's tail to 15.5): L u i g i
+    bars = {
+        "L": (7, [(0, 0, 3, 12), (0, 9, 7, 12)]),
+        "u": (8, [(0, 4, 3, 12), (5, 4, 8, 12), (0, 9.2, 8, 12)]),
+        "i": (3, [(0, 4.4, 3, 12), (0, 0.4, 3, 3)]),
+        "g": (8, [(0, 4, 8, 6.6), (0, 4, 3, 11), (5, 4, 8, 15.5), (0, 8.6, 8, 11), (0, 13, 8, 15.5)]),
+    }
+    s, x0, y0 = 2.05, 13.0, 7.5
+    word = "Luigi"
+    import random
+    rnd = random.Random(7)
+    layers = []
+    x = x0
+    for ch in word:
+        w, rects = bars[ch]
+        tilt, bob = rnd.uniform(-0.06, 0.06), rnd.uniform(-0.6, 0.6)
+        polys = []
+        for (a, b, c, d) in rects:
+            pts = [(a, b), (c, b), (c, d), (a, d)]
+            pts = [(px + rnd.uniform(-0.25, 0.25), py + rnd.uniform(-0.25, 0.25)) for px, py in pts]
+            polys.append([(x + (px + (py - 6) * tilt) * s, y0 + bob + py * s) for px, py in pts])
+        layers.append(polys)
+        x += (w + 1.4) * s
+    path = "".join("M" + " L".join("%.1f %.1f" % pt for pt in poly) + " Z" for polys in layers for poly in polys)
+    shift = lambda dx, dy: "".join("M" + " L".join("%.1f %.1f" % (a + dx, b + dy) for a, b in poly) + " Z"
+                                   for polys in layers for poly in polys)
+    p.raw(f'<path d="{shift(1.6, 1.8)}" fill="#a82a1c" fill-rule="nonzero"/>')
+    p.raw(f'<path d="{path}" fill="#b83a2c" stroke="#b83a2c" stroke-width="1.8" stroke-linejoin="round"/>')
+    p.raw(f'<path d="{path}" fill="#f4dde0" fill-rule="nonzero"/>')
+
+
 def levelup(p):
     """level-up's BP panel, as Mario's (battle_common.tpl image 51): a gold tile with a bevelled
     dark edge and on it a gold coin (Luigi's head goes on it in make_faces)"""
@@ -175,6 +216,18 @@ def levelup(p):
     p.shape(tile, TILE["fill"], TILE["line"], TILE["light"], TILE["shadow"], (6, 6), (7, 7), soft=3.0, grow=3.0,
             inner=3.0, bias=(1.2, 1.6))
     coin(Fig(p, 16.5, 17.5, 0.94, line=4.0))
+
+
+def make_ui():
+    """the drawn tab into drawn/ui/, the fallback of its recipe"""
+    os.makedirs(DRAWN_UI, exist_ok=True)
+    p = Part("tab_us", 96, 40)
+    tab(p)
+    im = harden(render(p))
+    with open(os.path.join(DRAWN_UI, "tab_us.svg"), "w", encoding="utf-8") as fh:
+        fh.write(p.svg())
+    im.save(os.path.join(DRAWN_UI, "tab_us.png"))
+    return ["tab_us"]
 
 
 # ------------------------------------------------------------ the faces --
@@ -266,4 +319,4 @@ def make_faces():
 
 
 if __name__ == "__main__":
-    print(", ".join(make_faces()))
+    print(", ".join(make_ui() + make_faces()))

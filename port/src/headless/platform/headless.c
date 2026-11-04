@@ -73,3 +73,8 @@ int portIconTexOverride(unsigned int iconId, void* texObj) {
     (void)texObj;
     return 0;
 }
+
+/* Menu speed (port/settings/features/menu_speed.cpp): the game's own slides headless */
+int portMenuFrames(int frames) {
+    return frames;
+}

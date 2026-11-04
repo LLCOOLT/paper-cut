@@ -54,12 +54,6 @@ Marios Mütze und Hemd
 Mario's overalls
 Marios Latzhose
 
-Partner's colour
-Farbe des Partners
-
-Goombella's hair and Vivian's body: the partners whose colour comes away cleanly.
-Gumbrinas Haare und Barbaras Körper: die Partner, deren Farbe sich sauber ändern lässt.
-
 HP banner
 KP-Leiste
 
@@ -86,3 +80,24 @@ Zufällig
 
 Reset all
 Alles zurücksetzen
+
+Goombella's hair
+Gumbrettas Haare
+
+Koops's shell
+Koops' Panzer
+
+Koops's hoodie
+Koops' Kapuzenpulli
+
+Flurrie's hair
+Flurries Haare
+
+Bobbery's body
+Bobberys Körper
+
+Ms. Mowz's mask and cape
+Maske und Umhang von Ms. Mowz
+
+Vivian's body
+Vivians Körper

@@ -1,0 +1,80 @@
+# The Start menu's forms and colour picker (port/include/port/pause_forms.h): an English line, then its translation, then a blank line.
+
+Opens Paper Cut's full settings page on this category: this one isn't in the Start menu.
+Öffnet die volle Einstellungsseite von Paper Cut bei dieser Kategorie: das hier gibt es nicht im Startmenü.
+
+On the full page
+Auf der vollen Seite
+
+Full settings page...
+Volle Einstellungsseite...
+
+Paper Cut's full settings page, over the game: every setting, and remapping, mods and practice.
+Die volle Einstellungsseite von Paper Cut über dem Spiel: jede Einstellung, dazu Tastenbelegung, Mods und Training.
+
+Press A again to confirm.
+Zum Bestätigen noch einmal A drücken.
+
+The window this many times the game's picture; left and right change it.
+Das Fenster so oft so groß wie das Bild des Spiels; links und rechts ändern es.
+
+That size is larger than this screen.
+Diese Größe ist größer als dieser Bildschirm.
+
+Your settings as a code, copied to paste wherever you share it.
+Deine Einstellungen als Code, kopiert zum Einfügen, wo du ihn teilst.
+
+Put the copied code in place
+Kopierten Code übernehmen
+
+Someone's preset code, copied: the settings that change the game put in place.
+Ein kopierter Preset-Code: die Einstellungen, die das Spiel verändern, werden übernommen.
+
+Preset put in place. Some settings apply from the next start.
+Preset übernommen. Manche Einstellungen gelten ab dem nächsten Start.
+
+No backups yet
+Noch keine Sicherungen
+
+One is kept each time the game saves.
+Bei jedem Speichern des Spiels wird eine behalten.
+
+This game's save copied there, in place of the save it has; a backup of that one is kept.
+Der Spielstand dieses Spiels wird dorthin kopiert, statt des dortigen; von dem wird eine Sicherung behalten.
+
+This game's save copied there.
+Der Spielstand dieses Spiels wird dorthin kopiert.
+
+That file isn't a save of this game.
+Diese Datei ist kein Spielstand dieses Spiels.
+
+Copied.
+Kopiert.
+
+The save couldn't be written there.
+Der Spielstand konnte dort nicht geschrieben werden.
+
+No controller connected
+Kein Controller verbunden
+
+Any Xbox, PlayStation, Switch or GameCube controller works.
+Jeder Xbox-, PlayStation-, Switch- oder GameCube-Controller geht.
+
+Which player it plays as; left and right change it.
+Welcher Spieler er ist; links und rechts ändern es.
+
+Part
+Teil
+
+Which part the colour is for: left and right change it.
+Für welchen Teil die Farbe ist: links und rechts ändern es.
+
+A puts this colour on.
+A legt diese Farbe an.
+
+Left and right make it more or less; it's on as it changes.
+Links und rechts mehr oder weniger; es gilt sofort.
+
+Each part's own colour: a swatch, or red, green and blue.
+Die eigene Farbe jedes Teils: ein Farbfeld oder Rot, Grün und Blau.
+

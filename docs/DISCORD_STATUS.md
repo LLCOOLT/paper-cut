@@ -1,14 +1,16 @@
 # Discord status
 
-System > Discord status (on by default) shows what you're doing in Paper Cut on
+General > Discord status (on by default) shows what you're doing in Paper Cut on
 your Discord profile while the Discord app runs on the same computer:
 
 - **details:** the area (Petalburg, Rogueport Sewers, the Great Tree...), from
   the map's three-letter prefix (the table in
   `port/settings/features/discord.cpp`, after `src/data/mapdata.c`'s areas);
   the title screen, the ending and the menus otherwise;
-- **state:** In battle, Playing online, Playing co-op (Second player on and a
-  player 2 in) or Exploring;
+- **state:** the chapter (Prologue, Chapter 1 to 8, Post-game after the final
+  battle, from the story's progress) and Mario's level, then In battle, Playing
+  online, Playing co-op (Second player on and a player 2 in) or Exploring:
+  "Chapter 3 · Lv 12 · In battle";
 - the time since the game started, and the large image `logo` ("Paper Cut").
 
 The state and the other words are in the menu language; area names are English.

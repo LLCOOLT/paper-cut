@@ -188,7 +188,7 @@ void overlay(int pageOpen) {
 const bool kRegistered = [] {
   static const char* const kCorners[] = {"Off", "Top left", "Top right", "Bottom left", "Bottom right"};
   portSettingsDeclare("input_display", 0, 0, 4);
-  portSettingsAddChoice("Display", "Input display",
+  portSettingsAddChoice("Interface", "Input display",
                         "The controller as the game reads it, in a corner: sticks, buttons, d-pad and triggers "
                         "(with Second player on, the second controller beside it).",
                         0, "input_display", kCorners, 5,

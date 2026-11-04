@@ -7,7 +7,7 @@ The game's own text (dialogue, items, the original menus) is not part of it: tha
 
 ## Where it goes
 
-In the **mods folder** (see [MODDING.md](MODDING.md#mods) for where it is on each platform; System > Language packs > "Open the mods folder" opens it):
+In the **mods folder** (see [MODDING.md](MODDING.md#mods) for where it is on each platform; Language > Language packs > "Open the mods folder" opens it):
 
 ```
 mods/
@@ -22,9 +22,9 @@ A pack is a folder only (not a .zip or .ttydmod), and needs no `mod.json`. A mod
 
 ## The quickest start
 
-System > Language packs > **Make a language pack template** writes `mods/my-language/lang/strings.txt` with every English text of the menus, each with an empty line under it for your translation, and a `pack.txt` to fill in. Pressing it again later (after an update of Paper Cut) adds only the texts your file doesn't have yet, at its end, under `# New texts to translate`.
+Language > Language packs > **Make a language pack template** writes `mods/my-language/lang/strings.txt` with every English text of the menus, each with an empty line under it for your translation, and a `pack.txt` to fill in. Pressing it again later (after an update of Paper Cut) adds only the texts your file doesn't have yet, at its end, under `# New texts to translate`.
 
-Translate a few lines, set `name=` and `code=` in `pack.txt`, press **Reload language packs**, and choose your language in System > Menu language. Reload shows changed texts at once, without restarting.
+Translate a few lines, set `name=` and `code=` in `pack.txt`, press **Reload language packs**, and choose your language in Language > Menu language. Reload shows changed texts at once, without restarting.
 
 ## pack.txt
 
@@ -38,7 +38,7 @@ font=myfont.ttf
 
 | Key | |
 |---|---|
-| `name` | The language in its own words: how System > Menu language lists it. |
+| `name` | The language in its own words: how Language > Menu language lists it. |
 | `code` | The language's code, lower case: `pt`, `pt-br`, `ko`, `ru`... One Paper Cut has (`de`, `fr`, `es`, `it`, `ja`, or `en`) makes the pack change that language's texts instead of adding one: a native speaker's fixes, say. |
 | `for` | `menus` (Paper Cut's own menus; the only kind for now). |
 | `fallback` | Optional, for a new language: a text the pack lacks is shown in this built-in language (`es`, `fr`...) instead of English. |
@@ -62,12 +62,12 @@ Fechar
 - The English text, exactly as Paper Cut shows it, on one line; its translation on the next; a blank line between texts.
 - A line break inside a text is written `\n`.
 - Keep `%s`, `%d` and `%%` as they are, in the same order: Paper Cut puts a name or a number there.
-- An English line with nothing under it is **not translated yet**: it stays as the built-in language would show it. The pack's list in System > Language packs counts them.
+- An English line with nothing under it is **not translated yet**: it stays as the built-in language would show it. The pack's list in Language > Language packs counts them.
 - If one pack translates a text twice differently, the first is used and the list says so.
 
 A text is shown, in order: the pack's translation; else the built-in language's (for `code=de`, Paper Cut's German; for a new language, its `fallback=`); else English. Where two packs have the same code, their texts are merged, the folder first by name winning.
 
-The list in System > Language packs shows each pack: what it does, how many texts it translates and how many are still empty, and anything wrong with it (a key it doesn't know, a missing font file, a text translated twice).
+The list in Language > Language packs shows each pack: what it does, how many texts it translates and how many are still empty, and anything wrong with it (a key it doesn't know, a missing font file, a text translated twice).
 
 `$TTYD_TR_DUMP=<file>` (an environment variable) writes each English text to the file as the menus ask for it: the same list the template comes from, for finding a text's exact English.
 

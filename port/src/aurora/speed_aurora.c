@@ -79,6 +79,14 @@ void portSpeedControl(int down) {
     }
 }
 
+void portSpeedToggle(void) {
+    if (portSettings()->ffToggle) {
+        sToggled = !sToggled;
+    } else {
+        sHeld = !sHeld; /* (until the held control's next release) */
+    }
+}
+
 int portSpeedActive(void) {
     return portClockSpeedPct() > 100;
 }

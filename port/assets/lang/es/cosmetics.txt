@@ -54,12 +54,6 @@ Gorra y camisa de Mario
 Mario's overalls
 Peto de Mario
 
-Partner's colour
-Color del compañero
-
-Goombella's hair and Vivian's body: the partners whose colour comes away cleanly.
-El pelo de Goomarina y el cuerpo de Bibiana: los compañeros cuyo color cambia limpiamente.
-
 HP banner
 Franja de PC
 
@@ -86,3 +80,24 @@ Al azar
 
 Reset all
 Restablecer todo
+
+Goombella's hair
+El pelo de Goombella
+
+Koops's shell
+El caparazón de Koops
+
+Koops's hoodie
+La sudadera de Koops
+
+Flurrie's hair
+El pelo de Flurrie
+
+Bobbery's body
+El cuerpo de Bobbery
+
+Ms. Mowz's mask and cape
+La máscara y la capa de Ms. Mowz
+
+Vivian's body
+El cuerpo de Vivian

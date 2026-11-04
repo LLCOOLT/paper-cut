@@ -283,6 +283,16 @@ dump textures) and add it to a texture set as the panel is
 (`portModsAddMapTexture`): the set's pattern is matched against the map's
 name, `*#luigi` meaning "any map, while Luigi is the player".
 
+### Lettering from the game's own letters (`art/recipes/luigi_tabs.recipe`)
+
+The pause menu's first tab, "Mario", as "Luigi" (and ルイージ): the tab's own
+board with its lettering filled over, and each letter cut from another of the
+game's tabs or bars. `alpha set 0` clears that tab's board colour, and `map`
+moves its lettering, line and blend to the Mario tab's colours. Where the game
+has no glyph, join strokes of others: ル is リ's long stroke and し. It goes in
+the `*#luigi` texture set as the panel does; its drawn fallbacks are
+`tools/luigi_icons.py`'s (`tab_us`) and `tools/luigi_tab_jp.py`'s (`tab_jp`).
+
 `tpl` paths under `/us/` fall back to the same path under `/jp/` on the Japanese disc. Its
 `e/jp/effect.tpl` matches images 0 to 99 of `e/us/effect.tpl`, and its `effect_sys.tpl` 0 to 3.
 

@@ -8,6 +8,7 @@
 //
 //   PCSET1:<base64url of "key=value;key=value...">
 #include "port/settings.h"
+#include "port/pause_forms.h"
 #include "port/tr.h"
 
 #include <SDL3/SDL.h>
@@ -283,12 +284,46 @@ void section(int inGame) {
   }
 }
 
+// The Start menu's form (port/include/port/pause_forms.h): the code copied, a copied one put in place
+int formRows(PortPauseRow* out, int max) {
+  if (max < 2) {
+    return 0;
+  }
+  out[0] = PortPauseRow{"Copy this setup's code", "Your settings as a code, copied to paste wherever you share it.",
+                        {}, {}, nullptr, 0, 0};
+  out[1] = PortPauseRow{"Put the copied code in place",
+                        "Someone's preset code, copied: the settings that change the game put in place.", {}, {},
+                        nullptr, 1, PORT_PAUSE_ROW_CONFIRM};
+  return 2;
+}
+
+const char* formAct(int id, int dir) {
+  if (dir != 0) {
+    return nullptr;
+  }
+  if (id == 0) {
+    SDL_SetClipboardText(makeCode().c_str());
+    return "Code copied: paste it wherever you share it.";
+  }
+  std::string clip;
+  if (char* text = SDL_GetClipboardText()) {
+    clip = text;
+    SDL_free(text);
+  }
+  const int changed = apply(clip);
+  report(changed);
+  return changed < 0 ? "That isn't a settings preset." : "Preset put in place. Some settings apply from the next start.";
+}
+
+const PortPauseForm kForm = {"General", "Settings presets", formRows, formAct};
+
 const bool sAdded = [] {
-  portSettingsAddSection("System", "Settings presets",
+  portSettingsAddSection("General", "Settings presets",
                          "Your setup as a code or a file to share, or someone else's put in place: the settings that "
                          "change the game (gameplay, challenges, accessibility, cosmetics, mirror mode...), not this "
                          "device's own (window, graphics, keys, controllers).",
                          0, section, "preset presets share code export import setup file copy paste");
+  portPauseAddForm(&kForm);
   return true;
 }();
 

@@ -1,0 +1,76 @@
+# The Start menu's Wardrobe (port/src/aurora/wardrobe_aurora.c) in Japanese for the JP release's own font: an English line, then its translation, then a blank line.
+
+Wardrobe
+きせかえ
+
+Mario
+マリオ
+
+Looks
+スタイル
+
+Cap and shirt
+ぼうしとシャツ
+
+Overalls
+オーバーオール
+
+Partners
+なかま
+
+Status bar
+ステータスバー
+
+Colour picker...
+カラーピッカー
+
+Your own
+じぶんの色
+
+Luigi
+ルイージ
+
+Wario
+ワリオ
+
+Waluigi
+ワルイージ
+
+Mario as his brother or his rivals, in one press.
+ボタンひとつで　マリオを　弟や　ライバルの　すがたに
+
+Custom colours, Random and Reset all.
+カスタムの色　ランダム　すべてリセット
+
+Left and right: the game's own, 13 colours, or Custom.
+左右で　ゲームの色　１３の色　カスタム
+
+Change how Mario, his partners and the status bar look.
+マリオと　なかまと　ステータスバーの　みためを　かえる
+
+Koops
+ノコタロウ
+
+Shell
+こうら
+
+Hoodie
+パーカー
+
+Yoshi's colour
+ヨッシーの色
+
+Green
+みどり
+
+The colour he hatched in. This changes the game itself.
+うまれたときの色　ゲームそのものが　かわる
+
+Not during online play or a replay.
+オンラインと　リプレイの　あいだは　かえられない
+
+Ms. Mowz
+チュチュリーナ
+
+Mask and cape
+マスクとマント

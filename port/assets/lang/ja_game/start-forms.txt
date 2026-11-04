@@ -1,0 +1,140 @@
+# The Start menu's forms and colour picker (port/include/port/pause_forms.h) in Japanese for the JP release's own font: an English line, then its translation, then a blank line.
+
+Opens Paper Cut's full settings page on this category: this one isn't in the Start menu.
+Paper Cutの　せっていページを　ひらきます　これは　スタートメニューに　ありません
+
+On the full page
+せっていページで
+
+Full settings page...
+せっていページ...
+
+Paper Cut's full settings page, over the game: every setting, and remapping, mods and practice.
+Paper Cutの　せっていページを　ひらきます　すべての　せっていが　あります
+
+Press A again to confirm.
+もういちど　Aボタンで　けってい
+
+The window this many times the game's picture; left and right change it.
+ウィンドウの　おおきさ　ひだりと　みぎで　かえます
+
+That size is larger than this screen.
+がめんより　おおきすぎます
+
+Your settings as a code, copied to paste wherever you share it.
+せっていを　コードにして　コピーします
+
+Put the copied code in place
+コピーした　コードを　つかう
+
+Someone's preset code, copied: the settings that change the game put in place.
+コピーした　コードの　せっていを　つかいます
+
+Preset put in place. Some settings apply from the next start.
+せっていを　かえました　つぎの　きどうから　かわる　ものも　あります
+
+No backups yet
+バックアップは　まだ　ありません
+
+One is kept each time the game saves.
+セーブするたびに　ひとつ　のこります
+
+This game's save copied there, in place of the save it has; a backup of that one is kept.
+セーブを　コピーします　まえの　セーブは　バックアップに　のこります
+
+This game's save copied there.
+セーブを　コピーします
+
+That file isn't a save of this game.
+この　ゲームの　セーブでは　ありません
+
+Copied.
+コピーしました
+
+The save couldn't be written there.
+セーブを　かきこめませんでした
+
+No controller connected
+コントローラーが　ありません
+
+Any Xbox, PlayStation, Switch or GameCube controller works.
+Xbox　PlayStation　Switch　ゲームキューブの　コントローラーが　つかえます
+
+Which player it plays as; left and right change it.
+なんばんの　プレイヤーか　ひだりと　みぎで　かえます
+
+Part
+パーツ
+
+Which part the colour is for: left and right change it.
+いろを　つける　パーツ　ひだりと　みぎで　かえます
+
+A puts this colour on.
+Aボタンで　この　いろに　します
+
+Left and right make it more or less; it's on as it changes.
+ひだりと　みぎで　ふやしたり　へらしたり　します
+
+Each part's own colour: a swatch, or red, green and blue.
+パーツの　いろ　みほんか　あか　みどり　あおで
+
+Window size
+ウィンドウの　おおきさ
+
+Keep the window above others
+ウィンドウを　いちばん　まえに
+
+Remember the window's size and place
+ウィンドウの　ばしょを　おぼえる
+
+Copy this setup's code
+せっていの　コードを　コピー
+
+Code copied: paste it wherever you share it.
+コードを　コピーしました
+
+That isn't a settings preset.
+せっていの　コードでは　ありません
+
+The game starts again to load it; the save as it is now is kept as a backup.
+さいきどうして　よみこみます　いまの　セーブは　バックアップに　のこります
+
+Restore
+もどす
+
+Restore this card's saves from the launcher, before the game starts.
+ゲームを　はじめる　まえに　ランチャーで　もどしてください
+
+Restarting when the game has finished saving...
+セーブが　おわったら　さいきどうします
+
+Japan (JP)
+にほん (JP)
+
+Europe (EU)
+ヨーロッパ (EU)
+
+North America (US)
+アメリカ (US)
+
+Copy
+コピー
+
+That card has no save of this game.
+その　カードには　セーブが　ありません
+
+Not playing
+あそばない
+
+Player 1
+プレイヤー1
+
+Player 2
+プレイヤー2
+
+Player 3
+プレイヤー3
+
+Player 4
+プレイヤー4
+

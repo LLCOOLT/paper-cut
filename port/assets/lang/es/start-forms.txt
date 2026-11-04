@@ -1,0 +1,80 @@
+# The Start menu's forms and colour picker (port/include/port/pause_forms.h): an English line, then its translation, then a blank line.
+
+Opens Paper Cut's full settings page on this category: this one isn't in the Start menu.
+Abre la página completa de ajustes de Paper Cut en esta categoría: esto no está en el menú de pausa.
+
+On the full page
+En la página completa
+
+Full settings page...
+Página completa de ajustes...
+
+Paper Cut's full settings page, over the game: every setting, and remapping, mods and practice.
+La página completa de ajustes de Paper Cut, sobre el juego: todos los ajustes, los controles, los mods y la práctica.
+
+Press A again to confirm.
+Pulsa A otra vez para confirmar.
+
+The window this many times the game's picture; left and right change it.
+La ventana, tantas veces la imagen del juego; izquierda y derecha la cambian.
+
+That size is larger than this screen.
+Ese tamaño es mayor que esta pantalla.
+
+Your settings as a code, copied to paste wherever you share it.
+Tus ajustes como código, copiado para pegarlo donde lo compartas.
+
+Put the copied code in place
+Aplicar el código copiado
+
+Someone's preset code, copied: the settings that change the game put in place.
+El código de preajuste copiado de alguien: se aplican los ajustes que cambian el juego.
+
+Preset put in place. Some settings apply from the next start.
+Preajuste aplicado. Algunos ajustes se aplican en el próximo inicio.
+
+No backups yet
+Aún no hay copias
+
+One is kept each time the game saves.
+Se guarda una cada vez que el juego guarda.
+
+This game's save copied there, in place of the save it has; a backup of that one is kept.
+La partida de este juego se copia allí, en lugar de la que tiene; se guarda una copia de esa.
+
+This game's save copied there.
+La partida de este juego se copia allí.
+
+That file isn't a save of this game.
+Ese archivo no es una partida de este juego.
+
+Copied.
+Copiada.
+
+The save couldn't be written there.
+No se pudo escribir la partida allí.
+
+No controller connected
+No hay mando conectado
+
+Any Xbox, PlayStation, Switch or GameCube controller works.
+Sirve cualquier mando de Xbox, PlayStation, Switch o GameCube.
+
+Which player it plays as; left and right change it.
+Qué jugador es; izquierda y derecha lo cambian.
+
+Part
+Parte
+
+Which part the colour is for: left and right change it.
+Qué parte se colorea: izquierda y derecha la cambian.
+
+A puts this colour on.
+A pone este color.
+
+Left and right make it more or less; it's on as it changes.
+Izquierda y derecha: más o menos; se aplica al momento.
+
+Each part's own colour: a swatch, or red, green and blue.
+El color de cada parte: una muestra, o rojo, verde y azul.
+

@@ -1,6 +1,7 @@
 // Gameplay+ and accessibility (port/include/port/gameplus.h): the settings
 // page's controls for the options, all off by default, and the quick-swap
 // control's keyboard key and controller button.
+#include "port/bindings.h"
 #include "port/gameplus.h"
 #include "port/settings.h"
 #include "port/tr.h"
@@ -11,24 +12,10 @@ namespace {
 
 constexpr unsigned kPlay = PORT_SETTING_CHANGES_PLAY;
 constexpr unsigned kSaves = PORT_SETTING_CHANGES_PLAY | PORT_SETTING_CHANGES_SAVES;
-constexpr const char* kTab = "Gameplay+";
+constexpr const char* kTab = "Enhancements";
 
-// Q on the keyboard, or a controller's left stick pressed in
-int quickSwapHeld() {
-  const bool* keys = SDL_GetKeyboardState(nullptr);
-  if (keys != nullptr && keys[SDL_SCANCODE_Q]) {
-    return 1;
-  }
-  int count = 0;
-  SDL_JoystickID* ids = SDL_GetGamepads(&count);
-  int held = 0;
-  for (int i = 0; i < count && !held; i++) {
-    SDL_Gamepad* pad = SDL_GetGamepadFromID(ids[i]);
-    held = pad != nullptr && SDL_GetGamepadButton(pad, SDL_GAMEPAD_BUTTON_LEFT_STICK);
-  }
-  SDL_free(ids);
-  return held;
-}
+// Q on the keyboard, or a controller's left stick pressed in (Controls > Bindings)
+int quickSwapHeld() { return portBindingsHeld(PORT_BIND_QUICK_SWAP); }
 
 // Fast travel: a button per hub, those not reached yet greyed out
 void fastTravel(int) {
@@ -145,13 +132,13 @@ struct Register {
 
     static const char* const kDifficulty[] = {"Original", "Easy (enemy HP 75 %, attacks 50 %)",
                                               "Hard (enemy HP 150 %, attacks 150 %)", "Custom"};
-    portSettingsAddChoice("Accessibility", "Difficulty",
+    portSettingsAddChoice("Gameplay", "Difficulty",
                           "Enemies' HP and the damage their attacks do. Custom uses Enemy HP (custom) and Enemy "
                           "attack (custom).", kPlay,
                           "difficulty", kDifficulty, 4, "difficulty easy hard enemy hp attack damage");
-    portSettingsAddSlider("Accessibility", "Enemy HP (custom)", nullptr, kPlay, "difficulty_enemy_hp", 25, 300,
+    portSettingsAddSlider("Gameplay", "Enemy HP (custom)", nullptr, kPlay, "difficulty_enemy_hp", 25, 300,
                           "%d %%", "difficulty enemy hp custom");
-    portSettingsAddSlider("Accessibility", "Enemy attack (custom)", nullptr, kPlay, "difficulty_enemy_attack", 25,
+    portSettingsAddSlider("Gameplay", "Enemy attack (custom)", nullptr, kPlay, "difficulty_enemy_attack", 25,
                           300, "%d %%", "difficulty enemy attack damage custom");
     static const char* const kAssist[] = {"Off", "Wider windows", "Automatic"};
     portSettingsAddChoice("Accessibility", "Action commands: attacks",

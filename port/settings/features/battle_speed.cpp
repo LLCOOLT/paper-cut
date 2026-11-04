@@ -10,7 +10,7 @@ const char* kChoices[] = {"Off", "1.5x", "2x"};
 
 const bool sAdded = [] {
   portSettingsDeclare("battle_speed", 0, 0, 2);
-  portSettingsAddChoice("Gameplay+", "Faster battles",
+  portSettingsAddChoice("Enhancements", "Faster battles",
                         "Battles play faster, but never while you act: action commands, Stylish moves, the menus and "
                         "Star Specials stay at normal speed, and guards and Superguards keep their timing. Not in "
                         "online co-op.",

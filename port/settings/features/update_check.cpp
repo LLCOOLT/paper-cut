@@ -377,9 +377,9 @@ struct UpdateCheckSettings {
     if (!kCanCheck) {
       return;
     }
-    portSettingsAddToggle("System", "Check for updates at start", "Asks GitHub for the latest release of Paper Cut.",
+    portSettingsAddToggle("General", "Check for updates at start", "Asks GitHub for the latest release of Paper Cut.",
                           0, "update_check", "update version release new github");
-    portSettingsAddSection("System", "New version", nullptr, 0, systemSection,
+    portSettingsAddSection("General", "New version", nullptr, 0, systemSection,
                            "update version release new download install");
     if (SDL_getenv("TTYD_UPDATE_INSTALL") != nullptr) {
       portSettingsAddOverlay(testOverlay, nullptr);

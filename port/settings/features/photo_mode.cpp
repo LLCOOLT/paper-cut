@@ -11,6 +11,7 @@
 //   B / P, Esc                  back to the game
 #include <dolphin/pad.h>
 
+#include "port/bindings.h"
 #include "port/practice.h"
 #include "port/settings.h"
 #include "port/tr.h"
@@ -168,16 +169,13 @@ void tick(int pageOpen) {
 
 int event(const void* e) {
   const SDL_Event* ev = static_cast<const SDL_Event*>(e);
+  // (P and both sticks pressed in, on and off: the Photo mode binding, below)
   if (ev->type == SDL_EVENT_KEY_DOWN && !ev->key.repeat) {
     const SDL_Scancode k = ev->key.scancode;
     if (!sPhoto.on) {
-      if (k == SDL_SCANCODE_P && portPhotoAvailable()) {
-        start();
-        return 1;
-      }
       return 0;
     }
-    if (k == SDL_SCANCODE_P || k == SDL_SCANCODE_ESCAPE) {
+    if (k == SDL_SCANCODE_ESCAPE) {
       stop();
     } else if (k == SDL_SCANCODE_H) {
       sPhoto.hideHud = !sPhoto.hideHud;
@@ -190,16 +188,8 @@ int event(const void* e) {
     return 1;
   }
   if (ev->type == SDL_EVENT_GAMEPAD_BUTTON_DOWN) {
-    SDL_Gamepad* p = SDL_GetGamepadFromID(ev->gbutton.which);
     const int b = ev->gbutton.button;
     if (!sPhoto.on) {
-      // both sticks pressed in (the second of the two)
-      if (p != nullptr && ((b == SDL_GAMEPAD_BUTTON_LEFT_STICK && SDL_GetGamepadButton(p, SDL_GAMEPAD_BUTTON_RIGHT_STICK)) ||
-                           (b == SDL_GAMEPAD_BUTTON_RIGHT_STICK && SDL_GetGamepadButton(p, SDL_GAMEPAD_BUTTON_LEFT_STICK))) &&
-          portPhotoAvailable()) {
-        start();
-        return 1;
-      }
       return 0;
     }
     if (b == SDL_GAMEPAD_BUTTON_EAST) { // B (Xbox's B, PlayStation's circle)
@@ -230,12 +220,27 @@ void section(int inGame) {
 }
 
 const bool sAdded = [] {
-  portSettingsAddSection("System", "Photo mode",
+  portSettingsAddSection("General", "Photo mode",
                          "The game held where it is, the camera all the way round Mario, up and down, in and out, the "
                          "HUD hidden or not, and a picture taken. P on the keyboard or both sticks pressed in; then the "
                          "sticks move the camera, A takes the picture, Y hides the HUD, B goes back.",
                          0, section, "photo mode picture screenshot camera pose hide hud freeze");
   portSettingsAddOverlay(tick, event);
+  // the Photo mode binding (Controls > Bindings): on, and off again
+  portBindingsSetHandler(PORT_BIND_PHOTO, [](int, int repeat) {
+    if (repeat) {
+      return 1;
+    }
+    if (sPhoto.on) {
+      stop();
+      return 1;
+    }
+    if (!portPhotoAvailable()) {
+      return 0;
+    }
+    start();
+    return 1;
+  });
   return true;
 }();
 

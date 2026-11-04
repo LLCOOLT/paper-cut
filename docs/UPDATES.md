@@ -1,6 +1,6 @@
 # Updates from inside the game
 
-At start Paper Cut asks GitHub for the latest release of `LLCOOLT/paper-cut` (System tab, Check for updates at start). When a newer one is out, the System tab shows it with a link to the release page, and on Windows, macOS and the Linux zip also **Download and install**. Code: `port/settings/features/update_check.cpp` (the check, the download, the checksum) and `port/settings/features/update_install.cpp` (unpacking, the switch-over).
+At start Paper Cut asks GitHub for the latest release of `LLCOOLT/paper-cut` (General tab, Check for updates at start). When a newer one is out, the General tab shows it with a link to the release page, and on Windows, macOS and the Linux zip also **Download and install**. Code: `port/settings/features/update_check.cpp` (the check, the download, the checksum) and `port/settings/features/update_install.cpp` (unpacking, the switch-over).
 
 ## What is downloaded
 

@@ -26,3 +26,16 @@ Sieht sich das Ende an
 
 In the menus
 In den Menüs
+
+Prologue
+Prolog
+
+Chapter %d
+Kapitel %d
+
+Post-game
+Nach dem Abspann
+
+Lv %d
+Lv. %d
+

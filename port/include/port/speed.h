@@ -10,6 +10,8 @@ extern "C" {
 /* The fast-forward control went down (1) or up (0): held, or toggled,
  * as the settings say. */
 void portSpeedControl(int down);
+/* Fast-forward on or off, whatever the setting (Bindings' Fast-forward on/off). */
+void portSpeedToggle(void);
 /* The game runs faster than real time this frame. */
 int portSpeedActive(void);
 /* Once per game frame (vi_aurora.c): the speed for the next one. */

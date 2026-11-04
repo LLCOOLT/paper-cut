@@ -26,3 +26,16 @@ Watching the ending
 
 In the menus
 メニュー
+
+Prologue
+プロローグ
+
+Chapter %d
+第%d章
+
+Post-game
+クリア後
+
+Lv %d
+Lv %d
+

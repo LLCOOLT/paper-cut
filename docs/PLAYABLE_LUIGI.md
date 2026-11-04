@@ -1,6 +1,6 @@
 # Playable Luigi (Paper Cut 0.2, M6)
 
-A Gameplay+ option, "Play as Luigi" (setting key `playable_luigi`, off by
+An Enhancements option, "Play as Luigi" (setting key `playable_luigi`, off by
 default), that shows Luigi in Mario's place. It changes how Mario looks, sounds
 and is called, not what he can do: Luigi uses Mario's moves, stats and
 collision. Saves are not changed.
@@ -128,16 +128,21 @@ drawn by `port/assets/luigi/art/tools/luigi_icons.py`) shows instead.
 - `ICON_1A1`, the gold coin on the Mario page's level row and the status
   tables;
 - level-up's BP panel (`battle_common.tpl` image 51, 38 on the JP disc, the
-  same data): Mario's panel with Luigi's head on its coin.
+  same data): Mario's panel with Luigi's head on its coin;
+- the pause menu's first tab (`win.tpl` image 1): "Luigi" (ルイージ on the JP
+  disc and in the EU disc's Japanese) in place of "Mario", the tab's own board
+  with each letter cut from the game's lettering on its other tabs and bars
+  (`port/assets/luigi/art/recipes/luigi_tabs.recipe`; its drawn stand-ins by
+  `luigi_icons.py` and `luigi_tab_jp.py` in `port/assets/luigi/art/tools/`).
 
 The three icons go through `portIconTexOverride`
 (`port/src/aurora/luigi_faces_aurora.c`, called from `iconGetTexObj` and
-`iconGX` in `src/driver/icondrv.c`). The panel is a texture replacement in a
-map-scoped texture set (`portModsAddMapTexture`, `port/mods/mods.cpp`): while
-the option is on, every map is named with a `#luigi` flag to the sets
-(`mod_game_aurora.c`, each frame), and the set `*#luigi` (any map, with the
-flag) holds it. With the option off nothing changes: Mario's own icons and
-panel. The C runner and the Python tool (`port/assets/luigi/art/tools/recipes.py`)
+`iconGX` in `src/driver/icondrv.c`). The panel and the tab are texture
+replacements in a map-scoped texture set (`portModsAddMapTexture`,
+`port/mods/mods.cpp`): while the option is on, every map is named with a
+`#luigi` flag to the sets (`mod_game_aurora.c`, each frame), and the set
+`*#luigi` (any map, with the flag) holds them. With the option off nothing
+changes: Mario's own icons, panel and tab. The C runner and the Python tool (`port/assets/luigi/art/tools/recipes.py`)
 make the same texels (`tests/port/art_recipe_check.py`, on all three discs).
 
 ## Text, menus, the brothers swapped, sounds
@@ -248,8 +253,6 @@ All of it only while the option is on; `port/src/common/luigi_pc.c` again.
   itself switches at once. The swapped NPCs, the text and the sounds switch
   at once too; a message already open keeps its text.
 - Peach, Bowser and 8-bit Mario are unchanged.
-- The menu tabs' titles ("Mario" on the pause menu's first tab) are textures,
-  not text, and still say Mario.
 - Seen in game (US): the Mario page draws Luigi with "Luigi" by the level and
   "Luigi's Abilities" in its help, and the Gear page's help says "Luigi's
   items". The prologue in Mario's house (`TTYD_MAP=aaa_00,prologue`): Mario
