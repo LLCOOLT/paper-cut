@@ -54,13 +54,13 @@ The fight behind each enemy in the field is drawn from all of its area's fights 
 Remix: badge draft
 リミックス: バッジドラフト
 
-At each chapter's title card, three badges to choose one from: left and right, then A.
+Each chapter's title card offers three badges: pick one.
 各チャプターのタイトルで、3つのバッジから1つを選べます。左右で選んでAで決定。
 
 Remix seed
 リミックスのシード
 
-The same seed, the same remix (share it with a challenge code).
+Same seed, same remix: share it with a challenge code.
 同じシードなら同じリミックスです(チャレンジコードでシェアできます)。
 
 Hardcore

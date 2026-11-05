@@ -4,7 +4,7 @@
 Bindings...
 キー　わりあて...
 
-Every key and controller button: the game's, and Paper Cut's own shortcuts.
+Every key and button: the game's and Paper Cut's own.
 すべての　キーと　コントローラーの　ボタン　ゲームのものと　Paper Cutの　ショートカット
 
 The game's buttons
@@ -36,9 +36,6 @@ Also %s.
 
 A: change. X: reset the row.
 A：かえる　X：この　ぎょうを　もとに　もどす
-
-A: change. X: reset the row. B: back.
-A：かえる　X：この　ぎょうを　もとに　もどす　B：もどる
 
 Press a key...
 キーを　おしてください...

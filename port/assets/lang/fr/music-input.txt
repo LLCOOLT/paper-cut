@@ -9,14 +9,14 @@ La musique de chaque salle est une autre du jeu : musique d'exploration pour mus
 Your music
 Votre musique
 
-Your files in the music folder play in place of the game's tracks they are named after.
+Music folder files replace the tracks they are named after.
 Vos fichiers du dossier music sont joués à la place des morceaux du jeu dont ils portent le nom.
 
 Shuffle includes your music
 L'aléatoire inclut votre musique
 
 Music shuffle also picks the music folder's files.
-La musique aléatoire choisit aussi les fichiers du dossier music.
+La musique aléatoire pioche aussi dans le dossier music.
 
 Music folder
 Dossier de musique

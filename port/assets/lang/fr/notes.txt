@@ -61,14 +61,14 @@ Gauche et droite choisissent la phrase de la note.
 Left and right pick the word in it.
 Gauche et droite choisissent son mot.
 
-Leaves the note where Mario stands, for other players to find and rate.
+Leaves the note where Mario stands, for others to rate.
 Laisse la note là où se tient Mario, pour que d'autres joueurs la trouvent et la notent.
 
 Asks the relay again for this area's notes.
 Redemande au relais les notes de cette zone.
 
-Right rates this note up, left rates it down. The best stay; the worst go.
-Droite : bonne note, gauche : mauvaise note. Les meilleures restent, les pires partent.
+Right: rate up, left: rate down. The best notes stay.
+Droite note mieux, gauche moins. Les meilleures restent.
 
 Your note is left here.
 Votre note est déposée ici.

@@ -167,7 +167,7 @@ static int inView(const PortNote* n) {
 void portNotesFrame(void) {
     MarioWork* mario;
     int i, total, near = -1;
-    float best = NOTE_READ * NOTE_READ;
+    float best = NOTE_READ * NOTE_READ, dist[NOTES_MAX];
     if (gp == NULL || !portNotesOn() || seqGetSeq() != SEQ_GAME || gp->inBattle || (mario = marioGetPtr()) == NULL) {
         sCount = 0;
         sNear = -1;
@@ -176,9 +176,10 @@ void portNotesFrame(void) {
     portNotesWant(gp->currentMapName);
     total = portNotesCount(gp->currentMapName);
     sCount = 0;
-    for (i = 0; i < total && sCount < NOTES_MAX; i++) {
+    for (i = 0; i < total; i++) { /* the nearest NOTES_MAX in view of all the room's */
         PortNote n;
         float dx, dz, d;
+        int k, at;
         if (!portNotesGet(gp->currentMapName, i, &n)) {
             break;
         }
@@ -188,11 +189,27 @@ void portNotesFrame(void) {
         if (d > NOTE_SEEN * NOTE_SEEN || !inView(&n)) {
             continue;
         }
-        if (d < best && fabsf((float)n.y - mario->position.y) < 80.0f) {
-            best = d;
-            near = sCount;
+        at = sCount;
+        if (sCount == NOTES_MAX) { /* full: in the farthest one's place, when nearer */
+            for (at = 0, k = 1; k < NOTES_MAX; k++) {
+                if (dist[k] > dist[at]) {
+                    at = k;
+                }
+            }
+            if (dist[at] <= d) {
+                continue;
+            }
+        } else {
+            sCount++;
         }
-        sNotes[sCount++] = n;
+        sNotes[at] = n;
+        dist[at] = d;
+    }
+    for (i = 0; i < sCount; i++) {
+        if (dist[i] < best && fabsf((float)sNotes[i].y - mario->position.y) < 80.0f) {
+            best = dist[i];
+            near = i;
+        }
     }
     if (near >= 0 && strcmp(sNotes[near].id, sNearId) == 0) {
         sAge++;

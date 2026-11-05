@@ -127,7 +127,7 @@ No limit
 Widest picture
 最大の横幅
 
-Past this the rest of the screen is bars (blurred with Blurred side bars).
+Wider screens get bars past this (see Blurred side bars).
 これを超えた分は帯になります（「ぼかした両端の帯」でぼかせます）。
 
 The status bar, message windows and battle menus, larger or smaller than the game's.
@@ -175,14 +175,14 @@ HDR対応の画面で、白を選んだ明るさ（ペーパーホワイト）�
 Performance overlay
 パフォーマンス表示
 
-How long each frame takes: the time between frames, and the part spent working.
+The time between frames, and the part spent working.
 各フレームにかかる時間：フレームの間隔と、そのうち処理にかかった時間。
 
 Sharp text
 くっきりした文字
 
-The game's font rebuilt as a distance field, so its letters stay sharp at any resolution (the same letters; a texture pack's font shows with this off).
-ゲームのフォントを距離フィールドとして作り直し、どの解像度でも文字がくっきりします（同じ文字のまま。オフにするとテクスチャパックのフォントが表示されます）。
+The game's font rebuilt as a distance field, so its letters stay sharp at any resolution (the same letters; a texture pack's own font is drawn as the pack's).
+ゲームのフォントを距離フィールドとして作り直し、どの解像度でも文字がくっきりします（同じ文字のまま。テクスチャパックが自分のフォントを持つときは、そのフォントが表示されます）。
 
 Window
 ウィンドウ
@@ -289,7 +289,7 @@ Enemy attack (custom)
 Action commands: attacks
 アクションコマンド：攻撃
 
-Wider timing for attack commands, or every attack command done for you.
+Wider timing for attack commands, or all done for you.
 攻撃のアクションコマンドのタイミングを広くするか、すべて自動で成功させます。
 
 Action commands: guards
@@ -313,19 +313,19 @@ No saves yet: put .gci files in the warps folder (in the save folder).
 Speedrun timer
 スピードランタイマー
 
-Game time in a corner, counted in the game's own frames, with real time under it.
+Game time (in frames) and real time in a corner.
 ゲーム時間を、ゲーム自身のフレームで数えて隅に表示し、その下に実時間を表示します。
 
 Load removal
 ロード時間を除く
 
-Game time stops while a map or a battle loads (the timer's and LiveSplit's).
+The timer and LiveSplit stop while a map or battle loads.
 マップやバトルのロード中はゲーム時間が止まります（タイマーとLiveSplitの両方）。
 
 Start with a new file
 新しいファイルで開始
 
-The timer starts when a new file begins, and resets at the title screen.
+The timer starts with a new file and resets at the title.
 新しいファイルを始めるとタイマーが動き出し、タイトル画面でリセットされます。
 
 Splits
@@ -373,7 +373,7 @@ Story and flags
 Memory watch corner
 メモリ監視の位置
 
-The fields ticked in Memory watch (All settings), kept on screen.
+Memory watch's ticked fields (All settings), on screen.
 「メモリ監視」（すべての設定）でチェックした項目を画面に表示し続けます。
 
 Memory watch
@@ -442,7 +442,7 @@ Presets
 One-hit KO
 一撃でＫＯ
 
-Any enemy hit that does damage knocks Mario or the partner out.
+Any damaging enemy hit knocks Mario or the partner out.
 ダメージのある敵の攻撃は、すべてマリオかなかまをＫＯします。
 
 Allowed
@@ -454,7 +454,7 @@ Guarding
 Attack commands
 攻撃のコマンド
 
-Narrower timing for Mario's and the partners' attack commands.
+Narrower timing for Mario's and partners' attack commands.
 マリオとなかまの攻撃のアクションコマンドのタイミングをせまくします。
 
 No items in battle
@@ -472,7 +472,7 @@ Viewers' commands in your channel's chat make the crowd throw items, give or tak
 Cooldown
 間隔
 
-One command each this many seconds; a viewer, one each three times it.
+Seconds between commands (three times that per viewer).
 この秒数ごとにコマンド1つ。1人の視聴者はその3倍ごとに1つ。
 
 Allow the harmful ones
@@ -490,7 +490,7 @@ Switches to the next partner in the field without the pause menu: Q, a controlle
 Save Blocks save at once
 セーブブロックですぐセーブ
 
-A Save Block saves to the file being played without asking first.
+A Save Block saves to the current file without asking.
 セーブブロックが、確認せずに遊んでいるファイルにセーブします。
 
 Bigger bag
@@ -508,13 +508,13 @@ After a battle, a partner who fell is back at 1 HP.
 Level up with the D-pad
 十字ボタンでレベルアップ
 
-The level-up screen (HP, FP or BP) also takes the D-pad, not only the stick.
+The level-up screen (HP, FP, BP) also takes the D-pad.
 レベルアップの画面（ＨＰ、ＦＰ、ＢＰ）で、スティックだけでなく十字ボタンも使えます。
 
 Healing items heal every partner
 回復アイテムでなかま全員を回復
 
-In the field, an item used on a partner heals the other partners too.
+In the field, healing one partner heals all of them.
 フィールドでなかまに使ったアイテムが、ほかのなかまも回復します。
 
 Skip repeated scenes
@@ -574,9 +574,6 @@ A lost match costs no rank, and a match's bonus condition stays at the top of th
 Play as Luigi
 ルイージで遊ぶ
 
-Luigi in Mario's place, with Mario's moves, in the field, battles, menus and credits; the text calls him Luigi and the other Luigi stays out of sight. Saves are not changed.
-マリオの代わりにルイージが、マリオの技で、フィールド、バトル、メニュー、スタッフロールに登場します。テキストもルイージと呼び、もう1人のルイージは見えなくなります。セーブは変わりません。
-
 A new file starts with what you choose here, taken from the file New Game+ from file names. Choose before starting the new file.
 新しいファイルを、ここで選んだものを「引き継ぐファイル」のファイルから引き継いで始めます。新しいファイルを始める前に選んでください。
 
@@ -610,7 +607,7 @@ A Save Block also offers to store items and take them out, as the Rogueport shop
 Walk-speed boost
 歩く速さのブースト
 
-Mario walks and runs faster while the Boost key or Boost button is held.
+Mario moves faster while the Boost key or button is held.
 「ブーストのキー」か「ブーストのボタン」を押している間、マリオが速く歩いて走ります。
 
 Boost speed
@@ -628,7 +625,7 @@ Boost button
 Coins from battles
 バトルのコイン
 
-The coins a won battle drops, after Merlee, Money Money and a First Strike.
+A battle's coins, after Merlee, Money Money and co.
 勝ったバトルで出るコイン（サンデール、コインコイン、せんせいこうげきの後）。
 
 Star Points from battles
@@ -640,7 +637,7 @@ A battle's Star Points (still at most 100, a level).
 Star Piece and Shine Sprite tracker
 ほしのかけらとシャインの記録
 
-How many of the current map's Star Pieces and Shine Sprites are found, in a corner.
+The map's Star Pieces and Shine Sprites, in a corner.
 今のマップのほしのかけらとシャインをいくつ見つけたかを、隅に表示します。
 
 On this map
@@ -685,7 +682,7 @@ Built-in randomizer
 Backups kept
 残すバックアップの数
 
-Dated copies of each save file, made when the game saves. 0: none.
+Dated copies of each save file, made on saving. 0: none.
 ゲームがセーブする時に作る、各セーブファイルの日付つきのコピー。0：なし。
 
 Restore a backup
@@ -706,7 +703,7 @@ Widescreen
 Never skip loading graphics
 読み込み中のグラフィックを飛ばさない
 
-Extra frames between the game's own 60: smoother motion.
+Extra frames between the game's 60: smoother motion.
 ゲームの60フレームの間に追加のフレーム：動きがなめらかに。
 
 Present at the display's refresh: no tearing.
@@ -1067,9 +1064,6 @@ last_crash.txt in the save folder; paste it to whoever is helping you.
 
 The game crashed last time
 前回ゲームがクラッシュしました
-
-A report of where it crashed was saved. Copy it and paste it to whoever is helping you.
-どこでクラッシュしたかのレポートを保存しました。コピーして、手伝ってくれる人に貼りつけてください。
 
 Copy report
 レポートをコピー
@@ -1608,7 +1602,7 @@ Replace the save with this one
 Restore
 戻す
 
-Restore this card's saves from the launcher, before the game starts.
+Restore saves from the launcher, before starting.
 このカードのセーブは、ゲームを始める前にランチャーから戻してください。
 
 The Japanese release keeps its Pianta Parlor records differently; the copy is converted. Names typed in one release's letters may look different in another.
@@ -1832,8 +1826,8 @@ Rが入る位置
 Player 2 joined: their stick walks the partner.
 プレイヤー2が参加：スティックで仲間を動かせます。
 
-A second controller: turn on Second player (Controls) to play the partner.
-2つ目のコントローラー：仲間を動かすには「2人目のプレイヤー」（操作）をオンに。
+A second controller: turn on Second player (co-op) in Multiplayer to play the partner.
+2つ目のコントローラー：仲間を動かすには「マルチプレイ」の「2人目のプレイヤー（協力プレイ）」をオンに。
 
 Player 2 left: the partner follows Mario.
 プレイヤー2が抜けました：仲間はマリオについていきます。

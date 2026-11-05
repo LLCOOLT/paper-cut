@@ -25,7 +25,7 @@ Steps that download (configuring and building, which fetch dependencies; Gradle;
 
 ## Cutting a release
 
-1. Write `docs/release_notes/<version>.md`: what the release is and what's in it. `release.py` adds the checksums and the "no game data" line.
+1. Write `docs/release_notes/<version>.md`: what the release is and what's in it. `release.py` adds the checksums and the "no game data" line. The game's What's new page is made from the same file at build time (`tools/port/whats_new.py`): its "What's new" and "Fixed" sections, each bullet's bold name and first sentence, so keep those short.
 2. Tag the commit and push the tag:
    ```bash
    git tag v0.1.0
@@ -39,7 +39,7 @@ Steps that download (configuring and building, which fetch dependencies; Gradle;
    - `SHA256SUMS.txt`.
 
    Then the Mac runner adds to the same draft:
-   - `papercut-<version>-macos-<arch>.zip`: `Paper Cut.app`, holding the three versions' builds (signed ad hoc, not notarized), with the same extras;
+   - `papercut-<version>-macos-<arch>.zip`: `Paper Cut.app`, holding the three versions' builds (signed ad hoc, or with the Developer ID and notarized when the signing secrets are set: [Code signing](#code-signing)), with the same extras;
    - `papercut-<version>-<jp|us|eu>-ios-unsigned.ipa`: one app per version, for AltStore, SideStore or Sideloadly;
    - `papercut-<version>-linux-x64.zip`: the three builds and the `papercut` script, built in an Ubuntu container ([`tools/port/linux-release.Dockerfile`](../tools/port/linux-release.Dockerfile));
    - `SHA256SUMS-macos.txt`, and those checksums in the notes.
@@ -77,7 +77,7 @@ Releases are unsigned on Windows and signed ad hoc on the Mac until the reposito
 |---|---|
 | `PAPERCUT_MACOS_SIGN_IDENTITY` | the identity's name, `Developer ID Application: <name> (<team ID>)` |
 | `PAPERCUT_MACOS_CERT_P12_BASE64`, `PAPERCUT_MACOS_CERT_PASSWORD` | the certificate and its key as a `.p12`, base64-encoded: imported into a keychain of the run's own (without them, the Mac runner's login keychain must have it) |
-| `PAPERCUT_NOTARY_KEY_BASE64`, `PAPERCUT_NOTARY_KEY_ID`, `PAPERCUT_NOTARY_ISSUER` | an App Store Connect API key (`.p8`) for `notarytool` |
+| `PAPERCUT_NOTARY_KEY_BASE64`, `PAPERCUT_NOTARY_KEY_ID`, `PAPERCUT_NOTARY_ISSUER` | an App Store Connect API key (`.p8`) for `notarytool` (`PAPERCUT_NOTARY_KEY` takes a path instead, outside CI) |
 | `PAPERCUT_NOTARY_APPLE_ID`, `PAPERCUT_NOTARY_PASSWORD`, `PAPERCUT_NOTARY_TEAM_ID` | or an Apple ID with an app-specific password |
 
 The iOS `.ipa` files stay unsigned (AltStore, SideStore and Sideloadly sign them on install), and the APKs debug-signed.

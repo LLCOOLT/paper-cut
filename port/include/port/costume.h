@@ -47,6 +47,12 @@ int portAnimPoseGroupMatrices(int poseId, Mtx matrix, Mtx* out, int max);
  * unused; -1 until it is loaded (it's loaded at the next frame's start: never
  * while drawing) or if it can't be. */
 int portCosmeticPose(const char* model, const char* anim);
+/* Room in the pose pool, its model files and its texture files for a pose of
+ * our own, with plenty left for the game's (animPoseEntry doesn't check). */
+int portCosmeticPoolRoom(void);
+struct AnimationPoseData;
+/* d's animation named name (its own string), or NULL. */
+const char* portCosmeticFindAnim(struct AnimationPoseData* d, const char* name);
 /* Once a frame, at its start (system.c): the poses asked for are loaded (the
  * costumes', the stickers', the skins'), what the save file has met noted,
  * this room's stickers drawn. */

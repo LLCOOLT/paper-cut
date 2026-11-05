@@ -31,7 +31,7 @@ Four complete small mods: [`examples/mods/lua-superguard-counter`](../examples/m
 
 `main.lua` runs once when the game starts; it sets up its handlers with `ttyd.on`. Each enabled mod has a Lua state of its own: mods don't see each other's variables.
 
-**Lua console**: F4 (Controls > Bindings, "Lua console"), or the Mods tab's *Lua mods* section. It shows what the mods `print` and their errors, with **Reload** (every Lua mod started again from its files).
+**Lua console**: F4 (Controls → **Bindings**, "Lua console"), or the Mods tab's **Lua mods** section. It shows what the mods `print` and their errors, with **Reload** (every Lua mod started again from its files).
 
 An error (a bug, a call that took too long, too much memory) **stops that mod alone**: its message and where it happened go to the console and the log, the Mods tab shows it, and a notice says so for a moment. The game goes on. Fix the file and it starts again by itself (below), or Reload.
 
@@ -152,7 +152,7 @@ Units are given by id, as the events give them; `battle.units()` lists the battl
 
 ### looks
 
-[Partner skins and costumes](COSTUMES.md), chosen by the mod over the Wardrobe's choice while it runs (the first mod's in the order). They change how things look only, each player's own, so every mod may choose, online too. Skins are the user folder's own and are off online and in replays (docs/COSTUMES.md): there `looks.skins()` lists none and `looks.set_skin` with a name returns false. Partners are 1 (Goombella) to 7 (Ms. Mowz), as `player.partner()` gives them.
+[Partner skins and costumes](COSTUMES.md), chosen by the mod over the Wardrobe's choice while it runs (the first mod's in the order). They change how things look only, each player's own, so every mod may choose, online too. Skins are the user folder's own and are off online and in replays ([COSTUMES.md](COSTUMES.md)): there `looks.skins()` lists none and `looks.set_skin` with a name returns false. Partners are 1 (Goombella) to 7 (Ms. Mowz), as `player.partner()` gives them.
 
 | | |
 |---|---|
@@ -175,7 +175,7 @@ Drawn over the game, in the game's own 640 x 480 coordinates (the picture's, wha
 
 ### rules
 
-The challenge rules (Settings > Challenges, [MODES.md](MODES.md)) set by the mod while it runs, above the settings: `rules.set("challenge_ohko", 1)`, `rules.set(key, nil)` gives the setting back; `rules.get(key)` is the mods' value or nil. The keys: `challenge_ohko` (0, 1), `challenge_guard` (0 off, 1 no Guard, 2 no Guard or Superguard), `challenge_commands` (0-2), `challenge_no_battle_items` (0, 1). The first mod in the order wins.
+The challenge rules (the Challenges tab, [MODES.md](MODES.md)) set by the mod while it runs, above the settings: `rules.set("challenge_ohko", 1)`, `rules.set(key, nil)` gives the setting back; `rules.get(key)` is the mods' value or nil. The keys: `challenge_ohko` (0, 1), `challenge_guard` (0 off, 1 no Guard, 2 no Guard or Superguard), `challenge_commands` (0-2), `challenge_no_battle_items` (0, 1). The first mod in the order wins.
 
 ## Online
 

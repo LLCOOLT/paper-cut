@@ -33,9 +33,7 @@ s32 CARDFormatAsync(s32 chan, CARDCallback callback);
 #include "port/cardsave_pc.h"
 #include "driver/swdrv.h"   /* portCardSnapshot: the resume kind */
 #include "evt/evt_story.h"
-#ifdef TARGET_PC
 int portCoopFollowerSaveId(int memberId); /* port/src/common/second_player_pc.c: player 3's companion is never saved */
-#endif
 #endif
 /** Name of the game's save file on the memory card, used to find, create and delete it. */
 const char card_file_name[0x14] = "mariost_save_file";

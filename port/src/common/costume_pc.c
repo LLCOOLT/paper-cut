@@ -11,6 +11,8 @@
 #include "port/costume.h"
 #include "port/lua_mods.h"
 #include "port/luigi.h"
+#include "port/online.h"
+#include "port/replay.h"
 #include "port/settings.h"
 #include "battle/battle_unit.h"
 #include "driver/animdrv.h"
@@ -60,7 +62,7 @@ static void letGo(int s) {
 }
 
 /* room in the pose pool for the game's own (it doesn't check for a full one) */
-static int poolRoom(void) {
+int portCosmeticPoolRoom(void) {
     AnimationWork* w = animGetPtr();
     int i, free = 0;
     int files = 0, textures = 0;
@@ -76,6 +78,16 @@ static int poolRoom(void) {
         textures += !w->textures[i].active;
     }
     return free >= 24 && files >= 16 && textures >= 16;
+}
+
+const char* portCosmeticFindAnim(AnimationPoseData* d, const char* name) {
+    int i;
+    for (i = 0; i < d->animCount; i++) {
+        if (!strcmp(d->anims[i].name, name)) {
+            return d->anims[i].name;
+        }
+    }
+    return NULL;
 }
 
 /* the ones asked for and not loaded yet: loaded at the frame's start
@@ -147,7 +159,7 @@ static void loadPose(const char* model, const char* anim) {
         }
         letGo(pick);
     }
-    if (!poolRoom()) {
+    if (!portCosmeticPoolRoom()) {
         return;
     }
     sPose[pick].pose1 = animPoseEntry(model, 2) + 1;
@@ -258,7 +270,9 @@ int portCostumeUnlocked(int i) {
 
 int portCostumeCurrent(void) {
     int* on = costumeSetting();
-    const int lua = portLuaCostumeChoice(); /* a Lua mod's choice wins while it runs (looks.set_costume) */
+    /* a Lua mod's choice wins while it runs (looks.set_costume); not online or in replays,
+     * where a HUD mod runs per machine and the costume's pose is in the game's pool */
+    const int lua = portOnlineActive() || portReplayActive() ? -1 : portLuaCostumeChoice();
     if (lua >= 0) {
         return lua <= COSTUMES ? lua : 0;
     }

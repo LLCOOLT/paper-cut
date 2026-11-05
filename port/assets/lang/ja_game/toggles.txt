@@ -22,7 +22,7 @@ Moon gravity
 月の　じゅうりょく
 
 Mario jumps and walks as on the Moon, everywhere.
-マリオが　どこでも　月の　上のように　ジャンプして　あるきます
+マリオが　どこでも　月の　上のように　うごきます
 
 Paper-thin from every side
 どこから　見ても　紙の　うすさ
@@ -34,7 +34,7 @@ Luigi's voice for Mario
 マリオに　ルイージの　こえ
 
 Mario's steps, jumps and landings sound as Luigi's.
-マリオの　あしおとや　ジャンプの　音が　ルイージの　ものに　なります
+あしおとや　ジャンプの　音が　ルイージのに　なります
 
 Spinning paper
 くるくる　紙
@@ -46,7 +46,7 @@ Chaos mode
 カオスモード
 
 Every 30 seconds something happens: giant or tiny Mario, flipped controls, the camera upside down, coin rain, a Bob-omb, and in battle the crowd's tricks. Not online or in replays.
-３０びょう　ごとに　なにかが　おこります　オンラインと　リプレイでは　なし
+30びょうごとに　なにか　おきる　オンライン　リプレイでは　なし
 
 Room transitions
 部屋の　きりかわり

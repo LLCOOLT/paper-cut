@@ -105,7 +105,8 @@ typedef struct PortDuoMove {
 int portDuoMoveCount(void);
 const PortDuoMove* portDuoMoveAt(int i);
 /* Adds a mode's own move (Brothers mode): copied; its key's messages are the
- * mode's to give (portDuoMsg asks the registered resolver). Returns its index or -1. */
+ * mode's to give (portDuoMsg asks the registered resolver); a key is 35 characters at
+ * most. Returns its index or -1. */
 int portDuoRegister(const PortDuoMove* move);
 void portDuoSetMsgResolver(const char* (*resolve)(const char* tag));
 /* Who plays the halves from now on (PORT_DUO_PLAYERS_*). */

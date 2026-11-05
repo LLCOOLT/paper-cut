@@ -9,14 +9,18 @@
 // paper patch (aurora/paper.h, port/patches/aurora) then thresholds it per
 // pixel at the scale the text is drawn, so the letters are sharp at any
 // resolution; served to Aurora as a replacement of the sheet (keyed by its
-// address), with mips. The glyphs' shapes are the game's. While it is on the
-// sheet is this one, ahead of a texture pack's own font (the pack's is drawn
-// with it off). Draw-only: no game state, no random numbers.
+// address), with mips. The glyphs' shapes are the game's. When a texture
+// pack replaces the font's sheet, sharp text steps aside for that font by
+// itself (looked for again whenever the packs change: port/include/port/
+// mods.h), so the pack's letters show as the pack drew them; the setting
+// stays as the player left it. Draw-only: no game state, no random numbers.
 #include <dolphin/gx.h> // GXTexObj, for aurora/texture.hpp
 #include <aurora/paper.h>
 #include <aurora/texture.hpp>
+#include <SDL3/SDL_log.h>
 
 #include "port/display.h"
+#include "port/mods.h"
 #include "port/settings.h"
 
 #include <algorithm>
@@ -37,6 +41,9 @@ std::vector<uint8_t> sPixels; // RGBA8, the mips one after another
 uint32_t sMips;
 aurora::texture::ReplacementRegistration sRegistration;
 int* sOn;
+// a texture pack replaces this sheet (looked for at sPackGeneration)
+bool sPackFont;
+int sPackGeneration = -1;
 
 // the sheet's coverage, 0-1, from GX I4 (8x8 texel blocks, two texels a byte, high nibble first)
 std::vector<float> decodeI4(const uint8_t* data, int w, int h) {
@@ -205,8 +212,34 @@ void build() {
   }
 }
 
+// whether a texture pack has its own sheet for the font: asked of Aurora with
+// this one's own registration off (it answers for the address first)
+bool packHasFont() {
+  if (sSheet == nullptr) {
+    return false;
+  }
+  GXTexObj obj;
+  GXInitTexObj(&obj, const_cast<void*>(sSheet), static_cast<u16>(sWidth), static_cast<u16>(sHeight), GX_TF_I4,
+               GX_CLAMP, GX_CLAMP, GX_FALSE);
+  return aurora::texture::has_replacement(&obj);
+}
+
 void apply() {
-  const bool want = sOn != nullptr && *sOn != 0 && sSheet != nullptr;
+  const int generation = portModsTexturesGeneration();
+  if (generation != sPackGeneration) {
+    sPackGeneration = generation;
+    if (sRegistration.id != 0) {
+      aurora::texture::unregister_replacement(sRegistration);
+      sRegistration = {};
+      aurora_set_paper_distance_field(nullptr);
+    }
+    const bool pack = packHasFont();
+    if (pack != sPackFont) {
+      SDL_Log("sharp text: %s", pack ? "a texture pack has its own font: drawn as the pack's" : "the game's font");
+    }
+    sPackFont = pack;
+  }
+  const bool want = sOn != nullptr && *sOn != 0 && sSheet != nullptr && !sPackFont;
   if (want == (sRegistration.id != 0)) {
     return;
   }
@@ -238,7 +271,7 @@ const bool sAdded = [] {
   portSettingsDeclare("sharp_text", 0, 0, 1); // at start, for the launcher's Settings tab
   portSettingsAddToggle("Graphics", "Sharp text",
                         "The game's font rebuilt as a distance field, so its letters stay sharp at any resolution "
-                        "(the same letters; a texture pack's font shows with this off).",
+                        "(the same letters; a texture pack's own font is drawn as the pack's).",
                         0, "sharp_text", "font text letters crisp hd resolution distance field");
   return true;
 }();
@@ -256,6 +289,8 @@ extern "C" void portFontSheet(const void* texels, int width, int height, int for
   sSheet = format == GX_TF_I4 && width % 8 == 0 && height % 8 == 0 ? texels : nullptr;
   sWidth = width;
   sHeight = height;
+  sPackGeneration = -1; // (a pack's font looked for again: the sheet is new)
+  SDL_Log("sharp text: the font's sheet, %dx%d", width, height);
   portSharpTextFrame();
 }
 

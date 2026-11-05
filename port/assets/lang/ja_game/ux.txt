@@ -4,7 +4,7 @@
 Restart now
 いますぐ　さいきどう
 
-Press A twice to restart the game for these settings; quick resume brings you back here.
+Press A twice to restart; quick resume brings you back.
 Aを　２かい　おすと　ゲームを　さいきどうします　クイックレジュームで　ここに　もどれます
 
 Press A again to restart.

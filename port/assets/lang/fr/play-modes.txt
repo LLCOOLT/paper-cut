@@ -54,14 +54,14 @@ Le combat de chaque ennemi sur le terrain est tiré parmi tous les combats de sa
 Remix: badge draft
 Remix : choix de badge
 
-At each chapter's title card, three badges to choose one from: left and right, then A.
+Each chapter's title card offers three badges: pick one.
 À l'écran titre de chaque chapitre, trois badges parmi lesquels en choisir un : gauche et droite, puis A.
 
 Remix seed
 Graine du remix
 
-The same seed, the same remix (share it with a challenge code).
-Même graine, même remix (partagez-la avec un code de défi).
+Same seed, same remix: share it with a challenge code.
+Même graine, même remix : partagez-la (code de défi).
 
 Hardcore
 Hardcore

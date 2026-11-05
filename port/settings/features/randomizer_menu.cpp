@@ -83,14 +83,14 @@ int rows(PortPauseRow* out, int max) {
   };
   if (!portRandoSupported()) {
     add(portPauseRow("The randomizer: the US version only",
-                     "It knows where the items are in the US version only, so it is off on this one.", nullptr,
+                     "It only knows the US version's items, so it is off here.", nullptr,
                      kNotHere, PORT_PAUSE_ROW_DIM));
     return n;
   }
   const PortRandoSettings& s = *settings();
   if (portApSeedPath()[0] != '\0') {
     add(portPauseRow("Use the built-in randomizer instead",
-                     "An Archipelago seed is chosen on the Archipelago tab; it is used instead of this one.", nullptr,
+                     "An Archipelago seed is chosen; A uses the built-in one.", nullptr,
                      kUseBuiltIn));
   }
   {
@@ -105,7 +105,7 @@ int rows(PortPauseRow* out, int max) {
                    "off again for your other files.",
                    onOff(s.enabled), kEnabled));
   {
-    PortPauseRow r = portPauseRow("Seed", "A: type a seed. Any text; empty: a random one is made at the start.",
+    PortPauseRow r = portPauseRow("Seed", "A: type a seed (any text). Empty: a random one at start.",
                                   s.seed[0] == '\0' ? "(random)" : nullptr, kSeed);
     plainCopy(r.value, sizeof(r.value), s.seed);
     add(r);
@@ -151,7 +151,7 @@ const char* changed() {
 
 const char* act(int id, int dir) {
   if (!portRandoSupported()) {
-    return "It knows where the items are in the US version only, so it is off on this one.";
+    return "It only knows the US version's items, so it is off here.";
   }
   PortRandoSettings* s = settings();
   if (id >= kToggleBase && id < kToggleBase + kToggleCount) {

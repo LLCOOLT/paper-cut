@@ -4,4 +4,4 @@ Daily shop specials
 みせの　ひがわり　セール
 
 Five shops each put one rare item on a shelf at 30% off, a different one each day and the same for everyone that day (by the UTC date). It takes one shelf's place for the day. Not during online co-op or a replay.
-5つの　みせが　めずらしい　アイテムを　ひとつ　やすく　うります　まいにち　かわります
+5つの　みせで　まいにち　めずらしい　ものが　やすい

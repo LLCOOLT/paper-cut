@@ -12,7 +12,7 @@ Redémarrage dès que le jeu a fini de sauvegarder...
 Starts the game again with this disc; quick resume brings you back here.
 Relance le jeu avec ce disque ; la reprise rapide vous ramène ici.
 
-Press A twice to restart the game for these settings; quick resume brings you back here.
+Press A twice to restart; quick resume brings you back.
 Appuyez deux fois sur A pour relancer le jeu pour ces paramètres ; la reprise rapide vous ramène ici.
 
 Press A again to restart.

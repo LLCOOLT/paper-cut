@@ -9,8 +9,8 @@ Each room's music is another of the game's: field music for field music, battle 
 Your music
 じぶんの　音がく
 
-Your files in the music folder play in place of the game's tracks they are named after.
-musicフォルダの　ファイルが　おなじ　名前の　きょくの　かわりに　ながれます
+Music folder files replace the tracks they are named after.
+musicフォルダの　ファイルが　おなじ名前の　きょくと　かわる
 
 Shuffle includes your music
 シャッフルに　じぶんの　音がくも

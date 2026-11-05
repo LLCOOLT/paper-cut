@@ -315,7 +315,7 @@ struct Register {
                           "Viewers' commands in your channel's chat make the crowd throw items, give or take a "
                           "little Star Power, fill the Bingo cards, cheer, leave or come.",
                           PORT_SETTING_CHANGES_PLAY, "crowd_control", "crowd control twitch chat stream viewers");
-    portSettingsAddSlider(kTab, "Cooldown", "One command each this many seconds; a viewer, one each three times it.",
+    portSettingsAddSlider(kTab, "Cooldown", "Seconds between commands (three times that per viewer).",
                           0, "crowd_cooldown", 5, 120, "%d s", "crowd control rate limit");
     portSettingsAddToggle(kTab, "Allow the harmful ones", "!rock, !drain and !leave.", PORT_SETTING_CHANGES_PLAY,
                           "crowd_harmful", "crowd control rocks drain");

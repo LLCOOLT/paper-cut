@@ -10,7 +10,7 @@
 #include "port/settings.h"
 
 /* pointers to the values are handed out, so the table never moves: room for
- * every feature's settings and many more (0.4.0 passed 256) */
+ * every feature's settings and many more */
 #define EXTRA_MAX 2048
 
 typedef struct Extra {
@@ -46,6 +46,16 @@ static Extra* add(const char* key) {
     return e;
 }
 
+/* a key read from a file or sent by another game (settings.txt, the online
+ * host's, a replay's): one that can't be kept is left out, not fatal */
+static Extra* addRead(const char* key) {
+    if (sCount == EXTRA_MAX || strlen(key) >= sizeof(sExtra[0].key)) {
+        fprintf(stderr, "settings: %s left out (no room)\n", key);
+        return NULL;
+    }
+    return add(key);
+}
+
 static int clamp(const Extra* e, int v) {
     return v < e->min ? e->min : v > e->max ? e->max : v;
 }
@@ -67,6 +77,7 @@ int* portSettingsDeclare(const char* key, int def, int min, int max) {
     e->declared = 1;
     if (e->toDefault) {
         e->value = def; /* (this run's set doesn't have it: online's guest, a playback) */
+        e->toDefault = 0;
     }
     snprintf(env, sizeof(env), "TTYD_SET_%s", key);
     if ((over = getenv(env)) != NULL) {
@@ -94,10 +105,11 @@ int portSettingsExtraDefault(const char* key, int* value) {
 int portSettingsExtraSet(const char* key, const char* value) {
     char env[80];
     Extra* e = find(key);
-    if (e == NULL) {
-        e = add(key);
+    if (e == NULL && (e = addRead(key)) == NULL) {
+        return 0;
     }
     snprintf(env, sizeof(env), "TTYD_SET_%s", key);
+    e->toDefault = 0; /* (a value set since: it wins) */
     if (getenv(env) == NULL) { /* the run's override stays */
         e->value = atoi(value);
         if (e->declared) {
@@ -111,9 +123,10 @@ int portSettingsExtraSet(const char* key, const char* value) {
  * guest: the host's settings, port/settings/online_lobby.cpp) */
 void portSettingsExtraForce(const char* key, const char* value) {
     Extra* e = find(key);
-    if (e == NULL) {
-        e = add(key);
+    if (e == NULL && (e = addRead(key)) == NULL) {
+        return;
     }
+    e->toDefault = 0;
     e->value = atoi(value);
     if (e->declared) {
         e->value = clamp(e, e->value);

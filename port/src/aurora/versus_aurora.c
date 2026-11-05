@@ -1249,8 +1249,6 @@ static int checkDamagePre(s32* r, BattleUnit** attacker, BattleUnit** target, Ba
     return 0;
 }
 
-static BattleWorkPad sNoPad; /* one controller: the defender can't guard (it is the attacker's) */
-
 void* portVersusGuardPad(const void* unit, int* handled) {
     (void)unit;
     if (!fight()) {
@@ -1258,9 +1256,12 @@ void* portVersusGuardPad(const void* unit, int* handled) {
         return NULL;
     }
     *handled = 1;
-    if (!twoPads() && !computer(1)) { /* (against the computer, Mario's player guards on the first controller, read as the second then) */
-        memset(&sNoPad, 0, sizeof(sNoPad));
-        return &sNoPad;
+    if (!twoPads() && !computer(1)) {
+        /* one controller, the two players taking turns on it: the defender
+         * guards on it too (never online, which always has two). (Against the
+         * computer, Mario's player guards on the first controller, read as the
+         * second then: below.) */
+        return &_battleWorkPointer->padWork[0];
     }
     /* the side that isn't acting: its controller is the second one in both phases (portVersusRoute) */
     return &_battleWorkPointer->padWork[1];
@@ -1461,6 +1462,12 @@ int portVersusRoute(void) {
         SWAP(triggerLeft);
         SWAP(triggerRight);
 #undef SWAP
+        if (computer(1)) {
+            /* its own presses (a Star Power's buttons) */
+            const unsigned press = portVersusCpuSacButtons();
+            gp->buttonNew[0] |= press;
+            gp->button[0] |= press;
+        }
     }
     return 1;
 }

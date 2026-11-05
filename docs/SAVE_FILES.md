@@ -23,10 +23,18 @@ The file's id is what ties a card file to its library entry: a file loaded and s
 With **Settings per save file** on (the default), these are saved with each file at each save and set again when that file is loaded:
 
 - the difficulty and its custom enemy HP and attack, the action-command assists, Retry on Game Over;
-- the Enhancements (Gameplay+), but for Play as Luigi;
+- the Enhancements tab's settings, but not Play as (it stays the player's);
 - the challenge rules and the Remix rules.
 
 Display, sound, controls and everything else stay the same for every file. A file saved before this, or saved on a GameCube or in Dolphin, has none: loading it leaves the settings as they are. A save put in place without the card (quick resume, the save warps) keeps the settings as they are, too.
+
+## A copy for Dolphin or a GameCube (Saves)
+
+Paper Cut's own items (the badge set's, the badge maker's, Zess T.'s new dishes) have ids past the end of the GameCube game's item table, so that game can't read a save holding one. **Make the copy** writes each card that has a save of this game to
+
+    <user>/For Dolphin/<JAP|USA|EUR>/01-G8Mx-mariost_save_file.gci
+
+with those items sold, in every slot that verifies: each for the coins a shop pays for it (Mario's coins stop at 999), held, stored or worn; a worn one is taken off, and Mario's HP, FP and BP and the partners' HP are worked out again as the game does when a badge comes off. The checksums are made again, so the GameCube game and Dolphin read the copy as an ordinary save. The card here is left as it is. Send saves to another device offers the same copy as a second link on its page, for a card that has such items (docs/SAVE_TRANSFER.md). Code: `portSaveDolphinSafe` in `port/src/common/save_convert_pc.c`.
 
 ## Paper Cut's block in the card file
 

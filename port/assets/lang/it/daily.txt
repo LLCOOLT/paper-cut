@@ -72,5 +72,5 @@ Mostra la classifica
 The board's answer wasn't understood.
 La risposta della classifica non è stata capita.
 
-Today's seed and rules, and the board, are on the full settings page's Modes tab.
+Today's seed, rules and board: on the full page's Modes tab.
 Il seme di oggi, le regole e la classifica sono nella scheda Modalità della pagina delle impostazioni.

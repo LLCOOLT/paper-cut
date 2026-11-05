@@ -15,8 +15,8 @@ Le quiz commence une fois cette page fermée.
 The quiz begins once the menu is closed.
 Le quiz commence une fois le menu fermé.
 
-Trivia about the game for up to four players: it begins once the menu is closed.
-Un quiz sur le jeu pour quatre joueurs au plus : il commence une fois le menu fermé.
+Game trivia for up to four players, once the menu closes.
+Quiz du jeu, jusqu'à quatre joueurs, dès le menu fermé.
 
 The last quiz: a draw at %d points.
 Le dernier quiz : égalité à %d points.

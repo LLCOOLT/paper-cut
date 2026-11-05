@@ -9,8 +9,8 @@ Il gioco fermo dov'è, la telecamera tutt'intorno a Mario, su e giù, più vicin
 Back to the game
 Torna al gioco
 
-(in the field, not online)
-(sul campo, non online)
+(in the field or a battle, not online)
+(sul campo o in battaglia, non online)
 
 Photo mode   Stick: turn   Right stick: in and out   A: picture   Y: hide the HUD   B: back
 Modalità foto   Stick: ruota   Stick destro: avvicina e allontana   A: foto   Y: nascondi l'interfaccia   B: indietro

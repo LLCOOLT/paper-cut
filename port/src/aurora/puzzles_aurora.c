@@ -209,6 +209,7 @@ static int sPouchSaved;
 static unsigned sResultCount;
 static int sResultPuzzle, sResultSolved, sResultTurns;
 static int sBest[64]; /* fewest turns solved in (0: never) */
+_Static_assert(PUZZLE_COUNT <= 64, "sBest holds a best for each puzzle");
 static int sBestRead;
 static int sStartAsk = -1, sStartDaily, sStopAsk; /* __atomic: the page's thread */
 

@@ -671,29 +671,31 @@ endif()
 # Lua 5.4 for Lua mods (docs/LUA_MODDING.md; libs/lua, docs/THIRD_PARTY.md):
 # the core and the safe standard libraries only. io, os, package (C
 # modules), debug and the stand-alone interpreters are not built at all.
-# Linked statically everywhere (headless too), no dynamic loading.
-set(TTYD_LUA_SOURCES)
-foreach(_f lapi lauxlib lbaselib lcode lcorolib lctype ldebug ldo ldump lfunc lgc llex lmathlib lmem lobject
-           lopcodes lparser lstate lstring lstrlib ltable ltablib ltm lundump lutf8lib lvm lzio)
-    list(APPEND TTYD_LUA_SOURCES ${CMAKE_SOURCE_DIR}/libs/lua/src/${_f}.c)
-endforeach()
-# and this project's own: creation numbers for hashing, pattern matching with a
-# step budget (libs/lua/lua_port_api.h)
-list(APPEND TTYD_LUA_SOURCES ${CMAKE_SOURCE_DIR}/libs/lua/lua_port.c ${CMAKE_SOURCE_DIR}/libs/lua/lua_port_match.c)
-add_library(lua STATIC ${TTYD_LUA_SOURCES})
-target_include_directories(lua PUBLIC ${CMAKE_SOURCE_DIR}/libs/lua/src ${CMAKE_SOURCE_DIR}/libs/lua)
-# fixed hash and sort seeds, for online play's lockstep (libs/lua/lua_port.h); MSVC's own
-# spelling where its front end is the one (clang-cl, MSVC), as port_prefix.h's
-if(MSVC)
-    target_compile_options(lua PRIVATE /FI${CMAKE_SOURCE_DIR}/libs/lua/lua_port.h /w)
-else()
-    target_compile_options(lua PRIVATE -include ${CMAKE_SOURCE_DIR}/libs/lua/lua_port.h -w)
+# Linked statically, no dynamic loading; Aurora only (headless has no Lua mods).
+if(TTYD_BACKEND STREQUAL "aurora")
+    set(TTYD_LUA_SOURCES)
+    foreach(_f lapi lauxlib lbaselib lcode lcorolib lctype ldebug ldo ldump lfunc lgc llex lmathlib lmem lobject
+               lopcodes lparser lstate lstring lstrlib ltable ltablib ltm lundump lutf8lib lvm lzio)
+        list(APPEND TTYD_LUA_SOURCES ${CMAKE_SOURCE_DIR}/libs/lua/src/${_f}.c)
+    endforeach()
+    # and this project's own: creation numbers for hashing, pattern matching with a
+    # step budget (libs/lua/lua_port_api.h)
+    list(APPEND TTYD_LUA_SOURCES ${CMAKE_SOURCE_DIR}/libs/lua/lua_port.c ${CMAKE_SOURCE_DIR}/libs/lua/lua_port_match.c)
+    add_library(lua STATIC ${TTYD_LUA_SOURCES})
+    target_include_directories(lua PUBLIC ${CMAKE_SOURCE_DIR}/libs/lua/src ${CMAKE_SOURCE_DIR}/libs/lua)
+    # fixed hash and sort seeds, for online play's lockstep (libs/lua/lua_port.h); MSVC's own
+    # spelling where its front end is the one (clang-cl, MSVC), as port_prefix.h's
+    if(MSVC)
+        target_compile_options(lua PRIVATE /FI${CMAKE_SOURCE_DIR}/libs/lua/lua_port.h /w)
+    else()
+        target_compile_options(lua PRIVATE -include ${CMAKE_SOURCE_DIR}/libs/lua/lua_port.h -w)
+    endif()
+    # the two users of point2uint: tables, functions and coroutines hashed by creation number (lua_port.h)
+    set_source_files_properties(${CMAKE_SOURCE_DIR}/libs/lua/src/ltable.c ${CMAKE_SOURCE_DIR}/libs/lua/src/lstring.c
+        PROPERTIES COMPILE_DEFINITIONS LUA_PORT_POINTER_HASH=1)
+    target_compile_definitions(lua PRIVATE _CRT_SECURE_NO_WARNINGS=1)
+    set_target_properties(lua PROPERTIES C_STANDARD 99 POSITION_INDEPENDENT_CODE ON)
 endif()
-# the two users of point2uint: tables, functions and coroutines hashed by creation number (lua_port.h)
-set_source_files_properties(${CMAKE_SOURCE_DIR}/libs/lua/src/ltable.c ${CMAKE_SOURCE_DIR}/libs/lua/src/lstring.c
-    PROPERTIES COMPILE_DEFINITIONS LUA_PORT_POINTER_HASH=1)
-target_compile_definitions(lua PRIVATE _CRT_SECURE_NO_WARNINGS=1)
-set_target_properties(lua PROPERTIES C_STANDARD 99 POSITION_INDEPENDENT_CODE ON)
 
 # Save states (port/src/aurora/savestate_aurora.c; Aurora with static RELs):
 # the game's data and bss go to their own sections (port_prefix.h), copied as
@@ -712,7 +714,7 @@ if(TTYD_BACKEND STREQUAL "aurora" AND TTYD_RELS_STATIC)
         APPEND PROPERTY COMPILE_DEFINITIONS TTYD_NO_SNAPSHOT=1)
     # (0.4.0: page_turn_pc, a room change's page flip; chaos_pc, its effect and timer; open_world_pc, the
     # room the hub last saw)
-    foreach(_f anim_pc tpl_pc map_pc camroad_pc gx_arrays_pc snapshot_bounds_pc luigi_pc costume_pc skin_pc battlex_pc enemy_variant_pc
+    foreach(_f anim_pc tpl_pc map_pc camroad_pc gx_arrays_pc snapshot_bounds_pc luigi_pc costume_pc skin_pc battlex_pc enemy_variant_pc duo_pc
                brothers_pc page_turn_pc chaos_pc open_world_pc)
         set_property(SOURCE ${CMAKE_SOURCE_DIR}/port/src/common/${_f}.c APPEND PROPERTY
             COMPILE_DEFINITIONS TTYD_SNAPSHOT_SECTION=1)
@@ -914,6 +916,8 @@ if(TTYD_BACKEND STREQUAL "aurora")
         ${CMAKE_BINARY_DIR}/generated/peach_r_pack.c)
     ttyd_embed_file(${CMAKE_SOURCE_DIR}/port/assets/luigi/bowser_anims.bin portBowserPack
         ${CMAKE_BINARY_DIR}/generated/bowser_pack.c)
+    ttyd_embed_file(${CMAKE_SOURCE_DIR}/port/assets/luigi/bowser_r_anims.bin portBowserRPack
+        ${CMAKE_BINARY_DIR}/generated/bowser_r_pack.c)
     # the community controller mappings (port/settings/features/controllers.cpp, docs/THIRD_PARTY.md)
     ttyd_embed_file(${CMAKE_SOURCE_DIR}/port/assets/controllers/gamecontrollerdb.txt portControllerDb
         ${CMAKE_BINARY_DIR}/generated/controller_db.c)
@@ -927,7 +931,7 @@ if(TTYD_BACKEND STREQUAL "aurora")
         ${CMAKE_BINARY_DIR}/generated/font_bold.c ${CMAKE_BINARY_DIR}/generated/font_medium.c
         ${CMAKE_BINARY_DIR}/generated/icon64.c ${CMAKE_BINARY_DIR}/generated/luigi_pack.c
         ${CMAKE_BINARY_DIR}/generated/peach_pack.c ${CMAKE_BINARY_DIR}/generated/peach_r_pack.c
-        ${CMAKE_BINARY_DIR}/generated/bowser_pack.c
+        ${CMAKE_BINARY_DIR}/generated/bowser_pack.c ${CMAKE_BINARY_DIR}/generated/bowser_r_pack.c
         ${CMAKE_BINARY_DIR}/generated/controller_db.c ${CMAKE_BINARY_DIR}/generated/logo512.c
         ${TTYD_SETTINGS_FEATURES})
     target_include_directories(ttyd_settings PRIVATE ${CMAKE_SOURCE_DIR}/port/include)
@@ -936,6 +940,15 @@ if(TTYD_BACKEND STREQUAL "aurora")
     set(TTYD_PORT_VERSION "dev" CACHE STRING "The port's version (releases: e.g. 0.1.0)")
     target_compile_definitions(ttyd_settings PRIVATE _CRT_SECURE_NO_WARNINGS=1 PORT_VERSION="${TTYD_PORT_VERSION}"
         PORT_GAME_ID="${TTYD_VERSION}")
+    # and the commit, for replays and online co-op (port/include/port/build_id.h): written at
+    # every build, only when it changed
+    add_custom_target(ttyd_build_id
+        COMMAND ${CMAKE_COMMAND} -DSRC=${CMAKE_SOURCE_DIR} -DOUT=${CMAKE_BINARY_DIR}/generated/build_id.c
+            -P ${CMAKE_SOURCE_DIR}/cmake/build_id.cmake
+        BYPRODUCTS ${CMAKE_BINARY_DIR}/generated/build_id.c VERBATIM)
+    add_dependencies(ttyd_settings ttyd_build_id)
+    target_sources(ttyd_settings PRIVATE ${CMAKE_SOURCE_DIR}/port/settings/build_id.cpp
+        ${CMAKE_BINARY_DIR}/generated/build_id.c)
     # Discord status (port/settings/features/discord.cpp, docs/DISCORD_STATUS.md): the
     # Discord application's ID; empty: the feature is built in but does nothing, its setting hidden
     set(TTYD_DISCORD_APP_ID "1567620424886657085" CACHE STRING "Discord status's Discord application ID (Paper Cut's; empty: off)")
@@ -1200,12 +1213,12 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Darwin" AND TTYD_BACKEND STREQUAL "aurora")
     if(NOT TTYD_MACOS_MIN_VERSION)
         set(TTYD_MACOS_MIN_VERSION 12.0)
     endif()
-    # CFBundleShortVersionString: the release's version (TTYD_PORT_VERSION, e.g.
-    # 0.2.0) when it is one, else 0.2 (as port/ios/ios.cmake)
-    if(TTYD_PORT_VERSION MATCHES "^[0-9]+(\\.[0-9]+)*$")
-        set(TTYD_MACOS_VERSION "${TTYD_PORT_VERSION}")
+    # CFBundleShortVersionString: TTYD_PORT_VERSION's leading numbers (0.4.0, or
+    # the 0.4.0 of 0.4.0-playtest), else 0.4.0 (as port/ios/ios.cmake)
+    if(TTYD_PORT_VERSION MATCHES "^([0-9]+(\\.[0-9]+)*)")
+        set(TTYD_MACOS_VERSION "${CMAKE_MATCH_1}")
     else()
-        set(TTYD_MACOS_VERSION "0.2")
+        set(TTYD_MACOS_VERSION "0.4.0")
     endif()
     configure_file(${CMAKE_SOURCE_DIR}/port/macos/Info.plist.in ${CMAKE_BINARY_DIR}/Info.plist @ONLY)
     # the app's icon (CFBundleIconFile), in Contents/Resources

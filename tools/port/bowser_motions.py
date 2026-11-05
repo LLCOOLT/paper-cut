@@ -15,8 +15,10 @@ Bowser's rig (c_koopa; he faces -x):
              locator3 the jaw: lip > kuti, yoko_ago > ago, sita_kuti
   Hammer_pc  the hammer (at 1.6 Luigi's size: he is drawn at 0.7), a child
              of the front hand, its handle in his fist
-Mario's back-facing animations have no back model to go to: Bowser plays
-them front-on (the R names are his front motions again).
+His back view (c_koopa_r_pc, bowser_back.py) is the same rig with his
+parts placed as seen from behind (the face hidden, the shell's other half
+and more spikes copies): Mario's back-facing animations play there, ours
+(MOTIONS_R) and his disc walk, run, stand and jump (luigi_pc.c kBowserMap).
 """
 from char_motions import (Rig, levels, field_hammer_name, merged, held, tracks, steps, blink_pairs, talk_pairs,
                           slowed, hammer_swing_pts, battle_hammer_set)
@@ -110,8 +112,10 @@ MOTIONS["M_H_2"] = {"end": 4, "keys": MOTIONS["M_H_1"]["keys"][:4] + [
 # ------------------------------------------------ spin jump (mot_hip.c)
 # Into his shell: head and limbs drawn in, curled forward (M_A_1A, held);
 # landing out of it (M_A_1B).
-_SHELL = P(bend(26, 18), {"head": {"rz": 18, "tx": 3.0, "ty": -3.0}}, arms(170, 150, 26, hf=2, hb=1),
-           feet((3.0, 4.0, 40.0), (2.0, 4.0, 30.0)), tail(-20), jaw(0.0, 4), {"locator2": {"sy": 0.9375}})
+_SHELL = P(bend(40, 10), {"head": {"rz": 10, "tx": 7.0, "ty": -6.0, "tz": -1.6, "sx": 0.75, "sy": 0.75}},
+           arms(185, 175, 40, hf=2, hb=1), {"L_udewa": {"tz": -2.6, "rz": 185 - 118 - 40, "tx": 4.0, "ty": -2.0}},
+           feet((6.0, 7.0, 70.0), (5.0, 7.0, 60.0)), {"L_foot": {"tx": 6.0, "ty": 7.0, "rz": 70.0, "tz": -0.6}},
+           tail(-30), jaw(0.0, 4), {"locator2": {"ty": 2.0, "sy": 0.9375}})
 MOTIONS["M_A_1A"] = {"end": 2, "keys": [(0, _SHELL), (2, _SHELL)]}
 MOTIONS["M_A_1B"] = {"end": 4, "keys": [
     (0, _SHELL), (2, _SHELL),
@@ -121,10 +125,11 @@ MOTIONS["M_A_1B"] = {"end": 4, "keys": [
 
 # ------------------------------------------------ holding up an item (M_I_1, 4 frames, held)
 # Thrust up high in his fist, his head back, a toothy grin.
-_HOLD = P(bend(-6, -10), arms(8, 150, -6, hf=2), jaw(0.5, 1), tail(6))
+_HOLD = P(bend(-12, -8), arms(-4, 150, -12, hf=2), {"L_udewa": {"rz": -4 - FRONT_ARM + 12, "ty": 1.5}},
+          jaw(0.6, 1), tail(8), {"locator2": {"sy": 1.0625}})
 MOTIONS["M_I_1"] = {"end": 4, "keys": [
     (0, P(bend(-2, -4), arms(60, 130, -2, hf=2), jaw(0.3, 0))),
-    (2, P(_HOLD, {"locator2": {"ty": 0.6, "sy": 1.0625}})),
+    (2, P(_HOLD, {"locator2": {"ty": 0.8, "sy": 1.125}})),
     (4, _HOLD)]}
 
 # ------------------------------------------------ battle (as "<Mario's name>@b")
@@ -516,4 +521,37 @@ for _n in ("M_H_2", "M_H_5", "M_H_8"):  # (Mario's back wall hit holds 6 frames,
     _k = MOTIONS[_n]["keys"]
     MOTIONS[_n + "R"] = dict(MOTIONS[_n], end=6, keys=_k + [(6,) + tuple(_k[-1][1:])])
 
-MODELS = [(RIG, MOTIONS)]
+# ------------------------------------------------ feet on the ground
+# locator2 scales about his middle (y 16.8 at rest), so a squash lifts his
+# feet off the floor and a stretch sinks them: each key's lift is made up so
+# his feet stay where its ty puts them.
+PIVOT_Y = 16.82
+
+
+def grounded(motions):
+    done = set()
+    for name, m in motions.items():
+        if id(m) in done:
+            continue
+        done.add(id(m))
+        if "sy" in m.get("tracks", {}).get("locator2", {}):
+            raise ValueError("%s: a squash in tracks isn't kept on the ground" % name)
+        keys = []
+        for f, pose, *opt in m.get("keys", []):
+            loc = pose.get("locator2", {})
+            if "sy" in loc:
+                pose = {g: dict(c) for g, c in pose.items()}
+                pose["locator2"]["ty"] = round(loc.get("ty", 0.0) + PIVOT_Y * (loc["sy"] - 1.0), 3)
+            keys.append((f, pose, *opt))
+        if "keys" in m:
+            m["keys"] = keys
+
+
+grounded(MOTIONS)
+
+# his back view: Mario's back-facing animations of ours, on c_koopa_r_pc
+RIG_R = Rig("c_koopa_r_pc", "bowser_r", RIG.chain)
+MOTIONS_R = {n: MOTIONS[n] for n in ("M_H_1R", "M_H_2R", "M_H_4R", "M_H_5R", "M_H_7R", "M_H_8R", "M_O_2R",
+                                     "M_U_2R", "M_C_1R")}
+
+MODELS = [(RIG, MOTIONS), (RIG_R, MOTIONS_R)]

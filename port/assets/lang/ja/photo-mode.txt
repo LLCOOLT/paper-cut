@@ -9,8 +9,8 @@ The game held where it is, the camera all the way round Mario, up and down, in a
 Back to the game
 ゲームに戻る
 
-(in the field, not online)
-（フィールドで、オンライン以外）
+(in the field or a battle, not online)
+（フィールドかバトルで、オンライン以外）
 
 Photo mode   Stick: turn   Right stick: in and out   A: picture   Y: hide the HUD   B: back
 フォトモード   スティック：回る   右スティック：寄る・引く   A：撮影   Y：HUDを隠す   B：戻る

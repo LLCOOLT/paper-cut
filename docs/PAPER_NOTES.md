@@ -3,7 +3,7 @@
 Notes left on the ground for other players: a set phrase and a word ("Hidden
 a Star Piece?", "Be wary of a trap"), never free text. Others read them where
 they lie and rate them up or down; the best of each room are kept. They are
-kept on the online relay (docs/ONLINE_RELAY.md), so they need it, and they are
+kept on the online relay ([ONLINE_RELAY.md](ONLINE_RELAY.md)), so they need it, and they are
 shared by every release and language: a note is two numbers and a place, and
 each game shows it in its own language.
 
@@ -12,7 +12,7 @@ each game shows it in its own language.
 - **Seeing them**: a room's notes lie on the ground as small folded sheets
   (gold-edged once rated +3 or more, blue for your own). Stand by one and its
   text shows over it, with its rating. A room shows at most its 8 best.
-- **Leaving one**: Start menu > Online > **Paper notes...**. Pick a **Phrase**
+- **Leaving one**: the Start menu's Online tab → **Paper notes...**. Pick a **Phrase**
   and a **Word** with left and right (the note reads out at the top), then
   **Leave this note here**: it is left where Mario stands. Three of yours per
   room at most, ten a day in an area.
@@ -23,10 +23,11 @@ each game shows it in its own language.
   that start with the same three letters, `gor_` Rogueport, `tik_` its
   underground...) are fetched when you enter it and kept for 10 minutes.
 
-The setting is Multiplayer > **Paper notes** (on). Off, nothing is fetched or
-shown. The notes are off during online co-op and while a replay records or
-plays: they are drawn only, and never touch the game, but a session's games
-and a replay's playback show exactly the same.
+The setting is Multiplayer → **Paper notes** (on by default). Off, nothing is
+fetched or shown. The notes are also off during online co-op and while a
+replay records or plays: they are only drawn and never touch the game, but
+this way a session's games, and a replay and its playback, show exactly the
+same.
 
 What this device left and rated is kept in `<user>/notes.txt`, so its own
 notes show as yours and a rating isn't asked twice.

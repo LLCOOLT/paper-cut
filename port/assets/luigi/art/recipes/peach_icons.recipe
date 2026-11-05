@@ -129,3 +129,47 @@ image art/icons/peach/peach_emblem.png
   paste head 4 4
   alpha cut 128
 end
+
+# ---------------------------------------------------------------------------------------------------
+# Level-up's BP panel (battle_common.tpl image 51, JP 38), 128x128, as Luigi's (luigi_icons.recipe):
+# Mario's head taken off the panel's coin, then hers on it in the panel's browns with a darker gold
+# shadow under it. Loaded in the "*#peach" texture set (luigi_faces_aurora.c, portLuigiFacesInit)
+gradient panel 0.0 #521800 0.45 #521800 0.5 #8c4c00 0.98 #8c4c00 1.04 #b26a00 2.0 #b26a00
+
+steps peach_levelup
+  colours gold sample 46 100
+  mask face circle 63.5 64.3 40
+  mask near circle 63.5 64.3 45.5
+  mask near - mask face
+  mask edge circle 63.5 64.3 47.6
+  mask edge - mask face
+  fill in face gold
+  fill in edge where h<40 s>0.5 gold
+  fill in near where v<0.82 gold
+  use peach_cards
+  use peach_head
+  @head crop 0 0 108 105
+  @head crop -4 -4 116 113
+  @head grow 4 line
+  @head flip x
+  @head scale 72 70 texel
+  @head ramp in solid base #f0c8a0 to panel
+  piece shadow canvas 128 128
+  @shadow paste head 31 32
+  @shadow fill in solid #8c6900
+  paste shadow 0 0
+  paste head 28 29
+  alpha cut 128
+end
+
+image art/icons/peach/ui/tex1_128x128_4d465d3c205b172e_14.png
+  discs G8ME01 G8MP01
+  load tpl battle/common/battle_common.tpl 51
+  use peach_levelup
+end
+
+image art/icons/peach/ui_jp/tex1_128x128_4d465d3c205b172e_14.png
+  discs G8MJ01
+  load tpl battle/common/battle_common.tpl 38
+  use peach_levelup
+end

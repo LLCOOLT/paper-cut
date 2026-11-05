@@ -33,7 +33,8 @@ static unsigned sLogNext;
 static char sGpu[160];
 
 void portCrashLogLine(const char* text) {
-    char* line = sLog[sLogNext % LOG_LINES];
+    /* (any thread logs: each line claims its own slot) */
+    char* line = sLog[__atomic_fetch_add(&sLogNext, 1, __ATOMIC_RELAXED) % LOG_LINES];
     size_t i;
     snprintf(line, sizeof(sLog[0]), "%s", text != NULL ? text : "");
     for (i = 0; line[i] != '\0'; i++) {
@@ -41,7 +42,6 @@ void portCrashLogLine(const char* text) {
             line[i] = ' '; /* one line each */
         }
     }
-    sLogNext++;
 }
 
 void portCrashSetGpu(const char* text) {

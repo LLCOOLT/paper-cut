@@ -15,6 +15,7 @@
 #include "port/settings.h"
 #include "port/pause_forms.h"
 #include "port/tr.h"
+#include "../file_util.h"
 #include <SDL3/SDL.h>
 #include <imgui.h>
 #include <algorithm>
@@ -115,16 +116,7 @@ void willWrite() {
   }
 }
 
-std::vector<uint8_t> readAll(const std::string& path) {
-  size_t size = 0;
-  void* data = SDL_LoadFile(path.c_str(), &size);
-  std::vector<uint8_t> bytes;
-  if (data != nullptr) {
-    bytes.assign(static_cast<uint8_t*>(data), static_cast<uint8_t*>(data) + size);
-    SDL_free(data);
-  }
-  return bytes;
-}
+using portfile::readAll;
 
 // the backup's date from its name ("<stem> <date>.gci")
 std::string dateOf(const std::string& backup) {
@@ -222,7 +214,7 @@ void backupsSection(int inGame) {
     ImGui::PopID();
   }
   if (locked && !backups.empty()) {
-    ImGui::TextDisabled("%s", portTr("Restore this card's saves from the launcher, before the game starts."));
+    ImGui::TextDisabled("%s", portTr("Restore saves from the launcher, before starting."));
   } else if (running && !backups.empty()) {
     ImGui::TextDisabled("%s", portTr(portRestartWaiting() ? "Restarting when the game has finished saving..."
                                                           : "The game starts again to load it; the save as it is "
@@ -297,6 +289,74 @@ void copySection(int inGame) {
   }
 }
 
+// A copy of each card for Dolphin or a GameCube (<user>/For Dolphin/<JAP|USA|EUR>/<name>.gci):
+// Paper Cut's own badges and dishes, which the GameCube game reads past its item table,
+// sold for coins (port/include/port/save_convert.h portSaveDolphinSafe); the card here
+// is left as it is.
+std::string dolphinDir(char release) {
+  return std::string(portSettingsUserPath()) + "/For Dolphin/" + regionDir(release);
+}
+
+void dolphinSection(int) {
+  static std::string sDone;
+  ImGui::TextWrapped("%s", portTr("The GameCube game can't read Paper Cut's own badges and dishes (the badge set's, "
+                                  "the badge maker's, Zess T.'s new dishes). This copy has them sold for the coins "
+                                  "a shop pays (up to 999), a worn one taken off; your card here keeps them."));
+  bool any = false;
+  for (int i = 0; i < 3; i++) {
+    char name[64];
+    portSaveFileName(kReleases[i], name, sizeof(name));
+    const std::string src = cardDir(kReleases[i]) + "/" + name;
+    if (!isFile(src)) {
+      continue;
+    }
+    any = true;
+    ImGui::PushID(i);
+    ImGui::AlignTextToFramePadding();
+    ImGui::TextUnformatted(portTr(kReleaseNames[i]));
+    ImGui::SameLine();
+    if (ImGui::SmallButton(portTrLabel("Make the copy##dolphin"))) {
+      std::vector<uint8_t> bytes = readAll(src);
+      int coins = 0;
+      const int sold = bytes.empty() ? -1 : portSaveDolphinSafe(bytes.data(), bytes.size(), &coins);
+      const std::string dir = dolphinDir(kReleases[i]), dst = dir + "/" + name;
+      char line[256];
+      if (sold < 0) {
+        std::snprintf(line, sizeof(line), "%s", portTr("That file isn't a save of this game."));
+      } else {
+        SDL_CreateDirectory(dir.c_str());
+        SDL_IOStream* f = SDL_IOFromFile(dst.c_str(), "wb");
+        const bool ok = f != nullptr && SDL_WriteIO(f, bytes.data(), bytes.size()) == bytes.size();
+        if (f != nullptr) {
+          SDL_CloseIO(f);
+        }
+        if (!ok) {
+          std::snprintf(line, sizeof(line), "%s", portTr("The copy couldn't be written."));
+        } else if (sold == 0) {
+          std::snprintf(line, sizeof(line), portTr("Nothing to sell: the copy is the card as it is. %s"), dst.c_str());
+        } else {
+          std::snprintf(line, sizeof(line), portTr("%d sold for %d coins: %s"), sold, coins, dst.c_str());
+        }
+      }
+      sDone = line;
+    }
+    ImGui::PopID();
+  }
+  if (!any) {
+    ImGui::TextDisabled("%s", portTr("No card here has a save of this game yet."));
+  }
+#if !defined(__ANDROID__) && !(defined(__APPLE__) && TARGET_OS_IPHONE)
+  if (any && ImGui::SmallButton(portTrLabel("Open the folder##dolphin"))) {
+    const std::string dir = std::string(portSettingsUserPath()) + "/For Dolphin";
+    SDL_CreateDirectory(dir.c_str());
+    SDL_OpenURL(("file:///" + dir).c_str());
+  }
+#endif
+  if (!sDone.empty()) {
+    ImGui::TextWrapped("%s", sDone.c_str());
+  }
+}
+
 // The Start menu's forms (port/include/port/pause_forms.h): the running game's card's backups,
 // and its save copied to the other releases' cards
 std::vector<std::string>& formBackups() {
@@ -334,7 +394,7 @@ const char* backupAct(int id, int dir) {
     return id < 0 ? "One is kept each time the game saves." : nullptr;
   }
   if (!portRestartSupported()) {
-    return "Restore this card's saves from the launcher, before the game starts.";
+    return "Restore saves from the launcher, before starting.";
   }
   if (portRestartWaiting()) {
     return "Restarting when the game has finished saving...";
@@ -390,12 +450,14 @@ struct SavesSettings {
   SavesSettings() {
     sKeep = portSettingsDeclare("save_backups", 5, 0, 20);
     gPortCardWillWrite = willWrite;
-    portSettingsAddSlider("Saves", "Backups kept", "Dated copies of each save file, made when the game saves. 0: none.",
+    portSettingsAddSlider("Saves", "Backups kept", "Dated copies of each save file, made on saving. 0: none.",
                           0, "save_backups", 0, 20, "%d", "backup restore gci memory card");
     portSettingsAddSection("Saves", "Restore a backup", nullptr, 0, backupsSection,
                            "backup restore undo gci memory card");
     portSettingsAddSection("Saves", "Copy a save to another release", nullptr, 0, copySection,
                            "convert transfer japan jp us eu pal region gci memory card");
+    portSettingsAddSection("Saves", "A copy for Dolphin or a GameCube", nullptr, 0, dolphinSection,
+                           "dolphin gamecube export gci badges dishes sell memory card");
     portPauseAddForm(&kBackupForm);
     portPauseAddForm(&kCopyForm);
   }

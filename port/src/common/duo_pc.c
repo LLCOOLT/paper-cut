@@ -173,20 +173,21 @@ static const struct {
     {"bros_drop", "Bros. Drop", "Mash together, then one stomps as\nthe other's hammer comes down."},
 };
 
-static PortDuoMove sAdded[PORT_DUO_MAX_MOVES - BUILTIN];
-static int sAddedCount;
-static const char* (*sResolver)(const char* tag);
+static PortDuoMove sAdded[PORT_DUO_MAX_MOVES - BUILTIN] PORT_HOST_DATA; /* (registrations: kept over save states) */
+static int sAddedCount PORT_HOST_DATA;
+static const char* (*sResolver)(const char* tag) PORT_HOST_DATA;
 static int sPlayersOverride;
-static int (*sSecondHero)(void);
-static int (*sControllerOf)(const void* unit);
-static int* sSetting;
+static int (*sSecondHero)(void) PORT_HOST_DATA;
+static int (*sControllerOf)(const void* unit) PORT_HOST_DATA;
+static int* sSetting PORT_HOST_DATA;
 
 /* each move's three weapons: the one the menu lists, the hero's half, the partner's */
 static BattleWeapon sHeader[PORT_DUO_MAX_MOVES];
 static BattleWeapon sHero[PORT_DUO_MAX_MOVES];
 static BattleWeapon sPartner[PORT_DUO_MAX_MOVES];
 static int sBuilt[PORT_DUO_MAX_MOVES];
-static char sTags[PORT_DUO_MAX_MOVES][3][48];
+#define TAG_SIZE 48 /* "pc_duo_name_" and a key of up to 35 */
+static char sTags[PORT_DUO_MAX_MOVES][3][TAG_SIZE];
 
 int portDuoMoveCount(void) {
     return BUILTIN + sAddedCount;
@@ -204,7 +205,8 @@ const PortDuoMove* portDuoMoveAt(int i) {
 }
 
 int portDuoRegister(const PortDuoMove* move) {
-    if (move == NULL || sAddedCount >= (int)(sizeof(sAdded) / sizeof(sAdded[0]))) {
+    if (move == NULL || move->key == NULL || strlen(move->key) > TAG_SIZE - sizeof("pc_duo_name_") ||
+        sAddedCount >= (int)(sizeof(sAdded) / sizeof(sAdded[0]))) {
         return -1;
     }
     sAdded[sAddedCount] = *move;
@@ -458,6 +460,9 @@ int portDuoListed(int i, int* usable) {
 
 /* --- The command menu (battle_seq_command.c) --- */
 
+/* the command menu's weapon list (BattleCommand.weapon) */
+#define WEAPON_SLOTS ((int)(sizeof(((BattleCommand*)0)->weapon) / sizeof(((BattleCommand*)0)->weapon[0])))
+
 void portDuoAddWeapons(BattleCommand* cmd, int type, int* num) {
     BattleWork* wp = _battleWorkPointer;
     BattleUnit* actor;
@@ -466,7 +471,7 @@ void portDuoAddWeapons(BattleCommand* cmd, int type, int* num) {
         return;
     }
     actor = BattleGetUnitPtr(wp, wp->activeUnitId);
-    for (i = 0; i < portDuoMoveCount() && *num < 21; i++) {
+    for (i = 0; i < portDuoMoveCount() && *num < WEAPON_SLOTS; i++) {
         const PortDuoMove* m = portDuoMoveAt(i);
         BattleCommandWeapon* e;
         if (!listedFor(wp, actor, i, &usable)) {
@@ -498,7 +503,7 @@ void portDuoCheckWeapons(BattleCommand* cmd, int count) {
         return;
     }
     actor = BattleGetUnitPtr(wp, wp->activeUnitId);
-    for (i = 0; i < count && i < 21; i++) {
+    for (i = 0; i < count && i < WEAPON_SLOTS; i++) {
         if (cmd->weapon[i].weapon == NULL || halfOf(cmd->weapon[i].weapon, &move) != 2) {
             continue;
         }
@@ -534,6 +539,9 @@ static const char* tr(const char* english) {
 #endif
 }
 
+/* "pc_duo_name_" and "pc_duo_desc_": what comes before a move's key */
+#define TAG_HEAD ((int)sizeof("pc_duo_name_") - 1)
+
 const char* portDuoMsg(const char* tag) {
     int i;
     if (tag == NULL || strncmp(tag, "pc_duo_", 7) != 0) {
@@ -550,7 +558,7 @@ const char* portDuoMsg(const char* tag) {
         return tr(onePlayer() ? "Mash A for Mario and B for your partner!" : "Both players mash A!");
     }
     for (i = 0; i < (int)(sizeof(kText) / sizeof(kText[0])); i++) {
-        if (strlen(tag) <= 12 || strcmp(tag + 12, kText[i].key) != 0) {
+        if ((int)strlen(tag) <= TAG_HEAD || strcmp(tag + TAG_HEAD, kText[i].key) != 0) {
             continue;
         }
         if (strncmp(tag + 7, "name_", 5) == 0) {
@@ -1381,11 +1389,11 @@ EVT_BEGIN(duo_attack_event)
     CALL(btlevtcmd_CommandGetWeaponAddress, BTL_UNIT_SELF, LW(12))
     CALL(btlevtcmd_AttackDeclare, BTL_UNIT_SELF, LW(3), LW(4))
     CALL(btlevtcmd_WaitGuardMove)
-    CALL(btlevtcmd_CommandPayWeaponCost, BTL_UNIT_SELF)
     CALL(duoBegin, LW(12), LW(13), LW(14))
     IF_INT_EQUAL(LW(13), 0)
         GOTO(99)
     END_IF
+    CALL(btlevtcmd_CommandPayWeaponCost, BTL_UNIT_SELF) /* (once the move is sure: no FP lost) */
     CALL(duoSecondUnit, LW(15))
     CALL(btlevtcmd_StopWaitEvent, BTL_UNIT_MARIO)
     CALL(btlevtcmd_StopWaitEvent, LW(15))

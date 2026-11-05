@@ -135,9 +135,10 @@ static void warpFrame(u32 frame) {
         }
         {
             /* $TTYD_OPEN_SEED: the file is an open-world randomizer file with this seed
-             * (port/include/port/open_world.h), its story as $TTYD_STORY says */
-            const char* v = getenv("TTYD_OPEN_SEED");
-            if (v != NULL && v[0] != 0) {
+             * (port/include/port/open_world.h), its story as $TTYD_STORY says; never
+             * online or in a replay (portOpenTestSeed) */
+            const char* v = portOpenTestSeed();
+            if (v != NULL) {
                 portOpenStamp(v, 0x0F, 0);
                 if (getenv("TTYD_OPEN_SELFTEST") != NULL) {
                     portOpenSelfTest();

@@ -10,10 +10,6 @@
 #include "mario/mario_pouch.h"
 #include "mario/mariost.h"
 
-/* the partner menu's order (win_party.c winPartyDt): Goombella, Koops,
- * Flurrie, Yoshi, Vivian, Bobbery, Ms. Mowz */
-static const int kOrder[] = {1, 2, 5, 4, 6, 3, 7};
-
 int portPartnerWheelList(int* ids, int max, int* current) {
     PouchData* pouch;
     MarioWork* mario;
@@ -24,10 +20,10 @@ int portPartnerWheelList(int* ids, int max, int* current) {
         return 0;
     }
     *current = marioGetParty();
-    for (i = 0; i < 7 && n < max; i++) {
-        const unsigned flags = pouch->partyData[kOrder[i]].flags;
+    for (i = 0; i < PORT_PARTNER_MENU_COUNT && n < max; i++) {
+        const unsigned flags = pouch->partyData[gPortPartnerMenuOrder[i]].flags;
         if ((flags & POUCH_PARTY_FLAG_JOINED) && !(flags & POUCH_PARTY_FLAG_AWAY)) {
-            ids[n++] = kOrder[i];
+            ids[n++] = gPortPartnerMenuOrder[i];
         }
     }
     return n;

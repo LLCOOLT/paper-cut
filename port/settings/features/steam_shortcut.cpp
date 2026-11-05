@@ -20,6 +20,7 @@
 // configset_<controller>.vdf, unless the player has one for Paper Cut already.
 #include "port/settings.h"
 #include "port/tr.h"
+#include "../file_util.h"
 #include <SDL3/SDL.h>
 #include <imgui.h>
 #include <algorithm>
@@ -334,29 +335,9 @@ std::string dirOf(const std::string& path) {
   return slash == std::string::npos ? std::string(".") : path.substr(0, slash);
 }
 
-std::vector<uint8_t> readAll(const std::string& path) {
-  size_t size = 0;
-  void* data = SDL_LoadFile(path.c_str(), &size);
-  std::vector<uint8_t> bytes;
-  if (data != nullptr) {
-    bytes.assign(static_cast<uint8_t*>(data), static_cast<uint8_t*>(data) + size);
-    SDL_free(data);
-  }
-  return bytes;
-}
+using portfile::readAll;
 
-bool writeAll(const std::string& path, const void* data, size_t size) {
-  SDL_IOStream* f = SDL_IOFromFile((path + ".tmp").c_str(), "wb");
-  const bool ok = f != nullptr && SDL_WriteIO(f, data, size) == size;
-  if (f != nullptr) {
-    SDL_CloseIO(f);
-  }
-  if (ok && SDL_RenamePath((path + ".tmp").c_str(), path.c_str())) {
-    return true;
-  }
-  SDL_RemovePath((path + ".tmp").c_str());
-  return false;
-}
+using portfile::writeAll;
 
 std::string stamp() {
   SDL_Time now = 0;

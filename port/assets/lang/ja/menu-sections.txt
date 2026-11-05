@@ -30,7 +30,7 @@ Not recognised: A asks for each of its buttons in turn.
 A controller
 コントローラー
 
-A controller listed here works once you press each of its buttons when asked.
+A listed controller works once its buttons are set.
 ここにあるコントローラーは、ボタンを順に押すと使えます。
 
 On an HDR display, the picture at the brightness you choose for white.
@@ -51,7 +51,7 @@ The brightest highlights a little brighter still.
 Turn on HDR output first.
 先にHDR出力をオンにしてください。
 
-Not from the second screen: do it in the game's own Start menu.
+Not on the second screen: use the game's Start menu.
 2つ目の画面ではできません。ゲームのスタートメニューで行ってください。
 
 Travel there: the trip starts once the menu is closed.
@@ -138,7 +138,7 @@ modsフォルダーの言語パックを読み直します。
 Writes a pack for a translator to start from in the mods folder: each text in English, with room for its translation.
 翻訳を始めるためのパックをmodsフォルダーに書き出します。英語の各テキストと訳の欄があります。
 
-Shows the mods folder on the desktop: a pack is a folder in it.
+Shows the mods folder; each pack is a folder in it.
 デスクトップでmodsフォルダーを開きます。パックはその中のフォルダーです。
 
 Restart for the new letters
@@ -165,7 +165,7 @@ modsフォルダーに書き出しました。訳すテキストが入ってい�
 Nothing yet: the message windows' pages show here.
 まだありません。メッセージのページがここに出ます。
 
-Up and down scroll, left and right a page at a time. B: back.
+Up and down scroll, left and right by page. B: back.
 上下でスクロール、左右で1ページずつ。B：もどる
 
 Read the message log
@@ -192,10 +192,10 @@ Player
 Whose controller is set: left and right change it.
 設定するプレイヤー。左右で変えます。
 
-The stick moves, the d-pad is A, B, X and Y, the left bumper Z, the left trigger R.
+The stick moves, the d-pad is ABXY, LB is Z and LT is R.
 スティックで移動、十字ボタンがA・B・X・Y、左のバンパーがZ、左のトリガーがR。
 
-The right stick moves, the face buttons, right bumper and trigger as they are.
+The right stick moves; face buttons, RB and RT unchanged.
 右スティックで移動、ボタンと右のバンパー・トリガーはそのまま。
 
 Rewind button
@@ -210,7 +210,7 @@ A：アドレスをコピー　X：送るのをやめる　B：もどる（送�
 A: the address and its QR code again.
 A：アドレスとQRコードをもう一度。
 
-The address the other device shows under Send saves to another device: A types it.
+A: type the address the other device shows under Send saves.
 もう一つの端末が「別の端末にセーブを送る」で出すアドレス。Aで入力します。
 
 Paste the address
@@ -219,10 +219,10 @@ Paste the address
 The address you copied, put in.
 コピーしたアドレスを入れます。
 
-Fetches the other device's saves; you choose what to replace next.
+Gets the other device's saves; then pick what to replace.
 もう一つの端末のセーブを受け取ります。次に置き換えるものを選びます。
 
-Replace: the other device's game file over this one's (kept as a backup first).
+Replace: the other device's file here (backed up first).
 置き換え：もう一つの端末のファイルをこちらに（先にバックアップします）。
 
 Replace
@@ -288,7 +288,7 @@ No new version found
 Checked at start, when Check for updates at start is on.
 起動時にアップデートを確認がオンのとき、起動時に確認します。
 
-A newer Paper Cut is out. A: its release page in the browser.
+A newer Paper Cut is out. A: open its release page.
 新しいPaper Cutが出ています。A：ブラウザーでページを開く
 
 Flathub updates this copy
@@ -366,5 +366,5 @@ A：これにする　B：もとのまま
 A: the text you copied, typed here.
 A：コピーしたテキストを入れる
 
-A types it. X deletes a letter. B leaves the text as it was.
-Aで入力、Xで1文字消す、Bでもとのまま。
+A types the key, B rubs out a letter (on none, it goes back), Start is Done.
+A で入力、B で1文字けす（なければもどる）、スタートでけってい。

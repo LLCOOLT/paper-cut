@@ -39,13 +39,6 @@
 #include "mario/mario_pouch.h"
 #include "mario/mariost.h"
 #include "win/win_main.h"
-#ifdef _WIN32
-#include <direct.h>
-#define makeDir(p) _mkdir(p)
-#else
-#include <sys/stat.h>
-#define makeDir(p) mkdir(p, 0755)
-#endif
 
 /* --- every sticker */
 
@@ -178,16 +171,12 @@ static Stuck sStuck[STUCK_MAX];
 static int sStuckCount;
 
 static void save(void) {
-    char dir[1024];
     FILE* f;
     int i;
     if (sPath[0] == '\0') {
         return;
     }
-    snprintf(dir, sizeof(dir), "%s/Stickers", portPracticeUserDir());
-    makeDir(dir);
-    snprintf(dir, sizeof(dir), "%s/Stickers/%s", portPracticeUserDir(), PORT_GAME_ID);
-    makeDir(dir);
+    portPracticeGameDir("Stickers");
     f = fopen(sPath, "w");
     if (f == NULL) {
         return;

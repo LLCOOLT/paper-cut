@@ -25,6 +25,7 @@
 #ifdef TARGET_PC
 #include "wide_x.h"
 #include "port/toggles.h"
+#include "port/widescreen.h"
 #endif
 
 #if VERSION >= VERSION_US
@@ -1532,7 +1533,6 @@ static void disp_maku(CameraId camId, void* param) {
      * 16:9, so they keep reaching the edges */
     if (camId == CAMERA_FADE2 &&
         (entry->type == FADE_CURTAIN_SIDES_A1_TOP || entry->type == FADE_CURTAIN_SIDES_A2_TOP)) {
-        extern float portWidescreenAspect(void);
         const f32 k = portWidescreenAspect() / (16.0f / 9.0f);
         if (k > 1.0f) {
             PSMTXScale(mtx2, k, 1.0f, 1.0f);

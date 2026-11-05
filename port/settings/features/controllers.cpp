@@ -527,7 +527,7 @@ int setupRows(PortPauseRow* out, int max) {
   SDL_free(ids);
   if (n == 0 && max > 0) {
     out[n++] = portPauseRow("Every connected controller is recognised.",
-                            "A controller listed here works once you press each of its buttons when asked.", nullptr,
+                            "A listed controller works once its buttons are set.", nullptr,
                             -1, PORT_PAUSE_ROW_DIM);
   }
   return n;

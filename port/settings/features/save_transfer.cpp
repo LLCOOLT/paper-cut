@@ -9,6 +9,8 @@
 //   /<token>            a page with each file as a link (a phone's browser)
 //   /<token>/list       "<size> <name>" lines (another Paper Cut)
 //   /<token>/f/<name>   a file
+//   /<token>/d/<name>   a file holding Paper Cut's own items, as a copy for Dolphin
+//                       or a GameCube (sold: port/include/port/save_convert.h)
 // It stops once every file was taken, after 5 minutes, or with Stop. The
 // address is shown as text and as a QR code (libs/qrcodegen).
 //
@@ -51,6 +53,7 @@
 extern "C" {
 #include "../../../libs/qrcodegen/qrcodegen.h"
 }
+#include "../file_util.h"
 
 namespace {
 
@@ -66,18 +69,10 @@ const char* releaseName(char release) {
 struct File {
   std::string name;
   std::vector<uint8_t> bytes;
+  std::vector<uint8_t> dolphin; // a copy for Dolphin or a GameCube, when it holds Paper Cut's own items
 };
 
-std::vector<uint8_t> readAll(const std::string& path) {
-  size_t size = 0;
-  void* data = SDL_LoadFile(path.c_str(), &size);
-  std::vector<uint8_t> bytes;
-  if (data != nullptr) {
-    bytes.assign(static_cast<uint8_t*>(data), static_cast<uint8_t*>(data) + size);
-    SDL_free(data);
-  }
-  return bytes;
-}
+using portfile::readAll;
 
 // The release whose save file this is by name and contents ("01-G8ME-mariost_save_file.gci"), 0 if none
 char saveOf(const std::string& name, const std::vector<uint8_t>& bytes) {
@@ -138,8 +133,18 @@ std::string htmlPage(const std::string& token) {
                      "margin:8px 0;border:1px solid #888;border-radius:8px;text-decoration:none}</style></head><body>"
                      "<h1>Paper Cut saves</h1><p>Download a file, then put it in Paper Cut's card folder (for a "
                      "phone's Paper Cut: type this page's address in its Saves tab, Receive saves, instead).</p>";
+  bool dolphin = false;
   for (const File& f : sSend.files) {
     page += "<a download href=\"/" + token + "/f/" + f.name + "\">" + f.name + " (" + releaseName(f.name[6]) + ")</a>";
+    if (!f.dolphin.empty()) {
+      page += "<a download href=\"/" + token + "/d/" + f.name + "\">" + f.name + " (" + releaseName(f.name[6]) +
+              ", for Dolphin or a GameCube*)</a>";
+      dolphin = true;
+    }
+  }
+  if (dolphin) {
+    page += "<p>* Paper Cut's own badges and dishes, which the GameCube game can't read, sold for coins. Paper Cut "
+            "itself reads either file.</p>";
   }
   return page + "</body></html>";
 }
@@ -181,13 +186,14 @@ void serveOne(Socket c, const std::string& token, std::vector<bool>& served) {
       list += std::to_string(f.bytes.size()) + " " + f.name + "\n";
     }
     respond(c, 200, "text/plain; charset=utf-8", list);
-  } else if (path.rfind(base + "/f/", 0) == 0) {
+  } else if (path.rfind(base + "/f/", 0) == 0 || path.rfind(base + "/d/", 0) == 0) {
+    const bool dolphin = path[base.size() + 1] == 'd';
     const std::string name = path.substr(base.size() + 3);
     for (size_t i = 0; i < sSend.files.size(); i++) {
-      if (sSend.files[i].name == name) {
+      if (sSend.files[i].name == name && (!dolphin || !sSend.files[i].dolphin.empty())) {
+        const std::vector<uint8_t>& bytes = dolphin ? sSend.files[i].dolphin : sSend.files[i].bytes;
         const std::string disposition = "Content-Disposition: attachment; filename=\"" + name + "\"\r\n";
-        respond(c, 200, "application/octet-stream",
-                std::string(sSend.files[i].bytes.begin(), sSend.files[i].bytes.end()), disposition.c_str());
+        respond(c, 200, "application/octet-stream", std::string(bytes.begin(), bytes.end()), disposition.c_str());
         served[i] = true;
         return;
       }
@@ -247,8 +253,12 @@ void startSending() {
     int count = 0;
     char** found = SDL_GlobDirectory(dir.c_str(), "*.gci", 0, &count);
     for (int i = 0; found != nullptr && i < count; i++) {
-      File f{found[i], readAll(dir + "/" + found[i])};
+      File f{found[i], readAll(dir + "/" + found[i]), {}};
       if (saveOf(f.name, f.bytes) != 0) {
+        if (portSaveHasPortItems(f.bytes.data(), f.bytes.size())) {
+          f.dolphin = f.bytes;
+          portSaveDolphinSafe(f.dolphin.data(), f.dolphin.size(), nullptr);
+        }
         sSend.files.push_back(std::move(f));
       }
     }
@@ -590,7 +600,7 @@ void receiveSection(int inGame) {
       sReceive.state = 0;
     }
     if (locked) {
-      ImGui::TextDisabled("%s", portTr("Receive this card's saves from the launcher, before the game starts."));
+      ImGui::TextDisabled("%s", portTr("Receive saves from the launcher, before starting."));
     } else if (running) {
       ImGui::TextDisabled("%s", portTr("This is the running game's card: the game starts again to load it."));
     }
@@ -723,7 +733,7 @@ int receiveRows(PortPauseRow* out, int max) {
   const int state = sReceive.state;
   if (state == 0) {
     PortPauseRow r = portPauseRow("Address",
-                                  "The address the other device shows under Send saves to another device: A types it.",
+                                  "A: type the address the other device shows under Send saves.",
                                   nullptr, kAddress);
     const size_t len = std::strlen(sReceive.url);
     std::snprintf(r.value, sizeof(r.value), "%s%s", len > 30 ? ".." : "", len > 30 ? sReceive.url + len - 28 : sReceive.url);
@@ -732,7 +742,7 @@ int receiveRows(PortPauseRow* out, int max) {
     }
     out[n++] = r;
     out[n++] = portPauseRow("Paste the address", "The address you copied, put in.", nullptr, kPaste);
-    out[n++] = portPauseRow("Receive saves", "Fetches the other device's saves; you choose what to replace next.",
+    out[n++] = portPauseRow("Receive saves", "Gets the other device's saves; then pick what to replace.",
                             nullptr, kReceive, sReceive.url[0] == '\0' ? PORT_PAUSE_ROW_DIM : 0);
   } else if (state == 1) {
     out[n++] = portPauseRow("Receiving...", nullptr, nullptr, kStatus, PORT_PAUSE_ROW_DIM);
@@ -743,7 +753,7 @@ int receiveRows(PortPauseRow* out, int max) {
       out[n++] = portPauseRow(releaseName(in.release), nullptr, nullptr, -1, PORT_PAUSE_ROW_HEADING);
       for (int k = 0; k < 4 && n < max - 3; k++) {
         PortPauseRow r = portPauseRow(nullptr,
-                                      "Replace: the other device's game file over this one's (kept as a backup first).",
+                                      "Replace: the other device's file here (backed up first).",
                                       in.replace[k] ? "Replace" : "Keep", int(i) * 4 + k);
         std::snprintf(r.text, sizeof(r.text), portTrGame("File %d: %s over %s"), k + 1,
                       portTrGame(hasGame(in.file.bytes, k) ? "a save" : "empty"),
@@ -755,7 +765,7 @@ int receiveRows(PortPauseRow* out, int max) {
     }
     const bool locked = running && !portRestartSupported();
     out[n++] = portPauseRow(running ? "Replace them and restart" : "Replace them",
-                            locked    ? "Receive this card's saves from the launcher, before the game starts."
+                            locked    ? "Receive saves from the launcher, before starting."
                             : running ? "This is the running game's card: the game starts again to load it."
                                       : "The save here is kept as a backup first.",
                             nullptr, kReplace, !any || locked ? PORT_PAUSE_ROW_DIM : PORT_PAUSE_ROW_CONFIRM);
@@ -816,7 +826,7 @@ const char* receiveAct(int id, int dir) {
       return "Choose a file to replace first.";
     }
     if (running && !portRestartSupported()) {
-      return "Receive this card's saves from the launcher, before the game starts.";
+      return "Receive saves from the launcher, before starting.";
     }
     applyChosen(1); // (the Start menu: a game is running)
     return nullptr;

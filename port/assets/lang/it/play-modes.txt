@@ -54,14 +54,14 @@ Lo scontro di ogni nemico sul campo è estratto fra tutti gli scontri della sua 
 Remix: badge draft
 Remix: scelta di tessere
 
-At each chapter's title card, three badges to choose one from: left and right, then A.
+Each chapter's title card offers three badges: pick one.
 Alla schermata del titolo di ogni capitolo, tre tessere fra cui sceglierne una: sinistra e destra, poi A.
 
 Remix seed
 Seme del remix
 
-The same seed, the same remix (share it with a challenge code).
-Stesso seme, stesso remix (condividilo con un codice sfida).
+Same seed, same remix: share it with a challenge code.
+Stesso seme, stesso remix: condividi un codice sfida.
 
 Hardcore
 Hardcore

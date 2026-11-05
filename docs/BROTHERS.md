@@ -1,12 +1,12 @@
 # Brothers mode
 
-Multiplayer > **Brothers mode** (setting `brothers_mode`, off by default):
+Multiplayer → **Brothers mode** (setting `brothers_mode`, off by default):
 Luigi joins Mario as a second hero, not a skin. Player 2 plays him with the
 second controller (A on another controller joins, as for co-op); with nobody on
 the second controller he follows Mario by himself, and player 1 plays his turns
 in battle. Saves are not changed: nothing about Luigi goes in a save file.
 
-While Brothers mode is on, Play as Luigi is off (both brothers are themselves),
+While Brothers mode is on, Enhancements → **Play as** Luigi plays as Mario (both brothers are themselves),
 and the second controller plays Luigi instead of the partner (co-op's partner
 controls are player 1's then).
 
@@ -14,7 +14,10 @@ controls are player 1's then).
 
 - The stick walks Luigi, **A** jumps (a little higher than Mario; a block he
   hits from below is hit as Mario's head would hit it), **B** swings his hammer
-  (blocks and switches in front of him, as Mario's hammer works them).
+  (blocks and switches in front of him, as Mario's hammer works them; an enemy
+  it comes down on is a first strike, as with Mario's hammer).
+- **A** in front of someone Mario could talk to starts the talk, as Mario's A
+  would, while Mario is near (the scene is Mario's: they turn to him).
 - Left alone for a few seconds, he follows Mario's steps again, hopping where
   Mario jumped. If he falls, gets stuck or is left far behind, he is back at
   Mario's side.
@@ -25,10 +28,12 @@ controls are player 1's then).
 - The camera moves toward the point between the brothers (at most half-way to
   Luigi) so both stay in view.
 - "2P" shows over Luigi while a second controller is there.
+- His HP and FP show under the game's HUD, with his face, sliding in and out
+  with it.
 
-Luigi uses Play as Luigi's model (his own animations and his hammer, made from
-your disc at start); without it, the disc's Luigi model (stand, walk, run,
-jump: no hammer).
+Luigi uses the playable Luigi's model ([PLAYABLE_LUIGI.md](PLAYABLE_LUIGI.md):
+his own animations and his hammer, made from your disc at start); without it,
+the disc's Luigi model (stand, walk, run, jump: no hammer).
 
 ## In battle
 
@@ -51,7 +56,7 @@ jump: no hammer).
 
 ## Bros. moves
 
-With Duo moves on (Multiplayer > Duo moves, docs/DUO_MOVES.md), Bros. Bounce,
+With Duo moves on (Multiplayer → **Duo moves**, [DUO_MOVES.md](DUO_MOVES.md)), Bros. Bounce,
 Bros. Hammer and Bros. Drop are in either brother's Jump or Hammer list, and
 the other brother's move this turn goes with it. With player 2 there each
 brother's half is his own player's (both on A); without, player 1 plays both
@@ -60,7 +65,7 @@ partner's half on the second controller.
 
 ## With three or four players
 
-Players 3 and 4 (docs/PLAYERS.md) play alongside the brothers: player 3 the
+Players 3 and 4 ([PLAYERS.md](PLAYERS.md)) play alongside the brothers: player 3 the
 follower or a companion, player 4 a companion. In battle the partner's turns
 are player 1's, or player 3's or 4's when it's their companion's partner;
 Luigi's are always player 2's.
@@ -69,9 +74,3 @@ Luigi's are always player 2's.
 
 Everything Luigi does follows from the host's settings (which online sends) and
 from player 2's input (the guest's), so both games of a session stay in step.
-
-## Not in it (yet)
-
-- Luigi's hammer doesn't start a battle with a first strike, and he doesn't talk
-  to people (Mario does).
-- Luigi's HP and FP aren't shown in the field.

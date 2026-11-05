@@ -169,21 +169,11 @@ void portSkinRelease(int poseId) {
     }
 }
 
-static const char* findAnim(AnimationPoseData* d, const char* name) {
-    int i;
-    for (i = 0; i < d->animCount; i++) {
-        if (!strcmp(d->anims[i].name, name)) {
-            return d->anims[i].name;
-        }
-    }
-    return NULL;
-}
-
 /* one of d's whose name is move or ends in "_" move ("W_1": W_1, KUR_W_1) */
 static const char* findMove(AnimationPoseData* d, const char* move) {
     const size_t n = strlen(move);
     int i;
-    const char* found = findAnim(d, move);
+    const char* found = portCosmeticFindAnim(d, move);
     if (found != NULL) {
         return found;
     }
@@ -202,7 +192,7 @@ static const char* skinAnim(AnimationPoseData* d, const char* want) {
     const char* move;
     const char* found;
     char first[16];
-    if ((found = findAnim(d, want)) != NULL) {
+    if ((found = portCosmeticFindAnim(d, want)) != NULL) {
         return found;
     }
     /* without the model's prefix: PKR_W_1 -> W_1 */
@@ -222,24 +212,6 @@ static const char* skinAnim(AnimationPoseData* d, const char* want) {
         return found;
     }
     return d->animCount > 0 ? d->anims[0].name : NULL;
-}
-
-static int poolRoom(void) {
-    AnimationWork* w = animGetPtr();
-    int i, free = 0;
-    int files = 0, textures = 0;
-    for (i = 0; i < w->totalPoses; i++) {
-        free += !(w->poses[i].flags & ANIM_POSE_FLAG_USED);
-    }
-    /* and in its 64 model files and 64 texture files: animPoseEntry takes a
-     * slot of each for a model not loaded yet, and crashes on a full table */
-    for (i = 0; i < w->totalFiles; i++) {
-        files += !w->files[i].active;
-    }
-    for (i = 0; i < w->totalTextures; i++) {
-        textures += !w->textures[i].active;
-    }
-    return free >= 24 && files >= 16 && textures >= 16;
 }
 
 #define WANTS 4
@@ -274,7 +246,7 @@ void portSkinsFrame(void) {
                 break;
             }
         }
-        if (s == STANDS || !poolRoom()) {
+        if (s == STANDS || !portCosmeticPoolRoom()) {
             continue;
         }
         pose = animPoseEntry(sSkins[skin].model, src->type);

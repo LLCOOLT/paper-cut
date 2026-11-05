@@ -6,7 +6,7 @@ The Paper Tower
 Climb the Paper Tower
 ペーパータワーを　のぼる
 
-30 floors of the game's rooms, remixed; once the game is finished.
+30 floors of the game's rooms, remixed, after the credits.
 へやを　くみかえた　30かいの　タワー　クリアごに　あそべます
 
 Leave the tower
@@ -46,4 +46,4 @@ Paper Tower seed
 ペーパータワーの　シード
 
 The rooms, their gates and the battles of a climb: 0 for the day's (the same for everyone that day), any other number for that climb every time.
-0は　その日の　タワー　ほかの　かずは　いつも　おなじ　タワーです
+0は　その日の　タワー　ほかの　かずは　いつも　おなじ　タワー

@@ -66,11 +66,11 @@ Der Papierturm öffnet sich, sobald dieser Spielstand das Spiel beendet hat.
 No climb is under way.
 Kein Aufstieg läuft.
 
-30 floors of the game's rooms, remixed; once the game is finished.
-30 Etagen aus den Räumen des Spiels, neu gemischt; nach dem Ende des Spiels.
+30 floors of the game's rooms, remixed, after the credits.
+30 Etagen gemischter Räume des Spiels, nach dem Abspann.
 
 On to the next floor; the climb counts as helped.
-Weiter zur nächsten Etage; der Aufstieg zählt als unterstützt.
+Weiter zur nächsten Etage; der Aufstieg gilt als unterstützt.
 
 The climb starts once the menu is closed.
 Der Aufstieg beginnt, sobald das Menü geschlossen ist.

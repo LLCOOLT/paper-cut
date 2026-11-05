@@ -137,7 +137,7 @@ const bool sAdded = [] {
                         "and scenes can end before the screen's edges.",
                         0, "aspect_ratio", kAspects, 7, "ultrawide 21:9 32:9 16:10 steam deck widescreen");
   portSettingsAddChoice("Display", "Widest picture",
-                        "Past this the rest of the screen is bars (blurred with Blurred side bars).", 0, "aspect_max",
+                        "Wider screens get bars past this (see Blurred side bars).", 0, "aspect_max",
                         kAspectMax, 3, "ultrawide limit clamp pillarbox");
   // port/src/aurora/widescreen_aurora.c
   portSettingsAddToggle("Display", "Bars where a scene ends",
@@ -184,7 +184,7 @@ const bool sAdded = [] {
                          0, hdrSection, "hdr high dynamic range nits brightness paper white edr scrgb hdr10");
   portPauseAddForm(&kHdrForm);
   portSettingsAddChoice("Interface", "Performance overlay",
-                        "How long each frame takes: the time between frames, and the part spent working.", 0,
+                        "The time between frames, and the part spent working.", 0,
                         "perf_overlay", kPerf, 3, "frame time graph pacing stutter performance fps");
   return true;
 }();

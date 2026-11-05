@@ -14,7 +14,12 @@
  * a menu or a partner's action (quick resume's "safe"), during a boss rush or
  * endless Glitz Pit, or after the practice tools changed the game. The choice
  * of how often: every room, or at a room change once 2, 5 or 10 minutes have
- * gone since the last save. */
+ * gone since the last save.
+ *
+ * Not during online co-op or a replay either: the save puts a slot into the
+ * game's card data and keeps the card manager busy for a few frames, on this
+ * game alone and on this machine's clock (the minutes between saves), which
+ * the other game, or the recording, doesn't have. */
 #include <stdio.h>
 #include <string.h>
 #include <SDL3/SDL_timer.h>
@@ -24,7 +29,9 @@
 #include "mario/mariost.h"
 #include "port/cardsave_pc.h"
 #include "port/modes.h"
+#include "port/online.h"
 #include "port/practice.h"
+#include "port/replay.h"
 #include "port/resume.h"
 #include "port/settings.h"
 #include "port/raid.h"
@@ -83,7 +90,8 @@ void portAutosaveFrame(void) {
         return;
     }
     if ((portModeStatus()->mode != PORT_MODE_NONE && !portModeStatus()->finished) || portPracticeTainted() ||
-        portRaidActive()) { /* (a raid's loadout is lent: never saved) */
+        portRaidActive() || /* (a raid's loadout is lent: never saved) */
+        portOnlineActive() || portReplayActive()) { /* (this game alone: see the top) */
         sPending = 0;
         return;
     }

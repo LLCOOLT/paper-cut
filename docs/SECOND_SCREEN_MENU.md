@@ -134,8 +134,9 @@ first picture, the old panels.
 
 - Battles, Bowser and Peach: the menu is the field's and Mario's; the
   second screen keeps its last picture.
-- Equipping badges, sorting, the Ragged Diary, reading mail as read,
-  Settings: they change the game (or the player's settings); the second
-  screen's menu only shows them.
+- The Ragged Diary and reading mail as read: they change the game's state,
+  which the second screen's menu doesn't touch (items, partners, badges and
+  sorting go to the game as taps instead; see above). The Settings tab's rows
+  that would change the game say so instead.
 - The background is a plain gradient (the game's capture of the field isn't
   taken for the second screen).

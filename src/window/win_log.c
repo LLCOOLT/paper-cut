@@ -82,7 +82,7 @@ static inline void winLogAddMenu(WindowWork* w, s32 id) {
         "msg_menu_kiroku_badge",
         "msg_menu_kiroku_ryori",
         "msg_menu_kiroku_mono",
-#ifdef TARGET_PC
+#ifdef TTYD_BACKEND_AURORA
         "pc_menu_photo", /* Paper Cut's Photos (port/include/port/photo.h) */
 #endif
     };
@@ -228,7 +228,7 @@ static inline void winLogAddMenu(WindowWork* w, s32 id) {
         "msg_menu_kiroku_badge",
         "msg_menu_kiroku_ryori",
         "msg_menu_kiroku_mono",
-#ifdef TARGET_PC
+#ifdef TTYD_BACKEND_AURORA
         "pc_menu_photo", /* Paper Cut's Photos (port/include/port/photo.h) */
 #endif
     };

@@ -54,14 +54,14 @@ El combate de cada enemigo del escenario se elige entre todos los combates de su
 Remix: badge draft
 Remix: elección de medalla
 
-At each chapter's title card, three badges to choose one from: left and right, then A.
+Each chapter's title card offers three badges: pick one.
 En la pantalla de título de cada capítulo, tres medallas entre las que elegir una: izquierda y derecha, luego A.
 
 Remix seed
 Semilla del remix
 
-The same seed, the same remix (share it with a challenge code).
-La misma semilla, el mismo remix (compártela con un código de desafío).
+Same seed, same remix: share it with a challenge code.
+Misma semilla, mismo remix; se comparte en código de desafío.
 
 Hardcore
 Extremo

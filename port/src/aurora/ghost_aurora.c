@@ -28,7 +28,7 @@
 extern const char* marioAnimeGroupData[4][3];
 
 #define GHOST_EVERY 2 /* frames per sample */
-#define NAME_MAX 512
+#define GHOST_NAMES_MAX 512
 
 typedef struct Sample {
     u16 map;   /* index into the maps' names; 0xFFFF: not in the field (a battle, a map change) */
@@ -78,11 +78,11 @@ static int nameIndex(char (**names)[16], u32* count, const char* name, size_t wi
             return (int)i;
         }
     }
-    if (*count >= NAME_MAX) {
+    if (*count >= GHOST_NAMES_MAX || (base = realloc(*names, (*count + 1) * width)) == NULL) {
         return -1;
     }
-    *names = realloc(*names, (*count + 1) * width);
-    base = (char*)*names + *count * width;
+    *names = (char(*)[16])base;
+    base += *count * width;
     memset(base, 0, width);
     strncpy(base, name, width - 1);
     return (int)(*count)++;
@@ -110,8 +110,13 @@ static void sample(void) {
         s.z = wp->position.z + wp->dispOfs.z;
     }
     if (sRec.count == sRec.cap) {
-        sRec.cap = sRec.cap ? sRec.cap * 2 : 4096;
-        sRec.samples = realloc(sRec.samples, sRec.cap * sizeof(Sample));
+        const u32 cap = sRec.cap ? sRec.cap * 2 : 4096;
+        Sample* more = realloc(sRec.samples, cap * sizeof(Sample));
+        if (more == NULL) {
+            return; /* (out of memory: the ghost ends here) */
+        }
+        sRec.samples = more;
+        sRec.cap = cap;
     }
     sRec.samples[sRec.count++] = s;
 }
@@ -194,7 +199,7 @@ static int parse(const unsigned char* data, size_t size, Track* t) {
     NEED(4);
     t->mapCount = get32(p);
     p += 4;
-    if (t->mapCount > NAME_MAX) {
+    if (t->mapCount > GHOST_NAMES_MAX) {
         return 0;
     }
     NEED(t->mapCount * 16);
@@ -204,7 +209,7 @@ static int parse(const unsigned char* data, size_t size, Track* t) {
     NEED(4);
     t->animCount = get32(p);
     p += 4;
-    if (t->animCount > NAME_MAX) {
+    if (t->animCount > GHOST_NAMES_MAX) {
         trackClear(t);
         return 0;
     }

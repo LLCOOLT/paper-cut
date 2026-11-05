@@ -279,6 +279,8 @@ enum { MSG_HELLO = 1, MSG_PING, MSG_PONG, MSG_SETUP, MSG_READY, MSG_START, MSG_I
 #define PROTOCOL 1
 #define RING 512 /* frames of input kept (the delay is a few) */
 #define MAX_MESSAGE (16 * 1024 * 1024)
+#define SEAT_IN_MAX (1024 * 1024)        /* a seat sends pads: more than this waiting is something else */
+#define LIST_REFRESH_MS (10 * 60 * 1000) /* how often a listed room renews its listing */
 
 static Socket sListen = BAD_SOCKET, sSock = BAD_SOCKET;
 static int sState = PORT_ONLINE_IDLE, sHost, sConnecting;
@@ -651,8 +653,8 @@ static void sendHello(void) {
 
 /* a hello: the same protocol, version, disc and mods, or the reason; into peer */
 static const char* parseHello(const unsigned char* p, size_t len, PortOnlineHello* peer, int* role) {
-    PortOnlineHello sPeer; /* (the fields' sizes) */
-    if (len < 6 + sizeof(sPeer.version) + sizeof(sPeer.game) + sizeof(sPeer.mods) + sizeof(sPeer.name) ||
+    PortOnlineHello h; /* (copied to peer once it passes) */
+    if (len < 6 + sizeof(h.version) + sizeof(h.game) + sizeof(h.mods) + sizeof(h.name) ||
         get32(p) != MAGIC) {
         return "That isn't Paper Cut on the other side.";
     }
@@ -661,32 +663,32 @@ static const char* parseHello(const unsigned char* p, size_t len, PortOnlineHell
     }
     *role = p[5] == 1 || p[5] == 2 ? p[5] : 0;
     p += 6;
-    memcpy(sPeer.version, p, sizeof(sPeer.version));
-    p += sizeof(sPeer.version);
-    memcpy(sPeer.game, p, sizeof(sPeer.game));
-    p += sizeof(sPeer.game);
-    memcpy(sPeer.mods, p, sizeof(sPeer.mods));
-    p += sizeof(sPeer.mods);
-    memcpy(sPeer.name, p, sizeof(sPeer.name));
-    p += sizeof(sPeer.name);
-    memset(sPeer.lua, 0, sizeof(sPeer.lua));
+    memcpy(h.version, p, sizeof(h.version));
+    p += sizeof(h.version);
+    memcpy(h.game, p, sizeof(h.game));
+    p += sizeof(h.game);
+    memcpy(h.mods, p, sizeof(h.mods));
+    p += sizeof(h.mods);
+    memcpy(h.name, p, sizeof(h.name));
+    p += sizeof(h.name);
+    memset(h.lua, 0, sizeof(h.lua));
     if (len >= HELLO_SIZE) {
-        memcpy(sPeer.lua, p, sizeof(sPeer.lua));
+        memcpy(h.lua, p, sizeof(h.lua));
     }
-    sPeer.lua[sizeof(sPeer.lua) - 1] = '\0';
-    sPeer.version[sizeof(sPeer.version) - 1] = sPeer.game[sizeof(sPeer.game) - 1] = '\0';
-    sPeer.mods[sizeof(sPeer.mods) - 1] = sPeer.name[sizeof(sPeer.name) - 1] = '\0';
-    if (strcmp(sPeer.version, sMe.version) != 0) {
+    h.lua[sizeof(h.lua) - 1] = '\0';
+    h.version[sizeof(h.version) - 1] = h.game[sizeof(h.game) - 1] = '\0';
+    h.mods[sizeof(h.mods) - 1] = h.name[sizeof(h.name) - 1] = '\0';
+    if (strcmp(h.version, sMe.version) != 0) {
         return "The other player's Paper Cut is a different version.";
     }
-    if (strcmp(sPeer.game, sMe.game) != 0) {
+    if (strcmp(h.game, sMe.game) != 0) {
         return "The other player has a different release of the game (both need the same: Japanese, US or "
                "European).";
     }
-    if (strcmp(sPeer.mods, sMe.mods) != 0) {
+    if (strcmp(h.mods, sMe.mods) != 0) {
         return "The other player has different mods on (both need the same).";
     }
-    *peer = sPeer;
+    *peer = h;
     return NULL;
 }
 
@@ -1041,6 +1043,10 @@ static int seatHello(int conn, int slot, const unsigned char* p, size_t len) {
     if (why == NULL && free_ < 0) {
         why = "That game has as many players as it can (four).";
     }
+    if (why == NULL && strcmp(who.lua, sMe.lua) != 0) {
+        /* (the guest may differ: Lua mods then run HUD-only on both; a seat can't tell) */
+        why = "The other player has different Lua mods on (a seat needs the same).";
+    }
     if (why != NULL) {
         seatRefuse(conn, id, why);
         return 0;
@@ -1105,9 +1111,27 @@ static void seatTake(int i, unsigned char* pad) {
         seatNeutral(pad, 0);
         return;
     }
-    while (sSeats[i].qLen > 8) {
-        sSeats[i].qHead = (sSeats[i].qHead + 1) % MAX_SEAT_QUEUE;
-        sSeats[i].qLen--;
+    /* No more kept than the way they come needs (one by address, a relay's batch): a seat
+       that hitched and caught up sends a burst, and every pad that stayed queued would be
+       a frame more of delay for that player from then on (players 3 and 4 a little later
+       than the first two). The skipped pads' buttons go into the next one, so a short
+       press isn't lost. (The host decides here and sends what it took: every game plays
+       the same.) */
+    {
+        const unsigned keep = sRelay ? PORT_ONLINE_BATCH + 1 : 2;
+        while (sSeats[i].qLen > keep) {
+            const unsigned char* skip = sSeats[i].q[sSeats[i].qHead];
+            unsigned char* next;
+            sSeats[i].qHead = (sSeats[i].qHead + 1) % MAX_SEAT_QUEUE;
+            sSeats[i].qLen--;
+            next = sSeats[i].q[sSeats[i].qHead];
+            next[0] |= skip[0]; /* the buttons; the sticks and triggers the newer's */
+            next[1] |= skip[1];
+            next[12] |= skip[12];
+            next[13] |= skip[13];
+            next[14] |= skip[14];
+            next[15] |= skip[15];
+        }
     }
     if (sSeats[i].qLen > 0) {
         memcpy(sSeats[i].last, sSeats[i].q[sSeats[i].qHead], PORT_ONLINE_PAD_BYTES);
@@ -1142,6 +1166,9 @@ static void seatFromRelay(const unsigned char* p, size_t len) {
         return;
     }
     opened = (unsigned char*)malloc(inner + 1);
+    if (opened == NULL) {
+        return;
+    }
     if (!portWatchOpen(p + 6, inner - 1, opened, &n) || n < 1) {
         free(opened);
         return; /* (not the code's: not one of this room's players) */
@@ -1213,7 +1240,7 @@ static void connsPump(void) {
                 seatMessage(seat, sConns[i].in.p[4], sConns[i].in.p + 5, used - 5);
                 bufTake(&sConns[i].in, used);
             }
-            if (seat < 0 || sConns[i].in.len > 1024 * 1024) {
+            if (seat < 0 || sConns[i].in.len > SEAT_IN_MAX) {
                 n = 0; /* (not a seat any more, or not sending what a seat sends) */
             }
         }
@@ -1235,6 +1262,10 @@ static void connsPump(void) {
         }
         if (SDL_GetTicks() - sConns[i].since > 10000 || sConns[i].in.len > 65536) {
             connFree(i);
+            continue;
+        }
+        if (sConns[i].in.len >= 4 && (get32(sConns[i].in.p) == 0 || get32(sConns[i].in.p) > MAX_MESSAGE)) {
+            connFree(i); /* (not a message: as takeMessage refuses it) */
             continue;
         }
         if (sConns[i].in.len >= 5 && sConns[i].in.len >= 4 + (size_t)get32(sConns[i].in.p)) {
@@ -1890,9 +1921,7 @@ static int pumpSocket(void) {
                 sConns[i].kind = CONN_PENDING;
                 sConns[i].in.len = sConns[i].out.len = 0;
                 sConns[i].since = SDL_GetTicks();
-                if (!seatHello(i, -1, p, len)) {
-                    /* (refused: its connection closed) */
-                }
+                (void)seatHello(i, -1, p, len); /* (refused: its connection closed) */
             }
             dropMessage();
             if (i < MAX_CONNS && sConns[i].kind == CONN_SEAT && sInLen > 0) {
@@ -2118,22 +2147,26 @@ int portOnlineWatch(const char* address, int port, const PortOnlineHello* me) {
 /* a seat's message to the host: through a room sealed with the watchers' key (the relay
  * gives it to the host only), by address as it is */
 static void seatSend(int type, const void* payload, size_t len) {
-    unsigned char* inner = (unsigned char*)malloc(len + 1);
-    inner[0] = (unsigned char)type;
-    if (len > 0) {
-        memcpy(inner + 1, payload, len);
+    unsigned char *inner, *sealed;
+    size_t n;
+    if (!sRelay) {
+        sendRaw(type, payload, len);
+        return;
     }
-    if (sRelay) {
-        unsigned char* sealed = (unsigned char*)malloc(len + 1 + PORT_WATCH_OVERHEAD);
-        const size_t n = portWatchSeal(inner, len + 1, sealed);
+    inner = (unsigned char*)malloc(len + 1);
+    sealed = (unsigned char*)malloc(len + 1 + PORT_WATCH_OVERHEAD);
+    if (inner != NULL && sealed != NULL) {
+        inner[0] = (unsigned char)type;
+        if (len > 0) {
+            memcpy(inner + 1, payload, len);
+        }
+        n = portWatchSeal(inner, len + 1, sealed);
         if (n > 0) {
             sendRaw(MSG_WSEALED, sealed, n);
             flushRelay();
         }
-        free(sealed);
-    } else {
-        sendRaw(type, payload, len);
     }
+    free(sealed);
     free(inner);
 }
 
@@ -2447,7 +2480,7 @@ static void relayLobbyPump(void) {
     if (sState == PORT_ONLINE_LISTENING && strncmp(sStatus, "Opening", 7) == 0) {
         status("Room %.4s: waiting for the other player to join.", sRoom); /* (the room's half: logs go out with crash reports) */
     }
-    if (sHost && sListOn && sState == PORT_ONLINE_LISTENING && SDL_GetTicks() - sListedAt > 10 * 60 * 1000) {
+    if (sHost && sListOn && sState == PORT_ONLINE_LISTENING && SDL_GetTicks() - sListedAt > LIST_REFRESH_MS) {
         sListedAt = SDL_GetTicks(); /* the listing kept (a relay without the room list passes it by) */
         portWsSendText("list");
     }

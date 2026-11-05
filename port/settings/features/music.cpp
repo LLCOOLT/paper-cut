@@ -108,7 +108,7 @@ const bool kRegistered = [] {
                         "for battle music. Scenes, jingles and fanfares stay as they are. Only you hear it.",
                         0, "music_shuffle", "music shuffle random bgm songs tracks soundtrack");
   portSettingsAddToggle("Audio", "Your music",
-                        "Your files in the music folder play in place of the game's tracks they are named after.",
+                        "Music folder files replace the tracks they are named after.",
                         0, "custom_music", "custom music replace own files ogg mp3 flac wav songs bgm");
   portSettingsAddToggle("Audio", "Shuffle includes your music",
                         "Music shuffle also picks the music folder's files.", 0, "music_shuffle_custom",

@@ -18,6 +18,9 @@ void portGameplusDeclare(void);
 int portGameplus(const char* key);
 
 /* --- Partner quick-swap ("quick_swap") --- */
+/* the partner menu's order of the partners' ids (win_party.c winPartyDt) */
+#define PORT_PARTNER_MENU_COUNT 7
+extern const int gPortPartnerMenuOrder[PORT_PARTNER_MENU_COUNT];
 /* The quick-swap control was pressed (a key, a controller's button, the
  * on-screen button or a test script). */
 void portQuickSwapPress(void);

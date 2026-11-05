@@ -5,6 +5,7 @@
  * or an online resync in a battle keeps them. */
 #include "port/enemy_variant.h"
 #include "port/battlex.h"
+#include "port/code64.h"
 #include "battle/battle.h"
 #include "battle/battle_database_common.h"
 #include "battle/battle_unit.h"
@@ -14,7 +15,6 @@
 #include <string.h>
 
 static const char kPrefix[] = "PCFOE1:";
-static const char kB64[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
 
 static const char* const kMoveNames[PORT_VARIANT_MOVE_COUNT] = {
     "None",
@@ -48,55 +48,6 @@ static int clampi(int v, int lo, int hi) {
 }
 
 /* --- codes --- */
-
-static int encode64(const unsigned char* in, int n, char* out, int size) {
-    unsigned v = 0;
-    int bits = 0, len = 0, i;
-    for (i = 0; i < n; i++) {
-        v = (v << 8) | in[i];
-        bits += 8;
-        while (bits >= 6) {
-            if (len + 1 >= size) {
-                return -1;
-            }
-            out[len++] = kB64[(v >> (bits - 6)) & 63];
-            bits -= 6;
-        }
-    }
-    if (bits > 0) {
-        if (len + 1 >= size) {
-            return -1;
-        }
-        out[len++] = kB64[(v << (6 - bits)) & 63];
-    }
-    out[len] = 0;
-    return len;
-}
-
-static int decode64(const char* in, unsigned char* out, int size) {
-    unsigned v = 0;
-    int bits = 0, len = 0;
-    for (; *in; in++) {
-        const char* at = strchr(kB64, *in);
-        if (at == NULL) {
-            if (*in == ' ' || *in == '\n' || *in == '\r' || *in == '\t') {
-                continue;
-            }
-            break; /* the code ends here */
-        }
-        v = (v << 6) | (unsigned)(at - kB64);
-        bits += 6;
-        if (bits >= 8) {
-            if (len + 1 >= size) {
-                return -1;
-            }
-            out[len++] = (unsigned char)((v >> (bits - 8)) & 0xFF);
-            bits -= 8;
-        }
-    }
-    out[len] = 0;
-    return len;
-}
 
 /* text with ';' '=' '%' escaped as %XX */
 static int putText(char* out, int at, int size, const char* key, const char* text) {
@@ -157,7 +108,7 @@ int portEnemyVariantCode(const PortEnemyVariant* v, char* out, int size) {
         return 0;
     }
     memcpy(out, kPrefix, (size_t)pre);
-    at = encode64((const unsigned char*)body, at, out + pre, size - pre);
+    at = portCode64Encode((const unsigned char*)body, at, out + pre, size - pre);
     return at < 0 ? 0 : pre + at;
 }
 
@@ -166,7 +117,7 @@ int portEnemyVariantParse(const char* code, PortEnemyVariant* out) {
     const char* start = code != NULL ? strstr(code, kPrefix) : NULL;
     const char* p;
     int n, haveKind = 0;
-    if (start == NULL || (n = decode64(start + sizeof(kPrefix) - 1, body, (int)sizeof(body))) <= 0) {
+    if (start == NULL || (n = portCode64Decode(start + sizeof(kPrefix) - 1, body, (int)sizeof(body))) <= 0) {
         return 0;
     }
     portEnemyVariantInit(out, 0);
@@ -185,7 +136,10 @@ int portEnemyVariantParse(const char* code, PortEnemyVariant* out) {
             char num[16];
             snprintf(num, sizeof(num), "%.*s", vlen < 15 ? vlen : 15, val);
             switch (key) {
-                case 'k': out->baseKind = clampi(atoi(num), 1, UNIT_MAX - 1); haveKind = 1; break;
+                case 'k': /* (an enemy's: never Mario's or a partner's) */
+                    out->baseKind = atoi(num);
+                    haveKind = out->baseKind >= 1 && out->baseKind < UNIT_MARIO;
+                    break;
                 case 'h': out->hpPercent = clampi(atoi(num), 10, 1000); break;
                 case 'p': out->hpAdd = clampi(atoi(num), -99, 999); break;
                 case 'a': out->attack = clampi(atoi(num), -9, 20); break;
@@ -234,7 +188,8 @@ void portEnemyVariantSpawn(BattleUnit* unit) {
     const PortEnemyVariant* v = NULL;
     BattleUnitPart* part;
     int i, hp;
-    if (unit == NULL || sArmedCount == 0 || unit->unitId < 0 || unit->unitId >= BATTLE_UNIT_MAX) {
+    if (unit == NULL || sArmedCount == 0 || unit->unitId < 0 || unit->unitId >= BATTLE_UNIT_MAX ||
+        unit->alliance == 0) {
         return;
     }
     for (i = 0; i < sArmedCount; i++) {

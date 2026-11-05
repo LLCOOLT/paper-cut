@@ -66,8 +66,8 @@ La Torre de papel se abre cuando esta partida haya terminado el juego.
 No climb is under way.
 No hay ninguna subida en curso.
 
-30 floors of the game's rooms, remixed; once the game is finished.
-30 pisos con las salas del juego, mezcladas; al terminar el juego.
+30 floors of the game's rooms, remixed, after the credits.
+30 pisos de salas del juego mezcladas, tras los créditos.
 
 On to the next floor; the climb counts as helped.
 Al siguiente piso; la subida cuenta como ayudada.

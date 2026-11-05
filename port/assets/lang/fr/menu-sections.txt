@@ -1,7 +1,7 @@
 # The Start menu's last sections (port/include/port/pause_forms.h) in French: an English line, then its translation, then a blank line.
 
 A: pick the colour; Controller light becomes Custom colour.
-A : choisir la couleur ; Lumière de la manette passe à Couleur perso.
+A : la couleur ; Lumière de la manette passe à Couleur perso.
 
 Couldn't open it.
 Impossible de l'ouvrir.
@@ -25,13 +25,13 @@ B: back.
 B : retour.
 
 Not recognised: A asks for each of its buttons in turn.
-Non reconnue : A demande chacun de ses boutons à tour de rôle.
+Non reconnue : A demande ses boutons un par un.
 
 A controller
 Une manette
 
-A controller listed here works once you press each of its buttons when asked.
-Une manette listée ici marche une fois chacun de ses boutons pressé quand demandé.
+A listed controller works once its buttons are set.
+Une manette listée marche une fois ses boutons configurés.
 
 On an HDR display, the picture at the brightness you choose for white.
 Sur un écran HDR, l'image à la luminosité choisie pour le blanc.
@@ -40,7 +40,7 @@ Not available here: needs a display with HDR turned on and the Direct3D or Metal
 Indisponible ici : il faut un écran avec le HDR activé et Direct3D ou Metal.
 
 How bright white is, in nits: left and right change it.
-La luminosité du blanc, en nits : gauche et droite la changent.
+Luminosité du blanc, en nits : gauche et droite la changent.
 
 %d nits
 %d nits
@@ -51,14 +51,14 @@ Les reflets les plus vifs encore un peu plus lumineux.
 Turn on HDR output first.
 Active d'abord la sortie HDR.
 
-Not from the second screen: do it in the game's own Start menu.
-Pas depuis le second écran : fais-le dans le menu Start du jeu.
+Not on the second screen: use the game's Start menu.
+Pas sur le second écran : utilise le menu Start du jeu.
 
 Travel there: the trip starts once the menu is closed.
 Y aller : le voyage commence une fois le menu fermé.
 
 Not reached yet: one more hub opens with each Crystal Star.
-Pas encore atteint : un lieu de plus s'ouvre à chaque Gemme Étoile.
+Pas encore atteint : un lieu de plus par Gemme Étoile.
 
 The trip starts once the menu is closed.
 Le voyage commence une fois le menu fermé.
@@ -109,7 +109,7 @@ A types its name.
 A : taper son nom.
 
 This loadout is empty: Store worn fills it.
-Cet ensemble est vide : Enregistrer l'équipement le remplit.
+Ensemble vide : Enregistrer l'équipement le remplit.
 
 Stored: the badges worn now.
 Enregistré : les badges équipés maintenant.
@@ -138,8 +138,8 @@ Relit les packs de langue du dossier mods.
 Writes a pack for a translator to start from in the mods folder: each text in English, with room for its translation.
 Écrit un pack de départ pour un traducteur dans le dossier mods : chaque texte en anglais, avec la place pour sa traduction.
 
-Shows the mods folder on the desktop: a pack is a folder in it.
-Montre le dossier mods sur le bureau : un pack est un dossier dedans.
+Shows the mods folder; each pack is a folder in it.
+Montre le dossier mods : chaque pack y est un dossier.
 
 Restart for the new letters
 Redémarrer pour les nouvelles lettres
@@ -165,8 +165,8 @@ Written to the mods folder: the texts to translate are in it.
 Nothing yet: the message windows' pages show here.
 Rien pour l'instant : les pages des fenêtres de texte s'affichent ici.
 
-Up and down scroll, left and right a page at a time. B: back.
-Haut et bas font défiler, gauche et droite page par page. B : retour.
+Up and down scroll, left and right by page. B: back.
+Haut, bas : défiler ; gauche, droite : par page. B : retour.
 
 Read the message log
 Lire l'historique des messages
@@ -192,10 +192,10 @@ Joueur
 Whose controller is set: left and right change it.
 La manette de qui est réglée : gauche et droite le changent.
 
-The stick moves, the d-pad is A, B, X and Y, the left bumper Z, the left trigger R.
+The stick moves, the d-pad is ABXY, LB is Z and LT is R.
 Le stick déplace, la croix est A, B, X et Y, la gâchette haute gauche Z, la gâchette gauche R.
 
-The right stick moves, the face buttons, right bumper and trigger as they are.
+The right stick moves; face buttons, RB and RT unchanged.
 Le stick droit déplace, les boutons, la gâchette haute droite et la gâchette tels quels.
 
 Rewind button
@@ -210,8 +210,8 @@ A : copier l'adresse. X : arrêter l'envoi. B : retour (l'envoi continue).
 A: the address and its QR code again.
 A : l'adresse et son code QR à nouveau.
 
-The address the other device shows under Send saves to another device: A types it.
-L'adresse que l'autre appareil montre sous Envoyer les sauvegardes : A la tape.
+A: type the address the other device shows under Send saves.
+A : taper l'adresse montrée sous Envoyer les sauvegardes.
 
 Paste the address
 Coller l'adresse
@@ -219,10 +219,10 @@ Coller l'adresse
 The address you copied, put in.
 L'adresse copiée, insérée.
 
-Fetches the other device's saves; you choose what to replace next.
-Récupère les sauvegardes de l'autre appareil ; tu choisis ensuite quoi remplacer.
+Gets the other device's saves; then pick what to replace.
+Les sauvegardes de l'autre appareil, puis quoi remplacer.
 
-Replace: the other device's game file over this one's (kept as a backup first).
+Replace: the other device's file here (backed up first).
 Remplacer : le fichier de l'autre appareil à la place de celui-ci (gardé en sauvegarde avant).
 
 Replace
@@ -274,10 +274,10 @@ Nobody
 Personne
 
 Choosing player 1's controller moves it to player 2, and player 1 plays on the keyboard.
-Choisir la manette du joueur 1 la donne au joueur 2, et le joueur 1 joue au clavier.
+Choisir la manette du joueur 1 la donne au joueur 2 ; le joueur 1, lui, passe au clavier.
 
 Player 2's controller plays as nobody until it joins again.
-La manette du joueur 2 ne joue plus personne jusqu'à ce qu'elle rejoigne.
+La manette du joueur 2 ne joue personne jusqu'à son retour.
 
 Updated to Paper Cut
 Mis à jour vers Paper Cut
@@ -286,10 +286,10 @@ No new version found
 Aucune nouvelle version trouvée
 
 Checked at start, when Check for updates at start is on.
-Vérifié au démarrage, si Chercher des mises à jour au démarrage est activé.
+Vérifié si Chercher des mises à jour au démarrage est actif.
 
-A newer Paper Cut is out. A: its release page in the browser.
-Un Paper Cut plus récent est sorti. A : sa page dans le navigateur.
+A newer Paper Cut is out. A: open its release page.
+Un Paper Cut plus récent est sorti. A : ouvrir sa page.
 
 Flathub updates this copy
 Flathub met à jour cette copie
@@ -319,7 +319,7 @@ Not installed
 Pas installée
 
 Press A twice: the game starts again on the new version.
-Appuie deux fois sur A : le jeu redémarre sur la nouvelle version.
+Deux fois A : le jeu repart sur la nouvelle version.
 
 Mute everything
 Tout couper
@@ -366,5 +366,5 @@ A : garder ce texte. B : le laisser comme avant.
 A: the text you copied, typed here.
 A : le texte copié, tapé ici.
 
-A types it. X deletes a letter. B leaves the text as it was.
-A le tape. X efface une lettre. B laisse le texte comme avant.
+A types the key, B rubs out a letter (on none, it goes back), Start is Done.
+A tape la touche, B efface une lettre (s'il n'y en a plus, revient), Start termine.

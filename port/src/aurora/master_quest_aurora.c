@@ -86,7 +86,7 @@ static int ordinaryGroup(const BattleGroupSetup* g) {
 
 /* --- the area's units -------------------------------------------------------- */
 
-#define TEMPLATES 48
+#define TEMPLATES 128 /* every kind of enemy an area's fights have (the Pit's are the most) */
 static char sTplArea[4];
 static const void* sTplTable;
 static BattleUnitSetup sTpl[TEMPLATES];

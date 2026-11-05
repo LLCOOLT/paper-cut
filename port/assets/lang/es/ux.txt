@@ -12,7 +12,7 @@ Se reinicia en cuanto el juego termine de guardar...
 Starts the game again with this disc; quick resume brings you back here.
 Vuelve a iniciar el juego con este disco; la reanudación rápida te trae de vuelta aquí.
 
-Press A twice to restart the game for these settings; quick resume brings you back here.
+Press A twice to restart; quick resume brings you back.
 Pulsa A dos veces para reiniciar el juego por estos ajustes; la reanudación rápida te trae de vuelta aquí.
 
 Press A again to restart.

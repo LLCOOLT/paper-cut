@@ -19,4 +19,4 @@ Slower, for more time for the action commands: the game plays the same, only slo
 ゆっくりに　なり　アクションコマンドの　時間が　ふえます　ゲームの　なかみは　おなじです　オンラインや　はやおくりの　あいだは　かわりません
 
 The field at full speed, the battles at the speed above.
-フィールドは　ふつうの　スピード　バトルは　うえの　スピードです
+フィールドは　ふつうの　はやさ　バトルは　うえの　はやさ

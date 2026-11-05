@@ -3,7 +3,7 @@
 Bindings
 Belegung
 
-Every key and controller button: the game's, and Paper Cut's own shortcuts.
+Every key and button: the game's and Paper Cut's own.
 Jede Taste und jeder Controller-Knopf: die des Spiels und Paper Cuts eigene Kurzbefehle.
 
 Settings (open, close)
@@ -182,9 +182,6 @@ Auch %s.
 
 A: change. X: reset the row.
 A: ändern. X: Zeile zurücksetzen.
-
-A: change. X: reset the row. B: back.
-A: ändern. X: Zeile zurücksetzen. B: zurück.
 
 Bindings...
 Belegung...

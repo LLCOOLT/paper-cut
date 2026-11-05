@@ -222,8 +222,6 @@ static int fieldReady(void) {
 
 static void fillMenu(PortCompanionSnapshot* s) {
     PouchData* p = pouchGetPtr();
-    /* the partner menu's order (win_party.c winPartyDt) */
-    static const int kOrder[] = {1, 2, 5, 4, 6, 3, 7};
     static const char* const kNames[8] = {NULL,          "name_party0", "name_party1", "name_party2",
                                           "name_party3", "name_party4", "name_party5", "name_party6"};
     const int out = !marioBgmodeChk() ? marioGetParty() : marioGetPtr()->prevPartyMemberId[0];
@@ -257,8 +255,8 @@ static void fillMenu(PortCompanionSnapshot* s) {
         m->out = 0;
         gameName("btl_un_mario", m->name, PORT_COMPANION_NAME);
     }
-    for (i = 0; i < 7; i++) {
-        const int id = kOrder[i];
+    for (i = 0; i < PORT_PARTNER_MENU_COUNT; i++) { /* the partner menu's order */
+        const int id = gPortPartnerMenuOrder[i];
         const PouchPartyData* d = &p->partyData[id];
         PortCompanionMember* m;
         if (!(d->flags & POUCH_PARTY_FLAG_JOINED)) {

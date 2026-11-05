@@ -77,7 +77,7 @@ static void listNotes(void) {
         return;
     }
     total = portNotesCount(gp->currentMapName);
-    for (i = 0; i < total && sListedCount < NOTES_LISTED; i++) {
+    for (i = 0; i < total; i++) { /* the nearest NOTES_LISTED of all the room's, nearest first */
         PortNote n;
         float dx, dz, here;
         if (!portNotesGet(gp->currentMapName, i, &n)) {
@@ -86,13 +86,16 @@ static void listNotes(void) {
         dx = (float)n.x - mario->position.x;
         dz = (float)n.z - mario->position.z;
         here = dx * dx + dz * dz;
-        for (j = sListedCount; j > 0 && d[j - 1] > here; j--) {
+        if (sListedCount == NOTES_LISTED && d[NOTES_LISTED - 1] <= here) {
+            continue;
+        }
+        j = sListedCount < NOTES_LISTED ? sListedCount++ : NOTES_LISTED - 1; /* (full: the farthest goes) */
+        for (; j > 0 && d[j - 1] > here; j--) {
             sListed[j] = sListed[j - 1];
             d[j] = d[j - 1];
         }
         sListed[j] = n;
         d[j] = here;
-        sListedCount++;
     }
 }
 
@@ -253,10 +256,10 @@ const char* portPauseNotesHelp(void) {
     switch (sPage.row) {
         case R_PHRASE: return "Left and right pick the note's phrase.";
         case R_WORD: return "Left and right pick the word in it.";
-        case R_LEAVE: return "Leaves the note where Mario stands, for other players to find and rate.";
+        case R_LEAVE: return "Leaves the note where Mario stands, for others to rate.";
         case R_REFRESH: return "Asks the relay again for this area's notes.";
     }
-    return "Right rates this note up, left rates it down. The best stay; the worst go.";
+    return "Right: rate up, left: rate down. The best notes stay.";
 }
 
 void portPauseNotesDisp(WindowWork* wp, f32 x, f32 y) {
@@ -304,8 +307,8 @@ void portPauseNotesDisp(WindowWork* wp, f32 x, f32 y) {
                 snprintf(shown, sizeof(shown), "%s", portTrGame(portNoteWord(sPage.word)));
             }
             fitText(x + ROW_X, ry, 150.0f, 0.8f, c, portTrGame(i == R_PHRASE ? "Phrase" : "Word"), 0);
-            snprintf(text, sizeof(text), "< %s >", shown);
-            fitText(x + VALUE_X, ry, 300.0f, 0.8f, c, text, 1);
+            /* (as the other pages' values: plain; the game's font takes "<...>" for a tag and drew nothing) */
+            fitText(x + VALUE_X, ry, 300.0f, 0.8f, c, shown, 1);
         } else if (i == R_LEAVE || i == R_REFRESH) {
             fitText(x + ROW_X, ry, 400.0f, 0.8f, c, portTrGame(i == R_LEAVE ? "Leave this note here" : "Refresh"), 0);
         } else {

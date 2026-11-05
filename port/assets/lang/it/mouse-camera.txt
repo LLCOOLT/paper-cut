@@ -16,4 +16,4 @@ Invert mouse camera
 Inverti la telecamera col mouse
 
 Moving the mouse up moves the camera out and higher.
-Spostare il mouse in alto allontana la telecamera e la alza.
+Mouse in alto: la telecamera si allontana e si alza.

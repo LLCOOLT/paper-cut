@@ -275,14 +275,25 @@ static SDL_EnumerationResult SDLCALL listed(void* data, const char* dirname, con
     char path[600];
     SDL_PathInfo info;
     Photo* p = NULL;
-    int i;
+    int i, slot = scan->count;
     (void)dirname;
-    if (!endsPng(fname) || scan->count >= MAX_PHOTOS) {
+    if (!endsPng(fname)) {
         return SDL_ENUM_CONTINUE;
     }
     snprintf(path, sizeof(path), "%s/%s", scan->folder, fname);
     if (!SDL_GetPathInfo(path, &info) || info.type != SDL_PATHTYPE_FILE) {
         return SDL_ENUM_CONTINUE;
+    }
+    if (scan->count >= MAX_PHOTOS) { /* full: in the oldest one's place, when newer (the newest are shown) */
+        slot = 0;
+        for (i = 1; i < scan->count; i++) {
+            if (scan->found[i]->time < scan->found[slot]->time) {
+                slot = i;
+            }
+        }
+        if (scan->found[slot]->time >= info.modify_time) {
+            return SDL_ENUM_CONTINUE;
+        }
     }
     /* one already known keeps its small picture */
     for (i = 0; i < sCount; i++) {
@@ -305,7 +316,13 @@ static SDL_EnumerationResult SDLCALL listed(void* data, const char* dirname, con
                      dt.minute);
         }
     }
-    scan->found[scan->count++] = p;
+    if (slot < scan->count) {
+        SDL_aligned_free(scan->found[slot]->thumb);
+        SDL_free(scan->found[slot]);
+    } else {
+        scan->count++;
+    }
+    scan->found[slot] = p;
     return SDL_ENUM_CONTINUE;
 }
 

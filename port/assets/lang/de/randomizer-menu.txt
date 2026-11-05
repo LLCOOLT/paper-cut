@@ -33,11 +33,11 @@ Beim Start: wohin jedes Item kam, im Ordner randomizer im Benutzerordner.
 The randomizer: the US version only
 Der Zufallsmodus: nur die US-Version
 
-It knows where the items are in the US version only, so it is off on this one.
-Er weiß nur in der US-Version, wo die Items sind, darum ist er hier aus.
+It only knows the US version's items, so it is off here.
+Er kennt nur die Items der US-Version, daher hier aus.
 
-An Archipelago seed is chosen on the Archipelago tab; it is used instead of this one.
-Auf dem Archipelago-Tab ist ein Archipelago-Seed gewählt; er wird statt diesem benutzt.
+An Archipelago seed is chosen; A uses the built-in one.
+Archipelago-Seed gewählt; A nutzt den eingebauten Seed.
 
 This run
 Dieser Lauf
@@ -54,7 +54,7 @@ Ab dem nächsten Start zufällig
 Every file played while it is on gets this seed's items: start a new file for it, and turn it off again for your other files.
 Jeder Spielstand, der gespielt wird, solange es an ist, bekommt die Items dieses Seeds: einen neuen Spielstand dafür beginnen und es für die anderen wieder ausschalten.
 
-A: type a seed. Any text; empty: a random one is made at the start.
+A: type a seed (any text). Empty: a random one at start.
 A: einen Seed eingeben. Beliebiger Text; leer: beim Start wird ein zufälliger gemacht.
 
 (random)
@@ -64,10 +64,13 @@ A: a new random seed.
 A: ein neuer zufälliger Seed.
 
 A: the seed made now, without playing it: what it would do.
-A: der Seed jetzt erzeugt, ohne ihn zu spielen: was er täte.
+A: zeigt, was der Seed jetzt täte, ohne ihn zu spielen.
 
 The built-in randomizer's seed is used from the next start.
-Ab dem nächsten Start wird der Seed des eingebauten Zufallsmodus benutzt.
+Ab dem nächsten Start gilt der Seed des eingebauten Modus.
 
 A new seed: from the next start.
 Ein neuer Seed: ab dem nächsten Start.
+
+An Archipelago seed is chosen on the Archipelago tab; it is used instead of this one.
+Auf dem Archipelago-Tab ist ein Archipelago-Seed gewählt; er wird statt diesem benutzt.

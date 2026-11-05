@@ -24,9 +24,6 @@ That game has as many players as it can (four).
 That game has as many players as it can.
 そのゲームはもう満員です。
 
-That room has as many players as it can
-そのルームはもう満員です
-
 The game started without this player: watch it instead.
 このプレイヤーぬきでゲームが始まりました：観戦してください。
 

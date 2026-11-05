@@ -449,12 +449,13 @@ static void startBattle(s32 entry) {
     NpcEntry* best = NULL;
     f32 bestDist = 1e30f;
     s32 i;
-    for (i = 0; i < wp->count; i++) {
+    for (i = 0; i < wp->total; i++) { /* (count is how many are used: they sit anywhere below total) */
         NpcEntry* npc = &wp->entries[i];
         f32 dx, dz;
         /* as the field battle check (npcdrv.c): a battle group and a defeat
          * script; story NPCs with only a group would fight out of context */
-        if (!(npc->flags & 1) || (entry < 0 && (npc->battleInfo.groupSetup == NULL || npc->deadEvent == NULL))) {
+        if (!(npc->flags & NPC_FLAG_USED) ||
+            (entry < 0 && (npc->battleInfo.groupSetup == NULL || npc->deadEvent == NULL))) {
             continue;
         }
         dx = npc->position.x - mario->position.x;
@@ -536,7 +537,7 @@ static void applyScript(PADStatus* pad) {
                        (int)sSweepIndex, (int)sSweepMax);
                 evtDeleteID(sSweepEvt);
             }
-            if (sSweepKind == 1 && sSweepNpc != NULL && (sSweepNpc->flags & 1)) {
+            if (sSweepKind == 1 && sSweepNpc != NULL && (sSweepNpc->flags & NPC_FLAG_USED)) {
                 evtStartID(sSweepNpc->regularEvtId);
             }
             marioKeyOn();
@@ -551,14 +552,14 @@ static void applyScript(PADStatus* pad) {
             if (sSweepKind == 1) {
                 NpcWork* wp = npcGetWorkPtr();
                 NpcEntry* npc;
-                if (sSweepIndex >= wp->count) {
+                if (sSweepIndex >= wp->total) {
                     break;
                 }
                 npc = &wp->entries[sSweepIndex];
                 /* parked out of reach (scripts put unused NPCs at y -1000):
                  * a player cannot talk to them, and their scripts may need
                  * set-up that only comes with placing them */
-                if (!(npc->flags & 1) || npc->talkEvt == NULL || npc->position.y < -500.0f) {
+                if (!(npc->flags & NPC_FLAG_USED) || npc->talkEvt == NULL || npc->position.y < -500.0f) {
                     sSweepIndex++;
                     continue;
                 }
@@ -577,7 +578,7 @@ static void applyScript(PADStatus* pad) {
                     break;
                 }
                 mobj = &wp->entries[sSweepIndex];
-                if (!(mobj->flags & 1) || mobj->event == 0) {
+                if (!(mobj->flags & MOBJ_FLAG_USED) || mobj->event == 0) {
                     sSweepIndex++;
                     continue;
                 }
@@ -817,7 +818,7 @@ static void applyScript(PADStatus* pad) {
                 } else if (strncmp(what, "button ", 7) == 0) {
                     static const char* const kNames[] = {"", "a", "b", "up", "down", "left", "right", "l", "r", "x", "y", "z"};
                     int k;
-                    for (k = 1; k < 12; k++) {
+                    for (k = 1; k < (int)(sizeof(kNames) / sizeof(kNames[0])); k++) {
                         if (strncmp(what + 7, kNames[k], strlen(kNames[k])) == 0 && (what[7 + strlen(kNames[k])] == ' ' || what[7 + strlen(kNames[k])] == 0)) {
                             portCompanionMenuButton(k);
                         }
@@ -915,21 +916,28 @@ static void applyScript(PADStatus* pad) {
  * second_player_pc.c): KEYS (a b x y z l r, and left right up down for the
  * main stick at full tilt, joined with '+') held on controller 2 for N frames
  * (default 2) from frame F of the script (counted from its first step, as its
- * waits are: past a $TTYD_MAP warp) */
-static void applyP2(PADStatus* pad) {
-    static const char* sList;
-    static int sRead;
-    static u32 sClock;
+ * waits are: past a $TTYD_MAP warp). $TTYD_P3_PRESS and $TTYD_P4_PRESS:
+ * the same on controllers 3 and 4, which are there (plugged in) for the
+ * whole script, so their companions come (docs/PLAYERS.md). */
+static void applyPress(PADStatus* pad, int port) {
+    static const char* sList[PAD_MAX_CONTROLLERS];
+    static int sRead[PAD_MAX_CONTROLLERS];
+    static u32 sClocks[PAD_MAX_CONTROLLERS];
+    static const char* const kEnv[PAD_MAX_CONTROLLERS] = {NULL, "TTYD_P2_PRESS", "TTYD_P3_PRESS", "TTYD_P4_PRESS"};
     const char* p;
-    if (!sRead) {
-        sRead = 1;
-        sList = getenv("TTYD_P2_PRESS");
+    u32 sClock;
+    if (!sRead[port]) {
+        sRead[port] = 1;
+        sList[port] = getenv(kEnv[port]);
     }
-    if (sList == NULL || sState != 2) {
+    if (sList[port] == NULL || sState != 2) {
         return;
     }
-    sClock++;
-    for (p = sList; p != NULL && *p != '\0';) {
+    sClock = ++sClocks[port];
+    if (port >= 2 && pad[port].err != PAD_ERR_NONE) {
+        memset(&pad[port], 0, sizeof(pad[port])); /* a controller there, nothing pressed */
+    }
+    for (p = sList[port]; p != NULL && *p != '\0';) {
         char keys[64], key[16];
         unsigned at = 0, len = 2;
         u16 bits = 0;
@@ -955,12 +963,12 @@ static void applyP2(PADStatus* pad) {
             k += *k == '+';
         }
         if (sClock >= at && sClock < at + len) {
-            pad[1].err = PAD_ERR_NONE;
-            pad[1].button |= bits;
-            pad[1].stickX = (s8)sx;
-            pad[1].stickY = (s8)sy;
+            pad[port].err = PAD_ERR_NONE;
+            pad[port].button |= bits;
+            pad[port].stickX = (s8)sx;
+            pad[port].stickY = (s8)sy;
             if (sClock == at) {
-                printf("[input] frame %u: controller 2 %s for %u\n", (unsigned)sFrame, keys, len);
+                printf("[input] frame %u: controller %d %s for %u\n", (unsigned)sFrame, port + 1, keys, len);
                 fflush(stdout);
             }
         }
@@ -976,7 +984,9 @@ void portInputApply(PADStatus* pad) {
     static int sCuePress = -1;
     static int sHapticsPress;
     applyScript(pad);
-    applyP2(pad);
+    applyPress(pad, 1);
+    applyPress(pad, 2);
+    applyPress(pad, 3);
     portMenuApplyPad(pad); /* the mouse's B and wheel in menus */
 #ifdef TTYD_BACKEND_AURORA
     if (portBindingsAskedFromSecondScreen()) { /* a key or button being chosen there: not the game's */

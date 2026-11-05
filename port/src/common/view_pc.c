@@ -5,6 +5,8 @@
 #include "port/replay.h"
 #include "port/settings.h"
 #include "port/widescreen.h"
+#include "battle/battle.h"
+#include "battle/battle_unit.h"
 #include "driver/camdrv.h"
 #include "driver/seqdrv.h"
 #include "mario/mario.h"
@@ -82,6 +84,34 @@ int portViewMirrored(void) {
 /* A map in the field, not a battle. */
 static int inField(void) {
     return gp != NULL && !gp->inBattle && seqGetSeq() == SEQ_GAME;
+}
+
+/* A battle on screen (photo mode's other place). */
+static int inBattleScene(void) {
+    return gp != NULL && gp->inBattle && seqGetSeq() == SEQ_BATTLE && _battleWorkPointer != NULL;
+}
+
+/* Where photo mode works: the field, or a battle. */
+static int photoPlace(void) {
+    return inField() || inBattleScene();
+}
+
+/* photo mode's subject: Mario's middle (in a battle, his battle self's) */
+static int photoSubject(Vec* out) {
+    if (inBattleScene()) {
+        BattleUnit* unit = BattleGetMarioPtr(_battleWorkPointer);
+        if (unit == NULL) {
+            return 0;
+        }
+        *out = unit->position;
+    } else {
+        if (marioGetPtr() == NULL) {
+            return 0;
+        }
+        *out = marioGetPtr()->position;
+    }
+    out->y += 25.0f;
+    return 1;
 }
 
 /* Mario walks where the stick says: no menu, scene or message holds him. */
@@ -173,11 +203,9 @@ static void photoFocus(void) {
     CameraEntry* cam = camGetPtr(CAMERA_3D);
     Vec pivot, v;
     float t, x, y;
-    if (cam == NULL || marioGetPtr() == NULL || cam->projType != GX_PERSPECTIVE) {
+    if (cam == NULL || cam->projType != GX_PERSPECTIVE || !photoSubject(&pivot)) {
         return;
     }
-    pivot = marioGetPtr()->position;
-    pivot.y += 25.0f;
     MTXMultVec(cam->view, &pivot, &v);
     if (v.z > -1.0f) {
         return; /* (behind the eye) */
@@ -199,7 +227,7 @@ static void photoFocus(void) {
 
 void portViewBegin(void) {
     viewBegin();
-    if (sPhoto.active && inField()) {
+    if (sPhoto.active && photoPlace()) {
         photoFocus();
     }
 }
@@ -220,7 +248,7 @@ static void viewBegin(void) {
     if (dt < 0.0f || dt > 0.1f) {
         dt = 0.1f;
     }
-    if (sPhoto.active && inField()) {
+    if (sPhoto.active && photoPlace()) {
         sYaw = sPhoto.yaw;
         sPitch = sPhoto.pitch;
         sZoom = sPhoto.zoom;
@@ -262,9 +290,13 @@ static void viewBegin(void) {
     }
 
     /* around Mario's middle: the yaw about the world's up, the pitch about
-     * the camera's right */
-    pivot = marioGetPtr()->position;
-    pivot.y += 25.0f;
+     * the camera's right (in a battle, round the point the battle camera
+     * looks at: the stage, Mario is off to one side) */
+    if (inBattleScene()) {
+        pivot = cam3d->cameraAt;
+    } else if (!photoSubject(&pivot)) {
+        return;
+    }
     d.x = cam3d->cameraPos.x - pivot.x;
     d.z = cam3d->cameraPos.z - pivot.z;
     right.x = d.z;
@@ -322,7 +354,7 @@ void portViewEnd(void) {
 /* --- photo mode --- */
 
 int portPhotoAvailable(void) {
-    return inField() && !portOnlineActive() && !portReplayActive() && marioGetPtr() != NULL;
+    return photoPlace() && !portOnlineActive() && !portReplayActive() && (inBattleScene() || marioGetPtr() != NULL);
 }
 
 void portPhotoSet(int active, float yaw, float pitch, float zoom, int hideHud) {

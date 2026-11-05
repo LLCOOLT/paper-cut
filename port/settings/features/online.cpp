@@ -24,6 +24,7 @@
 #include "port/lua_mods.h"
 #include "port/mods.h"
 #include "port/master_quest.h"
+#include "port/build_id.h"
 #include "port/online.h"
 #include "port/online_menu.h"
 #include "port/resume.h"
@@ -31,6 +32,8 @@
 #include "port/tr.h"
 #include "port/versions.h"
 #include "port/versus.h"
+#include "../settings_ui.h"
+#include "../file_util.h"
 
 #include <SDL3/SDL.h>
 #include <aurora/card.h>
@@ -47,6 +50,8 @@
 #include <string>
 #include <thread>
 #include <vector>
+
+using portui::hint;
 
 extern "C" {
 void CARDSetBasePath(const char* path, int chan); // Aurora (dolphin/card.h)
@@ -90,16 +95,7 @@ bool local(const std::string& key) {
   return false;
 }
 
-std::string readFile(const std::string& path) {
-  size_t size = 0;
-  void* data = SDL_LoadFile(path.c_str(), &size);
-  std::string out;
-  if (data != nullptr) {
-    out.assign(static_cast<const char*>(data), size);
-    SDL_free(data);
-  }
-  return out;
-}
+using portfile::readFile;
 
 // settings.txt's "key=value" lines, in order
 std::vector<std::pair<std::string, std::string>> settingLines(const std::string& text) {
@@ -310,7 +306,7 @@ bool luaOnlyMod(const std::string& dir) {
 
 PortOnlineHello hello() {
   PortOnlineHello me{};
-  std::snprintf(me.version, sizeof(me.version), "%s", PORT_VERSION);
+  std::snprintf(me.version, sizeof(me.version), "%s", portBuildVersion());
   std::snprintf(me.game, sizeof(me.game), "%.6s", portVersionSelf()->id);
   // the mods in use: the mods folder's names, sorted (both need the same)
   int count = 0;
@@ -561,12 +557,6 @@ bool applySetup() {
   }
   portOnlineGuestReady();
   return true;
-}
-
-void note(const char* text) {
-  ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
-  ImGui::TextWrapped("%s", portTr(text));
-  ImGui::PopStyleColor();
 }
 
 const char* peerName() {
@@ -869,10 +859,10 @@ bool portOnlineLobbyDraw(float scale) {
   }
   const float field = ImGui::GetFontSize() * 14.f;
   ImGui::TextUnformatted(portTr("Play online"));
-  note("Each player needs Paper Cut and their own disc of the same release. You play the same game together: "
+  hint("Each player needs Paper Cut and their own disc of the same release. You play the same game together: "
        "the host is Mario, the one who joins plays the partner. Any computer, phone or tablet can play with any "
        "other.");
-  note("Up to four play: players 3 and 4 join with Join as player 3 or 4 (before the host starts) and walk a "
+  hint("Up to four play: players 3 and 4 join with Join as player 3 or 4 (before the host starts) and walk a "
        "companion; in battle each plays their own character's turns.");
   ImGui::Dummy(ImVec2(0, 6.f * scale));
 
@@ -939,7 +929,7 @@ bool portOnlineLobbyDraw(float scale) {
       seatTyped();
     }
     ImGui::EndDisabled();
-    note("Watch: see the two players' game as it goes, a few seconds behind, without playing.");
+    hint("Watch: see the two players' game as it goes, a few seconds behind, without playing.");
     if (!sOffer.empty() && relay) {
       // one-click join: asked, never done by itself
       ImGui::Dummy(ImVec2(0, 6.f * scale));
@@ -989,7 +979,7 @@ bool portOnlineLobbyDraw(float scale) {
       SDL_SetClipboardText((std::string("papercut://join/") + shown).c_str());
       sCopied = room;
     }
-    note("Give this code to the other player. Paper Cut connects you directly when it can, and through its relay "
+    hint("Give this code to the other player. Paper Cut connects you directly when it can, and through its relay "
          "when it can't: nothing to set up on your router.");
   } else if (state == PORT_ONLINE_LISTENING && std::strcmp(portOnlineLinkName(), "direct") == 0) {
     char address[64];
@@ -997,17 +987,17 @@ bool portOnlineLobbyDraw(float scale) {
     if (portOnlineLocalAddress(address, sizeof(address))) {
       ImGui::Text(portTr("Your address: %s (port %d)"), address, sLobby.port);
     }
-    note("On the same network, that address is enough. Over the internet, forward that port on your router to "
+    hint("On the same network, that address is enough. Over the internet, forward that port on your router to "
          "this computer and give your public address, or both join a VPN such as Tailscale or ZeroTier and use "
          "its address.");
   } else if (state == PORT_ONLINE_CONNECTING || state == PORT_ONLINE_HANDSHAKE) {
     ImGui::TextWrapped("%s", portTr("Connecting..."));
   } else if (state == PORT_ONLINE_WAITING_SETUP && portOnlineSeating()) {
     ImGui::TextWrapped("%s", portTr("Connected: waiting for the host to start."));
-    note("You'll play a companion as player 3 or 4 (L or R in the field: another).");
+    hint("You'll play a companion as player 3 or 4 (L or R in the field: another).");
   } else if (state == PORT_ONLINE_WAITING_SETUP && portOnlineWatching()) {
     ImGui::TextWrapped("%s", portTr("Connected: waiting for the players to start."));
-    note("You'll watch from the start of their game.");
+    hint("You'll watch from the start of their game.");
   } else if (state == PORT_ONLINE_PEER_HERE) {
     const int rtt = portOnlineRoundTrip();
     ImGui::Text(portTr("%s joined."), peerName());

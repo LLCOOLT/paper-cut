@@ -43,6 +43,7 @@
 #define PING_SNAP 56.0f          /* an enemy this near the spot gets the arrow (and it follows) */
 #define PING_QUICK 160.0f        /* a quick press: the enemy this near the character, else its spot */
 #define AIM_SPEED 7.0f           /* the cursor's units a frame, the C-stick all the way */
+#define AIM_SHOWN 6              /* frames held before the aiming cursor shows (a quick press has none) */
 #define PLAYERS 2
 
 int portPingsOn(void) {
@@ -50,7 +51,7 @@ int portPingsOn(void) {
     if (sOn == NULL) {
         sOn = portSettingsDeclare("coop_pings", 1, 0, 1);
     }
-    return sOn != NULL && *sOn;
+    return *sOn;
 }
 
 /* --- Where the players are --- */
@@ -180,10 +181,6 @@ static int localPlayer(int port) {
     }
     return port;
 }
-
-#ifdef TTYD_BACKEND_AURORA
-int portBindingsHeldOn(int action, int port); /* bindings.cpp */
-#endif
 
 void portPingPad(PADStatus* pads) {
     int port;
@@ -415,7 +412,7 @@ static void pingDisp(CameraId camId, void* param) {
     }
     for (i = 0; i < PLAYERS; i++) {
         /* this player's cursor while aiming (theirs alone) */
-        if (sAim[i].held && sAim[i].frames > 6) {
+        if (sAim[i].held && sAim[i].frames > AIM_SHOWN) {
             const int player = localPlayer(i);
             ringDraw(&sAim[i].cursor, 16.0f, kColor[player], 0.9f);
             ringDraw(&sAim[i].cursor, 6.0f, (GXColor){0xFF, 0xFF, 0xFF, 0xFF}, 0.9f);
@@ -456,7 +453,7 @@ void portPingFrame(void) {
         any = 1;
     }
     for (i = 0; i < PLAYERS; i++) {
-        any |= sAim[i].held && sAim[i].frames > 6;
+        any |= sAim[i].held && sAim[i].frames > AIM_SHOWN;
     }
     if (any && portPingsOn() && inField()) {
         dispEntry(CAMERA_2D, 901.0f, 1, pingDisp, NULL);

@@ -112,33 +112,54 @@ reconnect works only once the relay has noticed the old connection is gone
 old relay otherwise: the host only sends watchers anything once the relay
 says some are there (`watch <N>`), which the old one never does.
 
-**To deploy (0.4.0): three or four players.** `port/relay/src/index.js`
-takes `role=seat` connections (up to 2: players 3 and 4), copies the host's
-watchers' messages to them too, passes each seat's messages to the host
-(wrapped as a stream message of type 0xF0 with the seat's place) and tells
-the host `seatgone <N>`; a listed room says how many play of how many may
-(`&max=` from the host; the list's lines are `<CODE> <playing>/<max>
-<name>`). Deploy it the usual way (below). Until then, against the relay as
-deployed: joining a room as player 3 or 4 fails ("role: host, guest or
-watch"), joining by address works, and everything else works as before.
+**To deploy (0.4.0).** `port/relay/src/index.js` and `wrangler.toml` add, in
+one deploy:
 
-**To deploy (0.4.0): the room list.** `port/relay/src/index.js` and
-`wrangler.toml` add a second Durable Object, `Lobby` (migration `v2`), and
-`GET /rooms`. Deploy the usual way (below); Wrangler applies the migration.
-Until then the Start menu's Room list says "The room list isn't on this relay
-yet" (the old relay answers 404) and everything else works as before: a host
-with "List my room" on only adds query parameters the old relay passes by.
+- **Three or four players**: `role=seat` connections (up to 2: players 3 and
+  4). The host's watchers' messages go to them too, each seat's messages go
+  to the host (wrapped as a stream message of type 0xF0 with the seat's
+  place), and the host is told `seatgone <N>`. A listed room says how many
+  play of how many may (`&max=` from the host).
+- **The room list**: the `Lobby` Durable Object and `GET /rooms` (below).
+- **Paper notes and leaderboards**: the `Notes` and `Board` Durable Objects,
+  `GET|POST /notes`, `GET|POST /board`, `GET /replay` and `POST /check`
+  ([PAPER_NOTES.md](PAPER_NOTES.md), [LEADERBOARDS.md](LEADERBOARDS.md)).
+- **Bingo rooms, daily boards and raid boards**: the `Bingo`, `Daily` and
+  `Raid` Durable Objects and `GET /bingo/<ROOM>`, `GET /daily/<YYYYMMDD>`,
+  `GET /raid/<WEEK>` (below).
 
-**To deploy (0.4.0): paper notes and leaderboards.** `port/relay/src/index.js`
-and `wrangler.toml` add two more Durable Objects, `Notes` and `Board`
-(migration `v3`), and `GET|POST /notes`, `GET|POST /board`, `GET /replay`,
-`POST /check` (docs/PAPER_NOTES.md, docs/LEADERBOARDS.md). Deploy the usual
-way; Wrangler applies the migration. Optionally give it a secret for the
-address hashes the limits keep (`npx wrangler secret put HASH_SALT`, any long
-random text); without one a fixed text is used. Until then the Paper notes
-page says "Paper notes aren't on this relay yet" and the Leaderboards section
-"Leaderboards aren't on this relay yet" (the old relay answers 404); nothing
-else changes.
+Deploy it the usual way (below); Wrangler applies the migrations it hasn't
+yet, in order: `v1` (`Room`), `v2` (`Lobby`), `v3` (`Notes`, `Board`),
+`bingo-v1`, `daily-v1`, `raid-v1`. Optionally give it a secret for the
+address hashes it keeps (`npx wrangler secret put HASH_SALT`, any long random
+text); without one a fixed text is used.
+
+Until then, against the relay as deployed: joining a room as player 3 or 4
+fails ("role: host, guest or watch"; joining by address works); the Room list
+says "The room list isn't on this relay yet."; the Paper notes page says
+"Paper notes aren't on this relay yet." and the Leaderboards section
+"Leaderboards aren't on this relay yet." (the old relay answers 404 to all of
+these); bingo rooms, the daily board and the raid board can't be reached.
+Everything else works as before: a host with "List my room" on only adds
+query parameters the old relay passes by.
+
+### Limits and refusals
+
+Every refusal is a status other than 200 and one line, `<why>: <words>`
+(`slower`, `today`, `mine`, `own`, `rated`, `gone`, `big`, `bad`, ...); the
+games show their own text for it. A room's refusals keep their words ("No one
+is hosting that room", "That room is full", ...): the games read them.
+
+- A request's address (query and all) is at most 2,048 characters, a text
+  body (a note, a check) at most 256 bytes, a replay at most 1 MB. Only GET
+  and POST are taken.
+- Who sent something is kept only as a hash of the address with `HASH_SALT`,
+  for the daily limits and one vote each; the daily and raid boards add the
+  day or the week to it, so their hashes can't be matched with another
+  board's.
+- A daily or raid board keeps at most 600 names and 1,000 senders: past 600,
+  a new name goes on only if it beats the last, which leaves.
+- `/daily/` takes only real dates.
 
 What they cost on the free plan: an area's notes are one request when a
 player enters it (kept 10 minutes), leaving or rating a note one; a board is
@@ -154,11 +175,12 @@ default): open to anyone, so the host gives the relay the code's secret half
 with its name, its disc's ID and Paper Cut's version (`&list=`, `&name=`,
 `&game=`, `&v=` on its connection). Every room tells the `Lobby` how many are
 in it (one request each time someone comes or goes), a listed room while its
-host waits alone; the host refreshes its listing with a text `list` every 10
-minutes, and one not refreshed for 20 is dropped. `GET /rooms?game=&v=` (only
-when a player opens the list or presses Refresh, never polled) answers
-`rooms <players online>` and a line per listed room of that release and
-version, newest first: `<CODE> <in the room> <name, percent-encoded>`. A
+host is there and its places aren't all taken; the host refreshes its listing
+with a text `list` every 10 minutes, and one not refreshed for 20 is dropped.
+`GET /rooms?game=&v=` (only when a player opens the list or presses Refresh,
+never polled) answers `rooms <players online>` and a line per listed room of
+that release and version, newest first, at most 40:
+`<CODE> <PLAYING>/<MAX> <name, percent-encoded>` (`1/4`). A
 joining player then joins by that code as by any other. Costs: a listing
 fetch is 2 requests (the Worker and the Lobby); each connection and its close
 1 more Durable Object request.
@@ -295,7 +317,7 @@ setup (its settings and memory card).
 
 ## Three or four players
 
-Players 3 and 4 (docs/PLAYERS.md) join as **seats**: the same code (or the
+Players 3 and 4 ([PLAYERS.md](PLAYERS.md)) join as **seats**: the same code (or the
 host's address), then **Join as player 3 or 4**, before the host starts (one
 who comes later is told to watch instead). A seat is a watcher that plays:
 

@@ -14,6 +14,12 @@ extern bool gPortLauncherShown;
 // Aurora keeps giving it the keys and the game gets none.
 void portUiReleaseInput();
 
+namespace portui {
+// A note in the page's grey, wrapped to the window: English (translated here)
+// or text already translated.
+void hint(const char* text);
+} // namespace portui
+
 // The last crash report sent with a click (port/settings/features/crash_report.cpp):
 // Report on GitHub (a filled-in issue opened in the browser) and Save as a zip...,
 // in the current ImGui window; the text with the player's name taken out of paths.

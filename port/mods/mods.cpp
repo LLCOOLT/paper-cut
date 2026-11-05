@@ -376,6 +376,8 @@ std::map<std::string, std::vector<uint8_t>> sHostFiles; // disc path -> contents
 std::vector<std::unique_ptr<Source>> sRetiredSources;
 std::vector<std::unique_ptr<std::vector<OverlayFile>>> sOverlayGenerations;
 std::vector<aurora::texture::ReplacementGroup> sTextureGroups;
+// counts every change to the packs' registrations (portModsTexturesGeneration)
+int sTexturesGeneration;
 // language code ("" for all) -> tag -> text in the game's encoding
 using Messages = std::unordered_map<std::string, std::unordered_map<std::string, std::string>>;
 std::vector<std::unique_ptr<Messages>> sMessageGenerations;
@@ -1422,10 +1424,12 @@ void mapTexUpdate(const std::string& map) {
         }
       }
       set->on = true;
+      sTexturesGeneration++;
       SDL_Log("mods: map %s: texture set %s on (%d textures)", map.c_str(), set->pattern.c_str(),
               int(set->group.registrations.size()));
     } else if (!want && set->on) {
       mapTexOff(*set);
+      sTexturesGeneration++;
     }
   }
 }
@@ -1519,6 +1523,7 @@ void applyTextures() {
     sTextureGroups.push_back(std::move(group));
   }
   mapTexUpdate(sMapTexMap);
+  sTexturesGeneration++;
 }
 
 void analyze();
@@ -2187,6 +2192,10 @@ void portModsMapTextures(const char* map) {
     return;
   }
   mapTexUpdate(map);
+}
+
+int portModsTexturesGeneration(void) {
+  return sTexturesGeneration;
 }
 
 void portModsReloadTextures(void) {

@@ -1,7 +1,35 @@
-Costumes, partner skins and stickers
-====================================
+# The Wardrobe: colours, costumes, partner skins and stickers
 
-Three ways to change how the game looks, all in the Start menu's **Wardrobe** tab. They change how things look only: the game itself plays the same, so they're fine in online co-op and in replays (the looks made from textures are each player's own). Partner skins and stickers are the exception: they come from your own user folder (the other player may not have them) and load models into the game's memory, so they're off in online co-op and in replays. Costumes stay, but online every game wears the host's (they load the disc's models into the game's memory too).
+Ways to change how the game looks, all in the Start menu's **Wardrobe** tab: colours and themes, costumes, partner skins and stickers. They change how things look only: the game itself plays the same, so they're fine in online co-op and in replays (the looks made from textures are each player's own). Partner skins and stickers are the exception: they come from your own user folder (the other player may not have them) and load models into the game's memory, so they're off in online co-op and in replays. Costumes stay, but online every game wears the host's (they load the disc's models into the game's memory too).
+
+## Colours and themes
+
+The Wardrobe's page shows the one being dressed on the left, turning slowly in
+his idle animation, and the rows on the right (`port/src/aurora/wardrobe_aurora.c`):
+
+- **Mario:** **Looks** (Mario as Luigi, Wario, Waluigi or Fire Mario in one
+  press), **Cap and shirt**, **Overalls**, **Costume** (below).
+- **Partners**, in the order they join, each with their parts: Goombella's
+  Hair and Helmet, Koops's Shell and Hoodie, Flurrie's Hair and Dress,
+  Vivian's Body, Hat and Hair, Bobbery's Body and Fuse, Ms. Mowz's Mask and
+  Cape, and a **Skin** row each (below). The selected row's partner stands on
+  the page, met yet or not.
+- **Yoshi's colour** is the colour he hatched in, stepped through the game's
+  seven. It's the game's own state (kept in the save), so it can't change
+  during online co-op or a replay.
+- **Status bar:** **Theme** (Original, Night, Forest, Ocean, Candy, High
+  contrast) colours the HP, FP and Star Power banners and the menus' pages to
+  go together; the **HP banner**, **FP banner**, **Star Power banner** and
+  **Menus** rows after it set one part, and a part with a colour of its own
+  keeps it over the theme.
+- **Colour picker...** opens the settings page's Cosmetics tab, where each
+  part also has a custom colour (a swatch, or red, green and blue).
+
+Left and right (A: the next) step through a row's colours: the game's own,
+13 named ones, then the part's custom one. A colour shows at once: the models'
+textures are recoloured as they're drawn. The same settings are on the
+settings page's **Cosmetics** tab (Theme, each part, and Looks and colour
+picker). Colours and themes are each player's own, online too.
 
 ## Costumes
 
@@ -19,7 +47,7 @@ Mario can wear a paper version of an enemy's outfit:
 | Buzzy Beetle shell | a Buzzy Beetle |
 | Spiny shell | a Spiny |
 
-A costume is unlocked once its enemy is in the Tattle Log of the file you're playing, and chosen in the Wardrobe: **Mario → Costume** (left and right step through the ones unlocked). It shows in the field, in battle and on the menus' figures, on Luigi too when he stands in for Mario (Play as Luigi). Paper forms (the plane, the boat...) don't wear it.
+A costume is unlocked once its enemy is in the Tattle Log of the file you're playing, and chosen in the Wardrobe: **Mario → Costume** (left and right step through the ones unlocked). It shows in the field, in battle and on the menus' figures, on whoever stands in for Mario (Enhancements → **Play as**, [PLAY_AS.md](PLAY_AS.md)). Paper forms (the plane, the boat...) don't wear it.
 
 Nothing is drawn for it: each costume is the enemy's own model from your disc, showing only the parts that make the outfit (the Koopa's shell, the X-Naut's hood and goggles...), fitted to Mario's hat, body or whole figure as he moves, and lit and faded as he is.
 
@@ -41,7 +69,7 @@ Then in the Wardrobe, each partner has a **Skin** row (Yoshi's is under his colo
 
 Skins are local files only: nothing is fetched. A skin is not a mod: it replaces nothing on the disc, and the same character can be every partner's skin at once. A model file that doesn't make sense is refused when the game loads it, with its name in the log.
 
-How it works: `port/src/aurora/skins_aurora.c` makes each skin into `a/pc_skin_<n>` and its drawings `a/pc_skin_<n>-` at startup, before the mods apply; `port/src/common/skin_pc.c` draws a skin's pose in the partner's place, following the partner's own pose (as Play as Luigi does for Mario).
+How it works: `port/src/aurora/skins_aurora.c` makes each skin into `a/pc_skin_<n>` and its drawings `a/pc_skin_<n>-` at startup, before the mods apply; `port/src/common/skin_pc.c` draws a skin's pose in the partner's place, following the partner's own pose (as Play as does for Mario).
 
 ## Stickers
 

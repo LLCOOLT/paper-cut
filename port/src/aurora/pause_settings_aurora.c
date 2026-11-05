@@ -102,6 +102,7 @@ typedef struct Row {
 
 /* the features' Start menu forms (portPauseAddForm) */
 #define MAX_FORMS 128
+#define MAX_SECTIONS 256 /* the full page's sections (portSettingsSections) */
 static const PortPauseForm* sForms[MAX_FORMS];
 static int sFormCount;
 static const char* sMessage; /* a form's answer, in the help box until the cursor moves (English) */
@@ -181,10 +182,12 @@ static int rateIndex(void) {
 
 /* the settings page's tabs that are modes or tools, not settings (they keep
  * their pages there), and the Wardrobe's (port/src/aurora/wardrobe_aurora.c).
- * (The Randomizer has a form here: port/settings/features/randomizer_menu.cpp.) */
+ * (The Randomizer has a form here: port/settings/features/randomizer_menu.cpp. Modes
+ * too: its switches, and the forms of the modes started from the Start menu, the
+ * quiz party, bingo, Tattle cards, the Paper Tower...) */
 static int toolTab(const char* tab) {
-    static const char* const kTools[] = {"Cosmetics", "Practice",  "Challenges",  "Modes",
-                                         "Achievements", "Mods", "Archipelago", "Streaming"};
+    static const char* const kTools[] = {"Cosmetics",    "Practice", "Challenges",  "Achievements",
+                                         "Mods",         "Archipelago", "Streaming"};
     size_t i;
     for (i = 0; i < sizeof(kTools) / sizeof(kTools[0]); i++) {
         if (strcmp(tab, kTools[i]) == 0) {
@@ -295,17 +298,28 @@ static void buildRows(void) {
             sRows[sCount].kind = KIND_RATE;
             sRows[sCount].label = "Frame rate";
             sRows[sCount].c.flags = 0;
-            sRows[sCount].c.note = "Extra frames between the game's own 60: smoother motion.";
+            sRows[sCount].c.note = "Extra frames between the game's 60: smoother motion.";
             sCount++;
         }
         if (strcmp(tab, "Controls") == 0) { /* the Bindings page's row (pause_bindings_aurora.c) */
             sRows[sCount].kind = KIND_BINDINGS;
             sRows[sCount].label = "Bindings...";
             sRows[sCount].c.flags = 0;
-            sRows[sCount].c.note = "Every key and controller button: the game's, and Paper Cut's own shortcuts.";
+            sRows[sCount].c.note = "Every key and button: the game's and Paper Cut's own.";
             sCount++;
         }
-        for (i = 0; i < n && sCount < MAX_ROWS - 3; i++) {
+        /* Modes: the modes to start first (the versus battle, then the full page's sections), its
+         * switches after them, and the Director's Cut journal (a list to read) last */
+        const int modes = strcmp(tab, "Modes") == 0;
+        if (modes && gp != NULL && seqGetSeq() == SEQ_GAME && !gp->inBattle && !gPortCompanionMenu) {
+            memset(&sRows[sCount], 0, sizeof(Row)); /* (as on the front page, below) */
+            sRows[sCount].form = -1;
+            sRows[sCount].kind = KIND_VERSUS;
+            sRows[sCount].label = "Versus battle";
+            sRows[sCount++].c.note = "Mario and his partners against Luigi and his, two players on one screen: set up "
+                                     "both sides, then fight in the Glitz Pit.";
+        }
+        for (i = 0; i < n && !modes && sCount < MAX_ROWS - 3; i++) {
             if (strcmp(controls[i].tab, tab) != 0) {
                 continue;
             }
@@ -317,14 +331,37 @@ static void buildRows(void) {
         /* the full page's sections in its order: each one's form (a heading over it when it has more
          * than one row), or a row to the full page for one without; then the forms of no section */
         {
-            const char* tabs[64];
-            const char* labels[64];
-            const int m = portSettingsSections(tabs, labels, 64);
+            /* (every section: there are over 70; one past this would lose its row) */
+            const char* tabs[MAX_SECTIONS];
+            const char* labels[MAX_SECTIONS];
+            const int m = portSettingsSections(tabs, labels, MAX_SECTIONS);
             int done[MAX_FORMS] = {0};
             int k, f;
-            for (k = 0; k <= m && sCount < MAX_ROWS - 3; k++) {
+            for (k = 0; k <= m + (modes ? 2 : 0) && sCount < MAX_ROWS - 3; k++) {
                 int any = 0;
+                if (modes && k == m + 1) { /* the switches, after the modes */
+                    for (i = 0; i < n && sCount < MAX_ROWS - 3; i++) {
+                        if (strcmp(controls[i].tab, tab) == 0) {
+                            nextStart |= (controls[i].flags & PORT_SETTING_NEXT_START) != 0;
+                            sRows[sCount].kind = controls[i].kind;
+                            sRows[sCount].label = controls[i].label;
+                            sRows[sCount++].c = controls[i];
+                        }
+                    }
+                    continue;
+                }
                 for (f = 0; f < sFormCount; f++) {
+                    const int journal = sForms[f]->section != NULL && strcmp(sForms[f]->section, "Director's Cut journal") == 0;
+                    if (modes && journal != (k == m + 2)) {
+                        continue; /* (the journal: last) */
+                    }
+                    if (modes && k == m + 2) {
+                        if (!done[f] && strcmp(sForms[f]->tab, tab) == 0) {
+                            done[f] = 1;
+                            addForm(f);
+                        }
+                        continue;
+                    }
                     if (done[f] || strcmp(sForms[f]->tab, tab) != 0 ||
                         (k < m ? sForms[f]->section == NULL || strcmp(sForms[f]->section, labels[k]) != 0 ||
                                      strcmp(tabs[k], tab) != 0
@@ -354,8 +391,7 @@ static void buildRows(void) {
         sRows[sCount].kind = KIND_RESTART;
         sRows[sCount].label = "Restart now";
         sRows[sCount].c.flags = 0;
-        sRows[sCount++].c.note = "Press A twice to restart the game for these settings; quick resume brings you "
-                                 "back here.";
+        sRows[sCount++].c.note = "Press A twice to restart; quick resume brings you back.";
     } else {
         sConfirm = 0;
     }
@@ -1577,8 +1613,12 @@ static Picture picture(const Row* r) {
     static const Picture kRestart = {{ICON_034, -1}, {0}, {0}, {0.8f}};                              /* round arrows */
     static const Picture kVersus = {{ICON_19E, ICON_19E}, {-7.0f, 7.0f}, {3.0f, -3.0f}, {0.62f, 0.62f}}; /* the brothers */
     size_t i;
-    if (r->kind == KIND_CATEGORY && strcmp(r->label, "Randomizer") == 0) { /* a Star Piece (the item's own icon) */
+    if ((r->kind == KIND_CATEGORY || r->kind == KIND_HEADING) && strcmp(r->label, "Randomizer") == 0) { /* a Star Piece (the item's own icon) */
         Picture p = {{itemDataTable[ITEM_STAR_PIECE].icon_id, -1}, {0}, {0}, {0.8f}};
+        return p;
+    }
+    if ((r->kind == KIND_CATEGORY || r->kind == KIND_HEADING) && strcmp(r->label, "Modes") == 0) { /* the Glitz Pit's Champ's Belt */
+        Picture p = {{itemDataTable[ITEM_CHAMPS_BELT].icon_id, -1}, {0}, {0}, {0.8f}};
         return p;
     }
     if (r->kind == KIND_PHOTO) {

@@ -1,7 +1,8 @@
-# Playable Luigi (Paper Cut 0.2, M6)
+# Playable Luigi
 
-An Enhancements option, "Play as Luigi" (setting key `playable_luigi`, off by
-default), that shows Luigi in Mario's place. It changes how Mario looks, sounds
+Enhancements → **Play as** set to Luigi (setting key `playable_luigi`, Mario by
+default; Peach and Bowser are in [PLAY_AS.md](PLAY_AS.md)) shows Luigi in
+Mario's place. It changes how Mario looks, sounds
 and is called, not what he can do: Luigi uses Mario's moves, stats and
 collision. Saves are not changed.
 

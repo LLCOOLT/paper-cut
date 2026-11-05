@@ -3,7 +3,7 @@
 Bindings
 キー割り当て
 
-Every key and controller button: the game's, and Paper Cut's own shortcuts.
+Every key and button: the game's and Paper Cut's own.
 すべてのキーとコントローラーのボタン：ゲームのものと、Paper Cut独自のショートカット。
 
 Settings (open, close)
@@ -182,9 +182,6 @@ Also %s.
 
 A: change. X: reset the row.
 A：変更　X：この行を元に戻す
-
-A: change. X: reset the row. B: back.
-A：変更　X：この行を元に戻す　B：戻る
 
 Bindings...
 キー割り当て...

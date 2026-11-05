@@ -28,11 +28,14 @@
  * second controller's input, so online lockstep stays deterministic.
  * Off, every hook returns at once and the game is as it was. */
 
+#include <stdint.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 struct PartyEntry;
+struct NpcEntry;
 
 /* The mode is on and Luigi can be there: the setting, Mario himself (not
  * Peach or Bowser), no versus fight. */
@@ -58,6 +61,13 @@ int portBrothersIsLuigi(const struct PartyEntry* party);
 struct PartyEntry* portBrothersFieldLuigi(void);
 /* the second player is walking him now (else he follows Mario) */
 int portBrothersDriven(void);
+/* Luigi is in the field (shown, or out of sight for a pipe and the like):
+ * his HP and FP on the HUD (brothers_aurora.c) */
+int portBrothersInField(void);
+/* fbatHitCheck's post hook (brothers_aurora.c registers it): when the
+ * game's own checks hit nothing, Luigi's hammer coming down on an NPC is a
+ * hit as Mario's (an enemy: the first strike and the battle). */
+void portBrothersFbatHitPost(struct NpcEntry** r, uint32_t flags, void* result);
 /* seq_load.c, a file started or loaded (after its party is cleared): Luigi
  * comes in again with the next field frame, his HP and FP full. */
 void portBrothersReset(void);

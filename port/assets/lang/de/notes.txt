@@ -61,13 +61,13 @@ Links und rechts wählen den Satz der Notiz.
 Left and right pick the word in it.
 Links und rechts wählen das Wort darin.
 
-Leaves the note where Mario stands, for other players to find and rate.
+Leaves the note where Mario stands, for others to rate.
 Hinterlässt die Notiz, wo Mario steht, damit andere Spieler sie finden und bewerten.
 
 Asks the relay again for this area's notes.
 Fragt das Relay erneut nach den Notizen dieses Gebiets.
 
-Right rates this note up, left rates it down. The best stay; the worst go.
+Right: rate up, left: rate down. The best notes stay.
 Rechts bewertet diese Notiz gut, links schlecht. Die besten bleiben, die schlechtesten gehen.
 
 Your note is left here.

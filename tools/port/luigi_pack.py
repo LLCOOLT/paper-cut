@@ -24,8 +24,9 @@ Pack layout (big-endian):
   0x00 "LUPK", u32 version, u32 base size, u32 base CRC-32 (the model it fits)
   0x10 u32 offset, u32 count per model table (ttyd_anim.TABLES order, 24):
        records appended to that table (groups: put before the root)
-  0xD0 u32 count, u32 offset: group fields to set, 12 bytes each: group
-       (its index in the merged table), byte offset in the record, value
+  0xD0 u32 count, u32 offset: fields to set, 12 bytes each: the record (its
+       index in the merged table; groups', or in the top byte the table
+       plus 1: node values, say), byte offset in the record, value
   0xD8 u32 count, u32 offset: a_mario- texture indices to copy
   0xE0 u32 count, u32 offset: animations, 0x48 each: name[60], offset, size
 """
@@ -50,7 +51,7 @@ class Char:
     at `grip` at rest (the fist's middle), at depth `z` (just behind the
     hand); at `scale` 1 the plane is 12 x 17, as the drawings' 96 x 136."""
 
-    def __init__(self, key, base, size, model_name, textures, parent, grip, z, scale=1.0):
+    def __init__(self, key, base, size, model_name, textures, parent, grip, z, scale=1.0, extra=None):
         self.key = key
         self.base = base              # the disc's model (a/<base>, a/<base>-)
         self.size = size              # its size (the pack's header has its CRC too)
@@ -61,6 +62,7 @@ class Char:
         self.pivot = (0.0, 1.6 * scale, 0.0)  # the handle's end, where the hands hold it
         self.rest = (grip[0], grip[1] - 1.6 * scale, z)
         self.pack = os.path.join(REPO, "port", "assets", "luigi", "%s_anims.bin" % key)
+        self.extra = extra  # (base, records, fields) -> more of each: a model made over the disc's
 
 
 # Luigi: the front glove (pPlane3); the fist's middle is the glove drawing's
@@ -75,7 +77,26 @@ PEACH_R = Char("peach_r", "c_peach_r", 42260, "c_peach_r_pc", 31, "pPlane20", (-
 # Bowser: his front hand (L_hand), the fist's middle; a hammer his size (he
 # is drawn at 0.7 in Mario's place: at 1.6 it is a little over Mario's)
 BOWSER = Char("bowser", "c_koopa", 110736, "c_koopa_pc", 41, "L_hand", (-12.6, 13.0), -0.05, 1.6)
-CHARS = {c.key: c for c in (LUIGI, PEACH, PEACH_R, BOWSER)}
+
+
+def _bowser_back(base, recs, patches):
+    import bowser_back
+    bowser_back.records(base, recs, patches)
+
+
+# his back view, made over c_koopa (bowser_back.py): the same hand
+BOWSER_R = Char("bowser_r", "c_koopa", 110736, "c_koopa_r_pc", 41, "L_hand", (-12.6, 13.0), -0.05, 1.6,
+                extra=_bowser_back)
+CHARS = {c.key: c for c in (LUIGI, PEACH, PEACH_R, BOWSER, BOWSER_R)}
+TABLE_INDEX = {name: i for i, (name, _s, _c) in enumerate(T.TABLES)}
+
+
+def field(table, index, off, value):
+    """a field to set (the pack's 0xD0 list): record `index` of `table`, as int bits"""
+    t = 0 if table == "groups" else TABLE_INDEX[table] + 1
+    if isinstance(value, float):
+        value = struct.unpack(">i", struct.pack(">f", value))[0]
+    return ((t << 24) | index, off, value)
 
 # Luigi's, by their old names
 LUIGI_SIZE = LUIGI.size
@@ -165,6 +186,8 @@ def hammer_records(base, ch=LUIGI):
 def write_pack(path, anims, base, ch=LUIGI):
     """the pack: the hammer's records and `anims` (ttyd_anim.Anim, our own) for ch's model `base`"""
     recs, patches = hammer_records(base, ch)
+    if ch.extra is not None:
+        ch.extra(base, recs, patches)
     body = bytearray()
     head = bytearray(HEADER)
     head[0:4] = MAGIC
@@ -231,9 +254,10 @@ def merge(base_data, base_tpl, mario_tpl, pack_data, ch=LUIGI):
         else:
             p.tables[name] = p.tables[name] + add
     for gi, off, value in pk["patches"]:
-        g = bytearray(p.tables["groups"][gi])
+        name = "groups" if gi >> 24 == 0 else T.TABLES[(gi >> 24) - 1][0]
+        g = bytearray(p.tables[name][gi & 0xFFFFFF])
         struct.pack_into(">i", g, off, value)
-        p.tables["groups"][gi] = bytes(g)
+        p.tables[name][gi & 0xFFFFFF] = bytes(g)
     by_name = {a.name: i for i, a in enumerate(p.anims)}
     for name, blob in pk["anims"]:
         a = T.Anim.parse(name, blob)  # (checks the blob; written back as it is)

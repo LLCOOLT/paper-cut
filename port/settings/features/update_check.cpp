@@ -441,7 +441,7 @@ int formRows(PortPauseRow* out, int max) {
     }
     return n;
   }
-  PortPauseRow out1 = portPauseRow("New version", "A newer Paper Cut is out. A: its release page in the browser.",
+  PortPauseRow out1 = portPauseRow("New version", "A newer Paper Cut is out. A: open its release page.",
                                    nullptr, kRelease);
   std::snprintf(out1.value, sizeof(out1.value), "Paper Cut %s", sVersion.c_str());
   out[n++] = out1;

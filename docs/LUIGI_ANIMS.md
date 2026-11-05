@@ -1,6 +1,6 @@
-# Luigi's animations (Paper Cut 0.2, M6b)
+# Luigi's animations
 
-"Play as Luigi" (docs/PLAYABLE_LUIGI.md) draws Luigi's field model, `c_luigi`,
+Enhancements → **Play as** Luigi ([PLAYABLE_LUIGI.md](PLAYABLE_LUIGI.md)) draws Luigi's field model, `c_luigi`,
 in Mario's place, but the disc gives Luigi only stand, idle, walk, run, jump
 and talk. This work adds new animations for his model, made in Blender, and
 the tools that move animations between the game's files and Blender.
@@ -232,4 +232,4 @@ hold, strike).
 Earlier plan, by priority:
 - The event poses (`e_mario`), paper forms' own animations (the forms
   themselves now capture Luigi when he has the pose), battle (`b_mario`'s 85).
-- Anything Luigi has no version of, as before (docs/PLAYABLE_LUIGI.md).
+- Anything Luigi has no version of, as before ([PLAYABLE_LUIGI.md](PLAYABLE_LUIGI.md)).

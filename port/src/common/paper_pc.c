@@ -378,14 +378,6 @@ int portPaperShadowPass(void) {
     return sShadowPass;
 }
 
-static void drawDirect(int poseId, Mtx mtx, int xluMode, float rotY, float scale) {
-    animPoseDrawMtx(poseId, mtx, xluMode, rotY, scale);
-}
-
-void portPaperPartyDrawMtx(int poseId, Mtx mtx, int xluMode, float rotY, float scale) {
-    portPaperDrawMtx(poseId, mtx, xluMode, rotY, scale, drawDirect);
-}
-
 int portPaperShadowSkip(const struct ShadowEntry* entry) {
     const int last = sCur ^ 1;
     declare();

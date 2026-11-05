@@ -21,6 +21,7 @@
 // keys, Paper Cut's actions and the digital triggers are Paper Cut's settings.
 #include "port/bindings.h"
 #include "port/companion_menu.h"
+#include "port/menu_typing.h"
 #include "port/savestate.h"
 #include "port/settings.h"
 #include "port/speed.h"
@@ -2123,7 +2124,8 @@ namespace {
 bool actionKeyHeld(int action) {
   int count = 0;
   const bool* keys = SDL_GetKeyboardState(&count);
-  const bool typing = ImGui::GetCurrentContext() != nullptr && ImGui::GetIO().WantTextInput;
+  const bool typing =
+      (ImGui::GetCurrentContext() != nullptr && ImGui::GetIO().WantTextInput) || portMenuTyping();
   for (int col = 0; col < 2 && keys != nullptr && !typing; col++) {
     const Bind k = keyValueBind(actionKey(action, col));
     if (k.type != Bind::Key || k.a >= count || !keys[k.a]) {
@@ -2778,7 +2780,7 @@ void testFrame() {
 
 const bool sAdded = [] {
   portSettingsAddSection("Controls", "Bindings",
-                         "Every key and controller button: the game's, and Paper Cut's own shortcuts.", 0, section,
+                         "Every key and button: the game's and Paper Cut's own.", 0, section,
                          "bindings keybinds keys keyboard controller buttons remap rebind mapping gamepad shortcuts "
                          "hotkeys swap sticks invert dead zone triggers combo");
   portSettingsAddOverlay(tick, nullptr);

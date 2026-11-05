@@ -1,15 +1,15 @@
 # Leaderboards
 
 Boss rush and Pit of 100 Trials times on the online relay
-(docs/ONLINE_RELAY.md), each kept with the replay that made it
-(docs/REPLAYS.md), and checked by playing that replay back. Modes tab >
+([ONLINE_RELAY.md](ONLINE_RELAY.md)), each kept with the replay that made it
+([REPLAYS.md](REPLAYS.md)), and checked by playing that replay back. Modes →
 **Leaderboards**.
 
 ## The boards
 
 | board | the run | its clock |
 | --- | --- | --- |
-| Boss rush (mid-game) | the boss rush (docs/MODES.md) with the mid-game loadout | from the rush's start to the last boss beaten |
+| Boss rush (mid-game) | the boss rush ([MODES.md](MODES.md)) with the mid-game loadout | from the rush's start to the last boss beaten |
 | Boss rush (late game) | the same, with the late-game loadout | the same |
 | Pit of 100 Trials | the story's Pit, from where you are | from entering floor 1 to reaching floor 100 |
 
@@ -43,7 +43,7 @@ board.
 **Your runs** lists this version's finished runs for the board. **Check and
 upload** starts the game again playing the run's replay. If the run ends on
 the same frame it did when recorded, its replay (compressed, without the ghost
-track) goes to the board with your name (Online tab > Your name), and the
+track) goes to the board with your name (the Online tab's **Your name**), and the
 label says where it placed. A run that doesn't play out the same here isn't
 sent. Esc or B leaves the playback, as for any replay.
 

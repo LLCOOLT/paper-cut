@@ -52,7 +52,6 @@
 #include "port/view.h"
 #include "port/versus.h"
 #include "port/duo.h"
-#include "port/replay.h"
 #include "port/players.h"
 #include "driver/seqdrv.h"
 #include "port/brothers.h"
@@ -68,7 +67,13 @@ MapObjectWork* portMobjGetWork(void);                      /* mobjdrv.c */
 
 extern PADStatus Pad[PAD_MAX_CONTROLLERS]; /* DEMOPad.c: the frame's controllers (online and replays: as played) */
 
-static int* sOn;
+static int* sOn; /* the second_player setting (declareOn) */
+
+static void declareOn(void) {
+    if (sOn == NULL) {
+        sOn = portSettingsDeclare("second_player", 0, 0, 1);
+    }
+}
 
 /* co-op is on: the setting, or an online session (player 2 is the guest) */
 static int coopOn(void) {
@@ -98,9 +103,7 @@ static int secondPad(void) {
 
 /* duo moves (duo_pc.c): two players to play their halves */
 int portCoopTwoPlayers(void) {
-    if (sOn == NULL) {
-        sOn = portSettingsDeclare("second_player", 0, 0, 1);
-    }
+    declareOn();
     return coopOn() && secondPad();
 }
 
@@ -357,10 +360,11 @@ static void interact(int h, PartyEntry* party) {
     MapObjectEntry* mobj = NULL;
     float best = REACH;
     int i;
-    for (i = 0; nw != NULL && i < nw->count; i++) {
+    for (i = 0; nw != NULL && i < nw->total; i++) {
         NpcEntry* n = &nw->entries[i];
         const float d = hypotf(n->position.x - party->position.x, n->position.z - party->position.z);
-        if ((n->flags & 1) && n->talkEvt != NULL && fabsf(n->position.y - party->position.y) < 60.0f && d < best) {
+        if ((n->flags & NPC_FLAG_USED) && n->talkEvt != NULL && fabsf(n->position.y - party->position.y) < 60.0f &&
+            d < best) {
             npc = n;
             best = d;
         }
@@ -385,7 +389,7 @@ static void interact(int h, PartyEntry* party) {
     for (i = 0; mw != NULL && i < mw->count; i++) {
         MapObjectEntry* m = &mw->entries[i];
         const float d = hypotf(m->position.x - party->position.x, m->position.z - party->position.z);
-        if ((m->flags & 1) && m->event != 0 && m->position.y - party->position.y < 80.0f &&
+        if ((m->flags & MOBJ_FLAG_USED) && m->event != 0 && m->position.y - party->position.y < 80.0f &&
             m->position.y - party->position.y > -20.0f && d < best) {
             mobj = m;
             best = d;
@@ -412,7 +416,7 @@ static void talkFrame(void) {
     if (evtCheckID(sCoop.talkEvt)) {
         return;
     }
-    if (sCoop.talkNpc != NULL && (sCoop.talkNpc->flags & 1)) {
+    if (sCoop.talkNpc != NULL && (sCoop.talkNpc->flags & NPC_FLAG_USED)) {
         evtStartID(sCoop.talkNpc->regularEvtId);
     }
     marioKeyOn();
@@ -871,7 +875,7 @@ static void seenFrame(void) {
             notice("Player 2 joined: their stick walks the partner.");
         } else if (has && !sHinted) {
             sHinted = 1;
-            notice("A second controller: turn on Second player (Controls) to play the partner.");
+            notice("A second controller: turn on Second player (co-op) in Multiplayer to play the partner.");
         } else if (!has && *sOn) {
             notice("Player 2 left: the partner follows Mario.");
         }
@@ -905,9 +909,7 @@ static void seenFrame(void) {
 }
 
 void portSecondPlayerRoute(void) {
-    if (sOn == NULL) {
-        sOn = portSettingsDeclare("second_player", 0, 0, 1);
-    }
+    declareOn();
     if (gp == NULL) {
         return;
     }

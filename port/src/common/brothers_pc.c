@@ -32,6 +32,7 @@
 #include "driver/animdrv.h"
 #include "driver/hitdrv.h"
 #include "driver/mobjdrv.h"
+#include "driver/npcdrv.h"
 #include "driver/seqdrv.h"
 #include "manager/evtmgr.h"
 #include "mario/mario.h"
@@ -56,6 +57,7 @@
 extern PartyEntry* partyPtrTbl[];                                   /* party.c (PORT_PARTY_SLOTS) */
 EventEntry* mobjRunEvent(MapObjectEntry* entry, EvtWord* eventCode); /* mobjdrv.c */
 MapObjectWork* portMobjGetWork(void);                                /* mobjdrv.c */
+BOOL marioChkTalkable(void);                                         /* mario_motion.c */
 
 #define LUIGI_SLOT PORT_PARTY_SLOT_LUIGI
 #define LUIGI_MEMBER PARTY_MEMBER_PUNIO /* the pose-name row (partyPoseTbl[10]) */
@@ -136,6 +138,10 @@ PartyEntry* portBrothersFieldLuigi(void) {
 
 int portBrothersDriven(void) {
     return sB.driven;
+}
+
+int portBrothersInField(void) {
+    return luigi() != NULL && gp != NULL && !gp->inBattle;
 }
 
 /* --- HP and FP --- */
@@ -365,9 +371,136 @@ static int trailFrame(void) {
     return 0;
 }
 
+/* --- talking --- */
+
+/* The NPC Luigi would talk to with A now: as the game picks Mario's (a
+ * friendly NPC with a talk event, within reach, in front of him, no wall
+ * between), while Mario could talk too and is near enough that the scene
+ * that follows (which is Mario's: the NPC turns to him, the camera is his)
+ * still reads. NULL none. */
+#define TALK_MARIO_NEAR 150.0f
+
+static NpcEntry* talkTarget(PartyEntry* p) {
+    MarioWork* mario = marioGetPtr();
+    NpcWork* nw = npcGetWorkPtr();
+    NpcEntry* best = NULL;
+    float bestD = 1000.0f;
+    int i;
+    if (nw == NULL || gp->fbatData == NULL || gp->fbatData->mode != 1 || gp->mapEventId || !marioChkTalkable() ||
+        mario->keyOffCount || (p->flags & (PARTY_FLAG_IS_JUMPING | PARTY_FLAG_IS_FALLING))) {
+        return NULL;
+    }
+    for (i = 0; i < nw->total; i++) {
+        NpcEntry* npc = &nw->entries[i];
+        float d, a, s, c, hx, hy, hz, nx, ny, nz, len;
+        if (!(npc->flags & NPC_FLAG_ACTIVE) || (npc->flags & NPC_FLAG_ENEMY) || npc->talkEvt == NULL) {
+            continue;
+        }
+        if (npc->position.y > p->position.y + p->height || p->position.y > npc->position.y + npc->height) {
+            continue;
+        }
+        d = distABf(p->position.x, p->position.z, npc->position.x, npc->position.z);
+        if (d > 0.5f * (p->width + npc->width) + 10.0f || d >= bestD ||
+            distABf(mario->position.x, mario->position.z, npc->position.x, npc->position.z) > TALK_MARIO_NEAR) {
+            continue;
+        }
+        a = reviseAngle(angleABf(p->position.x, p->position.z, npc->position.x, npc->position.z) - p->moveDir);
+        if (a > 90.0f && a < 270.0f) {
+            continue; /* behind him */
+        }
+        sincosf(&s, &c, angleABf(0.0f, 0.0f, npc->position.x - p->position.x, npc->position.z - p->position.z));
+        len = d;
+        if (hitCheckFilter(NULL, &hx, &hy, &hz, &len, &nx, &ny, &nz, p->position.x, p->position.y + 0.75f * p->height,
+                           p->position.z, s, 0.0f, c) != NULL) {
+            continue; /* a wall between */
+        }
+        best = npc;
+        bestD = d;
+    }
+    return best;
+}
+
+/* the game's own talk start (npcdrv.c's A on Mario's talk target) */
+static void startTalk(NpcEntry* npc) {
+    FieldBattleData* data = gp->fbatData;
+    printf("[brothers] Luigi talks to '%s'\n", npc->description);
+    fflush(stdout);
+    data->mode = 2;
+    data->subState = 0;
+    data->npc = npc;
+    npc->fbatHitKind = 0;
+}
+
+/* --- the hammer's first strike --- */
+
+#define HAMMER_LIVE_FROM (HAMMER_HIT - 3)
+#define HAMMER_LIVE_TO (HAMMER_HIT + 4)
+#define HAMMER_HEAD_RADIUS 12.0f
+
+/* fbatHitCheck (npcdrv.c), after the game's own checks found nothing: Luigi's
+ * hammer coming down on an NPC counts as Mario's (an enemy: a first strike
+ * and the battle; a friendly NPC that reacts to the hammer: its reaction),
+ * with the game's own filters. */
+void portBrothersFbatHitPost(NpcEntry** r, u32 flags, void* result) {
+    PartyEntry* p = luigi();
+    NpcWork* nw;
+    MarioWork* mario;
+    NpcEntry* hit = NULL;
+    float x, y, z, best = 1000.0f;
+    int i;
+    if (*r != NULL || p == NULL || sB.tucked || sB.swing < HAMMER_LIVE_FROM || sB.swing > HAMMER_LIVE_TO ||
+        !(flags & FBAT_CHECK_HAMMER) || !(flags & FBAT_CHECK_LIVE_ATTACK) || !portBrothersOn() || !fieldControl() ||
+        gp->mapEventId || (nw = npcGetWorkPtr()) == NULL) {
+        return;
+    }
+    mario = marioGetPtr();
+    if (((flags & FBAT_CHECK_CONTACT) && mario->mutekiTimer > 0) || (mario->flags & MARIO_FLAG_KEY_OFF) ||
+        mario->currMotionId == MARIO_MOTION_DAMAGE || mario->currMotionId == MARIO_MOTION_DAMAGE_TOGE) {
+        return;
+    }
+    /* the hammer's head, in front of him where it comes down */
+    x = p->position.x;
+    z = p->position.z;
+    movePos(&x, &z, 30.0f, p->moveDir);
+    y = p->position.y + 8.0f;
+    for (i = 0; i < nw->total; i++) {
+        NpcEntry* npc = &nw->entries[i];
+        float dx, dy, dz, d;
+        if (!(npc->flags & NPC_FLAG_ACTIVE) || ((flags & FBAT_CHECK_ENEMIES) != 0) != ((npc->flags & NPC_FLAG_ENEMY) != 0) ||
+            ((flags & FBAT_CHECK_QUERY) && !(npc->reactionFlags & 2)) ||
+            (npc->flags & (NPC_FLAG_NO_FIELD_ATTACK | NPC_FLAG_INTANGIBLE | NPC_FLAG_KOOPA_MODE)) ||
+            (npc->jumpFlags & NPC_STATUS_DEAD) || npc->fbatHitCooldown) {
+            continue;
+        }
+        dx = x - npc->position.x;
+        dz = z - npc->position.z;
+        dy = y < npc->position.y ? y - npc->position.y
+             : y > npc->position.y + npc->height ? y - (npc->position.y + npc->height)
+                                                 : 0.0f;
+        d = sqrtf(dx * dx + dy * dy + dz * dz);
+        if (d < 0.5f * npc->width + HAMMER_HEAD_RADIUS && d < best) {
+            best = d;
+            hit = npc;
+        }
+    }
+    if (hit == NULL) {
+        return;
+    }
+    if (result != NULL) {
+        *(u32*)result = FBAT_HIT_HAMMER; /* (FbatHitResult's kind; the rest as the game's checks left it) */
+    }
+    if (!(flags & FBAT_CHECK_QUERY)) {
+        fbatSetAttackAnnounce(FBAT_HIT_HAMMER);
+        printf("[brothers] Luigi's hammer hits '%s'\n", hit->description);
+        fflush(stdout);
+    }
+    *r = hit;
+}
+
 void portBrothersFieldFrame(void) {
     PartyEntry* p = luigi();
     MarioWork* mario;
+    NpcEntry* npc;
     if (gp == NULL) {
         return;
     }
@@ -422,7 +555,11 @@ void portBrothersFieldFrame(void) {
         } else if (sB.driven && ++sB.idle >= IDLE_FRAMES) {
             sB.driven = 0; /* hands off a while: he follows Mario again */
         }
-        sB.jump |= (pressed & PAD_BUTTON_A) != 0;
+        if ((pressed & PAD_BUTTON_A) && sB.swing == 0 && (npc = talkTarget(p)) != NULL) {
+            startTalk(npc); /* A in front of someone: a talk, as Mario's A */
+        } else {
+            sB.jump |= (pressed & PAD_BUTTON_A) != 0;
+        }
         sB.hammer |= (pressed & PAD_BUTTON_B) != 0;
     } else {
         sB.driven = 0;

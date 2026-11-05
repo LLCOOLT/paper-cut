@@ -2,8 +2,10 @@
  * text format, codes, the custom list and which set is in play. The battle
  * side is port/src/aurora/master_quest_aurora.c. */
 #include "port/master_quest.h"
+#include "port/code64.h"
 #include "port/practice.h"
 #include "port/settings.h"
+#include "battle/battle_database_common.h"
 #include "battle/battle_status_effect.h"
 #include "battle/battle_unit.h"
 
@@ -160,7 +162,8 @@ static const Name kStartStatus[] = {
 };
 
 static const Name kElements[] = {
-    {"normal", 0}, {"fire", 1}, {"ice", 2}, {"explosion", 3}, {"electric", 4},
+    {"normal", ELEMENT_NORMAL},       {"fire", ELEMENT_FIRE},         {"ice", ELEMENT_ICE},
+    {"explosion", ELEMENT_EXPLOSION}, {"electric", ELEMENT_ELECTRIC},
 };
 
 static int nameIndex(const Name* names, int count, const char* s) {
@@ -538,42 +541,24 @@ unsigned portMasterQuestHash(const char* text) {
 
 /* --- codes ------------------------------------------------------------------- */
 
-static const char kB64[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
 #define CODE_PREFIX "PCMQ1:"
 
 char* portMasterQuestCode(const char* text) {
     const size_t len = strlen(text);
-    char* out = (char*)malloc(sizeof(CODE_PREFIX) + (len * 4) / 3 + 4);
-    size_t at;
-    unsigned v = 0;
-    int bits = 0;
-    size_t i;
+    const size_t size = sizeof(CODE_PREFIX) + (len * 4) / 3 + 4;
+    char* out = (char*)malloc(size);
     if (out == NULL) {
         return NULL;
     }
     strcpy(out, CODE_PREFIX);
-    at = strlen(out);
-    for (i = 0; i < len; i++) {
-        v = (v << 8) | (unsigned char)text[i];
-        bits += 8;
-        while (bits >= 6) {
-            out[at++] = kB64[(v >> (bits - 6)) & 63];
-            bits -= 6;
-        }
-    }
-    if (bits > 0) {
-        out[at++] = kB64[(v << (6 - bits)) & 63];
-    }
-    out[at] = '\0';
+    portCode64Encode((const unsigned char*)text, (int)len, out + strlen(CODE_PREFIX), (int)(size - strlen(CODE_PREFIX)));
     return out;
 }
 
 char* portMasterQuestFromCode(const char* code) {
     const char* start = strstr(code, CODE_PREFIX);
     char* out;
-    size_t at = 0;
-    unsigned v = 0;
-    int bits = 0;
+    int at;
     if (start == NULL) {
         return NULL;
     }
@@ -582,25 +567,8 @@ char* portMasterQuestFromCode(const char* code) {
     if (out == NULL) {
         return NULL;
     }
-    for (; *start != '\0'; start++) {
-        const char c = *start;
-        const char* hit;
-        if (c == ' ' || c == '\n' || c == '\r' || c == '\t') {
-            continue;
-        }
-        hit = strchr(kB64, c);
-        if (hit == NULL || c == '\0') {
-            break; /* the code ends at anything else */
-        }
-        v = (v << 6) | (unsigned)(hit - kB64);
-        bits += 6;
-        if (bits >= 8) {
-            out[at++] = (char)((v >> (bits - 8)) & 0xFF);
-            bits -= 8;
-        }
-    }
-    out[at] = '\0';
-    if (at == 0 || at >= PORT_MQ_TEXT_MAX) {
+    at = portCode64Decode(start, (unsigned char*)out, (int)strlen(start) + 1);
+    if (at <= 0 || at >= PORT_MQ_TEXT_MAX) {
         free(out);
         return NULL;
     }

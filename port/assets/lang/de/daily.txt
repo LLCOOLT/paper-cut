@@ -72,5 +72,5 @@ Tafel zeigen
 The board's answer wasn't understood.
 Die Antwort der Tafel wurde nicht verstanden.
 
-Today's seed and rules, and the board, are on the full settings page's Modes tab.
-Der heutige Seed, die Regeln und die Tafel sind im Tab Modi der vollen Einstellungsseite.
+Today's seed, rules and board: on the full page's Modes tab.
+Heutiger Seed, Regeln, Tafel: im Tab Modi der vollen Seite.

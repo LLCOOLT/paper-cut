@@ -24,7 +24,7 @@
 namespace {
 
 constexpr const char* kTab = "Modes";
-constexpr const char* kSecondScreen = "Not from the second screen: do it in the game's own Start menu.";
+constexpr const char* kSecondScreen = "Not on the second screen: use the game's Start menu.";
 
 // --- the trophy room ---
 
@@ -236,7 +236,7 @@ int towerRows(PortPauseRow* out, int max) {
     return 0;
   }
   if (!portTowerActive()) {
-    out[n++] = portPauseRow("Climb the Paper Tower", "30 floors of the game's rooms, remixed; once the game is finished.",
+    out[n++] = portPauseRow("Climb the Paper Tower", "30 floors of the game's rooms, remixed, after the credits.",
                             nullptr, 0, portTowerUnlocked() ? PORT_PAUSE_ROW_CONFIRM : PORT_PAUSE_ROW_DIM);
     return n;
   }

@@ -27,8 +27,8 @@ Su questo dispositivo, il gioco online parte dalla scheda Online del launcher, p
 Host a room
 Apri una stanza
 
-Opens a room with a code to give the other player: nothing to set up.
-Apre una stanza con un codice da dare all'altro giocatore: niente da configurare.
+Opens a room with a code to give the other player.
+Apre una stanza con un codice da dare all'altro giocatore.
 
 Waits on your port: on the same network, or with the port forwarded or a VPN.
 Attende sulla tua porta: nella stessa rete, o con la porta inoltrata o una VPN.

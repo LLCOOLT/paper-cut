@@ -29,6 +29,7 @@
 #include "port/boards.h"
 #include "port/lua_mods.h"
 #include "port/master_quest.h"
+#include "port/build_id.h"
 #include "port/online.h"
 #include "port/playmodes.h"
 #include "port/replay.h"
@@ -37,6 +38,9 @@
 #include "port/settings.h"
 #include "port/tr.h"
 #include "port/versions.h"
+#include "../settings_ui.h"
+#include "../file_util.h"
+#include "../device_keys.h"
 
 #include <SDL3/SDL.h>
 #include <aurora/card.h>
@@ -57,6 +61,8 @@
 #if defined(__APPLE__)
 #include <TargetConditionals.h>
 #endif
+
+using portui::hint;
 
 extern "C" {
 void CARDSetBasePath(const char* path, int chan); // Aurora (dolphin/card.h)
@@ -85,40 +91,11 @@ bool usesMorePads(const std::vector<PortReplayRun>& runs) {
 }
 constexpr const char* kExt = ".pcreplay";
 
-// this device's own (prefixes), as settings presets' (presets.cpp), but the
-// intro and PAL's 50 Hz, which change the frames: never in a replay, never
-// changed by one
-constexpr const char* kDevice[] = {
-    "framerate", "vsync", "fullscreen", "resolution", "fps", "overlay_", "msaa", "tex_filter", "texture_upscale",
-    "supersample", "post_filter", "vrr", "hdr", "aniso", "lod_bias", "no_pop_in", "aspect_", "side_bars", "volume",
-    "mute", "music_", "sfx_", "ambience_", "background_input", "pause_unfocused", "cloud_sync", "sync_",
-    "phone_rumble", "rumble", "touch_", "auto_run", "stick_fixed", "tap_a", "orientation", "safe_area", "ff_",
-    "launcher_", "dump_textures", "key", "pad", "controller", "deadzone", "trigger", "second_player_port",
-    "menu_language", "speedrun_timer", "timer_", "split_category", "livesplit", "memory_watch", "achievements",
-    "button_prompts", "perf_overlay", "update_check", "window_", "quick_resume", "save_backups", "second_screen",
-    "companion", "custom_music", "settings_hint", "online", "crowd_", "jukebox", "game_sound_mode", "speakers",
-    "bind_", "mouse_camera", "dualsense", "update_auto", "save_library", "whats_new", "battery_saver",
-};
+// this device's own (device_keys.h): never in a replay, never changed by one (the intro and PAL's
+// 50 Hz, which a preset leaves alone, are the run's: they change the frames)
+bool device(const std::string& key) { return portdevice::owns(key); }
 
-bool device(const std::string& key) {
-  for (const char* p : kDevice) {
-    if (key.compare(0, std::strlen(p), p) == 0) {
-      return true;
-    }
-  }
-  return false;
-}
-
-std::string readFile(const std::string& path) {
-  size_t size = 0;
-  void* data = SDL_LoadFile(path.c_str(), &size);
-  std::string out;
-  if (data != nullptr) {
-    out.assign(static_cast<const char*>(data), size);
-    SDL_free(data);
-  }
-  return out;
-}
+using portfile::readFile;
 
 bool writeFile(const std::string& path, const std::string& data) {
   return SDL_SaveFile(path.c_str(), data.data(), data.size());
@@ -537,7 +514,7 @@ std::string stopAndSave() {
 // the recording's start, at start-up: what the playback needs to start the same
 void beginRecording() {
   sRec = Replay{};
-  sRec.version = PORT_VERSION;
+  sRec.version = portBuildVersion();
   sRec.game = gameId();
   sRec.mods = modsList();
   sRec.date = now(false);
@@ -603,11 +580,11 @@ bool beginPlayback(const char* path, bool race = false) {
     std::fflush(stdout);
     return false;
   }
-  sVersionDiffers = sPlay.version != PORT_VERSION;
+  sVersionDiffers = sPlay.version != portBuildVersion();
   sModsDiffer = sPlay.mods != modsList();
   if (sVersionDiffers) {
     std::printf("[replay] made with Paper Cut %s, this is %s: it may go out of step\n", sPlay.version.c_str(),
-                PORT_VERSION);
+                portBuildVersion());
   }
   if (sModsDiffer) {
     std::printf("[replay] made with other mods (%s): it may go out of step\n", sPlay.mods.c_str());
@@ -797,12 +774,6 @@ void refresh() {
   std::sort(sList.begin(), sList.end(), [](const Entry& a, const Entry& b) { return a.head.date > b.head.date; });
 }
 
-void hint(const char* text) {
-  ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
-  ImGui::TextWrapped("%s", text);
-  ImGui::PopStyleColor();
-}
-
 // what's to say about playing this one; false: it can't be played here
 bool playable(const Entry& e, std::string& why) {
   if (!e.ok) {
@@ -816,11 +787,11 @@ bool playable(const Entry& e, std::string& why) {
     why = text;
     return false;
   }
-  if (e.head.version != PORT_VERSION) {
+  if (e.head.version != portBuildVersion()) {
     char text[200];
     std::snprintf(text, sizeof(text),
                   portTr("Made with Paper Cut %s (this is %s): it may go out of step. You'll be told if it does."),
-                  e.head.version.c_str(), PORT_VERSION);
+                  e.head.version.c_str(), portBuildVersion());
     why = text;
   }
   return true;
@@ -983,6 +954,11 @@ void drawLabel() {
     char line[160];
     std::snprintf(line, sizeof(line), portTr("Out of step since frame %ld"), portReplayOutOfStep());
     extra = line;
+    if (sVersionDiffers) {
+      // why, most likely: another build's game code (ImGui draws the second line under it)
+      std::snprintf(line, sizeof(line), portTr("Made with Paper Cut %s"), sPlay.version.c_str());
+      extra += std::string("\n") + line;
+    }
   } else if (portReplayPlaying() && sVersionDiffers) {
     char line[160];
     std::snprintf(line, sizeof(line), portTr("Made with Paper Cut %s"), sPlay.version.c_str());

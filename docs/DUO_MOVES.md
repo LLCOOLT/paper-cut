@@ -2,7 +2,7 @@
 
 Team attacks for Mario and the partner: both their moves of the turn spent on one attack, each with its own action command, both at once. Built from the game's own animations: one for every partner from the start, a second at Ultra rank.
 
-The setting is **Multiplayer > Duo moves**: Off, **Co-op and versus** (the default: with a second player in co-op, online and in versus fights) or **Always** (in one-player games too). Online, the host's setting is the game's, as for every setting that changes play.
+The setting is Multiplayer → **Duo moves**: Off, **Co-op and versus** (the default: with a second player in co-op, online and in versus fights) or **Always** (in one-player games too). Online, the host's setting is the game's, as for every setting that changes play.
 
 ## Where they are
 
@@ -38,7 +38,7 @@ Once a partner is **Ultra rank**, a second, stronger move joins its first:
 | Bobbery | Mega Blast | 7 | stomps | blows up at the same moment | timed | |
 | Ms. Mowz | Dizzy Smash | 6 | hammers | slaps a beat first | timed | leave it dizzy |
 
-With two heroes on one side (Brothers mode's Luigi), the **Bros. moves** join them, both halves from Mario's own animations, in either brother's Jump or Hammer list: **Bros. Bounce** (3 FP, both stomp, the second a beat later, timed), **Bros. Hammer** (3 FP, two hammers side by side, timed) and **Bros. Drop** (5 FP, both mash, then one stomps as the other's hammer comes down). In a versus fight Luigi's side has the partner moves with Luigi as the hero.
+With two heroes on one side (Brothers mode's Luigi, [BROTHERS.md](BROTHERS.md)), the **Bros. moves** join them, both halves from Mario's own animations, in either brother's Jump or Hammer list: **Bros. Bounce** (3 FP, both stomp, the second a beat later, timed), **Bros. Hammer** (3 FP, two hammers side by side, timed) and **Bros. Drop** (5 FP, both mash, then one stomps as the other's hammer comes down). In a versus fight Luigi's side has the partner moves with Luigi as the hero.
 
 Each hit's power comes from Mario's boots or hammer and the partner's rank, plus 1 for a good command and 1 more for one right on time; the partner's hit gets 1 more when both commands were good. Badges count as for the hero's or partner's own moves (Power Plus, Charge, Jumpman and Hammerman, and the rest).
 
@@ -54,4 +54,4 @@ Who presses what:
 - **Two players** (co-op with a second controller, or online): player 1 plays Mario's bar and player 2 the partner's, both on A.
 - **One player** (Always without a second player, and each side of a versus fight): A for Mario and B for the partner, as in the Mario & Luigi games.
 
-The Accessibility settings for attack commands count here too: **Wider windows** doubles the windows and lowers the mashing's marks, **Automatic** plays both perfectly. The Simplifier badge widens the window of the one wearing it, and an Auto Command badge plays its wearer's half. Hold instead of mashing (One-handed controls) works for the mashing.
+Accessibility → **Action commands: attacks** counts here too: **Wider windows** doubles the windows and lowers the mashing's marks, **Automatic** plays both perfectly. The Simplifier badge widens the window of the one wearing it, and an Auto Command badge ([DIRECTORS_CUT.md](DIRECTORS_CUT.md)) plays its wearer's half. Controls → **Hold instead of mashing** works for the mashing.

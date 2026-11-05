@@ -63,6 +63,8 @@ static unsigned sRng = 1;
 static int sThink;
 static int sStuck;
 static int sAcGood;
+static int sSac = -1; /* the Star Power it picked this turn (superActionTable's; -1 none) */
+static int sSacCur, sSacRound, sSacWait, sSacGood; /* Showstopper's buttons as it plays them */
 
 static unsigned next(void) {
     sRng ^= sRng << 13;
@@ -81,11 +83,13 @@ void portVersusCpuReset(int skill) {
     sThink = 0;
     sStuck = 0;
     sAcGood = 0;
+    sSac = -1;
 }
 
 void portVersusCpuCommandBegins(void) {
     sThink = 0;
     sStuck = 0;
+    sSac = -1;
 }
 
 static int playerKind(const BattleUnit* u) {
@@ -104,7 +108,7 @@ typedef struct Option {
     int score;
 } Option;
 
-#define MAX_OPTIONS 48
+#define MAX_OPTIONS 64 /* every jump, hammer, Star Power and item Mario can have (51) */
 
 static Option sOptions[MAX_OPTIONS];
 static int sCount;
@@ -262,11 +266,244 @@ static int missing(const BattleUnit* u, int most) {
     return m < most ? m : most;
 }
 
+/* --- statuses --- */
+
+/* the move's chance (%) of the status, as battle_damage.c's _getSickStatusRate */
+static int statusRate(const BattleWeapon* w, int type) {
+    switch (type) {
+        case STATUS_SLEEP: return w->sleepChance;
+        case STATUS_STOP: return w->stopChance;
+        case STATUS_DIZZY: return w->dizzyChance;
+        case STATUS_POISON: return w->poisonChance;
+        case STATUS_CONFUSE: return w->confuseChance;
+        case STATUS_ELECTRIC: return w->electricChance;
+        case STATUS_DODGY: return w->dodgyChance;
+        case STATUS_BURN: return w->burnChance;
+        case STATUS_FREEZE: return w->freezeChance;
+        case STATUS_TINY: return w->sizeChangeStrength <= 0 ? w->sizeChangeChance : 0;
+        case STATUS_ATTACK_UP: return w->atkChangeStrength > 0 ? w->atkChangeChance : 0;
+        case STATUS_ATTACK_DOWN: return w->atkChangeStrength <= 0 ? w->atkChangeChance : 0;
+        case STATUS_DEFENSE_UP: return w->defChangeStrength > 0 ? w->defChangeChance : 0;
+        case STATUS_DEFENSE_DOWN: return w->defChangeStrength <= 0 ? w->defChangeChance : 0;
+        case STATUS_INVISIBLE: return w->invisibleChance;
+        case STATUS_FAST: return w->fastChance;
+        case STATUS_SLOW: return w->slowChance;
+        case STATUS_HP_REGEN: return w->hpRegenTime > 0 ? 100 : 0;
+        case STATUS_PAYBACK: return w->paybackTime != 0 ? 100 : 0;
+        case STATUS_HOLD_FAST: return w->holdFastTime > 0 ? 100 : 0;
+        case STATUS_INSTANT_KILL: return (u8)w->ohkoChance;
+        default: return 0;
+    }
+}
+
+/* the unit's own rate against it (%), as battle_damage.c's _getRegistStatus */
+static int statusRegist(const BattleUnit* u, int type) {
+    const BattleVulnerableStatus* v = u->vulnStatus;
+    if (v == NULL) {
+        return 100;
+    }
+    switch (type) {
+        case STATUS_SLEEP: return v->sleepRate;
+        case STATUS_STOP: return v->stopRate;
+        case STATUS_DIZZY: return v->dizzyRate;
+        case STATUS_POISON: return v->poisonRate;
+        case STATUS_CONFUSE: return v->confuseRate;
+        case STATUS_ELECTRIC: return v->electricRate;
+        case STATUS_DODGY: return v->dodgyRate;
+        case STATUS_BURN: return v->burnRate;
+        case STATUS_FREEZE: return v->freezeRate;
+        case STATUS_TINY: return v->tinyRate;
+        case STATUS_ATTACK_UP: return v->attackUpRate;
+        case STATUS_ATTACK_DOWN: return v->attackDownRate;
+        case STATUS_DEFENSE_UP: return v->defenseUpRate;
+        case STATUS_DEFENSE_DOWN: return v->defenseDownRate;
+        case STATUS_INVISIBLE: return v->invisibleRate;
+        case STATUS_FAST: return v->fastRate;
+        case STATUS_SLOW: return v->slowRate;
+        case STATUS_INSTANT_KILL: return v->instaKillRate;
+        default: return 100;
+    }
+}
+
+/* The chance (%) it takes on the target: the move's, the target's own rate,
+ * and what keeps it off (as BattleSetStatusDamage: immune parts, Allergic,
+ * Feeling Fine, Ice Power); 0 when the target has it already. */
+static int statusChance(const BattleWeapon* w, BattleUnit* t, const BattleUnitPart* part, int type) {
+    int rate = statusRate(w, type);
+    if (rate <= 0 || part == NULL || (part->attributes & (PART_ATTR_IMMUNE_TO_DAMAGE_OR_STATUS | PART_ATTR_IMMUNE_TO_STATUS))) {
+        return 0;
+    }
+    if (BtlUnit_CheckStatus(t, (StatusEffectType)type)) {
+        return 0; /* (already: no gain) */
+    }
+    switch (type) {
+        case STATUS_SLEEP:
+        case STATUS_STOP:
+        case STATUS_DIZZY:
+        case STATUS_POISON:
+        case STATUS_CONFUSE:
+        case STATUS_TINY:
+        case STATUS_ATTACK_DOWN:
+        case STATUS_DEFENSE_DOWN:
+        case STATUS_INSTANT_KILL:
+            if (t->badgesEquipped.FeelingFine) {
+                return 0;
+            }
+            /* fall through */
+        case STATUS_BURN:
+        case STATUS_FREEZE:
+        case STATUS_SLOW:
+            if (BtlUnit_CheckStatus(t, STATUS_ALLERGIC) || (part->attributes & PART_ATTR_IMMUNE_TO_MOST_STATUS) ||
+                (type == STATUS_BURN && t->badgesEquipped.IcePower)) {
+                return 0;
+            }
+            break;
+        default:
+            break;
+    }
+    if (!(w->special & SPECIAL_IGNORE_STATUS_VULNERABILITY) || statusRegist(t, type) == 0) {
+        rate = rate * statusRegist(t, type) / 100;
+    }
+    return rate > 100 ? 100 : rate;
+}
+
+/* turns a status lasts, as far as the computer looks ahead (three) */
+static int turnsOf(int time) {
+    return time <= 0 ? 1 : time > 3 ? 3 : time;
+}
+
+/* What a move's statuses are worth on a foe: turns it can't act (sleep,
+ * stop, freeze: as Clock Out's), half of that for dizzy, slow and confused,
+ * the damage poison and burn do, the attack and defence it loses, and a
+ * knock-out (Showstopper's: worth its whole HP); each by its chance. */
+static int foeStatusWorth(const BattleWeapon* w, BattleUnit* t, const BattleUnitPart* part) {
+    const int turn = t->currentKind == UNIT_MARIO ? 45 : 25;
+    int v = 0, p;
+    if (t->currentHp <= 0) {
+        return 0;
+    }
+    if ((p = statusChance(w, t, part, STATUS_SLEEP)) > 0) {
+        v += turn * turnsOf(w->sleepTime) * p / 100;
+    }
+    if ((p = statusChance(w, t, part, STATUS_STOP)) > 0) {
+        v += turn * turnsOf(w->stopTime) * p / 100;
+    }
+    if ((p = statusChance(w, t, part, STATUS_FREEZE)) > 0) {
+        v += turn * turnsOf(w->freezeTime) * p / 100;
+    }
+    if ((p = statusChance(w, t, part, STATUS_DIZZY)) > 0) {
+        v += turn / 2 * turnsOf(w->dizzyTime) * p / 100;
+    }
+    if ((p = statusChance(w, t, part, STATUS_CONFUSE)) > 0) {
+        v += turn / 2 * turnsOf(w->confuseTime) * p / 100;
+    }
+    if ((p = statusChance(w, t, part, STATUS_SLOW)) > 0) {
+        v += turn / 2 * turnsOf(w->slowTime) * p / 100;
+    }
+    if ((p = statusChance(w, t, part, STATUS_POISON)) > 0) {
+        v += worth(t, (w->poisonStrength > 0 ? w->poisonStrength : 1) * turnsOf(w->poisonTime)) * 7 / 10 * p / 100;
+    }
+    if ((p = statusChance(w, t, part, STATUS_BURN)) > 0) {
+        v += worth(t, turnsOf(w->burnTime)) * 7 / 10 * p / 100;
+    }
+    if ((p = statusChance(w, t, part, STATUS_TINY)) > 0) {
+        v += 15 * turnsOf(w->sizeChangeTime) * p / 100;
+    }
+    if ((p = statusChance(w, t, part, STATUS_ATTACK_DOWN)) > 0) {
+        v += 12 * (w->atkChangeStrength < 0 ? -w->atkChangeStrength : 1) * turnsOf(w->atkChangeTime) * p / 100;
+    }
+    if ((p = statusChance(w, t, part, STATUS_DEFENSE_DOWN)) > 0) {
+        v += 10 * (w->defChangeStrength < 0 ? -w->defChangeStrength : 1) * turnsOf(w->defChangeTime) * p / 100;
+    }
+    if ((p = statusChance(w, t, part, STATUS_INSTANT_KILL)) > 0) {
+        v += worth(t, t->currentHp) * p / 100;
+    }
+    return v;
+}
+
+/* What a move's statuses are worth on its own side: an extra move (Rally
+ * Wink), attack and defence up, dodging and going unseen, healing over
+ * turns while hurt, Payback and Hold Fast */
+static int allyStatusWorth(const BattleWeapon* w, BattleUnit* t, const BattleUnitPart* part) {
+    const int lead = t->currentKind == UNIT_MARIO;
+    int v = 0, p;
+    if (t->currentHp <= 0) {
+        return 0;
+    }
+    if ((p = statusChance(w, t, part, STATUS_FAST)) > 0) {
+        v += (lead ? 60 : 40) * p / 100;
+    }
+    if ((p = statusChance(w, t, part, STATUS_ATTACK_UP)) > 0) {
+        v += 14 * (w->atkChangeStrength > 0 ? w->atkChangeStrength : 1) * turnsOf(w->atkChangeTime) * p / 100;
+    }
+    if ((p = statusChance(w, t, part, STATUS_DEFENSE_UP)) > 0) {
+        v += (lead ? 12 : 8) * (w->defChangeStrength > 0 ? w->defChangeStrength : 1) * turnsOf(w->defChangeTime) * p / 100;
+    }
+    if ((p = statusChance(w, t, part, STATUS_DODGY)) > 0) {
+        v += (lead ? 25 : 15) * turnsOf(w->dodgyTime) * p / 100;
+    }
+    if ((p = statusChance(w, t, part, STATUS_INVISIBLE)) > 0) {
+        v += (lead ? 40 : 20) * p / 100;
+    }
+    if ((p = statusChance(w, t, part, STATUS_ELECTRIC)) > 0) {
+        v += 12 * turnsOf(w->electricTime) * p / 100;
+    }
+    if ((p = statusChance(w, t, part, STATUS_HP_REGEN)) > 0 && t->currentHp * 100 < t->maxHp * 70) {
+        v += missing(t, (w->hpRegenStrength > 0 ? w->hpRegenStrength : 1) * turnsOf(w->hpRegenTime)) * (lead ? 10 : 6) *
+             p / 100;
+    }
+    if ((p = statusChance(w, t, part, STATUS_PAYBACK)) > 0) {
+        v += (lead ? 25 : 15) * p / 100;
+    }
+    if ((p = statusChance(w, t, part, STATUS_HOLD_FAST)) > 0) {
+        v += (lead ? 20 : 12) * p / 100;
+    }
+    return v;
+}
+
+/* --- Showstopper --- */
+
+/* its knock-out chance as the computer plays its buttons (each press right
+ * by kShowPressPct): 50% with no round cleared, 10 more a round
+ * (sac_suki.c), so about 58, 70 and 89% */
+static const int kShowstopperPct[3] = {58, 70, 89};
+static const int kShowPressPct[3] = {80, 92, 98};
+static const int kShowPressFrames[3] = {30, 20, 14}; /* (each round gives 180 frames and up for 3 to 7 buttons) */
+
+int portShowstopperWants(s32* button, s32* cur, s32* round); /* sac_suki.c */
+
+unsigned portVersusCpuSacButtons(void) {
+    s32 button, cur, round;
+    if (sSac != 6 || !portShowstopperWants(&button, &cur, &round)) {
+        return 0;
+    }
+    if (cur != sSacCur || round != sSacRound) {
+        /* the next button: a moment to find it, and whether it is pressed right */
+        sSacCur = cur;
+        sSacRound = round;
+        sSacWait = kShowPressFrames[sSkill];
+        sSacGood = chance(kShowPressPct[sSkill]);
+    }
+    if (sSacWait > 0) {
+        sSacWait--;
+        return 0;
+    }
+    if (!sSacGood) {
+        return 0u; /* (not right: it lets the time run out) */
+    }
+    if (sSacWait == 0) {
+        sSacWait = -1;
+        printf("[versus] the computer: Showstopper, round %d, button %d\n", (int)round + 1, (int)cur + 1);
+        fflush(stdout);
+    }
+    return (unsigned)button;
+}
+
 /* A Star Power's worth: the heals once HP run low; the attacks by the damage
  * they would likely do (their action commands about half right; they pierce
  * defence); Clock Out by the foes' turns it may take; Power Lift while it
- * isn't on; less their Star Power, which is slow to fill. Showstopper is
- * left out (its knock-out by chance, on a player's units). */
+ * isn't on; Showstopper by the knock-outs it would likely make (as it plays
+ * the buttons); less their Star Power, which is slow to fill. */
 static void judgeSpecial(BattleWork* wp, BattleUnit* unit, Option* o, int n) {
     static const int kHit[8] = {0, 3, 0, 0, 5, 0, 0, 10}; /* a foe's likely damage: Earth Tremor, Art Attack, Supernova */
     BattleUnit* party = BattleGetPartnerPtr(wp, unit);
@@ -308,6 +545,17 @@ static void judgeSpecial(BattleWork* wp, BattleUnit* unit, Option* o, int n) {
         case 3: /* Power Lift */
             if (unit->atkChangeTurns <= 0) {
                 v = 70;
+            }
+            break;
+        case 6: /* Showstopper: a knock-out of each foe by chance */
+            for (i = 0; i < n; i++) {
+                BattleUnitPart* part;
+                BattleUnit* t = targetUnit(wp, i, &part);
+                int p;
+                if (t != NULL && !ownSide(unit, t) && playerKind(t) &&
+                    (p = statusChance(o->w.weapon, t, part, STATUS_INSTANT_KILL)) > 0) {
+                    v += worth(t, t->currentHp) * p / 100 * kShowstopperPct[sSkill] / 100;
+                }
             }
             break;
         default:
@@ -370,10 +618,19 @@ static void judge(BattleWork* wp, BattleUnit* unit, Option* o) {
         BattleUnitPart* part;
         BattleUnit* t = targetUnit(wp, i, &part);
         int v;
-        if (t == NULL || ownSide(unit, t) || !playerKind(t)) {
+        if (t == NULL || !playerKind(t)) {
             continue;
         }
-        v = worth(t, damage(wp, unit, weapon, t, part, o->type));
+        if (ownSide(unit, t)) {
+            /* a move for its own side (Rally Wink, Veil, a Power Punch, ...): its statuses */
+            v = allyStatusWorth(weapon, t, part);
+            if (v <= 0) {
+                continue;
+            }
+        } else {
+            /* the damage, and the statuses it gives (alone: Sleepy Sheep, Tease, a Stopwatch, ...) */
+            v = worth(t, damage(wp, unit, weapon, t, part, o->type)) + foeStatusWorth(weapon, t, part);
+        }
         sum += v;
         if (v > bestV || best < 0) {
             bestV = v;
@@ -394,7 +651,7 @@ static void judge(BattleWork* wp, BattleUnit* unit, Option* o) {
         o->score = sum;
     }
     if (o->score <= 0) {
-        o->score = weapon->hpDamageFn == NULL ? 1 : 0; /* (a move for its effect alone: little) */
+        o->score = weapon->hpDamageFn == NULL ? 1 : 0; /* (a move for an effect it can't weigh: little) */
         return;
     }
     o->score -= BtlUnit_GetWeaponCost(unit, weapon) * (sSkill == PORT_VERSUS_HARD ? 4 : 6);
@@ -518,6 +775,8 @@ static void decide(BattleWork* wp, BattleUnit* unit, const Option* o) {
         wp->weaponTargets = sTargets;
         wp->weaponTargets.currentTarget = (s8)(o->target < sTargets.numTargets ? o->target : 0);
     }
+    sSac = o->type == 4 ? o->special : -1;
+    sSacCur = sSacRound = -1;
     wp->flags |= BATTLE_FLAG_ACT_DECIDED;
     cmd->state = 29;
 }
@@ -595,7 +854,8 @@ int portVersusCpuCommand(BattleWork* wp, BattleUnit* unit) {
     } else {
         fallback(&sPick);
     }
-    printf("[versus] the computer: %s\n", pickName(&sPick));
+    printf("[versus] the computer: %s (item %d, score %d)\n", pickName(&sPick), sPick.type == 2 ? sPick.w.itemId : 0,
+           sPick.score);
     fflush(stdout);
     decide(wp, unit, &sPick);
     return 1;

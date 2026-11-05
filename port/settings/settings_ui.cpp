@@ -24,6 +24,7 @@
 #include "port/romfont_pc.h"
 #include "port/layout.h"
 #include "port/bindings.h"
+#include "port/menu_typing.h"
 #include "../archipelago/ttyd_ap.h"
 
 #include <SDL3/SDL.h>
@@ -57,6 +58,12 @@ const char* portShotStatus(void);
 // port/src/common/warp_pc.c
 void portWarpRequestSave(const char* path);
 const char* portWarpStatus(void);
+}
+
+void portui::hint(const char* text) {
+  ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
+  ImGui::TextWrapped("%s", portTr(text));
+  ImGui::PopStyleColor();
 }
 
 namespace {
@@ -135,11 +142,7 @@ bool check(const char* label, int* value) {
   return false;
 }
 
-void note(const char* text) {
-  ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
-  ImGui::TextWrapped("%s", portTr(text));
-  ImGui::PopStyleColor();
-}
+void note(const char* text) { portui::hint(text); }
 
 bool slider(const char* label, int* value, int lo, int hi) {
   if (ImGui::SliderInt(trl(label), value, lo, hi, "%d%%")) {
@@ -1236,6 +1239,11 @@ extern "C" int portSettingsSections(const char** tabs, const char** labels, int 
   int n = 0;
   for (const auto& s : sectionNames()) {
     if (n >= max) {
+      static bool sTold;
+      if (!sTold) { // (the caller's array is too small: the rest lose their Start menu rows)
+        sTold = true;
+        std::fprintf(stderr, "settings: %d sections, only %d listed\n", int(sectionNames().size()), max);
+      }
       break;
     }
     tabs[n] = s.first;
@@ -1367,6 +1375,9 @@ extern "C" void portSettingsEvent(const void* sdlEvent) {
   if (e->type == SDL_EVENT_FINGER_DOWN || e->type == SDL_EVENT_FINGER_MOTION || e->type == SDL_EVENT_FINGER_UP ||
       e->type == SDL_EVENT_FINGER_CANCELED) {
     touchToMouse(e);
+  }
+  if (portMenuTypingEvent(sdlEvent)) {
+    return; // typed into a Start menu keyboard (menu_typing.cpp)
   }
   if (portBindingsEvent(sdlEvent)) {
     return; // a key or button being chosen (Bindings), or one of Paper Cut's actions

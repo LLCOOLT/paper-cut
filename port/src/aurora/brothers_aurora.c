@@ -116,30 +116,44 @@ static void paramPost(BattleWork* wp) {
     fflush(stdout);
 }
 
-/* statusWinMain: Luigi's HUD under the game's, with his face */
+/* Luigi's HUD, with his face */
 static void luigiHud(CameraId camId, void* param) {
     portLuigiFaceForce(1);
     portStatusWinDispOther(camId, param);
     portLuigiFaceForce(-1);
 }
 
+/* statusWinMain: Luigi's HP and FP (the HUD's two first banners, his face
+ * on the HP's) under the game's, in battle and in the field, sliding in and
+ * out with it (draw-only: the font's numbers take no random numbers) */
 static void statusWinPost(void) {
     BattleUnit* luigi;
     StatusValue v;
-    const PouchData* pouch;
-    if (gp == NULL || !gp->inBattle || portVersusOn() ||
-        (luigi = luigiUnit(_battleWorkPointer)) == NULL) {
+    if (gp == NULL || portVersusOn() || !portBrothersOn()) {
         return;
     }
-    pouch = pouchGetPtr();
     memset(&v, 0, sizeof(v));
-    v.hp = luigi->currentHp;
-    v.maxHp = luigi->maxHp;
-    v.fp = luigi->currentFp;
-    v.maxFp = luigi->maxFp;
-    v.ap = pouch->currentSP;
-    v.maxAp = pouch->maximumSP;
+    if (gp->inBattle) {
+        if ((luigi = luigiUnit(_battleWorkPointer)) == NULL) {
+            return;
+        }
+        v.hp = luigi->currentHp;
+        v.maxHp = luigi->maxHp;
+        v.fp = luigi->currentFp;
+        v.maxFp = luigi->maxFp;
+    } else {
+        int hp, fp;
+        if (!portBrothersInField()) {
+            return;
+        }
+        portBrothersGetStats(&hp, &fp);
+        v.hp = (s16)hp;
+        v.maxHp = (s16)pouchGetPtr()->maximumHP;
+        v.fp = (s16)fp;
+        v.maxFp = (s16)pouchGetPtr()->maximumFP;
+    }
     portStatusWinSetOther(&v, 100.0f);
+    portStatusWinSetOtherHpFpOnly();
     dispEntry(CAMERA_2D, 500.0f, 0, luigiHud, NULL);
 }
 
@@ -151,4 +165,5 @@ void portBrothersRegister(void) {
     portModHostAddHook(0, kSlot_BattleGetMarioPtr, (void*)marioPre);
     portModHostAddHook(1, kSlot_BattleSetMarioParamToFieldBattle, (void*)paramPost);
     portModHostAddHook(1, kSlot_statusWinMain, (void*)statusWinPost);
+    portModHostAddHook(1, kSlot_fbatHitCheck, (void*)portBrothersFbatHitPost);
 }

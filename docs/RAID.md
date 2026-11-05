@@ -1,12 +1,12 @@
 # The raid boss
 
-One of the game's own bosses, much stronger, for a full party: two to four players online, with controllers on this computer (Multiplayer > Second player, and players 3 and 4: [PLAYERS.md](PLAYERS.md)), or one player and Brothers mode's Luigi ([BROTHERS.md](BROTHERS.md)). It fights in four phases that need the duo moves ([DUO_MOVES.md](DUO_MOVES.md)) and everyone's Superguards, and its attacks borrow other bosses'. A new boss every Monday (UTC), the same for everyone, with or without a network.
+One of the game's own bosses, much stronger, for a full party: two to four players online, with controllers on this computer (Multiplayer > Second player (co-op), and players 3 and 4: [PLAYERS.md](PLAYERS.md)), or one player and Brothers mode's Luigi ([BROTHERS.md](BROTHERS.md)). It fights in four phases that need the duo moves ([DUO_MOVES.md](DUO_MOVES.md)) and everyone's Superguards, and its attacks borrow other bosses'. A new boss every Monday (UTC), the same for everyone, with or without a network.
 
 ## Starting it
 
 With a file in play, in the field, and two players or more:
 
-- the Start menu's Settings tab, **Modes > Raid boss** (and **This week's raid**, the week's boss and its phases on a page);
+- the Start menu's Settings tab, **Modes > Raid boss**: its **Raid boss** row starts it, **This week's raid** shows the week's boss and its phases;
 - online, also the Start menu's Online tab, **Raid boss of the week**;
 - offline, the full settings page's Modes tab, **Start this week's raid**.
 

@@ -24,9 +24,6 @@ Das Spiel hat schon so viele Spieler wie möglich (vier).
 That game has as many players as it can.
 Das Spiel hat schon so viele Spieler wie möglich.
 
-That room has as many players as it can
-Der Raum hat schon so viele Spieler wie möglich
-
 The game started without this player: watch it instead.
 Das Spiel hat ohne dich begonnen: schau stattdessen zu.
 

@@ -83,6 +83,9 @@ double portHostSeconds(void);
 void portPracticeDeclare(void);
 /* The user folder (Aurora's; headless: $TTYD_USER_DIR or "."). */
 const char* portPracticeUserDir(void);
+/* Makes <user folder>/<sub>/<game id> if it's missing (the per-release
+ * records: Achievements, AreaMaps, Stickers). */
+void portPracticeGameDir(const char* sub);
 /* Each frame, from portPracticeFrame (achievements_pc.c). */
 void portAchievementsFrame(void);
 /* A save file was loaded (the file select, a save warp): gp->lastSlot and the

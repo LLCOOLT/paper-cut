@@ -314,12 +314,16 @@ int portRecipeCook(int a, int b) {
 /* (declared once each: asked for every frame; the settings' table never moves) */
 static int* sMakerKeys[PORT_BADGE_CUSTOM_COUNT][2] PORT_HOST_DATA;
 
+/* a made badge's effects packed in one setting: 7 bits each (a badge's index + 1) */
+#define MAKER_BITS 7
+#define MAKER_MASK ((1 << MAKER_BITS) - 1)
+
 static int* makerKey(int slot, const char* what) {
     const int which = what[0] == 'f' ? 0 : 1; /* "fx", "icon" */
     if (sMakerKeys[slot][which] == NULL) {
         char key[40];
         snprintf(key, sizeof(key), "badge_maker_%d_%s", slot, what);
-        sMakerKeys[slot][which] = portSettingsDeclare(key, 0, 0, 0x0FFFFFFF);
+        sMakerKeys[slot][which] = portSettingsDeclare(key, 0, 0, (1 << (MAKER_BITS * PORT_BADGE_GRANTS)) - 1);
     }
     return sMakerKeys[slot][which];
 }
@@ -334,7 +338,7 @@ int portBadgeMakerGet(int slot, short grants[PORT_BADGE_GRANTS], int* iconBadge)
     fx = makerKey(slot, "fx");
     icon = makerKey(slot, "icon");
     for (i = 0; i < PORT_BADGE_GRANTS; i++) {
-        const int v = fx != NULL ? (*fx >> (7 * i)) & 0x7F : 0;
+        const int v = fx != NULL ? (*fx >> (MAKER_BITS * i)) & MAKER_MASK : 0;
         grants[i] = (short)(v > 0 && v <= BADGE_COUNT ? BADGE_MIN + v - 1 : 0);
     }
     /* packed: no gaps */
@@ -361,7 +365,7 @@ void portBadgeMakerSet(int slot, const short grants[PORT_BADGE_GRANTS], int icon
     icon = makerKey(slot, "icon");
     for (i = 0; i < PORT_BADGE_GRANTS; i++) {
         if (grants[i] >= BADGE_MIN && grants[i] < BADGE_MAX) {
-            v |= (grants[i] - BADGE_MIN + 1) << (7 * n++);
+            v |= (grants[i] - BADGE_MIN + 1) << (MAKER_BITS * n++);
         }
     }
     if (fx != NULL) {
@@ -384,7 +388,7 @@ const char* portBadgeMakerName(int slot) {
 }
 
 unsigned portBattlexRefresh(void) {
-    static unsigned sChanges;
+    static unsigned sChanges PORT_HOST_DATA; /* (only ever counts up, save states or not) */
     int i;
     portItemsInit();
     for (i = 0; i < PORT_BADGE_CUSTOM_COUNT; i++) {

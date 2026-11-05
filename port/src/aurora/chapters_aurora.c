@@ -152,7 +152,7 @@ static void removeSnap(int slot) {
 }
 
 int portChapterSelectUnlocked(void) {
-    return gp != NULL && swByteGet(GSW_STORY_PROGRESS) >= STORY_STG9_02_RETURN_TO_ROGUEPORT;
+    return gp != NULL && swStoryPeek() >= STORY_STG9_02_RETURN_TO_ROGUEPORT;
 }
 
 int portChapterActive(void) {
@@ -304,7 +304,7 @@ static void fileLoaded(void) {
     FILE* f;
     Snapshot s;
     const int slot = slotNow();
-    const s32 story = swByteGet(GSW_STORY_PROGRESS);
+    const s32 story = swStoryPeek();
     sActive = 0;
     if (portOnlineActive() || portReplayActive()) {
         return; /* the kept state is this player's file, which the others don't have */
@@ -352,7 +352,7 @@ void portChaptersFrame(void) {
     if (sActive != 0) {
         if (__atomic_exchange_n(&sAbandonAsked, 0, __ATOMIC_SEQ_CST)) {
             endNow(0);
-        } else if (swByteGet(GSW_STORY_PROGRESS) >= kEnd[sActive]) {
+        } else if (swStoryPeek() >= kEnd[sActive]) {
             endNow(1);
         }
         return;

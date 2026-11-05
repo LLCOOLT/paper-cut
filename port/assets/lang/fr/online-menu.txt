@@ -27,8 +27,8 @@ Sur cet appareil, le jeu en ligne se lance depuis l'onglet En ligne du lanceur, 
 Host a room
 Ouvrir un salon
 
-Opens a room with a code to give the other player: nothing to set up.
-Ouvre un salon avec un code à donner à l'autre joueur : rien à configurer.
+Opens a room with a code to give the other player.
+Ouvre un salon avec un code à donner à l'autre joueur.
 
 Waits on your port: on the same network, or with the port forwarded or a VPN.
 Attend sur votre port : sur le même réseau, ou avec le port redirigé ou un VPN.

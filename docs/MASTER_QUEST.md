@@ -1,10 +1,10 @@
 # Master Quest
 
-Master Quest remixes the story's fights: more enemies, mixed from each area's own, and attacks that carry the game's own statuses, harder chapter by chapter, from the prologue to chapter 8, and the Pit of 100 Trials. Nothing new is drawn or animated: every enemy, move and status is one the game already has. Turn it on with **Modes > Master Quest**; it applies from the next room.
+Master Quest remixes the story's fights: more enemies, mixed from each area's own, and attacks that carry the game's own statuses, harder chapter by chapter, from the prologue to chapter 8, and the Pit of 100 Trials. Nothing new is drawn or animated: every enemy, move and status is one the game already has. Turn it on with Modes → **Master Quest**; it applies from the next room.
 
 ## What changes
 
-- **Fights.** A field enemy's fight is picked as the game picks it, then replaced by one of its area's Master Quest formations for the same first enemy: one to five enemies from that area's own fights. They keep the game's own entries for them (heights, item tables, what they do), stand where the game puts one to five enemies, and roll their held items as the game rolls them. The formation is the same each time for a room, an enemy and the remix seed (**Modes > Remix seed**), so a fight can be learned.
+- **Fights.** A field enemy's fight is picked as the game picks it, then replaced by one of its area's Master Quest formations for the same first enemy: one to five enemies from that area's own fights. They keep the game's own entries for them (heights, item tables, what they do), stand where the game puts one to five enemies, and roll their held items as the game rolls them. The formation is the same each time for a room, an enemy and the remix seed (Modes → **Remix seed**), so a fight can be learned.
 - **Enemies.** An enemy can have more (or less) HP, hit a little harder (attacks with a fixed power), give a status with its attacks on Mario's side (sleep, stop, dizzy, poison, confusion, burn, freeze, tiny, attack or defense down, slow; a guard still stops them, as in the game), attack with an element or pierce defense, and start a fight with up to two statuses of its own (dodgy, huge, attack or defense up, charged, invisible, fast, payback, hold fast, HP regeneration, electrified). The game's weapon data is never written: an attack with changes goes through the damage check as a changed copy.
 - **What stays.** Bosses and their parts, scripted fights (no running away, losing allowed, no Jump or Hammer, no partner change), tutorials, fights with an enemy outside a set's list, the boss rush and the endless Glitz Pit modes, and versus battles. In the Glitz Pit's story matches the teams stay as the story names them, and only their moves change.
 
@@ -29,7 +29,7 @@ Balanced for a new file, without the Gameplay tab's help. Fights grow more than 
 
 ## Your own sets
 
-**Challenges > Master Quest sets**: start from the curated set or from an empty one, edit the text (it is checked as you type), save it, and **Play this set**, or choose it in **Modes > Master Quest set**. **Copy the code** shares a set as a `PCMQ1:` code; **Add from the code** takes one in. The sets are kept in `master_quest_sets.txt` in the user folder, a code a line.
+Challenges → **Master Quest sets**: start from the curated set or from an empty one, edit the text (it is checked as you type), save it, and **Play this set**, or choose it in Modes → **Master Quest set**. **Copy the code** shares a set as a `PCMQ1:` code; **Add from the code** takes one in. The sets are kept in `master_quest_sets.txt` in the user folder, a code a line.
 
 A set is text, a line each (`#` starts a note):
 

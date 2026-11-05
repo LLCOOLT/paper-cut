@@ -24,9 +24,6 @@ That game has as many players as it can (four).
 That game has as many players as it can.
 そのゲームは　もう　まんいんです
 
-That room has as many players as it can
-そのルームは　もう　まんいんです
-
 The game started without this player: watch it instead.
 このプレイヤー　ぬきで　ゲームが　はじまりました：かんせん　してください
 

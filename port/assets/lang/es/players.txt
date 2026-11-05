@@ -24,9 +24,6 @@ Esa partida ya tiene todos los jugadores que puede (cuatro).
 That game has as many players as it can.
 Esa partida ya tiene todos los jugadores que puede.
 
-That room has as many players as it can
-Esa sala ya tiene todos los jugadores que puede
-
 The game started without this player: watch it instead.
 La partida empezó sin ti: mírala en su lugar.
 

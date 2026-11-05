@@ -33,10 +33,10 @@ Al empezar: adónde fue cada objeto, en la carpeta randomizer de la carpeta de u
 The randomizer: the US version only
 El aleatorio: solo la versión US
 
-It knows where the items are in the US version only, so it is off on this one.
-Solo sabe dónde están los objetos en la versión US, así que aquí está desactivado.
+It only knows the US version's items, so it is off here.
+Solo conoce los objetos de la versión US; aquí, desactivado.
 
-An Archipelago seed is chosen on the Archipelago tab; it is used instead of this one.
+An Archipelago seed is chosen; A uses the built-in one.
 Hay una semilla de Archipelago elegida en la pestaña Archipelago; se usa en lugar de esta.
 
 This run
@@ -54,8 +54,8 @@ Aleatorio desde el próximo inicio
 Every file played while it is on gets this seed's items: start a new file for it, and turn it off again for your other files.
 Cada partida jugada mientras está activado recibe los objetos de esta semilla: empieza una partida nueva para ella y desactívalo para las demás.
 
-A: type a seed. Any text; empty: a random one is made at the start.
-A: escribe una semilla. Cualquier texto; vacía: se crea una al azar al empezar.
+A: type a seed (any text). Empty: a random one at start.
+A: escribe una semilla (texto libre). Vacía: una al azar.
 
 (random)
 (al azar)
@@ -67,7 +67,10 @@ A: the seed made now, without playing it: what it would do.
 A: la semilla generada ahora, sin jugarla: lo que haría.
 
 The built-in randomizer's seed is used from the next start.
-La semilla del aleatorio integrado se usa desde el próximo inicio.
+Semilla del aleatorio propio: se usa al próximo inicio.
 
 A new seed: from the next start.
 Una semilla nueva: desde el próximo inicio.
+
+An Archipelago seed is chosen on the Archipelago tab; it is used instead of this one.
+Hay una semilla de Archipelago elegida en la pestaña Archipelago; se usa en lugar de esta.

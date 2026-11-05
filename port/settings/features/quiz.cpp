@@ -47,8 +47,8 @@ int formRows(PortPauseRow* out, int max) {
   if (max < 1) {
     return 0;
   }
-  out[0] = portPauseRow("Start a quiz party", "Trivia about the game for up to four players: it begins once the "
-                        "menu is closed.", nullptr, 0, portQuizActive() ? PORT_PAUSE_ROW_DIM : 0);
+  out[0] = portPauseRow("Start a quiz party", "Game trivia for up to four players, once the menu closes.", nullptr, 0,
+                        portQuizActive() ? PORT_PAUSE_ROW_DIM : 0);
   return 1;
 }
 
@@ -57,7 +57,7 @@ const char* formAct(int id, int dir) {
     return nullptr;
   }
   if (gPortCompanionMenu) {
-    return "Not from the second screen: do it in the game's own Start menu.";
+    return "Not on the second screen: use the game's Start menu.";
   }
   const char* why = nullptr;
   return portQuizStart(&why) ? "The quiz begins once the menu is closed." : why;

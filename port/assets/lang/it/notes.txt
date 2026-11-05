@@ -61,13 +61,13 @@ Sinistra e destra scelgono la frase del biglietto.
 Left and right pick the word in it.
 Sinistra e destra scelgono la sua parola.
 
-Leaves the note where Mario stands, for other players to find and rate.
+Leaves the note where Mario stands, for others to rate.
 Lascia il biglietto dove si trova Mario, perché altri giocatori lo trovino e lo valutino.
 
 Asks the relay again for this area's notes.
 Richiede di nuovo al relay i biglietti di questa zona.
 
-Right rates this note up, left rates it down. The best stay; the worst go.
+Right: rate up, left: rate down. The best notes stay.
 Destra valuta bene questo biglietto, sinistra male. I migliori restano, i peggiori se ne vanno.
 
 Your note is left here.

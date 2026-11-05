@@ -94,6 +94,9 @@ static SWork* wp;
 #endif
 
 static void statusWinDisp(CameraId camId, void* param);
+#ifdef TARGET_PC
+static BOOL portOtherHpFpOnly(void);
+#endif
 static void gaugeDisp(s32 sp, f32 x, f32 y);
 static void statusGetValue(SVal* values);
 static BOOL valueCheck(void);
@@ -363,6 +366,11 @@ static void PORT_HOOKABLE(statusWinDisp)(CameraId camId, void* param) {
         if (e->iconId == ICON_1D2 && !pouchGetPtr()->starPowersObtained) {
             break;
         }
+#ifdef TARGET_PC
+        if (i >= 6 && portOtherHpFpOnly()) { /* (the HP and FP banners alone: Brothers mode's Luigi) */
+            break;
+        }
+#endif
         if (!blinkOn) {
             blink = wp->blink;
             if (blink & 1 && i == 1) {
@@ -392,6 +400,11 @@ static void PORT_HOOKABLE(statusWinDisp)(CameraId camId, void* param) {
         numDisp(292.0f + HUD_X(x, 292) - 6.0f, 2.0f + (y - 38.0f), wp->cur.fp, 0);
     }
     numDisp(358.0f + HUD_X(x, 358) - 6.0f, 3.0f + (y - 38.0f), wp->cur.maxFp, 1);
+#ifdef TARGET_PC
+    if (portOtherHpFpOnly()) {
+        return;
+    }
+#endif
     numDisp(462.0f + HUD_X(x, 462), 2.0f + (y - 38.0f), wp->cur.starPoints, 0);
     if (!(wp->blink & 0x10) || blinkOn) {
         numDisp(572.0f + HUD_X(x, 572), 2.0f + (y - 38.0f), wp->cur.coins, 0);
@@ -852,13 +865,26 @@ int portHudIsStatusBar(DispCallback callback) {
 /* A versus battle (port/include/port/versus.h): the HUD drawn again at the
  * bottom of the screen (its top at openY) with the other side's values (as
  * shown, without the counting or blinks), sliding in and out with the
- * game's own: down off the screen as the game's goes up. */
+ * game's own: down off the screen as the game's goes up. Brothers mode's
+ * Luigi (port/include/port/brothers.h): his HP and FP banners alone, under
+ * the game's (an openY in the top half), sliding up with it. */
 static SVal sOther;
 static f32 sOtherY;
+static BOOL sOtherHpFpOnly; /* portStatusWinSetOtherHpFpOnly */
+static BOOL sDrawingOther;
+
+static BOOL portOtherHpFpOnly(void) {
+    return sDrawingOther && sOtherHpFpOnly;
+}
 
 void portStatusWinSetOther(const StatusValue* v, f32 openY) {
     sOther = *v;
     sOtherY = openY;
+    sOtherHpFpOnly = FALSE;
+}
+
+void portStatusWinSetOtherHpFpOnly(void) {
+    sOtherHpFpOnly = TRUE;
 }
 
 void portStatusWinDispOther(CameraId camId, void* param) {
@@ -869,10 +895,17 @@ void portStatusWinDispOther(CameraId camId, void* param) {
         return;
     }
     wp->cur = sOther;
-    wp->y = sOtherY - (y - wp->openY);
+    if (sOtherY >= 0.0f) {
+        /* in the top half: up off the screen with the game's, to where it closes */
+        wp->y = sOtherY + (y - wp->openY) * (wp->closeY - sOtherY) / (wp->closeY - wp->openY);
+    } else {
+        wp->y = sOtherY - (y - wp->openY);
+    }
     wp->blink = 0;
     wp->blinkTimer = 0;
+    sDrawingOther = TRUE;
     statusWinDisp(camId, param);
+    sDrawingOther = FALSE;
     wp->cur = keep;
     wp->y = y;
     wp->blink = blink;

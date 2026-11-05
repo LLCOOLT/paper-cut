@@ -115,11 +115,11 @@ Keine Grenze
 Widest picture
 Breitestes Bild
 
-Past this the rest of the screen is bars (blurred with Blurred side bars).
+Wider screens get bars past this (see Blurred side bars).
 Darüber hinaus besteht der restliche Bildschirm aus Balken (unscharf mit Unscharfe Seitenbalken).
 
 The status bar, message windows and battle menus, larger or smaller than the game's.
-Statusleiste, Textfenster und Kampfmenüs, größer oder kleiner als im Spiel.
+Statusleiste, Textfenster und Kampfmenüs größer/kleiner.
 
 Off (the game's)
 Aus (wie im Spiel)
@@ -137,7 +137,7 @@ Texture detail
 Texturdetail
 
 Which of a texture's detail levels is used at a distance.
-Welche Detailstufe einer Textur in der Ferne verwendet wird.
+Welche Detailstufe einer Textur in der Ferne gilt.
 
 Draws the picture several times larger than the window and shrinks it: smoother edges, much more work for the graphics card.
 Zeichnet das Bild mehrfach größer als das Fenster und verkleinert es: glattere Kanten, viel mehr Arbeit für die Grafikkarte.
@@ -160,14 +160,14 @@ Auf einem HDR-Bildschirm das Bild in der Helligkeit, die du für Weiß wählst (
 Performance overlay
 Leistungsanzeige
 
-How long each frame takes: the time between frames, and the part spent working.
+The time between frames, and the part spent working.
 Wie lange jedes Bild dauert: die Zeit zwischen den Bildern und der Anteil, in dem gearbeitet wird.
 
 Sharp text
 Scharfer Text
 
-The game's font rebuilt as a distance field, so its letters stay sharp at any resolution (the same letters; a texture pack's font shows with this off).
-Die Schrift des Spiels als Distanzfeld neu aufgebaut, damit ihre Buchstaben bei jeder Auflösung scharf bleiben (dieselben Buchstaben; die Schrift eines Texturpakets erscheint, wenn dies aus ist).
+The game's font rebuilt as a distance field, so its letters stay sharp at any resolution (the same letters; a texture pack's own font is drawn as the pack's).
+Die Schrift des Spiels als Distanzfeld neu aufgebaut, damit ihre Buchstaben bei jeder Auflösung scharf bleiben (dieselben Buchstaben; die eigene Schrift eines Texturpakets wird so gezeigt, wie das Paket sie zeichnet).
 
 Window
 Fenster
@@ -271,7 +271,7 @@ Gegner-Angriff (benutzerdefiniert)
 Action commands: attacks
 Action-Kommandos: Angriffe
 
-Wider timing for attack commands, or every attack command done for you.
+Wider timing for attack commands, or all done for you.
 Großzügigeres Timing für Angriffsbefehle, oder jeder Angriffsbefehl wird für dich erledigt.
 
 Action commands: guards
@@ -295,19 +295,19 @@ Noch keine Spielstände: lege .gci-Dateien in den Warp-Ordner (im Spielstand-Ord
 Speedrun timer
 Speedrun-Timer
 
-Game time in a corner, counted in the game's own frames, with real time under it.
+Game time (in frames) and real time in a corner.
 Spielzeit in einer Ecke, in den eigenen Bildern des Spiels gezählt, darunter die Echtzeit.
 
 Load removal
 Ladezeiten abziehen
 
-Game time stops while a map or a battle loads (the timer's and LiveSplit's).
+The timer and LiveSplit stop while a map or battle loads.
 Die Spielzeit hält an, während eine Karte oder ein Kampf lädt (die des Timers und von LiveSplit).
 
 Start with a new file
 Mit einer neuen Datei starten
 
-The timer starts when a new file begins, and resets at the title screen.
+The timer starts with a new file and resets at the title.
 Der Timer startet, wenn eine neue Datei beginnt, und wird auf dem Titelbildschirm zurückgesetzt.
 
 When to split: Any% at the end of each chapter; every step of the story; or the user folder's splits.txt.
@@ -326,7 +326,7 @@ Frame advance keys
 Einzelbild-Tasten
 
 F6 holds the game (and lets it go on), F7 moves one frame.
-F6 hält das Spiel an (und lässt es weiterlaufen), F7 geht ein Bild weiter.
+F6 hält an (und setzt fort), F7 geht ein Bild weiter.
 
 Frame advance
 Einzelbildschaltung
@@ -349,7 +349,7 @@ Geschichte und Flags
 Memory watch corner
 Ecke der Speicheranzeige
 
-The fields ticked in Memory watch (All settings), kept on screen.
+Memory watch's ticked fields (All settings), on screen.
 Die in der Speicheranzeige (Alle Einstellungen) angehakten Felder, auf dem Bildschirm gehalten.
 
 Memory watch
@@ -418,8 +418,8 @@ Vorgaben
 One-hit KO
 Ein-Treffer-K.O.
 
-Any enemy hit that does damage knocks Mario or the partner out.
-Jeder gegnerische Treffer mit Schaden schlägt Mario oder den Partner K.O.
+Any damaging enemy hit knocks Mario or the partner out.
+Jeder Schadenstreffer schlägt Mario oder den Partner K.O.
 
 Allowed
 Erlaubt
@@ -430,8 +430,8 @@ Abwehr
 Attack commands
 Angriffsbefehle
 
-Narrower timing for Mario's and the partners' attack commands.
-Engeres Timing für die Angriffsbefehle von Mario und den Partnern.
+Narrower timing for Mario's and partners' attack commands.
+Angriffsbefehle von Mario und Partnern mit engerem Timing.
 
 No items in battle
 Keine Items im Kampf
@@ -448,8 +448,8 @@ Befehle der Zuschauer im Chat deines Kanals lassen das Publikum Items werfen, ei
 Cooldown
 Abklingzeit
 
-One command each this many seconds; a viewer, one each three times it.
-Ein Befehl alle so viele Sekunden; ein Zuschauer einer alle dreimal so viele.
+Seconds between commands (three times that per viewer).
+Sekunden zwischen Befehlen (pro Zuschauer das Dreifache).
 
 Allow the harmful ones
 Die schädlichen erlauben
@@ -463,8 +463,8 @@ Wechselt im Feld ohne Pausenmenü zum nächsten Partner: Q, der linke Stick eine
 Save Blocks save at once
 Speicherblöcke speichern sofort
 
-A Save Block saves to the file being played without asking first.
-Ein Speicherblock speichert ohne Nachfrage in die gespielte Datei.
+A Save Block saves to the current file without asking.
+Ein Speicherblock speichert ungefragt in den Spielstand.
 
 Bigger bag
 Größere Tasche
@@ -476,18 +476,18 @@ Partners never at 0 HP
 Partner nie bei 0 KP
 
 After a battle, a partner who fell is back at 1 HP.
-Nach einem Kampf ist ein gefallener Partner wieder bei 1 KP.
+Nach dem Kampf hat ein besiegter Partner wieder 1 KP.
 
 Level up with the D-pad
 Aufsteigen mit dem Steuerkreuz
 
-The level-up screen (HP, FP or BP) also takes the D-pad, not only the stick.
+The level-up screen (HP, FP, BP) also takes the D-pad.
 Der Bildschirm beim Aufsteigen (KP, BP oder OP) nimmt auch das Steuerkreuz, nicht nur den Stick.
 
 Healing items heal every partner
 Heil-Items heilen alle Partner
 
-In the field, an item used on a partner heals the other partners too.
+In the field, healing one partner heals all of them.
 Im Feld heilt ein Item, das bei einem Partner benutzt wird, auch die anderen Partner.
 
 Skip repeated scenes
@@ -506,7 +506,7 @@ Faster battle menus
 Schnellere Kampfmenüs
 
 The battle command wheel opens and turns twice as fast.
-Das Rad der Kampfbefehle öffnet und dreht sich doppelt so schnell.
+Das Kampfbefehlsrad öffnet und dreht sich doppelt so schnell.
 
 Tattle without a turn
 Scanner ohne Zug
@@ -547,9 +547,6 @@ Ein verlorener Kampf kostet keinen Rang, und die Bonusbedingung eines Kampfes bl
 Play as Luigi
 Als Luigi spielen
 
-Luigi in Mario's place, with Mario's moves, in the field, battles, menus and credits; the text calls him Luigi and the other Luigi stays out of sight. Saves are not changed.
-Luigi an Marios Stelle, mit Marios Fähigkeiten, im Feld, im Kampf, in den Menüs und im Abspann; der Text nennt ihn Luigi, und der andere Luigi bleibt unsichtbar. Spielstände werden nicht verändert.
-
 A new file starts with what you choose here, taken from the file New Game+ from file names. Choose before starting the new file.
 Eine neue Datei beginnt mit dem, was du hier wählst, übernommen aus der Datei, die New Game+ aus Datei nennt. Wähle es, bevor du die neue Datei beginnst.
 
@@ -583,7 +580,7 @@ Ein Speicherblock bietet vor dem Speichern auch an, Items einzulagern und heraus
 Walk-speed boost
 Lauftempo-Schub
 
-Mario walks and runs faster while the Boost key or Boost button is held.
+Mario moves faster while the Boost key or button is held.
 Mario geht und läuft schneller, solange die Schub-Taste (Tastatur) oder die Schub-Taste (Controller) gehalten wird.
 
 Boost speed
@@ -601,20 +598,20 @@ Schub-Taste (Controller)
 Coins from battles
 Münzen aus Kämpfen
 
-The coins a won battle drops, after Merlee, Money Money and a First Strike.
+A battle's coins, after Merlee, Money Money and co.
 Die Münzen, die ein gewonnener Kampf abwirft, nach Merlee, Geld! Geld! und einem Erstangriff.
 
 Star Points from battles
 Sternenpunkte aus Kämpfen
 
 A battle's Star Points (still at most 100, a level).
-Die Sternenpunkte eines Kampfes (weiterhin höchstens 100, ein Level).
+Sternenpunkte eines Kampfes (weiter max. 100, ein Level).
 
 Star Piece and Shine Sprite tracker
 Anzeige für Sternsplitter und Insignien
 
-How many of the current map's Star Pieces and Shine Sprites are found, in a corner.
-Wie viele Sternsplitter und Insignien der aktuellen Karte gefunden sind, in einer Ecke.
+The map's Star Pieces and Shine Sprites, in a corner.
+Sternsplitter und Insignien der Karte, in einer Ecke.
 
 On this map
 Auf dieser Karte
@@ -658,7 +655,7 @@ Eingebauter Zufallsmodus
 Backups kept
 Behaltene Sicherungen
 
-Dated copies of each save file, made when the game saves. 0: none.
+Dated copies of each save file, made on saving. 0: none.
 Datierte Kopien jeder Spielstand-Datei, angelegt, wenn das Spiel speichert. 0: keine.
 
 Restore a backup
@@ -679,8 +676,8 @@ Breitbild
 Never skip loading graphics
 Ladende Grafik nie überspringen
 
-Extra frames between the game's own 60: smoother motion.
-Zusätzliche Bilder zwischen den 60 des Spiels: flüssigere Bewegung.
+Extra frames between the game's 60: smoother motion.
+Zwischenbilder zu den 60 des Spiels: flüssigere Bewegung.
 
 Present at the display's refresh: no tearing.
 Bei der Bildwiederholung des Bildschirms zeigen: kein Reißen.
@@ -1034,9 +1031,6 @@ last_crash.txt im Speicherordner; füge ihn bei dem ein, der dir hilft.
 
 The game crashed last time
 Das Spiel ist letztes Mal abgestürzt
-
-A report of where it crashed was saved. Copy it and paste it to whoever is helping you.
-Ein Bericht, wo es abgestürzt ist, wurde gespeichert. Kopiere ihn und füge ihn bei dem ein, der dir hilft.
 
 Copy report
 Bericht kopieren
@@ -1578,8 +1572,8 @@ Den Spielstand durch diesen ersetzen
 Restore
 Wiederherstellen
 
-Restore this card's saves from the launcher, before the game starts.
-Stelle die Spielstände dieser Karte im Launcher wieder her, bevor das Spiel startet.
+Restore saves from the launcher, before starting.
+Stelle Spielstände im Launcher wieder her, vor dem Start.
 
 The Japanese release keeps its Pianta Parlor records differently; the copy is converted. Names typed in one release's letters may look different in another.
 Die japanische Version speichert die Rekorde ihrer Spielhalle anders; die Kopie wird umgewandelt. In den Buchstaben einer Version getippte Namen können in einer anderen anders aussehen.
@@ -1805,8 +1799,8 @@ R löst aus bei
 Player 2 joined: their stick walks the partner.
 Spieler 2 ist dabei: sein Stick bewegt den Partner.
 
-A second controller: turn on Second player (Controls) to play the partner.
-Ein zweiter Controller: schalte Zweiter Spieler (Steuerung) ein, um den Partner zu spielen.
+A second controller: turn on Second player (co-op) in Multiplayer to play the partner.
+Ein zweiter Controller: schalte Zweiter Spieler (Koop) unter Mehrspieler ein, um den Partner zu spielen.
 
 Player 2 left: the partner follows Mario.
 Spieler 2 ist weg: der Partner folgt Mario.

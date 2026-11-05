@@ -12,7 +12,7 @@ Restarting when the game has finished saving...
 Starts the game again with this disc; quick resume brings you back here.
 このディスクでゲームを再起動します。クイックレジュームでここに戻れます。
 
-Press A twice to restart the game for these settings; quick resume brings you back here.
+Press A twice to restart; quick resume brings you back.
 Aを2回押すと、これらの設定のためにゲームを再起動します。クイックレジュームでここに戻れます。
 
 Press A again to restart.
@@ -29,6 +29,9 @@ Paper Cutの設定：スタートメニューの最後のタブ、またはF1（
 
 Paper Cut's settings: the Start menu's last tab, or the three-bar button.
 Paper Cutの設定：スタートメニューの最後のタブ、または三本線ボタン。
+
+As on a PAL TV: the game's 50 Hz mode, a little slower.
+PALテレビと同じ：ゲームの50Hzモードで、少し遅くなります。
 
 Xbox controller
 Xboxコントローラー

@@ -21,7 +21,7 @@ Die Vorlage konnte nicht geschrieben werden.
 Written: %s, with %d texts to translate.
 Geschrieben: %s, mit %d Texten zum Übersetzen.
 
-Letters the menus' fonts didn't have yet show after a restart.
+New letters for the menus' fonts show after a restart.
 Buchstaben, die den Schriften der Menüs noch fehlten, erscheinen nach einem Neustart.
 
 No language packs yet.

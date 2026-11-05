@@ -34,7 +34,7 @@ Luigi's voice for Mario
 La voz de Luigi para Mario
 
 Mario's steps, jumps and landings sound as Luigi's.
-Los pasos, saltos y aterrizajes de Mario suenan como los de Luigi.
+Pasos, saltos y aterrizajes de Mario con sonido de Luigi.
 
 Spinning paper
 Papel que gira

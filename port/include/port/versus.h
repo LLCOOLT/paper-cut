@@ -141,6 +141,9 @@ int portVersusCpuCommand(struct BattleWork* wp, struct BattleUnit* unit);
 int portVersusCpuGuard(struct BattleUnit* unit, struct BattleWeapon* weapon);
 void portVersusCpuActionCommand(void);
 int portVersusCpuActionGood(void);
+/* While its side acts, each frame: the buttons it presses on the first
+ * controller now (Showstopper's, as it plays them; else 0) */
+unsigned portVersusCpuSacButtons(void);
 
 /* An online versus room (port/settings/features/online.cpp: the host's
  * option, in the session's start): set for the session's games; then

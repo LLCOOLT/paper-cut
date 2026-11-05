@@ -14,12 +14,16 @@
 // What this device checked is kept in <user>/replays/checked.txt.
 #include "port/boards.h"
 #include "port/http.h"
+#include "port/build_id.h"
 #include "port/online.h"
 #include "port/online_menu.h"
 #include "port/replay.h"
 #include "port/settings.h"
 #include "port/tr.h"
 #include "port/versions.h"
+#include "../settings_ui.h"
+#include "../file_util.h"
+#include "../relay_util.h"
 
 #include <SDL3/SDL.h>
 #include <imgui.h>
@@ -33,6 +37,8 @@
 #include <string>
 #include <thread>
 #include <vector>
+
+using portui::hint;
 
 extern "C" {
 int portReplayCanRestart(void);
@@ -99,33 +105,9 @@ std::string relayHttps() {
 
 std::string query(int board) { return "board=" + boardKey(board) + "&game=" + gameId() + "&v=" + PORT_VERSION; }
 
-std::string percent(const std::string& text) {
-  std::string out;
-  for (unsigned char c : text) {
-    if ((c >= '0' && c <= '9') || (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || c == '-' || c == '_' ||
-        c == '.') {
-      out += char(c);
-    } else {
-      char hex[4];
-      std::snprintf(hex, sizeof(hex), "%%%02X", c);
-      out += hex;
-    }
-  }
-  return out;
-}
+using portrelay::percent;
 
-std::string unpercent(const std::string& text) {
-  std::string out;
-  for (size_t i = 0; i < text.size(); i++) {
-    if (text[i] == '%' && i + 2 < text.size()) {
-      out += char(std::strtol(text.substr(i + 1, 2).c_str(), nullptr, 16));
-      i += 2;
-    } else {
-      out += text[i];
-    }
-  }
-  return out;
-}
+using portrelay::unpercent;
 
 std::string clock(unsigned frames) {
   const unsigned fps = fiftyHz() ? 50 : 60;
@@ -141,16 +123,7 @@ std::string clock(unsigned frames) {
 
 std::string replayDir() { return std::string(portSettingsUserPath()) + "/replays"; }
 
-std::string readFile(const std::string& path) {
-  size_t size = 0;
-  void* data = SDL_LoadFile(path.c_str(), &size);
-  std::string out;
-  if (data != nullptr) {
-    out.assign(static_cast<const char*>(data), size);
-    SDL_free(data);
-  }
-  return out;
-}
+using portfile::readFile;
 
 // the relay's refusal ("<why>: <words>") in English for the page
 const char* refusal(const std::string& text, int status) {
@@ -394,7 +367,7 @@ void listRuns() {
       std::string game, version;
       r.path = dir + "/" + found[i];
       if (port_replay::boardRun(r.path, r.board, r.frames, done, r.name, r.date, game, version) && done &&
-          game == gameId() && version == PORT_VERSION) {
+          game == gameId() && version == portBuildVersion()) {
         r.done = done;
         r.checked = checkedOf(r.path);
         sRuns.push_back(r);
@@ -501,12 +474,6 @@ void overlay(int pageOpen) {
 }
 
 // --- the section ---
-
-void hint(const char* text) {
-  ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
-  ImGui::TextWrapped("%s", text);
-  ImGui::PopStyleColor();
-}
 
 void section(int inGame) {
   (void)inGame;

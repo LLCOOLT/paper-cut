@@ -115,6 +115,9 @@ const char* portModsTextureCollision(int i, const char** packs);
 void portModsSetTextureDumps(int on);
 /* The texture packs read again (files added or changed while playing). */
 void portModsReloadTextures(void);
+/* Moves on whenever the packs' textures change (applied, reloaded, a map's
+ * own set on or off): sharp text looks again for a pack's font. */
+int portModsTexturesGeneration(void);
 
 /* Reads the mods folder and applies the enabled mods (main_aurora.c, once
  * the disc is open), and the loose textures folder. $TTYD_NO_MODS: neither

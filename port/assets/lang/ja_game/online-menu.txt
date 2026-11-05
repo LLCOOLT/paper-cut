@@ -33,8 +33,8 @@ On this device, online play starts from the launcher's Online tab, before the ga
 Host a room
 ルームを　ひらく
 
-Opens a room with a code to give the other player: nothing to set up.
-あいてに　つたえる　コードの　ルームを　ひらきます：せっていは　いりません
+Opens a room with a code to give the other player.
+あいてに　つたえる　コードの　ルームを　ひらきます
 
 Host by address
 アドレスで　ひらく

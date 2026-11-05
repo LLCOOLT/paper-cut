@@ -32,6 +32,7 @@
 #include "port/companion_section.h"
 #include "port/companion_menu.h"
 #include "port/menu_tap.h"
+#include "port/menu_typing.h"
 #include "port/online.h"
 #include "port/online_menu.h"
 #include "port/notes.h"
@@ -212,6 +213,7 @@ static struct {
     int max;
     int key;   /* the selected key: the layout's, then its actions */
     int shift; /* a name's small letters */
+    size_t lastLen; /* the text's length a frame ago (a code just made whole: the hand to OK) */
 } sKb;
 
 static int kbActions(int* acts) {
@@ -366,6 +368,44 @@ static int kbPointer(void) {
     return 0;
 }
 
+/* the keyboard's typing (port/include/port/menu_typing.h): the layout's letters
+ * (in its case: a code's capitals, an address's small letters), Backspace,
+ * Enter (OK) and Esc; 1 for OK, -1 to leave, else 0 */
+static int kbTyped(int total) {
+    char typed[80];
+    int i, n;
+    portMenuTypingFrame();
+    n = portMenuTyped(typed, sizeof(typed));
+    for (i = 0; i < n; i++) {
+        char c = typed[i];
+        if (c == '\n') {
+            sKb.key = total - 1;
+            return 1;
+        }
+        if (c == '\x1B') {
+            psndSFXOn((const char*)0x20013);
+            return -1;
+        }
+        if (c == '\b') {
+            if (sKb.text[0] != '\0') {
+                sKb.text[strlen(sKb.text) - 1] = '\0';
+                psndSFXOn((const char*)0x20013);
+            }
+            continue;
+        }
+        if (sKb.layout == KEYS_CODE && c >= 'a' && c <= 'z') {
+            c = (char)(c - 'a' + 'A');
+        } else if (sKb.layout == KEYS_ADDRESS && c >= 'A' && c <= 'Z') {
+            c = (char)(c - 'A' + 'a');
+        }
+        if ((c == ' ' && sKb.layout == KEYS_NAME) || (c != ' ' && strchr(kKeys[sKb.layout], c) != NULL) ||
+            (sKb.layout == KEYS_NAME && c >= 'a' && c <= 'z')) {
+            kbType(c);
+        }
+    }
+    return 0;
+}
+
 /* each frame the keyboard is open: 1 while it stays */
 static int kbMain(WindowWork* wp) {
     int acts[5];
@@ -373,7 +413,17 @@ static int kbMain(WindowWork* wp) {
     const int keys = kbKeyCount();
     const int total = keys + nActs;
     const int rows = kbRows();
-    int press = kbPointer() || (wp->buttonTrg & PAD_BUTTON_A);
+    const int typed = kbTyped(total);
+    int press = kbPointer() || (wp->buttonTrg & PAD_BUTTON_A) || typed > 0;
+    if (typed < 0) {
+        sKb.open = 0;
+        return 0;
+    }
+    if (sKb.layout == KEYS_CODE && typed == 0 && strlen(sKb.text) == PORT_ONLINE_CODE_LENGTH &&
+        strlen(sKb.text) != sKb.lastLen) {
+        sKb.key = total - 1; /* a whole code: the hand on OK */
+    }
+    sKb.lastLen = strlen(sKb.text);
     if (wp->buttonTrg & PAD_BUTTON_START) {
         sKb.key = total - 1; /* OK */
         press = 1;
@@ -723,7 +773,7 @@ static void build(void) {
             "On this device, online play starts from the launcher's Online tab, before the game.", 0);
     } else if (phase == PORT_ONLINE_MENU_OFF || phase == PORT_ONLINE_MENU_FAILED) {
         if (relay) {
-            add(ROW_HOST, "Host a room", "Opens a room with a code to give the other player: nothing to set up.", 0);
+            add(ROW_HOST, "Host a room", "Opens a room with a code to give the other player.", 0);
         }
         add(ROW_HOST_ADDRESS, "Host by address",
             "Waits on your port: on the same network, or with the port forwarded or a VPN.", 0);
@@ -868,7 +918,7 @@ static const char* act(const Row* r, int dir) {
             if (dir == 0) {
                 const char* why = NULL;
                 if (gPortCompanionMenu) {
-                    return "Not from the second screen: do it in the game's own Start menu.";
+                    return "Not on the second screen: use the game's Start menu.";
                 }
                 return portRaidStart(&why) ? "The raid begins once the menu is closed." : why;
             }

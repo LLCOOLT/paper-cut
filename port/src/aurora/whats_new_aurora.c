@@ -54,6 +54,11 @@ static const char* gameText(const PortWhatsNewLine* l) {
 static void add(int kind, int indent, const char* text, size_t len) {
     Shown* s;
     if (sLineCount >= MAX_LINES) {
+        static int sTold;
+        if (!sTold) {
+            sTold = 1;
+            printf("[whats new] more than %d lines: the rest left out\n", MAX_LINES);
+        }
         return;
     }
     s = &sLines[sLineCount++];
@@ -362,9 +367,20 @@ void portWhatsNewFrame(void) {
 }
 
 void portWhatsNewPad(PADStatus* pads) {
+    static u16 sSwallow; /* the buttons that closed the window: the game's only once let go */
     u16 now = 0, pressed;
     int i, dir = 0;
     if (!sShowing) {
+        if (sSwallow != 0) {
+            u16 still = 0;
+            for (i = 0; i < PAD_MAX_CONTROLLERS; i++) {
+                if (pads[i].err == PAD_ERR_NONE) {
+                    still |= pads[i].button & sSwallow;
+                    pads[i].button &= (u16)~sSwallow;
+                }
+            }
+            sSwallow = still; /* (else the A that closed it starts the game from the title) */
+        }
         return;
     }
     for (i = 0; i < PAD_MAX_CONTROLLERS; i++) {
@@ -382,6 +398,7 @@ void portWhatsNewPad(PADStatus* pads) {
     if (pressed & (PAD_BUTTON_A | PAD_BUTTON_B | PAD_BUTTON_START)) {
         sShowing = 0;
         sDone = 1;
+        sSwallow = now & (PAD_BUTTON_A | PAD_BUTTON_B | PAD_BUTTON_START);
     } else if (now & (PAD_BUTTON_UP | PAD_BUTTON_DOWN)) {
         /* held: once, then every 4 reads after 20 */
         dir = (now & PAD_BUTTON_UP) ? -1 : 1;

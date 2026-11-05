@@ -16,6 +16,12 @@ void _swSet(s32 index);
 // Global Saved Work
 s32 swByteGet(s32 index);
 void swByteSet(s32 index, s32 value);
+#ifdef TARGET_PC
+// PC port: GSW(0), the story, as swByteGet(0) reads it but with no side effects (an open-world file's
+// Rogueport catch-up and room bookkeeping): for per-machine readers (menus, Discord, achievements), which
+// must not change game state in online lockstep
+s32 swStoryPeek(void);
+#endif
 // Global Saved Work Flags
 void swClear(s32 index);
 BOOL swGet(s32 index);

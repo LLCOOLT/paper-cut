@@ -54,6 +54,7 @@
 #include "port/replay.h"
 #include "data/item_data.h"
 #include "driver/itemdrv.h"
+#include "driver/msgdrv.h"
 #include "driver/swdrv.h"
 #include "evt/evt_cmd.h"
 #include "evt/evt_item.h"
@@ -203,6 +204,21 @@ static int chaptersDone(void) {
     return n;
 }
 
+/* a chapter just done: noted after the ones before it (PORT_OPEN_ORDER) */
+static void noteDone(int chapter) {
+    int i;
+    for (i = 0; i < 8; i++) {
+        const int c = gp->gsw[PORT_OPEN_ORDER + i];
+        if (c == chapter) {
+            return;
+        }
+        if (c == 0) {
+            gp->gsw[PORT_OPEN_ORDER + i] = (u8)chapter;
+            return;
+        }
+    }
+}
+
 /* the Rogueport stretch the hub's story is in */
 static int stretchOf(int raw) {
     int k = 0;
@@ -289,7 +305,15 @@ static int inHunt(void) {
     return 0;
 }
 
-int portOpenTrack(void) {
+/* the chapter last played, noted (title cards and intermissions read it) unless only peeking */
+static void noteSticky(int write, int chapter) {
+    if (write) {
+        gp->gsw[PORT_OPEN_STICKY] = (u8)chapter;
+    }
+}
+
+/* the chapter whose story the current map reads; write: note it as the chapter last played */
+static int trackOf(int write) {
     const MarioWork* m;
     size_t i;
     int sticky;
@@ -316,28 +340,28 @@ int portOpenTrack(void) {
     }
     if (isMap("gor_00")) {
         if (harborIsChapter5()) {
-            gp->gsw[PORT_OPEN_STICKY] = 5;
+            noteSticky(write, 5);
             return 5;
         }
         return 0;
     }
     if (isMap("gor_04")) {
         const int c = stationChapter();
-        gp->gsw[PORT_OPEN_STICKY] = (u8)c;
+        noteSticky(write, (u8)c);
         return c;
     }
     if (isMap("tik_07")) {
         /* the pipe to Fahr Outpost; Rogueport's while its story has a scene
          * there (Peach's mail after the fourth chapter) or is due one */
         if (chapterCount() >= 7 && hubSettled()) {
-            gp->gsw[PORT_OPEN_STICKY] = 7;
+            noteSticky(write, 7);
             return 7;
         }
         return 0;
     }
     if (isMap("tik_00") || isMap("tik_05")) {
         if (doorIsChapter8()) {
-            gp->gsw[PORT_OPEN_STICKY] = 8;
+            noteSticky(write, 8);
             return 8;
         }
         return 0;
@@ -345,7 +369,7 @@ int portOpenTrack(void) {
     for (i = 0; i < sizeof(kMaps) / sizeof(kMaps[0]); i++) {
         if (isMap(kMaps[i].prefix)) {
             if (kMaps[i].chapter <= chapterCount()) {
-                gp->gsw[PORT_OPEN_STICKY] = (u8)kMaps[i].chapter;
+                noteSticky(write, (u8)kMaps[i].chapter);
                 return kMaps[i].chapter;
             }
             return 0;
@@ -357,16 +381,22 @@ int portOpenTrack(void) {
     return 0;
 }
 
+int portOpenTrack(void) {
+    return trackOf(1);
+}
+
 /* a room entered since Rogueport last looked (any room: the way back from a
  * chapter goes through its own) */
 static char sLastMap[sizeof(((GlobalWork*)0)->currentMapName)];
 static int sRoomEntered;
+static void muteScene(EventEntry* entry); /* (a joining scene's lines, below) */
 
 static void noteRoom(void) {
     if (memcmp(sLastMap, gp->currentMapName, sizeof(sLastMap)) != 0) {
         memcpy(sLastMap, gp->currentMapName, sizeof(sLastMap));
         sRoomEntered = 1;
         sRoomChapter = 0;
+        muteScene(NULL);
     }
 }
 
@@ -425,6 +455,24 @@ int portOpenStoryGet(int raw) {
     return raw;
 }
 
+int portOpenStoryPeek(int raw) {
+    int t;
+    if (gp == NULL) {
+        return raw;
+    }
+    t = trackOf(0);
+    if (t != 0) {
+        return trackValue(t);
+    }
+    if (portOpenOn() && raw >= STORY_STG0_19_BLOOPER_BATTLE) {
+        if (isMap("gor_00") && gp->gsw0 >= STORY_STG5_58_FAIR_WINDS) {
+            return kStretchRest[4];
+        }
+        return gp->gsw0; /* (before a catch-up the next room may make) */
+    }
+    return raw;
+}
+
 int portOpenStorySet(int value) {
     const int t = portOpenTrack();
     if (t == 0) {
@@ -454,8 +502,47 @@ int portOpenStorySet(int value) {
                (int)sizeof(gp->currentMapName), gp->currentMapName);
         fflush(stdout);
     }
+    if (trackValue(t) < kChapterDone[t] && value >= kChapterDone[t]) {
+        noteDone(t);
+    }
     setTrackValue(t, value);
     return 1;
+}
+
+/* the n-th chapter done (1-based), 0 if fewer are: in the order noted, then
+ * (a file from before the order was kept) the others done, by number */
+static int nthDone(int n) {
+    int order[8], count = 0, c, i;
+    for (i = 0; i < 8; i++) {
+        c = gp->gsw[PORT_OPEN_ORDER + i];
+        if (c >= 1 && c <= chapterCount() && trackValue(c) >= kChapterDone[c]) {
+            order[count++] = c;
+        }
+    }
+    for (c = 1; c <= chapterCount() && count < 8; c++) {
+        for (i = 0; i < count && order[i] != c; i++) {
+        }
+        if (i == count && trackValue(c) >= kChapterDone[c]) {
+            order[count++] = c;
+        }
+    }
+    return n >= 1 && n <= count ? order[n - 1] : 0;
+}
+
+int portEvtOpenStretchStar(struct EventEntry* event, int isFirstCall) {
+    const int index = (int)evtGetValue(event, event->args[0]);
+    int chapter;
+    (void)isFirstCall;
+    if (gp == NULL || !portOpenOn()) {
+        return EVT_RETURN_DONE;
+    }
+    chapter = nthDone(index + 1);
+    if (chapter >= 1 && chapter <= 7) { /* (chapter 8 has no Crystal Star) */
+        printf("[open] the pedestal: the star of chapter %d, the %d. done\n", chapter, index + 1);
+        fflush(stdout);
+        evtSetValue(event, event->args[0], chapter - 1);
+    }
+    return EVT_RETURN_DONE;
 }
 
 /* --- the items --- */
@@ -530,10 +617,17 @@ int portOpenGetItem(int item) {
     }
     partner = tokenPartner(item);
     if (partner != 0) {
+        /* the partner's name in the game's own text (name_party0 Goombella ... name_party6 Ms. Mowz) */
         static const char* const kNames[] = {"", "Goombella", "Koops", "Bobbery", "Yoshi", "Flurrie", "Vivian", "Ms. Mowz"};
-        char text[96];
+        char text[96], tag[16];
+        const char* name;
+        snprintf(tag, sizeof(tag), "name_party%d", partner - 1);
+        name = msgSearch(tag);
+        if (name == NULL || name[0] == '\0') {
+            name = kNames[partner];
+        }
         partyJoin(partner);
-        snprintf(text, sizeof(text), portOpenText("%s joins the party!"), kNames[partner]);
+        snprintf(text, sizeof(text), portOpenText("%s joins the party!"), name);
         portSaveStateNotice(text);
         printf("[open] partner %d joins\n", partner);
         fflush(stdout);
@@ -579,6 +673,13 @@ void portOpenStarStone(void) {
     }
 }
 
+int portOpenStarShown(int star) {
+    if (!portOpenOn() || star < 1 || star > 7) {
+        return 1;
+    }
+    return (pouchGetPtr()->starPowersObtained & (1 << star)) != 0;
+}
+
 /* --- a partner's own joining scene --- */
 
 static void* sLecture;     /* the linked area's all_party_lecture */
@@ -601,6 +702,43 @@ static EVT_BEGIN(open_lecture_item)
     RETURN
 EVT_END()
 
+/* The scene whose joining lecture gave something other than its partner:
+ * the event that ran it and the ones above it (each by its pointer and id,
+ * so a later event in the same slot isn't taken for it). Their lines spoken
+ * by the party are left out: they are the joining partner's words. */
+enum { MUTE_DEPTH = 8 };
+static struct {
+    EventEntry* entry;
+    s32 id;
+} sMuted[MUTE_DEPTH];
+
+static void muteScene(EventEntry* entry) {
+    int i;
+    memset(sMuted, 0, sizeof(sMuted));
+    for (i = 0; i < MUTE_DEPTH && entry != NULL; i++, entry = entry->waitingEvent) {
+        sMuted[i].entry = entry;
+        sMuted[i].id = entry->eventId;
+    }
+}
+
+int portOpenMuteLine(struct EventEntry* event, const char* speaker) {
+    int i;
+    if (event == NULL || sMuted[0].entry == NULL || !portOpenOn()) {
+        return 0;
+    }
+    for (i = 0; i < MUTE_DEPTH; i++) {
+        if (sMuted[i].entry == event && sMuted[i].id == event->eventId) {
+            if (speaker == NULL || strcmp(speaker, "party") != 0) {
+                return 0;
+            }
+            printf("[open] a line of the joining scene left out (the partner out would say it)\n");
+            fflush(stdout);
+            return 1;
+        }
+    }
+    return 0;
+}
+
 void* portOpenChildScript(struct EventEntry* entry, void* script) {
     int partner, reward;
     if (script == NULL || script != sLecture || !portOpenOn()) {
@@ -613,16 +751,36 @@ void* portOpenChildScript(struct EventEntry* entry, void* script) {
     fflush(stdout);
     if (reward == 0) {
         sLectureParty = partner;
+        muteScene(NULL);
         return script;
     }
     if (reward >= 0x1000) {
         sLectureParty = reward - 0x1000;
         evtSetValue(entry, LW(9), reward - 0x1000); /* (that partner's own lecture, as the game plays it) */
+        if (reward - 0x1000 != partner) {
+            muteScene(entry);
+        }
         return script;
     }
     sLectureParty = 0;
     evtSetValue(entry, LW(10), reward);
+    muteScene(entry);
     return open_lecture_item;
+}
+
+/* --- the black chests --- */
+
+int portEvtOpenChest(struct EventEntry* event, int isFirstCall) {
+    const int curse = (int)evtGetValue(event, event->args[0]);
+    int reward = 0;
+    (void)isFirstCall;
+    if (gp != NULL && portOpenOn()) {
+        reward = portOpenChestReward(curse);
+        printf("[open] black chest of curse %d: %s %d\n", curse, reward != 0 ? "gives item" : "its own curse", reward);
+        fflush(stdout);
+    }
+    evtSetValue(event, event->args[1], reward);
+    return EVT_RETURN_DONE;
 }
 
 /* --- the party sent away and brought back --- */
@@ -661,6 +819,16 @@ int portOpenPartyJoin(int partner) {
 
 /* --- stamping a file --- */
 
+/* $TTYD_OPEN_SEED, a scripted run's seed: never online or in a replay, where
+ * the randomizer's settings are the session's (the host's or the recording's) */
+const char* portOpenTestSeed(void) {
+    const char* v = getenv("TTYD_OPEN_SEED");
+    if (v == NULL || v[0] == '\0' || portOnlineActive() || portReplayActive()) {
+        return NULL;
+    }
+    return v;
+}
+
 void portOpenStamp(const char* seed, unsigned pools, int goal) {
     size_t n = strlen(seed);
     if (gp == NULL) {
@@ -678,14 +846,75 @@ void portOpenStamp(const char* seed, unsigned pools, int goal) {
     prepareTokens();
     printf("[open] file stamped: seed '%s', pools %u, goal %d\n", seed, pools, goal);
     fflush(stdout);
+    if (portOpenTestSeed() != NULL) {
+        /* a scripted run's start: chapters' stories ($TTYD_OPEN_TRACKS,
+         * "chapter:story,...") and items in hand ($TTYD_OPEN_ITEMS, item ids) */
+        const char* v = getenv("TTYD_OPEN_TRACKS");
+        while (v != NULL && *v != '\0') {
+            char* end;
+            long chapter, story;
+            chapter = strtol(v, &end, 0);
+            if (*end != ':') {
+                break;
+            }
+            story = strtol(end + 1, &end, 0);
+            if (chapter >= 1 && chapter <= 8) {
+                setTrackValue((int)chapter, (int)story);
+                if (story >= kChapterDone[chapter]) {
+                    noteDone((int)chapter);
+                }
+                printf("[open] test: chapter %ld's story %ld\n", chapter, story);
+            }
+            v = *end == ',' ? end + 1 : NULL;
+        }
+        v = getenv("TTYD_OPEN_ITEMS");
+        while (v != NULL && *v != '\0') {
+            char* end;
+            const long item = strtol(v, &end, 0);
+            if (end == v) {
+                break;
+            }
+            pouchGetItem((ItemType)item);
+            printf("[open] test: item 0x%lX in hand\n", item);
+            v = *end == ',' ? end + 1 : NULL;
+        }
+        /* flags set ($TTYD_OPEN_FLAGS, GSWF numbers) */
+        v = getenv("TTYD_OPEN_FLAGS");
+        while (v != NULL && *v != '\0') {
+            char* end;
+            const long flag = strtol(v, &end, 0);
+            if (end == v) {
+                break;
+            }
+            swSet((s32)flag);
+            v = *end == ',' ? end + 1 : NULL;
+        }
+        /* the goal ($TTYD_OPEN_GOAL) and Crystal Stars had ($TTYD_OPEN_STARS, 1 to 7) */
+        if ((v = getenv("TTYD_OPEN_GOAL")) != NULL) {
+            gp->gsw[PORT_OPEN_GOAL] = (u8)atoi(v);
+        }
+        v = getenv("TTYD_OPEN_STARS");
+        while (v != NULL && *v != '\0') {
+            char* end;
+            const long star = strtol(v, &end, 0);
+            if (end == v) {
+                break;
+            }
+            if (star >= 1 && star <= 7) {
+                pouchGetStarStone((u32)star);
+            }
+            v = *end == ',' ? end + 1 : NULL;
+        }
+        fflush(stdout);
+    }
 }
 
 void portOpenNewFile(void) {
     char seed[PORT_OPEN_SEED_MAX];
     unsigned pools = 0;
     int goal = 0;
-    const char* test = getenv("TTYD_OPEN_SEED");
-    if (test != NULL && test[0] != '\0') { /* a scripted run */
+    const char* test = portOpenTestSeed();
+    if (test != NULL) { /* a scripted run */
         portOpenStamp(test, 0x0F, 0);
         return;
     }
@@ -806,6 +1035,14 @@ void portOpenSelfTest(void) {
             gp->gsw0 = raw;
         }
     }
+    /* the door's stars: only the ones Mario has; the pedestal's: the chapters in the order done */
+    selfCheck(portOpenStarShown(7) == ((pouchGetPtr()->starPowersObtained >> 7) & 1),
+              "the door shows only the stars Mario has");
+    setTrackValue(3, kChapterDone[3]);
+    noteDone(3);
+    setTrackValue(1, kChapterDone[1]);
+    noteDone(1);
+    selfCheck(nthDone(1) == 3 && nthDone(2) == 1, "the pedestal's stars go in the order the chapters were done");
     memcpy(gp->currentMapName, map, sizeof(map));
     memcpy(&gp->gsw[PORT_OPEN_GSW], saved, sizeof(saved));
     pouchRemoveItem(ITEM_ULTRA_BOOTS);

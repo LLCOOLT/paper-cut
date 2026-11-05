@@ -256,9 +256,9 @@ int formRows(PortPauseRow* out, int max) {
     return 0;
   }
   out[0] = portPauseRow("Player", "Whose controller is set: left and right change it.", kFormPorts[sFormPort], kFormPlayer);
-  out[1] = portPauseRow("Left hand", "The stick moves, the d-pad is A, B, X and Y, the left bumper Z, the left trigger R.",
+  out[1] = portPauseRow("Left hand", "The stick moves, the d-pad is ABXY, LB is Z and LT is R.",
                         nullptr, kFormLeft, PORT_PAUSE_ROW_CONFIRM);
-  out[2] = portPauseRow("Right hand", "The right stick moves, the face buttons, right bumper and trigger as they are.",
+  out[2] = portPauseRow("Right hand", "The right stick moves; face buttons, RB and RT unchanged.",
                         nullptr, kFormRight, PORT_PAUSE_ROW_CONFIRM);
   return 3;
 }

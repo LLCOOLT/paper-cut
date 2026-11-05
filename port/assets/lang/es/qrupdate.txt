@@ -75,8 +75,8 @@ Reemplazarlos y reiniciar
 Replace them
 Reemplazarlos
 
-Receive this card's saves from the launcher, before the game starts.
-Recibe las partidas de esta tarjeta desde el lanzador, antes de que empiece el juego.
+Receive saves from the launcher, before starting.
+Recibe las partidas desde el lanzador, antes de empezar.
 
 Could not receive the saves:
 No se pudieron recibir las partidas:

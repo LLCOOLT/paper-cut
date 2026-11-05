@@ -127,7 +127,7 @@ No limit
 Widest picture
 いちばん　ひろい　画面
 
-Past this the rest of the screen is bars (blurred with Blurred side bars).
+Wider screens get bars past this (see Blurred side bars).
 これより　ひろい分は　おびに　なります
 
 The status bar, message windows and battle menus, larger or smaller than the game's.
@@ -140,7 +140,7 @@ Anisotropic filtering
 いほうせい　フィルタリング
 
 Textures seen at an angle (floors, paths) stay sharp.
-ななめに　見える　テクスチャ（ゆか　道）が　くっきりします
+ななめに　見える　ゆかや　道の　テクスチャが　くっきりします
 
 The game's
 ゲームのまま
@@ -164,7 +164,7 @@ Variable refresh rate (G-Sync, FreeSync)
 かへん　リフレッシュレート（G-Sync　FreeSync）
 
 Each frame shown as soon as it is ready, without waiting for the screen. For VRR displays (others may tear); goes well with Frame rate: the display's.
-画面を　またずに　できたフレームを　すぐ　見せます　VRRの　画面むけです
+VRRむけ　画面を　またずに　すぐ　フレームを　見せます
 
 HDR output
 HDR　しゅつりょく
@@ -175,14 +175,14 @@ HDRの　画面で　しろの　あかるさ（ペーパーホワイト）を�
 Performance overlay
 パフォーマンスの　ひょうじ
 
-How long each frame takes: the time between frames, and the part spent working.
-フレームごとの　時間　フレームの　かんかくと　しょりの　時間
+The time between frames, and the part spent working.
+フレームの　かんかくと　しょりに　かかった　時間
 
 Sharp text
 くっきりした　もじ
 
-The game's font rebuilt as a distance field, so its letters stay sharp at any resolution (the same letters; a texture pack's font shows with this off).
-ゲームの　フォントを　つくりなおし　どんな　がめんでも　もじが　くっきり　します（テクスチャパックの　フォントは　オフで　でます）
+The game's font rebuilt as a distance field, so its letters stay sharp at any resolution (the same letters; a texture pack's own font is drawn as the pack's).
+ゲームの　フォントを　つくりなおし　どんな　がめんでも　もじが　くっきり　します（テクスチャパックの　フォントが　あれば　それが　でます）
 
 Window
 ウィンドウ
@@ -289,7 +289,7 @@ Enemy attack (custom)
 Action commands: attacks
 アクションコマンド：こうげき
 
-Wider timing for attack commands, or every attack command done for you.
+Wider timing for attack commands, or all done for you.
 こうげきの　アクションコマンドの　タイミングを　ひろく　するか　ぜんぶ　自動で　せいこう　させます
 
 Action commands: guards
@@ -313,19 +313,19 @@ No saves yet: put .gci files in the warps folder (in the save folder).
 Speedrun timer
 スピードランタイマー
 
-Game time in a corner, counted in the game's own frames, with real time under it.
-ゲームの　時間を　フレームで　かぞえて　すみに　だします　下に　じっさいの　時間
+Game time (in frames) and real time in a corner.
+ゲームの　時間（フレーム）と　じっさいの　時間
 
 Load removal
 ロード時間を　のぞく
 
-Game time stops while a map or a battle loads (the timer's and LiveSplit's).
+The timer and LiveSplit stop while a map or battle loads.
 マップや　バトルの　ロード中は　ゲームの　時間が　とまります
 
 Start with a new file
 あたらしい　ファイルで　スタート
 
-The timer starts when a new file begins, and resets at the title screen.
+The timer starts with a new file and resets at the title.
 あたらしい　ファイルを　はじめると　タイマーが　うごきだし　タイトル画面で　リセットします
 
 Splits
@@ -347,7 +347,7 @@ Frame advance keys
 コマおくりの　キー
 
 F6 holds the game (and lets it go on), F7 moves one frame.
-F6で　ゲームを　とめ（また　うごかし）　F7で　1フレーム　すすめます
+F6で　とめる／うごかす　F7で　1フレーム　すすめる
 
 Frame advance
 コマおくり
@@ -373,8 +373,8 @@ Story and flags
 Memory watch corner
 メモリかんしの　ばしょ
 
-The fields ticked in Memory watch (All settings), kept on screen.
-メモリかんしで　チェックした　こうもくを　画面に　だしつづけます
+Memory watch's ticked fields (All settings), on screen.
+メモリかんしで　チェックした　こうもくを　画面に　出します
 
 Memory watch
 メモリかんし
@@ -431,7 +431,7 @@ New version
 あたらしい　バージョン
 
 Earned from what each save file has done (its flags), kept beside the memory cards (not in the save), with a small notice when one is earned.
-セーブファイルが　やったことで　もらえます　もらった時には　小さな　おしらせが　出ます
+セーブの　きろくで　もらえます　もらうと　おしらせが　出ます
 
 This file
 このファイル
@@ -442,8 +442,8 @@ Presets
 One-hit KO
 いちげきで　ＫＯ
 
-Any enemy hit that does damage knocks Mario or the partner out.
-ダメージの　ある　てきの　こうげきは　ぜんぶ　マリオか　なかまを　ＫＯします
+Any damaging enemy hit knocks Mario or the partner out.
+ダメージの　ある　こうげきで　マリオも　なかまも　ＫＯします
 
 Allowed
 あり
@@ -454,8 +454,8 @@ Guarding
 Attack commands
 こうげきの　コマンド
 
-Narrower timing for Mario's and the partners' attack commands.
-マリオと　なかまの　こうげきの　アクションコマンドの　タイミングを　せまく　します
+Narrower timing for Mario's and partners' attack commands.
+マリオと　なかまの　こうげきの　タイミングが　せまく　なります
 
 No items in battle
 バトルで　アイテム　なし
@@ -472,7 +472,7 @@ Viewers' commands in your channel's chat make the crowd throw items, give or tak
 Cooldown
 かんかく
 
-One command each this many seconds; a viewer, one each three times it.
+Seconds between commands (three times that per viewer).
 この　びょうすうごとに　コマンド1つ
 
 Allow the harmful ones
@@ -490,8 +490,8 @@ Switches to the next partner in the field without the pause menu: Q, a controlle
 Save Blocks save at once
 セーブブロックで　すぐ　セーブ
 
-A Save Block saves to the file being played without asking first.
-セーブブロックが　たしかめずに　いまの　ファイルに　セーブします
+A Save Block saves to the current file without asking.
+セーブブロックが　きかずに　すぐに　セーブします
 
 Bigger bag
 大きな　ふくろ
@@ -508,32 +508,32 @@ After a battle, a partner who fell is back at 1 HP.
 Level up with the D-pad
 じゅうじボタンで　レベルアップ
 
-The level-up screen (HP, FP or BP) also takes the D-pad, not only the stick.
+The level-up screen (HP, FP, BP) also takes the D-pad.
 レベルアップの　画面で　じゅうじボタンも　使えます
 
 Healing items heal every partner
 かいふくアイテムで　なかま　ぜんいんを　かいふく
 
-In the field, an item used on a partner heals the other partners too.
-フィールドで　なかまに　使った　アイテムが　ほかの　なかまも　かいふくします
+In the field, healing one partner heals all of them.
+フィールドで　なかま　ひとりの　かいふくが　みんなに　きく
 
 Skip repeated scenes
 見た　シーンを　とばす
 
 Scenes already seen on this file go faster or straight to their end: the Crystal Star fanfare and map reveal, Zess T.'s cooking, the Glitz Pit's match scenes, the train and blimp tickets.
-このファイルで　見た　シーンが　はやく　すすむか　すぐ　おわります
+このファイルで　見た　シーンが　はやく　おわります
 
 Fast travel
 ファストトラベル
 
 Travel to a hub from the settings page (All settings, Travel to): Rogueport, then one more per Crystal Star.
-すべての　せっていから　町へ　いどう：ゴロツキタウン　そして　スターストーン1つごとに　1か所
+せっていから　町へ　いどう　スターストーンごとに　ふえる
 
 Faster battle menus
 バトルメニューを　はやく
 
 The battle command wheel opens and turns twice as fast.
-バトルの　コマンドの　わが　2ばいの　はやさで　ひらき　まわります
+バトルの　コマンドの　わが　2ばいの　はやさで　うごきます
 
 Tattle without a turn
 ターンを　使わずに　ものしり
@@ -545,7 +545,7 @@ Battle pop-ups
 バトルの　ポップアップ
 
 GUARD! and SUPERGUARD! over Mario or the partner, a resisted status's icon bouncing off, and status icons kept on screen while you pick a target.
-マリオや　なかまの　上に　GUARD!と　SUPERGUARD!を　だします
+マリオや　なかまの　上に　GUARD!などを　出します
 
 Retry on Game Over
 ゲームオーバーから　やりなおす
@@ -563,7 +563,7 @@ Pit of 100 Trials extras
 １００階ダンジョンの　おまけ
 
 Coins for each floor cleared (1 more per 10 floors down), and the Mover on every floor once floor 50 has been cleared.
-クリアした階ごとに　コイン　50階の後は　どの階にも　いどう屋
+階ごとに　コイン　50階の後は　どの階にも　いどう屋
 
 Glitz Pit kindness
 やさしい　とうぎ場
@@ -574,11 +574,8 @@ A lost match costs no rank, and a match's bonus condition stays at the top of th
 Play as Luigi
 ルイージで　あそぶ
 
-Luigi in Mario's place, with Mario's moves, in the field, battles, menus and credits; the text calls him Luigi and the other Luigi stays out of sight. Saves are not changed.
-マリオの　かわりに　ルイージが　マリオの　技で　とうじょうします　セーブは　かわりません
-
 A new file starts with what you choose here, taken from the file New Game+ from file names. Choose before starting the new file.
-あたらしい　ファイルを　ここで　えらんだものを　ひきついで　はじめます
+あたらしい　ファイルに　えらんだものを　ひきつぐ
 
 New Game+ from file
 ひきつぐ　ファイル
@@ -605,13 +602,13 @@ Storage at every Save Block
 すべての　セーブブロックで　あずける
 
 A Save Block also offers to store items and take them out, as the Rogueport shop's counter does, before saving.
-セーブブロックで　アイテムを　あずけたり　ひきだしたり　できます
+セーブブロックで　アイテムを　あずけ　ひきだせます
 
 Walk-speed boost
 あるく　はやさの　ブースト
 
-Mario walks and runs faster while the Boost key or Boost button is held.
-ブーストの　キーか　ボタンを　おしている間　マリオが　はやく　あるいて　はしります
+Mario moves faster while the Boost key or button is held.
+ブーストを　おしている間　マリオが　はやく　うごきます
 
 Boost speed
 ブーストの　はやさ
@@ -628,7 +625,7 @@ Boost button
 Coins from battles
 バトルの　コイン
 
-The coins a won battle drops, after Merlee, Money Money and a First Strike.
+A battle's coins, after Merlee, Money Money and co.
 かった　バトルで　出る　コイン
 
 Star Points from battles
@@ -640,7 +637,7 @@ A battle's Star Points (still at most 100, a level).
 Star Piece and Shine Sprite tracker
 ほしのかけらと　シャインの　きろく
 
-How many of the current map's Star Pieces and Shine Sprites are found, in a corner.
+The map's Star Pieces and Shine Sprites, in a corner.
 いまの　マップの　ほしのかけらと　シャインを　いくつ　見つけたかを　すみに　だします
 
 On this map
@@ -668,7 +665,7 @@ Junk-item helper in shops
 お店で　あまった　アイテムを　おしえる
 
 Selling, an item or badge Mario has more than one of shows how many (a worn badge is never marked).
-うる時　2つ　いじょう　もっている　アイテムや　バッジに　かずを　だします
+うる時　2つ　いじょうの　ものに　かずを　出します
 
 Boss rush
 ボスラッシュ
@@ -685,8 +682,8 @@ Built-in randomizer
 Backups kept
 のこす　バックアップの　かず
 
-Dated copies of each save file, made when the game saves. 0: none.
-ゲームが　セーブする時に　つくる　ひづけつきの　コピー　0：なし
+Dated copies of each save file, made on saving. 0: none.
+セーブする時に　つくる　ひづけつきの　コピー　0：なし
 
 Restore a backup
 バックアップを　もどす
@@ -706,7 +703,7 @@ Widescreen
 Never skip loading graphics
 よみこみ中の　グラフィックを　とばさない
 
-Extra frames between the game's own 60: smoother motion.
+Extra frames between the game's 60: smoother motion.
 ゲームの　60フレームの　間に　フレームを　ふやします
 
 Present at the display's refresh: no tearing.
@@ -944,7 +941,7 @@ Message size
 メッセージの　大きさ
 
 The message and choice windows larger, on top of HUD size. A window grows only while it fits the screen: a little in 4:3, up to about 145% in widescreen.
-メッセージの　ウィンドウを　大きく　します　画面に　はいる分だけ　大きく　なります
+メッセージの　まどを　画面に　はいる分だけ　大きく　します
 
 Y: a hint for where to go next.
 Y：つぎに　行く　ばしょの　ヒント
@@ -975,8 +972,8 @@ The game's textures made larger by an edge-following filter as they load: smooth
 Player 2 joined: their stick walks the partner.
 プレイヤー2が　さんか：スティックで　なかまを　うごかせます
 
-A second controller: turn on Second player (Controls) to play the partner.
-2つめの　コントローラー：そうさの　ふたりめの　プレイヤーを　オンに
+A second controller: turn on Second player (co-op) in Multiplayer to play the partner.
+2つめの　コントローラー：ふたりであそぶの　ふたりで　あそぶ（きょうりょく）を　オンに
 
 Player 2 left: the partner follows Mario.
 プレイヤー2が　ぬけました：なかまは　マリオに　ついていきます

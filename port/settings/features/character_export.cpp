@@ -9,6 +9,7 @@
 #include "port/mods.h"
 #include "port/settings.h"
 #include "port/tr.h"
+#include "../settings_ui.h"
 #include <SDL3/SDL.h>
 #include <dolphin/dvd.h>
 #include <imgui.h>
@@ -22,6 +23,8 @@
 #include <string>
 #include <vector>
 
+using portui::hint;
+
 namespace {
 
 constexpr uint32_t kHeaderSize = 0x1B0;   // AnimationPoseData on the disc
@@ -31,19 +34,13 @@ constexpr uint32_t kAnimTable = 0x1AC;    // offsets from 0x14C: the 25th, the a
 constexpr uint32_t kAnimRecord = 0x40;    // name[60], offset
 constexpr size_t kExportAllLimit = 200;
 // the Play as characters' models (port/src/aurora/luigi_model_aurora.c)
-constexpr const char* kHostModels[] = {"c_luigi_pc", "c_peach_pc", "c_peach_r_pc", "c_koopa_pc"};
+constexpr const char* kHostModels[] = {"c_luigi_pc", "c_peach_pc", "c_peach_r_pc", "c_koopa_pc", "c_koopa_r_pc"};
 
 std::vector<std::string> sModels; // the disc's a/ models, sorted
 bool sScanned;
 char sFilter[64];
 std::string sSelected;
 std::vector<std::string> sStatus;
-
-void note(const char* text) {
-  ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
-  ImGui::TextWrapped("%s", text);
-  ImGui::PopStyleColor();
-}
 
 uint32_t be32(const std::vector<uint8_t>& b, size_t at) {
   return at + 4 <= b.size() ? uint32_t(b[at]) << 24 | uint32_t(b[at + 1]) << 16 | uint32_t(b[at + 2]) << 8 | b[at + 3]
@@ -253,14 +250,14 @@ void portCharacterExportSection(int inGame) {
   if (!inGame) {
     return;
   }
-  note("A character's model and animations (the paper cut-out's model file) and its textures, as the game "
+  hint("A character's model and animations (the paper cut-out's model file) and its textures, as the game "
        "reads them, to exports/ in the user folder. tools/port/character_tool.py turns the export into PNGs and "
        "files Blender opens, and the edited files into a mod that replaces the character (docs/CHARACTERS.md).");
   if (!sScanned) {
     scan();
   }
   if (sModels.empty()) {
-    note("No models found on the disc.");
+    hint("No models found on the disc.");
     return;
   }
   ImGui::SetNextItemWidth(ImGui::GetFontSize() * 14);
@@ -316,6 +313,6 @@ void portCharacterExportSection(int inGame) {
   for (const auto& line : sStatus) {
     ImGui::BulletText("%s", line.c_str());
   }
-  note("Mario is a_mario (field; _r his back), e_mario (story scenes) and b_mario (battle), with variants; "
+  hint("Mario is a_mario (field; _r his back), e_mario (story scenes) and b_mario (battle), with variants; "
        "a partner or NPC is usually c_<name>. Filter \"mario\" and export them all for the whole set.");
 }

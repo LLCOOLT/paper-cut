@@ -106,7 +106,7 @@ Theme
 テーマ
 
 The status bar's banners and the menus' pages in colours that go together. A part with a colour of its own keeps it.
-ステータスバーのおびと　メニューの　ページを　あう色で　そろえる
+ステータスバーと　メニューを　あう色で　そろえます
 
 Night
 よる

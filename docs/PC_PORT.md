@@ -199,6 +199,51 @@ pipes and plain room changes can turn the old room away like a page instead
 of fading to black, with the page animations on the disc (a pop-up book's
 page, a page turned over, or folded paper); scripted fades stay the game's.
 
+Mouse camera (Gameplay tab, on by default; desktop only;
+`port/settings/features/view.cpp`): with **Free camera** on, the mouse turns
+the camera too while Mario walks, and the window holds the cursor meanwhile;
+menus and scenes give it back, and a middle click centres the camera.
+**Mouse camera speed** (1-10) and **Invert mouse camera** go with it.
+
+Controller haptics (Controls tab, on by default;
+`port/settings/features/haptics.cpp`): a short pulse as an action command's or
+a guard's timing window opens, and as a gauge or stick command reaches where
+it succeeds, with a tick as it steps on. Guards against attacks other than
+jumps are felt once that attack has been seen twice. On a DualSense the
+triggers also resist while a command holds R; other controllers get the
+pulses as plain rumble. It follows Rumble and its strength.
+
+The Start menu (`src/window/win_root.c`, `port/src/aurora/pause_settings_aurora.c`):
+L and R step through its tabs on the tab row, as left and right do. Its
+Settings tab holds the settings page's plain settings (an on/off, a choice, a
+number), by category as the settings page's tabs, with the features' own
+forms after them; it ends with **Photo mode** and **Full settings page**,
+which opens the whole settings page over the menu (closing it comes back
+there). The settings page's mode and tool tabs (Cosmetics, Practice,
+Challenges, Modes, Achievements, Mods, Archipelago, Streaming) are only on
+the full page.
+
+Photo mode (P, or both sticks pressed in; General > **Photo mode**, or the
+Start menu's Settings tab; `port/settings/features/photo_mode.cpp`): the game
+held where it is, the camera turned all the way round Mario, up and down, in
+and out. A (Enter) takes a picture, X (1) steps through the filters (Sepia,
+Black and white, Noir, Vivid, Warm, Cool, Faded, Cut paper, Folding light),
+LB (2) the depth of field (off, soft, strong: sharp round Mario), RB (3) the
+frames (Paper border, Stamp, Film strip, Storybook), Y (H) hides the HUD and
+message windows, B (P, Esc) goes back. Only in the field and not online. A
+picture is saved as it is shown, filter and frame included, at the window's
+size, to the Pictures folder's `Paper Cut` (on phones, or with
+`$TTYD_USER_DIR` set, the user folder's `Photos`); F12 saves one the same way.
+The Journal has a **Photos** entry after the game's own (not online or in a
+replay): a book of the pictures, newest first, eight a spread; the stick picks
+one, L and R turn the page, A shows it large (`port/include/port/photo.h`).
+
+Tattle Log models (`port/src/aurora/tattle_view_aurora.c`): with an enemy's
+card open in the Journal's Tattle Log, the stick or C-stick turns the enemy
+round, L and R held bring it in and out, and A puts it back as it was; it
+plays its idle animation. Not in battle, online or in a replay, and not for
+Smorg.
+
 Partner wheel (Controls tab; `port/settings/features/partner_wheel.cpp`): hold
 Partner quick-swap (Q, the left stick pressed in, or the on-screen swap
 button) for a ring of the partners who have joined; point with a stick, the
@@ -265,6 +310,7 @@ Environment switches (all optional):
 |---|---|
 | `TTYD_TRACE=1/2/3` | sequence/map changes, missing messages, card steps; 2: running scripts; 3: every script command |
 | `TTYD_TRACE_CMD=<text>[,<text>...]`, `TTYD_TRACE_BUDGET` | with `TTYD_TRACE=3`: only the scripts whose name contains one (frame-stamped); how many commands (default 4000) |
+| `TTYD_TRACE_EVERY=<n>` | with `TTYD_TRACE=2` or more: the running scripts listed every n frames (default 3000) |
 | `TTYD_FAST` | frames back to back on a virtual 60 Hz clock (timed waits keep their frame counts); Aurora draws wait for their pipelines |
 | `TTYD_CLOCK_DAYS=<n>` | the real clock `n` days on (negative: back), for the game clock and every date the port draws from (the daily seed, the daily puzzle, the shop specials, the Paper Tower's day, the raid's week): a replay played back as on another day keeps its recording's dates |
 | `TTYD_MAP=<map>[,<bero>]` | at the first field map or the title, start a new game on that map (with a partner, `TTYD_PARTY`, default Goombella) |
@@ -283,6 +329,8 @@ Environment switches (all optional):
 | `TTYD_CACHE_DIR` | Aurora's pipeline cache elsewhere |
 | `TTYD_AUDIO_WAV=<file>` | headless: write the mixed audio |
 | `TTYD_WATCHDOG=<s>` | no frame for that long: print the main thread's stack, exit 4 |
+| `TTYD_NO_CRASH_HANDLER` | no crash report: a crash goes to the debugger or the system as it would without Paper Cut's handler |
+| `TTYD_GX_BLOB_CAP=<n>` | fewer vertex-array slots than the registry has, to bring back the old overflow for a check (`gx_arrays_pc.c`) |
 | `TTYD_PAUSE_UNFOCUSED` | Aurora: also pause while unfocused |
 | `TTYD_WIDESCREEN=1/0` | Aurora: 16:9 picture (off by default; overrides the `widescreen` preference); see below |
 | `TTYD_GXARRAY_TRACE=1/2` | Aurora: vertex-array uploads without a size / every changed array |
@@ -294,7 +342,13 @@ Environment switches (all optional):
 | `TTYD_SETTINGS_HINT=1/0` | Aurora: show or skip the first room's settings hint (skipped by default with `TTYD_MAP`) |
 | `TTYD_STEAM_DECK=1/0` | Aurora: take this computer for a Steam Deck or not (its first-start settings) |
 | `TTYD_ART=off/lazy` | Aurora: the art recipes not run (the drawn art stands in), or each image made when first asked for |
+| `TTYD_COSTUMES_ALL`, `TTYD_STICKERS_ALL` | every costume, or every sticker, unlocked whatever the file has ([COSTUMES.md](COSTUMES.md)) |
+| `TTYD_FUN_TRACE`, `TTYD_LUIGI_TRACE` | log the head groups Big heads finds in each model; log Play as's stand-in model and pose changes in each place (field, battle, menu, journal, versus) |
+| `TTYD_OPEN_SEED=<seed>`, `TTYD_OPEN_SELFTEST` | a new file (and `TTYD_MAP`'s) is an open-world randomizer file with that seed ([RANDOMIZER.md](RANDOMIZER.md)); with a `TTYD_MAP` start, the items and chapters' stories checked at once, PASS/FAIL lines |
+| `TTYD_ACHIEVEMENT_TOAST=<n>` | achievement n's notice shown as the file loads |
+| `TTYD_AC_CUE_PRESS`, `TTYD_AC_CUE_SHOW=<lead>` | the Action Command cue on and logged, with A pressed for two frames each time it comes on; the cue held on screen at that lead |
 | `TTYD_P2_PRESS=<keys>@<frame>[+N][,...]` | scripted controller 2: those keys held from that frame for N frames (`port/src/common/input_pc.c`) |
+| `TTYD_P3_PRESS`, `TTYD_P4_PRESS` (same form) | scripted controllers 3 and 4, plugged in for the whole script (docs/PLAYERS.md) |
 | `TTYD_HAPTICS_PRESS=<k>/last`, `TTYD_HAPTICS_LOG` | Aurora: A pressed k frames into each window a haptic cue announces; log each cue, pulse and judgement |
 | `TTYD_BATTLE_SPEED_LOG` | log Faster battles' speed changes and guard windows |
 | `TTYD_CAPTION_LOG` | Aurora: log each caption for a sound as it comes |
@@ -357,12 +411,20 @@ walls at the sides (the room ends there), as in other widescreen hacks.
 
 ### Display options
 
-The Display tab (`port/settings/features/display.cpp`, applied once a frame
-by `port/src/aurora/display_aurora.c` through Aurora's display patches) holds
-the aspect ratio and widest picture, HUD size, anisotropic filtering, texture
-detail, supersampling, the picture filter, variable refresh rate, the
-performance overlay and HDR output. All are off, or the game's own, by
-default.
+`port/settings/features/display.cpp` (applied once a frame by
+`port/src/aurora/display_aurora.c` through Aurora's display patches) holds the
+Display tab's aspect ratio, widest picture, bars where a scene ends, variable
+refresh rate and HDR output; the Graphics tab's anisotropic filtering, texture
+detail, texture upscaling, supersampling and picture filter (its two paper
+filters are in [PAPER_LOOKS.md](PAPER_LOOKS.md#picture-filters)); and the
+Interface tab's HUD size and performance overlay. All are off, or the game's
+own, by default, but for Bars where a scene ends.
+
+**Bars where a scene ends** (Display, on by default;
+`port/src/aurora/widescreen_aurora.c`): much of the game was built for 4:3,
+so with a wider aspect ratio some rooms' sets end before the screen's edges,
+and battles past 16:9 do too. There, bars stand beside the picture instead of
+the empty space past the set. Off, the empty space shows.
 
 HDR output (settings `hdr`, `hdr_paper_white`, `hdr_boost`; Aurora patch
 0014, `include/aurora/hdr.h`) presents the picture on an HDR display. The
@@ -726,7 +788,7 @@ Classes found so far, and what catches them:
 | `extern inline` under `-fgnu89-inline`: no out-of-line copy, so a call the compiler does not inline (`-O0`, the Android debug build) is unresolved, or binds to a C library function of the same name (snd3d.c's approximate `sqrtf`) | `-O0` link (Android debug build); `grep -rn 'extern inline'` over PC-compiled code |
 | A call through a no-prototype `f()` declaration with fewer arguments than the definition takes: the callee reads whatever the argument register holds (r3 held the right value on GameCube; x0 happened to on arm64, rdi did not on x86-64: moo_00) | `noproto_calls.py` |
 | C library hardening on by default (Apple clang, bionic, some Linux distros: `_FORTIFY_SOURCE`) aborting on the game's intended overflows into padding | off in game code; `-DTTYD_FORTIFY=ON` sweep |
-| Per-address records outliving their memory: GX array ranges/disc blobs, decoded anim models and TPL graphs kept for freed blocks or cleared heaps, so new data at the same address was taken for the old (a pose's native vertices read as big-endian through a stale range: the title's red curtain wedge after the opening demo) | `portMemForget` from `smartFree`/`L_smartReInit`/`memClear` (`port/mem_pc.h`); a new range drops overlapping older ones; a range's endianness only from disc-data records (`portGXIsDiscData`); `TTYD_GXARRAY_TRACE=2` shows upload sizes |
+| Per-address records outliving their memory: GX array ranges/disc blobs, decoded anim models and TPL graphs kept for freed blocks or cleared heaps, so new data at the same address was taken for the old (a pose's native vertices read as big-endian through a stale range: the title's red curtain wedge after the opening demo) | `portMemForget` from `smartFree`/`L_smartReInit`/`memClear` (`port/include/port/mem_pc.h`); a new range drops overlapping older ones; a range's endianness only from disc-data records (`portGXIsDiscData`); `TTYD_GXARRAY_TRACE=2` shows upload sizes |
 | Empty files on the disc read into `_mapAlloc(0)` (NULL): a 0-byte read must complete | headless DVD; map sweep with a full extraction (`dtk vfs cp`) |
 | Variadic function called as non-variadic or the reverse (Apple arm64 passes variadic arguments on the stack); an undeclared call passing an f32 (sent as a double) | `proto_audit.py`; `-Werror=implicit-function-declaration`; `diag_census.py` over every version |
 

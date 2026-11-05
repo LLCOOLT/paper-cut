@@ -53,9 +53,11 @@ static const AnimMap kPeachMap[] = {
     {"M_I_2R", "P_T_1R", 1},  {"M_I_3R", "P_T_1R", 1},  {"M_J_1BR", "P_A_1R", 1}, {"M_J_1CR", "P_A_1R", 1},
 };
 
-/* Bowser (c_koopa, his 3D interlude set; no back view: his front serves).
- * Where our pack (c_koopa_pc) has one of these names it wins; the rest are
- * his disc poses that fit (getting up, keeling over, lying dazed, asleep) */
+/* Bowser (c_koopa, his 3D interlude set). Where our pack (c_koopa_pc) has
+ * one of these names it wins; the rest are his disc poses that fit (getting
+ * up, keeling over, lying dazed, asleep). The disc has no back view of him:
+ * ours, c_koopa_r_pc, is his own parts as seen from behind, made over
+ * c_koopa (tools/port/bowser_back.py), so his disc moves play on it too. */
 static const AnimMap kBowserMap[] = {
     {"M_S_1", "KPA_S_1", 0},   {"M_Z_1", "KPA_Z_1", 0},   {"M_W_1", "KPA_W_1", 0},   {"M_R_1", "KPA_R_1", 0},
     {"M_J_1A", "KPA_J_1A", 0}, {"M_J_1B", "KPA_J_1B", 0}, {"M_J_1C", "KPA_J_1B", 0}, {"M_I_2", "KPA_T_1", 0},
@@ -63,7 +65,9 @@ static const AnimMap kBowserMap[] = {
     {"M_H_1", "KPA_A_1B", 0},  {"M_H_4", "KPA_A_1B", 0},  {"M_H_7", "KPA_A_1B", 0},  {"M_V_1", "KPA_X_1", 0},
     {"M_V_2", "KPA_X_1", 0},   {"M_X_1", "KPA_X_1", 0},   {"M_U_3", "KPA_U_1", 0},   {"M_D_8", "KPA_D_2", 0},
     {"M_D_7", "KPA_D_4", 0},   {"M_Z_10", "KPA_Q_1", 0},  {"M_Z_11", "KPA_N_2", 0},  {"M_I_6", "KPA_N_2", 0},
-    {"M_H_16", "KPA_U_1", 0},
+    {"M_H_16", "KPA_U_1", 0},  {"M_S_1R", "KPA_S_1", 1}, {"M_Z_1R", "KPA_Z_1", 1},  {"M_W_1R", "KPA_W_1", 1},
+    {"M_R_1R", "KPA_R_1", 1},  {"M_J_1BR", "KPA_J_1B", 1}, {"M_J_1CR", "KPA_J_1B", 1}, {"M_I_2R", "KPA_T_1", 1},
+    {"M_I_3R", "KPA_T_1", 1},
 };
 
 /* What a character does where neither its model nor the map has Mario's
@@ -76,7 +80,8 @@ typedef struct {
     const char* model;   /* the disc's */
     const char* pcModel; /* ours, made at startup with our animations (NULL: none yet) */
     const char* back;    /* the back-facing model (NULL: the front's R names, or the front) */
-    const char* pcBack;  /* ours of it, made at startup with our animations (NULL: none) */
+    const char* pcBack;  /* ours of it, made at startup with our animations (NULL: none; with no
+                          * back of the disc's, the back view is ours alone: Bowser's) */
     const AnimMap* map;
     int mapCount;
     float scale;       /* drawn at this size in Mario's place */
@@ -97,15 +102,21 @@ static const PlayChar kChars[PORT_PLAY_AS_COUNT] = {
     {"c_peach", "c_peach_pc", "c_peach_r", "c_peach_r_pc", kPeachMap, COUNT(kPeachMap), 1.0f, 1.0f, 1,
      {"P_Z_1", "P_S_1", "P_W_1", "P_R_1", "P_T_1", "P_A_1", "P_A_2", "P_S_4", "P_A_1"},
      {"P_Z_1R", "P_S_1R", "P_W_1R", "P_R_1R", "P_T_1R", "P_A_1R", "P_A_1R", "P_S_1R", "P_A_1R"}},
-    {"c_koopa", "c_koopa_pc", NULL, NULL, kBowserMap, COUNT(kBowserMap), 0.7f, 0.5f, 1,
+    {"c_koopa", "c_koopa_pc", NULL, "c_koopa_r_pc", kBowserMap, COUNT(kBowserMap), 0.7f, 0.5f, 1,
      {"KPA_Z_1", "KPA_S_1", "KPA_W_1", "KPA_R_1", "KPA_T_1", "KPA_J_1A", "KPA_J_1B", "KPA_D_1", "KPA_A_1B"},
      {"KPA_Z_1", "KPA_S_1", "KPA_W_1", "KPA_R_1", "KPA_T_1", "KPA_J_1A", "KPA_J_1B", "KPA_D_1", "KPA_A_1B"}},
 };
 
+/* the character has a back view: the disc's, or ours made at startup */
+static int hasBack(int chr) {
+    const PlayChar* c = &kChars[chr];
+    return c->back != NULL || (c->pcBack != NULL && sModelReady[chr][1]);
+}
+
 /* the front model (0) or the back one (1) a character's stand-in loads */
 static const char* charModel(int chr, int back) {
     const PlayChar* c = &kChars[chr];
-    if (back && c->back != NULL) {
+    if (back && hasBack(chr)) {
         return sModelReady[chr][1] && c->pcBack != NULL ? c->pcBack : c->back;
     }
     return sModelReady[chr][0] && c->pcModel != NULL ? c->pcModel : c->model;
@@ -161,14 +172,13 @@ static const char* const kSameInBattle[] = {
     "M_N_7", /* (b_mario and e_mario) */
 };
 
-static const char* findAnim(AnimationPoseData* d, const char* name) {
-    size_t i;
-    for (i = 0; i < (size_t)d->animCount; i++) {
-        if (!strcmp(d->anims[i].name, name)) {
-            return d->anims[i].name;
-        }
+/* $TTYD_LUIGI_TRACE (docs/LUIGI_ANIMS.md): the stand-ins and sounds in the log */
+static int trace(void) {
+    static int sTrace = -1;
+    if (sTrace < 0) {
+        sTrace = getenv("TTYD_LUIGI_TRACE") != NULL;
     }
-    return NULL;
+    return sTrace;
 }
 
 /* Mario's animation is a back-facing one (a_mario_r's: M_S_1R, M_H_1R, ...) */
@@ -218,7 +228,8 @@ static const char* charAnim(int chr, int where, int pose, int backPose, const ch
     }
     /* a back-facing animation of Mario's: the back model's version (ours in
      * c_peach_r_pc) */
-    if (backPose >= 0 && isBack(mario) && (found = findAnim(animPoseGetAnimBaseDataPtr(backPose), mario)) != NULL) {
+    if (backPose >= 0 && isBack(mario) &&
+        (found = portCosmeticFindAnim(animPoseGetAnimBaseDataPtr(backPose), mario)) != NULL) {
         *back = 1;
         return found;
     }
@@ -226,21 +237,21 @@ static const char* charAnim(int chr, int where, int pose, int backPose, const ch
         d = animPoseGetAnimBaseDataPtr(pose);
         if (where == PORT_LUIGI_BATTLE || where == PORT_LUIGI_VERSUS) {
             snprintf(battle, sizeof(battle), "%s@b", mario);
-            if ((found = findAnim(d, battle)) != NULL) {
+            if ((found = portCosmeticFindAnim(d, battle)) != NULL) {
                 return found;
             }
             for (i = 0; i < COUNT(kSameInBattle); i++) {
-                if (!strcmp(kSameInBattle[i], mario) && (found = findAnim(d, mario)) != NULL) {
+                if (!strcmp(kSameInBattle[i], mario) && (found = portCosmeticFindAnim(d, mario)) != NULL) {
                     return found;
                 }
             }
-        } else if ((found = findAnim(d, mario)) != NULL) {
+        } else if ((found = portCosmeticFindAnim(d, mario)) != NULL) {
             return found;
         }
     }
     for (i = 0; i < c->mapCount; i++) {
         if (!strcmp(c->map[i].mario, mario)) {
-            *back = c->map[i].back;
+            *back = c->map[i].back && hasBack(chr);
             return c->map[i].to;
         }
     }
@@ -248,7 +259,7 @@ static const char* charAnim(int chr, int where, int pose, int backPose, const ch
         return NULL; /* (M_H_12: only the thrown hammer is drawn, right as Mario's) */
     }
     if (isBack(mario)) {
-        *back = c->back != NULL;
+        *back = hasBack(chr);
         return plainMove(&c->rear, mario);
     }
     return plainMove(&c->front, mario);
@@ -326,7 +337,7 @@ void portLuigiUpdate(int where, int poseId, int allowed) {
         {
             const char* mario = animPoseGetCurrentAnim(poseId)->name;
             /* (the back model, loaded once a back-facing animation wants it) */
-            if (mario != NULL && isBack(mario) && kChars[chr].back != NULL && sStandIn[where].pose[1] < 0) {
+            if (mario != NULL && isBack(mario) && hasBack(chr) && sStandIn[where].pose[1] < 0) {
                 sStandIn[where].pose[1] = animPoseEntry(charModel(chr, 1), poolType(where));
                 sStandIn[where].anim[0] = '\0';
                 if (sStandIn[where].pose[1] < 0) {
@@ -342,7 +353,7 @@ void portLuigiUpdate(int where, int poseId, int allowed) {
                 sStandIn[where].pose[1] = -1;
             }
         }
-        if (getenv("TTYD_LUIGI_TRACE") != NULL) {
+        if (trace()) {
             static const char* const kWhere[SLOTS] = {"field", "battle", "menu", "journal", "versus"};
             static char last[SLOTS][80];
             char now[80];
@@ -747,18 +758,22 @@ const char* portLuigiText(const char* msg) {
 int portLuigiSfx(int id) {
     /* Mario's field sounds on a plain floor and the pick's (Luigi's NPC's: the
      * same sounds, lower, as the game plays them for him; Peach's and
-     * Bowser's interlude steps and landings, Bowser's jump) */
-    static const char* const kMario[4] = {"SFX_MARIO_MOVE1L", "SFX_MARIO_MOVE1R", "SFX_MARIO_JUMP1",
-                                          "SFX_MARIO_LANDING1"};
-    static const char* const kSfx[PORT_PLAY_AS_COUNT][4] = {
-        {NULL, NULL, NULL, NULL},
+     * Bowser's interlude steps and landings, Bowser's jump; and for the spin
+     * jump, the whoosh and the thud of his ground pound in his own stages) */
+#define SFX_KINDS 6
+    static const char* const kMario[SFX_KINDS] = {"SFX_MARIO_MOVE1L", "SFX_MARIO_MOVE1R", "SFX_MARIO_JUMP1",
+                                                  "SFX_MARIO_LANDING1", "SFX_MARIO_HIP_DROP1",
+                                                  "SFX_MARIO_HIO_DROP2"};
+    static const char* const kSfx[PORT_PLAY_AS_COUNT][SFX_KINDS] = {
+        {NULL, NULL, NULL, NULL, NULL, NULL},
         {"SFX_FLD_NPC_LUIGI_MOVE1L", "SFX_FLD_NPC_LUIGI_MOVE1R", "SFX_FLD_NPC_LUIGI_JUMP1",
-         "SFX_FLD_NPC_LUIGI_LANDING1"},
-        {"SFX_PEACH_MOVE1L", "SFX_PEACH_MOVE1R", NULL, "SFX_PEACH_LANDING1"},
-        {"SFX_KUPPA_MOVE1", "SFX_KUPPA_MOVE2", "SFX_KUPPA_JUMP1", "SFX_KUPPA_LANDING1"},
+         "SFX_FLD_NPC_LUIGI_LANDING1", NULL, NULL},
+        {"SFX_PEACH_MOVE1L", "SFX_PEACH_MOVE1R", NULL, "SFX_PEACH_LANDING1", NULL, NULL},
+        {"SFX_KUPPA_MOVE1", "SFX_KUPPA_MOVE2", "SFX_KUPPA_JUMP1", "SFX_KUPPA_LANDING1", "SFX_KUPPA_HIP_DROP1",
+         "SFX_KUPPA_HIP_DROP2"},
     };
-    static int ids[PORT_PLAY_AS_COUNT][4];
-    static int mario[4];
+    static int ids[PORT_PLAY_AS_COUNT][SFX_KINDS];
+    static int mario[SFX_KINDS];
     static int ready;
     int i, c, chr = portPlayAs();
 
@@ -769,7 +784,7 @@ int portLuigiSfx(int id) {
         chr = PORT_PLAY_AS_LUIGI; /* (the fun toggle: Luigi's voice alone, on Mario) */
     }
     if (!ready) {
-        for (i = 0; i < 4; i++) {
+        for (i = 0; i < SFX_KINDS; i++) {
             mario[i] = searchPSSFXList(kMario[i]);
             for (c = 1; c < PORT_PLAY_AS_COUNT; c++) {
                 ids[c][i] = kSfx[c][i] != NULL ? searchPSSFXList(kSfx[c][i]) : 0;
@@ -777,10 +792,10 @@ int portLuigiSfx(int id) {
         }
         ready = 1;
     }
-    for (i = 0; i < 4; i++) {
+    for (i = 0; i < SFX_KINDS; i++) {
         /* (0: a name the table doesn't have) */
         if (mario[i] != 0 && ids[chr][i] != 0 && (id & 0x1FFF) == mario[i]) {
-            if (getenv("TTYD_LUIGI_TRACE") != NULL) {
+            if (trace()) {
                 printf("[play-as] sound %s for %s\n", kSfx[chr][i], kMario[i]);
                 fflush(stdout);
             }
@@ -1048,7 +1063,7 @@ load:
     }
     if (sNpc[s].cur != model || strcmp(sNpc[s].anim, want) != 0) {
         /* (a name the model lacks: its stand) */
-        if (findAnim(animPoseGetAnimBaseDataPtr(pose), want) == NULL) {
+        if (portCosmeticFindAnim(animPoseGetAnimBaseDataPtr(pose), want) == NULL) {
             if (model == NPC_E_MARIO) {
                 model = NPC_A_MARIO; /* (e_mario has no stand) */
                 want = "M_S_1";
@@ -1056,7 +1071,7 @@ load:
             }
             want = model == NPC_LUIGI ? kChars[chr].front.stand : model == NPC_A_MARIO_R ? "M_S_1R" : "M_S_1";
         }
-        if (getenv("TTYD_LUIGI_TRACE") != NULL) {
+        if (trace()) {
             printf("[play-as] npc %d: %s as %s %s\n", poseId, anim, npcModel(model), want);
             fflush(stdout);
         }
@@ -1073,6 +1088,11 @@ load:
     dst->rotationY = src->rotationY;
     dst->peraTargetRotY = src->peraTargetRotY;
     dst->scaleZFlip = src->scaleZFlip;
+}
+
+float portLuigiCreditScale(const char* model) {
+    const int chr = portPlayAs();
+    return chr != PORT_PLAY_AS_MARIO && model != NULL && !strcmp(model, "a_mario") ? kChars[chr].scale : 1.0f;
 }
 
 void portLuigiCreditActor(const char** model, const char** anim) {

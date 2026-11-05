@@ -67,7 +67,7 @@ Show the bingo card
 Mostra la cartella del bingo
 
 Each square: * done, x taken by another player, - not yet.
-Ogni casella: * fatta, x presa da un altro giocatore, - non ancora.
+Ogni casella: * fatta, x presa da un altro, - non ancora.
 
 Get %s
 Ottieni %s

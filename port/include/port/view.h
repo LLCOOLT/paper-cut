@@ -51,7 +51,8 @@ void portViewMouseCentre(void);
  * advance's hold), its last frame drawn again from a camera turned all the way
  * round Mario (yaw), up or down (pitch, radians: positive higher) and in or
  * out (zoom: the eye's distance, times), the HUD and message windows (the 2D
- * camera) hidden or not. Only in the field and not online. */
+ * camera) hidden or not. In the field or a battle (round the point the battle
+ * camera looks at), not online. */
 int portPhotoAvailable(void);
 void portPhotoSet(int active, float yaw, float pitch, float zoom, int hideHud);
 int portPhotoHideHud(void);

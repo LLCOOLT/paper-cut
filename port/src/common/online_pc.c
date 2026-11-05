@@ -287,10 +287,14 @@ void portOnlineApplyPad(PADStatus* pads) {
         /* every player's input, from the host's batches (a seat's own among them, as the host took it) */
         int got;
         const int seat = portOnlineSeating();
-        if (seat) {
-            portOnlinePackPad(&pads[0], mine); /* (this player's controller, before it's replaced) */
-        }
         f = sFrame++;
+        if (seat) {
+            /* this player's controller (before it's replaced), for the host's next frame: sent
+               before the wait for the host's batch, not after it, so it isn't older than it
+               need be when it gets there (the host only takes what has come) */
+            portOnlinePackPad(&pads[0], mine);
+            portOnlineSendInput(f, mine);
+        }
         got = portOnlineWatchInput(f, frame[0]);
         if (got == 0) {
             end(seat ? "The online game ended: the host left." : "Watching ended: the players' game is over.");
@@ -300,8 +304,6 @@ void portOnlineApplyPad(PADStatus* pads) {
             for (i = 0; i < PORT_ONLINE_MAX_PLAYERS; i++) {
                 neutral(frame[i]);
             }
-        } else if (seat) {
-            portOnlineSendInput(f, mine); /* for the host's next frame */
         }
         play(f, frame, pads);
         return;
@@ -346,8 +348,10 @@ void portOnlineApplyPad(PADStatus* pads) {
             /* the host's own, the guest's, the seats' (as the host sent them with its own) */
             memcpy(frame[0], own, PORT_ONLINE_PAD_BYTES);
             memcpy(frame[1], theirs, PORT_ONLINE_PAD_BYTES);
-            if (players > 2) {
-                portOnlineSeatPads(f, frame[2]);
+            if (players > 2 && !portOnlineSeatPads(f, frame[2])) {
+                /* (the seats' pads as sent are gone: playing them neutral would differ) */
+                end("The online game ended: the two games went out of step.");
+                return;
             }
         } else {
             /* the host's (its own, then the seats'), and the guest's own */

@@ -15,6 +15,13 @@
 #include "port/costume.h"
 #include "port/area_maps.h"
 #include "port/settings.h"
+#ifdef _WIN32
+#include <direct.h>
+#define makeDir(p) _mkdir(p)
+#else
+#include <sys/stat.h>
+#define makeDir(p) mkdir(p, 0755)
+#endif
 
 extern SequenceWork seqWork;
 
@@ -58,6 +65,14 @@ const char* portPracticeUserDir(void) {
     const char* dir = getenv("TTYD_USER_DIR");
     return dir != NULL && dir[0] != '\0' ? dir : ".";
 #endif
+}
+
+void portPracticeGameDir(const char* sub) {
+    char dir[1024];
+    snprintf(dir, sizeof(dir), "%s/%s", portPracticeUserDir(), sub);
+    makeDir(dir);
+    snprintf(dir, sizeof(dir), "%s/%s/%s", portPracticeUserDir(), sub, PORT_GAME_ID);
+    makeDir(dir);
 }
 
 const PortNamedValue* portStoryName(int value) {

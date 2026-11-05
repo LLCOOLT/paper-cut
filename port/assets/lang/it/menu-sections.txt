@@ -1,7 +1,7 @@
 # The Start menu's last sections (port/include/port/pause_forms.h) in Italian: an English line, then its translation, then a blank line.
 
 A: pick the colour; Controller light becomes Custom colour.
-A: scegli il colore; Luce del controller diventa Colore personale.
+A: scegli il colore (Luce del controller: Colore personale).
 
 Couldn't open it.
 Impossibile aprirlo.
@@ -25,13 +25,13 @@ B: back.
 B: indietro.
 
 Not recognised: A asks for each of its buttons in turn.
-Non riconosciuto: A chiede ciascuno dei suoi tasti a turno.
+Non riconosciuto: A chiede uno a uno i suoi tasti.
 
 A controller
 Un controller
 
-A controller listed here works once you press each of its buttons when asked.
-Un controller elencato qui funziona dopo aver premuto ogni tasto quando richiesto.
+A listed controller works once its buttons are set.
+Un controller elencato va una volta impostati i tasti.
 
 On an HDR display, the picture at the brightness you choose for white.
 Su uno schermo HDR, l'immagine alla luminosità scelta per il bianco.
@@ -40,7 +40,7 @@ Not available here: needs a display with HDR turned on and the Direct3D or Metal
 Non disponibile qui: serve uno schermo con HDR attivo e Direct3D o Metal.
 
 How bright white is, in nits: left and right change it.
-Quanto è luminoso il bianco, in nit: sinistra e destra lo cambiano.
+Luminosità del bianco, in nit: sinistra e destra la cambiano.
 
 %d nits
 %d nit
@@ -51,14 +51,14 @@ Le luci più forti ancora un po' più luminose.
 Turn on HDR output first.
 Attiva prima l'uscita HDR.
 
-Not from the second screen: do it in the game's own Start menu.
+Not on the second screen: use the game's Start menu.
 Non dal secondo schermo: fallo nel menu Start del gioco.
 
 Travel there: the trip starts once the menu is closed.
 Viaggia lì: il viaggio inizia una volta chiuso il menu.
 
 Not reached yet: one more hub opens with each Crystal Star.
-Non ancora raggiunto: ogni Gemma Stella apre un luogo in più.
+Non raggiunto: ogni Gemma Stella apre un luogo in più.
 
 The trip starts once the menu is closed.
 Il viaggio inizia una volta chiuso il menu.
@@ -138,8 +138,8 @@ Rilegge i pacchetti di lingua della cartella mods.
 Writes a pack for a translator to start from in the mods folder: each text in English, with room for its translation.
 Scrive un pacchetto da cui partire per tradurre nella cartella mods: ogni testo in inglese, con lo spazio per la traduzione.
 
-Shows the mods folder on the desktop: a pack is a folder in it.
-Mostra la cartella mods sul desktop: un pacchetto è una cartella al suo interno.
+Shows the mods folder; each pack is a folder in it.
+Mostra la cartella mods; ogni pacchetto è una sua cartella.
 
 Restart for the new letters
 Riavvia per le nuove lettere
@@ -165,8 +165,8 @@ Scritto nella cartella mods: i testi da tradurre sono lì.
 Nothing yet: the message windows' pages show here.
 Ancora niente: qui compaiono le pagine delle finestre di testo.
 
-Up and down scroll, left and right a page at a time. B: back.
-Su e giù scorrono, sinistra e destra una pagina alla volta. B: indietro.
+Up and down scroll, left and right by page. B: back.
+Su e giù scorrono, sinistra e destra a pagine. B: indietro.
 
 Read the message log
 Leggi la cronologia dei messaggi
@@ -190,13 +190,13 @@ Player
 Giocatore
 
 Whose controller is set: left and right change it.
-Di chi è il controller da impostare: sinistra e destra lo cambiano.
+Di chi è il controller: sinistra e destra lo cambiano.
 
-The stick moves, the d-pad is A, B, X and Y, the left bumper Z, the left trigger R.
+The stick moves, the d-pad is ABXY, LB is Z and LT is R.
 La levetta muove, la croce è A, B, X e Y, il dorsale sinistro Z, il grilletto sinistro R.
 
-The right stick moves, the face buttons, right bumper and trigger as they are.
-La levetta destra muove; i tasti, il dorsale e il grilletto destri come sono.
+The right stick moves; face buttons, RB and RT unchanged.
+La levetta destra muove; tasti, RB e RT restano uguali.
 
 Rewind button
 Tasto riavvolgimento
@@ -210,7 +210,7 @@ A: copia l'indirizzo. X: smetti di inviare. B: indietro (continua a inviare).
 A: the address and its QR code again.
 A: di nuovo l'indirizzo e il suo codice QR.
 
-The address the other device shows under Send saves to another device: A types it.
+A: type the address the other device shows under Send saves.
 L'indirizzo che l'altro dispositivo mostra in Invia salvataggi a un altro dispositivo: A lo scrive.
 
 Paste the address
@@ -219,10 +219,10 @@ Incolla l'indirizzo
 The address you copied, put in.
 L'indirizzo copiato, inserito.
 
-Fetches the other device's saves; you choose what to replace next.
-Prende i salvataggi dell'altro dispositivo; poi scegli cosa sostituire.
+Gets the other device's saves; then pick what to replace.
+Prende i salvataggi dell'altro dispositivo; poi scegli quali.
 
-Replace: the other device's game file over this one's (kept as a backup first).
+Replace: the other device's file here (backed up first).
 Sostituisci: il file dell'altro dispositivo al posto di questo (prima tenuto come copia).
 
 Replace
@@ -277,7 +277,7 @@ Choosing player 1's controller moves it to player 2, and player 1 plays on the k
 Scegliere il controller del giocatore 1 lo passa al giocatore 2, e il giocatore 1 gioca con la tastiera.
 
 Player 2's controller plays as nobody until it joins again.
-Il controller del giocatore 2 non gioca nessuno finché non si unisce di nuovo.
+Il controller del giocatore 2 non gioca finché non rientra.
 
 Updated to Paper Cut
 Aggiornato a Paper Cut
@@ -286,10 +286,10 @@ No new version found
 Nessuna nuova versione trovata
 
 Checked at start, when Check for updates at start is on.
-Controllato all'avvio, se Cerca aggiornamenti all'avvio è attivo.
+Si controlla all'avvio, con Cerca aggiornamenti all'avvio.
 
-A newer Paper Cut is out. A: its release page in the browser.
-È uscito un Paper Cut più recente. A: la sua pagina nel browser.
+A newer Paper Cut is out. A: open its release page.
+È uscito un Paper Cut più nuovo. A: apri la sua pagina.
 
 Flathub updates this copy
 Flathub aggiorna questa copia
@@ -366,5 +366,5 @@ A: tieni questo testo. B: lascialo com'era.
 A: the text you copied, typed here.
 A: il testo copiato, scritto qui.
 
-A types it. X deletes a letter. B leaves the text as it was.
-A lo scrive. X cancella una lettera. B lascia il testo com'era.
+A types the key, B rubs out a letter (on none, it goes back), Start is Done.
+A scrive il tasto, B cancella una lettera (se non ce ne sono, torna indietro), Start è Fatto.

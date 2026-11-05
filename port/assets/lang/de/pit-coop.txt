@@ -16,7 +16,7 @@ End the run
 Lauf beenden
 
 Mario goes back to the room he started from.
-Mario kehrt in den Raum zurück, in dem er begonnen hat.
+Mario kehrt in den Raum zurück, in dem er begann.
 
 Start a co-op Pit run
 Koop-Lauf im Duellkerker starten

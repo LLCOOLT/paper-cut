@@ -66,7 +66,7 @@ The Paper Tower opens once this file has finished the game.
 No climb is under way.
 タワーをのぼっていません。
 
-30 floors of the game's rooms, remixed; once the game is finished.
+30 floors of the game's rooms, remixed, after the credits.
 ゲームの部屋を組みかえた 30 階。クリア後に遊べます。
 
 On to the next floor; the climb counts as helped.

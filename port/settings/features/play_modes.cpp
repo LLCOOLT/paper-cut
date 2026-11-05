@@ -4,6 +4,7 @@
 #include "port/replay.h"
 #include "port/settings.h"
 #include "port/tr.h"
+#include "../settings_ui.h"
 
 #include <SDL3/SDL.h>
 #include <imgui.h>
@@ -12,6 +13,8 @@
 #include <cstdio>
 #include <cstdlib>
 #include <string>
+
+using portui::hint;
 
 namespace {
 
@@ -23,12 +26,6 @@ std::string clock(unsigned long long ms) {
   char text[32];
   std::snprintf(text, sizeof(text), "%llu:%02llu:%02llu", ms / 3600000, ms / 60000 % 60, ms / 1000 % 60);
   return text;
-}
-
-void hint(const char* text) {
-  ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
-  ImGui::TextWrapped("%s", text);
-  ImGui::PopStyleColor();
 }
 
 void chapterSection(int inGame) {
@@ -289,9 +286,9 @@ struct Register {
                           "bosses'), the same for a room and a seed. From the next room.",
                           PORT_SETTING_CHANGES_PLAY, "remix_enemies", "remix random enemies placement shuffle");
     portSettingsAddToggle(kTab, "Remix: badge draft",
-                          "At each chapter's title card, three badges to choose one from: left and right, then A.",
+                          "Each chapter's title card offers three badges: pick one.",
                           PORT_SETTING_CHANGES_PLAY, "remix_badge_draft", "remix badge draft choose pick");
-    portSettingsAddSlider(kTab, "Remix seed", "The same seed, the same remix (share it with a challenge code).",
+    portSettingsAddSlider(kTab, "Remix seed", "Same seed, same remix: share it with a challenge code.",
                           PORT_SETTING_CHANGES_PLAY, "remix_seed", 0, 99999, "%d", "remix seed");
     portSettingsAddSection(kTab, "Hardcore", nullptr, PORT_SETTING_CHANGES_PLAY, hardcoreSection,
                            "hardcore one life permadeath ironman remix ghost");

@@ -17,11 +17,12 @@ set(TTYD_IOS_BUNDLE_ID_PREFIX "io.github.ttyd-port" CACHE STRING
 set(TTYD_IOS_BUNDLE_ID "${TTYD_IOS_BUNDLE_ID_PREFIX}.${_ios_suffix}")
 # the name under the icon: Paper Cut, whichever version (the launcher names it)
 set(TTYD_IOS_DISPLAY_NAME "Paper Cut" CACHE STRING "The app's name on the Home Screen")
-# the release's version when it is one (TTYD_PORT_VERSION, e.g. 0.2.0), else 0.2
-if(TTYD_PORT_VERSION MATCHES "^[0-9]+(\\.[0-9]+)*$")
-    set(TTYD_IOS_VERSION "${TTYD_PORT_VERSION}")
+# the release's version: TTYD_PORT_VERSION's leading numbers (0.4.0, or the
+# 0.4.0 of 0.4.0-playtest), else 0.4.0
+if(TTYD_PORT_VERSION MATCHES "^([0-9]+(\\.[0-9]+)*)")
+    set(TTYD_IOS_VERSION "${CMAKE_MATCH_1}")
 else()
-    set(TTYD_IOS_VERSION "0.2")
+    set(TTYD_IOS_VERSION "0.4.0")
 endif()
 set(TTYD_IOS_BUILD "1")
 if(CMAKE_OSX_DEPLOYMENT_TARGET)

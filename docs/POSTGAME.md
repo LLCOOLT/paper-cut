@@ -4,7 +4,7 @@ Things to do once you know the way around, and the record of what you've done.
 
 ## Area maps
 
-Settings > **Area map** (while a game runs) draws a map of the area Mario is
+The full settings page's **Area map** tab (while a game runs) draws a map of the area Mario is
 in, or any other area you pick, made from the game's own room data: every
 room the game has in that area, and the ways between them.
 
@@ -113,9 +113,10 @@ during online co-op and replays.
 
 ## More achievements
 
-With Achievements on (the Achievements tab), 31 more come with the new
-places and modes, each with the usual pop-up when earned, and each a plaque in
-the trophy room:
+With Achievements on (the Achievements tab), 35 more come with the new
+places and modes: the 31 below, and four with the raid boss
+([RAID.md](RAID.md#rewards)). Each has the usual pop-up when earned and a
+plaque in the trophy room:
 
 | Achievement | For |
 |---|---|
@@ -127,12 +128,12 @@ the trophy room:
 | Brotherly Rivalry, Old Rivals | finishing 1 and 10 versus battles |
 | Shuffled, Stars Anywhere, Seed Master | playing an open-world randomizer file; holding 3, and all 7, Crystal Stars on one |
 | Racing a Ghost, Faster Than Your Shadow | racing a ghost; being 10 seconds ahead of one in a room |
-| Better Together, Rock Bottom, Together | the Pit's 25th and 100th floors in co-op |
+| Better Together, *Rock Bottom, Together* | the Pit's 25th and 100th floors in co-op |
 | Boss Rush, Crowd Favorite, Rematch | winning a boss rush; 10 rounds in one endless Glitz Pit run; winning a boss refight |
-| Once More, With Feeling | finishing a chapter again in chapter select |
+| *Once More, With Feeling* | finishing a chapter again in chapter select |
 | One Life, Remixed, Green Thunder | finishing chapter 1 on a hardcore file; a chapter with Remix: enemies on; a chapter as Luigi |
 | Say Cheese, Photo Album | 1 and 25 photo mode pictures |
-| Two Plumbers, Two Places | playing online co-op |
+| *Two Plumbers, Two Places* | playing online co-op |
 
 As before they're kept per save file beside the memory cards
 (`<user folder>/Achievements/<game id>/file<N>.txt`), now with the modes'

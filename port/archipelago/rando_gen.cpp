@@ -184,6 +184,16 @@ struct Sweep {
 // of the TTYD AP mod's (its low-memory tables, the DOL's shop and Dazzle
 // tables), and nothing the story itself hands over.
 bool plainScriptLocation(const TtydApLocation& loc, const TtydRandoLocation& r) {
+  // Places whose word in the apworld's data isn't an item the game's own
+  // script gives there (the TTYD AP mod reworks them): Whacka's bumps (words
+  // in the middle of muj_00's koburon_dead) and the Excess Express madam's 30
+  // coins (evt_sub_get_coin's count). Checked against the disc's RELs: every
+  // other script word is an item, or a Shine Sprite or coin block's word the
+  // port reads as one (evt_mobj.c), or a black chest's, which the open world
+  // asks for by its place (open_world.cpp).
+  static const int64_t kNotItemWords[] = {78780454, 78780455, 78780456, 78780457, 78780458,
+                                          78780459, 78780460, 78780806, 78780515};
+  if (std::find(std::begin(kNotItemWords), std::end(kNotItemWords), loc.id) != std::end(kNotItemWords)) return false;
   if (loc.count == 0 || (loc.flags & (TTYD_AP_SHOP | TTYD_AP_TATTLE))) return false;
   if (r.tags & (RANDO_TAG_SHOP | RANDO_TAG_TROUBLE | RANDO_TAG_COOKING | RANDO_TAG_DAZZLE | RANDO_TAG_PIT_FLOOR |
                 RANDO_TAG_STAR | RANDO_TAG_PARTNER)) {

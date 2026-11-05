@@ -17,8 +17,10 @@ letters, interpolated four times finer). Each frame the edge is found again at
 the size the text is drawn, one screen pixel wide, so letters stay sharp at
 any resolution and any text size. The letters are the game's own shapes.
 
-While it is on, a texture pack's replacement for the font sheet is not used
-(the distance field takes its place); turn it off to see a pack's font.
+When a texture pack replaces the font sheet, sharp text steps aside for that
+font by itself and the pack's letters are drawn as the pack made them; it
+looks again whenever the packs change (turned on or off, reloaded, or a
+map's own set), and the setting stays as you left it.
 
 ## Smooth paper edges
 
@@ -54,9 +56,21 @@ quick turns, and squash and spring back on hard landings. It is a small change
 to how each character is drawn; where they are, what they touch and what the
 game knows about them stay the same.
 
+## Picture filters
+
+Graphics → **Picture filter** (Off by default) lays a filter over the whole
+picture. Besides CRT, Paper grain and Sharpen, two are paper ones:
+
+- **Cut-paper outline:** an ink line and a pale cut edge round each shape, as
+  pieces of paper laid on each other.
+- **Folding light:** the picture on a folded sheet, with a slow light moving
+  across its panels.
+
+Photo mode has the same two among its own filters ([PC_PORT.md](PC_PORT.md#running)).
+
 ## Pop-up launcher
 
-When the launcher opens, its stage builds like a pop-up book: the floor rises,
+General → **Pop-up launcher** (on by default). When the launcher opens, its stage builds like a pop-up book: the floor rises,
 the curtains part, the title unfolds upright and the cards rise onto the
 stage, and Mario and his partners spring up along its front edge. Any key,
 click, touch or button skips it.

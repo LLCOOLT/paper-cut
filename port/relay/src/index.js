@@ -60,39 +60,102 @@ const VERSION = /^[0-9A-Za-z.+-]{1,24}$/;
 const LIST_TTL_MS = 20 * 60e3; // a listing the host hasn't refreshed (it does every 10 minutes)
 const MAX_LISTED = 40;         // shown in the list at most
 const MAX_NAME = 24;
+const MAX_URL = 2048;          // a request's address, query and all
+const MAX_POST = 256;          // a text request's body (notes, checks)
 
-// a listing's name: printable, on one line, MAX_NAME characters at most
-function cleanName(name) {
-  return [...(name || "")].filter((c) => c >= " " && c !== "\x7f").slice(0, MAX_NAME).join("").trim();
+// --- shared by every class ---
+//
+// Every refusal is a status other than 200 and "<WHY>: <words>" on one line
+// (the games show their own text from the status or WHY). The room's refusals
+// keep their words: the games look for "hosting" and "full" in them.
+
+const TEXT = { "content-type": "text/plain; charset=utf-8", "cache-control": "no-store" };
+
+function say(text, status = 200) {
+  return new Response(text.endsWith("\n") ? text : text + "\n", { status, headers: TEXT });
+}
+
+// a name as shown: printable, on one line, max characters at most
+function cleanName(name, max = MAX_NAME) {
+  return [...(name || "")].filter((c) => c >= " " && c !== "\x7f").slice(0, max).join("").trim();
+}
+
+// a whole number in lo..hi from text with nothing else in it, or null
+function int(text, lo, hi) {
+  if (!/^-?[0-9]{1,10}$/.test(text || "")) {
+    return null;
+  }
+  const n = Number(text);
+  return n >= lo && n <= hi ? n : null;
+}
+
+function hex(bytes) {
+  return [...bytes].map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+function newTicket() {
+  const bytes = new Uint8Array(16);
+  crypto.getRandomValues(bytes);
+  return hex(bytes);
+}
+
+// Who sent something is kept only as a hash of the address with HASH_SALT (a
+// secret, optional: `npx wrangler secret put HASH_SALT`) and a scope (a day's
+// or week's board, so the hashes there can't be matched with another's).
+async function addressHash(request, env, scope = "") {
+  const ip = request.headers.get("CF-Connecting-IP") || "?";
+  const text = (env.HASH_SALT || "papercut") + ":" + (scope ? scope + ":" : "") + ip;
+  return hex(new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text))).slice(0, 8));
+}
+
+// a text body of at most max bytes, or null when it's larger
+async function readText(request, max = MAX_POST) {
+  if (Number(request.headers.get("content-length") || "0") > max) {
+    return null;
+  }
+  const text = await request.text();
+  return text.length > max ? null : text;
+}
+
+// A Durable Object's class: its state and the Worker's environment.
+class Stored {
+  constructor(ctx, env) {
+    this.ctx = ctx;
+    this.env = env;
+  }
 }
 
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
-    const m = url.pathname.match(/^\/room\/([^/]+)$/);
+    if (request.url.length > MAX_URL) {
+      return say("long: that request is too long", 414);
+    }
     if (url.pathname === "/" || url.pathname === "/health") {
-      return new Response("Paper Cut relay\n", { headers: { "content-type": "text/plain" } });
+      return say("Paper Cut relay");
+    }
+    if (request.method !== "GET" && request.method !== "POST") {
+      return say("method: GET or POST", 405);
     }
     if (url.pathname === "/rooms") {
       return env.LOBBY.get(env.LOBBY.idFromName("lobby")).fetch(request);
     }
-    const bingo = url.pathname.match(/^\/bingo\/([0-9A-Z]{4,8})$/);
-    if (bingo) {
+    const bingo = url.pathname.match(/^\/bingo\/([^/]+)$/);
+    if (bingo && CODE.test(bingo[1])) {
       return env.BINGO.get(env.BINGO.idFromName(bingo[1])).fetch(request);
     }
     if (url.pathname === "/notes") {
-      const area = url.searchParams.get("area") || "";
-      if (!AREA.test(area)) {
-        return new Response("area: a map's first three letters\n", { status: 400 });
+      if (!AREA.test(url.searchParams.get("area") || "")) {
+        return say("bad: area, a map's first three letters", 400);
       }
-      return env.NOTES.get(env.NOTES.idFromName("notes:" + area)).fetch(request);
+      return env.NOTES.get(env.NOTES.idFromName("notes:" + url.searchParams.get("area"))).fetch(request);
     }
     if (url.pathname === "/board" || url.pathname === "/replay" || url.pathname === "/check") {
       const board = url.searchParams.get("board") || "";
       const game = url.searchParams.get("game") || "";
       const v = url.searchParams.get("v") || "";
       if (!BOARD.test(board) || !GAME.test(game) || !VERSION.test(v)) {
-        return new Response("board, game and v, please\n", { status: 400 });
+        return say("bad: board, game and v, please", 400);
       }
       return env.BOARDS.get(env.BOARDS.idFromName("board:" + board + ":" + game + ":" + v)).fetch(request);
     }
@@ -102,28 +165,24 @@ export default {
     }
     const daily = url.pathname.match(/^\/daily\/(\d{8})$/);
     if (daily) {
+      if (dayNumber(daily[1]) === null) {
+        return say("bad: not a date", 400);
+      }
       return env.DAILY.get(env.DAILY.idFromName(daily[1])).fetch(request);
     }
+    const m = url.pathname.match(/^\/room\/([^/]+)$/);
     if (!m || !CODE.test(m[1])) {
-      return new Response("Not a room\n", { status: 404 });
+      return say("Not a room", 404);
     }
-    const role = url.searchParams.get("role");
-    if (!ROLES.includes(role)) {
-      return new Response("role: host, guest, seat or watch\n", { status: 400 });
+    if (!ROLES.includes(url.searchParams.get("role"))) {
+      return say("role: host, guest, seat or watch", 400);
     }
     if (request.headers.get("Upgrade") !== "websocket") {
-      return new Response("A WebSocket upgrade, please\n", { status: 426 });
+      return say("A WebSocket upgrade, please", 426);
     }
-    const room = env.ROOMS.get(env.ROOMS.idFromName(m[1]));
-    return room.fetch(request);
+    return env.ROOMS.get(env.ROOMS.idFromName(m[1])).fetch(request);
   },
 };
-
-function newTicket() {
-  const bytes = new Uint8Array(16);
-  crypto.getRandomValues(bytes);
-  return [...bytes].map((b) => b.toString(16).padStart(2, "0")).join("");
-}
 
 function isWatchMessage(message) {
   if (message.byteLength < 4) {
@@ -133,12 +192,7 @@ function isWatchMessage(message) {
   return b[0] === 0xff && b[1] === 0xff && b[2] === 0xff && b[3] === 0xff;
 }
 
-export class Room {
-  constructor(ctx, env) {
-    this.ctx = ctx;
-    this.env = env;
-  }
-
+export class Room extends Stored {
   // the room's connections in a role, without those replaced by a reconnect
   here(role) {
     return this.ctx.getWebSockets(role).filter((ws) => {
@@ -199,20 +253,20 @@ export class Room {
       here = this.here(role);
     }
     if (role === "host" && here.length > 0) {
-      return new Response("That room has a host\n", { status: 409 });
+      return say("That room has a host", 409);
     }
     if (role === "guest" || role === "watch" || role === "seat") {
       if (this.here("host").length === 0) {
-        return new Response("No one is hosting that room\n", { status: 404 });
+        return say("No one is hosting that room", 404);
       }
       if (role === "guest" && here.length > 0) {
-        return new Response("That room is full\n", { status: 409 });
+        return say("That room is full", 409);
       }
       if (role === "watch" && here.length >= MAX_WATCHERS) {
-        return new Response("As many are watching that room as can\n", { status: 409 });
+        return say("As many are watching that room as can", 409);
       }
       if (role === "seat" && here.length >= MAX_SEATS) {
-        return new Response("That room has as many players as it can\n", { status: 409 });
+        return say("That room has as many players as it can", 409);
       }
     }
     // a seat's place in the room (0 or 1): the host knows its messages by it
@@ -359,12 +413,7 @@ export class Room {
 // listing, in its storage (it may be evicted between requests). Rooms that
 // stopped telling it are dropped as the list is read: a listing after
 // LIST_TTL_MS without a word, a count after ROOM_LIFETIME_MS.
-export class Lobby {
-  constructor(ctx, env) {
-    this.ctx = ctx;
-    this.env = env;
-  }
-
+export class Lobby extends Stored {
   async fetch(request) {
     const url = new URL(request.url);
     const now = Date.now();
@@ -373,10 +422,10 @@ export class Lobby {
       try {
         r = await request.json();
       } catch {
-        return new Response("Bad report\n", { status: 400 });
+        return say("bad: not a report", 400);
       }
       if (!r || typeof r.id !== "string" || r.id.length > 80) {
-        return new Response("Bad report\n", { status: 400 });
+        return say("bad: not a report", 400);
       }
       if (!(r.players > 0)) {
         await this.ctx.storage.delete("r:" + r.id);
@@ -390,10 +439,10 @@ export class Lobby {
           at: now,
         });
       }
-      return new Response("ok\n");
+      return say("ok");
     }
     if (url.pathname !== "/rooms") {
-      return new Response("Not here\n", { status: 404 });
+      return say("Not here", 404);
     }
     const game = url.searchParams.get("game") || "";
     const v = url.searchParams.get("v") || "";
@@ -420,9 +469,7 @@ export class Lobby {
       const playing = r.list.playing || 1;
       text += r.list.code + " " + playing + "/" + (r.list.max || 2) + " " + encodeURIComponent(r.list.name || "") + "\n";
     }
-    return new Response(text, {
-      headers: { "content-type": "text/plain; charset=utf-8", "cache-control": "no-store" },
-    });
+    return say(text);
   }
 }
 
@@ -431,8 +478,8 @@ export class Lobby {
 // Both are small stores in Durable Objects' storage, sized for the free plan:
 // a Durable Object per area's notes and per leaderboard, each read when a
 // player opens the page or enters the area (never polled). Who sent what is
-// kept only as a hash of the address with HASH_SALT (a secret, optional:
-// `npx wrangler secret put HASH_SALT`), for the daily limits and one vote each.
+// kept only as an address's hash (addressHash), for the daily limits and one
+// vote each.
 
 const AREA = /^[a-z]{3}$/;
 const NOTE_MAP = /^[a-z]{3}_[0-9a-z_]{1,13}$/;
@@ -451,19 +498,7 @@ const MAX_REPLAY = 1 << 20; // a compressed replay (zlib)
 const CHUNK = 96 * 1024;    // a storage value's piece (the key-value API keeps values under 128 KiB)
 const UPLOADS_A_DAY = 5;
 const CHECKS_A_DAY = 50;
-
-const TEXT = { "content-type": "text/plain; charset=utf-8", "cache-control": "no-store" };
-
-function say(text, status = 200) {
-  return new Response(text + "\n", { status, headers: TEXT });
-}
-
-async function addressHash(request, env) {
-  const ip = request.headers.get("CF-Connecting-IP") || "?";
-  const data = new TextEncoder().encode((env.HASH_SALT || "papercut") + ":" + ip);
-  const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", data));
-  return [...digest.slice(0, 8)].map((b) => b.toString(16).padStart(2, "0")).join("");
-}
+const QUOTA_KEYS = 4000;    // addresses counted in a day, so the quota stays one small value
 
 // one more of an address's daily allowance of kind; false when it's spent (resets at 00:00 UTC)
 async function spend(storage, kind, hash, max) {
@@ -473,20 +508,12 @@ async function spend(storage, kind, hash, max) {
     q = { day, n: {} };
   }
   const key = kind + ":" + hash;
-  if ((q.n[key] || 0) >= max) {
+  if ((q.n[key] || 0) >= max || (!(key in q.n) && Object.keys(q.n).length >= QUOTA_KEYS)) {
     return false;
   }
   q.n[key] = (q.n[key] || 0) + 1;
   await storage.put("quota", q);
   return true;
-}
-
-function int(text, lo, hi) {
-  if (!/^-?[0-9]{1,10}$/.test(text || "")) {
-    return null;
-  }
-  const n = Number(text);
-  return n >= lo && n <= hi ? n : null;
 }
 
 // Paper notes: an area's (a map's first three letters) in one Durable Object.
@@ -499,12 +526,7 @@ function int(text, lo, hi) {
 //                           "rate <MAP> <ID> <1|-1>"                 -> "ok <SCORE>"
 // A refusal is a status other than 200 and "<WHY>: <words>" (mine, today, own,
 // rated, gone).
-export class Notes {
-  constructor(ctx, env) {
-    this.ctx = ctx;
-    this.env = env;
-  }
-
+export class Notes extends Stored {
   async fetch(request) {
     const url = new URL(request.url);
     const area = url.searchParams.get("area");
@@ -520,10 +542,11 @@ export class Notes {
       }
       return say("notes " + lines.length + (lines.length > 0 ? "\n" + lines.join("\n") : ""));
     }
-    if (request.method !== "POST") {
-      return say("GET or POST", 405);
+    const text = await readText(request);
+    if (text === null) {
+      return say("bad: not a note", 400);
     }
-    const body = (await request.text()).slice(0, 200).trim().split(/\s+/);
+    const body = text.trim().split(/\s+/);
     const hash = await addressHash(request, this.env);
     const map = body[1] || "";
     if (!NOTE_MAP.test(map) || !map.startsWith(area + "_")) {
@@ -613,12 +636,7 @@ export class Notes {
 //   POST /check?...&id=<ID>      "<FRAMES>": the frames its playback here took -> "ok <CHECKS> <FAILS>"
 // A refusal is a status other than 200 and "<WHY>: <words>" (slower, today,
 // big, gone).
-export class Board {
-  constructor(ctx, env) {
-    this.ctx = ctx;
-    this.env = env;
-  }
-
+export class Board extends Stored {
   async dropReplay(entry) {
     const keys = [];
     for (let i = 0; i < entry.chunks; i++) {
@@ -659,7 +677,7 @@ export class Board {
         out.set(new Uint8Array(p), at);
         at += p.byteLength;
       }
-      return new Response(out, { headers: { "content-type": "application/octet-stream", "cache-control": "no-store" } });
+      return new Response(out, { headers: { ...TEXT, "content-type": "application/octet-stream" } });
     }
     if (request.method !== "POST") {
       return say("Not here", 404);
@@ -670,7 +688,7 @@ export class Board {
       if (!e) {
         return say("gone: that run isn't on the board any more", 404);
       }
-      const frames = int((await request.text()).slice(0, 20).trim(), 1, 0x7fffffff);
+      const frames = int(((await readText(request)) || "").trim(), 1, 0x7fffffff);
       if (frames === null) {
         return say("bad: not a check", 400);
       }
@@ -754,18 +772,13 @@ const BINGO_PLAYERS = 8;
 const BINGO_CELLS = 25;
 const BINGO_LIFETIME_MS = 24 * 3600e3;
 
-export class Bingo {
-  constructor(ctx, env) {
-    this.ctx = ctx;
-    this.env = env;
-  }
-
+export class Bingo extends Stored {
   async fetch(request) {
     const params = new URL(request.url).searchParams;
     const name = cleanName(params.get("name"));
     const seed = (params.get("seed") || "").toUpperCase();
     if (name === "") {
-      return new Response("name, please\n", { status: 400 });
+      return say("bad: name, please", 400);
     }
     const now = Date.now();
     let room = (await this.ctx.storage.get("room")) || null;
@@ -774,14 +787,14 @@ export class Bingo {
     }
     if (!room) {
       if (!BINGO_SEED.test(seed)) {
-        return new Response("seed, please\n", { status: 400 });
+        return say("bad: seed, please", 400);
       }
       room = { made: now, seed, players: [], claims: {} };
     }
     let you = room.players.indexOf(name);
     if (you < 0) {
       if (room.players.length >= BINGO_PLAYERS) {
-        return new Response("That room is full\n", { status: 409 });
+        return say("That room is full", 409);
       }
       room.players.push(name);
       you = room.players.length - 1;
@@ -800,9 +813,7 @@ export class Bingo {
     for (const [cell, who] of Object.entries(room.claims)) {
       text += "claim " + cell + " " + who + "\n";
     }
-    return new Response(text, {
-      headers: { "content-type": "text/plain; charset=utf-8", "cache-control": "no-store" },
-    });
+    return say(text);
   }
 }
 
@@ -826,58 +837,105 @@ const DAILY_MAX_MS = 7 * 24 * 3600e3;
 const DAILY_NAMES_PER_ADDRESS = 3;
 const DAILY_KEEP_MS = 40 * 24 * 3600e3;
 
+// the day's number since 1970-01-01 (UTC), or null when it isn't a date
 function dayNumber(yyyymmdd) {
   const y = Number(yyyymmdd.slice(0, 4)), m = Number(yyyymmdd.slice(4, 6)), d = Number(yyyymmdd.slice(6, 8));
-  return Math.floor(Date.UTC(y, m - 1, d) / 86400e3);
+  const at = new Date(Date.UTC(y, m - 1, d));
+  if (at.getUTCFullYear() !== y || at.getUTCMonth() !== m - 1 || at.getUTCDate() !== d) {
+    return null;
+  }
+  return Math.floor(at.getTime() / 86400e3);
 }
 
-async function addressHash(address, day) {
-  const data = new TextEncoder().encode(day + "|" + (address || "?"));
-  const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", data));
-  return [...digest.slice(0, 12)].map((b) => b.toString(16).padStart(2, "0")).join("");
-}
+// The daily and raid boards: one stored value, each name's best entry and the
+// names each address (as a hash) sent under, the whole of it dropped a while
+// after its first entry. Sized to stay one small value: past NAMED_BOARD_NAMES
+// names, a new one goes on only if it beats the last, which leaves.
+const NAMED_BOARD_NAMES = 600;
+const NAMED_BOARD_ADDRESSES = 1000;
 
-export class Daily {
-  constructor(ctx, env) {
-    this.ctx = ctx;
-    this.env = env;
+class NamedBoard extends Stored {
+  async board() {
+    return (await this.ctx.storage.get("board")) || { best: {}, addresses: {} };
   }
 
+  // the names, best first (compare: below 0 when its first entry is better)
+  ranked(board, compare) {
+    return Object.entries(board.best).sort((a, b) => compare(a[1], b[1]));
+  }
+
+  // name's entry sent: kept when it's the name's first or better than its
+  // last. A refusal (a Response), or null when it's on the board.
+  async enter(request, board, opts, name, entry) {
+    const { scope, perAddress, keepMs, compare } = opts;
+    const old = board.best[name];
+    let dropped = null;
+    if (!old && Object.keys(board.best).length >= NAMED_BOARD_NAMES) {
+      const last = this.ranked(board, compare).pop();
+      if (compare(entry, last[1]) >= 0) {
+        return say("slower: the board is full of better ones", 409);
+      }
+      dropped = last[0];
+    }
+    const who = await addressHash(request, this.env, scope);
+    const names = board.addresses[who] || [];
+    if (!names.includes(name)) {
+      if (names.length >= perAddress) {
+        return say("names: enough names from here for this board", 429);
+      }
+      if (names.length === 0 && Object.keys(board.addresses).length >= NAMED_BOARD_ADDRESSES) {
+        return say("full: this board takes no more senders", 429);
+      }
+      names.push(name);
+      board.addresses[who] = names;
+    }
+    if (!old || compare(entry, old) < 0) {
+      board.best[name] = entry;
+      if (dropped !== null) {
+        delete board.best[dropped];
+      }
+    }
+    if ((await this.ctx.storage.getAlarm()) === null) {
+      await this.ctx.storage.setAlarm(Date.now() + keepMs);
+    }
+    await this.ctx.storage.put("board", board);
+    return null;
+  }
+
+  async alarm() {
+    await this.ctx.storage.deleteAll();
+  }
+}
+
+const DAILY = {
+  perAddress: DAILY_NAMES_PER_ADDRESS,
+  keepMs: DAILY_KEEP_MS,
+  compare: (a, b) => a.ms - b.ms || a.at - b.at,
+};
+
+export class Daily extends NamedBoard {
   async fetch(request) {
     const url = new URL(request.url);
     const day = url.pathname.split("/").pop();
     const params = url.searchParams;
-    let board = (await this.ctx.storage.get("board")) || { times: {}, addresses: {} };
+    const board = await this.board();
     let rankOf = null;
     if (params.has("ms")) {
       const name = cleanName(params.get("name"));
-      const ms = Number.parseInt(params.get("ms") || "", 10);
+      const ms = int(params.get("ms"), DAILY_MIN_MS, DAILY_MAX_MS);
       const game = GAME.test(params.get("game") || "") ? params.get("game") : "?";
-      const today = Math.floor(Date.now() / 86400e3);
-      const age = today - dayNumber(day);
-      if (name === "" || !(ms >= DAILY_MIN_MS && ms <= DAILY_MAX_MS) || age < 0 || age > 2) {
-        return new Response("Not a time for this board\n", { status: 400 });
+      const age = Math.floor(Date.now() / 86400e3) - dayNumber(day);
+      if (name === "" || ms === null || age < 0 || age > 2) {
+        return say("bad: not a time for this board", 400);
       }
-      const who = await addressHash(request.headers.get("CF-Connecting-IP"), day);
-      const names = board.addresses[who] || [];
-      if (!names.includes(name)) {
-        if (names.length >= DAILY_NAMES_PER_ADDRESS) {
-          return new Response("Enough names from here today\n", { status: 429 });
-        }
-        names.push(name);
-        board.addresses[who] = names;
+      const refused = await this.enter(request, board, { ...DAILY, scope: "daily:" + day }, name,
+                                       { ms, game, at: Date.now() });
+      if (refused) {
+        return refused;
       }
-      const old = board.times[name];
-      if (!old || ms < old.ms) {
-        board.times[name] = { ms, game, at: Date.now() };
-      }
-      if ((await this.ctx.storage.getAlarm()) === null) {
-        await this.ctx.storage.setAlarm(Date.now() + DAILY_KEEP_MS);
-      }
-      await this.ctx.storage.put("board", board);
       rankOf = name;
     }
-    const sorted = Object.entries(board.times).sort((a, b) => a[1].ms - b[1].ms || a[1].at - b[1].at);
+    const sorted = this.ranked(board, DAILY.compare);
     let text = "daily " + day + " " + sorted.length;
     if (rankOf !== null) {
       text += " " + (sorted.findIndex(([n]) => n === rankOf) + 1);
@@ -886,13 +944,7 @@ export class Daily {
     sorted.slice(0, DAILY_SHOWN).forEach(([n, t], i) => {
       text += i + 1 + " " + t.ms + " " + encodeURIComponent(n) + " " + t.game + "\n";
     });
-    return new Response(text, {
-      headers: { "content-type": "text/plain; charset=utf-8", "cache-control": "no-store" },
-    });
-  }
-
-  async alarm() {
-    await this.ctx.storage.deleteAll();
+    return say(text);
   }
 }
 
@@ -916,6 +968,7 @@ export class Daily {
 const RAID_BOSSES = 6; // kBosses in raid_aurora.c: Bonetail, Hooktail, Magnus 2.0, Gloomtail, Macho Grubba, Smorg
 const RAID_SHOWN = 50;
 const RAID_MIN_TURNS = 4;
+const RAID_MAX_TURNS = 999;
 const RAID_MIN_FRAMES = 60 * 60;
 const RAID_MAX_FRAMES = 60 * 60 * 60 * 6;
 const RAID_NAMES_PER_ADDRESS = 4;
@@ -930,57 +983,39 @@ function raidBossOf(week) {
   return week % RAID_BOSSES;
 }
 
-function cleanPartyName(name) {
-  return [...(name || "")].filter((c) => c >= " " && c !== "\x7f").slice(0, RAID_MAX_NAME).join("").trim();
-}
+const RAID = {
+  perAddress: RAID_NAMES_PER_ADDRESS,
+  keepMs: RAID_KEEP_MS,
+  compare: (a, b) => a.turns - b.turns || a.frames - b.frames || a.at - b.at,
+};
 
-export class Raid {
-  constructor(ctx, env) {
-    this.ctx = ctx;
-    this.env = env;
-  }
-
+export class Raid extends NamedBoard {
   async fetch(request) {
     const url = new URL(request.url);
     const week = Number.parseInt(url.pathname.split("/").pop(), 10);
     const params = url.searchParams;
     const boss = raidBossOf(week);
-    let board = (await this.ctx.storage.get("board")) || { clears: {}, addresses: {} };
+    const board = await this.board();
     let rankOf = null;
     if (params.has("turns")) {
-      const name = cleanPartyName(params.get("name"));
-      const turns = Number.parseInt(params.get("turns") || "", 10);
-      const frames = Number.parseInt(params.get("frames") || "", 10);
-      const players = Number.parseInt(params.get("players") || "", 10);
-      const sentBoss = Number.parseInt(params.get("boss") || "", 10);
-      const game = GAME.test(params.get("game") || "") ? params.get("game") : "?";
+      const name = cleanName(params.get("name"), RAID_MAX_NAME);
+      const turns = int(params.get("turns"), RAID_MIN_TURNS, RAID_MAX_TURNS);
+      const frames = int(params.get("frames"), RAID_MIN_FRAMES, RAID_MAX_FRAMES);
+      const players = int(params.get("players"), 2, 4);
       const age = raidWeekNow() - week;
-      if (name === "" || sentBoss !== boss || !(turns >= RAID_MIN_TURNS && turns <= 999) ||
-          !(frames >= RAID_MIN_FRAMES && frames <= RAID_MAX_FRAMES) || !(players >= 2 && players <= 4) ||
-          age < 0 || age > 1) {
-        return new Response("Not a clear for this board\n", { status: 400 });
+      const game = GAME.test(params.get("game") || "") ? params.get("game") : "?";
+      if (name === "" || int(params.get("boss"), 0, RAID_BOSSES - 1) !== boss || turns === null ||
+          frames === null || players === null || age < 0 || age > 1) {
+        return say("bad: not a clear for this board", 400);
       }
-      const who = await addressHash(request.headers.get("CF-Connecting-IP"), "raid" + week);
-      const names = board.addresses[who] || [];
-      if (!names.includes(name)) {
-        if (names.length >= RAID_NAMES_PER_ADDRESS) {
-          return new Response("Enough names from here this week\n", { status: 429 });
-        }
-        names.push(name);
-        board.addresses[who] = names;
+      const refused = await this.enter(request, board, { ...RAID, scope: "raid:" + week }, name,
+                                       { turns, frames, players, game, at: Date.now() });
+      if (refused) {
+        return refused;
       }
-      const old = board.clears[name];
-      if (!old || turns < old.turns || (turns === old.turns && frames < old.frames)) {
-        board.clears[name] = { turns, frames, players, game, at: Date.now() };
-      }
-      if ((await this.ctx.storage.getAlarm()) === null) {
-        await this.ctx.storage.setAlarm(Date.now() + RAID_KEEP_MS);
-      }
-      await this.ctx.storage.put("board", board);
       rankOf = name;
     }
-    const sorted = Object.entries(board.clears).sort(
-      (a, b) => a[1].turns - b[1].turns || a[1].frames - b[1].frames || a[1].at - b[1].at);
+    const sorted = this.ranked(board, RAID.compare);
     let text = "raid " + week + " " + boss + " " + sorted.length;
     if (rankOf !== null) {
       text += " " + (sorted.findIndex(([n]) => n === rankOf) + 1);
@@ -989,12 +1024,6 @@ export class Raid {
     sorted.slice(0, RAID_SHOWN).forEach(([n, c], i) => {
       text += i + 1 + " " + c.turns + " " + c.frames + " " + c.players + " " + encodeURIComponent(n) + " " + c.game + "\n";
     });
-    return new Response(text, {
-      headers: { "content-type": "text/plain; charset=utf-8", "cache-control": "no-store" },
-    });
-  }
-
-  async alarm() {
-    await this.ctx.storage.deleteAll();
+    return say(text);
   }
 }

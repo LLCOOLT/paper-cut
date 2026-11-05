@@ -72,5 +72,5 @@ Ver el tablón
 The board's answer wasn't understood.
 No se entendió la respuesta del tablón.
 
-Today's seed and rules, and the board, are on the full settings page's Modes tab.
+Today's seed, rules and board: on the full page's Modes tab.
 La semilla de hoy, sus reglas y el tablón están en la pestaña Modos de la página de ajustes.

@@ -179,7 +179,12 @@ void portLuigiFaceForce(int luigi) {
 int portIconTexOverride(unsigned int iconId, void* out) {
     size_t k;
     /* (forced: a versus battle's Luigi side) */
-    const int chr = sFaceForce > 0 ? PORT_PLAY_AS_LUIGI : sFaceForce == 0 ? PORT_PLAY_AS_MARIO : portPlayAs();
+    const int pick = portPlayAs();
+    /* (Brothers mode keeps Play as Luigi off: Mario is himself, portLuigiOn) */
+    const int chr = sFaceForce > 0    ? PORT_PLAY_AS_LUIGI
+                    : sFaceForce == 0 ? PORT_PLAY_AS_MARIO
+                    : pick == PORT_PLAY_AS_LUIGI && !portLuigiOn() ? PORT_PLAY_AS_MARIO
+                                                                   : pick;
     if (chr == PORT_PLAY_AS_MARIO) {
         return 0;
     }
@@ -216,4 +221,9 @@ void portLuigiFacesInit(void) {
      * while the option is on: mod_game_aurora.c names the map with "#luigi" then */
     mapTextures("*#luigi", "art/icons/luigi/ui/");
     mapTextures("*#luigi", "art/icons/luigi/ui_jp/");
+    /* Peach's and Bowser's (their recipes' level-up panel), "#peach" / "#bowser" likewise */
+    mapTextures("*#peach", "art/icons/peach/ui/");
+    mapTextures("*#peach", "art/icons/peach/ui_jp/");
+    mapTextures("*#bowser", "art/icons/bowser/ui/");
+    mapTextures("*#bowser", "art/icons/bowser/ui_jp/");
 }

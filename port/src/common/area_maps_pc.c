@@ -12,13 +12,6 @@
 #include "port/companion.h"
 #include "port/gameplus.h"
 #include "port/practice.h"
-#ifdef _WIN32
-#include <direct.h>
-#define makeDir(p) _mkdir(p)
-#else
-#include <sys/stat.h>
-#define makeDir(p) mkdir(p, 0755)
-#endif
 
 #define ROOMS_MAX 256
 #define EXITS_MAX 1024
@@ -45,16 +38,12 @@ static int roomIndex(const char* map) {
 }
 
 static void save(void) {
-    char dir[1024];
     FILE* f;
     int i;
     if (sPath[0] == '\0') {
         return;
     }
-    snprintf(dir, sizeof(dir), "%s/AreaMaps", portPracticeUserDir());
-    makeDir(dir);
-    snprintf(dir, sizeof(dir), "%s/AreaMaps/%s", portPracticeUserDir(), PORT_GAME_ID);
-    makeDir(dir);
+    portPracticeGameDir("AreaMaps");
     f = fopen(sPath, "w");
     if (f == NULL) {
         return;

@@ -138,7 +138,7 @@ void jukebox(int) {
 }
 
 // --- The Start menu's forms (port/include/port/pause_forms.h) ---
-constexpr const char* kSecondScreen = "Not from the second screen: do it in the game's own Start menu.";
+constexpr const char* kSecondScreen = "Not on the second screen: use the game's Start menu.";
 
 // Loadouts: each one's name over its Wear, Store worn and Rename
 enum { kWear, kStore, kRename, kLoadoutRows };
@@ -351,21 +351,20 @@ struct Register {
                           "A Save Block also offers to store items and take them out, as the Rogueport shop's "
                           "counter does, before saving.",
                           kPlay, "storage_anywhere", "item storage save block keep stored items");
-    portSettingsAddToggle(kTab, "Walk-speed boost", "Mario walks and runs faster while the Boost key or Boost "
-                                                    "button is held.",
+    portSettingsAddToggle(kTab, "Walk-speed boost", "Mario moves faster while the Boost key or button is held.",
                           kPlay, "walk_boost", "walk run speed boost sprint hold");
     portSettingsAddSlider(kTab, "Boost speed", nullptr, kPlay, "walk_boost_speed", 110, 200, "%d %%",
                           "walk run speed boost sprint");
     portSettingsAddSection(kTab, "Boost key", nullptr, 0, boostKeys, "walk boost key keyboard button controller gamepad");
     static const char* const kTimes[] = {"x1", "x1.5", "x2", "x2.5", "x3"};
     portSettingsAddChoice(kTab, "Coins from battles",
-                          "The coins a won battle drops, after Merlee, Money Money and a First Strike.", kPlay,
+                          "A battle's coins, after Merlee, Money Money and co.", kPlay,
                           "coin_multiplier", kTimes, 5, "coin multiplier money battle drop");
     portSettingsAddChoice(kTab, "Star Points from battles", "A battle's Star Points (still at most 100, a level).",
                           kPlay, "exp_multiplier", kTimes, 5, "exp star points multiplier level");
     static const char* const kCorners[] = {"Off", "Top left", "Top right", "Bottom left", "Bottom right"};
     portSettingsAddChoice(kTab, "Star Piece and Shine Sprite tracker",
-                          "How many of the current map's Star Pieces and Shine Sprites are found, in a corner.", 0,
+                          "The map's Star Pieces and Shine Sprites, in a corner.", 0,
                           "collectible_tracker", kCorners, 5, "star piece shine sprite tracker collectible missing");
     portSettingsAddSection(kTab, "On this map", "Star Pieces and Shine Sprites found here.", PORT_SETTING_IN_GAME,
                            collectibles, "star piece shine sprite map collectible");

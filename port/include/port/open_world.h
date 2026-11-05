@@ -20,7 +20,14 @@
  * - gor_04.c: the station's attendants say whose way in the room is (the
  *   train's, chapter 6, or the blimp's, chapter 3: portEvtOpenRoomChapter);
  * - gor_01.c: the Ultra Hammer's chest stays whatever hammer Mario has
- *   (portEvtOpenWorld). */
+ *   (portEvtOpenWorld);
+ * - gon_06.c, usu_01.c, dou_07.c: a black chest gives what was put there,
+ *   shown as an item (portEvtOpenChest);
+ * - evt_msg.c: a joining scene that gave something else leaves out the
+ *   partner's lines (portOpenMuteLine);
+ * - tik_05.c: the Thousand-Year Door's scene shows the stars Mario has
+ *   (portOpenStarShown), the pedestal's the star of the chapter done
+ *   (portEvtOpenStretchStar). */
 
 #ifdef __cplusplus
 extern "C" {
@@ -40,6 +47,7 @@ enum {
     PORT_OPEN_TRACKS = PORT_OPEN_GSW + 56, /* u16 per chapter 0..9: its story (0: not begun) */
     PORT_OPEN_AWAY = PORT_OPEN_GSW + 76,   /* partners a scene sent away (bit per party id) */
     PORT_OPEN_FLAGS = PORT_OPEN_GSW + 77,  /* PORT_OPEN_FLAG_* */
+    PORT_OPEN_ORDER = PORT_OPEN_GSW + 78,  /* the chapters in the order they were done (8 bytes, 0: none yet) */
     PORT_OPEN_FLAG_GOAL = 1,               /* the goal's notice was shown */
     PORT_OPEN_STAGE = 3,                   /* this build's stage (PORT_OPEN_VERSION): chapters 1 to 8 */
 };
@@ -52,6 +60,10 @@ const char* portOpenFileSeed(void);
 int portOpenFileGoal(void);
 /* GSW 0 as the current chapter sees it (raw: the game's own value) */
 int portOpenStoryGet(int raw);
+/* GSW 0 as portOpenStoryGet reads it, changing nothing (no room noted, no
+ * Rogueport catch-up, no chapter last played): swStoryPeek, for readers
+ * outside the game's own logic (menus, Discord, achievements) */
+int portOpenStoryPeek(int raw);
 /* GSW 0 written: 1 if it went to the current chapter's own story */
 int portOpenStorySet(int value);
 /* the chapter whose story the current map reads (0: the game's own) */
@@ -73,6 +85,9 @@ struct EventEntry;
 void* portOpenChildScript(struct EventEntry* entry, void* script);
 /* seq_load.c, a new file: stamped if the randomizer is armed for one */
 void portOpenNewFile(void);
+/* $TTYD_OPEN_SEED for a scripted run, or NULL (also online and in replays,
+ * where the randomizer's settings are the session's) */
+const char* portOpenTestSeed(void);
 /* a test or a scripted run: stamp the file in play with this seed */
 void portOpenStamp(const char* seed, unsigned pools, int goal);
 /* $TTYD_OPEN_SELFTEST: the items and stories checked at once (PASS/FAIL lines) */
@@ -100,6 +115,27 @@ void portOpenSetLecture(void* script);
 
 /* the item ids a partner's item takes in this file (the game's unused key items) */
 int portOpenPartnerToken(int partner);
+
+/* tik_05, the Thousand-Year Door's scene: Crystal Star 1..7 is shown (1
+ * unless this is an open-world file and Mario hasn't got it) */
+int portOpenStarShown(int star);
+/* tik_05, the pedestal's scene after the n-th chapter done (Rogueport's
+ * stretch n): the Crystal Star of that chapter. Script function: args[0]
+ * holds n - 1 and gets that star's number - 1 (unchanged in any other file,
+ * and for a chapter with no star) */
+int portEvtOpenStretchStar(struct EventEntry* event, int isFirstCall);
+
+/* A black chest (gon_06, usu_01, dou_07): the item the seed put in the chest
+ * whose own item is this curse, when it is anything else; 0 leaves the chest
+ * as the game has it (its curse and the Paper Mage's lesson). The C++ side's
+ * lookup and the script function (args[0] the curse, args[1] out). */
+int portOpenChestReward(int curse);
+int portEvtOpenChest(struct EventEntry* event, int isFirstCall);
+
+/* evt_msg.c: 1 to skip a line the party speaks (speaker "party", or
+ * evt_msg_print_party) in a joining scene that gave something other than
+ * its partner: the partner out would say the joining partner's words */
+int portOpenMuteLine(struct EventEntry* event, const char* speaker);
 
 #ifdef __cplusplus
 }

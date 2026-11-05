@@ -10,7 +10,7 @@ Mouse camera speed
 Vitesse de la caméra à la souris
 
 How far the camera turns for a move of the mouse.
-De combien la caméra tourne pour un mouvement de la souris.
+De combien la caméra tourne pour un mouvement de souris.
 
 Invert mouse camera
 Inverser la caméra à la souris

@@ -144,7 +144,7 @@ The game asks the model for animations by name; one it doesn't have plays the mo
 
 **A partner's skin** needs no `--as` and replaces nothing: put the pack (or the export folder) in the user folder's `skins/` folder and pick it on the partner's Skin row in the Start menu's Wardrobe ([COSTUMES.md](COSTUMES.md#partner-skins)).
 
-**Play as Luigi** builds Luigi's model `a/c_luigi_pc` (his own and our new animations, and his hammer) from the disc at start, before mods; a mod that replaces `a/c_luigi` doesn't change him. To change the playable Luigi, replace `c_luigi_pc`: export it from the game (it's in the list: the port makes it at every start) and pack that folder; the mod's file wins over the port's.
+**Play as** Luigi (Enhancements) builds Luigi's model `a/c_luigi_pc` (his own and our new animations, and his hammer) from the disc at start, before mods; a mod that replaces `a/c_luigi` doesn't change him. To change the playable Luigi, replace `c_luigi_pc`: export it from the game (it's in the list: the port makes it at every start) and pack that folder; the mod's file wins over the port's.
 
 ## Checking
 

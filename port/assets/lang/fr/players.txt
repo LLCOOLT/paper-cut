@@ -24,9 +24,6 @@ Cette partie a déjà autant de joueurs que possible (quatre).
 That game has as many players as it can.
 Cette partie a déjà autant de joueurs que possible.
 
-That room has as many players as it can
-Ce salon a déjà autant de joueurs que possible
-
 The game started without this player: watch it instead.
 La partie a commencé sans vous : regardez-la plutôt.
 

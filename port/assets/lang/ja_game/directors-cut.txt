@@ -4,7 +4,7 @@ Director's Cut
 ディレクターズカット
 
 Content the game's code still has but never uses, put back: cut badges sold by Dazzle, enemies and battles nothing starts, the Red Buzzy family, a level-up confirmation and three lost sewer rooms. Each has a page in the Director's Cut journal below.
-つかわれなかった　ないようを　ふっかつします　バッジや　てきや　ちかの　へやなどです
+つかわれなかった　バッジや　てきなどを　ふっかつします
 
 Director's Cut journal
 ディレクターズカット　にっし

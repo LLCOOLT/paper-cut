@@ -66,11 +66,11 @@ La Tour de papier s'ouvre une fois le jeu terminé sur cette partie.
 No climb is under way.
 Aucune ascension en cours.
 
-30 floors of the game's rooms, remixed; once the game is finished.
-30 étages faits des salles du jeu, remixées ; une fois le jeu terminé.
+30 floors of the game's rooms, remixed, after the credits.
+30 étages des salles du jeu, remixées, après le générique.
 
 On to the next floor; the climb counts as helped.
-À l'étage suivant ; l'ascension compte comme aidée.
+Étage suivant ; l'ascension compte comme aidée.
 
 The climb starts once the menu is closed.
 L'ascension commence une fois le menu fermé.

@@ -1,7 +1,7 @@
 # The Start menu's last sections (port/include/port/pause_forms.h) in German: an English line, then its translation, then a blank line.
 
 A: pick the colour; Controller light becomes Custom colour.
-A: Farbe wählen; Controller-Licht wird zu Eigene Farbe.
+A: Farbe wählen; das Licht wechselt zu Eigene Farbe.
 
 Couldn't open it.
 Konnte nicht geöffnet werden.
@@ -30,7 +30,7 @@ Nicht erkannt: A fragt nacheinander nach jeder Taste.
 A controller
 Ein Controller
 
-A controller listed here works once you press each of its buttons when asked.
+A listed controller works once its buttons are set.
 Ein hier aufgeführter Controller geht, sobald du jede seiner Tasten auf Nachfrage drückst.
 
 On an HDR display, the picture at the brightness you choose for white.
@@ -51,8 +51,8 @@ Die hellsten Lichter noch ein wenig heller.
 Turn on HDR output first.
 Schalte zuerst die HDR-Ausgabe ein.
 
-Not from the second screen: do it in the game's own Start menu.
-Nicht vom zweiten Bildschirm aus: im Startmenü des Spiels selbst.
+Not on the second screen: use the game's Start menu.
+Nicht vom zweiten Bildschirm: nutze das Startmenü im Spiel.
 
 Travel there: the trip starts once the menu is closed.
 Dorthin reisen: Die Reise beginnt, sobald das Menü geschlossen ist.
@@ -109,7 +109,7 @@ A types its name.
 A: Namen eingeben.
 
 This loadout is empty: Store worn fills it.
-Diese Zusammenstellung ist leer: Angelegte speichern füllt sie.
+Leere Zusammenstellung: Angelegte speichern füllt sie.
 
 Stored: the badges worn now.
 Gespeichert: die jetzt angelegten Orden.
@@ -138,8 +138,8 @@ Liest die Sprachpakete im Mods-Ordner neu ein.
 Writes a pack for a translator to start from in the mods folder: each text in English, with room for its translation.
 Schreibt ein Paket für Übersetzer in den Mods-Ordner: jeder Text auf Englisch, mit Platz für die Übersetzung.
 
-Shows the mods folder on the desktop: a pack is a folder in it.
-Zeigt den Mods-Ordner auf dem Desktop: Ein Paket ist ein Ordner darin.
+Shows the mods folder; each pack is a folder in it.
+Zeigt den Mods-Ordner; jedes Paket ist ein Ordner darin.
 
 Restart for the new letters
 Neu starten für die neuen Zeichen
@@ -165,14 +165,14 @@ In den Mods-Ordner geschrieben: Die zu übersetzenden Texte sind darin.
 Nothing yet: the message windows' pages show here.
 Noch nichts: Die Seiten der Textfenster erscheinen hier.
 
-Up and down scroll, left and right a page at a time. B: back.
-Hoch und runter blättern, links und rechts seitenweise. B: zurück.
+Up and down scroll, left and right by page. B: back.
+Auf/ab scrollt, links/rechts seitenweise. B: zurück.
 
 Read the message log
 Textverlauf lesen
 
 The last 200 pages of the message windows, to read again at your own pace: newest at the bottom.
-Die letzten 200 Seiten der Textfenster, zum Nachlesen in Ruhe: die neueste unten.
+Die letzten 200 Textseiten zum Nachlesen, neueste unten.
 
 The music folder. Name a file after the game's track, as tracks.txt in the folder lists them (BGM_STG1_NOK1.wav), and it plays in its place.
 Der Musikordner. Benenne eine Datei nach dem Stück des Spiels, wie tracks.txt im Ordner sie auflistet (BGM_STG1_NOK1.wav), und sie spielt an seiner Stelle.
@@ -190,12 +190,12 @@ Player
 Spieler
 
 Whose controller is set: left and right change it.
-Wessen Controller eingestellt wird: links und rechts ändern es.
+Wessen Controller eingestellt wird: links/rechts ändern es.
 
-The stick moves, the d-pad is A, B, X and Y, the left bumper Z, the left trigger R.
+The stick moves, the d-pad is ABXY, LB is Z and LT is R.
 Der Stick bewegt, das Steuerkreuz ist A, B, X und Y, die linke Schultertaste Z, der linke Trigger R.
 
-The right stick moves, the face buttons, right bumper and trigger as they are.
+The right stick moves; face buttons, RB and RT unchanged.
 Der rechte Stick bewegt, die Aktionstasten, rechte Schultertaste und Trigger wie sie sind.
 
 Rewind button
@@ -210,7 +210,7 @@ A: Adresse kopieren. X: Senden beenden. B: zurück (es sendet weiter).
 A: the address and its QR code again.
 A: Adresse und QR-Code noch einmal.
 
-The address the other device shows under Send saves to another device: A types it.
+A: type the address the other device shows under Send saves.
 Die Adresse, die das andere Gerät unter Spielstände an ein anderes Gerät senden zeigt: A gibt sie ein.
 
 Paste the address
@@ -219,10 +219,10 @@ Adresse einfügen
 The address you copied, put in.
 Die kopierte Adresse, eingesetzt.
 
-Fetches the other device's saves; you choose what to replace next.
-Holt die Spielstände des anderen Geräts; danach wählst du, was ersetzt wird.
+Gets the other device's saves; then pick what to replace.
+Spielstände vom anderen Gerät; dann wählen, was ersetzt wird.
 
-Replace: the other device's game file over this one's (kept as a backup first).
+Replace: the other device's file here (backed up first).
 Ersetzen: die Spieldatei des anderen Geräts über diese (vorher als Sicherung behalten).
 
 Replace
@@ -277,7 +277,7 @@ Choosing player 1's controller moves it to player 2, and player 1 plays on the k
 Wählst du den Controller von Spieler 1, geht er an Spieler 2, und Spieler 1 spielt mit der Tastatur.
 
 Player 2's controller plays as nobody until it joins again.
-Der Controller von Spieler 2 spielt niemanden, bis er wieder beitritt.
+Spieler 2 spielt niemanden, bis er wieder beitritt.
 
 Updated to Paper Cut
 Aktualisiert auf Paper Cut
@@ -286,10 +286,10 @@ No new version found
 Keine neue Version gefunden
 
 Checked at start, when Check for updates at start is on.
-Beim Start geprüft, wenn Beim Start nach Updates suchen an ist.
+Geprüft, wenn Beim Start nach Updates suchen an ist.
 
-A newer Paper Cut is out. A: its release page in the browser.
-Ein neueres Paper Cut ist erschienen. A: seine Seite im Browser.
+A newer Paper Cut is out. A: open its release page.
+Ein neueres Paper Cut ist da. A: seine Seite öffnen.
 
 Flathub updates this copy
 Flathub aktualisiert diese Kopie
@@ -366,5 +366,5 @@ A: Text übernehmen. B: so lassen, wie er war.
 A: the text you copied, typed here.
 A: der kopierte Text, hier eingegeben.
 
-A types it. X deletes a letter. B leaves the text as it was.
-A gibt es ein. X löscht ein Zeichen. B lässt den Text, wie er war.
+A types the key, B rubs out a letter (on none, it goes back), Start is Done.
+A tippt die Taste, B löscht ein Zeichen (ohne Zeichen geht es zurück), Start ist Fertig.

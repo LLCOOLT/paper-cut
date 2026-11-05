@@ -9,8 +9,8 @@ Le jeu figé là où il est, la caméra tout autour de Mario, en haut et en bas,
 Back to the game
 Retour au jeu
 
-(in the field, not online)
-(sur le terrain, pas en ligne)
+(in the field or a battle, not online)
+(sur le terrain ou en combat, pas en ligne)
 
 Photo mode   Stick: turn   Right stick: in and out   A: picture   Y: hide the HUD   B: back
 Mode photo   Stick : tourner   Stick droit : rapprocher et éloigner   A : photo   Y : masquer l'interface   B : retour

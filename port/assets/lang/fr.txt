@@ -118,8 +118,8 @@ Sans limite
 Widest picture
 Image la plus large
 
-Past this the rest of the screen is bars (blurred with Blurred side bars).
-Au-delà, le reste de l'écran est fait de bandes (floues avec Bandes latérales floues).
+Wider screens get bars past this (see Blurred side bars).
+Au-delà : des bandes (voir Bandes latérales floues).
 
 The status bar, message windows and battle menus, larger or smaller than the game's.
 La barre d'état, les fenêtres de texte et les menus de combat, plus grands ou plus petits que dans le jeu.
@@ -131,7 +131,7 @@ Anisotropic filtering
 Filtrage anisotrope
 
 Textures seen at an angle (floors, paths) stay sharp.
-Les textures vues en biais (sols, chemins) restent nettes.
+Les textures en biais (sols, chemins) restent nettes.
 
 The game's
 Comme le jeu
@@ -166,14 +166,14 @@ Sur un écran HDR, l'image à la luminosité choisie pour le blanc (blanc papier
 Performance overlay
 Affichage des performances
 
-How long each frame takes: the time between frames, and the part spent working.
-La durée de chaque image : le temps entre deux images, et la part passée à travailler.
+The time between frames, and the part spent working.
+Le temps entre deux images, et la part passée à travailler.
 
 Sharp text
 Texte net
 
-The game's font rebuilt as a distance field, so its letters stay sharp at any resolution (the same letters; a texture pack's font shows with this off).
-La police du jeu reconstruite en champ de distance, pour que ses lettres restent nettes à toute résolution (les mêmes lettres ; la police d'un pack de textures s'affiche quand ceci est désactivé).
+The game's font rebuilt as a distance field, so its letters stay sharp at any resolution (the same letters; a texture pack's own font is drawn as the pack's).
+La police du jeu reconstruite en champ de distance, pour que ses lettres restent nettes à toute résolution (les mêmes lettres ; la police propre à un pack de textures s'affiche telle que le pack la dessine).
 
 Window
 Fenêtre
@@ -277,7 +277,7 @@ Attaque des ennemis (personnalisée)
 Action commands: attacks
 Commandes action : attaques
 
-Wider timing for attack commands, or every attack command done for you.
+Wider timing for attack commands, or all done for you.
 Un timing plus large pour les commandes d'attaque, ou chaque commande d'attaque faite pour vous.
 
 Action commands: guards
@@ -301,19 +301,19 @@ Pas encore de sauvegardes : mettez des fichiers .gci dans le dossier des télép
 Speedrun timer
 Chronomètre de speedrun
 
-Game time in a corner, counted in the game's own frames, with real time under it.
-Le temps de jeu dans un coin, compté dans les images du jeu, avec le temps réel en dessous.
+Game time (in frames) and real time in a corner.
+Temps de jeu (en images) et temps réel dans un coin.
 
 Load removal
 Sans les chargements
 
-Game time stops while a map or a battle loads (the timer's and LiveSplit's).
+The timer and LiveSplit stop while a map or battle loads.
 Le temps de jeu s'arrête pendant le chargement d'une carte ou d'un combat (celui du chronomètre et de LiveSplit).
 
 Start with a new file
 Démarrer avec un nouveau fichier
 
-The timer starts when a new file begins, and resets at the title screen.
+The timer starts with a new file and resets at the title.
 Le chronomètre démarre quand un nouveau fichier commence, et se remet à zéro à l'écran titre.
 
 When to split: Any% at the end of each chapter; every step of the story; or the user folder's splits.txt.
@@ -332,7 +332,7 @@ Frame advance keys
 Touches image par image
 
 F6 holds the game (and lets it go on), F7 moves one frame.
-F6 arrête le jeu (et le laisse repartir), F7 avance d'une image.
+F6 fige le jeu et le relance, F7 avance d'une image.
 
 Frame advance
 Image par image
@@ -358,8 +358,8 @@ Histoire et drapeaux
 Memory watch corner
 Coin de la surveillance mémoire
 
-The fields ticked in Memory watch (All settings), kept on screen.
-Les champs cochés dans Surveillance mémoire (Tous les paramètres), gardés à l'écran.
+Memory watch's ticked fields (All settings), on screen.
+Champs cochés de Surveillance mémoire (Tous les paramètres).
 
 Memory watch
 Surveillance mémoire
@@ -427,8 +427,8 @@ Préréglages
 One-hit KO
 K.O. en un coup
 
-Any enemy hit that does damage knocks Mario or the partner out.
-Tout coup ennemi qui fait des dégâts met Mario ou le partenaire K.O.
+Any damaging enemy hit knocks Mario or the partner out.
+Tout coup ennemi blessant met Mario ou le partenaire K.O.
 
 Allowed
 Autorisée
@@ -439,8 +439,8 @@ Garde
 Attack commands
 Commandes d'attaque
 
-Narrower timing for Mario's and the partners' attack commands.
-Un timing plus serré pour les commandes d'attaque de Mario et des partenaires.
+Narrower timing for Mario's and partners' attack commands.
+Timing plus serré des attaques de Mario et des partenaires.
 
 No items in battle
 Pas d'objets en combat
@@ -457,7 +457,7 @@ Les commandes des spectateurs dans le chat de votre chaîne font lancer des obje
 Cooldown
 Délai
 
-One command each this many seconds; a viewer, one each three times it.
+Seconds between commands (three times that per viewer).
 Une commande toutes les tant de secondes ; un spectateur, une toutes les trois fois plus.
 
 Allow the harmful ones
@@ -472,8 +472,8 @@ Passe au partenaire suivant sur le terrain sans le menu de pause : Q, le stick g
 Save Blocks save at once
 Les Blocs de sauvegarde sauvegardent tout de suite
 
-A Save Block saves to the file being played without asking first.
-Un Bloc de sauvegarde sauvegarde dans le fichier en cours sans demander d'abord.
+A Save Block saves to the current file without asking.
+Bloc de sauvegarde : sauve le fichier actuel sans demander.
 
 Bigger bag
 Sac plus grand
@@ -490,13 +490,13 @@ Après un combat, un partenaire tombé revient à 1 PC.
 Level up with the D-pad
 Monter de niveau avec la croix
 
-The level-up screen (HP, FP or BP) also takes the D-pad, not only the stick.
+The level-up screen (HP, FP, BP) also takes the D-pad.
 L'écran de montée de niveau (PC, PF ou PB) accepte aussi la croix directionnelle, pas seulement le stick.
 
 Healing items heal every partner
 Les objets de soin soignent tous les partenaires
 
-In the field, an item used on a partner heals the other partners too.
+In the field, healing one partner heals all of them.
 Sur le terrain, un objet utilisé sur un partenaire soigne aussi les autres partenaires.
 
 Skip repeated scenes
@@ -515,7 +515,7 @@ Faster battle menus
 Menus de combat plus rapides
 
 The battle command wheel opens and turns twice as fast.
-La roue des commandes de combat s'ouvre et tourne deux fois plus vite.
+La roue de combat s'ouvre et tourne deux fois plus vite.
 
 Tattle without a turn
 Indic sans perdre le tour
@@ -556,9 +556,6 @@ Un combat perdu ne coûte pas de rang, et la condition bonus d'un combat reste e
 Play as Luigi
 Jouer Luigi
 
-Luigi in Mario's place, with Mario's moves, in the field, battles, menus and credits; the text calls him Luigi and the other Luigi stays out of sight. Saves are not changed.
-Luigi à la place de Mario, avec les capacités de Mario, sur le terrain, en combat, dans les menus et le générique ; le texte l'appelle Luigi et l'autre Luigi reste caché. Les sauvegardes ne sont pas modifiées.
-
 A new file starts with what you choose here, taken from the file New Game+ from file names. Choose before starting the new file.
 Un nouveau fichier commence avec ce que vous choisissez ici, pris dans le fichier que donne New Game+ depuis le fichier. Choisissez avant de commencer le nouveau fichier.
 
@@ -589,7 +586,7 @@ Un Bloc de sauvegarde propose aussi de déposer et reprendre des objets, comme l
 Walk-speed boost
 Accélération de la marche
 
-Mario walks and runs faster while the Boost key or Boost button is held.
+Mario moves faster while the Boost key or button is held.
 Mario marche et court plus vite tant que la Touche d'accélération ou le Bouton d'accélération est maintenu.
 
 Boost speed
@@ -607,19 +604,19 @@ Bouton d'accélération
 Coins from battles
 Pièces des combats
 
-The coins a won battle drops, after Merlee, Money Money and a First Strike.
-Les pièces qu'un combat gagné rapporte, après Merlie, Money Money et une Initiative.
+A battle's coins, after Merlee, Money Money and co.
+Les pièces d'un combat, après Merlie, Money Money et cie.
 
 Star Points from battles
 Points Etoile des combats
 
 A battle's Star Points (still at most 100, a level).
-Les Points Etoile d'un combat (toujours 100 au plus, un niveau).
+Points Etoile d'un combat (toujours 100 max, un niveau).
 
 Star Piece and Shine Sprite tracker
 Suivi des Morceaux d'étoile et des Soleils
 
-How many of the current map's Star Pieces and Shine Sprites are found, in a corner.
+The map's Star Pieces and Shine Sprites, in a corner.
 Combien de Morceaux d'étoile et de Soleils de la carte actuelle sont trouvés, dans un coin.
 
 On this map
@@ -664,7 +661,7 @@ Aléatoire intégré
 Backups kept
 Copies gardées
 
-Dated copies of each save file, made when the game saves. 0: none.
+Dated copies of each save file, made on saving. 0: none.
 Des copies datées de chaque fichier de sauvegarde, faites quand le jeu sauvegarde. 0 : aucune.
 
 Restore a backup
@@ -685,8 +682,8 @@ Widescreen
 Never skip loading graphics
 Ne jamais sauter les graphismes en chargement
 
-Extra frames between the game's own 60: smoother motion.
-Des images en plus entre les 60 du jeu : mouvement plus fluide.
+Extra frames between the game's 60: smoother motion.
+Des images en plus entre les 60 du jeu : plus de fluidité.
 
 Present at the display's refresh: no tearing.
 Afficher au rafraîchissement de l'écran : pas de déchirure.
@@ -1040,9 +1037,6 @@ last_crash.txt dans le dossier de sauvegarde ; collez-le à la personne qui vous
 
 The game crashed last time
 Le jeu a planté la dernière fois
-
-A report of where it crashed was saved. Copy it and paste it to whoever is helping you.
-Un rapport de l'endroit du plantage a été enregistré. Copiez-le et collez-le à la personne qui vous aide.
 
 Copy report
 Copier le rapport
@@ -1581,8 +1575,8 @@ Remplacer la sauvegarde par celle-ci
 Restore
 Restaurer
 
-Restore this card's saves from the launcher, before the game starts.
-Restaurez les sauvegardes de cette carte depuis le lanceur, avant que le jeu démarre.
+Restore saves from the launcher, before starting.
+Restaurez les sauvegardes via le lanceur, avant de jouer.
 
 The Japanese release keeps its Pianta Parlor records differently; the copy is converted. Names typed in one release's letters may look different in another.
 La version japonaise garde les records de son Casino autrement ; la copie est convertie. Les noms écrits dans l'alphabet d'une version peuvent avoir l'air différents dans une autre.
@@ -1805,8 +1799,8 @@ R s'enclenche à
 Player 2 joined: their stick walks the partner.
 Le joueur 2 arrive : son stick déplace le partenaire.
 
-A second controller: turn on Second player (Controls) to play the partner.
-Une deuxième manette : activez Deuxième joueur (Commandes) pour jouer le partenaire.
+A second controller: turn on Second player (co-op) in Multiplayer to play the partner.
+Une deuxième manette : activez Deuxième joueur (coop) dans Multijoueur pour jouer le partenaire.
 
 Player 2 left: the partner follows Mario.
 Le joueur 2 est parti : le partenaire suit Mario.

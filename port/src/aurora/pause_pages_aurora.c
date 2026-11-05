@@ -3,8 +3,9 @@
  *
  * - the text page (portPauseTextOpen): what is typed so far over a grid of
  *   letters, then Space, Delete, Paste and Done; the stick or the D-pad move
- *   through the grid, A types, B leaves the text as it was. A tap on a key is
- *   its A (port/include/port/menu_tap.h).
+ *   through the grid, A types, B rubs out a letter (with none, leaves the text
+ *   as it was), Start is Done. A tap on a key is its A (port/include/port/menu_tap.h);
+ *   on a desktop the keyboard types too (port/include/port/menu_typing.h).
  * - the lines page (portPauseInfoOpen): a feature's lines (a log, a wizard's
  *   step, an address), scrolled with up and down when there are more than
  *   fit, with a QR code beside them when the feature has one; A, X and Y are
@@ -13,6 +14,7 @@
 #define PORT_SECTION_MENU
 #include "port/companion_section.h"
 #include "port/menu_tap.h"
+#include "port/menu_typing.h"
 #include "port/pause_forms.h"
 #include "port/pause_settings.h"
 #include "port/tr.h"
@@ -224,13 +226,79 @@ static int textPointer(void) {
     return 0;
 }
 
+/* the key that types c: itself, else the other case of it (a code's capitals), or -1 */
+static int keyFor(char c) {
+    int i, pass;
+    for (pass = 0; pass < 2; pass++) {
+        const int want = c == ' '  ? KEY_SPACE
+                         : pass == 0 ? (unsigned char)c
+                         : (c >= 'a' && c <= 'z') ? c - 'a' + 'A'
+                         : (c >= 'A' && c <= 'Z') ? c - 'A' + 'a'
+                                                  : (unsigned char)c;
+        for (i = 0; i < sKeyCount; i++) {
+            if (sKeys[i].ch == want) {
+                return i;
+            }
+        }
+    }
+    return -1;
+}
+
+/* the keyboard's typing (port/include/port/menu_typing.h): letters, Backspace,
+ * Enter (Done) and Esc (B); 1 when it closed the page */
+static int textTyped(void) {
+    static const Key kDel = {KEY_DELETE, 0, 0, 0};
+    char typed[80];
+    int i, n;
+    portMenuTypingFrame();
+    n = portMenuTyped(typed, sizeof(typed));
+    for (i = 0; i < n; i++) {
+        if (typed[i] == '\n') {
+            psndSFXOn((const char*)0x20012);
+            if (sDone != NULL) {
+                sDone(sText);
+            }
+            return 1;
+        }
+        if (typed[i] == '\x1B') {
+            psndSFXOn((const char*)0x20013);
+            return 1;
+        }
+        if (typed[i] == '\b') {
+            typeKey(&kDel);
+            psndSFXOn((const char*)0x20005);
+        } else {
+            const int k = keyFor(typed[i]);
+            if (k >= 0) {
+                sKeyAt = k;
+                typeKey(&sKeys[k]);
+                psndSFXOn((const char*)0x20005);
+            }
+        }
+    }
+    return 0;
+}
+
 static int textMain(WindowWork* wp) {
     const int click = textPointer();
-    if (wp->buttonTrg & PAD_BUTTON_B) {
-        psndSFXOn((const char*)0x20013);
+    if (textTyped()) {
         return -1;
     }
-    if (click || (wp->buttonTrg & PAD_BUTTON_A)) {
+    if (wp->buttonTrg & PAD_BUTTON_B) {
+        /* as the game's own name entry and the Online tab's keyboard: a letter
+         * rubbed out; with none, back (the text as it was) */
+        const size_t len = strlen(sText);
+        psndSFXOn((const char*)0x20013);
+        if (len == 0) {
+            return -1;
+        }
+        sText[len - 1] = '\0';
+        return 0;
+    }
+    if (wp->buttonTrg & PAD_BUTTON_START) { /* Start: Done, as the game's name entry */
+        sKeyAt = sKeyCount - 1;
+    }
+    if (click || (wp->buttonTrg & (PAD_BUTTON_A | PAD_BUTTON_START))) {
         const Key* k = &sKeys[sKeyAt];
         psndSFXOn((const char*)0x20012);
         if (k->ch == KEY_DONE) {
@@ -268,7 +336,7 @@ static const char* textHelp(void) {
     const Key* k = &sKeys[sKeyAt];
     const char* t = k->ch == KEY_DONE    ? "A: keep this text. B: leave it as it was."
                     : k->ch == KEY_PASTE ? "A: the text you copied, typed here."
-                                         : "A types it. X deletes a letter. B leaves the text as it was.";
+                                         : "A types the key, B rubs out a letter (on none, it goes back), Start is Done.";
     portPauseWrap(portTrGame(t), sHelp, sizeof(sHelp));
     return sHelp;
 }

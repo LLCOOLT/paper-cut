@@ -146,14 +146,24 @@ static int padsTaken(void) {
 }
 
 void portPartyPad(struct PADStatus* pads) {
+    static unsigned short sSwallow[PAD_MAX_CONTROLLERS]; /* held as a party game ended: not the game's until let go */
+    static int sWasTaken;
     int i;
     if (!padsTaken()) {
         for (i = 0; i < PAD_MAX_CONTROLLERS; i++) {
+            if (sWasTaken) {
+                sSwallow[i] = sHeld[i] & (PAD_BUTTON_A | PAD_BUTTON_B | PAD_BUTTON_X | PAD_BUTTON_Y |
+                                          PAD_TRIGGER_Z | PAD_BUTTON_START);
+            }
+            sSwallow[i] &= pads[i].button; /* (the A that left a duel would talk to the card player again) */
+            pads[i].button &= (unsigned short)~sSwallow[i];
             sHeld[i] = pads[i].button; /* what's held as a game starts doesn't count until let go */
             sPressed[i] = 0;
         }
+        sWasTaken = 0;
         return;
     }
+    sWasTaken = 1;
     sConnected = 0;
     for (i = 0; i < PAD_MAX_CONTROLLERS; i++) {
         unsigned short now = 0;

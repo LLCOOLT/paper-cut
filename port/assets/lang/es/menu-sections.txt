@@ -30,8 +30,8 @@ No reconocido: A pide cada uno de sus botones por turnos.
 A controller
 Un mando
 
-A controller listed here works once you press each of its buttons when asked.
-Un mando de esta lista funciona tras pulsar cada botón cuando se pida.
+A listed controller works once its buttons are set.
+Un mando de la lista funciona tras asignar sus botones.
 
 On an HDR display, the picture at the brightness you choose for white.
 En una pantalla HDR, la imagen con el brillo que elijas para el blanco.
@@ -40,7 +40,7 @@ Not available here: needs a display with HDR turned on and the Direct3D or Metal
 No disponible aquí: requiere una pantalla con HDR activado y Direct3D o Metal.
 
 How bright white is, in nits: left and right change it.
-El brillo del blanco, en nits: izquierda y derecha lo cambian.
+Brillo del blanco en nits; izquierda/derecha lo cambian.
 
 %d nits
 %d nits
@@ -51,8 +51,8 @@ Los brillos más intensos, un poco más todavía.
 Turn on HDR output first.
 Activa primero la salida HDR.
 
-Not from the second screen: do it in the game's own Start menu.
-No desde la segunda pantalla: hazlo en el menú Start del propio juego.
+Not on the second screen: use the game's Start menu.
+No desde la segunda pantalla: usa el menú Start del juego.
 
 Travel there: the trip starts once the menu is closed.
 Viajar allí: el viaje empieza al cerrar el menú.
@@ -73,7 +73,7 @@ Not solved yet
 Sin resolver
 
 The Trouble Center's jobs still open.
-Los encargos del Centro de Servicios Personalizados aún abiertos.
+Encargos abiertos del Centro de Servicios Personalizados.
 
 Badges found
 Medallas halladas
@@ -138,8 +138,8 @@ Vuelve a leer los paquetes de idioma de la carpeta mods.
 Writes a pack for a translator to start from in the mods folder: each text in English, with room for its translation.
 Escribe un paquete para empezar a traducir en la carpeta mods: cada texto en inglés, con espacio para su traducción.
 
-Shows the mods folder on the desktop: a pack is a folder in it.
-Muestra la carpeta mods en el escritorio: un paquete es una carpeta dentro.
+Shows the mods folder; each pack is a folder in it.
+Muestra la carpeta mods; cada paquete es una carpeta dentro.
 
 Restart for the new letters
 Reiniciar para las letras nuevas
@@ -165,8 +165,8 @@ Escrito en la carpeta mods: los textos por traducir están dentro.
 Nothing yet: the message windows' pages show here.
 Nada todavía: aquí se muestran las páginas de las ventanas de texto.
 
-Up and down scroll, left and right a page at a time. B: back.
-Arriba y abajo desplazan, izquierda y derecha página a página. B: volver.
+Up and down scroll, left and right by page. B: back.
+Arriba y abajo desplazan; los lados, por página. B: volver.
 
 Read the message log
 Leer el historial de mensajes
@@ -190,12 +190,12 @@ Player
 Jugador
 
 Whose controller is set: left and right change it.
-De quién es el mando que se ajusta: izquierda y derecha lo cambian.
+De quién es el mando: izquierda/derecha lo cambian.
 
-The stick moves, the d-pad is A, B, X and Y, the left bumper Z, the left trigger R.
+The stick moves, the d-pad is ABXY, LB is Z and LT is R.
 La palanca mueve, la cruceta es A, B, X e Y, el botón superior izquierdo Z, el gatillo izquierdo R.
 
-The right stick moves, the face buttons, right bumper and trigger as they are.
+The right stick moves; face buttons, RB and RT unchanged.
 La palanca derecha mueve; los botones, el botón superior y el gatillo derechos como están.
 
 Rewind button
@@ -210,7 +210,7 @@ A: copiar la dirección. X: dejar de enviar. B: volver (sigue enviando).
 A: the address and its QR code again.
 A: la dirección y su código QR otra vez.
 
-The address the other device shows under Send saves to another device: A types it.
+A: type the address the other device shows under Send saves.
 La dirección que muestra el otro dispositivo en Enviar partidas a otro dispositivo: A la escribe.
 
 Paste the address
@@ -219,11 +219,11 @@ Pegar la dirección
 The address you copied, put in.
 La dirección que copiaste, puesta.
 
-Fetches the other device's saves; you choose what to replace next.
-Trae las partidas del otro dispositivo; luego eliges qué reemplazar.
+Gets the other device's saves; then pick what to replace.
+Partidas del otro dispositivo; después eliges qué reemplazar.
 
-Replace: the other device's game file over this one's (kept as a backup first).
-Reemplazar: el archivo del otro dispositivo sobre este (se guarda antes una copia).
+Replace: the other device's file here (backed up first).
+Reemplazar: pone aquí el del otro dispositivo (con copia).
 
 Replace
 Reemplazar
@@ -277,7 +277,7 @@ Choosing player 1's controller moves it to player 2, and player 1 plays on the k
 Elegir el mando del jugador 1 lo pasa al jugador 2, y el jugador 1 juega con el teclado.
 
 Player 2's controller plays as nobody until it joins again.
-El mando del jugador 2 no juega como nadie hasta que vuelva a unirse.
+El jugador 2 no controla a nadie hasta volver a unirse.
 
 Updated to Paper Cut
 Actualizado a Paper Cut
@@ -286,10 +286,10 @@ No new version found
 No hay versión nueva
 
 Checked at start, when Check for updates at start is on.
-Se comprueba al iniciar, si Buscar actualizaciones al iniciar está activado.
+Con Buscar actualizaciones al iniciar activado, al arrancar.
 
-A newer Paper Cut is out. A: its release page in the browser.
-Ha salido un Paper Cut más nuevo. A: su página en el navegador.
+A newer Paper Cut is out. A: open its release page.
+Hay un Paper Cut más nuevo. A: abrir su página.
 
 Flathub updates this copy
 Flathub actualiza esta copia
@@ -366,5 +366,5 @@ A: guardar este texto. B: dejarlo como estaba.
 A: the text you copied, typed here.
 A: el texto que copiaste, escrito aquí.
 
-A types it. X deletes a letter. B leaves the text as it was.
-A lo escribe. X borra una letra. B deja el texto como estaba.
+A types the key, B rubs out a letter (on none, it goes back), Start is Done.
+A escribe la tecla, B borra una letra (si no queda ninguna, vuelve), Start es Listo.

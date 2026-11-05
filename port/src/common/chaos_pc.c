@@ -11,6 +11,7 @@
  * recording or playing a replay (the effects aren't input), and with
  * console-accurate mode. Its own random numbers, never the game's. */
 #include "port/toggles.h"
+#include "port/platform.h"
 #include "port/crowd.h"
 #include "port/online.h"
 #include "port/replay.h"
@@ -32,6 +33,7 @@
 #define EVERY_FRAMES (30 * 60) /* an effect every 30 seconds of play */
 #define LASTS_FRAMES (15 * 60) /* a lasting one for 15 */
 #define COIN_EVERY 12          /* coin rain: a coin each this many frames */
+#define NOTICE_FRAMES (3 * 60) /* a one-off effect's notice stays 3 seconds */
 
 enum {
     CHAOS_NONE = -1,
@@ -93,7 +95,7 @@ static int playing(void) {
 
 static unsigned next(void) {
     if (sSeed == 0) {
-        sSeed = (unsigned)OSGetTime() | 1u;
+        sSeed = (unsigned)portGameClockPeek() | 1u; /* (a peek: the game clock stays put) */
     }
     sSeed ^= sSeed << 13;
     sSeed ^= sSeed >> 17;
@@ -148,7 +150,7 @@ static void coin(void) {
 static void start(int effect) {
     stop();
     sShown = effect;
-    sShownLeft = 180;
+    sShownLeft = NOTICE_FRAMES;
     printf("[chaos] %s\n", kNames[effect]);
     fflush(stdout);
     if (effect >= CHAOS_FIELD_COUNT) {
@@ -194,8 +196,9 @@ void portChaosFrame(void) {
         sUntilNext = EVERY_FRAMES;
         if (battle) {
             /* the battle's: Crowd Control's, or a fun toggle (they show in battle too) */
-            const int pick = (int)(next() % (CHAOS_COUNT - CHAOS_FIELD_COUNT + 3));
-            start(pick < CHAOS_COUNT - CHAOS_FIELD_COUNT ? CHAOS_FIELD_COUNT + pick : CHAOS_BIG_HEADS + pick - (CHAOS_COUNT - CHAOS_FIELD_COUNT));
+            static const int kBattlePicks[] = {CHAOS_GIFT,  CHAOS_ROCK,      CHAOS_STAR,       CHAOS_DRAIN, CHAOS_BINGO,
+                                               CHAOS_CHEER, CHAOS_BIG_HEADS, CHAOS_PAPER_THIN, CHAOS_SPIN};
+            start(kBattlePicks[next() % (sizeof(kBattlePicks) / sizeof(kBattlePicks[0]))]);
         } else {
             start((int)(next() % CHAOS_FIELD_COUNT));
         }

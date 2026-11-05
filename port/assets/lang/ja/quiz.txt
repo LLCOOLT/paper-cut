@@ -15,7 +15,7 @@ The quiz begins once this page is closed.
 The quiz begins once the menu is closed.
 メニューを閉じるとクイズが始まります。
 
-Trivia about the game for up to four players: it begins once the menu is closed.
+Game trivia for up to four players, once the menu closes.
 4人まで遊べるゲームのクイズ: メニューを閉じると始まります。
 
 The last quiz: a draw at %d points.

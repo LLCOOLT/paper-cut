@@ -12,7 +12,7 @@ Riavvio appena il gioco ha finito di salvare...
 Starts the game again with this disc; quick resume brings you back here.
 Riavvia il gioco con questo disco; la ripresa rapida ti riporta qui.
 
-Press A twice to restart the game for these settings; quick resume brings you back here.
+Press A twice to restart; quick resume brings you back.
 Premi A due volte per riavviare il gioco per queste impostazioni; la ripresa rapida ti riporta qui.
 
 Press A again to restart.

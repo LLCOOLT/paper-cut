@@ -9,7 +9,7 @@ Each room's music is another of the game's: field music for field music, battle 
 Your music
 自分の音楽
 
-Your files in the music folder play in place of the game's tracks they are named after.
+Music folder files replace the tracks they are named after.
 musicフォルダのファイルが、その名前のゲームの曲の代わりに流れます。
 
 Shuffle includes your music

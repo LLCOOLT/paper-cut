@@ -7,7 +7,7 @@ The game's own text (dialogue, items, the original menus) is not part of it: tha
 
 ## Where it goes
 
-In the **mods folder** (see [MODDING.md](MODDING.md#mods) for where it is on each platform; Language > Language packs > "Open the mods folder" opens it):
+In the **mods folder** (see [MODDING.md](MODDING.md) for where it is on each platform; Language > Language packs > "Open the mods folder" opens it):
 
 ```
 mods/
@@ -70,6 +70,10 @@ A text is shown, in order: the pack's translation; else the built-in language's 
 The list in Language > Language packs shows each pack: what it does, how many texts it translates and how many are still empty, and anything wrong with it (a key it doesn't know, a missing font file, a text translated twice).
 
 `$TTYD_TR_DUMP=<file>` (an environment variable) writes each English text to the file as the menus ask for it: the same list the template comes from, for finding a text's exact English.
+
+## Paper Cut's own languages
+
+Paper Cut's menus come in English, German, French, Spanish, Italian and Japanese (`port/assets/lang/<code>/`). Each translation names the game's things as that language's release of the game does: the partners, places, items, Star Points, the Tattle Log, HP, FP and BP as the European release has them in German, French, Spanish and Italian, and as the Japanese release has them in Japanese. The achievements' names and notes are translated too. For the Start menu on the Japanese release, the Japanese texts have a second wording that keeps to the kanji the game's font has (`port/assets/lang/ja_game/`).
 
 ## Fonts
 

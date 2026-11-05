@@ -23,13 +23,6 @@
 #include "port/practice_tools.h"
 #include "port/settings.h"
 #include "win/win_main.h"
-#ifdef _WIN32
-#include <direct.h>
-#define makeDir(p) _mkdir(p)
-#else
-#include <sys/stat.h>
-#define makeDir(p) mkdir(p, 0755)
-#endif
 
 typedef enum Kind {
     K_STORY,   /* GSW 0 reached a */
@@ -86,7 +79,7 @@ static const Achievement kList[] = {
     {"partners_all", "Full Party", "Have all seven partners join.", K_PARTNERS, 7},
     {"level_20", "Seasoned", "Reach level 20.", K_LEVEL, 20},
     {"coins_999", "Rich Uncle", "Carry 999 coins.", K_COINS, 999},
-    /* 0.4.0: the post-game places and the new modes. To add one: a row here
+    /* the post-game places and the modes. To add one: a row here
      * (a new id, never renamed) and, for a mode, a counter it counts with
      * portAchievementCounterAdd / portAchievementCounterMax
      * (port/include/port/achievements.h; most are watched from the modes' own
@@ -256,7 +249,7 @@ static int progress(const Achievement* a, int* goal) {
     switch (a->kind) {
     case K_STORY:
         *goal = 1;
-        return swByteGet(GSW_STORY_PROGRESS) >= a->a;
+        return swStoryPeek() >= a->a;
     case K_FLAG:
         *goal = 1;
         return swGet(a->a) ? 1 : 0;
@@ -302,13 +295,13 @@ static int progress(const Achievement* a, int* goal) {
     case K_AREA: {
         /* the game's thread and the page's both come here: one each (a shared one
          * filled by both at once would run past its tables) */
-        PortAreaView sView;
-        if (!portAreaMapBuild(a->key, &sView)) {
+        PortAreaView view;
+        if (!portAreaMapBuild(a->key, &view)) {
             *goal = 0;
             return 0;
         }
-        *goal = sView.roomCount;
-        return sView.visited;
+        *goal = view.roomCount;
+        return view.visited;
     }
     }
     *goal = a->a != 0 && a->a < total ? a->a : total;
@@ -318,16 +311,12 @@ static int progress(const Achievement* a, int* goal) {
 /* --- the record -------------------------------------------------------------- */
 
 static void save(void) {
-    char dir[1024];
     FILE* f;
     int i;
     if (sPath[0] == '\0') {
         return;
     }
-    snprintf(dir, sizeof(dir), "%s/Achievements", portPracticeUserDir());
-    makeDir(dir);
-    snprintf(dir, sizeof(dir), "%s/Achievements/%s", portPracticeUserDir(), PORT_GAME_ID);
-    makeDir(dir);
+    portPracticeGameDir("Achievements");
     f = fopen(sPath, "w");
     if (f == NULL) {
         return;
@@ -416,7 +405,11 @@ void portAchievementsFrame(void) {
     }
     for (i = 0; i < COUNT; i++) {
         int goal = 1;
-        const int done = progress(&kList[i], &goal) >= goal && goal > 0;
+        int done;
+        if (sEarned[i][0] != '\0' && !sFirstCheck) {
+            continue; /* (earned for good: its progress isn't counted again) */
+        }
+        done = progress(&kList[i], &goal) >= goal && goal > 0;
         if (done && sEarned[i][0] == '\0') {
             const time_t t = time(NULL);
             struct tm tm;

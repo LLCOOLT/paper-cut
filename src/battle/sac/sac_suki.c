@@ -770,6 +770,26 @@ static SukiWork* get_ptr(void) {
 }
 #pragma dont_inline reset
 
+#ifdef TARGET_PC
+/* A versus computer playing Showstopper (port/src/aurora/versus_cpu_aurora.c,
+ * which knows it is running): the button the game waits for now, the
+ * button's place in the row and the round; 0 while none is wanted. */
+int portShowstopperWants(s32* button, s32* cur, s32* round) {
+    SukiWork* w;
+    if (_battleWorkPointer == NULL) {
+        return 0;
+    }
+    w = get_ptr();
+    if (w->state != 4 || w->cur < 0 || w->cur >= w->need || w->cur >= 7) {
+        return 0;
+    }
+    *button = w->btn[w->cur].button;
+    *cur = w->cur;
+    *round = w->round;
+    return 1;
+}
+#endif
+
 /** Starts the button game once the star is in place. */
 static USER_FUNC(start_game) {
     SukiWork* w = get_ptr();

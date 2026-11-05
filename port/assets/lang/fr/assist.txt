@@ -34,7 +34,7 @@ Slower only in battle
 Plus lent seulement en combat
 
 The field at full speed, the battles at the speed above.
-L'exploration à pleine vitesse, les combats à la vitesse ci-dessus.
+Exploration à pleine vitesse, combats à celle ci-dessus.
 
 One-handed controls
 Commandes à une main

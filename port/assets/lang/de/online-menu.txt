@@ -27,8 +27,8 @@ Auf diesem Gerät beginnt das Online-Spiel im Online-Tab des Launchers, vor dem 
 Host a room
 Raum eröffnen
 
-Opens a room with a code to give the other player: nothing to set up.
-Eröffnet einen Raum mit einem Code für den anderen Spieler: nichts einzurichten.
+Opens a room with a code to give the other player.
+Eröffnet einen Raum mit einem Code für den anderen Spieler.
 
 Waits on your port: on the same network, or with the port forwarded or a VPN.
 Wartet auf deinem Port: im selben Netzwerk, mit weitergeleitetem Port oder einem VPN.

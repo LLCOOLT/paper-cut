@@ -382,7 +382,8 @@ def package_desktop(outs, version_string, dist):
     open(notices, "w", encoding="utf-8", newline="\n").write(third_party.text(us))
     files += [(os.path.join(ROOT, "README.md"), "README.md"), (os.path.join(ROOT, "LICENSE"), "LICENSE.txt"),
               (notices, "THIRD_PARTY.txt"), (os.path.join(ROOT, "port", "assets", "fonts", "OFL.txt"), "OFL.txt"),
-              (os.path.join(ROOT, "docs", "MODDING.md"), "docs/MODDING.md")]
+              (os.path.join(ROOT, "docs", "MODDING.md"), "docs/MODDING.md"),
+              (os.path.join(ROOT, "docs", "LUA_MODDING.md"), "docs/LUA_MODDING.md")]
     for path in glob.glob(os.path.join(ROOT, "examples", "mods", "**", "*"), recursive=True):
         if os.path.isfile(path):
             files.append((path, os.path.relpath(path, ROOT).replace(os.sep, "/")))
@@ -454,7 +455,8 @@ ttyd-eu, all in this package). The list remembers your discs.
 F1 (or a controller's Back/Select) opens the settings page in the game.
 
 Mods go in the mods folder (Settings > Mods > Open the mods folder); the
-examples/ folder here has four to try (see docs/MODDING.md).
+examples/ folder here has some to try: data and code mods (docs/MODDING.md)
+and Lua mods (docs/LUA_MODDING.md).
 """
 
 

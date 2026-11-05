@@ -28,6 +28,9 @@
 #include "pmario_sound.h"
 #include "version.h"
 #include "evt/evt_story.h"
+#ifdef TARGET_PC
+#include "port/open_world.h"
+#endif
 
 static USER_FUNC(bgm_start_wait);
 static void majin_callback(s32 type);
@@ -400,6 +403,22 @@ static EVT_BEGIN(evt_majin2)
     CALL(evt_mario_normalize)
 #endif
     CALL(evt_mobj_wait_animation_end, STRING("box"))
+#ifdef TARGET_PC
+    // Paper Cut's open world: what the seed put in the chest, handed over as an item, and no lesson
+    CALL(portEvtOpenChest, ITEM_PAPER_CURSE, LW(10))
+    IF_INT_NOT_EQUAL(LW(10), 0)
+        CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
+        CALL(evt_item_entry, STRING("pc_open_item"), LW(10), LW(0), LW(1), LW(2), ITEM_ENTRY_FIXED, -1, 0)
+        CALL(evt_item_flag_on, STRING("pc_open_item"), ITEM_FLAG_NO_TOUCH)
+        CALL(evt_item_get_item, STRING("pc_open_item"))
+        SET_VALUE(GSW(GSW_STORY_PROGRESS), STORY_STG1_13_01_01_PAPER_MAGE_2)
+        SET_VALUE(GSWF(GSWF_GON06_BLACK_CHEST_OPENED), 1)
+        CALL(evt_mario_key_onoff, 1)
+        CALL(evt_npc_change_fbat_mode, 1)
+        CALL(evt_npc_start_for_event)
+        RETURN
+    END_IF
+#endif
     CALL(evt_pouch_add_item, ITEM_PAPER_CURSE, LW(0))
     CALL(evt_snd_bgmoff, PSND_FADE_HOLD)
     CALL(evt_snd_bgmon, PSND_CH(1), STRING("BGM_EVT_PERAMAJIN1"))

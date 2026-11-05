@@ -18,6 +18,8 @@
 #include "port/pause_forms.h"
 #include "port/settings.h"
 #include "port/tr.h"
+#include "../settings_ui.h"
+#include "../relay_util.h"
 
 #include <SDL3/SDL.h>
 #include <imgui.h>
@@ -31,6 +33,8 @@
 #include <string>
 #include <thread>
 #include <vector>
+
+using portui::hint;
 
 namespace {
 
@@ -61,43 +65,11 @@ Uint64 sNextAsk = 0;
 int sAskedChanges = -1;
 int sSeenCount = 0;
 
-std::string relayBase() {
-  for (int i = 0; portOnlineRelayAt(i) != nullptr; i++) {
-    const std::string relay = portOnlineRelayAt(i);
-    if (relay.compare(0, 6, "wss://") == 0) {
-      return "https://" + relay.substr(6);
-    }
-  }
-  return "";
-}
+using portrelay::relayBase;
 
-std::string percent(const std::string& s) {
-  std::string out;
-  for (unsigned char c : s) {
-    if ((c >= '0' && c <= '9') || (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || c == '-' || c == '_' ||
-        c == '.') {
-      out += static_cast<char>(c);
-    } else {
-      char hex[4];
-      std::snprintf(hex, sizeof(hex), "%%%02X", c);
-      out += hex;
-    }
-  }
-  return out;
-}
+using portrelay::percent;
 
-std::string unpercent(const std::string& s) {
-  std::string out;
-  for (size_t i = 0; i < s.size(); i++) {
-    if (s[i] == '%' && i + 2 < s.size()) {
-      out += static_cast<char>(std::strtol(s.substr(i + 1, 2).c_str(), nullptr, 16));
-      i += 2;
-    } else {
-      out += s[i];
-    }
-  }
-  return out;
-}
+using portrelay::unpercent;
 
 // the answer: "bingo <SEED>", "you <i>", "player <i> <name>", "claim <cell> <i>" lines
 bool parse(const std::string& text, RoomState& out) {
@@ -266,12 +238,6 @@ std::string clock(unsigned long long ms) {
   char text[32];
   std::snprintf(text, sizeof(text), "%llu:%02llu:%02llu", ms / 3600000, ms / 60000 % 60, ms / 1000 % 60);
   return text;
-}
-
-void hint(const char* text) {
-  ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
-  ImGui::TextWrapped("%s", text);
-  ImGui::PopStyleColor();
 }
 
 ImU32 cellColour(int i) {

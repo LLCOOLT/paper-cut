@@ -6,23 +6,20 @@
 #include "../../archipelago/ttyd_ap.h"
 #include "../../archipelago/ttyd_rando.h"
 #include "port/open_world.h"
+#include "../settings_ui.h"
 #include <imgui.h>
 #include <cstdio>
 #include <string>
+
+using portui::hint;
 
 namespace {
 
 constexpr const char* kTab = "Randomizer";
 
-void note(const char* text) {
-  ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
-  ImGui::TextWrapped("%s", text);
-  ImGui::PopStyleColor();
-}
-
 void warn(const char* text) {
   ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.75f, 0.3f, 1.0f));
-  ImGui::TextWrapped("%s", text);
+  ImGui::TextWrapped("%s", portTr(text));
   ImGui::PopStyleColor();
 }
 
@@ -36,7 +33,7 @@ void section(int inGame) {
   }
   PortRandoSettings* s = portRandoSettings(portSettingsUserPath());
   bool changed = false;
-  note("Shuffles the game's items among their places from a seed, with no Archipelago server: turn it on, pick "
+  hint("Shuffles the game's items among their places from a seed, with no Archipelago server: turn it on, pick "
        "the seed and what moves, then start the game and begin a new file. The same seed and choices always give "
        "the same game, so a seed can be shared.");
 
@@ -62,7 +59,7 @@ void section(int inGame) {
     s->enabled = enabled;
     changed = true;
   }
-  note("Every file played while it is on gets this seed's items, so start a new file for it, and turn it off "
+  hint("Every file played while it is on gets this seed's items, so start a new file for it, and turn it off "
        "again for your other files.");
 
   ImGui::SetNextItemWidth(ImGui::GetFontSize() * 14.0f);
@@ -75,7 +72,7 @@ void section(int inGame) {
     sCheck.clear();
   }
   if (s->seed[0] == '\0') {
-    note("Any text. Empty: a random one is made at the start (and kept here).");
+    hint("Any text. Empty: a random one is made at the start (and kept here).");
   }
 
   ImGui::TextUnformatted(portTr("What is shuffled"));
@@ -92,7 +89,7 @@ void section(int inGame) {
   box("Shine Sprites", s->shineSprites);
   box("Paper Cut's open world: chapters 1 to 8 in any order", s->openWorld);
   if (s->openWorld) {
-    note("Key items and partners move too (Koops, Flurrie, Yoshi, Vivian, Bobbery, the curses, the keys, the "
+    hint("Key items and partners move too (Koops, Flurrie, Yoshi, Vivian, Bobbery, the curses, the keys, the "
          "tickets, the boots and hammers...), placed so the goal's Crystal Stars can always be reached, and each "
          "chapter's story runs on its own: after the prologue, every chapter opens by its items (the pipes, the "
          "blimp and train tickets, the Old Letter for Flavio's ship, the Ultra Hammer for chapter 7's pipe), in "
@@ -105,7 +102,7 @@ void section(int inGame) {
       s->openGoal = goal >= 7 ? 0 : goal;
       changed = true;
     }
-    note("The goal: this many Crystal Stars, from any chapters. The logic makes sure that many can be reached; a "
+    hint("The goal: this many Crystal Stars, from any chapters. The logic makes sure that many can be reached; a "
          "notice says when they are, and the Thousand-Year Door opens with them (chapter 8, the palace, leads to "
          "the end). The others may need items that lie past the goal.");
     if (portOpenOn() && portOpenFileGoal() > 0) {
@@ -115,7 +112,7 @@ void section(int inGame) {
     box("Key items (open world: needs the TTYD AP mod)", s->keyItems);
   }
   if (s->keyItems && !s->openWorld) {
-    note("Key items, partners, the curses, hammer and boots move too, placed by the TTYD apworld's logic so the "
+    hint("Key items, partners, the curses, hammer and boots move too, placed by the TTYD apworld's logic so the "
          "Shadow Queen can always be reached. That logic is the TTYD AP mod's open world (chapters open by "
          "items, not the story), so the mod must be installed as a code mod (Mods tab, docs/MODDING.md); "
          "without it the game can't be finished. Badges, items or Star Pieces must be shuffled too.");
@@ -123,12 +120,12 @@ void section(int inGame) {
       warn("No enabled code mod looks like the TTYD AP mod.");
     }
   } else {
-    note("Without key items the story is the game's own: only things the story never asks for move (badges, "
+    hint("Without key items the story is the game's own: only things the story never asks for move (badges, "
          "items nothing needs, Star Pieces, Shine Sprites, in the places the game hands them out itself), so "
          "every seed can be finished. No mod needed.");
   }
   box("Write a spoiler log", s->spoiler);
-  note("At the start, to the randomizer folder in the user folder (spoiler_<seed>.txt): where every item went "
+  hint("At the start, to the randomizer folder in the user folder (spoiler_<seed>.txt): where every item went "
        "and, for the open world, the order the logic expects key items to be found in.");
 
   if (ImGui::Button(portTrLabel("Check this seed"))) {
@@ -139,7 +136,7 @@ void section(int inGame) {
     ImGui::TextWrapped("%s", sCheck.c_str());
   }
   if (inGame) {
-    note("Changes apply the next time the game starts.");
+    hint("Changes apply the next time the game starts.");
   }
   if (changed) {
     sCheck.clear();

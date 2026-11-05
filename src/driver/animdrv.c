@@ -7474,7 +7474,7 @@ int portAnimTextures(const char* file, PortTexInfo* out, int max) {
 
 int portAnimTexturesAt(int slot, PortTexInfo* out, int max) {
     AnimationTextureFile* t;
-    if (wp->textures == NULL || slot >= wp->totalTextures) {
+    if (wp->textures == NULL || slot < 0 || slot >= wp->totalTextures) {
         return -1;
     }
     t = &wp->textures[slot];

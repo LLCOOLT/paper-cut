@@ -58,14 +58,14 @@ Left and right pick the note's phrase.
 Left and right pick the word in it.
 ひだり　みぎで　たんごを　えらびます
 
-Leaves the note where Mario stands, for other players to find and rate.
+Leaves the note where Mario stands, for others to rate.
 マリオの　いる　ばしょに　メモを　のこします：ほかの　プレイヤーが　みつけて　ひょうかします
 
 Asks the relay again for this area's notes.
 この　あたりの　メモを　リレーから　よみこみなおします
 
-Right rates this note up, left rates it down. The best stay; the worst go.
-みぎで　よい　ひだりで　わるい　ひょうか：よい　メモは　のこり　わるい　メモは　きえます
+Right: rate up, left: rate down. The best notes stay.
+みぎで　よい　ひだりで　わるい　よい　メモが　のこります
 
 Your note is left here.
 メモを　ここに　のこしました

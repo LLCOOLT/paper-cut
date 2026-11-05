@@ -67,7 +67,7 @@ Show the bingo card
 Voir la grille de bingo
 
 Each square: * done, x taken by another player, - not yet.
-Chaque case : * faite, x prise par un autre joueur, - pas encore.
+Chaque case : * faite, x prise par un autre, - pas encore.
 
 Get %s
 Obtenir %s

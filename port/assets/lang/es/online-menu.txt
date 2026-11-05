@@ -27,8 +27,8 @@ En este dispositivo, el juego en línea empieza en la pestaña En línea del lan
 Host a room
 Abrir una sala
 
-Opens a room with a code to give the other player: nothing to set up.
-Abre una sala con un código para darle al otro jugador: nada que configurar.
+Opens a room with a code to give the other player.
+Abre una sala con un código para darle al otro jugador.
 
 Waits on your port: on the same network, or with the port forwarded or a VPN.
 Espera en tu puerto: en la misma red, o con el puerto redirigido o una VPN.

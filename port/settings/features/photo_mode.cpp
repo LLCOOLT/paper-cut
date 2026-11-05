@@ -4,7 +4,7 @@
 // hidden or not, a filter, a frame and depth of field (port/include/port/picture.h),
 // and a picture taken (as F12: the picture as shown, at the window's size, to
 // the Pictures folder's Paper Cut; the Journal's Photos show them). Only in the
-// field and not online (port/include/port/view.h).
+// field or a battle, and not online (port/include/port/view.h).
 //
 //   left stick / WASD, arrows   turn round Mario, up and down
 //   right stick / R, F          in and out
@@ -301,7 +301,7 @@ void section(int inGame) {
   ImGui::EndDisabled();
   if (!inGame || !portPhotoAvailable()) {
     ImGui::SameLine();
-    ImGui::TextDisabled("%s", portTr("(in the field, not online)"));
+    ImGui::TextDisabled("%s", portTr("(in the field or a battle, not online)"));
   }
 }
 

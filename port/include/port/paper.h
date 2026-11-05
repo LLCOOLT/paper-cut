@@ -27,8 +27,6 @@ struct ShadowEntry;
  * physics' matrix. */
 typedef void (*PortPaperDraw)(int poseId, Mtx mtx, int xluMode, float rotY, float scale);
 void portPaperDrawMtx(int poseId, Mtx mtx, int xluMode, float rotY, float scale, PortPaperDraw draw);
-/* party.c's partners: portPaperDrawMtx with animPoseDrawMtx */
-void portPaperPartyDrawMtx(int poseId, Mtx mtx, int xluMode, float rotY, float scale);
 /* animdrv.c: the draw under way is a paper shadow's (it leaves the pose's
  * paper turn as it was: the game reads the turn, and the character's own draw
  * steps it) */

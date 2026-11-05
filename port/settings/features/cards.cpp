@@ -227,7 +227,7 @@ const char* formAct(int id, int dir) {
     return nullptr;
   }
   if (gPortCompanionMenu) {
-    return "Not from the second screen: do it in the game's own Start menu.";
+    return "Not on the second screen: use the game's Start menu.";
   }
   const char* why = nullptr;
   const int opponent = id == kRowPlayer ? PORT_DUEL_PLAYER : id;

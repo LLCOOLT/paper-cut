@@ -8,6 +8,7 @@
 #include "port/practice_tools.h"
 #include "port/settings.h"
 #include "port/tr.h"
+#include "../settings_ui.h"
 #include <SDL3/SDL.h>
 #include <aurora/aurora.h>
 #include <imgui.h>
@@ -17,6 +18,8 @@
 #include <cstdio>
 #include <cstring>
 #include <string>
+
+using portui::hint;
 
 namespace {
 
@@ -47,13 +50,6 @@ void setWatched(int i, bool on) {
     *sWatchSet[i / 31] &= ~(1 << (i % 31));
   }
   portSettingsSave();
-}
-
-// a grey note, wrapped to the page
-void hint(const char* text) {
-  ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
-  ImGui::TextWrapped("%s", text);
-  ImGui::PopStyleColor();
 }
 
 bool contains(const char* hay, const char* needle) {
@@ -541,13 +537,13 @@ struct Register {
 
     static const char* const kCorners[] = {"Off", "Top left", "Top right", "Bottom left", "Bottom right"};
     portSettingsAddChoice(kTab, "Speedrun timer",
-                          "Game time in a corner, counted in the game's own frames, with real time under it.", 0,
+                          "Game time (in frames) and real time in a corner.", 0,
                           "speedrun_timer", kCorners, 5, "speedrun timer igt rta splits clock");
     portSettingsAddToggle(kTab, "Load removal",
-                          "Game time stops while a map or a battle loads (the timer's and LiveSplit's).", 0,
+                          "The timer and LiveSplit stop while a map or battle loads.", 0,
                           "timer_load_removal", "speedrun timer load removal igt loadless");
-    portSettingsAddToggle(kTab, "Start with a new file", "The timer starts when a new file begins, and resets at "
-                          "the title screen.", 0, "timer_autostart", "speedrun timer autostart start reset");
+    portSettingsAddToggle(kTab, "Start with a new file", "The timer starts with a new file and resets at the title.", 0,
+                          "timer_autostart", "speedrun timer autostart start reset");
     static const char* sCategories[8];
     for (int i = 0; i < portSplitCategoryCount() && i < 8; i++) {
       sCategories[i] = portSplitCategoryName(i);
@@ -576,9 +572,8 @@ struct Register {
     portSettingsAddSection(kTab, "Items", nullptr, kInGame, itemsSection, "items badges key items give edit cheat");
     portSettingsAddSection(kTab, "Story and flags", "GSW and GSWF: the story's progress and what has happened.",
                            kInGame, flagsSection, "gsw gswf flags story progress edit sequence");
-    portSettingsAddChoice(kTab, "Memory watch corner", "The fields ticked in Memory watch (All settings), kept on "
-                                                       "screen.", kInGame,
-                          "memory_watch", kCorners, 5, "memory watch ram display position speed");
+    portSettingsAddChoice(kTab, "Memory watch corner", "Memory watch's ticked fields (All settings), on screen.",
+                          kInGame, "memory_watch", kCorners, 5, "memory watch ram display position speed");
     portSettingsAddSection(kTab, "Memory watch", nullptr, kInGame, watchSection,
                            "memory watch ram mario party pouch position speed");
   }

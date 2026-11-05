@@ -37,7 +37,7 @@ static const StoryStep* nextStep(int value) {
 }
 
 int portJournalNextStep(const char** area, const char** name) {
-    const StoryStep* s = gp != NULL ? nextStep(swByteGet(GSW_STORY_PROGRESS)) : NULL;
+    const StoryStep* s = gp != NULL ? nextStep(swStoryPeek()) : NULL;
     if (s == NULL) {
         return 0;
     }
@@ -57,7 +57,7 @@ const char* portJournalHintMsg(const char* tag) {
         return sText;
     }
     if (strcmp(tag, "pc_menu_hint") == 0) {
-        const StoryStep* s = gp != NULL ? nextStep(swByteGet(GSW_STORY_PROGRESS)) : NULL;
+        const StoryStep* s = gp != NULL ? nextStep(swStoryPeek()) : NULL;
         char tagArea[40];
         if (s == NULL) {
             portPauseWrap(portTrGame("The story is over: go wherever you like."), sText, sizeof(sText));

@@ -67,7 +67,7 @@ Show the bingo card
 Bingokarte zeigen
 
 Each square: * done, x taken by another player, - not yet.
-Jedes Feld: * geschafft, x von jemand anderem geholt, - noch nicht.
+Jedes Feld: * geschafft, x von anderen geholt, - noch offen.
 
 Get %s
 %s holen

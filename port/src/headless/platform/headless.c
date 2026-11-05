@@ -92,6 +92,10 @@ int portOpenPartnerReward(int partner) {
     (void)partner;
     return 0;
 }
+int portOpenChestReward(int curse) {
+    (void)curse;
+    return 0;
+}
 void portOpenAreaLinked(const char* area) {
     (void)area;
 }

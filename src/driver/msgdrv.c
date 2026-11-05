@@ -1722,7 +1722,7 @@ const char* PORT_HOOKABLE(msgSearch)(const char* tag) {
         if (sAlt) {
             return ErrMessage[gp->language];
         }
-        for (k = 0; n > 4 && n < 0x40 && k < 7; k++) {
+        for (k = 0; n > 4 && n < 0x40 && k < (int)(sizeof(kSuffix) / sizeof(kSuffix[0])); k++) {
             if (!strcmp(tag + n - 4, kSuffix[k])) {
                 own = k;
             }
@@ -1731,7 +1731,7 @@ const char* PORT_HOOKABLE(msgSearch)(const char* tag) {
             char alt[0x40];
             const char* found = NULL;
             sAlt = 1;
-            for (k = 0; k < 7 && found == NULL; k++) {
+            for (k = 0; k < (int)(sizeof(kSuffix) / sizeof(kSuffix[0])) && found == NULL; k++) {
                 if (k != own) {
                     memcpy(alt, tag, n - 4);
                     strcpy(alt + n - 4, kSuffix[k]);

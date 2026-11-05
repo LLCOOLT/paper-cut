@@ -89,6 +89,9 @@ void portLuigiNpcUpdate(int poseId);
 /* The credits' parade (end_00.c): Luigi's model and walk in Mario's place,
  * and Mario's in Luigi's, while the option is on. */
 void portLuigiCreditActor(const char** model, const char** anim);
+/* the size the parade draws the pick at in Mario's place (model: the
+ * parade's own, before portLuigiCreditActor), as in the field: Bowser 0.7 */
+float portLuigiCreditScale(const char* model);
 
 /* At startup, before the mods apply (port/src/aurora/luigi_model_aurora.c):
  * a/c_luigi_pc and a/c_luigi_pc-, Luigi's model with our animations and his

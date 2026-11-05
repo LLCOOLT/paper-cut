@@ -16,4 +16,4 @@ Invert mouse camera
 マウスカメラを　はんてん
 
 Moving the mouse up moves the camera out and higher.
-マウスを　うえに　うごかすと　カメラが　とおく　たかく　なります
+マウスを　上に　やると　カメラが　とおく　たかく

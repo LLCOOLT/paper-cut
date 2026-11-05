@@ -317,7 +317,7 @@ int logLines(char (*out)[PORT_PAUSE_LINE], int max) {
   return n;
 }
 
-const char* logHelp() { return "Up and down scroll, left and right a page at a time. B: back."; }
+const char* logHelp() { return "Up and down scroll, left and right by page. B: back."; }
 
 const PortPauseInfo kLogPage = {"Message log", logLines, nullptr, logHelp, nullptr, nullptr, 1};
 

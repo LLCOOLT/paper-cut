@@ -5,6 +5,7 @@
 #include "port/master_quest.h"
 #include "port/settings.h"
 #include "port/tr.h"
+#include "../settings_ui.h"
 
 #include <SDL3/SDL.h>
 #include <imgui.h>
@@ -15,13 +16,9 @@
 #include <string>
 #include <vector>
 
-namespace {
+using portui::hint;
 
-void hint(const char* text) {
-  ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
-  ImGui::TextWrapped("%s", text);
-  ImGui::PopStyleColor();
-}
+namespace {
 
 // one parse for the page (a set is about 30 KB)
 PortMqSet sParsed;

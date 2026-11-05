@@ -36,6 +36,7 @@ class_name = "Board"
 [[migrations]]
 tag = "v3"
 new_sqlite_classes = ["Notes", "Board"]
+
 # bingo rooms (0.4.0): one Durable Object per lockout room
 [[durable_objects.bindings]]
 name = "BINGO"

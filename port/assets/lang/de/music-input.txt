@@ -9,7 +9,7 @@ Die Musik jedes Raums ist ein anderes Stück des Spiels: Feldmusik für Feldmusi
 Your music
 Deine Musik
 
-Your files in the music folder play in place of the game's tracks they are named after.
+Music folder files replace the tracks they are named after.
 Deine Dateien im Ordner music spielen statt der Stücke des Spiels, nach denen sie benannt sind.
 
 Shuffle includes your music

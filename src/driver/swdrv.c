@@ -74,6 +74,13 @@ s32 PORT_HOOKABLE(swByteGet)(s32 index) {
     }
 }
 
+#ifdef TARGET_PC
+/* PC port: the story as swByteGet(0) reads it, with nothing changed (driver/swdrv.h) */
+s32 swStoryPeek(void) {
+    return portOpenStoryPeek(gp->gsw0);
+}
+#endif
+
 /** Local Saved Work Flags --------------------------------------- */
 void PORT_HOOKABLE(_swSet)(s32 index) { // set specific bit
     gp->lswf[index / 32] |= (1 << (index % 32));

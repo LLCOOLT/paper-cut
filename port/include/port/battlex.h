@@ -77,7 +77,7 @@ const char* portBadgeMakerName(int slot);
 int portBadgeMakerCost(const short grants[PORT_BADGE_GRANTS]);
 /* The merchant's price: 20 coins and 15 a BP. */
 int portBadgeMakerPrice(int bp);
-/* The merchant's stock now (badge ids, -1 ended): the set when "pc_badges"
+/* The merchant's stock now (badge ids, at most max; the count): the set when "pc_badges"
  * is on, the badge maker's filled slots. */
 int portMerchantStock(int* out, int max);
 /* evt_win_other_select's window type for the merchant's list (src/manager/winmgr.c) */

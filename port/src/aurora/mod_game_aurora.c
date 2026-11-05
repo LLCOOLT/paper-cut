@@ -83,12 +83,15 @@ static void mapDataPost(MapData** result, const char* name) {
 /* seqMain, each frame: the map-scoped texture sets for the map now (mods.cpp) */
 static void seqMainPost(void) {
     if (gp != NULL && gp->currentMapName[0] != 0) {
-        /* with Luigi as the player (Play as Luigi): every map flagged "#luigi",
-         * for the sets of Luigi's faces in the game's own textures
-         * (luigi_faces_aurora.c, mods.cpp's mapMatches) */
+        /* with Luigi, Peach or Bowser as the player (Play as): every map
+         * flagged "#luigi", "#peach" or "#bowser", for the sets of their faces
+         * in the game's own textures (luigi_faces_aurora.c, mods.cpp's
+         * mapMatches) */
+        static const char* const kPickFlag[PORT_PLAY_AS_COUNT] = {"", "#luigi", "#peach", "#bowser"};
         char map[48];
-        const int luigi = portLuigiOn();
-        snprintf(map, sizeof(map), "%s%s", gp->currentMapName, luigi ? "#luigi" : "");
+        const int pick = portPlayAs();
+        const char* flag = pick == PORT_PLAY_AS_LUIGI ? (portLuigiOn() ? "#luigi" : "") : kPickFlag[pick];
+        snprintf(map, sizeof(map), "%s%s", gp->currentMapName, flag);
         portModsMapTextures(map);
     }
 }

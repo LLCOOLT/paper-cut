@@ -20,7 +20,11 @@ The user folder (saves, settings, mods: `%APPDATA%\ttyd`, `~/Library/Application
 
 ## Installing updates automatically
 
-**Install updates automatically** (General, and the Start menu's Settings tab; off by default) does the same without the button: when the start's check finds a newer release, its zip is downloaded quietly in the background, checked against the release's SHA-256 in the same way, and staged as above. It goes in place at the next start, never mid-game. While online co-op or a replay runs, nothing is downloaded: a download under way stops, and starts again once it's over. A download that fails, or doesn't match its checksum, isn't tried again until the next start; the General tab says why. The setting is only there where Download and install is. At the start the update is installed, the "what's new" window says so (`port/src/aurora/whats_new_aurora.c`).
+**Install updates automatically** (General, and the Start menu's Settings tab; off by default) does the same without the button: when the start's check finds a newer release, its zip is downloaded quietly in the background, checked against the release's SHA-256 in the same way, and staged as above. It goes in place at the next start, never mid-game. While online co-op or a replay runs, nothing is downloaded: a download under way stops, and starts again once it's over. A download that fails, or doesn't match its checksum, isn't tried again until the next start; the General tab says why. The setting is only there where Download and install is. At the start the update is installed, the What's new window says so (`port/src/aurora/whats_new_aurora.c`).
+
+## What's new
+
+The first start of a newer version (however it was installed) shows its **What's new** window once, in the game's own windows over the title screen, the file select or the field, half a second after the screen settles: this version's new features and fixes as a short list, scrolled with up and down. It isn't shown on the very first start, during online co-op or a replay, or in a dev build. The same list is on the General tab (**What's new**) and in the Start menu's Settings tab (General > **What's new**). The list is made from the version's release notes when the game is built ([RELEASING.md](RELEASING.md); `tools/port/whats_new.py`, `port/settings/features/whats_new.cpp`, `port/src/aurora/whats_new_aurora.c`). `$TTYD_WHATS_NEW=0` never shows the window, `=1` shows it at this start.
 
 ## Where there's no button
 

@@ -1,0 +1,65 @@
+# The pause menu's first tab, "Mario" (w/<language>/win.tpl image 1), as Bowser's while he's the player
+# (Play as Bowser, docs/PLAY_AS.md): the game's own tab with its lettering taken off, and "Bowser" put on
+# it letter by letter from the game's own lettering on its other tabs and buttons, recoloured to the
+# "Mario" tab's pale pink with its dark red line, as luigi_tabs.recipe does Luigi's. Loaded under
+# Dolphin's name for the tab it replaces, in the "*#bowser" texture set (luigi_faces_aurora.c).
+# Six letters where Mario has five: each a little narrower than its source.
+# (No Japanese version: the disc's lettering has no ク or パ; Mario's tab shows there.)
+
+image art/icons/bowser/ui/tex1_96x40_b3df1434fe52ff08_14.png
+  discs G8ME01 G8MP01
+  load tpl w/us/win.tpl 1
+  # the clean board (luigi_tabs.recipe's)
+  mask frame rect 5 4 13 32
+  mask frame + rect 87 4 91 32
+  fill in frame #aa1900
+  mask panel rect 15 5 85 31
+  fill in panel #ce5542
+  mask ledge rect 14 6 14 31
+  fill in ledge #c0422c
+  mask redge rect 86 6 86 31
+  fill in redge #c0402c
+  # B: "Badges"'s (image 4, the green tab)
+  piece B tpl w/us/win.tpl 4
+  @B crop 2 6 20 24
+  @B alpha set 0 where h=70..110 s>=0.45 v>=0.5
+  @B map #d6e3ce -> #e6ccd3 #99cd52 -> #d05741 #6ba818 -> #a91a00 #426110 -> #420c00
+  @B scale 17 22 texel
+  # o and r: "Mario"'s own
+  piece o tpl w/us/win.tpl 1
+  @o crop 73 12 19 20
+  @o alpha set 0 where h=0..20 s>=0.45 v>=0.5
+  @o alpha set 0 where h=350..360 s>=0.45 v>=0.5
+  @o scale 16 18 texel
+  piece r tpl w/us/win.tpl 1
+  @r crop 48 13 17 19
+  @r alpha set 0 where h=0..20 s>=0.45 v>=0.5
+  @r alpha set 0 where h=350..360 s>=0.45 v>=0.5
+  @r scale 14 18 texel
+  # w: "Number"'s m (image 173, a purple button), turned over
+  piece w tpl w/us/win.tpl 173
+  @w crop 37 11 19 18
+  @w alpha set 0 where h=230..265 s>=0.25 v>=0.32
+  @w map #d6d7e7 -> #e6ccd3 #5a4e99 -> #d05741 #1c1838 -> #420c00
+  @w flip y
+  @w scale 16 17 texel
+  # s: "Badges"'s
+  piece s tpl w/us/win.tpl 4
+  @s crop 76 12 14 18
+  @s alpha set 0 where h=70..110 s>=0.45 v>=0.5
+  @s map #d6e3ce -> #e6ccd3 #99cd52 -> #d05741 #6ba818 -> #a91a00 #426110 -> #420c00
+  @s scale 12 17 texel
+  # e: "Number"'s
+  piece e tpl w/us/win.tpl 173
+  @e crop 67 11 16 18
+  @e alpha set 0 where h=230..265 s>=0.25 v>=0.32
+  @e map #d6d7e7 -> #e6ccd3 #5a4e99 -> #d05741 #1c1838 -> #420c00
+  @e scale 14 17 texel
+  # on the baseline of "Mario" (row 30)
+  paste B 6 9
+  paste o 22 13
+  paste w 36 14
+  paste s 51 14
+  paste e 62 14
+  paste r 75 13
+end

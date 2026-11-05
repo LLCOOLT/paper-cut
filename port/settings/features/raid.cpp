@@ -13,6 +13,8 @@
 #include "port/settings.h"
 #include "port/tr.h"
 #include "port/versions.h"
+#include "../settings_ui.h"
+#include "../relay_util.h"
 
 #include <imgui.h>
 
@@ -25,6 +27,8 @@
 #include <string>
 #include <thread>
 #include <vector>
+
+using portui::hint;
 
 namespace {
 
@@ -88,43 +92,11 @@ void saveName() {
   }
 }
 
-std::string relayBase() {
-  for (int i = 0; portOnlineRelayAt(i) != nullptr; i++) {
-    const std::string relay = portOnlineRelayAt(i);
-    if (relay.compare(0, 6, "wss://") == 0) {
-      return "https://" + relay.substr(6);
-    }
-  }
-  return "";
-}
+using portrelay::relayBase;
 
-std::string percent(const std::string& s) {
-  std::string out;
-  for (unsigned char c : s) {
-    if ((c >= '0' && c <= '9') || (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || c == '-' || c == '_' ||
-        c == '.') {
-      out += static_cast<char>(c);
-    } else {
-      char hex[4];
-      std::snprintf(hex, sizeof(hex), "%%%02X", c);
-      out += hex;
-    }
-  }
-  return out;
-}
+using portrelay::percent;
 
-std::string unpercent(const std::string& s) {
-  std::string out;
-  for (size_t i = 0; i < s.size(); i++) {
-    if (s[i] == '%' && i + 2 < s.size()) {
-      out += static_cast<char>(std::strtol(s.substr(i + 1, 2).c_str(), nullptr, 16));
-      i += 2;
-    } else {
-      out += s[i];
-    }
-  }
-  return out;
-}
+using portrelay::unpercent;
 
 // "raid <WEEK> <BOSS> <CLEARS> [<YOUR RANK>]", then "<rank> <turns> <frames> <players> <name> <game>" lines
 void fetchBoard(std::string url) {
@@ -205,12 +177,6 @@ void askBoard(int week, const PortRaidResult* send) {
 }
 
 // --- the page ----------------------------------------------------------------------------------
-
-void hint(const char* text) {
-  ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
-  ImGui::TextWrapped("%s", text);
-  ImGui::PopStyleColor();
-}
 
 void weekLines(int week) {
   int a = 0, b = 0;
@@ -377,7 +343,7 @@ const char* formAct(int id, int dir) {
     return nullptr;
   }
   if (gPortCompanionMenu) {
-    return "Not from the second screen: do it in the game's own Start menu.";
+    return "Not on the second screen: use the game's Start menu.";
   }
   const char* why = nullptr;
   return portRaidStart(&why) ? "The raid begins once the menu is closed." : why;

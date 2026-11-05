@@ -5,6 +5,7 @@
 #include "port/restart.h"
 #include "port/settings.h"
 #include "port/tr.h"
+#include "../settings_ui.h"
 #include <SDL3/SDL.h>
 #include <imgui.h>
 #ifdef __APPLE__
@@ -13,13 +14,9 @@
 #include <cstdio>
 #include <string>
 
-namespace {
+using portui::hint;
 
-void note(const char* text) {
-  ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
-  ImGui::TextWrapped("%s", text);
-  ImGui::PopStyleColor();
-}
+namespace {
 
 const ImVec4 kAmber(1.0f, 0.75f, 0.3f, 1.0f);
 
@@ -29,7 +26,7 @@ constexpr const char* kBuiltIn[][2] = {{"en", "English"}, {"de", "Deutsch"}, {"f
 std::string sWritten; // what the template button did
 
 void section(int) {
-  note(portTr("A language pack translates Paper Cut's own menus: a folder in the mods folder holding a lang folder "
+  hint(portTr("A language pack translates Paper Cut's own menus: a folder in the mods folder holding a lang folder "
               "of text files. It adds a language to Menu language, or changes the texts of one that is there."));
   if (ImGui::Button(portTrLabel("Reload language packs"))) {
     portTrReloadPacks();
@@ -58,15 +55,15 @@ void section(int) {
   }
 #endif
   if (!sWritten.empty()) {
-    note(sWritten.c_str());
+    hint(sWritten.c_str());
   }
   if (portTrPacksNeedRestart()) {
-    note(portTr("Letters the menus' fonts didn't have yet show after a restart."));
+    hint(portTr("New letters for the menus' fonts show after a restart."));
     portRestartButton(); // (port/include/port/restart.h)
   }
   const int n = portTrPackCount();
   if (n == 0) {
-    note(portTr("No language packs yet."));
+    hint(portTr("No language packs yet."));
   }
   for (int i = 0; i < n; i++) {
     const PortTrPackInfo* p = portTrPack(i);
@@ -91,7 +88,7 @@ void section(int) {
     char line[256];
     std::snprintf(line, sizeof(line), portTr("mods/%s: %d texts translated, %d not translated yet."), p->folder,
                   p->strings, p->untranslated);
-    note(line);
+    hint(line);
     if (p->problems[0] != '\0') {
       ImGui::PushStyleColor(ImGuiCol_Text, kAmber);
       ImGui::TextWrapped("%s", p->problems);
@@ -112,12 +109,12 @@ int formRows(PortPauseRow* out, int max) {
                           "room for its translation.",
                           nullptr, kTemplate);
 #if !defined(__ANDROID__) && !(defined(__APPLE__) && TARGET_OS_IPHONE)
-  out[n++] = portPauseRow("Open the mods folder", "Shows the mods folder on the desktop: a pack is a folder in it.",
+  out[n++] = portPauseRow("Open the mods folder", "Shows the mods folder; each pack is a folder in it.",
                           nullptr, kFolder);
 #endif
   if (portTrPacksNeedRestart() && portRestartSupported()) {
     out[n++] = portPauseRow("Restart for the new letters",
-                            "Letters the menus' fonts didn't have yet show after a restart.", nullptr, kRestart,
+                            "New letters for the menus' fonts show after a restart.", nullptr, kRestart,
                             PORT_PAUSE_ROW_CONFIRM);
   }
   const int count = portTrPackCount();

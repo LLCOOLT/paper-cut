@@ -103,10 +103,11 @@ void portQuickSwapPressCoop(void) {
     sSwapCoop = 1;
 }
 
+/* the partner menu's order (win_party.c winPartyDt): Goombella, Koops,
+ * Flurrie, Yoshi, Vivian, Bobbery, Ms. Mowz */
+const int gPortPartnerMenuOrder[PORT_PARTNER_MENU_COUNT] = {1, 2, 5, 4, 6, 3, 7};
+
 int portQuickSwapPoll(int current) {
-    /* the partner menu's order (win_party.c winPartyDt): Goombella, Koops,
-     * Flurrie, Yoshi, Vivian, Bobbery, Ms. Mowz */
-    static const int kOrder[] = {1, 2, 5, 4, 6, 3, 7};
     /* (with the partner wheel on, the control is the wheel's: a tap there is a press here) */
     const int held = !gPortPartnerWheelOwns && ((gPortQuickSwapHeld != NULL && gPortQuickSwapHeld()) || gPortQuickSwapTouch);
     PouchData* pouch;
@@ -136,13 +137,13 @@ int portQuickSwapPoll(int current) {
     if (!portGameplus("quick_swap") && !coop) {
         return -1;
     }
-    for (i = 0; i < 7; i++) {
-        if (kOrder[i] == current) {
+    for (i = 0; i < PORT_PARTNER_MENU_COUNT; i++) {
+        if (gPortPartnerMenuOrder[i] == current) {
             at = i;
         }
     }
-    for (i = 1; i <= 7; i++) {
-        const int id = kOrder[(at + i + 7) % 7];
+    for (i = 1; i <= PORT_PARTNER_MENU_COUNT; i++) {
+        const int id = gPortPartnerMenuOrder[(at + i) % PORT_PARTNER_MENU_COUNT];
         const u16 flags = pouch->partyData[id].flags;
         if (id != current && (flags & POUCH_PARTY_FLAG_JOINED) && !(flags & POUCH_PARTY_FLAG_AWAY)) {
             printf("[gameplus] quick-swap: partner %d to %d\n", current, id);
@@ -325,9 +326,9 @@ static int sceneSeen(int scene) {
         case PORT_SCENE_GLITZ_WIN:
             return swGet(GSWF_TOU_LAST_OPPONENT_VALID); /* a match was fought (set when one ends) */
         case PORT_SCENE_TRAIN_TICKET:
-            return swByteGet(GSW_STORY_PROGRESS) >= STORY_STG6_01_THE_CONDUCTOR;
+            return swStoryPeek() >= STORY_STG6_01_THE_CONDUCTOR;
         case PORT_SCENE_BLIMP_TICKET:
-            return swByteGet(GSW_STORY_PROGRESS) >= STORY_STG3_00_WELCOME_TO_GLITZVILLE;
+            return swStoryPeek() >= STORY_STG3_00_WELCOME_TO_GLITZVILLE;
     }
     return 0;
 }
@@ -354,7 +355,7 @@ int portJournal(PortJournal* out) {
     if ((seq != SEQ_GAME && seq != SEQ_BATTLE) || pouch == NULL) {
         return 0;
     }
-    out->story = swByteGet(GSW_STORY_PROGRESS);
+    out->story = swStoryPeek();
     out->troublesTotal = 30;
     for (i = 1; i <= 30; i++) {
         if (swGet(GSWF_TROUBLE_SOLVED_BASE + i)) {

@@ -5,7 +5,7 @@ Mario's player and up to three more, on one computer or online:
 | Player | Plays | In the field | In battle |
 |---|---|---|---|
 | 1 | Mario | as always | Mario's turns and guards |
-| 2 | the partner | its stick walks the partner (Second player, Controls) | the partner's turns and guards |
+| 2 | the partner | its stick walks the partner (Multiplayer → **Second player (co-op)**) | the partner's turns and guards |
 | 3 | the follower | the story's follower when there is one (Flavio, Frankly...), else a **companion** | the partner's, when it's their companion's partner |
 | 4 | a companion | a companion of their own | likewise |
 
@@ -25,7 +25,7 @@ turns and guards. A player with no character in the fight waits.
 
 ## With Brothers mode
 
-With Brothers mode on (docs/BROTHERS.md), player 2 plays Luigi instead of
+With Multiplayer → **Brothers mode** on ([BROTHERS.md](BROTHERS.md)), player 2 plays Luigi instead of
 the partner, and the others keep their parts:
 
 | Player | In the field | In battle |
@@ -41,7 +41,7 @@ follower, so all five can be out at once; neither is ever saved.
 
 ## On one computer
 
-With Second player on (Controls), a controller in the third or fourth port
+With Multiplayer → **Second player (co-op)** on, a controller in the third or fourth port
 joins as player 3 or 4 ("Player 3 joined..."), and leaving takes their
 companion away.
 
@@ -51,7 +51,7 @@ Players 3 and 4 join a room (or the host's address) with **Join as player 3
 or 4** (the launcher's Online tab, or the Start menu's), before the host
 starts; the room list joins a room whose partner is taken that way. They get
 the host's setup as a watcher does and play from there
-(docs/ONLINE_RELAY.md, "Three or four players").
+([ONLINE_RELAY.md](ONLINE_RELAY.md#three-or-four-players)).
 
 - The host's input carries players 3 and 4's: each frame the host sends, it
   puts in the next of their controllers it has. So the players never wait
@@ -63,12 +63,24 @@ the host's setup as a watcher does and play from there
   whole code, PBKDF2), not J-PAKE: weaker, as the watchers' (they carry only
   the controller).
 
+## Co-op pings
+
+Multiplayer → **Co-op pings** (on by default) lets players 1 and 2 mark a
+spot or an enemy with a paper arrow both see, on one computer or online. Hold
+**Ping** (Bindings) and aim with the C-stick, then let go; a quick press
+marks the nearest enemy, else where the character stands. A click on the picture (a middle
+click works over the menus too) or a tap marks that spot. An arrow near an
+enemy goes on it and follows it, and stays five seconds. The ping travels in
+the controller's input, so both games of an online session, replays and
+watchers show the same arrows; the game itself sees nothing of it
+(`port/src/common/ping_pc.c`, `port/settings/features/pings.cpp`).
+
 ## Saves and replays
 
 A companion is never saved as the story's follower: a save made with one
 loads without it. Replays keep all four controllers (`PCRPLAY2`) when
 controllers 3 or 4 were there; older replays, and those without them, are
-`PCRPLAY1` as before (docs/REPLAYS.md).
+`PCRPLAY1` as before ([REPLAYS.md](REPLAYS.md)).
 
 ## For other features
 

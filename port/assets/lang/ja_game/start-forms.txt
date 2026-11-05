@@ -1,7 +1,7 @@
 # The Start menu's forms and colour picker (port/include/port/pause_forms.h) in Japanese for the JP release's own font: an English line, then its translation, then a blank line.
 
 Opens Paper Cut's full settings page on this category: this one isn't in the Start menu.
-Paper Cutの　せっていページを　ひらきます　これは　スタートメニューに　ありません
+スタートメニューには　ない　せっていページを　ひらきます
 
 On the full page
 せっていページで
@@ -10,7 +10,7 @@ Full settings page...
 せっていページ...
 
 Paper Cut's full settings page, over the game: every setting, and remapping, mods and practice.
-Paper Cutの　せっていページを　ひらきます　すべての　せっていが　あります
+すべての　せっていページを　ゲームの　上に　ひらく
 
 Press A again to confirm.
 もういちど　Aボタンで　けってい
@@ -102,7 +102,7 @@ The game starts again to load it; the save as it is now is kept as a backup.
 Restore
 もどす
 
-Restore this card's saves from the launcher, before the game starts.
+Restore saves from the launcher, before starting.
 ゲームを　はじめる　まえに　ランチャーで　もどしてください
 
 Restarting when the game has finished saving...

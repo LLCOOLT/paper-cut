@@ -39,8 +39,8 @@ A controller
 Every connected controller is recognised.
 つないだ　コントローラーは　すべて　わかります
 
-A controller listed here works once you press each of its buttons when asked.
-ここの　コントローラーは　ボタンを　じゅんに　おすと　つかえます
+A listed controller works once its buttons are set.
+ここの　コントローラーは　ボタンを　きめると　つかえます
 
 Showing in HDR.
 HDRで　うつして　います
@@ -72,8 +72,8 @@ Not available here.
 Turn on HDR output first.
 さきに　HDRを　オンに　してください
 
-Not from the second screen: do it in the game's own Start menu.
-2つめの　がめんでは　できません　ゲームの　スタートメニューで
+Not on the second screen: use the game's Start menu.
+2つめの　画面には　ありません　スタートメニューで　どうぞ
 
 Turn on Fast travel above to use it.
 うえの　ファストトラベルを　オンに　してください
@@ -82,7 +82,7 @@ Travel there: the trip starts once the menu is closed.
 そこへ　いきます　メニューを　とじると　しゅっぱつします
 
 Not reached yet: one more hub opens with each Crystal Star.
-まだ　いけません　スターストーンごとに　ひとつ　ふえます
+まだです　スターストーンごとに　ひとつ　ふえます
 
 The trip starts once the menu is closed.
 メニューを　とじると　しゅっぱつします
@@ -198,20 +198,20 @@ Writes a pack for a translator to start from in the mods folder: each text in En
 Open the mods folder
 modsフォルダーを　ひらく
 
-Shows the mods folder on the desktop: a pack is a folder in it.
+Shows the mods folder; each pack is a folder in it.
 modsフォルダーを　ひらきます
 
 Restart for the new letters
 あたらしい　もじの　ために　さいきどう
 
-Letters the menus' fonts didn't have yet show after a restart.
+New letters for the menus' fonts show after a restart.
 あたらしい　もじは　さいきどうの　あとに　でます
 
 No language packs yet.
 ことばの　パックは　まだ　ありません
 
 A language pack translates Paper Cut's own menus: a folder in the mods folder holding a lang folder of text files.
-ことばの　パックは　Paper Cutの　メニューを　ほんやくします
+ことばパックで　Paper Cutの　メニューを　ほんやくします
 
 Some of its lines couldn't be read: Make a language pack template shows the format.
 よめない　ぎょうが　あります　ひながたを　みてください
@@ -234,8 +234,8 @@ modsフォルダーに　つくりました
 Nothing yet: the message windows' pages show here.
 まだ　ありません　メッセージが　ここに　でます
 
-Up and down scroll, left and right a page at a time. B: back.
-うえと　したで　うごかす　ひだりと　みぎで　ページ　B：もどる
+Up and down scroll, left and right by page. B: back.
+上下で　うごかす　左右で　ページ　B：もどる
 
 Read the message log
 メッセージの　きろくを　よむ
@@ -256,7 +256,7 @@ Reads WAV files and some others.
 WAVと　ほかの　いくつかを　よめます
 
 The music folder. Name a file after the game's track, as tracks.txt in the folder lists them (BGM_STG1_NOK1.wav), and it plays in its place.
-おんがくの　フォルダー　tracks.txtの　なまえを　つけると　かわりに　ながれます
+musicフォルダ　きょく名の　ファイルが　かわりに　ながれる
 
 Look for files again
 ファイルを　さがしなおす
@@ -288,13 +288,13 @@ Whose controller is set: left and right change it.
 Left hand
 ひだりて
 
-The stick moves, the d-pad is A, B, X and Y, the left bumper Z, the left trigger R.
-スティックで　いどう　じゅうじボタンが　ABXY　ひだりの　バンパーが　Z
+The stick moves, the d-pad is ABXY, LB is Z and LT is R.
+スティック：いどう　じゅうじ：ABXY　LB：Z　LT：R
 
 Right hand
 みぎて
 
-The right stick moves, the face buttons, right bumper and trigger as they are.
+The right stick moves; face buttons, RB and RT unchanged.
 みぎの　スティックで　いどう　ボタンは　そのまま
 
 Set for the left hand.
@@ -351,7 +351,7 @@ Could not start sending (no network?).
 Address
 アドレス
 
-The address the other device shows under Send saves to another device: A types it.
+A: type the address the other device shows under Send saves.
 べつの　きかいが　だす　アドレス　Aで　いれます
 
 Paste the address
@@ -360,13 +360,13 @@ Paste the address
 The address you copied, put in.
 コピーした　アドレスを　いれます
 
-Fetches the other device's saves; you choose what to replace next.
+Gets the other device's saves; then pick what to replace.
 べつの　きかいの　セーブを　うけとります
 
 Receiving...
 うけとっています...
 
-Replace: the other device's game file over this one's (kept as a backup first).
+Replace: the other device's file here (backed up first).
 べつの　きかいの　ファイルで　おきかえます
 
 Replace
@@ -390,8 +390,8 @@ Replace them and restart
 Replace them
 おきかえる
 
-Receive this card's saves from the launcher, before the game starts.
-この　カードは　ゲームの　まえに　ランチャーで　うけとってください
+Receive saves from the launcher, before starting.
+セーブは　はじめる　まえに　ランチャーで　うけとって
 
 This is the running game's card: the game starts again to load it.
 いまの　ゲームの　カードです　よみこむために　さいきどうします
@@ -486,8 +486,8 @@ No new version found
 Checked at start, when Check for updates at start is on.
 きどうの　ときに　しらべます
 
-A newer Paper Cut is out. A: its release page in the browser.
-あたらしい　Paper Cutが　でています　A：ページを　ひらく
+A newer Paper Cut is out. A: open its release page.
+あたらしい　Paper Cutが　出ました　A：ページを　ひらく
 
 Flathub updates this copy
 Flathubが　アップデートします
@@ -579,5 +579,5 @@ A：これに　する　B：もとのまま
 A: the text you copied, typed here.
 A：コピーした　ものを　いれる
 
-A types it. X deletes a letter. B leaves the text as it was.
-Aで　いれる　Xで　けす　Bで　もとのまま
+A types the key, B rubs out a letter (on none, it goes back), Start is Done.
+A で　いれる　B で　1もじ　けす（なければ　もどる）　スタートで　けってい

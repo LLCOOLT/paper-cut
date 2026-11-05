@@ -104,17 +104,16 @@ static const char* dir(void) {
     return d != NULL && *d ? d : ".";
 }
 
+/* the file's bytes, allocated at their full size first (encodePng) */
 typedef struct PngBuf {
     u8* data;
-    size_t len, cap;
+    size_t len;
 } PngBuf;
 
 static void put(PngBuf* b, const void* p, size_t n) {
-    if (b->len + n > b->cap) {
-        b->cap = (b->len + n) * 2;
-        b->data = (u8*)realloc(b->data, b->cap);
+    if (n != 0) {
+        memcpy(b->data + b->len, p, n);
     }
-    memcpy(b->data + b->len, p, n);
     b->len += n;
 }
 
@@ -131,13 +130,16 @@ static void chunkMem(PngBuf* b, const char* type, const u8* data, u32 len) {
     put(b, hdr, 4);
 }
 
-/* The PNG file's bytes (malloc'd, *len set). */
+/* The PNG file's bytes (malloc'd, *len set), or NULL (out of memory). */
 static u8* encodePng(const u8* rgb, u32 w, u32 h, size_t* len) {
     static const u8 sig[8] = {0x89, 'P', 'N', 'G', 0x0D, 0x0A, 0x1A, 0x0A};
     u8 ihdr[13];
     u32 row = w * 3 + 1, raw = row * h, blocks = (raw + 65534) / 65535;
     u32 zlen = 2 + raw + blocks * 5 + 4, i, a = 1, b = 0, pos = 0, done = 0;
     u8* z = (u8*)malloc(zlen);
+    if (z == NULL) {
+        return NULL;
+    }
     z[pos++] = 0x78;
     z[pos++] = 0x01;
     while (done < raw) {
@@ -163,7 +165,12 @@ static u8* encodePng(const u8* rgb, u32 w, u32 h, size_t* len) {
     ihdr[9] = 2;  /* RGB */
     ihdr[10] = ihdr[11] = ihdr[12] = 0;
     {
-        PngBuf b = {NULL, 0, 0};
+        /* the signature, then three chunks of 12 bytes each around their data */
+        PngBuf b = {(u8*)malloc(8 + 12 * 3 + 13 + (size_t)pos), 0};
+        if (b.data == NULL) {
+            free(z);
+            return NULL;
+        }
         put(&b, sig, 8);
         chunkMem(&b, "IHDR", ihdr, 13);
         chunkMem(&b, "IDAT", z, pos);
@@ -191,6 +198,10 @@ static int writeFile(const char* path, const u8* data, size_t len) {
 static void writePng(const char* path, const u8* rgb, u32 w, u32 h) {
     size_t len;
     u8* png = encodePng(rgb, w, h, &len);
+    if (png == NULL) {
+        printf("[shot] out of memory for %s\n", path);
+        return;
+    }
     SDL_CreateDirectory(dir()); /* with its parents */
     writeFile(path, png, len);
     free(png);

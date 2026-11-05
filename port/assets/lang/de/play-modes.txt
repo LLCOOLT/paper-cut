@@ -54,14 +54,14 @@ Der Kampf hinter jedem Gegner im Feld wird aus allen Kämpfen seines Gebiets gez
 Remix: badge draft
 Remix: Orden-Auswahl
 
-At each chapter's title card, three badges to choose one from: left and right, then A.
+Each chapter's title card offers three badges: pick one.
 Bei jeder Kapitel-Titelkarte drei Orden, von denen du einen wählst: links und rechts, dann A.
 
 Remix seed
 Remix-Seed
 
-The same seed, the same remix (share it with a challenge code).
-Gleicher Seed, gleicher Remix (teile ihn mit einem Herausforderungscode).
+Same seed, same remix: share it with a challenge code.
+Ein Seed, ein Remix: teile ihn per Herausforderungscode.
 
 Hardcore
 Hardcore

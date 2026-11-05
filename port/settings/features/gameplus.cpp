@@ -59,7 +59,7 @@ void journal(int) {
 }
 
 // The Start menu's forms (port/include/port/pause_forms.h): the hubs, and the file's progress
-constexpr const char* kSecondScreen = "Not from the second screen: do it in the game's own Start menu.";
+constexpr const char* kSecondScreen = "Not on the second screen: use the game's Start menu.";
 
 int travelRows(PortPauseRow* out, int max) {
   int n = 0;
@@ -140,7 +140,7 @@ struct Register {
                           "stick pressed in, or the on-screen swap button.",
                           kPlay, "quick_swap", "partner switch swap change party");
     portSettingsAddToggle(kTab, "Save Blocks save at once",
-                          "A Save Block saves to the file being played without asking first.", kPlay,
+                          "A Save Block saves to the current file without asking.", kPlay,
                           "save_no_prompt", "save block prompt question memory card");
     portSettingsAddToggle(kTab, "Bigger bag",
                           "20 items without the Strange Sack. A save holding more than 10 items without it may "
@@ -150,10 +150,10 @@ struct Register {
                           "After a battle, a partner who fell is back at 1 HP.", kPlay, "partner_revive",
                           "partner hp revive faint knocked out");
     portSettingsAddToggle(kTab, "Level up with the D-pad",
-                          "The level-up screen (HP, FP or BP) also takes the D-pad, not only the stick.", kPlay,
+                          "The level-up screen (HP, FP, BP) also takes the D-pad.", kPlay,
                           "levelup_dpad", "level up dpad stick hp fp bp");
     portSettingsAddToggle(kTab, "Healing items heal every partner",
-                          "In the field, an item used on a partner heals the other partners too.", kPlay,
+                          "In the field, healing one partner heals all of them.", kPlay,
                           "heal_all_partners", "heal item partner mushroom hp");
     portSettingsAddToggle(kTab, "Skip repeated scenes",
                           "Scenes already seen on this file go faster or straight to their end: the Crystal Star "
@@ -222,7 +222,7 @@ struct Register {
                           300, "%d %%", "difficulty enemy attack damage custom");
     static const char* const kAssist[] = {"Off", "Wider windows", "Automatic"};
     portSettingsAddChoice("Accessibility", "Action commands: attacks",
-                          "Wider timing for attack commands, or every attack command done for you.", kPlay,
+                          "Wider timing for attack commands, or all done for you.", kPlay,
                           "ac_attack_assist", kAssist, 3, "action command assist timing auto attack");
     portSettingsAddChoice("Accessibility", "Action commands: guards",
                           "Wider Guard and Superguard windows, or every attack guarded for you (a Superguard is "

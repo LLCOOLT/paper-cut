@@ -27,8 +27,8 @@ On this device, online play starts from the launcher's Online tab, before the ga
 Host a room
 ルームを開く
 
-Opens a room with a code to give the other player: nothing to set up.
-相手に伝えるコードつきのルームを開きます：設定はいりません。
+Opens a room with a code to give the other player.
+相手に伝えるコードつきのルームを開きます。
 
 Waits on your port: on the same network, or with the port forwarded or a VPN.
 あなたのポートで待ちます：同じネットワーク、ポート転送、または VPN で。

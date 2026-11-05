@@ -3,8 +3,8 @@
 Bindings
 Assegnazioni
 
-Every key and controller button: the game's, and Paper Cut's own shortcuts.
-Ogni tasto e ogni pulsante del controller: quelli del gioco e le scorciatoie di Paper Cut.
+Every key and button: the game's and Paper Cut's own.
+Ogni tasto e pulsante: del gioco e di Paper Cut stesso.
 
 Settings (open, close)
 Impostazioni (apri, chiudi)
@@ -182,9 +182,6 @@ Anche %s.
 
 A: change. X: reset the row.
 A: cambia. X: ripristina la riga.
-
-A: change. X: reset the row. B: back.
-A: cambia. X: ripristina la riga. B: indietro.
 
 Bindings...
 Assegnazioni...

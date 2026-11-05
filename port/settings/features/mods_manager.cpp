@@ -8,6 +8,7 @@
 #include "port/restart.h"
 #include "port/settings.h"
 #include "port/tr.h"
+#include "../settings_ui.h"
 #include <SDL3/SDL.h>
 #include <imgui.h>
 #ifdef __APPLE__
@@ -18,15 +19,11 @@
 #include <string>
 #include <utility>
 
+using portui::hint;
+
 namespace {
 
 constexpr const char* kTab = "Mods";
-
-void note(const char* text) {
-  ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
-  ImGui::TextWrapped("%s", text);
-  ImGui::PopStyleColor();
-}
 
 void colored(const ImVec4& color, const char* text) {
   ImGui::PushStyleColor(ImGuiCol_Text, color);
@@ -45,7 +42,7 @@ void luaState(const PortModInfo* mod) {
   }
   const char* error = nullptr;
   switch (portLuaModState(mod->id, &error)) {
-  case PORT_LUA_RUNNING: note(portTr("Lua: running.")); break;
+  case PORT_LUA_RUNNING: hint(portTr("Lua: running.")); break;
   case PORT_LUA_FAILED:
     colored(kRed, (std::string(portTr("Lua: stopped by an error (the Lua console, F4, has it all):")) + " " +
                    (error != nullptr ? error : ""))
@@ -53,11 +50,11 @@ void luaState(const PortModInfo* mod) {
     break;
   case PORT_LUA_PAUSED: colored(kAmber, portTr("Lua: paused: the other player's Lua mods aren't the same.")); break;
   case PORT_LUA_HUD_ONLY:
-    note(portTr("Lua: runs as a display only: the other player's Lua mods aren't the same."));
+    hint(portTr("Lua: runs as a display only: the other player's Lua mods aren't the same."));
     break;
   default:
     if (mod->enabled && mod->error == nullptr) {
-      note(portTr("Lua: starts with the game."));
+      hint(portTr("Lua: starts with the game."));
     }
     break;
   }
@@ -116,7 +113,7 @@ void changes(int index) {
     }
   }
   if (portModsChangeCount(index, PORT_MOD_CHANGE_HOOK) == 0) {
-    note("Hooks (code that runs in place of or around the game's functions) show once its code runs.");
+    hint("Hooks (code that runs in place of or around the game's functions) show once its code runs.");
   }
   ImGui::TreePop();
 }
@@ -194,7 +191,7 @@ void options(int index, const PortModInfo* mod) {
       text += text.empty() ? "From the next start." : " (From the next start.)";
     }
     if (!text.empty()) {
-      note(text.c_str());
+      hint(text.c_str());
     }
     ImGui::PopID();
   }
@@ -205,7 +202,7 @@ void modsSection(int inGame) {
   if (!inGame) {
     portModsPreview(portSettingsUserPath()); // the launcher: list them without applying
   }
-  note("A mod is a folder or a .ttydmod/.zip file with a mod.json, in the mods folder. Where two mods change "
+  hint("A mod is a folder or a .ttydmod/.zip file with a mod.json, in the mods folder. Where two mods change "
        "the same thing, the one higher in the list wins. Changes apply to what the game loads next (the next "
        "room or battle); textures change at once; a mod's code starts with the game.");
   if (ImGui::Button(portTrLabel("Reload"))) {
@@ -219,7 +216,7 @@ void modsSection(int inGame) {
 #endif
   const int n = portModsCount();
   if (n == 0) {
-    note("No mods yet.");
+    hint("No mods yet.");
   }
   for (int i = 0; i < n; i++) {
     const PortModInfo* mod = portModsGet(i);
@@ -255,17 +252,17 @@ void modsSection(int inGame) {
       continue;
     }
     const std::string by = mod->author[0] != '\0' ? "by " + std::string(mod->author) + "  ·  " : "";
-    note((by + summary(i)).c_str());
+    hint((by + summary(i)).c_str());
     if (mod->description[0] != '\0') {
-      note(mod->description);
+      hint(mod->description);
     }
     if (mod->warning != nullptr) {
       colored(kAmber, mod->warning);
     }
     switch (mod->code) {
-    case PORT_MOD_CODE_RUNNING: note("Code: running."); break;
-    case PORT_MOD_CODE_STARTS_NEXT_START: note("Code: starts the next time the game starts."); break;
-    case PORT_MOD_CODE_STOPS_NEXT_START: note("Code: still running; it stops the next time the game starts."); break;
+    case PORT_MOD_CODE_RUNNING: hint("Code: running."); break;
+    case PORT_MOD_CODE_STARTS_NEXT_START: hint("Code: starts the next time the game starts."); break;
+    case PORT_MOD_CODE_STOPS_NEXT_START: hint("Code: still running; it stops the next time the game starts."); break;
     case PORT_MOD_CODE_FAILED: colored(kRed, (std::string("Code: ") + mod->codeError).c_str()); break;
     default: break;
     }
@@ -285,7 +282,7 @@ bool sCounted;
 
 void texturesSection(int inGame) {
   PortSettings* s = portSettings();
-  note("A Dolphin texture pack works as it comes: put its folder in the textures folder, or in a mod's "
+  hint("A Dolphin texture pack works as it comes: put its folder in the textures folder, or in a mod's "
        "textures folder.");
 #ifdef MODS_OPEN_FOLDERS
   if (ImGui::Button(portTrLabel("Open the textures folder"))) {
@@ -300,7 +297,7 @@ void texturesSection(int inGame) {
   }
   ImGui::EndDisabled();
   if (inGame) {
-    note("Reads the packs again while you play: edit a texture, reload, see it.");
+    hint("Reads the packs again while you play: edit a texture, reload, see it.");
   }
 
   bool dump = inGame ? sStats.dumping != 0 || s->dumpTextures != 0 : s->dumpTextures != 0;
@@ -312,7 +309,7 @@ void texturesSection(int inGame) {
       sCounted = false;
     }
   }
-  note("Saves each texture the game draws that no pack replaces yet, under the name a pack uses, to make or "
+  hint("Saves each texture the game draws that no pack replaces yet, under the name a pack uses, to make or "
        "extend a pack. Leave it off to play: it slows the game a little.");
 #ifdef MODS_OPEN_FOLDERS
   if (inGame && portModsDumpDir()[0] != '\0' && ImGui::Button(portTrLabel("Open the dump folder"))) {
@@ -331,17 +328,17 @@ void texturesSection(int inGame) {
   if (sStats.dumped > 0) {
     ImGui::Text(portTr("Seen in play: %d textures, %d of them replaced now (%d%%)."), sStats.dumped, sStats.dumpedCovered,
                 sStats.dumpedCovered * 100 / sStats.dumped);
-    note("The coverage counts what the dump folder holds: each texture the game drew while dumping was on and "
+    hint("The coverage counts what the dump folder holds: each texture the game drew while dumping was on and "
          "no pack replaced it then. Play with dumping on to see more of the game.");
   } else {
-    note("Coverage: turn on dumping and play a while; the textures the game draws are then counted against "
+    hint("Coverage: turn on dumping and play a while; the textures the game draws are then counted against "
          "the packs.");
   }
   if (sStats.collisions > 0) {
     char label[96];
     std::snprintf(label, sizeof(label), "Names given by more than one file: %d###collisions", sStats.collisions);
     if (ImGui::TreeNode(label)) {
-      note("A pack names each texture by its size, format and a hash of its pixels and palette, as Dolphin "
+      hint("A pack names each texture by its size, format and a hash of its pixels and palette, as Dolphin "
            "does. Two files with one name replace the same texture, and only one is used: between mods, the "
            "one higher in the list; the mods before the textures folder; inside one folder, either, so keep "
            "one. Textures with the same pixels share a name, so one file replaces them all; a name with $ for "
@@ -352,7 +349,7 @@ void texturesSection(int inGame) {
         ImGui::BulletText("%s: %s", name, packs);
       }
       if (sStats.collisions > 200) {
-        note("(the first 200)");
+        hint("(the first 200)");
       }
       ImGui::TreePop();
     }

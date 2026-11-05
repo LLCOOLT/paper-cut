@@ -64,7 +64,11 @@ def compact(bullet):
     text = text[:cut].rstrip(" ,;:")
     if len(text) > MAX_ITEM:
         text = text[:MAX_ITEM - 3]
-        text = text[:text.rfind(" ")].rstrip(" ,;:(") + "..."
+        # at the last clause's end when it leaves most of the line ("..., two players on one
+        # screen...", not "..., in the Glitz..."); else at a word
+        clause = max(text.rfind(", "), text.rfind(": "), text.rfind(" ("), text.rfind(" - "))
+        cut = clause if clause >= MAX_ITEM * 0.55 else text.rfind(" ")
+        text = text[:cut].rstrip(" ,;:(-") + "..."
     return text
 
 

@@ -10,6 +10,9 @@
 #include <string.h>
 #include <stdio.h>
 #include "version.h"
+#ifdef TARGET_PC
+#include "port/open_world.h"
+#endif
 
 // US message buffer is twice as large
 #if VERSION >= VERSION_US
@@ -184,6 +187,11 @@ USER_FUNC(evt_msg_print) {
     const char* b = (const char*)evtGetValue(event, args[1]);
     EvtWord c = evtGetValue(event, args[2]); /* window callback (script word) */
     EvtWord d = evtGetValue(event, args[3]);
+#ifdef TARGET_PC
+    if (isFirstCall && portOpenMuteLine(event, (const char*)d)) {
+        return EVT_RETURN_DONE; /* (an open-world joining scene that gave something else: port/open_world.h) */
+    }
+#endif
     return _evt_msg_print(event, isFirstCall, a, b, c, d);
 }
 
@@ -257,6 +265,11 @@ USER_FUNC(evt_msg_print_party) {
     } else {
         id = 0;
     }
+#ifdef TARGET_PC
+    if (isFirstCall && portOpenMuteLine(event, "party")) {
+        return EVT_RETURN_DONE; /* (an open-world joining scene that gave something else: port/open_world.h) */
+    }
+#endif
     strcpy(partyLabel, msg);
     strcat(partyLabel, partyMsgStr[id]);
     return _evt_msg_print(event, isFirstCall, 0, partyLabel, 0, (EvtWord) "party");
@@ -276,6 +289,11 @@ USER_FUNC(evt_msg_print_party_add) {
     } else {
         id = 0;
     }
+#ifdef TARGET_PC
+    if (isFirstCall && portOpenMuteLine(event, "party")) {
+        return EVT_RETURN_DONE; /* (an open-world joining scene that gave something else: port/open_world.h) */
+    }
+#endif
     if (isFirstCall) {
         strcpy(partyLabel, msg);
         strcat(partyLabel, partyMsgStr[id]);

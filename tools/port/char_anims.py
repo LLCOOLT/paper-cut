@@ -6,7 +6,8 @@ In Blender (`blender -b --python tools/port/char_anims.py -- pack --char peach`)
 
   char_anims.py pack --char peach|bowser [--disc DIR] [--save FILE.blend]
       each of the character's models (Peach: c_peach and her back-facing
-      c_peach_r) with the hammer added, as an editable object tree; every
+      c_peach_r; Bowser: c_koopa and his back view made over it,
+      bowser_back.py) with the hammer added, as an editable object tree; every
       motion of peach_motions.py / bowser_motions.py built on it as an
       Action, read back through the writer into the committed pack
       (port/assets/luigi/<model>_anims.bin)
@@ -66,7 +67,7 @@ def main(argv):
     p = sub.add_parser("pack")
     p.add_argument("--char", required=True, choices=("peach", "bowser"))
     p.add_argument("--disc", default=os.path.join(DATA, "disc"))
-    p.add_argument("--only", help="only these models (luigi_pack keys: peach, peach_r, bowser)")
+    p.add_argument("--only", help="only these models (luigi_pack keys: peach, peach_r, bowser, bowser_r)")
     p.add_argument("--save")
     a = ap.parse_args(argv)
     return {"pack": cmd_pack}[a.cmd](a)
