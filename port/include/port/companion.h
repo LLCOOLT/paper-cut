@@ -17,6 +17,8 @@
  * would on a button. So it stays the same for online co-op, where both
  * games run from the same input. Plain C: no game or SDK types. */
 
+#include "port/area_maps.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -89,6 +91,8 @@ typedef struct PortCompanionSnapshot {
     float boxMin[2], boxMax[2]; /* the room's extent (x, z) */
     int dotCount;
     PortCompanionDot dots[PORT_COMPANION_DOTS];
+    /* the area's map (port/include/port/area_maps.h; roomCount 0: none) */
+    PortAreaView areaMap;
     /* the battle */
     int turn;
     int enemyCount;
@@ -123,6 +127,8 @@ enum {
     PORT_COMPANION_TAP_ITEM = 1,    /* arg: the item's place in the bag; target 0 Mario, 1 the partner out */
     PORT_COMPANION_TAP_PARTNER = 2, /* arg: the partner to switch to (1-7) */
     PORT_COMPANION_TAP_ITEM_ON = 3, /* arg: the item's place in the bag; target: 0 Mario, 1-7 that partner */
+    PORT_COMPANION_TAP_BADGE = 4,   /* arg: a badge's place in the badge list (0-199), worn or taken off */
+    PORT_COMPANION_TAP_SORT = 5,    /* arg: pouchSortItem's mode (the second screen's Start menu sorted) */
 };
 void portCompanionTap(int kind, int arg, int target);
 
@@ -136,6 +142,9 @@ void portCompanionRoute(void);
 /* win_main.c, when the Start menu could open: the item tapped this frame
  * used, as the Start menu would; nonzero when one was. */
 int portCompanionFieldItem(void);
+/* win_main.c, there too: the badge tapped this frame worn or taken off, as
+ * the badge list does, or the sort tapped made; nonzero when one was. */
+int portCompanionFieldBadge(void);
 /* gameplus_pc.c portQuickSwapPoll: the partner tapped this frame (0: none). */
 int portCompanionPartner(void);
 

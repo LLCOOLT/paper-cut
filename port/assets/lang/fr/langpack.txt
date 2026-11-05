@@ -21,7 +21,7 @@ Le modèle n'a pas pu être écrit.
 Written: %s, with %d texts to translate.
 Écrit : %s, avec %d textes à traduire.
 
-Letters the menus' fonts didn't have yet show after a restart.
+New letters for the menus' fonts show after a restart.
 Les lettres que les polices des menus n'avaient pas encore s'affichent après un redémarrage.
 
 No language packs yet.

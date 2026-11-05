@@ -50,8 +50,15 @@ static int where(const float* pos) {
     return PORT_CAPTION_ON_SCREEN;
 }
 
+/* the DualSense's speaker (port/settings/features/dualsense_speaker.cpp) hears
+ * every cue too */
+void (*gPortSfxHeard)(const char* name);
+
 void portCaptionSfx(const char* name, const float* pos) {
     int offScreenOnly = 0, at, entry;
+    if (gPortSfxHeard != NULL && name != NULL) {
+        gPortSfxHeard(name);
+    }
     if (gPortCompanionMenu || name == NULL) {
         return;
     }

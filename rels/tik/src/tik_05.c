@@ -3,6 +3,7 @@
 #include "eff/eff_starstone.h"
 #ifdef TARGET_PC
 #include "port/gameplus.h"
+#include "port/open_world.h"
 #endif
 #include "eff/n64/eff_crystal_n64.h"
 #include "eff/n64/eff_pokopi_pcharge_n64.h"
@@ -179,6 +180,16 @@ static USER_FUNC(disp_lighteffect_func);
 static USER_FUNC(disp_treasure_map_func);
 static USER_FUNC(evtflash);
 static USER_FUNC(starstone_set_ry);
+#ifdef TARGET_PC
+/* Paper Cut's open world: the door's star marks light only for the stars Mario has */
+static USER_FUNC(hosi_playanim);
+static USER_FUNC(hosi_checkanim);
+#define HOSI_PLAYANIM hosi_playanim
+#define HOSI_CHECKANIM hosi_checkanim
+#else
+#define HOSI_PLAYANIM evt_map_playanim
+#define HOSI_CHECKANIM evt_map_checkanim
+#endif
 static void tiz_broken_draw(CameraId cameraId, void* param);
 static void alpha_tev(MapTevCallbackInfo* info);
 
@@ -351,6 +362,39 @@ static NpcSetupInfo npcEnt[] = {
     {0},
 };
 
+#ifdef TARGET_PC
+/* Paper Cut's open world: the door opens with the goal's Crystal Stars, from
+ * any chapters, so in its scene (mahojin_event7) the ring's stars "stone01"
+ * to "stone07" and the door's marks "anm_hosi_1" to "_7" show only the stars
+ * Mario has (port/open_world.h, portOpenStarShown; always all of them in any
+ * other file) */
+static int starHidden(const char* name) {
+    return name != NULL && strncmp(name, "stone0", 6) == 0 && name[6] >= '1' && name[6] <= '7' && name[7] == '\0' &&
+           !portOpenStarShown(name[6] - '0');
+}
+
+static int hosiHidden(const char* name) {
+    return name != NULL && strncmp(name, "anm_hosi_", 9) == 0 && name[9] >= '1' && name[9] <= '7' &&
+           name[10] == '\0' && !portOpenStarShown(name[9] - '0');
+}
+
+static USER_FUNC(hosi_playanim) {
+    if (hosiHidden((const char*)evtGetValue(event, event->args[0]))) {
+        return EVT_RETURN_DONE;
+    }
+    return evt_map_playanim(event, isFirstCall);
+}
+
+static USER_FUNC(hosi_checkanim) {
+    if (hosiHidden((const char*)evtGetValue(event, event->args[0]))) {
+        evtSetValue(event, event->args[1], 0);
+        evtSetValue(event, event->args[2], 0); /* (no wait for a mark that stays dark) */
+        return EVT_RETURN_DONE;
+    }
+    return evt_map_checkanim(event, isFirstCall);
+}
+#endif
+
 /** Script helper. Moves the named Crystal Star effect to the world position (args[1], args[2], args[3]). */
 static USER_FUNC(starstone_set_position) {
     EvtWord* args = event->args;
@@ -374,6 +418,11 @@ static USER_FUNC(starstone_get_position) {
     f32 y = ((EffStarStoneWork*)eff->userdata)->position.y;
     f32 z = ((EffStarStoneWork*)eff->userdata)->position.z;
 
+#ifdef TARGET_PC
+    if (starHidden((const char*)evtGetValue(event, args[0]))) {
+        y = -1000.0f; /* (the star dust where a star not had would be: out of sight) */
+    }
+#endif
     evtSetFloat(event, args[1], x);
     evtSetFloat(event, args[2], y);
     evtSetFloat(event, args[3], z);
@@ -397,6 +446,11 @@ static USER_FUNC(starstone_set_alpha) {
     const char* name = (const char*)evtGetValue(event, args[0]);
     u8 alpha = evtGetValue(event, args[1]);
 
+#ifdef TARGET_PC
+    if (starHidden(name)) {
+        alpha = 0;
+    }
+#endif
     ((EffStarStoneWork*)effNameToPtr(name)->userdata)->a = alpha;
     return EVT_RETURN_DONE;
 }
@@ -2086,6 +2140,10 @@ EVT_BEGIN(evt_starstone_up)
     CALL(evt_eff, STRING("itemget"), STRING("itemget"), 9, LW(4), LW(5), LW(6), 0, 0, 0, 0, 0, 0, 0, 0)
     SET_VALUE(LW(0), GW(15))
     SUBTRACT(LW(0), 1)
+#ifdef TARGET_PC
+    // Paper Cut's open world: the star raised is the one of the chapter done (port/open_world.h)
+    CALL(portEvtOpenStretchStar, LW(0))
+#endif
     ADD(LW(6), 5)
     CALL(evt_eff, STRING("stone"), STRING("starstone"), LW(0), LW(4), LW(5), LW(6), FLOAT(1.0f), 0, 0, 0, 0, 0, 0, 0)
     CALL(eff_starstone_sound_off, STRING("stone"))
@@ -2108,7 +2166,14 @@ EVT_BEGIN(evt_starstone_set)
     WAIT_MS(7000)
     SET_VALUE(LW(0), GW(15))
     SUBTRACT(LW(0), 1)
+#ifdef TARGET_PC
+    // Paper Cut's open world: the star is the one of the chapter done (its place in the ring stays the count's)
+    SET_VALUE(LW(1), LW(0))
+    CALL(portEvtOpenStretchStar, LW(1))
+    CALL(evt_eff, STRING("stone"), STRING("starstone"), LW(1), 0, -1000, 0, FLOAT(1.0f), 0, 0, 0, 0, 0, 0, 0)
+#else
     CALL(evt_eff, STRING("stone"), STRING("starstone"), LW(0), 0, -1000, 0, FLOAT(1.0f), 0, 0, 0, 0, 0, 0, 0)
+#endif
     CALL(starstone_setting, STRING("stone"), LW(0))
     CALL(eff_starstone_sound_off, STRING("stone"))
     CALL(evt_mario_get_pos, 0, LW(0), LW(1), LW(2))
@@ -2534,13 +2599,13 @@ EVT_END()
  */
 EVT_BEGIN(lastdungeon_anim_init)
     CALL(evt_map_playanim, STRING("anm_hibi"), 2, 0)
-    CALL(evt_map_playanim, STRING("anm_hosi_1"), 2, 0)
-    CALL(evt_map_playanim, STRING("anm_hosi_2"), 2, 0)
-    CALL(evt_map_playanim, STRING("anm_hosi_3"), 2, 0)
-    CALL(evt_map_playanim, STRING("anm_hosi_4"), 2, 0)
-    CALL(evt_map_playanim, STRING("anm_hosi_5"), 2, 0)
-    CALL(evt_map_playanim, STRING("anm_hosi_6"), 2, 0)
-    CALL(evt_map_playanim, STRING("anm_hosi_7"), 2, 0)
+    CALL(HOSI_PLAYANIM, STRING("anm_hosi_1"), 2, 0)
+    CALL(HOSI_PLAYANIM, STRING("anm_hosi_2"), 2, 0)
+    CALL(HOSI_PLAYANIM, STRING("anm_hosi_3"), 2, 0)
+    CALL(HOSI_PLAYANIM, STRING("anm_hosi_4"), 2, 0)
+    CALL(HOSI_PLAYANIM, STRING("anm_hosi_5"), 2, 0)
+    CALL(HOSI_PLAYANIM, STRING("anm_hosi_6"), 2, 0)
+    CALL(HOSI_PLAYANIM, STRING("anm_hosi_7"), 2, 0)
     CALL(evt_map_playanim, STRING("anm_tobira"), 1, 0)
     CALL(evt_map_playanim, STRING("anm_hibi"), 2, 0)
     RETURN
@@ -2943,39 +3008,39 @@ EVT_BEGIN(mahojin_event7)
     CALL(evt_cam3d_evt_set, -55, 62, -375, -55, 56, -575, 500, 11)
     WAIT_MS(500)
     CALL(evt_snd_sfxon, STRING("SFX_EVT_MAP_KAKAGERU3_2"), 0)
-    CALL(evt_map_playanim, STRING("anm_hosi_1"), 0, 0)
-    CALL(evt_map_checkanim, STRING("anm_hosi_1"), LW(0), LW(1))
+    CALL(HOSI_PLAYANIM, STRING("anm_hosi_1"), 0, 0)
+    CALL(HOSI_CHECKANIM, STRING("anm_hosi_1"), LW(0), LW(1))
     WAIT_MS(LW(1))
     WAIT_MS(1000)
     CALL(evt_cam3d_evt_set, -55, 115, -375, -55, 118, -575, 250, 11)
     WAIT_MS(250)
-    CALL(evt_map_playanim, STRING("anm_hosi_2"), 0, 0)
-    CALL(evt_map_checkanim, STRING("anm_hosi_2"), LW(0), LW(1))
+    CALL(HOSI_PLAYANIM, STRING("anm_hosi_2"), 0, 0)
+    CALL(HOSI_CHECKANIM, STRING("anm_hosi_2"), LW(0), LW(1))
     WAIT_MS(LW(1))
     CALL(evt_cam3d_evt_set, -43, 166, -375, -43, 169, -575, 250, 11)
     WAIT_MS(250)
-    CALL(evt_map_playanim, STRING("anm_hosi_3"), 0, 0)
-    CALL(evt_map_checkanim, STRING("anm_hosi_3"), LW(0), LW(1))
+    CALL(HOSI_PLAYANIM, STRING("anm_hosi_3"), 0, 0)
+    CALL(HOSI_CHECKANIM, STRING("anm_hosi_3"), LW(0), LW(1))
     WAIT_MS(LW(1))
     CALL(evt_cam3d_evt_set, 0, 191, -375, 0, 194, -575, 250, 11)
     WAIT_MS(250)
-    CALL(evt_map_playanim, STRING("anm_hosi_4"), 0, 0)
-    CALL(evt_map_checkanim, STRING("anm_hosi_4"), LW(0), LW(1))
+    CALL(HOSI_PLAYANIM, STRING("anm_hosi_4"), 0, 0)
+    CALL(HOSI_CHECKANIM, STRING("anm_hosi_4"), LW(0), LW(1))
     WAIT_MS(LW(1))
     CALL(evt_cam3d_evt_set, 43, 166, -375, 43, 169, -575, 250, 11)
     WAIT_MS(250)
-    CALL(evt_map_playanim, STRING("anm_hosi_5"), 0, 0)
-    CALL(evt_map_checkanim, STRING("anm_hosi_5"), LW(0), LW(1))
+    CALL(HOSI_PLAYANIM, STRING("anm_hosi_5"), 0, 0)
+    CALL(HOSI_CHECKANIM, STRING("anm_hosi_5"), LW(0), LW(1))
     WAIT_MS(LW(1))
     CALL(evt_cam3d_evt_set, 55, 115, -375, 55, 118, -575, 250, 11)
     WAIT_MS(250)
-    CALL(evt_map_playanim, STRING("anm_hosi_6"), 0, 0)
-    CALL(evt_map_checkanim, STRING("anm_hosi_6"), LW(0), LW(1))
+    CALL(HOSI_PLAYANIM, STRING("anm_hosi_6"), 0, 0)
+    CALL(HOSI_CHECKANIM, STRING("anm_hosi_6"), LW(0), LW(1))
     WAIT_MS(LW(1))
     CALL(evt_cam3d_evt_set, 55, 62, -375, 55, 65, -575, 250, 11)
     WAIT_MS(250)
-    CALL(evt_map_playanim, STRING("anm_hosi_7"), 0, 0)
-    CALL(evt_map_checkanim, STRING("anm_hosi_7"), LW(0), LW(1))
+    CALL(HOSI_PLAYANIM, STRING("anm_hosi_7"), 0, 0)
+    CALL(HOSI_CHECKANIM, STRING("anm_hosi_7"), LW(0), LW(1))
     WAIT_MS(LW(1))
     // The Door glows and pulses, then cracks spread over it as Mario turns to watch.
     WAIT_MS(1000)

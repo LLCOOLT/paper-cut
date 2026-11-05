@@ -9,6 +9,7 @@
 #include "rando_gen.h"
 #include "ttyd_ap_data.h"
 #include "ttyd_rando_logic.h"
+#include "pc_world.h"
 
 #include <algorithm>
 #include <cstdio>
@@ -183,6 +184,16 @@ struct Sweep {
 // of the TTYD AP mod's (its low-memory tables, the DOL's shop and Dazzle
 // tables), and nothing the story itself hands over.
 bool plainScriptLocation(const TtydApLocation& loc, const TtydRandoLocation& r) {
+  // Places whose word in the apworld's data isn't an item the game's own
+  // script gives there (the TTYD AP mod reworks them): Whacka's bumps (words
+  // in the middle of muj_00's koburon_dead) and the Excess Express madam's 30
+  // coins (evt_sub_get_coin's count). Checked against the disc's RELs: every
+  // other script word is an item, or a Shine Sprite or coin block's word the
+  // port reads as one (evt_mobj.c), or a black chest's, which the open world
+  // asks for by its place (open_world.cpp).
+  static const int64_t kNotItemWords[] = {78780454, 78780455, 78780456, 78780457, 78780458,
+                                          78780459, 78780460, 78780806, 78780515};
+  if (std::find(std::begin(kNotItemWords), std::end(kNotItemWords), loc.id) != std::end(kNotItemWords)) return false;
   if (loc.count == 0 || (loc.flags & (TTYD_AP_SHOP | TTYD_AP_TATTLE))) return false;
   if (r.tags & (RANDO_TAG_SHOP | RANDO_TAG_TROUBLE | RANDO_TAG_COOKING | RANDO_TAG_DAZZLE | RANDO_TAG_PIT_FLOOR |
                 RANDO_TAG_STAR | RANDO_TAG_PARTNER)) {
@@ -199,6 +210,7 @@ bool plainScriptLocation(const TtydApLocation& loc, const TtydRandoLocation& r) 
 bool vanillaSafe(int64_t item) {
   const TtydApItem* it = apItem(item);
   if (it == nullptr) return false;
+  if (std::string(itemName(item)) == "Briefcase") return false; // (the story's own: see gameItemOf)
   const int rom = it->romId;
   if (rom == kStarPiece || rom == kShineSprite) return true;
   if (rom >= 0xF0 && rom < 0x200) return true;           // badges: never asked for
@@ -269,7 +281,419 @@ unsigned poolOf(int64_t item) {
   return it->cls == 0 ? kItems : kKeyItems; // (the mod's own "10 Coins" is filler)
 }
 
+// The apworld names the TTYD AP mod's own item for the Briefcase (the mod
+// reworks Zip Toad's scene); in the game's own story it is the game's key
+// item, which rsh_02's evt_toron_catch2 asks for until Mario hands it over.
+int gameItemOf(int64_t item) {
+  if (std::string(itemName(item)) == "Briefcase") return 0x51; // ITEM_BRIEFCASE
+  const TtydApItem* it = apItem(item);
+  return it != nullptr ? it->romId : 0;
+}
+
+unsigned paperCutPoolOf(int64_t item) {
+  return std::string(itemName(item)) == "Briefcase" ? unsigned(kKeyItems) : poolOf(item);
+}
+
+int partnerOf(int64_t item) {
+  static const std::pair<const char*, int> kIds[] = {{"Goombella", 1}, {"Koops", 2},   {"Bobbery", 3}, {"Yoshi", 4},
+                                                     {"Flurrie", 5},   {"Vivian", 6}, {"Ms. Mowz", 7}};
+  const char* name = itemName(item);
+  for (const auto& [n, id] : kIds) {
+    if (std::string(name) == n) return id;
+  }
+  return 0;
+}
+
+int64_t itemByName(const char* name) {
+  for (const TtydRandoItem& i : kTtydRandoItemNames) {
+    if (std::string(i.name) == name) return i.id;
+  }
+  return 0;
+}
+
+namespace {
+
+// --- Paper Cut's own open world (pc_world.h) ---
+struct PcLogic {
+  const PcWorld& w = pcWorld();
+  std::vector<char> regionOn = std::vector<char>(RANDO_REGION_COUNT, 0);
+  std::vector<char> hub = std::vector<char>(RANDO_REGION_COUNT, 0);
+  struct Edge {
+    int from, to;
+    const PcRule* rule;
+  };
+  std::vector<Edge> edges;
+  std::vector<const PcRule*> extra = std::vector<const PcRule*>(kLocationCount, nullptr);
+  std::vector<char> hubScene = std::vector<char>(kLocationCount, 0); // a Rogueport scene that may hold a key item
+  std::map<std::string, int> locationIndex; // by name: kTtydRandoLocations' index
+  std::map<std::string, int> itemIndex;     // by name: kTtydRandoItems' index
+  std::map<std::string, int64_t> otherItem; // by name: items no apworld rule names (the Briefcase), their ids
+  std::vector<int> goal;                    // the goal places' indexes
+  std::string error;
+
+  static int region(const char* name) {
+    for (int i = 0; i < RANDO_REGION_COUNT; i++) {
+      if (std::string(kTtydRandoRegions[i]) == name) return i;
+    }
+    return -1;
+  }
+
+  bool check(const PcRule& r) {
+    if (r.op == PcRule::kHas && !itemIndex.count(r.name)) {
+      if (const int64_t id = itemByName(r.name.c_str())) otherItem[r.name] = id;
+      else error = "pc_world.h: no item \"" + r.name + "\"";
+    } else if (r.op == PcRule::kReach && !locationIndex.count(r.name)) {
+      error = "pc_world.h: no place \"" + r.name + "\"";
+    } else if (r.op == PcRule::kRegion && region(r.name.c_str()) < 0) {
+      error = "pc_world.h: no region \"" + r.name + "\"";
+    }
+    for (const PcRule& k : r.kids) check(k);
+    return error.empty();
+  }
+
+  PcLogic() {
+    for (int i = 0; i < kItemCount; i++) itemIndex[kTtydRandoItems[i].name] = i;
+    for (int i = 0; i < kLocationCount; i++) locationIndex[locationName(i)] = i;
+    for (const char* n : w.regions) {
+      if (region(n) < 0) error = std::string("pc_world.h: no region \"") + n + "\"";
+      else regionOn[region(n)] = 1;
+    }
+    for (const char* n : w.hubRegions) {
+      if (region(n) >= 0) hub[region(n)] = 1;
+    }
+    for (const PcEdge& e : w.edges) {
+      const int a = region(e.from), b = region(e.to);
+      if (a < 0 || b < 0) {
+        error = std::string("pc_world.h: an edge's region ") + e.from + " -> " + e.to;
+        continue;
+      }
+      check(e.rule);
+      edges.push_back({a, b, &e.rule});
+    }
+    auto placeRules = [&](const std::vector<PcPlaceRule>& list, bool scene) {
+      for (const PcPlaceRule& p : list) {
+        const auto it = locationIndex.find(p.location);
+        if (it == locationIndex.end()) {
+          error = std::string("pc_world.h: no place \"") + p.location + "\"";
+          continue;
+        }
+        if (extra[it->second] != nullptr) error = std::string("pc_world.h: two rules for \"") + p.location + "\"";
+        check(p.rule);
+        extra[it->second] = &p.rule;
+        hubScene[it->second] = scene;
+      }
+    };
+    placeRules(w.places, false);
+    placeRules(w.hubScenes, true);
+    for (int64_t id : w.goal) {
+      int at = -1;
+      for (int i = 0; i < kLocationCount; i++) {
+        if (kTtydRandoLocations[i].id == id) at = i;
+      }
+      if (at < 0) error = "pc_world.h: no goal place " + std::to_string(id);
+      else goal.push_back(at);
+    }
+    for (const char* n : w.extraItems) {
+      if (itemByName(n) == 0) error = std::string("pc_world.h: no item \"") + n + "\" to place";
+    }
+  }
+};
+
+const PcLogic& pcLogic() {
+  static const PcLogic l;
+  return l;
+}
+
+struct PcSweep : Sweep {
+  const PcLogic& L = pcLogic();
+  int need = 0;                  // the goal's Crystal Stars (0: all of them)
+  std::map<int64_t, int> other;  // items in hand that no apworld rule names
+
+  void collect(int64_t item) {
+    Sweep::collect(item);
+    for (const auto& [name, id] : L.otherItem) other[id] += id == item;
+  }
+
+  int goalStars() const { return need > 0 && need < int(L.goal.size()) ? need : int(L.goal.size()); }
+
+  bool evalPc(const PcRule& r) const {
+    switch (r.op) {
+    case PcRule::kTrue: return true;
+    case PcRule::kHas: {
+      const auto it = L.itemIndex.find(r.name);
+      if (it != L.itemIndex.end()) return have[it->second] >= r.count;
+      const auto o = other.find(L.otherItem.at(r.name));
+      return o != other.end() && o->second >= r.count;
+    }
+    case PcRule::kGoal: return have[kStarsItem] >= goalStars();
+    case PcRule::kReach: return reached[L.locationIndex.at(r.name)] != 0;
+    case PcRule::kRegion: return region[PcLogic::region(r.name.c_str())] != 0;
+    case PcRule::kAll:
+      for (const PcRule& k : r.kids) {
+        if (!evalPc(k)) return false;
+      }
+      return true;
+    case PcRule::kAny:
+      for (const PcRule& k : r.kids) {
+        if (evalPc(k)) return true;
+      }
+      return false;
+    }
+    return false;
+  }
+
+  void pcRegions() {
+    region[RANDO_REGION_MENU] = 1;
+    for (bool changed = true; changed;) {
+      changed = false;
+      for (const PcLogic::Edge& e : L.edges) {
+        if (region[e.from] && !region[e.to] && evalPc(*e.rule)) {
+          region[e.to] = 1;
+          changed = true;
+        }
+      }
+    }
+  }
+
+  bool placeOpen(int i) const {
+    const TtydRandoLocation& l = kTtydRandoLocations[i];
+    return region[l.region] && eval(l.rule) && (L.extra[i] == nullptr || evalPc(*L.extra[i]));
+  }
+
+  // As Sweep::run, by this world's ways
+  std::vector<int> run(const std::vector<int64_t>& item, const std::vector<char>& inLogic, bool sphere = false) {
+    for (bool changed = true; changed;) {
+      changed = false;
+      pcRegions();
+      std::vector<int> round;
+      for (int i = 0; i < kLocationCount; i++) {
+        if (!inLogic[i] || reached[i] || !placeOpen(i)) continue;
+        reached[i] = 1;
+        round.push_back(i);
+        changed = true;
+        if (!sphere && item[i] != 0) collect(item[i]);
+      }
+      if (sphere) {
+        for (int i : round) {
+          if (item[i] != 0) collect(item[i]);
+        }
+        pcRegions();
+        return round;
+      }
+    }
+    return {};
+  }
+
+  // the goal's Crystal Stars reached
+  bool goal() const {
+    int n = 0;
+    for (int i : L.goal) n += reached[i] != 0;
+    return n >= goalStars();
+  }
+};
+
+// A hub place's item is the room's own (an init script's item, block or
+// chest), not a scene's that waits for a later chapter: there a key item is
+// sure to be found while the hub's story stands still.
+bool roomOwnItem(const TtydApLocation& loc) {
+  for (int i = loc.first; i < loc.first + loc.count; i++) {
+    const std::string name = kTtydApTargets[i].name;
+    const size_t colon = name.rfind("::");
+    const std::string sym = colon == std::string::npos ? name : name.substr(colon + 2);
+    const bool init = sym.size() > 9 && sym.compare(sym.size() - 9, 9, "_init_evt") == 0;
+    if (!init && sym.rfind("mobj_box", 0) != 0) return false;
+  }
+  return loc.count > 0;
+}
+
+Result generatePaperCut(const Options& o) {
+  Result r;
+  r.hash = seedHash(o.seed);
+  const PcLogic& L = pcLogic();
+  if (!L.error.empty()) {
+    r.error = L.error;
+    return r;
+  }
+  const unsigned pools = o.pools | kKeyItems; // key items and partners always move here
+  if ((pools & (kBadges | kItems | kStarPieces)) == 0) {
+    r.error = "the open world needs badges, items or Star Pieces shuffled too";
+    return r;
+  }
+  const int stars = int(L.goal.size());
+  const int need = o.goalStars > 0 && o.goalStars < stars ? o.goalStars : stars;
+
+  // In logic: this stage's places but troubles (the game gives them, nothing
+  // counts on them). Written: those whose item sits in a REL's script, and
+  // the partners' own (their scene gives what is placed there). Crystal
+  // Stars, shops, cooking, Dazzle and the Pit keep theirs.
+  std::vector<char> inLogic(kLocationCount, 0), part(kLocationCount, 0), progOk(kLocationCount, 0);
+  std::vector<int> ap(kLocationCount, -1);
+  std::vector<int64_t> vanilla(kLocationCount);
+  for (int i = 0; i < kLocationCount; i++) {
+    const TtydRandoLocation& l = kTtydRandoLocations[i];
+    vanilla[i] = l.vanilla;
+    ap[i] = apLocation(l.id);
+    if (ap[i] < 0) {
+      r.error = "location " + std::to_string(l.id) + " is not in ttyd_ap_data.h (regenerate both from one apworld)";
+      return r;
+    }
+    if (!L.regionOn[l.region] || (l.tags & RANDO_TAG_TROUBLE)) continue;
+    inLogic[i] = 1;
+    const TtydApLocation& loc = kTtydApLocations[ap[i]];
+    const bool partner = (l.tags & RANDO_TAG_PARTNER) != 0 || partnerOf(l.vanilla) != 0;
+    const bool script = plainScriptLocation(loc, l);
+    if (!(script || partner) || (l.tags & RANDO_TAG_STAR)) continue;
+    if (std::find(L.w.fixed.begin(), L.w.fixed.end(), l.id) != L.w.fixed.end()) continue;
+    if ((paperCutPoolOf(l.vanilla) & pools) == 0) continue;
+    part[i] = 1;
+    progOk[i] = !L.hub[l.region] || roomOwnItem(loc) || L.hubScene[i];
+  }
+
+  // What can't be reached even with everything in hand stays as it is (it
+  // belongs to a later stage: Yoshi, Bobbery, the Ultra Boots...).
+  std::vector<int64_t> progression, rest;
+  {
+    std::vector<int64_t> none = vanilla;
+    PcSweep s;
+    s.need = need;
+    for (int i = 0; i < kLocationCount; i++) {
+      if (part[i]) {
+        none[i] = 0;
+        s.collect(vanilla[i]);
+      }
+    }
+    for (const char* n : L.w.extraItems) s.collect(itemByName(n));
+    s.run(none, inLogic);
+    if (!s.goal()) {
+      r.error = "the logic can't reach the goal's Crystal Stars even with every key item in hand";
+      return r;
+    }
+    for (int i = 0; i < kLocationCount; i++) {
+      if (part[i] && !s.reached[i]) part[i] = 0;
+    }
+  }
+  std::vector<int> slots;
+  for (int i = 0; i < kLocationCount; i++) {
+    if (!part[i]) continue;
+    slots.push_back(i);
+    r.shuffled++;
+    (paperCutPoolOf(vanilla[i]) == kKeyItems ? progression : rest).push_back(vanilla[i]);
+  }
+  // A key item whose own place this stage can't reach (the Old Letter) is
+  // placed anyway, in the place of one other item.
+  for (const char* name : L.w.extraItems) {
+    const int64_t id = itemByName(name);
+    if (std::find(progression.begin(), progression.end(), id) != progression.end()) continue;
+    if (rest.empty()) {
+      r.error = std::string("no room for ") + name;
+      return r;
+    }
+    rest.pop_back();
+    progression.push_back(id);
+  }
+
+  Rng rng(r.hash ^ (uint64_t(pools) << 56) ^ (uint64_t(kPaperCut) << 62) ^ (uint64_t(L.w.stage) << 48) ^
+          (uint64_t(need) << 40));
+  std::vector<int64_t> at;
+  for (r.attempts = 1; r.attempts <= kMaxAttempts; r.attempts++) {
+    at = vanilla;
+    for (int i : slots) at[i] = 0;
+    std::vector<int64_t> prog = progression;
+    rng.shuffle(prog);
+    bool failed = false;
+    while (!prog.empty()) {
+      const int64_t item = prog.back();
+      prog.pop_back();
+      PcSweep s;
+      s.need = need;
+      for (int64_t p : prog) s.collect(p);
+      s.run(at, inLogic);
+      std::vector<int> open;
+      for (int i : slots) {
+        if (at[i] == 0 && progOk[i] && s.reached[i]) open.push_back(i);
+      }
+      if (open.empty()) {
+        failed = true;
+        break;
+      }
+      at[open[rng.below(uint32_t(open.size()))]] = item;
+    }
+    if (failed) continue;
+    std::vector<int> empty;
+    for (int i : slots) {
+      if (at[i] == 0) empty.push_back(i);
+    }
+    std::vector<int64_t> items = rest;
+    rng.shuffle(items);
+    for (size_t k = 0; k < empty.size(); k++) at[empty[k]] = items[k];
+    // the goal, and every chapter's way in (what lies past the goal too:
+    // assumed fill leaves every key item reachable; this checks it)
+    PcSweep s;
+    s.need = need;
+    s.run(at, inLogic);
+    bool ways = true;
+    for (const char* way : L.w.ways) ways = ways && s.region[PcLogic::region(way)];
+    if (s.goal() && ways) {
+      r.chaptersReached = int(L.w.ways.size());
+      break;
+    }
+  }
+  if (r.attempts > kMaxAttempts) {
+    r.error = "no placement found in " + std::to_string(kMaxAttempts) + " tries";
+    return r;
+  }
+  for (int i : slots) {
+    r.placements.push_back({ap[i], at[i], true});
+    r.moved += at[i] != vanilla[i];
+  }
+
+  std::string& t = r.spoiler;
+  t += "Paper Cut built-in randomizer\n";
+  t += "Seed: " + o.seed + " (" + hex(r.hash) + ")\n";
+  t += "Logic: Paper Cut's open world, stage " + std::to_string(L.w.stage) + " (Rogueport, chapters";
+  for (size_t c = 0; c < L.w.chapters.size(); c++) t += (c ? ", " : " ") + std::to_string(L.w.chapters[c]);
+  t += ")\nGoal: " + std::to_string(need) + " of the " + std::to_string(stars) + " Crystal Stars\n";
+  t += "Shuffled: " + poolsText(pools) + "\n";
+  t += std::to_string(r.shuffled) + " locations, " + std::to_string(r.moved) + " items moved\n";
+  if (!L.w.extraItems.empty()) {
+    t += "Placed without a place of their own here:";
+    for (const char* n : L.w.extraItems) t += std::string(" ") + n;
+    t += "\n";
+  }
+  t += "\nPlaythrough (what the logic expects, sphere by sphere; key items and partners):\n";
+  {
+    PcSweep s;
+    s.need = need;
+    for (int sphere = 1;; sphere++) {
+      const std::vector<int> round = s.run(at, inLogic, true);
+      if (round.empty()) break;
+      std::string line;
+      for (int i : round) {
+        if (part[i] && paperCutPoolOf(at[i]) == kKeyItems) line += "  " + locationName(i) + ": " + itemName(at[i]) + "\n";
+      }
+      if (!line.empty()) t += "Sphere " + std::to_string(sphere) + "\n" + line;
+    }
+  }
+  t += "\nLocations:\n";
+  for (int region = 0; region < RANDO_REGION_COUNT; region++) {
+    bool header = false;
+    for (int i : slots) {
+      if (kTtydRandoLocations[i].region != region) continue;
+      if (!header) {
+        t += std::string("[") + kTtydRandoRegions[region] + "]\n";
+        header = true;
+      }
+      t += "  " + locationName(i) + ": " + itemName(at[i]) + (at[i] == vanilla[i] ? " (unchanged)" : "") + "\n";
+    }
+  }
+  r.ok = true;
+  return r;
+}
+
+} // namespace
+
 Result generate(const Options& o) {
+  if (o.logic == kPaperCut) return generatePaperCut(o);
   Result r;
   r.hash = seedHash(o.seed);
   const bool open = o.logic == kOpenWorld;

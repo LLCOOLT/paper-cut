@@ -3,8 +3,8 @@
 Rewind
 Zurückspulen
 
-Hold the Rewind key (Backspace) or button and the game steps back through its last seconds; let go to play on from there. Uses some memory and a little time every few frames. Not in online co-op.
-Halte die Zurückspulen-Taste (Rücktaste) oder den Knopf gedrückt, und das Spiel geht durch seine letzten Sekunden zurück; lass los, um von dort weiterzuspielen. Braucht etwas Speicher und alle paar Bilder ein wenig Zeit. Nicht im Online-Koop.
+Hold {REWIND} and the game steps back through its last seconds; let go to play on from there. Uses some memory and a little time every few frames. Not in online co-op.
+Halte {REWIND} gedrückt, und das Spiel geht durch seine letzten Sekunden zurück; lass los, um von dort weiterzuspielen. Braucht etwas Speicher und alle paar Bilder ein wenig Zeit. Nicht im Online-Koop.
 
 Rewind length
 Länge des Zurückspulens
@@ -28,7 +28,7 @@ Faster battles
 Schnellere Kämpfe
 
 Battles play faster, but never while you act: action commands, Stylish moves, the menus and Star Specials stay at normal speed, and guards and Superguards keep their timing. Not in online co-op.
-Kämpfe laufen schneller, aber nie, während du handelst: Action-Kommandos, Stylish-Moves, die Menüs und Spezialattacken bleiben beim normalen Tempo, und Abwehr und Superabwehr behalten ihr Timing. Nicht im Online-Koop.
+Kämpfe laufen schneller, aber nie, während du handelst: Action-Kommandos, Tricks, die Menüs und Sternen-Attacken bleiben beim normalen Tempo, und Abwehr und Konter behalten ihr Timing. Nicht im Online-Koop.
 
 How far back Rewind can go.
 Wie weit Zurückspulen zurückgehen kann.

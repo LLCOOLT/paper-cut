@@ -1165,3 +1165,9 @@ EVT_END()
 #ifdef PORT_MODS
 #include "port/hooks/src_battle_sac_sac_zubastar.inc"
 #endif
+
+#ifdef TARGET_PC
+int portSupernovaWants(void) {
+    return _battleWorkPointer != NULL && GetZubaStarPtr()->phase == 11;
+}
+#endif

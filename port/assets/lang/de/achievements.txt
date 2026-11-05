@@ -1,0 +1,340 @@
+# Achievement names and notes (port/src/common/achievements_pc.c)
+
+Achievement
+Erfolg
+
+A Paper Adventure
+Ein Papierabenteuer
+
+Finish the prologue.
+Schließe den Prolog ab.
+
+Castle Crasher
+Burgstürmer
+
+Finish Chapter 1: Castle and Dragon.
+Schließe Kapitel 1 ab.
+
+Tree Hugger
+Baumfreund
+
+Finish Chapter 2: The Great Boggly Tree.
+Schließe Kapitel 2 ab.
+
+Champ
+Champion
+
+Finish Chapter 3: Of Glitz and Glory.
+Schließe Kapitel 3 ab.
+
+Name Recalled
+Name wiedergefunden
+
+Finish Chapter 4: For Pigs the Bell Tolls.
+Schließe Kapitel 4 ab.
+
+Shipwrecked
+Gestrandet
+
+Finish Chapter 5: The Key to Pirates.
+Schließe Kapitel 5 ab.
+
+All Aboard
+Alle einsteigen
+
+Finish Chapter 6: 3 Days of Excess.
+Schließe Kapitel 6 ab.
+
+Moonwalker
+Mondspaziergang
+
+Finish Chapter 7: Mario Shoots the Moon.
+Schließe Kapitel 7 ab.
+
+The Door Closes
+Das Tor schließt sich
+
+Defeat the Shadow Queen.
+Besiege die Königin der Finsternis.
+
+Happily Ever After
+Glücklich bis ans Ende
+
+See the end credits.
+Sieh dir den Abspann an.
+
+Shiny Things
+Glitzerkram
+
+Find 50 Star Pieces.
+Finde 50 Sternsplitter.
+
+Star Piece Collector
+Sternsplitter-Sammler
+
+Find every Star Piece.
+Finde alle Sternsplitter.
+
+Sprite Hunter
+Sonnenjäger
+
+Find every Shine Sprite.
+Finde alle Insignien.
+
+First Course
+Erster Gang
+
+Have Zess T. cook a dish.
+Lass Racle T. ein Gericht kochen.
+
+Master Chef
+Meisterkoch
+
+Fill in every recipe in the Journal.
+Trage jedes Rezept ins Tagebuch ein.
+
+Badge Fan
+Ordensfan
+
+Find 40 kinds of badge.
+Finde 40 Arten von Orden.
+
+Badge Log Complete
+Ordensliste komplett
+
+Find every kind of badge.
+Finde jede Art von Orden.
+
+Know Your Enemy
+Kenne deinen Feind
+
+Tattle 60 kinds of enemy.
+Erfasse 60 Gegnerarten im Lexikon.
+
+Tattle Log Complete
+Lexikon komplett
+
+Tattle every enemy in the Tattle Log.
+Erfasse jeden Gegner im Lexikon.
+
+Halfway Down
+Auf halbem Weg
+
+Reach the 50th floor of the Pit of 100 Trials.
+Erreiche Ebene 50 des Duellkerkers.
+
+Pit of 100 Trials
+Duellkerker
+
+Defeat Bonetail at the bottom of the Pit.
+Besiege Lohviata am Grund des Duellkerkers.
+
+Trouble Shooter
+Problemlöser
+
+Solve every trouble at the Trouble Center.
+Löse jede Sorge der Job-Agentur.
+
+Full Party
+Volle Truppe
+
+Have all seven partners join.
+Gewinne alle sieben Partner.
+
+Seasoned
+Erfahren
+
+Reach level 20.
+Erreiche Level 20.
+
+Rich Uncle
+Onkel Dagobert
+
+Carry 999 coins.
+Trage 999 Münzen bei dir.
+
+Know Your Way Around
+Ortskundig
+
+Visit every room of Rogueport on its area map.
+Besuche jeden Raum von Rohlingen auf seiner Gebietskarte.
+
+Down Under
+Ab in den Untergrund
+
+Visit every room of Rogueport's underground.
+Besuche jeden Raum in Rohlingens Untergrund.
+
+Explorer
+Entdecker
+
+Visit 100 rooms on the area maps.
+Besuche 100 Räume auf den Gebietskarten.
+
+Cartographer
+Kartograf
+
+Visit every room on the area maps.
+Besuche jeden Raum auf den Gebietskarten.
+
+Hall of Fame
+Ruhmeshalle
+
+Visit the trophy room.
+Besuche den Trophäenraum.
+
+A Full Shelf
+Volles Regal
+
+Visit the trophy room with every Crystal Star and every boss in it.
+Besuche den Trophäenraum mit allen Sternjuwelen und allen Bossen darin.
+
+Ten Floors Up
+Zehn Etagen hoch
+
+Reach the 10th floor of the Paper Tower.
+Erreiche Etage 10 des Papierturms.
+
+Thin Air
+Dünne Luft
+
+Reach the 20th floor of the Paper Tower.
+Erreiche Etage 20 des Papierturms.
+
+Top of the Tower
+Turmspitze
+
+Climb all 30 floors of the Paper Tower.
+Erklimm alle 30 Etagen des Papierturms.
+
+Paper Airplane
+Papierflieger
+
+Climb the Paper Tower in under 30 minutes.
+Erklimm den Papierturm in unter 30 Minuten.
+
+Bargain Hunter
+Schnäppchenjäger
+
+Buy a daily shop special.
+Kaufe ein Tagesangebot im Laden.
+
+Regular Customer
+Stammkunde
+
+Buy 10 daily shop specials.
+Kaufe 10 Tagesangebote im Laden.
+
+Brotherly Rivalry
+Bruderzwist
+
+Finish a versus battle.
+Beende einen Versus-Kampf.
+
+Old Rivals
+Alte Rivalen
+
+Finish 10 versus battles.
+Beende 10 Versus-Kämpfe.
+
+Shuffled
+Gut gemischt
+
+Play an open-world randomizer file.
+Spiele einen Spielstand mit dem Randomizer der offenen Welt.
+
+Stars Anywhere
+Sterne überall
+
+Hold three Crystal Stars on an open-world file.
+Besitze drei Sternjuwelen in einem Spielstand der offenen Welt.
+
+Seed Master
+Seed-Meister
+
+Hold all seven Crystal Stars on an open-world file.
+Besitze alle sieben Sternjuwelen in einem Spielstand der offenen Welt.
+
+Racing a Ghost
+Wettlauf mit dem Geist
+
+Race a ghost.
+Tritt in einem Geisterrennen an.
+
+Faster Than Your Shadow
+Schneller als dein Schatten
+
+Get 10 seconds ahead of a ghost.
+Hol 10 Sekunden Vorsprung auf einen Geist heraus.
+
+Better Together
+Gemeinsam stärker
+
+Reach the 25th floor of the Pit in co-op.
+Erreiche im Koop Ebene 25 des Duellkerkers.
+
+Rock Bottom, Together
+Gemeinsam ganz unten
+
+Reach the Pit's 100th floor in co-op.
+Erreiche im Koop Ebene 100 des Duellkerkers.
+
+Boss Rush
+Boss-Marathon
+
+Win a boss rush.
+Gewinne einen Boss-Marathon.
+
+Crowd Favorite
+Publikumsliebling
+
+Win 10 rounds in one endless Glitz Pit run.
+Gewinne 10 Runden in einem einzigen endlosen Arena-Lauf.
+
+Rematch
+Revanche
+
+Win a boss refight.
+Gewinne eine Revanche gegen einen Boss.
+
+Once More, With Feeling
+Noch einmal mit Gefühl
+
+Finish a chapter again in chapter select.
+Schließe ein Kapitel über die Kapitelauswahl erneut ab.
+
+One Life
+Nur ein Leben
+
+Finish chapter 1 on a hardcore (one-life) file.
+Schließe Kapitel 1 auf einem Hardcore-Spielstand (nur ein Leben) ab.
+
+Remixed
+Neu gemischt
+
+Finish a chapter with Remix: enemies on.
+Schließe ein Kapitel mit eingeschaltetem „Remix: Gegner“ ab.
+
+Green Thunder
+Grüner Donner
+
+Finish a chapter playing as Luigi.
+Schließe ein Kapitel als Luigi ab.
+
+Say Cheese
+Bitte lächeln
+
+Take a picture in photo mode.
+Mach ein Foto im Fotomodus.
+
+Photo Album
+Fotoalbum
+
+Take 25 pictures in photo mode.
+Mach 25 Fotos im Fotomodus.
+
+Two Plumbers, Two Places
+Zwei Klempner, zwei Orte
+
+Play online co-op.
+Spiele online im Koop.

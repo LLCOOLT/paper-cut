@@ -75,8 +75,8 @@ Les remplacer et redémarrer
 Replace them
 Les remplacer
 
-Receive this card's saves from the launcher, before the game starts.
-Recevez les sauvegardes de cette carte depuis le lanceur, avant que le jeu démarre.
+Receive saves from the launcher, before starting.
+Recevez les sauvegardes depuis le lanceur, avant de jouer.
 
 Could not receive the saves:
 Les sauvegardes n'ont pas pu être reçues :

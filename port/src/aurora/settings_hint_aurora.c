@@ -28,7 +28,7 @@
 #if defined(__ANDROID__) || (defined(__APPLE__) && TARGET_OS_IPHONE)
 #define HINT_TEXT "Paper Cut's settings: the Start menu's last tab, or the three-bar button."
 #else
-#define HINT_TEXT "Paper Cut's settings: the Start menu's last tab, or F1 (Back on a controller)."
+#define HINT_TEXT "Paper Cut's settings: the Start menu's last tab, or {SETTINGS}."
 #endif
 
 static int sAge = -1; /* frames shown, -1 not yet */

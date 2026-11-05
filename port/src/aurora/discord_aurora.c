@@ -33,7 +33,7 @@ int portDiscordStory(int* chapter, int* level) {
     if (gp == NULL || chapter == NULL || level == NULL || (seqGetSeq() != SEQ_GAME && seqGetSeq() != SEQ_BATTLE)) {
         return 0;
     }
-    story = swByteGet(GSW_STORY_PROGRESS);
+    story = swStoryPeek();
     *chapter = 0;
     for (i = 0; i < (int)(sizeof(kStarts) / sizeof(kStarts[0])); i++) {
         if (story >= kStarts[i]) {

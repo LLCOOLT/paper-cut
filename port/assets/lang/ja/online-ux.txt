@@ -1,0 +1,106 @@
+# Online play's walk-through fixes (the Start menu's Online tab, the start-up's wait, the notices, the settings page's Online play), in Japanese: an English line, then its translation, then a blank line.
+
+By address
+アドレスで
+
+By code
+コードで
+
+Not connected
+未接続
+
+Play together: one hosts, the other joins with the host's address.
+いっしょに遊ぼう：ひとりがホストになり、もうひとりがホストのアドレスで参加します。
+
+Tell the other player this code: they choose Join by code.
+このコードを相手に伝えてください：相手は「コードで参加」を選びます。
+
+Give the other player this address: they choose Join by address.
+このアドレスを相手に伝えてください：相手は「アドレスで参加」を選びます。
+
+Copied: send the link, and a click on it opens Paper Cut on this room.
+コピーしました：リンクを送ってください。クリックするとこのルームでPaper Cutが開きます。
+
+Copied: send it to the other player (Join by code, or Watch a room).
+コピーしました：相手に送ってください（コードで参加、またはルームを観戦）。
+
+The other player is in your room: Start menu, Online, then Start together.
+相手がルームに来ました：スタートメニューの「オンライン」から「いっしょにスタート」へ。
+
+You're in the room: the host starts the online game when ready.
+ルームに入りました：準備ができたらホストがオンラインを始めます。
+
+Watching online
+オンラインで観戦
+
+Starting the online game
+オンラインを始めています
+
+Waiting for the other player's game...
+相手のゲームを待っています...
+
+Waiting for the players' game...
+プレイヤーのゲームを待っています...
+
+Waiting for the host's game...
+ホストのゲームを待っています...
+
+Esc or B: play alone instead
+EscかB：ひとりで遊ぶ
+
+The other player chose to play alone.
+相手はひとりで遊ぶことにしました。
+
+Playing alone: the online game can start again from the Online tab.
+ひとりで遊びます：オンラインは「オンライン」タブからまた始められます。
+
+The online game didn't start, so this game plays alone: try again from the Online tab.
+オンラインが始まらなかったので、ひとりで遊びます：「オンライン」タブからもう一度どうぞ。
+
+Online play is in the Start menu's Online tab (open the Start menu, then the Online tab), or the launcher's Online tab before the game: one hosts a room, the other joins it with its code.
+オンラインプレイはスタートメニューの「オンライン」タブ（スタートメニューを開いて「オンライン」タブへ）か、ゲーム前のランチャーの「オンライン」タブにあります：ひとりがルームを開き、もうひとりがそのコードで参加します。
+
+the other player
+相手
+
+Press again to leave
+もう一度押すとやめます
+
+You alone leave: the others are told, and everyone plays on alone.
+あなただけが抜けます：ほかの人にも伝わり、みんなひとりで続けます。
+
+You left the online game: you play on alone.
+オンラインを抜けました：ひとりで続けます。
+
+Someone tried to join with another version of Paper Cut: your room is still open.
+別のバージョンのPaper Cutで参加しようとした人がいます：ルームは開いたままです。
+
+Someone tried to join with another release of the game: your room is still open.
+別の地域版のゲームで参加しようとした人がいます：ルームは開いたままです。
+
+Someone tried to join with other mods on: your room is still open.
+ちがうMODで参加しようとした人がいます：ルームは開いたままです。
+
+Something that isn't Paper Cut tried to join: your room is still open.
+Paper Cutではないものが参加しようとしました：ルームは開いたままです。
+
+The other player left your room before the game: it's still open for them or someone else.
+相手がゲーム前にルームを抜けました：ルームはその人やほかの人のために開いたままです。
+
+Waiting for the other player...
+相手を待っています...
+
+The relay isn't answering right now: try again later, or connect by address.
+リレーがいま応答しません：あとでもう一度か、アドレスで接続してください。
+
+No one is hosting that room yet: check the code, or ask the host to open it and try again.
+そのルームはまだ誰もホストしていません：コードを確認するか、ホストに開いてもらってからもう一度どうぞ。
+
+The relay can't do that yet (it needs an update): use the host's address instead.
+リレーはまだそれに対応していません（更新が必要です）：かわりにホストのアドレスを使ってください。
+
+The other player's Paper Cut is a different version: both need the same one.
+相手のPaper Cutはバージョンがちがいます：同じバージョンが必要です。
+
+Online, the Start menu is the host's: they open it for everyone. Your settings page (F1) has Leave the online game.
+オンラインではスタートメニューはホストのものです：ホストがみんなのために開きます。自分の設定ページ（F1）に「オンラインをやめる」があります。

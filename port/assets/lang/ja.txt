@@ -7,8 +7,8 @@ Settings
 Close
 閉じる
 
-The Start menu's Settings tab, F1, Back/Select, the touch controls' three-bar button or a three-finger tap opens this page.
-このページは、スタートメニューの「設定」タブ、F1、Back/Select、タッチ操作の三本線ボタン、または三本指タップで開きます。
+The Start menu's Settings tab, {SETTINGS}, the touch controls' three-bar button or a three-finger tap opens this page.
+このページは、スタートメニューの「設定」タブ、{SETTINGS}、タッチ操作の三本線ボタン、または三本指タップで開きます。
 
 Search settings
 設定を検索
@@ -127,7 +127,7 @@ No limit
 Widest picture
 最大の横幅
 
-Past this the rest of the screen is bars (blurred with Blurred side bars).
+Wider screens get bars past this (see Blurred side bars).
 これを超えた分は帯になります（「ぼかした両端の帯」でぼかせます）。
 
 The status bar, message windows and battle menus, larger or smaller than the game's.
@@ -175,14 +175,14 @@ HDR対応の画面で、白を選んだ明るさ（ペーパーホワイト）�
 Performance overlay
 パフォーマンス表示
 
-How long each frame takes: the time between frames, and the part spent working.
+The time between frames, and the part spent working.
 各フレームにかかる時間：フレームの間隔と、そのうち処理にかかった時間。
 
 Sharp text
 くっきりした文字
 
-The game's font redrawn with crisp edges at high resolutions (the same letters).
-高い解像度で、ゲームのフォントをくっきりした縁で描き直します（同じ文字のまま）。
+The game's font rebuilt as a distance field, so its letters stay sharp at any resolution (the same letters; a texture pack's own font is drawn as the pack's).
+ゲームのフォントを距離フィールドとして作り直し、どの解像度でも文字がくっきりします（同じ文字のまま。テクスチャパックが自分のフォントを持つときは、そのフォントが表示されます）。
 
 Window
 ウィンドウ
@@ -226,14 +226,14 @@ Second player
 Action Command cue
 アクションコマンドの目安
 
-In battle, a ring closes on an A button when to press A for a Jump (and partners' stomps) and to guard an enemy jumping at you. Other commands show their own timing.
-バトルで、ジャンプ（となかまのふみつけ）でAを押すタイミングと、飛びかかってくる敵をガードするタイミングを、Aボタンに縮んでいく輪で示します。ほかのコマンドはそれぞれのタイミングを表示します。
+In battle, a ring closes on an {A} button when to press {A} for a Jump (and partners' stomps) and to guard an enemy jumping at you. Other commands show their own timing.
+バトルで、ジャンプ（となかまのふみつけ）で{A}を押すタイミングと、飛びかかってくる敵をガードするタイミングを、{A}ボタンに縮んでいく輪で示します。ほかのコマンドはそれぞれのタイミングを表示します。
 
 Fast-forward speed
 早送りの速さ
 
-Fast-forward: Tab, a controller's right stick click, or the on-screen >> button.
-早送り：Tab、コントローラーの右スティック押し込み、または画面の >> ボタン。
+Fast-forward: {FF}, or the on-screen >> button.
+早送り：{FF}、または画面の >> ボタン。
 
 Fast-forward toggles (instead of held)
 早送りを押すたびに切り替え（押し続けない）
@@ -289,7 +289,7 @@ Enemy attack (custom)
 Action commands: attacks
 アクションコマンド：攻撃
 
-Wider timing for attack commands, or every attack command done for you.
+Wider timing for attack commands, or all done for you.
 攻撃のアクションコマンドのタイミングを広くするか、すべて自動で成功させます。
 
 Action commands: guards
@@ -313,19 +313,19 @@ No saves yet: put .gci files in the warps folder (in the save folder).
 Speedrun timer
 スピードランタイマー
 
-Game time in a corner, counted in the game's own frames, with real time under it.
+Game time (in frames) and real time in a corner.
 ゲーム時間を、ゲーム自身のフレームで数えて隅に表示し、その下に実時間を表示します。
 
 Load removal
 ロード時間を除く
 
-Game time stops while a map or a battle loads (the timer's and LiveSplit's).
+The timer and LiveSplit stop while a map or battle loads.
 マップやバトルのロード中はゲーム時間が止まります（タイマーとLiveSplitの両方）。
 
 Start with a new file
 新しいファイルで開始
 
-The timer starts when a new file begins, and resets at the title screen.
+The timer starts with a new file and resets at the title.
 新しいファイルを始めるとタイマーが動き出し、タイトル画面でリセットされます。
 
 Splits
@@ -373,7 +373,7 @@ Story and flags
 Memory watch corner
 メモリ監視の位置
 
-The fields ticked in Memory watch (All settings), kept on screen.
+Memory watch's ticked fields (All settings), on screen.
 「メモリ監視」（すべての設定）でチェックした項目を画面に表示し続けます。
 
 Memory watch
@@ -442,7 +442,7 @@ Presets
 One-hit KO
 一撃でＫＯ
 
-Any enemy hit that does damage knocks Mario or the partner out.
+Any damaging enemy hit knocks Mario or the partner out.
 ダメージのある敵の攻撃は、すべてマリオかなかまをＫＯします。
 
 Allowed
@@ -454,7 +454,7 @@ Guarding
 Attack commands
 攻撃のコマンド
 
-Narrower timing for Mario's and the partners' attack commands.
+Narrower timing for Mario's and partners' attack commands.
 マリオとなかまの攻撃のアクションコマンドのタイミングをせまくします。
 
 No items in battle
@@ -472,7 +472,7 @@ Viewers' commands in your channel's chat make the crowd throw items, give or tak
 Cooldown
 間隔
 
-One command each this many seconds; a viewer, one each three times it.
+Seconds between commands (three times that per viewer).
 この秒数ごとにコマンド1つ。1人の視聴者はその3倍ごとに1つ。
 
 Allow the harmful ones
@@ -484,13 +484,13 @@ Chat
 Partner quick-swap
 なかまの早替え
 
-Switches to the next partner in the field without the pause menu: Q, a controller's left stick pressed in, or the on-screen swap button.
-ポーズメニューを使わずに、フィールドで次のなかまに替えます：Q、コントローラーの左スティック押し込み、または画面の切り替えボタン。
+Switches to the next partner in the field without the pause menu: {SWAP}, or the on-screen swap button.
+ポーズメニューを使わずに、フィールドで次のなかまに替えます：{SWAP}、または画面の切り替えボタン。
 
 Save Blocks save at once
 セーブブロックですぐセーブ
 
-A Save Block saves to the file being played without asking first.
+A Save Block saves to the current file without asking.
 セーブブロックが、確認せずに遊んでいるファイルにセーブします。
 
 Bigger bag
@@ -508,26 +508,26 @@ After a battle, a partner who fell is back at 1 HP.
 Level up with the D-pad
 十字ボタンでレベルアップ
 
-The level-up screen (HP, FP or BP) also takes the D-pad, not only the stick.
-レベルアップの画面（ＨＰ、ＦＰ、ＢＰ）で、スティックだけでなく十字ボタンも使えます。
+The level-up screen (HP, FP, BP) also takes the {DPAD}.
+レベルアップの画面（ＨＰ、ＦＰ、ＢＰ）で、スティックだけでなく{DPAD}も使えます。
 
 Healing items heal every partner
 回復アイテムでなかま全員を回復
 
-In the field, an item used on a partner heals the other partners too.
+In the field, healing one partner heals all of them.
 フィールドでなかまに使ったアイテムが、ほかのなかまも回復します。
 
 Skip repeated scenes
 見たシーンを飛ばす
 
 Scenes already seen on this file go faster or straight to their end: the Crystal Star fanfare and map reveal, Zess T.'s cooking, the Glitz Pit's match scenes, the train and blimp tickets.
-このファイルで見たシーンが速く進むか、すぐ終わります：クリスタルスターのファンファーレと地図、ナンシーの料理、とうぎ場の試合のシーン、汽車と飛行船のきっぷ。
+このファイルで見たシーンが速く進むか、すぐ終わります：スターストーンのファンファーレと地図、ナンシーの料理、とうぎ場の試合のシーン、汽車と飛行船のきっぷ。
 
 Fast travel
 ファストトラベル
 
 Travel to a hub from the settings page (All settings, Travel to): Rogueport, then one more per Crystal Star.
-設定ページ（すべての設定の「行き先」）から町へ移動：ゴロツキタウン、そしてクリスタルスター1つごとに1か所ずつ増えます。
+設定ページ（すべての設定の「行き先」）から町へ移動：ゴロツキタウン、そしてスターストーン1つごとに1か所ずつ増えます。
 
 Faster battle menus
 バトルメニューを速く
@@ -550,8 +550,8 @@ GUARD! and SUPERGUARD! over Mario or the partner, a resisted status's icon bounc
 Retry on Game Over
 ゲームオーバーからやり直す
 
-Keeps a save state of each room and battle as you enter it; on the Game Over screen, Y goes back to it. A short pause at each room's start.
-部屋やバトルに入るたびにステートセーブを残し、ゲームオーバー画面でYを押すとそこに戻ります。各部屋の始めに短い停止があります。
+Keeps a save state of each room and battle as you enter it; on the Game Over screen, {Y} goes back to it. A short pause at each room's start.
+部屋やバトルに入るたびにステートセーブを残し、ゲームオーバー画面で{Y}を押すとそこに戻ります。各部屋の始めに短い停止があります。
 
 Remake balance
 リメイク版のバランス
@@ -573,9 +573,6 @@ A lost match costs no rank, and a match's bonus condition stays at the top of th
 
 Play as Luigi
 ルイージで遊ぶ
-
-Luigi in Mario's place, with Mario's moves, in the field, battles, menus and credits; the text calls him Luigi and the other Luigi stays out of sight. Saves are not changed.
-マリオの代わりにルイージが、マリオの技で、フィールド、バトル、メニュー、スタッフロールに登場します。テキストもルイージと呼び、もう1人のルイージは見えなくなります。セーブは変わりません。
 
 A new file starts with what you choose here, taken from the file New Game+ from file names. Choose before starting the new file.
 新しいファイルを、ここで選んだものを「引き継ぐファイル」のファイルから引き継いで始めます。新しいファイルを始める前に選んでください。
@@ -610,7 +607,7 @@ A Save Block also offers to store items and take them out, as the Rogueport shop
 Walk-speed boost
 歩く速さのブースト
 
-Mario walks and runs faster while the Boost key or Boost button is held.
+Mario moves faster while the Boost key or button is held.
 「ブーストのキー」か「ブーストのボタン」を押している間、マリオが速く歩いて走ります。
 
 Boost speed
@@ -628,7 +625,7 @@ Boost button
 Coins from battles
 バトルのコイン
 
-The coins a won battle drops, after Merlee, Money Money and a First Strike.
+A battle's coins, after Merlee, Money Money and co.
 勝ったバトルで出るコイン（サンデール、コインコイン、せんせいこうげきの後）。
 
 Star Points from battles
@@ -640,7 +637,7 @@ A battle's Star Points (still at most 100, a level).
 Star Piece and Shine Sprite tracker
 ほしのかけらとシャインの記録
 
-How many of the current map's Star Pieces and Shine Sprites are found, in a corner.
+The map's Star Pieces and Shine Sprites, in a corner.
 今のマップのほしのかけらとシャインをいくつ見つけたかを、隅に表示します。
 
 On this map
@@ -685,7 +682,7 @@ Built-in randomizer
 Backups kept
 残すバックアップの数
 
-Dated copies of each save file, made when the game saves. 0: none.
+Dated copies of each save file, made on saving. 0: none.
 ゲームがセーブする時に作る、各セーブファイルの日付つきのコピー。0：なし。
 
 Restore a backup
@@ -706,7 +703,7 @@ Widescreen
 Never skip loading graphics
 読み込み中のグラフィックを飛ばさない
 
-Extra frames between the game's own 60: smoother motion.
+Extra frames between the game's 60: smoother motion.
 ゲームの60フレームの間に追加のフレーム：動きがなめらかに。
 
 Present at the display's refresh: no tearing.
@@ -763,11 +760,11 @@ The game's own Rumble option still applies.
 How fast the game's text appears.
 ゲームの文字が出る速さ。
 
-A ring shows when to press A in battle.
-バトルでAを押すタイミングを輪で示します。
+A ring shows when to press {A} in battle.
+バトルで{A}を押すタイミングを輪で示します。
 
-Fast-forward: Tab, the right stick's click, or >> on screen.
-早送り：Tab、右スティック押し込み、または画面の >>。
+Fast-forward: {FF}, or >> on screen.
+早送り：{FF}、または画面の >>。
 
 On: a press turns it on and off. Off: held.
 オン：押すたびに切り替え。オフ：押し続ける。
@@ -893,7 +890,7 @@ Level, stats and badges
 レベル、ステータス、バッジ
 
 Level, stats, badges and Tattle Log
-レベル、ステータス、バッジ、ものしりの記録
+レベル、ステータス、バッジ、ものしりリスト
 
 Easy (enemy HP 75 %, attacks 50 %)
 かんたん（敵のＨＰ 75 %、攻撃 50 %）
@@ -946,8 +943,8 @@ Message size
 The message and choice windows larger, on top of HUD size. A window grows only while it fits the screen: a little in 4:3, up to about 145% in widescreen.
 メッセージと選択肢のウィンドウを、HUDの大きさに加えて大きくします。画面に収まる間だけ大きくなります：4:3では少し、ワイド画面では約145%まで。
 
-Y: a hint for where to go next.
-Y：次に行く場所のヒント
+{Y}: a hint for where to go next.
+{Y}：次に行く場所のヒント
 
 Where next:
 次は：
@@ -958,8 +955,8 @@ The story is over: go wherever you like.
 Second player (co-op)
 2人目のプレイヤー（協力プレイ）
 
-Player 2 plays the partner: A on another controller joins. In battle: its moves, action commands and guards. In the field: the stick walks it, A hops, B talks or hits, X is its ability, L or R the next partner; Mario's Y calls it back. On a phone or tablet, pair two controllers.
-プレイヤー2が仲間を操作します：別のコントローラーのAで参加。バトルでは技、アクションコマンド、ガードを。フィールドでは、スティックで歩き、Aでジャンプ、Bで話すか叩き、Xで仲間の能力、LかRで次の仲間。マリオのYで呼び戻せます。スマホやタブレットでは、コントローラーを2つペアリングしてください。
+Player 2 plays the partner: {A} on another controller joins. In battle: its moves, action commands and guards. In the field: the stick walks it, {A} hops, {B} talks or hits, {X} is its ability, {L} or {R} the next partner; Mario's {Y} calls it back. On a phone or tablet, pair two controllers.
+プレイヤー2が仲間を操作します：別のコントローラーの{A}で参加。バトルでは技、アクションコマンド、ガードを。フィールドでは、スティックで歩き、{A}でジャンプ、{B}で話すか叩き、{X}で仲間の能力、{L}か{R}で次の仲間。マリオの{Y}で呼び戻せます。スマホやタブレットでは、コントローラーを2つペアリングしてください。
 
 connected
 接続中
@@ -1067,9 +1064,6 @@ last_crash.txt in the save folder; paste it to whoever is helping you.
 
 The game crashed last time
 前回ゲームがクラッシュしました
-
-A report of where it crashed was saved. Copy it and paste it to whoever is helping you.
-どこでクラッシュしたかのレポートを保存しました。コピーして、手伝ってくれる人に貼りつけてください。
 
 Copy report
 レポートをコピー
@@ -1210,10 +1204,10 @@ Player 1 plays; player 2 can play the partner in battle and in the field (Second
 プレイヤー1が遊び、プレイヤー2はバトルとフィールドで仲間を動かせます（下の「2人目のプレイヤー」）。各プレイヤーのボタンは「キー割り当て」で設定します。
 
 Couldn't open it: 
-開けませんでした：
+開けませんでした： 
 
 SDL didn't take the mapping: 
-SDLがマッピングを受けつけませんでした：
+SDLがマッピングを受けつけませんでした： 
 
 %s is set up. It's in the list above now, and next time.
 %sの設定ができました。上のリストに入り、次回からも使えます。
@@ -1279,10 +1273,10 @@ Shown while a game is in the field or a battle.
 ゲームがフィールドかバトルの間に表示されます。
 
 Crystal Stars: %d of 7
-クリスタルスター：%d／7
+スターストーン：%d／7
 
 Trouble Center: %d of %d solved
-トラブルセンター：%d／%d解決
+おなやみセンター：%d／%d解決
 
 Not solved yet: #%s
 まだ解決していない：#%s
@@ -1294,7 +1288,7 @@ Recipes cooked: %d of %d
 作った料理：%d／%d
 
 Tattle Log: %d of %d
-ものしりの記録：%d／%d
+ものしりリスト：%d／%d
 
 Star Pieces held: %d    Shine Sprites held: %d
 ほしのかけら：%d    シャイン：%d
@@ -1309,7 +1303,7 @@ Shown while a game is being played.
 バッジ%2d個
 
   empty  
-  空き
+  空き  
 
 Store worn
 つけているものを保存
@@ -1345,10 +1339,10 @@ Mario as he is in this file.
 このファイルのままのマリオ。
 
 Level 15: 30 HP, 25 FP, 21 BP, Super Boots and Hammer, every partner, four Star Powers, eight items.
-レベル15：ＨＰ30、ＦＰ25、ＢＰ21、スーパーブーツとスーパーハンマー、仲間全員、スターパワー4つ、アイテム8個。
+レベル15：ＨＰ30、ＦＰ25、ＢＰ21、スーパーブーツとスーパーハンマー、仲間全員、スペシャル技4つ、アイテム8個。
 
 Level 30: 60 HP, 50 FP, 51 BP, Ultra Boots and Hammer, every partner upgraded, all Star Powers, eight items.
-レベル30：ＨＰ60、ＦＰ50、ＢＰ51、ウルトラブーツとウルトラハンマー、仲間全員パワーアップ、スターパワー全部、アイテム8個。
+レベル30：ＨＰ60、ＦＰ50、ＢＰ51、ウルトラブーツとウルトラハンマー、仲間全員パワーアップ、スペシャル技全部、アイテム8個。
 
 The loadout is lent for the run: Mario is as he was after it. Your badges stay as they are.
 装備はこの挑戦の間だけ借りるもので、終わるとマリオは元どおりです。バッジもそのままです。
@@ -1608,11 +1602,11 @@ Replace the save with this one
 Restore
 戻す
 
-Restore this card's saves from the launcher, before the game starts.
+Restore saves from the launcher, before starting.
 このカードのセーブは、ゲームを始める前にランチャーから戻してください。
 
 The Japanese release keeps its Pianta Parlor records differently; the copy is converted. Names typed in one release's letters may look different in another.
-日本版はピアンタパーラーの記録の持ち方がちがうので、コピーは変換されます。ある版の文字で入力した名前は、別の版ではちがって見えることがあります。
+日本版はゆうぎ場の記録の持ち方がちがうので、コピーは変換されます。ある版の文字で入力した名前は、別の版ではちがって見えることがあります。
 
 From
 コピー元
@@ -1710,16 +1704,16 @@ the left trigger (L)
 the right trigger (R)
 右のトリガー（R）
 
-the d-pad up
+the D-pad up
 十字キーの上
 
-the d-pad down
+the D-pad down
 十字キーの下
 
-the d-pad left
+the D-pad left
 十字キーの左
 
-the d-pad right
+the D-pad right
 十字キーの右
 
 the left stick to the right
@@ -1832,8 +1826,8 @@ Rが入る位置
 Player 2 joined: their stick walks the partner.
 プレイヤー2が参加：スティックで仲間を動かせます。
 
-A second controller: turn on Second player (Controls) to play the partner.
-2つ目のコントローラー：仲間を動かすには「2人目のプレイヤー」（操作）をオンに。
+A second controller: turn on Second player (co-op) in Multiplayer to play the partner.
+2つ目のコントローラー：仲間を動かすには「マルチプレイ」の「2人目のプレイヤー（協力プレイ）」をオンに。
 
 Player 2 left: the partner follows Mario.
 プレイヤー2が抜けました：仲間はマリオについていきます。
@@ -1852,14 +1846,14 @@ Player 1 (Mario): the keyboard
 Player 2 (the partner): %s
 プレイヤー2（仲間）：%s
 
-Player 2: nobody yet. Press A on another controller to join.
-プレイヤー2：まだいません。別のコントローラーのAで参加します。
+Player 2: nobody yet. Press {A} on another controller to join.
+プレイヤー2：まだいません。別のコントローラーの{A}で参加します。
 
 Player 2: nobody (co-op is off).
 プレイヤー2：いません（協力プレイはオフ）。
 
-Press A on player 2's controller...
-プレイヤー2のコントローラーのAを押してください...
+Press {A} on player 2's controller...
+プレイヤー2のコントローラーの{A}を押してください...
 
 Stop co-op
 協力プレイをやめる
@@ -1876,8 +1870,8 @@ Let player 2 go
 Choosing player 1's controller moves it to player 2, and player 1 plays on the keyboard. Each player's buttons are set under Bindings.
 プレイヤー1のコントローラーを選ぶとプレイヤー2のものになり、プレイヤー1はキーボードで遊びます。各プレイヤーのボタンは「キー割り当て」で設定します。
 
-Co-op is on: press A on another controller to join.
-協力プレイがオン：別のコントローラーのAで参加します。
+Co-op is on: press {A} on another controller to join.
+協力プレイがオン：別のコントローラーの{A}で参加します。
 
 a controller
 コントローラー

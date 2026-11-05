@@ -9,12 +9,16 @@
 #include <string.h>
 #include "port/settings.h"
 
-#define EXTRA_MAX 256
+/* pointers to the values are handed out, so the table never moves: room for
+ * every feature's settings and many more */
+#define EXTRA_MAX 2048
 
 typedef struct Extra {
     char key[48];
     int value, min, max, def;
     int declared;
+    int toDefault; /* at its default once declared (portSettingsExtraToDefault) */
+    int savedAs, savedValue; /* settings.txt gets savedValue meanwhile (portSettingsExtraSaveAs) */
 } Extra;
 
 static Extra sExtra[EXTRA_MAX];
@@ -42,6 +46,16 @@ static Extra* add(const char* key) {
     return e;
 }
 
+/* a key read from a file or sent by another game (settings.txt, the online
+ * host's, a replay's): one that can't be kept is left out, not fatal */
+static Extra* addRead(const char* key) {
+    if (sCount == EXTRA_MAX || strlen(key) >= sizeof(sExtra[0].key)) {
+        fprintf(stderr, "settings: %s left out (no room)\n", key);
+        return NULL;
+    }
+    return add(key);
+}
+
 static int clamp(const Extra* e, int v) {
     return v < e->min ? e->min : v > e->max ? e->max : v;
 }
@@ -61,6 +75,10 @@ int* portSettingsDeclare(const char* key, int def, int min, int max) {
     e->max = max;
     e->def = def;
     e->declared = 1;
+    if (e->toDefault) {
+        e->value = def; /* (this run's set doesn't have it: online's guest, a playback) */
+        e->toDefault = 0;
+    }
     snprintf(env, sizeof(env), "TTYD_SET_%s", key);
     if ((over = getenv(env)) != NULL) {
         e->value = atoi(over);
@@ -87,10 +105,11 @@ int portSettingsExtraDefault(const char* key, int* value) {
 int portSettingsExtraSet(const char* key, const char* value) {
     char env[80];
     Extra* e = find(key);
-    if (e == NULL) {
-        e = add(key);
+    if (e == NULL && (e = addRead(key)) == NULL) {
+        return 0;
     }
     snprintf(env, sizeof(env), "TTYD_SET_%s", key);
+    e->toDefault = 0; /* (a value set since: it wins) */
     if (getenv(env) == NULL) { /* the run's override stays */
         e->value = atoi(value);
         if (e->declared) {
@@ -104,12 +123,34 @@ int portSettingsExtraSet(const char* key, const char* value) {
  * guest: the host's settings, port/settings/online_lobby.cpp) */
 void portSettingsExtraForce(const char* key, const char* value) {
     Extra* e = find(key);
-    if (e == NULL) {
-        e = add(key);
+    if (e == NULL && (e = addRead(key)) == NULL) {
+        return;
     }
+    e->toDefault = 0;
     e->value = atoi(value);
     if (e->declared) {
         e->value = clamp(e, e->value);
+    }
+}
+
+int portSettingsExtraToDefault(const char* key) {
+    Extra* e = find(key);
+    if (e == NULL) {
+        return 0;
+    }
+    if (e->declared) {
+        e->value = e->def;
+    } else {
+        e->toDefault = 1;
+    }
+    return 1;
+}
+
+void portSettingsExtraSaveAs(const char* key, int on, int value) {
+    Extra* e = find(key);
+    if (e != NULL) {
+        e->savedAs = on;
+        e->savedValue = value;
     }
 }
 
@@ -121,6 +162,6 @@ const char* portSettingsExtraAt(int i, int* value) {
     if (i < 0 || i >= sCount) {
         return NULL;
     }
-    *value = sExtra[i].value;
+    *value = sExtra[i].savedAs ? sExtra[i].savedValue : sExtra[i].value;
     return sExtra[i].key;
 }

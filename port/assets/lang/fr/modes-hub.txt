@@ -1,0 +1,136 @@
+# The Start menu's Modes hub and its pages for the modes (port/src/aurora/pause_settings_aurora.c, port/settings/features/modes.cpp, play_modes.cpp, battlex.cpp, postgame.cpp, boards.cpp, dojo.cpp) (Français)
+
+Story twists
+L'histoire autrement
+
+As you are
+Tel quel
+
+Mid-game
+Milieu de partie
+
+Late game
+Fin de partie
+
+The boss rush is over.
+L'enchaînement des boss est terminé.
+
+The boss rush starts once the menu is closed.
+L'enchaînement des boss commence dès que le menu est fermé.
+
+Boss
+Boss
+
+Left and right choose the boss.
+Gauche et droite choisissent le boss.
+
+Beat this boss in the story first.
+Bats d'abord ce boss dans l'histoire.
+
+ (not yet)
+ (pas encore)
+
+Fought again, then back to this room. Losing is a Game Over, as in the story.
+Combattu de nouveau, puis retour dans cette salle. Perdre est un Game Over, comme dans l'histoire.
+
+The fight starts once the menu is closed.
+Le combat commence dès que le menu est fermé.
+
+Stop the endless Glitz Pit
+Arrêter les Arènes sans fin
+
+Mario stays where he is.
+Mario reste où il est.
+
+The endless Glitz Pit is over.
+Les Arènes sans fin sont terminées.
+
+The first match starts once the menu is closed.
+Le premier match commence dès que le menu est fermé.
+
+The run ends once the menu is closed.
+La partie se termine dès que le menu est fermé.
+
+The run starts once the menu is closed.
+La partie commence dès que le menu est fermé.
+
+About this puzzle
+À propos de cette énigme
+
+Who's fought, the goal, and a hint.
+Les adversaires, le but et un indice.
+
+{A} shows the puzzle's hint.
+{A} montre l'indice de l'énigme.
+
+Five shops each put one rare item on a shelf at 30% off, a different one each day and the same for everyone that day (by the UTC date).
+Cinq boutiques mettent chacune un objet rare en rayon à -30 %, un autre chaque jour et le même pour tous ce jour-là (selon la date UTC).
+
+%s for %d coins (usually %d)
+%s pour %d pièces (d'habitude %d)
+
+Left and right choose the board.
+Gauche et droite choisissent le classement.
+
+See the board
+Voir le classement
+
+Its ten best runs, and how many games checked each.
+Ses dix meilleures parties, et combien de jeux ont vérifié chacune.
+
+Watch a run
+Regarder une partie
+
+Left and right choose a run; it plays as the game starts again, and this game tells the board whether it played out the same here.
+Gauche et droite choisissent une partie ; elle se joue quand le jeu redémarre, et ce jeu dit au classement si elle s'est déroulée pareil ici.
+
+{A} fetches the board again.
+{A} recharge le classement.
+
+The Glitz Pit fighter to practise on: it never falls.
+Le combattant des Arènes sur qui s'entraîner : il ne tombe jamais.
+
+The partner beside Mario as the fight starts.
+Le partenaire aux côtés de Mario au début du combat.
+
+Every partner at Ultra Rank, Ultra Boots and Hammer, every Jump and Hammer badge, all Star Powers, lent for the dojo.
+Chaque partenaire au rang Ultra, Ultra Bottes et Ultra Marteau, chaque badge de Saut et de Marteau, tous les pouvoirs stellaires, prêtés pour le dojo.
+
+Its attacks are for practising guards and Superguards.
+Ses attaques servent à s'entraîner au Bloque et au Contre.
+
+Set up the dojo before entering it.
+Règle le dojo avant d'y entrer.
+
+The dojo opens once the menu is closed.
+Le dojo s'ouvre dès que le menu est fermé.
+
+Your dojo results
+Tes résultats au dojo
+
+Next new file: hardcore
+Prochaine partie : hardcore
+
+Record a hardcore run
+Enregistrer une partie hardcore
+
+The game starts again at the title, recording (kept with the replays): start a new file. The Game Over saves the run, a ghost to race in Ghost races.
+Le jeu redémarre à l'écran titre en enregistrant (avec les replays) : commencez une nouvelle partie. Le Game Over sauvegarde la course, un fantôme à affronter dans Courses de fantômes.
+
+Today's seed
+La graine du jour
+
+The day's seed and its two rules.
+La graine du jour et ses deux règles.
+
+Set
+Prête
+
+The name your time goes to the board with.
+Le nom sous lequel ton temps va au classement.
+
+This file's time to the day's board.
+Le temps de cette partie au classement du jour.
+
+The day's results board.
+Le classement du jour.

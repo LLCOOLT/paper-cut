@@ -1,0 +1,11 @@
+{
+  "id": "dev.ttyd.lua-glass-cannon",
+  "name": "Glass cannon (Lua)",
+  "version": "1.0",
+  "author": "Paper Cut",
+  "description": "An example Lua mod that changes the game: Mario's side hits harder and takes more, no plain Guards (Superguards still work), and a coin for each Superguard.",
+  "options": [
+    {"key": "power", "label": "Damage, both ways (%)", "type": "int", "min": 100, "max": 300, "default": 150},
+    {"key": "tough_enemies", "label": "Enemies get half again their HP", "type": "bool", "default": false}
+  ]
+}

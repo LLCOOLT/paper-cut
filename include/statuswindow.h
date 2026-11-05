@@ -86,3 +86,14 @@ void N_statusClearBlink(void);
 void statusFPBlink(s32 frames);
 void statusMarioHPBlink(s32 frames);
 void statusPartyHPBlink(s32 frames);
+
+#ifdef TARGET_PC
+#include "driver/camdrv.h"
+// A second HUD (versus_aurora.c's Luigi side, brothers_aurora.c's Luigi): the values it shows and its top's y
+// when shown (at the bottom it slides down off the screen as the game's slides up; in the top half, up with
+// it); its draw callback (dispEntry). After portStatusWinSetOther, portStatusWinSetOtherHpFpOnly draws only
+// its HP and FP banners.
+void portStatusWinSetOther(const StatusValue* v, f32 openY);
+void portStatusWinSetOtherHpFpOnly(void);
+void portStatusWinDispOther(CameraId camId, void* param);
+#endif

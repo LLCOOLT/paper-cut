@@ -1,0 +1,13 @@
+# Online play's notices over the picture and the versus set-up's side labels: an English line, then its translation, then a blank line.
+
+Waiting for %s...
+Warte auf %s ...
+
+%s minimized the game.
+%s hat das Spiel minimiert.
+
+You: Mario's side
+Du: Marios Seite
+
+You: Luigi's side
+Du: Luigis Seite

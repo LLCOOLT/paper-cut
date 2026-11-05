@@ -1,0 +1,19 @@
+# The mouse camera (port/settings/features/view.cpp): an English line, then its translation, then a blank line.
+
+Mouse camera
+Cámara con ratón
+
+With the free camera on, the mouse turns it too while Mario walks, and the window holds the cursor then; menus and scenes give it back. A middle click centres the camera.
+Con la cámara libre activada, el ratón también la gira mientras Mario camina, y la ventana retiene el cursor mientras tanto; los menús y las escenas lo devuelven. Un clic con el botón central vuelve a centrar la cámara.
+
+Mouse camera speed
+Velocidad de la cámara con ratón
+
+How far the camera turns for a move of the mouse.
+Cuánto gira la cámara al mover el ratón.
+
+Invert mouse camera
+Invertir la cámara con ratón
+
+Moving the mouse up moves the camera out and higher.
+Mover el ratón hacia arriba aleja la cámara y la sube.

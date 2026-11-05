@@ -1,0 +1,103 @@
+# save files: see tools/port/gen_lang.py
+
+Keep every save file
+Jeden Spielstand behalten
+
+Each save the game writes is also kept in the library below, with a picture of where it was made, so there is no limit of four files.
+Jeder Spielstand, den das Spiel schreibt, wird auch in der Bibliothek unten behalten, mit einem Bild vom Ort des Speicherns: keine Grenze von vier Dateien mehr.
+
+Settings per save file
+Einstellungen pro Spielstand
+
+The difficulty, the Enhancements and the challenge rules are saved with each file and come back when it is loaded. Display, sound and controls stay the same for every file.
+Schwierigkeit, Verbesserungen und Herausforderungsregeln werden mit jeder Datei gespeichert und kehren beim Laden zurück. Bild, Ton und Steuerung bleiben für alle Dateien gleich.
+
+Save files
+Spielstände
+
+Add the card's saves to the library
+Spielstände der Karte zur Bibliothek hinzufügen
+
+%d added.
+%d hinzugefügt.
+
+File 1
+Datei 1
+
+File 2
+Datei 2
+
+File 3
+Datei 3
+
+File 4
+Datei 4
+
+Play in
+Spielen in
+
+No save files yet: each save the game writes is kept here.
+Noch keine Spielstände: jeder Spielstand, den das Spiel schreibt, wird hier behalten.
+
+Chapter 1
+Kapitel 1
+
+Chapter 2
+Kapitel 2
+
+Chapter 3
+Kapitel 3
+
+Chapter 4
+Kapitel 4
+
+Chapter 5
+Kapitel 5
+
+Chapter 6
+Kapitel 6
+
+Chapter 7
+Kapitel 7
+
+Chapter 8
+Kapitel 8
+
+The end
+Das Ende
+
+Saved %s on %s · in File %d
+Gespeichert %s in %s · in Datei %d
+
+Saved %s on %s
+Gespeichert %s in %s
+
+Replace that file and restart
+Diese Datei ersetzen und neu starten
+
+Replace that file
+Diese Datei ersetzen
+
+Play in that file and restart
+In dieser Datei spielen und neu starten
+
+Play in that file
+In dieser Datei spielen
+
+Delete it for good
+Endgültig löschen
+
+It stays in File %d of the memory card.
+Er bleibt in Datei %d der Speicherkarte.
+
+Put a file in the memory card from the launcher, before the game starts.
+Lege eine Datei vom Launcher aus auf die Speicherkarte, bevor das Spiel startet.
+
+Put in File %d.
+In Datei %d gelegt.
+
+The memory card has no save file yet: start a game and save once first.
+Die Speicherkarte hat noch keine Spieldatei: starte zuerst ein Spiel und speichere einmal.
+
+That save file can't be read.
+Dieser Spielstand kann nicht gelesen werden.

@@ -82,7 +82,7 @@ Reset all
 Restablecer todo
 
 Goombella's hair
-El pelo de Goombella
+El pelo de Goomarina
 
 Koops's shell
 El caparazón de Koops
@@ -91,13 +91,61 @@ Koops's hoodie
 La sudadera de Koops
 
 Flurrie's hair
-El pelo de Flurrie
+El pelo de Claudia
 
 Bobbery's body
-El cuerpo de Bobbery
+El cuerpo de Bombard
 
-Ms. Mowz's mask and cape
-La máscara y la capa de Ms. Mowz
+Ms. Mowz's mask
+La máscara de Lupina
 
 Vivian's body
-El cuerpo de Vivian
+El cuerpo de Bibiana
+
+Goombella's helmet
+El casco de Goomarina
+
+Flurrie's dress
+El vestido de Claudia
+
+Bobbery's fuse
+La mecha de Bombard
+
+Vivian's hat
+El sombrero de Bibiana
+
+Vivian's hair
+El pelo de Bibiana
+
+Ms. Mowz's cape
+La capa de Lupina
+
+Its own colour, or the mask's.
+Un color propio o el de la máscara.
+
+Theme
+Tema
+
+The status bar's banners and the menus' pages in colours that go together. A part with a colour of its own keeps it.
+Las bandas de la barra de estado y las páginas de los menús en colores que combinan. Una parte con color propio lo conserva.
+
+Night
+Noche
+
+Forest
+Bosque
+
+Ocean
+Océano
+
+Candy
+Caramelo
+
+High contrast
+Alto contraste
+
+Menus
+Menús
+
+The Start menu's pages, all in one colour.
+Las páginas del menú Start, todas de un color.

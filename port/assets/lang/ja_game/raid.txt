@@ -1,0 +1,55 @@
+# The raid boss drawn with the game's font (the Start menu's rows and the week's page, port/settings/features/raid.cpp; the Online tab's row), in Japanese for the JP release's own font: kana and its few kanji, words apart.
+
+Raid boss
+レイドボス
+
+This week's raid for two to four players: it begins once the menu is closed. Win or lose, Mario is back here after.
+２～４にんで　あそぶ　こんしゅうの　レイド　メニューを　とじると　はじまります
+
+This week's raid
+こんしゅうの　レイド
+
+The boss, its phases and what they borrow.
+ボスと　フェーズと　かりる　わざ
+
+The raid begins once the menu is closed.
+メニューを　とじると　レイドが　はじまります
+
+A raid is already on.
+もう　レイドちゅうです
+
+Another mode is running: finish it first.
+ほかの　モードの　さいちゅうです　さきに　おわらせてください
+
+A raid needs two players or more: online, a second controller, or Brothers mode's Luigi.
+レイドは　２にん　いじょうで　あそびます　オンライン　２Pの　コントローラー　ブラザーズモードの　ルイージ
+
+From %s: %s
+%s から：%s
+
+HP: %d (two players) to %d (four)
+HP：%d（２にん）～%d（４にん）
+
+1: the boss as it fights, stronger.
+1：いつもの　ボスが　つよく　なります
+
+2: a shell (1 damage) a duo move breaks; %s.
+2：カラ（1ダメージ）を　デュオわざで　わる　%s
+
+3: fury: piercing hits; half damage until
+3：いかり　つらぬく　こうげき　ダメージ　はんぶん
+
+   everyone has Superguarded once.
+   ぜんいんが　スーパーガードするまで
+
+4: %s and %s; duo moves x2.
+4：%s　%s　デュオわざ　２ばい
+
+Raid boss of the week
+こんしゅうの　レイドボス
+
+This week's raid boss, for everyone in the game: it begins once the menu is closed.
+みんなで　こんしゅうの　レイドボス　メニューを　とじると　はじまります
+
+the Shadow Queen's curse
+カゲの　じょおうの　のろい

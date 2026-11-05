@@ -1,0 +1,13 @@
+# Button icons: the words for the buttons with no icon in the game's font (日本語, the JP release's font)
+
+stick
+スティック
+
+C-stick
+Cスティック
+
+right stick
+みぎスティック
+
+D-pad
+じゅうじボタン

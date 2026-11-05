@@ -50,6 +50,7 @@ static void marioDisp(CameraId camId, void* param);
 #ifdef TARGET_PC /* Play as Luigi: Mario's draws go through Luigi's stand-in (port/include/port/luigi.h) */
 #include "port/luigi.h"
 #define animPoseDrawMtx portLuigiDrawMtx
+#include "port/toggles.h"
 #endif
 
 static void marioCtrlOff2Main(void);
@@ -1260,6 +1261,11 @@ void PORT_HOOKABLE(marioMain)(void) {
         wp->playerGravity = 0.5f;
     }
 #endif
+#ifdef TARGET_PC
+    if (portFunOn(PORT_FUN_MOON_GRAVITY)) { /* fun toggles: the Moon's gravity everywhere */
+        wp->playerGravity = 0.5f;
+    }
+#endif
     marioPreCamera();
     marioHitCheckWidth();
     if (wp->mutekiTimer > 0) {
@@ -2248,9 +2254,13 @@ void PORT_HOOKABLE(marioPreDisp)(void) {
         animPoseSetLocalTime(wp->paperAnimGroupId[marioAnimeId()], wp->poseTime);
     }
     animPoseMain(wp->paperAnimGroupId[marioAnimeId()]);
-#ifdef TARGET_PC /* Play as Luigi: not for Peach, Bowser or 8-bit Mario */
+#ifdef TARGET_PC /* Play as: the pick stands in for Mario (not for Peach, Bowser or 8-bit Mario) */
     portLuigiUpdate(PORT_LUIGI_FIELD, wp->paperAnimGroupId[marioAnimeId()],
                     !wp->characterId && !(wp->flags & MARIO_FLAG_IS_8_BIT));
+    if (wp->characterId) {
+        /* Peach's and Bowser's interludes, when they are the pick: Mario plays their part */
+        portLuigiNpcUpdate(wp->paperAnimGroupId[marioAnimeId()]);
+    }
 #endif
     if (wp->dispFlags & MARIO_DISP_FLAG_HIDDEN) {
         return;

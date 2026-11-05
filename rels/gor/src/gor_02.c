@@ -18,6 +18,9 @@
 #include "driver/npcdrv.h"
 #include "mario/mario_pouch.h"
 #include "mario/mario.h"
+#ifdef TARGET_PC
+#include "port/party.h"
+#endif
 #include "stdio.h"
 #include "driver/bgdrv.h"
 #include "dolphin/mtx.h"
@@ -2454,6 +2457,9 @@ EVT_BEGIN(kuribo4_talk)
         CASE_DEFAULT
         CALL(evt_msg_print, 0, STRING("gor_02_030_08"), 0, STRING("me"))
     END_SWITCH
+#ifdef TARGET_PC /* Tattle cards: the Westside's regular (port/include/port/party.h) */
+    CALL(portEvtCardsTalk, PORT_DUEL_REGULAR)
+#endif
     RETURN
 EVT_END()
 
@@ -2484,6 +2490,9 @@ EVT_BEGIN(chusan3_talk)
         CASE_DEFAULT
         CALL(evt_msg_print, 0, STRING("gor_02_031_08"), 0, STRING("me"))
     END_SWITCH
+#ifdef TARGET_PC /* Tattle cards: the Westside's rookie (port/include/port/party.h) */
+    CALL(portEvtCardsTalk, PORT_DUEL_ROOKIE)
+#endif
     RETURN
 EVT_END()
 
@@ -2610,6 +2619,9 @@ EVT_BEGIN(borodo1_talk)
         CASE_DEFAULT
         CALL(evt_msg_print, 0, STRING("gor_02_033_08"), 0, STRING("me"))
     END_SWITCH
+#ifdef TARGET_PC /* Tattle cards: the Westside's champion (port/include/port/party.h) */
+    CALL(portEvtCardsTalk, PORT_DUEL_CHAMPION)
+#endif
     RETURN
 EVT_END()
 

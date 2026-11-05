@@ -1,0 +1,146 @@
+# The settings' groups (port/settings/settings_layout.cpp) and the page's own words, in 日本語: an English line, then its translation, then a blank line.
+
+Speed
+スピード
+
+Camera
+カメラ
+
+As on the console
+ゲーム機と同じに
+
+Getting around
+移動
+
+Items and saving
+アイテムとセーブ
+
+Battles
+バトル
+
+Rewards and balance
+ほうびとバランス
+
+New things to find
+新しい発見
+
+Screen
+画面
+
+Picture shape
+画面の形
+
+Other screens
+ほかの画面
+
+Quality
+画質
+
+Paper looks
+紙の見た目
+
+Rumble and light
+振動とライト
+
+Touch
+タッチ
+
+Other ways to play
+ほかの遊び方
+
+Overlays
+オーバーレイ
+
+Seeing
+見る
+
+Hearing and reading
+聞く・読む
+
+Timing
+タイミング
+
+Co-op
+協力プレイ
+
+Together
+いっしょに
+
+Saving
+セーブ
+
+Backups
+バックアップ
+
+Other devices
+ほかの機器
+
+Starting
+起動
+
+Pictures
+写真
+
+Updates
+アップデート
+
+More
+その他
+
+New ways through the story
+物語の新しい遊び方
+
+Every day
+毎日
+
+Party games
+パーティーゲーム
+
+Just for fun
+おたのしみ
+
+Rules
+ルール
+
+Make your own
+自分で作る
+
+Timer
+タイマー
+
+Save states and warps
+ステートセーブとワープ
+
+Tools
+ツール
+
+new
+新
+
+Borderless: the whole screen, switching away at once. Full screen: the screen is the game's alone, at its own resolution and refresh rate. Keyboard: F11 or Alt+Enter.
+ボーダーレス：画面全体に表示し、すぐに切り替えられます。フルスクリーン：画面をゲーム専用にし、ディスプレイ本来の解像度とリフレッシュレートで表示します。キーボード：F11 か Alt+Enter。
+
+Start with the last disc played, without the launcher.
+ランチャーを出さずに、最後に遊んだディスクで始めます。
+
+Character
+キャラクター
+
+Fast-forward and rewind
+早送りと巻き戻し
+
+Collectibles
+コレクション
+
+Filter
+フィルター
+
+Output
+出力
+
+
+In the background
+バックグラウンド
+
+After the story
+クリア後

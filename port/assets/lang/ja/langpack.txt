@@ -21,7 +21,7 @@ The template could not be written.
 Written: %s, with %d texts to translate.
 書きこみました: %s(翻訳する文 %d 個)
 
-Letters the menus' fonts didn't have yet show after a restart.
+New letters for the menus' fonts show after a restart.
 メニューのフォントになかった文字は、再起動のあとに表示されます。
 
 No language packs yet.

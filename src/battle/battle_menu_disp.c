@@ -7,6 +7,7 @@
 #endif
 #ifdef TARGET_PC
 #include "port/platform.h"
+#include "port/port_text.h"
 #endif
 #include "port_hook.h"
 #include "version.h"
@@ -1249,18 +1250,46 @@ static void DrawMenuHelpWin(const char* msg, f32 x, f32 y) {
             }
             if (*p == '\n') {
                 *dst = 0;
+#ifdef TARGET_PC
+                /* (a translated or modded help can run past the four lines: the rest is dropped) */
+                if (line == 3) {
+                    break;
+                }
+#endif
                 dst = lines[++line];
                 p++;
                 continue;
             }
+#ifdef TARGET_PC
+            /* (and past a line's 0x30 bytes: the line stops there, never mid-letter in Shift-JIS) */
+            if (dst - lines[line] >= 0x2F ||
+                (dst - lines[line] == 0x2E && (((u8)*p >= 0x81 && (u8)*p <= 0x9F) || (u8)*p >= 0xE0))) {
+                dst = lines[line] + 0x2F; /* full: everything up to the next line break is dropped */
+                *dst = 0;
+                p++;
+                continue;
+            }
+#endif
             *dst = *p;
             p++;
             dst++;
         }
+#ifdef TARGET_PC
+        for (i = 0; i < 4; i++) {
+            lines[i][0x2F] = 0;
+        }
+#endif
         if (lines[0][0]) {
             FontDrawScale(0.8f);
         }
         tx = 20.0f + x;
+#ifdef TARGET_PC
+        /* Paper Cut's help (a duo move's, a badge's...), copied a line at a time: drawn with the
+         * game's random numbers put back (port/include/port/port_text.h) */
+        for (i = 0; i < 3; i++) {
+            portTextCopied((const char*)lines[i], msg, NULL);
+        }
+#endif
         FontDrawString(tx, y - 4.0f, (char*)lines[0]);
         if (lines[1][0]) {
             FontDrawScale(0.8f);

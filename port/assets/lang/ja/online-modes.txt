@@ -1,0 +1,4 @@
+# オンラインのモード：スタートメニューから始めて、セッションのすべてのゲームで同時に（各モードのページ）（日本語）
+
+Online, start it from the Start menu (Settings, Modes), so every game of the session starts it together.
+オンラインでは、スタートメニュー（設定、モード）から始めてください。セッションのすべてのゲームが同時に始めます。

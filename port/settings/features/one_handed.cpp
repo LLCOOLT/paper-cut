@@ -3,13 +3,14 @@
 // Bindings section changes it afterwards, its Reset all undoes it), and hold
 // instead of mashing (port/src/common/assist_pc.c).
 //
-//   Left hand    the stick moves; the d-pad is A, B, X and Y where the face
+//   Left hand    the stick moves; the D-pad is A, B, X and Y where the face
 //                buttons are (down A on most controllers), the left bumper Z,
 //                the left trigger R, the stick pressed in L, Back/Select Start
 //   Right hand   the right stick moves (the left one is the C-stick); the face
 //                buttons, the right bumper (Z) and trigger (R) as they are,
 //                the right stick pressed in L, Start
-// The GameCube d-pad is left without a button either way: the game hardly uses it.
+// The GameCube D-pad is left without a button either way: the game hardly uses it.
+#include "port/pause_forms.h"
 #include "port/settings.h"
 #include "port/tr.h"
 
@@ -24,7 +25,7 @@ namespace {
 
 enum Hand { kLeft, kRight };
 
-// the d-pad direction where a face button is
+// the D-pad direction where a face button is
 u32 dpadAt(u32 face) {
   switch (face) {
   case SDL_GAMEPAD_BUTTON_SOUTH:
@@ -150,8 +151,8 @@ void testFrame() {
     const char* name;
   };
   static const Step kSteps[] = {
-      {SDL_GAMEPAD_BUTTON_DPAD_DOWN, "d-pad down"}, {SDL_GAMEPAD_BUTTON_DPAD_RIGHT, "d-pad right"},
-      {SDL_GAMEPAD_BUTTON_DPAD_LEFT, "d-pad left"}, {SDL_GAMEPAD_BUTTON_DPAD_UP, "d-pad up"},
+      {SDL_GAMEPAD_BUTTON_DPAD_DOWN, "D-pad down"}, {SDL_GAMEPAD_BUTTON_DPAD_RIGHT, "D-pad right"},
+      {SDL_GAMEPAD_BUTTON_DPAD_LEFT, "D-pad left"}, {SDL_GAMEPAD_BUTTON_DPAD_UP, "D-pad up"},
       {SDL_GAMEPAD_BUTTON_LEFT_SHOULDER, "left bumper"}, {SDL_GAMEPAD_BUTTON_LEFT_STICK, "left stick in"},
       {SDL_GAMEPAD_BUTTON_BACK, "back"}, {SDL_GAMEPAD_BUTTON_SOUTH, "south"}, {SDL_GAMEPAD_BUTTON_EAST, "east"},
       {SDL_GAMEPAD_BUTTON_WEST, "west"}, {SDL_GAMEPAD_BUTTON_NORTH, "north"},
@@ -245,11 +246,44 @@ void section(int) {
   }
 }
 
+// The Start menu's form (port/include/port/pause_forms.h): the player, then each hand
+enum { kFormPlayer, kFormLeft, kFormRight };
+int sFormPort;
+constexpr const char* kFormPorts[] = {"Player 1", "Player 2", "Player 3", "Player 4"};
+
+int formRows(PortPauseRow* out, int max) {
+  if (max < 3) {
+    return 0;
+  }
+  out[0] = portPauseRow("Player", "Whose controller is set: left and right change it.", kFormPorts[sFormPort], kFormPlayer);
+  out[1] = portPauseRow("Left hand", "The stick moves, the D-pad is ABXY, LB is Z and LT is R.",
+                        nullptr, kFormLeft, PORT_PAUSE_ROW_CONFIRM);
+  out[2] = portPauseRow("Right hand", "The right stick moves; face buttons, RB and RT unchanged.",
+                        nullptr, kFormRight, PORT_PAUSE_ROW_CONFIRM);
+  return 3;
+}
+
+const char* formAct(int id, int dir) {
+  if (id == kFormPlayer) {
+    sFormPort = (sFormPort + (dir == 0 ? 1 : dir) + 4) % 4;
+    return nullptr;
+  }
+  if (dir != 0) {
+    return nullptr;
+  }
+  const bool left = id == kFormLeft;
+  return apply(u32(sFormPort), left ? kLeft : kRight) ? (left ? "Set for the left hand." : "Set for the right hand.")
+                                                     : "No controller is this player.";
+}
+
+const PortPauseForm kForm = {"Controls", "One-handed controls", formRows, formAct, PORT_PAUSE_FORM_OWN};
+
 const bool sAdded = [] {
   portSettingsDeclare("hold_to_mash", 0, 0, 1);
+  portPauseAddForm(&kForm);
   portSettingsAddSection(
       "Controls", "One-handed controls",
-      "Everything on one half of the controller. Left hand: the stick moves, the d-pad is A, B, X and Y, the left "
+      "Everything on one half of the controller. Left hand: the stick moves, the D-pad is A, B, X and Y, the left "
       "bumper Z, the left trigger R, the stick pressed in L, Back Start. Right hand: the right stick moves, the face "
       "buttons, right bumper and trigger as they are, the right stick pressed in L. Change any button afterwards under "
       "Bindings; Reset all there undoes it. Back and the stick presses then play instead of opening "

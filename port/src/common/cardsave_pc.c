@@ -215,14 +215,159 @@ static int isMeta(int32_t length, int32_t offset) {
 
 void (*gPortCardWillWrite)(void);
 
+/* ------------------------------------------------- Paper Cut's slot block */
+_Static_assert(PORT_CARD_EXTRA_AT >= PORT_CARD_GC_DATA_SIZE && PORT_CARD_EXTRA_AT + PORT_CARD_EXTRA_SIZE <= GC_VERSION,
+               "the block sits between the GameCube data and the slot's trailer");
+static char sExtra[4][PORT_CARD_EXTRA_SIZE];
+static int sExtraKeep[4];
+void (*gPortCardExtraForSave)(int slot, const char* old, int copy, char* out, int cap);
+void (*gPortCardExtraApply)(int slot, const char* text);
+void (*gPortCardSlotWritten)(int slot, const uint8_t* image);
+
+static int slotIndex(int32_t offset) {
+    return (int)(((offset - (int32_t)PORT_CARD_META_SIZE) / (int32_t)PORT_CARD_SLOT_SIZE) & 7);
+}
+
+const char* portCardSlotExtra(int slot) {
+    return slot >= 0 && slot < 4 ? sExtra[slot] : "";
+}
+
+void portCardSlotExtraSet(int slot, const char* text) {
+    if (slot < 0 || slot >= 4) {
+        return;
+    }
+    if (text == NULL) {
+        text = "";
+    }
+    strncpy(sExtra[slot], text, PORT_CARD_EXTRA_SIZE - 1);
+    sExtra[slot][PORT_CARD_EXTRA_SIZE - 1] = '\0';
+}
+
+const char* portCardImageExtra(const uint8_t* image) {
+    static char text[PORT_CARD_EXTRA_SIZE];
+    const char* at = (const char*)image + PORT_CARD_EXTRA_AT;
+    if (memcmp(at, PORT_CARD_EXTRA_MAGIC, sizeof(PORT_CARD_EXTRA_MAGIC) - 1) != 0) {
+        return NULL;
+    }
+    memcpy(text, at, PORT_CARD_EXTRA_SIZE - 1);
+    text[PORT_CARD_EXTRA_SIZE - 1] = '\0';
+    return text;
+}
+
+void portCardExtraSave(int slot) {
+    char out[PORT_CARD_EXTRA_SIZE];
+    if (slot < 0 || slot >= 4 || gPortCardExtraForSave == NULL) {
+        return;
+    }
+    out[0] = '\0';
+    gPortCardExtraForSave(slot, sExtra[slot], 0, out, (int)sizeof(out));
+    portCardSlotExtraSet(slot, out);
+}
+
+void portCardExtraCopy(int from, int to) {
+    char out[PORT_CARD_EXTRA_SIZE];
+    if (from < 0 || from >= 4 || to < 0 || to >= 4) {
+        return;
+    }
+    if (gPortCardExtraForSave == NULL) {
+        portCardSlotExtraSet(to, sExtra[from]);
+        return;
+    }
+    out[0] = '\0';
+    gPortCardExtraForSave(to, sExtra[from], 1, out, (int)sizeof(out));
+    portCardSlotExtraSet(to, out);
+}
+
+void portCardExtraErase(int slot) {
+    portCardSlotExtraSet(slot, "");
+}
+
+void portCardExtraKeepNext(int slot) {
+    if (slot >= 0 && slot < 4) {
+        sExtraKeep[slot] = 1;
+    }
+}
+
+void portCardExtraLoaded(int slot) {
+    if (slot < 0 || slot >= 4) {
+        return;
+    }
+    if (sExtraKeep[slot]) {
+        sExtraKeep[slot] = 0;
+        return;
+    }
+    if (gPortCardExtraApply != NULL) {
+        gPortCardExtraApply(slot, sExtra[slot]);
+    }
+}
+
+/* a slot image's block, from what is kept for its slot (main and backup) */
+static void putExtra(int index, uint8_t* image) {
+    const char* text = sExtra[index & 3];
+    const size_t n = strlen(text), magic = sizeof(PORT_CARD_EXTRA_MAGIC) - 1;
+    uint8_t* at = image + PORT_CARD_EXTRA_AT;
+    memset(at, 0, PORT_CARD_EXTRA_SIZE);
+    if (n >= magic && memcmp(text, PORT_CARD_EXTRA_MAGIC, magic) == 0) {
+        memcpy(at, text, n < PORT_CARD_EXTRA_SIZE - 1 ? n : PORT_CARD_EXTRA_SIZE - 1);
+    }
+}
+
+/* a slot just read into the game's card data (the copy the load chose, main
+ * or backup): its block kept. The reads that only check a slot's two copies
+ * (before a write, or for a load's choice) leave it: before a write, the
+ * block cardWrite made for the new save waits there (portCardExtraSave). */
+static int sReadIsCheck;
+
+void portCardReadCheckOnly(int check) {
+    sReadIsCheck = check;
+}
+
+static void takeExtra(int index, const uint8_t* image) {
+    if (!sReadIsCheck) {
+        portCardSlotExtraSet(index & 3, portCardImageExtra(image));
+    }
+}
+
+/* a write of more than one part, each whole: the header and the main slots
+ * from 0, or four slots (a card file's creation) */
+static int wholeRegions(int32_t length, int32_t offset) {
+    const int32_t meta = (int32_t)PORT_CARD_META_SIZE, slot = (int32_t)PORT_CARD_SLOT_SIZE;
+    if (offset == 0) {
+        return length > meta && length <= meta + 4 * slot && (length - meta) % slot == 0;
+    }
+    return offset >= meta && (offset - meta) % slot == 0 && length > slot && length <= 4 * slot && length % slot == 0;
+}
+
 void* portCardWriteImage(const void* native, int32_t length, int32_t offset) {
     if (gPortCardWillWrite != NULL) {
         gPortCardWillWrite();
     }
     if (isSlot(length, offset)) {
+        const int index = slotIndex(offset);
         portCardSlotToImage(native, sWriteImage);
+        putExtra(index, sWriteImage);
+        if (index < 4 && gPortCardSlotWritten != NULL) {
+            gPortCardSlotWritten(index, sWriteImage);
+        }
     } else if (isMeta(length, offset)) {
         portCardMetaToImage(native, sWriteImage);
+    } else if (wholeRegions(length, offset)) {
+        /* a new card file's header and four empty slots, then their backups
+         * (create_main): each part as the GameCube lays it out */
+        static uint8_t sCreateImage[PORT_CARD_META_SIZE + 4 * PORT_CARD_SLOT_SIZE] __attribute__((aligned(32)));
+        const uint8_t* src = (const uint8_t*)native;
+        int32_t at = 0;
+        while (at < length) {
+            if (offset + at == 0) {
+                portCardMetaToImage(src, sCreateImage);
+                at += (int32_t)PORT_CARD_META_SIZE;
+            } else {
+                portCardSlotToImage(src + at, sCreateImage + at);
+                putExtra(slotIndex(offset + at), sCreateImage + at);
+                at += (int32_t)PORT_CARD_SLOT_SIZE;
+            }
+        }
+        return sCreateImage;
     } else if (length > 0 && length <= (int32_t)sizeof(sWriteImage)) {
         memcpy(sWriteImage, native, (size_t)length); /* not a known region: raw */
     } else {
@@ -250,6 +395,7 @@ void portCardReadEnd(int32_t result) {
     }
     if (isSlot(sReadLen, sReadOff)) {
         portCardSlotFromImage(sReadImage, dst);
+        takeExtra(slotIndex(sReadOff), sReadImage);
     } else if (isMeta(sReadLen, sReadOff)) {
         portCardMetaFromImage(sReadImage, dst);
     } else {

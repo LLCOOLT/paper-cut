@@ -300,6 +300,15 @@ endif()
 # --- Game code: exactly the objects configure.py builds ---
 # Regenerate with tools/port/gen_sources.py after editing configure.py.
 include(${CMAKE_SOURCE_DIR}/port/sources_${TTYD_VERSION}.cmake)
+# Director's Cut (port/include/port/directors_cut.h): the Red Buzzy family's
+# units, only in the European release's test module (tst), built into the
+# Glitz Pit's REL as well, for every release, beside its Red Spike Top.
+if(TTYD_REL_tou2_SOURCES)
+    list(APPEND TTYD_REL_tou2_SOURCES
+        ${CMAKE_SOURCE_DIR}/rels/tst/src/unit/unit_crimson_met.c
+        ${CMAKE_SOURCE_DIR}/rels/tst/src/unit/unit_crimson_patamet.c
+        ${CMAKE_SOURCE_DIR}/rels/tst/src/unit/unit_crimson_patatogemet.c)
+endif()
 
 # Japanese text in string literals must be Shift-JIS, as sjiswrap makes it for
 # MWCC: sources with non-ASCII text are compiled from a copy with those
@@ -639,6 +648,9 @@ if(ANDROID)
     file(GLOB android_sources CONFIGURE_DEPENDS ${CMAKE_SOURCE_DIR}/port/android/native/*.c)
     list(APPEND TTYD_PORT_SOURCES ${android_sources})
 endif()
+# Paper Cut's own code: its calls to the game's font put the game's random numbers back after
+# (port/include/port/port_text.h; manager/fontmgr.h, win/win_main.h)
+set_property(SOURCE ${TTYD_PORT_SOURCES} APPEND PROPERTY COMPILE_DEFINITIONS TTYD_PORT_SOURCE=1)
 
 # MusyX sound system, built from the decompiled source with its PC target.
 file(STRINGS ${CMAKE_SOURCE_DIR}/libs/musyx/CMakeLists.txt musyx_lines REGEX "^ +src/musyx/.*\\.c$")
@@ -659,6 +671,35 @@ if(TTYD_BACKEND STREQUAL "aurora")
     target_link_libraries(musyx_pc PRIVATE ${AURORA_SDL3_TARGET})
 endif()
 
+# Lua 5.4 for Lua mods (docs/LUA_MODDING.md; libs/lua, docs/THIRD_PARTY.md):
+# the core and the safe standard libraries only. io, os, package (C
+# modules), debug and the stand-alone interpreters are not built at all.
+# Linked statically, no dynamic loading; Aurora only (headless has no Lua mods).
+if(TTYD_BACKEND STREQUAL "aurora")
+    set(TTYD_LUA_SOURCES)
+    foreach(_f lapi lauxlib lbaselib lcode lcorolib lctype ldebug ldo ldump lfunc lgc llex lmathlib lmem lobject
+               lopcodes lparser lstate lstring lstrlib ltable ltablib ltm lundump lutf8lib lvm lzio)
+        list(APPEND TTYD_LUA_SOURCES ${CMAKE_SOURCE_DIR}/libs/lua/src/${_f}.c)
+    endforeach()
+    # and this project's own: creation numbers for hashing, pattern matching with a
+    # step budget (libs/lua/lua_port_api.h)
+    list(APPEND TTYD_LUA_SOURCES ${CMAKE_SOURCE_DIR}/libs/lua/lua_port.c ${CMAKE_SOURCE_DIR}/libs/lua/lua_port_match.c)
+    add_library(lua STATIC ${TTYD_LUA_SOURCES})
+    target_include_directories(lua PUBLIC ${CMAKE_SOURCE_DIR}/libs/lua/src ${CMAKE_SOURCE_DIR}/libs/lua)
+    # fixed hash and sort seeds, for online play's lockstep (libs/lua/lua_port.h); MSVC's own
+    # spelling where its front end is the one (clang-cl, MSVC), as port_prefix.h's
+    if(MSVC)
+        target_compile_options(lua PRIVATE /FI${CMAKE_SOURCE_DIR}/libs/lua/lua_port.h /w)
+    else()
+        target_compile_options(lua PRIVATE -include ${CMAKE_SOURCE_DIR}/libs/lua/lua_port.h -w)
+    endif()
+    # the two users of point2uint: tables, functions and coroutines hashed by creation number (lua_port.h)
+    set_source_files_properties(${CMAKE_SOURCE_DIR}/libs/lua/src/ltable.c ${CMAKE_SOURCE_DIR}/libs/lua/src/lstring.c
+        PROPERTIES COMPILE_DEFINITIONS LUA_PORT_POINTER_HASH=1)
+    target_compile_definitions(lua PRIVATE _CRT_SECURE_NO_WARNINGS=1)
+    set_target_properties(lua PROPERTIES C_STANDARD 99 POSITION_INDEPENDENT_CODE ON)
+endif()
+
 # Save states (port/src/aurora/savestate_aurora.c; Aurora with static RELs):
 # the game's data and bss go to their own sections (port_prefix.h), copied as
 # a whole with MEM1, ARAM, the RELs' sections and the save-state heap
@@ -674,10 +715,22 @@ if(TTYD_BACKEND STREQUAL "aurora" AND TTYD_RELS_STATIC)
     endforeach()
     set_property(SOURCE ${CMAKE_SOURCE_DIR}/libs/musyx/src/musyx/runtime/hw_pc.c TARGET_DIRECTORY musyx_pc
         APPEND PROPERTY COMPILE_DEFINITIONS TTYD_NO_SNAPSHOT=1)
-    foreach(_f anim_pc tpl_pc map_pc camroad_pc gx_arrays_pc snapshot_bounds_pc luigi_pc)
+    # (0.4.0: page_turn_pc, a room change's page flip; chaos_pc, its effect and timer; open_world_pc, the
+    # room the hub last saw)
+    foreach(_f anim_pc tpl_pc map_pc camroad_pc gx_arrays_pc snapshot_bounds_pc luigi_pc costume_pc skin_pc battlex_pc enemy_variant_pc duo_pc
+               brothers_pc page_turn_pc chaos_pc open_world_pc)
         set_property(SOURCE ${CMAKE_SOURCE_DIR}/port/src/common/${_f}.c APPEND PROPERTY
             COMPILE_DEFINITIONS TTYD_SNAPSHOT_SECTION=1)
         set_property(SOURCE ${CMAKE_SOURCE_DIR}/port/src/common/${_f}.c APPEND PROPERTY COMPILE_OPTIONS -fno-common)
+    endforeach()
+    # (port/src/aurora: Master Quest's formations and copied moves, which the game's NPCs and units
+    # point at, and its fight's state; Director's Cut's "applied", kept with the badge table it
+    # changed. The other modes there keep state of their own outside: save states and rewind are
+    # refused while they run, savestate_aurora.c's allowed)
+    foreach(_f master_quest_aurora directors_cut_aurora)
+        set_property(SOURCE ${CMAKE_SOURCE_DIR}/port/src/aurora/${_f}.c APPEND PROPERTY
+            COMPILE_DEFINITIONS TTYD_SNAPSHOT_SECTION=1)
+        set_property(SOURCE ${CMAKE_SOURCE_DIR}/port/src/aurora/${_f}.c APPEND PROPERTY COMPILE_OPTIONS -fno-common)
     endforeach()
 endif()
 
@@ -856,24 +909,52 @@ if(TTYD_BACKEND STREQUAL "aurora")
     # Luigi's animation pack, our own work (port/src/aurora/luigi_model_aurora.c, docs/LUIGI_ANIMS.md)
     ttyd_embed_file(${CMAKE_SOURCE_DIR}/port/assets/luigi/luigi_anims.bin portLuigiPack
         ${CMAKE_BINARY_DIR}/generated/luigi_pack.c)
+    # Paper Cut's logo, for the artwork of Add to Steam (port/settings/features/steam_shortcut.cpp)
+    ttyd_embed_file(${CMAKE_SOURCE_DIR}/port/assets/icon/papercut-512.png portLogo512
+        ${CMAKE_BINARY_DIR}/generated/logo512.c)
+    # Peach's (front and back) and Bowser's, for Play as (docs/PLAY_AS.md)
+    ttyd_embed_file(${CMAKE_SOURCE_DIR}/port/assets/luigi/peach_anims.bin portPeachPack
+        ${CMAKE_BINARY_DIR}/generated/peach_pack.c)
+    ttyd_embed_file(${CMAKE_SOURCE_DIR}/port/assets/luigi/peach_r_anims.bin portPeachRPack
+        ${CMAKE_BINARY_DIR}/generated/peach_r_pack.c)
+    ttyd_embed_file(${CMAKE_SOURCE_DIR}/port/assets/luigi/bowser_anims.bin portBowserPack
+        ${CMAKE_BINARY_DIR}/generated/bowser_pack.c)
+    ttyd_embed_file(${CMAKE_SOURCE_DIR}/port/assets/luigi/bowser_r_anims.bin portBowserRPack
+        ${CMAKE_BINARY_DIR}/generated/bowser_r_pack.c)
     # the community controller mappings (port/settings/features/controllers.cpp, docs/THIRD_PARTY.md)
     ttyd_embed_file(${CMAKE_SOURCE_DIR}/port/assets/controllers/gamecontrollerdb.txt portControllerDb
         ${CMAKE_BINARY_DIR}/generated/controller_db.c)
     add_library(ttyd_settings OBJECT ${CMAKE_SOURCE_DIR}/port/settings/settings_ui.cpp
         ${CMAKE_SOURCE_DIR}/port/settings/launcher_ui.cpp ${CMAKE_SOURCE_DIR}/port/settings/launcher_style.cpp
+        ${CMAKE_SOURCE_DIR}/port/settings/launcher_popup.cpp ${CMAKE_SOURCE_DIR}/port/settings/launcher_stage.cpp
+        ${CMAKE_SOURCE_DIR}/port/settings/settings_layout.cpp
+        ${CMAKE_SOURCE_DIR}/port/settings/launcher_shot.cpp
+        ${CMAKE_SOURCE_DIR}/port/settings/launcher_look.cpp ${CMAKE_SOURCE_DIR}/port/settings/launcher_brand.cpp
         ${CMAKE_SOURCE_DIR}/port/settings/button_glyphs.cpp
         ${CMAKE_SOURCE_DIR}/port/settings/http.cpp ${CMAKE_SOURCE_DIR}/port/settings/tr.cpp
         # plain HTTP on the local network (save transfer); the QR code (libs/qrcodegen, docs/THIRD_PARTY.md)
         ${CMAKE_SOURCE_DIR}/port/settings/lan_http.cpp ${CMAKE_SOURCE_DIR}/libs/qrcodegen/qrcodegen.c
         ${CMAKE_BINARY_DIR}/generated/font_bold.c ${CMAKE_BINARY_DIR}/generated/font_medium.c
         ${CMAKE_BINARY_DIR}/generated/icon64.c ${CMAKE_BINARY_DIR}/generated/luigi_pack.c
-        ${CMAKE_BINARY_DIR}/generated/controller_db.c ${TTYD_SETTINGS_FEATURES})
+        ${CMAKE_BINARY_DIR}/generated/peach_pack.c ${CMAKE_BINARY_DIR}/generated/peach_r_pack.c
+        ${CMAKE_BINARY_DIR}/generated/bowser_pack.c ${CMAKE_BINARY_DIR}/generated/bowser_r_pack.c
+        ${CMAKE_BINARY_DIR}/generated/controller_db.c ${CMAKE_BINARY_DIR}/generated/logo512.c
+        ${TTYD_SETTINGS_FEATURES})
     target_include_directories(ttyd_settings PRIVATE ${CMAKE_SOURCE_DIR}/port/include)
     target_compile_features(ttyd_settings PRIVATE cxx_std_20)
     # The port's version, shown on the settings page (tools/port/release.py sets it).
     set(TTYD_PORT_VERSION "dev" CACHE STRING "The port's version (releases: e.g. 0.1.0)")
     target_compile_definitions(ttyd_settings PRIVATE _CRT_SECURE_NO_WARNINGS=1 PORT_VERSION="${TTYD_PORT_VERSION}"
         PORT_GAME_ID="${TTYD_VERSION}")
+    # and the commit, for replays and online co-op (port/include/port/build_id.h): written at
+    # every build, only when it changed
+    add_custom_target(ttyd_build_id
+        COMMAND ${CMAKE_COMMAND} -DSRC=${CMAKE_SOURCE_DIR} -DOUT=${CMAKE_BINARY_DIR}/generated/build_id.c
+            -P ${CMAKE_SOURCE_DIR}/cmake/build_id.cmake
+        BYPRODUCTS ${CMAKE_BINARY_DIR}/generated/build_id.c VERBATIM)
+    add_dependencies(ttyd_settings ttyd_build_id)
+    target_sources(ttyd_settings PRIVATE ${CMAKE_SOURCE_DIR}/port/settings/build_id.cpp
+        ${CMAKE_BINARY_DIR}/generated/build_id.c)
     # Discord status (port/settings/features/discord.cpp, docs/DISCORD_STATUS.md): the
     # Discord application's ID; empty: the feature is built in but does nothing, its setting hidden
     set(TTYD_DISCORD_APP_ID "1567620424886657085" CACHE STRING "Discord status's Discord application ID (Paper Cut's; empty: off)")
@@ -908,6 +989,14 @@ if(TTYD_BACKEND STREQUAL "aurora")
     file(COPY_FILE ${CMAKE_BINARY_DIR}/generated/luigi_art.c.tmp ${CMAKE_BINARY_DIR}/generated/luigi_art.c
         ONLY_IF_DIFFERENT)
     target_sources(ttyd_settings PRIVATE ${CMAKE_BINARY_DIR}/generated/luigi_art.c)
+    # the "what's new" page's list (port/include/port/whats_new.h), from this version's release notes
+    file(GLOB _wn_notes CONFIGURE_DEPENDS ${CMAKE_SOURCE_DIR}/docs/release_notes/*.md)
+    add_custom_command(OUTPUT ${CMAKE_BINARY_DIR}/generated/whats_new.c
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/tools/port/whats_new.py ${CMAKE_SOURCE_DIR}/docs/release_notes
+            ${TTYD_PORT_VERSION} ${CMAKE_BINARY_DIR}/generated/whats_new.c
+        DEPENDS ${_wn_notes} ${CMAKE_SOURCE_DIR}/tools/port/whats_new.py
+        COMMENT "The what's new page's list" VERBATIM)
+    target_sources(ttyd_settings PRIVATE ${CMAKE_BINARY_DIR}/generated/whats_new.c)
     target_link_libraries(ttyd PRIVATE ttyd_settings)
     if(WIN32)
         # HTTPS for the update check (port/settings/http.cpp)
@@ -933,14 +1022,18 @@ if(TTYD_BACKEND STREQUAL "aurora")
     endif()
     add_library(ttyd_mods STATIC ${CMAKE_SOURCE_DIR}/port/mods/mods.cpp ${CMAKE_SOURCE_DIR}/port/mods/mod_api.cpp
         ${CMAKE_SOURCE_DIR}/port/mods/evt_asm.cpp ${CMAKE_BINARY_DIR}/generated/statics_index.c
+        ${CMAKE_SOURCE_DIR}/port/mods/lua_host.cpp
         ${CMAKE_SOURCE_DIR}/port/archipelago/ap_client.cpp ${CMAKE_SOURCE_DIR}/port/archipelago/websocket.cpp
         ${CMAKE_SOURCE_DIR}/port/archipelago/ttyd_ap.cpp ${CMAKE_SOURCE_DIR}/port/archipelago/ttyd_rando.cpp
-        ${CMAKE_SOURCE_DIR}/port/archipelago/rando_gen.cpp)
+        ${CMAKE_SOURCE_DIR}/port/archipelago/rando_gen.cpp ${CMAKE_SOURCE_DIR}/port/archipelago/open_world.cpp)
     target_include_directories(ttyd_mods PRIVATE ${CMAKE_SOURCE_DIR}/port/include)
     target_compile_features(ttyd_mods PRIVATE cxx_std_20)
     target_compile_definitions(ttyd_mods PRIVATE _CRT_SECURE_NO_WARNINGS=1 PORT_GAME_ID="${TTYD_VERSION}"
         TTYD_MOD_PLATFORM="${TTYD_MOD_PLATFORM}")
     target_link_libraries(ttyd_mods PRIVATE aurora::core aurora::gx aurora::dvd ZLIB::ZLIB ${AURORA_SDL3_TARGET})
+    # Lua mods (port/mods/lua_host.cpp; the game's side, port/src/aurora/lua_game_aurora.c, in ttyd)
+    target_link_libraries(ttyd_mods PRIVATE lua)
+    target_link_libraries(ttyd PRIVATE lua)
     if(WIN32)
         target_link_libraries(ttyd_mods PRIVATE winhttp) # Archipelago's WebSocket (port/archipelago/websocket.cpp)
     endif()
@@ -1126,12 +1219,12 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Darwin" AND TTYD_BACKEND STREQUAL "aurora")
     if(NOT TTYD_MACOS_MIN_VERSION)
         set(TTYD_MACOS_MIN_VERSION 12.0)
     endif()
-    # CFBundleShortVersionString: the release's version (TTYD_PORT_VERSION, e.g.
-    # 0.2.0) when it is one, else 0.2 (as port/ios/ios.cmake)
-    if(TTYD_PORT_VERSION MATCHES "^[0-9]+(\\.[0-9]+)*$")
-        set(TTYD_MACOS_VERSION "${TTYD_PORT_VERSION}")
+    # CFBundleShortVersionString: TTYD_PORT_VERSION's leading numbers (0.4.0, or
+    # the 0.4.0 of 0.4.0-playtest), else 0.4.0 (as port/ios/ios.cmake)
+    if(TTYD_PORT_VERSION MATCHES "^([0-9]+(\\.[0-9]+)*)")
+        set(TTYD_MACOS_VERSION "${CMAKE_MATCH_1}")
     else()
-        set(TTYD_MACOS_VERSION "0.2")
+        set(TTYD_MACOS_VERSION "0.4.0")
     endif()
     configure_file(${CMAKE_SOURCE_DIR}/port/macos/Info.plist.in ${CMAKE_BINARY_DIR}/Info.plist @ONLY)
     # the app's icon (CFBundleIconFile), in Contents/Resources
@@ -1162,6 +1255,70 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Darwin" AND TTYD_BACKEND STREQUAL "aurora")
         fixup_bundle(\"\${_app}\" \"\" \"/opt/homebrew/lib;/usr/local/lib\")
         execute_process(COMMAND codesign --force --deep --sign - \"\${_app}\" COMMAND_ERROR_IS_FATAL ANY)
     ")
+endif()
+
+# --- Warnings for Paper Cut's own code ---
+# The decompiled game (src/, rels/, libs/) builds under -w: its matching style
+# is all noise. Paper Cut's own sources (port/) get a focused set of warnings
+# instead, as errors: each of these has hidden a real bug (a macro defined twice
+# in online_net_pc.c put online watchers out of step). Clang only (clang,
+# clang-cl, Apple clang, the NDK's, Emscripten's), each flag checked first;
+# TTYD_PORT_WERROR=OFF keeps them warnings (a new compiler's first build);
+# TTYD_PORT_EXTRA_WARNINGS adds more for a look (-Wshadow: about 30, nearly all
+# in stb_vorbis, none a bug, so it isn't in the set).
+option(TTYD_PORT_WERROR "Paper Cut's own code: its focused warnings are errors" ON)
+if(CMAKE_C_COMPILER_ID MATCHES "Clang" AND "-w" IN_LIST TTYD_CFLAGS)
+    include(CheckCCompilerFlag)
+    include(CheckCXXCompilerFlag)
+    if(TTYD_PORT_WERROR)
+        set(_pw -Werror=)
+    else()
+        set(_pw -W)
+    endif()
+    set(_port_c_warn -Wno-everything)
+    set(_port_cxx_warn)
+    foreach(_w macro-redefined implicit-function-declaration incompatible-pointer-types int-conversion
+               return-type format format-security uninitialized sometimes-uninitialized array-bounds
+               duplicate-decl-specifier excess-initializers ${TTYD_PORT_EXTRA_WARNINGS})
+        string(MAKE_C_IDENTIFIER "${_w}" _id)
+        check_c_compiler_flag(-W${_w} TTYD_HAVE_C_W_${_id})
+        if(TTYD_HAVE_C_W_${_id})
+            list(APPEND _port_c_warn ${_pw}${_w})
+        endif()
+        # C++ (port/settings, port/mods): those that C++ has, beside its default warnings
+        if(NOT _w MATCHES "^(implicit-function-declaration|incompatible-pointer-types|int-conversion)$")
+            check_cxx_compiler_flag(-W${_w} TTYD_HAVE_CXX_W_${_id})
+            if(TTYD_HAVE_CXX_W_${_id})
+                list(APPEND _port_cxx_warn ${_pw}${_w})
+            endif()
+        endif()
+    endforeach()
+    # the game target: -w moves from the target to each source that isn't Paper Cut's own
+    get_target_property(_ttyd_opts ttyd COMPILE_OPTIONS)
+    list(REMOVE_ITEM _ttyd_opts -w)
+    set_property(TARGET ttyd PROPERTY COMPILE_OPTIONS ${_ttyd_opts})
+    foreach(_t ttyd ttyd_settings ttyd_mods ttyd_cloud)
+        if(NOT TARGET ${_t})
+            continue()
+        endif()
+        get_target_property(_srcs ${_t} SOURCES)
+        foreach(_src ${_srcs})
+            if(_src MATCHES "^\\$<" OR NOT _src MATCHES "\\.(c|cpp|m|mm)$")
+                continue()
+            endif()
+            get_filename_component(_abs ${_src} ABSOLUTE BASE_DIR ${CMAKE_SOURCE_DIR})
+            string(FIND "${_abs}" "${CMAKE_SOURCE_DIR}/port/" _at)
+            if(_at EQUAL 0)
+                if(_abs MATCHES "\\.c$")
+                    set_property(SOURCE ${_src} APPEND PROPERTY COMPILE_OPTIONS ${_port_c_warn})
+                elseif(_abs MATCHES "\\.cpp$")
+                    set_property(SOURCE ${_src} APPEND PROPERTY COMPILE_OPTIONS ${_port_cxx_warn})
+                endif()
+            elseif(_t STREQUAL "ttyd")
+                set_property(SOURCE ${_src} APPEND PROPERTY COMPILE_OPTIONS -w)
+            endif()
+        endforeach()
+    endforeach()
 endif()
 
 # --- Host unit tests (no disc, no window): ctest or run the binaries ---
@@ -1203,9 +1360,12 @@ target_compile_options(loaders_test PRIVATE ${TTYD_CFLAGS})
 add_test(NAME loaders_test COMMAND loaders_test)
 # art_recipe_test: the art recipe runner on an extracted disc (tests/port/art_recipe_check.py
 # compares it with the authoring tool, port/assets/luigi/art/tools/recipes.py).
+# `rotate` turns by the game's sine and cosine (fdlibm, as the game does).
 add_executable(art_recipe_test EXCLUDE_FROM_ALL
     ${CMAKE_SOURCE_DIR}/tests/port/art_recipe_test.c
-    ${CMAKE_SOURCE_DIR}/port/src/common/art_recipe.c)
+    ${CMAKE_SOURCE_DIR}/port/src/common/art_recipe.c
+    ${CMAKE_SOURCE_DIR}/port/src/common/runtime_pc.c
+    ${TTYD_FDLIBM_SOURCES})
 target_compile_definitions(art_recipe_test PRIVATE ${TTYD_DEFINES})
 target_include_directories(art_recipe_test PRIVATE ${TTYD_INCLUDES})
 target_compile_options(art_recipe_test PRIVATE ${TTYD_CFLAGS})

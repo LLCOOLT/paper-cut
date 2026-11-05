@@ -3,10 +3,17 @@
 #include "battle/battle_mario.h"
 #include "battle/battle_item_data.h"
 #include "version.h"
+#ifdef TARGET_PC
+#include "port/battlex.h"
+/* longer on PC: the port's own badges and dishes from PORT_ITEM_MIN (port/include/port/battlex.h) */
+#define ITEM_TABLE_LENGTH PORT_ITEM_TABLE_SIZE
+#else
+#define ITEM_TABLE_LENGTH 340
+#endif
 
 #if VERSION <= VERSION_DEMO_JP
 // the demo item table (generated from the demo data)
-ItemData itemDataTable[340] = {
+ItemData itemDataTable[ITEM_TABLE_LENGTH] = {
     {"むこうアイテム", "in_unknown_item", "msg_unknown_item", "msg_unknown_item", 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0, 0x0, 0x0, 0x0, 0x0, 0x0, NULL},
     {"ふしぎなふくろ", "in_item_pouch", "msg_item_pouch", "msg_item_pouch", 0x0, 0x2, 0xA, 0x7, 0x5, 0x5, 0, 0x0, 0x0, 0x0, 0x9B, 0x0, NULL},
     {"スリットへんか", "in_unknown_item", "in_unknown_item", "in_unknown_item", 0x0, 0x3, 0xA, 0x7, 0x5, 0x5, 0, 0x0, 0x0, 0x0, 0xA5, 0x0, NULL},
@@ -349,7 +356,7 @@ ItemData itemDataTable[340] = {
     {NULL, NULL, NULL, NULL, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0, 0x0, 0x0, 0x0, 0x0, 0x0, NULL}
 };
 #else
-ItemData itemDataTable[340] = {
+ItemData itemDataTable[ITEM_TABLE_LENGTH] = {
     {"むこうアイテム", "in_unknown_item", "msg_unknown_item", "msg_unknown_item", 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x00, 0x00, 0x00, 0x00, 0x0, 0x0, NULL},
 #if VERSION >= VERSION_US
     {"ふしぎなふくろ", "in_item_pouch", "msg_item_pouch", "msg_item_pouch", 0x0, 0xFA, 0xA, 0x7, 0x5, 0x5, 0x00, 0x00, 0x00, 0x00, 0xA3, 0x0, NULL},

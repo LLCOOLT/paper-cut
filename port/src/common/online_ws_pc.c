@@ -24,6 +24,9 @@ void portWsSend(const void* data, size_t len) {
     (void)data;
     (void)len;
 }
+void portWsSendText(const char* text) {
+    (void)text;
+}
 size_t portWsRead(void* out, size_t cap) {
     (void)out;
     (void)cap;
@@ -331,13 +334,24 @@ static int upgrade(Conn* c) {
         }
         line[n] = '\0';
         SDL_Log("online: relay answered %d: %s", status, line);
-        if (status == 429 || status >= 500) {
+        if (status == 429) {
             setError("The relay is full for today: it opens again at midnight UTC. Connecting by address "
                      "still works.");
+        } else if (status >= 500) {
+            setError("The relay isn't answering right now: try again later, or connect by address.");
         } else if (status == 404 && strstr(line, "hosting") != NULL) {
-            setError("No one is hosting that room: check the code.");
+            /* (a wrong code, or the host not there yet: the relay can't tell them apart) */
+            setError("No one is hosting that room yet: check the code, or ask the host to open it and try again.");
+        } else if (status == 400 && strstr(line, "role") != NULL) {
+            /* a relay from before watching or players 3 and 4 in rooms (port/relay not deployed since) */
+            setError("The relay can't do that yet (it needs an update): use the host's address instead.");
         } else if (status == 409 && strstr(line, "full") != NULL) {
-            setError("That room already has two players.");
+            /* (port/relay's room refusals: a guest's "full", a watcher's, a seat's; a host's "has a host") */
+            setError("That room already has its second player: play as player 3 or 4, or watch.");
+        } else if (status == 409 && strstr(line, "watching") != NULL) {
+            setError("As many are watching that room as can: try again later.");
+        } else if (status == 409 && strstr(line, "players") != NULL) {
+            setError("That room has as many players as it can: watch it instead.");
         } else if (status == 409) {
             setError("That room code is taken.");
         } else {
@@ -560,6 +574,19 @@ void portWsSend(const void* data, size_t len) {
     SDL_LockMutex(sLock);
     if (sState == PORT_WS_OPEN || sState == PORT_WS_OPENING) {
         frame(&sOut, 2, data, len, &sSeed);
+        sSent++;
+    }
+    SDL_UnlockMutex(sLock);
+}
+
+void portWsSendText(const char* text) {
+    static unsigned sSeed = 0x7F4A7C15u;
+    if (sLock == NULL || text == NULL || text[0] == '\0') {
+        return;
+    }
+    SDL_LockMutex(sLock);
+    if (sState == PORT_WS_OPEN) {
+        frame(&sOut, 1, text, strlen(text), &sSeed);
         sSent++;
     }
     SDL_UnlockMutex(sLock);

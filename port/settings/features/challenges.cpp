@@ -172,13 +172,13 @@ struct ChallengeSettings {
     portChallengeDeclare();
     portSettingsAddSection(kTab, "Presets", nullptr, 0, presetsSection,
                            "challenge preset hard expert glass cannon one hit ko superguard difficulty");
-    portSettingsAddToggle(kTab, "One-hit KO", "Any enemy hit that does damage knocks Mario or the partner out.", kPlay,
+    portSettingsAddToggle(kTab, "One-hit KO", "Any damaging enemy hit knocks Mario or the partner out.", kPlay,
                           "challenge_ohko", "challenge ohko one hit death");
     static const char* const kGuard[] = {"Allowed", "Superguards only", "No guarding at all"};
     portSettingsAddChoice(kTab, "Guarding", nullptr, kPlay, "challenge_guard", kGuard, 3,
                           "challenge guard superguard defend");
     static const char* const kCommands[] = {"Original", "Harder (as 2 Unsimplifiers)", "Hardest (as 3)"};
-    portSettingsAddChoice(kTab, "Attack commands", "Narrower timing for Mario's and the partners' attack commands.",
+    portSettingsAddChoice(kTab, "Attack commands", "Narrower timing for Mario's and partners' attack commands.",
                           kPlay, "challenge_commands", kCommands, 3, "challenge action command timing unsimplifier");
     portSettingsAddToggle(kTab, "No items in battle", "The Items command can't be chosen in battle.", kPlay,
                           "challenge_no_battle_items", "challenge items battle");

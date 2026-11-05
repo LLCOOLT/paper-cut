@@ -1,0 +1,11 @@
+{
+  "id": "dev.ttyd.lua-crowded-fields",
+  "name": "Crowded fields (Lua)",
+  "version": "1.0",
+  "author": "Paper Cut",
+  "description": "An example Lua mod for Master Quest's hooks and the looks: every field fight gets one enemy more (another of its first kind), the leading kind a hit point more, and Goombella in a partner skin while it runs.",
+  "options": [
+    {"key": "extra", "label": "Enemies added to each field fight", "type": "int", "min": 0, "max": 4, "default": 1},
+    {"key": "skin", "label": "Goombella wears the first skin in skins/", "type": "bool", "default": false}
+  ]
+}

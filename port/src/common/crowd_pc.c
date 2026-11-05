@@ -21,6 +21,13 @@ void portCrowdPush(int command) {
     }
 }
 
+void portCrowdPushGame(int command) {
+    int none = -1;
+    if (command >= 0 && command < PORT_CROWD_COUNT && !portReplayActive()) {
+        __atomic_compare_exchange_n(&sWaiting, &none, command, 0, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST);
+    }
+}
+
 unsigned portCrowdBattleFrames(void) {
     return __atomic_load_n(&sBattleFrames, __ATOMIC_RELAXED);
 }

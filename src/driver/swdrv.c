@@ -4,6 +4,9 @@
 #include "driver/swdrv.h"
 #include "mario/mariost.h"
 #include <string.h>
+#ifdef TARGET_PC
+#include "port/open_world.h"
+#endif
 #ifdef PORT_MODS
 #include "port/hooks/src_driver_swdrv.h"
 #endif
@@ -47,6 +50,11 @@ void PORT_HOOKABLE(swClear)(s32 index) { // clear specific bit
 /** Global Saved Work -------------------------------------------- */
 void PORT_HOOKABLE(swByteSet)(s32 index, s32 value) {
     if (index == 0) {
+#ifdef TARGET_PC
+        if (portOpenStorySet(value)) { /* an open-world file: the chapter's own story (port/open_world.h) */
+            return;
+        }
+#endif
         gp->gsw0 = value;
     } else {
         gp->gsw[index] = (u8)value;
@@ -56,11 +64,22 @@ void PORT_HOOKABLE(swByteSet)(s32 index, s32 value) {
 /** Returns global saved word GSW(index). GSW(0), the story progress, is a full 32-bit value; the others are bytes. */
 s32 PORT_HOOKABLE(swByteGet)(s32 index) {
     if (index == 0) {
+#ifdef TARGET_PC
+        return portOpenStoryGet(gp->gsw0); /* an open-world file: the chapter's own story */
+#else
         return gp->gsw0;
+#endif
     } else {
         return gp->gsw[index];
     }
 }
+
+#ifdef TARGET_PC
+/* PC port: the story as swByteGet(0) reads it, with nothing changed (driver/swdrv.h) */
+s32 swStoryPeek(void) {
+    return portOpenStoryPeek(gp->gsw0);
+}
+#endif
 
 /** Local Saved Work Flags --------------------------------------- */
 void PORT_HOOKABLE(_swSet)(s32 index) { // set specific bit

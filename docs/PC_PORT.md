@@ -187,10 +187,78 @@ its strength, and the on-screen controls' haptics, opacity, size and
 auto-run, and controllers in the background. General: pause in the background.
 Saves: the save folder.
 
+The title menu (General tab, Starting: Title menu, on by default; `port/src/aurora/title_menu_aurora.c`): once Press Start is pressed, four buttons in a row in a dark band along the bottom (so the logo and the cast stay in view), painted as the Start menu's Settings tab's (the Journal's), with the game's cursor hand and sounds: **Play** (the file select, as before), **Modes**, **Online** and **Settings**. The stick, the D-pad, the keys, the mouse and a tap move through them; A, a click or a second tap chooses, B goes back to Press Start. Settings and Online open the Start menu's own Settings and Online tabs over the title, with no file loaded: the rows that work on a file in play are greyed and say so. Modes plays a party game or a battle on a file of its own that is never saved ([MODES.md](MODES.md)). The menu is off in online sessions and replays (Start goes straight to the files, as in the original, so the games of a session stay in step), and in tests with `$TTYD_INPUT` unless `TTYD_TITLE_MENU=1`.
+
+Battery saver (Display tab, Screen; `port/src/aurora/battery_aurora.c`): on battery
+(or always) the game is drawn 30 frames a second while it still runs all 60
+(every second frame runs its logic, cameras and draw list without drawing,
+and the screen keeps the last picture), at half the internal resolution and
+without in-between frames. Online play, replays and frame advance always draw
+every frame.
+
+Room transitions (Graphics tab, Paper looks; `port/src/common/page_turn_pc.c`): doors,
+pipes and plain room changes can turn the old room away like a page instead
+of fading to black, with the page animations on the disc (a pop-up book's
+page, a page turned over, or folded paper); scripted fades stay the game's.
+
+Mouse camera (Gameplay tab, on by default; desktop only;
+`port/settings/features/view.cpp`): with **Free camera** on, the mouse turns
+the camera too while Mario walks, and the window holds the cursor meanwhile;
+menus and scenes give it back, and a middle click centres the camera.
+**Mouse camera speed** (1-10) and **Invert mouse camera** go with it.
+
+Controller haptics (Controls tab, on by default;
+`port/settings/features/haptics.cpp`): a short pulse as an action command's or
+a guard's timing window opens, and as a gauge or stick command reaches where
+it succeeds, with a tick as it steps on. Guards against attacks other than
+jumps are felt once that attack has been seen twice. On a DualSense the
+triggers also resist while a command holds R; other controllers get the
+pulses as plain rumble. It follows Rumble and its strength.
+
+The Start menu (`src/window/win_root.c`, `port/src/aurora/pause_settings_aurora.c`):
+L and R step through its tabs on the tab row, as left and right do. Its
+Settings tab holds the settings page's plain settings (an on/off, a choice, a
+number), by category as the settings page's tabs, with the features' own
+forms after them; it ends with **Photo mode** and **Full settings page**,
+which opens the whole settings page over the menu (closing it comes back
+there). The settings page's mode and tool tabs (Cosmetics, Practice,
+Challenges, Modes, Achievements, Mods, Archipelago, Streaming) are only on
+the full page.
+
+Photo mode (P, or both sticks pressed in; General > **Photo mode**, or the
+Start menu's Settings tab; `port/settings/features/photo_mode.cpp`): the game
+held where it is, the camera turned all the way round Mario, up and down, in
+and out. A (Enter) takes a picture, X (1) steps through the filters (Sepia,
+Black and white, Noir, Vivid, Warm, Cool, Faded, Cut paper, Folding light),
+LB (2) the depth of field (off, soft, strong: sharp round Mario), RB (3) the
+frames (Paper border, Stamp, Film strip, Storybook), Y (H) hides the HUD and
+message windows, B (P, Esc) goes back. Only in the field and not online. A
+picture is saved as it is shown, filter and frame included, at the window's
+size, to the Pictures folder's `Paper Cut` (on phones, or with
+`$TTYD_USER_DIR` set, the user folder's `Photos`); F12 saves one the same way.
+The Journal has a **Photos** entry after the game's own (not online or in a
+replay): a book of the pictures, newest first, eight a spread; the stick picks
+one, L and R turn the page, A shows it large (`port/include/port/photo.h`).
+
+Tattle Log models (`port/src/aurora/tattle_view_aurora.c`): with an enemy's
+card open in the Journal's Tattle Log, the stick or C-stick turns the enemy
+round, L and R held bring it in and out, and A puts it back as it was; it
+plays its idle animation. Not in battle, online or in a replay, and not for
+Smorg.
+
+Partner wheel (Enhancements tab, Getting around; `port/settings/features/partner_wheel.cpp`): hold
+Partner quick-swap (Q, the left stick pressed in, or the on-screen swap
+button) for a ring of the partners who have joined; point with a stick, the
+movement keys, the mouse or a finger dragged from the button, and let go. A
+quick tap is still the quick swap. The choice travels in the controller's
+input (as the second screen's partner tap), so online play and replays carry
+it.
+
 Controllers (Controls tab; `port/settings/features/controllers.cpp`):
 - **Mappings:** the community SDL_GameControllerDB is loaded at start (`port/assets/controllers`, about 2,300 models), then the player's own `<user>/gamecontrollerdb.txt`. Most controllers SDL doesn't know work as gamepads.
 - **The list:** each connected controller with its kind and battery. Each can be made player 1-4 (Aurora's ports), tested live (buttons, sticks, triggers), and given dead zones and trigger click points per player, saved with Aurora's mappings.
-- **Remapping:** Bindings (Controls tab; `port/settings/features/bindings.cpp`) remaps any player, not only the first.
+- **Remapping:** Bindings (Controls tab; `port/settings/features/bindings.cpp`) remaps any player, not only the first. Each of the game's buttons has a key, a second key, a controller button and a second controller button; the second can be any button or any stick or trigger direction (a trigger as A, the right stick as the D-pad), and is Paper Cut's own (`pad2_<row>_p<player>` in settings.txt), added to what Aurora's mapping reads. Paper Cut's actions have two keys and two controller bindings; a key can have Ctrl, Shift, Alt or Cmd/Win held with it (`bind_<action>_key` keeps the modifiers in bits 10-13), and with Ctrl + F5 and F5 both bound the press with the most modifiers held does only its own. The Start menu's Bindings page (Settings tab, Controls) has the same four cells, two shown at a time (left and right go across).
+- **Profiles:** the whole set of bindings saved under a name, in `<user>/bindings/<name>.txt` (plain `key=value` lines). Loading one puts in the keyboard's and the actions' part for everyone and the controller's part (buttons, second buttons, sticks, dead zones, triggers) on the chosen player. Each player's loaded profile takes their later changes. A profile can be the default for a kind of controller (SDL's type: Xbox One, DualSense...), loaded onto a player whenever one of that kind becomes theirs; both are kept in `<user>/bindings/defaults.ini`. On the settings page: the Profile row over the table; in the Start menu: the rows after Reset all (a name typed on the game's text page).
 - **Set up a controller:** a controller SDL can't map (an old USB pad, an arcade stick) is set up by pressing each button when asked. The mapping takes effect at once and is added to `<user>/gamecontrollerdb.txt`.
 
 Save states (`port/src/aurora/savestate_aurora.c`; every Aurora build with
@@ -244,10 +312,18 @@ Environment switches (all optional):
 |---|---|
 | `TTYD_TRACE=1/2/3` | sequence/map changes, missing messages, card steps; 2: running scripts; 3: every script command |
 | `TTYD_TRACE_CMD=<text>[,<text>...]`, `TTYD_TRACE_BUDGET` | with `TTYD_TRACE=3`: only the scripts whose name contains one (frame-stamped); how many commands (default 4000) |
+| `TTYD_TRACE_EVERY=<n>` | with `TTYD_TRACE=2` or more: the running scripts listed every n frames (default 3000) |
 | `TTYD_FAST` | frames back to back on a virtual 60 Hz clock (timed waits keep their frame counts); Aurora draws wait for their pipelines |
-| `TTYD_MAP=<map>[,<bero>]` | at the first field map or the title, start a new game on that map (with a partner, `TTYD_PARTY`, default Goombella) |
+| `TTYD_CLOCK_DAYS=<n>` | the real clock `n` days on (negative: back), for the game clock and every date the port draws from (the daily seed, the daily puzzle, the shop specials, the Paper Tower's day, the raid's week): a replay played back as on another day keeps its recording's dates |
+| `TTYD_MAP=<map>[,<bero>]` | at the first field map or the title, start a new game on that map (with a partner, `TTYD_PARTY`, default Goombella; `TTYD_PARTY=1,2,5` joins more, the first one out) |
 | `TTYD_EXIT_FRAMES`, `TTYD_WARP_LIMIT` | with `TTYD_MAP`: exit 0 after N frames on the map; exit 3 if not reached in N seconds |
 | `TTYD_INPUT=<script>` | scripted controller 1 (below) |
+| `TTYD_TOWER_TEST=<room>[,r][,g][,fN]` | with `TTYD_MAP` and `TTYD_STORY=405`: start a Paper Tower climb (docs/POSTGAME.md) with that room (`hei_02`) on floor 1, in by its east way with `r`, no gates unless `g`; `fN` starts on floor N |
+| `TTYD_TROPHY_TEST=1` | a visit to the trophy room (docs/POSTGAME.md) once a game runs (with `TTYD_LOAD_SAVE` or `TTYD_MAP`) |
+| `TTYD_CHAPTER_TEST=N` | with `TTYD_MAP` and `TTYD_STORY=405`: chapter N again (docs/MODES.md) once a game runs; online in the same frame of every game |
+| `TTYD_PUZZLE_TEST=N` (or `daily`) | battle puzzle N (1-50), or today's (docs/BATTLE_EXTRAS.md), after 2 s of calm field once a game runs |
+| `TTYD_PARTY_GAME_TEST=quiz/duel0-3` | a quiz party, or a Tattle-card duel (0-2 the Westside's card players, 3 the second controller), once a game runs (docs/MODES.md) |
+| `TTYD_STEAM_DIR=<folder>`, `TTYD_STEAM_TEST=1` | Add to Steam (docs/STEAM.md) against a Steam folder of the test's own in place of the installed one; with `TTYD_STEAM_TEST` the button is pressed once a frame is up (`[steam] ...`) |
 | `TTYD_SHOT=<f>[,<f>...]`, `TTYD_SHOT_DIR` | Aurora: write those frames as PNG |
 | `TTYD_FRAMERATE=120/144/240/display` | Aurora: frames drawn between the game's (docs/FRAME_INTERPOLATION.md); else `framerate=` in the user folder's settings.txt |
 | `TTYD_SHOT_INBETWEEN=<k>` | Aurora: capture the k-th in-between frame after each `TTYD_SHOT` frame instead |
@@ -257,6 +333,8 @@ Environment switches (all optional):
 | `TTYD_CACHE_DIR` | Aurora's pipeline cache elsewhere |
 | `TTYD_AUDIO_WAV=<file>` | headless: write the mixed audio |
 | `TTYD_WATCHDOG=<s>` | no frame for that long: print the main thread's stack, exit 4 |
+| `TTYD_NO_CRASH_HANDLER` | no crash report: a crash goes to the debugger or the system as it would without Paper Cut's handler |
+| `TTYD_GX_BLOB_CAP=<n>` | fewer vertex-array slots than the registry has, to bring back the old overflow for a check (`gx_arrays_pc.c`) |
 | `TTYD_PAUSE_UNFOCUSED` | Aurora: also pause while unfocused |
 | `TTYD_WIDESCREEN=1/0` | Aurora: 16:9 picture (off by default; overrides the `widescreen` preference); see below |
 | `TTYD_GXARRAY_TRACE=1/2` | Aurora: vertex-array uploads without a size / every changed array |
@@ -264,11 +342,18 @@ Environment switches (all optional):
 | `TTYD_DUMP_TEXTURES` | Aurora: save every texture without a replacement, under its texture-pack name |
 | `TTYD_FINGERPRINT=<file>`, `TTYD_FINGERPRINT_PARTS` | Aurora: each frame's game-state fingerprint in the file (same input, same file); with PARTS, each part's hash too ([ONLINE_RELAY.md](ONLINE_RELAY.md)) |
 | `TTYD_TR_DUMP=<file>` | Aurora: every English text the menus ask to translate, once each, added to the file ([LANGUAGE_PACKS.md](LANGUAGE_PACKS.md)) |
+| `TTYD_TITLE_MENU=1/0` | Aurora: the title menu on or off whatever the setting (off by default with `TTYD_INPUT`) |
 | `TTYD_PAUSE_ROW=<label>` | Aurora: the Start menu's Settings tab opens with that row chosen |
 | `TTYD_SETTINGS_HINT=1/0` | Aurora: show or skip the first room's settings hint (skipped by default with `TTYD_MAP`) |
 | `TTYD_STEAM_DECK=1/0` | Aurora: take this computer for a Steam Deck or not (its first-start settings) |
 | `TTYD_ART=off/lazy` | Aurora: the art recipes not run (the drawn art stands in), or each image made when first asked for |
+| `TTYD_COSTUMES_ALL`, `TTYD_STICKERS_ALL` | every costume, or every sticker, unlocked whatever the file has ([COSTUMES.md](COSTUMES.md)) |
+| `TTYD_FUN_TRACE`, `TTYD_LUIGI_TRACE` | log the head groups Big heads finds in each model; log Play as's stand-in model and pose changes in each place (field, battle, menu, journal, versus) |
+| `TTYD_OPEN_SEED=<seed>`, `TTYD_OPEN_SELFTEST` | a new file (and `TTYD_MAP`'s) is an open-world randomizer file with that seed ([RANDOMIZER.md](RANDOMIZER.md)); with a `TTYD_MAP` start, the items and chapters' stories checked at once, PASS/FAIL lines |
+| `TTYD_ACHIEVEMENT_TOAST=<n>` | achievement n's notice shown as the file loads |
+| `TTYD_AC_CUE_PRESS`, `TTYD_AC_CUE_SHOW=<lead>` | the Action Command cue on and logged, with A pressed for two frames each time it comes on; the cue held on screen at that lead |
 | `TTYD_P2_PRESS=<keys>@<frame>[+N][,...]` | scripted controller 2: those keys held from that frame for N frames (`port/src/common/input_pc.c`) |
+| `TTYD_P3_PRESS`, `TTYD_P4_PRESS` (same form) | scripted controllers 3 and 4, plugged in for the whole script (docs/PLAYERS.md) |
 | `TTYD_HAPTICS_PRESS=<k>/last`, `TTYD_HAPTICS_LOG` | Aurora: A pressed k frames into each window a haptic cue announces; log each cue, pulse and judgement |
 | `TTYD_BATTLE_SPEED_LOG` | log Faster battles' speed changes and guard windows |
 | `TTYD_CAPTION_LOG` | Aurora: log each caption for a sound as it comes |
@@ -289,9 +374,11 @@ Environment switches (all optional):
 | `TTYD_ONLINE_CONTINUE`, `TTYD_ONLINE_RECOVERIES=<n>` | Aurora: host from the last save ("Continue where you left off"); the out-of-step recoveries so far (set by the game as it starts again) |
 | `TTYD_ONLINE_NO_ICE`, `TTYD_ONLINE_NO_RECONNECT` | Aurora: online games only through the relay (no direct path); no reconnecting after a drop |
 | `TTYD_ONLINE_DROP_AT=<frame>`, `TTYD_ONLINE_DESYNC_AT=<frame>` | Aurora: the connection dropped at that frame, once; the guest's random numbers nudged at that frame, once |
+| `TTYD_ONLINE_STALL_AT=<frame>:<ms>`, `TTYD_TEST_MINIMIZE=<frame>:<ms>`, `TTYD_HOLD_SHOT` | Aurora, tests: this side stops that long at that session frame, once; the window put away at that frame and shown again that much later (hidden on Windows, never focused); each online wait's notice saved, its picture to the user folder's Photos and the notice's layer to `$TTYD_SHOT_DIR/hold_N.png` |
+| `TTYD_TEST_F1_AT=<frame>[:<ms>]` | Aurora, tests: the full settings page opened at that frame, as F1 opens it, once; with ms, closed again that much later (input scripts drive the controller only) |
 | `TTYD_ONLINE_INVITE=<link>` | Aurora: an invite link handed from the launcher to another release's build (set by the game) |
-| `TTYD_REPLAY_RECORD`, `TTYD_REPLAY_NAME=<name>`, `TTYD_REPLAY_PLAY=<file>` | Aurora: record a replay from the start, its name; play one (set by the game as it restarts; [REPLAYS.md](REPLAYS.md)) |
-| `TTYD_REPLAY_OUT=<dir>`, `TTYD_REPLAY_FRAMES=<n>`, `TTYD_REPLAY_EXIT` | Aurora: recordings saved there; a recording saved after n frames; exit once it is saved or the playback is over |
+| `TTYD_REPLAY_RECORD`, `TTYD_REPLAY_NAME=<name>`, `TTYD_REPLAY_PLAY=<file>`, `TTYD_GHOST_RACE=<file>` | Aurora: record a replay from the start, its name; play one; race its ghost (set by the game as it restarts; [REPLAYS.md](REPLAYS.md)) |
+| `TTYD_REPLAY_OUT=<file>`, `TTYD_REPLAY_FRAMES=<n>`, `TTYD_REPLAY_EXIT` | Aurora: the recording saved as that file; a recording saved after n frames; exit once it is saved or the playback is over |
 | `TTYD_SAVE_SEND`, `TTYD_SAVE_SEND_QR=<file>`, `TTYD_SAVE_SEND_BIND=<address>` | Aurora: send saves from the first frame; the QR code saved as a picture; listen on that address ([SAVE_TRANSFER.md](SAVE_TRANSFER.md)) |
 | `TTYD_SAVE_RECEIVE=<url>`, `TTYD_SAVE_RECEIVE_FILES=<1234>` | Aurora: receive saves from that address at start, taking those files |
 | `TTYD_UPDATE_API=<url>`, `TTYD_UPDATE_INSTALL` | Aurora: a test release on this computer instead of GitHub's; press Install without the page ([UPDATES.md](UPDATES.md)) |
@@ -299,6 +386,12 @@ Environment switches (all optional):
 | `TTYD_URL_SCHEME_TEST` | Aurora on Windows: register `papercut-test://` links instead of `papercut://` (the registration's own test) |
 | `TTYD_LOAD_SAVE_SLOT=0-3` | with `TTYD_LOAD_SAVE`: that save as this file slot (the launcher's Continue) |
 | `TTYD_LAUNCHER_TAB=<tab>` | Aurora: the launcher opens on that tab (Online, for an invite link) |
+| `TTYD_LAUNCHER_STYLE=paper/game` | Aurora: the launcher's look, over the **Launcher look** setting ([PAPER_LOOKS.md](PAPER_LOOKS.md)) |
+| `TTYD_LAUNCHER_SHOT=<s>:<name>,...` | Aurora: the launcher as drawn, that many seconds after it opened, saved as `<name>.png` in `TTYD_SHOT_DIR` (drawn again on the CPU from Dear ImGui's draw data, so no window capture is needed) |
+| `TTYD_LAUNCHER_ADD=<s>:<path>` | Aurora: that disc image added to the launcher's list after that many seconds, as if picked |
+| `TTYD_BRAND_WORDMARK=<png>` | Aurora: that picture as the launcher's wordmark in place of the drawn letters (trying a new logo) |
+| `TTYD_LAUNCHER_PAD=xbox/ps/switch`, `TTYD_LAUNCHER_TOUCH` | Aurora: the launcher as with that controller in use; sized as on a phone or tablet |
+| `TTYD_LAUNCHER_STILL=1` | Aurora: the launcher's stage keeps still (no sway or twinkle), as with the system's animations off |
 | `TTYD_UPDATE_REPO=<owner>/<repo>` | Aurora: check another repository's releases for updates |
 
 Crashes and `abort()` print a symbolized backtrace.
@@ -331,12 +424,20 @@ walls at the sides (the room ends there), as in other widescreen hacks.
 
 ### Display options
 
-The Display tab (`port/settings/features/display.cpp`, applied once a frame
-by `port/src/aurora/display_aurora.c` through Aurora's display patches) holds
-the aspect ratio and widest picture, HUD size, anisotropic filtering, texture
-detail, supersampling, the picture filter, variable refresh rate, the
-performance overlay and HDR output. All are off, or the game's own, by
-default.
+`port/settings/features/display.cpp` (applied once a frame by
+`port/src/aurora/display_aurora.c` through Aurora's display patches) holds the
+Display tab's aspect ratio, widest picture, bars where a scene ends, variable
+refresh rate and HDR output; the Graphics tab's anisotropic filtering, texture
+detail, texture upscaling, supersampling and picture filter (its two paper
+filters are in [PAPER_LOOKS.md](PAPER_LOOKS.md#picture-filters)); and the
+Interface tab's HUD size and performance overlay. All are off, or the game's
+own, by default, but for Bars where a scene ends.
+
+**Bars where a scene ends** (Display, on by default;
+`port/src/aurora/widescreen_aurora.c`): much of the game was built for 4:3,
+so with a wider aspect ratio some rooms' sets end before the screen's edges,
+and battles past 16:9 do too. There, bars stand beside the picture instead of
+the empty space past the set. Off, the empty space shows.
 
 HDR output (settings `hdr`, `hdr_paper_white`, `hdr_boost`; Aurora patch
 0014, `include/aurora/hdr.h`) presents the picture on an HDR display. The
@@ -501,18 +602,48 @@ can be copied to and from Dolphin; Aurora's pipeline caches are in
   overlay (`port/touch/touch_overlay.cpp`, `TTYD_TOUCH_OVERLAY`, on by default
   on iOS): touches become port 1's virtual status (Aurora's
   `PADSetVirtualStatus`, merged into `PADRead`), so the game reads them like a
-  controller; drawn with Aurora's Dear ImGui. Floating stick on the left,
-  A/B/X/Y on the right (GameCube arrangement), L, R, Z and START at the top,
-  laid out in the safe area (on phones in the bars beside the picture).
+  controller (online lockstep, replays and the second player see it as
+  they see a controller; the overlay reads neither the game's clock nor its
+  random numbers); drawn with Aurora's Dear ImGui. Laid out in the safe area
+  (on phones in the bars beside the picture; held upright, below it):
+  - left: a floating stick, and above it a D-pad (Controls > On-screen D-pad:
+    while a menu is up, the default, fading in and out with it; always; off);
+  - right: A/B/X/Y in the GameCube arrangement and the yellow C-stick below
+    and left of B (above the buttons when held upright). The C-stick is
+    fixed: where the finger is on it is its tilt, full at its gate's edge
+    (the free camera, the Tattle Log's model, battles' C-stick commands);
+  - top: L and R in the corners, Z under R, START, fast-forward, the
+    settings and a camera (photo mode on and off; Controls > Photo mode
+    button), and in the field, with Partner quick-swap or the partner wheel
+    on, the swap button under Z (a tap swaps, held it opens the wheel, a drag
+    from it chooses).
+  In the GameCube controller's colours and shapes (Controls > GameCube
+  colours): a green A, a red B, kidney-bean X and Y, a purple Z, pill-shaped
+  shoulders, octagonal gates. A press shrinks and lights the control and
+  sends a ring out, with a light haptic tap (iOS `UIImpactFeedbackGenerator`,
+  Android's vibrator; Controls > Haptic tap on button press), and a notch
+  when the C-stick reaches its edge or the D-pad changes direction.
+  Away from the controls, a drag on the picture (or the right side) turns
+  the free camera (with Free camera and Mouse camera on, as the mouse turns
+  it; a tap on the C-stick with no tilt centres it again) and a quick tap is
+  a co-op ping there, or a row of a menu that is up. Photo mode takes the
+  controls while it is on: the stick or a drag turns, the C-stick goes in
+  and out, A takes the picture, B (or START, or the camera) goes back, X
+  the filter, L the depth of field, R the frame, Y the HUD.
   Buttons act on touch-down, before that frame's `PADRead`, for action
   commands. Hidden (and the virtual status cleared) once a controller is
   used, shown again on a touch (a connected controller is not enough: the iOS
-  Simulator reports one that never sends input). Built and run on Windows with `-DTTYD_TOUCH_OVERLAY=ON`: drawn
+  Simulator reports one that never sends input). Every control can be moved
+  and resized (Controls > Move the on-screen controls: drag one; pinch it,
+  or tap it and use - and +), held upright and sideways each their own
+  (`touch_layout.txt`: orientation, control, offset, size); Controls also
+  has their opacity and overall size. Built and run on Windows with `-DTTYD_TOUCH_OVERLAY=ON`: drawn
   over the picture, and a scripted touch on START
   (`TTYD_TOUCH_TEST=1900:0.5,0.07:10`, fast mode) skips the opening exactly
-  as a scripted START press does (same frame hash). `TTYD_TOUCH_MOUSE=1` lets
-  the mouse touch on desktop builds with the option on. Not yet: D-pad,
-  C-stick, a layout editor, opacity and size settings, haptics on press.
+  as a scripted START press does (same frame hash); a touch can move while
+  held (`<frame>:<x>,<y>:<frames>><x2>,<y2>`: a drag), and
+  `TTYD_TOUCH_EDIT=<frame>` opens the layout editor. `TTYD_TOUCH_MOUSE=1` lets
+  the mouse touch on desktop builds with the option on.
 
 - **Widescreen** (16:9, opt-in: Settings app > Paper Cut > Widescreen,
   read at launch; Running has the details and the scenes it does not suit):
@@ -617,7 +748,7 @@ watchdog.
 drives controller 1, applied after the game's one `PADRead` (`DEMOPad.c`). With
 `TTYD_MAP` the script starts on the map and ends the run. Commands: `wait N`,
 `hold KEYS N`, `press KEYS` (keys `a b x y z l r start`, `left right up down`
-for the stick, `dleft`.. d-pad, `cleft`.. C-stick, joined with `+`),
+for the stick, `dleft`.. D-pad, `cleft`.. C-stick, joined with `+`),
 `stick X Y N`, `shot NAME`, `battle [N]` (the nearest enemy NPC, through
 `evt_npc_battle_start`; with N, or `$TTYD_BATTLE_SETUP`, entry N of the
 area's battle table on the nearest NPC), `hp N`, `wait_seq N [MAX]`, `wait_map NAME [MAX]`,
@@ -632,6 +763,8 @@ the file menu on a fresh card and plays ~20 s (`save_sweep.txt`), reporting
 the map and story value it loaded into and any failure. A collection of
 speedrun practice saves (a point in every chapter, JP and US) lives,
 git-ignored, in `data/saves/` (`raw_*` the card images, `gci_*` extracted).
+
+For crossing a room: `walk_to HIT [MAX]` (the stick towards a hit object, an exit's zone, until the map changes, jumping and walking along walls when stuck; at most MAX frames, default 1800, else `[input] ... walk_to HIT: not reached`).
 
 For playing the story: `goto HIT` or `goto X Y Z` (Mario onto a hit object,
 e.g. an exit's zone or a trigger floor, or a position, as `evt_mario_set_pos`
@@ -698,7 +831,7 @@ Classes found so far, and what catches them:
 | `extern inline` under `-fgnu89-inline`: no out-of-line copy, so a call the compiler does not inline (`-O0`, the Android debug build) is unresolved, or binds to a C library function of the same name (snd3d.c's approximate `sqrtf`) | `-O0` link (Android debug build); `grep -rn 'extern inline'` over PC-compiled code |
 | A call through a no-prototype `f()` declaration with fewer arguments than the definition takes: the callee reads whatever the argument register holds (r3 held the right value on GameCube; x0 happened to on arm64, rdi did not on x86-64: moo_00) | `noproto_calls.py` |
 | C library hardening on by default (Apple clang, bionic, some Linux distros: `_FORTIFY_SOURCE`) aborting on the game's intended overflows into padding | off in game code; `-DTTYD_FORTIFY=ON` sweep |
-| Per-address records outliving their memory: GX array ranges/disc blobs, decoded anim models and TPL graphs kept for freed blocks or cleared heaps, so new data at the same address was taken for the old (a pose's native vertices read as big-endian through a stale range: the title's red curtain wedge after the opening demo) | `portMemForget` from `smartFree`/`L_smartReInit`/`memClear` (`port/mem_pc.h`); a new range drops overlapping older ones; a range's endianness only from disc-data records (`portGXIsDiscData`); `TTYD_GXARRAY_TRACE=2` shows upload sizes |
+| Per-address records outliving their memory: GX array ranges/disc blobs, decoded anim models and TPL graphs kept for freed blocks or cleared heaps, so new data at the same address was taken for the old (a pose's native vertices read as big-endian through a stale range: the title's red curtain wedge after the opening demo) | `portMemForget` from `smartFree`/`L_smartReInit`/`memClear` (`port/include/port/mem_pc.h`); a new range drops overlapping older ones; a range's endianness only from disc-data records (`portGXIsDiscData`); `TTYD_GXARRAY_TRACE=2` shows upload sizes |
 | Empty files on the disc read into `_mapAlloc(0)` (NULL): a 0-byte read must complete | headless DVD; map sweep with a full extraction (`dtk vfs cp`) |
 | Variadic function called as non-variadic or the reverse (Apple arm64 passes variadic arguments on the stack); an undeclared call passing an f32 (sent as a double) | `proto_audit.py`; `-Werror=implicit-function-declaration`; `diag_census.py` over every version |
 
@@ -846,7 +979,8 @@ gradle wrapper --gradle-version 8.12   # once; or run an installed gradle direct
 - `.gci` import/export through the system file picker.
 - Quitting (`AURORA_EXIT`) calls `exit(0)` from the game's thread instead of
   returning from `SDL_main`.
-- Touch layout editing, haptics on touch, per-game button hints.
+- Per-game button hints on the touch controls (the layout editor and haptic
+  taps are the shared overlay's, untried on a device here).
 
 ## The game code and the decomp
 

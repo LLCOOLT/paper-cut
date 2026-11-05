@@ -1,0 +1,170 @@
+# versus, the Start menu's set-up page in the JP release's font: see tools/port/gen_lang.py
+
+Versus battle
+たいせんバトル
+
+Mario and his partners against Luigi and his, two players on one screen: set up both sides, then fight in the Glitz Pit.
+マリオたい　ルイージ　ひとつの　がめんで　ふたりで　たいせん　りょうほうの　チームを　ととのえて　とうぎ場で　たたかいます
+
+Partner
+なかま
+
+Boots, hammer
+くつ　ハンマー
+
+Partner rank
+なかまの　ランク
+
+Stage
+ステージ
+
+Turn timer
+ターンの　じかん
+
+Luck badges
+うんの　バッジ
+
+Fight!
+たたかう！
+
+Normal
+ふつう
+
+Super
+スーパー
+
+Ultra
+ウルトラ
+
+Glitz Pit
+とうぎ場
+
+Not allowed
+なし
+
+to share
+のこり
+
+Mario's badges
+マリオの　バッジ
+
+Luigi's badges
+ルイージの　バッジ
+
+Mario's items
+マリオの　アイテム
+
+Luigi's items
+ルイージの　アイテム
+
+{X}: the other side.
+{X}：もう　かたほうの　チーム
+
+The side's level: each level-up above 1 goes to HP, FP or BP.
+チームの　レベル：1より　上の　レベルアップは　HP　FP　BPの　どれかに　入ります
+
+Left and right put a level-up into HP (5 each) or take one back.
+さゆうで　レベルアップを　HP（1回5）に　入れたり　もどしたり　します
+
+Left and right put a level-up into FP (5 each) or take one back.
+さゆうで　レベルアップを　FP（1回5）に　入れたり　もどしたり　します
+
+Left and right put a level-up into BP (3 each) or take one back.
+さゆうで　レベルアップを　BP（1回3）に　入れたり　もどしたり　します
+
+The boots and hammer: the jump and hammer moves they give.
+くつと　ハンマー：つかえる　ジャンプと　ハンマーの　わざが　きまります
+
+The partner who comes out first; the others swap in from the Tactics menu.
+さいしょに　出る　なかま　ほかの　なかまは　さくせんで　いれかえます
+
+A partner to swap to. Each partner fights on one side only.
+いれかえる　なかま　どの　なかまも　かたほうの　チームでしか　たたかえません
+
+The partners' rank: their HP and their moves.
+なかまの　ランク：HPと　わざが　きまります
+
+{A} opens the badges: as many as the BP allow.
+{A}で　バッジを　ひらきます：BPの　ぶんだけ　つけられます
+
+{A} opens the items: up to six. None at all is fine.
+{A}で　アイテムを　ひらきます：6つまで　なしでも　かまいません
+
+Where the fight is: the Glitz Pit's ring, or a battle stage from one of the chapters, with its audience and music.
+たいせんの　ばしょ：とうぎ場の　リングか　ぼうけんで　たたかった　ステージ　かんきゃくと　おんがくも　いっしょです
+
+How long each command can take; when it runs out the turn is passed.
+コマンドを　えらべる　じかん　じかんぎれで　ターンが　パスされます
+
+Close Call, Pretty Lucky, Lucky Day and Lucky Start leave hits to chance: off by default.
+うんの　バッジは　あたりを　うんまかせに　します：さいしょは　なし
+
+Starts the fight: Mario on controller 1, Luigi on 2.
+たいせんを　はじめます　マリオは　1P　ルイージは　2P
+
+{A} puts the badge on or takes it off. {B} goes back.
+{A}で　バッジを　つけたり　はずしたり　します　{B}で　もどる
+
+{A} or right adds one, left takes one back. {B} goes back.
+{A}か　みぎで　ひとつ　ふやし　ひだりで　ひとつ　へらします　{B}で　もどる
+
+A versus fight is on already.
+もう　たいせんちゅうです
+
+Share out every level-up between HP, FP and BP.
+レベルアップを　ぜんぶ　HP　FP　BPに　ふりわけてください
+
+The badges need more BP than this side has.
+バッジに　いる　BPが　この　チームの　BPより　おおいです
+
+A luck badge is on, and the rules don't allow them.
+うんの　バッジが　ついていますが　ルールで　つかえません
+
+A partner can fight on one side only.
+なかまは　かたほうの　チームでしか　たたかえません
+
+
+Luigi's side
+ルイージの　チーム
+
+A player
+プレイヤー
+
+Computer: easy
+CPU：やさしい
+
+Computer: normal
+CPU：ふつう
+
+Computer: hard
+CPU：むずかしい
+
+Who plays Luigi's side: a player on the second controller, or the computer, easy, normal or hard.
+ルイージの　チームは　ふたりめの　プレイヤーか　コンピューターが　あやつります
+
+Rung
+だん
+
+One fight
+1かいせん
+
+The ladder
+かちぬき
+
+best
+さいこう
+
+The ladder: a stronger Luigi each win, until Mario falls.
+かちぬき　かつたびに　ルイージが　つよくなります
+
+Versus room
+たいせんルーム
+
+On, the online game opens on the versus battle's set-up for both of you: you're Mario's side, they're Luigi's.
+オンで　オンラインの　ゲームは　ふたりとも　たいせんの　じゅんびから　はじまります　あなたが　マリオの　チーム　あいてが　ルイージの　チームです
+
+Showstopper knocks out
+ショーストッパーで　きぜつ
+
+Off: Showstopper takes up to a third of each foe's HP instead of knocking them out. On: as in the story.
+オフ：ショーストッパーは　きぜつの　かわりに　あいての　ＨＰを　さいだい　３ぶんの１　けずります　オン：ほんぺんと　おなじ

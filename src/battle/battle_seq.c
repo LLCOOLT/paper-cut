@@ -3,6 +3,7 @@
 #include "port_hook.h"
 #ifdef TARGET_PC
 #include "port/gameplus.h"
+#include "port/duo.h"
 #endif
 #include <dolphin/pad.h>
 #include "battle/battle_seq.h"
@@ -2251,6 +2252,17 @@ static void btlseqMove(BattleWork* wp) {
                     if (pouch->hammerLevel >= 2) {
                         wp->flags &= ~BATTLE_FLAG_SINGLE_HAMMER;
                     }
+#ifdef TARGET_PC
+                    { // duo moves: the Jump or Hammer list opens, with them under the move (port/include/port/duo.h)
+                        const int duo = portDuoListsMario(wp);
+                        if (duo & 1) {
+                            wp->flags &= ~BATTLE_FLAG_SINGLE_JUMP;
+                        }
+                        if (duo & 2) {
+                            wp->flags &= ~BATTLE_FLAG_SINGLE_HAMMER;
+                        }
+                    }
+#endif
                 }
                 break;
             case 0x5000009:

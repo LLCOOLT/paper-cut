@@ -316,3 +316,8 @@ struct ButtonPromptSettings {
 } sButtonPrompts;
 
 } // namespace
+
+// the text's button icons (port/settings/features/button_markup.cpp) draw what the prompts do
+bool buttonPromptsStyle(GlyphStyle* out) { return sChoice != nullptr && wantedStyle(out); }
+
+void buttonPromptsPlan(GlyphStyle style, GlyphSpec specs[8], std::string labels[8]) { plan(style, specs, labels); }

@@ -10,6 +10,7 @@
 #include "../../port/archipelago/rando_gen.h"
 #include "../../port/archipelago/ttyd_ap_data.h"
 #include "../../port/archipelago/ttyd_rando_logic.h"
+#include "../../port/archipelago/pc_world.h"
 
 #include <algorithm>
 #include <chrono>
@@ -98,7 +99,7 @@ bool goalReachable(const Result& r) {
 
 void testOne(const Options& o, bool deep) {
   const std::string what = "seed " + o.seed + " (" + poolsText(o.pools) + ", " +
-                           (o.logic == kOpenWorld ? "open world" : "vanilla story") + ")";
+                           (o.logic == kOpenWorld ? "open world" : o.logic == kPaperCut ? "Paper Cut open world" : "vanilla story") + ")";
   const Result r = generate(o);
   check(r.ok, what + ": " + r.error);
   if (!r.ok) return;
@@ -111,19 +112,39 @@ void testOne(const Options& o, bool deep) {
     if (p.shuffled) {
       before.push_back(l->vanilla);
       after.push_back(p.item);
-      const unsigned pools = o.logic == kOpenWorld ? o.pools | kKeyItems : o.pools;
-      check((poolOf(l->vanilla) & pools) != 0, what + ": " + kTtydApLocations[p.location].name + " took part");
+      const unsigned pools = o.logic != kVanillaStory ? o.pools | kKeyItems : o.pools;
+      const unsigned pool = o.logic == kPaperCut ? paperCutPoolOf(l->vanilla) : poolOf(l->vanilla);
+      check((pool & pools) != 0, what + ": " + kTtydApLocations[p.location].name + " took part");
     } else {
       check(p.item == l->vanilla, what + ": an unshuffled location changed");
     }
     if (o.logic == kVanillaStory) {
       check(poolOf(p.item) != kKeyItems, what + ": a key item moved in the vanilla story");
+      check(std::string(itemName(p.item)) != "Briefcase", what + ": the Briefcase (Zip Toad asks for it) moved");
       check(kTtydApLocations[p.location].flags == 0, what + ": a shop or tattle in the vanilla story");
     }
   }
-  std::sort(before.begin(), before.end());
-  std::sort(after.begin(), after.end());
-  check(before == after, what + ": the items placed are not the ones taken");
+  if (o.logic == kPaperCut) {
+    // every chapter's way in is reached by the generator's final sweep
+    check(r.chaptersReached == int(pcWorld().ways.size()),
+          what + ": " + std::to_string(r.chaptersReached) + " chapters reached");
+    // Paper Cut's open world places the key items its stage can't reach the
+    // own places of (pc_world.h's extraItems), each instead of another item
+    for (const char* name : pcWorld().extraItems) {
+      const auto it = std::find(after.begin(), after.end(), itemByName(name));
+      check(it != after.end(), what + ": " + name + " not placed");
+      if (it != after.end()) after.erase(it);
+    }
+    std::sort(before.begin(), before.end());
+    std::sort(after.begin(), after.end());
+    check(before.size() == after.size() + pcWorld().extraItems.size() &&
+              std::includes(before.begin(), before.end(), after.begin(), after.end()),
+          what + ": the items placed are not the ones taken");
+  } else {
+    std::sort(before.begin(), before.end());
+    std::sort(after.begin(), after.end());
+    check(before == after, what + ": the items placed are not the ones taken");
+  }
   if (o.logic == kOpenWorld && deep) {
     check(goalReachable(r), what + ": the Shadow Queen can't be reached");
   }
@@ -189,6 +210,55 @@ int main(int argc, char** argv) {
     if ((pools & ~unsigned(kKeyItems)) != 0) testOne(o, false);
   }
 
+  // Paper Cut's own open world: the same checks, its Crystal Stars reached by
+  // the generator's own sweep (r.ok), the prologue's places untouched, both
+  // stage 1 partners placed, in different places from seed to seed
+  {
+    Options pc;
+    pc.logic = kPaperCut;
+    pc.pools = kBadges | kItems | kStarPieces | kShineSprites;
+    std::map<std::string, int> koopsAt;
+    for (int i = 0; i < seeds; i++) {
+      pc.seed = "pc" + std::to_string(i);
+      testOne(pc, true);
+      const Result r = generate(pc);
+      int partners = 0;
+      for (const Placement& p : r.placements) {
+        const int64_t id = kTtydApLocations[p.location].id;
+        check(id != 78780002 && id != 78780136 && id != 78780153, pc.seed + ": a prologue place moved");
+        check(id != 78780004, pc.seed + ": the Old Letter's own place (after Rogueport's story stops) took part");
+        check(id != 78780070, pc.seed + ": the Train Ticket's own place (after Rogueport's story stops) took part");
+        check(id != 78780492, pc.seed + ": the grotto's Wedding Ring (never shown here) took part");
+        if (partnerOf(p.item) != 0) partners++;
+        if (partnerOf(p.item) == 2) koopsAt[kTtydApLocations[p.location].name]++;
+      }
+      // stage 2: Koops, Flurrie, Yoshi, Vivian, Bobbery (Goombella stays;
+      // Ms. Mowz's place is a trouble, never shuffled)
+      check(partners == 5, pc.seed + ": the five partners placed (" + std::to_string(partners) + ")");
+    }
+    check(koopsAt.size() > 3, "Koops goes to different places");
+    // the goal: fewer Crystal Stars, still a seed (and another one), every
+    // chapter still reachable past it
+    for (int goal = 1; goal <= 7; goal++) {
+      Options g = pc;
+      g.goalStars = goal;
+      g.seed = "goal" + std::to_string(goal);
+      testOne(g, true);
+      check(generate(g).spoiler.find("Goal: " + std::to_string(goal) + " of the 7") != std::string::npos,
+            g.seed + ": the spoiler names the goal");
+    }
+    pc.seed = "PaperCut";
+    const Result f = generate(pc);
+    std::printf("PaperCut: Paper Cut open world %d locations, %d moved, %d tries, digest %016llX\n", f.shuffled, f.moved,
+                f.attempts, (unsigned long long)digest(f));
+    if (getenv("RANDO_TEST_PC_SPOILER")) std::fputs(f.spoiler.c_str(), stdout);
+    pc.pools = kStarPieces;
+    pc.seed = "pc-stars";
+    testOne(pc, true);
+    pc.pools = kShineSprites;
+    check(!generate(pc).ok, "Paper Cut's open world with Shine Sprites only is refused");
+  }
+
   // a fixed seed's placements, so a change to the generator or its data shows
   vanilla.seed = all.seed = "PaperCut";
   const Result v = generate(vanilla), w = generate(all);
@@ -199,7 +269,7 @@ int main(int argc, char** argv) {
   if (getenv("RANDO_TEST_SPOILER")) std::fputs(w.spoiler.c_str(), stdout);
   // (these change with the generator or its data, on purpose: update them then,
   // and say so, since a seed shared before no longer gives the same game)
-  check(digest(v) == 0x3D3879B549D1C531ull, "the vanilla story's PaperCut placements changed");
+  check(digest(v) == 0x475DEF61D875D533ull, "the vanilla story's PaperCut placements changed");
   check(digest(w) == 0xBF998C1C555E6325ull, "the open world's PaperCut placements changed");
 
   const double s = std::chrono::duration<double>(std::chrono::steady_clock::now() - start).count();

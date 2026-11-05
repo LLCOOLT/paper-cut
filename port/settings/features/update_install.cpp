@@ -17,6 +17,7 @@
 #include <windows.h>
 #endif
 #include "port/update_install.h"
+#include "port/mods.h"
 #include <SDL3/SDL.h>
 #include <zlib.h>
 #include <algorithm>
@@ -642,6 +643,7 @@ extern "C" void portUpdateApplyStaged(int argc, char** argv) {
     return;
   }
   SDL_DestroyProcess(process); // it runs on; this one ends
+  portModsStartedOk();         // an update's restart isn't a failed start (safe mode, port/include/port/mods.h)
   std::_Exit(0);
 #endif
 }

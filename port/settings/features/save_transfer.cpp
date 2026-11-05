@@ -9,6 +9,8 @@
 //   /<token>            a page with each file as a link (a phone's browser)
 //   /<token>/list       "<size> <name>" lines (another Paper Cut)
 //   /<token>/f/<name>   a file
+//   /<token>/d/<name>   a file holding Paper Cut's own items, as a copy for Dolphin
+//                       or a GameCube (sold: port/include/port/save_convert.h)
 // It stops once every file was taken, after 5 minutes, or with Stop. The
 // address is shown as text and as a QR code (libs/qrcodegen).
 //
@@ -29,6 +31,7 @@
 #include "port/online_sock.h"
 #include "port/lan_http.h"
 #include "port/online.h"
+#include "port/pause_forms.h"
 #include "port/restart.h"
 #include "port/save_convert.h"
 #include "port/save_transfer.h"
@@ -41,6 +44,7 @@
 #include <cmath>
 #include <cstdio>
 #include <cstring>
+#include <initializer_list>
 #include <mutex>
 #include <string>
 #include <thread>
@@ -49,6 +53,7 @@
 extern "C" {
 #include "../../../libs/qrcodegen/qrcodegen.h"
 }
+#include "../file_util.h"
 
 namespace {
 
@@ -64,18 +69,10 @@ const char* releaseName(char release) {
 struct File {
   std::string name;
   std::vector<uint8_t> bytes;
+  std::vector<uint8_t> dolphin; // a copy for Dolphin or a GameCube, when it holds Paper Cut's own items
 };
 
-std::vector<uint8_t> readAll(const std::string& path) {
-  size_t size = 0;
-  void* data = SDL_LoadFile(path.c_str(), &size);
-  std::vector<uint8_t> bytes;
-  if (data != nullptr) {
-    bytes.assign(static_cast<uint8_t*>(data), static_cast<uint8_t*>(data) + size);
-    SDL_free(data);
-  }
-  return bytes;
-}
+using portfile::readAll;
 
 // The release whose save file this is by name and contents ("01-G8ME-mariost_save_file.gci"), 0 if none
 char saveOf(const std::string& name, const std::vector<uint8_t>& bytes) {
@@ -136,8 +133,18 @@ std::string htmlPage(const std::string& token) {
                      "margin:8px 0;border:1px solid #888;border-radius:8px;text-decoration:none}</style></head><body>"
                      "<h1>Paper Cut saves</h1><p>Download a file, then put it in Paper Cut's card folder (for a "
                      "phone's Paper Cut: type this page's address in its Saves tab, Receive saves, instead).</p>";
+  bool dolphin = false;
   for (const File& f : sSend.files) {
     page += "<a download href=\"/" + token + "/f/" + f.name + "\">" + f.name + " (" + releaseName(f.name[6]) + ")</a>";
+    if (!f.dolphin.empty()) {
+      page += "<a download href=\"/" + token + "/d/" + f.name + "\">" + f.name + " (" + releaseName(f.name[6]) +
+              ", for Dolphin or a GameCube*)</a>";
+      dolphin = true;
+    }
+  }
+  if (dolphin) {
+    page += "<p>* Paper Cut's own badges and dishes, which the GameCube game can't read, sold for coins. Paper Cut "
+            "itself reads either file.</p>";
   }
   return page + "</body></html>";
 }
@@ -179,13 +186,14 @@ void serveOne(Socket c, const std::string& token, std::vector<bool>& served) {
       list += std::to_string(f.bytes.size()) + " " + f.name + "\n";
     }
     respond(c, 200, "text/plain; charset=utf-8", list);
-  } else if (path.rfind(base + "/f/", 0) == 0) {
+  } else if (path.rfind(base + "/f/", 0) == 0 || path.rfind(base + "/d/", 0) == 0) {
+    const bool dolphin = path[base.size() + 1] == 'd';
     const std::string name = path.substr(base.size() + 3);
     for (size_t i = 0; i < sSend.files.size(); i++) {
-      if (sSend.files[i].name == name) {
+      if (sSend.files[i].name == name && (!dolphin || !sSend.files[i].dolphin.empty())) {
+        const std::vector<uint8_t>& bytes = dolphin ? sSend.files[i].dolphin : sSend.files[i].bytes;
         const std::string disposition = "Content-Disposition: attachment; filename=\"" + name + "\"\r\n";
-        respond(c, 200, "application/octet-stream",
-                std::string(sSend.files[i].bytes.begin(), sSend.files[i].bytes.end()), disposition.c_str());
+        respond(c, 200, "application/octet-stream", std::string(bytes.begin(), bytes.end()), disposition.c_str());
         served[i] = true;
         return;
       }
@@ -245,8 +253,12 @@ void startSending() {
     int count = 0;
     char** found = SDL_GlobDirectory(dir.c_str(), "*.gci", 0, &count);
     for (int i = 0; found != nullptr && i < count; i++) {
-      File f{found[i], readAll(dir + "/" + found[i])};
+      File f{found[i], readAll(dir + "/" + found[i]), {}};
       if (saveOf(f.name, f.bytes) != 0) {
+        if (portSaveHasPortItems(f.bytes.data(), f.bytes.size())) {
+          f.dolphin = f.bytes;
+          portSaveDolphinSafe(f.dolphin.data(), f.dolphin.size(), nullptr);
+        }
         sSend.files.push_back(std::move(f));
       }
     }
@@ -588,7 +600,7 @@ void receiveSection(int inGame) {
       sReceive.state = 0;
     }
     if (locked) {
-      ImGui::TextDisabled("%s", portTr("Receive this card's saves from the launcher, before the game starts."));
+      ImGui::TextDisabled("%s", portTr("Receive saves from the launcher, before starting."));
     } else if (running) {
       ImGui::TextDisabled("%s", portTr("This is the running game's card: the game starts again to load it."));
     }
@@ -601,6 +613,235 @@ void receiveSection(int inGame) {
     ImGui::TextWrapped("%s", portTr(sReceive.done.c_str()));
   }
 }
+
+// --- The Start menu's forms (port/include/port/pause_forms.h) ---
+
+// a status as one of the constants it is made from (their translations are kept by address), or nullptr
+const char* constantOf(const std::string& text, std::initializer_list<const char*> known) {
+  for (const char* k : known) {
+    if (text == k) {
+      return k;
+    }
+  }
+  return nullptr;
+}
+
+// game-encoded text wrapped into lines of a lines page
+int wrapInto(const char* text, char (*out)[PORT_PAUSE_LINE], int n, int max) {
+  char wrapped[700];
+  portPauseWrapCols(text, wrapped, sizeof(wrapped), 26);
+  for (char* line = wrapped; line != nullptr && n < max;) {
+    char* end = std::strchr(line, '\n');
+    if (end != nullptr) {
+      *end = '\0';
+    }
+    std::snprintf(out[n++], PORT_PAUSE_LINE, "%s", line);
+    line = end != nullptr ? end + 1 : nullptr;
+  }
+  return n;
+}
+
+// Sending: the address and its QR code on a page of their own, while it runs
+int sendLines(char (*out)[PORT_PAUSE_LINE], int max) {
+  int n = 0;
+  if (!sSend.running) {
+    std::lock_guard<std::mutex> hold(sSend.lock);
+    const char* k = constantOf(sSend.status, {"Sent: the other device has the saves.", "Stopped.",
+                                              "No other device took the saves in 5 minutes: stopped."});
+    return k != nullptr ? wrapInto(portTrGame(k), out, 0, max) : 0;
+  }
+  std::string url;
+  {
+    std::lock_guard<std::mutex> hold(sSend.lock);
+    url = sSend.url;
+  }
+  n = wrapInto(portTrGame("On the other device: Settings, Saves, Receive saves, and type this address."), out, n,
+               max - 6);
+  out[n++][0] = '\0';
+  for (size_t at = 0; at < url.size() && n < max - 2; at += 28) { // (an address is longer than a line)
+    std::snprintf(out[n++], PORT_PAUSE_LINE, "%s", url.substr(at, 28).c_str());
+  }
+  out[n++][0] = '\0';
+  const Uint64 now = SDL_GetTicks();
+  const int left = now < sSend.endsAt ? int((sSend.endsAt - now) / 1000) : 0;
+  std::snprintf(out[n++], PORT_PAUSE_LINE, portTrGame("Stops in %d:%02d"), left / 60, left % 60);
+  return n;
+}
+
+int sendButton(int b) {
+  if (b == 'A' && sSend.running) {
+    std::lock_guard<std::mutex> hold(sSend.lock);
+    SDL_SetClipboardText(sSend.url.c_str());
+  } else if (b == 'X' && sSend.running) {
+    sSend.stop = true;
+  }
+  return 0;
+}
+
+const char* sendHelp() {
+  return sSend.running ? "{A}: copy the address. {X}: stop sending. {B}: back (it goes on sending)." : "{B}: back.";
+}
+
+int sendQrSize() { return sSend.running ? sSend.qrSize : 0; }
+int sendQrModule(int x, int y) { return qrcodegen_getModule(sSend.qr, x, y) ? 1 : 0; }
+
+const PortPauseInfo kSendPage = {"Send saves to another device", sendLines, sendButton, sendHelp, sendQrSize,
+                                 sendQrModule, 0};
+
+int sendRows(PortPauseRow* out, int max) {
+  if (max < 1) {
+    return 0;
+  }
+  if (sSend.running) {
+    out[0] = portPauseRow("Send saves to another device", "{A}: the address and its QR code again.", nullptr, 0);
+    const Uint64 now = SDL_GetTicks();
+    const int left = now < sSend.endsAt ? int((sSend.endsAt - now) / 1000) : 0;
+    std::snprintf(out[0].value, sizeof(out[0].value), "%d:%02d", left / 60, left % 60);
+    return 1;
+  }
+  out[0] = portPauseRow("Send saves to another device",
+                        "Shows an address and its QR code for another device on the same network: its Paper Cut "
+                        "takes the saves with Receive saves. For 5 minutes, once.",
+                        nullptr, 0);
+  return 1;
+}
+
+const char* sendAct(int, int dir) {
+  if (dir != 0) {
+    return nullptr;
+  }
+  if (!sSend.running) {
+    startSending();
+  }
+  if (!sSend.running) {
+    std::lock_guard<std::mutex> hold(sSend.lock);
+    return constantOf(sSend.status, {"This device has no saves of the game yet.",
+                                     "This device has no random numbers for the address.",
+                                     "This device isn't on a network.", "Could not start sending (no network?)."});
+  }
+  portPauseInfoOpen(&kSendPage);
+  return nullptr;
+}
+
+// Receiving: the address typed on the text page or pasted, then which game files to replace
+enum { kAddress = 1000, kPaste, kReceive, kReplace, kCancel, kStatus };
+
+void addressTyped(const char* text) { std::snprintf(sReceive.url, sizeof(sReceive.url), "%s", text); }
+
+int receiveRows(PortPauseRow* out, int max) {
+  int n = 0;
+  const int state = sReceive.state;
+  if (state == 0) {
+    PortPauseRow r = portPauseRow("Address",
+                                  "{A}: type the address the other device shows under Send saves.",
+                                  nullptr, kAddress);
+    const size_t len = std::strlen(sReceive.url);
+    std::snprintf(r.value, sizeof(r.value), "%s%s", len > 30 ? ".." : "", len > 30 ? sReceive.url + len - 28 : sReceive.url);
+    if (len == 0) {
+      r.valueTr = "(none)";
+    }
+    out[n++] = r;
+    out[n++] = portPauseRow("Paste the address", "The address you copied, put in.", nullptr, kPaste);
+    out[n++] = portPauseRow("Receive saves", "Gets the other device's saves; then pick what to replace.",
+                            nullptr, kReceive, sReceive.url[0] == '\0' ? PORT_PAUSE_ROW_DIM : 0);
+  } else if (state == 1) {
+    out[n++] = portPauseRow("Receiving...", nullptr, nullptr, kStatus, PORT_PAUSE_ROW_DIM);
+  } else if (state == 2) {
+    bool any = false, running = false;
+    for (size_t i = 0; i < sReceive.files.size() && n < max - 4; i++) {
+      Incoming& in = sReceive.files[i];
+      out[n++] = portPauseRow(releaseName(in.release), nullptr, nullptr, -1, PORT_PAUSE_ROW_HEADING);
+      for (int k = 0; k < 4 && n < max - 3; k++) {
+        PortPauseRow r = portPauseRow(nullptr,
+                                      "Replace: the other device's file here (backed up first).",
+                                      in.replace[k] ? "Replace" : "Keep", int(i) * 4 + k);
+        std::snprintf(r.text, sizeof(r.text), portTrGame("File %d: %s over %s"), k + 1,
+                      portTrGame(hasGame(in.file.bytes, k) ? "a save" : "empty"),
+                      portTrGame(!in.here.empty() && hasGame(in.here, k) ? "a save" : "empty"));
+        out[n++] = r;
+        any |= in.replace[k];
+        running |= in.replace[k] && in.release == PORT_GAME_ID[3];
+      }
+    }
+    const bool locked = running && !portRestartSupported();
+    out[n++] = portPauseRow(running ? "Replace them and restart" : "Replace them",
+                            locked    ? "Receive saves from the launcher, before starting."
+                            : running ? "This is the running game's card: the game starts again to load it."
+                                      : "The save here is kept as a backup first.",
+                            nullptr, kReplace, !any || locked ? PORT_PAUSE_ROW_DIM : PORT_PAUSE_ROW_CONFIRM);
+    out[n++] = portPauseRow("Cancel", nullptr, nullptr, kCancel);
+  } else {
+    out[n++] = portPauseRow("Restarting when the game has finished saving...", nullptr, nullptr, kStatus,
+                            PORT_PAUSE_ROW_DIM);
+  }
+  if (state != 1 && !sReceive.error.empty() && n < max) {
+    PortPauseRow r = portPauseRow(nullptr, "Could not receive the saves.", nullptr, kStatus, PORT_PAUSE_ROW_DIM);
+    std::snprintf(r.text, sizeof(r.text), "%s", sReceive.error.c_str());
+    out[n++] = r;
+  } else if (state != 1 && !sReceive.done.empty() && n < max) {
+    out[n++] = portPauseRow("Received: the saves as they were are kept as backups.", nullptr, nullptr, kStatus,
+                            PORT_PAUSE_ROW_DIM);
+  }
+  return n;
+}
+
+const char* receiveAct(int id, int dir) {
+  if (id >= 0 && id < 1000) { // a game file: replace or keep
+    const size_t i = size_t(id / 4);
+    if (sReceive.state == 2 && i < sReceive.files.size()) {
+      sReceive.files[i].replace[id % 4] = !sReceive.files[i].replace[id % 4];
+    }
+    return nullptr;
+  }
+  if (dir != 0) {
+    return nullptr;
+  }
+  switch (id) {
+  case kAddress:
+    portPauseTextOpen("Address", sReceive.url, int(sizeof(sReceive.url)) - 1, PORT_PAUSE_CHARS_ADDRESS, addressTyped);
+    return nullptr;
+  case kPaste:
+    if (SDL_HasClipboardText()) {
+      char* text = SDL_GetClipboardText();
+      std::snprintf(sReceive.url, sizeof(sReceive.url), "%s", text != nullptr ? text : "");
+      SDL_free(text);
+      return nullptr;
+    }
+    return "Nothing copied yet.";
+  case kReceive:
+    if (sReceive.url[0] == '\0') {
+      return "Type the address first.";
+    }
+    startReceiving(sReceive.url);
+    return nullptr;
+  case kReplace: {
+    bool any = false, running = false;
+    for (const Incoming& in : sReceive.files) {
+      for (int k = 0; k < 4; k++) {
+        any |= in.replace[k];
+        running |= in.replace[k] && in.release == PORT_GAME_ID[3];
+      }
+    }
+    if (!any) {
+      return "Choose a file to replace first.";
+    }
+    if (running && !portRestartSupported()) {
+      return "Receive saves from the launcher, before starting.";
+    }
+    applyChosen(1); // (the Start menu: a game is running)
+    return nullptr;
+  }
+  case kCancel:
+    sReceive.files.clear();
+    sReceive.state = 0;
+    return nullptr;
+  default:
+    return nullptr;
+  }
+}
+
+const PortPauseForm kSendForm = {"Saves", "Send saves to another device", sendRows, sendAct, PORT_PAUSE_FORM_OWN};
+const PortPauseForm kReceiveForm = {"Saves", "Receive saves", receiveRows, receiveAct, PORT_PAUSE_FORM_OWN};
 
 // Tests ($TTYD_SAVE_SEND, $TTYD_SAVE_RECEIVE): from the first frame the user folder is known
 void testOverlay(int) {
@@ -644,6 +885,8 @@ struct SaveTransferSettings {
                            "transfer move phone qr code network wifi share send gci memory card");
     portSettingsAddSection("Saves", "Receive saves", nullptr, 0, receiveSection,
                            "transfer move phone qr code network wifi receive import gci memory card");
+    portPauseAddForm(&kSendForm);
+    portPauseAddForm(&kReceiveForm);
     if (SDL_getenv("TTYD_SAVE_SEND") != nullptr || SDL_getenv("TTYD_SAVE_RECEIVE") != nullptr) {
       portSettingsAddOverlay(testOverlay, nullptr);
     }

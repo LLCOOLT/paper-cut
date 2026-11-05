@@ -66,14 +66,14 @@ None yet: they're kept in the replays folder of the user folder.
 Open a replay file...
 リプレイファイルを開く...
 
-The game starts again to play it; Esc or B stops it.
-再生するためにゲームを始め直します。Esc か B で止まります。
+The game starts again to play it; Esc or {B} stops it.
+再生するためにゲームを始め直します。Esc か {B} で止まります。
 
 Recording
 記録中
 
-Replay finished: Esc or B to leave
-リプレイ終了：Esc か B で戻る
+Replay finished: Esc or {B} to leave
+リプレイ終了：Esc か {B} で戻る
 
 Replay
 リプレイ

@@ -6,6 +6,11 @@
  * stand-in NPC (as the area's own scripts do: evt_npc_set_battle_info, then
  * evt_npc_battle_start) and, after it, goes on to the next map. */
 #include "port/modes.h"
+#include "port/playmodes.h"
+#include "port/postgame.h"
+#include "port/raid.h"
+#include "port/dojo.h"
+#include "port/directors_cut.h"
 #include "port/mods.h"
 #include "port/mod_host.h"
 #include "port/hook_list.h"
@@ -23,6 +28,7 @@
 #include "mario/mario_pouch.h"
 #include "mario/mariost.h"
 #include "system.h"
+#include "port/title_menu.h"
 
 #include <SDL3/SDL_timer.h>
 #include <stdio.h>
@@ -326,7 +332,7 @@ static void giveLoadout(int loadout) {
 }
 
 int portModePitUnlocked(void) {
-    return swByteGet(0) >= STORY_STG3_34_RETURN_TO_ROGUEPORT;
+    return swStoryPeek() >= STORY_STG3_34_RETURN_TO_ROGUEPORT; /* (menus read it too: no side effects) */
 }
 
 /* Starts and stops asked for from the settings page (its own thread): done
@@ -391,8 +397,9 @@ static void frameHook(void) {
     if (__atomic_exchange_n(&sStopAsked, 0, __ATOMIC_SEQ_CST)) {
         stopNow();
     }
-    /* a start waits for the field (not a map change or a battle) */
-    if (seqGetSeq() == SEQ_GAME && !gp->inBattle) {
+    /* a start waits for the field (not a map change or a battle) and for a menu to close (the Start
+     * menu's pages start these too: port/settings/features/modes.cpp) */
+    if (seqGetSeq() == SEQ_GAME && !gp->inBattle && !seqCheckSeq() && marioStGetSystemLevel() == 0) {
         const int mode = __atomic_exchange_n(&sStartMode, 0, __ATOMIC_SEQ_CST);
         if (mode != PORT_MODE_NONE) {
             startNow(mode, __atomic_load_n(&sStartLoadout, __ATOMIC_SEQ_CST));
@@ -429,7 +436,7 @@ const char* portModeBossName(int boss) {
 }
 
 int portModeBossBeaten(int boss) {
-    return boss >= 0 && boss < BOSS_COUNT && gp != NULL && swByteGet(0) >= kBeatenAt[boss];
+    return boss >= 0 && boss < BOSS_COUNT && gp != NULL && swStoryPeek() >= kBeatenAt[boss];
 }
 
 int portModeRefight(int boss, int loadout, const char** why) {
@@ -449,6 +456,14 @@ int portModeRefight(int boss, int loadout, const char** why) {
     __atomic_store_n(&sStartLoadout, loadout, __ATOMIC_SEQ_CST);
     __atomic_store_n(&sStartMode, PORT_MODE_REFIGHT, __ATOMIC_SEQ_CST);
     return 1;
+}
+
+/* A leaderboard run (board_run_aurora.c): started on the first frame in the
+ * field, as a start from the Modes tab is, without its checks (at start-up
+ * there's no field yet) */
+void portModeQueue(int mode, int loadout) {
+    __atomic_store_n(&sStartLoadout, loadout, __ATOMIC_SEQ_CST);
+    __atomic_store_n(&sStartMode, mode, __ATOMIC_SEQ_CST);
 }
 
 void portModeStop(void) {
@@ -471,6 +486,17 @@ void portModesRegisterMaps(void) {
     for (i = 0; i < BOSS_COUNT; i++) {
         portModsAddHostMap(kBosses[i].map, mode_map_init, kBosses[i].files);
     }
+    /* the bosses whose speeches are in another room's text than the ground's
+     * (the boss's own room, as the story's battle loads it) */
+    portModsSetHostMapText("mri_m0", "mri_01"); /* Magnus von Grapple */
+    portModsSetHostMapText("muj_m1", "muj_00"); /* Lord Crump, chapter 5 */
+    portModsSetHostMapText("aji_m0", "aji_14"); /* Magnus von Grapple 2.0 */
     portModsAddHostMap(kPitMap.map, mode_map_init, kPitMap.files);
     portModHostAddHook(1, kSlot_marioStMain, (void*)frameHook);
+    portPlayModesInit(); /* chapter select and the other play modes (playmodes.h) */
+    portPostgameInit();  /* the trophy room and the other post-game modes (postgame.h) */
+    portDirectorsCutInit(); /* Director's Cut's hooks (directors_cut.h) */
+    portRaidInit();         /* the raid boss's maps and hooks (raid.h) */
+    portDojoRegisterMaps(); /* the action-command dojo's map and hooks (dojo.h) */
+    portTitleMenuInit();    /* the title menu's setting and its temporary file's hook (title_menu.h) */
 }

@@ -85,19 +85,67 @@ Goombella's hair
 I capelli di Goombella
 
 Koops's shell
-Il guscio di Koops
+Il guscio di Koopaldo
 
 Koops's hoodie
-La felpa di Koops
+La felpa di Koopaldo
 
 Flurrie's hair
-I capelli di Flurrie
+I capelli di Spirù
 
 Bobbery's body
-Il corpo di Bobbery
+Il corpo di Cannonio
 
-Ms. Mowz's mask and cape
-Maschera e mantello di Ms. Mowz
+Ms. Mowz's mask
+La maschera di Squitty
 
 Vivian's body
-Il corpo di Vivian
+Il corpo di Ombretta
+
+Goombella's helmet
+Il casco di Goombella
+
+Flurrie's dress
+Il vestito di Spirù
+
+Bobbery's fuse
+La miccia di Cannonio
+
+Vivian's hat
+Il cappello di Ombretta
+
+Vivian's hair
+I capelli di Ombretta
+
+Ms. Mowz's cape
+Il mantello di Squitty
+
+Its own colour, or the mask's.
+Un colore suo o quello della maschera.
+
+Theme
+Tema
+
+The status bar's banners and the menus' pages in colours that go together. A part with a colour of its own keeps it.
+Le fasce della barra di stato e le pagine dei menu in colori che stanno bene insieme. Una parte con un colore suo lo mantiene.
+
+Night
+Notte
+
+Forest
+Foresta
+
+Ocean
+Oceano
+
+Candy
+Caramella
+
+High contrast
+Alto contrasto
+
+Menus
+Menu
+
+The Start menu's pages, all in one colour.
+Le pagine del menu di pausa, tutte di un colore.

@@ -1,0 +1,16 @@
+# save files, the Start menu's Settings tab in the JP release's font: see tools/port/gen_lang.py
+
+Keep every save file
+すべての　セーブを　のこす
+
+Each save the game writes is also kept in the library below, with a picture of where it was made, so there is no limit of four files.
+セーブするたびに　ばしょの　えと　いっしょに　ライブラリにも　のこします　ファイルは　4つまで　では　ありません
+
+Settings per save file
+ファイルごとの　せってい
+
+The difficulty, the Enhancements and the challenge rules are saved with each file and come back when it is loaded. Display, sound and controls stay the same for every file.
+むずかしさや　チャレンジの　ルールは　ファイルごとに　セーブされ　ロードすると　もどります　がめんと　おとと　そうさは　きょうつうです
+
+Save files
+セーブファイル

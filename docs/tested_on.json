@@ -1,0 +1,46 @@
+{
+  "about": "What each release has been run on, and how far: tools/port/release.py renders it into the release notes ('Tested on'), and `release.py --tested-on VERSION` prints the same table for the README. Add a row (or a release to a row's list) when a build has been tried somewhere. how: played (the game played on it), started (it starts and reaches the game, little more), headless (automatic tests without a window), built (built and packaged, not run), not yet.",
+  "levels": ["played", "started", "headless", "built", "not yet"],
+  "devices": [
+    {
+      "device": "Windows PC, x86-64, NVIDIA GeForce RTX 3090",
+      "system": "Windows 11 (Direct3D 12)",
+      "versions": ["JP", "US", "EU"],
+      "how": "played",
+      "what": "every release's checks; online co-op with two games on one PC, with a Mac on the same network, and through the relay",
+      "releases": ["0.1.0", "0.2.0", "0.3.0"]
+    },
+    {
+      "device": "Mac, Apple M2",
+      "system": "macOS 26 (Metal)",
+      "versions": ["US"],
+      "how": "played",
+      "what": "online co-op with the Windows PC on the same network and through the relay",
+      "releases": ["0.2.0", "0.3.0"]
+    },
+    {
+      "device": "iPhone 17 Pro",
+      "system": "iOS 26",
+      "versions": ["US"],
+      "how": "played",
+      "what": "a development build installed from Xcode",
+      "releases": ["0.2.0"]
+    },
+    {
+      "device": "Linux, x86-64",
+      "system": "Ubuntu 24.04 (a container)",
+      "versions": ["JP", "US", "EU"],
+      "how": "headless",
+      "what": "every map loaded and saves written without a window; not played on a Linux desktop or a Steam Deck",
+      "releases": ["0.1.0", "0.2.0", "0.3.0"]
+    },
+    {
+      "device": "Android, arm64",
+      "system": "Android",
+      "versions": ["JP", "US", "EU"],
+      "how": "built",
+      "what": "the APKs built; not run on a device (the second screen only in a test window on Windows)",
+      "releases": ["0.1.0", "0.2.0", "0.3.0"]
+    }
+  ]
+}

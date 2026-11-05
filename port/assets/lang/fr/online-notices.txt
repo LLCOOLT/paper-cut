@@ -1,0 +1,13 @@
+# Online play's notices over the picture and the versus set-up's side labels: an English line, then its translation, then a blank line.
+
+Waiting for %s...
+En attente de %s...
+
+%s minimized the game.
+%s a réduit le jeu.
+
+You: Mario's side
+Vous : le camp de Mario
+
+You: Luigi's side
+Vous : le camp de Luigi

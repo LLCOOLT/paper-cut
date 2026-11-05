@@ -1,8 +1,9 @@
 #ifndef PORT_MUSIC_H
 #define PORT_MUSIC_H
 
-/* Music shuffle and the player's own music (Audio settings;
- * port/src/common/music_pc.c, port/settings/features/music.cpp). Both are
+/* Music shuffle and the player's own music (Audio > Soundtrack, one choice
+ * that sets the three settings below; port/src/common/music_pc.c,
+ * port/settings/features/music.cpp). Both are
  * only what is heard: the game's own track still plays on its stream channel
  * (silenced while the player's file plays in its place), psbgm keeps the
  * track the game asked for, and the shuffle's choices come from a random

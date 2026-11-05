@@ -1,6 +1,6 @@
-# Luigi's animations (Paper Cut 0.2, M6b)
+# Luigi's animations
 
-"Play as Luigi" (docs/PLAYABLE_LUIGI.md) draws Luigi's field model, `c_luigi`,
+Gameplay → **Play as** Luigi ([PLAYABLE_LUIGI.md](PLAYABLE_LUIGI.md)) draws Luigi's field model, `c_luigi`,
 in Mario's place, but the disc gives Luigi only stand, idle, walk, run, jump
 and talk. This work adds new animations for his model, made in Blender, and
 the tools that move animations between the game's files and Blender.
@@ -108,7 +108,8 @@ every frame, with a margin.
 - The pack, `port/assets/luigi/luigi_anims.bin` (our own work, built into
   the executable): the new animations, a hammer plane for Luigi's model (its
   records and node, our numbers), which group fields to set and which of
-  `a_mario-`'s drawings to copy. `tools/port/luigi_pack.py` writes and reads
+  `a_mario-`'s drawings to copy. `tools/port/luigi_pack.py` (Peach's and Bowser's
+  packs too, [PLAY_AS.md](PLAY_AS.md): `--char`) writes and reads
   it.
 - At startup, before the mods apply, `port/src/aurora/luigi_model_aurora.c`
   reads the user's `c_luigi`, `c_luigi-` and `a_mario-` and makes
@@ -231,4 +232,4 @@ hold, strike).
 Earlier plan, by priority:
 - The event poses (`e_mario`), paper forms' own animations (the forms
   themselves now capture Luigi when he has the pose), battle (`b_mario`'s 85).
-- Anything Luigi has no version of, as before (docs/PLAYABLE_LUIGI.md).
+- Anything Luigi has no version of, as before ([PLAYABLE_LUIGI.md](PLAYABLE_LUIGI.md)).

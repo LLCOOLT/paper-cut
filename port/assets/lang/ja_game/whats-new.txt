@@ -1,0 +1,61 @@
+# What's new in Japanese for the JP release's own font: kana, words apart.
+
+What's new
+あたらしい　こと
+
+What's new in Paper Cut %s
+Paper Cut %s の　あたらしい　こと
+
+This version's new features and fixes, from its release notes.
+この　バージョンで　ふえた　ことと　なおした　こと
+
+No notes for this version.
+この　バージョンの　メモは　ありません
+
+Up and down to read, left and right a page at a time; {B} goes back.
+うえと　したで　よむ　ひだりと　みぎで　１ページずつ　{B}で　もどる
+
+
+Updated to Paper Cut %s.
+Paper Cut %s に　アップデートしました
+
+{A} or {B} closes this.
+{A}か{B}で　とじる
+
+The full list
+ぜんぶの　リスト
+
+The full list is in the Start menu: Settings, General, What's new.
+ぜんぶの　リストは　スタートメニューの　せってい／ぜんぱん／『あたらしい　こと』に
+
+# the release notes' Highlights (docs/release_notes/<version>.md), each release its own
+
+Versus battles against a friend or the computer.
+たいせんバトル：ともだちや　コンピューターと
+
+Paper Cut's open world: chapters in any order (US).
+オープンワールド：チャプターは　すきな　じゅんに（US）
+
+Play as Luigi, Peach or Bowser, all the way through.
+ルイージ　ピーチ　クッパで　さいごまで
+
+A title menu: Play, Modes, Online and Settings.
+タイトルメニュー：あそぶ　モード　オンライン　せってい
+
+Modes: a dojo, dungeon master, boss rush and more.
+モード：どうじょう　ダンジョンマスター　ほか
+
+Four players, and Luigi as a hero in Brothers mode.
+４人プレイと　ブラザーズモード
+
+Master Quest, and a Director's Cut of what was cut.
+マスタークエストと　ディレクターズカット
+
+Online in the Start menu, easier to host and join.
+スタートメニューから　オンライン
+
+A paper-theatre launcher and a new star icon.
+紙の　げきじょうの　ランチャーと　星の　アイコン
+
+Button icons for your controller; a touch C-stick.
+コントローラーの　ボタンひょうじと　タッチの　Cスティック

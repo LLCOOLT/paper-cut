@@ -7,6 +7,7 @@
 #include "unit/party/unit_party_christine.h"
 #include "evt/evt_msg.h"
 #include "port/menu_tap.h"
+#include "port/duo.h"
 /* A, or the mouse on the ring (0) or a list (1): moves the cursor to the pointer, a click on the cursor's
  * choice is A (battle_menu_disp.c) */
 #define BTL_MENU_A(list) (BattlePadCheckTrigger(PAD_BUTTON_A) | portBattleMenuMouse(list))
@@ -701,6 +702,9 @@ static s32 _btlcmd_MakeSelectWeaponTable(BattleWork* wp, s32 type) {
             break;
         }
     }
+#ifdef TARGET_PC
+    portDuoAddWeapons(cmd, type, &num); // duo moves after the list's own (port/include/port/duo.h)
+#endif
     if (num <= 0) {
         return 0;
     }
@@ -804,6 +808,9 @@ static void _btlcmd_UpdateSelectWeaponTable(BattleWork* wp, s32 type) {
             }
         }
     }
+#ifdef TARGET_PC
+    portDuoCheckWeapons(cmd, n); // a duo move needs the other one's move too (port/include/port/duo.h)
+#endif
 }
 
 /**
@@ -3300,6 +3307,11 @@ static USER_FUNC(_get_msg) {
         case 6:
             msg = "btl_msg_cmderror_no_escape";
             break;
+#ifdef TARGET_PC
+        case PORT_DUO_REASON: // a duo move whose other half can't join now (port/include/port/duo.h)
+            msg = "pc_duo_busy";
+            break;
+#endif
         default:
             msg = "btl_msg_cmderror_no_select_now";
             break;

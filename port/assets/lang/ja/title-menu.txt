@@ -1,0 +1,22 @@
+# The title menu (port/src/aurora/title_menu_aurora.c, port/settings/features/title_menu.cpp), in Japanese: an English line, then its translation, then a blank line.
+
+Title menu
+タイトルメニュー
+
+After Press Start, a menu before the files: Play, Modes (party games and battles on a file that is never saved), Online and Settings. Off: straight to the files, as the original.
+スタートを押したあと、ファイルの前にメニュー：遊ぶ、モード（セーブされないファイルでパーティーゲームとバトル）、オンライン、設定。オフ：元のゲームどおりファイル選択へ。
+
+Your save files: go on with one, or start a new adventure.
+セーブファイル：続きから遊ぶか、新しい冒険を始めます。
+
+Party games and battles, on a file of their own that is never saved.
+パーティーゲームとバトルを、セーブされない専用のファイルで。
+
+Play together over the internet: host a room, join one by its code, or watch.
+インターネットで一緒に遊ぶ：ルームを開く、コードで参加する、観戦する。
+
+Paper Cut's settings, in the game's own book.
+Paper Cutの設定を、ゲームの本のページで。
+
+This one works on the file in play: load a file, then find it in the Start menu.
+遊んでいるファイルに使う項目です：ファイルを読み込んでから、スタートメニューで開いてください。

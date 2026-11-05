@@ -12,8 +12,8 @@ Full settings page...
 Paper Cut's full settings page, over the game: every setting, and remapping, mods and practice.
 ゲームの上に Paper Cut の設定ページを開きます。すべての設定、キー割り当て、Mod、練習。
 
-Press A again to confirm.
-もう一度Aで決定します。
+Press {A} again to confirm.
+もう一度{A}で決定します。
 
 The window this many times the game's picture; left and right change it.
 ゲーム画面の何倍の大きさのウィンドウか。左右で変えます。
@@ -69,8 +69,8 @@ Part
 Which part the colour is for: left and right change it.
 色をつけるパーツ。左右で変えます。
 
-A puts this colour on.
-Aでこの色にします。
+{A} puts this colour on.
+{A}でこの色にします。
 
 Left and right make it more or less; it's on as it changes.
 左右で増減します。すぐに変わります。

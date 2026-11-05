@@ -63,12 +63,19 @@ enum Logic {
   // The TTYD AP mod's open world (the TTYD apworld's logic): key items too,
   // placed so that the Shadow Queen can be reached. Needs that mod.
   kOpenWorld = 1,
+  // Paper Cut's own open world (pc_world.h): each chapter's story runs on
+  // its own, so the chapters a stage opens can be played in any order its
+  // logic allows; key items and partners placed by it. No mod needed.
+  kPaperCut = 2,
 };
 
 struct Options {
   std::string seed;  // any text; the same text, the same seed
   unsigned pools = kBadges | kItems | kStarPieces | kShineSprites;
   int logic = kVanillaStory;
+  // Paper Cut's open world: the Crystal Stars that are the goal (0: all of
+  // the stage's chapters'); the logic makes sure that many can be reached.
+  int goalStars = 0;
 };
 
 struct Placement {
@@ -86,6 +93,7 @@ struct Result {
   int moved = 0;      // of those, the ones whose item changed
   std::vector<Placement> placements;
   std::string spoiler; // the spoiler log's text
+  int chaptersReached = 0; // Paper Cut's open world: the chapters whose way in the final sweep reached
 };
 
 Result generate(const Options& options);
@@ -100,6 +108,17 @@ std::string poolsText(unsigned pools);
 // The kind of item an Archipelago item is (a Pool bit), or 0: never shuffled
 // (partners, Crystal Stars).
 unsigned poolOf(int64_t item);
+// Paper Cut's open world: the kind of item it is there (poolOf, but the
+// Briefcase is the story's key item), and the game's own item id an
+// Archipelago item gives (its romId, but the game's Briefcase for the
+// apworld's, which is the TTYD AP mod's own).
+unsigned paperCutPoolOf(int64_t item);
+int gameItemOf(int64_t item);
+// The partner an Archipelago item is (1 Goombella ... 7 Ms. Mowz, the game's
+// party ids), or 0.
+int partnerOf(int64_t item);
+// An item's Archipelago id by its name (kTtydRandoItemNames), or 0.
+int64_t itemByName(const char* name);
 
 } // namespace ttyd_rando
 #endif

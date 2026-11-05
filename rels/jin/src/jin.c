@@ -10,6 +10,9 @@
 #include "data/party_data.h"
 #include "jin.h"
 #include "rel_module.h"
+#ifdef TARGET_PC
+void jin_directors_cut(void);
+#endif
 
 static void* pose_buf;
 
@@ -48,6 +51,9 @@ void _prolog(void) {
     relSetEvtAddr("jin_10", jin_10_init_evt);
     relSetEvtAddr("jin_11", jin_11_init_evt);
     relSetBtlAddr("jin", btlsetup_jin_tbl, btl_jin_setup_no_tbl);
+#ifdef TARGET_PC
+    jin_directors_cut(); /* Director's Cut's cut battles (its battle database) */
+#endif
     pose_buf = _mapAlloc(sizeof(partyPoseTbl[6]));
     memcpy(pose_buf, partyPoseTbl[6], sizeof(partyPoseTbl[6]));
 }

@@ -44,6 +44,12 @@ float portWidescreenAspect(void);
 void portWidescreenFrame(void);
 /* Switched while running (the settings page). */
 void portWidescreenSet(int on);
+/* Bars per camera angle (aspect_scene_limits): mapDisp's each field frame.
+ * In rooms where void shows past a wall only as the camera nears that end,
+ * black bars inside the frame (drawn before the 2D camera, under the HUD)
+ * slide over it and away as the camera moves. Drawing only. */
+void portWideMapDrawn(void);
+
 /* Widescreen HUD on (the settings page; port/src/common/widescreen_pc.c) */
 extern int gPortWideHud;
 

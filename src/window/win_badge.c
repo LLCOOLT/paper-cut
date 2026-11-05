@@ -26,6 +26,7 @@
 #include "port/hooks/src_window_win_badge.h"
 #endif
 #ifdef TARGET_PC
+#include "port/companion.h"
 #include "port/menu_tap.h"
 /* Play as Luigi: the badge page's figures have Luigi's stand-in, which goes with them (port/include/port/luigi.h) */
 #include "port/luigi.h"
@@ -221,8 +222,18 @@ s32 PORT_HOOKABLE(winBadgeMain)(WindowWork* w) {
             pages = (cnt + 7) / 8;
             tab = w->badge.tab;
 #ifdef TARGET_PC
-            /* the second screen's menu only shows the badges (port/companion_menu.h) */
+            /* the second screen's menu: the game wears the badge or takes it off, from a tap
+               (port/companion.h); the equipped list's mark changes here at once */
             if (gPortCompanionMenu && (w->buttonTrg & PAD_BUTTON_A)) {
+                const s32 at = tab == 0 ? w->badge.sel[0] : w->badge.sel[1];
+                const s32 idx = tab == 0 ? at : w->badge.list[at].idx;
+                if (idx >= 0 && idx < pouchGetHaveBadgeCnt()) {
+                    portCompanionTap(PORT_COMPANION_TAP_BADGE, idx, 0);
+                    if (tab != 0 && (w->badge.list[at].equipped ||
+                                     pouch->availableBP >= itemDataTable[pouchHaveBadge(idx)].bp_cost)) {
+                        w->badge.list[at].equipped = !w->badge.list[at].equipped;
+                    }
+                }
             } else
 #endif
             if (w->buttonTrg & PAD_BUTTON_A) {

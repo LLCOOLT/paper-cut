@@ -1,0 +1,20 @@
+# Play as (Luigi, Peach, Bowser) in Japanese for the JP release's own font: an English line, then its translation, then a blank line.
+
+Play as
+あそぶ　キャラクター
+
+Who takes Mario's place, with Mario's moves, in the field, battles, menus and scenes; the text calls them by their name. Saves are not changed.
+マリオの　かわりに　マリオの　わざで　とうじょうします　なまえも　かわります　セーブは　かわりません
+
+Mario
+マリオ
+
+Luigi
+ルイージ
+
+Peach
+ピーチ
+
+Bowser
+クッパ
+

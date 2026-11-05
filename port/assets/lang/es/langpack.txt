@@ -21,8 +21,8 @@ No se pudo escribir la plantilla.
 Written: %s, with %d texts to translate.
 Escrita: %s, con %d textos por traducir.
 
-Letters the menus' fonts didn't have yet show after a restart.
-Las letras que aún no tenían las fuentes de los menús se ven tras reiniciar.
+New letters for the menus' fonts show after a restart.
+Las letras nuevas de los menús se ven tras reiniciar.
 
 No language packs yet.
 Aún no hay paquetes de idioma.

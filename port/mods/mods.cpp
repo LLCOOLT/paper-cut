@@ -12,6 +12,9 @@
 //                mod.json "maps": {"gor_99": {"init": "room_init", "files": "gor_01"}}
 //                gives a map (new, or the game's) its init script, and a new one
 //                another map's files
+//   lua/         a Lua mod: main.lua and the modules it requires (docs/LUA_MODDING.md,
+//                port/include/port/lua_mods.h); mod.json "lua": {"online": "hud"}
+//                lets it run online as a display only when the players' Lua differs
 // A zip may hold the mod in one top-level folder.
 //
 // Disc files go through Aurora's DVD overlay, textures through its texture
@@ -24,8 +27,12 @@
 // Apply keeps what it replaced alive: the game may hold a message pointer or
 // an open file of the previous set.
 #include "port/mods.h"
+#include "port/lua_mods.h"
 #include "port/mod_host.h"
 #include "port/modes.h"
+#include "port/versus.h"
+#include "port/brothers.h"
+#include "port/dungeon_master.h"
 #include "port/reflect.h"
 #include "port/json.h"
 #include "evt_asm.h"
@@ -155,6 +162,8 @@ public:
   // A folder's file on disk, for streaming it instead of reading it whole.
   std::string hostPath(const std::string& rel) const { return mZip ? std::string() : mPath + "/" + mPrefix + rel; }
   const std::string& path() const { return mPath; }
+  const std::string& prefix() const { return mPrefix; }
+  bool zip() const { return mZip; }
 
 private:
   std::string mPath;
@@ -332,10 +341,18 @@ struct Mod {
   };
   std::vector<MapSpec> maps;
   int scripts = 0;
+  bool luaHudOnline = false; // mod.json "lua": {"online": "hud"}
+  int luaFiles = 0;          // lua/*.lua
   // What it changes (analyze()), and what another mod changes too.
   std::vector<Change> changes[PORT_MOD_CHANGE_COUNT];
   std::vector<Change> patchPlaces; // the addresses its patches wrote (apply)
   std::vector<std::unique_ptr<Conflict>> conflicts;
+  // the mod manager: its icon (in the source), its name in the mods folder,
+  // what it holds, a language pack only
+  std::string icon, folder;
+  unsigned kinds = 0;
+  bool pack = false;
+  int online = PORT_MOD_ONLINE_OWN;
 };
 
 // A mod's code (a library in lib/<platform>/, or built into the game): it
@@ -368,6 +385,8 @@ std::map<std::string, std::vector<uint8_t>> sHostFiles; // disc path -> contents
 std::vector<std::unique_ptr<Source>> sRetiredSources;
 std::vector<std::unique_ptr<std::vector<OverlayFile>>> sOverlayGenerations;
 std::vector<aurora::texture::ReplacementGroup> sTextureGroups;
+// counts every change to the packs' registrations (portModsTexturesGeneration)
+int sTexturesGeneration;
 // language code ("" for all) -> tag -> text in the game's encoding
 using Messages = std::unordered_map<std::string, std::unordered_map<std::string, std::string>>;
 std::vector<std::unique_ptr<Messages>> sMessageGenerations;
@@ -379,10 +398,14 @@ std::mutex sMessageLock;
 struct ModMap {
   void* script = nullptr;
   std::string files; // the map whose files it reads, or empty
+  std::string text;  // the map whose messages it reads, when not files' (portModsSetHostMapText)
 };
 std::vector<std::unique_ptr<port_evt::Program>> sPrograms;
 std::map<std::string, ModMap> sMaps;
 std::vector<std::pair<std::string, std::string>> sAliases; // "/m/gor_99/" -> "/m/gor_01/"...
+// the host's maps' enemy set-up files ("/m/hei_w00/s"): never aliased, so the
+// modes' rooms have the ground they borrow without its field enemies
+std::vector<std::string> sNoSetup;
 std::map<std::string, ModMap> sHostMaps; // the host's own new maps (the modes'), below every mod's
 std::mutex sMapLock;
 
@@ -471,8 +494,12 @@ bool gameName(const std::string& text, port_evt::Word& out, std::string& why) {
   return false;
 }
 // Messages set by mods' code (api->setMessage): above every file's.
+// A tag's last few texts are kept (the game may still show an older one); the
+// rest go, so a mod setting one every frame doesn't grow without end.
 std::unordered_map<std::string, const char*> sCodeMessages;
-std::deque<std::string> sCodeMessageText;
+std::unordered_map<std::string, std::deque<std::string>> sCodeMessageText;
+constexpr size_t kMessageKept = 4;
+constexpr size_t kMessageTags = 16384;
 
 struct OverlayHandle {
   SDL_IOStream* io = nullptr;
@@ -1019,6 +1046,7 @@ void describe(Mod& m, const Json& root) {
   mod->version = root.str("version");
   mod->author = root.str("author");
   mod->description = root.str("description");
+  mod->icon = root.str("icon"); // a PNG in the mod (the mod manager); else its icon.png
   if (mod->id.empty()) {
     mod->error = "mod.json has no \"id\"";
   }
@@ -1066,6 +1094,10 @@ void describe(Mod& m, const Json& root) {
       }
     }
   }
+  // "lua": {"online": "hud"}: its Lua only draws, so it may run online whatever the other player has
+  if (const Json* lua = root.get("lua"); lua != nullptr && lua->type == Json::Object) {
+    mod->luaHudOnline = lua->str("online") == "hud";
+  }
   if (const Json* games = root.get("games"); games != nullptr && games->type == Json::Array) {
     bool found = false;
     for (const Json& g : games->items) {
@@ -1087,10 +1119,30 @@ void readMod(const std::string& path, bool isZip, const std::string& display) {
   if (mod->source == nullptr) {
     mod->error = error.empty() ? "can't be read" : error;
   } else if (!mod->source->read("mod.json", json)) {
-    if (!isZip) {
+    std::vector<uint8_t> pack;
+    if (!isZip && mod->source->read("lang/pack.txt", pack)) {
+      // a language pack (docs/LANGUAGE_PACKS.md): listed by its folder's name, its pack.txt name= shown
+      mod->pack = true;
+      mod->id = display;
+      const std::string text(pack.begin(), pack.end());
+      for (size_t at = 0; at < text.size();) {
+        size_t eol = text.find('\n', at);
+        eol = eol == std::string::npos ? text.size() : eol;
+        std::string line = text.substr(at, eol - at);
+        at = eol + 1;
+        while (!line.empty() && (line.back() == '\r' || line.back() == ' ')) {
+          line.pop_back();
+        }
+        if (line.rfind("name=", 0) == 0) {
+          mod->name = line.substr(5);
+        }
+      }
+      mod->description = "A language pack for Paper Cut's own menus.";
+    } else if (!isZip) {
       return; // a folder without mod.json isn't a mod (e.g. one being made)
+    } else {
+      mod->error = "has no mod.json";
     }
-    mod->error = "has no mod.json";
   } else if (!parseJson(json, root, error) || root.type != Json::Object) {
     mod->error = "mod.json: " + (error.empty() ? std::string("not an object") : error);
   } else {
@@ -1101,6 +1153,10 @@ void readMod(const std::string& path, bool isZip, const std::string& display) {
   }
   if (mod->name.empty()) {
     mod->name = mod->id;
+  }
+  mod->folder = display;
+  if (mod->icon.empty() && mod->source != nullptr && mod->source->has("icon.png")) {
+    mod->icon = "icon.png";
   }
   for (const auto& other : sMods) {
     if (other->id == mod->id && mod->error.empty()) {
@@ -1333,10 +1389,15 @@ std::string sMapTexMap; // the map the sets were last matched to
 
 bool mapTexRead(void* userData, const char* path, std::vector<uint8_t>& out) {
   const auto* f = static_cast<const MapTexFile*>(userData);
+  // Aurora asks for the texture by its own path, then for sidecar mips beside it
+  // (<name>_mip1.png ...): a mod's file of that name, and none of the host's (its
+  // bytes are the one image: served as a mip they were the wrong size)
   if (f->source != nullptr) {
-    return f->source->read(f->path, out);
+    return f->source->read(path != nullptr ? std::string{path} : f->path, out);
   }
-  (void)path;
+  if (path != nullptr && f->path != path) {
+    return false;
+  }
   const auto* p = static_cast<const uint8_t*>(f->data);
   out.assign(p, p + f->size);
   return true;
@@ -1403,10 +1464,12 @@ void mapTexUpdate(const std::string& map) {
         }
       }
       set->on = true;
+      sTexturesGeneration++;
       SDL_Log("mods: map %s: texture set %s on (%d textures)", map.c_str(), set->pattern.c_str(),
               int(set->group.registrations.size()));
     } else if (!want && set->on) {
       mapTexOff(*set);
+      sTexturesGeneration++;
     }
   }
 }
@@ -1500,12 +1563,50 @@ void applyTextures() {
     sTextureGroups.push_back(std::move(group));
   }
   mapTexUpdate(sMapTexMap);
+  sTexturesGeneration++;
 }
 
 void analyze();
 void publish();
 
+// Lua mods: each usable mod's lua/ files, for the Lua host (live) or just
+// the set's hash (the launcher's, for the online hello).
+void applyLua() {
+  std::vector<PortLuaModSpec> specs;
+  for (auto& m : sMods) {
+    Mod& mod = *m;
+    mod.luaFiles = 0;
+    if (mod.source == nullptr) {
+      continue;
+    }
+    PortLuaModSpec spec;
+    for (const auto& [rel, size] : mod.source->list("lua/")) {
+      std::vector<uint8_t> bytes;
+      if (endsWith(rel, ".lua") && mod.source->read(rel, bytes)) {
+        spec.files[rel].assign(bytes.begin(), bytes.end());
+        mod.luaFiles++;
+      }
+    }
+    if (!usable(mod) || spec.files.count("lua/main.lua") == 0) {
+      continue;
+    }
+    spec.id = mod.id;
+    spec.name = mod.name;
+    spec.folder = mod.source->hostPath("");
+    if (!spec.folder.empty() && spec.folder.back() == '/') {
+      spec.folder.pop_back();
+    }
+    spec.hudOnline = mod.luaHudOnline;
+    for (const auto& opt : mod.options) {
+      spec.options += opt->key + "=" + std::to_string(optionValue(mod, *opt)) + "\n";
+    }
+    specs.push_back(std::move(spec));
+  }
+  portLuaSetMods(std::move(specs)); // (the launcher never runs a frame: only its hash counts there)
+}
+
 void apply() {
+  applyLua();
   if (!sLive) {
     analyze(); // the launcher's preview: nothing is applied
     publish();
@@ -1648,19 +1749,45 @@ void apply() {
     std::lock_guard lock(sMapLock);
     sMaps = std::move(maps);
     sAliases.clear();
+    sNoSetup.clear();
     for (const auto& [name, m] : sMaps) {
       if (!m.files.empty()) {
+        if (const auto host = sHostMaps.find(name); host != sHostMaps.end() && host->second.script == m.script) {
+          sNoSetup.push_back("m/" + name + "/s");
+        }
         sAliases.push_back({"/m/" + name + "/", "/m/" + m.files + "/"});
         sAliases.push_back({"/b/" + name + ".", "/b/" + m.files + "."});
         // its text too: the game loads a map's messages by the map's name
         // (msg/US/tik_02.txt), and its scripts and battles print them
-        sAliases.push_back({"/" + name + ".txt", "/" + m.files + ".txt"});
+        sAliases.push_back({"/" + name + ".txt", "/" + (m.text.empty() ? m.files : m.text) + ".txt"});
       }
     }
   }
 
   analyze();
   publish();
+}
+
+// What a mod holds (the mod manager's badges), and so what online play asks
+// of it: textures and a language pack only draw (each player's own); Lua
+// alone runs by the Lua mods' hash; anything else every player needs on.
+void classify(Mod& mod) {
+  mod.kinds = 0;
+  if (mod.source != nullptr) {
+    const auto any = [&](const char* dir) { return !mod.source->list(dir).empty(); };
+    mod.kinds |= any("overlay/") ? PORT_MOD_KIND_FILES : 0;
+    mod.kinds |= any("textures/") ? PORT_MOD_KIND_TEXTURES : 0;
+    mod.kinds |= any("messages/") ? PORT_MOD_KIND_TEXT : 0;
+    mod.kinds |= any("patches/") ? PORT_MOD_KIND_DATA : 0;
+    mod.kinds |= any("evt/") || !mod.maps.empty() ? PORT_MOD_KIND_SCRIPTS : 0;
+    mod.kinds |= mod.source->has("lua/main.lua") ? PORT_MOD_KIND_LUA : 0;
+    mod.kinds |= mod.source->has("lang/pack.txt") ? PORT_MOD_KIND_LANG : 0;
+  }
+  mod.kinds |= hasCode(mod) ? PORT_MOD_KIND_CODE : 0;
+  const unsigned drawOnly = PORT_MOD_KIND_TEXTURES | PORT_MOD_KIND_LANG;
+  mod.online = (mod.kinds & ~drawOnly) == 0                     ? PORT_MOD_ONLINE_OWN
+               : (mod.kinds & ~(drawOnly | PORT_MOD_KIND_LUA)) == 0 ? PORT_MOD_ONLINE_LUA
+                                                                    : PORT_MOD_ONLINE_SHARED;
 }
 
 // Each mod's info for the settings page (and the log).
@@ -1689,10 +1816,13 @@ void publish() {
                    int(opt->choicePtrs.size()), opt->choicePtrs.data(), opt->note.c_str(),
                    std::clamp(opt->fallback, opt->min, opt->max), opt->nextStart ? 1 : 0};
     }
+    classify(*mod);
     mod->info = {mod->id.c_str(), mod->name.c_str(), mod->version.c_str(), mod->author.c_str(),
                  mod->description.c_str(), mod->display.c_str(), mod->error.empty() ? nullptr : mod->error.c_str(),
                  mod->enabled ? 1 : 0, mod->files, mod->textures, mod->messages, mod->patches,
-                 mod->warning.empty() ? nullptr : mod->warning.c_str(), code, codeError, int(mod->options.size())};
+                 mod->warning.empty() ? nullptr : mod->warning.c_str(), code, codeError, int(mod->options.size()),
+                 mod->luaFiles, mod->kinds, mod->pack ? 1 : 0, mod->online,
+                 mod->source != nullptr ? mod->folder.c_str() : ""};
     if (usable(*mod)) {
       const std::string scripts = mod->scripts ? ", " + std::to_string(mod->scripts) + " scripts" : "";
       SDL_Log("mods: %s%s%s: %d files, %d textures, %d messages, %d patches%s", mod->id.c_str(),
@@ -1862,6 +1992,48 @@ struct TextureCollision {
 };
 std::vector<TextureCollision> sTextureCollisions;
 
+// --- safe mode (mods.h) ---
+
+bool sSafeMode;    // this start: every mod off
+bool sSafeDecided; // the launcher (or portModsInit) chose already
+int (*sSafeAsk)(const char* names);
+std::string sStartingFile; // <user>/mods_starting.txt while this start is under way
+std::string sLastFailed;
+
+std::string startingPath(const std::string& user) { return user + "/mods_starting.txt"; }
+
+void clearStart() {
+  if (!sStartingFile.empty()) {
+    SDL_RemovePath(sStartingFile.c_str());
+    sStartingFile.clear();
+  }
+}
+
+// Each start with mods on names them in the file until the game gets going
+// (or quits): left behind, the next start offers safe mode. Not in the mods
+// folder itself, whose names online play compares.
+void markStart() {
+  const std::string path = startingPath(sUserPath);
+  SDL_RemovePath(path.c_str()); // (the last one's: asked about by now)
+  std::string names;
+  for (const auto& mod : sMods) {
+    if (usable(*mod) && !mod->pack) {
+      names += mod->name + "\n";
+    }
+  }
+  if (names.empty()) {
+    return;
+  }
+  if (SDL_SaveFile(path.c_str(), names.data(), names.size())) {
+    sStartingFile = path;
+    static bool sHooked;
+    if (!sHooked) {
+      sHooked = true;
+      std::atexit(clearStart); // a quit isn't a failed start (a crash ends without atexit)
+    }
+  }
+}
+
 } // namespace
 
 extern "C" {
@@ -1873,12 +2045,24 @@ void portModsInit(const char* userPath, const char* cachePath) {
   sDumpDir = std::string(cachePath) + "/texture_dumps";
   sCachePath = cachePath;
   sDisabledAll = getenv("TTYD_NO_MODS") != nullptr;
+  if (!sSafeDecided && !sDisabledAll) {
+    // the last start with mods on didn't get going (no launcher asked): ask here
+    if (const char* names = portModsLastStartFailed(userPath); names != nullptr && sSafeAsk != nullptr) {
+      sSafeMode = sSafeAsk(names) != 0;
+    }
+  }
+  sSafeDecided = true;
+  sDisabledAll = sDisabledAll || sSafeMode;
   SDL_CreateDirectory((sUserPath + "/textures").c_str());
   portModHostInit();
   portModesRegisterMaps(); // the modes' maps (port/include/port/modes.h)
+  portVersusRegisterMaps(); // the versus fight's map and hooks (port/include/port/versus.h)
+  portBrothersRegister(); // Brothers mode's battle hooks (port/include/port/brothers.h)
+  portDmRegister(); // dungeon master: player 2 plays the enemies (port/include/port/dungeon_master.h)
   portApInit(userPath); // an Archipelago seed: its options and files, before the mods (and their code)
   scan();
   readOptions();
+  markStart(); // safe mode's file, while this start is under way (before any mod's code runs)
   apply();
   startCode();
   sStarted = true;
@@ -1921,8 +2105,22 @@ void portModsSetMessage(const char* tag, const char* text) {
   if (text == nullptr) {
     sCodeMessages.erase(tag);
   } else {
-    sCodeMessageText.push_back(safeMessage(toGameText(text))); // kept: the game may still show the old one
-    sCodeMessages[tag] = sCodeMessageText.back().c_str();
+    std::string game = safeMessage(toGameText(text));
+    auto found = sCodeMessageText.find(tag);
+    if (found == sCodeMessageText.end()) {
+      if (sCodeMessageText.size() >= kMessageTags) {
+        return; // (that many tags of their own: no more)
+      }
+      found = sCodeMessageText.emplace(tag, std::deque<std::string>()).first;
+    }
+    std::deque<std::string>& kept = found->second;
+    if (kept.empty() || kept.back() != game) {
+      kept.push_back(std::move(game)); // (a deque: the older ones' text stays where it is)
+      if (kept.size() > kMessageKept) {
+        kept.pop_front();
+      }
+    }
+    sCodeMessages[tag] = kept.back().c_str();
   }
 }
 
@@ -1969,6 +2167,117 @@ void portModsPreview(const char* userPath) {
   scan();
   readOptions();
   apply();
+}
+
+const char* portModsLastStartFailed(const char* userPath) {
+  if (userPath == nullptr) {
+    return nullptr;
+  }
+  if (!sStartingFile.empty()) {
+    return nullptr; // this run's own file: the last start's was asked about already
+  }
+  std::vector<uint8_t> bytes;
+  if (!readHostFile(startingPath(userPath), bytes) || bytes.empty()) {
+    return nullptr;
+  }
+  sLastFailed.assign(bytes.begin(), bytes.end());
+  return sLastFailed.c_str();
+}
+
+void portModsSetSafeMode(int on) {
+  sSafeMode = on != 0;
+  sSafeDecided = true;
+  if (!sLive && !sModsDir.empty()) {
+    sDisabledAll = sSafeMode || getenv("TTYD_NO_MODS") != nullptr; // the launcher's preview (the online hello)
+    apply();
+  }
+}
+
+int portModsSafeMode(void) { return sSafeMode ? 1 : 0; }
+
+void portModsStartedOk(void) { clearStart(); }
+
+void portModsSetSafeAsk(int (*ask)(const char* names)) { sSafeAsk = ask; }
+
+const char* portModsOnlineList(void) {
+  static std::string sList;
+  std::vector<std::string> ids;
+  for (const auto& mod : sMods) {
+    if (usable(*mod) && mod->online == PORT_MOD_ONLINE_SHARED) {
+      ids.push_back(mod->id);
+    }
+  }
+  std::sort(ids.begin(), ids.end());
+  sList.clear();
+  for (const std::string& id : ids) {
+    sList += (sList.empty() ? "" : ",") + id;
+  }
+  return sList.c_str();
+}
+
+int portModsFolderOff(const char* userPath, const char* folder) {
+  if (userPath == nullptr || folder == nullptr) {
+    return 0;
+  }
+  const std::string dir = std::string(userPath) + "/mods";
+  std::string id = folder;
+  std::vector<uint8_t> bytes;
+  if (readHostFile(dir + "/" + folder + "/mod.json", bytes)) {
+    Json root;
+    std::string error;
+    if (parseJson(bytes, root, error) && root.type == Json::Object && !root.str("id").empty()) {
+      id = root.str("id");
+    }
+  }
+  bytes.clear();
+  if (!readHostFile(dir + "/mods.txt", bytes)) {
+    return 0;
+  }
+  const std::string text(bytes.begin(), bytes.end());
+  for (size_t at = 0; at < text.size();) {
+    size_t eol = text.find('\n', at);
+    eol = eol == std::string::npos ? text.size() : eol;
+    std::string line = text.substr(at, eol - at);
+    at = eol + 1;
+    while (!line.empty() && (line.back() == '\r' || line.back() == ' ')) {
+      line.pop_back();
+    }
+    if (line == "-" + id) {
+      return 1;
+    }
+  }
+  return 0;
+}
+
+const char* portModsPath(int index) {
+  if (index < 0 || index >= int(sMods.size()) || sMods[size_t(index)]->source == nullptr) {
+    return "";
+  }
+  return sMods[size_t(index)]->source->path().c_str();
+}
+
+const char* portModsRemove(int index) {
+  static std::string sWhy;
+  const std::string path = portModsPath(index);
+  if (path.empty()) {
+    return "It is built into the game.";
+  }
+  const std::string old = sUserPath + "/mods_old";
+  SDL_CreateDirectory(old.c_str());
+  const std::string name = sMods[size_t(index)]->folder;
+  std::string to = old + "/" + name;
+  for (int n = 2; SDL_GetPathInfo(to.c_str(), nullptr); n++) {
+    // an older one of the same name there already: this one beside it
+    const size_t dot = name.rfind('.');
+    const bool file = sMods[size_t(index)]->source->zip() && dot != std::string::npos;
+    to = old + "/" + (file ? name.substr(0, dot) : name) + " (" + std::to_string(n) + ")" + (file ? name.substr(dot) : "");
+  }
+  if (!SDL_RenamePath(path.c_str(), to.c_str())) {
+    sWhy = std::string("It couldn't be moved (is a file of it open?): ") + SDL_GetError();
+    return sWhy.c_str();
+  }
+  portModsReload();
+  return nullptr;
 }
 
 int portModsChangeCount(int index, int kind) {
@@ -2112,6 +2421,10 @@ void portModsMapTextures(const char* map) {
   mapTexUpdate(map);
 }
 
+int portModsTexturesGeneration(void) {
+  return sTexturesGeneration;
+}
+
 void portModsReloadTextures(void) {
   if (!sLive) {
     return;
@@ -2168,10 +2481,106 @@ bool portModsReadZip(const std::string& zip, const std::string& member, std::vec
   return src != nullptr && src->read(member, out);
 }
 
+bool portModsZipList(const std::string& zip, std::vector<std::pair<std::string, uint32_t>>& out, std::string& why) {
+  const auto src = Source::open(zip, true, why);
+  if (src == nullptr) {
+    return false;
+  }
+  // (from the zip's top: Source lists below its prefix, so put it back)
+  for (const auto& [rel, size] : src->list("")) {
+    out.emplace_back(src->prefix() + rel, size);
+  }
+  return true;
+}
+
+bool portModsZipExtract(const std::string& zip, const std::string& from, const std::string& to,
+                        const std::function<bool(uint64_t)>& progress, std::string& why) {
+  const auto src = Source::open(zip, true, why);
+  if (src == nullptr) {
+    return false;
+  }
+  uint64_t done = 0;
+  for (const auto& [rel, size] : src->list("")) {
+    const std::string full = src->prefix() + rel;
+    if (full.compare(0, from.size(), from) != 0) {
+      continue;
+    }
+    const std::string out = full.substr(from.size());
+    if (out.empty() || out[0] == '/' || out.find(':') != std::string::npos || ("/" + out + "/").find("/../") != std::string::npos) {
+      why = "\"" + full + "\" would be written outside the mod's folder";
+      return false;
+    }
+    std::vector<uint8_t> bytes;
+    if (!src->read(rel, bytes)) {
+      why = "\"" + full + "\" can't be read (a damaged zip?)";
+      return false;
+    }
+    const std::string path = to + "/" + out;
+    const size_t slash = path.rfind('/');
+    SDL_CreateDirectory(path.substr(0, slash).c_str());
+    if (!SDL_SaveFile(path.c_str(), bytes.data(), bytes.size())) {
+      why = std::string("can't write ") + path + ": " + SDL_GetError();
+      return false;
+    }
+    done += bytes.size();
+    if (progress && !progress(done)) {
+      why = "stopped";
+      return false;
+    }
+  }
+  return true;
+}
+
+PortModProbe portModsProbe(const std::string& path, bool isZip) {
+  PortModProbe probe;
+  const auto src = Source::open(path, isZip, probe.error);
+  if (src == nullptr) {
+    if (probe.error.empty()) {
+      probe.error = "can't be read";
+    }
+    return probe;
+  }
+  probe.prefix = src->prefix();
+  std::vector<uint8_t> json;
+  if (src->read("mod.json", json)) {
+    probe.mod = true;
+    Json root;
+    std::string error;
+    if (!parseJson(json, root, error) || root.type != Json::Object) {
+      probe.error = "mod.json: " + (error.empty() ? std::string("not an object") : error);
+    } else {
+      probe.id = root.str("id");
+      probe.name = root.str("name");
+      probe.version = root.str("version");
+      if (probe.id.empty()) {
+        probe.error = "mod.json has no \"id\"";
+      }
+    }
+  } else if (src->has("lang/pack.txt")) {
+    probe.pack = true;
+  }
+  return probe;
+}
+
+bool portModsReadIcon(int index, std::vector<uint8_t>& out) {
+  if (index < 0 || index >= int(sMods.size())) {
+    return false;
+  }
+  const Mod& mod = *sMods[size_t(index)];
+  return mod.source != nullptr && !mod.icon.empty() && mod.source->size(mod.icon) <= 4u * 1024 * 1024 &&
+         mod.source->read(mod.icon, out);
+}
+
 extern "C" {
 
 void portModsAddHostMap(const char* map, void* initScript, const char* files) {
   sHostMaps[map] = ModMap{initScript, files != nullptr ? files : ""};
+}
+
+void portModsSetHostMapText(const char* map, const char* text) {
+  if (const auto it = sHostMaps.find(map); it != sHostMaps.end()) {
+    it->second.text = text != nullptr ? text : "";
+  }
 }
 
 const char* portModsMapFiles(const char* map) {
@@ -2193,6 +2602,11 @@ const char* portModsPathAlias(const char* path) {
   }
   static thread_local std::string out;
   out = path;
+  for (const std::string& s : sNoSetup) {
+    if (out.size() >= s.size() && out.compare(out.size() - s.size(), s.size(), s) == 0) {
+      return path; // the room's field enemies: not read (no such file)
+    }
+  }
   for (const auto& [from, to] : sAliases) {
     const std::string bare = from.substr(1); // "m/gor_99/" at the start too
     if (const size_t at = out.find(from); at != std::string::npos) {

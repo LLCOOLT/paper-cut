@@ -22,7 +22,7 @@ Level
 Nivel
 
 Star Points
-Puntos estrella
+Puntos Estrella
 
 
 
@@ -31,7 +31,7 @@ FP
 PF
 
 HP
-PS
+PC
 
 BP
 PM
@@ -40,10 +40,10 @@ BP left
 PM libres
 
 Star Power
-Poder estelar
+Poder Estelar
 
 Crystal Stars
-Estrellas de cristal
+Cristales Estelares
 
 With Mario
 Con Mario
@@ -82,7 +82,7 @@ This room
 Esta sala
 
 No Star Pieces or Shine Sprites here.
-Aquí no hay fragmentos de estrella ni solecitos.
+Aquí no hay Piezas Estrella ni Soles.
 
 Partner
 Compañero

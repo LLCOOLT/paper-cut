@@ -7,6 +7,9 @@
 #include <dtrigf.h>
 #endif
 #include "driver/shadowdrv.h"
+#ifdef TARGET_PC
+#include "port/paper.h"
+#endif
 #include "driver/camdrv.h"
 #include "driver/dispdrv.h"
 #include "driver/hitdrv.h"
@@ -915,6 +918,11 @@ static void shadowDisp(CameraId cameraId, void* param) {
 
     disp = dispGetCurWork();
 
+#ifdef TARGET_PC /* PC port: the paper shadows, once the ground is drawn (port/include/port/paper.h) */
+    if (cameraId == CAMERA_3D) {
+        portPaperShadowTurn();
+    }
+#endif
     if (((cameraId == CAMERA_OFFSCREEN2) || (((u32)(cameraId - CAMERA_3D)) <= 1)) || (cameraId == CAMERA_3D_EFFECTB)) {
         shadowCharShadowDisp_Polygon(cameraId, param);
         {
@@ -1189,6 +1197,10 @@ static void shadowCharShadowDisp_Polygon(CameraId cameraId, void* param) {
             continue;
         if (entry->camId != cameraId)
             continue;
+#ifdef TARGET_PC /* PC port: a paper shadow drawn instead (port/include/port/paper.h) */
+        if (portPaperShadowSkip(entry))
+            continue;
+#endif
         if (cameraId == CAMERA_OFFSCREEN2) {
             sysWaitDrawSync();
             GXClearBoundingBox();
@@ -1264,6 +1276,10 @@ static void shadowCharShadowDisp_Texture(CameraId cameraId, void* param) {
             continue;
         if (entry->camId != cameraId)
             continue;
+#ifdef TARGET_PC /* PC port: a paper shadow drawn instead (port/include/port/paper.h) */
+        if (portPaperShadowSkip(entry))
+            continue;
+#endif
         if (cameraId == CAMERA_OFFSCREEN2) {
             sysWaitDrawSync();
             GXClearBoundingBox();
@@ -1385,6 +1401,10 @@ static void cylinderShadowDraw(CameraId cameraId, void* param) {
             continue;
         if (entry->camId != cameraId)
             continue;
+#ifdef TARGET_PC /* PC port: a paper shadow drawn instead (port/include/port/paper.h) */
+        if (portPaperShadowSkip(entry))
+            continue;
+#endif
         if (cameraId == CAMERA_OFFSCREEN2) {
             sysWaitDrawSync();
             GXClearBoundingBox();

@@ -4,6 +4,8 @@
 #include "eff/eff_starstone.h"
 #ifdef TARGET_PC
 #include "port/gameplus.h"
+#include "port/battlex.h"
+#include "port/open_world.h"
 #endif
 #include "eff/eff_mahojin.h"
 #include "version.h"
@@ -6494,6 +6496,13 @@ EVT_BEGIN(gor_01_init_evt)
     CALL(evt_run_case_evt, CASE_COND_FRONT_A, 1, STRING("A_keizi_ura"), 0, PTR(keijiban_ura_joho), 0)
     // The Ultra Hammer chest: on the roof until it has fallen, then on the ground.
     CALL(evt_pouch_check_item, ITEM_ULTRA_HAMMER, LW(0))
+#ifdef TARGET_PC
+    // Paper Cut's open world: the chest holds what the seed put there, whatever hammer Mario has
+    CALL(portEvtOpenWorld, LW(1))
+    IF_INT_EQUAL(LW(1), 1)
+        SET_VALUE(LW(0), 0)
+    END_IF
+#endif
     IF_INT_EQUAL(LW(0), 0)
         IF_INT_EQUAL(GSWF(GSWF_GOR01_ULTRA_HAMMER_CHEST_FALLEN), 0)
 #if VERSION <= VERSION_DEMO_JP
@@ -7523,7 +7532,12 @@ static USER_FUNC(cook_chk2) {
             return EVT_RETURN_DONE;
         }
     }
+#ifdef TARGET_PC
+    /* no recipe of the game's: one of Paper Cut's new dishes, when they're on (port/include/port/battlex.h) */
+    evtSetValue(event, args[2], portRecipeCook(item1, item2));
+#else
     evtSetValue(event, args[2], 0);
+#endif
     return EVT_RETURN_DONE;
 }
 #endif
@@ -8124,6 +8138,11 @@ static USER_FUNC(chk_cook_msg) {
 
 /** Marks dish args[0] as cooked in the recipe log (swSet with the item number minus 114). */
 static USER_FUNC(cooking_flag) {
+#ifdef TARGET_PC
+    if (portItemIsHeld(evtGetValue(event, event->args[0]))) {
+        return EVT_RETURN_DONE; /* the port's dishes have no Recipe Log flag (port/include/port/battlex.h) */
+    }
+#endif
     swSet(evtGetValue(event, event->args[0]) - 114);
     return EVT_RETURN_DONE;
 }

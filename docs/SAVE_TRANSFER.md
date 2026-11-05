@@ -12,6 +12,7 @@ The Saves tab of the settings page moves this game's save files from one device 
   - `/<token>`: a page with each file as a download link, for a phone's or computer's browser;
   - `/<token>/list`: `<size> <name>` lines, for another Paper Cut;
   - `/<token>/f/<name>`: a file.
+  - `/<token>/d/<name>`: for a card holding Paper Cut's own badges or dishes, a copy for Dolphin or a GameCube with them sold for coins (docs/SAVE_FILES.md); the page shows it as a second link.
 - It stops once every file was taken, after 5 minutes, or with Stop.
 
 The address is shown as text (with Copy) and as a QR code ([Nayuki's QR Code generator](https://github.com/nayuki/QR-Code-generator), `libs/qrcodegen/`, v1.8.0).

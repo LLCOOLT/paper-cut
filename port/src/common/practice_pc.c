@@ -12,7 +12,17 @@
 #include "mario/mariost.h"
 #include "port/platform.h"
 #include "port/practice.h"
+#include "port/stats.h"
+#include "port/costume.h"
+#include "port/area_maps.h"
 #include "port/settings.h"
+#ifdef _WIN32
+#include <direct.h>
+#define makeDir(p) _mkdir(p)
+#else
+#include <sys/stat.h>
+#define makeDir(p) mkdir(p, 0755)
+#endif
 
 extern SequenceWork seqWork;
 
@@ -58,6 +68,14 @@ const char* portPracticeUserDir(void) {
 #endif
 }
 
+void portPracticeGameDir(const char* sub) {
+    char dir[1024];
+    snprintf(dir, sizeof(dir), "%s/%s", portPracticeUserDir(), sub);
+    makeDir(dir);
+    snprintf(dir, sizeof(dir), "%s/%s/%s", portPracticeUserDir(), sub, PORT_GAME_ID);
+    makeDir(dir);
+}
+
 const PortNamedValue* portStoryName(int value) {
     int lo = 0, hi = portStoryNamesCount - 1;
     while (lo <= hi) { /* the table is sorted by value */
@@ -80,6 +98,7 @@ typedef struct Split {
     int story; /* split when GSW 0 reaches it */
     char name[48];
     double time; /* game time it was made at, <0 not yet */
+    double real; /* and the real time */
 } Split;
 
 #define SPLIT_MAX 512
@@ -209,6 +228,14 @@ double portSplitTime(int i) {
     return i >= 0 && i < sSplitCount ? sSplits[i].time : -1.0;
 }
 
+double portSplitRealTime(int i) {
+    return i >= 0 && i < sSplitCount && sSplits[i].time >= 0.0 ? sSplits[i].real : -1.0;
+}
+
+int portSplitCategory(void) {
+    return sLoadedCategory;
+}
+
 int portSplitNext(void) {
     return sNext;
 }
@@ -262,6 +289,9 @@ static void syncGameTime(void) {
 
 void portTimerReset(void) {
     int i;
+    if (sState == PORT_TIMER_RUNNING) {
+        portSplitsSaveRun(0); /* an attempt not finished: counted, its golds kept */
+    }
     if (sState != PORT_TIMER_IDLE) {
         portLiveSplitSend("reset");
     }
@@ -295,6 +325,7 @@ void portTimerStart(void) {
 static void finish(void) {
     sState = PORT_TIMER_DONE;
     sRealEnd = portHostSeconds();
+    portSplitsSaveRun(1); /* LiveSplit's splits file (splits_lss_pc.c) */
 }
 
 void portTimerSplit(void) {
@@ -309,6 +340,7 @@ void portTimerSplit(void) {
         return; /* split by hand: no row of its own */
     }
     if (sNext < sSplitCount) {
+        sSplits[sNext].real = portTimerRealSeconds();
         sSplits[sNext++].time = portTimerGameSeconds();
     }
     if (sNext >= sSplitCount && sSplitCount > 0) {
@@ -329,6 +361,7 @@ static void checkSplits(int story) {
             }
             addSplit(story, name);
             sSplits[sSplitCount - 1].time = portTimerGameSeconds();
+            sSplits[sSplitCount - 1].real = portTimerRealSeconds();
             sNext = sSplitCount;
             if (*sLoadRemoval) {
                 syncGameTime();
@@ -342,6 +375,7 @@ static void checkSplits(int story) {
         return;
     }
     while (sState == PORT_TIMER_RUNNING && sNext < sSplitCount && story >= sSplits[sNext].story) {
+        sSplits[sNext].real = portTimerRealSeconds();
         sSplits[sNext++].time = portTimerGameSeconds();
         if (*sLoadRemoval) {
             syncGameTime();
@@ -412,6 +446,9 @@ int portPracticeTainted(void) {
 void portPracticeFileLoaded(void) {
     sTainted = 0; /* its achievements, without the practice tools' changes */
     portAchievementsFileLoaded();
+    portStickersFileLoaded(); /* its stickers (sticker_pc.c) */
+    portStatsFileLoaded(); /* its lifetime stats (port/include/port/stats.h) */
+    portAreaMapsFileLoaded(); /* the area maps' rooms seen (port/include/port/area_maps.h) */
 }
 
 /* --- each frame ----------------------------------------------------------- */
@@ -466,4 +503,5 @@ void portPracticeFrame(void) {
     sLoading = loading;
     sPrevSeq = seq;
     portAchievementsFrame();
+    portAreaMapsFrame();
 }

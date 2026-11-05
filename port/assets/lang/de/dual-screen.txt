@@ -22,7 +22,7 @@ Level
 Level
 
 Star Points
-Sternpunkte
+Sternenpunkte
 
 
 
@@ -40,10 +40,10 @@ BP left
 OP frei
 
 Star Power
-Sternenkraft
+Sternen-Energie
 
 Crystal Stars
-Kristallsterne
+Sternjuwelen
 
 With Mario
 Bei Mario
@@ -82,7 +82,7 @@ This room
 Dieser Raum
 
 No Star Pieces or Shine Sprites here.
-Hier gibt es keine Sternenstücke oder Glanzsterne.
+Hier gibt es keine Sternsplitter oder Insignien.
 
 Partner
 Partner

@@ -1810,3 +1810,87 @@ EVT_BEGIN(bgset_tou_screen_evt)
     CALL(evt_mapobj_flag_onoff, MAPOBJ_GROUP, 0, STRING("gamen"), MAPOBJ_FLAG_DISPLAY_LIST)
     RETURN
 EVT_END()
+
+#ifdef TARGET_PC
+#include "port/directors_cut.h"
+
+/*
+ * Director's Cut (port/include/port/directors_cut.h): the Red Buzzy family. The Red Spike Top of the Tiny
+ * Spinies has three relatives the game never puts in a battle: the Red Buzzy (kind 172) and the red
+ * Parabuzzy and Spiky Parabuzzy (173, 174). Their units were left only in the European release's test module
+ * (rels/tst/src/unit/unit_crimson_*.c); CMakeLists.txt builds them into this REL too. With Director's Cut the
+ * Tiny Spinies' match is the whole family: the Red Spike Top on the ground with the Red Buzzy, the two red
+ * Parabuzzies flying behind.
+ */
+extern BattleUnitKind unit_crimson_met;
+extern BattleUnitKind unit_crimson_patamet;
+extern BattleUnitKind unit_crimson_patatogemet;
+
+static BattleUnitSetup dc_tou_red_buzzies_party[] = {
+    {
+        &unit_crimson_togemet, // unitKindParams
+        1, // alliance
+        {0}, // pad_05
+        BATTLE_PHASE_ENEMY, // attackPhase
+        {50.0f, 0.0f, -10.0f}, // position
+        0, // hitOffsetX
+        {0}, // unitWork
+        NULL, // itemDropTable
+    },
+    {
+        &unit_crimson_met, // unitKindParams
+        1, // alliance
+        {0}, // pad_05
+        BATTLE_PHASE_ENEMY, // attackPhase
+        {90.0f, 0.0f, 0.0f}, // position
+        0, // hitOffsetX
+        {0}, // unitWork
+        NULL, // itemDropTable
+    },
+    {
+        &unit_crimson_patamet, // unitKindParams
+        1, // alliance
+        {0}, // pad_05
+        BATTLE_PHASE_ENEMY, // attackPhase
+        {130.0f, 40.0f, 10.0f}, // position
+        0, // hitOffsetX
+        {0}, // unitWork
+        NULL, // itemDropTable
+    },
+    {
+        &unit_crimson_patatogemet, // unitKindParams
+        1, // alliance
+        {0}, // pad_05
+        BATTLE_PHASE_ENEMY, // attackPhase
+        {170.0f, 40.0f, 20.0f}, // position
+        0, // hitOffsetX
+        {0}, // unitWork
+        NULL, // itemDropTable
+    },
+};
+
+static BattleGroupSetup dc_tou_red_buzzies = {
+    4, // numEnemies
+    dc_tou_red_buzzies_party, // enemyData
+    0, 0, // heldItemWeight..randomItemWeight
+    100, // noItemWeight
+    battle_heart_drop_param_default, // hpDropTable
+    battle_heart_drop_param_default, // fpDropTable
+    5, // reserved_1C
+};
+
+static NpcBattleSelect dc_tou_01_11[] = {
+    {50, &dc_tou_red_buzzies, tou_btlstage_data},
+    {0},
+};
+
+static const PortDirectorsCutSelect dc_tou_selects[] = {
+    {btlgrpsel_tou_btlno_tou_01_11_off, dc_tou_01_11},
+    {NULL},
+};
+
+/** Hands the cut battles to Director's Cut; tou2.c's _prolog calls it. */
+void tou2_directors_cut(void) {
+    portDirectorsCutRel("tou2", dc_tou_selects, NULL);
+}
+#endif

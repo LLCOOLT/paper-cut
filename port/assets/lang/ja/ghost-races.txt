@@ -1,0 +1,25 @@
+# Ghost races (port/settings/features/replay.cpp, play_modes.cpp)
+
+Racing the ghost of '%s'.
+「%s」のゴーストとレース中。
+
+Stop the race
+レースをやめる
+
+The game starts again as it was before the race (also Shift+Esc).
+レース前の状態で再起動します(Shift+Esc でも)。
+
+Race its ghost
+ゴーストとレース
+
+Race its ghost: the game starts again from the replay's start with you in control, and the replay's Mario runs beside you, see-through, in the same rooms. Each room says how far ahead or behind you are.
+ゴーストとレース: リプレイの開始地点から再起動して自分で操作します。リプレイのマリオが同じ部屋に半透明で走ります。部屋ごとに何秒先か後かが出ます。
+
+Ghost race
+ゴーストレース
+
+%.2f s ahead of the ghost
+ゴーストより %.2f 秒先
+
+%.2f s behind the ghost
+ゴーストより %.2f 秒おくれ

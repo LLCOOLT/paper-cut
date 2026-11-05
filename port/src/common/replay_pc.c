@@ -33,6 +33,7 @@ static unsigned sInRun; /* frames of sRuns[sRunAt] played */
 static long sOutOfStep = -1;
 static int sStopAsked, sFinished;
 static u16 sLastButtons;
+static int sPadIn[PORT_REPLAY_PADS]; /* the last read's controllers connected, as the replay has them */
 
 static void* grow(void* p, size_t* cap, size_t need, size_t size) {
     if (need <= *cap) {
@@ -128,6 +129,10 @@ long portReplayOutOfStep(void) {
     return sOutOfStep;
 }
 
+int portReplayPadConnected(int port) {
+    return port >= 0 && port < PORT_REPLAY_PADS && sPadIn[port];
+}
+
 int portReplayActive(void) {
     return sMode != IDLE;
 }
@@ -205,6 +210,7 @@ void portReplayApplyPad(PADStatus* pads) {
         noController(pads);
         for (i = 0; i < PORT_REPLAY_PADS; i++) {
             portOnlinePackPad(&pads[i], packed[i]);
+            sPadIn[i] = pads[i].err != PAD_ERR_NO_CONTROLLER;
         }
         record((const unsigned char(*)[PORT_REPLAY_PAD_BYTES])packed);
         sFrame++;
@@ -231,11 +237,12 @@ void portReplayApplyPad(PADStatus* pads) {
         }
         for (i = 0; i < PORT_REPLAY_PADS; i++) {
             memset(&pads[i], 0, sizeof(pads[i]));
-            pads[i].err = PAD_ERR_NONE;
+            pads[i].err = i < PORT_REPLAY_PADS_OLD ? PAD_ERR_NONE : PAD_ERR_NO_CONTROLLER; /* (as before four players) */
         }
     } else {
         for (i = 0; i < PORT_REPLAY_PADS; i++) {
             portOnlineUnpackPad(sRuns[sRunAt].pads[i], &pads[i]);
+            sPadIn[i] = pads[i].err != PAD_ERR_NO_CONTROLLER;
         }
         sInRun++;
     }

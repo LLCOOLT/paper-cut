@@ -2,6 +2,7 @@
  * input, disc image), open the first frame, then run the game's main(). */
 #include <aurora/aurora.h>
 #include <SDL3/SDL_hints.h>
+#include <SDL3/SDL_log.h>
 #include <SDL3/SDL_video.h>
 #include <SDL3/SDL_surface.h>
 #include <aurora/event.h>
@@ -22,6 +23,7 @@
 #include "port/platform.h"
 #include "port/mods.h"
 #include "port/luigi.h"
+#include "port/costume.h"
 #include "port/update_install.h"
 #include "port/art_recipe.h"
 
@@ -46,6 +48,26 @@ static void logCallback(AuroraLogLevel level, const char* module, const char* me
     static const char* const sNames[] = {"DEBUG", "INFO", "WARNING", "ERROR", "FATAL"};
     FILE* out = level >= LOG_ERROR ? stderr : stdout;
     fprintf(out, "[%s: %s] %.*s\n", sNames[level], module, (int)len, message);
+    {
+        /* the crash report's last lines, and its graphics adapter (crash_pc.c) */
+        char line[240];
+        snprintf(line, sizeof(line), "[%s: %s] %.*s", sNames[level], module, (int)len, message);
+        portCrashLogLine(line);
+        if (len > 16 && strncmp(message, "Graphics adapter", 16) == 0) {
+            char full[600], gpu[160];
+            const char* device;
+            const char* api;
+            snprintf(full, sizeof(full), "%.*s", (int)len, message);
+            device = strstr(full, "Device: ");
+            api = strstr(full, "API: ");
+            if (device != NULL) {
+                snprintf(gpu, sizeof(gpu), "%.*s%s%.*s", (int)strcspn(device + 8, "\r\n"), device + 8,
+                         api != NULL ? ", " : "", api != NULL ? (int)strcspn(api + 5, "\r\n") : 0,
+                         api != NULL ? api + 5 : "");
+                portCrashSetGpu(gpu);
+            }
+        }
+    }
     if (level == LOG_FATAL) {
         char text[400];
         snprintf(text, sizeof(text), "[%s] %.*s", module, (int)len, message);
@@ -53,6 +75,18 @@ static void logCallback(AuroraLogLevel level, const char* module, const char* me
         fflush(stdout); /* the trace and Aurora's warnings before it */
         fflush(out);
         abort();
+    }
+}
+
+/* SDL's log (the port's SDL_Log lines) into the crash report's last lines too */
+static SDL_LogOutputFunction sSdlLog;
+static void* sSdlLogData;
+
+static void sdlLog(void* data, int category, SDL_LogPriority priority, const char* message) {
+    (void)data;
+    portCrashLogLine(message);
+    if (sSdlLog != NULL) {
+        sSdlLog(sSdlLogData, category, priority, message);
     }
 }
 
@@ -148,6 +182,8 @@ int aurora_main(int argc, char* argv[]) {
     CFPreferencesAppSynchronize(kCFPreferencesCurrentApplication);
 #endif
     info = aurora_initialize(argc, argv, &config);
+    SDL_GetLogOutputFunction(&sSdlLog, &sSdlLogData);
+    SDL_SetLogOutputFunction(sdlLog, NULL);
 #ifdef __ANDROID__
     portAndroidInit(); /* crash reports to logcat, background pause */
 #endif
@@ -197,8 +233,10 @@ int aurora_main(int argc, char* argv[]) {
     }
 
     portLuigiModelInit(); /* Luigi's model with our animations, from the disc (docs/LUIGI_ANIMS.md) */
+    portSkinsInit(info.userPath); /* partner skins from the user folder's skins/ (docs/COSTUMES.md) */
     portArtPrepare(info.userPath); /* "Preparing graphics": the art recipes run on the disc (art/RECIPES.md) */
     portLuigiFacesInit(); /* Play as Luigi's faces the recipes made; before the mods apply */
+    portReplayEarly(); /* a playback's randomizer settings, before the mods apply the randomizer (replay.cpp) */
     portModsInit(info.userPath, info.cachePath); /* the mods folder, loose textures (port/mods/mods.cpp) */
     portPipelineWarmupWait(); /* "Preparing graphics": every known pipeline built first */
     portOnlineTestStart(); /* tests: $TTYD_ONLINE_HOST / _JOIN, online co-op's lobby without its page */

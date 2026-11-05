@@ -21,8 +21,8 @@ Non è stato possibile scrivere il modello.
 Written: %s, with %d texts to translate.
 Scritto: %s, con %d testi da tradurre.
 
-Letters the menus' fonts didn't have yet show after a restart.
-Le lettere che i caratteri dei menu non avevano ancora appaiono dopo un riavvio.
+New letters for the menus' fonts show after a restart.
+Le nuove lettere dei caratteri dei menu appaiono al riavvio.
 
 No language packs yet.
 Ancora nessun pacchetto di lingua.

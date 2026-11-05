@@ -657,7 +657,7 @@ s32 PORT_HOOKABLE(weaponGetPower_Scissor)(BattleUnit* attacker, BattleWeapon* we
     if (target == NULL) {
         return 0;
     }
-    if ((s32)(u8)target->alliance == 1) {
+    if ((s32)(u8)target->alliance == SAC_FOE_ALLIANCE) {
         for (i = 0; i < 16; i++) {
             if (w->unitIds[i] == BtlUnit_GetUnitId(target)) {
                 return w->power[i];
@@ -904,12 +904,18 @@ static void scissor_disp_region(CameraId camera, void* param);
  * and finishes once the newest segment crosses an earlier one, closing the loop and capturing the screen.
  * Also finishes when time runs out; until then draws the line each frame.
  */
+#ifdef TARGET_PC
+static s32 sPortDrawing; /* scissor_control ran this frame (portArtAttackDraw) */
+#endif
 static s32 scissor_control(EventEntry* evt, BOOL first) {
     ScissorWork* w = GetScissorPtr();
     Pt* buf = (Pt*)w->strokePts;
     Pt* p;
     f32 ox, oy;
     s32 i, k;
+#ifdef TARGET_PC
+    sPortDrawing = 1;
+#endif
     if (first) {
         w->stars.count = 0;
         w->stars.prevStickY = 0.0f;
@@ -1019,7 +1025,7 @@ static s32 scissor_damage(EventEntry* evt, BOOL first) {
     hit = 0;
     for (i = 0; i < BATTLE_UNIT_MAX; i++) {
         unit = BattleGetUnitPtr(wp, i);
-        if (unit != NULL && BtlUnit_GetBelong(unit) == 1) {
+        if (unit != NULL && BtlUnit_GetBelong(unit) == SAC_FOE_ALLIANCE) {
             BattleUnitPart* part = BtlUnit_GetPartsPtr(unit, BtlUnit_GetBodyPartsId(unit));
             s32 res;
             if (BtlUnit_CheckStatus(unit, STATUS_INSTANT_KILL) != 1 && !(part->attributes & PART_ATTR_EVASIVE) && !(part->attributes & PART_ATTR_IMMUNE_TO_DAMAGE_OR_STATUS) &&
@@ -1410,6 +1416,16 @@ static s32 wait_star_standby(void) {
     return GetScissorPtr()->phase == 5 ? 2 : 0;
 }
 
+#ifdef TARGET_PC
+/* args[1] = args[0], mirrored when a versus fight's Luigi casts from the right (sac_common.h) */
+static s32 port_side_x(EventEntry* evt) {
+    EvtWord* args = evt->args;
+    const s32 v = evtGetValue(evt, args[0]);
+    evtSetValue(evt, args[1], SAC_FOE_ALLIANCE == 0 ? -v : v);
+    return 2;
+}
+#endif
+
 /**
  * Attack event of Art Attack: after the star intro the player draws loops around enemies
  * until the timer runs out; each closed loop cuts out that part of the screen
@@ -1447,6 +1463,10 @@ EVT_BEGIN(marioAttackEvent_Scissor)
         CALL(evt_btl_camera_set_mode, 0, 3)
 #if VERSION <= VERSION_DEMO_JP
         CALL(evt_btl_camera_set_moveto, 0, 75, 120, 600, 75, 70, 0, 30, 0)
+#elif defined(TARGET_PC)
+        // (towards the foes: mirrored for a versus fight's Luigi)
+        CALL(port_side_x, 75, LW(14))
+        CALL(evt_btl_camera_set_moveto, 0, LW(14), 105, 600, LW(14), 55, 0, 30, 0)
 #else
         CALL(evt_btl_camera_set_moveto, 0, 75, 105, 600, 75, 55, 0, 30, 0)
 #endif
@@ -1541,4 +1561,68 @@ EVT_END()
 
 #ifdef PORT_MODS
 #include "port/hooks/src_battle_sac_sac_scissor.inc"
+#endif
+
+#ifdef TARGET_PC
+int portArtAttackDraw(f32* x, f32* y, f32* vx, f32* vy, s32* points, s32* timer) {
+    ScissorWork* w;
+    const s32 drawing = sPortDrawing;
+    sPortDrawing = 0;
+    if (_battleWorkPointer == NULL || !drawing) {
+        return 0;
+    }
+    w = GetScissorPtr();
+    *x = w->stars.headX;
+    *y = w->stars.headY;
+    *vx = w->stars.velX;
+    *vy = w->stars.velY;
+    *points = w->stars.count;
+    *timer = w->timer;
+    return 1;
+}
+
+int portArtAttackTargets(f32 (*box)[4], s32 max) {
+    BattleWork* wp = _battleWorkPointer;
+    s32 i, n = 0;
+    if (wp == NULL) {
+        return 0;
+    }
+    /* (as scissor_damage picks them, and scissor_damage_sub's box) */
+    for (i = 0; i < BATTLE_UNIT_MAX && n < max; i++) {
+        BattleUnit* unit = BattleGetUnitPtr(wp, i);
+        BattleUnitPart* part;
+        Vec pos, c, s;
+        f32 w, h, sign;
+        s32 k;
+        if (unit == NULL || BtlUnit_GetBelong(unit) != SAC_FOE_ALLIANCE) {
+            continue;
+        }
+        part = BtlUnit_GetPartsPtr(unit, BtlUnit_GetBodyPartsId(unit));
+        if (BtlUnit_CheckStatus(unit, STATUS_INSTANT_KILL) == 1 || (part->attributes & PART_ATTR_EVASIVE) ||
+            (part->attributes & PART_ATTR_IMMUNE_TO_DAMAGE_OR_STATUS) || (part->attributes & PART_ATTR_NOT_TARGETABLE) ||
+            *(s8*)part->defenseAttr == 4 || *(s8*)part->defenseAttr == 2) {
+            continue;
+        }
+        sign = (unit->attributeFlags & UNIT_ATTR_CEILING) ? -1.0f : 1.0f;
+        w = unit->cutWidth * unit->sizeMultiplier;
+        h = unit->cutHeight * unit->sizeMultiplier;
+        BtlUnit_GetPos(unit, &pos.x, &pos.y, &pos.z);
+        pos.x = unit->cutBaseOffset.x * unit->sizeMultiplier + pos.x;
+        pos.y = sign * (unit->cutBaseOffset.y * unit->sizeMultiplier) + pos.y;
+        box[n][0] = box[n][1] = 100000.0f;
+        box[n][2] = box[n][3] = -100000.0f;
+        for (k = 0; k < 4; k++) {
+            c.x = pos.x + ((k & 1) ? 0.5f : -0.5f) * w;
+            c.y = pos.y + ((k & 2) ? 0.5f : -0.5f) * h;
+            c.z = pos.z;
+            btlGetScreenPoint(&c, &s);
+            box[n][0] = s.x < box[n][0] ? s.x : box[n][0];
+            box[n][1] = s.y < box[n][1] ? s.y : box[n][1];
+            box[n][2] = s.x > box[n][2] ? s.x : box[n][2];
+            box[n][3] = s.y > box[n][3] ? s.y : box[n][3];
+        }
+        n++;
+    }
+    return n;
+}
 #endif

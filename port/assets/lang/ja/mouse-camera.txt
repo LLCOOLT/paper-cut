@@ -1,0 +1,19 @@
+# The mouse camera (port/settings/features/view.cpp): an English line, then its translation, then a blank line.
+
+Mouse camera
+マウスカメラ
+
+With the free camera on, the mouse turns it too while Mario walks, and the window holds the cursor then; menus and scenes give it back. A middle click centres the camera.
+フリーカメラがオンのとき、マリオが歩くあいだはマウスでもカメラを回せます。そのあいだカーソルはウィンドウの中にとどまり、メニューやイベントでは元に戻ります。中ボタンのクリックでカメラを元の向きに戻します。
+
+Mouse camera speed
+マウスカメラの速さ
+
+How far the camera turns for a move of the mouse.
+マウスを動かしたときにカメラが回る大きさです。
+
+Invert mouse camera
+マウスカメラを反転
+
+Moving the mouse up moves the camera out and higher.
+マウスを上に動かすと、カメラが遠く高くなります。

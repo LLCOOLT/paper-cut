@@ -31,6 +31,7 @@ empty lines), where this stops.
 """
 import argparse
 import os
+import re
 import sys
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
@@ -47,6 +48,10 @@ JA_FONT = set("=　．・：？！ー／～（）『』＋－×＆☆○→←�
 JA_FONT |= set(chr(c) for c in range(0x20, 0x7F) if chr(c) not in "<>\\`")
 JA_FONT |= set(chr(c) for c in range(0x3041, 0x3094)) | set(chr(c) for c in range(0x30A1, 0x30F7))
 JA_FONT |= set(chr(c) for c in range(0xFF10, 0xFF18)) | set(chr(c) for c in range(0xFF21, 0xFF3B))
+JA_FONT |= {"\n"}  # a line break (written \n), not a letter: the game's messages break lines too
+
+
+MSG_STOPS = re.compile(r"<(k|p|o|key|once_stop|dkey|/dkey|select|scrl_auto)(?:[ >])")
 
 
 def read(code):
@@ -72,6 +77,12 @@ def read(code):
             en, tr = lines[i].replace("\\n", "\n"), lines[i + 1].replace("\\n", "\n")
             if en in pairs and pairs[en] != tr:
                 sys.exit(f"gen_lang: {name}: {en!r} translated twice")
+            # a message window's key waits and stops, as the English's: online, a window of
+            # Paper Cut's text takes the same presses and frames for every player whatever
+            # their language (src/driver/msgdrv.c, msgMain)
+            if MSG_STOPS.findall(en) != MSG_STOPS.findall(tr):
+                sys.exit(f"gen_lang: {name}: {en!r}: the translation's {MSG_STOPS.findall(tr)} "
+                         f"must be the English's {MSG_STOPS.findall(en)}")
             pairs[en] = tr
             i += 2
     return pairs
@@ -122,6 +133,9 @@ def generate():
             bad = "".join(sorted(set(c for c in t if c not in JA_FONT)))
             if bad:
                 sys.exit(f"gen_lang: ja_game.txt: {en!r}: the JP font has no {bad}")
+            if en not in pairs:
+                # (the table is by the ja files' English: without it the JP release shows the English)
+                sys.exit(f"gen_lang: ja_game.txt: {en!r} has no translation in ja/: add it there too")
         lines.append(f"static const TrEntry kTr_{code}[] = {{")
         for en in sorted(pairs, key=lambda s: s.encode("utf-8")):
             tr = pairs[en]

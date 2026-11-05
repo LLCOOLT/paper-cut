@@ -82,22 +82,70 @@ Reset all
 Alles zurücksetzen
 
 Goombella's hair
-Gumbrettas Haare
+Gumbrinas Haare
 
 Koops's shell
-Koops' Panzer
+Koopios Panzer
 
 Koops's hoodie
-Koops' Kapuzenpulli
+Koopios Kapuzenpulli
 
 Flurrie's hair
-Flurries Haare
+Aeronas Haare
 
 Bobbery's body
-Bobberys Körper
+Bart-ombs Körper
 
-Ms. Mowz's mask and cape
-Maske und Umhang von Ms. Mowz
+Ms. Mowz's mask
+Nagerines Maske
 
 Vivian's body
-Vivians Körper
+Barbaras Körper
+
+Goombella's helmet
+Gumbrinas Helm
+
+Flurrie's dress
+Aeronas Kleid
+
+Bobbery's fuse
+Bart-ombs Zündschnur
+
+Vivian's hat
+Barbaras Hut
+
+Vivian's hair
+Barbaras Haare
+
+Ms. Mowz's cape
+Nagerines Umhang
+
+Its own colour, or the mask's.
+Eine eigene Farbe oder die der Maske.
+
+Theme
+Thema
+
+The status bar's banners and the menus' pages in colours that go together. A part with a colour of its own keeps it.
+Die Banner der Statusleiste und die Seiten der Menüs in Farben, die zusammenpassen. Ein Teil mit eigener Farbe behält sie.
+
+Night
+Nacht
+
+Forest
+Wald
+
+Ocean
+Meer
+
+Candy
+Bonbon
+
+High contrast
+Hoher Kontrast
+
+Menus
+Menüs
+
+The Start menu's pages, all in one colour.
+Die Seiten des Startmenüs, alle in einer Farbe.

@@ -1,13 +1,13 @@
-// The launcher's look: a paper theatre like the game's battle stage (red
-// curtains with gold trim, a starry backdrop, a spotlight) and paper cut-out
-// cards, all drawn here from shapes; text in Fredoka (embedded font).
+// The launcher's type and style: text in Fredoka (embedded font); Dear ImGui's colours and sizes.
+// The stage behind it is launcher_stage.cpp's; the widgets on it (paper windows, the glove, tabs,
+// buttons) are launcher_look.cpp's.
 #include "launcher_style.h"
+#include "launcher_look.h"
+#include "port/button_markup.h"
 
 #include <SDL3/SDL.h>
-#include <aurora/aurora.h>
 
 #include <cmath>
-#include <cstdint>
 #ifdef __APPLE__
 #include <TargetConditionals.h>
 #endif
@@ -47,49 +47,6 @@ ImVec4 rgba(ImU32 c, float alpha = 1.f) {
   return v;
 }
 
-// a repeatable pseudo-random number in [0, 1) for star i, part k
-float hash(int i, int k) {
-  uint32_t x = static_cast<uint32_t>(i) * 747796405u + static_cast<uint32_t>(k) * 2891336453u + 12345u;
-  x ^= x >> 16;
-  x *= 0x7feb352du;
-  x ^= x >> 15;
-  return static_cast<float>(x & 0xFFFFFF) / static_cast<float>(0x1000000);
-}
-
-// a four-point sparkle, like the game's stars
-void sparkle(ImDrawList* dl, ImVec2 c, float r, ImU32 col) {
-  const float k = r * 0.28f;
-  ImVec2 pts[8] = {{c.x, c.y - r}, {c.x + k, c.y - k}, {c.x + r, c.y}, {c.x + k, c.y + k},
-                   {c.x, c.y + r}, {c.x - k, c.y + k}, {c.x - r, c.y}, {c.x - k, c.y - k}};
-  dl->AddConvexPolyFilled(pts, 8, col);
-}
-
-// one curtain: folds as vertical bands, darker where the cloth turns away
-void curtain(ImDrawList* dl, float x0, float x1, float top, float bottom, bool left, float scale) {
-  const int folds = 5;
-  const float w = (x1 - x0) / folds;
-  for (int i = 0; i < folds; i++) {
-    const float a = x0 + w * i;
-    const ImU32 light = IM_COL32(214, 44, 52, 255);
-    const ImU32 dark = IM_COL32(120, 14, 26, 255);
-    dl->AddRectFilledMultiColor(ImVec2(a, top), ImVec2(a + w * 0.5f, bottom), dark, light, light, dark);
-    dl->AddRectFilledMultiColor(ImVec2(a + w * 0.5f, top), ImVec2(a + w, bottom), light, dark, dark, light);
-  }
-  // the inner edge's shadow on the stage, and its gold rope tie-back
-  const float edge = left ? x1 : x0;
-  const float dir = left ? 1.f : -1.f;
-  dl->AddRectFilledMultiColor(ImVec2(std::fmin(edge, edge + dir * 18.f * scale), top),
-                              ImVec2(std::fmax(edge, edge + dir * 18.f * scale), bottom),
-                              left ? IM_COL32(0, 0, 0, 110) : IM_COL32(0, 0, 0, 0),
-                              left ? IM_COL32(0, 0, 0, 0) : IM_COL32(0, 0, 0, 110),
-                              left ? IM_COL32(0, 0, 0, 0) : IM_COL32(0, 0, 0, 110),
-                              left ? IM_COL32(0, 0, 0, 110) : IM_COL32(0, 0, 0, 0));
-  const float y = top + (bottom - top) * 0.62f;
-  dl->AddRectFilled(ImVec2(x0, y - 5.f * scale), ImVec2(x1, y + 5.f * scale), kGold, 5.f * scale);
-  dl->AddCircleFilled(ImVec2(edge, y), 9.f * scale, kGold);
-  dl->AddCircleFilled(ImVec2(edge, y), 5.f * scale, IM_COL32(204, 146, 30, 255));
-}
-
 } // namespace
 
 float launcherFontsScale() {
@@ -126,11 +83,22 @@ extern "C" void portUiInit(void) {
   }
   // each with the system's Japanese and the language packs' letters merged in (port/settings/tr.cpp)
   gLauncherFonts.title = addFont(portFontBold, portFontBold_size, 42.f * load);
+  {
+    // the wordmark's (launcher_brand.cpp): large, so the hero title stays crisp; ASCII only, nothing
+    // merged, to keep the atlas small
+    ImFontConfig cfg;
+    cfg.FontDataOwnedByAtlas = false;
+    static const ImWchar kAscii[] = {0x0020, 0x007E, 0};
+    gLauncherFonts.logo = ImGui::GetIO().Fonts->AddFontFromMemoryTTF(
+        const_cast<unsigned char*>(portFontBold), static_cast<int>(portFontBold_size), 64.f * load, &cfg, kAscii);
+  }
   portTrMergeFonts(portFontBold, portFontBold_size, 42.f * load);
   gLauncherFonts.heading = addFont(portFontBold, portFontBold_size, 23.f * load);
   portTrMergeFonts(portFontBold, portFontBold_size, 23.f * load);
   gLauncherFonts.body = addFont(portFontMedium, portFontMedium_size, 18.f * load);
   portTrMergeFonts(portFontMedium, portFontMedium_size, 18.f * load);
+  // the text's button icons, in the text's fonts (not the title's or the wordmark's: port/include/port/button_markup.h)
+  portButtonGlyphsInit(30.f * load);
 }
 
 void launcherStyleInit(float scale) {
@@ -162,7 +130,7 @@ void launcherPaperStyle(ImGuiStyle& s, float scale) {
   s.TabBorderSize = 0.f;
   ImVec4* c = s.Colors;
   c[ImGuiCol_Text] = rgba(kInk);
-  c[ImGuiCol_TextDisabled] = rgba(IM_COL32(128, 98, 74, 255));
+  c[ImGuiCol_TextDisabled] = rgba(IM_COL32(108, 80, 58, 255)); // (the help under each setting: readable on the cream)
   c[ImGuiCol_WindowBg] = rgba(kPaper, 0.f);
   c[ImGuiCol_ChildBg] = rgba(kPaper, 0.f);
   c[ImGuiCol_PopupBg] = rgba(kPaper);
@@ -187,7 +155,9 @@ void launcherPaperStyle(ImGuiStyle& s, float scale) {
   c[ImGuiCol_Separator] = rgba(IM_COL32(222, 196, 160, 255));
   c[ImGuiCol_ScrollbarBg] = rgba(kPaper, 0.f);
   c[ImGuiCol_ScrollbarGrab] = rgba(IM_COL32(214, 186, 146, 255));
-  c[ImGuiCol_NavCursor] = rgba(kInk); // the controller's focus: dark, to show on the cream cards and the red buttons
+  // the controller's focus: the launcher's glove points at it (launcher_look.cpp); a gold line too, for
+  // the settings page in the game (no glove there)
+  c[ImGuiCol_NavCursor] = rgba(IM_COL32(214, 150, 30, 255));
   // tables (Bindings, the mixer, practice's lists...): a light tan header and lines on the cream card,
   // not Dear ImGui's dark defaults under brown text
   c[ImGuiCol_TableHeaderBg] = rgba(IM_COL32(232, 210, 172, 255));
@@ -215,73 +185,8 @@ void launcherStyleEnd() {
   }
 }
 
-void launcherBackdrop(float time, float scale, ImVec2* min, ImVec2* max) {
-  ImDrawList* dl = ImGui::GetBackgroundDrawList();
-  const ImVec2 size = ImGui::GetIO().DisplaySize;
-  // the night-sky backdrop of the stage
-  dl->AddRectFilledMultiColor(ImVec2(0, 0), size, IM_COL32(24, 28, 74, 255), IM_COL32(24, 28, 74, 255),
-                              IM_COL32(70, 44, 110, 255), IM_COL32(70, 44, 110, 255));
-  for (int i = 0; i < 90; i++) {
-    const ImVec2 p(hash(i, 0) * size.x, hash(i, 1) * size.y * 0.8f);
-    const float tw = 0.55f + 0.45f * std::sin(time * (0.8f + hash(i, 2) * 1.6f) + hash(i, 3) * 6.283f);
-    const float r = (1.2f + hash(i, 4) * 2.2f) * scale;
-    const ImU32 col = IM_COL32(255, 244, 200, static_cast<int>(200 * tw));
-    if (hash(i, 5) < 0.12f) {
-      sparkle(dl, p, r * 3.f, col);
-    } else {
-      dl->AddCircleFilled(p, r, col);
-    }
-  }
-  // the stage floor, and the spotlight on it
-  const float floorTop = size.y * 0.86f;
-  dl->AddRectFilledMultiColor(ImVec2(0, floorTop), size, IM_COL32(150, 96, 52, 255), IM_COL32(150, 96, 52, 255),
-                              IM_COL32(92, 56, 28, 255), IM_COL32(92, 56, 28, 255));
-  for (int i = 1; i < 4; i++) {
-    const float y = floorTop + (size.y - floorTop) * i / 4.f;
-    dl->AddLine(ImVec2(0, y), ImVec2(size.x, y), IM_COL32(80, 46, 22, 160), 2.f * scale);
-  }
-  for (int i = 6; i >= 1; i--) {
-    dl->AddEllipseFilled(ImVec2(size.x * 0.5f, floorTop), ImVec2(size.x * 0.06f * i, size.y * 0.03f * i),
-                         IM_COL32(255, 240, 190, 12));
-  }
-  // curtains at the sides, the valance across the top with its gold trim
-  const float side = std::fmax(36.f * scale, size.x * 0.075f);
-  const float valance = std::fmax(30.f * scale, size.y * 0.075f);
-  curtain(dl, 0, side, 0, size.y, true, scale);
-  curtain(dl, size.x - side, size.x, 0, size.y, false, scale);
-  dl->AddRectFilledMultiColor(ImVec2(0, 0), ImVec2(size.x, valance), IM_COL32(150, 18, 30, 255),
-                              IM_COL32(150, 18, 30, 255), kCurtain, kCurtain);
-  const float scallop = 34.f * scale;
-  for (float x = scallop * 0.5f; x < size.x + scallop; x += scallop) {
-    dl->AddCircleFilled(ImVec2(x, valance), scallop * 0.5f, kCurtain);
-  }
-  dl->AddRectFilled(ImVec2(0, valance - 4.f * scale), ImVec2(size.x, valance + 1.f * scale), kGold);
-  for (float x = scallop * 0.5f; x < size.x + scallop; x += scallop) {
-    dl->AddCircleFilled(ImVec2(x, valance + scallop * 0.5f), 4.f * scale, kGold);
-  }
-  *min = ImVec2(side + 12.f * scale, valance + scallop * 0.5f + 10.f * scale);
-  *max = ImVec2(size.x - side - 12.f * scale, floorTop + (size.y - floorTop) * 0.35f); // standing on the stage
-  // and clear of a phone's notch, Dynamic Island and home indicator (the
-  // backdrop runs under them)
-  SDL_Rect safe;
-  int ww = 0, wh = 0;
-  SDL_Window* w = aurora_get_window();
-  if (w != nullptr && SDL_GetWindowSafeArea(w, &safe) && SDL_GetWindowSize(w, &ww, &wh) && ww > 0 && wh > 0) {
-    const float kx = size.x / ww, ky = size.y / wh; // window units to ImGui's
-    min->x = std::fmax(min->x, safe.x * kx + 8.f * scale);
-    min->y = std::fmax(min->y, safe.y * ky + 4.f * scale);
-    max->x = std::fmin(max->x, (safe.x + safe.w) * kx - 8.f * scale);
-    max->y = std::fmin(max->y, (safe.y + safe.h) * ky - 4.f * scale);
-  }
-}
-
 void launcherPaperCard(ImDrawList* dl, ImVec2 a, ImVec2 b, float scale) {
-  const float r = 14.f * scale;
-  dl->AddRectFilled(ImVec2(a.x + 6.f * scale, a.y + 7.f * scale), ImVec2(b.x + 6.f * scale, b.y + 7.f * scale),
-                    IM_COL32(20, 10, 30, 120), r);
-  dl->AddRectFilled(a, b, IM_COL32(255, 255, 255, 255), r);
-  dl->AddRectFilled(ImVec2(a.x + 4.f * scale, a.y + 4.f * scale), ImVec2(b.x - 4.f * scale, b.y - 4.f * scale), kPaper,
-                    r - 3.f * scale);
+  launcherPanelPaper(dl, a, b, scale); // the launcher's paper window (launcher_look.cpp)
 }
 
 void launcherOutlinedText(ImDrawList* dl, ImFont* font, float size, ImVec2 pos, const char* text, ImU32 fill,

@@ -1,0 +1,46 @@
+# The Wardrobe for whoever Play as picks (port/src/aurora/wardrobe_aurora.c) in Japanese for the JP release's own font: an English line, then its translation, then a blank line.
+
+Crown
+かんむり
+
+Gloves
+手ぶくろ
+
+Earrings
+イヤリング
+
+Shoes
+くつ
+
+Horns and spikes
+ツノとトゲ
+
+Bracelets
+うでわ
+
+Fire Luigi
+ファイアルイージ
+
+Luigi as his brother or his rivals, in one press.
+ボタンひとつで　ルイージを　兄や　ライバルの　すがたに
+
+Change how Luigi, his partners and the status bar look.
+ルイージと　なかまと　ステータスバーの　みためを　かえる
+
+Change how Peach, her partners and the status bar look.
+ピーチと　なかまと　ステータスバーの　みためを　かえる
+
+Change how Bowser, his partners and the status bar look.
+クッパと　なかまと　ステータスバーの　みためを　かえる
+
+This outfit doesn't fit Mario, so he doesn't wear it.
+このいしょうは　マリオには　あわない
+
+This outfit doesn't fit Luigi, so he doesn't wear it.
+このいしょうは　ルイージには　あわない
+
+This outfit doesn't fit Peach, so she doesn't wear it. Left and right: the ones that do.
+このいしょうは　ピーチには　あわない　左右で　あうものを
+
+This outfit doesn't fit Bowser, so he doesn't wear it. Left and right: the ones that do.
+このいしょうは　クッパには　あわない　左右で　あうものを

@@ -3116,6 +3116,18 @@ USER_FUNC(evt_mobj_badgeblk) {
     return EVT_RETURN_DONE;
 }
 
+#ifdef TARGET_PC
+/* A randomizer's item in a Shine Sprite block: written in the block's script
+ * word that the game always leaves 0 (docs/RANDOMIZER.md); the Shine Sprite
+ * otherwise */
+static s32 powerupblkItem(MapObjectEntry* mobj) {
+    return mobj->event > 0 && mobj->event < 0x200 ? (s32)mobj->event : ITEM_SHINE_SPRITE;
+}
+#define POWERUPBLK_ITEM(mobj) powerupblkItem(mobj)
+#else
+#define POWERUPBLK_ITEM(mobj) ITEM_SHINE_SPRITE
+#endif
+
 /**
  * Main function of the Shine Sprite blocks: when hit it pops a Shine Sprite, gives it to Mario,
  * sets the flag variable and deletes itself.
@@ -3144,7 +3156,7 @@ static s32 mobj_powerupblk(MapObjectEntry* mobj) {
             gp->systemLevelFlags |= SYSTEM_LEVEL_FLAG_STOP_LV0 | SYSTEM_LEVEL_FLAG_STOP_LV1;
             psndSFXOn_3D((const char*)0x201c0, &mobj->position);
             animPoseSetAnim(mobj->poseId, "A_1", 1);
-            itemEntry(mobj->position.x, mobj->position.y, mobj->position.z, "pwrblk1", ITEM_SHINE_SPRITE, ITEM_ENTRY_POP_VANISH, -1, NULL);
+            itemEntry(mobj->position.x, mobj->position.y, mobj->position.z, "pwrblk1", POWERUPBLK_ITEM(mobj), ITEM_ENTRY_POP_VANISH, -1, NULL);
             mobj->state++;
             break;
         case 1:
@@ -3161,7 +3173,7 @@ static s32 mobj_powerupblk(MapObjectEntry* mobj) {
                 mobj->typeData[1]--;
                 break;
             }
-            itemForceGet(itemEntry(mobj->position.x, 40.0f + mobj->position.y, mobj->position.z, "pwrblk2", ITEM_SHINE_SPRITE, ITEM_ENTRY_FIXED_NO_TOUCH, -1, NULL));
+            itemForceGet(itemEntry(mobj->position.x, 40.0f + mobj->position.y, mobj->position.z, "pwrblk2", POWERUPBLK_ITEM(mobj), ITEM_ENTRY_FIXED_NO_TOUCH, -1, NULL));
             evtSetValue(NULL, mobj->flagVar, 1);
             marioKeyOn();
 #if VERSION >= VERSION_JP
@@ -3335,6 +3347,26 @@ static s32 mobj_10countblk(MapObjectEntry* mobj) {
                 }
                 animPoseSetAnim(mobj->poseId, "A_1", 1);
                 psndSFXOn_3D((const char*)0x1be, &mobj->position);
+#ifdef TARGET_PC
+                /* A randomizer's item in a coin block, where the game always has
+                 * none (docs/RANDOMIZER.md): it pops out once, as from a ? block,
+                 * and the flag is set when it is picked up */
+                if ((u32)mobj->event == 0 && mobj->typeData[0] != 0 && mobj->typeData[0] != ITEM_COIN) {
+                    ItemEntry* got;
+                    itemEntry(mobj->position.x, 40.0f + mobj->position.y, mobj->position.z, mobj->name, mobj->typeData[0], ITEM_ENTRY_LAUNCH, mobj->flagVar, NULL);
+                    got = itemNameToPtr(mobj->name);
+                    itemFlagOn(got, ITEM_FLAG_CUSTOM_BOUNCE);
+                    got->bounceFactor = 0.7f;
+                    got->gravityScale = 1.0f;
+                    got->maxBounces = 0;
+                    got->velocityY = 360.0f;
+                    psndSFXOn_3D((const char*)0x1bc, &mobj->position);
+                    mobj->timer = 0; /* (an empty block from the next frame) */
+                    mobj->state++;
+                    mobj->flags &= ~MOBJ_FLAG_HIT;
+                    break;
+                }
+#endif
                 evtSetValue(NULL, mobj->flagVar, 1);
                 if ((u32)mobj->event != 0) {
                     mobjRunEvent(mobj, (EvtWord*)mobj->event);

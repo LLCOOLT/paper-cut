@@ -4,7 +4,7 @@ Colour-blind filter
 色の　みえかた　フィルター
 
 Shifts the colours your eyes confuse into ones they can tell apart, over the whole picture (a daltonization correction, not a simulation).
-みわけにくい　色を　みわけやすい　色に　ずらします　画面　ぜんたいに　かかります
+画面の　見わけにくい　色を　見わけやすく　します
 
 Protanopia (red-blind)
 １がた（赤）

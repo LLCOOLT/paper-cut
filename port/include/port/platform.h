@@ -15,6 +15,11 @@ void portCrashSetReportPath(const char* path);
 void portCrashSetContext(const char* text);
 /* The fatal error that is about to end the program (Aurora's), for the report. */
 void portCrashSetMessage(const char* text);
+/* A log line (Aurora's, SDL's), kept among the last few for the report's end. */
+void portCrashLogLine(const char* text);
+/* The graphics adapter (Aurora's log), for the report's header. */
+void portCrashSetGpu(const char* text);
+const char* portCrashGpu(void);
 /* aborts if p is below 2 GiB (sound-name words, include/sfx_name_word.h) */
 void portCheckHostAddress(const void* p, const char* what);
 /* a frame completed ($TTYD_WATCHDOG, crash_pc.c) */
@@ -90,6 +95,16 @@ void portFastClockSet(s64 t);
  * (os_time_aurora.c) */
 int portLockstep(void);
 void portLockstepBegin(s64 base);
+/* Aurora, in lockstep: the game clock now (OSTime) without moving it, as a
+ * read from drawing or a menu must (the raid's week, port/include/port/raid.h) */
+s64 portLockstepClock(void);
+/* days since 1970-01-01 (UTC) by portLockstepClock: what every date that
+ * picks game content uses (port/include/port/date_seed.h's portDateDay) */
+unsigned portLockstepDay(void);
+/* the game clock now (what OSGetTime would give) without moving it: for
+ * reads from drawing, menus, snapshots and anything else that does not run
+ * the same number of times in every game of a session or a replay */
+s64 portGameClockPeek(void);
 s64 portRealTime(void);
 /* Stop the game (the caller holds the main thread), its clock and audio, e.g.
  * while the window is minimized or the app is in the background; nests

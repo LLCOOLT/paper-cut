@@ -801,7 +801,14 @@ USER_FUNC(evt_end_credit_npc_main) {
     PSMTXConcat(m2, m1, m1);
     PSMTXTrans(m2, x / 2.0f, y / 2.0f, 0.0f);
     PSMTXConcat(m2, m1, actor->mtx);
+#ifdef TARGET_PC /* Play as: the pick at their field size (Bowser's 0.7), about the feet */
+    {
+        const f32 k = portLuigiCreditScale(R_credits_npc_info[id].agb);
+        PSMTXScale(m3, k, k, 0.01f);
+    }
+#else
     PSMTXScale(m3, 1.0f, 1.0f, 0.01f);
+#endif
     PSMTXConcat(actor->mtx, m3, actor->mtx);
 #if VERSION >= VERSION_JP
     if (animPoseGetVivianType(actor->poseId)) {

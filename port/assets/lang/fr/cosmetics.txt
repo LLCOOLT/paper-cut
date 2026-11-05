@@ -82,22 +82,70 @@ Reset all
 Tout réinitialiser
 
 Goombella's hair
-Les cheveux de Goombella
+Les cheveux de Goomélie
 
 Koops's shell
-La carapace de Koops
+La carapace de Koopek
 
 Koops's hoodie
-Le sweat de Koops
+Le sweat de Koopek
 
 Flurrie's hair
-Les cheveux de Flurrie
+Les cheveux de Cumulia
 
 Bobbery's body
-Le corps de Bobbery
+Le corps de Bombart
 
-Ms. Mowz's mask and cape
-Le masque et la cape de Ms. Mowz
+Ms. Mowz's mask
+Le masque de Carmina
 
 Vivian's body
-Le corps de Vivian
+Le corps de Viviane
+
+Goombella's helmet
+Le casque de Goomélie
+
+Flurrie's dress
+La robe de Cumulia
+
+Bobbery's fuse
+La mèche de Bombart
+
+Vivian's hat
+Le chapeau de Viviane
+
+Vivian's hair
+Les cheveux de Viviane
+
+Ms. Mowz's cape
+La cape de Carmina
+
+Its own colour, or the mask's.
+Une couleur à elle, ou celle du masque.
+
+Theme
+Thème
+
+The status bar's banners and the menus' pages in colours that go together. A part with a colour of its own keeps it.
+Les bandeaux de la barre d'état et les pages des menus dans des couleurs assorties. Une partie qui a sa propre couleur la garde.
+
+Night
+Nuit
+
+Forest
+Forêt
+
+Ocean
+Océan
+
+Candy
+Bonbon
+
+High contrast
+Contraste élevé
+
+Menus
+Menus
+
+The Start menu's pages, all in one colour.
+Les pages du menu Start, toutes d'une couleur.

@@ -7,7 +7,7 @@ The game's own text (dialogue, items, the original menus) is not part of it: tha
 
 ## Where it goes
 
-In the **mods folder** (see [MODDING.md](MODDING.md#mods) for where it is on each platform; Language > Language packs > "Open the mods folder" opens it):
+In the **mods folder** (see [MODDING.md](MODDING.md) for where it is on each platform; Language > Language packs > "Open the mods folder" opens it):
 
 ```
 mods/
@@ -18,7 +18,7 @@ mods/
       myfont.ttf     a font, if your script needs one (optional)
 ```
 
-A pack is a folder only (not a .zip or .ttydmod), and needs no `mod.json`. A mod folder that has one can carry a `lang/` folder too.
+A pack is a folder (not a .zip or .ttydmod), and needs no `mod.json`. A mod folder that has one can carry a `lang/` folder too. Packs are listed in the [mod manager](MODDING.md#the-mod-manager) with the mods: its switch turns a pack off, and dropping a pack's folder, or a zip of one (unpacked into a folder), on Paper Cut's window installs it.
 
 ## The quickest start
 
@@ -61,7 +61,8 @@ Fechar
 
 - The English text, exactly as Paper Cut shows it, on one line; its translation on the next; a blank line between texts.
 - A line break inside a text is written `\n`.
-- Keep `%s`, `%d` and `%%` as they are, in the same order: Paper Cut puts a name or a number there.
+- Keep `%s`, `%d` and `%%` as they are, in the same order: Paper Cut puts a name or a number there. A translation whose `%` codes differ from the English's isn't used (the pack's problems list says which).
+- Keep the buttons in braces as they are, wherever your sentence needs them: `{A}`, `{B}`, `{X}`, `{Y}`, `{Z}`, `{L}`, `{R}`, `{START}`, `{STICK}`, `{CSTICK}` and `{DPAD}` (the game's buttons), Paper Cut's actions such as `{PING}`, `{PHOTO}` or `{FF}`, and a controller's own buttons with their key, such as `{SOUTH:Return}`. Each shows as the button that does it now: its icon for the controller in use (Controls > Button prompts) or the key's name on the keyboard, where the player has bound it (Controls > Bindings). Words around them, such as "the" in "the {DPAD}", are yours.
 - An English line with nothing under it is **not translated yet**: it stays as the built-in language would show it. The pack's list in Language > Language packs counts them.
 - If one pack translates a text twice differently, the first is used and the list says so.
 
@@ -70,6 +71,10 @@ A text is shown, in order: the pack's translation; else the built-in language's 
 The list in Language > Language packs shows each pack: what it does, how many texts it translates and how many are still empty, and anything wrong with it (a key it doesn't know, a missing font file, a text translated twice).
 
 `$TTYD_TR_DUMP=<file>` (an environment variable) writes each English text to the file as the menus ask for it: the same list the template comes from, for finding a text's exact English.
+
+## Paper Cut's own languages
+
+Paper Cut's menus come in English, German, French, Spanish, Italian and Japanese (`port/assets/lang/<code>/`). Each translation names the game's things as that language's release of the game does: the partners, places, items, Star Points, the Tattle Log, HP, FP and BP as the European release has them in German, French, Spanish and Italian, and as the Japanese release has them in Japanese. The achievements' names and notes are translated too. For the Start menu on the Japanese release, the Japanese texts have a second wording that keeps to the kanji the game's font has (`port/assets/lang/ja_game/`).
 
 ## Fonts
 

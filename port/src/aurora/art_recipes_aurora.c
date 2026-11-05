@@ -13,6 +13,7 @@
 #include "port/art_recipe.h"
 
 #include <dolphin/dvd.h>
+#include <aurora/dvd.h>
 #include <SDL3/SDL.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -296,6 +297,43 @@ void portArtPrepare(const char* userPath) {
     sDisc = NULL;
     SDL_Log("art: %d images from the disc's (%d made, %d kept from before, %d not made, %d for other discs) in %d ms",
             sCount, made, kept, failed, other, (int)(SDL_GetTicks() - start));
+}
+
+int portArtMakeFolder(const char* userPath, const char* discPath, const char* folder) {
+    const size_t n = strlen(folder);
+    const char* mode = SDL_getenv("TTYD_ART");
+    int i, ready = 0;
+    if (userPath == NULL || !userPath[0] || (mode != NULL && strcmp(mode, "off") == 0) || sCacheDir[0] ||
+        !aurora_dvd_open(discPath)) {
+        return 0; /* (sCacheDir set: the game's disc is open, and its Preparing graphics did this) */
+    }
+    sGameId[0] = 0;
+    gameId();
+    snprintf(sCacheDir, sizeof(sCacheDir), "%s%sart_cache/%s", userPath,
+             userPath[strlen(userPath) - 1] == '/' || userPath[strlen(userPath) - 1] == '\\' ? "" : "/", sGameId);
+    collect();
+    for (i = 0; i < sCount; i++) {
+        if (strncmp(sImages[i].path, folder, n) == 0) {
+            make(&sImages[i]); /* from the cache, else from the disc and kept there */
+            ready += sImages[i].state == 1;
+        }
+    }
+    portArtDiscClose(sDisc);
+    sDisc = NULL;
+    /* as before: the game's disc (perhaps another) is opened later, and Preparing graphics reads these back */
+    for (i = 0; i < sCount; i++) {
+        if (strncmp(sImages[i].path, folder, n) == 0) {
+            free(sImages[i].data);
+            sImages[i].data = NULL;
+            sImages[i].size = 0;
+            sImages[i].state = 0;
+            sImages[i].saved = 0;
+        }
+    }
+    sGameId[0] = 0;
+    sCacheDir[0] = 0;
+    aurora_dvd_close();
+    return ready;
 }
 
 /* an image's PNG: made (now, if it wasn't), or its fallback's; NULL if neither or not on this disc */

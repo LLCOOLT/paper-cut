@@ -3,6 +3,10 @@
 #ifdef TARGET_PC
 #include "port/gameplus.h"
 #include "port/captions.h"
+#include "port/versus.h"
+#include "port/toggles.h"
+#include "port/battlex.h"
+#include "port/enemy_variant.h"
 #endif
 #include "eff/eff_nice.h"
 #include "pc_call.h"
@@ -75,6 +79,9 @@ void PORT_HOOKABLE(BattleDamageDirect)(s32 unitId, BattleUnit* target, BattleUni
     if (attacker) {
         attacker->totalDamageDealt += damage;
     }
+#ifdef TARGET_PC
+    portBattlexHit(attacker ? attacker->alliance : -1, target->alliance, damage, (result & DAMAGE_FLAG_HEAL) != 0); /* the recap */
+#endif
     if (part) {
         target->currentTarget = part;
     } else {
@@ -324,6 +331,9 @@ void PORT_HOOKABLE(BattleDamageDirect)(s32 unitId, BattleUnit* target, BattleUni
                     BattleAudience_Case_PartyDown();
                 }
                 if (target->currentKind >= UNIT_GOOMBA && target->currentKind < UNIT_UNUSED_TREE) {
+#ifdef TARGET_PC
+                    portBattlexDefeated(target->currentKind); /* the recap, the lifetime stats */
+#endif
                     BattleAudience_Case_KillEnemy(target->level);
                     BattleAudience_Case_FinalAttack();
                 }
@@ -647,6 +657,9 @@ skip:
         *result |= DAMAGE_FLAG_HEAL;
         return (u32)damage * -1;
     }
+#ifdef TARGET_PC
+    damage = portEnemyVariantDamage(attacker, target, damage); /* an enemy variant's attack and defence */
+#endif
     if (damage <= 0) {
         *result = defaultResult;
         return 0;
@@ -658,8 +671,9 @@ skip:
     }
 #ifdef TARGET_PC
     // the Gameplay tab's difficulty: an enemy's attack on Mario or a partner
-    if (attacker != NULL && attacker->alliance == 1 && target->alliance == 0) {
+    if (attacker != NULL && attacker->alliance == 1 && target->alliance == 0 && !portVersusOn()) { // (not a versus fight's Luigi)
         damage = portEnemyDamage(damage);
+        damage = portLevelSyncDamage(damage, attacker->kindParams->level); // level sync (port/toggles.h)
         damage = portChallengeDamage(damage, target->currentHp); // challenge: one-hit KO
     }
 #endif
@@ -1602,6 +1616,11 @@ s32 PORT_HOOKABLE(BattleSetStatusDamageFromWeapon)(BattleUnit* attacker, BattleU
                     }
                     break;
             }
+#ifdef TARGET_PC
+            if (i == 2) { /* Stop: a turn more from a versus fight's Luigi side (portVersusStopTime) */
+                time = (s8)portVersusStopTime(attacker, time);
+            }
+#endif
 #if VERSION <= VERSION_DEMO_JP
             BattleSetStatusDamage(&result, target, part, weapon->special, i, (s8)rate, levelDiff, time, strength);
 #else
@@ -1747,6 +1766,9 @@ s32 PORT_HOOKABLE(BattleCheckDamage)(BattleUnit* attacker, BattleUnit* target, B
 
     pierce = 0;
     cwp = &cw;
+#ifdef TARGET_PC
+    weapon = portEnemyVariantWeapon(attacker, weapon); /* an enemy variant's borrowed move */
+#endif
     BattleInitCounterPreCheckWork(cwp);
     if (!target) {
         return 18;
@@ -1770,6 +1792,9 @@ s32 PORT_HOOKABLE(BattleCheckDamage)(BattleUnit* attacker, BattleUnit* target, B
         BattleAudience_Case_GuardGood();
         attacker->superguardedCount++;
         target->superguardCountTaken = attacker->superguardedCount;
+#ifdef TARGET_PC
+        portBattlexSuperguard(); /* battle grades */
+#endif
         switch (weapon->superguardsAllowed) {
             case 2:
                 result = flags | DAMAGE_HIT_SUPERGUARDED;
@@ -1822,6 +1847,7 @@ s32 PORT_HOOKABLE(BattleCheckDamage)(BattleUnit* attacker, BattleUnit* target, B
                 ((NiceEffectWork*)eff->userdata)->overallScale = 0.75f;
 #ifdef TARGET_PC
                 portPopupGuard(target, part, 0); // Enhancements battle pop-ups
+                portBattlexGuard(); /* the recap */
 #endif
                 flags |= DAMAGE_FLAG_GUARDED;
                 psndSFXOn("SFX_SYSTEM_NICE1");

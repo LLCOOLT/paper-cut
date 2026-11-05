@@ -75,7 +75,7 @@ Replace them and restart
 Replace them
 置き換える
 
-Receive this card's saves from the launcher, before the game starts.
+Receive saves from the launcher, before starting.
 このカードのセーブは、ゲームが始まる前にランチャーで受け取ってください。
 
 Could not receive the saves:

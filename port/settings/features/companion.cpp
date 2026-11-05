@@ -91,7 +91,9 @@ const char* noteText(const char* text) {
       }
     }
     p += n;
-    if (cp > 0xFF && cp != 0x2013 && cp != 0x2026 && cp <= 0xFFFF && sGlyphs.insert(static_cast<ImWchar>(cp)).second) {
+    // (not the main page's button icons, U+E000 on: port/include/port/button_markup.h; no font has them)
+    if (cp > 0xFF && cp != 0x2013 && cp != 0x2026 && cp <= 0xFFFF && (cp < 0xE000 || cp > 0xF8FF) &&
+        sGlyphs.insert(static_cast<ImWchar>(cp)).second) {
       sFontsDirty = true;
     }
   }
@@ -604,6 +606,17 @@ void mapPanel(const PortCompanionSnapshot& s) {
     }
   }
   cardEnd();
+
+  // the area's map (area_maps.cpp draws it, as on the settings page)
+  if (s.areaMap.roomCount > 0) {
+    cardBegin();
+    heading(T("This area"));
+    char line[96];
+    std::snprintf(line, sizeof(line), T("%d of %d rooms visited"), s.areaMap.visited, s.areaMap.roomCount);
+    ImGui::TextUnformatted(line);
+    portAreaMapDraw(s.areaMap, innerWidth(), px(360), px(1));
+    cardEnd();
+  }
 }
 
 void battlePanel(const PortCompanionSnapshot& s) {
@@ -753,6 +766,9 @@ void drawMenu() {
       portCompanionMenuButton(b.button);
     }
     x += step;
+  }
+  if (menuButton(dl, ImVec2(size.x - r * 1.6f - step * 4, cy), r * 0.85f, "Z", 0, grey)) {
+    portCompanionMenuButton(PORT_COMPANION_BUTTON_Z); // the sort menu
   }
   if (menuButton(dl, ImVec2(size.x - r * 1.6f - step * 3, cy), r * 0.85f, "X", 0, grey)) {
     portCompanionMenuButton(PORT_COMPANION_BUTTON_X);

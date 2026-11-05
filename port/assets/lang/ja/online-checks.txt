@@ -1,0 +1,11 @@
+# Online play and replays kept in step: what is the session's, what is refused there (an English line, then its translation, then a blank line).
+
+The randomizer: this game started with other randomizer settings than the host's. Start it again and join from the launcher.
+ランダマイザー：このゲームはホストと違うランダマイザーの設定で始まりました。もう一度起動して、ランチャーから参加してください。
+
+Not during online play or a replay
+オンラインプレイやリプレイ中はできません
+
+This one is this device's own (its files, controllers or screen): it waits until the online game or the replay is over.
+これはこの端末のものです（ファイル、コントローラー、画面）。オンラインのゲームかリプレイが終わるまで待ちます。
+

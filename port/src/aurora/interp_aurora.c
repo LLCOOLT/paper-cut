@@ -140,6 +140,10 @@ void portInterpKeep(void* p, unsigned int n) {
     if (sKeptUsed + need > sKeptCap) {
         sKeptCap = (sKeptUsed + need) * 2;
         sKept = realloc(sKept, sKeptCap);
+        if (sKept == NULL) { /* (what the in-between draw changes couldn't be put back) */
+            fprintf(stderr, "[interp] out of memory\n");
+            abort();
+        }
     }
     memcpy(sKept + sKeptUsed, &p, sizeof(void*));
     memcpy(sKept + sKeptUsed + sizeof(void*), &n, sizeof(unsigned int));

@@ -22,7 +22,7 @@ Level
 Livello
 
 Star Points
-Punti stella
+Punti Stella
 
 
 
@@ -34,16 +34,16 @@ HP
 PV
 
 BP
-PM
+PT
 
 BP left
-PM liberi
+PT liberi
 
 Star Power
-Potere stellare
+Energia Stella
 
 Crystal Stars
-Stelle di cristallo
+Gemme Stella
 
 With Mario
 Con Mario
@@ -70,10 +70,10 @@ Items can be used in the field.
 Gli strumenti si usano fuori dalle battaglie.
 
 Badges worn
-Medaglie indossate
+Tessere indossate
 
 No badges worn.
-Nessuna medaglia indossata.
+Nessuna tessera indossata.
 
 Where next
 Dove andare
@@ -82,7 +82,7 @@ This room
 Questa stanza
 
 No Star Pieces or Shine Sprites here.
-Qui non ci sono pezzi di stella né soli.
+Qui non ci sono Scheggiastelle né Soli Custodi.
 
 Partner
 Compagno

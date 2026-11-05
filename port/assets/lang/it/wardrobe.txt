@@ -46,7 +46,7 @@ Change how Mario, his partners and the status bar look.
 Cambia l'aspetto di Mario, dei compagni e della barra di stato.
 
 Koops
-Koops
+Koopaldo
 
 Shell
 Guscio
@@ -67,7 +67,43 @@ Not during online play or a replay.
 Non durante il gioco online o un replay.
 
 Ms. Mowz
-Ms. Mowz
+Squitty
 
-Mask and cape
-Maschera e mantello
+Mask
+Maschera
+
+Goombella
+Goombella
+
+Flurrie
+Spirù
+
+Vivian
+Ombretta
+
+Bobbery
+Cannonio
+
+Hair
+Capelli
+
+Helmet
+Casco
+
+Dress
+Vestito
+
+Body
+Corpo
+
+Hat
+Cappello
+
+Fuse
+Miccia
+
+Cape
+Mantello
+
+The banners and the menus in colours that go together. A part with its own keeps it.
+Le fasce e i menu in colori che stanno bene insieme. Una parte con il suo colore lo mantiene.

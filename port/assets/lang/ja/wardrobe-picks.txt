@@ -1,0 +1,85 @@
+# The Wardrobe for whoever Play as picks (port/settings/features/cosmetics.cpp, port/src/aurora/wardrobe_aurora.c, docs/COSTUMES.md), in Japanese: an English line, then its translation, then a blank line.
+
+Luigi's cap and shirt
+ルイージのぼうしとシャツ
+
+Luigi's overalls
+ルイージのオーバーオール
+
+Peach's dress
+ピーチのドレス
+
+Peach's crown
+ピーチのかんむり
+
+Peach's hair
+ピーチの髪
+
+Peach's gloves
+ピーチの手ぶくろ
+
+Peach's earrings
+ピーチのイヤリング
+
+Peach's shoes
+ピーチのくつ
+
+Bowser's shell
+クッパのこうら
+
+Bowser's hair
+クッパの髪
+
+Bowser's skin
+クッパのはだ
+
+Bowser's horns and spikes
+クッパのツノとトゲ
+
+Bowser's bracelets
+クッパのうでわ
+
+Crown
+かんむり
+
+Gloves
+手ぶくろ
+
+Earrings
+イヤリング
+
+Shoes
+くつ
+
+Horns and spikes
+ツノとトゲ
+
+Bracelets
+うでわ
+
+Fire Luigi
+ファイアルイージ
+
+Luigi as his brother or his rivals, in one press.
+ボタンひとつで、ルイージを兄やライバルの姿に。
+
+Change how Luigi, his partners and the status bar look.
+ルイージと仲間とステータスバーの見た目を変える。
+
+Change how Peach, her partners and the status bar look.
+ピーチと仲間とステータスバーの見た目を変える。
+
+Change how Bowser, his partners and the status bar look.
+クッパと仲間とステータスバーの見た目を変える。
+
+This outfit doesn't fit Mario, so he doesn't wear it.
+この衣装はマリオに合わないので、着ません。
+
+This outfit doesn't fit Luigi, so he doesn't wear it.
+この衣装はルイージに合わないので、着ません。
+
+This outfit doesn't fit Peach, so she doesn't wear it. Left and right: the ones that do.
+この衣装はピーチに合わないので、着ません。左右で、合うものを。
+
+This outfit doesn't fit Bowser, so he doesn't wear it. Left and right: the ones that do.
+この衣装はクッパに合わないので、着ません。左右で、合うものを。

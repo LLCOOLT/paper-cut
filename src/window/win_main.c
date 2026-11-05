@@ -107,6 +107,18 @@ static WindowWork* wp;
 static USER_FUNC(itemUseFunc);
 #include "port/gameplus.h"
 #include "port/companion.h"
+#include "port/port_text.h"
+/* winFontSet & co.: what they make of Paper Cut's text (the format or a %s of it) is Paper Cut's
+ * too, drawn with the game's random numbers put back (port/include/port/port_text.h) */
+#define WIN_VSPRINTF(buf, fmt, args) PORT_TEXT_VSPRINTF(buf, fmt, args)
+#else
+#define WIN_VSPRINTF(buf, fmt, args) vsprintf(buf, fmt, args)
+#endif
+#ifdef TTYD_BACKEND_AURORA
+#include "port/pause_settings.h"
+#include "port/versus.h"
+#include "port/online_menu.h"
+#include "port/title_menu.h"
 #endif
 static void winLectureKeyMask(void);
 // FAKE: the prototype this file was compiled with (u16 icon id; icondrv.h has s16/s32), so callers zero-extend the id
@@ -257,6 +269,19 @@ void PORT_HOOKABLE(winMain)(void) {
                     if (mario->characterId == 0 && portCompanionFieldItem()) {
                         break;
                     }
+                    /* and its badge worn or taken off, or its sort */
+                    if (mario->characterId == 0 && portCompanionFieldBadge()) {
+                        break;
+                    }
+#ifdef TTYD_BACKEND_AURORA
+                    /* an online versus room's start: the Settings tab, on the versus set-up (versus.h) */
+                    if (mario->characterId == 0 && portVersusRoomPoll()) {
+                        wp->menuSel = PORT_PAUSE_SETTINGS_TAB;
+                    } else if (mario->characterId == 0 && portTitleModesPoll()) {
+                        /* the title menu's Modes: on its temporary file, the Modes hub (port/title_menu.h) */
+                        wp->menuSel = PORT_PAUSE_SETTINGS_TAB;
+                    } else
+#endif
                     if (mario->characterId == 0 &&
                         (quickSwap = portQuickSwapPoll(!marioBgmodeChk() ? marioGetParty() : mario->prevPartyMemberId[0])) >= 0) {
                         wp->menuSel = 1;
@@ -269,6 +294,13 @@ void PORT_HOOKABLE(winMain)(void) {
                         wp->menuSel = 0;
                     } else if (wp->buttonTrg & PAD_BUTTON_START) {
                         wp->menuSel = 0;
+#ifdef TTYD_BACKEND_AURORA
+                        /* a Start-menu lobby under way (never a session): straight to the Online tab, where
+                           the other player's arrival and Start together are */
+                        if (portOnlineMenuLobbyBusy()) {
+                            wp->menuSel = PORT_PAUSE_ONLINE_TAB;
+                        }
+#endif
                     } else {
                         if (keyGetButton(0) & PAD_TRIGGER_Z) {
                             break;
@@ -1154,7 +1186,7 @@ void winFontSet(Vec pos, Vec scale, GXColor color, const char* fmt, ...) {
 
     if (strstr(fmt, "%")) {
         va_start(args, fmt);
-        vsprintf(buf, fmt, args);
+        WIN_VSPRINTF(buf, fmt, args);
         msg = buf;
     }
     PSMTXTrans(trans, pos.x, pos.y, pos.z);
@@ -1173,7 +1205,7 @@ void winFontSetWidth(Vec pos, Vec scale, GXColor color, f32 width, const char* f
 
     if (strstr(fmt, "%")) {
         va_start(args, fmt);
-        vsprintf(buf, fmt, args);
+        WIN_VSPRINTF(buf, fmt, args);
         msg = buf;
     }
     w = scale.x * FontGetMessageWidth(msg);
@@ -1191,7 +1223,7 @@ void winFontSet(Vec pos, Vec scale, GXColor color, const char* fmt, ...) {
     va_list args;
 
     va_start(args, fmt);
-    vsprintf(buf, fmt, args);
+    WIN_VSPRINTF(buf, fmt, args);
     PSMTXTrans(trans, pos.x, pos.y, pos.z);
     PSMTXScale(scl, scale.x, scale.y, scale.z);
     PSMTXConcat(trans, scl, trans);
@@ -1215,7 +1247,7 @@ void winFontSetR(Vec pos, Vec scale, GXColor color, const char* fmt, ...) {
 
     if (strstr(fmt, "%")) {
         va_start(args, fmt);
-        vsprintf(buf, fmt, args);
+        WIN_VSPRINTF(buf, fmt, args);
         msg = buf;
     }
     if ((u32)gp->language != 0) {
@@ -1242,7 +1274,7 @@ void winFontSetR(Vec pos, Vec scale, GXColor color, const char* fmt, ...) {
 
     va_start(args, fmt);
     do {
-        vsprintf(buf, fmt, args);
+        WIN_VSPRINTF(buf, fmt, args);
     } while (0);
     {
         s32 w = FontGetMessageWidth("９９９") - FontGetMessageWidth(buf);
@@ -1268,7 +1300,7 @@ void winFontSetRWidth(Vec pos, Vec scale, GXColor color, f32 width, const char* 
 
     if (strstr(fmt, "%")) {
         va_start(args, fmt);
-        vsprintf(buf, fmt, args);
+        WIN_VSPRINTF(buf, fmt, args);
         msg = buf;
     } else {
         msg = fmt;
@@ -1302,7 +1334,7 @@ void winFontSetEdge(Vec pos, Vec scale, GXColor color, const char* fmt, ...) {
 
     if (strstr(fmt, "%")) {
         va_start(args, fmt);
-        vsprintf(buf, fmt, args);
+        WIN_VSPRINTF(buf, fmt, args);
         msg = buf;
     }
     PSMTXTrans(trans, pos.x, pos.y, pos.z);
@@ -1323,7 +1355,7 @@ void winFontSetEdgeWidth(Vec pos, Vec scale, GXColor color, f32 width, const cha
 
     if (strstr(fmt, "%")) {
         va_start(args, fmt);
-        vsprintf(buf, fmt, args);
+        WIN_VSPRINTF(buf, fmt, args);
         msg = buf;
     }
     w = scale.x * FontGetMessageWidth(msg);
@@ -1341,7 +1373,7 @@ void winFontSetEdge(Vec pos, Vec scale, GXColor color, const char* fmt, ...) {
     va_list args;
 
     va_start(args, fmt);
-    vsprintf(buf, fmt, args);
+    WIN_VSPRINTF(buf, fmt, args);
     PSMTXTrans(trans, pos.x, pos.y, pos.z);
     PSMTXScale(scl, scale.x, scale.y, scale.z);
     PSMTXConcat(trans, scl, trans);
@@ -1373,7 +1405,7 @@ void winFontSetPitch(f32 pitch, Vec pos, Vec scale, GXColor color, const char* f
     va_list args;
 
     va_start(args, fmt);
-    vsprintf(buf, fmt, args);
+    WIN_VSPRINTF(buf, fmt, args);
     FontDrawColor(color);
     FontDrawScaleVec(scale);
     // FAKE: called through a cast that passes the address of this function's own pos (the same registers as

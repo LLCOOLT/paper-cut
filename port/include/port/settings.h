@@ -123,6 +123,11 @@ int* portSettingsFind(const char* key);
  * field, and the declared and read ones to write back. */
 int portSettingsExtraSet(const char* key, const char* value);
 void portSettingsExtraForce(const char* key, const char* value);
+/* Online co-op's guest, a replay's playback: a setting of this player's own
+ * that the run's set doesn't have, at its default for this run: now if it is
+ * declared, else once it is (one declared on first use, whose default isn't
+ * known yet). 0: no such setting. */
+int portSettingsExtraToDefault(const char* key);
 /* Settings presets (port/settings/features/presets.cpp): a setting's default
  * (a field's before settings.txt, a declared one's def), 0 when unknown; and a
  * setting changed by key, kept (saved with the next portSettingsSave). */
@@ -134,6 +139,9 @@ int portSettingsSetKey(const char* key, const char* value);
  * hold is set. */
 void portSettingsSetForRun(const char* key, const char* value);
 void portSettingsHoldSaves(int hold);
+/* A declared setting changed for a while (a mode's run): settings.txt keeps
+ * value meanwhile (on), whatever it is in memory; off, its own again. */
+void portSettingsExtraSaveAs(const char* key, int on, int value);
 int portSettingsExtraCount(void);
 const char* portSettingsExtraAt(int i, int* value);
 
@@ -154,6 +162,18 @@ void portSettingsAddChoice(const char* tab, const char* label, const char* note,
                            const char* const* choices, int count, const char* keywords);
 void portSettingsAddSlider(const char* tab, const char* label, const char* note, unsigned flags, const char* key,
                            int min, int max, const char* format, const char* keywords);
+/* A choice made of other settings (one row for several keys): get() reads the
+ * choice from them, set() writes it back into them. It has no key of its own
+ * in settings.txt, presets or replays; id names it for portSettingsSetShown
+ * and the like. Its controls' value (PortSettingsControl) is a copy, read
+ * again from the keys whenever the controls are listed or drawn, and written
+ * back by set() at portSettingsApply when a page changed it. */
+void portSettingsAddChoiceOf(const char* tab, const char* label, const char* note, unsigned flags, const char* id,
+                             int (*get)(void), void (*set)(int), const char* const* choices, int count,
+                             const char* keywords);
+/* settings_aurora.c's portSettingsApply: the choices of other settings a page
+ * changed, written into their keys. */
+void portSettingsSyncChoicesOf(void);
 /* A feature's control (by its key) shown only while shown() says so (a
  * device's second display, say); call after adding it. */
 void portSettingsSetShown(const char* key, int (*shown)(void));
@@ -192,6 +212,30 @@ typedef struct PortSettingsControl {
     const char* format; /* a slider's printf format, e.g. "%d%%" */
 } PortSettingsControl;
 int portSettingsControls(PortSettingsControl* out, int max);
+
+/* Where each setting is shown (port/settings/settings_layout.cpp): the tab,
+ * the group heading it sits under (or NULL) and its place in the order, for
+ * the control a feature added to tab with this English label. Returns 0 for
+ * one not placed there (out: its own tab, no group, last). A setting's key
+ * never depends on its place. */
+typedef struct PortSettingsPlaceInfo {
+    const char* tab;
+    const char* group;
+    int order;
+    int isNew; /* new in this version: marked on the full page */
+} PortSettingsPlaceInfo;
+int portSettingsPlace(const char* tab, const char* label, PortSettingsPlaceInfo* out);
+/* The tabs in their order: the settings, then the modes and tools. */
+int portSettingsTabOrder(const char** tabs, int max);
+
+/* A category's page in the Start menu, in the page's order: its plain
+ * controls (kind 0-2) and its sections (kind 3, value NULL: a section of the
+ * full page, by its label), each with its group heading or NULL. */
+typedef struct PortSettingsPageRow {
+    PortSettingsControl c;
+    const char* group;
+} PortSettingsPageRow;
+int portSettingsPageRows(const char* tab, PortSettingsPageRow* out, int max);
 
 #ifdef __cplusplus
 }

@@ -2,11 +2,17 @@
  * cosmetics (port/settings/features/cosmetics.cpp) in the game's own menu, as
  * a game's character-customization screen. The one being dressed stands in
  * the middle of the page's left side, the game's own model in its idle
- * animation, turning slowly; the rows beside him: his looks (the game's own,
- * Luigi, Wario, Waluigi, Fire Mario), his cap and shirt, his overalls, then a
- * row for each partner in the order they join (Koops's two under his name),
- * the partner of the selected row taking his place, met yet or not; the
- * status bar's banners (the bar's own icons take it) and "Colour picker...",
+ * animation, turning slowly; the rows beside him: first whoever Play as picked
+ * (docs/PLAY_AS.md), under their name and as they stand in on the Mario page,
+ * with their own rows: Mario's looks (the game's own, Luigi, Wario, Waluigi,
+ * Fire Mario), his cap and shirt, his overalls; Luigi's the same in his
+ * colours; Peach's dress, crown, hair, gloves, earrings and shoes; Bowser's
+ * shell, hair, skin, horns and spikes, and bracelets; each pick's colours its
+ * own, kept apart, and the costume, fitted to whoever wears it. Then a
+ * row for each part of each partner, in the order they join, under their
+ * names, the partner of the selected row taking his place, met yet or not;
+ * the status bar's and menus' theme, its banners (the bar's own icons take
+ * it), the menus' colour (the page itself shows it) and "Colour picker...",
  * which opens the settings page's Cosmetics tab for the custom colours. The
  * rows scroll when they don't all fit. Left and right (A: the next) step
  * through a row's colours: the game's own, the 13 named ones, then the slot's
@@ -34,7 +40,9 @@
 /* the Start menu's statics in a block of their own, the second screen's menu's while it runs (port/companion_section.h) */
 #define PORT_SECTION_MENU
 #include "port/companion_section.h"
+#include "port/companion_menu.h"
 #include "port/cosmetics.h"
+#include "port/costume.h"
 #include "port/luigi.h"
 #include "port/menu_tap.h"
 #include "port/online.h"
@@ -63,8 +71,11 @@
 #include <string.h>
 
 
-enum { KIND_HEADING, KIND_SUBHEADING, KIND_LOOKS, KIND_SLOT, KIND_YOSHI, KIND_PICKER };
-enum { SHOW_MARIO, SHOW_HUD, SHOW_PARTNER };
+enum {
+    KIND_HEADING, KIND_SUBHEADING, KIND_LOOKS, KIND_SLOT, KIND_YOSHI, KIND_PICKER, KIND_THEME,
+    KIND_COSTUME, KIND_SKIN, KIND_STICKER_KIND, KIND_STICKER, KIND_STICK, KIND_PEEL
+};
+enum { SHOW_MARIO, SHOW_HUD, SHOW_PARTNER, SHOW_STICKER };
 
 typedef struct Row {
     int kind;
@@ -76,29 +87,89 @@ typedef struct Row {
     int indent; /* a part under its partner's name */
 } Row;
 
-static const Row kRows[] = {
-    {KIND_HEADING, 0, "Mario", NULL, SHOW_MARIO, 0, 0},
-    {KIND_LOOKS, 0, "Looks", "Mario as his brother or his rivals, in one press.", SHOW_MARIO, 0, 0},
-    {KIND_SLOT, PORT_COSMETIC_CAP, "Cap and shirt", NULL, SHOW_MARIO, 0, 0},
-    {KIND_SLOT, PORT_COSMETIC_OVERALLS, "Overalls", NULL, SHOW_MARIO, 0, 0},
+/* the Play as pick's own rows (the heading, its looks, then each of its
+ * slots, portCosmeticsSlotPick, by their short labels), then these */
+static const struct {
+    int slot;
+    const char* label;
+} kPickParts[] = {
+    {PORT_COSMETIC_CAP, "Cap and shirt"},
+    {PORT_COSMETIC_OVERALLS, "Overalls"},
+    {PORT_COSMETIC_LUIGI_CAP, "Cap and shirt"},
+    {PORT_COSMETIC_LUIGI_OVERALLS, "Overalls"},
+    {PORT_COSMETIC_PEACH_DRESS, "Dress"},
+    {PORT_COSMETIC_PEACH_CROWN, "Crown"},
+    {PORT_COSMETIC_PEACH_HAIR, "Hair"},
+    {PORT_COSMETIC_PEACH_GLOVES, "Gloves"},
+    {PORT_COSMETIC_PEACH_EARRINGS, "Earrings"},
+    {PORT_COSMETIC_PEACH_SHOES, "Shoes"},
+    {PORT_COSMETIC_BOWSER_SHELL, "Shell"},
+    {PORT_COSMETIC_BOWSER_HAIR, "Hair"},
+    {PORT_COSMETIC_BOWSER_SKIN, "Skin"},
+    {PORT_COSMETIC_BOWSER_SPIKES, "Horns and spikes"},
+    {PORT_COSMETIC_BOWSER_BRACELETS, "Bracelets"},
+};
+static const char* const kPickNames[PORT_PLAY_AS_COUNT] = {"Mario", "Luigi", "Peach", "Bowser"};
+static const char* const kLooksNotes[PORT_PLAY_AS_COUNT] = {
+    "Mario as his brother or his rivals, in one press.",
+    "Luigi as his brother or his rivals, in one press.",
+    NULL,
+    NULL,
+};
+
+static const Row kRest[] = {
     {KIND_HEADING, 0, "Partners", NULL, SHOW_PARTNER, 1, 0},
-    {KIND_SLOT, PORT_COSMETIC_PARTNER, "Goombella's hair", NULL, SHOW_PARTNER, 1, 0},
+    {KIND_SUBHEADING, 0, "Goombella", NULL, SHOW_PARTNER, 1, 0},
+    {KIND_SLOT, PORT_COSMETIC_PARTNER, "Hair", NULL, SHOW_PARTNER, 1, 1},
+    {KIND_SLOT, PORT_COSMETIC_GOOMBELLA_HELMET, "Helmet", NULL, SHOW_PARTNER, 1, 1},
+    {KIND_SKIN, 0, "Skin", NULL, SHOW_PARTNER, 1, 1},
     {KIND_SUBHEADING, 0, "Koops", NULL, SHOW_PARTNER, 2, 0},
     {KIND_SLOT, PORT_COSMETIC_KOOPS_SHELL, "Shell", NULL, SHOW_PARTNER, 2, 1},
     {KIND_SLOT, PORT_COSMETIC_KOOPS_HOODIE, "Hoodie", NULL, SHOW_PARTNER, 2, 1},
-    {KIND_SLOT, PORT_COSMETIC_FLURRIE_HAIR, "Flurrie's hair", NULL, SHOW_PARTNER, 5, 0},
+    {KIND_SKIN, 0, "Skin", NULL, SHOW_PARTNER, 2, 1},
+    {KIND_SUBHEADING, 0, "Flurrie", NULL, SHOW_PARTNER, 5, 0},
+    {KIND_SLOT, PORT_COSMETIC_FLURRIE_HAIR, "Hair", NULL, SHOW_PARTNER, 5, 1},
+    {KIND_SLOT, PORT_COSMETIC_FLURRIE_DRESS, "Dress", NULL, SHOW_PARTNER, 5, 1},
+    {KIND_SKIN, 0, "Skin", NULL, SHOW_PARTNER, 5, 1},
     {KIND_YOSHI, 0, "Yoshi's colour", NULL, SHOW_PARTNER, 4, 0},
-    {KIND_SLOT, PORT_COSMETIC_VIVIAN, "Vivian's body", NULL, SHOW_PARTNER, 6, 0},
-    {KIND_SLOT, PORT_COSMETIC_BOBBERY_BODY, "Bobbery's body", NULL, SHOW_PARTNER, 3, 0},
+    {KIND_SKIN, 0, "Yoshi's skin", NULL, SHOW_PARTNER, 4, 0},
+    {KIND_SUBHEADING, 0, "Vivian", NULL, SHOW_PARTNER, 6, 0},
+    {KIND_SLOT, PORT_COSMETIC_VIVIAN, "Body", NULL, SHOW_PARTNER, 6, 1},
+    {KIND_SLOT, PORT_COSMETIC_VIVIAN_HAT, "Hat", NULL, SHOW_PARTNER, 6, 1},
+    {KIND_SLOT, PORT_COSMETIC_VIVIAN_HAIR, "Hair", NULL, SHOW_PARTNER, 6, 1},
+    {KIND_SKIN, 0, "Skin", NULL, SHOW_PARTNER, 6, 1},
+    {KIND_SUBHEADING, 0, "Bobbery", NULL, SHOW_PARTNER, 3, 0},
+    {KIND_SLOT, PORT_COSMETIC_BOBBERY_BODY, "Body", NULL, SHOW_PARTNER, 3, 1},
+    {KIND_SLOT, PORT_COSMETIC_BOBBERY_FUSE, "Fuse", NULL, SHOW_PARTNER, 3, 1},
+    {KIND_SKIN, 0, "Skin", NULL, SHOW_PARTNER, 3, 1},
     {KIND_SUBHEADING, 0, "Ms. Mowz", NULL, SHOW_PARTNER, 7, 0},
-    {KIND_SLOT, PORT_COSMETIC_MOWZ_MASK, "Mask and cape", NULL, SHOW_PARTNER, 7, 1},
+    {KIND_SLOT, PORT_COSMETIC_MOWZ_MASK, "Mask", NULL, SHOW_PARTNER, 7, 1},
+    {KIND_SLOT, PORT_COSMETIC_MOWZ_CAPE, "Cape", NULL, SHOW_PARTNER, 7, 1},
+    {KIND_SKIN, 0, "Skin", NULL, SHOW_PARTNER, 7, 1},
+    {KIND_HEADING, 0, "Stickers", NULL, SHOW_STICKER, 0, 0},
+    {KIND_STICKER_KIND, 0, "Kind", "Partners' faces, items and enemies, unlocked as this file meets them.", SHOW_STICKER,
+     0, 0},
+    {KIND_STICKER, 0, "Sticker", "Left and right: the ones of this kind unlocked so far.", SHOW_STICKER, 0, 0},
+    {KIND_STICK, 0, "Stick it here", "Sticks it where Mario stands, facing the camera. Kept with this save file.",
+     SHOW_STICKER, 0, 0},
+    {KIND_PEEL, 0, "Peel the nearest", "Takes the sticker nearest Mario off.", SHOW_STICKER, 0, 0},
     {KIND_HEADING, 0, "Status bar", NULL, SHOW_HUD, 0, 0},
+    {KIND_THEME, 0, "Theme", "The banners and the menus in colours that go together. A part with its own keeps it.",
+     SHOW_HUD, 0, 0},
     {KIND_SLOT, PORT_COSMETIC_HUD_HP, "HP banner", NULL, SHOW_HUD, 0, 0},
     {KIND_SLOT, PORT_COSMETIC_HUD_FP, "FP banner", NULL, SHOW_HUD, 0, 0},
     {KIND_SLOT, PORT_COSMETIC_HUD_SP, "Star Power banner", NULL, SHOW_HUD, 0, 0},
+    {KIND_SLOT, PORT_COSMETIC_HUD_MENU, "Menus", NULL, SHOW_HUD, 0, 0},
     {KIND_PICKER, 0, "Colour picker...", "Each part's own colour: a swatch, or red, green and blue.", SHOW_MARIO, 0, 0},
 };
-#define ROWS ((s32)(sizeof(kRows) / sizeof(kRows[0])))
+#define REST ((s32)(sizeof(kRest) / sizeof(kRest[0])))
+#define MAX_ROWS (REST + 4 + (s32)(sizeof(kPickParts) / sizeof(kPickParts[0])))
+
+/* the rows now: the pick's, then the rest (made again when the pick changes) */
+static Row kRows[MAX_ROWS];
+static s32 sRows;
+static s32 sRowsPick = -1;
+#define ROWS sRows
 #define SHOWN 10 /* the rows the page has room for; the others scroll into view */
 
 /* the page: the stage at the left (its middle STAGE_X), the rows at the right */
@@ -139,6 +210,41 @@ static const unsigned kYoshiRgb[7] = {0x3CB43C, 0xE63228, 0x3C64E6, 0xF58C1E, 0x
 static const char* const kYoshiNote = "The colour he hatched in. This changes the game itself.";
 static const char* const kYoshiLocked = "Not during online play or a replay.";
 static const char* const kStepNote = "Left and right: the game's own, 13 colours, or Custom.";
+/* a costume chosen that the pick can't wear (costume_pc.c's fits): not shown on them */
+static const char* const kCostumeNoFit[PORT_PLAY_AS_COUNT] = {
+    "This outfit doesn't fit Mario, so he doesn't wear it.",
+    "This outfit doesn't fit Luigi, so he doesn't wear it.",
+    "This outfit doesn't fit Peach, so she doesn't wear it. Left and right: the ones that do.",
+    "This outfit doesn't fit Bowser, so he doesn't wear it. Left and right: the ones that do.",
+};
+
+static void makeRows(void) {
+    const int pick = portPlayAs();
+    size_t i;
+    s32 n = 0;
+    if (pick == sRowsPick && sRows > 0) {
+        return;
+    }
+    kRows[n++] = (Row){KIND_HEADING, 0, kPickNames[pick], NULL, SHOW_MARIO, 0, 0};
+    if (portCosmeticsLookCount() > 0) {
+        kRows[n++] = (Row){KIND_LOOKS, 0, "Looks", kLooksNotes[pick], SHOW_MARIO, 0, 0};
+    }
+    for (i = 0; i < sizeof(kPickParts) / sizeof(kPickParts[0]); i++) {
+        if (portCosmeticsSlotPick(kPickParts[i].slot) == pick) {
+            kRows[n++] = (Row){KIND_SLOT, kPickParts[i].slot, kPickParts[i].label, NULL, SHOW_MARIO, 0, 0};
+        }
+    }
+    kRows[n++] = (Row){KIND_COSTUME, 0, "Costume", NULL, SHOW_MARIO, 0, 0};
+    for (i = 0; i < (size_t)REST; i++) {
+        kRows[n++] = kRest[i];
+    }
+    sRows = n;
+    if (sRowsPick >= 0) { /* (the pick changed while the menu was open: back to the top) */
+        sRow = 1;
+        sTop = 0;
+    }
+    sRowsPick = pick;
+}
 
 static int yoshiLocked(void) {
     return portOnlineActive() || portReplayActive();
@@ -157,6 +263,17 @@ static const char* rowNote(const Row* r) {
     if (r->kind == KIND_YOSHI) {
         return yoshiLocked() ? kYoshiLocked : kYoshiNote;
     }
+    if (r->kind == KIND_COSTUME) {
+        const int c = portCostumeCurrent();
+        if (c > 0 && !portCostumeFits(c - 1)) {
+            return kCostumeNoFit[portPlayAs()];
+        }
+        return "An enemy's outfit, cut from its own paper: one more each time an enemy joins the Tattle Log.";
+    }
+    if (r->kind == KIND_SKIN) {
+        return portSkinCount() == 0 ? "Put a character pack in the skins folder to dress them as someone else."
+                                    : "Someone else in their place: the character packs in the skins folder.";
+    }
     if (r->note != NULL) {
         return r->note;
     }
@@ -172,11 +289,40 @@ static const char* rowValue(const Row* r) {
         const int look = portCosmeticsLook();
         return portTrGame(look >= 0 ? portCosmeticsLookName(look) : "Your own");
     }
+    if (r->kind == KIND_THEME) {
+        return portTrGame(portCosmeticsThemeName(portCosmeticsTheme()));
+    }
     if (r->kind == KIND_SLOT) {
-        return portTrGame(portCosmeticsColourName(portCosmeticsChoice(r->slot)));
+        /* (a part of the status bar or menus with no colour of its own: the theme's) */
+        return portTrGame(portCosmeticsSlotThemed(r->slot) ? "Theme"
+                                                           : portCosmeticsColourName(portCosmeticsChoice(r->slot)));
     }
     if (r->kind == KIND_YOSHI) {
         return portTrGame(kYoshiColours[yoshiColour()]);
+    }
+    if (r->kind == KIND_COSTUME) {
+        const int c = portCostumeCurrent();
+        return portTrGame(c > 0 ? portCostumeName(c - 1) : "None");
+    }
+    if (r->kind == KIND_SKIN) {
+        const int k = portSkinOf(r->party);
+        return k >= 0 ? portSkinName(k) : portTrGame("Their own");
+    }
+    if (r->kind == KIND_STICKER_KIND) {
+        static const char* const kKinds[PORT_STICKER_KINDS] = {"Faces", "Items", "Enemies"};
+        static char sKindText[64];
+        const int k = portStickerKindChosen();
+        snprintf(sKindText, sizeof(sKindText), "%s (%d)", portTrGame(kKinds[k]), portStickerUnlockedCount(k));
+        return sKindText;
+    }
+    if (r->kind == KIND_STICKER) {
+        const int c = portStickerChosen();
+        return c >= 0 ? portStickerName(c) : portTrGame("None yet");
+    }
+    if (r->kind == KIND_STICK) {
+        static char sHereText[48];
+        snprintf(sHereText, sizeof(sHereText), portTrGame("%d here"), portStickersHere());
+        return sHereText;
     }
     return "";
 }
@@ -232,8 +378,28 @@ static int change(const Row* r, int dir) {
         portCosmeticsStep(r->slot, dir);
         return 1;
     }
+    if (r->kind == KIND_THEME) {
+        portCosmeticsStepTheme(dir);
+        return 1;
+    }
     if (r->kind == KIND_YOSHI && !yoshiLocked()) {
         stepYoshi(dir);
+        return 1;
+    }
+    if (r->kind == KIND_COSTUME) {
+        portCostumeStep(dir);
+        return 1;
+    }
+    if (r->kind == KIND_SKIN) {
+        portSkinStep(r->party, dir);
+        return portSkinCount() > 0;
+    }
+    if (r->kind == KIND_STICKER_KIND) {
+        portStickerStepKind(dir);
+        return 1;
+    }
+    if (r->kind == KIND_STICKER) {
+        portStickerStep(dir);
         return 1;
     }
     return 0;
@@ -265,7 +431,7 @@ static f32 rowY(s32 i) {
 }
 
 static void pointAt(WindowWork* wp) {
-    static char tags[ROWS][24];
+    static char tags[MAX_ROWS][24];
     char text[512];
     if (tags[sRow][0] == '\0') {
         snprintf(tags[sRow], sizeof(tags[sRow]), "pc_menu_wardrobe_%d", (int)sRow);
@@ -316,6 +482,7 @@ void portPauseWardrobeExit(WindowWork* wp) {
 
 void portPauseWardrobeInit2(WindowWork* wp) {
     wp->flags |= WIN_FLAG_SUBMENU;
+    makeRows();
     if (sRow <= 0 || sRow >= ROWS || heading(&kRows[sRow])) {
         sRow = 1;
     }
@@ -361,6 +528,11 @@ static void followPicker(void) {
 s32 portPauseWardrobeMain(WindowWork* wp) {
     const Row* r;
     int a;
+    makeRows();
+    if (kRows[sRow].show == SHOW_STICKER && !gPortCompanionMenu) {
+        /* the stage's sticker: its pose wanted from the menu's frame (lockstep online), not its draw */
+        portStickerPoseWant(portStickerChosen());
+    }
     if (portPausePage() != NULL) {
         portPausePageMain(wp);
         followPicker();
@@ -378,8 +550,13 @@ s32 portPauseWardrobeMain(WindowWork* wp) {
     if (a) {
         if (r->kind == KIND_PICKER) {
             psndSFXOn((const char*)0x20012);
-            portPauseOpenPage(&gPortPausePicker, PORT_COSMETIC_CAP); /* in the game's windows */
+            /* (in the game's windows, on the pick's first part) */
+            portPauseOpenPage(&gPortPausePicker, kRows[1].kind == KIND_SLOT ? kRows[1].slot : kRows[2].slot);
             followPicker();
+        } else if (r->kind == KIND_STICK || r->kind == KIND_PEEL) {
+            /* (A only: left and right never stick one) */
+            const int done = r->kind == KIND_STICK ? portStickerStick() : portStickerPeel();
+            psndSFXOn((const char*)(done ? 0x20012 : 0x20013));
         } else if (change(r, 1)) {
             psndSFXOn((const char*)0x20005);
         }
@@ -502,11 +679,8 @@ static void stand(WindowWork* wp, s32 pose, f32 x, f32 y, f32 s, int mario, int 
     PSMTXConcat(m, sc, m);
     PSMTXConcat(m, ry, m);
     winZClear();
-    if (mario) {
-        portLuigiDrawMtx(pose, m, 2, 0.0f, 5.0f);
-    } else {
-        animPoseDrawMtx(pose, m, 2, 0.0f, 5.0f);
-    }
+    /* (Luigi standing in, his costume, a partner's skin) */
+    portLuigiDrawMtx(pose, m, 2, 0.0f, 5.0f);
 }
 
 /* the status bar's own icons, as it draws them: Mario's face and the HP
@@ -537,14 +711,25 @@ void portPauseWardrobeDisp(s32 camId, WindowWork* wp, s32 idx) {
     const f32 x = wp->menu[idx].x;
     const f32 y = wp->menu[idx].y;
     const int inside = wp->active == PORT_PAUSE_WARDROBE_TAB + 11;
-    const int show = kRows[sRow].show;
+    int show;
     s32 i;
     (void)camId;
+    makeRows();
+    show = kRows[sRow].show;
 
     winBgGX(wp, PORT_PAUSE_WARDROBE_TAB, x, y);
     /* the stage: who the selected row dresses */
     if (show == SHOW_HUD) {
         statusBar(x + STAGE_X + 25.0f, y + 85.0f);
+    } else if (show == SHOW_STICKER) {
+        const int c = portStickerChosen();
+        const int icon = portStickerIcon(c);
+        if (icon >= 0) {
+            Vec v = {x + STAGE_X, y + FEET_Y + 60.0f, 0.0f};
+            iconDispGx(&v, 0x10, (u16)icon, 3.0f);
+        } else {
+            stand(wp, portStickerPose(c), x + STAGE_X, y + FEET_Y, 2.0f, 0, 0);
+        }
     } else if (show == SHOW_PARTNER) {
         const s32 p = kRows[sRow].party;
         if (p == 4) {
@@ -552,7 +737,10 @@ void portPauseWardrobeDisp(s32 camId, WindowWork* wp, s32 idx) {
         }
         stand(wp, sPartner[p], x + STAGE_X, y + FEET_Y, kPartnerModel[p].scale, 0, p == 6);
     } else {
-        stand(wp, wp->mario.poseId, x + STAGE_X, y + FEET_Y, 2.2f, 1, 0);
+        /* (Peach, a head taller, and Bowser, twice as wide, a little smaller:
+         * her crown clear of the tabs, his snout on the page) */
+        static const f32 kStage[PORT_PLAY_AS_COUNT] = {2.2f, 2.2f, 1.8f, 1.6f};
+        stand(wp, wp->mario.poseId, x + STAGE_X, y + FEET_Y, kStage[portPlayAs()], 1, 0);
     }
 
     if (portPausePage() != NULL) { /* the colour picker beside the stage */
@@ -568,7 +756,9 @@ void portPauseWardrobeDisp(s32 camId, WindowWork* wp, s32 idx) {
         const char* value;
         winFontInit();
         if (r->kind == KIND_HEADING) {
-            fitText(x + ROW_X - 18.0f, ry, 280.0f, 0.75f, teal, portTrGame(r->label), 0);
+            /* (Mario's rows: the pick's, by name; Play as, port/include/port/luigi.h) */
+            fitText(x + ROW_X - 18.0f, ry, 280.0f, 0.75f, teal,
+                    portTrGame(strcmp(r->label, "Mario") == 0 ? portPlayAsName() : r->label), 0);
             continue;
         }
         if (r->kind == KIND_SUBHEADING) { /* a partner's name, over the rows of his parts */
@@ -600,7 +790,13 @@ void portPauseWardrobeDisp(s32 camId, WindowWork* wp, s32 idx) {
 const char* portPauseWardrobeMsg(const char* tag) {
     if (strcmp(tag, "pc_menu_wardrobe") == 0) {
         static char sTab[256];
-        portPauseWrap(portTrGame("Change how Mario, his partners and the status bar look."), sTab, sizeof(sTab));
+        static const char* const kTab[PORT_PLAY_AS_COUNT] = {
+            "Change how Mario, his partners and the status bar look.",
+            "Change how Luigi, his partners and the status bar look.",
+            "Change how Peach, her partners and the status bar look.",
+            "Change how Bowser, his partners and the status bar look.",
+        };
+        portPauseWrap(portTrGame(kTab[portPlayAs()]), sTab, sizeof(sTab));
         return sTab;
     }
     if (strncmp(tag, "pc_menu_wardrobe_", 17) == 0) {

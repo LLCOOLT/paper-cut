@@ -18,6 +18,12 @@ between the two games:
 3. **By address** (the old way, still there): the host's port forwarded, or a
    VPN such as Tailscale.
 
+The input delay comes from the round trip, measured in the lobby: the host
+pings the guest every 0.4 seconds while they're there (the direct path pings
+on its own), and the delay is set from the median of the last nine (the
+quicker of the first one or two), so one ping caught in a stall can't push it
+up to the most.
+
 The host chooses when it starts the game: direct if the path is there, the
 relay otherwise, and tells the guest (`MSG_LINK`).
 
@@ -53,8 +59,8 @@ the player you gave your address to.
 
 A Cloudflare Worker and a Durable Object per room (`port/relay/src/index.js`):
 it passes each player's binary messages to the other and says, in text,
-`you <address>`, `peer` and `gone`. It refuses a second host, a third player
-and a guest without a host.
+`you <address>`, `peer` and `gone`. It refuses a second host, a second guest,
+a third seat (players 3 and 4, below) and a guest without a host.
 
 ### What the free plan holds
 
@@ -98,7 +104,7 @@ list because they must be the same version.
 
 `wss://papercut-relay.llcoolt.workers.dev`, the build's default
 (`TTYD_ONLINE_RELAY`), on a Cloudflare account on the Workers Free plan.
-Deployed 2026-11-04.
+Deployed 2026-11-04; the 0.4.0 relay (seats, the room list, notes, boards, bingo, daily and raid) deployed 2026-11-05.
 
 **To deploy (0.3.0): watching and reconnecting.** `port/relay/src/index.js`
 changed after that deploy: rooms take `role=watch` connections (up to 4), the
@@ -111,6 +117,141 @@ reconnect works only once the relay has noticed the old connection is gone
 (it refuses a second host or guest until then). A new build is fine with the
 old relay otherwise: the host only sends watchers anything once the relay
 says some are there (`watch <N>`), which the old one never does.
+
+**To deploy (0.4.0).** `port/relay/src/index.js` and `wrangler.toml` add, in
+one deploy:
+
+- **Three or four players**: `role=seat` connections (up to 2: players 3 and
+  4). The host's watchers' messages go to them too, each seat's messages go
+  to the host (wrapped as a stream message of type 0xF0 with the seat's
+  place), and the host is told `seatgone <N>`. A listed room says how many
+  play of how many may (`&max=` from the host).
+- **The room list**: the `Lobby` Durable Object and `GET /rooms` (below).
+- **Paper notes and leaderboards**: the `Notes` and `Board` Durable Objects,
+  `GET|POST /notes`, `GET|POST /board`, `GET /replay` and `POST /check`
+  ([PAPER_NOTES.md](PAPER_NOTES.md), [LEADERBOARDS.md](LEADERBOARDS.md)).
+- **Bingo rooms, daily boards and raid boards**: the `Bingo`, `Daily` and
+  `Raid` Durable Objects and `GET /bingo/<ROOM>`, `GET /daily/<YYYYMMDD>`,
+  `GET /raid/<WEEK>` (below).
+
+Deploy it the usual way (below); Wrangler applies the migrations it hasn't
+yet, in order: `v1` (`Room`), `v2` (`Lobby`), `v3` (`Notes`, `Board`),
+`bingo-v1`, `daily-v1`, `raid-v1`. Optionally give it a secret for the
+address hashes it keeps (`npx wrangler secret put HASH_SALT`, any long random
+text); without one a fixed text is used.
+
+Until then, against the relay as deployed: joining a room as player 3 or 4
+fails ("role: host, guest or watch"; joining by address works); the Room list
+says "The room list isn't on this relay yet."; the Paper notes page says
+"Paper notes aren't on this relay yet." and the Leaderboards section
+"Leaderboards aren't on this relay yet." (the old relay answers 404 to all of
+these); bingo rooms, the daily board and the raid board can't be reached.
+Everything else works as before: a host with "List my room" on only adds
+query parameters the old relay passes by.
+
+### Limits and refusals
+
+Every refusal is a status other than 200 and one line, `<why>: <words>`
+(`slower`, `today`, `mine`, `own`, `rated`, `gone`, `big`, `bad`, ...); the
+games show their own text for it. A room's refusals keep their words ("No one
+is hosting that room", "That room is full", ...): the games read them.
+
+- A request's address (query and all) is at most 2,048 characters, a text
+  body (a note, a check) at most 256 bytes, a replay at most 1 MB. Only GET
+  and POST are taken.
+- Who sent something is kept only as a hash of the address with `HASH_SALT`,
+  for the daily limits and one vote each; the daily and raid boards add the
+  day or the week to it, so their hashes can't be matched with another
+  board's.
+- A daily or raid board keeps at most 600 names and 1,000 senders: past 600,
+  a new name goes on only if it beats the last, which leaves.
+- `/daily/` takes only real dates.
+
+What they cost on the free plan: an area's notes are one request when a
+player enters it (kept 10 minutes), leaving or rating a note one; a board is
+one request when it's opened, an upload or a check one, a replay's download
+one. Storage: an area's notes are a few KB; a board keeps its 10 best runs'
+replays (compressed, up to 1 MB each), in 96 KB pieces (the key-value API's
+values stay under 128 KiB).
+
+### The room list
+
+The Start menu's Online tab can list a host's room ("List my room", off by
+default): open to anyone, so the host gives the relay the code's secret half
+with its name, its disc's ID and Paper Cut's version (`&list=`, `&name=`,
+`&game=`, `&v=` on its connection). Every room tells the `Lobby` how many are
+in it (one request each time someone comes or goes), a listed room while its
+host is there and its places aren't all taken; the host refreshes its listing
+with a text `list` every 10 minutes, and one not refreshed for 20 is dropped.
+`GET /rooms?game=&v=` (only when a player opens the list or presses Refresh,
+never polled) answers `rooms <players online>` and a line per listed room of
+that release and version, newest first, at most 40:
+`<CODE> <PLAYING>/<MAX> <name, percent-encoded>` (`1/4`). A
+joining player then joins by that code as by any other. Costs: a listing
+fetch is 2 requests (the Worker and the Lobby); each connection and its close
+1 more Durable Object request.
+
+### Bingo rooms
+
+Lockout bingo ([MODES.md](MODES.md#bingo-modes-tab)) has rooms of its own on
+the same relay: one `Bingo` Durable Object per room code, keeping the room's
+card (the seed its first player brought), up to 8 players by name and who
+claimed each square first. A player's game asks it with a plain HTTPS
+`GET /bingo/<ROOM>?name=&seed=[&claim=<cell>,...]` every 5 seconds while the
+room is open, and at once when a square is done; the answer is
+`bingo <seed>`, `you <i>`, a `player <i> <name>` line each and a
+`claim <cell> <i>` line per square claimed. A claim on a square someone has
+changes nothing. A room is forgotten a day after it was made. Costs: 2
+requests per ask (the Worker and the room), so two players for an hour are
+about 2,900 of the free plan's 100,000 a day.
+
+### Daily results boards
+
+The daily seed ([MODES.md](MODES.md#daily-seed-modes-tab)) keeps a board per
+day (UTC): one `Daily` Durable Object for each date. `GET /daily/<YYYYMMDD>`
+answers `daily <date> <finished>` and the 50 best as
+`<rank> <ms> <name> <game>` lines; with `?name=&ms=&game=&v=` it first takes a
+time (the best per name stays, and the header adds that name's rank). A time
+is taken only for today or the two days before, between 5 minutes and 7 days;
+one address may send under 3 names a day (it's kept as a hash salted with the
+date, never the address). A board is dropped 40 days after its first time
+(an alarm). Nothing is polled: the board is fetched when a player asks.
+
+### Raid boards
+
+The raid boss ([RAID.md](RAID.md)) keeps a board per week (weeks since Monday
+1969-12-29, UTC): one `Raid` Durable Object for each. `GET /raid/<WEEK>`
+answers `raid <week> <boss> <clears>` (the week's boss by the same rotation as
+the game's) and the 50 best as `<rank> <turns> <frames> <players> <name> <game>`
+lines, the fewest turns first; with `?name=&boss=&turns=&frames=&players=&game=&v=`
+it first takes a clear (the week's boss, 2 to 4 players, this week or the
+last; the best per party name stays). One address may send under 4 names a
+week (a hash salted with the week). A board is dropped 120 days after its
+first clear.
+
+## From the Start menu
+
+The Start menu's Online tab (`port/src/aurora/pause_online_aurora.c`,
+`port/include/port/online_menu.h`) runs the same lobby from a game that is
+already running. A session must begin with the game, so when the host starts,
+both programs start again (as a recovery does) and the session begins from
+their start-up: the host hosting the same room (from the title, or from quick
+resume's last save), the guest joining it. A launcher's guest of a Start-menu
+host joins again by itself; a Start-menu guest of a launcher's host tells it
+(`PORT_ONLINE_BYE_REJOIN`) and the host starts by itself once it is back. Not
+on phones and tablets (their apps can't start themselves again): there it
+says to use the launcher.
+
+While a lobby is under way the Start menu opens on the Online tab, and its
+news shows over the picture too, so the host can play on with the menu closed:
+the other player here (again every 30 seconds while they wait), gone, or
+unable to play (another version, release or mods: the room stays open, its
+code the same). The games starting again show a page while they wait for each
+other; Esc or B there plays alone instead, and a start that doesn't come is
+said in the game. During a session the Start menu is the host's (its
+controller drives it in every game): the others' Start says so, and any player
+can leave from the settings page (Multiplayer, Online play, Leave the online
+game), the others told and playing on alone.
 
 ### Deploying one
 
@@ -155,6 +296,40 @@ deployed relay (the same day, both games on one computer): through it, 4,048
 frames identical at 7 frames of input delay (1,356 messages); direct, 4,048
 frames identical at 3 (10 relay messages).
 
+## The modes online
+
+Every game of a session must play the same frames, so a mode plays online
+only from what all of them have:
+
+- **Started together.** The Start menu runs in step in every game (the host's
+  controller drives it), so chapter select, the Paper Tower, the trophy room,
+  battle puzzles, the quiz party and the Tattle-card duels start from its
+  Settings tab (Modes) in the same frame everywhere. The full settings page is
+  one player's alone: online it says to use the Start menu instead. The
+  Westside's card players start a duel when talked to, as offline: the talk is
+  the game's own.
+- **The host's settings and day.** Daily shop specials, the daily puzzle and
+  the Paper Tower's day climb follow the host's settings and the session's
+  clock (the host's start), so its date. Chaos mode draws its effects from
+  that clock at the same frames in every game.
+- **Input.** The quiz party's answers and a card duel's picks are each
+  player's own controller, which crosses like any other input.
+- **The host's files.** What a mode plays from that is a player's own file
+  goes with the host's setup, as named blocks after the randomizer's settings
+  (the setup's flag 8, `port/include/port/online_session.h`): the Enemy
+  maker's enemies (`enemies.txt`), the Tattle card deck (`cards.txt`) and the
+  stickers (`Stickers/<game id>/file<n>.txt`). Every game of the session, the
+  host's too, plays from those for the rest of the run; a guest keeps the
+  stickers in `<user>/online` and never writes the host's into its own files.
+  A block the host didn't send is empty for the session.
+
+Still off online: save states, fast-forward, frame advance, rewind, the
+Practice tab's editors, warps and the Twitch chat (one game's alone, by
+design); partner skins (a character pack from one player's own folder,
+loaded into the game's memory); paper notes (left and rated from the Start menu,
+which runs in every game of the session alike: each game would leave the same note); ghost races (a race starts the game again from one player's
+recording).
+
 ## Watching
 
 A third (and fourth, up to 4 in a room) can join only to watch: the same
@@ -191,13 +366,49 @@ half's 31^4 values offline (slowly: each try costs the 200,000 rounds). What
 they carry is the input, the fingerprints, the players' names and the host's
 setup (its settings and memory card).
 
+## Three or four players
+
+Players 3 and 4 ([PLAYERS.md](PLAYERS.md)) join as **seats**: the same code (or the
+host's address), then **Join as player 3 or 4**, before the host starts (one
+who comes later is told to watch instead). A seat is a watcher that plays:
+
+- it gets what watchers get (the host's setup, with every player's name and
+  the seats' ids, so each seat knows its place; then the frames as played,
+  with the host's fingerprints), but while there are seats the host sends
+  them each frame by address, every `PORT_ONLINE_BATCH` frames through a
+  relay, and a seat plays each frame as soon as it has it;
+- it sends the host its controller for each frame it plays (`S_PAD`; through
+  a relay a batch of 3 at a time, sealed with the watchers' key);
+- the host puts the next of each seat's controllers into each frame it sends
+  (its input to the guest carries its own and the seats'; the direct UDP
+  path's packets carry them too, with fewer frames repeated in each), its
+  last again when none has come, and from the frame after a seat leaves, no
+  controller there. Every game plays the same frames: the seats never hold
+  the players up.
+
+Through a relay a seat costs about 20 messages a second (its batches), and
+the host's frames for the seats another 20 while there are seats (one
+message for them all, the watchers too). A seat that drops doesn't come back
+in that session; the others play on. A recovery (out of step) starts the
+seats again with the players, and the host waits for them (up to 20 seconds
+after the guest) before it starts.
+
 ## Reconnecting
 
 When a session's connection drops (closed, or nothing for 8 seconds), the
-game holds (its window's title says "Reconnecting..."; no frames are drawn
-meanwhile: drawing from inside the game's frame let the two games go out of
-step) and both sides make it again, for up to a
-minute; only then does the session end as before:
+game holds and both sides make it again, for up to a
+minute; only then does the session end as before. While a game is held, for
+the other player or for a reconnect, its window's title says why, and after
+half a second a small notice over the picture says it too ("Waiting for
+LT...", "Reconnecting..."), for players in full screen. The notice is drawn
+over the frame the game had already drawn, and that frame is shown once; none
+of the game's own work runs meanwhile, so both games stay in step (a second
+notice in the same wait is shown on a dark screen). A player whose window is
+put away (hidden, or the app in the background on phones and Macs; a
+minimized window on Windows keeps playing) tells the other player, whose
+notice then says "LT minimized the game.", and says so again each second:
+the wait for them doesn't count as quiet meanwhile, so no reconnect starts.
+The ways back:
 
 - **In a room**: the WebSocket to the room again, in the same role, with its
   ticket (the relay lets the new connection take the old one's place); the
@@ -266,6 +477,20 @@ After the fix, through a room: host and guest identical over every frame both
 wrote, 10,331 frames (7,800 of them after the reconnect), and the session
 went on to the end of the run. **Not
 yet tried**: by address, and with a watcher during the reconnect.
+
+**Paper Cut's text in the game's own menus** (2026-11-05). Those fixes were
+per feature, and the game's own code also draws Paper Cut's text: a duo
+move's name and help in the battle menu, Director's Cut's badges in the
+item boxes and shops, a mod's messages. In a battle with the duo move's help
+on screen, one game in English and one in French took different random
+numbers from the frame the list opened. The font now tells Paper Cut's text
+apart itself (`port/include/port/port_text.h`): every draw made by the port's
+code, and every text the game draws that came from the port (a message
+`msgSearch` answers from the port's tables, `portTrGame`'s, and the copies
+the game makes of them for its boxes, banners and message windows), puts
+the random numbers back after; the game's own text takes them as on the
+GameCube. The same battle in English and in French: identical over every
+frame; the single-player fingerprints unchanged.
 
 ## Not done
 

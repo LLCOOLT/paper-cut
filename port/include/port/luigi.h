@@ -20,8 +20,24 @@ extern "C" {
 #define PORT_LUIGI_BATTLE 1 /* Mario's unit's main part in battle (battle_disp.c) */
 #define PORT_LUIGI_MENU 2   /* the pause menu's Mario page and badge page figure (win_mario.c) */
 #define PORT_LUIGI_LOG 3    /* the journal map's walking figure (win_log.c) */
+#define PORT_LUIGI_VERSUS 4 /* a versus battle's Luigi: the enemy side's Mario unit (battle_disp.c), whatever the option */
 
-/* The option is on. */
+/* Play as (the setting playable_luigi, docs/PLAY_AS.md): who stands in for
+ * Mario. Luigi's own extras (his faces, Mario in green where he has no
+ * version, the brothers swapped in scenes) are his; Peach and Bowser have a
+ * stand-in for every pose (the nearest of their moves). */
+#define PORT_PLAY_AS_MARIO 0
+#define PORT_PLAY_AS_LUIGI 1
+#define PORT_PLAY_AS_PEACH 2
+#define PORT_PLAY_AS_BOWSER 3
+#define PORT_PLAY_AS_COUNT 4
+/* the pick; Mario (none) while Brothers mode is on: Mario and Luigi as themselves */
+int portPlayAs(void);
+/* a character's model with our animations (back: its back-facing one, Peach's
+ * c_peach_r_pc) was made at startup (else the disc's) */
+void portPlayAsSetModelReady(int chr, int back, int ready);
+
+/* Luigi is the pick. */
 int portLuigiOn(void);
 /* Once a frame, after the game stepped Mario's pose poseId: Luigi stands in
  * for it (where = PORT_LUIGI_FIELD or _BATTLE) when allowed and Mario's
@@ -45,6 +61,25 @@ void portLuigiRelease(int poseId);
  * for as long as the game runs). */
 const char* portLuigiText(const char* msg);
 
+/* The pick the text names (docs/PLAY_AS.md): the pick, but Mario in a
+ * versus battle (always the brothers, Mario against Luigi) and while
+ * Brothers mode is on (portPlayAs: no pick then, both brothers as themselves). */
+int portPlayAsText(void);
+/* its name in English ("Mario", "Luigi", "Peach", "Bowser"), for portTr */
+const char* portPlayAsName(void);
+/* text's encodings for portPlayAsSwapText: the game's (as msgSearch's, by
+ * the game's language), Shift-JIS (the JP release's font), Latin-1 (the US
+ * and EU releases' font), UTF-8 (the settings page) */
+#define PORT_TEXT_GAME 0
+#define PORT_TEXT_SJIS 1
+#define PORT_TEXT_LATIN1 2
+#define PORT_TEXT_UTF8 3
+/* text may name Mario or the pick chr (the quick test before a swap) */
+int portPlayAsHasName(const char* text, int chr);
+/* text with Mario's and chr's names swapped both ways, by the game text's
+ * rules (portLuigiText), into out (room for twice text and its end) */
+void portPlayAsSwapText(const char* text, char* out, int chr, int enc);
+
 /* __psndSFXOn: the sound id (as searchPSSFXList gives it) to play: Luigi's
  * NPC steps, jump and landing for Mario's plain-floor ones while the option
  * is on. */
@@ -56,6 +91,9 @@ int portLuigiSfx(int id);
  * option is on, the game's three icons of Mario's head are Luigi's: 1, or 0
  * for the game's own. */
 int portIconTexOverride(unsigned int iconId, void* texObj);
+/* Draws after this have Luigi's faces (1), Mario's (0) or as the option is
+ * (-1, the default): a versus battle's Luigi side (versus_aurora.c). */
+void portLuigiFaceForce(int luigi);
 /* At startup, after portArtPrepare, before the mods apply: level-up's BP
  * panel as Luigi's, in the "*#luigi" texture set (mod_game_aurora.c flags
  * every map so while the option is on). */
@@ -71,10 +109,14 @@ void portLuigiNpcUpdate(int poseId);
 /* The credits' parade (end_00.c): Luigi's model and walk in Mario's place,
  * and Mario's in Luigi's, while the option is on. */
 void portLuigiCreditActor(const char** model, const char** anim);
+/* the size the parade draws the pick at in Mario's place (model: the
+ * parade's own, before portLuigiCreditActor), as in the field: Bowser 0.7 */
+float portLuigiCreditScale(const char* model);
 
 /* At startup, before the mods apply (port/src/aurora/luigi_model_aurora.c):
  * a/c_luigi_pc and a/c_luigi_pc-, Luigi's model with our animations and his
- * hammer (docs/LUIGI_ANIMS.md), made from the user's disc. */
+ * hammer (docs/LUIGI_ANIMS.md), made from the user's disc; likewise Peach's
+ * c_peach_pc and c_peach_r_pc and Bowser's c_koopa_pc (docs/PLAY_AS.md). */
 void portLuigiModelInit(void);
 /* those files were made (else Luigi is the disc's c_luigi) */
 int portLuigiModelReady(void);

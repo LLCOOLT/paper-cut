@@ -1,0 +1,76 @@
+# dojo: see tools/port/gen_lang.py
+
+Jump
+ジャンプ
+
+Hammer
+ハンマー
+
+Special moves
+スペシャルわざ
+
+Guard
+ガード
+
+Superguard
+スーパーガード
+
+Stylish
+アクロバット技
+
+Perfect!
+パーフェクト！
+
+1 frame early
+1フレーム　はやい
+
+%d frames early
+%dフレーム　はやい
+
+1 frame late
+1フレーム　おそい
+
+%d frames late
+%dフレーム　おそい
+
+Held too long (%d frames late)
+はなすのが　おそすぎ（%dフレーム）
+
+No press
+おしていない
+
+Too many presses
+おしすぎ
+
+This attack can't be Superguarded
+この　こうげきは　スーパーガード　できない
+
+Success
+せいこう
+
+Missed
+しっぱい
+
+%.1f frames early on average
+へいきん　%.1fフレーム　はやい
+
+%.1f frames late on average
+へいきん　%.1fフレーム　おそい
+
+on time on average
+へいきん　ぴったり
+
+frame %d of %d
+%d/%dフレームめ
+
+Timed press
+タイミング
+
+Dojo: the dummy attacks every turn. Run Away to leave.
+どうじょう：あいては　まいターン　こうげきします　にげると　おわります
+
+Dojo: choose Defend and the dummy attacks. Run Away to leave.
+どうじょう：ぼうぎょを　えらぶと　あいてが　こうげきします　にげると　おわります
+
+Dojo: the dummy never attacks. Run Away to leave.
+どうじょう：あいては　こうげきしません　にげると　おわります

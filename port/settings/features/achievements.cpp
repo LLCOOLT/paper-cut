@@ -42,11 +42,11 @@ void list(int) {
     ImGui::TableNextRow();
     ImGui::TableNextColumn();
     if (when != nullptr) {
-      ImGui::TextColored(ImVec4(0.66f, 0.45f, 0.02f, 1.f), "%s", portAchievementName(i));
+      ImGui::TextColored(ImVec4(0.66f, 0.45f, 0.02f, 1.f), "%s", portTr(portAchievementName(i)));
     } else {
-      ImGui::TextUnformatted(portAchievementName(i));
+      ImGui::TextUnformatted(portTr(portAchievementName(i)));
     }
-    ImGui::TextDisabled("%s", portAchievementNote(i));
+    ImGui::TextDisabled("%s", portTr(portAchievementNote(i)));
     ImGui::TableNextColumn();
     if (goal > 1) {
       char text[32];

@@ -15,10 +15,15 @@
  *   battle              start a battle with the nearest enemy NPC, as a map
  *                       script would (evt_npc_battle_start)
  *   hp N                set Mario's HP (pouchSetHP), e.g. 1 to reach a Game Over
+ *   walk_to HIT [MAX]   the stick towards hit object HIT (an exit's zone) until
+ *                       the map changes, jumping when stuck; at most MAX frames
  *   wait_seq N [MAX]    no input until the game sequence is N (seqdrv.h:
  *                       1 title, 2 field, 4 battle, 6 file select), at most
  *                       MAX frames (default 3600), else exit 5
  *   wait_map NAME [MAX] no input until NAME is the current map, as wait_seq
+ *   wait_online N [MAX] no input until online co-op's lobby is in state N
+ *                       (port/include/port/online.h: 4 the host's guest is here,
+ *                       5 the guest is in the room), as wait_seq
  *   press_until_seq KEYS N [MAX]  press KEYS every 30 frames until sequence N
  *   press_until_map KEYS NAME [MAX]  the same, until NAME is the current map
  *                       (screens that ignore input during their intro)
@@ -27,13 +32,14 @@
  *   story N / flag N    the story (GSW 0) set to N / switch GSWF N set
  *   audience N, coins N, sp N, fp N   those set (sp: star power, in 1/100 units)
  *   maxsp N, maxhp N    the maximums set (maxhp also fills HP)
+ *   level N             Mario's level set to N
  *   stars MASK          the special moves obtained (bit 0: Sweet Treat ...)
  *   swap                the Enhancements partner quick-swap control pressed
  *   companion item N [T] / companion partner N
  *                       a tap on the second screen (port/include/port/companion.h):
  *                       the bag's item N used on Mario (T 1: the partner), or
  *                       a switch to partner N
- *   companion tap NX NY / companion button a|b|x|y|up|down|left|right|l|r / companion shot NAME
+ *   companion tap NX NY / companion button a|b|x|y|z|up|down|left|right|l|r / companion shot NAME
  *                       a tap at NX, NY (0-1) on the second screen's Start menu,
  *                       or one of its buttons (port/include/port/companion_menu.h)
  *   travel N            Enhancements fast travel to hub N (0 Rogueport, 1 Petalburg ...)
@@ -61,10 +67,12 @@
  *   end                 exit (0) once any capture is written
  * Each command is logged as "[input] frame F: <line>". */
 #include "port/ac_cue.h"
+#include "port/bindings.h"
 #include "port/companion.h"
 #include "port/companion_menu.h"
 #include "port/gameplus.h"
 #include "port/menu_tap.h"
+#include "port/online.h"
 #include <ctype.h>
 #include <math.h>
 #include <stdio.h>
@@ -156,6 +164,10 @@ static void randomInput(PADStatus* out) {
 }
 
 static s32 sWaitFrames = -1; /* frames spent in the current wait_seq / wait_map, -1: none */
+static s32 sWalkFrames = -1; /* walk_to: frames spent, -1: none */
+static s32 sWalkStuck, sWalkDetour, sWalkTries;
+static Vec sWalkPrev;
+static char sWalkMap[16];
 
 /* talk_all / mobj_all: the item being run, -1 when none */
 MapObjectWork* portMobjGetWork(void); /* mobjdrv.c */
@@ -214,15 +226,42 @@ __attribute__((weak)) void portRewindTest(int frames) {
     (void)frames;
 }
 
+/* One whole line of the script, however long (a long comment, a malformed
+ * line): the first size-1 characters, the rest read past. A line cut by
+ * fgets used to come back as more lines, each "cannot parse". */
+static BOOL readLine(FILE* f, char* line, int size) {
+    int len;
+    if (fgets(line, size, f) == NULL) {
+        return FALSE;
+    }
+    len = (int)strlen(line);
+    if (len > 0 && line[len - 1] != '\n') {
+        int c;
+        while ((c = fgetc(f)) != EOF && c != '\n') {
+        }
+    }
+    return TRUE;
+}
+
+/* A test script that cannot run: quit at once, as the other test exits do
+ * (_Exit, no teardown). exit() ran the C++ static destructors while Aurora's
+ * threads were still up, and the pipeline cache's writer thread, still
+ * joinable, aborted the game (std::terminate) instead of exit code 2. */
+static void loadFail(void) {
+    fflush(stdout);
+    fflush(stderr);
+    _Exit(2);
+}
+
 static void load(const char* path) {
     FILE* f = fopen(path, "r");
-    char line[128];
+    char line[512];
     int n = 0;
     if (f == NULL) {
         fprintf(stderr, "TTYD_INPUT: cannot open %s\n", path);
-        exit(2);
+        loadFail();
     }
-    while (fgets(line, sizeof(line), f) && sCount < MAX_LINES - 1) {
+    while (sCount < MAX_LINES - 1 && readLine(f, line, sizeof(line))) {
         char cmd[32] = "", a1[64] = "", a2[16] = "", a3[16] = "";
         char* hash = strchr(line, '#');
         Step* s = &sSteps[sCount];
@@ -272,6 +311,10 @@ static void load(const char* path) {
              * run resumes with load_file.txt */
             s->frames = -10;
             s->waitMax = a1[0] ? atoi(a1) : 1200;
+        } else if (strcmp(cmd, "wait_online") == 0) {
+            s->frames = -12;
+            snprintf(s->name, sizeof(s->name), "%s", a1);
+            s->waitMax = a2[0] ? atoi(a2) : 3600;
         } else if (strcmp(cmd, "press_until_story") == 0) {
             /* press KEYS every 30 frames until the story (GSW 0) reaches N */
             s->frames = -11;
@@ -304,7 +347,7 @@ static void load(const char* path) {
                    strcmp(cmd, "story") == 0 || strcmp(cmd, "flag") == 0 || strcmp(cmd, "audience") == 0 ||
                    strcmp(cmd, "coins") == 0 || strcmp(cmd, "sp") == 0 || strcmp(cmd, "fp") == 0 ||
                    strcmp(cmd, "maxsp") == 0 || strcmp(cmd, "maxhp") == 0 || strcmp(cmd, "stars") == 0 ||
-                   strcmp(cmd, "swap") == 0 || strcmp(cmd, "travel") == 0) {
+                   strcmp(cmd, "swap") == 0 || strcmp(cmd, "travel") == 0 || strcmp(cmd, "level") == 0) {
             /* state set-up for a test, at once */
             s->frames = -13;
             snprintf(s->name, sizeof(s->name), "%s", cmd);
@@ -331,6 +374,13 @@ static void load(const char* path) {
         } else if (strcmp(cmd, "wheel") == 0) {
             s->frames = -21;
             snprintf(s->name, sizeof(s->name), "%s", a1);
+        } else if (strcmp(cmd, "walk_to") == 0) {
+            /* walk_to HIT [MAX]: the stick towards a hit object (an exit's
+             * zone) until the map changes, jumping when stuck; at most MAX
+             * frames (default 1800), then "[input] walk_to: not reached" */
+            s->frames = -23;
+            snprintf(s->name, sizeof(s->name), "%s", a1);
+            s->waitMax = a2[0] ? atoi(a2) : 1800;
         } else if (strcmp(cmd, "mobj_event") == 0) {
             s->frames = -15;
             snprintf(s->name, sizeof(s->name), "%s", a1);
@@ -354,8 +404,9 @@ static void load(const char* path) {
         sCount++;
         continue;
     bad:
-        fprintf(stderr, "TTYD_INPUT: %s:%d: cannot parse '%s'\n", path, n, line);
-        exit(2);
+        line[strcspn(line, "\r\n")] = '\0';
+        fprintf(stderr, "TTYD_INPUT: %s:%d: cannot parse '%.80s%s'\n", path, n, line, strlen(line) > 80 ? "..." : "");
+        loadFail();
     }
     fclose(f);
 }
@@ -365,7 +416,7 @@ static void load(const char* path) {
 static void pauseFor(int ms) {
     OSTime before;
     portPause();
-    before = OSGetTime();
+    before = (OSTime)portGameClockPeek();
 #ifdef _WIN32
     Sleep((DWORD)ms);
 #else
@@ -375,7 +426,7 @@ static void pauseFor(int ms) {
     }
 #endif
     printf("[input] paused %d ms; game clock moved %lld us\n", ms,
-           (long long)OSTicksToMicroseconds(OSGetTime() - before));
+           (long long)OSTicksToMicroseconds((OSTime)portGameClockPeek() - before));
     fflush(stdout);
     portResume();
 }
@@ -426,12 +477,13 @@ static void startBattle(s32 entry) {
     NpcEntry* best = NULL;
     f32 bestDist = 1e30f;
     s32 i;
-    for (i = 0; i < wp->count; i++) {
+    for (i = 0; i < wp->total; i++) { /* (count is how many are used: they sit anywhere below total) */
         NpcEntry* npc = &wp->entries[i];
         f32 dx, dz;
         /* as the field battle check (npcdrv.c): a battle group and a defeat
          * script; story NPCs with only a group would fight out of context */
-        if (!(npc->flags & 1) || (entry < 0 && (npc->battleInfo.groupSetup == NULL || npc->deadEvent == NULL))) {
+        if (!(npc->flags & NPC_FLAG_USED) ||
+            (entry < 0 && (npc->battleInfo.groupSetup == NULL || npc->deadEvent == NULL))) {
             continue;
         }
         dx = npc->position.x - mario->position.x;
@@ -513,7 +565,7 @@ static void applyScript(PADStatus* pad) {
                        (int)sSweepIndex, (int)sSweepMax);
                 evtDeleteID(sSweepEvt);
             }
-            if (sSweepKind == 1 && sSweepNpc != NULL && (sSweepNpc->flags & 1)) {
+            if (sSweepKind == 1 && sSweepNpc != NULL && (sSweepNpc->flags & NPC_FLAG_USED)) {
                 evtStartID(sSweepNpc->regularEvtId);
             }
             marioKeyOn();
@@ -528,14 +580,14 @@ static void applyScript(PADStatus* pad) {
             if (sSweepKind == 1) {
                 NpcWork* wp = npcGetWorkPtr();
                 NpcEntry* npc;
-                if (sSweepIndex >= wp->count) {
+                if (sSweepIndex >= wp->total) {
                     break;
                 }
                 npc = &wp->entries[sSweepIndex];
                 /* parked out of reach (scripts put unused NPCs at y -1000):
                  * a player cannot talk to them, and their scripts may need
                  * set-up that only comes with placing them */
-                if (!(npc->flags & 1) || npc->talkEvt == NULL || npc->position.y < -500.0f) {
+                if (!(npc->flags & NPC_FLAG_USED) || npc->talkEvt == NULL || npc->position.y < -500.0f) {
                     sSweepIndex++;
                     continue;
                 }
@@ -554,7 +606,7 @@ static void applyScript(PADStatus* pad) {
                     break;
                 }
                 mobj = &wp->entries[sSweepIndex];
-                if (!(mobj->flags & 1) || mobj->event == 0) {
+                if (!(mobj->flags & MOBJ_FLAG_USED) || mobj->event == 0) {
                     sSweepIndex++;
                     continue;
                 }
@@ -574,6 +626,66 @@ static void applyScript(PADStatus* pad) {
         fflush(stdout);
         sSweepKind = 0;
     }
+    if (sWalkFrames >= 0) {
+        /* walk_to: the stick towards the hit object until the map changes */
+        const Step* w = &sSteps[sCur];
+        MarioWork* m = marioGetPtr();
+        memset(&pad[0], 0, sizeof(pad[0]));
+        pad[0].err = PAD_ERR_NONE;
+        if (gp == NULL || strcmp(gp->currentMapName, sWalkMap) != 0) {
+            printf("[input] frame %u: walk_to: reached (map %s) after %d frames\n", (unsigned)sFrame,
+                   gp != NULL ? gp->currentMapName : "", (int)sWalkFrames);
+            fflush(stdout);
+            sWalkFrames = -1;
+            return;
+        }
+        if (++sWalkFrames > w->waitMax) {
+            Vec to;
+            hitObjGetPos(w->name, &to);
+            printf("[input] frame %u: walk_to %s: not reached in %d frames (Mario at %.0f %.0f %.0f, it at %.0f %.0f "
+                   "%.0f)\n",
+                   (unsigned)sFrame, w->name, (int)w->waitMax, m->position.x, m->position.y, m->position.z, to.x, to.y,
+                   to.z);
+            fflush(stdout);
+            sWalkFrames = -1;
+            return;
+        }
+        if (seqGetSeq() == SEQ_GAME && marioChkKey()) {
+            Vec to;
+            float dx, dz, len;
+            hitObjGetPos(w->name, &to);
+            dx = to.x - m->position.x;
+            dz = to.z - m->position.z;
+            len = sqrtf(dx * dx + dz * dz);
+            if (len > 1.0f) {
+                /* the field camera looks down -z: stick right is +x, up is -z */
+                pad[0].stickX = (s8)(dx / len * 100.0f);
+                pad[0].stickY = (s8)(-dz / len * 100.0f);
+            }
+            /* stuck for a moment: jump (for a step up); stuck longer: walk
+             * along the wall, one side then the other, a longer way each time */
+            if (sWalkFrames % 20 == 0) {
+                const float moved = fabsf(m->position.x - sWalkPrev.x) + fabsf(m->position.z - sWalkPrev.z);
+                sWalkStuck = moved < 6.0f ? sWalkStuck + 1 : 0;
+                sWalkPrev = m->position;
+                if (sWalkStuck >= 2 && sWalkDetour <= 0) {
+                    sWalkTries++;
+                    sWalkDetour = 60 * (1 + sWalkTries / 2);
+                    sWalkStuck = 0;
+                }
+            }
+            if (sWalkStuck > 0 && sWalkFrames % 20 < 3) {
+                pad[0].button = PAD_BUTTON_A;
+            }
+            if (sWalkDetour > 0 && len > 1.0f) {
+                const float side = sWalkTries % 2 ? 1.0f : -1.0f;
+                sWalkDetour--;
+                pad[0].stickX = (s8)(-dz / len * 100.0f * side);
+                pad[0].stickY = (s8)(-dx / len * 100.0f * side);
+            }
+        }
+        return;
+    }
     if (sWaitFrames >= 0) {
         /* wait_seq / wait_map: neutral input until the condition holds */
         const Step* w = &sSteps[sCur];
@@ -584,6 +696,8 @@ static void applyScript(PADStatus* pad) {
             met = sControlFrames >= 60;
         } else if (w->frames == -11) {
             met = swByteGet(0) >= atoi(w->name);
+        } else if (w->frames == -12) {
+            met = portOnlineLobbyState() == atoi(w->name);
         } else if (w->frames == -10) {
             met = sWaitFrames > 0 && !cardIsExec(); /* save: the card is done */
         } else {
@@ -652,8 +766,20 @@ static void applyScript(PADStatus* pad) {
             fflush(stdout);
             cardWrite(gp->saveSlot);
         }
-        if (s->frames == -5 || s->frames == -6 || s->frames == -9 || s->frames == -10 || s->frames == -11) {
+        if (s->frames == -5 || s->frames == -6 || s->frames == -9 || s->frames == -10 || s->frames == -11 ||
+            s->frames == -12) {
             sWaitFrames = 0;
+            memset(&pad[0], 0, sizeof(pad[0]));
+            pad[0].err = PAD_ERR_NONE;
+            return;
+        }
+        if (s->frames == -23) {
+            snprintf(sWalkMap, sizeof(sWalkMap), "%s", gp != NULL ? gp->currentMapName : "");
+            sWalkFrames = 0;
+            sWalkStuck = 0;
+            sWalkDetour = 0;
+            sWalkTries = 0;
+            sWalkPrev = marioGetPtr()->position;
             memset(&pad[0], 0, sizeof(pad[0]));
             pad[0].err = PAD_ERR_NONE;
             return;
@@ -701,6 +827,8 @@ static void applyScript(PADStatus* pad) {
             } else if (strcmp(s->name, "maxhp") == 0) {
                 pouchSetMaxHP((s16)v);
                 pouchSetHP((s16)v);
+            } else if (strcmp(s->name, "level") == 0) {
+                pouchGetPtr()->level = (s16)v;
             } else if (strcmp(s->name, "stars") == 0) {
                 pouchGetPtr()->starPowersObtained = (u16)v;
             } else if (strcmp(s->name, "swap") == 0) {
@@ -716,9 +844,9 @@ static void applyScript(PADStatus* pad) {
                         portCompanionMenuShot(name);
                     }
                 } else if (strncmp(what, "button ", 7) == 0) {
-                    static const char* const kNames[] = {"", "a", "b", "up", "down", "left", "right", "l", "r", "x", "y"};
+                    static const char* const kNames[] = {"", "a", "b", "up", "down", "left", "right", "l", "r", "x", "y", "z"};
                     int k;
-                    for (k = 1; k < 11; k++) {
+                    for (k = 1; k < (int)(sizeof(kNames) / sizeof(kNames[0])); k++) {
                         if (strncmp(what + 7, kNames[k], strlen(kNames[k])) == 0 && (what[7 + strlen(kNames[k])] == ' ' || what[7 + strlen(kNames[k])] == 0)) {
                             portCompanionMenuButton(k);
                         }
@@ -816,21 +944,28 @@ static void applyScript(PADStatus* pad) {
  * second_player_pc.c): KEYS (a b x y z l r, and left right up down for the
  * main stick at full tilt, joined with '+') held on controller 2 for N frames
  * (default 2) from frame F of the script (counted from its first step, as its
- * waits are: past a $TTYD_MAP warp) */
-static void applyP2(PADStatus* pad) {
-    static const char* sList;
-    static int sRead;
-    static u32 sClock;
+ * waits are: past a $TTYD_MAP warp). $TTYD_P3_PRESS and $TTYD_P4_PRESS:
+ * the same on controllers 3 and 4, which are there (plugged in) for the
+ * whole script, so their companions come (docs/PLAYERS.md). */
+static void applyPress(PADStatus* pad, int port) {
+    static const char* sList[PAD_MAX_CONTROLLERS];
+    static int sRead[PAD_MAX_CONTROLLERS];
+    static u32 sClocks[PAD_MAX_CONTROLLERS];
+    static const char* const kEnv[PAD_MAX_CONTROLLERS] = {NULL, "TTYD_P2_PRESS", "TTYD_P3_PRESS", "TTYD_P4_PRESS"};
     const char* p;
-    if (!sRead) {
-        sRead = 1;
-        sList = getenv("TTYD_P2_PRESS");
+    u32 sClock;
+    if (!sRead[port]) {
+        sRead[port] = 1;
+        sList[port] = getenv(kEnv[port]);
     }
-    if (sList == NULL || sState != 2) {
+    if (sList[port] == NULL || sState != 2) {
         return;
     }
-    sClock++;
-    for (p = sList; p != NULL && *p != '\0';) {
+    sClock = ++sClocks[port];
+    if (port >= 2 && pad[port].err != PAD_ERR_NONE) {
+        memset(&pad[port], 0, sizeof(pad[port])); /* a controller there, nothing pressed */
+    }
+    for (p = sList[port]; p != NULL && *p != '\0';) {
         char keys[64], key[16];
         unsigned at = 0, len = 2;
         u16 bits = 0;
@@ -856,12 +991,12 @@ static void applyP2(PADStatus* pad) {
             k += *k == '+';
         }
         if (sClock >= at && sClock < at + len) {
-            pad[1].err = PAD_ERR_NONE;
-            pad[1].button |= bits;
-            pad[1].stickX = (s8)sx;
-            pad[1].stickY = (s8)sy;
+            pad[port].err = PAD_ERR_NONE;
+            pad[port].button |= bits;
+            pad[port].stickX = (s8)sx;
+            pad[port].stickY = (s8)sy;
             if (sClock == at) {
-                printf("[input] frame %u: controller 2 %s for %u\n", (unsigned)sFrame, keys, len);
+                printf("[input] frame %u: controller %d %s for %u\n", (unsigned)sFrame, port + 1, keys, len);
                 fflush(stdout);
             }
         }
@@ -877,8 +1012,20 @@ void portInputApply(PADStatus* pad) {
     static int sCuePress = -1;
     static int sHapticsPress;
     applyScript(pad);
-    applyP2(pad);
+    applyPress(pad, 1);
+    applyPress(pad, 2);
+    applyPress(pad, 3);
     portMenuApplyPad(pad); /* the mouse's B and wheel in menus */
+#ifdef TTYD_BACKEND_AURORA
+    if (portBindingsAskedFromSecondScreen()) { /* a key or button being chosen there: not the game's */
+        int port;
+        for (port = 0; port < PAD_CHANMAX; port++) {
+            pad[port].button = 0;
+            pad[port].stickX = pad[port].stickY = pad[port].substickX = pad[port].substickY = 0;
+            pad[port].triggerLeft = pad[port].triggerRight = 0;
+        }
+    }
+#endif
     portCompanionApplyPad(pad); /* a tap on the second screen (companion_pc.c) */
     if (sCuePress < 0) {
         const char* h = getenv("TTYD_HAPTICS_PRESS");

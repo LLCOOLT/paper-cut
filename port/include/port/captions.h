@@ -29,6 +29,9 @@ enum {
 /* accessibility.cpp: the caption table's entry for name (-1: none, or
  * captions off) and whether it is shown only out of sight; then the cue */
 int portCaptionLookup(const char* name, int* offScreenOnly);
+/* Every cue by name as it comes, for the DualSense's speaker
+ * (port/settings/features/dualsense_speaker.cpp); NULL: none. Output only. */
+extern void (*gPortSfxHeard)(const char* name);
 void portCaptionPush(int entry, int where);
 
 #ifdef __cplusplus

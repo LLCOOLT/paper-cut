@@ -4,6 +4,7 @@
 #include "battle/battle_unit.h"
 #ifdef TARGET_PC
 #include "port/gameplus.h"
+#include "port/open_world.h"
 #endif
 #include "evt/evt_cmd.h"
 
@@ -1185,6 +1186,10 @@ EVT_END()
  * While GF(10) is set he only says hikou_06.
  */
 EVT_BEGIN(hikosenkakari_talk)
+#ifdef TARGET_PC
+    // Paper Cut's open world: the blimp is chapter 3's way in (the train chapter 6's)
+    CALL(portEvtOpenRoomChapter, 3)
+#endif
     IF_INT_EQUAL(GF(10), 1)
         CALL(evt_msg_print, 0, STRING("hikou_06"), 0, STRING("me"))
         RETURN
@@ -1296,6 +1301,10 @@ EVT_END()
  * Says train_06 when Mario has just arrived on the return trip.
  */
 EVT_BEGIN(ekiin_talk)
+#ifdef TARGET_PC
+    // Paper Cut's open world: the train is chapter 6's way in (the blimp chapter 3's)
+    CALL(portEvtOpenRoomChapter, 6)
+#endif
     CALL(evt_bero_get_entername, LW(0))
     IF_STR_EQUAL(LW(0), STRING("resha_return"))
         CALL(evt_msg_print, 0, STRING("train_06"), 0, STRING("me"))
@@ -1620,6 +1629,9 @@ static NpcSetupInfo npcEnt[] = {
  * after a 10 second ride.
  */
 EVT_BEGIN(evt_hikousen)
+#ifdef TARGET_PC
+    CALL(portEvtOpenRoomChapter, 3)
+#endif
     CALL(evt_snd_bgmon, PSND_FADE_OUT, STRING("BGM_EVT_STG3_AIRSHIP1"))
     CALL(evt_mario_key_onoff, 0)
     CALL(evt_cam_ctrl_onoff, 4, 0)

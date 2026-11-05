@@ -1,0 +1,4 @@
+# Lua mods in Japanese for the JP release's own font: an English line, then its translation, then a blank line.
+
+Lua console
+Luaコンソール

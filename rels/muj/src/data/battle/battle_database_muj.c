@@ -1659,3 +1659,32 @@ static USER_FUNC(_wave_offset) {
     evtSetValue(event, varY, stepY);
     return EVT_RETURN_DONE;
 }
+
+#ifdef TARGET_PC
+#include "port/directors_cut.h"
+
+/*
+ * Director's Cut (port/include/port/directors_cut.h): the jungle's Fuzzies four at a time. BTLNO_MUJ_02_01
+ * picks one, two or three Green Fuzzies (10:20:10), and the fourth group this database has after them
+ * (btlgrp_muj_muj_02_01_off_04, Green Fuzzy x4) is in no list; the Steeple's Boos pick one to four the same
+ * way (10:20:10:10). (btlgrp_muj_muj_00_01, three Goombas with no drops, stays out: no Goomba is anywhere on
+ * Keelhaul Key, it reads as a placeholder.)
+ */
+static NpcBattleSelect dc_muj_02_01[] = {
+    {10, &btlgrp_muj_muj_02_01_off_01, &muj_btlstage_data[1]},
+    {20, &btlgrp_muj_muj_02_01_off_02, &muj_btlstage_data[1]},
+    {10, &btlgrp_muj_muj_02_01_off_03, &muj_btlstage_data[1]},
+    {10, &btlgrp_muj_muj_02_01_off_04, &muj_btlstage_data[1]},
+    {0},
+};
+
+static const PortDirectorsCutSelect dc_muj_selects[] = {
+    {btlgrpsel_muj_btlno_muj_02_01_off, dc_muj_02_01},
+    {NULL},
+};
+
+/** Hands the cut battles to Director's Cut; muj.c's _prolog calls it. */
+void muj_directors_cut(void) {
+    portDirectorsCutRel("muj", dc_muj_selects, NULL);
+}
+#endif

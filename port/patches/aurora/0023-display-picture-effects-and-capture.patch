@@ -1,0 +1,703 @@
+From 7ce122d14c62bf3db225841e517dc2e47424076a Mon Sep 17 00:00:00 2001
+From: LLCOOLT <114613597+LLCOOLT@users.noreply.github.com>
+Date: Wed, 4 Nov 2026 20:50:34 -0500
+Subject: [PATCH] display: picture effects and a capture of the presented
+ picture
+
+aurora_set_picture_effects (include/aurora/picture.h): a pass of its own over
+the resampled present picture: a cut-paper outline or folding light, a colour
+look (a 3x4 matrix), a vignette, depth of field round a focus point, and a
+frame (a paper border, a stamp, a film strip, a storybook's). None: no pass.
+aurora_capture_picture: the next presented picture as shown (after the
+effects, at its presented size) read back once, as RGBA, to a callback.
+In lib/webgpu/picture.cpp; its hooks kept apart from the earlier patches'
+lines, so each of them still checks as applied.
+---
+ cmake/aurora_core.cmake  |   1 +
+ include/aurora/picture.h |  47 ++++
+ lib/aurora.cpp           |   1 +
+ lib/webgpu/gpu.cpp       |   9 +
+ lib/webgpu/gpu.hpp       |   7 +
+ lib/webgpu/picture.cpp   | 546 +++++++++++++++++++++++++++++++++++++++
+ 6 files changed, 611 insertions(+)
+ create mode 100644 include/aurora/picture.h
+ create mode 100644 lib/webgpu/picture.cpp
+
+diff --git a/cmake/aurora_core.cmake b/cmake/aurora_core.cmake
+index a4e9720..ff18cc9 100644
+--- a/cmake/aurora_core.cmake
++++ b/cmake/aurora_core.cmake
+@@ -84,6 +84,7 @@ if (AURORA_ENABLE_GX)
+             lib/webgpu/gpu.cpp
+             lib/webgpu/gpu_cache.cpp
+             lib/webgpu/gpu_prof.cpp
++            lib/webgpu/picture.cpp
+             lib/dawn/BackendBinding.cpp
+             lib/dawn/TracyPlatform.cpp
+     )
+diff --git a/include/aurora/picture.h b/include/aurora/picture.h
+new file mode 100644
+index 0000000..dfb2b2a
+--- /dev/null
++++ b/include/aurora/picture.h
+@@ -0,0 +1,47 @@
++#ifndef AURORA_PICTURE_H
++#define AURORA_PICTURE_H
++
++/* Picture effects over the presented picture, and a capture of it: the application's own (Paper Cut's
++ * port/patches/aurora), for its paper filters and photo mode. */
++
++#ifdef __cplusplus
++extern "C" {
++#endif
++
++typedef struct AuroraPictureEffects {
++  /* 0 none, 1 a cut-paper outline (ink round the shapes, a pale cut edge beside it), 2 folding light (the
++   * picture on paper folded in panels, a slow light across them) */
++  int paper;
++  float paperStrength; /* 0-1 */
++  /* a colour look: out = clamp(look * (r, g, b, 1)), rows r, g, b of four (three weights and an offset), on
++   * gamma-encoded colour (0-1); lookOn 0: none */
++  int lookOn;
++  float look[12];
++  float vignette; /* 0-1: the corners darker */
++  /* depth of field: sharp round (focusX, focusY) (0-1 from the picture's top left) out to focusRadius (in
++   * picture heights), blurred past it up to blur (in pixels of a 480-line picture); blur 0: none */
++  float focusX, focusY, focusRadius, blur;
++  /* 0 none, 1 a paper border, 2 a stamp's perforated edge, 3 a film strip, 4 a storybook's */
++  int frame;
++} AuroraPictureEffects;
++
++/**
++ * The effects for the frames from the next one (a pass of its own after the present resample, its post filter and
++ * the colour matrix; not ImGui). NULL or all off: none (the default).
++ */
++void aurora_set_picture_effects(const AuroraPictureEffects* effects);
++
++/**
++ * Called once with the next presented picture as it is shown, effects and all (not ImGui): rgba, 4 bytes a pixel,
++ * rows top to bottom, width x height at the presented size; or with rgba NULL (0 x 0) when it cannot be read
++ * (an unusual surface format). On whatever thread the GPU's map callback comes on; rgba is valid only during the
++ * call. Returns 0 (and never calls) if a capture is already waiting.
++ */
++typedef void (*AuroraPictureCallback)(void* user, const unsigned char* rgba, unsigned int width, unsigned int height);
++int aurora_capture_picture(AuroraPictureCallback callback, void* user);
++
++#ifdef __cplusplus
++}
++#endif
++
++#endif
+diff --git a/lib/aurora.cpp b/lib/aurora.cpp
+index c439b3f..dcaba24 100644
+--- a/lib/aurora.cpp
++++ b/lib/aurora.cpp
+@@ -398,6 +398,7 @@ void end_frame() noexcept {
+       g_queue.Submit(1, &buffer);
+     }
+     webgpu::gpu_prof::after_submit();
++    webgpu::picture_after_submit(); // aurora_capture_picture: the copy mapped, now it is submitted
+     if (canPresent && g_surface) {
+       ZoneScopedN("Present");
+       wgpu::ConvertibleStatus status = wgpu::Status::Error;
+diff --git a/lib/webgpu/gpu.cpp b/lib/webgpu/gpu.cpp
+index 0c1ebbb..71dc4c5 100644
+--- a/lib/webgpu/gpu.cpp
++++ b/lib/webgpu/gpu.cpp
+@@ -947,7 +947,15 @@ wgpu::BindGroup create_copy_bind_group(const TextureWithSampler& source) {
+   return g_device.CreateBindGroup(&bindGroupDescriptor);
+ }
+ 
++// aurora_set_picture_effects, aurora_capture_picture (picture.cpp): the resampled picture through them
++static const TextureWithSampler& resample_present_source_only(const wgpu::CommandEncoder& encoder,
++                                                              const Viewport& viewport);
+ const TextureWithSampler& resample_present_source(const wgpu::CommandEncoder& encoder, const Viewport& viewport) {
++  return picture_pass(encoder, resample_present_source_only(encoder, viewport));
++}
++
++static const TextureWithSampler& resample_present_source_only(const wgpu::CommandEncoder& encoder,
++                                                              const Viewport& viewport) {
+   const auto& source = present_source();
+   const uint32_t width = viewport_extent(viewport.width);
+   const uint32_t height = viewport_extent(viewport.height);
+@@ -1617,6 +1625,7 @@ bool initialize(AuroraBackend auroraBackend, bool allowCpu) {
+ void shutdown() {
+   g_initialized = false;
+   gfx::gpu_synchronize();
++  release_picture();
+   gpu_prof::shutdown();
+   g_CopyBindGroupLayout = {};
+   g_CopyPipeline = {};
+diff --git a/lib/webgpu/gpu.hpp b/lib/webgpu/gpu.hpp
+index 1cfbb14..aa62453 100644
+--- a/lib/webgpu/gpu.hpp
++++ b/lib/webgpu/gpu.hpp
+@@ -13,6 +13,13 @@ struct SDL_Window;
+ namespace aurora::webgpu {
+ inline constexpr wgpu::TextureFormat NormalBufferFormat = wgpu::TextureFormat::RGB10A2Unorm;
+ 
++// aurora_set_picture_effects, aurora_capture_picture (aurora/picture.h, picture.cpp): the resampled picture with
++// the effects, or itself while there are none; a capture asked for read from it, mapped once submitted
++struct TextureWithSampler;
++const TextureWithSampler& picture_pass(const wgpu::CommandEncoder& encoder, const TextureWithSampler& source);
++void picture_after_submit();
++void release_picture() noexcept;
++
+ struct GraphicsConfig {
+   wgpu::SurfaceConfiguration surfaceConfiguration;
+   wgpu::TextureFormat depthFormat;
+diff --git a/lib/webgpu/picture.cpp b/lib/webgpu/picture.cpp
+new file mode 100644
+index 0000000..a67b803
+--- /dev/null
++++ b/lib/webgpu/picture.cpp
+@@ -0,0 +1,546 @@
++// aurora_set_picture_effects and aurora_capture_picture (aurora/picture.h): a pass of its own over the presented
++// picture (after the present resample, its post filter and the colour matrix), and a read-back of what is shown.
++#include "gpu.hpp"
++
++#include <algorithm>
++#include <array>
++#include <chrono>
++#include <cmath>
++#include <cstdint>
++#include <cstring>
++#include <memory>
++#include <mutex>
++#include <string_view>
++#include <vector>
++
++#include <aurora/picture.h>
++#include <webgpu/webgpu_cpp.h>
++
++namespace aurora::webgpu {
++using namespace std::string_view_literals;
++
++namespace {
++
++std::mutex g_mutex; // the effects and the capture asked for (any thread)
++AuroraPictureEffects g_effects{};
++bool g_effectsOn = false;
++AuroraPictureCallback g_captureCallback = nullptr;
++void* g_captureUser = nullptr;
++
++// render worker only
++wgpu::BindGroupLayout g_layout;
++wgpu::RenderPipeline g_pipeline;
++wgpu::TextureFormat g_pipelineFormat = wgpu::TextureFormat::Undefined;
++wgpu::Buffer g_uniforms;
++wgpu::Sampler g_sampler;
++TextureWithSampler g_target;
++
++struct Capture {
++  AuroraPictureCallback callback;
++  void* user;
++  wgpu::Buffer buffer;
++  uint32_t width, height, rowBytes;
++  bool bgra;
++};
++std::vector<std::shared_ptr<Capture>> g_toMap;
++
++struct Uniforms {
++  std::array<float, 12> look;   // rows r, g, b: weights and offset
++  std::array<float, 4> focus;   // x, y, radius, blur
++  std::array<float, 4> params;  // vignette, time, paper strength, look on
++  std::array<uint32_t, 4> mode; // paper, frame
++  std::array<float, 4> size;    // width, height, 1 / width, 1 / height
++};
++
++constexpr std::string_view kShader = R"(
++struct Uniforms {
++    look_r: vec4<f32>,
++    look_g: vec4<f32>,
++    look_b: vec4<f32>,
++    focus: vec4<f32>,
++    params: vec4<f32>,
++    mode: vec4<u32>,
++    size: vec4<f32>,
++};
++
++@group(0) @binding(0) var<uniform> u: Uniforms;
++@group(0) @binding(1) var s: sampler;
++@group(0) @binding(2) var t: texture_2d<f32>;
++
++@vertex
++fn vs_main(@builtin(vertex_index) vtxIdx: u32) -> @builtin(position) vec4<f32> {
++    var pos = array<vec2<f32>, 3>(vec2(-1.0, 1.0), vec2(-1.0, -3.0), vec2(3.0, 1.0));
++    return vec4<f32>(pos[vtxIdx], 0.0, 1.0);
++}
++
++fn hash12(p: vec2<f32>) -> f32 {
++    var p3 = fract(vec3<f32>(p.xyx) * 0.1031);
++    p3 += dot(p3, p3.yzx + 33.33);
++    return fract((p3.x + p3.y) * p3.z);
++}
++
++fn noise(p: vec2<f32>) -> f32 {
++    let i = floor(p);
++    let f = fract(p);
++    let w = f * f * (3.0 - 2.0 * f);
++    return mix(mix(hash12(i), hash12(i + vec2(1.0, 0.0)), w.x),
++               mix(hash12(i + vec2(0.0, 1.0)), hash12(i + vec2(1.0, 1.0)), w.x), w.y);
++}
++
++fn tap(uv: vec2<f32>) -> vec3<f32> {
++    return textureSampleLevel(t, s, uv, 0.0).rgb;
++}
++
++fn luma(c: vec3<f32>) -> f32 {
++    return dot(c, vec3(0.299, 0.587, 0.114));
++}
++
++// how strongly the picture changes round uv, at a spacing of d (in uv)
++fn edge(uv: vec2<f32>, d: vec2<f32>) -> f32 {
++    let tl = luma(tap(uv + vec2(-d.x, -d.y)));
++    let tc = luma(tap(uv + vec2(0.0, -d.y)));
++    let tr = luma(tap(uv + vec2(d.x, -d.y)));
++    let ml = luma(tap(uv + vec2(-d.x, 0.0)));
++    let mr = luma(tap(uv + vec2(d.x, 0.0)));
++    let bl = luma(tap(uv + vec2(-d.x, d.y)));
++    let bc = luma(tap(uv + vec2(0.0, d.y)));
++    let br = luma(tap(uv + vec2(d.x, d.y)));
++    let gx = (tr + 2.0 * mr + br) - (tl + 2.0 * ml + bl);
++    let gy = (bl + 2.0 * bc + br) - (tl + 2.0 * tc + tr);
++    return length(vec2(gx, gy));
++}
++
++// Cut paper: each shape's flat colour a little flatter, an ink line round it and a pale cut edge beside the line,
++// as pieces cut out and laid on each other
++fn cut_paper(c: vec3<f32>, uv: vec2<f32>, k: f32) -> vec3<f32> {
++    let line = max(u.size.y / 480.0, 1.0);
++    let d = vec2(line, line) * u.size.zw;
++    let ink = smoothstep(0.38, 0.75, edge(uv, d * 1.3));
++    let halo = smoothstep(0.34, 0.70, edge(uv, d * 3.0)) * (1.0 - ink);
++    let posterized = floor(c * 7.0 + 0.5) / 7.0;
++    var o = mix(c, posterized, 0.45 * k);
++    o = mix(o, vec3(0.99, 0.97, 0.92), halo * 0.55 * k);
++    o = mix(o, vec3(0.13, 0.10, 0.12), ink * 0.9 * k);
++    let p = uv * u.size.xy / line;
++    let fibres = noise(p * vec2(0.09, 0.45)) * 0.5 + noise(p * vec2(0.45, 0.07)) * 0.5;
++    return o * mix(1.0, 0.95 + 0.06 * fibres, k);
++}
++
++// Folding light: the picture on a sheet folded in four upright panels and once across, each panel turned a
++// little to or from a light that moves slowly across them; the creases a dark line with a bright edge
++fn folding_light(c: vec3<f32>, uv: vec2<f32>, k: f32) -> vec3<f32> {
++    let panels = 4.0;
++    let fx = uv.x * panels;
++    let col = floor(fx);
++    let row = select(0.0, 1.0, uv.y >= 0.5);
++    let tilt = 0.30;
++    let nx = select(-tilt, tilt, (u32(col) & 1u) == 0u);
++    let ny = select(-0.14, 0.14, row == 0.0);
++    let n = normalize(vec3(nx, ny, 1.0));
++    let a = u.params.y * 0.35;
++    let l = normalize(vec3(sin(a) * 0.9, 0.35 + 0.15 * cos(a * 0.7), 1.0));
++    let lit = dot(n, l);
++    let base = dot(normalize(vec3(0.0, 0.0, 1.0)), l);
++    var shade = 1.0 + (lit - base) * 2.2;
++    let line = max(u.size.y / 480.0, 1.0);
++    let dx = (fract(fx + 0.5) - 0.5) * u.size.x / panels / line; // pixels to the nearest upright crease
++    let dy = (uv.y - 0.5) * u.size.y / line;
++    let inside = fx >= 0.5 && fx <= panels - 0.5;
++    let creaseX = select(0.0, exp(-dx * dx / 2.5), inside);
++    let creaseY = exp(-dy * dy / 2.5);
++    shade *= 1.0 - 0.28 * max(creaseX, creaseY);
++    shade += select(0.0, 0.10 * exp(-(dx - 2.0) * (dx - 2.0) / 3.0), inside);
++    let p = uv * u.size.xy / line;
++    let fibres = noise(p * vec2(0.08, 0.5)) * 0.5 + noise(p * vec2(0.5, 0.06)) * 0.5;
++    let o = c * shade * (0.96 + 0.05 * fibres) * vec3(1.02, 1.0, 0.96);
++    return mix(c, o, k);
++}
++
++// Depth of field: sharp round the focus, a wider and wider disc of samples past it
++fn depth_of_field(uv: vec2<f32>) -> vec3<f32> {
++    let aspect = u.size.x * u.size.w;
++    let off = (uv - u.focus.xy) * vec2(aspect, 0.75);
++    let coc = smoothstep(u.focus.z, u.focus.z * 2.4 + 0.06, length(off));
++    let r = coc * u.focus.w * u.size.y / 480.0;
++    if (r < 0.5) {
++        return tap(uv);
++    }
++    var sum = vec3(0.0);
++    let turn = hash12(uv * u.size.xy) * 6.2831853; // each pixel's disc turned its own way: grain, not rings
++    for (var i = 0; i < 32; i++) {
++        let f = (f32(i) + 0.5) / 32.0;
++        let a = f32(i) * 2.39996323 + turn;
++        let o = vec2(cos(a), sin(a)) * sqrt(f) * r * u.size.zw;
++        sum += tap(uv + o);
++    }
++    return sum / 32.0;
++}
++
++fn box(p: vec2<f32>, hs: vec2<f32>, rad: f32) -> f32 {
++    let q = abs(p) - hs + vec2(rad);
++    return length(max(q, vec2(0.0))) + min(max(q.x, q.y), 0.0) - rad;
++}
++
++// The frames, in picture heights from the top left (w wide, 1 high)
++fn frame(c: vec3<f32>, pos: vec2<f32>) -> vec3<f32> {
++    let h = u.size.y;
++    let q = pos / h;
++    let w = u.size.x / h;
++    let e = min(min(q.x, w - q.x), min(q.y, 1.0 - q.y));
++    let grain = noise(pos / max(h / 480.0, 1.0) * 0.35);
++    if (u.mode.y == 1u) { // a paper border: a deckled edge, a little shadow inside it
++        let along = select(q.y, q.x, min(q.y, 1.0 - q.y) < min(q.x, w - q.x));
++        let m = 0.045 + 0.007 * noise(vec2(along * 90.0, 3.0));
++        if (e < m) {
++            return vec3(0.97, 0.95, 0.89) * (0.96 + 0.05 * grain);
++        }
++        return c * (0.80 + 0.20 * smoothstep(m, m + 0.014, e));
++    }
++    if (u.mode.y == 2u) { // a stamp: perforations round a white margin, a red line inside it
++        let gap = 0.05;
++        let m = 0.065;
++        var hole = 1e3;
++        if (min(q.y, 1.0 - q.y) < 0.03) {
++            hole = length(vec2((fract(q.x / gap) - 0.5) * gap, min(q.y, 1.0 - q.y)));
++        }
++        if (min(q.x, w - q.x) < 0.03) {
++            hole = min(hole, length(vec2((fract(q.y / gap) - 0.5) * gap, min(q.x, w - q.x))));
++        }
++        if (hole < 0.017) {
++            return vec3(0.16, 0.13, 0.18);
++        }
++        if (e < m) {
++            if (abs(e - (m - 0.016)) < 0.0035) {
++                return vec3(0.70, 0.14, 0.18);
++            }
++            return vec3(0.98, 0.97, 0.94) * (0.97 + 0.03 * grain);
++        }
++        return c;
++    }
++    if (u.mode.y == 3u) { // a film strip: dark bands above and below, their sprocket holes
++        let band = 0.105;
++        let fy = min(q.y, 1.0 - q.y);
++        if (fy < band) {
++            let pitch = 0.08;
++            let hx = (fract(q.x / pitch) - 0.5) * pitch;
++            let hy = fy - band * 0.5;
++            if (box(vec2(hx, hy), vec2(0.018, 0.024), 0.006) < 0.0) {
++                return vec3(0.90, 0.88, 0.82);
++            }
++            return vec3(0.06, 0.05, 0.05) * (0.8 + 0.4 * grain);
++        }
++        return c * (0.88 + 0.12 * smoothstep(band, band + 0.02, fy));
++    }
++    if (u.mode.y == 4u) { // a storybook's: a plum cover round the page, a gold line, round inner corners
++        let m = 0.055;
++        let d = box(q - vec2(w * 0.5, 0.5), vec2(w * 0.5 - m, 0.5 - m), 0.05);
++        if (d > 0.0) {
++            if (d < 0.007) {
++                return vec3(0.88, 0.70, 0.32) * (0.9 + 0.2 * grain);
++            }
++            return vec3(0.27, 0.13, 0.32) * (0.85 + 0.25 * grain);
++        }
++        return c * (0.82 + 0.18 * smoothstep(0.0, 0.025, -d));
++    }
++    return c;
++}
++
++@fragment
++fn fs_main(@builtin(position) position: vec4<f32>) -> @location(0) vec4<f32> {
++    let uv = position.xy * u.size.zw;
++    var c: vec3<f32>;
++    if (u.focus.w > 0.0) {
++        c = depth_of_field(uv);
++    } else {
++        c = tap(uv);
++    }
++    if (u.mode.x == 1u) {
++        c = cut_paper(c, uv, u.params.z);
++    } else if (u.mode.x == 2u) {
++        c = folding_light(c, uv, u.params.z);
++    }
++    if (u.params.w > 0.0) {
++        let c4 = vec4(c, 1.0);
++        c = vec3(dot(u.look_r, c4), dot(u.look_g, c4), dot(u.look_b, c4));
++    }
++    c = clamp(c, vec3(0.0), vec3(1.0));
++    if (u.params.x > 0.0) {
++        let aspect = u.size.x * u.size.w;
++        let d = length((uv - vec2(0.5)) * vec2(aspect, 1.0)) / (0.5 * sqrt(aspect * aspect + 1.0));
++        c *= 1.0 - u.params.x * smoothstep(0.45, 1.0, d);
++    }
++    if (u.mode.y != 0u) {
++        c = frame(c, position.xy);
++    }
++    return vec4(c, 1.0);
++}
++)"sv;
++
++bool any_effect(const AuroraPictureEffects& e) {
++  return (e.paper != 0 && e.paperStrength > 0.f) || e.lookOn != 0 || e.vignette > 0.f || e.blur > 0.f ||
++         e.frame != 0;
++}
++
++void create_pipeline(wgpu::TextureFormat format) {
++  if (!g_layout) {
++    const std::array entries{
++        wgpu::BindGroupLayoutEntry{
++            .binding = 0,
++            .visibility = wgpu::ShaderStage::Fragment,
++            .buffer = wgpu::BufferBindingLayout{.type = wgpu::BufferBindingType::Uniform},
++        },
++        wgpu::BindGroupLayoutEntry{
++            .binding = 1,
++            .visibility = wgpu::ShaderStage::Fragment,
++            .sampler = wgpu::SamplerBindingLayout{.type = wgpu::SamplerBindingType::Filtering},
++        },
++        wgpu::BindGroupLayoutEntry{
++            .binding = 2,
++            .visibility = wgpu::ShaderStage::Fragment,
++            .texture =
++                wgpu::TextureBindingLayout{
++                    .sampleType = wgpu::TextureSampleType::Float,
++                    .viewDimension = wgpu::TextureViewDimension::e2D,
++                },
++        },
++    };
++    const wgpu::BindGroupLayoutDescriptor layoutDescriptor{
++        .label = "Picture Effects Bind Group Layout",
++        .entryCount = entries.size(),
++        .entries = entries.data(),
++    };
++    g_layout = g_device.CreateBindGroupLayout(&layoutDescriptor);
++    const wgpu::BufferDescriptor uniformDescriptor{
++        .label = "Picture Effects Uniform Buffer",
++        .usage = wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::Uniform,
++        .size = sizeof(Uniforms),
++    };
++    g_uniforms = g_device.CreateBuffer(&uniformDescriptor);
++    const wgpu::SamplerDescriptor samplerDescriptor{
++        .label = "Picture Effects Sampler",
++        .addressModeU = wgpu::AddressMode::ClampToEdge,
++        .addressModeV = wgpu::AddressMode::ClampToEdge,
++        .magFilter = wgpu::FilterMode::Linear,
++        .minFilter = wgpu::FilterMode::Linear,
++    };
++    g_sampler = g_device.CreateSampler(&samplerDescriptor);
++  }
++  wgpu::ShaderSourceWGSL source{};
++  source.code = kShader;
++  const wgpu::ShaderModuleDescriptor moduleDescriptor{
++      .nextInChain = &source,
++      .label = "Picture Effects Module",
++  };
++  auto module = g_device.CreateShaderModule(&moduleDescriptor);
++  const std::array targets{wgpu::ColorTargetState{
++      .format = format,
++      .writeMask = wgpu::ColorWriteMask::All,
++  }};
++  const wgpu::FragmentState fragment{
++      .module = module,
++      .entryPoint = "fs_main",
++      .targetCount = targets.size(),
++      .targets = targets.data(),
++  };
++  const wgpu::PipelineLayoutDescriptor pipelineLayoutDescriptor{
++      .bindGroupLayoutCount = 1,
++      .bindGroupLayouts = &g_layout,
++  };
++  const auto pipelineLayout = g_device.CreatePipelineLayout(&pipelineLayoutDescriptor);
++  const wgpu::RenderPipelineDescriptor pipelineDescriptor{
++      .label = "Picture Effects Pipeline",
++      .layout = pipelineLayout,
++      .vertex = wgpu::VertexState{.module = module, .entryPoint = "vs_main"},
++      .primitive = wgpu::PrimitiveState{.topology = wgpu::PrimitiveTopology::TriangleList},
++      .multisample = wgpu::MultisampleState{.count = 1, .mask = UINT32_MAX},
++      .fragment = &fragment,
++  };
++  g_pipeline = g_device.CreateRenderPipeline(&pipelineDescriptor);
++  g_pipelineFormat = format;
++}
++
++const TextureWithSampler& draw_effects(const wgpu::CommandEncoder& encoder, const TextureWithSampler& source,
++                                       const AuroraPictureEffects& e) {
++  if (!g_pipeline || g_pipelineFormat != source.format) {
++    create_pipeline(source.format);
++  }
++  if (!g_target.view || g_target.size.width != source.size.width || g_target.size.height != source.size.height ||
++      g_target.format != source.format) {
++    g_target = create_render_texture(source.size.width, source.size.height, false);
++  }
++  Uniforms uniforms{};
++  for (int i = 0; i < 12; i++) {
++    uniforms.look[i] = e.look[i];
++  }
++  uniforms.focus = {e.focusX, e.focusY, e.focusRadius, e.blur};
++  const float time =
++      std::fmod(std::chrono::duration<float>(std::chrono::steady_clock::now().time_since_epoch()).count(), 3600.f);
++  uniforms.params = {std::clamp(e.vignette, 0.f, 1.f), time, std::clamp(e.paperStrength, 0.f, 1.f),
++                     e.lookOn != 0 ? 1.f : 0.f};
++  uniforms.mode = {static_cast<uint32_t>(std::clamp(e.paper, 0, 2)), static_cast<uint32_t>(std::clamp(e.frame, 0, 4)),
++                   0, 0};
++  const float w = static_cast<float>(source.size.width), h = static_cast<float>(source.size.height);
++  uniforms.size = {w, h, 1.f / w, 1.f / h};
++  g_queue.WriteBuffer(g_uniforms, 0, &uniforms, sizeof(uniforms));
++  const std::array entries{
++      wgpu::BindGroupEntry{.binding = 0, .buffer = g_uniforms, .size = sizeof(Uniforms)},
++      wgpu::BindGroupEntry{.binding = 1, .sampler = g_sampler},
++      wgpu::BindGroupEntry{.binding = 2, .textureView = source.view},
++  };
++  const wgpu::BindGroupDescriptor bindGroupDescriptor{
++      .layout = g_layout,
++      .entryCount = entries.size(),
++      .entries = entries.data(),
++  };
++  const auto bindGroup = g_device.CreateBindGroup(&bindGroupDescriptor);
++  const std::array attachments{wgpu::RenderPassColorAttachment{
++      .view = g_target.view,
++      .loadOp = wgpu::LoadOp::Clear,
++      .storeOp = wgpu::StoreOp::Store,
++  }};
++  const wgpu::RenderPassDescriptor passDescriptor{
++      .label = "Picture effects render pass",
++      .colorAttachmentCount = attachments.size(),
++      .colorAttachments = attachments.data(),
++  };
++  const auto pass = encoder.BeginRenderPass(&passDescriptor);
++  pass.SetPipeline(g_pipeline);
++  pass.SetBindGroup(0, bindGroup, 0, nullptr);
++  pass.SetViewport(0.f, 0.f, w, h, 0.f, 1.f);
++  pass.Draw(3);
++  pass.End();
++  return g_target;
++}
++
++void encode_capture(const wgpu::CommandEncoder& encoder, const TextureWithSampler& picture,
++                    AuroraPictureCallback callback, void* user) {
++  const auto format = picture.format;
++  const bool bgra = format == wgpu::TextureFormat::BGRA8Unorm || format == wgpu::TextureFormat::BGRA8UnormSrgb;
++  const bool rgba = format == wgpu::TextureFormat::RGBA8Unorm || format == wgpu::TextureFormat::RGBA8UnormSrgb;
++  if ((!bgra && !rgba) || !picture.texture || picture.size.width == 0 || picture.size.height == 0) {
++    callback(user, nullptr, 0, 0);
++    return;
++  }
++  auto capture = std::make_shared<Capture>();
++  capture->callback = callback;
++  capture->user = user;
++  capture->width = picture.size.width;
++  capture->height = picture.size.height;
++  capture->rowBytes = (capture->width * 4 + 255) & ~255u;
++  capture->bgra = bgra;
++  const wgpu::BufferDescriptor bufferDescriptor{
++      .label = "Picture Capture Buffer",
++      .usage = wgpu::BufferUsage::MapRead | wgpu::BufferUsage::CopyDst,
++      .size = static_cast<uint64_t>(capture->rowBytes) * capture->height,
++  };
++  capture->buffer = g_device.CreateBuffer(&bufferDescriptor);
++  const wgpu::TexelCopyTextureInfo from{.texture = picture.texture};
++  const wgpu::TexelCopyBufferInfo to{
++      .layout = wgpu::TexelCopyBufferLayout{.bytesPerRow = capture->rowBytes, .rowsPerImage = capture->height},
++      .buffer = capture->buffer,
++  };
++  const wgpu::Extent3D extent{.width = capture->width, .height = capture->height, .depthOrArrayLayers = 1};
++  encoder.CopyTextureToBuffer(&from, &to, &extent);
++  g_toMap.push_back(std::move(capture));
++}
++
++void deliver(const Capture& c) {
++  const auto bytes = static_cast<size_t>(c.rowBytes) * c.height;
++  const auto* mapped = static_cast<const uint8_t*>(c.buffer.GetConstMappedRange(0, bytes));
++  if (mapped == nullptr) {
++    c.callback(c.user, nullptr, 0, 0);
++    return;
++  }
++  std::vector<uint8_t> rgba(static_cast<size_t>(c.width) * c.height * 4);
++  for (uint32_t y = 0; y < c.height; y++) {
++    const uint8_t* row = mapped + static_cast<size_t>(y) * c.rowBytes;
++    uint8_t* out = rgba.data() + static_cast<size_t>(y) * c.width * 4;
++    if (c.bgra) {
++      for (uint32_t x = 0; x < c.width; x++) {
++        out[x * 4 + 0] = row[x * 4 + 2];
++        out[x * 4 + 1] = row[x * 4 + 1];
++        out[x * 4 + 2] = row[x * 4 + 0];
++        out[x * 4 + 3] = 255;
++      }
++    } else {
++      std::memcpy(out, row, static_cast<size_t>(c.width) * 4);
++      for (uint32_t x = 0; x < c.width; x++) {
++        out[x * 4 + 3] = 255;
++      }
++    }
++  }
++  c.callback(c.user, rgba.data(), c.width, c.height);
++}
++
++} // namespace
++
++const TextureWithSampler& picture_pass(const wgpu::CommandEncoder& encoder, const TextureWithSampler& source) {
++  AuroraPictureEffects effects;
++  bool on;
++  AuroraPictureCallback callback;
++  void* user;
++  {
++    std::lock_guard lock{g_mutex};
++    effects = g_effects;
++    on = g_effectsOn;
++    callback = g_captureCallback;
++    user = g_captureUser;
++    g_captureCallback = nullptr;
++    g_captureUser = nullptr;
++  }
++  const TextureWithSampler& shown = on ? draw_effects(encoder, source, effects) : source;
++  if (callback != nullptr) {
++    encode_capture(encoder, shown, callback, user);
++  }
++  return shown;
++}
++
++void picture_after_submit() {
++  for (auto& capture : g_toMap) {
++    const auto bytes = static_cast<uint64_t>(capture->rowBytes) * capture->height;
++    capture->buffer.MapAsync(wgpu::MapMode::Read, 0, bytes, wgpu::CallbackMode::AllowSpontaneous,
++                             [capture](wgpu::MapAsyncStatus status, wgpu::StringView) {
++                               if (status == wgpu::MapAsyncStatus::Success) {
++                                 deliver(*capture);
++                                 capture->buffer.Unmap();
++                               } else {
++                                 capture->callback(capture->user, nullptr, 0, 0);
++                               }
++                               capture->buffer = {};
++                             });
++  }
++  g_toMap.clear();
++}
++
++void release_picture() noexcept {
++  g_pipeline = {};
++  g_pipelineFormat = wgpu::TextureFormat::Undefined;
++  g_layout = {};
++  g_uniforms = {};
++  g_sampler = {};
++  g_target = {};
++  g_toMap.clear();
++}
++
++} // namespace aurora::webgpu
++
++extern "C" void aurora_set_picture_effects(const AuroraPictureEffects* effects) {
++  std::lock_guard lock{aurora::webgpu::g_mutex};
++  aurora::webgpu::g_effectsOn = effects != nullptr && aurora::webgpu::any_effect(*effects);
++  if (effects != nullptr) {
++    aurora::webgpu::g_effects = *effects;
++  }
++}
++
++extern "C" int aurora_capture_picture(AuroraPictureCallback callback, void* user) {
++  if (callback == nullptr) {
++    return 0;
++  }
++  std::lock_guard lock{aurora::webgpu::g_mutex};
++  if (aurora::webgpu::g_captureCallback != nullptr) {
++    return 0;
++  }
++  aurora::webgpu::g_captureCallback = callback;
++  aurora::webgpu::g_captureUser = user;
++  return 1;
++}
+-- 
+2.53.0.windows.1
+

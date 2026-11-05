@@ -258,6 +258,14 @@ def anim_to_json(anim, pose):
     tail = getattr(anim, "table_tail", None)
     if tail is not None and any(tail):
         out["table_tail"] = tail.hex()
+    vp = getattr(anim, "vis_pad", b"")
+    if any(vp):
+        out["vis_pad"] = vp.hex()
+    if getattr(anim, "model_offset", None) is not None:
+        out["model_offset"] = anim.model_offset  # no animation data of its own (a test file)
+    hs = getattr(anim, "header_size", T.ANIM_HEADER_SIZE)
+    if hs != T.ANIM_HEADER_SIZE:
+        out["header_size"] = hs
     ep = getattr(anim, "empty_ptrs", None)
     if ep and any(ep.values()):
         out["empty_ptrs"] = {str(k): v for k, v in ep.items()}
@@ -277,6 +285,13 @@ def json_to_anim(js, pose):
     a.exact = bool(js.get("exact", False))
     if "table_tail" in js:
         a.table_tail = bytes.fromhex(js["table_tail"])
+    if "vis_pad" in js:
+        a.vis_pad = bytes.fromhex(js["vis_pad"])
+    if js.get("header_size") == T.ANIM_HEADER_OLD:
+        a.header_size = T.ANIM_HEADER_OLD
+    if "model_offset" in js and not js.get("keys"):
+        a.model_offset = int(js["model_offset"])
+        return a
     if "empty_ptrs" in js:
         a.empty_ptrs = {int(k): int(v) for k, v in js["empty_ptrs"].items()}
     q = {}

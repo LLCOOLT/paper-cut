@@ -75,8 +75,8 @@ Ersetzen und neu starten
 Replace them
 Ersetzen
 
-Receive this card's saves from the launcher, before the game starts.
-Empfange die Spielstände dieser Karte im Launcher, bevor das Spiel startet.
+Receive saves from the launcher, before starting.
+Empfange Spielstände vom Launcher, vor dem Start.
 
 Could not receive the saves:
 Die Spielstände konnten nicht empfangen werden:

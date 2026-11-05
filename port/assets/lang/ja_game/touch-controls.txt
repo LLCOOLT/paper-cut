@@ -1,0 +1,13 @@
+# The on-screen touch controls in Japanese for the JP release's own font (the Start menu's Settings tab): kana and its few kanji, words apart.
+
+On-screen D-pad
+がめんの　じゅうじボタン
+
+While a menu is up
+メニューが　でているとき
+
+GameCube colours
+ゲームキューブの　いろ
+
+Photo mode button
+フォトモード　ボタン

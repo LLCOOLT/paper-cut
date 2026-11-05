@@ -17,6 +17,7 @@
 #endif
 #ifdef TARGET_PC
 #include <string.h>
+#include "port/port_text.h"
 // PC port: the announcement is a message a mod can replace, so it is written bounded to its buffer
 // (and port/mods/mods.cpp escapes a mod message's stray printf conversions)
 #define sprintf(buf, ...) snprintf(buf, sizeof(buf), __VA_ARGS__)
@@ -70,6 +71,11 @@ USER_FUNC(btlevtcmd_AnnounceMessage) {
                 sprintf(announce->text, text);
                 break;
         }
+#ifdef TARGET_PC
+        /* Paper Cut's message or item name: the banner drawn with the game's random numbers put back
+         * (port/include/port/port_text.h) */
+        portTextCopied(announce->text, text, type == 1 ? msgSearch(itemDataTable[announce->params[0]].name) : NULL);
+#endif
     }
     dispEntry(CAMERA_2D, 900.0f, 1, _disp, NULL);
 #if VERSION >= VERSION_US

@@ -324,9 +324,11 @@ def build_model(pose_path, tpl_path, cache_dir, prefix=None, collection=None, lo
     root["ttyd_base_vis"] = vis
     if actions:
         for a in pose.anims:
-            make_action(root, pose, a)
-        if pose.anims:
-            set_anim(root, pose.anims[0].name)
+            if a.keys:  # (an entry with no data of its own, in a test file, has none)
+                make_action(root, pose, a)
+        first = next((a for a in pose.anims if a.keys), None)
+        if first is not None:
+            set_anim(root, first.name)
     return root
 
 
@@ -509,6 +511,8 @@ def make_action(root, pose, anim):
     act["ttyd_raw"] = json.dumps(raw)
     act["ttyd_table_tail"] = getattr(anim, "table_tail", b"").hex()
     act["ttyd_empty_ptrs"] = json.dumps(getattr(anim, "empty_ptrs", {}))
+    act["ttyd_vis_pad"] = getattr(anim, "vis_pad", b"").hex()
+    act["ttyd_header_size"] = getattr(anim, "header_size", T.ANIM_HEADER_SIZE)
     act["ttyd_model"] = prefix
     act["ttyd_anim"] = anim.name
     return act
@@ -807,6 +811,11 @@ def _build_anim(act, root, pose, groups, base, objs, fcs, times, raw, orig_times
     ep = act.get("ttyd_empty_ptrs")
     if ep:
         anim.empty_ptrs = {int(a): b for a, b in json.loads(ep).items()}
+    vp = act.get("ttyd_vis_pad")
+    if vp:
+        anim.vis_pad = bytes.fromhex(vp)
+    if act.get("ttyd_header_size") == T.ANIM_HEADER_OLD:
+        anim.header_size = T.ANIM_HEADER_OLD
     return anim, worst
 
 
@@ -1011,9 +1020,13 @@ def file_roundtrip(root, out_path):
     prefix = root["ttyd_prefix"]
     anims = []
     for a in pose.anims:
+        if getattr(a, "model_offset", None) is not None:
+            anims.append(a)  # no animation data of its own (a test file)
+            continue
         act = bpy.data.actions["%s:%s" % (prefix, a.name)]
         new, _rep = read_action(root, act, pose)
         new.table_tail = getattr(a, "table_tail", None)
+        new.disc_offset = getattr(a, "disc_offset", None)  # shared AnimData stays shared
         anims.append(new)
     pose.anims = anims
     data = pose.build()

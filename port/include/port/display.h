@@ -5,7 +5,7 @@
  * setting of its own, off by default (port/settings/features/display.cpp):
  * aniso (anisotropic filtering), lod_bias (texture detail), supersample
  * (rendering 2-4x the window's size, area-downsampled), post_filter (CRT,
- * paper grain, sharpen over the picture), vrr (present without waiting for
+ * paper grain, sharpen, and the paper filters of port/picture.h over the picture), vrr (present without waiting for
  * vblank, for variable refresh displays), perf_overlay (a frame-time graph),
  * hdr (HDR output at a paper-white brightness, where supported).
  * The aspect ratio and HUD scale: port/widescreen.h, port/hud.h.

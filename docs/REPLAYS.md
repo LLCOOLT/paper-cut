@@ -26,7 +26,7 @@ in both the recording and the playback.
 
 While recording or playing, what would change this game outside the pad's
 input is off: save states, save warps, the Practice tab's edits, fast travel,
-crowd control, photo mode, and taps or clicks on the game's lists (the
+crowd control, photo mode, autosave, and taps or clicks on the game's lists (the
 mouse's B and wheel go through the pad, so they stay). Fast-forward is off
 while recording (the clock is virtual); a playback can fast-forward (its
 frames come sooner; the game clock is unchanged). Quick resume keeps making
@@ -53,7 +53,10 @@ The label shows the frame and the length.
 
 A replay from another release's disc (its ID) is refused. One from another
 Paper Cut version, or with other mods, is played with a warning, as it may
-go out of step.
+go out of step; if it does, the label says which version made it. A build
+that isn't a release names its version with its commit (`dev+1a2b3c4d5`,
+cmake/build_id.cmake), since two such builds can play differently while
+both saying `dev`; online co-op compares the same.
 
 ## Checking a playback is right
 
@@ -64,13 +67,19 @@ before the frame plays. The playback compares each as it comes; the first
 that differs is logged (`[replay] out of step at frame N`) and shown under
 the label ("Out of step since frame N").
 
+## Ghost races
+
+A recording also keeps where Mario was every other frame: the room, his place, his facing and his animation (`port/src/aurora/ghost_aurora.c`; it only reads him, so the game is unchanged). A replay that has it shows **Race its ghost**: the game starts again from the replay's start, as for a playback (its settings, card, start save and clock), but with the player in control. The replay's Mario is drawn see-through, a pose of the game's own Mario animations, in the same room at the same time from the start; each room entered says how far ahead or behind the ghost was there (the ghost's first time in that room since the last one matched). **Stop the race** (or Shift+Esc) starts the game again as it was before. Quick resume writes nothing during a race. Local only for now.
+
+A hardcore run recorded from the Modes tab is saved at its Game Over, so it can be raced too.
+
 ## The file
 
 Little-endian; "bytes" is a u32 length and then them.
 
 | what | |
 | --- | --- |
-| magic | `PCRPLAY1` |
+| magic | `PCRPLAY1`, or `PCRPLAY2` when controllers 3 or 4 were there ([PLAYERS.md](PLAYERS.md)) |
 | bytes ×5 | Paper Cut's version, the disc's ID (G8ME01...), the mods (names, sorted), the name, the date |
 | u64 | the game clock's base |
 | u8, u8 | the start (0 the title, 1 a save), the save's card slot (0-3) |
@@ -78,8 +87,13 @@ Little-endian; "bytes" is a u32 length and then them.
 | u32, then per file bytes name, bytes data | the memory card's files (.gci) |
 | bytes | the start save (a .gci), or empty |
 | u32 | frames |
-| u32, then per run u32 frames + 2 × 16 bytes | the input, run-length: both controllers as online co-op's 16 bytes (`portOnlinePackPad`) |
+| u8 (`PCRPLAY2` only) | the controllers in each run: 4 |
+| u32, then per run u32 frames + 2 (or the count above) × 16 bytes | the input, run-length: each controller as online co-op's 16 bytes (`portOnlinePackPad`); in a `PCRPLAY1` file controllers 3 and 4 are none |
 | u32, then per check u32 frame + u64 hash | the fingerprints |
+| the rest (optional) | the ghost track: `GHST`, u32 frames per sample (2), u32 maps + 16 bytes each, u32 animations + 32 bytes each, u32 samples + 20 bytes each (u16 map, s16 animation, u8 pose group, u8 mirrored, s16 turn in tenths of a degree, f32 x, y, z); a map of 0xFFFF is "not in the field". Older builds stop reading before it. |
+| then (optional) | a leaderboard run's trailer ([LEADERBOARDS.md](LEADERBOARDS.md)): `MODE`, u32 6, u8 the board (0 boss rush mid-game, 1 late game, 2 Pit of 100 Trials), u8 finished, u32 the run's time in frames. Read after the ghost track (whose length its counts give); builds before it take it as the ghost track's end and skip it. |
+| then (optional) | Master Quest's set: `MQST`, bytes its text ("" the curated one). The playback plays that set, whatever the player's `master_quest_sets.txt` has (the settings only name it by its hash). Builds before it stop at it. |
+| then (optional) | The built-in randomizer's settings: `RAND`, bytes their JSON (as `randomizer.json`, the seed filled in). The playback takes them before the game starts, so the classic randomizer applies the recording's seed and the open world stamps a new file with it, whatever the player's `randomizer.json` has. A replay without it never stamps a new file with the open world. Builds before it stop at it. |
 
 A run from a save holds the card (about 72 KB a file) and the save (72 KB);
 the input itself is a few KB for minutes of play.

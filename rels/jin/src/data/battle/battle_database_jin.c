@@ -1795,3 +1795,96 @@ NpcTerritoryInfo btl_jin_setup_no_tbl[] = {
     {"BTLNO_JIN_10_06", 24},
     {0},
 };
+
+#ifdef TARGET_PC
+#include "port/directors_cut.h"
+
+/*
+ * Director's Cut (port/include/port/directors_cut.h): the Steeple's cut field enemies. This database has the
+ * battles of two Swoopers in jin_03 (the stairs) and two Boos in jin_07 (the room with the chest), named for
+ * those rooms (btlgrp_jin_jin_03_0x_off_1, btlgrp_jin_jin_07_0x_off_1/2), but no BTLNO names them and the
+ * rooms' setup files only park a Swooper and a Boo out of sight. They are put back with the battles they have,
+ * set up as the side rooms' Swoopers and the hall's Boos are.
+ */
+static NpcBattleSelect dc_jin_03_01[] = {
+    {50, &btlgrp_jin_jin_03_01_off_1, &jin_btlstage_data[1]},
+    {0},
+};
+
+static NpcBattleSelect dc_jin_03_02[] = {
+    {50, &btlgrp_jin_jin_03_02_off_1, &jin_btlstage_data[1]},
+    {0},
+};
+
+static NpcBattleSelect dc_jin_07_01[] = {
+    {20, &btlgrp_jin_jin_07_01_off_1, &jin_btlstage_data[2]},
+    {10, &btlgrp_jin_jin_07_01_off_2, &jin_btlstage_data[2]},
+    {0},
+};
+
+static NpcBattleSelect dc_jin_07_02[] = {
+    {20, &btlgrp_jin_jin_07_02_off_1, &jin_btlstage_data[2]},
+    {10, &btlgrp_jin_jin_07_02_off_2, &jin_btlstage_data[2]},
+    {0},
+};
+
+static NpcSetupBattleInfo dc_jin_setups[] = {
+    {
+        "JIN_03バサバサ", // name
+        NULL, 0, // mapName..fixedItem
+        -1, // swFlag
+        NULL, // altSelect
+        dc_jin_03_01, // select
+        0, 0, // battleFlags, randomMode
+        {{3, 3}, {3, 3}, {3, 3}, {0}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {0}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
+        "BGM_ZAKO_BATTLE1", // bgmName
+    },
+    {
+        "JIN_03バサバサ", // name
+        NULL, 0, // mapName..fixedItem
+        -1, // swFlag
+        NULL, // altSelect
+        dc_jin_03_02, // select
+        0, 0, // battleFlags, randomMode
+        {{3, 3}, {3, 3}, {3, 3}, {0}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {3, 3}, {0}, {3, 3}, {3, 3}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
+        "BGM_ZAKO_BATTLE1", // bgmName
+    },
+    {
+        "JIN_07テレサ", // name
+        NULL, 0, // mapName..fixedItem
+        -1, // swFlag
+        NULL, // altSelect
+        dc_jin_07_01, // select
+        0, 0, // battleFlags, randomMode
+        {{4, 4}, {4, 4}, {10, 10}, {0}, {4, 4}, {4, 4}, {4, 4}, {4, 4}, {4, 4}, {0}, {4, 4}, {4, 4}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
+        "BGM_ZAKO_BATTLE1", // bgmName
+    },
+    {
+        "JIN_07テレサ", // name
+        NULL, 0, // mapName..fixedItem
+        -1, // swFlag
+        NULL, // altSelect
+        dc_jin_07_02, // select
+        0, 0, // battleFlags, randomMode
+        {{4, 4}, {4, 4}, {10, 10}, {0}, {4, 4}, {4, 4}, {4, 4}, {4, 4}, {4, 4}, {0}, {4, 4}, {4, 4}, {1, 1}, {1, 1}, {1, 1}, {1, 1}}, // randomRanges
+        "BGM_ZAKO_BATTLE1", // bgmName
+    },
+};
+
+static const PortDirectorsCutEnemy dc_jin_enemies[] = {
+    {"jin_03", "バサバサ１", "バサバサ", "バサバサ（天井）", {-100.0f, 150.0f, 0.0f}, {150.0f, 50.0f, 40.0f},
+     {150.0f, 200.0f, 40.0f}, &dc_jin_setups[0]},
+    {"jin_03", "バサバサ２", "バサバサ", "バサバサ（天井）", {100.0f, 150.0f, 0.0f}, {150.0f, 50.0f, 40.0f},
+     {150.0f, 200.0f, 40.0f}, &dc_jin_setups[1]},
+    {"jin_07", "テレサ１", "テレサ", "テレサ", {-200.0f, 50.0f, 0.0f}, {150.0f, 50.0f, 100.0f},
+     {150.0f, 100.0f, 100.0f}, &dc_jin_setups[2]},
+    {"jin_07", "テレサ２", "テレサ", "テレサ", {200.0f, 50.0f, 0.0f}, {150.0f, 50.0f, 100.0f},
+     {150.0f, 100.0f, 100.0f}, &dc_jin_setups[3]},
+    {NULL},
+};
+
+/** Hands the cut battles to Director's Cut; jin.c's _prolog calls it. */
+void jin_directors_cut(void) {
+    portDirectorsCutRel("jin", NULL, dc_jin_enemies);
+}
+#endif

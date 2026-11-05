@@ -10,10 +10,12 @@
 #include "manager/evtmgr.h"
 #include "evt/evt_cmd.h"
 #include "driver/swdrv.h"
+#include "port/open_world.h"
 #include "mario/mario_party.h"
 #include "event.h"
 #include "port/platform.h"
 #include "port/gameplus.h"
+#include "port/toggles.h"
 #include "port/practice.h"
 
 /* $TTYD_TRACE=2: every running script, where it is and what it calls. */
@@ -123,12 +125,32 @@ static void warpFrame(u32 frame) {
         }
         {
             /* a partner, as a save at that point of the game would have
-             * ($TTYD_PARTY: party id, default 1 = Goombella; 0 = none) */
+             * ($TTYD_PARTY: party id, default 1 = Goombella; 0 = none;
+             * more after commas join too, the first one out) */
             const char* v = getenv("TTYD_PARTY");
             s32 party = v ? atoi(v) : 1;
             if (party > 0 && party < 8) {
+                const char* more = v != NULL ? strchr(v, ',') : NULL;
                 partyJoin(party);
+                for (; more != NULL; more = strchr(more + 1, ',')) {
+                    const s32 other = atoi(more + 1);
+                    if (other > 0 && other < 8) {
+                        partyJoin(other);
+                    }
+                }
                 marioPartyEntry(party);
+            }
+        }
+        {
+            /* $TTYD_OPEN_SEED: the file is an open-world randomizer file with this seed
+             * (port/include/port/open_world.h), its story as $TTYD_STORY says; never
+             * online or in a replay (portOpenTestSeed) */
+            const char* v = portOpenTestSeed();
+            if (v != NULL) {
+                portOpenStamp(v, 0x0F, 0);
+                if (getenv("TTYD_OPEN_SELFTEST") != NULL) {
+                    portOpenSelfTest();
+                }
             }
         }
         printf("[warp] frame %u: to %s%s%s\n", (unsigned)frame, map, bero[0] ? " " : "", bero);
@@ -192,6 +214,7 @@ void portTraceFrame(u32 frame) {
     portWatchdogFrame();
     warpFrame(frame);
     portGameplusFrame();
+    portChaosFrame();    /* chaos mode's timer and effects (port/toggles.h) */
     portPracticeFrame(); /* the speedrun timer, achievements */
     static s32 lastSeq = -2;
     static char lastMap[sizeof(gp->currentMapName)];

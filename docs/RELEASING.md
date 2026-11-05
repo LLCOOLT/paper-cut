@@ -25,7 +25,7 @@ Steps that download (configuring and building, which fetch dependencies; Gradle;
 
 ## Cutting a release
 
-1. Write `docs/release_notes/<version>.md`: what the release is and what's in it. `release.py` adds the checksums and the "no game data" line.
+1. Write `docs/release_notes/<version>.md`: what the release is and what's in it. `release.py` adds the checksums and the "no game data" line. The game's What's new page is made from the same file at build time (`tools/port/whats_new.py`): its "Highlights" section, one short line per bullet (about 50 characters, around nine of them: the first start's one screen), then its "What's new" and "Fixed" sections, each bullet's bold name and first sentence, so keep those short. The highlights are translated by their English in `port/assets/lang/<code>/whats-new.txt` (then `tools/port/gen_lang.py`); one with no translation shows in English.
 2. Tag the commit and push the tag:
    ```bash
    git tag v0.1.0
@@ -39,7 +39,7 @@ Steps that download (configuring and building, which fetch dependencies; Gradle;
    - `SHA256SUMS.txt`.
 
    Then the Mac runner adds to the same draft:
-   - `papercut-<version>-macos-<arch>.zip`: `Paper Cut.app`, holding the three versions' builds (signed ad hoc, not notarized), with the same extras;
+   - `papercut-<version>-macos-<arch>.zip`: `Paper Cut.app`, holding the three versions' builds (signed ad hoc, or with the Developer ID and notarized when the signing secrets are set: [Code signing](#code-signing)), with the same extras;
    - `papercut-<version>-<jp|us|eu>-ios-unsigned.ipa`: one app per version, for AltStore, SideStore or Sideloadly;
    - `papercut-<version>-linux-x64.zip`: the three builds and the `papercut` script, built in an Ubuntu container ([`tools/port/linux-release.Dockerfile`](../tools/port/linux-release.Dockerfile));
    - `SHA256SUMS-macos.txt`, and those checksums in the notes.
@@ -56,6 +56,31 @@ To build the packages without publishing, run `python tools/port/release.py 0.1.
 - **Tools:** Xcode, Homebrew's `cmake ninja llvm python`, Rust with `rustup target add aarch64-apple-ios`, and Docker or OrbStack for the Linux packages. The workflow's first step prints each one's version.
 - **Disc data**, for the Linux CI job's tests that play the game: `.env` sets `TTYD_LOCAL_DATA` to a folder outside `~/Documents` (which a service can't read), holding `orig/<version>/` (the disc images) and `data/<version>/` (each disc extracted with `tools/port/extract_disc.py`). Release builds hold none of it.
 - **The Linux CI job** runs local CI's headless stages in the Ubuntu container (`tools/port/linux_container.py`), with that folder mounted at its own path.
+
+## Code signing
+
+Releases are unsigned on Windows and signed ad hoc on the Mac until the repository has signing secrets. `release.py` signs whenever its environment has them, and otherwise prints a line saying it didn't and goes on as before. The release workflow passes these repository secrets (Settings > Secrets and variables > Actions); an unset one is empty.
+
+**Windows (Authenticode):** `release.py` signs `Paper Cut.exe`, the three builds, the example mod's library and any library not already signed (Microsoft's keep their own signature), with a SHA-256 signature and an RFC 3161 timestamp, before zipping. Then `signtool verify /pa` checks them.
+
+| Secret | |
+|---|---|
+| `PAPERCUT_SIGN_PFX_BASE64`, `PAPERCUT_SIGN_PFX_PASSWORD` | a code-signing certificate as a `.pfx`, base64-encoded (`PAPERCUT_SIGN_PFX` takes a path instead, outside CI) |
+| `PAPERCUT_SIGN_THUMBPRINT` | or a certificate in the runner's certificate store by its SHA-1 thumbprint: a hardware token's (EV certificates, and OV ones issued since June 2023, come on a token or in a cloud HSM) |
+| `PAPERCUT_SIGN_TIMESTAMP` (a variable) | the timestamp server; DigiCert's by default |
+
+`signtool` comes from the Windows SDK (`PAPERCUT_SIGNTOOL` overrides where). A token-held certificate needs its driver on the Windows runner, and the runner's user signed in to it.
+
+**macOS (Developer ID and notarization):** the app's libraries and executables are signed inside out with the Developer ID, the hardened runtime and a secure timestamp, with one entitlement: library validation off, so code mods built by players still load. With notarization credentials too, the app is sent to Apple's notary service, waited for, stapled and checked with `spctl`, and the zip says nothing about Open Anyway.
+
+| Secret | |
+|---|---|
+| `PAPERCUT_MACOS_SIGN_IDENTITY` | the identity's name, `Developer ID Application: <name> (<team ID>)` |
+| `PAPERCUT_MACOS_CERT_P12_BASE64`, `PAPERCUT_MACOS_CERT_PASSWORD` | the certificate and its key as a `.p12`, base64-encoded: imported into a keychain of the run's own (without them, the Mac runner's login keychain must have it) |
+| `PAPERCUT_NOTARY_KEY_BASE64`, `PAPERCUT_NOTARY_KEY_ID`, `PAPERCUT_NOTARY_ISSUER` | an App Store Connect API key (`.p8`) for `notarytool` (`PAPERCUT_NOTARY_KEY` takes a path instead, outside CI) |
+| `PAPERCUT_NOTARY_APPLE_ID`, `PAPERCUT_NOTARY_PASSWORD`, `PAPERCUT_NOTARY_TEAM_ID` | or an Apple ID with an app-specific password |
+
+The iOS `.ipa` files stay unsigned (AltStore, SideStore and Sideloadly sign them on install), and the APKs debug-signed.
 
 ## Nothing from the disc
 

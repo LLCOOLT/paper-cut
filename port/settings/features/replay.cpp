@@ -17,14 +17,31 @@
 //   this device's own); u32 card files, each bytes name, bytes data; bytes
 //   the start save (a .gci, or none); u32 frames; u32 runs, each u32 frames
 //   and 2 x 16 bytes (both players' controllers, as online co-op's); u32
-//   checks, each u32 frame and u64 fingerprint (every 600 frames).
+//   checks, each u32 frame and u64 fingerprint (every 600 frames); then,
+//   optional, the ghost track ("GHST...") and a leaderboard run's "MODE"
+//   trailer (u32 6, u8 the board, u8 finished, u32 the run's frames), then
+//   Master Quest's set ("MQST", bytes its text, "" the curated one: the
+//   playback plays it whatever master_quest_sets.txt has), then the built-in
+//   randomizer's settings ("RAND", bytes their JSON: the open world's new
+//   files and the classic randomizer's start take them, whatever this
+//   player's randomizer.json has).
+#include "../../archipelago/ttyd_rando.h"
+#include "port/boards.h"
+#include "port/lua_mods.h"
+#include "port/mods.h"
+#include "port/master_quest.h"
+#include "port/build_id.h"
 #include "port/online.h"
+#include "port/playmodes.h"
 #include "port/replay.h"
 #include "port/restart.h"
 #include "port/resume.h"
 #include "port/settings.h"
 #include "port/tr.h"
 #include "port/versions.h"
+#include "../settings_ui.h"
+#include "../file_util.h"
+#include "../device_keys.h"
 
 #include <SDL3/SDL.h>
 #include <aurora/card.h>
@@ -46,6 +63,8 @@
 #include <TargetConditionals.h>
 #endif
 
+using portui::hint;
+
 extern "C" {
 void CARDSetBasePath(const char* path, int chan); // Aurora (dolphin/card.h)
 void portLockstepBegin(long long base);             // os_time_aurora.c
@@ -56,41 +75,28 @@ void portRestartForReplay(void); // restart.cpp
 namespace {
 
 constexpr const char kMagic[8] = {'P', 'C', 'R', 'P', 'L', 'A', 'Y', '1'};
-constexpr const char* kExt = ".pcreplay";
+// three or four players: a pad count after the frames, then that many pads a run (older builds
+// don't open these; a replay with controllers 3 and 4 never there is still written as PCRPLAY1)
+constexpr const char kMagic2[8] = {'P', 'C', 'R', 'P', 'L', 'A', 'Y', '2'};
 
-// this device's own (prefixes), as settings presets' (presets.cpp), but the
-// intro and PAL's 50 Hz, which change the frames: never in a replay, never
-// changed by one
-constexpr const char* kDevice[] = {
-    "framerate", "vsync", "fullscreen", "resolution", "fps", "overlay_", "msaa", "tex_filter", "texture_upscale",
-    "supersample", "post_filter", "vrr", "hdr", "aniso", "lod_bias", "no_pop_in", "aspect_", "side_bars", "volume",
-    "mute", "music_", "sfx_", "ambience_", "background_input", "pause_unfocused", "cloud_sync", "sync_",
-    "phone_rumble", "rumble", "touch_", "auto_run", "stick_fixed", "tap_a", "orientation", "safe_area", "ff_",
-    "launcher_", "dump_textures", "key", "pad", "controller", "deadzone", "trigger", "second_player_port",
-    "menu_language", "speedrun_timer", "timer_", "split_category", "livesplit", "memory_watch", "achievements",
-    "button_prompts", "perf_overlay", "update_check", "window_", "quick_resume", "save_backups", "second_screen",
-    "companion", "custom_music", "settings_hint", "online", "crowd_", "jukebox", "game_sound_mode", "speakers",
-};
-
-bool device(const std::string& key) {
-  for (const char* p : kDevice) {
-    if (key.compare(0, std::strlen(p), p) == 0) {
-      return true;
+// controllers 3 and 4 are there in some run (the replay needs PCRPLAY2)
+bool usesMorePads(const std::vector<PortReplayRun>& runs) {
+  for (const PortReplayRun& run : runs) {
+    for (int i = PORT_REPLAY_PADS_OLD; i < PORT_REPLAY_PADS; i++) {
+      if (static_cast<signed char>(run.pads[i][10]) != -1) { // (the pad's err: PAD_ERR_NO_CONTROLLER)
+        return true;
+      }
     }
   }
   return false;
 }
+constexpr const char* kExt = ".pcreplay";
 
-std::string readFile(const std::string& path) {
-  size_t size = 0;
-  void* data = SDL_LoadFile(path.c_str(), &size);
-  std::string out;
-  if (data != nullptr) {
-    out.assign(static_cast<const char*>(data), size);
-    SDL_free(data);
-  }
-  return out;
-}
+// this device's own (device_keys.h): never in a replay, never changed by one (the intro and PAL's
+// 50 Hz, which a preset leaves alone, are the run's: they change the frames)
+bool device(const std::string& key) { return portdevice::owns(key); }
+
+using portfile::readFile;
 
 bool writeFile(const std::string& path, const std::string& data) {
   return SDL_SaveFile(path.c_str(), data.data(), data.size());
@@ -184,11 +190,52 @@ struct Replay {
   unsigned frames = 0;
   std::vector<PortReplayRun> runs;
   std::vector<PortReplayCheck> checks;
+  std::string ghost; // the ghost track ("GHST...", ghost_aurora.c), or none: after the checks, older builds stop before it
+  // a leaderboard run's (port/include/port/boards.h): its board (-1 none), whether it finished, its time in frames
+  int board = -1;
+  unsigned boardDone = 0, boardFrames = 0;
+  // Master Quest's set as the recording had it (portMasterQuestSelectedText); none in older replays
+  bool hasMasterQuest = false;
+  std::string masterQuest;
+  // the built-in randomizer's settings (ttyd_rando.h: the open world's new files, the classic's start); none in older replays
+  bool hasRando = false;
+  std::string rando;
 };
+
+constexpr char kModeTag[4] = {'M', 'O', 'D', 'E'};
+constexpr char kMasterQuestTag[4] = {'M', 'Q', 'S', 'T'};
+constexpr char kRandoTag[4] = {'R', 'A', 'N', 'D'};
+
+// the ghost track's length at p (ghost_aurora.c's layout), or left when it can't be told
+size_t ghostLength(const unsigned char* p, size_t left) {
+  auto at = [&](size_t o) -> unsigned {
+    return o + 4 <= left ? unsigned(p[o]) | unsigned(p[o + 1]) << 8 | unsigned(p[o + 2]) << 16 | unsigned(p[o + 3]) << 24
+                         : 0xFFFFFFFFu;
+  };
+  size_t o = 8;
+  const unsigned maps = at(o);
+  if (maps > 4096) {
+    return left;
+  }
+  o += 4 + size_t(maps) * 16;
+  const unsigned anims = at(o);
+  if (anims > 4096) {
+    return left;
+  }
+  o += 4 + size_t(anims) * 32;
+  const unsigned samples = at(o);
+  if (samples > 0x1000000) {
+    return left;
+  }
+  o += 4 + size_t(samples) * 20;
+  return o <= left ? o : left;
+}
 
 std::string encode(const Replay& r) {
   Writer w;
-  w.b.assign(kMagic, sizeof(kMagic));
+  const bool four = usesMorePads(r.runs);
+  const int pads = four ? PORT_REPLAY_PADS : PORT_REPLAY_PADS_OLD;
+  w.b.assign(four ? kMagic2 : kMagic, sizeof(kMagic));
   w.bytes(r.version);
   w.bytes(r.game);
   w.bytes(r.mods);
@@ -205,24 +252,47 @@ std::string encode(const Replay& r) {
   }
   w.bytes(r.save);
   w.u32(r.frames);
+  if (four) {
+    w.u8(static_cast<unsigned>(pads));
+  }
   w.u32(static_cast<unsigned>(r.runs.size()));
   for (const PortReplayRun& run : r.runs) {
     w.u32(run.frames);
-    w.b.append(reinterpret_cast<const char*>(run.pads), sizeof(run.pads));
+    w.b.append(reinterpret_cast<const char*>(run.pads), static_cast<size_t>(pads) * PORT_REPLAY_PAD_BYTES);
   }
   w.u32(static_cast<unsigned>(r.checks.size()));
   for (const PortReplayCheck& c : r.checks) {
     w.u32(c.frame);
     w.u64(c.hash);
   }
+  w.b += r.ghost;
+  if (r.board >= 0) {
+    w.b.append(kModeTag, 4);
+    w.u32(6);
+    w.u8(static_cast<unsigned>(r.board));
+    w.u8(r.boardDone);
+    w.u32(r.boardFrames);
+  }
+  if (r.hasMasterQuest) {
+    // (after MODE: builds before it stop at MODE, or at a tag that isn't MODE)
+    w.b.append(kMasterQuestTag, 4);
+    w.bytes(r.masterQuest);
+  }
+  if (r.hasRando) {
+    // (after MQST: builds before it leave what follows MQST)
+    w.b.append(kRandoTag, 4);
+    w.bytes(r.rando);
+  }
   return w.b;
 }
 
 // headerOnly: up to the settings (the list's)
 bool decode(const std::string& data, Replay& r, bool headerOnly = false) {
-  if (data.size() < sizeof(kMagic) || std::memcmp(data.data(), kMagic, sizeof(kMagic)) != 0) {
+  if (data.size() < sizeof(kMagic) || (std::memcmp(data.data(), kMagic, sizeof(kMagic)) != 0 &&
+                                       std::memcmp(data.data(), kMagic2, sizeof(kMagic2)) != 0)) {
     return false;
   }
+  const bool four = std::memcmp(data.data(), kMagic2, sizeof(kMagic2)) == 0;
   Reader rd{reinterpret_cast<const unsigned char*>(data.data()) + sizeof(kMagic), data.size() - sizeof(kMagic)};
   r.version = rd.bytes();
   r.game = rd.bytes();
@@ -244,17 +314,25 @@ bool decode(const std::string& data, Replay& r, bool headerOnly = false) {
   }
   r.save = rd.bytes();
   r.frames = rd.u32();
+  const unsigned pads = four ? rd.u8() : PORT_REPLAY_PADS_OLD;
+  if (pads < PORT_REPLAY_PADS_OLD || pads > PORT_REPLAY_PADS) {
+    return false;
+  }
+  const size_t bytes = static_cast<size_t>(pads) * PORT_REPLAY_PAD_BYTES;
   const unsigned runs = rd.u32();
   for (unsigned i = 0; i < runs && rd.ok; i++) {
     PortReplayRun run{};
     run.frames = rd.u32();
-    if (rd.left < sizeof(run.pads)) {
+    if (rd.left < bytes) {
       rd.ok = false;
       break;
     }
-    std::memcpy(run.pads, rd.p, sizeof(run.pads));
-    rd.p += sizeof(run.pads);
-    rd.left -= sizeof(run.pads);
+    std::memcpy(run.pads, rd.p, bytes);
+    for (unsigned k = pads; k < PORT_REPLAY_PADS; k++) {
+      run.pads[k][10] = 0xFF; // (not in the file: no controller there, PAD_ERR_NO_CONTROLLER)
+    }
+    rd.p += bytes;
+    rd.left -= bytes;
     r.runs.push_back(run);
   }
   const unsigned checks = rd.u32();
@@ -263,6 +341,47 @@ bool decode(const std::string& data, Replay& r, bool headerOnly = false) {
     c.frame = rd.u32();
     c.hash = rd.u64();
     r.checks.push_back(c);
+  }
+  if (rd.ok && portGhostHasTrack(rd.p, rd.left)) {
+    const size_t n = ghostLength(rd.p, rd.left);
+    r.ghost.assign(reinterpret_cast<const char*>(rd.p), n);
+    rd.p += n;
+    rd.left -= n;
+  }
+  if (rd.ok && rd.left >= 8 && std::memcmp(rd.p, kModeTag, 4) == 0) {
+    rd.p += 4;
+    rd.left -= 4;
+    const unsigned size = rd.u32();
+    if (size >= 6 && size <= rd.left) {
+      const unsigned board = rd.u8();
+      r.boardDone = rd.u8();
+      r.boardFrames = rd.u32();
+      r.board = board < PORT_BOARD_COUNT ? int(board) : -1;
+      rd.p += size - 6; // (a longer trailer from a later build: the rest skipped)
+      rd.left -= size - 6;
+    }
+  }
+  if (rd.ok && rd.left >= 8 && std::memcmp(rd.p, kMasterQuestTag, 4) == 0) {
+    rd.p += 4;
+    rd.left -= 4;
+    Reader mq = rd;
+    std::string text = mq.bytes();
+    if (mq.ok) {
+      r.masterQuest = std::move(text);
+      r.hasMasterQuest = true;
+      rd = mq;
+    }
+  }
+  if (rd.ok && rd.left >= 8 && std::memcmp(rd.p, kRandoTag, 4) == 0) {
+    rd.p += 4;
+    rd.left -= 4;
+    Reader rr = rd;
+    std::string text = rr.bytes();
+    if (rr.ok) {
+      r.rando = std::move(text);
+      r.hasRando = true;
+      rd = rr;
+    }
   }
   return rd.ok;
 }
@@ -296,18 +415,12 @@ std::string cardDir(const char* base) {
 }
 
 std::string modsList() {
-  int count = 0;
-  std::vector<std::string> names;
-  if (char** found = SDL_GlobDirectory((std::string(portSettingsUserPath()) + "/mods").c_str(), "*", 0, &count)) {
-    for (int i = 0; i < count; i++) {
-      names.push_back(found[i]);
-    }
-    SDL_free(found);
-  }
-  std::sort(names.begin(), names.end());
-  std::string list;
-  for (const std::string& n : names) {
-    list += (list.empty() ? "" : ",") + n;
+  // the mods on that change the game, as online play compares them (port/include/port/mods.h):
+  // not the mods folder's bookkeeping, mods turned off or draw-only ones
+  std::string list = portModsOnlineList();
+  // the Lua mods' files too (a replay plays the same only with the same Lua)
+  if (const char* lua = portLuaHash(); lua[0] != '\0') {
+    list += std::string("|lua:") + lua;
   }
   return list;
 }
@@ -366,6 +479,10 @@ std::string stopAndSave() {
   sRec.checks.assign(checks, checks + checkCount);
   sRec.frames = portReplayFrame();
   sRec.name = sName[0] != '\0' ? sName : "Replay";
+  sRec.ghost.assign(portGhostBlob(nullptr, 0), '\0'); // where Mario was, for ghost races
+  if (!sRec.ghost.empty()) {
+    portGhostBlob(reinterpret_cast<unsigned char*>(sRec.ghost.data()), sRec.ghost.size());
+  }
   std::string path;
   if (const char* out = SDL_getenv("TTYD_REPLAY_OUT")) { // tests: here
     path = out;
@@ -388,7 +505,7 @@ std::string stopAndSave() {
 // the recording's start, at start-up: what the playback needs to start the same
 void beginRecording() {
   sRec = Replay{};
-  sRec.version = PORT_VERSION;
+  sRec.version = portBuildVersion();
   sRec.game = gameId();
   sRec.mods = modsList();
   sRec.date = now(false);
@@ -404,6 +521,16 @@ void beginRecording() {
     }
   }
   sRec.settings = settings;
+  // Master Quest's set as master_quest_sets.txt has it now (the settings name it only by its hash)
+  sRec.hasMasterQuest = true;
+  sRec.masterQuest = portMasterQuestSelectedText();
+  // and this game on the same text for the run (an edit of the set meanwhile changes neither)
+  portMasterQuestSetForRun(sRec.masterQuest.data(), sRec.masterQuest.size());
+  // the built-in randomizer's as this start-up applied them (a seed made now when it is on with
+  // none), and this game on the same for the run (the page changed meanwhile changes neither)
+  sRec.hasRando = true;
+  sRec.rando = portRandoSessionText(portSettingsUserPath());
+  portRandoSettingsForRun(sRec.rando);
   const std::string dir = cardDir(nullptr);
   int count = 0;
   if (char** found = SDL_GlobDirectory(dir.c_str(), "*.gci", 0, &count)) {
@@ -419,14 +546,20 @@ void beginRecording() {
     sRec.slot = slot != nullptr && slot[0] >= '0' && slot[0] <= '3' ? static_cast<unsigned>(slot[0] - '0') : 3;
     sRec.start = sRec.save.empty() ? 0 : 1;
   }
+  // a leaderboard run's (boards.cpp): armed now, so its start comes on the same frame in the playback
+  if (const char* board = SDL_getenv("TTYD_BOARD_RUN"); board != nullptr && board[0] >= '0' &&
+                                                        board[0] < '0' + PORT_BOARD_COUNT) {
+    sRec.board = board[0] - '0';
+    portBoardRunArm(sRec.board);
+  }
   portLockstepBegin(static_cast<long long>(sRec.base));
   portReplayRecordBegin();
   std::printf("[replay] recording from %s\n", sRec.start ? "a save" : "the title");
   std::fflush(stdout);
 }
 
-// a playback's start, at start-up; false: the game starts as usual
-bool beginPlayback(const char* path) {
+// a playback's start, at start-up (race: a ghost race's, from the same start); false: the game starts as usual
+bool beginPlayback(const char* path, bool race = false) {
   sPlayPath = path;
   if (!decode(readFile(path), sPlay)) {
     std::printf("[replay] %s isn't a replay (or isn't whole)\n", path);
@@ -438,11 +571,11 @@ bool beginPlayback(const char* path) {
     std::fflush(stdout);
     return false;
   }
-  sVersionDiffers = sPlay.version != PORT_VERSION;
+  sVersionDiffers = sPlay.version != portBuildVersion();
   sModsDiffer = sPlay.mods != modsList();
   if (sVersionDiffers) {
     std::printf("[replay] made with Paper Cut %s, this is %s: it may go out of step\n", sPlay.version.c_str(),
-                PORT_VERSION);
+                portBuildVersion());
   }
   if (sModsDiffer) {
     std::printf("[replay] made with other mods (%s): it may go out of step\n", sPlay.mods.c_str());
@@ -452,8 +585,12 @@ bool beginPlayback(const char* path) {
   portSettingsSave();
   for (const auto& [key, value] : parseSettings(readFile(std::string(portSettingsUserPath()) + "/settings.txt"))) {
     int def = 0;
-    if (!device(key) && wanted.find(key) == wanted.end() && portSettingsDefault(key.c_str(), &def) &&
-        std::to_string(def) != value) {
+    if (device(key) || wanted.find(key) != wanted.end()) {
+      continue;
+    }
+    if (!portSettingsDefault(key.c_str(), &def)) {
+      portSettingsExtraToDefault(key.c_str()); // declared on first use: at its default once it is
+    } else if (std::to_string(def) != value) {
       portSettingsSetForRun(key.c_str(), std::to_string(def).c_str());
     }
   }
@@ -461,6 +598,15 @@ bool beginPlayback(const char* path) {
     if (!device(key)) {
       portSettingsSetForRun(key.c_str(), value.c_str());
     }
+  }
+  if (sPlay.hasMasterQuest) {
+    // the recording's set, whatever this player's master_quest_sets.txt has (online.cpp alike)
+    portMasterQuestSetForRun(sPlay.masterQuest.data(), sPlay.masterQuest.size());
+  }
+  if (sPlay.hasRando) {
+    // the recording's randomizer settings (portReplayEarly put them in place before the classic
+    // randomizer applied: this only makes sure, for the open world's new files)
+    portRandoSettingsForRun(sPlay.rando);
   }
   portSettingsHoldSaves(1); // nothing of it saved to this player's settings.txt
   portSettingsApply();
@@ -488,6 +634,18 @@ bool beginPlayback(const char* path) {
     portWarpRequestResume(save.c_str(), static_cast<int>(sPlay.slot));
   }
   portLockstepBegin(static_cast<long long>(sPlay.base));
+  if (sPlay.board >= 0) {
+    portBoardRunArm(sPlay.board); // a leaderboard run's start, as in its recording
+  }
+  if (race) {
+    // a ghost race: the same start, the player's own input, the replay's Mario drawn as a ghost
+    if (!portGhostRaceBegin(reinterpret_cast<const unsigned char*>(sPlay.ghost.data()), sPlay.ghost.size(),
+                            sPlay.name.c_str())) {
+      std::printf("[replay] %s has no ghost to race\n", path);
+    }
+    std::fflush(stdout);
+    return true;
+  }
   portReplayPlayBegin(sPlay.runs.data(), sPlay.runs.size(), sPlay.checks.data(), sPlay.checks.size());
   std::printf("[replay] playing %s: '%s', %s, from %s\n", path, sPlay.name.c_str(), sPlay.date.c_str(),
               sPlay.start ? "a save" : "the title");
@@ -520,6 +678,12 @@ void restartRecording(bool fromSave) {
 void restartPlaying(const std::string& path) {
   sNextEnv.clear();
   sNextEnv.emplace_back("TTYD_REPLAY_PLAY", path);
+  portRestartForReplay();
+}
+
+void restartRacing(const std::string& path) {
+  sNextEnv.clear();
+  sNextEnv.emplace_back("TTYD_GHOST_RACE", path);
   portRestartForReplay();
 }
 
@@ -557,6 +721,7 @@ struct Entry {
   std::string path, file;
   Replay head;
   bool ok = false;
+  bool ghost = false; // it keeps where Mario was: it can be raced
 };
 std::vector<Entry> sList;
 int sPicked = -1;
@@ -578,7 +743,10 @@ Entry entryFor(const std::string& path, const std::string& file) {
   Entry e;
   e.path = path;
   e.file = file;
-  e.ok = decode(readFile(path), e.head, true);
+  const std::string data = readFile(path);
+  e.ok = decode(data, e.head, true);
+  Replay whole;
+  e.ghost = e.ok && decode(data, whole) && !whole.ghost.empty();
   return e;
 }
 
@@ -597,12 +765,6 @@ void refresh() {
   std::sort(sList.begin(), sList.end(), [](const Entry& a, const Entry& b) { return a.head.date > b.head.date; });
 }
 
-void hint(const char* text) {
-  ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
-  ImGui::TextWrapped("%s", text);
-  ImGui::PopStyleColor();
-}
-
 // what's to say about playing this one; false: it can't be played here
 bool playable(const Entry& e, std::string& why) {
   if (!e.ok) {
@@ -616,11 +778,11 @@ bool playable(const Entry& e, std::string& why) {
     why = text;
     return false;
   }
-  if (e.head.version != PORT_VERSION) {
+  if (e.head.version != portBuildVersion()) {
     char text[200];
     std::snprintf(text, sizeof(text),
                   portTr("Made with Paper Cut %s (this is %s): it may go out of step. You'll be told if it does."),
-                  e.head.version.c_str(), PORT_VERSION);
+                  e.head.version.c_str(), portBuildVersion());
     why = text;
   }
   return true;
@@ -652,6 +814,13 @@ void section(int inGame) {
       stopAndSave();
       refresh();
     }
+  } else if (portGhostRacing()) {
+    ImGui::Text(portTr("Racing the ghost of '%s'."), portGhostRaceName());
+    if (ImGui::Button(portTrLabel("Stop the race##ghost_leave"))) {
+      restartLeaving();
+    }
+    ImGui::SameLine();
+    hint(portTr("The game starts again as it was before the race (also Shift+Esc)."));
   } else if (portReplayPlaying()) {
     ImGui::Text(portTr("Playing '%s': %u of %u frames."), sPlay.name.c_str(), portReplayFrame(), portReplayLength());
     if (ImGui::Button(portTrLabel("Stop the replay##replay_leave"))) {
@@ -738,10 +907,21 @@ void section(int inGame) {
     if (ImGui::Button(portTrLabel("Play##replay_play"))) {
       restartPlaying(e.path);
     }
+    if (e.ghost) {
+      ImGui::SameLine();
+      if (ImGui::Button(portTrLabel("Race its ghost##replay_race"))) {
+        restartRacing(e.path);
+      }
+    }
     ImGui::EndDisabled();
+    if (ok && e.ghost) {
+      hint(portTr("Race its ghost: the game starts again from the replay's start with you in control, and the "
+                  "replay's Mario runs beside you, see-through, in the same rooms. Each room says how far ahead or "
+                  "behind you are."));
+    }
     if (ok) {
       ImGui::SameLine();
-      hint(portTr("The game starts again to play it; Esc or B stops it."));
+      hint(portTr("The game starts again to play it; Esc or {B} stops it."));
     }
   }
 }
@@ -756,7 +936,7 @@ void drawLabel() {
   if (portReplayRecording()) {
     std::snprintf(text, sizeof(text), "%s %s", portTr("Recording"), frameTime(portReplayFrame()).c_str());
   } else if (portReplayFinished()) {
-    std::snprintf(text, sizeof(text), "%s", portTr("Replay finished: Esc or B to leave"));
+    std::snprintf(text, sizeof(text), "%s", portTr("Replay finished: Esc or {B} to leave"));
   } else {
     std::snprintf(text, sizeof(text), "%s %u / %u", portTr("Replay"), portReplayFrame(), portReplayLength());
   }
@@ -765,6 +945,11 @@ void drawLabel() {
     char line[160];
     std::snprintf(line, sizeof(line), portTr("Out of step since frame %ld"), portReplayOutOfStep());
     extra = line;
+    if (sVersionDiffers) {
+      // why, most likely: another build's game code (ImGui draws the second line under it)
+      std::snprintf(line, sizeof(line), portTr("Made with Paper Cut %s"), sPlay.version.c_str());
+      extra += std::string("\n") + line;
+    }
   } else if (portReplayPlaying() && sVersionDiffers) {
     char line[160];
     std::snprintf(line, sizeof(line), portTr("Made with Paper Cut %s"), sPlay.version.c_str());
@@ -799,6 +984,24 @@ void frame(int pageOpen) {
       std::_Exit(0);
     }
   }
+  // a leaderboard run's recording: saved as it ends (its time in the trailer)
+  if (portReplayRecording() && sRec.board >= 0) {
+    const int state = portBoardRunState();
+    if (state == PORT_BOARD_RUN_DONE || state == PORT_BOARD_RUN_FAILED) {
+      sRec.boardDone = state == PORT_BOARD_RUN_DONE ? 1 : 0;
+      sRec.boardFrames = portBoardRunFrames();
+      const std::string path = stopAndSave();
+      if (!path.empty()) {
+        sMessage = std::string(portTr(state == PORT_BOARD_RUN_DONE
+                                          ? "Run finished and saved: check and upload it in Modes > Leaderboards."
+                                          : "The run ended before its end: saved as a replay, not for the board.")) +
+                   " " + path;
+      }
+      if (sExit) {
+        std::_Exit(0);
+      }
+    }
+  }
   if (portReplayPlaying() && sExit && portReplayFinished()) {
     std::printf("[replay] test: done\n");
     std::fflush(stdout);
@@ -817,7 +1020,8 @@ int event(const void* sdlEvent) {
     stopAndSave(); // a recording under way kept
     return 0;
   }
-  if (portReplayPlaying() && e->type == SDL_EVENT_KEY_DOWN && !e->key.repeat && e->key.key == SDLK_ESCAPE) {
+  if ((portReplayPlaying() || portGhostRacing()) && e->type == SDL_EVENT_KEY_DOWN && !e->key.repeat &&
+      e->key.key == SDLK_ESCAPE && (portReplayPlaying() || (e->key.mod & SDL_KMOD_SHIFT))) { // a race: Shift+Esc
     restartLeaving();
     return 1;
   }
@@ -835,18 +1039,116 @@ const bool sAdded = [] {
 
 } // namespace
 
+// At start-up before the mods (main_aurora.c): a playback's randomizer settings, so the
+// classic randomizer applies the recording's at the start (portApInit) as it did there
+extern "C" void portReplayEarly(void) {
+  const char* play = SDL_getenv("TTYD_REPLAY_PLAY");
+  if (play == nullptr || play[0] == '\0') {
+    play = SDL_getenv("TTYD_GHOST_RACE");
+  }
+  if (play == nullptr || play[0] == '\0') {
+    return;
+  }
+  Replay r;
+  if (decode(readFile(play), r) && r.hasRando) {
+    portRandoSettingsForRun(r.rando);
+  }
+}
+
 extern "C" void portReplayStartup(void) {
   if (const char* play = SDL_getenv("TTYD_REPLAY_PLAY"); play != nullptr && play[0] != '\0') {
     if (portOnlineActive()) {
       return;
     }
     beginPlayback(play);
+  } else if (const char* race = SDL_getenv("TTYD_GHOST_RACE"); race != nullptr && race[0] != '\0') {
+    if (!portOnlineActive()) {
+      beginPlayback(race, true);
+    }
   } else if (SDL_getenv("TTYD_REPLAY_RECORD") != nullptr && !portOnlineActive()) {
     beginRecording();
   }
 }
 
 extern "C" void portReplaySaveIfRecording(void) { stopAndSave(); }
+
+extern "C" int portReplayRestartRecording(const char* name, int fromSave) {
+  if (!canRestart() || portReplayActive() || (fromSave && !quickResumeSave())) {
+    return 0;
+  }
+  std::snprintf(sName, sizeof(sName), "%s", name != nullptr && name[0] != 0 ? name : "Replay");
+  restartRecording(fromSave != 0);
+  return 1;
+}
+
+extern "C" int portReplayCanRestart(void) { return canRestart() && !portReplayActive() ? 1 : 0; }
+
+extern "C" int portReplayCanRecordHere(void) { return portReplayCanRestart() && quickResumeSave() ? 1 : 0; }
+
+extern "C" int portReplayRestartForBoard(int board, const char* name) {
+  if (board < 0 || board >= PORT_BOARD_COUNT || !portReplayCanRecordHere()) {
+    return 0;
+  }
+  std::snprintf(sName, sizeof(sName), "%s", name != nullptr && name[0] != 0 ? name : portBoardTitle(board));
+  restartRecording(true);
+  sNextEnv.emplace_back("TTYD_BOARD_RUN", std::to_string(board));
+  return 1;
+}
+
+extern "C" int portReplayRestartPlay(const char* path, const char* env, const char* value) {
+  if (!portReplayCanRestart()) {
+    return 0;
+  }
+  restartPlaying(path);
+  if (env != nullptr) {
+    sNextEnv.emplace_back(env, value != nullptr ? value : "1");
+  }
+  return 1;
+}
+
+extern "C" int portReplayPlayingBoard(int* board, unsigned* frames, int* done) {
+  if (!portReplayPlaying() || sPlay.board < 0) {
+    return 0;
+  }
+  *board = sPlay.board;
+  *frames = sPlay.boardFrames;
+  *done = static_cast<int>(sPlay.boardDone);
+  return 1;
+}
+
+extern "C" const char* portReplayPlayingPath(void) { return sPlayPath.c_str(); }
+
+namespace port_replay {
+
+// a replay file's leaderboard run (boards.cpp's list): false when it's none
+bool boardRun(const std::string& path, int& board, unsigned& frames, bool& done, std::string& name, std::string& date,
+              std::string& game, std::string& version) {
+  Replay r;
+  if (!decode(readFile(path), r) || r.board < 0) {
+    return false;
+  }
+  board = r.board;
+  frames = r.boardFrames;
+  done = r.boardDone != 0;
+  name = r.name;
+  date = r.date;
+  game = r.game;
+  version = r.version;
+  return true;
+}
+
+// the bytes a board keeps of a replay: all of it but the ghost track (only for races here, and large)
+bool forUpload(const std::string& path, std::string& bytes) {
+  Replay r;
+  if (!decode(readFile(path), r) || r.board < 0) {
+    return false;
+  }
+  r.ghost.clear();
+  bytes = encode(r);
+  return true;
+}
+
+} // namespace port_replay
 
 extern "C" void portReplayRestartEnv(void) {
   SDL_Environment* env = SDL_GetEnvironment();

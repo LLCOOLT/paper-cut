@@ -10,6 +10,7 @@
 #include "port/hook_slot.h"
 #include "port/hook_list.h"
 #include "port/layout.h"
+#include "port/lua_mods.h"
 #include "port/mod_host.h"
 #include "../archipelago/ttyd_ap.h"
 
@@ -432,6 +433,7 @@ void portModsAreaEvent(const char* area, int entered) {
     portApAreaLinked(area); // an Archipelago seed's items, before the mods see the area
   }
   fire(sArea, area, entered);
+  portLuaEvent(entered ? "area_enter" : "area_leave", "s", area); // Lua mods (port/include/port/lua_mods.h)
 }
 
 void portModsShopEvent(const char* map, void* items, int count) { fire(sShop, map, items, count); }

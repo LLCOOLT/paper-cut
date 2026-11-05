@@ -46,7 +46,7 @@ Change how Mario, his partners and the status bar look.
 Wie Mario, seine Partner und die Statusleiste aussehen.
 
 Koops
-Koops
+Koopio
 
 Shell
 Panzer
@@ -67,7 +67,43 @@ Not during online play or a replay.
 Nicht beim Online-Spiel oder in einer Wiederholung.
 
 Ms. Mowz
-Ms. Mowz
+Nagerine
 
-Mask and cape
-Maske und Umhang
+Mask
+Maske
+
+Goombella
+Gumbrina
+
+Flurrie
+Aerona
+
+Vivian
+Barbara
+
+Bobbery
+Bart-omb
+
+Hair
+Haare
+
+Helmet
+Helm
+
+Dress
+Kleid
+
+Body
+Körper
+
+Hat
+Hut
+
+Fuse
+Zündschnur
+
+Cape
+Umhang
+
+The banners and the menus in colours that go together. A part with its own keeps it.
+Banner und Menüs in Farben, die zusammenpassen. Ein Teil mit eigener Farbe behält sie.

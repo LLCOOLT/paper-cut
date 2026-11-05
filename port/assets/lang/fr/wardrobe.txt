@@ -46,7 +46,7 @@ Change how Mario, his partners and the status bar look.
 Changez l'allure de Mario, de ses partenaires et de la barre d'état.
 
 Koops
-Koops
+Koopek
 
 Shell
 Carapace
@@ -67,7 +67,43 @@ Not during online play or a replay.
 Pas en ligne ni pendant un replay.
 
 Ms. Mowz
-Ms. Mowz
+Carmina
 
-Mask and cape
-Masque et cape
+Mask
+Masque
+
+Goombella
+Goomélie
+
+Flurrie
+Cumulia
+
+Vivian
+Viviane
+
+Bobbery
+Bombart
+
+Hair
+Cheveux
+
+Helmet
+Casque
+
+Dress
+Robe
+
+Body
+Corps
+
+Hat
+Chapeau
+
+Fuse
+Mèche
+
+Cape
+Cape
+
+The banners and the menus in colours that go together. A part with its own keeps it.
+Les bandeaux et les menus dans des couleurs assorties. Une partie qui a la sienne la garde.

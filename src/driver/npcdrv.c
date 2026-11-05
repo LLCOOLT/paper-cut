@@ -3,6 +3,8 @@
 #ifdef TARGET_PC
 #include "port/platform.h"
 #include "port/gameplus.h"
+#include "port/directors_cut.h"
+#include "port/port_text.h"
 #endif
 #include "port_hook.h"
 #include "wide_x.h"
@@ -1873,6 +1875,9 @@ static void _fbatFirstAttackAnnouceDisp(CameraId camId, void* param) {
     FontDrawColor((GXColor){0xFF, 0xFF, 0xFF, 0xFF});
     FontDrawScale(0.1f);
     for (i = 0; i < lines; i++) {
+#ifdef TARGET_PC
+        portTextCopied(buf[i], message, NULL); /* a mod's message: Paper Cut's (port/port_text.h) */
+#endif
         FontDrawStringShake(mulf(0.1f, x - width / 2), mulf(0.1f, y + -29 * i - 3.0f), buf[i]);
     }
 }
@@ -3322,7 +3327,11 @@ void PORT_HOOKABLE(npcSetupBattleInfo)(NpcEntry* npc, NpcSetupBattleInfo* setup)
         info->flowersDropped = 0;
         info->bgmName = setup->bgmName;
         if (setup->swFlag >= -EVTDAT_GSWF_BASE && setup->swFlag <= EVTDAT_GSWF_MAX) {
+#ifdef TARGET_PC /* Director's Cut: a set nothing chooses, chosen (port/include/port/directors_cut.h) */
+            if (swGet(setup->swFlag + EVTDAT_GSWF_BASE) || portDirectorsCutFlag(setup->swFlag + EVTDAT_GSWF_BASE)) {
+#else
             if (swGet(setup->swFlag + EVTDAT_GSWF_BASE)) {
+#endif
                 select = setup->altSelect;
             } else {
                 select = setup->select;
@@ -3330,6 +3339,9 @@ void PORT_HOOKABLE(npcSetupBattleInfo)(NpcEntry* npc, NpcSetupBattleInfo* setup)
         } else {
             select = setup->select;
         }
+#ifdef TARGET_PC /* Director's Cut: the list with an area's cut groups (port/include/port/directors_cut.h) */
+        select = (NpcBattleSelect*)portDirectorsCutSelect(select);
+#endif
         info->groupSetup = NULL;
         if (select) {
             NpcBattleSelect* p;

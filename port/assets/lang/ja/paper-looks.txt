@@ -1,0 +1,31 @@
+# Paper looks and the pop-up launcher (port/settings/features/paper_visuals.cpp), in Japanese: an English line, then its translation, then a blank line.
+
+Paper shadows
+紙の影
+
+Characters cast shadows shaped like their paper cut-outs, stretching away from the nearest lamp, instead of the round ones.
+キャラクターが丸い影の代わりに、紙の切り抜きの形をした影を落とし、いちばん近いランプから遠ざかるように伸びます。
+
+Paper physics
+紙の動き
+
+Characters bend like paper: they lean into fast moves, flutter on quick turns and squash on hard landings. Only the look changes.
+キャラクターが紙のようにしなります：速い動きで傾き、すばやいターンでひらひらし、強い着地でつぶれます。変わるのは見た目だけです。
+
+Subtle
+控えめ
+
+Lively
+にぎやか
+
+Smooth paper edges
+なめらかな紙のふち
+
+Clean outlines on the paper cut-outs at high resolutions instead of jagged steps; smoothest with anti-aliasing (MSAA) on.
+高い解像度で、紙の切り抜きのふちがギザギザの段ではなくきれいな輪郭になります。アンチエイリアス（MSAA）をオンにするといちばんなめらかです。
+
+Pop-up launcher
+飛び出す絵本のランチャー
+
+The launcher's stage builds like a pop-up book as it opens: the curtains part, the title unfolds and Mario and his partners spring up (once the game has run on that disc). Any button skips it.
+ランチャーを開くと、舞台が飛び出す絵本のように組み上がります：幕が開き、タイトルが立ち上がり、マリオと仲間たちが飛び出します（そのディスクでゲームを一度遊んだあと）。どのボタンでもスキップできます。

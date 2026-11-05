@@ -30,6 +30,9 @@ void portGXSetArraySized(int attr, const void* data, unsigned char stride, unsig
     if (size > want && want != 0) {
         size = want;
     }
+    if (size != 0 && mem1Lo != 0 && p >= mem1Lo && p < mem1Hi && size > mem1Hi - p) {
+        size = (u32)(mem1Hi - p); /* (a caller's window never runs off game memory) */
+    }
     if (size == 0 && data != NULL) {
         if (mem1Lo != 0 && p >= mem1Lo && p < mem1Hi) {
             size = (mem1Hi - p) < want ? (u32)(mem1Hi - p) : want;

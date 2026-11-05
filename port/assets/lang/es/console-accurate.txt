@@ -1,0 +1,7 @@
+# Console-accurate mode (port/settings/features/console_accurate.cpp), en español: an English line, then its translation, then a blank line.
+
+Console-accurate mode
+Modo fiel a la consola
+
+The game as the GameCube plays it: every setting that changes play goes back to the original and is locked, with Text speed, Menu speed and Rewind. The speedrun glitches are the game's own and all still there. Turned off, your settings come back as they were. Races and leaderboards can require it.
+El juego tal como lo juega la GameCube: cada ajuste que cambia el juego vuelve al original y queda bloqueado, junto con la velocidad del texto, la de los menús y el rebobinado. Los fallos de los speedruns son del propio juego y siguen todos ahí. Al apagarlo, tus ajustes vuelven como estaban. Las carreras y las clasificaciones pueden exigirlo.

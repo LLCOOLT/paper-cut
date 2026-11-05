@@ -1,0 +1,124 @@
+# battle-recap, the battle recap's card and the Journal's Records in the JP release's font: see tools/port/gen_lang.py
+
+Battle recap
+バトルの　まとめ
+
+Damage dealt
+あたえた　ダメージ
+
+Damage taken
+うけた　ダメージ
+
+Best hit
+さいこうの　いちげき
+
+Enemies defeated
+たおした　てき
+
+Superguards
+スーパーガード
+
+Guards
+ガード
+
+Stylish moves
+アクロバット技
+
+Turns
+ターン
+
+FP used
+つかった　FP
+
+Items used
+つかった　アイテム
+
+%d Star Points
+スターポイント　%d
+
+Grade
+ひょうか
+
+Dealt %d   Taken %d   Best hit %d   Turns %d
+あたえた　%d　うけた　%d　さいこう　%d　ターン　%d
+
+   Superguards %d
+　スーパーガード　%d
+
+Adventure
+ぼうけん
+
+Time played
+プレイ時間
+
+Distance walked
+あるいた　きょり
+
+Coins gained
+てに　いれた　コイン
+
+Jumps
+ジャンプ
+
+Spin Jumps
+ヒップドロップ
+
+Hammer swings
+ハンマーを　ふった　回数
+
+Star Points earned
+もらった　スターポイント
+
+
+Battles won
+かった　バトル
+
+Battles fled
+にげた　バトル
+
+Battles lost
+まけた　バトル
+
+Jump attacks
+ジャンプ　こうげき
+
+Hammer attacks
+ハンマー　こうげき
+
+
+Partner moves
+なかまの　技
+
+FP spent
+つかった　FP
+
+Appeals
+アピール
+
+Grade %s
+ひょうか　%s
+
+Best grade
+さいこうの　ひょうか
+
+Time per chapter
+しょうごとの　時間
+
+Epilogue and after
+エピローグと　その後
+
+
+Records
+レコード
+
+All files
+すべての　ファイル
+
+What you've done: on this file, and on every file.
+これまでに　したこと（この　ファイルと　すべての　ファイル）
+
+L, R: turn the page.
+L　R：ページを　めくる
+
+L, R: turn the page. A: this file or all files.
+L　R：ページを　めくる　A：この　ファイルか　すべての　ファイル

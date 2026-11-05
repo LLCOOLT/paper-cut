@@ -1,0 +1,25 @@
+# dolphin-copy: see tools/port/gen_lang.py
+
+A copy for Dolphin or a GameCube
+Dolphinやゲームキューブ用のコピー
+
+The GameCube game can't read Paper Cut's own badges and dishes (the badge set's, the badge maker's, Zess T.'s new dishes). This copy has them sold for the coins a shop pays (up to 999), a worn one taken off; your card here keeps them.
+ゲームキューブ版はPaper Cut独自のバッジと料理（バッジセット、バッジメーカー、ナンシーの新しい料理）を読めません。このコピーではそれらをお店の買取価格のコインで売り（999まで）、つけているものは外します。ここのメモリーカードにはそのまま残ります。
+
+Make the copy
+コピーを作る
+
+Open the folder
+フォルダを開く
+
+The copy couldn't be written.
+コピーを書き込めませんでした。
+
+Nothing to sell: the copy is the card as it is. %s
+売るものはありません。コピーはカードそのままです。%s
+
+%d sold for %d coins: %s
+%d個を%dコインで売りました：%s
+
+No card here has a save of this game yet.
+ここのカードにはまだこのゲームのセーブがありません。

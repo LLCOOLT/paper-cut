@@ -7,6 +7,7 @@
 // game and the launcher: F9 quieter, F10 louder (Shift: a step of 1), F3 mute,
 // with a bar shown on the screen for a moment.
 #include "port/bindings.h"
+#include "port/pause_forms.h"
 #include "port/settings.h"
 #include "port/tr.h"
 
@@ -182,6 +183,44 @@ void mixerSection(int) {
 #endif
 }
 
+// The Start menu's form (port/include/port/pause_forms.h): each part's mute (the volumes are the tab's own
+// rows), and Reset to 100%
+constexpr int kResetRow = 100;
+
+int formRows(PortPauseRow* out, int max) {
+  int n = 0;
+  static const char* const kMuteLabels[kCount] = {"Mute everything", "Mute the music", "Mute sound effects",
+                                                  "Mute ambience"};
+  for (int i = 0; i < kCount && n < max - 1; i++) {
+    const int* mute = portSettingsDeclare(kChannels[i].muteKey, 0, 0, 1);
+    out[n++] = portPauseRow(kMuteLabels[i], kChannels[i].tip, *mute ? "On" : "Off", i);
+  }
+  out[n++] = portPauseRow("Reset to 100%", "Every volume back to 100%, nothing muted.", nullptr, kResetRow,
+                          PORT_PAUSE_ROW_CONFIRM);
+  return n;
+}
+
+const char* formAct(int id, int dir) {
+  if (id == kResetRow) {
+    if (dir == 0) {
+      for (const Channel& c : kChannels) {
+        *volumeOf(c) = 100;
+        *portSettingsDeclare(c.muteKey, 0, 0, 1) = 0;
+      }
+      changed(true);
+    }
+    return nullptr;
+  }
+  if (id >= 0 && id < kCount) {
+    int* mute = portSettingsDeclare(kChannels[id].muteKey, 0, 0, 1);
+    *mute = !*mute;
+    changed(true);
+  }
+  return nullptr;
+}
+
+const PortPauseForm kForm = {"Audio", "Volume", formRows, formAct};
+
 // The bar on the screen after a volume key: the speaker, the level and its percentage.
 void drawBar(int pageOpen) {
   if (sShownAt == 0 || pageOpen) {
@@ -266,6 +305,7 @@ struct VolumeSettings {
                            "sound loud quiet mute master music bgm songs sfx sound effects ambience environment "
                            "background focus f9 f10 f3 keys");
     portSettingsAddOverlay(drawBar, nullptr);
+    portPauseAddForm(&kForm);
     portBindingsSetHandler(PORT_BIND_VOLUME_DOWN, [](int, int repeat) { return volumeKey(-1, repeat); });
     portBindingsSetHandler(PORT_BIND_VOLUME_UP, [](int, int repeat) { return volumeKey(1, repeat); });
     portBindingsSetHandler(PORT_BIND_MUTE, [](int, int repeat) { return volumeKey(0, repeat); });

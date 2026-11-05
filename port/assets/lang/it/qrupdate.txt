@@ -75,8 +75,8 @@ Sostituiscili e riavvia
 Replace them
 Sostituiscili
 
-Receive this card's saves from the launcher, before the game starts.
-Ricevi i salvataggi di questa scheda dal launcher, prima che il gioco parta.
+Receive saves from the launcher, before starting.
+Ricevi i salvataggi dal launcher, prima di iniziare.
 
 Could not receive the saves:
 Non è stato possibile ricevere i salvataggi:

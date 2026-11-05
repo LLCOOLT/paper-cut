@@ -1,5 +1,9 @@
 // Message driver: loads the message files, looks messages up by tag, parses their markup into
 // characters, icons and animations, and runs the speech windows and selection lists.
+#ifdef TARGET_PC
+#include "port/open_world.h"
+#include "port/duo.h"
+#endif
 #include "port_hook.h"
 #include "driver/msgdrv.h"
 #ifdef TARGET_PC
@@ -8,10 +12,17 @@
 #include "port/gameplay.h"
 #include "port/gameplus.h"
 #include "port/luigi.h"
+#include "port/directors_cut.h"
+#include "port/port_text.h"
+#include "port/online.h"
 #ifdef PORT_MODS
 #include "port/mods.h"
 #include "port/pause_settings.h"
 #include "port/journal_hint.h"
+#endif
+#ifdef TTYD_BACKEND_AURORA
+#include "port/photo.h"
+#include "port/stats.h"
 #endif
 #endif
 #ifdef TARGET_PC
@@ -436,6 +447,15 @@ static s32 msgMain(smartEntry* smart) {
     s32 i;
     s32 ms;
     NpcEntry* npc;
+#ifdef TARGET_PC
+    /* PC port: online, a window showing Paper Cut's text prints each page at once and scrolls
+     * without sliding. That text is in each player's own menu language, so printed letter by
+     * letter it would take a different time for each player and the script waiting on it would
+     * go on in a different frame: out of step. Its pages and waits are the same in every
+     * language (tools/port/gen_lang.py holds each translation to the English's <k>, <p>,
+     * <dkey>...), so at once it takes the same frames everywhere. Alone, as on the GameCube. */
+    const int instant = data->portText && portOnlineActive();
+#endif
 
     msgSEflag = 0;
     if (data->flags & MSG_WIN_FLAG_FIRST_FRAME) {
@@ -445,6 +465,11 @@ static s32 msgMain(smartEntry* smart) {
         data->flags &= ~MSG_WIN_FLAG_FIRST_FRAME;
         msgAddPage(smart, 0);
     }
+#ifdef TARGET_PC
+    if (instant && data->scrollTarget > data->scrollPos) {
+        data->scrollPos = data->scrollTarget; /* (paging back with Z, too) */
+    }
+#endif
     if (data->scrollTarget > data->scrollPos) {
         data->scrollPos += 0.36f * OSTicksToMilliseconds(gp->renderTime - data->lastUpdateTime);
 #ifdef TARGET_PC
@@ -487,6 +512,11 @@ static s32 msgMain(smartEntry* smart) {
             data->playTime += ms;
             break;
     }
+#ifdef TARGET_PC
+    if (instant) {
+        data->playTime = 0x3FFFFFFF; /* up to the page's key wait (which sets playTime back to its own time) */
+    }
+#endif
     data->lastUpdateTime = gp->renderTime;
     entry = &data->entries[data->nextEntry];
     for (i = data->nextEntry; i < VERSION_PICK(0x500, 0xA00); i++, entry++) {
@@ -512,6 +542,13 @@ static s32 msgMain(smartEntry* smart) {
                 break;
             case MSG_GLYPH_SCROLL:
                 data->scrollTarget -= entry->y;
+#ifdef TARGET_PC
+                if (instant) { /* (more lines than the window: the same frame, however many) */
+                    msgAddPage(smart, data->scrollTarget);
+                    data->scrollPos = data->scrollTarget;
+                    break;
+                }
+#endif
                 data->playTime = entry->time;
                 msgAddPage(smart, data->scrollTarget);
                 break;
@@ -585,6 +622,24 @@ static s32 msgMain(smartEntry* smart) {
     return 3;
 }
 
+#ifdef TARGET_PC
+/* PC port: a window showing Paper Cut's text (msgWindow_Entry, msgWindow_Add) draws it with the
+ * game's random numbers put back after, as the font does (port/include/port/port_text.h) */
+static BOOL msgDispText(smartEntry* smart, u8 alpha, f32 x, f32 y);
+static BOOL msgDisp(smartEntry* smart, u8 alpha, f32 x, f32 y) {
+    const int own = ((MsgWinData*)smart->address)->portText;
+    BOOL ret;
+    if (own) {
+        portTextBegin();
+    }
+    ret = msgDispText(smart, alpha, x, y);
+    if (own) {
+        portTextEnd();
+    }
+    return ret;
+}
+#define msgDisp msgDispText
+#endif
 static BOOL msgDisp(smartEntry* smart, u8 alpha, f32 x, f32 y);
 /**
  * Draws the parsed message text of a window at (x, y):
@@ -855,6 +910,9 @@ static BOOL msgDisp(smartEntry* smart, u8 alpha, f32 x, f32 y) {
     }
     return ret;
 }
+#ifdef TARGET_PC
+#undef msgDisp
+#endif
 
 /**
  * GX set-up hook for the key-wait star pose: draws it on top of everything (Z always passes, no blending, alpha
@@ -1641,7 +1699,22 @@ const char* PORT_HOOKABLE(msgSearch)(const char* tag) {
     {
         const char* modded = portModMsgSearch(tag, language_dir[gp->language]);
         if (modded != NULL) {
-            return portLuigiText(modded); /* Play as Luigi: his name for Mario's */
+            /* Play as Luigi: his name for Mario's; Paper Cut's text, as the ones below
+             * (port/include/port/port_text.h: the font puts the game's random numbers back after it) */
+            return portTextOwn(portLuigiText(modded));
+        }
+    }
+#endif
+#ifdef TARGET_PC /* the open world's own messages (port/include/port/open_world.h) */
+    {
+        const char* pc = portOpenMsg(tag);
+        if (pc == NULL) {
+            pc = portDuoMsg(tag); /* duo moves' names and help (port/include/port/duo.h) */
+        }
+        if (pc != NULL) {
+            /* Paper Cut's text, in each player's language: the font puts the game's random
+             * numbers back after it (port/include/port/port_text.h) */
+            return portTextOwn(pc);
         }
     }
 #endif
@@ -1651,8 +1724,17 @@ const char* PORT_HOOKABLE(msgSearch)(const char* tag) {
         if (pc == NULL) {
             pc = portJournalHintMsg(tag); /* the Journal's hint (port/src/aurora/journal_hint_aurora.c) */
         }
+        if (pc == NULL) {
+            pc = portPhotoJournalMsg(tag); /* the Journal's Photos (port/src/aurora/photo_gallery_aurora.c) */
+        }
+        if (pc == NULL) {
+            pc = portStatsJournalMsg(tag); /* the Journal's Stats (port/src/aurora/stats_journal_aurora.c) */
+        }
+        if (pc == NULL) {
+            pc = portDirectorsCutMsg(tag); /* Director's Cut's restored badges (port/include/port/directors_cut.h) */
+        }
         if (pc != NULL) {
-            return pc;
+            return portTextOwn(pc); /* (Paper Cut's text, as above) */
         }
     }
 #endif
@@ -1684,7 +1766,45 @@ const char* PORT_HOOKABLE(msgSearch)(const char* tag) {
             }
         }
     }
-#ifdef TARGET_PC /* $TTYD_TRACE: name every missing message (sweeps grep for it) */
+#ifdef TARGET_PC
+    {
+        /* a partner's line where the story never has that partner out (the
+         * open world, chapter select: Yoshi in chapter 2): another
+         * partner's line of the scene, Goombella's first, not the red "No
+         * messages" */
+        static const char* const kSuffix[] = {"_kur", "_nok", "_win", "_yos", "_viv", "_bom", "_chu"};
+        static int sAlt;
+        const size_t n = strlen(tag);
+        int k, own = -1;
+        if (sAlt) {
+            return ErrMessage[gp->language];
+        }
+        for (k = 0; n > 4 && n < 0x40 && k < (int)(sizeof(kSuffix) / sizeof(kSuffix[0])); k++) {
+            if (!strcmp(tag + n - 4, kSuffix[k])) {
+                own = k;
+            }
+        }
+        if (own >= 0) {
+            char alt[0x40];
+            const char* found = NULL;
+            sAlt = 1;
+            for (k = 0; k < (int)(sizeof(kSuffix) / sizeof(kSuffix[0])) && found == NULL; k++) {
+                if (k != own) {
+                    memcpy(alt, tag, n - 4);
+                    strcpy(alt + n - 4, kSuffix[k]);
+                    found = msgSearch(alt);
+                    if (found == ErrMessage[gp->language]) {
+                        found = NULL;
+                    }
+                }
+            }
+            sAlt = 0;
+            if (found != NULL) {
+                return found;
+            }
+        }
+    }
+    /* $TTYD_TRACE: name every missing message (sweeps grep for it) */
     portTraceMsgMissing(tag);
 #endif
     return ErrMessage[gp->language];
@@ -1800,6 +1920,9 @@ s32 PORT_HOOKABLE(msgWindow_Entry)(const char* msg, EvtWord callback, u16 priori
     data->parseScroll = 0;
     data->parseSpeed = 25;
     data->pageCount = 0;
+#ifdef TARGET_PC
+    data->portText = portTextIsOwn(msg); /* Paper Cut's text (msgDisp) */
+#endif
     msgAnalize(smart, copy);
 #ifdef TARGET_PC
     portSpeechMessage(window, copy); /* read aloud, page by page (port/include/port/speech.h) */
@@ -1887,6 +2010,9 @@ void PORT_HOOKABLE(msgWindow_Add)(const char* msg, s32 id) {
     }
 #endif
     ((MsgWinData*)smart->address)->lastUpdateTime = gp->renderTime;
+#ifdef TARGET_PC
+    ((MsgWinData*)smart->address)->portText |= portTextIsOwn(msg); /* Paper Cut's text (msgDisp) */
+#endif
     msgAnalize(smart, msg);
 #ifdef TARGET_PC
     portSpeechAppend(window, msg);

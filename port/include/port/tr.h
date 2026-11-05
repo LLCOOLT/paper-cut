@@ -31,6 +31,11 @@ const char* portTrLabel(const char* label);
  * Settings tab): Latin-1 on the US and EU releases, Shift-JIS on the JP one;
  * english where the font can't show the translation */
 const char* portTrGame(const char* english);
+/* Play as (docs/PLAY_AS.md): portTr and portTrGame give the pick's name for
+ * Mario's (and Mario's for the pick's), as the game's text does, but in the
+ * few texts that keep Mario's (tr.cpp's keepsMario); these two never do */
+const char* portTrNoPlayAs(const char* english);
+const char* portTrGameNoPlayAs(const char* english);
 
 /* The language packs read (port/settings/features/lang_packs.cpp shows them). */
 typedef struct PortTrPackInfo {

@@ -7,10 +7,12 @@
 #include <dolphin/gx/GXAurora.h>
 #include <dolphin/vi.h>
 #include "driver/camdrv.h"
+#include "driver/dispdrv.h"
 #include "mario/mariost.h"
 #include "port/settings.h"
 #include "port/view.h"
 #include "port/widescreen.h"
+#include <stdio.h>
 #if defined(__APPLE__)
 #include <TargetConditionals.h>
 #endif
@@ -70,7 +72,9 @@ static void declare(void) {
  * widescreen survey of 0.3.0): the widest aspect each shows
  * before black void past its walls or the set's own ends comes into view,
  * measured at its entrances. Wider than that, the frame stops there and the
- * rest is bars (side_bars blurs them). Rooms not listed are not limited. */
+ * rest is bars (side_bars blurs them). Rooms not listed are not limited.
+ * Where a room's view is in kAngleLimits (below), its bars follow the camera
+ * instead and this is not used. */
 static const struct {
     const char* map;
     float widest;
@@ -90,6 +94,8 @@ static const struct {
 /* battles: the theatre's stage fills 16:9; past it its side walls show */
 #define BATTLE_LIMIT (16.0f / 9.0f)
 
+static int angleView(void);
+
 /* The widest aspect the scene now shows (0: no limit). */
 static float sceneLimit(void) {
     size_t i;
@@ -98,6 +104,9 @@ static float sceneLimit(void) {
     }
     if (gp->inBattle) {
         return BATTLE_LIMIT;
+    }
+    if (angleView() >= 0) {
+        return 0.0f; /* bars per camera angle instead (below) */
     }
     for (i = 0; i < sizeof(kRoomLimits) / sizeof(kRoomLimits[0]); i++) {
         if (strcmp(gp->currentMapName, kRoomLimits[i].map) == 0) {
@@ -209,6 +218,199 @@ static int mirrored(int cameraId) {
         return portViewMirrored();
     default:
         return 0;
+    }
+}
+
+/* ---- Bars per camera angle (port/include/port/widescreen.h) ----
+ * In the rooms of kAngleLimits the void past a wall shows only while the
+ * camera is near that end of the room; there the widest aspect with no void
+ * falls in a line with the camera's x (measured walking through each room at
+ * 21:9, its target's x against the widest void-free middle of the picture).
+ * Black bars inside the frame cover what is past that, sliding in and out as
+ * the camera moves, so the frame keeps its shape and the HUD its place. A
+ * camera height of the room that wasn't measured (its at.z elsewhere) keeps
+ * the room's limit of kRoomLimits. */
+
+static const struct {
+    const char* map;
+    float z;            /* the camera target's z in this view (within 12) */
+    float la, lb, lmin; /* the left end: widest = la + lb * x, never below lmin (lb 0: none) */
+    float ra, rb, rmin; /* the right end, the same */
+} kAngleLimits[] = {
+    {"eki_01", -13.0f, 4.078f, 0.00969f, 1.97f, 4.176f, -0.01021f, 1.23f},
+    {"aji_01", -7.7f, 9.319f, 0.00930f, 1.27f, -1.633f, -0.01180f, 2.16f},
+    {"las_00", -19.6f, 3.138f, 0.00808f, 1.32f, 3.333f, -0.00832f, 1.39f},
+    {"gon_00", -13.0f, 2.161f, 0.01023f, 1.46f, 2.472f, -0.01379f, 1.45f},
+    {"dou_00", -36.1f, 3.010f, 0.01000f, 1.61f, 0.0f, 0.0f, 0.0f},
+    {"rsh_00_a", -11.8f, 2.843f, 0.00995f, 1.43f, 2.172f, -0.00878f, 1.19f},
+    {"mri_01", 7.0f, 3.810f, 0.00611f, 2.08f, 6.191f, -0.01315f, 1.98f},
+    {"rsh_02_a", -183.0f, 0.0f, 0.0f, 0.0f, 2.00f, 0.0f, 2.00f},
+};
+#define ANGLE_MARGIN 0.06f /* a little inside the void's edge */
+
+/* The view now is one of kAngleLimits' (its entry, or -1). */
+static int angleView(void) {
+    const CameraEntry* c;
+    size_t i;
+    if (gp == NULL || gp->inBattle) {
+        return -1;
+    }
+    c = camGetPtr(CAMERA_3D);
+    for (i = 0; i < sizeof(kAngleLimits) / sizeof(kAngleLimits[0]); i++) {
+        if (strcmp(gp->currentMapName, kAngleLimits[i].map) == 0 && fabsf(c->cameraAt.z - kAngleLimits[i].z) < 12.0f) {
+            return (int)i;
+        }
+    }
+    return -1;
+}
+
+/* the widest aspect the view shows (0: no limit) */
+static float angleLimit(int i) {
+    const float x = camGetPtr(CAMERA_3D)->cameraAt.x;
+    float w = 100.0f;
+    if (kAngleLimits[i].lmin > 0.0f) {
+        const float l = kAngleLimits[i].la + kAngleLimits[i].lb * x;
+        w = l > kAngleLimits[i].lmin ? l : kAngleLimits[i].lmin;
+    }
+    if (kAngleLimits[i].rmin > 0.0f) {
+        const float r = kAngleLimits[i].ra + kAngleLimits[i].rb * x;
+        const float rr = r > kAngleLimits[i].rmin ? r : kAngleLimits[i].rmin;
+        w = rr < w ? rr : w;
+    }
+    return w - ANGLE_MARGIN;
+}
+
+static float sMatte = 100.0f; /* the bars' inner edges now (as the edge scale; 100: none) */
+static int sWideLog = -1;
+
+static int mattesWanted(void) {
+    declare();
+    return sAspect > 0.0f && *sSceneLimits && !portViewFreeActive();
+}
+
+static void drawMattes(CameraId camId, void* param);
+
+/* Battles: the theatre's proscenium (the wooden frame's outer edges, at
+ * x +-BATTLE_FRAME_X, z BATTLE_FRAME_Z) ends a little inside 16:9 at the
+ * battle's own view, and past it are the hall's grey walls and floor; the
+ * curtain's rise shows them most. The widest aspect inside it, from the 3D
+ * camera now (it pans and zooms with the moves: zoomed in, no bars). The z is
+ * a guess (the stage's front); the x was measured at the battles' starting
+ * view (eye 0 110 750), where it is exact. */
+#define BATTLE_FRAME_X 213.5f
+#define BATTLE_FRAME_Z 200.0f
+static float battleLimit(void) {
+    const CameraEntry* c = camGetPtr(CAMERA_3D);
+    float w = 100.0f;
+    int side;
+    for (side = -1; side <= 1; side += 2) {
+        Vec p = {side * BATTLE_FRAME_X, 60.0f, BATTLE_FRAME_Z}, v;
+        float cx, cw;
+        MTXMultVec(c->view, &p, &v);
+        cx = c->projection[0][0] * v.x + c->projection[0][1] * v.y + c->projection[0][2] * v.z + c->projection[0][3];
+        cw = c->projection[3][0] * v.x + c->projection[3][1] * v.y + c->projection[3][2] * v.z + c->projection[3][3];
+        if (cw > 1.0f) {
+            const float x = side * cx / cw; /* how far out this side's edge is (clip x, 1: 4:3) */
+            const float a = (x - 0.01f) * GAME_ASPECT;
+            w = a < w ? a : w;
+        }
+    }
+    return w;
+}
+
+/* each field frame (mapDisp): the bars follow the camera */
+void portWideMapDrawn(void) {
+    const float edge = gPortWidescreenEdgeScale;
+    float target = edge;
+    int view;
+    if (sWideLog < 0) {
+        sWideLog = getenv("TTYD_WIDE_LOG") != NULL;
+    }
+    view = mattesWanted() ? angleView() : -1;
+    if (sWideLog && gp != NULL) {
+        const CameraEntry* c = camGetPtr(CAMERA_3D);
+        printf("[wide] cam %s at %.1f %.1f %.1f eye %.1f %.1f %.1f view %d bars %.3f\n", gp->currentMapName,
+               c->cameraAt.x, c->cameraAt.y, c->cameraAt.z, c->cameraPos.x, c->cameraPos.y, c->cameraPos.z, view,
+               sMatte > 50.0f ? 0.0f : sMatte * GAME_ASPECT);
+        {
+            /* the view's own eye (-R^T t) and forward, and fovY: what battle cameras set */
+            const float(*v)[4] = c->view;
+            const float ex = -(v[0][0] * v[0][3] + v[1][0] * v[1][3] + v[2][0] * v[2][3]);
+            const float ey = -(v[0][1] * v[0][3] + v[1][1] * v[1][3] + v[2][1] * v[2][3]);
+            const float ez = -(v[0][2] * v[0][3] + v[1][2] * v[1][3] + v[2][2] * v[2][3]);
+            printf("[wide] view eye %.1f %.1f %.1f fwd %.3f %.3f %.3f fov %.2f p00 %.3f\n", ex, ey, ez, -v[2][0],
+                   -v[2][1], -v[2][2], c->fovY, c->projection[0][0]);
+        }
+    }
+    {
+        const float limit = view >= 0 ? angleLimit(view) : gp != NULL && gp->inBattle && mattesWanted() ? battleLimit() : 0.0f;
+        float e;
+        if (limit <= 0.0f) {
+            sMatte = 100.0f;
+            return;
+        }
+        e = limit / GAME_ASPECT;
+        if (e < 4.0f / 3.0f / GAME_ASPECT) {
+            e = 4.0f / 3.0f / GAME_ASPECT; /* never into the game's 4:3 picture */
+        }
+        if (e < edge - 0.005f) {
+            target = e;
+        }
+    }
+    if (sMatte > edge) {
+        sMatte = edge; /* they slide in from the frame's edges */
+    }
+    /* in fast (the void shows as the camera moves), out gently */
+    sMatte += (target - sMatte) * (target < sMatte ? 0.5f : 0.15f);
+    if (target >= edge && sMatte > edge - 0.002f) {
+        sMatte = 100.0f;
+    } else {
+        dispEntry(CAMERA_2D, 100000.0f, 3, drawMattes, NULL); /* the first of the 2D camera's */
+    }
+}
+
+/* the bars: the 2D camera's first draw (under the HUD, over the world) */
+static void drawMattes(CameraId camId, void* param) {
+    CameraEntry* cam = camGetPtr(CAMERA_2D);
+    const float edge = gPortWidescreenEdgeScale;
+    const GXColor black = {0, 0, 0, 255};
+    float inner, outer;
+    int side;
+    (void)camId;
+    (void)param;
+    if (sMatte >= edge - 0.002f || !mattesWanted()) {
+        return;
+    }
+    inner = 304.0f * sMatte;
+    outer = 304.0f * edge + 8.0f;
+    GXSetBlendMode(GX_BM_NONE, GX_BL_ONE, GX_BL_ZERO, GX_LO_CLEAR);
+    GXSetZCompLoc(GX_TRUE);
+    GXSetAlphaCompare(GX_ALWAYS, 0, GX_AOP_AND, GX_ALWAYS, 0);
+    GXSetZMode(GX_FALSE, GX_ALWAYS, GX_FALSE);
+    GXSetFog(GX_FOG_NONE, 0.0f, 0.0f, 0.0f, 0.0f, black);
+    GXSetNumChans(0);
+    GXSetNumTexGens(0);
+    GXSetNumTevStages(1);
+    GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD_NULL, GX_TEXMAP_NULL, GX_COLOR_NULL);
+    GXSetTevColor(GX_TEVREG0, black);
+    GXSetTevColorOp(GX_TEVSTAGE0, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
+    GXSetTevAlphaOp(GX_TEVSTAGE0, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
+    GXSetTevColorIn(GX_TEVSTAGE0, GX_CC_ZERO, GX_CC_ZERO, GX_CC_ZERO, GX_CC_C0);
+    GXSetTevAlphaIn(GX_TEVSTAGE0, GX_CA_ZERO, GX_CA_ZERO, GX_CA_ZERO, GX_CA_A0);
+    GXSetTevSwapMode(GX_TEVSTAGE0, GX_TEV_SWAP0, GX_TEV_SWAP0);
+    GXLoadPosMtxImm(cam->view, 0);
+    GXSetCurrentMtx(0);
+    GXSetCullMode(GX_CULL_NONE);
+    GXClearVtxDesc();
+    GXSetVtxDesc(GX_VA_POS, GX_DIRECT);
+    GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XYZ, GX_F32, 0);
+    for (side = -1; side <= 1; side += 2) {
+        GXBegin(GX_QUADS, GX_VTXFMT0, 4);
+        GXPosition3f32(side * inner, 260.0f, 0.0f);
+        GXPosition3f32(side * outer, 260.0f, 0.0f);
+        GXPosition3f32(side * outer, -260.0f, 0.0f);
+        GXPosition3f32(side * inner, -260.0f, 0.0f);
+        GXEnd();
     }
 }
 

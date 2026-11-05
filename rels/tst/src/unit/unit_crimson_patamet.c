@@ -330,7 +330,12 @@ static EVT_BEGIN(dmg_fall_event_pata)
     CALL(btlevtcmd_SetFallAccel, LW(10), FLOAT(1.0f))
     CALL(btlevtcmd_JumpPosition, LW(10), LW(0), LW(1), LW(2), 10, -1)
     CALL(btlevtcmd_SetHomePos, LW(10), LW(0), LW(1), LW(2))
+#ifdef TARGET_PC /* Director's Cut (port/include/port/directors_cut.h): the wingless form is a Red Buzzy; the
+                  original turned it into a plain Buzzy Beetle */
+    CALL(btlevtcmd_ChangeKind, LW(10), UNIT_UNUSED_RED_BUZZY)
+#else
     CALL(btlevtcmd_ChangeKind, LW(10), UNIT_BUZZY_BEETLE)
+#endif
     CALL(btlevtcmd_GetHpDamageCount, LW(10), LW(0))
     IF_INT_LESS_OR_EQUAL(LW(0), 1)
         CALL_CHILD(init_event)

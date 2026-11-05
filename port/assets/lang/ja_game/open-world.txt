@@ -1,0 +1,4 @@
+# Paper Cut's own open world (port/archipelago/open_world.cpp) in Japanese for the JP release's own font: kana and its few kanji, words apart.
+
+A partner who joins Mario's party.
+マリオの　なかまに　くわわる　なかま

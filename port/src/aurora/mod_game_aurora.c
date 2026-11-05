@@ -2,6 +2,7 @@
  * host's hooks on the game functions behind the mods' shop and battle
  * services, which read the game's own structures, and the maps mods' scripts
  * give (port/include/port/mods.h). */
+#include "port/lua_mods.h"
 #include "port/mod_host.h"
 #include "port/mods.h"
 #include "port/hook_list.h"
@@ -82,12 +83,16 @@ static void mapDataPost(MapData** result, const char* name) {
 /* seqMain, each frame: the map-scoped texture sets for the map now (mods.cpp) */
 static void seqMainPost(void) {
     if (gp != NULL && gp->currentMapName[0] != 0) {
-        /* with Luigi as the player (Play as Luigi): every map flagged "#luigi",
-         * for the sets of Luigi's faces in the game's own textures
-         * (luigi_faces_aurora.c, mods.cpp's mapMatches) */
+        /* with Luigi, Peach or Bowser as the player (Play as): every map
+         * flagged "#luigi", "#peach" or "#bowser", for the sets of their faces
+         * in the game's own textures (luigi_faces_aurora.c, mods.cpp's
+         * mapMatches) */
+        static const char* const kPickFlag[PORT_PLAY_AS_COUNT] = {"", "#luigi", "#peach", "#bowser"};
         char map[48];
-        const int luigi = portLuigiOn();
-        snprintf(map, sizeof(map), "%s%s", gp->currentMapName, luigi ? "#luigi" : "");
+        /* (whoever the text names: portPlayAsText, Mario in versus and with Brothers mode on) */
+        const int pick = portPlayAsText();
+        const char* flag = kPickFlag[pick > 0 && pick < PORT_PLAY_AS_COUNT ? pick : 0];
+        snprintf(map, sizeof(map), "%s%s", gp->currentMapName, flag);
         portModsMapTextures(map);
     }
 }
@@ -97,4 +102,5 @@ void portModGameInit(void) {
     portModHostAddHook(0, kSlot_evt_shop_setup, (void*)shopPre);
     portModHostAddHook(0, kSlot_Btl_UnitSetup, (void*)battlePre);
     portModHostAddHook(1, kSlot_mapDataPtr, (void*)mapDataPost);
+    portLuaGameInit(); /* Lua mods' events (lua_game_aurora.c) */
 }

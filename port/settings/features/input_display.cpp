@@ -2,7 +2,7 @@
 // the GameCube controller as the game reads it, in a corner over the game, for
 // streams and practice. The stick and C-stick in their octagonal gates (a dot
 // where each points, its trail kept short), A B X Y in their GameCube places,
-// Z, Start, the d-pad, and L and R as bars that fill with the analog press
+// Z, Start, the D-pad, and L and R as bars that fill with the analog press
 // (the label lit at the click). The second player's controller beside it while
 // Second player is on and one is connected. In the launcher's colours: paper
 // cream on dark ink, gold and stage red for what is pressed.
@@ -92,7 +92,7 @@ void trigger(ImDrawList* dl, ImVec2 a, ImVec2 b, int value, bool click, const ch
         t > 0.5f || click ? kInk : alpha(kPaper, 230));
 }
 
-// the d-pad: a cross, each arm lit while held
+// the D-pad: a cross, each arm lit while held
 void dpad(ImDrawList* dl, ImVec2 c, float arm, float th, unsigned held, float u) {
   struct Arm {
     unsigned bit;
@@ -189,7 +189,7 @@ const bool kRegistered = [] {
   static const char* const kCorners[] = {"Off", "Top left", "Top right", "Bottom left", "Bottom right"};
   portSettingsDeclare("input_display", 0, 0, 4);
   portSettingsAddChoice("Interface", "Input display",
-                        "The controller as the game reads it, in a corner: sticks, buttons, d-pad and triggers "
+                        "The controller as the game reads it, in a corner: sticks, buttons, D-pad and triggers "
                         "(with Second player on, the second controller beside it).",
                         0, "input_display", kCorners, 5,
                         "input display controller buttons stick overlay stream practice viewer pad");

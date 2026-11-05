@@ -2,6 +2,7 @@
 #include "version.h"
 #ifdef TARGET_PC
 #include "port/rel_pc.h"
+#include "port/toggles.h"
 #endif
 #ifdef PORT_MODS
 #include "port/mods.h"
@@ -183,8 +184,14 @@ void PORT_HOOKABLE(seq_mapChangeMain)(SequenceWork* work) {
                 }
                 fadeEntry(FADE_OUT_WHITE, 2000, (GXColor){0, 0, 0, 0xFF});
             } else if (!newarea) {
+#ifdef TARGET_PC
+                gp->mapFadeInType = portPageTurnLeave(gp->mapFadeInType); /* page-turn transitions (port/toggles.h) */
+#endif
                 fadeEntry(gp->mapFadeInType, gp->mapFadeInDuration, (GXColor){0, 0, 0, 0xFF});
             } else {
+#ifdef TARGET_PC
+                gp->areaFadeInType = portPageTurnLeave(gp->areaFadeInType);
+#endif
                 fadeEntry(gp->areaFadeInType, gp->areaFadeInDuration, (GXColor){0, 0, 0, 0xFF});
             }
             gp->mapFadeInType = FADE_OUT_BLACK;

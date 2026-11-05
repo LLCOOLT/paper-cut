@@ -1,0 +1,136 @@
+# The Start menu's Modes hub and its pages for the modes (port/src/aurora/pause_settings_aurora.c, port/settings/features/modes.cpp, play_modes.cpp, battlex.cpp, postgame.cpp, boards.cpp, dojo.cpp) (Deutsch)
+
+Story twists
+Neue Wege
+
+As you are
+Wie du bist
+
+Mid-game
+Spielmitte
+
+Late game
+Spätes Spiel
+
+The boss rush is over.
+Der Boss-Marathon ist vorbei.
+
+The boss rush starts once the menu is closed.
+Der Boss-Marathon beginnt, sobald das Menü geschlossen ist.
+
+Boss
+Boss
+
+Left and right choose the boss.
+Links und rechts wählen den Boss.
+
+Beat this boss in the story first.
+Besiege diesen Boss erst in der Geschichte.
+
+ (not yet)
+ (noch nicht)
+
+Fought again, then back to this room. Losing is a Game Over, as in the story.
+Noch einmal bekämpft, danach zurück in diesen Raum. Eine Niederlage ist ein Game Over, wie in der Geschichte.
+
+The fight starts once the menu is closed.
+Der Kampf beginnt, sobald das Menü geschlossen ist.
+
+Stop the endless Glitz Pit
+Endlose Arena beenden
+
+Mario stays where he is.
+Mario bleibt, wo er ist.
+
+The endless Glitz Pit is over.
+Die endlose Arena ist vorbei.
+
+The first match starts once the menu is closed.
+Der erste Kampf beginnt, sobald das Menü geschlossen ist.
+
+The run ends once the menu is closed.
+Der Lauf endet, sobald das Menü geschlossen ist.
+
+The run starts once the menu is closed.
+Der Lauf beginnt, sobald das Menü geschlossen ist.
+
+About this puzzle
+Über dieses Rätsel
+
+Who's fought, the goal, and a hint.
+Gegen wen, das Ziel und ein Tipp.
+
+{A} shows the puzzle's hint.
+{A} zeigt den Tipp zum Rätsel.
+
+Five shops each put one rare item on a shelf at 30% off, a different one each day and the same for everyone that day (by the UTC date).
+Fünf Läden stellen je ein seltenes Item 30 % günstiger ins Regal, jeden Tag ein anderes und an einem Tag für alle dasselbe (nach dem UTC-Datum).
+
+%s for %d coins (usually %d)
+%s für %d Münzen (sonst %d)
+
+Left and right choose the board.
+Links und rechts wählen die Bestenliste.
+
+See the board
+Bestenliste ansehen
+
+Its ten best runs, and how many games checked each.
+Ihre zehn besten Läufe, und wie viele Spiele jeden geprüft haben.
+
+Watch a run
+Einen Lauf ansehen
+
+Left and right choose a run; it plays as the game starts again, and this game tells the board whether it played out the same here.
+Links und rechts wählen einen Lauf; er läuft, wenn das Spiel neu startet, und dieses Spiel meldet der Bestenliste, ob er hier genauso ablief.
+
+{A} fetches the board again.
+{A} lädt die Bestenliste neu.
+
+The Glitz Pit fighter to practise on: it never falls.
+Ein Kämpfer der Arena zum Üben: Er fällt nie.
+
+The partner beside Mario as the fight starts.
+Der Partner an Marios Seite, wenn der Kampf beginnt.
+
+Every partner at Ultra Rank, Ultra Boots and Hammer, every Jump and Hammer badge, all Star Powers, lent for the dojo.
+Jeder Partner auf Ultra-Rang, Ultra-Stiefel und -Hammer, jeder Sprung- und Hammer-Orden, alle Sternenkräfte, fürs Dojo geliehen.
+
+Its attacks are for practising guards and Superguards.
+Seine Angriffe sind zum Üben von Abwehr und Konter.
+
+Set up the dojo before entering it.
+Richte das Dojo ein, bevor du es betrittst.
+
+The dojo opens once the menu is closed.
+Das Dojo öffnet, sobald das Menü geschlossen ist.
+
+Your dojo results
+Deine Dojo-Ergebnisse
+
+Next new file: hardcore
+Nächste neue Datei: Hardcore
+
+Record a hardcore run
+Hardcore-Lauf aufnehmen
+
+The game starts again at the title, recording (kept with the replays): start a new file. The Game Over saves the run, a ghost to race in Ghost races.
+Das Spiel startet am Titel neu und nimmt auf (bei den Replays): Beginne eine neue Datei. Das Game Over speichert den Lauf als Geist für Geisterrennen.
+
+Today's seed
+Seed des Tages
+
+The day's seed and its two rules.
+Der Seed des Tages und seine zwei Regeln.
+
+Set
+Gesetzt
+
+The name your time goes to the board with.
+Der Name, mit dem deine Zeit auf die Bestenliste kommt.
+
+This file's time to the day's board.
+Die Zeit dieser Datei auf die Bestenliste des Tages.
+
+The day's results board.
+Die Ergebnisse des Tages.

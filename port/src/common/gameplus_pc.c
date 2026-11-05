@@ -41,8 +41,8 @@ static const struct {
     {"difficulty", 0, 0, 3},
     {"difficulty_enemy_hp", 100, 25, 300},
     {"difficulty_enemy_attack", 100, 25, 300},
-    {"ac_attack_assist", 0, 0, 2},
-    {"ac_guard_assist", 0, 0, 2},
+    {"ac_attack_assist", 0, 0, 3}, /* 3: by command type (port/include/port/dojo.h) */
+    {"ac_guard_assist", 0, 0, 3},
     {"remake_balance", 0, 0, 1},
     {"fast_battle_menus", 0, 0, 1},
     {"gameover_retry", 0, 0, 1},
@@ -53,7 +53,7 @@ static const struct {
     {"glitz_pit_kind", 0, 0, 1},
     {"battle_popups", 0, 0, 1},
     {"free_tattle", 0, 0, 1},
-    {"playable_luigi", 0, 0, 1},
+    {"playable_luigi", 0, 0, 3}, /* Play as: 0 Mario, 1 Luigi, 2 Peach, 3 Bowser */
     {"new_game_plus_from", 1, 1, 4},
 };
 
@@ -82,7 +82,17 @@ int portGameplus(const char* key) {
 
 int (*gPortQuickSwapHeld)(void);
 int gPortQuickSwapTouch;
+int gPortPartnerWheelOwns, gPortPartnerWheelOpen;
 static int sSwapPressed, sSwapHeld, sSwapCoop;
+
+void portPartnerWheelPad(PADStatus* pads) {
+    /* the wheel's choosing stick isn't Mario's walk (this game's own player,
+     * before online's exchange: what goes out is what this game plays) */
+    if (gPortPartnerWheelOpen) {
+        pads[0].stickX = 0;
+        pads[0].stickY = 0;
+    }
+}
 
 void portQuickSwapPress(void) {
     sSwapPressed = 1;
@@ -93,11 +103,13 @@ void portQuickSwapPressCoop(void) {
     sSwapCoop = 1;
 }
 
+/* the partner menu's order (win_party.c winPartyDt): Goombella, Koops,
+ * Flurrie, Yoshi, Vivian, Bobbery, Ms. Mowz */
+const int gPortPartnerMenuOrder[PORT_PARTNER_MENU_COUNT] = {1, 2, 5, 4, 6, 3, 7};
+
 int portQuickSwapPoll(int current) {
-    /* the partner menu's order (win_party.c winPartyDt): Goombella, Koops,
-     * Flurrie, Yoshi, Vivian, Bobbery, Ms. Mowz */
-    static const int kOrder[] = {1, 2, 5, 4, 6, 3, 7};
-    const int held = (gPortQuickSwapHeld != NULL && gPortQuickSwapHeld()) || gPortQuickSwapTouch;
+    /* (with the partner wheel on, the control is the wheel's: a tap there is a press here) */
+    const int held = !gPortPartnerWheelOwns && ((gPortQuickSwapHeld != NULL && gPortQuickSwapHeld()) || gPortQuickSwapTouch);
     PouchData* pouch;
     int i, at = -1, coop;
     if (held && !sSwapHeld) {
@@ -125,13 +137,13 @@ int portQuickSwapPoll(int current) {
     if (!portGameplus("quick_swap") && !coop) {
         return -1;
     }
-    for (i = 0; i < 7; i++) {
-        if (kOrder[i] == current) {
+    for (i = 0; i < PORT_PARTNER_MENU_COUNT; i++) {
+        if (gPortPartnerMenuOrder[i] == current) {
             at = i;
         }
     }
-    for (i = 1; i <= 7; i++) {
-        const int id = kOrder[(at + i + 7) % 7];
+    for (i = 1; i <= PORT_PARTNER_MENU_COUNT; i++) {
+        const int id = gPortPartnerMenuOrder[(at + i) % PORT_PARTNER_MENU_COUNT];
         const u16 flags = pouch->partyData[id].flags;
         if (id != current && (flags & POUCH_PARTY_FLAG_JOINED) && !(flags & POUCH_PARTY_FLAG_AWAY)) {
             printf("[gameplus] quick-swap: partner %d to %d\n", current, id);
@@ -263,17 +275,22 @@ __attribute__((weak)) void portSaveStateNotice(const char* text) {
     (void)text;
 }
 
+/* port/src/aurora/remix_aurora.c: a hardcore file (one life) has no retry */
+__attribute__((weak)) int portHardcoreActive(void) {
+    return 0;
+}
+
 static int sRetryLoading; /* frames left for the requested load to happen */
 
 void portRetryPoint(void) {
     sRetryLoading = 0;
-    if (portGameplus("gameover_retry")) {
+    if (portGameplus("gameover_retry") && !portHardcoreActive()) {
         portSaveStateRequest(PORT_SAVE_STATE_RETRY, 0);
     }
 }
 
 int portRetryOffer(void) {
-    if (!portGameplus("gameover_retry") || !portSaveStateHas(PORT_SAVE_STATE_RETRY)) {
+    if (!portGameplus("gameover_retry") || !portSaveStateHas(PORT_SAVE_STATE_RETRY) || portHardcoreActive()) {
         return 0;
     }
     if (sRetryLoading > 0) {
@@ -309,9 +326,9 @@ static int sceneSeen(int scene) {
         case PORT_SCENE_GLITZ_WIN:
             return swGet(GSWF_TOU_LAST_OPPONENT_VALID); /* a match was fought (set when one ends) */
         case PORT_SCENE_TRAIN_TICKET:
-            return swByteGet(GSW_STORY_PROGRESS) >= STORY_STG6_01_THE_CONDUCTOR;
+            return swStoryPeek() >= STORY_STG6_01_THE_CONDUCTOR;
         case PORT_SCENE_BLIMP_TICKET:
-            return swByteGet(GSW_STORY_PROGRESS) >= STORY_STG3_00_WELCOME_TO_GLITZVILLE;
+            return swStoryPeek() >= STORY_STG3_00_WELCOME_TO_GLITZVILLE;
     }
     return 0;
 }
@@ -338,7 +355,7 @@ int portJournal(PortJournal* out) {
     if ((seq != SEQ_GAME && seq != SEQ_BATTLE) || pouch == NULL) {
         return 0;
     }
-    out->story = swByteGet(GSW_STORY_PROGRESS);
+    out->story = swStoryPeek();
     out->troublesTotal = 30;
     for (i = 1; i <= 30; i++) {
         if (swGet(GSWF_TROUBLE_SOLVED_BASE + i)) {

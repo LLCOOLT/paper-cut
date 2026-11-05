@@ -1,0 +1,13 @@
+# Button icons: the words for the buttons with no icon in the game's font (Italiano)
+
+stick
+levetta
+
+C-stick
+Levetta C
+
+right stick
+levetta destra
+
+D-pad
+croce direzionale

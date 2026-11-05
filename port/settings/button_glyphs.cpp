@@ -231,14 +231,81 @@ std::vector<uint8_t> drawButtonGlyph(const GlyphSpec& g, int w, int h) {
   if (g.style == GlyphStyle::Keyboard) {
     // a key cap: a rounded square (wider for a long name), its front edge below
     const std::string label = g.label != nullptr ? g.label : "?";
-    const float hw = std::min(w * 0.47f, label.size() <= 1 ? m * 0.4f : w * 0.47f), hh = m * 0.38f;
+    // (in text, textScale: the cap fills more of the line's height)
+    const float hw = std::min(w * 0.47f, label.size() <= 1 ? (g.textScale > 0.f ? m * 0.44f : m * 0.4f) : w * 0.47f);
+    const float hh = g.textScale > 0.f ? m * 0.44f : m * 0.38f;
     const float r = m * 0.12f;
     if (!g.pressed) {
       cv.fill(hex(0x8B8A96), [&](float x, float y) { return roundBox(x, y, cx, cy + m * 0.07f, hw, hh, r); });
     }
     cv.fill(hex(0x46454F), [&](float x, float y) { return roundBox(x, y, cx, cy, hw, hh, r); });
     cv.fill(shade(hex(0xF4F2EC), dim), [&](float x, float y) { return roundBox(x, y, cx, cy, hw - m * 0.04f, hh - m * 0.04f, r * 0.8f); });
-    text(cv, label.c_str(), cx, cy, label.size() <= 1 ? m * 0.4f : m * 0.3f, ink);
+    text(cv, label.c_str(), cx, cy, g.textScale > 0.f ? m * g.textScale : label.size() <= 1 ? m * 0.4f : m * 0.3f, ink);
+    return cv.rgba8();
+  }
+
+  // the GameCube's own: a big green A, a red B, the grey kidneys X and Y, a
+  // purple Z, the grey L and R, the small Start (the touch controls' colours)
+  if (g.style == GlyphStyle::GameCube && g.face >= GlyphFace::GcA && g.face <= GlyphFace::GcStart) {
+    struct Gc {
+      uint32_t fill, mark;
+      const char* label;
+      bool round;
+    };
+    static const Gc kGc[] = {
+        {0x1EA25A, 0xFFFFFF, "A", true},  {0xE03A3E, 0xFFFFFF, "B", true},  {0xCFCED6, 0x3A3942, "X", true},
+        {0xCFCED6, 0x3A3942, "Y", true},  {0x6C4FD0, 0xFFFFFF, "Z", false}, {0x8E8D98, 0xFFFFFF, "L", false},
+        {0x8E8D98, 0xFFFFFF, "R", false}, {0x8E8D98, 0xFFFFFF, "START", false},
+    };
+    const Gc& k = kGc[static_cast<int>(g.face) - static_cast<int>(GlyphFace::GcA)];
+    const Rgba fillc = hex(k.fill), mark = shade(hex(k.mark), dim);
+    if (k.round) {
+      const float r = m * 0.44f;
+      if (!g.pressed) {
+        cv.fill(Rgba{0.f, 0.f, 0.f, 0.35f}, [&](float x, float y) { return circle(x, y, cx, cy + m * 0.06f, r); });
+      }
+      cv.fill(shade(fillc, 0.7f * dim), [&](float x, float y) { return circle(x, y, cx, cy, r); });
+      cv.fill(shade(fillc, dim), [&](float x, float y) { return circle(x, y, cx, cy - m * 0.012f, r - m * 0.045f); });
+      cv.fill(Rgba{1.f, 1.f, 1.f, 0.18f}, [&](float x, float y) {
+        return std::max(circle(x, y, cx, cy - m * 0.012f, r - m * 0.08f), y - (cy - r * 0.1f));
+      });
+      text(cv, k.label, cx, cy, m * 0.42f, mark);
+    } else {
+      const float hw = w * 0.46f, hh = std::min(h * 0.36f, w * 0.3f), rr = hh * 0.8f;
+      if (!g.pressed) {
+        cv.fill(Rgba{0.f, 0.f, 0.f, 0.35f}, [&](float x, float y) { return roundBox(x, y, cx, cy + m * 0.06f, hw, hh, rr); });
+      }
+      cv.fill(shade(fillc, 0.7f * dim), [&](float x, float y) { return roundBox(x, y, cx, cy, hw, hh, rr); });
+      cv.fill(shade(fillc, dim), [&](float x, float y) {
+        return roundBox(x, y, cx, cy - m * 0.01f, hw - m * 0.04f, hh - m * 0.04f, rr * 0.85f);
+      });
+      text(cv, k.label, cx, cy, hh * (k.label[1] != '\0' ? 0.7f : 0.9f), mark);
+    }
+    return cv.rgba8();
+  }
+
+  // the sticks (a cap in its ring; the GameCube's C-stick yellow) and the D-pad (a cross)
+  if (g.face == GlyphFace::LeftStick || g.face == GlyphFace::RightStick) {
+    const bool gc = g.style == GlyphStyle::GameCube, right = g.face == GlyphFace::RightStick;
+    const Rgba ring = hex(0x2B2A33), cap = gc && right ? hex(0xF2C318) : hex(gc ? 0x9C9BA6 : 0x5A5966);
+    const float r = m * 0.44f;
+    cv.fill(Rgba{0.f, 0.f, 0.f, 0.35f}, [&](float x, float y) { return circle(x, y, cx, cy + m * 0.06f, r); });
+    cv.fill(ring, [&](float x, float y) { return circle(x, y, cx, cy, r); });
+    cv.fill(shade(cap, 0.7f), [&](float x, float y) { return circle(x, y, cx, cy, r * 0.74f); });
+    cv.fill(cap, [&](float x, float y) { return circle(x, y, cx, cy - m * 0.02f, r * 0.64f); });
+    const char* label = g.label != nullptr ? g.label : gc ? (right ? "C" : "") : (right ? "R" : "L");
+    text(cv, label, cx, cy - m * 0.02f, m * (label[0] != '\0' && label[1] != '\0' ? 0.26f : 0.34f),
+         gc && right ? hex(0x5A4A08) : white);
+    return cv.rgba8();
+  }
+  if (g.face == GlyphFace::DPad) {
+    const float s = m * 0.44f, t = m * 0.15f;
+    auto cross = [&](float x, float y, float dy) {
+      return std::min(roundBox(x, y, cx, cy + dy, s, t, t * 0.35f), roundBox(x, y, cx, cy + dy, t, s, t * 0.35f));
+    };
+    cv.fill(Rgba{0.f, 0.f, 0.f, 0.35f}, [&](float x, float y) { return cross(x, y, m * 0.05f); });
+    cv.fill(hex(0x3A3942), [&](float x, float y) { return cross(x, y, 0.f); });
+    cv.fill(hex(0x5A5966), [&](float x, float y) { return cross(x, y, -m * 0.012f) + m * 0.035f; });
     return cv.rgba8();
   }
 

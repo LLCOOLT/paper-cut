@@ -3,8 +3,8 @@
 Speakers
 Altavoces
 
-Surround: the game's own surround sound to the rear speakers (it was made for Dolby Pro Logic II) instead of folded into the front two. Your device's output must be set to 5.1 or 7.1 too.
-Envolvente: el sonido envolvente propio del juego por los altavoces traseros (se hizo para Dolby Pro Logic II) en vez de mezclado en los dos delanteros. La salida de tu dispositivo también debe estar en 5.1 o 7.1.
+Surround: the game's own surround sound to the rear speakers (it was made for Dolby Pro Logic II) instead of folded into the front two. Your device's output must be set to 5.1 or 7.1 too. Headphones (3D): the same surround heard around your head, in front and behind, on any headphones.
+Envolvente: el sonido envolvente propio del juego por los altavoces traseros (se hizo para Dolby Pro Logic II) en vez de mezclado en los dos delanteros. La salida de tu dispositivo también debe estar en 5.1 o 7.1. Auriculares (3D): el mismo sonido envolvente alrededor de tu cabeza, delante y detrás, con cualquier auricular.
 
 Stereo
 Estéreo
@@ -14,3 +14,6 @@ Envolvente 5.1
 
 7.1 surround
 Envolvente 7.1
+
+Headphones (3D)
+Auriculares (3D)

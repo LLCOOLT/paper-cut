@@ -15,6 +15,7 @@
 #include "port/settings.h"
 #include "port/tr.h"
 
+#include "port/mods.h"
 #include <SDL3/SDL.h>
 #include <aurora/aurora.h>
 #include <imgui.h>
@@ -121,6 +122,11 @@ bool restartNow() {
   portReplaySaveIfRecording();
   SDL_UnsetEnvironmentVariable(env, "TTYD_REPLAY_RECORD");
   SDL_UnsetEnvironmentVariable(env, "TTYD_REPLAY_PLAY");
+  SDL_UnsetEnvironmentVariable(env, "TTYD_GHOST_RACE");
+  // a leaderboard run's, an upload's and a board entry's (boards.cpp): this run's only
+  SDL_UnsetEnvironmentVariable(env, "TTYD_BOARD_RUN");
+  SDL_UnsetEnvironmentVariable(env, "TTYD_BOARD_UPLOAD");
+  SDL_UnsetEnvironmentVariable(env, "TTYD_BOARD_ENTRY");
   char path[1024], sidecar[1024];
   portResumePath(path, sizeof(path), PORT_GAME_ID, 0);
   portResumePath(sidecar, sizeof(sidecar), PORT_GAME_ID, 1);
@@ -166,6 +172,7 @@ bool restartNow() {
   if (SDL_Window* w = aurora_get_window()) {
     SDL_HideWindow(w);
   }
+  portModsStartedOk(); // a restart isn't a failed start (safe mode, port/include/port/mods.h)
   std::_Exit(0);
 }
 

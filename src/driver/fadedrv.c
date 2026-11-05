@@ -24,6 +24,8 @@
 #endif
 #ifdef TARGET_PC
 #include "wide_x.h"
+#include "port/toggles.h"
+#include "port/widescreen.h"
 #endif
 
 #if VERSION >= VERSION_US
@@ -380,12 +382,18 @@ void PORT_HOOKABLE(fadeEntry)(s32 type, s32 duration, GXColor color) {
             entry->animFile = "OFF_d_meku";
             entry->animName = "Z_1";
             entry->imageType = 2;
+#ifdef TARGET_PC
+            entry->animFile = portPageTurnFile(entry->animFile); /* page-turn transitions: the page chosen (port/toggles.h) */
+#endif
             break;
         case FADE_PAGE_FLIP_A1:
         case FADE_PAGE_FLIP_A1_OFFSCREEN:
             entry->animFile = "OFF_d_meku";
             entry->animName = "A_1";
             entry->imageType = 2;
+#ifdef TARGET_PC
+            entry->animFile = portPageTurnFile(entry->animFile);
+#endif
             break;
         case FADE_PAGE_FLIP_FOUR:
             entry->animFile = "OFF_d_four_meku_5sec";
@@ -1517,6 +1525,19 @@ static void disp_maku(CameraId camId, void* param) {
     if (camId == CAMERA_3D_IMAGE && entry->type != FADE_PAGE_FLIP_FOUR && !(entry->flags & FADE_ENTRY_VIRTUAL_POS)) {
         PSMTXScale(mtx2, WIDE_X(1.0f), 1.0f, 1.0f);
         PSMTXConcat(mtx2, mtx, mtx);
+    }
+#endif
+#if defined(TARGET_PC) && defined(TTYD_BACKEND_AURORA)
+    /* widescreen: the title's side curtains (on the unscaled fade camera) reach the frame's edges at 16:9 but
+     * end short of them wider than that (21:9 and on): moved out from the middle with the frame's width past
+     * 16:9, so they keep reaching the edges */
+    if (camId == CAMERA_FADE2 &&
+        (entry->type == FADE_CURTAIN_SIDES_A1_TOP || entry->type == FADE_CURTAIN_SIDES_A2_TOP)) {
+        const f32 k = portWidescreenAspect() / (16.0f / 9.0f);
+        if (k > 1.0f) {
+            PSMTXScale(mtx2, k, 1.0f, 1.0f);
+            PSMTXConcat(mtx2, mtx, mtx);
+        }
     }
 #endif
     animPoseDrawMtx(entry->poseId, mtx, 1, 0.0f, scale);

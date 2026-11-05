@@ -7,8 +7,8 @@ Ajustes
 Close
 Cerrar
 
-The Start menu's Settings tab, F1, Back/Select, the touch controls' three-bar button or a three-finger tap opens this page.
-Esta página se abre con la pestaña Ajustes del menú Start, F1, Back/Select, el botón de tres rayas de los controles táctiles o un toque con tres dedos.
+The Start menu's Settings tab, {SETTINGS}, the touch controls' three-bar button or a three-finger tap opens this page.
+Esta página se abre con la pestaña Ajustes del menú Start, {SETTINGS}, el botón de tres rayas de los controles táctiles o un toque con tres dedos.
 
 Search settings
 Buscar ajustes
@@ -118,7 +118,7 @@ Sin límite
 Widest picture
 Imagen más ancha
 
-Past this the rest of the screen is bars (blurred with Blurred side bars).
+Wider screens get bars past this (see Blurred side bars).
 Más allá, el resto de la pantalla son franjas (difuminadas con Franjas laterales difuminadas).
 
 The status bar, message windows and battle menus, larger or smaller than the game's.
@@ -131,7 +131,7 @@ Anisotropic filtering
 Filtrado anisotrópico
 
 Textures seen at an angle (floors, paths) stay sharp.
-Las texturas vistas en ángulo (suelos, caminos) siguen nítidas.
+Texturas vistas en ángulo (suelos, caminos): nítidas.
 
 The game's
 Como el juego
@@ -166,14 +166,14 @@ En una pantalla HDR, la imagen con el brillo que elijas para el blanco (blanco p
 Performance overlay
 Indicador de rendimiento
 
-How long each frame takes: the time between frames, and the part spent working.
-Cuánto tarda cada fotograma: el tiempo entre fotogramas y la parte dedicada a trabajar.
+The time between frames, and the part spent working.
+El tiempo entre fotogramas y la parte dedicada a trabajar.
 
 Sharp text
 Texto nítido
 
-The game's font redrawn with crisp edges at high resolutions (the same letters).
-La fuente del juego redibujada con bordes nítidos a altas resoluciones (las mismas letras).
+The game's font rebuilt as a distance field, so its letters stay sharp at any resolution (the same letters; a texture pack's own font is drawn as the pack's).
+La fuente del juego reconstruida como campo de distancia, para que sus letras sigan nítidas a cualquier resolución (las mismas letras; la fuente propia de un paquete de texturas se ve tal como la dibuja el paquete).
 
 Window
 Ventana
@@ -217,14 +217,14 @@ Segundo jugador
 Action Command cue
 Aviso de comandos de acción
 
-In battle, a ring closes on an A button when to press A for a Jump (and partners' stomps) and to guard an enemy jumping at you. Other commands show their own timing.
-En combate, un aro se cierra sobre un botón A para indicar cuándo pulsar A en un Salto (y en los pisotones de los compañeros) y para defenderte de un enemigo que salta sobre ti. Los demás comandos muestran su propio ritmo.
+In battle, a ring closes on an {A} button when to press {A} for a Jump (and partners' stomps) and to guard an enemy jumping at you. Other commands show their own timing.
+En combate, un aro se cierra sobre un botón {A} para indicar cuándo pulsar {A} en un Salto (y en los pisotones de los compañeros) y para defenderte de un enemigo que salta sobre ti. Los demás comandos muestran su propio ritmo.
 
 Fast-forward speed
 Velocidad de avance rápido
 
-Fast-forward: Tab, a controller's right stick click, or the on-screen >> button.
-Avance rápido: Tab, pulsar el stick derecho de un mando o el botón >> de la pantalla.
+Fast-forward: {FF}, or the on-screen >> button.
+Avance rápido: {FF} o el botón >> de la pantalla.
 
 Fast-forward toggles (instead of held)
 El avance rápido se activa con una pulsación (en vez de mantener)
@@ -277,14 +277,14 @@ Ataque de los enemigos (personalizado)
 Action commands: attacks
 Comandos de acción: ataques
 
-Wider timing for attack commands, or every attack command done for you.
+Wider timing for attack commands, or all done for you.
 Un margen más amplio para los comandos de ataque, o cada comando de ataque hecho por ti.
 
 Action commands: guards
 Comandos de acción: defensa
 
 Wider Guard and Superguard windows, or every attack guarded for you (a Superguard is still up to you).
-Márgenes más amplios para la defensa y la superdefensa, o cada ataque defendido por ti (la superdefensa sigue dependiendo de ti).
+Márgenes más amplios para la defensa y la Súper Defensa, o cada ataque defendido por ti (la Súper Defensa sigue dependiendo de ti).
 
 A save state keeps the whole game as it is this moment, in the field or a battle. They last until the game is closed: use the game's own save blocks to keep your progress.
 Un estado guardado conserva todo el juego tal como está en este momento, en el mapa o en combate. Dura hasta que se cierra el juego: usa los Bloques de Guardado del juego para conservar tu progreso.
@@ -301,19 +301,19 @@ Aún no hay partidas: pon archivos .gci en la carpeta de saltos (en la carpeta d
 Speedrun timer
 Cronómetro de speedrun
 
-Game time in a corner, counted in the game's own frames, with real time under it.
+Game time (in frames) and real time in a corner.
 El tiempo de juego en una esquina, contado en los fotogramas del propio juego, con el tiempo real debajo.
 
 Load removal
 Sin tiempos de carga
 
-Game time stops while a map or a battle loads (the timer's and LiveSplit's).
+The timer and LiveSplit stop while a map or battle loads.
 El tiempo de juego se detiene mientras carga un mapa o un combate (el del cronómetro y el de LiveSplit).
 
 Start with a new file
 Empezar con un archivo nuevo
 
-The timer starts when a new file begins, and resets at the title screen.
+The timer starts with a new file and resets at the title.
 El cronómetro empieza cuando comienza un archivo nuevo y se reinicia en la pantalla de título.
 
 When to split: Any% at the end of each chapter; every step of the story; or the user folder's splits.txt.
@@ -332,7 +332,7 @@ Frame advance keys
 Teclas de fotograma a fotograma
 
 F6 holds the game (and lets it go on), F7 moves one frame.
-F6 detiene el juego (y lo deja seguir), F7 avanza un fotograma.
+F6 congela y reanuda el juego; F7 avanza un fotograma.
 
 Frame advance
 Fotograma a fotograma
@@ -358,7 +358,7 @@ Historia y banderas
 Memory watch corner
 Esquina de la vigilancia de memoria
 
-The fields ticked in Memory watch (All settings), kept on screen.
+Memory watch's ticked fields (All settings), on screen.
 Los campos marcados en Vigilancia de memoria (Todos los ajustes), mantenidos en pantalla.
 
 Memory watch
@@ -427,8 +427,8 @@ Preajustes
 One-hit KO
 K.O. de un golpe
 
-Any enemy hit that does damage knocks Mario or the partner out.
-Cualquier golpe enemigo que haga daño deja K.O. a Mario o al compañero.
+Any damaging enemy hit knocks Mario or the partner out.
+Todo golpe enemigo que dañe noquea a Mario o al compañero.
 
 Allowed
 Permitida
@@ -439,8 +439,8 @@ Defensa
 Attack commands
 Comandos de ataque
 
-Narrower timing for Mario's and the partners' attack commands.
-Un margen más estrecho para los comandos de ataque de Mario y de los compañeros.
+Narrower timing for Mario's and partners' attack commands.
+Comandos de ataque de Mario y compañeros con menos margen.
 
 No items in battle
 Sin objetos en combate
@@ -457,8 +457,8 @@ Los comandos de los espectadores en el chat de tu canal hacen que el público la
 Cooldown
 Espera
 
-One command each this many seconds; a viewer, one each three times it.
-Un comando cada tantos segundos; un espectador, uno cada el triple.
+Seconds between commands (three times that per viewer).
+Segundos entre comandos (el triple por espectador).
 
 Allow the harmful ones
 Permitir los dañinos
@@ -466,14 +466,14 @@ Permitir los dañinos
 Partner quick-swap
 Cambio rápido de compañero
 
-Switches to the next partner in the field without the pause menu: Q, a controller's left stick pressed in, or the on-screen swap button.
-Cambia al siguiente compañero en el mapa sin el menú de pausa: Q, pulsar el stick izquierdo de un mando o el botón de cambio de la pantalla.
+Switches to the next partner in the field without the pause menu: {SWAP}, or the on-screen swap button.
+Cambia al siguiente compañero en el mapa sin el menú de pausa: {SWAP} o el botón de cambio de la pantalla.
 
 Save Blocks save at once
 Los Bloques de Guardado guardan al momento
 
-A Save Block saves to the file being played without asking first.
-Un Bloque de Guardado guarda en el archivo que juegas sin preguntar antes.
+A Save Block saves to the current file without asking.
+Un Bloque de Guardado guarda en este archivo sin preguntar.
 
 Bigger bag
 Bolsa más grande
@@ -490,32 +490,32 @@ Tras un combate, un compañero caído vuelve con 1 PC.
 Level up with the D-pad
 Subir de nivel con la cruceta
 
-The level-up screen (HP, FP or BP) also takes the D-pad, not only the stick.
-La pantalla de subida de nivel (PC, PF o PM) también acepta la cruceta, no solo el stick.
+The level-up screen (HP, FP, BP) also takes the {DPAD}.
+La subida de nivel (PC, PF, PM) también acepta la {DPAD}.
 
 Healing items heal every partner
 Los objetos curativos curan a todos los compañeros
 
-In the field, an item used on a partner heals the other partners too.
-En el mapa, un objeto usado en un compañero cura también a los demás compañeros.
+In the field, healing one partner heals all of them.
+En el mapa, curar a un compañero cura a todos.
 
 Skip repeated scenes
 Saltar escenas repetidas
 
 Scenes already seen on this file go faster or straight to their end: the Crystal Star fanfare and map reveal, Zess T.'s cooking, the Glitz Pit's match scenes, the train and blimp tickets.
-Las escenas ya vistas en este archivo van más rápido o directamente al final: la fanfarria de la Estrella de Cuarzo y el mapa revelado, la cocina de T. Nancy, las escenas de los combates del Coliseo, los billetes del tren y del dirigible.
+Las escenas ya vistas en este archivo van más rápido o directamente al final: la fanfarria del Cristal Estelar y el mapa revelado, la cocina de T. Nancy, las escenas de los combates del Coliseo, los billetes del tren y del dirigible.
 
 Fast travel
 Viaje rápido
 
 Travel to a hub from the settings page (All settings, Travel to): Rogueport, then one more per Crystal Star.
-Viaja a una ciudad desde la página de ajustes (Todos los ajustes, Viajar a): Villa Viciosa, y una más por cada Estrella de Cuarzo.
+Viaja a una ciudad desde la página de ajustes (Todos los ajustes, Viajar a): Villa Viciosa, y una más por cada Cristal Estelar.
 
 Faster battle menus
 Menús de combate más rápidos
 
 The battle command wheel opens and turns twice as fast.
-La rueda de comandos de combate se abre y gira el doble de rápido.
+La rueda de comandos se abre y gira el doble de rápido.
 
 Tattle without a turn
 Descripción sin gastar el turno
@@ -532,8 +532,8 @@ GUARD! y SUPERGUARD! sobre Mario o el compañero, el icono de un estado resistid
 Retry on Game Over
 Reintentar tras Game Over
 
-Keeps a save state of each room and battle as you enter it; on the Game Over screen, Y goes back to it. A short pause at each room's start.
-Guarda un estado de cada sala y combate al entrar; en la pantalla de Game Over, Y vuelve a él. Una pausa corta al empezar cada sala.
+Keeps a save state of each room and battle as you enter it; on the Game Over screen, {Y} goes back to it. A short pause at each room's start.
+Guarda un estado de cada sala y combate al entrar; en la pantalla de Game Over, {Y} vuelve a él. Una pausa corta al empezar cada sala.
 
 Remake balance
 Equilibrio del remake
@@ -555,9 +555,6 @@ Un combate perdido no cuesta rango, y la condición extra de un combate se queda
 
 Play as Luigi
 Jugar como Luigi
-
-Luigi in Mario's place, with Mario's moves, in the field, battles, menus and credits; the text calls him Luigi and the other Luigi stays out of sight. Saves are not changed.
-Luigi en lugar de Mario, con las habilidades de Mario, en el mapa, en combate, en los menús y en los créditos; el texto lo llama Luigi y el otro Luigi no se ve. Las partidas no cambian.
 
 A new file starts with what you choose here, taken from the file New Game+ from file names. Choose before starting the new file.
 Un archivo nuevo empieza con lo que elijas aquí, tomado del archivo que indica New Game+ desde el archivo. Elígelo antes de empezar el archivo nuevo.
@@ -592,7 +589,7 @@ Un Bloque de Guardado también ofrece guardar y sacar objetos, como el mostrador
 Walk-speed boost
 Impulso de velocidad
 
-Mario walks and runs faster while the Boost key or Boost button is held.
+Mario moves faster while the Boost key or button is held.
 Mario camina y corre más rápido mientras se mantiene la Tecla de impulso o el Botón de impulso.
 
 Boost speed
@@ -610,20 +607,20 @@ Botón de impulso
 Coins from battles
 Monedas de los combates
 
-The coins a won battle drops, after Merlee, Money Money and a First Strike.
+A battle's coins, after Merlee, Money Money and co.
 Las monedas que deja un combate ganado, después de Merlí, Doble Dinero y un Primer Golpe.
 
 Star Points from battles
 Puntos Estrella de los combates
 
 A battle's Star Points (still at most 100, a level).
-Los Puntos Estrella de un combate (como mucho 100, un nivel).
+Puntos Estrella de un combate (como mucho 100, un nivel).
 
 Star Piece and Shine Sprite tracker
 Contador de Piezas Estrella y Soles
 
-How many of the current map's Star Pieces and Shine Sprites are found, in a corner.
-Cuántas Piezas Estrella y Soles del mapa actual se han encontrado, en una esquina.
+The map's Star Pieces and Shine Sprites, in a corner.
+Las Piezas Estrella y Soles del mapa, en una esquina.
 
 On this map
 En este mapa
@@ -667,7 +664,7 @@ Aleatorio integrado
 Backups kept
 Copias que se guardan
 
-Dated copies of each save file, made when the game saves. 0: none.
+Dated copies of each save file, made on saving. 0: none.
 Copias con fecha de cada archivo de partida, hechas cuando el juego guarda. 0: ninguna.
 
 Restore a backup
@@ -688,8 +685,8 @@ Panorámico
 Never skip loading graphics
 No saltar nunca gráficos en carga
 
-Extra frames between the game's own 60: smoother motion.
-Fotogramas extra entre los 60 del juego: movimiento más suave.
+Extra frames between the game's 60: smoother motion.
+Fotogramas extra entre los 60 del juego: más fluido.
 
 Present at the display's refresh: no tearing.
 Mostrar al ritmo de la pantalla: sin cortes.
@@ -745,11 +742,11 @@ La opción de vibración del propio juego sigue aplicándose.
 How fast the game's text appears.
 La velocidad con la que aparece el texto del juego.
 
-A ring shows when to press A in battle.
-Un aro indica cuándo pulsar A en combate.
+A ring shows when to press {A} in battle.
+Un aro indica cuándo pulsar {A} en combate.
 
-Fast-forward: Tab, the right stick's click, or >> on screen.
-Avance rápido: Tab, pulsar el stick derecho o >> en la pantalla.
+Fast-forward: {FF}, or >> on screen.
+Avance rápido: {FF} o >> en la pantalla.
 
 On: a press turns it on and off. Off: held.
 Sí: una pulsación lo activa y lo desactiva. No: mantener.
@@ -818,7 +815,7 @@ Keyboard
 Teclado
 
 Superguards only
-Solo superdefensa
+Solo Súper Defensa
 
 No guarding at all
 Ninguna defensa
@@ -869,7 +866,7 @@ Level, stats and badges
 Nivel, atributos y medallas
 
 Level, stats, badges and Tattle Log
-Nivel, atributos, medallas y Descripciones
+Nivel, atributos, medallas y lista de descripciones
 
 Easy (enemy HP 75 %, attacks 50 %)
 Fácil (PC enemigos 75 %, ataques 50 %)
@@ -922,8 +919,8 @@ Tamaño de los mensajes
 The message and choice windows larger, on top of HUD size. A window grows only while it fits the screen: a little in 4:3, up to about 145% in widescreen.
 Las ventanas de mensajes y de elección más grandes, además del tamaño de la interfaz. Una ventana crece solo mientras cabe en la pantalla: un poco en 4:3, hasta un 145 % en panorámico.
 
-Y: a hint for where to go next.
-Y: una pista de adónde ir ahora.
+{Y}: a hint for where to go next.
+{Y}: una pista de adónde ir ahora.
 
 Where next:
 Ahora:
@@ -934,8 +931,8 @@ La historia ha terminado: ve adonde quieras.
 Second player (co-op)
 Segundo jugador (cooperativo)
 
-Player 2 plays the partner: A on another controller joins. In battle: its moves, action commands and guards. In the field: the stick walks it, A hops, B talks or hits, X is its ability, L or R the next partner; Mario's Y calls it back. On a phone or tablet, pair two controllers.
-El jugador 2 lleva al compañero: A en otro mando se une. En combate: sus movimientos, comandos de acción y defensas. En el mapa: el stick lo mueve, A salta, B habla o golpea, X es su habilidad, L o R el siguiente compañero; la Y de Mario lo llama de vuelta. En un móvil o tableta, empareja dos mandos.
+Player 2 plays the partner: {A} on another controller joins. In battle: its moves, action commands and guards. In the field: the stick walks it, {A} hops, {B} talks or hits, {X} is its ability, {L} or {R} the next partner; Mario's {Y} calls it back. On a phone or tablet, pair two controllers.
+El jugador 2 lleva al compañero: {A} en otro mando se une. En combate: sus movimientos, comandos de acción y defensas. En el mapa: el stick lo mueve, {A} salta, {B} habla o golpea, {X} es su habilidad, {L} o {R} el siguiente compañero; la {Y} de Mario lo llama de vuelta. En un móvil o tableta, empareja dos mandos.
 
 connected
 conectado
@@ -1043,9 +1040,6 @@ last_crash.txt en la carpeta de partidas; pégalo a quien te esté ayudando.
 
 The game crashed last time
 El juego se cerró por un error la última vez
-
-A report of where it crashed was saved. Copy it and paste it to whoever is helping you.
-Se guardó un informe de dónde falló. Cópialo y pégalo a quien te esté ayudando.
 
 Copy report
 Copiar el informe
@@ -1186,10 +1180,10 @@ Player 1 plays; player 2 can play the partner in battle and in the field (Second
 El jugador 1 juega; el jugador 2 puede llevar al compañero en combate y en el mapa (Segundo jugador, abajo). Los botones de cada jugador se ajustan en Asignaciones.
 
 Couldn't open it: 
-No se pudo abrir:
+No se pudo abrir: 
 
 SDL didn't take the mapping: 
-SDL no aceptó la configuración:
+SDL no aceptó la configuración: 
 
 %s is set up. It's in the list above now, and next time.
 %s está configurado. Ya está en la lista de arriba, y también la próxima vez.
@@ -1255,10 +1249,10 @@ Shown while a game is in the field or a battle.
 Se muestra mientras una partida está en el mapa o en un combate.
 
 Crystal Stars: %d of 7
-Estrellas de Cuarzo: %d de 7
+Cristales Estelares: %d de 7
 
 Trouble Center: %d of %d solved
-Centro de problemas: %d de %d resueltos
+Centro de Servicios Personalizados: %d de %d resueltos
 
 Not solved yet: #%s
 Aún sin resolver: #%s
@@ -1270,7 +1264,7 @@ Recipes cooked: %d of %d
 Recetas cocinadas: %d de %d
 
 Tattle Log: %d of %d
-Descripciones: %d de %d
+Lista de descripciones: %d de %d
 
 Star Pieces held: %d    Shine Sprites held: %d
 Piezas Estrella: %d    Soles: %d
@@ -1285,7 +1279,7 @@ Se muestra mientras se juega una partida.
 %2d medallas
 
   empty  
-  vacío
+  vacío  
 
 Store worn
 Guardar las puestas
@@ -1321,10 +1315,10 @@ Mario as he is in this file.
 Mario tal como está en este archivo.
 
 Level 15: 30 HP, 25 FP, 21 BP, Super Boots and Hammer, every partner, four Star Powers, eight items.
-Nivel 15: 30 PC, 25 PF, 21 PM, Superbotas y Supermartillo, todos los compañeros, cuatro Poderes Estelares, ocho objetos.
+Nivel 15: 30 PC, 25 PF, 21 PM, Súper Botas y Súper Martillo, todos los compañeros, cuatro habilidades especiales, ocho objetos.
 
 Level 30: 60 HP, 50 FP, 51 BP, Ultra Boots and Hammer, every partner upgraded, all Star Powers, eight items.
-Nivel 30: 60 PC, 50 PF, 51 PM, Ultrabotas y Ultramartillo, todos los compañeros mejorados, todos los Poderes Estelares, ocho objetos.
+Nivel 30: 60 PC, 50 PF, 51 PM, Ultra Botas y Ultra Martillo, todos los compañeros mejorados, todas las habilidades especiales, ocho objetos.
 
 The loadout is lent for the run: Mario is as he was after it. Your badges stay as they are.
 El equipo se presta para la partida: después Mario vuelve a estar como antes. Tus medallas se quedan como están.
@@ -1570,7 +1564,7 @@ Check this seed
 Comprobar esta semilla
 
 Changes apply the next time the game starts.
-Los cambios se aplican la próxima vez que se inicie el juego.
+Los cambios se aplican al volver a iniciar el juego.
 
 Card
 Tarjeta
@@ -1584,11 +1578,11 @@ Sustituir la partida por esta
 Restore
 Restaurar
 
-Restore this card's saves from the launcher, before the game starts.
-Restaura las partidas de esta tarjeta desde el lanzador, antes de que empiece el juego.
+Restore saves from the launcher, before starting.
+Restaura las partidas desde el lanzador, antes de empezar.
 
 The Japanese release keeps its Pianta Parlor records differently; the copy is converted. Names typed in one release's letters may look different in another.
-La versión japonesa guarda de otra forma los récords de su salón de juegos; la copia se convierte. Los nombres escritos con las letras de una versión pueden verse distintos en otra.
+La versión japonesa guarda de otra forma los récords de su Casino; la copia se convierte. Los nombres escritos con las letras de una versión pueden verse distintos en otra.
 
 From
 De
@@ -1695,16 +1689,16 @@ el gatillo izquierdo (L)
 the right trigger (R)
 el gatillo derecho (R)
 
-the d-pad up
+the D-pad up
 la cruceta arriba
 
-the d-pad down
+the D-pad down
 la cruceta abajo
 
-the d-pad left
+the D-pad left
 la cruceta a la izquierda
 
-the d-pad right
+the D-pad right
 la cruceta a la derecha
 
 the left stick to the right
@@ -1808,8 +1802,8 @@ R se activa al
 Player 2 joined: their stick walks the partner.
 El jugador 2 se une: su stick mueve al compañero.
 
-A second controller: turn on Second player (Controls) to play the partner.
-Un segundo mando: activa Segundo jugador (Controles) para llevar al compañero.
+A second controller: turn on Second player (co-op) in Multiplayer to play the partner.
+Un segundo mando: activa Segundo jugador (cooperativo) en Multijugador para llevar al compañero.
 
 Player 2 left: the partner follows Mario.
 El jugador 2 se fue: el compañero sigue a Mario.
@@ -1828,14 +1822,14 @@ Jugador 1 (Mario): el teclado
 Player 2 (the partner): %s
 Jugador 2 (el compañero): %s
 
-Player 2: nobody yet. Press A on another controller to join.
-Jugador 2: aún nadie. Pulsa A en otro mando para unirte.
+Player 2: nobody yet. Press {A} on another controller to join.
+Jugador 2: aún nadie. Pulsa {A} en otro mando para unirte.
 
 Player 2: nobody (co-op is off).
 Jugador 2: nadie (el cooperativo está desactivado).
 
-Press A on player 2's controller...
-Pulsa A en el mando del jugador 2...
+Press {A} on player 2's controller...
+Pulsa {A} en el mando del jugador 2...
 
 Stop co-op
 Detener el cooperativo
@@ -1852,8 +1846,8 @@ Soltar al jugador 2
 Choosing player 1's controller moves it to player 2, and player 1 plays on the keyboard. Each player's buttons are set under Bindings.
 Elegir el mando del jugador 1 lo pasa al jugador 2, y el jugador 1 juega con el teclado. Los botones de cada jugador se ajustan en Asignaciones.
 
-Co-op is on: press A on another controller to join.
-El cooperativo está activado: pulsa A en otro mando para unirte.
+Co-op is on: press {A} on another controller to join.
+El cooperativo está activado: pulsa {A} en otro mando para unirte.
 
 a controller
 un mando

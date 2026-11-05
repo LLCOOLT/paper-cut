@@ -14,6 +14,9 @@
 #include "tik.h"
 #include "evt/evt_story.h"
 #include "driver/camdrv.h"
+#ifdef TARGET_PC
+#include "port/directors_cut.h"
+#endif
 
 static BeroEntry bero_entry_data[5];
 extern EvtWord iri_12_kino_makkino_talk[];
@@ -298,6 +301,9 @@ EVT_BEGIN(tik_06_init_evt)
     CALL(evt_snd_envon, PSND_FADE_RESTART | PSND_FADE_IN, STRING("ENV_STG0_TIK1"))
     CALL(evt_snd_set_rev_mode, 2)
     SET_VALUE(LW(0), PTR(bero_entry_data))
+#ifdef TARGET_PC
+    CALL(portEvtDirectorsCutBero) // Director's Cut: dokan_3 leads down into the cut tik_09
+#endif
     CALL(evt_bero_get_info)
     CALL_CHILD(evt_bero_info_run)
     CALL_CHILD(iri_12_init)

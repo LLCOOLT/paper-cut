@@ -1,0 +1,8 @@
+{
+  "id": "dev.ttyd.lua-superguard-counter",
+  "name": "Guard counter (Lua)",
+  "version": "1.0",
+  "author": "Paper Cut",
+  "description": "An example Lua mod: counts your Guards and Superguards, this battle and in all, and shows them in battle.",
+  "lua": {"online": "hud"}
+}

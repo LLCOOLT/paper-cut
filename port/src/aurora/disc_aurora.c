@@ -82,13 +82,62 @@ int portAuroraOpenDiscPath(const char* path, char* why, size_t size) {
 /* The version of the disc image at path (opened and closed again); NULL if
  * it can't be read or isn't a version of the game. */
 const PortVersionInfo* portAuroraProbeDisc(const char* path) {
+    return portAuroraProbeDiscBanner(path, NULL, NULL);
+}
+
+/* the open disc's banner (opening.bnr: 96x32 RGB5A3 in 4x4 tiles from 0x20) as RGBA8; FALSE if it has none */
+static BOOL readBanner(unsigned char* rgba) {
+    DVDFileInfo info;
+    static unsigned char data[0x1820]; /* the header and the picture: whole 32-byte blocks */
+    BOOL ok = FALSE;
+    int bx, by, x, y;
+    if (!DVDOpen("/opening.bnr", &info)) {
+        return FALSE;
+    }
+    if (info.length >= sizeof(data) && DVDReadPrio(&info, data, sizeof(data), 0, 2) >= (s32)sizeof(data) &&
+        memcmp(data, "BNR", 3) == 0) {
+        const unsigned char* p = data + 0x20;
+        for (by = 0; by < 32; by += 4) {
+            for (bx = 0; bx < 96; bx += 4) {
+                for (y = 0; y < 4; y++) {
+                    for (x = 0; x < 4; x++, p += 2) {
+                        const unsigned v = (unsigned)p[0] << 8 | p[1];
+                        unsigned char* o = rgba + ((by + y) * 96 + bx + x) * 4;
+                        if (v & 0x8000) {
+                            o[0] = (unsigned char)(((v >> 10) & 31) * 255 / 31);
+                            o[1] = (unsigned char)(((v >> 5) & 31) * 255 / 31);
+                            o[2] = (unsigned char)((v & 31) * 255 / 31);
+                            o[3] = 255;
+                        } else {
+                            o[0] = (unsigned char)(((v >> 8) & 15) * 17);
+                            o[1] = (unsigned char)(((v >> 4) & 15) * 17);
+                            o[2] = (unsigned char)((v & 15) * 17);
+                            o[3] = (unsigned char)(((v >> 12) & 7) * 255 / 7);
+                        }
+                    }
+                }
+            }
+        }
+        ok = TRUE;
+    }
+    DVDClose(&info);
+    return ok;
+}
+
+const PortVersionInfo* portAuroraProbeDiscBanner(const char* path, unsigned char* banner, int* hasBanner) {
     const PortVersionInfo* v;
     char gid[6];
+    if (hasBanner != NULL) {
+        *hasBanner = 0;
+    }
     if (!aurora_dvd_open(path)) {
         return NULL;
     }
     discId(gid);
     v = portVersionIdentify(gid, discHas, NULL);
+    if (v != NULL && banner != NULL && hasBanner != NULL) {
+        *hasBanner = readBanner(banner);
+    }
     aurora_dvd_close();
     return v;
 }

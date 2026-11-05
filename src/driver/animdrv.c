@@ -28,6 +28,9 @@
 #include "port/anim_pc.h"
 #include "port/bedecode.h"
 #include "port/luigi.h"
+#include "port/costume.h"
+#include "port/toggles.h"
+#include "port/paper.h"
 /* PC port: a loaded model blob starts with a marker and the native root
  * (port/anim_pc.h), where the GameCube code casts the blob itself. Index
  * tables stay big-endian in the blob: ANIM_IDX16 reads the low half of an
@@ -6139,6 +6142,23 @@ static void dispProc(s32 parentId, s32 groupId, s32 xluStage, s32 nextKeyframe, 
         if (wp->curPose->flags & ANIM_POSE_FLAG_WORLD_MATRICES) {
             PSMTXCopy(*g_modeling_mtx, (*wp->curPose->worldMatrices)[groupId]);
         }
+#ifdef TARGET_PC
+        {
+            /* fun toggles: big heads, grown about the head's pivot (draw only: after
+             * the world positions the game keeps; port/toggles.h) */
+            f32 k;
+            f32 c[3] = {node->rotationCenter.x, node->rotationCenter.y, node->rotationCenter.z};
+            if (portFunHeadScale(data, groupId, &k, c)) {
+                Mtx t;
+                PSMTXTrans(t, c[0], c[1], c[2]);
+                PSMTXConcat(*g_modeling_mtx, t, *g_modeling_mtx);
+                PSMTXScale(t, k, k, k);
+                PSMTXConcat(*g_modeling_mtx, t, *g_modeling_mtx);
+                PSMTXTrans(t, -c[0], -c[1], -c[2]);
+                PSMTXConcat(*g_modeling_mtx, t, *g_modeling_mtx);
+            }
+        }
+#endif
         pose = wp->curPose;
         if (pose->flags & ANIM_POSE_FLAG_VIVIAN && groupId == pose->vivianGroupNo[0]) {
             Mtx* m;
@@ -6194,6 +6214,11 @@ static void dispProc(s32 parentId, s32 groupId, s32 xluStage, s32 nextKeyframe, 
             if (pose->dispCallback) {
                 ((void (*)(void*, s32, Mtx*))pose->dispCallback)(pose->dispUserDataCallback, groupId, g_modeling_mtx);
             }
+#ifdef TARGET_PC
+            /* PC port: a costume or sticker draws only some of its parts
+             * (port/include/port/costume.h); their children still follow */
+            if (gPortAnimShapeMask == NULL || gPortAnimShapeMask[groupId])
+#endif
             renderProc(group->shapeId, xluStage);
             dispProc(groupId, group->childGroupId, xluStage, nextKeyframe, blend);
         }
@@ -6310,6 +6335,12 @@ void _animPoseDrawMtx(AnimationPose* pose, Mtx matrix, s32 xluMode, f32 rotY, f3
         wp->currDispMode = mode;
     }
     if (pose->flags & ANIM_POSE_FLAG_PERA) {
+#ifdef TARGET_PC
+        /* paper shadows (port/paper.h): the shadow's draw leaves the turn as it
+         * was, so the character's own draw steps it once a frame, as always
+         * (the game waits on it: animPoseGetPeraEnd) */
+        const f32 keepRot = pose->rotationY, keepPera = pose->peraRotY, keepTarget = pose->peraTargetRotY;
+#endif
         rotY += -90.0f;
         pose->peraRotY = rotY;
         diff = _animClampAngle2(_animCamAngle() - pose->peraRotY);
@@ -6327,9 +6358,23 @@ void _animPoseDrawMtx(AnimationPose* pose, Mtx matrix, s32 xluMode, f32 rotY, f3
         if (pose->flags & ANIM_POSE_FLAG_INSTANT_TURN) {
             pose->rotationY = pose->peraTargetRotY;
         } else {
+#ifdef TARGET_PC
+            /* battery saver: the turn of each frame that wasn't drawn too (port/toggles.h) */
+            int n;
+            for (n = portDrawFrames(); n > 1; n--) {
+                pose->rotationY += 0.1f * (pose->peraTargetRotY - pose->rotationY);
+            }
+#endif
             pose->rotationY += 0.1f * (pose->peraTargetRotY - pose->rotationY);
         }
         rotY = pose->rotationY;
+#ifdef TARGET_PC
+        if (portPaperShadowPass()) {
+            pose->rotationY = keepRot;
+            pose->peraRotY = keepPera;
+            pose->peraTargetRotY = keepTarget;
+        }
+#endif
         if (rotY != 0.0f) {
             PSMTXRotRad(tmp2, 'y', 0.017453292f * rotY);
             PSMTXConcat(matrix, tmp2, result);
@@ -6350,6 +6395,9 @@ void _animPoseDrawMtx(AnimationPose* pose, Mtx matrix, s32 xluMode, f32 rotY, f3
         PSMTXConcat(matrix, tmp3, result);
         matrix = result;
     }
+#ifdef TARGET_PC
+    matrix = portFunPoseMtx(data->fileName, matrix, result); /* fun toggles: paper-thin, spinning (draw only) */
+#endif
     if (pose->lastFrameZero == -1) {
         animPoseMainSub(pose);
     }
@@ -7101,6 +7149,55 @@ static void evalProc(s32 parentId, s32 groupId) {
     evalProc(groupId, group->brotherGroupId);
 }
 
+#ifdef TARGET_PC
+const unsigned char* gPortAnimShapeMask;
+
+/* PC port (port/include/port/costume.h): each group's model matrix of pose
+ * poseId as its animation is now, under matrix, as a draw would push them
+ * (evalProc), into out[]; groups hidden (or under a hidden one) are left all
+ * zero. The pose's own state is as it was. */
+s32 portAnimPoseGroupMatrices(s32 poseId, Mtx matrix, Mtx* out, s32 max) {
+    AnimationPose* pose;
+    AnimationPoseData* data;
+    AnimationPose* curPose;
+    AnimationPoseData* curPoseData;
+    Mtx** worldMatrices;
+    Mtx* array;
+    u32 flags;
+
+    if (poseId < 0 || poseId >= wp->totalPoses) {
+        return 0;
+    }
+    pose = &wp->poses[poseId];
+    if (!(pose->flags & ANIM_POSE_FLAG_USED) || pose->lastFrameZero == -1) {
+        return 0; /* (not stepped yet: its nodes aren't set) */
+    }
+    data = animPoseGetBaseData(pose);
+    if (data == NULL || data->groupCount <= 0 || data->groupCount > max) {
+        return 0;
+    }
+    memset(out, 0, sizeof(Mtx) * data->groupCount);
+    flags = pose->flags;
+    worldMatrices = pose->worldMatrices;
+    curPose = wp->curPose;
+    curPoseData = wp->curPoseData;
+    array = out;
+    pose->worldMatrices = &array;
+    pose->flags = (flags | ANIM_POSE_FLAG_WORLD_MATRICES) & ~(ANIM_POSE_FLAG_WORLD_POSITIONS | ANIM_POSE_FLAG_VIVIAN);
+    g_modeling_mtx_lv = 0;
+    g_modeling_mtx = &g_modeling_mtx_stack[0];
+    PSMTXCopy(matrix, *g_modeling_mtx);
+    wp->curPose = pose;
+    wp->curPoseData = data;
+    evalProc(-1, data->groupCount - 1);
+    pose->flags = flags;
+    pose->worldMatrices = worldMatrices;
+    wp->curPose = curPose;
+    wp->curPoseData = curPoseData;
+    return data->groupCount;
+}
+#endif
+
 /**
  * Makes pose poseId record the world position of each of its groups
  * when evaluated (for attaching things to body parts), allocating the buffer from the pose's heap.
@@ -7338,9 +7435,30 @@ Mtx g_modeling_mtx_stack[32];
 #include "port/cosmetics.h"
 /* Cosmetics (port/include/port/cosmetics.h): a loaded texture file's
  * textures, as animSetMaterial_Texture reads them */
+static int portAnimFileTextures(AnimationTextureFile* t, PortTexInfo* out, int max) {
+    TEXPalette* pal = *(TEXPalette**)t->handle->data;
+    s32 n;
+    if (pal == NULL) {
+        return 0;
+    }
+    for (n = 0; n < (s32)pal->numDescriptors && n < max; n++) {
+        TEXDescriptor* d = TEXGet(pal, n);
+        if (d == NULL || d->textureHeader == NULL) {
+            break;
+        }
+        out[n].data = d->textureHeader->data;
+        out[n].width = d->textureHeader->width;
+        out[n].height = d->textureHeader->height;
+        out[n].format = (int)d->textureHeader->format;
+        out[n].tlut = d->CLUTHeader != NULL ? d->CLUTHeader->data : NULL;
+        out[n].tlutFormat = d->CLUTHeader != NULL ? (int)d->CLUTHeader->format : 0;
+        out[n].tlutCount = d->CLUTHeader != NULL ? d->CLUTHeader->numEntries : 0;
+    }
+    return n;
+}
+
 int portAnimTextures(const char* file, PortTexInfo* out, int max) {
-    TEXPalette* pal;
-    s32 i, n;
+    s32 i;
     if (wp->textures == NULL) {
         return 0; /* (before animInit) */
     }
@@ -7349,27 +7467,23 @@ int portAnimTextures(const char* file, PortTexInfo* out, int max) {
         if (!t->active || t->handle == NULL || t->handle->data == NULL || strcmp(t->handle->filename, file) != 0) {
             continue;
         }
-        pal = *(TEXPalette**)t->handle->data;
-        if (pal == NULL) {
-            return 0;
-        }
-        for (n = 0; n < (s32)pal->numDescriptors && n < max; n++) {
-            TEXDescriptor* d = TEXGet(pal, n);
-            if (d == NULL || d->textureHeader == NULL) {
-                break;
-            }
-            out[n].data = d->textureHeader->data;
-            out[n].width = d->textureHeader->width;
-            out[n].height = d->textureHeader->height;
-            out[n].format = (int)d->textureHeader->format;
-            out[n].tlut = d->CLUTHeader != NULL ? d->CLUTHeader->data : NULL;
-            out[n].tlutFormat = d->CLUTHeader != NULL ? (int)d->CLUTHeader->format : 0;
-            out[n].tlutCount = d->CLUTHeader != NULL ? d->CLUTHeader->numEntries : 0;
-        }
-        return n;
+        return portAnimFileTextures(t, out, max);
     }
     return 0;
 }
+
+int portAnimTexturesAt(int slot, PortTexInfo* out, int max) {
+    AnimationTextureFile* t;
+    if (wp->textures == NULL || slot < 0 || slot >= wp->totalTextures) {
+        return -1;
+    }
+    t = &wp->textures[slot];
+    if (!t->active || t->handle == NULL || t->handle->data == NULL) {
+        return 0;
+    }
+    return portAnimFileTextures(t, out, max);
+}
+
 #endif
 
 #ifdef PORT_MODS

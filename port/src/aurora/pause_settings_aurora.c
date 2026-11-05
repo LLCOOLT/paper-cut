@@ -26,18 +26,29 @@
 #define PORT_SECTION_MENU
 #include "port/companion_section.h"
 #include "port/pause_settings.h"
+#include "port/online.h"
+#include "port/photo.h"
+#include "port/stats.h"
+#include "port/replay.h"
 #include "port/pause_bindings.h"
 #include "port/menu_speed.h"
 #include "port/menu_tap.h"
+#include "port/modes_hub.h"
 #include "port/companion_menu.h"
 #include "port/pause_forms.h"
 #include "port/restart.h"
 #include "port/settings.h"
+#include "port/title_menu.h"
 #include "port/speech.h"
 #include "port/tr.h"
+#include "port/button_markup.h"
 #include "port/view.h"
+#include "port/versus.h"
+#include "driver/seqdrv.h"
 #include "driver/camdrv.h"
 #include "icon_ids.h"
+#include "data/item_data.h"
+#include "mario/mario_pouch.h"
 #include "manager/fontmgr.h"
 #include "mario/mariost.h"
 #include "pmario_sound.h"
@@ -56,10 +67,10 @@ void portSettingsOpenAt(const char* tab); /* the full page on one of its tabs */
  * (port/include/port/pause_forms.h), KIND_SUBHEAD its heading; KIND_SECTION: a section of the full
  * page with no form here, which opens the full page */
 enum { KIND_HEADING = -1, KIND_RATE = 3, KIND_ALL = 4, KIND_RESTART = 5, KIND_PHOTO = 6, KIND_CATEGORY = 7,
-       KIND_BINDINGS = 8, KIND_FORM = 9, KIND_SUBHEAD = 10, KIND_SECTION = 11 };
+       KIND_BINDINGS = 8, KIND_FORM = 9, KIND_SUBHEAD = 10, KIND_SECTION = 11, KIND_VERSUS = 12, KIND_GROUP = 13 };
 /* the Bindings page open (port/include/port/pause_bindings.h): it has the input and the panel */
 static int sBindings;
-#define MAX_ROWS 256
+#define MAX_ROWS 1024 /* every setting listed fits, with room for the features still coming */
 /* The front page: the Journal's entry buttons (win_log.c: 224 x 32, the
  * cursor's lifted 8 up and left over its shadow, the others grey) in two
  * columns, filled down the left first; up and down go through them in order,
@@ -90,11 +101,42 @@ typedef struct Row {
     PortSettingsControl c;
     int form;         /* KIND_FORM: its form (sForms) */
     PortPauseRow f;   /* KIND_FORM: the form's row */
-    const char* tab;  /* KIND_SECTION: the full page's tab it opens */
+    const char* tab;  /* KIND_SECTION: the full page's tab it opens; a Modes hub page's heading: its button */
+    int group;        /* KIND_SUBHEAD: a group's heading (port/settings/settings_layout.cpp), not a form's;
+                       * KIND_HEADING: a Modes hub button's page (port/include/port/modes_hub.h) */
+    int held;         /* the title menu's (no file in play): one that works on a file, greyed (kNoFileNote) */
 } Row;
 
+/* The title menu's scopes (port/include/port/title_menu.h): over the title with no file, the rows
+ * that work on the file in play are greyed (PORT_SETTING_IN_GAME) and the Modes page is the title
+ * menu's own; on its temporary file, the Modes hub shows the modes that need no file of the player's */
+static const char kNoFileNote[] = "This one works on the file in play: load a file, then find it in the Start menu.";
+
+static int titleNoFile(void) {
+    return portTitleScope() == PORT_TITLE_NO_FILE;
+}
+
+/* a Modes page row (its section's label, its group) shown on the temporary file */
+static int titleModeShown(const char* label, const char* group) {
+    static const char* const kShown[] = {"Versus battle", "Raid boss",      "Quiz party",          "Tattle cards",
+                                         "Dungeon master", "Boss rush",     "Battle puzzles", "Action-command dojo"};
+    size_t i;
+    if (portTitleScope() != PORT_TITLE_TEMP_FILE) {
+        return 1;
+    }
+    if (group != NULL && strcmp(group, "Just for fun") == 0) {
+        return 1; /* (switches: they go with whichever mode is played) */
+    }
+    for (i = 0; label != NULL && i < sizeof(kShown) / sizeof(kShown[0]); i++) {
+        if (strcmp(label, kShown[i]) == 0) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
 /* the features' Start menu forms (portPauseAddForm) */
-#define MAX_FORMS 32
+#define MAX_FORMS 128
 static const PortPauseForm* sForms[MAX_FORMS];
 static int sFormCount;
 static const char* sMessage; /* a form's answer, in the help box until the cursor moves (English) */
@@ -106,16 +148,11 @@ void portPauseAddForm(const PortPauseForm* form) {
     }
 }
 
-/* the full page's sections (portSettingsAddSection) with a form here: their
- * forms say which (PortPauseForm.section) */
-static int formFor(const char* tab, const char* section) {
-    int i;
-    for (i = 0; i < sFormCount; i++) {
-        if (strcmp(sForms[i]->tab, tab) == 0 && sForms[i]->section != NULL && strcmp(sForms[i]->section, section) == 0) {
-            return 1;
-        }
-    }
-    return 0;
+/* a form's category: where its section is shown (port/settings/settings_layout.cpp) */
+static const char* formTab(int f) {
+    PortSettingsPlaceInfo p;
+    portSettingsPlace(sForms[f]->tab, sForms[f]->section, &p);
+    return p.tab;
 }
 
 static int selectable(int kind) {
@@ -124,7 +161,12 @@ static int selectable(int kind) {
 
 /* a row's name for the game's text: a form's row's own text as it is */
 static const char* rowLabel(const Row* r) {
-    return r->kind == KIND_FORM && r->f.label == NULL ? r->f.text : portTrGame(r->label);
+    if (r->kind == KIND_GROUP) { /* a Modes hub button: its name on the hub */
+        return portTrGame(portModesHubName(r->label));
+    }
+    return (r->kind == KIND_FORM || (r->kind == KIND_SUBHEAD && r->form >= 0)) && r->f.label == NULL
+               ? r->f.text
+               : portTrGame(r->label);
 }
 
 static Row sRows[MAX_ROWS];
@@ -148,16 +190,44 @@ static f32 sSlide, sSlideTo;
 static Row sOut[MAX_ROWS]; /* the page leaving: its rows, kept while the book slides away */
 static int sOutCount;
 static s32 sOutRow, sOutTop;
+/* The Modes page (port/include/port/modes_hub.h): a hub of picture buttons as the front page's, one
+ * a group of the Modes tab, each opening its group's rows on the book. The hub's buttons come in
+ * from the right as the front page's go out to the left (sSide: 0 the front page's, 1 the hub's). */
+#define MAX_HUB 16
+static int sGroup = -1;           /* on the Modes page: the button's page shown, or -1: the hub */
+static const char* sHub[MAX_HUB]; /* the hub's buttons (each its group's English name), in the page's order */
+static int sHubCount;
+static s32 sGroupRow[MAX_HUB], sGroupTop[MAX_HUB]; /* each button's page's cursor and view */
+static Row sHubFront[MAX_HUB];    /* the hub's buttons as last built (drawn while they slide) */
+static int sHubFrontCount;
+static s32 sHubFrontRow;
+static f32 sSide, sSideTo;
+#define HUB_SLIDE_X 640.0f
+
+/* the category is the Modes page, with its hub */
+static int isModes(int cat) {
+    return cat >= 0 && cat < sCatCount && strcmp(sCats[cat], "Modes") == 0;
+}
+
+/* the hub shown (rather than a button's page) */
+static int hubShown(void) {
+    return isModes(sCat) && sGroup < 0;
+}
+
+/* buttons shown: the front page's or the hub's */
+static int buttonsShown(void) {
+    return sCat < 0 || hubShown();
+}
 
 static const char* const kRates[] = {"60", "120", "144", "240", "display"};
 static const char* const kRateNames[] = {"60 Hz", "120 Hz", "144 Hz", "240 Hz", "The display's rate"};
 
 float portPauseTabX(int n, int i) {
-    return n >= 7 ? i * 78.0f - 234.0f : n >= 6 ? i * 90.0f - 225.0f : i * 105.0f - 205.0f;
+    return n >= 8 ? i * 70.0f - 245.0f : n >= 7 ? i * 78.0f - 234.0f : n >= 6 ? i * 90.0f - 225.0f : i * 105.0f - 205.0f;
 }
 
 float portPauseTabScale(int n) {
-    return n >= 7 ? 0.76f : n >= 6 ? 0.86f : 1.0f;
+    return n >= 8 ? 0.7f : n >= 7 ? 0.76f : n >= 6 ? 0.86f : 1.0f;
 }
 
 static int rateIndex(void) {
@@ -171,10 +241,14 @@ static int rateIndex(void) {
 }
 
 /* the settings page's tabs that are modes or tools, not settings (they keep
- * their pages there), and the Wardrobe's (port/src/aurora/wardrobe_aurora.c) */
+ * their pages there), and the Wardrobe's (port/src/aurora/wardrobe_aurora.c).
+ * (The Randomizer has a form here: port/settings/features/randomizer_menu.cpp. Modes
+ * too: its switches, and the forms of the modes started from the Start menu, the
+ * quiz party, bingo, Tattle cards, the Paper Tower... And Mods, the mod manager's:
+ * port/settings/features/mods_manager.cpp.) */
 static int toolTab(const char* tab) {
-    static const char* const kTools[] = {"Cosmetics", "Practice",  "Challenges",  "Modes",
-                                         "Achievements", "Mods", "Randomizer", "Archipelago", "Streaming"};
+    static const char* const kTools[] = {"Cosmetics", "Practice", "Challenges", "Achievements", "Archipelago",
+                                         "Streaming"};
     size_t i;
     for (i = 0; i < sizeof(kTools) / sizeof(kTools[0]); i++) {
         if (strcmp(tab, kTools[i]) == 0) {
@@ -182,6 +256,107 @@ static int toolTab(const char* tab) {
         }
     }
     return 0;
+}
+
+/* a form's rows on the page shown, under its section's name when it has more than one (or only a
+ * note) and no heading of its own first */
+#define OWN_ROW_ID (-0x0E1E) /* the one row of a device's own form online and in replays */
+static const char kOwnNote[] = "This one is this device's own (its files, controllers or screen): it waits until the "
+                               "online game or the replay is over.";
+
+static int formOwnHeld(int f) {
+    return (sForms[f]->flags & PORT_PAUSE_FORM_OWN) && (portOnlineActive() || portReplayActive());
+}
+
+static const char* formAct(int f, int id, int dir) {
+    if (id == OWN_ROW_ID) {
+        return dir == 0 ? kOwnNote : NULL;
+    }
+    return sForms[f]->act(id, dir);
+}
+
+static void addForm(int f) {
+    static PortPauseRow got[48];
+    int m, k;
+    if (formOwnHeld(f)) {
+        memset(&got[0], 0, sizeof(got[0]));
+        got[0].label = "Not during online play or a replay";
+        got[0].note = kOwnNote;
+        got[0].id = OWN_ROW_ID;
+        got[0].flags = PORT_PAUSE_ROW_DIM;
+        m = 1;
+    } else {
+        m = sForms[f]->rows(got, 48);
+    }
+    if ((m > 1 || (m == 1 && (got[0].flags & PORT_PAUSE_ROW_DIM))) && !(got[0].flags & PORT_PAUSE_ROW_HEADING) &&
+        sForms[f]->section != NULL && sCount < MAX_ROWS - 3) {
+        Row* r = &sRows[sCount++];
+        memset(r, 0, sizeof(*r));
+        r->kind = KIND_SUBHEAD;
+        r->label = sForms[f]->section;
+        r->form = -1;
+    }
+    for (k = 0; k < m && sCount < MAX_ROWS - 3; k++) {
+        Row* r = &sRows[sCount++];
+        memset(r, 0, sizeof(*r));
+        r->kind = (got[k].flags & PORT_PAUSE_ROW_HEADING) ? KIND_SUBHEAD : KIND_FORM;
+        r->label = got[k].label != NULL ? got[k].label : "";
+        r->c.note = got[k].note;
+        r->form = f;
+        r->f = got[k];
+    }
+}
+
+/* Versus battle's row works here: in a room, not in a battle, and not on the second screen (its
+ * menu is one player's alone, and the page's set-up and Fight! change the game) */
+static int versusHere(void) {
+    return gp != NULL && seqGetSeq() == SEQ_GAME && !gp->inBattle && !gPortCompanionMenu;
+}
+
+/* a page's row not shown in the Start menu: Photo mode (on the front page), and Versus battle where
+ * it can't start */
+static int pageRowHidden(const PortSettingsPageRow* p) {
+    return (p->c.kind == 3 && (strcmp(p->c.label, "Photo mode") == 0 ||
+                               (strcmp(p->c.label, "Versus battle") == 0 && !versusHere()))) ||
+           (p->c.tab != NULL && strcmp(p->c.tab, "Modes") == 0 && !titleModeShown(p->c.label, p->group));
+}
+
+/* a page row's hub button (port/include/port/modes_hub.h): its group's, or "More" with none */
+static const char* hubButton(const PortSettingsPageRow* p) {
+    return portModesHubButton(p->group != NULL ? p->group : "More");
+}
+
+/* the Modes hub's buttons from its page's rows, in their order: the buttons with a row shown */
+static int hubButtons(const PortSettingsPageRow* page, int m, const char** out) {
+    int k, i, n = 0;
+    for (k = 0; k < m; k++) {
+        const char* b = hubButton(&page[k]);
+        int have = 0;
+        if (pageRowHidden(&page[k])) {
+            continue;
+        }
+        for (i = 0; i < n && !have; i++) {
+            have = strcmp(out[i], b) == 0;
+        }
+        if (!have && n < MAX_HUB) {
+            out[n++] = b;
+        }
+    }
+    return n;
+}
+
+/* a Modes form with no section of the page's (a row to another tab's setting): the hub button of
+ * the group its section is placed in (port/settings/settings_layout.cpp), or the last one */
+static int formHubPage(int f) {
+    PortSettingsPlaceInfo p;
+    int i;
+    portSettingsPlace(sForms[f]->tab, sForms[f]->section, &p);
+    for (i = 0; i < sHubCount; i++) {
+        if (strcmp(sHub[i], portModesHubButton(p.group != NULL ? p.group : "More")) == 0) {
+            return i;
+        }
+    }
+    return sHubCount - 1;
 }
 
 /* The rows of the page shown: the list (sCat -1): each category (a settings
@@ -202,9 +377,22 @@ static void buildRows(void) {
     int i, nextStart = 0;
     sCatCount = 0;
     for (i = 0; i < n; i++) {
+        if (titleNoFile() && strcmp(controls[i].tab, "Modes") == 0) {
+            continue; /* (over the title: the title menu's own Modes) */
+        }
         if (!toolTab(controls[i].tab) && sCatCount < MAX_CATS &&
             (sCatCount == 0 || strcmp(sCats[sCatCount - 1], controls[i].tab) != 0)) {
             sCats[sCatCount++] = controls[i].tab;
+        }
+    }
+    /* and a tab with only forms (the Randomizer), after them */
+    for (i = 0; i < sFormCount; i++) {
+        int k, have = 0;
+        for (k = 0; k < sCatCount && !have; k++) {
+            have = strcmp(sCats[k], formTab(i)) == 0;
+        }
+        if (!have && !toolTab(formTab(i)) && sCatCount < MAX_CATS && !(titleNoFile() && strcmp(formTab(i), "Modes") == 0)) {
+            sCats[sCatCount++] = formTab(i);
         }
     }
     if (sCat >= sCatCount) {
@@ -219,68 +407,134 @@ static void buildRows(void) {
             sRows[sCount++].c.note = NULL;
         }
     } else {
+        /* the category's rows in the page's order (port/settings/settings_layout.cpp), each group
+         * under its heading: its plain controls, and for each of the full page's sections its form
+         * (a heading over it when it has more than one row) or a row to the full page; then any
+         * form of no section */
+        static PortSettingsPageRow page[MAX_ROWS];
         const char* tab = sCats[sCat];
-        sRows[sCount].kind = KIND_HEADING;
-        sRows[sCount++].label = tab;
-        if (strcmp(tab, "Display") == 0) {
-            sRows[sCount].kind = KIND_RATE;
-            sRows[sCount].label = "Frame rate";
-            sRows[sCount].c.flags = 0;
-            sRows[sCount].c.note = "Extra frames between the game's own 60: smoother motion.";
-            sCount++;
+        int m = portSettingsPageRows(tab, page, MAX_ROWS - 24);
+        const char* group = NULL;
+        int done[MAX_FORMS] = {0};
+        int k, f;
+        /* the Modes page: its hub's buttons, a group each (a small one folded into another's), in
+         * the page's order; on the hub only they are its rows, on a button's page only its groups' */
+        const int modes = isModes(sCat);
+        if (modes) {
+            sHubCount = hubButtons(page, m, sHub);
+            if (sGroup >= sHubCount) {
+                sGroup = -1;
+            }
         }
-        if (strcmp(tab, "Controls") == 0) { /* the Bindings page's row (pause_bindings_aurora.c) */
-            sRows[sCount].kind = KIND_BINDINGS;
-            sRows[sCount].label = "Bindings...";
-            sRows[sCount].c.flags = 0;
-            sRows[sCount].c.note = "Every key and controller button: the game's, and Paper Cut's own shortcuts.";
-            sCount++;
+        if (modes && sGroup < 0) {
+            for (i = 0; i < sHubCount; i++) {
+                memset(&sRows[sCount], 0, sizeof(Row));
+                sRows[sCount].kind = KIND_GROUP;
+                sRows[sCount].form = -1;
+                sRows[sCount++].label = sHub[i];
+            }
+            m = 0; /* (no rows of the page's own) */
         }
-        for (i = 0; i < n && sCount < MAX_ROWS - 3; i++) {
-            if (strcmp(controls[i].tab, tab) != 0) {
+        if (modes && sGroup >= 0) { /* the button's name and picture heading its page */
+            memset(&sRows[sCount], 0, sizeof(Row));
+            sRows[sCount].kind = KIND_HEADING;
+            sRows[sCount].label = portModesHubName(sHub[sGroup]);
+            sRows[sCount].tab = sHub[sGroup];
+            sRows[sCount].form = -1;
+            sRows[sCount++].group = 1;
+        } else if (!modes) {
+            sRows[sCount].kind = KIND_HEADING;
+            sRows[sCount].group = 0;
+            sRows[sCount++].label = tab;
+        }
+        for (k = 0; k < m && sCount < MAX_ROWS - 6; k++) {
+            const PortSettingsPageRow* p = &page[k];
+            const char* label = p->c.label;
+            int any = 0;
+            if (pageRowHidden(p)) {
                 continue;
             }
-            nextStart |= (controls[i].flags & PORT_SETTING_NEXT_START) != 0;
-            sRows[sCount].kind = controls[i].kind;
-            sRows[sCount].label = controls[i].label;
-            sRows[sCount++].c = controls[i];
-        }
-        /* the features' forms for it, then its sections without one: to the full page */
-        for (i = 0; i < sFormCount; i++) {
-            static PortPauseRow got[48];
-            int k, m;
-            if (strcmp(sForms[i]->tab, tab) != 0) {
-                continue;
+            if (modes && strcmp(hubButton(p), sHub[sGroup]) != 0) {
+                continue; /* (another button's) */
             }
-            m = sForms[i]->rows(got, 48);
-            for (k = 0; k < m && sCount < MAX_ROWS - 3; k++) {
+            if (modes && p->group != NULL && strcmp(p->group, sHub[sGroup]) == 0) {
+                group = p->group; /* (the button's own group: its name heads the page) */
+            }
+            if (p->group != NULL && (group == NULL || strcmp(p->group, group) != 0)) {
                 Row* r = &sRows[sCount++];
                 memset(r, 0, sizeof(*r));
-                r->kind = (got[k].flags & PORT_PAUSE_ROW_HEADING) ? KIND_SUBHEAD : KIND_FORM;
-                r->label = got[k].label != NULL ? got[k].label : "";
-                r->c.note = got[k].note;
-                r->form = i;
-                r->f = got[k];
+                r->kind = KIND_SUBHEAD;
+                r->label = p->group;
+                r->form = -1;
+                r->group = 1;
+                group = p->group;
+            }
+            if (p->c.kind != 3) {
+                if (strcmp(tab, "Display") == 0 && strcmp(label, "VSync") == 0) { /* (a string: its own row) */
+                    memset(&sRows[sCount], 0, sizeof(Row));
+                    sRows[sCount].form = -1;
+                    sRows[sCount].kind = KIND_RATE;
+                    sRows[sCount].label = "Frame rate";
+                    sRows[sCount++].c.note = "Extra frames between the game's own 60: smoother motion.";
+                }
+                nextStart |= (p->c.flags & PORT_SETTING_NEXT_START) != 0;
+                memset(&sRows[sCount], 0, sizeof(Row));
+                sRows[sCount].form = -1;
+                sRows[sCount].kind = p->c.kind;
+                sRows[sCount].label = label;
+                sRows[sCount].held = titleNoFile() && (p->c.flags & PORT_SETTING_IN_GAME);
+                sRows[sCount++].c = p->c;
+                continue;
+            }
+            if (strcmp(tab, "Controls") == 0 && strcmp(label, "Bindings") == 0) {
+                /* the Bindings page's row (pause_bindings_aurora.c) */
+                memset(&sRows[sCount], 0, sizeof(Row));
+                sRows[sCount].form = -1;
+                sRows[sCount].kind = KIND_BINDINGS;
+                sRows[sCount].label = "Bindings...";
+                sRows[sCount++].c.note = "Every key and controller button: the game's, and Paper Cut's own shortcuts.";
+                continue;
+            }
+            if (strcmp(label, "Versus battle") == 0) { /* (port/include/port/versus.h) */
+                memset(&sRows[sCount], 0, sizeof(Row));
+                sRows[sCount].form = -1;
+                sRows[sCount].kind = KIND_VERSUS;
+                sRows[sCount].label = "Versus battle";
+                sRows[sCount++].c.note = "Mario and his partners against Luigi and his, two players on one screen: "
+                                         "set up both sides, then fight in the Glitz Pit.";
+                continue;
+            }
+            {
+                const int from = sCount;
+                for (f = 0; f < sFormCount; f++) {
+                    if (!done[f] && sForms[f]->section != NULL && strcmp(sForms[f]->section, label) == 0 &&
+                        strcmp(formTab(f), tab) == 0) {
+                        done[f] = any = 1;
+                        addForm(f);
+                    }
+                }
+                if (!any) {
+                    Row* r = &sRows[sCount++];
+                    memset(r, 0, sizeof(*r));
+                    r->kind = KIND_SECTION;
+                    r->label = label;
+                    r->tab = tab;
+                    r->form = -1;
+                    r->c.note = "Opens Paper Cut's full settings page on this category: this one isn't in the Start menu.";
+                }
+                if (titleNoFile() && (p->c.flags & PORT_SETTING_IN_GAME) && strcmp(label, "Mods") != 0) {
+                    /* (the title menu: no file to work on; the mod manager's needs none) */
+                    int k2;
+                    for (k2 = from; k2 < sCount; k2++) {
+                        sRows[k2].held = sRows[k2].kind != KIND_SUBHEAD;
+                    }
+                }
             }
         }
-        {
-            const char* tabs[64];
-            const char* labels[64];
-            const int m = portSettingsSections(tabs, labels, 64);
-            int k;
-            for (k = 0; k < m && sCount < MAX_ROWS - 3; k++) {
-                Row* r;
-                if (strcmp(tabs[k], tab) != 0 || formFor(tab, labels[k]) || strcmp(labels[k], "Photo mode") == 0 ||
-                    (strcmp(tab, "Controls") == 0 && strcmp(labels[k], "Bindings") == 0)) { /* (rows of their own) */
-                    continue;
-                }
-                r = &sRows[sCount++];
-                memset(r, 0, sizeof(*r));
-                r->kind = KIND_SECTION;
-                r->label = labels[k];
-                r->tab = tabs[k];
-                r->form = -1;
-                r->c.note = "Opens Paper Cut's full settings page on this category: this one isn't in the Start menu.";
+        for (f = 0; f < sFormCount && sCount < MAX_ROWS - 6; f++) {
+            if (!done[f] && strcmp(formTab(f), tab) == 0 && (!modes || formHubPage(f) == sGroup) &&
+                (!modes || titleModeShown(sForms[f]->section, NULL))) {
+                addForm(f);
             }
         }
     }
@@ -290,17 +544,14 @@ static void buildRows(void) {
         sRows[sCount].kind = KIND_RESTART;
         sRows[sCount].label = "Restart now";
         sRows[sCount].c.flags = 0;
-        sRows[sCount++].c.note = "Press A twice to restart the game for these settings; quick resume brings you "
-                                 "back here.";
-    } else {
-        sConfirm = 0;
+        sRows[sCount++].c.note = "Press {A} twice to restart; quick resume brings you back.";
     }
     if (sCat < 0 && portPhotoAvailable()) { /* (port/settings/features/photo_mode.cpp) */
         sRows[sCount].kind = KIND_PHOTO;
         sRows[sCount].label = "Photo mode";
         sRows[sCount].c.flags = 0;
-        sRows[sCount++].c.note = "Closes the menu and holds the game: the sticks move the camera, A takes a picture, "
-                                 "Y hides the HUD, B goes back.";
+        sRows[sCount++].c.note = "Closes the menu and holds the game: the sticks move the camera, {SOUTH:Return} takes a picture, "
+                                 "{NORTH:H} hides the HUD, {EAST:Escape} goes back.";
     }
     if (sCat < 0) {
         sRows[sCount].kind = KIND_ALL;
@@ -313,11 +564,12 @@ static void buildRows(void) {
         if (sRows[i].kind == wasKind &&
             (wasKind == KIND_FORM ? sRows[i].form == wasForm && sRows[i].f.id == wasId : sRows[i].label == was)) {
             sRow = i;
-            return;
+            return; /* (the same row: a first A on it, Restart now's or a form row's, still waits for the second) */
         }
     }
+    sConfirm = 0; /* (the row asking is gone: Restart now once nothing is pending) */
     if (sRow >= sCount || !selectable(sRows[sRow].kind)) {
-        sRow = sCat < 0 ? 0 : 1;
+        sRow = buttonsShown() ? 0 : 1;
         while (sRow + 1 < sCount && !selectable(sRows[sRow].kind)) {
             sRow++;
         }
@@ -330,6 +582,10 @@ static void build(void) {
         sFrontCount = sCount < (int)(sizeof(sFront) / sizeof(sFront[0])) ? sCount : (int)(sizeof(sFront) / sizeof(sFront[0]));
         memcpy(sFront, sRows, sFrontCount * sizeof(Row));
         sFrontRow = sRow;
+    } else if (hubShown()) {
+        sHubFrontCount = sCount < MAX_HUB ? sCount : MAX_HUB;
+        memcpy(sHubFront, sRows, sHubFrontCount * sizeof(Row));
+        sHubFrontRow = sRow;
     }
 }
 
@@ -362,6 +618,36 @@ static void categoryNote(const char* tab, char* out, size_t size) {
     int i, shown = 0, more = 0;
     size_t len = 0;
     out[0] = '\0';
+    if (strcmp(tab, "Modes") == 0 || strncmp(tab, "hub:", 4) == 0) { /* the hub's buttons; "hub:<button>": its rows */
+        static PortSettingsPageRow page[MAX_ROWS];
+        static const char* buttons[MAX_HUB];
+        const int m = portSettingsPageRows("Modes", page, MAX_ROWS - 24);
+        const int hub = tab[0] == 'M';
+        const int count = hub ? hubButtons(page, m, buttons) : m;
+        for (i = 0; i < count; i++) {
+            const char* name;
+            if (hub) {
+                name = portModesHubName(buttons[i]);
+            } else if (pageRowHidden(&page[i]) || strcmp(hubButton(&page[i]), tab + 4) != 0) {
+                continue;
+            } else {
+                name = page[i].c.label;
+            }
+            if (shown >= 3) {
+                more = 1;
+                break;
+            }
+            if (len < size) {
+                len += snprintf(out + len, size - len, "%s%s", shown > 0 ? (jp ? "\x81\x45" : ", ") : "",
+                                portTrGame(name));
+            }
+            shown++;
+        }
+        if (more && len < size) {
+            snprintf(out + len, size - len, "%s", jp ? "\x81\x44\x81\x44\x81\x44" : "...");
+        }
+        return;
+    }
     if (strcmp(tab, "Display") == 0) {
         len += snprintf(out, size, "%s", portTrGame("Frame rate"));
         shown++;
@@ -382,6 +668,17 @@ static void categoryNote(const char* tab, char* out, size_t size) {
     }
     if (more && len < size) {
         snprintf(out + len, size - len, "%s", jp ? "\x81\x44\x81\x44\x81\x44" : "...");
+    }
+}
+
+/* a button's help: what's in its page (a Modes hub button's, its rows) */
+static void buttonNote(const Row* r, char* out, size_t size) {
+    char key[96];
+    if (r->kind == KIND_GROUP) {
+        snprintf(key, sizeof(key), "hub:%s", r->label);
+        categoryNote(key, out, size);
+    } else {
+        categoryNote(r->label, out, size);
     }
 }
 
@@ -408,10 +705,15 @@ static void valueText(const Row* r, char* out, size_t size) {
 
 /* left (-1) or right (+1): the next value, wrapping like the game's own option
  * lists; numbers step and stop at the ends */
+int portConsoleAccurateLockedValue(unsigned flags, const int* value); /* console_accurate.cpp */
+
 static int change(const Row* r, int dir) {
     PortSettings* s = portSettings();
     const PortSettingsControl* c = &r->c;
     int v;
+    if ((r->kind == 0 || r->kind == 1 || r->kind == 2) && portConsoleAccurateLockedValue(c->flags, c->value)) {
+        return 0; /* console-accurate mode keeps it at the original's */
+    }
     switch (r->kind) {
         case KIND_RATE:
             snprintf(s->framerate, sizeof(s->framerate), "%s", kRates[(rateIndex() + dir + 5) % 5]);
@@ -455,6 +757,11 @@ static size_t separator(const char* p) {
  * made '(' (a tag in the game's text): between words, and inside a word only
  * when it is longer than a line */
 void portPauseWrap(const char* text, char* out, size_t size) {
+    portPauseWrapCols(text, out, size, HELP_COLS);
+}
+
+void portPauseWrapCols(const char* text, char* out, size_t size, int cols) {
+    const size_t maxCols = (size_t)cols;
     size_t n = 0, line = 0;
     while (*text != '\0' && n + 4 < size) {
         const char* end = text;
@@ -468,7 +775,7 @@ void portPauseWrap(const char* text, char* out, size_t size) {
         if ((sep = separator(text)) != 0) {
             const int two = sep == 2;
             text += two ? 2 : 1;
-            if (line > 0 && line + sep <= HELP_COLS && *text != '\0' && *text != '\n') {
+            if (line > 0 && line + sep <= maxCols && *text != '\0' && *text != '\n') {
                 out[n++] = two ? (char)0x81 : ' ';
                 if (two) {
                     out[n++] = 0x40;
@@ -480,16 +787,30 @@ void portPauseWrap(const char* text, char* out, size_t size) {
         /* the word: up to the next separator or break; letters 1 or 2 columns */
         while (*end != '\0' && *end != '\n' && separator(end) == 0) {
             const int two = sjisLead((unsigned char)*end) && end[1] != '\0';
+            int len, cols;
+            if (*end == '{' && (cols = portButtonsGameColumns(end, &len)) >= 0) { /* a button: as it shows */
+                end += len;
+                width += (size_t)cols;
+                continue;
+            }
             end += two ? 2 : 1;
             width += two ? 2 : 1;
         }
-        if (line > 0 && line + width > HELP_COLS) {
+        if (line > 0 && line + width > maxCols) {
             out[n++] = '\n';
             line = 0;
         }
         while (text < end && n + 4 < size) {
             const int two = sjisLead((unsigned char)*text) && text[1] != '\0';
-            if (line + (two ? 2 : 1) > HELP_COLS) { /* a word longer than a line */
+            int len, cols;
+            if (*text == '{' && (cols = portButtonsGameColumns(text, &len)) >= 0 && n + (size_t)len + 4 < size) {
+                memcpy(out + n, text, (size_t)len); /* a button whole */
+                n += (size_t)len;
+                text += len;
+                line += (size_t)cols;
+                continue;
+            }
+            if (line + (two ? 2 : 1) > maxCols) { /* a word longer than a line */
                 out[n++] = '\n';
                 line = 0;
             }
@@ -532,17 +853,18 @@ void portPauseHelpTurn(WindowWork* wp) {
 #define TAG_ROWS 64
 static void pointAt(WindowWork* wp) {
     /* (one tag a page's row: each page's rows are its own) */
-    static char tags[MAX_CATS + 1][TAG_ROWS][28];
+    static char tags[MAX_CATS + 1 + MAX_HUB][TAG_ROWS][28];
     const Row* r = &sRows[sRow];
-    char* tag = tags[sCat + 1][sRow % TAG_ROWS];
+    const int page = isModes(sCat) && sGroup >= 0 ? MAX_CATS + 1 + sGroup : sCat + 1; /* (a hub button's its own) */
+    char* tag = tags[page][sRow % TAG_ROWS];
     char text[1024];
     if (tag[0] == '\0') {
-        snprintf(tag, sizeof(tags[0][0]), "pc_menu_settings_%d_%d", sCat + 1, (int)(sRow % TAG_ROWS));
+        snprintf(tag, sizeof(tags[0][0]), "pc_menu_settings_%d_%d", page, (int)(sRow % TAG_ROWS));
     }
-    if (sCat < 0) { /* as the Journal's: the hand at the button's left end */
+    if (buttonsShown()) { /* as the Journal's: the hand at the button's left end */
         f32 bx, by;
         frontAt((int)sRow, sCount, &bx, &by);
-        wp->helpTgtX = bx - BANNER_W / 2.0f - 16.0f;
+        wp->helpTgtX = bx - BANNER_W / 2.0f - (hubShown() ? 30.0f : 16.0f); /* (clear of a hub button's sticker) */
         wp->helpTgtY = by + 8.0f;
     } else {
         wp->helpTgtX = ROW_X - 24.0f;
@@ -556,18 +878,18 @@ static void pointAt(WindowWork* wp) {
         return;
     }
     if (r->kind == KIND_FORM && sConfirm) {
-        portPauseWrap(portTrGame("Press A again to confirm."), sHelp, sizeof(sHelp));
+        portPauseWrap(portTrGame("Press {A} again to confirm."), sHelp, sizeof(sHelp));
         winMsgEntry(wp, 0, "pc_menu_settings_confirm", 0);
         return;
     }
     if (r->kind == KIND_RESTART && sConfirm) {
         /* (a tag of its own: the text changes on the same row) */
-        portPauseWrap(portTrGame("Press A again to restart."), sHelp, sizeof(sHelp));
+        portPauseWrap(portTrGame("Press {A} again to restart."), sHelp, sizeof(sHelp));
         winMsgEntry(wp, 0, "pc_menu_settings_restart", 0);
         return;
     }
-    if (r->kind == KIND_CATEGORY) {
-        categoryNote(r->label, text, sizeof(text));
+    if (r->kind == KIND_CATEGORY || r->kind == KIND_GROUP) {
+        buttonNote(r, text, sizeof(text));
         portPauseWrap(text, sHelp, sizeof(sHelp));
         winMsgEntry(wp, 0, tag, 0);
         return;
@@ -601,7 +923,7 @@ static void move(int dir) {
     do {
         sRow = (sRow + dir + sCount) % sCount;
     } while (!selectable(sRows[sRow].kind));
-    if (sCat >= 0) {
+    if (!buttonsShown()) {
         follow();
     }
 }
@@ -628,14 +950,14 @@ static int pointer(void) {
     f32 gx, gy, bx, by;
     const int kind = portMenuPoint(&gx, &gy);
     int i;
-    if (kind == 0 || (sSlide > 0.05f && sSlide < 0.95f)) {
+    if (kind == 0 || (sSlide > 0.05f && sSlide < 0.95f) || (sSide > 0.05f && sSide < 0.95f)) {
         return 0;
     }
     for (i = 0; i < sCount; i++) {
         if (!selectable(sRows[i].kind)) {
             continue;
         }
-        if (sCat < 0) {
+        if (buttonsShown()) {
             frontAt(i, sCount, &bx, &by);
             if (gx < bx - BANNER_W / 2.0f || gx > bx + BANNER_W / 2.0f || gy > by + 16.0f || gy <= by - 16.0f) {
                 continue;
@@ -659,7 +981,7 @@ static int pointer(void) {
 
 /* to page cat (-1: the list), each page's cursor and view kept while the menu is open */
 static void showPage(int cat) {
-    if (cat < 0 && sCat >= 0) { /* (drawn as the book goes) */
+    if (cat < 0 && sCat >= 0 && !hubShown()) { /* (drawn as the book goes) */
         memcpy(sOut, sRows, sCount * sizeof(Row));
         sOutCount = sCount;
         sOutRow = sRow;
@@ -668,14 +990,58 @@ static void showPage(int cat) {
     sPageRow[sCat + 1] = sRow;
     sPageTop[sCat + 1] = sTop;
     sCat = cat;
-    sRow = sPageRow[cat + 1] >= 0 ? sPageRow[cat + 1] : cat < 0 ? 0 : 1;
+    sGroup = -1; /* (the Modes page opens on its hub) */
+    sRow = sPageRow[cat + 1] >= 0 ? sPageRow[cat + 1] : cat < 0 || isModes(cat) ? 0 : 1;
     sTop = sPageTop[cat + 1];
     sCount = 0; /* (the cursor from this page's own, not the last one's row) */
     sConfirm = 0;
-    sSlideTo = cat < 0 ? 0.0f : 1.0f;
+    /* the Modes page: the hub's buttons in from the right, no book; back: the front page's in from the left */
+    sSlideTo = cat < 0 || isModes(cat) ? 0.0f : 1.0f;
+    sSideTo = isModes(cat) ? 1.0f : 0.0f;
     build();
-    if (cat >= 0) {
+    if (!buttonsShown()) {
         follow();
+    }
+}
+
+/* on the Modes page: to hub button g's page (its book up, the hub's buttons down, as a category's
+ * page from the front page), or back to the hub (-1); each page's cursor and view kept */
+static void showGroup(int g) {
+    if (g < 0 && sGroup >= 0) { /* (drawn as the book goes) */
+        memcpy(sOut, sRows, sCount * sizeof(Row));
+        sOutCount = sCount;
+        sOutRow = sRow;
+        sOutTop = sTop;
+        sGroupRow[sGroup] = sRow;
+        sGroupTop[sGroup] = sTop;
+        sRow = sPageRow[sCat + 1] >= 0 ? sPageRow[sCat + 1] : 0;
+    } else if (g >= 0) {
+        sPageRow[sCat + 1] = sRow; /* (the hub's cursor) */
+        sRow = sGroupRow[g] >= 0 ? sGroupRow[g] : 1;
+        sTop = sGroupTop[g];
+    }
+    sGroup = g;
+    sCount = 0;
+    sConfirm = 0;
+    sSlideTo = g < 0 ? 0.0f : 1.0f;
+    build();
+    if (g >= 0) {
+        follow();
+    }
+}
+
+/* The title menu's Modes (port/include/port/title_menu.h): the tab entered straight on the Modes hub,
+ * its buttons already in place */
+void portPauseSettingsOpenModes(void) {
+    int i;
+    build();
+    for (i = 0; i < sCatCount; i++) {
+        if (isModes(i)) {
+            showPage(i);
+            sSlide = sSlideTo;
+            sSide = sSideTo;
+            return;
+        }
     }
 }
 
@@ -686,7 +1052,13 @@ void portPauseSettingsInit(WindowWork* wp) {
         sPageRow[i] = -1;
         sPageTop[i] = 0;
     }
+    for (i = 0; i < MAX_HUB; i++) {
+        sGroupRow[i] = -1;
+        sGroupTop[i] = 0;
+    }
     sCat = -1;
+    sGroup = -1;
+    sSide = sSideTo = 0.0f;
     sBindings = 0;
     sCount = 0;
     sRow = 0;
@@ -696,14 +1068,46 @@ void portPauseSettingsInit(WindowWork* wp) {
 }
 
 void portPauseSettingsInit2(WindowWork* wp) {
-    const char* want = getenv("TTYD_PAUSE_ROW"); /* tests: the row chosen first, by its label */
+    /* tests: the row chosen first, by its label; "Category/Row": that category's page open on that row;
+     * "Modes/Button/Row": the Modes hub's button's page (by its group's name or the button's) */
+    const char* want = getenv("TTYD_PAUSE_ROW");
+    const char* slash = want != NULL ? strchr(want, '/') : NULL;
     int i;
     wp->flags |= WIN_FLAG_SUBMENU;
     build();
+    if (slash != NULL) {
+        for (i = 0; i < sCount; i++) {
+            if (sRows[i].kind == KIND_CATEGORY && strncmp(sRows[i].label, want, (size_t)(slash - want)) == 0 &&
+                sRows[i].label[slash - want] == 0) {
+                showPage(i);
+                sSlide = sSlideTo;
+                sSide = sSideTo;
+                break;
+            }
+        }
+        want = slash + 1;
+        slash = hubShown() ? strchr(want, '/') : NULL;
+        for (i = 0; slash != NULL && i < sCount; i++) {
+            const char* name = portModesHubName(sRows[i].label);
+            const size_t len = (size_t)(slash - want);
+            if (sRows[i].kind == KIND_GROUP && ((strncmp(sRows[i].label, want, len) == 0 && sRows[i].label[len] == 0) ||
+                                                (strncmp(name, want, len) == 0 && name[len] == 0))) {
+                sRow = i;
+                showGroup(i);
+                sSlide = 1.0f;
+                want = slash + 1;
+                break;
+            }
+        }
+    }
     for (i = 0; want != NULL && i < sCount; i++) {
-        if (sRows[i].label != NULL && strcmp(sRows[i].label, want) == 0) {
+        if (sRows[i].label != NULL && strcmp(sRows[i].label, want) == 0 && selectable(sRows[i].kind)) {
             sRow = i;
-            sTop = i - 1 < 0 ? 0 : i - 1;
+            sTop = i - 1 < 1 ? 1 : i - 1;
+            if (!buttonsShown()) {
+                follow();
+            }
+            break;
         }
     }
     pointAt(wp);
@@ -712,15 +1116,16 @@ void portPauseSettingsInit2(WindowWork* wp) {
 s32 portPauseSettingsMain(WindowWork* wp) {
     const u32 wasTrg = wp->buttonTrg, wasRep = wp->dirRep;
     const s32 wasRow = sRow;
+    /* a form's page of its own (port/include/port/pause_forms.h) first: the Bindings page opens one
+     * (a profile's name typed) over itself */
+    if (portPausePage() != NULL) {
+        return portPausePageMain(wp) == -2 ? -2 : 0; /* (-2: the whole menu closed, as for Photo mode) */
+    }
     if (sBindings) {
         if (portPauseBindingsMain(wp) < 0) {
             sBindings = 0;
             pointAt(wp);
         }
-        return 0;
-    }
-    if (portPausePage() != NULL) { /* a form's page of its own (port/include/port/pause_forms.h) */
-        portPausePageMain(wp);
         return 0;
     }
     build(); /* a feature's setting shown or hidden by another (widescreen's HUD) */
@@ -730,17 +1135,42 @@ s32 portPauseSettingsMain(WindowWork* wp) {
         if (sCat < 0) {
             return -1;
         }
-        showPage(-1); /* a category's page: back to the list */
+        if (hubShown() && portTitleScope() == PORT_TITLE_TEMP_FILE) {
+            portTitleModesBack();
+            return -2; /* the title menu's Modes: the whole menu closes, back to the title */
+        }
+        if (isModes(sCat) && sGroup >= 0) {
+            showGroup(-1); /* a Modes hub button's page: back to the hub */
+            pointAt(wp);
+            return 0;
+        }
+        showPage(-1); /* a category's page (or the Modes hub): back to the list */
         pointAt(wp);
         return 0;
     }
     if (!(wp->buttonTrg & PAD_BUTTON_A) && (wp->buttonTrg != 0 || wp->dirRep != 0)) {
         sConfirm = 0; /* anything else: Restart now asks again */
     }
+    if (sRow < sCount && sRows[sRow].held &&
+        ((wp->buttonTrg & PAD_BUTTON_A) || (wp->dirRep & (DEMO_STICK_LEFT | DEMO_STICK_RIGHT)))) {
+        psndSFXOn((const char*)0x20014); /* (the game's buzzer, a badge with too little BP: no file to work on) */
+        sMessage = kNoFileNote;
+        sMessageN++;
+        wp->buttonTrg &= ~PAD_BUTTON_A;
+        wp->dirRep &= ~(DEMO_STICK_LEFT | DEMO_STICK_RIGHT);
+    }
     if (pointer() || (wp->buttonTrg & PAD_BUTTON_A)) {
-        if (sRows[sRow].kind == KIND_CATEGORY) {
+        if (sRows[sRow].held) {
+            /* (a click on it: as A above) */
+            psndSFXOn((const char*)0x20014);
+            sMessage = kNoFileNote;
+            sMessageN++;
+        } else if (sRows[sRow].kind == KIND_CATEGORY) {
             psndSFXOn((const char*)0x20012);
             showPage((int)sRow);
+        } else if (sRows[sRow].kind == KIND_GROUP) {
+            psndSFXOn((const char*)0x20012);
+            showGroup((int)sRow);
         } else if (sRows[sRow].kind == KIND_BINDINGS) {
             psndSFXOn((const char*)0x20012);
             sBindings = 1;
@@ -749,6 +1179,10 @@ s32 portPauseSettingsMain(WindowWork* wp) {
         } else if (sRows[sRow].kind == KIND_ALL) {
             psndSFXOn((const char*)0x20012);
             portSettingsToggle();
+        } else if (sRows[sRow].kind == KIND_VERSUS) {
+            psndSFXOn((const char*)0x20012);
+            portPauseOpenPage(&gPortVersusSetupPage, 0);
+            return 0;
         } else if (sRows[sRow].kind == KIND_PHOTO) {
             psndSFXOn((const char*)0x20012);
             portPhotoRequest();
@@ -770,8 +1204,12 @@ s32 portPauseSettingsMain(WindowWork* wp) {
                 sMessage = NULL;
             } else {
                 sConfirm = 0;
-                sMessage = sForms[r->form]->act(r->f.id, 0);
+                sMessage = formAct(r->form, r->f.id, 0);
                 sMessageN++;
+                if (portTitleScope() == PORT_TITLE_TEMP_FILE && sMessage != NULL &&
+                    strstr(sMessage, "once the menu is closed") != NULL) {
+                    return -2; /* the title menu's Modes: a mode started, the menu closes for it */
+                }
             }
         } else if (change(&sRows[sRow], 1)) {
             psndSFXOn((const char*)0x20005);
@@ -785,10 +1223,10 @@ s32 portPauseSettingsMain(WindowWork* wp) {
     } else if (wp->dirRep & (DEMO_STICK_LEFT | DEMO_STICK_RIGHT)) {
         const int dir = (wp->dirRep & DEMO_STICK_LEFT) ? -1 : 1;
         if (sCat >= 0 && sRows[sRow].kind == KIND_FORM) {
-            sMessage = sForms[sRows[sRow].form]->act(sRows[sRow].f.id, dir);
+            sMessage = formAct(sRows[sRow].form, sRows[sRow].f.id, dir);
             sMessageN++;
             psndSFXOn((const char*)0x20005);
-        } else if (sCat < 0 ? across(dir) : change(&sRows[sRow], dir)) {
+        } else if (buttonsShown() ? across(dir) : change(&sRows[sRow], dir)) {
             psndSFXOn((const char*)0x20005);
         }
     }
@@ -808,8 +1246,8 @@ s32 portPauseSettingsMain(WindowWork* wp) {
         valueText(&sRows[sRow], value, sizeof(value));
         if (sMessage != NULL) {
             snprintf(note, sizeof(note), "%s", portTrGame(sMessage));
-        } else if (sRows[sRow].kind == KIND_CATEGORY) {
-            categoryNote(sRows[sRow].label, note, sizeof(note)); /* (what's in it) */
+        } else if (sRows[sRow].kind == KIND_CATEGORY || sRows[sRow].kind == KIND_GROUP) {
+            buttonNote(&sRows[sRow], note, sizeof(note)); /* (what's in it) */
         } else {
             snprintf(note, sizeof(note), "%s", sRows[sRow].c.note != NULL ? portTrGame(sRows[sRow].c.note) : "");
         }
@@ -854,6 +1292,7 @@ typedef struct PaintedTab {
 
 static PaintedTab sSettingsTab = {.hue = 55.0f};
 static PaintedTab sWardrobeTab = {.hue = -35.0f};
+static PaintedTab sOnlineTab = {.hue = 180.0f}; /* the Journal's blue to orange */
 
 static u32 rd16(const u8* p) {
     return ((u32)p[0] << 8) | p[1];
@@ -1325,6 +1764,11 @@ void portPauseWardrobeTabDisp(WindowWork* wp, float x, float y, float scale, GXC
             (GXColor){0xEA, 0xF6, 0xF2, 0xFF}, (GXColor){0x2A, 0x9A, 0x8E, 0xFF}, x, y, scale, c);
 }
 
+void portPauseOnlineTabDisp(WindowWork* wp, float x, float y, float scale, GXColor c) {
+    tabDisp(wp, &sOnlineTab, portTrGame("Online"), (GXColor){0x5A, 0x28, 0x06, 0xFF},
+            (GXColor){0xFA, 0xEE, 0xE0, 0xFF}, (GXColor){0xCE, 0x76, 0x2C, 0xFF}, x, y, scale, c);
+}
+
 /* --- The front page's buttons, painted as the Journal's are. Those are
  * pictures in the menu's TPL (win.tpl 0x1F-0x23: a blue painted strip with
  * its word, cut out by 0xB5's shape). The Settings tab's are made from the
@@ -1338,12 +1782,14 @@ void portPauseWardrobeTabDisp(WindowWork* wp, float x, float y, float scale, GXC
 #define BANNER_TEX_W 224
 #define BANNER_TEX_H 32
 
-static struct {
+typedef struct Banner {
     u8 pixels[BANNER_TEX_W * BANNER_TEX_H * 4] __attribute__((aligned(32))); /* GX RGBA8 */
     GXTexObj obj;
     const void* from;
     int ready;
-} sBanner;
+} Banner;
+/* the Settings tab's (violet), and the Journal's Photos entry's (its own blue: port/include/port/photo.h) */
+static Banner sBanner, sJournalBanner;
 
 /* a letter's pale paint on the Journal's buttons: bright and nearly grey */
 static int bannerLetter(const u8* p) {
@@ -1352,7 +1798,7 @@ static int bannerLetter(const u8* p) {
     return mx >= 150 && (mx - mn) * 100 < 45 * mx;
 }
 
-static BOOL makeBanner(TEXPalette* tpl) {
+static BOOL makeBanner(Banner* banner, TEXPalette* tpl, float hue) {
     static u8 rgba[BANNER_TEX_W * BANNER_TEX_H * 4], shape[BANNER_TEX_W * BANNER_TEX_H];
     const int w = BANNER_TEX_W, h = BANNER_TEX_H;
     TEXDescriptor* strip = TEXGet(tpl, 0x1F);
@@ -1400,29 +1846,35 @@ static BOOL makeBanner(TEXPalette* tpl) {
     for (y = 0; y < h; y++) {
         for (x = 0; x < w; x++) {
             u8* p = rgba + (y * w + x) * 4;
-            u8* tile = sBanner.pixels + ((y / 4) * (w / 4) + x / 4) * 64;
+            u8* tile = banner->pixels + ((y / 4) * (w / 4) + x / 4) * 64;
             const int at = ((y & 3) * 4 + (x & 3)) * 2;
-            hueShift(p, sSettingsTab.hue);
+            if (hue != 0.0f) {
+                hueShift(p, hue);
+            }
             tile[at] = shape[y * w + x];
             tile[at + 1] = p[0];
             tile[32 + at] = p[1];
             tile[32 + at + 1] = p[2];
         }
     }
-    GXInitTexObj(&sBanner.obj, sBanner.pixels, w, h, GX_TF_RGBA8, GX_CLAMP, GX_CLAMP, GX_FALSE);
-    GXInitTexObjLOD(&sBanner.obj, GX_LINEAR, GX_LINEAR, 0.0f, 0.0f, 0.0f, GX_FALSE, GX_FALSE, GX_ANISO_1);
+    GXInitTexObj(&banner->obj, banner->pixels, w, h, GX_TF_RGBA8, GX_CLAMP, GX_CLAMP, GX_FALSE);
+    GXInitTexObjLOD(&banner->obj, GX_LINEAR, GX_LINEAR, 0.0f, 0.0f, 0.0f, GX_FALSE, GX_FALSE, GX_ANISO_1);
     return TRUE;
 }
 
-static BOOL bannerReady(WindowWork* wp) {
+static BOOL bannerMade(WindowWork* wp, Banner* banner, float hue) {
     TEXPalette* tpl = (TEXPalette*)*wp->res->data;
     TEXDescriptor* strip = TEXGet(tpl, 0x1F);
     const void* from = strip != NULL && strip->textureHeader != NULL ? strip->textureHeader->data : NULL;
-    if (from != sBanner.from) {
-        sBanner.from = from;
-        sBanner.ready = from != NULL && makeBanner(tpl);
+    if (from != banner->from) {
+        banner->from = from;
+        banner->ready = from != NULL && makeBanner(banner, tpl, hue);
     }
-    return sBanner.ready;
+    return banner->ready;
+}
+
+static BOOL bannerReady(WindowWork* wp) {
+    return bannerMade(wp, &sBanner, sSettingsTab.hue);
 }
 
 /* A category's picture: the game's own icons (by their ids in every
@@ -1453,9 +1905,22 @@ static Picture picture(const Row* r) {
     static const Picture kPhoto = {{ICON_03B, ICON_19E}, {0.0f, 0.0f}, {0.0f, 1.0f}, {0.8f, 0.4f}}; /* Mario in a frame */
     static const Picture kAll = {{ICON_191, -1}, {0}, {0}, {0.8f}};                                  /* the Strange Sack */
     static const Picture kRestart = {{ICON_034, -1}, {0}, {0}, {0.8f}};                              /* round arrows */
+    static const Picture kVersus = {{ICON_19E, ICON_19E}, {-7.0f, 7.0f}, {3.0f, -3.0f}, {0.62f, 0.62f}}; /* the brothers */
     size_t i;
+    if ((r->kind == KIND_CATEGORY || r->kind == KIND_HEADING) && strcmp(r->label, "Randomizer") == 0) { /* a Star Piece (the item's own icon) */
+        Picture p = {{itemDataTable[ITEM_STAR_PIECE].icon_id, -1}, {0}, {0}, {0.8f}};
+        return p;
+    }
+    if (((r->kind == KIND_CATEGORY || r->kind == KIND_HEADING) && strcmp(r->label, "Modes") == 0) ||
+        r->kind == KIND_GROUP || (r->kind == KIND_HEADING && r->group)) { /* the Glitz Pit's Champ's Belt */
+        Picture p = {{itemDataTable[ITEM_CHAMPS_BELT].icon_id, -1}, {0}, {0}, {0.8f}};
+        return p;
+    }
     if (r->kind == KIND_PHOTO) {
         return kPhoto;
+    }
+    if (r->kind == KIND_VERSUS) {
+        return kVersus;
     }
     if (r->kind == KIND_ALL) {
         return kAll;
@@ -1471,9 +1936,34 @@ static Picture picture(const Row* r) {
     return kPictures[sizeof(kPictures) / sizeof(kPictures[0]) - 1].p; /* (another: the cog) */
 }
 
+/* a Modes hub button's picture (port/include/port/modes_hub.h): the recipe's sticker, or the game's
+ * icon it is made from; FALSE: neither (the Modes page's own picture then) */
+static BOOL hubPictureDisp(const Row* r, f32 x, f32 y, f32 scale, GXColor c) {
+    const char* button = r->kind == KIND_GROUP ? r->label : r->kind == KIND_HEADING && r->group ? r->tab : NULL;
+    GXTexObj obj;
+    f32 w, h;
+    int icon = -1;
+    if (button == NULL) {
+        return FALSE;
+    }
+    if (portModesHubPicture(button, &obj, &w, &h, &icon)) {
+        tintedQuad(&obj, x, y, w * scale, h * scale, c);
+        return TRUE;
+    }
+    if (icon >= 0) {
+        winIconInit();
+        winIconSet(icon, (Vec){x, y, 0.0f}, (Vec){0.8f * scale, 0.8f * scale, 1.0f}, c);
+        return TRUE;
+    }
+    return FALSE;
+}
+
 static void pictureDisp(const Row* r, f32 x, f32 y, f32 scale, GXColor c) {
     const Picture p = picture(r);
     int i;
+    if (hubPictureDisp(r, x, y, scale, c)) {
+        return;
+    }
     winIconInit();
     for (i = 0; i < 2 && p.icon[i] >= 0; i++) {
         const f32 s = p.scale[i] * scale;
@@ -1482,15 +1972,17 @@ static void pictureDisp(const Row* r, f32 x, f32 y, f32 scale, GXColor c) {
 }
 
 /* a front page button at (x, y): as the Journal draws its entries, the
- * cursor's white and lifted over its shadow, the others grey; on it the
+ * cursor's lifted over its shadow, the others a little shaded (lighter than the Journal's grey,
+ * so every name reads at a glance); on it the
  * category's picture, and its name pale on a dark outline as the Journal's */
 static void bannerDisp(WindowWork* wp, const Row* r, f32 x, f32 y, int selected) {
-    const u8 k = selected ? 0xFF : 0x80;
+    const u8 k = selected ? 0xFF : 0xC8;
     const GXColor c = {k, k, k, 0xFF};
     const GXColor dark = {(u8)(0x3A * k / 0xFF), (u8)(0x1C * k / 0xFF), (u8)(0x66 * k / 0xFF), 0xFF};
     const GXColor fill = {(u8)(0xF6 * k / 0xFF), (u8)(0xEA * k / 0xFF), (u8)(0xF4 * k / 0xFF), 0xFF};
-    const char* name = portTrGame(r->label);
-    const f32 room = BANNER_W - 54.0f;
+    const char* name = rowLabel(r);
+    const int hub = r->kind == KIND_GROUP; /* (its sticker wider than an icon: the name a little right) */
+    const f32 room = BANNER_W - (hub ? 62.0f : 54.0f);
     f32 full, sx;
     if (bannerReady(wp)) {
         if (selected) {
@@ -1505,11 +1997,103 @@ static void bannerDisp(WindowWork* wp, const Row* r, f32 x, f32 y, int selected)
         x -= 8.0f;
         y += 8.0f;
     }
-    pictureDisp(r, x - BANNER_W / 2.0f + 24.0f, y - 1.0f, 1.0f, c);
+    pictureDisp(r, x - BANNER_W / 2.0f + (hub ? 20.0f : 24.0f), y - 1.0f, 1.0f, c);
     /* the name in the rest, in its middle; narrower letters when long */
     full = (f32)FontGetMessageWidth(name);
     sx = full * 0.8f > room ? room / full : 0.8f;
-    outlinedText(x - BANNER_W / 2.0f + 44.0f + (room - full * sx) / 2.0f, y + 10.0f, sx, 0.8f, dark, fill, name);
+    outlinedText(x - BANNER_W / 2.0f + (hub ? 52.0f : 44.0f) + (room - full * sx) / 2.0f, y + 10.0f, sx, 0.8f, dark,
+                 fill, name);
+}
+
+/* The title menu's buttons (port/include/port/title_menu.h): a front page button as above, s times its
+ * size (the whole of it: the banner, the lift, the icons and the word), with one or two of the game's
+ * icons (-1: none) and a word, at alpha a (their drop-in) */
+void portPauseTitleButton(WindowWork* wp, float x, float y, float s, const char* name, int icon, int icon2,
+                          int selected, int a) {
+    const u8 k = selected ? 0xFF : 0xC8;
+    const GXColor c = {k, k, k, (u8)a};
+    const GXColor dark = {(u8)(0x3A * k / 0xFF), (u8)(0x1C * k / 0xFF), (u8)(0x66 * k / 0xFF), (u8)a};
+    const GXColor fill = {(u8)(0xF6 * k / 0xFF), (u8)(0xEA * k / 0xFF), (u8)(0xF4 * k / 0xFF), (u8)a};
+    const f32 bw = BANNER_W * s, room = (BANNER_W - 54.0f) * s, lift = 8.0f * s;
+    f32 full, sx;
+    if (bannerReady(wp)) {
+        if (selected) {
+            tintedQuad(&sBanner.obj, x, y, bw, BANNER_TEX_H * s, (GXColor){0x00, 0x00, 0x00, (u8)(a / 2)});
+            x -= lift;
+            y += lift;
+        }
+        tintedQuad(&sBanner.obj, x, y, bw, BANNER_TEX_H * s, c);
+    } else if (selected) {
+        x -= lift;
+        y += lift;
+    }
+    winIconInit();
+    if (icon >= 0 && icon2 >= 0) { /* (two: side by side, a little smaller, as Multiplayer's) */
+        winIconSet(icon, (Vec){x - bw / 2.0f + 18.0f * s, y + 2.0f * s, 0.0f}, (Vec){0.62f * s, 0.62f * s, 1.0f}, c);
+        winIconSet(icon2, (Vec){x - bw / 2.0f + 31.0f * s, y - 4.0f * s, 0.0f}, (Vec){0.62f * s, 0.62f * s, 1.0f}, c);
+    } else if (icon >= 0) {
+        winIconSet(icon, (Vec){x - bw / 2.0f + 24.0f * s, y - 1.0f * s, 0.0f}, (Vec){0.8f * s, 0.8f * s, 1.0f}, c);
+    }
+    full = (f32)FontGetMessageWidth(name);
+    sx = full * 0.8f * s > room ? room / full : 0.8f * s;
+    outlinedText(x - bw / 2.0f + 44.0f * s + (room - full * sx) / 2.0f, y + 10.0f * s, sx, 0.8f * s, dark, fill,
+                 name);
+}
+
+/* The Journal's Photos entry (port/include/port/photo.h): its button as the Journal's own, made as the front
+ * page's are but its blue kept (the Journal's 224 wide), Mario in a frame and its word on it as theirs */
+void portPhotoJournalButton(WindowWork* wp, float x, float y, int selected) {
+    const u8 k = selected ? 0xFF : 0x80;
+    const GXColor c = {k, k, k, 0xFF};
+    const GXColor dark = {(u8)(0x14 * k / 0xFF), (u8)(0x2C * k / 0xFF), (u8)(0x6E * k / 0xFF), 0xFF};
+    const GXColor fill = {(u8)(0xF2 * k / 0xFF), (u8)(0xF4 * k / 0xFF), (u8)(0xFA * k / 0xFF), 0xFF};
+    const char* name = portTrGame("Photos");
+    const f32 w = (f32)BANNER_TEX_W, room = w - 64.0f;
+    const Row photo = {.kind = KIND_PHOTO};
+    f32 full, sx;
+    if (bannerMade(wp, &sJournalBanner, 0.0f)) {
+        if (selected) {
+            tintedQuad(&sJournalBanner.obj, x, y, w, BANNER_TEX_H, (GXColor){0x00, 0x00, 0x00, 0x80});
+            x -= 8.0f;
+            y += 8.0f;
+        }
+        tintedQuad(&sJournalBanner.obj, x, y, w, BANNER_TEX_H, c);
+    } else if (selected) {
+        x -= 8.0f;
+        y += 8.0f;
+    }
+    pictureDisp(&photo, x - w / 2.0f + 28.0f, y - 1.0f, 1.0f, c);
+    full = (f32)FontGetMessageWidth(name);
+    sx = full * 0.85f > room ? room / full : 0.85f;
+    outlinedText(x - w / 2.0f + 50.0f + (room - full * sx) / 2.0f, y + 11.0f, sx, 0.85f, dark, fill, name);
+}
+
+/* The Journal's Stats entry (port/include/port/stats.h): the same button as the Photos', the Champ's Belt on it */
+void portStatsJournalButton(WindowWork* wp, float x, float y, int selected) {
+    const u8 k = selected ? 0xFF : 0x80;
+    const GXColor c = {k, k, k, 0xFF};
+    const GXColor dark = {(u8)(0x14 * k / 0xFF), (u8)(0x2C * k / 0xFF), (u8)(0x6E * k / 0xFF), 0xFF};
+    const GXColor fill = {(u8)(0xF2 * k / 0xFF), (u8)(0xF4 * k / 0xFF), (u8)(0xFA * k / 0xFF), 0xFF};
+    const char* name = portTrGame("Records");
+    const f32 w = (f32)BANNER_TEX_W, room = w - 64.0f;
+    f32 full, sx;
+    if (bannerMade(wp, &sJournalBanner, 0.0f)) {
+        if (selected) {
+            tintedQuad(&sJournalBanner.obj, x, y, w, BANNER_TEX_H, (GXColor){0x00, 0x00, 0x00, 0x80});
+            x -= 8.0f;
+            y += 8.0f;
+        }
+        tintedQuad(&sJournalBanner.obj, x, y, w, BANNER_TEX_H, c);
+    } else if (selected) {
+        x -= 8.0f;
+        y += 8.0f;
+    }
+    winIconInit();
+    winIconSet(itemDataTable[ITEM_CHAMPS_BELT].icon_id, (Vec){x - w / 2.0f + 28.0f, y - 1.0f, 0.0f},
+               (Vec){0.7f, 0.7f, 1.0f}, c);
+    full = (f32)FontGetMessageWidth(name);
+    sx = full * 0.85f > room ? room / full : 0.85f;
+    outlinedText(x - w / 2.0f + 50.0f + (room - full * sx) / 2.0f, y + 11.0f, sx, 0.85f, dark, fill, name);
 }
 
 /* the Journal's book's pieces (win.tpl 0x26-0x34), each over w x h from its
@@ -1576,37 +2160,58 @@ static void bookGX(WindowWork* wp, f32 x, f32 y, f32 w, f32 h) {
 }
 
 /* a category's page on the book at (x, y): the category's picture and name
- * heading the left page, its rows' names there and their values on the right */
+ * heading the left page, its rows' names there and their values on the right.
+ * As the game's own lists (items, badges): every row in dark ink, the cursor's
+ * shown by the hand and a band of highlight behind it; a row not available
+ * now in a lighter ink. Each group's heading in the heading's violet over a
+ * rule, a form's own heading in brown. */
 static void pageDisp(WindowWork* wp, const Row* rows, int count, s32 row, s32 top, f32 x, f32 y, int inside) {
-    const GXColor black = {0x00, 0x00, 0x00, 0xFF};
+    const GXColor ink = {0x1E, 0x16, 0x10, 0xFF};
+    const GXColor value = {0x2A, 0x2E, 0x6E, 0xFF}; /* the values: a blue ink, apart from the names */
+    const GXColor dim = {0x74, 0x6A, 0x60, 0xFF}; /* (lighter, still readable) */
     const GXColor grey = {0x60, 0x60, 0x60, 0xFF};
     const GXColor heading = {0x3A, 0x1C, 0x66, 0xFF};
+    const GXColor subhead = {0x7A, 0x4E, 0x22, 0xFF};
+    const GXColor rule = {0x3A, 0x1C, 0x66, 0x50};
+    const GXColor band = {0xFF, 0xD8, 0x6A, 0x8C};
     const GXColor white = {0xFF, 0xFF, 0xFF, 0xFF};
     int i;
     bookGX(wp, x + BOOK_X, y + BOOK_TOP, BOOK_W, BOOK_PAGE_H);
-    if (count > 0 && rows[0].kind == KIND_HEADING) {
-        pictureDisp(&rows[0], x + BOOK_X + 40.0f, y + BOOK_TOP - 28.0f, 1.0f, white);
-        winFontInit();
-        fitText(x + BOOK_X + 62.0f, y + BOOK_TOP - 17.0f, 160.0f, 0.95f, heading, portTrGame(rows[0].label), 0);
+    if (inside && row >= top && row < top + VISIBLE && row < count && selectable(rows[row].kind)) {
+        portPauseBox(x + ROW_X - 12.0f, y + ROW_TOP - (row - top) * ROW_STEP + 1.0f, VALUE_X - ROW_X + 22.0f,
+                     ROW_STEP - 2.0f, band);
     }
-    winFontInit();
+    if (count > 0 && rows[0].kind == KIND_HEADING) {
+        /* (a Modes hub button's page: its sticker, wider than an icon, a little smaller) */
+        const f32 shift = rows[0].group ? 10.0f : 0.0f;
+        pictureDisp(&rows[0], x + BOOK_X + 40.0f, y + BOOK_TOP - 28.0f, rows[0].group ? 0.85f : 1.0f, white);
+        winFontInit();
+        fitText(x + BOOK_X + 62.0f + shift, y + BOOK_TOP - 17.0f, 160.0f - shift, 0.95f, heading,
+                portTrGame(rows[0].label), 0);
+    }
     for (i = top; i < count && i < top + VISIBLE; i++) {
         const Row* r = &rows[i];
         const f32 ry = y + ROW_TOP - (i - top) * ROW_STEP;
-        const GXColor c = !inside || i == row ? black : grey;
-        char value[64];
+        const int off = (r->kind == KIND_FORM && (r->f.flags & PORT_PAUSE_ROW_DIM)) || r->held;
+        char text[64];
         if (r->kind == KIND_HEADING) {
             continue;
         }
-        if (r->kind == KIND_SUBHEAD) {
-            fitText(x + ROW_X - 8.0f, ry, BOOK_W / 2.0f - 36.0f, 0.75f, heading, rowLabel(r), 0);
+        if (r->kind == KIND_SUBHEAD && r->group) {
+            portPauseBox(x + ROW_X - 10.0f, ry - ROW_STEP + 4.0f, VALUE_X - ROW_X + 18.0f, 1.5f, rule);
+            winFontInit();
+            fitText(x + ROW_X - 10.0f, ry, BOOK_W - 60.0f, 0.78f, heading, rowLabel(r), 0);
             continue;
         }
-        fitText(x + ROW_X, ry, BOOK_W / 2.0f - 44.0f, 0.8f,
-                (r->kind == KIND_FORM && (r->f.flags & PORT_PAUSE_ROW_DIM)) ? grey : c, rowLabel(r), 0);
-        valueText(r, value, sizeof(value));
-        if (value[0] != '\0') {
-            fitText(x + VALUE_X, ry, BOOK_W / 2.0f - 46.0f, 0.8f, c, value, 1);
+        winFontInit();
+        if (r->kind == KIND_SUBHEAD) {
+            fitText(x + ROW_X - 4.0f, ry, BOOK_W / 2.0f - 36.0f, 0.72f, subhead, rowLabel(r), 0);
+            continue;
+        }
+        fitText(x + ROW_X, ry, BOOK_W / 2.0f - 44.0f, 0.8f, off ? dim : ink, rowLabel(r), 0);
+        valueText(r, text, sizeof(text));
+        if (text[0] != '\0') {
+            fitText(x + VALUE_X, ry, BOOK_W / 2.0f - 46.0f, 0.8f, off ? dim : value, text, 1);
         }
     }
     /* where the view is in the page, as the Journal's logs count theirs */
@@ -1617,12 +2222,42 @@ static void pageDisp(WindowWork* wp, const Row* rows, int count, s32 row, s32 to
     }
 }
 
+/* the Modes hub's title over its buttons: the Modes page's picture and its name, as a button's (it
+ * goes up as the book comes) */
+static void hubTitleDisp(f32 x, f32 y) {
+    const GXColor white = {0xFF, 0xFF, 0xFF, 0xFF};
+    const GXColor dark = {0x3A, 0x1C, 0x66, 0xFF};
+    const GXColor fill = {0xF6, 0xEA, 0xF4, 0xFF};
+    const Row modes = {.kind = KIND_HEADING, .label = "Modes"};
+    const char* name = portTrGame("Modes");
+    const f32 full = (f32)FontGetMessageWidth(name) * 1.0f;
+    const f32 left = x - (full + 40.0f) / 2.0f;
+    pictureDisp(&modes, left + 14.0f, y + 113.0f, 1.0f, white);
+    outlinedText(left + 36.0f, y + 124.0f, 1.0f, 1.0f, dark, fill, name);
+}
+
+/* the front page's or the Modes hub's buttons at (x, y), the cursor on cur's, all down behind the
+ * help box as the book comes up (sSlide) */
+static void buttonsDisp(WindowWork* wp, const Row* rows, int count, s32 cur, f32 x, f32 y) {
+    int i;
+    for (i = 0; i <= count; i++) {
+        /* (the cursor's last, over the others) */
+        const int k = i < count ? i : (int)cur;
+        f32 bx, by;
+        if (k >= count || (i < count && k == cur)) {
+            continue;
+        }
+        frontAt(k, count, &bx, &by);
+        by += (-160.0f - by) * sSlide;
+        bannerDisp(wp, &rows[k], x + bx, y + by, i == count);
+    }
+}
+
 void portPauseSettingsDisp(s32 camId, WindowWork* wp, s32 idx) {
     static u32 sStepped;
     const f32 x = wp->menu[idx].x;
     const f32 y = wp->menu[idx].y;
     const int inside = wp->active == PORT_PAUSE_SETTINGS_TAB + 11;
-    int i;
     (void)camId;
 
     /* the slide between the pages, once a frame, at the menu's speed (port/include/port/menu_speed.h) */
@@ -1634,35 +2269,35 @@ void portPauseSettingsDisp(s32 camId, WindowWork* wp, s32 idx) {
         if (fabsf(sSlideTo - sSlide) < 0.002f) {
             sSlide = sSlideTo;
         }
+        sSide += (sSideTo - sSide) / d;
+        if (fabsf(sSideTo - sSide) < 0.002f) {
+            sSide = sSideTo;
+        }
     }
 
     winBgGX(wp, PORT_PAUSE_SETTINGS_TAB, x, y);
+    if (portPausePage() != NULL) { /* (over the Bindings page too) */
+        portPausePageDisp(wp, x, y);
+        return;
+    }
     if (sBindings) { /* the Bindings page (pause_bindings_aurora.c): on the page's panel */
         winKirinukiGX(wp, 0, x - 270.0f, y + 144.0f, 540.0f, 270.0f);
         portPauseBindingsDisp(wp, x, y, inside);
         return;
     }
-    if (portPausePage() != NULL) {
-        portPausePageDisp(wp, x, y);
-        return;
-    }
     if (sSlide < 1.0f) { /* the buttons: down behind the help box, the book over them, as it comes up */
-        for (i = 0; i <= sFrontCount; i++) {
-            /* (the cursor's last, over the others) */
-            const s32 cur = sCat < 0 ? sRow : sFrontRow;
-            const int k = i < sFrontCount ? i : (int)cur;
-            f32 bx, by;
-            if (k >= sFrontCount || (i < sFrontCount && k == cur)) {
-                continue;
-            }
-            frontAt(k, sFrontCount, &bx, &by);
-            by += (-160.0f - by) * sSlide;
-            bannerDisp(wp, &sFront[k], x + bx, y + by, i == sFrontCount);
+        if (sSide < 1.0f) {
+            buttonsDisp(wp, sFront, sFrontCount, sCat < 0 ? sRow : sFrontRow, x - HUB_SLIDE_X * sSide, y);
+        }
+        if (sSide > 0.0f) { /* the Modes hub's: in from the right */
+            buttonsDisp(wp, sHubFront, sHubFrontCount, hubShown() ? sRow : sHubFrontRow,
+                        x + HUB_SLIDE_X * (1.0f - sSide), y);
+            hubTitleDisp(x + HUB_SLIDE_X * (1.0f - sSide), y + 200.0f * sSlide);
         }
     }
     if (sSlide > 0.0f) { /* the book: up from below, as the Journal's map comes */
         const f32 by = y - 480.0f * (1.0f - sSlide);
-        if (sCat >= 0) {
+        if (sCat >= 0 && !hubShown()) {
             pageDisp(wp, sRows, sCount, sRow, sTop, x, by, inside);
         } else {
             pageDisp(wp, sOut, sOutCount, sOutRow, sOutTop, x, by, inside);
@@ -1731,6 +2366,9 @@ const char* portPauseSettingsMsg(const char* tag) {
     }
     if (strncmp(tag, "pc_menu_wardrobe", 16) == 0) {
         return portPauseWardrobeMsg(tag);
+    }
+    if (strncmp(tag, "pc_menu_online", 14) == 0) {
+        return portPauseOnlineMsg(tag);
     }
     if (portPauseBindingsHelp(tag) != NULL) {
         return portPauseBindingsHelp(tag);

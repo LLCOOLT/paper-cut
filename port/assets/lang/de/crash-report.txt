@@ -1,0 +1,25 @@
+# Crash reports sent with a click (port/settings/features/crash_report.cpp): see tools/port/gen_lang.py
+
+A report of where it crashed was saved. Send it to Paper Cut on GitHub, save it as a zip, or copy it for whoever is helping you.
+Ein Bericht, wo es abgestürzt ist, wurde gespeichert. Schick ihn an Paper Cut auf GitHub, speichere ihn als ZIP oder kopiere ihn für jemanden, der dir hilft.
+
+Report on GitHub
+Auf GitHub melden
+
+Save as a zip...
+Als ZIP speichern...
+
+Opened in your browser: read it, add what you were doing, and submit it there if you like.
+Im Browser geöffnet: Lies es durch, ergänze, was du gerade getan hast, und sende es dort ab, wenn du möchtest.
+
+A new issue on Paper Cut's GitHub, filled in. Nothing is sent until you submit it there.
+Ein neues, ausgefülltes Issue auf Paper Cuts GitHub. Nichts wird gesendet, bis du es dort absendest.
+
+It holds the version, the system, the graphics card and where it crashed; your name is taken out of folder paths.
+Er enthält die Version, das System, die Grafikkarte und die Absturzstelle; dein Name wird aus Ordnerpfaden entfernt.
+
+Saved: 
+Gespeichert: 
+
+The zip couldn't be saved there.
+Die ZIP-Datei konnte dort nicht gespeichert werden.

@@ -21,6 +21,10 @@
 #include "statuswindow.h"
 #include "version.h"
 #include "battle/battle_party.h"
+#ifdef TARGET_PC
+#include "port/battlex.h"
+#include "port/enemy_variant.h"
+#endif
 
 BattleWork* _battleWorkPointer;
 
@@ -258,7 +262,13 @@ BOOL PORT_HOOKABLE(Btl_UnitSetup)(BattleWork* wp) {
         enemy->dropTable = setup->itemDropLists[i];
         enemy->currentHp = enemy->maxHp;
         enemy->currentFp = enemy->maxFp;
+#ifdef TARGET_PC
+        portEnemyVariantSpawn(enemy); /* an armed enemy variant (port/include/port/enemy_variant.h) */
+#endif
     }
+#ifdef TARGET_PC
+    portBattlexBattleStart(groupSetup->numEnemies); /* battle grades (port/include/port/battlex.h) */
+#endif
 
     wp->activeUnitId = -1;
     wp->badgeEquippedFlags = 0;
@@ -301,6 +311,24 @@ BOOL PORT_HOOKABLE(Btl_UnitSetup)(BattleWork* wp) {
                 break;
         }
     }
+#ifdef TARGET_PC
+    {
+        /* the port's badges that count as these (port/include/port/battlex.h) */
+        static const struct {
+            s16 id;
+            u32 flag;
+        } kPortFlags[] = {
+            {ITEM_QUICK_CHANGE, BADGE_FLAG_QUICK_CHANGE}, {ITEM_PEEKABOO, BADGE_FLAG_PEEKABOO},
+            {ITEM_TIMING_TUTOR, BADGE_FLAG_TIMING_TUTOR}, {ITEM_HEART_FINDER, BADGE_FLAG_HEART_FINDER},
+            {ITEM_FLOWER_FINDER, BADGE_FLAG_FLOWER_FINDER}, {ITEM_MONEY_MONEY, BADGE_FLAG_MONEY_MONEY},
+        };
+        for (j = 0; j < (s32)(sizeof(kPortFlags) / sizeof(kPortFlags[0])); j++) {
+            if (portBadgeEquippedGrants(kPortFlags[j].id) > 0) {
+                wp->badgeEquippedFlags |= kPortFlags[j].flag;
+            }
+        }
+    }
+#endif
 
     return TRUE;
 }
@@ -641,6 +669,17 @@ static void _EquipItem(BattleUnit* unit, EquipFlags flags, ItemType type) {
     if (type == ITEM_NULL) {
         return;
     }
+#ifdef TARGET_PC
+    if (portItemIsBadge(type)) {
+        /* one of the port's badges: each of the game's badges it counts as (port/include/port/battlex.h) */
+        const short* grants;
+        int n = portBadgeGrants(type, &grants), k;
+        for (k = 0; k < n; k++) {
+            _EquipItem(unit, flags, (ItemType)grants[k]);
+        }
+        return;
+    }
+#endif
 
     if (type == ITEM_REFUND) {
         unit->badgesEquipped.Refund++;

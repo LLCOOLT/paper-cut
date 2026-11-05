@@ -20,6 +20,8 @@ typedef int (*PortHttpData)(void* user, const void* bytes, size_t size, unsigned
 @property(nonatomic, copy) NSString* error; /* why it failed, or nil */
 @property(nonatomic) BOOL stopped;          /* the callback said stop */
 @property(nonatomic, strong) dispatch_semaphore_t done;
+@property(nonatomic) BOOL anyStatus; /* a POST's: the answer's body whatever its status */
+@property(nonatomic) NSInteger status;
 @end
 
 @implementation PortHttpTask
@@ -30,7 +32,8 @@ typedef int (*PortHttpData)(void* user, const void* bytes, size_t size, unsigned
      completionHandler:(void (^)(NSURLSessionResponseDisposition))completionHandler {
     const NSInteger status =
         [response isKindOfClass:[NSHTTPURLResponse class]] ? ((NSHTTPURLResponse*)response).statusCode : 0;
-    if (status != 200) {
+    self.status = status;
+    if (status != 200 && !(self.anyStatus && status > 0)) {
         self.error = [NSString stringWithFormat:@"the server answered %ld", (long)status];
         completionHandler(NSURLSessionResponseCancel);
         return;
@@ -75,8 +78,9 @@ typedef int (*PortHttpData)(void* user, const void* bytes, size_t size, unsigned
 
 @end
 
-int portHttpAppleGet(const char* url, const char* accept, PortHttpData data, void* user, char* error,
-                     size_t errorSize) {
+/* A GET (body NULL), or a POST of body (any status's answer taken; *status set) */
+static int perform(const char* url, const char* accept, const void* body, size_t bodySize, const char* contentType,
+                   PortHttpData data, void* user, int* status, char* error, size_t errorSize) {
     @autoreleasepool {
         NSURL* address = [NSURL URLWithString:[NSString stringWithUTF8String:url]];
         if (address == nil || ![address.scheme.lowercaseString isEqualToString:@"https"]) {
@@ -89,9 +93,16 @@ int portHttpAppleGet(const char* url, const char* accept, PortHttpData data, voi
         if (accept != NULL) {
             [request setValue:[NSString stringWithUTF8String:accept] forHTTPHeaderField:@"Accept"];
         }
+        if (body != NULL) {
+            request.HTTPMethod = @"POST";
+            request.HTTPBody = [NSData dataWithBytes:body length:bodySize];
+            [request setValue:[NSString stringWithUTF8String:contentType != NULL ? contentType : "application/octet-stream"]
+                forHTTPHeaderField:@"Content-Type"];
+        }
         PortHttpTask* task = [PortHttpTask new];
         task.data = data;
         task.user = user;
+        task.anyStatus = body != NULL;
         task.done = dispatch_semaphore_create(0);
         NSURLSessionConfiguration* config = [NSURLSessionConfiguration ephemeralSessionConfiguration];
         config.requestCachePolicy = NSURLRequestReloadIgnoringLocalCacheData;
@@ -108,8 +119,21 @@ int portHttpAppleGet(const char* url, const char* accept, PortHttpData data, voi
             snprintf(error, errorSize, "%s", task.error.UTF8String);
             return 0;
         }
+        if (status != NULL) {
+            *status = (int)task.status;
+        }
         return 1;
     }
+}
+
+int portHttpAppleGet(const char* url, const char* accept, PortHttpData data, void* user, char* error,
+                     size_t errorSize) {
+    return perform(url, accept, NULL, 0, NULL, data, user, NULL, error, errorSize);
+}
+
+int portHttpApplePost(const char* url, const void* body, size_t bodySize, const char* contentType, PortHttpData data,
+                      void* user, int* status, char* error, size_t errorSize) {
+    return perform(url, NULL, body != NULL ? body : "", bodySize, contentType, data, user, status, error, errorSize);
 }
 
 #endif

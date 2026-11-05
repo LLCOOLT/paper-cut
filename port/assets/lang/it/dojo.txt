@@ -1,0 +1,205 @@
+# dojo: see tools/port/gen_lang.py
+
+Action-command dojo
+Dojo dei comandi
+
+Timing assist by command type
+Aiuto al tempismo per tipo di comando
+
+Action command timing in every battle
+Tempismo dei comandi in ogni battaglia
+
+The dojo's window after each action command, guard and Stylish move, in every battle: how many frames early or late.
+La finestra del dojo dopo ogni comando, difesa e tecnica con stile, in ogni battaglia: quanti fotogrammi in anticipo o in ritardo.
+
+By command type
+Per tipo di comando
+
+Jump
+Salto
+
+Hammer
+Martello
+
+Special moves
+Mosse speciali
+
+Guard
+Difesa
+
+Superguard
+Super difesa
+
+Stylish
+Con stile
+
+Every turn
+Ogni turno
+
+When you choose Defend
+Quando scegli Difesa
+
+Never
+Mai
+
+A little wider
+Un po' più ampia
+
+Wider
+Più ampia
+
+Much wider
+Molto più ampia
+
+%.1f early
+%.1f in anticipo
+
+%.1f late
+%.1f in ritardo
+
+on time
+in tempo
+
+Command
+Comando
+
+Tries
+Tentativi
+
+In time
+In tempo
+
+Average press (frames)
+Pressione media (fotogrammi)
+
+Suggested assist
+Aiuto consigliato
+
+(more tries)
+(altri tentativi)
+
+Practise any of Mario's or the partners' action commands against a dummy on the Glitz Pit's ring, with each press told in frames: early, Perfect, or late. The guard and Superguard windows show as a bar, and so do the Stylish moves' windows.
+Allenati con qualsiasi comando di Mario o dei compagni contro un fantoccio sul ring dello Stadio, con ogni pressione misurata in fotogrammi: in anticipo, Perfetto o in ritardo. Le finestre della Difesa e della Super difesa appaiono come una barra, e così quelle delle tecniche con stile.
+
+Mario's HP, FP and Star Power fill up every turn, and the dummy never falls. Run Away to leave: Mario is then as he was before, items and all.
+I PV, PF e il potere stella di Mario si riempiono a ogni turno, e il fantoccio non cade mai. Fuggi per uscire: Mario torna com'era prima, oggetti compresi.
+
+Dummy
+Fantoccio
+
+First partner out
+Primo compagno
+
+Every move
+Tutte le mosse
+
+(every partner at Ultra Rank, Ultra Boots and Hammer, every Jump and Hammer badge, all Star Powers, lent for the dojo)
+(ogni compagno al grado Ultra, Ultrastivali e Ultramartello, ogni medaglia di salto e di martello, tutti i poteri stella, prestati per il dojo)
+
+The dummy attacks
+Il fantoccio attacca
+
+Enter the dojo
+Entra nel dojo
+
+Leave the dojo
+Esci dal dojo
+
+In a fight, Run Away to leave (the dummy always lets you).
+In battaglia, fuggi per uscire (il fantoccio te lo lascia sempre fare).
+
+The dojo is offline only: not during online play or a replay.
+Il dojo è solo offline: non durante il gioco online o un replay.
+
+Enter it while a file is in play.
+Entra mentre giochi un salvataggio.
+
+Since you entered the dojo
+Da quando sei entrato nel dojo
+
+All your results
+Tutti i tuoi risultati
+
+Kept on this device, not in the save file. The average press is how many frames early or late your presses were, a press in time counting as 0.
+Tenuti su questo dispositivo, non nel salvataggio. La pressione media dice di quanti fotogrammi in anticipo o in ritardo erano le tue pressioni; una in tempo conta come 0.
+
+Reset the results
+Azzera i risultati
+
+None yet.
+Ancora nessuno.
+
+With Action commands: attacks or guards set to By command type, only the kinds of command you choose here have wider windows, as much as you choose. Wider is as Simplifier badges make it: one badge a step for attacks.
+Con Comandi: attacchi o difese su Per tipo di comando, solo i tipi di comando scelti qui hanno finestre più ampie, quanto scegli. Più ampia è come con le medaglie Semplificatore: una medaglia a passo per gli attacchi.
+
+Online, the host's timing assist plays for everyone.
+Online, l'aiuto al tempismo dell'host vale per tutti.
+
+(the dojo suggests: %s)
+(il dojo consiglia: %s)
+
+Use the dojo's suggestions
+Usa i consigli del dojo
+
+%d changed; attacks and guards are now By command type.
+%d cambiati; attacchi e difese ora sono Per tipo di comando.
+
+These apply once Action commands: attacks or guards is By command type.
+Vale quando Comandi: attacchi o difese è Per tipo di comando.
+
+Perfect!
+Perfetto!
+
+1 frame early
+1 fotogramma in anticipo
+
+%d frames early
+%d fotogrammi in anticipo
+
+1 frame late
+1 fotogramma in ritardo
+
+%d frames late
+%d fotogrammi in ritardo
+
+Held too long (%d frames late)
+Tenuto troppo (%d fotogrammi in ritardo)
+
+No press
+Nessuna pressione
+
+Too many presses
+Troppe pressioni
+
+This attack can't be Superguarded
+Questo attacco non si può parare con la Super difesa
+
+Success
+Riuscito
+
+Missed
+Mancato
+
+%.1f frames early on average
+in media %.1f fotogrammi in anticipo
+
+%.1f frames late on average
+in media %.1f fotogrammi in ritardo
+
+on time on average
+in media in tempo
+
+frame %d of %d
+fotogramma %d di %d
+
+Timed press
+Pressione a tempo
+
+Dojo: the dummy attacks every turn. Run Away to leave.
+Dojo: il fantoccio attacca ogni turno. Fuggi per uscire.
+
+Dojo: choose Defend and the dummy attacks. Run Away to leave.
+Dojo: scegli Difesa e il fantoccio attacca. Fuggi per uscire.
+
+Dojo: the dummy never attacks. Run Away to leave.
+Dojo: il fantoccio non attacca mai. Fuggi per uscire.

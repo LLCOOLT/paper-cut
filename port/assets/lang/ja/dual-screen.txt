@@ -43,7 +43,7 @@ Star Power
 スターパワー
 
 Crystal Stars
-クリスタルスター
+スターストーン
 
 With Mario
 マリオといっしょ
@@ -82,7 +82,7 @@ This room
 この部屋
 
 No Star Pieces or Shine Sprites here.
-ここにはスターのかけらもシャインスプライトもありません。
+ここにはほしのかけらもシャインもありません。
 
 Partner
 仲間

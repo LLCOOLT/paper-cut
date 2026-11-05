@@ -255,22 +255,30 @@ int portOpen(int channel, const unsigned char* in, size_t len, unsigned char* ou
  * offline, which J-PAKE doesn't let it do with the players' own messages
  * (docs/ONLINE_RELAY.md). The nonce: this program's random 4 bytes (a host
  * started again keeps the code) and a count, both in front; a watcher takes a
- * count only newer than the last under the same 4 bytes. */
+ * count only newer than the last under the same 4 bytes. Seats (players 3 and
+ * 4) send their controller to the host on it too, each under its own 4 bytes:
+ * the last count is kept for each sender (a few), and one under this side's
+ * own 4 bytes (its message sent back) is never taken. */
 #define WATCH_ROUNDS 200000
 static mbedtls_chachapoly_context sWatchAead;
 static int sWatchReady;
 static unsigned char sWatchSalt[4], sWatchCode[16];
 static unsigned long long sWatchCount;
-static unsigned char sWatchLastSalt[4];
-static unsigned long long sWatchLast;
-static int sWatchHeard;
+#define WATCH_SENDERS 8
+static struct {
+    unsigned char salt[4];
+    unsigned long long last;
+    int heard;
+} sWatchFrom[WATCH_SENDERS];
+static int sWatchNextFrom;
 
 void portWatchReset(void) {
     if (sWatchReady) {
         mbedtls_chachapoly_free(&sWatchAead);
     }
     sWatchReady = 0;
-    sWatchHeard = 0;
+    memset(sWatchFrom, 0, sizeof(sWatchFrom));
+    sWatchNextFrom = 0;
     sWatchCode[0] = '\0';
 }
 
@@ -317,23 +325,32 @@ size_t portWatchSeal(const unsigned char* in, size_t len, unsigned char* out) {
 int portWatchOpen(const unsigned char* in, size_t len, unsigned char* out, size_t* outLen) {
     unsigned long long count = 0;
     size_t body;
-    int i;
-    if (!sWatchReady || len < PORT_WATCH_OVERHEAD) {
-        return 0;
+    int i, from = -1;
+    if (!sWatchReady || len < PORT_WATCH_OVERHEAD || memcmp(in, sWatchSalt, 4) == 0) {
+        return 0; /* (this side's own, back) */
     }
     for (i = 0; i < 8; i++) {
         count |= (unsigned long long)in[4 + i] << (8 * i);
     }
-    if (sWatchHeard && memcmp(in, sWatchLastSalt, 4) == 0 && count <= sWatchLast) {
+    for (i = 0; i < WATCH_SENDERS; i++) {
+        if (sWatchFrom[i].heard && memcmp(in, sWatchFrom[i].salt, 4) == 0) {
+            from = i;
+        }
+    }
+    if (from >= 0 && count <= sWatchFrom[from].last) {
         return 0; /* not newer than the last: a repeat */
     }
     body = len - PORT_WATCH_OVERHEAD;
     if (mbedtls_chachapoly_auth_decrypt(&sWatchAead, body, in, NULL, 0, in + 12 + body, in + 12, out) != 0) {
         return 0;
     }
-    memcpy(sWatchLastSalt, in, 4);
-    sWatchLast = count;
-    sWatchHeard = 1;
+    if (from < 0) { /* a sender not heard before (the oldest one's place) */
+        from = sWatchNextFrom;
+        sWatchNextFrom = (sWatchNextFrom + 1) % WATCH_SENDERS;
+        memcpy(sWatchFrom[from].salt, in, 4);
+        sWatchFrom[from].heard = 1;
+    }
+    sWatchFrom[from].last = count;
     *outLen = body;
     return 1;
 }

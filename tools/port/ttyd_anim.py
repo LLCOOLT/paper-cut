@@ -48,6 +48,7 @@ TABLES = [
 ]
 HEADER_SIZE = 0x1B0
 ANIM_HEADER_SIZE = 0x5C
+ANIM_HEADER_OLD = 0x44  # the same without the bounding box
 
 
 def _align4(n):
@@ -138,17 +139,33 @@ class PoseFile:
         p.header = bytearray(data[:HEADER_SIZE])
         counts = struct.unpack_from(">25I", data, 0xE8)
         ptrs = struct.unpack_from(">25I", data, 0x14C)
+        # an empty table's pointer: most files hold where the next table
+        # starts, some a stray value (0xFFBC8FC0): kept as it is
+        p.empty_ptrs = {}
         for i, (name, size, ci) in enumerate(TABLES):
             off, n = ptrs[i], counts[ci]
             p.tables[name] = [bytes(data[off + j * size:off + (j + 1) * size]) for j in range(n)]
+            if n == 0:
+                p.empty_ptrs[i] = off
         aoff, na = ptrs[24], counts[_C_ANIM]
         for j in range(na):
             rec = data[aoff + j * 0x40:aoff + (j + 1) * 0x40]
             name = _cstr(rec[:0x3C])
             doff = struct.unpack_from(">I", rec, 0x3C)[0]
+            if doff < aoff + 0x40 * na:
+                # no AnimData: the entry points into the model's own tables
+                # (P_ktest_1's A_1 and A_2 at 0, a test file): kept as it is
+                a = Anim(name)
+                a.model_offset = doff
+                a.table_tail = bytes(rec[len(name):0x3C])
+                p.anims.append(a)
+                continue
             size = struct.unpack_from(">I", data, doff)[0]
             a = Anim.parse(name, data[doff:doff + size])
             a.table_tail = bytes(rec[len(name):0x3C])  # the name field past the name (zeros on the disc)
+            # two table entries may point at one AnimData (test_bom's Z_1 and
+            # E_1R): written once again while both are unchanged
+            a.disc_offset = doff
             p.anims.append(a)
         p._check_layout(data)
         return p
@@ -173,6 +190,8 @@ class PoseFile:
             out.extend(b"\0" * (_align4(len(out)) - len(out)))
             ptrs[i] = len(out)
             counts[ci] = len(recs)
+            if not recs and i in getattr(self, "empty_ptrs", {}):
+                ptrs[i] = self.empty_ptrs[i]
             for r in recs:
                 if len(r) != size:
                     raise ValueError(f"{name}: a {len(r)}-byte record, not {size}")
@@ -184,9 +203,24 @@ class PoseFile:
         out.extend(b"\0" * (0x40 * len(self.anims)))
         out.extend(b"\0" * (_align4(len(out)) - len(out)))
         struct.pack_into(">I", out, 0, len(out))  # size: the model's part, up to the first AnimData
+        written = {}  # disc offset -> (offset here, bytes) of the AnimData written so far
         for j, a in enumerate(self.anims):
-            blob = a.build(getattr(a, "exact", True))
-            out.extend(b"\0" * (_align4(len(out)) - len(out)))
+            if getattr(a, "model_offset", None) is not None:
+                blob, doff, share = None, None, None
+            else:
+                blob = a.build(getattr(a, "exact", True))
+                doff = getattr(a, "disc_offset", None)
+                share = written.get(doff)
+            if blob is None:
+                at = a.model_offset
+            elif share is not None and share[1] == blob:
+                at = share[0]  # shared on the disc and still the same: once
+            else:
+                out.extend(b"\0" * (_align4(len(out)) - len(out)))
+                at = len(out)
+                if doff is not None:
+                    written.setdefault(doff, (at, blob))
+                out.extend(blob)
             rec = bytearray(0x40)
             nb = a.name.encode("latin-1")
             if len(nb) >= 0x3C:
@@ -195,9 +229,8 @@ class PoseFile:
             tail = getattr(a, "table_tail", None)
             if tail is not None and len(tail) == 0x3C - len(nb):
                 rec[len(nb):0x3C] = tail
-            struct.pack_into(">I", rec, 0x3C, len(out))
+            struct.pack_into(">I", rec, 0x3C, at)
             out[table_at + j * 0x40:table_at + (j + 1) * 0x40] = rec
-            out.extend(blob)
         struct.pack_into(">25I", out, 0xE8, *counts)
         struct.pack_into(">25I", out, 0x14C, *ptrs)
         return bytes(out)
@@ -382,12 +415,23 @@ class Anim:
         (_size, n_loop, n_key, n_pos, n_nrm, n_tex, n_vis, n_node, n_val) = h[:9]
         p_loop, p_key, p_pos, p_nrm, p_tex, p_vis, p_node, p_val = h[9:17]
         a.bbox = h[17:23]
+        if p_loop == ANIM_HEADER_OLD:
+            # an older header without the bounding box (two map objects:
+            # HOBJ_BrickHatenaBlock, OFF_hei_01b): kept in that form
+            a.header_size = ANIM_HEADER_OLD
+            a.bbox = (0.0,) * 6
         a.empty_ptrs = {}  # a few disc files hold a stray pointer for an empty section: kept as it is
         for i, (cnt, ptr) in enumerate(zip(h[1:9], h[9:17])):
             if cnt == 0:
                 a.empty_ptrs[i] = ptr
         a.loop_info = [struct.unpack_from(">iff", d, p_loop + 12 * i) for i in range(n_loop)]
         a.value_keys = [struct.unpack_from(">fi", d, p_val + 8 * i) for i in range(n_val)]
+        # an odd count of visibility changes leaves two bytes to the next
+        # 4-byte boundary: zeros, or 0xFFFF in many enemies (Goomba, Koopa)
+        a.vis_pad = b""
+        if n_vis % 2:
+            end = p_vis + 2 * n_vis
+            a.vis_pad = bytes(d[end:end + 2])
         for k in range(n_key):
             kf = struct.unpack_from(">f10i", d, p_key + 0x2C * k)
             key = Key(kf[0])
@@ -465,7 +509,10 @@ class Anim:
             rec += [len(node) // 4, len(b) // 4]
             node.extend(b)
             keyrecs.append(rec)
+        old = getattr(self, "header_size", ANIM_HEADER_SIZE) == ANIM_HEADER_OLD
         out = bytearray(ANIM_HEADER_SIZE)
+        if old:
+            del out[ANIM_HEADER_OLD:]
         offs = []
         offs.append(len(out))
         for l in self.loop_info:
@@ -473,6 +520,10 @@ class Anim:
         offs.append(len(out))
         for r in keyrecs:
             out.extend(struct.pack(">f10i", *r))
+        n_vis = len(vis) // 2
+        vis_pad = getattr(self, "vis_pad", b"")
+        if n_vis % 2 and len(vis_pad) == 2:
+            vis.extend(vis_pad)  # the disc's padding, past the count (never read)
         for buf in (pos, nrm, tex, vis, node):
             out.extend(b"\0" * (_align4(len(out)) - len(out)))
             offs.append(len(out))
@@ -482,11 +533,14 @@ class Anim:
         for t, v in self.value_keys:
             out.extend(struct.pack(">fi", t, v))
         counts = [len(self.loop_info), len(self.keys), len(pos) // 4, len(nrm) // 4, len(tex) // 12,
-                  len(vis) // 2, len(node) // 4, len(self.value_keys)]
+                  n_vis, len(node) // 4, len(self.value_keys)]
         for i, ptr in getattr(self, "empty_ptrs", {}).items():
             if counts[i] == 0:
                 offs[i] = ptr
-        struct.pack_into(">9I8I6f", out, 0, len(out), *counts, *offs, *self.bbox)
+        if old:
+            struct.pack_into(">9I8I", out, 0, len(out), *counts, *offs)
+        else:
+            struct.pack_into(">9I8I6f", out, 0, len(out), *counts, *offs, *self.bbox)
         return bytes(out)
 
     # ------------------------------------------------------- evaluation ----

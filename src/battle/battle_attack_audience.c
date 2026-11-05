@@ -29,6 +29,9 @@
 #ifdef PORT_MODS
 #include "port/hooks/src_battle_battle_attack_audience.h"
 #endif
+#ifdef TARGET_PC
+#include "port/port_text.h"
+#endif
 
 // this unit is size-optimised, as in the original (the object differs without it)
 #pragma optimize_for_size on
@@ -188,6 +191,10 @@ static void _get_item_announce_disp(s32 cameraId, void* param) {
 #else
     msg = msgSearch("btl_msg_get_item");
     sprintf(buf, msg, itemName);
+#endif
+#ifdef TARGET_PC
+    /* an item's name from Paper Cut: drawn with the game's random numbers put back (port/port_text.h) */
+    portTextCopied(buf, itemName, NULL);
 #endif
     width = FontGetMessageWidthLine(buf, &lines);
     lines++;

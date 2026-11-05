@@ -10,6 +10,8 @@
 #include "version.h"
 #ifdef TARGET_PC
 #include "port/battle_speed.h"
+#include "port/battlex.h"
+#include "port/dojo.h"
 #endif
 #ifdef PORT_MODS
 #include "port/hooks/src_battle_battle_acrobat.h"
@@ -26,6 +28,10 @@ static void _accrobat_timing_icon_disp(CameraId camId, void* param);
  */
 s32 PORT_HOOKABLE(BattleAcrobatStart)(BattleWork* work, s32 unitId, s32 windowStartFrame,
                        s32 windowEndFrame, s32 endFrame, s32 earlyFrames) {
+#ifdef TARGET_PC
+    // the dojo's Stylish trainer; timing assist by command type widens the window
+    portDojoStylishStart(work, &windowStartFrame, &windowEndFrame, endFrame);
+#endif
     work->stylishCurFrame = 0;
     work->stylishWindowStart = windowStartFrame;
     work->stylishWindowEnd = windowEndFrame;
@@ -93,6 +99,9 @@ s32 PORT_HOOKABLE(BattleAcrobatMain)(BattleWork* work) {
         }
         if (work->stylishCurFrame <= work->stylishWindowEnd) {
             work->stylishResult = 2;
+#ifdef TARGET_PC
+            portBattlexStylish(); /* battle grades (port/include/port/battlex.h) */
+#endif
             return EVT_RETURN_YIELD;
         }
         work->stylishResult = -2;

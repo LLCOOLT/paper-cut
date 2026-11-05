@@ -15,12 +15,28 @@
 #include "mario/mariost.h"
 #endif
 #include "driver/swdrv.h"
+#ifdef TARGET_PC
+#include "port/open_world.h"
+#include "port/battlex.h"
+/* The port's own badges and dishes (port/include/port/battlex.h) go in the badge and item lists too */
+#define POUCH_IS_HELD(t) (((t) >= ITEM_MIN && (t) < ITEM_MAX) || portItemIsHeld(t))
+#define POUCH_IS_BADGE(t) (((t) >= BADGE_MIN && (t) < BADGE_MAX) || portItemIsBadge(t))
+#define PORT_OR_HELD(t) || portItemIsHeld(t)
+#define PORT_OR_BADGE(t) || portItemIsBadge(t)
+#else
+#define PORT_OR_HELD(t)
+#define PORT_OR_BADGE(t)
+#define POUCH_IS_HELD(t) ((t) >= ITEM_MIN && (t) < ITEM_MAX)
+#define POUCH_IS_BADGE(t) ((t) >= BADGE_MIN && (t) < BADGE_MAX)
+#endif
 #ifdef PORT_MODS
 #include "port/hooks/src_mario_mario_pouch.h"
 #endif
 #ifdef TARGET_PC
 // The Enhancements tab's bigger bag (port/include/port/gameplus.h): 20 items without the Strange Sack
 int portHeldItemBase(void);
+#include "port/companion.h"
+#include "port/companion_menu.h"
 #undef HELD_ITEM_COUNT_BASE
 #define HELD_ITEM_COUNT_BASE portHeldItemBase()
 #endif
@@ -257,6 +273,11 @@ BOOL PORT_HOOKABLE(pouchGetItem)(ItemType type) {
     s16* itemLists[2];
     s32 size;
     BOOL ok;
+#ifdef TARGET_PC
+    if (portOpenGetItem(type)) { /* an open-world file: a partner's item, the progressive boots (port/open_world.h) */
+        return 1;
+    }
+#endif
     if (type == ITEM_COIN) {
         if (mpp->coins < 999) {
             mpp->coins++;
@@ -340,7 +361,7 @@ BOOL PORT_HOOKABLE(pouchGetItem)(ItemType type) {
     size = 0;
     itemLists[0] = (void*)0;
     itemLists[1] = (void*)0;
-    if ((type >= ITEM_MIN) && (type < ITEM_MAX)) {
+    if (POUCH_IS_HELD(type)) {
         itemLists[0] = mpp->heldItems;
 #ifdef TARGET_PC
         size = (pouchCheckItem(ITEM_STRANGE_SACK)) ? (20) : HELD_ITEM_COUNT_BASE;
@@ -353,7 +374,7 @@ BOOL PORT_HOOKABLE(pouchGetItem)(ItemType type) {
         size = 0x79;
         ok = 1;
         itemLists[0] = mpp->keyItems;
-    } else if ((type >= BADGE_MIN) && (type < BADGE_MAX)) {
+    } else if (POUCH_IS_BADGE(type)) {
         size = 200;
         ok = 1;
         itemLists[0] = mpp->badges;
@@ -369,11 +390,15 @@ BOOL PORT_HOOKABLE(pouchGetItem)(ItemType type) {
 
 /** How many copies of an item, key item or badge Mario carries (stored items do not count); 0 for other ids. */
 s32 PORT_HOOKABLE(pouchCheckItem)(u32 itemId) {
+#ifdef TARGET_PC
+    s32 id = portOpenItemAlias(itemId); /* an open-world file: any Castle Key for any (port/open_world.h) */
+#else
     s32 id = itemId;
+#endif
     s32 i;
     u32 itemCnt;
 
-    if (id >= ITEM_MIN && id < ITEM_MAX) {
+    if (POUCH_IS_HELD(id)) {
         itemCnt = 0;
         for (i = 0; i < MAX_HELD_ITEMS; i++) {
             if (id == mpp->heldItems[i]) {
@@ -391,7 +416,7 @@ s32 PORT_HOOKABLE(pouchCheckItem)(u32 itemId) {
         }
         return itemCnt;
     }
-    if (id >= BADGE_MIN && id < BADGE_MAX) {
+    if (POUCH_IS_BADGE(id)) {
         itemCnt = 0;
         for (i = 0; i < MAX_BADGES; i++) {
             if (id == mpp->badges[i]) {
@@ -424,11 +449,14 @@ BOOL PORT_HOOKABLE(pouchRemoveItem)(ItemType type) {
     s16* table2;
     BOOL valid;
     s32 maximum;
+#ifdef TARGET_PC
+    type = (ItemType)portOpenItemAlias(type);
+#endif
     int i;
     maximum = 0;
     table1 = (void*)0;
     table2 = (void*)0;
-    if ((type >= ITEM_COIN) && (type < (ITEM_FRESH_JUICE + 1))) {
+    if (((type >= ITEM_COIN) && (type < (ITEM_FRESH_JUICE + 1))) PORT_OR_HELD(type)) {
         table1 = mpp->heldItems;
         table2 = (void*)0;
 #ifdef TARGET_PC
@@ -442,7 +470,7 @@ BOOL PORT_HOOKABLE(pouchRemoveItem)(ItemType type) {
         table2 = (void*)0;
         maximum = 121;
         valid = 1;
-    } else if ((type >= ITEM_POWER_JUMP) && (type < (ITEM_SUPER_CHARGE_P + 1))) {
+    } else if (((type >= ITEM_POWER_JUMP) && (type < (ITEM_SUPER_CHARGE_P + 1))) PORT_OR_BADGE(type)) {
         table1 = mpp->badges;
         table2 = mpp->equippedBadges;
         maximum = 200;
@@ -498,7 +526,7 @@ BOOL PORT_HOOKABLE(pouchRemoveItemIndex)(ItemType type, s32 index) {
     maximum = 0;
     table1 = NULL;
     table2 = NULL;
-    if (type >= ITEM_MIN && type < ITEM_MAX) {
+    if (POUCH_IS_HELD(type)) {
         table1 = mpp->heldItems;
         table2 = NULL;
         maximum = CHECK_ITEM(ITEM_STRANGE_SACK) ? MAX_HELD_ITEMS : HELD_ITEM_COUNT_BASE;
@@ -508,7 +536,7 @@ BOOL PORT_HOOKABLE(pouchRemoveItemIndex)(ItemType type, s32 index) {
         table2 = NULL;
         maximum = 121;
         valid = TRUE;
-    } else if (type >= BADGE_MIN && type < BADGE_MAX) {
+    } else if (POUCH_IS_BADGE(type)) {
         table1 = mpp->badges;
         table2 = mpp->equippedBadges;
         maximum = 200;
@@ -819,6 +847,12 @@ void PORT_HOOKABLE(pouchSortItem)(s32 mode) {
     const char* ida;
 #endif
 
+#ifdef TARGET_PC
+    /* the second screen's menu (port/companion_menu.h): its sort, for the game to make too (a tap) */
+    if (gPortCompanionMenu) {
+        portCompanionTap(PORT_COMPANION_TAP_SORT, mode, 0);
+    }
+#endif
     pp[0] = mpp;
     if ((u32)mode <= 1 || mode == 7 || mode == 8) {
         n = 0;
@@ -1379,6 +1413,10 @@ void PORT_HOOKABLE(pouchReviseMarioParam)(void) {
                 break;
         }
     }
+#ifdef TARGET_PC
+    mpp->maximumHP += (s16)(5 * portBadgeEquippedGrants(ITEM_HP_PLUS)); /* the port's badges */
+    mpp->maximumFP += (s16)(5 * portBadgeEquippedGrants(ITEM_FP_PLUS));
+#endif
     if (mpp->currentHP > mpp->maximumHP) {
         mpp->currentHP = mpp->maximumHP;
     }
@@ -1452,6 +1490,9 @@ s32 PORT_HOOKABLE(pouchEquipCheckBadge)(s32 badgeId) {
             count++;
         }
     }
+#ifdef TARGET_PC
+    count += portBadgeEquippedGrants(badgeId); /* the port's badges that count as it */
+#endif
     return count;
 }
 
@@ -1577,6 +1618,9 @@ void PORT_HOOKABLE(pouchGetStarStone)(u32 id) {
     if (mpp->maximumSP > 800) {
         mpp->maximumSP = 800;
     }
+#ifdef TARGET_PC
+    portOpenStarStone(); /* an open-world file: 100 per star held, whatever the order (port/open_world.h) */
+#endif
 }
 
 /** Number of mails received so far (bits set among the first 99 of emailReceivedFlags). */

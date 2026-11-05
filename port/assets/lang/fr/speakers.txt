@@ -3,8 +3,8 @@
 Speakers
 Enceintes
 
-Surround: the game's own surround sound to the rear speakers (it was made for Dolby Pro Logic II) instead of folded into the front two. Your device's output must be set to 5.1 or 7.1 too.
-Surround : le son surround du jeu lui-même sur les enceintes arrière (il a été conçu pour le Dolby Pro Logic II) au lieu d'être mêlé aux deux de devant. La sortie de votre appareil doit aussi être réglée en 5.1 ou 7.1.
+Surround: the game's own surround sound to the rear speakers (it was made for Dolby Pro Logic II) instead of folded into the front two. Your device's output must be set to 5.1 or 7.1 too. Headphones (3D): the same surround heard around your head, in front and behind, on any headphones.
+Surround : le son surround du jeu lui-même sur les enceintes arrière (il a été conçu pour le Dolby Pro Logic II) au lieu d'être mêlé aux deux de devant. La sortie de votre appareil doit aussi être réglée en 5.1 ou 7.1. Casque (3D) : le même son surround autour de votre tête, devant et derrière, avec n'importe quel casque.
 
 Stereo
 Stéréo
@@ -14,3 +14,6 @@ Surround 5.1
 
 7.1 surround
 Surround 7.1
+
+Headphones (3D)
+Casque (3D)

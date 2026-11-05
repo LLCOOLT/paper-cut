@@ -111,6 +111,20 @@ OSTime OSGetTime(void) {
     return sTimeBase + nsToTicks((sClockPaused ? sPauseStartNs : monotonicNs()) - sMonoBaseNs - sPausedNs);
 }
 
+/* OSGetTime without moving the virtual clock (draws, snapshots: port/platform.h) */
+s64 portGameClockPeek(void) {
+    if (fastClock()) {
+        return sTimeBase + nsToTicks(sVirtualNs);
+    }
+    return OSGetTime();
+}
+
+/* days since 1970-01-01 (UTC) by the game clock (no online or replays here) */
+unsigned portLockstepDay(void) {
+    const OSTime t = (OSTime)portGameClockPeek();
+    return t > 0 ? (unsigned)(t / ((OSTime)OS_TIMER_CLOCK * 86400)) + 10957u : 10957u;
+}
+
 void portClockPause(void) {
     sPauseStartNs = monotonicNs();
     sClockPaused = TRUE;

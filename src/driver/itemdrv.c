@@ -45,6 +45,14 @@
 #include "evt/evt_story.h"
 #include <dolphin/pad.h>
 #include "evt/evt_msg.h"
+#ifdef TARGET_PC
+#include "port/port_text.h"
+/* an item's name from Paper Cut (Director's Cut's badges...) makes the box's text Paper Cut's:
+ * drawn with the game's random numbers put back (port/include/port/port_text.h) */
+#define ITEM_NAME_COPIED(buffer, name) portTextCopied((buffer), (name), NULL)
+#else
+#define ITEM_NAME_COPIED(buffer, name) ((void)0)
+#endif
 
 /** Returns the zero vector. */
 #ifdef TARGET_PC /* file-local: camdrv.c defines the same external inline functions */
@@ -90,6 +98,70 @@ static void itemseq_GetItem(ItemEntry* entry);
 
 //.bss
 static ItemWork work[2];
+
+#ifdef TARGET_PC
+/*
+ * Port: an item that must not be lost never expires and is never out of reach.
+ * That is a key item (a partner's item in the open world is one), or an item a
+ * flag marks taken: what the game's scripts and the randomizers place in trees,
+ * bushes, blocks and chests. The game leaves a key item that sank in deep water
+ * or lava at y -1000, out of reach, and one that falls through a floor falls on
+ * for ever; either comes back where it appeared, floating there. (The game's own
+ * timed drops have no flag, and no placed item has a timer: unchanged.)
+ */
+#define ITEM_KEEP_SLOTS 32 /* itemInit's count */
+typedef struct ItemKeep {
+    Vec spawn;
+    BOOL noTouch;
+} ItemKeep;
+static ItemKeep sItemKeep[2][ITEM_KEEP_SLOTS];
+
+static ItemKeep* itemKeepOf(const ItemEntry* entry) {
+    int w;
+    if (!((entry->itemId >= KEY_ITEM_MIN && entry->itemId < KEY_ITEM_MAX) || entry->collectFlag != -1)) {
+        return NULL;
+    }
+    for (w = 0; w < 2; w++) {
+        if (entry >= work[w].entries && entry < work[w].entries + work[w].count && entry - work[w].entries < ITEM_KEEP_SLOTS) {
+            return &sItemKeep[w][entry - work[w].entries];
+        }
+    }
+    return NULL;
+}
+
+/* (itemEntry) where it appeared; no timer */
+static void itemKeepEntered(ItemEntry* entry) {
+    ItemKeep* keep = itemKeepOf(entry);
+    if (keep == NULL) {
+        return;
+    }
+    keep->spawn = entry->position;
+    keep->noTouch = (entry->flags & ITEM_FLAG_NO_TOUCH) != 0;
+    entry->timer = 0;
+    entry->status &= ~ITEM_STATUS_TIMER_HOLD;
+}
+
+/* (itemMain, each frame) sunk or fallen through: back where it appeared */
+static void itemKeepCheck(ItemEntry* entry) {
+    ItemKeep* keep;
+    if (!(entry->flags & ITEM_FLAG_USED) || (keep = itemKeepOf(entry)) == NULL) {
+        return;
+    }
+    if (!(entry->status & ITEM_STATUS_IN_WATER) &&
+        !((entry->mode >= 3 && entry->mode <= 6) && entry->position.y < keep->spawn.y - 2000.0f)) {
+        return;
+    }
+    printf("[item] item %d (%s) went out of reach: back where it appeared\n", entry->itemId, entry->name);
+    fflush(stdout);
+    entry->position = keep->spawn;
+    entry->status &= ~(ITEM_STATUS_IN_WATER | ITEM_STATUS_TIMER_HOLD | ITEM_STATUS_LAUNCH | ITEM_STATUS_THROWN | ITEM_STATUS_BLINK_HIDDEN);
+    if (!keep->noTouch) {
+        entry->flags &= ~ITEM_FLAG_NO_TOUCH;
+    }
+    entry->timer = 0;
+    itemModeChange(entry, 7);
+}
+#endif
 
 //.data
 WinMgrDesc itemdrv_window_desc[4] = {
@@ -525,6 +597,9 @@ void PORT_HOOKABLE(itemMain)(void) {
                 itemDelete(entry->name);
                 break;
         }
+#ifdef TARGET_PC
+        itemKeepCheck(entry);
+#endif
 
         if (entry->flags & ITEM_FLAG_USED) {
             switch (entry->itemId) {
@@ -841,6 +916,9 @@ ItemEntry* PORT_HOOKABLE(itemEntry)(f32 x, f32 y, f32 z, const char* name, s32 i
             itemModeChange(entry, 10);
             break;
     }
+#ifdef TARGET_PC
+    itemKeepEntered(entry);
+#endif
     return entry;
 }
 
@@ -1028,6 +1106,7 @@ static void winNameDisp(WinMgrEntry* win) {
         }
         evtMsgFmtStr(buffer, name);
     }
+    ITEM_NAME_COPIED(buffer, name);
     width = FontGetMessageWidthLine(buffer, &lines);
     if (width + 20 > win->width) {
         win->width = width + 20;
@@ -1055,6 +1134,7 @@ static void winNameDisp(WinMgrEntry* win) {
     } else {
         sprintf(buffer, msgSearch("msg_window_item_get"), name);
     }
+    ITEM_NAME_COPIED(buffer, name);
     width = FontGetMessageWidth(buffer);
     if (width + 20 > win->width) {
         win->width = width + 20;
@@ -1085,6 +1165,7 @@ static void winNameDisp2(WinMgrEntry* win) {
         strcpy(buffer, msgSearch("msg_window_item_release"));
         evtMsgFmtStr(buffer, name);
     }
+    ITEM_NAME_COPIED(buffer, name);
     width = FontGetMessageWidthLine(buffer, &lines);
     if (width + 20 > win->width) {
         win->width = width + 20;
@@ -1108,6 +1189,7 @@ static void winNameDisp2(WinMgrEntry* win) {
 
     name = msgSearch(itemDataTable[entry->itemId].name);
     sprintf(buffer, msgSearch("msg_window_item_release"), name);
+    ITEM_NAME_COPIED(buffer, name);
     width = FontGetMessageWidth(buffer);
     if (width + 20 > win->width) {
         win->width = width + 20;

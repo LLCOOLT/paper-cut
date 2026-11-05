@@ -1,0 +1,106 @@
+# Online play's walk-through fixes (the Start menu's Online tab, the start-up's wait, the notices, the settings page's Online play), in Español: an English line, then its translation, then a blank line.
+
+By address
+Por dirección
+
+By code
+Por código
+
+Not connected
+Sin conexión
+
+Play together: one hosts, the other joins with the host's address.
+Jugad juntos: uno aloja y el otro se une con la dirección del anfitrión.
+
+Tell the other player this code: they choose Join by code.
+Dile este código al otro jugador: elige Unirse con código.
+
+Give the other player this address: they choose Join by address.
+Dale esta dirección al otro jugador: elige Unirse por dirección.
+
+Copied: send the link, and a click on it opens Paper Cut on this room.
+Copiado: envía el enlace; al pulsarlo se abre Paper Cut en esta sala.
+
+Copied: send it to the other player (Join by code, or Watch a room).
+Copiado: envíaselo al otro jugador (Unirse con código o Ver una sala).
+
+The other player is in your room: Start menu, Online, then Start together.
+El otro jugador está en tu sala: menú Start, En línea y luego Empezar juntos.
+
+You're in the room: the host starts the online game when ready.
+Estás en la sala: el anfitrión empezará la partida en línea cuando esté listo.
+
+Watching online
+Viendo en línea
+
+Starting the online game
+Empezando la partida en línea
+
+Waiting for the other player's game...
+Esperando la partida del otro jugador...
+
+Waiting for the players' game...
+Esperando la partida de los jugadores...
+
+Waiting for the host's game...
+Esperando la partida del anfitrión...
+
+Esc or B: play alone instead
+Esc o B: jugar solo en su lugar
+
+The other player chose to play alone.
+El otro jugador ha preferido jugar solo.
+
+Playing alone: the online game can start again from the Online tab.
+Juegas solo: la partida en línea puede volver a empezar desde la pestaña En línea.
+
+The online game didn't start, so this game plays alone: try again from the Online tab.
+La partida en línea no empezó, así que juegas solo: inténtalo de nuevo desde la pestaña En línea.
+
+Online play is in the Start menu's Online tab (open the Start menu, then the Online tab), or the launcher's Online tab before the game: one hosts a room, the other joins it with its code.
+El juego en línea está en la pestaña En línea del menú Start (abre el menú Start y luego la pestaña En línea), o en la pestaña En línea del lanzador antes de jugar: uno abre una sala y el otro se une con su código.
+
+the other player
+el otro jugador
+
+Press again to leave
+Pulsa otra vez para salir
+
+You alone leave: the others are told, and everyone plays on alone.
+Solo sales tú: los demás reciben el aviso y cada uno sigue solo.
+
+You left the online game: you play on alone.
+Has salido de la partida en línea: sigues solo.
+
+Someone tried to join with another version of Paper Cut: your room is still open.
+Alguien intentó unirse con otra versión de Paper Cut: tu sala sigue abierta.
+
+Someone tried to join with another release of the game: your room is still open.
+Alguien intentó unirse con otra edición del juego: tu sala sigue abierta.
+
+Someone tried to join with other mods on: your room is still open.
+Alguien intentó unirse con otros mods activos: tu sala sigue abierta.
+
+Something that isn't Paper Cut tried to join: your room is still open.
+Algo que no es Paper Cut intentó unirse: tu sala sigue abierta.
+
+The other player left your room before the game: it's still open for them or someone else.
+El otro jugador salió de tu sala antes de empezar: sigue abierta para él o para otra persona.
+
+Waiting for the other player...
+Esperando al otro jugador...
+
+The relay isn't answering right now: try again later, or connect by address.
+El relé no responde ahora mismo: inténtalo más tarde o conéctate por dirección.
+
+No one is hosting that room yet: check the code, or ask the host to open it and try again.
+Nadie aloja todavía esa sala: comprueba el código o pide al anfitrión que la abra y vuelve a intentarlo.
+
+The relay can't do that yet (it needs an update): use the host's address instead.
+El relé aún no puede hacer eso (necesita una actualización): usa la dirección del anfitrión.
+
+The other player's Paper Cut is a different version: both need the same one.
+El Paper Cut del otro jugador es de otra versión: los dos necesitáis la misma.
+
+Online, the Start menu is the host's: they open it for everyone. Your settings page (F1) has Leave the online game.
+En línea, el menú Start es del anfitrión: lo abre para todos. Tu página de ajustes (F1) tiene Salir de la partida en línea.

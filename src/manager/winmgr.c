@@ -36,6 +36,9 @@
 #ifdef PORT_MODS
 #include "port/hooks/src_manager_winmgr.h"
 #endif
+#ifdef TARGET_PC
+#include "port/battlex.h"
+#endif
 // FAKE: winmgr.c calls L_pouchEquipBadge through this prototype (the types it was compiled with) instead of the one in mario/mario_pouch.h; same registers, behaviour-identical.
 typedef u16 (*L_pouchEquipBadgeRetU16Fn)(s32);
 
@@ -726,6 +729,9 @@ WinMgrSelect* PORT_HOOKABLE(winMgrSelectEntry)(EvtWord type, s32 newItem, BOOL c
      * GameCube the list's address read as an s32 is negative (0x80...); here
      * it is a 64-bit pointer, which as an s32 was taken for a window type. */
     n = (type < 0 || type > 0xFFFF) ? -1 : (s32)type;
+    if (type == PORT_SELECT_MERCHANT) {
+        n = 11; /* the Paper Cut merchant's list: the badge shop's window (port/include/port/battlex.h) */
+    }
 #else
     n = type;
 #endif
@@ -752,6 +758,23 @@ WinMgrSelect* PORT_HOOKABLE(winMgrSelectEntry)(EvtWord type, s32 newItem, BOOL c
     sel->cursorX = desc->x;
     sel->cursorY = desc->y - 54;
 
+#ifdef TARGET_PC
+    if (type == PORT_SELECT_MERCHANT) {
+        s32 stock[64];
+        s32 count = portMerchantStock(stock, 64);
+        sel->items = __memAlloc(HEAP_DEFAULT, (count + 1) * 4);
+        memset(sel->items, 0, (count + 1) * 4);
+        sel->numItems = 0;
+        for (i = 0; i < count; i++) {
+            sel->items[sel->numItems].id = (s16)stock[i];
+            if (itemDataTable[stock[i]].buy_price > pouchGetCoin()) {
+                sel->items[sel->numItems].flags |= (WINMGR_ITEM_GRAY | WINMGR_ITEM_DISABLED);
+            }
+            sel->numItems++;
+        }
+        goto port_listed;
+    }
+#endif
     switch (m = sel->type) {
         case 0:
             sel->items = __memAlloc(HEAP_DEFAULT, 0x1E8);
@@ -1029,6 +1052,9 @@ WinMgrSelect* PORT_HOOKABLE(winMgrSelectEntry)(EvtWord type, s32 newItem, BOOL c
             }
             break;
     }
+#ifdef TARGET_PC
+port_listed:
+#endif
     if (sel->numItems < 8) {
         winMgrSetSize(sel->descriptorId[0], desc->x, desc->y, desc->width, desc->height - (8 - sel->numItems) * 24);
     }

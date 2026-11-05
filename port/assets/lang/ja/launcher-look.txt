@@ -1,0 +1,112 @@
+# The launcher's look: its headings, disc list and versions (port/settings/launcher_ui.cpp), in Japanese: an English line, then its translation, then a blank line.
+
+Your discs
+あなたのディスク
+
+Not the game
+このゲームではありません
+
+Missing
+見つかりません
+
+Add a disc image...
+ディスクイメージを追加...
+
+Add another...
+ほかを追加...
+
+Welcome!
+ようこそ！
+
+Unknown disc image
+不明なディスクイメージ
+
+Missing file
+ファイルが見つかりません
+
+Continue
+つづきから
+
+Play (starts its build)
+プレイ（そのビルドを起動）
+
+Licences
+ライセンス
+
+the US release
+北米版
+
+the Japanese release
+日本版
+
+the European release
+欧州版
+
+the June 2004 US demo
+2004年6月の北米体験版
+
+the Japanese store demo
+日本の店頭体験版
+
+the September 2004 US demo
+2004年9月の北米体験版
+
+the September 2004 European demo
+2004年9月の欧州体験版
+
+US
+北米
+
+Japan
+日本
+
+Europe
+欧州
+
+US demo (June 2004)
+北米体験版（2004年6月）
+
+Japanese store demo
+日本の店頭体験版
+
+US demo (Sept 2004)
+北米体験版（2004年9月）
+
+European demo (Sept 2004)
+欧州体験版（2004年9月）
+
+Launcher look
+ランチャーの見た目
+
+Paper Cut's
+Paper Cut
+
+The game's (trial)
+ゲーム（試用）
+
+Paper Cut's: the launcher's own paper, drawn by Paper Cut. The game's: the Start menu's own glove, paper window and labels, made from your disc once it is in the launcher's list.
+Paper Cut：Paper Cutが描くランチャー独自の紙。ゲーム：スタートメニューの手袋、紙のウィンドウ、ラベル。ディスクがランチャーのリストに入ると、そのディスクから作られます。
+
+Launcher sounds
+ランチャーの効果音
+
+Soft paper sounds in the launcher as the glove moves, a choice is made and a page turns.
+手袋が動くとき、選んだとき、ページをめくるときに、ランチャーでやさしい紙の音が鳴ります。
+
+Add a disc
+ディスクを追加
+
+Choose
+決定
+
+Back
+もどる
+
+Sections
+項目
+
+Tabs
+タブ
+
+for Paper Mario: The Thousand-Year Door
+ペーパーマリオRPG のために

@@ -1,0 +1,13 @@
+# Button icons: the words for the buttons with no icon in the game's font (Deutsch)
+
+stick
+Stick
+
+C-stick
+C-Stick
+
+right stick
+rechter Stick
+
+D-pad
+Steuerkreuz

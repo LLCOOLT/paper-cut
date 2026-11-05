@@ -18,6 +18,9 @@ void portGameplusDeclare(void);
 int portGameplus(const char* key);
 
 /* --- Partner quick-swap ("quick_swap") --- */
+/* the partner menu's order of the partners' ids (win_party.c winPartyDt) */
+#define PORT_PARTNER_MENU_COUNT 7
+extern const int gPortPartnerMenuOrder[PORT_PARTNER_MENU_COUNT];
 /* The quick-swap control was pressed (a key, a controller's button, the
  * on-screen button or a test script). */
 void portQuickSwapPress(void);
@@ -29,6 +32,24 @@ void portQuickSwapPressCoop(void);
 extern int (*gPortQuickSwapHeld)(void);
 /* phones: the on-screen quick-swap button is down (port/touch/touch_overlay.cpp) */
 extern int gPortQuickSwapTouch;
+/* The partner wheel (port/settings/features/partner_wheel.cpp): it has the
+ * quick-swap control (a tap still swaps, through portQuickSwapPress; held, it
+ * opens the wheel), and it is open now. Its choice comes back as the second
+ * screen's partner tap (companion.h), in the controller's input, so online
+ * and replays carry it. */
+extern int gPortPartnerWheelOwns, gPortPartnerWheelOpen;
+/* DEMOPad.c, this game's pads before online's exchange: the stick is the
+ * wheel's while it is open. */
+struct PADStatus;
+void portPartnerWheelPad(struct PADStatus* pads);
+/* touch_overlay.cpp: the finger on the quick-swap button moved (window pixels). */
+void portPartnerWheelPointer(float x, float y);
+/* port/src/common/partner_wheel_pc.c: the partners who can be chosen now
+ * (joined, not away; the partner menu's order) and the one out (current, 0
+ * none); 0 when the wheel can't open (not Mario in the field). */
+int portPartnerWheelList(int* ids, int max, int* current);
+/* The field could take a switch now (no scene or menu running). */
+int portPartnerWheelFieldFree(void);
 /* win_main.c, every field frame the pause menu could open: the partner to
  * switch to (the next one who has joined, in the partner menu's order), or
  * -1 for none. current: the partner out now (0: none). */
@@ -179,7 +200,8 @@ int portEnemyHp(int hp);
 int portEnemyDamage(int damage);
 
 /* --- Accessibility: action-command assist ("ac_attack_assist",
- * "ac_guard_assist": 0 off, 1 wider windows, 2 automatic): battle_ac.c --- */
+ * "ac_guard_assist": 0 off, 1 wider windows, 2 automatic, 3 by command type:
+ * port/include/port/dojo.h): battle_ac.c --- */
 
 /* ===== The second batch (port/src/common/gameplus2_pc.c; their controls in
  * port/settings/features/gameplus2.cpp) ===== */
@@ -231,6 +253,8 @@ int portBattleExp(int exp);
  * 1-4 a corner TL TR BL BR) --- */
 /* The current map's, by their flags: TRUE when it has any (in the field). */
 int portCollectiblesHere(int* pieces, int* piecesTotal, int* sprites, int* spritesTotal);
+/* A map's (its first six letters), with a file loaded: the area maps' (port/include/port/area_maps.h). */
+int portCollectiblesForMap(const char* map, int* pieces, int* piecesTotal, int* sprites, int* spritesTotal);
 
 /* --- Faster text outside battle ("fast_field_text") --- */
 /* msgdrv.c: the scale of a message window's time (text, page scroll, fades):

@@ -33,6 +33,8 @@
 #endif
 #ifdef TARGET_PC /* Play as Luigi: the parts' draws go through Luigi's stand-in (port/include/port/luigi.h) */
 #include "port/luigi.h"
+#include "port/versus.h"
+#include "port/brothers.h"
 #define animPoseDrawMtx portLuigiDrawMtx
 #endif
 
@@ -585,9 +587,16 @@ void PORT_HOOKABLE(btlDispMain)(void) {
             statusPoseControl(part);
             BtlUnit_GetPartsWorldPos(part, &wx, &wy, &wz);
             animPoseMain(part->poseId);
-#ifdef TARGET_PC /* Play as Luigi: Mario's unit's body */
-            if (unit->currentKind == UNIT_MARIO && unit->alliance == 0 && part->kindPartParams->partNum == 1) {
-                portLuigiUpdate(PORT_LUIGI_BATTLE, part->poseId, TRUE);
+#ifdef TARGET_PC /* Play as Luigi: Mario's unit's body; a versus battle's Luigi (port/include/port/versus.h) */
+            if (portBrothersLuigiUnit(unit) && part->kindPartParams->partNum == 1) {
+                portLuigiUpdate(PORT_LUIGI_VERSUS, part->poseId, TRUE); /* Brothers mode's Luigi (port/include/port/brothers.h) */
+            } else if (unit->currentKind == UNIT_MARIO && unit->alliance == 0 && part->kindPartParams->partNum == 1) {
+                portLuigiUpdate(PORT_LUIGI_BATTLE, part->poseId, !portVersusOn());
+            } else if (unit->currentKind == UNIT_MARIO && unit->alliance == 1 && part->kindPartParams->partNum == 1) {
+                portLuigiUpdate(PORT_LUIGI_VERSUS, part->poseId, TRUE);
+            } else if (unit->currentKind != UNIT_MARIO && !portVersusOn()) {
+                /* Play as Bowser (or Peach): their own units, Bowser's boss fights, are Mario */
+                portLuigiNpcUpdate(part->poseId);
             }
 #endif
             zpos = (Vec){wx, wy, wz + part->dispZOffset};
@@ -1127,6 +1136,13 @@ void PORT_HOOKABLE(btlDispEntAnime)(BattleUnit* unit) {
  * flag marks it as a hurt pose, which keeps the status draw types.
  */
 void PORT_HOOKABLE(btlDispChangeAnime)(BattleUnitPart* part, const char* name, BOOL flag) {
+#ifdef TARGET_PC
+    /* a pose the part has none for (BtlUnit_SetAnimType on a part without
+     * it: a versus fight's Mario or partner under Earth Tremor): as it is */
+    if (name == NULL) {
+        return;
+    }
+#endif
     strcpy(PART_POSENAME(part), name);
     part->animFlags |= PART_ANIM_MANUAL_POSE;
     part->animFlags |= PART_ANIM_CHANGE;

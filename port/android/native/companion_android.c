@@ -20,7 +20,7 @@ JNIEXPORT void JNICALL Java_dev_ttyd_port_TtydCompanion_setActive(JNIEnv* env, j
 }
 
 JNIEXPORT jstring JNICALL Java_dev_ttyd_port_TtydCompanion_snapshot(JNIEnv* env, jclass cls) {
-    static char sText[24576];
+    static char sText[32768]; /* the area map's rooms and ways too */
     (void)cls;
     portCompanionText(sText, sizeof(sText));
     return (*env)->NewStringUTF(env, sText);

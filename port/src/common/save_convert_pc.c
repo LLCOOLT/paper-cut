@@ -7,6 +7,9 @@
  * US and PAL; then the rest follows, and the size, version and checksums
  * close the slot at 0x3FF0. */
 #include "port/save_convert.h"
+#include "port/battlex.h"
+#include "data/item_data.h"
+#include "mario/mario_pouch.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -131,4 +134,173 @@ int portSaveConvert(const uint8_t* gci, size_t size, char to, uint8_t* out) {
 
 void portSaveFileName(char release, char* out, size_t cap) {
     snprintf(out, cap, "01-G8M%c-mariost_save_file.gci", release);
+}
+
+/* --- a copy for Dolphin or a GameCube (portSaveDolphinSafe) --- */
+
+enum {
+    POUCH = 0x13E0, /* PouchData in the slot (the same in every release) */
+    POUCH_PARTY = 0x0,
+    PARTY_SIZE = 0xE,
+    PARTY_MAX_HP = 0x2,
+    PARTY_BASE_MAX_HP = 0x4,
+    PARTY_HP = 0x6,
+    POUCH_HP = 0x70,
+    POUCH_MAX_HP = 0x72,
+    POUCH_FP = 0x74,
+    POUCH_MAX_FP = 0x76,
+    POUCH_COINS = 0x78,
+    POUCH_BASE_MAX_HP = 0x8E,
+    POUCH_BASE_MAX_FP = 0x90,
+    POUCH_AVAILABLE_BP = 0x92,
+    POUCH_MAX_BP = 0x94,
+    POUCH_HELD = 0x192,
+    POUCH_STORED = 0x1BA,
+    POUCH_BADGES = 0x1FA,
+    POUCH_EQUIPPED = 0x38A,
+    COIN_MAX = 999,
+};
+
+static int be16(const uint8_t* p) {
+    return (int16_t)(((unsigned)p[0] << 8) | p[1]);
+}
+
+static void put16(uint8_t* p, int v) {
+    p[0] = (uint8_t)((unsigned)v >> 8);
+    p[1] = (uint8_t)v;
+}
+
+static int portItem(int id) {
+    return id >= PORT_ITEM_MIN && id < PORT_ITEM_END;
+}
+
+/* A list of item ids (n s16) without the port's items, the rest kept in order; each
+ * one taken out paid for. Returns how many were. */
+static int sellFrom(uint8_t* list, int n, int* coins) {
+    int i, kept = 0, sold = 0;
+    for (i = 0; i < n; i++) {
+        const int id = be16(list + i * 2);
+        if (portItem(id)) {
+            *coins += itemDataTable[id].sell_price;
+            sold++;
+        } else {
+            put16(list + kept * 2, id);
+            kept++;
+        }
+    }
+    for (; kept < n; kept++) {
+        put16(list + kept * 2, 0);
+    }
+    return sold;
+}
+
+static int clampTo(int v, int max) {
+    return v > max ? max : v;
+}
+
+/* One slot: the port's items sold, the stats worked out again as the game does
+ * (pouchReviseMarioParam, pouchRevisePartyParam) when one was worn. */
+static int sellSlot(uint8_t* s, const Layout* l, int* paid) {
+    uint8_t* p = s + POUCH;
+    int coins = 0, sold, worn = 0, i, kept = 0;
+    if (!slotValid(s, l)) {
+        return 0;
+    }
+    sold = sellFrom(p + POUCH_HELD, MAX_HELD_ITEMS, &coins);
+    sold += sellFrom(p + POUCH_STORED, MAX_STORED_ITEMS, &coins);
+    /* the badges, and the worn ones beside them (the same place in both lists) */
+    for (i = 0; i < MAX_BADGES; i++) {
+        const int id = be16(p + POUCH_BADGES + i * 2), on = be16(p + POUCH_EQUIPPED + i * 2);
+        if (portItem(id) || portItem(on)) {
+            coins += portItem(id) ? itemDataTable[id].sell_price : 0;
+            sold += portItem(id);
+            worn |= portItem(on);
+            continue;
+        }
+        put16(p + POUCH_BADGES + kept * 2, id);
+        put16(p + POUCH_EQUIPPED + kept * 2, on);
+        kept++;
+    }
+    for (; kept < MAX_BADGES; kept++) {
+        put16(p + POUCH_BADGES + kept * 2, 0);
+        put16(p + POUCH_EQUIPPED + kept * 2, 0);
+    }
+    if (sold == 0 && !worn) {
+        return 0;
+    }
+    put16(p + POUCH_COINS, clampTo(be16(p + POUCH_COINS) + coins, COIN_MAX));
+    if (worn) {
+        int hp = be16(p + POUCH_BASE_MAX_HP), fp = be16(p + POUCH_BASE_MAX_FP), bp = be16(p + POUCH_MAX_BP);
+        int partyPlus = 0;
+        for (i = 0; i < MAX_BADGES; i++) {
+            const int on = be16(p + POUCH_EQUIPPED + i * 2);
+            if (on <= 0 || on >= ITEM_TYPE_MAX) {
+                continue;
+            }
+            hp += on == ITEM_HP_PLUS ? 5 : 0;
+            fp += on == ITEM_FP_PLUS ? 5 : 0;
+            partyPlus += on == ITEM_HP_PLUS_P;
+            bp -= itemDataTable[on].bp_cost;
+        }
+        put16(p + POUCH_MAX_HP, hp);
+        put16(p + POUCH_MAX_FP, fp);
+        put16(p + POUCH_HP, clampTo(be16(p + POUCH_HP), hp));
+        put16(p + POUCH_FP, clampTo(be16(p + POUCH_FP), fp));
+        put16(p + POUCH_AVAILABLE_BP, bp);
+        for (i = 1; i < 8; i++) {
+            uint8_t* party = p + POUCH_PARTY + i * PARTY_SIZE;
+            const int max = be16(party + PARTY_BASE_MAX_HP) + partyPlus * 5;
+            put16(party + PARTY_MAX_HP, max);
+            put16(party + PARTY_HP, clampTo(be16(party + PARTY_HP), max));
+        }
+    }
+    {
+        const uint32_t ck = byteSum(s, l->dataSize);
+        put32(s + SLOT_CK1, ck);
+        put32(s + SLOT_CK2, ~ck);
+    }
+    *paid += coins;
+    return sold;
+}
+
+int portSaveDolphinSafe(uint8_t* gci, size_t size, int* coins) {
+    const char release = portSaveRelease(gci, size);
+    int i, sold = 0, paid = 0;
+    if (release == 0) {
+        return -1;
+    }
+    portItemsInit(); /* (their prices) */
+    for (i = 0; i < SLOT_COUNT; i++) {
+        int backupPaid = 0;
+        /* (slots 4-7 are 0-3's backups: sold the same, counted once) */
+        const int n = sellSlot(gci + GCI_HEADER + META_SIZE + (size_t)i * SLOT_SIZE, layoutOf(release),
+                               i < SLOT_COUNT / 2 ? &paid : &backupPaid);
+        sold += i < SLOT_COUNT / 2 ? n : 0;
+    }
+    if (coins != NULL) {
+        *coins = paid;
+    }
+    return sold;
+}
+
+int portSaveHasPortItems(const uint8_t* gci, size_t size) {
+    const char release = portSaveRelease(gci, size);
+    int i, k;
+    if (release == 0) {
+        return 0;
+    }
+    for (i = 0; i < SLOT_COUNT; i++) {
+        const uint8_t* p = gci + GCI_HEADER + META_SIZE + (size_t)i * SLOT_SIZE + POUCH;
+        for (k = 0; k < MAX_HELD_ITEMS + MAX_STORED_ITEMS; k++) { /* (held, then stored: one after the other) */
+            if (portItem(be16(p + POUCH_HELD + k * 2))) {
+                return 1;
+            }
+        }
+        for (k = 0; k < 2 * MAX_BADGES; k++) { /* (the badges, then the worn ones) */
+            if (portItem(be16(p + POUCH_BADGES + k * 2))) {
+                return 1;
+            }
+        }
+    }
+    return 0;
 }

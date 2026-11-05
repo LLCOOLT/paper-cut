@@ -24,6 +24,18 @@ int portSaveConvert(const uint8_t* gci, size_t size, char to, uint8_t* out);
 /* The .gci's name for a release: "01-G8MJ-mariost_save_file.gci". */
 void portSaveFileName(char release, char* out, size_t cap);
 
+/* A copy for Dolphin or a GameCube: the GameCube game reads Paper Cut's own
+ * items (the badge set's, the badge maker's, Zess T.'s new dishes: ids past
+ * its item table, port/include/port/battlex.h) past the end of its table. In
+ * gci (size bytes, changed in place) every slot that verifies has them sold
+ * at the price a shop pays, the coins added (up to 999); a worn one taken off
+ * and the HP, FP and BP worked out again as the game does. Returns how many
+ * were sold (coins, when not NULL: what they paid), -1 when gci isn't a save
+ * of this game. */
+int portSaveDolphinSafe(uint8_t* gci, size_t size, int* coins);
+/* 1 when a slot of gci holds one of Paper Cut's own items. */
+int portSaveHasPortItems(const uint8_t* gci, size_t size);
+
 #ifdef __cplusplus
 }
 #endif
